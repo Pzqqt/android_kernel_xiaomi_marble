@@ -211,6 +211,7 @@ static int handle_session_info(struct msm_vidc_inst *inst,
 		break;
 	case HFI_INFO_DATA_CORRUPT:
 		info = "data corrupt";
+		inst->hfi_frame_info.data_corrupt = 1;
 		break;
 	default:
 		info = "unknown";
@@ -392,23 +393,26 @@ static int get_driver_buffer_flags(struct msm_vidc_inst *inst, u32 hfi_flags)
 {
 	u32 driver_flags = 0;
 
-	if (inst->frame_prop.hfi_picture_type & HFI_PICTURE_IDR) {
+	if (inst->hfi_frame_info.picture_type & HFI_PICTURE_IDR) {
 		driver_flags |= MSM_VIDC_BUF_FLAG_KEYFRAME;
-	} else if (inst->frame_prop.hfi_picture_type & HFI_PICTURE_P) {
+	} else if (inst->hfi_frame_info.picture_type & HFI_PICTURE_P) {
 		driver_flags |= MSM_VIDC_BUF_FLAG_PFRAME;
-	} else if (inst->frame_prop.hfi_picture_type & HFI_PICTURE_B) {
+	} else if (inst->hfi_frame_info.picture_type & HFI_PICTURE_B) {
 		driver_flags |= MSM_VIDC_BUF_FLAG_BFRAME;
-	} else if (inst->frame_prop.hfi_picture_type & HFI_PICTURE_I) {
+	} else if (inst->hfi_frame_info.picture_type & HFI_PICTURE_I) {
 		if (inst->codec == MSM_VIDC_VP9)
 			driver_flags |= MSM_VIDC_BUF_FLAG_KEYFRAME;
-	} else if (inst->frame_prop.hfi_picture_type & HFI_PICTURE_CRA) {
+	} else if (inst->hfi_frame_info.picture_type & HFI_PICTURE_CRA) {
 		driver_flags |= MSM_VIDC_BUF_FLAG_KEYFRAME;
-	} else if (inst->frame_prop.hfi_picture_type & HFI_PICTURE_BLA) {
+	} else if (inst->hfi_frame_info.picture_type & HFI_PICTURE_BLA) {
 		driver_flags |= MSM_VIDC_BUF_FLAG_KEYFRAME;
 	}
 
-	if (inst->capabilities->cap[META_BUF_TAG].value) {
-		if (inst->frame_prop.hfi_no_output &&
+	if (inst->hfi_frame_info.data_corrupt)
+		driver_flags |= MSM_VIDC_BUF_FLAG_ERROR;
+
+	if (inst->hfi_frame_info.no_output) {
+		if (inst->capabilities->cap[META_BUF_TAG].value &&
 			!(hfi_flags & HFI_BUF_FW_FLAG_CODEC_CONFIG))
 			driver_flags |= MSM_VIDC_BUF_FLAG_ERROR;
 	}
@@ -490,6 +494,15 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 
 	buf->attr &= ~MSM_VIDC_ATTR_QUEUED;
 	buf->attr |= MSM_VIDC_ATTR_DEQUEUED;
+
+	if (is_encode_session(inst)) {
+		/* encoder output is not expected to be corrupted */
+		if (inst->hfi_frame_info.data_corrupt) {
+			i_vpr_e(inst, "%s: encode output is corrupted\n", __func__);
+			msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
+		}
+	}
+
 	/*
 	 * reset data size to zero for last flag buffer.
 	 * reset RO flag for last flag buffer.
@@ -1068,7 +1081,7 @@ static int handle_session_property(struct msm_vidc_inst *inst,
 				__func__, pkt->port, pkt->type);
 			break;
 		}
-		inst->frame_prop.hfi_picture_type = payload_ptr[0];
+		inst->hfi_frame_info.picture_type = payload_ptr[0];
 		break;
 	case HFI_PROP_NO_OUTPUT:
 		if (port != INPUT_PORT) {
@@ -1078,7 +1091,7 @@ static int handle_session_property(struct msm_vidc_inst *inst,
 				__func__, pkt->port, pkt->type);
 			break;
 		}
-		inst->frame_prop.hfi_no_output = 1;
+		inst->hfi_frame_info.no_output = 1;
 		break;
 	default:
 		i_vpr_e(inst, "%s: invalid port settings property %#x\n",
@@ -1217,9 +1230,9 @@ int handle_session_response_work(struct msm_vidc_inst *inst,
 	struct msm_vidc_cmd_range be[5] = {
 		{HFI_SYSTEM_ERROR_BEGIN, HFI_SYSTEM_ERROR_END},
 		{HFI_SESSION_ERROR_BEGIN, HFI_SESSION_ERROR_END},
+		{HFI_INFORMATION_BEGIN, HFI_INFORMATION_END},
 		{HFI_PROP_BEGIN, HFI_PROP_END},
 		{HFI_CMD_BEGIN, HFI_CMD_END},
-		{HFI_INFORMATION_BEGIN, HFI_INFORMATION_END},
 	};
 
 	if (!inst || !resp_work) {
@@ -1248,8 +1261,8 @@ int handle_session_response_work(struct msm_vidc_inst *inst,
 		pkt += packet->size;
 	}
 
-	memset(&inst->frame_prop, 0,
-		sizeof(struct msm_vidc_frame_properties));
+	memset(&inst->hfi_frame_info, 0,
+		sizeof(struct msm_vidc_hfi_frame_info));
 	for (i = 0; i < ARRAY_SIZE(be); i++) {
 		pkt = start_pkt;
 		for (j = 0; j < hdr->num_packets; j++) {
@@ -1277,8 +1290,8 @@ int handle_session_response_work(struct msm_vidc_inst *inst,
 			goto exit;
 	}
 
-	memset(&inst->frame_prop, 0,
-		sizeof(struct msm_vidc_frame_properties));
+	memset(&inst->hfi_frame_info, 0,
+		sizeof(struct msm_vidc_hfi_frame_info));
 
 exit:
 	return rc;
@@ -1384,9 +1397,9 @@ static int handle_session_response(struct msm_vidc_core *core,
 	struct msm_vidc_cmd_range be[5] = {
 		{HFI_SYSTEM_ERROR_BEGIN, HFI_SYSTEM_ERROR_END},
 		{HFI_SESSION_ERROR_BEGIN, HFI_SESSION_ERROR_END},
+		{HFI_INFORMATION_BEGIN, HFI_INFORMATION_END},
 		{HFI_PROP_BEGIN, HFI_PROP_END},
 		{HFI_CMD_BEGIN, HFI_CMD_END},
-		{HFI_INFORMATION_BEGIN, HFI_INFORMATION_END},
 	};
 
 	inst = get_inst(core, hdr->session_id);
@@ -1436,7 +1449,7 @@ static int handle_session_response(struct msm_vidc_core *core,
 		pkt += packet->size;
 	}
 
-	memset(&inst->frame_prop, 0, sizeof(struct msm_vidc_frame_properties));
+	memset(&inst->hfi_frame_info, 0, sizeof(struct msm_vidc_hfi_frame_info));
 	for (i = 0; i < ARRAY_SIZE(be); i++) {
 		pkt = start_pkt;
 		for (j = 0; j < hdr->num_packets; j++) {
@@ -1457,7 +1470,7 @@ static int handle_session_response(struct msm_vidc_core *core,
 			goto exit;
 	}
 
-	memset(&inst->frame_prop, 0, sizeof(struct msm_vidc_frame_properties));
+	memset(&inst->hfi_frame_info, 0, sizeof(struct msm_vidc_hfi_frame_info));
 
 exit:
 	mutex_unlock(&inst->lock);
