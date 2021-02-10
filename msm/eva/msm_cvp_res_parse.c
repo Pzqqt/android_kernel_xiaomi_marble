@@ -941,7 +941,7 @@ int msm_cvp_smmu_fault_handler(struct iommu_domain *domain,
 	 * is not installed and prints a list of useful debug information like
 	 * FAR, SID etc. This information is not printed if we return 0.
 	 */
-	return -EINVAL;
+	return -ENOSYS;
 }
 
 static int msm_cvp_populate_context_bank(struct device *dev,
