@@ -993,13 +993,13 @@ static void __flush_debug_queue(struct msm_vidc_core *core,
 				__func__, pkt->size);
 			continue;
 		}
-		if (pkt->size > packet_size) {
-			d_vpr_e("%s: pkt size[%d] > packet_size[%d]\n",
+		if (pkt->size >= packet_size) {
+			d_vpr_e("%s: pkt size[%d] >= packet_size[%d]\n",
 				__func__, pkt->size, packet_size);
 			continue;
 		}
 
-		packet[packet_size - 1] = '\0';
+		packet[pkt->size] = '\0';
 		/*
 		 * All fw messages starts with new line character. This
 		 * causes dprintk to print this message in two lines
