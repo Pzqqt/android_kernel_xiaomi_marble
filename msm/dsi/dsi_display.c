@@ -3966,6 +3966,37 @@ end:
 	return rc;
 }
 
+static int dsi_display_validate_res(struct dsi_display *display)
+{
+	struct device_node *of_node = display->pdev->dev.of_node;
+	struct of_phandle_iterator it;
+	struct dsi_ctrl *dsi_ctrl;
+	bool ctrl_avail = false;
+
+	of_phandle_iterator_init(&it, of_node, "qcom,dsi-ctrl", NULL, 0);
+	while (of_phandle_iterator_next(&it) == 0) {
+		dsi_ctrl = dsi_ctrl_get(it.node);
+		if (IS_ERR(dsi_ctrl)) {
+			int rc = PTR_ERR(dsi_ctrl);
+
+			if (rc == -EPROBE_DEFER)
+				return rc;
+			/*
+			 * With dual display mode, the seconday display needs at least
+			 * one ctrl to proceed through the probe. Exact ctrl match
+			 * will be done after parsing the DT or firmware data.
+			 */
+			if (rc == -EBUSY)
+				ctrl_avail |= false;
+		} else {
+			dsi_ctrl_put(dsi_ctrl);
+			ctrl_avail = true;
+		}
+	}
+
+	return ctrl_avail ? 0 : -EBUSY;
+}
+
 static int dsi_display_get_phandle_count(struct dsi_display *display,
 			const char *propname)
 {
@@ -5813,10 +5844,28 @@ int dsi_display_dev_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, display);
 
+	rc = dsi_display_validate_res(display);
+	if (rc) {
+		/*
+		 * Display's bailing out without probe deferral must register its
+		 * components to complete MDSS binding. Scheduled to be fixed in the future
+		 * with dynamic component binding.
+		 */
+		if (rc == -EBUSY) {
+			int ret = component_add(&pdev->dev,
+					&dsi_display_comp_ops);
+			if (ret)
+				DSI_ERR(
+					"component add failed for display type: %s, rc=%d\n"
+					, display->type, ret);
+		}
+
+		goto end;
+	}
+
 	/* initialize display in firmware callback */
 	if (!boot_disp->boot_disp_en &&
-			IS_ENABLED(CONFIG_DSI_PARSER) &&
-			!display->trusted_vm_env) {
+			IS_ENABLED(CONFIG_DSI_PARSER)) {
 		if (!strcmp(display->display_type, "primary"))
 			firm_req = !request_firmware_nowait(
 				THIS_MODULE, 1, "dsi_prop",
