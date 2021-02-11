@@ -196,7 +196,6 @@ int msm_vidc_memory_alloc(struct msm_vidc_core *core, struct msm_vidc_alloc *mem
 
 	size = ALIGN(mem->size, SZ_4K);
 
-/* All dma-heap allocations are cached by default. */
 	if (mem->secure) {
 		switch (mem->region) {
 		case MSM_VIDC_SECURE_PIXEL:
@@ -234,8 +233,9 @@ int msm_vidc_memory_alloc(struct msm_vidc_core *core, struct msm_vidc_alloc *mem
 	}
 
 	d_vpr_h(
-		"%s: dmabuf = %pK, size = %d, kvaddr = %pK, buffer_type = %#x\n",
-		__func__, mem->dmabuf, mem->size, mem->kvaddr, mem->type);
+		"%s: dmabuf = %pK, size = %d, kvaddr = %pK, buffer_type = %#x secure %d region %d\n",
+		__func__, mem->dmabuf, mem->size, mem->kvaddr, mem->type,
+		mem->secure, mem->region);
 	return 0;
 
 error:
