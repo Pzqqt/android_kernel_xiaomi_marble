@@ -7656,6 +7656,8 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 			resource_p->tx_wrapper_cache_max_size);
 	ipa3_ctx->ipa_config_is_auto = resource_p->ipa_config_is_auto;
 	ipa3_ctx->ipa_mhi_proxy = resource_p->ipa_mhi_proxy;
+	ipa3_ctx->max_num_smmu_cb = resource_p->max_num_smmu_cb;
+	ipa3_ctx->hw_type_index = ipa3_get_hw_type_index();
 	ipa3_ctx->ipa_wdi3_2g_holb_timeout =
 		resource_p->ipa_wdi3_2g_holb_timeout;
 	ipa3_ctx->ipa_wdi3_5g_holb_timeout =
