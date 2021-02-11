@@ -789,12 +789,6 @@ static int hdd_parse_reassoc(struct hdd_adapter *adapter, const char *command,
 	return ret;
 }
 
-static inline
-void hdd_abort_roam_scan(struct hdd_context *hdd_ctx, uint8_t vdev_id)
-{
-	ucfg_cm_abort_roam_scan(hdd_ctx->pdev, vdev_id);
-}
-
 /**
  * hdd_sendactionframe() - send a userspace-supplied action frame
  * @adapter:	Adapter upon which the command was received
@@ -886,7 +880,8 @@ hdd_sendactionframe(struct hdd_adapter *adapter, const uint8_t *bssid,
 				 * may cause long delays in sending action
 				 * frames.
 				 */
-				hdd_abort_roam_scan(hdd_ctx, adapter->vdev_id);
+				ucfg_cm_abort_roam_scan(hdd_ctx->pdev,
+							adapter->vdev_id);
 			} else {
 				/*
 				 * 0 is accepted as current home frequency,
