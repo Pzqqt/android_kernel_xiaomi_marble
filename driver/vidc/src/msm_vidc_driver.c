@@ -1553,6 +1553,7 @@ int msm_vidc_destroy_internal_buffer(struct msm_vidc_inst *inst,
 			msm_vidc_memory_unmap(inst->core, map);
 			list_del(&map->list);
 			kfree(map);
+			break;
 		}
 	}
 
@@ -1561,6 +1562,7 @@ int msm_vidc_destroy_internal_buffer(struct msm_vidc_inst *inst,
 			msm_vidc_memory_free(inst->core, alloc);
 			list_del(&alloc->list);
 			kfree(alloc);
+			break;
 		}
 	}
 
@@ -1568,6 +1570,7 @@ int msm_vidc_destroy_internal_buffer(struct msm_vidc_inst *inst,
 		if (buf->dmabuf == buffer->dmabuf) {
 			list_del(&buf->list);
 			kfree(buf);
+			break;
 		}
 	}
 
