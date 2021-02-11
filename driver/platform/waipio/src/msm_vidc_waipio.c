@@ -181,19 +181,11 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 
 	{FRAME_RATE, ENC, CODECS_ALL,
 		(MINIMUM_FPS << 16), (MAXIMUM_FPS << 16),
-		1, (DEFAULT_FPS << 16),
-		0,
-		HFI_PROP_FRAME_RATE,
-		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT,
-		{0}, {0},
-		NULL, msm_vidc_set_q16},
+		1, (DEFAULT_FPS << 16)},
 
 	{FRAME_RATE, DEC, CODECS_ALL,
 		(MINIMUM_FPS << 16), (MAXIMUM_FPS << 16),
-		1, (DEFAULT_FPS << 16),
-		0,
-		HFI_PROP_FRAME_RATE,
-		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT},
+		1, (DEFAULT_FPS << 16)},
 
 	{OPERATING_RATE, ENC|DEC, CODECS_ALL,
 		1, INT_MAX, 1, (DEFAULT_FPS << 16)},
@@ -287,7 +279,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		0, 0, 0, 0,
 		V4L2_CID_MPEG_VIDEO_FORCE_KEY_FRAME,
 		HFI_PROP_REQUEST_SYNC_FRAME,
-		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT},
+		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED},
 
 	/* Enc: Keeping CABAC and CAVLC as same bitrate.
 	 * Dec: there's no use of Bitrate cap
@@ -353,7 +345,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		1, MAX_CONSTANT_QUALITY, 1, 90,
 		V4L2_CID_MPEG_VIDEO_CONSTANT_QUALITY,
 		HFI_PROP_CONSTANT_QUALITY,
-		CAP_FLAG_OUTPUT_PORT,
+		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
 		{BITRATE_MODE}, {0},
 		NULL, msm_vidc_set_constant_quality},
 
@@ -362,7 +354,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		0, INT_MAX, 1, 2 * DEFAULT_FPS - 1,
 		V4L2_CID_MPEG_VIDEO_GOP_SIZE,
 		HFI_PROP_MAX_GOP_FRAMES,
-		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT,
+		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
 		NULL, msm_vidc_set_u32},
 
@@ -1044,6 +1036,13 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		HFI_PROP_DEC_START_FROM_RAP_FRAME,
 		CAP_FLAG_INPUT_PORT,
 		{THUMBNAIL_MODE}},
+
+	{SEQ_CHANGE_AT_SYNC_FRAME, DEC, CODECS_ALL,
+		V4L2_MPEG_MSM_VIDC_DISABLE, V4L2_MPEG_MSM_VIDC_ENABLE,
+		1, V4L2_MPEG_MSM_VIDC_ENABLE,
+		0,
+		HFI_PROP_SEQ_CHANGE_AT_SYNC_FRAME,
+		CAP_FLAG_INPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED},
 
 	{META_LTR_MARK_USE, ENC, CODECS_ALL,
 		V4L2_MPEG_MSM_VIDC_DISABLE, V4L2_MPEG_MSM_VIDC_ENABLE,

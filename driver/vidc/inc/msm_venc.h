@@ -13,6 +13,7 @@ int msm_venc_streamoff_input(struct msm_vidc_inst *inst);
 int msm_venc_streamon_input(struct msm_vidc_inst *inst);
 int msm_venc_streamoff_output(struct msm_vidc_inst *inst);
 int msm_venc_streamon_output(struct msm_vidc_inst *inst);
+int msm_venc_qbuf(struct msm_vidc_inst *inst, struct vb2_buffer *vb2);
 int msm_venc_process_cmd(struct msm_vidc_inst *inst, u32 cmd);
 int msm_venc_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f);
 int msm_venc_g_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f);

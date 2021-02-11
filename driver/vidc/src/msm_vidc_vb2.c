@@ -289,7 +289,7 @@ void msm_vidc_buf_queue(struct vb2_buffer *vb2)
 	if (is_decode_session(inst))
 		rc = msm_vdec_qbuf(inst, vb2);
 	else if (is_encode_session(inst))
-		rc = msm_vdec_qbuf(inst, vb2);
+		rc = msm_venc_qbuf(inst, vb2);
 	else
 		rc = -EINVAL;
 

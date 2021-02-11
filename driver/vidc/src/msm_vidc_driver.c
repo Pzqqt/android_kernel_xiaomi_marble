@@ -606,6 +606,7 @@ bool msm_vidc_allow_s_ctrl(struct msm_vidc_inst *inst, u32 id)
 			case V4L2_CID_MPEG_VIDC_MARKLTRFRAME:
 			case V4L2_CID_MPEG_VIDC_VIDEO_BLUR_TYPES:
 			case V4L2_CID_MPEG_VIDC_VIDEO_BLUR_RESOLUTION:
+			case V4L2_CID_MPEG_VIDEO_CONSTANT_QUALITY:
 				allow = true;
 				break;
 			default:

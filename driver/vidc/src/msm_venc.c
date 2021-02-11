@@ -836,6 +836,17 @@ error:
 	return rc;
 }
 
+int msm_venc_qbuf(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
+{
+	int rc = 0;
+
+	rc = msm_vidc_queue_buffer(inst, vb2);
+	if (rc)
+		return rc;
+
+	return rc;
+}
+
 int msm_venc_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 {
 	int rc = 0;

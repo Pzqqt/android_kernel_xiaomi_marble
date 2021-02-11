@@ -350,6 +350,7 @@ enum msm_vidc_inst_capability_type {
 	THUMBNAIL_MODE,
 	DEFAULT_HEADER,
 	RAP_FRAME,
+	SEQ_CHANGE_AT_SYNC_FRAME,
 	META_LTR_MARK_USE,
 	META_DPB_MISR,
 	META_OPB_MISR,
@@ -583,12 +584,6 @@ struct msm_vidc_rectangle {
 	u32 top;
 	u32 width;
 	u32 height;
-};
-
-struct msm_vidc_properties {
-	u32                    frame_rate;
-	u32                    operating_rate;
-	u32                    bitrate;
 };
 
 struct msm_vidc_subscription_params {

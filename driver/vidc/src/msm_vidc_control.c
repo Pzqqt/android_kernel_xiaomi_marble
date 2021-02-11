@@ -266,8 +266,8 @@ static int msm_vidc_add_capid_to_list(struct msm_vidc_inst *inst,
 	if (type & FW_LIST) {
 		list_for_each_entry(curr_node, &inst->firmware.list, list) {
 			if (curr_node->cap_id == cap_id) {
-				i_vpr_e(inst,
-					"%s: cap %d cannot be the child of two parents\n",
+				i_vpr_l(inst,
+					"%s: cap %d already present in FW_LIST\n",
 					__func__, cap_id);
 				return 0;
 			}
