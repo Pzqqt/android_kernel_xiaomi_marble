@@ -1950,12 +1950,16 @@ static const struct dev_pm_ops wsa883x_swr_pm_ops = {
 
 static const struct swr_device_id wsa883x_swr_id[] = {
 	{"wsa883x", 0},
+	{"wsa883x_2", 0},
 	{}
 };
 
 static const struct of_device_id wsa883x_swr_dt_match[] = {
 	{
 		.compatible = "qcom,wsa883x",
+	},
+	{
+		.compatible = "qcom,wsa883x_2",
 	},
 	{}
 };
