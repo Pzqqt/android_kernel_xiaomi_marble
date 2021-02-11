@@ -1765,6 +1765,9 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 
 	wsa883x->parent_np = of_parse_phandle(pdev->dev.of_node,
 					      "qcom,bolero-handle", 0);
+	if (!wsa883x->parent_np)
+		wsa883x->parent_np = of_parse_phandle(pdev->dev.of_node,
+					      "qcom,lpass-cdc-handle", 0);
 	if (wsa883x->parent_np) {
 		wsa883x->parent_dev =
 				of_find_device_by_node(wsa883x->parent_np);
