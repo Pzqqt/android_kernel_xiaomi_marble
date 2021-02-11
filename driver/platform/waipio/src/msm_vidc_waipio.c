@@ -13,10 +13,6 @@
 #include "msm_vidc_control.h"
 #include "hfi_property.h"
 
-#define DDR_TYPE_LPDDR4 0x6
-#define DDR_TYPE_LPDDR4X 0x7
-#define DDR_TYPE_LPDDR5 0x8
-#define DDR_TYPE_LPDDR5X 0x9
 #define DEFAULT_VIDEO_CONCEAL_COLOR_BLACK 0x8020010
 #define MAX_LTR_FRAME_COUNT     2
 #define MAX_BASE_LAYER_PRIORITY_ID 63
@@ -1181,24 +1177,12 @@ static struct msm_vidc_platform_data waipio_data = {
 static int msm_vidc_init_data(struct msm_vidc_core *core)
 {
 	int rc = 0;
-	struct msm_vidc_ubwc_config_data *ubwc_config;
-	u32 ddr_type;
 
 	if (!core || !core->platform) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 	d_vpr_h("%s: initialize waipio data\n", __func__);
-
-	ubwc_config = waipio_data.ubwc_config;
-	ddr_type = of_fdt_get_ddrtype();
-	if (ddr_type == -ENOENT)
-		d_vpr_e("Failed to get ddr type, use LPDDR5\n");
-
-	if (ddr_type == DDR_TYPE_LPDDR4 || ddr_type == DDR_TYPE_LPDDR4X)
-		ubwc_config->highest_bank_bit = 0xf;
-	d_vpr_h("%s: DDR Type 0x%x hbb 0x%x\n", __func__,
-		ddr_type, ubwc_config->highest_bank_bit);
 
 	core->platform->data = waipio_data;
 
