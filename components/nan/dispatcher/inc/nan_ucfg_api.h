@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -404,6 +404,14 @@ bool ucfg_nan_is_vdev_creation_allowed(struct wlan_objmgr_psoc *psoc);
 bool ucfg_nan_is_sta_nan_ndi_4_port_allowed(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * ucfg_nan_is_beamforming_supported- Get support for beamforing
+ * @psoc: pointer to psoc object
+ *
+ * Return: True if beamforming is supported, false if not.
+ */
+bool ucfg_nan_is_beamforming_supported(struct wlan_objmgr_psoc *psoc);
+
+/**
  * ucfg_disable_nan_discovery() - Disable NAN discovery
  * @psoc: pointer to psoc object
  * @data: Data to be sent to NAN discovery engine, which runs in firmware
@@ -551,6 +559,12 @@ bool ucfg_nan_is_vdev_creation_allowed(struct wlan_objmgr_psoc *psoc)
 
 static inline
 bool ucfg_nan_is_sta_nan_ndi_4_port_allowed(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
+static inline
+bool ucfg_nan_is_beamforming_supported(struct wlan_objmgr_psoc *psoc)
 {
 	return false;
 }
