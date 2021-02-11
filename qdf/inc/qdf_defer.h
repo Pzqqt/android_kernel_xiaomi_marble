@@ -175,9 +175,9 @@ void qdf_sched_work(qdf_handle_t hdl, qdf_work_t *work);
  * @wqueue: pointer to workqueue
  * @work: pointer to work
  *
- * Return: none
+ * Return: false if work was already on a queue, true otherwise
  */
-void
+bool
 qdf_queue_work(qdf_handle_t hdl, qdf_workqueue_t *wqueue, qdf_work_t *work);
 
 /**
@@ -303,12 +303,12 @@ static inline qdf_workqueue_t *qdf_alloc_unbound_workqueue(char *name)
  * @hdl: OS handle
  * @wqueue: pointer to workqueue
  * @work: pointer to work
- * Return: none
+ * Return: false if work was already on a queue, true otherwise
  */
-static inline void
+static inline bool
 qdf_queue_work(qdf_handle_t hdl, qdf_workqueue_t *wqueue, qdf_work_t *work)
 {
-	return  __qdf_queue_work(wqueue, work);
+	return __qdf_queue_work(wqueue, work);
 }
 
 /**

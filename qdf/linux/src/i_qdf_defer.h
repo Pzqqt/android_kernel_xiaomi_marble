@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -70,12 +70,12 @@ __qdf_init_work(__qdf_work_t *work, qdf_defer_fn_t func, void *arg)
  * __qdf_queue_work - Queue the work/task
  * @wqueue: pointer to workqueue
  * @work: pointer to work
- * Return: none
+ * Return: false if work was already on a queue, true otherwise
  */
-static inline void
+static inline bool
 __qdf_queue_work(__qdf_workqueue_t *wqueue, __qdf_work_t *work)
 {
-	queue_work(wqueue, &work->work);
+	return queue_work(wqueue, &work->work);
 }
 
 /**

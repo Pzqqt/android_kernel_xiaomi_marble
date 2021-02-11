@@ -137,7 +137,7 @@ void qdf_sched_work(qdf_handle_t hdl, qdf_work_t *work)
 
 qdf_export_symbol(qdf_sched_work);
 
-void
+bool
 qdf_queue_work(qdf_handle_t hdl, qdf_workqueue_t *wqueue, qdf_work_t *work)
 {
 	return  __qdf_queue_work(wqueue, work);
