@@ -420,6 +420,34 @@ static void hdd_softap_notify_dhcp_ind(void *context, struct sk_buff *netbuf)
 	hdd_post_dhcp_ind(adapter, dest_mac_addr, WMA_DHCP_STOP_IND);
 }
 
+void hdd_ipa_update_rx_mcbc_stats(struct hdd_adapter *adapter,
+				  struct sk_buff *skb)
+{
+	struct hdd_station_info *hdd_sta_info;
+	struct qdf_mac_addr *src_mac;
+	qdf_ether_header_t *eh;
+
+	src_mac = (struct qdf_mac_addr *)(skb->data +
+					  QDF_NBUF_SRC_MAC_OFFSET);
+
+	hdd_sta_info = hdd_get_sta_info_by_mac(
+				&adapter->sta_info_list,
+				src_mac->bytes,
+				STA_INFO_SOFTAP_IPA_RX_PKT_CALLBACK);
+	if (!hdd_sta_info)
+		return;
+
+	if (qdf_nbuf_data_is_ipv4_mcast_pkt(skb->data))
+		hdd_sta_info->rx_mc_bc_cnt++;
+
+	eh = (qdf_ether_header_t *)qdf_nbuf_data(skb);
+	if (QDF_IS_ADDR_BROADCAST(eh->ether_dhost))
+		hdd_sta_info->rx_mc_bc_cnt++;
+
+	hdd_put_sta_info_ref(&adapter->sta_info_list, &hdd_sta_info,
+			     true, STA_INFO_SOFTAP_IPA_RX_PKT_CALLBACK);
+}
+
 int hdd_softap_inspect_dhcp_packet(struct hdd_adapter *adapter,
 				   struct sk_buff *skb,
 				   enum qdf_proto_dir dir)

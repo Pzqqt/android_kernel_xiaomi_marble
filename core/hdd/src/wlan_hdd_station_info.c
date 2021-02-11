@@ -37,6 +37,7 @@
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_hdd_sta_info.h"
 #include "wlan_hdd_object_manager.h"
+#include "wlan_ipa_ucfg_api.h"
 
 #include <cdp_txrx_handle.h>
 #include <cdp_txrx_stats_struct.h>
@@ -1627,7 +1628,12 @@ int32_t hdd_cfg80211_get_station_cmd(struct wiphy *wiphy,
  * @adapter: pointer to adapter
  * @stainfo: station information
  *
- * This function gets peer statistics information
+ * This function gets peer statistics information. If IPA is
+ * enabled the Rx bcast/mcast count is updated in the
+ * exception callback invoked by the IPA driver. In case of
+ * back pressure the packets may get routed to the sw path and
+ * where eventually the peer mcast/bcast pkt counts are updated in
+ * dp rx process handling.
  *
  * Return : 0 on success and errno on failure
  */
@@ -1652,8 +1658,12 @@ static int hdd_get_peer_stats(struct hdd_adapter *adapter,
 	}
 
 	stainfo->rx_retry_cnt = peer_stats->rx.rx_retries;
-	stainfo->rx_mc_bc_cnt = peer_stats->rx.multicast.num +
-				peer_stats->rx.bcast.num;
+	if (!ucfg_ipa_is_enabled())
+		stainfo->rx_mc_bc_cnt = peer_stats->rx.multicast.num +
+					peer_stats->rx.bcast.num;
+	else
+		stainfo->rx_mc_bc_cnt += peer_stats->rx.multicast.num +
+					 peer_stats->rx.bcast.num;
 
 	qdf_mem_free(peer_stats);
 	peer_stats = NULL;

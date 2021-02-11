@@ -107,6 +107,7 @@ enum dhcp_nego_status {
  * @STA_INFO_CLEAR_CACHED_STA_INFO:     Clear the cached sta info
  * @STA_INFO_ATTACH_DETACH:             Station info attach/detach
  * @STA_INFO_SHOW:     Station info show
+ * @STA_INFO_SOFTAP_IPA_RX_PKT_CALLBACK: Update rx mcbc stats for IPA case
  *
  */
 /*
@@ -144,6 +145,7 @@ typedef enum {
 	STA_INFO_CLEAR_CACHED_STA_INFO = 27,
 	STA_INFO_ATTACH_DETACH = 28,
 	STA_INFO_SHOW = 29,
+	STA_INFO_SOFTAP_IPA_RX_PKT_CALLBACK = 30,
 
 	STA_INFO_ID_MAX,
 } wlan_sta_info_dbgid;
