@@ -1791,6 +1791,36 @@ static int hdd_add_pmf_bcn_protect_stats(struct sk_buff *skb,
 
 #ifdef WLAN_FEATURE_BIG_DATA_STATS
 /**
+ * hdd_get_big_data_stats_len - get data length used in
+ * hdd_big_data_pack_resp_nlmsg()
+ * @adapter: hdd adapter
+ *
+ * This function calculates the data length used in
+ * hdd_big_data_pack_resp_nlmsg()
+ *
+ * Return: total data length used in hdd_big_data_pack_resp_nlmsg()
+ */
+static uint32_t
+hdd_get_big_data_stats_len(struct hdd_adapter *adapter)
+{
+	uint32_t len;
+
+	len =
+	nla_total_size(sizeof(adapter->big_data_stats.last_tx_data_rate_kbps)) +
+	nla_total_size(sizeof(adapter->big_data_stats.target_power_ofdm)) +
+	nla_total_size(sizeof(adapter->big_data_stats.target_power_dsss)) +
+	nla_total_size(sizeof(adapter->big_data_stats.last_tx_data_rix)) +
+	nla_total_size(sizeof(adapter->big_data_stats.tsf_out_of_sync)) +
+	nla_total_size(sizeof(adapter->big_data_stats.ani_level)) +
+	nla_total_size(sizeof(adapter->big_data_stats.last_data_tx_pwr));
+
+	/** Add len of roam params **/
+	len += nla_total_size(sizeof(uint32_t)) * 3;
+
+	return len;
+}
+
+/**
  * hdd_big_data_pack_resp_nlmsg() - pack big data nl resp msg
  * @skb: pointer to response skb buffer
  * @adapter: adapter holding big data stats
@@ -1805,9 +1835,109 @@ hdd_big_data_pack_resp_nlmsg(struct sk_buff *skb,
 			     struct hdd_adapter *adapter,
 			     struct hdd_context *hdd_ctx)
 {
-	//add stats
+	struct hdd_station_ctx *hdd_sta_ctx;
+
+	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	if (!hdd_sta_ctx) {
+		hdd_err("Invalid station context");
+		return -EINVAL;
+	}
+	if (nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_LATEST_TX_RATE,
+			adapter->big_data_stats.last_tx_data_rate_kbps)){
+		hdd_err("latest tx rate put fail");
+		return -EINVAL;
+	}
+
+	if (WLAN_REG_IS_5GHZ_CH_FREQ(hdd_sta_ctx->cache_conn_info.chan_freq)) {
+		if (nla_put_u32(
+			skb,
+			QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_TARGET_POWER_5G_6MBPS,
+			adapter->big_data_stats.target_power_ofdm)){
+			hdd_err("5G ofdm power put fail");
+			return -EINVAL;
+		}
+	} else if (WLAN_REG_IS_24GHZ_CH_FREQ(
+				hdd_sta_ctx->cache_conn_info.chan_freq)){
+		if (nla_put_u32(
+		       skb,
+		       QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_TARGET_POWER_24G_6MBPS,
+		       adapter->big_data_stats.target_power_ofdm)){
+			hdd_err("2.4G ofdm power put fail");
+			return -EINVAL;
+		}
+		if (nla_put_u32(
+		       skb,
+		       QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_TARGET_POWER_24G_1MBPS,
+		       adapter->big_data_stats.target_power_dsss)){
+			hdd_err("target power dsss put fail");
+			return -EINVAL;
+		}
+	}
+
+	if (nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_LATEST_RIX,
+			adapter->big_data_stats.last_tx_data_rix)){
+		hdd_err("last rix rate put fail");
+		return -EINVAL;
+	}
+	if (nla_put_u32(skb,
+			QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_TSF_OUT_OF_SYNC_COUNT,
+			adapter->big_data_stats.tsf_out_of_sync)){
+		hdd_err("tsf out of sync put fail");
+		return -EINVAL;
+	}
+	if (nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_ANI_LEVEL,
+			adapter->big_data_stats.ani_level)){
+		hdd_err("ani level put fail");
+		return -EINVAL;
+	}
+	if (nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_LATEST_TX_POWER,
+			adapter->big_data_stats.last_data_tx_pwr)){
+		hdd_err("last data tx power put fail");
+		return -EINVAL;
+	}
+	if (nla_put_u32(skb,
+			QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_ROAM_TRIGGER_REASON,
+			wlan_cm_get_roam_states(hdd_ctx->psoc, adapter->vdev_id,
+						ROAM_TRIGGER_REASON))){
+		hdd_err("roam trigger reason put fail");
+		return -EINVAL;
+	}
+	if (nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_ROAM_FAIL_REASON,
+			wlan_cm_get_roam_states(hdd_ctx->psoc, adapter->vdev_id,
+						ROAM_FAIL_REASON))){
+		hdd_err("roam fail reason put fail");
+		return -EINVAL;
+	}
+	if (nla_put_u32(
+		      skb,
+		      QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_ROAM_INVOKE_FAIL_REASON,
+		      wlan_cm_get_roam_states(hdd_ctx->psoc, adapter->vdev_id,
+					      ROAM_INVOKE_FAIL_REASON))){
+		hdd_err("roam invoke fail reason put fail");
+		return -EINVAL;
+	}
 
 	return 0;
+}
+
+/**
+ * hdd_reset_roam_params() - reset roam params
+ * @psoc: psoc
+ * @vdev_id: vdev id
+ *
+ * This function resets big data roam params
+ *
+ * Return: None
+ */
+static void
+hdd_reset_roam_params(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	wlan_cm_update_roam_states(psoc, vdev_id,
+				   0, ROAM_TRIGGER_REASON);
+	wlan_cm_update_roam_states(psoc, vdev_id,
+				   0, ROAM_FAIL_REASON);
+	wlan_cm_update_roam_states(psoc, vdev_id,
+				   0, ROAM_INVOKE_FAIL_REASON);
 }
 #else
 static int
@@ -1817,6 +1947,16 @@ hdd_big_data_pack_resp_nlmsg(struct sk_buff *skb,
 {
 	return 0;
 }
+
+static uint32_t
+hdd_get_big_data_stats_len(struct hdd_adapter *adapter)
+{
+	return 0;
+}
+
+static void
+hdd_reset_roam_params(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{}
 #endif
 
 /**
@@ -2078,9 +2218,10 @@ static int hdd_get_station_info_ex(struct hdd_context *hdd_ctx,
 				   struct hdd_adapter *adapter)
 {
 	struct sk_buff *skb;
-	uint32_t nl_buf_len, connect_fail_rsn_len;
+	uint32_t nl_buf_len = 0, connect_fail_rsn_len;
 	struct hdd_station_ctx *hdd_sta_ctx;
 	bool big_data_stats_req = false;
+	int ret;
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
@@ -2095,10 +2236,10 @@ static int hdd_get_station_info_ex(struct hdd_context *hdd_ctx,
 			hdd_err_rl("wlan_hdd_get_big_data_station_stats fail");
 			return -EINVAL;
 		}
-		// allocate memory to nl_buf_len to send data
+		nl_buf_len = hdd_get_big_data_stats_len(adapter);
 	}
 
-	nl_buf_len = hdd_get_pmf_bcn_protect_stats_len(adapter);
+	nl_buf_len += hdd_get_pmf_bcn_protect_stats_len(adapter);
 	connect_fail_rsn_len = hdd_get_connect_fail_reason_code_len(adapter);
 	nl_buf_len += connect_fail_rsn_len;
 
@@ -2135,7 +2276,9 @@ static int hdd_get_station_info_ex(struct hdd_context *hdd_ctx,
 		}
 	}
 
-	return cfg80211_vendor_cmd_reply(skb);
+	ret = cfg80211_vendor_cmd_reply(skb);
+	hdd_reset_roam_params(hdd_ctx->psoc, adapter->vdev_id);
+	return ret;
 }
 
 /**
