@@ -1611,6 +1611,7 @@ int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 {
 	int rc = 0;
 	enum msm_vidc_allow allow = MSM_VIDC_DISALLOW;
+	enum msm_vidc_port_type port;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1639,19 +1640,20 @@ int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 	} else if (cmd == V4L2_DEC_CMD_START) {
 		if (!msm_vidc_allow_start(inst))
 			return -EBUSY;
+		port = (inst->state == MSM_VIDC_DRAIN_LAST_FLAG) ? INPUT_PORT : OUTPUT_PORT;
+		vb2_clear_last_buffer_dequeued(&inst->vb2q[OUTPUT_META_PORT]);
+		vb2_clear_last_buffer_dequeued(&inst->vb2q[OUTPUT_PORT]);
 		rc = msm_vidc_state_change_start(inst);
 		if (rc)
 			return rc;
 		rc = venus_hfi_session_command(inst,
 				HFI_CMD_RESUME,
-				OUTPUT_PORT,
+				port,
 				HFI_PAYLOAD_NONE,
 				NULL,
 				0);
 		if (rc)
 			return rc;
-		vb2_clear_last_buffer_dequeued(&inst->vb2q[OUTPUT_META_PORT]);
-		vb2_clear_last_buffer_dequeued(&inst->vb2q[OUTPUT_PORT]);
 	} else {
 		d_vpr_e("%s: unknown cmd %d\n", __func__, cmd);
 		return -EINVAL;
