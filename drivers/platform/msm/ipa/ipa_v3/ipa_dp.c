@@ -1199,6 +1199,11 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 			sys_in->client);
 	}
 
+	ep->client = sys_in->client;
+	ep->sys->ext_ioctl_v2 = sys_in->ext_ioctl_v2;
+	ep->sys->int_modt = sys_in->int_modt;
+	ep->sys->int_modc = sys_in->int_modc;
+	ep->sys->buff_size = sys_in->buff_size;
 	ep->skip_ep_cfg = sys_in->skip_ep_cfg;
 	if (ipa3_assign_policy(sys_in, ep->sys)) {
 		IPAERR("failed to sys ctx for client %d\n", sys_in->client);
@@ -1207,13 +1212,8 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 	}
 
 	ep->valid = 1;
-	ep->client = sys_in->client;
 	ep->client_notify = sys_in->notify;
 	ep->sys->napi_obj = sys_in->napi_obj;
-	ep->sys->ext_ioctl_v2 = sys_in->ext_ioctl_v2;
-	ep->sys->int_modt = sys_in->int_modt;
-	ep->sys->int_modc = sys_in->int_modc;
-	ep->sys->buff_size = sys_in->buff_size;
 	ep->priv = sys_in->priv;
 	ep->keep_ipa_awake = sys_in->keep_ipa_awake;
 	atomic_set(&ep->avail_fifo_desc,
@@ -3910,15 +3910,22 @@ static void ipa3_set_aggr_limit(struct ipa_sys_connect_params *in,
 		struct ipa3_sys_context *sys)
 {
 	u32 *aggr_byte_limit = &in->ipa_ep_cfg.aggr.aggr_byte_limit;
-	u32 adjusted_sz = ipa_adjust_ra_buff_base_sz(*aggr_byte_limit);
+	u32 adjusted_sz;
 
-	IPADBG("get close-by %u\n", adjusted_sz);
-	IPADBG("set rx_buff_sz %lu\n", (unsigned long)
-		IPA_GENERIC_RX_BUFF_SZ(adjusted_sz));
+	if (sys->ext_ioctl_v2) {
+		IPAERR("set rx_buff_sz config from netmngr %lu\n", (unsigned long)
+			sys->buff_size);
+		sys->rx_buff_sz = IPA_GENERIC_RX_BUFF_SZ(sys->buff_size);
+	} else {
+		adjusted_sz = ipa_adjust_ra_buff_base_sz(*aggr_byte_limit);
+		IPAERR("get close-by %u\n", adjusted_sz);
+		IPAERR("set default rx_buff_sz %lu\n", (unsigned long)
+				IPA_GENERIC_RX_BUFF_SZ(adjusted_sz));
+		sys->rx_buff_sz = IPA_GENERIC_RX_BUFF_SZ(adjusted_sz);
+	}
 
 	/* disable ipa_status */
 	sys->ep->status.status_en = false;
-	sys->rx_buff_sz = IPA_GENERIC_RX_BUFF_SZ(adjusted_sz);
 
 	if (in->client == IPA_CLIENT_APPS_WAN_COAL_CONS)
 		in->ipa_ep_cfg.aggr.aggr_hard_byte_limit_en = 1;
