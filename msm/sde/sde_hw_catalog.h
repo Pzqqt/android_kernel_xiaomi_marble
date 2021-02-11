@@ -252,6 +252,7 @@ enum {
  * @SDE_SSPP_BLOCK_SEC_UI    Blocks secure-ui layers
  * @SDE_SSPP_SCALER_QSEED3LITE Qseed3lite algorithm support
  * @SDE_SSPP_TRUE_INLINE_ROT Support of SSPP true inline rotation v1
+ * @SDE_SSPP_MULTIRECT_ERROR SSPP has error based on RECT0 or RECT1
  * @SDE_SSPP_PREDOWNSCALE    Support pre-downscale X-direction by 2 for inline
  * @SDE_SSPP_PREDOWNSCALE_Y  Support pre-downscale Y-direction for inline
  * @SDE_SSPP_INLINE_CONST_CLR Inline rotation requires const clr disabled
@@ -283,6 +284,7 @@ enum {
 	SDE_SSPP_BLOCK_SEC_UI,
 	SDE_SSPP_SCALER_QSEED3LITE,
 	SDE_SSPP_TRUE_INLINE_ROT,
+	SDE_SSPP_MULTIRECT_ERROR,
 	SDE_SSPP_PREDOWNSCALE,
 	SDE_SSPP_PREDOWNSCALE_Y,
 	SDE_SSPP_INLINE_CONST_CLR,
@@ -1416,6 +1418,7 @@ struct sde_perf_cfg {
  * @true_inline_rot_rev	inline rotator feature revision
  * @macrotile_mode     UBWC parameter for macro tile channel distribution
  * @pipe_order_type    indicate if it is required to specify pipe order
+ * @sspp_multirect_error flag to indicate whether ubwc and meta error by rect is supported
  * @delay_prg_fetch_start indicates if throttling the fetch start is required
  * @has_qsync	       Supports qsync feature
  * @has_3d_merge_reset Supports 3D merge reset
@@ -1489,6 +1492,7 @@ struct sde_mdss_cfg {
 	u32 true_inline_rot_rev;
 	u32 macrotile_mode;
 	u32 pipe_order_type;
+	bool sspp_multirect_error;
 	bool delay_prg_fetch_start;
 	bool has_qsync;
 	bool has_3d_merge_reset;

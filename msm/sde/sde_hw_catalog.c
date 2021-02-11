@@ -1744,6 +1744,9 @@ static void sde_sspp_set_features(struct sde_mdss_cfg *sde_cfg,
 		if (sde_cfg->sc_cfg[SDE_SYS_CACHE_DISP].has_sys_cache)
 			set_bit(SDE_PERF_SSPP_SYS_CACHE, &sspp->perf_features);
 
+		if (sde_cfg->sspp_multirect_error)
+			set_bit(SDE_SSPP_MULTIRECT_ERROR, &sspp->features);
+
 		if (sde_cfg->has_decimation) {
 			sblk->maxhdeciexp = MAX_HORZ_DECIMATION;
 			sblk->maxvdeciexp = MAX_VERT_DECIMATION;
@@ -4827,6 +4830,7 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->dither_luma_mode_support = true;
 		sde_cfg->mdss_hw_block_size = 0x158;
 		sde_cfg->syscache_supported = true;
+		sde_cfg->sspp_multirect_error = true;
 	} else {
 		SDE_ERROR("unsupported chipset id:%X\n", hw_rev);
 		sde_cfg->perf.min_prefill_lines = 0xffff;

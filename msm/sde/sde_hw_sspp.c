@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #include "sde_hwio.h"
@@ -86,6 +86,7 @@
 #define SSPP_SW_PIX_EXT_C3_LR              0x120
 #define SSPP_SW_PIX_EXT_C3_TB              0x124
 #define SSPP_SW_PIX_EXT_C3_REQ_PIXELS      0x128
+#define SSPP_META_ERROR_STATUS             0X12C
 #define SSPP_TRAFFIC_SHAPER                0x130
 #define SSPP_CDP_CNTL                      0x134
 #define SSPP_UBWC_ERROR_STATUS             0x138
@@ -95,6 +96,8 @@
 #define SSPP_TRAFFIC_SHAPER_REC1           0x158
 #define SSPP_EXCL_REC_SIZE                 0x1B4
 #define SSPP_EXCL_REC_XY                   0x1B8
+#define SSPP_META_ERROR_STATUS_REC1        0x1C4
+#define SSPP_UBWC_ERROR_STATUS_REC1        0x1C8
 #define SSPP_VIG_OP_MODE                   0x0
 #define SSPP_VIG_CSC_10_OP_MODE            0x0
 #define SSPP_TRAFFIC_SHAPER_BPC_MAX        0xFF
@@ -417,21 +420,77 @@ static void sde_hw_sspp_setup_format(struct sde_hw_pipe *ctx,
 	SDE_REG_WRITE(c, SSPP_UBWC_ERROR_STATUS + idx, BIT(31));
 }
 
-static void sde_hw_sspp_clear_ubwc_error(struct sde_hw_pipe *ctx)
+static void sde_hw_sspp_clear_ubwc_error(struct sde_hw_pipe *ctx, uint32_t multirect_index)
 {
 	struct sde_hw_blk_reg_map *c;
 
 	c = &ctx->hw;
+
 	SDE_REG_WRITE(c, SSPP_UBWC_ERROR_STATUS, BIT(31));
 }
 
-static u32 sde_hw_sspp_get_ubwc_error(struct sde_hw_pipe *ctx)
+static u32 sde_hw_sspp_get_ubwc_error(struct sde_hw_pipe *ctx, uint32_t multirect_index)
 {
 	struct sde_hw_blk_reg_map *c;
 	u32 reg_code;
 
 	c = &ctx->hw;
+
 	reg_code = SDE_REG_READ(c, SSPP_UBWC_ERROR_STATUS);
+
+	return reg_code;
+}
+
+static void sde_hw_sspp_clear_ubwc_error_v1(struct sde_hw_pipe *ctx, uint32_t multirect_index)
+{
+	struct sde_hw_blk_reg_map *c;
+
+	c = &ctx->hw;
+
+	if (multirect_index == SDE_SSPP_RECT_1)
+		SDE_REG_WRITE(c, SSPP_UBWC_ERROR_STATUS_REC1, BIT(31));
+	else
+		SDE_REG_WRITE(c, SSPP_UBWC_ERROR_STATUS, BIT(31));
+}
+
+static u32 sde_hw_sspp_get_ubwc_error_v1(struct sde_hw_pipe *ctx, uint32_t multirect_index)
+{
+	struct sde_hw_blk_reg_map *c;
+	u32 reg_code;
+
+	c = &ctx->hw;
+
+	if (multirect_index == SDE_SSPP_RECT_1)
+		reg_code = SDE_REG_READ(c, SSPP_UBWC_ERROR_STATUS_REC1);
+	else
+		reg_code = SDE_REG_READ(c, SSPP_UBWC_ERROR_STATUS);
+
+	return reg_code;
+}
+
+static void sde_hw_sspp_clear_meta_error(struct sde_hw_pipe *ctx, uint32_t multirect_index)
+{
+	struct sde_hw_blk_reg_map *c;
+
+	c = &ctx->hw;
+
+	if (multirect_index == SDE_SSPP_RECT_1)
+		SDE_REG_WRITE(c, SSPP_META_ERROR_STATUS_REC1, BIT(31));
+	else
+		SDE_REG_WRITE(c, SSPP_META_ERROR_STATUS, BIT(31));
+}
+
+static u32 sde_hw_sspp_get_meta_error(struct sde_hw_pipe *ctx, uint32_t multirect_index)
+{
+	struct sde_hw_blk_reg_map *c;
+	u32 reg_code;
+
+	c = &ctx->hw;
+
+	if (multirect_index == SDE_SSPP_RECT_1)
+		reg_code = SDE_REG_READ(c, SSPP_META_ERROR_STATUS_REC1);
+	else
+		reg_code = SDE_REG_READ(c, SSPP_META_ERROR_STATUS);
 
 	return reg_code;
 }
@@ -1253,6 +1312,17 @@ static void _setup_layer_ops(struct sde_hw_pipe *c,
 			c->ops.setup_scaler = reg_dmav1_setup_vig_qseed3;
 	}
 
+	if (test_bit(SDE_SSPP_MULTIRECT_ERROR, &features)) {
+		c->ops.get_meta_error = sde_hw_sspp_get_meta_error;
+		c->ops.clear_meta_error = sde_hw_sspp_clear_meta_error;
+
+		c->ops.get_ubwc_error = sde_hw_sspp_get_ubwc_error_v1;
+		c->ops.clear_ubwc_error = sde_hw_sspp_clear_ubwc_error_v1;
+	} else {
+		c->ops.get_ubwc_error = sde_hw_sspp_get_ubwc_error;
+		c->ops.clear_ubwc_error = sde_hw_sspp_clear_ubwc_error;
+	}
+
 	if (test_bit(SDE_SSPP_PREDOWNSCALE, &features))
 		c->ops.setup_pre_downscale = sde_hw_sspp_setup_pre_downscale;
 
@@ -1271,9 +1341,6 @@ static void _setup_layer_ops(struct sde_hw_pipe *c,
 		c->ops.setup_inverse_pma = sde_hw_sspp_setup_dgm_inverse_pma;
 	else if (test_bit(SDE_SSPP_INVERSE_PMA, &features))
 		c->ops.setup_inverse_pma = sde_hw_sspp_setup_inverse_pma;
-
-	c->ops.get_ubwc_error = sde_hw_sspp_get_ubwc_error;
-	c->ops.clear_ubwc_error = sde_hw_sspp_clear_ubwc_error;
 }
 
 static struct sde_sspp_cfg *_sspp_offset(enum sde_sspp sspp,

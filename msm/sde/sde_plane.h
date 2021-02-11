@@ -318,6 +318,18 @@ u32 sde_plane_get_ubwc_error(struct drm_plane *plane);
 void sde_plane_clear_ubwc_error(struct drm_plane *plane);
 
 /*
+ * sde_plane_get_meta_error - gets the meta error code
+ * @plane: Pointer to DRM plane object
+ */
+u32 sde_plane_get_meta_error(struct drm_plane *plane);
+
+/*
+ * sde_plane_clear_meta_error - clears the meta error code
+ * @plane: Pointer to DRM plane object
+ */
+void sde_plane_clear_meta_error(struct drm_plane *plane);
+
+/*
  * sde_plane_setup_src_split_order - enable/disable pipe's src_split_order
  * @plane: Pointer to DRM plane object
  * @rect_mode: multirect mode

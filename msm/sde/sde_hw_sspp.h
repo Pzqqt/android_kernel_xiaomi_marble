@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HW_SSPP_H
@@ -592,16 +592,32 @@ struct sde_hw_sspp_ops {
 		enum sde_sspp_multirect_index index, struct sde_csc_cfg *data);
 
 	/**
+	 * clear_meta_error - clear the meta error-code registers
+	 * @ctx: Pointer to pipe context
+	 * @multirect_index: rec in use
+	 */
+	void (*clear_meta_error)(struct sde_hw_pipe *ctx, uint32_t multirect_index);
+
+	/**
+	 * get_meta_error - get the meta error-code
+	 * @ctx: Pointer to pipe context
+	 * @multirect_index: rec in use
+	 */
+	u32 (*get_meta_error)(struct sde_hw_pipe *ctx, uint32_t multirect_index);
+
+	/**
 	 * clear_ubwc_error - clear the ubwc error-code registers
 	 * @ctx: Pointer to pipe context
+	 * @multirect_index: rec in use
 	 */
-	void (*clear_ubwc_error)(struct sde_hw_pipe *ctx);
+	void (*clear_ubwc_error)(struct sde_hw_pipe *ctx, uint32_t multirect_index);
 
 	/**
 	 * get_ubwc_error - get the ubwc error-code
 	 * @ctx: Pointer to pipe context
+	 * @multirect_index: rec in use
 	 */
-	u32 (*get_ubwc_error)(struct sde_hw_pipe *ctx);
+	u32 (*get_ubwc_error)(struct sde_hw_pipe *ctx, uint32_t multirect_index);
 };
 
 /**
