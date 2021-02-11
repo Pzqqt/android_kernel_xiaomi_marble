@@ -450,6 +450,35 @@ cm_set_pmf_caps(struct wlan_cm_connect_req *req, struct scan_filter *filter)
 		filter->pmf_cap = WLAN_PMF_DISABLED;
 }
 
+static void cm_create_bss_peer(struct cnx_mgr *cm_ctx,
+			       struct cm_connect_req *req)
+{
+	QDF_STATUS status;
+	struct qdf_mac_addr *bssid;
+
+	bssid = &req->cur_candidate->entry->bssid;
+	status = mlme_cm_bss_peer_create_req(cm_ctx->vdev, bssid);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		struct wlan_cm_connect_resp *resp;
+		uint8_t vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
+
+		/* In case of failure try with next candidate */
+		mlme_err(CM_PREFIX_FMT "peer create request failed %d",
+			 CM_PREFIX_REF(vdev_id, req->cm_id), status);
+
+		resp = qdf_mem_malloc(sizeof(*resp));
+		if (!resp)
+			return;
+
+		cm_fill_failure_resp_from_cm_id(cm_ctx, resp, req->cm_id,
+						CM_PEER_CREATE_FAILED);
+		cm_sm_deliver_event_sync(cm_ctx,
+				WLAN_CM_SM_EV_CONNECT_GET_NEXT_CANDIDATE,
+				sizeof(*resp), resp);
+		qdf_mem_free(resp);
+	}
+}
+
 #ifdef CONN_MGR_ADV_FEATURE
 #ifdef WLAN_FEATURE_FILS_SK
 /*
@@ -741,6 +770,80 @@ static void cm_update_security_filter(struct scan_filter *filter,
 static inline void cm_set_fils_wep_key(struct cnx_mgr *cm_ctx,
 				       struct wlan_cm_connect_resp *resp)
 {}
+
+QDF_STATUS
+cm_peer_create_on_bss_select_ind_resp(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
+{
+	struct cm_req *cm_req;
+
+	cm_req = cm_get_req_by_cm_id(cm_ctx, *cm_id);
+	if (!cm_req)
+		return QDF_STATUS_E_FAILURE;
+
+	cm_create_bss_peer(cm_ctx, &cm_req->connect_req);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS cm_bss_select_ind_rsp(struct wlan_objmgr_vdev *vdev,
+				 QDF_STATUS status)
+{
+	struct cnx_mgr *cm_ctx;
+	QDF_STATUS qdf_status;
+	wlan_cm_id cm_id;
+	uint32_t prefix;
+	struct wlan_cm_connect_resp *resp;
+
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx)
+		return QDF_STATUS_E_INVAL;
+
+	cm_id = cm_ctx->active_cm_id;
+	prefix = CM_ID_GET_PREFIX(cm_id);
+
+	if (prefix != CONNECT_REQ_PREFIX) {
+		mlme_err(CM_PREFIX_FMT "active req is not connect req",
+			 CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev), cm_id));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		qdf_status =
+			cm_sm_deliver_event(vdev,
+				WLAN_CM_SM_EV_BSS_SELECT_IND_SUCCESS,
+				sizeof(wlan_cm_id), &cm_id);
+		if (QDF_IS_STATUS_SUCCESS(qdf_status))
+			return qdf_status;
+
+		goto post_err;
+	}
+
+	/* In case of failure try with next candidate */
+	resp = qdf_mem_malloc(sizeof(*resp));
+	if (!resp) {
+		qdf_status = QDF_STATUS_E_NOMEM;
+		goto post_err;
+	}
+
+	cm_fill_failure_resp_from_cm_id(cm_ctx, resp, cm_id,
+					CM_BSS_SELECT_IND_FAILED);
+	qdf_status =
+		cm_sm_deliver_event(vdev,
+				    WLAN_CM_SM_EV_CONNECT_GET_NEXT_CANDIDATE,
+				    sizeof(*resp), resp);
+	qdf_mem_free(resp);
+	if (QDF_IS_STATUS_SUCCESS(qdf_status))
+		return qdf_status;
+
+post_err:
+	/*
+	 * If there is a event posting error it means the SM state is not in
+	 * JOIN ACTIVE (some new cmd has changed the state of SM), so just
+	 * complete the connect command.
+	 */
+	cm_connect_handle_event_post_fail(cm_ctx, cm_id);
+	return qdf_status;
+}
 
 #endif /* CONN_MGR_ADV_FEATURE */
 
@@ -1166,35 +1269,6 @@ flush_single_pmk:
 	return status;
 }
 
-static void cm_create_bss_peer(struct cnx_mgr *cm_ctx,
-			       struct cm_connect_req *req)
-{
-	QDF_STATUS status;
-	struct qdf_mac_addr *bssid;
-
-	bssid = &req->cur_candidate->entry->bssid;
-	status = mlme_cm_bss_peer_create_req(cm_ctx->vdev, bssid);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		struct wlan_cm_connect_resp *resp;
-		uint8_t vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
-
-		/* In case of failure try with next candidate */
-		mlme_err(CM_PREFIX_FMT "peer create request failed %d",
-			 CM_PREFIX_REF(vdev_id, req->cm_id), status);
-
-		resp = qdf_mem_malloc(sizeof(*resp));
-		if (!resp)
-			return;
-
-		cm_fill_failure_resp_from_cm_id(cm_ctx, resp, req->cm_id,
-						CM_PEER_CREATE_FAILED);
-		cm_sm_deliver_event_sync(cm_ctx,
-				WLAN_CM_SM_EV_CONNECT_GET_NEXT_CANDIDATE,
-				sizeof(*resp), resp);
-		qdf_mem_free(resp);
-	}
-}
-
 static QDF_STATUS
 cm_send_bss_select_ind(struct cnx_mgr *cm_ctx, struct cm_connect_req *req)
 {
@@ -1344,20 +1418,6 @@ QDF_STATUS cm_connect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 connect_err:
 	return cm_send_connect_start_fail(cm_ctx,
 					  &cm_req->connect_req, CM_JOIN_FAILED);
-}
-
-QDF_STATUS
-cm_peer_create_on_bss_select_ind_resp(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
-{
-	struct cm_req *cm_req;
-
-	cm_req = cm_get_req_by_cm_id(cm_ctx, *cm_id);
-	if (!cm_req)
-		return QDF_STATUS_E_FAILURE;
-
-	cm_create_bss_peer(cm_ctx, &cm_req->connect_req);
-
-	return QDF_STATUS_SUCCESS;
 }
 
 #ifdef WLAN_FEATURE_FILS_SK
@@ -1667,66 +1727,6 @@ post_err:
 	 */
 	cm_connect_complete(cm_ctx, resp);
 
-	return qdf_status;
-}
-
-QDF_STATUS cm_bss_select_ind_rsp(struct wlan_objmgr_vdev *vdev,
-				 QDF_STATUS status)
-{
-	struct cnx_mgr *cm_ctx;
-	QDF_STATUS qdf_status;
-	wlan_cm_id cm_id;
-	uint32_t prefix;
-	struct wlan_cm_connect_resp *resp;
-
-	cm_ctx = cm_get_cm_ctx(vdev);
-	if (!cm_ctx)
-		return QDF_STATUS_E_INVAL;
-
-	cm_id = cm_ctx->active_cm_id;
-	prefix = CM_ID_GET_PREFIX(cm_id);
-
-	if (prefix != CONNECT_REQ_PREFIX) {
-		mlme_err(CM_PREFIX_FMT "active req is not connect req",
-			 CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev), cm_id));
-		return QDF_STATUS_E_INVAL;
-	}
-
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		qdf_status =
-			cm_sm_deliver_event(vdev,
-				WLAN_CM_SM_EV_BSS_SELECT_IND_SUCCESS,
-				sizeof(wlan_cm_id), &cm_id);
-		if (QDF_IS_STATUS_SUCCESS(qdf_status))
-			return qdf_status;
-
-		goto post_err;
-	}
-
-	/* In case of failure try with next candidate */
-	resp = qdf_mem_malloc(sizeof(*resp));
-	if (!resp) {
-		qdf_status = QDF_STATUS_E_NOMEM;
-		goto post_err;
-	}
-
-	cm_fill_failure_resp_from_cm_id(cm_ctx, resp, cm_id,
-					CM_BSS_SELECT_IND_FAILED);
-	qdf_status =
-		cm_sm_deliver_event(vdev,
-				    WLAN_CM_SM_EV_CONNECT_GET_NEXT_CANDIDATE,
-				    sizeof(*resp), resp);
-	qdf_mem_free(resp);
-	if (QDF_IS_STATUS_SUCCESS(qdf_status))
-		return qdf_status;
-
-post_err:
-	/*
-	 * If there is a event posting error it means the SM state is not in
-	 * JOIN ACTIVE (some new cmd has changed the state of SM), so just
-	 * complete the connect command.
-	 */
-	cm_connect_handle_event_post_fail(cm_ctx, cm_id);
 	return qdf_status;
 }
 
