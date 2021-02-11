@@ -604,11 +604,12 @@ struct msm_vidc_subscription_params {
 	u32                    tier;
 };
 
-struct msm_vidc_frame_properties {
-	u32                    hfi_picture_type;
-	u32                    hfi_no_output;
-	u32                    hfi_cr;
-	u32                    hfi_cf;
+struct msm_vidc_hfi_frame_info {
+	u32                    picture_type;
+	u32                    no_output;
+	u32                    cr;
+	u32                    cf;
+	u32                    data_corrupt;
 };
 
 struct msm_vidc_cmd_range {
