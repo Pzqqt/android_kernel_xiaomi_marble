@@ -4104,6 +4104,7 @@ static int dsi_display_res_init(struct dsi_display *display)
 
 	display_for_each_ctrl(i, display) {
 		struct msm_dsi_phy *phy = display->ctrl[i].phy;
+		struct dsi_host_common_cfg *host = &display->panel->host_config;
 
 		phy->cfg.force_clk_lane_hs =
 			display->panel->host_config.force_hs_clk_lane;
@@ -4117,6 +4118,10 @@ static int dsi_display_res_init(struct dsi_display *display)
 		if ((display->panel->dyn_clk_caps.dyn_clk_support) &&
 				(display->panel->panel_mode == DSI_OP_VIDEO_MODE))
 			dsi_phy_pll_parse_dfps_data(phy);
+
+		phy->cfg.split_link.enabled = host->split_link.enabled;
+		phy->cfg.split_link.num_sublinks = host->split_link.num_sublinks;
+		phy->cfg.split_link.lanes_per_sublink = host->split_link.lanes_per_sublink;
 	}
 
 	rc = dsi_display_parse_lane_map(display);

@@ -116,6 +116,7 @@ struct dsi_phy_per_lane_cfgs {
  * @force_clk_lane_hs:Boolean whether to force clock lane in HS mode.
  * @phy_type:         Phy-type (Dphy/Cphy).
  * @bit_clk_rate_hz: DSI bit clk rate in HZ.
+ * @split_link:       DSI split link config data.
  */
 struct dsi_phy_cfg {
 	struct dsi_phy_per_lane_cfgs lanecfg;
@@ -128,6 +129,7 @@ struct dsi_phy_cfg {
 	bool force_clk_lane_hs;
 	enum dsi_phy_type phy_type;
 	unsigned long bit_clk_rate_hz;
+	struct dsi_split_link_config split_link;
 };
 
 struct dsi_phy_hw;
