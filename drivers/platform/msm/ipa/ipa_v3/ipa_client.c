@@ -1497,6 +1497,7 @@ EXPORT_SYMBOL(ipa3_xdci_ep_delay_rm);
 int ipa3_xdci_disconnect(u32 clnt_hdl, bool should_force_clear, u32 qmi_req_id)
 {
 	struct ipa3_ep_context *ep;
+	struct ipa_ep_cfg_ctrl ep_cfg_ctrl;
 	int result;
 	u32 source_pipe_bitmask = 0;
 	u32 source_pipe_reg_idx = 0;
@@ -1536,6 +1537,12 @@ int ipa3_xdci_disconnect(u32 clnt_hdl, bool should_force_clear, u32 qmi_req_id)
 			IPAERR("Error stopping channel (CONS client): %d\n",
 				result);
 			goto stop_chan_fail;
+		}
+		if (ipa3_ctx->ipa_hw_type < IPA_HW_v4_0) {
+			/* Unsuspend the pipe */
+			memset(&ep_cfg_ctrl, 0, sizeof(struct ipa_ep_cfg_ctrl));
+			ep_cfg_ctrl.ipa_ep_suspend = false;
+			ipa3_cfg_ep_ctrl(clnt_hdl, &ep_cfg_ctrl);
 		}
 	}
 	IPA_ACTIVE_CLIENTS_DEC_EP(ipa3_get_client_mapping(clnt_hdl));
