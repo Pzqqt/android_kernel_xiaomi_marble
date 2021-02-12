@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -22,6 +22,9 @@
 #define _WLAN_OBJMGR_GLOBAL_OBJ_I_H_
 
 #include "wlan_objmgr_cmn.h"
+#ifdef WLAN_FEATURE_11BE_MLO
+#include "wlan_mlo_mgr_public_structs.h"
+#endif
 
 struct wlan_objmgr_debug_info;
 /**
@@ -58,6 +61,9 @@ struct wlan_objmgr_debug_info;
  */
 struct wlan_objmgr_global {
 	struct wlan_objmgr_psoc *psoc[WLAN_OBJMGR_MAX_DEVICES];
+#ifdef WLAN_FEATURE_11BE_MLO
+	struct mlo_mgr_context *mlo_ctx;
+#endif
 	wlan_objmgr_psoc_create_handler
 		psoc_create_handler[WLAN_UMAC_MAX_COMPONENTS];
 	void *psoc_create_handler_arg[WLAN_UMAC_MAX_COMPONENTS];

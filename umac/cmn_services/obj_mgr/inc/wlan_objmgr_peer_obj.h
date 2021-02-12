@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -25,6 +25,9 @@
 #include <qdf_types.h>
 #include <qdf_atomic.h>
 #include "wlan_objmgr_vdev_obj.h"
+#ifdef WLAN_FEATURE_11BE_MLO
+#include "wlan_mlo_mgr_public_structs.h"
+#endif
 
 /* peer flags */
 /* authorized for data */
@@ -169,6 +172,7 @@ struct wlan_objmgr_peer_objmgr {
  * @obj_state:        Status of Peer object
  * @pdev_id:          Pdev ID
  * @peer_lock:        Lock for access/update peer contents
+ * @mlo_peer_ctx:     Reference to MLO Peer context
  */
 struct wlan_objmgr_peer {
 	qdf_list_node_t psoc_peer;
@@ -181,6 +185,9 @@ struct wlan_objmgr_peer {
 	QDF_STATUS obj_status[WLAN_UMAC_MAX_COMPONENTS];
 	WLAN_OBJ_STATE obj_state;
 	qdf_spinlock_t peer_lock;
+#ifdef WLAN_FEATURE_11BE_MLO
+	struct mlo_peer_ctx *mlo_peer_ctx;
+#endif
 };
 
 /**

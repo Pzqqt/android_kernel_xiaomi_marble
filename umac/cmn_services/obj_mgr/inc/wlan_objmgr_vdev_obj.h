@@ -35,6 +35,9 @@
 #include "include/wlan_vdev_mlme.h"
 #include "wlan_vdev_mlme_api.h"
 #include "wlan_mlme_dbg.h"
+#ifdef WLAN_FEATURE_11BE_MLO
+#include "wlan_mlo_mgr_public_structs.h"
+#endif
 
 	/* CONF: privacy enabled */
 #define WLAN_VDEV_F_PRIVACY              0x00000001
@@ -172,6 +175,8 @@
 /* Feature more extension flags */
 	/* VDEV is MLO*/
 #define WLAN_VDEV_FEXT2_MLO                 0x00000001
+	/* STA VDEV is link type */
+#define WLAN_VDEV_FEXT2_MLO_STA_LINK        0x00000002
 
 /* VDEV OP flags  */
   /* if the vap destroyed by user */
@@ -374,6 +379,7 @@ struct wlan_objmgr_vdev_objmgr {
  * @obj_status[]:   Component object status
  * @obj_state:      VDEV object state
  * @vdev_lock:      VDEV lock
+ * @mlo_dev_ctx:    MLO device context
  */
 struct wlan_objmgr_vdev {
 	qdf_list_node_t vdev_node;
@@ -384,6 +390,9 @@ struct wlan_objmgr_vdev {
 	QDF_STATUS obj_status[WLAN_UMAC_MAX_COMPONENTS];
 	WLAN_OBJ_STATE obj_state;
 	qdf_spinlock_t vdev_lock;
+#ifdef WLAN_FEATURE_11BE_MLO
+	struct wlan_mlo_dev_context *mlo_dev_ctx;
+#endif
 };
 
 /**
@@ -1254,6 +1263,47 @@ static inline bool wlan_vdev_mlme_is_mlo_ap(struct wlan_objmgr_vdev *vdev)
 }
 #else
 static inline bool wlan_vdev_mlme_is_mlo_ap(struct wlan_objmgr_vdev *vdev)
+{
+	return false;
+}
+#endif
+
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * wlan_vdev_mlme_is_mlo_vdev() - whether it is mlo vdev or not
+ * @vdev: VDEV object
+ *
+ * Return: True if it is mlo ap, otherwise false.
+ */
+static inline
+bool wlan_vdev_mlme_is_mlo_vdev(struct wlan_objmgr_vdev *vdev)
+{
+	return wlan_vdev_mlme_feat_ext2_cap_get(vdev, WLAN_VDEV_FEXT2_MLO);
+}
+
+/**
+ * wlan_vdev_mlme_is_mlo_vdev() - whether it is mlo vdev or not
+ * @vdev: VDEV object
+ *
+ * Return: True if it is mlo ap, otherwise false.
+ */
+static inline
+bool wlan_vdev_mlme_is_mlo_link_vdev(struct wlan_objmgr_vdev *vdev)
+{
+	return wlan_vdev_mlme_feat_ext2_cap_get(vdev,
+						WLAN_VDEV_FEXT2_MLO_STA_LINK);
+}
+
+#else
+
+static inline
+bool wlan_vdev_mlme_is_mlo_vdev(struct wlan_objmgr_vdev *vdev)
+{
+	return false;
+}
+
+static inline
+bool wlan_vdev_mlme_is_mlo_link_vdev(struct wlan_objmgr_vdev *vdev)
 {
 	return false;
 }
