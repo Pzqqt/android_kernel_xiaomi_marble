@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -707,7 +707,7 @@ ol_tx_pkt_capture_tx_completion_process(
 		ip_len = tso_seg->seg.tso_flags.ip_len;
 		ip_len = qdf_cpu_to_be16(ip_len);
 
-		for (frag_cnt = 0; frag_cnt < num_frags; frag_cnt++) {
+		for (frag_cnt = 0; frag_cnt <= num_frags; frag_cnt++) {
 			qdf_mem_copy(qdf_nbuf_data(netbuf) + frag_len,
 				     tso_seg->seg.tso_frags[frag_cnt].vaddr,
 				     tso_seg->seg.tso_frags[frag_cnt].length);
