@@ -83,6 +83,9 @@ EXPORT_SYMBOL(msm_vidc_syscache_disable);
 
 int msm_vidc_clock_voting = !1;
 
+bool msm_vidc_fw_dump = !true;
+EXPORT_SYMBOL(msm_vidc_fw_dump);
+
 #define MAX_DBG_BUF_SIZE 4096
 
 struct core_inst_pair {
@@ -244,6 +247,8 @@ struct dentry* msm_vidc_debugfs_init_drv()
 			&msm_vidc_syscache_disable);
 	debugfs_create_bool("lossless_encoding", 0644, dir,
 			&msm_vidc_lossless_encode);
+	debugfs_create_bool("msm_vidc_fw_dump", 0644, dir,
+			&msm_vidc_fw_dump);
 
 	return dir;
 

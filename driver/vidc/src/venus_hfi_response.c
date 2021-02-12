@@ -3,6 +3,8 @@
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/devcoredump.h>
+#include <linux/of_address.h>
 #include "hfi_packet.h"
 #include "venus_hfi.h"
 #include "venus_hfi_response.h"
@@ -372,13 +374,61 @@ static int handle_session_error(struct msm_vidc_inst *inst,
 	return rc;
 }
 
+static void fw_coredump(struct platform_device *pdev)
+{
+	int rc = 0;
+	struct device_node *node = NULL;
+	struct resource res = {0};
+	phys_addr_t mem_phys = 0;
+	size_t res_size = 0;
+	void *mem_va = NULL;
+	void *data = NULL;
+
+	node = of_parse_phandle(pdev->dev.of_node, "memory-region", 0);
+	if (!node) {
+		d_vpr_e("%s: DT error getting \"memory-region\" property\n",
+			__func__);
+		return;
+	}
+
+	rc = of_address_to_resource(node, 0, &res);
+	if (rc) {
+		d_vpr_e("%s: error %d while getting \"memory-region\" resource\n",
+			__func__, rc);
+		return;
+	}
+
+	mem_phys = res.start;
+	res_size = (size_t)resource_size(&res);
+
+	mem_va = memremap(mem_phys, res_size, MEMREMAP_WC);
+	if (!mem_va) {
+		d_vpr_e("%s: unable to remap firmware memory\n", __func__);
+		return;
+	}
+
+	data = vmalloc(res_size);
+	if (!data) {
+		memunmap(mem_va);
+		return;
+	}
+
+	memcpy(data, mem_va, res_size);
+	memunmap(mem_va);
+	dev_coredumpv(&pdev->dev, data, res_size, GFP_KERNEL);
+}
+
 int handle_system_error(struct msm_vidc_core *core,
 	struct hfi_packet *pkt)
 {
 	d_vpr_e("%s: system error received\n", __func__);
+
 	print_sfr_message(core);
 	venus_hfi_noc_error_info(core);
 	msm_vidc_core_deinit(core, true);
+	if (msm_vidc_fw_dump)
+		fw_coredump(core->pdev);
+
 	return 0;
 }
 
