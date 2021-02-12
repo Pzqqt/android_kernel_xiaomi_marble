@@ -1137,6 +1137,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_mlo_link_set_active_resp_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_roam_sae_offload_tlv_param,
     WMITLV_TAG_STRUC_wmi_big_data_dp_stats_tlv_param,
+    WMITLV_TAG_STRUC_wmi_pdev_get_dpd_status_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_get_dpd_status_evt_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1594,6 +1596,7 @@ typedef enum {
     OP(WMI_VDEV_TID_LATENCY_CONFIG_CMDID) \
     OP(WMI_PEER_TID_LATENCY_CONFIG_CMDID) \
     OP(WMI_MLO_LINK_SET_ACTIVE_CMDID) \
+    OP(WMI_PDEV_GET_DPD_STATUS_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1856,6 +1859,7 @@ typedef enum {
     OP(WMI_REG_CHAN_LIST_CC_EXT_EVENTID) \
     OP(WMI_TWT_NOTIFY_EVENTID) \
     OP(WMI_MLO_LINK_SET_ACTIVE_RESP_EVENTID) \
+    OP(WMI_PDEV_GET_DPD_STATUS_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -4597,6 +4601,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_ENABLE_DURATION_BASED_TX_MODE_SELECTION_CMDID
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, vdev_id_bitmap, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_MLO_LINK_SET_ACTIVE_CMDID);
 
+/* Request DPD Status */
+#define WMITLV_TABLE_WMI_PDEV_GET_DPD_STATUS_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_get_dpd_status_cmd_fixed_param, wmi_pdev_get_dpd_status_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_GET_DPD_STATUS_CMDID);
+
 
 /************************** TLV definitions of WMI events *******************************/
 
@@ -6204,6 +6213,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_TWT_SESSION_STATS_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, force_active_vdev_bitmap, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, force_inactive_vdev_bitmap, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_MLO_LINK_SET_ACTIVE_RESP_EVENTID);
+
+/* Get DPD status Event */
+#define WMITLV_TABLE_WMI_PDEV_GET_DPD_STATUS_EVENTID(id,op,buf,len)  \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_get_dpd_status_evt_fixed_param, wmi_pdev_get_dpd_status_evt_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_GET_DPD_STATUS_EVENTID);
 
 
 #ifdef __cplusplus

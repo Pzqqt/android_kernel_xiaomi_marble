@@ -446,6 +446,8 @@ typedef enum {
     WMI_PDEV_GET_TPC_STATS_CMDID,
     /** ENABLE/DISABLE Duration based tx mode selection */
     WMI_PDEV_ENABLE_DURATION_BASED_TX_MODE_SELECTION_CMDID,
+    /* Get DPD status from HALPHY */
+    WMI_PDEV_GET_DPD_STATUS_CMDID,
 
     /* VDEV (virtual device) specific commands */
     /** vdev create */
@@ -1492,6 +1494,9 @@ typedef enum {
 
     /** WMI event in response to TPC STATS command */
     WMI_PDEV_GET_TPC_STATS_EVENTID,
+
+    /* Event to get DPD status from HALPHY */
+    WMI_PDEV_GET_DPD_STATUS_EVENTID,
 
 
     /* VDEV specific events */
@@ -28269,6 +28274,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_TID_LATENCY_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_PEER_TID_LATENCY_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_MLO_LINK_SET_ACTIVE_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_GET_DPD_STATUS_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -30636,6 +30642,23 @@ typedef struct {
     A_UINT32 request_id;    /* request ID set by the command */
     A_INT32  tx_power;      /* TX power for the specified HALPHY parameters in half dBm unit */
 } wmi_get_tpc_power_evt_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_get_dpd_status_cmd_fixed_param */
+    A_UINT32 pdev_id;        /* PDEV ID set by the command */
+} wmi_pdev_get_dpd_status_cmd_fixed_param;
+
+typedef enum {
+    WMI_DPD_STATUS_DISABLE = 0,
+    WMI_DPD_STATUS_ENABLE = 1,
+    WMI_DPD_STATUS_INVALID = 2,
+} WMI_DPD_STATUS;
+
+typedef struct {
+    A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_get_dpd_status_evt_fixed_param  */
+    A_UINT32 pdev_id;        /* PDEV Id set by the command */
+    A_UINT32 dpd_status;    /* DPD status obtained from HALPHY, refer to WMI_DPD_STATUS */
+} wmi_pdev_get_dpd_status_evt_fixed_param;
 
 /* below structures are related to Motion Detection. */
 typedef struct {
