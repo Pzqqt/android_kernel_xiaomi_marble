@@ -719,6 +719,7 @@ static int dsi_ctrl_clocks_init(struct platform_device *pdev,
 	struct dsi_link_lp_clk_info *lp_link = &ctrl->clk_info.lp_link_clks;
 	struct dsi_link_hs_clk_info *hs_link = &ctrl->clk_info.hs_link_clks;
 	struct dsi_clk_link_set *rcg = &ctrl->clk_info.rcg_clks;
+	struct dsi_clk_link_set *xo = &ctrl->clk_info.xo_clk;
 
 	core->mdp_core_clk = devm_clk_get(&pdev->dev, "mdp_core_clk");
 	if (IS_ERR(core->mdp_core_clk)) {
@@ -791,6 +792,14 @@ static int dsi_ctrl_clocks_init(struct platform_device *pdev,
 		DSI_CTRL_ERR(ctrl, "failed to get pixel_clk_rcg, rc=%d\n", rc);
 		goto fail;
 	}
+
+	xo->byte_clk = devm_clk_get(&pdev->dev, "xo");
+	if (IS_ERR(xo->byte_clk)) {
+		xo->byte_clk = NULL;
+		DSI_CTRL_DEBUG(ctrl, "failed to get xo clk, rc=%d\n", rc);
+	}
+
+	xo->pixel_clk = xo->byte_clk;
 
 	return 0;
 fail:

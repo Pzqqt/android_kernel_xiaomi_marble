@@ -2647,6 +2647,52 @@ error:
 	return rc;
 }
 
+static int dsi_display_set_clk_src(struct dsi_display *display, bool set_xo)
+{
+	int rc = 0;
+	int i;
+	struct dsi_display_ctrl *m_ctrl, *ctrl;
+	struct dsi_ctrl_clk_info *info;
+
+	if (display->trusted_vm_env)
+		return 0;
+	/*
+	 * In case of split DSI usecases, the clock for master controller should
+	 * be enabled before the other controller. Master controller in the
+	 * clock context refers to the controller that sources the clock. While turning off the
+	 * clocks, the source is set to xo.
+	 */
+	m_ctrl = &display->ctrl[display->clk_master_idx];
+	info = &m_ctrl->ctrl->clk_info;
+
+	if (!set_xo)
+		rc = dsi_ctrl_set_clock_source(m_ctrl->ctrl, &display->clock_info.pll_clks);
+	else if ((info->xo_clk.byte_clk) && (info->xo_clk.pixel_clk))
+		rc = dsi_ctrl_set_clock_source(m_ctrl->ctrl, &info->xo_clk);
+	if (rc) {
+		DSI_ERR("[%s] failed to set source clocks for master, rc=%d\n", display->name, rc);
+		return rc;
+	}
+
+	/* Set source for the rest of the controllers */
+	display_for_each_ctrl(i, display) {
+		ctrl = &display->ctrl[i];
+		if (!ctrl->ctrl || (ctrl == m_ctrl))
+			continue;
+
+		info = &ctrl->ctrl->clk_info;
+		if (!set_xo)
+			rc = dsi_ctrl_set_clock_source(ctrl->ctrl, &display->clock_info.pll_clks);
+		else if ((info->xo_clk.byte_clk) && (info->xo_clk.pixel_clk))
+			rc = dsi_ctrl_set_clock_source(ctrl->ctrl, &info->xo_clk);
+		if (rc) {
+			DSI_ERR("[%s] failed to set source clocks, rc=%d\n", display->name, rc);
+			return rc;
+		}
+	}
+	return 0;
+}
+
 int dsi_display_phy_pll_toggle(void *priv, bool prepare)
 {
 	int rc = 0;
@@ -2657,6 +2703,8 @@ int dsi_display_phy_pll_toggle(void *priv, bool prepare)
 		DSI_ERR("invalid arguments\n");
 		return -EINVAL;
 	}
+
+	rc = dsi_display_set_clk_src(display, !prepare);
 
 	m_ctrl = &display->ctrl[display->clk_master_idx];
 	if (!m_ctrl->phy) {
@@ -2701,44 +2749,6 @@ int dsi_display_phy_configure(void *priv, bool commit)
 	rc = dsi_phy_configure(m_ctrl->phy, commit);
 
 	return rc;
-}
-
-static int dsi_display_set_clk_src(struct dsi_display *display)
-{
-	int rc = 0;
-	int i;
-	struct dsi_display_ctrl *m_ctrl, *ctrl;
-
-	/*
-	 * In case of split DSI usecases, the clock for master controller should
-	 * be enabled before the other controller. Master controller in the
-	 * clock context refers to the controller that sources the clock.
-	 */
-	m_ctrl = &display->ctrl[display->clk_master_idx];
-
-	rc = dsi_ctrl_set_clock_source(m_ctrl->ctrl,
-			&display->clock_info.pll_clks);
-	if (rc) {
-		DSI_ERR("[%s] failed to set source clocks for master, rc=%d\n",
-			   display->name, rc);
-		return rc;
-	}
-
-	/* Turn on rest of the controllers */
-	display_for_each_ctrl(i, display) {
-		ctrl = &display->ctrl[i];
-		if (!ctrl->ctrl || (ctrl == m_ctrl))
-			continue;
-
-		rc = dsi_ctrl_set_clock_source(ctrl->ctrl,
-			   &display->clock_info.pll_clks);
-		if (rc) {
-			DSI_ERR("[%s] failed to set source clocks, rc=%d\n",
-				   display->name, rc);
-			return rc;
-		}
-	}
-	return 0;
 }
 
 static int dsi_display_phy_reset_config(struct dsi_display *display,
@@ -7257,16 +7267,6 @@ static int dsi_display_pre_switch(struct dsi_display *display)
 		goto error_ctrl_clk_off;
 	}
 
-	if (!display->trusted_vm_env) {
-		rc = dsi_display_set_clk_src(display);
-		if (rc) {
-			DSI_ERR(
-			"[%s] failed to set DSI link clock source, rc=%d\n",
-			display->name, rc);
-			goto error_ctrl_deinit;
-		}
-	}
-
 	rc = dsi_display_clk_ctrl(display->dsi_clk_handle,
 			DSI_LINK_CLK, DSI_CLK_ON);
 	if (rc) {
@@ -7663,16 +7663,6 @@ int dsi_display_prepare(struct dsi_display *display)
 			DSI_ERR("[%s] failed to enable DSI PHY, rc=%d\n",
 			       display->name, rc);
 			goto error_ctrl_clk_off;
-		}
-	}
-
-	if (!display->trusted_vm_env) {
-		rc = dsi_display_set_clk_src(display);
-		if (rc) {
-			DSI_ERR(
-			"[%s] failed to set DSI link clock source, rc=%d\n",
-				display->name, rc);
-			goto error_phy_disable;
 		}
 	}
 
