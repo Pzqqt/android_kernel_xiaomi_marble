@@ -7246,6 +7246,20 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 					eCSR_DISCONNECT_REASON_UNSPECIFIED,
 					REASON_UNSPEC_FAILURE);
 
+	/*
+	 * If roamSession.connectState is disconnecting that mean
+	 * disconnect was received with scan for ssid in progress
+	 * and dropped. This state will ensure that connect will
+	 * not be issued from scan for ssid completion. Thus
+	 * if this fresh connect also issue scan for ssid the connect
+	 * command will be dropped assuming disconnect is in progress.
+	 * Thus reset connectState here
+	 */
+	if (mac->roam.roamSession[sessionId].connectState ==
+	    eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTING)
+		mac->roam.roamSession[sessionId].connectState =
+			eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED;
+
 	filter = qdf_mem_malloc(sizeof(*filter));
 	if (!filter) {
 		status = QDF_STATUS_E_NOMEM;
@@ -7783,9 +7797,17 @@ QDF_STATUS csr_roam_disconnect(struct mac_context *mac_ctx, uint32_t session_id,
 
 	if (csr_is_conn_state_connected(mac_ctx, session_id)
 	    || csr_is_roam_command_waiting_for_session(mac_ctx, session_id)
-	    || CSR_IS_CONN_NDI(&session->connectedProfile))
+	    || CSR_IS_CONN_NDI(&session->connectedProfile)) {
 		status = csr_roam_issue_disassociate_cmd(mac_ctx, session_id,
 							 reason, mac_reason);
+	} else if (session->scan_info.profile) {
+		mac_ctx->roam.roamSession[session_id].connectState =
+				eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTING;
+		csr_scan_abort_mac_scan(mac_ctx, session_id, INVAL_SCAN_ID);
+		status = QDF_STATUS_CMD_NOT_QUEUED;
+		sme_debug("Disconnect cmd not queued, Roam command is not present return with status %d",
+			  status);
+	}
 #else
 	if (CSR_IS_CONN_NDI(&session->connectedProfile))
 		status = csr_roam_issue_disassociate_cmd(mac_ctx, session_id,

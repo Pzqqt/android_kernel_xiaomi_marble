@@ -493,7 +493,10 @@ typedef enum {
 	eCSR_CONNECT_STATE_TYPE_NDI_NOT_STARTED,
 	/* NAN Data interface started */
 	eCSR_CONNECT_STATE_TYPE_NDI_STARTED,
-
+#ifndef FEATURE_CM_ENABLE
+	/* Disconnecting with AP or stop connecting process */
+	eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTING,
+#endif
 } eCsrConnectState;
 
 /*

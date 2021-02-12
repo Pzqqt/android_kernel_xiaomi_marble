@@ -174,6 +174,12 @@ QDF_STATUS csr_scan_handle_search_for_ssid(struct mac_context *mac_ctx,
 		qdf_mem_free(filter);
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			break;
+		if (mac_ctx->roam.roamSession[session_id].connectState ==
+		    eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTING) {
+			sme_err("upper layer issued disconnetion");
+			status = QDF_STATUS_E_FAILURE;
+			break;
+		}
 
 		status = csr_roam_issue_connect(mac_ctx, session_id, profile,
 						hBSSList, eCsrHddIssued,
