@@ -427,14 +427,14 @@ populate_dot11f_tx_power_env(struct mac_context *mac,
 						     chan_freq,
 						     &chan_params);
 
-		psd_start_freq = chan_params.mhz_freq_seg0 - bw_val + 10;
+		psd_start_freq = chan_params.mhz_freq_seg0 - bw_val / 2 + 10;
 
 		for (count = 0; count < num_tx_power_psd; count++) {
 			wlan_reg_get_client_power_for_6ghz_ap(
 							mac->pdev,
 							REG_DEFAULT_CLIENT,
 							psd_start_freq +
-							20 * num_tx_power_psd,
+							20 * count,
 							&psd_tpe,
 							&reg_power,
 							&eirp_power);
@@ -469,7 +469,7 @@ populate_dot11f_tx_power_env(struct mac_context *mac,
 							mac->pdev,
 							REG_SUBORDINATE_CLIENT,
 							psd_start_freq +
-							20 * num_tx_power_psd,
+							20 * count,
 							&psd_tpe,
 							&reg_power,
 							&eirp_power);
