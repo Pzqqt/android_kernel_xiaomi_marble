@@ -502,8 +502,11 @@ void rmnet_egress_handler(struct sk_buff *skb, bool low_latency)
 	rmnet_vnd_tx_fixup(orig_dev, skb_len);
 
 	if (low_latency) {
-		if (rmnet_ll_send_skb(skb))
-			goto drop;
+		if (rmnet_ll_send_skb(skb)) {
+			/* Drop but no need to free. Above API handles that */
+			this_cpu_inc(priv->pcpu_stats->stats.tx_drops);
+			return;
+		}
 	} else {
 		dev_queue_xmit(skb);
 	}

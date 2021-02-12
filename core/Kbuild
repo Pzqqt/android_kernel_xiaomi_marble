@@ -18,8 +18,10 @@ rmnet_core-y := \
 	rmnet_map_command.o \
 	rmnet_map_data.o \
 	rmnet_vnd.o
-rmnet_core-$(CONFIG_MHI_BUS) += \
-	rmnet_ll.o
+
+rmnet_core-y += \
+	rmnet_ll.o \
+	rmnet_ll_ipa.o
 
 #DFC sources
 rmnet_core-y += \
