@@ -1483,9 +1483,7 @@ static int waipio_ssr_enable(struct device *dev, void *data)
 		dev_dbg(dev, "%s: TODO \n", __func__);
 	}
 
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-	snd_soc_card_change_online_state(card, 1);
-#endif /* CONFIG_AUDIO_QGKI */
+	snd_card_notify_user(1);
 	dev_dbg(dev, "%s: setting snd_card to ONLINE\n", __func__);
 
 err:
@@ -1503,9 +1501,7 @@ static void waipio_ssr_disable(struct device *dev, void *data)
 	}
 
 	dev_dbg(dev, "%s: setting snd_card to OFFLINE\n", __func__);
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-	snd_soc_card_change_online_state(card, 0);
-#endif /* CONFIG_AUDIO_QGKI */
+	snd_card_notify_user(0);
 
 	if (!strcmp(card->name, "waipio-stub-snd-card")) {
 		/* TODO */
@@ -1736,7 +1732,19 @@ static struct platform_driver waipio_asoc_machine_driver = {
 	.probe = msm_asoc_machine_probe,
 	.remove = msm_asoc_machine_remove,
 };
-module_platform_driver(waipio_asoc_machine_driver);
+
+static int __init msm_asoc_machine_init(void)
+{
+	snd_card_sysfs_init();
+	return platform_driver_register(&waipio_asoc_machine_driver);
+}
+module_init(msm_asoc_machine_init);
+
+static void __exit msm_asoc_machine_exit(void)
+{
+	platform_driver_unregister(&waipio_asoc_machine_driver);
+}
+module_exit(msm_asoc_machine_exit);
 
 MODULE_SOFTDEP("pre: bt_fm_slim");
 MODULE_DESCRIPTION("ALSA SoC msm");
