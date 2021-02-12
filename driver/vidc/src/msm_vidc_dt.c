@@ -4,6 +4,7 @@
  */
 
 #include <linux/iommu.h>
+#include <linux/dma-iommu.h>
 #include <linux/of.h>
 #include <linux/sort.h>
 
@@ -798,6 +799,12 @@ static int msm_vidc_setup_context_bank(struct msm_vidc_core *core,
 	}
 
 	cb->domain = iommu_get_domain_for_dev(cb->dev);
+
+	/*
+	 * When memory is fragmented, below configuration increases the
+	 * possibility to get a mapping for buffer in the configured CB.
+	 */
+	iommu_dma_enable_best_fit_algo(cb->dev);
 
 	/*
 	 * configure device segment size and segment boundary to ensure
