@@ -1431,12 +1431,6 @@ static QDF_STATUS dp_rx_mon_process_dest_pktlog(struct dp_soc *soc,
 	void *data;
 	struct ieee80211_frame *wh;
 	uint8_t type, subtype;
-#ifdef NO_RX_PKT_HDR_TLV
-	struct rx_mon_pkt_tlvs *rx_tlv;
-#else
-	struct rx_pkt_tlvs *rx_tlv;
-#endif
-	struct rx_msdu_start_tlv *msdu_start_tlv;
 
 	if (!pdev)
 		return QDF_STATUS_E_INVAL;
@@ -1447,8 +1441,6 @@ static QDF_STATUS dp_rx_mon_process_dest_pktlog(struct dp_soc *soc,
 		else
 			data = qdf_nbuf_data(mpdu);
 
-		rx_tlv = data - SIZE_OF_MONITOR_TLV;
-
 		/* CBF logging required, doesn't matter if it is a full mode
 		 * or lite mode.
 		 * Need to look for mpdu with:
@@ -1456,19 +1448,17 @@ static QDF_STATUS dp_rx_mon_process_dest_pktlog(struct dp_soc *soc,
 		 */
 		event = WDI_EVENT_RX_CBF;
 
-		msdu_start_tlv = &rx_tlv->msdu_start_tlv;
-		msdu_timestamp =
-			msdu_start_tlv->rx_msdu_start.ppdu_start_timestamp;
-
 		wh = (struct ieee80211_frame *)data;
 		type = (wh)->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 		subtype = (wh)->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
 		if (type == IEEE80211_FC0_TYPE_MGT &&
-		    subtype == IEEE80211_FCO_SUBTYPE_ACTION_NO_ACK)
+		    subtype == IEEE80211_FCO_SUBTYPE_ACTION_NO_ACK) {
+			msdu_timestamp = pdev->ppdu_info.rx_status.tsft;
 			dp_rx_populate_cbf_hdr(soc,
 					       mac_id, event,
 					       mpdu,
 					       msdu_timestamp);
+		}
 	}
 	return QDF_STATUS_SUCCESS;
 }
