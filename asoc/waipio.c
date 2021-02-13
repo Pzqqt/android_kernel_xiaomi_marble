@@ -112,6 +112,7 @@ static struct wcd_mbhc_config wcd_mbhc_cfg = {
 	.moisture_duty_cycle_en = true,
 };
 
+#ifdef PM_QOS_ENABLE
 /* set audio task affinity to core 1 & 2 */
 static const unsigned int audio_core_list[] = {1, 2};
 static cpumask_t audio_cpu_map = CPU_MASK_NONE;
@@ -158,6 +159,7 @@ static void msm_audio_remove_qos_request()
 		kfree(msm_audio_req);
 	}
 }
+#endif
 
 static bool msm_usbc_swap_gnd_mic(struct snd_soc_component *component, bool active)
 {
@@ -1690,8 +1692,10 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 
 	is_initial_boot = true;
 
+#ifdef PM_QOS_ENABLE
 	/* Add QoS request for audio tasks */
 	msm_audio_add_qos_request();
+#endif
 
 	return 0;
 err:
@@ -1714,7 +1718,9 @@ static int msm_asoc_machine_remove(struct platform_device *pdev)
 	msm_common_snd_deinit(common_pdata);
 	snd_event_master_deregister(&pdev->dev);
 	snd_soc_unregister_card(card);
+#ifdef PM_QOS_ENABLE
 	msm_audio_remove_qos_request();
+#endif
 
 	return 0;
 }
