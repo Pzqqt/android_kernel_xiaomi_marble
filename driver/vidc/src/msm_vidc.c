@@ -713,11 +713,6 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	kref_init(&inst->kref);
 	mutex_init(&inst->lock);
 
-	rc = msm_vidc_add_session(inst);
-	if (rc) {
-		d_vpr_e("%s: failed to get session id\n", __func__);
-		goto error;
-	}
 	i_vpr_e(inst, "Opening video instance: %d\n", session_type);
 
 	inst->response_workq = create_singlethread_workqueue("response_workq");
@@ -796,6 +791,11 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	if (rc)
 		goto error;
 
+	rc = msm_vidc_add_session(inst);
+	if (rc) {
+		d_vpr_e("%s: failed to get session id\n", __func__);
+		goto error;
+	}
 	msm_vidc_scale_power(inst, true);
 
 	rc = msm_vidc_session_open(inst);
