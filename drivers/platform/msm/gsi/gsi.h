@@ -2259,14 +2259,14 @@ int gsi_enable_flow_control_ee(unsigned int chan_idx, unsigned int ee,
 								int *code);
 
 /**
-* gsi_query_aqc_msi_addr - get aqc channel msi address
+* gsi_query_msi_addr - get gsi channel msi address
 *
 * @chan_id: channel id
-* @addr: [out] aqc channel msi address
+* @addr: [out] channel msi address
 *
 * @Return gsi_status
 */
-int gsi_query_aqc_msi_addr(unsigned long chan_hdl, phys_addr_t *addr);
+int gsi_query_msi_addr(unsigned long chan_hdl, phys_addr_t *addr);
 
 /**
 * gsi_dump_ch_info - channel information.

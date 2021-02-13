@@ -4941,7 +4941,7 @@ void gsi_wdi3_dump_register(unsigned long chan_hdl)
 }
 EXPORT_SYMBOL(gsi_wdi3_dump_register);
 
-int gsi_query_aqc_msi_addr(unsigned long chan_hdl, phys_addr_t *addr)
+int gsi_query_msi_addr(unsigned long chan_hdl, phys_addr_t *addr)
 {
         if (!gsi_ctx) {
                 pr_err("%s:%d gsi context not allocated\n", __func__, __LINE__);
@@ -4965,7 +4965,7 @@ int gsi_query_aqc_msi_addr(unsigned long chan_hdl, phys_addr_t *addr)
 
         return 0;
 }
-EXPORT_SYMBOL(gsi_query_aqc_msi_addr);
+EXPORT_SYMBOL(gsi_query_msi_addr);
 
 static union __packed gsi_channel_scratch __gsi_update_mhi_channel_scratch(
 	unsigned long chan_hdl, struct __packed gsi_mhi_channel_scratch mscr)
