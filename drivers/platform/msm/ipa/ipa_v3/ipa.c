@@ -9117,6 +9117,11 @@ static int ipa_smmu_perph_cb_probe(struct device *dev,
 
 	ipa3_ctx->s1_bypass_arr[cb_type] = (bypass != 0);
 
+	if (of_property_read_bool(dev->of_node, "qcom,shared-cb")) {
+		IPADBG("CB %d using shared CB\n", cb_type);
+		cb->shared = true;
+	}
+
 	/* MAP ipa-uc ram */
 	add_map = of_get_property(dev->of_node,
 		"qcom,additional-mapping", &add_map_size);
