@@ -1963,6 +1963,19 @@ static int _wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 
 	errno = __wlan_hdd_cfg80211_resume_wlan(wiphy);
 
+	/* It may happen during cfg80211 suspend this timer is stopped.
+	 * This means that if
+	 * 1) work was queued in the workqueue, it was removed from the
+	 *    workqueue and suspend proceeded.
+	 * 2) The work was scheduled and cfg80211 suspend waited for this
+	 *    work to complete and then suspend proceeded.
+	 * So here in cfg80211 resume, check if no interface is up and
+	 * the module state is enabled then trigger idle timer start.
+	 */
+	if (!hdd_is_any_interface_open(hdd_ctx) &&
+	    hdd_ctx->driver_status == DRIVER_MODULES_ENABLED)
+		hdd_psoc_idle_timer_start(hdd_ctx);
+
 	return errno;
 }
 
