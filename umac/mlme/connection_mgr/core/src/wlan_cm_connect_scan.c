@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2015,2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -189,11 +189,11 @@ QDF_STATUS cm_connect_scan_resp(struct cnx_mgr *cm_ctx, wlan_scan_id *scan_id,
 	enum wlan_cm_connect_fail_reason reason = CM_GENERIC_FAILURE;
 
 	if (!*scan_id)
-		goto scan_failure;
+		return QDF_STATUS_E_FAILURE;
 
 	cm_req = cm_get_req_by_scan_id(cm_ctx, *scan_id);
 	if (!cm_req)
-		goto scan_failure;
+		return QDF_STATUS_E_FAILURE;
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		reason = CM_NO_CANDIDATE_FOUND;
