@@ -34,6 +34,7 @@
 #include <wlan_dfs_utils_api.h>
 #include <dfs_process_radar_found_ind.h>
 #include <dfs_internal.h>
+#include <wlan_reg_channel_api.h>
 
 /* dfs_init_precac_tree_node() - Initialise the preCAC BSTree node with the
  *                               provided values.
@@ -735,6 +736,76 @@ dfs_mark_tree_node_as_nol_for_freq(struct wlan_dfs *dfs,
 	}
 }
 
+/**
+ * dfs_is_freq_needed_in_precac_list() - Check if the frequency should be
+ * present in the dfs precac list.
+ * @dfs: Pointer the the dfs object.
+ * @reg_chan: Regulatory channel information.
+ *
+ * Return: True if the channel is DFS, else return false.
+ */
+static bool
+dfs_is_freq_needed_in_precac_list(struct wlan_dfs *dfs,
+				  struct regulatory_channel reg_chan)
+{
+	enum phy_ch_width ch_width;
+	/* Center of 20/40/80/160 channel */
+	qdf_freq_t pri_band_cen_freq;
+	/* Center of  secondary 80 in the 80_80/165MHz  channel */
+	qdf_freq_t sec_band_cen_freq = 0;
+	bool is_dfs;
+
+	if (reg_chan.chan_flags & REGULATORY_CHAN_RADAR)
+		return true;
+
+	switch (reg_chan.max_bw) {
+	case DFS_CHWIDTH_20_VAL:
+		ch_width = CH_WIDTH_20MHZ;
+		break;
+	case DFS_CHWIDTH_40_VAL:
+		ch_width = CH_WIDTH_40MHZ;
+		break;
+	case DFS_CHWIDTH_80_VAL:
+		ch_width = CH_WIDTH_80MHZ;
+		break;
+	case DFS_CHWIDTH_160_VAL:
+		ch_width = CH_WIDTH_160MHZ;
+		break;
+	default:
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			"Invalid channel width %d", reg_chan.max_bw);
+		return false;
+	}
+
+	pri_band_cen_freq = reg_chan.center_freq;
+	if (dfs_is_restricted_80p80mhz_supported(dfs) &&
+	    (ch_width == CH_WIDTH_80MHZ) &&
+	    (IS_WITHIN_RANGE(pri_band_cen_freq,
+			     RESTRICTED_80P80_CHAN_CENTER_FREQ,
+			     DFS_CHWIDTH_165_VAL / 2))) {
+		/* Find a frequency from the other segment of 80p80. */
+		if (pri_band_cen_freq < RESTRICTED_80P80_CHAN_CENTER_FREQ)
+			sec_band_cen_freq = pri_band_cen_freq +
+					DFS_80P80MHZ_SECOND_SEG_OFFSET;
+		else
+			sec_band_cen_freq = pri_band_cen_freq -
+					DFS_80P80MHZ_SECOND_SEG_OFFSET;
+	}
+
+	is_dfs = wlan_reg_is_freq_width_dfs(dfs->dfs_pdev_obj,
+					    pri_band_cen_freq, ch_width);
+
+	if (is_dfs)
+		return is_dfs;
+
+	if (sec_band_cen_freq)
+		is_dfs = wlan_reg_is_freq_width_dfs(dfs->dfs_pdev_obj,
+						    sec_band_cen_freq,
+						    ch_width);
+
+	return is_dfs;
+}
+
 /* dfs_fill_max_bw_for_chan() - Finds unique precac tree node in the channel
  * list and stores the primary channel frequency, maximum bandwidth and the
  * center frequency. The algorithm is based on the data structure ic_channels
@@ -785,11 +856,8 @@ static void dfs_fill_max_bw_for_chan(struct wlan_dfs *dfs,
 		if (cur_chan_list[i].center_freq <= right_edge_freq)
 			continue;
 
-		/* Check if the channel is non-DFS and bandwidth is less
-		 * than 80.
-		 */
-		if (!(cur_chan_list[i].chan_flags & REGULATORY_CHAN_RADAR) &&
-		    cur_chan_list[i].max_bw < DFS_CHWIDTH_80_VAL)
+		/* Check if the channel is DFS, else skip. */
+		if (!dfs_is_freq_needed_in_precac_list(dfs, cur_chan_list[i]))
 			continue;
 
 		right_edge_freq =
