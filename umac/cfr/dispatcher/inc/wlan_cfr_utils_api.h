@@ -57,6 +57,9 @@
 #define DEFAULT_SRNGID_CFR 0
 #endif
 
+#define MAX_CFR_PRD  (10 * 60 * 1000)   /* 10 minutes */
+#define CFR_MOD_PRD  10                 /* CFR period to be multiples of 10ms */
+
 enum cfrmetaversion {
 	CFR_META_VERSION_NONE,
 	CFR_META_VERSION_1,

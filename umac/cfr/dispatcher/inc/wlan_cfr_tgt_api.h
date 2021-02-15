@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -73,6 +73,15 @@ int tgt_cfr_start_capture(struct wlan_objmgr_pdev *pdev,
  */
 int tgt_cfr_stop_capture(struct wlan_objmgr_pdev *pdev,
 			 struct wlan_objmgr_peer *peer);
+
+/**
+ * tgt_cfr_validate_period() - API to validate cfr period configured by user
+ * @psoc: pointer to the psoc object
+ * @period: period value to validate
+ *
+ * Return: success/failure of periodicity validation
+ */
+int tgt_cfr_validate_period(struct wlan_objmgr_psoc *psoc, u_int32_t period);
 
 /**
  * tgt_cfr_enable_cfr_timer() - API to enable cfr timer

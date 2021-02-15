@@ -24,9 +24,6 @@
 #include <wlan_cfr_public_structs.h>
 #include <wlan_cfr_utils_api.h>
 
-#define MAX_CFR_PRD  (10 * 60 * 1000)   /* 10 minutes */
-#define CFR_MOD_PRD  2                  /* CFR period to be multiples of 2 ms */
-
 /**
  * ucfg_cfr_start_capture() - function to start cfr capture for connected client
  * @pdev: pointer to pdev object
