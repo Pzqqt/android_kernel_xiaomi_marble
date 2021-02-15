@@ -2195,6 +2195,9 @@ int msm_vidc_session_streamoff(struct msm_vidc_inst *inst,
 	}
 	mutex_lock(&inst->lock);
 
+	if(rc)
+		goto error:
+
 	/* no more queued buffers after streamoff */
 	count = msm_vidc_num_buffers(inst, buffer_type, MSM_VIDC_ATTR_QUEUED);
 	if (!count) {
