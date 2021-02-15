@@ -948,8 +948,8 @@ static QDF_STATUS cm_connect_get_candidates(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef WLAN_FEATURE_INTERFACE_MGR
-static QDF_STATUS cm_validate_candidate(struct cnx_mgr *cm_ctx,
+static
+QDF_STATUS cm_if_mgr_validate_candidate(struct cnx_mgr *cm_ctx,
 					struct scan_cache_entry *scan_entry)
 {
 	struct if_mgr_event_data event_data = {0};
@@ -964,7 +964,7 @@ static QDF_STATUS cm_validate_candidate(struct cnx_mgr *cm_ctx,
 }
 
 static QDF_STATUS
-cm_inform_if_mgr_connect_complete(struct wlan_objmgr_vdev *vdev,
+cm_if_mgr_inform_connect_complete(struct wlan_objmgr_vdev *vdev,
 				  QDF_STATUS connect_status)
 {
 	struct if_mgr_event_data *connect_complete;
@@ -982,33 +982,10 @@ cm_inform_if_mgr_connect_complete(struct wlan_objmgr_vdev *vdev,
 }
 
 static QDF_STATUS
-cm_inform_if_mgr_connect_start(struct wlan_objmgr_vdev *vdev)
+cm_if_mgr_inform_connect_start(struct wlan_objmgr_vdev *vdev)
 {
 	return if_mgr_deliver_event(vdev, WLAN_IF_MGR_EV_CONNECT_START, NULL);
 }
-
-#else
-static inline
-QDF_STATUS cm_validate_candidate(struct cnx_mgr *cm_ctx,
-				 struct scan_cache_entry *scan_entry)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline QDF_STATUS
-cm_inform_if_mgr_connect_complete(struct wlan_objmgr_vdev *vdev,
-				  QDF_STATUS connect_status)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline QDF_STATUS
-cm_inform_if_mgr_connect_start(struct wlan_objmgr_vdev *vdev)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-#endif
 
 QDF_STATUS
 cm_handle_connect_req_in_non_init_state(struct cnx_mgr *cm_ctx,
@@ -1115,7 +1092,7 @@ QDF_STATUS cm_connect_start(struct cnx_mgr *cm_ctx,
 	 * this is called from Scan for ssid
 	 */
 	if (!cm_req->scan_id) {
-		cm_inform_if_mgr_connect_start(cm_ctx->vdev);
+		cm_if_mgr_inform_connect_start(cm_ctx->vdev);
 		status = mlme_cm_connect_start_ind(cm_ctx->vdev, &cm_req->req);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			reason = CM_NO_CANDIDATE_FOUND;
@@ -1217,7 +1194,7 @@ static QDF_STATUS cm_get_valid_candidate(struct cnx_mgr *cm_ctx,
 				   cur_node, &next_node);
 		scan_node = qdf_container_of(cur_node, struct scan_cache_node,
 					     node);
-		status = cm_validate_candidate(cm_ctx, scan_node->entry);
+		status = cm_if_mgr_validate_candidate(cm_ctx, scan_node->entry);
 		if (QDF_IS_STATUS_SUCCESS(status)) {
 			new_candidate = scan_node;
 			break;
@@ -1604,7 +1581,7 @@ QDF_STATUS cm_connect_complete(struct cnx_mgr *cm_ctx,
 
 	mlme_cm_connect_complete_ind(cm_ctx->vdev, resp);
 	mlme_cm_osif_connect_complete(cm_ctx->vdev, resp);
-	cm_inform_if_mgr_connect_complete(cm_ctx->vdev, resp->connect_status);
+	cm_if_mgr_inform_connect_complete(cm_ctx->vdev, resp->connect_status);
 	cm_inform_blm_connect_complete(cm_ctx->vdev, resp);
 
 	/* Update scan entry in case connect is success or fails with bssid */

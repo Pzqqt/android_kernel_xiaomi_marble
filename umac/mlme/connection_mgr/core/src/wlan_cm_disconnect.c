@@ -245,9 +245,8 @@ static QDF_STATUS cm_ser_disconnect_req(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef WLAN_FEATURE_INTERFACE_MGR
 static void
-cm_inform_if_mgr_disconnect_complete(struct wlan_objmgr_vdev *vdev)
+cm_if_mgr_inform_disconnect_complete(struct wlan_objmgr_vdev *vdev)
 {
 	struct if_mgr_event_data *disconnect_complete;
 
@@ -263,7 +262,7 @@ cm_inform_if_mgr_disconnect_complete(struct wlan_objmgr_vdev *vdev)
 }
 
 static void
-cm_inform_if_mgr_disconnect_start(struct wlan_objmgr_vdev *vdev)
+cm_if_mgr_inform_disconnect_start(struct wlan_objmgr_vdev *vdev)
 {
 	struct if_mgr_event_data *disconnect_start;
 
@@ -277,18 +276,6 @@ cm_inform_if_mgr_disconnect_start(struct wlan_objmgr_vdev *vdev)
 			     disconnect_start);
 	qdf_mem_free(disconnect_start);
 }
-
-#else
-static inline void
-cm_inform_if_mgr_disconnect_complete(struct wlan_objmgr_vdev *vdev)
-{
-}
-
-static inline void
-cm_inform_if_mgr_disconnect_start(struct wlan_objmgr_vdev *vdev)
-{
-}
-#endif
 
 void cm_initiate_internal_disconnect(struct cnx_mgr *cm_ctx)
 {
@@ -330,7 +317,7 @@ QDF_STATUS cm_disconnect_start(struct cnx_mgr *cm_ctx,
 	}
 	cm_vdev_scan_cancel(pdev, cm_ctx->vdev);
 	mlme_cm_disconnect_start_ind(cm_ctx->vdev, &req->req);
-	cm_inform_if_mgr_disconnect_start(cm_ctx->vdev);
+	cm_if_mgr_inform_disconnect_start(cm_ctx->vdev);
 	mlme_cm_osif_disconnect_start_ind(cm_ctx->vdev);
 
 	/* Serialize disconnect req, Handle failure status */
@@ -471,7 +458,7 @@ QDF_STATUS cm_disconnect_complete(struct cnx_mgr *cm_ctx,
 	mlme_cm_disconnect_complete_ind(cm_ctx->vdev, resp);
 	mlme_cm_osif_disconnect_complete(cm_ctx->vdev, resp);
 	wlan_crypto_free_vdev_key(cm_ctx->vdev);
-	cm_inform_if_mgr_disconnect_complete(cm_ctx->vdev);
+	cm_if_mgr_inform_disconnect_complete(cm_ctx->vdev);
 	cm_inform_blm_disconnect_complete(cm_ctx->vdev, resp);
 
 	/*

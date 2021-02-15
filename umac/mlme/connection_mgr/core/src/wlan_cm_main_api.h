@@ -27,9 +27,7 @@
 #include "wlan_cm_sm.h"
 #include <include/wlan_mlme_cmn.h>
 #include <wlan_crypto_global_api.h>
-#ifdef WLAN_FEATURE_INTERFACE_MGR
 #include <wlan_if_mgr_api.h>
-#endif
 #ifdef WLAN_CM_USE_SPINLOCK
 #include <scheduler_api.h>
 #endif

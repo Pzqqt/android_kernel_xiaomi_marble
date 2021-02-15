@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -21,11 +21,11 @@
 #ifndef _WLAN_IF_MGR_API_H_
 #define _WLAN_IF_MGR_API_H_
 
-#ifdef WLAN_FEATURE_INTERFACE_MGR
-
 #include "wlan_objmgr_psoc_obj.h"
 #include "wlan_objmgr_vdev_obj.h"
 #include "wlan_if_mgr_public_struct.h"
+
+#ifdef WLAN_FEATURE_INTERFACE_MGR
 
 /**
  * if_mgr_deliver_event() - interface mgr event handler
@@ -39,6 +39,7 @@ QDF_STATUS if_mgr_deliver_event(struct wlan_objmgr_vdev *vdev,
 				enum wlan_if_mgr_evt event,
 				struct if_mgr_event_data *event_data);
 #else
+static inline
 QDF_STATUS if_mgr_deliver_event(struct wlan_objmgr_vdev *vdev,
 				enum wlan_if_mgr_evt event,
 				struct if_mgr_event_data *event_data)
