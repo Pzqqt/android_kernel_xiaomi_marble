@@ -816,7 +816,7 @@ void dp_fisa_rx_fst_update_work(void *arg)
 
 	if (hif_force_wake_request(((struct hal_soc *)hal_soc_hdl)->hif_handle)) {
 		dp_err("Wake up request failed");
-		qdf_check_state_before_panic();
+		qdf_check_state_before_panic(__func__, __LINE__);
 		return;
 	}
 
@@ -832,7 +832,7 @@ void dp_fisa_rx_fst_update_work(void *arg)
 
 	if (hif_force_wake_release(((struct hal_soc *)hal_soc_hdl)->hif_handle)) {
 		dp_err("Wake up release failed");
-		qdf_check_state_before_panic();
+		qdf_check_state_before_panic(__func__, __LINE__);
 		return;
 	}
 }
