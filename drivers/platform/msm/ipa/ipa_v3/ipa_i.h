@@ -2228,6 +2228,7 @@ struct ipa3_context {
 	bool ulso_supported;
 	u16 ulso_ip_id_min;
 	u16 ulso_ip_id_max;
+	bool use_pm_wrapper;
 };
 
 struct ipa3_plat_drv_res {
@@ -2304,6 +2305,7 @@ struct ipa3_plat_drv_res {
 	bool ulso_supported;
 	u16 ulso_ip_id_min;
 	u16 ulso_ip_id_max;
+	bool use_pm_wrapper;
 };
 
 /**
@@ -2777,6 +2779,12 @@ int ipa3_connect_gsi_wdi_pipe(struct ipa_wdi_in_params *in,
 
 int ipa3_disconnect_wdi_pipe(u32 clnt_hdl);
 int ipa3_enable_wdi_pipe(u32 clnt_hdl);
+int ipa_pm_wrapper_wdi_set_perf_profile_internal(struct ipa_wdi_perf_profile *profile);
+int ipa_pm_wrapper_connect_wdi_pipe(struct ipa_wdi_in_params *in,
+			struct ipa_wdi_out_params *out);
+int ipa_pm_wrapper_disconnect_wdi_pipe(u32 clnt_hdl);
+int ipa_pm_wrapper_enable_wdi_pipe(u32 clnt_hdl);
+int ipa_pm_wrapper_disable_pipe(u32 clnt_hdl);
 int ipa3_enable_gsi_wdi_pipe(u32 clnt_hdl);
 int ipa3_disable_wdi_pipe(u32 clnt_hdl);
 int ipa3_disable_gsi_wdi_pipe(u32 clnt_hdl);

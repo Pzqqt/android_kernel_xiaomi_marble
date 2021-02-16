@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  */
 
 #include "ipa_i.h"
@@ -29,6 +29,26 @@
 #define IPA_UC_POLL_SLEEP_USEC 100
 
 #define GSI_STOP_MAX_RETRY_CNT 10
+
+enum ipa_pm_state_wdi_info {
+	IPA_PM_WDI_PM_REGISTERED = 0x0,
+	IPA_PM_WDI_PM_ACTIVATE = 0x1,
+	IPA_PM_WDI_PM_DEACTIVATE_IN_PROC = 0x2,
+	IPA_PM_WDI_PM_DEACTIVATE = 0x3,
+	IPA_PM_WDI_PM_DEREGISTER_IN_PROC = 0x4,
+	IPA_PM_WDI_PM_DEREGISTERED = 0x5
+};
+
+struct ipa_pm_wdi_context {
+	enum ipa_pm_state_wdi_info curr_pm_state;
+	u32 ipa_wrapper_pm_hdl;
+};
+
+static struct ipa_pm_wdi_context ipa_pm_wdi_ctx = {
+	.curr_pm_state = IPA_PM_WDI_PM_DEREGISTERED,
+	.ipa_wrapper_pm_hdl = 0
+};
+
 
 struct ipa_wdi_res {
 	struct ipa_wdi_buffer_info *res;
@@ -3146,3 +3166,151 @@ int ipa3_release_wdi_mapping(u32 num_buffers, struct ipa_wdi_buffer_info *info)
 	return ret;
 }
 EXPORT_SYMBOL(ipa3_release_wdi_mapping);
+
+static void ipa_wdi_pm_wrapper_cb(void *p, enum ipa_pm_cb_event event)
+{
+	IPADBG("received pm event %d\n", event);
+}
+
+int ipa_pm_wrapper_wdi_set_perf_profile_internal(struct ipa_wdi_perf_profile *profile)
+{
+	int res = 0;
+
+	if (profile == NULL) {
+		IPAERR("Invalid input\n");
+		return -EINVAL;
+	}
+
+	res = ipa_pm_set_throughput(ipa_pm_wdi_ctx.ipa_wrapper_pm_hdl,
+			profile->max_supported_bw_mbps);
+	if (res) {
+		IPAERR("fail to set pm throughput\n");
+		return -EFAULT;
+	}
+
+	 return 0;
+}
+EXPORT_SYMBOL(ipa_pm_wrapper_wdi_set_perf_profile_internal);
+
+int ipa_pm_wrapper_connect_wdi_pipe(struct ipa_wdi_in_params *in,
+				struct ipa_wdi_out_params *out)
+{
+	int ret = 0;
+	struct ipa_pm_register_params pm_params;
+
+	if (!(in && out)) {
+		IPAERR("empty parameters. in=%pK out=%pK\n", in, out);
+		return -EINVAL;
+	}
+	if (ipa_pm_wdi_ctx.curr_pm_state != IPA_PM_WDI_PM_DEREGISTERED &&
+		ipa_pm_wdi_ctx.curr_pm_state != IPA_PM_WDI_PM_REGISTERED) {
+		IPAERR("Unexpected current ipa pm state\n");
+		return -EINVAL;
+	}
+
+	if (ipa_pm_wdi_ctx.curr_pm_state != IPA_PM_WDI_PM_REGISTERED) {
+		memset(&pm_params, 0, sizeof(pm_params));
+		pm_params.name = "wdi";
+		pm_params.callback = ipa_wdi_pm_wrapper_cb;
+		pm_params.user_data = NULL;
+		pm_params.group = IPA_PM_GROUP_DEFAULT;
+		if (ipa_pm_register(&pm_params, &ipa_pm_wdi_ctx.ipa_wrapper_pm_hdl)) {
+			IPAERR("fail to register ipa pm\n");
+			ret = -EFAULT;
+			return ret;
+		}
+		ipa_pm_wdi_ctx.curr_pm_state = IPA_PM_WDI_PM_REGISTERED;
+	}
+
+	if (ipa3_connect_wdi_pipe(in,out)) {
+		IPAERR("fail to setup pipe\n");
+		ret = -EFAULT;
+		return ret;
+	}
+
+	return ret;
+}
+EXPORT_SYMBOL(ipa_pm_wrapper_connect_wdi_pipe);
+
+int ipa_pm_wrapper_disconnect_wdi_pipe(u32 clnt_hdl)
+{
+	int ret = 0;
+	if (ipa_pm_wdi_ctx.curr_pm_state == IPA_PM_WDI_PM_DEACTIVATE_IN_PROC ||
+		ipa_pm_wdi_ctx.curr_pm_state == IPA_PM_WDI_PM_ACTIVATE) {
+		IPAERR("Unexpected current ipa pm state\n");
+		return -EFAULT;
+	}
+	if (ipa3_disconnect_wdi_pipe(clnt_hdl)) {
+		IPAERR("fail to tear down pipe\n");
+		return -EFAULT;
+	}
+
+	if (ipa_pm_wdi_ctx.curr_pm_state != IPA_PM_WDI_PM_DEREGISTER_IN_PROC) {
+		ipa_pm_wdi_ctx.curr_pm_state  = IPA_PM_WDI_PM_DEREGISTER_IN_PROC;
+	}
+	else {
+		if (ipa_pm_deregister(ipa_pm_wdi_ctx.ipa_wrapper_pm_hdl)) {
+			IPAERR("fail to deregister ipa pm\n");
+			return -EFAULT;
+		}
+		ipa_pm_wdi_ctx.curr_pm_state = IPA_PM_WDI_PM_DEREGISTERED;
+	}
+
+	return ret;
+}
+EXPORT_SYMBOL(ipa_pm_wrapper_disconnect_wdi_pipe);
+
+int ipa_pm_wrapper_enable_wdi_pipe(u32 clnt_hdl)
+{
+	int ret = 0;
+	if (ipa_pm_wdi_ctx.curr_pm_state == IPA_PM_WDI_PM_DEREGISTER_IN_PROC ||
+		ipa_pm_wdi_ctx.curr_pm_state == IPA_PM_WDI_PM_DEREGISTERED ||
+			ipa_pm_wdi_ctx.curr_pm_state == IPA_PM_WDI_PM_DEACTIVATE_IN_PROC) {
+		IPAERR("Unexpected current ipa pm state\n");
+		return -EFAULT;
+	}
+
+	if (ipa_pm_wdi_ctx.curr_pm_state != IPA_PM_WDI_PM_ACTIVATE) {
+		if (ipa_pm_activate_sync(ipa_pm_wdi_ctx.ipa_wrapper_pm_hdl)) {
+			IPAERR("fail to activate ipa pm\n");
+			return -EFAULT;
+		}
+		ipa_pm_wdi_ctx.curr_pm_state = IPA_PM_WDI_PM_ACTIVATE;
+	}
+
+	if (ipa3_enable_wdi_pipe(clnt_hdl)) {
+		IPAERR("fail to enable wdi pipe\n");
+		return -EFAULT;
+	}
+	return ret;
+}
+EXPORT_SYMBOL(ipa_pm_wrapper_enable_wdi_pipe);
+
+int ipa_pm_wrapper_disable_pipe(u32 clnt_hdl)
+{
+	int ret = 0;
+	if (ipa_pm_wdi_ctx.curr_pm_state == IPA_PM_WDI_PM_REGISTERED ||
+		ipa_pm_wdi_ctx.curr_pm_state == IPA_PM_WDI_PM_DEREGISTER_IN_PROC ||
+			ipa_pm_wdi_ctx.curr_pm_state == IPA_PM_WDI_PM_DEREGISTERED) {
+		IPAERR("Unexpected current ipa pm state\n");
+		return -EFAULT;
+	}
+
+	if (ipa3_disable_wdi_pipe(clnt_hdl)) {
+		IPAERR("fail to disable wdi pipe\n");
+		return -EFAULT;
+	}
+
+	if (ipa_pm_wdi_ctx.curr_pm_state != IPA_PM_WDI_PM_DEACTIVATE_IN_PROC) {
+		ipa_pm_wdi_ctx.curr_pm_state = IPA_PM_WDI_PM_DEACTIVATE_IN_PROC;
+	}
+	else {
+		if(ipa_pm_deactivate_sync(ipa_pm_wdi_ctx.ipa_wrapper_pm_hdl)) {
+			IPAERR("fail to deactivate ipa pm\n");
+			return -EFAULT;
+		}
+		ipa_pm_wdi_ctx.curr_pm_state = IPA_PM_WDI_PM_DEACTIVATE;
+	}
+	return ret;
+}
+EXPORT_SYMBOL(ipa_pm_wrapper_disable_pipe);

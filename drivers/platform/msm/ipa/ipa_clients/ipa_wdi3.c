@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/ipa_wdi3.h>
@@ -769,18 +769,26 @@ static int ipa_wdi_disable_pipes_internal(void)
 
 static int ipa_wdi_set_perf_profile_internal(struct ipa_wdi_perf_profile *profile)
 {
+	int res = 0;
+
 	if (profile == NULL) {
 		IPA_WDI_ERR("Invalid input\n");
 		return -EINVAL;
 	}
 
-	if (ipa_pm_set_throughput(ipa_wdi_ctx->ipa_pm_hdl,
-		profile->max_supported_bw_mbps)) {
+	if (ipa3_ctx->use_pm_wrapper) {
+		res = ipa_pm_wrapper_wdi_set_perf_profile_internal(profile);
+	} else {
+		res = ipa_pm_set_throughput(ipa_wdi_ctx->ipa_pm_hdl,
+			profile->max_supported_bw_mbps);
+	}
+
+	if (res) {
 		IPA_WDI_ERR("fail to set pm throughput\n");
 		return -EFAULT;
 	}
 
-	return 0;
+	return res;
 }
 
 void ipa_wdi3_register(void)

@@ -6615,12 +6615,20 @@ static inline void ipa3_register_to_fmwk(void)
 	data.ipa_rmnet_ctl_xmit = ipa3_rmnet_ctl_xmit;
 	data.ipa_register_rmnet_ctl_cb = ipa3_register_rmnet_ctl_cb;
 	data.ipa_unregister_rmnet_ctl_cb = ipa3_unregister_rmnet_ctl_cb;
-	data.ipa_enable_wdi_pipe = ipa3_enable_wdi_pipe;
-	data.ipa_disable_wdi_pipe = ipa3_disable_wdi_pipe;
+	if (ipa3_ctx->use_pm_wrapper) {
+		data.ipa_enable_wdi_pipe = ipa_pm_wrapper_enable_wdi_pipe;
+		data.ipa_disable_wdi_pipe = ipa_pm_wrapper_disable_pipe;
+		data.ipa_connect_wdi_pipe = ipa_pm_wrapper_connect_wdi_pipe;
+		data.ipa_disconnect_wdi_pipe = ipa_pm_wrapper_disconnect_wdi_pipe;
+	}
+	else {
+		data.ipa_enable_wdi_pipe = ipa3_enable_wdi_pipe;
+		data.ipa_disable_wdi_pipe = ipa3_disable_wdi_pipe;
+		data.ipa_connect_wdi_pipe = ipa3_connect_wdi_pipe;
+		data.ipa_disconnect_wdi_pipe = ipa3_disconnect_wdi_pipe;
+	}
 	data.ipa_resume_wdi_pipe = ipa3_resume_wdi_pipe;
 	data.ipa_suspend_wdi_pipe = ipa3_suspend_wdi_pipe;
-	data.ipa_connect_wdi_pipe = ipa3_connect_wdi_pipe;
-	data.ipa_disconnect_wdi_pipe = ipa3_disconnect_wdi_pipe;
 	data.ipa_uc_reg_rdyCB = ipa3_uc_reg_rdyCB;
 	data.ipa_uc_dereg_rdyCB = ipa3_uc_dereg_rdyCB;
 
@@ -7826,6 +7834,7 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	ipa3_ctx->ulso_supported = resource_p->ulso_supported;
 	ipa3_ctx->ulso_ip_id_min = resource_p->ulso_ip_id_min;
 	ipa3_ctx->ulso_ip_id_max = resource_p->ulso_ip_id_max;
+	ipa3_ctx->use_pm_wrapper = resource_p->use_pm_wrapper;
 
 	if (resource_p->gsi_fw_file_name) {
 		ipa3_ctx->gsi_fw_file_name =
@@ -9041,6 +9050,14 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 		"qcom,do-not-use-ch-gsi-20");
 	IPADBG(": GSI CH 20 WA is = %s\n",
 		ipa_drv_res->gsi_ch20_wa
+		? "Needed" : "Not needed");
+
+	ipa_drv_res->use_pm_wrapper = false;
+	ipa_drv_res->use_pm_wrapper =
+		of_property_read_bool(pdev->dev.of_node,
+		"qcom,use-wrapper-pm-support");
+	IPADBG(": Use PM wrapper Support = %s\n",
+		ipa_drv_res->use_pm_wrapper
 		? "Needed" : "Not needed");
 
 	elem_num = of_property_count_elems_of_size(pdev->dev.of_node,
