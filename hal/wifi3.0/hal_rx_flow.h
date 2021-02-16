@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -120,6 +120,7 @@ hal_rx_flow_delete_entry(struct hal_rx_fst *fst, void *hal_rx_fse);
  */
 QDF_STATUS hal_rx_flow_get_tuple_info(void *hal_fse,
 				      struct hal_flow_tuple_info *tuple_info);
+
 
 /**
  * hal_rx_fst_attach() - Initialize Rx flow search table in HW FST

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -18,6 +18,8 @@
 
 #ifndef __HAL_RX_FLOW_DEFINES_H
 #define __HAL_RX_FLOW_DEFINES_H
+
+#include "hal_flow.h"
 
 #define HAL_FST_HASH_KEY_SIZE_BYTES 40
 #define HAL_OFFSET(block, field) block ## _ ## field ## _OFFSET
