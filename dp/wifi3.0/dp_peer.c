@@ -1524,6 +1524,7 @@ int dp_peer_update_ast(struct dp_soc *soc, struct dp_peer *peer,
 	ast_entry->peer_id = peer->peer_id;
 	ast_entry->type = CDP_TXRX_AST_TYPE_WDS;
 	ast_entry->pdev_id = peer->vdev->pdev->pdev_id;
+	ast_entry->vdev_id = peer->vdev->vdev_id;
 	ast_entry->is_active = TRUE;
 	TAILQ_INSERT_TAIL(&peer->ast_entry_list, ast_entry, ase_list_elem);
 
