@@ -18,6 +18,7 @@
 
 #include "hal_hw_headers.h"
 #include "hal_api.h"
+#include "hal_reo.h"
 #include "target_type.h"
 #include "wcss_version.h"
 #include "qdf_module.h"
@@ -49,10 +50,18 @@ void hal_qca6750_attach(struct hal_soc *hal);
 #ifdef QCA_WIFI_QCA5018
 void hal_qca5018_attach(struct hal_soc *hal);
 #endif
+#ifdef QCA_WIFI_WCN7850
+void hal_wcn7850_attach(struct hal_soc *hal);
+#endif
 
 #ifdef ENABLE_VERBOSE_DEBUG
 bool is_hal_verbose_debug_enabled;
 #endif
+
+#define HAL_REO_DESTINATION_RING_CTRL_IX_0_ADDR(x)	((x) + 0x4)
+#define HAL_REO_DESTINATION_RING_CTRL_IX_1_ADDR(x)	((x) + 0x8)
+#define HAL_REO_DESTINATION_RING_CTRL_IX_2_ADDR(x)	((x) + 0xc)
+#define HAL_REO_DESTINATION_RING_CTRL_IX_3_ADDR(x)	((x) + 0x10)
 
 #ifdef ENABLE_HAL_REG_WR_HISTORY
 struct hal_reg_write_fail_history hal_reg_wr_hist;
@@ -185,10 +194,12 @@ QDF_STATUS hal_set_shadow_regs(void *hal_soc)
 	int i;
 	struct hal_hw_srng_config *srng_config =
 		&hal->hw_srng_table[WBM2SW_RELEASE];
+	uint32_t reo_reg_base;
+
+	reo_reg_base = hal_get_reo_reg_base_offset(hal_soc);
 
 	target_reg_offset =
-		HWIO_REO_R0_DESTINATION_RING_CTRL_IX_0_ADDR(
-			SEQ_WCSS_UMAC_REO_REG_OFFSET);
+		HAL_REO_DESTINATION_RING_CTRL_IX_0_ADDR(reo_reg_base);
 
 	for (i = 0; i < MAX_REO_REMAP_SHADOW_REGS; i++) {
 		hal_set_one_target_reg_config(hal, target_reg_offset, i);
@@ -379,6 +390,13 @@ static void hal_target_based_configure(struct hal_soc *hal)
 			hal->use_register_windowing = true;
 			hal->static_window_map = true;
 			hal_qca6750_attach(hal);
+		break;
+#endif
+#ifdef QCA_WIFI_WCN7850
+	case TARGET_TYPE_WCN7850:
+		hal->use_register_windowing = true;
+		hal_wcn7850_attach(hal);
+		hal->init_phase = false;
 		break;
 #endif
 #if defined(QCA_WIFI_QCA8074) && defined(WIFI_TARGET_TYPE_3_0)
@@ -1486,6 +1504,10 @@ extern void hal_detach(void *hal_soc)
 }
 qdf_export_symbol(hal_detach);
 
+#define HAL_CE_CHANNEL_DST_DEST_CTRL_ADDR(x)		((x) + 0x000000b0)
+#define HAL_CE_CHANNEL_DST_DEST_CTRL_DEST_MAX_LENGTH_BMSK	0x0000ffff
+#define HAL_CE_CHANNEL_DST_DEST_RING_CONSUMER_PREFETCH_TIMER_ADDR(x)	((x) + 0x00000040)
+#define HAL_CE_CHANNEL_DST_DEST_RING_CONSUMER_PREFETCH_TIMER_RMSK	0x00000007
 /**
  * hal_ce_dst_setup - Initialize CE destination ring registers
  * @hal_soc: HAL SOC handle
@@ -1500,23 +1522,23 @@ static inline void hal_ce_dst_setup(struct hal_soc *hal, struct hal_srng *srng,
 		HAL_SRNG_CONFIG(hal, CE_DST);
 
 	/* set DEST_MAX_LENGTH according to ce assignment */
-	reg_addr = HWIO_WFSS_CE_CHANNEL_DST_R0_DEST_CTRL_ADDR(
+	reg_addr = HAL_CE_CHANNEL_DST_DEST_CTRL_ADDR(
 			ring_config->reg_start[R0_INDEX] +
 			(ring_num * ring_config->reg_size[R0_INDEX]));
 
 	reg_val = HAL_REG_READ(hal, reg_addr);
-	reg_val &= ~HWIO_WFSS_CE_CHANNEL_DST_R0_DEST_CTRL_DEST_MAX_LENGTH_BMSK;
+	reg_val &= ~HAL_CE_CHANNEL_DST_DEST_CTRL_DEST_MAX_LENGTH_BMSK;
 	reg_val |= srng->u.dst_ring.max_buffer_length &
-		HWIO_WFSS_CE_CHANNEL_DST_R0_DEST_CTRL_DEST_MAX_LENGTH_BMSK;
+		HAL_CE_CHANNEL_DST_DEST_CTRL_DEST_MAX_LENGTH_BMSK;
 	HAL_REG_WRITE(hal, reg_addr, reg_val);
 
 	if (srng->prefetch_timer) {
-		reg_addr = HWIO_WFSS_CE_CHANNEL_DST_R0_DEST_RING_CONSUMER_PREFETCH_TIMER_ADDR(
+		reg_addr = HAL_CE_CHANNEL_DST_DEST_RING_CONSUMER_PREFETCH_TIMER_ADDR(
 				ring_config->reg_start[R0_INDEX] +
 				(ring_num * ring_config->reg_size[R0_INDEX]));
 
 		reg_val = HAL_REG_READ(hal, reg_addr);
-		reg_val &= ~HWIO_WFSS_CE_CHANNEL_DST_R0_DEST_RING_CONSUMER_PREFETCH_TIMER_RMSK;
+		reg_val &= ~HAL_CE_CHANNEL_DST_DEST_RING_CONSUMER_PREFETCH_TIMER_RMSK;
 		reg_val |= srng->prefetch_timer;
 		HAL_REG_WRITE(hal, reg_addr, reg_val);
 		reg_val = HAL_REG_READ(hal, reg_addr);
@@ -1539,64 +1561,67 @@ void hal_reo_read_write_ctrl_ix(hal_soc_handle_t hal_soc_hdl, bool read,
 {
 	uint32_t reg_offset;
 	struct hal_soc *hal = (struct hal_soc *)hal_soc_hdl;
+	uint32_t reo_reg_base;
+
+	reo_reg_base = hal_get_reo_reg_base_offset(hal_soc_hdl);
 
 	if (read) {
 		if (ix0) {
 			reg_offset =
-				HWIO_REO_R0_DESTINATION_RING_CTRL_IX_0_ADDR(
-						SEQ_WCSS_UMAC_REO_REG_OFFSET);
+				HAL_REO_DESTINATION_RING_CTRL_IX_0_ADDR(
+						reo_reg_base);
 			*ix0 = HAL_REG_READ(hal, reg_offset);
 		}
 
 		if (ix1) {
 			reg_offset =
-				HWIO_REO_R0_DESTINATION_RING_CTRL_IX_1_ADDR(
-						SEQ_WCSS_UMAC_REO_REG_OFFSET);
+				HAL_REO_DESTINATION_RING_CTRL_IX_1_ADDR(
+						reo_reg_base);
 			*ix1 = HAL_REG_READ(hal, reg_offset);
 		}
 
 		if (ix2) {
 			reg_offset =
-				HWIO_REO_R0_DESTINATION_RING_CTRL_IX_2_ADDR(
-						SEQ_WCSS_UMAC_REO_REG_OFFSET);
+				HAL_REO_DESTINATION_RING_CTRL_IX_2_ADDR(
+						reo_reg_base);
 			*ix2 = HAL_REG_READ(hal, reg_offset);
 		}
 
 		if (ix3) {
 			reg_offset =
-				HWIO_REO_R0_DESTINATION_RING_CTRL_IX_3_ADDR(
-						SEQ_WCSS_UMAC_REO_REG_OFFSET);
+				HAL_REO_DESTINATION_RING_CTRL_IX_3_ADDR(
+						reo_reg_base);
 			*ix3 = HAL_REG_READ(hal, reg_offset);
 		}
 	} else {
 		if (ix0) {
 			reg_offset =
-				HWIO_REO_R0_DESTINATION_RING_CTRL_IX_0_ADDR(
-						SEQ_WCSS_UMAC_REO_REG_OFFSET);
+				HAL_REO_DESTINATION_RING_CTRL_IX_0_ADDR(
+						reo_reg_base);
 			HAL_REG_WRITE_CONFIRM_RETRY(hal, reg_offset,
 						    *ix0, true);
 		}
 
 		if (ix1) {
 			reg_offset =
-				HWIO_REO_R0_DESTINATION_RING_CTRL_IX_1_ADDR(
-						SEQ_WCSS_UMAC_REO_REG_OFFSET);
+				HAL_REO_DESTINATION_RING_CTRL_IX_1_ADDR(
+						reo_reg_base);
 			HAL_REG_WRITE_CONFIRM_RETRY(hal, reg_offset,
 						    *ix1, true);
 		}
 
 		if (ix2) {
 			reg_offset =
-				HWIO_REO_R0_DESTINATION_RING_CTRL_IX_2_ADDR(
-						SEQ_WCSS_UMAC_REO_REG_OFFSET);
+				HAL_REO_DESTINATION_RING_CTRL_IX_2_ADDR(
+						reo_reg_base);
 			HAL_REG_WRITE_CONFIRM_RETRY(hal, reg_offset,
 						    *ix2, true);
 		}
 
 		if (ix3) {
 			reg_offset =
-				HWIO_REO_R0_DESTINATION_RING_CTRL_IX_3_ADDR(
-						SEQ_WCSS_UMAC_REO_REG_OFFSET);
+				HAL_REO_DESTINATION_RING_CTRL_IX_3_ADDR(
+						reo_reg_base);
 			HAL_REG_WRITE_CONFIRM_RETRY(hal, reg_offset,
 						    *ix3, true);
 		}
