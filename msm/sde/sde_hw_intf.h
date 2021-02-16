@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HW_INTF_H
@@ -78,6 +78,7 @@ struct intf_avr_params {
  * @ get_line_count: reads current vertical line counter
  * @ get_underrun_line_count: reads current underrun pixel clock count and
  *                            converts it into line count
+ * @setup_vsync_source: Configure vsync source selection for intf
  * @bind_pingpong_blk: enable/disable the connection with pingpong which will
  *                     feed pixels to this interface
  */
@@ -111,6 +112,8 @@ struct sde_hw_intf_ops {
 	 */
 	u32 (*get_line_count)(struct sde_hw_intf *intf);
 	u32 (*get_underrun_line_count)(struct sde_hw_intf *intf);
+
+	void (*setup_vsync_source)(struct sde_hw_intf *intf, u32 frame_rate);
 
 	void (*bind_pingpong_blk)(struct sde_hw_intf *intf,
 			bool enable,

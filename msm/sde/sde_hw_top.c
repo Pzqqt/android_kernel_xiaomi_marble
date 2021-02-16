@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #include "sde_hwio.h"
@@ -50,15 +50,8 @@
 #define MDP_WD_TIMER_4_CTL2               0x444
 #define MDP_WD_TIMER_4_LOAD_VALUE         0x448
 
-#define MDP_TICK_COUNT                    16
-#define XO_CLK_RATE                       19200
-#define MS_TICKS_IN_SEC                   1000
-
 #define AUTOREFRESH_TEST_POINT	0x2
 #define TEST_MASK(id, tp)	((id << 4) | (tp << 1) | BIT(0))
-
-#define CALCULATE_WD_LOAD_VALUE(fps) \
-	((uint32_t)((MS_TICKS_IN_SEC * XO_CLK_RATE)/(MDP_TICK_COUNT * fps)))
 
 #define DCE_SEL                           0x450
 
@@ -316,18 +309,13 @@ static void _update_vsync_source(struct sde_hw_mdp *mdp,
 			break;
 		}
 
-		if (cfg->is_dummy) {
-			SDE_REG_WRITE(c, wd_ctl2, 0x0);
-		} else {
-			SDE_REG_WRITE(c, wd_load_value,
-				CALCULATE_WD_LOAD_VALUE(cfg->frame_rate));
+		SDE_REG_WRITE(c, wd_load_value, CALCULATE_WD_LOAD_VALUE(cfg->frame_rate));
 
-			SDE_REG_WRITE(c, wd_ctl, BIT(0)); /* clear timer */
-			reg = SDE_REG_READ(c, wd_ctl2);
-			reg |= BIT(8);		/* enable heartbeat timer */
-			reg |= BIT(0);		/* enable WD timer */
-			SDE_REG_WRITE(c, wd_ctl2, reg);
-		}
+		SDE_REG_WRITE(c, wd_ctl, BIT(0)); /* clear timer */
+		reg = SDE_REG_READ(c, wd_ctl2);
+		reg |= BIT(8); /* enable heartbeat timer */
+		reg |= BIT(0); /* enable WD timer */
+		SDE_REG_WRITE(c, wd_ctl2, reg);
 
 		/* make sure that timers are enabled/disabled for vsync state */
 		wmb();
@@ -623,7 +611,6 @@ static void _setup_mdp_ops(struct sde_hw_mdp_ops *ops,
 	ops->setup_clk_force_ctrl = sde_hw_setup_clk_force_ctrl;
 	ops->get_clk_ctrl_status = sde_hw_get_clk_ctrl_status;
 	ops->get_danger_status = sde_hw_get_danger_status;
-	ops->setup_vsync_source = sde_hw_setup_vsync_source;
 	ops->set_cwb_ppb_cntl = sde_hw_program_cwb_ppb_ctrl;
 	ops->get_safe_status = sde_hw_get_safe_status;
 	ops->get_split_flush_status = sde_hw_get_split_flush;
@@ -633,7 +620,7 @@ static void _setup_mdp_ops(struct sde_hw_mdp_ops *ops,
 	ops->set_mdp_hw_events = sde_hw_mdp_events;
 	if (cap & BIT(SDE_MDP_VSYNC_SEL))
 		ops->setup_vsync_source = sde_hw_setup_vsync_source;
-	else
+	else if (cap & BIT(SDE_MDP_WD_TIMER))
 		ops->setup_vsync_source = sde_hw_setup_vsync_source_v1;
 
 	if (cap & BIT(SDE_MDP_DHDR_MEMPOOL_4K) ||

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef __SDE_ENCODER_PHYS_H__
@@ -185,8 +185,7 @@ struct sde_encoder_phys_ops {
 	int (*get_wr_line_count)(struct sde_encoder_phys *phys);
 	bool (*wait_dma_trigger)(struct sde_encoder_phys *phys);
 	int (*wait_for_active)(struct sde_encoder_phys *phys);
-	void (*setup_vsync_source)(struct sde_encoder_phys *phys,
-			u32 vsync_source, bool is_dummy);
+	void (*setup_vsync_source)(struct sde_encoder_phys *phys, u32 vsync_source);
 	u32 (*get_underrun_line_count)(struct sde_encoder_phys *phys);
 };
 
@@ -567,10 +566,8 @@ void sde_encoder_helper_trigger_start(struct sde_encoder_phys *phys_enc);
  * sde_encoder_helper_vsync_config - configure vsync source for cmd mode
  * @phys_enc: Pointer to physical encoder structure
  * @vsync_source: vsync source selection
- * @is_dummy: used only for RSC
  */
-void sde_encoder_helper_vsync_config(struct sde_encoder_phys *phys_enc,
-			u32 vsync_source, bool is_dummy);
+void sde_encoder_helper_vsync_config(struct sde_encoder_phys *phys_enc, u32 vsync_source);
 
 /**
  * sde_encoder_helper_wait_event_timeout - wait for event with timeout

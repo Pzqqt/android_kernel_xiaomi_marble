@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
@@ -2248,6 +2248,10 @@ static int sde_intf_parse_dt(struct device_node *np,
 		if (SDE_HW_MAJOR(sde_cfg->hwversion) >=
 				SDE_HW_MAJOR(SDE_HW_VER_700))
 			set_bit(SDE_INTF_TE_ALIGN_VSYNC, &intf->features);
+
+		if (SDE_HW_MAJOR(sde_cfg->hwversion) >=
+				SDE_HW_MAJOR(SDE_HW_VER_810))
+			set_bit(SDE_INTF_WD_TIMER, &intf->features);
 	}
 
 end:
@@ -3807,6 +3811,8 @@ static int sde_top_parse_dt(struct device_node *np, struct sde_mdss_cfg *cfg)
 	major_version = SDE_HW_MAJOR(cfg->hwversion);
 	if (major_version < SDE_HW_MAJOR(SDE_HW_VER_500))
 		set_bit(SDE_MDP_VSYNC_SEL, &cfg->mdp[0].features);
+	else if (major_version < SDE_HW_MAJOR(SDE_HW_VER_810))
+		set_bit(SDE_MDP_WD_TIMER, &cfg->mdp[0].features);
 
 	rc = _add_to_irq_offset_list(cfg, SDE_INTR_HWBLK_TOP,
 			SDE_INTR_TOP_INTR, cfg->mdp[0].base);

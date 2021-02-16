@@ -1935,13 +1935,25 @@ static void sde_encoder_phys_cmd_trigger_start(
 }
 
 static void sde_encoder_phys_cmd_setup_vsync_source(
-		struct sde_encoder_phys *phys_enc,
-		u32 vsync_source, bool is_dummy)
+		struct sde_encoder_phys *phys_enc, u32 vsync_source)
 {
+	struct sde_encoder_virt *sde_enc;
+
 	if (!phys_enc || !phys_enc->hw_intf)
 		return;
 
-	sde_encoder_helper_vsync_config(phys_enc, vsync_source, is_dummy);
+	sde_enc = to_sde_encoder_virt(phys_enc->parent);
+	if (!sde_enc)
+		return;
+
+	if (sde_enc->disp_info.is_te_using_watchdog_timer &&
+			phys_enc->hw_intf->ops.setup_vsync_source) {
+		vsync_source = SDE_VSYNC_SOURCE_WD_TIMER_0;
+		phys_enc->hw_intf->ops.setup_vsync_source(phys_enc->hw_intf,
+				sde_enc->mode_info.frame_rate);
+	} else {
+		sde_encoder_helper_vsync_config(phys_enc, vsync_source);
+	}
 
 	if (phys_enc->has_intf_te && phys_enc->hw_intf->ops.vsync_sel)
 		phys_enc->hw_intf->ops.vsync_sel(phys_enc->hw_intf,

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/bitops.h>
@@ -166,6 +166,7 @@
 #define SDE_INTR_DSICMD_2_INTO_STATIC BIT(6)
 #define SDE_INTR_DSICMD_2_OUTOF_STATIC BIT(7)
 #define SDE_INTR_PROG_LINE BIT(8)
+#define SDE_INTR_INTF_WD_TIMER_0_DONE BIT(13)
 
 /**
  * AD4 interrupt status bit definitions
@@ -398,6 +399,7 @@ static struct sde_irq_type sde_irq_intf_map[] = {
 		SDE_INTR_DSICMD_2_OUTOF_STATIC, -1},
 
 	{ SDE_IRQ_TYPE_PROG_LINE, -1, SDE_INTR_PROG_LINE, -1},
+	{ SDE_IRQ_TYPE_WD_TIMER, -1, SDE_INTR_WD_TIMER_0_DONE, -1},
 };
 
 static struct sde_irq_type sde_irq_ad4_map[] = {

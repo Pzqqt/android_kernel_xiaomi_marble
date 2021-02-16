@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HW_MDSS_H
@@ -60,6 +60,13 @@ enum sde_format_flags {
 #define SDE_FORMAT_IS_UBWC(X) \
 	(((X)->fetch_mode == SDE_FETCH_UBWC) && \
 			test_bit(SDE_FORMAT_FLAG_COMPRESSED_BIT, (X)->flag))
+
+#define MDP_TICK_COUNT                    16
+#define XO_CLK_RATE                       19200
+#define MS_TICKS_IN_SEC                   1000
+
+#define CALCULATE_WD_LOAD_VALUE(fps) \
+	((uint32_t)((MS_TICKS_IN_SEC * XO_CLK_RATE)/(MDP_TICK_COUNT * fps)))
 
 #define SDE_BLEND_FG_ALPHA_FG_CONST	(0 << 0)
 #define SDE_BLEND_FG_ALPHA_BG_CONST	(1 << 0)
