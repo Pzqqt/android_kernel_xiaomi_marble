@@ -5441,36 +5441,6 @@ QDF_STATUS sme_get_cfg_valid_channels(uint32_t *valid_ch_freq, uint32_t *len)
 	return status;
 }
 
-static uint8_t *sme_reg_hint_to_str(const enum country_src src)
-{
-	switch (src) {
-	case SOURCE_CORE:
-		return "WORLD MODE";
-
-	case SOURCE_DRIVER:
-		return "BDF file";
-
-	case SOURCE_USERSPACE:
-		return "user-space";
-
-	case SOURCE_11D:
-		return "802.11D IEs in beacons";
-
-	default:
-		return "unknown";
-	}
-}
-
-void sme_set_cc_src(mac_handle_t mac_handle, enum country_src cc_src)
-{
-	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-
-	mac_ctx->reg_hint_src = cc_src;
-
-	sme_debug("Country source is %s",
-		  sme_reg_hint_to_str(cc_src));
-}
-
 /**
  * sme_handle_generic_change_country_code() - handles country ch req
  * @mac_ctx:    mac global context

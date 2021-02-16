@@ -6604,6 +6604,21 @@ wlan_get_parsed_bss_description_ies(struct mac_context *mac_ctx,
 	return status;
 }
 
+uint32_t wlan_get_11h_power_constraint(struct mac_context *mac_ctx,
+				       tDot11fIEPowerConstraints *constraints)
+{
+	uint32_t local_power_constraint = 0;
+
+	/*
+	 * check if .11h support is enabled, if not,
+	 * the power constraint is 0.
+	 */
+	if (mac_ctx->mlme_cfg->gen.enabled_11h && constraints->present)
+		local_power_constraint = constraints->localPowerConstraints;
+
+	return local_power_constraint;
+}
+
 #ifdef FEATURE_WLAN_ESE
 static void wlan_fill_qbss_load_param(tDot11fBeaconIEs *bcn_ies,
 				      struct bss_description *bss_desc)

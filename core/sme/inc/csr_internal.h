@@ -191,16 +191,8 @@ struct bss_config_param {
 	eCsrMediaAccessType qosType;
 	tSirMacSSid SSID;
 	enum csr_cfgdot11mode uCfgDot11Mode;
-	enum reg_wifi_band band;
 	tAniAuthType authType;
-	eCsrEncryptionType encType;
-	uint32_t uShortSlotTime;
-	uint32_t uHTSupport;
-	uint32_t uPowerLimit;
-	uint32_t uHeartBeatThresh;
-	uint32_t uJoinTimeOut;
 	tSirMacCapabilityInfo BssCap;
-	bool f11hSupport;
 	ePhyChanBondState cbMode;
 };
 
@@ -351,7 +343,6 @@ struct csr_roam_joinstatus {
 };
 
 struct csr_scanstruct {
-	tSirScanType curScanType;
 	struct csr_channel channels11d;
 	struct channel_power defaultPowerTable[CFG_VALID_CHANNEL_LIST_LEN];
 	uint32_t numChannelsDefault;
@@ -363,9 +354,6 @@ struct csr_scanstruct {
 	uint8_t countryCodeDefault[REG_ALPHA2_LEN + 1];
 	uint8_t countryCodeCurrent[REG_ALPHA2_LEN + 1];
 	uint8_t countryCode11d[REG_ALPHA2_LEN + 1];
-	v_REGDOMAIN_t domainIdDefault;  /* default regulatory domain */
-	v_REGDOMAIN_t domainIdCurrent;  /* current regulatory domain */
-
 	/*
 	 * in 11d IE from probe rsp or beacons of neighboring APs
 	 * will use the most popular one (max count)

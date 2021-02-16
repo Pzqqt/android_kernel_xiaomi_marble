@@ -180,12 +180,6 @@ QDF_STATUS csr_scan_for_ssid(struct mac_context *mac, uint32_t sessionId,
 QDF_STATUS csr_scan_abort_mac_scan(struct mac_context *mac, uint32_t vdev_id,
 				   uint32_t scan_id);
 
-/* If fForce is true we will save the new String that is learn't. */
-/* Typically it will be true in case of Join or user initiated ioctl */
-bool csr_learn_11dcountry_information(struct mac_context *mac,
-				   struct bss_description *pSirBssDesc,
-				   tDot11fBeaconIEs *pIes, bool fForce);
-void csr_apply_country_information(struct mac_context *mac);
 void csr_free_scan_result_entry(struct mac_context *mac, struct tag_csrscan_result
 				*pResult);
 

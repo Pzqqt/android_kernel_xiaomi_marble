@@ -776,7 +776,6 @@ struct mac_context {
 	void (*chan_info_cb)(struct scan_chan_info *chan_info);
 	void (*del_peers_ind_cb)(struct wlan_objmgr_psoc *psoc,
 				 uint8_t vdev_id);
-	enum  country_src reg_hint_src;
 	uint32_t rx_packet_drop_counter;
 	enum tx_ack_status auth_ack_status;
 	enum tx_ack_status assoc_ack_status;

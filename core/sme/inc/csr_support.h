@@ -233,8 +233,7 @@ bool csr_is_infra_bss_desc(struct bss_description *pSirBssDesc);
 tSirResultCodes csr_get_de_auth_rsp_status_code(struct deauth_rsp *pSmeRsp);
 uint32_t csr_get_frag_thresh(struct mac_context *mac_ctx);
 uint32_t csr_get_rts_thresh(struct mac_context *mac_ctx);
-uint32_t csr_get11h_power_constraint(struct mac_context *mac_ctx,
-				     tDot11fIEPowerConstraints *constraints);
+
 uint8_t csr_construct_rsn_ie(struct mac_context *mac, uint32_t sessionId,
 			     struct csr_roam_profile *pProfile,
 			     struct bss_description *pSirBssDesc,

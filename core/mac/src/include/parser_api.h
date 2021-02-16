@@ -1271,6 +1271,9 @@ wlan_get_parsed_bss_description_ies(struct mac_context *mac_ctx,
 				    struct bss_description *bss_desc,
 				    tDot11fBeaconIEs **ie_struct);
 
+uint32_t wlan_get_11h_power_constraint(struct mac_context *mac_ctx,
+				       tDot11fIEPowerConstraints *constraints);
+
 QDF_STATUS
 wlan_fill_bss_desc_from_scan_entry(struct mac_context *mac_ctx,
 				   struct bss_description *bss_desc,

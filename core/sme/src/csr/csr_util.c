@@ -1973,21 +1973,6 @@ eCsrPhyMode csr_convert_from_reg_phy_mode(enum reg_phymode phymode)
 	}
 }
 
-uint32_t csr_get11h_power_constraint(struct mac_context *mac_ctx,
-				     tDot11fIEPowerConstraints *constraints)
-{
-	uint32_t localPowerConstraint = 0;
-
-	/* check if .11h support is enabled, if not,
-	 * the power constraint is 0.
-	 */
-	if (mac_ctx->mlme_cfg->gen.enabled_11h &&
-	    constraints->present)
-		localPowerConstraint = constraints->localPowerConstraints;
-
-	return localPowerConstraint;
-}
-
 #ifndef FEATURE_CM_ENABLE
 bool csr_is_profile_wpa(struct csr_roam_profile *pProfile)
 {

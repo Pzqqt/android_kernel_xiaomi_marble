@@ -2525,6 +2525,10 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 	struct cm_roam_values_copy config;
 	bool ese_ver_present;
 	int8_t reg_max;
+	struct ps_global_info *ps_global_info = &mac_ctx->sme.ps_global_info;
+	struct ps_params *ps_param =
+				&ps_global_info->ps_params[session->vdev_id];
+	uint32_t join_timeout;
 
 	/*
 	 * Update the capability here itself as this is used in
@@ -2558,6 +2562,10 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	mac_ctx->mlme_cfg->power.local_power_constraint =
+		wlan_get_11h_power_constraint(mac_ctx,
+					      &ie_struct->PowerConstraints);
+
 	session->enable_session_twt_support =
 					lim_enable_twt(mac_ctx, ie_struct);
 
@@ -2574,11 +2582,30 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if (session->dot11mode == MLME_DOT11_MODE_11B)
+		mac_ctx->mlme_cfg->feature_flags.enable_short_slot_time_11g = 0;
+	else
+		mac_ctx->mlme_cfg->feature_flags.enable_short_slot_time_11g =
+			mac_ctx->mlme_cfg->ht_caps.short_slot_time_enabled;
+
 	status = lim_check_and_validate_6g_ap(mac_ctx, bss_desc, ie_struct);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		qdf_mem_free(ie_struct);
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	/*
+	 * Join timeout: if we find a BeaconInterval in the BssDescription,
+	 * then set the Join Timeout to be 10 x the BeaconInterval.
+	 */
+	join_timeout = mac_ctx->mlme_cfg->timeouts.join_failure_timeout_ori;
+	if (bss_desc->beaconInterval)
+		join_timeout = QDF_MAX(10 * bss_desc->beaconInterval,
+				       join_timeout);
+
+	mac_ctx->mlme_cfg->timeouts.join_failure_timeout =
+		QDF_MIN(join_timeout,
+			mac_ctx->mlme_cfg->timeouts.join_failure_timeout_ori);
 
 	lim_join_req_update_ht_vht_caps(mac_ctx, session, bss_desc,
 					ie_struct);
@@ -2822,6 +2849,7 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 			}
 			session->gUapsdPerAcBitmask = value;
 		}
+		ps_param->uapsd_per_ac_bit_mask = session->gUapsdPerAcBitmask;
 	}
 
 	if (session->gLimCurrentBssUapsd) {

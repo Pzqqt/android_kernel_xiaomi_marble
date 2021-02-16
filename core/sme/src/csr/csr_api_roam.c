@@ -432,9 +432,6 @@ QDF_STATUS csr_init_chan_list(struct mac_context *mac, uint8_t *alpha2)
 
 	sme_debug("init time country code %.2s", mac->scan.countryCodeDefault);
 
-	mac->scan.domainIdDefault = 0;
-	mac->scan.domainIdCurrent = 0;
-
 	qdf_mem_copy(mac->scan.countryCodeCurrent,
 		     mac->scan.countryCodeDefault, REG_ALPHA2_LEN + 1);
 	qdf_mem_copy(mac->scan.countryCodeElected,
@@ -1109,9 +1106,6 @@ QDF_STATUS csr_stop(struct mac_context *mac)
 	for (sessionId = 0; sessionId < WLAN_MAX_VDEVS; sessionId++)
 		if (CSR_IS_SESSION_VALID(mac, sessionId))
 			ucfg_scan_flush_results(mac->pdev, NULL);
-
-	/* Reset the domain back to the deault */
-	mac->scan.domainIdCurrent = mac->scan.domainIdDefault;
 
 	for (sessionId = 0; sessionId < WLAN_MAX_VDEVS; sessionId++) {
 		csr_roam_state_change(mac, eCSR_ROAMING_STATE_STOP, sessionId);
@@ -2086,8 +2080,6 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 		/* Assign this before calling csr_init11d_info */
 		if (wlan_reg_11d_enabled_on_host(mac->psoc))
 			status = csr_init11d_info(mac, &pParam->Csr11dinfo);
-		else
-			mac->scan.curScanType = eSIR_ACTIVE_SCAN;
 
 		/* Initialize the power + channel information if 11h is
 		 * enabled. If 11d is enabled this information has already
@@ -3173,6 +3165,7 @@ QDF_STATUS csr_roam_prepare_bss_config(struct mac_context *mac,
 {
 	enum csr_cfgdot11mode cfgDot11Mode;
 	uint32_t join_timeout;
+	enum reg_wifi_band band;
 
 	QDF_ASSERT(pIes);
 	if (!pIes)
@@ -3206,11 +3199,11 @@ QDF_STATUS csr_roam_prepare_bss_config(struct mac_context *mac,
 	}
 
 	if (WLAN_REG_IS_5GHZ_CH_FREQ(bss_desc->chan_freq))
-		pBssConfig->band = REG_BAND_5G;
+		band = REG_BAND_5G;
 	else if (WLAN_REG_IS_24GHZ_CH_FREQ(bss_desc->chan_freq))
-		pBssConfig->band = REG_BAND_2G;
+		band = REG_BAND_2G;
 	else if (WLAN_REG_IS_6GHZ_CHAN_FREQ(bss_desc->chan_freq))
-		pBssConfig->band = REG_BAND_6G;
+		band = REG_BAND_6G;
 	else
 		return QDF_STATUS_E_FAILURE;
 
@@ -3224,7 +3217,7 @@ QDF_STATUS csr_roam_prepare_bss_config(struct mac_context *mac,
 		 * 2.4Ghz and to 11a mode for 5Ghz
 		 */
 		sme_warn("Can not find match phy mode");
-		if (REG_BAND_2G == pBssConfig->band) {
+		if (REG_BAND_2G == band) {
 			if (mac->roam.configParam.phyMode &
 			    (eCSR_DOT11_MODE_11b | eCSR_DOT11_MODE_11b_ONLY)) {
 				pBssConfig->uCfgDot11Mode =
@@ -3233,9 +3226,9 @@ QDF_STATUS csr_roam_prepare_bss_config(struct mac_context *mac,
 				pBssConfig->uCfgDot11Mode =
 						eCSR_CFG_DOT11_MODE_11G;
 			}
-		} else if (pBssConfig->band == REG_BAND_5G) {
+		} else if (band == REG_BAND_5G) {
 			pBssConfig->uCfgDot11Mode = eCSR_CFG_DOT11_MODE_11A;
-		} else if (pBssConfig->band == REG_BAND_6G) {
+		} else if (band == REG_BAND_6G) {
 			pBssConfig->uCfgDot11Mode =
 						eCSR_CFG_DOT11_MODE_11AX_ONLY;
 		}
@@ -3286,36 +3279,27 @@ QDF_STATUS csr_roam_prepare_bss_config(struct mac_context *mac,
 	}
 	/* short slot time */
 	if (eCSR_CFG_DOT11_MODE_11B != cfgDot11Mode)
-		pBssConfig->uShortSlotTime =
+		mac->mlme_cfg->feature_flags.enable_short_slot_time_11g =
 			mac->mlme_cfg->ht_caps.short_slot_time_enabled;
 	else
-		pBssConfig->uShortSlotTime = 0;
+		mac->mlme_cfg->feature_flags.enable_short_slot_time_11g = 0;
 
-	pBssConfig->f11hSupport =
-			mac->mlme_cfg->gen.enabled_11h;
 	/* power constraint */
-	pBssConfig->uPowerLimit =
-		csr_get11h_power_constraint(mac, &pIes->PowerConstraints);
-	/* heartbeat */
-	if (CSR_IS_11A_BSS(bss_desc))
-		pBssConfig->uHeartBeatThresh =
-			mac->roam.configParam.HeartbeatThresh50;
-	else
-		pBssConfig->uHeartBeatThresh =
-			mac->mlme_cfg->timeouts.heart_beat_threshold;
+	mac->mlme_cfg->power.local_power_constraint =
+		wlan_get_11h_power_constraint(mac, &pIes->PowerConstraints);
 
 	/*
 	 * Join timeout: if we find a BeaconInterval in the BssDescription,
 	 * then set the Join Timeout to be 10 x the BeaconInterval.
 	 */
-	pBssConfig->uJoinTimeOut = cfg_default(CFG_JOIN_FAILURE_TIMEOUT);
-	if (bss_desc->beaconInterval) {
+	join_timeout = cfg_default(CFG_JOIN_FAILURE_TIMEOUT);
+	if (bss_desc->beaconInterval)
 		/* Make sure it is bigger than the minimal */
 		join_timeout = QDF_MAX(10 * bss_desc->beaconInterval,
 				       cfg_min(CFG_JOIN_FAILURE_TIMEOUT));
-		if (join_timeout < pBssConfig->uJoinTimeOut)
-			pBssConfig->uJoinTimeOut = join_timeout;
-	}
+
+	mac->mlme_cfg->timeouts.join_failure_timeout =
+		QDF_MIN(join_timeout, cfg_default(CFG_JOIN_FAILURE_TIMEOUT));
 
 	/* validate CB */
 	if ((pBssConfig->uCfgDot11Mode == eCSR_CFG_DOT11_MODE_11N) ||
@@ -3347,6 +3331,8 @@ QDF_STATUS csr_roam_prepare_bss_config_from_profile(
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint32_t bss_op_ch_freq = 0;
 	uint8_t qAPisEnabled = false;
+	enum reg_wifi_band band;
+
 	/* SSID */
 	pBssConfig->SSID.length = 0;
 	if (pProfile->SSIDs.numOfSSIDs) {
@@ -3365,15 +3351,12 @@ QDF_STATUS csr_roam_prepare_bss_config_from_profile(
 	    pProfile->EncryptionType.encryptionType[0])
 		pBssConfig->BssCap.privacy = 1;
 
-	/* Update when 6G support is added for NDI */
-	pBssConfig->band = (mac->mlme_cfg->gen.band == BAND_2G ?
-			    REG_BAND_2G : REG_BAND_5G);
 	/* phymode */
 	if (pProfile->ChannelInfo.freq_list)
 		bss_op_ch_freq = pProfile->ChannelInfo.freq_list[0];
 	pBssConfig->uCfgDot11Mode = csr_roam_get_phy_mode_band_for_bss(
 						mac, pProfile, bss_op_ch_freq,
-						&pBssConfig->band);
+						&band);
 	/* QOS */
 	/* Is this correct to always set to this // *** */
 	if (pBssConfig->BssCap.ess == 1) {
@@ -3424,24 +3407,11 @@ QDF_STATUS csr_roam_prepare_bss_config_from_profile(
 	}
 	/* short slot time */
 	if (WNI_CFG_PHY_MODE_11B != pBssConfig->uCfgDot11Mode) {
-		pBssConfig->uShortSlotTime =
+		mac->mlme_cfg->feature_flags.enable_short_slot_time_11g =
 			mac->mlme_cfg->ht_caps.short_slot_time_enabled;
 	} else {
-		pBssConfig->uShortSlotTime = 0;
+		mac->mlme_cfg->feature_flags.enable_short_slot_time_11g = 0;
 	}
-	pBssConfig->f11hSupport = false;
-	pBssConfig->uPowerLimit = 0;
-	/* heartbeat */
-	if (REG_BAND_5G == pBssConfig->band ||
-	    REG_BAND_6G == pBssConfig->band) {
-		pBssConfig->uHeartBeatThresh =
-			mac->roam.configParam.HeartbeatThresh50;
-	} else {
-		pBssConfig->uHeartBeatThresh =
-			mac->mlme_cfg->timeouts.heart_beat_threshold;
-	}
-	/* Join timeout */
-	pBssConfig->uJoinTimeOut = cfg_default(CFG_JOIN_FAILURE_TIMEOUT);
 
 	return status;
 }
@@ -4043,12 +4013,6 @@ QDF_STATUS csr_roam_set_bss_config_cfg(struct mac_context *mac, uint32_t session
 	 * Do we need to worry about sequence for OSs that are not Windows??
 	 */
 	if (bss_desc) {
-		if ((wlan_get_opmode_from_vdev_id(mac->pdev, sessionId) !=
-		      QDF_SAP_MODE) &&
-		     csr_learn_11dcountry_information(mac,
-						      bss_desc, pIes, true)) {
-			csr_apply_country_information(mac);
-		}
 		if ((wlan_reg_11d_enabled_on_host(mac->psoc)) && pIes) {
 			if (!pIes->Country.present)
 				csr_apply_channel_power_info_wrapper(mac);
@@ -4064,11 +4028,6 @@ QDF_STATUS csr_roam_set_bss_config_cfg(struct mac_context *mac, uint32_t session
 
 	/* encryption type */
 	csr_set_cfg_privacy(mac, pProfile, (bool) pBssConfig->BssCap.privacy);
-	/* short slot time */
-	mac->mlme_cfg->feature_flags.enable_short_slot_time_11g =
-						pBssConfig->uShortSlotTime;
-
-	mac->mlme_cfg->power.local_power_constraint = pBssConfig->uPowerLimit;
 	/* CB */
 
 	if (CSR_IS_INFRA_AP(pProfile))
@@ -4089,9 +4048,6 @@ QDF_STATUS csr_roam_set_bss_config_cfg(struct mac_context *mac, uint32_t session
 				     pProfile, bss_desc, pIes, sessionId);
 	else
 		csr_set_cfg_rate_set_from_profile(mac, pProfile, sessionId);
-
-	mac->mlme_cfg->timeouts.join_failure_timeout =
-		pBssConfig->uJoinTimeOut;
 
 	/* Any roaming related changes should be above this line */
 	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(mac->psoc, sessionId)) {
@@ -13078,6 +13034,14 @@ QDF_STATUS cm_csr_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	csr_set_qos_to_cfg(mac_ctx, vdev_id,
+			   csr_get_qos_from_bss_desc(mac_ctx, bss_desc,
+						     ie_struct));
+
+	if ((wlan_reg_11d_enabled_on_host(mac_ctx->psoc)) &&
+	     !ie_struct->Country.present)
+		csr_apply_channel_power_info_wrapper(mac_ctx);
+
 	status = csr_get_rate_set(mac_ctx, ie_struct, &op_rate_set,
 				  &ext_rate_set);
 
@@ -13681,35 +13645,6 @@ csr_validate_and_update_fils_info(struct mac_context *mac,
 }
 #endif
 
-#if defined(WLAN_FEATURE_11AX) && defined(WLAN_SUPPORT_TWT)
-/**
- * csr_enable_twt() - Check if its allowed to enable twt for this session
- * @ie: pointer to beacon/probe resp ie's
- *
- * TWT is allowed only if device is in 11ax mode and peer supports
- * TWT responder or if QCN ie present.
- *
- * Return: true or flase
- */
-static bool csr_enable_twt(struct mac_context *mac_ctx, tDot11fBeaconIEs *ie)
-{
-
-	if (mac_ctx->mlme_cfg->he_caps.dot11_he_cap.twt_request && ie &&
-	    (ie->qcn_ie.present || ie->he_cap.twt_responder)) {
-		sme_debug("TWT is supported, hence disable UAPSD; twt req supp: %d,twt respon supp: %d, QCN_IE: %d",
-			  mac_ctx->mlme_cfg->he_caps.dot11_he_cap.twt_request,
-			  ie->he_cap.twt_responder, ie->qcn_ie.present);
-		return true;
-	}
-	return false;
-}
-#else
-static bool csr_enable_twt(struct mac_context *mac_ctx, tDot11fBeaconIEs *ie)
-{
-	return false;
-}
-#endif
-
 static void csr_get_basic_rates(tSirMacRateSet *b_rates, uint32_t chan_freq)
 {
 	/*
@@ -13821,8 +13756,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 	uint32_t dot11mode = 0;
 	uint8_t *wpaRsnIE = NULL;
 	struct join_req *csr_join_req;
-	struct ps_global_info *ps_global_info = &mac->sme.ps_global_info;
-	struct ps_params *ps_param = &ps_global_info->ps_params[sessionId];
 	tpCsrNeighborRoamControlInfo neigh_roam_info;
 	enum csr_akm_type akm;
 	uint8_t programmed_country[REG_ALPHA2_LEN + 1];
@@ -13939,8 +13872,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		status =
 			csr_get_rate_set(mac, pIes, &OpRateSet,
 					 &ExRateSet);
-		if (!csr_enable_twt(mac, pIes))
-			ps_param->uapsd_per_ac_bit_mask = pProfile->uapsd_mask;
+
 		if (QDF_IS_STATUS_SUCCESS(status)) {
 			/* OperationalRateSet */
 			if (OpRateSet.numRates) {

@@ -167,6 +167,52 @@ enum sir_roam_op_code {
 	SIR_ROAMING_DEAUTH,
 };
 
+/**
+ * enum ps_state - State of the power save
+ * @FULL_POWER_MODE: for Full power mode
+ * @LEGACY_POWER_SAVE_MODE: For Legacy Power Save mode
+ * @UAPSD_MODE: for UAPSD power save
+ */
+enum ps_state {
+	FULL_POWER_MODE,
+	LEGACY_POWER_SAVE_MODE,
+	UAPSD_MODE
+};
+
+/**
+ * struct ps_params - maintain power save state and USAPD params
+ * @mac_ctx: mac_ctx
+ * @session_id: Session Id.
+ * @ps_state : State of the power save
+ * @uapsd_per_ac_trigger_enable_mask: dynamic UPASD mask setting
+ *		derived from AddTS Rsp and DelTS frame.
+ *		If a particular AC bit is set, it means AC is trigger  enabled.
+ * @uapsd_per_ac_delivery_enable_mask: dynamic UPASD mask setting
+ *		derived from AddTS Rsp and DelTs frame.
+ *		If a particular AC bit is set, it means AC is delivery enabled.
+ * @ac_admit_mask: used for AC downgrade. This is a dynamic mask
+ *		setting which keep tracks of ACs being admitted.
+ *		If bit is set to 0: That particular AC is not admitted
+ *		If bit is set to 1: That particular AC is admitted
+ * @uapsd_per_ac_bit_mask: This is a static UAPSD mask setting
+ *		derived from SME_JOIN_REQ and SME_REASSOC_REQ.
+ *		If a particular AC bit is set, it means the AC is both
+ *		trigger enabled and delivery enabled.
+ * @auto_ps_enable_timer: Upon expiration of this timer	Power Save Offload
+ *		module will try to enable sta mode ps
+ */
+
+struct ps_params {
+	void *mac_ctx;
+	uint32_t     session_id;
+	enum    ps_state ps_state;
+	uint8_t uapsd_per_ac_trigger_enable_mask;
+	uint8_t uapsd_per_ac_delivery_enable_mask;
+	uint8_t ac_admit_mask[SIR_MAC_DIRECTION_DIRECT];
+	uint8_t uapsd_per_ac_bit_mask;
+	qdf_mc_timer_t auto_ps_enable_timer;
+};
+
 /* Type declarations used by Firmware and Host software */
 
 /* Scan type enum used in scan request */
