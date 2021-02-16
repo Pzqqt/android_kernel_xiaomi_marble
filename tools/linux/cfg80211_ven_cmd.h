@@ -797,6 +797,7 @@ enum {
 	IEEE80211_PARAM_VAP_MESH_TID_CONFIG     = 732,   /* Configure TID latency  */
 	IEEE80211_PARAM_PEER_TID_LATENCY_ENABLE    = 733,   /* Enable per peer tid latency  */
 	IEEE80211_PARAM_AP_CHAN_RPT_SSID_FILTER    = 734,   /* enable/disable inclusion of AP Channel Report IE in Beacon/Probe-Rsp */
+	IEEE80211_PARAM_WLAN_SCHED_TIMEOUT         = 735,
 };
 
 enum {
@@ -2084,6 +2085,7 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"ser_history",         IEEE80211_PARAM_WLAN_SER_HISTORY, SET_PARAM, 2},
 #endif
 	{"print_rl",            IEEE80211_PARAM_WLAN_PRINT_RL, SET_PARAM, 2},
+	{"sched_timeout",       IEEE80211_PARAM_WLAN_SCHED_TIMEOUT, SET_PARAM, 1},
 	{"da_wds_war",          IEEE80211_PARAM_DA_WAR_ENABLE, SET_PARAM, 1},
 	{"g_da_wds_war",        IEEE80211_PARAM_DA_WAR_ENABLE, GET_PARAM, 0},
 	{"advertise_sta_maxcap",    IEEE80211_PARAM_STA_MAX_CH_CAP, SET_PARAM, 1},
