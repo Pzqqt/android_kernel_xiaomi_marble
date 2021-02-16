@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -21,6 +21,7 @@
 #include "qdf_types.h"
 #include "qdf_lock.h"
 #include "qdf_mem.h"
+#include "qdf_trace.h"
 #include "rx_msdu_link.h"
 #include "rx_reo_queue.h"
 #include "rx_reo_queue_ext.h"
@@ -28,24 +29,15 @@
 #include "tlv_hdr.h"
 #include "tlv_tag_def.h"
 #include "reo_destination_ring.h"
-#include "reo_reg_seq_hwioreg.h"
 #include "reo_entrance_ring.h"
 #include "reo_get_queue_stats.h"
 #include "reo_get_queue_stats_status.h"
 #include "tcl_data_cmd.h"
 #include "tcl_gse_cmd.h"
 #include "tcl_status_ring.h"
-#include "mac_tcl_reg_seq_hwioreg.h"
 #include "ce_src_desc.h"
 #include "ce_stat_desc.h"
-#ifdef QCA_WIFI_QCA6490
-#include "wfss_ce_channel_dst_reg_seq_hwioreg.h"
-#include "wfss_ce_channel_src_reg_seq_hwioreg.h"
-#else
-#include "wfss_ce_reg_seq_hwioreg.h"
-#endif /* QCA_WIFI_QCA6490 */
 #include "wbm_link_descriptor_ring.h"
-#include "wbm_reg_seq_hwioreg.h"
 #include "wbm_buffer_ring.h"
 #include "wbm_release_ring.h"
 #include "rx_msdu_desc_info.h"
@@ -87,6 +79,39 @@
 /* TODO: Check if the following can be provided directly by HW headers */
 #define SRNG_LOOP_CNT_MASK REO_DESTINATION_RING_15_LOOPING_COUNT_MASK
 #define SRNG_LOOP_CNT_LSB REO_DESTINATION_RING_15_LOOPING_COUNT_LSB
+
+#define HAL_REO_R0_REO2SW1_RING_MSI1_BASE_MSB_ADDR_SHFT		0x0
+#define HAL_REO_R0_REO2SW1_RING_MSI1_BASE_MSB_ADDR_BMSK		0xff
+
+#define HAL_REO_R0_REO2SW1_RING_MSI1_BASE_MSB_MSI1_ENABLE_SHFT	0x8
+#define HAL_REO_R0_REO2SW1_RING_MSI1_BASE_MSB_MSI1_ENABLE_BMSK	0x100
+
+#define HAL_REO_R0_REO2SW1_RING_BASE_MSB_RING_BASE_ADDR_MSB_SHFT	0x0
+#define HAL_REO_R0_REO2SW1_RING_BASE_MSB_RING_BASE_ADDR_MSB_BMSK	0xff
+
+#define HAL_REO_R0_REO2SW1_RING_BASE_MSB_RING_SIZE_SHFT		0x8
+#define HAL_REO_R0_REO2SW1_RING_BASE_MSB_RING_SIZE_BMSK		0xfffff00
+
+#define HAL_REO_R0_REO2SW1_RING_ID_RING_ID_SHFT		0x8
+#define HAL_REO_R0_REO2SW1_RING_ID_RING_ID_BMSK		0x0000ff00
+
+#define HAL_REO_R0_REO2SW1_RING_ID_ENTRY_SIZE_SHFT	0x0
+#define HAL_REO_R0_REO2SW1_RING_ID_ENTRY_SIZE_BMSK	0xff
+
+#define HAL_REO_R0_REO2SW1_RING_PRODUCER_INT_SETUP_INTERRUPT_TIMER_THRESHOLD_SHFT	0x10
+#define HAL_REO_R0_REO2SW1_RING_PRODUCER_INT_SETUP_INTERRUPT_TIMER_THRESHOLD_BMSK	0xffff0000
+
+#define HAL_REO_R0_REO2SW1_RING_PRODUCER_INT_SETUP_BATCH_COUNTER_THRESHOLD_SHFT		0x0
+#define HAL_REO_R0_REO2SW1_RING_PRODUCER_INT_SETUP_BATCH_COUNTER_THRESHOLD_BMSK		0x00007fff
+
+#define HAL_REO_R0_REO2SW1_RING_MISC_DATA_TLV_SWAP_BIT_SHFT	0x5
+#define HAL_REO_R0_REO2SW1_RING_MISC_DATA_TLV_SWAP_BIT_BMSK	0x20
+
+#define HAL_REO_R0_REO2SW1_RING_MISC_HOST_FW_SWAP_BIT_SHFT	0x4
+#define HAL_REO_R0_REO2SW1_RING_MISC_HOST_FW_SWAP_BIT_BMSK	0x10
+
+#define HAL_REO_R0_REO2SW1_RING_MISC_MSI_SWAP_BIT_SHFT		0x3
+#define HAL_REO_R0_REO2SW1_RING_MISC_MSI_SWAP_BIT_BMSK		0x8
 
 /* HAL Macro to get the buffer info size */
 #define HAL_RX_BUFFINFO_NUM_DWORDS NUM_OF_DWORDS_BUFFER_ADDR_INFO
@@ -201,7 +226,7 @@
 	HWIO_TCL_ ## _reg_group ## _SW2TCL1_RING_ ## _reg ## _ADDR(0)
 
 #define _SRNG_DST_FLD(_reg_group, _reg_fld) \
-	HWIO_REO_ ## _reg_group ## _REO2SW1_RING_ ## _reg_fld
+	HAL_REO_ ## _reg_group ## _REO2SW1_RING_ ## _reg_fld
 #define _SRNG_SRC_FLD(_reg_group, _reg_fld) \
 	HWIO_TCL_ ## _reg_group ## _SW2TCL1_RING_ ## _reg_fld
 
@@ -322,24 +347,26 @@ SRC_CONSUMER_INT_SETUP_IX1,
  * hal_set_link_desc_addr - Setup link descriptor in a buffer_addr_info
  * HW structure
  *
+ * @hal_soc_hdl: HAL soc handle
  * @desc: Descriptor entry (from WBM_IDLE_LINK ring)
  * @cookie: SW cookie for the buffer/descriptor
  * @link_desc_paddr: Physical address of link descriptor entry
  *
  */
-static inline void hal_set_link_desc_addr(void *desc, uint32_t cookie,
-	qdf_dma_addr_t link_desc_paddr)
+static inline void hal_set_link_desc_addr(hal_soc_handle_t hal_soc_hdl,
+					  void *desc, uint32_t cookie,
+					  qdf_dma_addr_t link_desc_paddr)
 {
-	uint32_t *buf_addr = (uint32_t *)desc;
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	HAL_DESC_SET_FIELD(buf_addr, BUFFER_ADDR_INFO_0, BUFFER_ADDR_31_0,
-			   link_desc_paddr & 0xffffffff);
-	HAL_DESC_SET_FIELD(buf_addr, BUFFER_ADDR_INFO_1, BUFFER_ADDR_39_32,
-			   (uint64_t)link_desc_paddr >> 32);
-	HAL_DESC_SET_FIELD(buf_addr, BUFFER_ADDR_INFO_1, RETURN_BUFFER_MANAGER,
-			   WBM_IDLE_DESC_LIST);
-	HAL_DESC_SET_FIELD(buf_addr, BUFFER_ADDR_INFO_1, SW_BUFFER_COOKIE,
-			   cookie);
+	if ((!hal_soc) || (!hal_soc->ops)) {
+		hal_err("hal handle is NULL");
+		return;
+	}
+
+	if (hal_soc->ops->hal_set_link_desc_addr)
+		hal_soc->ops->hal_set_link_desc_addr(desc, cookie,
+						     link_desc_paddr);
 }
 
 /**
