@@ -375,6 +375,14 @@ struct sde_connector_ops {
 			void *display);
 
 	/**
+	 * set_dyn_bit_clk - set target dynamic clock rate
+	 * @connector: Pointer to drm connector structure
+	 * @value: Target dynamic clock rate
+	 * Returns: Zero on success
+	 */
+	int (*set_dyn_bit_clk)(struct drm_connector *connector, uint64_t value);
+
+	/**
 	 * get_qsync_min_fps - Get qsync min fps from qsync-min-fps-list
 	 * @display: Pointer to private display structure
 	 * @mode_fps: Fps value in dfps list
@@ -960,6 +968,14 @@ int sde_connector_set_blob_data(struct drm_connector *conn,
  * Returns: Zero on success
  */
 int sde_connector_roi_v1_check_roi(struct drm_connector_state *conn_state);
+
+/**
+ * sde_connector_set_dyn_bit_clk - set dynamic bit clock
+ * @conn: Pointer to drm_connector struct
+ * @value: Property value
+ * Returns: Zero on success
+ */
+int sde_connector_set_dyn_bit_clk(struct drm_connector *conn, uint64_t value);
 
 /**
  * sde_connector_schedule_status_work - manage ESD thread

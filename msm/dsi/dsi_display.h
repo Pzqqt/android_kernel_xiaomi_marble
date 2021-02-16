@@ -154,6 +154,8 @@ struct dsi_display_ext_bridge {
  *		      index into the ctrl[MAX_DSI_CTRLS_PER_DISPLAY] array.
  * @cmd_master_idx:   The master controller for sending DSI commands to panel.
  * @video_master_idx: The master controller for enabling video engine.
+ * @dyn_bit_clk:      The DSI bit clock rate dynamically set by user mode client.
+ * @dyn_bit_clk_pending: Flag indicating the pending DSI dynamic bit clock rate change.
  * @cached_clk_rate:  The cached DSI clock rate set dynamically by sysfs.
  * @clkrate_change_pending: Flag indicating the pending DSI clock re-enabling.
  * @clock_info:       Clock sourcing for DSI display.
@@ -225,7 +227,9 @@ struct dsi_display {
 	u32 video_master_idx;
 
 	/* dynamic DSI clock info*/
-	u32  cached_clk_rate;
+	u32 dyn_bit_clk;
+	bool dyn_bit_clk_pending;
+	u32 cached_clk_rate;
 	atomic_t clkrate_change_pending;
 
 	struct dsi_display_clk_info clock_info;
@@ -775,5 +779,22 @@ int dsi_display_get_panel_vfp(void *display,
  * Return: Zero on Success
  */
 int dsi_display_dump_clks_state(struct dsi_display *display);
+
+/**
+ * dsi_display_update_dyn_bit_clk() - update mode timing to compensate for dynamic bit clock
+ * @display:         Handle to display
+ * @mode:            Mode to be updated
+ * Return: Zero on Success
+ */
+int dsi_display_update_dyn_bit_clk(struct dsi_display *display, struct dsi_display_mode *mode);
+
+/**
+ * dsi_display_restore_bit_clk() - restore mode bit clock rate value from dynamic bit clock
+ * @display:         Handle to display
+ * @mode:            Mode to be updated
+ * Return: Zero on Success
+ */
+int dsi_display_restore_bit_clk(struct dsi_display *display, struct dsi_display_mode *mode);
+
 
 #endif /* _DSI_DISPLAY_H_ */

@@ -6726,6 +6726,29 @@ static void _dsi_display_populate_bit_clks(struct dsi_display *display,
 	}
 }
 
+int dsi_display_restore_bit_clk(struct dsi_display *display, struct dsi_display_mode *mode)
+{
+	u32 clk_rate_hz = 0;
+
+	if (!display || !mode || !mode->priv_info) {
+		DSI_ERR("invalid arguments\n");
+		return -EINVAL;
+	}
+
+	/* for dynamic DSI use specified clock rate otherwise restore clock rate */
+	if (display->dyn_bit_clk > 0)
+		clk_rate_hz = display->dyn_bit_clk;
+	else if (display->cached_clk_rate > 0)
+		clk_rate_hz = display->cached_clk_rate;
+
+	mode->timing.clk_rate_hz = clk_rate_hz;
+	mode->priv_info->clk_rate_hz = clk_rate_hz;
+	DSI_DEBUG("dyn_bit_clk:%u, cached_clk_rate:%u, clk_rate_hz:%u\n",
+			display->dyn_bit_clk, display->cached_clk_rate, clk_rate_hz);
+
+	return 0;
+}
+
 void dsi_display_put_mode(struct dsi_display *display,
 	struct dsi_display_mode *mode)
 {
@@ -7237,9 +7260,11 @@ int dsi_display_set_mode(struct dsi_display *display,
 		}
 	}
 
-	/*For dynamic DSI setting, use specified clock rate */
-	if (display->cached_clk_rate > 0)
-		adj_mode.priv_info->clk_rate_hz = display->cached_clk_rate;
+	rc = dsi_display_restore_bit_clk(display, &adj_mode);
+	if (rc) {
+		DSI_ERR("[%s] bit clk rate cannot be restored\n", display->name);
+		goto error;
+	}
 
 	rc = dsi_display_validate_mode_set(display, &adj_mode, flags);
 	if (rc) {
@@ -7253,11 +7278,13 @@ int dsi_display_set_mode(struct dsi_display *display,
 		goto error;
 	}
 
-	DSI_INFO("mdp_transfer_time=%d, hactive=%d, vactive=%d, fps=%d\n",
+	DSI_INFO("mdp_transfer_time=%d, hactive=%d, vactive=%d, fps=%d, clk_rate=%llu\n",
 			adj_mode.priv_info->mdp_transfer_time_us,
-			timing.h_active, timing.v_active, timing.refresh_rate);
+			timing.h_active, timing.v_active, timing.refresh_rate,
+			adj_mode.priv_info->clk_rate_hz);
 	SDE_EVT32(adj_mode.priv_info->mdp_transfer_time_us,
-			timing.h_active, timing.v_active, timing.refresh_rate);
+			timing.h_active, timing.v_active, timing.refresh_rate,
+			adj_mode.priv_info->clk_rate_hz);
 
 	memcpy(display->panel->cur_mode, &adj_mode, sizeof(adj_mode));
 error:
@@ -8362,6 +8389,62 @@ int dsi_display_update_pps(char *pps_cmd, void *disp)
 	mutex_lock(&display->display_lock);
 	memcpy(display->panel->dce_pps_cmd, pps_cmd, DSI_CMD_PPS_SIZE);
 	mutex_unlock(&display->display_lock);
+
+	return 0;
+}
+
+int dsi_display_update_dyn_bit_clk(struct dsi_display *display,
+			struct dsi_display_mode *mode)
+{
+	struct dsi_dyn_clk_caps *dyn_clk_caps;
+	struct dsi_host_common_cfg *host_cfg;
+	int bpp, lanes = 0;
+
+	if (!display || !mode) {
+		DSI_ERR("invalid arguments\n");
+		return -EINVAL;
+	}
+
+	dyn_clk_caps = &(display->panel->dyn_clk_caps);
+	if (!dyn_clk_caps->dyn_clk_support) {
+		DSI_DEBUG("dynamic bit clock support not enabled\n");
+		return 0;
+	} else if (!display->dyn_bit_clk_pending) {
+		DSI_DEBUG("dynamic bit clock rate not updated\n");
+		return 0;
+	} else if (display->dyn_bit_clk < mode->priv_info->min_dsi_clk_hz) {
+		DSI_ERR("dynamic bit clock rate %llu smaller than minimum value:%llu\n",
+				display->dyn_bit_clk, mode->priv_info->min_dsi_clk_hz);
+		return -EINVAL;
+	}
+
+	/* update mode clk rate with user value */
+	mode->timing.clk_rate_hz = display->dyn_bit_clk;
+	mode->priv_info->clk_rate_hz = display->dyn_bit_clk;
+
+	host_cfg = &(display->panel->host_config);
+	bpp = dsi_pixel_format_to_bpp(host_cfg->dst_format);
+
+	if (host_cfg->data_lanes & DSI_DATA_LANE_0)
+		lanes++;
+	if (host_cfg->data_lanes & DSI_DATA_LANE_1)
+		lanes++;
+	if (host_cfg->data_lanes & DSI_DATA_LANE_2)
+		lanes++;
+	if (host_cfg->data_lanes & DSI_DATA_LANE_3)
+		lanes++;
+
+	dsi_display_adjust_mode_timing(display, mode, lanes, bpp);
+
+	/* adjust pixel clock based on dynamic bit clock */
+	mode->pixel_clk_khz = div_u64(mode->timing.clk_rate_hz * lanes, bpp);
+	do_div(mode->pixel_clk_khz, 1000);
+	mode->pixel_clk_khz *= display->ctrl_count;
+	DSI_DEBUG("dynamic bit clk:%u, min dsi clk:%llu, lanes:%d, bpp:%d, pck:%d Khz\n",
+			display->dyn_bit_clk, mode->priv_info->min_dsi_clk_hz, lanes, bpp,
+			mode->pixel_clk_khz);
+
+	display->dyn_bit_clk_pending = false;
 
 	return 0;
 }
