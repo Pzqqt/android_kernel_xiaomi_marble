@@ -6678,12 +6678,11 @@ static void _dsi_display_populate_bit_clks(struct dsi_display *display,
 		src = &display->modes[i];
 		if (!src)
 			return;
-		/*
-		 * TODO: currently setting the first bit rate in
-		 * the list as preferred rate. But ideally should
-		 * be based on user or device tree preferrence.
-		 */
-		src->timing.clk_rate_hz = dyn_clk_caps->bit_clk_list[0];
+
+		if (!src->priv_info->bit_clk_list.count)
+			continue;
+
+		src->timing.clk_rate_hz = src->priv_info->bit_clk_list.rates[0];
 
 		dsi_display_adjust_mode_timing(display, src, lanes, bpp);
 
@@ -6728,6 +6727,7 @@ static void _dsi_display_populate_bit_clks(struct dsi_display *display,
 
 int dsi_display_restore_bit_clk(struct dsi_display *display, struct dsi_display_mode *mode)
 {
+	int i;
 	u32 clk_rate_hz = 0;
 
 	if (!display || !mode || !mode->priv_info) {
@@ -6735,17 +6735,24 @@ int dsi_display_restore_bit_clk(struct dsi_display *display, struct dsi_display_
 		return -EINVAL;
 	}
 
-	/* for dynamic DSI use specified clock rate otherwise restore clock rate */
-	if (display->dyn_bit_clk > 0)
-		clk_rate_hz = display->dyn_bit_clk;
-	else if (display->cached_clk_rate > 0)
-		clk_rate_hz = display->cached_clk_rate;
+	clk_rate_hz = display->cached_clk_rate;
+
+	if (mode->priv_info->bit_clk_list.count) {
+		/* use first entry as the default bit clk rate */
+		clk_rate_hz = mode->priv_info->bit_clk_list.rates[0];
+
+		for (i = 0; i < mode->priv_info->bit_clk_list.count; i++) {
+			if (display->dyn_bit_clk == mode->priv_info->bit_clk_list.rates[i])
+				clk_rate_hz = display->dyn_bit_clk;
+		}
+	}
 
 	mode->timing.clk_rate_hz = clk_rate_hz;
 	mode->priv_info->clk_rate_hz = clk_rate_hz;
-	DSI_DEBUG("dyn_bit_clk:%u, cached_clk_rate:%u, clk_rate_hz:%u\n",
-			display->dyn_bit_clk, display->cached_clk_rate, clk_rate_hz);
 
+	SDE_EVT32(clk_rate_hz, display->cached_clk_rate, display->dyn_bit_clk);
+	DSI_DEBUG("clk_rate_hz:%u, cached_clk_rate:%u, dyn_bit_clk:%u\n",
+			clk_rate_hz, display->cached_clk_rate, display->dyn_bit_clk);
 	return 0;
 }
 
@@ -8412,6 +8419,9 @@ int dsi_display_update_dyn_bit_clk(struct dsi_display *display,
 	} else if (!display->dyn_bit_clk_pending) {
 		DSI_DEBUG("dynamic bit clock rate not updated\n");
 		return 0;
+	} else if (!display->dyn_bit_clk) {
+		DSI_DEBUG("dynamic bit clock rate cleared\n");
+		return 0;
 	} else if (display->dyn_bit_clk < mode->priv_info->min_dsi_clk_hz) {
 		DSI_ERR("dynamic bit clock rate %llu smaller than minimum value:%llu\n",
 				display->dyn_bit_clk, mode->priv_info->min_dsi_clk_hz);
@@ -8440,6 +8450,8 @@ int dsi_display_update_dyn_bit_clk(struct dsi_display *display,
 	mode->pixel_clk_khz = div_u64(mode->timing.clk_rate_hz * lanes, bpp);
 	do_div(mode->pixel_clk_khz, 1000);
 	mode->pixel_clk_khz *= display->ctrl_count;
+
+	SDE_EVT32(display->dyn_bit_clk, mode->priv_info->min_dsi_clk_hz, mode->pixel_clk_khz);
 	DSI_DEBUG("dynamic bit clk:%u, min dsi clk:%llu, lanes:%d, bpp:%d, pck:%d Khz\n",
 			display->dyn_bit_clk, mode->priv_info->min_dsi_clk_hz, lanes, bpp,
 			mode->pixel_clk_khz);

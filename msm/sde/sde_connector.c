@@ -2623,6 +2623,12 @@ static int sde_connector_populate_mode_info(struct drm_connector *conn,
 		sde_kms_info_add_keyint(info, "bit_clk_rate",
 					mode_info.clk_rate);
 
+		if (mode_info.bit_clk_count > 0)
+			sde_kms_info_add_list(info, "dyn_bitclk_list",
+					mode_info.bit_clk_rates,
+					mode_info.bit_clk_count);
+
+
 		topology_idx = (int)sde_rm_get_topology_name(&sde_kms->rm,
 					mode_info.topology);
 		if (topology_idx < SDE_RM_TOPOLOGY_MAX) {
@@ -2761,11 +2767,9 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 	struct msm_display_info *display_info)
 {
 	struct dsi_display *dsi_display;
-	int rc, i;
+	int rc;
 	struct drm_connector *connector;
 	u64 panel_id = ~0x0;
-	struct dsi_dyn_clk_caps *dyn_clk_caps;
-	u32 max_bit_clk;
 
 	msm_property_install_blob(&c_conn->property_info, "capabilities",
 			DRM_MODE_PROP_IMMUTABLE, CONNECTOR_PROP_SDE_INFO);
@@ -2800,17 +2804,10 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 		}
 
 		if (dsi_display && dsi_display->panel &&
-				dsi_display->panel->dyn_clk_caps.dyn_clk_support) {
-
-			dyn_clk_caps = &dsi_display->panel->dyn_clk_caps;
-			max_bit_clk = dyn_clk_caps->bit_clk_list[0];
-			for (i = 1; i < dyn_clk_caps->bit_clk_list_len; i++)
-				max_bit_clk = max(dyn_clk_caps->bit_clk_list[i], max_bit_clk);
-
+				dsi_display->panel->dyn_clk_caps.dyn_clk_support)
 			msm_property_install_range(&c_conn->property_info, "dyn_bit_clk",
-					0x0, 0, max_bit_clk, max_bit_clk,
-					CONNECTOR_PROP_DYN_BIT_CLK);
-		}
+					0x0, 0, ~0, 0, CONNECTOR_PROP_DYN_BIT_CLK);
+
 
 		mutex_lock(&c_conn->base.dev->mode_config.mutex);
 		sde_connector_fill_modes(&c_conn->base,

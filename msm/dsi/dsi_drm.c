@@ -579,6 +579,13 @@ int dsi_conn_get_mode_info(struct drm_connector *connector,
 	memcpy(&mode_info->topology, &dsi_mode->priv_info->topology,
 			sizeof(struct msm_display_topology));
 
+	if (dsi_mode->priv_info->bit_clk_list.count) {
+		mode_info->bit_clk_rates =
+				dsi_mode->priv_info->bit_clk_list.rates;
+		mode_info->bit_clk_count =
+				dsi_mode->priv_info->bit_clk_list.count;
+	}
+
 	if (dsi_mode->priv_info->dsc_enabled) {
 		mode_info->comp_info.comp_type = MSM_DISPLAY_COMPRESSION_DSC;
 		mode_info->topology.comp_type = MSM_DISPLAY_COMPRESSION_DSC;
@@ -696,11 +703,6 @@ int dsi_conn_set_info_blob(struct drm_connector *connector,
 
 	sde_kms_info_add_keystr(info, "dyn bitclk support",
 			panel->dyn_clk_caps.dyn_clk_support ? "true" : "false");
-
-	if (panel->dyn_clk_caps.dyn_clk_support)
-		sde_kms_info_add_list(info, "dyn_bitclk_list",
-				panel->dyn_clk_caps.bit_clk_list,
-				panel->dyn_clk_caps.bit_clk_list_len);
 
 	switch (panel->phy_props.rotation) {
 	case DSI_PANEL_ROTATE_NONE:
@@ -1297,12 +1299,8 @@ void dsi_conn_set_allowed_mode_switch(struct drm_connector *connector,
 
 int dsi_conn_set_dyn_bit_clk(struct drm_connector *connector, uint64_t value)
 {
-	int i;
-	bool is_valid = false;
 	struct sde_connector *c_conn = NULL;
-	struct sde_connector_state *c_state;
 	struct dsi_display *display;
-	struct dsi_dyn_clk_caps *dyn_clk_caps;
 
 	if (!connector) {
 		DSI_ERR("invalid connector\n");
@@ -1310,25 +1308,12 @@ int dsi_conn_set_dyn_bit_clk(struct drm_connector *connector, uint64_t value)
 	}
 
 	c_conn = to_sde_connector(connector);
-	c_state = to_sde_connector_state(connector->state);
-
 	display = (struct dsi_display *) c_conn->display;
-	dyn_clk_caps = &display->panel->dyn_clk_caps;
-
-	for (i = 0; i < dyn_clk_caps->bit_clk_list_len; i++) {
-		if (dyn_clk_caps->bit_clk_list[i] == value) {
-			is_valid = true;
-			break;
-		}
-	}
-
-	if (!is_valid) {
-		DSI_ERR("invalid dynamic bit clock rate selection %llu\n", value);
-		return -EINVAL;
-	}
 
 	display->dyn_bit_clk = value;
 	display->dyn_bit_clk_pending = true;
+
+	SDE_EVT32(display->dyn_bit_clk);
 	DSI_DEBUG("update dynamic bit clock rate to %llu\n", display->dyn_bit_clk);
 
 	return 0;

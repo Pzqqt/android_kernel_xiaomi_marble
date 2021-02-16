@@ -703,6 +703,8 @@ struct msm_display_topology {
  * @mdp_transfer_time_us   Specifies the mdp transfer time for command mode
  *                         panels in microseconds.
  * @allowed_mode_switches: bit mask to indicate supported mode switch.
+ * @bit_clk_rates: list of supported bit clock rates
+ * @bit_clk_count: number of supported bit clock rates
  */
 struct msm_mode_info {
 	uint32_t frame_rate;
@@ -719,6 +721,8 @@ struct msm_mode_info {
 	u32 panel_mode_caps;
 	u32 mdp_transfer_time_us;
 	u32 allowed_mode_switches;
+	u32 *bit_clk_rates;
+	u32 bit_clk_count;
 };
 
 /**
