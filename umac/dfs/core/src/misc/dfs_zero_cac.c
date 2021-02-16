@@ -1844,7 +1844,7 @@ static qdf_freq_t dfs_find_rcac_chan(struct wlan_dfs *dfs,
 
 		dfs_fill_des_rcac_chan_params(dfs,
 					      &nxt_chan_params,
-					      curchan_chwidth);
+					      agile_chwidth);
 
 		/* The current dfs channel width may not be supported by the
 		 * agile engine. For example, some chips may support
