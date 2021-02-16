@@ -597,9 +597,6 @@ void hal_rx_mpdu_desc_info_get_be(void *desc_addr,
 	mpdu_info = (uint32_t *)&reo_dst_ring->rx_mpdu_desc_info_details;
 
 	mpdu_desc_info->msdu_count = HAL_RX_MPDU_MSDU_COUNT_GET(mpdu_info);
-// TODO - MPDU Sequence number is not there in hamilton
-// mpdu_seq is just used for printing at two places
-//	mpdu_desc_info->mpdu_seq = HAL_RX_MPDU_SEQUENCE_NUMBER_GET(mpdu_info);
 	mpdu_desc_info->mpdu_flags = hal_rx_get_mpdu_flags(mpdu_info);
 	mpdu_desc_info->peer_meta_data =
 		HAL_RX_MPDU_DESC_PEER_META_DATA_GET(mpdu_info);

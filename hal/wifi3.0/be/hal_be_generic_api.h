@@ -496,8 +496,8 @@ hal_rx_status_get_tlv_info_generic_be(void *rx_tlv_hdr, void *ppduinfo,
 				ppdu_info->rx_status.chan_num,
 				 ppdu_info->rx_status.chan_freq);
 		}
+#ifdef DP_BE_NOTYET_WAR
 		// TODO -  timestamp is changed to 64-bit for wcn7850
-#if 0
 		ppdu_info->com_info.ppdu_timestamp =
 			HAL_RX_GET(rx_tlv, RX_PPDU_START,
 				PPDU_START_TIMESTAMP);
@@ -1386,8 +1386,8 @@ hal_rx_status_get_tlv_info_generic_be(void *rx_tlv_hdr, void *ppduinfo,
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			  "RSSI_PRI20_CHAIN3: %d\n", rssi_value);
 
+#ifdef DP_BE_NOTYET_WAR
 		// TODO - this is not preset for wcn7850
-#if 0
 		rssi_value = HAL_RX_GET(rssi_info_tlv,
 					RECEIVE_RSSI_INFO, RSSI_PRI20_CHAIN4);
 		ppdu_info->rx_status.rssi[4] = rssi_value;

@@ -62,6 +62,8 @@
  */
 #define MAPPED_REF_OFF 0xFE0
 
+#define HAL_OFFSET(block, field) block ## _ ## field ## _OFFSET
+
 #ifdef ENABLE_VERBOSE_DEBUG
 static inline void
 hal_set_verbose_debug(bool flag)
@@ -2295,23 +2297,6 @@ uint32_t hal_get_reo_qdesc_align(hal_soc_handle_t hal_soc_hdl)
 }
 
 /**
- * hal_reo_qdesc_setup - Setup HW REO queue descriptor
- *
- * @hal_soc: Opaque HAL SOC handle
- * @ba_window_size: BlockAck window size
- * @start_seq: Starting sequence number
- * @hw_qdesc_vaddr: Virtual address of REO queue descriptor memory
- * @hw_qdesc_paddr: Physical address of REO queue descriptor memory
- * @pn_type: PN type (one of the types defined in 'enum hal_pn_type')
- *
- */
-void hal_reo_qdesc_setup(hal_soc_handle_t hal_soc_hdl,
-			 int tid, uint32_t ba_window_size,
-			 uint32_t start_seq, void *hw_qdesc_vaddr,
-			 qdf_dma_addr_t hw_qdesc_paddr,
-			 int pn_type);
-
-/**
  * hal_srng_get_hp_addr - Get head pointer physical address
  *
  * @hal_soc: Opaque HAL SOC handle
@@ -2403,24 +2388,6 @@ void hal_get_meminfo(hal_soc_handle_t hal_soc_hdl, struct hal_mem_info *mem);
  */
 uint32_t hal_get_target_type(hal_soc_handle_t hal_soc_hdl);
 
-/**
- * hal_get_ba_aging_timeout - Retrieve BA aging timeout
- *
- * @hal_soc: Opaque HAL SOC handle
- * @ac: Access category
- * @value: timeout duration in millisec
- */
-void hal_get_ba_aging_timeout(hal_soc_handle_t hal_soc_hdl, uint8_t ac,
-			      uint32_t *value);
-/**
- * hal_set_aging_timeout - Set BA aging timeout
- *
- * @hal_soc: Opaque HAL SOC handle
- * @ac: Access category in millisec
- * @value: timeout duration value
- */
-void hal_set_ba_aging_timeout(hal_soc_handle_t hal_soc_hdl, uint8_t ac,
-			      uint32_t value);
 /**
  * hal_srng_dst_hw_init - Private function to initialize SRNG
  * destination ring HW
