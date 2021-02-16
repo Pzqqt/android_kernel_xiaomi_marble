@@ -716,9 +716,7 @@ void dp_peer_tid_queue_init(struct dp_peer *peer)
 		if (qdf_unlikely(!tx_tid->xretry_ppdu)) {
 			int i;
 
-			QDF_TRACE(QDF_MODULE_ID_TXRX,
-					  QDF_TRACE_LEVEL_ERROR,
-					  "Alloc failed");
+			dp_tx_capture_err("Alloc failed");
 			for (i = 0; i < tid; i++) {
 				tx_tid = &peer->tx_capture.tx_tid[i];
 				qdf_mem_free(tx_tid->xretry_ppdu);
@@ -4290,8 +4288,10 @@ dp_send_mgmt_ctrl_to_stack(struct dp_pdev *pdev,
 			wh->i_dur[0] = duration_le & 0xFF;
 			seq_le = qdf_cpu_to_le16(user->start_seq <<
 						 IEEE80211_SEQ_SEQ_SHIFT);
-			wh->i_seq[1] = (seq_le & 0xFF00) >> 8;
-			wh->i_seq[0] = seq_le & 0xFF;
+			if (user->is_seq_num_valid) {
+				wh->i_seq[1] = (seq_le & 0xFF00) >> 8;
+				wh->i_seq[0] = seq_le & 0xFF;
+			}
 		}
 		dp_tx_capture_debug("%pK: ctrl/mgmt frm(0x%08x): fc 0x%x 0x%x\n",
 				    pdev->soc, ptr_tx_cap_info->mpdu_info.ppdu_id,
