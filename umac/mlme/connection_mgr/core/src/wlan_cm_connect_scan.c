@@ -26,7 +26,7 @@
  * Calculation for timeout:
  * 8 sec(time to complete scan on all channels) + 2 sec(buffer)
  */
-#define SCAN_FOR_SSID_TIMEOUT       10000
+#define SCAN_FOR_SSID_TIMEOUT       (PLATFORM_VALUE(10000, 50000))
 
 static QDF_STATUS cm_fill_scan_req(struct cnx_mgr *cm_ctx,
 				   struct cm_connect_req *cm_req,
