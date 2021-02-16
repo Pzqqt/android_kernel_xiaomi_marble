@@ -4048,7 +4048,7 @@ error:
 	return rc;
 }
 
-static int dsi_display_validate_resources(struct dsi_display *display)
+static int dsi_display_res_init(struct dsi_display *display)
 {
 	int rc = 0;
 	int i;
@@ -4061,7 +4061,7 @@ static int dsi_display_validate_resources(struct dsi_display *display)
 			rc = PTR_ERR(ctrl->ctrl);
 			DSI_ERR("failed to get dsi controller, rc=%d\n", rc);
 			ctrl->ctrl = NULL;
-			goto error;
+			goto error_ctrl_put;
 		}
 
 		ctrl->phy = dsi_phy_get(ctrl->phy_of_node);
@@ -4070,24 +4070,9 @@ static int dsi_display_validate_resources(struct dsi_display *display)
 			DSI_ERR("failed to get phy controller, rc=%d\n", rc);
 			dsi_ctrl_put(ctrl->ctrl);
 			ctrl->phy = NULL;
-			goto error;
+			goto error_ctrl_put;
 		}
 	}
-	return rc;
-
-error:
-	for (i = i - 1; i >= 0; i--) {
-		ctrl = &display->ctrl[i];
-		dsi_ctrl_put(ctrl->ctrl);
-		dsi_phy_put(ctrl->phy);
-	}
-	return -EPROBE_DEFER;
-}
-
-static int dsi_display_res_init(struct dsi_display *display)
-{
-	int rc = 0;
-	int i;
 
 	display->panel = dsi_panel_get(&display->pdev->dev,
 				display->panel_node,
@@ -4099,7 +4084,7 @@ static int dsi_display_res_init(struct dsi_display *display)
 		rc = PTR_ERR(display->panel);
 		DSI_ERR("failed to get panel, rc=%d\n", rc);
 		display->panel = NULL;
-		goto error;
+		goto error_ctrl_put;
 	}
 
 	display_for_each_ctrl(i, display) {
@@ -4122,13 +4107,13 @@ static int dsi_display_res_init(struct dsi_display *display)
 	rc = dsi_display_parse_lane_map(display);
 	if (rc) {
 		DSI_ERR("Lane map not found, rc=%d\n", rc);
-		goto error;
+		goto error_ctrl_put;
 	}
 
 	rc = dsi_display_clocks_init(display);
 	if (rc) {
 		DSI_ERR("Failed to parse clock data, rc=%d\n", rc);
-		goto error;
+		goto error_ctrl_put;
 	}
 
 	/**
@@ -4139,7 +4124,14 @@ static int dsi_display_res_init(struct dsi_display *display)
 		display->is_active = false;
 	else
 		display->is_active = true;
-error:
+
+	return 0;
+error_ctrl_put:
+	for (i = i - 1; i >= 0; i--) {
+		ctrl = &display->ctrl[i];
+		dsi_ctrl_put(ctrl->ctrl);
+		dsi_phy_put(ctrl->phy);
+	}
 	return rc;
 }
 
@@ -5122,6 +5114,12 @@ static int _dsi_display_dev_init(struct dsi_display *display)
 				display->parser, display->fw->data,
 				display->fw->size);
 
+	rc = dsi_display_parse_dt(display);
+	if (rc) {
+		DSI_ERR("[%s] failed to parse dt, rc=%d\n", display->name, rc);
+		goto error;
+	}
+
 	rc = dsi_display_res_init(display);
 	if (rc) {
 		DSI_ERR("[%s] failed to initialize resources, rc=%d\n",
@@ -5675,6 +5673,8 @@ static int dsi_display_init(struct dsi_display *display)
 	int rc = 0;
 	struct platform_device *pdev = display->pdev;
 
+	mutex_init(&display->display_lock);
+
 	rc = _dsi_display_dev_init(display);
 	if (rc) {
 		DSI_ERR("device init failed, rc=%d\n", rc);
@@ -5756,7 +5756,6 @@ int dsi_display_dev_probe(struct platform_device *pdev)
 		rc = -ENOMEM;
 		goto end;
 	}
-	mutex_init(&display->display_lock);
 
 	display->dma_cmd_workq = create_singlethread_workqueue(
 			"dsi_dma_cmd_workq");
@@ -5814,19 +5813,6 @@ int dsi_display_dev_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, display);
 
-	rc = dsi_display_parse_dt(display);
-	if (rc) {
-		DSI_ERR("[%s] failed to parse dt, rc=%d\n", display->name, rc);
-		goto end;
-	}
-
-	rc = dsi_display_validate_resources(display);
-	if (rc) {
-		DSI_ERR("[%s] needed resources not probed yet, rc=%d\n",
-							display->name, rc);
-		goto end;
-	}
-
 	/* initialize display in firmware callback */
 	if (!boot_disp->boot_disp_en &&
 			IS_ENABLED(CONFIG_DSI_PARSER) &&
@@ -5852,10 +5838,8 @@ int dsi_display_dev_probe(struct platform_device *pdev)
 
 	return 0;
 end:
-	if (display) {
-		mutex_destroy(&display->display_lock);
+	if (display)
 		devm_kfree(&pdev->dev, display);
-	}
 
 	return rc;
 }
