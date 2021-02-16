@@ -144,6 +144,20 @@ target_if_regulatory_get_rx_ops(struct wlan_objmgr_psoc *psoc)
 	return &rx_ops->reg_rx_ops;
 }
 
+struct wlan_lmac_if_reg_tx_ops *
+target_if_regulatory_get_tx_ops(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_lmac_if_tx_ops *tx_ops;
+
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		target_if_err("tx_ops is NULL");
+		return NULL;
+	}
+
+	return &tx_ops->reg_ops;
+}
+
 QDF_STATUS target_if_reg_set_offloaded_info(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_lmac_if_reg_rx_ops *reg_rx_ops;
@@ -200,6 +214,24 @@ QDF_STATUS target_if_reg_set_5dot9_ghz_info(struct wlan_objmgr_psoc *psoc)
 			tgt_if_regulatory_is_5dot9_ghz_supported(psoc));
 
 	return QDF_STATUS_SUCCESS;
+}
+
+bool
+target_if_reg_is_reg_cc_ext_event_host_supported(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_lmac_if_reg_tx_ops *reg_tx_ops;
+	bool reg_ext_cc_supp = false;
+
+	reg_tx_ops = target_if_regulatory_get_tx_ops(psoc);
+	if (!reg_tx_ops) {
+		target_if_err("reg_tx_ops is NULL");
+		return reg_ext_cc_supp;
+	}
+
+	if (reg_tx_ops->register_master_ext_handler)
+		reg_ext_cc_supp = true;
+
+	return reg_ext_cc_supp;
 }
 
 /**

@@ -844,3 +844,17 @@ target_pdev_scan_radio_is_dfs_enabled(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_E_INVAL;
 }
+
+void target_if_set_reg_cc_ext_supp(struct target_psoc_info *tgt_hdl,
+				   struct wlan_objmgr_psoc *psoc)
+{
+	struct tgt_info *info;
+
+	if (!tgt_hdl)
+		return;
+
+	info = (&tgt_hdl->info);
+
+	info->wlan_res_cfg.is_reg_cc_ext_event_supported =
+		target_if_reg_is_reg_cc_ext_event_host_supported(psoc);
+}
