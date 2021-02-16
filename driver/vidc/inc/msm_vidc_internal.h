@@ -281,6 +281,7 @@ enum msm_vidc_inst_capability_type {
 	GOP_CLOSURE,
 	BLUR_TYPES,
 	BLUR_RESOLUTION,
+	CSC,
 	CSC_CUSTOM_MATRIX,
 	HEIC,
 	LOWLATENCY_MODE,

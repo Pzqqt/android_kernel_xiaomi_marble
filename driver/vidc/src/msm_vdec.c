@@ -312,26 +312,54 @@ static int msm_vdec_set_colorspace(struct msm_vidc_inst *inst,
 	enum msm_vidc_port_type port)
 {
 	int rc = 0;
-	u32 colorspace, xfer_func, ycbcr_enc, color_info;
+	u32 primaries, matrix_coeff, transfer_char;
+	u32 full_range = 0;
+	u32 colour_description_present_flag = 0;
+	u32 video_signal_type_present_flag = 0, color_info = 0;
+	/* Unspecified video format */
+	u32 video_format = 5;
 
 	if (port != INPUT_PORT && port != OUTPUT_PORT) {
 		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
 		return -EINVAL;
 	}
 
-	colorspace = inst->fmts[OUTPUT_PORT].fmt.pix_mp.colorspace;
-	xfer_func = inst->fmts[OUTPUT_PORT].fmt.pix_mp.xfer_func;
-	ycbcr_enc = inst->fmts[OUTPUT_PORT].fmt.pix_mp.ycbcr_enc;
+	if (inst->codec != MSM_VIDC_H264 && inst->codec != MSM_VIDC_HEVC)
+		return 0;
 
-	color_info = ((ycbcr_enc << 16) & 0xFF0000) |
-		((xfer_func << 8) & 0xFF00) | (colorspace & 0xFF);
+	primaries = inst->fmts[port].fmt.pix_mp.colorspace;
+	matrix_coeff = inst->fmts[port].fmt.pix_mp.ycbcr_enc;
+	transfer_char = inst->fmts[port].fmt.pix_mp.xfer_func;
+
+	if (primaries != V4L2_COLORSPACE_DEFAULT ||
+	    transfer_char != V4L2_XFER_FUNC_DEFAULT ||
+	    matrix_coeff != V4L2_YCBCR_ENC_DEFAULT) {
+		colour_description_present_flag = 1;
+		video_signal_type_present_flag = 1;
+	}
+
+	if (inst->fmts[port].fmt.pix_mp.quantization !=
+	    V4L2_QUANTIZATION_DEFAULT) {
+		video_signal_type_present_flag = 1;
+		full_range = inst->fmts[port].fmt.pix_mp.quantization ==
+			V4L2_QUANTIZATION_FULL_RANGE ? 1 : 0;
+	}
+
+	color_info = (matrix_coeff & 0xFF) |
+		((transfer_char << 8) & 0xFF00) |
+		((primaries << 16) & 0xFF0000) |
+		((colour_description_present_flag << 24) & 0x1000000) |
+		((full_range << 25) & 0x2000000) |
+		((video_format << 26) & 0x1C000000) |
+		((video_signal_type_present_flag << 29) & 0x20000000);
+
 	inst->subcr_params[port].color_info = color_info;
-	i_vpr_h(inst, "%s: color info: %d", __func__, color_info);
+	i_vpr_h(inst, "%s: color info: %#x\n", __func__, color_info);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_SIGNAL_COLOR_INFO,
 			HFI_HOST_FLAGS_NONE,
 			get_hfi_port(inst, port),
-			HFI_PAYLOAD_U32,
+			HFI_PAYLOAD_32_PACKED,
 			&color_info,
 			sizeof(u32));
 	if (rc)
@@ -1197,6 +1225,10 @@ static int msm_vdec_update_properties(struct msm_vidc_inst *inst)
 	struct msm_vidc_subscription_params subsc_params;
 	struct msm_vidc_core *core;
 	u32 width, height;
+	u32 primaries, matrix_coeff, transfer_char;
+	u32 full_range = 0, video_format = 0;
+	u32 colour_description_present_flag = 0;
+	u32 video_signal_type_present_flag = 0;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1227,12 +1259,42 @@ static int msm_vdec_update_properties(struct msm_vidc_inst *inst)
 		call_session_op(core, buffer_size, inst, MSM_VIDC_BUF_OUTPUT);
 	//inst->buffers.output.size = inst->fmts[OUTPUT_PORT].fmt.pix_mp.plane_fmt[0].sizeimage;
 
-	inst->fmts[OUTPUT_PORT].fmt.pix_mp.colorspace =
-		(subsc_params.color_info & 0xFF0000) >> 16;
-	inst->fmts[OUTPUT_PORT].fmt.pix_mp.xfer_func =
-		(subsc_params.color_info & 0xFF00) >> 8;
-	inst->fmts[OUTPUT_PORT].fmt.pix_mp.ycbcr_enc =
-		subsc_params.color_info & 0xFF;
+	matrix_coeff = subsc_params.color_info & 0xFF;
+	transfer_char = (subsc_params.color_info & 0xFF00) >> 8;
+	primaries = (subsc_params.color_info & 0xFF0000) >> 16;
+	colour_description_present_flag =
+		(subsc_params.color_info & 0x1000000) >> 24;
+	full_range = (subsc_params.color_info & 0x2000000) >> 25;
+	video_signal_type_present_flag =
+		(subsc_params.color_info & 0x20000000) >> 29;
+
+	inst->fmts[OUTPUT_PORT].fmt.pix_mp.colorspace = V4L2_COLORSPACE_DEFAULT;
+	inst->fmts[OUTPUT_PORT].fmt.pix_mp.xfer_func = V4L2_XFER_FUNC_DEFAULT;
+	inst->fmts[OUTPUT_PORT].fmt.pix_mp.ycbcr_enc = V4L2_YCBCR_ENC_DEFAULT;
+	inst->fmts[OUTPUT_PORT].fmt.pix_mp.quantization = V4L2_QUANTIZATION_DEFAULT;
+
+	if (video_signal_type_present_flag) {
+		video_format = (subsc_params.color_info & 0x1C000000) >> 26;
+		inst->fmts[OUTPUT_PORT].fmt.pix_mp.quantization =
+			full_range ?
+			V4L2_QUANTIZATION_FULL_RANGE :
+			V4L2_QUANTIZATION_LIM_RANGE;
+		if (colour_description_present_flag) {
+			inst->fmts[OUTPUT_PORT].fmt.pix_mp.colorspace =
+				primaries;
+			inst->fmts[OUTPUT_PORT].fmt.pix_mp.xfer_func =
+				transfer_char;
+			inst->fmts[OUTPUT_PORT].fmt.pix_mp.ycbcr_enc =
+				matrix_coeff;
+		} else {
+			i_vpr_h(inst,
+				"%s: color description flag is not present\n",
+				__func__);
+		}
+	} else {
+		i_vpr_h(inst, "%s: video_signal type is not present\n",
+			__func__);
+	}
 
 	inst->buffers.output.min_count = subsc_params.fw_min_count;
 
@@ -2156,6 +2218,10 @@ int msm_vdec_inst_init(struct msm_vidc_inst *inst)
 	f->fmt.pix_mp.plane_fmt[0].bytesperline = f->fmt.pix_mp.width;
 	f->fmt.pix_mp.plane_fmt[0].sizeimage = call_session_op(core,
 		buffer_size, inst, MSM_VIDC_BUF_OUTPUT);
+	f->fmt.pix_mp.colorspace = V4L2_COLORSPACE_DEFAULT;
+	f->fmt.pix_mp.xfer_func = V4L2_XFER_FUNC_DEFAULT;
+	f->fmt.pix_mp.ycbcr_enc = V4L2_YCBCR_ENC_DEFAULT;
+	f->fmt.pix_mp.quantization = V4L2_QUANTIZATION_DEFAULT;
 	inst->buffers.output.min_count = call_session_op(core,
 		min_count, inst, MSM_VIDC_BUF_OUTPUT);
 	inst->buffers.output.extra_count = call_session_op(core,

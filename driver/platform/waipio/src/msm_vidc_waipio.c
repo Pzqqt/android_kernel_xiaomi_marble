@@ -374,6 +374,13 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		HFI_PROP_BLUR_RESOLUTION,
 		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT},
 
+	{CSC, ENC, CODECS_ALL,
+		V4L2_MPEG_MSM_VIDC_DISABLE,
+		V4L2_MPEG_MSM_VIDC_ENABLE,
+		1, V4L2_MPEG_MSM_VIDC_DISABLE,
+		0,
+		HFI_PROP_CSC},
+
 	/* Needed for control initialization. TODO */
 	/* {CSC_CUSTOM_MATRIX, ENC, CODECS_ALL,
 		V4L2_MPEG_MSM_VIDC_DISABLE,
