@@ -1259,7 +1259,7 @@ static void rmnet_map_flush_tx_packet_work(struct work_struct *work)
 
 	state = container_of(work, struct rmnet_aggregation_state, agg_wq);
 
-	spin_lock_irqsave(state->agg_lock, flags);
+	spin_lock_irqsave(&state->agg_lock, flags);
 	if (likely(state->agg_state == -EINPROGRESS)) {
 		/* Buffer may have already been shipped out */
 		if (likely(state->agg_skb)) {
@@ -1271,7 +1271,7 @@ static void rmnet_map_flush_tx_packet_work(struct work_struct *work)
 		state->agg_state = 0;
 	}
 
-	spin_unlock_irqrestore(state->agg_lock, flags);
+	spin_unlock_irqrestore(&state->agg_lock, flags);
 	if (skb)
 		state->send_agg_skb(skb);
 }
@@ -1319,30 +1319,30 @@ static void rmnet_map_linearize_copy(struct sk_buff *dst, struct sk_buff *src)
 	}
 }
 
-static void rmnet_free_agg_pages(struct rmnet_port *port)
+static void rmnet_free_agg_pages(struct rmnet_aggregation_state *state)
 {
 	struct rmnet_agg_page *agg_page, *idx;
 
-	list_for_each_entry_safe(agg_page, idx, &port->agg_list, list) {
+	list_for_each_entry_safe(agg_page, idx, &state->agg_list, list) {
 		list_del(&agg_page->list);
 		put_page(agg_page->page);
 		kfree(agg_page);
 	}
 
-	port->agg_head = NULL;
+	state->agg_head = NULL;
 }
 
-static struct page *rmnet_get_agg_pages(struct rmnet_port *port)
+static struct page *rmnet_get_agg_pages(struct rmnet_aggregation_state *state)
 {
 	struct rmnet_agg_page *agg_page;
 	struct page *page = NULL;
 	int i = 0;
 
-	if (!(port->egress_agg_params.agg_features & RMNET_PAGE_RECYCLE))
+	if (!(state->params.agg_features & RMNET_PAGE_RECYCLE))
 		goto alloc;
 
 	do {
-		agg_page = port->agg_head;
+		agg_page = state->agg_head;
 		if (unlikely(!agg_page))
 			break;
 
@@ -1350,25 +1350,26 @@ static struct page *rmnet_get_agg_pages(struct rmnet_port *port)
 			page = agg_page->page;
 			page_ref_inc(agg_page->page);
 
-			port->stats.agg.ul_agg_reuse++;
-			port->agg_head = list_next_entry(agg_page, list);
+			state->stats->ul_agg_reuse++;
+			state->agg_head = list_next_entry(agg_page, list);
 			break;
 		}
 
-		port->agg_head = list_next_entry(agg_page, list);
+		state->agg_head = list_next_entry(agg_page, list);
 		i++;
 	} while (i <= 5);
 
 alloc:
 	if (!page) {
-		page =  __dev_alloc_pages(GFP_ATOMIC, port->agg_size_order);
-		port->stats.agg.ul_agg_alloc++;
+		page =  __dev_alloc_pages(GFP_ATOMIC, state->agg_size_order);
+		state->stats->ul_agg_alloc++;
 	}
 
 	return page;
 }
 
-static struct rmnet_agg_page *__rmnet_alloc_agg_pages(struct rmnet_port *port)
+static struct rmnet_agg_page *
+__rmnet_alloc_agg_pages(struct rmnet_aggregation_state *state)
 {
 	struct rmnet_agg_page *agg_page;
 	struct page *page;
@@ -1377,7 +1378,7 @@ static struct rmnet_agg_page *__rmnet_alloc_agg_pages(struct rmnet_port *port)
 	if (!agg_page)
 		return NULL;
 
-	page = __dev_alloc_pages(GFP_ATOMIC, port->agg_size_order);
+	page = __dev_alloc_pages(GFP_ATOMIC, state->agg_size_order);
 	if (!page) {
 		kfree(agg_page);
 		return NULL;
@@ -1389,35 +1390,36 @@ static struct rmnet_agg_page *__rmnet_alloc_agg_pages(struct rmnet_port *port)
 	return agg_page;
 }
 
-static void rmnet_alloc_agg_pages(struct rmnet_port *port)
+static void rmnet_alloc_agg_pages(struct rmnet_aggregation_state *state)
 {
 	struct rmnet_agg_page *agg_page = NULL;
 	int i = 0;
 
 	for (i = 0; i < 512; i++) {
-		agg_page = __rmnet_alloc_agg_pages(port);
+		agg_page = __rmnet_alloc_agg_pages(state);
 
 		if (agg_page)
-			list_add_tail(&agg_page->list, &port->agg_list);
+			list_add_tail(&agg_page->list, &state->agg_list);
 	}
 
-	port->agg_head = list_first_entry_or_null(&port->agg_list,
-						  struct rmnet_agg_page, list);
+	state->agg_head = list_first_entry_or_null(&state->agg_list,
+						   struct rmnet_agg_page, list);
 }
 
-static struct sk_buff *rmnet_map_build_skb(struct rmnet_port *port)
+static struct sk_buff *
+rmnet_map_build_skb(struct rmnet_aggregation_state *state)
 {
 	struct sk_buff *skb;
 	unsigned int size;
 	struct page *page;
 	void *vaddr;
 
-	page = rmnet_get_agg_pages(port);
+	page = rmnet_get_agg_pages(state);
 	if (!page)
 		return NULL;
 
 	vaddr = page_address(page);
-	size = PAGE_SIZE << port->agg_size_order;
+	size = PAGE_SIZE << state->agg_size_order;
 
 	skb = build_skb(vaddr, size);
 	if (!skb) {
@@ -1434,7 +1436,7 @@ void rmnet_map_send_agg_skb(struct rmnet_aggregation_state *state,
 	struct sk_buff *agg_skb;
 
 	if (!state->agg_skb) {
-		spin_unlock_irqrestore(state->agg_lock, flags);
+		spin_unlock_irqrestore(&state->agg_lock, flags);
 		return;
 	}
 
@@ -1444,7 +1446,7 @@ void rmnet_map_send_agg_skb(struct rmnet_aggregation_state *state,
 	state->agg_count = 0;
 	memset(&state->agg_time, 0, sizeof(state->agg_time));
 	state->agg_state = 0;
-	spin_unlock_irqrestore(state->agg_lock, flags);
+	spin_unlock_irqrestore(&state->agg_lock, flags);
 	hrtimer_cancel(&state->hrtimer);
 	state->send_agg_skb(agg_skb);
 }
@@ -1461,7 +1463,7 @@ void rmnet_map_tx_aggregate(struct sk_buff *skb, struct rmnet_port *port,
 						 RMNET_DEFAULT_AGG_STATE];
 
 new_packet:
-	spin_lock_irqsave(&port->agg_lock, flags);
+	spin_lock_irqsave(&state->agg_lock, flags);
 	memcpy(&last, &state->agg_last, sizeof(last));
 	ktime_get_real_ts64(&state->agg_last);
 
@@ -1480,22 +1482,22 @@ new_packet:
 		 * sparse, don't aggregate. We will need to tune this later
 		 */
 		diff = timespec64_sub(state->agg_last, last);
-		size = port->egress_agg_params.agg_size - skb->len;
+		size = state->params.agg_size - skb->len;
 
 		if (diff.tv_sec > 0 || diff.tv_nsec > rmnet_agg_bypass_time ||
 		    size <= 0) {
-			spin_unlock_irqrestore(&port->agg_lock, flags);
+			spin_unlock_irqrestore(&state->agg_lock, flags);
 			skb->protocol = htons(ETH_P_MAP);
 			state->send_agg_skb(skb);
 			return;
 		}
 
-		state->agg_skb = rmnet_map_build_skb(port);
+		state->agg_skb = rmnet_map_build_skb(state);
 		if (!state->agg_skb) {
 			state->agg_skb = NULL;
 			state->agg_count = 0;
 			memset(&state->agg_time, 0, sizeof(state->agg_time));
-			spin_unlock_irqrestore(&port->agg_lock, flags);
+			spin_unlock_irqrestore(&state->agg_lock, flags);
 			skb->protocol = htons(ETH_P_MAP);
 			state->send_agg_skb(skb);
 			return;
@@ -1513,7 +1515,7 @@ new_packet:
 	size = skb_tailroom(state->agg_skb);
 
 	if (skb->len > size ||
-	    state->agg_count >= port->egress_agg_params.agg_count ||
+	    state->agg_count >= state->params.agg_count ||
 	    diff.tv_sec > 0 || diff.tv_nsec > rmnet_agg_time_limit) {
 		rmnet_map_send_agg_skb(state, flags);
 		goto new_packet;
@@ -1527,24 +1529,24 @@ schedule:
 	if (state->agg_state != -EINPROGRESS) {
 		state->agg_state = -EINPROGRESS;
 		hrtimer_start(&state->hrtimer,
-			      ns_to_ktime(port->egress_agg_params.agg_time),
+			      ns_to_ktime(state->params.agg_time),
 			      HRTIMER_MODE_REL);
 	}
-	spin_unlock_irqrestore(&port->agg_lock, flags);
+	spin_unlock_irqrestore(&state->agg_lock, flags);
 }
 
-void rmnet_map_update_ul_agg_config(struct rmnet_port *port, u16 size,
-				    u8 count, u8 features, u32 time)
+void rmnet_map_update_ul_agg_config(struct rmnet_aggregation_state *state,
+				    u16 size, u8 count, u8 features, u32 time)
 {
 	unsigned long irq_flags;
 
-	spin_lock_irqsave(&port->agg_lock, irq_flags);
-	port->egress_agg_params.agg_count = count;
-	port->egress_agg_params.agg_time = time;
-	port->egress_agg_params.agg_size = size;
-	port->egress_agg_params.agg_features = features;
+	spin_lock_irqsave(&state->agg_lock, irq_flags);
+	state->params.agg_count = count;
+	state->params.agg_time = time;
+	state->params.agg_size = size;
+	state->params.agg_features = features;
 
-	rmnet_free_agg_pages(port);
+	rmnet_free_agg_pages(state);
 
 	/* This effectively disables recycling in case the UL aggregation
 	 * size is lesser than PAGE_SIZE.
@@ -1552,41 +1554,42 @@ void rmnet_map_update_ul_agg_config(struct rmnet_port *port, u16 size,
 	if (size < PAGE_SIZE)
 		goto done;
 
-	port->agg_size_order = get_order(size);
+	state->agg_size_order = get_order(size);
 
-	size = PAGE_SIZE << port->agg_size_order;
+	size = PAGE_SIZE << state->agg_size_order;
 	size -= SKB_DATA_ALIGN(sizeof(struct skb_shared_info));
-	port->egress_agg_params.agg_size = size;
+	state->params.agg_size = size;
 
-	if (port->egress_agg_params.agg_features == RMNET_PAGE_RECYCLE)
-		rmnet_alloc_agg_pages(port);
+	if (state->params.agg_features == RMNET_PAGE_RECYCLE)
+		rmnet_alloc_agg_pages(state);
 
 done:
-	spin_unlock_irqrestore(&port->agg_lock, irq_flags);
+	spin_unlock_irqrestore(&state->agg_lock, irq_flags);
 }
 
 void rmnet_map_tx_aggregate_init(struct rmnet_port *port)
 {
 	unsigned int i;
 
-	spin_lock_init(&port->agg_lock);
-	INIT_LIST_HEAD(&port->agg_list);
-
-	/* Since PAGE_SIZE - 1 is specified here, no pages are pre-allocated.
-	 * This is done to reduce memory usage in cases where
-	 * UL aggregation is disabled.
-	 * Additionally, the features flag is also set to 0.
-	 */
-	rmnet_map_update_ul_agg_config(port, PAGE_SIZE - 1, 20, 0, 3000000);
 
 	for (i = RMNET_DEFAULT_AGG_STATE; i < RMNET_MAX_AGG_STATE; i++) {
 		struct rmnet_aggregation_state *state = &port->agg_state[i];
 
+		spin_lock_init(&state->agg_lock);
+		INIT_LIST_HEAD(&state->agg_list);
 		hrtimer_init(&state->hrtimer, CLOCK_MONOTONIC,
 			     HRTIMER_MODE_REL);
 		state->hrtimer.function = rmnet_map_flush_tx_packet_queue;
 		INIT_WORK(&state->agg_wq, rmnet_map_flush_tx_packet_work);
-		state->agg_lock = &port->agg_lock;
+		state->stats = &port->stats.agg;
+
+		/* Since PAGE_SIZE - 1 is specified here, no pages are
+		 * pre-allocated. This is done to reduce memory usage in cases
+		 * where UL aggregation is disabled.
+		 * Additionally, the features flag is also set to 0.
+		 */
+		rmnet_map_update_ul_agg_config(state, PAGE_SIZE - 1, 20, 0,
+					       3000000);
 	}
 
 	/* Set delivery functions for each aggregation state */
@@ -1606,10 +1609,10 @@ void rmnet_map_tx_aggregate_exit(struct rmnet_port *port)
 		cancel_work_sync(&state->agg_wq);
 	}
 
-	spin_lock_irqsave(&port->agg_lock, flags);
 	for (i = RMNET_DEFAULT_AGG_STATE; i < RMNET_MAX_AGG_STATE; i++) {
 		struct rmnet_aggregation_state *state = &port->agg_state[i];
 
+		spin_lock_irqsave(&state->agg_lock, flags);
 		if (state->agg_state == -EINPROGRESS) {
 			if (state->agg_skb) {
 				kfree_skb(state->agg_skb);
@@ -1621,10 +1624,10 @@ void rmnet_map_tx_aggregate_exit(struct rmnet_port *port)
 
 			state->agg_state = 0;
 		}
-	}
 
-	rmnet_free_agg_pages(port);
-	spin_unlock_irqrestore(&port->agg_lock, flags);
+		rmnet_free_agg_pages(state);
+		spin_unlock_irqrestore(&state->agg_lock, flags);
+	}
 }
 
 void rmnet_map_tx_qmap_cmd(struct sk_buff *qmap_skb, u8 ch, bool flush)
@@ -1646,18 +1649,18 @@ void rmnet_map_tx_qmap_cmd(struct sk_buff *qmap_skb, u8 ch, bool flush)
 	if (!(port->data_format & RMNET_EGRESS_FORMAT_AGGREGATION))
 		goto send;
 
-	spin_lock_irqsave(&port->agg_lock, flags);
+	spin_lock_irqsave(&state->agg_lock, flags);
 	if (state->agg_skb) {
 		agg_skb = state->agg_skb;
 		state->agg_skb = NULL;
 		state->agg_count = 0;
 		memset(&state->agg_time, 0, sizeof(state->agg_time));
 		state->agg_state = 0;
-		spin_unlock_irqrestore(&port->agg_lock, flags);
+		spin_unlock_irqrestore(&state->agg_lock, flags);
 		hrtimer_cancel(&state->hrtimer);
 		state->send_agg_skb(agg_skb);
 	} else {
-		spin_unlock_irqrestore(&port->agg_lock, flags);
+		spin_unlock_irqrestore(&state->agg_lock, flags);
 	}
 
 send:

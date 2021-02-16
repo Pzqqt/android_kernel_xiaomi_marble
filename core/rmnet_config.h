@@ -76,16 +76,21 @@ enum {
 };
 
 struct rmnet_aggregation_state {
+	struct rmnet_egress_agg_params params;
 	struct timespec64 agg_time;
 	struct timespec64 agg_last;
 	struct hrtimer hrtimer;
 	struct work_struct agg_wq;
-	/* Pointer back to the main lock for use in the workqueue */
-	spinlock_t *agg_lock;
+	/* Protect aggregation related elements */
+	spinlock_t agg_lock;
 	struct sk_buff *agg_skb;
 	int (*send_agg_skb)(struct sk_buff *skb);
 	int agg_state;
 	u8 agg_count;
+	u8 agg_size_order;
+	struct list_head agg_list;
+	struct rmnet_agg_page *agg_head;
+	struct rmnet_agg_stats *stats;
 };
 
 
@@ -107,15 +112,7 @@ struct rmnet_port {
 	struct net_device *bridge_ep;
 	void *rmnet_perf;
 
-	struct rmnet_egress_agg_params egress_agg_params;
-
-	/* Protect aggregation related elements */
-	spinlock_t agg_lock;
-
 	struct rmnet_aggregation_state agg_state[RMNET_MAX_AGG_STATE];
-	u8 agg_size_order;
-	struct list_head agg_list;
-	struct rmnet_agg_page *agg_head;
 
 	void *qmi_info;
 

@@ -334,6 +334,7 @@ static int rmnet_map_egress_handler(struct sk_buff *skb,
 {
 	int required_headroom, additional_header_len, csum_type, tso = 0;
 	struct rmnet_map_header *map_header;
+	struct rmnet_aggregation_state *state;
 
 	additional_header_len = 0;
 	required_headroom = sizeof(struct rmnet_map_header);
@@ -358,15 +359,15 @@ static int rmnet_map_egress_handler(struct sk_buff *skb,
 	if (port->data_format & RMNET_INGRESS_FORMAT_PS)
 		qmi_rmnet_work_maybe_restart(port);
 
+	state = &port->agg_state[(low_latency) ? RMNET_LL_AGG_STATE :
+				 RMNET_DEFAULT_AGG_STATE];
+
 	if (csum_type &&
 	    (skb_shinfo(skb)->gso_type & (SKB_GSO_UDP_L4 | SKB_GSO_TCPV4 | SKB_GSO_TCPV6)) &&
 	     skb_shinfo(skb)->gso_size) {
-		struct rmnet_aggregation_state *state;
 		unsigned long flags;
 
-		state = &port->agg_state[(low_latency) ? RMNET_LL_AGG_STATE :
-					 RMNET_DEFAULT_AGG_STATE];
-		spin_lock_irqsave(&port->agg_lock, flags);
+		spin_lock_irqsave(&state->agg_lock, flags);
 		rmnet_map_send_agg_skb(state, flags);
 
 		if (rmnet_map_add_tso_header(skb, port, orig_dev))
@@ -387,7 +388,8 @@ static int rmnet_map_egress_handler(struct sk_buff *skb,
 	map_header->mux_id = mux_id;
 
 	if (port->data_format & RMNET_EGRESS_FORMAT_AGGREGATION) {
-		if (rmnet_map_tx_agg_skip(skb, required_headroom) || tso)
+		if (state->params.agg_count < 2 ||
+		    rmnet_map_tx_agg_skip(skb, required_headroom) || tso)
 			goto done;
 
 		rmnet_map_tx_aggregate(skb, port, low_latency);
