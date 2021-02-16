@@ -204,6 +204,8 @@ static const char *msm_vidc_get_priv_ctrl_name(struct msm_vidc_inst *inst, u32 c
 		return "HEVC I Frame Max QP";
 	case V4L2_CID_MPEG_VIDC_HEVC_P_FRAME_MAX_QP:
 		return "HEVC P Frame Max QP";
+	case V4L2_CID_MPEG_VIDC_SUPERFRAME:
+		return "Encoder Batching Superframe";
 	default:
 		i_vpr_e(inst, "%s: ctrl name not available for ctrl id %#x\n",
 			__func__, control_id);
