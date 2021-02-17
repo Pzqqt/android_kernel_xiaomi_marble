@@ -465,6 +465,17 @@ static bool ipa_eth_is_smmu_buff_cb_bypass(
 	return false;
 }
 
+static enum ipa_smmu_cb_type ipa_eth_get_cb_type(
+	enum ipa_client_type client_type)
+{
+	if (IPA_CLIENT_IS_SMMU_ETH_INSTANCE(client_type))
+		return IPA_SMMU_CB_ETH;
+	if (IPA_CLIENT_IS_SMMU_ETH1_INSTANCE(client_type))
+		return IPA_SMMU_CB_ETH1;
+
+	return IPA_SMMU_CB_MAX;
+}
+
 static int ipa3_smmu_map_eth_pipes(struct ipa_eth_client_pipe_info *pipe,
 	enum ipa_client_type client_type, bool map)
 {
@@ -474,8 +485,10 @@ static int ipa3_smmu_map_eth_pipes(struct ipa_eth_client_pipe_info *pipe,
 	u64 iova;
 	phys_addr_t pa;
 	u64 iova_p;
+	u64 prev_iova_p;
 	phys_addr_t pa_p;
 	u32 size_p;
+	enum ipa_smmu_cb_type cb_type;
 
 	if (pipe->info.fix_buffer_size > PAGE_SIZE) {
 		IPAERR("invalid data buff size\n");
@@ -505,6 +518,20 @@ map_buffer:
 		return 0;
 	}
 
+	cb_type = ipa_eth_get_cb_type(client_type);
+	if (cb_type >= IPA_SMMU_CB_MAX) {
+		IPAERR("invalid CB type %d\n", cb_type);
+		goto fail_map_buffer_smmu_enabled;
+	}
+
+	if ((ipa3_get_smmu_ctx(cb_type))->shared) {
+		IPADBG("SMMU cb %d is shared, no need to map buffers\n", cb_type);
+		return 0;
+	} else {
+		IPADBG(
+		"SMMU cb %d is not shared, continue to map buffers\n", cb_type);
+	}
+
 	smmu_domain = ipa_eth_get_smmu_domain(client_type);
 	if (!smmu_domain) {
 		IPAERR("invalid smmu domain\n");
@@ -512,11 +539,20 @@ map_buffer:
 		goto fail_map_buffer_smmu_enabled;
 	}
 
+	prev_iova_p = 0;
 	for (i = 0; i < pipe->info.data_buff_list_size; i++) {
 		iova = (u64)pipe->info.data_buff_list[i].iova;
 		pa = (phys_addr_t)pipe->info.data_buff_list[i].pa;
 		IPA_SMMU_ROUND_TO_PAGE(iova, pa, pipe->info.fix_buffer_size,
 			iova_p, pa_p, size_p);
+		/* Add check on every 2nd buffer for AQC smmu-dup issue */
+		if (prev_iova_p == iova_p) {
+			IPADBG_LOW(
+				"current buffer and previous are on the same page, skip page mapping\n"
+			);
+			continue;
+		}
+		prev_iova_p = iova_p;
 		IPADBG_LOW("%s 0x%llx to 0x%pa size %d\n", map ? "mapping" :
 			"unmapping", iova_p, &pa_p, size_p);
 		if (map) {
