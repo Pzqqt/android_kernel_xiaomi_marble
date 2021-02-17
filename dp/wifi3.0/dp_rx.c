@@ -114,7 +114,7 @@ QDF_STATUS dp_rx_desc_sanity(struct dp_soc *soc, hal_soc_handle_t hal_soc,
 		goto fail;
 	}
 
-	return_buffer_manager = hal_rx_ret_buf_manager_get(ring_desc);
+	return_buffer_manager = hal_rx_ret_buf_manager_get(hal_soc, ring_desc);
 	if (qdf_unlikely(!(return_buffer_manager == HAL_RX_BUF_RBM_SW1_BM ||
 			 return_buffer_manager == HAL_RX_BUF_RBM_SW3_BM))) {
 		goto fail;
@@ -448,7 +448,7 @@ QDF_STATUS __dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 				 (unsigned long long)(nbuf_frag_info.paddr),
 				 (*desc_list)->rx_desc.cookie);
 
-		hal_rxdma_buff_addr_info_set(rxdma_ring_entry,
+		hal_rxdma_buff_addr_info_set(dp_soc->hal_soc, rxdma_ring_entry,
 					     nbuf_frag_info.paddr,
 						(*desc_list)->rx_desc.cookie,
 						rx_desc_pool->owner);

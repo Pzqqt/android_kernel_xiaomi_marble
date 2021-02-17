@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -66,10 +66,10 @@ uint32_t dp_rx_frag_handle(struct dp_soc *soc, hal_ring_desc_t  ring_desc,
  *
  * Returns: pointer to ieee80211_frame
  */
-static inline
-struct ieee80211_frame *dp_rx_frag_get_mac_hdr(uint8_t *rx_desc_info)
+static inline struct ieee80211_frame *
+dp_rx_frag_get_mac_hdr(struct dp_soc *soc, uint8_t *rx_desc_info)
 {
-	int rx_desc_len = SIZE_OF_DATA_RX_TLV;
+	int rx_desc_len = soc->rx_pkt_tlv_size;
 	return (struct ieee80211_frame *)(rx_desc_info + rx_desc_len);
 }
 
@@ -80,11 +80,11 @@ struct ieee80211_frame *dp_rx_frag_get_mac_hdr(uint8_t *rx_desc_info)
  *
  * Returns: uint16_t, rx sequence number
  */
-static inline
-uint16_t dp_rx_frag_get_mpdu_seq_number(uint8_t *rx_desc_info)
+static inline uint16_t
+dp_rx_frag_get_mpdu_seq_number(struct dp_soc *soc, int8_t *rx_desc_info)
 {
 	struct ieee80211_frame *mac_hdr;
-	mac_hdr = dp_rx_frag_get_mac_hdr(rx_desc_info);
+	mac_hdr = dp_rx_frag_get_mac_hdr(soc, rx_desc_info);
 
 	return qdf_le16_to_cpu(*(uint16_t *) mac_hdr->i_seq) >>
 		IEEE80211_SEQ_SEQ_SHIFT;
@@ -97,11 +97,11 @@ uint16_t dp_rx_frag_get_mpdu_seq_number(uint8_t *rx_desc_info)
  *
  * Returns: uint8_t, receive fragment number
  */
-static inline
-uint8_t dp_rx_frag_get_mpdu_frag_number(uint8_t *rx_desc_info)
+static inline uint8_t
+dp_rx_frag_get_mpdu_frag_number(struct dp_soc *soc, uint8_t *rx_desc_info)
 {
 	struct ieee80211_frame *mac_hdr;
-	mac_hdr = dp_rx_frag_get_mac_hdr(rx_desc_info);
+	mac_hdr = dp_rx_frag_get_mac_hdr(soc, rx_desc_info);
 
 	return qdf_le16_to_cpu(*(uint16_t *) mac_hdr->i_seq) &
 		IEEE80211_SEQ_FRAG_MASK;
@@ -115,19 +115,19 @@ uint8_t dp_rx_frag_get_mpdu_frag_number(uint8_t *rx_desc_info)
  * Returns: uint8_t, get more fragment bit
  */
 static inline
-uint8_t dp_rx_frag_get_more_frag_bit(uint8_t *rx_desc_info)
+uint8_t dp_rx_frag_get_more_frag_bit(struct dp_soc *soc, uint8_t *rx_desc_info)
 {
 	struct ieee80211_frame *mac_hdr;
-	mac_hdr = dp_rx_frag_get_mac_hdr(rx_desc_info);
+	mac_hdr = dp_rx_frag_get_mac_hdr(soc, rx_desc_info);
 
 	return (mac_hdr->i_fc[1] & IEEE80211_FC1_MORE_FRAG) >> 2;
 }
 
 static inline
-uint8_t dp_rx_get_pkt_dir(uint8_t *rx_desc_info)
+uint8_t dp_rx_get_pkt_dir(struct dp_soc *soc, uint8_t *rx_desc_info)
 {
 	struct ieee80211_frame *mac_hdr;
-	mac_hdr = dp_rx_frag_get_mac_hdr(rx_desc_info);
+	mac_hdr = dp_rx_frag_get_mac_hdr(soc, rx_desc_info);
 
 	return mac_hdr->i_fc[1] & IEEE80211_FC1_DIR_MASK;
 }
