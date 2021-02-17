@@ -219,6 +219,7 @@ int target_if_infra_cp_stats_event_handler(ol_scn_t scn, uint8_t *data,
 }
 #endif /* WLAN_SUPPORT_INFRA_CTRL_PATH_STATS */
 
+#ifdef WLAN_SUPPORT_INFRA_CTRL_PATH_STATS
 static QDF_STATUS
 target_if_cp_stats_register_event_handler(struct wlan_objmgr_psoc *psoc)
 {
@@ -266,6 +267,29 @@ target_if_cp_stats_unregister_event_handler(struct wlan_objmgr_psoc *psoc)
 					     wmi_pdev_cp_fwstats_eventid);
 	return QDF_STATUS_SUCCESS;
 }
+#else
+static QDF_STATUS
+target_if_cp_stats_register_event_handler(struct wlan_objmgr_psoc *psoc)
+{
+	if (!psoc) {
+		cp_stats_err("PSOC is NULL!");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
+target_if_cp_stats_unregister_event_handler(struct wlan_objmgr_psoc *psoc)
+{
+	if (!psoc) {
+		cp_stats_err("PSOC is NULL!");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_SUPPORT_INFRA_CTRL_PATH_STATS */
 
 #ifdef WLAN_SUPPORT_INFRA_CTRL_PATH_STATS
 /**
