@@ -616,15 +616,6 @@ int sde_core_irq_domain_fini(struct sde_kms *sde_kms)
 irqreturn_t sde_core_irq(struct sde_kms *sde_kms)
 {
 	/*
-	 * Read interrupt status from all sources. Interrupt status are
-	 * stored within hw_intr.
-	 * Function will also clear the interrupt status after reading.
-	 * Individual interrupt status bit will only get stored if it
-	 * is enabled.
-	 */
-	sde_kms->hw_intr->ops.get_interrupt_statuses(sde_kms->hw_intr);
-
-	/*
 	 * Dispatch to HW driver to handle interrupt lookup that is being
 	 * fired. When matching interrupt is located, HW driver will call to
 	 * sde_core_irq_callback_handler with the irq_idx from the lookup table.

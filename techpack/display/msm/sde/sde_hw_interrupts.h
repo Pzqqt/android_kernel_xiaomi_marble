@@ -166,14 +166,6 @@ struct sde_hw_intr_ops {
 			void *arg);
 
 	/**
-	 * get_interrupt_statuses - Gets and store value from all interrupt
-	 *                          status registers that are currently fired.
-	 * @intr:	HW interrupt handle
-	 */
-	void (*get_interrupt_statuses)(
-			struct sde_hw_intr *intr);
-
-	/**
 	 * clear_interrupt_status - Clears HW interrupt status based on given
 	 *                          lookup IRQ index
 	 * @intr:	HW interrupt handle
@@ -232,7 +224,6 @@ struct sde_hw_intr_ops {
  * @hw:               virtual address mapping
  * @ops:              function pointer mapping for IRQ handling
  * @cache_irq_mask:   array of IRQ enable masks reg storage created during init
- * @save_irq_status:  array of IRQ status reg storage created during init
  * @irq_lock:         spinlock for accessing IRQ resources
  * @sde_irq_size:   total number of elements of the sde_irq_tbl
  * @sde_irq_tbl:	table with the registesrs offsets of the sde interrupts
@@ -244,7 +235,6 @@ struct sde_hw_intr {
 	struct sde_hw_blk_reg_map hw;
 	struct sde_hw_intr_ops ops;
 	u32 *cache_irq_mask;
-	u32 *save_irq_status;
 	u32 sde_irq_size;
 	struct sde_intr_reg *sde_irq_tbl;
 	u32 sde_irq_map_size;
