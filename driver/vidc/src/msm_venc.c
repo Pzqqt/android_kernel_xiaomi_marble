@@ -206,7 +206,7 @@ static int msm_venc_set_crop_offsets(struct msm_vidc_inst *inst,
 {
 	int rc = 0;
 	u32 left_offset, top_offset, right_offset, bottom_offset;
-	u64 crop;
+	u32 crop[2] = {0};
 
 	if (port != OUTPUT_PORT) {
 		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
@@ -220,8 +220,8 @@ static int msm_venc_set_crop_offsets(struct msm_vidc_inst *inst,
 	bottom_offset = (inst->fmts[port].fmt.pix_mp.height -
 		inst->crop.height);
 
-	crop = (u64)right_offset << 48 | (u64)bottom_offset << 32 |
-		(u64)left_offset << 16 | top_offset;
+	crop[0] = left_offset << 16 | top_offset;
+	crop[1] = right_offset << 16 | bottom_offset;
 	i_vpr_h(inst, "%s: left_offset: %d top_offset: %d "
 		"right_offset: %d bottom_offset: %d", __func__,
 		left_offset, top_offset, right_offset, bottom_offset);

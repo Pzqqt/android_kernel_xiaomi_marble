@@ -588,7 +588,7 @@ struct msm_vidc_rectangle {
 
 struct msm_vidc_subscription_params {
 	u32                    bitstream_resolution;
-	u64                    crop_offsets;
+	u32                    crop_offsets[2];
 	u32                    bit_depth;
 	u32                    coded_frames;
 	u32                    fw_min_count;

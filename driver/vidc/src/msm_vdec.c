@@ -129,7 +129,7 @@ static int msm_vdec_set_crop_offsets(struct msm_vidc_inst *inst,
 {
 	int rc = 0;
 	u32 left_offset, top_offset, right_offset, bottom_offset;
-	u64 payload;
+	u32 payload[2] = {0};
 
 	if (inst->fmts[INPUT_PORT].fmt.pix_mp.width <
 		inst->crop.width)
@@ -146,12 +146,13 @@ static int msm_vdec_set_crop_offsets(struct msm_vidc_inst *inst,
 	bottom_offset = (inst->fmts[INPUT_PORT].fmt.pix_mp.height -
 		inst->crop.height);
 
-	payload = (u64)right_offset << 48 | (u64)bottom_offset << 32 |
-		(u64)left_offset << 16 | top_offset;
+	payload[0] = left_offset << 16 | top_offset;
+	payload[1] = right_offset << 16 | bottom_offset;
 	i_vpr_h(inst, "%s: left_offset: %d top_offset: %d "
 		"right_offset: %d bottom_offset: %d", __func__,
 		left_offset, top_offset, right_offset, bottom_offset);
-	inst->subcr_params[port].crop_offsets = payload;
+	inst->subcr_params[port].crop_offsets[0] = payload[0];
+	inst->subcr_params[port].crop_offsets[1] = payload[1];
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_CROP_OFFSETS,
 			HFI_HOST_FLAGS_NONE,
@@ -1235,12 +1236,12 @@ static int msm_vdec_update_properties(struct msm_vidc_inst *inst)
 
 	inst->buffers.output.min_count = subsc_params.fw_min_count;
 
-	inst->crop.top = subsc_params.crop_offsets & 0xFFFF;
-	inst->crop.left = (subsc_params.crop_offsets >> 16) & 0xFFFF;
+	inst->crop.top = subsc_params.crop_offsets[0] & 0xFFFF;
+	inst->crop.left = (subsc_params.crop_offsets[0] >> 16) & 0xFFFF;
 	inst->crop.height = inst->fmts[INPUT_PORT].fmt.pix_mp.height -
-		((subsc_params.crop_offsets >> 32) & 0xFFFF);
+		(subsc_params.crop_offsets[1] & 0xFFFF);
 	inst->crop.width = inst->fmts[INPUT_PORT].fmt.pix_mp.width -
-		((subsc_params.crop_offsets >> 48) & 0xFFFF);
+		((subsc_params.crop_offsets[1] >> 16) & 0xFFFF);
 
 	inst->capabilities->cap[PROFILE].value = subsc_params.profile;
 	inst->capabilities->cap[LEVEL].value = subsc_params.level;
@@ -1450,8 +1451,8 @@ static int msm_vdec_subscribe_output_port_settings_change(struct msm_vidc_inst *
 			payload_type = HFI_PAYLOAD_U32;
 			break;
 		case HFI_PROP_CROP_OFFSETS:
-			payload[0] = subsc_params.crop_offsets >> 32;
-			payload[1] = subsc_params.crop_offsets;
+			payload[0] = subsc_params.crop_offsets[0];
+			payload[1] = subsc_params.crop_offsets[1];
 			payload_size = sizeof(u64);
 			payload_type = HFI_PAYLOAD_64_PACKED;
 			break;
@@ -1667,6 +1668,7 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 	int rc = 0;
 	struct msm_vidc_core *core;
 	struct v4l2_format *fmt;
+	u32 codec_align;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1687,8 +1689,11 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 		}
 		fmt = &inst->fmts[INPUT_PORT];
 		fmt->type = INPUT_MPLANE;
-		fmt->fmt.pix_mp.width = ALIGN(f->fmt.pix_mp.width, 16);
-		fmt->fmt.pix_mp.height = ALIGN(f->fmt.pix_mp.height, 16);
+
+		codec_align = inst->fmts[INPUT_PORT].fmt.pix_mp.pixelformat ==
+			V4L2_PIX_FMT_HEVC ? 32 : 16;
+		fmt->fmt.pix_mp.width = ALIGN(f->fmt.pix_mp.width, codec_align);
+		fmt->fmt.pix_mp.height = ALIGN(f->fmt.pix_mp.height, codec_align);
 		fmt->fmt.pix_mp.pixelformat = f->fmt.pix_mp.pixelformat;
 		fmt->fmt.pix_mp.num_planes = 1;
 		fmt->fmt.pix_mp.plane_fmt[0].bytesperline = 0;

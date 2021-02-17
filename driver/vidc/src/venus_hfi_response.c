@@ -26,9 +26,10 @@ void print_psc_properties(u32 tag, const char *str, struct msm_vidc_inst *inst,
 		return;
 
 	dprintk(tag, inst->sid,
-		"%s: resolution %#x, crop offsets %#llx, bit depth %d, coded frames %d "
+		"%s: resolution %#x, crop offsets[0] %#x, crop offsets[1] %#x, bit depth %d, coded frames %d "
 		"fw min count %d, poc %d, color info %d, profile %d, level %d, tier %d ",
-		str, subsc_params.bitstream_resolution, subsc_params.crop_offsets,
+		str, subsc_params.bitstream_resolution,
+		subsc_params.crop_offsets[0], subsc_params.crop_offsets[1],
 		subsc_params.bit_depth, subsc_params.coded_frames,
 		subsc_params.fw_min_count, subsc_params.pic_order_cnt,
 		subsc_params.color_info, subsc_params.profile, subsc_params.level,
@@ -1059,8 +1060,8 @@ static int handle_session_property(struct msm_vidc_inst *inst,
 		inst->subcr_params[port].bitstream_resolution = payload_ptr[0];
 		break;
 	case HFI_PROP_CROP_OFFSETS:
-		inst->subcr_params[port].crop_offsets =
-			(u64)payload_ptr[0] << 32 | payload_ptr[1];
+		inst->subcr_params[port].crop_offsets[0] = payload_ptr[0];
+		inst->subcr_params[port].crop_offsets[1] = payload_ptr[1];
 		break;
 	case HFI_PROP_LUMA_CHROMA_BIT_DEPTH:
 		inst->subcr_params[port].bit_depth = payload_ptr[0];
