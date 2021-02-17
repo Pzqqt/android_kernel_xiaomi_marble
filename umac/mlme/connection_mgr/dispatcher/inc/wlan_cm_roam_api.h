@@ -443,8 +443,9 @@ void wlan_cm_init_occupied_ch_freq_list(struct wlan_objmgr_pdev *pdev,
 					struct wlan_objmgr_psoc *psoc,
 					uint8_t vdev_id);
 
-uint32_t cm_crpto_authmode_to_wmi_authmode(int32_t authmodeset,
-					   int32_t akm, int32_t ucastcipherset);
+uint32_t cm_crypto_authmode_to_wmi_authmode(int32_t authmodeset,
+					    int32_t akm,
+					    int32_t ucastcipherset);
 uint8_t *wlan_cm_get_rrm_cap_ie_data(void);
 
 /**
