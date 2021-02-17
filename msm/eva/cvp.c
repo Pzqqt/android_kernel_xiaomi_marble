@@ -638,4 +638,5 @@ static void __exit msm_cvp_exit(void)
 module_init(msm_cvp_init);
 module_exit(msm_cvp_exit);
 
+MODULE_SOFTDEP("pre: msm-mmrm");
 MODULE_LICENSE("GPL v2");
