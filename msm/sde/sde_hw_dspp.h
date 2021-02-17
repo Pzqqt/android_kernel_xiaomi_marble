@@ -211,6 +211,12 @@ struct sde_hw_dspp_ops {
 	void (*ltm_read_intr_status)(struct sde_hw_dspp *ctx, u32 *status);
 
 	/**
+	 * clear_ltm_merge_mode - clear LTM merge_mode bit
+	 * @ctx: Pointer to dspp context
+	 */
+	void (*clear_ltm_merge_mode)(struct sde_hw_dspp *ctx);
+
+	/**
 	 * validate_rc_mask -  Validate RC mask configuration
 	 * @ctx: Pointer to dspp context.
 	 * @cfg: Pointer to configuration.

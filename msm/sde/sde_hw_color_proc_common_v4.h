@@ -148,6 +148,8 @@ enum {
 #define SSPP 0
 #define DSPP 1
 
+#define LTM_CONFIG_MERGE_MODE_ONLY (BIT(16) | BIT(17))
+
 struct sde_ltm_phase_info {
 	u32 init_h[LTM_MAX];
 	u32 init_v;

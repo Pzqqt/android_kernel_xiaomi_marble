@@ -312,6 +312,7 @@ struct sde_frame_data {
  * @ltm_buf_free    : list of LTM buffers that are available
  * @ltm_buf_busy    : list of LTM buffers that are been used by HW
  * @ltm_hist_en     : flag to indicate whether LTM hist is enabled or not
+ * @ltm_merge_clear_pending : flag indicates merge mode bit needs to be cleared
  * @ltm_buffer_lock : muttx to protect ltm_buffers allcation and free
  * @ltm_lock        : Spinlock to protect ltm buffer_cnt, hist_en and ltm lists
  * @needs_hw_reset  : Initiate a hw ctl reset
@@ -407,6 +408,7 @@ struct sde_crtc {
 	struct list_head ltm_buf_free;
 	struct list_head ltm_buf_busy;
 	bool ltm_hist_en;
+	bool ltm_merge_clear_pending;
 	struct drm_msm_ltm_cfg_param ltm_cfg;
 	struct mutex ltm_buffer_lock;
 	spinlock_t ltm_lock;
