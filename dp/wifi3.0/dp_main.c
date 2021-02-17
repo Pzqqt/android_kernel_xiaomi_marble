@@ -3236,7 +3236,7 @@ void dp_link_desc_ring_replenish(struct dp_soc *soc, uint32_t mac_id)
 			offset = count % pages->num_element_per_page;
 			cookie = LINK_DESC_COOKIE(count, page_idx);
 
-			hal_set_link_desc_addr(desc, cookie,
+			hal_set_link_desc_addr(soc->hal_soc, desc, cookie,
 					       dma_pages[page_idx].page_p_addr
 					       + (offset * link_desc_size));
 			count++;
@@ -3263,7 +3263,8 @@ void dp_link_desc_ring_replenish(struct dp_soc *soc, uint32_t mac_id)
 			page_idx = count / num_descs_per_page;
 			offset = count % num_descs_per_page;
 			cookie = LINK_DESC_COOKIE(count, page_idx);
-			hal_set_link_desc_addr((void *)scatter_buf_ptr,
+			hal_set_link_desc_addr(soc->hal_soc,
+					       (void *)scatter_buf_ptr,
 					       cookie,
 					       dma_pages[page_idx].page_p_addr +
 					       (offset * link_desc_size));
