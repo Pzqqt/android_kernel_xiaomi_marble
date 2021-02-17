@@ -1231,6 +1231,8 @@ struct wlan_lmac_if_reg_rx_ops {
 	bool (*reg_ignore_fw_reg_offload_ind)(struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*reg_get_unii_5g_bitmap)(struct wlan_objmgr_pdev *pdev,
 					     uint8_t *bitmap);
+	QDF_STATUS (*reg_set_ext_tpc_supported)(struct wlan_objmgr_psoc *psoc,
+						bool val);
 };
 
 #ifdef CONVERGED_P2P_ENABLE

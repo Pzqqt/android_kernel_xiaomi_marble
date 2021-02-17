@@ -106,4 +106,14 @@ QDF_STATUS tgt_reg_set_6ghz_supported(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS tgt_reg_set_5dot9_ghz_supported(struct wlan_objmgr_psoc *psoc,
 					   bool val);
 
+/**
+ * tgt_reg_set_ext_tpc_supported() - Whether FW supports new WMI cmd for TPC
+ * @psoc: Pointer to psoc
+ * @val: value
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS tgt_reg_set_ext_tpc_supported(struct wlan_objmgr_psoc *psoc,
+					 bool val);
+
 #endif

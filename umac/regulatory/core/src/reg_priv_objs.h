@@ -104,6 +104,7 @@ struct chan_change_cbk_entry {
  *	changes.
  * @domain_code_6g_ap: domain code for 6G AP
  * @domain_code_6g_client: domain code for 6G client
+ * @is_ext_tpc_supported: Whether FW supports new WMI command for TPC
  */
 struct wlan_regulatory_psoc_priv_obj {
 	struct mas_chan_params mas_chan_params[PSOC_MAX_PHY_REG_CAP];
@@ -160,6 +161,7 @@ struct wlan_regulatory_psoc_priv_obj {
 	uint8_t domain_code_6g_ap[REG_CURRENT_MAX_AP_TYPE];
 	uint8_t domain_code_6g_client[REG_CURRENT_MAX_AP_TYPE][REG_MAX_CLIENT_TYPE];
 #endif
+	bool is_ext_tpc_supported;
 };
 
 /**
