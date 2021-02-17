@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015, 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015, 2018-2021 The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SWRM_REGISTERS_H
@@ -19,24 +19,36 @@
 #define MM_SYNC_CONFIG                            (SWRM_BASE+0x0108)
 #define SWRM_COMP_NPL_PARAMS                      (SWRM_BASE+0x0120)
 #define SWRM_INTERRUPT_STATUS                     (SWRM_BASE+0x0200)
-#define SWRM_INTERRUPT_EN                         (SWRM_BASE+0x0204)
 #define SWRM_INTERRUPT_CLEAR                      (SWRM_BASE+0x0208)
 #define SWRM_INTERRUPT_STATUS_1                   (SWRM_BASE+0x0220)
-#define SWRM_INTERRUPT_EN_1                       (SWRM_BASE+0x0224)
 #define SWRM_INTERRUPT_CLEAR_1                    (SWRM_BASE+0x0228)
 #define SWRM_CPU1_INTERRUPT_EN                    (SWRM_BASE+0x0210)
 #define SWRM_CPU1_INTERRUPT_EN_1                  (SWRM_BASE+0x0230)
 #define SWRM_CPU0_CMD_RESPONSE                    (SWRM_BASE+0x0250)
-#define SWRM_CMD_FIFO_WR_CMD                      (SWRM_BASE+0x0300)
-#define SWRM_CMD_FIFO_RD_CMD                      (SWRM_BASE+0x0304)
-#define SWRM_CMD_FIFO_CMD                         (SWRM_BASE+0x0308)
-#define SWRM_CMD_FIFO_STATUS                      (SWRM_BASE+0x030C)
-#define SWRM_CMD_FIFO_CFG                         (SWRM_BASE+0x0314)
-#define SWRM_CMD_FIFO_RD_FIFO                     (SWRM_BASE+0x0318)
+
 #define SWRM_CPU1_CMD_FIFO_WR_CMD                 (SWRM_BASE+0x031C)
 #define SWRM_CPU1_CMD_FIFO_RD_CMD                 (SWRM_BASE+0x0320)
 #define SWRM_CPU1_CMD_FIFO_STATUS                 (SWRM_BASE+0x0328)
 #define SWRM_CPU1_CMD_FIFO_RD_FIFO                (SWRM_BASE+0x0334)
+
+#ifdef CONFIG_SWRM_VER_1P7
+#define SWRM_INTERRUPT_EN                    SWRM_CPU1_INTERRUPT_EN
+#define SWRM_INTERRUPT_EN_1                  SWRM_CPU1_INTERRUPT_EN_1
+#define SWRM_CMD_FIFO_WR_CMD                 SWRM_CPU1_CMD_FIFO_WR_CMD
+#define SWRM_CMD_FIFO_RD_CMD                 SWRM_CPU1_CMD_FIFO_RD_CMD
+#define SWRM_CMD_FIFO_STATUS                 SWRM_CPU1_CMD_FIFO_STATUS
+#define SWRM_CMD_FIFO_RD_FIFO                SWRM_CPU1_CMD_FIFO_RD_FIFO
+#else
+#define SWRM_INTERRUPT_EN                         (SWRM_BASE+0x0204)
+#define SWRM_INTERRUPT_EN_1                       (SWRM_BASE+0x0224)
+#define SWRM_CMD_FIFO_WR_CMD                      (SWRM_BASE+0x0300)
+#define SWRM_CMD_FIFO_RD_CMD                      (SWRM_BASE+0x0304)
+#define SWRM_CMD_FIFO_STATUS                      (SWRM_BASE+0x030C)
+#define SWRM_CMD_FIFO_RD_FIFO                     (SWRM_BASE+0x0318)
+#endif /* CONFIG_SWRM_VER_1P7 */
+
+#define SWRM_CMD_FIFO_CMD                         (SWRM_BASE+0x0308)
+#define SWRM_CMD_FIFO_CFG                         (SWRM_BASE+0x0314)
 #define SWRM_CPU_NUM_ENTRIES_WR_CMD_FIFO          (SWRM_BASE+0x0370)
 #define SWRM_CPU0_SW_INTERRUPT_SET                (SWRM_BASE+0x0374)
 #define SWRM_CPU0_SW_MESSAGE0                     (SWRM_BASE+0x0384)
