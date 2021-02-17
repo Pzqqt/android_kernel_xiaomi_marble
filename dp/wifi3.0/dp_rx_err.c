@@ -1293,6 +1293,23 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 			/* IEEE80211_SEQ_MAX indicates invalid start_seq */
 	}
 
+	/*
+	 * Drop packets in this path if cce_match is found. Packets will come
+	 * in following path depending on whether tidQ is setup.
+	 * 1. If tidQ is setup: WIFILI_HAL_RX_WBM_REO_PSH_RSN_ROUTE and
+	 * cce_match = 1
+	 *    Packets with WIFILI_HAL_RX_WBM_REO_PSH_RSN_ROUTE are already
+	 *    dropped.
+	 * 2. If tidQ is not setup: WIFILI_HAL_RX_WBM_REO_PSH_RSN_ERROR and
+	 * cce_match = 1
+	 *    These packets need to be dropped and should not get delivered
+	 *    to stack.
+	 */
+	if (qdf_unlikely(dp_rx_err_cce_drop(soc, vdev, nbuf, rx_tlv_hdr))) {
+		qdf_nbuf_free(nbuf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	if (qdf_unlikely(vdev->rx_decap_type == htt_cmn_pkt_type_raw)) {
 		qdf_nbuf_set_next(nbuf, NULL);
 		dp_rx_deliver_raw(vdev, nbuf, peer);
