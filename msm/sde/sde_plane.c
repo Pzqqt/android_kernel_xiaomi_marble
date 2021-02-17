@@ -3636,6 +3636,7 @@ static void _sde_plane_setup_capabilities_blob(struct sde_plane *psde,
 	bool is_master = !psde->is_virtual;
 	const struct sde_format_extended *format_list;
 	u32 index;
+	int pipe_id;
 
 	if (is_master) {
 		format_list = psde->pipe_sblk->format_list;
@@ -3674,13 +3675,22 @@ static void _sde_plane_setup_capabilities_blob(struct sde_plane *psde,
 			psde->pipe_sblk->max_per_pipe_bw * 1000LL);
 	sde_kms_info_add_keyint(info, "max_per_pipe_bw_high",
 			psde->pipe_sblk->max_per_pipe_bw_high * 1000LL);
+
+	if (psde->pipe <= SSPP_VIG3 && psde->pipe >= SSPP_VIG0)
+		pipe_id = psde->pipe -  SSPP_VIG0;
+	else if (psde->pipe <= SSPP_RGB3 && psde->pipe >= SSPP_RGB0)
+		pipe_id = psde->pipe -  SSPP_RGB0;
+	else if (psde->pipe <= SSPP_DMA3 && psde->pipe >= SSPP_DMA0)
+		pipe_id = psde->pipe -  SSPP_DMA0;
+	else
+		pipe_id = -1;
+
+	sde_kms_info_add_keyint(info, "pipe_idx", pipe_id);
+
 	index = (master_plane_id == 0) ? 0 : 1;
 	if (catalog->has_demura &&
-	    catalog->demura_supported[psde->pipe][index] != ~0x0) {
+	    catalog->demura_supported[psde->pipe][index] != ~0x0)
 		sde_kms_info_add_keyint(info, "demura_block", index);
-		sde_kms_info_add_keyint(info, "demura_pipe_id",
-				psde->pipe - SSPP_DMA0);
-	}
 
 	if (psde->features & BIT(SDE_SSPP_SEC_UI_ALLOWED))
 		sde_kms_info_add_keyint(info, "sec_ui_allowed", 1);
