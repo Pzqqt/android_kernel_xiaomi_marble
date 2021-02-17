@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -177,7 +177,7 @@
  * idle roam trigger(in dBm).
  * @Min: -120
  * @Max: 0
- * @Default: -70
+ * @Default: -75
  *
  * Minimum RSSI value of the candidate AP to consider it as candidate for
  * roaming when roam trigger is Deauthentication/Disconnection from current
@@ -196,7 +196,7 @@
 		"candidate_min_rssi_for_disconnect", \
 		-120, \
 		0, \
-		-70, \
+		-75, \
 		CFG_VALUE_OR_DEFAULT, \
 		"Minimum RSSI of candidate AP for Disconnect roam trigger")
 
@@ -206,7 +206,7 @@
  * miss roam trigger (in dBm)
  * @Min: -120
  * @Max: 0
- * @Default: -70
+ * @Default: -75
  *
  * Minimum RSSI value of the candidate AP to consider it as candidate for
  * roaming when roam trigger is disconnection from current AP due to beacon
@@ -225,7 +225,7 @@
 	"candidate_min_rssi_for_beacon_miss", \
 	-120, \
 	0, \
-	-70, \
+	-75, \
 	CFG_VALUE_OR_DEFAULT, \
 	"Minimum RSSI of candidate AP for Bmiss roam trigger")
 

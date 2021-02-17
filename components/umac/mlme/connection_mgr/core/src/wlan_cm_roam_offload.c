@@ -483,7 +483,7 @@ cm_roam_scan_offload_fill_lfr3_config(struct wlan_objmgr_vdev *vdev,
 	akm = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
 
 	rso_config->akm =
-		cm_crpto_authmode_to_wmi_authmode(authmode, akm, uccipher);
+		cm_crypto_authmode_to_wmi_authmode(authmode, akm, uccipher);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1066,8 +1066,8 @@ static uint32_t cm_get_wapi_wmi_auth_type(int32_t akm)
 		return WMI_AUTH_NONE;
 }
 
-uint32_t cm_crpto_authmode_to_wmi_authmode(int32_t authmodeset,
-					   int32_t akm, int32_t ucastcipherset)
+uint32_t cm_crypto_authmode_to_wmi_authmode(int32_t authmodeset,
+					    int32_t akm, int32_t ucastcipherset)
 {
 	if (!authmodeset || authmodeset < 0)
 		return WMI_AUTH_OPEN;
@@ -1157,7 +1157,7 @@ cm_roam_scan_offload_ap_profile(struct wlan_objmgr_psoc *psoc,
 	authmode = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_AUTH_MODE);
 	akm = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
 	profile->rsn_authmode =
-		cm_crpto_authmode_to_wmi_authmode(authmode, akm, uccipher);
+		cm_crypto_authmode_to_wmi_authmode(authmode, akm, uccipher);
 
 	profile->rssi_threshold = rso_cfg->cfg_param.roam_rssi_diff;
 	profile->bg_rssi_threshold = rso_cfg->cfg_param.bg_rssi_threshold;

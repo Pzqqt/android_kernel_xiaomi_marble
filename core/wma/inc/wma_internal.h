@@ -779,8 +779,6 @@ int wma_vdev_install_key_complete_event_handler(void *handle,
 void wma_objmgr_set_peer_mlme_phymode(tp_wma_handle wma, uint8_t *mac_addr,
 				      enum wlan_phymode phymode);
 
-uint32_t wma_convert_crypto_akm_to_wmi_akm(uint32_t keymgmt);
-
 QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 					   tSirNwType nw_type,
 					   tpAddStaParams params);
