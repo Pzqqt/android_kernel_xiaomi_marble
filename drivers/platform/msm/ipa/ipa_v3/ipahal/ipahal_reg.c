@@ -5031,11 +5031,6 @@ void ipahal_get_aggr_force_close_valmask(int ep_idx,
 		return;
 	}
 
-	if (ep_idx > (sizeof(valmask->val) * 8 - 1)) {
-		IPAHAL_ERR("too big ep_idx %d\n", ep_idx);
-		ipa_assert();
-		return;
-	}
 	IPA_SETFIELD_IN_REG(valmask->val,
 		IPA_BIT_MAP_CELL_MSK(ep_idx),
 		shft, bmsk);
