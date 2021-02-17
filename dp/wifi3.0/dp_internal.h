@@ -1835,9 +1835,19 @@ void dp_peer_stats_update_protocol_cnt(struct cdp_soc_t *soc,
 				       bool is_egress,
 				       bool is_rx);
 
+void dp_vdev_peer_stats_update_protocol_cnt_tx(struct dp_vdev *vdev_hdl,
+					       qdf_nbuf_t nbuf);
+
 #else
 #define dp_vdev_peer_stats_update_protocol_cnt(vdev, nbuf, peer, \
 					       is_egress, is_rx)
+
+static inline
+void dp_vdev_peer_stats_update_protocol_cnt_tx(struct dp_vdev *vdev_hdl,
+					       qdf_nbuf_t nbuf)
+{
+}
+
 #endif
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2

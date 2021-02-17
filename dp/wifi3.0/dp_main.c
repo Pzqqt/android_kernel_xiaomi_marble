@@ -54,6 +54,7 @@
 #include "qdf_mem.h"   /* qdf_mem_malloc,free */
 #include "cfg_ucfg_api.h"
 #include "dp_mon_filter.h"
+
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 #include "cdp_txrx_flow_ctrl_v2.h"
 #else
@@ -117,6 +118,9 @@ cdp_dump_flow_pool_info(struct cdp_soc_t *soc)
 #define dp_vdev_info(params...) \
 	__QDF_TRACE_FL(QDF_TRACE_LEVEL_INFO_HIGH, QDF_MODULE_ID_DP_VDEV, ## params)
 #define dp_vdev_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_DP_VDEV, params)
+
+void dp_configure_arch_ops(struct dp_soc *soc);
+qdf_size_t dp_get_soc_context_size(uint16_t device_id);
 
 /*
  * The max size of cdp_peer_stats_param_t is limited to 16 bytes.
@@ -5345,6 +5349,8 @@ static void dp_soc_detach(struct cdp_soc_t *txrx_soc)
 {
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 
+	soc->arch_ops.txrx_soc_detach(soc);
+
 	dp_soc_swlm_detach(soc);
 	dp_soc_tx_desc_sw_pools_free(soc);
 	dp_soc_srng_free(soc);
@@ -6104,12 +6110,17 @@ static QDF_STATUS dp_vdev_attach_wifi3(struct cdp_soc_t *cdp_soc,
 				       enum wlan_op_mode op_mode,
 				       enum wlan_op_subtype subtype)
 {
+	int i = 0;
+	qdf_size_t vdev_context_size;
 	struct dp_soc *soc = (struct dp_soc *)cdp_soc;
 	struct dp_pdev *pdev =
 		dp_get_pdev_from_soc_pdev_id_wifi3((struct dp_soc *)soc,
 						   pdev_id);
-	struct dp_vdev *vdev = qdf_mem_malloc(sizeof(*vdev));
-	int i = 0;
+	struct dp_vdev *vdev;
+
+	vdev_context_size =
+		soc->arch_ops.txrx_get_context_size(DP_CONTEXT_TYPE_VDEV);
+	vdev = qdf_mem_malloc(vdev_context_size);
 
 	if (!pdev) {
 		dp_init_err("%pK: DP PDEV is Null for pdev id %d",
@@ -6220,6 +6231,9 @@ static QDF_STATUS dp_vdev_attach_wifi3(struct cdp_soc_t *cdp_soc,
 	dp_info("Created vdev %pK ("QDF_MAC_ADDR_FMT")", vdev,
 		QDF_MAC_ADDR_REF(vdev->mac_addr.raw));
 	DP_STATS_INIT(vdev);
+
+	if (QDF_IS_STATUS_ERROR(soc->arch_ops.txrx_vdev_attach(soc, vdev)))
+		goto fail0;
 
 	if (wlan_op_mode_sta == vdev->opmode)
 		dp_peer_create_wifi3((struct cdp_soc_t *)soc, vdev_id,
@@ -6410,6 +6424,8 @@ static QDF_STATUS dp_vdev_detach_wifi3(struct cdp_soc_t *cdp_soc,
 
 	if (!vdev)
 		return QDF_STATUS_E_FAILURE;
+
+	soc->arch_ops.txrx_vdev_detach(soc, vdev);
 
 	pdev = vdev->pdev;
 
@@ -12871,12 +12887,13 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 		goto fail0;
 	}
 
-	soc = qdf_mem_malloc(sizeof(*soc));
+	soc = qdf_mem_malloc(dp_get_soc_context_size(device_id));
 	if (!soc) {
 		dp_err("DP SOC memory allocation failed");
 		goto fail0;
 	}
 
+	dp_info("soc memory allocated %pk", soc);
 	soc->hif_handle = hif_handle;
 	soc->hal_soc = hif_get_hal_handle(soc->hif_handle);
 	if (!soc->hal_soc)
@@ -12889,6 +12906,8 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 	soc->ctrl_psoc = ctrl_psoc;
 	soc->osdev = qdf_osdev;
 	soc->num_hw_dscp_tid_map = HAL_MAX_HW_DSCP_TID_MAPS;
+
+	dp_configure_arch_ops(soc);
 
 	/* Reset wbm sg list and flags */
 	dp_rx_wbm_sg_list_reset(soc);
@@ -12925,6 +12944,11 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 		goto fail5;
 	}
 
+	if (!QDF_IS_STATUS_SUCCESS(soc->arch_ops.txrx_soc_attach(soc))) {
+		dp_err("unable to do target specific attach");
+		goto fail6;
+	}
+
 	dp_soc_swlm_attach(soc);
 	dp_soc_set_interrupt_mode(soc);
 	dp_soc_set_def_pdev(soc);
@@ -12935,6 +12959,8 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 		qdf_skb_total_mem_stats_read());
 
 	return soc;
+fail6:
+	dp_soc_tx_desc_sw_pools_free(soc);
 fail5:
 	dp_soc_srng_free(soc);
 fail4:

@@ -103,6 +103,35 @@ void *dp_soc_init_wifi3(struct cdp_soc_t *soc,
 }
 #endif /* QCA_WIFI_QCA8074 */
 
+static inline int cdp_get_arch_type_from_devid(uint16_t devid)
+{
+	switch (devid) {
+	case LITHIUM_DP: /*FIXME Add lithium devide IDs */
+	case QCA8074_DEVICE_ID: /* Hawekeye */
+	case QCA8074V2_DEVICE_ID: /* Hawekeye V2*/
+	case QCA5018_DEVICE_ID:
+	case QCA6290_DEVICE_ID:
+	case QCN9000_DEVICE_ID:
+	case QCN6122_DEVICE_ID:
+	case QCA6390_DEVICE_ID:
+	case QCA6490_DEVICE_ID:
+	case QCA6750_DEVICE_ID:
+	case QCA6390_EMULATION_DEVICE_ID:
+	case RUMIM2M_DEVICE_ID_NODE0: /*lithium emulation */
+	case RUMIM2M_DEVICE_ID_NODE1: /*lithium emulation */
+	case RUMIM2M_DEVICE_ID_NODE2: /*lithium emulation */
+	case RUMIM2M_DEVICE_ID_NODE3: /*lithium emulation */
+	case RUMIM2M_DEVICE_ID_NODE4: /*lithium emulation */
+	case RUMIM2M_DEVICE_ID_NODE5: /*lithium emulation */
+		return LITHIUM_DP;
+	case BERYLLIUM_DP:
+	case WCN7850_DEVICE_ID:
+		return BERYLLIUM_DP;
+	default:
+		return -1;
+	}
+}
+
 static inline
 ol_txrx_soc_handle cdp_soc_attach(u_int16_t devid,
 				  struct hif_opaque_softc *hif_handle,

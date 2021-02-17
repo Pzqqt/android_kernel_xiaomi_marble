@@ -57,6 +57,7 @@
 #ifdef WLAN_TX_PKT_CAPTURE_ENH
 #include "dp_tx_capture.h"
 #endif
+//#include "dp_tx.h"
 
 #define REPT_MU_MIMO 1
 #define REPT_MU_OFDMA_MIMO 3
@@ -504,7 +505,8 @@ struct dp_tx_ext_desc_pool_s {
  * @tx_encap_type: Transmit encap type (i.e. Raw, Native Wi-Fi, Ethernet).
  * 		   This is maintained in descriptor to allow more efficient
  * 		   processing in completion event processing code.
- * 		    This field is filled in with the htt_pkt_type enum.
+ * 		   This field is filled in with the htt_pkt_type enum.
+ * @buffer_src: buffer source TQM, REO, FW etc.
  * @frm_type: Frame Type - ToDo check if this is redundant
  * @pkt_offset: Offset from which the actual packet data starts
  * @me_buffer: Pointer to ME buffer - store this so that it can be freed on
@@ -522,7 +524,9 @@ struct dp_tx_desc_s {
 	uint8_t tx_status;
 	uint16_t peer_id;
 	struct dp_pdev *pdev;
-	uint8_t tx_encap_type;
+	uint8_t tx_encap_type:2,
+		buffer_src:3,
+		reserved:3;
 	uint8_t frm_type;
 	uint8_t pkt_offset;
 	uint8_t  pool_id;
@@ -1491,6 +1495,64 @@ struct ipa_dp_tx_rsc {
 };
 #endif
 
+struct dp_tx_msdu_info_s;
+/*
+ * enum dp_context_type- DP Context Type
+ * @DP_CONTEXT_TYPE_SOC: Context type DP SOC
+ * @DP_CONTEXT_TYPE_PDEV: Context type DP PDEV
+ * @DP_CONTEXT_TYPE_VDEV: Context type DP VDEV
+ * @DP_CONTEXT_TYPE_PEER: Context type DP PEER
+ *
+ * Helper enums to be used to retrieve the size of the corresponding
+ * data structure by passing the type.
+ */
+enum dp_context_type {
+	DP_CONTEXT_TYPE_SOC,
+	DP_CONTEXT_TYPE_PDEV,
+	DP_CONTEXT_TYPE_VDEV,
+	DP_CONTEXT_TYPE_PEER
+};
+
+/*
+ * struct dp_arch_ops- DP target specific arch ops
+ * @DP_CONTEXT_TYPE_SOC: Context type DP SOC
+ * @DP_CONTEXT_TYPE_PDEV: Context type DP PDEV
+ * @tx_hw_enqueue: enqueue TX data to HW
+ * @tx_comp_get_params_from_hal_desc: get software tx descriptor and release
+ * 				      source from HAL desc for wbm release ring
+ * @txrx_set_vdev_param: target specific ops while setting vdev params
+ */
+struct dp_arch_ops {
+	/* INIT/DEINIT Arch Ops */
+	QDF_STATUS (*txrx_soc_attach)(struct dp_soc *soc);
+	QDF_STATUS (*txrx_soc_detach)(struct dp_soc *soc);
+	QDF_STATUS (*txrx_pdev_attach)(struct dp_pdev *pdev);
+	QDF_STATUS (*txrx_pdev_detach)(struct dp_pdev *pdev);
+	QDF_STATUS (*txrx_vdev_attach)(struct dp_soc *soc,
+				       struct dp_vdev *vdev);
+	QDF_STATUS (*txrx_vdev_detach)(struct dp_soc *soc,
+				       struct dp_vdev *vdev);
+
+	/* TX RX Arch Ops */
+	QDF_STATUS (*tx_hw_enqueue)(struct dp_soc *soc, struct dp_vdev *vdev,
+				    struct dp_tx_desc_s *tx_desc,
+				    uint16_t fw_metadata,
+				    struct cdp_tx_exception_metadata *metadata,
+				    struct dp_tx_msdu_info_s *msdu_info);
+
+	 void (*tx_comp_get_params_from_hal_desc)(struct dp_soc *soc,
+						  void *tx_comp_hal_desc,
+						  struct dp_tx_desc_s **desc);
+	/* Control Arch Ops */
+	QDF_STATUS (*txrx_set_vdev_param)(struct dp_soc *soc,
+					  struct dp_vdev *vdev,
+					  enum cdp_vdev_param_type param,
+					  cdp_config_param_type val);
+
+	/* Misc Arch Ops */
+	qdf_size_t (*txrx_get_context_size)(enum dp_context_type);
+};
+
 /* SOC level structure for data path */
 struct dp_soc {
 	/**
@@ -1505,6 +1567,8 @@ struct dp_soc {
 
 	/* OS device abstraction */
 	qdf_device_t osdev;
+
+	struct dp_arch_ops arch_ops;
 
 	/*cce disable*/
 	bool cce_disable;
@@ -1939,6 +2003,8 @@ struct dp_soc {
 	qdf_spinlock_t reo_desc_deferred_freelist_lock;
 	bool reo_desc_deferred_freelist_init;
 #endif
+	/* BM id for first WBM2SW  ring */
+	uint32_t wbm_sw0_bm_id;
 };
 
 #ifdef IPA_OFFLOAD
@@ -3358,6 +3424,8 @@ struct dp_req_rx_hw_stats_t {
 	bool is_query_timeout;
 };
 #endif
+/* soc level structure to declare arch specific ops for DP */
+
 
 void dp_hw_link_desc_pool_banks_free(struct dp_soc *soc, uint32_t mac_id);
 QDF_STATUS dp_hw_link_desc_pool_banks_alloc(struct dp_soc *soc,
