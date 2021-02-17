@@ -466,23 +466,6 @@ static uint16_t hal_rx_attn_phy_ppdu_id_get_li(uint8_t *buf)
 }
 
 /**
- * hal_rx_attn_msdu_done_get_li() - Get msdi done flag from RX TLV
- * @buf: RX tlv address
- *
- * Return: msdu done flag
- */
-static uint32_t hal_rx_attn_msdu_done_get_li(uint8_t *buf)
-{
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_attention *rx_attn = &pkt_tlvs->attn_tlv.rx_attn;
-	uint32_t msdu_done;
-
-	msdu_done = HAL_RX_ATTN_MSDU_DONE_GET(rx_attn);
-
-	return msdu_done;
-}
-
-/**
  * hal_rx_msdu_start_msdu_len_get(): API to get the MSDU length
  * from rx_msdu_start TLV
  *
@@ -934,26 +917,6 @@ hal_rx_tlv_csum_err_get_li(uint8_t *rx_tlv_hdr, uint32_t *ip_csum_err,
 {
 	*ip_csum_err = hal_rx_attn_ip_cksum_fail_get(rx_tlv_hdr);
 	*tcp_udp_csum_err = hal_rx_attn_tcp_udp_cksum_fail_get(rx_tlv_hdr);
-}
-
-void hal_rx_mpdu_desc_info_get_li(void *desc_addr,
-				  void *mpdu_desc_info_hdl)
-{
-	struct reo_destination_ring *reo_dst_ring;
-	struct hal_rx_mpdu_desc_info *mpdu_desc_info =
-		(struct hal_rx_mpdu_desc_info *)mpdu_desc_info_hdl;
-	uint32_t *mpdu_info;
-
-	reo_dst_ring = (struct reo_destination_ring *)desc_addr;
-
-	mpdu_info = (uint32_t *)&reo_dst_ring->rx_mpdu_desc_info_details;
-
-	mpdu_desc_info->msdu_count = HAL_RX_MPDU_MSDU_COUNT_GET(mpdu_info);
-	mpdu_desc_info->mpdu_seq = HAL_RX_MPDU_SEQUENCE_NUMBER_GET(mpdu_info);
-	mpdu_desc_info->mpdu_flags = HAL_RX_MPDU_FLAGS_GET(mpdu_info);
-	mpdu_desc_info->peer_meta_data =
-		HAL_RX_MPDU_DESC_PEER_META_DATA_GET(mpdu_info);
-	mpdu_desc_info->bar_frame = HAL_RX_MPDU_BAR_FRAME_GET(mpdu_info);
 }
 
 static uint8_t hal_rx_err_status_get_li(hal_ring_desc_t rx_desc)

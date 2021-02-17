@@ -2246,7 +2246,7 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 		for (ring = 0; ring < soc->num_reo_dest_rings; ring++) {
 			if (!(rx_mask & (1 << ring)))
 				continue;
-			work_done = dp_rx_process(int_ctx,
+			work_done = soc->arch_ops.dp_rx_process(int_ctx,
 						  soc->reo_dest_ring[ring].hal_srng,
 						  ring,
 						  remaining_quota);
