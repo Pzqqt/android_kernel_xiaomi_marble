@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -57,10 +57,12 @@ enum wlan_if_mgr_evt {
  * struct validate_bss_data - interface manager validate candidate data
  * @peer_addr: MAC address of the BSS
  * @chan_freq: Frequency of the potential BSS connection
+ * @beacon_interval: beacon interval of BSS
  */
 struct validate_bss_data {
 	struct qdf_mac_addr peer_addr;
-	uint32_t chan_freq;
+	qdf_freq_t chan_freq;
+	uint16_t beacon_interval;
 };
 
 /**
