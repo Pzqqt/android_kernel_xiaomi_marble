@@ -190,6 +190,7 @@ struct sde_dbg_debug_bus_common {
 	u32 enable_mask;
 	bool include_in_deferred_work;
 	u32 entries_size;
+	u32 limited_entries_size;
 	u32 *dumped_content;
 	u32 content_idx;
 	u32 content_size;
@@ -198,6 +199,7 @@ struct sde_dbg_debug_bus_common {
 struct sde_dbg_sde_debug_bus {
 	struct sde_dbg_debug_bus_common cmn;
 	struct sde_debug_bus_entry *entries;
+	struct sde_debug_bus_entry *limited_entries;
 	u32 top_blk_off;
 	u32 (*read_tp)(void __iomem *mem_base, u32 wr_addr, u32 rd_addr, u32 block_id, u32 test_id);
 	void (*clear_tp)(void __iomem *mem_base, u32 wr_addr);
@@ -305,6 +307,34 @@ static void _sde_debug_bus_ppb1_dump(u32 wr_addr, u32 block_id, u32 test_id, u32
 	SDE_DBG_LOG_DEBUGBUS("pp1", wr_addr, block_id, test_id, val);
 }
 
+static struct sde_debug_bus_entry dbg_bus_sde_limited[] = {
+	{ DBGBUS_SSPP0, DBGBUS_DSPP_STATUS, 0, 9, 0, 8 },
+	{ DBGBUS_SSPP0, DBGBUS_DSPP_STATUS, 20, 34, 0, 8 },
+	{ DBGBUS_SSPP0, DBGBUS_DSPP_STATUS, 60, 4, 0, 8 },
+	{ DBGBUS_SSPP0, DBGBUS_DSPP_STATUS, 70, 4, 0, 8 },
+
+	{ DBGBUS_SSPP1, DBGBUS_DSPP_STATUS, 0, 9, 0, 8 },
+	{ DBGBUS_SSPP1, DBGBUS_DSPP_STATUS, 20, 34, 0, 8 },
+	{ DBGBUS_SSPP1, DBGBUS_DSPP_STATUS, 60, 4, 0, 8 },
+	{ DBGBUS_SSPP1, DBGBUS_DSPP_STATUS, 70, 4, 0, 8 },
+
+	{ DBGBUS_DSPP, DBGBUS_DSPP_STATUS, 0, 1, 0, 8 },
+	{ DBGBUS_DSPP, DBGBUS_DSPP_STATUS, 9, 1, 0, 8 },
+	{ DBGBUS_DSPP, DBGBUS_DSPP_STATUS, 13, 2, 0, 8 },
+	{ DBGBUS_DSPP, DBGBUS_DSPP_STATUS, 19, 2, 0, 8 },
+	{ DBGBUS_DSPP, DBGBUS_DSPP_STATUS, 24, 2, 0, 8 },
+	{ DBGBUS_DSPP, DBGBUS_DSPP_STATUS, 31, 8, 0, 8 },
+	{ DBGBUS_DSPP, DBGBUS_DSPP_STATUS, 42, 12, 0, 8 },
+	{ DBGBUS_DSPP, DBGBUS_DSPP_STATUS, 54, 2, 0, 32 },
+	{ DBGBUS_DSPP, DBGBUS_DSPP_STATUS, 56, 2, 0, 8 },
+	{ DBGBUS_DSPP, DBGBUS_DSPP_STATUS, 63, 73, 0, 8 },
+
+	{ DBGBUS_PERIPH, DBGBUS_DSPP_STATUS, 0, 1, 0, 8 },
+	{ DBGBUS_PERIPH, DBGBUS_DSPP_STATUS, 47, 7, 0, 8 },
+	{ DBGBUS_PERIPH, DBGBUS_DSPP_STATUS, 60, 14, 0, 8 },
+	{ DBGBUS_PERIPH, DBGBUS_DSPP_STATUS, 80, 3, 0, 8 },
+};
+
 static struct sde_debug_bus_entry dbg_bus_sde[] = {
 	{ DBGBUS_SSPP0, DBGBUS_DSPP_STATUS, 0, 74, 0, 32 },
 	{ DBGBUS_SSPP1, DBGBUS_DSPP_STATUS, 0, 74, 0, 32 },
@@ -338,6 +368,21 @@ static struct sde_debug_bus_entry dbg_bus_sde[] = {
 	{ DBGBUS_DSPP, DBGBUS_DSPP_STATUS, 110, 1, 7, 1, _sde_debug_bus_lm_dump },
 	{ DBGBUS_DSPP, DBGBUS_DSPP_STATUS, 96, 1, 7, 1, _sde_debug_bus_lm_dump },
 	{ DBGBUS_DSPP, DBGBUS_DSPP_STATUS, 124, 1, 7, 1, _sde_debug_bus_lm_dump }
+};
+
+static struct sde_debug_bus_entry vbif_dbg_bus_limited[] = {
+	{ MMSS_VBIF_TEST_BUS1_CTRL0, MMSS_VBIF_TEST_BUS_OUT, 0, 2, 0, 12},
+	{ MMSS_VBIF_TEST_BUS1_CTRL0, MMSS_VBIF_TEST_BUS_OUT, 4, 6, 0, 12},
+	{ MMSS_VBIF_TEST_BUS1_CTRL0, MMSS_VBIF_TEST_BUS_OUT, 12, 2, 0, 12},
+
+	{ MMSS_VBIF_TEST_BUS2_CTRL0, MMSS_VBIF_TEST_BUS_OUT, 0, 2, 0, 16},
+	{ MMSS_VBIF_TEST_BUS2_CTRL0, MMSS_VBIF_TEST_BUS_OUT, 0, 2, 128, 208},
+	{ MMSS_VBIF_TEST_BUS2_CTRL0, MMSS_VBIF_TEST_BUS_OUT, 4, 6, 0, 16},
+	{ MMSS_VBIF_TEST_BUS2_CTRL0, MMSS_VBIF_TEST_BUS_OUT, 4, 6, 128, 208},
+	{ MMSS_VBIF_TEST_BUS2_CTRL0, MMSS_VBIF_TEST_BUS_OUT, 12, 2, 0, 16},
+	{ MMSS_VBIF_TEST_BUS2_CTRL0, MMSS_VBIF_TEST_BUS_OUT, 12, 2, 128, 208},
+	{ MMSS_VBIF_TEST_BUS2_CTRL0, MMSS_VBIF_TEST_BUS_OUT, 16, 2, 0, 16},
+	{ MMSS_VBIF_TEST_BUS2_CTRL0, MMSS_VBIF_TEST_BUS_OUT, 16, 2, 128, 208},
 };
 
 static struct sde_debug_bus_entry vbif_dbg_bus[] = {
@@ -402,7 +447,8 @@ static void _sde_dump_reg(const char *dump_name, u32 reg_dump_flag,
 	if (!len_bytes || !dump_mem)
 		return;
 
-	in_log = (reg_dump_flag & SDE_DBG_DUMP_IN_LOG);
+	in_log = (reg_dump_flag & SDE_DBG_DUMP_IN_LOG)
+				| (reg_dump_flag & SDE_DBG_DUMP_IN_LOG_LIMITED);
 	in_mem = (reg_dump_flag & SDE_DBG_DUMP_IN_MEM);
 
 	pr_debug("%s: reg_dump_flag=%d in_log=%d in_mem=%d\n",
@@ -743,13 +789,37 @@ static void _sde_dbg_dump_vbif_err_info(void __iomem *mem_base)
 	}
 }
 
+static bool _is_dbg_bus_limited_valid(struct sde_dbg_sde_debug_bus *bus,
+				u32 wr_addr, u32 block_id, u32 test_id)
+{
+	struct sde_debug_bus_entry *entry;
+	u32 block_id_max, test_id_max;
+	int i;
+
+	if (!bus->limited_entries || !bus->cmn.limited_entries_size)
+		return true;
+
+	for (i = 0; i < bus->cmn.limited_entries_size; i++) {
+		entry = bus->limited_entries + i;
+		block_id_max = entry->block_id + entry->block_id_max;
+		test_id_max = entry->test_id + entry->test_id_max;
+
+		if ((wr_addr == entry->wr_addr)
+		    && ((block_id >= entry->block_id) && (block_id < block_id_max))
+		    && ((test_id >= entry->test_id) && (test_id < test_id_max)))
+			return true;
+	}
+
+	return false;
+}
+
 static void _sde_dbg_dump_bus_entry(struct sde_dbg_sde_debug_bus *bus,
 		struct sde_debug_bus_entry *entries, u32 bus_size,
 		void __iomem *mem_base, u32 *dump_addr)
 {
 	u32 status = 0;
 	int i, j, k;
-	bool in_mem, in_log;
+	bool in_mem, in_log, in_log_limited;
 	struct sde_debug_bus_entry *entry;
 
 	if (!bus->read_tp || !bus->clear_tp)
@@ -757,6 +827,7 @@ static void _sde_dbg_dump_bus_entry(struct sde_dbg_sde_debug_bus *bus,
 
 	in_mem = (bus->cmn.enable_mask & SDE_DBG_DUMP_IN_MEM);
 	in_log = (bus->cmn.enable_mask & SDE_DBG_DUMP_IN_LOG);
+	in_log_limited = (bus->cmn.enable_mask & SDE_DBG_DUMP_IN_LOG_LIMITED);
 
 	for (k = 0; k < bus_size; k++) {
 		entry = entries + k;
@@ -768,7 +839,9 @@ static void _sde_dbg_dump_bus_entry(struct sde_dbg_sde_debug_bus *bus,
 
 				status = bus->read_tp(mem_base, entry->wr_addr,
 							entry->rd_addr, i, j);
-				if (!entry->analyzer && in_log)
+
+				if (!entry->analyzer && (in_log || (in_log_limited &&
+					    _is_dbg_bus_limited_valid(bus, entry->wr_addr, i, j))))
 					SDE_DBG_LOG_ENTRY(0, entry->wr_addr, i, j, status);
 
 				if (dump_addr && in_mem) {
@@ -2093,6 +2166,8 @@ void sde_dbg_init_dbg_buses(u32 hwversion)
 
 	dbg->dbgbus_sde.entries = dbg_bus_sde;
 	dbg->dbgbus_sde.cmn.entries_size = ARRAY_SIZE(dbg_bus_sde);
+	dbg->dbgbus_sde.limited_entries = dbg_bus_sde_limited;
+	dbg->dbgbus_sde.cmn.limited_entries_size = ARRAY_SIZE(dbg_bus_sde_limited);
 	dbg->dbgbus_sde.cmn.name = DBGBUS_NAME_SDE;
 	dbg->dbgbus_sde.cmn.enable_mask = DEFAULT_DBGBUS_SDE;
 	dbg->dbgbus_sde.read_tp = _sde_dbg_sde_read_test_point;
@@ -2100,6 +2175,8 @@ void sde_dbg_init_dbg_buses(u32 hwversion)
 
 	dbg->dbgbus_vbif_rt.entries = vbif_dbg_bus;
 	dbg->dbgbus_vbif_rt.cmn.entries_size = ARRAY_SIZE(vbif_dbg_bus);
+	dbg->dbgbus_vbif_rt.limited_entries = vbif_dbg_bus_limited;
+	dbg->dbgbus_vbif_rt.cmn.limited_entries_size = ARRAY_SIZE(vbif_dbg_bus_limited);
 	dbg->dbgbus_vbif_rt.cmn.name = DBGBUS_NAME_VBIF_RT;
 	dbg->dbgbus_vbif_rt.cmn.enable_mask = DEFAULT_DBGBUS_VBIFRT;
 	dbg->dbgbus_vbif_rt.read_tp = _sde_dbg_vbif_read_test_point;
