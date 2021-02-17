@@ -306,6 +306,8 @@ static os_timer_func(dfs_remove_from_nol)
 	/* Delete the given NOL entry. */
 	DFS_NOL_DELETE_CHAN_LOCKED(dfs, delfreq, delchwidth);
 
+	utils_dfs_reg_update_nol_chan_for_freq(dfs->dfs_pdev_obj,
+					       &delfreq, 1, DFS_NOL_RESET);
 	/* Update the wireless stack with the new NOL. */
 	dfs_nol_update(dfs);
 
@@ -317,8 +319,6 @@ static os_timer_func(dfs_remove_from_nol)
 		  "remove channel %d from nol", chan);
 	utils_dfs_unmark_precac_nol_for_freq(dfs->dfs_pdev_obj, delfreq);
 
-	utils_dfs_reg_update_nol_chan_for_freq(dfs->dfs_pdev_obj,
-					     &delfreq, 1, DFS_NOL_RESET);
 	utils_dfs_save_nol(dfs->dfs_pdev_obj);
 
 	/*
