@@ -10,7 +10,14 @@
 #include "msm_vidc_driver.h"
 #include "msm_vdec.h"
 
+#define in_range(range, val) (((range.begin) < (val)) && ((range.end) > (val)))
+
 extern struct msm_vidc_core *g_core;
+struct msm_vidc_hfi_range {
+	u32 begin;
+	u32 end;
+	int (*handle)(struct msm_vidc_inst *inst, struct hfi_packet *pkt);
+};
 
 void print_psc_properties(u32 tag, const char *str, struct msm_vidc_inst *inst,
 	struct msm_vidc_subscription_params subsc_params)
@@ -1198,32 +1205,6 @@ exit:
 	return rc;
 }
 
-static int process_response_packet(struct msm_vidc_inst *inst,
-		struct hfi_packet *packet)
-{
-	int rc = 0;
-
-	if (packet->type > HFI_CMD_BEGIN &&
-		packet->type < HFI_CMD_END) {
-		rc = handle_session_command(inst, packet);
-	} else if (packet->type > HFI_PROP_BEGIN &&
-		packet->type < HFI_PROP_END) {
-		rc = handle_session_property(inst, packet);
-	} else if (packet->type > HFI_SESSION_ERROR_BEGIN &&
-		packet->type < HFI_SESSION_ERROR_END) {
-		rc = handle_session_error(inst, packet);
-	} else if (packet->type > HFI_INFORMATION_BEGIN &&
-		packet->type < HFI_INFORMATION_END) {
-		rc = handle_session_info(inst, packet);
-	} else {
-		i_vpr_e(inst, "%s: Unknown packet type: %#x\n",
-			__func__, packet->type);
-		rc = -EINVAL;
-	}
-
-	return rc;
-}
-
 int handle_session_response_work(struct msm_vidc_inst *inst,
 		struct response_work *resp_work)
 {
@@ -1233,12 +1214,11 @@ int handle_session_response_work(struct msm_vidc_inst *inst,
 	u8 *pkt, *start_pkt;
 	u32 hfi_cmd_type = 0;
 	int i, j;
-	struct msm_vidc_cmd_range be[5] = {
-		{HFI_SYSTEM_ERROR_BEGIN, HFI_SYSTEM_ERROR_END},
-		{HFI_SESSION_ERROR_BEGIN, HFI_SESSION_ERROR_END},
-		{HFI_INFORMATION_BEGIN, HFI_INFORMATION_END},
-		{HFI_PROP_BEGIN, HFI_PROP_END},
-		{HFI_CMD_BEGIN, HFI_CMD_END},
+	struct msm_vidc_hfi_range be[] = {
+		{HFI_SESSION_ERROR_BEGIN, HFI_SESSION_ERROR_END, handle_session_error},
+		{HFI_INFORMATION_BEGIN,   HFI_INFORMATION_END,   handle_session_info},
+		{HFI_PROP_BEGIN,          HFI_PROP_END,          handle_session_property},
+		{HFI_CMD_BEGIN,           HFI_CMD_END,           handle_session_command},
 	};
 
 	if (!inst || !resp_work) {
@@ -1273,8 +1253,7 @@ int handle_session_response_work(struct msm_vidc_inst *inst,
 		pkt = start_pkt;
 		for (j = 0; j < hdr->num_packets; j++) {
 			packet = (struct hfi_packet * ) pkt;
-			if (packet->type > be[i].begin
-				&& packet->type < be[i].end) {
+			if (in_range(be[i], packet->type)) {
 				if (hfi_cmd_type == HFI_CMD_SETTINGS_CHANGE) {
 					i_vpr_e(inst,
 						"%s: invalid packet type %d in port settings change\n",
@@ -1282,7 +1261,7 @@ int handle_session_response_work(struct msm_vidc_inst *inst,
 					rc = -EINVAL;
 				}
 				hfi_cmd_type = packet->type;
-				rc = process_response_packet(inst, packet);
+				rc = be[i].handle(inst, packet);
 				if (rc)
 					goto exit;
 			}
@@ -1400,12 +1379,11 @@ static int handle_session_response(struct msm_vidc_core *core,
 	u32 hfi_cmd_type = 0;
 	u32 hfi_port = 0;
 	int i, j;
-	struct msm_vidc_cmd_range be[5] = {
-		{HFI_SYSTEM_ERROR_BEGIN, HFI_SYSTEM_ERROR_END},
-		{HFI_SESSION_ERROR_BEGIN, HFI_SESSION_ERROR_END},
-		{HFI_INFORMATION_BEGIN, HFI_INFORMATION_END},
-		{HFI_PROP_BEGIN, HFI_PROP_END},
-		{HFI_CMD_BEGIN, HFI_CMD_END},
+	struct msm_vidc_hfi_range be[] = {
+		{HFI_SESSION_ERROR_BEGIN, HFI_SESSION_ERROR_END, handle_session_error},
+		{HFI_INFORMATION_BEGIN,   HFI_INFORMATION_END,   handle_session_info},
+		{HFI_PROP_BEGIN,          HFI_PROP_END,          handle_session_property},
+		{HFI_CMD_BEGIN,           HFI_CMD_END,           handle_session_command},
 	};
 
 	inst = get_inst(core, hdr->session_id);
@@ -1460,9 +1438,9 @@ static int handle_session_response(struct msm_vidc_core *core,
 		pkt = start_pkt;
 		for (j = 0; j < hdr->num_packets; j++) {
 			packet = (struct hfi_packet * ) pkt;
-			if (packet->type > be[i].begin && packet->type < be[i].end) {
+			if (in_range(be[i], packet->type)) {
 				hfi_cmd_type = packet->type;
-				rc = process_response_packet(inst, packet);
+				rc = be[i].handle(inst, packet);
 				if (rc)
 					goto exit;
 			}

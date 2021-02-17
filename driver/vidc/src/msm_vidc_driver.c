@@ -807,11 +807,50 @@ bool msm_vidc_allow_last_flag(struct msm_vidc_inst *inst)
 	return false;
 }
 
+static int msm_vidc_process_pending_ipsc(struct msm_vidc_inst *inst,
+	enum msm_vidc_inst_state *new_state)
+{
+	struct response_work *resp_work, *dummy = NULL;
+	int rc = 0;
+
+	if (!inst || !new_state) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (list_empty(&inst->response_works))
+		return 0;
+
+	i_vpr_h(inst, "%s: state %s, ipsc pending\n", __func__, state_name(inst->state));
+	list_for_each_entry_safe(resp_work, dummy, &inst->response_works, list) {
+		if (resp_work->type == RESP_WORK_INPUT_PSC) {
+			rc = handle_session_response_work(inst, resp_work);
+			if (rc) {
+				i_vpr_e(inst, "%s: handle ipsc failed\n", __func__);
+				*new_state = MSM_VIDC_ERROR;
+			} else {
+				if (inst->state == MSM_VIDC_DRC_DRAIN_LAST_FLAG ||
+					inst->state == MSM_VIDC_DRAIN_START_INPUT) {
+					*new_state = MSM_VIDC_DRC_DRAIN;
+				} else if (inst->state == MSM_VIDC_DRC_LAST_FLAG) {
+					*new_state = MSM_VIDC_DRC;
+				}
+			}
+			list_del(&resp_work->list);
+			kfree(resp_work->data);
+			kfree(resp_work);
+			/* list contains max only one ipsc at anytime */
+			break;
+		}
+	}
+
+	return rc;
+}
+
 int msm_vidc_state_change_streamon(struct msm_vidc_inst *inst, u32 type)
 {
 	int rc = 0;
 	enum msm_vidc_inst_state new_state = MSM_VIDC_ERROR;
-	struct response_work *resp_work;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -832,35 +871,19 @@ int msm_vidc_state_change_streamon(struct msm_vidc_inst *inst, u32 type)
 		} else if (inst->state == MSM_VIDC_START_INPUT) {
 			new_state = MSM_VIDC_START;
 		} else if (inst->state == MSM_VIDC_DRAIN_START_INPUT) {
-			i_vpr_h(inst,
-				"%s: streamon(output) in DRAIN_START_INPUT state\n",
-				__func__);
+			i_vpr_h(inst, "%s: streamon(output) in %s state\n",
+				__func__, state_name(inst->state));
 			new_state = MSM_VIDC_DRAIN;
-			if (!list_empty(&inst->response_works)) {
-				resp_work = list_first_entry(&inst->response_works,
-							struct response_work, list);
-				if (resp_work->type == RESP_WORK_INPUT_PSC) {
-					i_vpr_h(inst,
-						"%s: streamon(output) in DRAIN_START_INPUT state, input psc pending\n",
-						__func__);
-					rc = handle_session_response_work(inst, resp_work);
-					if (rc) {
-						i_vpr_e(inst,
-							"%s: handle input psc failed\n", __func__);
-						new_state = MSM_VIDC_ERROR;
-					} else {
-						new_state = MSM_VIDC_DRC_DRAIN;
-					}
-					list_del(&resp_work->list);
-					kfree(resp_work->data);
-					kfree(resp_work);
-				}
+			rc = msm_vidc_process_pending_ipsc(inst, &new_state);
+			if (rc) {
+				i_vpr_e(inst, "%s: process pending ipsc failed\n", __func__);
+				goto state_change;
 			}
 		}
 	}
-	rc = msm_vidc_change_inst_state(inst, new_state, __func__);
-	if (rc)
-		return rc;
+
+state_change:
+	msm_vidc_change_inst_state(inst, new_state, __func__);
 
 	return rc;
 }
@@ -960,7 +983,6 @@ int msm_vidc_state_change_start(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 	enum msm_vidc_inst_state new_state = MSM_VIDC_ERROR;
-	struct response_work *resp_work;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -969,57 +991,28 @@ int msm_vidc_state_change_start(struct msm_vidc_inst *inst)
 
 	if (inst->state == MSM_VIDC_DRAIN_LAST_FLAG ||
 		inst->state == MSM_VIDC_DRC_LAST_FLAG) {
-			new_state = MSM_VIDC_START;
-		if (!list_empty(&inst->response_works)) {
-			resp_work = list_first_entry(&inst->response_works,
-				struct response_work, list);
-			if (resp_work->type == RESP_WORK_INPUT_PSC) {
-				i_vpr_h(inst,
-					"%s: start in DRC(DRAIN)_LAST_FLAG state, input psc pending\n",
-					__func__);
-				rc = handle_session_response_work(inst, resp_work);
-				if (rc) {
-					i_vpr_e(inst,
-						"%s: handle input psc failed\n", __func__);
-					new_state = MSM_VIDC_ERROR;
-				} else {
-					new_state = MSM_VIDC_DRC;
-				}
-				list_del(&resp_work->list);
-				kfree(resp_work->data);
-				kfree(resp_work);
-			}
+		new_state = MSM_VIDC_START;
+		rc = msm_vidc_process_pending_ipsc(inst, &new_state);
+		if (rc) {
+			i_vpr_e(inst, "%s: process pending ipsc failed\n", __func__);
+			goto state_change;
 		}
 	} else if (inst->state == MSM_VIDC_DRC_DRAIN_LAST_FLAG) {
-			new_state = MSM_VIDC_DRAIN;
-		if (!list_empty(&inst->response_works)) {
-			resp_work = list_first_entry(&inst->response_works,
-				struct response_work, list);
-			if (resp_work->type == RESP_WORK_INPUT_PSC) {
-				i_vpr_h(inst,
-					"%s: start in DRC_DRAIN_LAST_FLAG state, input psc pending\n");
-				rc = handle_session_response_work(inst, resp_work);
-				if (rc) {
-					i_vpr_e(inst,
-						"%s: handle input psc failed\n", __func__);
-					new_state = MSM_VIDC_ERROR;
-				} else {
-					new_state = MSM_VIDC_DRC_DRAIN;
-				}
-				list_del(&resp_work->list);
-				kfree(resp_work->data);
-				kfree(resp_work);
-			}
+		new_state = MSM_VIDC_DRAIN;
+		rc = msm_vidc_process_pending_ipsc(inst, &new_state);
+		if (rc) {
+			i_vpr_e(inst, "%s: process pending ipsc failed\n", __func__);
+			goto state_change;
 		}
 	} else {
-		i_vpr_e(inst, "%s: wrong state %s\n",
-			__func__, state_name(inst->state));
-		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
-		return -EINVAL;
+		i_vpr_e(inst, "%s: wrong state %s\n", __func__, state_name(inst->state));
+		new_state = MSM_VIDC_ERROR;
+		rc = -EINVAL;
+		goto state_change;
 	}
-	rc = msm_vidc_change_inst_state(inst, new_state, __func__);
-	if (rc)
-		return rc;
+
+state_change:
+	msm_vidc_change_inst_state(inst, new_state, __func__);
 
 	return rc;
 }
