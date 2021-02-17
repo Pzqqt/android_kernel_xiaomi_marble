@@ -7216,6 +7216,10 @@ dp_peer_authorize(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 		status = QDF_STATUS_E_FAILURE;
 	} else {
 		peer->authorize = authorize ? 1 : 0;
+
+		if (!peer->authorize)
+			dp_peer_flush_frags(soc_hdl, vdev_id, peer_mac);
+
 		dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
 	}
 
