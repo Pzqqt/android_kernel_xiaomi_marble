@@ -1694,4 +1694,32 @@ dp_rx_deliver_to_pkt_capture_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf,
 {
 }
 #endif
+
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
+#ifdef FEATURE_MEC
+/**
+ * dp_rx_mcast_echo_check() - check if the mcast pkt is a loop
+ *			      back on same vap or a different vap.
+ * @soc: core DP main context
+ * @peer: dp peer handler
+ * @rx_tlv_hdr: start of the rx TLV header
+ * @nbuf: pkt buffer
+ *
+ * Return: bool (true if it is a looped back pkt else false)
+ *
+ */
+bool dp_rx_mcast_echo_check(struct dp_soc *soc,
+			    struct dp_peer *peer,
+			    uint8_t *rx_tlv_hdr,
+			    qdf_nbuf_t nbuf);
+#else
+static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
+					  struct dp_peer *peer,
+					  uint8_t *rx_tlv_hdr,
+					  qdf_nbuf_t nbuf)
+{
+	return false;
+}
+#endif /* FEATURE_MEC */
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
 #endif /* _DP_RX_H */

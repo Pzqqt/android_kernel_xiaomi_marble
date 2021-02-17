@@ -2271,6 +2271,33 @@ void dp_rx_deliver_to_pkt_capture_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf,
 
 #endif
 
+#if defined(FEATURE_MCL_REPEATER) && defined(FEATURE_MEC)
+/**
+ * dp_rx_mec_check_wrapper() - wrapper to dp_rx_mcast_echo_check
+ * @soc: core DP main context
+ * @peer: dp peer handler
+ * @rx_tlv_hdr: start of the rx TLV header
+ * @nbuf: pkt buffer
+ *
+ * Return: bool (true if it is a looped back pkt else false)
+ */
+static inline bool dp_rx_mec_check_wrapper(struct dp_soc *soc,
+					   struct dp_peer *peer,
+					   uint8_t *rx_tlv_hdr,
+					   qdf_nbuf_t nbuf)
+{
+	return dp_rx_mcast_echo_check(soc, peer, rx_tlv_hdr, nbuf);
+}
+#else
+static inline bool dp_rx_mec_check_wrapper(struct dp_soc *soc,
+					   struct dp_peer *peer,
+					   uint8_t *rx_tlv_hdr,
+					   qdf_nbuf_t nbuf)
+{
+	return false;
+}
+#endif
+
 /**
  * dp_rx_process() - Brain of the Rx processing functionality
  *		     Called from the bottom half (tasklet/NET_RX_SOFTIRQ)
@@ -2933,6 +2960,18 @@ done:
 					tid_stats->intrabss_cnt++;
 					continue; /* Get next desc */
 				}
+
+			if (qdf_unlikely(dp_rx_mec_check_wrapper(soc,
+								 peer,
+								 rx_tlv_hdr,
+								 nbuf))) {
+				/* this is a looped back MCBC pkt,drop it */
+				DP_STATS_INC_PKT(peer, rx.mec_drop, 1,
+						 QDF_NBUF_CB_RX_PKT_LEN(nbuf));
+				qdf_nbuf_free(nbuf);
+				nbuf = next;
+				continue;
+			}
 		}
 
 		dp_rx_fill_gro_info(soc, rx_tlv_hdr, nbuf, &rx_ol_pkt_cnt);
