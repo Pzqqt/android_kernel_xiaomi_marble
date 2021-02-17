@@ -241,6 +241,34 @@ ucfg_mlme_is_twt_setup_in_progress(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * ucfg_mlme_twt_is_command_in_progress() - Get TWT command in progress
+ * @psoc: Pointer to global PSOC object
+ * @peer_mac: Global peer mac address
+ * @dialog_id: TWT session dialog id
+ * @cmd: TWT command
+ *
+ * Return: True if given command is in progress
+ */
+
+static inline bool
+ucfg_mlme_twt_is_command_in_progress(struct wlan_objmgr_psoc *psoc,
+				     struct qdf_mac_addr *peer_mac,
+				     uint8_t dialog_id,
+				     enum wlan_twt_commands cmd)
+{
+	return mlme_twt_is_command_in_progress(psoc, peer_mac, dialog_id, cmd);
+}
+
+static inline QDF_STATUS
+ucfg_mlme_set_twt_command_in_progress(struct wlan_objmgr_psoc *psoc,
+				      struct qdf_mac_addr *peer_mac,
+				      uint8_t dialog_id,
+				      enum wlan_twt_commands cmd)
+{
+	return mlme_set_twt_command_in_progress(psoc, peer_mac, dialog_id, cmd);
+}
+
+/**
  * ucfg_mlme_set_twt_setup_done() - Set TWT setup done flag
  * @psoc: Pointer to global PSOC object
  * @peer_mac: Global peer mac address
@@ -501,6 +529,24 @@ static inline bool
 ucfg_mlme_is_twt_setup_in_progress(struct wlan_objmgr_psoc *psoc,
 				   struct qdf_mac_addr *peer_mac,
 				   uint8_t dialog_id)
+{
+	return false;
+}
+
+static inline QDF_STATUS
+ucfg_mlme_set_twt_command_in_progress(struct wlan_objmgr_psoc *psoc,
+				      struct qdf_mac_addr *peer_mac,
+				      uint8_t dialog_id,
+				      enum wlan_twt_commands cmd)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
+static inline bool
+ucfg_mlme_twt_is_command_in_progress(struct wlan_objmgr_psoc *psoc,
+				     struct qdf_mac_addr *peer_mac,
+				     uint8_t dialog_id,
+				     enum wlan_twt_commands cmd)
 {
 	return false;
 }
