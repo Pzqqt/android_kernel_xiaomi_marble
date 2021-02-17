@@ -4625,7 +4625,7 @@ static void ipa_gsi_irq_tx_notify_cb(struct gsi_chan_xfer_notify *notify)
 
 void __ipa_gsi_irq_rx_scedule_poll(struct ipa3_sys_context *sys)
 {
-	bool clk_off;
+	bool clk_off = true;
 	enum ipa_client_type client_type;
 
 	atomic_set(&sys->curr_polling_state, 1);
@@ -4645,7 +4645,9 @@ void __ipa_gsi_irq_rx_scedule_poll(struct ipa3_sys_context *sys)
 	 * switch. Use the active no block instead
 	 * where we would have ref counts.
 	 */
-	clk_off = IPA_ACTIVE_CLIENTS_INC_EP_NO_BLOCK(client_type);
+	if ((ipa_net_initialized && sys->napi_obj) ||
+		IPA_CLIENT_IS_LOW_LAT_CONS(sys->ep->client))
+		clk_off = IPA_ACTIVE_CLIENTS_INC_EP_NO_BLOCK(client_type);
 	if (!clk_off && ipa_net_initialized && sys->napi_obj) {
 		trace_ipa3_napi_schedule(sys->ep->client);
 		napi_schedule(sys->napi_obj);
