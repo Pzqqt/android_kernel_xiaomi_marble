@@ -6790,9 +6790,12 @@ wlan_fill_bss_desc_from_scan_entry(struct mac_context *mac_ctx,
 uint16_t
 wlan_get_ielen_from_bss_description(struct bss_description *bss_desc)
 {
-	uint16_t ielen;
+	uint16_t ielen, ieFields_offset;
 
-	if (!bss_desc)
+	ieFields_offset = GET_FIELD_OFFSET(struct bss_description, ieFields);
+
+	if ((!bss_desc || !bss_desc->length) ||
+	    (bss_desc->length - sizeof(bss_desc->length) <= ieFields_offset))
 		return 0;
 
 	/*
@@ -6809,7 +6812,7 @@ wlan_get_ielen_from_bss_description(struct bss_description *bss_desc)
 	 */
 
 	ielen = (uint16_t)(bss_desc->length + sizeof(bss_desc->length) -
-			   GET_FIELD_OFFSET(struct bss_description, ieFields));
+			   ieFields_offset);
 
 	return ielen;
 }
