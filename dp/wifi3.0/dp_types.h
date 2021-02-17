@@ -1532,6 +1532,7 @@ struct dp_arch_ops {
 				       struct dp_vdev *vdev);
 	QDF_STATUS (*txrx_vdev_detach)(struct dp_soc *soc,
 				       struct dp_vdev *vdev);
+	QDF_STATUS (*dp_rxdma_ring_sel_cfg)(struct dp_soc *soc);
 
 	/* TX RX Arch Ops */
 	QDF_STATUS (*tx_hw_enqueue)(struct dp_soc *soc, struct dp_vdev *vdev,
@@ -2005,6 +2006,11 @@ struct dp_soc {
 #endif
 	/* BM id for first WBM2SW  ring */
 	uint32_t wbm_sw0_bm_id;
+
+	/* rx monitor pkt tlv size */
+	uint16_t rx_mon_pkt_tlv_size;
+	/* rx pkt tlv size */
+	uint16_t rx_pkt_tlv_size;
 };
 
 #ifdef IPA_OFFLOAD

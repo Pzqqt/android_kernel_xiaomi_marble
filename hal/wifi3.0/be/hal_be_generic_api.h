@@ -1452,14 +1452,14 @@ hal_rx_status_get_tlv_info_generic_be(void *rx_tlv_hdr, void *ppduinfo,
 	case WIFIRX_MPDU_START_E:
 	{
 		uint8_t *rx_mpdu_start = (uint8_t *)rx_tlv;
-		uint32_t ppdu_id = HAL_RX_GET_PPDU_ID(rx_mpdu_start);
+		uint32_t ppdu_id = HAL_RX_GET_PPDU_ID(rx_tlv);
 		uint8_t filter_category = 0;
 
 		ppdu_info->nac_info.fc_valid =
-				HAL_RX_GET_FC_VALID(rx_mpdu_start);
+				HAL_RX_GET_FC_VALID(rx_tlv);
 
 		ppdu_info->nac_info.to_ds_flag =
-				HAL_RX_GET_TO_DS_FLAG(rx_mpdu_start);
+				HAL_RX_GET_TO_DS_FLAG(rx_tlv);
 
 		ppdu_info->nac_info.frame_control =
 			HAL_RX_GET(rx_mpdu_start,
@@ -1467,7 +1467,7 @@ hal_rx_status_get_tlv_info_generic_be(void *rx_tlv_hdr, void *ppduinfo,
 				   MPDU_FRAME_CONTROL_FIELD);
 
 		ppdu_info->sw_frame_group_id =
-			HAL_RX_GET_SW_FRAME_GROUP_ID(rx_mpdu_start);
+			HAL_RX_GET_SW_FRAME_GROUP_ID(rx_tlv);
 
 		if (ppdu_info->sw_frame_group_id ==
 		    HAL_MPDU_SW_FRAME_GROUP_NULL_DATA) {
@@ -1481,7 +1481,7 @@ hal_rx_status_get_tlv_info_generic_be(void *rx_tlv_hdr, void *ppduinfo,
 				  ppdu_info);
 
 		ppdu_info->nac_info.mac_addr2_valid =
-				HAL_RX_GET_MAC_ADDR2_VALID(rx_mpdu_start);
+				HAL_RX_TLV_MPDU_MAC_ADDR_AD2_VALID_GET(rx_tlv);
 
 		*(uint16_t *)&ppdu_info->nac_info.mac_addr2[0] =
 			HAL_RX_GET(rx_mpdu_start,
@@ -1505,7 +1505,7 @@ hal_rx_status_get_tlv_info_generic_be(void *rx_tlv_hdr, void *ppduinfo,
 		}
 
 		filter_category =
-				HAL_RX_GET_FILTER_CATEGORY(rx_mpdu_start);
+				HAL_RX_GET_FILTER_CATEGORY(rx_tlv);
 
 		if (filter_category == 0)
 			ppdu_info->rx_status.rxpcu_filter_pass = 1;
@@ -1677,42 +1677,6 @@ void hal_tx_update_tidmap_prty_generic_be(struct hal_soc *soc, uint8_t value)
 
 	HAL_REG_WRITE(soc, addr,
 		      (value & HWIO_TCL_R0_TID_MAP_PRTY_RMSK));
-}
-
-/**
- * hal_rx_mpdu_end_offset_get_generic(): API to get the
- * mpdu_end structure offset rx_pkt_tlv structure
- *
- * NOTE: API returns offset of attn TLV from structure
- * rx_pkt_tlvs
- */
-static uint32_t hal_rx_mpdu_end_offset_get_generic(void)
-{
-	return RX_PKT_TLV_OFFSET(mpdu_end_tlv);
-}
-
-/**
- * hal_rx_attn_offset_get_generic(): API to get the
- * msdu_end structure offset rx_pkt_tlv structure
- *
- * NOTE: API returns offset of attn TLV from structure
- * rx_pkt_tlvs
- */
-static uint32_t hal_rx_attn_offset_get_generic(void)
-{
-	return RX_PKT_TLV_OFFSET(attn_tlv);
-}
-
-/**
- * hal_rx_msdu_start_offset_get_generic(): API to get the
- * msdu_start structure offset rx_pkt_tlv structure
- *
- * NOTE: API returns offset of attn TLV from structure
- * rx_pkt_tlvs
- */
-static uint32_t hal_rx_msdu_start_offset_get_generic(void)
-{
-	return RX_PKT_TLV_OFFSET(msdu_start_tlv);
 }
 
 /**

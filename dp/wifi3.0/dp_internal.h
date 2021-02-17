@@ -421,6 +421,20 @@ static inline void dp_wds_ext_peer_init(struct dp_peer *peer)
 }
 #endif /* QCA_SUPPORT_WDS_EXTENDED */
 
+#ifdef QCA_HOST2FW_RXBUF_RING
+static inline
+struct dp_srng *dp_get_rxdma_ring(struct dp_pdev *pdev, int lmac_id)
+{
+	return &pdev->rx_mac_buf_ring[lmac_id];
+}
+#else
+static inline
+struct dp_srng *dp_get_rxdma_ring(struct dp_pdev *pdev, int lmac_id)
+{
+	return &pdev->soc->rx_refill_buf_ring[lmac_id];
+}
+#endif
+
 /**
  * The lmac ID for a particular channel band is fixed.
  * 2.4GHz band uses lmac_id = 1
@@ -2440,7 +2454,7 @@ static inline uint32_t dp_history_get_next_index(qdf_atomic_t *curr_idx,
  *
  * Return: None
  */
-void dp_rx_skip_tlvs(qdf_nbuf_t nbuf, uint32_t l3_padding);
+void dp_rx_skip_tlvs(struct dp_soc *soc, qdf_nbuf_t nbuf, uint32_t l3_padding);
 
 /**
  * dp_soc_is_full_mon_enable () - Return if full monitor mode is enabled

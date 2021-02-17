@@ -115,7 +115,6 @@
 #include "hal_7850_tx.h"
 #include "hal_7850_rx.h"
 
-#include "hal_7850_rx_tlv.h"
 #include "hal_be_rx_tlv.h"
 
 #include <hal_generic_api.h>
@@ -254,6 +253,55 @@ static
 void *hal_dst_mpdu_desc_info_7850(void *dst_ring_desc)
 {
 	return (void *)HAL_DST_MPDU_DESC_INFO(dst_ring_desc);
+}
+
+/*
+ * hal_rx_get_tlv_7850(): API to get the tlv
+ *
+ * @rx_tlv: TLV data extracted from the rx packet
+ * Return: uint8_t
+ */
+static uint8_t hal_rx_get_tlv_7850(void *rx_tlv)
+{
+	return HAL_RX_GET(rx_tlv, PHYRX_RSSI_LEGACY, RECEIVE_BANDWIDTH);
+}
+
+/**
+ * hal_rx_proc_phyrx_other_receive_info_tlv_7850()
+ *				    - process other receive info TLV
+ * @rx_tlv_hdr: pointer to TLV header
+ * @ppdu_info: pointer to ppdu_info
+ *
+ * Return: None
+ */
+static
+void hal_rx_proc_phyrx_other_receive_info_tlv_7850(void *rx_tlv_hdr,
+						   void *ppdu_info_handle)
+{
+	uint32_t tlv_tag, tlv_len;
+	uint32_t temp_len, other_tlv_len, other_tlv_tag;
+	void *rx_tlv = (uint8_t *)rx_tlv_hdr + HAL_RX_TLV32_HDR_SIZE;
+	void *other_tlv_hdr = NULL;
+	void *other_tlv = NULL;
+
+	tlv_tag = HAL_RX_GET_USER_TLV32_TYPE(rx_tlv_hdr);
+	tlv_len = HAL_RX_GET_USER_TLV32_LEN(rx_tlv_hdr);
+	temp_len = 0;
+
+	other_tlv_hdr = rx_tlv + HAL_RX_TLV32_HDR_SIZE;
+
+	other_tlv_tag = HAL_RX_GET_USER_TLV32_TYPE(other_tlv_hdr);
+	other_tlv_len = HAL_RX_GET_USER_TLV32_LEN(other_tlv_hdr);
+	temp_len += other_tlv_len;
+	other_tlv = other_tlv_hdr + HAL_RX_TLV32_HDR_SIZE;
+
+	switch (other_tlv_tag) {
+	default:
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s unhandled TLV type: %d, TLV len:%d",
+			  __func__, other_tlv_tag, other_tlv_len);
+		break;
+	}
 }
 
 /**
@@ -696,11 +744,6 @@ static void hal_hw_txrx_ops_attach_wcn7850(struct hal_soc *hal_soc)
 	/* rx - TLV struct offsets */
 	hal_soc->ops->hal_rx_msdu_end_offset_get =
 					hal_rx_msdu_end_offset_get_generic;
-//	hal_soc->ops->hal_rx_attn_offset_get = hal_rx_attn_offset_get_generic;
-//	hal_soc->ops->hal_rx_msdu_start_offset_get =
-//					hal_rx_msdu_start_offset_get_generic;
-//	hal_soc->ops->hal_rx_mpdu_end_offset_get =
-//					hal_rx_mpdu_end_offset_get_generic;
 	hal_soc->ops->hal_rx_mpdu_start_offset_get =
 					hal_rx_mpdu_start_offset_get_generic;
 	hal_soc->ops->hal_rx_pkt_tlv_offset_get =

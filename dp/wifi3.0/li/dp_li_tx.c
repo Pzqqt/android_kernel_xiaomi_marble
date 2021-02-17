@@ -20,6 +20,8 @@
 #include "dp_tx.h"
 #include "dp_li_tx.h"
 #include "dp_tx_desc.h"
+#include <dp_internal.h>
+#include <dp_htt.h>
 #include <hal_li_api.h>
 #include <hal_li_tx.h>
 
