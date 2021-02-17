@@ -998,7 +998,7 @@ free_nbuf:
 }
 
 #if defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490) || \
-    defined(QCA_WIFI_QCA6750)
+    defined(QCA_WIFI_QCA6750) || defined(QCA_WIFI_WCN7850)
 /**
  * dp_rx_null_q_handle_invalid_peer_id_exception() - to find exception
  * @soc: pointer to dp_soc struct

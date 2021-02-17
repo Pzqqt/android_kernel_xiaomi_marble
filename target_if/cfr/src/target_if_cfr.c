@@ -480,7 +480,7 @@ target_if_cfr_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 #endif
 
 #ifdef WLAN_ENH_CFR_ENABLE
-#ifdef QCA_WIFI_QCA6490
+#if defined(QCA_WIFI_QCA6490) || defined(QCA_WIFI_WCN7850)
 static uint8_t target_if_cfr_get_mac_id(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_vdev *vdev;

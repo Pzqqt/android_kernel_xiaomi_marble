@@ -26,9 +26,12 @@
 
 #include "hif_main.h"
 
-#define MOB_DRV_LEGACY_DP	0xdeed/*FIXME Add MCL device IDs */
-#define LITHIUM_DP		0xfffd/*FIXME Add Litium device ID */
-/* Use these device IDs for attach in future */
+#define MOB_DRV_LEGACY_DP 0xdeed
+/* Lithium device IDs */
+#define LITHIUM_DP		0xfffd
+/* Beryllium device IDs */
+#define BERYLLIUM_DP		0xaffe
+/* Use device IDs for attach in future */
 
 #if defined(DP_TXRX_SOC_ATTACH)
 static inline ol_txrx_soc_handle
@@ -110,6 +113,7 @@ ol_txrx_soc_handle cdp_soc_attach(u_int16_t devid,
 {
 	switch (devid) {
 	case LITHIUM_DP: /*FIXME Add lithium devide IDs */
+	case BERYLLIUM_DP:
 	case QCA8074_DEVICE_ID: /* Hawekeye */
 	case QCA8074V2_DEVICE_ID: /* Hawekeye V2*/
 	case QCA5018_DEVICE_ID:

@@ -35,7 +35,8 @@
 #define HAL_IPA_TX_COMP_RING_IDX 2
 
 /* calculate the register address offset from bar0 of shadow register x */
-#if defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490)
+#if defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490) || \
+    defined(QCA_WIFI_WCN7850)
 #define SHADOW_REGISTER_START_ADDRESS_OFFSET 0x000008FC
 #define SHADOW_REGISTER_END_ADDRESS_OFFSET \
 	((SHADOW_REGISTER_START_ADDRESS_OFFSET) + (4 * (MAX_SHADOW_REGISTERS)))
@@ -125,7 +126,8 @@ static inline void hal_reg_write_result_check(struct hal_soc *hal_soc,
 	}
 }
 
-#if !defined(QCA_WIFI_QCA6390) && !defined(QCA_WIFI_QCA6490)
+#if !defined(QCA_WIFI_QCA6390) && !defined(QCA_WIFI_QCA6490) && \
+    !defined(QCA_WIFI_WCN7850)
 static inline void hal_lock_reg_access(struct hal_soc *soc,
 				       unsigned long *flags)
 {
@@ -230,7 +232,7 @@ static inline void hal_tx_init_cmd_credit_ring(hal_soc_handle_t hal_soc_hdl,
  *                            that window would be a bug
  */
 #if !defined(QCA_WIFI_QCA6390) && !defined(QCA_WIFI_QCA6490) && \
-    !defined(QCA_WIFI_QCA6750)
+    !defined(QCA_WIFI_QCA6750) && !defined(QCA_WIFI_WCN7850)
 static inline void hal_write32_mb(struct hal_soc *hal_soc, uint32_t offset,
 				  uint32_t value)
 {
@@ -463,7 +465,7 @@ static inline void hal_srng_write_address_32_mb(struct hal_soc *hal_soc,
 #endif
 
 #if !defined(QCA_WIFI_QCA6390) && !defined(QCA_WIFI_QCA6490) && \
-    !defined(QCA_WIFI_QCA6750)
+    !defined(QCA_WIFI_QCA6750) && !defined(QCA_WIFI_WCN7850)
 /**
  * hal_read32_mb() - Access registers to read configuration
  * @hal_soc: hal soc handle
@@ -861,7 +863,7 @@ extern void hal_detach(void *hal_soc);
 #define HAL_SRNG_MSI_INTR				0x00020000
 #define HAL_SRNG_CACHED_DESC		0x00040000
 
-#ifdef QCA_WIFI_QCA6490
+#if defined(QCA_WIFI_QCA6490)  || defined(QCA_WIFI_WCN7850)
 #define HAL_SRNG_PREFETCH_TIMER 1
 #else
 #define HAL_SRNG_PREFETCH_TIMER 0

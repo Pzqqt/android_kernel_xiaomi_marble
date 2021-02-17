@@ -7688,8 +7688,8 @@ static QDF_STATUS dp_peer_delete_wifi3(struct cdp_soc_t *soc_hdl,
  * Return: MAC address on success, NULL on failure.
  *
  */
-static uint8 *dp_get_vdev_mac_addr_wifi3(struct cdp_soc_t *soc_hdl,
-					 uint8_t vdev_id)
+static uint8_t *dp_get_vdev_mac_addr_wifi3(struct cdp_soc_t *soc_hdl,
+					   uint8_t vdev_id)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
 	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
@@ -14499,6 +14499,25 @@ static void dp_soc_cfg_init(struct dp_soc *soc)
 		}
 		soc->wlan_cfg_ctx->rxdma1_enable = 0;
 		break;
+	case TARGET_TYPE_WCN7850:
+		wlan_cfg_set_reo_dst_ring_size(soc->wlan_cfg_ctx,
+					       REO_DST_RING_SIZE_QCA6290);
+		soc->ast_override_support = 1;
+
+		if (soc->cdp_soc.ol_ops->get_con_mode &&
+		    soc->cdp_soc.ol_ops->get_con_mode() ==
+		    QDF_GLOBAL_MONITOR_MODE) {
+			int int_ctx;
+
+			for (int_ctx = 0; int_ctx < WLAN_CFG_INT_NUM_CONTEXTS;
+			     int_ctx++) {
+				soc->wlan_cfg_ctx->int_rx_ring_mask[int_ctx] = 0;
+				soc->wlan_cfg_ctx->int_rxdma2host_ring_mask[int_ctx] = 0;
+			}
+		}
+
+		soc->wlan_cfg_ctx->rxdma1_enable = 0;
+		break;
 	case TARGET_TYPE_QCA8074:
 		wlan_cfg_set_mon_delayed_replenish_entries(soc->wlan_cfg_ctx,
 							   MON_BUF_MIN_ENTRIES);
@@ -14581,6 +14600,11 @@ static void dp_soc_cfg_attach(struct dp_soc *soc)
 	case TARGET_TYPE_QCA6390:
 	case TARGET_TYPE_QCA6490:
 	case TARGET_TYPE_QCA6750:
+		wlan_cfg_set_reo_dst_ring_size(soc->wlan_cfg_ctx,
+					       REO_DST_RING_SIZE_QCA6290);
+		soc->wlan_cfg_ctx->rxdma1_enable = 0;
+		break;
+	case TARGET_TYPE_WCN7850:
 		wlan_cfg_set_reo_dst_ring_size(soc->wlan_cfg_ctx,
 					       REO_DST_RING_SIZE_QCA6290);
 		soc->wlan_cfg_ctx->rxdma1_enable = 0;

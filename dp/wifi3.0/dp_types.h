@@ -158,7 +158,7 @@ enum m_copy_mode {
 struct msdu_list {
 	qdf_nbuf_t head;
 	qdf_nbuf_t tail;
-	uint32 sum_len;
+	uint32_t sum_len;
 };
 
 struct dp_soc_cmn;
