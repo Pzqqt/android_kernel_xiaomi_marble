@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/err.h>
@@ -74,6 +74,34 @@ static void dp_pll_clock_unregister(struct dp_pll *pll)
 	}
 }
 
+int dp_pll_clock_register_helper(struct dp_pll *pll, struct dp_pll_vco_clk *clks, int num_clks)
+{
+	int rc = 0, i = 0;
+	struct platform_device *pdev;
+	struct clk *clk;
+
+	if (!pll || !clks) {
+		DP_ERR("input not initialized\n");
+		return -EINVAL;
+	}
+
+	pdev = pll->pdev;
+
+	for (i = 0; i < num_clks; i++) {
+		clks[i].priv = pll;
+
+		clk = clk_register(&pdev->dev, &clks[i].hw);
+		if (IS_ERR(clk)) {
+			DP_ERR("%s registration failed for DP: %d\n",
+			clk_hw_get_name(&clks[i].hw), pll->index);
+			return -EINVAL;
+		}
+		pll->clk_data->clks[i] = clk;
+	}
+
+	return rc;
+}
+
 struct dp_pll *dp_pll_get(struct dp_pll_in *in)
 {
 	int rc = 0;
@@ -93,6 +121,7 @@ struct dp_pll *dp_pll_get(struct dp_pll_in *in)
 	pll->pdev = in->pdev;
 	pll->parser = in->parser;
 	pll->aux = in->aux;
+	pll->dp_core_revision = in->dp_core_revision;
 	parser = pll->parser;
 	pdev = pll->pdev;
 

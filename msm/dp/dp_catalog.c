@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
 
@@ -1936,6 +1936,22 @@ static void dp_catalog_ctrl_fec_config(struct dp_catalog_ctrl *ctrl,
 	dp_write(DP_MAINLINK_CTRL, reg);
 	/* make sure mainlink configuration is updated with fec sequence */
 	wmb();
+}
+
+u32 dp_catalog_get_dp_core_version(struct dp_catalog *dp_catalog)
+{
+	struct dp_catalog_private *catalog;
+	struct dp_io_data *io_data;
+
+	if (!dp_catalog) {
+		DP_ERR("invalid input\n");
+		return 0;
+	}
+
+	catalog = container_of(dp_catalog, struct dp_catalog_private, dp_catalog);
+	io_data = catalog->io.dp_ahb;
+
+	return dp_read(DP_HW_VERSION);
 }
 
 static int dp_catalog_reg_dump(struct dp_catalog *dp_catalog,

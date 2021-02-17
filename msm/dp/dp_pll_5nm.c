@@ -121,6 +121,8 @@
 #define DP_VCO_RATE_9720MHZDIV1000		9720000UL
 #define DP_VCO_RATE_10800MHZDIV1000		10800000UL
 
+#define DP_PLL_NUM_CLKS				2
+
 #define DP_5NM_C_READY		BIT(0)
 #define DP_5NM_FREQ_DONE	BIT(0)
 #define DP_5NM_PLL_LOCKED	BIT(1)
@@ -826,17 +828,33 @@ static const struct clk_ops pll_vco_div_clk_ops = {
 	.set_rate = dp_pll_vco_div_clk_set_rate,
 };
 
-static struct dp_pll_vco_clk dp_phy_pll_link_clk = {
+static struct dp_pll_vco_clk dp0_phy_pll_clks[DP_PLL_NUM_CLKS] = {
+	{
 	.hw.init = &(struct clk_init_data) {
-		.name = "dp_phy_pll_link_clk",
+		.name = "dp0_phy_pll_link_clk",
 		.ops = &pll_link_clk_ops,
+		},
+	},
+	{
+	.hw.init = &(struct clk_init_data) {
+		.name = "dp0_phy_pll_vco_div_clk",
+		.ops = &pll_vco_div_clk_ops,
+		},
 	},
 };
 
-static struct dp_pll_vco_clk dp_phy_pll_vco_div_clk = {
+static struct dp_pll_vco_clk dp_phy_pll_clks[DP_PLL_NUM_CLKS] = {
+	{
+	.hw.init = &(struct clk_init_data) {
+		.name = "dp_phy_pll_link_clk",
+		.ops = &pll_link_clk_ops,
+		},
+	},
+	{
 	.hw.init = &(struct clk_init_data) {
 		.name = "dp_phy_pll_vco_div_clk",
 		.ops = &pll_vco_div_clk_ops,
+		},
 	},
 };
 
@@ -844,9 +862,9 @@ static struct dp_pll_db dp_pdb;
 
 int dp_pll_clock_register_5nm(struct dp_pll *pll)
 {
-	int rc = 0, num_clks = 2;
+	int rc = 0;
 	struct platform_device *pdev;
-	struct clk *clk;
+	struct dp_pll_vco_clk *pll_clks;
 
 	if (!pll) {
 		DP_ERR("pll data not initialized\n");
@@ -858,46 +876,36 @@ int dp_pll_clock_register_5nm(struct dp_pll *pll)
 	if (!pll->clk_data)
 		return -ENOMEM;
 
-	pll->clk_data->clks = kcalloc(num_clks, sizeof(struct clk *),
+	pll->clk_data->clks = kcalloc(DP_PLL_NUM_CLKS, sizeof(struct clk *),
 			GFP_KERNEL);
 	if (!pll->clk_data->clks) {
 		kfree(pll->clk_data);
 		return -ENOMEM;
 	}
 
-	pll->clk_data->clk_num = num_clks;
+	pll->clk_data->clk_num = DP_PLL_NUM_CLKS;
 	pll->priv = &dp_pdb;
 	dp_pdb.pll = pll;
-
-	dp_phy_pll_link_clk.priv = pll;
-	dp_phy_pll_vco_div_clk.priv = pll;
 
 	pll->pll_cfg = dp_pll_configure;
 	pll->pll_prepare = dp_pll_prepare;
 	pll->pll_unprepare = dp_pll_unprepare;
 
-	clk = clk_register(&pdev->dev, &dp_phy_pll_link_clk.hw);
-	if (IS_ERR(clk)) {
-		DP_ERR("%s registration failed for DP: %d\n",
-		       clk_hw_get_name(&dp_phy_pll_link_clk.hw), pll->index);
-		rc = -EINVAL;
-		goto clk_reg_fail;
-	}
-	pll->clk_data->clks[0] = clk;
+	if (pll->dp_core_revision >= 0x10040000)
+		pll_clks = dp0_phy_pll_clks;
+	else
+		pll_clks = dp_phy_pll_clks;
 
-	clk = clk_register(&pdev->dev, &dp_phy_pll_vco_div_clk.hw);
-	if (IS_ERR(clk)) {
-		DP_ERR("%s registration failed for DP: %d\n",
-		       clk_hw_get_name(&dp_phy_pll_vco_div_clk.hw), pll->index);
-		rc = -EINVAL;
+	rc = dp_pll_clock_register_helper(pll, pll_clks, DP_PLL_NUM_CLKS);
+	if (rc) {
+		DP_ERR("Clock register failed rc=%d\n", rc);
 		goto clk_reg_fail;
 	}
-	pll->clk_data->clks[1] = clk;
 
 	rc = of_clk_add_provider(pdev->dev.of_node,
 			of_clk_src_onecell_get, pll->clk_data);
 	if (rc) {
-		DP_ERR("Clock register failed rc=%d\n", rc);
+		DP_ERR("Clock add provider failed rc=%d\n", rc);
 		goto clk_reg_fail;
 	}
 
