@@ -4429,7 +4429,7 @@ static struct ipahal_reg_obj ipahal_reg_objs[IPA_HW_MAX][IPA_REG_MAX] = {
 		ipareg_parse_endp_init_aggr_n_v4_5,
 		0x00001024, 0x80, 0, 30, 1, 0},
 	[IPA_HW_v5_0][IPA_ENDP_INIT_DEAGGR_n] = {
-		ipareg_construct_endp_init_deaggr_n,
+		ipareg_construct_endp_init_deaggr_n_v4_5,
 		ipareg_parse_dummy,
 		0x00001034, 0x80, 0, 10, 0, 0},
 	[IPA_HW_v5_0][IPA_ENDP_INIT_RSRC_GRP_n] = {
