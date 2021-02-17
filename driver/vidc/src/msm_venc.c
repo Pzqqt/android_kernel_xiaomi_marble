@@ -879,6 +879,8 @@ int msm_venc_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 	} else if (cmd == V4L2_ENC_CMD_START) {
 		if (!msm_vidc_allow_start(inst))
 			return -EBUSY;
+		vb2_clear_last_buffer_dequeued(&inst->vb2q[OUTPUT_META_PORT]);
+		vb2_clear_last_buffer_dequeued(&inst->vb2q[OUTPUT_PORT]);
 		rc = msm_vidc_state_change_start(inst);
 		if (rc)
 			return rc;
