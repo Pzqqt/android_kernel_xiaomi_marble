@@ -1792,6 +1792,7 @@ static int ipa3_setup_apps_wan_cons_pipes(
 	struct ipa_sys_connect_params *ipa_wan_ep_cfg;
 	int ep_idx, coal_ep_idx;
 	int rc = 0;
+	int wan_hdl;
 
 	if (ingress_param->pipe_setup_status == IPA_PIPE_SETUP_EXISTS)
 		return rc;
@@ -1892,8 +1893,14 @@ static int ipa3_setup_apps_wan_cons_pipes(
 	ipa_wan_ep_cfg->int_modc = ingress_param->int_modc;
 	ipa_wan_ep_cfg->buff_size = ingress_param->buff_size;
 
-	rc = ipa_setup_sys_pipe(&rmnet_ipa3_ctx->ipa_to_apps_ep_cfg,
-		&rmnet_ipa3_ctx->ipa3_to_apps_hdl);
+	/* Pass dummy handle if coal is already setup to avoid overriding */
+	if (ipa_wan_ep_cfg->client == IPA_CLIENT_APPS_WAN_CONS &&
+		(*ingress_eps_mask & IPA_AP_INGRESS_EP_COALS))
+		rc = ipa_setup_sys_pipe(&rmnet_ipa3_ctx->ipa_to_apps_ep_cfg,
+			&wan_hdl);
+	else
+		rc = ipa_setup_sys_pipe(&rmnet_ipa3_ctx->ipa_to_apps_ep_cfg,
+			&rmnet_ipa3_ctx->ipa3_to_apps_hdl);
 
 	if (rc) {
 		pipe_status->status = IPA_PIPE_SETUP_FAILURE;

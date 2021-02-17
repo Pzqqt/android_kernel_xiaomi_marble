@@ -4007,15 +4007,10 @@ static int ipa3_assign_policy(struct ipa_sys_connect_params *in,
 				IPA_GENERIC_RX_BUFF_BASE_SZ);
 			sys->get_skb = ipa3_get_skb_ipa_rx;
 			sys->free_skb = ipa3_free_skb_rx;
-			in->ipa_ep_cfg.aggr.aggr_en = IPA_ENABLE_AGGR;
 			if (in->client == IPA_CLIENT_APPS_WAN_COAL_CONS)
 				in->ipa_ep_cfg.aggr.aggr = IPA_COALESCE;
 			else
 				in->ipa_ep_cfg.aggr.aggr = IPA_GENERIC;
-			if (in->client == IPA_CLIENT_APPS_LAN_CONS ||
-				!in->ext_ioctl_v2)
-				in->ipa_ep_cfg.aggr.aggr_time_limit =
-					IPA_GENERIC_AGGR_TIME_LIMIT;
 			if (in->client == IPA_CLIENT_APPS_LAN_CONS) {
 				INIT_WORK(&sys->repl_work, ipa3_wq_repl_rx);
 				sys->pyld_hdlr = ipa3_lan_rx_pyld_hdlr;
@@ -4025,12 +4020,19 @@ static int ipa3_assign_policy(struct ipa_sys_connect_params *in,
 					ipa3_recycle_rx_wrapper;
 				sys->rx_pool_sz =
 					ipa3_ctx->lan_rx_ring_size;
+				in->ipa_ep_cfg.aggr.aggr_en = IPA_ENABLE_AGGR;
 				in->ipa_ep_cfg.aggr.aggr_byte_limit =
 				IPA_GENERIC_AGGR_BYTE_LIMIT;
 				in->ipa_ep_cfg.aggr.aggr_pkt_limit =
 				IPA_GENERIC_AGGR_PKT_LIMIT;
+				in->ipa_ep_cfg.aggr.aggr_time_limit =
+					IPA_GENERIC_AGGR_TIME_LIMIT;
 			} else if (in->client == IPA_CLIENT_APPS_WAN_CONS ||
 				in->client == IPA_CLIENT_APPS_WAN_COAL_CONS) {
+				in->ipa_ep_cfg.aggr.aggr_en = IPA_ENABLE_AGGR;
+				if (!in->ext_ioctl_v2)
+					in->ipa_ep_cfg.aggr.aggr_time_limit =
+						IPA_GENERIC_AGGR_TIME_LIMIT;
 				if (ipa3_ctx->ipa_wan_skb_page
 					&& in->napi_obj) {
 					INIT_WORK(&sys->repl_work,
