@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019, 2021 The Linux Foundation. All rights reserved.
  */
 
 #include "sde_hw_mdss.h"
@@ -164,3 +164,18 @@ static const struct sde_format_extended true_inline_rot_v2_fmts[] = {
 	P010_UBWC_FMTS,
 	{0, 0},
 };
+
+static const struct sde_format_extended fp16_formats[] = {
+	{DRM_FORMAT_ARGB16161616F, 0},
+	{DRM_FORMAT_ARGB16161616F, DRM_FORMAT_MOD_QCOM_ALPHA_SWAP},
+	{DRM_FORMAT_ABGR16161616F, 0},
+	{DRM_FORMAT_ABGR16161616F, DRM_FORMAT_MOD_QCOM_ALPHA_SWAP},
+	{DRM_FORMAT_ABGR16161616F, DRM_FORMAT_MOD_QCOM_COMPRESSED},
+	{0, 0}
+};
+
+static const struct sde_format_extended fp_16_inline_rot_fmts[] = {
+	{DRM_FORMAT_ABGR16161616F, DRM_FORMAT_MOD_QCOM_COMPRESSED},
+	{0, 0}
+};
+

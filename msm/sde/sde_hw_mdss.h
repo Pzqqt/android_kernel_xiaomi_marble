@@ -43,12 +43,16 @@ enum sde_format_flags {
 	SDE_FORMAT_FLAG_YUV_BIT,
 	SDE_FORMAT_FLAG_DX_BIT,
 	SDE_FORMAT_FLAG_COMPRESSED_BIT,
+	SDE_FORMAT_FLAG_ALPHA_SWAP_BIT,
+	SDE_FORMAT_FLAG_FP16_BIT,
 	SDE_FORMAT_FLAG_BIT_MAX,
 };
 
 #define SDE_FORMAT_FLAG_YUV		BIT(SDE_FORMAT_FLAG_YUV_BIT)
 #define SDE_FORMAT_FLAG_DX		BIT(SDE_FORMAT_FLAG_DX_BIT)
 #define SDE_FORMAT_FLAG_COMPRESSED	BIT(SDE_FORMAT_FLAG_COMPRESSED_BIT)
+#define SDE_FORMAT_FLAG_ALPHA_SWAP	BIT(SDE_FORMAT_FLAG_ALPHA_SWAP_BIT)
+#define SDE_FORMAT_FLAG_FP16		BIT(SDE_FORMAT_FLAG_FP16_BIT)
 #define SDE_FORMAT_IS_YUV(X)		\
 	(test_bit(SDE_FORMAT_FLAG_YUV_BIT, (X)->flag))
 #define SDE_FORMAT_IS_DX(X)		\
@@ -60,6 +64,10 @@ enum sde_format_flags {
 #define SDE_FORMAT_IS_UBWC(X) \
 	(((X)->fetch_mode == SDE_FETCH_UBWC) && \
 			test_bit(SDE_FORMAT_FLAG_COMPRESSED_BIT, (X)->flag))
+#define SDE_FORMAT_IS_ALPHA_SWAPPED(X) \
+	(test_bit(SDE_FORMAT_FLAG_ALPHA_SWAP_BIT, (X)->flag))
+#define SDE_FORMAT_IS_FP16(X) \
+	(test_bit(SDE_FORMAT_FLAG_FP16_BIT, (X)->flag))
 
 #define MDP_TICK_COUNT                    16
 #define XO_CLK_RATE                       19200
@@ -409,6 +417,7 @@ enum {
 	COLOR_5BIT = 1, /* No 5-bit Alpha */
 	COLOR_6BIT = 2, /* 6-Bit Alpha also = 2 */
 	COLOR_8BIT = 3, /* 8-Bit Alpha also = 3 */
+	COLOR_16BIT = 3,
 };
 
 /**

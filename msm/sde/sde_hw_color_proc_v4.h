@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 #ifndef _SDE_HW_COLOR_PROC_V4_H_
 #define _SDE_HW_COLOR_PROC_V4_H_
@@ -8,6 +8,8 @@
 #include "sde_hw_util.h"
 #include "sde_hw_catalog.h"
 #include "sde_hw_dspp.h"
+#include "sde_hw_sspp.h"
+
 /**
  * sde_setup_dspp_3d_gamutv4 - Function for 3d gamut v4 version feature
  *                             programming.
@@ -77,4 +79,39 @@ void sde_ltm_read_intr_status(struct sde_hw_dspp *dspp, u32 *status);
  */
 void sde_demura_backlight_cfg(struct sde_hw_dspp *dspp, u64 val);
 
+/**
+ * sde_setup_fp16_cscv1 - api to set FP16 CSC cp block
+ * @ctx: pointer to pipe object
+ * @index: pipe rectangle to operate on
+ * @data: pointer to sde_hw_cp_cfg object containing drm_msm_fp16_csc data
+ */
+void sde_setup_fp16_cscv1(struct sde_hw_pipe *ctx,
+		enum sde_sspp_multirect_index index, void *data);
+
+/**
+ * sde_setup_fp16_gcv1 - api to set FP16 GC cp block
+ * @ctx: pointer to pipe object
+ * @index: pipe rectangle to operate on
+ * @data: pointer to sde_hw_cp_cfg object containing drm_msm_fp16_gc data
+ */
+void sde_setup_fp16_gcv1(struct sde_hw_pipe *ctx,
+		enum sde_sspp_multirect_index index, void *data);
+
+/**
+ * sde_setup_fp16_igcv1 - api to set FP16 IGC cp block
+ * @ctx: pointer to pipe object
+ * @index: pipe rectangle to operate on
+ * @data: pointer to sde_hw_cp_cfg object containing bool data
+ */
+void sde_setup_fp16_igcv1(struct sde_hw_pipe *ctx,
+		enum sde_sspp_multirect_index index, void *data);
+
+/**
+ * sde_setup_fp16_unmultv1 - api to set FP16 UNMULT cp block
+ * @ctx: pointer to pipe object
+ * @index: pipe rectangle to operate on
+ * @data: pointer to sde_hw_cp_cfg object containing bool data
+ */
+void sde_setup_fp16_unmultv1(struct sde_hw_pipe *ctx,
+		enum sde_sspp_multirect_index index, void *data);
 #endif /* _SDE_HW_COLOR_PROC_V4_H_ */

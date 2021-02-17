@@ -91,6 +91,9 @@
 #define SDE_COLOR_PROCESS_MAJOR(version) (((version) & 0xFFFF0000) >> 16)
 #define SDE_COLOR_PROCESS_MINOR(version) ((version) & 0xFFFF)
 
+#define IS_SDE_CP_VER_1_0(version) \
+	(version == SDE_COLOR_PROCESS_VER(0x1, 0x0))
+
 #define MAX_XIN_COUNT 16
 #define SSPP_SUBBLK_COUNT_MAX 2
 
@@ -258,6 +261,10 @@ enum {
  * @SDE_SSPP_PREDOWNSCALE    Support pre-downscale X-direction by 2 for inline
  * @SDE_SSPP_PREDOWNSCALE_Y  Support pre-downscale Y-direction for inline
  * @SDE_SSPP_INLINE_CONST_CLR Inline rotation requires const clr disabled
+ * @SDE_SSPP_FP16_IGC        FP16 IGC color processing block support
+ * @SDE_SSPP_FP16_GC         FP16 GC color processing block support
+ * @SDE_SSPP_FP16_CSC        FP16 CSC color processing block support
+ * @SDE_SSPP_FP16_UNMULT     FP16 alpha unmult color processing block support
  * @SDE_SSPP_MAX             maximum value
  */
 enum {
@@ -290,6 +297,10 @@ enum {
 	SDE_SSPP_PREDOWNSCALE,
 	SDE_SSPP_PREDOWNSCALE_Y,
 	SDE_SSPP_INLINE_CONST_CLR,
+	SDE_SSPP_FP16_IGC,
+	SDE_SSPP_FP16_GC,
+	SDE_SSPP_FP16_CSC,
+	SDE_SSPP_FP16_UNMULT,
 	SDE_SSPP_MAX
 };
 
@@ -585,7 +596,10 @@ enum {
 	u32 id; \
 	u32 base; \
 	u32 len; \
-	unsigned long features; \
+	union { \
+		unsigned long features; \
+		u64 features_ext; \
+	}; \
 	unsigned long perf_features
 
 /**
@@ -613,12 +627,14 @@ struct sde_src_blk {
 /**
  * struct sde_scaler_blk: Scaler information
  * @info:   HW register and features supported by this sub-blk
+ * @regdma_base: offset of this sub-block relative regdma top
  * @version: qseed block revision
  * @h_preload: horizontal preload
  * @v_preload: vertical preload
  */
 struct sde_scaler_blk {
 	SDE_HW_SUBBLK_INFO;
+	u32 regdma_base;
 	u32 version;
 	u32 h_preload;
 	u32 v_preload;
@@ -630,11 +646,13 @@ struct sde_csc_blk {
 
 /**
  * struct sde_pp_blk : Pixel processing sub-blk information
+ * @regdma_base: offset of this sub-block relative regdma top
  * @info:   HW register and features supported by this sub-blk
  * @version: HW Algorithm version
  */
 struct sde_pp_blk {
 	SDE_HW_SUBBLK_INFO;
+	u32 regdma_base;
 	u32 version;
 };
 
@@ -692,6 +710,7 @@ enum sde_qos_lut_usage {
  * @max_per_pipe_bw: maximum allowable bandwidth of this pipe in kBps
  * @max_per_pipe_bw_high: maximum allowable bandwidth of this pipe in kBps
  *				in case of no VFE
+ * @top_off: offset of the sub-block top register relative to sspp top
  * @src_blk:
  * @scaler_blk:
  * @csc_blk:
@@ -705,6 +724,14 @@ enum sde_qos_lut_usage {
  * @gc_blk: 1D LUT GC block
  * @num_dgm_csc_blk: number of DGM CSC blocks
  * @dgm_csc_blk: DGM CSC blocks
+ * @num_fp16_igc_blk: number of FP16 IGC blocks
+ * @fp16_igc_blk: FP16 IGC block array
+ * @num_fp16_gc_blk: number of FP16 GC blocks
+ * @fp16_gc_blk: FP16 GC block array
+ * @num_fp16_csc_blk: number of FP16 CSC blocks
+ * @fp16_csc_blk: FP16 CSC block array
+ * @num_fp16_unmult_blk: number of FP16 UNMULT blocks
+ * @fp16_unmult_blk: FP16 UNMULT block array
  * @format_list: Pointer to list of supported formats
  * @virt_format_list: Pointer to list of supported formats for virtual planes
  * @in_rot_format_list: Pointer to list of supported formats for inline rotation
@@ -734,6 +761,7 @@ struct sde_sspp_sub_blks {
 	u32 smart_dma_priority;
 	u32 max_per_pipe_bw;
 	u32 max_per_pipe_bw_high;
+	u32 top_off;
 	struct sde_src_blk src_blk;
 	struct sde_scaler_blk scaler_blk;
 	struct sde_pp_blk csc_blk;
@@ -747,6 +775,14 @@ struct sde_sspp_sub_blks {
 	struct sde_pp_blk gc_blk[SSPP_SUBBLK_COUNT_MAX];
 	u32 num_dgm_csc_blk;
 	struct sde_pp_blk dgm_csc_blk[SSPP_SUBBLK_COUNT_MAX];
+	u32 num_fp16_igc_blk;
+	struct sde_pp_blk fp16_igc_blk[SSPP_SUBBLK_COUNT_MAX];
+	u32 num_fp16_gc_blk;
+	struct sde_pp_blk fp16_gc_blk[SSPP_SUBBLK_COUNT_MAX];
+	u32 num_fp16_csc_blk;
+	struct sde_pp_blk fp16_csc_blk[SSPP_SUBBLK_COUNT_MAX];
+	u32 num_fp16_unmult_blk;
+	struct sde_pp_blk fp16_unmult_blk[SSPP_SUBBLK_COUNT_MAX];
 
 	const struct sde_format_extended *format_list;
 	const struct sde_format_extended *virt_format_list;
@@ -1452,8 +1488,9 @@ struct sde_perf_cfg {
  * @has_sui_blendstage  flag to indicate secure-ui has a blendstage restriction
  * @has_cursor    indicates if hardware cursor is supported
  * @has_vig_p010  indicates if vig pipe supports p010 format
+ * @has_fp16      indicates if FP16 format is supported on SSPP pipes
  * @mdss_hw_block_size  Max offset of MDSS_HW block (0 offset), used for debug
- * @inline_rot_formats	formats supported by the inline rotator feature
+ * @inline_rot_formats formats supported by the inline rotator feature
  * @irq_offset_list     list of sde_intr_irq_offsets to initialize irq table
  * @rc_count	number of rounded corner hardware instances
  * @demura_count number of demura hardware instances
@@ -1529,6 +1566,7 @@ struct sde_mdss_cfg {
 	bool has_hdr_plus;
 	bool has_cursor;
 	bool has_vig_p010;
+	bool has_fp16;
 	u32 mdss_hw_block_size;
 	u32 mdss_count;
 	struct sde_mdss_base_cfg mdss[MAX_BLOCKS];

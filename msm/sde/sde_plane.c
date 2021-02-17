@@ -101,7 +101,7 @@ struct sde_plane {
 	struct mutex lock;
 
 	enum sde_sspp pipe;
-	uint32_t features;      /* capabilities from catalog */
+	uint64_t features;      /* capabilities from catalog */
 	uint32_t perf_features; /* perf capabilities from catalog */
 	uint32_t nformats;
 	uint32_t formats[64];
@@ -1156,6 +1156,9 @@ static void sde_color_process_plane_setup(struct drm_plane *plane)
 	size_t memcol_sz = 0, size = 0;
 	struct sde_hw_cp_cfg hw_cfg = {};
 	struct sde_hw_ctl *ctl = _sde_plane_get_hw_ctl(plane);
+	bool fp16_igc, fp16_unmult;
+	struct drm_msm_fp16_gc *fp16_gc = NULL;
+	struct drm_msm_fp16_csc *fp16_csc = NULL;
 
 	psde = to_sde_plane(plane);
 	pstate = to_sde_plane_state(plane->state);
@@ -1254,6 +1257,58 @@ static void sde_color_process_plane_setup(struct drm_plane *plane)
 		hw_cfg.payload = gc;
 		psde->pipe_hw->ops.setup_dma_gc(psde->pipe_hw, &hw_cfg,
 				pstate->multirect_index);
+	}
+
+	if (pstate->dirty & SDE_PLANE_DIRTY_FP16_IGC &&
+			psde->pipe_hw->ops.setup_fp16_igc) {
+		fp16_igc = !!sde_plane_get_property(pstate,
+				PLANE_PROP_FP16_IGC);
+		hw_cfg.last_feature = 0;
+		hw_cfg.ctl = ctl;
+		hw_cfg.len = sizeof(bool);
+		hw_cfg.payload = &fp16_igc;
+		psde->pipe_hw->ops.setup_fp16_igc(psde->pipe_hw,
+				pstate->multirect_index, &hw_cfg);
+	}
+
+	if (pstate->dirty & SDE_PLANE_DIRTY_FP16_GC &&
+			psde->pipe_hw->ops.setup_fp16_gc) {
+		fp16_gc = msm_property_get_blob(&psde->property_info,
+				&pstate->property_state,
+				&size,
+				PLANE_PROP_FP16_GC);
+		hw_cfg.last_feature = 0;
+		hw_cfg.ctl = ctl;
+		hw_cfg.len = size;
+		hw_cfg.payload = fp16_gc;
+		psde->pipe_hw->ops.setup_fp16_gc(psde->pipe_hw,
+				pstate->multirect_index, &hw_cfg);
+	}
+
+	if (pstate->dirty & SDE_PLANE_DIRTY_FP16_CSC &&
+			psde->pipe_hw->ops.setup_fp16_csc) {
+		fp16_csc = msm_property_get_blob(&psde->property_info,
+				&pstate->property_state,
+				&size,
+				PLANE_PROP_FP16_CSC);
+		hw_cfg.last_feature = 0;
+		hw_cfg.ctl = ctl;
+		hw_cfg.len = size;
+		hw_cfg.payload = fp16_csc;
+		psde->pipe_hw->ops.setup_fp16_csc(psde->pipe_hw,
+				pstate->multirect_index, &hw_cfg);
+	}
+
+	if (pstate->dirty & SDE_PLANE_DIRTY_FP16_UNMULT &&
+			psde->pipe_hw->ops.setup_fp16_unmult) {
+		fp16_unmult = !!sde_plane_get_property(pstate,
+				PLANE_PROP_FP16_UNMULT);
+		hw_cfg.last_feature = 0;
+		hw_cfg.ctl = ctl;
+		hw_cfg.len = sizeof(bool);
+		hw_cfg.payload = &fp16_unmult;
+		psde->pipe_hw->ops.setup_fp16_unmult(psde->pipe_hw,
+				pstate->multirect_index, &hw_cfg);
 	}
 }
 
@@ -2840,6 +2895,11 @@ static void _sde_plane_map_prop_to_dirty_bits(void)
 	plane_prop_array[PLANE_PROP_VALUE_ADJUST] =
 	plane_prop_array[PLANE_PROP_CONTRAST_ADJUST] =
 		SDE_PLANE_DIRTY_ALL;
+
+	plane_prop_array[PLANE_PROP_FP16_IGC] = SDE_PLANE_DIRTY_FP16_IGC;
+	plane_prop_array[PLANE_PROP_FP16_GC] = SDE_PLANE_DIRTY_FP16_GC;
+	plane_prop_array[PLANE_PROP_FP16_CSC] = SDE_PLANE_DIRTY_FP16_CSC;
+	plane_prop_array[PLANE_PROP_FP16_UNMULT] = SDE_PLANE_DIRTY_FP16_UNMULT;
 }
 
 static inline bool _sde_plane_allow_uidle(struct sde_plane *psde,
@@ -3534,6 +3594,38 @@ static void _sde_plane_install_colorproc_properties(struct sde_plane *psde,
 			psde->pipe_sblk->gc_blk[0].version >> 16);
 		msm_property_install_blob(&psde->property_info, feature_name, 0,
 			PLANE_PROP_DMA_GC);
+	}
+
+	if (psde->features & BIT(SDE_SSPP_FP16_IGC)) {
+		snprintf(feature_name, sizeof(feature_name), "%s%d",
+			"SDE_SSPP_FP16_IGC_V",
+			psde->pipe_sblk->fp16_igc_blk[0].version >> 16);
+		msm_property_install_range(&psde->property_info, feature_name,
+				0x0, 0, 1, 0, PLANE_PROP_FP16_IGC);
+	}
+
+	if (psde->features & BIT(SDE_SSPP_FP16_GC)) {
+		snprintf(feature_name, sizeof(feature_name), "%s%d",
+			"SDE_SSPP_FP16_GC_V",
+			psde->pipe_sblk->fp16_gc_blk[0].version >> 16);
+		msm_property_install_blob(&psde->property_info, feature_name, 0,
+			PLANE_PROP_FP16_GC);
+	}
+
+	if (psde->features & BIT(SDE_SSPP_FP16_CSC)) {
+		snprintf(feature_name, sizeof(feature_name), "%s%d",
+			"SDE_SSPP_FP16_CSC_V",
+			psde->pipe_sblk->fp16_csc_blk[0].version >> 16);
+		msm_property_install_blob(&psde->property_info, feature_name, 0,
+			PLANE_PROP_FP16_CSC);
+	}
+
+	if (psde->features & BIT(SDE_SSPP_FP16_UNMULT)) {
+		snprintf(feature_name, sizeof(feature_name), "%s%d",
+			"SDE_SSPP_FP16_UNMULT_V",
+			psde->pipe_sblk->fp16_unmult_blk[0].version >> 16);
+		msm_property_install_range(&psde->property_info, feature_name,
+			0x0, 0, 1, 0, PLANE_PROP_FP16_UNMULT);
 	}
 }
 
@@ -4476,7 +4568,7 @@ static int _sde_plane_init_debugfs(struct drm_plane *plane)
 		return -ENOMEM;
 
 	/* don't error check these */
-	debugfs_create_x32("features", 0400,
+	debugfs_create_x64("features", 0400,
 		psde->debugfs_root, &psde->features);
 
 	if (cfg->features & BIT(SDE_SSPP_SCALER_QSEED3) ||
@@ -4655,7 +4747,7 @@ struct drm_plane *sde_plane_init(struct drm_device *dev,
 	}
 
 	/* cache features mask for later */
-	psde->features = psde->pipe_hw->cap->features;
+	psde->features = psde->pipe_hw->cap->features_ext;
 	psde->perf_features = psde->pipe_hw->cap->perf_features;
 	psde->pipe_sblk = psde->pipe_hw->cap->sblk;
 	if (!psde->pipe_sblk) {

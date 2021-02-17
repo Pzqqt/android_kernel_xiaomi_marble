@@ -359,8 +359,15 @@ static void sde_hw_sspp_setup_format(struct sde_hw_pipe *ctx,
 		(fmt->element[1] << 8) | (fmt->element[0] << 0);
 	src_format |= ((fmt->unpack_count - 1) << 12) |
 		(fmt->unpack_tight << 17) |
-		(fmt->unpack_align_msb << 18) |
-		((fmt->bpp - 1) << 9);
+		(fmt->unpack_align_msb << 18);
+
+	if (SDE_FORMAT_IS_FP16(fmt)) {
+		src_format |= BIT(16) | BIT(10) | BIT(9);
+	} else if (fmt->bpp <= 4) {
+		src_format |= ((fmt->bpp - 1) << 9);
+	} else if (fmt->bpp <= 8) {
+		src_format |=  BIT(16) | ((fmt->bpp - 5) << 9);
+	}
 
 	if ((flags & SDE_SSPP_ROT_90) && test_bit(SDE_SSPP_INLINE_CONST_CLR,
 			&ctx->cap->features))
@@ -1192,6 +1199,22 @@ static void _setup_layer_ops_colorproc(struct sde_hw_pipe *c,
 				c->ops.setup_dma_gc = NULL;
 		}
 	}
+
+	if (test_bit(SDE_SSPP_FP16_IGC, &features) &&
+			IS_SDE_CP_VER_1_0(c->cap->sblk->fp16_igc_blk[0].version))
+		c->ops.setup_fp16_igc = sde_setup_fp16_igcv1;
+
+	if (test_bit(SDE_SSPP_FP16_GC, &features) &&
+			IS_SDE_CP_VER_1_0(c->cap->sblk->fp16_gc_blk[0].version))
+		c->ops.setup_fp16_gc = sde_setup_fp16_gcv1;
+
+	if (test_bit(SDE_SSPP_FP16_CSC, &features) &&
+			IS_SDE_CP_VER_1_0(c->cap->sblk->fp16_csc_blk[0].version))
+		c->ops.setup_fp16_csc = sde_setup_fp16_cscv1;
+
+	if (test_bit(SDE_SSPP_FP16_UNMULT, &features) &&
+			IS_SDE_CP_VER_1_0(c->cap->sblk->fp16_unmult_blk[0].version))
+		c->ops.setup_fp16_unmult = sde_setup_fp16_unmultv1;
 }
 
 static void sde_hw_sspp_setup_inverse_pma(struct sde_hw_pipe *ctx,
