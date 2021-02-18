@@ -90,6 +90,7 @@ dfs_descend_precac_tree_for_freq(struct precac_tree_node *node,
  * @bandwidth: Bandwidth of the channel.
  * @depth:     Depth of the tree. The depth of the tree when the root is 160MHz
  *             channel is 4, 80MHz is 3, 40MHz is 2 and 20MHz is 1.
+ * @dfs:       Pointer to WLAN DFS structure
  *
  * Return: EOK if new node is allocated, else return ENOMEM.
  */
@@ -97,15 +98,18 @@ static QDF_STATUS
 dfs_insert_node_into_bstree_for_freq(struct precac_tree_node **root,
 				     uint16_t chan_freq,
 				     uint8_t bandwidth,
-				     uint8_t depth)
+				     uint8_t depth,
+				     struct wlan_dfs *dfs)
 {
 	struct precac_tree_node *new_node = NULL;
 	struct precac_tree_node *curr_node, *prev_node = NULL;
 	QDF_STATUS status = EOK;
 
 	new_node = qdf_mem_malloc(sizeof(*new_node));
-	if (!new_node)
+	if (!new_node) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "new_node is NULL");
 		return -ENOMEM;
+	}
 	dfs_init_precac_tree_node_for_freq(new_node,
 					   chan_freq,
 					   bandwidth,
@@ -160,7 +164,7 @@ dfs_find_leftmost_leaf_of_precac_tree(struct precac_tree_node *node)
  *                                NOTE: This changes tree structure, hence
  *                                caller should be in a lock.
  * @dfs:          Pointer to WLAN DFS structure.
- * @precac_entry: Precac list entry whose BSTree is to be freed.
+ * @root_node:    Root node of Precac list entry whose BSTree is to be freed.
  *
  * Consider the below Binary tree,
  *
@@ -193,11 +197,10 @@ dfs_find_leftmost_leaf_of_precac_tree(struct precac_tree_node *node)
  */
 
 static void dfs_free_precac_tree_nodes(struct wlan_dfs *dfs,
-				       struct dfs_precac_entry *precac_entry)
+				       struct precac_tree_node *root_node)
 {
-	struct precac_tree_node *root_node, *left_most_leaf, *prev_root_node;
+	struct precac_tree_node *left_most_leaf, *prev_root_node;
 
-	root_node = precac_entry->tree_root;
 	if (!root_node) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "tree root is null");
 		return;
@@ -395,9 +398,13 @@ dfs_create_precac_tree_for_freq(struct wlan_dfs *dfs,
 			    dfs_insert_node_into_bstree_for_freq(root,
 								 chan_freq,
 								 bandwidth,
-								 depth);
-			if (status)
+								 depth,
+								 dfs);
+			if (status) {
+				dfs_free_precac_tree_nodes(dfs, *root);
+				*root = NULL;
 				return status;
+			}
 		}
 		bandwidth /= 2;
 	}
@@ -422,7 +429,8 @@ dfs_precac_create_165mhz_precac_entry(struct wlan_dfs *dfs,
 	dfs_insert_node_into_bstree_for_freq(&precac_entry->tree_root,
 					     RESTRICTED_80P80_CHAN_CENTER_FREQ,
 					     DFS_CHWIDTH_160_VAL,
-					     DEPTH_160_ROOT);
+					     DEPTH_160_ROOT,
+					     dfs);
 	status =
 		dfs_create_precac_tree_for_freq
 		(dfs,
@@ -682,7 +690,8 @@ void dfs_deinit_precac_list(struct wlan_dfs *dfs)
 		TAILQ_FOREACH_SAFE(precac_entry,
 				   &dfs->dfs_precac_list,
 				   pe_list, tmp_precac_entry) {
-			dfs_free_precac_tree_nodes(dfs, precac_entry);
+			dfs_free_precac_tree_nodes(dfs, precac_entry->tree_root);
+			precac_entry->tree_root = NULL;
 			TAILQ_REMOVE(&dfs->dfs_precac_list,
 				     precac_entry, pe_list);
 			qdf_mem_free(precac_entry);
@@ -1161,7 +1170,6 @@ void dfs_init_precac_list(struct wlan_dfs *dfs)
 			}
 		}
 	}
-	PRECAC_LIST_UNLOCK(dfs);
 	qdf_mem_free(dfs_max_bw_info);
 
 	dfs_debug(dfs, WLAN_DEBUG_DFS,
@@ -1175,6 +1183,7 @@ void dfs_init_precac_list(struct wlan_dfs *dfs)
 	    bw = tmp_precac_entry->bw;
 	    dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "ieee=%u bw=%u", ch_ieee, bw);
 	}
+	PRECAC_LIST_UNLOCK(dfs);
 }
 
 /*
