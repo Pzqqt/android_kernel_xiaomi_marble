@@ -1013,6 +1013,19 @@ static int handle_session_delivery_mode(struct msm_vidc_inst *inst,
 	return 0;
 }
 
+static int handle_session_resume(struct msm_vidc_inst *inst,
+	struct hfi_packet *pkt)
+{
+	if (pkt->flags & HFI_FW_FLAGS_SESSION_ERROR) {
+		i_vpr_e(inst, "%s: received session error\n", __func__);
+		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
+	}
+
+	if (pkt->flags & HFI_FW_FLAGS_SUCCESS)
+		i_vpr_h(inst, "%s: successful\n", __func__);
+	return 0;
+}
+
 static int handle_session_command(struct msm_vidc_inst *inst,
 	struct hfi_packet *pkt)
 {
@@ -1035,6 +1048,8 @@ static int handle_session_command(struct msm_vidc_inst *inst,
 		return handle_session_subscribe_mode(inst, pkt);
 	case HFI_CMD_DELIVERY_MODE:
 		return handle_session_delivery_mode(inst, pkt);
+	case HFI_CMD_RESUME:
+		return handle_session_resume(inst, pkt);
 	default:
 		i_vpr_e(inst, "%s: Unsupported command type: %#x\n",
 			__func__, pkt->type);

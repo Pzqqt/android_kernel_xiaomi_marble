@@ -1849,7 +1849,7 @@ int msm_vidc_release_internal_buffers(struct msm_vidc_inst *inst,
 		/* mark pending release */
 		buffer->attr |= MSM_VIDC_ATTR_PENDING_RELEASE;
 
-		i_vpr_e(inst, "%s: released buffer_type %#x, size %d\n",
+		i_vpr_h(inst, "%s: released buffer_type %#x, size %d\n",
 			__func__, buffer_type, buffers->size);
 	}
 
