@@ -62,15 +62,7 @@ $(shell find $(LOCAL_WLAN_BLD_DIR)/qcacld-3.0/ -maxdepth 1 \
 	-name '.*' ! -name '.git' -exec rm -rf {} +)
 
 $(foreach chip, $(TARGET_WLAN_CHIP), \
-	$($(shell mkdir -p $(LOCAL_WLAN_BLD_DIR)/qcacld-3.0/.$(chip)); \
-	$(foreach node, \
-	$(shell find $(LOCAL_WLAN_BLD_DIR)/qcacld-3.0/ -maxdepth 1 \
-		! -name '.*' ! -name '*~' \
-		! -name '.' ! -name 'qcacld-3.0'), \
-	$(shell ln -sf $(node) \
-	$(LOCAL_WLAN_BLD_DIR)/qcacld-3.0/.$(chip)/$(lastword $(strip $(subst /, ,$(node)))) \
-	))))
-
+	$(shell ln -sf . $(LOCAL_WLAN_BLD_DIR)/qcacld-3.0/.$(chip)))
 include $(foreach chip, $(TARGET_WLAN_CHIP), $(LOCAL_PATH)/.$(chip)/Android.mk)
 
 else # Multi-ok check
