@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018, 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018, 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -553,6 +553,46 @@ int hif_apps_enable_irq_wake(struct hif_opaque_softc *hif_ctx)
 		return -EINVAL;
 
 	return enable_irq_wake(scn->wake_irq);
+}
+
+int hif_apps_disable_irqs_except_wake_irq(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn;
+	int i;
+
+	QDF_BUG(hif_ctx);
+	scn = HIF_GET_SOFTC(hif_ctx);
+	if (!scn)
+		return -EINVAL;
+
+	for (i = 0; i < scn->ce_count; ++i) {
+		int irq = scn->bus_ops.hif_map_ce_to_irq(scn, i);
+
+		if (irq != scn->wake_irq)
+			disable_irq(irq);
+	}
+
+	return 0;
+}
+
+int hif_apps_enable_irqs_except_wake_irq(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn;
+	int i;
+
+	QDF_BUG(hif_ctx);
+	scn = HIF_GET_SOFTC(hif_ctx);
+	if (!scn)
+		return -EINVAL;
+
+	for (i = 0; i < scn->ce_count; ++i) {
+		int irq = scn->bus_ops.hif_map_ce_to_irq(scn, i);
+
+		if (irq != scn->wake_irq)
+			enable_irq(irq);
+	}
+
+	return 0;
 }
 
 #ifdef WLAN_FEATURE_BMI

@@ -4480,6 +4480,27 @@ int hif_get_wake_ce_id(struct hif_softc *scn, uint8_t *ce_id)
 	return 0;
 }
 
+int hif_get_fw_diag_ce_id(struct hif_softc *scn, uint8_t *ce_id)
+{
+	int status;
+	uint8_t ul_pipe, dl_pipe;
+	int ul_is_polled, dl_is_polled;
+
+	/* DL pipe for WMI_CONTROL_DIAG_SVC should map to the FW DIAG CE_ID */
+	status = hif_map_service_to_pipe(GET_HIF_OPAQUE_HDL(scn),
+					 WMI_CONTROL_DIAG_SVC,
+					 &ul_pipe, &dl_pipe,
+					 &ul_is_polled, &dl_is_polled);
+	if (status) {
+		hif_err("Failed to map pipe: %d", status);
+		return status;
+	}
+
+	*ce_id = dl_pipe;
+
+	return 0;
+}
+
 #ifdef HIF_CE_LOG_INFO
 /**
  * ce_get_index_info(): Get CE index info

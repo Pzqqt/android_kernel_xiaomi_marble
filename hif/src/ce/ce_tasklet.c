@@ -613,6 +613,64 @@ static inline bool hif_tasklet_schedule(struct hif_opaque_softc *hif_ctx,
 }
 
 /**
+ * ce_poll_reap_by_id() - reap the available frames from CE by polling per ce_id
+ * @scn: hif context
+ * @ce_id: CE id
+ *
+ * This function needs to be called once after all the irqs are disabled
+ * and tasklets are drained during bus suspend.
+ *
+ * Return: 0 on success, unlikely -EBUSY if reaping goes infinite loop
+ */
+static int ce_poll_reap_by_id(struct hif_softc *scn, enum ce_id_type ce_id)
+{
+	struct HIF_CE_state *hif_ce_state = (struct HIF_CE_state *)scn;
+	struct CE_state *CE_state = scn->ce_id_to_state[ce_id];
+
+	if (scn->ce_latency_stats)
+		hif_record_tasklet_exec_entry_ts(scn, ce_id);
+
+	hif_record_ce_desc_event(scn, ce_id, HIF_CE_REAP_ENTRY,
+				 NULL, NULL, -1, 0);
+
+	ce_per_engine_service(scn, ce_id);
+
+	/*
+	 * In an unlikely case, if frames are still pending to reap,
+	 * could be an infinite loop, so return -EBUSY.
+	 */
+	if (ce_check_rx_pending(CE_state))
+		return -EBUSY;
+
+	hif_record_ce_desc_event(scn, ce_id, HIF_CE_REAP_EXIT,
+				 NULL, NULL, -1, 0);
+
+	if (scn->ce_latency_stats)
+		ce_tasklet_update_bucket(hif_ce_state, ce_id);
+
+	return 0;
+}
+
+/**
+ * hif_drain_fw_diag_ce() - reap all the available FW diag logs from CE
+ * @scn: hif context
+ *
+ * This function needs to be called once after all the irqs are disabled
+ * and tasklets are drained during bus suspend.
+ *
+ * Return: 0 on success, unlikely -EBUSY if reaping goes infinite loop
+ */
+int hif_drain_fw_diag_ce(struct hif_softc *scn)
+{
+	uint8_t ce_id;
+
+	if (hif_get_fw_diag_ce_id(scn, &ce_id))
+		return 0;
+
+	return ce_poll_reap_by_id(scn, ce_id);
+}
+
+/**
  * ce_dispatch_interrupt() - dispatch an interrupt to a processing context
  * @ce_id: ce_id
  * @tasklet_entry: context
