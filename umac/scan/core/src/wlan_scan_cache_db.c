@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -439,39 +439,33 @@ static bool scm_bss_is_connected(struct scan_cache_entry *entry)
 	return false;
 }
 
-static bool scm_bss_is_nontx_of_conn_bss(struct scan_cache_entry *entry,
-					 struct scan_dbs *scan_db)
+/**
+ * scm_get_conn_node() - Get the scan cache entry node of the connected BSS
+ * @scan_db: scan DB pointer
+ *
+ * Return: scan cache entry node of connected BSS if exists, NULL otherwise
+ */
+static
+struct scan_cache_node *scm_get_conn_node(struct scan_dbs *scan_db)
 {
 	int i;
 	struct scan_cache_node *cur_node = NULL;
 	struct scan_cache_node *next_node = NULL;
 
-	if (!entry->mbssid_info.profile_num)
-		return false;
-
 	for (i = 0 ; i < SCAN_HASH_SIZE; i++) {
 		cur_node = scm_get_next_node(scan_db,
-					     &scan_db->scan_hash_tbl[i], NULL);
+			&scan_db->scan_hash_tbl[i], NULL);
 		while (cur_node) {
-			if (!memcmp(entry->mbssid_info.trans_bssid,
-				    cur_node->entry->bssid.bytes,
-				    QDF_MAC_ADDR_SIZE)) {
-				if (scm_bss_is_connected(cur_node->entry)) {
-					scm_scan_entry_put_ref(scan_db,
-							       cur_node,
-							       true);
-					return true;
-				}
-			}
-
+			if (scm_bss_is_connected(cur_node->entry))
+				return cur_node;
 			next_node = scm_get_next_node(scan_db,
-					&scan_db->scan_hash_tbl[i], cur_node);
+				&scan_db->scan_hash_tbl[i], cur_node);
 			cur_node = next_node;
 			next_node = NULL;
 		}
 	}
 
-	return false;
+	return NULL;
 }
 
 void scm_age_out_entries(struct wlan_objmgr_psoc *psoc,
@@ -480,6 +474,7 @@ void scm_age_out_entries(struct wlan_objmgr_psoc *psoc,
 	int i;
 	struct scan_cache_node *cur_node = NULL;
 	struct scan_cache_node *next_node = NULL;
+	struct scan_cache_node *conn_node = NULL;
 	struct scan_default_params *def_param;
 
 	def_param = wlan_scan_psoc_get_def_params(psoc);
@@ -488,21 +483,31 @@ void scm_age_out_entries(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 
+	conn_node = scm_get_conn_node(scan_db);
 	for (i = 0 ; i < SCAN_HASH_SIZE; i++) {
 		cur_node = scm_get_next_node(scan_db,
 			&scan_db->scan_hash_tbl[i], NULL);
 		while (cur_node) {
-			if (!scm_bss_is_connected(cur_node->entry) &&
-			    !scm_bss_is_nontx_of_conn_bss(cur_node->entry,
-							  scan_db))
+			if (!conn_node /* if there is no connected node */ ||
+			    /* OR cur_node is not part of the MBSSID of the
+			     * connected node
+			     */
+			    memcmp(conn_node->entry->mbssid_info.trans_bssid,
+				   cur_node->entry->mbssid_info.trans_bssid,
+				   QDF_MAC_ADDR_SIZE)
+			   ) {
 				scm_check_and_age_out(scan_db, cur_node,
 					def_param->scan_cache_aging_time);
+			}
 			next_node = scm_get_next_node(scan_db,
 				&scan_db->scan_hash_tbl[i], cur_node);
 			cur_node = next_node;
 			next_node = NULL;
 		}
 	}
+
+	if (conn_node)
+		scm_scan_entry_put_ref(scan_db, conn_node, true);
 }
 
 /**
