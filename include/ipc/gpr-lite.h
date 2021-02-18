@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2017, 2019-2020 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2017, 2019-2021 The Linux Foundation. All rights reserved.
  * Copyright (c) 2018, Linaro Limited
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 #include <linux/spinlock.h>
 #include <linux/device.h>
 #include "soc/audio_mod_devicetable.h"
-#include <dt-bindings/sound/qcom,gpr.h>
+#include <bindings/qcom,gpr.h>
 
 extern struct bus_type gprbus;
 

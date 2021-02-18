@@ -19,7 +19,7 @@
 #include <asoc/wcdcal-hwdep.h>
 #include <asoc/msm-cdc-pinctrl.h>
 #include <asoc/msm-cdc-supply.h>
-#include <dt-bindings/sound/audio-codec-port-types.h>
+#include <bindings/audio-codec-port-types.h>
 #include <linux/qti-regmap-debugfs.h>
 
 #include "wcd938x-registers.h"
