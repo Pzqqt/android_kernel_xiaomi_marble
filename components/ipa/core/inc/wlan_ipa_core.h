@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -592,7 +592,8 @@ static inline
 void ipa_set_rps_per_vdev(struct wlan_ipa_priv *ipa_ctx, uint8_t vdev_id,
 			  bool enable)
 {
-	ipa_ctx->rps_enable(vdev_id, enable);
+	if (ipa_ctx->rps_enable)
+		ipa_ctx->rps_enable(vdev_id, enable);
 }
 
 /**
