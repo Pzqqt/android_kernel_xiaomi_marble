@@ -5356,7 +5356,12 @@ static void wma_update_mlme_related_tgt_caps(struct wlan_objmgr_psoc *psoc,
 		wmi_service_enabled(wmi_handle,
 				    wmi_service_dual_sta_roam_support);
 
-	wma_debug("beacon protection support %d", mlme_tgt_cfg.bigtk_support);
+	mlme_tgt_cfg.ocv_support =
+		wmi_service_enabled(wmi_handle,
+				    wmi_service_ocv_support);
+
+	wma_debug("beacon protection support %d, ocv support %d",
+		  mlme_tgt_cfg.bigtk_support, mlme_tgt_cfg.ocv_support);
 
 	/* Call this at last only after filling all the tgt caps */
 	wlan_mlme_update_cfg_with_tgt_caps(psoc, &mlme_tgt_cfg);
