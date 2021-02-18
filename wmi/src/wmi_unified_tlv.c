@@ -11937,7 +11937,7 @@ static QDF_STATUS extract_reg_chan_list_ext_update_event_tlv(
 	wmi_unified_t wmi_handle, uint8_t *evt_buf,
 	struct cur_regulatory_info *reg_info, uint32_t len)
 {
-	uint32_t i;
+	uint32_t i, j;
 	WMI_REG_CHAN_LIST_CC_EXT_EVENTID_param_tlvs *param_buf;
 	wmi_reg_chan_list_cc_event_ext_fixed_param *ext_chan_list_event_hdr;
 	wmi_regulatory_rule_ext_struct *ext_wmi_reg_rule;
@@ -12162,53 +12162,23 @@ static QDF_STATUS extract_reg_chan_list_ext_update_event_tlv(
 					      ext_wmi_reg_rule);
 	ext_wmi_reg_rule += num_5g_reg_rules;
 
-	reg_info->reg_rules_6g_ap_ptr[REG_STANDARD_POWER_AP] =
-			create_ext_reg_rules_from_wmi(num_6g_reg_rules_ap
-						      [REG_STANDARD_POWER_AP],
+	for (i = 0; i < REG_CURRENT_MAX_AP_TYPE; i++) {
+		reg_info->reg_rules_6g_ap_ptr[i] =
+			create_ext_reg_rules_from_wmi(num_6g_reg_rules_ap[i],
 						      ext_wmi_reg_rule);
-	ext_wmi_reg_rule += num_6g_reg_rules_ap[REG_STANDARD_POWER_AP];
 
-	reg_info->reg_rules_6g_ap_ptr[REG_INDOOR_AP] =
-			create_ext_reg_rules_from_wmi(num_6g_reg_rules_ap
-						      [REG_INDOOR_AP],
-						      ext_wmi_reg_rule);
-	ext_wmi_reg_rule += num_6g_reg_rules_ap[REG_INDOOR_AP];
-
-	reg_info->reg_rules_6g_ap_ptr[REG_VERY_LOW_POWER_AP] =
-			create_ext_reg_rules_from_wmi(num_6g_reg_rules_ap
-						      [REG_VERY_LOW_POWER_AP],
-						      ext_wmi_reg_rule);
-	ext_wmi_reg_rule += num_6g_reg_rules_ap[REG_VERY_LOW_POWER_AP];
-
-	for (i = 0; i < REG_MAX_CLIENT_TYPE; i++) {
-		reg_info->reg_rules_6g_client_ptr[REG_STANDARD_POWER_AP][i] =
-			create_ext_reg_rules_from_wmi(
-						num_6g_reg_rules_client
-						[REG_STANDARD_POWER_AP][i],
-						ext_wmi_reg_rule);
-
-		ext_wmi_reg_rule +=
-			num_6g_reg_rules_client[REG_STANDARD_POWER_AP][i];
+		ext_wmi_reg_rule += num_6g_reg_rules_ap[i];
 	}
 
-	for (i = 0; i < REG_MAX_CLIENT_TYPE; i++) {
-		reg_info->reg_rules_6g_client_ptr[REG_INDOOR_AP][i] =
-			create_ext_reg_rules_from_wmi(
-				num_6g_reg_rules_client[REG_INDOOR_AP][i],
-				ext_wmi_reg_rule);
+	for (j = 0; j < REG_CURRENT_MAX_AP_TYPE; j++) {
+		for (i = 0; i < REG_MAX_CLIENT_TYPE; i++) {
+			reg_info->reg_rules_6g_client_ptr[j][i] =
+				create_ext_reg_rules_from_wmi(
+					num_6g_reg_rules_client[j][i],
+					ext_wmi_reg_rule);
 
-		ext_wmi_reg_rule += num_6g_reg_rules_client[REG_INDOOR_AP][i];
-	}
-
-	for (i = 0; i < REG_MAX_CLIENT_TYPE; i++) {
-		reg_info->reg_rules_6g_client_ptr[REG_VERY_LOW_POWER_AP][i] =
-			create_ext_reg_rules_from_wmi(
-						num_6g_reg_rules_client
-						[REG_VERY_LOW_POWER_AP][i],
-						ext_wmi_reg_rule);
-
-		ext_wmi_reg_rule +=
-			num_6g_reg_rules_client[REG_VERY_LOW_POWER_AP][i];
+			ext_wmi_reg_rule += num_6g_reg_rules_client[j][i];
+		}
 	}
 
 	reg_info->client_type = ext_chan_list_event_hdr->client_type;
@@ -12246,7 +12216,6 @@ static QDF_STATUS extract_reg_chan_list_ext_update_event_tlv(
 	reg_info->domain_code_6g_super_id =
 		ext_chan_list_event_hdr->domain_code_6g_super_id;
 
-	wmi_debug("super domain id %d", reg_info->domain_code_6g_super_id);
 	wmi_debug("processed regulatory extended channel list");
 
 	return QDF_STATUS_SUCCESS;
