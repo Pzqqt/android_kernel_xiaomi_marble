@@ -157,27 +157,6 @@ static inline void cm_update_hlp_info(struct wlan_objmgr_vdev *vdev,
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 /**
- * cm_get_diag_enc_type - get diag enc type
- * @cipherset: enc type to convert
- *
- * Return: diag enc type
- */
-enum mgmt_encrypt_type cm_get_diag_enc_type(uint32_t cipherset);
-
-/**
- * cm_diag_get_auth_type - get auth type
- * @auth_type: diag auth type to fill
- * @authmodeset: authmode to calculate diag auth type
- * @akm: akm  to calculate diag auth type
- * @ucastcipherset: cipher to calculate diag auth type
- *
- * Return: none
- */
-void cm_diag_get_auth_type(uint8_t *auth_type,
-			   uint32_t authmodeset, uint32_t akm,
-			   uint32_t ucastcipherset);
-
-/**
  * cm_connect_info - send connect info to diag
  * @vdev: vdev ptr
  * @connect_success: if connect was success
@@ -190,6 +169,12 @@ void cm_diag_get_auth_type(uint8_t *auth_type,
 void cm_connect_info(struct wlan_objmgr_vdev *vdev, bool connect_success,
 		     struct qdf_mac_addr *bssid, struct wlan_ssid *ssid,
 		     qdf_freq_t freq);
+
+void cm_diag_get_auth_enc_type_vdev_id(struct wlan_objmgr_psoc *psoc,
+				       uint8_t *auth_type,
+				       uint8_t *ucast_cipher,
+				       uint8_t *mcast_cipher,
+				       uint8_t vdev_id);
 
 #ifdef WLAN_UNIT_TEST
 /**
