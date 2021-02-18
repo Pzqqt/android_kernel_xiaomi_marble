@@ -11,6 +11,11 @@
 #include "ipahal_hw_stats_i.h"
 #include "ipahal_nat_i.h"
 
+#define CHECK_SET_PARAM(member, p_cmd_data, p_params, p_params_mask) \
+	if ((p_params_mask)->member) {\
+		(p_cmd_data)->member = (p_params)->member;\
+	}
+
 struct ipahal_context *ipahal_ctx;
 
 static const char *ipahal_imm_cmd_name_to_str[IPA_IMM_CMD_MAX] = {
@@ -414,6 +419,48 @@ static struct ipahal_imm_cmd_pyld *ipa_imm_cmd_construct_ip_packet_init_ex(
 	return pyld;
 }
 
+int ipa_imm_cmd_modify_ip_packet_init_ex(
+	enum ipahal_imm_cmd_name cmd,
+	const void *cmd_data,
+	const void *params,
+	const void *params_mask)
+{
+	struct ipa_imm_cmd_hw_ip_packet_init_ex *data =
+		(struct ipa_imm_cmd_hw_ip_packet_init_ex *)cmd_data;
+	struct ipahal_imm_cmd_ip_packet_init_ex *mask =
+		(struct ipahal_imm_cmd_ip_packet_init_ex *)params_mask;
+	struct ipahal_imm_cmd_ip_packet_init_ex *prms =
+		(struct ipahal_imm_cmd_ip_packet_init_ex *)params;
+
+	CHECK_SET_PARAM(frag_disable, data, prms, mask);
+	CHECK_SET_PARAM(filter_disable, data, prms, mask);
+	CHECK_SET_PARAM(nat_disable, data, prms, mask);
+	CHECK_SET_PARAM(route_disable, data, prms, mask);
+	CHECK_SET_PARAM(hdr_removal_insertion_disable, data, prms, mask);
+	CHECK_SET_PARAM(cs_disable, data, prms, mask);
+	CHECK_SET_PARAM(quota_tethering_stats_disable, data, prms, mask);
+	CHECK_SET_PARAM(flt_rt_tbl_idx, data, prms, mask);
+	CHECK_SET_PARAM(flt_stats_cnt_idx, data, prms, mask);
+	CHECK_SET_PARAM(flt_priority, data, prms, mask);
+	CHECK_SET_PARAM(flt_close_aggr_irq_mod, data, prms, mask);
+	CHECK_SET_PARAM(flt_rule_id, data, prms, mask);
+	CHECK_SET_PARAM(flt_action, data, prms, mask);
+	CHECK_SET_PARAM(flt_pdn_idx, data, prms, mask);
+	CHECK_SET_PARAM(flt_set_metadata, data, prms, mask);
+	CHECK_SET_PARAM(flt_retain_hdr, data, prms, mask);
+	CHECK_SET_PARAM(rt_pipe_dest_idx, data, prms, mask);
+	CHECK_SET_PARAM(rt_stats_cnt_idx, data, prms, mask);
+	CHECK_SET_PARAM(rt_priority, data, prms, mask);
+	CHECK_SET_PARAM(rt_close_aggr_irq_mod, data, prms, mask);
+	CHECK_SET_PARAM(rt_rule_id, data, prms, mask);
+	CHECK_SET_PARAM(rt_hdr_offset, data, prms, mask);
+	CHECK_SET_PARAM(rt_proc_ctx, data, prms, mask);
+	CHECK_SET_PARAM(rt_retain_hdr, data, prms, mask);
+	CHECK_SET_PARAM(rt_system, data, prms, mask);
+
+	return 0;
+}
+
 static struct ipahal_imm_cmd_pyld *ipa_imm_cmd_construct_nat_dma(
 	enum ipahal_imm_cmd_name cmd, const void *params, bool is_atomic_ctx)
 {
@@ -702,15 +749,32 @@ static struct ipahal_imm_cmd_pyld *ipa_imm_cmd_construct_dummy(
 	return NULL;
 }
 
+static int ipa_imm_cmd_modify_dummy(
+	enum ipahal_imm_cmd_name cmd,
+	const void *cmd_data,
+	const void *params,
+	const void *params_mask)
+{
+	IPAHAL_ERR("no modify function for IMM_CMD=%s, IPA ver %d\n",
+		ipahal_imm_cmd_name_str(cmd), ipahal_ctx->hw_type);
+	WARN_ON(1);
+	return -EINVAL;
+}
+
 /*
  * struct ipahal_imm_cmd_obj - immediate command H/W information for
  *  specific IPA version
  * @construct - CB to construct imm command payload from abstracted structure
+ * @modify - CB to modify imm command payload from abstracted structure
  * @opcode - Immediate command OpCode
  */
 struct ipahal_imm_cmd_obj {
 	struct ipahal_imm_cmd_pyld *(*construct)(enum ipahal_imm_cmd_name cmd,
 		const void *params, bool is_atomic_ctx);
+	int (*modify)(enum ipahal_imm_cmd_name cmd,
+		      const void *cmd_data,
+		      const void *params,
+		      const void *params_mask);
 	u16 opcode;
 };
 
@@ -731,68 +795,88 @@ static struct ipahal_imm_cmd_obj
 	/* IPAv3 */
 	[IPA_HW_v3_0][IPA_IMM_CMD_IP_V4_FILTER_INIT] = {
 		ipa_imm_cmd_construct_ip_v4_filter_init,
+		ipa_imm_cmd_modify_dummy,
 		3},
 	[IPA_HW_v3_0][IPA_IMM_CMD_IP_V6_FILTER_INIT] = {
 		ipa_imm_cmd_construct_ip_v6_filter_init,
+		ipa_imm_cmd_modify_dummy,
 		4},
 	[IPA_HW_v3_0][IPA_IMM_CMD_IP_V4_NAT_INIT] = {
 		ipa_imm_cmd_construct_ip_v4_nat_init,
+		ipa_imm_cmd_modify_dummy,
 		5},
 	[IPA_HW_v3_0][IPA_IMM_CMD_IP_V4_ROUTING_INIT] = {
 		ipa_imm_cmd_construct_ip_v4_routing_init,
+		ipa_imm_cmd_modify_dummy,
 		7},
 	[IPA_HW_v3_0][IPA_IMM_CMD_IP_V6_ROUTING_INIT] = {
 		ipa_imm_cmd_construct_ip_v6_routing_init,
+		ipa_imm_cmd_modify_dummy,
 		8},
 	[IPA_HW_v3_0][IPA_IMM_CMD_HDR_INIT_LOCAL] = {
 		ipa_imm_cmd_construct_hdr_init_local,
+		ipa_imm_cmd_modify_dummy,
 		9},
 	[IPA_HW_v3_0][IPA_IMM_CMD_HDR_INIT_SYSTEM] = {
 		ipa_imm_cmd_construct_hdr_init_system,
+		ipa_imm_cmd_modify_dummy,
 		10},
 	[IPA_HW_v3_0][IPA_IMM_CMD_REGISTER_WRITE] = {
 		ipa_imm_cmd_construct_register_write,
+		ipa_imm_cmd_modify_dummy,
 		12},
 	[IPA_HW_v3_0][IPA_IMM_CMD_NAT_DMA] = {
 		ipa_imm_cmd_construct_nat_dma,
+		ipa_imm_cmd_modify_dummy,
 		14},
 	[IPA_HW_v3_0][IPA_IMM_CMD_IP_PACKET_INIT] = {
 		ipa_imm_cmd_construct_ip_packet_init,
+		ipa_imm_cmd_modify_dummy,
 		16},
 	[IPA_HW_v3_0][IPA_IMM_CMD_DMA_TASK_32B_ADDR] = {
 		ipa_imm_cmd_construct_dma_task_32b_addr,
+		ipa_imm_cmd_modify_dummy,
 		17},
 	[IPA_HW_v3_0][IPA_IMM_CMD_DMA_SHARED_MEM] = {
 		ipa_imm_cmd_construct_dma_shared_mem,
+		ipa_imm_cmd_modify_dummy,
 		19},
 	[IPA_HW_v3_0][IPA_IMM_CMD_IP_PACKET_TAG_STATUS] = {
 		ipa_imm_cmd_construct_ip_packet_tag_status,
+		ipa_imm_cmd_modify_dummy,
 		20},
 
 	/* IPAv4 */
 	[IPA_HW_v4_0][IPA_IMM_CMD_REGISTER_WRITE] = {
 		ipa_imm_cmd_construct_register_write_v_4_0,
+		ipa_imm_cmd_modify_dummy,
 		12},
 	/* NAT_DMA was renamed to TABLE_DMA for IPAv4 */
 	[IPA_HW_v4_0][IPA_IMM_CMD_NAT_DMA] = {
 		ipa_imm_cmd_construct_dummy,
+		ipa_imm_cmd_modify_dummy,
 		-1},
 	[IPA_HW_v4_0][IPA_IMM_CMD_TABLE_DMA] = {
 		ipa_imm_cmd_construct_table_dma_ipav4,
+		ipa_imm_cmd_modify_dummy,
 		14},
 	[IPA_HW_v4_0][IPA_IMM_CMD_DMA_SHARED_MEM] = {
 		ipa_imm_cmd_construct_dma_shared_mem_v_4_0,
+		ipa_imm_cmd_modify_dummy,
 		19},
 	[IPA_HW_v4_0][IPA_IMM_CMD_IP_V6_CT_INIT] = {
 		ipa_imm_cmd_construct_ip_v6_ct_init,
+		ipa_imm_cmd_modify_dummy,
 		23},
 
 	/* IPAv5 */
 	[IPA_HW_v5_0][IPA_IMM_CMD_IP_PACKET_INIT] = {
 		ipa_imm_cmd_construct_ip_packet_init_v_5_0,
+		ipa_imm_cmd_modify_dummy,
 		16},
 	[IPA_HW_v5_0][IPA_IMM_CMD_IP_PACKET_INIT_EX] = {
 		ipa_imm_cmd_construct_ip_packet_init_ex,
+		ipa_imm_cmd_modify_ip_packet_init_ex,
 		18},
 };
 
@@ -908,6 +992,41 @@ struct ipahal_imm_cmd_pyld *ipahal_construct_imm_cmd(
 	IPAHAL_DBG_LOW("construct IMM_CMD:%s\n", ipahal_imm_cmd_name_str(cmd));
 	return ipahal_imm_cmd_objs[ipahal_ctx->hw_type][cmd].construct(
 		cmd, params, is_atomic_ctx);
+}
+
+/*
+ * ipahal_modify_imm_cmd() - Modify immdiate command in an existing buffer
+ * This function modifies an existing imm cmd buffer
+ * @cmd_name: [in] Immediate command name
+ * @cmd_data: [in] Constructed immediate command buffer data
+ * @params: [in] Structure with specific IMM params
+ * @params_mask: [in] Same structure, but the fields filled with 0,
+ *  if they should not be changed, or any non-zero for fields to be updated
+ */
+int ipahal_modify_imm_cmd(
+	enum ipahal_imm_cmd_name cmd,
+	const void *cmd_data,
+	const void *params,
+	const void *params_mask)
+{
+	if (!cmd_data || !params || !params_mask) {
+		WARN_ONCE(true,
+			"Input error: cmd_data=%pK params=%pK params_mask=%pK\n",
+			cmd_data, params, params_mask);
+		return -EINVAL;
+	}
+
+	if (cmd >= IPA_IMM_CMD_MAX) {
+		IPAHAL_ERR("Invalid immediate command %u\n", cmd);
+		return -EINVAL;
+	}
+
+	IPAHAL_DBG_LOW("Modify IMM_CMD:%s\n", ipahal_imm_cmd_name_str(cmd));
+	return ipahal_imm_cmd_objs[ipahal_ctx->hw_type][cmd].modify(
+		cmd,
+		cmd_data,
+		params,
+		params_mask);
 }
 
 /*
