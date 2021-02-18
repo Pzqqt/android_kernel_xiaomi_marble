@@ -2562,16 +2562,15 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	if (!roam_info) {
-		hdd_err("roam_info is NULL");
-		return QDF_STATUS_E_FAILURE;
+	if (roam_info) {
+		hdd_cm_save_connect_status(adapter, roam_info->reasonCode);
+		if (roam_info->u.pConnectedProfile)
+			uapsd_mask = roam_info->u.pConnectedProfile->
+				     modifyProfileFields.uapsd_mask;
 	}
-	if (roam_info->u.pConnectedProfile)
-		uapsd_mask =
-		roam_info->u.pConnectedProfile->modifyProfileFields.uapsd_mask;
+
 	hdd_cm_update_rssi_snr_by_bssid(adapter);
 
-	hdd_cm_save_connect_status(adapter, roam_info->reasonCode);
 	/*
 	 * reset scan reject params if connection is success or we received
 	 * final failure from CSR after trying with all APs.
@@ -2594,6 +2593,11 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 	mac_handle = hdd_ctx->mac_handle;
 
 	if (eCSR_ROAM_RESULT_ASSOCIATED == roam_result) {
+		if (!roam_info) {
+			hdd_err("roam_info is NULL");
+			return QDF_STATUS_E_FAILURE;
+		}
+
 		if (!hddDisconInProgress) {
 			hdd_conn_set_connection_state(adapter,
 						   eConnectionState_Associated);
