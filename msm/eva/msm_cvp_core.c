@@ -382,6 +382,9 @@ int msm_cvp_close(void *instance)
 
 	msm_cvp_comm_session_clean(inst);
 
+	if (inst->session_type == MSM_CVP_DSP)
+		cvp_dsp_del_sess(inst->process_id, inst);
+
 	kref_put(&inst->kref, close_helper);
 	return 0;
 }

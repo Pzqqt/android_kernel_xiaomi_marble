@@ -644,7 +644,6 @@ static int cvp_reinit_dsp(void)
 	return rc;
 }
 
-#ifdef FASTRPC_DRIVER_AVAILABLE
 static struct cvp_dsp_fastrpc_driver_entry *cvp_find_fastrpc_node_with_handle(
 			uint32_t handle)
 {
@@ -667,9 +666,7 @@ static struct cvp_dsp_fastrpc_driver_entry *cvp_find_fastrpc_node_with_handle(
 	return frpc_node;
 }
 
-static void eva_fastrpc_driver_unregister(struct msm_cvp_inst *inst,
-			uint32_t handle,
-			bool force_exit);
+static void eva_fastrpc_driver_unregister(uint32_t handle, bool force_exit);
 
 static int cvp_fastrpc_probe(struct fastrpc_device *rpc_dev)
 {
@@ -769,11 +766,81 @@ static int eva_fastrpc_dev_unmap_dma(struct fastrpc_device *frpc_device,
 	return rc;
 }
 
+static void eva_fastrpc_driver_add_sess(
+	struct cvp_dsp_fastrpc_driver_entry *frpc,
+	struct msm_cvp_inst *inst)
+{
+	mutex_lock(&frpc->dsp_sessions.lock);
+	if (inst)
+		list_add_tail(&inst->dsp_list, &frpc->dsp_sessions.list);
+	else
+		dprintk(CVP_ERR, "%s incorrect input %pK\n", __func__, inst);
+	frpc->session_cnt++;
+	mutex_unlock(&frpc->dsp_sessions.lock);
+	dprintk(CVP_DSP, "add dsp sess %pK fastrpc_driver %pK\n", inst, frpc);
+}
+
+int cvp_dsp_fastrpc_unmap(uint32_t process_id, struct cvp_internal_buf *buf)
+{
+	struct cvp_dsp_fastrpc_driver_entry *frpc_node = NULL;
+	struct fastrpc_device *frpc_device = NULL;
+	int rc = 0;
+
+	frpc_node = cvp_find_fastrpc_node_with_handle(process_id);
+	if (!frpc_node) {
+		dprintk(CVP_ERR, "%s no frpc node for process id %d\n",
+			__func__, process_id);
+		return -EINVAL;
+	}
+	frpc_device = frpc_node->cvp_fastrpc_device;
+	rc = eva_fastrpc_dev_unmap_dma(frpc_device, buf);
+	if (rc) {
+		dprintk(CVP_ERR,
+			"%s Fail to unmap buffer 0x%x\n",
+				__func__, rc);
+		return rc;
+	}
+
+	return rc;
+}
+
+int cvp_dsp_del_sess(uint32_t process_id, struct msm_cvp_inst *inst)
+{
+	struct cvp_dsp_fastrpc_driver_entry *frpc_node = NULL;
+	struct list_head *ptr = NULL, *next = NULL;
+	struct msm_cvp_inst *sess;
+	bool found = false;
+
+	frpc_node = cvp_find_fastrpc_node_with_handle(process_id);
+	if (!frpc_node) {
+		dprintk(CVP_ERR, "%s no frpc node for process id %d\n",
+				__func__, process_id);
+		return -EINVAL;
+	}
+	mutex_lock(&frpc_node->dsp_sessions.lock);
+	list_for_each_safe(ptr, next, &frpc_node->dsp_sessions.list) {
+		sess = list_entry(ptr, struct msm_cvp_inst, list);
+		if (sess == inst) {
+			dprintk(CVP_DSP, "%s Find sess %pK to be deleted\n",
+				__func__, inst);
+			found = true;
+			break;
+		}
+	}
+	if (found) {
+		list_del(&inst->dsp_list);
+		frpc_node->session_cnt--;
+	}
+
+	mutex_unlock(&frpc_node->dsp_sessions.lock);
+
+	return 0;
+}
+
 static int eva_fastrpc_driver_register(uint32_t handle)
 {
 	struct cvp_dsp_apps *me = &gfa_cv;
 	int rc = 0;
-	//struct cvp_dsp2cpu_cmd_msg *dsp2cpu_cmd = &me->pending_dsp2cpu_cmd;
 	struct cvp_dsp_fastrpc_driver_entry *frpc_node = NULL;
 
 	frpc_node = cvp_find_fastrpc_node_with_handle(handle);
@@ -795,6 +862,7 @@ static int eva_fastrpc_driver_register(uint32_t handle)
 		dprintk(CVP_DSP, "Add frpc node 0x%x to list\n", frpc_node);
 		list_add_tail(&frpc_node->list, &me->fastrpc_driver_list.list);
 		mutex_unlock(&me->fastrpc_driver_list.lock);
+		INIT_MSM_CVP_LIST(&frpc_node->dsp_sessions);
 
 		/* register fastrpc device to this session */
 		frpc_node->handle = handle;
@@ -815,12 +883,7 @@ static int eva_fastrpc_driver_register(uint32_t handle)
 				__func__);
 			goto fail_fastrpc_driver_timeout;
 		}
-
-		/* initialize dspbuf list */
-		INIT_MSM_CVP_LIST(&frpc_node->dspbufs);
 	}
-
-	frpc_node->session_cnt++;
 
 	return rc;
 
@@ -835,18 +898,11 @@ fail_fastrpc_driver_register:
 	return -EINVAL;
 }
 
-static void eva_fastrpc_driver_unregister(struct msm_cvp_inst *inst,
-			uint32_t handle,
-			bool force_exit)
+static void eva_fastrpc_driver_unregister(uint32_t handle, bool force_exit)
 {
 	struct cvp_dsp_apps *me = &gfa_cv;
-	struct list_head *ptr = NULL, *next = NULL;
 	struct cvp_dsp_fastrpc_driver_entry *frpc_node = NULL;
-	struct msm_cvp_list *buf_list = NULL;
-	struct cvp_internal_buf *buf = NULL;
-	struct fastrpc_device *frpc_device = NULL;
 	struct cvp_dsp2cpu_cmd_msg *dsp2cpu_cmd = &me->pending_dsp2cpu_cmd;
-	int rc = 0;
 
 	dprintk(CVP_DSP, "%s Unregister fastrpc driver handle 0x%x, force %d\n",
 		__func__, handle, (uint32_t)force_exit);
@@ -857,48 +913,11 @@ static void eva_fastrpc_driver_unregister(struct msm_cvp_inst *inst,
 	if (frpc_node == NULL)
 		return;
 
-	frpc_node->session_cnt--;
-
 	if ((frpc_node->session_cnt == 0) || force_exit) {
 		dprintk(CVP_DSP, "%s session cnt %d, force %d\n",
 		__func__, frpc_node->session_cnt, (uint32_t)force_exit);
-		//Free any left over buffers
-		ptr = NULL;
-		next = NULL;
-		buf_list = &frpc_node->dspbufs;
-		mutex_lock(&buf_list->lock);
-		list_for_each_safe(ptr, next, &buf_list->list) {
-			buf = list_entry(ptr, struct cvp_internal_buf, list);
 
-			if (!buf->smem) {
-				dprintk(CVP_DSP, "%s Empyt smem\n", __func__);
-				list_del(&buf->list);
-				kfree(buf);
-				continue;
-			}
-
-			rc = eva_fastrpc_dev_unmap_dma(frpc_device, buf);
-			if (rc) {
-				dprintk(CVP_ERR,
-					"%s Fail to unmap buffer 0x%x\n",
-						__func__, rc);
-				continue;
-			}
-
-			rc = cvp_release_dsp_buffers(inst, buf);
-			if (rc) {
-				dprintk(CVP_ERR,
-					"%s Fail to free buffer 0x%x\n",
-						__func__, rc);
-				continue;
-			}
-
-			list_del(&buf->list);
-			kfree(buf);
-		}
-		mutex_unlock(&buf_list->lock);
-
-		DEINIT_MSM_CVP_LIST(&frpc_node->dspbufs);
+		DEINIT_MSM_CVP_LIST(&frpc_node->dsp_sessions);
 
 		/* remove list if this is the last session */
 		mutex_lock(&me->fastrpc_driver_list.lock);
@@ -909,8 +928,6 @@ static void eva_fastrpc_driver_unregister(struct msm_cvp_inst *inst,
 		kfree(frpc_node);
 	}
 }
-
-#endif
 
 void cvp_dsp_send_hfi_queue(void)
 {
@@ -1123,6 +1140,7 @@ static void __dsp_cvp_sess_create(struct cvp_dsp_cmd_msg *cmd)
 	struct eva_kmd_session_control *sys_ctrl = NULL;
 	int rc = 0;
 	struct cvp_dsp2cpu_cmd_msg *dsp2cpu_cmd = &me->pending_dsp2cpu_cmd;
+	struct cvp_dsp_fastrpc_driver_entry *frpc_node = NULL;
 
 	cmd->ret = 0;
 
@@ -1140,20 +1158,19 @@ static void __dsp_cvp_sess_create(struct cvp_dsp_cmd_msg *cmd)
 		goto fail_frpc_driver_reg;
 	}
 
-#ifdef FASTRPC_DRIVER_AVAILABLE
 	rc = eva_fastrpc_driver_register(dsp2cpu_cmd->pid);
-#endif
 	if (rc) {
 		dprintk(CVP_ERR, "%s Register fastrpc driver fail\n", __func__);
 		goto fail_frpc_driver_reg;
 	}
 
-	inst = msm_cvp_open(MSM_CORE_CVP, MSM_CVP_USER);
+	inst = msm_cvp_open(MSM_CORE_CVP, MSM_CVP_DSP);
 	if (!inst) {
 		dprintk(CVP_ERR, "%s Failed create instance\n", __func__);
 		goto fail_msm_cvp_open;
 	}
 
+	inst->process_id = dsp2cpu_cmd->pid;
 	kmd->type = EVA_KMD_SET_SYS_PROPERTY;
 	sys_prop = (struct eva_kmd_sys_properties *)&kmd->data.sys_properties;
 	sys_prop->prop_num = 5;
@@ -1205,6 +1222,10 @@ static void __dsp_cvp_sess_create(struct cvp_dsp_cmd_msg *cmd)
 	cmd->session_cpu_high = (uint32_t)((inst_handle & HIGH32) >> 32);
 	cmd->session_cpu_low = (uint32_t)(inst_handle & LOW32);
 
+	frpc_node = cvp_find_fastrpc_node_with_handle(dsp2cpu_cmd->pid);
+	if (frpc_node)
+		eva_fastrpc_driver_add_sess(frpc_node, inst);
+
 	dprintk(CVP_DSP,
 		"%s CREATE_SESS id 0x%x, cpu_low 0x%x, cpu_high 0x%x\n",
 		__func__, cmd->session_id, cmd->session_cpu_low,
@@ -1231,6 +1252,7 @@ static void __dsp_cvp_sess_delete(struct cvp_dsp_cmd_msg *cmd)
 	struct eva_kmd_session_control *sys_ctrl;
 	int rc;
 	struct cvp_dsp2cpu_cmd_msg *dsp2cpu_cmd = &me->pending_dsp2cpu_cmd;
+	struct cvp_dsp_fastrpc_driver_entry *frpc_node = NULL;
 
 	cmd->ret = 0;
 
@@ -1240,6 +1262,14 @@ static void __dsp_cvp_sess_delete(struct cvp_dsp_cmd_msg *cmd)
 		dsp2cpu_cmd->session_cpu_low,
 		dsp2cpu_cmd->session_cpu_high,
 		dsp2cpu_cmd->pid);
+
+	frpc_node = cvp_find_fastrpc_node_with_handle(dsp2cpu_cmd->pid);
+	if (!frpc_node) {
+		dprintk(CVP_ERR, "%s pid 0x%x not registered with fastrpc\n",
+			__func__, dsp2cpu_cmd->pid);
+		cmd->ret = -1;
+		return;
+	}
 
 	kmd = kzalloc(sizeof(*kmd), GFP_KERNEL);
         if (!kmd) {
@@ -1251,11 +1281,6 @@ static void __dsp_cvp_sess_delete(struct cvp_dsp_cmd_msg *cmd)
 	inst = (struct msm_cvp_inst *)ptr_dsp2cpu(
 			dsp2cpu_cmd->session_cpu_high,
 			dsp2cpu_cmd->session_cpu_low);
-
-#ifdef FASTRPC_DRIVER_AVAILABLE
-	/* unregister fastrpc driver */
-	eva_fastrpc_driver_unregister(inst, dsp2cpu_cmd->pid, false);
-#endif
 
 	kmd->type = EVA_KMD_SESSION_CONTROL;
 	sys_ctrl = (struct eva_kmd_session_control *)&kmd->data.session_ctrl;
@@ -1276,6 +1301,9 @@ static void __dsp_cvp_sess_delete(struct cvp_dsp_cmd_msg *cmd)
 		cmd->ret = -1;
 		goto dsp_fail_delete;
 	}
+
+	/* unregister fastrpc driver */
+	eva_fastrpc_driver_unregister(dsp2cpu_cmd->pid, false);
 
 	dprintk(CVP_DSP, "%s DSP2CPU_DETELE_SESSION Done\n", __func__);
 dsp_fail_delete:
@@ -1523,11 +1551,8 @@ static void __dsp_cvp_mem_alloc(struct cvp_dsp_cmd_msg *cmd)
 	struct cvp_dsp2cpu_cmd_msg *dsp2cpu_cmd = &me->pending_dsp2cpu_cmd;
 	uint64_t v_dsp_addr = 0;
 
-#ifdef FASTRPC_DRIVER_AVAILABLE
 	struct fastrpc_device *frpc_device = NULL;
 	struct cvp_dsp_fastrpc_driver_entry *frpc_node = NULL;
-	struct msm_cvp_list *buf_list = NULL;
-#endif
 
 	cmd->ret = 0;
 
@@ -1538,7 +1563,6 @@ static void __dsp_cvp_mem_alloc(struct cvp_dsp_cmd_msg *cmd)
 		dsp2cpu_cmd->session_cpu_high,
 		dsp2cpu_cmd->pid);
 
-#ifdef FASTRPC_DRIVER_AVAILABLE
 	frpc_node = cvp_find_fastrpc_node_with_handle(dsp2cpu_cmd->pid);
 	if (!frpc_node) {
 		dprintk(CVP_ERR, "%s Failed to find fastrpc node 0x%x\n",
@@ -1546,38 +1570,34 @@ static void __dsp_cvp_mem_alloc(struct cvp_dsp_cmd_msg *cmd)
 		goto fail_fastrpc_node;
 	}
 	frpc_device = frpc_node->cvp_fastrpc_device;
-#endif
 
 	inst = (struct msm_cvp_inst *)ptr_dsp2cpu(
 			dsp2cpu_cmd->session_cpu_high,
 			dsp2cpu_cmd->session_cpu_low);
 
-	buf = kzalloc(sizeof(*buf), GFP_KERNEL);
+	buf = kmem_cache_zalloc(cvp_driver->buf_cache, GFP_KERNEL);
 	if (!buf)
 		goto fail_kzalloc_buf;
 
 	rc = cvp_allocate_dsp_bufs(inst, buf,
 			dsp2cpu_cmd->sbuf.size,
 			dsp2cpu_cmd->sbuf.type);
-	if (rc != 0)
+	if (rc)
 		goto fail_allocate_dsp_buf;
 
-#ifdef FASTRPC_DRIVER_AVAILABLE
 	rc = eva_fastrpc_dev_map_dma(frpc_device, buf,
 			dsp2cpu_cmd->sbuf.dsp_remote_map,
 			&v_dsp_addr);
-#endif
 	if (rc) {
 		dprintk(CVP_ERR, "%s Failed to map buffer 0x%x\n", __func__,
 			rc);
 		goto fail_fastrpc_dev_map_dma;
 	}
-#ifdef FASTRPC_DRIVER_AVAILABLE
-	buf_list = &frpc_node->dspbufs;
-	mutex_lock(&buf_list->lock);
-	list_add_tail(&buf->list, &buf_list->list);
-	mutex_unlock(&buf_list->lock);
-#endif
+
+	mutex_lock(&inst->cvpdspbufs.lock);
+	list_add_tail(&buf->list, &inst->cvpdspbufs.list);
+	mutex_unlock(&inst->cvpdspbufs.lock);
+
 	dprintk(CVP_DSP, "%s allocate buffer done, addr 0x%llx\n",
 		__func__, v_dsp_addr);
 
@@ -1595,11 +1615,9 @@ static void __dsp_cvp_mem_alloc(struct cvp_dsp_cmd_msg *cmd)
 fail_fastrpc_dev_map_dma:
 	cvp_release_dsp_buffers(inst, buf);
 fail_allocate_dsp_buf:
-	kfree(buf);
+	kmem_cache_free(cvp_driver->buf_cache, buf);
 fail_kzalloc_buf:
-#ifdef FASTRPC_DRIVER_AVAILABLE
 fail_fastrpc_node:
-#endif
 	cmd->ret = -1;
 	return;
 
@@ -1607,7 +1625,6 @@ fail_fastrpc_node:
 
 static void __dsp_cvp_mem_free(struct cvp_dsp_cmd_msg *cmd)
 {
-#ifdef FASTRPC_DRIVER_AVAILABLE
 	struct cvp_dsp_apps *me = &gfa_cv;
 	struct msm_cvp_inst *inst;
 	int rc;
@@ -1641,7 +1658,7 @@ static void __dsp_cvp_mem_free(struct cvp_dsp_cmd_msg *cmd)
 	}
 	frpc_device = frpc_node->cvp_fastrpc_device;
 
-	buf_list = &frpc_node->dspbufs;
+	buf_list = &inst->cvpdspbufs;
 	mutex_lock(&buf_list->lock);
 	list_for_each_safe(ptr, next, &buf_list->list) {
 		buf = list_entry(ptr, struct cvp_internal_buf, list);
@@ -1678,7 +1695,7 @@ static void __dsp_cvp_mem_free(struct cvp_dsp_cmd_msg *cmd)
 
 			list_del(&buf->list);
 
-			kfree(buf);
+			kmem_cache_free(cvp_driver->buf_cache, buf);
 			break;
 		}
 	}
@@ -1686,7 +1703,6 @@ static void __dsp_cvp_mem_free(struct cvp_dsp_cmd_msg *cmd)
 fail_release_buf:
 fail_fastrpc_dev_unmap_dma:
 	mutex_unlock(&buf_list->lock);
-#endif
 }
 
 static int cvp_dsp_thread(void *data)

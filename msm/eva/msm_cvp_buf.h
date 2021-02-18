@@ -113,6 +113,7 @@ enum buffer_owner {
 	DRIVER,
 	FIRMWARE,
 	CLIENT,
+	DSP,
 	MAX_OWNER
 };
 

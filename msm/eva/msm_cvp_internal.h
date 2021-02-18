@@ -290,9 +290,11 @@ struct msm_cvp_core {
 
 struct msm_cvp_inst {
 	struct list_head list;
+	struct list_head dsp_list;
 	struct mutex sync_lock, lock;
 	struct msm_cvp_core *core;
 	enum session_type session_type;
+	u32 process_id;
 	struct cvp_session_queue session_queue;
 	struct cvp_session_queue session_queue_fence;
 	struct cvp_session_event event_handler;

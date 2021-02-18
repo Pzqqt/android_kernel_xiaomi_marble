@@ -12,13 +12,7 @@
 
 #include <linux/pid.h>
 #include <linux/sched.h>
-
-#define FASTRPC_DRIVER_AVAILABLE
-
-#ifdef FASTRPC_DRIVER_AVAILABLE
 #include <linux/fastrpc.h>
-#endif
-
 
 #define CVP_APPS_DSP_GLINK_GUID "cvp-glink-apps-dsp"
 #define CVP_APPS_DSP_SMD_GUID "cvp-smd-apps-dsp"
@@ -174,14 +168,11 @@ struct cvp_dsp_fastrpc_driver_entry {
 	struct list_head list;
 	uint32_t handle;
 	uint32_t session_cnt;
-#ifdef FASTRPC_DRIVER_AVAILABLE
 	struct fastrpc_driver cvp_fastrpc_driver;
 	struct fastrpc_device *cvp_fastrpc_device;
-#endif
 	struct completion fastrpc_probe_completion;
-	struct msm_cvp_list dspbufs;
 	/* all dsp sessions list */
-	struct msm_cvp_list dsp_session;
+	struct msm_cvp_list dsp_sessions;
 };
 
 struct cvp_dsp_apps {
@@ -260,6 +251,10 @@ int cvp_dsp_deregister_buffer(uint32_t session_id, uint32_t buff_fd,
 			uint32_t buff_fd_size, uint32_t buff_size,
 			uint32_t buff_offset, uint32_t buff_index,
 			uint32_t buff_fd_iova);
+
+int cvp_dsp_fastrpc_unmap(uint32_t process_id, struct cvp_internal_buf *buf);
+
+int cvp_dsp_del_sess(uint32_t process_id, struct msm_cvp_inst *inst);
 
 #endif // MSM_CVP_DSP_H
 
