@@ -9922,17 +9922,28 @@ static void csr_copy_ssids_from_profile(tCsrSSIDs *ssid_list,
 			       &ssid_list->SSIDList[i].SSID);
 }
 
-static QDF_STATUS csr_fill_filter_from_vdev_crypto(struct mac_context *mac_ctx,
+static
+QDF_STATUS csr_fill_filter_from_vdev_crypto(struct mac_context *mac_ctx,
+					    struct csr_roam_profile *profile,
 					    struct scan_filter *filter,
 					    uint8_t vdev_id)
 {
 	struct wlan_objmgr_vdev *vdev;
+	struct rso_config *rso_cfg;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc, vdev_id,
 						    WLAN_LEGACY_SME_ID);
 	if (!vdev) {
 		sme_err("Invalid vdev");
 		return QDF_STATUS_E_FAILURE;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (rso_cfg) {
+		rso_cfg->rsn_cap = 0;
+		if (profile->MFPRequired)
+			rso_cfg->rsn_cap |= WLAN_CRYPTO_RSN_CAP_MFP_REQUIRED;
+		if (profile->MFPCapable)
+			rso_cfg->rsn_cap |= WLAN_CRYPTO_RSN_CAP_MFP_ENABLED;
 	}
 
 	wlan_cm_fill_crypto_filter_from_vdev(vdev, filter);
@@ -9953,7 +9964,8 @@ static QDF_STATUS csr_fill_crypto_params(struct mac_context *mac_ctx,
 		return QDF_STATUS_SUCCESS;
 	}
 
-	return csr_fill_filter_from_vdev_crypto(mac_ctx, filter, vdev_id);
+	return csr_fill_filter_from_vdev_crypto(mac_ctx, profile, filter,
+						vdev_id);
 }
 
 QDF_STATUS
