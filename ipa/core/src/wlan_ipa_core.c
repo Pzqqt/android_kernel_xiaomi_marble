@@ -2437,7 +2437,7 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 		if (iface_ctx)
 			wlan_ipa_cleanup_iface(iface_ctx);
 
-		if (qdf_ipa_get_lan_rx_napi())
+		if (qdf_ipa_get_lan_rx_napi() && ipa_ctx->sap_num_connected_sta)
 			ipa_set_rps_per_vdev(ipa_ctx, session_id, false);
 
 		qdf_mutex_release(&ipa_ctx->event_lock);
