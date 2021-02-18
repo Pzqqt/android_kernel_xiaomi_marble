@@ -6616,19 +6616,18 @@ static bool check_disable_channels(struct hdd_context *hdd_ctx,
 }
 
 /**
- * disconnect_sta_and_stop_sap() - Disconnect STA and stop SAP
+ * disconnect_sta_and_restart_sap() - Disconnect STA and restart SAP
  *
  * @hdd_ctx: Pointer to hdd context
  * @reason: Disconnect reason code as per @enum wlan_reason_code
  *
  * Disable channels provided by user and disconnect STA if it is
- * connected to any AP, stop SAP and send deauthentication request
- * to STAs connected to SAP.
+ * connected to any AP, restart SAP.
  *
  * Return: None
  */
-static void disconnect_sta_and_stop_sap(struct hdd_context *hdd_ctx,
-					enum wlan_reason_code reason)
+static void disconnect_sta_and_restart_sap(struct hdd_context *hdd_ctx,
+					   enum wlan_reason_code reason)
 {
 	struct hdd_adapter *adapter, *next = NULL;
 	QDF_STATUS status;
@@ -6647,7 +6646,8 @@ static void disconnect_sta_and_stop_sap(struct hdd_context *hdd_ctx,
 				hdd_ctx->pdev,
 				adapter->session.ap.operating_chan_freq);
 			if (check_disable_channels(hdd_ctx, ap_ch))
-				wlan_hdd_stop_sap(adapter);
+				policy_mgr_check_sap_restart(hdd_ctx->psoc,
+							     adapter->vdev_id);
 		}
 
 		status = hdd_get_next_adapter(hdd_ctx, adapter, &next);
@@ -6834,8 +6834,9 @@ mem_alloc_failed:
 		ret = wlan_hdd_disable_channels(hdd_ctx);
 		if (ret)
 			return ret;
-		disconnect_sta_and_stop_sap(hdd_ctx,
-					    REASON_OPER_CHANNEL_BAND_CHANGE);
+		disconnect_sta_and_restart_sap(
+					hdd_ctx,
+					REASON_OPER_CHANNEL_BAND_CHANGE);
 	}
 
 	hdd_exit();
