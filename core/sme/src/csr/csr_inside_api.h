@@ -598,12 +598,6 @@ void csr_get_vdev_type_nss(enum QDF_OPMODE dev_mode, uint8_t *nss_2g,
 #define WLAN_80211D_DISABLED         0
 #define WLAN_80211D_SUPPORT_MULTI_DOMAIN     1
 #define WLAN_80211D_NOT_SUPPORT_MULTI_DOMAIN     2
-
-void cm_diag_get_auth_enc_type_vdev_id(struct wlan_objmgr_psoc *psoc,
-				       uint8_t *auth_type,
-				       uint8_t *ucast_cipher,
-				       uint8_t *mcast_cipher,
-				       uint8_t vdev_id);
 #endif /* #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR */
 /*
  * csr_scan_result_purge() -

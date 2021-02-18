@@ -2585,43 +2585,6 @@ static void csr_roam_populate_channels(tDot11fBeaconIEs *beacon_ies,
 #endif
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
-void cm_diag_get_auth_enc_type_vdev_id(struct wlan_objmgr_psoc *psoc,
-				       uint8_t *auth_type,
-				       uint8_t *ucast_cipher,
-				       uint8_t *mcast_cipher,
-				       uint8_t vdev_id)
-{
-	struct wlan_objmgr_vdev *vdev;
-	struct wlan_crypto_params *crypto_params;
-
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
-						    WLAN_LEGACY_MAC_ID);
-	if (!vdev) {
-		mlme_err("vdev object is NULL for vdev %d", vdev_id);
-		return;
-	}
-	crypto_params = wlan_crypto_vdev_get_crypto_params(vdev);
-
-	if (!crypto_params) {
-		mlme_err("crypto params is null");
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
-		return;
-	}
-	if (auth_type)
-		cm_diag_get_auth_type(auth_type,
-				      crypto_params->authmodeset,
-				      crypto_params->key_mgmt,
-				      crypto_params->ucastcipherset);
-	if (ucast_cipher)
-		*ucast_cipher =
-			cm_get_diag_enc_type(crypto_params->ucastcipherset);
-	if (mcast_cipher)
-		*mcast_cipher =
-			cm_get_diag_enc_type(crypto_params->ucastcipherset);
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
-
-}
-
 #ifndef FEATURE_CM_ENABLE
 static void
 csr_cm_connect_info(struct mac_context *mac_ctx, uint8_t vdev_id,
@@ -13032,7 +12995,6 @@ QDF_STATUS cm_csr_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 	 * CSR is cleaned up fully. No new params should be added to CSR, use
 	 * vdev/pdev/psoc instead
 	 */
-
 	mac_ctx = cds_get_context(QDF_MODULE_ID_SME);
 	if (!mac_ctx)
 		return QDF_STATUS_E_INVAL;
@@ -13062,6 +13024,7 @@ QDF_STATUS cm_csr_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 	status = csr_cm_update_fils_info(vdev, bss_desc, req);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		sme_err("failed to update fils info vdev id %d", vdev_id);
+		qdf_mem_free(ie_struct);
 		qdf_mem_free(bss_desc);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -13076,22 +13039,17 @@ QDF_STATUS cm_csr_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 
 	status = csr_get_rate_set(mac_ctx, ie_struct, &op_rate_set,
 				  &ext_rate_set);
+	qdf_mem_free(ie_struct);
+	qdf_mem_free(bss_desc);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		sme_err("Rates parsing failed vdev id %d", vdev_id);
-		qdf_mem_free(ie_struct);
-		qdf_mem_free(bss_desc);
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	qdf_mem_free(ie_struct);
-	qdf_mem_free(bss_desc);
 
 	mlme_set_opr_rate(vdev, op_rate_set.rate, op_rate_set.numRates);
 	mlme_set_ext_opr_rate(vdev, ext_rate_set.rate, ext_rate_set.numRates);
 
-	/* Fill join_req from legacy */
-	mac_ctx->mlme_cfg->sta.current_rssi = join_req->entry->rssi_raw;
 	csr_roam_state_change(mac_ctx, eCSR_ROAMING_STATE_JOINING, vdev_id);
 
 	return QDF_STATUS_SUCCESS;
@@ -13231,6 +13189,7 @@ static void csr_fill_connected_profile(struct mac_context *mac_ctx,
 	struct wlan_channel *chan;
 
 	conn_profile = &session->connectedProfile;
+	qdf_mem_zero(conn_profile, sizeof(tCsrRoamConnectedProfile));
 	conn_profile->modifyProfileFields.uapsd_mask = rsp->uapsd_mask;
 	conn_profile->op_freq = rsp->connect_rsp.freq;
 	qdf_copy_macaddr(&conn_profile->bssid, &rsp->connect_rsp.bssid);
@@ -13383,11 +13342,6 @@ QDF_STATUS cm_csr_connect_rsp(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline bool cm_is_fils_connection(struct wlan_cm_connect_resp *resp)
-{
-	return resp->is_fils_connection;
-}
-
 QDF_STATUS
 cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
 			struct wlan_cm_connect_resp *rsp)
@@ -13405,7 +13359,6 @@ cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
 	 * CSR is cleaned up fully. No new params should be added to CSR, use
 	 * vdev/pdev/psoc instead
 	 */
-
 	mac_ctx = cds_get_context(QDF_MODULE_ID_SME);
 	if (!mac_ctx)
 		return QDF_STATUS_E_INVAL;
@@ -13522,8 +13475,6 @@ QDF_STATUS cm_csr_disconnect_start_ind(struct wlan_objmgr_vdev *vdev,
 					 vdev_id);
 	}
 
-	/* Fill join_req from legacy */
-
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -13577,8 +13528,6 @@ QDF_STATUS cm_csr_handle_diconnect_req(struct wlan_objmgr_vdev *vdev,
 	wlan_roam_reset_roam_params(mac_ctx->psoc);
 	csr_roam_restore_default_config(mac_ctx, vdev_id);
 
-	/* Fill legacy struct */
-
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -13594,7 +13543,6 @@ cm_csr_diconnect_done_ind(struct wlan_objmgr_vdev *vdev,
 	 * CSR is cleaned up fully. No new params should be added to CSR, use
 	 * vdev/pdev/psoc instead
 	 */
-
 	mac_ctx = cds_get_context(QDF_MODULE_ID_SME);
 	if (!mac_ctx)
 		return QDF_STATUS_E_INVAL;
@@ -13604,8 +13552,6 @@ cm_csr_diconnect_done_ind(struct wlan_objmgr_vdev *vdev,
 		sme_qos_update_hand_off(vdev_id, false);
 	csr_set_default_dot11_mode(mac_ctx);
 	csr_free_connect_bss_desc(mac_ctx, vdev_id);
-
-	/* Fill legacy structures/ops from resp */
 
 	return QDF_STATUS_SUCCESS;
 }

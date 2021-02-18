@@ -402,7 +402,7 @@ static enum mgmt_bss_type cm_get_diag_persona(enum QDF_OPMODE persona)
 	}
 }
 
-enum mgmt_encrypt_type cm_get_diag_enc_type(uint32_t cipherset)
+static enum mgmt_encrypt_type cm_get_diag_enc_type(uint32_t cipherset)
 {
 	enum mgmt_encrypt_type n = ENC_MODE_OPEN;
 
@@ -467,9 +467,9 @@ static void cm_diag_fill_wapi_auth_type(uint8_t *auth_type, uint32_t akm)
 		*auth_type = AUTH_WAPI_PSK;
 }
 
-void cm_diag_get_auth_type(uint8_t *auth_type,
-			   uint32_t authmodeset, uint32_t akm,
-			   uint32_t ucastcipherset)
+static void cm_diag_get_auth_type(uint8_t *auth_type,
+				  uint32_t authmodeset, uint32_t akm,
+				  uint32_t ucastcipherset)
 {
 	if (!authmodeset) {
 		*auth_type = AUTH_OPEN;
@@ -690,6 +690,43 @@ void cm_connect_info(struct wlan_objmgr_vdev *vdev, bool connect_success,
 
 	/* store connect info on success */
 	cm_connect_success_diag(mlme_obj, &conn_stats);
+}
+
+void cm_diag_get_auth_enc_type_vdev_id(struct wlan_objmgr_psoc *psoc,
+				       uint8_t *auth_type,
+				       uint8_t *ucast_cipher,
+				       uint8_t *mcast_cipher,
+				       uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_crypto_params *crypto_params;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL for vdev %d", vdev_id);
+		return;
+	}
+
+	crypto_params = wlan_crypto_vdev_get_crypto_params(vdev);
+	if (!crypto_params) {
+		mlme_err("crypto params is null");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		return;
+	}
+	if (auth_type)
+		cm_diag_get_auth_type(auth_type,
+				      crypto_params->authmodeset,
+				      crypto_params->key_mgmt,
+				      crypto_params->ucastcipherset);
+	if (ucast_cipher)
+		*ucast_cipher =
+			cm_get_diag_enc_type(crypto_params->ucastcipherset);
+	if (mcast_cipher)
+		*mcast_cipher =
+			cm_get_diag_enc_type(crypto_params->ucastcipherset);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+
 }
 
 #ifdef WLAN_UNIT_TEST
