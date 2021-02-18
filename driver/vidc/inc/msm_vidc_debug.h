@@ -64,7 +64,7 @@ enum vidc_msg_prio {
 	} while (0)
 
 #define i_vpr_e(inst, __fmt, ...) dprintk_inst(VIDC_ERR, inst, __fmt, ##__VA_ARGS__)
-#define i_vpr_i(inst, __fmt, ...) dprintk_inst(VIDC_INFO, inst, __fmt, ##__VA_ARGS__)
+#define i_vpr_i(inst, __fmt, ...) dprintk_inst(VIDC_HIGH, inst, __fmt, ##__VA_ARGS__)
 #define i_vpr_h(inst, __fmt, ...) dprintk_inst(VIDC_HIGH, inst, __fmt, ##__VA_ARGS__)
 #define i_vpr_l(inst, __fmt, ...) dprintk_inst(VIDC_LOW, inst, __fmt, ##__VA_ARGS__)
 #define i_vpr_p(inst, __fmt, ...) dprintk_inst(VIDC_PERF, inst, __fmt, ##__VA_ARGS__)
@@ -87,7 +87,7 @@ enum vidc_msg_prio {
 #define d_vpr_e(__fmt, ...)	\
 			dprintk(VIDC_ERR, DEFAULT_SID, __fmt, ##__VA_ARGS__)
 #define d_vpr_i(__fmt, ...) \
-			dprintk(VIDC_INFO, DEFAULT_SID, __fmt, ##__VA_ARGS__)
+			dprintk(VIDC_HIGH, DEFAULT_SID, __fmt, ##__VA_ARGS__)
 #define d_vpr_h(__fmt, ...) \
 			dprintk(VIDC_HIGH, DEFAULT_SID, __fmt, ##__VA_ARGS__)
 #define d_vpr_l(__fmt, ...) \
