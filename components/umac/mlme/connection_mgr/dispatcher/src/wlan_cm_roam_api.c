@@ -1280,6 +1280,11 @@ struct rso_config *wlan_cm_get_rso_config_fl(struct wlan_objmgr_vdev *vdev,
 
 {
 	struct cm_ext_obj *cm_ext_obj;
+	enum QDF_OPMODE op_mode = wlan_vdev_mlme_get_opmode(vdev);
+
+	/* get only for CLI and STA */
+	if (op_mode != QDF_STA_MODE && op_mode != QDF_P2P_CLIENT_MODE)
+		return NULL;
 
 	cm_ext_obj = cm_get_ext_hdl_fl(vdev, func, line);
 	if (!cm_ext_obj)
@@ -1348,6 +1353,11 @@ struct rso_config *wlan_cm_get_rso_config_fl(struct wlan_objmgr_vdev *vdev,
 					     const char *func, uint32_t line)
 {
 	struct mlme_legacy_priv *mlme_priv;
+	enum QDF_OPMODE op_mode = wlan_vdev_mlme_get_opmode(vdev);
+
+	/* get only for CLI and STA */
+	if (op_mode != QDF_STA_MODE && op_mode != QDF_P2P_CLIENT_MODE)
+		return NULL;
 
 	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
 	if (!mlme_priv) {

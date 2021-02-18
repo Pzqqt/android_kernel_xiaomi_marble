@@ -1108,8 +1108,10 @@ typedef QDF_STATUS (*csr_session_open_cb)(uint8_t session_id,
 					  QDF_STATUS qdf_status);
 typedef QDF_STATUS (*csr_session_close_cb)(uint8_t session_id);
 
+#ifndef FEATURE_CM_ENABLE
 #define CSR_IS_INFRASTRUCTURE(pProfile) (eCSR_BSS_TYPE_INFRASTRUCTURE == \
 					 (pProfile)->BSSType)
+#endif
 #define CSR_IS_ANY_BSS_TYPE(pProfile) (eCSR_BSS_TYPE_ANY == \
 				       (pProfile)->BSSType)
 #define CSR_IS_INFRA_AP(pProfile) (eCSR_BSS_TYPE_INFRA_AP ==  \

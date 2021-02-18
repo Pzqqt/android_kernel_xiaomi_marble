@@ -5516,8 +5516,12 @@ static void csr_roam_process_results_default(struct mac_context *mac_ctx,
 		break;
 	}
 #endif
-	if (CSR_IS_INFRASTRUCTURE(&session->connectedProfile)
-		|| CSR_IS_ROAM_SUBSTATE_STOP_BSS_REQ(mac_ctx, session_id)) {
+	if (CSR_IS_ROAM_SUBSTATE_STOP_BSS_REQ(mac_ctx, session_id)
+	/* This is temp ifdef will be removed in near future */
+#ifndef FEATURE_CM_ENABLE
+	    || CSR_IS_INFRASTRUCTURE(&session->connectedProfile)
+#endif
+	) {
 		/*
 		 * do not free for the other profiles as we need
 		 * to send down stop BSS later
@@ -7784,7 +7788,9 @@ csr_roam_save_connected_information(struct mac_context *mac,
 	tDot11fBeaconIEs *pIesTemp = pIes;
 	struct csr_roam_session *pSession = NULL;
 	tCsrRoamConnectedProfile *pConnectProfile = NULL;
+#ifndef FEATURE_CM_ENABLE
 	struct cm_roam_values_copy src_cfg;
+#endif
 
 	pSession = CSR_GET_SESSION(mac, sessionId);
 	if (!pSession) {
@@ -7794,12 +7800,16 @@ csr_roam_save_connected_information(struct mac_context *mac,
 	}
 
 	pConnectProfile = &pSession->connectedProfile;
+#ifndef FEATURE_CM_ENABLE
 	/*
 	 * In case of LFR2.0, the connected profile is copied into a temporary
 	 * profile and cleared and then is copied back. This is not needed for
 	 * LFR3.0, since the profile is not cleared.
 	 */
-	if (!MLME_IS_ROAM_SYNCH_IN_PROGRESS(mac->psoc, sessionId)) {
+	if (!MLME_IS_ROAM_SYNCH_IN_PROGRESS(mac->psoc, sessionId))
+#endif
+	{
+
 		qdf_mem_zero(&pSession->connectedProfile,
 				sizeof(tCsrRoamConnectedProfile));
 		pConnectProfile->AuthType = pProfile->negotiatedAuthType;
@@ -7819,28 +7829,34 @@ csr_roam_save_connected_information(struct mac_context *mac,
 	if (!pConnectProfile->beaconInterval)
 		sme_err("ERROR: Beacon interval is ZERO");
 	csr_get_bss_id_bss_desc(pSirBssDesc, &pConnectProfile->bssid);
-	if (pSirBssDesc->mdiePresent) {
-		src_cfg.bool_value = true;
-		src_cfg.uint_value = (pSirBssDesc->mdie[1] << 8) |
-				     (pSirBssDesc->mdie[0]);
-	} else {
-		src_cfg.bool_value = false;
-		src_cfg.uint_value = 0;
-	}
-	wlan_cm_roam_cfg_set_value(mac->psoc, sessionId,
-				   MOBILITY_DOMAIN, &src_cfg);
 	if (!pIesTemp)
 		status = csr_get_parsed_bss_description_ies(mac, pSirBssDesc,
 							   &pIesTemp);
+
+#ifndef FEATURE_CM_ENABLE
+	if (CSR_IS_INFRASTRUCTURE(pConnectProfile)) {
+		if (pSirBssDesc->mdiePresent) {
+			src_cfg.bool_value = true;
+			src_cfg.uint_value = (pSirBssDesc->mdie[1] << 8) |
+					     (pSirBssDesc->mdie[0]);
+		} else {
+			src_cfg.bool_value = false;
+			src_cfg.uint_value = 0;
+		}
+		wlan_cm_roam_cfg_set_value(mac->psoc, sessionId,
+					   MOBILITY_DOMAIN, &src_cfg);
+
 #ifdef FEATURE_WLAN_ESE
-	if ((csr_is_profile_ese(pProfile) ||
-	     (QDF_IS_STATUS_SUCCESS(status) &&
-	      (pIesTemp->ESEVersion.present) &&
-	      (pProfile->negotiatedAuthType == eCSR_AUTH_TYPE_OPEN_SYSTEM))) &&
-	    (mac->mlme_cfg->lfr.ese_enabled))
-		wlan_cm_set_ese_assoc(mac->pdev, sessionId, true);
-	else
-		wlan_cm_set_ese_assoc(mac->pdev, sessionId, false);
+		if ((csr_is_profile_ese(pProfile) ||
+		     (QDF_IS_STATUS_SUCCESS(status) &&
+		      (pIesTemp->ESEVersion.present) &&
+		      (pProfile->negotiatedAuthType == eCSR_AUTH_TYPE_OPEN_SYSTEM))) &&
+		    (mac->mlme_cfg->lfr.ese_enabled))
+			wlan_cm_set_ese_assoc(mac->pdev, sessionId, true);
+		else
+			wlan_cm_set_ese_assoc(mac->pdev, sessionId, false);
+#endif
+	}
 #endif
 	/* save ssid */
 	if (QDF_IS_STATUS_SUCCESS(status)) {
@@ -7861,23 +7877,25 @@ csr_roam_save_connected_information(struct mac_context *mac,
 		/* Save the bss desc */
 		status = csr_roam_save_connected_bss_desc(mac, sessionId,
 								pSirBssDesc);
-		src_cfg.uint_value = pSirBssDesc->mbo_oce_enabled_ap;
-		wlan_cm_roam_cfg_set_value(mac->psoc, sessionId,
-					   MBO_OCE_ENABLED_AP, &src_cfg);
-		csr_fill_single_pmk(mac->psoc, sessionId, pSirBssDesc);
-		if (CSR_IS_QOS_BSS(pIesTemp) || pIesTemp->HTCaps.present)
-			/* Some HT AP's dont send WMM IE so in that case we
-			 * assume all HT Ap's are Qos Enabled AP's
-			 */
-			pConnectProfile->qap = true;
-		else
-			pConnectProfile->qap = false;
 #ifndef FEATURE_CM_ENABLE
-		if (pIesTemp->ExtCap.present) {
-			struct s_ext_cap *p_ext_cap = (struct s_ext_cap *)
-							pIesTemp->ExtCap.bytes;
-			pConnectProfile->proxy_arp_service =
-				p_ext_cap->proxy_arp_service;
+		if (CSR_IS_INFRASTRUCTURE(pConnectProfile)) {
+			src_cfg.uint_value = pSirBssDesc->mbo_oce_enabled_ap;
+			wlan_cm_roam_cfg_set_value(mac->psoc, sessionId,
+						   MBO_OCE_ENABLED_AP, &src_cfg);
+			csr_fill_single_pmk(mac->psoc, sessionId, pSirBssDesc);
+			if (CSR_IS_QOS_BSS(pIesTemp) || pIesTemp->HTCaps.present)
+				/* Some HT AP's dont send WMM IE so in that case we
+				 * assume all HT Ap's are Qos Enabled AP's
+				 */
+				pConnectProfile->qap = true;
+			else
+				pConnectProfile->qap = false;
+			if (pIesTemp->ExtCap.present) {
+				struct s_ext_cap *p_ext_cap = (struct s_ext_cap *)
+								pIesTemp->ExtCap.bytes;
+				pConnectProfile->proxy_arp_service =
+					p_ext_cap->proxy_arp_service;
+			}
 		}
 #endif
 		qdf_mem_zero(pConnectProfile->country_code,
@@ -13202,7 +13220,6 @@ static void csr_fill_connected_profile(struct mac_context *mac_ctx,
 
 	conn_profile = &session->connectedProfile;
 	conn_profile->modifyProfileFields.uapsd_mask = rsp->uapsd_mask;
-	conn_profile->BSSType = eCSR_BSS_TYPE_INFRASTRUCTURE;
 	conn_profile->op_freq = rsp->connect_rsp.freq;
 	qdf_copy_macaddr(&conn_profile->bssid, &rsp->connect_rsp.bssid);
 	conn_profile->SSID.length = rsp->connect_rsp.ssid.length;
@@ -16056,6 +16073,8 @@ bool csr_roam_is_sta_mode(struct mac_context *mac, uint8_t vdev_id)
 	opmode = wlan_get_opmode_from_vdev_id(mac->pdev, vdev_id);
 	if (opmode == QDF_STA_MODE)
 		return true;
+
+	sme_debug("Wrong opmode %d", opmode);
 
 	return false;
 }

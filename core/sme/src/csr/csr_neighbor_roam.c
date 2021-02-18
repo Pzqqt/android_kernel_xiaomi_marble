@@ -868,10 +868,8 @@ static void csr_neighbor_roam_info_ctx_init(struct mac_context *mac,
 	 * down to firmware.Do not send the START command for
 	 * other session connections.
 	 */
-	if (!csr_roam_is_sta_mode(mac, session_id)) {
-		sme_debug("Wrong Mode %d", session->connectedProfile.BSSType);
+	if (!csr_roam_is_sta_mode(mac, session_id))
 		return;
-	}
 
 	ngbr_roam_info->uOsRequestedHandoff = 0;
 	if (!MLME_IS_ROAM_SYNCH_IN_PROGRESS(mac->psoc, session_id))
