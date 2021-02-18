@@ -42,4 +42,6 @@ int hfi_packet_sys_debug_config(struct msm_vidc_core *core,
 int hfi_packet_session_command(struct msm_vidc_inst *inst,
 	u32 pkt_type, u32 flags, u32 port, u32 session_id,
 	u32 payload_type, void *payload, u32 payload_size);
+int hfi_packet_sys_intraframe_powercollapse(struct msm_vidc_core* core,
+	u8* pkt, u32 pkt_size, u32 enable);
 #endif // _HFI_PACKET_H_

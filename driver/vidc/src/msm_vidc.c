@@ -713,7 +713,7 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	kref_init(&inst->kref);
 	mutex_init(&inst->lock);
 
-	i_vpr_e(inst, "Opening video instance: %d\n", session_type);
+	i_vpr_h(inst, "Opening video instance: %d\n", session_type);
 
 	inst->response_workq = create_singlethread_workqueue("response_workq");
 	if (!inst->response_workq) {

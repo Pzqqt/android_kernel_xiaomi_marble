@@ -386,10 +386,12 @@ static int __hand_off_regulator(struct msm_vidc_core *core,
 		rc = regulator_set_mode(rinfo->regulator,
 				REGULATOR_MODE_FAST);
 		if (rc) {
+			core->handoff_done = 0;
 			d_vpr_e("Failed to hand off regulator control: %s\n",
 				rinfo->name);
 			return rc;
 		} else {
+			core->handoff_done = 1;
 			d_vpr_h("Hand off regulator control to HW: %s\n",
 					rinfo->name);
 		}
@@ -1049,28 +1051,24 @@ static int __sys_set_coverage(struct msm_vidc_core *core,
 
 	return 0;
 }
-
+*/
 static int __sys_set_power_control(struct msm_vidc_core *core, bool enable)
 {
-	struct regulator_info *rinfo;
-	bool supported = false;
+	int rc = 0;
 
-	venus_hfi_for_each_regulator(core, rinfo) {
-		if (rinfo->has_hw_power_collapse) {
-			supported = true;
-			break;
-		}
-	}
+	if (!core->handoff_done)
+		return rc;
 
-	if (!supported)
-		return 0;
+	rc = hfi_packet_sys_intraframe_powercollapse(core, core->packet, core->packet_size, enable);
+	if (rc)
+		return rc;
 
-	//call_hfi_pkt_op(core, sys_power_control, pkt, enable);
-	//if (__iface_cmdq_write(core, pkt, sid))
-	//	return -ENOTEMPTY;
-	return 0;
+	rc = __iface_cmdq_write(core, core->packet);
+	if (rc)
+		return rc;
+
+	return rc;
 }
-*/
 
 int __prepare_pc(struct msm_vidc_core *core)
 {
@@ -1698,14 +1696,11 @@ static int __enable_hw_power_collapse(struct msm_vidc_core *core)
 {
 	int rc = 0;
 
-	// TODO: skip if hardwar power control feature is not present
-	d_vpr_e("%s: skip hand off regulators\n", __func__);
-	return 0;
-
 	rc = __hand_off_regulators(core);
 	if (rc)
 		d_vpr_e("%s: Failed to enable HW power collapse %d\n",
-				__func__, rc);
+			__func__, rc);
+
 	return rc;
 }
 
@@ -2122,12 +2117,16 @@ static int __resume(struct msm_vidc_core *core)
 	}
 
 	__sys_set_debug(core, (msm_vidc_debug & FW_LOGMASK) >> FW_LOGSHIFT);
+
 	rc = __enable_subcaches(core);
 	if (rc) {
 		d_vpr_e("Failed to activate subcache\n");
 		goto err_reset_core;
 	}
 	__set_subcaches(core);
+
+	if (core->handoff_done)
+		__sys_set_power_control(core, true);
 
 	d_vpr_h("Resumed from power collapse\n");
 exit:
@@ -2678,6 +2677,9 @@ int venus_hfi_core_init(struct msm_vidc_core *core)
 	rc = __set_subcaches(core);
 	if (rc)
 		goto error;
+
+	if (core->handoff_done)
+		__sys_set_power_control(core, true);
 
 	d_vpr_h("%s(): successful\n", __func__);
 	return 0;

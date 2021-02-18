@@ -354,20 +354,6 @@ int hfi_packet_sys_init(struct msm_vidc_core *core,
 	if (rc)
 		goto err_sys_init;
 
-	/* HFI_PROP_INTRA_FRAME_POWER_COLLAPSE */
-	payload = 0;
-	d_vpr_h("%s: intra frame power collapse %d\n", __func__, payload);
-	rc = hfi_create_packet(pkt, pkt_size,
-				   HFI_PROP_INTRA_FRAME_POWER_COLLAPSE,
-				   HFI_HOST_FLAGS_NONE,
-				   HFI_PAYLOAD_U32,
-				   HFI_PORT_NONE,
-				   core->packet_id++,
-				   &payload,
-				   sizeof(u32));
-	if (rc)
-		goto err_sys_init;
-
 	/* HFI_PROP_UBWC_MAX_CHANNELS */
 	payload = core->platform->data.ubwc_config->max_channels;
 	d_vpr_h("%s: ubwc max channels %d\n", __func__, payload);
@@ -632,6 +618,45 @@ int hfi_packet_session_command(struct msm_vidc_inst *inst,
 	return rc;
 
 err_cmd:
+	d_vpr_e("%s: create packet failed\n", __func__);
+	return rc;
+}
+
+int hfi_packet_sys_intraframe_powercollapse(struct msm_vidc_core* core,
+	u8* pkt, u32 pkt_size, u32 enable)
+{
+	int rc = 0;
+	u32 payload = 0;
+
+	if (!core || !pkt) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	rc = hfi_create_header(pkt, pkt_size,
+		0 /*session_id*/,
+		core->header_id++);
+	if (rc)
+		goto err;
+
+	/* HFI_PROP_INTRA_FRAME_POWER_COLLAPSE */
+	payload = enable;
+	d_vpr_h("%s: intra frame power collapse %d\n", __func__, payload);
+	rc = hfi_create_packet(pkt, pkt_size,
+		HFI_PROP_INTRA_FRAME_POWER_COLLAPSE,
+		HFI_HOST_FLAGS_NONE,
+		HFI_PAYLOAD_U32,
+		HFI_PORT_NONE,
+		core->packet_id++,
+		&payload,
+		sizeof(u32));
+	if (rc)
+		goto err;
+
+	d_vpr_h("IFPC packet created\n");
+	return rc;
+
+err:
 	d_vpr_e("%s: create packet failed\n", __func__);
 	return rc;
 }

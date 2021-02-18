@@ -109,6 +109,7 @@ struct msm_vidc_core {
 	u32                                    header_id;
 	u32                                    packet_id;
 	struct completion                      init_done;
+	u32                                    handoff_done;
 };
 
 #endif // _MSM_VIDC_CORE_H_
