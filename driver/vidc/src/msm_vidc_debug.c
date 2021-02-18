@@ -14,8 +14,7 @@
 #define MAX_SSR_STRING_LEN         10
 #define MAX_DEBUG_LEVEL_STRING_LEN 15
 
-int msm_vidc_debug = VIDC_HIGH | VIDC_PKT | VIDC_ERR | VIDC_PRINTK |
-	FW_ERROR | FW_FATAL;
+int msm_vidc_debug = VIDC_ERR | VIDC_PRINTK | FW_ERROR | FW_FATAL;
 EXPORT_SYMBOL(msm_vidc_debug);
 
 bool msm_vidc_lossless_encode = !true;
