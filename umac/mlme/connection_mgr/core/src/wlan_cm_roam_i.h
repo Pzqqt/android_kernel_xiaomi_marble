@@ -25,11 +25,30 @@
 #ifndef _WLAN_CM_ROAM_I_H_
 #define _WLAN_CM_ROAM_I_H_
 
+#ifdef FEATURE_CM_ENABLE
 #include "qdf_types.h"
 #include "wlan_objmgr_psoc_obj.h"
 #include "wlan_objmgr_pdev_obj.h"
 #include "wlan_objmgr_vdev_obj.h"
+#include "connection_mgr/core/src/wlan_cm_main.h"
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * cm_add_fw_roam_dummy_ser_cb() - Add dummy blocking command
+ * @pdev: pdev pointer
+ * @cm_ctx: connection mgr context
+ * @cm_req: connect req
+ *
+ * This function adds dummy blocking command with high priority to avoid
+ * any other vdev command till roam is completed.Any NB operations will be
+ * blocked in serailization until roam logic completes execution.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_add_fw_roam_dummy_ser_cb(struct wlan_objmgr_pdev *pdev,
+			    struct cnx_mgr *cm_ctx,
+			    struct cm_req *cm_req);
 /**
  * cm_fw_roam_start_req() - Post roam start req to CM SM
  * @psoc: psoc pointer
@@ -41,20 +60,17 @@
  * Return: QDF_STATUS
  */
 QDF_STATUS cm_fw_roam_start_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id);
-
 /**
- * cm_fw_roam_start() - Handle roam start event
- * @cm_ctx: connection mgr context
+ * cm_fw_roam_abort_req() - Post roam abort req to CM SM
+ * @psoc: psoc pointer
  * @vdev_id: vdev id
- * @pause_serialization: boolean indicating to pause serialization
  *
- * This function handles the roam start event received from FW.
+ * This function posts roam abort event change to connection manager
+ * state machine
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS cm_fw_roam_start(struct cnx_mgr *cm_ctx, uint8_t vdev_id,
-			    bool pause_serialization);
-
+QDF_STATUS cm_fw_roam_abort_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id);
 /**
  * cm_fw_roam_sync_req() - Post roam sync to CM SM
  * @psoc: psoc pointer
@@ -79,4 +95,6 @@ QDF_STATUS cm_fw_roam_sync_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id);
  */
 QDF_STATUS
 cm_fw_roam_sync_propagation(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id);
+#endif /*WLAN_FEATURE_ROAM_OFFLOAD */
+#endif /*FEATURE_CM_ENABLE */
 #endif /* _WLAN_CM_ROAM_I_H_ */
