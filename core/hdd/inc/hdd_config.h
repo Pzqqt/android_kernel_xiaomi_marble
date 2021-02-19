@@ -778,6 +778,26 @@ struct dhcp_server {
 	"enable/disable MAC address provisioning feature")
 
 /*
+ * </ini>
+ * read_mac_addr_from_mac_file - Use/ignore MAC address from mac cfg file
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used whether to configure MAC address from the cfg file or not
+ *
+ * Supported Feature: STA/SAP/P2P
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_READ_MAC_ADDR_FROM_MAC_FILE CFG_INI_BOOL( \
+	"read_mac_addr_from_mac_file", \
+	0, \
+	"Use/ignore MAC address from cfg file")
+
+/*
  * <ini>
  * provisioned_intf_pool - It is bit mask value of Interfaces
  * @Min: 0
@@ -1814,6 +1834,7 @@ enum host_log_level {
 	CFG(CFG_NB_COMMANDS_RATE_LIMIT) \
 	CFG(CFG_HDD_DOT11_MODE) \
 	CFG(CFG_ENABLE_DISABLE_CHANNEL) \
+	CFG(CFG_READ_MAC_ADDR_FROM_MAC_FILE) \
 	CFG(CFG_SAR_CONVERSION) \
 	CFG(CFG_WOW_DISABLE) \
 	CFG(CFG_ENABLE_HOST_MODULE_LOG_LEVEL) \

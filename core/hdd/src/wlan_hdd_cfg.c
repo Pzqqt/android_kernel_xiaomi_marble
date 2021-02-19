@@ -203,6 +203,11 @@ QDF_STATUS hdd_update_mac_config(struct hdd_context *hdd_ctx)
 
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
+	if (!hdd_ctx->config->read_mac_addr_from_mac_file) {
+		hdd_debug("Reading MAC address from MAC file is not enabled.");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	memset(mac_table, 0, sizeof(mac_table));
 	status = request_firmware(&fw, WLAN_MAC_FILE, hdd_ctx->parent_dev);
 	if (status) {
