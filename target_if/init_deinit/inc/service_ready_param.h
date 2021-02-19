@@ -338,6 +338,9 @@ struct wlan_psoc_host_chainmask_capabilities {
 		 supports_chan_width_80:1,
 		 supports_chan_width_160:1,
 		 supports_chan_width_80P80:1,
+#ifdef WLAN_FEATURE_11BE
+		 supports_chan_width_320:1,
+#endif
 		 supports_aSpectral:1,
 		 supports_aSpectral_160:1,
 		 supports_aDFS_160:1,

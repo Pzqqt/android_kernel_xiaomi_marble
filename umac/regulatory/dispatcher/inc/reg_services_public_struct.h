@@ -78,6 +78,9 @@
 #define BW_40_MHZ     40
 #define BW_80_MHZ     80
 #define BW_160_MHZ    160
+#ifdef WLAN_FEATURE_11BE
+#define BW_320_MHZ    320
+#endif
 #define BW_40_MHZ     40
 
 #define MAX_NUM_PWR_LEVEL 16
