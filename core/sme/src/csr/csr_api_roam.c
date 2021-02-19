@@ -182,9 +182,6 @@ static void init_config_param(struct mac_context *mac);
 static bool csr_roam_process_results(struct mac_context *mac, tSmeCmd *pCommand,
 				     enum csr_roamcomplete_result Result,
 				     void *Context);
-static ePhyChanBondState csr_get_cb_mode_from_ies(struct mac_context *mac,
-						  uint32_t primary_ch_freq,
-						  tDot11fBeaconIEs *pIes);
 
 static void csr_roaming_state_config_cnf_processor(struct mac_context *mac,
 			tSmeCmd *pCommand, uint8_t session_id);
@@ -3263,24 +3260,6 @@ QDF_STATUS csr_roam_prepare_bss_config(struct mac_context *mac,
 
 	mac->mlme_cfg->timeouts.join_failure_timeout =
 		QDF_MIN(join_timeout, cfg_default(CFG_JOIN_FAILURE_TIMEOUT));
-
-	/* validate CB */
-	if ((pBssConfig->uCfgDot11Mode == eCSR_CFG_DOT11_MODE_11N) ||
-	    (pBssConfig->uCfgDot11Mode == eCSR_CFG_DOT11_MODE_11N_ONLY) ||
-	    (pBssConfig->uCfgDot11Mode == eCSR_CFG_DOT11_MODE_11AC) ||
-	    (pBssConfig->uCfgDot11Mode == eCSR_CFG_DOT11_MODE_11AC_ONLY) ||
-	    (pBssConfig->uCfgDot11Mode == eCSR_CFG_DOT11_MODE_11AX) ||
-	    (pBssConfig->uCfgDot11Mode == eCSR_CFG_DOT11_MODE_11AX_ONLY))
-		pBssConfig->cbMode = csr_get_cb_mode_from_ies(
-					mac, bss_desc->chan_freq, pIes);
-	else
-		pBssConfig->cbMode = PHY_SINGLE_CHANNEL_CENTERED;
-
-	if (WLAN_REG_IS_24GHZ_CH_FREQ(bss_desc->chan_freq) &&
-	    pProfile->force_24ghz_in_ht20) {
-		pBssConfig->cbMode = PHY_SINGLE_CHANNEL_CENTERED;
-		sme_debug("force_24ghz_in_ht20 is set so set cbmode to 0");
-	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -11942,94 +11921,6 @@ bool csr_roam_is_channel_valid(struct mac_context *mac, uint32_t chan_freq)
 	return valid;
 }
 
-/* This function check and validate whether the NIC can do CB (40MHz) */
-static ePhyChanBondState csr_get_cb_mode_from_ies(struct mac_context *mac,
-						  uint32_t ch_freq,
-						  tDot11fBeaconIEs *pIes)
-{
-	ePhyChanBondState eRet = PHY_SINGLE_CHANNEL_CENTERED;
-	uint32_t sec_ch_freq = 0;
-	uint32_t ChannelBondingMode;
-	struct ch_params ch_params = {0};
-
-	if (WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq)) {
-		ChannelBondingMode =
-			mac->roam.configParam.channelBondingMode24GHz;
-	} else {
-		ChannelBondingMode =
-			mac->roam.configParam.channelBondingMode5GHz;
-	}
-
-	if (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE == ChannelBondingMode)
-		return PHY_SINGLE_CHANNEL_CENTERED;
-
-	/* Figure what the other side's CB mode */
-	if (!(pIes->HTCaps.present && (eHT_CHANNEL_WIDTH_40MHZ ==
-		pIes->HTCaps.supportedChannelWidthSet))) {
-		return PHY_SINGLE_CHANNEL_CENTERED;
-	}
-
-	/* In Case WPA2 and TKIP is the only one cipher suite in Pairwise */
-	if ((pIes->RSN.present && (pIes->RSN.pwise_cipher_suite_count == 1) &&
-		!memcmp(&(pIes->RSN.pwise_cipher_suites[0][0]),
-					"\x00\x0f\xac\x02", 4))
-		/* In Case only WPA1 is supported and TKIP is
-		 * the only one cipher suite in Unicast.
-		 */
-		|| (!pIes->RSN.present && (pIes->WPA.present &&
-			(pIes->WPA.unicast_cipher_count == 1) &&
-			!memcmp(&(pIes->WPA.unicast_ciphers[0][0]),
-					"\x00\x50\xf2\x02", 4)))) {
-		sme_debug("No channel bonding in TKIP mode");
-		return PHY_SINGLE_CHANNEL_CENTERED;
-	}
-
-	if (!pIes->HTInfo.present)
-		return PHY_SINGLE_CHANNEL_CENTERED;
-
-	/*
-	 * This is called during INFRA STA/CLIENT and should use the merged
-	 * value of supported channel width and recommended tx width as per
-	 * standard
-	 */
-	sme_debug("ch freq %d scws %u rtws %u sco %u", ch_freq,
-		  pIes->HTCaps.supportedChannelWidthSet,
-		  pIes->HTInfo.recommendedTxWidthSet,
-		  pIes->HTInfo.secondaryChannelOffset);
-
-	if (pIes->HTInfo.recommendedTxWidthSet == eHT_CHANNEL_WIDTH_40MHZ)
-		eRet = (ePhyChanBondState)pIes->HTInfo.secondaryChannelOffset;
-	else
-		eRet = PHY_SINGLE_CHANNEL_CENTERED;
-
-	switch (eRet) {
-	case PHY_DOUBLE_CHANNEL_LOW_PRIMARY:
-		sec_ch_freq = ch_freq + CSR_SEC_CHANNEL_OFFSET;
-		break;
-	case PHY_DOUBLE_CHANNEL_HIGH_PRIMARY:
-		sec_ch_freq = ch_freq - CSR_SEC_CHANNEL_OFFSET;
-		break;
-	default:
-		break;
-	}
-
-	if (eRet != PHY_SINGLE_CHANNEL_CENTERED) {
-		ch_params.ch_width = CH_WIDTH_40MHZ;
-		wlan_reg_set_channel_params_for_freq(mac->pdev, ch_freq,
-						     sec_ch_freq, &ch_params);
-		if (ch_params.ch_width == CH_WIDTH_20MHZ ||
-		    ch_params.sec_ch_offset != eRet) {
-			sme_err("ch freq %d :: Supported HT BW %d and cbmode %d, APs HT BW %d and cbmode %d, so switch to 20Mhz",
-				ch_freq, ch_params.ch_width,
-				ch_params.sec_ch_offset,
-				pIes->HTInfo.recommendedTxWidthSet, eRet);
-			eRet = PHY_SINGLE_CHANNEL_CENTERED;
-		}
-	}
-
-	return eRet;
-}
-
 #ifndef FEATURE_CM_ENABLE
 static bool csr_is_encryption_in_list(struct mac_context *mac,
 				      tCsrEncryptionList *pCipherList,
@@ -12474,8 +12365,7 @@ csr_roam_get_bss_start_parms_from_bss_desc(
 			     pParam->ssId.length);
 	}
 	pParam->cbMode =
-		csr_get_cb_mode_from_ies(mac, pParam->operation_chan_freq,
-					 pIes);
+		wlan_get_cb_mode(mac, pParam->operation_chan_freq, pIes);
 }
 
 static void csr_roam_determine_max_rate_for_ad_hoc(struct mac_context *mac,
