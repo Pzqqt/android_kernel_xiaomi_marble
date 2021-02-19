@@ -222,12 +222,14 @@ static ssize_t debug_level_write(struct file* filp, const char __user* buf,
 		rc = -EINVAL;
 		goto exit;
 	}
-	core->capabilities[HW_RESPONSE_TIMEOUT].value =
-		((msm_vidc_debug & 0xFF) >
-		(VIDC_ERR | VIDC_HIGH)) ? 1500 : 1000;
 	rc = count;
-	d_vpr_h("debug timeout updated to - %d ms\n",
-		core->capabilities[HW_RESPONSE_TIMEOUT].value);
+	if (core->capabilities) {
+		core->capabilities[HW_RESPONSE_TIMEOUT].value =
+			((msm_vidc_debug & 0xFF) >
+			(VIDC_ERR | VIDC_HIGH)) ? 1500 : 1000;
+		d_vpr_h("debug timeout updated to - %d ms\n",
+			core->capabilities[HW_RESPONSE_TIMEOUT].value);
+	}
 
 exit:
 	return rc;
