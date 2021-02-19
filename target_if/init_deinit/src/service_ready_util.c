@@ -679,8 +679,6 @@ int init_deinit_populate_mac_phy_cap_ext2(wmi_unified_t wmi_handle,
 					  uint8_t *event,
 					  struct tgt_info *info)
 {
-	struct wlan_psoc_host_mac_phy_caps_ext2
-		mac_phy_caps_ext2[PSOC_MAX_MAC_PHY_CAP] = {{0} };
 	uint32_t num_hw_modes;
 	uint8_t hw_idx;
 	uint32_t hw_mode_id;
@@ -689,6 +687,7 @@ int init_deinit_populate_mac_phy_cap_ext2(wmi_unified_t wmi_handle,
 	uint8_t mac_phy_count = 0;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct wlan_psoc_host_mac_phy_caps *mac_phy_cap;
+	struct wlan_psoc_host_mac_phy_caps_ext2 *mac_phy_caps_ext2;
 
 	if (!event)
 		return -EINVAL;
@@ -709,10 +708,12 @@ int init_deinit_populate_mac_phy_cap_ext2(wmi_unified_t wmi_handle,
 			}
 
 			mac_phy_cap = &info->mac_phy_cap[mac_phy_count];
+			mac_phy_caps_ext2 =
+				&info->mac_phy_caps_ext2[mac_phy_count];
 			status = wmi_extract_mac_phy_cap_service_ready_ext2(
 					wmi_handle, event, hw_mode_id, phy_id,
 					mac_phy_cap->phy_idx,
-					&mac_phy_caps_ext2[mac_phy_count]);
+					mac_phy_caps_ext2);
 
 			if (QDF_IS_STATUS_ERROR(status)) {
 				target_if_err("failed to parse mac phy capability ext2");

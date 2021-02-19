@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -196,7 +196,11 @@ struct wlan_psoc_host_mac_phy_caps {
 		 supports_11a:1,
 		 supports_11n:1,
 		 supports_11ac:1,
-		 supports_11ax:1;
+		 supports_11ax:1,
+#ifdef WLAN_FEATURE_11BE
+		 supports_11be:1,
+#endif
+		 reserved:25;
 	uint32_t supported_bands;
 	uint32_t ampdu_density;
 	uint32_t max_bw_supported_2G;
@@ -253,6 +257,15 @@ struct wlan_psoc_host_mac_phy_caps_ext2 {
 	uint32_t pdev_id;
 	uint32_t phy_id;
 	uint32_t wireless_modes_ext;
+#ifdef WLAN_FEATURE_11BE
+	uint32_t eht_cap_info_2G[PSOC_HOST_MAX_MAC_SIZE];
+	uint32_t eht_supp_mcs_2G;
+	uint32_t eht_cap_info_5G[PSOC_HOST_MAX_MAC_SIZE];
+	uint32_t eht_supp_mcs_5G;
+	uint32_t eht_cap_phy_info_2G[PSOC_HOST_MAX_PHY_SIZE];
+	uint32_t eht_cap_phy_info_5G[PSOC_HOST_MAX_PHY_SIZE];
+	uint32_t eht_cap_info_internal;
+#endif
 };
 
 /*

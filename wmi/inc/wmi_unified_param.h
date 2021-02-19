@@ -948,6 +948,19 @@ typedef struct {
 #define WMI_HOST_HE_TXRX_MCS_NSS_IDX_160   1
 #define WMI_HOST_HE_TXRX_MCS_NSS_IDX_80_80 2
 
+#ifdef WLAN_FEATURE_11BE
+#define WMI_HOST_MAX_EHTCAP_PHY_SIZE	3
+#define WMI_HOST_MAX_EHTCAP_MAC_SIZE	2
+#define WMI_HOST_EHTCAP_MAC_WORD1	0
+#define WMI_HOST_EHTCAP_MAC_WORD2	1
+#define WMI_HOST_MAX_EHT_RATE_SET	3
+
+#define WMI_HOST_EHT_INVALID_MCSNSSMAP (0xFFFF)
+#define WMI_HOST_EHT_TXRX_MCS_NSS_IDX_80    0
+#define WMI_HOST_EHT_TXRX_MCS_NSS_IDX_160   1
+#define WMI_HOST_EHT_TXRX_MCS_NSS_IDX_320   2
+#endif
+
 /**
  * struct wmi_host_ppe_threshold -PPE threshold
  * @numss_m1: NSS - 1

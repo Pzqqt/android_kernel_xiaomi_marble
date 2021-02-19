@@ -11151,6 +11151,31 @@ static QDF_STATUS extract_hw_mode_cap_service_ready_ext_tlv(
 }
 
 /**
+ * extract_mac_phy_cap_service_ready_11be_support - api to extract 11be support
+ * @param param: host mac phy capabilities
+ * @param mac_phy_caps: mac phy capabilities
+ *
+ * Return: void
+ */
+#ifdef WLAN_FEATURE_11BE
+static void
+extract_service_ready_11be_support(struct wlan_psoc_host_mac_phy_caps *param,
+				   WMI_MAC_PHY_CAPABILITIES *mac_phy_caps)
+{
+	param->supports_11be =
+			WMI_SUPPORT_11BE_GET(mac_phy_caps->supported_flags);
+
+	wmi_debug("11be support %d", param->supports_11be);
+}
+#else
+static void
+extract_service_ready_11be_support(struct wlan_psoc_host_mac_phy_caps *param,
+				   WMI_MAC_PHY_CAPABILITIES *mac_phy_caps)
+{
+}
+#endif
+
+/**
  * extract_mac_phy_cap_service_ready_ext_tlv() -
  *       extract MAC phy cap from service ready event
  * @wmi_handle: wmi handle
@@ -11226,6 +11251,8 @@ static QDF_STATUS extract_mac_phy_cap_service_ready_ext_tlv(
 	param->supports_11ax =
 			WMI_SUPPORT_11AX_GET(mac_phy_caps->supported_flags);
 
+	extract_service_ready_11be_support(param, mac_phy_caps);
+
 	param->supported_bands = mac_phy_caps->supported_bands;
 	param->ampdu_density = mac_phy_caps->ampdu_density;
 	param->max_bw_supported_2G = mac_phy_caps->max_bw_supported_2G;
@@ -11276,6 +11303,67 @@ static QDF_STATUS extract_mac_phy_cap_service_ready_ext_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * extract_mac_phy_cap_ehtcaps- api to extract eht mac phy caps
+ * @param param: host ext2 mac phy capabilities
+ * @param mac_phy_caps: ext mac phy capabilities
+ *
+ * Return: void
+ */
+#ifdef WLAN_FEATURE_11BE
+static void extract_mac_phy_cap_ehtcaps(
+	struct wlan_psoc_host_mac_phy_caps_ext2 *param,
+	WMI_MAC_PHY_CAPABILITIES_EXT *mac_phy_caps)
+{
+	uint32_t i;
+
+	param->eht_cap_info_2G[WMI_HOST_EHTCAP_MAC_WORD1] =
+		mac_phy_caps->eht_cap_info_2G;
+	param->eht_cap_info_2G[WMI_HOST_EHTCAP_MAC_WORD2] =
+		mac_phy_caps->eht_cap_info_2G_ext;
+	param->eht_supp_mcs_2G = mac_phy_caps->eht_supp_mcs_2G;
+	param->eht_cap_info_5G[WMI_HOST_EHTCAP_MAC_WORD1] =
+		mac_phy_caps->eht_cap_info_5G;
+	param->eht_cap_info_5G[WMI_HOST_EHTCAP_MAC_WORD2] =
+		mac_phy_caps->eht_cap_info_5G_ext;
+	param->eht_supp_mcs_5G = mac_phy_caps->eht_supp_mcs_5G;
+	param->eht_cap_info_internal = mac_phy_caps->eht_cap_info_internal;
+
+	qdf_mem_copy(&param->eht_cap_phy_info_2G,
+		     &mac_phy_caps->eht_cap_phy_info_2G,
+		     sizeof(param->eht_cap_phy_info_2G));
+	qdf_mem_copy(&param->eht_cap_phy_info_5G,
+		     &mac_phy_caps->eht_cap_phy_info_5G,
+		     sizeof(param->eht_cap_phy_info_5G));
+
+	wmi_debug("EHT mac caps: cap_info_2G %x, cap_info_2G_ext %x, cap_info_5G %x, cap_info_5G_ext %x, supp_mcs_2G %x, supp_mcs_5G %x, info_internal %x",
+		  mac_phy_caps->eht_cap_info_2G,
+		  mac_phy_caps->eht_cap_info_2G_ext,
+		  mac_phy_caps->eht_cap_info_5G,
+		  mac_phy_caps->eht_cap_info_5G_ext,
+		  mac_phy_caps->eht_supp_mcs_2G, mac_phy_caps->eht_supp_mcs_5G,
+		  mac_phy_caps->eht_cap_info_internal);
+
+	wmi_nofl_debug("EHT phy caps: ");
+
+	wmi_nofl_debug("2G: ");
+	for (i = 0; i < PSOC_HOST_MAX_PHY_SIZE; i++) {
+		wmi_nofl_debug("index %d value %d",
+			       i, param->eht_cap_phy_info_2G[i]);
+	}
+	wmi_nofl_debug("5G: ");
+	for (i = 0; i < PSOC_HOST_MAX_PHY_SIZE; i++) {
+		wmi_nofl_debug("index %d value %d",
+			       i, param->eht_cap_phy_info_5G[i]);
+	}
+}
+#else
+static void extract_mac_phy_cap_ehtcaps(
+	struct wlan_psoc_host_mac_phy_caps_ext2 *param,
+	WMI_MAC_PHY_CAPABILITIES_EXT *mac_phy_caps)
+{
+}
+#endif
 static QDF_STATUS extract_mac_phy_cap_service_ready_ext2_tlv(
 			wmi_unified_t wmi_handle,
 			uint8_t *event, uint8_t hw_mode_id, uint8_t phy_id,
@@ -11310,6 +11398,8 @@ static QDF_STATUS extract_mac_phy_cap_service_ready_ext2_tlv(
 			wmi_handle, mac_phy_caps->pdev_id);
 	param->wireless_modes_ext = convert_wireless_modes_ext_tlv(
 			mac_phy_caps->wireless_modes_ext);
+
+	extract_mac_phy_cap_ehtcaps(param, mac_phy_caps);
 
 	return QDF_STATUS_SUCCESS;
 }
