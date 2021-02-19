@@ -28,6 +28,7 @@
 
 /**
  * enum wlan_cm_sm_evt - connection manager related events
+ * Note: make sure to update cm_sm_event_names on updating this enum
  * @WLAN_CM_SM_EV_CONNECT_REQ:            Connect request event from requester
  * @WLAN_CM_SM_EV_SCAN:                   Event to start connect scan
  * @WLAN_CM_SM_EV_SCAN_SUCCESS:           Connect scan success event
@@ -47,9 +48,9 @@
  * @WLAN_CM_SM_EV_DISCONNECT_ACTIVE:      Process disconnect after in active cmd
  * @WLAN_CM_SM_EV_DISCONNECT_DONE:        Disconnect done event
  * @WLAN_CM_SM_EV_ROAM_START:             Roam start event for LFR2 and LFR3
- * @WLAN_CM_SM_EV_ROAM_SYNC:              Roam sync event fro LFR3
+ * @WLAN_CM_SM_EV_ROAM_SYNC:              Roam sync event for LFR3
  * @WLAN_CM_SM_EV_ROAM_INVOKE_FAIL:       Roam invoke fail event
- * @WLAN_CM_SM_EV_ROAM_HO_FAIL:           Hand off failed event
+ * @WLAN_CM_SM_EV_ROAM_HO_FAIL:           Hands off failed event
  * @WLAN_CM_SM_EV_PREAUTH_DONE:           Preauth is completed
  * @WLAN_CM_SM_EV_GET_NEXT_PREAUTH_AP:    Get next candidate as preauth failed
  * @WLAN_CM_SM_EV_PREAUTH_FAIL:           Preauth failed for all candidate
@@ -58,9 +59,10 @@
  * @WLAN_CM_SM_EV_REASSOC_DONE:           Reassoc completed
  * @WLAN_CM_SM_EV_REASSOC_FAILURE:        Reassoc failed
  * @WLAN_CM_SM_EV_ROAM_COMPLETE:          Roaming completed
- * @WLAN_CM_SM_EV_ROAM_REQ:               LFR3/FW roam - Roam req from FW
+ * @WLAN_CM_SM_EV_ROAM_REQ:               LFR3/FW roam - Roam req from connect
  *                                        LFR2/Host roam - Roam req from host/FW
  * @WLAN_CM_SM_EV_ROAM_INVOKE:            Host initiated LFR3/FW roam req
+ * @WLAN_CM_SM_EV_ROAM_ABORT:             Roam abort
  * @WLAN_CM_SM_EV_MAX:                    Max event
  */
 enum wlan_cm_sm_evt {
@@ -95,6 +97,7 @@ enum wlan_cm_sm_evt {
 	WLAN_CM_SM_EV_ROAM_COMPLETE = 28,
 	WLAN_CM_SM_EV_ROAM_REQ = 29,
 	WLAN_CM_SM_EV_ROAM_INVOKE = 30,
+	WLAN_CM_SM_EV_ROAM_ABORT = 31,
 	WLAN_CM_SM_EV_MAX,
 };
 

@@ -19,6 +19,7 @@
  */
 #include "wlan_cm_main_api.h"
 #include "wlan_cm_sm.h"
+#include "wlan_cm_roam.h"
 #include <wlan_serialization_api.h>
 #include "wlan_utility.h"
 #include "wlan_scan_api.h"
@@ -527,8 +528,13 @@ cm_handle_discon_req_in_non_connected_state(struct cnx_mgr *cm_ctx,
 			cm_flush_pending_request(cm_ctx, CONNECT_REQ_PREFIX,
 						 true);
 		break;
-	case WLAN_CM_SS_JOIN_ACTIVE:
 	case WLAN_CM_S_ROAMING:
+		/* for FW roam/LFR3 remove the req from the list */
+		if (cm_roam_offload_enabled(wlan_vdev_get_psoc(cm_ctx->vdev)))
+			cm_flush_pending_request(cm_ctx, ROAM_REQ_PREFIX,
+						 false);
+		/* fallthrough */
+	case WLAN_CM_SS_JOIN_ACTIVE:
 		/*
 		 * In join active/roaming state, there would be no pending
 		 * command, so no action required. so for new disconnect

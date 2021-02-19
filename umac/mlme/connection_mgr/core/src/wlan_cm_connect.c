@@ -20,6 +20,7 @@
 
 #include "wlan_cm_main_api.h"
 #include "wlan_scan_api.h"
+#include "wlan_cm_roam.h"
 #include "wlan_cm_sm.h"
 #ifdef WLAN_POLICY_MGR_ENABLE
 #include "wlan_policy_mgr_api.h"
@@ -994,6 +995,11 @@ cm_handle_connect_req_in_non_init_state(struct cnx_mgr *cm_ctx,
 {
 	switch (cm_state_substate) {
 	case WLAN_CM_S_ROAMING:
+		/* for FW roam/LFR3 remove the req from the list */
+		if (cm_roam_offload_enabled(wlan_vdev_get_psoc(cm_ctx->vdev)))
+			cm_flush_pending_request(cm_ctx, ROAM_REQ_PREFIX,
+						 false);
+		/* fallthrough */
 	case WLAN_CM_S_CONNECTED:
 	case WLAN_CM_SS_JOIN_ACTIVE:
 		/*

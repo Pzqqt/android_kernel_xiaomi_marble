@@ -52,6 +52,11 @@
  * @mlme_cm_disconnect_start_cb: Disconnect start callback
  * @vdev: vdev pointer
  *
+ * @mlme_cm_roam_start_cb: Roam start callback
+ * @vdev: vdev pointer
+ *
+ * @mlme_cm_roam_abort_cb: Roam abort callback
+ * @vdev: vdev pointer
  */
 struct mlme_cm_ops {
 	QDF_STATUS (*mlme_cm_connect_complete_cb)(
@@ -69,6 +74,10 @@ struct mlme_cm_ops {
 					struct wlan_cm_discon_rsp *rsp);
 	QDF_STATUS (*mlme_cm_disconnect_start_cb)(
 					struct wlan_objmgr_vdev *vdev);
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+	QDF_STATUS (*mlme_cm_roam_start_cb)(struct wlan_objmgr_vdev *vdev);
+	QDF_STATUS (*mlme_cm_roam_abort_cb)(struct wlan_objmgr_vdev *vdev);
+#endif
 };
 #endif
 
@@ -588,6 +597,24 @@ mlme_cm_osif_disconnect_complete(struct wlan_objmgr_vdev *vdev,
  * Return: QDF_STATUS
  */
 QDF_STATUS mlme_cm_osif_disconnect_start_ind(struct wlan_objmgr_vdev *vdev);
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * mlme_cm_osif_roam_start_ind() - osif Roam start indication
+ * @vdev: vdev pointer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlme_cm_osif_roam_start_ind(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlme_cm_osif_roam_abort_ind() - osif Roam abort indication
+ * @vdev: vdev pointer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlme_cm_osif_roam_abort_ind(struct wlan_objmgr_vdev *vdev);
+#endif
 
 /**
  * typedef osif_cm_get_global_ops_cb() - Callback to get connection manager

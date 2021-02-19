@@ -532,6 +532,11 @@ cm_flush_pending_request(struct cnx_mgr *cm_ctx, uint32_t prefix,
 	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
 	struct cm_req *cm_req;
 	uint32_t req_prefix;
+	bool roam_offload = false;
+
+	if (cm_roam_offload_enabled(wlan_vdev_get_psoc(cm_ctx->vdev)) &&
+	     prefix == ROAM_REQ_PREFIX)
+		roam_offload = true;
 
 	cm_req_lock_acquire(cm_ctx);
 	qdf_list_peek_front(&cm_ctx->req_list, &cur_node);
@@ -541,9 +546,14 @@ cm_flush_pending_request(struct cnx_mgr *cm_ctx, uint32_t prefix,
 
 		req_prefix = CM_ID_GET_PREFIX(cm_req->cm_id);
 
-		/* Only remove the pending requests matching the flush prefix */
+		/*
+		 * Only remove requests matching the flush prefix and
+		 * the pending req for non roam offload(LFR3) commands
+		 * (roam command is dummy in FW roam/LFR3 so active
+		 * command can be removed)
+		 */
 		if (req_prefix != prefix ||
-		    cm_req->cm_id == cm_ctx->active_cm_id)
+		    (!roam_offload && cm_req->cm_id == cm_ctx->active_cm_id))
 			goto next;
 
 		/* If only_failed_req is set flush only failed req */
@@ -554,6 +564,8 @@ cm_flush_pending_request(struct cnx_mgr *cm_ctx, uint32_t prefix,
 			cm_handle_connect_flush(cm_ctx, cm_req);
 			cm_ctx->connect_count--;
 			cm_free_connect_req_mem(&cm_req->connect_req);
+		} else if (req_prefix == ROAM_REQ_PREFIX) {
+			cm_free_roam_req_mem(&cm_req->roam_req);
 		} else {
 			cm_handle_disconnect_flush(cm_ctx, cm_req);
 			cm_ctx->disconnect_count--;
@@ -761,6 +773,19 @@ void cm_remove_cmd(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 {
 	struct wlan_objmgr_psoc *psoc;
 	QDF_STATUS status;
+
+	if (!cm_id) {
+		mlme_err("cmd_id is null");
+		return;
+	}
+
+	/* return if zero or invalid cm_id */
+	if (!*cm_id || *cm_id == CM_ID_INVALID) {
+		mlme_debug(CM_PREFIX_FMT " Invalid cm_id",
+			   CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
+					 *cm_id));
+		return;
+	}
 
 	psoc = wlan_vdev_get_psoc(cm_ctx->vdev);
 	if (!psoc) {

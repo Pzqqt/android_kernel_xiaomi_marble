@@ -218,6 +218,20 @@ typedef QDF_STATUS
 				       enum netif_reason_type reason);
 
 /**
+ * typedef os_if_cm_napi_serialize_ctrl_cb: Callback to update
+ * NAPI serialization
+ * @action: bool action to take on napi serialization
+ *
+ * This callback indicates legacy modules to take the actions
+ * related to napi serialization
+ *
+ * Context: Any context.
+ * Return: QDF_STATUS
+ */
+typedef QDF_STATUS
+	(*os_if_cm_napi_serialize_ctrl_cb)(bool action);
+
+/**
  * osif_cm_unlink_bss() - function to unlink bss from kernel and scan database
  * on connect timeouts reasons
  * @vdev: vdev pointer
@@ -251,6 +265,8 @@ void osif_cm_unlink_bss(struct wlan_objmgr_vdev *vdev,
  * legacy modules
  * @osif_cm_netif_queue_ctrl_cb: callback to legacy module to take
  * actions on netif queue
+ * @os_if_cm_napi_serialize_ctrl_cb: callback to legacy module to take
+ * actions on napi serialization
  * @save_gtk_cb : callback to legacy module to save gtk
  * @set_hlp_data_cb: callback to legacy module to save hlp data
  */
@@ -259,6 +275,7 @@ struct osif_cm_ops {
 	osif_cm_disconnect_comp_cb disconnect_complete_cb;
 #ifdef CONN_MGR_ADV_FEATURE
 	osif_cm_netif_queue_ctrl_cb netif_queue_control_cb;
+	os_if_cm_napi_serialize_ctrl_cb napi_serialize_control_cb;
 #endif
 #ifdef WLAN_FEATURE_FILS_SK
 	osif_cm_save_gtk_cb save_gtk_cb;
@@ -314,6 +331,18 @@ QDF_STATUS osif_cm_disconnect_comp_ind(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS osif_cm_netif_queue_ind(struct wlan_objmgr_vdev *vdev,
 				   enum netif_action_type action,
 				   enum netif_reason_type reason);
+
+/**
+ * osif_cm_napi_serialize() - Function to indicate napi serialize
+ * action to legacy module
+ * @action: Action to take on napi serialization
+ *
+ * This function indicates to take the actions related to napi activities
+ *
+ * Context: Any context.
+ * Return: QDF_STATUS
+ */
+QDF_STATUS osif_cm_napi_serialize(bool action);
 #endif
 
 #ifdef WLAN_FEATURE_FILS_SK
