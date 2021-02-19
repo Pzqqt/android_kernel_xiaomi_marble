@@ -2505,9 +2505,11 @@ fail_dma_mapping:
 fail_skb_alloc:
 	kmem_cache_free(ipa3_ctx->rx_pkt_wrapper_cache, rx_pkt);
 fail_kmem_cache_alloc:
-	if (rx_len_cached == 0)
+	if (rx_len_cached == 0) {
 		queue_delayed_work(sys->wq, &sys->replenish_rx_work,
 				msecs_to_jiffies(1));
+		return;
+	}
 done:
 	/* only ring doorbell once here */
 	ret = gsi_queue_xfer(sys->ep->gsi_chan_hdl, idx,
@@ -2612,9 +2614,12 @@ fail_dma_mapping:
 	INIT_LIST_HEAD(&rx_pkt->link);
 	spin_unlock_bh(&sys->spinlock);
 fail_kmem_cache_alloc:
-	if (rx_len_cached == 0)
+	if (rx_len_cached == 0) {
 		queue_delayed_work(sys->wq, &sys->replenish_rx_work,
 		msecs_to_jiffies(1));
+		return;
+	}
+
 done:
 	/* only ring doorbell once here */
 	ret = gsi_queue_xfer(sys->ep->gsi_chan_hdl, idx,
