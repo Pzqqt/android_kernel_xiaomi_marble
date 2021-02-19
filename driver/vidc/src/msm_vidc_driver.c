@@ -20,6 +20,7 @@
 #include "msm_venc.h"
 #include "venus_hfi.h"
 #include "venus_hfi_response.h"
+#include "hfi_packet.h"
 
 #define COUNT_BITS(a, out) {       \
 	while ((a) >= 1) {          \
@@ -2120,6 +2121,30 @@ int msm_vidc_session_set_codec(struct msm_vidc_inst *inst)
 		return rc;
 
 	return 0;
+}
+
+int msm_vidc_session_set_default_header(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+	u32 default_header = false;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	default_header = inst->capabilities->cap[DEFAULT_HEADER].value;
+	i_vpr_h(inst, "%s: default header: %d", __func__, default_header);
+	rc = venus_hfi_session_property(inst,
+			HFI_PROP_DEC_DEFAULT_HEADER,
+			HFI_HOST_FLAGS_NONE,
+			get_hfi_port(inst, INPUT_PORT),
+			HFI_PAYLOAD_U32,
+			&default_header,
+			sizeof(u32));
+	if (rc)
+		i_vpr_e(inst, "%s: set property failed\n", __func__);
+	return rc;
 }
 
 int msm_vidc_session_streamon(struct msm_vidc_inst *inst,

@@ -218,6 +218,7 @@ int msm_vidc_remove_session(struct msm_vidc_inst *inst);
 int msm_vidc_add_session(struct msm_vidc_inst *inst);
 int msm_vidc_session_open(struct msm_vidc_inst *inst);
 int msm_vidc_session_set_codec(struct msm_vidc_inst *inst);
+int msm_vidc_session_set_default_header(struct msm_vidc_inst *inst);
 int msm_vidc_session_streamon(struct msm_vidc_inst *inst,
 		enum msm_vidc_port_type port);
 int msm_vidc_session_streamoff(struct msm_vidc_inst *inst,
