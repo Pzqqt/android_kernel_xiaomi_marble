@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
@@ -117,11 +117,14 @@ static struct page **get_pages(struct drm_gem_object *obj)
 		 */
 		} else if (msm_obj->flags & (MSM_BO_WC|MSM_BO_UNCACHED)) {
 			aspace_dev = msm_gem_get_aspace_device(msm_obj->aspace);
-			if (aspace_dev)
+			if (aspace_dev) {
 				dma_map_sg(aspace_dev, msm_obj->sgt->sgl,
 					msm_obj->sgt->nents, DMA_BIDIRECTIONAL);
-			else
+				/* mark the buffer as external buffer */
+				msm_obj->flags |= MSM_BO_EXTBUF;
+			} else {
 				DRM_ERROR("failed to get aspace_device\n");
+			}
 		}
 	}
 
@@ -1108,7 +1111,10 @@ static int msm_gem_new_impl(struct drm_device *dev,
 	INIT_LIST_HEAD(&msm_obj->submit_entry);
 	INIT_LIST_HEAD(&msm_obj->vmas);
 	INIT_LIST_HEAD(&msm_obj->iova_list);
-	msm_obj->aspace = NULL;
+	msm_obj->aspace = msm_gem_smmu_address_space_get(dev,
+			MSM_SMMU_DOMAIN_UNSECURE);
+	if (IS_ERR(msm_obj->aspace))
+		msm_obj->aspace = NULL;
 	msm_obj->in_active_list = false;
 	msm_obj->obj_dirty = false;
 
