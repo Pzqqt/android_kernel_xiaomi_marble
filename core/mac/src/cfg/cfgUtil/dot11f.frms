@@ -4311,6 +4311,7 @@ FRAME TDLSDisRsp
     OPTIE  ht2040_bss_coexistence;
     MANDIE LinkIdentifier;
     OPTIE  VHTCaps;
+    OPTIE  he_cap;
 }
 
 FRAME TDLSSetupReq
@@ -4336,6 +4337,7 @@ FRAME TDLSSetupReq
     OPTIE  WMMInfoStation;
     OPTIE  AID;
     OPTIE  VHTCaps;
+    OPTIE  he_cap;
 }
 
 FRAME TDLSSetupRsp
@@ -4363,6 +4365,7 @@ FRAME TDLSSetupRsp
     OPTIE  AID;
     OPTIE  VHTCaps;
     OPTIE  OperatingMode;
+    OPTIE  he_cap;
 }
 
 FRAME TDLSSetupCnf
@@ -4380,6 +4383,7 @@ FRAME TDLSSetupCnf
     OPTIE  WMMParams;
     OPTIE  VHTOperation;
     OPTIE  OperatingMode;
+    OPTIE  he_op;
 }
 FRAME TDLSTeardown
 {
