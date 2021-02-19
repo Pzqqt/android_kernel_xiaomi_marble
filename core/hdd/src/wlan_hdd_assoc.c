@@ -283,19 +283,7 @@ static void hdd_start_powersave_timer_on_associated(struct hdd_adapter *adapter)
 				    timeout);
 }
 
-/**
- * hdd_conn_set_authenticated() - set authentication state
- * @adapter: pointer to the adapter
- * @auth_state: authentication state
- *
- * This function updates the global HDD station context
- * authentication state. And to start auto powersave timer
- * if ptk installed case and open security case.
- *
- * Return: none
- */
-static void
-hdd_conn_set_authenticated(struct hdd_adapter *adapter, uint8_t auth_state)
+void hdd_conn_set_authenticated(struct hdd_adapter *adapter, uint8_t auth_state)
 {
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	char *auth_time;
@@ -2034,21 +2022,6 @@ QDF_STATUS hdd_update_dp_vdev_flags(void *cbk_data,
 	return status;
 }
 
-/**
- * hdd_conn_change_peer_state() - Change the state of the peer
- * @adapter: pointer to adapter
- * @mac_addr: peer mac address
- * @sta_state: peer state
- *
- * Return: QDF_STATUS enumeration
- */
-static QDF_STATUS hdd_conn_change_peer_state(struct hdd_adapter *adapter,
-					     uint8_t *mac_addr,
-					     enum ol_txrx_peer_state sta_state)
-{
-	return hdd_change_peer_state(adapter, mac_addr, sta_state);
-}
-
 #if defined(WLAN_SUPPORT_RX_FISA)
 /**
  * hdd_rx_register_fisa_ops() - FISA callback functions
@@ -2143,31 +2116,8 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 		return qdf_status;
 	}
 
-	if (!is_auth_required) {
-		/*
-		 * Connections that do not need Upper layer auth, transition
-		 * TLSHIM directly to 'Authenticated' state
-		 */
-		qdf_status = hdd_conn_change_peer_state(
-						adapter,
-						txrx_desc.peer_addr.bytes,
-						OL_TXRX_PEER_STATE_AUTH);
+	hdd_cm_set_peer_authenticate(adapter, bssid, is_auth_required);
 
-		hdd_conn_set_authenticated(adapter, true);
-		hdd_objmgr_set_peer_mlme_auth_state(adapter->vdev, true);
-	} else {
-		hdd_debug("ULA auth Sta: " QDF_MAC_ADDR_FMT
-			  " Changing TL state to CONNECTED at Join time",
-			  QDF_MAC_ADDR_REF(txrx_desc.peer_addr.bytes));
-
-		qdf_status = hdd_conn_change_peer_state(
-						adapter,
-						txrx_desc.peer_addr.bytes,
-						OL_TXRX_PEER_STATE_CONN);
-
-		hdd_conn_set_authenticated(adapter, false);
-		hdd_objmgr_set_peer_mlme_auth_state(adapter->vdev, false);
-	}
 	return qdf_status;
 }
 
@@ -2440,24 +2390,15 @@ done:
 static int hdd_change_sta_state_authenticated(struct hdd_adapter *adapter,
 					      struct csr_roam_info *roaminfo)
 {
-	QDF_STATUS status;
 	uint8_t *mac_addr;
 	struct hdd_station_ctx *hddstactx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	mac_addr = hddstactx->conn_info.bssid.bytes;
-	hdd_debug("Changing Peer state to AUTHENTICATED for Sta = "
-		  QDF_MAC_ADDR_FMT, QDF_MAC_ADDR_REF(mac_addr));
+	hdd_cm_set_peer_authenticate(adapter, &hddstactx->conn_info.bssid,
+				     false);
 
-	/* Connections that do not need Upper layer authentication,
-	 * transition TL to 'Authenticated' state after the keys are set
-	 */
-	status = hdd_change_peer_state(adapter, mac_addr,
-				       OL_TXRX_PEER_STATE_AUTH);
-	hdd_conn_set_authenticated(adapter, true);
-	hdd_objmgr_set_peer_mlme_auth_state(adapter->vdev, true);
-
-	return qdf_status_to_os_return(status);
+	return 0;
 }
 
 /**
@@ -3061,38 +3002,9 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			hdd_send_re_assoc_event(dev, adapter, roam_info,
 						reqRsnIe, reqRsnLength);
 			/* Reassoc successfully */
-			if (roam_info->fAuthRequired) {
-				qdf_status =
-					hdd_change_peer_state(adapter,
-						roam_info->bssid.bytes,
-						OL_TXRX_PEER_STATE_CONN);
-				hdd_conn_set_authenticated(adapter, false);
-				hdd_objmgr_set_peer_mlme_auth_state(
-							adapter->vdev,
-							false);
-			} else {
-				hdd_debug("sta: " QDF_MAC_ADDR_FMT
-					  "Changing TL state to AUTHENTICATED",
-					  QDF_MAC_ADDR_REF(
-					  roam_info->bssid.bytes));
-				qdf_status =
-					hdd_change_peer_state(adapter,
-						roam_info->bssid.bytes,
-						OL_TXRX_PEER_STATE_AUTH);
-				hdd_conn_set_authenticated(adapter, true);
-				hdd_objmgr_set_peer_mlme_auth_state(
-							adapter->vdev,
-							true);
-			}
-
-			if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
-				/*
-				 * Perform any WMM-related association
-				 * processing
-				 */
-				hdd_wmm_assoc(adapter, true,
-					      uapsd_mask);
-			}
+			hdd_cm_set_peer_authenticate(adapter, &roam_info->bssid,
+						     roam_info->fAuthRequired);
+			hdd_wmm_assoc(adapter, true, uapsd_mask);
 
 			/* Start the tx queues */
 			hdd_debug("Enabling queues");

@@ -831,7 +831,7 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 	fils_info = param_buf->roam_fils_synch_info;
 	if (fils_info) {
 		if ((fils_info->kek_len > SIR_KEK_KEY_LEN_FILS) ||
-		    (fils_info->pmk_len > SIR_PMK_LEN)) {
+		    (fils_info->pmk_len > MAX_PMK_LEN)) {
 			wma_err("Invalid kek_len %d or pmk_len %d",
 				 fils_info->kek_len,
 				 fils_info->pmk_len);
@@ -862,7 +862,7 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 
 	pmk_cache_info = param_buf->roam_pmk_cache_synch_info;
 	if (pmk_cache_info && (pmk_cache_info->pmk_len)) {
-		if (pmk_cache_info->pmk_len > SIR_PMK_LEN) {
+		if (pmk_cache_info->pmk_len > MAX_PMK_LEN) {
 			wma_err("Invalid pmk_len %d",
 				 pmk_cache_info->pmk_len);
 			wma_free_roam_synch_frame_ind(iface);

@@ -167,6 +167,18 @@ void __hdd_cm_disconnect_handler_pre_user_update(struct hdd_adapter *adapter);
 void __hdd_cm_disconnect_handler_post_user_update(struct hdd_adapter *adapter);
 
 /**
+ * hdd_cm_set_peer_authenticate() - set peer as authenticated
+ * @adapter: pointer to adapter
+ * @bssid: bssid of the connection
+ * @is_auth_required: is upper layer authenticatoin required
+ *
+ * Return: QDF_STATUS enumeration
+ */
+void hdd_cm_set_peer_authenticate(struct hdd_adapter *adapter,
+				  struct qdf_mac_addr *bssid,
+				  bool is_auth_required);
+
+/**
  * hdd_cm_update_rssi_snr_by_bssid() - update rsi and snr into adapter
  * @adapter: Pointer to adapter
  *

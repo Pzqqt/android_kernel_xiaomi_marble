@@ -2545,7 +2545,7 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 
 
 	if (roam_sync_ind_ptr->authStatus ==
-	    CSR_ROAM_AUTH_STATUS_AUTHENTICATED) {
+	    ROAM_AUTH_STATUS_AUTHENTICATED) {
 		ft_session_ptr->is_key_installed = true;
 		curr_sta_ds->is_key_installed = true;
 	}

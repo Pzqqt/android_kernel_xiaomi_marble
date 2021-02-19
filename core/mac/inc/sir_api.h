@@ -126,7 +126,6 @@ typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
 #define KEK_256BIT_KEY_LEN 32
 
 #define SIR_REPLAY_CTR_LEN 8
-#define SIR_PMK_LEN  48
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 #define SIR_UAPSD_BITOFFSET_ACVO     0
 #define SIR_UAPSD_BITOFFSET_ACVI     1
@@ -2523,7 +2522,7 @@ struct roam_offload_synch_ind {
 	uint32_t kek_len;
 	uint8_t kek[SIR_KEK_KEY_LEN_FILS];
 	uint32_t   pmk_len;
-	uint8_t    pmk[SIR_PMK_LEN];
+	uint8_t    pmk[MAX_PMK_LEN];
 	uint8_t    pmkid[PMKID_LEN];
 	bool update_erp_next_seq_num;
 	uint16_t next_erp_seq_num;

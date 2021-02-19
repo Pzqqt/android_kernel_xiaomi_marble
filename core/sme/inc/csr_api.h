@@ -807,13 +807,6 @@ struct csr_config_params {
 #define DEFAULT_REASSOC_FAILURE_TIMEOUT 1000
 #endif
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-/* connected but not authenticated */
-#define CSR_ROAM_AUTH_STATUS_CONNECTED      0x1
-/* connected and authenticated */
-#define CSR_ROAM_AUTH_STATUS_AUTHENTICATED  0x2
-#endif
-
 struct csr_roam_info {
 	struct csr_roam_profile *pProfile;
 	struct bss_description *bss_desc;
@@ -887,7 +880,7 @@ struct csr_roam_info {
 	uint8_t kek[SIR_KEK_KEY_LEN_FILS];
 	uint8_t kek_len;
 	uint32_t pmk_len;
-	uint8_t pmk[SIR_PMK_LEN];
+	uint8_t pmk[MAX_PMK_LEN];
 	uint8_t pmkid[PMKID_LEN];
 	bool update_erp_next_seq_num;
 	uint16_t next_erp_seq_num;

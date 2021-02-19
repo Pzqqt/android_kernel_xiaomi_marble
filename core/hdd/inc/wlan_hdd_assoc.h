@@ -209,6 +209,20 @@ bool hdd_is_fils_connection(struct hdd_context *hdd_ctx,
 			    struct hdd_adapter *adapter);
 
 /**
+ * hdd_conn_set_authenticated() - set authentication state
+ * @adapter: pointer to the adapter
+ * @auth_state: authentication state
+ *
+ * This function updates the global HDD station context
+ * authentication state. And to start auto powersave timer
+ * if ptk installed case and open security case.
+ *
+ * Return: none
+ */
+void
+hdd_conn_set_authenticated(struct hdd_adapter *adapter, uint8_t auth_state);
+
+/**
  * hdd_conn_set_connection_state() - set connection state
  * @adapter: pointer to the adapter
  * @conn_state: connection state
