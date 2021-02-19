@@ -1977,26 +1977,40 @@ int msm_vidc_vb2_queue_init(struct msm_vidc_inst *inst)
 	int rc = 0;
 
 	if (!inst) {
-		d_vpr_e("%s: invalid params\n", __func__);
+		i_vpr_e(inst, "%s: invalid params\n", __func__);
 		return -EINVAL;
+	}
+
+	if (inst->vb2q_init) {
+		i_vpr_h(inst, "%s: vb2q already inited\n", __func__);
+		return 0;
 	}
 
 	rc = vb2q_init(inst, &inst->vb2q[INPUT_PORT], INPUT_MPLANE);
 	if (rc)
-		return rc;
+		goto exit;
 
 	rc = vb2q_init(inst, &inst->vb2q[OUTPUT_PORT], OUTPUT_MPLANE);
 	if (rc)
-		return rc;
+		goto fail_out_vb2q_init;
 
 	rc = vb2q_init(inst, &inst->vb2q[INPUT_META_PORT], INPUT_META_PLANE);
 	if (rc)
-		return rc;
+		goto fail_in_meta_vb2q_init;
 
 	rc = vb2q_init(inst, &inst->vb2q[OUTPUT_META_PORT], OUTPUT_META_PLANE);
 	if (rc)
-		return rc;
+		goto fail_out_meta_vb2q_init;
+	inst->vb2q_init = true;
 
+	return 0;
+fail_out_meta_vb2q_init:
+	vb2_queue_release(&inst->vb2q[INPUT_META_PORT]);
+fail_in_meta_vb2q_init:
+	vb2_queue_release(&inst->vb2q[OUTPUT_PORT]);
+fail_out_vb2q_init:
+	vb2_queue_release(&inst->vb2q[INPUT_PORT]);
+exit:
 	return rc;
 }
 
@@ -2008,10 +2022,16 @@ int msm_vidc_vb2_queue_deinit(struct msm_vidc_inst *inst)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
+	if (!inst->vb2q_init) {
+		i_vpr_h(inst, "%s: vb2q already deinited\n", __func__);
+		return 0;
+	}
+
 	vb2_queue_release(&inst->vb2q[OUTPUT_META_PORT]);
 	vb2_queue_release(&inst->vb2q[INPUT_META_PORT]);
 	vb2_queue_release(&inst->vb2q[OUTPUT_PORT]);
 	vb2_queue_release(&inst->vb2q[INPUT_PORT]);
+	inst->vb2q_init = false;
 
 	return rc;
 }
@@ -2292,10 +2312,6 @@ int msm_vidc_get_inst_capability(struct msm_vidc_inst *inst)
 			memcpy(inst->capabilities, &core->inst_caps[i],
 				sizeof(struct msm_vidc_inst_capability));
 		}
-	}
-	if (!inst->capabilities) {
-		i_vpr_e(inst, "%s: capabilities not found\n", __func__);
-		return -EINVAL;
 	}
 
 	return rc;

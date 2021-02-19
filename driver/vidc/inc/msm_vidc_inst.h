@@ -138,6 +138,7 @@ struct msm_vidc_inst {
 	struct completion                  completions[MAX_SIGNAL];
 	bool                               active;
 	u64                                last_qbuf_time_ns;
+	bool                               vb2q_init;
 };
 
 #endif // _MSM_VIDC_INST_H_

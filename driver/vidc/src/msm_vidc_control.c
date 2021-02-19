@@ -502,7 +502,9 @@ int msm_vidc_ctrl_deinit(struct msm_vidc_inst *inst)
 	}
 	i_vpr_h(inst, "%s(): num ctrls %d\n", __func__, inst->num_ctrls);
 	v4l2_ctrl_handler_free(&inst->ctrl_handler);
+	memset(&inst->ctrl_handler, 0, sizeof(struct v4l2_ctrl_handler));
 	kfree(inst->ctrls);
+	inst->ctrls = NULL;
 
 	return 0;
 }
@@ -548,7 +550,7 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 	if (rc) {
 		i_vpr_e(inst, "control handler init failed, %d\n",
 				inst->ctrl_handler.error);
-		return rc;
+		goto error;
 	}
 
 	for (idx = 0; idx < INST_CAP_MAX; idx++) {
@@ -562,7 +564,8 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 				"%s: invalid ctrl %#x, max allowed %d\n",
 				__func__, capability->cap[idx].v4l2_id,
 				num_ctrls);
-			return -EINVAL;
+			rc = -EINVAL;
+			goto error;
 		}
 		i_vpr_h(inst,
 			"%s: cap idx %d, value %d min %d max %d step_or_mask %#x flags %#x v4l2_id %#x hfi_id %#x\n",
@@ -603,7 +606,8 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 			if (!ctrl_cfg.name) {
 				i_vpr_e(inst, "%s: %#x ctrl name is null\n",
 					__func__, ctrl_cfg.id);
-				return -EINVAL;
+				rc = -EINVAL;
+				goto error;
 			}
 			ctrl = v4l2_ctrl_new_custom(&inst->ctrl_handler,
 					&ctrl_cfg, NULL);
@@ -629,7 +633,8 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 		if (!ctrl) {
 			i_vpr_e(inst, "%s: invalid ctrl %#x\n", __func__,
 				capability->cap[idx].v4l2_id);
-			return -EINVAL;
+			rc = -EINVAL;
+			goto error;
 		}
 
 		rc = inst->ctrl_handler.error;
@@ -638,7 +643,7 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 				"error adding ctrl (%#x) to ctrl handle, %d\n",
 				capability->cap[idx].v4l2_id,
 				inst->ctrl_handler.error);
-			return rc;
+			goto error;
 		}
 
 		/*
@@ -651,6 +656,10 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 	}
 	inst->num_ctrls = num_ctrls;
 	i_vpr_h(inst, "%s(): num ctrls %d\n", __func__, inst->num_ctrls);
+
+	return 0;
+error:
+	msm_vidc_ctrl_deinit(inst);
 
 	return rc;
 }
