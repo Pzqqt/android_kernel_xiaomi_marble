@@ -184,6 +184,62 @@ static bool util_is_pureg_rate(uint8_t *rates, uint8_t nrates)
 	return pureg;
 }
 
+#ifdef WLAN_FEATURE_11BE
+static enum wlan_phymode
+util_scan_get_phymode_5g_11be(struct wlan_objmgr_pdev *pdev,
+			      struct scan_cache_entry *scan_params,
+			      enum wlan_phymode phymode,
+			      uint8_t band_mask)
+{
+	struct wlan_ie_ehtops *eht_ops;
+
+	eht_ops = (struct wlan_ie_ehtops *)util_scan_entry_ehtop(scan_params);
+	if (!util_scan_entry_ehtcap(scan_params) || !eht_ops)
+		return phymode;
+
+	switch (eht_ops->width) {
+	case WLAN_EHT_CHWIDTH_20:
+		phymode = WLAN_PHYMODE_11BEA_EHT20;
+		break;
+	case WLAN_EHT_CHWIDTH_40:
+		phymode = WLAN_PHYMODE_11BEA_EHT40;
+		break;
+	case WLAN_EHT_CHWIDTH_80:
+		phymode = WLAN_PHYMODE_11BEA_EHT80;
+		break;
+	case WLAN_EHT_CHWIDTH_160:
+		phymode = WLAN_PHYMODE_11BEA_EHT160;
+		break;
+	case WLAN_EHT_CHWIDTH_320:
+		phymode = WLAN_PHYMODE_11BEA_EHT320;
+		break;
+	default:
+		scm_err("Invalid eht_ops width: %d", eht_ops->width);
+		phymode = WLAN_PHYMODE_11BEA_EHT20;
+		break;
+	}
+
+	scan_params->channel.cfreq0 =
+		wlan_reg_chan_band_to_freq(pdev,
+					   eht_ops->chan_freq_seg0,
+					   band_mask);
+	scan_params->channel.cfreq1 =
+		wlan_reg_chan_band_to_freq(pdev,
+					   eht_ops->chan_freq_seg1,
+					   band_mask);
+	return phymode;
+}
+#else
+static enum wlan_phymode
+util_scan_get_phymode_5g_11be(struct wlan_objmgr_pdev *pdev,
+			      struct scan_cache_entry *scan_params,
+			      enum wlan_phymode phymode,
+			      uint8_t band_mask)
+{
+	return phymode;
+}
+#endif
+
 #ifdef CONFIG_BAND_6GHZ
 static struct he_oper_6g_param *util_scan_get_he_6g_params(uint8_t *he_ops)
 {
@@ -336,6 +392,9 @@ util_scan_get_phymode_6g(struct wlan_objmgr_pdev *pdev,
 					he_6g_params->chan_freq_seg1,
 					band_mask);
 
+	phymode = util_scan_get_phymode_5g_11be(pdev, scan_params,
+						phymode, band_mask);
+
 	return phymode;
 }
 #else
@@ -469,8 +528,37 @@ util_scan_get_phymode_5g(struct wlan_objmgr_pdev *pdev,
 		break;
 	}
 
+	phymode = util_scan_get_phymode_5g_11be(pdev, scan_params,
+						phymode, band_mask);
+
 	return phymode;
 }
+
+#ifdef WLAN_FEATURE_11BE
+static enum wlan_phymode
+util_scan_get_phymode_2g_11be(struct scan_cache_entry *scan_params,
+			      enum wlan_phymode  phymode)
+{
+	if (!util_scan_entry_ehtcap(scan_params))
+		return phymode;
+
+	if (phymode == WLAN_PHYMODE_11AXG_HE40PLUS)
+		phymode = WLAN_PHYMODE_11BEG_EHT40PLUS;
+	else if (phymode == WLAN_PHYMODE_11AXG_HE40MINUS)
+		phymode = WLAN_PHYMODE_11BEG_EHT40MINUS;
+	else
+		phymode = WLAN_PHYMODE_11BEG_EHT20;
+
+	return phymode;
+}
+#else
+static enum wlan_phymode
+util_scan_get_phymode_2g_11be(struct scan_cache_entry *scan_params,
+			      enum wlan_phymode  phymode)
+{
+	return phymode;
+}
+#endif
 
 static enum wlan_phymode
 util_scan_get_phymode_2g(struct scan_cache_entry *scan_params)
@@ -554,6 +642,8 @@ util_scan_get_phymode_2g(struct scan_cache_entry *scan_params)
 		phymode = WLAN_PHYMODE_11AXG_HE40MINUS;
 	else
 		phymode = WLAN_PHYMODE_11AXG_HE20;
+
+	phymode = util_scan_get_phymode_2g_11be(scan_params, phymode);
 
 	return phymode;
 }
@@ -798,6 +888,14 @@ util_scan_parse_extn_ie(struct scan_cache_entry *scan_params,
 			return QDF_STATUS_E_INVAL;
 		scan_params->ie_list.hecap_6g = (uint8_t *)ie;
 		break;
+#ifdef WLAN_FEATURE_11BE
+	case WLAN_EXTN_ELEMID_EHTCAP:
+		scan_params->ie_list.ehtcap = (uint8_t *)ie;
+		break;
+	case WLAN_EXTN_ELEMID_EHTOP:
+		scan_params->ie_list.ehtop  = (uint8_t *)ie;
+		break;
+#endif
 	default:
 		break;
 	}

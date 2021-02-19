@@ -729,6 +729,10 @@ util_scan_copy_beacon_data(struct scan_cache_entry *new_entry,
 	ie_lst->adaptive_11r = conv_ptr(ie_lst->adaptive_11r, old_ptr, new_ptr);
 	ie_lst->single_pmk = conv_ptr(ie_lst->single_pmk, old_ptr, new_ptr);
 	ie_lst->rsnxe = conv_ptr(ie_lst->rsnxe, old_ptr, new_ptr);
+#ifdef WLAN_FEATURE_11BE
+	ie_lst->ehtcap = conv_ptr(ie_lst->ehtcap, old_ptr, new_ptr);
+	ie_lst->ehtop = conv_ptr(ie_lst->ehtop, old_ptr, new_ptr);
+#endif
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1499,6 +1503,37 @@ util_scan_entry_heop(struct scan_cache_entry *scan_entry)
 {
 	return scan_entry->ie_list.heop;
 }
+
+#ifdef WLAN_FEATURE_11BE
+/**
+ * util_scan_entry_ehtcap() - function to read eht caps vendor ie
+ * @scan_entry: scan entry
+ *
+ * API, function to read eht caps vendor ie
+ *
+ * Return: eht caps vendorie or NULL if ie is not present
+ */
+static inline uint8_t*
+util_scan_entry_ehtcap(struct scan_cache_entry *scan_entry)
+{
+	return scan_entry->ie_list.ehtcap;
+}
+
+/**
+ * util_scan_entry_ehtop() - function to read ehtop vendor ie
+ * @scan_entry: scan entry
+ *
+ * API, function to read ehtop vendor ie
+ *
+ * Return, ehtop vendorie or NULL if ie is not present
+ */
+static inline uint8_t*
+util_scan_entry_ehtop(struct scan_cache_entry *scan_entry)
+{
+	return scan_entry->ie_list.ehtop;
+}
+
+#endif
 
 /**
  * util_scan_entry_tpe() - function to read tpe ie
