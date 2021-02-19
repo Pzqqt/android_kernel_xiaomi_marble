@@ -490,7 +490,7 @@ int wlan_hdd_send_hang_reason_event(struct hdd_context *hdd_ctx,
 				    size_t data_len);
 
 int wlan_hdd_send_avoid_freq_for_dnbs(struct hdd_context *hdd_ctx,
-				      uint8_t op_chan);
+				      qdf_freq_t op_freq);
 
 /**
  * wlan_hdd_rso_cmd_status_cb() - HDD callback to read RSO command status
@@ -710,18 +710,6 @@ int wlan_hdd_try_disconnect(struct hdd_adapter *adapter,
 int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason,
 			enum wlan_reason_code mac_reason);
 #endif
-/**
- * wlan_hdd_get_adjacent_chan(): Gets next/previous channel
- * to the channel passed.
- * @chan: Channel
- * @upper: If "true" then next channel is returned or else
- * previous channel is returned.
- *
- * This function returns the next/previous adjacent-channel to
- * the channel passed. If "upper = true" then next channel is
- * returned else previous is returned.
- */
-int wlan_hdd_get_adjacent_chan(uint8_t chan, bool upper);
 
 /**
  * wlan_hdd_merge_avoid_freqs(): Merge two tHddAvoidFreqList
