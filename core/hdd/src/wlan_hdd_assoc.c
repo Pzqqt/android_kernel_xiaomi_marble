@@ -5225,6 +5225,7 @@ struct osif_cm_ops osif_ops = {
 	.connect_complete_cb = hdd_cm_connect_complete,
 	.disconnect_complete_cb = hdd_cm_disconnect_complete,
 	.netif_queue_control_cb = hdd_cm_netif_queue_control,
+	.napi_serialize_control_cb = hdd_cm_napi_serialize_control,
 #ifdef WLAN_FEATURE_FILS_SK
 	.save_gtk_cb = hdd_cm_save_gtk,
 	.set_hlp_data_cb = hdd_cm_set_hlp_data,

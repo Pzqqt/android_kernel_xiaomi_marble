@@ -85,6 +85,9 @@
 #ifdef FEATURE_WLAN_DIAG_SUPPORT    /* FEATURE_WLAN_DIAG_SUPPORT */
 #include "host_diag_core_log.h"
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
+#ifdef FEATURE_CM_ENABLE
+#include <../../core/src/wlan_cm_roam_i.h>
+#endif
 
 #ifdef FEATURE_WLAN_EXTSCAN
 #define WMA_EXTSCAN_CYCLE_WAKE_LOCK_DURATION WAKELOCK_DURATION_RECOMMENDED
@@ -4230,7 +4233,6 @@ static void wma_invalid_roam_reason_handler(tp_wma_handle wma_handle,
 		wma_debug("Invalid notif %d", notif);
 		return;
 	}
-
 	roam_synch_data = qdf_mem_malloc(sizeof(*roam_synch_data));
 	if (!roam_synch_data)
 		return;
@@ -4239,9 +4241,15 @@ static void wma_invalid_roam_reason_handler(tp_wma_handle wma_handle,
 	if (notif != WMI_ROAM_NOTIF_ROAM_START)
 		wma_handle->pe_roam_synch_cb(wma_handle->mac_context,
 					     roam_synch_data, NULL, op_code);
-
+#if defined(FEATURE_CM_ENABLE) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
+	if (notif == WMI_ROAM_NOTIF_ROAM_START)
+		cm_fw_roam_start_req(wma_handle->psoc, vdev_id);
+	else
+		cm_fw_roam_abort_req(wma_handle->psoc, vdev_id);
+#else
 	wma_handle->csr_roam_synch_cb(wma_handle->mac_context, roam_synch_data,
 				      NULL, op_code);
+#endif
 	qdf_mem_free(roam_synch_data);
 }
 

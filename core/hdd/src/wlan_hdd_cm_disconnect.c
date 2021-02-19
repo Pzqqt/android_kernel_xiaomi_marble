@@ -352,5 +352,13 @@ QDF_STATUS hdd_cm_netif_queue_control(struct wlan_objmgr_vdev *vdev,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS hdd_cm_napi_serialize_control(bool action)
+{
+	hdd_napi_serialize(action);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #endif
 

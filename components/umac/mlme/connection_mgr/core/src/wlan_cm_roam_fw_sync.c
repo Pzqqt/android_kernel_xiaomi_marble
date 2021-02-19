@@ -27,6 +27,7 @@
 #include "wlan_objmgr_vdev_obj.h"
 #include "wlan_cm_roam_i.h"
 
+#ifdef FEATURE_CM_ENABLE
 QDF_STATUS cm_fw_roam_sync_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 {
 	return QDF_STATUS_SUCCESS;
@@ -37,4 +38,4 @@ cm_fw_roam_sync_propagation(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 {
 	return QDF_STATUS_SUCCESS;
 }
-
+#endif
