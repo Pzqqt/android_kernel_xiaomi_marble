@@ -834,16 +834,16 @@ struct csr_roam_info {
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	uint8_t roamSynchInProgress;
 	uint8_t synchAuthStatus;
-	uint8_t kck[KCK_256BIT_KEY_LEN];
+	uint8_t kck[MAX_KCK_LEN];
 	uint8_t kck_len;
-	uint8_t kek[SIR_KEK_KEY_LEN_FILS];
+	uint8_t kek[MAX_KEK_LENGTH];
 	uint8_t kek_len;
 	uint32_t pmk_len;
 	uint8_t pmk[MAX_PMK_LEN];
 	uint8_t pmkid[PMKID_LEN];
 	bool update_erp_next_seq_num;
 	uint16_t next_erp_seq_num;
-	uint8_t replay_ctr[SIR_REPLAY_CTR_LEN];
+	uint8_t replay_ctr[REPLAY_CTR_LEN];
 	uint8_t subnet_change_status;
 #endif
 	struct oem_channel_info chan_info;

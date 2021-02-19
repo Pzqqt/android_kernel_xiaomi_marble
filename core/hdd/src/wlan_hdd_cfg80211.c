@@ -6728,7 +6728,7 @@ int wlan_hdd_send_roam_auth_event(struct hdd_adapter *adapter, uint8_t *bssid,
 	skb = cfg80211_vendor_event_alloc(hdd_ctx->wiphy,
 			&(adapter->wdev),
 			ETH_ALEN + req_rsn_len + rsp_rsn_len +
-			sizeof(uint8_t) + SIR_REPLAY_CTR_LEN +
+			sizeof(uint8_t) + REPLAY_CTR_LEN +
 			SIR_KCK_KEY_LEN + roam_info_ptr->kek_len +
 			sizeof(uint16_t) + sizeof(uint8_t) +
 			(9 * NLMSG_HDRLEN) + fils_params_len,
@@ -6767,13 +6767,13 @@ int wlan_hdd_send_roam_auth_event(struct hdd_adapter *adapter, uint8_t *bssid,
 		    auth_type != eCSR_AUTH_TYPE_CCKM_RSN &&
 		    nla_put(skb,
 			    QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_KEY_REPLAY_CTR,
-			    SIR_REPLAY_CTR_LEN,
+			    REPLAY_CTR_LEN,
 			    roam_info_ptr->replay_ctr)) {
 			hdd_err("non FT/non CCKM connection");
 			hdd_err("failed to send replay counter");
 			goto nla_put_failure;
 		}
-		if (roam_info_ptr->kek_len > SIR_KEK_KEY_LEN_FILS ||
+		if (roam_info_ptr->kek_len > MAX_KEK_LENGTH ||
 		    nla_put(skb,
 			QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_PTK_KCK,
 			roam_info_ptr->kck_len, roam_info_ptr->kck) ||

@@ -793,7 +793,7 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 		qdf_mem_copy(roam_synch_ind_ptr->kek, key->kek,
 			     SIR_KEK_KEY_LEN);
 		qdf_mem_copy(roam_synch_ind_ptr->replay_ctr,
-			     key->replay_counter, SIR_REPLAY_CTR_LEN);
+			     key->replay_counter, REPLAY_CTR_LEN);
 	} else if (key_ft) {
 		/*
 		 * For AKM 00:0F:AC (FT suite-B-SHA384)
@@ -817,7 +817,7 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 
 		qdf_mem_copy(roam_synch_ind_ptr->replay_ctr,
 			     (key_ft->key_buffer + kek_len + kck_len),
-			     SIR_REPLAY_CTR_LEN);
+			     REPLAY_CTR_LEN);
 	}
 
 	if (param_buf->hw_mode_transition_fixed_param)
@@ -830,7 +830,7 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 
 	fils_info = param_buf->roam_fils_synch_info;
 	if (fils_info) {
-		if ((fils_info->kek_len > SIR_KEK_KEY_LEN_FILS) ||
+		if ((fils_info->kek_len > MAX_KEK_LENGTH) ||
 		    (fils_info->pmk_len > MAX_PMK_LEN)) {
 			wma_err("Invalid kek_len %d or pmk_len %d",
 				 fils_info->kek_len,

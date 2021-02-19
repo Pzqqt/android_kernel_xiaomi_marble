@@ -17354,7 +17354,7 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 			roam_info->update_erp_next_seq_num,
 			roam_info->next_erp_seq_num);
 	qdf_mem_copy(roam_info->replay_ctr, roam_synch_data->replay_ctr,
-			SIR_REPLAY_CTR_LEN);
+			REPLAY_CTR_LEN);
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		FL("LFR3: Copy KCK, KEK(len %d) and Replay Ctr"),
 		roam_info->kek_len);
