@@ -96,26 +96,6 @@ qdf_freq_t wlan_reg_min_5ghz_chan_freq(void);
 qdf_freq_t wlan_reg_max_5ghz_chan_freq(void);
 #endif /* CONFIG_CHAN_FREQ_API */
 
-#ifdef CONFIG_CHAN_NUM_API
-/**
- * wlan_reg_is_24ghz_ch() - Check if the given channel number is 2.4GHz
- * @chan: Channel number
- *
- * Return: true if channel number is 2.4GHz, else false
- */
-#define WLAN_REG_IS_24GHZ_CH(chan) wlan_reg_is_24ghz_ch(chan)
-bool wlan_reg_is_24ghz_ch(uint8_t chan);
-
-/**
- * wlan_reg_is_5ghz_ch() - Check if the given channel number is 5GHz
- * @chan: Channel number
- *
- * Return: true if channel number is 5GHz, else false
- */
-#define WLAN_REG_IS_5GHZ_CH(chan) wlan_reg_is_5ghz_ch(chan)
-bool wlan_reg_is_5ghz_ch(uint8_t chan);
-#endif /* CONFIG_CHAN_NUM_API */
-
 /**
  * wlan_reg_is_24ghz_ch_freq() - Check if the given channel frequency is 2.4GHz
  * @freq: Channel frequency
@@ -648,21 +628,6 @@ qdf_freq_t wlan_reg_get_channel_freq(struct wlan_objmgr_pdev *pdev,
  */
 QDF_STATUS wlan_reg_get_current_chan_list(struct wlan_objmgr_pdev *pdev,
 		struct regulatory_channel *chan_list);
-
-#ifdef CONFIG_CHAN_NUM_API
-/**
- * wlan_reg_get_bonded_channel_state() - get bonded channel state
- * @pdev: pdev ptr
- * @ch: chennal number
- * @bw: chennal number
- * @sec_ch: secondary channel
- *
- * Return: enum channel_state
- */
-enum channel_state wlan_reg_get_bonded_channel_state(
-	struct wlan_objmgr_pdev *pdev, uint8_t ch,
-	enum phy_ch_width bw, uint8_t sec_ch);
-#endif /* CONFIG_CHAN_NUM_API */
 
 /**
  * wlan_reg_get_bonded_channel_state_for_freq() - Get bonded channel freq state

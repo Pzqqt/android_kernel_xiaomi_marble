@@ -513,21 +513,6 @@ void reg_update_nol_history_ch(struct wlan_objmgr_pdev *pdev,
 			       uint8_t num_chan,
 			       bool nol_history_chan);
 
-/**
- * reg_is_24ghz_ch() - Check if the given channel number is 2.4GHz
- * @chan: Channel number
- *
- * Return: true if channel number is 2.4GHz, else false
- */
-bool reg_is_24ghz_ch(uint32_t chan);
-
-/**
- * reg_is_5ghz_ch() - Check if the given channel number is 5GHz
- * @chan: Channel number
- *
- * Return: true if channel number is 5GHz, else false
- */
-bool reg_is_5ghz_ch(uint32_t chan);
 #endif /* CONFIG_CHAN_NUM_API */
 
 /**

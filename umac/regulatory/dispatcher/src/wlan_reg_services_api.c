@@ -217,29 +217,6 @@ uint16_t wlan_reg_get_bw_value(enum phy_ch_width bw)
 
 qdf_export_symbol(wlan_reg_get_bw_value);
 
-#ifdef CONFIG_CHAN_NUM_API
-/**
- * wlan_reg_get_bonded_channel_state() - Get 2G bonded channel state
- * @ch: channel number.
- * @bw: channel band width
- *
- * Return: channel state
- */
-enum channel_state
-wlan_reg_get_bonded_channel_state(struct wlan_objmgr_pdev *pdev,
-				  uint8_t ch,
-				  enum phy_ch_width bw, uint8_t sec_ch)
-{
-	if (WLAN_REG_IS_24GHZ_CH(ch))
-		return reg_get_2g_bonded_channel_state(pdev, ch,
-						       sec_ch, bw);
-	else
-		return reg_get_5g_bonded_channel_state(pdev, ch,
-						       bw);
-}
-
-#endif /* CONFIG_CHAN_NUM_API */
-
 /**
  * wlan_reg_set_dfs_region () - Get the current dfs region
  * @dfs_reg: pointer to dfs region
@@ -789,18 +766,6 @@ qdf_freq_t wlan_reg_max_5ghz_chan_freq(void)
 	return reg_max_5ghz_chan_freq();
 }
 #endif /* CONFIG_CHAN_FREQ_API */
-
-#ifdef CONFIG_CHAN_NUM_API
-bool wlan_reg_is_24ghz_ch(uint8_t chan)
-{
-	return reg_is_24ghz_ch(chan);
-}
-
-bool wlan_reg_is_5ghz_ch(uint8_t chan)
-{
-	return reg_is_5ghz_ch(chan);
-}
-#endif /* CONFIG_CHAN_NUM_API */
 
 bool wlan_reg_is_24ghz_ch_freq(qdf_freq_t freq)
 {

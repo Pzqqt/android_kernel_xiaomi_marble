@@ -2402,15 +2402,6 @@ void reg_update_nol_history_ch(struct wlan_objmgr_pdev *pdev,
 	}
 }
 
-bool reg_is_24ghz_ch(uint32_t chan)
-{
-	return REG_IS_24GHZ_CH(chan);
-}
-
-bool reg_is_5ghz_ch(uint32_t chan)
-{
-	return REG_IS_5GHZ_CH(chan);
-}
 #endif /* CONFIG_CHAN_NUM_API */
 
 bool reg_is_24ghz_ch_freq(uint32_t freq)
