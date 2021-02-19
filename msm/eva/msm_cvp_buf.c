@@ -1117,8 +1117,9 @@ struct cvp_internal_buf *cvp_allocate_arp_bufs(struct msm_cvp_inst *inst,
 		goto fail_kzalloc;
 	}
 
-	rc = msm_cvp_smem_alloc(buffer_size, 1, smem_flags, 0,
-			&(inst->core->resources), buf->smem);
+	buf->smem->flags = smem_flags;
+	rc = msm_cvp_smem_alloc(buffer_size, 1, 0,
+		&(inst->core->resources), buf->smem);
 	if (rc) {
 		dprintk(CVP_ERR, "Failed to allocate ARP memory\n");
 		goto err_no_mem;
@@ -1252,7 +1253,8 @@ int cvp_allocate_dsp_bufs(struct msm_cvp_inst *inst,
 		goto fail_kzalloc_smem_cache;
 	}
 
-	rc = msm_cvp_smem_alloc(buffer_size, 1, smem_flags, 0,
+	buf->smem->flags = smem_flags;
+	rc = msm_cvp_smem_alloc(buffer_size, 1, 0,
 			&(inst->core->resources), buf->smem);
 	if (rc) {
 		dprintk(CVP_ERR, "Failed to allocate ARP memory\n");

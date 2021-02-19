@@ -34,7 +34,8 @@ enum smem_prop {
 	SMEM_SECURE = 0x4,
 	SMEM_ADSP = 0x8,
 	SMEM_NON_PIXEL = 0x10,
-	SMEM_PIXEL = 0x20
+	SMEM_PIXEL = 0x20,
+	SMEM_CAMERA = 0x40
 };
 
 struct msm_cvp_list {
@@ -72,7 +73,6 @@ struct msm_cvp_smem {
 	u32 size;
 	u32 bitmap_index;
 	u32 flags;
-	u32 ion_flags;
 	struct cvp_dma_mapping_info mapping_info;
 };
 
@@ -151,12 +151,12 @@ void print_smem(u32 tag, const char *str,
 		struct msm_cvp_smem *smem);
 
 /*Kernel DMA buffer and IOMMU mapping functions*/
-int msm_cvp_smem_alloc(size_t size, u32 align, u32 flags, int map_kernel,
+int msm_cvp_smem_alloc(size_t size, u32 align, int map_kernel,
 			void  *res, struct msm_cvp_smem *smem);
 int msm_cvp_smem_free(struct msm_cvp_smem *smem);
-struct context_bank_info *msm_cvp_smem_get_context_bank(bool is_secure,
+struct context_bank_info *msm_cvp_smem_get_context_bank(
 				struct msm_cvp_platform_resources *res,
-				unsigned long ion_flags);
+				unsigned int flags);
 int msm_cvp_map_smem(struct msm_cvp_inst *inst,
 			struct msm_cvp_smem *smem,
 			const char *str);
