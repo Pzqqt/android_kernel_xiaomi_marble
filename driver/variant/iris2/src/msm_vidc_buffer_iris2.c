@@ -600,7 +600,7 @@ int msm_buffer_min_count_iris2(struct msm_vidc_inst *inst,
 		case MSM_VIDC_BUF_NON_COMV:
 		case MSM_VIDC_BUF_LINE:
 		case MSM_VIDC_BUF_PERSIST:
-			count = 1;
+			count = msm_vidc_internal_buffer_count(inst, buffer_type);
 			break;
 		case MSM_VIDC_BUF_DPB:
 			count = msm_buffer_decoder_dpb_count(inst);

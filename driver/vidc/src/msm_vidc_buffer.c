@@ -163,6 +163,39 @@ u32 msm_vidc_output_extra_count(struct msm_vidc_inst *inst)
 	return count;
 }
 
+u32 msm_vidc_internal_buffer_count(struct msm_vidc_inst *inst,
+	enum msm_vidc_buffer_type buffer_type)
+{
+	u32 count = 0;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return 0;
+	}
+
+	if (is_decode_session(inst)) {
+		if (buffer_type == MSM_VIDC_BUF_BIN ||
+			buffer_type == MSM_VIDC_BUF_LINE ||
+			buffer_type == MSM_VIDC_BUF_PERSIST) {
+			count = 1;
+		} else if (buffer_type == MSM_VIDC_BUF_COMV ||
+			buffer_type == MSM_VIDC_BUF_NON_COMV) {
+			if (inst->codec == MSM_VIDC_HEVC ||
+				inst->codec == MSM_VIDC_H264)
+				count = 1;
+			else
+				count = 0;
+		} else {
+			d_vpr_e("%s: unsupported buffer type %#x\n",
+				__func__, buffer_type);
+			count = 0;
+		}
+	}
+	//todo: add enc support if needed
+
+	return count;
+}
+
 u32 msm_vidc_decoder_input_size(struct msm_vidc_inst *inst)
 {
 	u32 frame_size, num_mbs;
