@@ -19,17 +19,35 @@
 #include "venus_hfi.h"
 #include "hfi_packet.h"
 
-u32 msm_vdec_subscribe_for_port_settings_change[] = {
+u32 msm_vdec_subscribe_for_psc_avc[] = {
 	HFI_PROP_BITSTREAM_RESOLUTION,
 	HFI_PROP_CROP_OFFSETS,
-	HFI_PROP_LUMA_CHROMA_BIT_DEPTH,
 	HFI_PROP_CODED_FRAMES,
 	HFI_PROP_BUFFER_FW_MIN_OUTPUT_COUNT,
 	HFI_PROP_PIC_ORDER_CNT_TYPE,
+	HFI_PROP_PROFILE,
+	HFI_PROP_LEVEL,
 	HFI_PROP_SIGNAL_COLOR_INFO,
+};
+
+u32 msm_vdec_subscribe_for_psc_hevc[] = {
+	HFI_PROP_BITSTREAM_RESOLUTION,
+	HFI_PROP_CROP_OFFSETS,
+	HFI_PROP_LUMA_CHROMA_BIT_DEPTH,
+	HFI_PROP_BUFFER_FW_MIN_OUTPUT_COUNT,
 	HFI_PROP_PROFILE,
 	HFI_PROP_LEVEL,
 	HFI_PROP_TIER,
+	HFI_PROP_SIGNAL_COLOR_INFO,
+};
+
+u32 msm_vdec_subscribe_for_psc_vp9[] = {
+	HFI_PROP_BITSTREAM_RESOLUTION,
+	HFI_PROP_CROP_OFFSETS,
+	HFI_PROP_LUMA_CHROMA_BIT_DEPTH,
+	HFI_PROP_BUFFER_FW_MIN_OUTPUT_COUNT,
+	HFI_PROP_PROFILE,
+	HFI_PROP_LEVEL,
 };
 
 u32 msm_vdec_subscribe_for_properties[] = {
@@ -1006,6 +1024,8 @@ static int msm_vdec_subscribe_input_port_settings_change(struct msm_vidc_inst *i
 	struct msm_vidc_core *core;
 	u32 payload[32] = {0};
 	u32 i;
+	u32 subscribe_psc_size = 0;
+	u32 *psc = NULL;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1015,21 +1035,39 @@ static int msm_vdec_subscribe_input_port_settings_change(struct msm_vidc_inst *i
 	d_vpr_h("%s()\n", __func__);
 
 	payload[0] = HFI_MODE_PORT_SETTINGS_CHANGE;
-	for (i = 0; i < ARRAY_SIZE(msm_vdec_subscribe_for_port_settings_change);
-	     i++)
-		payload[i + 1] = msm_vdec_subscribe_for_port_settings_change[i];
+	if (inst->codec == MSM_VIDC_H264) {
+		subscribe_psc_size = ARRAY_SIZE(msm_vdec_subscribe_for_psc_avc);
+		psc = msm_vdec_subscribe_for_psc_avc;
+	} else if (inst->codec == MSM_VIDC_HEVC) {
+		subscribe_psc_size = ARRAY_SIZE(msm_vdec_subscribe_for_psc_hevc);
+		psc = msm_vdec_subscribe_for_psc_hevc;
+	} else if (inst->codec == MSM_VIDC_VP9) {
+		subscribe_psc_size = ARRAY_SIZE(msm_vdec_subscribe_for_psc_vp9);
+		psc = msm_vdec_subscribe_for_psc_vp9;
+	} else {
+		d_vpr_e("%s: unsupported codec: %d\n", __func__, inst->codec);
+		psc = NULL;
+		return -EINVAL;
+	}
 
+	if (!psc || !subscribe_psc_size) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	payload[0] = HFI_MODE_PORT_SETTINGS_CHANGE;
+	for (i = 0; i < subscribe_psc_size; i++)
+		payload[i + 1] = psc[i];
 	rc = venus_hfi_session_command(inst,
 			HFI_CMD_SUBSCRIBE_MODE,
 			port,
 			HFI_PAYLOAD_U32_ARRAY,
 			&payload[0],
-			(ARRAY_SIZE(msm_vdec_subscribe_for_port_settings_change) + 1) *
-			sizeof(u32));
+			((subscribe_psc_size + 1) *
+			sizeof(u32)));
 
-	for (i = 0; i < ARRAY_SIZE(msm_vdec_subscribe_for_port_settings_change);
-		i++) {
-		switch (msm_vdec_subscribe_for_port_settings_change[i]) {
+	for (i = 0; i < subscribe_psc_size; i++) {
+		switch (psc[i]) {
 		case HFI_PROP_BITSTREAM_RESOLUTION:
 			rc = msm_vdec_set_bitstream_resolution(inst, port);
 			break;
@@ -1062,7 +1100,7 @@ static int msm_vdec_subscribe_input_port_settings_change(struct msm_vidc_inst *i
 			break;
 		default:
 			d_vpr_e("%s: unknown property %#x\n", __func__,
-				msm_vdec_subscribe_for_port_settings_change[i]);
+				psc[i]);
 			rc = -EINVAL;
 			break;
 		}
@@ -1482,30 +1520,51 @@ static int msm_vdec_subscribe_output_port_settings_change(struct msm_vidc_inst *
 	u32 prop_type, payload_size, payload_type;
 	u32 i;
 	struct msm_vidc_subscription_params subsc_params;
+	u32 subscribe_psc_size = 0;
+	u32 *psc = NULL;
 
 	d_vpr_h("%s()\n", __func__);
 
 	payload[0] = HFI_MODE_PORT_SETTINGS_CHANGE;
-	for (i = 0; i < ARRAY_SIZE(msm_vdec_subscribe_for_port_settings_change);
-	     i++)
-		payload[i + 1] = msm_vdec_subscribe_for_port_settings_change[i];
+	if (inst->codec == MSM_VIDC_H264) {
+		subscribe_psc_size = ARRAY_SIZE(msm_vdec_subscribe_for_psc_avc);
+		psc = msm_vdec_subscribe_for_psc_avc;
+	} else if (inst->codec == MSM_VIDC_HEVC) {
+		subscribe_psc_size = ARRAY_SIZE(msm_vdec_subscribe_for_psc_hevc);
+		psc = msm_vdec_subscribe_for_psc_hevc;
+	} else if (inst->codec == MSM_VIDC_VP9) {
+		subscribe_psc_size = ARRAY_SIZE(msm_vdec_subscribe_for_psc_vp9);
+		psc = msm_vdec_subscribe_for_psc_vp9;
+	} else {
+		d_vpr_e("%s: unsupported codec: %d\n", __func__, inst->codec);
+		psc = NULL;
+		return -EINVAL;
+	}
+
+	if (!psc || !subscribe_psc_size) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	payload[0] = HFI_MODE_PORT_SETTINGS_CHANGE;
+	for (i = 0; i < subscribe_psc_size; i++)
+		payload[i + 1] = psc[i];
 
 	rc = venus_hfi_session_command(inst,
 			HFI_CMD_SUBSCRIBE_MODE,
 			port,
 			HFI_PAYLOAD_U32_ARRAY,
 			&payload[0],
-			(ARRAY_SIZE(msm_vdec_subscribe_for_port_settings_change) + 1) *
-			sizeof(u32));
+			((subscribe_psc_size + 1) *
+			sizeof(u32)));
 
 	subsc_params = inst->subcr_params[port];
-	for (i = 0; i < ARRAY_SIZE(msm_vdec_subscribe_for_port_settings_change);
-		i++) {
+	for (i = 0; i < subscribe_psc_size; i++) {
 		payload[0] = 0;
 		payload[1] = 0;
 		payload_size = 0;
 		payload_type = 0;
-		prop_type = msm_vdec_subscribe_for_port_settings_change[i];
+		prop_type = psc[i];
 		switch (prop_type) {
 		case HFI_PROP_BITSTREAM_RESOLUTION:
 			payload[0] = subsc_params.bitstream_resolution;
