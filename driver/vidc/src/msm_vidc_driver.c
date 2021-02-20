@@ -1380,7 +1380,11 @@ struct msm_vidc_buffer *msm_vidc_get_driver_buf(struct msm_vidc_inst *inst,
 		buf->dmabuf = dmabuf;
 		INIT_LIST_HEAD(&buf->list);
 		list_add_tail(&buf->list, &buffers->list);
+	} else {
+		/* reset all attributes except read only */
+		buf->attr &= MSM_VIDC_ATTR_READ_ONLY;
 	}
+
 	rc = vb2_buffer_to_driver(vb2, buf);
 	if (rc)
 		goto error;
