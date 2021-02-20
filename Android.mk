@@ -166,7 +166,7 @@ endif
 # Create Symbolic link
 ifneq ($(findstring $(WLAN_CHIPSET),$(WIFI_DRIVER_DEFAULT)),)
 ifeq ($(PRODUCT_VENDOR_MOVE_ENABLED),true)
-ifneq ($(WIFI_DRIVER_INSTALL_TO_KERNEL_OUT),)
+ifneq ($(WIFI_DRIVER_INSTALL_TO_KERNEL_OUT),true)
 $(shell mkdir -p $(TARGET_OUT_VENDOR)/lib/modules; \
 	ln -sf /$(TARGET_COPY_OUT_VENDOR)/lib/modules/$(WLAN_CHIPSET)/$(LOCAL_MODULE) $(TARGET_OUT_VENDOR)/lib/modules/$(LOCAL_MODULE))
 endif
