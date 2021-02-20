@@ -3917,16 +3917,20 @@ static void ipa3_set_aggr_limit(struct ipa_sys_connect_params *in,
 	u32 *aggr_byte_limit = &in->ipa_ep_cfg.aggr.aggr_byte_limit;
 	u32 adjusted_sz;
 
-	if (sys->ext_ioctl_v2) {
+	if (ipa3_ctx->ipa_wan_skb_page) {
 		IPAERR("set rx_buff_sz config from netmngr %lu\n", (unsigned long)
 			sys->buff_size);
 		sys->rx_buff_sz = IPA_GENERIC_RX_BUFF_SZ(sys->buff_size);
+		*aggr_byte_limit = IPA_ADJUST_AGGR_BYTE_LIMIT(*aggr_byte_limit);
 	} else {
 		adjusted_sz = ipa_adjust_ra_buff_base_sz(*aggr_byte_limit);
 		IPAERR("get close-by %u\n", adjusted_sz);
 		IPAERR("set default rx_buff_sz %lu\n", (unsigned long)
 				IPA_GENERIC_RX_BUFF_SZ(adjusted_sz));
 		sys->rx_buff_sz = IPA_GENERIC_RX_BUFF_SZ(adjusted_sz);
+		*aggr_byte_limit = sys->rx_buff_sz < *aggr_byte_limit ?
+		IPA_ADJUST_AGGR_BYTE_LIMIT(sys->rx_buff_sz) :
+		IPA_ADJUST_AGGR_BYTE_LIMIT(*aggr_byte_limit);
 	}
 
 	/* disable ipa_status */
@@ -3934,10 +3938,6 @@ static void ipa3_set_aggr_limit(struct ipa_sys_connect_params *in,
 
 	if (in->client == IPA_CLIENT_APPS_WAN_COAL_CONS)
 		in->ipa_ep_cfg.aggr.aggr_hard_byte_limit_en = 1;
-
-	*aggr_byte_limit = sys->rx_buff_sz < *aggr_byte_limit ?
-		IPA_ADJUST_AGGR_BYTE_LIMIT(sys->rx_buff_sz) :
-		IPA_ADJUST_AGGR_BYTE_LIMIT(*aggr_byte_limit);
 
 	IPADBG("set aggr_limit %lu\n", (unsigned long) *aggr_byte_limit);
 }
