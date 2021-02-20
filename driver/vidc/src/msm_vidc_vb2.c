@@ -181,6 +181,10 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 				inst->buffers.arp.min_count,
 				inst->buffers.arp.size);
 		} else if(is_decode_session(inst)) {
+			rc = msm_vidc_session_set_default_header(inst);
+			if (rc)
+				return rc;
+
 			rc = msm_vidc_alloc_and_queue_session_internal_buffers(inst,
 				MSM_VIDC_BUF_PERSIST);
 			if (rc)
