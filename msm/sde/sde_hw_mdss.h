@@ -168,6 +168,8 @@ enum sde_lm {
 	LM_3,
 	LM_4,
 	LM_5,
+	LM_DCWB_DUMMY_0,
+	LM_DCWB_DUMMY_1,
 	LM_6,
 	LM_MAX
 };
@@ -238,6 +240,8 @@ enum sde_pingpong {
 	PINGPONG_3,
 	PINGPONG_4,
 	PINGPONG_5,
+	PINGPONG_CWB_0,
+	PINGPONG_CWB_1,
 	PINGPONG_S0,
 	PINGPONG_MAX
 };
@@ -317,6 +321,12 @@ enum sde_cwb {
 	CWB_MAX
 };
 
+enum sde_dcwb {
+	DCWB_0 = 0x1,
+	DCWB_1,
+	DCWB_MAX
+};
+
 enum sde_wd_timer {
 	WD_TIMER_0 = 0x1,
 	WD_TIMER_1,
@@ -350,6 +360,7 @@ enum sde_merge_3d {
 	MERGE_3D_0 = 1,
 	MERGE_3D_1,
 	MERGE_3D_2,
+	MERGE_3D_CWB_0,
 	MERGE_3D_MAX
 };
 

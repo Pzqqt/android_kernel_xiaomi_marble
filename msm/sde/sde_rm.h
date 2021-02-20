@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef __SDE_RM_H__
@@ -104,6 +104,7 @@ enum sde_rm_topology_group {
  * @SDE_RM_TOPCTL_DSPP: Require layer mixers with DSPP capabilities
  * @SDE_RM_TOPCTL_DS  : Require layer mixers with DS capabilities
  * @SDE_RM_TOPCTL_CWB  : Require layer mixers with CWB capabilities
+ * @SDE_RM_TOPCTL_DCWB : Require layer mixers with DCWB capabilities
  */
 enum sde_rm_topology_control {
 	SDE_RM_TOPCTL_RESERVE_LOCK,
@@ -111,6 +112,7 @@ enum sde_rm_topology_control {
 	SDE_RM_TOPCTL_DSPP,
 	SDE_RM_TOPCTL_DS,
 	SDE_RM_TOPCTL_CWB,
+	SDE_RM_TOPCTL_DCWB,
 };
 
 /**

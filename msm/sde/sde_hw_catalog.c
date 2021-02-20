@@ -320,6 +320,7 @@ enum {
 enum {
 	PP_OFF,
 	PP_LEN,
+	PP_CWB,
 	TE_OFF,
 	TE_LEN,
 	TE2_OFF,
@@ -439,6 +440,7 @@ enum {
 	MIXER_BLOCKS,
 	MIXER_DISP,
 	MIXER_CWB,
+	MIXER_DCWB,
 	MIXER_PROP_MAX,
 };
 
@@ -759,6 +761,8 @@ static struct sde_prop_type mixer_prop[] = {
 		PROP_TYPE_STRING_ARRAY},
 	{MIXER_CWB, "qcom,sde-mixer-cwb-pref", false,
 		PROP_TYPE_STRING_ARRAY},
+	{MIXER_DCWB, "qcom,sde-mixer-dcwb-pref", false,
+		PROP_TYPE_STRING_ARRAY},
 };
 
 static struct sde_prop_type mixer_blocks_prop[] = {
@@ -831,6 +835,7 @@ static struct sde_prop_type ds_prop[] = {
 static struct sde_prop_type pp_prop[] = {
 	{PP_OFF, "qcom,sde-pp-off", true, PROP_TYPE_U32_ARRAY},
 	{PP_LEN, "qcom,sde-pp-size", false, PROP_TYPE_U32},
+	{PP_CWB, "qcom,sde-pp-cwb", false, PROP_TYPE_U32_ARRAY},
 	{TE_OFF, "qcom,sde-te-off", false, PROP_TYPE_U32_ARRAY},
 	{TE_LEN, "qcom,sde-te-size", false, PROP_TYPE_U32},
 	{TE2_OFF, "qcom,sde-te2-off", false, PROP_TYPE_U32_ARRAY},
@@ -2224,6 +2229,8 @@ static int sde_mixer_parse_dt(struct device_node *np,
 			ds_idx = 0; i < off_count; i++) {
 		const char *disp_pref = NULL;
 		const char *cwb_pref = NULL;
+		const char *dcwb_pref = NULL;
+		u32 dummy_mixer_base = 0x0f0f;
 
 		mixer_base = PROP_VALUE_ACCESS(props->values, MIXER_OFF, i);
 		if (!mixer_base)
@@ -2276,6 +2283,16 @@ static int sde_mixer_parse_dt(struct device_node *np,
 			mixer_prop[MIXER_CWB].prop_name, i, &cwb_pref);
 		if (cwb_pref && !strcmp(cwb_pref, "cwb"))
 			set_bit(SDE_DISP_CWB_PREF, &mixer->features);
+
+		of_property_read_string_index(np,
+			mixer_prop[MIXER_DCWB].prop_name, i, &dcwb_pref);
+		if (dcwb_pref && !strcmp(dcwb_pref, "dcwb")) {
+			set_bit(SDE_DISP_DCWB_PREF, &mixer->features);
+			if (mixer->base == dummy_mixer_base) {
+				mixer->base = 0x0;
+				mixer->len = 0;
+			}
+		}
 
 		mixer->pingpong = pp_count > 0 ? pp_idx + PINGPONG_0
 							: PINGPONG_MAX;
@@ -2518,7 +2535,18 @@ static int sde_wb_parse_dt(struct device_node *np, struct sde_mdss_cfg *sde_cfg)
 		if (IS_SDE_CTL_REV_100(sde_cfg->ctl_rev))
 			set_bit(SDE_WB_INPUT_CTRL, &wb->features);
 
-		if (sde_cfg->has_cwb_support) {
+		if (sde_cfg->has_dedicated_cwb_support) {
+			set_bit(SDE_WB_HAS_DCWB, &wb->features);
+			if (IS_SDE_CTL_REV_100(sde_cfg->ctl_rev))
+				set_bit(SDE_WB_DCWB_CTRL, &wb->features);
+			if (major_version >= SDE_HW_MAJOR(SDE_HW_VER_810)) {
+				sde_cfg->cwb_blk_off = 0x66A00;
+				sde_cfg->cwb_blk_stride = 0x400;
+			} else {
+				sde_cfg->cwb_blk_off = 0x83000;
+				sde_cfg->cwb_blk_stride = 0x100;
+			}
+		} else if (sde_cfg->has_cwb_support) {
 			set_bit(SDE_WB_HAS_CWB, &wb->features);
 			if (IS_SDE_CTL_REV_100(sde_cfg->ctl_rev))
 				set_bit(SDE_WB_CWB_CTRL, &wb->features);
@@ -3798,6 +3826,9 @@ static int sde_pp_parse_dt(struct device_node *np, struct sde_mdss_cfg *sde_cfg)
 		if (PROP_VALUE_ACCESS(prop_value, PP_SLAVE, i))
 			set_bit(SDE_PINGPONG_SLAVE, &pp->features);
 
+		if (PROP_VALUE_ACCESS(prop_value, PP_CWB, i))
+			set_bit(SDE_PINGPONG_CWB, &pp->features);
+
 		if (major_version < SDE_HW_MAJOR(SDE_HW_VER_700)) {
 			sblk->dsc.base = PROP_VALUE_ACCESS(prop_value,
 					DSC_OFF, i);
@@ -5005,7 +5036,7 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->has_trusted_vm_support = true;
 		sde_cfg->syscache_supported = true;
 	} else if (IS_WAIPIO_TARGET(hw_rev)) {
-		sde_cfg->has_cwb_support = true;
+		sde_cfg->has_dedicated_cwb_support = true;
 		sde_cfg->has_wb_ubwc = true;
 		sde_cfg->has_qsync = true;
 		sde_cfg->perf.min_prefill_lines = 40;

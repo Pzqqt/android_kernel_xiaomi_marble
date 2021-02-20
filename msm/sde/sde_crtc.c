@@ -5454,6 +5454,12 @@ static void sde_crtc_install_properties(struct drm_crtc *crtc,
 		{CAPTURE_DSPP_OUT, "capture_pp_out"},
 	};
 
+	static const struct drm_prop_enum_list e_dcwb_data_points[] = {
+		{CAPTURE_MIXER_OUT, "capture_mixer_out"},
+		{CAPTURE_DSPP_OUT, "capture_pp_out"},
+		{CAPTURE_DEMURA_OUT, "capture_demura_out"},
+	};
+
 	static const struct drm_prop_enum_list e_idle_pc_state[] = {
 		{IDLE_PC_NONE, "idle_pc_none"},
 		{IDLE_PC_ENABLE, "idle_pc_enable"},
@@ -5524,7 +5530,12 @@ static void sde_crtc_install_properties(struct drm_crtc *crtc,
 			ARRAY_SIZE(e_idle_pc_state), 0,
 			CRTC_PROP_IDLE_PC_STATE);
 
-	if (catalog->has_cwb_support)
+	if (catalog->has_dedicated_cwb_support)
+		msm_property_install_enum(&sde_crtc->property_info,
+				"capture_mode", 0, 0, e_dcwb_data_points,
+				ARRAY_SIZE(e_dcwb_data_points), 0,
+				CRTC_PROP_CAPTURE_OUTPUT);
+	else if (catalog->has_cwb_support)
 		msm_property_install_enum(&sde_crtc->property_info,
 				"capture_mode", 0, 0, e_cwb_data_points,
 				ARRAY_SIZE(e_cwb_data_points), 0,

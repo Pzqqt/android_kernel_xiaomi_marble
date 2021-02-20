@@ -30,7 +30,7 @@
 
 static const u32 cwb_irq_tbl[PINGPONG_MAX] = {SDE_NONE, INTR_IDX_PP1_OVFL,
 	INTR_IDX_PP2_OVFL, INTR_IDX_PP3_OVFL, INTR_IDX_PP4_OVFL,
-	INTR_IDX_PP5_OVFL, SDE_NONE, SDE_NONE};
+	INTR_IDX_PP5_OVFL, INTR_IDX_PP_CWB_OVFL, SDE_NONE};
 
 /**
  * sde_rgb2yuv_601l - rgb to yuv color space conversion matrix
@@ -467,12 +467,14 @@ static void _sde_encoder_phys_wb_setup_cwb(struct sde_encoder_phys *phys_enc,
 
 	hw_ctl = crtc->mixers[0].hw_ctl;
 	if (hw_ctl && hw_ctl->ops.setup_intf_cfg_v1 &&
-			test_bit(SDE_WB_CWB_CTRL, &hw_wb->caps->features)) {
+			test_bit(SDE_WB_CWB_CTRL | SDE_WB_DCWB_CTRL,
+					&hw_wb->caps->features)) {
 		struct sde_hw_intf_cfg_v1 intf_cfg = { 0, };
 
 		for (i = 0; i < crtc->num_mixers; i++)
-			intf_cfg.cwb[intf_cfg.cwb_count++] =
-				(enum sde_cwb)(hw_pp->idx + i);
+			intf_cfg.cwb[intf_cfg.cwb_count++] = (enum sde_cwb)
+				(test_bit(SDE_WB_DCWB_CTRL, &hw_wb->caps->features) ?
+					((hw_pp->idx % 2) + i) : (hw_pp->idx + i));
 
 		if (hw_pp->merge_3d && (intf_cfg.merge_3d_count <
 				MAX_MERGE_3D_PER_CTL_V1) && need_merge)
@@ -483,12 +485,17 @@ static void _sde_encoder_phys_wb_setup_cwb(struct sde_encoder_phys *phys_enc,
 			hw_pp->ops.setup_3d_mode(hw_pp, (enable && need_merge) ?
 					BLEND_3D_H_ROW_INT : 0);
 
-		if (hw_wb->ops.bind_pingpong_blk)
+		if ((hw_wb->ops.bind_pingpong_blk) &&
+				test_bit(SDE_WB_CWB_CTRL, &hw_wb->caps->features))
 			hw_wb->ops.bind_pingpong_blk(hw_wb, enable, hw_pp->idx);
+
+		if ((hw_wb->ops.bind_dcwb_pp_blk) &&
+				test_bit(SDE_WB_DCWB_CTRL, &hw_wb->caps->features))
+			hw_wb->ops.bind_dcwb_pp_blk(hw_wb, enable, hw_pp->idx);
 
 		if (hw_ctl->ops.update_intf_cfg) {
 			hw_ctl->ops.update_intf_cfg(hw_ctl, &intf_cfg, enable);
-			SDE_DEBUG("in CWB mode on CTL_%d PP-%d merge3d:%d\n",
+			SDE_DEBUG("in CWB/DCWB mode on CTL_%d PP-%d merge3d:%d\n",
 					hw_ctl->idx - CTL_0,
 					hw_pp->idx - PINGPONG_0,
 					hw_pp->merge_3d ?
@@ -503,7 +510,7 @@ static void _sde_encoder_phys_wb_setup_cwb(struct sde_encoder_phys *phys_enc,
 
 		if (hw_ctl && hw_ctl->ops.update_wb_cfg) {
 			hw_ctl->ops.update_wb_cfg(hw_ctl, intf_cfg, enable);
-			SDE_DEBUG("in CWB mode adding WB for CTL_%d\n",
+			SDE_DEBUG("in CWB/DCWB mode adding WB for CTL_%d\n",
 					hw_ctl->idx - CTL_0);
 		}
 	}
@@ -593,13 +600,14 @@ static void _sde_enc_phys_wb_detect_cwb(struct sde_encoder_phys *phys_enc,
 	u32 encoder_mask = 0;
 
 	/* Check if WB has CWB support */
-	if (wb_cfg->features & BIT(SDE_WB_HAS_CWB)) {
+	if ((wb_cfg->features & BIT(SDE_WB_HAS_CWB))
+			|| (wb_cfg->features & BIT(SDE_WB_HAS_DCWB))) {
 		encoder_mask = crtc_state->encoder_mask;
 		encoder_mask &= ~drm_encoder_mask(phys_enc->parent);
 	}
 	phys_enc->in_clone_mode = encoder_mask ? true : false;
 
-	SDE_DEBUG("detect CWB - status:%d\n", phys_enc->in_clone_mode);
+	SDE_DEBUG("detect CWB(OR)DCWB - status:%d\n", phys_enc->in_clone_mode);
 }
 
 static int _sde_enc_phys_wb_validate_cwb(struct sde_encoder_phys *phys_enc,
@@ -863,6 +871,7 @@ static void _sde_encoder_phys_wb_update_cwb_flush(
 	int i = 0;
 	int cwb_capture_mode = 0;
 	enum sde_cwb cwb_idx = 0;
+	enum sde_dcwb dcwb_idx = 0;
 	enum sde_cwb src_pp_idx = 0;
 	bool dspp_out = false;
 	bool need_merge = false;
@@ -895,9 +904,19 @@ static void _sde_encoder_phys_wb_update_cwb_flush(
 	dspp_out = (cwb_capture_mode == CAPTURE_DSPP_OUT);
 	need_merge = (crtc->num_mixers > 1) ? true : false;
 
-	if (src_pp_idx > CWB_0 ||  ((cwb_idx + crtc->num_mixers) > CWB_MAX)) {
-		SDE_ERROR("invalid hw config for CWB\n");
-		return;
+	if (test_bit(SDE_WB_DCWB_CTRL, &hw_wb->caps->features)) {
+		dcwb_idx = (enum sde_dcwb) ((hw_pp->idx % 2) + i);
+		if ((dcwb_idx + crtc->num_mixers) > DCWB_MAX) {
+			SDE_ERROR("invalid hw config for DCWB. dcwb_idx=%d, num_mixers=%d\n",
+				dcwb_idx, crtc->num_mixers);
+			return;
+		}
+	} else {
+		if (src_pp_idx > CWB_0 ||  ((cwb_idx + crtc->num_mixers) > CWB_MAX)) {
+			SDE_ERROR("invalid hw config for CWB. pp_idx-%d, cwb_idx=%d, num_mixers=%d\n",
+				src_pp_idx, dcwb_idx, crtc->num_mixers);
+			return;
+		}
 	}
 
 	if (hw_ctl->ops.update_bitmask)
@@ -908,18 +927,30 @@ static void _sde_encoder_phys_wb_update_cwb_flush(
 		hw_ctl->ops.update_bitmask(hw_ctl, SDE_HW_FLUSH_CDM,
 				hw_cdm->idx, 1);
 
-	if (test_bit(SDE_WB_CWB_CTRL, &hw_wb->caps->features)) {
+	if (test_bit(SDE_WB_CWB_CTRL | SDE_WB_DCWB_CTRL,
+					&hw_wb->caps->features)) {
 		for (i = 0; i < crtc->num_mixers; i++) {
-			cwb_idx = (enum sde_cwb) (hw_pp->idx + i);
 			src_pp_idx = (enum sde_cwb) (src_pp_idx + i);
 
-			if (hw_wb->ops.program_cwb_ctrl)
-				hw_wb->ops.program_cwb_ctrl(hw_wb, cwb_idx,
-						src_pp_idx, dspp_out, enable);
+			if (test_bit(SDE_WB_DCWB_CTRL, &hw_wb->caps->features)) {
+				dcwb_idx = (enum sde_dcwb) ((hw_pp->idx % 2) + i);
+				if (hw_wb->ops.program_dcwb_ctrl)
+					hw_wb->ops.program_dcwb_ctrl(hw_wb, dcwb_idx,
+						src_pp_idx, cwb_capture_mode,
+						enable);
+				if (hw_ctl->ops.update_bitmask)
+					hw_ctl->ops.update_bitmask(hw_ctl,
+						SDE_HW_FLUSH_CWB, dcwb_idx, 1);
 
-			if (hw_ctl->ops.update_bitmask)
-				hw_ctl->ops.update_bitmask(hw_ctl,
+			} else if (test_bit(SDE_WB_CWB_CTRL, &hw_wb->caps->features)) {
+				cwb_idx = (enum sde_cwb) (hw_pp->idx + i);
+				if (hw_wb->ops.program_cwb_ctrl)
+					hw_wb->ops.program_cwb_ctrl(hw_wb, cwb_idx,
+						src_pp_idx, dspp_out, enable);
+				if (hw_ctl->ops.update_bitmask)
+					hw_ctl->ops.update_bitmask(hw_ctl,
 						SDE_HW_FLUSH_CWB, cwb_idx, 1);
+			}
 		}
 
 		if (need_merge && hw_ctl->ops.update_bitmask
@@ -1133,8 +1164,10 @@ static void sde_encoder_phys_wb_irq_ctrl(
 {
 
 	struct sde_encoder_phys_wb *wb_enc = to_sde_encoder_phys_wb(phys);
+	const struct sde_wb_cfg *wb_cfg;
 	int index = 0, refcount;
 	int ret = 0, pp = 0;
+	u32 max_num_of_irqs = 0;
 
 	if (!wb_enc)
 		return;
@@ -1147,15 +1180,23 @@ static void sde_encoder_phys_wb_irq_ctrl(
 		SDE_ERROR("invalid pingpong index for WB or CWB\n");
 		return;
 	}
-
 	refcount = atomic_read(&phys->wbirq_refcount);
+
+	/*
+	 * For Dedicated CWB, only one overflow IRQ is used for
+	 * both the PP_CWB blks. Make sure only one IRQ is registered
+	 * when D-CWB is enabled.
+	 */
+	wb_cfg = wb_enc->hw_wb->caps;
+	max_num_of_irqs = (wb_cfg->features & BIT(SDE_WB_HAS_DCWB)) ?
+					1 : CRTC_DUAL_MIXERS_ONLY;
 
 	if (enable && atomic_inc_return(&phys->wbirq_refcount) == 1) {
 		sde_encoder_helper_register_irq(phys, INTR_IDX_WB_DONE);
 		if (ret)
 			atomic_dec_return(&phys->wbirq_refcount);
 
-		for (index = 0; index < CRTC_DUAL_MIXERS_ONLY; index++)
+		for (index = 0; index < max_num_of_irqs; index++)
 			if (cwb_irq_tbl[index + pp] != SDE_NONE)
 				sde_encoder_helper_register_irq(phys,
 					cwb_irq_tbl[index + pp]);
@@ -1165,7 +1206,7 @@ static void sde_encoder_phys_wb_irq_ctrl(
 		if (ret)
 			atomic_inc_return(&phys->wbirq_refcount);
 
-		for (index = 0; index < CRTC_DUAL_MIXERS_ONLY; index++)
+		for (index = 0; index < max_num_of_irqs; index++)
 			if (cwb_irq_tbl[index + pp] != SDE_NONE)
 				sde_encoder_helper_unregister_irq(phys,
 					cwb_irq_tbl[index + pp]);
@@ -1839,6 +1880,7 @@ struct sde_encoder_phys *sde_encoder_phys_wb_init(
 {
 	struct sde_encoder_phys *phys_enc;
 	struct sde_encoder_phys_wb *wb_enc;
+	const struct sde_wb_cfg *wb_cfg;
 	struct sde_hw_mdp *hw_mdp;
 	struct sde_encoder_irq *irq;
 	int ret = 0;
@@ -1921,6 +1963,7 @@ struct sde_encoder_phys *sde_encoder_phys_wb_init(
 	atomic_set(&phys_enc->pending_retire_fence_cnt, 0);
 	atomic_set(&phys_enc->wbirq_refcount, 0);
 	init_waitqueue_head(&phys_enc->pending_kickoff_wq);
+	wb_cfg = wb_enc->hw_wb->caps;
 
 	irq = &phys_enc->irq[INTR_IDX_WB_DONE];
 	INIT_LIST_HEAD(&irq->cb.list);
@@ -1932,55 +1975,68 @@ struct sde_encoder_phys *sde_encoder_phys_wb_init(
 	irq->cb.arg = wb_enc;
 	irq->cb.func = sde_encoder_phys_wb_done_irq;
 
-	irq = &phys_enc->irq[INTR_IDX_PP1_OVFL];
-	INIT_LIST_HEAD(&irq->cb.list);
-	irq->name = "pp1_overflow";
-	irq->hw_idx = CWB_1;
-	irq->irq_idx = -1;
-	irq->intr_type = SDE_IRQ_TYPE_CWB_OVERFLOW;
-	irq->intr_idx = INTR_IDX_PP1_OVFL;
-	irq->cb.arg = wb_enc;
-	irq->cb.func = sde_encoder_phys_cwb_ovflow;
+	if (wb_cfg && (wb_cfg->features & BIT(SDE_WB_HAS_DCWB))) {
+		irq = &phys_enc->irq[INTR_IDX_PP_CWB_OVFL];
+		INIT_LIST_HEAD(&irq->cb.list);
+		irq->name = "pp_cwb0_overflow";
+		irq->hw_idx = PINGPONG_CWB_0;
+		irq->irq_idx = -1;
+		irq->intr_type = SDE_IRQ_TYPE_CWB_OVERFLOW;
+		irq->intr_idx = INTR_IDX_PP_CWB_OVFL;
+		irq->cb.arg = wb_enc;
+		irq->cb.func = sde_encoder_phys_cwb_ovflow;
 
-	irq = &phys_enc->irq[INTR_IDX_PP2_OVFL];
-	INIT_LIST_HEAD(&irq->cb.list);
-	irq->name = "pp2_overflow";
-	irq->hw_idx = CWB_2;
-	irq->irq_idx = -1;
-	irq->intr_type = SDE_IRQ_TYPE_CWB_OVERFLOW;
-	irq->intr_idx = INTR_IDX_PP2_OVFL;
-	irq->cb.arg = wb_enc;
-	irq->cb.func = sde_encoder_phys_cwb_ovflow;
+	} else {
+		irq = &phys_enc->irq[INTR_IDX_PP1_OVFL];
+		INIT_LIST_HEAD(&irq->cb.list);
+		irq->name = "pp1_overflow";
+		irq->hw_idx = CWB_1;
+		irq->irq_idx = -1;
+		irq->intr_type = SDE_IRQ_TYPE_CWB_OVERFLOW;
+		irq->intr_idx = INTR_IDX_PP1_OVFL;
+		irq->cb.arg = wb_enc;
+		irq->cb.func = sde_encoder_phys_cwb_ovflow;
 
-	irq = &phys_enc->irq[INTR_IDX_PP3_OVFL];
-	INIT_LIST_HEAD(&irq->cb.list);
-	irq->name = "pp3_overflow";
-	irq->hw_idx = CWB_3;
-	irq->irq_idx = -1;
-	irq->intr_type = SDE_IRQ_TYPE_CWB_OVERFLOW;
-	irq->intr_idx = INTR_IDX_PP3_OVFL;
-	irq->cb.arg = wb_enc;
-	irq->cb.func = sde_encoder_phys_cwb_ovflow;
+		irq = &phys_enc->irq[INTR_IDX_PP2_OVFL];
+		INIT_LIST_HEAD(&irq->cb.list);
+		irq->name = "pp2_overflow";
+		irq->hw_idx = CWB_2;
+		irq->irq_idx = -1;
+		irq->intr_type = SDE_IRQ_TYPE_CWB_OVERFLOW;
+		irq->intr_idx = INTR_IDX_PP2_OVFL;
+		irq->cb.arg = wb_enc;
+		irq->cb.func = sde_encoder_phys_cwb_ovflow;
 
-	irq = &phys_enc->irq[INTR_IDX_PP4_OVFL];
-	INIT_LIST_HEAD(&irq->cb.list);
-	irq->name = "pp4_overflow";
-	irq->hw_idx = CWB_4;
-	irq->irq_idx = -1;
-	irq->intr_type = SDE_IRQ_TYPE_CWB_OVERFLOW;
-	irq->intr_idx = INTR_IDX_PP4_OVFL;
-	irq->cb.arg = wb_enc;
-	irq->cb.func = sde_encoder_phys_cwb_ovflow;
+		irq = &phys_enc->irq[INTR_IDX_PP3_OVFL];
+		INIT_LIST_HEAD(&irq->cb.list);
+		irq->name = "pp3_overflow";
+		irq->hw_idx = CWB_3;
+		irq->irq_idx = -1;
+		irq->intr_type = SDE_IRQ_TYPE_CWB_OVERFLOW;
+		irq->intr_idx = INTR_IDX_PP3_OVFL;
+		irq->cb.arg = wb_enc;
+		irq->cb.func = sde_encoder_phys_cwb_ovflow;
 
-	irq = &phys_enc->irq[INTR_IDX_PP5_OVFL];
-	INIT_LIST_HEAD(&irq->cb.list);
-	irq->name = "pp5_overflow";
-	irq->hw_idx = CWB_5;
-	irq->irq_idx = -1;
-	irq->intr_type = SDE_IRQ_TYPE_CWB_OVERFLOW;
-	irq->intr_idx = INTR_IDX_PP5_OVFL;
-	irq->cb.arg = wb_enc;
-	irq->cb.func = sde_encoder_phys_cwb_ovflow;
+		irq = &phys_enc->irq[INTR_IDX_PP4_OVFL];
+		INIT_LIST_HEAD(&irq->cb.list);
+		irq->name = "pp4_overflow";
+		irq->hw_idx = CWB_4;
+		irq->irq_idx = -1;
+		irq->intr_type = SDE_IRQ_TYPE_CWB_OVERFLOW;
+		irq->intr_idx = INTR_IDX_PP4_OVFL;
+		irq->cb.arg = wb_enc;
+		irq->cb.func = sde_encoder_phys_cwb_ovflow;
+
+		irq = &phys_enc->irq[INTR_IDX_PP5_OVFL];
+		INIT_LIST_HEAD(&irq->cb.list);
+		irq->name = "pp5_overflow";
+		irq->hw_idx = CWB_5;
+		irq->irq_idx = -1;
+		irq->intr_type = SDE_IRQ_TYPE_CWB_OVERFLOW;
+		irq->intr_idx = INTR_IDX_PP5_OVFL;
+		irq->cb.arg = wb_enc;
+		irq->cb.func = sde_encoder_phys_cwb_ovflow;
+	}
 
 	/* create internal buffer for disable logic */
 	if (_sde_encoder_phys_wb_init_internal_fb(wb_enc,

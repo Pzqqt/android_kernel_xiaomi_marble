@@ -333,6 +333,7 @@ enum {
  * @SDE_MIXER_GC              Gamma correction block
  * @SDE_DIM_LAYER             Layer mixer supports dim layer
  * @SDE_DISP_CWB_PREF         Layer mixer preferred for CWB
+ * @SDE_DISP_DCWB_PREF        Layer mixer preferred for Dedicated CWB
  * @SDE_DISP_PRIMARY_PREF     Layer mixer preferred for primary display
  * @SDE_DISP_SECONDARY_PREF   Layer mixer preferred for secondary display
  * @SDE_MIXER_COMBINED_ALPHA  Layer mixer bg and fg alpha in single register
@@ -346,6 +347,7 @@ enum {
 	SDE_DISP_PRIMARY_PREF,
 	SDE_DISP_SECONDARY_PREF,
 	SDE_DISP_CWB_PREF,
+	SDE_DISP_DCWB_PREF,
 	SDE_MIXER_COMBINED_ALPHA,
 	SDE_MIXER_MAX
 };
@@ -414,6 +416,7 @@ enum {
  * @SDE_PINGPONG_DITHER,         Dither blocks
  * @SDE_PINGPONG_DITHER_LUMA,    Dither sub-blocks and features
  * @SDE_PINGPONG_MERGE_3D,  Separate MERGE_3D block exists
+ * @SDE_PINGPONG_CWB,           PP block supports CWB
  * @SDE_PINGPONG_MAX
  */
 enum {
@@ -425,6 +428,7 @@ enum {
 	SDE_PINGPONG_DITHER,
 	SDE_PINGPONG_DITHER_LUMA,
 	SDE_PINGPONG_MERGE_3D,
+	SDE_PINGPONG_CWB,
 	SDE_PINGPONG_MAX
 };
 
@@ -523,7 +527,9 @@ enum {
  * @SDE_WB_INPUT_CTRL       Writeback supports from which pp block input pixel
  *                          data arrives.
  * @SDE_WB_HAS_CWB          Writeback block supports concurrent writeback
+ * @SDE_WB_HAS_DCWB         Writeback block supports dedicated CWB
  * @SDE_WB_CWB_CTRL         Separate CWB control is available for configuring
+ * @SDE_WB_DCWB_CTRL        Separate DCWB control is available for configuring
  * @SDE_WB_MAX              maximum value
  */
 enum {
@@ -544,7 +550,9 @@ enum {
 	SDE_WB_CDP,
 	SDE_WB_INPUT_CTRL,
 	SDE_WB_HAS_CWB,
+	SDE_WB_HAS_DCWB,
 	SDE_WB_CWB_CTRL,
+	SDE_WB_DCWB_CTRL,
 	SDE_WB_MAX
 };
 
@@ -1440,6 +1448,7 @@ struct sde_perf_cfg {
  * @has_cdp            Client driven prefetch feature status
  * @has_wb_ubwc        UBWC feature supported on WB
  * @has_cwb_support    indicates if device supports primary capture through CWB
+ * @has_dedicated_cwb_support    indicates if device supports dedicated path for CWB capture
  * @cwb_blk_off        CWB offset address
  * @cwb_blk_stride     offset between each CWB blk
  * @ubwc_version       UBWC feature version (0x0 for not supported)
@@ -1522,6 +1531,7 @@ struct sde_mdss_cfg {
 	bool has_dim_layer;
 	bool has_wb_ubwc;
 	bool has_cwb_support;
+	bool has_dedicated_cwb_support;
 	u32 cwb_blk_off;
 	u32 cwb_blk_stride;
 	u32 ubwc_version;

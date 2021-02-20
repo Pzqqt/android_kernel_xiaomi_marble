@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #include "sde_hw_mdss.h"
@@ -92,6 +92,31 @@ static void _sde_hw_cwb_ctrl_init(struct sde_mdss_cfg *m,
 
 	for (i = 0; i < m->pingpong_count; i++) {
 		snprintf(name, sizeof(name), "cwb%d", i);
+		blk_off = b->blk_off + (m->cwb_blk_stride * i);
+
+		sde_dbg_reg_register_dump_range(SDE_DBG_NAME, name,
+				blk_off, blk_off + b->length, 0xff);
+	}
+}
+
+static void _sde_hw_dcwb_ctrl_init(struct sde_mdss_cfg *m,
+		void __iomem *addr, struct sde_hw_blk_reg_map *b)
+{
+	int i;
+	u32 blk_off;
+	char name[64] = {0};
+
+	if (!b)
+		return;
+
+	b->base_off = addr;
+	b->blk_off = m->cwb_blk_off;
+	b->length = 0x20;
+	b->hwversion = m->hwversion;
+	b->log_mask = SDE_DBG_MASK_WB;
+
+	for (i = 0; i < m->pingpong_count; i++) {
+		snprintf(name, sizeof(name), "dcwb%d", i);
 		blk_off = b->blk_off + (m->cwb_blk_stride * i);
 
 		sde_dbg_reg_register_dump_range(SDE_DBG_NAME, name,
@@ -270,6 +295,46 @@ static void sde_hw_wb_bind_pingpong_blk(
 	SDE_REG_WRITE(c, WB_MUX, mux_cfg);
 }
 
+static void sde_hw_wb_bind_dcwb_pp_blk(
+		struct sde_hw_wb *ctx,
+		bool enable,
+		const enum sde_pingpong pp)
+{
+	struct sde_hw_blk_reg_map *c;
+	int mux_cfg = 0xF;
+
+	if (!ctx)
+		return;
+
+	c = &ctx->hw;
+	if (enable)
+		mux_cfg = 0xd;
+
+	SDE_REG_WRITE(c, WB_MUX, mux_cfg);
+}
+
+static void sde_hw_wb_program_dcwb_ctrl(struct sde_hw_wb *ctx,
+	const enum sde_dcwb cur_idx, const enum sde_cwb data_src,
+	int tap_location, bool enable)
+{
+	struct sde_hw_blk_reg_map *c;
+	u32 blk_base;
+
+	if (!ctx)
+		return;
+
+	c = &ctx->dcwb_hw;
+	blk_base  = ctx->catalog->cwb_blk_stride * (cur_idx - DCWB_0);
+
+	if (enable) {
+		SDE_REG_WRITE(c, blk_base + CWB_CTRL_SRC_SEL, data_src - CWB_0);
+		SDE_REG_WRITE(c, blk_base + CWB_CTRL_MODE, tap_location);
+	} else {
+		SDE_REG_WRITE(c, blk_base + CWB_CTRL_SRC_SEL, 0xf);
+		SDE_REG_WRITE(c, blk_base + CWB_CTRL_MODE, 0x0);
+	}
+}
+
 static void sde_hw_wb_program_cwb_ctrl(struct sde_hw_wb *ctx,
 	const enum sde_cwb cur_idx, const enum sde_cwb data_src,
 	bool dspp_out, bool enable)
@@ -312,6 +377,11 @@ static void _setup_wb_ops(struct sde_hw_wb_ops *ops,
 
 	if (test_bit(SDE_WB_CWB_CTRL, &features))
 		ops->program_cwb_ctrl = sde_hw_wb_program_cwb_ctrl;
+
+	if (test_bit(SDE_WB_DCWB_CTRL, &features)) {
+		ops->program_dcwb_ctrl = sde_hw_wb_program_dcwb_ctrl;
+		ops->bind_dcwb_pp_blk = sde_hw_wb_bind_dcwb_pp_blk;
+	}
 }
 
 static struct sde_hw_blk_ops sde_hw_ops = {
@@ -361,6 +431,9 @@ struct sde_hw_wb *sde_hw_wb_init(enum sde_wb idx,
 
 	if (test_bit(SDE_WB_CWB_CTRL, &cfg->features))
 		_sde_hw_cwb_ctrl_init(m, addr, &c->cwb_hw);
+
+	if (test_bit(SDE_WB_DCWB_CTRL, &cfg->features))
+		_sde_hw_dcwb_ctrl_init(m, addr, &c->dcwb_hw);
 
 	return c;
 

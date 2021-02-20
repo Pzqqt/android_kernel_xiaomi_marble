@@ -29,6 +29,7 @@
 #define RM_RQ_DSPP(r) ((r)->top_ctrl & BIT(SDE_RM_TOPCTL_DSPP))
 #define RM_RQ_DS(r) ((r)->top_ctrl & BIT(SDE_RM_TOPCTL_DS))
 #define RM_RQ_CWB(r) ((r)->top_ctrl & BIT(SDE_RM_TOPCTL_CWB))
+#define RM_RQ_DCWB(r) ((r)->top_ctrl & BIT(SDE_RM_TOPCTL_DCWB))
 #define RM_IS_TOPOLOGY_MATCH(t, r) ((t).num_lm == (r).num_lm && \
 				(t).num_comp_enc == (r).num_enc && \
 				(t).num_intf == (r).num_intf && \
@@ -984,7 +985,7 @@ static bool _sde_rm_check_lm_and_get_connected_blks(
 	const struct sde_lm_cfg *lm_cfg = to_sde_hw_mixer(lm->hw)->cap;
 	const struct sde_pingpong_cfg *pp_cfg;
 	bool ret, is_conn_primary, is_conn_secondary;
-	u32 lm_primary_pref, lm_secondary_pref, cwb_pref;
+	u32 lm_primary_pref, lm_secondary_pref, cwb_pref, dcwb_pref;
 
 	*dspp = NULL;
 	*ds = NULL;
@@ -993,6 +994,7 @@ static bool _sde_rm_check_lm_and_get_connected_blks(
 	lm_primary_pref = lm_cfg->features & BIT(SDE_DISP_PRIMARY_PREF);
 	lm_secondary_pref = lm_cfg->features & BIT(SDE_DISP_SECONDARY_PREF);
 	cwb_pref = lm_cfg->features & BIT(SDE_DISP_CWB_PREF);
+	dcwb_pref = lm_cfg->features & BIT(SDE_DISP_DCWB_PREF);
 	is_conn_primary = (reqs->hw_res.display_type ==
 				 SDE_CONNECTOR_PRIMARY) ? true : false;
 	is_conn_secondary = (reqs->hw_res.display_type ==
@@ -1026,8 +1028,9 @@ static bool _sde_rm_check_lm_and_get_connected_blks(
 		 * If CWB is enabled and LM is not CWB supported
 		 * then return false.
 		 */
-		if (RM_RQ_CWB(reqs) && !cwb_pref) {
-			SDE_DEBUG("fail: cwb supported lm not allocated\n");
+		if ((RM_RQ_CWB(reqs) && !cwb_pref) ||
+		    (RM_RQ_DCWB(reqs) && !dcwb_pref)) {
+			SDE_DEBUG("fail: cwb/dcwb supported lm not allocated\n");
 			return false;
 		}
 	} else if ((!is_conn_primary && lm_primary_pref) ||
@@ -1992,6 +1995,7 @@ static int _sde_rm_populate_requirements(
 		struct drm_encoder *enc,
 		struct drm_crtc_state *crtc_state,
 		struct drm_connector_state *conn_state,
+		struct sde_mdss_cfg *cfg,
 		struct sde_rm_requirements *reqs)
 {
 	const struct drm_display_mode *mode = &crtc_state->mode;
@@ -2031,8 +2035,12 @@ static int _sde_rm_populate_requirements(
 	 * Set the requirement for LM which has CWB support if CWB is
 	 * found enabled.
 	 */
-	if (!RM_RQ_CWB(reqs) && sde_encoder_in_clone_mode(enc)) {
-		reqs->top_ctrl |= BIT(SDE_RM_TOPCTL_CWB);
+	if ((!RM_RQ_CWB(reqs) || !RM_RQ_DCWB(reqs))
+				&& sde_encoder_in_clone_mode(enc)) {
+		if (cfg->has_dedicated_cwb_support)
+			reqs->top_ctrl |= BIT(SDE_RM_TOPCTL_DCWB);
+		else
+			reqs->top_ctrl |= BIT(SDE_RM_TOPCTL_CWB);
 
 		/*
 		 * topology selection based on conn mode is not valid for CWB
@@ -2476,7 +2484,7 @@ int sde_rm_reserve(
 
 	reqs.hw_res.comp_info = comp_info;
 	ret = _sde_rm_populate_requirements(rm, enc, crtc_state,
-			conn_state, &reqs);
+			conn_state, sde_kms->catalog, &reqs);
 	if (ret) {
 		SDE_ERROR("failed to populate hw requirements\n");
 		goto end;
