@@ -641,6 +641,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		HFI_PROP_QP_PACKED,
 		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT},
 
+	// TODO: Enable while reveiwing support for layer encoding
 	{HIER_CODING_TYPE, ENC, HEVC,
 		V4L2_MPEG_VIDEO_HEVC_HIERARCHICAL_CODING_B,
 		V4L2_MPEG_VIDEO_HEVC_HIERARCHICAL_CODING_P,
@@ -651,7 +652,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		HFI_PROP_LAYER_ENCODING_TYPE,
 		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT | CAP_FLAG_MENU,
 		{0}, {0},
-		NULL, msm_vidc_set_u32_enum},
+		NULL, NULL},
 
 	/* TODO(AS) - ctrl init failing. Need to fix
 	{HIER_CODING_TYPE, ENC, H264,
