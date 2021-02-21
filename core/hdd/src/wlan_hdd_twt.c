@@ -765,7 +765,9 @@ static int hdd_twt_get_session_params(struct hdd_adapter *adapter,
 			  QDF_MAC_ADDR_REF(params[0].peer_mac));
 	}
 
-	if (!ucfg_mlme_is_twt_setup_done(adapter->hdd_ctx->psoc,
+	if ((adapter->device_mode != QDF_SAP_MODE ||
+	     params[0].dialog_id != WLAN_ALL_SESSIONS_DIALOG_ID) &&
+	    !ucfg_mlme_is_twt_setup_done(adapter->hdd_ctx->psoc,
 					 &hdd_sta_ctx->conn_info.bssid,
 					 params[0].dialog_id)) {
 		hdd_debug("vdev%d: TWT session %d setup incomplete",
