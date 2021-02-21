@@ -654,10 +654,11 @@ enum drm_mode_status dp_connector_mode_valid(struct drm_connector *connector,
 		struct drm_display_mode *mode, void *display,
 		const struct msm_resource_caps_info *avail_res)
 {
-	int rc = 0;
+	int rc = 0, vrefresh;
 	struct dp_display *dp_disp;
 	struct sde_connector *sde_conn;
 	struct msm_resource_caps_info avail_dp_res;
+	struct dp_panel *dp_panel;
 
 	if (!mode || !display || !connector) {
 		DP_ERR("invalid params\n");
@@ -671,6 +672,9 @@ enum drm_mode_status dp_connector_mode_valid(struct drm_connector *connector,
 	}
 
 	dp_disp = display;
+	dp_panel = sde_conn->drv_panel;
+
+	vrefresh = drm_mode_vrefresh(mode);
 
 	rc = dp_disp->get_available_dp_resources(dp_disp, avail_res,
 			&avail_dp_res);
@@ -678,6 +682,12 @@ enum drm_mode_status dp_connector_mode_valid(struct drm_connector *connector,
 		DP_ERR("error getting max dp resources. rc:%d\n", rc);
 		return MODE_ERROR;
 	}
+
+	if (dp_panel->mode_override && (mode->hdisplay != dp_panel->hdisplay ||
+			mode->vdisplay != dp_panel->vdisplay ||
+			vrefresh != dp_panel->vrefresh ||
+			mode->picture_aspect_ratio != dp_panel->aspect_ratio))
+		return MODE_BAD;
 
 	return dp_disp->validate_mode(dp_disp, sde_conn->drv_panel,
 			mode, &avail_dp_res);

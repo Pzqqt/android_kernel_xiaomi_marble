@@ -5,6 +5,8 @@
 
 #include <linux/debugfs.h>
 #include <linux/slab.h>
+#include <drm/drm_dp_mst_helper.h>
+#include <drm/drm_probe_helper.h>
 
 #include "dp_power.h"
 #include "dp_catalog.h"
@@ -15,19 +17,20 @@
 #include "dp_display.h"
 #include "dp_pll.h"
 #include "dp_hpd.h"
+#include "dp_mst_sim.h"
 
 #define DEBUG_NAME "drm_dp"
 
 struct dp_debug_private {
 	struct dentry *root;
-	u8 *edid;
-	u32 edid_size;
 
-	u8 *dpcd;
+	u32 dpcd_offset;
 	u32 dpcd_size;
 
 	u32 mst_con_id;
+	u32 mst_edid_idx;
 	bool hotplug;
+	u32 sim_mode;
 
 	char exe_mode[SZ_32];
 	char reg_dump[SZ_32];
@@ -45,40 +48,73 @@ struct dp_debug_private {
 	struct dp_pll *pll;
 	struct dp_display *display;
 	struct mutex lock;
+	struct dp_aux_bridge *sim_bridge;
 };
 
-static int dp_debug_get_edid_buf(struct dp_debug_private *debug)
+static int dp_debug_sim_hpd_cb(void *arg, bool hpd, bool hpd_irq)
 {
-	int rc = 0;
+	struct dp_debug_private *debug = arg;
 
-	if (!debug->edid) {
-		debug->edid = devm_kzalloc(debug->dev, SZ_256, GFP_KERNEL);
-		if (!debug->edid) {
-			rc = -ENOMEM;
-			goto end;
-		}
-
-		debug->edid_size = SZ_256;
-	}
-end:
-	return rc;
+	if (hpd_irq)
+		return debug->hpd->simulate_attention(debug->hpd, 0);
+	else
+		return debug->hpd->simulate_connect(debug->hpd, hpd);
 }
 
-static int dp_debug_get_dpcd_buf(struct dp_debug_private *debug)
+static int dp_debug_attach_sim_bridge(struct dp_debug_private *debug)
 {
-	int rc = 0;
+	int ret;
 
-	if (!debug->dpcd) {
-		debug->dpcd = devm_kzalloc(debug->dev, SZ_4K, GFP_KERNEL);
-		if (!debug->dpcd) {
-			rc = -ENOMEM;
-			goto end;
-		}
+	if (debug->sim_bridge)
+		return 0;
 
-		debug->dpcd_size = SZ_4K;
-	}
-end:
-	return rc;
+	ret = dp_sim_create_bridge(debug->dev, &debug->sim_bridge);
+	if (ret)
+		return ret;
+
+	dp_sim_update_port_num(debug->sim_bridge, 1);
+
+	if (debug->sim_bridge->register_hpd)
+		debug->sim_bridge->register_hpd(debug->sim_bridge,
+				dp_debug_sim_hpd_cb, debug);
+
+	return 0;
+}
+
+static void dp_debug_enable_sim_mode(struct dp_debug_private *debug,
+		u32 mode_mask)
+{
+	/* return if mode is already enabled */
+	if ((debug->sim_mode & mode_mask) == mode_mask)
+		return;
+
+	/* create bridge if not yet */
+	if (dp_debug_attach_sim_bridge(debug))
+		return;
+
+	/* switch to bridge mode */
+	if (!debug->sim_mode)
+		debug->aux->set_sim_mode(debug->aux, debug->sim_bridge);
+
+	/* update sim mode */
+	debug->sim_mode |= mode_mask;
+	dp_sim_set_sim_mode(debug->sim_bridge, debug->sim_mode);
+}
+
+static void dp_debug_disable_sim_mode(struct dp_debug_private *debug,
+		u32 mode_mask)
+{
+	/* return if mode is already disabled */
+	if (!(debug->sim_mode & mode_mask))
+		return;
+
+	/* update sim mode */
+	debug->sim_mode &= ~mode_mask;
+	dp_sim_set_sim_mode(debug->sim_bridge, debug->sim_mode);
+
+	/* switch to normal mode */
+	if (!debug->sim_mode)
+		debug->aux->set_sim_mode(debug->aux, NULL);
 }
 
 static ssize_t dp_debug_write_edid(struct file *file,
@@ -112,32 +148,13 @@ static ssize_t dp_debug_write_edid(struct file *file,
 
 	edid_size = size / char_to_nib;
 	buf_t = buf;
+	size = edid_size;
 
-	if (dp_debug_get_edid_buf(debug))
+	edid = kzalloc(size, GFP_KERNEL);
+	if (!edid)
 		goto bail;
 
-	if (edid_size != debug->edid_size) {
-		DP_DEBUG("realloc debug edid\n");
-
-		if (debug->edid) {
-			devm_kfree(debug->dev, debug->edid);
-
-			debug->edid = devm_kzalloc(debug->dev,
-						edid_size, GFP_KERNEL);
-			if (!debug->edid) {
-				rc = -ENOMEM;
-				goto bail;
-			}
-
-			debug->edid_size = edid_size;
-
-			debug->aux->set_sim_mode(debug->aux,
-					debug->dp_debug.sim_mode,
-					debug->edid, debug->dpcd);
-		}
-	}
-
-	while (edid_size--) {
+	while (size--) {
 		char t[3];
 		int d;
 
@@ -149,23 +166,16 @@ static ssize_t dp_debug_write_edid(struct file *file,
 			goto bail;
 		}
 
-		if (debug->edid && (edid_buf_index < debug->edid_size))
-			debug->edid[edid_buf_index++] = d;
-
+		edid[edid_buf_index++] = d;
 		buf_t += char_to_nib;
 	}
 
-	edid = debug->edid;
+	dp_debug_enable_sim_mode(debug, DP_SIM_MODE_EDID);
+	dp_sim_update_port_edid(debug->sim_bridge, debug->mst_edid_idx,
+			edid, edid_size);
 bail:
 	kfree(buf);
-	debug->panel->set_edid(debug->panel, edid, debug->edid_size);
-
-	/*
-	 * print edid status as this code is executed
-	 * only while running in debug mode which is manually
-	 * triggered by a tester or a script.
-	 */
-	DP_INFO("[%s]\n", edid ? "SET" : "CLEAR");
+	kfree(edid);
 
 	mutex_unlock(&debug->lock);
 	return rc;
@@ -182,7 +192,6 @@ static ssize_t dp_debug_write_dpcd(struct file *file,
 	ssize_t rc = count;
 	char offset_ch[5];
 	u32 offset, data_len;
-	const u32 dp_receiver_cap_size = 16;
 
 	if (!debug)
 		return -ENODEV;
@@ -214,15 +223,6 @@ static ssize_t dp_debug_write_dpcd(struct file *file,
 		goto bail;
 	}
 
-	if (dp_debug_get_dpcd_buf(debug))
-		goto bail;
-
-	if (offset == 0xFFFF) {
-		DP_ERR("clearing dpcd\n");
-		memset(debug->dpcd, 0, debug->dpcd_size);
-		goto bail;
-	}
-
 	size -= 4;
 	if (size == 0)
 		goto bail;
@@ -231,7 +231,11 @@ static ssize_t dp_debug_write_dpcd(struct file *file,
 	data_len = dpcd_size;
 	buf_t = buf + 4;
 
-	dpcd_buf_index = offset;
+	dpcd = kzalloc(dpcd_size, GFP_KERNEL);
+	if (ZERO_OR_NULL_PTR(dpcd)) {
+		rc = -ENOMEM;
+		goto bail;
+	}
 
 	while (dpcd_size--) {
 		char t[3];
@@ -245,33 +249,33 @@ static ssize_t dp_debug_write_dpcd(struct file *file,
 			goto bail;
 		}
 
-		if (dpcd_buf_index < debug->dpcd_size)
-			debug->dpcd[dpcd_buf_index++] = d;
+		dpcd[dpcd_buf_index++] = d;
 
 		buf_t += char_to_nib;
 	}
 
-	dpcd = debug->dpcd;
+	/*
+	 * if link training status registers are reprogramed,
+	 * read link training status from simulator, otherwise
+	 * read link training status from real aux channel.
+	 */
+	if (offset <= DP_LANE0_1_STATUS &&
+			offset + dpcd_buf_index > DP_LANE0_1_STATUS)
+		dp_debug_enable_sim_mode(debug,
+			DP_SIM_MODE_DPCD_READ | DP_SIM_MODE_LINK_TRAIN);
+	else
+		dp_debug_enable_sim_mode(debug, DP_SIM_MODE_DPCD_READ);
+
+	dp_sim_write_dpcd_reg(debug->sim_bridge,
+			dpcd, dpcd_buf_index, offset);
+	debug->dpcd_offset = offset;
+	debug->dpcd_size = dpcd_buf_index;
+
 bail:
 	kfree(buf);
-
-	if (!dpcd || (size / char_to_nib) >= dp_receiver_cap_size ||
-	    offset == 0xffff) {
-		debug->panel->set_dpcd(debug->panel, dpcd);
-		/*
-		 * print dpcd status as this code is executed
-		 * only while running in debug mode which is manually
-		 * triggered by a tester or a script.
-		 */
-		if (!dpcd || (offset == 0xffff))
-			DP_INFO("[%s]\n", "CLEAR");
-		else
-			DP_INFO("[%s]\n", "SET");
-	}
+	kfree(dpcd);
 
 	mutex_unlock(&debug->lock);
-
-	debug->aux->dpcd_updated(debug->aux);
 	return rc;
 }
 
@@ -283,44 +287,42 @@ static ssize_t dp_debug_read_dpcd(struct file *file,
 	int const buf_size = SZ_4K;
 	u32 offset = 0;
 	u32 len = 0;
-	bool notify = false;
+	u8 *dpcd;
 
-	if (!debug || !debug->aux || !debug->dpcd)
+	if (!debug || !debug->aux)
 		return -ENODEV;
 
-	mutex_lock(&debug->lock);
 	if (*ppos)
-		goto end;
+		return 0;
 
 	buf = kzalloc(buf_size, GFP_KERNEL);
 	if (!buf)
-		goto end;
+		return -ENOMEM;
 
-	len += snprintf(buf, buf_size, "0x%x", debug->aux->reg);
+	mutex_lock(&debug->lock);
+	dpcd = kzalloc(buf_size, GFP_KERNEL);
+	if (!dpcd)
+		goto bail;
 
-	if (!debug->aux->read) {
-		while (1) {
-			if (debug->aux->reg + offset >= buf_size ||
-			    offset >= debug->aux->size)
-				break;
+	dp_sim_read_dpcd_reg(debug->sim_bridge, dpcd,
+			debug->dpcd_size, debug->dpcd_offset);
 
-			len += snprintf(buf + len, buf_size - len, "0x%x",
-				debug->dpcd[debug->aux->reg + offset++]);
-		}
+	len += snprintf(buf, buf_size, "0x%x", debug->dpcd_offset);
 
-		notify = true;
+	while (offset < debug->dpcd_size) {
+		len += snprintf(buf + len, buf_size - len, "0x%x",
+			dpcd[debug->dpcd_offset + offset++]);
 	}
+
+	kfree(dpcd);
 
 	len = min_t(size_t, count, len);
 	if (!copy_to_user(user_buff, buf, len))
 		*ppos += len;
 
-	kfree(buf);
-end:
+bail:
 	mutex_unlock(&debug->lock);
-
-	if (notify)
-		debug->aux->dpcd_updated(debug->aux);
+	kfree(buf);
 
 	return len;
 }
@@ -371,6 +373,7 @@ static ssize_t dp_debug_write_edid_modes(struct file *file,
 		const char __user *user_buff, size_t count, loff_t *ppos)
 {
 	struct dp_debug_private *debug = file->private_data;
+	struct dp_panel *panel;
 	char buf[SZ_32];
 	size_t len = 0;
 	int hdisplay = 0, vdisplay = 0, vrefresh = 0, aspect_ratio;
@@ -380,6 +383,8 @@ static ssize_t dp_debug_write_edid_modes(struct file *file,
 
 	if (*ppos)
 		goto end;
+
+	panel = debug->panel;
 
 	/* Leave room for termination char */
 	len = min_t(size_t, count, SZ_32 - 1);
@@ -395,15 +400,15 @@ static ssize_t dp_debug_write_edid_modes(struct file *file,
 	if (!hdisplay || !vdisplay || !vrefresh)
 		goto clear;
 
-	debug->dp_debug.debug_en = true;
-	debug->dp_debug.hdisplay = hdisplay;
-	debug->dp_debug.vdisplay = vdisplay;
-	debug->dp_debug.vrefresh = vrefresh;
-	debug->dp_debug.aspect_ratio = aspect_ratio;
+	panel->mode_override = true;
+	panel->hdisplay = hdisplay;
+	panel->vdisplay = vdisplay;
+	panel->vrefresh = vrefresh;
+	panel->aspect_ratio = aspect_ratio;
 	goto end;
 clear:
 	DP_DEBUG("clearing debug modes\n");
-	debug->dp_debug.debug_en = false;
+	panel->mode_override = false;
 end:
 	return len;
 }
@@ -412,17 +417,20 @@ static ssize_t dp_debug_write_edid_modes_mst(struct file *file,
 		const char __user *user_buff, size_t count, loff_t *ppos)
 {
 	struct dp_debug_private *debug = file->private_data;
-	struct dp_mst_connector *mst_connector;
+	struct drm_connector *connector;
+	struct sde_connector *sde_conn;
+	struct dp_panel *panel = NULL;
 	char buf[SZ_512];
 	char *read_buf;
 	size_t len = 0;
 
 	int hdisplay = 0, vdisplay = 0, vrefresh = 0, aspect_ratio = 0;
 	int con_id = 0, offset = 0, debug_en = 0;
-	bool in_list = false;
 
 	if (!debug)
 		return -ENODEV;
+
+	mutex_lock(&debug->lock);
 
 	if (*ppos)
 		goto end;
@@ -434,33 +442,32 @@ static ssize_t dp_debug_write_edid_modes_mst(struct file *file,
 	buf[len] = '\0';
 	read_buf = buf;
 
-	mutex_lock(&debug->dp_debug.dp_mst_connector_list.lock);
 	while (sscanf(read_buf, "%d %d %d %d %d %d%n", &debug_en, &con_id,
 			&hdisplay, &vdisplay, &vrefresh, &aspect_ratio,
 			&offset) == 6) {
-		list_for_each_entry(mst_connector,
-				&debug->dp_debug.dp_mst_connector_list.list,
-				list) {
-			if (mst_connector->con_id == con_id) {
-				in_list = true;
-				mst_connector->debug_en = (bool) debug_en;
-				mst_connector->hdisplay = hdisplay;
-				mst_connector->vdisplay = vdisplay;
-				mst_connector->vrefresh = vrefresh;
-				mst_connector->aspect_ratio = aspect_ratio;
-				DP_INFO("Setting %dx%dp%d on conn %d\n",
-					hdisplay, vdisplay, vrefresh, con_id);
+		connector = drm_connector_lookup((*debug->connector)->dev,
+				NULL, con_id);
+		if (connector) {
+			sde_conn = to_sde_connector(connector);
+			panel = sde_conn->drv_panel;
+			if (panel && sde_conn->mst_port) {
+				panel->mode_override = debug_en;
+				panel->hdisplay = hdisplay;
+				panel->vdisplay = vdisplay;
+				panel->vrefresh = vrefresh;
+				panel->aspect_ratio = aspect_ratio;
+			} else {
+				DP_ERR("connector id %d is not mst\n", con_id);
 			}
+			drm_connector_put(connector);
+		} else {
+			DP_ERR("invalid connector id %d\n", con_id);
 		}
 
-		if (!in_list)
-			DP_DEBUG("dp connector id %d is invalid\n", con_id);
-
-		in_list = false;
 		read_buf += offset;
 	}
-	mutex_unlock(&debug->dp_debug.dp_mst_connector_list.lock);
 end:
+	mutex_unlock(&debug->lock);
 	return len;
 }
 
@@ -468,16 +475,18 @@ static ssize_t dp_debug_write_mst_con_id(struct file *file,
 		const char __user *user_buff, size_t count, loff_t *ppos)
 {
 	struct dp_debug_private *debug = file->private_data;
-	struct dp_mst_connector *mst_connector;
+	struct drm_connector *connector;
+	struct sde_connector *sde_conn;
+	struct drm_dp_mst_port *mst_port;
+	struct dp_panel *dp_panel;
 	char buf[SZ_32];
 	size_t len = 0;
 	int con_id = 0, status;
-	bool in_list = false;
-	const int dp_en = BIT(3), hpd_high = BIT(7), hpd_irq = BIT(8);
-	int vdo = dp_en | hpd_high | hpd_irq;
 
 	if (!debug)
 		return -ENODEV;
+
+	mutex_lock(&debug->lock);
 
 	if (*ppos)
 		goto end;
@@ -489,50 +498,49 @@ static ssize_t dp_debug_write_mst_con_id(struct file *file,
 
 	buf[len] = '\0';
 
-	if (sscanf(buf, "%d %d", &con_id, &status) != 2) {
-		len = 0;
+	if (sscanf(buf, "%d %d", &con_id, &status) != 2)
 		goto end;
-	}
 
 	if (!con_id)
 		goto clear;
 
-	/* Verify that the connector id is for a valid mst connector. */
-	mutex_lock(&debug->dp_debug.dp_mst_connector_list.lock);
-	list_for_each_entry(mst_connector,
-			&debug->dp_debug.dp_mst_connector_list.list, list) {
-		if (mst_connector->con_id == con_id) {
-			in_list = true;
-			debug->mst_con_id = con_id;
-			mst_connector->state = status;
-			break;
-		}
-	}
-	mutex_unlock(&debug->dp_debug.dp_mst_connector_list.lock);
-
-	if (!in_list && status != connector_status_connected) {
+	connector = drm_connector_lookup((*debug->connector)->dev,
+			NULL, con_id);
+	if (!connector) {
 		DP_ERR("invalid connector id %u\n", con_id);
 		goto end;
 	}
 
-	if (status == connector_status_unknown)
-		goto end;
+	sde_conn = to_sde_connector(connector);
 
-	debug->dp_debug.mst_hpd_sim = true;
-
-	if (status == connector_status_connected) {
-		DP_INFO("plug mst connector\n", con_id, status);
-		debug->dp_debug.mst_sim_add_con = true;
-	} else {
-		DP_INFO("unplug mst connector %d\n", con_id, status);
+	if (!sde_conn->drv_panel || !sde_conn->mst_port) {
+		DP_ERR("invalid connector state %d\n", con_id);
+		goto out;
 	}
 
-	debug->hpd->simulate_attention(debug->hpd, vdo);
+	debug->mst_con_id = con_id;
+
+	if (status == connector_status_unknown)
+		goto out;
+
+	mst_port = sde_conn->mst_port;
+	dp_panel = sde_conn->drv_panel;
+
+	if (debug->dp_debug.sim_mode) {
+		dp_sim_update_port_status(debug->sim_bridge,
+				mst_port->port_num, status);
+	} else {
+		dp_panel->mst_hide = (status == connector_status_disconnected);
+		drm_kms_helper_hotplug_event(connector->dev);
+	}
+out:
+	drm_connector_put(connector);
 	goto end;
 clear:
 	DP_DEBUG("clearing mst_con_id\n");
 	debug->mst_con_id = 0;
 end:
+	mutex_unlock(&debug->lock);
 	return len;
 }
 
@@ -556,7 +564,6 @@ static ssize_t dp_debug_write_mst_con_add(struct file *file,
 	if (copy_from_user(buf, user_buff, len))
 		goto end;
 
-	debug->dp_debug.mst_hpd_sim = true;
 	debug->dp_debug.mst_sim_add_con = true;
 	debug->hpd->simulate_attention(debug->hpd, vdo);
 end:
@@ -567,7 +574,8 @@ static ssize_t dp_debug_write_mst_con_remove(struct file *file,
 		const char __user *user_buff, size_t count, loff_t *ppos)
 {
 	struct dp_debug_private *debug = file->private_data;
-	struct dp_mst_connector *mst_connector;
+	struct drm_connector_list_iter conn_iter;
+	struct drm_connector *connector;
 	char buf[SZ_32];
 	size_t len = 0;
 	int con_id = 0;
@@ -596,23 +604,20 @@ static ssize_t dp_debug_write_mst_con_remove(struct file *file,
 	if (!con_id)
 		goto end;
 
-	/* Verify that the connector id is for a valid mst connector. */
-	mutex_lock(&debug->dp_debug.dp_mst_connector_list.lock);
-	list_for_each_entry(mst_connector,
-			&debug->dp_debug.dp_mst_connector_list.list, list) {
-		if (mst_connector->con_id == con_id) {
+	drm_connector_list_iter_begin((*debug->connector)->dev, &conn_iter);
+	drm_for_each_connector_iter(connector, &conn_iter) {
+		if (connector->base.id == con_id) {
 			in_list = true;
 			break;
 		}
 	}
-	mutex_unlock(&debug->dp_debug.dp_mst_connector_list.lock);
+	drm_connector_list_iter_end(&conn_iter);
 
 	if (!in_list) {
 		DRM_ERROR("invalid connector id %u\n", con_id);
 		goto end;
 	}
 
-	debug->dp_debug.mst_hpd_sim = true;
 	debug->dp_debug.mst_sim_remove_con = true;
 	debug->dp_debug.mst_sim_remove_con_id = con_id;
 	debug->hpd->simulate_attention(debug->hpd, vdo);
@@ -812,6 +817,8 @@ static ssize_t dp_debug_mst_sideband_mode_write(struct file *file,
 	if (!debug)
 		return -ENODEV;
 
+	mutex_lock(&debug->lock);
+
 	/* Leave room for termination char */
 	len = min_t(size_t, count, SZ_8 - 1);
 	if (copy_from_user(buf, user_buff, len))
@@ -821,19 +828,29 @@ static ssize_t dp_debug_mst_sideband_mode_write(struct file *file,
 
 	if (sscanf(buf, "%d %u", &mst_sideband_mode, &mst_port_cnt) != 2) {
 		DP_ERR("invalid input\n");
-		return -EINVAL;
+		goto bail;
 	}
 
-	if (mst_port_cnt > DP_MST_SIM_MAX_PORTS) {
-		DP_ERR("port cnt:%d exceeding max:%d\n", mst_port_cnt,
-				DP_MST_SIM_MAX_PORTS);
-		return -EINVAL;
-	}
+	if (!mst_port_cnt)
+		mst_port_cnt = 1;
 
-	debug->parser->has_mst_sideband = mst_sideband_mode ? true : false;
-	debug->dp_debug.mst_port_cnt = mst_port_cnt;
+	debug->mst_edid_idx = 0;
+
+	if (mst_sideband_mode)
+		dp_debug_disable_sim_mode(debug, DP_SIM_MODE_MST);
+	else
+		dp_debug_enable_sim_mode(debug, DP_SIM_MODE_MST);
+
+	dp_sim_update_port_num(debug->sim_bridge, mst_port_cnt);
+
+	buf[0] = !mst_sideband_mode;
+	dp_sim_write_dpcd_reg(debug->sim_bridge, buf, 1, DP_MSTM_CAP);
+
 	DP_DEBUG("mst_sideband_mode: %d port_cnt:%d\n",
 			mst_sideband_mode, mst_port_cnt);
+
+bail:
+	mutex_unlock(&debug->lock);
 	return count;
 }
 
@@ -1056,50 +1073,29 @@ static ssize_t dp_debug_read_edid_modes_mst(struct file *file,
 		char __user *user_buff, size_t count, loff_t *ppos)
 {
 	struct dp_debug_private *debug = file->private_data;
-	struct dp_mst_connector *mst_connector;
 	char *buf;
 	u32 len = 0, ret = 0, max_size = SZ_4K;
-	int rc = 0;
 	struct drm_connector *connector;
 	struct drm_display_mode *mode;
-	bool in_list = false;
 
 	if (!debug) {
 		DP_ERR("invalid data\n");
-		rc = -ENODEV;
-		goto error;
-	}
-
-	mutex_lock(&debug->dp_debug.dp_mst_connector_list.lock);
-	list_for_each_entry(mst_connector,
-			&debug->dp_debug.dp_mst_connector_list.list, list) {
-		if (mst_connector->con_id == debug->mst_con_id) {
-			connector = mst_connector->conn;
-			in_list = true;
-		}
-	}
-	mutex_unlock(&debug->dp_debug.dp_mst_connector_list.lock);
-
-	if (!in_list) {
-		DP_ERR("connector %u not in mst list\n", debug->mst_con_id);
-		rc = -EINVAL;
-		goto error;
-	}
-
-	if (!connector) {
-		DP_ERR("connector is NULL\n");
-		rc = -EINVAL;
-		goto error;
+		return -ENODEV;
 	}
 
 	if (*ppos)
-		goto error;
+		return 0;
+
+	connector = drm_connector_lookup((*debug->connector)->dev,
+			NULL, debug->mst_con_id);
+	if (!connector) {
+		DP_ERR("connector %u not in mst list\n", debug->mst_con_id);
+		return 0;
+	}
 
 	buf = kzalloc(SZ_4K, GFP_KERNEL);
-	if (!buf) {
-		rc = -ENOMEM;
-		goto error;
-	}
+	if (!buf)
+		goto clean;
 
 	mutex_lock(&connector->dev->mode_config.mutex);
 	list_for_each_entry(mode, &connector->modes, head) {
@@ -1115,17 +1111,15 @@ static ssize_t dp_debug_read_edid_modes_mst(struct file *file,
 
 	len = min_t(size_t, count, len);
 	if (copy_to_user(user_buff, buf, len)) {
-		kfree(buf);
-		rc = -EFAULT;
-		goto error;
+		len = -EFAULT;
+		goto clean;
 	}
 
 	*ppos += len;
+clean:
 	kfree(buf);
-
+	drm_connector_put(connector);
 	return len;
-error:
-	return rc;
 }
 
 static ssize_t dp_debug_read_mst_con_id(struct file *file,
@@ -1173,11 +1167,13 @@ static ssize_t dp_debug_read_mst_conn_info(struct file *file,
 		char __user *user_buff, size_t count, loff_t *ppos)
 {
 	struct dp_debug_private *debug = file->private_data;
-	struct dp_mst_connector *mst_connector;
+	struct drm_connector_list_iter conn_iter;
+	struct drm_connector *connector;
+	struct sde_connector *sde_conn;
+	struct dp_display *display;
 	char *buf;
 	u32 len = 0, ret = 0, max_size = SZ_4K;
 	int rc = 0;
-	struct drm_connector *connector;
 
 	if (!debug) {
 		DP_ERR("invalid data\n");
@@ -1194,21 +1190,13 @@ static ssize_t dp_debug_read_mst_conn_info(struct file *file,
 		goto error;
 	}
 
-	mutex_lock(&debug->dp_debug.dp_mst_connector_list.lock);
-	list_for_each_entry(mst_connector,
-			&debug->dp_debug.dp_mst_connector_list.list, list) {
-		/* Do not print info for head node */
-		if (mst_connector->con_id == -1)
+	drm_connector_list_iter_begin((*debug->connector)->dev, &conn_iter);
+	drm_for_each_connector_iter(connector, &conn_iter) {
+		sde_conn = to_sde_connector(connector);
+		display = sde_conn->display;
+		if (!sde_conn->mst_port ||
+				display->base_connector != (*debug->connector))
 			continue;
-
-		connector = mst_connector->conn;
-
-		if (!connector) {
-			DP_ERR("connector for id %d is NULL\n",
-					mst_connector->con_id);
-			continue;
-		}
-
 		ret = scnprintf(buf + len, max_size,
 				"conn name:%s, conn id:%d state:%d\n",
 				connector->name, connector->base.id,
@@ -1216,7 +1204,7 @@ static ssize_t dp_debug_read_mst_conn_info(struct file *file,
 		if (dp_debug_check_buffer_overflow(ret, &max_size, &len))
 			break;
 	}
-	mutex_unlock(&debug->dp_debug.dp_mst_connector_list.lock);
+	drm_connector_list_iter_end(&conn_iter);
 
 	len = min_t(size_t, count, len);
 	if (copy_to_user(user_buff, buf, len)) {
@@ -1570,7 +1558,7 @@ static ssize_t dp_debug_read_hdr_mst(struct file *file,
 	struct dp_debug_private *debug = file->private_data;
 	char *buf = NULL;
 	u32 len = 0, max_size = SZ_4K;
-	struct dp_mst_connector *mst_connector;
+	struct drm_connector_list_iter conn_iter;
 	struct drm_connector *connector;
 	bool in_list = false;
 
@@ -1579,15 +1567,14 @@ static ssize_t dp_debug_read_hdr_mst(struct file *file,
 		return -ENODEV;
 	}
 
-	mutex_lock(&debug->dp_debug.dp_mst_connector_list.lock);
-	list_for_each_entry(mst_connector,
-			&debug->dp_debug.dp_mst_connector_list.list, list) {
-		if (mst_connector->con_id == debug->mst_con_id) {
-			connector = mst_connector->conn;
+	drm_connector_list_iter_begin((*debug->connector)->dev, &conn_iter);
+	drm_for_each_connector_iter(connector, &conn_iter) {
+		if (connector->base.id == debug->mst_con_id) {
 			in_list = true;
+			break;
 		}
 	}
-	mutex_unlock(&debug->dp_debug.dp_mst_connector_list.lock);
+	drm_connector_list_iter_end(&conn_iter);
 
 	if (!in_list) {
 		DP_ERR("connector %u not in mst list\n", debug->mst_con_id);
@@ -1626,20 +1613,15 @@ static ssize_t dp_debug_read_hdr_mst(struct file *file,
 
 static void dp_debug_set_sim_mode(struct dp_debug_private *debug, bool sim)
 {
+	struct drm_connector_list_iter conn_iter;
+	struct drm_connector *connector;
+	struct sde_connector *sde_conn;
+	struct dp_display *display;
+	struct dp_panel *panel;
+
 	if (sim) {
-		if (dp_debug_get_edid_buf(debug))
-			return;
-
-		if (dp_debug_get_dpcd_buf(debug)) {
-			devm_kfree(debug->dev, debug->edid);
-			debug->edid = NULL;
-			return;
-		}
-
 		debug->dp_debug.sim_mode = true;
-		debug->aux->set_sim_mode(debug->aux, true,
-			debug->edid, debug->dpcd);
-		debug->ctrl->set_sim_mode(debug->ctrl, true);
+		dp_debug_enable_sim_mode(debug, DP_SIM_MODE_ALL);
 	} else {
 		if (debug->hotplug) {
 			DP_WARN("sim mode off before hotplug disconnect\n");
@@ -1649,22 +1631,24 @@ static void dp_debug_set_sim_mode(struct dp_debug_private *debug, bool sim)
 		debug->aux->abort(debug->aux, true);
 		debug->ctrl->abort(debug->ctrl, true);
 
-		debug->aux->set_sim_mode(debug->aux, false, NULL, NULL);
-		debug->ctrl->set_sim_mode(debug->ctrl, false);
 		debug->dp_debug.sim_mode = false;
 
-		debug->panel->set_edid(debug->panel, 0, 0);
-		if (debug->edid) {
-			devm_kfree(debug->dev, debug->edid);
-			debug->edid = NULL;
-		}
+		debug->mst_edid_idx = 0;
+		dp_debug_disable_sim_mode(debug, DP_SIM_MODE_ALL);
+	}
 
-		debug->panel->set_dpcd(debug->panel, 0);
-		if (debug->dpcd) {
-			devm_kfree(debug->dev, debug->dpcd);
-			debug->dpcd = NULL;
+	/* clear override settings in panel */
+	drm_connector_list_iter_begin((*debug->connector)->dev, &conn_iter);
+	drm_for_each_connector_iter(connector, &conn_iter) {
+		sde_conn = to_sde_connector(connector);
+		display = sde_conn->display;
+		if (display->base_connector == (*debug->connector)) {
+			panel = sde_conn->drv_panel;
+			panel->mode_override = false;
+			panel->mst_hide = false;
 		}
 	}
+	drm_connector_list_iter_end(&conn_iter);
 
 	/*
 	 * print simulation status as this code is executed
@@ -1988,6 +1972,8 @@ static int dp_debug_init_mst(struct dp_debug_private *debug, struct dentry *dir)
 		       DEBUG_NAME, rc);
 		return rc;
 	}
+
+	debugfs_create_u32("mst_edid_idx", 0644, dir, &debug->mst_edid_idx);
 
 	return rc;
 }
@@ -2407,18 +2393,6 @@ error:
 	return rc;
 }
 
-u8 *dp_debug_get_edid(struct dp_debug *dp_debug)
-{
-	struct dp_debug_private *debug;
-
-	if (!dp_debug)
-		return NULL;
-
-	debug = container_of(dp_debug, struct dp_debug_private, dp_debug);
-
-	return debug->edid;
-}
-
 static void dp_debug_abort(struct dp_debug *dp_debug)
 {
 	struct dp_debug_private *debug;
@@ -2466,7 +2440,6 @@ struct dp_debug *dp_debug_get(struct dp_debug_in *in)
 		goto error;
 	}
 
-	debug->dp_debug.debug_en = false;
 	debug->hpd = in->hpd;
 	debug->link = in->link;
 	debug->panel = in->panel;
@@ -2480,9 +2453,6 @@ struct dp_debug *dp_debug_get(struct dp_debug_in *in)
 	debug->display = in->display;
 
 	dp_debug = &debug->dp_debug;
-	dp_debug->vdisplay = 0;
-	dp_debug->hdisplay = 0;
-	dp_debug->vrefresh = 0;
 
 	mutex_init(&debug->lock);
 
@@ -2493,20 +2463,8 @@ struct dp_debug *dp_debug_get(struct dp_debug_in *in)
 	}
 
 	debug->aux->access_lock = &debug->lock;
-	dp_debug->get_edid = dp_debug_get_edid;
 	dp_debug->abort = dp_debug_abort;
 	dp_debug->set_mst_con = dp_debug_set_mst_con;
-
-	INIT_LIST_HEAD(&dp_debug->dp_mst_connector_list.list);
-
-	/*
-	 * Do not associate the head of the list with any connector in order to
-	 * maintain backwards compatibility with the SST use case.
-	 */
-	dp_debug->dp_mst_connector_list.con_id = -1;
-	dp_debug->dp_mst_connector_list.conn = NULL;
-	dp_debug->dp_mst_connector_list.debug_en = false;
-	mutex_init(&dp_debug->dp_mst_connector_list.lock);
 
 	dp_debug->max_pclk_khz = debug->parser->max_pclk_khz;
 
@@ -2526,6 +2484,9 @@ static int dp_debug_deinit(struct dp_debug *dp_debug)
 
 	debugfs_remove_recursive(debug->root);
 
+	if (debug->sim_bridge)
+		dp_sim_destroy_bridge(debug->sim_bridge);
+
 	return 0;
 }
 
@@ -2540,14 +2501,7 @@ void dp_debug_put(struct dp_debug *dp_debug)
 
 	dp_debug_deinit(dp_debug);
 
-	mutex_destroy(&dp_debug->dp_mst_connector_list.lock);
 	mutex_destroy(&debug->lock);
-
-	if (debug->edid)
-		devm_kfree(debug->dev, debug->edid);
-
-	if (debug->dpcd)
-		devm_kfree(debug->dev, debug->dpcd);
 
 	devm_kfree(debug->dev, debug);
 }

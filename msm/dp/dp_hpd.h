@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DP_HPD_H_
@@ -9,6 +9,7 @@
 #include <linux/types.h>
 #include "dp_parser.h"
 #include "dp_catalog.h"
+#include "dp_aux_bridge.h"
 
 struct device;
 
@@ -29,7 +30,8 @@ enum dp_hpd_plug_orientation {
  * @DP_HPD_ALTMODE: AltMode over G-Link based HPD
  * @DP_HPD_USBPD:   USB type-c based HPD
  * @DP_HPD_GPIO:    GPIO based HPD
- * @DP_HPD_BUILTIN: Controller built-in HPD
+ * @DP_HPD_LPHW:    LPHW based HPD
+ * @DP_HPD_BRIDGE:  External bridge HPD
  */
 
 enum dp_hpd_type {
@@ -37,7 +39,7 @@ enum dp_hpd_type {
 	DP_HPD_USBPD,
 	DP_HPD_GPIO,
 	DP_HPD_LPHW,
-	DP_HPD_BUILTIN,
+	DP_HPD_BRIDGE,
 };
 
 /**
@@ -95,14 +97,18 @@ struct dp_hpd {
  * dp_hpd_get() - configure and get the DisplayPlot HPD module data
  *
  * @dev: device instance of the caller
- * @parser: DP parser
+ * @parser: pointer to DP parser module
+ * @catalog: pointer to DP catalog module
+ * @aux_bridge: handle for aux_bridge driver data
  * @cb: callback function for HPD response
  * return: pointer to allocated hpd module data
  *
  * This function sets up the hpd module
  */
 struct dp_hpd *dp_hpd_get(struct device *dev, struct dp_parser *parser,
-		struct dp_catalog_hpd *catalog, struct dp_hpd_cb *cb);
+		struct dp_catalog_hpd *catalog,
+		struct dp_aux_bridge *aux_bridge,
+		struct dp_hpd_cb *cb);
 
 /**
  * dp_hpd_put()
