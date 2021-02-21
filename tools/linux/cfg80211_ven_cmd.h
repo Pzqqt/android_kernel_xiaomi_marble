@@ -300,8 +300,6 @@ enum {
 	IEEE80211_PARAM_RC_NUM_RETRIES          = 308,
 	IEEE80211_PARAM_GET_ACS                 = 309,/* to get status of acs */
 	IEEE80211_PARAM_GET_CAC                 = 310,/* to get status of CAC period */
-	IEEE80211_PARAM_EXT_IFACEUP_ACS         = 311,  /* Enable external auto channel selection entity
-							   at VAP init time */
 	IEEE80211_PARAM_ONETXCHAIN              = 312,  /* force to tx with one chain for legacy client */
 	IEEE80211_PARAM_DFSDOMAIN               = 313,  /* Get DFS Domain */
 	IEEE80211_PARAM_SCAN_CHAN_EVENT         = 314,  /* Enable delivery of Scan Channel Events during
