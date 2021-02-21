@@ -42,6 +42,8 @@
 #define WB_CREQ_LUT_1			0x09C
 #define WB_UBWC_STATIC_CTRL		0x144
 #define WB_MUX				0x150
+#define WB_CROP_CTRL			0x154
+#define WB_CROP_OFFSET			0x158
 #define WB_CSC_BASE			0x260
 #define WB_DST_ADDR_SW_STATUS		0x2B0
 #define WB_CDP_CNTL			0x2B4
@@ -233,6 +235,21 @@ static void sde_hw_wb_roi(struct sde_hw_wb *ctx, struct sde_hw_wb_cfg *wb)
 	SDE_REG_WRITE(c, WB_OUT_SIZE, out_size);
 }
 
+static void sde_hw_wb_crop(struct sde_hw_wb *ctx, struct sde_hw_wb_cfg *wb, bool crop)
+{
+	struct sde_hw_blk_reg_map *c = &ctx->hw;
+	u32 crop_xy;
+
+	crop_xy = (wb->crop.y << 16) | wb->crop.x;
+
+	if (crop) {
+		SDE_REG_WRITE(c, WB_CROP_CTRL, 0x1);
+		SDE_REG_WRITE(c, WB_CROP_OFFSET, crop_xy);
+	} else {
+		SDE_REG_WRITE(c, WB_CROP_CTRL, 0x0);
+	}
+}
+
 static void sde_hw_wb_setup_qos_lut(struct sde_hw_wb *ctx,
 		struct sde_hw_wb_qos_cfg *cfg)
 {
@@ -365,6 +382,9 @@ static void _setup_wb_ops(struct sde_hw_wb_ops *ops,
 
 	if (test_bit(SDE_WB_XY_ROI_OFFSET, &features))
 		ops->setup_roi = sde_hw_wb_roi;
+
+	if (test_bit(SDE_WB_CROP, &features))
+		ops->setup_crop = sde_hw_wb_crop;
 
 	if (test_bit(SDE_WB_QOS, &features))
 		ops->setup_qos_lut = sde_hw_wb_setup_qos_lut;

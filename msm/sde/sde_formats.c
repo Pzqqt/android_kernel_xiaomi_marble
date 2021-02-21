@@ -1146,69 +1146,6 @@ int sde_format_populate_layout(
 	return ret;
 }
 
-static void _sde_format_calc_offset_linear(struct sde_hw_fmt_layout *source,
-		u32 x, u32 y)
-{
-	if ((x == 0) && (y == 0))
-		return;
-
-	source->plane_addr[0] += y * source->plane_pitch[0];
-
-	if (source->num_planes == 1) {
-		source->plane_addr[0] += x * source->format->bpp;
-	} else {
-		uint32_t xoff, yoff;
-		uint32_t v_subsample = 1;
-		uint32_t h_subsample = 1;
-
-		_sde_get_v_h_subsample_rate(source->format->chroma_sample,
-				&v_subsample, &h_subsample);
-
-		xoff = x / h_subsample;
-		yoff = y / v_subsample;
-
-		source->plane_addr[0] += x;
-		source->plane_addr[1] += xoff +
-				(yoff * source->plane_pitch[1]);
-		if (source->num_planes == 2) /* pseudo planar */
-			source->plane_addr[1] += xoff;
-		else /* planar */
-			source->plane_addr[2] += xoff +
-				(yoff * source->plane_pitch[2]);
-	}
-}
-
-int sde_format_populate_layout_with_roi(
-		struct msm_gem_address_space *aspace,
-		struct drm_framebuffer *fb,
-		struct sde_rect *roi,
-		struct sde_hw_fmt_layout *layout)
-{
-	int ret;
-
-	ret = sde_format_populate_layout(aspace, fb, layout);
-	if (ret || !roi)
-		return ret;
-
-	if (!roi->w || !roi->h || (roi->x + roi->w > fb->width) ||
-			(roi->y + roi->h > fb->height)) {
-		DRM_ERROR("invalid roi=[%d,%d,%d,%d], fb=[%u,%u]\n",
-				roi->x, roi->y, roi->w, roi->h,
-				fb->width, fb->height);
-		ret = -EINVAL;
-	} else if (SDE_FORMAT_IS_LINEAR(layout->format)) {
-		_sde_format_calc_offset_linear(layout, roi->x, roi->y);
-		layout->width = roi->w;
-		layout->height = roi->h;
-	} else if (roi->x || roi->y || (roi->w != fb->width) ||
-			(roi->h != fb->height)) {
-		DRM_ERROR("non-linear layout with roi not supported\n");
-		ret = -EINVAL;
-	}
-
-	return ret;
-}
-
 int sde_format_check_modified_format(
 		const struct msm_kms *kms,
 		const struct msm_format *msm_fmt,

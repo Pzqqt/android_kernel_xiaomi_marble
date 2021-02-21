@@ -2592,6 +2592,10 @@ static int sde_connector_populate_mode_info(struct drm_connector *conn,
 			continue;
 		}
 
+		sde_kms_info_add_keyint(info, "has_cwb_crop", sde_kms->catalog->has_cwb_crop);
+		sde_kms_info_add_keyint(info, "has_dedicated_cwb_support",
+			sde_kms->catalog->has_dedicated_cwb_support);
+
 		sde_kms_info_add_keyint(info, "mdp_transfer_time_us",
 			mode_info.mdp_transfer_time_us);
 

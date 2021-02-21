@@ -314,6 +314,8 @@ static void sde_encoder_phys_wb_setup_fb(struct sde_encoder_phys *phys_enc,
 	struct sde_hw_wb_cfg *wb_cfg;
 	struct sde_hw_wb_cdp_cfg *cdp_cfg;
 	const struct msm_format *format;
+	struct sde_crtc_state *cstate;
+	struct sde_rect pu_roi = {0,};
 	int ret;
 	struct msm_gem_address_space *aspace;
 	u32 fb_mode;
@@ -323,6 +325,8 @@ static void sde_encoder_phys_wb_setup_fb(struct sde_encoder_phys *phys_enc,
 		SDE_ERROR("invalid encoder\n");
 		return;
 	}
+
+	cstate = to_sde_crtc_state(wb_enc->crtc->state);
 
 	hw_wb = wb_enc->hw_wb;
 	wb_cfg = &wb_enc->wb_cfg;
@@ -373,22 +377,33 @@ static void sde_encoder_phys_wb_setup_fb(struct sde_encoder_phys *phys_enc,
 	}
 	wb_cfg->roi = *wb_roi;
 
-	if (hw_wb->caps->features & BIT(SDE_WB_XY_ROI_OFFSET)) {
-		ret = sde_format_populate_layout(aspace, fb, &wb_cfg->dest);
-		if (ret) {
-			SDE_DEBUG("failed to populate layout %d\n", ret);
-			return;
-		}
-		wb_cfg->dest.width = fb->width;
-		wb_cfg->dest.height = fb->height;
-		wb_cfg->dest.num_planes = wb_cfg->dest.format->num_planes;
-	} else {
-		ret = sde_format_populate_layout_with_roi(aspace, fb, wb_roi,
-			&wb_cfg->dest);
-		if (ret) {
-			/* this error should be detected during atomic_check */
-			SDE_DEBUG("failed to populate layout %d\n", ret);
-			return;
+	ret = sde_format_populate_layout(aspace, fb, &wb_cfg->dest);
+	if (ret) {
+		SDE_DEBUG("failed to populate layout %d\n", ret);
+		return;
+	}
+	wb_cfg->dest.width = fb->width;
+	wb_cfg->dest.height = fb->height;
+	wb_cfg->dest.num_planes = wb_cfg->dest.format->num_planes;
+
+	if (hw_wb->ops.setup_crop) {
+		wb_cfg->crop.x = wb_cfg->roi.x;
+		wb_cfg->crop.y = wb_cfg->roi.y;
+
+		if (cstate->user_roi_list.num_rects) {
+			sde_kms_rect_merge_rectangles(&cstate->user_roi_list, &pu_roi);
+
+			if ((wb_cfg->roi.w != pu_roi.w) || (wb_cfg->roi.h != pu_roi.h)) {
+				/* offset cropping region to PU region */
+				wb_cfg->crop.x = wb_cfg->crop.x - pu_roi.x;
+				wb_cfg->crop.y = wb_cfg->crop.y - pu_roi.y;
+				hw_wb->ops.setup_crop(hw_wb, wb_cfg, true);
+			}
+		} else if ((wb_cfg->roi.w != wb_cfg->dest.width) ||
+				(wb_cfg->roi.h != wb_cfg->dest.height)) {
+			hw_wb->ops.setup_crop(hw_wb, wb_cfg, true);
+		} else {
+			hw_wb->ops.setup_crop(hw_wb, wb_cfg, false);
 		}
 	}
 
@@ -467,8 +482,8 @@ static void _sde_encoder_phys_wb_setup_cwb(struct sde_encoder_phys *phys_enc,
 
 	hw_ctl = crtc->mixers[0].hw_ctl;
 	if (hw_ctl && hw_ctl->ops.setup_intf_cfg_v1 &&
-			test_bit(SDE_WB_CWB_CTRL | SDE_WB_DCWB_CTRL,
-					&hw_wb->caps->features)) {
+			(test_bit(SDE_WB_CWB_CTRL, &hw_wb->caps->features) ||
+			test_bit(SDE_WB_DCWB_CTRL, &hw_wb->caps->features))) {
 		struct sde_hw_intf_cfg_v1 intf_cfg = { 0, };
 
 		for (i = 0; i < crtc->num_mixers; i++)
@@ -621,6 +636,7 @@ static int _sde_enc_phys_wb_validate_cwb(struct sde_encoder_phys *phys_enc,
 	struct sde_rect pu_roi = {0,};
 	int out_width = 0, out_height = 0;
 	int ds_srcw = 0, ds_srch = 0, ds_outw = 0, ds_outh = 0;
+	const struct sde_format *fmt;
 	int data_pt;
 	int ds_in_use = false;
 	int i = 0;
@@ -630,6 +646,12 @@ static int _sde_enc_phys_wb_validate_cwb(struct sde_encoder_phys *phys_enc,
 	if (!fb) {
 		SDE_DEBUG("no output framebuffer\n");
 		return 0;
+	}
+
+	fmt = sde_get_sde_format_ext(fb->format->format, fb->modifier);
+	if (!fmt) {
+		SDE_ERROR("unsupported output pixel format:%x\n", fb->format->format);
+		return -EINVAL;
 	}
 
 	ret = sde_wb_connector_state_get_output_roi(conn_state, &wb_roi);
@@ -672,6 +694,10 @@ static int _sde_enc_phys_wb_validate_cwb(struct sde_encoder_phys *phys_enc,
 	 *	2.2) DSPP Tap point: same as No DS case
 	 *		a) wb-roi should be inside FB
 	 *		b) mode resolution & wb-roi should be same
+	 * 3) Partial Update case: additional stride check
+	 *      a) cwb roi should be inside PU region or FB
+	 *      b) cropping is only allowed for fully sampled data
+	 *      c) add check for stride and QOS setting by 256B
 	 */
 	if (ds_in_use && data_pt == CAPTURE_DSPP_OUT) {
 		out_width = ds_outw;
@@ -684,9 +710,23 @@ static int _sde_enc_phys_wb_validate_cwb(struct sde_encoder_phys *phys_enc,
 		out_height = mode->vdisplay;
 	}
 
-	if ((wb_roi.w != out_width) || (wb_roi.h != out_height)) {
+	if (SDE_FORMAT_IS_YUV(fmt) && ((wb_roi.w != out_width) || (wb_roi.h != out_height))) {
+		SDE_ERROR("invalid wb roi[%dx%d] with ds_use:%d out[%dx%d] fmt:%x\n",
+				wb_roi.w, wb_roi.h, ds_in_use, out_width, out_height,
+				fmt->base.pixel_format);
+		return -EINVAL;
+	}
+
+	if ((wb_roi.w > out_width) || (wb_roi.h > out_height)) {
 		SDE_ERROR("invalid wb roi[%dx%d] with ds_use:%d out[%dx%d]\n",
-				wb_roi.w, wb_roi.h, out_width, out_height);
+				wb_roi.w, wb_roi.h, ds_in_use, out_width, out_height);
+		return -EINVAL;
+	}
+
+	if (((wb_roi.w < out_width) || (wb_roi.h < out_height)) &&
+			(wb_roi.w * wb_roi.h * fmt->bpp) % 256) {
+		SDE_ERROR("invalid stride w = %d h = %d bpp =%d out_width = %d, out_height = %d\n",
+				wb_roi.w, wb_roi.h, fmt->bpp, out_width, out_height);
 		return -EINVAL;
 	}
 
@@ -701,7 +741,7 @@ static int _sde_enc_phys_wb_validate_cwb(struct sde_encoder_phys *phys_enc,
 	/* validate wb roi against pu rect */
 	if (cstate->user_roi_list.num_rects) {
 		sde_kms_rect_merge_rectangles(&cstate->user_roi_list, &pu_roi);
-		if (wb_roi.w != pu_roi.w || wb_roi.h != pu_roi.h) {
+		if (wb_roi.w > pu_roi.w || wb_roi.h > pu_roi.h) {
 			SDE_ERROR("invalid wb roi with pu [%dx%d vs %dx%d]\n",
 					wb_roi.w, wb_roi.h, pu_roi.w, pu_roi.h);
 			return -EINVAL;
@@ -927,8 +967,8 @@ static void _sde_encoder_phys_wb_update_cwb_flush(
 		hw_ctl->ops.update_bitmask(hw_ctl, SDE_HW_FLUSH_CDM,
 				hw_cdm->idx, 1);
 
-	if (test_bit(SDE_WB_CWB_CTRL | SDE_WB_DCWB_CTRL,
-					&hw_wb->caps->features)) {
+	if (test_bit(SDE_WB_CWB_CTRL, &hw_wb->caps->features) ||
+			test_bit(SDE_WB_DCWB_CTRL, &hw_wb->caps->features)) {
 		for (i = 0; i < crtc->num_mixers; i++) {
 			src_pp_idx = (enum sde_cwb) (src_pp_idx + i);
 
