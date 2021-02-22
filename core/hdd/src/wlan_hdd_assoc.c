@@ -2732,7 +2732,9 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 					  adapter->device_mode,
 					  adapter->vdev_id,
 					  WLAN_IPA_STA_CONNECT,
-					  roam_info->bssid.bytes);
+					  roam_info->bssid.bytes,
+					  WLAN_REG_IS_24GHZ_CH_FREQ(
+						sta_ctx->conn_info.chan_freq));
 
 		if (adapter->device_mode == QDF_STA_MODE)
 			cdp_reset_rx_hw_ext_stats(soc);

@@ -123,7 +123,8 @@ void __hdd_cm_disconnect_handler_pre_user_update(struct hdd_adapter *adapter)
 				  adapter->device_mode,
 				  adapter->vdev_id,
 				  WLAN_IPA_STA_DISCONNECT,
-				  sta_ctx->conn_info.bssid.bytes);
+				  sta_ctx->conn_info.bssid.bytes,
+				  false);
 
 	hdd_periodic_sta_stats_stop(adapter);
 	wlan_hdd_auto_shutdown_enable(hdd_ctx, true);

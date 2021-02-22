@@ -912,7 +912,9 @@ hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
 				  adapter->device_mode,
 				  adapter->vdev_id,
 				  WLAN_IPA_STA_CONNECT,
-				  rsp->bssid.bytes);
+				  rsp->bssid.bytes,
+				  WLAN_REG_IS_24GHZ_CH_FREQ(
+					sta_ctx->conn_info.chan_freq));
 
 	if (adapter->device_mode == QDF_STA_MODE)
 		cdp_reset_rx_hw_ext_stats(soc);

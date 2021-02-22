@@ -396,13 +396,14 @@ QDF_STATUS ipa_send_mcc_scc_msg(struct wlan_objmgr_pdev *pdev,
  * @session_id: session id for the event
  * @type: event enum of type ipa_wlan_event
  * @mac_address: MAC address associated with the event
+ * @is_2g_iface: true if interface is operating on 2G band, otherwise false
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS ipa_wlan_evt(struct wlan_objmgr_pdev *pdev, qdf_netdev_t net_dev,
 			uint8_t device_mode, uint8_t session_id,
 			enum wlan_ipa_wlan_event ipa_event_type,
-			uint8_t *mac_addr);
+			uint8_t *mac_addr, bool is_2g_iface);
 
 /**
  * ipa_uc_smmu_map() - Map / Unmap DMA buffer to IPA UC
