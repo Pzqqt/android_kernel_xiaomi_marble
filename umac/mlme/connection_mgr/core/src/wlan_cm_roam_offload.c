@@ -2608,11 +2608,14 @@ cm_roam_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	status = wlan_cm_tgt_send_roam_stop_req(psoc, vdev_id, stop_req);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		mlme_debug("fail to send roam stop");
-	} else {
+	}
+#ifndef FEATURE_CM_ENABLE
+	else {
 		status = wlan_cm_roam_scan_offload_rsp(vdev_id, reason);
 		if (QDF_IS_STATUS_ERROR(status))
 			mlme_debug("fail to send rso rsp msg");
 	}
+#endif
 
 rel_vdev_ref:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
@@ -2966,9 +2969,12 @@ cm_roam_switch_to_rso_stop(struct wlan_objmgr_pdev *pdev,
 	 * nothing to do here
 	 */
 	default:
+
+#ifndef FEATURE_CM_ENABLE
 		/* For LFR2 BTM request, need handoff even roam disabled */
 		if (reason == REASON_OS_REQUESTED_ROAMING_NOW)
 			wlan_cm_roam_neighbor_proceed_with_handoff_req(vdev_id);
+#endif
 		return QDF_STATUS_SUCCESS;
 	}
 	mlme_set_roam_state(psoc, vdev_id, WLAN_ROAM_RSO_STOPPED);
@@ -3377,7 +3383,12 @@ cm_roam_switch_to_roam_sync(struct wlan_objmgr_pdev *pdev,
 		 * deauth roam trigger to stop data path queues
 		 */
 	case WLAN_ROAMING_IN_PROG:
-		if (!wlan_cm_is_sta_connected(vdev_id)) {
+#ifdef FEATURE_CM_ENABLE
+		if (!cm_is_vdevid_connected(pdev, vdev_id))
+#else
+		if (!wlan_cm_is_sta_connected(vdev_id))
+#endif
+		{
 			mlme_err("ROAM: STA not in connected state");
 			return QDF_STATUS_E_FAILURE;
 		}
