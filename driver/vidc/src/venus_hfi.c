@@ -1669,6 +1669,8 @@ static int __disable_regulator(struct regulator_info *rinfo,
 		goto disable_regulator_failed;
 	}
 
+	core->handoff_done = 0;
+
 	if (!regulator_is_enabled(rinfo->regulator))
 		d_vpr_e("%s: regulator %s already disabled\n",
 			__func__, rinfo->name);
@@ -2125,8 +2127,7 @@ static int __resume(struct msm_vidc_core *core)
 	}
 	__set_subcaches(core);
 
-	if (core->handoff_done)
-		__sys_set_power_control(core, true);
+	__sys_set_power_control(core, true);
 
 	d_vpr_h("Resumed from power collapse\n");
 exit:
@@ -2646,6 +2647,8 @@ int venus_hfi_core_init(struct msm_vidc_core *core)
 		return -ENOMEM;
 	}
 
+	core->handoff_done = 0;
+
 	rc = __load_fw(core);
 	if (rc)
 		return rc;
@@ -2678,8 +2681,7 @@ int venus_hfi_core_init(struct msm_vidc_core *core)
 	if (rc)
 		goto error;
 
-	if (core->handoff_done)
-		__sys_set_power_control(core, true);
+	__sys_set_power_control(core, true);
 
 	d_vpr_h("%s(): successful\n", __func__);
 	return 0;
