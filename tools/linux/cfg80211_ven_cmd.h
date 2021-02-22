@@ -798,6 +798,7 @@ enum {
 	IEEE80211_PARAM_PEER_TID_LATENCY_ENABLE    = 733,   /* Enable per peer tid latency  */
 	IEEE80211_PARAM_AP_CHAN_RPT_SSID_FILTER    = 734,   /* enable/disable inclusion of AP Channel Report IE in Beacon/Probe-Rsp */
 	IEEE80211_PARAM_WLAN_SCHED_TIMEOUT         = 735,
+	IEEE80211_PARAM_AP_MAX_AUTH_FAIL           = 736,   /* Set max continuous auth failures to be sent auth response within 15 seconds */
 };
 
 enum {
@@ -2298,6 +2299,8 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"g_peer_tidlatency ",     IEEE80211_PARAM_PEER_TID_LATENCY_ENABLE, GET_PARAM, 0},
 	{"rpt_filter",          IEEE80211_PARAM_AP_CHAN_RPT_SSID_FILTER, SET_PARAM, 1},
 	{"g_rpt_filter",          IEEE80211_PARAM_AP_CHAN_RPT_SSID_FILTER, GET_PARAM, 0},
+	{"max_auth_fail",          IEEE80211_PARAM_AP_MAX_AUTH_FAIL, SET_PARAM, 1},
+	{"g_max_auth_fail",        IEEE80211_PARAM_AP_MAX_AUTH_FAIL, GET_PARAM, 0},
 };
 
 struct vendor_commands radio_vendor_cmds[] = {
