@@ -15768,6 +15768,12 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_NDI_TXBF_SUPPORT;
 	wmi_service[wmi_service_reg_cc_ext_event_support] =
 			WMI_SERVICE_REG_CC_EXT_EVENT_SUPPORT;
+#if defined(CONFIG_BAND_6GHZ) && defined(CONFIG_REG_CLIENT)
+	wmi_service[wmi_service_lower_6g_edge_ch_supp] =
+			WMI_SERVICE_ENABLE_LOWER_6G_EDGE_CH_SUPP;
+	wmi_service[wmi_service_disable_upper_6g_edge_ch_supp] =
+			WMI_SERVICE_DISABLE_UPPER_6G_EDGE_CH_SUPP;
+#endif
 }
 
 /**

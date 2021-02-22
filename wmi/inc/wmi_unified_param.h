@@ -5109,6 +5109,10 @@ typedef enum {
 	wmi_service_ext_tpc_reg_support,
 	wmi_service_ndi_txbf_support,
 	wmi_service_reg_cc_ext_event_support,
+#if defined(CONFIG_BAND_6GHZ) && defined(CONFIG_REG_CLIENT)
+	wmi_service_lower_6g_edge_ch_supp,
+	wmi_service_disable_upper_6g_edge_ch_supp,
+#endif
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF

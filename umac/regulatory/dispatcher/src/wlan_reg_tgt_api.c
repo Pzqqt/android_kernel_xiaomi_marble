@@ -123,3 +123,18 @@ QDF_STATUS tgt_reg_set_ext_tpc_supported(struct wlan_objmgr_psoc *psoc,
 {
 	return reg_set_ext_tpc_supported(psoc, val);
 }
+
+#if defined(CONFIG_BAND_6GHZ) && defined(CONFIG_REG_CLIENT)
+QDF_STATUS tgt_reg_set_lower_6g_edge_ch_supp(struct wlan_objmgr_psoc *psoc,
+					     bool val)
+{
+	return reg_set_lower_6g_edge_ch_supp(psoc, val);
+}
+
+QDF_STATUS
+tgt_reg_set_disable_upper_6g_edge_ch_supp(struct wlan_objmgr_psoc *psoc,
+					  bool val)
+{
+	return reg_set_disable_upper_6g_edge_ch_supp(psoc, val);
+}
+#endif

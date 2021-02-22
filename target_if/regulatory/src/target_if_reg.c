@@ -723,7 +723,8 @@ tgt_if_regulatory_is_ext_tpc_supported(struct wlan_objmgr_psoc *psoc)
 	if (!wmi_handle)
 		return false;
 
-	return wmi_service_enabled(wmi_handle, wmi_service_ext_tpc_reg_support);
+	return wmi_service_enabled(wmi_handle,
+				   wmi_service_ext_tpc_reg_support);
 }
 
 QDF_STATUS target_if_regulatory_set_ext_tpc(struct wlan_objmgr_psoc *psoc)
@@ -743,6 +744,96 @@ QDF_STATUS target_if_regulatory_set_ext_tpc(struct wlan_objmgr_psoc *psoc)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#if defined(CONFIG_BAND_6GHZ) && defined(CONFIG_REG_CLIENT)
+/**
+ * tgt_if_regulatory_is_lower_6g_edge_ch_supp() - Check if lower 6ghz
+ * edge channel (5935MHz) is supported
+ * @psoc: Pointer to psoc
+ *
+ * Return: true if channel is supported, else false
+ */
+static bool
+tgt_if_regulatory_is_lower_6g_edge_ch_supp(struct wlan_objmgr_psoc *psoc)
+{
+	wmi_unified_t wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+
+	if (!wmi_handle)
+		return false;
+
+	return wmi_service_enabled(wmi_handle,
+				   wmi_service_lower_6g_edge_ch_supp);
+}
+
+/**
+ * tgt_if_regulatory_is_upper_6g_edge_ch_disabled() - Check if upper
+ * 6ghz edge channel (7115MHz) is disabled
+ * @psoc: Pointer to psoc
+ *
+ * Return: true if channel is disabled, else false
+ */
+static bool
+tgt_if_regulatory_is_upper_6g_edge_ch_disabled(struct wlan_objmgr_psoc *psoc)
+{
+	wmi_unified_t wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+
+	if (!wmi_handle)
+		return false;
+
+	return wmi_service_enabled(wmi_handle,
+				   wmi_service_disable_upper_6g_edge_ch_supp);
+}
+
+QDF_STATUS
+target_if_reg_set_lower_6g_edge_ch_info(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_lmac_if_reg_rx_ops *reg_rx_ops;
+
+	reg_rx_ops = target_if_regulatory_get_rx_ops(psoc);
+	if (!reg_rx_ops) {
+		target_if_err("reg_rx_ops is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (reg_rx_ops->reg_set_lower_6g_edge_ch_supp)
+		reg_rx_ops->reg_set_lower_6g_edge_ch_supp(
+			psoc,
+			tgt_if_regulatory_is_lower_6g_edge_ch_supp(psoc));
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+target_if_reg_set_disable_upper_6g_edge_ch_info(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_lmac_if_reg_rx_ops *reg_rx_ops;
+
+	reg_rx_ops = target_if_regulatory_get_rx_ops(psoc);
+	if (!reg_rx_ops) {
+		target_if_err("reg_rx_ops is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (reg_rx_ops->reg_set_disable_upper_6g_edge_ch_supp)
+		reg_rx_ops->reg_set_disable_upper_6g_edge_ch_supp(
+			psoc,
+			tgt_if_regulatory_is_upper_6g_edge_ch_disabled(psoc));
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static inline bool
+tgt_if_regulatory_is_lower_6g_edge_ch_supp(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
+static inline bool
+tgt_if_regulatory_is_upper_6g_edge_ch_disabled(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+#endif
 
 QDF_STATUS target_if_register_regulatory_tx_ops(
 		struct wlan_lmac_if_tx_ops *tx_ops)

@@ -845,6 +845,50 @@ reg_modify_chan_list_for_5dot9_ghz_channels(struct wlan_objmgr_pdev *pdev,
 	}
 }
 
+#if defined(CONFIG_BAND_6GHZ) && defined(CONFIG_REG_CLIENT)
+/**
+ * reg_modify_chan_list_for_6g_edge_channels() - Modify 6 GHz edge channels
+ *
+ * @pdev: Pointer to pdev object
+ * @chan_list: Current channel list
+ *
+ * This function disables lower 6G edge channel (5935MHz) if service bit
+ * wmi_service_lower_6g_edge_ch_supp is not set. If service bit is set
+ * the channels remain enabled. It disables upper 6G edge channel (7115MHz)
+ * if the service bit wmi_service_disable_upper_6g_edge_ch_supp is set, it
+ * is enabled by default.
+ *
+ */
+static void
+reg_modify_chan_list_for_6g_edge_channels(struct wlan_objmgr_pdev *pdev,
+					  struct regulatory_channel
+					  *chan_list)
+{
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+
+	if (!reg_is_lower_6g_edge_ch_supp(psoc)) {
+		chan_list[CHAN_ENUM_5935].state = CHANNEL_STATE_DISABLE;
+		chan_list[CHAN_ENUM_5935].chan_flags |=
+						REGULATORY_CHAN_DISABLED;
+	}
+
+	if (reg_is_upper_6g_edge_ch_disabled(psoc)) {
+		chan_list[CHAN_ENUM_7115].state = CHANNEL_STATE_DISABLE;
+		chan_list[CHAN_ENUM_7115].chan_flags |=
+						REGULATORY_CHAN_DISABLED;
+	}
+}
+#else
+static inline void
+reg_modify_chan_list_for_6g_edge_channels(struct wlan_objmgr_pdev *pdev,
+					  struct regulatory_channel
+					  *chan_list)
+{
+}
+#endif
+
 #ifdef DISABLE_UNII_SHARED_BANDS
 /**
  * reg_is_reg_unii_band_1_set() - Check UNII bitmap
@@ -1065,6 +1109,10 @@ void reg_compute_pdev_current_chan_list(struct wlan_regulatory_pdev_priv_obj
 
 	reg_modify_chan_list_for_max_chwidth(pdev_priv_obj->pdev_ptr,
 					     pdev_priv_obj->cur_chan_list);
+
+	reg_modify_chan_list_for_6g_edge_channels(pdev_priv_obj->pdev_ptr,
+						  pdev_priv_obj->
+						  cur_chan_list);
 }
 
 void reg_reset_reg_rules(struct reg_rule_info *reg_rules)
