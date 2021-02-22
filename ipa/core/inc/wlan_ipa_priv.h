@@ -471,6 +471,7 @@ struct ipa_uc_fw_stats {
  * @session_id: Session ID
  * @mac_addr: Mac address
  * @is_loading: Driver loading flag
+ * @is_2g_iface: true if interface is operating on 2G band, otherwise false
  */
 struct wlan_ipa_uc_pending_event {
 	qdf_list_node_t node;
@@ -480,6 +481,7 @@ struct wlan_ipa_uc_pending_event {
 	uint8_t session_id;
 	uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
 	bool is_loading;
+	bool is_2g_iface;
 };
 
 /**
