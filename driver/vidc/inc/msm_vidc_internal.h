@@ -229,6 +229,7 @@ enum msm_vidc_core_capability_type {
 	DECODE_BATCH_TIMEOUT,
 	AV_SYNC_WINDOW_SIZE,
 	CLK_FREQ_THRESHOLD,
+	NON_FATAL_FAULTS,
 	CORE_CAP_MAX,
 };
 

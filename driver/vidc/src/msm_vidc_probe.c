@@ -221,6 +221,7 @@ static int msm_vidc_initialize_core(struct msm_vidc_core *core)
 	INIT_LIST_HEAD(&core->dangling_instances);
 
 	INIT_WORK(&core->device_work, venus_hfi_work_handler);
+	INIT_WORK(&core->smmu_fault_work, msm_vidc_smmu_fault_work_handler);
 	INIT_DELAYED_WORK(&core->pm_work, venus_hfi_pm_work_handler);
 	INIT_DELAYED_WORK(&core->fw_unload_work, msm_vidc_fw_unload_handler);
 	INIT_DELAYED_WORK(&core->batch_work, msm_vidc_batch_handler);

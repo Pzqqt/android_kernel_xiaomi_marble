@@ -14,6 +14,10 @@
 #define VIDC_DBG_LABEL "msm_vidc"
 #endif
 
+/* Allow only 6 prints/sec */
+#define VIDC_DBG_SESSION_RATELIMIT_INTERVAL (1 * HZ)
+#define VIDC_DBG_SESSION_RATELIMIT_BURST 6
+
 #define VIDC_DBG_TAG VIDC_DBG_LABEL ": %6s: %08x: %5s: "
 #define FW_DBG_TAG VIDC_DBG_LABEL ": %6s: "
 #define DEFAULT_SID ((u32)-1)
@@ -106,6 +110,13 @@ enum vidc_msg_prio {
 			##__VA_ARGS__); \
 	} while (0)
 
+#define dprintk_ratelimit(__level, __fmt, ...) \
+	do { \
+		if (msm_vidc_check_ratelimit()) { \
+			dprintk(__level, DEFAULT_SID, __fmt, ##__VA_ARGS__); \
+		} \
+	} while (0)
+
 #define MSM_VIDC_ERROR(value)					\
 	do {	if (value)					\
 			d_vpr_e("BugOn");		\
@@ -129,5 +140,6 @@ struct dentry *msm_vidc_debugfs_init_inst(void *inst,
 void msm_vidc_debugfs_deinit_inst(void *inst);
 void msm_vidc_debugfs_update(void *inst,
 		enum msm_vidc_debugfs_event e);
+int msm_vidc_check_ratelimit(void);
 
 #endif

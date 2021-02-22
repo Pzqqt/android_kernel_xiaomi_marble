@@ -29,6 +29,11 @@
 	}                           \
 }
 
+struct msm_vidc_buf_details {
+	enum msm_vidc_buffer_type type;
+	char *name;
+};
+
 void print_vidc_buffer(u32 tag, const char *str, struct msm_vidc_inst *inst,
 		struct msm_vidc_buffer *vbuf)
 {
@@ -2625,10 +2630,141 @@ int msm_vidc_core_timeout(struct msm_vidc_core *core)
 	return msm_vidc_core_deinit(core, true);
 }
 
+int msm_vidc_print_inst_info(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_buffers *buffers;
+	struct msm_vidc_buffer *buf;
+	enum msm_vidc_port_type port;
+	bool is_secure, is_decode;
+	u32 bit_depth, bit_rate, frame_rate, width, height;
+	struct dma_buf *dbuf;
+	int i = 0;
+
+	struct msm_vidc_buf_details buffer_details[] = {
+		{MSM_VIDC_BUF_INPUT,             "INPUT"      },
+		{MSM_VIDC_BUF_OUTPUT,            "OUTPUT"     },
+		{MSM_VIDC_BUF_INPUT_META,        "IN_META"    },
+		{MSM_VIDC_BUF_OUTPUT_META,       "OUT_META"   },
+		{MSM_VIDC_BUF_BIN,               "BIN"        },
+		{MSM_VIDC_BUF_ARP,               "ARP"        },
+		{MSM_VIDC_BUF_COMV,              "COMV"       },
+		{MSM_VIDC_BUF_NON_COMV,          "NON_COMV"   },
+		{MSM_VIDC_BUF_LINE,              "LINE"       },
+		{MSM_VIDC_BUF_PERSIST,           "PERSIST"    },
+		{MSM_VIDC_BUF_VPSS,              "VPSS"       },
+	};
+
+	if (!inst || !inst->capabilities) {
+		i_vpr_e(inst, "%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	is_secure = !!(inst->flags & VIDC_SECURE);
+	is_decode = inst->domain == MSM_VIDC_DECODER;
+	port = is_decode ? INPUT_PORT : OUTPUT_PORT;
+	width = inst->fmts[port].fmt.pix_mp.width;
+	height = inst->fmts[port].fmt.pix_mp.height;
+	bit_depth = inst->capabilities->cap[BIT_DEPTH].value & 0xFFFF;
+	bit_rate = inst->capabilities->cap[BIT_RATE].value;
+	frame_rate = inst->capabilities->cap[FRAME_RATE].value >> 16;
+
+	i_vpr_e(inst, "%s %s session, HxW: %d x %d, fps: %d, bitrate: %d, bit-depth: %d\n",
+		is_secure ? "Secure" : "Non-Secure",
+		is_decode ? "Decode" : "Encode",
+		height, width,
+		frame_rate, bit_rate, bit_depth);
+
+	/* Print buffer details */
+	for (i = 0; i < ARRAY_SIZE(buffer_details); i++) {
+		buffers = msm_vidc_get_buffers(inst, buffer_details[i].type, __func__);
+		if (!buffers)
+			continue;
+
+		i_vpr_e(inst, "count: type: %8s, min: %2d, extra: %2d, actual: %2d\n",
+			buffer_details[i].name, buffers->min_count,
+			buffers->extra_count, buffers->actual_count);
+
+		list_for_each_entry(buf, &buffers->list, list) {
+			if (!buf->valid || !buf->dmabuf)
+				continue;
+			dbuf = (struct dma_buf *)buf->dmabuf;
+			i_vpr_e(inst,
+				"buf: type: %8s, index: %2d, fd: %4d, size: %9u, off: %8u, filled: %9u, iova: %8x, inode: %9ld, flags: %8x, ts: %16lld, attr: %8x\n",
+				buffer_details[i].name, buf->index, buf->fd, buf->buffer_size,
+				buf->data_offset, buf->data_size, buf->device_addr,
+				file_inode(dbuf->file)->i_ino,
+				buf->flags, buf->timestamp, buf->attr);
+		}
+	}
+
+	return 0;
+}
+
+void msm_vidc_smmu_fault_work_handler(struct work_struct *work)
+{
+	struct msm_vidc_core *core;
+	struct msm_vidc_inst *inst = NULL;
+	struct msm_vidc_inst *instances[MAX_SUPPORTED_INSTANCES];
+	s32 num_instances = 0;
+
+	core = container_of(work, struct msm_vidc_core, smmu_fault_work);
+	if (!core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return;
+	}
+
+	core_lock(core, __func__);
+	list_for_each_entry(inst, &core->instances, list)
+		instances[num_instances++] = inst;
+	core_unlock(core, __func__);
+
+	while (num_instances--) {
+		inst = instances[num_instances];
+		inst = get_inst_ref(core, inst);
+		if (!inst)
+			continue;
+		inst_lock(inst, __func__);
+		msm_vidc_print_inst_info(inst);
+		inst_unlock(inst, __func__);
+		put_inst(inst);
+	}
+}
+
 int msm_vidc_smmu_fault_handler(struct iommu_domain *domain,
 		struct device *dev, unsigned long iova, int flags, void *data)
 {
-	return -EINVAL;
+	struct msm_vidc_core *core = data;
+
+	if (!domain || !core || !core->capabilities) {
+		d_vpr_e("%s: invalid params %pK %pK\n",
+			__func__, domain, core);
+		return -EINVAL;
+	}
+
+	if (core->smmu_fault_handled) {
+		if (core->capabilities[NON_FATAL_FAULTS].value) {
+			dprintk_ratelimit(VIDC_ERR,
+					"%s: non-fatal pagefault address: %lx\n",
+					__func__, iova);
+			return 0;
+		}
+	}
+
+	d_vpr_e("%s: faulting address: %lx\n", __func__, iova);
+
+	core->smmu_fault_handled = true;
+	/**
+	 * Fault handler shouldn't be blocked for longtime. So offload work
+	 * to device_workq to print buffer and memory consumption details.
+	 */
+	queue_work(core->device_workq, &core->smmu_fault_work);
+	/*
+	 * Return -ENOSYS to elicit the default behaviour of smmu driver.
+	 * If we return -ENOSYS, then smmu driver assumes page fault handler
+	 * is not installed and prints a list of useful debug information like
+	 * FAR, SID etc. This information is not printed if we return 0.
+	 */
+	return -ENOSYS;
 }
 
 int msm_vidc_trigger_ssr(struct msm_vidc_core *core,

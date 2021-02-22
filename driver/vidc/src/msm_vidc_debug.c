@@ -559,4 +559,10 @@ void msm_vidc_debugfs_update(void *instance,
 	}
 }
 
-
+int msm_vidc_check_ratelimit(void)
+{
+	static DEFINE_RATELIMIT_STATE(_rs,
+				VIDC_DBG_SESSION_RATELIMIT_INTERVAL,
+				VIDC_DBG_SESSION_RATELIMIT_BURST);
+	return __ratelimit(&_rs);
+}
