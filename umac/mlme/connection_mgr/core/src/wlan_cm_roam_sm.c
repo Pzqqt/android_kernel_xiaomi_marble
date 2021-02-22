@@ -142,9 +142,13 @@ bool cm_subst_preauth_event(void *ctx, uint16_t event,
 							     data_len, data);
 		break;
 	case WLAN_CM_SM_EV_ROAM_START:
+		/* set preauth to true when we enter preauth state */
+		cm_ctx->preauth_in_progress = true;
 		cm_host_roam_start_req(cm_ctx, data);
 		break;
 	case WLAN_CM_SM_EV_START_REASSOC:
+		/* set preauth to false as soon as we move to reassoc state */
+		cm_ctx->preauth_in_progress = false;
 		cm_sm_transition_to(cm_ctx, WLAN_CM_SS_REASSOC);
 		cm_sm_deliver_event_sync(cm_ctx, WLAN_CM_SM_EV_START_REASSOC,
 					 data_len, data);

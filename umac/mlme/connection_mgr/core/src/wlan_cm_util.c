@@ -492,25 +492,34 @@ static void cm_remove_cmd_from_serialization(struct cnx_mgr *cm_ctx,
 	cmd_info.cmd_id = cm_id;
 	cmd_info.req_type = WLAN_SER_CANCEL_NON_SCAN_CMD;
 
-	if (prefix == CONNECT_REQ_PREFIX)
+	if (prefix == CONNECT_REQ_PREFIX) {
 		cmd_info.cmd_type = WLAN_SER_CMD_VDEV_CONNECT;
-	else if (prefix == ROAM_REQ_PREFIX)
-		cmd_info.cmd_type = WLAN_SER_CMD_VDEV_REASSOC;
-	else
+	} else if (prefix == ROAM_REQ_PREFIX) {
+		/*
+		 * Try removing PREAUTH command when in preauth state else
+		 * try remove ROAM command
+		 */
+		if (cm_ctx->preauth_in_progress)
+			cmd_info.cmd_type = WLAN_SER_CMD_PERFORM_PRE_AUTH;
+		else
+			cmd_info.cmd_type = WLAN_SER_CMD_VDEV_ROAM;
+		cm_ctx->preauth_in_progress = false;
+	} else {
 		cmd_info.cmd_type = WLAN_SER_CMD_VDEV_DISCONNECT;
+	}
 
 	cmd_info.vdev = cm_ctx->vdev;
 
 	if (cm_id == cm_ctx->active_cm_id) {
-		mlme_debug(CM_PREFIX_FMT "Remove from active",
-			   CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
-					 cm_id));
+		mlme_debug(CM_PREFIX_FMT "Remove cmd type %d from active",
+			   CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev), cm_id),
+			   cmd_info.cmd_type);
 		cmd_info.queue_type = WLAN_SERIALIZATION_ACTIVE_QUEUE;
 		wlan_serialization_remove_cmd(&cmd_info);
 	} else {
-		mlme_debug(CM_PREFIX_FMT "Remove from pending",
-			   CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
-					 cm_id));
+		mlme_debug(CM_PREFIX_FMT "Remove cmd type %d from pending",
+			   CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev), cm_id),
+			   cmd_info.cmd_type);
 		cmd_info.queue_type = WLAN_SERIALIZATION_PENDING_QUEUE;
 		wlan_serialization_cancel_request(&cmd_info);
 	}

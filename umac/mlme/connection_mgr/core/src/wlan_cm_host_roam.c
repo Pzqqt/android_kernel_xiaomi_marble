@@ -226,6 +226,18 @@ static QDF_STATUS cm_host_roam_start(struct cnx_mgr *cm_ctx,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+static
+QDF_STATUS cm_host_roam_start_fail(struct cnx_mgr *cm_ctx,
+				   struct cm_req *cm_req,
+				   enum wlan_cm_connect_fail_reason reason)
+{
+	/*
+	 * call API to send WLAN_CM_SM_EV_PREAUTH_FAIL to call preauth complete
+	 * and move SM to CONNECTED state
+	 */
+	return QDF_STATUS_SUCCESS;
+}
 #else
 static QDF_STATUS cm_host_roam_start(struct cnx_mgr *cm_ctx,
 				     struct cm_req *cm_req)
@@ -233,6 +245,14 @@ static QDF_STATUS cm_host_roam_start(struct cnx_mgr *cm_ctx,
 	return cm_sm_deliver_event_sync(cm_ctx, WLAN_CM_SM_EV_START_REASSOC,
 					sizeof(cm_req->roam_req),
 					&cm_req->roam_req);
+}
+
+static
+QDF_STATUS cm_host_roam_start_fail(struct cnx_mgr *cm_ctx,
+				   struct cm_req *cm_req,
+				   enum wlan_cm_connect_fail_reason reason)
+{
+	return cm_send_reassoc_start_fail(cm_ctx, cm_req->cm_id, reason, true);
 }
 #endif
 
@@ -262,7 +282,7 @@ QDF_STATUS cm_host_roam_start_req(struct cnx_mgr *cm_ctx,
 		return status;
 
 roam_err:
-	return cm_send_reassoc_start_fail(cm_ctx, cm_req->cm_id, reason, true);
+	return cm_host_roam_start_fail(cm_ctx, cm_req, reason);
 }
 
 bool cm_roam_resp_cmid_match_list_head(struct cnx_mgr *cm_ctx,
@@ -578,7 +598,7 @@ static QDF_STATUS cm_ser_reassoc_req(struct cnx_mgr *cm_ctx,
 		return status;
 	}
 
-	cmd.cmd_type = WLAN_SER_CMD_VDEV_REASSOC;
+	cmd.cmd_type = WLAN_SER_CMD_VDEV_ROAM;
 	cmd.cmd_id = cm_req->cm_id;
 	cmd.cmd_cb = cm_ser_reassoc_cb;
 	cmd.source = WLAN_UMAC_COMP_MLME;
