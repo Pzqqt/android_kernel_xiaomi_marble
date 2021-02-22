@@ -713,7 +713,11 @@ int hif_force_wake_request(struct hif_opaque_softc *hif_handle)
 	HIF_STATS_INC(ipci_scn, mhi_force_wake_request_vote, 1);
 	while (!pld_is_device_awake(scn->qdf_dev->dev) &&
 	       timeout <= FORCE_WAKE_DELAY_TIMEOUT_MS) {
-		qdf_mdelay(FORCE_WAKE_DELAY_MS);
+		if (qdf_in_interrupt())
+			qdf_mdelay(FORCE_WAKE_DELAY_MS);
+		else
+			qdf_sleep(FORCE_WAKE_DELAY_MS);
+
 		timeout += FORCE_WAKE_DELAY_MS;
 	}
 
