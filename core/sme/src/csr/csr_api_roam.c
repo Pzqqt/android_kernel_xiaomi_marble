@@ -13672,6 +13672,15 @@ rel_vdev_ref:
 	return status;
 }
 
+/*
+ * csr_iterate_triplets() - Iterate the country IE to validate it
+ * @country_ie: country IE to iterate through
+ *
+ * This function always returns success because connection should not be failed
+ * in the case of missing elements in the country IE
+ *
+ * Return: QDF_STATUS
+ */
 static QDF_STATUS csr_iterate_triplets(tDot11fIECountry country_ie)
 {
 	u_int8_t i;
@@ -13689,8 +13698,8 @@ static QDF_STATUS csr_iterate_triplets(tDot11fIECountry country_ie)
 				return QDF_STATUS_SUCCESS;
 		}
 	}
-	sme_err_rl("No operating class triplet followed by channel range triplet");
-	return QDF_STATUS_E_FAILURE;
+	sme_debug("No operating class triplet followed by channel range triplet");
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -14111,7 +14120,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 
 		if (wlan_reg_is_6ghz_chan_freq(pBssDescription->chan_freq)) {
 			if (!pIes->Country.present)
-				sme_debug("Channel is 6G but not country IE present");
+				sme_debug("Channel is 6G but country IE not present");
 			wlan_reg_read_current_country(mac->psoc,
 						      programmed_country);
 			if (!qdf_mem_cmp(pIes->Country.country,
@@ -14119,8 +14128,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 					 REG_ALPHA2_LEN + 1))
 				sme_debug("Country IE does not match country stored in regulatory");
 			status = csr_iterate_triplets(pIes->Country);
-			if (QDF_IS_STATUS_ERROR(status))
-				return status;
 		}
 
 		if (wlan_reg_is_6ghz_chan_freq(pBssDescription->chan_freq)) {
