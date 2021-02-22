@@ -111,6 +111,7 @@ dp_extap_in_ipv6(dp_pdev_extap_t *extap, qdf_ether_header_t *eh)
 	qdf_net_ipv6hdr_t *iphdr = (qdf_net_ipv6hdr_t *)(eh + 1);
 	u_int8_t *mac;
 	qdf_net_icmp6_11addr_t *ha;
+	rwlock_state_t lock_state;
 
 	print_ipv6("inp6", eh);
 
@@ -120,17 +121,21 @@ dp_extap_in_ipv6(dp_pdev_extap_t *extap, qdf_ether_header_t *eh)
 		switch (nd->nd_icmph.icmp6_type) {
 		case QDF_ND_NSOL:	/* ARP Request */
 				ha = (qdf_net_icmp6_11addr_t *)nd->nd_opt;
+				OS_RWLOCK_WRITE_LOCK(&extap->mi_lock, &lock_state);
 				/* save source ip */
 				mi_add(&extap->miroot, iphdr->ipv6_saddr.s6_addr,
 					  ha->addr, ATH_MITBL_IPV6);
+				OS_RWLOCK_WRITE_UNLOCK(&extap->mi_lock, &lock_state);
 				return;
 		case QDF_ND_NADVT:	/* ARP Response */
 				if ((is_ipv6_addr_multicast(&nd->nd_target)) ||
 					(nd->nd_icmph.icmp6_dataun.u_nd_advt.override)) {
 					ha = (qdf_net_icmp6_11addr_t *)nd->nd_opt;
 					/* save target ip */
+					OS_RWLOCK_WRITE_LOCK(&extap->mi_lock, &lock_state);
 					mi_add(&extap->miroot, nd->nd_target.s6_addr,
 						  ha->addr, ATH_MITBL_IPV6);
+					OS_RWLOCK_WRITE_UNLOCK(&extap->mi_lock, &lock_state);
 				}
 				/*
 				 * Unlike ipv4, source IP and MAC is not present.
@@ -154,8 +159,10 @@ dp_extap_in_ipv6(dp_pdev_extap_t *extap, qdf_ether_header_t *eh)
 				   eaip6(iphdr->ipv6_daddr.s6_addr),
 				   eamac(eh->ether_shost), eamac(eh->ether_dhost));
 	}
+	OS_RWLOCK_READ_LOCK(&extap->mi_lock, &lock_state);
 	mac = mi_lkup(extap->miroot, iphdr->ipv6_daddr.s6_addr,
 				 ATH_MITBL_IPV6);
+	OS_RWLOCK_READ_UNLOCK(&extap->mi_lock, &lock_state);
 	if (mac) {
 		extap_debug_mac(eh->ether_dhost, mac);
 		WLAN_ADDR_COPY(eh->ether_dhost, mac);
@@ -175,6 +182,7 @@ int dp_extap_input(dp_pdev_extap_t *extap, uint8_t *vdev_macaddr,
 	u_int8_t *sip, *dip;
 	qdf_net_iphdr_t *iphdr = NULL;
 	qdf_net_arphdr_t *arp = NULL;
+	rwlock_state_t lock_state;
 
 	if (qdf_unlikely(!extap))
 		return 1;
@@ -220,7 +228,9 @@ int dp_extap_input(dp_pdev_extap_t *extap, uint8_t *vdev_macaddr,
 			return 0;
 	}
 
+	OS_RWLOCK_READ_LOCK(&extap->mi_lock, &lock_state);
 	mac = mi_lkup(extap->miroot, dip, ATH_MITBL_IPV4);
+	OS_RWLOCK_READ_UNLOCK(&extap->mi_lock, &lock_state);
 	if (mac) {
 		extap_debug_mac(eh->ether_dhost, mac);
 		WLAN_ADDR_COPY(eh->ether_dhost, mac);
@@ -262,6 +272,7 @@ dp_extap_out_arp(dp_pdev_extap_t *extap, uint8_t *vdev_macaddr,
 				qdf_ether_header_t *eh, struct dp_extap_nssol *extap_nssol)
 {
 	qdf_net_arphdr_t *arp = (qdf_net_arphdr_t *)(eh + 1);
+	rwlock_state_t lock_state;
 
 	print_arp(eh);
 
@@ -272,9 +283,11 @@ dp_extap_out_arp(dp_pdev_extap_t *extap, uint8_t *vdev_macaddr,
 					arp->ar_sip, QDF_IPV4_ADDR_SIZE);
 	}
 
+	OS_RWLOCK_WRITE_LOCK(&extap->mi_lock, &lock_state);
 	/* For ARP requests/responses, note down the sender's details */
 	mi_add(&extap->miroot, arp->ar_sip, arp->ar_sha,
 		  ATH_MITBL_IPV4);
+	OS_RWLOCK_WRITE_UNLOCK(&extap->mi_lock, &lock_state);
 
 	extap_debug("out %s\t" eaistr "\t" eamstr "\t" eaistr "\t" eamstr "\n",
 			   arps[qdf_ntohs(arp->ar_op)],
@@ -377,6 +390,7 @@ dp_extap_out_ipv6(dp_pdev_extap_t *extap, uint8_t *vdev_macaddr,
 	qdf_net_ipv6hdr_t *iphdr = (qdf_net_ipv6hdr_t *)(eh + 1);
 	u_int8_t *mac, *ip;
 	qdf_net_icmp6_11addr_t *ha;
+	rwlock_state_t lock_state;
 
 	print_ipv6("out6", eh);
 
@@ -398,8 +412,11 @@ dp_extap_out_ipv6(dp_pdev_extap_t *extap, uint8_t *vdev_macaddr,
 								iphdr->ipv6_saddr.s6_addr, QDF_IPV6_ADDR_SIZE);
 				}
 
+				OS_RWLOCK_WRITE_LOCK(&extap->mi_lock, &lock_state);
 				mi_add(&extap->miroot, iphdr->ipv6_saddr.s6_addr,
 					  ha->addr, ATH_MITBL_IPV6);
+				OS_RWLOCK_WRITE_UNLOCK(&extap->mi_lock, &lock_state);
+
 				extap_debug_mac(ha->addr, vdev_macaddr);
 				WLAN_ADDR_COPY(ha->addr, vdev_macaddr);
 				nd->nd_icmph.icmp6_cksum = 0;
@@ -423,8 +440,11 @@ dp_extap_out_ipv6(dp_pdev_extap_t *extap, uint8_t *vdev_macaddr,
 									nd->nd_target.s6_addr, QDF_IPV6_ADDR_SIZE);
 					}
 
+					OS_RWLOCK_WRITE_LOCK(&extap->mi_lock, &lock_state);
 					mi_add(&extap->miroot, nd->nd_target.s6_addr,
 						  ha->addr, ATH_MITBL_IPV6);
+					OS_RWLOCK_WRITE_UNLOCK(&extap->mi_lock, &lock_state);
+
 					extap_debug_mac(ha->addr, vdev_macaddr);
 					WLAN_ADDR_COPY(ha->addr, vdev_macaddr);
 				}
@@ -454,7 +474,9 @@ dp_extap_out_ipv6(dp_pdev_extap_t *extap, uint8_t *vdev_macaddr,
 	}
 
 	ip = iphdr->ipv6_daddr.s6_addr;
+	OS_RWLOCK_READ_LOCK(&extap->mi_lock, &lock_state);
 	mac = mi_lkup(extap->miroot, ip, ATH_MITBL_IPV6);
+	OS_RWLOCK_READ_UNLOCK(&extap->mi_lock, &lock_state);
 
 	if (mac) {
 		extap_debug_ip(eh->ether_dhost, mac, ip);
@@ -509,18 +531,24 @@ void dp_extap_disable(struct wlan_objmgr_vdev *vdev)
 
 void dp_extap_mitbl_dump(dp_pdev_extap_t *extap)
 {
+	rwlock_state_t lock_state;
 	if (!extap)
 		return;
 
+	OS_RWLOCK_READ_LOCK(&extap->mi_lock, &lock_state);
 	mi_tbl_dump(extap->miroot);
+	OS_RWLOCK_READ_UNLOCK(&extap->mi_lock, &lock_state);
 }
 
 void dp_extap_mitbl_purge(dp_pdev_extap_t *extap)
 {
+	rwlock_state_t lock_state;
 	if (!extap)
 		return;
 
+	OS_RWLOCK_WRITE_LOCK(&extap->mi_lock, &lock_state);
 	mi_tbl_purge(&extap->miroot);
+	OS_RWLOCK_WRITE_UNLOCK(&extap->mi_lock, &lock_state);
 }
 
 int dp_extap_tx_process(struct wlan_objmgr_vdev *vdev, struct sk_buff **skb,
@@ -569,3 +597,48 @@ int dp_extap_rx_process(struct wlan_objmgr_vdev *vdev, struct sk_buff *skb)
 }
 
 qdf_export_symbol(dp_extap_rx_process);
+
+/**
+ * @brief extap attach
+ *
+ * @param pdev objmgr Pointer.
+ *
+ * @return 0 on success
+ * @return -ve on failure
+ */
+int dp_extap_attach(struct wlan_objmgr_pdev *pdev)
+{
+	int ret = 0;
+	dp_pdev_extap_t *extap_pdev = dp_pdev_get_extap_handle(pdev);
+
+	if (!extap_pdev) {
+		extap_debug(" extap_pdev is NULL");
+		return -EINVAL;
+	}
+
+	OS_RWLOCK_INIT(&extap_pdev->mi_lock);
+	return ret;
+}
+qdf_export_symbol(dp_extap_attach);
+
+/**
+ * @brief extap detach
+ *
+ * @param pdev objmgr Pointer.
+ *
+ * @return 0 on success
+ * @return -ve on failure
+ */
+int dp_extap_detach(struct wlan_objmgr_pdev *pdev)
+{
+	int ret = 0;
+	dp_pdev_extap_t *extap_pdev = dp_pdev_get_extap_handle(pdev);
+
+	if (!extap_pdev) {
+		extap_debug(" extap_pdev is NULL");
+		return -EINVAL;
+	}
+	OS_RWLOCK_DESTROY(&extap_pdev->mi_lock);
+	return ret;
+}
+qdf_export_symbol(dp_extap_detach);
