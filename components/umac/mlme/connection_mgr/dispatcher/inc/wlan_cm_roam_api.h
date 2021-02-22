@@ -104,28 +104,6 @@ wlan_roam_update_cfg(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 QDF_STATUS
 wlan_cm_roam_cmd_allowed(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			 uint8_t rso_command, uint8_t reason);
-#endif
-
-/**
- * wlan_cm_roam_scan_offload_rsp() - send roam scan offload response message
- * @vdev_id: vdev id
- * @reason: reason to roam
- *
- * This function gets called to send roam scan offload response message
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS
-wlan_cm_roam_scan_offload_rsp(uint8_t vdev_id, uint8_t reason);
-
-/**
- * wlan_cm_send_beacon_miss() - initiate beacon miss
- * @vdev_id: vdev id
- * @rssi: AP rssi
- *
- * Return: void
- */
-void wlan_cm_send_beacon_miss(uint8_t vdev_id, int32_t rssi);
 
 /**
  * wlan_cm_roam_neighbor_proceed_with_handoff_req() - invoke host handover to
@@ -138,6 +116,28 @@ void wlan_cm_send_beacon_miss(uint8_t vdev_id, int32_t rssi);
  */
 QDF_STATUS
 wlan_cm_roam_neighbor_proceed_with_handoff_req(uint8_t vdev_id);
+
+/**
+ * wlan_cm_roam_scan_offload_rsp() - send roam scan offload response message
+ * @vdev_id: vdev id
+ * @reason: reason to roam
+ *
+ * This function gets called to send roam scan offload response message
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_cm_roam_scan_offload_rsp(uint8_t vdev_id, uint8_t reason);
+#endif
+
+/**
+ * wlan_cm_send_beacon_miss() - initiate beacon miss
+ * @vdev_id: vdev id
+ * @rssi: AP rssi
+ *
+ * Return: void
+ */
+void wlan_cm_send_beacon_miss(uint8_t vdev_id, int32_t rssi);
 
 /**
  * wlan_cm_is_sta_connected() - check if STA is connected

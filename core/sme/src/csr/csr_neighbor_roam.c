@@ -49,6 +49,7 @@ static const char *lfr_get_config_item_string(uint8_t reason)
 	}
 }
 
+#ifndef FEATURE_CM_ENABLE
 void csr_neighbor_roam_state_transition(struct mac_context *mac_ctx,
 		uint8_t newstate, uint8_t session)
 {
@@ -108,23 +109,16 @@ void csr_neighbor_roam_send_lfr_metric_event(
 	}
 }
 #endif
+#endif
 
 QDF_STATUS csr_neighbor_roam_update_config(struct mac_context *mac_ctx,
 		uint8_t session_id, uint8_t value, uint8_t reason)
 {
-	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
-	    &mac_ctx->roam.neighborRoamInfo[session_id];
 	struct cm_roam_values_copy src_cfg;
-	eCsrNeighborRoamState state;
 	uint8_t old_value;
 	struct wlan_objmgr_vdev *vdev;
 	struct rso_config *rso_cfg;
 	struct rso_cfg_params *cfg_params;
-
-	if (!pNeighborRoamInfo) {
-		sme_err("Invalid Session ID %d", session_id);
-		return QDF_STATUS_E_FAILURE;
-	}
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac_ctx->pdev, session_id,
 						    WLAN_LEGACY_SME_ID);
@@ -138,56 +132,47 @@ QDF_STATUS csr_neighbor_roam_update_config(struct mac_context *mac_ctx,
 		return QDF_STATUS_E_FAILURE;
 	}
 	cfg_params = &rso_cfg->cfg_param;
-	state = pNeighborRoamInfo->neighborRoamState;
-	if ((state == eCSR_NEIGHBOR_ROAM_STATE_CONNECTED) ||
-			state == eCSR_NEIGHBOR_ROAM_STATE_INIT) {
-		switch (reason) {
-		case REASON_LOOKUP_THRESH_CHANGED:
-			old_value = cfg_params->neighbor_lookup_threshold;
-			cfg_params->neighbor_lookup_threshold = value;
-			break;
-		case REASON_OPPORTUNISTIC_THRESH_DIFF_CHANGED:
-			old_value = cfg_params->opportunistic_threshold_diff;
-			cfg_params->opportunistic_threshold_diff = value;
-			break;
-		case REASON_ROAM_RESCAN_RSSI_DIFF_CHANGED:
-			old_value = cfg_params->roam_rescan_rssi_diff;
-			cfg_params->roam_rescan_rssi_diff = value;
-			src_cfg.uint_value = value;
-			wlan_cm_roam_cfg_set_value(mac_ctx->psoc, session_id,
-						   RSSI_CHANGE_THRESHOLD,
-						   &src_cfg);
-			break;
-		case REASON_ROAM_BMISS_FIRST_BCNT_CHANGED:
-			old_value = cfg_params->roam_bmiss_first_bcn_cnt;
-			cfg_params->roam_bmiss_first_bcn_cnt = value;
-			break;
-		case REASON_ROAM_BMISS_FINAL_BCNT_CHANGED:
-			old_value = cfg_params->roam_bmiss_final_cnt;
-			cfg_params->roam_bmiss_final_cnt = value;
-			break;
-		default:
-			sme_debug("Unknown update cfg reason");
-			wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-			return QDF_STATUS_E_FAILURE;
-		}
-	} else {
-		sme_err("Unexpected state %s, return fail",
-			mac_trace_get_neighbour_roam_state(state));
+	switch (reason) {
+	case REASON_LOOKUP_THRESH_CHANGED:
+		old_value = cfg_params->neighbor_lookup_threshold;
+		cfg_params->neighbor_lookup_threshold = value;
+		break;
+	case REASON_OPPORTUNISTIC_THRESH_DIFF_CHANGED:
+		old_value = cfg_params->opportunistic_threshold_diff;
+		cfg_params->opportunistic_threshold_diff = value;
+		break;
+	case REASON_ROAM_RESCAN_RSSI_DIFF_CHANGED:
+		old_value = cfg_params->roam_rescan_rssi_diff;
+		cfg_params->roam_rescan_rssi_diff = value;
+		src_cfg.uint_value = value;
+		wlan_cm_roam_cfg_set_value(mac_ctx->psoc, session_id,
+					   RSSI_CHANGE_THRESHOLD,
+					   &src_cfg);
+		break;
+	case REASON_ROAM_BMISS_FIRST_BCNT_CHANGED:
+		old_value = cfg_params->roam_bmiss_first_bcn_cnt;
+		cfg_params->roam_bmiss_first_bcn_cnt = value;
+		break;
+	case REASON_ROAM_BMISS_FINAL_BCNT_CHANGED:
+		old_value = cfg_params->roam_bmiss_final_cnt;
+		cfg_params->roam_bmiss_final_cnt = value;
+		break;
+	default:
+		sme_debug("Unknown update cfg reason");
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 		return QDF_STATUS_E_FAILURE;
 	}
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-	if (state == eCSR_NEIGHBOR_ROAM_STATE_CONNECTED) {
-		sme_debug("CONNECTED, send update cfg cmd");
-		wlan_roam_update_cfg(mac_ctx->psoc, session_id, reason);
-	}
+	sme_debug("CONNECTED, send update cfg cmd");
+	wlan_roam_update_cfg(mac_ctx->psoc, session_id, reason);
+
 	sme_debug("LFR config for %s changed from %d to %d",
 		  lfr_get_config_item_string(reason), old_value, value);
 
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * csr_neighbor_roam_reset_connected_state_control_info()
  *
@@ -380,19 +365,7 @@ csr_neighbor_roam_get_scan_filter_from_profile(struct mac_context *mac,
 
 	return QDF_STATUS_SUCCESS;
 }
-
-enum band_info csr_get_rf_band(uint8_t channel)
-{
-	if ((channel >= SIR_11A_CHANNEL_BEGIN) &&
-	    (channel <= SIR_11A_CHANNEL_END))
-		return BAND_5G;
-
-	if ((channel >= SIR_11B_CHANNEL_BEGIN) &&
-	    (channel <= SIR_11B_CHANNEL_END))
-		return BAND_2G;
-
-	return BAND_UNKNOWN;
-}
+#endif
 
 /**
  * csr_neighbor_roam_channels_filter_by_current_band()
@@ -423,7 +396,7 @@ QDF_STATUS csr_neighbor_roam_channels_filter_by_current_band(struct mac_context 
 	uint8_t i = 0;
 	uint8_t numChannels = 0;
 	uint32_t curr_ap_op_chan_freq =
-		mac->roam.neighborRoamInfo[sessionId].curr_ap_op_chan_freq;
+		wlan_get_operation_chan_freq_vdev_id(mac->pdev, sessionId);
 	/* Check for NULL pointer */
 	if (!input_chan_freq_list)
 		return QDF_STATUS_E_INVAL;
@@ -655,6 +628,7 @@ void csr_roam_restore_default_config(struct mac_context *mac_ctx,
 }
 #endif
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * csr_neighbor_roam_indicate_disconnect() - To indicate disconnect
  * @mac: The handle returned by mac_open
@@ -801,8 +775,6 @@ static void csr_neighbor_roam_info_ctx_init(struct mac_context *mac,
 
 	qdf_copy_macaddr(&ngbr_roam_info->currAPbssid,
 			&session->connectedProfile.bssid);
-	ngbr_roam_info->curr_ap_op_chan_freq =
-				      session->connectedProfile.op_freq;
 	/*
 	 * Update RSSI change params to vdev
 	 */
@@ -1049,8 +1021,7 @@ QDF_STATUS csr_neighbor_roam_init(struct mac_context *mac, uint8_t sessionId)
 	csr_neighbor_roam_state_transition(mac,
 			eCSR_NEIGHBOR_ROAM_STATE_INIT, sessionId);
 	pNeighborRoamInfo->uOsRequestedHandoff = 0;
-	/* Set the Last Sent Cmd as RSO_STOP */
-	pNeighborRoamInfo->last_sent_cmd = ROAM_SCAN_OFFLOAD_STOP;
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1093,6 +1064,7 @@ void csr_neighbor_roam_close(struct mac_context *mac, uint8_t sessionId)
 		eCSR_NEIGHBOR_ROAM_STATE_CLOSED, sessionId);
 
 }
+#endif
 
 /**
  * csr_neighbor_roam_is11r_assoc() - Check if association type is 11R
@@ -1110,6 +1082,7 @@ bool csr_neighbor_roam_is11r_assoc(struct mac_context *mac_ctx, uint8_t session_
 	return config.bool_value;
 }
 
+#ifndef FEATURE_CM_ENABLE
 /*
  * csr_neighbor_middle_of_roaming() -
  * This function returns true if STA is in the middle of roaming states
@@ -1132,7 +1105,6 @@ bool csr_neighbor_middle_of_roaming(struct mac_context *mac, uint8_t sessionId)
 	return val;
 }
 
-#ifndef FEATURE_CM_ENABLE
 bool
 wlan_cm_host_roam_in_progress(struct wlan_objmgr_psoc *psoc,
 			      uint8_t vdev_id)
@@ -1154,7 +1126,7 @@ wlan_cm_host_roam_in_progress(struct wlan_objmgr_psoc *psoc,
 
 	return csr_neighbor_middle_of_roaming(mac_ctx, vdev_id);
 }
-#endif
+
 /**
  * csr_neighbor_roam_process_handoff_req - Processes handoff request
  *
@@ -1260,12 +1232,10 @@ static QDF_STATUS csr_neighbor_roam_process_handoff_req(
 		csr_neighbor_roam_trigger_handoff(mac_ctx, session_id);
 	} else {
 		/* This is temp ifdef will be removed in near future */
-#ifndef FEATURE_CM_ENABLE
 		status = csr_scan_for_ssid(mac_ctx, session_id, profile,
 					   roam_id, false);
 		if (status != QDF_STATUS_SUCCESS)
 			sme_err("SSID scan failed");
-#endif
 	}
 
 end:
@@ -1329,7 +1299,6 @@ QDF_STATUS csr_neighbor_roam_sssid_scan_done(struct mac_context *mac,
 	}
 	return QDF_STATUS_SUCCESS;
 }
-
 
 /**
  * csr_neighbor_roam_handoff_req_hdlr - Processes handoff request
@@ -1452,3 +1421,4 @@ QDF_STATUS csr_neighbor_roam_start_lfr_scan(struct mac_context *mac,
 
 
 }
+#endif

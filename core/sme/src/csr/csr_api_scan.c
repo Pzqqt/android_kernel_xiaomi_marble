@@ -1871,6 +1871,10 @@ void csr_fill_enc_type(eCsrEncryptionType *cipher_type, uint32_t cipherset)
 static void csr_fill_neg_crypto_info(struct tag_csrscan_result *bss,
 				     struct security_info *sec_info)
 {
+	if (!sec_info->authmodeset && !sec_info->key_mgmt &&
+	    !sec_info->ucastcipherset)
+		return;
+
 	csr_fill_enc_type(&bss->ucEncryptionType, sec_info->ucastcipherset);
 	csr_fill_enc_type(&bss->mcEncryptionType, sec_info->mcastcipherset);
 	csr_fill_auth_type(&bss->authType, sec_info->authmodeset,

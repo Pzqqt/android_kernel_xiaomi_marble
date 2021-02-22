@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -588,6 +588,7 @@ void lim_post_ft_pre_auth_rsp(struct mac_context *mac_ctx,
 			      uint16_t auth_rsp_length,
 			      struct pe_session *session)
 {
+#ifndef FEATURE_CM_ENABLE
 	tpSirFTPreAuthRsp ft_pre_auth_rsp;
 	struct scheduler_msg mmh_msg = {0};
 	uint16_t rsp_len = sizeof(tSirFTPreAuthRsp);
@@ -612,6 +613,7 @@ void lim_post_ft_pre_auth_rsp(struct mac_context *mac_ctx,
 			sir_copy_mac_addr(ft_pre_auth_rsp->preAuthbssId,
 			    session->ftPEContext.pFTPreAuthReq->preAuthbssId);
 	}
+
 
 	ft_pre_auth_rsp->messageType = eWNI_SME_FT_PRE_AUTH_RSP;
 	ft_pre_auth_rsp->length = (uint16_t) rsp_len;
@@ -640,12 +642,22 @@ void lim_post_ft_pre_auth_rsp(struct mac_context *mac_ctx,
 	mmh_msg.bodyval = 0;
 
 	pe_debug("Posted Auth Rsp to SME with status of 0x%x", status);
+
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 	if (status == QDF_STATUS_SUCCESS)
 		lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_PREAUTH_DONE,
 				      session, status, 0);
 #endif
+
 	lim_sys_process_mmh_msg_api(mac_ctx, &mmh_msg);
+#else
+#ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
+	if (status == QDF_STATUS_SUCCESS)
+		lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_PREAUTH_DONE,
+				      session, status, 0);
+#endif
+	/* post msg to osif to cm */
+#endif
 }
 
 /**

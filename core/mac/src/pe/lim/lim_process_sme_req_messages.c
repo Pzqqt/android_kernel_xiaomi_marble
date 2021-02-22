@@ -7379,10 +7379,13 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 		__lim_process_report_message(mac, pMsg);
 		break;
 
+#ifndef FEATURE_CM_ENABLE
 	case eWNI_SME_FT_PRE_AUTH_REQ:
 		bufConsumed = (bool) lim_process_ft_pre_auth_req(mac, pMsg);
 		break;
-
+#else
+	/* handle new command */
+#endif
 	case eWNI_SME_FT_AGGR_QOS_REQ:
 		lim_process_ft_aggr_qos_req(mac, msg_buf);
 		break;

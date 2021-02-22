@@ -1190,6 +1190,7 @@ typedef void (*tCsrTsmStatsCallback)(tAniTrafStrmMetrics tsmMetrics,
 #endif /* FEATURE_WLAN_ESE */
 typedef void (*tCsrSnrCallback)(int8_t snr, void *pContext);
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * csr_roam_issue_ft_preauth_req() - Initiate Preauthentication request
  * @max_ctx: Global MAC context
@@ -1221,7 +1222,7 @@ QDF_STATUS csr_continue_lfr2_connect(struct mac_context *mac,
 	return QDF_STATUS_E_NOSUPPORT;
 }
 #endif
-
+#endif
 typedef void (*csr_readyToSuspendCallback)(void *pContext, bool suspended);
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
 typedef void (*csr_readyToExtWoWCallback)(void *pContext, bool status);

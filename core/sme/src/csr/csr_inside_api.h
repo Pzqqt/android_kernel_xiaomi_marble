@@ -394,6 +394,7 @@ QDF_STATUS csr_roam_get_session_id_from_bssid(struct mac_context *mac,
 enum csr_cfgdot11mode csr_find_best_phy_mode(struct mac_context *mac,
 							uint32_t phyMode);
 
+#ifndef FEATURE_CM_ENABLE
 /*
  * csr_copy_ssids_from_roam_params() - copy SSID from roam_params to scan filter
  * @rso_usr_cfg: rso user config
@@ -414,7 +415,6 @@ void csr_copy_ssids_from_roam_params(struct rso_config_params *rso_usr_cfg,
 void csr_update_scan_filter_dot11mode(struct mac_context *mac_ctx,
 				      struct scan_filter *filter);
 
-#ifndef FEATURE_CM_ENABLE
 /**
  * csr_roam_get_scan_filter_from_profile() - prepare scan filter from
  * given roam profile
@@ -434,7 +434,6 @@ csr_roam_get_scan_filter_from_profile(struct mac_context *mac_ctx,
 				      struct csr_roam_profile *profile,
 				      struct scan_filter *filter,
 				      bool is_roam, uint8_t vdev_id);
-#endif
 /**
  * csr_neighbor_roam_get_scan_filter_from_profile() - prepare scan filter from
  * connected profile
@@ -451,6 +450,7 @@ QDF_STATUS
 csr_neighbor_roam_get_scan_filter_from_profile(struct mac_context *mac,
 					       struct scan_filter *filter,
 					       uint8_t vdev_id);
+#endif
 /*
  * csr_scan_get_result() - Return scan results based on filter
  * @mac: Pointer to Global MAC structure
@@ -784,6 +784,7 @@ QDF_STATUS csr_roam_issue_deauth_sta_cmd(struct mac_context *mac,
 QDF_STATUS
 csr_send_chng_mcc_beacon_interval(struct mac_context *mac, uint32_t sessionId);
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * csr_roam_ft_pre_auth_rsp_processor() - Handle the preauth response
  * @mac_ctx: Global MAC context
@@ -800,6 +801,7 @@ void csr_roam_ft_pre_auth_rsp_processor(struct mac_context *mac_ctx,
 					tpSirFTPreAuthRsp pFTPreAuthRsp)
 {}
 #endif
+#endif
 
 #ifdef FEATURE_WLAN_ESE
 void update_cckmtsf(uint32_t *timeStamp0, uint32_t *timeStamp1,
@@ -812,13 +814,17 @@ static inline void csr_update_prev_ap_info(struct csr_roam_session *session,
 					   struct wlan_objmgr_vdev *vdev) {}
 #endif
 
+#ifndef FEATURE_CM_ENABLE
 QDF_STATUS csr_roam_enqueue_preauth(struct mac_context *mac, uint32_t sessionId,
 				    struct bss_description *pBssDescription,
 				    enum csr_roam_reason reason,
 				    bool fImmediate);
+
 QDF_STATUS csr_dequeue_roam_command(struct mac_context *mac,
 				enum csr_roam_reason reason,
 				uint8_t session_id);
+#endif
+
 QDF_STATUS csr_scan_create_entry_in_scan_cache(struct mac_context *mac,
 						uint32_t sessionId,
 						struct qdf_mac_addr bssid,
@@ -946,18 +952,6 @@ csr_roam_set_bss_config_cfg(struct mac_context *mac_ctx, uint32_t session_id,
 
 void csr_prune_channel_list_for_mode(struct mac_context *mac,
 				     struct csr_channel *pChannelList);
-
-/**
- * csr_get_rf_band()
- *
- * @channel: channel number
- *
- * This function is used to translate channel number to band
- *
- * Return: BAND_2G -  if 2.4GHZ channel
- *         BAND_5G -  if 5GHZ channel
- */
-enum band_info csr_get_rf_band(uint8_t channel);
 
 /**
  * csr_lookup_pmkid_using_bssid() - lookup pmkid using bssid

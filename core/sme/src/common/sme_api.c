@@ -266,8 +266,11 @@ static QDF_STATUS sme_process_set_hw_mode_resp(struct mac_context *mac, uint8_t 
 			  session_id);
 		csr_csa_restart(mac, session_id);
 	}
+	/* This is temp ifdef will be removed in near future */
+#ifndef FEATURE_CM_ENABLE
 	if (reason == POLICY_MGR_UPDATE_REASON_LFR2_ROAM)
 		csr_continue_lfr2_connect(mac, session_id);
+#endif
 
 	if (reason == POLICY_MGR_UPDATE_REASON_STA_CONNECT) {
 		QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -2432,11 +2435,13 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 		}
 		break;
 #endif /* FEATURE_WLAN_ESE */
+#ifndef FEATURE_CM_ENABLE
 	case eWNI_SME_ROAM_SCAN_OFFLOAD_RSP:
 		status = csr_roam_offload_scan_rsp_hdlr((void *)mac,
 							pMsg->bodyptr);
 		qdf_mem_free(pMsg->bodyptr);
 		break;
+#endif
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
 	case eWNI_SME_READY_TO_EXTWOW_IND:
 		if (pMsg->bodyptr) {
@@ -6255,13 +6260,9 @@ QDF_STATUS sme_update_wes_mode(mac_handle_t mac_handle, bool isWESModeEnabled,
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			  "LFR runtime successfully set WES Mode to %d - old value is %d - roam state is %s",
+			  "LFR runtime successfully set WES Mode to %d - old value is %d",
 			  isWESModeEnabled,
-			  mac->mlme_cfg->lfr.wes_mode_enabled,
-			  mac_trace_get_neighbour_roam_state(mac->roam.
-							     neighborRoamInfo
-							     [sessionId].
-							    neighborRoamState));
+			  mac->mlme_cfg->lfr.wes_mode_enabled);
 		mac->mlme_cfg->lfr.wes_mode_enabled = isWESModeEnabled;
 		sme_release_global_lock(&mac->sme);
 	}
@@ -6897,27 +6898,6 @@ uint16_t sme_get_neighbor_scan_min_chan_time(mac_handle_t mac_handle,
 	wlan_cm_roam_cfg_get_value(mac->psoc, sessionId,
 				   SCAN_MIN_CHAN_TIME, &temp);
 	return temp.uint_value;
-}
-
-/*
- * sme_get_neighbor_roam_state() -
- * get neighbor roam state
- *
- * mac_handle - The handle returned by mac_open.
- * sessionId - Session Identifier
- * Return uint32_t - neighbor roam state
- */
-uint32_t sme_get_neighbor_roam_state(mac_handle_t mac_handle, uint8_t sessionId)
-{
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-
-	if (sessionId >= WLAN_MAX_VDEVS) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  FL("Invalid sme session id: %d"), sessionId);
-		return 0;
-	}
-
-	return mac->roam.neighborRoamInfo[sessionId].neighborRoamState;
 }
 
 /*
@@ -9087,13 +9067,9 @@ QDF_STATUS sme_update_dfs_scan_mode(mac_handle_t mac_handle, uint8_t sessionId,
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			  "LFR runtime successfully set AllowDFSChannelRoam Mode to %d - old value is %d - roam state is %s",
+			  "LFR runtime successfully set AllowDFSChannelRoam Mode to %d - old value is %d",
 			  allowDFSChannelRoam,
-			  mac->mlme_cfg->lfr.roaming_dfs_channel,
-			  mac_trace_get_neighbour_roam_state(mac->roam.
-							     neighborRoamInfo
-							     [sessionId].
-							    neighborRoamState));
+			  mac->mlme_cfg->lfr.roaming_dfs_channel);
 		mac->mlme_cfg->lfr.roaming_dfs_channel =
 			allowDFSChannelRoam;
 		if (mac->mlme_cfg->lfr.roam_scan_offload_enabled)
@@ -10621,32 +10597,6 @@ QDF_STATUS sme_wifi_start_logger(mac_handle_t mac_handle,
 	return status;
 }
 
-/**
- * sme_neighbor_middle_of_roaming() - Function to know if
- * STA is in the middle of roaming states
- * @mac_handle:                Handle returned by macOpen
- * @sessionId: sessionId of the STA session
- *
- * This function is a wrapper to call
- * csr_neighbor_middle_of_roaming to know STA is in the
- * middle of roaming states
- *
- * Return: True or False
- *
- */
-bool sme_neighbor_middle_of_roaming(mac_handle_t mac_handle, uint8_t sessionId)
-{
-	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-	bool val = false;
-
-	if (CSR_IS_SESSION_VALID(mac_ctx, sessionId))
-		val = csr_neighbor_middle_of_roaming(mac_ctx, sessionId);
-	else
-		sme_debug("Invalid Session: %d", sessionId);
-
-	return val;
-}
-
 bool sme_is_any_session_in_middle_of_roaming(mac_handle_t mac_handle)
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
@@ -10654,7 +10604,7 @@ bool sme_is_any_session_in_middle_of_roaming(mac_handle_t mac_handle)
 
 	for (session_id = 0; session_id < WLAN_MAX_VDEVS; session_id++) {
 		if (CSR_IS_SESSION_VALID(mac_ctx, session_id) &&
-		    csr_neighbor_middle_of_roaming(mac_ctx, session_id))
+		    wlan_cm_host_roam_in_progress(mac_ctx->psoc, session_id))
 			return true;
 	}
 
