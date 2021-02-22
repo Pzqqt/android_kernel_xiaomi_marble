@@ -195,6 +195,18 @@ enum msm_vidc_colorformat_type v4l2_colorformat_to_driver(u32 colorformat,
 	const char *func);
 u32 v4l2_colorformat_from_driver(enum msm_vidc_colorformat_type colorformat,
 	const char *func);
+u32 v4l2_color_primaries_to_driver(struct msm_vidc_inst *inst,
+	u32 v4l2_primaries);
+u32 v4l2_color_primaries_from_driver(struct msm_vidc_inst *inst,
+	u32 vidc_color_primaries);
+u32 v4l2_transfer_char_to_driver(struct msm_vidc_inst *inst,
+	u32 v4l2_transfer_char);
+u32 v4l2_transfer_char_from_driver(struct msm_vidc_inst *inst,
+	u32 vidc_transfer_char);
+u32 v4l2_matrix_coeff_to_driver(struct msm_vidc_inst *inst,
+	u32 v4l2_matrix_coeff);
+u32 v4l2_matrix_coeff_from_driver(struct msm_vidc_inst *inst,
+	u32 vidc_matrix_coeff);
 int v4l2_type_to_driver_port(struct msm_vidc_inst *inst, u32 type,
 	const char *func);
 const char *state_name(enum msm_vidc_inst_state state);

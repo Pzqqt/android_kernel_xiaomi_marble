@@ -334,8 +334,10 @@ static int msm_vdec_set_colorspace(struct msm_vidc_inst *inst,
 	enum msm_vidc_port_type port)
 {
 	int rc = 0;
-	u32 primaries, matrix_coeff, transfer_char;
-	u32 full_range = 0;
+	u32 primaries = MSM_VIDC_PRIMARIES_RESERVED;
+	u32 matrix_coeff = MSM_VIDC_MATRIX_COEFF_RESERVED;
+	u32 transfer_char = MSM_VIDC_TRANSFER_RESERVED;
+	u32 full_range = V4L2_QUANTIZATION_DEFAULT;
 	u32 colour_description_present_flag = 0;
 	u32 video_signal_type_present_flag = 0, color_info = 0;
 	/* Unspecified video format */
@@ -349,15 +351,17 @@ static int msm_vdec_set_colorspace(struct msm_vidc_inst *inst,
 	if (inst->codec != MSM_VIDC_H264 && inst->codec != MSM_VIDC_HEVC)
 		return 0;
 
-	primaries = inst->fmts[port].fmt.pix_mp.colorspace;
-	matrix_coeff = inst->fmts[port].fmt.pix_mp.ycbcr_enc;
-	transfer_char = inst->fmts[port].fmt.pix_mp.xfer_func;
-
-	if (primaries != V4L2_COLORSPACE_DEFAULT ||
-	    transfer_char != V4L2_XFER_FUNC_DEFAULT ||
-	    matrix_coeff != V4L2_YCBCR_ENC_DEFAULT) {
+	if (inst->fmts[port].fmt.pix_mp.colorspace != V4L2_COLORSPACE_DEFAULT ||
+	    inst->fmts[port].fmt.pix_mp.ycbcr_enc != V4L2_XFER_FUNC_DEFAULT ||
+	    inst->fmts[port].fmt.pix_mp.xfer_func != V4L2_YCBCR_ENC_DEFAULT) {
 		colour_description_present_flag = 1;
 		video_signal_type_present_flag = 1;
+		primaries = v4l2_color_primaries_to_driver(inst,
+			inst->fmts[port].fmt.pix_mp.colorspace);
+		matrix_coeff = v4l2_matrix_coeff_to_driver(inst,
+			inst->fmts[port].fmt.pix_mp.ycbcr_enc);
+		transfer_char = v4l2_transfer_char_to_driver(inst,
+			inst->fmts[port].fmt.pix_mp.xfer_func);
 	}
 
 	if (inst->fmts[port].fmt.pix_mp.quantization !=
@@ -1291,11 +1295,11 @@ static int msm_vdec_update_properties(struct msm_vidc_inst *inst)
 			V4L2_QUANTIZATION_LIM_RANGE;
 		if (colour_description_present_flag) {
 			inst->fmts[OUTPUT_PORT].fmt.pix_mp.colorspace =
-				primaries;
+				v4l2_color_primaries_from_driver(inst, primaries);
 			inst->fmts[OUTPUT_PORT].fmt.pix_mp.xfer_func =
-				transfer_char;
+				v4l2_transfer_char_from_driver(inst, transfer_char);
 			inst->fmts[OUTPUT_PORT].fmt.pix_mp.ycbcr_enc =
-				matrix_coeff;
+				v4l2_matrix_coeff_from_driver(inst, matrix_coeff);
 		} else {
 			i_vpr_h(inst,
 				"%s: color description flag is not present\n",

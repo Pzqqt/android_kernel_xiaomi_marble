@@ -26,6 +26,26 @@
 #define V4L2_PIX_FMT_VIDC_ARGB32C               v4l2_fourcc('Q', '2', '4', 'C')
 #define V4L2_META_FMT_VIDC                      v4l2_fourcc('Q', 'M', 'E', 'T')
 
+/* start of vidc specific colorspace definitions */
+#define V4L2_COLORSPACE_VIDC_GENERIC_FILM    101
+#define V4L2_COLORSPACE_VIDC_EG431           102
+#define V4L2_COLORSPACE_VIDC_EBU_TECH        103
+
+#define V4L2_XFER_FUNC_VIDC_BT470_SYSTEM_M   201
+#define V4L2_XFER_FUNC_VIDC_BT470_SYSTEM_BG  202
+#define V4L2_XFER_FUNC_VIDC_BT601_525_OR_625 203
+#define V4L2_XFER_FUNC_VIDC_LINEAR           204
+#define V4L2_XFER_FUNC_VIDC_XVYCC            205
+#define V4L2_XFER_FUNC_VIDC_BT1361           206
+#define V4L2_XFER_FUNC_VIDC_BT2020           207
+#define V4L2_XFER_FUNC_VIDC_ST428            208
+#define V4L2_XFER_FUNC_VIDC_HLG              209
+
+#define V4L2_YCBCR_VIDC_SRGB_OR_SMPTE_ST428  301
+#define V4L2_YCBCR_VIDC_FCC47_73_682         302
+
+/* end of vidc specific colorspace definitions */
+
 /* vendor controls start */
 #define V4L2_CID_MPEG_VIDC_BASE                 (V4L2_CTRL_CLASS_MPEG | 0x2000)
 

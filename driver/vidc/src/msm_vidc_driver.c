@@ -227,6 +227,297 @@ u32 v4l2_colorformat_from_driver(enum msm_vidc_colorformat_type colorformat,
 	return v4l2_colorformat;
 }
 
+u32 v4l2_color_primaries_to_driver(struct msm_vidc_inst *inst,
+	u32 v4l2_primaries)
+{
+	u32 vidc_color_primaries = MSM_VIDC_PRIMARIES_RESERVED;
+
+	switch(v4l2_primaries) {
+	case V4L2_COLORSPACE_DEFAULT:
+		vidc_color_primaries = MSM_VIDC_PRIMARIES_RESERVED;
+		break;
+	case V4L2_COLORSPACE_REC709:
+		vidc_color_primaries = MSM_VIDC_PRIMARIES_BT709;
+		break;
+	case V4L2_COLORSPACE_470_SYSTEM_M:
+		vidc_color_primaries = MSM_VIDC_PRIMARIES_BT470_SYSTEM_M;
+		break;
+	case V4L2_COLORSPACE_470_SYSTEM_BG:
+		vidc_color_primaries = MSM_VIDC_PRIMARIES_BT470_SYSTEM_BG;
+		break;
+	case V4L2_COLORSPACE_SMPTE170M:
+		vidc_color_primaries = MSM_VIDC_PRIMARIES_BT601_525;
+		break;
+	case V4L2_COLORSPACE_SMPTE240M:
+		vidc_color_primaries = MSM_VIDC_PRIMARIES_SMPTE_ST240M;
+		break;
+	case V4L2_COLORSPACE_VIDC_GENERIC_FILM:
+		vidc_color_primaries = MSM_VIDC_PRIMARIES_GENERIC_FILM;
+		break;
+	case V4L2_COLORSPACE_BT2020:
+		vidc_color_primaries = MSM_VIDC_PRIMARIES_BT2020;
+		break;
+	case V4L2_COLORSPACE_DCI_P3:
+		vidc_color_primaries = MSM_VIDC_PRIMARIES_SMPTE_RP431_2;
+		break;
+	case V4L2_COLORSPACE_VIDC_EG431:
+		vidc_color_primaries = MSM_VIDC_PRIMARIES_SMPTE_EG431_1;
+		break;
+	case V4L2_COLORSPACE_VIDC_EBU_TECH:
+		vidc_color_primaries = MSM_VIDC_PRIMARIES_SMPTE_EBU_TECH;
+		break;
+	default:
+		i_vpr_e(inst, "%s: invalid color primaries %d\n",
+			__func__, v4l2_primaries);
+		break;
+	}
+
+	return vidc_color_primaries;
+}
+
+u32 v4l2_color_primaries_from_driver(struct msm_vidc_inst *inst,
+	u32 vidc_color_primaries)
+{
+	u32 v4l2_primaries = V4L2_COLORSPACE_DEFAULT;
+
+	switch(vidc_color_primaries) {
+	case MSM_VIDC_PRIMARIES_UNSPECIFIED:
+		v4l2_primaries = V4L2_COLORSPACE_DEFAULT;
+		break;
+	case MSM_VIDC_PRIMARIES_BT709:
+		v4l2_primaries = V4L2_COLORSPACE_REC709;
+		break;
+	case MSM_VIDC_PRIMARIES_BT470_SYSTEM_M:
+		v4l2_primaries = V4L2_COLORSPACE_470_SYSTEM_M;
+		break;
+	case MSM_VIDC_PRIMARIES_BT470_SYSTEM_BG:
+		v4l2_primaries = V4L2_COLORSPACE_470_SYSTEM_BG;
+		break;
+	case MSM_VIDC_PRIMARIES_BT601_525:
+		v4l2_primaries = V4L2_COLORSPACE_SMPTE170M;
+		break;
+	case MSM_VIDC_PRIMARIES_SMPTE_ST240M:
+		v4l2_primaries = V4L2_COLORSPACE_SMPTE240M;
+		break;
+	case MSM_VIDC_PRIMARIES_GENERIC_FILM:
+		v4l2_primaries = V4L2_COLORSPACE_VIDC_GENERIC_FILM;
+		break;
+	case MSM_VIDC_PRIMARIES_BT2020:
+		v4l2_primaries = V4L2_COLORSPACE_BT2020;
+		break;
+	case MSM_VIDC_PRIMARIES_SMPTE_RP431_2:
+		v4l2_primaries = V4L2_COLORSPACE_DCI_P3;
+		break;
+	case MSM_VIDC_PRIMARIES_SMPTE_EG431_1:
+		v4l2_primaries = V4L2_COLORSPACE_VIDC_EG431;
+		break;
+	case MSM_VIDC_PRIMARIES_SMPTE_EBU_TECH:
+		v4l2_primaries = V4L2_COLORSPACE_VIDC_EBU_TECH;
+		break;
+	default:
+		i_vpr_e(inst, "%s: invalid hfi color primaries %d\n",
+			__func__, vidc_color_primaries);
+		v4l2_primaries = V4L2_COLORSPACE_DEFAULT;
+		break;
+	}
+
+	return v4l2_primaries;
+}
+
+u32 v4l2_transfer_char_to_driver(struct msm_vidc_inst *inst,
+	u32 v4l2_transfer_char)
+{
+	u32 vidc_transfer_char = MSM_VIDC_TRANSFER_RESERVED;
+
+	switch(v4l2_transfer_char) {
+	case V4L2_XFER_FUNC_DEFAULT:
+		vidc_transfer_char = MSM_VIDC_TRANSFER_RESERVED;
+		break;
+	case V4L2_XFER_FUNC_709:
+		vidc_transfer_char = MSM_VIDC_TRANSFER_BT709;
+		break;
+	case V4L2_XFER_FUNC_VIDC_BT470_SYSTEM_M:
+		vidc_transfer_char = MSM_VIDC_TRANSFER_BT470_SYSTEM_M;
+		break;
+	case V4L2_XFER_FUNC_VIDC_BT470_SYSTEM_BG:
+		vidc_transfer_char = MSM_VIDC_TRANSFER_BT470_SYSTEM_BG;
+		break;
+	case V4L2_XFER_FUNC_VIDC_BT601_525_OR_625:
+		vidc_transfer_char = MSM_VIDC_TRANSFER_BT601_525_OR_625;
+		break;
+	case V4L2_XFER_FUNC_SMPTE240M:
+		vidc_transfer_char = MSM_VIDC_TRANSFER_SMPTE_ST240M;
+		break;
+	case V4L2_XFER_FUNC_VIDC_LINEAR:
+		vidc_transfer_char = MSM_VIDC_TRANSFER_LINEAR;
+		break;
+	case V4L2_XFER_FUNC_VIDC_XVYCC:
+		vidc_transfer_char = MSM_VIDC_TRANSFER_XVYCC;
+		break;
+	case V4L2_XFER_FUNC_VIDC_BT1361:
+		vidc_transfer_char = MSM_VIDC_TRANSFER_BT1361_0;
+		break;
+	case V4L2_XFER_FUNC_SRGB:
+		vidc_transfer_char = MSM_VIDC_TRANSFER_SRGB_SYCC;
+		break;
+	case V4L2_XFER_FUNC_VIDC_BT2020:
+		vidc_transfer_char = MSM_VIDC_TRANSFER_BT2020_14;
+		break;
+	case V4L2_XFER_FUNC_SMPTE2084:
+		vidc_transfer_char = MSM_VIDC_TRANSFER_SMPTE_ST2084_PQ;
+		break;
+	case V4L2_XFER_FUNC_VIDC_ST428:
+		vidc_transfer_char = MSM_VIDC_TRANSFER_SMPTE_ST428_1;
+		break;
+	case V4L2_XFER_FUNC_VIDC_HLG:
+		vidc_transfer_char = MSM_VIDC_TRANSFER_BT2100_2_HLG;
+		break;
+	default:
+		i_vpr_e(inst, "%s: invalid transfer char %d\n",
+			__func__, v4l2_transfer_char);
+		break;
+	}
+
+	return vidc_transfer_char;
+}
+
+u32 v4l2_transfer_char_from_driver(struct msm_vidc_inst *inst,
+	u32 vidc_transfer_char)
+{
+	u32  v4l2_transfer_char = V4L2_XFER_FUNC_DEFAULT;
+
+	switch(vidc_transfer_char) {
+	case MSM_VIDC_TRANSFER_UNSPECIFIED:
+		v4l2_transfer_char = V4L2_XFER_FUNC_DEFAULT;
+		break;
+	case MSM_VIDC_TRANSFER_BT709:
+		v4l2_transfer_char = V4L2_XFER_FUNC_709;
+		break;
+	case MSM_VIDC_TRANSFER_BT470_SYSTEM_M:
+		v4l2_transfer_char = V4L2_XFER_FUNC_VIDC_BT470_SYSTEM_M;
+		break;
+	case MSM_VIDC_TRANSFER_BT470_SYSTEM_BG:
+		v4l2_transfer_char = V4L2_XFER_FUNC_VIDC_BT470_SYSTEM_BG;
+		break;
+	case MSM_VIDC_TRANSFER_BT601_525_OR_625:
+		v4l2_transfer_char = V4L2_XFER_FUNC_VIDC_BT601_525_OR_625;
+		break;
+	case MSM_VIDC_TRANSFER_SMPTE_ST240M:
+		v4l2_transfer_char = V4L2_XFER_FUNC_SMPTE240M;
+		break;
+	case MSM_VIDC_TRANSFER_LINEAR:
+		v4l2_transfer_char = V4L2_XFER_FUNC_VIDC_LINEAR;
+		break;
+	case MSM_VIDC_TRANSFER_XVYCC:
+		v4l2_transfer_char = V4L2_XFER_FUNC_VIDC_XVYCC;
+		break;
+	case MSM_VIDC_TRANSFER_BT1361_0:
+		v4l2_transfer_char = V4L2_XFER_FUNC_VIDC_BT1361;
+		break;
+	case MSM_VIDC_TRANSFER_SRGB_SYCC:
+		v4l2_transfer_char = V4L2_XFER_FUNC_SRGB;
+		break;
+	case MSM_VIDC_TRANSFER_BT2020_14:
+	case MSM_VIDC_TRANSFER_BT2020_15:
+		v4l2_transfer_char = V4L2_XFER_FUNC_VIDC_BT2020;
+		break;
+	case MSM_VIDC_TRANSFER_SMPTE_ST2084_PQ:
+		v4l2_transfer_char = V4L2_XFER_FUNC_SMPTE2084;
+		break;
+	case MSM_VIDC_TRANSFER_SMPTE_ST428_1:
+		v4l2_transfer_char = V4L2_XFER_FUNC_VIDC_ST428;
+		break;
+	case MSM_VIDC_TRANSFER_BT2100_2_HLG:
+		v4l2_transfer_char = V4L2_XFER_FUNC_VIDC_HLG;
+		break;
+	default:
+		i_vpr_e(inst, "%s: invalid transfer char %d\n",
+			__func__, vidc_transfer_char);
+		break;
+	}
+
+	return v4l2_transfer_char;
+}
+
+u32 v4l2_matrix_coeff_to_driver(struct msm_vidc_inst *inst,
+	u32 v4l2_matrix_coeff)
+{
+	u32 vidc_matrix_coeff = MSM_VIDC_MATRIX_COEFF_RESERVED;
+
+	switch(v4l2_matrix_coeff) {
+	case V4L2_YCBCR_VIDC_SRGB_OR_SMPTE_ST428:
+		vidc_matrix_coeff = MSM_VIDC_MATRIX_COEFF_SRGB_SMPTE_ST428_1;
+		break;
+	case V4L2_YCBCR_ENC_709:
+	case V4L2_YCBCR_ENC_XV709:
+		vidc_matrix_coeff = MSM_VIDC_MATRIX_COEFF_BT709;
+		break;
+	case V4L2_YCBCR_VIDC_FCC47_73_682:
+		vidc_matrix_coeff = MSM_VIDC_MATRIX_COEFF_FCC_TITLE_47;
+		break;
+	case V4L2_YCBCR_ENC_XV601:
+		vidc_matrix_coeff = MSM_VIDC_MATRIX_COEFF_BT470_SYS_BG_OR_BT601_625;
+		break;
+	case V4L2_YCBCR_ENC_601:
+		vidc_matrix_coeff = MSM_VIDC_MATRIX_COEFF_BT601_525_BT1358_525_OR_625;
+		break;
+	case V4L2_YCBCR_ENC_SMPTE240M:
+		vidc_matrix_coeff = MSM_VIDC_MATRIX_COEFF_SMPTE_ST240;
+		break;
+	case V4L2_YCBCR_ENC_BT2020:
+		vidc_matrix_coeff = MSM_VIDC_MATRIX_COEFF_BT2020_NON_CONSTANT;
+		break;
+	case V4L2_YCBCR_ENC_BT2020_CONST_LUM:
+		vidc_matrix_coeff = MSM_VIDC_MATRIX_COEFF_BT2020_CONSTANT;
+		break;
+	default:
+		i_vpr_e(inst, "%s: invalid matrix coeff %d\n",
+			__func__, v4l2_matrix_coeff);
+		break;
+	}
+
+	return vidc_matrix_coeff;
+}
+
+u32 v4l2_matrix_coeff_from_driver(struct msm_vidc_inst *inst,
+	u32 vidc_matrix_coeff)
+{
+	u32 v4l2_matrix_coeff = V4L2_YCBCR_ENC_DEFAULT;
+
+	switch(vidc_matrix_coeff) {
+	case MSM_VIDC_MATRIX_COEFF_SRGB_SMPTE_ST428_1:
+		v4l2_matrix_coeff = V4L2_YCBCR_VIDC_SRGB_OR_SMPTE_ST428;
+		break;
+	case MSM_VIDC_MATRIX_COEFF_BT709:
+		v4l2_matrix_coeff = V4L2_YCBCR_ENC_709;
+		break;
+	case MSM_VIDC_MATRIX_COEFF_FCC_TITLE_47:
+		v4l2_matrix_coeff = V4L2_YCBCR_VIDC_FCC47_73_682;
+		break;
+	case MSM_VIDC_MATRIX_COEFF_BT470_SYS_BG_OR_BT601_625:
+		v4l2_matrix_coeff = V4L2_YCBCR_ENC_XV601;
+		break;
+	case MSM_VIDC_MATRIX_COEFF_BT601_525_BT1358_525_OR_625:
+		v4l2_matrix_coeff = V4L2_YCBCR_ENC_601;
+		break;
+	case MSM_VIDC_MATRIX_COEFF_SMPTE_ST240:
+		v4l2_matrix_coeff = V4L2_YCBCR_ENC_SMPTE240M;
+		break;
+	case MSM_VIDC_MATRIX_COEFF_BT2020_NON_CONSTANT:
+		v4l2_matrix_coeff = V4L2_YCBCR_ENC_BT2020;
+		break;
+	case MSM_VIDC_MATRIX_COEFF_BT2020_CONSTANT:
+		v4l2_matrix_coeff = V4L2_YCBCR_ENC_BT2020_CONST_LUM;
+		break;
+	default:
+		i_vpr_e(inst, "%s: invalid matrix coeff %d\n",
+			__func__, vidc_matrix_coeff);
+		break;
+	}
+
+	return v4l2_matrix_coeff;
+}
+
 int v4l2_type_to_driver_port(struct msm_vidc_inst *inst, u32 type,
 	const char *func)
 {

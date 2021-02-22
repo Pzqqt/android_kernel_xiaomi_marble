@@ -198,6 +198,61 @@ enum msm_vidc_quality_mode {
 	MSM_VIDC_POWER_SAVE_MODE = 0x2,
 };
 
+enum msm_vidc_color_primaries {
+	MSM_VIDC_PRIMARIES_RESERVED                         = 0,
+	MSM_VIDC_PRIMARIES_BT709                            = 1,
+	MSM_VIDC_PRIMARIES_UNSPECIFIED                      = 2,
+	MSM_VIDC_PRIMARIES_BT470_SYSTEM_M                   = 4,
+	MSM_VIDC_PRIMARIES_BT470_SYSTEM_BG                  = 5,
+	MSM_VIDC_PRIMARIES_BT601_525                        = 6,
+	MSM_VIDC_PRIMARIES_SMPTE_ST240M                     = 7,
+	MSM_VIDC_PRIMARIES_GENERIC_FILM                     = 8,
+	MSM_VIDC_PRIMARIES_BT2020                           = 9,
+	MSM_VIDC_PRIMARIES_SMPTE_ST428_1                    = 10,
+	MSM_VIDC_PRIMARIES_SMPTE_RP431_2                    = 11,
+	MSM_VIDC_PRIMARIES_SMPTE_EG431_1                    = 12,
+	MSM_VIDC_PRIMARIES_SMPTE_EBU_TECH                   = 22,
+};
+
+enum msm_vidc_transfer_characteristics {
+	MSM_VIDC_TRANSFER_RESERVED                          = 0,
+	MSM_VIDC_TRANSFER_BT709                             = 1,
+	MSM_VIDC_TRANSFER_UNSPECIFIED                       = 2,
+	MSM_VIDC_TRANSFER_BT470_SYSTEM_M                    = 4,
+	MSM_VIDC_TRANSFER_BT470_SYSTEM_BG                   = 5,
+	MSM_VIDC_TRANSFER_BT601_525_OR_625                  = 6,
+	MSM_VIDC_TRANSFER_SMPTE_ST240M                      = 7,
+	MSM_VIDC_TRANSFER_LINEAR                            = 8,
+	MSM_VIDC_TRANSFER_LOG_100_1                         = 9,
+	MSM_VIDC_TRANSFER_LOG_SQRT                          = 10,
+	MSM_VIDC_TRANSFER_XVYCC                             = 11,
+	MSM_VIDC_TRANSFER_BT1361_0                          = 12,
+	MSM_VIDC_TRANSFER_SRGB_SYCC                         = 13,
+	MSM_VIDC_TRANSFER_BT2020_14                         = 14,
+	MSM_VIDC_TRANSFER_BT2020_15                         = 15,
+	MSM_VIDC_TRANSFER_SMPTE_ST2084_PQ                   = 16,
+	MSM_VIDC_TRANSFER_SMPTE_ST428_1                     = 17,
+	MSM_VIDC_TRANSFER_BT2100_2_HLG                      = 18,
+};
+
+enum msm_vidc_matrix_coefficients {
+	MSM_VIDC_MATRIX_COEFF_SRGB_SMPTE_ST428_1             = 0,
+	MSM_VIDC_MATRIX_COEFF_BT709                          = 1,
+	MSM_VIDC_MATRIX_COEFF_UNSPECIFIED                    = 2,
+	MSM_VIDC_MATRIX_COEFF_RESERVED                       = 3,
+	MSM_VIDC_MATRIX_COEFF_FCC_TITLE_47                   = 4,
+	MSM_VIDC_MATRIX_COEFF_BT470_SYS_BG_OR_BT601_625      = 5,
+	MSM_VIDC_MATRIX_COEFF_BT601_525_BT1358_525_OR_625    = 6,
+	MSM_VIDC_MATRIX_COEFF_SMPTE_ST240                    = 7,
+	MSM_VIDC_MATRIX_COEFF_YCGCO                          = 8,
+	MSM_VIDC_MATRIX_COEFF_BT2020_NON_CONSTANT            = 9,
+	MSM_VIDC_MATRIX_COEFF_BT2020_CONSTANT                = 10,
+	MSM_VIDC_MATRIX_COEFF_SMPTE_ST2085                   = 11,
+	MSM_VIDC_MATRIX_COEFF_SMPTE_CHROM_DERV_NON_CONSTANT  = 12,
+	MSM_VIDC_MATRIX_COEFF_SMPTE_CHROM_DERV_CONSTANT      = 13,
+	MSM_VIDC_MATRIX_COEFF_BT2100                         = 14,
+};
+
 enum msm_vidc_core_capability_type {
 	CORE_CAP_NONE = 0,
 	ENC_CODECS,
