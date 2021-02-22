@@ -1254,16 +1254,13 @@ static int msm_vdec_update_properties(struct msm_vidc_inst *inst)
 	inst->fmts[INPUT_PORT].fmt.pix_mp.width = width;
 	inst->fmts[INPUT_PORT].fmt.pix_mp.height = height;
 
-	inst->fmts[OUTPUT_PORT].fmt.pix_mp.width = VENUS_Y_STRIDE(
-		v4l2_colorformat_to_media(
-		inst->fmts[OUTPUT_PORT].fmt.pix_mp.pixelformat, __func__),
-		width);
-	inst->fmts[OUTPUT_PORT].fmt.pix_mp.height = VENUS_Y_SCANLINES(
-		v4l2_colorformat_to_media(
-		inst->fmts[OUTPUT_PORT].fmt.pix_mp.pixelformat,	__func__),
-		height);
+	inst->fmts[OUTPUT_PORT].fmt.pix_mp.width = VIDEO_Y_STRIDE_PIX(
+		inst->fmts[OUTPUT_PORT].fmt.pix_mp.pixelformat, width);
+	inst->fmts[OUTPUT_PORT].fmt.pix_mp.height = VIDEO_Y_SCANLINES(
+		inst->fmts[OUTPUT_PORT].fmt.pix_mp.pixelformat, height);
 	inst->fmts[OUTPUT_PORT].fmt.pix_mp.plane_fmt[0].bytesperline =
-		inst->fmts[OUTPUT_PORT].fmt.pix_mp.width;
+		VIDEO_Y_STRIDE_BYTES(
+		inst->fmts[OUTPUT_PORT].fmt.pix_mp.pixelformat, width);
 	inst->fmts[OUTPUT_PORT].fmt.pix_mp.plane_fmt[0].sizeimage =
 		call_session_op(core, buffer_size, inst, MSM_VIDC_BUF_OUTPUT);
 	//inst->buffers.output.size = inst->fmts[OUTPUT_PORT].fmt.pix_mp.plane_fmt[0].sizeimage;
@@ -1860,17 +1857,16 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 			f->fmt.pix_mp.width = fmt->fmt.pix_mp.width;
 		}
 		fmt->fmt.pix_mp.pixelformat = f->fmt.pix_mp.pixelformat;
-		fmt->fmt.pix_mp.width = VENUS_Y_STRIDE(
-			v4l2_colorformat_to_media(
-			fmt->fmt.pix_mp.pixelformat, __func__),
-			f->fmt.pix_mp.width);
-		fmt->fmt.pix_mp.height = VENUS_Y_SCANLINES(
-			v4l2_colorformat_to_media(
-			fmt->fmt.pix_mp.pixelformat, __func__),
+		fmt->fmt.pix_mp.width = VIDEO_Y_STRIDE_PIX(
+			fmt->fmt.pix_mp.pixelformat, f->fmt.pix_mp.width);
+		fmt->fmt.pix_mp.height = VIDEO_Y_SCANLINES(
+			fmt->fmt.pix_mp.pixelformat,
 			f->fmt.pix_mp.height);
 		fmt->fmt.pix_mp.num_planes = 1;
 		fmt->fmt.pix_mp.plane_fmt[0].bytesperline =
-			fmt->fmt.pix_mp.width;
+			VIDEO_Y_STRIDE_BYTES(
+			inst->fmts[OUTPUT_PORT].fmt.pix_mp.pixelformat,
+			f->fmt.pix_mp.width);
 		fmt->fmt.pix_mp.plane_fmt[0].sizeimage = call_session_op(core,
 			buffer_size, inst, MSM_VIDC_BUF_OUTPUT);
 
@@ -2238,14 +2234,15 @@ int msm_vdec_inst_init(struct msm_vidc_inst *inst)
 	f = &inst->fmts[OUTPUT_PORT];
 	f->type = OUTPUT_MPLANE;
 	f->fmt.pix_mp.pixelformat = V4L2_PIX_FMT_VIDC_NV12C;
-	f->fmt.pix_mp.width = VENUS_Y_STRIDE(
-		v4l2_colorformat_to_media(f->fmt.pix_mp.pixelformat, __func__),
+	f->fmt.pix_mp.width = VIDEO_Y_STRIDE_PIX(f->fmt.pix_mp.pixelformat,
 		DEFAULT_WIDTH);
-	f->fmt.pix_mp.height = VENUS_Y_SCANLINES(
-		v4l2_colorformat_to_media(f->fmt.pix_mp.pixelformat, __func__),
+	f->fmt.pix_mp.height = VIDEO_Y_SCANLINES(f->fmt.pix_mp.pixelformat,
 		DEFAULT_HEIGHT);
 	f->fmt.pix_mp.num_planes = 1;
-	f->fmt.pix_mp.plane_fmt[0].bytesperline = f->fmt.pix_mp.width;
+	f->fmt.pix_mp.plane_fmt[0].bytesperline =
+		VIDEO_Y_STRIDE_BYTES(
+		inst->fmts[OUTPUT_PORT].fmt.pix_mp.pixelformat,
+		DEFAULT_WIDTH);
 	f->fmt.pix_mp.plane_fmt[0].sizeimage = call_session_op(core,
 		buffer_size, inst, MSM_VIDC_BUF_OUTPUT);
 	f->fmt.pix_mp.colorspace = V4L2_COLORSPACE_DEFAULT;

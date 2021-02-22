@@ -191,8 +191,6 @@ enum msm_vidc_codec_type v4l2_codec_to_driver(u32 v4l2_codec,
 	const char *func);
 u32 v4l2_codec_from_driver(enum msm_vidc_codec_type codec,
 	const char *func);
-u32 v4l2_colorformat_to_media(u32 v4l2_fmt,
-	const char *func);
 enum msm_vidc_colorformat_type v4l2_colorformat_to_driver(u32 colorformat,
 	const char *func);
 u32 v4l2_colorformat_from_driver(enum msm_vidc_colorformat_type colorformat,

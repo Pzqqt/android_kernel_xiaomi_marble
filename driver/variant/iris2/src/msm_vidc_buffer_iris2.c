@@ -198,7 +198,7 @@ static u32 msm_vidc_decoder_dpb_size_iris2(struct msm_vidc_inst *inst)
 {
 
 	u32 size = 0;
-	u32 color_fmt, media_fmt;
+	u32 color_fmt, v4l2_fmt;
 	u32 width, height;
 	struct v4l2_format *f;
 
@@ -216,22 +216,22 @@ static u32 msm_vidc_decoder_dpb_size_iris2(struct msm_vidc_inst *inst)
 	height = f->fmt.pix_mp.height;
 
 	if (color_fmt == MSM_VIDC_FMT_NV12) {
-		media_fmt = COLOR_FMT_NV12_UBWC;
+		v4l2_fmt = V4L2_PIX_FMT_VIDC_NV12C;
 		HFI_NV12_UBWC_IL_CALC_BUF_SIZE_V2(size, width, height,
-			VENUS_Y_STRIDE(media_fmt, width), VENUS_Y_SCANLINES(media_fmt, height),
-			VENUS_UV_STRIDE(media_fmt, width), VENUS_UV_SCANLINES(media_fmt, height),
-			VENUS_Y_META_STRIDE(media_fmt, width), VENUS_Y_META_SCANLINES(media_fmt,
+			VIDEO_Y_STRIDE_BYTES(v4l2_fmt, width), VIDEO_Y_SCANLINES(v4l2_fmt, height),
+			VIDEO_UV_STRIDE_BYTES(v4l2_fmt, width), VIDEO_UV_SCANLINES(v4l2_fmt, height),
+			VIDEO_Y_META_STRIDE(v4l2_fmt, width), VIDEO_Y_META_SCANLINES(v4l2_fmt,
 				height),
-			VENUS_UV_META_STRIDE(media_fmt, width), VENUS_UV_META_SCANLINES(media_fmt,
+			VIDEO_UV_META_STRIDE(v4l2_fmt, width), VIDEO_UV_META_SCANLINES(v4l2_fmt,
 				height));
 	} else if (color_fmt == MSM_VIDC_FMT_P010) {
-		media_fmt = COLOR_FMT_P010_UBWC;
+		v4l2_fmt = V4L2_PIX_FMT_VIDC_TP10C;
 		HFI_YUV420_TP10_UBWC_CALC_BUF_SIZE(size,
-			VENUS_Y_STRIDE(media_fmt, width), VENUS_Y_SCANLINES(media_fmt, height),
-			VENUS_UV_STRIDE(media_fmt, width), VENUS_UV_SCANLINES(media_fmt, height),
-			VENUS_Y_META_STRIDE(media_fmt, width), VENUS_Y_META_SCANLINES(media_fmt,
+			VIDEO_Y_STRIDE_BYTES(v4l2_fmt, width), VIDEO_Y_SCANLINES(v4l2_fmt, height),
+			VIDEO_UV_STRIDE_BYTES(v4l2_fmt, width), VIDEO_UV_SCANLINES(v4l2_fmt, height),
+			VIDEO_Y_META_STRIDE(v4l2_fmt, width), VIDEO_Y_META_SCANLINES(v4l2_fmt,
 				height),
-			VENUS_UV_META_STRIDE(media_fmt, width), VENUS_UV_META_SCANLINES(media_fmt,
+			VIDEO_UV_META_STRIDE(v4l2_fmt, width), VIDEO_UV_META_SCANLINES(v4l2_fmt,
 				height));
 	}
 

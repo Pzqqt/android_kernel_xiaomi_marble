@@ -223,28 +223,6 @@ u32 v4l2_colorformat_from_driver(enum msm_vidc_colorformat_type colorformat,
 	return v4l2_colorformat;
 }
 
-u32 v4l2_colorformat_to_media(u32 v4l2_fmt, const char *func)
-{
-	switch (v4l2_fmt) {
-	case V4L2_PIX_FMT_NV12:
-		return COLOR_FMT_NV12;
-	case V4L2_PIX_FMT_NV21:
-		return COLOR_FMT_NV21;
-	case V4L2_PIX_FMT_VIDC_P010:
-		return COLOR_FMT_P010;
-	case V4L2_PIX_FMT_VIDC_NV12C:
-		return COLOR_FMT_NV12_UBWC;
-	case V4L2_PIX_FMT_VIDC_TP10C:
-		return COLOR_FMT_NV12_BPP10_UBWC;
-	case V4L2_PIX_FMT_VIDC_ARGB32C:
-		return COLOR_FMT_RGBA8888_UBWC;
-	default:
-		d_vpr_e("%s: invalid v4l2 color fmt: %#x, set default (NV12)",
-			func, v4l2_fmt);
-		return COLOR_FMT_NV12;
-	}
-}
-
 int v4l2_type_to_driver_port(struct msm_vidc_inst *inst, u32 type,
 	const char *func)
 {

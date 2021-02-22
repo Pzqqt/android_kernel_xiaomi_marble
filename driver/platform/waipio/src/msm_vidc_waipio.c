@@ -70,7 +70,7 @@ static struct msm_platform_core_capability core_data_waipio[] = {
 	{DEBUG_TIMEOUT, 0},
 	// TODO: review below entries, and if required rename as PREFETCH
 	{PREFIX_BUF_COUNT_PIX, 18},
-	{PREFIX_BUF_SIZE_PIX, 13434880}, /* Calculated by VENUS_BUFFER_SIZE for 4096x2160 UBWC */
+	{PREFIX_BUF_SIZE_PIX, 13434880}, /* Calculated by VIDEO_RAW_BUFFER_SIZE for 4096x2160 UBWC */
 	{PREFIX_BUF_COUNT_NON_PIX, 1},
 	{PREFIX_BUF_SIZE_NON_PIX, 209715200}, /*
 		 * Internal buffer size is calculated for secure decode session

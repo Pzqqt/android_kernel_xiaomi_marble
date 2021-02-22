@@ -264,13 +264,12 @@ u32 msm_vidc_decoder_input_size(struct msm_vidc_inst *inst)
 u32 msm_vidc_decoder_output_size(struct msm_vidc_inst *inst)
 {
 	u32 size;
-	u32 format;
 	struct v4l2_format *f;
 
 	f = &inst->fmts[OUTPUT_PORT];
-	format = v4l2_colorformat_to_media(f->fmt.pix_mp.pixelformat, __func__);
-	size = VENUS_BUFFER_SIZE(format, f->fmt.pix_mp.width,
-			f->fmt.pix_mp.height);
+	size = VIDEO_RAW_BUFFER_SIZE(f->fmt.pix_mp.pixelformat,
+			f->fmt.pix_mp.width,
+			f->fmt.pix_mp.height, true);
 	return size;
 }
 
@@ -287,12 +286,11 @@ u32 msm_vidc_decoder_output_meta_size(struct msm_vidc_inst *inst)
 u32 msm_vidc_encoder_input_size(struct msm_vidc_inst *inst)
 {
 	u32 size;
-	u32 format;
 	struct v4l2_format *f;
 
 	f = &inst->fmts[INPUT_PORT];
-	format = v4l2_colorformat_to_media(f->fmt.pix_mp.pixelformat, __func__);
-	size = VENUS_BUFFER_SIZE_USED(format, f->fmt.pix_mp.width,
+	size = VIDEO_RAW_BUFFER_SIZE(f->fmt.pix_mp.pixelformat,
+			f->fmt.pix_mp.width,
 			f->fmt.pix_mp.height, false);
 	return size;
 }
