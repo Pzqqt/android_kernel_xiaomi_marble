@@ -1618,4 +1618,15 @@ QDF_STATUS reg_set_ext_tpc_supported(struct wlan_objmgr_psoc *psoc,
  * Return: true if FW supports the new TPC command, else false
  */
 bool reg_is_ext_tpc_supported(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * reg_get_bonded_chan_entry() - Fetch the bonded channel pointer given a
+ * frequency and channel width.
+ * @freq: Input frequency.
+ * @chwidth: Input channel width.
+ *
+ * Return: A valid bonded channel pointer if found, else NULL.
+ */
+const struct bonded_channel_freq *
+reg_get_bonded_chan_entry(qdf_freq_t freq, enum phy_ch_width chwidth);
 #endif
