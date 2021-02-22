@@ -283,6 +283,10 @@ enum hfi_layer_encoding_type {
 
 #define HFI_PROP_LAYER_COUNT                                    0x03000139
 
+enum hfi_chromaqp_offset_mode {
+    HFI_ADAPTIVE_CHROMAQP_OFFSET = 0x0,
+    HFI_FIXED_CHROMAQP_OFFSET = 0x1,
+};
 #define HFI_BITMASK_CHROMA_CB_OFFSET     0x0000ffff
 #define HFI_BITMASK_CHROMA_CR_OFFSET     0xffff0000
 #define HFI_PROP_CHROMA_QP_OFFSET                               0x0300013a

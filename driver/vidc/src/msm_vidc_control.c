@@ -1464,6 +1464,92 @@ int msm_vidc_set_frame_qp(void *instance,
 	return rc;
 }
 
+int msm_vidc_set_req_sync_frame(void *instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+	s32 prepend_spspps;
+	u32 hfi_value = 0;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	prepend_spspps = inst->capabilities->cap[PREPEND_SPSPPS_TO_IDR].value;
+	if (prepend_spspps)
+		hfi_value = HFI_SYNC_FRAME_REQUEST_WITH_PREFIX_SEQ_HDR;
+	else
+		hfi_value = HFI_SYNC_FRAME_REQUEST_WITHOUT_SEQ_HDR;
+
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32_ENUM,
+		&hfi_value, sizeof(u32), __func__);
+
+	return rc;
+}
+
+int msm_vidc_set_chroma_qp_index_offset(void *instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+	u32 hfi_value = 0, chroma_qp_offset_mode = 0, chroma_qp = 0;
+	u32 offset = 12;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (inst->capabilities->cap[cap_id].flags & CAP_FLAG_CLIENT_SET)
+		chroma_qp_offset_mode = HFI_FIXED_CHROMAQP_OFFSET;
+	else
+		chroma_qp_offset_mode = HFI_ADAPTIVE_CHROMAQP_OFFSET;
+
+	chroma_qp = inst->capabilities->cap[cap_id].value + offset;
+	hfi_value = chroma_qp_offset_mode | chroma_qp << 8 | chroma_qp << 16 ;
+
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_32_PACKED,
+		&hfi_value, sizeof(u32), __func__);
+
+	return rc;
+}
+
+int msm_vidc_set_slice_count(void* instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	struct msm_vidc_inst* inst = (struct msm_vidc_inst*)instance;
+	s32 slice_mode = -1;
+	u32 hfi_value = 0, set_cap_id = 0;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	slice_mode = inst->capabilities->cap[SLICE_MODE].value;
+
+	if (slice_mode == V4L2_MPEG_VIDEO_MULTI_SLICE_MODE_SINGLE) {
+		i_vpr_l(inst, "%s: slice mode is: %u, ignore setting to fw\n",
+			__func__, slice_mode);
+		return 0;
+	}
+	if (slice_mode == V4L2_MPEG_VIDEO_MULTI_SLICE_MODE_MAX_MB) {
+		hfi_value = inst->capabilities->cap[SLICE_MAX_MB].value;
+		set_cap_id = SLICE_MAX_MB;
+	} else if (slice_mode == V4L2_MPEG_VIDEO_MULTI_SLICE_MODE_MAX_BYTES) {
+		hfi_value = inst->capabilities->cap[SLICE_MAX_BYTES].value;
+		set_cap_id = SLICE_MAX_BYTES;
+	}
+
+	rc = msm_vidc_packetize_control(inst, set_cap_id, HFI_PAYLOAD_U32,
+		&hfi_value, sizeof(u32), __func__);
+
+	return rc;
+}
+
 /* TODO
 int msm_vidc_set_flip(void *instance,
 	enum msm_vidc_inst_capability_type cap_id)
