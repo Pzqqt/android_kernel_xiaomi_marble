@@ -439,6 +439,7 @@ enum vdev_start_resp_type {
  *                                      request command
  * @mlme_vdev_start_continue:           callback to initiate operations on
  *                                      LMAC/FW start response
+ * @mlme_vdev_sta_conn_start:           callback to initiate STA connection
  * @mlme_vdev_up_send:                  callback to initiate actions of VDEV
  *                                      MLME up operation
  * @mlme_vdev_notify_up_complete:       callback to notify VDEV MLME on moving
@@ -463,6 +464,7 @@ enum vdev_start_resp_type {
  *                                      vdev mlme peer delete all response
  * @mlme_vdev_dfs_cac_wait_notify:      callback to notify about CAC state
  * @mlme_vdev_csa_complete:             callback to indicate CSA complete
+ * @mlme_vdev_sta_disconn_start:        callback to initiate STA disconnection
  */
 struct vdev_mlme_ops {
 	QDF_STATUS (*mlme_vdev_validate_basic_params)(
@@ -538,6 +540,9 @@ struct vdev_mlme_ops {
 				struct vdev_mlme_obj *vdev_mlme);
 	QDF_STATUS (*mlme_vdev_csa_complete)(
 				struct vdev_mlme_obj *vdev_mlme);
+	QDF_STATUS (*mlme_vdev_sta_disconn_start)(
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data);
 
 };
 

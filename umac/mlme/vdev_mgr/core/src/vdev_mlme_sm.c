@@ -1073,6 +1073,11 @@ static bool mlme_vdev_subst_start_disconn_progress_event(void *ctx,
 		status = true;
 		break;
 
+	case WLAN_VDEV_SM_EV_DOWN:
+		mlme_vdev_sta_disconn_start(vdev_mlme, event_data_len,
+					    event_data);
+		status = true;
+		break;
 	default:
 		status = false;
 		break;

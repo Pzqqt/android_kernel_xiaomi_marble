@@ -291,6 +291,30 @@ static inline QDF_STATUS mlme_vdev_sta_conn_start(
 }
 
 /**
+ * mlme_vdev_sta_disconn_start - Invoke Station VDEV disconnection
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ * @event_data_len: data size
+ * @event_data: event data
+ *
+ * API invokes connection SM to start station disconnection
+ *
+ * Return: SUCCESS on successful invocation of disconnection sm
+ *         FAILURE, if it fails due to any
+ */
+static inline QDF_STATUS mlme_vdev_sta_disconn_start(
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_sta_disconn_start)
+		ret = vdev_mlme->ops->mlme_vdev_sta_disconn_start(
+					vdev_mlme, event_data_len, event_data);
+
+	return ret;
+}
+
+/**
  * mlme_vdev_up_send - VDEV up operation
  * @vdev_mlme_obj:  VDEV MLME comp object
  * @event_data_len: data size
