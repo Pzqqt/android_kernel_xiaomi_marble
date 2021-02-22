@@ -149,8 +149,8 @@ struct dp_rx_desc {
 	struct dp_rx_desc_dbg_info *dbg_info;
 #endif
 	uint8_t	in_use:1,
-	unmapped:1,
-	in_err_state:1;
+		unmapped:1,
+		in_err_state:1;
 };
 
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
@@ -540,7 +540,7 @@ void *dp_rx_cookie_2_va_rxdma_buf(struct dp_soc *soc, uint32_t cookie)
 	if (qdf_unlikely(index >= rx_desc_pool->pool_size))
 		return NULL;
 
-	return &(soc->rx_desc_buf[pool_id].array[index].rx_desc);
+	return &rx_desc_pool->array[index].rx_desc;
 }
 
 /**
@@ -653,7 +653,8 @@ void dp_rx_pdev_desc_pool_free(struct dp_pdev *pdev);
 QDF_STATUS dp_rx_pdev_desc_pool_init(struct dp_pdev *pdev);
 void dp_rx_pdev_desc_pool_deinit(struct dp_pdev *pdev);
 void dp_rx_desc_pool_deinit(struct dp_soc *soc,
-			    struct rx_desc_pool *rx_desc_pool);
+			    struct rx_desc_pool *rx_desc_pool,
+			    uint32_t pool_id);
 
 QDF_STATUS dp_rx_pdev_attach(struct dp_pdev *pdev);
 QDF_STATUS dp_rx_pdev_buffers_alloc(struct dp_pdev *pdev);
@@ -1990,4 +1991,21 @@ dp_rx_is_list_ready(qdf_nbuf_t nbuf_head,
 	return false;
 }
 #endif
+
+/**
+ * dp_rx_desc_pool_init_generic() - Generic Rx descriptors initialization
+ * @soc: SOC handle
+ * @rx_desc_pool: pointer to RX descriptor pool
+ * @pool_id: pool ID
+ *
+ * Return: None
+ */
+QDF_STATUS dp_rx_desc_pool_init_generic(struct dp_soc *soc,
+				  struct rx_desc_pool *rx_desc_pool,
+				  uint32_t pool_id);
+
+void dp_rx_desc_pool_deinit_generic(struct dp_soc *soc,
+				  struct rx_desc_pool *rx_desc_pool,
+				  uint32_t pool_id);
+
 #endif /* _DP_RX_H */

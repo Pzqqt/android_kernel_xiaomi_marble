@@ -787,3 +787,43 @@ done:
 
 	return rx_bufs_used; /* Assume no scale factor for now */
 }
+
+QDF_STATUS dp_rx_desc_pool_init_li(struct dp_soc *soc,
+				   struct rx_desc_pool *rx_desc_pool,
+				   uint32_t pool_id)
+{
+	return dp_rx_desc_pool_init_generic(soc, rx_desc_pool, pool_id);
+
+}
+
+void dp_rx_desc_pool_deinit_li(struct dp_soc *soc,
+			       struct rx_desc_pool *rx_desc_pool,
+			       uint32_t pool_id)
+{
+}
+
+QDF_STATUS dp_wbm_get_rx_desc_from_hal_desc_li(
+					struct dp_soc *soc,
+					void *ring_desc,
+					struct dp_rx_desc **r_rx_desc)
+{
+	struct hal_buf_info buf_info = {0};
+	hal_soc_handle_t hal_soc = soc->hal_soc;
+
+	/* only cookie and rbm will be valid in buf_info */
+	hal_rx_buf_cookie_rbm_get(hal_soc, (uint32_t *)ring_desc,
+				  &buf_info);
+
+	if (qdf_unlikely(buf_info.rbm !=
+				HAL_RX_BUF_RBM_SW3_BM(soc->wbm_sw0_bm_id))) {
+		/* TODO */
+		/* Call appropriate handler */
+		DP_STATS_INC(soc, rx.err.invalid_rbm, 1);
+		dp_rx_err("%pK: Invalid RBM %d", soc, buf_info.rbm);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*r_rx_desc = dp_rx_cookie_2_va_rxdma_buf(soc, buf_info.sw_cookie);
+
+	return QDF_STATUS_SUCCESS;
+}

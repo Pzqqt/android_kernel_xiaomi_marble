@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -791,7 +791,7 @@ static inline void dp_tx_desc_update_fast_comp_flag(struct dp_soc *soc,
 static inline struct dp_tx_desc_s *dp_tx_desc_find(struct dp_soc *soc,
 		uint8_t pool_id, uint16_t page_id, uint16_t offset)
 {
-	struct dp_tx_desc_pool_s *tx_desc_pool = &((soc)->tx_desc[(pool_id)]);
+	struct dp_tx_desc_pool_s *tx_desc_pool = &soc->tx_desc[pool_id];
 
 	return tx_desc_pool->desc_pages.cacheable_pages[page_id] +
 		tx_desc_pool->elem_size * offset;

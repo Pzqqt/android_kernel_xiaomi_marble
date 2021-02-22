@@ -24,24 +24,49 @@
 #include "hal_tx.h"
 #include <hal_be_api.h>
 
+#ifdef DP_FEATURE_HW_COOKIE_CONVERSION
+#ifdef DP_HW_COOKIE_CONVERT_EXCEPTION
 void dp_tx_comp_get_params_from_hal_desc_be(struct dp_soc *soc,
 					    void *tx_comp_hal_desc,
 					    struct dp_tx_desc_s **r_tx_desc)
 {
-	uint8_t pool_id;
 	uint32_t tx_desc_id;
 
-	tx_desc_id = hal_tx_comp_get_desc_id(tx_comp_hal_desc);
-	pool_id = (tx_desc_id & DP_TX_DESC_ID_POOL_MASK) >>
-			DP_TX_DESC_ID_POOL_OS;
-
-	/* Find Tx descriptor */
-	*r_tx_desc = dp_tx_desc_find(soc, pool_id,
-				     (tx_desc_id & DP_TX_DESC_ID_PAGE_MASK) >>
-							DP_TX_DESC_ID_PAGE_OS,
-				     (tx_desc_id & DP_TX_DESC_ID_OFFSET_MASK) >>
-						DP_TX_DESC_ID_OFFSET_OS);
+	if (qdf_likely(
+		hal_tx_comp_get_cookie_convert_done(tx_comp_hal_desc))) {
+		/* HW cookie conversion done */
+		*r_tx_desc = (struct dp_tx_desc_s *)
+				hal_tx_comp_get_desc_va(tx_comp_hal_desc);
+	} else {
+		/* SW do cookie conversion to VA */
+		tx_desc_id = hal_tx_comp_get_desc_id(tx_comp_hal_desc);
+		*r_tx_desc =
+		(struct dp_tx_desc_s *)dp_cc_desc_find(soc, tx_desc_id, true);
+	}
 }
+#else
+void dp_tx_comp_get_params_from_hal_desc_be(struct dp_soc *soc,
+					    void *tx_comp_hal_desc,
+					    struct dp_tx_desc_s **r_tx_desc)
+{
+	*r_tx_desc = (struct dp_tx_desc_s *)
+			hal_tx_comp_get_desc_va(tx_comp_hal_desc);
+}
+#endif /* DP_HW_COOKIE_CONVERT_EXCEPTION */
+#else
+
+void dp_tx_comp_get_params_from_hal_desc_be(struct dp_soc *soc,
+					    void *tx_comp_hal_desc,
+					    struct dp_tx_desc_s **r_tx_desc)
+{
+	uint32_t tx_desc_id;
+
+	/* SW do cookie conversion to VA */
+	tx_desc_id = hal_tx_comp_get_desc_id(tx_comp_hal_desc);
+	*r_tx_desc =
+	(struct dp_tx_desc_s *)dp_cc_desc_find(soc, tx_desc_id, true);
+}
+#endif /* DP_FEATURE_HW_COOKIE_CONVERSION */
 
 QDF_STATUS
 dp_tx_hw_enqueue_be(struct dp_soc *soc, struct dp_vdev *vdev,
@@ -322,4 +347,85 @@ void dp_tx_update_bank_profile(struct dp_soc_be *be_soc,
 {
 	dp_tx_put_bank_profile(be_soc, be_vdev);
 	be_vdev->bank_id = dp_tx_get_bank_profile(be_soc, be_vdev);
+}
+
+QDF_STATUS dp_tx_desc_pool_init_be(struct dp_soc *soc,
+				   uint16_t pool_desc_num,
+				   uint8_t pool_id)
+{
+	struct dp_tx_desc_pool_s *tx_desc_pool;
+	struct dp_soc_be *be_soc;
+	struct dp_spt_page_desc *page_desc;
+	struct dp_spt_page_desc_list *page_desc_list;
+	struct dp_tx_desc_s *tx_desc_elem;
+
+	if (!pool_desc_num) {
+		dp_err("desc_num 0 !!");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	be_soc = dp_get_be_soc_from_dp_soc(soc);
+	tx_desc_pool = &soc->tx_desc[pool_id];
+	page_desc_list = &be_soc->tx_spt_page_desc[pool_id];
+
+	/* allocate SPT pages from page desc pool */
+	page_desc_list->num_spt_pages =
+		dp_cc_spt_page_desc_alloc(be_soc,
+					  &page_desc_list->spt_page_list_head,
+					  &page_desc_list->spt_page_list_tail,
+					  pool_desc_num);
+
+	if (!page_desc_list->num_spt_pages) {
+		dp_err("fail to allocate cookie conversion spt pages");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* put each TX Desc VA to SPT pages and get corresponding ID */
+	page_desc = page_desc_list->spt_page_list_head;
+	tx_desc_elem = tx_desc_pool->freelist;
+	while (tx_desc_elem) {
+		DP_CC_SPT_PAGE_UPDATE_VA(page_desc->page_v_addr,
+					 page_desc->avail_entry_index,
+					 tx_desc_elem);
+		tx_desc_elem->id =
+			dp_cc_desc_id_generate(page_desc->ppt_index,
+					       page_desc->avail_entry_index,
+					       true);
+		tx_desc_elem->pool_id = pool_id;
+		tx_desc_elem = tx_desc_elem->next;
+
+		page_desc->avail_entry_index++;
+		if (page_desc->avail_entry_index >=
+				DP_CC_SPT_PAGE_MAX_ENTRIES)
+			page_desc = page_desc->next;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+void dp_tx_desc_pool_deinit_be(struct dp_soc *soc,
+			       struct dp_tx_desc_pool_s *tx_desc_pool,
+			       uint8_t pool_id)
+{
+	struct dp_soc_be *be_soc;
+	struct dp_spt_page_desc *page_desc;
+	struct dp_spt_page_desc_list *page_desc_list;
+
+	be_soc = dp_get_be_soc_from_dp_soc(soc);
+	page_desc_list = &be_soc->tx_spt_page_desc[pool_id];
+
+	/* cleanup for each page */
+	page_desc = page_desc_list->spt_page_list_head;
+	while (page_desc) {
+		page_desc->avail_entry_index = 0;
+		qdf_mem_zero(page_desc->page_v_addr, qdf_page_size);
+		page_desc = page_desc->next;
+	}
+
+	/* free pages desc back to pool */
+	dp_cc_spt_page_desc_free(be_soc,
+				 &page_desc_list->spt_page_list_head,
+				 &page_desc_list->spt_page_list_tail,
+				 page_desc_list->num_spt_pages);
+	page_desc_list->num_spt_pages = 0;
 }

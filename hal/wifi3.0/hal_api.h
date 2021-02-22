@@ -2833,4 +2833,21 @@ uint32_t hal_get_ring_usage(
 	ring_usage = (100 * num_valid) / srng->num_entries;
 	return ring_usage;
 }
+
+/**
+ * hal_cmem_write() - function for CMEM buffer writing
+ * @hal_soc_hdl: HAL SOC handle
+ * @offset: CMEM address
+ * @value: value to write
+ *
+ * Return: None.
+ */
+static inline void hal_cmem_write(hal_soc_handle_t hal_soc_hdl,
+				  uint32_t offset,
+				  uint32_t value)
+{
+	struct hal_soc *hal = (struct hal_soc *)hal_soc_hdl;
+
+	hal_write32_mb(hal, offset, value);
+}
 #endif /* _HAL_APIH_ */

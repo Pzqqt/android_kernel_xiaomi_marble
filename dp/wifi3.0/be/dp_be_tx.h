@@ -109,4 +109,27 @@ void dp_tx_put_bank_profile(struct dp_soc_be *soc, struct dp_vdev_be *be_vdev);
  */
 void dp_tx_update_bank_profile(struct dp_soc_be *be_soc,
 			       struct dp_vdev_be *be_vdev);
+
+/**
+ * dp_tx_desc_pool_init_be() - Initialize Tx Descriptor pool(s)
+ * @soc: Handle to DP Soc structure
+ * @pool_desc_num: pool descriptor number
+ * @pool_id: pool ID to allocate
+ *
+ * Return: QDF_STATUS_SUCCESS - success, others - failure
+ */
+QDF_STATUS dp_tx_desc_pool_init_be(struct dp_soc *soc,
+				   uint16_t pool_desc_num,
+				   uint8_t pool_id);
+/**
+ * dp_tx_desc_pool_deinit_be() - De-initialize Tx Descriptor pool(s)
+ * @soc: Handle to DP Soc structure
+ * @tx_desc_pool: Tx descriptor pool handler
+ * @pool_id: pool ID to deinit
+ *
+ * Return: None
+ */
+void dp_tx_desc_pool_deinit_be(struct dp_soc *soc,
+			       struct dp_tx_desc_pool_s *tx_desc_pool,
+			       uint8_t pool_id);
 #endif

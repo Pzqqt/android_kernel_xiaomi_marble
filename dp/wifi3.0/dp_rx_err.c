@@ -321,8 +321,8 @@ more_msdu_link_desc:
 			     &mpdu_desc_info->msdu_count);
 
 	for (i = 0; (i < mpdu_desc_info->msdu_count); i++) {
-		rx_desc = dp_rx_cookie_2_va_rxdma_buf(soc,
-						      msdu_list.sw_cookie[i]);
+		rx_desc = soc->arch_ops.dp_rx_desc_cookie_2_va(
+						soc, msdu_list.sw_cookie[i]);
 
 		qdf_assert_always(rx_desc);
 
@@ -560,9 +560,9 @@ more_msdu_link_desc:
 	hal_rx_msdu_list_get(soc->hal_soc, link_desc_va, &msdu_list,
 			     &num_msdus);
 	for (i = 0; i < num_msdus; i++) {
-		rx_desc = dp_rx_cookie_2_va_rxdma_buf(
-					soc,
-					msdu_list.sw_cookie[i]);
+		rx_desc = soc->arch_ops.dp_rx_desc_cookie_2_va(
+						soc,
+						msdu_list.sw_cookie[i]);
 
 		qdf_assert_always(rx_desc);
 
@@ -1937,8 +1937,9 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 			goto next_entry;
 		}
 
-		rx_desc = dp_rx_cookie_2_va_rxdma_buf(soc,
-						      msdu_list.sw_cookie[0]);
+		rx_desc = soc->arch_ops.dp_rx_desc_cookie_2_va(
+						soc,
+						msdu_list.sw_cookie[0]);
 		qdf_assert_always(rx_desc);
 
 		mac_id = rx_desc->pool_id;
@@ -2167,7 +2168,6 @@ dp_rx_wbm_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 	uint8_t msdu_continuation = 0;
 	bool process_sg_buf = false;
 	uint32_t wbm_err_src;
-	struct hal_buf_info buf_info = {0};
 
 	/* Debug -- Remove later */
 	qdf_assert(soc && hal_ring_hdl);
@@ -2206,30 +2206,18 @@ dp_rx_wbm_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 		qdf_assert((wbm_err_src == HAL_RX_WBM_ERR_SRC_RXDMA) ||
 			   (wbm_err_src == HAL_RX_WBM_ERR_SRC_REO));
 
-		/*
-		 * Check if the buffer is to be processed on this processor
-		 */
-
-		/* only cookie and rbm will be valid in buf_info */
-		hal_rx_buf_cookie_rbm_get(hal_soc, (uint32_t *)ring_desc,
-					  &buf_info);
-
-		if (qdf_unlikely(buf_info.rbm !=
-				 HAL_RX_BUF_RBM_SW3_BM(soc->wbm_sw0_bm_id))) {
-			/* TODO */
-			/* Call appropriate handler */
-			DP_STATS_INC(soc, rx.err.invalid_rbm, 1);
-			dp_rx_err_err("%pK: Invalid RBM %d", soc,
-				      buf_info.rbm);
+		if (soc->arch_ops.dp_wbm_get_rx_desc_from_hal_desc(soc,
+								   ring_desc,
+								   &rx_desc)) {
+			dp_rx_err_err("get rx desc from hal_desc failed");
 			continue;
 		}
 
-		rx_desc = dp_rx_cookie_2_va_rxdma_buf(soc, buf_info.sw_cookie);
 		qdf_assert_always(rx_desc);
 
 		if (!dp_rx_desc_check_magic(rx_desc)) {
-			dp_rx_err_err("%pk: Invalid rx_desc cookie=%d",
-				      soc, buf_info.sw_cookie);
+			dp_rx_err_err("%pk: Invalid rx_desc %pk",
+				      soc, rx_desc);
 			continue;
 		}
 
@@ -2677,7 +2665,9 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 			else {
 				for (i = 0; i < num_msdus; i++) {
 					struct dp_rx_desc *rx_desc =
-						dp_rx_cookie_2_va_rxdma_buf(soc,
+						soc->arch_ops.
+						dp_rx_desc_cookie_2_va(
+							soc,
 							msdu_list.sw_cookie[i]);
 					qdf_assert_always(rx_desc);
 					msdu = rx_desc->nbuf;
@@ -2860,7 +2850,7 @@ dp_wbm_int_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 		if (msdu_list.sw_cookie[0] != HAL_RX_COOKIE_SPECIAL) {
 			for (i = 0; i < num_msdus; i++) {
 				struct dp_rx_desc *rx_desc =
-					dp_rx_cookie_2_va_rxdma_buf(
+					soc->arch_ops.dp_rx_desc_cookie_2_va(
 							soc,
 							msdu_list.sw_cookie[i]);
 				qdf_assert_always(rx_desc);
@@ -2954,7 +2944,9 @@ dp_handle_wbm_internal_error(struct dp_soc *soc, void *hal_desc,
 
 	if (buf_type == HAL_WBM_RELEASE_RING_2_BUFFER_TYPE) {
 		DP_STATS_INC(soc, tx.wbm_internal_error[WBM_INT_ERROR_REO_NULL_MSDU_BUFF], 1);
-		rx_desc = dp_rx_cookie_2_va_rxdma_buf(soc, buf_info.sw_cookie);
+		rx_desc = soc->arch_ops.dp_rx_desc_cookie_2_va(
+							soc,
+							buf_info.sw_cookie);
 
 		if (rx_desc && rx_desc->nbuf) {
 			rx_desc_pool = &soc->rx_desc_buf[rx_desc->pool_id];

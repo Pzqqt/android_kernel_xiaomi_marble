@@ -192,3 +192,38 @@ ring_access_fail:
 
 	return status;
 }
+
+QDF_STATUS dp_tx_desc_pool_init_li(struct dp_soc *soc,
+				   uint16_t pool_desc_num,
+				   uint8_t pool_id)
+{
+	uint32_t id, count, page_id, offset, pool_id_32;
+	struct dp_tx_desc_s *tx_desc_elem;
+	struct dp_tx_desc_pool_s *tx_desc_pool;
+	uint16_t num_desc_per_page;
+
+	tx_desc_pool = &soc->tx_desc[pool_id];
+	tx_desc_elem = tx_desc_pool->freelist;
+	count = 0;
+	pool_id_32 = (uint32_t)pool_id;
+	num_desc_per_page = tx_desc_pool->desc_pages.num_element_per_page;
+	while (tx_desc_elem) {
+		page_id = count / num_desc_per_page;
+		offset = count % num_desc_per_page;
+		id = ((pool_id_32 << DP_TX_DESC_ID_POOL_OS) |
+			(page_id << DP_TX_DESC_ID_PAGE_OS) | offset);
+
+		tx_desc_elem->id = id;
+		tx_desc_elem->pool_id = pool_id;
+		tx_desc_elem = tx_desc_elem->next;
+		count++;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+void dp_tx_desc_pool_deinit_li(struct dp_soc *soc,
+			       struct dp_tx_desc_pool_s *tx_desc_pool,
+			       uint8_t pool_id)
+{
+}

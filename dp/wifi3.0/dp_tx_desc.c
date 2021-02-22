@@ -140,15 +140,12 @@ void dp_tx_desc_pool_free(struct dp_soc *soc, uint8_t pool_id)
 QDF_STATUS dp_tx_desc_pool_init(struct dp_soc *soc, uint8_t pool_id,
 				uint16_t num_elem)
 {
-	uint32_t id, count, page_id, offset, pool_id_32;
 	struct dp_tx_desc_pool_s *tx_desc_pool;
-	struct dp_tx_desc_s *tx_desc_elem;
-	uint16_t num_desc_per_page;
 	uint32_t desc_size;
 
-	desc_size = DP_TX_DESC_SIZE(sizeof(*tx_desc_elem));
+	desc_size = DP_TX_DESC_SIZE(sizeof(struct dp_tx_desc_s));
 
-	tx_desc_pool = &((soc)->tx_desc[(pool_id)]);
+	tx_desc_pool = &soc->tx_desc[pool_id];
 	if (qdf_mem_multi_page_link(soc->osdev,
 				    &tx_desc_pool->desc_pages,
 				    desc_size, num_elem, true)) {
@@ -159,23 +156,13 @@ QDF_STATUS dp_tx_desc_pool_init(struct dp_soc *soc, uint8_t pool_id,
 	tx_desc_pool->freelist = (struct dp_tx_desc_s *)
 		*tx_desc_pool->desc_pages.cacheable_pages;
 	/* Set unique IDs for each Tx descriptor */
-	tx_desc_elem = tx_desc_pool->freelist;
-	count = 0;
-	pool_id_32 = (uint32_t)pool_id;
-	num_desc_per_page = tx_desc_pool->desc_pages.num_element_per_page;
-	while (tx_desc_elem) {
-		page_id = count / num_desc_per_page;
-		offset = count % num_desc_per_page;
-		id = ((pool_id_32 << DP_TX_DESC_ID_POOL_OS) |
-			(page_id << DP_TX_DESC_ID_PAGE_OS) | offset);
-
-		tx_desc_elem->id = id;
-		tx_desc_elem->pool_id = pool_id;
-		tx_desc_elem = tx_desc_elem->next;
-		count++;
+	if (QDF_STATUS_SUCCESS != soc->arch_ops.dp_tx_desc_pool_init(
+						soc, num_elem, pool_id)) {
+		dp_err("initialization per target failed");
+		return QDF_STATUS_E_FAULT;
 	}
 
-	tx_desc_pool->elem_size = DP_TX_DESC_SIZE(sizeof(*tx_desc_elem));
+	tx_desc_pool->elem_size = DP_TX_DESC_SIZE(sizeof(struct dp_tx_desc_s));
 
 	dp_tx_desc_pool_counter_initialize(tx_desc_pool, num_elem);
 	TX_DESC_LOCK_CREATE(&tx_desc_pool->lock);
@@ -193,7 +180,8 @@ void dp_tx_desc_pool_deinit(struct dp_soc *soc, uint8_t pool_id)
 {
 	struct dp_tx_desc_pool_s *tx_desc_pool;
 
-	tx_desc_pool = &((soc)->tx_desc[(pool_id)]);
+	tx_desc_pool = &soc->tx_desc[pool_id];
+	soc->arch_ops.dp_tx_desc_pool_deinit(soc, tx_desc_pool, pool_id);
 	TX_DESC_POOL_MEMBER_CLEAN(tx_desc_pool);
 	TX_DESC_LOCK_DESTROY(&tx_desc_pool->lock);
 }

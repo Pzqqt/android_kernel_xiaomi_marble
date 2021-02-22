@@ -51,6 +51,16 @@ static QDF_STATUS dp_soc_detach_li(struct dp_soc *soc)
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS dp_soc_init_li(struct dp_soc *soc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dp_soc_deinit_li(struct dp_soc *soc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
 static QDF_STATUS dp_pdev_attach_li(struct dp_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
@@ -252,13 +262,28 @@ void dp_initialize_arch_ops_li(struct dp_arch_ops *arch_ops)
 	arch_ops->dp_rx_process = dp_rx_process_li;
 	arch_ops->tx_comp_get_params_from_hal_desc =
 		dp_tx_comp_get_params_from_hal_desc_li;
+	arch_ops->dp_wbm_get_rx_desc_from_hal_desc =
+			dp_wbm_get_rx_desc_from_hal_desc_li;
+	arch_ops->dp_tx_desc_pool_init = dp_tx_desc_pool_init_li;
+	arch_ops->dp_tx_desc_pool_deinit = dp_tx_desc_pool_deinit_li;
+	arch_ops->dp_rx_desc_pool_init = dp_rx_desc_pool_init_li;
+	arch_ops->dp_rx_desc_pool_deinit = dp_rx_desc_pool_deinit_li;
+#else
+	arch_ops->dp_rx_desc_pool_init = dp_rx_desc_pool_init_generic;
+	arch_ops->dp_rx_desc_pool_deinit = dp_rx_desc_pool_deinit_generic;
 #endif
 	arch_ops->txrx_get_context_size = dp_get_context_size_li;
 	arch_ops->txrx_soc_attach = dp_soc_attach_li;
 	arch_ops->txrx_soc_detach = dp_soc_detach_li;
+	arch_ops->txrx_soc_init = dp_soc_init_li;
+	arch_ops->txrx_soc_deinit = dp_soc_deinit_li;
 	arch_ops->txrx_pdev_attach = dp_pdev_attach_li;
 	arch_ops->txrx_pdev_detach = dp_pdev_detach_li;
 	arch_ops->txrx_vdev_attach = dp_vdev_attach_li;
 	arch_ops->txrx_vdev_detach = dp_vdev_detach_li;
+	arch_ops->dp_rx_desc_cookie_2_va =
+			dp_rx_desc_cookie_2_va_li;
+
 	arch_ops->dp_rxdma_ring_sel_cfg = dp_rxdma_ring_sel_cfg_li;
 }
+

@@ -1123,6 +1123,24 @@
 		CFG_INI_BOOL("gForceRX64BA", \
 		false, "Enable/Disable force 64 blockack in RX side")
 
+/*
+ * <ini>
+ * ghw_cc_enable - enable HW cookie conversion by register
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to control HW based 20 bits cookie to 64 bits
+ * Desc virtual address conversion
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_DP_HW_CC_ENABLE \
+		CFG_INI_BOOL("ghw_cc_enable", \
+		true, "Enable/Disable HW cookie conversion")
+
 #ifdef IPA_OFFLOAD
 /*
  * <ini>
@@ -1272,6 +1290,7 @@
 		CFG(CFG_DP_RX_RADIO_1_DEFAULT_REO) \
 		CFG(CFG_DP_RX_RADIO_2_DEFAULT_REO) \
 		CFG(CFG_DP_WOW_CHECK_RX_PENDING) \
+		CFG(CFG_DP_HW_CC_ENABLE) \
 		CFG(CFG_FORCE_RX_64_BA) \
 		CFG(CFG_DP_DELAY_MON_REPLENISH) \
 		CFG_DP_IPA_TX_RING_CFG

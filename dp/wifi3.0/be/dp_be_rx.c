@@ -168,7 +168,10 @@ more_data:
 			break;
 		}
 
-		rx_desc = dp_rx_cookie_2_va_rxdma_buf(soc, rx_buf_cookie);
+		rx_desc = (struct dp_rx_desc *)
+				hal_rx_get_reo_desc_va(ring_desc);
+		dp_rx_desc_sw_cc_check(soc, rx_buf_cookie, &rx_desc);
+
 		status = dp_rx_desc_sanity(soc, hal_soc, hal_ring_hdl,
 					   ring_desc, rx_desc);
 		if (QDF_IS_STATUS_ERROR(status)) {
@@ -752,4 +755,228 @@ done:
 	DP_RX_HIST_STATS_PER_PDEV();
 
 	return rx_bufs_used; /* Assume no scale factor for now */
+}
+
+#ifdef RX_DESC_MULTI_PAGE_ALLOC
+/**
+ * dp_rx_desc_pool_init_be_cc() - initial RX desc pool for cookie conversion
+ * @soc: Handle to DP Soc structure
+ * @rx_desc_pool: Rx descriptor pool handler
+ * @pool_id: Rx descriptor pool ID
+ *
+ * Return: QDF_STATUS_SUCCESS - succeeded, others - failed
+ */
+static QDF_STATUS
+dp_rx_desc_pool_init_be_cc(struct dp_soc *soc,
+			   struct rx_desc_pool *rx_desc_pool,
+			   uint32_t pool_id)
+{
+	struct dp_soc_be *be_soc;
+	union dp_rx_desc_list_elem_t *rx_desc_elem;
+	struct dp_spt_page_desc *page_desc;
+	struct dp_spt_page_desc_list *page_desc_list;
+
+	be_soc = dp_get_be_soc_from_dp_soc(soc);
+	page_desc_list = &be_soc->rx_spt_page_desc[pool_id];
+
+	/* allocate SPT pages from page desc pool */
+	page_desc_list->num_spt_pages =
+		dp_cc_spt_page_desc_alloc(be_soc,
+					  &page_desc_list->spt_page_list_head,
+					  &page_desc_list->spt_page_list_tail,
+					  rx_desc_pool->pool_size);
+
+	if (!page_desc_list->num_spt_pages) {
+		dp_err("fail to allocate cookie conversion spt pages");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* put each RX Desc VA to SPT pages and get corresponding ID */
+	page_desc = page_desc_list->spt_page_list_head;
+	rx_desc_elem = rx_desc_pool->freelist;
+	while (rx_desc_elem) {
+		DP_CC_SPT_PAGE_UPDATE_VA(page_desc->page_v_addr,
+					 page_desc->avail_entry_index,
+					 &rx_desc_elem->rx_desc);
+
+		rx_desc_elem->rx_desc.cookie =
+			dp_cc_desc_id_generate(page_desc->ppt_index,
+					       page_desc->avail_entry_index,
+					       true);
+		rx_desc_elem->rx_desc.pool_id = pool_id;
+		rx_desc_elem->rx_desc.in_use = 0;
+		rx_desc_elem = rx_desc_elem->next;
+
+		page_desc->avail_entry_index++;
+		if (page_desc->avail_entry_index >=
+				DP_CC_SPT_PAGE_MAX_ENTRIES)
+			page_desc = page_desc->next;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS
+dp_rx_desc_pool_init_be_cc(struct dp_soc *soc,
+			   struct rx_desc_pool *rx_desc_pool,
+			   uint32_t pool_id)
+{
+	struct dp_soc_be *be_soc;
+	struct dp_spt_page_desc *page_desc;
+	struct dp_spt_page_desc_list *page_desc_list;
+	int i;
+
+	be_soc = dp_get_be_soc_from_dp_soc(soc);
+	page_desc_list = &be_soc->rx_spt_page_desc[pool_id];
+
+	/* allocate SPT pages from page desc pool */
+	page_desc_list->num_spt_pages =
+			dp_cc_spt_page_desc_alloc(
+					be_soc,
+					&page_desc_list->spt_page_list_head,
+					&page_desc_list->spt_page_list_tail,
+					rx_desc_pool->pool_size);
+
+	if (!page_desc_list->num_spt_pages) {
+		dp_err("fail to allocate cookie conversion spt pages");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* put each RX Desc VA to SPT pages and get corresponding ID */
+	page_desc = page_desc_list->spt_page_list_head;
+	for (i = 0; i <= rx_desc_pool->pool_size - 1; i++) {
+		if (i == rx_desc_pool->pool_size - 1)
+			rx_desc_pool->array[i].next = NULL;
+		else
+			rx_desc_pool->array[i].next =
+				&rx_desc_pool->array[i + 1];
+
+		DP_CC_SPT_PAGE_UPDATE_VA(page_desc->page_v_addr,
+					 page_desc->avail_entry_index,
+					 &rx_desc_pool->array[i].rx_desc);
+
+		rx_desc_pool->array[i].rx_desc.cookie =
+			dp_cc_desc_id_generate(page_desc->ppt_index,
+					       page_desc->avail_entry_index,
+					       true);
+
+		rx_desc_pool->array[i].rx_desc.pool_id = pool_id;
+		rx_desc_pool->array[i].rx_desc.in_use = 0;
+
+		page_desc->avail_entry_index++;
+		if (page_desc->avail_entry_index >=
+				DP_CC_SPT_PAGE_MAX_ENTRIES)
+			page_desc = page_desc->next;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+static void
+dp_rx_desc_pool_deinit_be_cc(struct dp_soc *soc,
+			     struct rx_desc_pool *rx_desc_pool,
+			     uint32_t pool_id)
+{
+	struct dp_soc_be *be_soc;
+	struct dp_spt_page_desc *page_desc;
+	struct dp_spt_page_desc_list *page_desc_list;
+
+	be_soc = dp_get_be_soc_from_dp_soc(soc);
+	page_desc_list = &be_soc->rx_spt_page_desc[pool_id];
+
+	/* cleanup for each page */
+	page_desc = page_desc_list->spt_page_list_head;
+	while (page_desc) {
+		page_desc->avail_entry_index = 0;
+		qdf_mem_zero(page_desc->page_v_addr, qdf_page_size);
+		page_desc = page_desc->next;
+	}
+
+	/* free pages desc back to pool */
+	dp_cc_spt_page_desc_free(be_soc,
+				 &page_desc_list->spt_page_list_head,
+				 &page_desc_list->spt_page_list_tail,
+				 page_desc_list->num_spt_pages);
+	page_desc_list->num_spt_pages = 0;
+}
+
+QDF_STATUS dp_rx_desc_pool_init_be(struct dp_soc *soc,
+				   struct rx_desc_pool *rx_desc_pool,
+				   uint32_t pool_id)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	/* Only regular RX buffer desc pool use HW cookie conversion */
+	if (rx_desc_pool->desc_type == DP_RX_DESC_BUF_TYPE) {
+		dp_info("rx_desc_buf pool init");
+		status = dp_rx_desc_pool_init_be_cc(soc,
+						    rx_desc_pool,
+						    pool_id);
+	} else {
+		dp_info("non_rx_desc_buf_pool init");
+		status = dp_rx_desc_pool_init_generic(soc, rx_desc_pool, pool_id);
+	}
+
+	return status;
+}
+
+void dp_rx_desc_pool_deinit_be(struct dp_soc *soc,
+			       struct rx_desc_pool *rx_desc_pool,
+			       uint32_t pool_id)
+{
+	if (rx_desc_pool->desc_type == DP_RX_DESC_BUF_TYPE)
+		dp_rx_desc_pool_deinit_be_cc(soc, rx_desc_pool, pool_id);
+}
+
+#ifdef DP_FEATURE_HW_COOKIE_CONVERSION
+#ifdef DP_HW_COOKIE_CONVERT_EXCEPTION
+QDF_STATUS dp_wbm_get_rx_desc_from_hal_desc_be(struct dp_soc *soc,
+					       void *ring_desc,
+					       struct dp_rx_desc **r_rx_desc)
+{
+	if (hal_rx_wbm_get_cookie_convert_done(ring_desc)) {
+		/* HW cookie conversion done */
+		*r_rx_desc = (struct dp_rx_desc *)
+				hal_rx_wbm_get_desc_va(ring_desc);
+	} else {
+		/* SW do cookie conversion */
+		uint32_t cookie = HAL_RX_BUF_COOKIE_GET(ring_desc);
+
+		*r_rx_desc = (struct dp_rx_desc *)
+				dp_cc_desc_find(soc, cookie, true);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+QDF_STATUS dp_wbm_get_rx_desc_from_hal_desc_be(struct dp_soc *soc,
+					       void *ring_desc,
+					       struct dp_rx_desc **r_rx_desc)
+{
+	 *r_rx_desc = (struct dp_rx_desc *)
+			hal_rx_wbm_get_desc_va(ring_desc);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* DP_HW_COOKIE_CONVERT_EXCEPTION */
+#else
+QDF_STATUS dp_wbm_get_rx_desc_from_hal_desc_be(struct dp_soc *soc,
+					       void *ring_desc,
+					       struct dp_rx_desc **r_rx_desc)
+{
+	/* SW do cookie conversion */
+	uint32_t cookie = HAL_RX_BUF_COOKIE_GET(ring_desc);
+
+	*r_rx_desc = (struct dp_rx_desc *)
+			dp_cc_desc_find(soc, cookie, true);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* DP_FEATURE_HW_COOKIE_CONVERSION */
+
+struct dp_rx_desc *dp_rx_desc_cookie_2_va_be(struct dp_soc *soc,
+					     uint32_t cookie)
+{
+	return (struct dp_rx_desc *)dp_cc_desc_find(soc, cookie, true);
 }

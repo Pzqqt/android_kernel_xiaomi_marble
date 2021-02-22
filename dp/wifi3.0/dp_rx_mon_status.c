@@ -2294,7 +2294,7 @@ dp_rx_pdev_mon_status_desc_pool_deinit(struct dp_pdev *pdev, uint32_t mac_id) {
 
 	dp_debug("Mon RX Desc status Pool[%d] deinit", pdev_id);
 
-	dp_rx_desc_pool_deinit(soc, rx_desc_pool);
+	dp_rx_desc_pool_deinit(soc, rx_desc_pool, mac_id);
 }
 
 void

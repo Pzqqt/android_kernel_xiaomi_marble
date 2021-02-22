@@ -423,6 +423,9 @@ enum dp_desc_type {
 	DP_RX_DESC_BUF_TYPE,
 	DP_RX_DESC_STATUS_TYPE,
 	DP_HW_LINK_DESC_TYPE,
+#ifdef CONFIG_BERYLLIUM
+	DP_HW_CC_SPT_PAGE_TYPE,
+#endif
 };
 
 /**
@@ -1532,6 +1535,8 @@ struct dp_arch_ops {
 	/* INIT/DEINIT Arch Ops */
 	QDF_STATUS (*txrx_soc_attach)(struct dp_soc *soc);
 	QDF_STATUS (*txrx_soc_detach)(struct dp_soc *soc);
+	QDF_STATUS (*txrx_soc_init)(struct dp_soc *soc);
+	QDF_STATUS (*txrx_soc_deinit)(struct dp_soc *soc);
 	QDF_STATUS (*txrx_pdev_attach)(struct dp_pdev *pdev);
 	QDF_STATUS (*txrx_pdev_detach)(struct dp_pdev *pdev);
 	QDF_STATUS (*txrx_vdev_attach)(struct dp_soc *soc,
@@ -1553,6 +1558,30 @@ struct dp_arch_ops {
 	uint32_t (*dp_rx_process)(struct dp_intr *int_ctx,
 				  hal_ring_handle_t hal_ring_hdl,
 				  uint8_t reo_ring_num, uint32_t quota);
+
+	QDF_STATUS (*dp_tx_desc_pool_init)(struct dp_soc *soc,
+					   uint16_t pool_desc_num,
+					   uint8_t pool_id);
+	void (*dp_tx_desc_pool_deinit)(
+				struct dp_soc *soc,
+				struct dp_tx_desc_pool_s *tx_desc_pool,
+				uint8_t pool_id);
+
+	QDF_STATUS (*dp_rx_desc_pool_init)(struct dp_soc *soc,
+					   struct rx_desc_pool *rx_desc_pool,
+					   uint32_t pool_id);
+	void (*dp_rx_desc_pool_deinit)(struct dp_soc *soc,
+				       struct rx_desc_pool *rx_desc_pool,
+				       uint32_t pool_id);
+
+	QDF_STATUS (*dp_wbm_get_rx_desc_from_hal_desc)(
+						struct dp_soc *soc,
+						void *ring_desc,
+						struct dp_rx_desc **r_rx_desc);
+
+	struct dp_rx_desc *(*dp_rx_desc_cookie_2_va)(struct dp_soc *soc,
+						     uint32_t cookie);
+
 	/* Control Arch Ops */
 	QDF_STATUS (*txrx_set_vdev_param)(struct dp_soc *soc,
 					  struct dp_vdev *vdev,
@@ -2034,6 +2063,11 @@ struct dp_soc {
 
 	/* link desc ID start per device type */
 	uint32_t link_desc_id_start;
+
+	/* CMEM buffer target reserved for host usage */
+	uint64_t cmem_base;
+	/* CMEM size in bytes */
+	uint64_t cmem_size;
 };
 
 #ifdef IPA_OFFLOAD

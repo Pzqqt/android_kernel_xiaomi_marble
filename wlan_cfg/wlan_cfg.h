@@ -323,6 +323,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	uint32_t ipa_tx_ring_size;
 	uint32_t ipa_tx_comp_ring_size;
 #endif
+	bool hw_cc_enabled;
 };
 
 /**
