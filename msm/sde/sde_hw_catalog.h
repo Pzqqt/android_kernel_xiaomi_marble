@@ -113,11 +113,14 @@
  */
 #define SDE_INLINE_ROT_VERSION_1_0_0	0x100
 #define SDE_INLINE_ROT_VERSION_2_0_0	0x200
+#define SDE_INLINE_ROT_VERSION_2_0_1	0x201
 
 #define IS_SDE_INLINE_ROT_REV_100(rev) \
 	((rev) == SDE_INLINE_ROT_VERSION_1_0_0)
 #define IS_SDE_INLINE_ROT_REV_200(rev) \
 	((rev) == SDE_INLINE_ROT_VERSION_2_0_0)
+#define IS_SDE_INLINE_ROT_REV_201(rev) \
+	((rev) == SDE_INLINE_ROT_VERSION_2_0_1)
 
 
 /*
@@ -1673,6 +1676,7 @@ struct sde_mdss_cfg {
 	struct sde_format_extended *wb_formats;
 	struct sde_format_extended *virt_vig_formats;
 	struct sde_format_extended *inline_rot_formats;
+	struct sde_format_extended *inline_rot_restricted_formats;
 
 	struct list_head irq_offset_list;
 };
