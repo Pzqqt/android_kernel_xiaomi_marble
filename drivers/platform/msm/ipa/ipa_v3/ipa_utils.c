@@ -10267,10 +10267,12 @@ void ipa3_set_resorce_groups_min_max_limits(void)
 			ipa3_rsrc_src_grp_config[hw_type_idx][i][j].min;
 			val.x_max =
 			ipa3_rsrc_src_grp_config[hw_type_idx][i][j].max;
-			val.y_min =
-			ipa3_rsrc_src_grp_config[hw_type_idx][i][j + 1].min;
-			val.y_max =
-			ipa3_rsrc_src_grp_config[hw_type_idx][i][j + 1].max;
+			if ((j + 1) < IPA_GROUP_MAX) {
+				val.y_min =
+				ipa3_rsrc_src_grp_config[hw_type_idx][i][j + 1].min;
+				val.y_max =
+				ipa3_rsrc_src_grp_config[hw_type_idx][i][j + 1].max;
+			}
 			ipa3_write_rsrc_grp_type_reg(j, i, true, &val);
 		}
 	}
@@ -10282,10 +10284,12 @@ void ipa3_set_resorce_groups_min_max_limits(void)
 			ipa3_rsrc_dst_grp_config[hw_type_idx][i][j].min;
 			val.x_max =
 			ipa3_rsrc_dst_grp_config[hw_type_idx][i][j].max;
-			val.y_min =
-			ipa3_rsrc_dst_grp_config[hw_type_idx][i][j + 1].min;
-			val.y_max =
-			ipa3_rsrc_dst_grp_config[hw_type_idx][i][j + 1].max;
+			if ((j + 1) < IPA_GROUP_MAX) {
+				val.y_min =
+				ipa3_rsrc_dst_grp_config[hw_type_idx][i][j + 1].min;
+				val.y_max =
+				ipa3_rsrc_dst_grp_config[hw_type_idx][i][j + 1].max;
+			}
 			ipa3_write_rsrc_grp_type_reg(j, i, false, &val);
 		}
 	}
