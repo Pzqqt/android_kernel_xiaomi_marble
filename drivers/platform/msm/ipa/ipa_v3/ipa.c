@@ -131,6 +131,8 @@ static void ipa_dec_clients_disable_clks_on_wq(struct work_struct *work);
 static DECLARE_DELAYED_WORK(ipa_dec_clients_disable_clks_on_wq_work,
 	ipa_dec_clients_disable_clks_on_wq);
 
+static DECLARE_DELAYED_WORK(ipa_dec_clients_disable_clks_on_suspend_irq_wq_work,
+	ipa_dec_clients_disable_clks_on_wq);
 static void ipa_inc_clients_enable_clks_on_wq(struct work_struct *work);
 static DECLARE_WORK(ipa_inc_clients_enable_clks_on_wq_work,
 	ipa_inc_clients_enable_clks_on_wq);
@@ -6222,6 +6224,22 @@ void ipa3_dec_client_disable_clks_no_block(
 		&ipa_dec_clients_disable_clks_on_wq_work, 0);
 }
 
+/**
+ * ipa3_dec_client_disable_clks_delay_wq() - Decrease active clients counter
+ * in delayed workqueue.
+ *
+ * Return codes:
+ * None
+ */
+void ipa3_dec_client_disable_clks_delay_wq(
+	struct ipa_active_client_logging_info *id, unsigned long delay)
+{
+	ipa3_active_clients_log_dec(id, true);
+
+	if (!queue_delayed_work(ipa3_ctx->power_mgmt_wq,
+		&ipa_dec_clients_disable_clks_on_suspend_irq_wq_work, delay))
+		IPAERR("Scheduling delayed work failed\n");
+}
 /**
  * ipa3_inc_acquire_wakelock() - Increase active clients counter, and
  * acquire wakelock if necessary

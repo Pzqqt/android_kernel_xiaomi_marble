@@ -9,6 +9,7 @@
 #define INTERRUPT_WORKQUEUE_NAME "ipa_interrupt_wq"
 #define DIS_SUSPEND_INTERRUPT_TIMEOUT 5
 #define IPA_IRQ_NUM_MAX 32
+#define IPA_AGG_BUSY_TIMEOUT (msecs_to_jiffies(5))
 
 struct ipa3_interrupt_info {
 	ipa_irq_handler_t handler;
@@ -384,10 +385,14 @@ static void ipa3_process_interrupts(bool isr_context)
 
 static void ipa3_interrupt_defer(struct work_struct *work)
 {
+	struct ipa_active_client_logging_info log_info;
+
 	IPADBG("processing interrupts in wq\n");
 	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
 	ipa3_process_interrupts(false);
-	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
+	IPA_ACTIVE_CLIENTS_PREP_SIMPLE(log_info);
+	/* Delay the devote process to have time to get gsi ieob irq */
+	ipa3_dec_client_disable_clks_delay_wq(&log_info, IPA_AGG_BUSY_TIMEOUT);
 	IPADBG("Done\n");
 }
 
