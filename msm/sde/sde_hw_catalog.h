@@ -981,6 +981,7 @@ struct sde_mdp_cfg {
  * @fal10_target_idle_time: fal10 targeted time in uS
  * @fal1_target_idle_time:  fal1 targeted time in uS
  * @fal10_threshold:        fal10 threshold value
+ * @fal1_max_threshold      fal1 maximum allowed threshold value
  * @max_downscale:          maximum downscaling ratio x1000.
  *	                    This ratio is multiplied x1000 to allow
  *	                    3 decimal precision digits.
@@ -1003,6 +1004,7 @@ struct sde_uidle_cfg {
 	u32 fal10_target_idle_time;
 	u32 fal1_target_idle_time;
 	u32 fal10_threshold;
+	u32 fal1_max_threshold;
 	u32 max_dwnscale;
 	u32 max_fps;
 	u32 max_fal1_fps;

@@ -150,6 +150,8 @@
 #define SDE_UIDLE_FAL10_DANGER 6
 #define SDE_UIDLE_FAL10_TARGET_IDLE 50
 #define SDE_UIDLE_FAL1_TARGET_IDLE 40
+#define SDE_UIDLE_FAL1_MAX_THRESHOLD 15
+#define SDE_UIDLE_REV102_FAL1_MAX_THRESHOLD 255
 #define SDE_UIDLE_FAL10_THRESHOLD_60 12
 #define SDE_UIDLE_FAL10_THRESHOLD_90 13
 #define SDE_UIDLE_MAX_DWNSCALE 1500
@@ -4780,6 +4782,7 @@ static void _sde_hw_setup_uidle(struct sde_uidle_cfg *uidle_cfg)
 		uidle_cfg->fal1_target_idle_time = SDE_UIDLE_FAL1_TARGET_IDLE;
 		uidle_cfg->max_dwnscale = SDE_UIDLE_MAX_DWNSCALE;
 		uidle_cfg->debugfs_ctrl = true;
+		uidle_cfg->fal1_max_threshold = SDE_UIDLE_FAL1_MAX_THRESHOLD;
 
 		if (IS_SDE_UIDLE_REV_100(uidle_cfg->uidle_rev)) {
 			uidle_cfg->fal10_threshold =
@@ -4798,6 +4801,8 @@ static void _sde_hw_setup_uidle(struct sde_uidle_cfg *uidle_cfg)
 				SDE_UIDLE_FAL10_THRESHOLD_90;
 			uidle_cfg->max_fps = SDE_UIDLE_MAX_FPS_90;
 			uidle_cfg->max_fal1_fps = SDE_UIDLE_MAX_FPS_240;
+			uidle_cfg->fal1_max_threshold =
+					SDE_UIDLE_REV102_FAL1_MAX_THRESHOLD;
 		}
 	} else {
 		pr_err("invalid uidle rev:0x%x, disabling uidle\n",
