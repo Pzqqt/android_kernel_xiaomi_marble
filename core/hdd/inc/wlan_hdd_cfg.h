@@ -267,6 +267,7 @@ struct hdd_config {
 	uint32_t sta_stats_cache_expiry_time;
 #endif
 	int icmp_req_to_fw_mark_interval;
+	bool read_mac_addr_from_mac_file;
 };
 
 /**

@@ -12440,6 +12440,8 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 	hdd_sar_cfg_update(config, psoc);
 	hdd_init_qmi_stats(config, psoc);
 	hdd_club_ll_stats_in_get_sta_cfg_update(config, psoc);
+	config->read_mac_addr_from_mac_file =
+			cfg_get(psoc, CFG_READ_MAC_ADDR_FROM_MAC_FILE);
 }
 
 struct hdd_context *hdd_context_create(struct device *dev)
