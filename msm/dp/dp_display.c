@@ -1371,6 +1371,31 @@ static int dp_display_usbpd_configure_cb(struct device *dev)
 	return 0;
 }
 
+static void dp_display_update_dsc_resources(struct dp_display_private *dp,
+		struct dp_panel *panel, bool enable)
+{
+	int rc;
+	u32 dsc_blk_cnt = 0;
+	struct msm_drm_private *priv = dp->priv;
+
+	if (enable) {
+		if (panel->pinfo.comp_info.comp_type == MSM_DISPLAY_COMPRESSION_DSC &&
+				(panel->pinfo.comp_info.comp_ratio > 1)) {
+			rc = msm_get_dsc_count(priv, panel->pinfo.h_active,
+					&dsc_blk_cnt);
+			if (rc) {
+				DP_ERR("error getting dsc count. rc:%d\n", rc);
+				return;
+			}
+		}
+		dp->tot_dsc_blks_in_use += dsc_blk_cnt;
+		panel->dsc_blks_in_use += dsc_blk_cnt;
+	} else {
+		dp->tot_dsc_blks_in_use -= panel->dsc_blks_in_use;
+		panel->dsc_blks_in_use = 0;
+	}
+}
+
 static int dp_display_stream_pre_disable(struct dp_display_private *dp,
 			struct dp_panel *dp_panel)
 {
@@ -1400,8 +1425,11 @@ static void dp_display_stream_disable(struct dp_display_private *dp,
 		return;
 	}
 
-	DP_DEBUG("stream_id=%d, active_stream_cnt=%d\n",
-			dp_panel->stream_id, dp->active_stream_cnt);
+	dp_display_update_dsc_resources(dp, dp_panel, false);
+
+	DP_DEBUG("stream_id=%d, active_stream_cnt=%d, tot_dsc_blks_in_use=%d\n",
+			dp_panel->stream_id, dp->active_stream_cnt,
+			dp->tot_dsc_blks_in_use);
 
 	dp->ctrl->stream_off(dp->ctrl, dp_panel);
 	dp->active_panels[dp_panel->stream_id] = NULL;
@@ -1570,7 +1598,10 @@ static int dp_display_stream_enable(struct dp_display_private *dp,
 		dp->active_stream_cnt++;
 	}
 
-	DP_DEBUG("dp active_stream_cnt:%d\n", dp->active_stream_cnt);
+	dp_display_update_dsc_resources(dp, dp_panel, true);
+
+	DP_DEBUG("dp active_stream_cnt:%d, tot_dsc_blks_in_use=%d\n",
+			dp->active_stream_cnt, dp->tot_dsc_blks_in_use);
 
 	return rc;
 }
@@ -2298,32 +2329,6 @@ static int dp_display_set_stream_info(struct dp_display *dp_display,
 	return rc;
 }
 
-static void dp_display_update_dsc_resources(struct dp_display_private *dp,
-		struct dp_panel *panel, bool enable)
-{
-	int rc;
-	u32 dsc_blk_cnt = 0;
-	struct msm_drm_private *priv = dp->priv;
-
-	if (panel->pinfo.comp_info.comp_type == MSM_DISPLAY_COMPRESSION_DSC &&
-			(panel->pinfo.comp_info.comp_ratio > 1)) {
-		rc = msm_get_dsc_count(priv, panel->pinfo.h_active,
-				&dsc_blk_cnt);
-		if (rc) {
-			DP_ERR("error getting dsc count. rc:%d\n", rc);
-			return;
-		}
-	}
-
-	if (enable) {
-		dp->tot_dsc_blks_in_use += dsc_blk_cnt;
-		panel->tot_dsc_blks_in_use += dsc_blk_cnt;
-	} else {
-		dp->tot_dsc_blks_in_use -= dsc_blk_cnt;
-		panel->tot_dsc_blks_in_use -= dsc_blk_cnt;
-	}
-}
-
 static int dp_display_enable(struct dp_display *dp_display, void *panel)
 {
 	int rc = 0;
@@ -2363,7 +2368,6 @@ static int dp_display_enable(struct dp_display *dp_display, void *panel)
 	if (rc)
 		goto end;
 
-	dp_display_update_dsc_resources(dp, panel, true);
 	dp_display_state_add(DP_STATE_ENABLED);
 end:
 	mutex_unlock(&dp->session_lock);
@@ -2549,7 +2553,6 @@ static int dp_display_disable(struct dp_display *dp_display, void *panel)
 	}
 
 	dp_display_stream_disable(dp, dp_panel);
-	dp_display_update_dsc_resources(dp, dp_panel, false);
 
 	dp_display_state_remove(DP_STATE_HDCP_ABORTED);
 	for (i = DP_STREAM_0; i < DP_STREAM_MAX; i++) {
@@ -2936,7 +2939,7 @@ static void dp_display_convert_to_dp_mode(struct dp_display *dp_display,
 
 	free_dsc_blks = dp_display->max_dsc_count -
 				dp->tot_dsc_blks_in_use +
-				dp_panel->tot_dsc_blks_in_use;
+				dp_panel->dsc_blks_in_use;
 
 	rc = msm_get_dsc_count(dp->priv, drm_mode->hdisplay,
 			&required_dsc_blks);
