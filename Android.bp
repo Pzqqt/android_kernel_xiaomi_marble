@@ -9,7 +9,9 @@ video_headers_out = [
 video_kernel_headers_verbose = "--verbose "
 genrule {
     name: "qti_generate_video_kernel_headers",
-    tools: ["headers_install.sh"],
+    tools: ["headers_install.sh",
+            "unifdef"
+    ],
     tool_files: [
         "video_kernel_headers.py",
     ],
@@ -19,6 +21,7 @@ genrule {
          "--header_arch arm64 " +
          "--gen_dir $(genDir) " +
          "--video_include_uapi $(locations include/uapi/*/**/*.h) " +
+         "--unifdef $(location unifdef) " +
          "--headers_install $(location headers_install.sh)",
     out: video_headers_out,
 }
