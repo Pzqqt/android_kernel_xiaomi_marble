@@ -125,24 +125,6 @@ enum channel_state wlan_reg_get_2g_bonded_channel_state(
 	 */
 	return reg_get_2g_bonded_channel_state(pdev, ch, sec_ch, bw);
 }
-
-/**
- * wlan_reg_set_channel_params() - Sets channel parameteres for given bandwidth
- * @ch: channel number.
- * @ch_params: pointer to the channel parameters.
- *
- * Return: None
- */
-void wlan_reg_set_channel_params(struct wlan_objmgr_pdev *pdev, uint8_t ch,
-				 uint8_t sec_ch_2g,
-				 struct ch_params *ch_params)
-{
-	/*
-	 * Set channel parameters like center frequency for a bonded channel
-	 * state. Also return the maximum bandwidth supported by the channel.
-	 */
-	reg_set_channel_params(pdev, ch, sec_ch_2g, ch_params);
-}
 #endif /* CONFIG_CHAN_NUM_API */
 
 /**

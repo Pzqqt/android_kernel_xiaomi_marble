@@ -559,19 +559,6 @@ enum channel_state wlan_reg_get_5g_bonded_channel_state(
 enum channel_state wlan_reg_get_2g_bonded_channel_state(
 		struct wlan_objmgr_pdev *pdev, uint8_t ch,
 		uint8_t sec_ch, enum phy_ch_width bw);
-
-/**
- * wlan_reg_set_channel_params () - Sets channel parameteres for given bandwidth
- * @pdev: The physical dev to program country code or regdomain
- * @ch: channel number.
- * @sec_ch_2g: Secondary channel.
- * @ch_params: pointer to the channel parameters.
- *
- * Return: None
- */
-void wlan_reg_set_channel_params(struct wlan_objmgr_pdev *pdev, uint8_t ch,
-				 uint8_t sec_ch_2g,
-				 struct ch_params *ch_params);
 #endif /* CONFIG_CHAN_NUM_API */
 /**
  * wlan_reg_get_dfs_region () - Get the current dfs region
