@@ -109,22 +109,22 @@ enum csr_roam_reason {
 #ifndef FEATURE_CM_ENABLE
 	/* roaming because we need to force a Disassoc due to MIC failure */
 	eCsrForcedDisassocMICFailure,
-#endif
 	eCsrHddIssuedReassocToSameAP,
 	eCsrSmeIssuedReassocToSameAP,
-#ifndef FEATURE_CM_ENABLE
 	/* roaming because someone asked us to deauth and stay disassociated. */
 	eCsrForcedDeauth,
 	/* will be issued by Handoff logic to disconect from current AP */
 	eCsrSmeIssuedDisassocForHandoff,
-#endif
 	/* will be issued by Handoff logic to join a new AP with same profile */
 	eCsrSmeIssuedAssocToSimilarAP,
+#endif
 	eCsrStopBss,
 	eCsrSmeIssuedFTReassoc,
 	eCsrForcedDisassocSta,
 	eCsrForcedDeauthSta,
+#ifndef FEATURE_CM_ENABLE
 	eCsrPerformPreauth,
+#endif
 	/* Roaming disabled from driver during connect/start BSS */
 	ecsr_driver_disabled,
 };
@@ -145,7 +145,9 @@ enum csr_roam_substate {
 	eCSR_ROAM_SUBSTATE_DISASSOC_REASSOC_FAILURE,
 	eCSR_ROAM_SUBSTATE_DISASSOC_FORCED,
 	eCSR_ROAM_SUBSTATE_WAIT_FOR_KEY,
+#ifndef FEATURE_CM_ENABLE
 	eCSR_ROAM_SUBSTATE_DISASSOC_HANDOFF,
+#endif
 	eCSR_ROAM_SUBSTATE_JOINED_NO_TRAFFIC,
 	eCSR_ROAM_SUBSTATE_JOINED_NON_REALTIME_TRAFFIC,
 	eCSR_ROAM_SUBSTATE_JOINED_REALTIME_TRAFFIC,
@@ -547,8 +549,9 @@ struct csr_roamstruct {
 	 */
 	int32_t sPendingCommands;
 	struct csr_roam_session *roamSession;
+#ifndef FEATURE_CM_ENABLE
 	tCsrNeighborRoamControlInfo neighborRoamInfo[WLAN_MAX_VDEVS];
-	uint8_t isFastRoamIniFeatureEnabled;
+#endif
 #ifdef FEATURE_WLAN_ESE
 	uint8_t isEseIniFeatureEnabled;
 #endif
@@ -613,9 +616,11 @@ struct csr_roamstruct {
 #define CSR_IS_ROAM_SUBSTATE_WAITFORKEY(mac, sessionId) \
 		CSR_IS_ROAM_SUBSTATE((mac), \
 			eCSR_ROAM_SUBSTATE_WAIT_FOR_KEY, sessionId)
+#ifndef FEATURE_CM_ENABLE
 #define CSR_IS_ROAM_SUBSTATE_DISASSOC_HO(mac, sessionId) \
 		CSR_IS_ROAM_SUBSTATE((mac), \
 			eCSR_ROAM_SUBSTATE_DISASSOC_HANDOFF, sessionId)
+#endif
 #define CSR_IS_ROAM_SUBSTATE_HO_NT(mac, sessionId) \
 		CSR_IS_ROAM_SUBSTATE((mac), \
 			eCSR_ROAM_SUBSTATE_JOINED_NO_TRAFFIC, sessionId)
@@ -860,6 +865,7 @@ QDF_STATUS csr_get_tsm_stats(struct mac_context *mac,
 bool csr_roam_is_fast_roam_enabled(struct mac_context *mac,  uint8_t vdev_id);
 bool csr_roam_is_roam_offload_scan_enabled(
 	struct mac_context *mac);
+#ifndef FEATURE_CM_ENABLE
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 QDF_STATUS csr_roam_offload_scan_rsp_hdlr(struct mac_context *mac,
 		struct roam_offload_scan_rsp *scanOffloadRsp);
@@ -871,7 +877,6 @@ static inline QDF_STATUS csr_roam_offload_scan_rsp_hdlr(
 	return QDF_STATUS_E_NOSUPPORT;
 }
 #endif
-#ifndef FEATURE_CM_ENABLE
 QDF_STATUS csr_handoff_request(struct mac_context *mac, uint8_t sessionId,
 		tCsrHandoffRequest
 		*pHandoffInfo);

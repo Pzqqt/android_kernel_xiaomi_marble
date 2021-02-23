@@ -22,6 +22,7 @@
  * Host based roaming preauthentication implementation
  */
 
+#ifndef FEATURE_CM_ENABLE
 #include "wma_types.h"
 #include "csr_inside_api.h"
 #include "sme_qos_internal.h"
@@ -789,4 +790,4 @@ QDF_STATUS csr_neighbor_roam_issue_preauth_req(struct mac_context *mac_ctx,
 
 	return status;
 }
-
+#endif

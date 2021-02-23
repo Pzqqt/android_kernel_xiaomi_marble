@@ -41,6 +41,7 @@
 #include "wma_if.h"
 #include "wma.h"
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * mac_trace_get_neighbour_roam_state() - Get the neighbor roam state
  * @neighbourroamstate: State in numeric form
@@ -65,7 +66,7 @@ uint8_t *mac_trace_get_neighbour_roam_state(uint16_t neighbourroamstate)
 		break;
 	}
 }
-
+#endif
 /**
  * mac_trace_getcsr_roam_state() - Get the csr roam state
  * @csr_roam_state: State in numeric form
@@ -114,7 +115,9 @@ uint8_t *mac_trace_getcsr_roam_sub_state(uint16_t csr_roam_sub_state)
 		CASE_RETURN_STRING(eCSR_ROAM_SUBSTATE_DISASSOC_REASSOC_FAILURE);
 		CASE_RETURN_STRING(eCSR_ROAM_SUBSTATE_DISASSOC_FORCED);
 		CASE_RETURN_STRING(eCSR_ROAM_SUBSTATE_WAIT_FOR_KEY);
+#ifndef FEATURE_CM_ENABLE
 		CASE_RETURN_STRING(eCSR_ROAM_SUBSTATE_DISASSOC_HANDOFF);
+#endif
 		CASE_RETURN_STRING(eCSR_ROAM_SUBSTATE_JOINED_NO_TRAFFIC);
 		CASE_RETURN_STRING
 			(eCSR_ROAM_SUBSTATE_JOINED_NON_REALTIME_TRAFFIC);
@@ -255,8 +258,10 @@ uint8_t *mac_trace_get_sme_msg_string(uint16_t sme_msg)
 		CASE_RETURN_STRING(eWNI_SME_NEIGHBOR_REPORT_IND);
 		CASE_RETURN_STRING(eWNI_SME_BEACON_REPORT_REQ_IND);
 		CASE_RETURN_STRING(eWNI_SME_BEACON_REPORT_RESP_XMIT_IND);
+#ifndef FEATURE_CM_ENABLE
 		CASE_RETURN_STRING(eWNI_SME_FT_PRE_AUTH_REQ);
 		CASE_RETURN_STRING(eWNI_SME_FT_PRE_AUTH_RSP);
+#endif
 		CASE_RETURN_STRING(eWNI_SME_FT_AGGR_QOS_REQ);
 		CASE_RETURN_STRING(eWNI_SME_FT_AGGR_QOS_RSP);
 #if defined FEATURE_WLAN_ESE
@@ -268,7 +273,9 @@ uint8_t *mac_trace_get_sme_msg_string(uint16_t sme_msg)
 #ifdef WLAN_FEATURE_GTK_OFFLOAD
 		CASE_RETURN_STRING(eWNI_PMC_GTK_OFFLOAD_GETINFO_RSP);
 #endif /* WLAN_FEATURE_GTK_OFFLOAD */
+#ifndef FEATURE_CM_ENABLE
 		CASE_RETURN_STRING(eWNI_SME_ROAM_SCAN_OFFLOAD_RSP);
+#endif
 		CASE_RETURN_STRING(eWNI_SME_DFS_RADAR_FOUND);
 		CASE_RETURN_STRING(eWNI_SME_CHANNEL_CHANGE_REQ);
 		CASE_RETURN_STRING(eWNI_SME_CHANNEL_CHANGE_RSP);
@@ -304,8 +311,10 @@ uint8_t *mac_trace_get_sme_msg_string(uint16_t sme_msg)
 #ifdef WLAN_FEATURE_11W
 		CASE_RETURN_STRING(eWNI_SME_UNPROT_MGMT_FRM_IND);
 #endif
+#ifndef FEATURE_CM_ENABLE
 		CASE_RETURN_STRING(eWNI_SME_CANDIDATE_FOUND_IND);
 		CASE_RETURN_STRING(eWNI_SME_HANDOFF_REQ);
+#endif
 		CASE_RETURN_STRING(eWNI_SME_GET_TSM_STATS_REQ);
 		CASE_RETURN_STRING(eWNI_SME_GET_TSM_STATS_RSP);
 		CASE_RETURN_STRING(eWNI_SME_TSM_IE_IND);

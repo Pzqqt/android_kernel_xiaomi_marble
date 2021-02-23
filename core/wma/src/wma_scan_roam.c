@@ -4189,6 +4189,7 @@ QDF_STATUS wma_scan_probe_setoui(tp_wma_handle wma,
  */
 void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 {
+#ifndef FEATURE_CM_ENABLE
 	struct scheduler_msg cds_msg = {0};
 	tSirSmeCandidateFoundInd *candidate_ind;
 	QDF_STATUS status;
@@ -4211,6 +4212,9 @@ void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 					QDF_MODULE_ID_SCAN,  &cds_msg);
 	if (QDF_IS_STATUS_ERROR(status))
 		qdf_mem_free(candidate_ind);
+#else
+	/* post to osif queue to call cm API for LFR2 */
+#endif
 }
 
 /**

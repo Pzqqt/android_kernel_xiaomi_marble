@@ -6174,14 +6174,10 @@ static int __iw_get_char_setnone(struct net_device *dev,
 				scnprintf(extra + len, WE_MAX_STR_LEN - len,
 					  "\n HDD Conn State - %s "
 					  "\n\n SME State:"
-					  "\n Neighbour Roam State - %s"
 					  "\n CSR State - %s"
 					  "\n CSR Substate - %s",
 					  hdd_connection_state_string
 						  (sta_ctx->conn_info.conn_state),
-					  mac_trace_get_neighbour_roam_state
-						  (sme_get_neighbor_roam_state
-							  (mac_handle, stat_adapter->vdev_id)),
 					  mac_trace_getcsr_roam_state
 						  (sme_get_current_roam_state
 							  (mac_handle, stat_adapter->vdev_id)),

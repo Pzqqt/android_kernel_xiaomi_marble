@@ -1118,8 +1118,6 @@ QDF_STATUS sme_set_neighbor_scan_max_chan_time(mac_handle_t mac_handle,
 				const uint16_t nNeighborScanMaxChanTime);
 uint16_t sme_get_neighbor_scan_min_chan_time(mac_handle_t mac_handle,
 					     uint8_t sessionId);
-uint32_t sme_get_neighbor_roam_state(mac_handle_t mac_handle,
-				     uint8_t sessionId);
 uint32_t sme_get_current_roam_state(mac_handle_t mac_handle, uint8_t sessionId);
 uint32_t sme_get_current_roam_sub_state(mac_handle_t mac_handle,
 					uint8_t sessionId);
@@ -1715,9 +1713,6 @@ QDF_STATUS sme_configure_guard_time(mac_handle_t mac_handle, uint8_t session_id,
 
 QDF_STATUS sme_wifi_start_logger(mac_handle_t mac_handle,
 				 struct sir_wifi_start_log start_log);
-
-bool sme_neighbor_middle_of_roaming(mac_handle_t mac_handle,
-				    uint8_t sessionId);
 
 /**
  * sme_is_any_session_in_middle_of_roaming() - check if roaming is in progress

@@ -58,8 +58,10 @@ typedef struct sFTSMEContext {
 	/* Saved pFTPreAuthRsp */
 	tpSirFTPreAuthRsp psavedFTPreAuthRsp;
 	bool setFTPreAuthState;
+#ifndef FEATURE_CM_ENABLE
 	/* Time to trigger reassoc once pre-auth is successful */
 	qdf_mc_timer_t preAuthReassocIntvlTimer;
+#endif
 	bool addMDIE;
 	/* User context for the timer callback */
 	tpFTRoamCallbackUsrCtx pUsrCtx;
@@ -124,7 +126,9 @@ static inline void sme_reset_key(mac_handle_t mac_handle, uint32_t vdev_id)
 }
 #endif
 
+#ifndef FEATURE_CM_ENABLE
 void sme_preauth_reassoc_intvl_timer_callback(void *context);
+#endif
 void sme_set_ft_pre_auth_state(mac_handle_t mac_handle, uint32_t sessionId,
 			       bool state);
 bool sme_get_ft_pre_auth_state(mac_handle_t mac_handle, uint32_t sessionId);

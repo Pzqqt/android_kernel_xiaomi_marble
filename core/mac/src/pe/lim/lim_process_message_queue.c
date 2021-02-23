@@ -1748,7 +1748,9 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 #if defined FEATURE_WLAN_ESE
 	case eWNI_SME_ESE_ADJACENT_AP_REPORT:
 #endif
+#ifndef FEATURE_CM_ENABLE
 	case eWNI_SME_FT_PRE_AUTH_REQ:
+#endif
 	case eWNI_SME_FT_AGGR_QOS_REQ:
 	case eWNI_SME_REGISTER_MGMT_FRAME_REQ:
 #ifdef FEATURE_WLAN_ESE

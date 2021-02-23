@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -92,6 +92,7 @@ QDF_STATUS csr_msg_processor(struct mac_context *mac_ctx, void *msg_buf)
 				sme_rsp->messageType, cur_state,
 				vdev_id);
 
+#ifndef FEATURE_CM_ENABLE
 			if (eWNI_SME_FT_PRE_AUTH_RSP ==
 					sme_rsp->messageType) {
 				sme_err("Dequeue eSmeCommandRoam command with reason eCsrPerformPreauth");
@@ -104,6 +105,7 @@ QDF_STATUS csr_msg_processor(struct mac_context *mac_ctx, void *msg_buf)
 					eCsrSmeIssuedFTReassoc,
 					vdev_id);
 			}
+#endif
 		}
 		break;
 	} /* switch */
