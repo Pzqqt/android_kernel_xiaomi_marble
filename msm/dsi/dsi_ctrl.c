@@ -1027,7 +1027,12 @@ static int dsi_ctrl_update_link_freqs(struct dsi_ctrl *dsi_ctrl,
 		bit_rate_per_lane = bit_rate;
 		do_div(bit_rate_per_lane, num_of_lanes);
 		byte_clk_rate = bit_rate_per_lane;
-		do_div(byte_clk_rate, 8);
+		/**
+		 * Ensure that the byte clock rate is even to avoid failures
+		 * during set rate for byte intf clock.
+		 */
+		byte_clk_rate = DIV_ROUND_CLOSEST(byte_clk_rate, 8);
+		byte_clk_rate &= ~BIT(0);
 		byte_intf_clk_rate = byte_clk_rate;
 		byte_intf_clk_div = host_cfg->byte_intf_clk_div;
 		do_div(byte_intf_clk_rate, byte_intf_clk_div);
