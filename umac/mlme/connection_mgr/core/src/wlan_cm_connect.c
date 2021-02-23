@@ -1830,10 +1830,10 @@ cm_allocate_and_copy_ies_and_keys(struct wlan_cm_connect_req *target,
 				  struct wlan_cm_connect_req *source)
 {
 	/* Reset the copied pointers of target */
-	source->assoc_ie.ptr = NULL;
-	source->crypto.wep_keys.key = NULL;
-	source->crypto.wep_keys.seq = NULL;
-	source->scan_ie.ptr = NULL;
+	target->assoc_ie.ptr = NULL;
+	target->crypto.wep_keys.key = NULL;
+	target->crypto.wep_keys.seq = NULL;
+	target->scan_ie.ptr = NULL;
 
 	if (source->scan_ie.ptr) {
 		target->scan_ie.ptr = qdf_mem_malloc(source->scan_ie.len);

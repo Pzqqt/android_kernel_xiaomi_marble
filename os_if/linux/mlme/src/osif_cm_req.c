@@ -419,7 +419,7 @@ static void osif_cm_free_connect_req(struct wlan_cm_connect_req *connect_req)
 {
 	if (connect_req->scan_ie.ptr) {
 		qdf_mem_free(connect_req->scan_ie.ptr);
-		connect_req->assoc_ie.ptr = NULL;
+		connect_req->scan_ie.ptr = NULL;
 	}
 
 	if (connect_req->assoc_ie.ptr) {
