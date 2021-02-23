@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -761,6 +761,21 @@ struct vhtcap {
 	struct vhtmcsinfo supp_mcs;
 };
 
+/**
+ * struct hecap - HE capabilities
+ *
+ * This structure is the "HE capabilities element" as
+ * described in 802.11ax D4.0 section 9.4.2.232.3
+ * @mac_cap_info: MAC capability info
+ * @phycap_info: Phy Capability info
+ */
+#ifdef WLAN_FEATURE_11AX
+struct hecap {
+	uint8_t mac_cap_info[6];
+	uint8_t phycap_info[11];
+};
+#endif
+
 struct tdls_update_peer_params {
 	uint8_t peer_addr[QDF_MAC_ADDR_SIZE];
 	uint32_t peer_type;
@@ -773,6 +788,10 @@ struct tdls_update_peer_params {
 	struct htcap_cmn_ie ht_cap;
 	uint8_t vhtcap_present;
 	struct vhtcap vht_cap;
+#ifdef WLAN_FEATURE_11AX
+	uint8_t he_cap_len;
+	struct hecap he_cap;
+#endif
 	uint8_t uapsd_queues;
 	uint8_t max_sp;
 	uint8_t supported_channels_len;
@@ -1295,6 +1314,8 @@ struct tdls_send_mgmt_request {
  * @ht_cap: ht capability
  * @vhtcap_present: vht capability present
  * @vht_cap: vht capability
+ * @he_cap_len: he capability length
+ * @he_cap: he capability
  * @uapsd_queues: uapsd queue as sSirMacQosInfoStation
  * @max_sp: maximum service period
  */
@@ -1314,6 +1335,10 @@ struct tdls_add_sta_req {
 	struct htcap_cmn_ie ht_cap;
 	uint8_t vhtcap_present;
 	struct vhtcap vht_cap;
+#ifdef WLAN_FEATURE_11AX
+	uint8_t he_cap_len;
+	struct hecap he_cap;
+#endif
 	uint8_t uapsd_queues;
 	uint8_t max_sp;
 	bool is_pmf;
