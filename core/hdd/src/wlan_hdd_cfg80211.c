@@ -2194,8 +2194,9 @@ hdd_update_reg_chan_info(struct hdd_adapter *adapter,
 
 		if (WLAN_REG_IS_5GHZ_CH_FREQ(freq_list[i])) {
 			ch_params.ch_width = sap_config->acs_cfg.ch_width;
-			wlan_reg_set_channel_params(hdd_ctx->pdev, chan,
-						    0, &ch_params);
+			wlan_reg_set_channel_params_for_freq(hdd_ctx->pdev,
+							     icv->freq,
+							     0, &ch_params);
 			icv->vht_center_freq_seg0 = ch_params.center_freq_seg0;
 			icv->vht_center_freq_seg1 = ch_params.center_freq_seg1;
 		}
