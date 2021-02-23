@@ -1049,7 +1049,7 @@ static int dsi_pll_5nm_set_pclk_div(struct dsi_pll_resource *pll, bool commit)
 		pclk_src_rate = div_u64(pclk_src_rate, 7);
 	}
 
-	pclk_div = pclk_src_rate / pll->pclk_rate;
+	pclk_div = DIV_ROUND_CLOSEST(pclk_src_rate, pll->pclk_rate);
 
 	DSI_PLL_DBG(pll, "pclk rate: %llu, dsi_clk: %d, pclk_div: %d\n",
 			pll->pclk_rate, dsi_clk, pclk_div);
