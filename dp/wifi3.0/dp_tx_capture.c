@@ -5770,6 +5770,7 @@ void dp_tx_ppdu_stats_process(void *context)
 	size_t nbuf_list_sz;
 	uint8_t user_mode;
 	bool is_stats_queue_empty = false;
+	uint32_t tlv_bitmap = 0;
 
 	STAILQ_INIT(&sched_ppdu_queue);
 	/* Move the PPDU entries to defer list */
@@ -5880,6 +5881,7 @@ void dp_tx_ppdu_stats_process(void *context)
 			 * instead of freeing below.
 			 */
 			nbuf_ppdu = ppdu_info->nbuf;
+			tlv_bitmap = ppdu_info->tlv_bitmap;
 			qdf_mem_free(ppdu_info);
 
 			qdf_assert_always(nbuf_ppdu);
@@ -5913,7 +5915,7 @@ void dp_tx_ppdu_stats_process(void *context)
 					    ppdu_desc->num_users != 0 &&
 					    (ppdu_desc->frame_ctrl &
 					     HTT_FRAMECTRL_DATATYPE) &&
-					    (ppdu_info->tlv_bitmap & 1 <<
+					    (tlv_bitmap & 1 <<
 					     HTT_PPDU_STATS_USR_RATE_TLV)) {
 						dp_wdi_event_handler(
 							WDI_EVENT_TX_PPDU_DESC,
