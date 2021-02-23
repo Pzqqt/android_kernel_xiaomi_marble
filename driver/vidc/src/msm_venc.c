@@ -244,7 +244,7 @@ static int msm_venc_set_host_max_buf_count(struct msm_vidc_inst *inst,
 	enum msm_vidc_port_type port)
 {
 	int rc = 0;
-	u32 count = DEFAULT_MAX_HOST_BUF_COUNT;
+	u32 count = DEFAULT_MAX_HOST_ENC_BUF_COUNT;
 
 	if (port != INPUT_PORT && port != OUTPUT_PORT) {
 		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);

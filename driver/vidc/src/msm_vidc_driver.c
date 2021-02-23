@@ -1438,6 +1438,20 @@ struct msm_vidc_buffer *get_meta_buffer(struct msm_vidc_inst *inst,
 	return mbuf;
 }
 
+bool msm_vidc_is_super_buffer(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_inst_capability *capability = NULL;
+
+	if (!inst || !inst->capabilities) {
+		i_vpr_e(inst, "%s: Invalid params\n", __func__);
+		return false;
+	}
+
+	capability = inst->capabilities;
+
+	return !!capability->cap[SUPER_FRAME].value;
+}
+
 int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 {
 	int rc = 0;
@@ -1492,7 +1506,10 @@ int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 			return -EINVAL;
 		}
 	}
-	rc = venus_hfi_queue_buffer(inst, buf, meta);
+	if (msm_vidc_is_super_buffer(inst) && is_input_buffer(buf->type))
+		rc = venus_hfi_queue_super_buffer(inst, buf, meta);
+	else
+		rc = venus_hfi_queue_buffer(inst, buf, meta);
 	if (rc)
 		return rc;
 

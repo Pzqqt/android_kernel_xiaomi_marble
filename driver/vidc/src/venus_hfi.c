@@ -33,6 +33,14 @@
 
 #define MAX_FIRMWARE_NAME_SIZE 128
 
+#define update_offset(offset, val)		((offset) += (val))
+#define update_timestamp(ts, val) \
+	do { \
+		do_div((ts), NSEC_PER_USEC); \
+		(ts) += (val); \
+		(ts) *= NSEC_PER_USEC; \
+	} while (0)
+
 extern struct msm_vidc_core *g_core;
 
 static int __resume(struct msm_vidc_core *core);
@@ -874,6 +882,18 @@ int __iface_cmdq_write(struct msm_vidc_core *core,
 	int rc = __iface_cmdq_write_relaxed(core, pkt, &needs_interrupt);
 
 	if (!rc && needs_interrupt)
+		call_venus_op(core, raise_interrupt, core);
+
+	return rc;
+}
+
+static int __iface_cmdq_write_intr(struct msm_vidc_core *core,
+	void *pkt, bool allow)
+{
+	bool needs_interrupt = false;
+	int rc = __iface_cmdq_write_relaxed(core, pkt, &needs_interrupt);
+
+	if (!rc && allow && needs_interrupt)
 		call_venus_op(core, raise_interrupt, core);
 
 	return rc;
@@ -3023,6 +3043,125 @@ int venus_hfi_session_command(struct msm_vidc_inst *inst,
 
 unlock:
 	core_unlock(core, __func__);
+	return rc;
+}
+
+int venus_hfi_queue_super_buffer(struct msm_vidc_inst *inst,
+	struct msm_vidc_buffer *buffer, struct msm_vidc_buffer *metabuf)
+{
+	int rc = 0;
+	struct msm_vidc_core *core;
+	struct hfi_buffer hfi_buffer;
+	struct hfi_buffer hfi_meta_buffer;
+	struct msm_vidc_inst_capability *capability;
+	u32 frame_size, meta_size, batch_size, cnt = 0;
+	u64 ts_delta_us;
+
+	if (!inst || !inst->core || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+	capability = inst->capabilities;
+	core_lock(core, __func__);
+
+	if (!__valdiate_session(core, inst, __func__)) {
+		rc = -EINVAL;
+		goto unlock;
+	}
+
+	/* Get super yuv buffer */
+	rc = get_hfi_buffer(inst, buffer, &hfi_buffer);
+	if (rc)
+		goto unlock;
+
+	/* Get super meta buffer */
+	if (metabuf) {
+		rc = get_hfi_buffer(inst, metabuf, &hfi_meta_buffer);
+		if (rc)
+			goto unlock;
+	}
+
+	batch_size = capability->cap[SUPER_FRAME].value;
+	frame_size = call_session_op(core, buffer_size, inst, MSM_VIDC_BUF_INPUT);
+	meta_size = call_session_op(core, buffer_size, inst, MSM_VIDC_BUF_INPUT_META);
+	ts_delta_us = 1000000 / (capability->cap[FRAME_RATE].value >> 16);
+
+	/* Sanitize super yuv buffer */
+	if (frame_size * batch_size != buffer->buffer_size) {
+		i_vpr_e(inst, "%s: invalid super yuv buffer. frame %u, batch %u, buffer size %u\n",
+			__func__, frame_size, batch_size, buffer->buffer_size);
+		goto unlock;
+	}
+
+	/* Sanitize super meta buffer */
+	if (metabuf && meta_size * batch_size != metabuf->buffer_size) {
+		i_vpr_e(inst, "%s: invalid super meta buffer. meta %u, batch %u, buffer size %u\n",
+			__func__, meta_size, batch_size, metabuf->buffer_size);
+		goto unlock;
+	}
+
+	/* Initialize yuv buffer */
+	hfi_buffer.data_size = frame_size;
+	hfi_buffer.addr_offset = 0;
+
+	/* Initialize meta buffer */
+	if (metabuf) {
+		hfi_meta_buffer.data_size = meta_size;
+		hfi_meta_buffer.addr_offset = 0;
+	}
+
+	while (cnt < batch_size) {
+		/* Create header */
+		rc = hfi_create_header(inst->packet, inst->packet_size,
+				inst->session_id, core->header_id++);
+		if (rc)
+			goto unlock;
+
+		/* Create yuv packet */
+		update_offset(hfi_buffer.addr_offset, (cnt ? frame_size : 0u));
+		update_timestamp(hfi_buffer.timestamp, (cnt ? ts_delta_us : 0u));
+		rc = hfi_create_packet(inst->packet,
+				inst->packet_size,
+				HFI_CMD_BUFFER,
+				HFI_HOST_FLAGS_INTR_REQUIRED,
+				HFI_PAYLOAD_STRUCTURE,
+				get_hfi_port_from_buffer_type(inst, buffer->type),
+				core->packet_id++,
+				&hfi_buffer,
+				sizeof(hfi_buffer));
+		if (rc)
+			goto unlock;
+
+		/* Create meta packet */
+		if (metabuf) {
+			update_offset(hfi_meta_buffer.addr_offset, (cnt ? meta_size : 0u));
+			update_timestamp(hfi_meta_buffer.timestamp, (cnt ? ts_delta_us : 0u));
+			rc = hfi_create_packet(inst->packet,
+				inst->packet_size,
+				HFI_CMD_BUFFER,
+				HFI_HOST_FLAGS_INTR_REQUIRED,
+				HFI_PAYLOAD_STRUCTURE,
+				get_hfi_port_from_buffer_type(inst, metabuf->type),
+				core->packet_id++,
+				&hfi_meta_buffer,
+				sizeof(hfi_meta_buffer));
+			if (rc)
+				goto unlock;
+		}
+
+		/* Raise interrupt only for last pkt in the batch */
+		rc = __iface_cmdq_write_intr(inst->core, inst->packet, (cnt == batch_size - 1));
+		if (rc)
+			goto unlock;
+
+		cnt++;
+	}
+unlock:
+	core_unlock(core, __func__);
+	if (rc)
+		i_vpr_e(inst, "%s: queue super buffer failed: %d\n", __func__, rc);
+
 	return rc;
 }
 

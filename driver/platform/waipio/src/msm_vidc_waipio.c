@@ -239,6 +239,11 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		HFI_PROP_ROTATION,
 		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT},
 
+	{SUPER_FRAME, ENC, CODECS_ALL,
+		0, 16, 1, 0,
+		V4L2_CID_MPEG_VIDC_SUPERFRAME,
+		0},
+
 	{SLICE_INTERFACE, DEC, CODECS_ALL,
 		0, 0, 0, 0,
 		V4L2_CID_MPEG_VIDEO_DECODER_SLICE_INTERFACE,

@@ -116,6 +116,9 @@ enum v4l2_mpeg_vidc_blur_types {
 #define V4L2_CID_MPEG_VIDC_HEVC_P_FRAME_MAX_QP                               \
 	(V4L2_CID_MPEG_VIDC_BASE + 0x27)
 
+/* Encoder Super frame control */
+#define V4L2_CID_MPEG_VIDC_SUPERFRAME           (V4L2_CID_MPEG_VIDC_BASE + 0x28)
+
 enum v4l2_mpeg_vidc_metapayload_header_flags {
 	METADATA_FLAGS_NONE             = 0,
 	METADATA_FLAGS_TOP_FIELD        = (1 << 0),
