@@ -256,7 +256,7 @@ static int alloc_dma_mem(size_t size, u32 align, int map_kernel,
 	dma_addr_t iova = 0;
 	int rc = 0;
 	struct dma_buf *dbuf = NULL;
-	struct dma_heap *heap;
+	struct dma_heap *heap = NULL;
 
 	if (!res) {
 		dprintk(CVP_ERR, "%s: NULL res\n", __func__);

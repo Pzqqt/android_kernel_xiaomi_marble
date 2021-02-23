@@ -607,6 +607,7 @@ exit:
 	dprintk(CVP_SYNX, "%s exit\n", current->comm);
 	cvp_put_inst(inst);
 	do_exit(rc);
+	return rc;
 }
 
 static int msm_cvp_session_process_hfi_fence(struct msm_cvp_inst *inst,

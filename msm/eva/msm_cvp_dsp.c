@@ -1838,6 +1838,7 @@ wait_dsp:
 exit:
 	dprintk(CVP_DBG, "dsp thread exit\n");
 	do_exit(rc);
+	return rc;
 }
 
 int cvp_dsp_device_init(void)

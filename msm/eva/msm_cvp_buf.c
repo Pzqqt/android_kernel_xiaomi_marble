@@ -352,12 +352,15 @@ int msm_cvp_map_buf_dsp_new(struct msm_cvp_inst *inst,
 		dprintk(CVP_WARN, "%s incorrect pid\n", __func__);
 		return -EINVAL;
 	}
-	dprintk(CVP_WARN, "%s get pid_s 0x%x from pidA 0x%x\n", __func__, pid_s, pid);
+	dprintk(CVP_DSP, "%s get pid_s 0x%x from pidA 0x%x\n", __func__, pid_s, pid);
 	/* task = get_pid_task(pid, PIDTYPE_PID); */
 	task = get_pid_task(pid_s, PIDTYPE_TGID);
 
-	if (!task)
+	if (!task) {
 		dprintk(CVP_WARN, "%s task doesn't exist\n", __func__);
+		return -EINVAL;
+	}
+
 	file = msm_cvp_fget(buf->fd, task, FMODE_PATH, 1);
 	if (file == NULL) {
 		dprintk(CVP_WARN, "%s fail to get file from fd\n", __func__);
