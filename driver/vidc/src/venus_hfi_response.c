@@ -466,14 +466,20 @@ static int handle_input_buffer(struct msm_vidc_inst *inst,
 		return -EINVAL;
 	}
 
-	frame_size = call_session_op(core, buffer_size, inst, MSM_VIDC_BUF_INPUT);
-	batch_size = inst->capabilities->cap[SUPER_FRAME].value;
 	/* attach dequeued flag for, only last frame in the batch */
-	if (msm_vidc_is_super_buffer(inst) &&
-		buffer->addr_offset / frame_size < batch_size - 1) {
-		i_vpr_h(inst, "%s: superframe last buffer not reached: %u, %u, %u\n",
-			__func__, buffer->addr_offset, frame_size, batch_size);
-		return 0;
+	if (msm_vidc_is_super_buffer(inst)) {
+		frame_size = call_session_op(core, buffer_size, inst, MSM_VIDC_BUF_INPUT);
+		batch_size = inst->capabilities->cap[SUPER_FRAME].value;
+		if (!frame_size || !batch_size) {
+			i_vpr_e(inst, "%s: invalid size: frame %u, batch %u\n",
+				__func__, frame_size, batch_size);
+			return -EINVAL;
+		}
+		if (buffer->addr_offset / frame_size < batch_size - 1) {
+			i_vpr_h(inst, "%s: superframe last buffer not reached: %u, %u, %u\n",
+				__func__, buffer->addr_offset, frame_size, batch_size);
+			return 0;
+		}
 	}
 	buf->data_offset = buffer->data_offset;
 	buf->data_size = buffer->data_size;
@@ -591,14 +597,20 @@ static int handle_input_metadata_buffer(struct msm_vidc_inst *inst,
 			__func__, buffer->index, buffer->base_address);
 		return -EINVAL;
 	}
-	frame_size = call_session_op(core, buffer_size, inst, MSM_VIDC_BUF_INPUT_META);
-	batch_size = inst->capabilities->cap[SUPER_FRAME].value;
 	/* attach dequeued flag for, only last frame in the batch */
-	if (msm_vidc_is_super_buffer(inst) &&
-		buffer->addr_offset / frame_size < batch_size - 1) {
-		i_vpr_h(inst, "%s: superframe last buffer not reached: %u, %u, %u\n",
-			__func__, buffer->addr_offset, frame_size, batch_size);
-		return 0;
+	if (msm_vidc_is_super_buffer(inst)) {
+		frame_size = call_session_op(core, buffer_size, inst, MSM_VIDC_BUF_INPUT_META);
+		batch_size = inst->capabilities->cap[SUPER_FRAME].value;
+		if (!frame_size || !batch_size) {
+			i_vpr_e(inst, "%s: invalid size: frame %u, batch %u\n",
+				__func__, frame_size, batch_size);
+			return -EINVAL;
+		}
+		if (buffer->addr_offset / frame_size < batch_size - 1) {
+			i_vpr_h(inst, "%s: superframe last buffer not reached: %u, %u, %u\n",
+				__func__, buffer->addr_offset, frame_size, batch_size);
+			return 0;
+		}
 	}
 	buf->data_size = buffer->data_size;
 	buf->attr &= ~MSM_VIDC_ATTR_QUEUED;
