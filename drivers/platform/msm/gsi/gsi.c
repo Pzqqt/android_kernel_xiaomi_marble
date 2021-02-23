@@ -3850,6 +3850,11 @@ int __gsi_populate_tre(struct gsi_chan_ctx *ctx,
 	tre.ieob = (xfer->flags & GSI_XFER_FLAG_EOB) ? 1 : 0;
 	tre.chain = (xfer->flags & GSI_XFER_FLAG_CHAIN) ? 1 : 0;
 
+	if (unlikely(ctx->state  == GSI_CHAN_STATE_NOT_ALLOCATED)) {
+		GSIERR("bad state %d\n", ctx->state);
+		return -GSI_STATUS_UNSUPPORTED_OP;
+	}
+
 	idx = gsi_find_idx_from_addr(&ctx->ring, ctx->ring.wp_local);
 	tre_ptr = (struct gsi_tre *)(ctx->ring.base_va +
 		idx * ctx->ring.elem_sz);
