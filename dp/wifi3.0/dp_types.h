@@ -1338,6 +1338,29 @@ struct dp_swlm {
 };
 #endif
 
+#ifdef IPA_OFFLOAD
+/* IPA uC datapath offload Wlan Tx resources */
+struct ipa_dp_tx_rsc {
+	/* Resource info to be passed to IPA */
+	qdf_dma_addr_t ipa_tcl_ring_base_paddr;
+	void *ipa_tcl_ring_base_vaddr;
+	uint32_t ipa_tcl_ring_size;
+	qdf_dma_addr_t ipa_tcl_hp_paddr;
+	uint32_t alloc_tx_buf_cnt;
+
+	qdf_dma_addr_t ipa_wbm_ring_base_paddr;
+	void *ipa_wbm_ring_base_vaddr;
+	uint32_t ipa_wbm_ring_size;
+	qdf_dma_addr_t ipa_wbm_tp_paddr;
+	/* WBM2SW HP shadow paddr */
+	qdf_dma_addr_t ipa_wbm_hp_shadow_paddr;
+
+	/* TX buffers populated into the WBM ring */
+	void **tx_buf_pool_vaddr_unaligned;
+	qdf_dma_addr_t *tx_buf_pool_paddr_unaligned;
+};
+#endif
+
 /* SOC level structure for data path */
 struct dp_soc {
 	/**
@@ -1614,26 +1637,11 @@ struct dp_soc {
 
 	void *external_txrx_handle; /* External data path handle */
 #ifdef IPA_OFFLOAD
-	/* IPA uC datapath offload Wlan Tx resources */
-	struct {
-		/* Resource info to be passed to IPA */
-		qdf_dma_addr_t ipa_tcl_ring_base_paddr;
-		void *ipa_tcl_ring_base_vaddr;
-		uint32_t ipa_tcl_ring_size;
-		qdf_dma_addr_t ipa_tcl_hp_paddr;
-		uint32_t alloc_tx_buf_cnt;
-
-		qdf_dma_addr_t ipa_wbm_ring_base_paddr;
-		void *ipa_wbm_ring_base_vaddr;
-		uint32_t ipa_wbm_ring_size;
-		qdf_dma_addr_t ipa_wbm_tp_paddr;
-		/* WBM2SW HP shadow paddr */
-		qdf_dma_addr_t ipa_wbm_hp_shadow_paddr;
-
-		/* TX buffers populated into the WBM ring */
-		void **tx_buf_pool_vaddr_unaligned;
-		qdf_dma_addr_t *tx_buf_pool_paddr_unaligned;
-	} ipa_uc_tx_rsc;
+	struct ipa_dp_tx_rsc ipa_uc_tx_rsc;
+#ifdef IPA_WDI3_TX_TWO_PIPES
+	/* Resources for the alternative IPA TX pipe */
+	struct ipa_dp_tx_rsc ipa_uc_tx_rsc_alt;
+#endif
 
 	/* IPA uC datapath offload Wlan Rx resources */
 	struct {
@@ -1799,6 +1807,16 @@ struct dp_ipa_resources {
 	qdf_dma_addr_t rx_ready_doorbell_paddr;
 
 	bool is_db_ddr_mapped;
+
+#ifdef IPA_WDI3_TX_TWO_PIPES
+	qdf_shared_mem_t tx_alt_ring;
+	uint32_t tx_alt_ring_num_alloc_buffer;
+	qdf_shared_mem_t tx_alt_comp_ring;
+
+	/* IPA UC doorbell registers paddr */
+	qdf_dma_addr_t tx_alt_comp_doorbell_paddr;
+	uint32_t *tx_alt_comp_doorbell_vaddr;
+#endif
 };
 #endif
 
