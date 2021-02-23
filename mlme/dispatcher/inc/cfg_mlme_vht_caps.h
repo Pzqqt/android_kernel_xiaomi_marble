@@ -597,6 +597,26 @@
 			1, \
 			"Enable subfee in vendor vht ie")
 
+/*
+ * <ini>
+ * enable_vhtmcs_10_11_support - Enable/Disable vht mcs 10, 11 support
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is  used to enable/disable mcs 10, 11 support.
+ *
+ * Related: NA
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_VHT_MCS_10_11 CFG_INI_BOOL( \
+		"enable_vhtmcs_10_11_support", \
+		1, \
+		"Enable/Disable vht mcs 10, 11 support")
+
 #define CFG_VHT_CAPS_ALL \
 	CFG(CFG_VHT_SUPP_CHAN_WIDTH) \
 	CFG(CFG_VHT_SU_BEAMFORMEE_CAP) \
@@ -630,6 +650,7 @@
 	CFG(CFG_ENABLE_SUBFEE_IN_VENDOR_VHTIE) \
 	CFG(CFG_TX_BF_CAP) \
 	CFG(CFG_AS_CAP) \
-	CFG(CFG_DISABLE_LDPC_WITH_TXBF_AP)
+	CFG(CFG_DISABLE_LDPC_WITH_TXBF_AP) \
+	CFG(CFG_ENABLE_VHT_MCS_10_11)
 
 #endif /* __CFG_MLME_VHT_CAPS_H */
