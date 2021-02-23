@@ -4221,12 +4221,6 @@ void lim_calculate_tpc(struct mac_context *mac,
 							session->ch_width);
 	}
 
-	if (!wlan_reg_is_6ghz_chan_freq(oper_freq))
-		reg_max = wlan_reg_get_channel_reg_power_for_freq(mac->pdev,
-								  oper_freq);
-	else
-		is_6ghz_freq = true;
-
 	ch_params.ch_width = CH_WIDTH_20MHZ;
 
 	for (i = 0; i < num_pwr_levels; i++) {
