@@ -115,6 +115,10 @@ wma_map_phy_ch_bw_to_wmi_channel_width(enum phy_ch_width ch_width)
 		return WMI_HOST_CHAN_WIDTH_5;
 	case CH_WIDTH_10MHZ:
 		return WMI_HOST_CHAN_WIDTH_10;
+#ifdef WLAN_FEATURE_11BE
+	case CH_WIDTH_320MHZ:
+		return WMI_HOST_CHAN_WIDTH_320;
+#endif
 	default:
 		return WMI_HOST_CHAN_WIDTH_20;
 	}
@@ -124,6 +128,18 @@ wma_map_phy_ch_bw_to_wmi_channel_width(enum phy_ch_width ch_width)
 #define WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ         1
 #define WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ        2
 #define WNI_CFG_VHT_CHANNEL_WIDTH_80_PLUS_80MHZ 3
+
+#ifdef WLAN_FEATURE_11BE
+static void wma_update_ch_list_11be_params(struct ch_params *ch)
+{
+	ch->ch_width = CH_WIDTH_320MHZ;
+}
+#else /* !WLAN_FEATURE_11BE */
+static void wma_update_ch_list_11be_params(struct ch_params *ch)
+{
+	ch->ch_width = CH_WIDTH_160MHZ;
+}
+#endif /* WLAN_FEATURE_11BE */
 
 /**
  * wma_update_channel_list() - update channel list
@@ -206,7 +222,8 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 		/*TODO: WMI_SET_CHANNEL_REG_CLASSID */
 		chan_p->maxregpower = chan_list->chanParam[i].pwr;
 
-		ch_params.ch_width = CH_WIDTH_160MHZ;
+		wma_update_ch_list_11be_params(&ch_params);
+
 		wlan_reg_set_channel_params_for_freq(wma_handle->pdev,
 						     chan_p->mhz, 0,
 						     &ch_params);

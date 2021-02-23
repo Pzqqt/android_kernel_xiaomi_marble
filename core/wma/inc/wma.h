@@ -1500,6 +1500,16 @@ int wma_mgmt_tx_completion_handler(void *handle, uint8_t *cmpl_event_params,
 int wma_mgmt_tx_bundle_completion_handler(void *handle,
 	uint8_t *cmpl_event_params, uint32_t len);
 uint32_t wma_get_vht_ch_width(void);
+
+#ifdef WLAN_FEATURE_11BE
+uint32_t wma_get_eht_ch_width(void);
+#else
+static inline uint32_t wma_get_eht_ch_width(void)
+{
+	return 0;
+}
+#endif
+
 QDF_STATUS
 wma_config_debug_module_cmd(wmi_unified_t wmi_handle, A_UINT32 param,
 		A_UINT32 val, A_UINT32 *module_id_bitmap,

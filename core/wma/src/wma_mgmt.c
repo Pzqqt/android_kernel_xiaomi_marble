@@ -1533,6 +1533,8 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	else if (params->ch_width == CH_WIDTH_80P80MHZ)
 		cmd->bw_160 = 1;
 
+	wma_set_peer_assoc_params_bw_320(cmd, params->ch_width);
+
 	cmd->peer_vht_caps = params->vht_caps;
 	if (params->p2pCapableSta) {
 		cmd->p2p_capable_sta = 1;
