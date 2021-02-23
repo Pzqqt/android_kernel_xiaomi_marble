@@ -1482,7 +1482,7 @@ static enum policy_mgr_two_connection_mode
 		/* SBS */
 		if ((WLAN_REG_IS_5GHZ_CH_FREQ(
 		    pm_conc_connection_list[0].freq)) &&
-		    (WLAN_REG_IS_5GHZ_CH(
+		    (WLAN_REG_IS_5GHZ_CH_FREQ(
 		    pm_conc_connection_list[1].freq))) {
 			if (POLICY_MGR_ONE_ONE ==
 				pm_conc_connection_list[0].chain_mask)
