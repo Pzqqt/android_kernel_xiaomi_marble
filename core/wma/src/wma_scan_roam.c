@@ -2456,19 +2456,14 @@ wma_roam_ho_fail_handler(tp_wma_handle wma, uint32_t vdev_id,
 	struct handoff_failure_ind *ho_failure_ind;
 	struct scheduler_msg sme_msg = { 0 };
 	QDF_STATUS qdf_status;
-	struct reject_ap_info ap_info;
-
-	ap_info.bssid = bssid;
-	ap_info.reject_ap_type = DRIVER_AVOID_TYPE;
-	ap_info.reject_reason = REASON_ROAM_HO_FAILURE;
-	ap_info.source = ADDED_BY_DRIVER;
-	wlan_blm_add_bssid_to_reject_list(wma->pdev, &ap_info);
 
 	ho_failure_ind = qdf_mem_malloc(sizeof(*ho_failure_ind));
 	if (!ho_failure_ind)
 		return;
 
 	ho_failure_ind->vdev_id = vdev_id;
+	ho_failure_ind->bssid = bssid;
+
 	sme_msg.type = eWNI_SME_HO_FAIL_IND;
 	sme_msg.bodyptr = ho_failure_ind;
 	sme_msg.bodyval = 0;
