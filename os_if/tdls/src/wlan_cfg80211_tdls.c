@@ -238,24 +238,30 @@ tdls_calc_channels_from_staparams(struct tdls_update_peer_params *req_info,
 }
 
 #ifdef WLAN_FEATURE_11AX
+#define MIN_TDLS_HE_CAP_LEN 21
+
 static void
 wlan_cfg80211_tdls_extract_he_params(struct tdls_update_peer_params *req_info,
 				     struct station_parameters *params)
 {
+	if (params->he_capa_len < MIN_TDLS_HE_CAP_LEN) {
+		osif_debug("he_capa_len %d less than MIN_TDLS_HE_CAP_LEN",
+			   params->he_capa_len);
+		return;
+	}
+
 	if (!params->he_capa) {
 		osif_debug("he_capa not present");
-	} else {
-		qdf_mem_copy(&req_info->he_cap, params->he_capa,
-			     sizeof(struct hecap));
-		if (!params->he_capa_len) {
-			osif_debug("he_capa_len not present");
-		} else {
-			qdf_mem_copy(&req_info->he_cap_len,
-				     &params->he_capa_len,
-				     sizeof(uint8_t));
-		}
+		return;
 	}
+
+	req_info->he_cap_len = params->he_capa_len;
+	qdf_mem_copy(&req_info->he_cap, params->he_capa,
+		     sizeof(struct hecap));
+
+	return;
 }
+
 #else
 static void
 wlan_cfg80211_tdls_extract_he_params(struct tdls_update_peer_params *req_info,

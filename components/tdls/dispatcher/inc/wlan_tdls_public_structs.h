@@ -773,7 +773,11 @@ struct vhtcap {
 struct hecap {
 	uint8_t mac_cap_info[6];
 	uint8_t phycap_info[11];
-};
+	struct {
+		uint16_t rx_map;
+		uint16_t tx_map;
+	} he_cap_mcs_info;
+} qdf_packed;
 #endif
 
 struct tdls_update_peer_params {
