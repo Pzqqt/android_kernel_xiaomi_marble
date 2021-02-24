@@ -852,8 +852,9 @@ void cm_dump_freq_list(struct rso_chan_info *chan_info)
 	if (chan_info->freq_list) {
 		for (i = 0; i < chan_info->num_chan; i++) {
 			if (j < buflen)
-				j += snprintf(channel_list + j, buflen - j,
-					      "%d ", chan_info->freq_list[i]);
+				j += qdf_scnprintf(channel_list + j, buflen - j,
+						   "%d ",
+						   chan_info->freq_list[i]);
 			else
 				break;
 		}
@@ -900,16 +901,6 @@ static QDF_STATUS cm_create_bg_scan_roam_channel_list(struct rso_chan_info *chan
 		chan_info->freq_list[i] = chan_freq_lst[i];
 
 	return status;
-}
-
-static void cm_flush_roam_channel_list(struct rso_chan_info *channel_info)
-{
-	/* Free up the memory first (if required) */
-	if (channel_info->freq_list) {
-		qdf_mem_free(channel_info->freq_list);
-		channel_info->freq_list = NULL;
-		channel_info->num_chan = 0;
-	}
 }
 
 static QDF_STATUS

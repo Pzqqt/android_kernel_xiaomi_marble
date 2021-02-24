@@ -94,34 +94,12 @@ typedef struct sCsrNeighborRoamControlInfo {
 /* All the necessary Function declarations are here */
 QDF_STATUS csr_neighbor_roam_indicate_connect(struct mac_context *mac,
 		uint8_t sessionId, QDF_STATUS status);
-#endif
-#if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
-QDF_STATUS csr_roam_control_restore_default_config(struct mac_context *mac,
-						   uint8_t vdev_id);
-void csr_roam_restore_default_config(struct mac_context *mac_ctx,
-				     uint8_t vdev_id);
-#else
-static inline
-QDF_STATUS csr_roam_control_restore_default_config(struct mac_context *mac,
-						   uint8_t vdev_id)
-{
-	return QDF_STATUS_SUCCESS;
-}
-static inline void csr_roam_restore_default_config(struct mac_context *mac_ctx,
-						   uint8_t vdev_id)
-{
-}
-#endif
-#ifndef FEATURE_CM_ENABLE
 QDF_STATUS csr_neighbor_roam_indicate_disconnect(struct mac_context *mac,
 		uint8_t sessionId);
 QDF_STATUS csr_neighbor_roam_init(struct mac_context *mac, uint8_t sessionId);
 void csr_neighbor_roam_close(struct mac_context *mac, uint8_t sessionId);
 QDF_STATUS csr_neighbor_roam_preauth_rsp_handler(struct mac_context *mac,
 		uint8_t sessionId, QDF_STATUS limStatus);
-#endif
-bool csr_neighbor_roam_is11r_assoc(struct mac_context *mac, uint8_t sessionId);
-#ifndef FEATURE_CM_ENABLE
 #ifdef WLAN_FEATURE_HOST_ROAM
 void csr_neighbor_roam_tranistion_preauth_done_to_disconnected(
 		struct mac_context *mac, uint8_t sessionId);
@@ -147,23 +125,6 @@ static inline void csr_neighbor_roam_purge_preauth_failed_list(
 {}
 #endif
 bool csr_neighbor_middle_of_roaming(struct mac_context *mac, uint8_t sessionId);
-#endif
-QDF_STATUS csr_neighbor_roam_update_config(struct mac_context *mac_ctx,
-		uint8_t session_id, uint8_t value, uint8_t reason);
-QDF_STATUS csr_neighbor_roam_channels_filter_by_current_band(
-		struct mac_context *mac, uint8_t sessionId,
-		uint32_t *input_chan_freq_list,
-		uint8_t inputNumOfChannels,
-		uint32_t *out_chan_freq_list,
-		uint8_t *pMergedOutputNumOfChannels);
-QDF_STATUS csr_neighbor_roam_merge_channel_lists(struct mac_context *mac,
-		uint32_t *pinput_chan_freq_list,
-		uint8_t inputNumOfChannels,
-		uint32_t *out_chan_freq_list,
-		uint8_t outputNumOfChannels,
-		uint8_t *pMergedOutputNumOfChannels);
-
-#ifndef FEATURE_CM_ENABLE
 #if defined(WLAN_FEATURE_FILS_SK)
 /**
  * csr_update_fils_config - Update FILS config to CSR roam session
@@ -186,7 +147,26 @@ QDF_STATUS csr_neighbor_roam_sssid_scan_done(struct mac_context *mac,
 		uint8_t sessionId, QDF_STATUS status);
 QDF_STATUS csr_neighbor_roam_start_lfr_scan(struct mac_context *mac,
 		uint8_t sessionId);
+void csr_neighbor_roam_state_transition(struct mac_context *mac_ctx,
+		uint8_t newstate, uint8_t session);
+uint8_t *csr_neighbor_roam_state_to_string(uint8_t state);
+QDF_STATUS csr_neighbor_roam_issue_preauth_req(struct mac_context *mac,
+		uint8_t sessionId);
+bool csr_neighbor_roam_is_preauth_candidate(struct mac_context *mac,
+		    uint8_t sessionId, tSirMacAddr bssId);
+#ifdef FEATURE_WLAN_LFR_METRICS
+void csr_neighbor_roam_send_lfr_metric_event(struct mac_context *mac_ctx,
+		uint8_t session_id, tSirMacAddr bssid, eRoamCmdStatus status);
+#else
+static inline void csr_neighbor_roam_send_lfr_metric_event(
+		struct mac_context *mac_ctx, uint8_t session_id,
+		tSirMacAddr bssid, eRoamCmdStatus status)
+{}
 #endif
+
+QDF_STATUS csr_roam_copy_connected_profile(struct mac_context *mac,
+		uint32_t sessionId, struct csr_roam_profile *pDstProfile);
+#endif /* FEATURE_CM_ENABLE */
 
 #ifdef FEATURE_WLAN_ESE
 QDF_STATUS csr_set_cckm_ie(struct mac_context *mac, const uint8_t sessionId,
@@ -196,6 +176,7 @@ QDF_STATUS csr_roam_read_tsf(struct mac_context *mac, uint8_t *pTimestamp,
 		const uint8_t sessionId);
 #endif
 #endif /* FEATURE_WLAN_ESE */
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS csr_roam_synch_callback(struct mac_context *mac,
 	struct roam_offload_synch_ind *roam_synch_data,
@@ -297,28 +278,6 @@ csr_roam_pmkid_req_callback(uint8_t vdev_id,
 	return QDF_STATUS_E_NOSUPPORT;
 }
 #endif
-#ifndef FEATURE_CM_ENABLE
-void csr_neighbor_roam_state_transition(struct mac_context *mac_ctx,
-		uint8_t newstate, uint8_t session);
-uint8_t *csr_neighbor_roam_state_to_string(uint8_t state);
-QDF_STATUS csr_neighbor_roam_issue_preauth_req(struct mac_context *mac,
-		uint8_t sessionId);
-bool csr_neighbor_roam_is_preauth_candidate(struct mac_context *mac,
-		    uint8_t sessionId, tSirMacAddr bssId);
-#ifdef FEATURE_WLAN_LFR_METRICS
-void csr_neighbor_roam_send_lfr_metric_event(struct mac_context *mac_ctx,
-		uint8_t session_id, tSirMacAddr bssid, eRoamCmdStatus status);
-#else
-static inline void csr_neighbor_roam_send_lfr_metric_event(
-		struct mac_context *mac_ctx, uint8_t session_id,
-		tSirMacAddr bssid, eRoamCmdStatus status)
-{}
-#endif
-
-QDF_STATUS csr_roam_copy_connected_profile(struct mac_context *mac,
-		uint32_t sessionId, struct csr_roam_profile *pDstProfile);
-#endif
-
 /**
  * csr_invoke_neighbor_report_request - Send neighbor report invoke command to
  *					WMA

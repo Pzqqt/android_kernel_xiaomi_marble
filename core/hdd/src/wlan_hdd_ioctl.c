@@ -5008,10 +5008,10 @@ static int drv_cmd_set_ccx_roam_scan_channels(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
-	status = sme_set_ese_roam_scan_channel_list(mac_handle,
-						    adapter->vdev_id,
-						    channel_freq_list,
-						    num_channels);
+	status = ucfg_cm_set_ese_roam_scan_channel_list(hdd_ctx->pdev,
+							adapter->vdev_id,
+							channel_freq_list,
+							num_channels);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Failed to update channel list information");
 		ret = -EINVAL;

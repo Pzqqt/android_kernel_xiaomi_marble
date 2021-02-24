@@ -902,7 +902,7 @@ QDF_STATUS csr_update_channel_list(struct mac_context *mac)
 		if ((CHANNEL_STATE_ENABLE == channel_state) ||
 		    mac->scan.fEnableDFSChnlScan) {
 			if ((roam_policy->dfs_mode ==
-				CSR_STA_ROAM_POLICY_DFS_DISABLED) &&
+				STA_ROAM_POLICY_DFS_DISABLED) &&
 				(channel_state == CHANNEL_STATE_DFS)) {
 				QDF_TRACE(QDF_MODULE_ID_SME,
 					QDF_TRACE_LEVEL_DEBUG,
@@ -1446,16 +1446,6 @@ static void init_config_param(struct mac_context *mac)
 		WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ + 1;
 }
 
-void csr_flush_cfg_bg_scan_roam_channel_list(struct rso_chan_info *channel_info)
-{
-	/* Free up the memory first (if required) */
-	if (channel_info->freq_list) {
-		qdf_mem_free(channel_info->freq_list);
-		channel_info->freq_list = NULL;
-		channel_info->num_chan = 0;
-	}
-}
-
 /**
  * csr_flush_roam_scan_chan_lists() - Flush the roam channel lists
  * @mac: Global MAC context
@@ -1483,136 +1473,12 @@ csr_flush_roam_scan_chan_lists(struct mac_context *mac, uint8_t vdev_id)
 		return;
 	}
 	cfg_params = &rso_cfg->cfg_param;
-	csr_flush_cfg_bg_scan_roam_channel_list(&cfg_params->pref_chan_info);
-	csr_flush_cfg_bg_scan_roam_channel_list(
-					&cfg_params->specific_chan_info);
+	wlan_cm_flush_roam_channel_list(&cfg_params->pref_chan_info);
+	wlan_cm_flush_roam_channel_list(&cfg_params->specific_chan_info);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 }
 
 #ifdef FEATURE_WLAN_ESE
-QDF_STATUS csr_create_roam_scan_channel_list(struct mac_context *mac,
-					     struct rso_config *rso_cfg,
-					     uint8_t sessionId,
-					     uint32_t *chan_freq_list,
-					     uint8_t numChannels,
-					     const enum band_info band)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	uint8_t out_num_chan = 0;
-	uint8_t inNumChannels = numChannels;
-	uint32_t *in_ptr = chan_freq_list;
-	uint8_t i = 0;
-	uint32_t *csr_freq_list;
-	uint32_t *tmp_chan_freq_list;
-	uint8_t mergedOutputNumOfChannels = 0;
-	struct rso_chan_info *chan_lst;
-
-	chan_lst = &rso_cfg->roam_scan_freq_lst;
-	/*
-	 * Create a Union of occupied channel list learnt by the DUT along
-	 * with the Neighbor report Channels. This increases the chances of
-	 * the DUT to get a candidate AP while roaming even if the Neighbor
-	 * Report is not able to provide sufficient information.
-	 */
-	if (rso_cfg->occupied_chan_lst.num_chan) {
-		csr_neighbor_roam_merge_channel_lists(mac,
-					rso_cfg->occupied_chan_lst.freq_list,
-					rso_cfg->occupied_chan_lst.num_chan,
-					in_ptr, inNumChannels,
-					&mergedOutputNumOfChannels);
-		inNumChannels = mergedOutputNumOfChannels;
-	}
-
-	csr_freq_list = qdf_mem_malloc(CFG_VALID_CHANNEL_LIST_LEN *
-				       sizeof(uint32_t));
-	if (!csr_freq_list) {
-		sme_err("memory allocation failed for csr_freq_list");
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	if (BAND_2G == band) {
-		for (i = 0; i < inNumChannels; i++) {
-			if (WLAN_REG_IS_24GHZ_CH_FREQ(in_ptr[i]) &&
-			    csr_roam_is_channel_valid(mac, in_ptr[i])) {
-				csr_freq_list[out_num_chan++] = in_ptr[i];
-			}
-		}
-	} else if (BAND_5G == band) {
-		for (i = 0; i < inNumChannels; i++) {
-			/* Add 5G Non-DFS channel */
-			if (WLAN_REG_IS_5GHZ_CH_FREQ(in_ptr[i]) &&
-			    csr_roam_is_channel_valid(mac, in_ptr[i]) &&
-			    !wlan_reg_is_dfs_for_freq(mac->pdev, in_ptr[i])) {
-				csr_freq_list[out_num_chan++] = in_ptr[i];
-			}
-		}
-	} else if (BAND_ALL == band) {
-		for (i = 0; i < inNumChannels; i++) {
-			if (csr_roam_is_channel_valid(mac, in_ptr[i]) &&
-			    !wlan_reg_is_dfs_for_freq(mac->pdev, in_ptr[i])) {
-				csr_freq_list[out_num_chan++] = in_ptr[i];
-			}
-		}
-	} else {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_WARN,
-			  "Invalid band, No operation carried out (Band %d)",
-			  band);
-		qdf_mem_free(csr_freq_list);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	tmp_chan_freq_list = qdf_mem_malloc(CFG_VALID_CHANNEL_LIST_LEN *
-					    sizeof(uint32_t));
-	if (!tmp_chan_freq_list) {
-		sme_err("memory allocation failed for tmp_chan_freq_list");
-		qdf_mem_free(csr_freq_list);
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	/*
-	 * if roaming within band is enabled, then select only the
-	 * in band channels .
-	 * This is required only if the band capability is set to ALL,
-	 * E.g., if band capability is only 2.4G then all the channels in the
-	 * list are already filtered for 2.4G channels, hence ignore this check
-	 */
-	if ((BAND_ALL == band) && CSR_IS_ROAM_INTRA_BAND_ENABLED(mac)) {
-		csr_neighbor_roam_channels_filter_by_current_band(
-						mac,
-						sessionId,
-						csr_freq_list,
-						out_num_chan,
-						tmp_chan_freq_list,
-						&out_num_chan);
-	}
-	/* Prepare final roam scan channel list */
-	if (out_num_chan) {
-		/* Clear the channel list first */
-		if (chan_lst->freq_list) {
-			qdf_mem_free(chan_lst->freq_list);
-			chan_lst->freq_list = NULL;
-			chan_lst->num_chan = 0;
-		}
-		chan_lst->freq_list =
-			qdf_mem_malloc(out_num_chan * sizeof(qdf_freq_t));
-		if (!chan_lst->freq_list) {
-			chan_lst->num_chan = 0;
-			status = QDF_STATUS_E_NOMEM;
-			goto error;
-		}
-		for (i = 0; i < out_num_chan; i++)
-			chan_lst->freq_list[i] = tmp_chan_freq_list[i];
-
-		chan_lst->num_chan = out_num_chan;
-	}
-
-error:
-	qdf_mem_free(tmp_chan_freq_list);
-	qdf_mem_free(csr_freq_list);
-
-	return status;
-}
-
 /**
  * csr_roam_is_ese_assoc() - is this ese association
  * @mac_ctx: Global MAC context
@@ -5280,7 +5146,12 @@ void csr_roam_complete(struct mac_context *mac_ctx,
 /* Returns whether the current association is a 11r assoc or not */
 bool csr_roam_is11r_assoc(struct mac_context *mac, uint8_t sessionId)
 {
-	return csr_neighbor_roam_is11r_assoc(mac, sessionId);
+	struct cm_roam_values_copy config;
+
+	wlan_cm_roam_cfg_get_value(mac->psoc, sessionId, IS_11R_CONNECTION,
+				   &config);
+
+	return config.bool_value;
 }
 
 bool csr_roam_is_fast_roam_enabled(struct mac_context *mac, uint8_t vdev_id)
@@ -9922,8 +9793,8 @@ csr_roam_get_scan_filter_from_profile(struct mac_context *mac_ctx,
 					filter->num_of_channels);
 				break;
 			}
-			if (csr_roam_is_channel_valid(mac_ctx,
-						      ch_info->freq_list[i]) &&
+			if (wlan_roam_is_channel_valid(&mac_ctx->mlme_cfg->reg,
+						       ch_info->freq_list[i]) &&
 			    wlan_cm_dual_sta_is_freq_allowed(
 				    mac_ctx->psoc, ch_info->freq_list[i],
 				    profile->csrPersona)) {
@@ -11864,27 +11735,6 @@ int8_t csr_get_cfg_max_tx_power(struct mac_context *mac, uint32_t ch_freq)
 	return wlan_get_cfg_max_tx_power(mac->psoc, mac->pdev, ch_freq);
 }
 
-bool csr_roam_is_channel_valid(struct mac_context *mac, uint32_t chan_freq)
-{
-	bool valid = false;
-	uint32_t i;
-	uint32_t len = mac->mlme_cfg->reg.valid_channel_list_num;
-
-	for (i = 0; (i < len); i++) {
-		if (wlan_reg_is_dsrc_freq(
-			mac->mlme_cfg->reg.valid_channel_freq_list[i]))
-			continue;
-
-		if (chan_freq ==
-		    mac->mlme_cfg->reg.valid_channel_freq_list[i]) {
-			valid = true;
-			break;
-		}
-	}
-
-	return valid;
-}
-
 #ifndef FEATURE_CM_ENABLE
 static bool csr_is_encryption_in_list(struct mac_context *mac,
 				      tCsrEncryptionList *pCipherList,
@@ -13378,9 +13228,6 @@ QDF_STATUS cm_csr_handle_diconnect_req(struct wlan_objmgr_vdev *vdev,
 
 	csr_update_prev_ap_info(session, vdev);
 	csr_qos_send_disconnect_ind(mac_ctx, vdev_id);
-
-	wlan_roam_reset_roam_params(mac_ctx->psoc);
-	csr_roam_restore_default_config(mac_ctx, vdev_id);
 
 	return QDF_STATUS_SUCCESS;
 }

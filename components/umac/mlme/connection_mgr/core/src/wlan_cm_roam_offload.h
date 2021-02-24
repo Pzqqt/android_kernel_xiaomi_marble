@@ -136,6 +136,45 @@ cm_start_roam_invoke(struct wlan_objmgr_psoc *psoc,
 #endif
 #endif
 
+#ifdef FEATURE_WLAN_ESE
+/**
+ * cm_create_roam_scan_channel_list() - create roam scan channel list
+ * @pdev: pdev
+ * @rso_cfg: roam config
+ * @vdev_id: vdev id
+ * @chan_freq_list: pointer to channel list
+ * @num_chan: number of channels
+ * @band: band enumeration
+ *
+ * This function modifies the roam scan channel list as per AP neighbor
+ * report; AP neighbor report may be empty or may include only other AP
+ * channels; in any case, we merge the channel list with the learned occupied
+ * channels list.
+ * if the band is 2.4G, then make sure channel list contains only 2.4G
+ * valid channels if the band is 5G, then make sure channel list contains
+ * only 5G valid channels
+ *
+ * Return: QDF_STATUS enumeration
+ */
+QDF_STATUS cm_create_roam_scan_channel_list(struct wlan_objmgr_pdev *pdev,
+					    struct rso_config *rso_cfg,
+					    uint8_t vdev_id,
+					    qdf_freq_t *chan_freq_list,
+					    uint8_t num_chan,
+					    const enum band_info band);
+#endif
+
+QDF_STATUS cm_neighbor_roam_update_config(struct wlan_objmgr_pdev *pdev,
+					  uint8_t vdev_id, uint8_t value,
+					  uint8_t reason);
+void cm_flush_roam_channel_list(struct rso_chan_info *channel_info);
+
+QDF_STATUS cm_roam_control_restore_default_config(struct wlan_objmgr_pdev *pdev,
+						  uint8_t vdev_id);
+
+void cm_roam_restore_default_config(struct wlan_objmgr_pdev *pdev,
+				    uint8_t vdev_id);
+
 /**
  * cm_roam_send_disable_config() - Send roam module enable/disable cfg to fw
  * @psoc: PSOC pointer

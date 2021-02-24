@@ -1200,7 +1200,8 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 
 		if (beacon_req->channel_info.chan_num != 255) {
 			chan_valid =
-				csr_roam_is_channel_valid(mac, bcn_chan_freq);
+				wlan_roam_is_channel_valid(&mac->mlme_cfg->reg,
+							   bcn_chan_freq);
 
 			if (chan_valid) {
 				rrm_freq_list[num_chan] = bcn_chan_freq;
@@ -1215,7 +1216,8 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 			bcn_chan_freq =
 				beacon_req->channel_list.chan_freq_lst[i];
 			chan_valid =
-				csr_roam_is_channel_valid(mac, bcn_chan_freq);
+				wlan_roam_is_channel_valid(&mac->mlme_cfg->reg,
+							   bcn_chan_freq);
 
 			if (chan_valid) {
 				rrm_freq_list[num_chan] = bcn_chan_freq;
@@ -1421,7 +1423,9 @@ rrm_calculate_neighbor_ap_roam_score(struct mac_context *mac_ctx,
 	uint32_t roam_score = 0;
 #ifdef FEATURE_WLAN_ESE
 	uint8_t session_id;
+	struct cm_roam_values_copy config;
 #endif
+
 	if (!nbr_report_desc) {
 		QDF_ASSERT(0);
 		return;
@@ -1473,8 +1477,10 @@ rrm_calculate_neighbor_ap_roam_score(struct mac_context *mac_ctx,
 check_11r_assoc:
 #ifdef FEATURE_WLAN_ESE
 	session_id = nbr_report_desc->sessionId;
+	wlan_cm_roam_cfg_get_value(mac_ctx->psoc, session_id, IS_11R_CONNECTION,
+				   &config);
 	/* It has come in the report so its the best score */
-	if (csr_neighbor_roam_is11r_assoc(mac_ctx, session_id) == false) {
+	if (!config.bool_value) {
 		/* IAPP Route so lets make use of this info save all AP, as the
 		 * list does not come all the time. Save and reuse till the next
 		 * AP List comes to us. Even save our own MAC address. Will be

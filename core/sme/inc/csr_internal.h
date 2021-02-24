@@ -64,10 +64,6 @@
 	( \
 	  ((mac)->mlme_cfg->lfr.roam_prefer_5ghz) \
 	)
-#define CSR_IS_ROAM_INTRA_BAND_ENABLED(mac) \
-	( \
-	  ((mac)->mlme_cfg->lfr.roam_intra_band) \
-	)
 #define CSR_IS_FASTROAM_IN_CONCURRENCY_INI_FEATURE_ENABLED(mac) \
 	( \
 	  ((mac)->mlme_cfg->lfr.enable_fast_roam_in_concurrency) \
@@ -312,7 +308,6 @@ struct csr_config {
 	bool mcc_rts_cts_prot_enable;
 	bool mcc_bcast_prob_resp_enable;
 	uint8_t fAllowMCCGODiffBI;
-	bool nRoamScanControl;
 	uint32_t nVhtChannelWidth;
 	bool send_smps_action;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
