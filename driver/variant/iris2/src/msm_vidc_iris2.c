@@ -616,7 +616,7 @@ int msm_vidc_decide_work_route_iris2(struct msm_vidc_inst* inst)
 
 int msm_vidc_decide_quality_mode_iris2(struct msm_vidc_inst* inst)
 {
-	struct msm_vidc_inst_capability* capability = inst->capabilities;
+	struct msm_vidc_inst_capability* capability = NULL;
 	struct msm_vidc_core *core;
 	u32 mbpf, mbps, max_hq_mbpf, max_hq_mbps;
 	u32 mode;
@@ -625,6 +625,8 @@ int msm_vidc_decide_quality_mode_iris2(struct msm_vidc_inst* inst)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
+
+	capability = inst->capabilities;
 
 	if (!is_encode_session(inst))
 		return 0;
