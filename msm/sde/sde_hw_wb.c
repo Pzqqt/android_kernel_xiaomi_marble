@@ -117,7 +117,7 @@ static void _sde_hw_dcwb_ctrl_init(struct sde_mdss_cfg *m,
 	b->hwversion = m->hwversion;
 	b->log_mask = SDE_DBG_MASK_WB;
 
-	for (i = 0; i < m->pingpong_count; i++) {
+	for (i = 0; i < m->dcwb_count; i++) {
 		snprintf(name, sizeof(name), "dcwb%d", i);
 		blk_off = b->blk_off + (m->cwb_blk_stride * i);
 

@@ -214,6 +214,7 @@ struct sde_intr_irq_offsets {
  * @SDE_MDP_WD_TIMER      WD timer support
  * @SDE_MDP_DHDR_MEMPOOL   Dynamic HDR Metadata mempool present
  * @SDE_MDP_DHDR_MEMPOOL_4K Dynamic HDR mempool is 4k aligned
+ * @SDE_MDP_PERIPH_TOP_REMOVED Indicates if periph top0 block is removed
  * @SDE_MDP_MAX            Maximum value
 
  */
@@ -227,6 +228,7 @@ enum {
 	SDE_MDP_WD_TIMER,
 	SDE_MDP_DHDR_MEMPOOL,
 	SDE_MDP_DHDR_MEMPOOL_4K,
+	SDE_MDP_PERIPH_TOP_0_REMOVED,
 	SDE_MDP_MAX
 };
 
@@ -1510,6 +1512,7 @@ struct sde_perf_cfg {
  * @irq_offset_list     list of sde_intr_irq_offsets to initialize irq table
  * @rc_count	number of rounded corner hardware instances
  * @demura_count number of demura hardware instances
+ * @dcwb_count          number of dcwb hardware instances
  */
 struct sde_mdss_cfg {
 	u32 hwversion;
@@ -1647,6 +1650,8 @@ struct sde_mdss_cfg {
 
 	u32 qdss_count;
 	struct sde_qdss_cfg qdss[MAX_BLOCKS];
+
+	u32 dcwb_count;
 
 	/* Add additional block data structures here */
 

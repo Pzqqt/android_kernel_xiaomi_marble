@@ -3880,8 +3880,11 @@ static int sde_pp_parse_dt(struct device_node *np, struct sde_mdss_cfg *sde_cfg)
 		if (PROP_VALUE_ACCESS(prop_value, PP_SLAVE, i))
 			set_bit(SDE_PINGPONG_SLAVE, &pp->features);
 
-		if (PROP_VALUE_ACCESS(prop_value, PP_CWB, i))
+		if (PROP_VALUE_ACCESS(prop_value, PP_CWB, i)) {
 			set_bit(SDE_PINGPONG_CWB, &pp->features);
+			if (sde_cfg->has_dedicated_cwb_support)
+				sde_cfg->dcwb_count++;
+		}
 
 		if (major_version < SDE_HW_MAJOR(SDE_HW_VER_700)) {
 			sblk->dsc.base = PROP_VALUE_ACCESS(prop_value,
@@ -5115,6 +5118,7 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->syscache_supported = true;
 		sde_cfg->sspp_multirect_error = true;
 		sde_cfg->has_fp16 = true;
+		set_bit(SDE_MDP_PERIPH_TOP_0_REMOVED, &sde_cfg->mdp[0].features);
 	} else {
 		SDE_ERROR("unsupported chipset id:%X\n", hw_rev);
 		sde_cfg->perf.min_prefill_lines = 0xffff;
