@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -748,7 +748,10 @@ void cds_drop_rxpkt_by_staid(p_cds_sched_context pSchedContext, uint16_t staId)
 
 	while (pSchedContext->active_staid == staId &&
 	       timeout <= CDS_ACTIVE_STAID_CLEANUP_TIMEOUT) {
-		qdf_mdelay(CDS_ACTIVE_STAID_CLEANUP_DELAY);
+		if (qdf_in_interrupt())
+			qdf_mdelay(CDS_ACTIVE_STAID_CLEANUP_DELAY);
+		else
+			qdf_sleep(CDS_ACTIVE_STAID_CLEANUP_DELAY);
 		timeout += CDS_ACTIVE_STAID_CLEANUP_DELAY;
 	}
 
