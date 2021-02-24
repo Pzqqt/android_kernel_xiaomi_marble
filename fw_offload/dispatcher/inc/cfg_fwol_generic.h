@@ -768,10 +768,16 @@
 
 /*
  * <ini>
- * g_enable_ilp - Enable/Disable ILP HW Block
+ * g_enable_ilp - ILP HW Block Configuration
+ * @Min: 0
+ * @Max: 3
  * @Default: 1
  *
- * This ini is used to enable/disable the ILP HW block
+ * This ini is used to configure ILP HW block with various options
+ * 0: disable
+ * 1: perf settings
+ * 2: max power saving
+ * 3: balanced settings
  *
  * Related: none
  *
@@ -782,9 +788,12 @@
  * <ini>
  */
 
-#define CFG_SET_ENABLE_ILP CFG_INI_BOOL( \
+#define CFG_SET_ENABLE_ILP CFG_INI_UINT( \
 		"g_enable_ilp", \
+		0, \
+		3, \
 		1, \
+		CFG_VALUE_OR_DEFAULT, \
 		"ILP configuration")
 
 /*

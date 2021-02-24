@@ -322,7 +322,7 @@ QDF_STATUS ucfg_fwol_get_ani_enabled(struct wlan_objmgr_psoc *psoc,
 }
 
 static QDF_STATUS ucfg_fwol_get_ilp_config(struct wlan_objmgr_psoc *psoc,
-					   bool *enable_ilp)
+					   uint32_t *enable_ilp)
 {
 	struct wlan_fwol_psoc_obj *fwol_obj;
 
@@ -1047,13 +1047,14 @@ QDF_STATUS ucfg_fwol_configure_global_params(struct wlan_objmgr_psoc *psoc,
 					     struct wlan_objmgr_pdev *pdev)
 {
 	QDF_STATUS status;
+	uint32_t enable_ilp;
 	bool value;
 
 	/* Configure ILP feature in FW */
-	status = ucfg_fwol_get_ilp_config(psoc, &value);
+	status = ucfg_fwol_get_ilp_config(psoc, &enable_ilp);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
-	status = fwol_set_ilp_config(pdev, value);
+	status = fwol_set_ilp_config(pdev, enable_ilp);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
