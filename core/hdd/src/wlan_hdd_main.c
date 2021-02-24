@@ -1780,23 +1780,48 @@ static void hdd_update_vdev_nss(struct hdd_context *hdd_ctx)
 }
 
 /**
- * hdd_update_wiphy_vhtcap() - Updates wiphy vhtcap fields
+ * hdd_update_2g_wiphy_vhtcap() - Updates 2G wiphy vhtcap fields
  * @hdd_ctx: HDD context
  *
- * Updates wiphy vhtcap fields
+ * Updates 2G wiphy vhtcap fields
  *
  * Return: None
  */
-static void hdd_update_wiphy_vhtcap(struct hdd_context *hdd_ctx)
+static void hdd_update_2g_wiphy_vhtcap(struct hdd_context *hdd_ctx)
+{
+	struct ieee80211_supported_band *band_2g =
+		hdd_ctx->wiphy->bands[NL80211_BAND_2GHZ];
+	uint32_t value;
+	bool is_vht_24ghz;
+
+	if (!band_2g) {
+		hdd_debug("2GHz band disabled, skipping capability population");
+		return;
+	}
+
+	ucfg_mlme_get_vht_for_24ghz(hdd_ctx->psoc, &is_vht_24ghz);
+
+	if (is_vht_24ghz) {
+		ucfg_mlme_cfg_get_vht_tx_mcs_map(hdd_ctx->psoc, &value);
+		band_2g->vht_cap.vht_mcs.tx_mcs_map = value;
+	}
+}
+
+/**
+ * hdd_update_5g_wiphy_vhtcap() - Updates 5G wiphy vhtcap fields
+ * @hdd_ctx: HDD context
+ *
+ * Updates 5G wiphy vhtcap fields
+ *
+ * Return: None
+ */
+static void hdd_update_5g_wiphy_vhtcap(struct hdd_context *hdd_ctx)
 {
 	struct ieee80211_supported_band *band_5g =
 		hdd_ctx->wiphy->bands[NL80211_BAND_5GHZ];
-	struct ieee80211_supported_band *band_2g =
-		hdd_ctx->wiphy->bands[NL80211_BAND_2GHZ];
 	QDF_STATUS status;
 	uint8_t value = 0, value1 = 0;
 	uint32_t value2;
-	bool is_vht_24ghz;
 
 	if (!band_5g) {
 		hdd_debug("5GHz band disabled, skipping capability population");
@@ -1823,15 +1848,20 @@ static void hdd_update_wiphy_vhtcap(struct hdd_context *hdd_ctx)
 
 	ucfg_mlme_cfg_get_vht_tx_mcs_map(hdd_ctx->psoc, &value2);
 	band_5g->vht_cap.vht_mcs.tx_mcs_map = value2;
+}
 
-	if (!band_2g) {
-		hdd_debug("2GHz band disabled, skipping capability population");
-		return;
-	}
-	ucfg_mlme_get_vht_for_24ghz(hdd_ctx->psoc, &is_vht_24ghz);
-
-	if (is_vht_24ghz)
-		band_2g->vht_cap.vht_mcs.tx_mcs_map = value2;
+/**
+ * hdd_update_wiphy_vhtcap() - Updates wiphy vhtcap fields
+ * @hdd_ctx: HDD context
+ *
+ * Updates wiphy vhtcap fields
+ *
+ * Return: None
+ */
+static void hdd_update_wiphy_vhtcap(struct hdd_context *hdd_ctx)
+{
+	hdd_update_2g_wiphy_vhtcap(hdd_ctx);
+	hdd_update_5g_wiphy_vhtcap(hdd_ctx);
 }
 
 static void hdd_update_tgt_ht_cap(struct hdd_context *hdd_ctx,
