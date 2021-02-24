@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,9 +26,8 @@
  * for the 2nd connection, when we have a connection already in
  * the system (with DBS supported by HW)
  */
-enum policy_mgr_pcl_type
-	pm_second_connection_pcl_dbs_1x1_table[PM_MAX_ONE_CONNECTION_MODE]
-		[PM_MAX_NUM_OF_MODE][PM_MAX_CONC_PRIORITY_MODE] = {
+pm_dbs_pcl_second_connection_table_type
+pm_second_connection_pcl_dbs_1x1_table = {
 	[PM_STA_24_1x1] = {
 	[PM_STA_MODE] = {PM_5G_SCC_CH, PM_5G_SCC_CH, PM_5G_SCC_CH},
 	[PM_SAP_MODE] = {PM_5G_SCC_CH, PM_5G_SCC_CH, PM_5G_SCC_CH},
