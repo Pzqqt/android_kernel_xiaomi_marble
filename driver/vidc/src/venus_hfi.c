@@ -2484,6 +2484,8 @@ fail_init_res:
 
 void __unload_fw(struct msm_vidc_core *core)
 {
+	int rc = 0;
+
 	if (!core->dt->fw_cookie)
 		return;
 
@@ -2491,13 +2493,16 @@ void __unload_fw(struct msm_vidc_core *core)
 	if (core->state != MSM_VIDC_CORE_DEINIT)
 		flush_workqueue(core->pm_workq);
 
-	qcom_scm_pas_shutdown(core->dt->fw_cookie);
+	rc = qcom_scm_pas_shutdown(core->dt->fw_cookie);
+	if (rc)
+		d_vpr_e("Firmware unload failed rc=%d\n", rc);
+
 	core->dt->fw_cookie = 0;
 
 	__venus_power_off(core);
 	__deinit_resources(core);
 
-	d_vpr_h("Firmware unloaded successfully\n");
+	d_vpr_h("%s done\n", __func__);
 }
 
 static int __response_handler(struct msm_vidc_core *core)

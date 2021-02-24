@@ -230,6 +230,49 @@ exit:
 	return rc;
 }
 
+static int msm_vidc_remove(struct platform_device* pdev)
+{
+	struct msm_vidc_core* core;
+
+	if (!pdev) {
+		d_vpr_e("%s: invalid input %pK", __func__, pdev);
+		return -EINVAL;
+	}
+	core = dev_get_drvdata(&pdev->dev);
+	if (!core) {
+		d_vpr_e("%s: invalid core", __func__);
+		return -EINVAL;
+	}
+
+	d_vpr_h("%s()\n", __func__);
+
+	msm_vidc_core_deinit(core, true);
+
+	msm_vidc_unregister_video_device(core, MSM_VIDC_ENCODER);
+	msm_vidc_unregister_video_device(core, MSM_VIDC_DECODER);
+	//device_remove_file(&core->vdev[MSM_VIDC_ENCODER].vdev.dev,
+		//&dev_attr_link_name);
+	//device_remove_file(&core->vdev[MSM_VIDC_DECODER].vdev.dev,
+		//&dev_attr_link_name);
+	v4l2_device_unregister(&core->v4l2_dev);
+	sysfs_remove_group(&pdev->dev.kobj, &msm_vidc_core_attr_group);
+
+	msm_vidc_deinit_instance_caps(core);
+	msm_vidc_deinit_core_caps(core);
+
+	msm_vidc_deinit_irq(core);
+	msm_vidc_deinit_platform(pdev);
+	msm_vidc_deinit_dt(pdev);
+	msm_vidc_deinitialize_core(core);
+
+	dev_set_drvdata(&pdev->dev, NULL);
+	debugfs_remove_recursive(core->debugfs_parent);
+	kfree(core);
+	g_core = NULL;
+
+	return 0;
+}
+
 static int msm_vidc_probe_video_device(struct platform_device *pdev)
 {
 	int rc = 0;
@@ -253,49 +296,65 @@ static int msm_vidc_probe_video_device(struct platform_device *pdev)
 	rc = msm_vidc_initialize_core(core);
 	if (rc) {
 		d_vpr_e("%s: init core failed with %d\n", __func__, rc);
-		goto exit;
+		goto init_core_failed;
 	}
 
 	rc = msm_vidc_init_dt(pdev);
 	if (rc) {
 		d_vpr_e("%s: init dt failed with %d\n", __func__, rc);
-		return -EINVAL;
+		rc = -EINVAL;
+		goto init_dt_failed;
 	}
 
 	rc = msm_vidc_init_platform(pdev);
 	if (rc) {
 		d_vpr_e("%s: init platform failed with %d\n", __func__, rc);
-		return -EINVAL;
+		rc = -EINVAL;
+		goto init_plat_failed;
 	}
 
 	rc = msm_vidc_init_irq(core);
-	if (rc)
-		return rc;
+	if (rc) {
+		d_vpr_e("%s: init irq failed with %d\n", __func__, rc);
+		goto init_irq_failed;
+	}
+
+	rc = msm_vidc_init_core_caps(core);
+	if (rc) {
+		d_vpr_e("%s: init core caps failed with %d\n", __func__, rc);
+		goto init_core_caps_fail;
+	}
+
+	rc = msm_vidc_init_instance_caps(core);
+	if (rc) {
+		d_vpr_e("%s: init inst cap failed with %d\n", __func__, rc);
+		goto init_inst_caps_fail;
+	}
 
 	rc = sysfs_create_group(&pdev->dev.kobj, &msm_vidc_core_attr_group);
 	if (rc) {
 		d_vpr_e("Failed to create attributes\n");
-		goto exit;
+		goto init_group_failed;
 	}
 
 	rc = v4l2_device_register(&pdev->dev, &core->v4l2_dev);
 	if (rc) {
 		d_vpr_e("Failed to register v4l2 device\n");
-		goto exit;
+		goto v4l2_reg_failed;
 	}
 
 	/* setup the decoder device */
 	rc = msm_vidc_register_video_device(core, MSM_VIDC_DECODER, nr);
 	if (rc) {
 		d_vpr_e("Failed to register video decoder\n");
-		goto exit;
+		goto dec_reg_failed;
 	}
 
 	/* setup the encoder device */
 	rc = msm_vidc_register_video_device(core, MSM_VIDC_ENCODER, nr + 1);
 	if (rc) {
 		d_vpr_e("Failed to register video encoder\n");
-		goto exit;
+		goto enc_reg_failed;
 	}
 
 	core->debugfs_root = msm_vidc_debugfs_init_core(core);
@@ -313,12 +372,36 @@ static int msm_vidc_probe_video_device(struct platform_device *pdev)
 			&pdev->dev);
 	if (rc) {
 		d_vpr_e("Failed to trigger probe for sub-devices\n");
-		goto exit;
+		goto sub_dev_failed;
 	}
 
-exit:
-	if (rc)
-		debugfs_remove_recursive(core->debugfs_parent);
+	return rc;
+
+sub_dev_failed:
+	msm_vidc_unregister_video_device(core, MSM_VIDC_ENCODER);
+enc_reg_failed:
+	msm_vidc_unregister_video_device(core, MSM_VIDC_DECODER);
+dec_reg_failed:
+	v4l2_device_unregister(&core->v4l2_dev);
+v4l2_reg_failed:
+	sysfs_remove_group(&pdev->dev.kobj, &msm_vidc_core_attr_group);
+init_group_failed:
+	msm_vidc_deinit_instance_caps(core);
+init_inst_caps_fail:
+	msm_vidc_deinit_core_caps(core);
+init_core_caps_fail:
+	msm_vidc_deinit_irq(core);
+init_irq_failed:
+	msm_vidc_deinit_platform(pdev);
+init_plat_failed:
+	msm_vidc_deinit_dt(pdev);
+init_dt_failed:
+	msm_vidc_deinitialize_core(core);
+init_core_failed:
+	dev_set_drvdata(&pdev->dev, NULL);
+	debugfs_remove_recursive(core->debugfs_parent);
+	kfree(core);
+	g_core = NULL;
 
 	return rc;
 }
@@ -349,41 +432,6 @@ static int msm_vidc_probe(struct platform_device *pdev)
 	/* How did we end up here? */
 	MSM_VIDC_ERROR(1);
 	return -EINVAL;
-}
-
-static int msm_vidc_remove(struct platform_device *pdev)
-{
-	struct msm_vidc_core *core;
-
-	if (!pdev) {
-		d_vpr_e("%s: invalid input %pK", __func__, pdev);
-		return -EINVAL;
-	}
-	core = dev_get_drvdata(&pdev->dev);
-	if (!core) {
-		d_vpr_e("%s: invalid core", __func__);
-		return -EINVAL;
-	}
-
-	d_vpr_h("%s()\n", __func__);
-
-	msm_vidc_unregister_video_device(core, MSM_VIDC_ENCODER);
-	msm_vidc_unregister_video_device(core, MSM_VIDC_DECODER);
-	//device_remove_file(&core->vdev[MSM_VIDC_ENCODER].vdev.dev,
-				//&dev_attr_link_name);
-	//device_remove_file(&core->vdev[MSM_VIDC_DECODER].vdev.dev,
-				//&dev_attr_link_name);
-	v4l2_device_unregister(&core->v4l2_dev);
-	sysfs_remove_group(&pdev->dev.kobj, &msm_vidc_core_attr_group);
-	msm_vidc_deinit_irq(core);
-	msm_vidc_deinit_platform(pdev);
-	msm_vidc_deinit_dt(pdev);
-	msm_vidc_deinitialize_core(core);
-	dev_set_drvdata(&pdev->dev, NULL);
-	debugfs_remove_recursive(core->debugfs_parent);
-	kfree(core);
-	g_core = NULL;
-	return 0;
 }
 
 struct platform_driver msm_vidc_driver = {
