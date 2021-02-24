@@ -491,5 +491,23 @@ void lim_handle_sap_beacon(struct wlan_objmgr_pdev *pdev,
  */
 enum ani_akm_type lim_translate_rsn_oui_to_akm_type(uint8_t auth_suite[4]);
 
+#ifdef WLAN_SUPPORT_TWT
+/**
+ * lim_fill_roamed_peer_twt_caps() - Update Peer TWT capabilities
+ * @mac_ctx: Pointer to mac context
+ * @vdev_id: vdev id
+ * @roam_synch: Pointer to roam synch indication
+ *
+ * Return: None
+ */
+void lim_fill_roamed_peer_twt_caps(struct mac_context *mac_ctx, uint8_t vdev_id,
+				   struct roam_offload_synch_ind *roam_synch);
+#else
+static inline
+void lim_fill_roamed_peer_twt_caps(struct mac_context *mac_ctx, uint8_t vdev_id,
+				   struct roam_offload_synch_ind *roam_synch)
+{}
+#endif
+
 /************************************************************/
 #endif /* __LIM_API_H */

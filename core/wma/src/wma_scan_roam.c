@@ -1014,6 +1014,8 @@ wma_roam_update_vdev(tp_wma_handle wma,
 	wma_add_sta(wma, add_sta_params);
 	qdf_mem_copy(bssid, roam_synch_ind_ptr->bssid.bytes,
 		     QDF_MAC_ADDR_SIZE);
+	lim_fill_roamed_peer_twt_caps(wma->mac_context, vdev_id,
+				      roam_synch_ind_ptr);
 	qdf_mem_free(add_sta_params);
 }
 

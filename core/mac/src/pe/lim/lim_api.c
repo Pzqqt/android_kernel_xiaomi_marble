@@ -74,6 +74,7 @@
 #include <wlan_tdls_cfg_api.h>
 #include "cfg_ucfg_api.h"
 #include "wlan_mlme_public_struct.h"
+#include "wlan_mlme_twt_api.h"
 #include "wlan_scan_utils_api.h"
 #include <qdf_hang_event_notifier.h>
 #include <qdf_notifier.h>
@@ -2379,6 +2380,55 @@ static inline void
 lim_fill_fils_ft(struct pe_session *src_session,
 		 struct pe_session *dst_session)
 {}
+#endif
+
+#ifdef WLAN_SUPPORT_TWT
+void
+lim_fill_roamed_peer_twt_caps(struct mac_context *mac_ctx,
+			      uint8_t vdev_id,
+			      struct roam_offload_synch_ind *roam_synch)
+{
+	uint8_t *reassoc_body;
+	uint16_t len;
+	uint32_t status;
+	tDot11fReAssocResponse *reassoc_rsp;
+	struct pe_session *pe_session;
+
+	pe_session = pe_find_session_by_vdev_id(mac_ctx, vdev_id);
+	if (!pe_session) {
+		pe_err("session not found for given vdev_id %d", vdev_id);
+		return;
+	}
+
+	reassoc_rsp = qdf_mem_malloc(sizeof(*reassoc_rsp));
+	if (!reassoc_rsp)
+		return;
+
+	len = roam_synch->reassocRespLength - sizeof(tSirMacMgmtHdr);
+	reassoc_body = (uint8_t *)roam_synch + sizeof(tSirMacMgmtHdr) +
+			roam_synch->reassocRespOffset;
+
+	status = dot11f_unpack_re_assoc_response(mac_ctx, reassoc_body, len,
+						 reassoc_rsp, false);
+	if (DOT11F_FAILED(status)) {
+		pe_err("Failed to parse a Re-association Rsp (0x%08x, %d bytes):",
+		       status, len);
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
+				   reassoc_body, len);
+		qdf_mem_free(reassoc_rsp);
+		return;
+	} else if (DOT11F_WARNED(status)) {
+		pe_debug("Warnings while unpacking a Re-association Rsp (0x%08x, %d bytes):",
+			 status, len);
+	}
+
+	if (lim_is_session_he_capable(pe_session))
+		mlme_set_twt_peer_capabilities(mac_ctx->psoc,
+					       &roam_synch->bssid,
+					       &reassoc_rsp->he_cap,
+					       &reassoc_rsp->he_op);
+	qdf_mem_free(reassoc_rsp);
+}
 #endif
 
 /**
