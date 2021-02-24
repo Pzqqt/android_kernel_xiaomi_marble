@@ -572,14 +572,22 @@ static int __set_clk_rate(struct msm_vidc_core *core,
 		struct clock_info *cl, u64 rate)
 {
 	int rc = 0;
-	struct clk *clk = cl->clk;
+	// struct clk *clk = cl->clk;
+	struct mmrm_client_data client_data;
+	struct mmrm_client *client = cl->mmrm_client;
+
+	/* not registered */
+	if (!client)
+		return -EINVAL;
 
 	/* bail early if requested clk rate is not changed */
 	if (rate == cl->prev)
 		return 0;
 
 	d_vpr_p("Scaling clock %s to %llu, prev %llu\n", cl->name, rate, cl->prev);
-	rc = clk_set_rate(clk, rate);
+	/* TODO: Set num_hw_blocks based on encoder or decoder */
+	memset(&client_data, 0, sizeof(client_data));
+	rc = mmrm_client_set_value(client, &client_data, rate);
 	if (rc) {
 		d_vpr_e("%s: Failed to set clock rate %llu %s: %d\n",
 			__func__, rate, cl->name, rc);
@@ -1301,6 +1309,83 @@ err_clk_get:
 	return rc;
 }
 
+static void __deregister_mmrm(struct msm_vidc_core *core)
+{
+	struct clock_info *cl;
+
+	venus_hfi_for_each_clock(core, cl) {
+		if (cl->has_scaling && cl->mmrm_client) {
+			mmrm_client_deregister(cl->mmrm_client);
+			cl->mmrm_client = NULL;
+		}
+	}
+}
+
+static int __register_mmrm(struct msm_vidc_core *core)
+{
+	int rc = 0;
+	struct clock_info *cl;
+
+	venus_hfi_for_each_clock(core, cl) {
+		struct mmrm_client_desc desc;
+		char *name = (char *)desc.client_info.desc.name;
+
+		// TODO: set notifier data vals
+		struct mmrm_client_notifier_data notifier_data = {
+			MMRM_CLIENT_RESOURCE_VALUE_CHANGE,
+			{{0, 0}},
+			NULL};
+
+		// TODO: add callback fn
+		desc.notifier_callback_fn = NULL;
+
+		if (!cl->has_scaling)
+			continue;
+
+		if (IS_ERR_OR_NULL(cl->clk)) {
+			d_vpr_e("%s: Invalid clock: %s\n", __func__, cl->name);
+			rc = PTR_ERR(cl->clk) ? PTR_ERR(cl->clk) : -EINVAL;
+			goto err_register_mmrm;
+		}
+
+		desc.client_type = MMRM_CLIENT_CLOCK;
+		desc.client_info.desc.client_domain = MMRM_CLIENT_DOMAIN_VIDEO;
+		desc.client_info.desc.client_id = cl->clk_id;
+		strlcpy(name, cl->name, sizeof(desc.client_info.desc.name));
+		desc.client_info.desc.clk = cl->clk;
+		desc.priority = MMRM_CLIENT_PRIOR_LOW;
+		desc.pvt_data = notifier_data.pvt_data;
+
+		d_vpr_h("%s: domain(%d) cid(%d) name(%s) clk(%pK)\n",
+			__func__,
+			desc.client_info.desc.client_domain,
+			desc.client_info.desc.client_id,
+			desc.client_info.desc.name,
+			desc.client_info.desc.clk);
+
+		d_vpr_h("%s: type(%d) pri(%d) pvt(%pK) notifier(%pK)\n",
+			__func__,
+			desc.client_type,
+			desc.priority,
+			desc.pvt_data,
+			desc.notifier_callback_fn);
+
+		cl->mmrm_client = mmrm_client_register(&desc);
+		if (!cl->mmrm_client) {
+			d_vpr_e("%s: Failed to register clk(%s): %d\n",
+				__func__, cl->name, rc);
+			rc = -EINVAL;
+			goto err_register_mmrm;
+		}
+	}
+
+	return 0;
+
+err_register_mmrm:
+	__deregister_mmrm(core);
+	return rc;
+}
+
 static int __handle_reset_clk(struct msm_vidc_core *core,
 			int reset_index, enum reset_state state)
 {
@@ -1639,6 +1724,13 @@ static int __init_resources(struct msm_vidc_core *core)
 		goto err_init_clocks;
 	}
 
+	rc = __register_mmrm(core);
+	if (rc) {
+		d_vpr_e("Failed to register mmrm\n");
+		rc = -ENODEV;
+		goto err_init_mmrm;
+	}
+
 	for (i = 0; i < core->dt->reset_set.count; i++) {
 		rc = __handle_reset_clk(core, i, INIT);
 		if (rc) {
@@ -1662,6 +1754,8 @@ static int __init_resources(struct msm_vidc_core *core)
 
 err_init_reset_clk:
 err_init_bus:
+	__deregister_mmrm(core);
+err_init_mmrm:
 	__deinit_clocks(core);
 err_init_clocks:
 	__deinit_regulators(core);
@@ -1672,6 +1766,7 @@ static void __deinit_resources(struct msm_vidc_core *core)
 {
 	__deinit_subcaches(core);
 	__deinit_bus(core);
+	__deregister_mmrm(core);
 	__deinit_clocks(core);
 	__deinit_regulators(core);
 }
@@ -1954,7 +2049,7 @@ static int __set_subcaches(struct msm_vidc_core *core)
 	rc = __iface_cmdq_write(core, core->packet);
 	if (rc)
 		goto err_fail_set_subacaches;
-		
+
 	venus_hfi_for_each_subcache(core, sinfo) {
 		if (sinfo->isactive) {
 			sinfo->isset = true;
@@ -1963,7 +2058,7 @@ static int __set_subcaches(struct msm_vidc_core *core)
 				sinfo->subcache->slice_size);
 		}
 	}
-	
+
 	core->dt->sys_cache_res_set = true;
 
 	return 0;

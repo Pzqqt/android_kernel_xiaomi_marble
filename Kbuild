@@ -2,6 +2,8 @@
 
 include $(VIDEO_ROOT)/config/waipio_video.conf
 
+KBUILD_CPPFLAGS += -DCONFIG_MSM_MMRM=1
+
 LINUXINCLUDE    += -include $(VIDEO_ROOT)/config/waipio_video.h
 
 LINUXINCLUDE    += -I$(VIDEO_ROOT)/driver/vidc/inc \

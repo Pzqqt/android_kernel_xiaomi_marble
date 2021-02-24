@@ -20,6 +20,9 @@
 #define MSM_VIDC_MIN_UBWC_COMPRESSION_RATIO (1 << 16)
 #define MSM_VIDC_MAX_UBWC_COMPRESSION_RATIO (5 << 16)
 
+/* TODO: Move to dtsi OR use source clock instead of branch clock.*/
+#define MSM_VIDC_CLOCK_SOURCE_SCALING_RATIO 3
+
 u64 msm_vidc_max_freq(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_core* core;
@@ -407,6 +410,15 @@ int msm_vidc_set_clocks(struct msm_vidc_inst* inst)
 	i_vpr_p(inst, "%s: clock rate %lu requested %lu increment %d decrement %d\n",
 		__func__, rate, freq, increment, decrement);
 	mutex_unlock(&core->lock);
+
+	/*
+	 * This conversion is necessary since we are scaling clock values based on
+	 * the branch clock. However, mmrm driver expects source clock to be registered
+	 * and used for scaling.
+	 * TODO: Remove this scaling if using source clock instead of branch clock.
+	 */
+	rate = rate * MSM_VIDC_CLOCK_SOURCE_SCALING_RATIO;
+	i_vpr_h(inst, "%s: scaled clock rate %lu\n", __func__, rate);
 
 	rc = venus_hfi_scale_clocks(inst, rate);
 	if (rc)

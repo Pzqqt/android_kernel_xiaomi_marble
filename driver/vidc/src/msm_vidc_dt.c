@@ -551,6 +551,7 @@ static int msm_vidc_load_clock_table(struct msm_vidc_core *core)
 	int rc = 0, num_clocks = 0, c = 0;
 	struct platform_device *pdev = core->pdev;
 	struct msm_vidc_dt *dt = core->dt;
+	int *clock_ids = NULL;
 	int *clock_props = NULL;
 	struct clock_set *clocks = &dt->clock_set;
 
@@ -561,6 +562,22 @@ static int msm_vidc_load_clock_table(struct msm_vidc_core *core)
 		clocks->count = 0;
 		rc = 0;
 		goto err_load_clk_table_fail;
+	}
+
+	clock_ids = devm_kzalloc(&pdev->dev, num_clocks *
+			sizeof(*clock_ids), GFP_KERNEL);
+	if (!clock_ids) {
+		d_vpr_e("No memory to read clock ids\n");
+		rc = -ENOMEM;
+		goto err_load_clk_table_fail;
+	}
+
+	rc = of_property_read_u32_array(pdev->dev.of_node,
+				"clock-ids", clock_ids,
+				num_clocks);
+	if (rc) {
+		d_vpr_e("Failed to read clock ids: %d\n", rc);
+		goto err_load_clk_prop_fail;
 	}
 
 	clock_props = devm_kzalloc(&pdev->dev, num_clocks *
@@ -595,6 +612,8 @@ static int msm_vidc_load_clock_table(struct msm_vidc_core *core)
 
 		of_property_read_string_index(pdev->dev.of_node,
 				"clock-names", c, &vc->name);
+
+		vc->clk_id = clock_ids[c];
 
 		if (clock_props[c] & CLOCK_PROP_HAS_SCALING) {
 			vc->has_scaling = true;

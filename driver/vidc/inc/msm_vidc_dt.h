@@ -8,6 +8,7 @@
 
 #include <linux/platform_device.h>
 #include <linux/soc/qcom/llcc-qcom.h>
+#include <linux/soc/qcom/msm_mmrm.h>
 
 #include "msm_vidc_internal.h"
 
@@ -133,11 +134,13 @@ struct regulator_set {
 
 struct clock_info {
 	const char *name;
+	u32 clk_id;
 	struct clk *clk;
 	u32 count;
 	bool has_scaling;
 	bool has_mem_retention;
 	u64 prev;
+	struct mmrm_client *mmrm_client;
 };
 
 struct clock_set {
