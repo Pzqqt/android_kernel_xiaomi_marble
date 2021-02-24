@@ -76,6 +76,7 @@ cm_handle_disconnect_req(struct wlan_objmgr_vdev *vdev,
 	struct wlan_objmgr_pdev *pdev;
 	uint8_t vdev_id;
 	struct rso_config *rso_cfg;
+	struct wlan_objmgr_psoc *psoc;
 
 	if (!vdev || !req)
 		return QDF_STATUS_E_FAILURE;
@@ -83,6 +84,12 @@ cm_handle_disconnect_req(struct wlan_objmgr_vdev *vdev,
 	pdev = wlan_vdev_get_pdev(vdev);
 	if (!pdev) {
 		mlme_err(CM_PREFIX_FMT "pdev not found",
+			 CM_PREFIX_REF(req->req.vdev_id, req->cm_id));
+		return QDF_STATUS_E_INVAL;
+	}
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		mlme_err(CM_PREFIX_FMT "psoc not found",
 			 CM_PREFIX_REF(req->req.vdev_id, req->cm_id));
 		return QDF_STATUS_E_INVAL;
 	}
@@ -98,6 +105,8 @@ cm_handle_disconnect_req(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_NOMEM;
 
 	cm_csr_handle_diconnect_req(vdev, req);
+	wlan_roam_reset_roam_params(psoc);
+	cm_roam_restore_default_config(pdev, vdev_id);
 	opmode = wlan_vdev_mlme_get_opmode(vdev);
 	if (opmode == QDF_STA_MODE)
 		wlan_cm_roam_state_change(pdev, vdev_id,

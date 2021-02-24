@@ -764,6 +764,19 @@ QDF_STATUS wlan_strip_ie(uint8_t *addn_ie, uint16_t *addn_ielen,
 bool wlan_is_channel_present_in_list(qdf_freq_t *freq_lst,
 				     uint32_t num_chan, qdf_freq_t chan_freq);
 
+/**
+ * wlan_roam_is_channel_valid() - validate channel frequency
+ * @reg: regulatory context
+ * @chan_freq: channel frequency
+ *
+ * This function validates channel frequency present in valid channel
+ * list or not.
+ *
+ * Return: true or false
+ */
+bool wlan_roam_is_channel_valid(struct wlan_mlme_reg *reg,
+				qdf_freq_t chan_freq);
+
 int8_t wlan_get_cfg_max_tx_power(struct wlan_objmgr_psoc *psoc,
 				 struct wlan_objmgr_pdev *pdev,
 				 uint32_t ch_freq);

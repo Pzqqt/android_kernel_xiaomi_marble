@@ -3059,6 +3059,26 @@ bool wlan_is_channel_present_in_list(qdf_freq_t *freq_lst,
 	return false;
 }
 
+bool wlan_roam_is_channel_valid(struct wlan_mlme_reg *reg, qdf_freq_t chan_freq)
+{
+	bool valid = false;
+	uint32_t i;
+	uint32_t len = reg->valid_channel_list_num;
+
+	for (i = 0; (i < len); i++) {
+		if (wlan_reg_is_dsrc_freq(
+			reg->valid_channel_freq_list[i]))
+			continue;
+
+		if (chan_freq == reg->valid_channel_freq_list[i]) {
+			valid = true;
+			break;
+		}
+	}
+
+	return valid;
+}
+
 int8_t wlan_get_cfg_max_tx_power(struct wlan_objmgr_psoc *psoc,
 				 struct wlan_objmgr_pdev *pdev,
 				 uint32_t ch_freq)

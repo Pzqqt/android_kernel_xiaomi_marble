@@ -312,6 +312,12 @@ QDF_STATUS wlan_cm_roam_cfg_get_value(struct wlan_objmgr_psoc *psoc,
 				      enum roam_cfg_param roam_cfg_type,
 				      struct cm_roam_values_copy *dst_config);
 
+static inline void
+wlan_cm_flush_roam_channel_list(struct rso_chan_info *channel_info)
+{
+	cm_flush_roam_channel_list(channel_info);
+}
+
 /**
  * wlan_cm_roam_cfg_set_value  - Set RSO config value
  * @psoc: psoc pointer
