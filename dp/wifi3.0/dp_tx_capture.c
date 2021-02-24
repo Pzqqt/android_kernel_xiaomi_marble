@@ -1992,16 +1992,16 @@ void dp_process_ppdu_stats_update_failed_bitmap(struct dp_pdev *pdev,
 				}
 			}
 
-			if (user->enq_bitmap[i]) {
-				last_set_bit = i * 32 +
-					qdf_fls(user->enq_bitmap[i]) - 1;
-			}
-
 			if (extra_ba_mpdus) {
 				user->enq_bitmap[i] = enq_ba_bitmap[i];
 			} else {
 				user->failed_bitmap[i] = user->enq_bitmap[i] &
 							 user->failed_bitmap[i];
+			}
+
+			if (user->enq_bitmap[i]) {
+				last_set_bit = i * 32 +
+					qdf_fls(user->enq_bitmap[i]) - 1;
 			}
 		}
 	} else {
@@ -2035,16 +2035,16 @@ void dp_process_ppdu_stats_update_failed_bitmap(struct dp_pdev *pdev,
 				}
 			}
 
-			if (user->enq_bitmap[i]) {
-				last_set_bit = i * 32 +
-					qdf_fls(user->enq_bitmap[i]) - 1;
-			}
-
 			if (extra_ba_mpdus) {
 				user->enq_bitmap[i] = enq_ba_bitmap[i];
 			} else {
 				user->failed_bitmap[i] = user->enq_bitmap[i] &
 							 user->failed_bitmap[i];
+			}
+
+			if (user->enq_bitmap[i]) {
+				last_set_bit = i * 32 +
+					qdf_fls(user->enq_bitmap[i]) - 1;
 			}
 		}
 	}
