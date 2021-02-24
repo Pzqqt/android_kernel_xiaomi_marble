@@ -4051,6 +4051,9 @@ u32 shadow_sr_wr_ind_addr(struct hif_softc *scn, u32 ctrl_addr)
 	case 0:
 		addr = SHADOW_VALUE0;
 		break;
+	case 3:
+		addr = SHADOW_VALUE3;
+		break;
 	case 4:
 		addr = SHADOW_VALUE4;
 		break;
