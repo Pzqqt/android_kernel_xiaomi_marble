@@ -1170,6 +1170,17 @@ bool wlan_reg_is_same_band_freqs(qdf_freq_t freq1, qdf_freq_t freq2);
 enum channel_enum wlan_reg_get_chan_enum_for_freq(qdf_freq_t freq);
 
 /**
+ * wlan_reg_is_freq_present_in_cur_chan_list() - Check if channel is present
+ * in the current channel list
+ * @pdev: pdev pointer
+ * @freq: Channel center frequency
+ *
+ * Return: true if channel is present in current channel list
+ */
+bool wlan_reg_is_freq_present_in_cur_chan_list(struct wlan_objmgr_pdev *pdev,
+					       qdf_freq_t freq);
+
+/**
  * wlan_reg_update_nol_history_ch_for_freq() - Set nol-history flag for the
  * channels in the list.
  *

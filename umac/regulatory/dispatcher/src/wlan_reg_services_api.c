@@ -993,6 +993,12 @@ enum channel_enum wlan_reg_get_chan_enum_for_freq(qdf_freq_t freq)
 	return reg_get_chan_enum_for_freq(freq);
 }
 
+bool wlan_reg_is_freq_present_in_cur_chan_list(struct wlan_objmgr_pdev *pdev,
+					       qdf_freq_t freq)
+{
+	return reg_is_freq_present_in_cur_chan_list(pdev, freq);
+}
+
 bool wlan_reg_is_etsi13_srd_chan_for_freq(struct wlan_objmgr_pdev *pdev,
 					  qdf_freq_t freq)
 {
