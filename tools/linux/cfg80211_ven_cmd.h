@@ -796,7 +796,7 @@ enum {
 	IEEE80211_PARAM_VAP_MESH_LATENCY_CONFIG    = 731,   /* Configure TID latency  */
 	IEEE80211_PARAM_VAP_MESH_TID_CONFIG     = 732,   /* Configure TID latency  */
 	IEEE80211_PARAM_PEER_TID_LATENCY_ENABLE    = 733,   /* Enable per peer tid latency  */
-	IEEE80211_PARAM_AP_CHAN_RPT_SSID_FILTER    = 734,   /* enable/disable inclusion of AP Channel Report IE in Beacon/Probe-Rsp */
+	IEEE80211_PARAM_AP_CHAN_RPT_FILTER         = 734,   /* enable filter for AP Channel Report IE in Beacon/Probe-Rsp */
 	IEEE80211_PARAM_WLAN_SCHED_TIMEOUT         = 735,
 	IEEE80211_PARAM_AP_MAX_AUTH_FAIL           = 736,   /* Set max continuous auth failures to be sent auth response within 15 seconds */
 	IEEE80211_PARAM_VAP_PROFILE_CONFIG         = 737,   /* Per vap resource profile size for EMA non tx vap */
@@ -2298,8 +2298,8 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"config_mesh_tid ",     IEEE80211_PARAM_VAP_MESH_TID_CONFIG, SET_PARAM, 1},
 	{"enable_peer_tidlatency ", IEEE80211_PARAM_PEER_TID_LATENCY_ENABLE, SET_PARAM, 1},
 	{"g_peer_tidlatency ",     IEEE80211_PARAM_PEER_TID_LATENCY_ENABLE, GET_PARAM, 0},
-	{"rpt_filter",          IEEE80211_PARAM_AP_CHAN_RPT_SSID_FILTER, SET_PARAM, 1},
-	{"g_rpt_filter",          IEEE80211_PARAM_AP_CHAN_RPT_SSID_FILTER, GET_PARAM, 0},
+	{"rpt_filter",          IEEE80211_PARAM_AP_CHAN_RPT_FILTER, SET_PARAM, 1},
+	{"g_rpt_filter",        IEEE80211_PARAM_AP_CHAN_RPT_FILTER, GET_PARAM, 0},
 	{"max_auth_fail",          IEEE80211_PARAM_AP_MAX_AUTH_FAIL, SET_PARAM, 1},
 	{"g_max_auth_fail",        IEEE80211_PARAM_AP_MAX_AUTH_FAIL, GET_PARAM, 0},
 	{"vap_resource_profile ",     IEEE80211_PARAM_VAP_PROFILE_CONFIG, SET_PARAM, 2},
