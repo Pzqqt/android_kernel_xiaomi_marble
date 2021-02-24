@@ -25,9 +25,7 @@
 #include <wlan_osif_priv.h>
 #include <init_deinit_lmac.h>
 #include <wlan_cfr_utils_api.h>
-#ifdef DIRECT_BUF_RX_ENABLE
 #include <target_if_direct_buf_rx_api.h>
-#endif
 #include <target_if_cfr_enh.h>
 #include "cdp_txrx_ctrl.h"
 
