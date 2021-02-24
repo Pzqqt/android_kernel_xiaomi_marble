@@ -1101,6 +1101,12 @@ static int handle_session_property(struct msm_vidc_inst *inst,
 	i_vpr_h(inst, "%s: property type %#x\n", __func__, pkt->type);
 
 	port = vidc_port_from_hfi(inst, pkt->port);
+	if (port >= MAX_PORT) {
+		i_vpr_e(inst,
+				"%s: invalid port: %d for property %#x\n",
+				__func__, pkt->port, pkt->type);
+		return -EINVAL;
+	}
 	payload_ptr = (u32 *)((u8 *)pkt + sizeof(struct hfi_packet));
 
 	switch (pkt->type) {
@@ -1405,6 +1411,8 @@ static int queue_response_work(struct msm_vidc_inst *inst,
 	struct response_work *work;
 
 	work = kzalloc(sizeof(struct response_work), GFP_KERNEL);
+	if (!work)
+		return -ENOMEM;
 	INIT_LIST_HEAD(&work->list);
 	work->type = type;
 	work->data_size = hdr_size;

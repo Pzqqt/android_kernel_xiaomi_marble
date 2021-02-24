@@ -402,7 +402,7 @@ struct msm_vidc_inst_cap {
 struct msm_vidc_inst_capability {
 	enum msm_vidc_domain_type domain;
 	enum msm_vidc_codec_type codec;
-	struct msm_vidc_inst_cap cap[INST_CAP_MAX];
+	struct msm_vidc_inst_cap cap[INST_CAP_MAX+1];
 };
 
 struct msm_vidc_core_capability {
