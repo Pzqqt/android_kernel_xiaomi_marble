@@ -536,14 +536,6 @@ bool wlan_reg_is_world(uint8_t *country);
 
 #ifdef CONFIG_CHAN_NUM_API
 /**
- * wlan_reg_get_chan_enum() - Get channel enum for given channel number
- * @chan_num: Channel number
- *
- * Return: Channel enum
- */
-enum channel_enum wlan_reg_get_chan_enum(uint8_t chan_num);
-
-/**
  * wlan_reg_get_5g_bonded_channel_state() - Get 5G bonded channel state
  * @pdev: The physical dev to program country code or regdomain
  * @ch: channel number.

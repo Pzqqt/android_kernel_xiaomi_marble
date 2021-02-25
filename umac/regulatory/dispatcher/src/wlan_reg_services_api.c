@@ -886,17 +886,6 @@ enum band_info wlan_reg_chan_to_band(uint8_t chan_num)
 }
 
 qdf_export_symbol(wlan_reg_chan_to_band);
-
-/**
- * wlan_reg_get_chan_enum() - Get channel enum for given channel number
- * @chan_num: Channel number
- *
- * Return: Channel enum
- */
-enum channel_enum wlan_reg_get_chan_enum(uint8_t chan_num)
-{
-	return reg_get_chan_enum(chan_num);
-}
 #endif /* CONFIG_CHAN_NUM_API */
 
 bool wlan_reg_is_regdmn_en302502_applicable(struct wlan_objmgr_pdev *pdev)
