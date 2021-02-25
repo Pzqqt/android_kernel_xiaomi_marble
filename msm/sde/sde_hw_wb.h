@@ -17,6 +17,7 @@ struct sde_hw_wb_cfg {
 	struct sde_hw_fmt_layout dest;
 	enum sde_intf_mode intf_mode;
 	struct sde_rect roi;
+	struct sde_rect crop;
 	bool is_secure;
 };
 
@@ -87,6 +88,9 @@ struct sde_hw_wb_ops {
 
 	void (*setup_roi)(struct sde_hw_wb *ctx,
 		struct sde_hw_wb_cfg *wb);
+
+	void (*setup_crop)(struct sde_hw_wb *ctx,
+		struct sde_hw_wb_cfg *wb, bool crop);
 
 	/**
 	 * setup_qos_lut - setup danger, safe, creq, etc. LUTs

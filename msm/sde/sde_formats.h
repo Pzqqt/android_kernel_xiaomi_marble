@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019, 2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_FORMATS_H
@@ -106,22 +106,6 @@ int sde_format_check_modified_format(
 int sde_format_populate_layout(
 		struct msm_gem_address_space *aspace,
 		struct drm_framebuffer *fb,
-		struct sde_hw_fmt_layout *fmtl);
-
-/**
- * sde_format_populate_layout_with_roi - populate the given format layout
- *                     based on mmu, fb, roi, and format found in the fb
- * @aspace:            address space pointer
- * @fb:                framebuffer pointer
- * @roi:               region of interest (optional)
- * @fmtl:              format layout structure to populate
- *
- * Return: error code on failure, 0 on success
- */
-int sde_format_populate_layout_with_roi(
-		struct msm_gem_address_space *aspace,
-		struct drm_framebuffer *fb,
-		struct sde_rect *roi,
 		struct sde_hw_fmt_layout *fmtl);
 
 /**
