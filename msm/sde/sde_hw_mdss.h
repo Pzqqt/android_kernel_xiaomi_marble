@@ -584,6 +584,10 @@ struct sde_mdss_color {
  *			using LUTDMA
  * @panel_height: height of display panel in pixels.
  * @panel_width: width of display panel in pixels.
+ * @valid_skip_blend_plane: true if skip plane params are valid
+ * @skip_blend_plane: plane which has been skipped staging into layer mixer
+ * @skip_blend_plane_w: skip plane width
+ * @skip_blend_plane_h: skip plane height
  */
 struct sde_hw_cp_cfg {
 	void *payload;
@@ -598,6 +602,10 @@ struct sde_hw_cp_cfg {
 	bool broadcast_disabled;
 	u32 panel_height;
 	u32 panel_width;
+	bool valid_skip_blend_plane;
+	enum sde_sspp skip_blend_plane;
+	u32 skip_blend_plane_w;
+	u32 skip_blend_plane_h;
 };
 
 /**

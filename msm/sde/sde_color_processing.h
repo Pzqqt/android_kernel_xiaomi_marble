@@ -5,6 +5,7 @@
 
 #ifndef _SDE_COLOR_PROCESSING_H
 #define _SDE_COLOR_PROCESSING_H
+#include "sde_hw_mdss.h"
 #include <drm/drm_crtc.h>
 
 struct sde_irq_callback;
@@ -137,6 +138,21 @@ struct sde_cp_crtc_property_state {
 struct sde_cp_crtc_range_prop_payload {
 	u64 addr;
 	u32 len;
+};
+
+/**
+ * struct sde_cp_crtc_skip_blend_plane: struct to define skip blend plane configuration
+ * @valid_plane: flag to indicate plane is valid
+ * @plane: plane that has been enabled and skipped blending
+ * @width: plane width
+ * @height: plane height
+ */
+
+struct sde_cp_crtc_skip_blend_plane {
+	bool valid_plane;
+	enum sde_sspp plane;
+	u32 width;
+	u32 height;
 };
 
 /**
@@ -330,7 +346,18 @@ void sde_cp_clear_state_info(struct drm_crtc_state *state);
  */
 void sde_cp_duplicate_state_info(struct drm_crtc_state *old_state,
 				struct drm_crtc_state *state);
-
+/**
+ * sde_cp_disable_features(): disable cp features
+ * @crtc: Pointer to drm_crtc.
+ */
 void sde_cp_disable_features(struct drm_crtc *crtc);
+/**
+ * sde_cp_set_skip_blend_plane_info(): set/clear the skip blend plane
+ * @crtc: Pointer to drm_crtc.
+ * @skip_blend: Pointer to sde_cp_crtc_skip_blend_plane
+ */
+
+void sde_cp_set_skip_blend_plane_info(struct drm_crtc *crtc,
+		struct sde_cp_crtc_skip_blend_plane *skip_blend);
 
 #endif /*_SDE_COLOR_PROCESSING_H */

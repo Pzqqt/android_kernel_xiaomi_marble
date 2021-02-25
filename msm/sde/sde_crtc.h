@@ -296,6 +296,11 @@ struct sde_crtc_misr_info {
  * @cache_state     : Current static image cache state
  * @dspp_blob_info  : blob containing dspp hw capability information
  * @cached_encoder_mask : cached encoder_mask for vblank work
+ * @valid_skip_blend_plane: flag to indicate if skip blend plane is valid
+ * @skip_blend_plane: enabled plane that has skip blending
+ * @skip_blend_plane_w: skip blend plane width
+ * @skip_blend_plane_h: skip blend plane height
+ *
  */
 struct sde_crtc {
 	struct drm_crtc base;
@@ -387,6 +392,11 @@ struct sde_crtc {
 
 	struct drm_property_blob *dspp_blob_info;
 	u32 cached_encoder_mask;
+
+	bool valid_skip_blend_plane;
+	enum sde_sspp skip_blend_plane;
+	u32 skip_blend_plane_w;
+	u32 skip_blend_plane_h;
 };
 
 enum sde_crtc_dirty_flags {

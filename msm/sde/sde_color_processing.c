@@ -1632,6 +1632,11 @@ static void _sde_cp_crtc_commit_feature(struct sde_cp_node *prop_node,
 	hw_cfg.last_feature = 0;
 	hw_cfg.panel_width = sde_crtc->base.state->adjusted_mode.hdisplay;
 	hw_cfg.panel_height = sde_crtc->base.state->adjusted_mode.vdisplay;
+	hw_cfg.valid_skip_blend_plane = sde_crtc->valid_skip_blend_plane;
+	hw_cfg.skip_blend_plane = sde_crtc->skip_blend_plane;
+	hw_cfg.skip_blend_plane_h = sde_crtc->skip_blend_plane_h;
+	hw_cfg.skip_blend_plane_w = sde_crtc->skip_blend_plane_w;
+
 	SDE_EVT32(hw_cfg.panel_width, hw_cfg.panel_height);
 
 	for (i = 0; i < num_mixers; i++) {
@@ -4709,6 +4714,10 @@ void sde_cp_crtc_disable(struct drm_crtc *drm_crtc)
 				&crtc->dspp_blob_info,
 			info->data, SDE_KMS_INFO_DATALEN(info),
 			CRTC_PROP_DSPP_INFO);
+	crtc->valid_skip_blend_plane = false;
+	crtc->skip_blend_plane = SSPP_NONE;
+	crtc->skip_blend_plane_h = 0;
+	crtc->skip_blend_plane_w = 0;
 	mutex_unlock(&crtc->crtc_cp_lock);
 	kfree(info);
 }
@@ -4770,3 +4779,31 @@ void sde_cp_duplicate_state_info(struct drm_crtc_state *drm_old_state,
 			  curr_state->cp_range_payload[i].len);
 	}
 }
+
+void sde_cp_set_skip_blend_plane_info(struct drm_crtc *drm_crtc,
+	struct sde_cp_crtc_skip_blend_plane *skip_blend)
+{
+	struct sde_crtc *crtc;
+
+	if (!drm_crtc || !skip_blend) {
+		DRM_ERROR("invalid crtc handle drm_crtc %pK skip_blend %pK\n",
+			drm_crtc, skip_blend);
+		return;
+	}
+	crtc = to_sde_crtc(drm_crtc);
+	mutex_lock(&crtc->crtc_cp_lock);
+	if (!skip_blend->valid_plane) {
+		crtc->valid_skip_blend_plane = false;
+		crtc->skip_blend_plane = SSPP_NONE;
+		crtc->skip_blend_plane_h = 0;
+		crtc->skip_blend_plane_w = 0;
+		mutex_unlock(&crtc->crtc_cp_lock);
+		return;
+	}
+	crtc->valid_skip_blend_plane = true;
+	crtc->skip_blend_plane = skip_blend->plane;
+	crtc->skip_blend_plane_h = skip_blend->height;
+	crtc->skip_blend_plane_w = skip_blend->width;
+	mutex_unlock(&crtc->crtc_cp_lock);
+}
+

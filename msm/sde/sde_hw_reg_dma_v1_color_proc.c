@@ -5260,14 +5260,54 @@ static int __reg_dmav1_setup_demurav1_cfg5(struct sde_hw_dspp *ctx,
 	return rc;
 }
 
+static bool __reg_dmav1_valid_hfc_en_cfg(struct drm_msm_dem_cfg *dcfg,
+			struct sde_hw_cp_cfg *hw_cfg)
+{
+	u32 h, w, temp;
+	if (!hw_cfg->valid_skip_blend_plane) {
+		DRM_ERROR("HFC plane not set\n");
+		return false;
+	}
+
+	h = hw_cfg->panel_height;
+	w = hw_cfg->panel_width;
+	temp = hw_cfg->panel_width / 2;
+	if (dcfg->pentile) {
+		w = dcfg->c0_depth * (temp / 2) + dcfg->c1_depth * temp +
+			dcfg->c2_depth * (temp / 2);
+		if (w % 32)
+			w = 32 - (w % 32) + w;
+		w = 2 * (w / 32);
+		w = w / (hw_cfg->num_of_mixers ? hw_cfg->num_of_mixers : 1);
+	}
+	if (h != hw_cfg->skip_blend_plane_h || w != hw_cfg->skip_blend_plane_w) {
+		DRM_ERROR("invalid hfc cfg exp h %d exp w %d act h %d act w %d\n",
+			h, w, hw_cfg->skip_blend_plane_h, hw_cfg->skip_blend_plane_w);
+		DRM_ERROR("c0_depth %d c1_depth %d c2 depth %d hw_cfg->panel_width %d\n",
+			dcfg->c0_depth, dcfg->c1_depth, dcfg->c2_depth, hw_cfg->panel_width);
+		return false;
+	}
+
+	if (dcfg->src_id == BIT(3) && hw_cfg->skip_blend_plane == SSPP_DMA3)
+		return true;
+
+	if (dcfg->src_id == BIT(1) && hw_cfg->skip_blend_plane == SSPP_DMA1)
+		return true;
+
+	DRM_ERROR("invalid HFC plane dcfg->src_id %d hw_cfg->skip_blend_plane %d\n",
+		dcfg->src_id, hw_cfg->skip_blend_plane);
+	return false;
+}
 
 static int __reg_dmav1_setup_demurav1_en(struct sde_hw_dspp *ctx,
 		struct drm_msm_dem_cfg *dcfg,
 		struct sde_reg_dma_setup_ops_cfg *dma_write_cfg,
-		struct sde_hw_reg_dma_ops *dma_ops)
+		struct sde_hw_reg_dma_ops *dma_ops,
+		struct sde_hw_cp_cfg *hw_cfg)
 {
 	u32 en = 0, backl;
 	int rc;
+	bool valid_hfc_cfg = false;
 	u32 demura_base = ctx->cap->sblk->demura.base + ctx->hw.blk_off;
 
 	backl = (1024 << 16) | 1024;
@@ -5288,7 +5328,10 @@ static int __reg_dmav1_setup_demurav1_en(struct sde_hw_dspp *ctx,
 	en |= (dcfg->cfg3_en) ? BIT(5) : 0;
 	en |= (dcfg->cfg4_en) ? BIT(4) : 0;
 	en |= (dcfg->cfg2_en) ? BIT(3) : 0;
-	en |= (dcfg->cfg0_en) ? BIT(2) : 0;
+	if (dcfg->cfg0_en)
+		valid_hfc_cfg = __reg_dmav1_valid_hfc_en_cfg(dcfg, hw_cfg);
+	if (valid_hfc_cfg)
+		en |= (dcfg->cfg0_en) ? BIT(2) : 0;
 	en |= (dcfg->cfg1_en) ? BIT(1) : 0;
 	DRM_DEBUG_DRIVER("demura en %x\n", en);
 	SDE_EVT32(en);
@@ -5404,7 +5447,7 @@ void reg_dmav1_setup_demurav1(struct sde_hw_dspp *ctx, void *cfx)
 	}
 
 	rc = __reg_dmav1_setup_demurav1_en(ctx, dcfg, &dma_write_cfg,
-			dma_ops);
+			dma_ops, hw_cfg);
 	if (rc) {
 		DRM_ERROR("failed setup_demurav1_en rc %d", rc);
 		return;

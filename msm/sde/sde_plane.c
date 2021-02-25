@@ -3336,6 +3336,7 @@ static void _sde_plane_atomic_disable(struct drm_plane *plane,
 	struct drm_plane_state *state;
 	struct sde_plane_state *pstate;
 	u32 multirect_index = SDE_SSPP_RECT_0;
+	struct sde_cp_crtc_skip_blend_plane skip_blend_plane;
 	u32 blend_type;
 
 	if (!plane) {
@@ -3358,8 +3359,12 @@ static void _sde_plane_atomic_disable(struct drm_plane *plane,
 	/* some of the color features are dependent on plane with skip blend.
 	 * if skip blend plane is being disabled, we need to disable color properties.
 	*/
-	if (blend_type == SDE_DRM_BLEND_OP_SKIP && old_state->crtc)
+	if (blend_type == SDE_DRM_BLEND_OP_SKIP && old_state->crtc) {
+		skip_blend_plane.valid_plane = false;
+		skip_blend_plane.plane = SSPP_NONE;
+		sde_cp_set_skip_blend_plane_info(old_state->crtc, &skip_blend_plane);
 		sde_crtc_disable_cp_features(old_state->crtc);
+	}
 
 	SDE_EVT32(DRMID(plane), is_sde_plane_virtual(plane),
 			pstate->multirect_mode);

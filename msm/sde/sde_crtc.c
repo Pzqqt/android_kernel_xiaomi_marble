@@ -1511,6 +1511,7 @@ static void _sde_crtc_blend_setup_mixer(struct drm_crtc *crtc,
 	int i, mode, cnt = 0;
 	bool bg_alpha_enable = false;
 	u32 blend_type;
+	struct sde_cp_crtc_skip_blend_plane skip_blend_plane;
 	DECLARE_BITMAP(fetch_active, SSPP_MAX);
 
 	if (!sde_crtc || !crtc->state || !mixer) {
@@ -1563,6 +1564,14 @@ static void _sde_crtc_blend_setup_mixer(struct drm_crtc *crtc,
 
 		blend_type = sde_plane_get_property(pstate,
 					PLANE_PROP_BLEND_OP);
+
+		if (blend_type == SDE_DRM_BLEND_OP_SKIP) {
+			skip_blend_plane.valid_plane = true;
+			skip_blend_plane.plane = sde_plane_pipe(plane);
+			skip_blend_plane.height = plane_crtc_roi.h;
+			skip_blend_plane.width = plane_crtc_roi.w;
+			sde_cp_set_skip_blend_plane_info(crtc, &skip_blend_plane);
+		}
 
 		if (blend_type != SDE_DRM_BLEND_OP_SKIP) {
 			if (pstate->stage == SDE_STAGE_BASE &&
@@ -4819,6 +4828,7 @@ static int _sde_crtc_check_get_pstates(struct drm_crtc *crtc,
 	int rc = 0, multirect_count = 0, i, mixer_width, mixer_height;
 	int inc_sde_stage = 0;
 	struct sde_kms *kms;
+	u32 blend_type;
 
 	sde_crtc = to_sde_crtc(crtc);
 	cstate = to_sde_crtc_state(state);
@@ -4853,6 +4863,8 @@ static int _sde_crtc_check_get_pstates(struct drm_crtc *crtc,
 		pstates[*cnt].stage = sde_plane_get_property(
 				pstates[*cnt].sde_pstate, PLANE_PROP_ZPOS);
 		pstates[*cnt].pipe_id = sde_plane_pipe(plane);
+		blend_type = sde_plane_get_property(pstates[*cnt].sde_pstate,
+			PLANE_PROP_BLEND_OP);
 
 		if (!kms->catalog->has_base_layer)
 			inc_sde_stage = SDE_STAGE_0;
@@ -4893,7 +4905,7 @@ static int _sde_crtc_check_get_pstates(struct drm_crtc *crtc,
 			return -E2BIG;
 		}
 
-		if (cstate->num_ds_enabled &&
+		if (blend_type != SDE_DRM_BLEND_OP_SKIP && cstate->num_ds_enabled &&
 				((pstate->crtc_h > mixer_height) ||
 				(pstate->crtc_w > mixer_width))) {
 			SDE_ERROR("plane w/h:%x*%x > mixer w/h:%x*%x\n",
