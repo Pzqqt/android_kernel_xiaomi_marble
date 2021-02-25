@@ -2143,7 +2143,18 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 			qdf_mem_free(roam_info);
 			return -EINVAL;
 		}
-		if (roam_info->btm_rsp.present)
+
+		/*
+		 * Print BTM resp TLV info (wmi_roam_btm_response_info) only
+		 * when trigger reason is BTM or WTC_BTM. As for other roam
+		 * triggers this TLV contains zeros, so host should not print.
+		 */
+		if ((roam_info->btm_rsp.present) &&
+		    (roam_info->trigger.present &&
+		    (roam_info->trigger.trigger_reason ==
+		     WMI_ROAM_TRIGGER_REASON_WTC_BTM ||
+		     roam_info->trigger.trigger_reason ==
+		     WMI_ROAM_TRIGGER_REASON_BTM)))
 			wma_rso_print_btm_rsp_info(&roam_info->btm_rsp,
 						   vdev_id);
 
