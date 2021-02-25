@@ -5477,21 +5477,26 @@ void populate_dot11f_ese_rad_mgmt_cap(tDot11fIEESERadMgmtCap *pESERadMgmtCap)
 	pESERadMgmtCap->reserved = 0;
 }
 
-QDF_STATUS populate_dot11f_ese_cckm_opaque(struct mac_context *mac,
-					   tpSirCCKMie pCCKMie,
-					   tDot11fIEESECckmOpaque *pDot11f)
+QDF_STATUS
+populate_dot11f_ese_cckm_opaque(struct mac_context *mac,
+				struct mlme_connect_info *connect_info,
+				tDot11fIEESECckmOpaque *pDot11f)
 {
 	int idx;
+	tSirRSNie ie;
 
-	if (pCCKMie->length) {
-		idx = find_ie_location(mac, (tpSirRSNie) pCCKMie,
-						 DOT11F_EID_ESECCKMOPAQUE);
-		if (0 <= idx) {
+	if (connect_info->cckm_ie_len &&
+	    connect_info->cckm_ie_len < DOT11F_IE_RSN_MAX_LEN) {
+		qdf_mem_copy(ie.rsnIEdata, connect_info->cckm_ie,
+			     connect_info->cckm_ie_len);
+		ie.length = connect_info->cckm_ie_len;
+		idx = find_ie_location(mac, &ie, DOT11F_EID_ESECCKMOPAQUE);
+		if (idx >= 0) {
 			pDot11f->present = 1;
 			/* Dont include OUI */
-			pDot11f->num_data = pCCKMie->cckmIEdata[idx + 1] - 4;
-			qdf_mem_copy(pDot11f->data, pCCKMie->cckmIEdata + idx + 2 + 4,  /* EID,len,OUI */
-				     pCCKMie->cckmIEdata[idx + 1] - 4); /* Skip OUI */
+			pDot11f->num_data = ie.rsnIEdata[idx + 1] - 4;
+			qdf_mem_copy(pDot11f->data, ie.rsnIEdata + idx + 2 + 4,  /* EID,len,OUI */
+				     ie.rsnIEdata[idx + 1] - 4); /* Skip OUI */
 		}
 	}
 	return QDF_STATUS_SUCCESS;

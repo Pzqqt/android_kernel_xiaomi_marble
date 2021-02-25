@@ -1627,32 +1627,6 @@ static QDF_STATUS sme_tsm_ie_ind(struct mac_context *mac,
 }
 
 /**
- * sme_set_cckm_ie() - set cckm ie
- * @mac_handle: Opaque handle to the global MAC context
- * @sessionId: session id
- * @pCckmIe: Pointer to CCKM Ie
- * @cckmIeLen: Length of @pCckmIe
- *
- * Function to store the CCKM IE passed from supplicant and use
- * it while packing reassociation request.
- *
- * Return: QDF_STATUS enumeration
- */
-QDF_STATUS sme_set_cckm_ie(mac_handle_t mac_handle, uint8_t sessionId,
-			   uint8_t *pCckmIe, uint8_t cckmIeLen)
-{
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		csr_set_cckm_ie(mac, sessionId, pCckmIe, cckmIeLen);
-		sme_release_global_lock(&mac->sme);
-	}
-	return status;
-}
-
-/**
  * sme_set_ese_beacon_request() - set ese beacon request
  * @mac_handle: Opaque handle to the global MAC context
  * @sessionId: session id

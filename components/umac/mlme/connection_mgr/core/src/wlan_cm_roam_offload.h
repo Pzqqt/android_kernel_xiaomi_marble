@@ -172,6 +172,27 @@ void cm_flush_roam_channel_list(struct rso_chan_info *channel_info);
 QDF_STATUS cm_roam_control_restore_default_config(struct wlan_objmgr_pdev *pdev,
 						  uint8_t vdev_id);
 
+/**
+ * cm_update_pmk_cache_ft - API to update MDID in PMKSA cache entry
+ * @psoc: psoc pointer
+ * @vdev_id: dvev ID
+ *
+ * Return: None
+ */
+void cm_update_pmk_cache_ft(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id);
+
+/**
+ * cm_lookup_pmkid_using_bssid() - lookup pmkid using bssid
+ * @psoc: pointer to psoc
+ * @vdev_id: vdev_id
+ * @pmk_cache: pointer to pmk cache
+ *
+ * Return: true if pmkid is found else false
+ */
+bool cm_lookup_pmkid_using_bssid(struct wlan_objmgr_psoc *psoc,
+				 uint8_t vdev_id,
+				 struct wlan_crypto_pmksa *pmk_cache);
+
 void cm_roam_restore_default_config(struct wlan_objmgr_pdev *pdev,
 				    uint8_t vdev_id);
 
@@ -186,6 +207,44 @@ void cm_roam_restore_default_config(struct wlan_objmgr_pdev *pdev,
 QDF_STATUS
 cm_roam_send_disable_config(struct wlan_objmgr_psoc *psoc,
 			    uint8_t vdev_id, uint8_t cfg);
+
+/**
+ * cm_roam_start_init_on_connect() - init roaming
+ * @pdev: pdev pointer
+ * @vdev_id: vdev_id
+ *
+ * Return: void
+ */
+void cm_roam_start_init_on_connect(struct wlan_objmgr_pdev *pdev,
+				   uint8_t vdev_id);
+
+#if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
+void
+cm_store_sae_single_pmk_to_global_cache(struct wlan_objmgr_psoc *psoc,
+					struct wlan_objmgr_pdev *pdev,
+					struct wlan_objmgr_vdev *vdev);
+/**
+ * cm_check_and_set_sae_single_pmk_cap() - check if the Roamed AP support
+ * roaming using single pmk
+ * with same pmk or not
+ * @psoc: psoc
+ * @vdev_id: vdev id
+ *
+ * Return: void
+ */
+void cm_check_and_set_sae_single_pmk_cap(struct wlan_objmgr_psoc *psoc,
+					 uint8_t vdev_id);
+#else
+static inline void
+cm_store_sae_single_pmk_to_global_cache(struct wlan_objmgr_psoc *psoc,
+					struct wlan_objmgr_pdev *pdev,
+					struct wlan_objmgr_vdev *vdev)
+{}
+static inline void
+cm_check_and_set_sae_single_pmk_cap(struct wlan_objmgr_psoc *psoc,
+				    uint8_t vdev_id)
+{}
+#endif
 
 bool cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
 			 struct wlan_objmgr_vdev *vdev,

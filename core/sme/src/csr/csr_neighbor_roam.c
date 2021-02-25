@@ -426,30 +426,14 @@ static void csr_neighbor_roam_info_ctx_init(struct mac_context *mac,
 {
 	tpCsrNeighborRoamControlInfo ngbr_roam_info =
 		&mac->roam.neighborRoamInfo[session_id];
-	struct cm_roam_values_copy src_cfg;
 	struct csr_roam_session *session = &mac->roam.roamSession[session_id];
 	int init_ft_flag = false;
-	bool mdie_present;
 
-	wlan_cm_init_occupied_ch_freq_list(mac->pdev, mac->psoc, session_id);
 	csr_neighbor_roam_state_transition(mac,
 			eCSR_NEIGHBOR_ROAM_STATE_CONNECTED, session_id);
-
 	qdf_copy_macaddr(&ngbr_roam_info->currAPbssid,
 			&session->connectedProfile.bssid);
-	/*
-	 * Update RSSI change params to vdev
-	 */
-	src_cfg.uint_value = mac->mlme_cfg->lfr.roam_rescan_rssi_diff;
-	wlan_cm_roam_cfg_set_value(mac->psoc, session_id,
-				   RSSI_CHANGE_THRESHOLD, &src_cfg);
-
-	src_cfg.uint_value = mac->mlme_cfg->lfr.roam_scan_hi_rssi_delay;
-	wlan_cm_roam_cfg_set_value(mac->psoc, session_id,
-				   HI_RSSI_DELAY_BTW_SCANS, &src_cfg);
-
-	wlan_cm_update_roam_scan_scheme_bitmap(mac->psoc, session_id,
-					       DEFAULT_ROAM_SCAN_SCHEME_BITMAP);
+	cm_roam_start_init_on_connect(mac->pdev, session_id);
 
 	/*
 	 * Now we can clear the preauthDone that
@@ -457,19 +441,6 @@ static void csr_neighbor_roam_info_ctx_init(struct mac_context *mac,
 	 */
 	csr_neighbor_roam_free_roamable_bss_list(mac,
 		&ngbr_roam_info->FTRoamInfo.preAuthDoneList);
-	wlan_cm_roam_cfg_get_value(mac->psoc, session_id,
-				   MOBILITY_DOMAIN, &src_cfg);
-	mdie_present = src_cfg.bool_value;
-	/* Based on the auth scheme tell if we are 11r */
-	if (csr_is_auth_type11r
-		(mac, session->connectedProfile.AuthType, mdie_present)) {
-		if (mac->mlme_cfg->lfr.fast_transition_enabled)
-			init_ft_flag = true;
-		src_cfg.bool_value = true;
-	} else
-		src_cfg.bool_value = false;
-	wlan_cm_roam_cfg_set_value(mac->psoc, session_id,
-				   IS_11R_CONNECTION, &src_cfg);
 #ifdef FEATURE_WLAN_ESE
 	/* Based on the auth scheme tell if we are 11r */
 	if (wlan_cm_get_ese_assoc(mac->pdev, session_id)) {
@@ -487,29 +458,7 @@ static void csr_neighbor_roam_info_ctx_init(struct mac_context *mac,
 		csr_neighbor_roam_purge_preauth_failed_list(mac);
 	}
 
-	if (!csr_roam_is_roam_offload_scan_enabled(mac))
-		return;
-	/*
-	 * Store the current PMK info of the AP
-	 * to the single pmk global cache if the BSS allows
-	 * single pmk roaming capable.
-	 */
-	csr_store_sae_single_pmk_to_global_cache(mac, session,
-						 session_id);
-
-	/*
-	 * If this is not a INFRA type BSS, then do not send the command
-	 * down to firmware.Do not send the START command for
-	 * other session connections.
-	 */
-	if (!csr_roam_is_sta_mode(mac, session_id))
-		return;
-
 	ngbr_roam_info->uOsRequestedHandoff = 0;
-	if (!MLME_IS_ROAM_SYNCH_IN_PROGRESS(mac->psoc, session_id))
-		wlan_cm_roam_state_change(mac->pdev, session_id,
-					  WLAN_ROAM_RSO_ENABLED,
-					  REASON_CTX_INIT);
 }
 
 /**

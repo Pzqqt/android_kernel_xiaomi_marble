@@ -2075,44 +2075,6 @@ bool csr_is_profile_rsn(struct csr_roam_profile *pProfile)
 }
 #endif
 
-/**
- * csr_is_auth_type11r() - Check if Authentication type is 11R
- * @mac: pointer to mac context
- * @auth_type: The authentication type that is used to make the connection
- * @mdie_present: Is MDIE IE present
- *
- * Return: true if is 11R auth type, false otherwise
- */
-bool csr_is_auth_type11r(struct mac_context *mac, enum csr_akm_type auth_type,
-			 uint8_t mdie_present)
-{
-	switch (auth_type) {
-	case eCSR_AUTH_TYPE_OPEN_SYSTEM:
-		if (mdie_present &&
-		    mac->mlme_cfg->lfr.enable_ftopen)
-			return true;
-		break;
-	case eCSR_AUTH_TYPE_FT_RSN_PSK:
-	case eCSR_AUTH_TYPE_FT_RSN:
-	case eCSR_AUTH_TYPE_FT_SAE:
-	case eCSR_AUTH_TYPE_FT_SUITEB_EAP_SHA384:
-	case eCSR_AUTH_TYPE_FT_FILS_SHA256:
-	case eCSR_AUTH_TYPE_FT_FILS_SHA384:
-		return true;
-	default:
-		break;
-	}
-	return false;
-}
-
-/* Function to return true if the profile is 11r */
-bool csr_is_profile11r(struct mac_context *mac,
-			struct csr_roam_profile *pProfile)
-{
-	return csr_is_auth_type11r(mac, pProfile->negotiatedAuthType,
-				   pProfile->mdid.mdie_present);
-}
-
 bool csr_is_auth_type_ese(enum csr_akm_type AuthType)
 {
 	switch (AuthType) {
@@ -2174,21 +2136,22 @@ bool csr_is_pmkid_found_for_peer(struct mac_context *mac,
 {
 	uint32_t i;
 	uint8_t *session_pmkid;
-	tPmkidCacheInfo *pmkid_cache;
+	struct wlan_crypto_pmksa *pmkid_cache;
 
 	pmkid_cache = qdf_mem_malloc(sizeof(*pmkid_cache));
 	if (!pmkid_cache)
 		return false;
 
-	qdf_mem_copy(pmkid_cache->BSSID.bytes, peer_mac_addr,
+	qdf_mem_copy(pmkid_cache->bssid.bytes, peer_mac_addr,
 		     QDF_MAC_ADDR_SIZE);
 
-	if (!csr_lookup_pmkid_using_bssid(mac, session, pmkid_cache)) {
+	if (!cm_lookup_pmkid_using_bssid(mac->psoc, session->vdev_id,
+					 pmkid_cache)) {
 		qdf_mem_free(pmkid_cache);
 		return false;
 	}
 
-	session_pmkid = pmkid_cache->PMKID;
+	session_pmkid = pmkid_cache->pmkid;
 	for (i = 0; i < pmkid_count; i++) {
 		if (!qdf_mem_cmp(pmkid + (i * PMKID_LEN),
 				 session_pmkid, PMKID_LEN)) {
@@ -2201,37 +2164,6 @@ bool csr_is_pmkid_found_for_peer(struct mac_context *mac,
 	qdf_mem_free(pmkid_cache);
 
 	return false;
-}
-
-bool csr_lookup_pmkid_using_bssid(struct mac_context *mac,
-				  struct csr_roam_session *session,
-				  tPmkidCacheInfo *pmk_cache)
-{
-	struct wlan_crypto_pmksa *pmksa;
-	struct wlan_objmgr_vdev *vdev;
-
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, session->vdev_id,
-						    WLAN_LEGACY_SME_ID);
-	if (!vdev) {
-		sme_err("Invalid vdev");
-		return false;
-	}
-
-	pmksa = wlan_crypto_get_pmksa(vdev, &pmk_cache->BSSID);
-	if (!pmksa) {
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-		return false;
-	}
-	qdf_mem_copy(pmk_cache->PMKID, pmksa->pmkid, sizeof(pmk_cache->PMKID));
-	qdf_mem_copy(pmk_cache->pmk, pmksa->pmk, pmksa->pmk_len);
-	pmk_cache->pmk_len = pmksa->pmk_len;
-	pmk_cache->pmk_lifetime = pmksa->pmk_lifetime;
-	pmk_cache->pmk_lifetime_threshold = pmksa->pmk_lifetime_threshold;
-	pmk_cache->pmk_ts = pmksa->pmk_entry_ts;
-
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-
-	return true;
 }
 
 #ifndef FEATURE_CM_ENABLE

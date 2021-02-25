@@ -5153,8 +5153,8 @@ static int drv_cmd_set_cckm_ie(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
-	sme_set_cckm_ie(hdd_ctx->mac_handle, adapter->vdev_id,
-			cckm_ie, cckm_ie_len);
+	ucfg_cm_set_cckm_ie(hdd_ctx->psoc, adapter->vdev_id, cckm_ie,
+			    cckm_ie_len);
 	if (cckm_ie) {
 		qdf_mem_free(cckm_ie);
 		cckm_ie = NULL;

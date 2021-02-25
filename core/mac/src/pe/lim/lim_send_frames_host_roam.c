@@ -84,8 +84,13 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 	bool vht_enabled = false;
 	tpSirMacMgmtHdr mac_hdr;
 	tftSMEContext *ft_sme_context;
+	struct mlme_legacy_priv *mlme_priv;
 
 	if (!pe_session)
+		return;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(pe_session->vdev);
+	if (!mlme_priv)
 		return;
 
 	vdev_id = pe_session->vdev_id;
@@ -213,9 +218,9 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 				&frm->WPAOpaque);
 		}
 #ifdef FEATURE_WLAN_ESE
-		if (pe_session->pLimReAssocReq->cckmIE.length) {
+		if (mlme_priv->connect_info.cckm_ie_len) {
 			populate_dot11f_ese_cckm_opaque(mac_ctx,
-				&(pe_session->pLimReAssocReq->cckmIE),
+				&mlme_priv->connect_info,
 				&frm->ESECckmOpaque);
 		}
 #endif

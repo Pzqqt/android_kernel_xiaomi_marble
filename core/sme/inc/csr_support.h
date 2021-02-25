@@ -327,10 +327,6 @@ QDF_STATUS csr_reassoc(struct mac_context *mac, uint32_t sessionId,
 		tCsrRoamModifyProfileFields *pModProfileFields,
 		uint32_t *pRoamId, bool fForce);
 #endif
-
-bool csr_is_profile11r(struct mac_context *mac, struct csr_roam_profile *pProfile);
-bool csr_is_auth_type11r(struct mac_context *mac, enum csr_akm_type AuthType,
-			 uint8_t mdiePresent);
 #ifdef FEATURE_WLAN_ESE
 bool csr_is_profile_ese(struct csr_roam_profile *pProfile);
 #endif

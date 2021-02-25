@@ -252,11 +252,6 @@ typedef struct tagCsrEseCckmInfo {
 	uint8_t btk[SIR_BTK_KEY_LEN];
 #endif
 } tCsrEseCckmInfo;
-
-typedef struct tagCsrEseCckmIe {
-	uint8_t cckmIe[DOT11F_IE_RSN_MAX_LEN];
-	uint8_t cckmIeLen;
-} tCsrEseCckmIe;
 #endif /* FEATURE_WLAN_ESE */
 
 typedef struct sCsrChannel_ {

@@ -686,9 +686,6 @@ QDF_STATUS sme_get_tsm_stats(mac_handle_t mac_handle,
 		tCsrTsmStatsCallback callback,
 		struct qdf_mac_addr bssId,
 		void *pContext, uint8_t tid);
-QDF_STATUS sme_set_cckm_ie(mac_handle_t mac_handle,
-		uint8_t sessionId,
-		uint8_t *pCckmIe, uint8_t cckmIeLen);
 QDF_STATUS sme_set_ese_beacon_request(mac_handle_t mac_handle,
 				      const uint8_t sessionId,
 				      const tCsrEseBeaconReq *in_req);

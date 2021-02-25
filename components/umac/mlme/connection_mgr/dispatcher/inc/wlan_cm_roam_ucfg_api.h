@@ -66,6 +66,8 @@ QDF_STATUS ucfg_cm_set_ese_roam_scan_channel_list(struct wlan_objmgr_pdev *pdev,
 						  uint8_t vdev_id,
 						  qdf_freq_t *chan_freq_list,
 						  uint8_t num_chan);
+QDF_STATUS ucfg_cm_set_cckm_ie(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			       const uint8_t *cck_ie, const uint8_t cck_ie_len);
 #endif
 
 /**

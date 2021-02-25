@@ -3879,6 +3879,86 @@ out:
 	return status;
 }
 
+void cm_update_pmk_cache_ft(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_crypto_pmksa pmksa;
+	enum QDF_OPMODE vdev_mode;
+	struct cm_roam_values_copy src_cfg;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev is NULL");
+		return;
+	}
+
+	vdev_mode = wlan_vdev_mlme_get_opmode(vdev);
+	/* If vdev mode is STA then proceed further */
+	if (vdev_mode != QDF_STA_MODE) {
+		mlme_err("vdev mode is not STA");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		return;
+	}
+
+	/*
+	 * In FT connection fetch the MDID from Session and send it to crypto
+	 * so that it will update the crypto PMKSA table with the MDID for the
+	 * matching BSSID or SSID PMKSA entry. And delete the old/stale PMK
+	 * cache entries for the same mobility domain as of the newly added
+	 * entry to avoid multiple PMK cache entries for the same MDID.
+	 */
+	wlan_vdev_get_bss_peer_mac(vdev, &pmksa.bssid);
+	wlan_vdev_mlme_get_ssid(vdev, pmksa.ssid, &pmksa.ssid_len);
+	wlan_cm_roam_cfg_get_value(psoc, vdev_id,
+				   MOBILITY_DOMAIN, &src_cfg);
+	mlme_debug("copied the BSSID/SSID from session to PMKSA mdie %d",
+		  src_cfg.bool_value);
+	if (src_cfg.bool_value) {
+		pmksa.mdid.mdie_present = 1;
+		pmksa.mdid.mobility_domain = src_cfg.uint_value;
+		mlme_debug("copied the MDID from session to PMKSA");
+
+		status = wlan_crypto_update_pmk_cache_ft(vdev, &pmksa);
+		if (status == QDF_STATUS_SUCCESS)
+			mlme_debug("Updated the crypto cache table");
+	}
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+}
+
+bool cm_lookup_pmkid_using_bssid(struct wlan_objmgr_psoc *psoc,
+				 uint8_t vdev_id,
+				 struct wlan_crypto_pmksa *pmk_cache)
+{
+	struct wlan_crypto_pmksa *pmksa;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("Invalid vdev");
+		return false;
+	}
+
+	pmksa = wlan_crypto_get_pmksa(vdev, &pmk_cache->bssid);
+	if (!pmksa) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		return false;
+	}
+	qdf_mem_copy(pmk_cache->pmkid, pmksa->pmkid, sizeof(pmk_cache->pmkid));
+	qdf_mem_copy(pmk_cache->pmk, pmksa->pmk, pmksa->pmk_len);
+	pmk_cache->pmk_len = pmksa->pmk_len;
+	pmk_cache->pmk_lifetime = pmksa->pmk_lifetime;
+	pmk_cache->pmk_lifetime_threshold = pmksa->pmk_lifetime_threshold;
+	pmk_cache->pmk_entry_ts = pmksa->pmk_entry_ts;
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+
+	return true;
+}
+
 void cm_roam_restore_default_config(struct wlan_objmgr_pdev *pdev,
 				    uint8_t vdev_id)
 {
@@ -3955,6 +4035,95 @@ cm_store_sae_single_pmk_to_global_cache(struct wlan_objmgr_psoc *psoc,
 	qdf_mem_zero(pmk_info, sizeof(*pmk_info));
 	qdf_mem_free(pmk_info);
 }
+
+void cm_check_and_set_sae_single_pmk_cap(struct wlan_objmgr_psoc *psoc,
+					 uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_pmk_info *pmk_info;
+	struct wlan_crypto_pmksa *pmkid_cache;
+	int32_t keymgmt;
+	bool lookup_success;
+	QDF_STATUS status;
+	struct qdf_mac_addr bssid = QDF_MAC_ADDR_ZERO_INIT;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("get vdev failed");
+		return;
+	}
+	status = wlan_vdev_get_bss_peer_mac(vdev, &bssid);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("Failed to find connected bssid");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		return;
+	}
+	keymgmt = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
+	if (keymgmt < 0) {
+		mlme_err("Invalid mgmt cipher");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		return;
+	}
+
+	if (keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_SAE)) {
+		struct cm_roam_values_copy src_cfg;
+
+		wlan_cm_roam_cfg_get_value(psoc, vdev_id, IS_SINGLE_PMK,
+					   &src_cfg);
+		wlan_mlme_set_sae_single_pmk_bss_cap(psoc, vdev_id,
+						     src_cfg.bool_value);
+		if (!src_cfg.bool_value)
+			goto end;
+
+		wlan_crypto_set_sae_single_pmk_bss_cap(vdev, &bssid, true);
+
+		pmkid_cache = qdf_mem_malloc(sizeof(*pmkid_cache));
+		if (!pmkid_cache)
+			goto end;
+
+		qdf_copy_macaddr(&pmkid_cache->bssid, &bssid);
+		/*
+		 * In SAE single pmk roaming case, there will
+		 * be no PMK entry found for the AP in pmk cache.
+		 * So if the lookup is successful, then we have done
+		 * a FULL sae here. In that case, clear all other
+		 * single pmk entries.
+		 */
+		lookup_success =
+			cm_lookup_pmkid_using_bssid(psoc, vdev_id, pmkid_cache);
+		if (lookup_success) {
+			wlan_crypto_selective_clear_sae_single_pmk_entries(vdev,
+					&bssid);
+
+			pmk_info = qdf_mem_malloc(sizeof(*pmk_info));
+			if (!pmk_info) {
+				qdf_mem_zero(pmkid_cache, sizeof(*pmkid_cache));
+				qdf_mem_free(pmkid_cache);
+				goto end;
+			}
+
+			qdf_mem_copy(pmk_info->pmk, pmkid_cache->pmk,
+				     pmkid_cache->pmk_len);
+			pmk_info->pmk_len = pmkid_cache->pmk_len;
+			pmk_info->spmk_timestamp = pmkid_cache->pmk_entry_ts;
+			pmk_info->spmk_timeout_period  =
+				(pmkid_cache->pmk_lifetime *
+				 pmkid_cache->pmk_lifetime_threshold / 100);
+
+			wlan_mlme_update_sae_single_pmk(vdev, pmk_info);
+
+			qdf_mem_zero(pmk_info, sizeof(*pmk_info));
+			qdf_mem_free(pmk_info);
+		}
+
+		qdf_mem_zero(pmkid_cache, sizeof(*pmkid_cache));
+		qdf_mem_free(pmkid_cache);
+	}
+
+end:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+}
 #endif
 
 bool cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
@@ -3986,7 +4155,6 @@ bool cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
 	return false;
 }
 
-#ifdef FEATURE_CM_ENABLE
 static void cm_roam_start_init(struct wlan_objmgr_psoc *psoc,
 			       struct wlan_objmgr_pdev *pdev,
 			       struct wlan_objmgr_vdev *vdev)
@@ -4068,6 +4236,7 @@ void cm_roam_start_init_on_connect(struct wlan_objmgr_pdev *pdev,
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 }
 
+#ifdef FEATURE_CM_ENABLE
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static QDF_STATUS
 cm_find_roam_candidate(struct wlan_objmgr_pdev *pdev,

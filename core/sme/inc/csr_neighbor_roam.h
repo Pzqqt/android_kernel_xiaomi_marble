@@ -166,16 +166,12 @@ static inline void csr_neighbor_roam_send_lfr_metric_event(
 
 QDF_STATUS csr_roam_copy_connected_profile(struct mac_context *mac,
 		uint32_t sessionId, struct csr_roam_profile *pDstProfile);
-#endif /* FEATURE_CM_ENABLE */
 
 #ifdef FEATURE_WLAN_ESE
-QDF_STATUS csr_set_cckm_ie(struct mac_context *mac, const uint8_t sessionId,
-		const uint8_t *pCckmIe, const uint8_t ccKmIeLen);
-#ifndef FEATURE_CM_ENABLE
 QDF_STATUS csr_roam_read_tsf(struct mac_context *mac, uint8_t *pTimestamp,
 		const uint8_t sessionId);
-#endif
 #endif /* FEATURE_WLAN_ESE */
+#endif /* FEATURE_CM_ENABLE */
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS csr_roam_synch_callback(struct mac_context *mac,

@@ -187,6 +187,33 @@ release_ref:
 
 	return status;
 }
+
+QDF_STATUS ucfg_cm_set_cckm_ie(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			       const uint8_t *cck_ie, const uint8_t cck_ie_len)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_CM_ID);
+
+	if (!vdev) {
+		mlme_err("vdev not found for id %d", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		return QDF_STATUS_E_FAILURE;
+	}
+	qdf_mem_copy(mlme_priv->connect_info.cckm_ie, cck_ie, cck_ie_len);
+	mlme_priv->connect_info.cckm_ie_len = cck_ie_len;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #endif
 
 #ifdef FEATURE_CM_ENABLE

@@ -932,14 +932,6 @@ struct join_req {
 	tSirMacRateSet operationalRateSet;      /* Has 11a or 11b rates */
 	tSirMacRateSet extendedRateSet; /* Has 11g rates */
 	tSirRSNie rsnIE;        /* RSN IE to be sent in */
-	/* (Re) Association Request */
-#ifdef FEATURE_WLAN_ESE
-	/* CCMK IE to be included as handler for join and reassoc is */
-	tSirCCKMie cckmIE;
-	/* the same. The join will never carry cckm, but will be set to */
-	/* 0. */
-#endif
-
 	tSirAddie addIEScan;    /* Additional IE to be sent in */
 	/* (unicast) Probe Request at the time of join */
 

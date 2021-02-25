@@ -519,7 +519,6 @@ struct csr_roam_session {
 	bool isPrevApInfoValid;
 	tSirMacSSid prevApSSID;
 	uint32_t roamTS1;
-	tCsrEseCckmIe suppCckmIeInfo;
 #endif
 	uint8_t bRefAssocStartCnt;      /* Tracking assoc start indication */
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
@@ -900,6 +899,7 @@ QDF_STATUS
 csr_roam_update_add_ies(struct mac_context *mac,
 		tSirUpdateIE *pUpdateIE, eUpdateIEsType updateType);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
+#ifndef FEATURE_CM_ENABLE
 /**
  * csr_scan_save_roam_offload_ap_to_scan_cache() - This function parses the
  * received beacon/probe response from the firmware as part of the roam synch
@@ -915,7 +915,7 @@ QDF_STATUS
 csr_rso_save_ap_to_scan_cache(struct mac_context *mac,
 			      struct roam_offload_synch_ind *roam_synch_ind,
 			      struct bss_description *bss_desc_ptr);
-
+#endif
 /**
  * csr_process_ho_fail_ind  - This function will process the Hand Off Failure
  * indication received from the firmware. It will trigger a disconnect on
