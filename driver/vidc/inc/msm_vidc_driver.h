@@ -293,7 +293,7 @@ enum msm_vidc_allow msm_vidc_allow_stop(struct msm_vidc_inst *inst);
 bool msm_vidc_allow_start(struct msm_vidc_inst *inst);
 bool msm_vidc_allow_streamon(struct msm_vidc_inst *inst, u32 type);
 bool msm_vidc_allow_streamoff(struct msm_vidc_inst *inst, u32 type);
-bool msm_vidc_allow_qbuf(struct msm_vidc_inst *inst);
+enum msm_vidc_allow msm_vidc_allow_qbuf(struct msm_vidc_inst *inst, u32 type);
 enum msm_vidc_allow msm_vidc_allow_input_psc(struct msm_vidc_inst *inst);
 bool msm_vidc_allow_last_flag(struct msm_vidc_inst *inst);
 int msm_vidc_state_change_streamon(struct msm_vidc_inst *inst, u32 type);

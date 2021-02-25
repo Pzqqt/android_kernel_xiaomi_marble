@@ -1022,18 +1022,38 @@ bool msm_vidc_allow_streamoff(struct msm_vidc_inst *inst, u32 type)
 	return allow;
 }
 
-bool msm_vidc_allow_qbuf(struct msm_vidc_inst *inst)
+enum msm_vidc_allow msm_vidc_allow_qbuf(struct msm_vidc_inst *inst, u32 type)
 {
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
-		return false;
+		return MSM_VIDC_DISALLOW;
 	}
 	if (inst->state == MSM_VIDC_ERROR) {
 		i_vpr_e(inst, "%s: inst in error state\n", __func__);
-		return false;
-	} else {
-		return true;
+		return MSM_VIDC_DISALLOW;
 	}
+	if (type == INPUT_META_PLANE || type == OUTPUT_META_PLANE)
+		return MSM_VIDC_DEFER;
+
+	if (type == INPUT_MPLANE) {
+		if (inst->state == MSM_VIDC_OPEN ||
+			inst->state == MSM_VIDC_START_OUTPUT)
+			return MSM_VIDC_DEFER;
+		else
+			return MSM_VIDC_ALLOW;
+	} else if (type == OUTPUT_MPLANE) {
+		if (inst->state == MSM_VIDC_OPEN ||
+			inst->state == MSM_VIDC_START_INPUT ||
+			inst->state == MSM_VIDC_DRAIN_START_INPUT)
+			return MSM_VIDC_DEFER;
+		else
+			return MSM_VIDC_ALLOW;
+	} else {
+		i_vpr_e(inst, "%s: unknown buffer type %d\n", __func__, type);
+		return MSM_VIDC_DISALLOW;
+	}
+
+	return MSM_VIDC_DISALLOW;
 }
 
 enum msm_vidc_allow msm_vidc_allow_input_psc(struct msm_vidc_inst *inst)
@@ -1730,6 +1750,7 @@ int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 	int rc = 0;
 	struct msm_vidc_buffer *buf;
 	struct msm_vidc_buffer *meta;
+	enum msm_vidc_allow allow;
 	int port;
 
 	if (!inst || !vb2) {
@@ -1741,20 +1762,18 @@ int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 	if (!buf)
 		return -EINVAL;
 
-	/* meta buffer will be queued along with actual buffer */
-	if (buf->type == MSM_VIDC_BUF_INPUT_META ||
-	    buf->type == MSM_VIDC_BUF_OUTPUT_META) {
-		buf->attr |= MSM_VIDC_ATTR_DEFERRED;
-		i_vpr_h(inst, "%s: %s_META qbuf deferred\n", __func__,
-			buf->type == MSM_VIDC_BUF_INPUT_META ? "INPUT" : "OUTPUT");
-		return 0;
-	}
-
 	/* skip queuing if streamon not completed */
 	port = v4l2_type_to_driver_port(inst, vb2->type, __func__);
 	if (port < 0)
 		return -EINVAL;
-	if (!inst->vb2q[port].streaming) {
+
+	allow = msm_vidc_allow_qbuf(inst, vb2->type);
+	if (allow == MSM_VIDC_DISALLOW) {
+		i_vpr_e(inst, "%s: qbuf not allowed\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!inst->vb2q[port].streaming || allow == MSM_VIDC_DEFER) {
 		buf->attr |= MSM_VIDC_ATTR_DEFERRED;
 		print_vidc_buffer(VIDC_HIGH, "high", "qbuf deferred", inst, buf);
 		return 0;

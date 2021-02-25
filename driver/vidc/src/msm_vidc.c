@@ -442,7 +442,7 @@ int msm_vidc_qbuf(void *instance, struct media_device *mdev,
 
 	mutex_lock(&inst->lock);
 
-	if (!msm_vidc_allow_qbuf(inst)) {
+	if (is_session_error(inst)) {
 		rc = -EBUSY;
 		goto unlock;
 	}
