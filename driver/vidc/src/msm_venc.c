@@ -1084,142 +1084,6 @@ error:
 	return rc;
 }
 
-static int msm_venc_s_fmt_input(struct msm_vidc_inst *inst, struct v4l2_format *f)
-{
-	int rc = 0;
-	struct v4l2_format *fmt;
-	struct msm_vidc_core *core;
-	u32 codec_align;
-
-	if (!inst || !inst->core || !inst->capabilities) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
-	core = inst->core;
-
-	fmt = &inst->fmts[INPUT_PORT];
-	fmt->type = INPUT_MPLANE;
-	fmt->fmt.pix_mp.pixelformat = f->fmt.pix_mp.pixelformat;
-	fmt->fmt.pix_mp.width = VIDEO_Y_STRIDE_PIX(fmt->fmt.pix_mp.pixelformat,
-		f->fmt.pix_mp.width);
-	fmt->fmt.pix_mp.height = VIDEO_Y_SCANLINES(fmt->fmt.pix_mp.pixelformat,
-		f->fmt.pix_mp.height);
-
-	fmt->fmt.pix_mp.num_planes = 1;
-	fmt->fmt.pix_mp.plane_fmt[0].bytesperline =
-		VIDEO_Y_STRIDE_BYTES(fmt->fmt.pix_mp.pixelformat,
-		f->fmt.pix_mp.width);
-	fmt->fmt.pix_mp.plane_fmt[0].sizeimage = call_session_op(core,
-		buffer_size, inst, MSM_VIDC_BUF_INPUT);
-	fmt->fmt.pix_mp.colorspace = f->fmt.pix_mp.colorspace;
-	fmt->fmt.pix_mp.xfer_func = f->fmt.pix_mp.xfer_func;
-	fmt->fmt.pix_mp.ycbcr_enc = f->fmt.pix_mp.ycbcr_enc;
-	fmt->fmt.pix_mp.quantization = f->fmt.pix_mp.quantization;
-	inst->buffers.input.min_count = call_session_op(core,
-		min_count, inst, MSM_VIDC_BUF_INPUT);
-	inst->buffers.input.extra_count = call_session_op(core,
-		extra_count, inst, MSM_VIDC_BUF_INPUT);
-	if (inst->buffers.input.actual_count <
-		inst->buffers.input.min_count +
-		inst->buffers.input.extra_count) {
-		inst->buffers.input.actual_count =
-			inst->buffers.input.min_count +
-			inst->buffers.input.extra_count;
-	}
-	inst->buffers.input.size =
-		fmt->fmt.pix_mp.plane_fmt[0].sizeimage;
-
-	codec_align = inst->fmts[OUTPUT_PORT].fmt.pix_mp.pixelformat ==
-		V4L2_PIX_FMT_HEVC ? 32 : 16;
-
-	/* check if resolution changed */
-	if (inst->fmts[OUTPUT_PORT].fmt.pix_mp.width >
-		ALIGN(f->fmt.pix_mp.width, codec_align) ||
-		inst->fmts[OUTPUT_PORT].fmt.pix_mp.height >
-		ALIGN(f->fmt.pix_mp.height, codec_align)) {
-		/* reset bitstream port with updated resolution */
-		inst->fmts[OUTPUT_PORT].fmt.pix_mp.width =
-			ALIGN(f->fmt.pix_mp.width, codec_align);
-		inst->fmts[OUTPUT_PORT].fmt.pix_mp.height =
-			ALIGN(f->fmt.pix_mp.height, codec_align);
-		inst->fmts[OUTPUT_PORT].fmt.pix_mp.plane_fmt[0].sizeimage =
-			call_session_op(core, buffer_size,
-				inst, MSM_VIDC_BUF_OUTPUT);
-
-		/* reset crop dimensions with updated resolution */
-		inst->crop.top = inst->crop.left = 0;
-		inst->crop.width = f->fmt.pix_mp.width;
-		inst->crop.height = f->fmt.pix_mp.height;
-
-		/* reset compose dimensions with updated resolution */
-		inst->compose.top = inst->crop.left = 0;
-		inst->compose.width = f->fmt.pix_mp.width;
-		inst->compose.height = f->fmt.pix_mp.height;
-	}
-
-	//rc = msm_vidc_check_session_supported(inst);
-	if (rc)
-		return rc;
-	//update_log_ctxt(inst->sid, inst->session_type,
-	//	mplane->pixelformat);
-	i_vpr_h(inst,
-		"%s: input: codec %#x width %d height %d size %d min_count %d extra_count %d\n",
-		__func__, f->fmt.pix_mp.pixelformat, f->fmt.pix_mp.width,
-		f->fmt.pix_mp.height,
-		fmt->fmt.pix_mp.plane_fmt[0].sizeimage,
-		inst->buffers.input.min_count,
-		inst->buffers.input.extra_count);
-
-	//msm_vidc_update_dcvs(inst);
-	//msm_vidc_update_batching(inst);
-
-	memcpy(f, fmt, sizeof(struct v4l2_format));
-
-	return rc;
-}
-
-static int msm_venc_s_fmt_input_meta(struct msm_vidc_inst *inst, struct v4l2_format *f)
-{
-	int rc = 0;
-	struct v4l2_format *fmt;
-	struct msm_vidc_core *core;
-
-	if (!inst || !inst->core) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
-	core = inst->core;
-
-	fmt = &inst->fmts[INPUT_META_PORT];
-	fmt->type = INPUT_META_PLANE;
-	fmt->fmt.meta.dataformat = V4L2_META_FMT_VIDC;
-	if (is_input_meta_enabled(inst)) {
-		fmt->fmt.meta.buffersize = call_session_op(core,
-			buffer_size, inst, MSM_VIDC_BUF_OUTPUT_META);
-		inst->buffers.input_meta.min_count =
-				inst->buffers.input.min_count;
-		inst->buffers.input_meta.extra_count =
-				inst->buffers.input.extra_count;
-		inst->buffers.input_meta.actual_count =
-				inst->buffers.input.actual_count;
-		inst->buffers.input_meta.size = fmt->fmt.meta.buffersize;
-	} else {
-		fmt->fmt.meta.buffersize = 0;
-		inst->buffers.input_meta.min_count = 0;
-		inst->buffers.input_meta.extra_count = 0;
-		inst->buffers.input_meta.actual_count = 0;
-		inst->buffers.input_meta.size = 0;
-	}
-	i_vpr_h(inst,
-		"%s: input meta: size %d min_count %d extra_count %d\n",
-		__func__, fmt->fmt.meta.buffersize,
-		inst->buffers.input_meta.min_count,
-		inst->buffers.input_meta.extra_count);
-
-	memcpy(f, fmt, sizeof(struct v4l2_format));
-	return rc;
-}
-
 static int msm_venc_s_fmt_output(struct msm_vidc_inst *inst, struct v4l2_format *f)
 {
 	int rc = 0;
@@ -1283,14 +1147,6 @@ static int msm_venc_s_fmt_output(struct msm_vidc_inst *inst, struct v4l2_format 
 	//update_log_ctxt(inst->sid, inst->session_type,
 	//	mplane->pixelformat);
 
-	i_vpr_h(inst,
-		"%s: output: format %#x width %d height %d size %d min_count %d extra_count %d\n",
-		__func__, fmt->fmt.pix_mp.pixelformat, fmt->fmt.pix_mp.width,
-		fmt->fmt.pix_mp.height,
-		fmt->fmt.pix_mp.plane_fmt[0].sizeimage,
-		inst->buffers.output.min_count,
-		inst->buffers.output.extra_count);
-
 	memcpy(f, fmt, sizeof(struct v4l2_format));
 
 	return rc;
@@ -1328,11 +1184,121 @@ static int msm_venc_s_fmt_output_meta(struct msm_vidc_inst *inst, struct v4l2_fo
 		inst->buffers.output_meta.actual_count = 0;
 		inst->buffers.output_meta.size = 0;
 	}
-	i_vpr_h(inst,
-		"%s: output meta: size %d min_count %d extra_count %d\n",
-		__func__, fmt->fmt.meta.buffersize,
-		inst->buffers.output_meta.min_count,
-		inst->buffers.output_meta.extra_count);
+
+	memcpy(f, fmt, sizeof(struct v4l2_format));
+	return rc;
+}
+
+static int msm_venc_s_fmt_input(struct msm_vidc_inst *inst, struct v4l2_format *f)
+{
+	int rc = 0;
+	struct v4l2_format *fmt;
+	struct msm_vidc_core *core;
+
+	if (!inst || !inst->core || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+
+	fmt = &inst->fmts[INPUT_PORT];
+	fmt->type = INPUT_MPLANE;
+	fmt->fmt.pix_mp.pixelformat = f->fmt.pix_mp.pixelformat;
+	fmt->fmt.pix_mp.width = VIDEO_Y_STRIDE_PIX(fmt->fmt.pix_mp.pixelformat,
+		f->fmt.pix_mp.width);
+	fmt->fmt.pix_mp.height = VIDEO_Y_SCANLINES(fmt->fmt.pix_mp.pixelformat,
+		f->fmt.pix_mp.height);
+
+	fmt->fmt.pix_mp.num_planes = 1;
+	fmt->fmt.pix_mp.plane_fmt[0].bytesperline =
+		VIDEO_Y_STRIDE_BYTES(fmt->fmt.pix_mp.pixelformat,
+		f->fmt.pix_mp.width);
+	fmt->fmt.pix_mp.plane_fmt[0].sizeimage = call_session_op(core,
+		buffer_size, inst, MSM_VIDC_BUF_INPUT);
+	fmt->fmt.pix_mp.colorspace = f->fmt.pix_mp.colorspace;
+	fmt->fmt.pix_mp.xfer_func = f->fmt.pix_mp.xfer_func;
+	fmt->fmt.pix_mp.ycbcr_enc = f->fmt.pix_mp.ycbcr_enc;
+	fmt->fmt.pix_mp.quantization = f->fmt.pix_mp.quantization;
+	inst->buffers.input.min_count = call_session_op(core,
+		min_count, inst, MSM_VIDC_BUF_INPUT);
+	inst->buffers.input.extra_count = call_session_op(core,
+		extra_count, inst, MSM_VIDC_BUF_INPUT);
+	if (inst->buffers.input.actual_count <
+		inst->buffers.input.min_count +
+		inst->buffers.input.extra_count) {
+		inst->buffers.input.actual_count =
+			inst->buffers.input.min_count +
+			inst->buffers.input.extra_count;
+	}
+	inst->buffers.input.size =
+		fmt->fmt.pix_mp.plane_fmt[0].sizeimage;
+
+	if (fmt->fmt.pix_mp.width != VIDEO_Y_STRIDE_PIX(
+		fmt->fmt.pix_mp.pixelformat, inst->crop.width) ||
+		fmt->fmt.pix_mp.height != VIDEO_Y_SCANLINES(
+		fmt->fmt.pix_mp.pixelformat, inst->crop.height)) {
+
+		/* reset crop dimensions with updated resolution */
+		inst->crop.top = inst->crop.left = 0;
+		inst->crop.width = f->fmt.pix_mp.width;
+		inst->crop.height = f->fmt.pix_mp.height;
+
+		/* reset compose dimensions with updated resolution */
+		inst->compose.top = inst->crop.left = 0;
+		inst->compose.width = f->fmt.pix_mp.width;
+		inst->compose.height = f->fmt.pix_mp.height;
+
+		rc = msm_venc_s_fmt_output(inst, &inst->fmts[OUTPUT_PORT]);
+		if (rc)
+			return rc;
+	}
+
+	//rc = msm_vidc_check_session_supported(inst);
+	if (rc)
+		return rc;
+	//update_log_ctxt(inst->sid, inst->session_type,
+	//	mplane->pixelformat);
+
+	//msm_vidc_update_dcvs(inst);
+	//msm_vidc_update_batching(inst);
+
+	memcpy(f, fmt, sizeof(struct v4l2_format));
+
+	return rc;
+}
+
+static int msm_venc_s_fmt_input_meta(struct msm_vidc_inst *inst, struct v4l2_format *f)
+{
+	int rc = 0;
+	struct v4l2_format *fmt;
+	struct msm_vidc_core *core;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+
+	fmt = &inst->fmts[INPUT_META_PORT];
+	fmt->type = INPUT_META_PLANE;
+	fmt->fmt.meta.dataformat = V4L2_META_FMT_VIDC;
+	if (is_input_meta_enabled(inst)) {
+		fmt->fmt.meta.buffersize = call_session_op(core,
+			buffer_size, inst, MSM_VIDC_BUF_OUTPUT_META);
+		inst->buffers.input_meta.min_count =
+				inst->buffers.input.min_count;
+		inst->buffers.input_meta.extra_count =
+				inst->buffers.input.extra_count;
+		inst->buffers.input_meta.actual_count =
+				inst->buffers.input.actual_count;
+		inst->buffers.input_meta.size = fmt->fmt.meta.buffersize;
+	} else {
+		fmt->fmt.meta.buffersize = 0;
+		inst->buffers.input_meta.min_count = 0;
+		inst->buffers.input_meta.extra_count = 0;
+		inst->buffers.input_meta.actual_count = 0;
+		inst->buffers.input_meta.size = 0;
+	}
 
 	memcpy(f, fmt, sizeof(struct v4l2_format));
 	return rc;
@@ -1342,6 +1308,7 @@ static int msm_venc_s_fmt_output_meta(struct msm_vidc_inst *inst, struct v4l2_fo
 int msm_venc_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 {
 	int rc = 0;
+	struct v4l2_format *fmt = NULL;
 
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1349,24 +1316,40 @@ int msm_venc_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 	}
 
 	if (f->type == INPUT_MPLANE) {
+		fmt = &inst->fmts[INPUT_PORT];
 		rc = msm_venc_s_fmt_input(inst, f);
 		if (rc)
 			return rc;
 	} else if (f->type == INPUT_META_PLANE) {
+		fmt = &inst->fmts[INPUT_META_PORT];
 		rc = msm_venc_s_fmt_input_meta(inst, f);
 		if (rc)
 			return rc;
 	} else if (f->type == OUTPUT_MPLANE) {
+		fmt = &inst->fmts[OUTPUT_PORT];
 		rc = msm_venc_s_fmt_output(inst, f);
 		if (rc)
 			return rc;
 	} else if (f->type == OUTPUT_META_PLANE) {
+		fmt = &inst->fmts[OUTPUT_META_PORT];
 		rc = msm_venc_s_fmt_output_meta(inst, f);
 		if (rc)
 			return rc;
 	} else {
 		i_vpr_e(inst, "%s: invalid type %d\n", __func__, f->type);
 		return rc;
+	}
+
+	if (f->type == INPUT_MPLANE || f->type == OUTPUT_MPLANE) {
+		i_vpr_h(inst,
+			"%s: type %d: format %#x width %d height %d size %d\n",
+			__func__, f->type, fmt->fmt.pix_mp.pixelformat,
+			fmt->fmt.pix_mp.width,
+			fmt->fmt.pix_mp.height,
+			fmt->fmt.pix_mp.plane_fmt[0].sizeimage);
+	} else {
+		i_vpr_h(inst, "%s: type %d: size %d\n",
+			__func__, f->type, fmt->fmt.meta.buffersize);
 	}
 
 	return rc;
