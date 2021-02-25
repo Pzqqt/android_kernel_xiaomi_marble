@@ -329,7 +329,8 @@ int msm_vidc_set_clocks(struct msm_vidc_inst* inst)
 	int rc = 0;
 	struct msm_vidc_core* core;
 	struct msm_vidc_inst* temp;
-	u64 freq, rate;
+	u64 freq;
+        u64 rate = 0;
 	u32 data_size;
 	bool increment, decrement;
 	u64 curr_time_ns;
