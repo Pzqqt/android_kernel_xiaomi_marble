@@ -2085,7 +2085,7 @@ int msm_vidc_remove_session(struct msm_vidc_inst *inst)
 	list_for_each_entry_safe(i, temp, &core->instances, list) {
 		if (i->session_id == inst->session_id) {
 			list_del_init(&i->list);
-			d_vpr_h("%s: removed session %d\n",
+			d_vpr_h("%s: removed session %#x\n",
 				__func__, i->session_id);
 			inst->sid = 0;
 		}
@@ -2341,7 +2341,7 @@ int msm_vidc_get_inst_capability(struct msm_vidc_inst *inst)
 	return rc;
 }
 
-static int msm_vidc_deinit_core_caps(struct msm_vidc_core *core)
+int msm_vidc_deinit_core_caps(struct msm_vidc_core *core)
 {
 	int rc = 0;
 
@@ -2349,14 +2349,15 @@ static int msm_vidc_deinit_core_caps(struct msm_vidc_core *core)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-	d_vpr_h("%s: skip freeing core capabilities\n", __func__);
-	//kfree(core->capabilities);
-	//core->capabilities = NULL;
+
+	kfree(core->capabilities);
+	core->capabilities = NULL;
+	d_vpr_h("%s: Core capabilities freed\n", __func__);
 
 	return rc;
 }
 
-static int msm_vidc_init_core_caps(struct msm_vidc_core *core)
+int msm_vidc_init_core_caps(struct msm_vidc_core *core)
 {
 	int rc = 0;
 	int i, num_platform_caps;
@@ -2376,32 +2377,25 @@ static int msm_vidc_init_core_caps(struct msm_vidc_core *core)
 			goto exit;
 	}
 
+	core->capabilities = kcalloc(1,
+		(sizeof(struct msm_vidc_core_capability) *
+		(CORE_CAP_MAX + 1)), GFP_KERNEL);
 	if (!core->capabilities) {
-		core->capabilities = kcalloc(1,
-			(sizeof(struct msm_vidc_core_capability) *
-			CORE_CAP_MAX), GFP_KERNEL);
-		if (!core->capabilities) {
-			d_vpr_e("%s: failed to allocate core capabilities\n",
-				__func__);
-			rc = -ENOMEM;
-			goto exit;
-		}
-	} else {
-		d_vpr_h("%s: capabilities memory is expected to be freed\n",
+		d_vpr_e("%s: failed to allocate core capabilities\n",
 			__func__);
+		rc = -ENOMEM;
+		goto exit;
 	}
 
 	num_platform_caps = core->platform->data.core_data_size;
 
 	/* loop over platform caps */
-	for (i = 0; i < num_platform_caps; i++) {
+	for (i = 0; i < num_platform_caps && i < CORE_CAP_MAX; i++) {
 		core->capabilities[platform_data[i].type].type = platform_data[i].type;
 		core->capabilities[platform_data[i].type].value = platform_data[i].value;
 	}
 
 exit:
-	if (rc)
-		msm_vidc_deinit_core_caps(core);
 	return rc;
 }
 
@@ -2434,7 +2428,7 @@ static void update_inst_capability(struct msm_platform_inst_capability *in,
 	}
 }
 
-static int msm_vidc_deinit_instance_caps(struct msm_vidc_core *core)
+int msm_vidc_deinit_instance_caps(struct msm_vidc_core *core)
 {
 	int rc = 0;
 
@@ -2442,14 +2436,15 @@ static int msm_vidc_deinit_instance_caps(struct msm_vidc_core *core)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-	d_vpr_h("%s: skip freeing core->instance capabilities\n", __func__);
-	//kfree(core->inst_caps);
-	//core->inst_caps = NULL;
+
+	kfree(core->inst_caps);
+	core->inst_caps = NULL;
+	d_vpr_h("%s: core->inst_caps freed\n", __func__);
 
 	return rc;
 }
 
-static int msm_vidc_init_instance_caps(struct msm_vidc_core *core)
+int msm_vidc_init_instance_caps(struct msm_vidc_core *core)
 {
 	int rc = 0;
 	u8 enc_valid_codecs, dec_valid_codecs;
@@ -2482,20 +2477,14 @@ static int msm_vidc_init_instance_caps(struct msm_vidc_core *core)
 	COUNT_BITS(count_bits, codecs_count);
 
 	core->codecs_count = codecs_count;
-
+	core->inst_caps = kcalloc(codecs_count,
+		sizeof(struct msm_vidc_inst_capability),
+		GFP_KERNEL);
 	if (!core->inst_caps) {
-		core->inst_caps = kcalloc(codecs_count,
-			sizeof(struct msm_vidc_inst_capability),
-			GFP_KERNEL);
-		if (!core->inst_caps) {
-			d_vpr_e("%s: failed to allocate core capabilities\n",
-				__func__);
-			rc = -ENOMEM;
-			goto error;
-		}
-	} else {
-		d_vpr_h("%s: capabilities memory is expected to be freed\n",
+		d_vpr_e("%s: failed to allocate core capabilities\n",
 			__func__);
+		rc = -ENOMEM;
+		goto error;
 	}
 
 	check_bit = 0;
@@ -2547,10 +2536,7 @@ static int msm_vidc_init_instance_caps(struct msm_vidc_core *core)
 		}
 	}
 
-	return 0;
 error:
-	if (rc)
-		msm_vidc_deinit_instance_caps(core);
 	return rc;
 }
 
@@ -2568,13 +2554,13 @@ int msm_vidc_core_deinit(struct msm_vidc_core *core, bool force)
 	d_vpr_h("%s()\n", __func__);
 	if (core->state == MSM_VIDC_CORE_DEINIT)
 		goto unlock;
+
 	if (!force)
 		if (!list_empty(&core->instances))
 			goto unlock;
 
 	venus_hfi_core_deinit(core);
-	msm_vidc_deinit_instance_caps(core);
-	msm_vidc_deinit_core_caps(core);
+
 	/* unlink all sessions from core, if any */
 	list_for_each_entry_safe(inst, dummy, &core->instances, list) {
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
@@ -2601,13 +2587,6 @@ int msm_vidc_core_init(struct msm_vidc_core *core)
 		rc = 0;
 		goto unlock;
 	}
-
-	rc = msm_vidc_init_core_caps(core);
-	if (rc)
-		goto unlock;
-	rc = msm_vidc_init_instance_caps(core);
-	if (rc)
-		goto unlock;
 
 	msm_vidc_change_core_state(core, MSM_VIDC_CORE_INIT, __func__);
 	init_completion(&core->init_done);

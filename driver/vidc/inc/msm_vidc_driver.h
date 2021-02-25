@@ -301,5 +301,9 @@ bool inst_lock_check(struct msm_vidc_inst *inst, const char *function);
 int msm_vidc_update_meta_port_settings(struct msm_vidc_inst *inst);
 void msm_vidc_schedule_core_deinit(struct msm_vidc_core *core);
 bool msm_vidc_is_super_buffer(struct msm_vidc_inst *inst);
+int msm_vidc_init_core_caps(struct msm_vidc_core* core);
+int msm_vidc_init_instance_caps(struct msm_vidc_core* core);
+int msm_vidc_deinit_core_caps(struct msm_vidc_core* core);
+int msm_vidc_deinit_instance_caps(struct msm_vidc_core* core);
 #endif // _MSM_VIDC_DRIVER_H_
 
