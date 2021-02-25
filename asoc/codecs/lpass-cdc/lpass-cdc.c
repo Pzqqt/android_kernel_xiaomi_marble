@@ -18,6 +18,7 @@
 #include "lpass-cdc.h"
 #include "internal.h"
 #include "lpass-cdc-clk-rsc.h"
+#include <linux/qti-regmap-debugfs.h>
 
 #define DRV_NAME "lpass-cdc"
 
@@ -1283,6 +1284,9 @@ static int lpass_cdc_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "%s:regmap init failed\n", __func__);
 		return -EINVAL;
 	}
+
+	devm_regmap_qti_debugfs_register(priv->dev, priv->regmap);
+
 	priv->read_dev = __lpass_cdc_reg_read;
 	priv->write_dev = __lpass_cdc_reg_write;
 

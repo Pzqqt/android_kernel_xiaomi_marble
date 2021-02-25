@@ -30,6 +30,7 @@
 #include "wsa883x.h"
 #include "internal.h"
 #include "asoc/bolero-slave-internal.h"
+#include <linux/qti-regmap-debugfs.h>
 
 #define T1_TEMP -10
 #define T2_TEMP 150
@@ -1637,6 +1638,8 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 			__func__, ret);
 		goto dev_err;
 	}
+
+	devm_regmap_qti_debugfs_register(&pdev->dev, wsa883x->regmap);
 
 	/* Set all interrupts as edge triggered */
 	for (i = 0; i < wsa883x_regmap_irq_chip.num_regs; i++)
