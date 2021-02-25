@@ -9,6 +9,8 @@
 #include <linux/debugfs.h>
 #include <linux/delay.h>
 #include <linux/types.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
 
 #ifndef VIDC_DBG_LABEL
 #define VIDC_DBG_LABEL "msm_vidc"
@@ -35,7 +37,7 @@ extern int msm_vidc_clock_voting;
 /* To enable messages OR these values and
  * echo the result to debugfs file.
  *
- * To enable all messages set debug_level = 0x101F
+ * To enable all messages set msm_vidc_debug = 0x101F
  */
 
 enum vidc_msg_prio {

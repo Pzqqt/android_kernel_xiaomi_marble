@@ -15,7 +15,7 @@
 #define MAX_DEBUG_LEVEL_STRING_LEN 15
 
 int msm_vidc_debug = VIDC_ERR | VIDC_PRINTK | FW_ERROR | FW_FATAL;
-EXPORT_SYMBOL(msm_vidc_debug);
+module_param(msm_vidc_debug, int, 0644);
 
 bool msm_vidc_lossless_encode = !true;
 EXPORT_SYMBOL(msm_vidc_lossless_encode);
@@ -141,61 +141,6 @@ static const struct file_operations ssr_fops = {
 	.write = trigger_ssr_write,
 };
 
-static ssize_t debug_level_write(struct file* filp, const char __user* buf,
-	size_t count, loff_t* ppos)
-{
-	int rc = 0;
-	struct msm_vidc_core* core = filp->private_data;
-	char kbuf[MAX_DEBUG_LEVEL_STRING_LEN] = { 0 };
-
-	/* filter partial writes and invalid commands */
-	if (*ppos != 0 || count >= sizeof(kbuf) || count == 0) {
-		d_vpr_e("returning error - pos %d, count %d\n", *ppos, count);
-		rc = -EINVAL;
-	}
-
-	rc = simple_write_to_buffer(kbuf, sizeof(kbuf) - 1, ppos, buf, count);
-	if (rc < 0) {
-		d_vpr_e("%s: User memory fault\n", __func__);
-		rc = -EFAULT;
-		goto exit;
-	}
-
-	rc = kstrtoint(kbuf, 0, &msm_vidc_debug);
-	if (rc) {
-		d_vpr_e("returning error err %d\n", rc);
-		rc = -EINVAL;
-		goto exit;
-	}
-	rc = count;
-	if (core->capabilities) {
-		core->capabilities[HW_RESPONSE_TIMEOUT].value =
-			((msm_vidc_debug & 0xFF) >
-			(VIDC_ERR | VIDC_HIGH)) ? 1500 : 1000;
-		d_vpr_h("debug timeout updated to - %d ms\n",
-			core->capabilities[HW_RESPONSE_TIMEOUT].value);
-	}
-
-exit:
-	return rc;
-}
-
-static ssize_t debug_level_read(struct file* file, char __user* buf,
-	size_t count, loff_t* ppos)
-{
-	size_t len;
-	char kbuf[MAX_DEBUG_LEVEL_STRING_LEN];
-
-	len = scnprintf(kbuf, sizeof(kbuf), "0x%08x\n", msm_vidc_debug);
-	return simple_read_from_buffer(buf, count, ppos, kbuf, len);
-}
-
-static const struct file_operations debug_level_fops = {
-	.open = simple_open,
-	.write = debug_level_write,
-	.read = debug_level_read,
-};
-
 struct dentry* msm_vidc_debugfs_init_drv()
 {
 	struct dentry *dir = NULL;
@@ -248,11 +193,6 @@ struct dentry *msm_vidc_debugfs_init_core(void *core_in)
 	}
 	if (!debugfs_create_file("trigger_ssr", 0200,
 			dir, core, &ssr_fops)) {
-		d_vpr_e("debugfs_create_file: fail\n");
-		goto failed_create_dir;
-	}
-	if (!debugfs_create_file("debug_level", 0644,
-			parent, core, &debug_level_fops)) {
 		d_vpr_e("debugfs_create_file: fail\n");
 		goto failed_create_dir;
 	}
