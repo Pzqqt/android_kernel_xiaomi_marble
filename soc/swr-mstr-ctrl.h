@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SWR_WCD_CTRL_H
@@ -75,6 +75,7 @@ enum {
 enum {
 	SWR_PDM = 0,
 	SWR_PCM,
+	SWR_PDM_32,
 };
 
 struct usecase {

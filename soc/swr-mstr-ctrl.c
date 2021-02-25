@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/irq.h>
@@ -739,7 +739,7 @@ static int swrm_get_port_config(struct swr_mstr_ctrl *swrm)
 }
 
 static int swrm_pcm_port_config(struct swr_mstr_ctrl *swrm, u8 port_num,
-				bool dir, bool enable)
+				u8 stream_type, bool dir, bool enable)
 {
 	u16 reg_addr = 0;
 	u32 reg_val = SWRM_COMP_FEATURE_CFG_DEFAULT_VAL;
@@ -749,9 +749,19 @@ static int swrm_pcm_port_config(struct swr_mstr_ctrl *swrm, u8 port_num,
 			__func__, port_num);
 		return -EINVAL;
 	}
-	reg_addr = ((dir) ? SWRM_DIN_DP_PCM_PORT_CTRL(port_num) : \
+
+	switch (stream_type) {
+	case SWR_PCM:
+		reg_addr = ((dir) ? SWRM_DIN_DP_PCM_PORT_CTRL(port_num) : \
 				SWRM_DOUT_DP_PCM_PORT_CTRL(port_num));
-	swr_master_write(swrm, reg_addr, enable);
+		swr_master_write(swrm, reg_addr, enable);
+		break;
+	case SWR_PDM_32:
+		break;
+	case SWR_PDM:
+	default:
+		return 0;
+	}
 
 	if (swrm->version >= SWRM_VERSION_1_7)
 		reg_val = SWRM_COMP_FEATURE_CFG_DEFAULT_VAL_V1P7;
@@ -1266,8 +1276,8 @@ static void swrm_disable_ports(struct swr_master *master,
 			__func__, i,
 			(SWRM_DP_PORT_CTRL_BANK((i + 1), bank)), value);
 
-		if (mport->stream_type == SWR_PCM)
-			swrm_pcm_port_config(swrm, (i + 1), mport->dir, false);
+		swrm_pcm_port_config(swrm, (i + 1),
+				mport->stream_type, mport->dir, false);
 	}
 }
 
@@ -1416,8 +1426,8 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 		if (!mport->port_en)
 			continue;
 
-		if (mport->stream_type == SWR_PCM)
-			swrm_pcm_port_config(swrm, (i + 1), mport->dir, true);
+		swrm_pcm_port_config(swrm, (i + 1),
+				mport->stream_type, mport->dir, true);
 		j = 0;
 		lane_ctrl  = 0;
 		sinterval = 0xFFFF;
