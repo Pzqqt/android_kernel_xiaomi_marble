@@ -2885,6 +2885,7 @@ uint32_t dp_tx_msdu_dequeue(struct dp_peer *peer, uint32_t ppdu_id,
 	struct msdu_completion_info *ptr_msdu_info = NULL;
 	uint32_t wbm_tsf;
 	uint32_t matched = 0;
+	qdf_nbuf_queue_t temp_defer_q;
 
 	if (qdf_unlikely(!peer))
 		return 0;
@@ -2901,15 +2902,20 @@ uint32_t dp_tx_msdu_dequeue(struct dp_peer *peer, uint32_t ppdu_id,
 	if (qdf_unlikely(!tx_tid))
 		return 0;
 
+	/* Initialize temp list */
+	qdf_nbuf_queue_init(&temp_defer_q);
+
 	/* lock here */
 	qdf_spin_lock_bh(&tx_tid->tasklet_tid_lock);
-	qdf_nbuf_queue_append(&tx_tid->defer_msdu_q, &tx_tid->msdu_comp_q);
+	qdf_nbuf_queue_append(&temp_defer_q, &tx_tid->msdu_comp_q);
 	qdf_nbuf_queue_init(&tx_tid->msdu_comp_q);
 	/* unlock here */
 	qdf_spin_unlock_bh(&tx_tid->tasklet_tid_lock);
 
 	/* lock here */
 	qdf_spin_lock_bh(&tx_tid->tid_lock);
+
+	qdf_nbuf_queue_append(&tx_tid->defer_msdu_q, &temp_defer_q);
 
 	if (qdf_nbuf_is_queue_empty(&tx_tid->defer_msdu_q)) {
 		/* release lock here */
