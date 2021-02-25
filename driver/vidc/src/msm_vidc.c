@@ -67,11 +67,11 @@ int msm_vidc_poll(void *instance, struct file *filp,
 
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
+		return POLLERR;
 	}
 	if (inst->state == MSM_VIDC_ERROR) {
 		i_vpr_e(inst, "%s: inst in error state\n", __func__);
-		return -EINVAL;
+		return POLLERR;
 	}
 
 	poll_wait(filp, &inst->event_handler.wait, wait);
