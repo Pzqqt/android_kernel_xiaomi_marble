@@ -7180,17 +7180,16 @@ static int wlan_hdd_handle_restrict_offchan_config(struct hdd_adapter *adapter,
 	if (restrict_offchan == 1) {
 		enum policy_mgr_con_mode pmode =
 		policy_mgr_convert_device_mode_to_qdf_type(dev_mode);
-		int chan;
+		uint32_t freq;
 
 		u32 vdev_id = wlan_vdev_get_id(vdev);
 
 		wlan_vdev_obj_lock(vdev);
 		wlan_vdev_mlme_cap_set(vdev, WLAN_VDEV_C_RESTRICT_OFFCHAN);
 		wlan_vdev_obj_unlock(vdev);
-		chan = wlan_freq_to_chan(
-			policy_mgr_get_channel(hdd_ctx->psoc, pmode, &vdev_id));
-		if (!chan ||
-		    wlan_hdd_send_avoid_freq_for_dnbs(hdd_ctx, chan)) {
+		freq = policy_mgr_get_channel(hdd_ctx->psoc, pmode, &vdev_id);
+		if (!freq ||
+		    wlan_hdd_send_avoid_freq_for_dnbs(hdd_ctx, freq)) {
 			hdd_err("unable to send avoid_freq");
 			ret_val = -EINVAL;
 		}

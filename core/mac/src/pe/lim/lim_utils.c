@@ -3711,6 +3711,8 @@ void lim_update_sta_run_time_ht_switch_chnl_params(struct mac_context *mac,
 						   tDot11fIEHTInfo *pHTInfo,
 						   struct pe_session *pe_session)
 {
+	qdf_freq_t chan_freq;
+
 	/* If self capability is set to '20Mhz only', then do not change the CB mode. */
 	if (!lim_get_ht_capability
 		    (mac, eHT_SUPPORTED_CHANNEL_WIDTH_SET, pe_session))
@@ -3731,8 +3733,10 @@ void lim_update_sta_run_time_ht_switch_chnl_params(struct mac_context *mac,
 		pe_debug("ch switch is in progress, ignore HT IE BW update");
 		return;
 	}
+	chan_freq = wlan_reg_legacy_chan_to_freq(mac->pdev,
+						 pHTInfo->primaryChannel);
 
-	if (wlan_reg_get_chan_enum(pHTInfo->primaryChannel) ==
+	if (wlan_reg_get_chan_enum_for_freq(chan_freq) ==
 	    INVALID_CHANNEL) {
 		pe_debug("Ignore Invalid channel in HT info");
 		return;
