@@ -1409,12 +1409,15 @@ struct ipa3_ipv6ct_mem {
  * @IPA_HW_Virtual: IPA hardware supporting virtual memory allocation
  * @IPA_HW_PCIE: IPA hardware supporting memory allocation over PCIE Bridge
  * @IPA_HW_Emulation: IPA emulation hardware
+ * @IPA_HW_Test: Regular IPA hardware in test mode (for
+ *             kernel-tests)
  */
 enum ipa3_hw_mode {
 	IPA_HW_MODE_NORMAL    = 0,
 	IPA_HW_MODE_VIRTUAL   = 1,
 	IPA_HW_MODE_PCIE      = 2,
 	IPA_HW_MODE_EMULATION = 3,
+	IPA_HW_MODE_TEST      = 4,
 };
 
 /*
