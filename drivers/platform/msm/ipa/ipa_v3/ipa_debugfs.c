@@ -3216,9 +3216,16 @@ static ssize_t ipa3_eth_read_perf_status(struct file *file,
 	switch (client->client_type) {
 	case IPA_ETH_CLIENT_AQC107:
 	case IPA_ETH_CLIENT_AQC113:
-		ret = ipa3_get_aqc_gsi_stats(&stats);
-		tx_ep = IPA_CLIENT_AQC_ETHERNET_CONS;
-		rx_ep = IPA_CLIENT_AQC_ETHERNET_PROD;
+	case IPA_ETH_CLIENT_NTN:
+		if (client->client_type == IPA_ETH_CLIENT_NTN) {
+			ret = ipa3_get_ntn_gsi_stats(&stats);
+			tx_ep = IPA_CLIENT_ETHERNET_CONS;
+			rx_ep = IPA_CLIENT_ETHERNET_PROD;
+		} else {
+			ret = ipa3_get_aqc_gsi_stats(&stats);
+			tx_ep = IPA_CLIENT_AQC_ETHERNET_CONS;
+			rx_ep = IPA_CLIENT_AQC_ETHERNET_PROD;
+		}
 		if (!ret) {
 			nbytes = scnprintf(dbg_buff, IPA_MAX_MSG_LEN,
 			"%s_ringFull=%u\n"
@@ -3258,7 +3265,9 @@ static ssize_t ipa3_eth_read_perf_status(struct file *file,
 		} else {
 			nbytes = scnprintf(dbg_buff,
 				IPA_MAX_MSG_LEN,
-				"Fail to read AQC GSI stats\n");
+				"Fail to read [%s][%s] GSI stats\n",
+				ipa_clients_strings[rx_ep],
+				ipa_clients_strings[tx_ep]);
 			cnt += nbytes;
 		}
 		break;
@@ -3329,7 +3338,7 @@ static ssize_t ipa3_eth_read_perf_status(struct file *file,
 			cnt += nbytes;
 		} else {
 			nbytes = scnprintf(dbg_buff, IPA_MAX_MSG_LEN,
-				"Fail to read AQC GSI stats\n");
+				"Fail to read RTK GSI stats\n");
 			cnt += nbytes;
 		}
 		break;
@@ -3350,6 +3359,7 @@ static ssize_t ipa3_eth_read_err_status(struct file *file,
 	int tx_ep, rx_ep;
 	struct ipa3_eth_error_stats tx_stats;
 	struct ipa3_eth_error_stats rx_stats;
+	int scratch_num;
 
 	memset(&tx_stats, 0, sizeof(struct ipa3_eth_error_stats));
 	memset(&rx_stats, 0, sizeof(struct ipa3_eth_error_stats));
@@ -3368,42 +3378,45 @@ static ssize_t ipa3_eth_read_err_status(struct file *file,
 	case IPA_ETH_CLIENT_AQC113:
 		tx_ep = IPA_CLIENT_AQC_ETHERNET_CONS;
 		rx_ep = IPA_CLIENT_AQC_ETHERNET_PROD;
-		break;
+		scratch_num = 7;
 	case IPA_ETH_CLIENT_RTK8111K:
 	case IPA_ETH_CLIENT_RTK8125B:
 		tx_ep = IPA_CLIENT_RTK_ETHERNET_CONS;
 		rx_ep = IPA_CLIENT_RTK_ETHERNET_PROD;
-		ipa3_eth_get_status(tx_ep, 5, &tx_stats);
-		ipa3_eth_get_status(rx_ep, 5, &rx_stats);
+		scratch_num = 5;
 		break;
+	case IPA_ETH_CLIENT_NTN:
+		tx_ep = IPA_CLIENT_ETHERNET_CONS;
+		rx_ep = IPA_CLIENT_ETHERNET_PROD;
+		scratch_num = 6;
 	default:
 		IPAERR("Not supported\n");
 		return 0;
 	}
+	ipa3_eth_get_status(tx_ep, scratch_num, &tx_stats);
+	ipa3_eth_get_status(rx_ep, scratch_num, &rx_stats);
+
 	nbytes = scnprintf(dbg_buff, IPA_MAX_MSG_LEN,
 		"%s_RP=0x%x\n"
 		"%s_WP=0x%x\n"
-		"%s_SCRATCH5=0x%x\n",
+		"%s_err:%u (scratch %d)\n",
 		ipa_clients_strings[tx_ep],
 		tx_stats.rp,
 		ipa_clients_strings[tx_ep],
 		tx_stats.wp,
 		ipa_clients_strings[tx_ep],
-		tx_stats.err);
+		tx_stats.err, scratch_num);
 	cnt += nbytes;
 	nbytes = scnprintf(dbg_buff + cnt, IPA_MAX_MSG_LEN - cnt,
 		"%s_RP=0x%x\n"
 		"%s_WP=0x%x\n"
-		"%s_SCRATCH5=0x%x\n"
-		"%s_err:%u\n",
+		"%s_err:%u (scratch %d)\n",
 		ipa_clients_strings[rx_ep],
 		rx_stats.rp,
 		ipa_clients_strings[rx_ep],
 		rx_stats.wp,
 		ipa_clients_strings[rx_ep],
-		rx_stats.err,
-		ipa_clients_strings[rx_ep],
-		rx_stats.err & 0xff);
+		rx_stats.err, scratch_num);
 	cnt += nbytes;
 done:
 	return simple_read_from_buffer(ubuf, count, ppos, dbg_buff, cnt);

@@ -2233,8 +2233,17 @@ int gsi_get_refetch_reg(unsigned long chan_hdl, bool is_rp);
  *
  * @ep_id: ep index
  * @scratch_id: drop stats on which scratch register
+ * @chan_hdl: gsi channel handle
  */
-int gsi_get_drop_stats(unsigned long ep_id, int scratch_id);
+int gsi_get_drop_stats(unsigned long ep_id, int scratch_id,
+	unsigned long chan_hdl);
+
+/**
+* gsi_get_wp - get channel write pointer for stats
+*
+* @chan_hdl: gsi channel handle
+*/
+int gsi_get_wp(unsigned long chan_hdl);
 
 /**
  * gsi_wdi3_dump_register - dump wdi3 related gsi registers

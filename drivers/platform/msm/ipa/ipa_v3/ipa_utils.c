@@ -11640,7 +11640,9 @@ void ipa3_get_gsi_stats(int prot_id,
 		stats->num_ch = MAX_WDI3_CHANNELS;
 		ipa3_get_wdi3_gsi_stats(stats);
 		break;
-	case IPA_HW_PROTOCOL_ETH:
+	case IPA_HW_PROTOCOL_NTN3:
+		stats->num_ch = MAX_NTN_CHANNELS;
+		ipa3_get_ntn_gsi_stats(stats);
 		break;
 	case IPA_HW_PROTOCOL_MHIP:
 		stats->num_ch = MAX_MHIP_CHANNELS;
@@ -11796,6 +11798,10 @@ int ipa3_get_prot_id(enum ipa_client_type client)
 void ipa3_eth_get_status(u32 client, int scratch_id,
 	struct ipa3_eth_error_stats *stats)
 {
+#define RTK_GSI_SCRATCH_ID 5
+#define AQC_GSI_SCRATCH_ID 7
+#define NTN_GSI_SCRATCH_ID 6
+
 	int ch_id;
 	int ipa_ep_idx;
 
@@ -11804,9 +11810,43 @@ void ipa3_eth_get_status(u32 client, int scratch_id,
 	if (ipa_ep_idx == IPA_EP_NOT_ALLOCATED)
 		return;
 	ch_id = ipa3_ctx->ep[ipa_ep_idx].gsi_chan_hdl;
-	stats->rp = gsi_get_refetch_reg(ch_id, true);
-	stats->wp = gsi_get_refetch_reg(ch_id, false);
-	stats->err = gsi_get_drop_stats(ipa_ep_idx, scratch_id);
+
+	/*
+	 * drop stats sometimes exist for RX and sometimes for Tx,
+	 * wp sometimes acquired from ch_cntxt_6 and sometimes from refetch,
+	 * depending on protocol.
+	 */
+	stats->err = 0;
+	switch (client) {
+	case IPA_CLIENT_RTK_ETHERNET_PROD:
+		stats->err = gsi_get_drop_stats(ipa_ep_idx, RTK_GSI_SCRATCH_ID,
+			ch_id);
+	case IPA_CLIENT_RTK_ETHERNET_CONS:
+		stats->wp = gsi_get_refetch_reg(ch_id, false);
+		stats->rp = gsi_get_refetch_reg(ch_id, true);
+		break;
+
+	case IPA_CLIENT_AQC_ETHERNET_PROD:
+		stats->err = gsi_get_drop_stats(ipa_ep_idx, AQC_GSI_SCRATCH_ID,
+			ch_id);
+		stats->wp = gsi_get_wp(ch_id);
+		stats->rp = gsi_get_refetch_reg(ch_id, true);
+		break;
+	case IPA_CLIENT_AQC_ETHERNET_CONS:
+		stats->wp = gsi_get_refetch_reg(ch_id, false);
+		stats->rp = gsi_get_refetch_reg(ch_id, true);
+		break;
+	case IPA_CLIENT_ETHERNET_PROD:
+		stats->wp = gsi_get_wp(ch_id);
+		stats->rp = gsi_get_refetch_reg(ch_id, true);
+		break;
+	case IPA_CLIENT_ETHERNET_CONS:
+		stats->err = gsi_get_drop_stats(ipa_ep_idx, NTN_GSI_SCRATCH_ID,
+			ch_id);
+		stats->wp = gsi_get_refetch_reg(ch_id, false);
+		stats->rp = gsi_get_refetch_reg(ch_id, true);
+		break;
+	}
 	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
 }
 

@@ -4928,24 +4928,80 @@ int gsi_get_refetch_reg(unsigned long chan_hdl, bool is_rp)
 }
 EXPORT_SYMBOL(gsi_get_refetch_reg);
 
-int gsi_get_drop_stats(unsigned long ep_id, int scratch_id)
+int gsi_get_drop_stats(unsigned long ep_id, int scratch_id,
+	unsigned long chan_hdl)
 {
-	/* RTK use scratch 5 */
-	if (scratch_id == 5) {
-		/*
-		 * each channel context is 6 lines of 8 bytes, but n in SHRAM_n
-		 * is in 4 bytes offsets, so multiplying ep_id by 6*2=12 will
-		 * give the beginning of the required channel context, and then
-		 * need to add 7 since the channel context layout has the ring
-		 * rbase (8 bytes) + channel scratch 0-4 (20 bytes) so adding
-		 * additional 28/4 = 7 to get to scratch 5 of the required
-		 * channel.
-		 */
-		gsihal_read_reg_n(GSI_GSI_SHRAM_n, ep_id * 12 + 7);
+#define GSI_RTK_ERR_STATS_MASK 0xFFFF
+#define GSI_NTN_ERR_STATS_MASK 0xFFFFFFFF
+#define GSI_AQC_RX_STATUS_MASK 0x1FFF
+#define GSI_AQC_RX_STATUS_SHIFT 0
+#define GSI_AQC_RDM_ERR_MASK 0x1FFF0000
+#define GSI_AQC_RDM_ERR_SHIFT 16
+
+	uint16_t rx_status;
+	uint16_t rdm_err;
+	uint32_t val;
+
+	/* on newer versions we can read the ch scratch directly from reg */
+	if (gsi_ctx->per.ver >= GSI_VER_3_0) {
+		switch (scratch_id) {
+		case 5:
+			return gsihal_read_reg_nk(
+				GSI_EE_n_GSI_CH_k_SCRATCH_5,
+				gsi_ctx->per.ee,
+				chan_hdl) & GSI_RTK_ERR_STATS_MASK;
+			break;
+		case 6:
+			return gsihal_read_reg_nk(
+				GSI_EE_n_GSI_CH_k_SCRATCH_6,
+				gsi_ctx->per.ee,
+				chan_hdl) & GSI_NTN_ERR_STATS_MASK;
+			break;
+		case 7:
+			val = gsihal_read_reg_nk(
+				GSI_EE_n_GSI_CH_k_SCRATCH_7,
+				gsi_ctx->per.ee,
+				chan_hdl);
+			rx_status = (val & GSI_AQC_RX_STATUS_MASK)
+				>> GSI_AQC_RX_STATUS_SHIFT;
+			rdm_err = (val & GSI_AQC_RDM_ERR_MASK)
+				>> (GSI_AQC_RDM_ERR_SHIFT);
+			return rx_status + rdm_err;
+			break;
+		default:
+			GSIERR("invalid scratch id %d\n", scratch_id);
+			return 0;
+		}
+
+	/* on older versions we need to read the scratch from SHRAM */
+	} else {
+		/* RTK use scratch 5 */
+		if (scratch_id == 5) {
+			/*
+			 * each channel context is 6 lines of 8 bytes, but n in
+			 * SHRAM_n is in 4 bytes offsets, so multiplying ep_id
+			 * by 6*2=12 will give the beginning of the required
+			 * channel context, and then need to add 7 since the
+			 * channel context layout has the ring rbase (8 bytes)
+			 * + channel scratch 0-4 (20 bytes) so adding
+			 * additional 28/4 = 7 to get to scratch 5 of the
+			 * required channel.
+			 */
+			return gsihal_read_reg_n(
+				GSI_GSI_SHRAM_n,
+				ep_id * 12 + 7) & GSI_RTK_ERR_STATS_MASK;
+		}
 	}
 	return 0;
 }
 EXPORT_SYMBOL(gsi_get_drop_stats);
+
+int gsi_get_wp(unsigned long chan_hdl)
+{
+	return gsihal_read_reg_nk(GSI_EE_n_GSI_CH_k_CNTXT_6, gsi_ctx->per.ee,
+		chan_hdl);
+}
+EXPORT_SYMBOL(gsi_get_wp);
 
 void gsi_wdi3_dump_register(unsigned long chan_hdl)
 {

@@ -915,7 +915,7 @@ int ipa3_eth_connect(
 		return -EINVAL;
 	}
 
-	if ((pipe->client_info->client_type == IPA_ETH_CLIENT_NTN)) {
+	if (pipe->client_info->client_type == IPA_ETH_CLIENT_NTN) {
 		if (pipe->info.fix_buffer_size != NTN_BUFFER_SIZE) {
 			IPAERR("fix buffer size %u not valid for NTN, use 2K\n"
 				, pipe->info.fix_buffer_size);
