@@ -119,6 +119,11 @@
 #define ROAM_AUTH_STATUS_CONNECTED      0x1
 /* connected and authenticated */
 #define ROAM_AUTH_STATUS_AUTHENTICATED  0x2
+
+#define IS_ROAM_REASON_STA_KICKOUT(reason) ((reason & 0xF) == \
+	WMI_ROAM_TRIGGER_REASON_STA_KICKOUT)
+#define IS_ROAM_REASON_DISCONNECTION(reason) ((reason & 0xF) == \
+	WMI_ROAM_TRIGGER_REASON_DEAUTH)
 #endif
 
 /*
