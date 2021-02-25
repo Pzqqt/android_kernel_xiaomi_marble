@@ -161,6 +161,8 @@ static inline QDF_STATUS dp_hw_cc_cmem_addr_init(
 				struct dp_soc *soc,
 				struct dp_hw_cookie_conversion_t *cc_ctx)
 {
+	dp_info("cmem base 0x%llx, size 0x%llx",
+		soc->cmem_base, soc->cmem_size);
 	/* get CMEM for cookie conversion */
 	if (soc->cmem_size < DP_CC_PPT_MEM_SIZE) {
 		dp_err("cmem_size %llu bytes < 4K", soc->cmem_size);
