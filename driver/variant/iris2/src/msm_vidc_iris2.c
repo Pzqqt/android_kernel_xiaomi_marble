@@ -536,7 +536,7 @@ int msm_vidc_decide_work_mode_iris2(struct msm_vidc_inst* inst)
 		width = out_f->fmt.pix_mp.width;
 		res_ok = res_is_less_than_or_equal_to(width, height, 1280, 720);
 		if (inst->capabilities->cap[CODED_FRAMES].value ==
-				CODED_FRAMES_ADAPTIVE_FIELDS ||
+				CODED_FRAMES_INTERLACE ||
 			inst->capabilities->cap[LOWLATENCY_MODE].value ||
 			res_ok) {
 			work_mode = MSM_VIDC_STAGE_1;
@@ -588,7 +588,7 @@ int msm_vidc_decide_work_route_iris2(struct msm_vidc_inst* inst)
 
 	if (is_decode_session(inst)) {
 		if (inst->capabilities->cap[CODED_FRAMES].value ==
-				CODED_FRAMES_ADAPTIVE_FIELDS)
+				CODED_FRAMES_INTERLACE)
 			work_route = MSM_VIDC_PIPE_1;
 	} else if (is_encode_session(inst)) {
 		u32 slice_mode, width, height;

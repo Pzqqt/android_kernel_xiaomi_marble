@@ -1324,7 +1324,12 @@ static int msm_vdec_update_properties(struct msm_vidc_inst *inst)
 	inst->capabilities->cap[HEVC_TIER].value = subsc_params.tier;
 	inst->capabilities->cap[POC].value = subsc_params.pic_order_cnt;
 	inst->capabilities->cap[BIT_DEPTH].value = subsc_params.bit_depth;
-	inst->capabilities->cap[CODED_FRAMES].value = subsc_params.coded_frames;
+	if (subsc_params.coded_frames & HFI_BITMASK_FRAME_MBS_ONLY_FLAG)
+		inst->capabilities->cap[CODED_FRAMES].value =
+			CODED_FRAMES_PROGRESSIVE;
+	else
+		inst->capabilities->cap[CODED_FRAMES].value =
+			CODED_FRAMES_INTERLACE;
 
 	return 0;
 }
@@ -2124,7 +2129,7 @@ static int msm_vdec_check_colorformat_supported(struct msm_vidc_inst* inst,
 		!is_10bit_colorformat(colorformat))
 		supported = false;
 	if (inst->capabilities->cap[CODED_FRAMES].value ==
-		CODED_FRAMES_ADAPTIVE_FIELDS &&
+		CODED_FRAMES_INTERLACE &&
 		!is_ubwc_colorformat(colorformat))
 		supported = false;
 
