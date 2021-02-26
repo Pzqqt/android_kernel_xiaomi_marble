@@ -18,7 +18,8 @@
 #define VIDC_DBG_SESSION_RATELIMIT_INTERVAL (1 * HZ)
 #define VIDC_DBG_SESSION_RATELIMIT_BURST 6
 
-#define VIDC_DBG_TAG VIDC_DBG_LABEL ": %6s: %08x: %5s: "
+#define VIDC_DBG_TAG_INST VIDC_DBG_LABEL ": %4s: %s: "
+#define VIDC_DBG_TAG_CORE VIDC_DBG_LABEL ": %4s: %08x: %s: "
 #define FW_DBG_TAG VIDC_DBG_LABEL ": %6s: "
 #define DEFAULT_SID ((u32)-1)
 
@@ -56,64 +57,55 @@ enum vidc_msg_prio {
 #define FW_LOGSHIFT    16
 #define FW_LOGMASK     0x0FFF0000
 
-#define dprintk_inst(__level, inst, __fmt, ...) \
+#define dprintk_inst(__level, __level_str, inst, __fmt, ...) \
 	do { \
 		if (inst && (msm_vidc_debug & __level)) { \
-			pr_err(VIDC_DBG_TAG __fmt, \
-				level_str(__level), \
-				get_sid(inst), \
-				codec_str(inst), \
+			pr_info(VIDC_DBG_TAG_INST __fmt, \
+				__level_str, \
+				inst->debug_str, \
 				##__VA_ARGS__); \
 		} \
 	} while (0)
 
-#define i_vpr_e(inst, __fmt, ...) dprintk_inst(VIDC_ERR, inst, __fmt, ##__VA_ARGS__)
-#define i_vpr_i(inst, __fmt, ...) dprintk_inst(VIDC_HIGH, inst, __fmt, ##__VA_ARGS__)
-#define i_vpr_h(inst, __fmt, ...) dprintk_inst(VIDC_HIGH, inst, __fmt, ##__VA_ARGS__)
-#define i_vpr_l(inst, __fmt, ...) dprintk_inst(VIDC_LOW, inst, __fmt, ##__VA_ARGS__)
-#define i_vpr_p(inst, __fmt, ...) dprintk_inst(VIDC_PERF, inst, __fmt, ##__VA_ARGS__)
-#define i_vpr_t(inst, __fmt, ...) dprintk_inst(VIDC_PKT, inst, __fmt, ##__VA_ARGS__)
-#define i_vpr_b(inst, __fmt, ...) dprintk_inst(VIDC_BUS, inst, __fmt, ##__VA_ARGS__)
-#define i_vpr_hp(inst, __fmt, ...) \
-			dprintk_inst(VIDC_HIGH | VIDC_PERF, inst, __fmt, ##__VA_ARGS__)
+#define i_vpr_e(inst, __fmt, ...) dprintk_inst(VIDC_ERR,  "err ", inst, __fmt, ##__VA_ARGS__)
+#define i_vpr_i(inst, __fmt, ...) dprintk_inst(VIDC_HIGH, "high", inst, __fmt, ##__VA_ARGS__)
+#define i_vpr_h(inst, __fmt, ...) dprintk_inst(VIDC_HIGH, "high", inst, __fmt, ##__VA_ARGS__)
+#define i_vpr_l(inst, __fmt, ...) dprintk_inst(VIDC_LOW,  "low ", inst, __fmt, ##__VA_ARGS__)
+#define i_vpr_p(inst, __fmt, ...) dprintk_inst(VIDC_PERF, "perf", inst, __fmt, ##__VA_ARGS__)
+#define i_vpr_t(inst, __fmt, ...) dprintk_inst(VIDC_PKT,  "pkt ", inst, __fmt, ##__VA_ARGS__)
+#define i_vpr_b(inst, __fmt, ...) dprintk_inst(VIDC_BUS,  "bus ", inst, __fmt, ##__VA_ARGS__)
 
-#define dprintk(__level, sid, __fmt, ...)	\
+#define dprintk_core(__level, __level_str, __fmt, ...) \
 	do { \
 		if (msm_vidc_debug & __level) { \
-			pr_err(VIDC_DBG_TAG __fmt, \
-				level_str(__level), \
-				sid, \
+			pr_info(VIDC_DBG_TAG_CORE __fmt, \
+				__level_str, \
+				DEFAULT_SID, \
 				"codec", \
 				##__VA_ARGS__); \
 		} \
 	} while (0)
 
-#define d_vpr_e(__fmt, ...)	\
-			dprintk(VIDC_ERR, DEFAULT_SID, __fmt, ##__VA_ARGS__)
-#define d_vpr_i(__fmt, ...) \
-			dprintk(VIDC_HIGH, DEFAULT_SID, __fmt, ##__VA_ARGS__)
-#define d_vpr_h(__fmt, ...) \
-			dprintk(VIDC_HIGH, DEFAULT_SID, __fmt, ##__VA_ARGS__)
-#define d_vpr_l(__fmt, ...) \
-			dprintk(VIDC_LOW, DEFAULT_SID, __fmt, ##__VA_ARGS__)
-#define d_vpr_p(__fmt, ...) \
-			dprintk(VIDC_PERF, DEFAULT_SID, __fmt, ##__VA_ARGS__)
-#define d_vpr_t(__fmt, ...) \
-			dprintk(VIDC_PKT, DEFAULT_SID, __fmt, ##__VA_ARGS__)
-#define d_vpr_b(__fmt, ...) \
-			dprintk(VIDC_BUS, DEFAULT_SID, __fmt, ##__VA_ARGS__)
+#define d_vpr_e(__fmt, ...) dprintk_core(VIDC_ERR,  "err ", __fmt, ##__VA_ARGS__)
+#define d_vpr_h(__fmt, ...) dprintk_core(VIDC_HIGH, "high", __fmt, ##__VA_ARGS__)
+#define d_vpr_l(__fmt, ...) dprintk_core(VIDC_LOW,  "low ", __fmt, ##__VA_ARGS__)
+#define d_vpr_p(__fmt, ...) dprintk_core(VIDC_PERF, "perf", __fmt, ##__VA_ARGS__)
+#define d_vpr_t(__fmt, ...) dprintk_core(VIDC_PKT,  "pkt ", __fmt, ##__VA_ARGS__)
+#define d_vpr_b(__fmt, ...) dprintk_core(VIDC_BUS,  "bus ", __fmt, ##__VA_ARGS__)
+
+#define dprintk_ratelimit(__level, __level_str, __fmt, ...) \
+	do { \
+		if (msm_vidc_check_ratelimit()) { \
+			dprintk_core(__level, __level_str, __fmt, ##__VA_ARGS__); \
+		} \
+	} while (0)
 
 #define dprintk_firmware(__level, __fmt, ...)	\
 	do { \
-		pr_err(FW_DBG_TAG __fmt, \
-			"fw", \
-			##__VA_ARGS__); \
-	} while (0)
-
-#define dprintk_ratelimit(__level, __fmt, ...) \
-	do { \
-		if (msm_vidc_check_ratelimit()) { \
-			dprintk(__level, DEFAULT_SID, __fmt, ##__VA_ARGS__); \
+		if (__level & FW_PRINTK) { \
+			pr_info(FW_DBG_TAG __fmt, \
+				"fw", \
+				##__VA_ARGS__); \
 		} \
 	} while (0)
 
@@ -121,10 +113,6 @@ enum vidc_msg_prio {
 	do {	if (value)					\
 			d_vpr_e("BugOn");		\
 	} while (0)
-
-const char *level_str(u32 level);
-const char *codec_str(void *instance);
-u32 get_sid(void *instance);
 
 enum msm_vidc_debugfs_event {
 	MSM_VIDC_DEBUGFS_EVENT_ETB,

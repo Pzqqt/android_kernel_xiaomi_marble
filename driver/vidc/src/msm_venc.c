@@ -52,6 +52,10 @@ static int msm_venc_codec_change(struct msm_vidc_inst *inst, u32 v4l2_codec)
 		__func__, inst->fmts[OUTPUT_PORT].fmt.pix_mp.pixelformat, v4l2_codec);
 
 	inst->codec = v4l2_codec_to_driver(v4l2_codec, __func__);
+	rc = msm_vidc_update_debug_str(inst);
+	if (rc)
+		goto exit;
+
 	rc = msm_vidc_get_inst_capability(inst);
 	if (rc)
 		goto exit;
@@ -476,7 +480,7 @@ static int msm_venc_set_input_properties(struct msm_vidc_inst *inst)
 			rc = msm_venc_set_colorspace(inst, INPUT_PORT);
 			break;
 		default:
-			d_vpr_e("%s: unknown property %#x\n", __func__,
+			i_vpr_e(inst, "%s: unknown property %#x\n", __func__,
 				msm_venc_input_set_prop[i]);
 			rc = -EINVAL;
 			break;
@@ -517,7 +521,7 @@ static int msm_venc_set_output_properties(struct msm_vidc_inst *inst)
 			rc = msm_venc_set_csc(inst, OUTPUT_PORT);
 			break;
 		default:
-			d_vpr_e("%s: unknown property %#x\n", __func__,
+			i_vpr_e(inst, "%s: unknown property %#x\n", __func__,
 				msm_venc_output_set_prop[i]);
 			rc = -EINVAL;
 			break;
@@ -997,7 +1001,7 @@ int msm_venc_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 		if (rc)
 			return rc;
 	} else {
-		d_vpr_e("%s: unknown cmd %d\n", __func__, cmd);
+		i_vpr_e(inst, "%s: unknown cmd %d\n", __func__, cmd);
 		return -EINVAL;
 	}
 	return 0;
@@ -1712,13 +1716,13 @@ int msm_venc_inst_init(struct msm_vidc_inst *inst)
 	struct msm_vidc_core *core;
 	struct v4l2_format *f;
 
-	d_vpr_h("%s()\n", __func__);
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-	core = inst->core;
+	i_vpr_h(inst, "%s()\n", __func__);
 
+	core = inst->core;
 	f = &inst->fmts[OUTPUT_PORT];
 	f->type = OUTPUT_MPLANE;
 	f->fmt.pix_mp.width = DEFAULT_WIDTH;

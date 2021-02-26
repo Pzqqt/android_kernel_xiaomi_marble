@@ -138,22 +138,40 @@ void __dump(struct dump dump[], int len)
 	}
 }
 
-static void __dump_packet(u8 *packet)
+static void __dump_packet(u8 *packet, const char *function, void *qinfo)
 {
-	u32 c = 0, packet_size = *(u32 *)packet;
+	u32 c = 0, session_id, packet_size = *(u32 *)packet;
 	const int row_size = 32;
+	struct msm_vidc_inst *inst = NULL;
+	bool matches = false;
 	/*
 	 * row must contain enough for 0xdeadbaad * 8 to be converted into
 	 * "de ad ba ab " * 8 + '\0'
 	 */
 	char row[3 * 32];
 
+	session_id = *((u32 *)packet + 1);
+	list_for_each_entry(inst, &g_core->instances, list) {
+		if (inst->session_id == session_id) {
+			matches = true;
+			break;
+		}
+	}
+
+	if (matches)
+		i_vpr_t(inst, "%s: %pK\n", function, qinfo);
+	else
+		d_vpr_t("%s: %pK\n", function, qinfo);
+
 	for (c = 0; c * row_size < packet_size; ++c) {
 		int bytes_to_read = ((c + 1) * row_size > packet_size) ?
 			packet_size % row_size : row_size;
 		hex_dump_to_buffer(packet + c * row_size, bytes_to_read,
 				row_size, 4, row, sizeof(row), false);
-		d_vpr_t("%s\n", row);
+		if (matches)
+			i_vpr_t(inst, "%s\n", row);
+		else
+			d_vpr_t("%s\n", row);
 	}
 }
 
@@ -185,7 +203,7 @@ static bool __valdiate_session(struct msm_vidc_core *core,
 	bool valid = false;
 	struct msm_vidc_inst *temp;
 
-	if (!core)
+	if (!core || !inst)
 		return false;
 
 	__strict_check(core);
@@ -461,11 +479,11 @@ static int __vote_bandwidth(struct bus_info *bus,
 {
 	int rc = 0;
 
-	d_vpr_p("Voting bus %s to ab %llu kbps\n", bus->name, bw_kbps);
+	d_vpr_p("Voting bus %s to ab %llu kbps\n", bus->name, kbps_to_icc(bw_kbps));
 	rc = icc_set_bw(bus->path, kbps_to_icc(bw_kbps), 0);
 	if (rc)
 		d_vpr_e("Failed voting bus %s to ab %llu, rc=%d\n",
-				bus->name, bw_kbps, rc);
+				bus->name, kbps_to_icc(bw_kbps), rc);
 
 	return rc;
 }
@@ -560,6 +578,7 @@ static int __set_clk_rate(struct msm_vidc_core *core,
 	if (rate == cl->prev)
 		return 0;
 
+	d_vpr_p("Scaling clock %s to %llu, prev %llu\n", cl->name, rate, cl->prev);
 	rc = clk_set_rate(clk, rate);
 	if (rc) {
 		d_vpr_e("%s: Failed to set clock rate %llu %s: %d\n",
@@ -577,8 +596,6 @@ static int __set_clocks(struct msm_vidc_core *core, u32 freq)
 
 	venus_hfi_for_each_clock(core, cl) {
 		if (cl->has_scaling) {/* has_scaling */
-			d_vpr_h("Scaling clock %s to %u, prev %llu\n",
-				cl->name, freq, cl->prev);
 			rc = __set_clk_rate(core, cl, freq);
 			if (rc)
 				return rc;
@@ -629,10 +646,9 @@ static int __write_queue(struct msm_vidc_iface_q_info *qinfo, u8 *packet,
 		return -ENOENT;
 	}
 
-	if (msm_vidc_debug & VIDC_PKT) {
-		d_vpr_t("%s: %pK\n", __func__, qinfo);
-		__dump_packet(packet);
-	}
+	if (msm_vidc_debug & VIDC_PKT)
+		__dump_packet(packet, __func__, qinfo);
+
 
 	// TODO: handle writing packet
 	//d_vpr_e("skip writing packet\n");
@@ -706,7 +722,6 @@ static int __read_queue(struct msm_vidc_iface_q_info *qinfo, u8 *packet,
 	u32 receive_request = 0;
 	u32 read_idx, write_idx;
 	int rc = 0;
-	u32 sid;
 
 	if (!qinfo || !packet || !pb_tx_req_is_set) {
 		d_vpr_e("%s: invalid params %pK %pK %pK\n",
@@ -813,9 +828,7 @@ static int __read_queue(struct msm_vidc_iface_q_info *qinfo, u8 *packet,
 
 	if ((msm_vidc_debug & VIDC_PKT) &&
 		!(queue->qhdr_type & HFI_Q_ID_CTRL_TO_HOST_DEBUG_Q)) {
-		sid = *((u32 *)packet + 2);
-		d_vpr_t("%s: %pK\n", __func__, qinfo);
-		__dump_packet(packet);
+		__dump_packet(packet, __func__, qinfo);
 	}
 
 	return rc;
@@ -2530,8 +2543,6 @@ irqreturn_t venus_hfi_isr(int irq, void *data)
 {
 	struct msm_vidc_core *core = data;
 
-	d_vpr_l("%s()\n", __func__);
-
 	disable_irq_nosync(irq);
 	queue_work(core->device_workq, &core->device_work);
 
@@ -2543,6 +2554,7 @@ void venus_hfi_work_handler(struct work_struct *work)
 	struct msm_vidc_core *core;
 	int num_responses = 0;
 
+	d_vpr_l("%s()\n", __func__);
 	core = container_of(work, struct msm_vidc_core, device_work);
 	if (!core) {
 		d_vpr_e("%s: invalid params\n", __func__);

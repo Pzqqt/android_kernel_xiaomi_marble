@@ -25,61 +25,6 @@ EXPORT_SYMBOL(msm_vidc_syscache_disable);
 
 int msm_vidc_clock_voting = !1;
 
-const char *level_str(u32 level)
-{
-	if (level & VIDC_ERR)
-		return "err ";
-	else if (level & VIDC_HIGH)
-		return "high";
-	else if (level & VIDC_LOW)
-		return "low ";
-	else if (level & VIDC_PERF)
-		return "perf";
-	else if (level & VIDC_PKT)
-		return "pkt ";
-	else if (level & VIDC_BUS)
-		return "bus ";
-	else
-		return "????";
-}
-
-const char *codec_str(void *instance)
-{
-	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
-
-	if (!inst) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		goto err_invalid_inst;
-	}
-
-	if (inst->codec == MSM_VIDC_H264)
-		return "h264 ";
-	else if (inst->codec == MSM_VIDC_HEVC)
-		return "hevc ";
-	else if (inst->codec == MSM_VIDC_VP9)
-		return "vp9  ";
-	else
-		return "?????";
-
-err_invalid_inst:
-	return "null  ";
-}
-
-u32 get_sid(void *instance)
-{
-	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
-
-	if (!inst) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		goto err_invalid_inst;
-	}
-
-	return inst->sid;
-
-err_invalid_inst:
-	return 0;
-}
-
 #define MAX_DBG_BUF_SIZE 4096
 
 struct core_inst_pair {
@@ -442,7 +387,7 @@ struct dentry *msm_vidc_debugfs_init_inst(void *instance, struct dentry *parent)
 		d_vpr_e("%s: invalid params\n", __func__);
 		goto exit;
 	}
-	snprintf(debugfs_name, MAX_DEBUGFS_NAME, "inst_%d", inst->sid);
+	snprintf(debugfs_name, MAX_DEBUGFS_NAME, "inst_%d", inst->session_id);
 
 	idata = kzalloc(sizeof(struct core_inst_pair), GFP_KERNEL);
 	if (!idata) {

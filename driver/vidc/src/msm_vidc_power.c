@@ -221,7 +221,7 @@ int msm_vidc_scale_buses(struct msm_vidc_inst *inst)
 	}
 	core = inst->core;
 	if (!core->dt) {
-		d_vpr_e("%s: invalid dt params\n", __func__);
+		i_vpr_e(inst, "%s: invalid dt params\n", __func__);
 		return -EINVAL;
 	}
 	vote_data = &inst->bus_data;
@@ -401,7 +401,7 @@ int msm_vidc_set_clocks(struct msm_vidc_inst* inst)
 	}
 	core->power.clk_freq = (u32)rate;
 
-	d_vpr_p("%s: clock rate %lu requested %lu increment %d decrement %d\n",
+	i_vpr_p(inst, "%s: clock rate %lu requested %lu increment %d decrement %d\n",
 		__func__, rate, freq, increment, decrement);
 	mutex_unlock(&core->lock);
 

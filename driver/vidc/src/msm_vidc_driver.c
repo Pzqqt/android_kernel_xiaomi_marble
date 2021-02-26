@@ -5,7 +5,6 @@
 
 #include <linux/iommu.h>
 #include <linux/workqueue.h>
-#include <linux/hash.h>
 #include <media/v4l2_vidc_extensions.h>
 #include "msm_media_info.h"
 
@@ -34,14 +33,14 @@ struct msm_vidc_buf_details {
 	char *name;
 };
 
-void print_vidc_buffer(u32 tag, const char *str, struct msm_vidc_inst *inst,
+void print_vidc_buffer(u32 tag, const char *tag_str, const char *str, struct msm_vidc_inst *inst,
 		struct msm_vidc_buffer *vbuf)
 {
-	if (!(tag & msm_vidc_debug) || !inst || !vbuf)
+	if (!(tag & msm_vidc_debug) || !inst || !vbuf || !tag_str || !str)
 		return;
 
 	if (vbuf->type == MSM_VIDC_BUF_INPUT || vbuf->type == MSM_VIDC_BUF_OUTPUT) {
-		dprintk(tag, inst->sid,
+		dprintk_inst(tag, tag_str, inst,
 			"%s: %s: idx %2d fd %3d off %d daddr %#llx size %d filled %d flags %#x ts %lld attr %#x\n",
 			str, vbuf->type == MSM_VIDC_BUF_INPUT ? "INPUT" : "OUTPUT",
 			vbuf->index, vbuf->fd, vbuf->data_offset,
@@ -49,7 +48,7 @@ void print_vidc_buffer(u32 tag, const char *str, struct msm_vidc_inst *inst,
 			vbuf->flags, vbuf->timestamp, vbuf->attr);
 	} else if (vbuf->type == MSM_VIDC_BUF_INPUT_META ||
 			   vbuf->type == MSM_VIDC_BUF_OUTPUT_META) {
-		dprintk(tag, inst->sid,
+		dprintk_inst(tag, tag_str, inst,
 			"%s: %s: idx %2d fd %3d off %d daddr %#llx size %d filled %d flags %#x ts %lld attr %#x\n",
 			str, vbuf->type == MSM_VIDC_BUF_INPUT_META ? "INPUT_META" : "OUTPUT_META",
 			vbuf->index, vbuf->fd, vbuf->data_offset,
@@ -1205,13 +1204,13 @@ int msm_vidc_unmap_driver_buf(struct msm_vidc_inst *inst,
 		}
 	}
 	if (!found) {
-		print_vidc_buffer(VIDC_ERR, "no buf in mappings", inst, buf);
+		print_vidc_buffer(VIDC_ERR, "err ", "no buf in mappings", inst, buf);
 		return -EINVAL;
 	}
 
 	rc = msm_vidc_memory_unmap(inst->core, map);
 	if (rc) {
-		print_vidc_buffer(VIDC_ERR, "unmap failed", inst, buf);
+		print_vidc_buffer(VIDC_ERR, "err ", "unmap failed", inst, buf);
 		return -EINVAL;
 	}
 
@@ -1340,14 +1339,14 @@ struct msm_vidc_buffer *msm_vidc_get_driver_buf(struct msm_vidc_inst *inst,
 		/* only YUV buffers are allowed to repeat */
 		if ((is_decode_session(inst) && vb2->type != OUTPUT_MPLANE) ||
 		    (is_encode_session(inst) && vb2->type != INPUT_MPLANE)) {
-			print_vidc_buffer(VIDC_ERR,
+			print_vidc_buffer(VIDC_ERR, "err ",
 				"existing buffer", inst, buf);
 			goto error;
 		}
 		/* for decoder, YUV with RO flag are allowed to repeat */
 		if (is_decode_session(inst) &&
 		    !(buf->attr & MSM_VIDC_ATTR_READ_ONLY)) {
-			print_vidc_buffer(VIDC_ERR,
+			print_vidc_buffer(VIDC_ERR, "err ",
 				"existing buffer without RO flag", inst, buf);
 			goto error;
 		}
@@ -1455,7 +1454,8 @@ int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 	if (buf->type == MSM_VIDC_BUF_INPUT_META ||
 	    buf->type == MSM_VIDC_BUF_OUTPUT_META) {
 		buf->attr |= MSM_VIDC_ATTR_DEFERRED;
-		print_vidc_buffer(VIDC_HIGH, "qbuf deferred", inst, buf);
+		i_vpr_h(inst, "%s: %s_META qbuf deferred\n", __func__,
+			buf->type == MSM_VIDC_BUF_INPUT_META ? "INPUT" : "OUTPUT");
 		return 0;
 	}
 
@@ -1465,7 +1465,7 @@ int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 		return -EINVAL;
 	if (!inst->vb2q[port].streaming) {
 		buf->attr |= MSM_VIDC_ATTR_DEFERRED;
-		print_vidc_buffer(VIDC_HIGH, "qbuf deferred", inst, buf);
+		print_vidc_buffer(VIDC_HIGH, "high", "qbuf deferred", inst, buf);
 		return 0;
 	}
 
@@ -1480,15 +1480,16 @@ int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 		msm_vidc_scale_power(inst, true);
 	}
 
-	print_vidc_buffer(VIDC_HIGH, "qbuf", inst, buf);
+	print_vidc_buffer(VIDC_HIGH, "high", "qbuf", inst, buf);
 	meta = get_meta_buffer(inst, buf);
-	if (!meta) {
-		if (is_meta_enabled(inst, buf->type)) {
-			print_vidc_buffer(VIDC_ERR, "missing meta for",
-				inst, buf);
-			return -EINVAL;
-		}
+	if (meta)
+		print_vidc_buffer(VIDC_HIGH, "high", "qbuf", inst, meta);
+
+	if (!meta && is_meta_enabled(inst, buf->type)) {
+		print_vidc_buffer(VIDC_ERR, "err ", "missing meta for", inst, buf);
+		return -EINVAL;
 	}
+
 	if (msm_vidc_is_super_buffer(inst) && is_input_buffer(buf->type))
 		rc = venus_hfi_queue_super_buffer(inst, buf, meta);
 	else
@@ -1898,7 +1899,7 @@ int msm_vidc_vb2_buffer_done(struct msm_vidc_inst *inst,
 		}
 	}
 	if (!found) {
-		print_vidc_buffer(VIDC_ERR, "vb2 not found for", inst, buf);
+		print_vidc_buffer(VIDC_ERR, "err ", "vb2 not found for", inst, buf);
 		return -EINVAL;
 	}
 	vbuf = to_vb2_v4l2_buffer(vb2);
@@ -2061,15 +2062,11 @@ int msm_vidc_add_session(struct msm_vidc_inst *inst)
 	if (count < 0xffffff /*TODO: MAX_SUPPORTED_INSTANCES*/) {
 		list_add_tail(&inst->list, &core->instances);
 	} else {
-		d_vpr_e("%s: total sessions %d exceeded max limit %d\n",
+		i_vpr_e(inst, "%s: total sessions %d exceeded max limit %d\n",
 			__func__, count, MAX_SUPPORTED_INSTANCES);
 		rc = -EINVAL;
 	}
 	core_unlock(core, __func__);
-
-	/* assign session_id */
-	inst->session_id = hash32_ptr(inst);
-	inst->sid = inst->session_id;
 
 	return rc;
 }
@@ -2090,14 +2087,13 @@ int msm_vidc_remove_session(struct msm_vidc_inst *inst)
 	list_for_each_entry_safe(i, temp, &core->instances, list) {
 		if (i->session_id == inst->session_id) {
 			list_del_init(&i->list);
-			d_vpr_h("%s: removed session %#x\n",
+			i_vpr_h(inst, "%s: removed session %#x\n",
 				__func__, i->session_id);
-			inst->sid = 0;
 		}
 	}
 	list_for_each_entry(i, &core->instances, list)
 		count++;
-	d_vpr_h("%s: remaining sessions %d\n", __func__, count);
+	i_vpr_h(inst, "%s: remaining sessions %d\n", __func__, count);
 	core_unlock(core, __func__);
 
 	return 0;
@@ -2325,7 +2321,6 @@ int msm_vidc_get_inst_capability(struct msm_vidc_inst *inst)
 	int i;
 	struct msm_vidc_core *core;
 
-	d_vpr_h("%s()\n", __func__);
 	if (!inst || !inst->core || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
@@ -2556,7 +2551,7 @@ int msm_vidc_core_deinit(struct msm_vidc_core *core, bool force)
 	}
 
 	core_lock(core, __func__);
-	d_vpr_h("%s()\n", __func__);
+	d_vpr_h("%s(): force %u\n", __func__, force);
 	if (core->state == MSM_VIDC_CORE_DEINIT)
 		goto unlock;
 
@@ -2743,7 +2738,7 @@ int msm_vidc_smmu_fault_handler(struct iommu_domain *domain,
 
 	if (core->smmu_fault_handled) {
 		if (core->capabilities[NON_FATAL_FAULTS].value) {
-			dprintk_ratelimit(VIDC_ERR,
+			dprintk_ratelimit(VIDC_ERR, "err ",
 					"%s: non-fatal pagefault address: %lx\n",
 					__func__, iova);
 			return 0;
@@ -2837,7 +2832,7 @@ int msm_vidc_flush_buffers(struct msm_vidc_inst* inst,
 		list_for_each_entry_safe(buf, dummy, &buffers->list, list) {
 			if (buf->attr & MSM_VIDC_ATTR_QUEUED ||
 				buf->attr & MSM_VIDC_ATTR_DEFERRED) {
-				print_vidc_buffer(VIDC_ERR, "flushing buffer", inst, buf);
+				print_vidc_buffer(VIDC_ERR, "err ", "flushing buffer", inst, buf);
 				msm_vidc_vb2_buffer_done(inst, buf);
 				msm_vidc_put_driver_buf(inst, buf);
 			}
@@ -3063,3 +3058,43 @@ void msm_vidc_schedule_core_deinit(struct msm_vidc_core *core)
 	return;
 }
 
+static const char *get_codec_str(enum msm_vidc_codec_type type)
+{
+	switch (type) {
+	case MSM_VIDC_H264: return "h264";
+	case MSM_VIDC_HEVC: return "h265";
+	case MSM_VIDC_VP9:  return " vp9";
+	}
+
+	return "....";
+}
+
+static const char *get_domain_str(enum msm_vidc_domain_type type)
+{
+	switch (type) {
+	case MSM_VIDC_ENCODER: return "e";
+	case MSM_VIDC_DECODER: return "d";
+	}
+
+	return ".";
+}
+
+int msm_vidc_update_debug_str(struct msm_vidc_inst *inst)
+{
+	u32 sid;
+	const char *codec;
+	const char *domain;
+
+	if (!inst) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+	sid = inst->session_id;
+	codec = get_codec_str(inst->codec);
+	domain = get_domain_str(inst->domain);
+	snprintf(inst->debug_str, sizeof(inst->debug_str), "%08x: %s%s", sid, codec, domain);
+	d_vpr_h("%s: sid: %08x, codec: %s, domain: %s, final: %s\n",
+		__func__, sid, codec, domain, inst->debug_str);
+
+	return 0;
+}

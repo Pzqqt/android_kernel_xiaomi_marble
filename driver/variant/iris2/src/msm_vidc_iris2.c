@@ -558,7 +558,7 @@ int msm_vidc_decide_work_mode_iris2(struct msm_vidc_inst* inst)
 		}
 	}
 	else {
-		d_vpr_e("%s: invalid session type\n", __func__);
+		i_vpr_e(inst, "%s: invalid session type\n", __func__);
 		return -EINVAL;
 	}
 
@@ -604,7 +604,7 @@ int msm_vidc_decide_work_route_iris2(struct msm_vidc_inst* inst)
 			work_route = MSM_VIDC_PIPE_1;
 
 	} else {
-		d_vpr_e("%s: invalid session type\n", __func__);
+		i_vpr_e(inst, "%s: invalid session type\n", __func__);
 		return -EINVAL;
 	}
 

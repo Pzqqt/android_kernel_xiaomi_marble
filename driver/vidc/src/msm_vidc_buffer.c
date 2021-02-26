@@ -186,7 +186,7 @@ u32 msm_vidc_internal_buffer_count(struct msm_vidc_inst *inst,
 			else
 				count = 0;
 		} else {
-			d_vpr_e("%s: unsupported buffer type %#x\n",
+			i_vpr_e(inst, "%s: unsupported buffer type %#x\n",
 				__func__, buffer_type);
 			count = 0;
 		}

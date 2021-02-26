@@ -87,7 +87,7 @@ int msm_vidc_queue_setup(struct vb2_queue *q,
 	}
 
 	if (inst->state == MSM_VIDC_START) {
-		d_vpr_e("%s: invalid state %d\n", __func__, inst->state);
+		i_vpr_e(inst, "%s: invalid state %d\n", __func__, inst->state);
 		return -EINVAL;
 	}
 

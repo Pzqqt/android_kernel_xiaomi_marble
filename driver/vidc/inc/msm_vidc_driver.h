@@ -183,7 +183,7 @@ static inline bool is_session_error(struct msm_vidc_inst* inst)
 	return inst->state == MSM_VIDC_ERROR;
 }
 
-void print_vidc_buffer(u32 tag, const char *str, struct msm_vidc_inst *inst,
+void print_vidc_buffer(u32 tag, const char *tag_str, const char *str, struct msm_vidc_inst *inst,
 		struct msm_vidc_buffer *vbuf);
 void print_vb2_buffer(const char *str, struct msm_vidc_inst *inst,
 		struct vb2_buffer *vb2);
@@ -307,5 +307,6 @@ int msm_vidc_init_core_caps(struct msm_vidc_core* core);
 int msm_vidc_init_instance_caps(struct msm_vidc_core* core);
 int msm_vidc_deinit_core_caps(struct msm_vidc_core* core);
 int msm_vidc_deinit_instance_caps(struct msm_vidc_core* core);
+int msm_vidc_update_debug_str(struct msm_vidc_inst *inst);
 #endif // _MSM_VIDC_DRIVER_H_
 

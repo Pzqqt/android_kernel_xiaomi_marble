@@ -30,7 +30,7 @@ static u32 msm_vidc_decoder_bin_size_iris2(struct msm_vidc_inst *inst)
 	core = inst->core;
 
 	if (!core->capabilities) {
-		d_vpr_e("%s: invalid capabilities\n", __func__);
+		i_vpr_e(inst, "%s: invalid capabilities\n", __func__);
 		return size;
 	}
 	num_vpp_pipes = core->capabilities[NUM_VPP_PIPE].value;
@@ -133,7 +133,7 @@ static u32 msm_vidc_decoder_line_size_iris2(struct msm_vidc_inst *inst)
 	}
 	core = inst->core;
 	if (!core->capabilities) {
-		d_vpr_e("%s: invalid capabilities\n", __func__);
+		i_vpr_e(inst, "%s: invalid capabilities\n", __func__);
 		return size;
 	}
 	num_vpp_pipes = core->capabilities[NUM_VPP_PIPE].value;

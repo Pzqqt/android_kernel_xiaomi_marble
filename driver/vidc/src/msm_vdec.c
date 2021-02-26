@@ -66,6 +66,10 @@ static int msm_vdec_codec_change(struct msm_vidc_inst *inst, u32 v4l2_codec)
 		__func__, inst->fmts[INPUT_PORT].fmt.pix_mp.pixelformat, v4l2_codec);
 
 	inst->codec = v4l2_codec_to_driver(v4l2_codec, __func__);
+	rc = msm_vidc_update_debug_str(inst);
+	if (rc)
+		goto exit;
+
 	rc = msm_vidc_get_inst_capability(inst);
 	if (rc)
 		goto exit;
@@ -1003,7 +1007,7 @@ static int msm_vdec_subscribe_input_port_settings_change(struct msm_vidc_inst *i
 		return -EINVAL;
 	}
 	core = inst->core;
-	d_vpr_h("%s()\n", __func__);
+	i_vpr_h(inst, "%s()\n", __func__);
 
 	payload[0] = HFI_MODE_PORT_SETTINGS_CHANGE;
 	if (inst->codec == MSM_VIDC_H264) {
@@ -1016,13 +1020,13 @@ static int msm_vdec_subscribe_input_port_settings_change(struct msm_vidc_inst *i
 		subscribe_psc_size = ARRAY_SIZE(msm_vdec_subscribe_for_psc_vp9);
 		psc = msm_vdec_subscribe_for_psc_vp9;
 	} else {
-		d_vpr_e("%s: unsupported codec: %d\n", __func__, inst->codec);
+		i_vpr_e(inst, "%s: unsupported codec: %d\n", __func__, inst->codec);
 		psc = NULL;
 		return -EINVAL;
 	}
 
 	if (!psc || !subscribe_psc_size) {
-		d_vpr_e("%s: invalid params\n", __func__);
+		i_vpr_e(inst, "%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 
@@ -1070,7 +1074,7 @@ static int msm_vdec_subscribe_input_port_settings_change(struct msm_vidc_inst *i
 			rc = msm_vdec_set_tier(inst, port);
 			break;
 		default:
-			d_vpr_e("%s: unknown property %#x\n", __func__,
+			i_vpr_e(inst, "%s: unknown property %#x\n", __func__,
 				psc[i]);
 			rc = -EINVAL;
 			break;
@@ -1097,7 +1101,7 @@ static int msm_vdec_subscribe_property(struct msm_vidc_inst *inst,
 		return -EINVAL;
 	}
 	core = inst->core;
-	d_vpr_h("%s()\n", __func__);
+	i_vpr_h(inst, "%s()\n", __func__);
 
 	payload[0] = HFI_MODE_PROPERTY;
 	for (i = 0; i < ARRAY_SIZE(msm_vdec_subscribe_for_properties); i++)
@@ -1141,7 +1145,7 @@ static int msm_vdec_subscribe_metadata(struct msm_vidc_inst *inst,
 		return -EINVAL;
 	}
 	core = inst->core;
-	d_vpr_h("%s()\n", __func__);
+	i_vpr_h(inst, "%s()\n", __func__);
 
 	capability = inst->capabilities;
 	payload[0] = HFI_MODE_METADATA;
@@ -1183,7 +1187,7 @@ static int msm_vdec_set_delivery_mode_metadata(struct msm_vidc_inst *inst,
 		return -EINVAL;
 	}
 	core = inst->core;
-	d_vpr_h("%s()\n", __func__);
+	i_vpr_h(inst, "%s()\n", __func__);
 
 	capability = inst->capabilities;
 	payload[0] = HFI_MODE_METADATA;
@@ -1217,7 +1221,7 @@ static int msm_vdec_session_resume(struct msm_vidc_inst *inst,
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-	d_vpr_h("%s()\n", __func__);
+	i_vpr_h(inst, "%s()\n", __func__);
 
 	rc = venus_hfi_session_command(inst,
 			HFI_CMD_RESUME,
@@ -1491,7 +1495,11 @@ static int msm_vdec_subscribe_output_port_settings_change(struct msm_vidc_inst *
 	u32 subscribe_psc_size = 0;
 	u32 *psc = NULL;
 
-	d_vpr_h("%s()\n", __func__);
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	i_vpr_h(inst, "%s()\n", __func__);
 
 	payload[0] = HFI_MODE_PORT_SETTINGS_CHANGE;
 	if (inst->codec == MSM_VIDC_H264) {
@@ -1504,13 +1512,13 @@ static int msm_vdec_subscribe_output_port_settings_change(struct msm_vidc_inst *
 		subscribe_psc_size = ARRAY_SIZE(msm_vdec_subscribe_for_psc_vp9);
 		psc = msm_vdec_subscribe_for_psc_vp9;
 	} else {
-		d_vpr_e("%s: unsupported codec: %d\n", __func__, inst->codec);
+		i_vpr_e(inst, "%s: unsupported codec: %d\n", __func__, inst->codec);
 		psc = NULL;
 		return -EINVAL;
 	}
 
 	if (!psc || !subscribe_psc_size) {
-		d_vpr_e("%s: invalid params\n", __func__);
+		i_vpr_e(inst, "%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 
@@ -1586,7 +1594,7 @@ static int msm_vdec_subscribe_output_port_settings_change(struct msm_vidc_inst *
 			payload_type = HFI_PAYLOAD_U32;
 			break;
 		default:
-			d_vpr_e("%s: unknown property %#x\n", __func__,
+			i_vpr_e(inst, "%s: unknown property %#x\n", __func__,
 				prop_type);
 			prop_type = 0;
 			rc = -EINVAL;
@@ -1680,7 +1688,7 @@ static int msm_vdec_qbuf_batch(struct msm_vidc_inst *inst,
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-	d_vpr_h("%s()\n", __func__);
+	i_vpr_h(inst, "%s()\n", __func__);
 
 	return rc;
 }
@@ -1745,7 +1753,7 @@ int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 		if (rc)
 			return rc;
 	} else {
-		d_vpr_e("%s: unknown cmd %d\n", __func__, cmd);
+		i_vpr_e(inst, "%s: unknown cmd %d\n", __func__, cmd);
 		return -EINVAL;
 	}
 

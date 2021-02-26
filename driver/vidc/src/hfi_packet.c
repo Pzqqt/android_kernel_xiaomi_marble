@@ -167,7 +167,7 @@ u32 get_hfi_codec(struct msm_vidc_inst *inst)
 	case MSM_VIDC_VP9:
 		return HFI_CODEC_DECODE_VP9;
 	default:
-		d_vpr_e("invalid codec %d, domain %d\n",
+		i_vpr_e(inst, "invalid codec %d, domain %d\n",
 			inst->codec, inst->domain);
 		return 0;
 	}
@@ -614,11 +614,11 @@ int hfi_packet_session_command(struct msm_vidc_inst *inst,
 	if (rc)
 		goto err_cmd;
 
-	d_vpr_h("Command packet 0x%x created\n", pkt_type);
+	i_vpr_h(inst, "Command packet 0x%x created\n", pkt_type);
 	return rc;
 
 err_cmd:
-	d_vpr_e("%s: create packet failed\n", __func__);
+	i_vpr_e(inst, "%s: create packet failed\n", __func__);
 	return rc;
 }
 

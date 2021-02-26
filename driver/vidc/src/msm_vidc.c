@@ -3,6 +3,8 @@
  * Copyright (c) 2020, The Linux Foundation. All rights reserved.
  */
 
+#include <linux/types.h>
+#include <linux/hash.h>
 #include "msm_vidc.h"
 #include "msm_vidc_core.h"
 #include "msm_vidc_inst.h"
@@ -710,14 +712,22 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 		return NULL;
 	}
 	inst->core = core;
+	inst->domain = session_type;
+	inst->session_id = hash32_ptr(inst);
+	inst->state = MSM_VIDC_OPEN;
+	inst->active = true;
+	inst->request = false;
+	inst->ipsc_properties_set = false;
+	inst->opsc_properties_set = false;
 	kref_init(&inst->kref);
 	mutex_init(&inst->lock);
+	msm_vidc_update_debug_str(inst);
 
 	i_vpr_h(inst, "Opening video instance: %d\n", session_type);
 
 	inst->response_workq = create_singlethread_workqueue("response_workq");
 	if (!inst->response_workq) {
-		d_vpr_e("%s: create input_psc_workq failed\n", __func__);
+		i_vpr_e(inst, "%s: create input_psc_workq failed\n", __func__);
 		goto error;
 	}
 
@@ -767,12 +777,6 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	INIT_LIST_HEAD(&inst->mappings.vpss.list);
 	INIT_LIST_HEAD(&inst->children.list);
 	INIT_LIST_HEAD(&inst->firmware.list);
-	inst->domain = session_type;
-	inst->state = MSM_VIDC_OPEN;
-	inst->active = true;
-	inst->request = false;
-	inst->ipsc_properties_set = false;
-	inst->opsc_properties_set = false;
 	for (i = 0; i < MAX_SIGNAL; i++)
 		init_completion(&inst->completions[i]);
 
@@ -793,7 +797,7 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 
 	rc = msm_vidc_add_session(inst);
 	if (rc) {
-		d_vpr_e("%s: failed to get session id\n", __func__);
+		i_vpr_e(inst, "%s: failed to get session id\n", __func__);
 		goto error;
 	}
 	msm_vidc_scale_power(inst, true);

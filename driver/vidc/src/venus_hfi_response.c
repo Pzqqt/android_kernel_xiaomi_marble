@@ -19,13 +19,13 @@ struct msm_vidc_hfi_range {
 	int (*handle)(struct msm_vidc_inst *inst, struct hfi_packet *pkt);
 };
 
-void print_psc_properties(u32 tag, const char *str, struct msm_vidc_inst *inst,
+void print_psc_properties(const char *str, struct msm_vidc_inst *inst,
 	struct msm_vidc_subscription_params subsc_params)
 {
-	if (!(tag & msm_vidc_debug) || !inst)
+	if (!inst || !str)
 		return;
 
-	dprintk(tag, inst->sid,
+	i_vpr_h(inst,
 		"%s: resolution %#x, crop offsets[0] %#x, crop offsets[1] %#x, bit depth %d, coded frames %d "
 		"fw min count %d, poc %d, color info %d, profile %d, level %d, tier %d ",
 		str, subsc_params.bitstream_resolution,
@@ -483,7 +483,7 @@ static int handle_input_buffer(struct msm_vidc_inst *inst,
 	buf->flags = 0;
 	buf->flags = get_driver_buffer_flags(inst, buffer->flags);
 
-	print_vidc_buffer(VIDC_HIGH, "EBD", inst, buf);
+	print_vidc_buffer(VIDC_HIGH, "high", "dqbuf", inst, buf);
 	msm_vidc_debugfs_update(inst, MSM_VIDC_DEBUGFS_EVENT_EBD);
 
 	return rc;
@@ -554,7 +554,7 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 	buf->flags = 0;
 	buf->flags = get_driver_buffer_flags(inst, buffer->flags);
 
-	print_vidc_buffer(VIDC_HIGH, "FBD", inst, buf);
+	print_vidc_buffer(VIDC_HIGH, "high", "dqbuf", inst, buf);
 	msm_vidc_debugfs_update(inst, MSM_VIDC_DEBUGFS_EVENT_FBD);
 
 	return rc;
@@ -607,7 +607,7 @@ static int handle_input_metadata_buffer(struct msm_vidc_inst *inst,
 	if (buffer->flags & HFI_BUF_FW_FLAG_LAST)
 		buf->flags |= MSM_VIDC_BUF_FLAG_LAST;
 
-	print_vidc_buffer(VIDC_HIGH, "EBD META", inst, buf);
+	print_vidc_buffer(VIDC_HIGH, "high", "dqbuf", inst, buf);
 	return rc;
 }
 
@@ -643,7 +643,7 @@ static int handle_output_metadata_buffer(struct msm_vidc_inst *inst,
 	if (buffer->flags & HFI_BUF_FW_FLAG_LAST)
 		buf->flags |= MSM_VIDC_BUF_FLAG_LAST;
 
-	print_vidc_buffer(VIDC_HIGH, "FBD META", inst, buf);
+	print_vidc_buffer(VIDC_HIGH, "high", "dqbuf", inst, buf);
 	return rc;
 }
 
@@ -675,7 +675,8 @@ static int handle_dequeue_buffers(struct msm_vidc_inst* inst)
 				 */
 				if ((buf->attr & MSM_VIDC_ATTR_BUFFER_DONE) &&
 						buf->attr & MSM_VIDC_ATTR_READ_ONLY){
-					print_vidc_buffer(VIDC_HIGH, "vb2 done already", inst, buf);
+					print_vidc_buffer(VIDC_HIGH, "high",
+						"vb2 done already", inst, buf);
 				} else {
 					buf->attr |= MSM_VIDC_ATTR_BUFFER_DONE;
 					msm_vidc_vb2_buffer_done(inst, buf);
@@ -1004,12 +1005,10 @@ static int handle_port_settings_change(struct msm_vidc_inst *inst,
 		__func__, pkt->port);
 
 	if (pkt->port == HFI_PORT_RAW) {
-		print_psc_properties(VIDC_HIGH, "OUTPUT_PSC", inst,
-			inst->subcr_params[OUTPUT_PORT]);
+		print_psc_properties("OUTPUT_PSC", inst, inst->subcr_params[OUTPUT_PORT]);
 		rc = msm_vdec_output_port_settings_change(inst);
 	} else if (pkt->port == HFI_PORT_BITSTREAM) {
-		print_psc_properties(VIDC_HIGH, "INPUT_PSC", inst,
-			inst->subcr_params[INPUT_PORT]);
+		print_psc_properties("INPUT_PSC", inst, inst->subcr_params[INPUT_PORT]);
 		rc = msm_vdec_input_port_settings_change(inst);
 	} else {
 		i_vpr_e(inst, "%s: invalid port type: %#x\n",
@@ -1283,7 +1282,7 @@ int handle_session_response_work(struct msm_vidc_inst *inst,
 
 	hdr = (struct hfi_header *)resp_work->data;
 	if (!hdr) {
-		d_vpr_e("%s: invalid params\n", __func__);
+		i_vpr_e(inst, "%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 
@@ -1392,7 +1391,7 @@ void handle_session_response_work_handler(struct work_struct *work)
 			}
 			break;
 		default:
-			d_vpr_e("%s: invalid response work type %d\n", __func__,
+			i_vpr_e(inst, "%s: invalid response work type %d\n", __func__,
 				resp_work->type);
 			break;
 		}

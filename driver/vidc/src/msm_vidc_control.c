@@ -1143,13 +1143,13 @@ int msm_vidc_adjust_v4l2_properties(struct msm_vidc_inst *inst)
 	struct msm_vidc_inst_cap_entry *curr_node = NULL, *tmp_node = NULL;
 	struct msm_vidc_inst_capability *capability;
 
-	d_vpr_h("%s()\n", __func__);
 	if (!inst || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 	capability = inst->capabilities;
 
+	i_vpr_h(inst, "%s()\n", __func__);
 	for (i = 0; i < INST_CAP_MAX; i++) {
 		if (capability->cap[i].flags & CAP_FLAG_ROOT) {
 			rc = msm_vidc_adjust_property(inst,
@@ -1719,11 +1719,11 @@ int msm_vidc_set_v4l2_properties(struct msm_vidc_inst *inst)
 	struct msm_vidc_inst_capability *capability;
 	struct msm_vidc_inst_cap_entry *curr_node = NULL, *tmp_node = NULL;
 
-	d_vpr_h("%s()\n", __func__);
 	if (!inst || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
+	i_vpr_h(inst, "%s()\n", __func__);
 	capability = inst->capabilities;
 
 	list_for_each_entry_safe(curr_node, tmp_node,
