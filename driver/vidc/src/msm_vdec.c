@@ -210,7 +210,7 @@ static int msm_vdec_set_bit_depth(struct msm_vidc_inst *inst,
 
 	inst->subcr_params[port].bit_depth = bitdepth;
 	msm_vidc_update_cap_value(inst, BIT_DEPTH, bitdepth, __func__);
-	i_vpr_h(inst, "%s: bit depth: %d", __func__, bitdepth);
+	i_vpr_h(inst, "%s: bit depth: %#x", __func__, bitdepth);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_LUMA_CHROMA_BIT_DEPTH,
 			HFI_HOST_FLAGS_NONE,
