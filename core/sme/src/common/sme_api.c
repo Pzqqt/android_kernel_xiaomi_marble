@@ -10780,6 +10780,15 @@ void sme_update_tgt_eht_cap(mac_handle_t mac_handle,
 			    struct wma_tgt_cfg *cfg,
 			    tDot11fIEeht_cap *eht_cap_ini)
 {
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+
+	qdf_mem_copy(&mac_ctx->eht_cap_2g,
+		     &cfg->eht_cap_2g,
+		     sizeof(tDot11fIEeht_cap));
+
+	qdf_mem_copy(&mac_ctx->eht_cap_5g,
+		     &cfg->eht_cap_5g,
+		     sizeof(tDot11fIEeht_cap));
 }
 
 void sme_update_eht_cap_nss(mac_handle_t mac_handle, uint8_t session_id,
