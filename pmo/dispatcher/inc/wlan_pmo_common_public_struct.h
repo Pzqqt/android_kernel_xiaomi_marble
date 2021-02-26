@@ -55,11 +55,13 @@
  * enum pmo_vdev_param_id: tell vdev param id
  * @pmo_vdev_param_listen_interval: vdev listen interval param id
  * @pmo_vdev_param_dtim_policy: vdev param dtim policy
+ * @pmo_vdev_param_forced_dtim_count: vdev param forced dtim count
  * @pmo_vdev_max_param: Max vdev param id
  */
 enum pmo_vdev_param_id {
 	pmo_vdev_param_listen_interval = 0,
 	pmo_vdev_param_dtim_policy,
+	pmo_vdev_param_forced_dtim_count,
 	pmo_vdev_max_param
 };
 
@@ -291,6 +293,7 @@ enum pmo_gpio_wakeup_mode {
  * @sta_dynamic_dtim: station dynamic DTIM value
  * @sta_mod_dtim: station modulated DTIM value
  * @sta_max_li_mod_dtim: station max listen interval DTIM value
+ * @sta_forced_dtim: station forced DTIM value
  * @wow_enable: enable wow with majic pattern match or pattern byte match
  * @power_save_mode: power save mode for psoc
  * @runtime_pm_delay: set runtime pm's inactivity timer
@@ -352,6 +355,7 @@ struct pmo_psoc_cfg {
 	uint8_t sta_dynamic_dtim;
 	uint8_t sta_mod_dtim;
 	uint8_t sta_max_li_mod_dtim;
+	bool sta_forced_dtim;
 	enum pmo_wow_enable_type wow_enable;
 	enum powersave_mode power_save_mode;
 	enum powersave_mode default_power_save_mode;
