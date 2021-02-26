@@ -823,6 +823,10 @@ pmo_core_enable_wow_in_fw(struct wlan_objmgr_psoc *psoc,
 		param.flags |= WMI_WOW_FLAG_MOD_DTIM_ON_SYS_SUSPEND;
 	}
 
+	if (psoc_cfg->sta_forced_dtim) {
+		pmo_info("forced DTIM enabled");
+		param.flags |= WMI_WOW_FLAG_FORCED_DTIM_ON_SYS_SUSPEND;
+	}
 	status = pmo_tgt_psoc_send_wow_enable_req(psoc, &param);
 	if (status != QDF_STATUS_SUCCESS) {
 		pmo_err("Failed to enable wow in fw");
@@ -1602,6 +1606,34 @@ out:
 	return status;
 }
 
+QDF_STATUS pmo_core_config_forced_dtim(struct wlan_objmgr_vdev *vdev,
+				       uint32_t dynamic_dtim)
+{
+	struct pmo_vdev_priv_obj *vdev_ctx;
+	uint8_t vdev_id;
+	QDF_STATUS status;
+
+	vdev_id = pmo_vdev_get_id(vdev);
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	vdev_ctx->dyn_modulated_dtim = dynamic_dtim;
+	vdev_ctx->dyn_modulated_dtim_enabled = dynamic_dtim >= 1;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+
+	status = pmo_tgt_vdev_update_param_req(vdev,
+					       pmo_vdev_param_forced_dtim_count,
+					       dynamic_dtim);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pmo_err("Failed to set forced DTIM for vdev id %d",
+			vdev_id);
+	}
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
+	return status;
+}
+
 QDF_STATUS pmo_core_config_modulated_dtim(struct wlan_objmgr_vdev *vdev,
 					  uint32_t mod_dtim)
 {
@@ -1624,6 +1656,9 @@ QDF_STATUS pmo_core_config_modulated_dtim(struct wlan_objmgr_vdev *vdev,
 	vdev_id = pmo_vdev_get_id(vdev);
 	vdev_ctx = pmo_vdev_get_priv(vdev);
 	psoc_cfg = &vdev_ctx->pmo_psoc_ctx->psoc_cfg;
+
+	if (psoc_cfg->sta_forced_dtim)
+		return pmo_core_config_forced_dtim(vdev, mod_dtim);
 
 	/* Calculate Maximum allowed modulated DTIM */
 	beacon_interval_mod =

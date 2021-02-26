@@ -249,6 +249,28 @@
 
 /*
  * <ini>
+ * gEnableForcedDTIM - Enable/Disable forced DTIM feature
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable forced DTIM feature.
+ *
+ * 0 - Disable forced DTIM.
+ * 1 - Enable forced DTIM
+ *
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_PMO_ENABLE_FORCED_DTIM CFG_INI_BOOL( \
+	"gEnableForcedDTIM", \
+	0, \
+	"Enable/disable Forced DTIM feature")
+
+/*
+ * <ini>
  * gMaxPsPoll - Max powersave poll
  * @Min: 0
  * @Max: 255
@@ -468,6 +490,7 @@
 	CFG(CFG_PMO_ENABLE_HOST_NSOFFLOAD) \
 	CFG(CFG_PMO_ENABLE_DYNAMIC_DTIM) \
 	CFG(CFG_PMO_ENABLE_MODULATED_DTIM) \
+	CFG(CFG_PMO_ENABLE_FORCED_DTIM) \
 	CFG(CFG_PMO_MC_ADDR_LIST_ENABLE) \
 	CFG(CFG_PMO_POWERSAVE_MODE) \
 	CFG(CFG_PMO_MAX_PS_POLL) \
