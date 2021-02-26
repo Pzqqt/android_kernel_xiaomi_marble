@@ -640,6 +640,7 @@ static int ipa_eth_setup_aqc_gsi_channel(
 		IPAERR("Failed getting GSI EP info for client=%d\n",
 		       ep->client);
 		result = -EINVAL;
+		goto fail_get_gsi_ep_info;
 	} else
 		gsi_channel_props.ch_id = gsi_ep_info->ipa_gsi_chan_num;
 	gsi_channel_props.evt_ring_hdl = ep->gsi_evt_ring_hdl;
@@ -656,7 +657,8 @@ static int ipa_eth_setup_aqc_gsi_channel(
 	gsi_channel_props.ring_len = len;
 	gsi_channel_props.ring_base_addr =
 		(u64)pipe->info.transfer_ring_base;
-	result = gsi_alloc_channel(&gsi_channel_props, ipa3_ctx->gsi_dev_hdl,
+	result = gsi_alloc_channel(&gsi_channel_props,
+		ipa3_ctx->gsi_dev_hdl,
 		&ep->gsi_chan_hdl);
 	if (result != GSI_STATUS_SUCCESS)
 		goto fail_get_gsi_ep_info;

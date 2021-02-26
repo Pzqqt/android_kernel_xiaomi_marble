@@ -545,8 +545,8 @@ static int ipa_eth_pm_register(struct ipa_eth_client *client)
 	int rc;
 
 	/* validate user input */
-	if (!client) {
-		IPA_ETH_ERR("null client");
+	if (!client || (client->client_type >= IPA_ETH_CLIENT_MAX)) {
+		IPA_ETH_ERR("null client or eth client doesn't exist");
 		return -EFAULT;
 	}
 	client_type = client->client_type;
@@ -603,8 +603,8 @@ static int ipa_eth_pm_deregister(struct ipa_eth_client *client)
 	int client_type, inst_id;
 
 	/* validate user input */
-	if (!client) {
-		IPA_ETH_ERR("null client");
+	if (!client || (client->client_type >= IPA_ETH_CLIENT_MAX)) {
+		IPA_ETH_ERR("null client or client type not defined");
 		return -EFAULT;
 	}
 	client_type = client->client_type;
@@ -635,8 +635,8 @@ static int ipa_eth_client_conn_pipes_internal(struct ipa_eth_client *client)
 	int client_type, inst_id, traff_type;
 
 	/* validate user input */
-	if (!client) {
-		IPA_ETH_ERR("null client");
+	if (!client || (client->client_type >= IPA_ETH_CLIENT_MAX)) {
+		IPA_ETH_ERR("null client or client type not defined");
 		return -EFAULT;
 	}
 	if (!ipa_eth_ctx) {
@@ -725,8 +725,8 @@ static int ipa_eth_client_reg_intf_internal(struct ipa_eth_intf_info *intf)
 	struct ipa_ioc_add_hdr *hdr;
 	struct ipa_tx_intf tx;
 	struct ipa_rx_intf rx;
-	enum ipa_client_type tx_client[IPA_CLIENT_MAX];
-	enum ipa_client_type rx_client[IPA_CLIENT_MAX];
+	enum ipa_client_type tx_client[IPA_CLIENT_MAX] = {0};
+	enum ipa_client_type rx_client[IPA_CLIENT_MAX] = {0};
 	struct ipa_ioc_tx_intf_prop *tx_prop =  NULL;
 	struct ipa_ioc_rx_intf_prop *rx_prop = NULL;
 	struct ipa_eth_client_pipe_info *pipe;
@@ -938,7 +938,7 @@ static int ipa_eth_client_set_perf_profile_internal(struct ipa_eth_client *clien
 
 	client_type = client->client_type;
 	inst_id = client->inst_id;
-	if (profile == NULL) {
+	if ((!profile) || (!client) || (client->client_type >= IPA_ETH_CLIENT_MAX)) {
 		IPA_ETH_ERR("Invalid input\n");
 		return -EINVAL;
 	}

@@ -727,6 +727,11 @@ int ipa3_rx_poll(u32 clnt_hdl, int budget);
 void ipa3_recycle_wan_skb(struct sk_buff *skb);
 
 /*
+ * Low lat data path
+ */
+int ipa3_low_lat_rx_poll(u32 clnt_hdl, int budget);
+
+/*
 * System pipes
 */
 int ipa3_set_wlan_tx_info(struct ipa_wdi_tx_info *info);

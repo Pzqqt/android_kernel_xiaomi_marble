@@ -247,7 +247,8 @@ static struct ipahal_stats_init_pyld *ipahal_generate_init_pyld_tethering_v5_0(
 		if (i > 0 && !(i % IPAHAL_MAX_PIPES_PER_REG)) {
 			reg_idx++;
 		}
-		if (in->prod_bitmask[reg_idx] & ipahal_get_ep_bit(i)) {
+		if ((reg_idx < IPAHAL_IPA5_PIPE_REG_NUM) &&
+			(in->prod_bitmask[reg_idx] & ipahal_get_ep_bit(i))) {
 			bool has_cons = false;
 
 			for (j = 0; j < IPAHAL_IPA5_PIPE_REG_NUM; j++) {
@@ -291,7 +292,8 @@ static struct ipahal_stats_init_pyld *ipahal_generate_init_pyld_tethering_v5_0(
 
 	reg_idx = 0;
 	for (i = 0; i < IPAHAL_IPA5_PIPES_NUM; i++) {
-		if (in->prod_bitmask[reg_idx] & ipahal_get_ep_bit(i)) {
+		if ((reg_idx < IPAHAL_IPA5_PIPE_REG_NUM) &&
+			(in->prod_bitmask[reg_idx] & ipahal_get_ep_bit(i))) {
 			struct ipahal_stats_tethering_hdr_v5_0_hw *hdr =
 				pyld_ptr;
 
