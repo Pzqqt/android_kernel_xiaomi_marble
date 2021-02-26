@@ -68,12 +68,34 @@ int hdd_update_eht_cap_in_cfg(struct hdd_context *hdd_ctx);
  */
 void wlan_hdd_check_11be_support(struct hdd_beacon_data *beacon,
 				 struct sap_config *config);
+
+/**
+ * hdd_update_wiphy_eht_cap() - update the wiphy with eht capabilities
+ * @hdd_ctx: HDD context
+ * @cfg: WMA target configuration
+ *
+ * update wiphy with the eht capabilties.
+ *
+ * Return: None
+ */
+void hdd_update_wiphy_eht_cap(struct hdd_context *hdd_ctx,
+			      struct wma_tgt_cfg *cfg);
 #else
+static inline
+void hdd_update_tgt_eht_cap(struct hdd_context *hdd_ctx,
+			    struct wma_tgt_cfg *cfg)
+{
+}
 
 static inline void wlan_hdd_check_11be_support(struct hdd_beacon_data *beacon,
 					       struct sap_config *config)
 {
 }
 
+static inline
+void hdd_update_wiphy_eht_cap(struct hdd_context *hdd_ctx,
+			      struct wma_tgt_cfg *cfg)
+{
+}
 #endif
 #endif /* if !defined(WLAN_HDD_EHT_H)*/
