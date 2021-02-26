@@ -3050,6 +3050,23 @@ QDF_STATUS mlme_set_ext_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *src,
  */
 bool wlan_mlme_is_sta_mon_conc_supported(struct wlan_objmgr_psoc *psoc);
 
+#ifdef FEATURE_WDS
+/**
+ * wlan_mlme_get_wds_mode() - Check wds mode supported
+ * @psoc: pointer to psoc object
+ *
+ * Return: supprted wds mode
+ */
+enum wlan_wds_mode
+wlan_mlme_get_wds_mode(struct wlan_objmgr_psoc *psoc);
+#else
+static inline enum wlan_wds_mode
+wlan_mlme_get_wds_mode(struct wlan_objmgr_psoc *psoc)
+{
+	return WLAN_WDS_MODE_DISABLED;
+}
+#endif
+
 #ifdef WLAN_SUPPORT_TWT
 /**
  * mlme_is_twt_enabled() - Get if TWT is enabled via ini.

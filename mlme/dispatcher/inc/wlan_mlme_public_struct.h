@@ -1306,6 +1306,7 @@ struct wlan_mlme_ratemask {
  * @wls_6ghz_capable: wifi location service(WLS) is 6ghz capable
  * @monitor_mode_concurrency: Monitor mode concurrency supported
  * @ocv_support: FW supports OCV or not
+ * @wds_mode: wds mode supported
  */
 struct wlan_mlme_generic {
 	uint32_t band_capability;
@@ -1349,6 +1350,7 @@ struct wlan_mlme_generic {
 	bool wls_6ghz_capable;
 	enum monitor_mode_concurrency monitor_mode_concurrency;
 	bool ocv_support;
+	enum wlan_wds_mode wds_mode;
 };
 
 /*
