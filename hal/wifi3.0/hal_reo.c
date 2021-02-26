@@ -589,7 +589,7 @@ inline int hal_reo_cmd_flush_cache(hal_ring_handle_t hal_ring_hdl,
 		BLOCK_CACHE_USAGE_AFTER_FLUSH, cp->block_use_after_flush);
 
 	HAL_DESC_SET_FIELD(reo_desc, REO_FLUSH_CACHE_2, FLUSH_ENTIRE_CACHE,
-		cp->flush_all);
+		cp->flush_entire_cache);
 
 	if (hif_pm_runtime_get(hal_soc->hif_handle,
 			       RTPM_ID_HAL_REO_CMD, true) == 0) {

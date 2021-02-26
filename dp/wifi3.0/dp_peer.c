@@ -2615,6 +2615,7 @@ try_desc_alloc:
 	} else {
 		hw_qdesc_vaddr = rx_tid->hw_qdesc_vaddr_unaligned;
 	}
+	rx_tid->hw_qdesc_vaddr_aligned = hw_qdesc_vaddr;
 
 	/* TODO: Ensure that sec_type is set before ADDBA is received.
 	 * Currently this is set based on htt indication
@@ -4511,3 +4512,91 @@ struct dp_peer *dp_sta_vdev_self_peer_ref_n_get(struct dp_soc *soc,
 	qdf_spin_unlock_bh(&vdev->peer_list_lock);
 	return peer;
 }
+
+#ifdef DUMP_REO_QUEUE_INFO_IN_DDR
+void dp_dump_rx_reo_queue_info(
+	struct dp_soc *soc, void *cb_ctxt, union hal_reo_status *reo_status)
+{
+	struct dp_rx_tid *rx_tid = (struct dp_rx_tid *)cb_ctxt;
+
+	if (!rx_tid)
+		return;
+
+	if (reo_status->fl_cache_status.header.status !=
+		HAL_REO_CMD_SUCCESS) {
+		dp_err_rl("Rx tid REO HW desc flush failed(%d)",
+			  reo_status->rx_queue_status.header.status);
+		return;
+	}
+	qdf_spin_lock_bh(&rx_tid->tid_lock);
+	hal_dump_rx_reo_queue_desc(rx_tid->hw_qdesc_vaddr_aligned);
+	qdf_spin_unlock_bh(&rx_tid->tid_lock);
+}
+
+void dp_send_cache_flush_for_rx_tid(
+	struct dp_soc *soc, struct dp_peer *peer)
+{
+	int i;
+	struct dp_rx_tid *rx_tid;
+	struct hal_reo_cmd_params params;
+
+	if (!peer) {
+		dp_err_rl("Peer is NULL");
+		return;
+	}
+
+	for (i = 0; i < DP_MAX_TIDS; i++) {
+		rx_tid = &peer->rx_tid[i];
+		if (!rx_tid)
+			continue;
+		qdf_spin_lock_bh(&rx_tid->tid_lock);
+		if (rx_tid->hw_qdesc_vaddr_aligned) {
+			qdf_mem_zero(&params, sizeof(params));
+			params.std.need_status = 1;
+			params.std.addr_lo =
+				rx_tid->hw_qdesc_paddr & 0xffffffff;
+			params.std.addr_hi =
+				(uint64_t)(rx_tid->hw_qdesc_paddr) >> 32;
+			params.u.fl_cache_params.flush_no_inval = 0;
+			if (QDF_STATUS_SUCCESS !=
+				dp_reo_send_cmd(
+					soc, CMD_FLUSH_CACHE,
+					&params, dp_dump_rx_reo_queue_info,
+					(void *)rx_tid)) {
+				dp_err_rl("cache flush send failed tid %d",
+					  rx_tid->tid);
+				qdf_spin_unlock_bh(&rx_tid->tid_lock);
+				break;
+			}
+		}
+		qdf_spin_unlock_bh(&rx_tid->tid_lock);
+	}
+}
+
+void dp_get_rx_reo_queue_info(
+	struct cdp_soc_t *soc_hdl, uint8_t vdev_id)
+{
+	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_GENERIC_STATS);
+	struct dp_peer *peer = NULL;
+
+	if (!vdev) {
+		dp_err_rl("vdev is null for vdev_id: %u", vdev_id);
+		goto failed;
+	}
+
+	peer = dp_vdev_bss_peer_ref_n_get(soc, vdev, DP_MOD_ID_GENERIC_STATS);
+
+	if (!peer) {
+		dp_err_rl("Peer is NULL");
+		goto failed;
+	}
+	dp_send_cache_flush_for_rx_tid(soc, peer);
+failed:
+	if (peer)
+		dp_peer_unref_delete(peer, DP_MOD_ID_GENERIC_STATS);
+	if (vdev)
+		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_GENERIC_STATS);
+}
+#endif /* DUMP_REO_QUEUE_INFO_IN_DDR */

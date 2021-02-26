@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -179,7 +179,7 @@ struct hal_reo_cmd_flush_queue_params {
  * @cache_block_res_index: Blocking resource to be used
  * @flush_no_inval: Flush without invalidatig descriptor
  * @use_after_flush: Block usage after flush till unblock command
- * @flush_all: Flush entire REO cache
+ * @flush_entire_cache: Flush entire REO cache
  */
 struct hal_reo_cmd_flush_cache_params {
 	bool fwd_mpdus_in_queue;
@@ -187,7 +187,7 @@ struct hal_reo_cmd_flush_cache_params {
 	uint8_t cache_block_res_index;
 	bool flush_no_inval;
 	bool block_use_after_flush;
-	bool flush_all;
+	bool flush_entire_cache;
 };
 
 /**
