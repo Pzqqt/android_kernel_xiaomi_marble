@@ -901,6 +901,15 @@ QDF_STATUS mlme_update_tgt_he_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS mlme_update_tgt_eht_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
 					   struct wma_tgt_cfg *wma_cfg)
 {
+	struct wlan_mlme_psoc_ext_obj *mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	tDot11fIEeht_cap *eht_cap = &wma_cfg->eht_cap;
+
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
+
+	mlme_obj->cfg.eht_caps.dot11_eht_cap.present = 1;
+	qdf_mem_copy(&mlme_obj->cfg.eht_caps.dot11_eht_cap, eht_cap,
+		     sizeof(tDot11fIEeht_cap));
 	return QDF_STATUS_SUCCESS;
 }
 #endif
@@ -4731,3 +4740,19 @@ bool wlan_mlme_is_local_tpe_pref(struct wlan_objmgr_psoc *psoc)
 
 	return mlme_obj->cfg.power.use_local_tpe;
 }
+
+#ifdef WLAN_FEATURE_11BE
+QDF_STATUS mlme_cfg_get_eht_caps(struct wlan_objmgr_psoc *psoc,
+				 tDot11fIEeht_cap *eht_cap)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
+
+	*eht_cap = mlme_obj->cfg.eht_caps.dot11_eht_cap;
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif

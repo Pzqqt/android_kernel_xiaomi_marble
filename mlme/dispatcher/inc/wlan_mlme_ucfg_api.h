@@ -4143,4 +4143,17 @@ ucfg_mlme_is_sta_mon_conc_supported(struct wlan_objmgr_psoc *psoc)
 	return wlan_mlme_is_sta_mon_conc_supported(psoc);
 }
 
+/**
+ * ucfg_mlme_cfg_get_eht_caps() - Get the EHT capability info
+ * @psoc: pointer to psoc object
+ * @eht_cap: Caps that needs to be filled.
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_cfg_get_eht_caps(struct wlan_objmgr_psoc *psoc,
+				      tDot11fIEeht_cap *eht_cap)
+{
+	return mlme_cfg_get_eht_caps(psoc, eht_cap);
+}
 #endif /* _WLAN_MLME_UCFG_API_H_ */
