@@ -265,6 +265,7 @@ static uint8_t dp_soc_ring_if_nss_offloaded(struct dp_soc *soc,
 					    int ring_num);
 static QDF_STATUS dp_vdev_set_monitor_mode_rings(struct dp_pdev *pdev,
 						 uint8_t delayed_replenish);
+static void dp_vdev_set_monitor_mode_buf_rings(struct dp_pdev *pdev);
 
 #define DP_INTR_POLL_TIMER_MS	5
 
@@ -5803,6 +5804,7 @@ static QDF_STATUS dp_vdev_attach_wifi3(struct cdp_soc_t *cdp_soc,
 	dp_vdev_id_map_tbl_add(soc, vdev, vdev_id);
 
 	if (wlan_op_mode_monitor == vdev->opmode) {
+		dp_vdev_set_monitor_mode_buf_rings(pdev);
 		pdev->monitor_vdev = vdev;
 		return QDF_STATUS_SUCCESS;
 	}
@@ -7754,7 +7756,6 @@ static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_soc_t *dp_soc,
 	}
 
 	pdev->monitor_configured = true;
-	dp_vdev_set_monitor_mode_buf_rings(pdev);
 
 	dp_mon_filter_setup_mon_mode(pdev);
 	status = dp_mon_filter_update(pdev);
