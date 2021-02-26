@@ -344,6 +344,7 @@ struct wait_for_key_timer {
  * @rso_cfg: per vdev RSO config to be sent to FW
  * @connect_info: mlme connect information
  * @wait_key_timer: wait key timer
+ * @eht_config: Eht capability configuration
  */
 struct mlme_legacy_priv {
 	bool chan_switch_in_progress;
@@ -381,6 +382,9 @@ struct mlme_legacy_priv {
 #endif
 	struct mlme_connect_info connect_info;
 	struct wait_for_key_timer wait_key_timer;
+#ifdef WLAN_FEATURE_11BE
+	tDot11fIEeht_cap eht_config;
+#endif
 };
 
 /**

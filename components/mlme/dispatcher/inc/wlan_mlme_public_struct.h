@@ -1066,7 +1066,7 @@ struct wlan_mlme_he_caps {
  */
 struct wlan_mlme_eht_caps {
 	tDot11fIEeht_cap dot11_eht_cap;
-
+	tDot11fIEeht_cap eht_cap_orig;
 	/* Add members to store INI configuration corresponding to 11be */
 };
 #endif
