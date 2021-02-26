@@ -670,11 +670,10 @@ static int handle_dequeue_buffers(struct msm_vidc_inst* inst)
 			if (buf->attr & MSM_VIDC_ATTR_DEQUEUED) {
 				buf->attr &= ~MSM_VIDC_ATTR_DEQUEUED;
 				/*
-				 * do not send vb2_buffer_done when fw sends FBDs
-				 * with read only flag for second time
+				 * do not send vb2_buffer_done when fw returns
+				 * same buffer again
 				 */
-				if ((buf->attr & MSM_VIDC_ATTR_BUFFER_DONE) &&
-						buf->attr & MSM_VIDC_ATTR_READ_ONLY){
+				if (buf->attr & MSM_VIDC_ATTR_BUFFER_DONE) {
 					print_vidc_buffer(VIDC_HIGH, "high",
 						"vb2 done already", inst, buf);
 				} else {
