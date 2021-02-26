@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -169,6 +169,7 @@ wlan_cfr_pdev_obj_create_handler(struct wlan_objmgr_pdev *pdev, void *arg)
 	pa->lut_num = wlan_cfr_get_dbr_num_entries(pdev);
 	if (!pa->lut_num) {
 		cfr_err("lut num is 0");
+		qdf_mem_free(pa);
 		return QDF_STATUS_E_INVAL;
 	}
 	pa->lut = (struct look_up_table **)qdf_mem_malloc(pa->lut_num *
