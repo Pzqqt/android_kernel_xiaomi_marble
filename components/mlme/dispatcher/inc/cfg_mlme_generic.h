@@ -37,6 +37,22 @@ enum monitor_mode_concurrency {
 	MONITOR_MODE_CONC_AFTER_LAST,
 	MONITOR_MODE_CONC_MAX = MONITOR_MODE_CONC_AFTER_LAST - 1,
 };
+
+/**
+ * enum wds_mode_type: wds mode
+ * @WLAN_WDS_MODE_DISABLED: WDS is disabled
+ * @WLAN_WDS_MODE_REPEATER: WDS repeater mode
+ *
+ * This is used for 'type' values in wds_mode
+ */
+enum wlan_wds_mode {
+	WLAN_WDS_MODE_DISABLED  =  0,
+	WLAN_WDS_MODE_REPEATER  =  1,
+	/* keep this last */
+	WLAN_WDS_MODE_LAST,
+	WLAN_WDS_MODE_MAX = WLAN_WDS_MODE_LAST - 1,
+};
+
 /*
  * pmfSaQueryMaxRetries - Control PMF SA query retries for SAP
  * @Min: 0
@@ -822,6 +838,40 @@ enum monitor_mode_concurrency {
 	CFG_VALUE_OR_DEFAULT, \
 	"Monitor mode concurrency supported")
 
+#ifdef FEATURE_WDS
+/*
+ * <ini>
+ *
+ * wds_mode - wds mode supported
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * Related: None
+ *
+ * wds mode supported
+ * 0 - wds mode disabled
+ * 1 - wds repeater mode
+ *
+ * Supported Feature: General
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_WDS_MODE CFG_INI_UINT( \
+	"wds_mode", \
+	WLAN_WDS_MODE_DISABLED, \
+	WLAN_WDS_MODE_MAX, \
+	WLAN_WDS_MODE_DISABLED, \
+	CFG_VALUE_OR_DEFAULT, \
+	"wds mode supported")
+
+#define CFG_WDS_MODE_ALL CFG(CFG_WDS_MODE)
+#else
+#define CFG_WDS_MODE_ALL
+#endif
+
 #define CFG_GENERIC_ALL \
 	CFG(CFG_ENABLE_DEBUG_PACKET_LOG) \
 	CFG(CFG_PMF_SA_QUERY_MAX_RETRIES) \
@@ -855,5 +905,6 @@ enum monitor_mode_concurrency {
 	CFG(CFG_DFS_CHAN_AGEOUT_TIME) \
 	CFG(CFG_SAE_CONNECION_RETRIES) \
 	CFG(CFG_WLS_6GHZ_CAPABLE) \
-	CFG(CFG_MONITOR_MODE_CONCURRENCY)
+	CFG(CFG_MONITOR_MODE_CONCURRENCY) \
+	CFG_WDS_MODE_ALL
 #endif /* __CFG_MLME_GENERIC_H */

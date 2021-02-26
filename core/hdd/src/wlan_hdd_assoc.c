@@ -1943,6 +1943,41 @@ void hdd_set_unpause_queue(void *soc, struct hdd_adapter *adapter)
 { }
 #endif
 
+#ifdef FEATURE_WDS
+/**
+ * hdd_config_wds_repeater_mode() - configures vdev for wds repeater mode
+ * @adapter: pointer to adapter
+ * @peer_addr: peer mac address
+ *
+ * Configure dp vdev to detect and drop multicast echo packets and enable
+ * 4 address frame format in fw.
+ *
+ * Return: None
+ */
+static void
+hdd_config_wds_repeater_mode(struct hdd_adapter *adapter, uint8_t *peer_addr)
+{
+	cdp_config_param_type vdev_param;
+	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	vdev_param.cdp_vdev_param_mec = true;
+	if (cdp_txrx_set_vdev_param(soc, adapter->vdev_id, CDP_ENABLE_MEC,
+				    vdev_param))
+		hdd_debug("Failed to set MEC param on DP vdev");
+
+	hdd_nofl_info("Turn on 4 address for peer: " QDF_MAC_ADDR_FMT,
+		      QDF_MAC_ADDR_REF(peer_addr));
+	if (sme_set_peer_param(peer_addr, WMI_HOST_PEER_USE_4ADDR, true,
+			       adapter->vdev_id))
+		hdd_err("Failed to enable WDS on vdev");
+}
+#else
+static inline void
+hdd_config_wds_repeater_mode(struct hdd_adapter *adapter, uint8_t *peer_addr)
+{
+}
+#endif
+
 QDF_STATUS hdd_change_peer_state(struct hdd_adapter *adapter,
 				 uint8_t *peer_mac,
 				 enum ol_txrx_peer_state sta_state)
@@ -1982,6 +2017,11 @@ QDF_STATUS hdd_change_peer_state(struct hdd_adapter *adapter,
 		    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
 			hdd_set_unpause_queue(soc, adapter);
 		}
+
+		if (adapter->device_mode == QDF_STA_MODE &&
+		    (wlan_mlme_get_wds_mode(hdd_ctx->psoc) ==
+		    WLAN_WDS_MODE_REPEATER))
+			hdd_config_wds_repeater_mode(adapter, peer_mac);
 	}
 	return QDF_STATUS_SUCCESS;
 }

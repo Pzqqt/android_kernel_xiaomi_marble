@@ -362,6 +362,26 @@ mlme_init_lpass_support_cfg(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
+#ifdef FEATURE_WDS
+/**
+ * mlme_init_wds_config_cfg() - initialize wds_mode flag
+ * @psoc: Pointer to PSOC
+ * @gen: pointer to generic CFG items
+ *
+ * Return: None
+ */
+static void mlme_init_wds_config_cfg(struct wlan_objmgr_psoc *psoc,
+				     struct wlan_mlme_generic *gen)
+{
+	gen->wds_mode = cfg_get(psoc, CFG_WDS_MODE);
+}
+#else
+static void mlme_init_wds_config_cfg(struct wlan_objmgr_psoc *psoc,
+				     struct wlan_mlme_generic *gen)
+{
+}
+#endif
+
 static void mlme_init_generic_cfg(struct wlan_objmgr_psoc *psoc,
 				  struct wlan_mlme_generic *gen)
 {
@@ -425,6 +445,7 @@ static void mlme_init_generic_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_SAE_CONNECION_RETRIES);
 	gen->monitor_mode_concurrency =
 		cfg_get(psoc, CFG_MONITOR_MODE_CONCURRENCY);
+	mlme_init_wds_config_cfg(psoc, gen);
 }
 
 static void mlme_init_edca_ani_cfg(struct wlan_mlme_edca_params *edca_params)

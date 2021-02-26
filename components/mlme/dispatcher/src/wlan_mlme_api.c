@@ -4676,6 +4676,20 @@ wlan_mlme_get_monitor_mode_concurrency(struct wlan_objmgr_psoc *psoc)
 	return mlme_obj->cfg.gen.monitor_mode_concurrency;
 }
 
+#ifdef FEATURE_WDS
+enum wlan_wds_mode
+wlan_mlme_get_wds_mode(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return cfg_default(CFG_WDS_MODE);
+
+	return mlme_obj->cfg.gen.wds_mode;
+}
+#endif
+
 bool wlan_mlme_is_sta_mon_conc_supported(struct wlan_objmgr_psoc *psoc)
 {
 	if (wlan_mlme_get_monitor_mode_concurrency(psoc) ==
