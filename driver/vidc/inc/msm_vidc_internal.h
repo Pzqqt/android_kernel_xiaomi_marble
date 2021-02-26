@@ -727,6 +727,8 @@ struct msm_vidc_power {
 	u32                    ddr_bw;
 	u32                    sys_cache_bw;
 	u32                    dcvs_flags;
+	u32                    fw_cr;
+	u32                    fw_cf;
 };
 
 struct msm_vidc_alloc {
