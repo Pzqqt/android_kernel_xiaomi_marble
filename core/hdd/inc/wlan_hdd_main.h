@@ -2209,6 +2209,9 @@ struct hdd_context {
 	struct bbm_context *bbm_ctx;
 #endif
 	bool is_dual_mac_cfg_updated;
+	bool is_regulatory_update_in_progress;
+	qdf_event_t regulatory_update_event;
+	qdf_mutex_t regulatory_status_lock;
 };
 
 /**
