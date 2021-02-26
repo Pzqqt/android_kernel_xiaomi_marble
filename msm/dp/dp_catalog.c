@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
 
@@ -1406,6 +1406,7 @@ static void dp_catalog_panel_tpg_cfg(struct dp_catalog_panel *panel,
 {
 	struct dp_catalog_private *catalog;
 	struct dp_io_data *io_data;
+	u32 reg;
 
 	if (!panel) {
 		DP_ERR("invalid input\n");
@@ -1427,12 +1428,13 @@ static void dp_catalog_panel_tpg_cfg(struct dp_catalog_panel *panel,
 	if (!enable) {
 		dp_write(MMSS_DP_TPG_MAIN_CONTROL, 0x0);
 		dp_write(MMSS_DP_BIST_ENABLE, 0x0);
-		dp_write(MMSS_DP_TIMING_ENGINE_EN, 0x0);
+		reg = dp_read(MMSS_DP_TIMING_ENGINE_EN);
+		reg &= ~0x1;
+		dp_write(MMSS_DP_TIMING_ENGINE_EN, reg);
 		wmb(); /* ensure Timing generator is turned off */
 		return;
 	}
 
-	dp_write(MMSS_DP_INTF_CONFIG, 0x0);
 	dp_write(MMSS_DP_INTF_HSYNC_CTL,
 			panel->hsync_ctl);
 	dp_write(MMSS_DP_INTF_VSYNC_PERIOD_F0,
@@ -1458,7 +1460,9 @@ static void dp_catalog_panel_tpg_cfg(struct dp_catalog_panel *panel,
 	dp_write(MMSS_DP_TPG_VIDEO_CONFIG, 0x5);
 	wmb(); /* ensure TPG config is programmed */
 	dp_write(MMSS_DP_BIST_ENABLE, 0x1);
-	dp_write(MMSS_DP_TIMING_ENGINE_EN, 0x1);
+	reg = dp_read(MMSS_DP_TIMING_ENGINE_EN);
+	reg |= 0x1;
+	dp_write(MMSS_DP_TIMING_ENGINE_EN, reg);
 	wmb(); /* ensure Timing generator is turned on */
 }
 
