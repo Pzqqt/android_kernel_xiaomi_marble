@@ -2165,7 +2165,7 @@ static void hdd_sar_target_config(struct hdd_context *hdd_ctx,
 
 static void hdd_update_vhtcap_2g(struct hdd_context *hdd_ctx)
 {
-	uint32_t chip_mode = 0;
+	uint64_t chip_mode = 0;
 	QDF_STATUS status;
 	bool b2g_vht_cfg = false;
 	bool b2g_vht_target = false;
