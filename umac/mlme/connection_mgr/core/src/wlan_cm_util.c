@@ -1088,6 +1088,9 @@ cm_get_active_req_type(struct wlan_objmgr_vdev *vdev)
 	uint32_t active_req_prefix = 0;
 
 	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx)
+		return CM_NONE;
+
 	cm_id = cm_ctx->active_cm_id;
 
 	if (cm_id != CM_ID_INVALID)
@@ -1113,6 +1116,8 @@ bool cm_get_active_connect_req(struct wlan_objmgr_vdev *vdev,
 	uint32_t cm_id_prefix;
 
 	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx)
+		return status;
 
 	cm_req_lock_acquire(cm_ctx);
 	qdf_list_peek_front(&cm_ctx->req_list, &cur_node);
@@ -1154,6 +1159,8 @@ bool cm_get_active_disconnect_req(struct wlan_objmgr_vdev *vdev,
 	uint32_t cm_id_prefix;
 
 	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx)
+		return status;
 
 	cm_req_lock_acquire(cm_ctx);
 	qdf_list_peek_front(&cm_ctx->req_list, &cur_node);

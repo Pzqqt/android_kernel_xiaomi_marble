@@ -133,6 +133,8 @@ bool cm_get_active_reassoc_req(struct wlan_objmgr_vdev *vdev,
 	uint32_t cm_id_prefix;
 
 	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx)
+		return status;
 
 	cm_req_lock_acquire(cm_ctx);
 	qdf_list_peek_front(&cm_ctx->req_list, &cur_node);

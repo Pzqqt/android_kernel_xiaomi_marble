@@ -1440,7 +1440,7 @@ cm_resume_connect_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	QDF_STATUS status;
 	struct security_info *neg_sec_info;
 	uint16_t rsn_caps;
-	uint8_t country_code[REG_ALPHA2_LEN + 1];
+	uint8_t country_code[REG_ALPHA2_LEN + 1] = {0};
 	struct wlan_objmgr_psoc *psoc;
 
 	psoc = wlan_pdev_get_psoc(wlan_vdev_get_pdev(cm_ctx->vdev));

@@ -44,11 +44,8 @@ void cm_sm_state_update(struct cnx_mgr *cm_ctx,
 			enum wlan_cm_sm_state state,
 			enum wlan_cm_sm_state substate)
 {
-	if (!cm_ctx) {
-		mlme_err("vdev %d cm_ctx is NULL",
-			 wlan_vdev_get_id(cm_ctx->vdev));
+	if (!cm_ctx)
 		return;
-	}
 
 	cm_set_state(cm_ctx, state);
 	cm_set_substate(cm_ctx, substate);
@@ -510,7 +507,8 @@ static bool cm_subst_join_pending_event(void *ctx, uint16_t event,
 						 resp->cm_id),
 				   cm_ctx->disconnect_count);
 			cm_req = cm_get_req_by_cm_id(cm_ctx, resp->cm_id);
-			cm_req->failed_req = true;
+			if (cm_req)
+				cm_req->failed_req = true;
 			cm_sm_transition_to(cm_ctx, WLAN_CM_S_DISCONNECTING);
 			break;
 		}
