@@ -579,24 +579,6 @@ typedef enum {
 
 } eCsrRoamWmmUserModeType;
 
-typedef struct tagPmkidCandidateInfo {
-	struct qdf_mac_addr BSSID;
-	bool preAuthSupported;
-} tPmkidCandidateInfo;
-
-typedef struct tagPmkidCacheInfo {
-	struct qdf_mac_addr BSSID;
-	uint8_t PMKID[PMKID_LEN];
-	uint8_t pmk[CSR_RSN_MAX_PMK_LEN];
-	uint8_t pmk_len;
-	uint8_t ssid_len;
-	uint8_t ssid[WLAN_SSID_MAX_LEN];
-	uint8_t cache_id[CACHE_ID_LEN];
-	uint32_t   pmk_lifetime;
-	uint8_t    pmk_lifetime_threshold;
-	qdf_time_t pmk_ts;
-} tPmkidCacheInfo;
-
 #ifdef FEATURE_WLAN_WAPI
 typedef struct tagBkidCandidateInfo {
 	struct qdf_mac_addr BSSID;

@@ -12374,7 +12374,7 @@ void csr_roam_prepare_bss_params(struct mac_context *mac, uint32_t sessionId,
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 void csr_get_pmk_info(struct mac_context *mac_ctx, uint8_t session_id,
-			  tPmkidCacheInfo *pmk_cache)
+		      struct wlan_crypto_pmksa *pmk_cache)
 {
 	if (!mac_ctx) {
 		sme_err("Mac_ctx is NULL");
@@ -12431,7 +12431,8 @@ QDF_STATUS csr_roam_set_psk_pmk(struct mac_context *mac, uint8_t vdev_id,
 
 #if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 void csr_clear_sae_single_pmk(struct wlan_objmgr_psoc *psoc,
-			      uint8_t vdev_id, tPmkidCacheInfo *pmk_cache)
+			      uint8_t vdev_id,
+			      struct wlan_crypto_pmksa *pmk_cache)
 {
 	struct wlan_objmgr_vdev *vdev;
 	int32_t keymgmt;
@@ -17182,7 +17183,7 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		wlan_vdev_get_bss_peer_mac(vdev, &pmkid_cache->bssid);
 		sme_debug("Trying to find PMKID for " QDF_MAC_ADDR_FMT " AKM Type:%d",
 			  QDF_MAC_ADDR_REF(pmkid_cache->bssid.bytes),
-			  session->pCurRoamProfile->negotiatedAuthType);;
+			  session->pCurRoamProfile->negotiatedAuthType);
 		wlan_cm_roam_cfg_get_value(mac_ctx->psoc, session_id,
 					   MOBILITY_DOMAIN, &config);
 		mdie_present = config.bool_value;

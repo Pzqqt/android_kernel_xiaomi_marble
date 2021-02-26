@@ -3261,7 +3261,7 @@ QDF_STATUS sme_roam_del_pmkid_from_cache(mac_handle_t mac_handle,
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 void sme_get_pmk_info(mac_handle_t mac_handle, uint8_t session_id,
-		      tPmkidCacheInfo *pmk_cache)
+		      struct wlan_crypto_pmksa *pmk_cache)
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	QDF_STATUS status = sme_acquire_global_lock(&mac_ctx->sme);
@@ -13349,11 +13349,11 @@ QDF_STATUS sme_fast_reassoc(mac_handle_t mac_handle,
 #endif
 void sme_clear_sae_single_pmk_info(struct wlan_objmgr_psoc *psoc,
 				   uint8_t session_id,
-				   tPmkidCacheInfo *pmk_cache_info)
+				   struct wlan_crypto_pmksa *pmk_cache_info)
 {
 	struct wlan_crypto_pmksa *pmksa;
 	struct wlan_objmgr_vdev *vdev;
-	tPmkidCacheInfo pmk_to_del;
+	struct wlan_crypto_pmksa pmk_to_del;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, session_id,
 						    WLAN_LEGACY_SME_ID);
@@ -13361,7 +13361,7 @@ void sme_clear_sae_single_pmk_info(struct wlan_objmgr_psoc *psoc,
 		sme_err("Invalid vdev");
 		return;
 	}
-	pmksa = wlan_crypto_get_pmksa(vdev, &pmk_cache_info->BSSID);
+	pmksa = wlan_crypto_get_pmksa(vdev, &pmk_cache_info->bssid);
 	if (!pmksa) {
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 		return;
@@ -13374,7 +13374,7 @@ void sme_clear_sae_single_pmk_info(struct wlan_objmgr_psoc *psoc,
 
 QDF_STATUS sme_set_del_pmkid_cache(struct wlan_objmgr_psoc *psoc,
 				   uint8_t session_id,
-				   tPmkidCacheInfo *pmk_cache_info,
+				   struct wlan_crypto_pmksa *pmk_cache_info,
 				   bool is_add)
 {
 	struct wmi_unified_pmk_cache *pmk_cache;
@@ -13396,7 +13396,7 @@ QDF_STATUS sme_set_del_pmkid_cache(struct wlan_objmgr_psoc *psoc,
 
 	if (!pmk_cache_info->ssid_len) {
 		pmk_cache->cat_flag = WMI_PMK_CACHE_CAT_FLAG_BSSID;
-		WMI_CHAR_ARRAY_TO_MAC_ADDR(pmk_cache_info->BSSID.bytes,
+		WMI_CHAR_ARRAY_TO_MAC_ADDR(pmk_cache_info->bssid.bytes,
 				&pmk_cache->bssid);
 	} else {
 		pmk_cache->cat_flag = WMI_PMK_CACHE_CAT_FLAG_SSID_CACHE_ID;
@@ -13414,7 +13414,7 @@ QDF_STATUS sme_set_del_pmkid_cache(struct wlan_objmgr_psoc *psoc,
 		pmk_cache->action_flag = WMI_PMK_CACHE_ACTION_FLAG_DEL_ENTRY;
 
 	pmk_cache->pmkid_len = PMKID_LEN;
-	qdf_mem_copy(pmk_cache->pmkid, pmk_cache_info->PMKID,
+	qdf_mem_copy(pmk_cache->pmkid, pmk_cache_info->pmkid,
 		     PMKID_LEN);
 
 	pmk_cache->pmk_len = pmk_cache_info->pmk_len;

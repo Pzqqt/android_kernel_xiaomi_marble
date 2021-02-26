@@ -664,7 +664,7 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
  * Return: none
  */
 void csr_get_pmk_info(struct mac_context *mac_ctx, uint8_t session_id,
-		      tPmkidCacheInfo *pmk_cache);
+		      struct wlan_crypto_pmksa *pmk_cache);
 
 /*
  * csr_roam_set_psk_pmk() - store PSK/PMK in CSR session
@@ -830,11 +830,11 @@ QDF_STATUS csr_update_channel_list(struct mac_context *mac);
  * Return : None
  */
 void csr_clear_sae_single_pmk(struct wlan_objmgr_psoc *psoc,
-			      uint8_t vdev_id, tPmkidCacheInfo *pmksa);
+			      uint8_t vdev_id, struct wlan_crypto_pmksa *pmksa);
 #else
 static inline void
 csr_clear_sae_single_pmk(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
-			 tPmkidCacheInfo *pmksa)
+			 struct wlan_crypto_pmksa *pmksa)
 {
 }
 #endif

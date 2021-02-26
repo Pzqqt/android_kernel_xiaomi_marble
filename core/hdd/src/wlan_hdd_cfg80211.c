@@ -21800,7 +21800,7 @@ static int wlan_hdd_cfg80211_add_station(struct wiphy *wiphy,
 	     (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 7, 0)))
 static inline void
 hdd_fill_pmksa_lifetime(struct cfg80211_pmksa *pmksa,
-			tPmkidCacheInfo *pmk_cache)
+			struct wlan_crypto_pmksa *pmk_cache)
 {
 	pmk_cache->pmk_lifetime = pmksa->pmk_lifetime;
 	if (pmk_cache->pmk_lifetime > WLAN_CRYPTO_MAX_PMKID_LIFETIME)
@@ -21818,12 +21818,12 @@ hdd_fill_pmksa_lifetime(struct cfg80211_pmksa *pmksa,
 #else
 static inline void
 hdd_fill_pmksa_lifetime(struct cfg80211_pmksa *pmksa,
-			tPmkidCacheInfo *src_pmk_cache)
+			struct wlan_crypto_pmksa *src_pmk_cache)
 {}
 #endif
 
 static QDF_STATUS wlan_hdd_set_pmksa_cache(struct hdd_adapter *adapter,
-					   tPmkidCacheInfo *pmk_cache)
+					   struct wlan_crypto_pmksa *pmk_cache)
 {
 	QDF_STATUS result;
 	struct wlan_crypto_pmksa *pmksa;
@@ -21852,14 +21852,14 @@ static QDF_STATUS wlan_hdd_set_pmksa_cache(struct hdd_adapter *adapter,
 	}
 
 	if (!pmk_cache->ssid_len) {
-		qdf_copy_macaddr(&pmksa->bssid, &pmk_cache->BSSID);
+		qdf_copy_macaddr(&pmksa->bssid, &pmk_cache->bssid);
 	} else {
 		qdf_mem_copy(pmksa->ssid, pmk_cache->ssid, pmk_cache->ssid_len);
 		qdf_mem_copy(pmksa->cache_id, pmk_cache->cache_id,
 			     WLAN_CACHE_ID_LEN);
 		pmksa->ssid_len = pmk_cache->ssid_len;
 	}
-	qdf_mem_copy(pmksa->pmkid, pmk_cache->PMKID, PMKID_LEN);
+	qdf_mem_copy(pmksa->pmkid, pmk_cache->pmkid, PMKID_LEN);
 	qdf_mem_copy(pmksa->pmk, pmk_cache->pmk, pmk_cache->pmk_len);
 	pmksa->pmk_len = pmk_cache->pmk_len;
 	pmksa->pmk_entry_ts = qdf_get_system_timestamp();
@@ -21882,7 +21882,7 @@ static QDF_STATUS wlan_hdd_set_pmksa_cache(struct hdd_adapter *adapter,
 }
 
 static QDF_STATUS wlan_hdd_del_pmksa_cache(struct hdd_adapter *adapter,
-					   tPmkidCacheInfo *pmk_cache)
+					   struct wlan_crypto_pmksa *pmk_cache)
 {
 	QDF_STATUS result;
 	struct wlan_crypto_pmksa pmksa;
@@ -21892,7 +21892,7 @@ static QDF_STATUS wlan_hdd_del_pmksa_cache(struct hdd_adapter *adapter,
 	if (!vdev)
 		return QDF_STATUS_E_FAILURE;
 
-	qdf_copy_macaddr(&pmksa.bssid, &pmk_cache->BSSID);
+	qdf_copy_macaddr(&pmksa.bssid, &pmk_cache->bssid);
 	result = wlan_crypto_set_del_pmksa(vdev, &pmksa, false);
 	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 
@@ -21943,14 +21943,14 @@ static inline bool wlan_hdd_is_pmksa_valid(struct cfg80211_pmksa *pmksa)
  * Return: None
  */
 static void hdd_fill_pmksa_info(struct hdd_adapter *adapter,
-				tPmkidCacheInfo *pmk_cache,
+				struct wlan_crypto_pmksa *pmk_cache,
 				struct cfg80211_pmksa *pmksa, bool is_delete)
 {
 	if (pmksa->bssid) {
 		hdd_debug("%s PMKSA for " QDF_MAC_ADDR_FMT,
 			  is_delete ? "Delete" : "Set",
 			  QDF_MAC_ADDR_REF(pmksa->bssid));
-		qdf_mem_copy(pmk_cache->BSSID.bytes,
+		qdf_mem_copy(pmk_cache->bssid.bytes,
 			     pmksa->bssid, QDF_MAC_ADDR_SIZE);
 	} else {
 		qdf_mem_copy(pmk_cache->ssid, pmksa->ssid, pmksa->ssid_len);
@@ -21969,7 +21969,7 @@ static void hdd_fill_pmksa_info(struct hdd_adapter *adapter,
 	if (is_delete)
 		return;
 
-	qdf_mem_copy(pmk_cache->PMKID, pmksa->pmkid, PMKID_LEN);
+	qdf_mem_copy(pmk_cache->pmkid, pmksa->pmkid, PMKID_LEN);
 	if (pmksa->pmk_len && (pmksa->pmk_len <= CSR_RSN_MAX_PMK_LEN)) {
 		qdf_mem_copy(pmk_cache->pmk, pmksa->pmk, pmksa->pmk_len);
 		pmk_cache->pmk_len = pmksa->pmk_len;
@@ -21993,7 +21993,8 @@ static inline bool wlan_hdd_is_pmksa_valid(struct cfg80211_pmksa *pmksa)
 }
 
 /*
- * hdd_fill_pmksa_info: API to update tPmkidCacheInfo from cfg80211_pmksa
+ * hdd_fill_pmksa_info: API to update struct wlan_crypto_pmksa from
+ * cfg80211_pmksa
  * @adapter: Pointer to hdd adapter
  * @pmk_cache: pmk which needs to be updated
  * @pmksa: pmk from supplicant
@@ -22002,21 +22003,20 @@ static inline bool wlan_hdd_is_pmksa_valid(struct cfg80211_pmksa *pmksa)
  * Return: None
  */
 static void hdd_fill_pmksa_info(struct hdd_adapter *adapter,
-				tPmkidCacheInfo *pmk_cache,
+				struct wlan_crypto_pmksa *pmk_cache,
 				struct cfg80211_pmksa *pmksa, bool is_delete)
 {
 	mac_handle_t mac_handle;
 
 	hdd_debug("%s PMKSA for " QDF_MAC_ADDR_FMT, is_delete ? "Delete" : "Set",
 		  QDF_MAC_ADDR_REF(pmksa->bssid));
-	qdf_mem_copy(pmk_cache->BSSID.bytes,
-				pmksa->bssid, QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(pmk_cache->bssid.bytes, pmksa->bssid, QDF_MAC_ADDR_SIZE);
 
 	if (is_delete)
 		return;
 	mac_handle = hdd_adapter_get_mac_handle(adapter);
 	sme_get_pmk_info(mac_handle, adapter->vdev_id, pmk_cache);
-	qdf_mem_copy(pmk_cache->PMKID, pmksa->pmkid, PMKID_LEN);
+	qdf_mem_copy(pmk_cache->pmkid, pmksa->pmkid, PMKID_LEN);
 }
 #endif
 
@@ -22036,7 +22036,7 @@ static int __wlan_hdd_cfg80211_set_pmksa(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	QDF_STATUS result = QDF_STATUS_SUCCESS;
 	int status;
-	tPmkidCacheInfo *pmk_cache;
+	struct wlan_crypto_pmksa *pmk_cache;
 
 	hdd_enter();
 
@@ -22089,7 +22089,7 @@ static int __wlan_hdd_cfg80211_set_pmksa(struct wiphy *wiphy,
 	sme_set_del_pmkid_cache(hdd_ctx->psoc, adapter->vdev_id,
 				pmk_cache, true);
 
-	qdf_mem_zero(pmk_cache, sizeof(pmk_cache));
+	qdf_mem_zero(pmk_cache, sizeof(*pmk_cache));
 
 	qdf_mem_free(pmk_cache);
 	hdd_exit();
@@ -22138,7 +22138,7 @@ static int __wlan_hdd_cfg80211_del_pmksa(struct wiphy *wiphy,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int status = 0;
-	tPmkidCacheInfo *pmk_cache;
+	struct wlan_crypto_pmksa *pmk_cache;
 
 	hdd_enter();
 
@@ -23786,7 +23786,7 @@ wlan_hdd_extauth_cache_pmkid(struct hdd_adapter *adapter,
 			     mac_handle_t mac_handle,
 			     struct cfg80211_external_auth_params *params)
 {
-	tPmkidCacheInfo *pmk_cache;
+	struct wlan_crypto_pmksa *pmk_cache;
 	QDF_STATUS result;
 
 	if (params->pmkid) {
@@ -23794,9 +23794,9 @@ wlan_hdd_extauth_cache_pmkid(struct hdd_adapter *adapter,
 		if (!pmk_cache)
 			return;
 
-		qdf_mem_copy(pmk_cache->BSSID.bytes, params->bssid,
+		qdf_mem_copy(pmk_cache->bssid.bytes, params->bssid,
 			     QDF_MAC_ADDR_SIZE);
-		qdf_mem_copy(pmk_cache->PMKID, params->pmkid,
+		qdf_mem_copy(pmk_cache->pmkid, params->pmkid,
 			     PMKID_LEN);
 		result = wlan_hdd_set_pmksa_cache(adapter, pmk_cache);
 		if (!QDF_IS_STATUS_SUCCESS(result))
