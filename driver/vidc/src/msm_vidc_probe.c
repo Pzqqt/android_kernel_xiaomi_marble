@@ -93,7 +93,7 @@ static struct attribute_group msm_vidc_core_attr_group = {
 static const struct of_device_id msm_vidc_dt_match[] = {
 	{.compatible = "qcom,msm-vidc"},
 	{.compatible = "qcom,msm-vidc,context-bank"},
-	{},
+	MSM_VIDC_EMPTY_BRACE
 };
 MODULE_DEVICE_TABLE(of, msm_vidc_dt_match);
 

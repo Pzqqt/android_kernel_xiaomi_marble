@@ -23,6 +23,10 @@
 #define FW_DBG_TAG VIDC_DBG_LABEL ": %6s: "
 #define DEFAULT_SID ((u32)-1)
 
+#ifndef MSM_VIDC_EMPTY_BRACE
+#define MSM_VIDC_EMPTY_BRACE {},
+#endif
+
 extern int msm_vidc_debug;
 extern bool msm_vidc_lossless_encode;
 extern bool msm_vidc_syscache_disable;
