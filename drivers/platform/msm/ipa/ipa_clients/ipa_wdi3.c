@@ -253,9 +253,8 @@ static int ipa_wdi_reg_intf_internal(struct ipa_wdi_reg_intf_in_params *in)
 
 	memset(tx_prop, 0, sizeof(tx_prop));
 	tx_prop[0].ip = IPA_IP_v4;
-	if (ipa3_get_ctx()->ipa_wdi3_over_gsi &&
-		ipa3_ctx->is_wdi3_tx1_needed) {
-		if (in->is_tx1_used)
+	if (ipa3_get_ctx()->ipa_wdi3_over_gsi) {
+		if (in->is_tx1_used && ipa3_ctx->is_wdi3_tx1_needed)
 			tx_prop[0].dst_pipe = IPA_CLIENT_WLAN2_CONS1;
 		else
 			tx_prop[0].dst_pipe = IPA_CLIENT_WLAN2_CONS;
@@ -268,9 +267,8 @@ static int ipa_wdi_reg_intf_internal(struct ipa_wdi_reg_intf_in_params *in)
 		sizeof(tx_prop[0].hdr_name));
 
 	tx_prop[1].ip = IPA_IP_v6;
-	if (ipa3_get_ctx()->ipa_wdi3_over_gsi &&
-		ipa3_ctx->is_wdi3_tx1_needed) {
-		if (in->is_tx1_used)
+	if (ipa3_get_ctx()->ipa_wdi3_over_gsi) {
+		if (in->is_tx1_used && ipa3_ctx->is_wdi3_tx1_needed)
 			tx_prop[1].dst_pipe = IPA_CLIENT_WLAN2_CONS1;
 		else
 			tx_prop[1].dst_pipe = IPA_CLIENT_WLAN2_CONS;
