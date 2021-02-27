@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -199,6 +199,20 @@ ol_rx_fwd_check(struct ol_txrx_vdev_t *vdev,
 				qdf_nbuf_set_next(msdu, NULL);
 				qdf_nbuf_tx_free(msdu,
 						 QDF_NBUF_PKT_ERROR);
+				msdu = msdu_list;
+				continue;
+			}
+
+			if (vdev->opmode == wlan_op_mode_ap &&
+			    qdf_nbuf_is_ipv4_eapol_pkt(msdu) &&
+			    qdf_mem_cmp(qdf_nbuf_data(msdu) +
+					QDF_NBUF_DEST_MAC_OFFSET,
+					vdev->mac_addr.raw,
+					QDF_MAC_ADDR_SIZE)) {
+				TXRX_STATS_MSDU_LIST_INCR(
+					pdev, tx.dropped.host_reject, msdu);
+				qdf_nbuf_set_next(msdu, NULL);
+				qdf_nbuf_tx_free(msdu, QDF_NBUF_PKT_ERROR);
 				msdu = msdu_list;
 				continue;
 			}
