@@ -1723,8 +1723,8 @@ dp_rx_defrag_store_fragment(struct dp_soc *soc,
 
 	rx_reorder_array_elem = peer->rx_tid[tid].array;
 	if (!rx_reorder_array_elem) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "Rcvd Fragmented pkt before peer_tid is setup");
+		dp_err_rl("Rcvd Fragmented pkt before tid setup for peer %pK",
+			  peer);
 		goto discard_frag;
 	}
 
