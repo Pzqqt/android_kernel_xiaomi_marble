@@ -669,6 +669,7 @@ static int msm_vdec_set_realtime(struct msm_vidc_inst *inst,
 		return -EINVAL;
 	}
 
+	realtime = inst->capabilities->cap[PRIORITY].value;
 	i_vpr_h(inst, "%s: priority: %d", __func__, realtime);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_REALTIME,
@@ -1378,7 +1379,13 @@ static int msm_vdec_read_input_subcr_params(struct msm_vidc_inst *inst)
 	}
 
 	inst->buffers.output.min_count = subsc_params.fw_min_count;
-
+	if (is_thumbnail_session(inst) && inst->codec != MSM_VIDC_VP9) {
+		if (inst->buffers.output.min_count != 1) {
+			i_vpr_e(inst, "%s: invalid min count %d in thumbnail case\n",
+				__func__, inst->buffers.output.min_count);
+			msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
+		}
+	}
 	inst->crop.top = subsc_params.crop_offsets[0] & 0xFFFF;
 	inst->crop.left = (subsc_params.crop_offsets[0] >> 16) & 0xFFFF;
 	inst->crop.height = inst->fmts[INPUT_PORT].fmt.pix_mp.height -

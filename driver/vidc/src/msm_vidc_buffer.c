@@ -59,7 +59,7 @@ u32 msm_vidc_output_min_count(struct msm_vidc_inst *inst)
 		return 0;
 
 	if (is_thumbnail_session(inst))
-		return inst->codec == MSM_VIDC_VP9 ? 8 : 1;
+		return 1;
 
 	if (is_decode_session(inst)) {
 		switch (inst->codec) {

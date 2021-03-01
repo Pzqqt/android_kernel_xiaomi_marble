@@ -320,7 +320,7 @@ static ssize_t inst_info_read(struct file *file, char __user *buf,
 			inst->capabilities->cap[FRAME_RATE].value >> 16);
 	cur += write_str(cur, end - cur, "state: %d\n", inst->state);
 	cur += write_str(cur, end - cur, "secure: %d\n",
-		!!(inst->flags & VIDC_SECURE));
+		is_secure_session(inst));
 	cur += write_str(cur, end - cur, "-----------Formats-------------\n");
 	for (i = 0; i < MAX_PORT; i++) {
 		if (i != INPUT_PORT && i != OUTPUT_PORT)

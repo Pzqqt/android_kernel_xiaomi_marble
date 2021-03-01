@@ -413,6 +413,7 @@ enum msm_vidc_inst_capability_type {
 	DEFAULT_HEADER,
 	RAP_FRAME,
 	SEQ_CHANGE_AT_SYNC_FRAME,
+	PRIORITY,
 	META_LTR_MARK_USE,
 	META_DPB_MISR,
 	META_OPB_MISR,
@@ -678,13 +679,6 @@ struct msm_vidc_decode_batch {
 	bool                   enable;
 	u32                    size;
 	struct delayed_work    work;
-};
-
-enum msm_vidc_modes {
-	VIDC_SECURE            = BIT(0),
-	VIDC_TURBO             = BIT(1),
-	VIDC_THUMBNAIL         = BIT(2),
-	VIDC_LOW_POWER         = BIT(3),
 };
 
 enum load_calc_quirks {

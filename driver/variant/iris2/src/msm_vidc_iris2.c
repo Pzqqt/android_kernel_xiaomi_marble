@@ -639,13 +639,10 @@ int msm_vidc_decide_quality_mode_iris2(struct msm_vidc_inst* inst)
 	max_hq_mbps = core->capabilities[MAX_MBPS_HQ].value;;
 
 	/* Power saving always disabled for CQ and LOSSLESS RC modes. */
-	if (inst->capabilities->cap[LOSSLESS].value ||
+	if (capability->cap[LOSSLESS].value ||
 		(mbpf <= max_hq_mbpf && mbps <= max_hq_mbps))
 		mode = MSM_VIDC_MAX_QUALITY_MODE;
 
-	inst->flags = mode == MSM_VIDC_POWER_SAVE_MODE ?
-		inst->flags | VIDC_LOW_POWER :
-		inst->flags & ~VIDC_LOW_POWER;
 	capability->cap[QUALITY_MODE].value = mode;
 
 	return 0;

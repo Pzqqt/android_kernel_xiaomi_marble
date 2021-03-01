@@ -26,7 +26,7 @@ static inline is_encode_session(struct msm_vidc_inst *inst)
 
 static inline is_secure_session(struct msm_vidc_inst *inst)
 {
-	return false;
+	return !!(inst->capabilities->cap[SECURE_MODE].value);
 }
 
 static inline is_input_buffer(enum msm_vidc_buffer_type buffer_type)
@@ -145,24 +145,21 @@ static inline bool is_secondary_output_mode(struct msm_vidc_inst *inst)
 	return false; // TODO: inst->stream_output_mode == HAL_VIDEO_DECODER_SECONDARY;
 }
 
-static inline bool is_turbo_session(struct msm_vidc_inst *inst)
-{
-	return !!(inst->flags & VIDC_TURBO);
-}
-
 static inline bool is_thumbnail_session(struct msm_vidc_inst *inst)
 {
-	return !!(inst->flags & VIDC_THUMBNAIL);
+	return false;
+	// todo: return !!(inst->capabilities->cap[THUMBNAIL_MODE].value);
 }
 
 static inline bool is_low_power_session(struct msm_vidc_inst *inst)
 {
-	return !!(inst->flags & VIDC_LOW_POWER);
+	return (inst->capabilities->cap[QUALITY_MODE].value ==
+		MSM_VIDC_POWER_SAVE_MODE);
 }
 
 static inline bool is_realtime_session(struct msm_vidc_inst *inst)
 {
-	return false; // TODO: fix it
+	return !inst->capabilities->cap[PRIORITY].value;
 }
 
 static inline bool is_active_session(u64 prev, u64 curr)

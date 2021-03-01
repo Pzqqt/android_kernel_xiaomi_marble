@@ -119,7 +119,57 @@ static const char * const * msm_vidc_get_qmenu_type(
 	}
 }
 
-static const char *msm_vidc_get_priv_ctrl_name(struct msm_vidc_inst *inst, u32 control_id)
+static const char *msm_vidc_get_priv_ctrl_name_list2(struct msm_vidc_inst *inst,
+	u32 control_id)
+{
+	switch (control_id) {
+	case V4L2_CID_MPEG_VIDC_HEVC_I_FRAME_MIN_QP:
+		return "HEVC I Frame Min QP";
+	case V4L2_CID_MPEG_VIDC_HEVC_P_FRAME_MIN_QP:
+		return "HEVC P Frame Min QP";
+	case V4L2_CID_MPEG_VIDC_HEVC_I_FRAME_MAX_QP:
+		return "HEVC I Frame Max QP";
+	case V4L2_CID_MPEG_VIDC_HEVC_P_FRAME_MAX_QP:
+		return "HEVC P Frame Max QP";
+	case V4L2_CID_MPEG_VIDC_METADATA_LTR_MARK_USE_DETAILS:
+		return "LTR Mark Use Details Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_SEQ_HEADER_NAL:
+		return "Seq Header NAL Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_DPB_LUMA_CHROMA_MISR:
+		return "DPB Luma-Chroma MISR Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_OPB_LUMA_CHROMA_MISR:
+		return "OPB Luma-Chroma MISR Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_INTERLACE:
+		return "Interlace Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_CONCEALED_MB_COUNT:
+		return "Concealed MB Count Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_HISTOGRAM_INFO:
+		return "Historgram Info Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_SEI_MASTERING_DISPLAY_COLOUR:
+		return "SEI Mastering Display Color Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_SEI_CONTENT_LIGHT_LEVEL:
+		return "SEI Content Lighting Level Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_HDR10PLUS:
+		return "HDR10PLUS Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_EVA_STATS:
+		return "EVA Stats Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_BUFFER_TAG:
+		return "Buffer Tag Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_SUBFRAME_OUTPUT:
+		return "Subframe Output Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_ROI_INFO:
+		return "ROI Info Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_TIMESTAMP:
+		return "Timestamp Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_ENC_QP_METADATA:
+		return "Encoder QP Metadata";
+	default:
+		return NULL;
+	}
+}
+
+static const char *msm_vidc_get_priv_ctrl_name_list1(struct msm_vidc_inst *inst,
+	u32 control_id)
 {
 	switch (control_id) {
 	case V4L2_CID_MPEG_VIDC_SECURE:
@@ -162,55 +212,38 @@ static const char *msm_vidc_get_priv_ctrl_name(struct msm_vidc_inst *inst, u32 c
 		return "H264 Display Delay";
 	case V4L2_CID_MPEG_MFC51_VIDEO_DECODER_H264_DISPLAY_DELAY_ENABLE:
 		return "H264 Display Delay Enable";
-	case V4L2_CID_MPEG_VIDC_METADATA_LTR_MARK_USE_DETAILS:
-		return "LTR Mark Use Details Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_SEQ_HEADER_NAL:
-		return "Seq Header NAL Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_DPB_LUMA_CHROMA_MISR:
-		return "DPB Luma-Chroma MISR Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_OPB_LUMA_CHROMA_MISR:
-		return "OPB Luma-Chroma MISR Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_INTERLACE:
-		return "Interlace Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_CONCEALED_MB_COUNT:
-		return "Concealed MB Count Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_HISTOGRAM_INFO:
-		return "Historgram Info Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_SEI_MASTERING_DISPLAY_COLOUR:
-		return "SEI Mastering Display Color Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_SEI_CONTENT_LIGHT_LEVEL:
-		return "SEI Content Lighting Level Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_HDR10PLUS:
-		return "HDR10PLUS Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_EVA_STATS:
-		return "EVA Stats Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_BUFFER_TAG:
-		return "Buffer Tag Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_SUBFRAME_OUTPUT:
-		return "Subframe Output Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_ROI_INFO:
-		return "ROI Info Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_TIMESTAMP:
-		return "Timestamp Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_ENC_QP_METADATA:
-		return "Encoder QP Metadata";
 	case V4L2_CID_MPEG_VIDC_MIN_BITSTREAM_SIZE_OVERWRITE:
 		return "Bitstream Size Overwrite";
-	case V4L2_CID_MPEG_VIDC_HEVC_I_FRAME_MIN_QP:
-		return "HEVC I Frame Min QP";
-	case V4L2_CID_MPEG_VIDC_HEVC_P_FRAME_MIN_QP:
-		return "HEVC P Frame Min QP";
-	case V4L2_CID_MPEG_VIDC_HEVC_I_FRAME_MAX_QP:
-		return "HEVC I Frame Max QP";
-	case V4L2_CID_MPEG_VIDC_HEVC_P_FRAME_MAX_QP:
-		return "HEVC P Frame Max QP";
 	case V4L2_CID_MPEG_VIDC_SUPERFRAME:
 		return "Encoder Batching Superframe";
+	case V4L2_CID_MPEG_VIDC_THUMBNAIL_MODE:
+		return "Thumbnail Mode";
+	case V4L2_CID_MPEG_VIDC_PRIORITY:
+		return "Priority";
 	default:
-		i_vpr_e(inst, "%s: ctrl name not available for ctrl id %#x\n",
-			__func__, control_id);
 		return NULL;
 	}
+}
+/*
+ * Due to a long switch case function, ccn failure was observed. Hence the
+ * below function is split into msm_vidc_get_priv_ctrl_name_list1() and
+ * msm_vidc_get_priv_ctrl_name_list2()
+ */
+static const char *msm_vidc_get_priv_ctrl_name(struct msm_vidc_inst *inst,
+	u32 control_id)
+{
+	const char *ctrl_name;
+
+	ctrl_name = msm_vidc_get_priv_ctrl_name_list1(inst, control_id);
+	if (ctrl_name)
+		return ctrl_name;
+	ctrl_name = msm_vidc_get_priv_ctrl_name_list2(inst, control_id);
+	if (ctrl_name)
+		return ctrl_name;
+
+	i_vpr_e(inst, "%s: ctrl name not available for ctrl id %#x\n",
+		__func__, control_id);
+	return NULL;
 }
 
 static int msm_vidc_packetize_control(struct msm_vidc_inst *inst,

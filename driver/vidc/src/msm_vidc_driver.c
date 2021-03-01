@@ -2964,7 +2964,7 @@ int msm_vidc_print_inst_info(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
-	is_secure = !!(inst->flags & VIDC_SECURE);
+	is_secure = is_secure_session(inst);
 	is_decode = inst->domain == MSM_VIDC_DECODER;
 	port = is_decode ? INPUT_PORT : OUTPUT_PORT;
 	width = inst->fmts[port].fmt.pix_mp.width;

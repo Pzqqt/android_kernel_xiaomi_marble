@@ -494,8 +494,8 @@ int msm_vidc_scale_clocks(struct msm_vidc_inst *inst)
 	if (!data_size)
 		return 0;
 
-	if (inst->power.buffer_counter < DCVS_FTB_WINDOW ||
-		is_turbo_session(inst)) {
+	//todo: add turbo session check
+	if (inst->power.buffer_counter < DCVS_FTB_WINDOW) {
 		inst->power.min_freq = msm_vidc_max_freq(inst);
 		inst->power.dcvs_flags = 0;
 	} else if (msm_vidc_clock_voting) {

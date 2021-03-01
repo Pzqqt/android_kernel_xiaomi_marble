@@ -108,7 +108,6 @@ struct msm_vidc_inst {
 	struct msm_vidc_rectangle          crop;
 	struct msm_vidc_rectangle          compose;
 	struct msm_vidc_power              power;
-	enum msm_vidc_modes                flags;
 	struct vidc_bus_vote_data          bus_data;
 	struct msm_vidc_buffers_info       buffers;
 	struct msm_vidc_mappings_info      mappings;
