@@ -1,3 +1,13 @@
+# Android makefile for the WLAN Module
+
+# set WLAN_BUILD_DEBUG=y in your environment to enable debug logging
+define wlog
+$(if $(WLAN_BUILD_DEBUG),$(info $(1)))
+endef
+
+LOCAL_PATH := $(call my-dir)
+$(call wlog,LOCAL_PATH=$(LOCAL_PATH))
+
 ENABLE_QCACLD := true
 ifeq ($(TARGET_USES_QMAA), true)
 ifneq ($(TARGET_USES_QMAA_OVERRIDE_WLAN), true)
@@ -8,8 +18,6 @@ endif
 endif
 
 ifeq  ($(ENABLE_QCACLD), true)
-# Android makefile for the WLAN Module
-LOCAL_PATH := $(call my-dir)
 
 # Assume no targets will be supported
 WLAN_CHIPSET :=
@@ -35,6 +43,9 @@ endif # opensource
 # Multi-ko check
 LOCAL_DEV_NAME := $(patsubst .%,%,\
 	$(lastword $(strip $(subst /, ,$(LOCAL_PATH)))))
+
+$(call wlog,LOCAL_DEV_NAME=$(LOCAL_DEV_NAME))
+$(call wlog,TARGET_WLAN_CHIP=$(TARGET_WLAN_CHIP))
 
 ifeq (1, $(strip $(shell expr $(words $(strip $(TARGET_WLAN_CHIP))) \>= 2)))
 
@@ -186,11 +197,11 @@ $(shell mkdir -p $(TARGET_FW_PATH); \
 	ln -sf $(TARGET_MAC_BIN_PATH)/wlan_mac.bin $(TARGET_FW_PATH)/wlan_mac.bin)
 ifeq ($(TARGET_BOARD_AUTO),true)
 $(shell ln -sf $(TARGET_CFG_PATH)/WCNSS_qcom_cfg.ini $(TARGET_FW_PATH)/WCNSS_qcom_cfg.ini)
-$(warning "generate soft link because TARGET_BOARD_AUTO true")
+$(call wlog,"generate soft link because TARGET_BOARD_AUTO true")
 else
 ifneq ($(GENERIC_ODM_IMAGE),true)
 $(shell ln -sf $(TARGET_CFG_PATH)/WCNSS_qcom_cfg.ini $(TARGET_FW_PATH)/WCNSS_qcom_cfg.ini)
-$(warning "generate soft link because GRNERIC_ODM_IMAGE not true")
+$(call wlog,"generate soft link because GENERIC_ODM_IMAGE not true")
 endif
 endif
 endif # Multi-ko check
