@@ -28,6 +28,7 @@
 #define DEFAULT_DBGBUS_DSI	SDE_DBG_DUMP_IN_MEM
 #define DEFAULT_DBGBUS_RSC	SDE_DBG_DUMP_IN_MEM
 #define DEFAULT_DBGBUS_LUTDMA	SDE_DBG_DUMP_IN_MEM
+#define DEFAULT_DBGBUS_DP	SDE_DBG_DUMP_IN_MEM
 #define DEFAULT_BASE_REG_CNT	DEFAULT_MDSS_HW_BLOCK_SIZE
 #define GROUP_BYTES		4
 #define ROW_BYTES		16
@@ -39,6 +40,7 @@
 #define DBGBUS_NAME_DSI		"dsi"
 #define DBGBUS_NAME_RSC		"sde_rsc_wrapper"
 #define DBGBUS_NAME_LUTDMA	"reg_dma"
+#define DBGBUS_NAME_DP		"dp_ahb"
 
 /* offsets from LUTDMA top address for the debug buses */
 #define LUTDMA_0_DEBUG_BUS_CTRL		0x1e8
@@ -79,6 +81,10 @@
 
 #define RSC_WRAPPER_DEBUG_BUS		0x010
 #define RSC_WRAPPER_DEBUG_BUS_DATA	0x014
+
+/* offsets from DP AHB base address for DP debug bus */
+#define DPTX_DEBUG_BUS_CTRL		0x88
+#define DPTX_DEBUG_BUS_OUTPUT		0x8c
 
 /* print debug ranges in groups of 4 u32s */
 #define REG_DUMP_ALIGN		16
@@ -245,6 +251,7 @@ struct sde_dbg_regbuf {
  * @dbgbus_dsi: debug bus structure for the dsi
  * @dbgbus_rsc: debug bus structure for rscc
  * @dbgbus_lutdma: debug bus structure for the lutdma hw
+ * @dbgbus_dp: debug bus structure for dp
  * @dump_all: dump all entries in register dump
  * @dump_secure: dump entries excluding few as it is in secure-session
  * @regbuf: buffer data to track the register dumping in hw recovery
@@ -270,6 +277,7 @@ static struct sde_dbg_base {
 	struct sde_dbg_sde_debug_bus dbgbus_dsi;
 	struct sde_dbg_sde_debug_bus dbgbus_rsc;
 	struct sde_dbg_sde_debug_bus dbgbus_lutdma;
+	struct sde_dbg_sde_debug_bus dbgbus_dp;
 	bool dump_all;
 	bool dump_secure;
 	u32 debugfs_ctrl;
@@ -423,6 +431,10 @@ static struct sde_debug_bus_entry dbg_bus_lutdma[] = {
 	{ LUTDMA_1_DEBUG_BUS_CTRL, LUTDMA_1_DEBUG_BUS_STATUS, 0, 1, 8448, 1 },
 	{ LUTDMA_1_DEBUG_BUS_CTRL, LUTDMA_1_DEBUG_BUS_STATUS, 0, 1, 8704, 1 },
 	{ LUTDMA_1_DEBUG_BUS_CTRL, LUTDMA_1_DEBUG_BUS_STATUS, 0, 1, 8960, 1 },
+};
+
+static struct sde_debug_bus_entry dp_dbg_bus[] = {
+	{DPTX_DEBUG_BUS_CTRL, DPTX_DEBUG_BUS_OUTPUT, 0, 1, 0, 145},
 };
 
 /**
@@ -697,6 +709,14 @@ static u32 _sde_dbg_cmn_read_test_point(void __iomem *mem_base, u32 wr_addr, u32
 static void _sde_dbg_cmn_clear_test_point(void __iomem *mem_base, u32 wr_addr)
 {
 	writel_relaxed(0, mem_base + wr_addr);
+}
+
+static u32 _sde_dbg_dp_read_test_point(void __iomem *mem_base, u32 wr_addr, u32 rd_addr,
+			u32 block_id, u32 test_id)
+{
+	u32 val = (test_id << 4) | BIT(0);
+
+	return _sde_dbg_cmn_read_test_point(mem_base, wr_addr, rd_addr, val);
 }
 
 static u32 _sde_dbg_rsc_read_test_point(void __iomem *mem_base, u32 wr_addr, u32 rd_addr,
@@ -988,13 +1008,13 @@ static void _sde_dbg_dump_dsi_dbg_bus(struct sde_dbg_sde_debug_bus *bus)
  * @dump_dbgbus_sde: whether to dump the sde debug bus
  * @dump_dbgbus_vbif_rt: whether to dump the vbif rt debug bus
  * @dump_dbgbus_dsi: whether to dump the dsi debug bus
+ * @dump_dbgbus_dp: whether to dump the dp debug bus
  * @dump_all: dump evtlog + regs
  * @dump_secure: flag to indicate dumping in secure-session
  */
 static void _sde_dump_array(struct sde_dbg_reg_base *blk_arr[],
-	u32 len, bool do_panic, const char *name, bool dump_dbgbus_sde,
-	bool dump_dbgbus_vbif_rt,  bool dump_dbgbus_dsi, bool dump_all,
-	bool dump_secure)
+	u32 len, bool do_panic, const char *name, bool dump_dbgbus_sde, bool dump_dbgbus_vbif_rt,
+	bool dump_dbgbus_dsi, bool dump_dbgbus_dp, bool dump_all, bool dump_secure)
 {
 	int i, rc;
 	ktime_t start, end;
@@ -1036,6 +1056,9 @@ static void _sde_dump_array(struct sde_dbg_reg_base *blk_arr[],
 	if (dump_dbgbus_dsi)
 		_sde_dbg_dump_dsi_dbg_bus(&sde_dbg_base.dbgbus_dsi);
 
+	if (dump_dbgbus_dp)
+		_sde_dbg_dump_sde_dbg_bus(&sde_dbg_base.dbgbus_dp);
+
 	end = ktime_get();
 	dev_info(sde_dbg_base.dev,
 			"debug-bus logging time start_us:%llu, end_us:%llu , duration_us:%llu\n",
@@ -1062,6 +1085,7 @@ static void _sde_dump_work(struct work_struct *work)
 		sde_dbg_base.dbgbus_sde.cmn.include_in_deferred_work,
 		sde_dbg_base.dbgbus_vbif_rt.cmn.include_in_deferred_work,
 		sde_dbg_base.dbgbus_dsi.cmn.include_in_deferred_work,
+		sde_dbg_base.dbgbus_dp.cmn.include_in_deferred_work,
 		sde_dbg_base.dump_all, sde_dbg_base.dump_secure);
 }
 
@@ -1072,6 +1096,7 @@ void sde_dbg_dump(enum sde_dbg_dump_context dump_mode, const char *name, ...)
 	bool dump_dbgbus_sde = false;
 	bool dump_dbgbus_vbif_rt = false;
 	bool dump_dbgbus_dsi = false;
+	bool dump_dbgbus_dp = false;
 	bool dump_all = false;
 	bool dump_secure = false;
 	va_list args;
@@ -1128,6 +1153,9 @@ void sde_dbg_dump(enum sde_dbg_dump_context dump_mode, const char *name, ...)
 		if (!strcmp(blk_name, "dsi_dbg_bus"))
 			dump_dbgbus_dsi = true;
 
+		if (!strcmp(blk_name, "dp_dbg_bus"))
+			dump_dbgbus_dp = true;
+
 		if (!strcmp(blk_name, "panic"))
 			do_panic = true;
 
@@ -1143,12 +1171,13 @@ void sde_dbg_dump(enum sde_dbg_dump_context dump_mode, const char *name, ...)
 		sde_dbg_base.dbgbus_vbif_rt.cmn.include_in_deferred_work = dump_dbgbus_vbif_rt;
 		sde_dbg_base.dbgbus_dsi.cmn.include_in_deferred_work = dump_dbgbus_dsi;
 		sde_dbg_base.dbgbus_rsc.cmn.include_in_deferred_work = dump_dbgbus_sde;
+		sde_dbg_base.dbgbus_dp.cmn.include_in_deferred_work = dump_dbgbus_dp;
 		sde_dbg_base.dump_all = dump_all;
 		schedule_work(&sde_dbg_base.dump_work);
 	} else {
-		_sde_dump_array(blk_arr, blk_len, do_panic, name,
-				dump_dbgbus_sde, dump_dbgbus_vbif_rt,
-				dump_dbgbus_dsi, dump_all, dump_secure);
+		_sde_dump_array(blk_arr, blk_len, do_panic, name, dump_dbgbus_sde,
+				dump_dbgbus_vbif_rt, dump_dbgbus_dsi, dump_dbgbus_dp,
+				dump_all, dump_secure);
 	}
 }
 
@@ -1298,7 +1327,7 @@ static ssize_t sde_evtlog_dump_write(struct file *file,
 	const char __user *user_buf, size_t count, loff_t *ppos)
 {
 	_sde_dump_array(NULL, 0, sde_dbg_base.panic_on_err, "dump_debugfs",
-		true, true, true, true, false);
+		true, true, true, true, true, false);
 
 	return count;
 }
@@ -1730,6 +1759,28 @@ static int sde_recovery_lutdma_dbgbus_dump_open(struct inode *inode,
 
 static const struct file_operations sde_recovery_lutdma_dbgbus_fops = {
 	.open = sde_recovery_lutdma_dbgbus_dump_open,
+	.read = sde_recovery_dbgbus_dump_read,
+};
+
+static int sde_recovery_dp_dbgbus_dump_open(struct inode *inode,
+		struct file *file)
+{
+	if (!inode || !file)
+		return -EINVAL;
+
+	/* non-seekable */
+	file->f_mode &= ~(FMODE_LSEEK | FMODE_PREAD | FMODE_PWRITE);
+	file->private_data =  (void *)&sde_dbg_base.dbgbus_dp.cmn;
+
+	mutex_lock(&sde_dbg_base.mutex);
+	sde_dbg_base.dbgbus_dp.cmn.content_idx = 0;
+	mutex_unlock(&sde_dbg_base.mutex);
+
+	return 0;
+}
+
+static const struct file_operations sde_recovery_dp_dbgbus_fops = {
+	.open = sde_recovery_dp_dbgbus_dump_open,
 	.read = sde_recovery_dbgbus_dump_read,
 };
 
@@ -2176,6 +2227,15 @@ int sde_dbg_debugfs_register(struct device *dev)
 				&dbg->dbgbus_lutdma.cmn.enable_mask);
 	}
 
+	if (dbg->dbgbus_dp.entries) {
+		debugfs_create_file("recovery_dp_dbgbus", 0400, debugfs_root,
+				NULL, &sde_recovery_dp_dbgbus_fops);
+		snprintf(debug_name, sizeof(debug_name), "%s_dbgbus",
+				dbg->dbgbus_dp.cmn.name);
+		debugfs_create_u32(debug_name, 0600, debugfs_root,
+				&dbg->dbgbus_dp.cmn.enable_mask);
+	}
+
 	list_for_each_entry(blk_base, &dbg->reg_base_list, reg_base_head) {
 		snprintf(debug_name, sizeof(debug_name), "%s_off",
 				blk_base->name);
@@ -2212,6 +2272,7 @@ void sde_dbg_init_dbg_buses(u32 hwversion)
 	memset(&dbg->dbgbus_vbif_rt, 0, sizeof(dbg->dbgbus_vbif_rt));
 	memset(&dbg->dbgbus_dsi, 0, sizeof(dbg->dbgbus_dsi));
 	memset(&dbg->dbgbus_rsc, 0, sizeof(dbg->dbgbus_rsc));
+	memset(&dbg->dbgbus_dp, 0, sizeof(dbg->dbgbus_dp));
 
 	dbg->dbgbus_sde.entries = dbg_bus_sde;
 	dbg->dbgbus_sde.cmn.entries_size = ARRAY_SIZE(dbg_bus_sde);
@@ -2245,6 +2306,13 @@ void sde_dbg_init_dbg_buses(u32 hwversion)
 	dbg->dbgbus_rsc.cmn.enable_mask = DEFAULT_DBGBUS_RSC;
 	dbg->dbgbus_rsc.read_tp = _sde_dbg_rsc_read_test_point;
 	dbg->dbgbus_rsc.clear_tp = _sde_dbg_cmn_clear_test_point;
+
+	dbg->dbgbus_dp.entries = dp_dbg_bus;
+	dbg->dbgbus_dp.cmn.entries_size = ARRAY_SIZE(dp_dbg_bus);
+	dbg->dbgbus_dp.cmn.name = DBGBUS_NAME_DP;
+	dbg->dbgbus_dp.cmn.enable_mask = DEFAULT_DBGBUS_DP;
+	dbg->dbgbus_dp.read_tp = _sde_dbg_dp_read_test_point;
+	dbg->dbgbus_dp.clear_tp = _sde_dbg_cmn_clear_test_point;
 
 	if (SDE_HW_REV_MAJOR(hwversion) >= 0x7) {
 		dbg->dbgbus_lutdma.entries = dbg_bus_lutdma;
