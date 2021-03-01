@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021,, The Linux Foundation. All rights reserved.
  */
 
 #ifndef __H_HFI_COMMAND_H__
