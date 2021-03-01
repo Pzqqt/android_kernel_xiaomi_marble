@@ -623,6 +623,15 @@ enum hal_reo_cmd_type {
 	CMD_UPDATE_RX_REO_QUEUE = 5
 };
 
+struct hal_rx_pkt_capture_flags {
+	uint8_t encrypt_type;
+	uint8_t fragment_flag;
+	uint8_t fcs_err;
+	uint32_t chan_freq;
+	uint32_t rssi_comb;
+	uint64_t tsft;
+};
+
 struct hal_hw_txrx_ops {
 	/* init and setup */
 	void (*hal_srng_dst_hw_init)(struct hal_soc *hal,

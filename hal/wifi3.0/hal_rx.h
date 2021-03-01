@@ -21,6 +21,7 @@
 
 #include <hal_api.h>
 #include "hal_rx_hw_defines.h"
+#include "hal_hw_headers.h"
 
 /*************************************
  * Ring desc offset/shift/masks
@@ -2695,6 +2696,17 @@ hal_rx_tlv_csum_err_get(hal_soc_handle_t hal_soc_hdl, uint8_t *rx_tlv_hdr,
 	return hal_soc->ops->hal_rx_tlv_csum_err_get(rx_tlv_hdr,
 						     ip_csum_err,
 						     tcp_udp_csum_err);
+}
+
+static inline void
+hal_rx_tlv_get_pkt_capture_flags(hal_soc_handle_t hal_soc_hdl,
+				 uint8_t *rx_tlv_hdr,
+				 struct hal_rx_pkt_capture_flags *flags)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	return hal_soc->ops->hal_rx_tlv_get_pkt_capture_flags(rx_tlv_hdr,
+							      flags);
 }
 
 static inline uint8_t

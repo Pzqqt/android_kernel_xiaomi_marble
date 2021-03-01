@@ -20,7 +20,7 @@
 #include "hal_li_hw_headers.h"
 #include "hal_li_reo.h"
 
-#include "hal_rx.h"	// hal_reo_config
+#include "hal_rx.h"
 #include "hal_li_rx.h"
 #include "hal_tx.h"
 #include <hal_api_mon.h>
@@ -917,6 +917,26 @@ hal_rx_tlv_csum_err_get_li(uint8_t *rx_tlv_hdr, uint32_t *ip_csum_err,
 {
 	*ip_csum_err = hal_rx_attn_ip_cksum_fail_get(rx_tlv_hdr);
 	*tcp_udp_csum_err = hal_rx_attn_tcp_udp_cksum_fail_get(rx_tlv_hdr);
+}
+
+static
+void hal_rx_tlv_get_pkt_capture_flags_li(uint8_t *rx_tlv_pkt_hdr,
+					    struct hal_rx_pkt_capture_flags *flags)
+{
+	struct rx_pkt_tlvs *rx_tlv_hdr = (struct rx_pkt_tlvs *)rx_tlv_pkt_hdr;
+	struct rx_attention *rx_attn = &rx_tlv_hdr->attn_tlv.rx_attn;
+	struct rx_mpdu_start *mpdu_start =
+				&rx_tlv_hdr->mpdu_start_tlv.rx_mpdu_start;
+	struct rx_mpdu_end *mpdu_end = &rx_tlv_hdr->mpdu_end_tlv.rx_mpdu_end;
+	struct rx_msdu_start *msdu_start =
+				&rx_tlv_hdr->msdu_start_tlv.rx_msdu_start;
+
+	flags->encrypt_type = mpdu_start->rx_mpdu_info_details.encrypt_type;
+	flags->fcs_err = mpdu_end->fcs_err;
+	flags->fragment_flag = rx_attn->fragment_flag;
+	flags->chan_freq = HAL_RX_MSDU_START_FREQ_GET(msdu_start);
+	flags->rssi_comb = HAL_RX_MSDU_START_RSSI_GET(msdu_start);
+	flags->tsft = msdu_start->ppdu_start_timestamp;
 }
 
 static uint8_t hal_rx_err_status_get_li(hal_ring_desc_t rx_desc)
