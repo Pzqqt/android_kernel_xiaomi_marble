@@ -28,6 +28,7 @@
 #include <cds_ieee80211_common.h>
 #include <ol_txrx_htt_api.h>
 #include "wlan_policy_mgr_ucfg.h"
+#include "hal_rx.h"
 #ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 #include "dp_internal.h"
 #include "cds_utils.h"
@@ -424,7 +425,7 @@ pkt_capture_rx_convert8023to80211(hal_soc_handle_t hal_soc_hdl,
 
 	eth_hdr = (struct ethernet_hdr_t *)qdf_nbuf_data(msdu);
 	hdsize = sizeof(struct ethernet_hdr_t);
-	pwh = HAL_RX_DESC_GET_80211_HDR(desc);
+	pwh = hal_rx_desc_get_80211_hdr(hal_soc_hdl, desc);
 
 	wh = (struct ieee80211_frame *)localbuf;
 
@@ -686,34 +687,30 @@ static void pkt_capture_rx_get_phy_info(void *context, void *psoc,
 
 /**
  * pkt_capture_get_rx_rtap_flags() - Get radiotap flags
- * @ptr_rx_tlv_hdr: Pointer to struct rx_pkt_tlvs
+ * @flags: Pointer to struct hal_rx_pkt_capture_flags
  *
  * Return: Bitmapped radiotap flags.
  */
-static uint8_t pkt_capture_get_rx_rtap_flags(void *ptr_rx_tlv_hdr)
+static
+uint8_t pkt_capture_get_rx_rtap_flags(struct hal_rx_pkt_capture_flags *flags)
 {
-	struct rx_pkt_tlvs *rx_tlv_hdr = (struct rx_pkt_tlvs *)ptr_rx_tlv_hdr;
-	struct rx_attention *rx_attn = &rx_tlv_hdr->attn_tlv.rx_attn;
-	struct rx_mpdu_start *mpdu_start =
-				&rx_tlv_hdr->mpdu_start_tlv.rx_mpdu_start;
-	struct rx_mpdu_end *mpdu_end = &rx_tlv_hdr->mpdu_end_tlv.rx_mpdu_end;
 	uint8_t rtap_flags = 0;
 
 	/* WEP40 || WEP104 || WEP128 */
-	if (mpdu_start->rx_mpdu_info_details.encrypt_type == 0 ||
-	    mpdu_start->rx_mpdu_info_details.encrypt_type == 1 ||
-	    mpdu_start->rx_mpdu_info_details.encrypt_type == 3)
+	if (flags->encrypt_type == 0 ||
+	    flags->encrypt_type == 1 ||
+	    flags->encrypt_type == 3)
 		rtap_flags |= BIT(2);
 
 	/* IEEE80211_RADIOTAP_F_FRAG */
-	if (rx_attn->fragment_flag)
+	if (flags->fragment_flag)
 		rtap_flags |= BIT(3);
 
 	/* IEEE80211_RADIOTAP_F_FCS */
 	rtap_flags |= BIT(4);
 
 	/* IEEE80211_RADIOTAP_F_BADFCS */
-	if (mpdu_end->fcs_err)
+	if (flags->fcs_err)
 		rtap_flags |= BIT(6);
 
 	return rtap_flags;
@@ -734,9 +731,8 @@ static void pkt_capture_rx_mon_get_rx_status(void *context, void *dp_soc,
 					     struct mon_rx_status *rx_status)
 {
 	uint8_t *rx_tlv_hdr = desc;
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)desc;
-	struct rx_msdu_start *msdu_start =
-					&pkt_tlvs->msdu_start_tlv.rx_msdu_start;
+	struct dp_soc *soc = dp_soc;
+	struct hal_rx_pkt_capture_flags flags = {0};
 	struct connection_info info[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_vdev *vdev = context;
@@ -744,10 +740,13 @@ static void pkt_capture_rx_mon_get_rx_status(void *context, void *dp_soc,
 	uint8_t vdev_id;
 	int i;
 
-	rx_status->rtap_flags |= pkt_capture_get_rx_rtap_flags(rx_tlv_hdr);
-	rx_status->ant_signal_db = hal_rx_msdu_start_get_rssi(rx_tlv_hdr);
-	rx_status->rssi_comb = hal_rx_msdu_start_get_rssi(rx_tlv_hdr);
-	rx_status->tsft = msdu_start->ppdu_start_timestamp;
+	hal_rx_tlv_get_pkt_capture_flags(soc->hal_soc, (uint8_t *)rx_tlv_hdr,
+					 &flags);
+
+	rx_status->rtap_flags |= pkt_capture_get_rx_rtap_flags(&flags);
+	rx_status->ant_signal_db = flags.rssi_comb;
+	rx_status->rssi_comb = flags.rssi_comb;
+	rx_status->tsft = flags.tsft;
 
 	vdev_id = wlan_vdev_get_id(vdev);
 
