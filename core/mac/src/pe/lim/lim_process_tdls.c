@@ -783,6 +783,9 @@ static void populate_dot11f_tdls_ht_vht_cap(struct mac_context *mac,
 }
 
 #ifdef WLAN_FEATURE_11AX
+
+#define LIM_TDLS_MIN_LEN 21
+
 static void lim_tdls_set_he_chan_width(tDot11fIEhe_cap *heCap,
 				       struct pe_session *session)
 {
@@ -820,6 +823,7 @@ static void populate_dot11f_set_tdls_he_cap(struct mac_context *mac,
 	if (IS_DOT11_MODE_HE(selfDot11Mode)) {
 		populate_dot11f_he_caps(mac, NULL, heCap);
 		lim_tdls_set_he_chan_width(heCap, session);
+		lim_log_he_cap(mac, heCap);
 	}
 }
 
@@ -881,9 +885,15 @@ lim_tdls_populate_dot11f_he_caps(struct mac_context *mac,
 		struct he_capability_info he_cap;
 	} uHECapInfo;
 
+	if (add_sta_req->he_cap_len < LIM_TDLS_MIN_LEN) {
+		pe_debug("He_capability invalid");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	qdf_mem_copy(&uHECapInfo.nCfgValue, &add_sta_req->he_cap,
 		     sizeof(uHECapInfo.nCfgValue));
 
+	pDot11f->present = 1;
 	pDot11f->htc_he = uHECapInfo.he_cap.htc_he;
 	pDot11f->twt_request = uHECapInfo.he_cap.twt_request;
 	pDot11f->twt_responder = uHECapInfo.he_cap.twt_responder;
@@ -1006,8 +1016,15 @@ static void lim_tdls_update_node_he_caps(struct mac_context *mac,
 					 tDphHashNode *sta,
 					 struct pe_session *pe_session)
 {
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
 	pe_debug("Populating HE IEs");
-	lim_tdls_populate_dot11f_he_caps(mac, add_sta_req, &sta->he_config);
+	status = lim_tdls_populate_dot11f_he_caps(mac, add_sta_req,
+						  &sta->he_config);
+
+	if (status != QDF_STATUS_SUCCESS)
+		return;
+
 	if (sta->he_config.present)
 		sta->mlmStaContext.he_capable = 1;
 
