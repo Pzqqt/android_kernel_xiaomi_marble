@@ -4237,6 +4237,73 @@ void cm_roam_start_init_on_connect(struct wlan_objmgr_pdev *pdev,
 }
 
 #ifdef FEATURE_CM_ENABLE
+QDF_STATUS cm_start_roam_invoke(struct wlan_objmgr_psoc *psoc,
+				struct wlan_objmgr_vdev *vdev,
+				struct qdf_mac_addr *bssid,
+				qdf_freq_t chan_freq,
+				enum wlan_cm_source source)
+{
+	struct cm_req *cm_req;
+	QDF_STATUS status;
+	uint8_t roam_control_bitmap;
+	uint8_t vdev_id = vdev->vdev_objmgr.vdev_id;
+	bool roam_offload_enabled = cm_roam_offload_enabled(psoc);
+
+	roam_control_bitmap = mlme_get_operations_bitmap(psoc, vdev_id);
+	if (roam_offload_enabled && (roam_control_bitmap ||
+	    !MLME_IS_ROAM_INITIALIZED(psoc, vdev_id))) {
+		mlme_debug("ROAM: RSO Disabled internaly: vdev[%d] bitmap[0x%x]",
+			   vdev_id, roam_control_bitmap);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cm_req = qdf_mem_malloc(sizeof(*cm_req));
+	if (!cm_req)
+		return QDF_STATUS_E_NOMEM;
+
+	/* Ignore BSSID and channel validation for FW host roam */
+	if (source == CM_ROAMING_FW)
+		goto send_evt;
+
+	if (qdf_is_macaddr_zero(bssid) ||
+	    cm_req->roam_req.req.source == CM_ROAMING_NUD_FAILURE) {
+		if (!wlan_mlme_is_data_stall_recovery_fw_supported(psoc)) {
+			mlme_debug("FW does not support data stall recovery, aborting roam invoke");
+			qdf_mem_free(cm_req);
+			return QDF_STATUS_E_NOSUPPORT;
+		}
+		cm_req->roam_req.req.forced_roaming = true;
+		source = CM_ROAMING_NUD_FAILURE;
+		goto send_evt;
+	}
+
+	if (!chan_freq || qdf_is_macaddr_zero(bssid)) {
+		mlme_debug("bssid " QDF_MAC_ADDR_FMT " chan_freq %d",
+			   QDF_MAC_ADDR_REF(bssid->bytes), chan_freq);
+		qdf_mem_free(cm_req);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_copy_macaddr(&cm_req->roam_req.req.bssid, bssid);
+	cm_req->roam_req.req.chan_freq = chan_freq;
+
+send_evt:
+	cm_req->roam_req.req.source = source;
+
+	cm_req->roam_req.req.vdev_id = vdev_id;
+	/*
+	 * For LFR3 WLAN_CM_SM_EV_ROAM_REQ will be converted to
+	 * WLAN_CM_SM_EV_ROAM_INVOKE.
+	 */
+	status = cm_sm_deliver_event(vdev, WLAN_CM_SM_EV_ROAM_REQ,
+				     sizeof(*cm_req), cm_req);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		qdf_mem_free(cm_req);
+
+	return status;
+}
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static QDF_STATUS
 cm_find_roam_candidate(struct wlan_objmgr_pdev *pdev,
@@ -4312,64 +4379,6 @@ cm_find_roam_candidate(struct wlan_objmgr_pdev *pdev,
 	wlan_scan_purge_results(candidate_list);
 
 	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS cm_start_roam_invoke(struct wlan_objmgr_psoc *psoc,
-				struct wlan_objmgr_vdev *vdev,
-				struct qdf_mac_addr *bssid,
-				qdf_freq_t chan_freq)
-{
-	struct cm_req *cm_req;
-	QDF_STATUS status;
-	uint8_t roam_control_bitmap;
-	uint8_t vdev_id = vdev->vdev_objmgr.vdev_id;
-
-	roam_control_bitmap = mlme_get_operations_bitmap(psoc, vdev_id);
-	if (roam_control_bitmap ||
-	    !MLME_IS_ROAM_INITIALIZED(psoc, vdev_id)) {
-		mlme_debug("ROAM: RSO Disabled internaly: vdev[%d] bitmap[0x%x]",
-			   vdev_id, roam_control_bitmap);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	cm_req = qdf_mem_malloc(sizeof(*cm_req));
-	if (!cm_req)
-		return QDF_STATUS_E_NOMEM;
-
-	if (qdf_is_macaddr_zero(bssid)) {
-		if (!wlan_mlme_is_data_stall_recovery_fw_supported(psoc)) {
-			mlme_debug("FW does not support data stall recovery, aborting roam invoke");
-			qdf_mem_free(cm_req);
-			return QDF_STATUS_E_NOSUPPORT;
-		}
-		cm_req->roam_req.req.forced_roaming = true;
-		goto send_evt;
-	}
-
-	if (!chan_freq || qdf_is_macaddr_zero(bssid)) {
-		mlme_debug("bssid " QDF_MAC_ADDR_FMT " chan_freq %d",
-			   QDF_MAC_ADDR_REF(bssid->bytes), chan_freq);
-		qdf_mem_free(cm_req);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	qdf_copy_macaddr(&cm_req->roam_req.req.bssid, bssid);
-	cm_req->roam_req.req.chan_freq = chan_freq;
-
-send_evt:
-	if (cm_req->roam_req.req.forced_roaming)
-		cm_req->roam_req.req.source = CM_ROAMING_NUD_FAILURE;
-	else
-		cm_req->roam_req.req.source = CM_ROAMING_HOST;
-
-	cm_req->roam_req.req.vdev_id = vdev_id;
-	status = cm_sm_deliver_event(vdev, WLAN_CM_SM_EV_ROAM_INVOKE,
-				     sizeof(*cm_req), cm_req);
-
-	if (QDF_IS_STATUS_ERROR(status))
-		qdf_mem_free(cm_req);
-
-	return status;
 }
 
 QDF_STATUS

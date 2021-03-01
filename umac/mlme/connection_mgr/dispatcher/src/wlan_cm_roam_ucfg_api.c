@@ -242,9 +242,10 @@ ucfg_cm_update_fils_config(struct wlan_objmgr_psoc *psoc,
 
 QDF_STATUS
 ucfg_wlan_cm_roam_invoke(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
-			 struct qdf_mac_addr *bssid, qdf_freq_t ch_freq)
+			 struct qdf_mac_addr *bssid, qdf_freq_t ch_freq,
+			 enum wlan_cm_source source)
 {
-	return wlan_cm_roam_invoke(pdev, vdev_id, bssid, ch_freq);
+	return wlan_cm_roam_invoke(pdev, vdev_id, bssid, ch_freq, source);
 }
 
 #endif
