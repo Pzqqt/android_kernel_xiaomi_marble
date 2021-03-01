@@ -3566,33 +3566,6 @@ static int hdd_handle_pdev_reset(struct hdd_adapter *adapter, int value)
 	return ret;
 }
 
-static int hdd_we_set_ch_width(struct hdd_adapter *adapter, int ch_width)
-{
-	uint32_t bonding_mode;
-
-	/* updating channel bonding only on 5Ghz */
-	hdd_debug("WMI_VDEV_PARAM_CHWIDTH val %d", ch_width);
-
-	switch (ch_width) {
-	case eHT_CHANNEL_WIDTH_20MHZ:
-		bonding_mode = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
-		break;
-
-	case eHT_CHANNEL_WIDTH_40MHZ:
-	case eHT_CHANNEL_WIDTH_80MHZ:
-	case eHT_CHANNEL_WIDTH_80P80MHZ:
-	case eHT_CHANNEL_WIDTH_160MHZ:
-		bonding_mode = WNI_CFG_CHANNEL_BONDING_MODE_ENABLE;
-		break;
-
-	default:
-		hdd_err("Invalid channel width 0->20 1->40 2->80");
-		return -EINVAL;
-	}
-
-	return hdd_update_channel_width(adapter, ch_width, bonding_mode);
-}
-
 static int hdd_we_set_11d_state(struct hdd_adapter *adapter, int state_11d)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);

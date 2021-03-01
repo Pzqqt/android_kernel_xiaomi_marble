@@ -2975,6 +2975,45 @@ static void wlan_hdd_handle_zero_acs_list(struct hdd_context *hdd_ctx,
 	hdd_debug("retore acs chan list to single freq %d", acs_chan_default);
 }
 
+#ifdef WLAN_FEATURE_11BE
+static void wlan_hdd_set_sap_acs_ch_width_320(struct sap_config *sap_config)
+{
+	sap_config->acs_cfg.ch_width = CH_WIDTH_320MHZ;
+}
+
+static bool wlan_hdd_is_sap_acs_ch_width_320(struct sap_config *sap_config)
+{
+	return sap_config->acs_cfg.ch_width == CH_WIDTH_320MHZ;
+}
+
+static void wlan_hdd_set_chandef(struct wlan_objmgr_vdev *vdev,
+				 struct cfg80211_chan_def *chandef)
+{
+	if (vdev->vdev_mlme.des_chan->ch_width != CH_WIDTH_320MHZ)
+		return;
+
+	chandef->width = NL80211_CHAN_WIDTH_320;
+	/* Set center_freq1 to center frequency of complete 320MHz */
+	chandef->center_freq1 = vdev->vdev_mlme.des_chan->ch_cfreq2;
+}
+#else /* !WLAN_FEATURE_11BE */
+static inline
+void wlan_hdd_set_sap_acs_ch_width_320(struct sap_config *sap_config)
+{
+}
+
+static inline
+bool wlan_hdd_is_sap_acs_ch_width_320(struct sap_config *sap_config)
+{
+	return false;
+}
+
+static inline void wlan_hdd_set_chandef(struct wlan_objmgr_vdev *vdev,
+					struct cfg80211_chan_def *chandef)
+{
+}
+#endif /* WLAN_FEATURE_11BE */
+
 /**
  * __wlan_hdd_cfg80211_do_acs(): CFG80211 handler function for DO_ACS Vendor CMD
  * @wiphy:  Linux wiphy struct pointer
@@ -2999,7 +3038,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	int ret, i;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_ACS_MAX + 1];
 	bool ht_enabled, ht40_enabled, vht_enabled;
-	uint8_t ch_width;
+	uint16_t ch_width;
 	enum qca_wlan_vendor_acs_hw_mode hw_mode;
 	enum policy_mgr_con_mode pm_mode;
 	QDF_STATUS qdf_status;
@@ -3009,6 +3048,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	bool go_force_11n_for_11ac = 0;
 	bool go_11ac_override = 0;
 	bool sap_11ac_override = 0;
+	uint8_t vht_ch_width;
 
 	/* ***Note*** Donot set SME config related to ACS operation here because
 	 * ACS operation is not synchronouse and ACS for Second AP may come when
@@ -3122,7 +3162,9 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 
 	qdf_mem_zero(&sap_config->acs_cfg, sizeof(struct sap_acs_cfg));
 
-	if (ch_width == 160)
+	if (ch_width == 320)
+		wlan_hdd_set_sap_acs_ch_width_320(sap_config);
+	else if (ch_width == 160)
 		sap_config->acs_cfg.ch_width = CH_WIDTH_160MHZ;
 	else if (ch_width == 80)
 		sap_config->acs_cfg.ch_width = CH_WIDTH_80MHZ;
@@ -3299,7 +3341,8 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		sap_config->acs_cfg.hw_mode = eCSR_DOT11_MODE_11ac;
 		qdf_status =
 			ucfg_mlme_get_vht_channel_width(hdd_ctx->psoc,
-							&ch_width);
+							&vht_ch_width);
+		ch_width = vht_ch_width;
 		sap_config->acs_cfg.ch_width = ch_width;
 	}
 
@@ -3579,7 +3622,9 @@ void wlan_hdd_cfg80211_acs_ch_select_evt(struct hdd_adapter *adapter)
 		return;
 	}
 
-	if (sap_cfg->acs_cfg.ch_width == CH_WIDTH_160MHZ)
+	if (wlan_hdd_is_sap_acs_ch_width_320(sap_cfg))
+		ch_width = 320;
+	else if (sap_cfg->acs_cfg.ch_width == CH_WIDTH_160MHZ)
 		ch_width = 160;
 	else if (sap_cfg->acs_cfg.ch_width == CH_WIDTH_80MHZ)
 		ch_width = 80;
@@ -8824,64 +8869,6 @@ static int hdd_set_elna_bypass(struct hdd_adapter *adapter,
 	return ret;
 }
 #endif
-
-static enum eSirMacHTChannelWidth
-hdd_nl80211_chwidth_to_chwidth(uint8_t nl80211_chwidth)
-{
-	int chwidth;
-
-	switch (nl80211_chwidth) {
-	case NL80211_CHAN_WIDTH_20:
-		chwidth = eHT_CHANNEL_WIDTH_20MHZ;
-		break;
-	case NL80211_CHAN_WIDTH_40:
-		chwidth = eHT_CHANNEL_WIDTH_40MHZ;
-		break;
-	case NL80211_CHAN_WIDTH_80:
-		chwidth = eHT_CHANNEL_WIDTH_80MHZ;
-		break;
-	case NL80211_CHAN_WIDTH_80P80:
-		chwidth = eHT_CHANNEL_WIDTH_80P80MHZ;
-		break;
-	case NL80211_CHAN_WIDTH_160:
-		chwidth = eHT_CHANNEL_WIDTH_160MHZ;
-		break;
-	default:
-		hdd_err("Unsupported channel width %d", nl80211_chwidth);
-		chwidth = -EINVAL;
-	}
-
-	return chwidth;
-}
-
-static uint8_t
-hdd_chwidth_to_nl80211_chwidth(enum eSirMacHTChannelWidth chwidth)
-{
-	uint8_t nl80211_chwidth;
-
-	switch (chwidth) {
-	case eHT_CHANNEL_WIDTH_20MHZ:
-		nl80211_chwidth = NL80211_CHAN_WIDTH_20;
-		break;
-	case eHT_CHANNEL_WIDTH_40MHZ:
-		nl80211_chwidth = NL80211_CHAN_WIDTH_40;
-		break;
-	case eHT_CHANNEL_WIDTH_80MHZ:
-		nl80211_chwidth = NL80211_CHAN_WIDTH_80;
-		break;
-	case eHT_CHANNEL_WIDTH_80P80MHZ:
-		nl80211_chwidth = NL80211_CHAN_WIDTH_80P80;
-		break;
-	case eHT_CHANNEL_WIDTH_160MHZ:
-		nl80211_chwidth = NL80211_CHAN_WIDTH_160;
-		break;
-	default:
-		hdd_err("Unsupported channel width %d", chwidth);
-		nl80211_chwidth = 0xFF;
-	}
-
-	return nl80211_chwidth;
-}
 
 static uint32_t hdd_nl80211_chwidth_to_bonding_mode(uint8_t nl80211_chwidth)
 {
@@ -24760,6 +24747,8 @@ static int __wlan_hdd_cfg80211_get_channel(struct wiphy *wiphy,
 		chandef->width = NL80211_CHAN_WIDTH_20;
 		break;
 	}
+
+	wlan_hdd_set_chandef(vdev, chandef);
 
 	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 	hdd_debug("primary_freq:%d, ch_width:%d, center_freq1:%d, center_freq2:%d",

@@ -1102,6 +1102,67 @@ static int pcie_gen_speed;
 /* Variable to hold connection mode including module parameter con_mode */
 static int curr_con_mode;
 
+#ifdef WLAN_FEATURE_11BE
+static enum phy_ch_width hdd_get_eht_phy_ch_width_from_target(void)
+{
+	uint32_t max_fw_bw = sme_get_eht_ch_width();
+
+	if (max_fw_bw == WNI_CFG_EHT_CHANNEL_WIDTH_320MHZ)
+		return CH_WIDTH_320MHZ;
+	else if (max_fw_bw == WNI_CFG_EHT_CHANNEL_WIDTH_160MHZ)
+		return CH_WIDTH_160MHZ;
+	else
+		return CH_WIDTH_80MHZ;
+}
+
+static bool hdd_is_target_eht_phy_ch_width_supported(enum phy_ch_width width)
+{
+	enum phy_ch_width max_fw_bw = hdd_get_eht_phy_ch_width_from_target();
+
+	if (width <= max_fw_bw)
+		return true;
+
+	hdd_err("FW does not support this BW %d max BW supported %d",
+		width, max_fw_bw);
+	return false;
+}
+
+static bool hdd_is_target_eht_160mhz_capable(void)
+{
+	return hdd_is_target_eht_phy_ch_width_supported(CH_WIDTH_160MHZ);
+}
+
+static enum phy_ch_width
+wlan_hdd_map_nl_chan_width(enum nl80211_chan_width width)
+{
+	if (width == NL80211_CHAN_WIDTH_320) {
+		return hdd_get_eht_phy_ch_width_from_target();
+	} else {
+		hdd_err("Invalid channel width %d, setting to default", width);
+		return CH_WIDTH_INVALID;
+	}
+}
+
+#else /* !WLAN_FEATURE_11BE */
+static inline bool
+hdd_is_target_eht_phy_ch_width_supported(enum phy_ch_width width)
+{
+	return true;
+}
+
+static inline bool hdd_is_target_eht_160mhz_capable(void)
+{
+	return false;
+}
+
+static enum phy_ch_width
+wlan_hdd_map_nl_chan_width(enum nl80211_chan_width width)
+{
+	hdd_err("Invalid channel width %d, setting to default", width);
+	return CH_WIDTH_INVALID;
+}
+#endif /* WLAN_FEATURE_11BE */
+
 /**
  * hdd_map_nl_chan_width() - Map NL channel width to internal representation
  * @ch_width: NL channel width
@@ -1132,6 +1193,9 @@ enum phy_ch_width hdd_map_nl_chan_width(enum nl80211_chan_width ch_width)
 		else
 			return CH_WIDTH_80MHZ;
 	case NL80211_CHAN_WIDTH_160:
+		if (hdd_is_target_eht_160mhz_capable())
+			return CH_WIDTH_160MHZ;
+
 		if (fw_ch_bw >= WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ)
 			return CH_WIDTH_160MHZ;
 		else
@@ -1141,9 +1205,7 @@ enum phy_ch_width hdd_map_nl_chan_width(enum nl80211_chan_width ch_width)
 	case NL80211_CHAN_WIDTH_10:
 		return CH_WIDTH_10MHZ;
 	default:
-		hdd_err("Invalid channel width %d, setting to default",
-				ch_width);
-		return CH_WIDTH_INVALID;
+		return wlan_hdd_map_nl_chan_width(ch_width);
 	}
 }
 
@@ -8441,6 +8503,9 @@ int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, qdf_freq_t freq,
 			ch_width, max_fw_bw);
 		return -EINVAL;
 	}
+
+	if (!hdd_is_target_eht_phy_ch_width_supported(ch_width))
+		return -EINVAL;
 
 	ret = hdd_validate_channel_and_bandwidth(adapter, freq, bandwidth);
 	if (ret) {
@@ -19139,6 +19204,141 @@ int hdd_crash_inject(struct hdd_adapter *adapter, uint32_t v1, uint32_t v2)
 	return ret;
 }
 #endif
+
+static const struct hdd_chwidth_info chwidth_info[] = {
+	[NL80211_CHAN_WIDTH_20_NOHT] = {
+		.ch_bw = HW_MODE_20_MHZ,
+		.ch_bw_str = "20MHz",
+		.phy_chwidth = CH_WIDTH_20MHZ,
+	},
+	[NL80211_CHAN_WIDTH_20] = {
+		.sir_chwidth_valid = true,
+		.sir_chwidth = eHT_CHANNEL_WIDTH_20MHZ,
+		.ch_bw = HW_MODE_20_MHZ,
+		.ch_bw_str = "20MHz",
+		.phy_chwidth = CH_WIDTH_20MHZ,
+		.bonding_mode = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE,
+	},
+	[NL80211_CHAN_WIDTH_40] = {
+		.sir_chwidth_valid = true,
+		.sir_chwidth = eHT_CHANNEL_WIDTH_40MHZ,
+		.ch_bw = HW_MODE_40_MHZ,
+		.ch_bw_str = "40MHz",
+		.phy_chwidth = CH_WIDTH_40MHZ,
+		.bonding_mode = WNI_CFG_CHANNEL_BONDING_MODE_ENABLE,
+	},
+	[NL80211_CHAN_WIDTH_80] = {
+		.sir_chwidth_valid = true,
+		.sir_chwidth = eHT_CHANNEL_WIDTH_80MHZ,
+		.ch_bw = HW_MODE_80_MHZ,
+		.ch_bw_str = "80MHz",
+		.phy_chwidth = CH_WIDTH_80MHZ,
+		.bonding_mode = WNI_CFG_CHANNEL_BONDING_MODE_ENABLE,
+	},
+	[NL80211_CHAN_WIDTH_80P80] = {
+		.sir_chwidth_valid = true,
+		.sir_chwidth = eHT_CHANNEL_WIDTH_80P80MHZ,
+		.ch_bw = HW_MODE_80_PLUS_80_MHZ,
+		.ch_bw_str = "(80 + 80)MHz",
+		.phy_chwidth = CH_WIDTH_80P80MHZ,
+		.bonding_mode = WNI_CFG_CHANNEL_BONDING_MODE_ENABLE,
+	},
+	[NL80211_CHAN_WIDTH_160] = {
+		.sir_chwidth_valid = true,
+		.sir_chwidth = eHT_CHANNEL_WIDTH_160MHZ,
+		.ch_bw = HW_MODE_160_MHZ,
+		.ch_bw_str = "160MHz",
+		.phy_chwidth = CH_WIDTH_160MHZ,
+		.bonding_mode = WNI_CFG_CHANNEL_BONDING_MODE_ENABLE,
+	},
+	[NL80211_CHAN_WIDTH_5] = {
+		.ch_bw = HW_MODE_5_MHZ,
+		.ch_bw_str = "5MHz",
+		.phy_chwidth = CH_WIDTH_5MHZ,
+	},
+	[NL80211_CHAN_WIDTH_10] = {
+		.ch_bw = HW_MODE_10_MHZ,
+		.ch_bw_str = "10MHz",
+		.phy_chwidth = CH_WIDTH_10MHZ,
+	},
+#ifdef WLAN_FEATURE_11BE
+	[NL80211_CHAN_WIDTH_320] = {
+		.sir_chwidth_valid = true,
+		.sir_chwidth = eHT_CHANNEL_WIDTH_320MHZ,
+		.ch_bw = HW_MODE_320_MHZ,
+		.ch_bw_str = "320MHz",
+		.phy_chwidth = CH_WIDTH_320MHZ,
+		.bonding_mode = WNI_CFG_CHANNEL_BONDING_MODE_ENABLE,
+	},
+#endif
+};
+
+enum eSirMacHTChannelWidth
+hdd_nl80211_chwidth_to_chwidth(uint8_t nl80211_chwidth)
+{
+	if (nl80211_chwidth >= ARRAY_SIZE(chwidth_info) ||
+	    !chwidth_info[nl80211_chwidth].sir_chwidth_valid) {
+		hdd_err("Unsupported channel width %d", nl80211_chwidth);
+		return -EINVAL;
+	}
+
+	return chwidth_info[nl80211_chwidth].sir_chwidth;
+}
+
+uint8_t hdd_chwidth_to_nl80211_chwidth(enum eSirMacHTChannelWidth chwidth)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(chwidth_info); i++) {
+		if (chwidth_info[i].sir_chwidth_valid &&
+		    chwidth_info[i].sir_chwidth == chwidth)
+			return i;
+	}
+
+	hdd_err("Unsupported channel width %d", chwidth);
+	return 0xFF;
+}
+
+enum hw_mode_bandwidth wlan_hdd_get_channel_bw(enum nl80211_chan_width width)
+{
+	if (width >= ARRAY_SIZE(chwidth_info)) {
+		hdd_err("Invalid width: %d, using default 20MHz", width);
+		return HW_MODE_20_MHZ;
+	}
+
+	return chwidth_info[width].ch_bw;
+}
+
+uint8_t *hdd_ch_width_str(enum phy_ch_width ch_width)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(chwidth_info); i++) {
+		if (chwidth_info[i].phy_chwidth == ch_width)
+			return chwidth_info[i].ch_bw_str;
+	}
+
+	return "UNKNOWN";
+}
+
+int hdd_we_set_ch_width(struct hdd_adapter *adapter, int ch_width)
+{
+	int i;
+
+	/* updating channel bonding only on 5Ghz */
+	hdd_debug("WMI_VDEV_PARAM_CHWIDTH val %d", ch_width);
+
+	for (i = 0; i < ARRAY_SIZE(chwidth_info); i++) {
+		if (chwidth_info[i].sir_chwidth_valid &&
+		    chwidth_info[i].sir_chwidth == ch_width)
+			return hdd_update_channel_width(
+					adapter, ch_width,
+					chwidth_info[i].bonding_mode);
+	}
+
+	hdd_err("Invalid ch_width %d", ch_width);
+	return -EINVAL;
+}
 
 /* Register the module init/exit functions */
 module_init(hdd_module_init);

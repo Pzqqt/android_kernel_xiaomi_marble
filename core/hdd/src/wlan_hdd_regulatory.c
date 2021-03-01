@@ -1090,6 +1090,21 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 #endif
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
+#ifdef WLAN_FEATURE_11BE
+static void fill_wiphy_channel_320mhz(struct ieee80211_channel *wiphy_chan,
+				      uint16_t max_bw)
+{
+	if (max_bw < 320)
+		wiphy_chan->flags |= IEEE80211_CHAN_NO_320MHZ;
+}
+#else
+static inline
+void fill_wiphy_channel_320mhz(struct ieee80211_channel *wiphy_chan,
+			       uint16_t max_bw)
+{
+}
+#endif
+
 static void fill_wiphy_channel(struct ieee80211_channel *wiphy_chan,
 			       struct regulatory_channel *cur_chan)
 {
@@ -1118,6 +1133,8 @@ static void fill_wiphy_channel(struct ieee80211_channel *wiphy_chan,
 		wiphy_chan->flags |= IEEE80211_CHAN_NO_80MHZ;
 	if (cur_chan->max_bw < 160)
 		wiphy_chan->flags |= IEEE80211_CHAN_NO_160MHZ;
+
+	fill_wiphy_channel_320mhz(wiphy_chan, cur_chan->max_bw);
 
 	wiphy_chan->orig_flags = wiphy_chan->flags;
 }

@@ -2287,6 +2287,25 @@ struct hdd_channel_info {
 	u_int8_t vht_center_freq_seg1;
 };
 
+/**
+ * struct hdd_chwidth_info - channel width related info
+ * @sir_chwidth_valid: If nl_chan_width is valid in Sir
+ * @sir_chwidth: enum eSirMacHTChannelWidth
+ * @ch_bw: enum hw_mode_bandwidth
+ * @ch_bw_str: ch_bw in string format
+ * @phy_chwidth: enum phy_ch_width
+ * @bonding mode: WNI_CFG_CHANNEL_BONDING_MODE_DISABLE or
+ *		  WNI_CFG_CHANNEL_BONDING_MODE_ENABLE
+ */
+struct hdd_chwidth_info {
+	bool sir_chwidth_valid;
+	enum eSirMacHTChannelWidth sir_chwidth;
+	enum hw_mode_bandwidth ch_bw;
+	char *ch_bw_str;
+	enum phy_ch_width phy_chwidth;
+	int bonding_mode;
+};
+
 /*
  * Function declarations and documentation
  */
@@ -4979,4 +4998,47 @@ void wlan_hdd_set_pm_qos_request(struct hdd_context *hdd_ctx,
 {
 }
 #endif
+
+/**
+ * hdd_nl80211_chwidth_to_chwidth - Get sir chan width from nl chan width
+ * @nl80211_chwidth: enum nl80211_chan_width
+ *
+ * Return: enum eSirMacHTChannelWidth or -INVAL for unsupported nl chan width
+ */
+enum eSirMacHTChannelWidth
+hdd_nl80211_chwidth_to_chwidth(uint8_t nl80211_chwidth);
+
+/**
+ * hdd_chwidth_to_nl80211_chwidth - Get nl chan width from sir chan width
+ * @chwidth: enum eSirMacHTChannelWidth
+ *
+ * Return: enum nl80211_chan_width or 0xFF for unsupported sir chan width
+ */
+uint8_t hdd_chwidth_to_nl80211_chwidth(enum eSirMacHTChannelWidth chwidth);
+
+/**
+ * wlan_hdd_get_channel_bw() - get channel bandwidth
+ * @width: input channel width in nl80211_chan_width value
+ *
+ * Return: channel width value defined by driver
+ */
+enum hw_mode_bandwidth wlan_hdd_get_channel_bw(enum nl80211_chan_width width);
+
+/**
+ * hdd_ch_width_str() - Get string for channel width
+ * @ch_width: channel width from connect info
+ *
+ * Return: User readable string for channel width
+ */
+uint8_t *hdd_ch_width_str(enum phy_ch_width ch_width);
+
+/**
+ * hdd_we_set_ch_width - Function to update channel width
+ * @adapter: hdd_adapter pointer
+ * @ch_width: enum eSirMacHTChannelWidth
+ *
+ * Return: 0 for success otherwise failure
+ */
+int hdd_we_set_ch_width(struct hdd_adapter *adapter, int ch_width);
+
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */
