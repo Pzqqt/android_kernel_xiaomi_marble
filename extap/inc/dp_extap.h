@@ -38,7 +38,7 @@
 
 #ifdef EXTAP_DEBUG
 #define extap_log(level, args...)                       \
-	QDF_TRACE(QDF_MODULE_ID_EXTAP, level, ##args)
+	QDF_TRACE(QDF_MODULE_ID_EXT_AP, level, ##args)
 #define extap_logl(level, format, args...)              \
 	extap_log(level, FL(format), ##args)
 #define extap_debug(format, args ...)                   \
@@ -143,8 +143,8 @@ static inline uint8_t dp_is_extap_enabled(struct wlan_objmgr_vdev *vdev)
 }
 
 /**
- * dp_get_extap_handle() - get extap handle from pdev
- * @pdev: pdev object pointer
+ * dp_get_extap_handle() - get extap handle from vdev
+ * @vdev: vdev object pointer
  *
  * Return: extap handle
  */
@@ -152,12 +152,10 @@ static inline
 dp_pdev_extap_t *dp_get_extap_handle(struct wlan_objmgr_vdev *vdev)
 {
 	struct wlan_objmgr_pdev *wlan_pdev;
-	struct wlan_objmgr_psoc *psoc;
 	dp_txrx_pdev_handle_t *dp_hdl;
 	ol_txrx_soc_handle soc;
 
 	wlan_pdev = wlan_vdev_get_pdev(vdev);
-	psoc = wlan_vdev_get_psoc(vdev);
 
 	soc = wlan_psoc_get_dp_handle(wlan_pdev_get_psoc(wlan_pdev));
 	if (!soc)
@@ -170,4 +168,28 @@ dp_pdev_extap_t *dp_get_extap_handle(struct wlan_objmgr_vdev *vdev)
 	return &dp_hdl->extap_hdl;
 }
 
+/**
+ * dp_pdev_get_extap_handle() - get extap handle from pdev
+ * @pdev: pdev object pointer
+ *
+ * Return: extap handle
+ */
+static
+dp_pdev_extap_t *dp_pdev_get_extap_handle(struct wlan_objmgr_pdev *pdev)
+{
+	dp_txrx_pdev_handle_t *dp_hdl;
+	ol_txrx_soc_handle soc;
+
+	soc = wlan_psoc_get_dp_handle(wlan_pdev_get_psoc(pdev));
+	if (!soc)
+		return NULL;
+	dp_hdl = cdp_pdev_get_dp_txrx_handle(soc, wlan_objmgr_pdev_get_pdev_id(pdev));
+	if (!dp_hdl)
+		return NULL;
+
+	return &dp_hdl->extap_hdl;
+}
+
+int dp_extap_attach(struct wlan_objmgr_pdev *pdev);
+int dp_extap_detach(struct wlan_objmgr_pdev *pdev);
 #endif /* __DP_EXTAP_H_ */

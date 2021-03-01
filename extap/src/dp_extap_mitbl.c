@@ -119,6 +119,7 @@ mi_tbl_lkup(mi_node_t *root, u_int8_t *ip, int ipver)
 
 void mi_tbl_del(mi_node_t **root, u_int8_t *ip, int ipver)
 {
+	/* Acquire read-write lock before extap entry delete */
 	mi_node_t *a = mi_tbl_lkup2(*root, ip, ipver);
 
 	if (a) {
@@ -480,6 +481,7 @@ mi_tbl_del(mi_node_t **root, u_int8_t *ipaddr, int ip_ver)
 	mi_node_t *fn, *in, *ln, *next;
 	int dir = 0, bit = 0;
 
+	/* Acquire read-write lock before extap entry delete */
 	if (!(*root)) {
 		extap_debug("\nThere is no entry in the Table");
 		return;
