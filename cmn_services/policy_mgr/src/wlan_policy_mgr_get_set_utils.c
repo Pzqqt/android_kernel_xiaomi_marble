@@ -552,6 +552,10 @@ static enum hw_mode_bandwidth policy_mgr_map_wmi_channel_width_to_hw_mode_bw(
 		return HW_MODE_5_MHZ;
 	case WMI_CHAN_WIDTH_10:
 		return HW_MODE_10_MHZ;
+#ifdef WLAN_FEATURE_11BE
+	case WMI_CHAN_WIDTH_320:
+		return HW_MODE_320_MHZ;
+#endif
 	default:
 		return HW_MODE_BW_NONE;
 	}
