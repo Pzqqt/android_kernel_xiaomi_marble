@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
@@ -141,6 +141,16 @@ struct sde_plane_state {
 	uint32_t static_cache_state;
 
 	struct sde_hw_pipe_cdp_cfg cdp_cfg;
+};
+
+/**
+ * struct sde_multirect_plane_states: Defines multirect pair of drm plane states
+ * @r0: drm plane configured on rect 0
+ * @r1: drm plane configured on rect 1
+ */
+struct sde_multirect_plane_states {
+	const struct drm_plane_state *r0;
+	const struct drm_plane_state *r1;
 };
 
 #define to_sde_plane_state(x) \

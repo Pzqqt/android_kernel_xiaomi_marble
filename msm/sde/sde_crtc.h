@@ -29,9 +29,6 @@
 #include "sde_core_perf.h"
 #include "sde_hw_ds.h"
 
-#define SDE_PSTATES_MAX (SDE_STAGE_MAX * 4)
-#define SDE_MULTIRECT_PLANE_MAX (SDE_STAGE_MAX * 2)
-
 #define SDE_CRTC_NAME_SIZE	12
 
 /* define the maximum number of in-flight frame events */
@@ -221,23 +218,6 @@ struct sde_crtc_misr_info {
 	u32 misr_frame_count;
 };
 
-struct plane_state {
-	struct sde_plane_state *sde_pstate;
-	const struct drm_plane_state *drm_pstate;
-	int stage;
-	u32 pipe_id;
-};
-
-/**
- * struct sde_multirect_plane_states: Defines multirect pair of drm plane states
- * @r0: drm plane configured on rect 0
- * @r1: drm plane configured on rect 1
- */
-struct sde_multirect_plane_states {
-	const struct drm_plane_state *r0;
-	const struct drm_plane_state *r1;
-};
-
 /*
  * Maximum number of free event structures to cache
  */
@@ -279,9 +259,6 @@ struct sde_multirect_plane_states {
  * @ad_dirty      : list containing ad properties that are dirty
  * @ad_active     : list containing ad properties that are active
  * @crtc_lock     : crtc lock around create, destroy and access.
- * @pstates       : array of plane states
- * @num_pstates   : Number of plane states
- * @multirect     : array of multirect plane states
  * @frame_pending : Whether or not an update is pending
  * @frame_events  : static allocation of in-flight frame events
  * @frame_event_list : available frame event list
@@ -362,10 +339,6 @@ struct sde_crtc {
 
 	struct mutex crtc_lock;
 	struct mutex crtc_cp_lock;
-
-	struct plane_state pstates[SDE_PSTATES_MAX];
-	uint32_t num_pstates;
-	struct sde_multirect_plane_states multirect[SDE_MULTIRECT_PLANE_MAX];
 
 	atomic_t frame_pending;
 	struct sde_crtc_frame_event frame_events[SDE_CRTC_FRAME_EVENT_SIZE];
