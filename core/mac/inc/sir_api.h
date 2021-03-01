@@ -2108,12 +2108,14 @@ struct sir_antenna_mode_resp {
 	enum set_antenna_mode_status status;
 };
 
+#ifndef FEATURE_CM_ENABLE
 /* / Definition for Candidate found indication from FW */
 typedef struct sSirSmeCandidateFoundInd {
 	uint16_t messageType;   /* eWNI_SME_CANDIDATE_FOUND_IND */
 	uint16_t length;
 	uint8_t sessionId;      /* Session Identifier */
 } tSirSmeCandidateFoundInd, *tpSirSmeCandidateFoundInd;
+#endif
 
 #ifdef WLAN_FEATURE_11W
 typedef struct sSirWlanExcludeUnencryptParam {

@@ -62,7 +62,7 @@ __wlan_hdd_store_reassoc_sysfs(struct net_device *net_dev, char const *buf,
 
 #ifdef FEATURE_CM_ENABLE
 	ucfg_wlan_cm_roam_invoke(hdd_ctx->pdev, adapter->vdev_id,
-				 &target_bssid, operating_ch);
+				 &target_bssid, operating_ch, CM_ROAMING_HOST);
 #else
 	sme_get_modify_profile_fields(mac_handle, adapter->vdev_id,
 				      &mod_fields);

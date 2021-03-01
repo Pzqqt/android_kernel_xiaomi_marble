@@ -4186,11 +4186,31 @@ QDF_STATUS wma_scan_probe_setoui(tp_wma_handle wma,
  */
 void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 {
-#ifndef FEATURE_CM_ENABLE
-	struct scheduler_msg cds_msg = {0};
-	tSirSmeCandidateFoundInd *candidate_ind;
+	struct scheduler_msg msg = {0};
 	QDF_STATUS status;
+#ifdef FEATURE_CM_ENABLE
+	struct cm_host_roam_start_ind *ind;
+#else
+	tSirSmeCandidateFoundInd *candidate_ind;
+#endif
 
+#ifdef FEATURE_CM_ENABLE
+	ind = qdf_mem_malloc(sizeof(*ind));
+	if (!ind)
+		return;
+
+	wma->interfaces[vdev_id].roaming_in_progress = true;
+	ind->pdev = wma->pdev;
+	ind->vdev_id = vdev_id;
+	msg.bodyptr = ind;
+	msg.callback = wlan_cm_host_roam_start;
+	wma_debug("Posting ROam start ind to connection manager, vdev %d",
+		  vdev_id);
+	status = scheduler_post_message(QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_OS_IF,
+					QDF_MODULE_ID_SCAN, &msg);
+
+#else
 	candidate_ind = qdf_mem_malloc(sizeof(tSirSmeCandidateFoundInd));
 	if (!candidate_ind)
 		return;
@@ -4200,18 +4220,16 @@ void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 	candidate_ind->sessionId = vdev_id;
 	candidate_ind->length = sizeof(tSirSmeCandidateFoundInd);
 
-	cds_msg.type = eWNI_SME_CANDIDATE_FOUND_IND;
-	cds_msg.bodyptr = candidate_ind;
-	cds_msg.callback = sme_mc_process_handler;
+	msg.type = eWNI_SME_CANDIDATE_FOUND_IND;
+	msg.bodyptr = candidate_ind;
+	msg.callback = sme_mc_process_handler;
 	wma_debug("Posting candidate ind to SME, vdev %d", vdev_id);
 
 	status = scheduler_post_message(QDF_MODULE_ID_WMA, QDF_MODULE_ID_SME,
-					QDF_MODULE_ID_SCAN,  &cds_msg);
-	if (QDF_IS_STATUS_ERROR(status))
-		qdf_mem_free(candidate_ind);
-#else
-	/* post to osif queue to call cm API for LFR2 */
+					QDF_MODULE_ID_SCAN,  &msg);
 #endif
+	if (QDF_IS_STATUS_ERROR(status))
+		qdf_mem_free(msg.bodyptr);
 }
 
 /**

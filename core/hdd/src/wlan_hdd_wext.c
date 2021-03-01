@@ -6631,7 +6631,8 @@ static int __iw_setnone_getnone(struct net_device *dev,
 					    &target_bssid);
 #ifdef FEATURE_CM_ENABLE
 		ucfg_wlan_cm_roam_invoke(hdd_ctx->pdev, adapter->vdev_id,
-					 &target_bssid, operating_ch);
+					 &target_bssid, operating_ch,
+					 CM_ROAMING_HOST);
 #else
 
 		sme_get_modify_profile_fields(mac_handle, adapter->vdev_id,

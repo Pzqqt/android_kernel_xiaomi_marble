@@ -1308,7 +1308,8 @@ QDF_STATUS cm_roam_release_lock(struct wlan_objmgr_vdev *vdev)
 
 QDF_STATUS
 wlan_cm_roam_invoke(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
-		    struct qdf_mac_addr *bssid, qdf_freq_t chan_freq)
+		    struct qdf_mac_addr *bssid, qdf_freq_t chan_freq,
+		    enum wlan_cm_source source)
 {
 	QDF_STATUS status;
 	struct wlan_objmgr_psoc *psoc;
@@ -1327,17 +1328,26 @@ wlan_cm_roam_invoke(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	if (cm_roam_offload_enabled(psoc)) {
-		status = cm_start_roam_invoke(psoc, vdev, bssid, chan_freq);
-	} else {
-		/* Add host roam support (LFR2) */
-		status = QDF_STATUS_E_FAILURE;
-	}
-
+	status = cm_start_roam_invoke(psoc, vdev, bssid, chan_freq, source);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 
 	return status;
 }
+
+#ifdef WLAN_FEATURE_HOST_ROAM
+QDF_STATUS wlan_cm_host_roam_start(struct scheduler_msg *msg)
+{
+	struct cm_host_roam_start_ind *req;
+	struct qdf_mac_addr bssid = QDF_MAC_ADDR_ZERO_INIT;
+
+	if (!msg || !msg->bodyptr)
+		return QDF_STATUS_E_FAILURE;
+
+	req = msg->bodyptr;
+	return wlan_cm_roam_invoke(req->pdev, req->vdev_id, &bssid, 0,
+				   CM_ROAMING_FW);
+}
+#endif
 
 #else
 struct rso_config *wlan_cm_get_rso_config_fl(struct wlan_objmgr_vdev *vdev,

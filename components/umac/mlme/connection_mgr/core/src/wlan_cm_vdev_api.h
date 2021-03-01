@@ -126,6 +126,16 @@ struct cm_peer_create_req {
 };
 
 /**
+ * struct cm_host_roam_start_ind - roam start ind for host roam from FW
+ * @vdev_id: vdev id
+ * @pdev: pdev object
+ */
+struct cm_host_roam_start_ind {
+	uint8_t vdev_id;
+	struct wlan_objmgr_pdev *pdev;
+};
+
+/**
  * struct cm_ext_obj - Connection manager legacy object
  * @rso_cfg: connect info to be used in RSO.
  */

@@ -704,7 +704,8 @@ static int hdd_parse_reassoc_v1(struct hdd_adapter *adapter, const char *command
 	qdf_mem_copy(target_bssid.bytes, bssid, sizeof(tSirMacAddr));
 	status = ucfg_wlan_cm_roam_invoke(hdd_ctx->pdev,
 					  adapter->vdev_id,
-					  &target_bssid, freq);
+					  &target_bssid, freq,
+					  CM_ROAMING_HOST);
 	return qdf_status_to_os_return(status);
 #else
 	ret = hdd_reassoc(adapter, bssid, freq, REASSOC);
@@ -766,7 +767,8 @@ static int hdd_parse_reassoc_v2(struct hdd_adapter *adapter,
 		qdf_mem_copy(target_bssid.bytes, bssid, sizeof(tSirMacAddr));
 		status = ucfg_wlan_cm_roam_invoke(hdd_ctx->pdev,
 						  adapter->vdev_id,
-						  &target_bssid, freq);
+						  &target_bssid, freq,
+						  CM_ROAMING_HOST);
 		ret = qdf_status_to_os_return(status);
 #else
 		ret = hdd_reassoc(adapter, bssid, freq, REASSOC);
@@ -4619,7 +4621,7 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 #ifdef FEATURE_CM_ENABLE
 	qdf_mem_copy(target_bssid.bytes, bssid, sizeof(tSirMacAddr));
 	ucfg_wlan_cm_roam_invoke(hdd_ctx->pdev, adapter->vdev_id,
-				 &target_bssid, freq);
+				 &target_bssid, freq, CM_ROAMING_HOST);
 #else
 	mac_handle = hdd_ctx->mac_handle;
 	chan_freq = wlan_get_operation_chan_freq(adapter->vdev);
