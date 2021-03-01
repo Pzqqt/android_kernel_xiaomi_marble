@@ -1714,6 +1714,8 @@ static int wsa_macro_config_ear_spkr_gain(struct snd_soc_component *component,
 				BOLERO_CDC_WSA_COMPANDER0_CTL7, 0x01, 0x00);
 			snd_soc_component_update_bits(component,
 				BOLERO_CDC_WSA_COMPANDER0_CTL3, 0x80, 0x80);
+			snd_soc_component_update_bits(component,
+				BOLERO_CDC_WSA_RX0_RX_PATH_CFG1, 0x08, 0x00);
 		}
 		break;
 	case SND_SOC_DAPM_POST_PMD:
@@ -1729,6 +1731,8 @@ static int wsa_macro_config_ear_spkr_gain(struct snd_soc_component *component,
 			dev_dbg(wsa_priv->dev, "%s: Reset RX0 Volume to 0 dB\n",
 				__func__);
 		}
+		snd_soc_component_update_bits(component,
+				BOLERO_CDC_WSA_RX0_RX_PATH_CFG1, 0x08, 0x08);
 		snd_soc_component_update_bits(component,
 				BOLERO_CDC_WSA_COMPANDER0_CTL7, 0x01, 0x01);
 		snd_soc_component_update_bits(component,

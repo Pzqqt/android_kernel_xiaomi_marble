@@ -1587,8 +1587,14 @@ static int lpass_cdc_wsa_macro_enable_interpolator(struct snd_soc_dapm_widget *w
 
 		lpass_cdc_wsa_macro_config_compander(component, w->shift, event);
 		lpass_cdc_wsa_macro_config_softclip(component, w->shift, event);
+		if(wsa_priv->wsa_spkrrecv)
+			snd_soc_component_update_bits(component,
+					LPASS_CDC_WSA_RX0_RX_PATH_CFG1,
+					0x08, 0x00);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
+		snd_soc_component_update_bits(component,
+				LPASS_CDC_WSA_RX0_RX_PATH_CFG1,	0x08, 0x08);
 		lpass_cdc_wsa_macro_config_compander(component, w->shift, event);
 		lpass_cdc_wsa_macro_config_softclip(component, w->shift, event);
 		lpass_cdc_wsa_macro_enable_prim_interpolator(component, reg, event);
