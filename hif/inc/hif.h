@@ -1699,4 +1699,36 @@ static inline void hif_config_irq_set_perf_affinity_hint(
 {
 }
 #endif
+
+/**
+ * hif_apps_grp_irqs_enable() - enable ext grp irqs
+ * @hif - HIF opaque context
+ *
+ * Return: 0 on success. Error code on failure.
+ */
+int hif_apps_grp_irqs_enable(struct hif_opaque_softc *hif_ctx);
+
+/**
+ * hif_apps_grp_irqs_disable() - disable ext grp irqs
+ * @hif - HIF opaque context
+ *
+ * Return: 0 on success. Error code on failure.
+ */
+int hif_apps_grp_irqs_disable(struct hif_opaque_softc *hif_ctx);
+
+/**
+ * hif_disable_grp_irqs() - disable ext grp irqs
+ * @hif - HIF opaque context
+ *
+ * Return: 0 on success. Error code on failure.
+ */
+int hif_disable_grp_irqs(struct hif_opaque_softc *scn);
+
+/**
+ * hif_enable_grp_irqs() - enable ext grp irqs
+ * @hif - HIF opaque context
+ *
+ * Return: 0 on success. Error code on failure.
+ */
+int hif_enable_grp_irqs(struct hif_opaque_softc *scn);
 #endif /* _HIF_H_ */

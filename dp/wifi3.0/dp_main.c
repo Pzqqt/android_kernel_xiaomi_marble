@@ -10391,11 +10391,25 @@ void dp_update_rx_soft_irq_limit_params(struct dp_soc *soc,
 		soc->wlan_cfg_ctx->rx_enable_eol_data_check,
 		soc->wlan_cfg_ctx->rx_hp_oos_update_limit);
 }
+
+static void dp_update_soft_irq_limits(struct dp_soc *soc, uint32_t tx_limit,
+				      uint32_t rx_limit)
+{
+	soc->wlan_cfg_ctx->tx_comp_loop_pkt_limit = tx_limit;
+	soc->wlan_cfg_ctx->rx_reap_loop_pkt_limit = rx_limit;
+}
+
 #else
 static inline
 void dp_update_rx_soft_irq_limit_params(struct dp_soc *soc,
 					struct cdp_config_params *params)
 { }
+
+static inline
+void dp_update_soft_irq_limits(struct dp_soc *soc, uint32_t tx_limit,
+			       uint32_t rx_limit)
+{
+}
 #endif /* WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT */
 
 /**
@@ -11430,6 +11444,32 @@ dp_config_full_mon_mode(struct cdp_soc_t *soc_handle,
 }
 #endif
 
+#if defined(FEATURE_RUNTIME_PM) || defined(DP_POWER_SAVE)
+static void dp_drain_txrx(struct cdp_soc_t *soc_handle)
+{
+	struct dp_soc *soc = (struct dp_soc *)soc_handle;
+	uint32_t cur_tx_limit, cur_rx_limit;
+	uint32_t budget = 0xffff;
+	int i;
+
+	cur_tx_limit = soc->wlan_cfg_ctx->tx_comp_loop_pkt_limit;
+	cur_rx_limit = soc->wlan_cfg_ctx->rx_reap_loop_pkt_limit;
+
+	/* Temporarily increase soft irq limits when going to drain
+	 * the UMAC/LMAC SRNGs and restore them after polling.
+	 * Though the budget is on higher side, the TX/RX reaping loops
+	 * will not execute longer as both TX and RX would be suspended
+	 * by the time this API is called.
+	 */
+	dp_update_soft_irq_limits(soc, budget, budget);
+
+	for (i = 0; i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++)
+		dp_service_srngs(&soc->intr_ctx[i], budget);
+
+	dp_update_soft_irq_limits(soc, cur_tx_limit, cur_rx_limit);
+}
+#endif
+
 static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_soc_attach_target = dp_soc_attach_target_wifi3,
 	.txrx_vdev_attach = dp_vdev_attach_wifi3,
@@ -11530,6 +11570,10 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.get_wds_ext_peer_id = dp_wds_ext_get_peer_id,
 	.set_wds_ext_peer_rx = dp_wds_ext_set_peer_rx,
 #endif /* QCA_SUPPORT_WDS_EXTENDED */
+
+#if defined(FEATURE_RUNTIME_PM) || defined(DP_POWER_SAVE)
+	.txrx_drain = dp_drain_txrx,
+#endif
 };
 
 static struct cdp_ctrl_ops dp_ops_ctrl = {

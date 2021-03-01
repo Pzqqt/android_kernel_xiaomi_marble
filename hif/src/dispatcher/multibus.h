@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018, 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018, 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -94,6 +94,8 @@ struct hif_bus_ops {
 	int (*hif_config_irq_by_ceid)(struct hif_softc *hif_sc, int ce_id);
 	bool (*hif_log_bus_info)(struct hif_softc *scn, uint8_t *data,
 				 unsigned int *offset);
+	int (*hif_enable_grp_irqs)(struct hif_softc *scn);
+	int (*hif_disable_grp_irqs)(struct hif_softc *scn);
 };
 
 #ifdef HIF_SNOC

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -240,4 +240,23 @@ bool hif_ipci_needs_bmi(struct hif_softc *scn);
  */
 const char *hif_ipci_get_irq_name(int irq_no);
 
+/**
+ * hif_ipci_enable_grp_irqs(): enable grp IRQs
+ * @scn: struct hif_softc
+ *
+ * This function enables grp irqs
+ *
+ * Return: 0 if success, error code if failure
+ */
+int hif_ipci_enable_grp_irqs(struct hif_softc *scn);
+
+/**
+ * hif_ipci_disable_grp_irqs(): disable grp IRQs
+ * @scn: struct hif_softc
+ *
+ * This function disables grp irqs
+ *
+ * Return: 0 if success, error code if failure
+ */
+int hif_ipci_disable_grp_irqs(struct hif_softc *scn);
 #endif /* _IPCI_API_H_ */

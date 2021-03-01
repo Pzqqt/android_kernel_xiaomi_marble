@@ -826,3 +826,13 @@ void hif_allow_link_low_power_states(struct hif_opaque_softc *hif)
 {
 }
 #endif
+
+int hif_ipci_enable_grp_irqs(struct hif_softc *scn)
+{
+	return hif_apps_grp_irqs_enable(GET_HIF_OPAQUE_HDL(scn));
+}
+
+int hif_ipci_disable_grp_irqs(struct hif_softc *scn)
+{
+	return hif_apps_grp_irqs_disable(GET_HIF_OPAQUE_HDL(scn));
+}

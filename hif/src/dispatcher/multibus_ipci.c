@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -81,6 +81,8 @@ QDF_STATUS hif_initialize_ipci_ops(struct hif_softc *hif_sc)
 		&hif_dummy_config_irq_affinity;
 	bus_ops->hif_config_irq_by_ceid = &hif_dummy_config_irq_by_ceid;
 	bus_ops->hif_log_bus_info = &hif_dummy_log_bus_info;
+	bus_ops->hif_enable_grp_irqs = hif_ipci_enable_grp_irqs;
+	bus_ops->hif_disable_grp_irqs = hif_ipci_disable_grp_irqs;
 
 	return QDF_STATUS_SUCCESS;
 }

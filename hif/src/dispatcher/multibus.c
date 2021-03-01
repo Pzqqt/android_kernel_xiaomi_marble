@@ -61,6 +61,8 @@ static void hif_initialize_default_ops(struct hif_softc *hif_sc)
 	bus_ops->hif_config_irq_affinity =
 		&hif_dummy_config_irq_affinity;
 	bus_ops->hif_config_irq_by_ceid = &hif_dummy_config_irq_by_ceid;
+	bus_ops->hif_enable_grp_irqs = &hif_dummy_enable_grp_irqs;
+	bus_ops->hif_disable_grp_irqs = &hif_dummy_enable_grp_irqs;
 }
 
 #define NUM_OPS (sizeof(struct hif_bus_ops) / sizeof(void *))
@@ -625,3 +627,61 @@ bool hif_log_bus_info(struct hif_softc *hif_sc, uint8_t *data,
 	return false;
 }
 #endif
+
+int hif_apps_grp_irqs_enable(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_exec_context *hif_exec;
+	struct hif_softc *scn;
+	int i;
+
+	QDF_BUG(hif_ctx);
+	scn = HIF_GET_SOFTC(hif_ctx);
+	if (!scn)
+		return -EINVAL;
+
+	for (i = 0 ; i < HIF_MAX_GROUP; i++) {
+		hif_exec = hif_exec_get_ctx(hif_ctx, i);
+		if (!hif_exec)
+			continue;
+
+		hif_exec->irq_enable(hif_exec);
+	}
+
+	return 0;
+}
+
+int hif_apps_grp_irqs_disable(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_exec_context *hif_exec;
+	struct hif_softc *scn;
+	int i;
+
+	QDF_BUG(hif_ctx);
+	scn = HIF_GET_SOFTC(hif_ctx);
+	if (!scn)
+		return -EINVAL;
+
+	for (i = 0 ; i < HIF_MAX_GROUP; i++) {
+		hif_exec = hif_exec_get_ctx(hif_ctx, i);
+		if (!hif_exec)
+			continue;
+
+		hif_exec->irq_disable(hif_exec);
+	}
+
+	return 0;
+}
+
+int hif_disable_grp_irqs(struct hif_opaque_softc *scn)
+{
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(scn);
+
+	return hif_sc->bus_ops.hif_disable_grp_irqs(hif_sc);
+}
+
+int hif_enable_grp_irqs(struct hif_opaque_softc *scn)
+{
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(scn);
+
+	return hif_sc->bus_ops.hif_enable_grp_irqs(hif_sc);
+}
