@@ -253,14 +253,16 @@ static int msm_vdec_set_coded_frames(struct msm_vidc_inst *inst,
 	enum msm_vidc_port_type port)
 {
 	int rc = 0;
-	u32 coded_frames;
+	u32 coded_frames = 0;
 
 	if (port != INPUT_PORT && port != OUTPUT_PORT) {
 		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
 		return -EINVAL;
 	}
 
-	coded_frames = inst->capabilities->cap[CODED_FRAMES].value;
+	if (inst->capabilities->cap[CODED_FRAMES].value ==
+			CODED_FRAMES_PROGRESSIVE)
+		coded_frames = HFI_BITMASK_FRAME_MBS_ONLY_FLAG;
 	inst->subcr_params[port].coded_frames = coded_frames;
 	i_vpr_h(inst, "%s: coded frames: %d", __func__, coded_frames);
 	rc = venus_hfi_session_property(inst,
@@ -1237,7 +1239,72 @@ static int msm_vdec_session_resume(struct msm_vidc_inst *inst,
 	return rc;
 }
 
-static int msm_vdec_update_properties(struct msm_vidc_inst *inst)
+int msm_vdec_init_input_subcr_params(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_subscription_params *subsc_params;
+	struct msm_vidc_core *core;
+	u32 left_offset, top_offset, right_offset, bottom_offset;
+	u32 primaries, matrix_coeff, transfer_char;
+	u32 full_range = 0, video_format = 0;
+	u32 colour_description_present_flag = 0;
+	u32 video_signal_type_present_flag = 0;
+
+	if (!inst || !inst->core || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+	subsc_params = &inst->subcr_params[INPUT_PORT];
+
+	subsc_params->bitstream_resolution =
+		inst->fmts[INPUT_PORT].fmt.pix_mp.width << 16 |
+		inst->fmts[INPUT_PORT].fmt.pix_mp.height;
+
+	left_offset = inst->crop.left;
+	top_offset = inst->crop.top;
+	right_offset = (inst->fmts[INPUT_PORT].fmt.pix_mp.width -
+			inst->crop.width);
+	bottom_offset = (inst->fmts[INPUT_PORT].fmt.pix_mp.height -
+			inst->crop.height);
+	subsc_params->crop_offsets[0] =
+			left_offset << 16 | top_offset;
+	subsc_params->crop_offsets[1] =
+			right_offset << 16 | bottom_offset;
+
+	subsc_params->fw_min_count = inst->buffers.output.min_count;
+
+	primaries = v4l2_color_primaries_from_driver(inst,
+		inst->fmts[INPUT_PORT].fmt.pix_mp.colorspace);
+	matrix_coeff = v4l2_matrix_coeff_from_driver(inst,
+		inst->fmts[INPUT_PORT].fmt.pix_mp.ycbcr_enc);
+	transfer_char = v4l2_transfer_char_from_driver(inst,
+		inst->fmts[INPUT_PORT].fmt.pix_mp.xfer_func);
+	full_range = inst->fmts[INPUT_PORT].fmt.pix_mp.quantization ==
+		V4L2_QUANTIZATION_FULL_RANGE ? 1 : 0;
+	subsc_params->color_info =
+		(matrix_coeff & 0xFF) |
+		((transfer_char << 8) & 0xFF00) |
+		((primaries << 16) & 0xFF0000) |
+		((colour_description_present_flag << 24) & 0x1000000) |
+		((full_range << 25) & 0x2000000) |
+		((video_format << 26) & 0x1C000000) |
+		((video_signal_type_present_flag << 29) & 0x20000000);
+
+	subsc_params->profile = inst->capabilities->cap[PROFILE].value;
+	subsc_params->level = inst->capabilities->cap[LEVEL].value;
+	subsc_params->tier = inst->capabilities->cap[HEVC_TIER].value;
+	subsc_params->pic_order_cnt = inst->capabilities->cap[POC].value;
+	subsc_params->bit_depth = inst->capabilities->cap[BIT_DEPTH].value;
+	if (inst->capabilities->cap[CODED_FRAMES].value ==
+			CODED_FRAMES_PROGRESSIVE)
+		subsc_params->coded_frames = HFI_BITMASK_FRAME_MBS_ONLY_FLAG;
+	else
+		subsc_params->coded_frames = 0;
+
+	return 0;
+}
+
+static int msm_vdec_read_input_subcr_params(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_subscription_params subsc_params;
 	struct msm_vidc_core *core;
@@ -1345,7 +1412,7 @@ int msm_vdec_input_port_settings_change(struct msm_vidc_inst *inst)
 		return 0;
 	}
 
-	rc = msm_vdec_update_properties(inst);
+	rc = msm_vdec_read_input_subcr_params(inst);
 	if (rc)
 		return rc;
 

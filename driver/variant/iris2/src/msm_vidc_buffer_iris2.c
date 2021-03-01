@@ -23,7 +23,7 @@ static u32 msm_vidc_decoder_bin_size_iris2(struct msm_vidc_inst *inst)
 	bool is_interlaced;
 	u32 vpp_delay;
 
-	if (!inst || !inst->core) {
+	if (!inst || !inst->core || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return size;
 	}
@@ -38,7 +38,11 @@ static u32 msm_vidc_decoder_bin_size_iris2(struct msm_vidc_inst *inst)
 		vpp_delay = inst->decode_vpp_delay.size;
 	else
 		vpp_delay = DEFAULT_BSE_VPP_DELAY;
-	is_interlaced = false; //TODO: (inst->pic_struct == MSM_VIDC_PIC_STRUCT_MAYBE_INTERLACED);
+	if (inst->capabilities->cap[CODED_FRAMES].value ==
+			CODED_FRAMES_PROGRESSIVE)
+		is_interlaced = false;
+	else
+		is_interlaced = true;
 	f = &inst->fmts[INPUT_PORT];
 	width = f->fmt.pix_mp.width;
 	height = f->fmt.pix_mp.height;

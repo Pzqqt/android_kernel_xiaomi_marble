@@ -25,6 +25,7 @@ int msm_vdec_g_param(struct msm_vidc_inst *inst,
 int msm_vdec_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f);
 int msm_vdec_inst_init(struct msm_vidc_inst *inst);
 int msm_vdec_inst_deinit(struct msm_vidc_inst *inst);
+int msm_vdec_init_input_subcr_params(struct msm_vidc_inst *inst);
 int msm_vdec_input_port_settings_change(struct msm_vidc_inst *inst);
 int msm_vdec_output_port_settings_change(struct msm_vidc_inst *inst);
 int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd);

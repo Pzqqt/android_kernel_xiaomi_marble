@@ -1312,6 +1312,9 @@ int handle_session_response_work(struct msm_vidc_inst *inst,
 		pkt += packet->size;
 	}
 
+	if (resp_work->type == RESP_WORK_INPUT_PSC)
+		msm_vdec_init_input_subcr_params(inst);
+
 	memset(&inst->hfi_frame_info, 0,
 		sizeof(struct msm_vidc_hfi_frame_info));
 	for (i = 0; i < ARRAY_SIZE(be); i++) {
