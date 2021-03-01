@@ -909,3 +909,13 @@ ucfg_pmo_get_go_mode_bus_suspend(struct wlan_objmgr_psoc *psoc)
 
 	return pmo_psoc_ctx->psoc_cfg.is_bus_suspend_enabled_in_go_mode;
 }
+
+QDF_STATUS ucfg_pmo_core_txrx_suspend(struct wlan_objmgr_psoc *psoc)
+{
+	return pmo_core_txrx_suspend(psoc);
+}
+
+QDF_STATUS ucfg_pmo_core_txrx_resume(struct wlan_objmgr_psoc *psoc)
+{
+	return pmo_core_txrx_resume(psoc);
+}

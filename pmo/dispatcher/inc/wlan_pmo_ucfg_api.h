@@ -1183,6 +1183,21 @@ ucfg_pmo_get_gpio_wakeup_mode(struct wlan_objmgr_psoc *psoc)
 }
 #endif
 
+/**
+ * ucfg_pmo_core_txrx_suspend(): suspends TX/RX
+ * @psoc: objmgr psoc
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS ucfg_pmo_core_txrx_suspend(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_core_txrx_resume(): resumes TX/RX
+ * @psoc: objmgr psoc
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS ucfg_pmo_core_txrx_resume(struct wlan_objmgr_psoc *psoc);
 #else /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 static inline QDF_STATUS
 ucfg_pmo_psoc_open(struct wlan_objmgr_psoc *psoc)
@@ -1831,6 +1846,16 @@ enum active_apf_mode
 ucfg_pmo_get_active_mc_bc_apf_mode(struct wlan_objmgr_psoc *psoc)
 {
 	return 0;
+}
+
+QDF_STATUS ucfg_pmo_core_txrx_suspend(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_pmo_core_txrx_resume(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
 }
 #endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 

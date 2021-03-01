@@ -966,6 +966,82 @@ out:
 	return status;
 }
 
+QDF_STATUS pmo_core_txrx_suspend(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_ctx;
+	QDF_STATUS status;
+	void *hif_ctx;
+	void *dp_soc;
+	int ret;
+
+	status = pmo_psoc_get_ref(psoc);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pmo_err("pmo cannot get the reference out of psoc");
+		return status;
+	}
+
+	pmo_ctx = pmo_psoc_get_priv(psoc);
+	if (pmo_core_get_wow_state(pmo_ctx) != pmo_wow_state_unified_d3)
+		goto out;
+
+	hif_ctx = pmo_core_psoc_get_hif_handle(psoc);
+	dp_soc = pmo_core_psoc_get_dp_handle(psoc);
+	if (!hif_ctx || !dp_soc) {
+		pmo_err("Invalid ctx hif: %pK, dp: %pK", hif_ctx, dp_soc);
+		status = QDF_STATUS_E_INVAL;
+		goto out;
+	}
+
+	ret = hif_disable_grp_irqs(hif_ctx);
+	if (ret && ret != -EOPNOTSUPP) {
+		pmo_err("Prevent suspend, failed to disable grp irqs: %d", ret);
+		status =  qdf_status_from_os_return(ret);
+		goto out;
+	}
+
+	if (ret == -EOPNOTSUPP)
+		goto out;
+
+	cdp_drain_txrx(dp_soc);
+out:
+	pmo_psoc_put_ref(psoc);
+	return status;
+}
+
+QDF_STATUS pmo_core_txrx_resume(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_ctx;
+	QDF_STATUS status;
+	void *hif_ctx;
+	int ret;
+
+	status = pmo_psoc_get_ref(psoc);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pmo_err("pmo cannot get the reference out of psoc");
+		return status;
+	}
+
+	pmo_ctx = pmo_psoc_get_priv(psoc);
+	if (pmo_core_get_wow_state(pmo_ctx) != pmo_wow_state_unified_d3)
+		goto out;
+
+	hif_ctx = pmo_core_psoc_get_hif_handle(psoc);
+	if (!hif_ctx) {
+		pmo_err("Invalid hif ctx");
+		status = QDF_STATUS_E_INVAL;
+		goto out;
+	}
+
+	ret = hif_enable_grp_irqs(hif_ctx);
+	if (ret && ret != -EOPNOTSUPP) {
+		pmo_err("Failed to enable grp irqs: %d", ret);
+		status = qdf_status_from_os_return(ret);
+	}
+out:
+	pmo_psoc_put_ref(psoc);
+	return status;
+}
+
 #ifdef FEATURE_RUNTIME_PM
 #define PMO_CORE_PSOC_RUNTIME_PM_QDF_BUG(__condition) ({ \
 	typeof(__condition) condition = __condition; \
@@ -1053,11 +1129,15 @@ QDF_STATUS pmo_core_psoc_bus_runtime_suspend(struct wlan_objmgr_psoc *psoc,
 		goto pmo_bus_resume;
 	}
 
+	status = pmo_core_txrx_suspend(psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto resume_hif;
+
 	pending = cdp_rx_get_pending(cds_get_context(QDF_MODULE_ID_SOC));
 	if (pending) {
 		pmo_debug("Prevent suspend, RX frame pending %d", pending);
 		status = QDF_STATUS_E_BUSY;
-		goto resume_hif;
+		goto resume_txrx;
 	}
 
 	if (pld_cb) {
@@ -1069,7 +1149,7 @@ QDF_STATUS pmo_core_psoc_bus_runtime_suspend(struct wlan_objmgr_psoc *psoc,
 
 		if (ret) {
 			status = qdf_status_from_os_return(ret);
-			goto resume_hif;
+			goto resume_txrx;
 		}
 	}
 
@@ -1085,7 +1165,7 @@ QDF_STATUS pmo_core_psoc_bus_runtime_suspend(struct wlan_objmgr_psoc *psoc,
 			hif_pm_runtime_suspend_unlock(hif_ctx);
 			pmo_err("Target wake up received before suspend completion");
 			status = QDF_STATUS_E_BUSY;
-			goto resume_hif;
+			goto resume_txrx;
 		}
 		hif_process_runtime_suspend_success(hif_ctx);
 		hif_pm_runtime_suspend_unlock(hif_ctx);
@@ -1094,6 +1174,10 @@ QDF_STATUS pmo_core_psoc_bus_runtime_suspend(struct wlan_objmgr_psoc *psoc,
 	}
 
 	goto dec_psoc_ref;
+
+resume_txrx:
+	PMO_CORE_PSOC_RUNTIME_PM_QDF_BUG(QDF_STATUS_SUCCESS !=
+		pmo_core_txrx_resume(psoc));
 
 resume_hif:
 	PMO_CORE_PSOC_RUNTIME_PM_QDF_BUG(hif_runtime_resume(hif_ctx));
@@ -1181,6 +1265,10 @@ QDF_STATUS pmo_core_psoc_bus_runtime_resume(struct wlan_objmgr_psoc *psoc,
 			goto fail;
 		}
 	}
+
+	status = pmo_core_txrx_resume(psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto fail;
 
 	if (hif_runtime_resume(hif_ctx)) {
 		status = QDF_STATUS_E_FAILURE;
