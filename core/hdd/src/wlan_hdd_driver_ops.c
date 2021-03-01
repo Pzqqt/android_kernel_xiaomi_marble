@@ -1205,11 +1205,18 @@ static int __wlan_hdd_bus_suspend(struct wow_enable_params wow_params,
 		goto resume_pmo;
 	}
 
+	status = ucfg_pmo_core_txrx_suspend(hdd_ctx->psoc);
+	err = qdf_status_to_os_return(status);
+	if (err) {
+		hdd_err("Failed to suspend TXRX: %d", err);
+		goto resume_hif;
+	}
+
 	pending = cdp_rx_get_pending(cds_get_context(QDF_MODULE_ID_SOC));
 	if (pending) {
 		hdd_debug("Prevent suspend, RX frame pending %d", pending);
 		err = -EBUSY;
-		goto resume_hif;
+		goto resume_txrx;
 	}
 
 	/*
@@ -1222,6 +1229,10 @@ static int __wlan_hdd_bus_suspend(struct wow_enable_params wow_params,
 
 	hdd_info("bus suspend succeeded");
 	return 0;
+
+resume_txrx:
+	status = ucfg_pmo_core_txrx_resume(hdd_ctx->psoc);
+	QDF_BUG(QDF_IS_STATUS_SUCCESS(status));
 
 resume_hif:
 	status = hif_bus_resume(hif_ctx);
@@ -1381,6 +1392,13 @@ int wlan_hdd_bus_resume(enum qdf_suspend_type type)
 	param.policy = BBM_NON_PERSISTENT_POLICY;
 	param.policy_info.flag = BBM_APPS_RESUME;
 	hdd_bbm_apply_independent_policy(hdd_ctx, &param);
+
+	qdf_status = ucfg_pmo_core_txrx_resume(hdd_ctx->psoc);
+	status = qdf_status_to_os_return(qdf_status);
+	if (status) {
+		hdd_err("Failed to resume TXRX");
+		goto out;
+	}
 
 	status = hif_bus_resume(hif_ctx);
 	if (status) {
