@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -417,6 +417,68 @@ extract_peer_stats_info_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+/**
+ * extract_big_data_stats_tlv() - extract big data from event
+ * @param wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param stats_param: Pointer to hold big data stats
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS
+extract_big_data_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
+			   struct big_data_stats_event *stats)
+{
+	WMI_VDEV_SEND_BIG_DATA_P2_EVENTID_param_tlvs *param_buf;
+	wmi_vdev_send_big_data_p2_event_fixed_param *event;
+	wmi_big_data_dp_stats_tlv_param *dp_stats_param_buf;
+
+	param_buf = (WMI_VDEV_SEND_BIG_DATA_P2_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		wmi_err("invalid buffer");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	event = param_buf->fixed_param;
+	if (!event) {
+		wmi_err("invalid fixed param");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	dp_stats_param_buf = param_buf->big_data_dp_stats;
+	if (!dp_stats_param_buf) {
+		wmi_err("invalid dp stats param");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	stats->vdev_id = event->vdev_id;
+	stats->ani_level = event->ani_level;
+	stats->tsf_out_of_sync = event->tsf_out_of_sync;
+
+	stats->last_data_tx_pwr = dp_stats_param_buf->last_data_tx_pwr;
+	stats->target_power_dsss = dp_stats_param_buf->target_power_dsss;
+	stats->target_power_ofdm = dp_stats_param_buf->target_power_ofdm;
+	stats->last_tx_data_rix = dp_stats_param_buf->last_tx_data_rix;
+	stats->last_tx_data_rate_kbps =
+		dp_stats_param_buf->last_tx_data_rate_kbps;
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+static void
+wmi_attach_big_data_stats_handler(struct wmi_ops *ops)
+{
+	ops->extract_big_data_stats = extract_big_data_stats_tlv;
+}
+#else
+static void
+wmi_attach_big_data_stats_handler(struct wmi_ops *ops)
+{}
+#endif
+
 void wmi_mc_cp_stats_attach_tlv(wmi_unified_t wmi_handle)
 {
 	struct wmi_ops *ops = wmi_handle->ops;
@@ -428,4 +490,5 @@ void wmi_mc_cp_stats_attach_tlv(wmi_unified_t wmi_handle)
 		send_request_peer_stats_info_cmd_tlv;
 	ops->extract_peer_stats_count = extract_peer_stats_count_tlv;
 	ops->extract_peer_stats_info = extract_peer_stats_info_tlv;
+	wmi_attach_big_data_stats_handler(ops);
 }

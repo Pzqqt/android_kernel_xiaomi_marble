@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -90,3 +90,16 @@ wmi_extract_peer_stats_info(wmi_unified_t wmi_handle, void *evt_buf,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+QDF_STATUS
+wmi_extract_big_data_stats_param(wmi_unified_t wmi_handle, void *evt_buf,
+				 struct big_data_stats_event *stats_param)
+{
+	if (wmi_handle->ops->extract_big_data_stats)
+		return wmi_handle->ops->extract_big_data_stats(wmi_handle,
+				evt_buf, stats_param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif

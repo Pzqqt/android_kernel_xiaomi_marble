@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -97,4 +97,19 @@ QDF_STATUS
 wmi_extract_peer_stats_info(wmi_unified_t wmi_handle, void *evt_buf,
 			    uint32_t index,
 			    wmi_host_peer_stats_info *peer_stats_info);
+
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+/**
+ * wmi_extract_big_data_stats_param() - extract big data statsfrom event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @stats_param: Pointer to hold stats
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_extract_big_data_stats_param(wmi_unified_t wmi_handle, void *evt_buf,
+				 struct big_data_stats_event *stats_param);
+#endif
+
 #endif /* _WMI_UNIFIED_MC_CP_STATS_API_H_ */
