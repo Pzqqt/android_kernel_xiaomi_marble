@@ -1674,7 +1674,9 @@ QDF_STATUS hdd_wlan_re_init(void)
 
 	hdd_init_scan_reject_params(hdd_ctx);
 
+#ifndef FEATURE_CM_ENABLE
 	complete(&adapter->roaming_comp_var);
+#endif
 	hdd_ctx->bt_coex_mode_set = false;
 
 	/* Allow the phone to go to sleep */

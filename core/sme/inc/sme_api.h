@@ -582,8 +582,11 @@ QDF_STATUS sme_roam_disconnect_sta(mac_handle_t mac_handle, uint8_t sessionId,
 		struct csr_del_sta_params *p_del_sta_params);
 QDF_STATUS sme_roam_deauth_sta(mac_handle_t mac_handle, uint8_t sessionId,
 		struct csr_del_sta_params *pDelStaParams);
+#ifndef FEATURE_CM_ENABLE
 struct bss_description *sme_roam_get_connect_bss_desc(mac_handle_t mac_handle,
 						       uint8_t vdev_id);
+#endif
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * sme_set_roam_scan_ch_event_cb() - Register roam scan ch callback

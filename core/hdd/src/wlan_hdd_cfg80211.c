@@ -18151,6 +18151,7 @@ static int wlan_hdd_cfg80211_set_default_beacon_key(struct wiphy *wiphy,
 }
 #endif
 
+#ifndef FEATURE_CM_ENABLE
 void wlan_hdd_cfg80211_unlink_bss(struct hdd_adapter *adapter,
 				  tSirMacAddr bssid, uint8_t *ssid,
 				  uint8_t ssid_len)
@@ -18217,8 +18218,7 @@ static inline void wlan_hdd_add_age_ie(struct ieee80211_mgmt *mgmt,
 }
 #endif /* WLAN_ENABLE_AGEIE_ON_SCAN_RESULTS */
 
-
-struct cfg80211_bss *
+static struct cfg80211_bss *
 wlan_hdd_inform_bss_frame(struct hdd_adapter *adapter,
 				     struct bss_description *bss_desc)
 {
@@ -18349,6 +18349,7 @@ wlan_hdd_cfg80211_update_bss_db(struct hdd_adapter *adapter,
 	}
 	return bss;
 }
+#endif
 
 /**
  * wlan_hdd_cfg80211_pmksa_candidate_notify() - notify a new PMSKA candidate
@@ -18385,6 +18386,7 @@ int wlan_hdd_cfg80211_pmksa_candidate_notify(struct hdd_adapter *adapter,
 	return 0;
 }
 
+#ifndef FEATURE_CM_ENABLE
 #ifdef FEATURE_WLAN_LFR_METRICS
 /**
  * wlan_hdd_cfg80211_roam_metrics_preauth() - roam metrics preauth
@@ -18520,6 +18522,7 @@ wlan_hdd_cfg80211_roam_metrics_handover(struct hdd_adapter *adapter,
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 #endif
 
 #ifdef FEATURE_MONITOR_MODE_SUPPORT

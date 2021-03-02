@@ -273,107 +273,89 @@ typedef struct tagCsr11dinfo {
 } tCsr11dinfo;
 
 typedef enum {
+#ifndef FEATURE_CM_ENABLE
 	eCSR_ROAM_CANCELLED = 1,
-	/* it means error happens before assoc_start/roaming_start is called. */
-	eCSR_ROAM_FAILED,
 	/*
 	 * a CSR trigger roaming operation starts,
 	 * callback may get a pointer to tCsrConnectedProfile
 	 */
-	eCSR_ROAM_ROAMING_START,
+	eCSR_ROAM_ROAMING_START = 3,
 	/* a CSR trigger roaming operation is completed */
-	eCSR_ROAM_ROAMING_COMPLETION,
+	eCSR_ROAM_ROAMING_COMPLETION  = 4,
 	/* Connection completed status. */
-	eCSR_ROAM_CONNECT_COMPLETION,
-	/*
-	 * an association or start_IBSS operation starts,
-	 * callback may get a pointer to struct csr_roam_profile and
-	 * a pointer to struct bss_description
-	 */
-	eCSR_ROAM_ASSOCIATION_START,
+	eCSR_ROAM_CONNECT_COMPLETION = 5,
 	/*
 	 * a roaming operation is finish, see eCsrRoamResult for
 	 * possible data passed back
 	 */
-	eCSR_ROAM_ASSOCIATION_COMPLETION,
-	eCSR_ROAM_DISASSOCIATED,
-	eCSR_ROAM_ASSOCIATION_FAILURE,
+	eCSR_ROAM_ASSOCIATION_COMPLETION = 7,
+	eCSR_ROAM_DISASSOCIATED = 8,
+	eCSR_ROAM_ASSOCIATION_FAILURE = 9,
 	/* when callback with this flag. it gets a pointer to the BSS desc. */
-	eCSR_ROAM_SHOULD_ROAM,
-	/* A new candidate for PMKID is found */
-	eCSR_ROAM_SCAN_FOUND_NEW_BSS,
+	eCSR_ROAM_SHOULD_ROAM = 10,
+#endif
 	/* CSR is done lostlink roaming and still cannot reconnect */
-	eCSR_ROAM_LOSTLINK,
-	/* a link lost is detected. CSR starts roaming. */
-	eCSR_ROAM_LOSTLINK_DETECTED,
+	eCSR_ROAM_LOSTLINK = 12,
 	/*
 	 * TKIP MIC error detected, callback gets a pointer
 	 * to struct mic_failure_ind
 	 */
-	eCSR_ROAM_MIC_ERROR_IND,
-	/*
-	 * Update the connection status network is active etc.
-	 */
-	eCSR_ROAM_CONNECT_STATUS_UPDATE,
-	eCSR_ROAM_GEN_INFO,
-	eCSR_ROAM_SET_KEY_COMPLETE,
+	eCSR_ROAM_MIC_ERROR_IND = 14,
+	eCSR_ROAM_SET_KEY_COMPLETE = 17,
 	/* BSS in SoftAP mode status indication */
-	eCSR_ROAM_INFRA_IND,
-	eCSR_ROAM_WPS_PBC_PROBE_REQ_IND,
-	eCSR_ROAM_FT_RESPONSE,
-	eCSR_ROAM_FT_START,
-	/* this mean error happens before assoc_start/roam_start is called. */
-	eCSR_ROAM_SESSION_OPENED,
-	eCSR_ROAM_FT_REASSOC_FAILED,
-	eCSR_ROAM_PMK_NOTIFY,
+	eCSR_ROAM_INFRA_IND = 18,
+	eCSR_ROAM_WPS_PBC_PROBE_REQ_IND = 19,
+#ifndef FEATURE_CM_ENABLE
+	eCSR_ROAM_FT_RESPONSE = 20,
+	eCSR_ROAM_FT_START = 21,
+	eCSR_ROAM_FT_REASSOC_FAILED = 23,
+	eCSR_ROAM_PMK_NOTIFY = 24,
 	/*
 	 * Following 4 enums are used by FEATURE_WLAN_LFR_METRICS
 	 * but they are needed for compilation even when
 	 * FEATURE_WLAN_LFR_METRICS is not defined.
 	 */
-	eCSR_ROAM_PREAUTH_INIT_NOTIFY,
-	eCSR_ROAM_PREAUTH_STATUS_SUCCESS,
-	eCSR_ROAM_PREAUTH_STATUS_FAILURE,
-	eCSR_ROAM_HANDOVER_SUCCESS,
-	/*
-	 * TDLS callback events
-	 */
-	eCSR_ROAM_TDLS_STATUS_UPDATE,
-	eCSR_ROAM_RESULT_MGMT_TX_COMPLETE_IND,
-
+	eCSR_ROAM_PREAUTH_INIT_NOTIFY = 25,
+	eCSR_ROAM_PREAUTH_STATUS_SUCCESS = 26,
+	eCSR_ROAM_PREAUTH_STATUS_FAILURE = 27,
+	eCSR_ROAM_HANDOVER_SUCCESS = 28,
+#endif
 	/* Disaconnect all the clients */
-	eCSR_ROAM_DISCONNECT_ALL_P2P_CLIENTS,
+	eCSR_ROAM_DISCONNECT_ALL_P2P_CLIENTS = 31,
 	/* Stopbss triggered from SME due to different */
-	eCSR_ROAM_SEND_P2P_STOP_BSS,
+	eCSR_ROAM_SEND_P2P_STOP_BSS = 32,
 	/* beacon interval */
 #ifdef WLAN_FEATURE_11W
-	eCSR_ROAM_UNPROT_MGMT_FRAME_IND,
+	eCSR_ROAM_UNPROT_MGMT_FRAME_IND = 33,
 #endif
 
 #ifdef FEATURE_WLAN_ESE
-	eCSR_ROAM_TSM_IE_IND,
-	eCSR_ROAM_CCKM_PREAUTH_NOTIFY,
-	eCSR_ROAM_ESE_ADJ_AP_REPORT_IND,
-	eCSR_ROAM_ESE_BCN_REPORT_IND,
+	eCSR_ROAM_TSM_IE_IND = 34,
+#ifndef FEATURE_CM_ENABLE
+	eCSR_ROAM_CCKM_PREAUTH_NOTIFY = 35,
+#endif
+	eCSR_ROAM_ESE_ADJ_AP_REPORT_IND = 36,
+	eCSR_ROAM_ESE_BCN_REPORT_IND = 37,
 #endif /* FEATURE_WLAN_ESE */
 
 	/* Radar indication from lower layers */
-	eCSR_ROAM_DFS_RADAR_IND,
-	eCSR_ROAM_SET_CHANNEL_RSP,
+	eCSR_ROAM_DFS_RADAR_IND = 38,
+	eCSR_ROAM_SET_CHANNEL_RSP = 39,
 
 	/* Channel sw update notification */
-	eCSR_ROAM_DFS_CHAN_SW_NOTIFY,
-	eCSR_ROAM_EXT_CHG_CHNL_IND,
-	eCSR_ROAM_STA_CHANNEL_SWITCH,
-	eCSR_ROAM_NDP_STATUS_UPDATE,
-	eCSR_ROAM_UPDATE_SCAN_RESULT,
-	eCSR_ROAM_START,
-	eCSR_ROAM_ABORT,
-	eCSR_ROAM_NAPI_OFF,
-	eCSR_ROAM_CHANNEL_COMPLETE_IND,
-	eCSR_ROAM_CAC_COMPLETE_IND,
-	eCSR_ROAM_SAE_COMPUTE,
-	eCSR_ROAM_FIPS_PMK_REQUEST,
+	eCSR_ROAM_DFS_CHAN_SW_NOTIFY = 40,
+	eCSR_ROAM_EXT_CHG_CHNL_IND = 41,
+	eCSR_ROAM_STA_CHANNEL_SWITCH = 42,
+	eCSR_ROAM_NDP_STATUS_UPDATE = 43,
+#ifndef FEATURE_CM_ENABLE
+	eCSR_ROAM_START = 44,
+	eCSR_ROAM_ABORT = 45,
+	eCSR_ROAM_NAPI_OFF = 46,
+#endif
+	eCSR_ROAM_CHANNEL_COMPLETE_IND = 47,
+	eCSR_ROAM_CAC_COMPLETE_IND = 48,
+	eCSR_ROAM_SAE_COMPUTE = 49,
+	eCSR_ROAM_FIPS_PMK_REQUEST = 50,
 } eRoamCmdStatus;
 
 /* comment inside indicates what roaming callback gets */

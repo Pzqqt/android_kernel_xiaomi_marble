@@ -1208,10 +1208,6 @@ error:
 		csr_release_profile(mac_ctx, session->scan_info.profile);
 		qdf_mem_free(session->scan_info.profile);
 		session->scan_info.profile = NULL;
-		if (notify)
-			csr_roam_call_callback(mac_ctx, session_id, NULL,
-					roam_id, eCSR_ROAM_FAILED,
-					eCSR_ROAM_RESULT_FAILURE);
 	}
 	return status;
 }

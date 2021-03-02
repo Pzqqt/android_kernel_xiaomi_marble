@@ -286,6 +286,7 @@ bool sme_ft_key_ready_for_install(mac_handle_t mac_handle, uint32_t session_id)
 }
 #endif
 
+#ifndef FEATURE_CM_ENABLE
 /*
  * HDD Interface to SME. SME now sends the Auth 2 and RIC IEs up to the
  * supplicant. The supplicant will then proceed to send down the
@@ -379,7 +380,6 @@ void sme_get_rici_es(mac_handle_t mac_handle, uint32_t sessionId,
 	sme_release_global_lock(&mac->sme);
 }
 
-#ifndef FEATURE_CM_ENABLE
 /*
  * Timer callback for the timer that is started between the preauth completion
  * and reassoc request to the PE. In this interval, it is expected that the

@@ -451,7 +451,6 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 	tpRrmSMEContext rrm_ctx =
 		&mac_ctx->rrm.rrmSmeContext[measurement_index];
 	uint32_t session_id;
-	struct csr_roam_info *roam_info = NULL;
 	tSirScanType scan_type;
 	struct csr_roam_session *session;
 
@@ -573,12 +572,6 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 		goto rrm_send_scan_results_done;
 	}
 
-	roam_info = qdf_mem_malloc(sizeof(*roam_info));
-	if (!roam_info) {
-		status = QDF_STATUS_E_NOMEM;
-		goto rrm_send_scan_results_done;
-	}
-
 	session = CSR_GET_SESSION(mac_ctx, session_id);
 
 	/* This is temp ifdef will be removed in near future */
@@ -631,13 +624,8 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 		sme_debug("Scan res timer:%lu, rrm scan timer:%llu",
 				scan_results->timer, rrm_scan_timer);
 		if ((scan_results->timer >= rrm_scan_timer) ||
-		    (is_conn_bss_found == true) || is_nontx_of_conn_bss) {
-			roam_info->bss_desc = &scan_results->BssDescriptor;
-			csr_roam_call_callback(mac_ctx, session_id, roam_info,
-						0, eCSR_ROAM_UPDATE_SCAN_RESULT,
-						eCSR_ROAM_RESULT_NONE);
+		    (is_conn_bss_found == true) || is_nontx_of_conn_bss)
 			scanresults_arr[counter++] = scan_results;
-		}
 		scan_results = next_result;
 		if (counter >= num_scan_results)
 			break;
@@ -670,7 +658,6 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 rrm_send_scan_results_done:
 	if (scanresults_arr)
 		qdf_mem_free(scanresults_arr);
-	qdf_mem_free(roam_info);
 	sme_scan_result_purge(result_handle);
 
 	return status;

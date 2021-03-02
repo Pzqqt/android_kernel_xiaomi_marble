@@ -3203,6 +3203,7 @@ QDF_STATUS sme_roam_deauth_sta(mac_handle_t mac_handle, uint8_t sessionId,
 	return status;
 }
 
+#ifndef FEATURE_CM_ENABLE
 struct bss_description *sme_roam_get_connect_bss_desc(mac_handle_t mac_handle,
 						      uint8_t vdev_id)
 {
@@ -3229,7 +3230,6 @@ struct bss_description *sme_roam_get_connect_bss_desc(mac_handle_t mac_handle,
 	return bss_desc;
 }
 
-#ifndef FEATURE_CM_ENABLE
 QDF_STATUS sme_roam_del_pmkid_from_cache(mac_handle_t mac_handle,
 					 uint8_t vdev_id,
 					 struct wlan_crypto_pmksa *pmksa,

@@ -152,9 +152,6 @@ QDF_STATUS csr_roam_copy_profile(struct mac_context *mac,
 				 struct csr_roam_profile *pDstProfile,
 				 struct csr_roam_profile *pSrcProfile,
 				 uint8_t vdev_id);
-QDF_STATUS csr_roam_start(struct mac_context *mac);
-void csr_roam_stop(struct mac_context *mac, uint32_t sessionId);
-
 QDF_STATUS csr_scan_open(struct mac_context *mac);
 QDF_STATUS csr_scan_close(struct mac_context *mac);
 
@@ -249,21 +246,23 @@ QDF_STATUS csr_roam_issue_start_bss(struct mac_context *mac, uint32_t sessionId,
 					uint32_t roamId);
 QDF_STATUS csr_roam_issue_stop_bss(struct mac_context *mac, uint32_t sessionId,
 				   enum csr_roam_substate NewSubstate);
+#ifndef FEATURE_CM_ENABLE
 bool csr_is_roam_command_waiting_for_session(struct mac_context *mac,
 					uint32_t sessionId);
 eRoamCmdStatus csr_get_roam_complete_status(struct mac_context *mac,
 					    uint32_t sessionId);
+#endif
 /* pBand can be NULL if caller doesn't need to get it */
 QDF_STATUS csr_roam_issue_disassociate_cmd(struct mac_context *mac,
 					   uint32_t sessionId,
 					   eCsrRoamDisconnectReason reason,
 					   enum wlan_reason_code mac_reason);
+#ifndef FEATURE_CM_ENABLE
 /* pCommand may be NULL */
 void csr_roam_remove_duplicate_command(struct mac_context *mac, uint32_t sessionId,
 				       tSmeCmd *pCommand,
 				       enum csr_roam_reason eRoamReason);
 
-#ifndef FEATURE_CM_ENABLE
 bool csr_is_same_profile(struct mac_context *mac, tCsrRoamConnectedProfile
 			*pProfile1, struct csr_roam_profile *pProfile2,
 			uint8_t vdev_id);
@@ -341,6 +340,7 @@ void csr_apply_channel_power_info_to_fw(struct mac_context *mac,
 					uint8_t *countryCode);
 void csr_apply_power2_current(struct mac_context *mac);
 
+#ifndef FEATURE_CM_ENABLE
 /* return a bool to indicate whether roaming completed or continue. */
 bool csr_roam_complete_roaming(struct mac_context *mac, uint32_t sessionId,
 			       bool fForce, eCsrRoamResult roamResult);
@@ -348,6 +348,7 @@ void csr_roam_completion(struct mac_context *mac, uint32_t sessionId,
 			 struct csr_roam_info *roam_info, tSmeCmd *pCommand,
 			 eCsrRoamResult roamResult, bool fSuccess);
 void csr_roam_cancel_roaming(struct mac_context *mac, uint32_t sessionId);
+#endif
 void csr_apply_channel_power_info_wrapper(struct mac_context *mac);
 QDF_STATUS csr_save_to_channel_power2_g_5_g(struct mac_context *mac,
 					uint32_t tableSize,
@@ -729,11 +730,13 @@ QDF_STATUS csr_roam_disconnect(struct mac_context *mac, uint32_t session_id,
 QDF_STATUS csr_roam_issue_stop_bss_cmd(struct mac_context *mac, uint32_t sessionId,
 				       bool fHighPriority);
 
+#ifndef FEATURE_CM_ENABLE
 void csr_call_roaming_completion_callback(struct mac_context *mac,
 					  struct csr_roam_session *pSession,
 					  struct csr_roam_info *roam_info,
 					  uint32_t roamId,
 					  eCsrRoamResult roamResult);
+#endif
 /**
  * csr_roam_issue_disassociate_sta_cmd() - disassociate a associated station
  * @mac:          Pointer to global structure for MAC

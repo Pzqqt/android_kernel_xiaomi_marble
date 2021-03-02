@@ -886,12 +886,6 @@ QDF_STATUS wlansap_roam_callback(void *ctx,
 					     eSAP_STA_SET_KEY_EVENT,
 					     (void *) eSAP_STATUS_FAILURE);
 		break;
-	case eCSR_ROAM_DISASSOCIATED:
-		if (roam_result == eCSR_ROAM_RESULT_MIC_FAILURE)
-			sap_signal_hdd_event(sap_ctx, csr_roam_info,
-					     eSAP_STA_MIC_FAILURE_EVENT,
-					     (void *) eSAP_STATUS_FAILURE);
-		break;
 	case eCSR_ROAM_WPS_PBC_PROBE_REQ_IND:
 		break;
 	case eCSR_ROAM_DISCONNECT_ALL_P2P_CLIENTS:

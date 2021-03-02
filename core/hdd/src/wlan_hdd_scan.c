@@ -310,6 +310,7 @@ void hdd_init_scan_reject_params(struct hdd_context *hdd_ctx)
 	}
 }
 
+#ifndef FEATURE_CM_ENABLE
 void hdd_reset_scan_reject_params(struct hdd_context *hdd_ctx,
 				  eRoamCmdStatus roam_status,
 				  eCsrRoamResult roam_result)
@@ -321,6 +322,7 @@ void hdd_reset_scan_reject_params(struct hdd_context *hdd_ctx,
 		hdd_init_scan_reject_params(hdd_ctx);
 	}
 }
+#endif
 
 /*
  * wlan_hdd_update_scan_ies() - API to update the scan IEs of scan request

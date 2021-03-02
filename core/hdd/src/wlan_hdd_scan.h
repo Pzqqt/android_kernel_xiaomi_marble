@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -130,6 +130,8 @@ void wlan_hdd_cfg80211_abort_scan(struct wiphy *wiphy,
  */
 void hdd_init_scan_reject_params(struct hdd_context *hdd_ctx);
 
+#ifndef FEATURE_CM_ENABLE
+
 /**
  * hdd_reset_scan_reject_params() - reset scan reject params per roam stats
  * @hdd_ctx: hdd contxt
@@ -141,6 +143,7 @@ void hdd_init_scan_reject_params(struct hdd_context *hdd_ctx);
 void hdd_reset_scan_reject_params(struct hdd_context *hdd_ctx,
 				  eRoamCmdStatus roam_status,
 				  eCsrRoamResult roam_result);
+#endif
 
 /**
  * wlan_hdd_cfg80211_scan_block() - scan block handler
