@@ -405,17 +405,6 @@ bool mlme_is_flexible_twt_enabled(struct wlan_objmgr_psoc *psoc)
 }
 #endif
 
-bool mlme_get_twt_bcast_requestor_tgt_cap(struct wlan_objmgr_psoc *psoc)
-{
-	struct wlan_mlme_psoc_ext_obj *mlme_obj;
-
-	mlme_obj = mlme_get_psoc_ext_obj(psoc);
-	if (!mlme_obj)
-		return false;
-
-	return mlme_obj->cfg.twt_cfg.bcast_requestor_tgt_cap;
-}
-
 QDF_STATUS mlme_set_twt_command_in_progress(struct wlan_objmgr_psoc *psoc,
 					    struct qdf_mac_addr *peer_mac,
 					    uint8_t dialog_id,

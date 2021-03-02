@@ -1032,7 +1032,12 @@ static void mlme_init_he_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_TWT_REQUESTOR);
 	he_caps->dot11_he_cap.twt_responder =
 			cfg_get(psoc, CFG_TWT_RESPONDER);
-	he_caps->dot11_he_cap.broadcast_twt = cfg_get(psoc, CFG_BCAST_TWT);
+	/*
+	 * Broadcast TWT capability will be filled in
+	 * populate_dot11f_he_caps() based on STA/SAP
+	 * role and "twt_bcast_req_resp_config" ini
+	 */
+	he_caps->dot11_he_cap.broadcast_twt = 0;
 	if (mlme_is_twt_enabled(psoc))
 		he_caps->dot11_he_cap.flex_twt_sched =
 				cfg_default(CFG_HE_FLEX_TWT_SCHED);

@@ -565,9 +565,9 @@ void wma_update_bcast_twt_support(tp_wma_handle wh,
 {
 	if (wmi_service_enabled(wh->wmi_handle,
 				wmi_service_bcast_twt_support))
-		tgt_cfg->bcast_twt_support = true;
+		tgt_cfg->legacy_bcast_twt_support = true;
 	else
-		tgt_cfg->bcast_twt_support = false;
+		tgt_cfg->legacy_bcast_twt_support = false;
 
 	if (wmi_service_enabled(wh->wmi_handle,
 				wmi_service_twt_bcast_req_support))

@@ -2273,7 +2273,6 @@ hdd_twt_pack_get_capabilities_resp(struct hdd_adapter *adapter)
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	uint8_t peer_cap = 0, self_cap = 0;
 	bool twt_req = false, twt_bcast_req = false;
-	bool enable_bcast_twt = false, bcast_tgt_cap;
 
 	/*
 	 * Length of attribute QCA_WLAN_VENDOR_ATTR_TWT_CAPABILITIES_SELF &
@@ -2301,16 +2300,9 @@ hdd_twt_pack_get_capabilities_resp(struct hdd_adapter *adapter)
 	if (twt_req)
 		self_cap |= QCA_WLAN_TWT_CAPA_REQUESTOR;
 
-	ucfg_mlme_get_bcast_twt(hdd_ctx->psoc, &enable_bcast_twt);
-	bcast_tgt_cap = ucfg_mlme_get_twt_bcast_requestor_tgt_cap(
-						hdd_ctx->psoc);
 	ucfg_mlme_get_twt_bcast_requestor(hdd_ctx->psoc,
 					  &twt_bcast_req);
-	if (bcast_tgt_cap && enable_bcast_twt)
-		self_cap |= (twt_bcast_req ?
-			     QCA_WLAN_TWT_CAPA_BROADCAST : 0);
-	else if (twt_bcast_req)
-		self_cap |= QCA_WLAN_TWT_CAPA_BROADCAST;
+	self_cap |= (twt_bcast_req ? QCA_WLAN_TWT_CAPA_BROADCAST : 0);
 
 	if (ucfg_mlme_is_flexible_twt_enabled(hdd_ctx->psoc))
 		self_cap |= QCA_WLAN_TWT_CAPA_FLEXIBLE;
@@ -3065,10 +3057,7 @@ void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 	struct wma_tgt_services *services = &cfg->services;
 	bool twt_bcast_req;
 	bool twt_bcast_res;
-	bool enable_twt;
-	bool bcast_twt;
-	bool twt_req;
-	bool twt_res;
+	bool twt_req, twt_res, enable_twt;
 
 	enable_twt = ucfg_mlme_is_twt_enabled(hdd_ctx->psoc);
 
@@ -3082,43 +3071,57 @@ void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 	ucfg_mlme_get_twt_bcast_responder(hdd_ctx->psoc,
 					  &twt_bcast_res);
 
-	ucfg_mlme_get_bcast_twt(hdd_ctx->psoc, &bcast_twt);
-	if (bcast_twt)
-		ucfg_mlme_set_bcast_twt(hdd_ctx->psoc,
-					QDF_MIN(cfg->bcast_twt_support,
-						enable_twt));
-	else
-		hdd_debug("bcast twt is disable in ini, fw cap %d",
-			  cfg->bcast_twt_support);
-
 	hdd_debug("ini: enable_twt=%d, bcast_req=%d, bcast_res=%d",
 		  enable_twt, twt_bcast_req, twt_bcast_res);
 	hdd_debug("ini: twt_req=%d, twt_res=%d", twt_req, twt_res);
-	hdd_debug("svc:  req=%d, res=%d, bcast_req=%d, bcast_res=%d",
+	hdd_debug("svc:  req=%d, res=%d, bcast_req=%d, bcast_res=%d legacy_bcast_twt:%d",
 		  services->twt_requestor, services->twt_responder,
-		  cfg->twt_bcast_req_support, cfg->twt_bcast_res_support);
+		  cfg->twt_bcast_req_support, cfg->twt_bcast_res_support,
+		  cfg->legacy_bcast_twt_support);
 
+	/*
+	 * The HE cap IE in frame will have intersection of
+	 * "enable_twt" ini, twt requestor fw service cap and
+	 * "twt_requestor" ini requestor bit after this
+	 * set operation.
+	 */
 	ucfg_mlme_set_twt_requestor(hdd_ctx->psoc,
 				    QDF_MIN(services->twt_requestor,
 					    (enable_twt && twt_req)));
 
+	/*
+	 * The HE cap IE in frame will have intersection of
+	 * "enable_twt" ini, twt responder fw service cap and
+	 * "twt_responder" ini responder bit after this
+	 * set operation.
+	 */
 	ucfg_mlme_set_twt_responder(hdd_ctx->psoc,
 				    QDF_MIN(services->twt_responder,
 					    (enable_twt && twt_res)));
+	/*
+	 * The HE cap IE in frame will have intersection of
+	 * "enable_twt" ini, twt requestor fw service cap and
+	 * "twt_bcast_req_resp_config" ini requestor bit after this
+	 * set operation.
+	 */
+	ucfg_mlme_set_twt_bcast_requestor(
+			hdd_ctx->psoc,
+			QDF_MIN((cfg->twt_bcast_req_support ||
+				 cfg->legacy_bcast_twt_support),
+				(enable_twt && twt_bcast_req)));
 
-	twt_req = enable_twt && twt_bcast_req;
-	ucfg_mlme_set_twt_bcast_requestor_tgt_cap(hdd_ctx->psoc,
-						  cfg->twt_bcast_req_support);
-	ucfg_mlme_set_twt_bcast_requestor(hdd_ctx->psoc,
-					  QDF_MIN(cfg->twt_bcast_req_support,
-						  twt_req));
+	/*
+	 * The HE cap IE in frame will have intersection of
+	 * "enable_twt" ini, twt responder fw service cap and
+	 * "twt_bcast_req_resp_config" ini responder bit after this
+	 * set operation.
+	 */
+	ucfg_mlme_set_twt_bcast_responder(
+			hdd_ctx->psoc,
+			QDF_MIN((cfg->twt_bcast_res_support ||
+				 cfg->legacy_bcast_twt_support),
+				(enable_twt && twt_bcast_res)));
 
-	twt_res = enable_twt && twt_bcast_res;
-	ucfg_mlme_set_twt_bcast_responder_tgt_cap(hdd_ctx->psoc,
-						  cfg->twt_bcast_res_support);
-	ucfg_mlme_set_twt_bcast_responder(hdd_ctx->psoc,
-					  QDF_MIN(cfg->twt_bcast_res_support,
-						  twt_res));
 	ucfg_mlme_set_twt_nudge_tgt_cap(hdd_ctx->psoc, cfg->twt_nudge_enabled);
 	ucfg_mlme_set_twt_all_twt_tgt_cap(hdd_ctx->psoc,
 					  cfg->all_twt_enabled);
@@ -3130,19 +3133,22 @@ void hdd_send_twt_enable_cmd(struct hdd_context *hdd_ctx)
 {
 	uint8_t pdev_id = hdd_ctx->pdev->pdev_objmgr.wlan_pdev_id;
 	struct twt_enable_disable_conf twt_en_dis = {0};
-	bool is_requestor_en;
-	bool is_responder_en;
-	bool twt_bcast_en;
+	bool is_requestor_en, is_responder_en;
+	bool twt_bcast_requestor = false, twt_bcast_responder = false;
 
 	/* Get MLME TWT config */
 	ucfg_mlme_get_twt_requestor(hdd_ctx->psoc, &is_requestor_en);
 	ucfg_mlme_get_twt_responder(hdd_ctx->psoc, &is_responder_en);
-	ucfg_mlme_get_bcast_twt(hdd_ctx->psoc, &twt_en_dis.bcast_en);
+
+	ucfg_mlme_get_twt_bcast_responder(hdd_ctx->psoc, &twt_bcast_responder);
+	ucfg_mlme_get_twt_bcast_requestor(hdd_ctx->psoc, &twt_bcast_requestor);
+	twt_en_dis.bcast_en = (twt_bcast_requestor || twt_bcast_responder);
+
 	ucfg_mlme_get_twt_congestion_timeout(hdd_ctx->psoc,
 					     &twt_en_dis.congestion_timeout);
 	hdd_debug("TWT mlme cfg:req: %d, res:%d, bcast:%d, cong:%d, pdev:%d",
 		  is_requestor_en, is_responder_en, twt_en_dis.bcast_en,
-		   twt_en_dis.congestion_timeout, pdev_id);
+		  twt_en_dis.congestion_timeout, pdev_id);
 
 	/* The below code takes care of the following :
 	 * If user wants to separately enable requestor and responder roles,
@@ -3163,8 +3169,7 @@ void hdd_send_twt_enable_cmd(struct hdd_context *hdd_ctx)
 	if (is_requestor_en) {
 		twt_en_dis.role = WMI_TWT_ROLE_REQUESTOR;
 		twt_en_dis.ext_conf_present = true;
-		ucfg_mlme_get_twt_bcast_requestor(hdd_ctx->psoc, &twt_bcast_en);
-		if (twt_bcast_en)
+		if (twt_bcast_requestor)
 			twt_en_dis.oper = WMI_TWT_OPERATION_BROADCAST;
 		else
 			twt_en_dis.oper = WMI_TWT_OPERATION_INDIVIDUAL;
@@ -3176,8 +3181,7 @@ void hdd_send_twt_enable_cmd(struct hdd_context *hdd_ctx)
 	if (is_responder_en) {
 		twt_en_dis.role = WMI_TWT_ROLE_RESPONDER;
 		twt_en_dis.ext_conf_present = true;
-		ucfg_mlme_get_twt_bcast_responder(hdd_ctx->psoc, &twt_bcast_en);
-		if (twt_bcast_en)
+		if (twt_bcast_responder)
 			twt_en_dis.oper = WMI_TWT_OPERATION_BROADCAST;
 		else
 			twt_en_dis.oper = WMI_TWT_OPERATION_INDIVIDUAL;

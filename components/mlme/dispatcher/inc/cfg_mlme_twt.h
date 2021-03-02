@@ -68,28 +68,6 @@
 
 /*
  * <ini>
- * bcast_twt - to bcast twt capability.
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This cfg is used to bcast twt capability.
- *
- * Related: NA
- *
- * Supported Feature: 11AX
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_BCAST_TWT CFG_INI_BOOL( \
-		"bcast_twt", \
-		1, \
-		"Bcast TWT")
-
-/*
- * <ini>
  * enable_twt - Enable Target Wake Time support.
  * @Min: 0
  * @Max: 1
@@ -143,7 +121,7 @@
  * twt_bcast_req_resp_config - To enable broadcast twt requestor and responder.
  * @Min: 0 Disable the extended twt capability
  * @Max: 3
- * @Default: 0
+ * @Default: 1
  *
  * This cfg is used to configure the broadcast TWT requestor and responder.
  * Bitmap for enabling the broadcast twt requestor and responder.
@@ -171,7 +149,7 @@
 		"twt_bcast_req_resp_config", \
 		0, \
 		3, \
-		0, \
+		1, \
 		CFG_VALUE_OR_DEFAULT, \
 		"BROADCAST TWT CAPABILITY")
 
@@ -186,7 +164,6 @@
 		     TWT_BCAST_RES_BITS)
 
 #define CFG_TWT_ALL \
-	CFG(CFG_BCAST_TWT) \
 	CFG(CFG_ENABLE_TWT) \
 	CFG(CFG_TWT_REQUESTOR) \
 	CFG(CFG_TWT_RESPONDER) \

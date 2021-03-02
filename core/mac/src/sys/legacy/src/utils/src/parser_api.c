@@ -6421,27 +6421,17 @@ populate_dot11f_broadcast_twt_he_cap(struct mac_context *mac,
 				     struct pe_session *session,
 				     tDot11fIEhe_cap *he_cap)
 {
-	bool enable_bcast_twt =
-		mac->mlme_cfg->he_caps.dot11_he_cap.broadcast_twt;
-	bool requestor_tgt_cap =
-		mac->mlme_cfg->twt_cfg.bcast_requestor_tgt_cap;
-	bool responder_tgt_cap =
-		mac->mlme_cfg->twt_cfg.bcast_responder_tgt_cap;
-	bool requestor_cfg =
+	bool bcast_requestor =
 		mac->mlme_cfg->twt_cfg.is_bcast_requestor_enabled;
-	bool responder_cfg =
+	bool bcast_responder =
 		mac->mlme_cfg->twt_cfg.is_bcast_responder_enabled;
+
 	he_cap->broadcast_twt = 0;
+
 	if (session->opmode == QDF_STA_MODE) {
-		if (enable_bcast_twt && requestor_tgt_cap)
-			he_cap->broadcast_twt = requestor_cfg;
-		else if (enable_bcast_twt)
-			he_cap->broadcast_twt = 1;
+		he_cap->broadcast_twt = bcast_requestor;
 	} else if (session->opmode == QDF_SAP_MODE) {
-		if (enable_bcast_twt && responder_tgt_cap)
-			he_cap->broadcast_twt = responder_cfg;
-		else if (enable_bcast_twt)
-			he_cap->broadcast_twt = 1;
+		he_cap->broadcast_twt = bcast_responder;
 	}
 }
 #else
