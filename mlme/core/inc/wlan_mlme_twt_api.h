@@ -175,15 +175,6 @@ bool mlme_is_twt_notify_in_progress(struct wlan_objmgr_psoc *psoc,
 bool mlme_is_flexible_twt_enabled(struct wlan_objmgr_psoc *psoc);
 
 /**
- * mlme_get_twt_bcast_requestor_tgt_cap() - Get broadcast requestor target
- * capability.
- * @psoc: Pointer to psoc object
- *
- * Return: True if tgt cap is advertised.
- */
-bool mlme_get_twt_bcast_requestor_tgt_cap(struct wlan_objmgr_psoc *psoc);
-
-/**
  * mlme_set_twt_command_in_progress() - Set TWT command is in progress.
  * @psoc: Pointer to psoc object
  * @peer_mac: Pointer to peer mac address
