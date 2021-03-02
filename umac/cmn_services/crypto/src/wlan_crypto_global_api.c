@@ -1259,16 +1259,6 @@ QDF_STATUS wlan_crypto_getkey(struct wlan_objmgr_vdev *vdev,
 		}
 		key = wlan_crypto_peer_getkey(peer, req_key->keyix);
 
-		tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
-		if (!tx_ops) {
-			crypto_err("tx_ops is NULL");
-			return QDF_STATUS_E_INVAL;
-		}
-
-		if (WLAN_CRYPTO_TX_OPS_GETPN(tx_ops) &&
-		    (req_key->flags & WLAN_CRYPTO_KEY_GET_PN))
-			WLAN_CRYPTO_TX_OPS_GETPN(tx_ops)(vdev, mac_addr,
-							 req_key->type);
 		wlan_objmgr_peer_release_ref(peer, WLAN_CRYPTO_ID);
 		if (!key)
 			return QDF_STATUS_E_INVAL;
@@ -1299,6 +1289,17 @@ QDF_STATUS wlan_crypto_getkey(struct wlan_objmgr_vdev *vdev,
 					(uint8_t *)(key->recviv),
 					sizeof(req_key->recviv));
 		}
+
+		tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+		if (!tx_ops) {
+			crypto_err("tx_ops is NULL");
+			return QDF_STATUS_E_INVAL;
+		}
+
+		if (WLAN_CRYPTO_TX_OPS_GETPN(tx_ops) &&
+		    (req_key->flags & WLAN_CRYPTO_KEY_GET_PN))
+			WLAN_CRYPTO_TX_OPS_GETPN(tx_ops)(vdev, mac_addr,
+							 req_key->type);
 	}
 
 	return QDF_STATUS_SUCCESS;
