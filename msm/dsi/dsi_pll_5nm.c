@@ -584,7 +584,7 @@ static void dsi_pll_commit(struct dsi_pll_5nm *pll,
 		       reg->frac_div_start_mid);
 	DSI_PLL_REG_W(pll_base, PLL_FRAC_DIV_START_HIGH_1,
 		       reg->frac_div_start_high);
-	DSI_PLL_REG_W(pll_base, PLL_PLL_LOCKDET_RATE_1, 0x40);
+	DSI_PLL_REG_W(pll_base, PLL_PLL_LOCKDET_RATE_1, reg->pll_lockdet_rate);
 	DSI_PLL_REG_W(pll_base, PLL_PLL_LOCK_DELAY, 0x06);
 	DSI_PLL_REG_W(pll_base, PLL_CMODE_1,
 			pll->cphy_enabled ? 0x00 : 0x10);
