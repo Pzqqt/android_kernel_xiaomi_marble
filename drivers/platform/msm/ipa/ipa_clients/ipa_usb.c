@@ -1219,7 +1219,7 @@ static int ipa3_usb_request_xdci_channel(
 	}
 	chan_params.keep_ipa_awake = params->keep_ipa_awake;
 	chan_params.evt_ring_params.intf = GSI_EVT_CHTYPE_XDCI_EV;
-	chan_params.evt_ring_params.intr = GSI_INTR_IRQ;
+	chan_params.evt_ring_params.intr = GSI_INTR_MSI;
 	chan_params.evt_ring_params.re_size = GSI_EVT_RING_RE_SIZE_16B;
 	chan_params.evt_ring_params.ring_len = params->xfer_ring_len -
 		chan_params.evt_ring_params.re_size;
@@ -1229,7 +1229,9 @@ static int ipa3_usb_request_xdci_channel(
 	chan_params.evt_ring_params.int_modt = 0;
 	chan_params.evt_ring_params.int_modt = 0;
 	chan_params.evt_ring_params.intvec = 0;
-	chan_params.evt_ring_params.msi_addr = 0;
+	chan_params.evt_ring_params.msi_addr =
+		((uint64_t)params->xfer_scratch.depcmd_low_addr) +
+		(((uint64_t)params->xfer_scratch.depcmd_hi_addr) << 32);
 	chan_params.evt_ring_params.rp_update_addr = 0;
 	chan_params.evt_ring_params.exclusive = true;
 	chan_params.evt_ring_params.err_cb = ipa3_usb_gsi_evt_err_cb;
