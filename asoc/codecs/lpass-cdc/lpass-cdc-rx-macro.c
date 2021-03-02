@@ -989,7 +989,7 @@ static int lpass_cdc_rx_macro_set_prim_interpolator_rate(struct snd_soc_dai *dai
 			    (inp1_sel == int_1_mix1_inp + INTn_1_INP_SEL_RX0) ||
 			    (inp2_sel == int_1_mix1_inp + INTn_1_INP_SEL_RX0)) {
 				int_fs_reg = LPASS_CDC_RX_RX0_RX_PATH_CTL +
-					     0x80 * j;
+					LPASS_CDC_RX_MACRO_RX_PATH_OFFSET * j;
 				pr_debug("%s: AIF_PB DAI(%d) connected to INT%u_1\n",
 					  __func__, dai->id, j);
 				pr_debug("%s: set INT%u_1 sample rate to %u\n",
@@ -1039,7 +1039,7 @@ static int lpass_cdc_rx_macro_set_mix_interpolator_rate(struct snd_soc_dai *dai,
 			if (int_mux_cfg1_val == int_2_inp +
 							INTn_2_INP_SEL_RX0) {
 				int_fs_reg = LPASS_CDC_RX_RX0_RX_PATH_MIX_CTL +
-						0x80 * j;
+					LPASS_CDC_RX_MACRO_RX_PATH_OFFSET * j;
 				pr_debug("%s: AIF_PB DAI(%d) connected to INT%u_2\n",
 					  __func__, dai->id, j);
 				pr_debug("%s: set INT%u_2 sample rate to %u\n",
