@@ -1225,6 +1225,27 @@ QDF_STATUS wlansap_deauth_sta(struct sap_context *sap_ctx,
 				   params);
 }
 
+#ifdef WLAN_FEATURE_11BE
+static enum phy_ch_width
+wlansap_get_target_eht_phy_ch_width(void)
+{
+	uint32_t max_fw_bw = sme_get_eht_ch_width();
+
+	if (max_fw_bw == WNI_CFG_EHT_CHANNEL_WIDTH_160MHZ)
+		return CH_WIDTH_160MHZ;
+	else if (max_fw_bw == WNI_CFG_EHT_CHANNEL_WIDTH_320MHZ)
+		return CH_WIDTH_320MHZ;
+	else
+		return CH_WIDTH_80MHZ;
+}
+#else /* !WLAN_FEATURE_11BE */
+static enum phy_ch_width
+wlansap_get_target_eht_phy_ch_width(void)
+{
+	return CH_WIDTH_20MHZ;
+}
+#endif /* WLAN_FEATURE_11BE */
+
 enum phy_ch_width
 wlansap_get_csa_chanwidth_from_phymode(struct sap_context *sap_context,
 				       uint32_t chan_freq,
@@ -1260,6 +1281,10 @@ wlansap_get_csa_chanwidth_from_phymode(struct sap_context *sap_context,
 				ch_width = CH_WIDTH_160MHZ;
 			else
 				ch_width = CH_WIDTH_80MHZ;
+
+			ch_width = QDF_MAX(
+					wlansap_get_target_eht_phy_ch_width(),
+					ch_width);
 		} else if (sap_context->csr_roamProfile.phyMode ==
 			   eCSR_DOT11_MODE_11n ||
 			   sap_context->csr_roamProfile.phyMode ==
