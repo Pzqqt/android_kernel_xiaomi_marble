@@ -69,6 +69,10 @@ qca_wlan_vendor_twt_add_dialog_policy[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1] = 
 	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX_WAKE_INTVL] = {.type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL2_MANTISSA] = {.type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAC_ADDR] = VENDOR_NLA_POLICY_MAC_ADDR,
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST_ID] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST_RECOMMENDATION] = {
+							.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST_PERSISTENCE] = {.type = NLA_U8 },
 };
 
 static const struct nla_policy
@@ -173,6 +177,26 @@ int hdd_twt_get_add_dialog_values(struct nlattr **tb,
 
 	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST;
 	params->flag_bcast = nla_get_flag(tb[cmd_id]);
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST_ID;
+	if (tb[cmd_id]) {
+		params->dialog_id = nla_get_u8(tb[cmd_id]);
+		hdd_debug("TWT_SETUP_BCAST_ID %d", params->dialog_id);
+	}
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST_RECOMMENDATION;
+	if (tb[cmd_id]) {
+		params->b_twt_recommendation = nla_get_u8(tb[cmd_id]);
+		hdd_debug("TWT_SETUP_BCAST_RECOMM %d",
+			  params->b_twt_recommendation);
+	}
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST_PERSISTENCE;
+	if (tb[cmd_id]) {
+		params->b_twt_persistence = nla_get_u8(tb[cmd_id]);
+		hdd_debug("TWT_SETUP_BCAST_PERSIS %d",
+			  params->b_twt_persistence);
+	}
 
 	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_REQ_TYPE;
 	if (!tb[cmd_id]) {
@@ -2018,6 +2042,12 @@ static int hdd_sta_twt_terminate_session(struct hdd_adapter *adapter,
 	} else {
 		params.dialog_id = 0;
 		hdd_debug("TWT_TERMINATE_FLOW_ID not specified. set to zero");
+	}
+
+	id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST_ID;
+	if (tb[id]) {
+		params.dialog_id = nla_get_u8(tb[id]);
+		hdd_debug("TWT_SETUP_BCAST_ID %d", params.dialog_id);
 	}
 
 	status = hdd_twt_check_all_twt_support(adapter->hdd_ctx->psoc,
