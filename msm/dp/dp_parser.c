@@ -662,7 +662,7 @@ static int dp_parser_clock(struct dp_parser *parser)
 			if (clock_mmrm) {
 				clk->type = DSS_CLK_MMRM;
 				clk->mmrm.clk_id = clock_mmrm;
-			} else if (!strcmp(clk_name, "link_clk")) {
+			} else if (!strcmp(clk_name, "link_clk_src")) {
 				clk->type = DSS_CLK_PCLK;
 			} else {
 				clk->type = DSS_CLK_AHB;
