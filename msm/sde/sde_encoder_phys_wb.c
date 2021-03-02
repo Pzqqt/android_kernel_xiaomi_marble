@@ -386,7 +386,7 @@ static void sde_encoder_phys_wb_setup_fb(struct sde_encoder_phys *phys_enc,
 	wb_cfg->dest.height = fb->height;
 	wb_cfg->dest.num_planes = wb_cfg->dest.format->num_planes;
 
-	if (hw_wb->ops.setup_crop) {
+	if (hw_wb->ops.setup_crop && phys_enc->in_clone_mode) {
 		wb_cfg->crop.x = wb_cfg->roi.x;
 		wb_cfg->crop.y = wb_cfg->roi.y;
 
