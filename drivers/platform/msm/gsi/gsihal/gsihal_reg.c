@@ -1990,6 +1990,7 @@ void gsihal_write_reg_nk(enum gsihal_reg_name reg, u32 n, u32 k, u32 val)
 	offset += gsihal_reg_objs[gsihal_ctx->gsi_ver][reg].n_ofst * n;
 	gsi_writel(val, gsihal_ctx->base + offset);
 }
+EXPORT_SYMBOL(gsihal_write_reg_nk);
 
 /*
  * gsihal_write_reg_fields() - Write to reg a prased value
@@ -2235,6 +2236,7 @@ u32 gsihal_get_reg_nk_ofst(enum gsihal_reg_name reg, u32 n, u32 k)
 
 	return offset;
 }
+EXPORT_SYMBOL(gsihal_get_reg_nk_ofst);
 
 /*
 * gsihal_get_bit_map_array_size() - Get the size of the bit map
