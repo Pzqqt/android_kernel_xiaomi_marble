@@ -1950,6 +1950,7 @@ static int dp_init_sub_modules(struct dp_display_private *dp)
 
 	pll_in.aux = dp->aux;
 	pll_in.parser = dp->parser;
+	pll_in.dp_core_revision = dp_catalog_get_dp_core_version(dp->catalog);
 
 	dp->pll = dp_pll_get(&pll_in);
 	if (IS_ERR(dp->pll)) {

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DP_REG_H_
@@ -398,10 +398,6 @@
 #define MMSS_DP_PIXEL_N_V200			(0x0134)
 #define MMSS_DP_PIXEL1_M_V200			(0x0148)
 #define MMSS_DP_PIXEL1_N_V200			(0x014C)
-#define MMSS_DP_PIXEL_M_V420			(0x01B0)
-#define MMSS_DP_PIXEL_N_V420			(0x01B4)
-#define MMSS_DP_PIXEL1_M_V420			(0x01C8)
-#define MMSS_DP_PIXEL1_N_V420			(0x01CC)
 
 /* DP HDCP 1.3 registers */
 #define DP_HDCP_CTRL                                   (0x0A0)

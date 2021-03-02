@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DP_CATALOG_H_
@@ -336,4 +336,5 @@ struct dp_catalog_sub *dp_catalog_get_v420(struct device *dev,
 struct dp_catalog_sub *dp_catalog_get_v200(struct device *dev,
 			struct dp_catalog *catalog, struct dp_catalog_io *io);
 
+u32 dp_catalog_get_dp_core_version(struct dp_catalog *dp_catalog);
 #endif /* _DP_CATALOG_H_ */

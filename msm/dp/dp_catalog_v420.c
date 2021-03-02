@@ -1,12 +1,21 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
 
 #include "dp_catalog.h"
 #include "dp_reg.h"
 #include "dp_debug.h"
+
+#define MMSS_DP_PIXEL_BASE_V130			(0x1A8)
+#define MMSS_DP_PIXEL1_BASE_V130		(0x1C0)
+
+#define MMSS_DP_PIXEL_BASE_V140			(0x1BC)
+#define MMSS_DP_PIXEL1_BASE_V140		(0x1D4)
+
+#define MMSS_DP_M_OFF				(0x8)
+#define MMSS_DP_N_OFF				(0xC)
 
 #define dp_catalog_get_priv_v420(x) ({ \
 	struct dp_catalog *catalog; \
@@ -146,8 +155,10 @@ static void dp_catalog_panel_config_msa_v420(struct dp_catalog_panel *panel,
 	u32 const nvid_fixed = 0x8000;
 	u32 const link_rate_hbr2 = 540000;
 	u32 const link_rate_hbr3 = 810000;
+	struct dp_catalog *dp_catalog;
 	struct dp_catalog_private_v420 *catalog;
 	struct dp_io_data *io_data;
+	u32 version;
 
 	if (!panel || !rate) {
 		DP_ERR("invalid input\n");
@@ -159,14 +170,27 @@ static void dp_catalog_panel_config_msa_v420(struct dp_catalog_panel *panel,
 		return;
 	}
 
-	catalog = dp_catalog_get_priv_v420(panel);
+	dp_catalog = container_of(panel, struct dp_catalog, panel);
+	catalog = container_of(dp_catalog->sub, struct dp_catalog_private_v420, sub);
+
+	version = dp_catalog_get_dp_core_version(dp_catalog);
 	io_data = catalog->io->dp_mmss_cc;
 
-	if (panel->stream_id == DP_STREAM_1)
-		reg_off = MMSS_DP_PIXEL1_M_V420 - MMSS_DP_PIXEL_M_V420;
+	if (version >= 0x10040000) {
+		if (panel->stream_id == DP_STREAM_1)
+			reg_off = MMSS_DP_PIXEL1_BASE_V140;
+		else
+			reg_off = MMSS_DP_PIXEL_BASE_V140;
+	} else {
+		if (panel->stream_id == DP_STREAM_1)
+			reg_off = MMSS_DP_PIXEL1_BASE_V130;
+		else
+			reg_off = MMSS_DP_PIXEL_BASE_V130;
+	}
 
-	pixel_m = dp_read(MMSS_DP_PIXEL_M_V420 + reg_off);
-	pixel_n = dp_read(MMSS_DP_PIXEL_N_V420 + reg_off);
+
+	pixel_m = dp_read(reg_off + MMSS_DP_M_OFF);
+	pixel_n = dp_read(reg_off + MMSS_DP_N_OFF);
 	DP_DEBUG("pixel_m=0x%x, pixel_n=0x%x\n", pixel_m, pixel_n);
 
 	mvid = (pixel_m & 0xFFFF) * 5;
