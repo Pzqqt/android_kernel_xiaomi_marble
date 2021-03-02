@@ -685,6 +685,8 @@ wlan_reg_get_tx_ops(struct wlan_objmgr_psoc *psoc)
 	return reg_get_psoc_tx_ops(psoc);
 }
 
+qdf_export_symbol(wlan_reg_get_tx_ops);
+
 QDF_STATUS wlan_reg_get_curr_regdomain(struct wlan_objmgr_pdev *pdev,
 		struct cur_regdmn_info *cur_regdmn)
 {
