@@ -491,21 +491,14 @@ static int hdd_hostapd_open(struct net_device *net_dev)
 		return errno;
 
 	errno = __hdd_hostapd_open(net_dev);
-
+	if (!errno)
+		osif_vdev_cache_command(vdev_sync, NO_COMMAND);
 	osif_vdev_sync_trans_stop(vdev_sync);
 
 	return errno;
 }
 
-/**
- * __hdd_hostapd_stop() - hdd stop function for hostapd interface
- * This is called in response to ifconfig down
- *
- * @dev: pointer to net_device structure
- *
- * Return - 0 for success non-zero for failure
- */
-static int __hdd_hostapd_stop(struct net_device *dev)
+int hdd_hostapd_stop_no_trans(struct net_device *dev)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -518,10 +511,8 @@ static int __hdd_hostapd_stop(struct net_device *dev)
 		   NO_SESSION, 0);
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (ret) {
-		set_bit(DOWN_DURING_SSR, &adapter->event_flags);
+	if (ret)
 		return ret;
-	}
 
 	/*
 	 * Some tests requires to do "ifconfig down" only to bring
@@ -561,10 +552,13 @@ int hdd_hostapd_stop(struct net_device *net_dev)
 	struct osif_vdev_sync *vdev_sync;
 
 	errno = osif_vdev_sync_trans_start(net_dev, &vdev_sync);
-	if (errno)
+	if (errno) {
+		if (vdev_sync)
+			osif_vdev_cache_command(vdev_sync, INTERFACE_DOWN);
 		return errno;
+	}
 
-	errno = __hdd_hostapd_stop(net_dev);
+	errno = hdd_hostapd_stop_no_trans(net_dev);
 
 	osif_vdev_sync_trans_stop(vdev_sync);
 

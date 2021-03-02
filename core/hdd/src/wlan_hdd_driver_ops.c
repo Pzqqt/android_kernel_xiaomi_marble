@@ -704,8 +704,10 @@ static int __hdd_soc_recovery_reinit(struct device *dev,
 	 * So check if FW is down then don't reset the recovery
 	 * in progress
 	 */
-	if (!qdf_is_fw_down())
+	if (!qdf_is_fw_down()) {
 		cds_set_recovery_in_progress(false);
+		hdd_handle_cached_commands();
+	}
 
 	hdd_soc_load_unlock(dev);
 	hdd_start_complete(0);

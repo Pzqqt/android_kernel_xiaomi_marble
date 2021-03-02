@@ -25,18 +25,6 @@
 #include "qdf_status.h"
 #include "qdf_types.h"
 
-/**
- * struct osif_vdev_sync - a vdev synchronization context
- * @net_dev: the net_device used as a lookup key
- * @dsc_vdev: the dsc_vdev used for synchronization
- * @in_use: indicates if the context is being used
- */
-struct osif_vdev_sync {
-	struct net_device *net_dev;
-	struct dsc_vdev *dsc_vdev;
-	bool in_use;
-};
-
 static struct osif_vdev_sync __osif_vdev_sync_arr[WLAN_MAX_VDEVS];
 static qdf_spinlock_t __osif_vdev_sync_lock;
 
@@ -61,6 +49,11 @@ static struct osif_vdev_sync *osif_vdev_sync_lookup(struct net_device *net_dev)
 	}
 
 	return NULL;
+}
+
+struct osif_vdev_sync *osif_get_vdev_sync_arr(void)
+{
+	return __osif_vdev_sync_arr;
 }
 
 static struct osif_vdev_sync *osif_vdev_sync_get(void)
@@ -206,11 +199,11 @@ __osif_vdev_sync_start_callback(struct net_device *net_dev,
 	if (!vdev_sync)
 		return -EAGAIN;
 
+	*out_vdev_sync = vdev_sync;
+
 	status = vdev_start_cb(vdev_sync->dsc_vdev, desc);
 	if (QDF_IS_STATUS_ERROR(status))
 		return qdf_status_to_os_return(status);
-
-	*out_vdev_sync = vdev_sync;
 
 	return 0;
 }
@@ -321,5 +314,15 @@ void osif_vdev_sync_init(void)
 void osif_vdev_sync_deinit(void)
 {
 	osif_vdev_sync_lock_destroy();
+}
+
+uint8_t osif_vdev_get_cached_cmd(struct osif_vdev_sync *vdev_sync)
+{
+	return dsc_vdev_get_cached_cmd(vdev_sync->dsc_vdev);
+}
+
+void osif_vdev_cache_command(struct osif_vdev_sync *vdev_sync, uint8_t cmd_id)
+{
+	dsc_vdev_cache_command(vdev_sync->dsc_vdev, cmd_id);
 }
 

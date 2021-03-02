@@ -4416,21 +4416,15 @@ static int hdd_open(struct net_device *net_dev)
 		return errno;
 
 	errno = __hdd_open(net_dev);
+	if (!errno)
+		osif_vdev_cache_command(vdev_sync, NO_COMMAND);
 
 	osif_vdev_sync_trans_stop(vdev_sync);
 
 	return errno;
 }
 
-/**
- * __hdd_stop() - HDD stop function
- * @dev:	Pointer to net_device structure
- *
- * This is called in response to ifconfig down
- *
- * Return: 0 for success; non-zero for failure
- */
-static int __hdd_stop(struct net_device *dev)
+int hdd_stop_no_trans(struct net_device *dev)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -4444,10 +4438,8 @@ static int __hdd_stop(struct net_device *dev)
 		   adapter->vdev_id, adapter->device_mode);
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (ret) {
-		set_bit(DOWN_DURING_SSR, &adapter->event_flags);
+	if (ret)
 		return ret;
-	}
 
 	/* Nothing to be done if the interface is not opened */
 	if (false == test_bit(DEVICE_IFACE_OPENED, &adapter->event_flags)) {
@@ -4545,10 +4537,13 @@ static int hdd_stop(struct net_device *net_dev)
 	struct osif_vdev_sync *vdev_sync;
 
 	errno = osif_vdev_sync_trans_start(net_dev, &vdev_sync);
-	if (errno)
+	if (errno) {
+		if (vdev_sync)
+			osif_vdev_cache_command(vdev_sync, INTERFACE_DOWN);
 		return errno;
+	}
 
-	errno = __hdd_stop(net_dev);
+	errno = hdd_stop_no_trans(net_dev);
 
 	osif_vdev_sync_trans_stop(vdev_sync);
 
@@ -8560,19 +8555,9 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 			hdd_start_station_adapter(adapter);
 			hdd_set_mon_rx_cb(adapter->dev);
 
-			/*
-			 * Do not set channel for monitor mode if monitor iface
-			 * went down during SSR, as for set channels host sends
-			 * vdev start command to FW. For the interfaces went
-			 * down during SSR, host stops those adapters by sending
-			 * vdev stop/down/delete commands to FW. So FW doesn't
-			 * sends response for vdev start and vdev start response
-			 * timer expires and thus host triggers ASSERT.
-			 */
-			if (!test_bit(DOWN_DURING_SSR, &adapter->event_flags))
-				wlan_hdd_set_mon_chan(
-						adapter, adapter->mon_chan_freq,
-						adapter->mon_bandwidth);
+			wlan_hdd_set_mon_chan(
+					adapter, adapter->mon_chan_freq,
+					adapter->mon_bandwidth);
 			break;
 		case QDF_NDI_MODE:
 			hdd_ndi_start(adapter->dev->name, 0);

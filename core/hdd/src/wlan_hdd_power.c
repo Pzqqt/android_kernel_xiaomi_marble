@@ -1585,36 +1585,6 @@ static void hdd_send_default_scan_ies(struct hdd_context *hdd_ctx)
 }
 
 /**
- * hdd_is_interface_down_during_ssr - Check if the interface went down during
- * SSR
- * @hdd_ctx: HDD context
- *
- * Check if any of the interface went down while the device is recovering.
- * If the interface went down close the session.
- */
-static void hdd_is_interface_down_during_ssr(struct hdd_context *hdd_ctx)
-{
-	struct hdd_adapter *adapter = NULL, *pnext = NULL;
-	QDF_STATUS status;
-
-	hdd_enter();
-
-	status = hdd_get_front_adapter(hdd_ctx, &adapter);
-	while (adapter && status == QDF_STATUS_SUCCESS) {
-		if (test_bit(DOWN_DURING_SSR, &adapter->event_flags)) {
-			clear_bit(DOWN_DURING_SSR, &adapter->event_flags);
-			hdd_stop_adapter(hdd_ctx, adapter);
-			hdd_deinit_adapter(hdd_ctx, adapter, true);
-			clear_bit(DEVICE_IFACE_OPENED, &adapter->event_flags);
-		}
-		status = hdd_get_next_adapter(hdd_ctx, adapter, &pnext);
-		adapter = pnext;
-	}
-
-	hdd_exit();
-}
-
-/**
  * hdd_restore_sar_config - Restore the saved SAR config after SSR
  * @hdd_ctx: HDD context
  *
@@ -1633,6 +1603,58 @@ static void hdd_restore_sar_config(struct hdd_context *hdd_ctx)
 					  hdd_ctx->sar_cmd_params);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("Unable to configured SAR after SSR");
+}
+
+void hdd_handle_cached_commands(void)
+{
+	struct net_device *net_dev;
+	struct hdd_adapter *adapter = NULL;
+	struct hdd_context *hdd_ctx;
+	struct osif_vdev_sync *vdev_sync_arr = osif_get_vdev_sync_arr();
+	struct osif_vdev_sync *vdev_sync;
+	int i;
+	uint8_t cmd_id;
+
+	/* Get the HDD context */
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx)
+		return;
+
+	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
+		vdev_sync = vdev_sync_arr + i;
+		if (!vdev_sync || !vdev_sync->in_use)
+			continue;
+
+		cmd_id = osif_vdev_get_cached_cmd(vdev_sync);
+		net_dev = vdev_sync->net_dev;
+		if (net_dev) {
+			adapter = WLAN_HDD_GET_PRIV_PTR(
+					(struct net_device *)net_dev);
+			if (!adapter)
+				continue;
+		} else {
+			continue;
+		}
+
+		switch (cmd_id) {
+		case NO_COMMAND:
+			break;
+		case INTERFACE_DOWN:
+			hdd_debug("Handling cached interface down command for %s",
+				  adapter->dev->name);
+
+			if (adapter->device_mode == QDF_SAP_MODE ||
+			    adapter->device_mode == QDF_P2P_GO_MODE)
+				hdd_hostapd_stop_no_trans(net_dev);
+			else
+				hdd_stop_no_trans(net_dev);
+
+			osif_vdev_cache_command(vdev_sync, NO_COMMAND);
+			break;
+		default:
+			break;
+		}
+	}
 }
 
 QDF_STATUS hdd_wlan_re_init(void)
@@ -1694,7 +1716,6 @@ QDF_STATUS hdd_wlan_re_init(void)
 	ucfg_mlme_get_sap_internal_restart(hdd_ctx->psoc, &value);
 	if (value)
 		hdd_ssr_restart_sap(hdd_ctx);
-	hdd_is_interface_down_during_ssr(hdd_ctx);
 	hdd_wlan_ssr_reinit_event();
 	return QDF_STATUS_SUCCESS;
 

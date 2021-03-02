@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,9 +24,16 @@
 #include "qdf_types.h"
 
 /**
- * struct osif_vdev_sync - opaque synchronization handle for a vdev
+ * struct osif_vdev_sync - vdev synchronization context
+ * @net_dev: the net_device used as a lookup key
+ * @dsc_vdev: the dsc_vdev used for synchronization
+ * @in_use: indicates if the context is being used
  */
-struct osif_vdev_sync;
+struct osif_vdev_sync {
+	struct net_device *net_dev;
+	struct dsc_vdev *dsc_vdev;
+	bool in_use;
+};
 
 /**
  * osif_vdev_sync_create() - create a vdev synchronization context
@@ -167,6 +174,36 @@ void __osif_vdev_sync_op_stop(struct osif_vdev_sync *vdev_sync,
  * Return: None
  */
 void osif_vdev_sync_wait_for_ops(struct osif_vdev_sync *vdev_sync);
+
+/**
+ * osif_vdev_get_cached_cmd() - Get north bound cmd cached during SSR
+ * @vdev_sync: osif vdev sync corresponding to the network interface
+ *
+ * This api will be invoked after completion of SSR re-initialization to get
+ * the last north bound command received during SSR
+ *
+ * Return: North bound command ID
+ */
+uint8_t osif_vdev_get_cached_cmd(struct osif_vdev_sync *vdev_sync);
+
+/**
+ * osif_vdev_cache_command() - Cache north bound command during SSR
+ * @vdev_sync: osif vdev sync corresponding to the network interface
+ * @cmd_id: North bound command ID
+ *
+ * This api will be invoked when a north bound command is received during SSR
+ * and it should be handled after SSR re-initialization.
+ *
+ * Return: None
+ */
+void osif_vdev_cache_command(struct osif_vdev_sync *vdev_sync, uint8_t cmd_id);
+
+/**
+ * osif_get_vdev_sync_arr() - Get vdev sync array base pointer
+ *
+ * Return: Base pointer to the vdev sync array
+ */
+struct osif_vdev_sync *osif_get_vdev_sync_arr(void);
 
 #endif /* __OSIF_VDEV_SYNC_H */
 
