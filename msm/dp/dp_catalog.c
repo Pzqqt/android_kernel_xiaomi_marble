@@ -123,6 +123,7 @@ struct dp_catalog_private {
 	struct dp_catalog dp_catalog;
 
 	char exe_mode[SZ_4];
+	u32 dp_core_version;
 };
 
 static u32 dp_read_sw(struct dp_catalog_private *catalog,
@@ -1949,6 +1950,9 @@ u32 dp_catalog_get_dp_core_version(struct dp_catalog *dp_catalog)
 	}
 
 	catalog = container_of(dp_catalog, struct dp_catalog_private, dp_catalog);
+	if (catalog->dp_core_version)
+		return catalog->dp_core_version;
+
 	io_data = catalog->io.dp_ahb;
 
 	return dp_read(DP_HW_VERSION);
