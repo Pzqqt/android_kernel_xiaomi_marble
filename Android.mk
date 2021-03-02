@@ -47,14 +47,12 @@ LOCAL_DEV_NAME := $(patsubst .%,%,\
 $(call wlog,LOCAL_DEV_NAME=$(LOCAL_DEV_NAME))
 $(call wlog,TARGET_WLAN_CHIP=$(TARGET_WLAN_CHIP))
 
-ifeq (1, $(strip $(shell expr $(words $(strip $(TARGET_WLAN_CHIP))) \>= 2)))
-
+TARGET_WLAN_CHIP ?= wlan
+LOCAL_MULTI_KO := false
+ifneq ($(TARGET_WLAN_CHIP), wlan)
 ifeq ($(LOCAL_DEV_NAME), qcacld-3.0)
 LOCAL_MULTI_KO := true
-else
-LOCAL_MULTI_KO := false
 endif
-
 endif
 
 ifeq ($(LOCAL_MULTI_KO), true)
