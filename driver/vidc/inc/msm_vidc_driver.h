@@ -162,6 +162,11 @@ static inline bool is_realtime_session(struct msm_vidc_inst *inst)
 	return !inst->capabilities->cap[PRIORITY].value;
 }
 
+static inline bool is_lowlatency_session(struct msm_vidc_inst *inst)
+{
+	return !!(inst->capabilities->cap[LOWLATENCY_MODE].value);
+}
+
 static inline bool is_active_session(u64 prev, u64 curr)
 {
 	u64 ts_delta;
@@ -270,7 +275,7 @@ int msm_vidc_map_driver_buf(struct msm_vidc_inst *inst,
 	struct msm_vidc_buffer *buf);
 int msm_vidc_put_driver_buf(struct msm_vidc_inst *inst,
 	struct msm_vidc_buffer *buf);
-int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct vb2_buffer *vb2);
+int msm_vidc_queue_buffer_single(struct msm_vidc_inst *inst, struct vb2_buffer *vb2);
 int msm_vidc_destroy_internal_buffer(struct msm_vidc_inst *inst,
 	struct msm_vidc_buffer *buffer);
 void msm_vidc_destroy_buffers(struct msm_vidc_inst *inst);
@@ -317,5 +322,6 @@ int msm_vidc_init_instance_caps(struct msm_vidc_core* core);
 int msm_vidc_deinit_core_caps(struct msm_vidc_core* core);
 int msm_vidc_deinit_instance_caps(struct msm_vidc_core* core);
 int msm_vidc_update_debug_str(struct msm_vidc_inst *inst);
+bool msm_vidc_allow_decode_batch(struct msm_vidc_inst *inst);
 #endif // _MSM_VIDC_DRIVER_H_
 

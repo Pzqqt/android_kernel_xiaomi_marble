@@ -359,9 +359,14 @@ static bool is_parent_available(struct msm_vidc_inst* inst,
 	return false;
 }
 
-static int msm_vidc_update_cap_value(struct msm_vidc_inst* inst, u32 cap,
+int msm_vidc_update_cap_value(struct msm_vidc_inst *inst, u32 cap,
 	s32 adjusted_val, const char *func)
 {
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
 	if (inst->capabilities->cap[cap].value != adjusted_val)
 		i_vpr_h(inst,
 			"%s: updated database value from %#x to %#x\n",
@@ -508,7 +513,7 @@ static int msm_vidc_adjust_dynamic_property(struct msm_vidc_inst *inst,
 		if (rc)
 			goto exit;
 	} else if (ctrl) {
-		capability->cap[cap_id].value = ctrl->val;
+		msm_vidc_update_cap_value(inst, cap_id, ctrl->val, __func__);
 	}
 
 	/* add children if cap value modified */
@@ -741,7 +746,7 @@ int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl)
 	capability->cap[cap_id].flags |= CAP_FLAG_CLIENT_SET;
 	/* Static setting */
 	if (!inst->vb2q[OUTPUT_PORT].streaming) {
-		capability->cap[cap_id].value = ctrl->val;
+		msm_vidc_update_cap_value(inst, cap_id, ctrl->val, __func__);
 
 		if (is_meta_ctrl(ctrl->id))
 			msm_vidc_update_meta_port_settings(inst);

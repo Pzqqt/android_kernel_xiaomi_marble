@@ -18,6 +18,9 @@
 #include "msm_vidc_control.h"
 #include "venus_hfi.h"
 #include "hfi_packet.h"
+/* TODO: update based on clips */
+#define MAX_DEC_BATCH_SIZE 6
+#define SKIP_BATCH_WINDOW 100
 
 u32 msm_vdec_subscribe_for_psc_avc[] = {
 	HFI_PROP_BITSTREAM_RESOLUTION,
@@ -206,7 +209,7 @@ static int msm_vdec_set_bit_depth(struct msm_vidc_inst *inst,
 		bitdepth = 10 << 16 | 10;
 
 	inst->subcr_params[port].bit_depth = bitdepth;
-	inst->capabilities->cap[BIT_DEPTH].value = bitdepth;
+	msm_vidc_update_cap_value(inst, BIT_DEPTH, bitdepth, __func__);
 	i_vpr_h(inst, "%s: bit depth: %d", __func__, bitdepth);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_LUMA_CHROMA_BIT_DEPTH,
@@ -1393,17 +1396,17 @@ static int msm_vdec_read_input_subcr_params(struct msm_vidc_inst *inst)
 	inst->crop.width = inst->fmts[INPUT_PORT].fmt.pix_mp.width -
 		((subsc_params.crop_offsets[1] >> 16) & 0xFFFF);
 
-	inst->capabilities->cap[PROFILE].value = subsc_params.profile;
-	inst->capabilities->cap[LEVEL].value = subsc_params.level;
-	inst->capabilities->cap[HEVC_TIER].value = subsc_params.tier;
-	inst->capabilities->cap[POC].value = subsc_params.pic_order_cnt;
-	inst->capabilities->cap[BIT_DEPTH].value = subsc_params.bit_depth;
+	msm_vidc_update_cap_value(inst, PROFILE, subsc_params.profile, __func__);
+	msm_vidc_update_cap_value(inst, LEVEL, subsc_params.level, __func__);
+	msm_vidc_update_cap_value(inst, HEVC_TIER, subsc_params.tier, __func__);
+	msm_vidc_update_cap_value(inst, POC, subsc_params.pic_order_cnt, __func__);
+	msm_vidc_update_cap_value(inst, BIT_DEPTH, subsc_params.bit_depth, __func__);
 	if (subsc_params.coded_frames & HFI_BITMASK_FRAME_MBS_ONLY_FLAG)
-		inst->capabilities->cap[CODED_FRAMES].value =
-			CODED_FRAMES_PROGRESSIVE;
+		msm_vidc_update_cap_value(inst, CODED_FRAMES, CODED_FRAMES_PROGRESSIVE, __func__);
 	else
-		inst->capabilities->cap[CODED_FRAMES].value =
-			CODED_FRAMES_INTERLACE;
+		msm_vidc_update_cap_value(inst, CODED_FRAMES, CODED_FRAMES_INTERLACE, __func__);
+
+	inst->decode_batch.enable = msm_vidc_allow_decode_batch(inst);
 
 	return 0;
 }
@@ -1543,12 +1546,41 @@ int msm_vdec_streamon_input(struct msm_vidc_inst *inst)
 	if (rc)
 		goto error;
 
+	inst->decode_batch.enable = msm_vidc_allow_decode_batch(inst);
+
 	return 0;
 
 error:
 	i_vpr_e(inst, "%s: failed\n", __func__);
 	msm_vdec_streamoff_input(inst);
 	return rc;
+}
+
+static int schedule_batch_work(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_core *core;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+	cancel_delayed_work(&inst->decode_batch.work);
+	queue_delayed_work(core->batch_workq, &inst->decode_batch.work,
+		msecs_to_jiffies(core->capabilities[DECODE_BATCH_TIMEOUT].value));
+
+	return 0;
+}
+
+static int cancel_batch_work(struct msm_vidc_inst *inst)
+{
+	if (!inst) {
+		d_vpr_e("%s: Invalid arguments\n", __func__);
+		return -EINVAL;
+	}
+	cancel_delayed_work(&inst->decode_batch.work);
+
+	return 0;
 }
 
 int msm_vdec_streamoff_output(struct msm_vidc_inst *inst)
@@ -1560,6 +1592,8 @@ int msm_vdec_streamoff_output(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
+	/* cancel pending batch work */
+	cancel_batch_work(inst);
 	rc = msm_vidc_session_streamoff(inst, OUTPUT_PORT);
 	if (rc)
 		return rc;
@@ -1754,6 +1788,8 @@ int msm_vdec_streamon_output(struct msm_vidc_inst *inst)
 	if (rc)
 		goto error;
 
+	inst->decode_batch.enable = msm_vidc_allow_decode_batch(inst);
+
 	return 0;
 
 error:
@@ -1765,13 +1801,43 @@ error:
 static int msm_vdec_qbuf_batch(struct msm_vidc_inst *inst,
 	struct vb2_buffer *vb2)
 {
-	int rc = 0;
+	struct msm_vidc_buffer *buf;
+	enum msm_vidc_allow allow;
+	int count, rc;
 
-	if (!inst || !vb2) {
+	if (!inst || !vb2 || !inst->decode_batch.size) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-	i_vpr_h(inst, "%s()\n", __func__);
+
+	buf = msm_vidc_get_driver_buf(inst, vb2);
+	if (!buf)
+		return -EINVAL;
+
+	allow = msm_vidc_allow_qbuf(inst, vb2->type);
+	if (allow == MSM_VIDC_DISALLOW) {
+		i_vpr_e(inst, "%s: qbuf not allowed\n", __func__);
+		return -EINVAL;
+	} else if (allow == MSM_VIDC_DEFER) {
+		print_vidc_buffer(VIDC_HIGH, "high", "qbuf deferred", inst, buf);
+		return 0;
+	}
+
+	/* do not defer buffers initially to avoid latency issues */
+	if (inst->power.buffer_counter > SKIP_BATCH_WINDOW) {
+		count = msm_vidc_num_buffers(inst, MSM_VIDC_BUF_OUTPUT, MSM_VIDC_ATTR_DEFERRED);
+		if (count < inst->decode_batch.size) {
+			print_vidc_buffer(VIDC_HIGH, "high", "batch-qbuf deferred", inst, buf);
+			schedule_batch_work(inst);
+			return 0;
+		}
+
+		cancel_batch_work(inst);
+	}
+
+	rc = msm_vidc_queue_buffer_batch(inst);
+	if (rc)
+		return rc;
 
 	return rc;
 }
@@ -1780,10 +1846,16 @@ int msm_vdec_qbuf(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 {
 	int rc = 0;
 
-	if (inst->decode_batch.enable)
+	if (!inst || !vb2) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	/* batch decoder output & meta buffer only */
+	if (inst->decode_batch.enable && vb2->type == OUTPUT_MPLANE)
 		rc = msm_vdec_qbuf_batch(inst, vb2);
 	else
-		rc = msm_vidc_queue_buffer(inst, vb2);
+		rc = msm_vidc_queue_buffer_single(inst, vb2);
 
 	return rc;
 }
@@ -2142,11 +2214,9 @@ set_default:
 	i_vpr_h(inst, "%s: type %u value %#x\n",
 		__func__, s_parm->type, q16_rate);
 
-	if (is_frame_rate) {
-		capability->cap[FRAME_RATE].value = q16_rate;
-	} else {
-		capability->cap[OPERATING_RATE].value = q16_rate;
-	}
+	msm_vidc_update_cap_value(inst,
+		is_frame_rate ? FRAME_RATE : OPERATING_RATE,
+		q16_rate, __func__);
 
 exit:
 	return rc;
@@ -2290,6 +2360,10 @@ int msm_vdec_inst_init(struct msm_vidc_inst *inst)
 	core = inst->core;
 
 	INIT_DELAYED_WORK(&inst->decode_batch.work, msm_vidc_batch_handler);
+	if (core->capabilities[DECODE_BATCH].value) {
+		inst->decode_batch.enable = true;
+		inst->decode_batch.size = MAX_DEC_BATCH_SIZE;
+	}
 
 	f = &inst->fmts[INPUT_PORT];
 	f->type = INPUT_MPLANE;
@@ -2372,6 +2446,8 @@ int msm_vdec_inst_deinit(struct msm_vidc_inst *inst)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
+	/* cancel pending batch work */
+	cancel_batch_work(inst);
 	rc = msm_vidc_ctrl_deinit(inst);
 
 	return rc;

@@ -166,8 +166,10 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 	/* (4096 * 2304) / 256 */
 	{LOSSLESS_MBPF, ENC, H264|HEVC, 64, 36864, 1, 36864},
 	/* Batch Mode Decode */
+	/* TODO: update with new values based on updated voltage corner */
 	{BATCH_MBPF, DEC, CODECS_ALL, 64, 34816, 1, 34816},
 	/* (4096 * 2304) / 256 */
+	{BATCH_FPS, DEC, CODECS_ALL, 1, 120, 1, 120},
 	{SECURE_MBPF, ENC|DEC, CODECS_ALL, 64, 36864, 1, 36864},
 	/* ((1920 * 1088) / 256) * 480 fps */
 	{MBPS, ENC, CODECS_ALL, 64, 3916800, 1, 3916800},

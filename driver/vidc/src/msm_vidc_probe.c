@@ -180,11 +180,18 @@ static int msm_vidc_deinitialize_core(struct msm_vidc_core *core)
 	mutex_destroy(&core->lock);
 	msm_vidc_change_core_state(core, MSM_VIDC_CORE_DEINIT, __func__);
 
+	if (core->batch_workq)
+		destroy_workqueue(core->batch_workq);
+
 	if (core->pm_workq)
 		destroy_workqueue(core->pm_workq);
 
 	if (core->device_workq)
 		destroy_workqueue(core->device_workq);
+
+	core->batch_workq = NULL;
+	core->pm_workq = NULL;
+	core->device_workq = NULL;
 
 	return rc;
 }
@@ -211,7 +218,13 @@ static int msm_vidc_initialize_core(struct msm_vidc_core *core)
 	core->pm_workq = create_singlethread_workqueue("pm_workq");
 	if (!core->pm_workq) {
 		d_vpr_e("%s: create pm workq failed\n", __func__);
-		destroy_workqueue(core->device_workq);
+		rc = -EINVAL;
+		goto exit;
+	}
+
+	core->batch_workq = create_singlethread_workqueue("batch_workq");
+	if (!core->batch_workq) {
+		d_vpr_e("%s: create batch workq failed\n", __func__);
 		rc = -EINVAL;
 		goto exit;
 	}
@@ -224,10 +237,20 @@ static int msm_vidc_initialize_core(struct msm_vidc_core *core)
 	INIT_WORK(&core->smmu_fault_work, msm_vidc_smmu_fault_work_handler);
 	INIT_DELAYED_WORK(&core->pm_work, venus_hfi_pm_work_handler);
 	INIT_DELAYED_WORK(&core->fw_unload_work, msm_vidc_fw_unload_handler);
-	INIT_DELAYED_WORK(&core->batch_work, msm_vidc_batch_handler);
 	INIT_WORK(&core->ssr_work, msm_vidc_ssr_handler);
 
+	return 0;
 exit:
+	if (core->batch_workq)
+		destroy_workqueue(core->batch_workq);
+	if (core->pm_workq)
+		destroy_workqueue(core->pm_workq);
+	if (core->device_workq)
+		destroy_workqueue(core->device_workq);
+	core->batch_workq = NULL;
+	core->pm_workq = NULL;
+	core->device_workq = NULL;
+
 	return rc;
 }
 

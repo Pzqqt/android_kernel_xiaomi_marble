@@ -88,8 +88,8 @@ struct msm_vidc_core {
 	struct workqueue_struct               *device_workq;
 	struct delayed_work                    pm_work;
 	struct workqueue_struct               *pm_workq;
+	struct workqueue_struct               *batch_workq;
 	struct delayed_work                    fw_unload_work;
-	struct delayed_work                    batch_work;
 	struct work_struct                     ssr_work;
 	struct msm_vidc_core_power             power;
 	struct msm_vidc_ssr                    ssr;

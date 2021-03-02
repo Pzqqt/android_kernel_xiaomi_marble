@@ -12,6 +12,7 @@
 #include "msm_vidc_inst.h"
 #include "msm_vidc_core.h"
 #include "msm_vidc_driver.h"
+#include "msm_vidc_control.h"
 #include "msm_vidc_dt.h"
 #include "msm_vidc_internal.h"
 #include "msm_vidc_buffer.h"
@@ -564,7 +565,7 @@ int msm_vidc_decide_work_mode_iris2(struct msm_vidc_inst* inst)
 
 	i_vpr_h(inst, "Configuring work mode = %u low latency = %u",
 		work_mode, lowlatency);
-	inst->capabilities->cap[STAGE].value = work_mode;
+	msm_vidc_update_cap_value(inst, STAGE, work_mode, __func__);
 
 	/* TODO If Encode then Set Low Latency (Enable/Disable)
 	 * and Update internal cap struct
@@ -609,7 +610,7 @@ int msm_vidc_decide_work_route_iris2(struct msm_vidc_inst* inst)
 	}
 
 	i_vpr_h(inst, "Configuring work route = %u", work_route);
-	inst->capabilities->cap[PIPE].value = work_route;
+	msm_vidc_update_cap_value(inst, PIPE, work_route, __func__);
 
 	return 0;
 }
@@ -643,7 +644,7 @@ int msm_vidc_decide_quality_mode_iris2(struct msm_vidc_inst* inst)
 		(mbpf <= max_hq_mbpf && mbps <= max_hq_mbps))
 		mode = MSM_VIDC_MAX_QUALITY_MODE;
 
-	capability->cap[QUALITY_MODE].value = mode;
+	msm_vidc_update_cap_value(inst, QUALITY_MODE, mode, __func__);
 
 	return 0;
 }

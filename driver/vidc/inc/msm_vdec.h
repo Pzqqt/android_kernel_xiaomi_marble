@@ -29,5 +29,6 @@ int msm_vdec_init_input_subcr_params(struct msm_vidc_inst *inst);
 int msm_vdec_input_port_settings_change(struct msm_vidc_inst *inst);
 int msm_vdec_output_port_settings_change(struct msm_vidc_inst *inst);
 int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd);
+int msm_vidc_queue_buffer_batch(struct msm_vidc_inst *inst);
 
 #endif // _MSM_VDEC_H_

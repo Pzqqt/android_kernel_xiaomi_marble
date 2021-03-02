@@ -307,6 +307,7 @@ enum msm_vidc_inst_capability_type {
 	MBPF,
 	LOSSLESS_MBPF,
 	BATCH_MBPF,
+	BATCH_FPS,
 	SECURE_MBPF,
 	MBPS,
 	POWER_SAVE_MBPS,

@@ -70,5 +70,7 @@ int msm_vidc_v4l2_menu_to_hfi(struct msm_vidc_inst *inst,
 	enum msm_vidc_inst_capability_type cap_id, u32 *value);
 int msm_vidc_v4l2_to_hfi_enum(struct msm_vidc_inst *inst,
 	enum msm_vidc_inst_capability_type cap_id, u32 *value);
+int msm_vidc_update_cap_value(struct msm_vidc_inst *inst, u32 cap,
+	s32 adjusted_val, const char *func);
 
 #endif

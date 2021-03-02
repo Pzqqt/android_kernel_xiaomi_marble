@@ -11,6 +11,7 @@
 #include "msm_vidc_driver.h"
 #include "msm_vidc_platform.h"
 #include "msm_vidc_internal.h"
+#include "msm_vidc_control.h"
 #include "msm_vidc_memory.h"
 #include "msm_vidc_debug.h"
 #include "msm_vidc_power.h"
@@ -20,6 +21,7 @@
 #include "venus_hfi.h"
 #include "venus_hfi_response.h"
 #include "hfi_packet.h"
+extern struct msm_vidc_core *g_core;
 
 #define COUNT_BITS(a, out) {       \
 	while ((a) >= 1) {          \
@@ -1024,6 +1026,8 @@ bool msm_vidc_allow_streamoff(struct msm_vidc_inst *inst, u32 type)
 
 enum msm_vidc_allow msm_vidc_allow_qbuf(struct msm_vidc_inst *inst, u32 type)
 {
+	int port = 0;
+
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return MSM_VIDC_DISALLOW;
@@ -1032,6 +1036,15 @@ enum msm_vidc_allow msm_vidc_allow_qbuf(struct msm_vidc_inst *inst, u32 type)
 		i_vpr_e(inst, "%s: inst in error state\n", __func__);
 		return MSM_VIDC_DISALLOW;
 	}
+
+	port = v4l2_type_to_driver_port(inst, type, __func__);
+	if (port < 0)
+		return MSM_VIDC_DISALLOW;
+
+	/* defer queuing if streamon not completed */
+	if (!inst->vb2q[port].streaming)
+		return MSM_VIDC_DEFER;
+
 	if (type == INPUT_META_PLANE || type == OUTPUT_META_PLANE)
 		return MSM_VIDC_DEFER;
 
@@ -1679,6 +1692,9 @@ struct msm_vidc_buffer *msm_vidc_get_driver_buf(struct msm_vidc_inst *inst,
 		buf->attr &= MSM_VIDC_ATTR_READ_ONLY;
 	}
 
+	/* treat every buffer as deferred buffer initially */
+	buf->attr |= MSM_VIDC_ATTR_DEFERRED;
+
 	rc = vb2_buffer_to_driver(vb2, buf);
 	if (rc)
 		goto error;
@@ -1736,7 +1752,7 @@ bool msm_vidc_is_super_buffer(struct msm_vidc_inst *inst)
 	struct msm_vidc_inst_capability *capability = NULL;
 
 	if (!inst || !inst->capabilities) {
-		i_vpr_e(inst, "%s: Invalid params\n", __func__);
+		d_vpr_e("%s: Invalid params\n", __func__);
 		return false;
 	}
 
@@ -1745,49 +1761,98 @@ bool msm_vidc_is_super_buffer(struct msm_vidc_inst *inst)
 	return !!capability->cap[SUPER_FRAME].value;
 }
 
-int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
+static bool is_single_session(struct msm_vidc_inst *inst)
 {
-	int rc = 0;
-	struct msm_vidc_buffer *buf;
-	struct msm_vidc_buffer *meta;
-	enum msm_vidc_allow allow;
-	int port;
+	struct msm_vidc_core *core;
+	u32 count = 0;
 
-	if (!inst || !vb2) {
+	if (!inst) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return false;
+	}
+	core = inst->core;
+
+	core_lock(core, __func__);
+	list_for_each_entry(inst, &core->instances, list)
+		count++;
+	core_unlock(core, __func__);
+
+	return count == 1;
+}
+
+bool msm_vidc_allow_decode_batch(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_core *core;
+	bool allow = false;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+
+	allow = inst->decode_batch.enable;
+	if (!allow) {
+		i_vpr_h(inst, "%s: batching already disabled\n", __func__);
+		goto exit;
+	}
+
+	allow = core->capabilities[DECODE_BATCH].value;
+	if (!allow) {
+		i_vpr_h(inst, "%s: core doesn't support batching\n", __func__);
+		goto exit;
+	}
+
+	allow = is_single_session(inst);
+	if (!allow) {
+		i_vpr_h(inst, "%s: multiple sessions running\n", __func__);
+		goto exit;
+	}
+
+	allow = is_decode_session(inst);
+	if (!allow) {
+		i_vpr_h(inst, "%s: not a decoder session\n", __func__);
+		goto exit;
+	}
+
+	allow = !is_thumbnail_session(inst);
+	if (!allow) {
+		i_vpr_h(inst, "%s: thumbnail session\n", __func__);
+		goto exit;
+	}
+
+	allow = is_realtime_session(inst);
+	if (!allow) {
+		i_vpr_h(inst, "%s: non-realtime session\n", __func__);
+		goto exit;
+	}
+
+	allow = !is_lowlatency_session(inst);
+	if (!allow) {
+		i_vpr_h(inst, "%s: lowlatency session\n", __func__);
+		goto exit;
+	}
+
+exit:
+	i_vpr_h(inst, "%s: batching %s\n", __func__, allow ? "enabled" : "disabled");
+
+	return allow;
+}
+
+static int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct msm_vidc_buffer *buf)
+{
+	struct msm_vidc_buffer *meta;
+	int rc = 0;
+
+	if (!inst || !buf || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 
-	buf = msm_vidc_get_driver_buf(inst, vb2);
-	if (!buf)
-		return -EINVAL;
-
-	/* skip queuing if streamon not completed */
-	port = v4l2_type_to_driver_port(inst, vb2->type, __func__);
-	if (port < 0)
-		return -EINVAL;
-
-	allow = msm_vidc_allow_qbuf(inst, vb2->type);
-	if (allow == MSM_VIDC_DISALLOW) {
-		i_vpr_e(inst, "%s: qbuf not allowed\n", __func__);
-		return -EINVAL;
-	}
-
-	if (!inst->vb2q[port].streaming || allow == MSM_VIDC_DEFER) {
-		buf->attr |= MSM_VIDC_ATTR_DEFERRED;
-		print_vidc_buffer(VIDC_HIGH, "high", "qbuf deferred", inst, buf);
-		return 0;
-	}
-
-	if (is_decode_session(inst) &&
-			inst->capabilities->cap[CODEC_CONFIG].value) {
+	if (is_decode_session(inst) && is_input_buffer(buf->type) &&
+		inst->capabilities->cap[CODEC_CONFIG].value) {
 		buf->flags |= MSM_VIDC_BUF_FLAG_CODECCONFIG;
-		inst->capabilities->cap[CODEC_CONFIG].value = 0;
-	}
-
-	if (buf->type == MSM_VIDC_BUF_INPUT) {
-		inst->power.buffer_counter++;
-		msm_vidc_scale_power(inst, true);
+		msm_vidc_update_cap_value(inst, CODEC_CONFIG, 0, __func__);
 	}
 
 	print_vidc_buffer(VIDC_HIGH, "high", "qbuf", inst, buf);
@@ -1818,6 +1883,70 @@ int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 		msm_vidc_debugfs_update(inst, MSM_VIDC_DEBUGFS_EVENT_ETB);
 	else if (buf->type == MSM_VIDC_BUF_OUTPUT)
 		msm_vidc_debugfs_update(inst, MSM_VIDC_DEBUGFS_EVENT_FTB);
+
+	return 0;
+}
+
+int msm_vidc_queue_buffer_batch(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_buffers *buffers;
+	struct msm_vidc_buffer *buf;
+	int rc = 0;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	buffers = msm_vidc_get_buffers(inst, MSM_VIDC_BUF_OUTPUT, __func__);
+	if (!buffers)
+		return -EINVAL;
+
+	msm_vidc_scale_power(inst, true);
+
+	list_for_each_entry(buf, &buffers->list, list) {
+		if (!(buf->attr & MSM_VIDC_ATTR_DEFERRED))
+			continue;
+		rc = msm_vidc_queue_buffer(inst, buf);
+		if (rc)
+			return rc;
+	}
+
+	return 0;
+}
+
+int msm_vidc_queue_buffer_single(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
+{
+	int rc = 0;
+	struct msm_vidc_buffer *buf;
+	enum msm_vidc_allow allow;
+
+	if (!inst || !vb2) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	buf = msm_vidc_get_driver_buf(inst, vb2);
+	if (!buf)
+		return -EINVAL;
+
+	allow = msm_vidc_allow_qbuf(inst, vb2->type);
+	if (allow == MSM_VIDC_DISALLOW) {
+		i_vpr_e(inst, "%s: qbuf not allowed\n", __func__);
+		return -EINVAL;
+	} else if (allow == MSM_VIDC_DEFER) {
+		print_vidc_buffer(VIDC_HIGH, "high", "qbuf deferred", inst, buf);
+		return 0;
+	}
+
+	if (buf->type == MSM_VIDC_BUF_INPUT) {
+		inst->power.buffer_counter++;
+		msm_vidc_scale_power(inst, true);
+	}
+
+	rc = msm_vidc_queue_buffer(inst, buf);
+	if (rc)
+		return rc;
 
 	return rc;
 }
@@ -2558,6 +2687,9 @@ int msm_vidc_session_streamoff(struct msm_vidc_inst *inst,
 		rc = -EINVAL;
 		goto error;
 	}
+
+	/* flush deferred buffers */
+	msm_vidc_flush_buffers(inst, buffer_type);
 	return 0;
 
 error:
@@ -3106,6 +3238,39 @@ void msm_vidc_fw_unload_handler(struct work_struct *work)
 
 void msm_vidc_batch_handler(struct work_struct *work)
 {
+	struct msm_vidc_inst *inst;
+	enum msm_vidc_allow allow;
+	int rc = 0;
+
+	inst = container_of(work, struct msm_vidc_inst, decode_batch.work.work);
+	inst = get_inst_ref(g_core, inst);
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return;
+	}
+
+	inst_lock(inst, __func__);
+	if (is_session_error(inst)) {
+		i_vpr_e(inst, "%s: failled. Session error\n", __func__);
+		goto exit;
+	}
+
+	allow = msm_vidc_allow_qbuf(inst, OUTPUT_MPLANE);
+	if (allow != MSM_VIDC_ALLOW) {
+		i_vpr_e(inst, "%s: not allowed in state: %s\n", __func__, state_name(inst->state));
+		goto exit;
+	}
+
+	i_vpr_h(inst, "%s: queue pending batch buffers\n", __func__);
+	rc = msm_vidc_queue_buffer_batch(inst);
+	if (rc) {
+		i_vpr_e(inst, "%s: batch qbufs failed\n", __func__);
+		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
+	}
+
+exit:
+	inst_unlock(inst, __func__);
+	put_inst(inst);
 }
 
 int msm_vidc_flush_buffers(struct msm_vidc_inst* inst,

@@ -353,10 +353,8 @@ static int msm_venc_set_csc(struct msm_vidc_inst* inst,
 		return -EINVAL;
 	}
 
-	if (msm_venc_csc_required(inst))
-		inst->capabilities->cap[CSC].value = 1;
-	else
-		inst->capabilities->cap[CSC].value = 0;
+	msm_vidc_update_cap_value(inst, CSC,
+		msm_venc_csc_required(inst) ? 1 : 0, __func__);
 
 	csc = inst->capabilities->cap[CSC].value;
 	i_vpr_h(inst, "%s: csc: %u\n", __func__, csc);
@@ -955,7 +953,7 @@ int msm_venc_qbuf(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 {
 	int rc = 0;
 
-	rc = msm_vidc_queue_buffer(inst, vb2);
+	rc = msm_vidc_queue_buffer_single(inst, vb2);
 	if (rc)
 		return rc;
 
@@ -1590,12 +1588,9 @@ set_default:
 	i_vpr_h(inst, "%s: type %u value %#x\n",
 		__func__, s_parm->type, q16_rate);
 
-	if (!is_frame_rate) {
-		capability->cap[OPERATING_RATE].value = q16_rate;
-		goto exit;
-	} else {
-		capability->cap[FRAME_RATE].value = q16_rate;
-	}
+	msm_vidc_update_cap_value(inst,
+		is_frame_rate ? FRAME_RATE : OPERATING_RATE,
+		q16_rate, __func__);
 
 	/*
 	 * In static case, frame rate is set via
