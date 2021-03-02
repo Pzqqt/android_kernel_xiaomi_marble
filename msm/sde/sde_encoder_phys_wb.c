@@ -30,7 +30,11 @@
 
 static const u32 cwb_irq_tbl[PINGPONG_MAX] = {SDE_NONE, INTR_IDX_PP1_OVFL,
 	INTR_IDX_PP2_OVFL, INTR_IDX_PP3_OVFL, INTR_IDX_PP4_OVFL,
-	INTR_IDX_PP5_OVFL, INTR_IDX_PP_CWB_OVFL, SDE_NONE};
+	INTR_IDX_PP5_OVFL, SDE_NONE, SDE_NONE};
+
+static const u32 dcwb_irq_tbl[PINGPONG_MAX] = {SDE_NONE, SDE_NONE,
+	SDE_NONE, SDE_NONE, SDE_NONE, SDE_NONE,
+	INTR_IDX_PP_CWB_OVFL, SDE_NONE};
 
 /**
  * sde_rgb2yuv_601l - rgb to yuv color space conversion matrix
@@ -1208,6 +1212,7 @@ static void sde_encoder_phys_wb_irq_ctrl(
 	int index = 0, refcount;
 	int ret = 0, pp = 0;
 	u32 max_num_of_irqs = 0;
+	const u32 *irq_table = NULL;
 
 	if (!wb_enc)
 		return;
@@ -1228,8 +1233,13 @@ static void sde_encoder_phys_wb_irq_ctrl(
 	 * when D-CWB is enabled.
 	 */
 	wb_cfg = wb_enc->hw_wb->caps;
-	max_num_of_irqs = (wb_cfg->features & BIT(SDE_WB_HAS_DCWB)) ?
-					1 : CRTC_DUAL_MIXERS_ONLY;
+	if (wb_cfg->features & BIT(SDE_WB_HAS_DCWB)) {
+		max_num_of_irqs = 1;
+		irq_table = dcwb_irq_tbl;
+	} else {
+		max_num_of_irqs = CRTC_DUAL_MIXERS_ONLY;
+		irq_table = cwb_irq_tbl;
+	}
 
 	if (enable && atomic_inc_return(&phys->wbirq_refcount) == 1) {
 		sde_encoder_helper_register_irq(phys, INTR_IDX_WB_DONE);
@@ -1237,9 +1247,9 @@ static void sde_encoder_phys_wb_irq_ctrl(
 			atomic_dec_return(&phys->wbirq_refcount);
 
 		for (index = 0; index < max_num_of_irqs; index++)
-			if (cwb_irq_tbl[index + pp] != SDE_NONE)
+			if (irq_table[index + pp] != SDE_NONE)
 				sde_encoder_helper_register_irq(phys,
-					cwb_irq_tbl[index + pp]);
+					irq_table[index + pp]);
 	} else if (!enable &&
 			atomic_dec_return(&phys->wbirq_refcount) == 0) {
 		sde_encoder_helper_unregister_irq(phys, INTR_IDX_WB_DONE);
@@ -1247,9 +1257,9 @@ static void sde_encoder_phys_wb_irq_ctrl(
 			atomic_inc_return(&phys->wbirq_refcount);
 
 		for (index = 0; index < max_num_of_irqs; index++)
-			if (cwb_irq_tbl[index + pp] != SDE_NONE)
+			if (irq_table[index + pp] != SDE_NONE)
 				sde_encoder_helper_unregister_irq(phys,
-					cwb_irq_tbl[index + pp]);
+					irq_table[index + pp]);
 	}
 }
 
