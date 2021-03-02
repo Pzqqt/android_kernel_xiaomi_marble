@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -142,5 +142,28 @@ void _dsc_vdev_op_stop(struct dsc_vdev *vdev, const char *func);
  * Return: None
  */
 void dsc_vdev_wait_for_ops(struct dsc_vdev *vdev);
+
+/**
+ * dsc_vdev_get_cached_cmd() - Get north bound cmd cached during SSR
+ * @vdev: Pointer to the dsc vdev
+ *
+ * This api will be invoked after completion of SSR re-initialization to get
+ * the last north bound command received during SSR
+ *
+ * Return: North bound command ID
+ */
+uint8_t dsc_vdev_get_cached_cmd(struct dsc_vdev *vdev);
+
+/**
+ * dsc_vdev_cache_command() - Cache north bound command during SSR
+ * @vdev: Pointer to the dsc vdev corresponding to the network interface
+ * @cmd_id: North bound command ID
+ *
+ * This api will be invoked when a north bound command is received during SSR
+ * and it should be handled after SSR re-initialization.
+ *
+ * Return: None
+ */
+void dsc_vdev_cache_command(struct dsc_vdev *vdev, uint8_t cmd_id);
 
 #endif /* __WLAN_DSC_VDEV_H */
