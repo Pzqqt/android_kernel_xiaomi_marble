@@ -633,13 +633,16 @@ static ssize_t dp_debug_mmrm_clk_cb_write(struct file *file,
 	size_t len = 0;
 	struct dss_clk_mmrm_cb mmrm_cb_data;
 	struct mmrm_client_notifier_data notifier_data;
-	struct dp_display *dp_display = debug->display;
+	struct dp_display *dp_display;
 	int cb_type;
 
 	if (!debug)
 		return -ENODEV;
 	if (*ppos)
 		return 0;
+
+	dp_display = debug->display;
+
 	len = min_t(size_t, count, SZ_8 - 1);
 	if (copy_from_user(buf, user_buff, len))
 		return 0;
