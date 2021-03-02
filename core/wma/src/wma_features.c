@@ -5090,36 +5090,14 @@ static void wma_send_set_key_rsp(uint8_t vdev_id, bool pairwise,
 	}
 }
 
-static uint32_t wma_cipher_to_cap(enum wlan_crypto_cipher_type cipher)
+void wma_set_peer_ucast_cipher(uint8_t *mac_addr, int32_t uc_cipher,
+			       int32_t cipher_cap)
 {
-	switch (cipher) {
-	case WLAN_CRYPTO_CIPHER_WEP:  return WLAN_CRYPTO_CAP_WEP;
-	case WLAN_CRYPTO_CIPHER_WEP_40:  return WLAN_CRYPTO_CAP_WEP;
-	case WLAN_CRYPTO_CIPHER_WEP_104:  return WLAN_CRYPTO_CAP_WEP;
-	case WLAN_CRYPTO_CIPHER_AES_OCB:  return WLAN_CRYPTO_CAP_AES;
-	case WLAN_CRYPTO_CIPHER_AES_CCM:  return WLAN_CRYPTO_CAP_AES;
-	case WLAN_CRYPTO_CIPHER_AES_CCM_256:  return WLAN_CRYPTO_CAP_AES;
-	case WLAN_CRYPTO_CIPHER_AES_GCM:  return WLAN_CRYPTO_CAP_AES;
-	case WLAN_CRYPTO_CIPHER_AES_GCM_256:  return WLAN_CRYPTO_CAP_AES;
-	case WLAN_CRYPTO_CIPHER_CKIP: return WLAN_CRYPTO_CAP_CKIP;
-	case WLAN_CRYPTO_CIPHER_TKIP: return WLAN_CRYPTO_CAP_TKIP_MIC;
-	case WLAN_CRYPTO_CIPHER_WAPI_SMS4: return WLAN_CRYPTO_CAP_WAPI_SMS4;
-	case WLAN_CRYPTO_CIPHER_WAPI_GCM4: return WLAN_CRYPTO_CAP_WAPI_GCM4;
-	case WLAN_CRYPTO_CIPHER_FILS_AEAD: return WLAN_CRYPTO_CAP_FILS_AEAD;
-	default: return 0;
-	}
-}
-
-void wma_set_peer_ucast_cipher(uint8_t *mac_addr,
-			       enum wlan_crypto_cipher_type cipher)
-{
-	int32_t set_val = 0, cipher_cap;
 	struct wlan_objmgr_peer *peer;
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
 	if (!wma)
 		return;
-
 	peer = wlan_objmgr_get_peer(wma->psoc,
 				    wlan_objmgr_pdev_get_pdev_id(wma->pdev),
 				    mac_addr, WLAN_LEGACY_WMA_ID);
@@ -5128,19 +5106,15 @@ void wma_set_peer_ucast_cipher(uint8_t *mac_addr,
 			QDF_MAC_ADDR_REF(mac_addr));
 		return;
 	}
-	cipher_cap = wma_cipher_to_cap(cipher);
-	MLME_SET_BIT(set_val, cipher_cap);
+
 	wlan_crypto_set_peer_param(peer, WLAN_CRYPTO_PARAM_CIPHER_CAP,
-				   set_val);
-	set_val = 0;
-	MLME_SET_BIT(set_val, cipher);
+				   cipher_cap);
 	wlan_crypto_set_peer_param(peer, WLAN_CRYPTO_PARAM_UCAST_CIPHER,
-				   set_val);
+				   uc_cipher);
 	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
 
 	wma_debug("Set unicast cipher %x and cap %x for "QDF_MAC_ADDR_FMT,
-		  1 << cipher, 1 << cipher_cap,
-		  QDF_MAC_ADDR_REF(mac_addr));
+		  uc_cipher, cipher_cap, QDF_MAC_ADDR_REF(mac_addr));
 }
 
 void wma_update_set_key(uint8_t session_id, bool pairwise,

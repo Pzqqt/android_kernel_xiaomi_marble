@@ -2333,12 +2333,13 @@ struct wlan_objmgr_psoc *wma_get_psoc_from_scn_handle(void *scn_handle);
 /**
  * wma_set_peer_ucast_cipher() - Update unicast cipher fof the peer
  * @mac_addr: peer mac address
- * @cipher: peer cipher type
+ * @cipher: peer cipher bits
+ * @cipher_cap: cipher cap
  *
  * Return: None
  */
-void wma_set_peer_ucast_cipher(uint8_t *mac_addr,
-			       enum wlan_crypto_cipher_type cipher);
+void wma_set_peer_ucast_cipher(uint8_t *mac_addr, int32_t cipher,
+			       int32_t cipher_cap);
 
 /**
  * wma_update_set_key() - Update WMA layer for set key

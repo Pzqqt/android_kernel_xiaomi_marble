@@ -17726,6 +17726,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 	bool ft_mode = false;
 	enum wlan_crypto_cipher_type cipher;
 	int errno;
+	int32_t cipher_cap, ucast_cipher = 0;
 	struct qdf_mac_addr mac_address;
 
 	hdd_enter();
@@ -17777,12 +17778,15 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 					WLAN_CRYPTO_KEY_TYPE_UNICAST :
 					WLAN_CRYPTO_KEY_TYPE_GROUP),
 					mac_address.bytes, params);
+	cipher_cap = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_CIPHER_CAP);
 	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 	if (errno)
 		return errno;
 	cipher = osif_nl_to_crypto_cipher_type(params->cipher);
+	QDF_SET_PARAM(ucast_cipher, cipher);
 	if (pairwise)
-		wma_set_peer_ucast_cipher(mac_address.bytes, cipher);
+		wma_set_peer_ucast_cipher(mac_address.bytes,
+					  ucast_cipher, cipher_cap);
 
 	switch (adapter->device_mode) {
 	case QDF_SAP_MODE:
