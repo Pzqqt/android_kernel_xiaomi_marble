@@ -2074,6 +2074,10 @@ static int hdd_twt_nudge_session(struct hdd_adapter *adapter,
 		nla_memcpy(params.peer_macaddr, tb[id], QDF_MAC_ADDR_SIZE);
 		hdd_debug("peer mac_addr "QDF_MAC_ADDR_FMT,
 			  QDF_MAC_ADDR_REF(params.peer_macaddr));
+	} else {
+		qdf_mem_copy(params.peer_macaddr,
+			     hdd_sta_ctx->conn_info.bssid.bytes,
+			     QDF_MAC_ADDR_SIZE);
 	}
 
 	id = QCA_WLAN_VENDOR_ATTR_TWT_NUDGE_FLOW_ID;
