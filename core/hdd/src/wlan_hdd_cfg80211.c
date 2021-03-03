@@ -19650,6 +19650,9 @@ static void hdd_populate_crypto_params(struct wlan_objmgr_vdev *vdev,
 {
 	uint32_t set_val = 0;
 
+	/* Resetting the RSN caps for every connection */
+	wlan_crypto_set_vdev_param(vdev, WLAN_CRYPTO_PARAM_RSN_CAP, set_val);
+
 	if (req->crypto.n_akm_suites) {
 		hdd_populate_crypto_akm_type(vdev, req->crypto.akm_suites[0]);
 	} else {
