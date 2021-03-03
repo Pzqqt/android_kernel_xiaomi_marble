@@ -461,6 +461,14 @@ int ipa_imm_cmd_modify_ip_packet_init_ex(
 	return 0;
 }
 
+inline void ipa_imm_cmd_modify_ip_packet_init_ex_dest_pipe(
+	const void *cmd_data,
+	u64 pipe_dest_idx)
+{
+	((struct ipa_imm_cmd_hw_ip_packet_init_ex *)cmd_data)->rt_pipe_dest_idx
+		= pipe_dest_idx;
+}
+
 static struct ipahal_imm_cmd_pyld *ipa_imm_cmd_construct_nat_dma(
 	enum ipahal_imm_cmd_name cmd, const void *params, bool is_atomic_ctx)
 {
