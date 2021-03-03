@@ -349,46 +349,6 @@ void dfs_reinit_nol_from_psoc_copy(struct wlan_dfs *dfs,
 }
 #endif
 
-#ifdef QCA_RADARTOOL_CMD
-#ifdef CONFIG_CHAN_FREQ_API
-void dfs_set_nol(struct wlan_dfs *dfs,
-		 struct dfsreq_nolelem *dfs_nol,
-		 int nchan)
-{
-#define TIME_IN_MS 1000
-	uint32_t nol_time_lft_ms;
-	struct dfs_channel chan;
-	int i;
-
-	if (!dfs) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
-		return;
-	}
-
-	for (i = 0; i < nchan; i++) {
-		nol_time_lft_ms = qdf_do_div(qdf_get_monotonic_boottime() -
-					     dfs_nol[i].nol_start_us, 1000);
-
-		if (nol_time_lft_ms < dfs_nol[i].nol_timeout_ms) {
-			chan.dfs_ch_freq = dfs_nol[i].nol_freq;
-			chan.dfs_ch_flags = 0;
-			chan.dfs_ch_flagext = 0;
-			nol_time_lft_ms =
-				(dfs_nol[i].nol_timeout_ms - nol_time_lft_ms);
-
-			DFS_NOL_ADD_CHAN_LOCKED(dfs, chan.dfs_ch_freq,
-						(nol_time_lft_ms / TIME_IN_MS));
-			utils_dfs_reg_update_nol_chan_for_freq(dfs->dfs_pdev_obj,
-							     &chan.dfs_ch_freq,
-							     1, DFS_NOL_SET);
-		}
-	}
-#undef TIME_IN_MS
-	dfs_nol_update(dfs);
-}
-#endif
-#endif
-
 #ifdef CONFIG_HOST_FIND_CHAN
 bool wlan_is_chan_radar(struct wlan_dfs *dfs, struct dfs_channel *chan)
 {
