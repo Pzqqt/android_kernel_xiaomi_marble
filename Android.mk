@@ -62,9 +62,7 @@ $(shell find $(LOCAL_WLAN_BLD_DIR)/qcacld-3.0/ -maxdepth 1 \
 	-name '.*' ! -name '.git' -exec rm -rf {} +)
 
 $(foreach chip, $(TARGET_WLAN_CHIP), \
-	$($(shell mkdir -p $(LOCAL_WLAN_BLD_DIR)/qcacld-3.0/.$(chip); \
-	ln -sf $(LOCAL_WLAN_BLD_DIR)/qca-wifi-host-cmn \
-		$(LOCAL_WLAN_BLD_DIR)/qcacld-3.0/.$(chip)/qca-wifi-host-cmn); \
+	$($(shell mkdir -p $(LOCAL_WLAN_BLD_DIR)/qcacld-3.0/.$(chip)); \
 	$(foreach node, \
 	$(shell find $(LOCAL_WLAN_BLD_DIR)/qcacld-3.0/ -maxdepth 1 \
 		! -name '.*' ! -name '*~' \
@@ -85,7 +83,6 @@ ifeq ($(LOCAL_DEV_NAME), qcacld-3.0)
 
 LOCAL_DEV_NAME := wlan
 LOCAL_MOD_NAME := wlan
-CMN_OFFSET := ..
 LOCAL_SRC_DIR :=
 TARGET_FW_DIR := firmware/wlan/qca_cld
 TARGET_CFG_PATH := /vendor/etc/wifi
@@ -94,7 +91,6 @@ TARGET_MAC_BIN_PATH := /mnt/vendor/persist
 else
 
 LOCAL_SRC_DIR := .$(LOCAL_DEV_NAME)
-CMN_OFFSET := .
 # Use default profile if WLAN_CFG_USE_DEFAULT defined.
 ifeq ($(WLAN_CFG_USE_DEFAULT),)
 WLAN_PROFILE := $(LOCAL_DEV_NAME)
@@ -123,8 +119,8 @@ endif # platform-sdk-version
 ###########################################################
 # This is set once per LOCAL_PATH, not per (kernel) module
 KBUILD_OPTIONS := WLAN_ROOT=$(WLAN_BLD_DIR)/qcacld-3.0/$(LOCAL_SRC_DIR)
-KBUILD_OPTIONS += WLAN_COMMON_ROOT=$(CMN_OFFSET)/qca-wifi-host-cmn
-KBUILD_OPTIONS += WLAN_COMMON_INC=$(WLAN_BLD_DIR)/qca-wifi-host-cmn
+KBUILD_OPTIONS += WLAN_COMMON_ROOT=cmn
+KBUILD_OPTIONS += WLAN_COMMON_INC=$(WLAN_BLD_DIR)/qcacld-3.0/cmn
 KBUILD_OPTIONS += WLAN_FW_API=$(WLAN_BLD_DIR)/fw-api
 KBUILD_OPTIONS += WLAN_PROFILE=$(WLAN_PROFILE)
 KBUILD_OPTIONS += DYNAMIC_SINGLE_CHIP=$(DYNAMIC_SINGLE_CHIP)

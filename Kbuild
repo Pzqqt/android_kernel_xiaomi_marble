@@ -11,13 +11,13 @@ ifeq ($(KERNEL_BUILD), y)
 	# Need to explicitly define for Kernel-based builds
 	MODNAME := wlan
 	WLAN_ROOT := drivers/staging/qcacld-3.0
-	WLAN_COMMON_ROOT := ../qca-wifi-host-cmn
+	WLAN_COMMON_ROOT := cmn
 	WLAN_COMMON_INC := $(WLAN_ROOT)/$(WLAN_COMMON_ROOT)
 	WLAN_FW_API := $(WLAN_ROOT)/../fw-api/
 	WLAN_PROFILE := default
 endif
 
-WLAN_COMMON_ROOT ?= ../qca-wifi-host-cmn
+WLAN_COMMON_ROOT ?= cmn
 WLAN_COMMON_INC ?= $(WLAN_ROOT)/$(WLAN_COMMON_ROOT)
 WLAN_FW_API ?= $(WLAN_ROOT)/../fw-api/
 WLAN_PROFILE ?= default
