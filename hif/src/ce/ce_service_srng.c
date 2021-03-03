@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -719,6 +719,7 @@ static void ce_srng_msi_ring_params_setup(struct hif_softc *scn, uint32_t ce_id,
 	uint32_t msi_data_count;
 	uint32_t msi_irq_start;
 	int ret;
+	int irq_id;
 
 	ret = pld_get_user_msi_assignment(scn->qdf_dev->dev, "CE",
 					  &msi_data_count, &msi_data_start,
@@ -728,15 +729,16 @@ static void ce_srng_msi_ring_params_setup(struct hif_softc *scn, uint32_t ce_id,
 	if (ret)
 		return;
 
+	irq_id = scn->int_assignment->msi_idx[ce_id];
 	pld_get_msi_address(scn->qdf_dev->dev, &addr_low, &addr_high);
 
 	ring_params->msi_addr = addr_low;
 	ring_params->msi_addr |= (qdf_dma_addr_t)(((uint64_t)addr_high) << 32);
-	ring_params->msi_data = (ce_id % msi_data_count) + msi_data_start;
+	ring_params->msi_data =  irq_id + msi_data_start;
 	ring_params->flags |= HAL_SRNG_MSI_INTR;
 
-	hif_debug("ce_id %d, msi_addr %pK, msi_data %d", ce_id,
-		  (void *)ring_params->msi_addr, ring_params->msi_data);
+	hif_debug("ce_id %d irq_id %d, msi_addr %pK, msi_data %d", ce_id,
+		  irq_id, (void *)ring_params->msi_addr, ring_params->msi_data);
 }
 
 static void ce_srng_src_ring_setup(struct hif_softc *scn, uint32_t ce_id,

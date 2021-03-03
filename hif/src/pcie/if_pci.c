@@ -2058,7 +2058,7 @@ end:
 static int hif_ce_srng_msi_free_irq(struct hif_softc *scn)
 {
 	int ret;
-	int ce_id, irq;
+	int ce_id, irq, irq_id;
 	uint32_t msi_data_start;
 	uint32_t msi_data_count;
 	uint32_t msi_irq_start;
@@ -2083,13 +2083,14 @@ static int hif_ce_srng_msi_free_irq(struct hif_softc *scn)
 		if (!ce_sc->tasklets[ce_id].inited)
 			continue;
 
-		msi_data = (ce_id % msi_data_count) + msi_irq_start;
+		irq_id = scn->int_assignment->msi_idx[ce_id];
+		msi_data = irq_id + msi_irq_start;
 		irq = pld_get_msi_irq(scn->qdf_dev->dev, msi_data);
 
 		hif_pci_ce_irq_remove_affinity_hint(irq);
 
-		hif_debug("%s: (ce_id %d, msi_data %d, irq %d)", __func__,
-			  ce_id, msi_data, irq);
+		hif_debug("%s: (ce_id %d, irq_id %d, msi_data %d, irq %d)",
+			  __func__, irq_id, ce_id, msi_data, irq);
 
 		pfrm_free_irq(scn->qdf_dev->dev, irq, &ce_sc->tasklets[ce_id]);
 	}
@@ -2875,6 +2876,7 @@ int hif_ce_msi_configure_irq_by_ceid(struct hif_softc *scn, int ce_id)
 	uint32_t msi_data_start;
 	uint32_t msi_data_count;
 	unsigned int msi_data;
+	int irq_id;
 	uint32_t msi_irq_start;
 	struct HIF_CE_state *ce_sc = HIF_GET_CE_STATE(scn);
 	struct hif_pci_softc *pci_sc = HIF_GET_PCI_SOFTC(scn);
@@ -2888,15 +2890,21 @@ int hif_ce_msi_configure_irq_by_ceid(struct hif_softc *scn, int ce_id)
 					  &msi_data_count, &msi_data_start,
 					  &msi_irq_start);
 
+	if (ret) {
+		hif_err("Failed to get CE msi config");
+		return -EINVAL;
+	}
+
+	irq_id = scn->int_assignment->msi_idx[ce_id];
 	/* needs to match the ce_id -> irq data mapping
 	 * used in the srng parameter configuration
 	 */
 	pci_slot = hif_get_pci_slot(scn);
-	msi_data = (ce_id % msi_data_count) + msi_irq_start;
+	msi_data = irq_id + msi_irq_start;
 	irq = pld_get_msi_irq(scn->qdf_dev->dev, msi_data);
-	hif_debug("%s: (ce_id %d, msi_data %d, irq %d tasklet %pK)",
-		__func__, ce_id, msi_data, irq,
-		&ce_sc->tasklets[ce_id]);
+	hif_debug("%s: (ce_id %d, irq_id %d, msi_data %d, irq %d tasklet %pK)",
+		  __func__, ce_id, irq_id, msi_data, irq,
+		  &ce_sc->tasklets[ce_id]);
 
 	/* implies the ce is also initialized */
 	if (!ce_sc->tasklets[ce_id].inited)

@@ -143,6 +143,16 @@
 #define HIF_GET_SOFTC(scn) ((struct hif_softc *)scn)
 #define GET_HIF_OPAQUE_HDL(scn) ((struct hif_opaque_softc *)scn)
 
+#define NUM_CE_AVAILABLE 12
+/* Add 1 here to store default configuration in index 0 */
+#define NUM_CE_CONTEXT (NUM_CE_AVAILABLE + 1)
+
+#define CE_INTERRUPT_IDX(x) x
+
+struct ce_int_assignment {
+	uint8_t msi_idx[NUM_CE_AVAILABLE];
+};
+
 struct hif_ce_stats {
 	int hif_pipe_no_resrc_count;
 	int ce_ring_delta_fail_count;
@@ -220,6 +230,7 @@ struct hif_softc {
 	uint32_t ce_irq_summary;
 	/* No of copy engines supported */
 	unsigned int ce_count;
+	struct ce_int_assignment *int_assignment;
 	atomic_t active_tasklet_cnt;
 	atomic_t active_grp_tasklet_cnt;
 	atomic_t link_suspended;

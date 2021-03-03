@@ -1203,10 +1203,10 @@ static QDF_STATUS dp_peer_ast_entry_del_by_pdev(struct cdp_soc_t *soc_handle,
  * Return: the index in the grp_mask array with the ring number.
  * -QDF_STATUS_E_NOENT if no entry is found
  */
-static int dp_srng_find_ring_in_mask(int ring_num, int *grp_mask)
+static int dp_srng_find_ring_in_mask(int ring_num, uint8_t *grp_mask)
 {
 	int ext_group_num;
-	int mask = 1 << ring_num;
+	uint8_t mask = 1 << ring_num;
 
 	for (ext_group_num = 0; ext_group_num < WLAN_CFG_INT_NUM_CONTEXTS;
 	     ext_group_num++) {
@@ -1221,7 +1221,7 @@ static int dp_srng_calculate_msi_group(struct dp_soc *soc,
 				       enum hal_ring_type ring_type,
 				       int ring_num)
 {
-	int *grp_mask;
+	uint8_t *grp_mask;
 
 	switch (ring_type) {
 	case WBM2SW_RELEASE:
@@ -1303,6 +1303,53 @@ static int dp_srng_calculate_msi_group(struct dp_soc *soc,
 
 	return dp_srng_find_ring_in_mask(ring_num, grp_mask);
 }
+
+/*
+ * dp_get_num_msi_available()- API to get number of MSIs available
+ * @dp_soc: DP soc Handle
+ * @interrupt_mode: Mode of interrupts
+ *
+ * Return: Number of MSIs available or 0 in case of integrated
+ */
+#if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
+static int dp_get_num_msi_available(struct dp_soc *soc, int interrupt_mode)
+{
+	return 0;
+}
+#else
+/*
+ * dp_get_num_msi_available()- API to get number of MSIs available
+ * @dp_soc: DP soc Handle
+ * @interrupt_mode: Mode of interrupts
+ *
+ * Return: Number of MSIs available or 0 in case of integrated
+ */
+static int dp_get_num_msi_available(struct dp_soc *soc, int interrupt_mode)
+{
+	int msi_data_count;
+	int msi_data_start;
+	int msi_irq_start;
+	int ret;
+
+	if (interrupt_mode == DP_INTR_INTEGRATED) {
+		return 0;
+	} else if (interrupt_mode == DP_INTR_MSI || interrupt_mode ==
+		   DP_INTR_POLL) {
+		ret = pld_get_user_msi_assignment(soc->osdev->dev, "DP",
+						  &msi_data_count,
+						  &msi_data_start,
+						  &msi_irq_start);
+		if (ret) {
+			qdf_err("Unable to get DP MSI assignment %d",
+				interrupt_mode);
+			return -EINVAL;
+		}
+		return msi_data_count;
+	}
+	qdf_err("Interrupt mode invalid %d", interrupt_mode);
+	return -EINVAL;
+}
+#endif
 
 /**
  * dp_is_msi_group_number_invalid() - check msi_group_number valid or not
@@ -3470,7 +3517,7 @@ static uint8_t dp_soc_ring_if_nss_offloaded(struct dp_soc *soc, enum hal_ring_ty
 static void dp_soc_disable_unused_mac_intr_mask(struct dp_soc *soc,
 						int mac_num)
 {
-	int *grp_mask = NULL;
+	uint8_t *grp_mask = NULL;
 	int group_number;
 
 	grp_mask = &soc->wlan_cfg_ctx->int_host2rxdma_ring_mask[0];
@@ -3503,7 +3550,7 @@ static void dp_soc_disable_unused_mac_intr_mask(struct dp_soc *soc,
 static void dp_soc_reset_intr_mask(struct dp_soc *soc)
 {
 	uint8_t j;
-	int *grp_mask = NULL;
+	uint8_t *grp_mask = NULL;
 	int group_number, mask, num_ring;
 
 	/* number of tx ring */
@@ -12906,6 +12953,7 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 	bool is_monitor_mode = false;
 	struct hal_reo_params reo_params;
 	uint8_t i;
+	int num_dp_msi;
 
 	wlan_minidump_log(soc, sizeof(*soc), soc->ctrl_psoc,
 			  WLAN_MD_DP_SOC, "dp_soc");
@@ -12941,8 +12989,13 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 	    QDF_GLOBAL_MONITOR_MODE)
 		is_monitor_mode = true;
 
-	wlan_cfg_fill_interrupt_mask(soc->wlan_cfg_ctx, soc->intr_mode,
-				     is_monitor_mode);
+	num_dp_msi = dp_get_num_msi_available(soc, soc->intr_mode);
+	if (num_dp_msi < 0) {
+		dp_init_err("%pK: dp_interrupt assignment failed", soc);
+		goto fail3;
+	}
+	wlan_cfg_fill_interrupt_mask(soc->wlan_cfg_ctx, num_dp_msi,
+				     soc->intr_mode, is_monitor_mode);
 
 	/* initialize WBM_IDLE_LINK ring */
 	if (dp_hw_link_desc_ring_init(soc)) {
