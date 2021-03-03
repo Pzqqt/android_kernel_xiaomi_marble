@@ -1956,7 +1956,7 @@ static void dp_panel_handle_sink_request(struct dp_panel *dp_panel)
 
 static void dp_panel_tpg_config(struct dp_panel *dp_panel, bool enable)
 {
-	u32 hsync_start_x, hsync_end_x;
+	u32 hsync_start_x, hsync_end_x, hactive;
 	struct dp_catalog_panel *catalog;
 	struct dp_panel_private *panel;
 	struct dp_panel_info *pinfo;
@@ -1985,9 +1985,13 @@ static void dp_panel_tpg_config(struct dp_panel *dp_panel, bool enable)
 		return;
 	}
 
+	hactive = pinfo->h_active;
+	if (pinfo->widebus_en)
+		hactive >>= 1;
+
 	/* TPG config */
 	catalog->hsync_period = pinfo->h_sync_width + pinfo->h_back_porch +
-			pinfo->h_active + pinfo->h_front_porch;
+			hactive + pinfo->h_front_porch;
 	catalog->vsync_period = pinfo->v_sync_width + pinfo->v_back_porch +
 			pinfo->v_active + pinfo->v_front_porch;
 
