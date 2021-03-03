@@ -2200,6 +2200,10 @@ struct ipa3_context {
 	u32 ipa_wdi3_5g_holb_timeout;
 	bool is_wdi3_tx1_needed;
 	bool ipa_endp_delay_wa_v2;
+	dma_addr_t pkt_init_ex_imm[IPA5_MAX_NUM_PIPES];
+	u32 pkt_init_ex_imm_opcode;
+	struct ipa_mem_buffer pkt_init_mem;
+	struct ipa_mem_buffer pkt_init_ex_mem;
 };
 
 struct ipa3_plat_drv_res {
