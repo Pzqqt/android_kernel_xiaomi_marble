@@ -1547,19 +1547,19 @@ int msm_venc_s_param(struct msm_vidc_inst *inst,
 	if (s_parm->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
 		timeperframe = &s_parm->parm.output.timeperframe;
 		max_rate = capability->cap[OPERATING_RATE].max;
-		default_rate = capability->cap[OPERATING_RATE].value;
+		default_rate = capability->cap[OPERATING_RATE].value >> 16;
 	} else {
 		timeperframe = &s_parm->parm.capture.timeperframe;
 		is_frame_rate = true;
-		max_rate = capability->cap[FRAME_RATE].value;
-		default_rate = capability->cap[FRAME_RATE].value;
+		max_rate = capability->cap[FRAME_RATE].max >> 16;
+		default_rate = capability->cap[FRAME_RATE].value >> 16;
 	}
 
 	if (!timeperframe->denominator || !timeperframe->numerator) {
 		i_vpr_e(inst,
 			"%s: invalid rate for type %u\n",
 			__func__, s_parm->type);
-		input_rate = default_rate >> 16;
+		input_rate = default_rate;
 		goto set_default;
 	}
 
@@ -1579,7 +1579,7 @@ int msm_venc_s_param(struct msm_vidc_inst *inst,
 	/* Check max allowed rate */
 	if (input_rate > max_rate) {
 		i_vpr_e(inst,
-			"%s: Unsupported rate %u, max_fps %u, type: %u\n",
+			"%s: Unsupported rate %llu, max_fps %u, type: %u\n",
 			__func__, input_rate, max_rate, s_parm->type);
 		rc = -ENOTSUPP;
 		goto exit;
@@ -1598,7 +1598,7 @@ set_default:
 	}
 
 	/*
-	 * In static case, frame rate is set during via
+	 * In static case, frame rate is set via
 	 * inst database set function mentioned in
 	 * FRAME_RATE cap id.
 	 * In dynamic case, frame rate is set like below.
