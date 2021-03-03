@@ -476,6 +476,20 @@ enum hfi_picture_type {
 #define HFI_BITMASK_RAW_HEIGHT                          0x0000ffff
 #define HFI_PROP_RAW_RESOLUTION                                 0x03000178
 
+#define HFI_PROP_DPB_TAG_LIST                                   0x03000179
+
+#define HFI_PROP_DPB_LIST                                       0x0300017A
+
+enum hfi_nal_length_field_type {
+    HFI_NAL_LENGTH_STARTCODES           = 0,
+    HFI_NAL_LENGTH_SIZE_4               = 4,
+};
+#define HFI_PROP_NAL_LENGTH_FIELD                               0x0300017B
+
+#define HFI_PROP_TOTAL_PEAK_BITRATE                             0x0300017C
+
+#define HFI_PROP_MAINTAIN_MIN_QUALITY                           0x0300017D
+
 #define HFI_PROP_END                                            0x03FFFFFF
 
 #define HFI_SESSION_ERROR_BEGIN                                 0x04000000

@@ -1550,6 +1550,32 @@ int msm_vidc_set_slice_count(void* instance,
 	return rc;
 }
 
+int msm_vidc_set_nal_length(void* instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+	u32 hfi_value = HFI_NAL_LENGTH_STARTCODES;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!inst->capabilities->cap[WITHOUT_STARTCODE].value) {
+		hfi_value = HFI_NAL_LENGTH_STARTCODES;
+	} else {
+		rc = msm_vidc_v4l2_to_hfi_enum(inst, NAL_LENGTH_FIELD, &hfi_value);
+		if (rc)
+			return -EINVAL;
+	}
+
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32_ENUM,
+		&hfi_value, sizeof(u32), __func__);
+
+	return rc;
+}
+
 /* TODO
 int msm_vidc_set_flip(void *instance,
 	enum msm_vidc_inst_capability_type cap_id)
@@ -1860,6 +1886,16 @@ int msm_vidc_v4l2_to_hfi_enum(struct msm_vidc_inst *inst,
 			break;
 		default:
 			*value = HFI_DEBLOCK_ALL_BOUNDARY;
+			goto set_default;
+		}
+		return 0;
+	case V4L2_CID_MPEG_VIDEO_HEVC_SIZE_OF_LENGTH_FIELD:
+		switch (capability->cap[cap_id].value) {
+		case V4L2_MPEG_VIDEO_HEVC_SIZE_4:
+			*value = HFI_NAL_LENGTH_SIZE_4;
+			break;
+		default:
+			*value = HFI_NAL_LENGTH_STARTCODES;
 			goto set_default;
 		}
 		return 0;

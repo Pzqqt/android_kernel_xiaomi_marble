@@ -57,6 +57,8 @@ int msm_vidc_set_constant_quality(void *instance,
 	enum msm_vidc_inst_capability_type cap_id);
 int msm_vidc_set_use_and_mark_ltr(void *instance,
 	enum msm_vidc_inst_capability_type cap_id);
+int msm_vidc_set_nal_length(void* instance,
+	enum msm_vidc_inst_capability_type cap_id);
 int msm_vidc_set_s32(void *instance,
 	enum msm_vidc_inst_capability_type cap_id);
 int msm_vidc_set_array(void *instance,
