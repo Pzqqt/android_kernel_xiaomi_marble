@@ -811,14 +811,15 @@ bool msm_vidc_allow_s_fmt(struct msm_vidc_inst *inst, u32 type)
 		allow = true;
 		goto exit;
 	}
-	if (inst->state == MSM_VIDC_START_INPUT) {
-		if (type == OUTPUT_MPLANE || type == OUTPUT_META_PLANE) {
+	if (type == OUTPUT_MPLANE || type == OUTPUT_META_PLANE) {
+		if (inst->state == MSM_VIDC_START_INPUT ||
+		    inst->state == MSM_VIDC_DRAIN_START_INPUT) {
 			allow = true;
 			goto exit;
 		}
 	}
-	if (inst->state == MSM_VIDC_START_OUTPUT) {
-		if (type == INPUT_MPLANE || type == INPUT_META_PLANE) {
+	if (type == INPUT_MPLANE || type == INPUT_META_PLANE) {
+		if (inst->state == MSM_VIDC_START_OUTPUT) {
 			allow = true;
 			goto exit;
 		}
@@ -909,14 +910,15 @@ bool msm_vidc_allow_reqbufs(struct msm_vidc_inst *inst, u32 type)
 		allow = true;
 		goto exit;
 	}
-	if (inst->state == MSM_VIDC_START_INPUT) {
-		if (type == OUTPUT_MPLANE || type == OUTPUT_META_PLANE) {
+	if (type == OUTPUT_MPLANE || type == OUTPUT_META_PLANE) {
+		if (inst->state == MSM_VIDC_START_INPUT ||
+		    inst->state == MSM_VIDC_DRAIN_START_INPUT) {
 			allow = true;
 			goto exit;
 		}
 	}
-	if (inst->state == MSM_VIDC_START_OUTPUT) {
-		if (type == INPUT_MPLANE || type == INPUT_META_PLANE) {
+	if (type == INPUT_MPLANE || type == INPUT_META_PLANE) {
+		if (inst->state == MSM_VIDC_START_OUTPUT) {
 			allow = true;
 			goto exit;
 		}
