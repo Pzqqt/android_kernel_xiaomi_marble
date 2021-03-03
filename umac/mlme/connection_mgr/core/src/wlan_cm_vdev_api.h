@@ -266,21 +266,26 @@ void cm_csr_disconnect_on_wait_key_timeout(uint8_t vdev_id);
 #endif
 
 #ifdef FEATURE_CM_ENABLE
-static inline QDF_STATUS cm_ext_hdl_create(struct cnx_mgr *cm_ctx)
+static inline QDF_STATUS
+cm_ext_hdl_create(struct wlan_objmgr_vdev *vdev, cm_ext_t **ext_cm_ptr)
 {
-	cm_ctx->ext_cm_ptr = qdf_mem_malloc(sizeof(struct cm_ext_obj));
-	if (!cm_ctx->ext_cm_ptr)
+	struct cm_ext_obj *cm_obj;
+
+	*ext_cm_ptr = qdf_mem_malloc(sizeof(struct cm_ext_obj));
+	if (!*ext_cm_ptr)
 		return QDF_STATUS_E_NOMEM;
 
-	wlan_cm_rso_config_init(cm_ctx->vdev, &cm_ctx->ext_cm_ptr->rso_cfg);
+	cm_obj = *ext_cm_ptr;
+	wlan_cm_rso_config_init(vdev, &cm_obj->rso_cfg);
 
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline QDF_STATUS cm_ext_hdl_destroy(struct cnx_mgr *cm_ctx)
+static inline QDF_STATUS
+cm_ext_hdl_destroy(struct wlan_objmgr_vdev *vdev, cm_ext_t *ext_cm_ptr)
 {
-	wlan_cm_rso_config_deinit(cm_ctx->vdev, &cm_ctx->ext_cm_ptr->rso_cfg);
-	qdf_mem_free(cm_ctx->ext_cm_ptr);
+	wlan_cm_rso_config_deinit(vdev, &ext_cm_ptr->rso_cfg);
+	qdf_mem_free(ext_cm_ptr);
 
 	return QDF_STATUS_SUCCESS;
 }
