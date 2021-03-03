@@ -2447,8 +2447,11 @@ static int sde_intf_parse_dt(struct device_node *np,
 			set_bit(SDE_INTF_TE_ALIGN_VSYNC, &intf->features);
 
 		if (SDE_HW_MAJOR(sde_cfg->hwversion) >=
-				SDE_HW_MAJOR(SDE_HW_VER_810))
+				SDE_HW_MAJOR(SDE_HW_VER_810)) {
 			set_bit(SDE_INTF_WD_TIMER, &intf->features);
+			set_bit(SDE_INTF_RESET_COUNTER, &intf->features);
+			set_bit(SDE_INTF_VSYNC_TIMESTAMP, &intf->features);
+		}
 	}
 
 end:
@@ -5119,6 +5122,7 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->sspp_multirect_error = true;
 		sde_cfg->has_fp16 = true;
 		set_bit(SDE_MDP_PERIPH_TOP_0_REMOVED, &sde_cfg->mdp[0].features);
+		sde_cfg->has_precise_vsync_ts = true;
 	} else {
 		SDE_ERROR("unsupported chipset id:%X\n", hw_rev);
 		sde_cfg->perf.min_prefill_lines = 0xffff;

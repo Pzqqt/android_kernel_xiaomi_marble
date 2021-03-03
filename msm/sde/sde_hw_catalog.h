@@ -498,6 +498,8 @@ enum {
  * @SDE_INTF_TE_ALIGN_VSYNC     INTF block has POMS Align vsync support
  * @SDE_INTF_WD_TIMER          INTF block has WD Timer support
  * @SDE_INTF_STATUS             INTF block has INTF_STATUS register
+ * @SDE_INTF_RESET_COUNTER      INTF block has frame/line counter reset support
+ * @SDE_INTF_VSYNC_TIMESTAMP    INTF block has vsync timestamp logged
  * @SDE_INTF_MAX
  */
 enum {
@@ -506,6 +508,8 @@ enum {
 	SDE_INTF_TE_ALIGN_VSYNC,
 	SDE_INTF_WD_TIMER,
 	SDE_INTF_STATUS,
+	SDE_INTF_RESET_COUNTER,
+	SDE_INTF_VSYNC_TIMESTAMP,
 	SDE_INTF_MAX
 };
 
@@ -1507,6 +1511,7 @@ struct sde_perf_cfg {
  * @has_cursor    indicates if hardware cursor is supported
  * @has_vig_p010  indicates if vig pipe supports p010 format
  * @has_fp16      indicates if FP16 format is supported on SSPP pipes
+ * @has_precise_vsync_ts  indicates if HW has vsyc timestamp logging capability
  * @mdss_hw_block_size  Max offset of MDSS_HW block (0 offset), used for debug
  * @inline_rot_formats formats supported by the inline rotator feature
  * @irq_offset_list     list of sde_intr_irq_offsets to initialize irq table
@@ -1588,6 +1593,7 @@ struct sde_mdss_cfg {
 	bool has_cursor;
 	bool has_vig_p010;
 	bool has_fp16;
+	bool has_precise_vsync_ts;
 	u32 mdss_hw_block_size;
 	u32 mdss_count;
 	struct sde_mdss_base_cfg mdss[MAX_BLOCKS];

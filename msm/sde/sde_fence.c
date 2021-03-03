@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
@@ -11,6 +11,30 @@
 #include "sde_fence.h"
 
 #define TIMELINE_VAL_LENGTH		128
+
+int _dma_fence_signal_timestamp_locked(struct dma_fence *fence, ktime_t ts)
+{
+	struct dma_fence_cb *cur, *tmp;
+	struct list_head cb_list;
+
+	lockdep_assert_held(fence->lock);
+
+	if (unlikely(test_and_set_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags)))
+		return -EINVAL;
+
+	/* Stash the cb_list before replacing it with the timestamp */
+	list_replace(&fence->cb_list, &cb_list);
+
+	fence->timestamp = ts;
+	set_bit(DMA_FENCE_FLAG_TIMESTAMP_BIT, &fence->flags);
+
+	list_for_each_entry_safe(cur, tmp, &cb_list, node) {
+		INIT_LIST_HEAD(&cur->node);
+		cur->func(fence, cur);
+	}
+
+	return 0;
+}
 
 void *sde_sync_get(uint64_t fd)
 {
@@ -289,7 +313,7 @@ void sde_fence_prepare(struct sde_fence_context *ctx)
 	}
 }
 
-static void _sde_fence_trigger(struct sde_fence_context *ctx, bool error)
+static void _sde_fence_trigger(struct sde_fence_context *ctx, bool error, ktime_t ts)
 {
 	unsigned long flags;
 	struct sde_fence *fc, *next;
@@ -307,7 +331,9 @@ static void _sde_fence_trigger(struct sde_fence_context *ctx, bool error)
 		spin_lock_irqsave(&ctx->lock, flags);
 		if (error)
 			dma_fence_set_error(&fc->base, -EBUSY);
-		is_signaled = dma_fence_is_signaled_locked(&fc->base);
+		is_signaled = sde_fence_signaled(&fc->base);
+		if (is_signaled)
+			_dma_fence_signal_timestamp_locked(&fc->base, ts);
 		spin_unlock_irqrestore(&ctx->lock, flags);
 
 		if (is_signaled) {
@@ -397,7 +423,7 @@ void sde_fence_signal(struct sde_fence_context *ctx, ktime_t ts,
 	SDE_EVT32(ctx->drm_id, ctx->done_count, ctx->commit_count,
 			ktime_to_us(ts));
 
-	_sde_fence_trigger(ctx, (fence_event == SDE_FENCE_SIGNAL_ERROR));
+	_sde_fence_trigger(ctx, (fence_event == SDE_FENCE_SIGNAL_ERROR), ts);
 }
 
 void sde_fence_timeline_status(struct sde_fence_context *ctx,

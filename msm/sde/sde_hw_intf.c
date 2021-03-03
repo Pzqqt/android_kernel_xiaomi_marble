@@ -61,6 +61,9 @@
 #define INTF_MISR_CTRL                  0x180
 #define INTF_MISR_SIGNATURE             0x184
 
+#define INTF_VSYNC_TIMESTAMP_CTRL       0x210
+#define INTF_VSYNC_TIMESTAMP0           0x214
+#define INTF_VSYNC_TIMESTAMP1           0x218
 #define INTF_WD_TIMER_0_CTL             0x230
 #define INTF_WD_TIMER_0_CTL2            0x234
 #define INTF_WD_TIMER_0_LOAD_VALUE      0x238
@@ -190,6 +193,27 @@ static inline void _check_and_set_comp_bit(struct sde_hw_intf *ctx,
 			(IS_SDE_MAJOR_SAME(ctx->mdss->hwversion,
 				SDE_HW_VER_600) && dsc_4hs_merge))
 		(*intf_cfg2) |= BIT(12);
+}
+
+static void sde_hw_intf_reset_counter(struct sde_hw_intf *ctx)
+{
+	struct sde_hw_blk_reg_map *c = &ctx->hw;
+
+	SDE_REG_WRITE(c, INTF_LINE_COUNT, BIT(31));
+}
+
+static u64 sde_hw_intf_get_vsync_timestamp(struct sde_hw_intf *ctx)
+{
+	struct sde_hw_blk_reg_map *c = &ctx->hw;
+	u32 timestamp_lo, timestamp_hi;
+	u64 timestamp = 0;
+
+	timestamp_hi = SDE_REG_READ(c, INTF_VSYNC_TIMESTAMP1);
+	timestamp_lo = SDE_REG_READ(c, INTF_VSYNC_TIMESTAMP0);
+	timestamp = timestamp_hi;
+	timestamp = (timestamp << 32) | timestamp_lo;
+
+	return timestamp;
 }
 
 static void sde_hw_intf_setup_timing_engine(struct sde_hw_intf *ctx,
@@ -371,8 +395,12 @@ static void sde_hw_intf_enable_timing_engine(
 		u8 enable)
 {
 	struct sde_hw_blk_reg_map *c = &intf->hw;
+
 	/* Note: Display interface select is handled in top block hw layer */
 	SDE_REG_WRITE(c, INTF_TIMING_ENGINE_EN, enable != 0);
+
+	if (enable && (intf->cap->features & BIT(SDE_INTF_VSYNC_TIMESTAMP)))
+		SDE_REG_WRITE(c, INTF_VSYNC_TIMESTAMP_CTRL, BIT(0));
 }
 
 static void sde_hw_intf_setup_prg_fetch(
@@ -458,7 +486,7 @@ static void sde_hw_intf_get_status(
 	s->is_en = SDE_REG_READ(c, INTF_TIMING_ENGINE_EN);
 	if (s->is_en) {
 		s->frame_count = SDE_REG_READ(c, INTF_FRAME_COUNT);
-		s->line_count = SDE_REG_READ(c, INTF_LINE_COUNT);
+		s->line_count = SDE_REG_READ(c, INTF_LINE_COUNT) & 0xffff;
 	} else {
 		s->line_count = 0;
 		s->frame_count = 0;
@@ -472,9 +500,10 @@ static void sde_hw_intf_v1_get_status(
 	struct sde_hw_blk_reg_map *c = &intf->hw;
 
 	s->is_en = SDE_REG_READ(c, INTF_STATUS) & BIT(0);
+	s->is_prog_fetch_en = (SDE_REG_READ(c, INTF_CONFIG) & BIT(31));
 	if (s->is_en) {
 		s->frame_count = SDE_REG_READ(c, INTF_FRAME_COUNT);
-		s->line_count = SDE_REG_READ(c, INTF_LINE_COUNT);
+		s->line_count = SDE_REG_READ(c, INTF_LINE_COUNT) & 0xffff;
 	} else {
 		s->line_count = 0;
 		s->frame_count = 0;
@@ -537,7 +566,7 @@ static u32 sde_hw_intf_get_line_count(struct sde_hw_intf *intf)
 
 	c = &intf->hw;
 
-	return SDE_REG_READ(c, INTF_LINE_COUNT);
+	return SDE_REG_READ(c, INTF_LINE_COUNT) & 0xffff;
 }
 
 static u32 sde_hw_intf_get_underrun_line_count(struct sde_hw_intf *intf)
@@ -662,6 +691,10 @@ static int sde_hw_intf_enable_te(struct sde_hw_intf *intf, bool enable)
 
 	c = &intf->hw;
 	SDE_REG_WRITE(c, INTF_TEAR_TEAR_CHECK_EN, enable);
+
+	if (enable && (intf->cap->features & BIT(SDE_INTF_VSYNC_TIMESTAMP)))
+		SDE_REG_WRITE(c, INTF_VSYNC_TIMESTAMP_CTRL, BIT(0));
+
 	return 0;
 }
 
@@ -847,6 +880,12 @@ static void _setup_intf_ops(struct sde_hw_intf_ops *ops,
 		ops->check_and_reset_tearcheck =
 			sde_hw_intf_v1_check_and_reset_tearcheck;
 	}
+
+	if (cap & BIT(SDE_INTF_RESET_COUNTER))
+		ops->reset_counter = sde_hw_intf_reset_counter;
+
+	if (cap & BIT(SDE_INTF_VSYNC_TIMESTAMP))
+		ops->get_vsync_timestamp = sde_hw_intf_get_vsync_timestamp;
 }
 
 static struct sde_hw_blk_ops sde_hw_ops = {

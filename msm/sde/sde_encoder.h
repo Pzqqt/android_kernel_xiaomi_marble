@@ -220,13 +220,13 @@ struct sde_encoder_virt {
 	bool intfs_swapped;
 	bool qdss_status;
 
-	void (*crtc_vblank_cb)(void *data);
+	void (*crtc_vblank_cb)(void *data, ktime_t ts);
 	void *crtc_vblank_cb_data;
 
 	struct dentry *debugfs_root;
 	struct mutex enc_lock;
 	atomic_t frame_done_cnt[MAX_PHYS_ENCODERS_PER_VIRTUAL];
-	void (*crtc_frame_event_cb)(void *data, u32 event);
+	void (*crtc_frame_event_cb)(void *data, u32 event, ktime_t ts);
 	struct sde_kms_frame_event_cb_data crtc_frame_event_cb_data;
 
 	struct sde_rsc_client *rsc_client;
@@ -290,7 +290,7 @@ void sde_encoder_early_wakeup(struct drm_encoder *drm_enc);
  * @data:	user data provided to callback
  */
 void sde_encoder_register_vblank_callback(struct drm_encoder *encoder,
-		void (*cb)(void *), void *data);
+		void (*cb)(void *, ktime_t), void *data);
 
 /**
  * sde_encoder_register_frame_event_callback - provide callback to encoder that
@@ -300,7 +300,7 @@ void sde_encoder_register_vblank_callback(struct drm_encoder *encoder,
  * @crtc:	pointer to drm_crtc object interested in frame events
  */
 void sde_encoder_register_frame_event_callback(struct drm_encoder *encoder,
-		void (*cb)(void *, u32), struct drm_crtc *crtc);
+		void (*cb)(void *, u32, ktime_t), struct drm_crtc *crtc);
 
 /**
  * sde_encoder_get_rsc_client - gets the rsc client state for primary
@@ -385,6 +385,20 @@ u32 sde_encoder_get_fps(struct drm_encoder *encoder);
  * @encoder: Pointer to drm encoder object
  */
 enum sde_intf_mode sde_encoder_get_intf_mode(struct drm_encoder *encoder);
+
+/*
+ * sde_encoder_get_frame_count - get hardware frame count of the given encoder
+ * @encoder: Pointer to drm encoder object
+ */
+u32 sde_encoder_get_frame_count(struct drm_encoder *encoder);
+
+/*
+ * sde_encoder_get_vblank_timestamp - get the last vsync timestamp
+ * @encoder: Pointer to drm encoder object
+ * @tvblank: vblank timestamp
+ */
+bool sde_encoder_get_vblank_timestamp(struct drm_encoder *encoder,
+		ktime_t *tvblank);
 
 /**
  * sde_encoder_control_te - control enabling/disabling VSYNC_IN_EN
@@ -591,6 +605,14 @@ static inline u32 sde_encoder_get_dfps_maxfps(struct drm_encoder *drm_enc)
  * @drm_enc:	Pointer to drm encoder structure
  */
 void sde_encoder_virt_reset(struct drm_encoder *drm_enc);
+
+/**
+ * sde_encoder_calc_last_vsync_timestamp - read last HW vsync timestamp counter
+ *         and calculate the corresponding vsync ktime. Return ktime_get
+ *         when HW support is not available
+ * @drm_enc:    Pointer to drm encoder structure
+ */
+ktime_t sde_encoder_calc_last_vsync_timestamp(struct drm_encoder *drm_enc);
 
 /**
  * sde_encoder_get_kms - retrieve the kms from encoder

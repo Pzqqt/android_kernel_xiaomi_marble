@@ -439,6 +439,9 @@ static void sde_encoder_phys_cmd_cont_splash_mode_set(
 			hw_pp->ops.get_autorefresh(hw_pp,
 					&cmd_enc->autorefresh.cfg);
 		}
+
+		if (hw_intf->ops.reset_counter)
+			hw_intf->ops.reset_counter(hw_intf);
 	}
 
 	_sde_encoder_phys_cmd_setup_irq_hw_idx(phys_enc);
@@ -682,12 +685,9 @@ static bool _sde_encoder_phys_cmd_is_ongoing_pptx(
 		hw_pp->ops.get_vsync_info(hw_pp, &info);
 	}
 
-	SDE_EVT32(DRMID(phys_enc->parent),
-			phys_enc->hw_pp->idx - PINGPONG_0,
-			phys_enc->hw_intf->idx - INTF_0,
-			atomic_read(&phys_enc->pending_kickoff_cnt),
-			info.wr_ptr_line_count,
-			phys_enc->cached_mode.vdisplay);
+	SDE_EVT32(DRMID(phys_enc->parent), phys_enc->hw_pp->idx - PINGPONG_0,
+		phys_enc->hw_intf->idx - INTF_0, atomic_read(&phys_enc->pending_kickoff_cnt),
+		info.wr_ptr_line_count, info.intf_frame_count, phys_enc->cached_mode.vdisplay);
 
 	if (info.wr_ptr_line_count > 0 && info.wr_ptr_line_count <
 			phys_enc->cached_mode.vdisplay)
@@ -1348,6 +1348,9 @@ static void sde_encoder_phys_cmd_disable(struct sde_encoder_phys *phys_enc)
 			phys_enc->hw_pp->ops.enable_tearcheck(phys_enc->hw_pp,
 					false);
 		sde_encoder_helper_phys_disable(phys_enc, NULL);
+
+		if (phys_enc->hw_intf->ops.reset_counter)
+			phys_enc->hw_intf->ops.reset_counter(phys_enc->hw_intf);
 	}
 
 	phys_enc->enable_state = SDE_ENC_DISABLED;

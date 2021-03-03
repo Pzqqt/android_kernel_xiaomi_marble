@@ -146,6 +146,73 @@ void sde_encoder_uidle_enable(struct drm_encoder *drm_enc, bool enable)
 	}
 }
 
+ktime_t sde_encoder_calc_last_vsync_timestamp(struct drm_encoder *drm_enc)
+{
+	struct sde_encoder_virt *sde_enc;
+	struct sde_encoder_phys *cur_master;
+	u64 vsync_counter, qtmr_counter, hw_diff, hw_diff_ns, frametime_ns;
+	ktime_t tvblank, cur_time;
+	struct intf_status intf_status = {0};
+	u32 fps;
+
+	sde_enc = to_sde_encoder_virt(drm_enc);
+	cur_master = sde_enc->cur_master;
+	fps = sde_encoder_get_fps(drm_enc);
+
+	if (!cur_master || !cur_master->hw_intf || !fps
+		|| !cur_master->hw_intf->ops.get_vsync_timestamp
+		|| (!sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE)
+			&& !sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_VIDEO_MODE)))
+		return 0;
+
+	/*
+	 * avoid calculation and rely on ktime_get, if programmable fetch is enabled
+	 * as the HW VSYNC timestamp will be updated at panel vsync and not at MDP VSYNC
+	 */
+	if (cur_master->hw_intf->ops.get_status) {
+		cur_master->hw_intf->ops.get_status(cur_master->hw_intf, &intf_status);
+		if (intf_status.is_prog_fetch_en)
+			return 0;
+	}
+
+	vsync_counter = cur_master->hw_intf->ops.get_vsync_timestamp(cur_master->hw_intf);
+	qtmr_counter = arch_timer_read_counter();
+	cur_time = ktime_get_ns();
+
+	/* check for counter rollover between the two timestamps [56 bits] */
+	if (qtmr_counter < vsync_counter) {
+		hw_diff = (0xffffffffffffff - vsync_counter) + qtmr_counter;
+		SDE_EVT32(DRMID(drm_enc), vsync_counter >> 32, vsync_counter,
+				qtmr_counter >> 32, qtmr_counter, hw_diff,
+				fps, SDE_EVTLOG_FUNC_CASE1);
+	} else {
+		hw_diff = qtmr_counter - vsync_counter;
+	}
+
+	hw_diff_ns = DIV_ROUND_UP(hw_diff * 1000 * 10, 192); /* 19.2 MHz clock */
+	frametime_ns = DIV_ROUND_UP(1000000000, fps);
+
+	/* avoid setting timestamp, if diff is more than one vsync */
+	if (ktime_compare(hw_diff_ns, frametime_ns) > 0) {
+		tvblank = 0;
+		SDE_EVT32(DRMID(drm_enc), vsync_counter >> 32, vsync_counter,
+				qtmr_counter >> 32, qtmr_counter, ktime_to_us(hw_diff_ns),
+				fps, SDE_EVTLOG_ERROR);
+	} else {
+		tvblank = ktime_sub_ns(cur_time, hw_diff_ns);
+	}
+
+	SDE_DEBUG_ENC(sde_enc,
+			"vsync:%llu, qtmr:%llu, diff_ns:%llu, ts:%llu, cur_ts:%llu, fps:%d\n",
+			vsync_counter, qtmr_counter, ktime_to_us(hw_diff_ns),
+			ktime_to_us(tvblank), ktime_to_us(cur_time), fps);
+
+	SDE_EVT32_VERBOSE(DRMID(drm_enc), hw_diff >> 32, hw_diff, ktime_to_us(hw_diff_ns),
+			ktime_to_us(tvblank), ktime_to_us(cur_time), fps, SDE_EVTLOG_FUNC_CASE2);
+
+	return tvblank;
+}
+
 static void _sde_encoder_pm_qos_add_request(struct drm_encoder *drm_enc)
 {
 	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
@@ -3066,6 +3133,7 @@ static void sde_encoder_vblank_callback(struct drm_encoder *drm_enc,
 {
 	struct sde_encoder_virt *sde_enc = NULL;
 	unsigned long lock_flags;
+	ktime_t ts = 0;
 
 	if (!drm_enc || !phy_enc)
 		return;
@@ -3073,16 +3141,26 @@ static void sde_encoder_vblank_callback(struct drm_encoder *drm_enc,
 	SDE_ATRACE_BEGIN("encoder_vblank_callback");
 	sde_enc = to_sde_encoder_virt(drm_enc);
 
+	/*
+	 * calculate accurate vsync timestamp when available
+	 * set current time otherwise
+	 */
+	if (phy_enc->sde_kms && phy_enc->sde_kms->catalog->has_precise_vsync_ts)
+		ts = sde_encoder_calc_last_vsync_timestamp(drm_enc);
+	if (!ts)
+		ts = ktime_get();
+
 	spin_lock_irqsave(&sde_enc->enc_spinlock, lock_flags);
+	phy_enc->last_vsync_timestamp = ts;
+	atomic_inc(&phy_enc->vsync_cnt);
 	if (sde_enc->crtc_vblank_cb)
-		sde_enc->crtc_vblank_cb(sde_enc->crtc_vblank_cb_data);
+		sde_enc->crtc_vblank_cb(sde_enc->crtc_vblank_cb_data, ts);
 	spin_unlock_irqrestore(&sde_enc->enc_spinlock, lock_flags);
 
 	if (phy_enc->sde_kms &&
 			phy_enc->sde_kms->catalog->uidle_cfg.debugfs_perf)
 		sde_encoder_perf_uidle_status(phy_enc->sde_kms, sde_enc->crtc);
 
-	atomic_inc(&phy_enc->vsync_cnt);
 	SDE_ATRACE_END("encoder_vblank_callback");
 }
 
@@ -3111,7 +3189,7 @@ static void sde_encoder_underrun_callback(struct drm_encoder *drm_enc,
 }
 
 void sde_encoder_register_vblank_callback(struct drm_encoder *drm_enc,
-		void (*vbl_cb)(void *), void *vbl_data)
+		void (*vbl_cb)(void *, ktime_t), void *vbl_data)
 {
 	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
 	unsigned long lock_flags;
@@ -3147,7 +3225,7 @@ void sde_encoder_register_vblank_callback(struct drm_encoder *drm_enc,
 }
 
 void sde_encoder_register_frame_event_callback(struct drm_encoder *drm_enc,
-			void (*frame_event_cb)(void *, u32 event),
+			void (*frame_event_cb)(void *, u32 event, ktime_t ts),
 			struct drm_crtc *crtc)
 {
 	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
@@ -3174,14 +3252,16 @@ static void sde_encoder_frame_done_callback(
 		struct sde_encoder_phys *ready_phys, u32 event)
 {
 	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
+	struct sde_kms *sde_kms = sde_encoder_get_kms(&sde_enc->base);
 	unsigned int i;
 	bool trigger = true;
 	bool is_cmd_mode = false;
 	enum sde_rm_topology_name topology = SDE_RM_TOPOLOGY_NONE;
+	ktime_t ts = 0;
 
-	if (!drm_enc || !sde_enc->cur_master) {
-		SDE_ERROR("invalid param: drm_enc %pK, cur_master %pK\n",
-				drm_enc, drm_enc ? sde_enc->cur_master : 0);
+	if (!sde_kms || !sde_enc->cur_master) {
+		SDE_ERROR("invalid param: sde_kms %pK, cur_master %pK\n",
+				sde_kms, sde_enc->cur_master);
 		return;
 	}
 
@@ -3189,6 +3269,19 @@ static void sde_encoder_frame_done_callback(
 				sde_enc->cur_master->connector;
 	if (sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE))
 		is_cmd_mode = true;
+
+	/* get precise vsync timestamp for retire fence, if precise vsync timestamp is enabled */
+	if (sde_kms->catalog->has_precise_vsync_ts
+	    && (event & SDE_ENCODER_FRAME_EVENT_SIGNAL_RETIRE_FENCE)
+	    && (!(event & (SDE_ENCODER_FRAME_EVENT_ERROR | SDE_ENCODER_FRAME_EVENT_PANEL_DEAD))))
+		ts = sde_encoder_calc_last_vsync_timestamp(drm_enc);
+
+	/*
+	 * get current ktime for other events and when precise timestamp is not
+	 * available for retire-fence
+	 */
+	if (!ts)
+		ts = ktime_get();
 
 	if (event & (SDE_ENCODER_FRAME_EVENT_DONE
 			| SDE_ENCODER_FRAME_EVENT_ERROR
@@ -3223,15 +3316,13 @@ static void sde_encoder_frame_done_callback(
 		if (trigger) {
 			if (sde_enc->crtc_frame_event_cb)
 				sde_enc->crtc_frame_event_cb(
-					&sde_enc->crtc_frame_event_cb_data,
-					event);
+					&sde_enc->crtc_frame_event_cb_data, event, ts);
 			for (i = 0; i < sde_enc->num_phys_encs; i++)
 				atomic_add_unless(&sde_enc->frame_done_cnt[i],
 						-1, 0);
 		}
 	} else if (sde_enc->crtc_frame_event_cb) {
-		sde_enc->crtc_frame_event_cb(
-				&sde_enc->crtc_frame_event_cb_data, event);
+		sde_enc->crtc_frame_event_cb(&sde_enc->crtc_frame_event_cb_data, event, ts);
 	}
 }
 
@@ -5140,6 +5231,43 @@ enum sde_intf_mode sde_encoder_get_intf_mode(struct drm_encoder *encoder)
 	}
 
 	return INTF_MODE_NONE;
+}
+
+u32 sde_encoder_get_frame_count(struct drm_encoder *encoder)
+{
+	struct sde_encoder_virt *sde_enc = NULL;
+	struct sde_encoder_phys *phys;
+
+	if (!encoder) {
+		SDE_ERROR("invalid encoder\n");
+		return 0;
+	}
+	sde_enc = to_sde_encoder_virt(encoder);
+
+	phys = sde_enc->cur_master;
+
+	return phys ? atomic_read(&phys->vsync_cnt) : 0;
+}
+
+bool sde_encoder_get_vblank_timestamp(struct drm_encoder *encoder,
+		ktime_t *tvblank)
+{
+	struct sde_encoder_virt *sde_enc = NULL;
+	struct sde_encoder_phys *phys;
+
+	if (!encoder) {
+		SDE_ERROR("invalid encoder\n");
+		return false;
+	}
+	sde_enc = to_sde_encoder_virt(encoder);
+
+	phys = sde_enc->cur_master;
+	if (!phys)
+		return false;
+
+	*tvblank = phys->last_vsync_timestamp;
+
+	return *tvblank ? true : false;
 }
 
 static void _sde_encoder_cache_hw_res_cont_splash(
