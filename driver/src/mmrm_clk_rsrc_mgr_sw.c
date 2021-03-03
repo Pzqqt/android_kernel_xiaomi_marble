@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 #include <linux/slab.h>
 #include <dt-bindings/regulator/qcom,rpmh-regulator-levels.h>
@@ -119,11 +119,17 @@ static int mmrm_sw_clk_client_deregister(struct mmrm_clk_mgr *sw_clk_mgr,
 	d_mpr_h("%s: entering\n", __func__);
 
 	/* validate the client ptr */
-	if (!client || client->client_uid >= sinfo->tot_clk_clients) {
+	if (!client) {
+		d_mpr_e("%s: invalid client\n");
+		rc = -EINVAL;
+		goto err_invalid_client;
+	}
+
+	if (client->client_uid >= sinfo->tot_clk_clients) {
 		d_mpr_e("%s: invalid client uid (%d)\n",
 			__func__, client->client_uid);
 		rc = -EINVAL;
-		goto err_not_valid_client;
+		goto err_invalid_client;
 	}
 
 	mutex_lock(&sw_clk_mgr->lock);
@@ -141,7 +147,7 @@ static int mmrm_sw_clk_client_deregister(struct mmrm_clk_mgr *sw_clk_mgr,
 	d_mpr_h("%s: exiting with success\n", __func__);
 	return rc;
 
-err_not_valid_client:
+err_invalid_client:
 	d_mpr_h("%s: error exit\n", __func__);
 	return rc;
 }
@@ -353,7 +359,13 @@ static int mmrm_sw_clk_client_setval(struct mmrm_clk_mgr *sw_clk_mgr,
 	d_mpr_h("%s: entering\n", __func__);
 
 	/* validate input params */
-	if (!client || client->client_uid >= sinfo->tot_clk_clients) {
+	if (!client) {
+		d_mpr_e("%s: invalid client\n");
+		rc = -EINVAL;
+		goto err_invalid_client;
+	}
+
+	if (client->client_uid >= sinfo->tot_clk_clients) {
 		d_mpr_e("%s: invalid client uid (%d)\n",
 			__func__, client->client_uid);
 		rc = -EINVAL;
@@ -492,7 +504,13 @@ static int mmrm_sw_clk_client_getval(struct mmrm_clk_mgr *sw_clk_mgr,
 	d_mpr_h("%s: entering\n", __func__);
 
 	/* validate input params */
-	if (!client || client->client_uid >= sinfo->tot_clk_clients) {
+	if (!client) {
+		d_mpr_e("%s: invalid client\n");
+		rc = -EINVAL;
+		goto err_invalid_client;
+	}
+
+	if (client->client_uid >= sinfo->tot_clk_clients) {
 		d_mpr_e("%s: invalid client uid (%d)\n",
 			__func__, client->client_uid);
 		rc = -EINVAL;

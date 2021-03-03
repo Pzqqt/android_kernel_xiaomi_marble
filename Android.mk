@@ -1,4 +1,4 @@
-MMRM_BLD_DIR := $(shell pwd)/vendor/qcom/opensource/mmrm
+MMRM_BLD_DIR := $(shell pwd)/vendor/qcom/opensource/mmrm-driver
 
 # Build msm-mmrm.ko
 ###########################################################
