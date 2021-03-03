@@ -1683,6 +1683,26 @@ int hdd_update_regulatory_config(struct hdd_context *hdd_ctx)
 	return 0;
 }
 
+int hdd_init_regulatory_update_event(struct hdd_context *hdd_ctx)
+{
+	QDF_STATUS status;
+
+	status = qdf_event_create(&hdd_ctx->regulatory_update_event);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to create regulatory update event");
+		goto failure;
+	}
+	status = qdf_mutex_create(&hdd_ctx->regulatory_status_lock);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to create regulatory status mutex");
+		goto failure;
+	}
+	hdd_ctx->is_regulatory_update_in_progress = false;
+
+failure:
+	return qdf_status_to_os_return(status);
+}
+
 int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy)
 {
 	bool offload_enabled;
@@ -1700,10 +1720,6 @@ int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy)
 	ucfg_reg_register_chan_change_callback(hdd_ctx->psoc,
 					       hdd_regulatory_dyn_cbk,
 					       NULL);
-
-	qdf_event_create(&hdd_ctx->regulatory_update_event);
-	qdf_mutex_create(&hdd_ctx->regulatory_status_lock);
-	hdd_ctx->is_regulatory_update_in_progress = false;
 
 	wiphy->regulatory_flags |= REGULATORY_WIPHY_SELF_MANAGED;
 	/* Check the kernel version for upstream commit aced43ce780dc5 that
@@ -1762,12 +1778,22 @@ int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy)
 }
 #endif
 
+void hdd_deinit_regulatory_update_event(struct hdd_context *hdd_ctx)
+{
+	QDF_STATUS status;
+
+	status = qdf_event_destroy(&hdd_ctx->regulatory_update_event);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to destroy regulatory update event");
+	status = qdf_mutex_destroy(&hdd_ctx->regulatory_status_lock);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to destroy regulatory status mutex");
+}
+
 void hdd_regulatory_deinit(struct hdd_context *hdd_ctx)
 {
 	qdf_flush_work(&hdd_ctx->country_change_work);
 	qdf_destroy_work(0, &hdd_ctx->country_change_work);
-	qdf_event_destroy(&hdd_ctx->regulatory_update_event);
-	qdf_mutex_destroy(&hdd_ctx->regulatory_status_lock);
 }
 
 void hdd_update_regdb_offload_config(struct hdd_context *hdd_ctx)

@@ -41,6 +41,22 @@ struct hdd_context;
  */
 int hdd_update_regulatory_config(struct hdd_context *hdd_ctx);
 
+/**
+ * hdd_init_regulatory_update_event() - Initialize the regulatory update event
+ * @hdd_ctx: HDD context
+ *
+ * Return: 0 on success, err on failure
+ */
+int hdd_init_regulatory_update_event(struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_deinit_regulatory_update_event() - Cleanup the regulatory update event
+ * @hdd_ctx: HDD context
+ *
+ * Return: none
+ */
+void hdd_deinit_regulatory_update_event(struct hdd_context *hdd_ctx);
+
 int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy);
 
 /**
