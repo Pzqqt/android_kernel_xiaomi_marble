@@ -8222,7 +8222,6 @@ QDF_STATUS sme_set_auto_shutdown_timer(mac_handle_t mac_handle,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct auto_shutdown_cmd *auto_sh_cmd;
 	struct scheduler_msg message = {0};
 
