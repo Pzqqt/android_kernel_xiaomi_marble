@@ -1501,12 +1501,17 @@ static int sde_connector_atomic_set_property(struct drm_connector *connector,
 		 * requesting for the retire fence
 		 */
 		if (prev_user_fd == -1) {
+			uint32_t offset;
+
+			offset = sde_connector_get_property(state,
+					CONN_PROP_RETIRE_FENCE_OFFSET);
 			/*
 			 * update the offset to a timeline for
 			 * commit completion
 			 */
+			offset++;
 			rc = sde_fence_create(c_conn->retire_fence,
-						&fence_user_fd, 1);
+						&fence_user_fd, offset);
 			if (rc) {
 				SDE_ERROR("fence create failed rc:%d\n", rc);
 				goto end;
@@ -2796,6 +2801,10 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 
 	msm_property_install_volatile_range(&c_conn->property_info,
 		"RETIRE_FENCE", 0x0, 0, ~0, 0, CONNECTOR_PROP_RETIRE_FENCE);
+
+	msm_property_install_volatile_range(&c_conn->property_info,
+		"RETIRE_FENCE_OFFSET", 0x0, 0, ~0, 0,
+		 CONN_PROP_RETIRE_FENCE_OFFSET);
 
 	msm_property_install_range(&c_conn->property_info, "autorefresh",
 			0x0, 0, AUTOREFRESH_MAX_FRAME_CNT, 0,
