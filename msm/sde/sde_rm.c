@@ -101,6 +101,22 @@ static const struct sde_rm_topology_def g_top_table_v1[SDE_RM_TOPOLOGY_MAX] = {
 			MSM_DISPLAY_COMPRESSION_DSC },
 };
 
+char sde_hw_blk_str[SDE_HW_BLK_MAX][SDE_HW_BLK_NAME_LEN] = {
+	"top",
+	"sspp",
+	"lm",
+	"dspp",
+	"ds",
+	"ctl",
+	"cdm",
+	"pingpong",
+	"intf",
+	"wb",
+	"dsc",
+	"vdc",
+	"merge_3d",
+	"qdss",
+};
 
 /**
  * struct sde_rm_requirements - Reservation requirements parameter bundle
@@ -723,6 +739,54 @@ static int _sde_rm_hw_blk_create_new(struct sde_rm *rm,
 fail:
 	return rc;
 }
+
+#ifdef CONFIG_DEBUG_FS
+static int _sde_rm_status_show(struct seq_file *s, void *data)
+{
+	struct sde_rm *rm;
+	struct sde_rm_hw_blk *blk;
+	u32 type, allocated, unallocated;
+
+	if (!s || !s->private)
+		return -EINVAL;
+
+	rm = s->private;
+	for (type = SDE_HW_BLK_LM; type < SDE_HW_BLK_MAX; type++) {
+		allocated = 0;
+		unallocated = 0;
+		list_for_each_entry(blk, &rm->hw_blks[type], list) {
+			if (!blk->rsvp && !blk->rsvp_nxt)
+				unallocated++;
+			else
+				allocated++;
+		}
+		seq_printf(s, "type:%d blk:%s allocated:%d unallocated:%d\n",
+			type, sde_hw_blk_str[type], allocated, unallocated);
+	}
+
+	return 0;
+}
+
+static int _sde_rm_debugfs_status_open(struct inode *inode,
+		struct file *file)
+{
+	return single_open(file, _sde_rm_status_show, inode->i_private);
+}
+
+void sde_rm_debugfs_init(struct sde_rm *sde_rm, struct dentry *parent)
+{
+	static const struct file_operations debugfs_rm_status_fops = {
+		.open =		_sde_rm_debugfs_status_open,
+		.read =		seq_read,
+	};
+
+	debugfs_create_file("rm_status", 0400, parent, sde_rm, &debugfs_rm_status_fops);
+}
+#else
+void sde_rm_debugfs_init(struct sde_rm *rm, struct dentry *parent)
+{
+}
+#endif
 
 int sde_rm_init(struct sde_rm *rm,
 		struct sde_mdss_cfg *cat,
