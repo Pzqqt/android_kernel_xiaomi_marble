@@ -784,6 +784,7 @@ QDF_STATUS dp_ipa_set_doorbell_paddr(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 			soc->reo_dest_ring[IPA_REO_DEST_RING_IDX].hal_srng;
 	uint32_t tx_comp_doorbell_dmaaddr;
 	uint32_t rx_ready_doorbell_dmaaddr;
+	int ret = 0;
 
 	if (!pdev) {
 		dp_err("Invalid instance");
@@ -802,13 +803,19 @@ QDF_STATUS dp_ipa_set_doorbell_paddr(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 				ioremap(ipa_res->tx_comp_doorbell_paddr, 4);
 
 	if (qdf_mem_smmu_s1_enabled(soc->osdev)) {
-		pld_smmu_map(soc->osdev->dev, ipa_res->tx_comp_doorbell_paddr,
-			     &tx_comp_doorbell_dmaaddr, sizeof(uint32_t));
+		ret = pld_smmu_map(soc->osdev->dev,
+				   ipa_res->tx_comp_doorbell_paddr,
+				   &tx_comp_doorbell_dmaaddr,
+				   sizeof(uint32_t));
 		ipa_res->tx_comp_doorbell_paddr = tx_comp_doorbell_dmaaddr;
+		qdf_assert_always(!ret);
 
-		pld_smmu_map(soc->osdev->dev, ipa_res->rx_ready_doorbell_paddr,
-			     &rx_ready_doorbell_dmaaddr, sizeof(uint32_t));
+		ret = pld_smmu_map(soc->osdev->dev,
+				   ipa_res->rx_ready_doorbell_paddr,
+				   &rx_ready_doorbell_dmaaddr,
+				   sizeof(uint32_t));
 		ipa_res->rx_ready_doorbell_paddr = rx_ready_doorbell_dmaaddr;
+		qdf_assert_always(!ret);
 	}
 
 	DP_IPA_SET_TX_DB_PADDR(soc, ipa_res);
@@ -1733,14 +1740,12 @@ QDF_STATUS dp_ipa_cleanup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 		ret = pld_smmu_unmap(soc->osdev->dev,
 				     ipa_res->rx_ready_doorbell_paddr,
 				     sizeof(uint32_t));
-		if (ret)
-			dp_err_rl("IPA RX DB smmu unmap failed");
+		qdf_assert_always(!ret);
 
 		ret = pld_smmu_unmap(soc->osdev->dev,
 				     ipa_res->tx_comp_doorbell_paddr,
 				     sizeof(uint32_t));
-		if (ret)
-			dp_err_rl("IPA TX DB smmu unmap failed");
+		qdf_assert_always(!ret);
 	}
 
 exit:
