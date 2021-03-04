@@ -545,6 +545,12 @@ int rmnet_frag_flow_command(struct rmnet_frag_descriptor *frag_desc,
 	if (!cmd)
 		return -1;
 
+	/* Silently discard any marksers recived over the LL channel */
+	if (frag_desc->priority == 0xda1a &&
+	    (cmd->command_name == RMNET_MAP_COMMAND_FLOW_START ||
+	     cmd->command_name == RMNET_MAP_COMMAND_FLOW_END))
+		return 0;
+
 	switch (cmd->command_name) {
 	case RMNET_MAP_COMMAND_FLOW_START:
 		rmnet_frag_process_flow_start(frag_desc, cmd, port, pkt_len);

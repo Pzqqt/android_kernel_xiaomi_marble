@@ -243,6 +243,16 @@ int rmnet_map_flow_command(struct sk_buff *skb, struct rmnet_port *port,
 	cmd = rmnet_map_get_cmd_start(skb);
 	command_name = cmd->command_name;
 
+	/* Silently discard any markers on the LL channel */
+	if (skb->priority == 0xda1a &&
+	    (command_name == RMNET_MAP_COMMAND_FLOW_START ||
+	     command_name == RMNET_MAP_COMMAND_FLOW_END)) {
+		if (!rmnet_perf)
+			consume_skb(skb);
+
+		return 0;
+	}
+
 	switch (command_name) {
 	case RMNET_MAP_COMMAND_FLOW_START:
 		rmnet_map_process_flow_start(skb, port, rmnet_perf);
