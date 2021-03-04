@@ -3054,6 +3054,14 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		hdd_debug("waiting for channel list to update");
 		qdf_wait_for_event_completion(&hdd_ctx->regulatory_update_event,
 					      CHANNEL_LIST_UPDATE_TIMEOUT);
+		/* In case of set country failure in FW, response never comes
+		 * so wait the full timeout, then set in_progress to false.
+		 * If the response comes back, in_progress will already be set
+		 * to false anyways.
+		 */
+		qdf_mutex_acquire(&hdd_ctx->regulatory_status_lock);
+		hdd_ctx->is_regulatory_update_in_progress = false;
+		qdf_mutex_release(&hdd_ctx->regulatory_status_lock);
 	} else {
 		qdf_mutex_release(&hdd_ctx->regulatory_status_lock);
 	}
@@ -20670,6 +20678,14 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 		hdd_debug("waiting for channel list to update");
 		qdf_wait_for_event_completion(&hdd_ctx->regulatory_update_event,
 					      CHANNEL_LIST_UPDATE_TIMEOUT);
+		/* In case of set country failure in FW, response never comes
+		 * so wait the full timeout, then set in_progress to false.
+		 * If the response comes back, in_progress will already be set
+		 * to false anyways.
+		 */
+		qdf_mutex_acquire(&hdd_ctx->regulatory_status_lock);
+		hdd_ctx->is_regulatory_update_in_progress = false;
+		qdf_mutex_release(&hdd_ctx->regulatory_status_lock);
 	} else {
 		qdf_mutex_release(&hdd_ctx->regulatory_status_lock);
 	}
