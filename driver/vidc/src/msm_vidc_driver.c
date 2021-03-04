@@ -3298,6 +3298,26 @@ void inst_unlock(struct msm_vidc_inst *inst, const char *function)
 	mutex_unlock(&inst->lock);
 }
 
+int msm_vidc_update_bitstream_buffer_size(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_core *core;
+	struct v4l2_format *fmt;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+
+	if (is_decode_session(inst)) {
+		fmt = &inst->fmts[INPUT_PORT];
+		fmt->fmt.pix_mp.plane_fmt[0].sizeimage = call_session_op(core,
+			buffer_size, inst, MSM_VIDC_BUF_INPUT);
+	}
+
+	return 0;
+}
+
 int msm_vidc_update_meta_port_settings(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_core *core;
