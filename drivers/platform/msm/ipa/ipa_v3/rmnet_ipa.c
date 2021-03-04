@@ -1700,6 +1700,7 @@ static int handle3_egress_format(struct net_device *dev,
 		ipa_wan_ep_cfg->ipa_ep_cfg.aggr.aggr = IPA_QCMAP;
 
 		ipa_wan_ep_cfg->ipa_ep_cfg.deaggr.packet_offset_valid = false;
+		ipa_wan_ep_cfg->ipa_ep_cfg.deaggr.syspipe_err_detection = true;
 
 		ipa_wan_ep_cfg->ipa_ep_cfg.hdr.hdr_ofst_pkt_size = 2;
 
