@@ -211,7 +211,7 @@ QDF_STATUS reg_set_country(struct wlan_objmgr_pdev *pdev,
 		if (psoc_reg->cc_src == SOURCE_USERSPACE ||
 		    psoc_reg->cc_src == SOURCE_CORE) {
 			reg_debug("country is not different");
-			return QDF_STATUS_SUCCESS;
+			return QDF_STATUS_E_INVAL;
 		}
 	}
 
