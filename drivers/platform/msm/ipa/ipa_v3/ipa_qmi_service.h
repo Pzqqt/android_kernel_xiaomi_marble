@@ -22,7 +22,11 @@
 #define MAX_NUM_QMI_RULE_CACHE 10
 #define MAX_NUM_QMI_MPM_AGGR_CACHE 3
 #define DEV_NAME "ipa-wan"
+#if IS_ENABLED(CONFIG_QCOM_Q6V5_PAS)
+#define SUBSYS_LOCAL_MODEM "mpss"
+#else
 #define SUBSYS_LOCAL_MODEM "modem"
+#endif
 #define SUBSYS_REMOTE_MODEM "esoc0"
 
 
