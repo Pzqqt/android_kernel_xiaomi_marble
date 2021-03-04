@@ -16559,6 +16559,7 @@ typedef enum wake_reason_e {
     WOW_REASON_GENERIC_WAKE, /* A generic reason that host should be woken up */
     WOW_REASON_ERR_PKT_TRIGGERED_WAKEUP,
     WOW_REASON_TWT,
+    WOW_REASON_FATAL_EVENT_WAKE,
 
     /* add new WOW_REASON_ defs before this line */
     WOW_REASON_MAX,
