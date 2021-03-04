@@ -3174,211 +3174,6 @@ csr_roam_get_qos_info_from_bss(struct mac_context *mac,
 	return status;
 }
 
-static void csr_reset_cfg_privacy(struct mac_context *mac)
-{
-	uint8_t Key0[WLAN_CRYPTO_KEY_WEP104_LEN] = {0};
-	uint8_t Key1[WLAN_CRYPTO_KEY_WEP104_LEN] = {0};
-	uint8_t Key2[WLAN_CRYPTO_KEY_WEP104_LEN] = {0};
-	uint8_t Key3[WLAN_CRYPTO_KEY_WEP104_LEN] = {0};
-	struct wlan_mlme_wep_cfg *wep_params = &mac->mlme_cfg->wep_params;
-
-	mlme_set_wep_key(wep_params, MLME_WEP_DEFAULT_KEY_1, Key0,
-			 WLAN_CRYPTO_KEY_WEP104_LEN);
-	mlme_set_wep_key(wep_params, MLME_WEP_DEFAULT_KEY_2, Key1,
-			 WLAN_CRYPTO_KEY_WEP104_LEN);
-	mlme_set_wep_key(wep_params, MLME_WEP_DEFAULT_KEY_3, Key2,
-			 WLAN_CRYPTO_KEY_WEP104_LEN);
-	mlme_set_wep_key(wep_params, MLME_WEP_DEFAULT_KEY_4, Key3,
-			 WLAN_CRYPTO_KEY_WEP104_LEN);
-}
-
-void csr_set_cfg_privacy(struct mac_context *mac, struct csr_roam_profile *pProfile,
-			 bool fPrivacy)
-{
-	/*
-	 * the only difference between this function and
-	 * the csr_set_cfg_privacyFromProfile() is the setting of the privacy
-	 * CFG based on the advertised privacy setting from the AP for WPA
-	 * associations. See note below in this function...
-	 */
-	uint32_t privacy_enabled = 0, rsn_enabled = 0, wep_default_key_id = 0;
-	uint32_t WepKeyLength = WLAN_CRYPTO_KEY_WEP40_LEN;
-	uint32_t Key0Length = 0, Key1Length = 0, Key2Length = 0, Key3Length = 0;
-
-	/* Reserve for the biggest key */
-	uint8_t Key0[WLAN_CRYPTO_KEY_WEP104_LEN];
-	uint8_t Key1[WLAN_CRYPTO_KEY_WEP104_LEN];
-	uint8_t Key2[WLAN_CRYPTO_KEY_WEP104_LEN];
-	uint8_t Key3[WLAN_CRYPTO_KEY_WEP104_LEN];
-
-	struct wlan_mlme_wep_cfg *wep_params = &mac->mlme_cfg->wep_params;
-
-	switch (pProfile->negotiatedUCEncryptionType) {
-	case eCSR_ENCRYPT_TYPE_NONE:
-		/* for NO encryption, turn off Privacy and Rsn. */
-		privacy_enabled = 0;
-		rsn_enabled = 0;
-		/* clear out the WEP keys that may be hanging around. */
-		Key0Length = 0;
-		Key1Length = 0;
-		Key2Length = 0;
-		Key3Length = 0;
-		break;
-
-	case eCSR_ENCRYPT_TYPE_WEP40_STATICKEY:
-	case eCSR_ENCRYPT_TYPE_WEP40:
-
-		/* Privacy is ON.  NO RSN for Wep40 static key. */
-		privacy_enabled = 1;
-		rsn_enabled = 0;
-		/* Set the Wep default key ID. */
-		wep_default_key_id = pProfile->Keys.defaultIndex;
-		/* Wep key size if 5 bytes (40 bits). */
-		WepKeyLength = WLAN_CRYPTO_KEY_WEP40_LEN;
-		/*
-		 * set encryption keys in the CFG database or
-		 * clear those that are not present in this profile.
-		 */
-		if (pProfile->Keys.KeyLength[0]) {
-			qdf_mem_copy(Key0,
-				pProfile->Keys.KeyMaterial[0],
-				WLAN_CRYPTO_KEY_WEP40_LEN);
-			Key0Length = WLAN_CRYPTO_KEY_WEP40_LEN;
-		} else {
-			Key0Length = 0;
-		}
-
-		if (pProfile->Keys.KeyLength[1]) {
-			qdf_mem_copy(Key1,
-				pProfile->Keys.KeyMaterial[1],
-				WLAN_CRYPTO_KEY_WEP40_LEN);
-			Key1Length = WLAN_CRYPTO_KEY_WEP40_LEN;
-		} else {
-			Key1Length = 0;
-		}
-
-		if (pProfile->Keys.KeyLength[2]) {
-			qdf_mem_copy(Key2,
-				pProfile->Keys.KeyMaterial[2],
-				WLAN_CRYPTO_KEY_WEP40_LEN);
-			Key2Length = WLAN_CRYPTO_KEY_WEP40_LEN;
-		} else {
-			Key2Length = 0;
-		}
-
-		if (pProfile->Keys.KeyLength[3]) {
-			qdf_mem_copy(Key3,
-				pProfile->Keys.KeyMaterial[3],
-				WLAN_CRYPTO_KEY_WEP40_LEN);
-			Key3Length = WLAN_CRYPTO_KEY_WEP40_LEN;
-		} else {
-			Key3Length = 0;
-		}
-		break;
-
-	case eCSR_ENCRYPT_TYPE_WEP104_STATICKEY:
-	case eCSR_ENCRYPT_TYPE_WEP104:
-
-		/* Privacy is ON.  NO RSN for Wep40 static key. */
-		privacy_enabled = 1;
-		rsn_enabled = 0;
-		/* Set the Wep default key ID. */
-		wep_default_key_id = pProfile->Keys.defaultIndex;
-		/* Wep key size if 13 bytes (104 bits). */
-		WepKeyLength = WLAN_CRYPTO_KEY_WEP104_LEN;
-		/*
-		 * set encryption keys in the CFG database or clear
-		 * those that are not present in this profile.
-		 */
-		if (pProfile->Keys.KeyLength[0]) {
-			qdf_mem_copy(Key0,
-				pProfile->Keys.KeyMaterial[0],
-				WLAN_CRYPTO_KEY_WEP104_LEN);
-			Key0Length = WLAN_CRYPTO_KEY_WEP104_LEN;
-		} else {
-			Key0Length = 0;
-		}
-
-		if (pProfile->Keys.KeyLength[1]) {
-			qdf_mem_copy(Key1,
-				pProfile->Keys.KeyMaterial[1],
-				WLAN_CRYPTO_KEY_WEP104_LEN);
-			Key1Length = WLAN_CRYPTO_KEY_WEP104_LEN;
-		} else {
-			Key1Length = 0;
-		}
-
-		if (pProfile->Keys.KeyLength[2]) {
-			qdf_mem_copy(Key2,
-				pProfile->Keys.KeyMaterial[2],
-				WLAN_CRYPTO_KEY_WEP104_LEN);
-			Key2Length = WLAN_CRYPTO_KEY_WEP104_LEN;
-		} else {
-			Key2Length = 0;
-		}
-
-		if (pProfile->Keys.KeyLength[3]) {
-			qdf_mem_copy(Key3,
-				pProfile->Keys.KeyMaterial[3],
-				WLAN_CRYPTO_KEY_WEP104_LEN);
-			Key3Length = WLAN_CRYPTO_KEY_WEP104_LEN;
-		} else {
-			Key3Length = 0;
-		}
-		break;
-
-	case eCSR_ENCRYPT_TYPE_TKIP:
-	case eCSR_ENCRYPT_TYPE_AES:
-	case eCSR_ENCRYPT_TYPE_AES_GCMP:
-	case eCSR_ENCRYPT_TYPE_AES_GCMP_256:
-#ifdef FEATURE_WLAN_WAPI
-	case eCSR_ENCRYPT_TYPE_WPI:
-#endif /* FEATURE_WLAN_WAPI */
-		/*
-		 * this is the only difference between this function and
-		 * the csr_set_cfg_privacyFromProfile().
-		 * (setting of the privacy CFG based on the advertised
-		 *  privacy setting from AP for WPA/WAPI associations).
-		 */
-		privacy_enabled = (0 != fPrivacy);
-		/* turn on RSN enabled for WPA associations */
-		rsn_enabled = 1;
-		/* clear static WEP keys that may be hanging around. */
-		Key0Length = 0;
-		Key1Length = 0;
-		Key2Length = 0;
-		Key3Length = 0;
-		break;
-	default:
-		privacy_enabled = 0;
-		rsn_enabled = 0;
-		break;
-	}
-
-	mac->mlme_cfg->wep_params.is_privacy_enabled = privacy_enabled;
-	mac->mlme_cfg->feature_flags.enable_rsn = rsn_enabled;
-	mlme_set_wep_key(wep_params, MLME_WEP_DEFAULT_KEY_1, Key0, Key0Length);
-	mlme_set_wep_key(wep_params, MLME_WEP_DEFAULT_KEY_2, Key1, Key1Length);
-	mlme_set_wep_key(wep_params, MLME_WEP_DEFAULT_KEY_3, Key2, Key2Length);
-	mlme_set_wep_key(wep_params, MLME_WEP_DEFAULT_KEY_4, Key3, Key3Length);
-	mac->mlme_cfg->wep_params.wep_default_key_id = wep_default_key_id;
-}
-
-static void csr_set_cfg_ssid(struct mac_context *mac, tSirMacSSid *pSSID)
-{
-	uint32_t len = 0;
-
-	if (pSSID->length <= WLAN_SSID_MAX_LEN)
-		len = pSSID->length;
-	else
-		len = WLAN_SSID_MAX_LEN;
-
-	qdf_mem_copy(mac->mlme_cfg->sap_cfg.cfg_ssid,
-		     (uint8_t *)pSSID->ssId, len);
-	mac->mlme_cfg->sap_cfg.cfg_ssid_len = len;
-
-}
-
 static QDF_STATUS csr_set_qos_to_cfg(struct mac_context *mac, uint32_t sessionId,
 				     eCsrMediaAccessType qosType)
 {
@@ -3418,75 +3213,6 @@ static QDF_STATUS csr_set_qos_to_cfg(struct mac_context *mac, uint32_t sessionId
 	/* save the WMM setting for later use */
 	mac->roam.roamSession[sessionId].fWMMConnection = (bool) WmeEnabled;
 	mac->roam.roamSession[sessionId].fQOSConnection = (bool) QoSEnabled;
-	return status;
-}
-
-static QDF_STATUS csr_get_rate_set(struct mac_context *mac,
-				   tDot11fBeaconIEs *pIes,
-				   tSirMacRateSet *pOpRateSet,
-				   tSirMacRateSet *pExRateSet)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	int i;
-	uint8_t *pDstRate;
-	uint16_t rateBitmap = 0;
-
-	qdf_mem_zero(pOpRateSet, sizeof(tSirMacRateSet));
-	qdf_mem_zero(pExRateSet, sizeof(tSirMacRateSet));
-	QDF_ASSERT(pIes);
-
-	if (!pIes) {
-		sme_err("failed to parse BssDesc");
-		return status;
-	}
-
-	/*
-	 * Originally, we thought that for 11a networks, the 11a rates
-	 * are always in the Operational Rate set & for 11b and 11g
-	 * networks, the 11b rates appear in the Operational Rate set.
-	 * Consequently, in either case, we would blindly put the rates
-	 * we support into our Operational Rate set.
-	 * (including the basic rates, which we've already verified are
-	 * supported earlier in the roaming decision).
-	 * However, it turns out that this is not always the case.
-	 * Some AP's (e.g. D-Link DI-784) ram 11g rates into the
-	 * Operational Rate set too.  Now, we're a little more careful.
-	 */
-	pDstRate = pOpRateSet->rate;
-	if (pIes->SuppRates.present) {
-		for (i = 0; i < pIes->SuppRates.num_rates; i++) {
-			if (csr_rates_is_dot11_rate_supported(mac,
-				pIes->SuppRates.rates[i]) &&
-				!csr_check_rate_bitmap(
-					pIes->SuppRates.rates[i],
-					rateBitmap)) {
-				csr_add_rate_bitmap(pIes->SuppRates.
-						    rates[i], &rateBitmap);
-				*pDstRate++ = pIes->SuppRates.rates[i];
-				pOpRateSet->numRates++;
-			}
-		}
-	}
-	/*
-	 * If there are Extended Rates in the beacon, we will reflect the
-	 * extended rates that we support in our Extended Operational Rate
-	 * set.
-	 */
-	if (pIes->ExtSuppRates.present) {
-		pDstRate = pExRateSet->rate;
-		for (i = 0; i < pIes->ExtSuppRates.num_rates; i++) {
-			if (csr_rates_is_dot11_rate_supported(mac,
-				pIes->ExtSuppRates.rates[i]) &&
-				!csr_check_rate_bitmap(
-					pIes->ExtSuppRates.rates[i],
-					rateBitmap)) {
-				*pDstRate++ = pIes->ExtSuppRates.rates[i];
-				pExRateSet->numRates++;
-			}
-		}
-	}
-	if (pOpRateSet->numRates > 0 || pExRateSet->numRates > 0)
-		status = QDF_STATUS_SUCCESS;
 	return status;
 }
 
@@ -3753,16 +3479,7 @@ QDF_STATUS csr_roam_set_bss_config_cfg(struct mac_context *mac, uint32_t session
 	}
 	/* Qos */
 	csr_set_qos_to_cfg(mac, sessionId, pBssConfig->qosType);
-	/* SSID */
-	csr_set_cfg_ssid(mac, &pBssConfig->SSID);
-
-	/* Auth type */
-	mac->mlme_cfg->wep_params.auth_type = pBssConfig->authType;
-
-	/* encryption type */
-	csr_set_cfg_privacy(mac, pProfile, (bool) pBssConfig->BssCap.privacy);
 	/* CB */
-
 	if (CSR_IS_INFRA_AP(pProfile))
 		chan_freq = pProfile->op_freq;
 	else if (bss_desc)
@@ -11808,9 +11525,6 @@ static bool csr_roam_is_same_profile_keys(struct mac_context *mac,
 			    (mac, &pProfile2->EncryptionType,
 			    pConnProfile->EncryptionType))
 			break;
-		if (pConnProfile->Keys.defaultIndex !=
-		    pProfile2->Keys.defaultIndex)
-			break;
 		for (i = 0; i < CSR_MAX_NUM_KEY; i++) {
 			if (pConnProfile->Keys.KeyLength[i] !=
 			    pProfile2->Keys.KeyLength[i])
@@ -11841,51 +11555,9 @@ static bool csr_roam_is_same_profile_keys(struct mac_context *mac,
  */
 static void
 csr_populate_basic_rates(tSirMacRateSet *rate_set, bool is_ofdm_rates,
-		bool is_basic_rates)
+			 bool is_basic_rates)
 {
-	int i = 0;
-	uint8_t ofdm_rates[8] = {
-		SIR_MAC_RATE_6,
-		SIR_MAC_RATE_9,
-		SIR_MAC_RATE_12,
-		SIR_MAC_RATE_18,
-		SIR_MAC_RATE_24,
-		SIR_MAC_RATE_36,
-		SIR_MAC_RATE_48,
-		SIR_MAC_RATE_54
-	};
-	uint8_t cck_rates[4] = {
-		SIR_MAC_RATE_1,
-		SIR_MAC_RATE_2,
-		SIR_MAC_RATE_5_5,
-		SIR_MAC_RATE_11
-	};
-
-	if (is_ofdm_rates == true) {
-		rate_set->numRates = 8;
-		qdf_mem_copy(rate_set->rate, ofdm_rates, sizeof(ofdm_rates));
-		if (is_basic_rates) {
-			rate_set->rate[0] |= CSR_DOT11_BASIC_RATE_MASK;
-			rate_set->rate[2] |= CSR_DOT11_BASIC_RATE_MASK;
-			rate_set->rate[4] |= CSR_DOT11_BASIC_RATE_MASK;
-		}
-		for (i = 0; i < rate_set->numRates; i++)
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			("Default OFDM rate is %2x"), rate_set->rate[i]);
-	} else {
-		rate_set->numRates = 4;
-		qdf_mem_copy(rate_set->rate, cck_rates, sizeof(cck_rates));
-		if (is_basic_rates) {
-			rate_set->rate[0] |= CSR_DOT11_BASIC_RATE_MASK;
-			rate_set->rate[1] |= CSR_DOT11_BASIC_RATE_MASK;
-			rate_set->rate[2] |= CSR_DOT11_BASIC_RATE_MASK;
-			rate_set->rate[3] |= CSR_DOT11_BASIC_RATE_MASK;
-		}
-		for (i = 0; i < rate_set->numRates; i++)
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			("Default CCK rate is %2x"), rate_set->rate[i]);
-
-	}
+	wlan_populate_basic_rates(rate_set, is_ofdm_rates, is_basic_rates);
 }
 
 /**
@@ -12587,8 +12259,6 @@ QDF_STATUS cm_csr_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 {
 	struct mac_context *mac_ctx;
 	uint8_t vdev_id = wlan_vdev_get_id(vdev);
-	tSirMacRateSet op_rate_set;
-	tSirMacRateSet ext_rate_set;
 	QDF_STATUS status;
 	tDot11fBeaconIEs *ie_struct;
 	struct bss_description *bss_desc;
@@ -12641,18 +12311,8 @@ QDF_STATUS cm_csr_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 	     !ie_struct->Country.present)
 		csr_apply_channel_power_info_wrapper(mac_ctx);
 
-	status = csr_get_rate_set(mac_ctx, ie_struct, &op_rate_set,
-				  &ext_rate_set);
 	qdf_mem_free(ie_struct);
 	qdf_mem_free(bss_desc);
-
-	if (QDF_IS_STATUS_ERROR(status)) {
-		sme_err("Rates parsing failed vdev id %d", vdev_id);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	mlme_set_opr_rate(vdev, op_rate_set.rate, op_rate_set.numRates);
-	mlme_set_ext_opr_rate(vdev, ext_rate_set.rate, ext_rate_set.numRates);
 
 	cm_csr_set_joining(vdev_id);
 
@@ -13131,19 +12791,6 @@ csr_validate_and_update_fils_info(struct mac_context *mac,
 }
 #endif
 
-static void csr_get_basic_rates(tSirMacRateSet *b_rates, uint32_t chan_freq)
-{
-	/*
-	 * Some IOT APs don't send supported rates in
-	 * probe resp, hence add BSS basic rates in
-	 * supported rates IE of assoc request.
-	 */
-	if (WLAN_REG_IS_24GHZ_CH_FREQ(chan_freq))
-		csr_populate_basic_rates(b_rates, false, true);
-	else if (WLAN_REG_IS_5GHZ_CH_FREQ(chan_freq))
-		csr_populate_basic_rates(b_rates, true, true);
-}
-
 static QDF_STATUS csr_copy_assoc_ie(struct mac_context *mac, uint8_t vdev_id,
 				    struct csr_roam_profile *profile,
 				    struct join_req *csr_join_req)
@@ -13245,10 +12892,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 	uint8_t acm_mask = 0, uapsd_mask;
 	uint32_t bss_freq;
 	uint16_t msgLen, ieLen;
-	tSirMacRateSet OpRateSet;
-	tSirMacRateSet ExRateSet;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
-	uint32_t dot11mode = 0;
 	uint8_t *wpaRsnIE = NULL;
 	struct join_req *csr_join_req;
 	tpCsrNeighborRoamControlInfo neigh_roam_info;
@@ -13349,60 +12993,15 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 				   pBssDescription->bssId,
 				   pProfile->negotiatedAuthType,
 				   pBssDescription->chan_freq);
-		/* dot11mode */
-		dot11mode =
-			csr_translate_to_wni_cfg_dot11_mode(mac,
-							    pSession->bssParams.
-							    uCfgDot11Mode);
 		akm = pProfile->negotiatedAuthType;
 		csr_join_req->akm = csr_convert_csr_to_ani_akm_type(akm);
 
-		csr_join_req->dot11mode = (uint8_t)dot11mode;
 		csr_join_req->wps_registration = pProfile->bWPSAssociation;
 		csr_join_req->force_24ghz_in_ht20 =
 			pProfile->force_24ghz_in_ht20;
 		src_config.uint_value = pProfile->uapsd_mask;
 		wlan_cm_roam_cfg_set_value(mac->psoc, sessionId, UAPSD_MASK,
 					   &src_config);
-		status =
-			csr_get_rate_set(mac, pIes, &OpRateSet,
-					 &ExRateSet);
-
-		if (QDF_IS_STATUS_SUCCESS(status)) {
-			/* OperationalRateSet */
-			if (OpRateSet.numRates) {
-				csr_join_req->operationalRateSet.numRates =
-					OpRateSet.numRates;
-				qdf_mem_copy(&csr_join_req->operationalRateSet.
-						rate, OpRateSet.rate,
-						OpRateSet.numRates);
-			} else if (pProfile->phyMode == eCSR_DOT11_MODE_AUTO) {
-				tSirMacRateSet b_rates = {0};
-
-				csr_get_basic_rates(&b_rates,
-						    pBssDescription->chan_freq);
-				csr_join_req->operationalRateSet = b_rates;
-			}
-			/* ExtendedRateSet */
-			if (ExRateSet.numRates) {
-				csr_join_req->extendedRateSet.numRates =
-					ExRateSet.numRates;
-				qdf_mem_copy(&csr_join_req->extendedRateSet.
-						rate, ExRateSet.rate,
-						ExRateSet.numRates);
-			} else {
-				csr_join_req->extendedRateSet.numRates = 0;
-			}
-		} else if (pProfile->phyMode == eCSR_DOT11_MODE_AUTO) {
-			tSirMacRateSet b_rates = {0};
-
-			csr_get_basic_rates(&b_rates,
-					    pBssDescription->chan_freq);
-			csr_join_req->operationalRateSet = b_rates;
-		} else {
-			csr_join_req->operationalRateSet.numRates = 0;
-			csr_join_req->extendedRateSet.numRates = 0;
-		}
 
 		/* rsnIE */
 		if (csr_is_profile_wpa(pProfile)) {
@@ -14463,7 +14062,6 @@ void csr_cleanup_vdev_session(struct mac_context *mac, uint8_t vdev_id)
 		sme_ft_close(MAC_HANDLE(mac), vdev_id);
 		csr_free_connect_bss_desc(mac, vdev_id);
 		sme_reset_key(MAC_HANDLE(mac), vdev_id);
-		csr_reset_cfg_privacy(mac);
 		csr_flush_roam_scan_chan_lists(mac, vdev_id);
 		csr_roam_free_connect_profile(&pSession->connectedProfile);
 		csr_roam_free_connected_info(mac, &pSession->connectedInfo);

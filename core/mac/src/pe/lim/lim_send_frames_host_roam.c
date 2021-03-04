@@ -134,7 +134,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 	qdf_mem_copy((uint8_t *)frm->CurrentAPAddress.mac,
 			pe_session->prev_ap_bssid, sizeof(tSirMacAddr));
 
-	populate_dot11f_ssid2(mac_ctx, &frm->SSID);
+	populate_dot11f_ssid2(pe_session, &frm->SSID);
 	populate_dot11f_supp_rates(mac_ctx, POPULATE_DOT11F_RATES_OPERATIONAL,
 		&frm->SuppRates, pe_session);
 
@@ -600,7 +600,7 @@ void lim_send_reassoc_req_mgmt_frame(struct mac_context *mac,
 	qdf_mem_copy((uint8_t *) frm->CurrentAPAddress.mac,
 		     (uint8_t *) pe_session->bssId, 6);
 
-	populate_dot11f_ssid2(mac, &frm->SSID);
+	populate_dot11f_ssid2(pe_session, &frm->SSID);
 	populate_dot11f_supp_rates(mac, POPULATE_DOT11F_RATES_OPERATIONAL,
 				   &frm->SuppRates, pe_session);
 

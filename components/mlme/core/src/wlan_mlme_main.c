@@ -1246,12 +1246,6 @@ static bool is_sae_sap_enabled(struct wlan_objmgr_psoc *psoc)
 static void mlme_init_sap_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_cfg_sap *sap_cfg)
 {
-	uint8_t *ssid;
-
-	ssid = cfg_default(CFG_SSID);
-	qdf_mem_zero(sap_cfg->cfg_ssid, WLAN_SSID_MAX_LEN);
-	sap_cfg->cfg_ssid_len = STR_SSID_DEFAULT_LEN;
-	qdf_mem_copy(sap_cfg->cfg_ssid, ssid, STR_SSID_DEFAULT_LEN);
 	sap_cfg->beacon_interval = cfg_get(psoc, CFG_BEACON_INTERVAL);
 	sap_cfg->dtim_interval = cfg_default(CFG_DTIM_PERIOD);
 	sap_cfg->listen_interval = cfg_default(CFG_LISTEN_INTERVAL);
@@ -1959,29 +1953,6 @@ static void mlme_init_nss_chains(struct wlan_objmgr_psoc *psoc,
 	nss_chains->enable_dynamic_nss_chains_cfg =
 			cfg_get(psoc, CFG_ENABLE_DYNAMIC_NSS_CHAIN_CONFIG);
 }
-static void mlme_init_wep_keys(struct wlan_mlme_wep_cfg *wep_params)
-{
-	/* initialize the default key values to zero */
-	wep_params->wep_default_key_1.len = WLAN_CRYPTO_KEY_WEP104_LEN;
-	wep_params->wep_default_key_1.max_len = WLAN_CRYPTO_KEY_WEP104_LEN;
-	qdf_mem_zero(wep_params->wep_default_key_1.data,
-		     WLAN_CRYPTO_KEY_WEP104_LEN);
-
-	wep_params->wep_default_key_2.len = WLAN_CRYPTO_KEY_WEP104_LEN;
-	wep_params->wep_default_key_2.max_len = WLAN_CRYPTO_KEY_WEP104_LEN;
-	qdf_mem_zero(wep_params->wep_default_key_2.data,
-		     WLAN_CRYPTO_KEY_WEP104_LEN);
-
-	wep_params->wep_default_key_3.len = WLAN_CRYPTO_KEY_WEP104_LEN;
-	wep_params->wep_default_key_3.max_len = WLAN_CRYPTO_KEY_WEP104_LEN;
-	qdf_mem_zero(wep_params->wep_default_key_3.data,
-		     WLAN_CRYPTO_KEY_WEP104_LEN);
-
-	wep_params->wep_default_key_4.len = WLAN_CRYPTO_KEY_WEP104_LEN;
-	wep_params->wep_default_key_4.max_len = WLAN_CRYPTO_KEY_WEP104_LEN;
-	qdf_mem_zero(wep_params->wep_default_key_4.data,
-		     WLAN_CRYPTO_KEY_WEP104_LEN);
-}
 
 static void mlme_init_wep_cfg(struct wlan_mlme_wep_cfg *wep_params)
 {
@@ -1993,7 +1964,6 @@ static void mlme_init_wep_cfg(struct wlan_mlme_wep_cfg *wep_params)
 			cfg_default(CFG_OPEN_SYSTEM_AUTH_ENABLE);
 
 	wep_params->wep_default_key_id = cfg_default(CFG_WEP_DEFAULT_KEYID);
-	mlme_init_wep_keys(wep_params);
 }
 
 static void mlme_init_wifi_pos_cfg(struct wlan_objmgr_psoc *psoc,

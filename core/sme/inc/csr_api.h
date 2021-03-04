@@ -577,7 +577,6 @@ typedef struct tagCsrKeys {
 	/* Also use to indicate whether the key index is set */
 	uint8_t KeyLength[CSR_MAX_NUM_KEY];
 	uint8_t KeyMaterial[CSR_MAX_NUM_KEY][CSR_MAX_KEY_LEN];
-	uint8_t defaultIndex;
 } tCsrKeys;
 
 /*

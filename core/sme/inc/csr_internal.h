@@ -803,10 +803,6 @@ uint8_t csr_construct_wapi_ie(struct mac_context *mac, uint32_t sessionId,
 		tDot11fBeaconIEs *pIes, tCsrWapiIe *pWapiIe);
 #endif /* FEATURE_WLAN_WAPI */
 
-void csr_set_cfg_privacy(struct mac_context *mac,
-			 struct csr_roam_profile *pProfile,
-			 bool fPrivacy);
-
 /**
  * csr_get_concurrent_operation_freq() - To get concurrent operating freq
  * @mac_ctx: Pointer to mac context

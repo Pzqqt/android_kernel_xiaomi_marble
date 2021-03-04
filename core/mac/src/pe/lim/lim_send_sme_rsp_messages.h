@@ -103,6 +103,7 @@ void lim_send_sme_join_reassoc_rsp(struct mac_context *mac_ctx,
  * @reason: reason of failure, valid only if status is failure
  * @connect_status: Indicates the staus of the req
  * @status_code: Protocol Status Code
+ * @is_reassoc: if reassoc resp
  *
  * Return: None
  */
@@ -111,7 +112,8 @@ void lim_cm_send_connect_rsp(struct mac_context *mac_ctx,
 			     struct cm_vdev_join_req *req,
 			     enum wlan_cm_connect_fail_reason reason,
 			     QDF_STATUS connect_status,
-			     enum wlan_status_code status_code);
+			     enum wlan_status_code status_code,
+			     bool is_reassoc);
 #endif
 
 /**

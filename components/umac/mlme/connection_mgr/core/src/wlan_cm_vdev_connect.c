@@ -1016,7 +1016,10 @@ QDF_STATUS wlan_cm_send_connect_rsp(struct scheduler_msg *msg)
 		}
 	}
 	cm_csr_connect_rsp(vdev, rsp);
-	status = wlan_cm_connect_rsp(vdev, &rsp->connect_rsp);
+	if (rsp->connect_rsp.is_reassoc)
+		status = wlan_cm_reassoc_rsp(vdev, &rsp->connect_rsp);
+	else
+		status = wlan_cm_connect_rsp(vdev, &rsp->connect_rsp);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 
 	wlan_cm_free_connect_rsp(rsp);

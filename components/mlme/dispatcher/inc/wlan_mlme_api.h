@@ -89,17 +89,6 @@ QDF_STATUS mlme_get_wep_key(struct wlan_objmgr_vdev *vdev,
 			    qdf_size_t *key_len);
 
 /**
- * mlme_set_wep_key() - set the wep keys during auth
- * @wep_params: cfg wep parametrs structure
- * @wep_key_id: default key number that needs to be copied
- * @key_to_set: destination buffer to be copied
- * @len:        size to be copied
- */
-QDF_STATUS mlme_set_wep_key(struct wlan_mlme_wep_cfg *wep_params,
-			    enum wep_key_id wep_keyid, uint8_t *key_to_set,
-			    qdf_size_t len);
-
-/**
  * wlan_mlme_get_tx_power() - Get the max tx power in particular band
  * @psoc: pointer to psoc object
  * @band: 2ghz/5ghz band

@@ -850,7 +850,7 @@ populate_dot11f_ssid(struct mac_context *mac,
 		tSirMacSSid *pInternal, tDot11fIESSID *pDot11f);
 
 /* / Populate a tDot11fIESSID from CFG */
-QDF_STATUS populate_dot11f_ssid2(struct mac_context *mac,
+QDF_STATUS populate_dot11f_ssid2(struct pe_session *pe_session,
 				tDot11fIESSID *pDot11f);
 
 /**
@@ -1275,6 +1275,9 @@ wlan_get_parsed_bss_description_ies(struct mac_context *mac_ctx,
 				    struct bss_description *bss_desc,
 				    tDot11fBeaconIEs **ie_struct);
 
+void wlan_populate_basic_rates(tSirMacRateSet *rate_set, bool is_ofdm_rates,
+			       bool is_basic_rates);
+
 uint32_t wlan_get_11h_power_constraint(struct mac_context *mac_ctx,
 				       tDot11fIEPowerConstraints *constraints);
 
@@ -1295,6 +1298,18 @@ wlan_fill_bss_desc_from_scan_entry(struct mac_context *mac_ctx,
  */
 uint16_t
 wlan_get_ielen_from_bss_description(struct bss_description *bss_desc);
+
+bool wlan_rates_is_dot11_rate_supported(struct mac_context *mac_ctx,
+					uint8_t rate);
+
+bool wlan_check_rate_bitmap(uint8_t rate, uint16_t rate_bitmap);
+
+QDF_STATUS wlan_get_rate_set(struct mac_context *mac,
+			     tDot11fBeaconIEs *ie_struct,
+			     tSirMacRateSet *op_rate,
+			     tSirMacRateSet *ext_rate);
+
+void wlan_add_rate_bitmap(uint8_t rate, uint16_t *rate_bitmap);
 
 /**
  * dot11f_parse_assoc_response() - API to parse Assoc IE buffer to struct

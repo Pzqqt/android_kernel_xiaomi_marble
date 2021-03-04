@@ -60,7 +60,7 @@
 #define CSR_DOT11_SUPPORTED_RATES_MAX (12)
 #define CSR_DOT11_EXTENDED_SUPPORTED_RATES_MAX (8)
 
-#define CSR_DOT11_BASIC_RATE_MASK (0x80)
+#define CSR_DOT11_BASIC_RATE_MASK    WLAN_DOT11_BASIC_RATE_MASK
 
 /* NOTE these index are use as array index for csr_rsn_oui */
 #define CSR_OUI_USE_GROUP_CIPHER_INDEX 0x00
@@ -83,47 +83,6 @@
 /* max idx, should be last & highest */
 #define CSR_OUI_WAPI_WAI_MAX_INDEX     0x03
 #endif /* FEATURE_WLAN_WAPI */
-
-typedef enum {
-	/* 11b rates */
-	eCsrSuppRate_1Mbps   = 1 * 2,
-	eCsrSuppRate_2Mbps   = 2 * 2,
-	eCsrSuppRate_5_5Mbps = 11,      /* 5.5 * 2 */
-	eCsrSuppRate_11Mbps  = 11 * 2,
-
-	/* 11a / 11g rates */
-	eCsrSuppRate_6Mbps   = 6 * 2,
-	eCsrSuppRate_9Mbps   = 9 * 2,
-	eCsrSuppRate_12Mbps  = 12 * 2,
-	eCsrSuppRate_18Mbps  = 18 * 2,
-	eCsrSuppRate_24Mbps  = 24 * 2,
-	eCsrSuppRate_36Mbps  = 36 * 2,
-	eCsrSuppRate_48Mbps  = 48 * 2,
-	eCsrSuppRate_54Mbps  = 54 * 2,
-
-	/* airgo proprietary rates */
-	eCsrSuppRate_10Mbps   = 10 * 2,
-	eCsrSuppRate_10_5Mbps = 21,     /* 10.5 * 2 */
-	eCsrSuppRate_20Mbps   = 20 * 2,
-	eCsrSuppRate_21Mbps   = 21 * 2,
-	eCsrSuppRate_40Mbps   = 40 * 2,
-	eCsrSuppRate_42Mbps   = 42 * 2,
-	eCsrSuppRate_60Mbps   = 60 * 2,
-	eCsrSuppRate_63Mbps   = 63 * 2,
-	eCsrSuppRate_72Mbps   = 72 * 2,
-	eCsrSuppRate_80Mbps   = 80 * 2,
-	eCsrSuppRate_84Mbps   = 84 * 2,
-	eCsrSuppRate_96Mbps   = 96 * 2,
-	eCsrSuppRate_108Mbps  = 108 * 2,
-	eCsrSuppRate_120Mbps  = 120 * 2,
-	eCsrSuppRate_126Mbps  = 126 * 2,
-	eCsrSuppRate_144Mbps  = 144 * 2,
-	eCsrSuppRate_160Mbps  = 160 * 2,
-	eCsrSuppRate_168Mbps  = 168 * 2,
-	eCsrSuppRate_192Mbps  = 192 * 2,
-	eCsrSuppRate_216Mbps  = 216 * 2,
-	eCsrSuppRate_240Mbps  = 240 * 2
-} eCsrSupportedRates;
 
 /* Generic Information Element Structure */
 typedef struct sDot11IEHeader {
@@ -294,8 +253,6 @@ tAniEdType csr_translate_encrypt_type_to_ed_type(
 
 bool csr_is_bssid_match(struct qdf_mac_addr *pProfBssid,
 			struct qdf_mac_addr *BssBssid);
-void csr_add_rate_bitmap(uint8_t rate, uint16_t *pRateBitmap);
-bool csr_check_rate_bitmap(uint8_t rate, uint16_t RateBitmap);
 bool csr_rates_is_dot11_rate_supported(struct mac_context *mac_ctx, uint8_t rate);
 enum bss_type csr_translate_bsstype_to_mac_type(eCsrRoamBssType csrtype);
 /* Caller allocates memory for pIEStruct */

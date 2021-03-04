@@ -160,80 +160,6 @@ uint8_t csr_group_mgmt_oui[][CSR_RSN_OUI_SIZE] = {
 	{0x00, 0x0F, 0xAC, 0x0C},
 };
 
-
-/* ////////////////////////////////////////////////////////////////////// */
-
-/**
- * \var g_phy_rates_suppt
- *
- * \brief Rate support lookup table
- *
- *
- * This is a  lookup table indexing rates &  configuration parameters to
- * support.  Given a rate (in  unites of 0.5Mpbs) & three bools (MIMO
- * Enabled, Channel  Bonding Enabled, & Concatenation  Enabled), one can
- * determine  whether  the given  rate  is  supported  by computing  two
- * indices.  The  first maps  the rate to  table row as  indicated below
- * (i.e. eHddSuppRate_6Mbps maps to  row zero, eHddSuppRate_9Mbps to row
- * 1, and so on).  Index two can be computed like so:
- *
- * \code
- *  idx2 = ( fEsf  ? 0x4 : 0x0 ) |
- *         ( fCb   ? 0x2 : 0x0 ) |
- *         ( fMimo ? 0x1 : 0x0 );
- * \endcode
- *
- *
- * Given that:
- *
- *  \code
- *  fSupported = g_phy_rates_suppt[idx1][idx2];
- *  \endcode
- *
- *
- * This table is based on  the document "PHY Supported Rates.doc".  This
- * table is  permissive in that a  rate is reflected  as being supported
- * even  when turning  off an  enabled feature  would be  required.  For
- * instance, "PHY Supported Rates"  lists 42Mpbs as unsupported when CB,
- * ESF, &  MIMO are all  on.  However,  if we turn  off either of  CB or
- * MIMO, it then becomes supported.   Therefore, we mark it as supported
- * even in index 7 of this table.
- *
- *
- */
-
-static const bool g_phy_rates_suppt[24][8] = {
-
-	/* SSF   SSF    SSF    SSF    ESF    ESF    ESF    ESF */
-	/* SIMO  MIMO   SIMO   MIMO   SIMO   MIMO   SIMO   MIMO */
-	/* No CB No CB  CB     CB     No CB  No CB  CB     CB */
-	{true, true, true, true, true, true, true, true},       /* 6Mbps */
-	{true, true, true, true, true, true, true, true},       /* 9Mbps */
-	{true, true, true, true, true, true, true, true},       /* 12Mbps */
-	{true, true, true, true, true, true, true, true},       /* 18Mbps */
-	{false, false, true, true, false, false, true, true},   /* 20Mbps */
-	{true, true, true, true, true, true, true, true},       /* 24Mbps */
-	{true, true, true, true, true, true, true, true},       /* 36Mbps */
-	{false, false, true, true, false, true, true, true},    /* 40Mbps */
-	{false, false, true, true, false, true, true, true},    /* 42Mbps */
-	{true, true, true, true, true, true, true, true},       /* 48Mbps */
-	{true, true, true, true, true, true, true, true},       /* 54Mbps */
-	{false, true, true, true, false, true, true, true},     /* 72Mbps */
-	{false, false, true, true, false, true, true, true},    /* 80Mbps */
-	{false, false, true, true, false, true, true, true},    /* 84Mbps */
-	{false, true, true, true, false, true, true, true},     /* 96Mbps */
-	{false, true, true, true, false, true, true, true},     /* 108Mbps */
-	{false, false, true, true, false, true, true, true},    /* 120Mbps */
-	{false, false, true, true, false, true, true, true},    /* 126Mbps */
-	{false, false, false, true, false, false, false, true}, /* 144Mbps */
-	{false, false, false, true, false, false, false, true}, /* 160Mbps */
-	{false, false, false, true, false, false, false, true}, /* 168Mbps */
-	{false, false, false, true, false, false, false, true}, /* 192Mbps */
-	{false, false, false, true, false, false, false, true}, /* 216Mbps */
-	{false, false, false, true, false, false, false, true}, /* 240Mbps */
-
-};
-
 #define CASE_RETURN_STR(n) {\
 	case (n): return (# n);\
 }
@@ -2489,10 +2415,10 @@ bool csr_rates_is_dot11_rate11b_supported_rate(uint8_t dot11Rate)
 		(uint16_t) (BITS_OFF(dot11Rate, CSR_DOT11_BASIC_RATE_MASK));
 
 	switch (nonBasicRate) {
-	case eCsrSuppRate_1Mbps:
-	case eCsrSuppRate_2Mbps:
-	case eCsrSuppRate_5_5Mbps:
-	case eCsrSuppRate_11Mbps:
+	case SUPP_RATE_1_MBPS:
+	case SUPP_RATE_2_MBPS:
+	case SUPP_RATE_5_MBPS:
+	case SUPP_RATE_11_MBPS:
 		fSupported = true;
 		break;
 
@@ -2510,14 +2436,14 @@ bool csr_rates_is_dot11_rate11a_supported_rate(uint8_t dot11Rate)
 		(uint16_t) (BITS_OFF(dot11Rate, CSR_DOT11_BASIC_RATE_MASK));
 
 	switch (nonBasicRate) {
-	case eCsrSuppRate_6Mbps:
-	case eCsrSuppRate_9Mbps:
-	case eCsrSuppRate_12Mbps:
-	case eCsrSuppRate_18Mbps:
-	case eCsrSuppRate_24Mbps:
-	case eCsrSuppRate_36Mbps:
-	case eCsrSuppRate_48Mbps:
-	case eCsrSuppRate_54Mbps:
+	case SUPP_RATE_6_MBPS:
+	case SUPP_RATE_9_MBPS:
+	case SUPP_RATE_12_MBPS:
+	case SUPP_RATE_18_MBPS:
+	case SUPP_RATE_24_MBPS:
+	case SUPP_RATE_36_MBPS:
+	case SUPP_RATE_48_MBPS:
+	case SUPP_RATE_54_MBPS:
 		fSupported = true;
 		break;
 
@@ -2684,275 +2610,10 @@ bool csr_is_bssid_match(struct qdf_mac_addr *pProfBssid,
 	return fMatch;
 }
 
-/**
- * csr_is_aggregate_rate_supported() - to check if aggregate rate is supported
- * @mac_ctx: pointer to mac context
- * @rate: A rate in units of 500kbps
- *
- *
- * The rate encoding  is just as in 802.11  Information Elements, except
- * that the high bit is \em  not interpreted as indicating a Basic Rate,
- * and proprietary rates are allowed, too.
- *
- * Note  that if the  adapter's dot11Mode  is g,  we don't  restrict the
- * rates.  According to hwReadEepromParameters, this will happen when:
- * ... the  card is  configured for ALL  bands through  the property
- * page.  If this occurs, and the card is not an ABG card ,then this
- * code  is  setting the  dot11Mode  to  assume  the mode  that  the
- * hardware can support.   For example, if the card  is an 11BG card
- * and we  are configured to support  ALL bands, then  we change the
- * dot11Mode  to 11g  because  ALL in  this  case is  only what  the
- * hardware can support.
- *
- * Return: true if  the adapter is currently capable of supporting this rate
- */
-
-static bool csr_is_aggregate_rate_supported(struct mac_context *mac_ctx,
-			uint16_t rate)
+bool csr_rates_is_dot11_rate_supported(struct mac_context *mac_ctx,
+				       uint8_t rate)
 {
-	bool supported = false;
-	uint16_t idx, new_rate;
-
-	/* In case basic rate flag is set */
-	new_rate = BITS_OFF(rate, CSR_DOT11_BASIC_RATE_MASK);
-	if (eCSR_CFG_DOT11_MODE_11A ==
-			mac_ctx->roam.configParam.uCfgDot11Mode) {
-		switch (new_rate) {
-		case eCsrSuppRate_6Mbps:
-		case eCsrSuppRate_9Mbps:
-		case eCsrSuppRate_12Mbps:
-		case eCsrSuppRate_18Mbps:
-		case eCsrSuppRate_24Mbps:
-		case eCsrSuppRate_36Mbps:
-		case eCsrSuppRate_48Mbps:
-		case eCsrSuppRate_54Mbps:
-			supported = true;
-			break;
-		default:
-			supported = false;
-			break;
-		}
-
-	} else if (eCSR_CFG_DOT11_MODE_11B ==
-		   mac_ctx->roam.configParam.uCfgDot11Mode) {
-		switch (new_rate) {
-		case eCsrSuppRate_1Mbps:
-		case eCsrSuppRate_2Mbps:
-		case eCsrSuppRate_5_5Mbps:
-		case eCsrSuppRate_11Mbps:
-			supported = true;
-			break;
-		default:
-			supported = false;
-			break;
-		}
-	} else if (!mac_ctx->roam.configParam.ProprietaryRatesEnabled) {
-
-		switch (new_rate) {
-		case eCsrSuppRate_1Mbps:
-		case eCsrSuppRate_2Mbps:
-		case eCsrSuppRate_5_5Mbps:
-		case eCsrSuppRate_6Mbps:
-		case eCsrSuppRate_9Mbps:
-		case eCsrSuppRate_11Mbps:
-		case eCsrSuppRate_12Mbps:
-		case eCsrSuppRate_18Mbps:
-		case eCsrSuppRate_24Mbps:
-		case eCsrSuppRate_36Mbps:
-		case eCsrSuppRate_48Mbps:
-		case eCsrSuppRate_54Mbps:
-			supported = true;
-			break;
-		default:
-			supported = false;
-			break;
-		}
-	} else if (eCsrSuppRate_1Mbps == new_rate ||
-			eCsrSuppRate_2Mbps == new_rate ||
-			eCsrSuppRate_5_5Mbps == new_rate ||
-			eCsrSuppRate_11Mbps == new_rate)
-		supported = true;
-	else {
-		idx = 0x1;
-
-		switch (new_rate) {
-		case eCsrSuppRate_6Mbps:
-			supported = g_phy_rates_suppt[0][idx];
-			break;
-		case eCsrSuppRate_9Mbps:
-			supported = g_phy_rates_suppt[1][idx];
-			break;
-		case eCsrSuppRate_12Mbps:
-			supported = g_phy_rates_suppt[2][idx];
-			break;
-		case eCsrSuppRate_18Mbps:
-			supported = g_phy_rates_suppt[3][idx];
-			break;
-		case eCsrSuppRate_20Mbps:
-			supported = g_phy_rates_suppt[4][idx];
-			break;
-		case eCsrSuppRate_24Mbps:
-			supported = g_phy_rates_suppt[5][idx];
-			break;
-		case eCsrSuppRate_36Mbps:
-			supported = g_phy_rates_suppt[6][idx];
-			break;
-		case eCsrSuppRate_40Mbps:
-			supported = g_phy_rates_suppt[7][idx];
-			break;
-		case eCsrSuppRate_42Mbps:
-			supported = g_phy_rates_suppt[8][idx];
-			break;
-		case eCsrSuppRate_48Mbps:
-			supported = g_phy_rates_suppt[9][idx];
-			break;
-		case eCsrSuppRate_54Mbps:
-			supported = g_phy_rates_suppt[10][idx];
-			break;
-		case eCsrSuppRate_72Mbps:
-			supported = g_phy_rates_suppt[11][idx];
-			break;
-		case eCsrSuppRate_80Mbps:
-			supported = g_phy_rates_suppt[12][idx];
-			break;
-		case eCsrSuppRate_84Mbps:
-			supported = g_phy_rates_suppt[13][idx];
-			break;
-		case eCsrSuppRate_96Mbps:
-			supported = g_phy_rates_suppt[14][idx];
-			break;
-		case eCsrSuppRate_108Mbps:
-			supported = g_phy_rates_suppt[15][idx];
-			break;
-		case eCsrSuppRate_120Mbps:
-			supported = g_phy_rates_suppt[16][idx];
-			break;
-		case eCsrSuppRate_126Mbps:
-			supported = g_phy_rates_suppt[17][idx];
-			break;
-		case eCsrSuppRate_144Mbps:
-			supported = g_phy_rates_suppt[18][idx];
-			break;
-		case eCsrSuppRate_160Mbps:
-			supported = g_phy_rates_suppt[19][idx];
-			break;
-		case eCsrSuppRate_168Mbps:
-			supported = g_phy_rates_suppt[20][idx];
-			break;
-		case eCsrSuppRate_192Mbps:
-			supported = g_phy_rates_suppt[21][idx];
-			break;
-		case eCsrSuppRate_216Mbps:
-			supported = g_phy_rates_suppt[22][idx];
-			break;
-		case eCsrSuppRate_240Mbps:
-			supported = g_phy_rates_suppt[23][idx];
-			break;
-		default:
-			supported = false;
-			break;
-		}
-	}
-	return supported;
-}
-
-void csr_add_rate_bitmap(uint8_t rate, uint16_t *pRateBitmap)
-{
-	uint16_t rateBitmap;
-	uint16_t n = BITS_OFF(rate, CSR_DOT11_BASIC_RATE_MASK);
-
-	rateBitmap = *pRateBitmap;
-	switch (n) {
-	case SIR_MAC_RATE_1:
-		rateBitmap |= SIR_MAC_RATE_1_BITMAP;
-		break;
-	case SIR_MAC_RATE_2:
-		rateBitmap |= SIR_MAC_RATE_2_BITMAP;
-		break;
-	case SIR_MAC_RATE_5_5:
-		rateBitmap |= SIR_MAC_RATE_5_5_BITMAP;
-		break;
-	case SIR_MAC_RATE_11:
-		rateBitmap |= SIR_MAC_RATE_11_BITMAP;
-		break;
-	case SIR_MAC_RATE_6:
-		rateBitmap |= SIR_MAC_RATE_6_BITMAP;
-		break;
-	case SIR_MAC_RATE_9:
-		rateBitmap |= SIR_MAC_RATE_9_BITMAP;
-		break;
-	case SIR_MAC_RATE_12:
-		rateBitmap |= SIR_MAC_RATE_12_BITMAP;
-		break;
-	case SIR_MAC_RATE_18:
-		rateBitmap |= SIR_MAC_RATE_18_BITMAP;
-		break;
-	case SIR_MAC_RATE_24:
-		rateBitmap |= SIR_MAC_RATE_24_BITMAP;
-		break;
-	case SIR_MAC_RATE_36:
-		rateBitmap |= SIR_MAC_RATE_36_BITMAP;
-		break;
-	case SIR_MAC_RATE_48:
-		rateBitmap |= SIR_MAC_RATE_48_BITMAP;
-		break;
-	case SIR_MAC_RATE_54:
-		rateBitmap |= SIR_MAC_RATE_54_BITMAP;
-		break;
-	}
-	*pRateBitmap = rateBitmap;
-}
-
-bool csr_check_rate_bitmap(uint8_t rate, uint16_t rateBitmap)
-{
-	uint16_t n = BITS_OFF(rate, CSR_DOT11_BASIC_RATE_MASK);
-
-	switch (n) {
-	case SIR_MAC_RATE_1:
-		rateBitmap &= SIR_MAC_RATE_1_BITMAP;
-		break;
-	case SIR_MAC_RATE_2:
-		rateBitmap &= SIR_MAC_RATE_2_BITMAP;
-		break;
-	case SIR_MAC_RATE_5_5:
-		rateBitmap &= SIR_MAC_RATE_5_5_BITMAP;
-		break;
-	case SIR_MAC_RATE_11:
-		rateBitmap &= SIR_MAC_RATE_11_BITMAP;
-		break;
-	case SIR_MAC_RATE_6:
-		rateBitmap &= SIR_MAC_RATE_6_BITMAP;
-		break;
-	case SIR_MAC_RATE_9:
-		rateBitmap &= SIR_MAC_RATE_9_BITMAP;
-		break;
-	case SIR_MAC_RATE_12:
-		rateBitmap &= SIR_MAC_RATE_12_BITMAP;
-		break;
-	case SIR_MAC_RATE_18:
-		rateBitmap &= SIR_MAC_RATE_18_BITMAP;
-		break;
-	case SIR_MAC_RATE_24:
-		rateBitmap &= SIR_MAC_RATE_24_BITMAP;
-		break;
-	case SIR_MAC_RATE_36:
-		rateBitmap &= SIR_MAC_RATE_36_BITMAP;
-		break;
-	case SIR_MAC_RATE_48:
-		rateBitmap &= SIR_MAC_RATE_48_BITMAP;
-		break;
-	case SIR_MAC_RATE_54:
-		rateBitmap &= SIR_MAC_RATE_54_BITMAP;
-		break;
-	}
-	return !!rateBitmap;
-}
-
-bool csr_rates_is_dot11_rate_supported(struct mac_context *mac_ctx, uint8_t rate)
-{
-	uint16_t n = BITS_OFF(rate, CSR_DOT11_BASIC_RATE_MASK);
-
-	return csr_is_aggregate_rate_supported(mac_ctx, n);
+	return wlan_rates_is_dot11_rate_supported(mac_ctx, rate);
 }
 
 #ifndef FEATURE_CM_ENABLE

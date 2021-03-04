@@ -1868,13 +1868,14 @@ populate_dot11f_ssid(struct mac_context *mac,
 	}
 } /* End populate_dot11f_ssid. */
 
-QDF_STATUS populate_dot11f_ssid2(struct mac_context *mac, tDot11fIESSID *pDot11f)
+QDF_STATUS populate_dot11f_ssid2(struct pe_session *pe_session,
+				 tDot11fIESSID *pDot11f)
 {
-
-	qdf_mem_copy(pDot11f->ssid, mac->mlme_cfg->sap_cfg.cfg_ssid,
-		     mac->mlme_cfg->sap_cfg.cfg_ssid_len);
-	pDot11f->num_ssid = mac->mlme_cfg->sap_cfg.cfg_ssid_len;
+	qdf_mem_copy(pDot11f->ssid, pe_session->ssId.ssId,
+		     pe_session->ssId.length);
+	pDot11f->num_ssid = pe_session->ssId.length;
 	pDot11f->present = 1;
+
 	return QDF_STATUS_SUCCESS;
 } /* End populate_dot11f_ssid2. */
 
@@ -6696,6 +6697,387 @@ wlan_get_parsed_bss_description_ies(struct mac_context *mac_ctx,
 		qdf_mem_free(*ie_struct);
 		*ie_struct = NULL;
 	}
+
+	return status;
+}
+
+void
+wlan_populate_basic_rates(tSirMacRateSet *rate_set, bool is_ofdm_rates,
+			  bool is_basic_rates)
+{
+	int i = 0;
+	uint8_t ofdm_rates[8] = {
+		SIR_MAC_RATE_6,
+		SIR_MAC_RATE_9,
+		SIR_MAC_RATE_12,
+		SIR_MAC_RATE_18,
+		SIR_MAC_RATE_24,
+		SIR_MAC_RATE_36,
+		SIR_MAC_RATE_48,
+		SIR_MAC_RATE_54
+	};
+	uint8_t cck_rates[4] = {
+		SIR_MAC_RATE_1,
+		SIR_MAC_RATE_2,
+		SIR_MAC_RATE_5_5,
+		SIR_MAC_RATE_11
+	};
+
+	if (is_ofdm_rates == true) {
+		rate_set->numRates = 8;
+		qdf_mem_copy(rate_set->rate, ofdm_rates, sizeof(ofdm_rates));
+		if (is_basic_rates) {
+			rate_set->rate[0] |= WLAN_DOT11_BASIC_RATE_MASK;
+			rate_set->rate[2] |= WLAN_DOT11_BASIC_RATE_MASK;
+			rate_set->rate[4] |= WLAN_DOT11_BASIC_RATE_MASK;
+		}
+		for (i = 0; i < rate_set->numRates; i++)
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+			("Default OFDM rate is %2x"), rate_set->rate[i]);
+	} else {
+		rate_set->numRates = 4;
+		qdf_mem_copy(rate_set->rate, cck_rates, sizeof(cck_rates));
+		if (is_basic_rates) {
+			rate_set->rate[0] |= WLAN_DOT11_BASIC_RATE_MASK;
+			rate_set->rate[1] |= WLAN_DOT11_BASIC_RATE_MASK;
+			rate_set->rate[2] |= WLAN_DOT11_BASIC_RATE_MASK;
+			rate_set->rate[3] |= WLAN_DOT11_BASIC_RATE_MASK;
+		}
+		for (i = 0; i < rate_set->numRates; i++)
+			QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+			("Default CCK rate is %2x"), rate_set->rate[i]);
+	}
+}
+
+/**
+ * wlan_is_aggregate_rate_supported() - to check if aggregate rate is supported
+ * @mac_ctx: pointer to mac context
+ * @rate: A rate in units of 500kbps
+ *
+ *
+ * The rate encoding  is just as in 802.11  Information Elements, except
+ * that the high bit is \em  not interpreted as indicating a Basic Rate,
+ * and proprietary rates are allowed, too.
+ *
+ * Note  that if the  adapter's dot11Mode  is g,  we don't  restrict the
+ * rates.  According to hwReadEepromParameters, this will happen when:
+ * ... the  card is  configured for ALL  bands through  the property
+ * page.  If this occurs, and the card is not an ABG card ,then this
+ * code  is  setting the  dot11Mode  to  assume  the mode  that  the
+ * hardware can support.   For example, if the card  is an 11BG card
+ * and we  are configured to support  ALL bands, then  we change the
+ * dot11Mode  to 11g  because  ALL in  this  case is  only what  the
+ * hardware can support.
+ *
+ * Return: true if  the adapter is currently capable of supporting this rate
+ */
+
+static bool wlan_is_aggregate_rate_supported(struct mac_context *mac_ctx,
+					     uint16_t rate)
+{
+	bool supported = false;
+	uint16_t idx, new_rate;
+	enum mlme_dot11_mode self_dot11_mode =
+				mac_ctx->mlme_cfg->dot11_mode.dot11_mode;
+
+	/* In case basic rate flag is set */
+	new_rate = BITS_OFF(rate, WLAN_DOT11_BASIC_RATE_MASK);
+	if (self_dot11_mode == MLME_DOT11_MODE_11A) {
+		switch (new_rate) {
+		case SUPP_RATE_6_MBPS:
+		case SUPP_RATE_9_MBPS:
+		case SUPP_RATE_12_MBPS:
+		case SUPP_RATE_18_MBPS:
+		case SUPP_RATE_24_MBPS:
+		case SUPP_RATE_36_MBPS:
+		case SUPP_RATE_48_MBPS:
+		case SUPP_RATE_54_MBPS:
+			supported = true;
+			break;
+		default:
+			supported = false;
+			break;
+		}
+	} else if (self_dot11_mode == MLME_DOT11_MODE_11B) {
+		switch (new_rate) {
+		case SUPP_RATE_1_MBPS:
+		case SUPP_RATE_2_MBPS:
+		case SUPP_RATE_5_MBPS:
+		case SUPP_RATE_11_MBPS:
+			supported = true;
+			break;
+		default:
+			supported = false;
+			break;
+		}
+	} else if (!mac_ctx->roam.configParam.ProprietaryRatesEnabled) {
+		switch (new_rate) {
+		case SUPP_RATE_1_MBPS:
+		case SUPP_RATE_2_MBPS:
+		case SUPP_RATE_5_MBPS:
+		case SUPP_RATE_6_MBPS:
+		case SUPP_RATE_9_MBPS:
+		case SUPP_RATE_11_MBPS:
+		case SUPP_RATE_12_MBPS:
+		case SUPP_RATE_18_MBPS:
+		case SUPP_RATE_24_MBPS:
+		case SUPP_RATE_36_MBPS:
+		case SUPP_RATE_48_MBPS:
+		case SUPP_RATE_54_MBPS:
+			supported = true;
+			break;
+		default:
+			supported = false;
+			break;
+		}
+	} else if (new_rate == SUPP_RATE_1_MBPS ||
+		   new_rate == SUPP_RATE_2_MBPS ||
+		   new_rate == SUPP_RATE_5_MBPS ||
+		   new_rate == SUPP_RATE_11_MBPS)
+		supported = true;
+	else {
+		idx = 0x1;
+
+		switch (new_rate) {
+		case SUPP_RATE_6_MBPS:
+			supported = g_phy_rates_suppt[0][idx];
+			break;
+		case SUPP_RATE_9_MBPS:
+			supported = g_phy_rates_suppt[1][idx];
+			break;
+		case SUPP_RATE_12_MBPS:
+			supported = g_phy_rates_suppt[2][idx];
+			break;
+		case SUPP_RATE_18_MBPS:
+			supported = g_phy_rates_suppt[3][idx];
+			break;
+		case SUPP_RATE_20_MBPS:
+			supported = g_phy_rates_suppt[4][idx];
+			break;
+		case SUPP_RATE_24_MBPS:
+			supported = g_phy_rates_suppt[5][idx];
+			break;
+		case SUPP_RATE_36_MBPS:
+			supported = g_phy_rates_suppt[6][idx];
+			break;
+		case SUPP_RATE_40_MBPS:
+			supported = g_phy_rates_suppt[7][idx];
+			break;
+		case SUPP_RATE_42_MBPS:
+			supported = g_phy_rates_suppt[8][idx];
+			break;
+		case SUPP_RATE_48_MBPS:
+			supported = g_phy_rates_suppt[9][idx];
+			break;
+		case SUPP_RATE_54_MBPS:
+			supported = g_phy_rates_suppt[10][idx];
+			break;
+		case SUPP_RATE_72_MBPS:
+			supported = g_phy_rates_suppt[11][idx];
+			break;
+		case SUPP_RATE_80_MBPS:
+			supported = g_phy_rates_suppt[12][idx];
+			break;
+		case SUPP_RATE_84_MBPS:
+			supported = g_phy_rates_suppt[13][idx];
+			break;
+		case SUPP_RATE_96_MBPS:
+			supported = g_phy_rates_suppt[14][idx];
+			break;
+		case SUPP_RATE_108_MBPS:
+			supported = g_phy_rates_suppt[15][idx];
+			break;
+		case SUPP_RATE_120_MBPS:
+			supported = g_phy_rates_suppt[16][idx];
+			break;
+		case SUPP_RATE_126_MBPS:
+			supported = g_phy_rates_suppt[17][idx];
+			break;
+		case SUPP_RATE_144_MBPS:
+			supported = g_phy_rates_suppt[18][idx];
+			break;
+		case SUPP_RATE_160_MBPS:
+			supported = g_phy_rates_suppt[19][idx];
+			break;
+		case SUPP_RATE_168_MBPS:
+			supported = g_phy_rates_suppt[20][idx];
+			break;
+		case SUPP_RATE_192_MBPS:
+			supported = g_phy_rates_suppt[21][idx];
+			break;
+		case SUPP_RATE_216_MBPS:
+			supported = g_phy_rates_suppt[22][idx];
+			break;
+		case SUPP_RATE_240_MBPS:
+			supported = g_phy_rates_suppt[23][idx];
+			break;
+		default:
+			supported = false;
+			break;
+		}
+	}
+
+	return supported;
+}
+
+bool wlan_rates_is_dot11_rate_supported(struct mac_context *mac_ctx,
+					uint8_t rate)
+{
+	uint16_t n = BITS_OFF(rate, WLAN_DOT11_BASIC_RATE_MASK);
+
+	return wlan_is_aggregate_rate_supported(mac_ctx, n);
+}
+
+bool wlan_check_rate_bitmap(uint8_t rate, uint16_t rate_bitmap)
+{
+	uint16_t n = BITS_OFF(rate, WLAN_DOT11_BASIC_RATE_MASK);
+
+	switch (n) {
+	case SIR_MAC_RATE_1:
+		rate_bitmap &= SIR_MAC_RATE_1_BITMAP;
+		break;
+	case SIR_MAC_RATE_2:
+		rate_bitmap &= SIR_MAC_RATE_2_BITMAP;
+		break;
+	case SIR_MAC_RATE_5_5:
+		rate_bitmap &= SIR_MAC_RATE_5_5_BITMAP;
+		break;
+	case SIR_MAC_RATE_11:
+		rate_bitmap &= SIR_MAC_RATE_11_BITMAP;
+		break;
+	case SIR_MAC_RATE_6:
+		rate_bitmap &= SIR_MAC_RATE_6_BITMAP;
+		break;
+	case SIR_MAC_RATE_9:
+		rate_bitmap &= SIR_MAC_RATE_9_BITMAP;
+		break;
+	case SIR_MAC_RATE_12:
+		rate_bitmap &= SIR_MAC_RATE_12_BITMAP;
+		break;
+	case SIR_MAC_RATE_18:
+		rate_bitmap &= SIR_MAC_RATE_18_BITMAP;
+		break;
+	case SIR_MAC_RATE_24:
+		rate_bitmap &= SIR_MAC_RATE_24_BITMAP;
+		break;
+	case SIR_MAC_RATE_36:
+		rate_bitmap &= SIR_MAC_RATE_36_BITMAP;
+		break;
+	case SIR_MAC_RATE_48:
+		rate_bitmap &= SIR_MAC_RATE_48_BITMAP;
+		break;
+	case SIR_MAC_RATE_54:
+		rate_bitmap &= SIR_MAC_RATE_54_BITMAP;
+		break;
+	}
+	return !!rate_bitmap;
+}
+
+void wlan_add_rate_bitmap(uint8_t rate, uint16_t *rate_bitmap)
+{
+	uint16_t n = BITS_OFF(rate, CSR_DOT11_BASIC_RATE_MASK);
+
+	switch (n) {
+	case SIR_MAC_RATE_1:
+		*rate_bitmap |= SIR_MAC_RATE_1_BITMAP;
+		break;
+	case SIR_MAC_RATE_2:
+		*rate_bitmap |= SIR_MAC_RATE_2_BITMAP;
+		break;
+	case SIR_MAC_RATE_5_5:
+		*rate_bitmap |= SIR_MAC_RATE_5_5_BITMAP;
+		break;
+	case SIR_MAC_RATE_11:
+		*rate_bitmap |= SIR_MAC_RATE_11_BITMAP;
+		break;
+	case SIR_MAC_RATE_6:
+		*rate_bitmap |= SIR_MAC_RATE_6_BITMAP;
+		break;
+	case SIR_MAC_RATE_9:
+		*rate_bitmap |= SIR_MAC_RATE_9_BITMAP;
+		break;
+	case SIR_MAC_RATE_12:
+		*rate_bitmap |= SIR_MAC_RATE_12_BITMAP;
+		break;
+	case SIR_MAC_RATE_18:
+		*rate_bitmap |= SIR_MAC_RATE_18_BITMAP;
+		break;
+	case SIR_MAC_RATE_24:
+		*rate_bitmap |= SIR_MAC_RATE_24_BITMAP;
+		break;
+	case SIR_MAC_RATE_36:
+		*rate_bitmap |= SIR_MAC_RATE_36_BITMAP;
+		break;
+	case SIR_MAC_RATE_48:
+		*rate_bitmap |= SIR_MAC_RATE_48_BITMAP;
+		break;
+	case SIR_MAC_RATE_54:
+		*rate_bitmap |= SIR_MAC_RATE_54_BITMAP;
+		break;
+	}
+}
+
+QDF_STATUS wlan_get_rate_set(struct mac_context *mac,
+			     tDot11fBeaconIEs *ie_struct,
+			     tSirMacRateSet *op_rate,
+			     tSirMacRateSet *ext_rate)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	int i;
+	uint8_t *dst_rate;
+	uint16_t rateBitmap = 0;
+
+	qdf_mem_zero(op_rate, sizeof(tSirMacRateSet));
+	qdf_mem_zero(ext_rate, sizeof(tSirMacRateSet));
+	QDF_ASSERT(ie_struct);
+
+	/*
+	 * Originally, we thought that for 11a networks, the 11a rates
+	 * are always in the Operational Rate set & for 11b and 11g
+	 * networks, the 11b rates appear in the Operational Rate set.
+	 * Consequently, in either case, we would blindly put the rates
+	 * we support into our Operational Rate set.
+	 * (including the basic rates, which we've already verified are
+	 * supported earlier in the roaming decision).
+	 * However, it turns out that this is not always the case.
+	 * Some AP's (e.g. D-Link DI-784) ram 11g rates into the
+	 * Operational Rate set too.  Now, we're a little more careful.
+	 */
+	dst_rate = op_rate->rate;
+	if (ie_struct->SuppRates.present) {
+		for (i = 0; i < ie_struct->SuppRates.num_rates; i++) {
+			if (csr_rates_is_dot11_rate_supported(mac,
+				ie_struct->SuppRates.rates[i]) &&
+				!wlan_check_rate_bitmap(
+					ie_struct->SuppRates.rates[i],
+					rateBitmap)) {
+				wlan_add_rate_bitmap(ie_struct->SuppRates.
+						    rates[i], &rateBitmap);
+				*dst_rate++ = ie_struct->SuppRates.rates[i];
+				op_rate->numRates++;
+			}
+		}
+	}
+	/*
+	 * If there are Extended Rates in the beacon, we will reflect the
+	 * extended rates that we support in our Extended Operational Rate
+	 * set.
+	 */
+	if (ie_struct->ExtSuppRates.present) {
+		dst_rate = ext_rate->rate;
+		for (i = 0; i < ie_struct->ExtSuppRates.num_rates; i++) {
+			if (wlan_rates_is_dot11_rate_supported(mac,
+				ie_struct->ExtSuppRates.rates[i]) &&
+				!wlan_check_rate_bitmap(
+					ie_struct->ExtSuppRates.rates[i],
+					rateBitmap)) {
+				*dst_rate++ = ie_struct->ExtSuppRates.rates[i];
+				ext_rate->numRates++;
+			}
+		}
+	}
+	if (op_rate->numRates > 0 || ext_rate->numRates > 0)
+		status = QDF_STATUS_SUCCESS;
 
 	return status;
 }

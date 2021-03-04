@@ -51,6 +51,9 @@ struct mac_context;
 #include "wlan_cp_stats_mc_defs.h"
 
 #define OFFSET_OF(structType, fldName)   (&((structType *)0)->fldName)
+#define WLAN_DOT11_BASIC_RATE_MASK (0x80)
+#define BITS_ON(_Field, _Bitmask)  ((_Field) |=  (_Bitmask))
+#define BITS_OFF(_Field, _Bitmask) ((_Field) &= ~(_Bitmask))
 
 /* / Max supported channel list */
 #define SIR_MAX_SUPPORTED_CHANNEL_LIST      96
@@ -177,6 +180,112 @@ enum ps_state {
 	LEGACY_POWER_SAVE_MODE,
 	UAPSD_MODE
 };
+
+/**
+ * \var g_phy_rates_suppt
+ *
+ * \brief Rate support lookup table
+ *
+ *
+ * This is a  lookup table indexing rates &  configuration parameters to
+ * support.  Given a rate (in  unites of 0.5Mpbs) & three bools (MIMO
+ * Enabled, Channel  Bonding Enabled, & Concatenation  Enabled), one can
+ * determine  whether  the given  rate  is  supported  by computing  two
+ * indices.  The  first maps  the rate to  table row as  indicated below
+ * (i.e. eHddSuppRate_6Mbps maps to  row zero, eHddSuppRate_9Mbps to row
+ * 1, and so on).  Index two can be computed like so:
+ *
+ * \code
+ *  idx2 = ( fEsf  ? 0x4 : 0x0 ) |
+ *         ( fCb   ? 0x2 : 0x0 ) |
+ *         ( fMimo ? 0x1 : 0x0 );
+ * \endcode
+ *
+ *
+ * Given that:
+ *
+ *  \code
+ *  fSupported = g_phy_rates_suppt[idx1][idx2];
+ *  \endcode
+ *
+ *
+ * This table is based on  the document "PHY Supported Rates.doc".  This
+ * table is  permissive in that a  rate is reflected  as being supported
+ * even  when turning  off an  enabled feature  would be  required.  For
+ * instance, "PHY Supported Rates"  lists 42Mpbs as unsupported when CB,
+ * ESF, &  MIMO are all  on.  However,  if we turn  off either of  CB or
+ * MIMO, it then becomes supported.   Therefore, we mark it as supported
+ * even in index 7 of this table.
+ *
+ *
+ */
+
+static const bool g_phy_rates_suppt[24][8] = {
+
+	/* SSF   SSF    SSF    SSF    ESF    ESF    ESF    ESF */
+	/* SIMO  MIMO   SIMO   MIMO   SIMO   MIMO   SIMO   MIMO */
+	/* No CB No CB  CB     CB     No CB  No CB  CB     CB */
+	{true, true, true, true, true, true, true, true},       /* 6Mbps */
+	{true, true, true, true, true, true, true, true},       /* 9Mbps */
+	{true, true, true, true, true, true, true, true},       /* 12Mbps */
+	{true, true, true, true, true, true, true, true},       /* 18Mbps */
+	{false, false, true, true, false, false, true, true},   /* 20Mbps */
+	{true, true, true, true, true, true, true, true},       /* 24Mbps */
+	{true, true, true, true, true, true, true, true},       /* 36Mbps */
+	{false, false, true, true, false, true, true, true},    /* 40Mbps */
+	{false, false, true, true, false, true, true, true},    /* 42Mbps */
+	{true, true, true, true, true, true, true, true},       /* 48Mbps */
+	{true, true, true, true, true, true, true, true},       /* 54Mbps */
+	{false, true, true, true, false, true, true, true},     /* 72Mbps */
+	{false, false, true, true, false, true, true, true},    /* 80Mbps */
+	{false, false, true, true, false, true, true, true},    /* 84Mbps */
+	{false, true, true, true, false, true, true, true},     /* 96Mbps */
+	{false, true, true, true, false, true, true, true},     /* 108Mbps */
+	{false, false, true, true, false, true, true, true},    /* 120Mbps */
+	{false, false, true, true, false, true, true, true},    /* 126Mbps */
+	{false, false, false, true, false, false, false, true}, /* 144Mbps */
+	{false, false, false, true, false, false, false, true}, /* 160Mbps */
+	{false, false, false, true, false, false, false, true}, /* 168Mbps */
+	{false, false, false, true, false, false, false, true}, /* 192Mbps */
+	{false, false, false, true, false, false, false, true}, /* 216Mbps */
+	{false, false, false, true, false, false, false, true}, /* 240Mbps */
+};
+
+typedef enum {
+	/* 11b rates */
+	SUPP_RATE_1_MBPS   =   1 * 2,
+	SUPP_RATE_2_MBPS   =   2 * 2,
+	SUPP_RATE_5_MBPS =     11,
+	SUPP_RATE_11_MBPS  =   11 * 2,
+
+	/* 11a / 11g rates */
+	SUPP_RATE_6_MBPS   =   6 * 2,
+	SUPP_RATE_9_MBPS   =   9 * 2,
+	SUPP_RATE_12_MBPS  =   12 * 2,
+	SUPP_RATE_18_MBPS  =   18 * 2,
+	SUPP_RATE_24_MBPS  =   24 * 2,
+	SUPP_RATE_36_MBPS  =   36 * 2,
+	SUPP_RATE_48_MBPS  =   48 * 2,
+	SUPP_RATE_54_MBPS  =   54 * 2,
+
+	/* Airgo prop. rates */
+	SUPP_RATE_20_MBPS   =  20 * 2,
+	SUPP_RATE_40_MBPS   =  40 * 2,
+	SUPP_RATE_42_MBPS   =  42 * 2,
+	SUPP_RATE_72_MBPS   =  72 * 2,
+	SUPP_RATE_80_MBPS   =  80 * 2,
+	SUPP_RATE_84_MBPS   =  84 * 2,
+	SUPP_RATE_96_MBPS   =  96 * 2,
+	SUPP_RATE_108_MBPS  =  108 * 2,
+	SUPP_RATE_120_MBPS  =  120 * 2,
+	SUPP_RATE_126_MBPS  =  126 * 2,
+	SUPP_RATE_144_MBPS  =  144 * 2,
+	SUPP_RATE_160_MBPS  =  160 * 2,
+	SUPP_RATE_168_MBPS  =  168 * 2,
+	SUPP_RATE_192_MBPS  =  192 * 2,
+	SUPP_RATE_216_MBPS  =  216 * 2,
+	SUPP_RATE_240_MBPS  =  240 * 2
+} eCsrSupportedRates;
 
 /**
  * struct ps_params - maintain power save state and USAPD params
@@ -925,29 +1034,26 @@ struct join_req {
 	uint16_t length;
 	uint8_t vdev_id;
 	tSirMacSSid ssId;
-	uint8_t dot11mode;      /* to support BT-AMP */
-	bool wps_registration;
-
-	tSirMacRateSet operationalRateSet;      /* Has 11a or 11b rates */
-	tSirMacRateSet extendedRateSet; /* Has 11g rates */
 	tSirRSNie rsnIE;        /* RSN IE to be sent in */
 	tSirAddie addIEScan;    /* Additional IE to be sent in */
 	/* (unicast) Probe Request at the time of join */
 
 	tSirAddie addIEAssoc;   /* Additional IE to be sent in */
 	/* (Re) Association Request */
-
+#ifndef FEATURE_CM_ENABLE
 	tAniEdType UCEncryptionType;
 	enum ani_akm_type akm;
+	bool wps_registration;
+	bool isOSENConnection;
+	bool force_24ghz_in_ht20;
+#endif
 
 #ifdef FEATURE_WLAN_ESE
 	tESETspecInfo eseTspecInfo;
 #endif
-	bool isOSENConnection;
 	struct supported_channels supportedChannels;
-	/* Pls make this as last variable in struct */
-	bool force_24ghz_in_ht20;
 	bool force_rsne_override;
+	/* Pls make this as last variable in struct */
 	struct bss_description bssDescription;
 	/*
 	 * WARNING: Pls make bssDescription as last variable in struct
