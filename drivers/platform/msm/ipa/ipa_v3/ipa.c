@@ -120,6 +120,9 @@ static void ipa_gsi_notify_cb(struct gsi_per_notify *notify);
 
 static int ipa3_attach_to_smmu(void);
 static int ipa3_alloc_pkt_init(void);
+static int ipa_alloc_pkt_init_ex(void);
+static void ipa3_free_pkt_init(void);
+static void ipa3_free_pkt_init_ex(void);
 
 static void ipa3_load_ipa_fw(struct work_struct *work);
 static DECLARE_WORK(ipa3_fw_loading_work, ipa3_load_ipa_fw);
@@ -6750,7 +6753,14 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 	if (result) {
 		IPAERR("Failed to alloc pkt_init payload\n");
 		result = -ENODEV;
-		goto fail_allok_pkt_init;
+		goto fail_alloc_pkt_init;
+	}
+
+	result = ipa_alloc_pkt_init_ex();
+	if (result) {
+		IPAERR("Failed to alloc pkt_init_ex payload\n");
+		result = -ENODEV;
+		goto fail_alloc_pkt_init_ex;
 	}
 
 	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v3_5)
@@ -6957,9 +6967,12 @@ fail_setup_apps_pipes:
 fail_register_device:
 	ipa3_destroy_flt_tbl_idrs();
 fail_init_interrupts:
-	 ipa3_remove_interrupt_handler(IPA_TX_SUSPEND_IRQ);
-	 ipa3_interrupts_destroy(ipa3_res.ipa_irq, &ipa3_ctx->master_pdev->dev);
-fail_allok_pkt_init:
+	ipa3_remove_interrupt_handler(IPA_TX_SUSPEND_IRQ);
+	ipa3_interrupts_destroy(ipa3_res.ipa_irq, &ipa3_ctx->master_pdev->dev);
+	ipa3_free_pkt_init_ex();
+fail_alloc_pkt_init_ex:
+	ipa3_free_pkt_init();
+fail_alloc_pkt_init:
 	ipa3_nat_ipv6ct_destroy_devices();
 fail_nat_ipv6ct_init_dev:
 	ipa3_free_coal_close_frame();
@@ -7425,7 +7438,7 @@ int ipa3_tz_unlock_reg(struct ipa_tz_unlock_reg_info *reg_info, u16 num_regs)
 
 static int ipa3_alloc_pkt_init(void)
 {
-	struct ipa_mem_buffer mem;
+	struct ipa_mem_buffer *mem = &ipa3_ctx->pkt_init_mem;
 	struct ipahal_imm_cmd_pyld *cmd_pyld;
 	struct ipahal_imm_cmd_ip_packet_init cmd = {0};
 	int i;
@@ -7438,17 +7451,16 @@ static int ipa3_alloc_pkt_init(void)
 	}
 	ipa3_ctx->pkt_init_imm_opcode = cmd_pyld->opcode;
 
-	mem.size = cmd_pyld->len * ipa3_ctx->ipa_num_pipes;
-	mem.base = dma_alloc_coherent(ipa3_ctx->pdev, mem.size,
-		&mem.phys_base, GFP_KERNEL);
-	if (!mem.base) {
-		IPAERR("failed to alloc DMA buff of size %d\n", mem.size);
-		ipahal_destroy_imm_cmd(cmd_pyld);
+	mem->size = cmd_pyld->len * ipa3_ctx->ipa_num_pipes;
+	ipahal_destroy_imm_cmd(cmd_pyld);
+	mem->base = dma_alloc_coherent(ipa3_ctx->pdev, mem->size,
+		&mem->phys_base, GFP_KERNEL);
+	if (!mem->base) {
+		IPAERR("failed to alloc DMA buff of size %d\n", mem->size);
 		return -ENOMEM;
 	}
-	ipahal_destroy_imm_cmd(cmd_pyld);
 
-	memset(mem.base, 0, mem.size);
+	memset(mem->base, 0, mem->size);
 	for (i = 0; i < ipa3_ctx->ipa_num_pipes; i++) {
 		cmd.destination_pipe_index = i;
 		cmd_pyld = ipahal_construct_imm_cmd(IPA_IMM_CMD_IP_PACKET_INIT,
@@ -7456,14 +7468,81 @@ static int ipa3_alloc_pkt_init(void)
 		if (!cmd_pyld) {
 			IPAERR("failed to construct IMM cmd\n");
 			dma_free_coherent(ipa3_ctx->pdev,
-				mem.size,
-				mem.base,
-				mem.phys_base);
+				mem->size,
+				mem->base,
+				mem->phys_base);
 			return -ENOMEM;
 		}
-		memcpy(mem.base + i * cmd_pyld->len, cmd_pyld->data,
+		memcpy(mem->base + i * cmd_pyld->len, cmd_pyld->data,
 			cmd_pyld->len);
-		ipa3_ctx->pkt_init_imm[i] = mem.phys_base + i * cmd_pyld->len;
+		ipa3_ctx->pkt_init_imm[i] = mem->phys_base + i * cmd_pyld->len;
+		ipahal_destroy_imm_cmd(cmd_pyld);
+	}
+
+	return 0;
+}
+
+static void ipa3_free_pkt_init(void)
+{
+	dma_free_coherent(ipa3_ctx->pdev, ipa3_ctx->pkt_init_mem.size,
+		ipa3_ctx->pkt_init_mem.base,
+		ipa3_ctx->pkt_init_mem.phys_base);
+}
+
+static void ipa3_free_pkt_init_ex(void)
+{
+	dma_free_coherent(ipa3_ctx->pdev, ipa3_ctx->pkt_init_ex_mem.size,
+		ipa3_ctx->pkt_init_ex_mem.base,
+		ipa3_ctx->pkt_init_ex_mem.phys_base);
+}
+
+static int ipa_alloc_pkt_init_ex(void)
+{
+	struct ipa_mem_buffer *mem = &ipa3_ctx->pkt_init_ex_mem;
+	struct ipahal_imm_cmd_pyld *cmd_pyld;
+	struct ipahal_imm_cmd_ip_packet_init_ex cmd = {0};
+	int i;
+
+	cmd_pyld = ipahal_construct_imm_cmd(IPA_IMM_CMD_IP_PACKET_INIT_EX,
+		&cmd, false);
+	if (!cmd_pyld) {
+		IPAERR("failed to construct IMM cmd\n");
+		return -ENOMEM;
+	}
+	ipa3_ctx->pkt_init_ex_imm_opcode = cmd_pyld->opcode;
+
+	mem->size = cmd_pyld->len * ipa3_ctx->ipa_num_pipes;
+	ipahal_destroy_imm_cmd(cmd_pyld);
+	mem->base = dma_alloc_coherent(ipa3_ctx->pdev, mem->size,
+		&mem->phys_base, GFP_KERNEL);
+	if (!mem->base) {
+		IPAERR("failed to alloc DMA buff of size %d\n", mem->size);
+		return -ENOMEM;
+	}
+
+	memset(mem->base, 0, mem->size);
+	for (i = 0; i < ipa3_ctx->ipa_num_pipes; i++) {
+		cmd.frag_disable = true;
+		cmd.nat_disable = true;
+		cmd.filter_disable = true;
+		cmd.route_disable = true;
+		cmd.hdr_removal_insertion_disable = false;
+		cmd.cs_disable = false;
+		cmd.flt_retain_hdr = true;
+		cmd.rt_retain_hdr = true;
+		cmd.rt_pipe_dest_idx = i;
+		cmd_pyld = ipahal_construct_imm_cmd(IPA_IMM_CMD_IP_PACKET_INIT_EX,
+			&cmd, false);
+		if (!cmd_pyld) {
+			IPAERR("failed to construct IMM cmd\n");
+			dma_free_coherent(ipa3_ctx->pdev,
+				mem->size,
+				mem->base,
+				mem->phys_base);
+			return -ENOMEM;
+		}
+		memcpy(mem->base + i * cmd_pyld->len, cmd_pyld->data, cmd_pyld->len);
+		ipa3_ctx->pkt_init_ex_imm[i] = mem->phys_base + i * cmd_pyld->len;
 		ipahal_destroy_imm_cmd(cmd_pyld);
 	}
 

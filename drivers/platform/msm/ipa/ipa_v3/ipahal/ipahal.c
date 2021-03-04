@@ -28,7 +28,8 @@ static const char *ipahal_imm_cmd_name_to_str[IPA_IMM_CMD_MAX] = {
 	__stringify(IPA_IMM_CMD_IP_PACKET_TAG_STATUS),
 	__stringify(IPA_IMM_CMD_DMA_TASK_32B_ADDR),
 	__stringify(IPA_IMM_CMD_TABLE_DMA),
-	__stringify(IPA_IMM_CMD_IP_V6_CT_INIT)
+	__stringify(IPA_IMM_CMD_IP_V6_CT_INIT),
+	__stringify(IPA_IMM_CMD_IP_PACKET_INIT_EX),
 };
 
 static const char *ipahal_pkt_status_exception_to_str
@@ -360,6 +361,55 @@ static struct ipahal_imm_cmd_pyld *ipa_imm_cmd_construct_ip_packet_init_v_5_0(
 		WARN_ON(1);
 	}
 	data->destination_pipe_index = pktinit_params->destination_pipe_index;
+
+	return pyld;
+}
+
+static struct ipahal_imm_cmd_pyld *ipa_imm_cmd_construct_ip_packet_init_ex(
+	enum ipahal_imm_cmd_name cmd, const void *params, bool is_atomic_ctx)
+{
+	struct ipahal_imm_cmd_pyld *pyld;
+	struct ipa_imm_cmd_hw_ip_packet_init_ex *data;
+	struct ipahal_imm_cmd_ip_packet_init_ex *packet_init_ex_params =
+		(struct ipahal_imm_cmd_ip_packet_init_ex *)params;
+
+	pyld = IPAHAL_MEM_ALLOC(sizeof(*pyld) + sizeof(*data), is_atomic_ctx);
+	if (unlikely(!pyld)) {
+		IPAHAL_ERR("kzalloc err\n");
+		return pyld;
+	}
+	pyld->opcode = ipahal_imm_cmd_get_opcode(cmd);
+	pyld->len = sizeof(*data);
+	data = (struct ipa_imm_cmd_hw_ip_packet_init_ex *)pyld->data;
+
+	data->frag_disable = packet_init_ex_params->frag_disable;
+	data->filter_disable = packet_init_ex_params->filter_disable;
+	data->nat_disable = packet_init_ex_params->nat_disable;
+	data->route_disable = packet_init_ex_params->route_disable;
+	data->hdr_removal_insertion_disable =
+	packet_init_ex_params->hdr_removal_insertion_disable;
+	data->cs_disable = packet_init_ex_params->cs_disable;
+	data->quota_tethering_stats_disable =
+	packet_init_ex_params->quota_tethering_stats_disable;
+	data->flt_rt_tbl_idx = packet_init_ex_params->flt_rt_tbl_idx;
+	data->flt_stats_cnt_idx = packet_init_ex_params->flt_stats_cnt_idx;
+	data->flt_priority = packet_init_ex_params->flt_priority;
+	data->flt_close_aggr_irq_mod =
+	packet_init_ex_params->flt_close_aggr_irq_mod;
+	data->flt_rule_id = packet_init_ex_params->flt_rule_id;
+	data->flt_action = packet_init_ex_params->flt_action;
+	data->flt_pdn_idx = packet_init_ex_params->flt_pdn_idx;
+	data->flt_set_metadata = packet_init_ex_params->flt_set_metadata;
+	data->flt_retain_hdr = packet_init_ex_params->flt_retain_hdr;
+	data->rt_pipe_dest_idx = packet_init_ex_params->rt_pipe_dest_idx;
+	data->rt_stats_cnt_idx = packet_init_ex_params->rt_stats_cnt_idx;
+	data->rt_priority = packet_init_ex_params->rt_priority;
+	data->rt_close_aggr_irq_mod = packet_init_ex_params->rt_close_aggr_irq_mod;
+	data->rt_rule_id = packet_init_ex_params->rt_rule_id;
+	data->rt_hdr_offset = packet_init_ex_params->rt_hdr_offset;
+	data->rt_proc_ctx = packet_init_ex_params->rt_proc_ctx;
+	data->rt_retain_hdr = packet_init_ex_params->rt_retain_hdr;
+	data->rt_system = packet_init_ex_params->rt_system;
 
 	return pyld;
 }
@@ -741,6 +791,9 @@ static struct ipahal_imm_cmd_obj
 	[IPA_HW_v5_0][IPA_IMM_CMD_IP_PACKET_INIT] = {
 		ipa_imm_cmd_construct_ip_packet_init_v_5_0,
 		16},
+	[IPA_HW_v5_0][IPA_IMM_CMD_IP_PACKET_INIT_EX] = {
+		ipa_imm_cmd_construct_ip_packet_init_ex,
+		18},
 };
 
 /*

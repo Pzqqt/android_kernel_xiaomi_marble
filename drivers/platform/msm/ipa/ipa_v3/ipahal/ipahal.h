@@ -31,6 +31,7 @@ enum ipahal_imm_cmd_name {
 	IPA_IMM_CMD_DMA_TASK_32B_ADDR,
 	IPA_IMM_CMD_TABLE_DMA,
 	IPA_IMM_CMD_IP_V6_CT_INIT,
+	IPA_IMM_CMD_IP_PACKET_INIT_EX,
 	IPA_IMM_CMD_MAX,
 };
 
@@ -227,6 +228,48 @@ struct ipahal_imm_cmd_table_dma {
  */
 struct ipahal_imm_cmd_ip_packet_init {
 	u32 destination_pipe_index;
+};
+
+/*
+ * struct ipahal_imm_cmd_ip_packet_init_ex - IP_PACKET_INIT_EX cmd payload
+ * @frag_disable: true - disabled. overrides IPA_ENDP_CONFIG_n:FRAG_OFFLOAD_EN
+ * @filter_disable: true - disabled, false - enabled
+ * @nat_disable: true - disabled, false - enabled
+ * @route_disable: true - disabled, false - enabled
+ * @hdr_removal_insertion_disable: true - disabled, false - enabled
+ * @cs_disable: true - disabled, false - enabled
+ * @quota_tethering_stats_disable: true - disabled, false - enabled
+ * fields @flt_rt_tbl_idx - @flt_retain_hdr are a logical software translation
+ * of ipa5_0_flt_rule_hw_hdr.
+ * fields @rt_pipe_dest_idx - @rt_system are a logical software translation
+ * ipa5_0_rt_rule_hw_hdr
+ */
+struct ipahal_imm_cmd_ip_packet_init_ex {
+	bool frag_disable;
+	bool filter_disable;
+	bool nat_disable;
+	bool route_disable;
+	bool hdr_removal_insertion_disable;
+	bool cs_disable;
+	bool quota_tethering_stats_disable;
+	u8 flt_rt_tbl_idx;
+	u8 flt_stats_cnt_idx;
+	u8 flt_priority;
+	bool flt_close_aggr_irq_mod;
+	u16 flt_rule_id ;
+	u8 flt_action;
+	u8 flt_pdn_idx;
+	bool flt_set_metadata;
+	bool flt_retain_hdr;
+	u8 rt_pipe_dest_idx;
+	u8 rt_stats_cnt_idx;
+	u8 rt_priority;
+	bool rt_close_aggr_irq_mod;
+	u16 rt_rule_id;
+	u16 rt_hdr_offset;
+	bool rt_proc_ctx;
+	bool rt_retain_hdr;
+	bool rt_system;
 };
 
 /*
