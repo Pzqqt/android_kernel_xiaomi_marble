@@ -6944,6 +6944,12 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 
 	ipa3_debugfs_init();
 
+	result = ipa_mpm_init();
+	if (result)
+		IPAERR("fail to init mpm %d\n", result);
+	else
+		IPADBG(":mpm init init ok\n");
+
 	mutex_lock(&ipa3_ctx->lock);
 	ipa3_ctx->ipa_initialization_complete = true;
 	if (ipa3_ctx->clients_registered)

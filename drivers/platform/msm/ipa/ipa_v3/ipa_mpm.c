@@ -560,7 +560,7 @@ static int ipa_mpm_set_dma_mode(enum ipa_client_type src_pipe,
 	ep_cfg.mode.dst = dst_pipe;
 	ep_cfg.seq.set_dynamic = true;
 
-	result = ipa_cfg_ep(ipa_get_ep_mapping(src_pipe), &ep_cfg);
+	result = ipa3_cfg_ep(ipa_get_ep_mapping(src_pipe), &ep_cfg);
 	IPA_MPM_FUNC_EXIT();
 
 destroy_imm_cmd:
@@ -1649,7 +1649,11 @@ static int ipa_mpm_start_stop_remote_mhip_chan(
 			IPA_MPM_DBG("Remote channel already started for %d\n",
 				probe_id);
 		} else {
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+			ret = mhi_start_transfer(mhi_dev);
+#else
 			ret = mhi_resume_transfer(mhi_dev);
+#endif
 			mutex_lock(&ipa_mpm_ctx->md[probe_id].mhi_mutex);
 			if (ret)
 				ipa_mpm_ctx->md[probe_id].remote_state =
@@ -1665,7 +1669,11 @@ static int ipa_mpm_start_stop_remote_mhip_chan(
 			IPA_MPM_DBG("Remote channel already stopped for %d\n",
 					probe_id);
 		} else {
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+			ret = mhi_stop_transfer(mhi_dev);
+#else
 			ret = mhi_pause_transfer(mhi_dev);
+#endif
 			mutex_lock(&ipa_mpm_ctx->md[probe_id].mhi_mutex);
 			if (ret)
 				ipa_mpm_ctx->md[probe_id].remote_state =
@@ -1684,7 +1692,7 @@ static enum mhip_status_type ipa_mpm_start_stop_mhip_chan(
 	int probe_id,
 	enum ipa_mpm_start_stop_type start_stop)
 {
-	int ipa_ep_idx;
+	int ipa_ep_idx = IPA_EP_NOT_ALLOCATED;
 	struct ipa3_ep_context *ep;
 	bool is_start;
 	enum ipa_client_type ul_chan, dl_chan;
@@ -2753,6 +2761,7 @@ static void ipa_mpm_mhi_status_cb(struct mhi_device *mhi_dev,
 	case MHI_CB_FATAL_ERROR:
 	case MHI_CB_EE_MISSION_MODE:
 	case MHI_CB_DTR_SIGNAL:
+	default:
 		IPA_MPM_ERR("unexpected event %d\n", mhi_cb);
 		break;
 	}
@@ -2784,7 +2793,7 @@ int ipa_mpm_mhip_xdci_pipe_enable(enum ipa_usb_teth_prot xdci_teth_prot)
 	int probe_id = IPA_MPM_MHIP_CH_ID_MAX;
 	int i;
 	enum ipa_mpm_mhip_client_type mhip_client;
-	enum mhip_status_type status;
+	enum mhip_status_type status = MHIP_STATUS_SUCCESS;
 	int pipe_idx;
 	bool is_acted = true;
 	int ret = 0;
@@ -2919,6 +2928,7 @@ int ipa_mpm_mhip_xdci_pipe_enable(enum ipa_usb_teth_prot xdci_teth_prot)
 	}
 	return ret;
 }
+EXPORT_SYMBOL(ipa_mpm_mhip_xdci_pipe_enable);
 
 int ipa_mpm_mhip_xdci_pipe_disable(enum ipa_usb_teth_prot xdci_teth_prot)
 {
@@ -3042,6 +3052,7 @@ int ipa_mpm_mhip_xdci_pipe_disable(enum ipa_usb_teth_prot xdci_teth_prot)
 
 	return ret;
 }
+EXPORT_SYMBOL(ipa_mpm_mhip_xdci_pipe_disable);
 
 static int ipa_mpm_populate_smmu_info(struct platform_device *pdev)
 {
@@ -3228,13 +3239,13 @@ static struct platform_driver ipa_ipa_mpm_driver = {
  *
  * Return: None
  */
-static int __init ipa_mpm_init(void)
+int ipa_mpm_init(void)
 {
 	IPA_MPM_DBG("register ipa_mpm platform device\n");
 	return platform_driver_register(&ipa_ipa_mpm_driver);
 }
 
-static void __exit ipa_mpm_exit(void)
+void ipa_mpm_exit(void)
 {
 	IPA_MPM_DBG("unregister ipa_mpm platform device\n");
 	platform_driver_unregister(&ipa_ipa_mpm_driver);
@@ -3253,6 +3264,7 @@ int ipa3_is_mhip_offload_enabled(void)
 	else
 		return 1;
 }
+EXPORT_SYMBOL(ipa3_is_mhip_offload_enabled);
 
 int ipa_mpm_panic_handler(char *buf, int size)
 {
@@ -3406,7 +3418,5 @@ int ipa3_mpm_enable_adpl_over_odl(bool enable)
 	return ret;
 }
 
-late_initcall(ipa_mpm_init);
-module_exit(ipa_mpm_exit);
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("MHI Proxy Manager Driver");
