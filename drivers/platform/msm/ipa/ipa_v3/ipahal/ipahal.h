@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _IPAHAL_H_
@@ -410,6 +410,21 @@ const char *ipahal_imm_cmd_name_str(enum ipahal_imm_cmd_name cmd_name);
  */
 struct ipahal_imm_cmd_pyld *ipahal_construct_imm_cmd(
 	enum ipahal_imm_cmd_name cmd, const void *params, bool is_atomic_ctx);
+
+/*
+ * ipahal_modify_imm_cmd() - Modify immdiate command in an existing buffer
+ * This function modifies an existing imm cmd buffer
+ * @cmd_name: [in] Immediate command name
+ * @cmd_data: [in] Constructed immediate command buffer data
+ * @params: [in] Structure with specific IMM params
+ * @params_mask: [in] Same structure, but the fields filled with 0,
+ *  if they should not be changed, or any non-zero for fields to be updated
+ */
+int ipahal_modify_imm_cmd(
+	enum ipahal_imm_cmd_name cmd,
+	const void *cmd_data,
+	const void *params,
+	const void *params_mask);
 
 /*
  * ipahal_construct_nop_imm_cmd() - Construct immediate comamnd for NO-Op
