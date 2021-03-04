@@ -12193,6 +12193,10 @@ typedef enum {
      */
     WMI_VDEV_PARAM_WMM_TXOP_ENABLE,          /* 0xA7 */
 
+    /** Value of DTIM to be applied in Suspend mode
+     */
+    WMI_VDEV_PARAM_FORCE_DTIM_CNT,           /* 0xA8 */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
@@ -16545,6 +16549,11 @@ enum {
      * This flag/bit will be set if INI settings enable mod_dtim_on_sys_suspend.
      */
     WMI_WOW_FLAG_MOD_DTIM_ON_SYS_SUSPEND    = 0x00000040,
+    /*
+     * Forced dtim in suspend mode enable Flag.
+     * setDtimInSuspendMode
+     */
+    WMI_WOW_FLAG_FORCED_DTIM_ON_SYS_SUSPEND = 0x00000080,
 };
 
 typedef struct {
