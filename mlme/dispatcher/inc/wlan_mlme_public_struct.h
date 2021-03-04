@@ -742,8 +742,6 @@ struct wlan_mlme_wps_params {
  * @is_6g_sap_fd_enabled: enable fils discovery on sap
  */
 struct wlan_mlme_cfg_sap {
-	uint8_t cfg_ssid[WLAN_SSID_MAX_LEN];
-	uint8_t cfg_ssid_len;
 	uint16_t beacon_interval;
 	uint16_t dtim_interval;
 	uint16_t listen_interval;
@@ -2250,10 +2248,6 @@ enum wep_key_id {
  * @is_auth_open_system:    Flag to check if the auth type is open
  * @auth_type:              Authentication type value
  * @wep_default_key_id:     Default WEP key id
- * @wep_default_key_1:      WEP encryption key 1
- * @wep_default_key_2:      WEP encryption key 2
- * @wep_default_key_3:      WEP encryption key 3
- * @wep_default_key_4:      WEP encryption key 4
  */
 struct wlan_mlme_wep_cfg {
 	bool is_privacy_enabled;
@@ -2261,10 +2255,6 @@ struct wlan_mlme_wep_cfg {
 	bool is_auth_open_system;
 	uint8_t auth_type;
 	uint8_t wep_default_key_id;
-	struct mlme_cfg_str wep_default_key_1;
-	struct mlme_cfg_str wep_default_key_2;
-	struct mlme_cfg_str wep_default_key_3;
-	struct mlme_cfg_str wep_default_key_4;
 };
 
 /**
