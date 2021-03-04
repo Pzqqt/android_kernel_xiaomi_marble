@@ -2434,7 +2434,15 @@ typedef struct _wmi_ppe_threshold {
         A_UINT32 ru_mask; /** RU index mask */
     };
     A_UINT32 ppet16_ppet8_ru3_ru0[WMI_MAX_NUM_SS]; /** ppet8 and ppet16 for max num ss */
+    /**************************************************
+     * As this struct is embedded inside other structs,
+     * it cannot be expanded without breaking backwards
+     * compatibility.  Do not add new fields here.
+     **************************************************/
 } wmi_ppe_threshold;
+
+#define WMI_MAX_EHTCAP_MAC_SIZE  2
+#define WMI_MAX_EHTCAP_PHY_SIZE  3
 
 /* WMI_SYS_CAPS_* refer to the capabilities that system support
  */
@@ -2967,6 +2975,21 @@ typedef struct {
      * Bits 31:2 - Reserved
      */
     A_UINT32 target_cap_flags;
+
+    /* EHT MAC Capabilities: total WMI_MAX_EHTCAP_MAC_SIZE*A_UINT32 bits
+     * those bits actually are max mac capabilities = cap_mac_2g | cap_mac_5g
+     * The actual cap mac info per mac (2g/5g) in the TLV -- WMI_MAC_PHY_CAPABILITIES_EXT
+     */
+    A_UINT32 eht_cap_mac_info[WMI_MAX_EHTCAP_MAC_SIZE];
+
+    /* Following this struct are the TLV's:
+     *     WMI_DMA_RING_CAPABILITIES;
+     *     wmi_spectral_bin_scaling_params;
+     *     WMI_MAC_PHY_CAPABILITIES_EXT;  <-- EHT mac capabilites and phy capabilites info
+     *     WMI_HAL_REG_CAPABILITIES_EXT2;
+     *     wmi_nan_capabilities;
+     *     WMI_SCAN_RADIO_CAPABILITIES_EXT2;
+     */
 } wmi_service_ready_ext2_event_fixed_param;
 
 typedef struct {
@@ -14118,6 +14141,12 @@ typedef struct {
     A_UINT32 tx_mcs_set; /* Negotiated TX HE rates(i.e. rate this node can TX to peer) */
 } wmi_he_rate_set;
 
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_eht_rate_set */
+    A_UINT32 rx_mcs_set;
+    A_UINT32 tx_mcs_set;
+} wmi_eht_rate_set;
+
 /*
  * IMPORTANT: Make sure the bit definitions here are consistent
  * with the ni_flags definitions in wlan_peer.h
@@ -14146,6 +14175,10 @@ typedef struct {
 #define WMI_PEER_IS_P2P_CAPABLE 0x20000000  /* P2P capable peer */
 #define WMI_PEER_160MHZ         0x40000000  /* 160 MHz enabled */
 #define WMI_PEER_SAFEMODE_EN    0x80000000  /* Fips Mode Enabled */
+
+/** define for peer_flags_ext */
+#define WMI_PEER_EXT_EHT        0x00000001  /* EHT enabled */
+#define WMI_PEER_EXT_320MHZ     0x00000002  /* 320Mhz enabled */
 
 /**
  * Peer rate capabilities.
@@ -14329,6 +14362,18 @@ typedef struct {
      */
     A_UINT32 auth_mode;
 
+    /* Refer to WMI_PEER_EXT_xxx defs */
+    A_UINT32 peer_flags_ext;
+
+    /* 802.11be capabilities and other params */
+    A_UINT32 puncture_20mhz_bitmap; /* each bit indicates one 20Mhz bw puntured */
+    /* EHT mac capabilites from BSS beacon EHT cap IE, total WMI_MAX_EHTCAP_MAC_SIZE*A_UINT32 bits */
+    A_UINT32 peer_eht_cap_mac[WMI_MAX_EHTCAP_MAC_SIZE];
+    /* EHT phy capabilites from BSS beacon EHT cap IE, total WMI_MAX_EHTCAP_PHY_SIZE*A_UINT32 bits */
+    A_UINT32 peer_eht_cap_phy[WMI_MAX_EHTCAP_PHY_SIZE];
+    A_UINT32 peer_eht_ops;
+    wmi_ppe_threshold peer_eht_ppet;
+
 /* Following this struct are the TLV's:
  *     A_UINT8 peer_legacy_rates[];
  *     A_UINT8 peer_ht_rates[];
@@ -14337,6 +14382,7 @@ typedef struct {
  *     wmi_peer_assoc_mlo_params  mlo_params[0,1]; <-- MLO parameters opt. TLV
  *         Only present for MLO peers.
  *         For non-MLO peers the array length should be 0.
+ *     wmi_eht_rate_set_peer_eht_rates; <-- EHT capabilities of the peer
  */
 } wmi_peer_assoc_complete_cmd_fixed_param;
 
@@ -27141,6 +27187,26 @@ typedef struct {
     /* phy id. Starts with 0 */
     A_UINT32 phy_id;
     A_UINT32 wireless_modes_ext; /* REGDMN MODE EXT, see REGDMN_MODE_ enum */
+
+    /**************************************************************************
+     * following new params for 802.11be, but under development
+     **************************************************************************/
+    /* EHT capability mac info field of 802.11be */
+    A_UINT32 eht_cap_mac_info_2G[WMI_MAX_EHTCAP_MAC_SIZE];
+    A_UINT32 eht_cap_mac_info_5G[WMI_MAX_EHTCAP_MAC_SIZE];
+    A_UINT32 eht_supp_mcs_2G;
+    A_UINT32 eht_supp_mcs_5G;
+    /* EHT capability phy field of 802.11be, WMI_EHT_CAP defines */
+    A_UINT32 eht_cap_phy_info_2G[WMI_MAX_EHTCAP_PHY_SIZE];
+    A_UINT32 eht_cap_phy_info_5G[WMI_MAX_EHTCAP_PHY_SIZE];
+    wmi_ppe_threshold eht_ppet2G;
+    wmi_ppe_threshold eht_ppet5G;
+    A_UINT32 eht_cap_info_internal;
+    /**************************************************************************
+     * Currently pls do not add any new param after EHT
+     * as still under development.
+     * We can add new param before it.
+     **************************************************************************/
 } WMI_MAC_PHY_CAPABILITIES_EXT;
 
 typedef struct {
