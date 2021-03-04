@@ -655,7 +655,6 @@ static void lim_handle_join_rsp_status(struct mac_context *mac_ctx,
 				sme_join_rsp->tspecIeLen);
 		}
 #endif
-		sme_join_rsp->aid = session_entry->limAID;
 		sme_join_rsp->vht_channel_width =
 			session_entry->ch_width;
 

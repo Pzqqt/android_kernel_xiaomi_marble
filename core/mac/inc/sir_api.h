@@ -821,10 +821,9 @@ typedef struct sTspecInfo {
 	struct mac_tspec_ie tspec;
 } tTspecInfo;
 
-#define SIR_ESE_MAX_TSPEC_IES   4
 typedef struct sESETspecTspecInfo {
 	uint8_t numTspecs;
-	tTspecInfo tspec[SIR_ESE_MAX_TSPEC_IES];
+	tTspecInfo tspec[ESE_MAX_TSPEC_IES];
 } tESETspecInfo;
 
 struct tsm_ie {
@@ -957,6 +956,7 @@ struct join_req {
 	 */
 };
 
+#ifndef FEATURE_CM_ENABLE
 /* / Definition for response message to previously issued join request */
 /* / MAC ---> */
 struct join_rsp {
@@ -964,13 +964,11 @@ struct join_rsp {
 	uint16_t length;
 	uint8_t vdev_id;      /* Session ID */
 	tSirResultCodes status_code;
-	tAniAuthType authType;
 	uint32_t vht_channel_width;
 	/* It holds reasonCode when join fails due to deauth/disassoc frame.
 	 * Otherwise it holds status code.
 	 */
 	uint16_t protStatusCode;
-	uint16_t aid;
 	uint32_t beaconLength;
 	uint32_t assocReqLength;
 	uint32_t assocRspLength;
@@ -1008,6 +1006,7 @@ struct join_rsp {
 #endif
 	uint8_t frames[1];
 };
+#endif
 
 struct oem_channel_info {
 	uint32_t mhz;
@@ -2494,8 +2493,6 @@ typedef struct {
 #endif
 
 struct roam_offload_synch_ind {
-	uint16_t messageType;   /*eWNI_SME_ROAM_OFFLOAD_SYNCH_IND */
-	uint16_t length;
 	uint16_t beaconProbeRespOffset;
 	uint16_t beaconProbeRespLength;
 	uint16_t reassocRespOffset;
@@ -2522,7 +2519,13 @@ struct roam_offload_synch_ind {
 	uint16_t next_erp_seq_num;
 	uint8_t replay_ctr[REPLAY_CTR_LEN];
 	void *add_bss_params;
-	struct join_rsp *join_rsp;
+	enum phy_ch_width chan_width;
+	uint32_t max_rate_flags;
+	uint32_t ric_data_len;
+#ifdef FEATURE_WLAN_ESE
+	uint32_t tspec_len;
+#endif
+	uint8_t *ric_tspec_data;
 	uint16_t aid;
 	struct sir_hw_mode_trans_ind hw_mode_trans_ind;
 	uint8_t nss;

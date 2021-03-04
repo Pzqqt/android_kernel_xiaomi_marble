@@ -1186,9 +1186,8 @@ int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
 	/* update freq and channel width */
 	wma->interfaces[synch_event->vdev_id].ch_freq =
 		roam_synch_ind_ptr->chan_freq;
-	if (roam_synch_ind_ptr->join_rsp)
-		wma->interfaces[synch_event->vdev_id].chan_width =
-			roam_synch_ind_ptr->join_rsp->vht_channel_width;
+	wma->interfaces[synch_event->vdev_id].chan_width =
+		roam_synch_ind_ptr->chan_width;
 	/*
 	 * update phy_mode in wma to avoid mismatch in phymode between host and
 	 * firmware. The phymode stored in peer->peer_mlme.phymode is
@@ -1221,8 +1220,8 @@ cleanup_label:
 		if (synch_event)
 			wma_post_roam_sync_failure(wma, synch_event->vdev_id);
 	}
-	if (roam_synch_ind_ptr && roam_synch_ind_ptr->join_rsp)
-		qdf_mem_free(roam_synch_ind_ptr->join_rsp);
+	if (roam_synch_ind_ptr && roam_synch_ind_ptr->ric_tspec_data)
+		qdf_mem_free(roam_synch_ind_ptr->ric_tspec_data);
 	if (roam_synch_ind_ptr)
 		qdf_mem_free(roam_synch_ind_ptr);
 	if (bss_desc_ptr)

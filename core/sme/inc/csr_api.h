@@ -1180,15 +1180,18 @@ typedef void (*csr_readyToSuspendCallback)(void *pContext, bool suspended);
 typedef void (*csr_readyToExtWoWCallback)(void *pContext, bool status);
 #endif
 typedef void (*csr_link_status_callback)(uint8_t status, void *context);
+
+#ifndef FEATURE_CM_ENABLE
 #ifdef FEATURE_WLAN_TDLS
 void csr_roam_fill_tdls_info(struct mac_context *mac_ctx,
 			     struct csr_roam_info *roam_info,
-			     struct join_rsp *join_rsp);
+			     struct wlan_objmgr_vdev *vdev);
 #else
 static inline void csr_roam_fill_tdls_info(struct mac_context *mac_ctx,
 					   struct csr_roam_info *roam_info,
-					   struct join_rsp *join_rsp)
+					   struct wlan_objmgr_vdev *vdev)
 {}
+#endif
 #endif
 
 typedef void (*sme_get_raom_scan_ch_callback)(

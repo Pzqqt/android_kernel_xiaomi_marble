@@ -16546,6 +16546,8 @@ fail:
 	msg_return.bodyval = 0;
 	sys_process_mmh_msg(mac, &msg_return);
 }
+
+#ifndef FEATURE_CM_ENABLE
 #ifdef FEATURE_WLAN_TDLS
 /**
  * csr_roam_fill_tdls_info() - Fill TDLS information
@@ -16556,11 +16558,11 @@ fail:
  */
 void csr_roam_fill_tdls_info(struct mac_context *mac_ctx,
 			     struct csr_roam_info *roam_info,
-			     struct join_rsp *join_rsp)
+			     struct wlan_objmgr_vdev *vdev)
 {
-	roam_info->tdls_prohibited = join_rsp->tdls_prohibited;
+	roam_info->tdls_prohibited = mlme_get_tdls_prohibited(vdev);
 	roam_info->tdls_chan_swit_prohibited =
-		join_rsp->tdls_chan_swit_prohibited;
+		mlme_get_tdls_chan_switch_prohibited(vdev);
 	sme_debug(
 		"tdls:prohibit: %d, chan_swit_prohibit: %d",
 		roam_info->tdls_prohibited,
@@ -16568,7 +16570,6 @@ void csr_roam_fill_tdls_info(struct mac_context *mac_ctx,
 }
 #endif
 
-#ifndef FEATURE_CM_ENABLE
 #if defined(WLAN_FEATURE_FILS_SK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 static void csr_copy_fils_join_rsp_roam_info(struct csr_roam_info *roam_info,
 				      struct roam_offload_synch_ind *roam_synch_data)
@@ -16774,6 +16775,7 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	uint8_t mdie_present;
 	struct cm_roam_values_copy config;
 	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct mlme_legacy_priv *mlme_priv;
 
 	mlme_obj = mlme_get_psoc_ext_obj(mac_ctx->psoc);
 	if (!mlme_obj) {
@@ -16787,6 +16789,11 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	if (!vdev) {
 		sme_err("vdev is NULL, aborting roam invoke");
 		return QDF_STATUS_E_NULL_VALUE;
+	}
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto end;
 	}
 
 	vdev_roam_params = mlme_get_roam_invoke_params(vdev);
@@ -17243,43 +17250,41 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 
 	sme_debug("LFR3:Clear Connected info");
 	csr_roam_free_connected_info(mac_ctx, &session->connectedInfo);
-	len = roam_synch_data->join_rsp->parsedRicRspLen;
+	len = roam_synch_data->ric_data_len;
 
 #ifdef FEATURE_WLAN_ESE
-	len += roam_synch_data->join_rsp->tspecIeLen;
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-		FL("LFR3: tspecLen %d"),
-		roam_synch_data->join_rsp->tspecIeLen);
+	len += roam_synch_data->tspec_len;
+	sme_debug("LFR3: tspecLen %d", roam_synch_data->tspec_len);
 #endif
 
-	sme_debug("LFR3: RIC length - %d",
-		  roam_synch_data->join_rsp->parsedRicRspLen);
+	sme_debug("LFR3: RIC length - %d", roam_synch_data->ric_data_len);
 	if (len) {
 		session->connectedInfo.pbFrames =
 			qdf_mem_malloc(len);
 		if (session->connectedInfo.pbFrames) {
 			qdf_mem_copy(session->connectedInfo.pbFrames,
-				roam_synch_data->join_rsp->frames, len);
+				     roam_synch_data->ric_tspec_data,
+				     len);
 			session->connectedInfo.nRICRspLength =
-				roam_synch_data->join_rsp->parsedRicRspLen;
+				roam_synch_data->ric_data_len;
 
 #ifdef FEATURE_WLAN_ESE
 			session->connectedInfo.nTspecIeLength =
-				roam_synch_data->join_rsp->tspecIeLen;
+				roam_synch_data->tspec_len;
 #endif
 		}
 	}
 	conn_profile->vht_channel_width =
-		roam_synch_data->join_rsp->vht_channel_width;
+		roam_synch_data->chan_width;
 	add_bss_params = (struct bss_params *)roam_synch_data->add_bss_params;
-	roam_info->timingMeasCap =
-		roam_synch_data->join_rsp->timingMeasCap;
-	roam_info->chan_info.nss = roam_synch_data->join_rsp->nss;
-	roam_info->chan_info.rate_flags =
-		roam_synch_data->join_rsp->max_rate_flags;
-	roam_info->chan_info.ch_width =
-		roam_synch_data->join_rsp->vht_channel_width;
-	csr_roam_fill_tdls_info(mac_ctx, roam_info, roam_synch_data->join_rsp);
+	roam_info->timingMeasCap = mlme_priv->connect_info.timing_meas_cap;
+	roam_info->chan_info.nss = roam_synch_data->nss;
+	roam_info->chan_info.rate_flags = roam_synch_data->max_rate_flags;
+	roam_info->chan_info.ch_width = roam_synch_data->chan_width;
+	/* This is temp ifdef will be removed in near future */
+#ifndef FEATURE_CM_ENABLE
+	csr_roam_fill_tdls_info(mac_ctx, roam_info, vdev);
+#endif
 	assoc_info.bss_desc = bss_desc;
 	roam_info->status_code = eSIR_SME_SUCCESS;
 	roam_info->reasonCode = eSIR_SME_SUCCESS;

@@ -1381,15 +1381,6 @@ wma_tx_frame_with_tx_complete_send(struct mac_context *mac, void *pPacket,
 }
 #endif
 
-void lim_set_tdls_flags(struct roam_offload_synch_ind *roam_sync_ind_ptr,
-		   struct pe_session *ft_session_ptr)
-{
-	roam_sync_ind_ptr->join_rsp->tdls_prohibited =
-		mlme_get_tdls_prohibited(ft_session_ptr->vdev);
-	roam_sync_ind_ptr->join_rsp->tdls_chan_swit_prohibited =
-		mlme_get_tdls_chan_switch_prohibited(ft_session_ptr->vdev);
-}
-
 /*
  * TDLS setup Request frame on AP link
  */

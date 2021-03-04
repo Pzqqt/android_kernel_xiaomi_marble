@@ -436,7 +436,7 @@ typedef struct sSirAssocRsp {
 
 #ifdef FEATURE_WLAN_ESE
 	uint8_t num_tspecs;
-	tDot11fIEWMMTSPEC TSPECInfo[SIR_ESE_MAX_TSPEC_IES];
+	tDot11fIEWMMTSPEC TSPECInfo[ESE_MAX_TSPEC_IES];
 	struct ese_tsm_ie tsmIE;
 #endif
 
