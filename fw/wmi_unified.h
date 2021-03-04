@@ -14207,7 +14207,7 @@ typedef struct {
     /** MLO flags */
     wmi_mlo_flags mlo_flags;
     /** MLD MAC address */
-    wmi_mac_addr vdev_macaddr;
+    wmi_mac_addr mld_macaddr;
 } wmi_peer_assoc_mlo_params;
 
 typedef struct {
@@ -17489,6 +17489,7 @@ typedef struct wmi_nlo_config {
  * wmi_vendor_oui vendor_oui[num_vendor_oui];
  * connected_nlo_rssi_params cnlo_rssi_params;
  * connected_nlo_bss_band_rssi_pref cnlo_bss_band_rssi_pref[num_cnlo_band_pref];
+ * A_UINT32 preferred_chan_list[]; // in MHz
  */
 } wmi_nlo_config_cmd_fixed_param;
 
