@@ -167,6 +167,9 @@ struct sAniProbeRspStruct {
  * @nss: Return the number of spatial streams supported
  * @stbc_capable: stbc capable
  * @no_ptk_4_way: Do not need 4-way handshake
+ * @eht_capable: is EHT capabale or not
+ * @eht_config: EHT capability
+ * @eht_op: EHT operation
  *
  * This structure contains parameter required for
  * add sta request of upper layer.
@@ -248,6 +251,11 @@ typedef struct {
 	uint8_t twt_responder;
 #endif
 	bool no_ptk_4_way;
+#ifdef WLAN_FEATURE_11BE
+	bool eht_capable;
+	tDot11fIEeht_cap eht_config;
+	tDot11fIEeht_op eht_op;
+#endif
 } tAddStaParams, *tpAddStaParams;
 
 /**
@@ -338,6 +346,7 @@ typedef struct sLimMlmSetKeysReq {
  * @ch_width: VHT tx channel width
  * @he_capable: HE Capability
  * @no_ptk_4_way: Do not need 4-way handshake
+ * @eht_capable: EHT capability
  */
 struct bss_params {
 	tSirMacAddr bssId;
@@ -364,6 +373,9 @@ struct bss_params {
 #endif
 	bool no_ptk_4_way;
 	uint16_t bss_max_idle_period;
+#ifdef WLAN_FEATURE_11BE
+	bool eht_capable;
+#endif
 };
 
 /**

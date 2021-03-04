@@ -49,6 +49,7 @@
  *                                          stats req
  * @is_fw_therm_throt_supp: Get thermal throttling threshold
  * @igmp_offload_enable: Get igmp offload enable or disable
+ * @en_11be: enable 11be
  */
 struct wma_tgt_services {
 	uint32_t sta_power_save;
@@ -90,6 +91,7 @@ struct wma_tgt_services {
 #ifdef WLAN_FEATURE_IGMP_OFFLOAD
 	bool igmp_offload_enable;
 #endif
+	bool en_11be;
 };
 
 /**
@@ -242,6 +244,11 @@ struct wma_tgt_cfg {
 	bool twt_nudge_enabled;
 	bool all_twt_enabled;
 	bool twt_stats_enabled;
+#endif
+#ifdef WLAN_FEATURE_11BE
+	tDot11fIEeht_cap eht_cap;
+	tDot11fIEeht_cap eht_cap_2g;
+	tDot11fIEeht_cap eht_cap_5g;
 #endif
 };
 #endif /* WMA_TGT_CFG_H */

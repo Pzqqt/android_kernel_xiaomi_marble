@@ -2492,6 +2492,9 @@ WMA_OBJS :=	$(WMA_SRC_DIR)/wma_main.o \
 		$(WMA_SRC_DIR)/wlan_qct_wma_legacy.o\
 		$(WMA_NDP_OBJS)
 
+ifeq ($(CONFIG_WLAN_FEATURE_11BE), y)
+WMA_OBJS +=	$(WMA_SRC_DIR)/wma_eht.o
+endif
 ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
 WMA_OBJS+=	$(WMA_SRC_DIR)/wma_ocb.o
 endif
