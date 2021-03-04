@@ -2927,12 +2927,13 @@ static int hdd_twt_configure(struct hdd_adapter *adapter,
 
 	id = QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_OPERATION;
 	twt_oper_attr = tb[id];
-	twt_oper = nla_get_u8(twt_oper_attr);
 
 	if (!twt_oper_attr) {
 		hdd_err("TWT operation NOT specified");
 		return -EINVAL;
 	}
+
+	twt_oper = nla_get_u8(twt_oper_attr);
 
 	id = QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS;
 	twt_param_attr = tb[id];
