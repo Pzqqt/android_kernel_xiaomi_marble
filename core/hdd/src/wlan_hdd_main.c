@@ -5920,6 +5920,7 @@ static char *net_dev_ref_debug_string_from_id(wlan_net_dev_ref_dbgid dbgid)
 		"NET_DEV_HOLD_COUNTRY_CHANGE_UPDATE_SAP",
 		"NET_DEV_HOLD_CACHE_STATION_STATS_CB",
 		"NET_DEV_HOLD_DISPLAY_TXRX_STATS",
+		"NET_DEV_HOLD_START_PRE_CAC_TRANS",
 		"NET_DEV_HOLD_ID_MAX"};
 	int32_t num_dbg_strings = QDF_ARRAY_SIZE(strings);
 
