@@ -100,6 +100,10 @@ enum hdd_dot11_mode {
 	eHDD_DOT11_MODE_11a,
 	eHDD_DOT11_MODE_11ax_ONLY,
 	eHDD_DOT11_MODE_11ax,
+#ifdef WLAN_FEATURE_11BE
+	eHDD_DOT11_MODE_11be,
+	eHDD_DOT11_MODE_11be_ONLY,
+#endif
 };
 
 /*
