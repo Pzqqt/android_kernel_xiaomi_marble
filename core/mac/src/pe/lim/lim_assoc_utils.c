@@ -2086,14 +2086,6 @@ static bool lim_is_add_sta_params_he_capable(tpAddStaParams add_sta_params)
 {
 	return add_sta_params->he_capable;
 }
-
-static void lim_add_tdls_sta_he_config(tpAddStaParams add_sta_params,
-				       tpDphHashNode sta_ds)
-{
-	pe_debug("Adding tdls he capabilities");
-	qdf_mem_copy(&add_sta_params->he_config, &sta_ds->he_config,
-		     sizeof(add_sta_params->he_config));
-}
 #else
 static void lim_update_he_stbc_capable(tpAddStaParams add_sta_params)
 {}
@@ -2106,12 +2098,24 @@ static bool lim_is_add_sta_params_he_capable(tpAddStaParams add_sta_params)
 {
 	return false;
 }
+#endif
 
+#ifdef FEATURE_WLAN_TDLS
+#ifdef WLAN_FEATURE_11AX
+static void lim_add_tdls_sta_he_config(tpAddStaParams add_sta_params,
+				       tpDphHashNode sta_ds)
+{
+	pe_debug("Adding tdls he capabilities");
+	qdf_mem_copy(&add_sta_params->he_config, &sta_ds->he_config,
+		     sizeof(add_sta_params->he_config));
+}
+#else
 static void lim_add_tdls_sta_he_config(tpAddStaParams add_sta_params,
 				       tpDphHashNode sta_ds)
 {
 }
-#endif
+#endif /* WLAN_FEATURE_11AX */
+#endif /* FEATURE_WLAN_TDLS */
 
 /**
  * lim_add_sta()- called to add an STA context at hardware
