@@ -267,9 +267,11 @@ static u32 msm_vidc_encoder_bin_size_iris2(struct msm_vidc_inst *inst)
 	height = f->fmt.pix_mp.height;
 
 	if (inst->codec == MSM_VIDC_H264)
-		HFI_BUFFER_BIN_H264E(size, width, height, stage, num_vpp_pipes);
+		HFI_BUFFER_BIN_H264E(size, inst->hfi_rc_type, width,
+			height, stage, num_vpp_pipes);
 	else if (inst->codec == MSM_VIDC_HEVC)
-		HFI_BUFFER_BIN_H265E(size, width, height, stage, num_vpp_pipes);
+		HFI_BUFFER_BIN_H265E(size, inst->hfi_rc_type, width,
+			height, stage, num_vpp_pipes);
 
 	i_vpr_l(inst, "%s: size %d\n", __func__, size);
 	return size;
