@@ -427,6 +427,17 @@ int ipahal_modify_imm_cmd(
 	const void *params_mask);
 
 /*
+ * ipa_imm_cmd_modify_ip_packet_init_ex_dest_pipe() -
+ *   Modify ip_packet_init_ex immdiate command pipe_dest_idx field
+ * This function modifies an existing imm cmd buffer
+ * @cmd_data: [in] Constructed immediate command buffer data
+ * @pipe_dest_idx: [in] destination pipe index to set
+ */
+void ipa_imm_cmd_modify_ip_packet_init_ex_dest_pipe(
+	const void *cmd_data,
+	u64 pipe_dest_idx);
+
+/*
  * ipahal_construct_nop_imm_cmd() - Construct immediate comamnd for NO-Op
  * Core driver may want functionality to inject NOP commands to IPA
  *  to ensure e.g., PIPLINE clear before someother operation.

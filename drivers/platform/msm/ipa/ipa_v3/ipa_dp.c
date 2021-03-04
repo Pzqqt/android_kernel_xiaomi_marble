@@ -10,7 +10,9 @@
 #include <linux/list.h>
 #include <linux/netdevice.h>
 #include <linux/msm_gsi.h>
+#include <uapi/linux/ip.h>
 #include <net/sock.h>
+#include <net/ipv6.h>
 #include <asm/page.h>
 #include "gsi.h"
 #include "ipa_i.h"
@@ -582,7 +584,7 @@ int ipa3_send(struct ipa3_sys_context *sys,
 	return 0;
 
 failure_dma_map:
-		kmem_cache_free(ipa3_ctx->tx_pkt_wrapper_cache, tx_pkt);
+	kmem_cache_free(ipa3_ctx->tx_pkt_wrapper_cache, tx_pkt);
 
 failure:
 	ipahal_destroy_imm_cmd(tag_pyld_ret);
@@ -1810,10 +1812,14 @@ int ipa3_tx_dp(enum ipa_client_type dst, struct sk_buff *skb,
 	}
 
 	if (dst_ep_idx != -1) {
-		int skb_idx;
-
 		/* SW data path */
+		int skb_idx;
+		struct iphdr *network_header;
+
+		network_header = (struct iphdr *)(skb_network_header(skb));
+
 		data_idx = 0;
+
 		if (sys->policy == IPA_POLICY_NOINTR_MODE) {
 			/*
 			 * For non-interrupt mode channel (where there is no
@@ -1824,9 +1830,24 @@ int ipa3_tx_dp(enum ipa_client_type dst, struct sk_buff *skb,
 			desc[data_idx].is_tag_status = true;
 			data_idx++;
 		}
-		desc[data_idx].opcode = ipa3_ctx->pkt_init_imm_opcode;
+
+		if ((network_header->version == 4 &&
+		     network_header->protocol == IPPROTO_ICMP) ||
+		    (((struct ipv6hdr *)network_header)->version == 6 &&
+		     ((struct ipv6hdr *)network_header)->nexthdr == NEXTHDR_ICMP)) {
+			ipa_imm_cmd_modify_ip_packet_init_ex_dest_pipe(
+				ipa3_ctx->pkt_init_ex_imm[ipa3_ctx->ipa_num_pipes].base,
+				dst_ep_idx);
+			desc[data_idx].opcode =
+				ipa3_ctx->pkt_init_ex_imm_opcode;
+			desc[data_idx].dma_address =
+				ipa3_ctx->pkt_init_ex_imm[ipa3_ctx->ipa_num_pipes].phys_base;
+		} else {
+			desc[data_idx].opcode = ipa3_ctx->pkt_init_imm_opcode;
+			desc[data_idx].dma_address =
+				ipa3_ctx->pkt_init_imm[dst_ep_idx];
+		}
 		desc[data_idx].dma_address_valid = true;
-		desc[data_idx].dma_address = ipa3_ctx->pkt_init_imm[dst_ep_idx];
 		desc[data_idx].type = IPA_IMM_CMD_DESC;
 		desc[data_idx].callback = NULL;
 		data_idx++;

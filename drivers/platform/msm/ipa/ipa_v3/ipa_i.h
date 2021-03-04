@@ -72,6 +72,8 @@
 #define IPA_HOLB_TMR_DIS 0x0
 #define IPA_HOLB_TMR_EN 0x1
 #define IPA_HOLB_TMR_VAL_4_5 31
+#define IPA_IMM_IP_PACKET_INIT_EX_CMD_NUM (IPA5_MAX_NUM_PIPES + 1)
+
 /*
  * The transport descriptor size was changed to GSI_CHAN_RE_SIZE_16B, but
  * IPA users still use sps_iovec size as FIFO element size.
@@ -2200,10 +2202,10 @@ struct ipa3_context {
 	u32 ipa_wdi3_5g_holb_timeout;
 	bool is_wdi3_tx1_needed;
 	bool ipa_endp_delay_wa_v2;
-	dma_addr_t pkt_init_ex_imm[IPA5_MAX_NUM_PIPES];
 	u32 pkt_init_ex_imm_opcode;
 	struct ipa_mem_buffer pkt_init_mem;
 	struct ipa_mem_buffer pkt_init_ex_mem;
+	struct ipa_mem_buffer pkt_init_ex_imm[IPA_IMM_IP_PACKET_INIT_EX_CMD_NUM];
 };
 
 struct ipa3_plat_drv_res {

@@ -7501,7 +7501,8 @@ static int ipa_alloc_pkt_init_ex(void)
 	struct ipa_mem_buffer *mem = &ipa3_ctx->pkt_init_ex_mem;
 	struct ipahal_imm_cmd_pyld *cmd_pyld;
 	struct ipahal_imm_cmd_ip_packet_init_ex cmd = {0};
-	int i;
+	struct ipahal_imm_cmd_ip_packet_init_ex cmd_mask = {0};
+	int result = 0;
 
 	cmd_pyld = ipahal_construct_imm_cmd(IPA_IMM_CMD_IP_PACKET_INIT_EX,
 		&cmd, false);
@@ -7511,42 +7512,88 @@ static int ipa_alloc_pkt_init_ex(void)
 	}
 	ipa3_ctx->pkt_init_ex_imm_opcode = cmd_pyld->opcode;
 
-	mem->size = cmd_pyld->len * ipa3_ctx->ipa_num_pipes;
-	ipahal_destroy_imm_cmd(cmd_pyld);
+	/* one cmd for each pipe for ULSO + one common for ICMP */
+	mem->size = cmd_pyld->len * (ipa3_ctx->ipa_num_pipes + 1);
 	mem->base = dma_alloc_coherent(ipa3_ctx->pdev, mem->size,
 		&mem->phys_base, GFP_KERNEL);
 	if (!mem->base) {
 		IPAERR("failed to alloc DMA buff of size %d\n", mem->size);
-		return -ENOMEM;
+		result = -ENOMEM;
+		goto free_imm;
 	}
 
 	memset(mem->base, 0, mem->size);
-	for (i = 0; i < ipa3_ctx->ipa_num_pipes; i++) {
-		cmd.frag_disable = true;
-		cmd.nat_disable = true;
-		cmd.filter_disable = true;
-		cmd.route_disable = true;
-		cmd.hdr_removal_insertion_disable = false;
-		cmd.cs_disable = false;
-		cmd.flt_retain_hdr = true;
-		cmd.rt_retain_hdr = true;
-		cmd.rt_pipe_dest_idx = i;
-		cmd_pyld = ipahal_construct_imm_cmd(IPA_IMM_CMD_IP_PACKET_INIT_EX,
-			&cmd, false);
-		if (!cmd_pyld) {
-			IPAERR("failed to construct IMM cmd\n");
-			dma_free_coherent(ipa3_ctx->pdev,
-				mem->size,
-				mem->base,
-				mem->phys_base);
-			return -ENOMEM;
+	cmd.frag_disable = true;
+	cmd_mask.frag_disable = true;
+	cmd.nat_disable = true;
+	cmd_mask.nat_disable = true;
+	cmd.filter_disable = true;
+	cmd_mask.filter_disable = true;
+	cmd.route_disable = true;
+	cmd_mask.route_disable = true;
+	cmd.hdr_removal_insertion_disable = false;
+	cmd_mask.hdr_removal_insertion_disable = true;
+	cmd.cs_disable = false;
+	cmd_mask.cs_disable = true;
+	cmd.flt_retain_hdr = true;
+	cmd_mask.flt_retain_hdr = true;
+	cmd.rt_retain_hdr = true;
+	cmd_mask.rt_retain_hdr = true;
+	cmd_mask.rt_pipe_dest_idx = true;
+	for (cmd.rt_pipe_dest_idx = 0;
+	      cmd.rt_pipe_dest_idx < ipa3_ctx->ipa_num_pipes;
+	      cmd.rt_pipe_dest_idx++) {
+		result = ipahal_modify_imm_cmd(IPA_IMM_CMD_IP_PACKET_INIT_EX,
+			cmd_pyld->data, &cmd, &cmd_mask);
+		if (unlikely(result != 0)) {
+			IPAERR("failed to modify IMM cmd\n");
+			goto free_dma;
 		}
-		memcpy(mem->base + i * cmd_pyld->len, cmd_pyld->data, cmd_pyld->len);
-		ipa3_ctx->pkt_init_ex_imm[i] = mem->phys_base + i * cmd_pyld->len;
-		ipahal_destroy_imm_cmd(cmd_pyld);
+		memcpy(mem->base + cmd.rt_pipe_dest_idx * cmd_pyld->len,
+			cmd_pyld->data, cmd_pyld->len);
+		ipa3_ctx->pkt_init_ex_imm[cmd.rt_pipe_dest_idx].phys_base =
+			mem->phys_base + cmd.rt_pipe_dest_idx * cmd_pyld->len;
+		ipa3_ctx->pkt_init_ex_imm[cmd.rt_pipe_dest_idx].base =
+			mem->base + cmd.rt_pipe_dest_idx * cmd_pyld->len;
+		ipa3_ctx->pkt_init_ex_imm[cmd.rt_pipe_dest_idx].size =
+			cmd_pyld->len;
 	}
 
-	return 0;
+	cmd.hdr_removal_insertion_disable = true;
+	cmd.cs_disable = true;
+	cmd.flt_retain_hdr = false;
+	cmd.rt_retain_hdr = false;
+	cmd.flt_close_aggr_irq_mod = true;
+	cmd_mask.flt_close_aggr_irq_mod = true;
+	cmd.rt_close_aggr_irq_mod = true;
+	cmd_mask.rt_close_aggr_irq_mod = true;
+	/* Just a placeholder. Will be assigned in the DP, before sending. */
+	cmd.rt_pipe_dest_idx = ipa3_ctx->ipa_num_pipes;
+	result = ipahal_modify_imm_cmd(IPA_IMM_CMD_IP_PACKET_INIT_EX,
+		cmd_pyld->data, &cmd, &cmd_mask);
+	if (unlikely(result != 0)) {
+		IPAERR("failed to modify IMM cmd\n");
+		goto free_dma;
+	}
+	memcpy(mem->base + ipa3_ctx->ipa_num_pipes * cmd_pyld->len,
+		cmd_pyld->data,
+		cmd_pyld->len);
+	ipa3_ctx->pkt_init_ex_imm[ipa3_ctx->ipa_num_pipes].phys_base =
+		mem->phys_base + ipa3_ctx->ipa_num_pipes * cmd_pyld->len;
+	ipa3_ctx->pkt_init_ex_imm[ipa3_ctx->ipa_num_pipes].base =
+		mem->base + ipa3_ctx->ipa_num_pipes * cmd_pyld->len;
+	ipa3_ctx->pkt_init_ex_imm[ipa3_ctx->ipa_num_pipes].size = cmd_pyld->len;
+
+	goto free_imm;
+
+free_dma:
+	dma_free_coherent(ipa3_ctx->pdev,
+		mem->size,
+		mem->base,
+		mem->phys_base);
+free_imm:
+	ipahal_destroy_imm_cmd(cmd_pyld);
+	return result;
 }
 
 /*
