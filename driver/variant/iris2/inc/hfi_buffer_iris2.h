@@ -1273,7 +1273,7 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
         num_recon = num_ref + 1; \
 	} while (0)
 
-#define SIZE_BIN_BITSTREAM_ENC(_size, frame_width, frame_height, \
+#define SIZE_BIN_BITSTREAM_ENC(_size, rc_type, frame_width, frame_height, \
 				work_mode, lcu_size) \
 	do \
 	{ \
@@ -1283,18 +1283,25 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 		size_aligned_height = HFI_ALIGN((frame_height), lcu_size); \
 		if (work_mode == HFI_WORKMODE_2) \
 		{ \
-			bitstream_size_eval = (((size_aligned_width) * \
-				(size_aligned_height)*3 * 5) >> 2); \
-			if (size_aligned_width * size_aligned_height > \
-				(4096 * 2176)) \
+			if ((rc_type == HFI_RC_CQ) || (rc_type == HFI_RC_OFF)) \
 			{ \
-				bitstream_size_eval = \
-					(bitstream_size_eval >> 3); \
+				bitstream_size_eval = (((size_aligned_width)* (size_aligned_height)* 3) >> 1); \
 			} \
-			else if (bitstream_size_eval > (352 * 288 * 4)) \
+			else \
 			{ \
-				bitstream_size_eval = \
-					(bitstream_size_eval >> 2); \
+				bitstream_size_eval = (((size_aligned_width) * \
+					(size_aligned_height)*3 * 5) >> 2); \
+				if (size_aligned_width * size_aligned_height > \
+					(4096 * 2176)) \
+				{ \
+					bitstream_size_eval = \
+						(bitstream_size_eval >> 3); \
+				} \
+				else if (size_aligned_width * size_aligned_height > (352 * 288 * 4)) \
+				{ \
+					bitstream_size_eval = \
+						(bitstream_size_eval >> 2); \
+				} \
 			} \
 		} \
 		else \
@@ -1332,13 +1339,13 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 		size = size_single_pipe_eval; \
 	} while (0)
 
-#define HFI_BUFFER_BIN_ENC(_size, frame_width, frame_height, lcu_size, \
+#define HFI_BUFFER_BIN_ENC(_size, rc_type, frame_width, frame_height, lcu_size, \
 				work_mode, num_vpp_pipes)           \
 	do \
 	{ \
 		HFI_U32 bitstream_size = 0, total_bitbin_buffers = 0, \
 			size_single_pipe = 0, bitbin_size = 0; \
-		SIZE_BIN_BITSTREAM_ENC(bitstream_size, frame_width, \
+		SIZE_BIN_BITSTREAM_ENC(bitstream_size, rc_type, frame_width, \
 			frame_height, work_mode, lcu_size);         \
 		if (work_mode == HFI_WORKMODE_2) \
 		{ \
@@ -1359,19 +1366,19 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 				total_bitbin_buffers + 512; \
 	} while (0)
 
-#define HFI_BUFFER_BIN_H264E(_size, frame_width, frame_height, \
+#define HFI_BUFFER_BIN_H264E(_size, rc_type, frame_width, frame_height, \
 				work_mode, num_vpp_pipes)    \
 	do \
 	{ \
-		HFI_BUFFER_BIN_ENC(_size, frame_width, frame_height, 16, \
+		HFI_BUFFER_BIN_ENC(_size, rc_type, frame_width, frame_height, 16, \
 				work_mode, num_vpp_pipes); \
 	} while (0)
 
-#define HFI_BUFFER_BIN_H265E(_size, frame_width, frame_height, \
+#define HFI_BUFFER_BIN_H265E(_size, rc_type, frame_width, frame_height, \
 				work_mode, num_vpp_pipes)    \
 	do \
 	{ \
-		HFI_BUFFER_BIN_ENC(_size, frame_width, frame_height, 32,\
+		HFI_BUFFER_BIN_ENC(_size, rc_type, frame_width, frame_height, 32,\
 				work_mode, num_vpp_pipes); \
 	} while (0)
 
