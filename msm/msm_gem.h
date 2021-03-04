@@ -146,6 +146,10 @@ struct msm_gem_object {
 	 * new pagetables due to cb switch
 	 */
 	bool obj_dirty;
+
+	/* iova address and aligned offset */
+	uint64_t iova;
+	uint32_t offset;
 };
 #define to_msm_bo(x) container_of(x, struct msm_gem_object, base)
 
@@ -218,5 +222,22 @@ struct msm_gem_submit {
 		uint64_t iova;
 	} bos[0];
 };
+
+/**
+ * msm_gem_put_buffer - put gem buffer
+ * @gem: pointer to gem buffer object
+ */
+void msm_gem_put_buffer(struct drm_gem_object *gem);
+
+/**
+ * msm_gem_gem_buffer - get a gem buffer
+ * @gem: drm gem object
+ * @drm_device: pointer to drm device
+ * @fb: frame buffer object
+ * @align_size: size to align the buffer to
+ */
+int msm_gem_get_buffer(struct drm_gem_object *gem,
+		struct drm_device *dev, struct drm_framebuffer *fb,
+		uint32_t align_size);
 
 #endif /* __MSM_GEM_H__ */
