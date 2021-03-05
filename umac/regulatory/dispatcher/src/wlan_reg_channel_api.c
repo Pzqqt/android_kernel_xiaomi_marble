@@ -181,3 +181,10 @@ bool wlan_reg_is_nol_hist_for_freq(struct wlan_objmgr_pdev *pdev,
 {
 	return reg_is_nol_hist_for_freq(pdev, freq);
 }
+
+bool wlan_reg_is_freq_width_dfs(struct wlan_objmgr_pdev *pdev,
+				qdf_freq_t freq,
+				enum phy_ch_width ch_width)
+{
+	return reg_is_freq_width_dfs(pdev, freq, ch_width);
+}

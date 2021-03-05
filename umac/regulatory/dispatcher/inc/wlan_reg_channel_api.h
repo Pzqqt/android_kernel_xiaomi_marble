@@ -224,4 +224,16 @@ bool wlan_reg_is_nol_for_freq(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq);
 bool wlan_reg_is_nol_hist_for_freq(struct wlan_objmgr_pdev *pdev,
 				   qdf_freq_t freq);
 
+/**
+ * wlan_reg_is_freq_width_dfs()- Check if the channel is dfs, given the channel
+ * frequency and width combination.
+ * @pdev: Pointer to pdev.
+ * @freq: Channel center frequency.
+ * @ch_width: Channel Width.
+ *
+ * Return: True if frequency + width has DFS subchannels, else false.
+ */
+bool wlan_reg_is_freq_width_dfs(struct wlan_objmgr_pdev *pdev,
+				qdf_freq_t freq,
+				enum phy_ch_width ch_width);
 #endif /* __WLAN_REG_CHANNEL_API_H */

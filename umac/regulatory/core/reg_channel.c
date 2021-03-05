@@ -387,3 +387,52 @@ bool reg_is_nol_hist_for_freq(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)
 
 	return pdev_priv_obj->cur_chan_list[chan_enum].nol_history;
 }
+
+/**
+ * reg_is_freq_band_dfs() - Find the bonded pair for the given frequency
+ * and check if any of the sub frequencies in the bonded pair is DFS.
+ * @pdev: Pointer to the pdev object.
+ * @freq: Input frequency.
+ * @bonded_chan_ptr: Frequency range of the given channel and width.
+ *
+ * Return: True if any of the channels in the bonded_chan_ar that contains
+ * the input frequency is dfs, else false.
+ */
+static bool
+reg_is_freq_band_dfs(struct wlan_objmgr_pdev *pdev,
+		     qdf_freq_t freq,
+		     const struct bonded_channel_freq *bonded_chan_ptr)
+{
+	qdf_freq_t chan_cfreq;
+	bool is_dfs = false;
+
+	chan_cfreq =  bonded_chan_ptr->start_freq;
+	while (chan_cfreq <= bonded_chan_ptr->end_freq) {
+		/* If any of the channel is disabled by regulatory, return. */
+		if (reg_is_disable_for_freq(pdev, chan_cfreq) &&
+		    !reg_is_nol_for_freq(pdev, chan_cfreq))
+			return false;
+		if (reg_is_dfs_for_freq(pdev, chan_cfreq))
+			is_dfs = true;
+		chan_cfreq = chan_cfreq + NEXT_20_CH_OFFSET;
+	}
+
+	return is_dfs;
+}
+
+bool reg_is_freq_width_dfs(struct wlan_objmgr_pdev *pdev,
+			   qdf_freq_t freq,
+			   enum phy_ch_width ch_width)
+{
+	const struct bonded_channel_freq *bonded_chan_ptr;
+
+	if (ch_width == CH_WIDTH_20MHZ)
+		return reg_is_dfs_for_freq(pdev, freq);
+
+	bonded_chan_ptr = reg_get_bonded_chan_entry(freq, ch_width);
+
+	if (!bonded_chan_ptr)
+		return false;
+
+	return reg_is_freq_band_dfs(pdev, freq, bonded_chan_ptr);
+}

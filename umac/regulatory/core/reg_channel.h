@@ -24,6 +24,8 @@
 #ifndef __REG_CHANNEL_H_
 #define __REG_CHANNEL_H_
 
+#define NEXT_20_CH_OFFSET 20
+
 #ifdef CONFIG_HOST_FIND_CHAN
 
 /**
@@ -270,4 +272,16 @@ bool reg_is_nol_for_freq(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq);
  */
 bool reg_is_nol_hist_for_freq(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq);
 
+/**
+ * reg_is_freq_width_dfs()- Check if a channel is DFS, given the channel
+ * frequency and width combination.
+ * @pdev: Pointer to pdev.
+ * @freq: Channel center frequency.
+ * @ch_width: Channel Width.
+ *
+ * Return: True if frequency + width has DFS subchannels, else false.
+ */
+bool reg_is_freq_width_dfs(struct wlan_objmgr_pdev *pdev,
+			   qdf_freq_t freq,
+			   enum phy_ch_width ch_width);
 #endif /* __REG_CHANNEL_H_ */
