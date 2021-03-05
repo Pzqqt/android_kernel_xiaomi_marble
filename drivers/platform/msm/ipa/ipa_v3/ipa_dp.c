@@ -139,8 +139,9 @@ static int ipa_poll_gsi_n_pkt(struct ipa3_sys_context *sys,
 static unsigned long tag_to_pointer_wa(uint64_t tag);
 static uint64_t pointer_to_tag_wa(struct ipa3_tx_pkt_wrapper *tx_pkt);
 static void ipa3_tasklet_rx_notify(unsigned long data);
-
 static u32 ipa_adjust_ra_buff_base_sz(u32 aggr_byte_limit);
+
+struct gsi_chan_xfer_notify g_lan_rx_notify[IPA_LAN_NAPI_MAX_FRAMES];
 
 /**
  * ipa3_write_done_common() - this function is responsible on freeing
@@ -5359,7 +5360,12 @@ static int ipa_poll_gsi_n_pkt(struct ipa3_sys_context *sys,
 	int poll_num = 0;
 
 	if (!actual_num || expected_num <= 0 ||
-		expected_num > max(IPA_WAN_NAPI_MAX_FRAMES, NAPI_TX_WEIGHT)) {
+		(sys->ep->client == IPA_CLIENT_APPS_WAN_CONS &&
+		expected_num > IPA_WAN_NAPI_MAX_FRAMES) ||
+		(sys->ep->client == IPA_CLIENT_APPS_LAN_CONS &&
+		expected_num > IPA_LAN_NAPI_MAX_FRAMES) ||
+		(IPA_CLIENT_IS_APPS_PROD(sys->ep->client) &&
+		 expected_num > NAPI_TX_WEIGHT)) {
 		IPAERR("bad params actual_num=%pK expected_num=%d\n",
 			actual_num, expected_num);
 		return GSI_STATUS_INVALID_PARAMS;
@@ -5397,6 +5403,7 @@ static int ipa_poll_gsi_n_pkt(struct ipa3_sys_context *sys,
 	*actual_num = idx + poll_num;
 	return ret;
 }
+
 /**
  * ipa3_lan_rx_poll() - Poll the LAN rx packets from IPA HW.
  * This function is executed in the softirq context
@@ -5411,8 +5418,9 @@ int ipa3_lan_rx_poll(u32 clnt_hdl, int weight)
 	struct ipa3_ep_context *ep;
 	int ret;
 	int cnt = 0;
+	int num = 0;
+	int i;
 	int remain_aggr_weight;
-	struct gsi_chan_xfer_notify notify;
 
 	if (unlikely(clnt_hdl >= ipa3_ctx->ipa_num_pipes ||
 		ipa3_ctx->ep[clnt_hdl].valid == 0)) {
@@ -5437,18 +5445,21 @@ start_poll:
 	while (remain_aggr_weight > 0 &&
 			atomic_read(&ep->sys->curr_polling_state)) {
 		atomic_set(&ipa3_ctx->transport_pm.eot_activity, 1);
-		ret = ipa_poll_gsi_pkt(ep->sys, &notify);
+		ret = ipa_poll_gsi_n_pkt(ep->sys, g_lan_rx_notify,
+				remain_aggr_weight, &num);
 		if (ret)
 			break;
 
-		if (IPA_CLIENT_IS_MEMCPY_DMA_CONS(ep->client))
-			ipa3_dma_memcpy_notify(ep->sys);
-		else if (IPA_CLIENT_IS_WLAN_CONS(ep->client))
-			ipa3_wlan_wq_rx_common(ep->sys, &notify);
-		else
-			ipa3_wq_rx_common(ep->sys, &notify);
+		for (i = 0; i < num; i++) {
+			if (IPA_CLIENT_IS_MEMCPY_DMA_CONS(ep->client))
+				ipa3_dma_memcpy_notify(ep->sys);
+			else if (IPA_CLIENT_IS_WLAN_CONS(ep->client))
+				ipa3_wlan_wq_rx_common(ep->sys, g_lan_rx_notify + i);
+			else
+				ipa3_wq_rx_common(ep->sys, g_lan_rx_notify + i);
+		}
 
-		remain_aggr_weight--;
+		remain_aggr_weight -= num;
 		if (ep->sys->len == 0) {
 			if (remain_aggr_weight == 0)
 				cnt--;
