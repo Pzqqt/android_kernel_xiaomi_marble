@@ -540,6 +540,8 @@ typedef enum {
     HTT_STATS_DLPAGER_STATS_TAG                    = 120, /* htt_dlpager_stats_tlv */
     HTT_STATS_PHY_COUNTERS_TAG                     = 121, /* htt_phy_counters_tlv */
     HTT_STATS_PHY_STATS_TAG                        = 122, /* htt_phy_stats_tlv */
+    HTT_STATS_PHY_RESET_COUNTERS_TAG               = 123, /* htt_phy_reset_counters_tlv */
+    HTT_STATS_PHY_RESET_STATS_TAG                  = 124, /* htt_phy_reset_stats_tlv */
 
 
     HTT_STATS_MAX_TAG,
@@ -5392,6 +5394,63 @@ typedef struct {
 #define HTT_MAX_PER_BLK_ERR_CNT 20
 #define HTT_MAX_RX_OTA_ERR_CNT 14
 
+typedef enum {
+    HTT_STATS_CHANNEL_HALF_RATE          = 0x0001,   /* Half rate */
+    HTT_STATS_CHANNEL_QUARTER_RATE       = 0x0002,   /* Quarter rate */
+    HTT_STATS_CHANNEL_DFS                = 0x0004,   /* Enable radar event reporting */
+    HTT_STATS_CHANNEL_HOME               = 0x0008,   /* Home channel */
+    HTT_STATS_CHANNEL_PASSIVE_SCAN       = 0x0010,   /*Passive Scan */
+    HTT_STATS_CHANNEL_DFS_SAP_NOT_UP     = 0x0020,   /* set when VDEV_START_REQUEST, clear when VDEV_UP */
+    HTT_STATS_CHANNEL_PASSIVE_SCAN_CAL   = 0x0040,   /* need to do passive scan calibration to avoid "spikes" */
+    HTT_STATS_CHANNEL_DFS_SAP_UP         = 0x0080,   /* DFS master */
+    HTT_STATS_CHANNEL_DFS_CFREQ2         = 0x0100,   /* Enable radar event reporting for sec80 in VHT80p80 */
+    HTT_STATS_CHANNEL_DTIM_SYNTH         = 0x0200,   /* Enable DTIM */
+    HTT_STATS_CHANNEL_FORCE_GAIN         = 0x0400,   /* Force gain mmode (only used for FTM) */
+    HTT_STATS_CHANNEL_PERFORM_NF_CAL     = 0x0800,   /* Perform NF cal in channel change (only used for FTM) */
+    HTT_STATS_CHANNEL_165_MODE_0         = 0x1000,   /* 165 MHz mode 0 */
+    HTT_STATS_CHANNEL_165_MODE_1         = 0x2000,   /* 165 MHz mode 1 */
+    HTT_STATS_CHANNEL_165_MODE_2         = 0x3000,   /* 165 MHz mode 2 */
+    HTT_STATS_CHANNEL_165_MODE_MASK      = 0x3000,   /* 165 MHz 2-bit mode mask */
+} HTT_STATS_CHANNEL_FLAGS;
+
+typedef enum {
+    HTT_STATS_RF_MODE_MIN          = 0,
+    HTT_STATS_RF_MODE_PHYA_ONLY    = 0,        // only PHYA is active
+    HTT_STATS_RF_MODE_DBS          = 1,        // PHYA/5G and PHYB/2G
+    HTT_STATS_RF_MODE_SBS          = 2,        // PHYA/5G and PHYB/5G in HL/NPR; PHYA0/5G and PHYA1/5G in HK
+    HTT_STATS_RF_MODE_PHYB_ONLY    = 3,        // only PHYB is active
+    HTT_STATS_RF_MODE_DBS_SBS      = 4,        // PHYA0/5G, PHYA1/5G and PHYB/2G in HK (the 2 5G are in different channel)
+    HTT_STATS_RF_MODE_DBS_OR_SBS   = 5,        // PHYA0/5G, PHYA1/5G and PHYB/5G or 2G in HK
+    HTT_STATS_RF_MODE_INVALID      = 0xff,
+} HTT_STATS_RF_MODE;
+
+typedef enum {
+    HTT_STATS_RESET_CAUSE_FIRST_RESET      = 0x00000001, /* First reset by application */
+    HTT_STATS_RESET_CAUSE_ERROR            = 0x00000002, /* Trigered due to error */
+    HTT_STATS_RESET_CAUSE_DEEP_SLEEP       = 0x00000004, /* Reset after deep sleep */
+    HTT_STATS_RESET_CAUSE_FULL_RESET       = 0x00000008, /* Full reset without any optimizations */
+    HTT_STATS_RESET_CAUSE_CHANNEL_CHANGE   = 0x00000010, /* For normal channel change */
+    HTT_STATS_RESET_CAUSE_BAND_CHANGE      = 0x00000020, /* Trigered due to band change */
+    HTT_STATS_RESET_CAUSE_DO_CAL           = 0x00000040, /* Trigered due to calibrations */
+    HTT_STATS_RESET_CAUSE_MCI_ERROR        = 0x00000080, /* Triggered due to MCI ERROR */
+    HTT_STATS_RESET_CAUSE_CHWIDTH_CHANGE   = 0x00000100, /* Trigered due to channel width change */
+    HTT_STATS_RESET_CAUSE_WARM_RESTORE_CAL = 0x00000200, /* Trigered due to warm reset we want to just restore calibrations */
+    HTT_STATS_RESET_CAUSE_COLD_RESTORE_CAL = 0x00000400, /* Trigered due to cold reset we want to just restore calibrations */
+    HTT_STATS_RESET_CAUSE_PHY_WARM_RESET   = 0x00000800, /* Trigered due to phy warm reset we want to just restore calibrations */
+    HTT_STATS_RESET_CAUSE_M3_SSR           = 0x00001000, /* Trigered due to SSR Restart */
+    HTT_STATS_RESET_CAUSE_FORCE_CAL        = 0x00002000, /* Reset to force the calibration */
+    /* 0x00004000, 0x00008000 reserved */
+    HTT_STATS_NO_RESET_CHANNEL_CHANGE      = 0x00010000, /* No reset, normal channel change */
+    HTT_STATS_NO_RESET_BAND_CHANGE         = 0x00020000, /* No reset, channel change across band */
+    HTT_STATS_NO_RESET_CHWIDTH_CHANGE      = 0x00040000, /* No reset, channel change across channel width */
+    HTT_STATS_NO_RESET_CHAINMASK_CHANGE    = 0x00080000, /* No reset, chainmask change */
+    HTT_STATS_RESET_CAUSE_PHY_WARM_RESET_UCODE_TRIG = 0x00100000, /* Trigered due to phy warm reset we want to just restore calibrations */
+    HTT_STATS_RESET_CAUSE_PHY_OFF_TIMEOUT_RESET  = 0x00200000, /* Reset ucode because phy off ack timeout*/
+    HTT_STATS_RESET_CAUSE_LMAC_RESET_UMAC_NOC_ERR = 0x00400000, /* LMAC reset trigered due to NOC Address/Slave error originating at LMAC */
+    HTT_STATS_NO_RESET_SCAN_BACK_TO_SAME_HOME_CHANNEL_CHANGE = 0x00800000, /* No reset, scan to home channel change */
+} HTT_STATS_RESET_CAUSE;
+
+
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
     /* number of RXTD OFDMA OTA error counts except power surge and drop */
@@ -5462,7 +5521,103 @@ typedef struct {
     A_INT32 ani_level;
     /* running time in minutes since FW boot */
     A_UINT32 fw_run_time;
+    /* per chain runtime noise floor values in dBm */
+    A_INT32 runTime_nf_chain[HTT_STATS_MAX_CHAINS];
 } htt_phy_stats_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /* current pdev_id */
+    A_UINT32 pdev_id;
+    /* current channel information */
+    A_UINT32 chan_mhz;
+    /* center_freq1, center_freq2 in mhz */
+    A_UINT32 chan_band_center_freq1;
+    A_UINT32 chan_band_center_freq2;
+    /* chan_phy_mode - WLAN_PHY_MODE enum type */
+    A_UINT32 chan_phy_mode;
+    /* chan_flags follows HTT_STATS_CHANNEL_FLAGS enum */
+    A_UINT32  chan_flags;
+    /* channel Num updated to virtual phybase */
+    A_UINT32 chan_num;
+
+    /* Cause for the phy reset - HTT_STATS_RESET_CAUSE */
+    A_UINT32 reset_cause;
+    /* Cause for the previous phy reset */
+    A_UINT32 prev_reset_cause;
+    /* source for the phywarm reset - HTT_STATS_RESET_CAUSE */
+    A_UINT32 phy_warm_reset_src;
+    /* rxGain Table selection mode - register settings
+     * 0 - Auto, 1/2 - Forced with and without BT override respectively
+     */
+    A_UINT32 rx_gain_tbl_mode;
+    /* current xbar value - perchain analog to digital idx mapping */
+    A_UINT32 xbar_val;
+    /* Flag to indicate forced calibration */
+    A_UINT32 force_calibration;
+    /* current RF mode (e.g. SBS/DBS) - follows HTT_STATS_RF_MODE enum */
+    A_UINT32 phyrf_mode;
+
+    /* PDL phyInput stats */
+    /* homechannel flag
+     * 1- Homechan, 0 - scan channel
+     */
+    A_UINT32 phy_homechan;
+    /* Tx and Rx chainmask */
+    A_UINT32 phy_tx_ch_mask;
+    A_UINT32 phy_rx_ch_mask;
+    /* INI masks - to decide the INI registers to be loaded on a reset */
+    A_UINT32 phybb_ini_mask;
+    A_UINT32 phyrf_ini_mask;
+
+    /* DFS,ADFS/Spectral scan enable masks */
+    A_UINT32 phy_dfs_en_mask;
+    A_UINT32 phy_sscan_en_mask;
+    A_UINT32 phy_synth_sel_mask;
+    A_UINT32 phy_adfs_freq;
+
+    /* CCK FIR settings
+     * register settings - filter coefficients for Iqs conversion
+     * [31:24] = FIR_COEFF_3_0
+     * [23:16] = FIR_COEFF_2_0
+     * [15:8]  = FIR_COEFF_1_0
+     * [7:0]   = FIR_COEFF_0_0
+     */
+    A_UINT32 cck_fir_settings;
+    /* dynamic primary channel index
+     * primary 20MHz channel index on the current channel BW
+     */
+    A_UINT32  phy_dyn_pri_chan;
+
+    /* Current CCA detection threshold
+     * dB above noisefloor req for CCA
+     * Register settings for all subbands
+     */
+    A_UINT32 cca_thresh;
+    /* status for dynamic CCA adjustment
+     * 0-disabled, 1-enabled
+     */
+    A_UINT32 dyn_cca_status;
+} htt_phy_reset_stats_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    /* current pdev_id */
+    A_UINT32 pdev_id;
+    /* ucode PHYOFF pass/failure count */
+    A_UINT32 cf_active_low_fail_cnt;
+    A_UINT32 cf_active_low_pass_cnt;
+
+    /* PHYOFF count attempted through ucode VREG */
+    A_UINT32 phy_off_through_vreg_cnt;
+
+    /* Force calibration count */
+    A_UINT32 force_calibration_cnt;
+
+    /* phyoff count during rfmode switch */
+    A_UINT32 rf_mode_switch_phy_off_cnt;
+} htt_phy_reset_counters_tlv;
 
 /* NOTE:
  * This structure is for documentation, and cannot be safely used directly.
@@ -5471,6 +5626,8 @@ typedef struct {
 typedef struct {
     htt_phy_counters_tlv phy_counters;
     htt_phy_stats_tlv phy_stats;
+    htt_phy_reset_counters_tlv phy_reset_counters;
+    htt_phy_reset_stats_tlv phy_reset_stats;
 } htt_phy_counters_and_phy_stats_t;
 
 #endif /* __HTT_STATS_H__ */
