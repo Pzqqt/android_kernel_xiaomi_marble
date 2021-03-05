@@ -88,7 +88,7 @@
 
 #define NAPI_WEIGHT 64
 
-#define NAPI_TX_WEIGHT 64
+#define NAPI_TX_WEIGHT 32
 
 #define IPA_WAN_AGGR_PKT_CNT 1
 
@@ -1108,6 +1108,8 @@ struct ipa3_sys_context {
 	bool skip_eot;
 	u32 eob_drop_cnt;
 	struct napi_struct napi_tx;
+	bool tx_poll;
+	bool napi_tx_enable;
 	atomic_t in_napi_context;
 	u32 int_modt;
 	u32 int_modc;
@@ -2179,6 +2181,7 @@ struct ipa3_context {
 	/* dummy netdev for lan RX NAPI */
 	bool lan_rx_napi_enable;
 	bool tx_napi_enable;
+	bool tx_poll;
 	struct net_device generic_ndev;
 	struct napi_struct napi_lan_rx;
 	u32 icc_num_cases;
@@ -2243,6 +2246,7 @@ struct ipa3_plat_drv_res {
 	bool tethered_flow_control;
 	bool lan_rx_napi_enable;
 	bool tx_napi_enable;
+	bool tx_poll;
 	u32 mhi_evid_limits[2]; /* start and end values */
 	bool ipa_mhi_dynamic_config;
 	u32 ipa_tz_unlock_reg_num;

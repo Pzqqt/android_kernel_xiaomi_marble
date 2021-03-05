@@ -683,8 +683,8 @@ static void gsi_process_chan(struct gsi_xfer_compl_evt *evt,
 		 * Increment RP local only in polling context to avoid
 		 * sys len mismatch.
 		 */
-		if (!(callback && ch_ctx->props.dir ==
-					GSI_CHAN_DIR_FROM_GSI))
+		if (!callback || (ch_ctx->props.dir == GSI_CHAN_DIR_TO_GSI &&
+			!ch_ctx->props.tx_poll))
 			/* the element at RP is also processed */
 			gsi_incr_ring_rp(&ch_ctx->ring);
 
@@ -706,7 +706,8 @@ static void gsi_process_chan(struct gsi_xfer_compl_evt *evt,
 	 * channel will receive the IEOB interrupt and xfer pointer will be
 	 * overwritten. To avoid this process all data in polling context.
 	 */
-	if (!(callback && ch_ctx->props.dir == GSI_CHAN_DIR_FROM_GSI)) {
+	if (!callback || (ch_ctx->props.dir == GSI_CHAN_DIR_TO_GSI &&
+		!ch_ctx->props.tx_poll)) {
 		ch_ctx->stats.completed++;
 		ch_ctx->user_data[rp_idx].valid = false;
 	}
@@ -738,7 +739,8 @@ static void gsi_process_evt_re(struct gsi_evt_ctx *ctx,
 	 * sys len mismatch.
 	 */
 	ch_ctx = &gsi_ctx->chan[evt->chid];
-	if (callback && ch_ctx->props.dir == GSI_CHAN_DIR_FROM_GSI)
+	if (callback && (ch_ctx->props.dir == GSI_CHAN_DIR_FROM_GSI ||
+		ch_ctx->props.tx_poll))
 		return;
 	gsi_incr_ring_rp(&ctx->ring);
 	/* recycle this element */
@@ -755,6 +757,14 @@ static void gsi_ring_evt_doorbell(struct gsi_evt_ctx *ctx)
 	gsihal_write_reg_nk(GSI_EE_n_EV_CH_k_DOORBELL_0,
 		gsi_ctx->per.ee, ctx->id, val);
 }
+
+void gsi_ring_evt_doorbell_polling_mode(unsigned long chan_hdl) {
+	struct gsi_evt_ctx *ctx;
+
+	ctx = gsi_ctx->chan[chan_hdl].evtr;
+	gsi_ring_evt_doorbell(ctx);
+}
+EXPORT_SYMBOL(gsi_ring_evt_doorbell_polling_mode);
 
 static void gsi_ring_chan_doorbell(struct gsi_chan_ctx *ctx)
 {
@@ -773,6 +783,11 @@ static void gsi_ring_chan_doorbell(struct gsi_chan_ctx *ctx)
 	val = GSI_LSB(ctx->ring.wp_local);
 	gsihal_write_reg_nk(GSI_EE_n_GSI_CH_k_DOORBELL_0,
 		gsi_ctx->per.ee, ctx->props.ch_id, val);
+}
+
+static bool check_channel_polling(struct gsi_evt_ctx* ctx) {
+	/* For shared event rings both channels will be marked */
+	return atomic_read(&ctx->chan[0]->poll_mode);
 }
 
 static void gsi_handle_ieob(int ee)
@@ -830,11 +845,9 @@ check_again_v3_0:
 					ctx->ring.rp = rp;
 					while (ctx->ring.rp_local != rp) {
 						++cntr;
-						if (ctx->props.exclusive &&
-						    atomic_read(
-							    &ctx->chan->poll_mode)) {
-							cntr = 0;
-							break;
+						if (check_channel_polling(ctx)) {
+								cntr = 0;
+								break;
 						}
 						gsi_process_evt_re(ctx, &notify,
 								   true);
@@ -886,9 +899,7 @@ check_again_v3_0:
 				ctx->ring.rp = rp;
 				while (ctx->ring.rp_local != rp) {
 					++cntr;
-					if (ctx->props.exclusive &&
-					    atomic_read(
-						    &ctx->chan->poll_mode)) {
+					if (check_channel_polling(ctx)) {
 						cntr = 0;
 						break;
 					}
@@ -2551,7 +2562,7 @@ int gsi_alloc_channel(struct gsi_chan_props *props, unsigned long dev_hdl,
 		if (atomic_read(
 			&gsi_ctx->evtr[props->evt_ring_hdl].chan_ref_cnt) &&
 			gsi_ctx->evtr[props->evt_ring_hdl].props.exclusive &&
-			gsi_ctx->evtr[props->evt_ring_hdl].chan->props.prot !=
+			gsi_ctx->evtr[props->evt_ring_hdl].chan[0]->props.prot !=
 			GSI_CHAN_PROT_GCI) {
 			GSIERR("evt ring=%lu exclusively used by ch_hdl=%pK\n",
 				props->evt_ring_hdl, chan_hdl);
@@ -2632,12 +2643,25 @@ int gsi_alloc_channel(struct gsi_chan_props *props, unsigned long dev_hdl,
 
 	if (erindex < GSI_EVT_RING_MAX) {
 		ctx->evtr = &gsi_ctx->evtr[erindex];
-		if (props->prot != GSI_CHAN_PROT_GCI)
+		if(ctx->evtr->num_of_chan_allocated
+		   >= MAX_CHANNELS_SHARING_EVENT_RING) {
+			GSIERR(
+				"too many channels sharing the same event ring %u\n",
+				erindex);
+			GSI_ASSERT();
+		}
+		if (props->prot != GSI_CHAN_PROT_GCI) {
 			atomic_inc(&ctx->evtr->chan_ref_cnt);
-		if (props->prot != GSI_CHAN_PROT_GCI &&
-			ctx->evtr->props.exclusive &&
-			atomic_read(&ctx->evtr->chan_ref_cnt) == 1)
-			ctx->evtr->chan = ctx;
+			if (ctx->evtr->props.exclusive) {
+				if (atomic_read(&ctx->evtr->chan_ref_cnt) == 1)
+					ctx->evtr->chan
+					[ctx->evtr->num_of_chan_allocated++] = ctx;
+			}
+			else {
+				ctx->evtr->chan[ctx->evtr->num_of_chan_allocated++]
+					= ctx;
+			}
+		}
 	}
 
 	gsi_program_chan_ctx(props, gsi_ctx->per.ee, erindex);
@@ -3695,6 +3719,30 @@ int gsi_is_channel_empty(unsigned long chan_hdl, bool *is_empty)
 }
 EXPORT_SYMBOL(gsi_is_channel_empty);
 
+bool gsi_is_event_pending(unsigned long chan_hdl) {
+	struct gsi_chan_ctx *ctx;
+	uint64_t rp;
+	uint64_t rp_local;
+	int ee;
+
+	if (chan_hdl >= gsi_ctx->max_ch) {
+		GSIERR("bad params chan_hdl=%lu\n", chan_hdl);
+		return false;
+	}
+
+	ctx = &gsi_ctx->chan[chan_hdl];
+	ee = gsi_ctx->per.ee;
+
+	/* read only, updating will be handled in NAPI context if needed */
+	rp = ctx->evtr->props.gsi_read_event_ring_rp(
+		&ctx->evtr->props, ctx->evtr->id, ee);
+	rp |= ctx->evtr->ring.rp & GSI_MSB_MASK;
+	rp_local = ctx->evtr->ring.rp_local;
+
+	return rp != rp_local;
+}
+EXPORT_SYMBOL(gsi_is_event_pending);
+
 int __gsi_get_gci_cookie(struct gsi_chan_ctx *ctx, uint16_t idx)
 {
 	int i;
@@ -4054,6 +4102,7 @@ int gsi_config_channel_mode(unsigned long chan_hdl, enum gsi_chan_mode mode)
 	enum gsi_chan_mode curr;
 	unsigned long flags;
 	enum gsi_chan_mode chan_mode;
+	int i;
 
 	if (!gsi_ctx) {
 		pr_err("%s:%d gsi context not allocated\n", __func__, __LINE__);
@@ -4073,7 +4122,7 @@ int gsi_config_channel_mode(unsigned long chan_hdl, enum gsi_chan_mode mode)
 		return -GSI_STATUS_UNSUPPORTED_OP;
 	}
 
-	if (!ctx->evtr || !ctx->evtr->props.exclusive) {
+	if (!ctx->evtr) {
 		GSIERR("cannot configure mode on chan_hdl=%lu\n",
 				chan_hdl);
 		return -GSI_STATUS_UNSUPPORTED_OP;
@@ -4110,9 +4159,11 @@ int gsi_config_channel_mode(unsigned long chan_hdl, enum gsi_chan_mode mode)
 			gsihal_write_reg_n(GSI_EE_n_CNTXT_SRC_IEOB_IRQ_CLR,
 				gsi_ctx->per.ee, 1 << ctx->evtr->id);
 		}
-		atomic_set(&ctx->poll_mode, mode);
-		if ((ctx->props.prot == GSI_CHAN_PROT_GCI) && ctx->evtr->chan) {
-			atomic_set(&ctx->evtr->chan->poll_mode, mode);
+		for(i = 0; i < ctx->evtr->num_of_chan_allocated; i++) {
+			atomic_set(&ctx->evtr->chan[i]->poll_mode, mode);
+		}
+		if ((ctx->props.prot == GSI_CHAN_PROT_GCI) && *ctx->evtr->chan) {
+			atomic_set(&ctx->evtr->chan[0]->poll_mode, mode);
 		} else if (gsi_ctx->coal_info.evchid == ctx->evtr->id) {
 			coal_ctx = &gsi_ctx->chan[gsi_ctx->coal_info.ch_id];
 			if (coal_ctx != NULL)
@@ -4126,9 +4177,11 @@ int gsi_config_channel_mode(unsigned long chan_hdl, enum gsi_chan_mode mode)
 
 	if (curr == GSI_CHAN_MODE_POLL &&
 			mode == GSI_CHAN_MODE_CALLBACK) {
-		atomic_set(&ctx->poll_mode, mode);
-		if ((ctx->props.prot == GSI_CHAN_PROT_GCI) && ctx->evtr->chan) {
-			atomic_set(&ctx->evtr->chan->poll_mode, mode);
+		for(i = 0; i < ctx->evtr->num_of_chan_allocated; i++) {
+			atomic_set(&ctx->evtr->chan[i]->poll_mode, mode);
+		}
+		if ((ctx->props.prot == GSI_CHAN_PROT_GCI) && *ctx->evtr->chan) {
+			atomic_set(&ctx->evtr->chan[0]->poll_mode, mode);
 		} else if (gsi_ctx->coal_info.evchid == ctx->evtr->id) {
 			coal_ctx = &gsi_ctx->chan[gsi_ctx->coal_info.ch_id];
 			if (coal_ctx != NULL)

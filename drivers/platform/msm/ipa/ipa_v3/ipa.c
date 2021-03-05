@@ -6858,6 +6858,7 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 		gsi_props.mhi_er_id_limits[1] = resource_p->mhi_evid_limits[1];
 	}
 	gsi_props.skip_ieob_mask_wa = resource_p->skip_ieob_mask_wa;
+	gsi_props.tx_poll = resource_p->tx_poll;
 
 	result = gsi_register_device(&gsi_props,
 		&ipa3_ctx->gsi_dev_hdl);
@@ -7776,6 +7777,7 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 		resource_p->do_ram_collection_on_crash;
 	ipa3_ctx->lan_rx_napi_enable = resource_p->lan_rx_napi_enable;
 	ipa3_ctx->tx_napi_enable = resource_p->tx_napi_enable;
+	ipa3_ctx->tx_poll = resource_p->tx_poll;
 	ipa3_ctx->ipa_gpi_event_rp_ddr = resource_p->ipa_gpi_event_rp_ddr;
 	ipa3_ctx->rmnet_ctl_enable = resource_p->rmnet_ctl_enable;
 	ipa3_ctx->tx_wrapper_cache_max_size = get_tx_wrapper_cache_size(
@@ -8842,6 +8844,12 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	IPADBG(": Enable tx NAPI = %s\n",
 		ipa_drv_res->tx_napi_enable
 		? "True" : "False");
+
+	ipa_drv_res->tx_poll = of_property_read_bool(pdev->dev.of_node,
+		"qcom,tx-poll");
+	IPADBG(": Enable tx polling = %s\n",
+	       ipa_drv_res->tx_poll
+	       ? "True" : "False");
 
 	ipa_drv_res->rmnet_ctl_enable =
 		of_property_read_bool(pdev->dev.of_node,
