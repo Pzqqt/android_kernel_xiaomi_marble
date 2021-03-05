@@ -748,9 +748,16 @@ int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl)
 	if (!inst->vb2q[OUTPUT_PORT].streaming) {
 		msm_vidc_update_cap_value(inst, cap_id, ctrl->val, __func__);
 
-		if (is_meta_ctrl(ctrl->id))
-			msm_vidc_update_meta_port_settings(inst);
-
+		if (ctrl->id == V4L2_CID_MPEG_VIDC_MIN_BITSTREAM_SIZE_OVERWRITE) {
+			rc = msm_vidc_update_bitstream_buffer_size(inst);
+			if (rc)
+				return rc;
+		}
+		if (is_meta_ctrl(ctrl->id)) {
+			rc = msm_vidc_update_meta_port_settings(inst);
+			if (rc)
+				return rc;
+		}
 		return 0;
 	}
 
