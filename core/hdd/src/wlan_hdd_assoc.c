@@ -2698,6 +2698,9 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 					  WLAN_IPA_STA_CONNECT,
 					  roam_info->bssid.bytes);
 
+		if (adapter->device_mode == QDF_STA_MODE)
+			cdp_reset_rx_hw_ext_stats(soc);
+
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 		wlan_hdd_auto_shutdown_enable(hdd_ctx, false);
 #endif
