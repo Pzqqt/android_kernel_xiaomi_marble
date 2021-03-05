@@ -2244,6 +2244,12 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 	uint32_t remaining_quota = dp_budget;
 	uint32_t work_done  = 0;
 	int budget = dp_budget;
+	uint8_t reo_status_mask = int_ctx->reo_status_ring_mask;
+
+	if (reo_status_mask) {
+		if (dp_reo_status_ring_handler(int_ctx, soc))
+			int_ctx->intr_stats.num_reo_status_ring_masks++;
+	}
 
 	if (qdf_unlikely(!(soc->mon_vdev_timer_state & MON_VDEV_TIMER_RUNNING))) {
 		work_done = dp_process_lmac_rings(int_ctx, remaining_quota);
