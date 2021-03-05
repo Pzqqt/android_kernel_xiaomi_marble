@@ -5691,6 +5691,45 @@ QDF_STATUS lim_send_ies_per_band(struct mac_context *mac_ctx,
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef WLAN_FEATURE_11AX
+static
+void lim_update_ext_cap_he_params(struct mac_context *mac_ctx,
+				  tDot11fIEExtCap *ext_cap_data,
+				  uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
+	tDot11fIEhe_cap *he_cap;
+	struct s_ext_cap *p_ext_cap;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc, vdev_id,
+						    WLAN_LEGACY_MAC_ID);
+	if (!vdev)
+		return;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+		return;
+	}
+
+	he_cap = &mlme_priv->he_config;
+
+	p_ext_cap = (struct s_ext_cap *)ext_cap_data->bytes;
+	p_ext_cap->twt_requestor_support = he_cap->twt_request;
+	p_ext_cap->twt_responder_support = he_cap->twt_responder;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+
+	ext_cap_data->num_bytes = lim_compute_ext_cap_ie_length(ext_cap_data);
+}
+#else
+static inline void
+lim_update_ext_cap_he_params(struct mac_context *mac_ctx,
+			     tDot11fIEExtCap *ext_cap_data,
+			     uint8_t vdev_id)
+{}
+#endif
+
 /**
  * lim_send_ext_cap_ie() - send ext cap IE to FW
  * @mac_ctx: global MAC context
@@ -5706,7 +5745,7 @@ QDF_STATUS lim_send_ies_per_band(struct mac_context *mac_ctx,
  * Return: QDF_STATUS
  */
 QDF_STATUS lim_send_ext_cap_ie(struct mac_context *mac_ctx,
-			       uint32_t session_id,
+			       uint32_t vdev_id,
 			       tDot11fIEExtCap *extra_extcap, bool merge)
 {
 	tDot11fIEExtCap ext_cap_data = {0};
@@ -5727,6 +5766,7 @@ QDF_STATUS lim_send_ext_cap_ie(struct mac_context *mac_ctx,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	lim_update_ext_cap_he_params(mac_ctx, &ext_cap_data, vdev_id);
 	num_bytes = ext_cap_data.num_bytes;
 
 	if (merge && extra_extcap && extra_extcap->num_bytes > 0) {
@@ -5740,7 +5780,7 @@ QDF_STATUS lim_send_ext_cap_ie(struct mac_context *mac_ctx,
 	if (!vdev_ie)
 		return QDF_STATUS_E_NOMEM;
 
-	vdev_ie->vdev_id = session_id;
+	vdev_ie->vdev_id = vdev_id;
 	vdev_ie->ie_id = DOT11F_EID_EXTCAP;
 	vdev_ie->length = num_bytes;
 	vdev_ie->band = 0;
@@ -7329,6 +7369,11 @@ void lim_set_he_caps(struct mac_context *mac, struct pe_session *session,
 		he_cap->srp = dot11_cap.srp;
 		he_cap->power_boost = dot11_cap.power_boost;
 
+		he_cap->tx_1024_qam_lt_242_tone_ru =
+			dot11_cap.tx_1024_qam_lt_242_tone_ru;
+		he_cap->rx_1024_qam_lt_242_tone_ru =
+			dot11_cap.rx_1024_qam_lt_242_tone_ru;
+
 		he_cap->he_ltf_800_gi_4x = dot11_cap.he_ltf_800_gi_4x;
 		he_cap->max_nc = dot11_cap.max_nc;
 		he_cap->er_he_ltf_800_gi_4x = dot11_cap.er_he_ltf_800_gi_4x;
@@ -7452,6 +7497,13 @@ QDF_STATUS lim_send_he_caps_ie(struct mac_context *mac_ctx,
 		he_cap->mu_feedback_tone16 = 0;
 	}
 
+	/*
+	 * For 5G band HE cap, set the beamformee STS <= 80Mhz to
+	 * mac->he_cap_5g.bfee_sts_lt_80 to keep the values same
+	 * as initial connection
+	 */
+	he_cap->bfee_sts_lt_80 = mac_ctx->he_cap_5g.bfee_sts_lt_80;
+
 	if (he_cap->ppet_present)
 		num_ppe_th = lim_set_he_caps_ppet(mac_ctx, he_caps,
 						  CDS_BAND_5GHZ);
@@ -7462,6 +7514,13 @@ QDF_STATUS lim_send_he_caps_ie(struct mac_context *mac_ctx,
 	if (QDF_IS_STATUS_ERROR(status_5g))
 		pe_err("Unable send HE Cap IE for 5GHZ band, status: %d",
 			status_5g);
+
+	/*
+	 * For 5G band HE cap, set the beamformee STS <= 80Mhz to
+	 * mac->he_cap_5g.bfee_sts_lt_80 to keep the values same
+	 * as initial connection
+	 */
+	he_cap->bfee_sts_lt_80 = mac_ctx->he_cap_2g.bfee_sts_lt_80;
 
 	lim_intersect_he_ch_width_2g(mac_ctx, he_cap);
 
