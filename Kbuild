@@ -1941,6 +1941,10 @@ ifeq ($(CONFIG_WDI_EVENT_ENABLE), y)
 DP_OBJS +=     $(DP_SRC)/dp_wdi_event.o
 endif
 
+ifeq ($(CONFIG_FEATURE_MEC), y)
+DP_OBJS += $(DP_SRC)/dp_txrx_wds.o
+endif
+
 endif #LITHIUM
 
 $(call add-wlan-objs,dp,$(DP_OBJS))
@@ -3869,6 +3873,11 @@ cppflags-y += -DDETECTION_TIMER_TIMEOUT=2000
 cppflags-y += -DDETECTION_LATENCY_THRESHOLD=1900
 endif
 endif
+
+#Flags to enable/disable WDS specific features
+cppflags-$(CONFIG_FEATURE_WDS) += -DFEATURE_WDS
+cppflags-$(CONFIG_FEATURE_MEC) += -DFEATURE_MEC
+cppflags-$(CONFIG_FEATURE_MCL_REPEATER) += -DFEATURE_MCL_REPEATER
 
 KBUILD_CPPFLAGS += $(cppflags-y)
 
