@@ -3104,6 +3104,10 @@ qdf_nbuf_unshare_debug(qdf_nbuf_t buf, const char *func_name,
 	if (is_initial_mem_debug_disabled)
 		return __qdf_nbuf_unshare(buf);
 
+	/* Not a shared buffer, nothing to do */
+	if (!qdf_nbuf_is_cloned(buf))
+		return buf;
+
 	/* Take care to delete the debug entries for frags */
 	num_nr_frags = qdf_nbuf_get_nr_frags(buf);
 
@@ -3115,17 +3119,14 @@ qdf_nbuf_unshare_debug(qdf_nbuf_t buf, const char *func_name,
 		idx++;
 	}
 
+	qdf_net_buf_debug_delete_node(buf);
+
 	unshared_buf = __qdf_nbuf_unshare(buf);
 
-	if (qdf_likely(buf != unshared_buf)) {
-		qdf_net_buf_debug_delete_node(buf);
+	if (qdf_likely(unshared_buf)) {
+		qdf_net_buf_debug_add_node(unshared_buf, 0,
+					   func_name, line_num);
 
-		if (unshared_buf)
-			qdf_net_buf_debug_add_node(unshared_buf, 0,
-						   func_name, line_num);
-	}
-
-	if (unshared_buf) {
 		/* Take care to add the debug entries for frags */
 		num_nr_frags = qdf_nbuf_get_nr_frags(unshared_buf);
 
