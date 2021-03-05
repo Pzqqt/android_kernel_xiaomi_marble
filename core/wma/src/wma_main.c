@@ -6793,13 +6793,12 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 	 * the num_vdevs by 1.
 	 */
 
-	if (QDF_GLOBAL_FTM_MODE != cds_get_conparam()) {
-		if (ucfg_nan_is_vdev_creation_allowed(wma_handle->psoc)) {
-			wlan_res_cfg->nan_separate_iface_support = true;
-		} else {
-			wlan_res_cfg->num_vdevs--;
-			wma_update_num_peers_tids(wma_handle, wlan_res_cfg);
-		}
+	if (ucfg_nan_is_vdev_creation_allowed(wma_handle->psoc) ||
+	    QDF_GLOBAL_FTM_MODE == cds_get_conparam()) {
+		wlan_res_cfg->nan_separate_iface_support = true;
+	} else {
+		wlan_res_cfg->num_vdevs--;
+		wma_update_num_peers_tids(wma_handle, wlan_res_cfg);
 	}
 
 	if ((ucfg_pkt_capture_get_mode(wma_handle->psoc) !=
