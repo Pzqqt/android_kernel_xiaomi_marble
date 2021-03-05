@@ -12119,6 +12119,21 @@ out:
 
 	return status;
 }
+
+/**
+ * dp_reset_rx_hw_ext_stats - Reset rx hardware ext stats
+ * @soc_hdl: soc handle
+ *
+ * Return: None
+ */
+static
+void dp_reset_rx_hw_ext_stats(struct cdp_soc_t *soc_hdl)
+{
+	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
+
+	soc->ext_stats.rx_mpdu_received = 0;
+	soc->ext_stats.rx_mpdu_missed = 0;
+}
 #endif /* WLAN_FEATURE_STATS_EXT */
 
 #ifdef DP_PEER_EXTENDED_API
@@ -12144,6 +12159,7 @@ static struct cdp_misc_ops dp_ops_misc = {
 #ifdef WLAN_FEATURE_STATS_EXT
 	.txrx_ext_stats_request = dp_txrx_ext_stats_request,
 	.request_rx_hw_stats = dp_request_rx_hw_stats,
+	.reset_rx_hw_ext_stats = dp_reset_rx_hw_ext_stats,
 #endif /* WLAN_FEATURE_STATS_EXT */
 	.vdev_inform_ll_conn = dp_vdev_inform_ll_conn,
 #ifdef WLAN_DP_FEATURE_SW_LATENCY_MGR
