@@ -29,6 +29,7 @@
 #define GSI_EVT_RING_MAX  31
 #define GSI_NO_EVT_ERINDEX 255
 #define GSI_ISR_CACHE_MAX 20
+#define MAX_CHANNELS_SHARING_EVENT_RING 2
 
 #define GSI_IPC_LOGGING(buf, fmt, args...) \
 	do { \
@@ -290,6 +291,7 @@ struct gsi_per_notify {
  * @enable_clk_bug_on: enable IPA clock for dump saving before assert
  * @skip_ieob_mask_wa: flag for skipping ieob_mask_wa
  * All the callbacks are in interrupt context
+ * @tx_poll: propagate to relevant gsi channels that tx polling feature is on
  *
  */
 struct gsi_per_props {
@@ -313,6 +315,7 @@ struct gsi_per_props {
 	int (*clk_status_cb)(void);
 	void (*enable_clk_bug_on)(void);
 	bool skip_ieob_mask_wa;
+	bool tx_poll;
 };
 
 enum gsi_chan_evt {
@@ -432,6 +435,7 @@ enum gsi_chan_use_db_eng {
  *                   is used, REE will fetch/send new TRE to peripheral only
  *                   if peripheral's empty_level_count is higher than
  *                   EMPTY_LVL_THRSHOLD defined for this channel
+ * @tx_poll:         channel process completions in NAPI context
  * @xfer_cb:         transfer notification callback, this callback happens
  *                   on event boundaries
  *
@@ -485,6 +489,7 @@ struct gsi_chan_props {
 	uint8_t low_weight;
 	enum gsi_prefetch_mode prefetch_mode;
 	uint8_t empty_lvl_threshold;
+	bool tx_poll;
 	void (*xfer_cb)(struct gsi_chan_xfer_notify *notify);
 	void (*err_cb)(struct gsi_chan_err_notify *notify);
 	void (*cleanup_cb)(void *chan_user_data, void *xfer_user_data);
@@ -1342,7 +1347,8 @@ struct gsi_evt_ctx {
 	struct gsi_ring_ctx ring;
 	struct mutex mlock;
 	struct completion compl;
-	struct gsi_chan_ctx *chan;
+	struct gsi_chan_ctx *chan[MAX_CHANNELS_SHARING_EVENT_RING];
+	uint8_t num_of_chan_allocated;
 	atomic_t chan_ref_cnt;
 	union __packed gsi_evt_scratch scratch;
 	struct gsi_evt_stats stats;
@@ -1697,6 +1703,13 @@ int gsi_dealloc_channel(unsigned long chan_hdl);
 int gsi_poll_channel(unsigned long chan_hdl,
 		struct gsi_chan_xfer_notify *notify);
 
+/**
+ * gsi_ring_evt_doorbell_napi - doorbell from NAPI context
+ * @chan_hdl:  Client handle previously obtained from
+ *             gsi_alloc_channel
+ *
+ */
+void gsi_ring_evt_doorbell_polling_mode(unsigned long chan_hdl);
 
 /**
  * gsi_config_channel_mode - Peripheral should call this function
@@ -2056,6 +2069,15 @@ int gsi_query_channel_info(unsigned long chan_hdl,
  */
 int gsi_is_channel_empty(unsigned long chan_hdl, bool *is_empty);
 
+/**
+ * gsi_is_event_pending - Returns true if there is at least one event in the
+ * provided event ring which wasn't processed.
+ *
+ * @chan_hdl: Client handle previously obtained from gsi_alloc_channel
+ *
+ * @Return true if an event is pending, else false
+ */
+bool gsi_is_event_pending(unsigned long chan_hdl);
 /**
  * gsi_get_channel_cfg - This function returns the current config
  * of the specified channel

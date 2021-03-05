@@ -92,6 +92,8 @@
 
 #define IPA_QMAP_ID_BYTE 0
 
+static int ipa3_tx_switch_to_intr_mode(struct ipa3_sys_context *sys);
+static int ipa3_rx_switch_to_intr_mode(struct ipa3_sys_context *sys);
 static struct sk_buff *ipa3_get_skb_ipa_rx(unsigned int len, gfp_t flags);
 static void ipa3_replenish_wlan_rx_cache(struct ipa3_sys_context *sys);
 static void ipa3_replenish_rx_cache(struct ipa3_sys_context *sys);
@@ -141,13 +143,13 @@ static void ipa3_tasklet_rx_notify(unsigned long data);
 static u32 ipa_adjust_ra_buff_base_sz(u32 aggr_byte_limit);
 
 /**
- * ipa3_wq_write_done_common() - this function is responsible on freeing
+ * ipa3_write_done_common() - this function is responsible on freeing
  * all tx_pkt_wrappers related to a skb
  * @tx_pkt: the first tx_pkt_warpper related to a certain skb
  * @sys:points to the ipa3_sys_context the EOT was received on
  * returns the number of tx_pkt_wrappers that were freed
  */
-static int ipa3_wq_write_done_common(struct ipa3_sys_context *sys,
+static int ipa3_write_done_common(struct ipa3_sys_context *sys,
 				struct ipa3_tx_pkt_wrapper *tx_pkt)
 {
 	struct ipa3_tx_pkt_wrapper *next_pkt;
@@ -220,7 +222,7 @@ static void ipa3_wq_write_done_status(int src_pipe,
 	if (!sys)
 		return;
 
-	ipa3_wq_write_done_common(sys, tx_pkt);
+	ipa3_write_done_common(sys, tx_pkt);
 }
 
 /**
@@ -249,7 +251,7 @@ static void ipa3_tasklet_write_done(unsigned long data)
 				struct ipa3_tx_pkt_wrapper, link);
 			xmit_done = this_pkt->xmit_done;
 			spin_unlock_bh(&sys->spinlock);
-			ipa3_wq_write_done_common(sys, this_pkt);
+			ipa3_write_done_common(sys, this_pkt);
 			spin_lock_bh(&sys->spinlock);
 			if (xmit_done)
 				break;
@@ -258,7 +260,60 @@ static void ipa3_tasklet_write_done(unsigned long data)
 	spin_unlock_bh(&sys->spinlock);
 }
 
-static int ipa3_poll_tx_complete(struct ipa3_sys_context *sys, int budget)
+static int ipa3_napi_poll_tx_complete(struct ipa3_sys_context *sys, int budget)
+{
+	struct ipa3_tx_pkt_wrapper *this_pkt = NULL;
+	int entry_budget = budget;
+	int poll_status = 0;
+	int num_of_desc = 0;
+	int i = 0;
+	struct gsi_chan_xfer_notify notify[NAPI_TX_WEIGHT];
+
+	do {
+		poll_status =
+			ipa_poll_gsi_n_pkt(sys, notify, budget, &num_of_desc);
+		for(i = 0; i < num_of_desc; i++) {
+			this_pkt = notify[i].xfer_user_data;
+			/* For shared event ring sys context might change */
+			sys = this_pkt->sys;
+			ipa3_write_done_common(sys, this_pkt);
+			budget--;
+		}
+		IPADBG_LOW("Number of desc polled %d", num_of_desc);
+	} while(budget > 0 && !poll_status);
+	return entry_budget - budget;
+}
+
+static int ipa3_aux_napi_poll_tx_complete(struct napi_struct *napi_tx,
+						int budget)
+{
+	struct ipa3_sys_context *sys = container_of(napi_tx,
+		struct ipa3_sys_context, napi_tx);
+	int tx_done = 0;
+	int ret = 0;
+
+poll_tx:
+	tx_done += ipa3_napi_poll_tx_complete(sys, budget - tx_done);
+
+	/* Doorbell needed here for continuous polling */
+	gsi_ring_evt_doorbell_polling_mode(sys->ep->gsi_chan_hdl);
+
+	if (tx_done < budget) {
+		napi_complete(napi_tx);
+		ret = ipa3_tx_switch_to_intr_mode(sys);
+
+		/* if we got an EOT while we marked NAPI as complete */
+		if (ret == -GSI_STATUS_PENDING_IRQ &&
+			napi_reschedule(napi_tx)) {
+			goto poll_tx;
+		}
+		IPA_ACTIVE_CLIENTS_DEC_EP(sys->ep->client);
+	}
+	IPADBG_LOW("the number of tx completions is: %d", tx_done);
+	return min(tx_done, budget);
+}
+
+static int ipa3_napi_tx_complete(struct ipa3_sys_context *sys, int budget)
 {
 	struct ipa3_tx_pkt_wrapper *this_pkt = NULL;
 	bool xmit_done = false;
@@ -274,7 +329,7 @@ static int ipa3_poll_tx_complete(struct ipa3_sys_context *sys, int budget)
 			struct ipa3_tx_pkt_wrapper, link);
 		xmit_done = this_pkt->xmit_done;
 		spin_unlock_bh(&sys->spinlock);
-		budget -= ipa3_wq_write_done_common(sys, this_pkt);
+		budget -= ipa3_write_done_common(sys, this_pkt);
 		spin_lock_bh(&sys->spinlock);
 		if (xmit_done)
 			atomic_add_unless(&sys->xmit_eot_cnt, -1, 0);
@@ -283,14 +338,14 @@ static int ipa3_poll_tx_complete(struct ipa3_sys_context *sys, int budget)
 	return entry_budget - budget;
 }
 
-static int ipa3_aux_poll_tx_complete(struct napi_struct *napi_tx, int budget)
+static int ipa3_aux_napi_tx_complete(struct napi_struct *napi_tx, int budget)
 {
 	struct ipa3_sys_context *sys = container_of(napi_tx,
 		struct ipa3_sys_context, napi_tx);
 	int tx_done = 0;
 
 poll_tx:
-	tx_done += ipa3_poll_tx_complete(sys, budget - tx_done);
+	tx_done += ipa3_napi_tx_complete(sys, budget - tx_done);
 	if (tx_done < budget) {
 		napi_complete(napi_tx);
 		atomic_set(&sys->in_napi_context, 0);
@@ -299,7 +354,7 @@ poll_tx:
 		if (atomic_read(&sys->xmit_eot_cnt) > 0 &&
 		    !atomic_cmpxchg(&sys->in_napi_context, 0, 1)
 		    && napi_reschedule(napi_tx)) {
-		    goto poll_tx;
+			goto poll_tx;
 		}
 	}
 	IPADBG_LOW("the number of tx completions is: %d", tx_done);
@@ -533,8 +588,9 @@ int ipa3_send(struct ipa3_sys_context *sys,
 		}
 
 		if (i == (num_desc - 1)) {
-			if (!sys->use_comm_evt_ring ||
-			    (sys->pkt_sent % IPA_EOT_THRESH == 0)) {
+			if (ipa3_ctx->tx_poll ||
+				!sys->use_comm_evt_ring ||
+				(sys->pkt_sent % IPA_EOT_THRESH == 0)) {
 				gsi_xfer[i].flags |=
 					GSI_XFER_FLAG_EOT;
 				gsi_xfer[i].flags |=
@@ -878,14 +934,59 @@ void __ipa3_update_curr_poll_state(enum ipa_client_type client, int state)
 {
 	int ep_idx = IPA_EP_NOT_ALLOCATED;
 
-	if (client == IPA_CLIENT_APPS_WAN_COAL_CONS)
-		ep_idx = ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_CONS);
-	if (client == IPA_CLIENT_APPS_WAN_CONS)
-		ep_idx = ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS);
+	switch (client) {
+		case IPA_CLIENT_APPS_WAN_COAL_CONS:
+			ep_idx = ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_CONS);
+			break;
+		case IPA_CLIENT_APPS_WAN_CONS:
+			ep_idx = ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS);
+			break;
+		case IPA_CLIENT_APPS_LAN_CONS:
+			/* for error handling */
+			break;
+		case IPA_CLIENT_APPS_WAN_PROD:
+			ep_idx = ipa3_get_ep_mapping(IPA_CLIENT_APPS_LAN_PROD);
+			break;
+		case IPA_CLIENT_APPS_LAN_PROD:
+			ep_idx = ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_PROD);
+			break;
+		default:
+			IPAERR("unexpected client:%d\n", client);
+			break;
+	}
 
 	if (ep_idx != IPA_EP_NOT_ALLOCATED && ipa3_ctx->ep[ep_idx].sys)
 		atomic_set(&ipa3_ctx->ep[ep_idx].sys->curr_polling_state,
 									state);
+}
+
+static int ipa3_tx_switch_to_intr_mode(struct ipa3_sys_context *sys) {
+	int ret;
+
+	atomic_set(&sys->curr_polling_state, 0);
+	__ipa3_update_curr_poll_state(sys->ep->client, 0);
+	ret = gsi_config_channel_mode(sys->ep->gsi_chan_hdl,
+				      GSI_CHAN_MODE_CALLBACK);
+	if ((ret != GSI_STATUS_SUCCESS) &&
+	    !atomic_read(&sys->curr_polling_state)) {
+		if (ret == -GSI_STATUS_PENDING_IRQ) {
+			atomic_set(&sys->curr_polling_state, 1);
+			__ipa3_update_curr_poll_state(sys->ep->client, 1);
+		} else {
+			IPAERR("Failed to switch to intr mode %d ch_id %d\n",
+				sys->curr_polling_state, sys->ep->gsi_chan_hdl);
+		}
+	}
+
+	/* in case we miss an interrupt after NAPI complete */
+	if(gsi_is_event_pending(sys->ep->gsi_chan_hdl)) {
+		atomic_set(&sys->curr_polling_state, 1);
+		__ipa3_update_curr_poll_state(sys->ep->client, 1);
+		gsi_config_channel_mode(sys->ep->gsi_chan_hdl,
+					GSI_CHAN_MODE_POLL);
+		ret = -GSI_STATUS_PENDING_IRQ;
+	}
+	return ret;
 }
 
 /**
@@ -1062,6 +1163,7 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 	struct ipahal_reg_coal_evict_lru evict_lru;
 	char buff[IPA_RESOURCE_NAME_MAX];
 	struct ipa_ep_cfg ep_cfg_copy;
+	int (*tx_completion_func)(struct napi_struct *, int);
 
 	if (sys_in == NULL || clnt_hdl == NULL) {
 		IPAERR("NULL args\n");
@@ -1177,6 +1279,11 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 		memset(ep->sys, 0, offsetof(struct ipa3_sys_context, ep));
 	}
 
+	if(ipa3_ctx->tx_poll)
+		tx_completion_func = &ipa3_aux_napi_poll_tx_complete;
+	else
+		tx_completion_func = &ipa3_aux_napi_tx_complete;
+
 	atomic_set(&ep->sys->xmit_eot_cnt, 0);
 	if (IPA_CLIENT_IS_PROD(sys_in->client))
 		tasklet_init(&ep->sys->tasklet, ipa3_tasklet_write_done,
@@ -1187,18 +1294,28 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 
 	if (IPA_CLIENT_IS_PROD(sys_in->client) &&
 		ipa3_ctx->tx_napi_enable) {
-		if (sys_in->client != IPA_CLIENT_APPS_WAN_PROD) {
+		if (sys_in->client == IPA_CLIENT_APPS_LAN_PROD) {
 			netif_tx_napi_add(&ipa3_ctx->generic_ndev,
-			&ep->sys->napi_tx, ipa3_aux_poll_tx_complete,
+			&ep->sys->napi_tx, tx_completion_func,
 			NAPI_TX_WEIGHT);
-		} else {
+			ep->sys->napi_tx_enable = ipa3_ctx->tx_napi_enable;
+			ep->sys->tx_poll = ipa3_ctx->tx_poll;
+		} else if(sys_in->client == IPA_CLIENT_APPS_WAN_PROD) {
 			netif_tx_napi_add((struct net_device *)sys_in->priv,
-			&ep->sys->napi_tx, ipa3_aux_poll_tx_complete,
+			&ep->sys->napi_tx, tx_completion_func,
 			NAPI_TX_WEIGHT);
+			ep->sys->napi_tx_enable = ipa3_ctx->tx_napi_enable;
+			ep->sys->tx_poll = ipa3_ctx->tx_poll;
+		} else {
+			/*CMD pipe*/
+			ep->sys->tx_poll = false;
+			ep->sys->napi_tx_enable = false;
 		}
-		napi_enable(&ep->sys->napi_tx);
-		IPADBG("napi_enable on producer client %d completed",
-			sys_in->client);
+		if(ep->sys->napi_tx_enable) {
+			napi_enable(&ep->sys->napi_tx);
+			IPADBG("napi_enable on producer client %d completed",
+				sys_in->client);
+		}
 	}
 
 	ep->client = sys_in->client;
@@ -4627,6 +4744,7 @@ static void ipa_gsi_chan_err_cb(struct gsi_chan_err_notify *notify)
 static void ipa_gsi_irq_tx_notify_cb(struct gsi_chan_xfer_notify *notify)
 {
 	struct ipa3_tx_pkt_wrapper *tx_pkt;
+	struct ipa3_sys_context *sys;
 
 	IPADBG_LOW("event %d notified\n", notify->evt_id);
 
@@ -4635,14 +4753,29 @@ static void ipa_gsi_irq_tx_notify_cb(struct gsi_chan_xfer_notify *notify)
 		atomic_set(&ipa3_ctx->transport_pm.eot_activity, 1);
 		tx_pkt = notify->xfer_user_data;
 		tx_pkt->xmit_done = true;
-		atomic_inc(&tx_pkt->sys->xmit_eot_cnt);
-
-		if (ipa_net_initialized && ipa3_ctx->tx_napi_enable) {
-		    if(!atomic_cmpxchg(&tx_pkt->sys->in_napi_context, 0, 1))
-			napi_schedule(&tx_pkt->sys->napi_tx);
-		}
-		else
+		sys = tx_pkt->sys;
+		if (sys->tx_poll) {
+			if (!atomic_read(&sys->curr_polling_state)) {
+				/* dummy vote to prevent NoC error */
+				if(IPA_ACTIVE_CLIENTS_INC_EP_NO_BLOCK(
+					sys->ep->client)) {
+					IPAERR("clk isn't active");
+					ipa_assert();
+				}
+				/* put the producer event ring into polling mode */
+				gsi_config_channel_mode(sys->ep->gsi_chan_hdl,
+							GSI_CHAN_MODE_POLL);
+				atomic_set(&sys->curr_polling_state, 1);
+				__ipa3_update_curr_poll_state(sys->ep->client, 1);
+				napi_schedule(&tx_pkt->sys->napi_tx);
+			}
+		} else if (ipa_net_initialized && sys->napi_tx_enable) {
+			if(!atomic_cmpxchg(&tx_pkt->sys->in_napi_context, 0, 1))
+				napi_schedule(&tx_pkt->sys->napi_tx);
+		} else {
+			atomic_inc(&tx_pkt->sys->xmit_eot_cnt);
 			tasklet_schedule(&tx_pkt->sys->tasklet);
+		}
 		break;
 	default:
 		IPAERR("received unexpected event id %d\n", notify->evt_id);
@@ -5026,6 +5159,11 @@ static int ipa_gsi_setup_transfer_ring(struct ipa3_ep_context *ep,
 		gsi_channel_props.prot = GSI_CHAN_PROT_GPI;
 	if (IPA_CLIENT_IS_PROD(ep->client)) {
 		gsi_channel_props.dir = GSI_CHAN_DIR_TO_GSI;
+		if(ep->client == IPA_CLIENT_APPS_WAN_PROD ||
+		   ep->client == IPA_CLIENT_APPS_LAN_PROD)
+			gsi_channel_props.tx_poll = ipa3_ctx->tx_poll;
+		else
+			gsi_channel_props.tx_poll = false;
 	} else {
 		gsi_channel_props.dir = GSI_CHAN_DIR_FROM_GSI;
 		gsi_channel_props.max_re_expected = ep->sys->rx_pool_sz;
@@ -5221,7 +5359,7 @@ static int ipa_poll_gsi_n_pkt(struct ipa3_sys_context *sys,
 	int poll_num = 0;
 
 	if (!actual_num || expected_num <= 0 ||
-		expected_num > IPA_WAN_NAPI_MAX_FRAMES) {
+		expected_num > max(IPA_WAN_NAPI_MAX_FRAMES, NAPI_TX_WEIGHT)) {
 		IPAERR("bad params actual_num=%pK expected_num=%d\n",
 			actual_num, expected_num);
 		return GSI_STATUS_INVALID_PARAMS;
