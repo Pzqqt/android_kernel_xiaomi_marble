@@ -163,6 +163,8 @@ static const char *msm_vidc_get_priv_ctrl_name_list2(struct msm_vidc_inst *inst,
 		return "Timestamp Metadata";
 	case V4L2_CID_MPEG_VIDC_METADATA_ENC_QP_METADATA:
 		return "Encoder QP Metadata";
+	case V4L2_CID_MPEG_VIDC_METADATA_DPB_TAG_LIST:
+		return "DPB Tag List";
 	default:
 		return NULL;
 	}
