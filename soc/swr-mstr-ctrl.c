@@ -2927,14 +2927,16 @@ static int swrm_probe(struct platform_device *pdev)
 	if (ret) {
 		dev_err(&pdev->dev, "%s: Looking up %s property failed\n",
 			__func__, "qcom,swr-num-dev");
-		goto err_pdata_fail;
+		mutex_unlock(&swrm->mlock);
+		goto err_parse_num_dev;
 	} else {
 		if (swrm->num_dev > swrm->num_auto_enum) {
 			dev_err(&pdev->dev, "%s: num_dev %d > max limit %d\n",
 				__func__, swrm->num_dev,
 				swrm->num_auto_enum);
 			ret = -EINVAL;
-			goto err_pdata_fail;
+			mutex_unlock(&swrm->mlock);
+			goto err_parse_num_dev;
 		} else {
 			dev_dbg(&pdev->dev,
 				"max swr devices expected to attach - %d, supported auto_enum - %d\n",
@@ -2994,6 +2996,7 @@ static int swrm_probe(struct platform_device *pdev)
 	return 0;
 err_irq_wakeup_fail:
 	device_init_wakeup(swrm->dev, false);
+err_parse_num_dev:
 err_mstr_init_fail:
 	swr_unregister_master(&swrm->master);
 err_mstr_fail:
