@@ -2126,7 +2126,7 @@ static int ipa_wdi3_test_multi_transfer3(void *priv)
 {
 	struct ipa_ep_cfg ep_cfg = { {0} };
 	int i;
-	bool is_tx1_used;
+	bool is_tx1_used = false;
 
 	if (ipa_wdi3_test_reg_intf(is_tx1_used)) {
 		IPA_UT_ERR("fail to register intf.\n");
