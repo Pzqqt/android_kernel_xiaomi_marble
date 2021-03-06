@@ -142,6 +142,9 @@ enum v4l2_mpeg_vidc_blur_types {
 #define V4L2_CID_MPEG_VIDC_THUMBNAIL_MODE       (V4L2_CID_MPEG_VIDC_BASE + 0x29)
 /* Priority control */
 #define V4L2_CID_MPEG_VIDC_PRIORITY             (V4L2_CID_MPEG_VIDC_BASE + 0x2A)
+/* Metadata DPB Tag List*/
+#define V4L2_CID_MPEG_VIDC_METADATA_DPB_TAG_LIST                             \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x2B)
 
 enum v4l2_mpeg_vidc_metapayload_header_flags {
 	METADATA_FLAGS_NONE             = 0,
