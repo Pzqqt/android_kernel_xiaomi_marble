@@ -1071,6 +1071,7 @@ struct ipa3_repl_ctx {
  * @int_modt: GSI event ring interrupt moderation timer
  * @int_modc: GSI event ring interrupt moderation counter
  * @buff_size: rx packet length
+ * @page_order: page order of the rx pipe based on the ioctl version
  * @ext_ioctl_v2: specifies if it's new version of ingress/egress ioctl
  *
  * IPA context specific to the GPI pipes a.k.a LAN IN/OUT and WAN
@@ -1114,6 +1115,7 @@ struct ipa3_sys_context {
 	u32 int_modt;
 	u32 int_modc;
 	u32 buff_size;
+	u32 page_order;
 	bool ext_ioctl_v2;
 
 	/* ordering is important - mutable fields go above */

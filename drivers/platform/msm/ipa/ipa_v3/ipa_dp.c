@@ -1324,6 +1324,8 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 	ep->sys->int_modt = sys_in->int_modt;
 	ep->sys->int_modc = sys_in->int_modc;
 	ep->sys->buff_size = sys_in->buff_size;
+	ep->sys->page_order = (sys_in->ext_ioctl_v2) ?
+			get_order(sys_in->buff_size) : IPA_WAN_PAGE_ORDER;
 	ep->skip_ep_cfg = sys_in->skip_ep_cfg;
 	if (ipa3_assign_policy(sys_in, ep->sys)) {
 		IPAERR("failed to sys ctx for client %d\n", sys_in->client);
@@ -2184,15 +2186,9 @@ static struct ipa3_rx_pkt_wrapper *ipa3_alloc_rx_pkt_page(
 		flag);
 	if (unlikely(!rx_pkt))
 		return NULL;
-	if (sys->ext_ioctl_v2) {
-		rx_pkt->len = sys->buff_size;
-		rx_pkt->page_data.page = __dev_alloc_pages(flag,
-						get_order(sys->buff_size));
-	} else {
-		rx_pkt->len = PAGE_SIZE << IPA_WAN_PAGE_ORDER;
-		rx_pkt->page_data.page = __dev_alloc_pages(flag,
-			IPA_WAN_PAGE_ORDER);
-	}
+	rx_pkt->len = PAGE_SIZE << sys->page_order;
+	rx_pkt->page_data.page = __dev_alloc_pages(flag,
+				sys->page_order);
 
 	if (unlikely(!rx_pkt->page_data.page))
 		goto fail_page_alloc;
@@ -2214,7 +2210,7 @@ static struct ipa3_rx_pkt_wrapper *ipa3_alloc_rx_pkt_page(
 	return rx_pkt;
 
 fail_dma_mapping:
-	__free_pages(rx_pkt->page_data.page, IPA_WAN_PAGE_ORDER);
+	__free_pages(rx_pkt->page_data.page, sys->page_order);
 fail_page_alloc:
 	kmem_cache_free(ipa3_ctx->rx_pkt_wrapper_cache, rx_pkt);
 	return NULL;
@@ -2908,8 +2904,7 @@ static void free_rx_page(void *chan_user_data, void *xfer_user_data)
 	}
 	dma_unmap_page(ipa3_ctx->pdev, rx_pkt->page_data.dma_addr,
 		rx_pkt->len, DMA_FROM_DEVICE);
-	__free_pages(rx_pkt->page_data.page,
-		IPA_WAN_PAGE_ORDER);
+	__free_pages(rx_pkt->page_data.page, sys->page_order);
 	kmem_cache_free(ipa3_ctx->rx_pkt_wrapper_cache, rx_pkt);
 }
 
@@ -2960,8 +2955,7 @@ static void ipa3_cleanup_rx(struct ipa3_sys_context *sys)
 					rx_pkt->page_data.dma_addr,
 					rx_pkt->len,
 					DMA_FROM_DEVICE);
-				__free_pages(rx_pkt->page_data.page,
-					IPA_WAN_PAGE_ORDER);
+				__free_pages(rx_pkt->page_data.page, sys->page_order);
 			}
 			kmem_cache_free(ipa3_ctx->rx_pkt_wrapper_cache,
 				rx_pkt);
@@ -2979,8 +2973,7 @@ static void ipa3_cleanup_rx(struct ipa3_sys_context *sys)
 					rx_pkt->page_data.dma_addr,
 					rx_pkt->len,
 					DMA_FROM_DEVICE);
-				__free_pages(rx_pkt->page_data.page,
-					IPA_WAN_PAGE_ORDER);
+				__free_pages(rx_pkt->page_data.page, sys->page_order);
 				kmem_cache_free(
 					ipa3_ctx->rx_pkt_wrapper_cache,
 					rx_pkt);
@@ -3776,8 +3769,7 @@ static struct sk_buff *handle_page_completion(struct gsi_chan_xfer_notify
 		} else {
 			dma_unmap_page(ipa3_ctx->pdev, rx_page.dma_addr,
 					rx_pkt->len, DMA_FROM_DEVICE);
-			__free_pages(rx_pkt->page_data.page,
-							IPA_WAN_PAGE_ORDER);
+			__free_pages(rx_pkt->page_data.page, sys->page_order);
 		}
 		rx_pkt->sys->free_rx_wrapper(rx_pkt);
 		IPA_STATS_INC_CNT(ipa3_ctx->stats.rx_page_drop_cnt);
@@ -3801,8 +3793,7 @@ static struct sk_buff *handle_page_completion(struct gsi_chan_xfer_notify
 			} else {
 				dma_unmap_page(ipa3_ctx->pdev, rx_page.dma_addr,
 					rx_pkt->len, DMA_FROM_DEVICE);
-				__free_pages(rx_pkt->page_data.page,
-							IPA_WAN_PAGE_ORDER);
+				__free_pages(rx_pkt->page_data.page, sys->page_order);
 			}
 			rx_pkt->sys->free_rx_wrapper(rx_pkt);
 			IPA_STATS_INC_CNT(ipa3_ctx->stats.rx_page_drop_cnt);
@@ -3826,7 +3817,7 @@ static struct sk_buff *handle_page_completion(struct gsi_chan_xfer_notify
 				skb_shinfo(rx_skb)->nr_frags,
 				rx_page.page, 0,
 				size,
-				PAGE_SIZE << IPA_WAN_PAGE_ORDER);
+				PAGE_SIZE << sys->page_order);
 		}
 	} else {
 		return NULL;
