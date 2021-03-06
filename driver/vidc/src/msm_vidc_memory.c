@@ -27,6 +27,7 @@ struct context_bank_info *get_context_bank(struct msm_vidc_core *core,
 	static const struct msm_vidc_buf_region_name buf_region_name[] = {
 		{MSM_VIDC_REGION_NONE,          "none"                 },
 		{MSM_VIDC_NON_SECURE,           "venus_ns"             },
+		{MSM_VIDC_NON_SECURE_PIXEL,     "venus_ns_pixel"        },
 		{MSM_VIDC_SECURE_PIXEL,         "venus_sec_pixel"      },
 		{MSM_VIDC_SECURE_NONPIXEL,      "venus_sec_non_pixel"  },
 		{MSM_VIDC_SECURE_BITSTREAM,     "venus_sec_bitstream"  },

@@ -104,7 +104,6 @@ struct addr_set {
 struct context_bank_info {
 	struct list_head list;
 	const char *name;
-	u32 buffer_type;
 	bool is_secure;
 	struct addr_range addr_range;
 	struct device *dev;

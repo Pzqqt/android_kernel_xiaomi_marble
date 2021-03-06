@@ -819,10 +819,9 @@ static int msm_vidc_setup_context_bank(struct msm_vidc_core *core,
 
 	d_vpr_h("Attached %s and created mapping\n", dev_name(dev));
 	d_vpr_h(
-		"Context bank: %s, buffer_type: %#x, is_secure: %d, address range start: %#x, size: %#x, dev: %pK, domain: %pK",
-		cb->name, cb->buffer_type, cb->is_secure, cb->addr_range.start,
+		"Context bank: %s, is_secure: %d, address range start: %#x, size: %#x, dev: %pK, domain: %pK",
+		cb->name, cb->is_secure, cb->addr_range.start,
 		cb->addr_range.size, cb->dev, cb->domain);
-
 remove_cb:
 	return rc;
 }
@@ -868,16 +867,9 @@ static int msm_vidc_populate_context_bank(struct device *dev,
 	d_vpr_h("context bank %s: secure = %d\n",
 			cb->name, cb->is_secure);
 
-	/* setup buffer type for each sub device*/
-	rc = of_property_read_u32(np, "buffer-types", &cb->buffer_type);
-	if (rc) {
-		d_vpr_e("failed to load buffer_type info %d\n", rc);
-		rc = -ENOENT;
-		goto err_setup_cb;
-	}
-	d_vpr_h("context bank %s address start %x size %x buffer_type %x\n",
+	d_vpr_h("context bank %s address start %x size %x\n",
 		cb->name, cb->addr_range.start,
-		cb->addr_range.size, cb->buffer_type);
+		cb->addr_range.size);
 
 	rc = msm_vidc_setup_context_bank(core, cb, dev);
 	if (rc) {

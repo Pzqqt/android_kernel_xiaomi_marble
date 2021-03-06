@@ -784,48 +784,69 @@ u32 msm_vidc_get_buffer_region(struct msm_vidc_inst *inst,
 {
 	u32 region = MSM_VIDC_NON_SECURE;
 
-	if (!is_secure_session(inst) &&
-		buffer_type != MSM_VIDC_BUF_ARP) {
-		return region;
+	if (!is_secure_session(inst)) {
+		switch (buffer_type) {
+		case MSM_VIDC_BUF_ARP:
+			region = MSM_VIDC_SECURE_NONPIXEL;
+			break;
+		case MSM_VIDC_BUF_INPUT:
+			if (is_encode_session(inst))
+				region = MSM_VIDC_NON_SECURE_PIXEL;
+			else
+				region = MSM_VIDC_NON_SECURE;
+			break;
+		case MSM_VIDC_BUF_OUTPUT:
+			if (is_decode_session(inst))
+				region = MSM_VIDC_NON_SECURE_PIXEL;
+			else
+				region = MSM_VIDC_NON_SECURE;
+			break;
+		case MSM_VIDC_BUF_DPB:
+			region = MSM_VIDC_NON_SECURE_PIXEL;
+			break;
+		default:
+			region = MSM_VIDC_NON_SECURE;
+			break;
+		}
+	} else {
+		switch (buffer_type) {
+		case MSM_VIDC_BUF_INPUT:
+			if (is_encode_session(inst))
+				region = MSM_VIDC_SECURE_PIXEL;
+			else
+				region = MSM_VIDC_SECURE_BITSTREAM;
+			break;
+		case MSM_VIDC_BUF_OUTPUT:
+			if (is_encode_session(inst))
+				region = MSM_VIDC_SECURE_BITSTREAM;
+			else
+				region = MSM_VIDC_SECURE_PIXEL;
+			break;
+		case MSM_VIDC_BUF_INPUT_META:
+		case MSM_VIDC_BUF_OUTPUT_META:
+			region = MSM_VIDC_NON_SECURE;
+			break;
+		case MSM_VIDC_BUF_BIN:
+			region = MSM_VIDC_SECURE_BITSTREAM;
+			break;
+		case MSM_VIDC_BUF_COMV:
+		case MSM_VIDC_BUF_NON_COMV:
+		case MSM_VIDC_BUF_LINE:
+			region = MSM_VIDC_SECURE_NONPIXEL;
+			break;
+		case MSM_VIDC_BUF_DPB:
+			region = MSM_VIDC_SECURE_PIXEL;
+			break;
+		case MSM_VIDC_BUF_PERSIST:
+		case MSM_VIDC_BUF_ARP:
+			region = MSM_VIDC_SECURE_NONPIXEL;
+			break;
+		default:
+			i_vpr_e(inst, "%s: invalid driver buffer type %d\n",
+				func, buffer_type);
+		}
 	}
 
-	switch (buffer_type) {
-	case MSM_VIDC_BUF_INPUT:
-		if (is_encode_session(inst))
-			region = MSM_VIDC_SECURE_PIXEL;
-		else
-			region = MSM_VIDC_SECURE_BITSTREAM;
-		break;
-	case MSM_VIDC_BUF_OUTPUT:
-		if (is_encode_session(inst))
-			region = MSM_VIDC_SECURE_BITSTREAM;
-		else
-			region = MSM_VIDC_SECURE_PIXEL;
-		break;
-	case MSM_VIDC_BUF_INPUT_META:
-	case MSM_VIDC_BUF_OUTPUT_META:
-		region = MSM_VIDC_NON_SECURE;
-		break;
-	case MSM_VIDC_BUF_BIN:
-		region = MSM_VIDC_SECURE_BITSTREAM;
-		break;
-	case MSM_VIDC_BUF_COMV:
-	case MSM_VIDC_BUF_NON_COMV:
-	case MSM_VIDC_BUF_LINE:
-		region = MSM_VIDC_SECURE_NONPIXEL;
-		break;
-	case MSM_VIDC_BUF_DPB:
-		region = MSM_VIDC_SECURE_PIXEL;
-		break;
-	case MSM_VIDC_BUF_PERSIST:
-	// TODO: Need to revisit for ARP
-	case MSM_VIDC_BUF_ARP:
-		region = MSM_VIDC_SECURE_NONPIXEL;
-		break;
-	default:
-		i_vpr_e(inst, "%s: invalid driver buffer type %d\n",
-			func, buffer_type);
-	}
 	return region;
 }
 
@@ -2283,7 +2304,7 @@ int msm_vidc_create_internal_buffer(struct msm_vidc_inst *inst,
 	alloc->region = msm_vidc_get_buffer_region(inst,
 		buffer_type, __func__);
 	alloc->size = buffer->buffer_size;
-	alloc->secure = (alloc->region > MSM_VIDC_NON_SECURE) ? 1 : 0;
+	alloc->secure = is_secure_region(alloc->region);
 	rc = msm_vidc_memory_alloc(inst->core, alloc);
 	if (rc)
 		return -ENOMEM;

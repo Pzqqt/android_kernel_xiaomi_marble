@@ -180,9 +180,15 @@ static inline bool is_active_session(u64 prev, u64 curr)
 			MSM_VIDC_SESSION_INACTIVE_THRESHOLD_MS);
 }
 
-static inline bool is_session_error(struct msm_vidc_inst* inst)
+static inline bool is_session_error(struct msm_vidc_inst *inst)
 {
 	return inst->state == MSM_VIDC_ERROR;
+}
+
+static inline bool is_secure_region(enum msm_vidc_buffer_region region)
+{
+	return !(region == MSM_VIDC_NON_SECURE ||
+			region == MSM_VIDC_NON_SECURE_PIXEL);
 }
 
 const char *cap_name(enum msm_vidc_inst_capability_type cap);
