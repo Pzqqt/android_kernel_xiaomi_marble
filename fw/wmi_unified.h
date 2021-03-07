@@ -14553,6 +14553,30 @@ typedef struct _wlan_dcs_im_tgt_stats {
     A_UINT32 my_bss_rx_cycle_count;
 } wlan_dcs_im_tgt_stats_t;
 
+typedef struct wlan_dcs_awgn_info {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_dcs_awgn_int_t */
+    A_UINT32 tlv_header;
+    /** Channel width (20, 40, 80, 80+80, 160, 320 ) enum wmi_channel_width */
+    A_UINT32 channel_width;
+    /** Primary channel frequency (MHz) */
+    A_UINT32 chan_freq;
+    /** center frequency (MHz) first segment */
+    A_UINT32 center_freq0;
+    /** center frequency (MHz) second segment */
+    A_UINT32 center_freq1;
+    /*
+     * Indicates which 20MHz segments contain interference
+     *  320 MHz: bits 0-15
+     *  160 MHz: bits 0-7
+     *   80 MHz: bits 0-3
+     * Bitmap - Each bit position will indicate 20MHz in which
+     * interference is seen. (Valid 16 bits out of 32 bit integer)
+     * Note: for 11be, the interference present 20MHz can be punctured
+     * for better channel utilization.
+     */
+    A_UINT32 chan_bw_interference_bitmap;
+} wmi_dcs_awgn_int_t;
+
 /**
  *  wmi_dcs_interference_event_t
  *
@@ -14565,9 +14589,12 @@ typedef struct _wlan_dcs_im_tgt_stats {
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_dcs_interference_event_fixed_param */
     /**
-     * Type of the event present, either the cw interference event, or the wlan_im stats
+     * Type of the event present, either the cw interference event, or the wlan_im stats, or AWGN int
+     *  ATH_CAP_DCS_CWIM   0x01
+     *  ATH_CAP_DCS_WLANIM 0x02
+     *  ATH_CAP_DCS_AGWNIM 0x04
      */
-    A_UINT32 interference_type; /* type of interference, wlan or cw */
+    A_UINT32 interference_type; /* type of interference, wlan, cw, or AWGN */
     /** pdev_id for identifying the MAC
      * See macros starting with WMI_PDEV_ID_ for values.
      */
@@ -14580,6 +14607,7 @@ typedef struct {
  *
  *       wlan_dcs_cw_int            cw_int[];   <-- cw_interference event
  *       wlan_dcs_im_tgt_stats_t   wlan_stat[]; <-- wlan im interfernce stats
+ *       wmi_dcs_awgn_int_t        awgn_int[];  <-- Additive white Gaussian noise (awgn) interference
  */
 } wmi_dcs_interference_event_fixed_param;
 

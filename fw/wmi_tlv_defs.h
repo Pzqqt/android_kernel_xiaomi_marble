@@ -1140,6 +1140,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_pdev_get_dpd_status_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_get_dpd_status_evt_fixed_param,
     WMITLV_TAG_STRUC_wmi_eht_rate_set,
+    WMITLV_TAG_STRUC_wmi_dcs_awgn_int_t,
 } WMITLV_TAG_ID;
 
 /*
@@ -5028,7 +5029,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_GTK_OFFLOAD_STATUS_EVENTID);
 #define WMITLV_TABLE_WMI_DCS_INTERFERENCE_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_dcs_interference_event_fixed_param, wmi_dcs_interference_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wlan_dcs_cw_int, cw_int, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wlan_dcs_im_tgt_stats_t, wlan_stat, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wlan_dcs_im_tgt_stats_t, wlan_stat, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_dcs_awgn_int_t, awgn_int, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_DCS_INTERFERENCE_EVENTID);
 
 /* Profile data Event */
