@@ -675,6 +675,8 @@ static const struct rsrc_min_max ipa3_rsrc_dst_grp_config
 		{6, 6}, {5, 5}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {39, 39},  },
 		[IPA_v5_0_RSRC_GRP_TYPE_DST_DPS_DMARS] = {
 		{0, 3}, {0, 3}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0},  },
+		[IPA_v5_0_RSRC_GRP_TYPE_DST_ULSO_SEGMENTS] = {
+		{0, 0x3f}, {0, 0x3f}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0},  },
 	},
 	[IPA_5_0_MHI] = {
 		/* UL  DL  unused  unused unused  UC_RX_Q DRBIP N/A */
@@ -690,6 +692,8 @@ static const struct rsrc_min_max ipa3_rsrc_dst_grp_config
 		{6, 6}, {5, 5}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {39, 39},  },
 		[IPA_v5_0_RSRC_GRP_TYPE_DST_DPS_DMARS] = {
 		{0, 3}, {0, 3}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0},  },
+		[IPA_v5_0_RSRC_GRP_TYPE_DST_ULSO_SEGMENTS] = {
+		{0, 0x3f}, {0, 0x3f}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0},  },
 	},
 };
 
@@ -6559,6 +6563,13 @@ int ipa3_init_hw(void)
 		}
 	}
 
+	if (ipa3_is_ulso_supported()) {
+		ipahal_write_reg_n(IPA_ULSO_CFG_IP_ID_MIN_VALUE_n, 0,
+			ipa3_ctx->ulso_ip_id_min);
+		ipahal_write_reg_n(IPA_ULSO_CFG_IP_ID_MAX_VALUE_n, 0,
+		ipa3_ctx->ulso_ip_id_max);
+	}
+
 	ipa_comp_cfg();
 
 	/*
@@ -7005,6 +7016,13 @@ int ipa3_cfg_ep(u32 clnt_hdl, const struct ipa_ep_cfg *ipa_ep_cfg)
 	if (result)
 		return result;
 
+	if (ipa3_is_ulso_supported()) {
+		result = ipa3_cfg_ep_ulso(clnt_hdl,
+			&ipa_ep_cfg->ulso);
+		if (result)
+			return result;
+	}
+
 	if (IPA_CLIENT_IS_PROD(ipa3_ctx->ep[clnt_hdl].client)) {
 		result = ipa3_cfg_ep_nat(clnt_hdl, &ipa_ep_cfg->nat);
 		if (result)
@@ -7387,6 +7405,45 @@ int ipa3_cfg_ep_hdr_ext(u32 clnt_hdl,
 
 	ipahal_write_reg_n_fields(IPA_ENDP_INIT_HDR_EXT_n, clnt_hdl,
 		&ep->cfg.hdr_ext);
+
+	IPA_ACTIVE_CLIENTS_DEC_EP(ipa3_get_client_mapping(clnt_hdl));
+
+	return 0;
+}
+
+/**
+ * ipa3_cfg_ep_ulso() -  IPA end-point ulso configuration
+ * @clnt_hdl:	[in] opaque client handle assigned by IPA to client
+ * @ep_ulso:	[in] IPA end-point ulso configuration params
+ *
+ * Returns:	0 on success, negative on failure
+ *
+ * Note:	Should not be called from atomic context
+ */
+int ipa3_cfg_ep_ulso(u32 clnt_hdl,
+		       const struct ipa_ep_cfg_ulso *ep_ulso)
+{
+	struct ipa3_ep_context *ep;
+
+	if (clnt_hdl >= ipa3_ctx->ipa_num_pipes ||
+	    ipa3_ctx->ep[clnt_hdl].valid == 0 || ep_ulso == NULL) {
+		IPAERR("bad parm, clnt_hdl = %d , ep_valid = %d\n",
+				clnt_hdl, ipa3_ctx->ep[clnt_hdl].valid);
+		return -EINVAL;
+	}
+
+	IPADBG("pipe=%d ipid_min_max_idx=%d is_ulso_pipe=%d\n",
+		clnt_hdl, ep_ulso->ipid_min_max_idx, ep_ulso->is_ulso_pipe);
+
+	ep = &ipa3_ctx->ep[clnt_hdl];
+
+	/* copy over EP cfg */
+	ep->cfg.ulso = *ep_ulso;
+
+	IPA_ACTIVE_CLIENTS_INC_EP(ipa3_get_client_mapping(clnt_hdl));
+
+	ipahal_write_reg_n(IPA_ENDP_INIT_ULSO_CFG_n, clnt_hdl,
+		ep->cfg.ulso.ipid_min_max_idx);
 
 	IPA_ACTIVE_CLIENTS_DEC_EP(ipa3_get_client_mapping(clnt_hdl));
 
@@ -11662,4 +11719,18 @@ void ipa3_set_modem_up(bool is_up)
 	mutex_lock(&ipa3_ctx->lock);
 	ipa3_ctx->is_modem_up = is_up;
 	mutex_unlock(&ipa3_ctx->lock);
+}
+
+/**
+ * ipa3_is_ulso_supported() - Query IPA for ulso support
+ *
+ * Return value: true if ulso is supported, false otherwise
+ *
+ */
+bool ipa3_is_ulso_supported(void)
+{
+	if (!ipa3_ctx)
+		return false;
+
+	return ipa3_ctx->ulso_supported;
 }
