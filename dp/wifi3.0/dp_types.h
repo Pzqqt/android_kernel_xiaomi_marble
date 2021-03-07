@@ -377,6 +377,7 @@ struct dp_rx_nbuf_frag_info {
  * @DP_RX_RING_HIST_TYPE: Datapath rx ring history
  * @DP_RX_ERR_RING_HIST_TYPE: Datapath rx error ring history
  * @DP_RX_REINJECT_RING_HIST_TYPE: Datapath reinject ring history
+ * @DP_RX_REFILL_RING_HIST_TYPE: Datapath rx refill ring history
  */
 enum dp_ctxt_type {
 	DP_PDEV_TYPE,
@@ -384,6 +385,7 @@ enum dp_ctxt_type {
 	DP_RX_ERR_RING_HIST_TYPE,
 	DP_RX_REINJECT_RING_HIST_TYPE,
 	DP_FISA_RX_FT_TYPE,
+	DP_RX_REFILL_RING_HIST_TYPE,
 };
 
 /**
@@ -1157,6 +1159,7 @@ struct rx_refill_buff_pool {
 	bool is_initialized;
 };
 
+#ifdef WLAN_FEATURE_DP_RX_RING_HISTORY
 /*
  * The logic for get current index of these history is dependent on this
  * value being power of 2.
@@ -1164,6 +1167,7 @@ struct rx_refill_buff_pool {
 #define DP_RX_HIST_MAX 2048
 #define DP_RX_ERR_HIST_MAX 2048
 #define DP_RX_REINJECT_HIST_MAX 1024
+#define DP_RX_REFILL_HIST_MAX 2048
 
 QDF_COMPILE_TIME_ASSERT(rx_history_size,
 			(DP_RX_HIST_MAX &
@@ -1174,6 +1178,10 @@ QDF_COMPILE_TIME_ASSERT(rx_err_history_size,
 QDF_COMPILE_TIME_ASSERT(rx_reinject_history_size,
 			(DP_RX_REINJECT_HIST_MAX &
 			 (DP_RX_REINJECT_HIST_MAX - 1)) == 0);
+QDF_COMPILE_TIME_ASSERT(rx_refill_history_size,
+			(DP_RX_REFILL_HIST_MAX &
+			(DP_RX_REFILL_HIST_MAX - 1)) == 0);
+
 
 /**
  * struct dp_buf_info_record - ring buffer info
@@ -1182,6 +1190,22 @@ QDF_COMPILE_TIME_ASSERT(rx_reinject_history_size,
  */
 struct dp_buf_info_record {
 	struct hal_buf_info hbi;
+	uint64_t timestamp;
+};
+
+/**
+ * struct dp_refill_info_record - ring refill buffer info
+ * @hp: HP value after refill
+ * @tp: cached tail value during refill
+ * @num_req: number of buffers requested to refill
+ * @num_refill: number of buffers refilled to ring
+ * @timestamp: timestamp when this entry was recorded
+ */
+struct dp_refill_info_record {
+	uint32_t hp;
+	uint32_t tp;
+	uint32_t num_req;
+	uint32_t num_refill;
 	uint64_t timestamp;
 };
 
@@ -1211,6 +1235,17 @@ struct dp_rx_reinject_history {
 	qdf_atomic_t index;
 	struct dp_buf_info_record entry[DP_RX_REINJECT_HIST_MAX];
 };
+
+/* struct dp_rx_refill_history - rx buf refill hisotry
+ * @index: Index where the last entry is written
+ * @entry: history entries
+ */
+struct dp_rx_refill_history {
+	qdf_atomic_t index;
+	struct dp_refill_info_record entry[DP_RX_REFILL_HIST_MAX];
+};
+
+#endif
 
 /* structure to record recent operation related variable */
 struct dp_last_op_info {
@@ -1611,9 +1646,13 @@ struct dp_soc {
 		unsigned idx_bits;
 		TAILQ_HEAD(, dp_ast_entry) * bins;
 	} ast_hash;
+
+#ifdef WLAN_FEATURE_DP_RX_RING_HISTORY
 	struct dp_rx_history *rx_ring_history[MAX_REO_DEST_RINGS];
+	struct dp_rx_refill_history *rx_refill_ring_history[MAX_PDEV_CNT];
 	struct dp_rx_err_history *rx_err_ring_history;
 	struct dp_rx_reinject_history *rx_reinject_ring_history;
+#endif
 
 	qdf_spinlock_t ast_lock;
 	/*Timer for AST entry ageout maintainance */

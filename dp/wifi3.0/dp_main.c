@@ -4522,10 +4522,12 @@ static void dp_soc_rx_history_attach(struct dp_soc *soc)
 	uint32_t rx_ring_hist_size;
 	uint32_t rx_err_ring_hist_size;
 	uint32_t rx_reinject_hist_size;
+	uint32_t rx_refill_ring_hist_size;
 
 	rx_ring_hist_size = sizeof(*soc->rx_ring_history[0]);
 	rx_err_ring_hist_size = sizeof(*soc->rx_err_ring_history);
 	rx_reinject_hist_size = sizeof(*soc->rx_reinject_ring_history);
+	rx_refill_ring_hist_size = sizeof(*soc->rx_refill_ring_history[0]);
 
 	for (i = 0; i < MAX_REO_DEST_RINGS; i++) {
 		soc->rx_ring_history[i] = dp_context_alloc_mem(
@@ -4540,6 +4542,16 @@ static void dp_soc_rx_history_attach(struct dp_soc *soc)
 		qdf_atomic_init(&soc->rx_err_ring_history->index);
 
 	dp_soc_rx_reinject_ring_history_attach(soc);
+
+	for (i = 0; i < MAX_PDEV_CNT; i++) {
+		soc->rx_refill_ring_history[i] = dp_context_alloc_mem(
+						soc,
+						DP_RX_REFILL_RING_HIST_TYPE,
+						rx_refill_ring_hist_size);
+
+		if (soc->rx_refill_ring_history[i])
+			qdf_atomic_init(&soc->rx_refill_ring_history[i]->index);
+	}
 }
 
 static void dp_soc_rx_history_detach(struct dp_soc *soc)
@@ -4559,6 +4571,10 @@ static void dp_soc_rx_history_detach(struct dp_soc *soc)
 	 */
 	dp_context_free_mem(soc, DP_RX_REINJECT_RING_HIST_TYPE,
 			    soc->rx_reinject_ring_history);
+
+	for (i = 0; i < MAX_PDEV_CNT; i++)
+		dp_context_free_mem(soc, DP_RX_REFILL_RING_HIST_TYPE,
+				    soc->rx_refill_ring_history[i]);
 }
 
 #else
