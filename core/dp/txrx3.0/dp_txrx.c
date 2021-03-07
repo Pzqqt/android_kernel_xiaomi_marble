@@ -297,6 +297,9 @@ static struct dp_prealloc_context g_dp_context_allocs[] = {
 	{DP_RX_REINJECT_RING_HIST_TYPE, sizeof(struct dp_rx_reinject_history),
 	 false, NULL},
 #endif	/* RX_DEFRAG_DO_NOT_REINJECT */
+	/* 1 Rx refill ring history */
+	{DP_RX_REFILL_RING_HIST_TYPE, sizeof(struct dp_rx_refill_history),
+	false, NULL},
 #endif	/* WLAN_FEATURE_DP_RX_RING_HISTORY */
 #ifdef WLAN_SUPPORT_RX_FISA
 	{DP_FISA_RX_FT_TYPE, sizeof(struct dp_fisa_rx_sw_ft) * FISA_RX_FT_SIZE, false, NULL},
