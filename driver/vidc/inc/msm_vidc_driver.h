@@ -185,6 +185,7 @@ static inline bool is_session_error(struct msm_vidc_inst* inst)
 	return inst->state == MSM_VIDC_ERROR;
 }
 
+const char *cap_name(enum msm_vidc_inst_capability_type cap);
 void print_vidc_buffer(u32 tag, const char *tag_str, const char *str, struct msm_vidc_inst *inst,
 		struct msm_vidc_buffer *vbuf);
 void print_vb2_buffer(const char *str, struct msm_vidc_inst *inst,

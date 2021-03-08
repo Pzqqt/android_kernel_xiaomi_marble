@@ -17,7 +17,7 @@
 #include "venus_hfi.h"
 #include "hfi_packet.h"
 
-u32 msm_venc_input_set_prop[] = {
+static const u32 msm_venc_input_set_prop[] = {
 	HFI_PROP_COLOR_FORMAT,
 	HFI_PROP_RAW_RESOLUTION,
 	HFI_PROP_LINEAR_STRIDE_SCANLINE,
@@ -25,21 +25,34 @@ u32 msm_venc_input_set_prop[] = {
 	HFI_PROP_SIGNAL_COLOR_INFO,
 };
 
-u32 msm_venc_output_set_prop[] = {
+static const u32 msm_venc_output_set_prop[] = {
 	HFI_PROP_BITSTREAM_RESOLUTION,
 	HFI_PROP_CROP_OFFSETS,
 	HFI_PROP_BUFFER_HOST_MAX_COUNT,
 	HFI_PROP_CSC,
 };
 
-u32 msm_venc_input_subscribe_for_properties[] = {
+static const u32 msm_venc_input_subscribe_for_properties[] = {
 	HFI_PROP_NO_OUTPUT,
 };
 
-u32 msm_venc_output_subscribe_for_properties[] = {
+static const u32 msm_venc_output_subscribe_for_properties[] = {
 	HFI_PROP_PICTURE_TYPE,
 	HFI_PROP_BUFFER_MARK,
 	HFI_PROP_WORST_COMPRESSION_RATIO,
+};
+
+static const u32 msm_venc_internal_buffer_type[] = {
+	MSM_VIDC_BUF_BIN,
+	MSM_VIDC_BUF_COMV,
+	MSM_VIDC_BUF_NON_COMV,
+	MSM_VIDC_BUF_LINE,
+	MSM_VIDC_BUF_DPB,
+};
+
+struct msm_venc_prop_type_handle {
+	u32 type;
+	int (*handle)(struct msm_vidc_inst *inst, enum msm_vidc_port_type port);
 };
 
 static int msm_venc_codec_change(struct msm_vidc_inst *inst, u32 v4l2_codec)
@@ -458,42 +471,36 @@ static int msm_venc_set_quality_mode(struct msm_vidc_inst *inst)
 
 static int msm_venc_set_input_properties(struct msm_vidc_inst *inst)
 {
-	int rc = 0;
-	int i = 0;
+	int i, j, rc = 0;
+	static const struct msm_venc_prop_type_handle prop_type_handle_arr[] = {
+		{HFI_PROP_COLOR_FORMAT,               msm_venc_set_colorformat                 },
+		{HFI_PROP_RAW_RESOLUTION,             msm_venc_set_raw_resolution              },
+		{HFI_PROP_LINEAR_STRIDE_SCANLINE,     msm_venc_set_linear_alignment_factor     },
+		{HFI_PROP_BUFFER_HOST_MAX_COUNT,      msm_venc_set_host_max_buf_count          },
+		{HFI_PROP_SIGNAL_COLOR_INFO,          msm_venc_set_colorspace                  },
+	};
 
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-	i_vpr_h(inst, "%s()\n", __func__);
 
-	for (i = 0; i < ARRAY_SIZE(msm_venc_input_set_prop);
-	     i++) {
-		switch (msm_venc_input_set_prop[i]) {
-		case HFI_PROP_COLOR_FORMAT:
-			rc = msm_venc_set_colorformat(inst, INPUT_PORT);
-			break;
-		case HFI_PROP_RAW_RESOLUTION:
-			rc = msm_venc_set_raw_resolution(inst, INPUT_PORT);
-			break;
-		case HFI_PROP_LINEAR_STRIDE_SCANLINE:
-			rc = msm_venc_set_linear_alignment_factor(inst, INPUT_PORT);
-			break;
-		case HFI_PROP_BUFFER_HOST_MAX_COUNT:
-			rc = msm_venc_set_host_max_buf_count(inst, INPUT_PORT);
-			break;
-		case HFI_PROP_SIGNAL_COLOR_INFO:
-			rc = msm_venc_set_colorspace(inst, INPUT_PORT);
-			break;
-		default:
-			i_vpr_e(inst, "%s: unknown property %#x\n", __func__,
-				msm_venc_input_set_prop[i]);
-			rc = -EINVAL;
-			break;
+	i_vpr_h(inst, "%s()\n", __func__);
+	for (i = 0; i < ARRAY_SIZE(msm_venc_input_set_prop); i++) {
+		/* set session input properties */
+		for (j = 0; j < ARRAY_SIZE(prop_type_handle_arr); j++) {
+			if (prop_type_handle_arr[j].type == msm_venc_input_set_prop[i]) {
+				rc = prop_type_handle_arr[j].handle(inst, INPUT_PORT);
+				if (rc)
+					goto exit;
+				break;
+			}
 		}
 
-		if (rc)
-			goto exit;
+		/* is property type unknown ? */
+		if (j == ARRAY_SIZE(prop_type_handle_arr))
+			i_vpr_e(inst, "%s: unknown property %#x\n", __func__,
+				msm_venc_input_set_prop[i]);
 	}
 
 exit:
@@ -502,39 +509,35 @@ exit:
 
 static int msm_venc_set_output_properties(struct msm_vidc_inst *inst)
 {
-	int rc = 0;
-	int i = 0;
+	int i, j, rc = 0;
+	static const struct msm_venc_prop_type_handle prop_type_handle_arr[] = {
+		{HFI_PROP_BITSTREAM_RESOLUTION,       msm_venc_set_bitstream_resolution    },
+		{HFI_PROP_CROP_OFFSETS,               msm_venc_set_crop_offsets            },
+		{HFI_PROP_BUFFER_HOST_MAX_COUNT,      msm_venc_set_host_max_buf_count      },
+		{HFI_PROP_CSC,                        msm_venc_set_csc                     },
+	};
 
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-	i_vpr_h(inst, "%s()\n", __func__);
 
-	for (i = 0; i < ARRAY_SIZE(msm_venc_output_set_prop);
-	     i++) {
-		switch (msm_venc_output_set_prop[i]) {
-		case HFI_PROP_BITSTREAM_RESOLUTION:
-			rc = msm_venc_set_bitstream_resolution(inst, OUTPUT_PORT);
-			break;
-		case HFI_PROP_CROP_OFFSETS:
-			rc = msm_venc_set_crop_offsets(inst, OUTPUT_PORT);
-			break;
-		case HFI_PROP_BUFFER_HOST_MAX_COUNT:
-			rc = msm_venc_set_host_max_buf_count(inst, OUTPUT_PORT);
-			break;
-		case HFI_PROP_CSC:
-			rc = msm_venc_set_csc(inst, OUTPUT_PORT);
-			break;
-		default:
-			i_vpr_e(inst, "%s: unknown property %#x\n", __func__,
-				msm_venc_output_set_prop[i]);
-			rc = -EINVAL;
-			break;
+	i_vpr_h(inst, "%s()\n", __func__);
+	for (i = 0; i < ARRAY_SIZE(msm_venc_output_set_prop); i++) {
+		/* set session output properties */
+		for (j = 0; j < ARRAY_SIZE(prop_type_handle_arr); j++) {
+			if (prop_type_handle_arr[j].type == msm_venc_output_set_prop[i]) {
+				rc = prop_type_handle_arr[j].handle(inst, OUTPUT_PORT);
+				if (rc)
+					goto exit;
+				break;
+			}
 		}
 
-		if (rc)
-			goto exit;
+		/* is property type unknown ? */
+		if (j == ARRAY_SIZE(prop_type_handle_arr))
+			i_vpr_e(inst, "%s: unknown property %#x\n", __func__,
+				msm_venc_output_set_prop[i]);
 	}
 
 exit:
@@ -628,7 +631,7 @@ static int msm_venc_queue_input_internal_buffers(struct msm_vidc_inst *inst)
 
 static int msm_venc_get_output_internal_buffers(struct msm_vidc_inst *inst)
 {
-	int rc = 0;
+	int i, rc = 0;
 	struct msm_vidc_core *core;
 
 	if (!inst || !inst->core) {
@@ -637,25 +640,11 @@ static int msm_venc_get_output_internal_buffers(struct msm_vidc_inst *inst)
 	}
 	core = inst->core;
 
-	rc = msm_vidc_get_internal_buffers(inst, MSM_VIDC_BUF_BIN);
-	if (rc)
-		return rc;
-
-	rc = msm_vidc_get_internal_buffers(inst, MSM_VIDC_BUF_COMV);
-	if (rc)
-		return rc;
-
-	rc = msm_vidc_get_internal_buffers(inst, MSM_VIDC_BUF_NON_COMV);
-	if (rc)
-		return rc;
-
-	rc = msm_vidc_get_internal_buffers(inst, MSM_VIDC_BUF_LINE);
-	if (rc)
-		return rc;
-
-	rc = msm_vidc_get_internal_buffers(inst, MSM_VIDC_BUF_DPB);
-	if (rc)
-		return rc;
+	for (i = 0; i < ARRAY_SIZE(msm_venc_internal_buffer_type); i++) {
+		rc = msm_vidc_get_internal_buffers(inst, msm_venc_internal_buffer_type[i]);
+		if (rc)
+			return rc;
+	}
 
 	i_vpr_h(inst, "internal buffer: min     size\n");
 	i_vpr_h(inst, "bin  buffer: %d      %d\n",
@@ -679,56 +668,36 @@ static int msm_venc_get_output_internal_buffers(struct msm_vidc_inst *inst)
 
 static int msm_venc_create_output_internal_buffers(struct msm_vidc_inst *inst)
 {
-	int rc = 0;
+	int i, rc = 0;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 
-	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_BIN);
-	if (rc)
-		return rc;
-	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_COMV);
-	if (rc)
-		return rc;
-	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_NON_COMV);
-	if (rc)
-		return rc;
-	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_LINE);
-	if (rc)
-		return rc;
-	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_DPB);
-	if (rc)
-		return rc;
+	for (i = 0; i < ARRAY_SIZE(msm_venc_internal_buffer_type); i++) {
+		rc = msm_vidc_create_internal_buffers(inst, msm_venc_internal_buffer_type[i]);
+		if (rc)
+			return rc;
+	}
 
 	return 0;
 }
 
 static int msm_venc_queue_output_internal_buffers(struct msm_vidc_inst *inst)
 {
-	int rc = 0;
+	int i, rc = 0;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 
-	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_BIN);
-	if (rc)
-		return rc;
-	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_COMV);
-	if (rc)
-		return rc;
-	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_NON_COMV);
-	if (rc)
-		return rc;
-	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_LINE);
-	if (rc)
-		return rc;
-	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_DPB);
-	if (rc)
-		return rc;
+	for (i = 0; i < ARRAY_SIZE(msm_venc_internal_buffer_type); i++) {
+		rc = msm_vidc_queue_internal_buffers(inst, msm_venc_internal_buffer_type[i]);
+		if (rc)
+			return rc;
+	}
 
 	return 0;
 }
@@ -783,7 +752,7 @@ static int msm_venc_metadata_delivery(struct msm_vidc_inst *inst,
 	u32 payload[32] = {0};
 	u32 i, count = 0;
 	struct msm_vidc_inst_capability *capability;
-	u32 metadata_list[] = {
+	static const u32 metadata_list[] = {
 		META_SEI_MASTERING_DISP,
 		META_SEI_CLL,
 		META_HDR10PLUS,
@@ -831,7 +800,7 @@ static int msm_venc_metadata_subscription(struct msm_vidc_inst *inst,
 	u32 payload[32] = {0};
 	u32 i, count = 0;
 	struct msm_vidc_inst_capability *capability;
-	u32 metadata_list[] = {
+	static const u32 metadata_list[] = {
 		META_LTR_MARK_USE,
 		META_SEQ_HDR_NAL,
 		META_TIMESTAMP,

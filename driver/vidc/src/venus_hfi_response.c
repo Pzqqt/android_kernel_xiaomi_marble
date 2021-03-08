@@ -13,9 +13,25 @@
 #define in_range(range, val) (((range.begin) < (val)) && ((range.end) > (val)))
 
 extern struct msm_vidc_core *g_core;
-struct msm_vidc_hfi_range {
+struct msm_vidc_core_hfi_range {
 	u32 begin;
 	u32 end;
+	int (*handle)(struct msm_vidc_core *core, struct hfi_packet *pkt);
+};
+
+struct msm_vidc_inst_hfi_range {
+	u32 begin;
+	u32 end;
+	int (*handle)(struct msm_vidc_inst *inst, struct hfi_packet *pkt);
+};
+
+struct msm_vidc_hfi_buffer_handle {
+	enum hfi_buffer_type type;
+	int (*handle)(struct msm_vidc_inst *inst, struct hfi_buffer *buffer);
+};
+
+struct msm_vidc_hfi_packet_handle {
+	enum hfi_buffer_type type;
 	int (*handle)(struct msm_vidc_inst *inst, struct hfi_packet *pkt);
 };
 
@@ -184,6 +200,33 @@ int validate_packet(u8 *response_pkt, u8 *core_resp_pkt,
 			func, *(u32 *)response_pkt);
 		return -EINVAL;
 	}
+	return 0;
+}
+
+static int validate_hdr_packet(struct msm_vidc_core *core,
+	struct hfi_header *hdr, const char *function)
+{
+	struct hfi_packet *packet;
+	u8 *pkt;
+	int i, rc = 0;
+
+	if (!core || !hdr || !function) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	pkt = (u8 *)((u8 *)hdr + sizeof(struct hfi_header));
+
+	/* validate all packets */
+	for (i = 0; i < hdr->num_packets; i++) {
+		packet = (struct hfi_packet *)pkt;
+		rc = validate_packet(pkt, core->response_packet, core->packet_size, function);
+		if (rc)
+			return rc;
+
+		pkt += packet->size;
+	}
+
 	return 0;
 }
 
@@ -666,7 +709,7 @@ static int handle_dequeue_buffers(struct msm_vidc_inst* inst)
 	struct msm_vidc_buffers* buffers;
 	struct msm_vidc_buffer* buf;
 	struct msm_vidc_buffer* dummy;
-	enum msm_vidc_buffer_type buffer_type[] = {
+	static const enum msm_vidc_buffer_type buffer_type[] = {
 		MSM_VIDC_BUF_INPUT_META,
 		MSM_VIDC_BUF_INPUT,
 		MSM_VIDC_BUF_OUTPUT_META,
@@ -908,9 +951,38 @@ static int handle_arp_buffer(struct msm_vidc_inst *inst,
 static int handle_session_buffer(struct msm_vidc_inst *inst,
 	struct hfi_packet *pkt)
 {
-	int rc = 0;
+	int i, rc = 0;
 	struct hfi_buffer *buffer;
-	u32 buf_type = 0, port_type = 0;
+	u32 hfi_handle_size = 0;
+	const struct msm_vidc_hfi_buffer_handle *hfi_handle_arr = NULL;
+	static const struct msm_vidc_hfi_buffer_handle enc_input_hfi_handle[] = {
+		{HFI_BUFFER_METADATA,       handle_input_metadata_buffer      },
+		{HFI_BUFFER_RAW,            handle_input_buffer               },
+	};
+	static const struct msm_vidc_hfi_buffer_handle enc_output_hfi_handle[] = {
+		{HFI_BUFFER_METADATA,       handle_output_metadata_buffer     },
+		{HFI_BUFFER_BITSTREAM,      handle_output_buffer              },
+		{HFI_BUFFER_BIN,            handle_bin_buffer                 },
+		{HFI_BUFFER_COMV,           handle_comv_buffer                },
+		{HFI_BUFFER_NON_COMV,       handle_non_comv_buffer            },
+		{HFI_BUFFER_LINE,           handle_line_buffer                },
+		{HFI_BUFFER_ARP,            handle_arp_buffer                 },
+		{HFI_BUFFER_DPB,            handle_dpb_buffer                 },
+	};
+	static const struct msm_vidc_hfi_buffer_handle dec_input_hfi_handle[] = {
+		{HFI_BUFFER_METADATA,       handle_input_metadata_buffer      },
+		{HFI_BUFFER_BITSTREAM,      handle_input_buffer               },
+		{HFI_BUFFER_BIN,            handle_bin_buffer                 },
+		{HFI_BUFFER_COMV,           handle_comv_buffer                },
+		{HFI_BUFFER_NON_COMV,       handle_non_comv_buffer            },
+		{HFI_BUFFER_LINE,           handle_line_buffer                },
+		{HFI_BUFFER_PERSIST,        handle_persist_buffer             },
+	};
+	static const struct msm_vidc_hfi_buffer_handle dec_output_hfi_handle[] = {
+		{HFI_BUFFER_METADATA,       handle_output_metadata_buffer     },
+		{HFI_BUFFER_RAW,            handle_output_buffer              },
+		{HFI_BUFFER_DPB,            handle_dpb_buffer                 },
+	};
 
 	if (pkt->flags & HFI_FW_FLAGS_SESSION_ERROR) {
 		i_vpr_e(inst, "%s: received session error\n", __func__);
@@ -924,85 +996,55 @@ static int handle_session_buffer(struct msm_vidc_inst *inst,
 		return 0;
 	}
 
-	port_type = pkt->port;
-
 	buffer = (struct hfi_buffer *)((u8 *)pkt + sizeof(struct hfi_packet));
-	buf_type = buffer->type;
-	if (!is_valid_hfi_buffer_type(inst, buf_type, __func__)) {
+	if (!is_valid_hfi_buffer_type(inst, buffer->type, __func__)) {
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 		return 0;
 	}
 
-	if (!is_valid_hfi_port(inst, port_type, buf_type, __func__)) {
+	if (!is_valid_hfi_port(inst, pkt->port, buffer->type, __func__)) {
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 		return 0;
 	}
 
 	if (is_encode_session(inst)) {
-		if (port_type == HFI_PORT_BITSTREAM) {
-			if (buf_type == HFI_BUFFER_METADATA)
-				rc = handle_output_metadata_buffer(inst, buffer);
-			else if (buf_type == HFI_BUFFER_BITSTREAM)
-				rc = handle_output_buffer(inst, buffer);
-			else if (buf_type == HFI_BUFFER_BIN)
-				rc = handle_bin_buffer(inst, buffer);
-			else if (buf_type == HFI_BUFFER_COMV)
-				rc = handle_comv_buffer(inst, buffer);
-			else if (buf_type == HFI_BUFFER_NON_COMV)
-				rc = handle_non_comv_buffer(inst, buffer);
-			else if (buf_type == HFI_BUFFER_LINE)
-				rc = handle_line_buffer(inst, buffer);
-			else if (buf_type == HFI_BUFFER_ARP)
-				rc = handle_arp_buffer(inst, buffer);
-			else if (buf_type == HFI_BUFFER_DPB)
-				rc = handle_dpb_buffer(inst, buffer);
-			else
-				i_vpr_e(inst, "%s: unknown bitstream port buffer type %#x\n",
-					__func__, buf_type);
-		} else if (port_type == HFI_PORT_RAW) {
-			if (buf_type == HFI_BUFFER_METADATA)
-				rc = handle_input_metadata_buffer(inst, buffer);
-			else if (buf_type == HFI_BUFFER_RAW)
-				rc = handle_input_buffer(inst, buffer);
-			else
-				i_vpr_e(inst, "%s: unknown raw port buffer type %#x\n",
-					__func__, buf_type);
+		if (pkt->port == HFI_PORT_RAW) {
+			hfi_handle_size = ARRAY_SIZE(enc_input_hfi_handle);
+			hfi_handle_arr = enc_input_hfi_handle;
+		} else if (pkt->port == HFI_PORT_BITSTREAM) {
+			hfi_handle_size = ARRAY_SIZE(enc_output_hfi_handle);
+			hfi_handle_arr = enc_output_hfi_handle;
 		}
 	} else if (is_decode_session(inst)) {
-		if (port_type == HFI_PORT_BITSTREAM) {
-			if (buf_type == HFI_BUFFER_METADATA)
-				rc = handle_input_metadata_buffer(inst, buffer);
-			else if (buf_type == HFI_BUFFER_BITSTREAM)
-				rc = handle_input_buffer(inst, buffer);
-			else if (buf_type == HFI_BUFFER_BIN)
-				rc = handle_bin_buffer(inst, buffer);
-			else if (buf_type == HFI_BUFFER_COMV)
-				rc = handle_comv_buffer(inst, buffer);
-			else if (buf_type == HFI_BUFFER_NON_COMV)
-				rc = handle_non_comv_buffer(inst, buffer);
-			else if (buf_type == HFI_BUFFER_LINE)
-				rc = handle_line_buffer(inst, buffer);
-			else if (buf_type == HFI_BUFFER_PERSIST)
-				rc = handle_persist_buffer(inst, buffer);
-			else
-				i_vpr_e(inst, "%s: unknown bitstream port buffer type %#x\n",
-					__func__, buf_type);
-		} else if (port_type == HFI_PORT_RAW) {
-			if (buf_type == HFI_BUFFER_METADATA)
-				rc = handle_output_metadata_buffer(inst, buffer);
-			else if (buf_type == HFI_BUFFER_RAW)
-				rc = handle_output_buffer(inst, buffer);
-			else if (buf_type == HFI_BUFFER_DPB)
-				rc = handle_dpb_buffer(inst, buffer);
-			else
-				i_vpr_e(inst, "%s: unknown raw port buffer type %#x\n",
-					__func__, buf_type);
+		if (pkt->port == HFI_PORT_BITSTREAM) {
+			hfi_handle_size = ARRAY_SIZE(dec_input_hfi_handle);
+			hfi_handle_arr = dec_input_hfi_handle;
+		} else if (pkt->port == HFI_PORT_RAW) {
+			hfi_handle_size = ARRAY_SIZE(dec_output_hfi_handle);
+			hfi_handle_arr = dec_output_hfi_handle;
 		}
-	} else {
-		i_vpr_e(inst, "%s: invalid session %d\n",
-			__func__, inst->domain);
+	}
+
+	/* handle invalid session */
+	if (!hfi_handle_arr || !hfi_handle_size) {
+		i_vpr_e(inst, "%s: invalid session %d\n", __func__, inst->domain);
 		return -EINVAL;
 	}
+
+	/* handle session buffer */
+	for (i = 0; i < hfi_handle_size; i++) {
+		if (hfi_handle_arr[i].type == buffer->type) {
+			rc = hfi_handle_arr[i].handle(inst, buffer);
+			if (rc)
+				return rc;
+			break;
+		}
+	}
+
+	/* handle unknown buffer type */
+	if (i == hfi_handle_size)
+		i_vpr_e(inst, "%s: port %u, unknown buffer type %#x\n", __func__,
+			pkt->port, buffer->type);
 
 	return rc;
 }
@@ -1072,32 +1114,36 @@ static int handle_session_resume(struct msm_vidc_inst *inst,
 static int handle_session_command(struct msm_vidc_inst *inst,
 	struct hfi_packet *pkt)
 {
-	switch (pkt->type) {
-	case HFI_CMD_OPEN:
-		return handle_session_open(inst, pkt);
-	case HFI_CMD_CLOSE:
-		return handle_session_close(inst, pkt);
-	case HFI_CMD_START:
-		return handle_session_start(inst, pkt);
-	case HFI_CMD_STOP:
-		return handle_session_stop(inst, pkt);
-	case HFI_CMD_DRAIN:
-		return handle_session_drain(inst, pkt);
-	case HFI_CMD_BUFFER:
-		return handle_session_buffer(inst, pkt);
-	case HFI_CMD_SETTINGS_CHANGE:
-		return handle_port_settings_change(inst, pkt);
-	case HFI_CMD_SUBSCRIBE_MODE:
-		return handle_session_subscribe_mode(inst, pkt);
-	case HFI_CMD_DELIVERY_MODE:
-		return handle_session_delivery_mode(inst, pkt);
-	case HFI_CMD_RESUME:
-		return handle_session_resume(inst, pkt);
-	default:
-		i_vpr_e(inst, "%s: Unsupported command type: %#x\n",
-			__func__, pkt->type);
+	int i, rc;
+	static const struct msm_vidc_hfi_packet_handle hfi_pkt_handle[] = {
+		{HFI_CMD_OPEN,              handle_session_open               },
+		{HFI_CMD_CLOSE,             handle_session_close              },
+		{HFI_CMD_START,             handle_session_start              },
+		{HFI_CMD_STOP,              handle_session_stop               },
+		{HFI_CMD_DRAIN,             handle_session_drain              },
+		{HFI_CMD_BUFFER,            handle_session_buffer             },
+		{HFI_CMD_SETTINGS_CHANGE,   handle_port_settings_change       },
+		{HFI_CMD_SUBSCRIBE_MODE,    handle_session_subscribe_mode     },
+		{HFI_CMD_DELIVERY_MODE,     handle_session_delivery_mode      },
+		{HFI_CMD_RESUME,            handle_session_resume             },
+	};
+
+	/* handle session pkt */
+	for (i = 0; i < ARRAY_SIZE(hfi_pkt_handle); i++) {
+		if (hfi_pkt_handle[i].type == pkt->type) {
+			rc = hfi_pkt_handle[i].handle(inst, pkt);
+			if (rc)
+				return rc;
+			break;
+		}
+	}
+
+	/* handle unknown buffer type */
+	if (i == ARRAY_SIZE(hfi_pkt_handle)) {
+		i_vpr_e(inst, "%s: Unsupported command type: %#x\n", __func__, pkt->type);
 		return -EINVAL;
 	}
+
 	return 0;
 }
 
@@ -1244,35 +1290,99 @@ static int handle_system_response(struct msm_vidc_core *core,
 {
 	int rc = 0;
 	struct hfi_packet *packet;
-	u8 *pkt;
-	int i;
+	u8 *pkt, *start_pkt;
+	bool parsed = false;
+	int i, j, k;
+	static const struct msm_vidc_core_hfi_range be[] = {
+		{HFI_SYSTEM_ERROR_BEGIN,   HFI_SYSTEM_ERROR_END,   handle_system_error     },
+		{HFI_PROP_BEGIN,           HFI_PROP_END,           handle_system_property  },
+		{HFI_CMD_BEGIN,            HFI_CMD_END,            handle_system_init      },
+	};
 
-	pkt = (u8 *)((u8 *)hdr + sizeof(struct hfi_header));
+	start_pkt = (u8 *)((u8 *)hdr + sizeof(struct hfi_header));
+	for (i = 0; i < ARRAY_SIZE(be); i++) {
+		pkt = start_pkt;
+		for (j = 0; j < hdr->num_packets; j++) {
+			packet = (struct hfi_packet *)pkt;
+			parsed = false;
+			if (in_range(be[i], packet->type)) {
+				parsed = true;
+				rc = be[i].handle(core, packet);
+				if (rc)
+					return -EINVAL;
+			}
 
-	for (i = 0; i < hdr->num_packets; i++) {
-		if (validate_packet((u8 *)pkt, core->response_packet,
-				core->packet_size, __func__)) {
-			rc = -EINVAL;
-			goto exit;
+			/* is pkt type unknown ? */
+			if (!parsed) {
+				for (k = 0; k < ARRAY_SIZE(be); k++)
+					if (in_range(be[k], packet->type))
+						parsed |= true;
+
+				if (!parsed)
+					d_vpr_e("%s: unknown packet received %#x\n",
+						__func__, packet->type);
+			}
+
+			pkt += packet->size;
 		}
-		packet = (struct hfi_packet *)pkt;
-		if (packet->type == HFI_CMD_INIT) {
-			rc = handle_system_init(core, packet);
-		} else if (packet->type > HFI_SYSTEM_ERROR_BEGIN &&
-			   packet->type < HFI_SYSTEM_ERROR_END) {
-			rc = handle_system_error(core, packet);
-		} else if (packet->type > HFI_PROP_BEGIN &&
-			   packet->type < HFI_PROP_CODEC) {
-			rc = handle_system_property(core, packet);
-		} else {
-			d_vpr_e("%s: Unknown packet type: %#x\n",
-			__func__, packet->type);
-			rc = -EINVAL;
-			goto exit;
-		}
-		pkt += packet->size;
 	}
+
+	return 0;
+}
+
+static int __handle_session_response(struct msm_vidc_inst *inst,
+	struct hfi_header *hdr)
+{
+	int rc = 0;
+	struct hfi_packet *packet;
+	u8 *pkt, *start_pkt;
+	bool dequeue = false, parsed = false;
+	int i, j, k;
+	static const struct msm_vidc_inst_hfi_range be[] = {
+		{HFI_SESSION_ERROR_BEGIN,  HFI_SESSION_ERROR_END,  handle_session_error    },
+		{HFI_INFORMATION_BEGIN,    HFI_INFORMATION_END,    handle_session_info     },
+		{HFI_PROP_BEGIN,           HFI_PROP_END,           handle_session_property },
+		{HFI_CMD_BEGIN,            HFI_CMD_END,            handle_session_command  },
+	};
+
+	memset(&inst->hfi_frame_info, 0, sizeof(struct msm_vidc_hfi_frame_info));
+	start_pkt = (u8 *)((u8 *)hdr + sizeof(struct hfi_header));
+	for (i = 0; i < ARRAY_SIZE(be); i++) {
+		pkt = start_pkt;
+		for (j = 0; j < hdr->num_packets; j++) {
+			packet = (struct hfi_packet *)pkt;
+			parsed = false;
+			if (in_range(be[i], packet->type)) {
+				parsed = true;
+				dequeue |= (packet->type == HFI_CMD_BUFFER);
+				rc = be[i].handle(inst, packet);
+				if (rc)
+					goto exit;
+			}
+
+			/* is pkt type unknown ? */
+			if (!parsed) {
+				for (k = 0; k < ARRAY_SIZE(be); k++)
+					if (in_range(be[k], packet->type))
+						parsed |= true;
+
+				if (!parsed)
+					d_vpr_e("%s: unknown packet received %#x\n",
+						__func__, packet->type);
+			}
+
+			pkt += packet->size;
+		}
+	}
+	if (dequeue) {
+		rc = handle_dequeue_buffers(inst);
+		if (rc)
+			goto exit;
+	}
+
 exit:
+	memset(&inst->hfi_frame_info, 0, sizeof(struct msm_vidc_hfi_frame_info));
+
 	return rc;
 }
 
@@ -1281,18 +1391,8 @@ int handle_session_response_work(struct msm_vidc_inst *inst,
 {
 	int rc = 0;
 	struct hfi_header *hdr = NULL;
-	struct hfi_packet *packet;
-	u8 *pkt, *start_pkt;
-	u32 hfi_cmd_type = 0;
-	int i, j;
-	struct msm_vidc_hfi_range be[] = {
-		{HFI_SESSION_ERROR_BEGIN, HFI_SESSION_ERROR_END, handle_session_error},
-		{HFI_INFORMATION_BEGIN,   HFI_INFORMATION_END,   handle_session_info},
-		{HFI_PROP_BEGIN,          HFI_PROP_END,          handle_session_property},
-		{HFI_CMD_BEGIN,           HFI_CMD_END,           handle_session_command},
-	};
 
-	if (!inst || !resp_work) {
+	if (!inst || !inst->core || !resp_work) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
@@ -1302,58 +1402,14 @@ int handle_session_response_work(struct msm_vidc_inst *inst,
 		i_vpr_e(inst, "%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-
-	hfi_cmd_type = 0;
-	pkt = (u8 *)((u8 *)hdr + sizeof(struct hfi_header));
-	start_pkt = pkt;
-
-	/* validate all packets */
-	for (i = 0; i < hdr->num_packets; i++) {
-		packet = (struct hfi_packet * ) pkt;
-		if (validate_packet(pkt, resp_work->data,
-				resp_work->data_size, __func__)) {
-			rc = -EINVAL;
-			goto exit;
-		}
-		pkt += packet->size;
-	}
-
 	if (resp_work->type == RESP_WORK_INPUT_PSC)
 		msm_vdec_init_input_subcr_params(inst);
 
-	memset(&inst->hfi_frame_info, 0,
-		sizeof(struct msm_vidc_hfi_frame_info));
-	for (i = 0; i < ARRAY_SIZE(be); i++) {
-		pkt = start_pkt;
-		for (j = 0; j < hdr->num_packets; j++) {
-			packet = (struct hfi_packet * ) pkt;
-			if (in_range(be[i], packet->type)) {
-				if (hfi_cmd_type == HFI_CMD_SETTINGS_CHANGE) {
-					i_vpr_e(inst,
-						"%s: invalid packet type %d in port settings change\n",
-						__func__, packet->type);
-					rc = -EINVAL;
-				}
-				hfi_cmd_type = packet->type;
-				rc = be[i].handle(inst, packet);
-				if (rc)
-					goto exit;
-			}
-			pkt += packet->size;
-		}
-	}
+	rc = __handle_session_response(inst, hdr);
+	if (rc)
+		return rc;
 
-	if (hfi_cmd_type == HFI_CMD_BUFFER) {
-		rc = handle_dequeue_buffers(inst);
-		if (rc)
-			goto exit;
-	}
-
-	memset(&inst->hfi_frame_info, 0,
-		sizeof(struct msm_vidc_hfi_frame_info));
-
-exit:
-	return rc;
+	return 0;
 }
 
 void handle_session_response_work_handler(struct work_struct *work)
@@ -1448,89 +1504,63 @@ static int queue_response_work(struct msm_vidc_inst *inst,
 static int handle_session_response(struct msm_vidc_core *core,
 	struct hfi_header *hdr)
 {
-	int rc = 0;
 	struct msm_vidc_inst *inst;
 	struct hfi_packet *packet;
-	u8 *pkt, *start_pkt;
-	u32 hfi_cmd_type = 0;
-	u32 hfi_port = 0;
-	int i, j;
-	struct msm_vidc_hfi_range be[] = {
-		{HFI_SESSION_ERROR_BEGIN, HFI_SESSION_ERROR_END, handle_session_error},
-		{HFI_INFORMATION_BEGIN,   HFI_INFORMATION_END,   handle_session_info},
-		{HFI_PROP_BEGIN,          HFI_PROP_END,          handle_session_property},
-		{HFI_CMD_BEGIN,           HFI_CMD_END,           handle_session_command},
-	};
+	u8 *pkt;
+	enum response_work_type type;
+	int i, rc = 0;
+	bool offload = false;
+
+	if (!core || !hdr) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
 
 	inst = get_inst(core, hdr->session_id);
 	if (!inst) {
-		d_vpr_e("%s: invalid params\n", __func__);
+		d_vpr_e("%s: Invalid params\n", __func__);
 		return -EINVAL;
 	}
 
 	mutex_lock(&inst->lock);
-	hfi_cmd_type = 0;
-	hfi_port = 0;
+	/* search for special pkt */
 	pkt = (u8 *)((u8 *)hdr + sizeof(struct hfi_header));
-	start_pkt = pkt;
-
-	/* validate all packets */
 	for (i = 0; i < hdr->num_packets; i++) {
-		packet = (struct hfi_packet * ) pkt;
-		if (validate_packet(pkt, core->response_packet,
-				core->packet_size, __func__)) {
-			rc = -EINVAL;
-			goto exit;
-		}
-		pkt += packet->size;
-	}
+		packet = (struct hfi_packet *)pkt;
 
-	pkt = start_pkt;
-	for (j = 0; j < hdr->num_packets; j++) {
-		packet = (struct hfi_packet * ) pkt;
 		if (packet->type == HFI_CMD_SETTINGS_CHANGE) {
-			if (packet->port == HFI_PORT_BITSTREAM)
-				rc = queue_response_work(inst,
-					RESP_WORK_INPUT_PSC,
-					(void *)hdr, hdr->size);
-			else if (packet->port == HFI_PORT_RAW)
-				rc = queue_response_work(inst,
-					RESP_WORK_OUTPUT_PSC,
-					(void *)hdr, hdr->size);
-			goto exit;
+			if (packet->port == HFI_PORT_BITSTREAM) {
+				offload = true;
+				type = RESP_WORK_INPUT_PSC;
+			} else if (packet->port == HFI_PORT_RAW) {
+				offload = true;
+				type = RESP_WORK_OUTPUT_PSC;
+			}
 		} else if (packet->type == HFI_CMD_BUFFER &&
-				packet->port == HFI_PORT_RAW &&
-				check_last_flag(inst, packet)) {
-			rc = queue_response_work(inst,
-				RESP_WORK_LAST_FLAG,
-				(void *)hdr, hdr->size);
-			goto exit;
+			packet->port == HFI_PORT_RAW) {
+			if (check_last_flag(inst, packet)) {
+				offload = true;
+				type = RESP_WORK_LAST_FLAG;
+			}
 		}
+		if (offload)
+			break;
+
 		pkt += packet->size;
 	}
 
-	memset(&inst->hfi_frame_info, 0, sizeof(struct msm_vidc_hfi_frame_info));
-	for (i = 0; i < ARRAY_SIZE(be); i++) {
-		pkt = start_pkt;
-		for (j = 0; j < hdr->num_packets; j++) {
-			packet = (struct hfi_packet * ) pkt;
-			if (in_range(be[i], packet->type)) {
-				hfi_cmd_type = packet->type;
-				rc = be[i].handle(inst, packet);
-				if (rc)
-					goto exit;
-			}
-			pkt += packet->size;
-		}
-	}
-
-	if (hfi_cmd_type == HFI_CMD_BUFFER) {
-		rc = handle_dequeue_buffers(inst);
+	if (offload) {
+		i_vpr_h(inst, "%s: queue response work %#x\n", __func__, type);
+		rc = queue_response_work(inst, type, (void *)hdr, hdr->size);
 		if (rc)
-			goto exit;
+			i_vpr_e(inst, "%s: Offload response work failed\n", __func__);
+
+		goto exit;
 	}
 
-	memset(&inst->hfi_frame_info, 0, sizeof(struct msm_vidc_hfi_frame_info));
+	rc = __handle_session_response(inst, hdr);
+	if (rc)
+		goto exit;
 
 exit:
 	mutex_unlock(&inst->lock);
@@ -1541,6 +1571,7 @@ exit:
 int handle_response(struct msm_vidc_core *core, void *response)
 {
 	struct hfi_header *hdr;
+	int rc = 0;
 
 	if (!core || !response) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1548,9 +1579,11 @@ int handle_response(struct msm_vidc_core *core, void *response)
 	}
 
 	hdr = (struct hfi_header *)response;
-	if (validate_packet((u8 *)hdr, core->response_packet,
-			core->packet_size, __func__))
+	rc = validate_hdr_packet(core, hdr, __func__);
+	if (rc) {
+		d_vpr_e("%s: hdr pkt validation failed\n", __func__);
 		return -EINVAL;
+	}
 
 	if (!hdr->session_id)
 		return handle_system_response(core, hdr);

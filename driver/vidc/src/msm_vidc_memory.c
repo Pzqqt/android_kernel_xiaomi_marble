@@ -14,30 +14,31 @@
 #include "msm_vidc_dt.h"
 #include "msm_vidc_core.h"
 
+struct msm_vidc_buf_region_name {
+	enum msm_vidc_buffer_region region;
+	char *name;
+};
 
 struct context_bank_info *get_context_bank(struct msm_vidc_core *core,
 		enum msm_vidc_buffer_region region)
 {
-	char *name;
+	const char *name;
 	struct context_bank_info *cb = NULL, *match = NULL;
+	static const struct msm_vidc_buf_region_name buf_region_name[] = {
+		{MSM_VIDC_REGION_NONE,          "none"                 },
+		{MSM_VIDC_NON_SECURE,           "venus_ns"             },
+		{MSM_VIDC_SECURE_PIXEL,         "venus_sec_pixel"      },
+		{MSM_VIDC_SECURE_NONPIXEL,      "venus_sec_non_pixel"  },
+		{MSM_VIDC_SECURE_BITSTREAM,     "venus_sec_bitstream"  },
+	};
 
-	switch (region) {
-	case MSM_VIDC_NON_SECURE:
-		name = "venus_ns";
-		break;
-	case MSM_VIDC_SECURE_PIXEL:
-		name = "venus_sec_pixel";
-		break;
-	case MSM_VIDC_SECURE_NONPIXEL:
-		name = "venus_sec_non_pixel";
-		break;
-	case MSM_VIDC_SECURE_BITSTREAM:
-		name = "venus_sec_bitstream";
-		break;
-	default:
-		d_vpr_e("invalid region : %#x\n", region);
-		return NULL;
-	}
+	if (!region || region > ARRAY_SIZE(buf_region_name))
+		goto exit;
+
+	if (buf_region_name[region].region != region)
+		goto exit;
+
+	name = buf_region_name[region].name;
 
 	list_for_each_entry(cb, &core->dt->context_banks, list) {
 		if (!strcmp(cb->name, name)) {
@@ -49,6 +50,10 @@ struct context_bank_info *get_context_bank(struct msm_vidc_core *core,
 		d_vpr_e("cb not found for region %#x\n", region);
 
 	return match;
+
+exit:
+	d_vpr_e("Invalid region %#x\n", region);
+	return NULL;
 }
 
 struct dma_buf *msm_vidc_memory_get_dmabuf(int fd)

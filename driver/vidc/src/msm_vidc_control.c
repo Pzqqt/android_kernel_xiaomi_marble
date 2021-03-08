@@ -119,135 +119,6 @@ static const char * const * msm_vidc_get_qmenu_type(
 	}
 }
 
-static const char *msm_vidc_get_priv_ctrl_name_list2(struct msm_vidc_inst *inst,
-	u32 control_id)
-{
-	switch (control_id) {
-	case V4L2_CID_MPEG_VIDC_HEVC_I_FRAME_MIN_QP:
-		return "HEVC I Frame Min QP";
-	case V4L2_CID_MPEG_VIDC_HEVC_P_FRAME_MIN_QP:
-		return "HEVC P Frame Min QP";
-	case V4L2_CID_MPEG_VIDC_HEVC_I_FRAME_MAX_QP:
-		return "HEVC I Frame Max QP";
-	case V4L2_CID_MPEG_VIDC_HEVC_P_FRAME_MAX_QP:
-		return "HEVC P Frame Max QP";
-	case V4L2_CID_MPEG_VIDC_METADATA_LTR_MARK_USE_DETAILS:
-		return "LTR Mark Use Details Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_SEQ_HEADER_NAL:
-		return "Seq Header NAL Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_DPB_LUMA_CHROMA_MISR:
-		return "DPB Luma-Chroma MISR Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_OPB_LUMA_CHROMA_MISR:
-		return "OPB Luma-Chroma MISR Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_INTERLACE:
-		return "Interlace Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_CONCEALED_MB_COUNT:
-		return "Concealed MB Count Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_HISTOGRAM_INFO:
-		return "Historgram Info Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_SEI_MASTERING_DISPLAY_COLOUR:
-		return "SEI Mastering Display Color Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_SEI_CONTENT_LIGHT_LEVEL:
-		return "SEI Content Lighting Level Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_HDR10PLUS:
-		return "HDR10PLUS Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_EVA_STATS:
-		return "EVA Stats Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_BUFFER_TAG:
-		return "Buffer Tag Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_SUBFRAME_OUTPUT:
-		return "Subframe Output Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_ROI_INFO:
-		return "ROI Info Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_TIMESTAMP:
-		return "Timestamp Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_ENC_QP_METADATA:
-		return "Encoder QP Metadata";
-	case V4L2_CID_MPEG_VIDC_METADATA_DPB_TAG_LIST:
-		return "DPB Tag List";
-	default:
-		return NULL;
-	}
-}
-
-static const char *msm_vidc_get_priv_ctrl_name_list1(struct msm_vidc_inst *inst,
-	u32 control_id)
-{
-	switch (control_id) {
-	case V4L2_CID_MPEG_VIDC_SECURE:
-		return "Secure Mode";
-	case V4L2_CID_MPEG_VIDC_HEIC:
-		return "HEIC";
-	case V4L2_CID_MPEG_VIDC_LOWLATENCY_REQUEST:
-		return "Low Latency Mode";
-	case V4L2_CID_MPEG_VIDC_CODEC_CONFIG:
-		return "Codec Config";
-	case V4L2_CID_MPEG_VIDC_B_FRAME_MIN_QP:
-		return "B frame Min QP";
-	case V4L2_CID_MPEG_VIDC_B_FRAME_MAX_QP:
-		return "B frame Max QP";
-	case V4L2_CID_MPEG_VIDC_LTRCOUNT:
-		return "LTR count";
-	case V4L2_CID_MPEG_VIDC_USELTRFRAME:
-		return "Use LTR Frame";
-	case V4L2_CID_MPEG_VIDC_MARKLTRFRAME:
-		return "Mark LTR Frame";
-	case V4L2_CID_MPEG_VIDC_BASELAYER_PRIORITY:
-		return "Baselayer Priority";
-	case V4L2_CID_MPEG_VIDC_INTRA_REFRESH_PERIOD:
-		return "Intra Refresh Period";
-	case V4L2_CID_MPEG_VIDC_AU_DELIMITER:
-		return "AU Delimiter";
-	case V4L2_CID_MPEG_VIDC_TIME_DELTA_BASED_RC:
-		return "Time Delta Based RC";
-	case V4L2_CID_MPEG_VIDC_CONTENT_ADAPTIVE_CODING:
-		return "Content Adaptive Coding";
-	case V4L2_CID_MPEG_VIDC_QUALITY_BITRATE_BOOST:
-		return "Quality Bitrate Boost";
-	case V4L2_CID_MPEG_VIDC_VIDEO_BLUR_TYPES:
-		return "Blur Types";
-	case V4L2_CID_MPEG_VIDC_VIDEO_BLUR_RESOLUTION:
-		return "Blur Resolution";
-	case V4L2_CID_MPEG_VIDC_VIDEO_VPE_CSC_CUSTOM_MATRIX:
-		return "CSC Custom Matrix";
-	case V4L2_CID_MPEG_MFC51_VIDEO_DECODER_H264_DISPLAY_DELAY:
-		return "H264 Display Delay";
-	case V4L2_CID_MPEG_MFC51_VIDEO_DECODER_H264_DISPLAY_DELAY_ENABLE:
-		return "H264 Display Delay Enable";
-	case V4L2_CID_MPEG_VIDC_MIN_BITSTREAM_SIZE_OVERWRITE:
-		return "Bitstream Size Overwrite";
-	case V4L2_CID_MPEG_VIDC_SUPERFRAME:
-		return "Encoder Batching Superframe";
-	case V4L2_CID_MPEG_VIDC_THUMBNAIL_MODE:
-		return "Thumbnail Mode";
-	case V4L2_CID_MPEG_VIDC_PRIORITY:
-		return "Priority";
-	default:
-		return NULL;
-	}
-}
-/*
- * Due to a long switch case function, ccn failure was observed. Hence the
- * below function is split into msm_vidc_get_priv_ctrl_name_list1() and
- * msm_vidc_get_priv_ctrl_name_list2()
- */
-static const char *msm_vidc_get_priv_ctrl_name(struct msm_vidc_inst *inst,
-	u32 control_id)
-{
-	const char *ctrl_name;
-
-	ctrl_name = msm_vidc_get_priv_ctrl_name_list1(inst, control_id);
-	if (ctrl_name)
-		return ctrl_name;
-	ctrl_name = msm_vidc_get_priv_ctrl_name_list2(inst, control_id);
-	if (ctrl_name)
-		return ctrl_name;
-
-	i_vpr_e(inst, "%s: ctrl name not available for ctrl id %#x\n",
-		__func__, control_id);
-	return NULL;
-}
-
 static int msm_vidc_packetize_control(struct msm_vidc_inst *inst,
 	enum msm_vidc_inst_capability_type cap_id, u32 payload_type,
 	void *hfi_val, u32 payload_size, const char *func)
@@ -371,9 +242,9 @@ int msm_vidc_update_cap_value(struct msm_vidc_inst *inst, u32 cap,
 
 	if (inst->capabilities->cap[cap].value != adjusted_val)
 		i_vpr_h(inst,
-			"%s: updated database value from %#x to %#x\n",
-			func, inst->capabilities->cap[cap].value,
-			adjusted_val);
+			"%s: updated database: name %s, value %#x -> %#x\n",
+			func, cap_name(cap),
+			inst->capabilities->cap[cap].value, adjusted_val);
 
 	inst->capabilities->cap[cap].value = adjusted_val;
 
@@ -643,8 +514,7 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 				ctrl_cfg.step =
 					capability->cap[idx].step_or_mask;
 			}
-			ctrl_cfg.name = msm_vidc_get_priv_ctrl_name(inst,
-					capability->cap[idx].v4l2_id);
+			ctrl_cfg.name = cap_name(capability->cap[idx].cap);
 			if (!ctrl_cfg.name) {
 				i_vpr_e(inst, "%s: %#x ctrl name is null\n",
 					__func__, ctrl_cfg.id);

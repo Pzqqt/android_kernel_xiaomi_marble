@@ -30,10 +30,238 @@ extern struct msm_vidc_core *g_core;
 	}                           \
 }
 
-struct msm_vidc_buf_details {
+struct msm_vidc_buf_type_name {
 	enum msm_vidc_buffer_type type;
 	char *name;
 };
+
+struct msm_vidc_cap_name {
+	enum msm_vidc_inst_capability_type cap;
+	char *name;
+};
+
+static const struct msm_vidc_cap_name cap_name_arr[] = {
+	{INST_CAP_NONE,                  "INST_CAP_NONE"              },
+	{FRAME_WIDTH,                    "FRAME_WIDTH"                },
+	{LOSSLESS_FRAME_WIDTH,           "LOSSLESS_FRAME_WIDTH"       },
+	{SECURE_FRAME_WIDTH,             "SECURE_FRAME_WIDTH"         },
+	{HEVC_IMAGE_FRAME_WIDTH,         "HEVC_IMAGE_FRAME_WIDTH"     },
+	{HEIC_IMAGE_FRAME_WIDTH,         "HEIC_IMAGE_FRAME_WIDTH"     },
+	{FRAME_HEIGHT,                   "FRAME_HEIGHT"               },
+	{LOSSLESS_FRAME_HEIGHT,          "LOSSLESS_FRAME_HEIGHT"      },
+	{SECURE_FRAME_HEIGHT,            "SECURE_FRAME_HEIGHT"        },
+	{HEVC_IMAGE_FRAME_HEIGHT,        "HEVC_IMAGE_FRAME_HEIGHT"    },
+	{HEIC_IMAGE_FRAME_HEIGHT,        "HEIC_IMAGE_FRAME_HEIGHT"    },
+	{PIX_FMTS,                       "PIX_FMTS"                   },
+	{MIN_BUFFERS_INPUT,              "MIN_BUFFERS_INPUT"          },
+	{MIN_BUFFERS_OUTPUT,             "MIN_BUFFERS_OUTPUT"         },
+	{MBPF,                           "MBPF"                       },
+	{LOSSLESS_MBPF,                  "LOSSLESS_MBPF"              },
+	{BATCH_MBPF,                     "BATCH_MBPF"                 },
+	{BATCH_FPS,                      "BATCH_FPS"                  },
+	{SECURE_MBPF,                    "SECURE_MBPF"                },
+	{MBPS,                           "MBPS"                       },
+	{POWER_SAVE_MBPS,                "POWER_SAVE_MBPS"            },
+	{FRAME_RATE,                     "FRAME_RATE"                 },
+	{OPERATING_RATE,                 "OPERATING_RATE"             },
+	{SCALE_X,                        "SCALE_X"                    },
+	{SCALE_Y,                        "SCALE_Y"                    },
+	{B_FRAME,                        "B_FRAME"                    },
+	{MB_CYCLES_VSP,                  "MB_CYCLES_VSP"              },
+	{MB_CYCLES_VPP,                  "MB_CYCLES_VPP"              },
+	{MB_CYCLES_LP,                   "MB_CYCLES_LP"               },
+	{MB_CYCLES_FW,                   "MB_CYCLES_FW"               },
+	{MB_CYCLES_FW_VPP,               "MB_CYCLES_FW_VPP"           },
+	{SECURE_MODE,                    "SECURE_MODE"                },
+	{HFLIP,                          "HFLIP"                      },
+	{VFLIP,                          "VFLIP"                      },
+	{ROTATION,                       "ROTATION"                   },
+	{SUPER_FRAME,                    "SUPER_FRAME"                },
+	{SLICE_INTERFACE,                "SLICE_INTERFACE"            },
+	{HEADER_MODE,                    "HEADER_MODE"                },
+	{PREPEND_SPSPPS_TO_IDR,          "PREPEND_SPSPPS_TO_IDR"      },
+	{META_SEQ_HDR_NAL,               "META_SEQ_HDR_NAL"           },
+	{WITHOUT_STARTCODE,              "WITHOUT_STARTCODE"          },
+	{NAL_LENGTH_FIELD,               "NAL_LENGTH_FIELD"           },
+	{REQUEST_I_FRAME,                "REQUEST_I_FRAME"            },
+	{BIT_RATE,                       "BIT_RATE"                   },
+	{BITRATE_MODE,                   "BITRATE_MODE"               },
+	{LOSSLESS,                       "LOSSLESS"                   },
+	{FRAME_SKIP_MODE,                "FRAME_SKIP_MODE"            },
+	{FRAME_RC_ENABLE,                "FRAME_RC_ENABLE"            },
+	{CONSTANT_QUALITY,               "CONSTANT_QUALITY"           },
+	{GOP_SIZE,                       "GOP_SIZE"                   },
+	{GOP_CLOSURE,                    "GOP_CLOSURE"                },
+	{BLUR_TYPES,                     "BLUR_TYPES"                 },
+	{BLUR_RESOLUTION,                "BLUR_RESOLUTION"            },
+	{CSC,                            "CSC"                        },
+	{CSC_CUSTOM_MATRIX,              "CSC_CUSTOM_MATRIX"          },
+	{HEIC,                           "HEIC"                       },
+	{LOWLATENCY_MODE,                "LOWLATENCY_MODE"            },
+	{LTR_COUNT,                      "LTR_COUNT"                  },
+	{USE_LTR,                        "USE_LTR"                    },
+	{MARK_LTR,                       "MARK_LTR"                   },
+	{BASELAYER_PRIORITY,             "BASELAYER_PRIORITY"         },
+	{IR_RANDOM,                      "IR_RANDOM"                  },
+	{AU_DELIMITER,                   "AU_DELIMITER"               },
+	{TIME_DELTA_BASED_RC,            "TIME_DELTA_BASED_RC"        },
+	{CONTENT_ADAPTIVE_CODING,        "CONTENT_ADAPTIVE_CODING"    },
+	{BITRATE_BOOST,                  "BITRATE_BOOST"              },
+	{VBV_DELAY,                      "VBV_DELAY"                  },
+	{MIN_FRAME_QP,                   "MIN_FRAME_QP"               },
+	{I_FRAME_MIN_QP,                 "I_FRAME_MIN_QP"             },
+	{P_FRAME_MIN_QP,                 "P_FRAME_MIN_QP"             },
+	{B_FRAME_MIN_QP,                 "B_FRAME_MIN_QP"             },
+	{MAX_FRAME_QP,                   "MAX_FRAME_QP"               },
+	{I_FRAME_MAX_QP,                 "I_FRAME_MAX_QP"             },
+	{P_FRAME_MAX_QP,                 "P_FRAME_MAX_QP"             },
+	{B_FRAME_MAX_QP,                 "B_FRAME_MAX_QP"             },
+	{HEVC_HIER_QP,                   "HEVC_HIER_QP"               },
+	{I_FRAME_QP,                     "I_FRAME_QP"                 },
+	{P_FRAME_QP,                     "P_FRAME_QP"                 },
+	{B_FRAME_QP,                     "B_FRAME_QP"                 },
+	{L0_QP,                          "L0_QP"                      },
+	{L1_QP,                          "L1_QP"                      },
+	{L2_QP,                          "L2_QP"                      },
+	{L3_QP,                          "L3_QP"                      },
+	{L4_QP,                          "L4_QP"                      },
+	{L5_QP,                          "L5_QP"                      },
+	{HIER_LAYER_QP,                  "HIER_LAYER_QP"              },
+	{HIER_CODING_TYPE,               "HIER_CODING_TYPE"           },
+	{HIER_CODING,                    "HIER_CODING"                },
+	{HIER_CODING_LAYER,              "HIER_CODING_LAYER"          },
+	{L0_BR,                          "L0_BR"                      },
+	{L1_BR,                          "L1_BR"                      },
+	{L2_BR,                          "L2_BR"                      },
+	{L3_BR,                          "L3_BR"                      },
+	{L4_BR,                          "L4_BR"                      },
+	{L5_BR,                          "L5_BR"                      },
+	{ENTROPY_MODE,                   "ENTROPY_MODE"               },
+	{PROFILE,                        "PROFILE"                    },
+	{LEVEL,                          "LEVEL"                      },
+	{HEVC_TIER,                      "HEVC_TIER"                  },
+	{LF_MODE,                        "LF_MODE"                    },
+	{LF_ALPHA,                       "LF_ALPHA"                   },
+	{LF_BETA,                        "LF_BETA"                    },
+	{SLICE_MODE,                     "SLICE_MODE"                 },
+	{SLICE_MAX_BYTES,                "SLICE_MAX_BYTES"            },
+	{SLICE_MAX_MB,                   "SLICE_MAX_MB"               },
+	{MB_RC,                          "MB_RC"                      },
+	{TRANSFORM_8X8,                  "TRANSFORM_8X8"              },
+	{CHROMA_QP_INDEX_OFFSET,         "CHROMA_QP_INDEX_OFFSET"     },
+	{DISPLAY_DELAY_ENABLE,           "DISPLAY_DELAY_ENABLE"       },
+	{DISPLAY_DELAY,                  "DISPLAY_DELAY"              },
+	{CONCEAL_COLOR_8BIT,             "CONCEAL_COLOR_8BIT"         },
+	{CONCEAL_COLOR_10BIT,            "CONCEAL_COLOR_10BIT"        },
+	{STAGE,                          "STAGE"                      },
+	{PIPE,                           "PIPE"                       },
+	{POC,                            "POC"                        },
+	{QUALITY_MODE,                   "QUALITY_MODE"               },
+	{CODED_FRAMES,                   "CODED_FRAMES"               },
+	{BIT_DEPTH,                      "BIT_DEPTH"                  },
+	{CODEC_CONFIG,                   "CODEC_CONFIG"               },
+	{BITSTREAM_SIZE_OVERWRITE,       "BITSTREAM_SIZE_OVERWRITE"   },
+	{THUMBNAIL_MODE,                 "THUMBNAIL_MODE"             },
+	{DEFAULT_HEADER,                 "DEFAULT_HEADER"             },
+	{RAP_FRAME,                      "RAP_FRAME"                  },
+	{SEQ_CHANGE_AT_SYNC_FRAME,       "SEQ_CHANGE_AT_SYNC_FRAME"   },
+	{PRIORITY,                       "PRIORITY"                   },
+	{META_LTR_MARK_USE,              "META_LTR_MARK_USE"          },
+	{META_DPB_MISR,                  "META_DPB_MISR"              },
+	{META_OPB_MISR,                  "META_OPB_MISR"              },
+	{META_INTERLACE,                 "META_INTERLACE"             },
+	{META_TIMESTAMP,                 "META_TIMESTAMP"             },
+	{META_CONCEALED_MB_CNT,          "META_CONCEALED_MB_CNT"      },
+	{META_HIST_INFO,                 "META_HIST_INFO"             },
+	{META_SEI_MASTERING_DISP,        "META_SEI_MASTERING_DISP"    },
+	{META_SEI_CLL,                   "META_SEI_CLL"               },
+	{META_HDR10PLUS,                 "META_HDR10PLUS"             },
+	{META_EVA_STATS,                 "META_EVA_STATS"             },
+	{META_BUF_TAG,                   "META_BUF_TAG"               },
+	{META_DPB_TAG_LIST,              "META_DPB_TAG_LIST"          },
+	{META_SUBFRAME_OUTPUT,           "META_SUBFRAME_OUTPUT"       },
+	{META_ENC_QP_METADATA,           "META_ENC_QP_METADATA"       },
+	{META_ROI_INFO,                  "META_ROI_INFO"              },
+	{INST_CAP_MAX,                   "INST_CAP_MAX"               },
+};
+
+const char *cap_name(enum msm_vidc_inst_capability_type cap)
+{
+	const char *name = "UNKNOWN CAP";
+
+	if (cap > ARRAY_SIZE(cap_name_arr))
+		goto exit;
+
+	if (cap_name_arr[cap].cap != cap)
+		goto exit;
+
+	name = cap_name_arr[cap].name;
+
+exit:
+	return name;
+}
+
+struct msm_vidc_inst_state_name {
+	enum msm_vidc_inst_state state;
+	char *name;
+};
+
+static const struct msm_vidc_inst_state_name inst_state_name_arr[] = {
+	{MSM_VIDC_OPEN,                  "OPEN"                       },
+	{MSM_VIDC_START_INPUT,           "START_INPUT"                },
+	{MSM_VIDC_START_OUTPUT,          "START_OUTPUT"               },
+	{MSM_VIDC_START,                 "START"                      },
+	{MSM_VIDC_DRC,                   "DRC"                        },
+	{MSM_VIDC_DRC_LAST_FLAG,         "DRC_LAST_FLAG"              },
+	{MSM_VIDC_DRAIN,                 "DRAIN"                      },
+	{MSM_VIDC_DRAIN_LAST_FLAG,       "DRAIN_LAST_FLAG"            },
+	{MSM_VIDC_DRC_DRAIN,             "DRC_DRAIN"                  },
+	{MSM_VIDC_DRC_DRAIN_LAST_FLAG,   "DRC_DRAIN_LAST_FLAG"        },
+	{MSM_VIDC_DRAIN_START_INPUT,     "DRAIN_START_INPUT"          },
+	{MSM_VIDC_ERROR,                 "ERROR"                      },
+};
+
+const char *state_name(enum msm_vidc_inst_state state)
+{
+	const char *name = "UNKNOWN STATE";
+
+	if (!state || state > ARRAY_SIZE(inst_state_name_arr))
+		goto exit;
+
+	if (inst_state_name_arr[state - 1].state != state)
+		goto exit;
+
+	name = inst_state_name_arr[state - 1].name;
+
+exit:
+	return name;
+}
+
+struct msm_vidc_core_state_name {
+	enum msm_vidc_core_state state;
+	char *name;
+};
+
+static const struct msm_vidc_core_state_name core_state_name_arr[] = {
+	{MSM_VIDC_CORE_DEINIT,           "CORE_DEINIT"                },
+	{MSM_VIDC_CORE_INIT,             "CORE_INIT"                  },
+};
+
+const char *core_state_name(enum msm_vidc_core_state state)
+{
+	const char *name = "UNKNOWN STATE";
+
+	if (state >= ARRAY_SIZE(core_state_name_arr))
+		goto exit;
+
+	if (core_state_name_arr[state].state != state)
+		goto exit;
+
+	name = core_state_name_arr[state].name;
+
+exit:
+	return name;
+}
 
 void print_vidc_buffer(u32 tag, const char *tag_str, const char *str, struct msm_vidc_inst *inst,
 		struct msm_vidc_buffer *vbuf)
@@ -65,12 +293,21 @@ void print_vb2_buffer(const char *str, struct msm_vidc_inst *inst,
 	if (!inst || !vb2)
 		return;
 
-	i_vpr_e(inst,
-		"%s: %s: idx %2d fd %d off %d size %d filled %d\n",
-		str, vb2->type == INPUT_MPLANE ? "INPUT" : "OUTPUT",
-		vb2->index, vb2->planes[0].m.fd,
-		vb2->planes[0].data_offset, vb2->planes[0].length,
-		vb2->planes[0].bytesused);
+	if (vb2->type == INPUT_MPLANE || vb2->type == OUTPUT_MPLANE) {
+		i_vpr_e(inst,
+			"%s: %s: idx %2d fd %d off %d size %d filled %d\n",
+			str, vb2->type == INPUT_MPLANE ? "INPUT" : "OUTPUT",
+			vb2->index, vb2->planes[0].m.fd,
+			vb2->planes[0].data_offset, vb2->planes[0].length,
+			vb2->planes[0].bytesused);
+	} else if (vb2->type == INPUT_META_PLANE || vb2->type == OUTPUT_META_PLANE) {
+		i_vpr_e(inst,
+			"%s: %s: idx %2d fd %d off %d size %d filled %d\n",
+			str, vb2->type == INPUT_MPLANE ? "INPUT_META" : "OUTPUT_META",
+			vb2->index, vb2->planes[0].m.fd,
+			vb2->planes[0].data_offset, vb2->planes[0].length,
+			vb2->planes[0].bytesused);
+	}
 }
 
 enum msm_vidc_buffer_type v4l2_type_to_driver(u32 type, const char *func)
@@ -692,25 +929,6 @@ struct msm_vidc_allocations *msm_vidc_get_allocations(
 	}
 }
 
-const char *core_state_name(enum msm_vidc_core_state state)
-{
-	const char* name = "UNKNOWN";
-
-	switch (state) {
-	case MSM_VIDC_CORE_INIT:
-		name = "CORE_INIT";
-		break;
-	case MSM_VIDC_CORE_DEINIT:
-		name = "CORE_DEINIT";
-		break;
-	default:
-		name = "UNKNOWN";
-		break;
-	}
-
-	return name;
-}
-
 int msm_vidc_change_core_state(struct msm_vidc_core *core,
 	enum msm_vidc_core_state request_state, const char *func)
 {
@@ -724,55 +942,6 @@ int msm_vidc_change_core_state(struct msm_vidc_core *core,
 		core_state_name(request_state));
 	core->state = request_state;
 	return 0;
-}
-
-const char *state_name(enum msm_vidc_inst_state state)
-{
-	const char *name = "UNKNOWN";
-
-	switch (state) {
-	case MSM_VIDC_OPEN:
-		name = "OPEN";
-		break;
-	case MSM_VIDC_START_INPUT:
-		name = "START_INPUT";
-		break;
-	case MSM_VIDC_START_OUTPUT:
-		name = "START_OUTPUT";
-		break;
-	case MSM_VIDC_START:
-		name = "START";
-		break;
-	case MSM_VIDC_DRC:
-		name = "DRC";
-		break;
-	case MSM_VIDC_DRC_LAST_FLAG:
-		name = "DRC_LAST_FLAG";
-		break;
-	case MSM_VIDC_DRAIN:
-		name = "DRAIN";
-		break;
-	case MSM_VIDC_DRAIN_LAST_FLAG:
-		name = "DRAIN_LAST_FLAG";
-		break;
-	case MSM_VIDC_DRC_DRAIN:
-		name = "DRC_DRAIN";
-		break;
-	case MSM_VIDC_DRC_DRAIN_LAST_FLAG:
-		name = "DRC_DRAIN_LAST_FLAG";
-		break;
-	case MSM_VIDC_DRAIN_START_INPUT:
-		name = "DRAIN_START_INPUT";
-		break;
-	case MSM_VIDC_ERROR:
-		name = "ERROR";
-		break;
-	default:
-		name = "UNKNOWN";
-		break;
-	}
-
-	return name;
 }
 
 int msm_vidc_change_inst_state(struct msm_vidc_inst *inst,
@@ -3079,7 +3248,7 @@ int msm_vidc_print_inst_info(struct msm_vidc_inst *inst)
 	struct dma_buf *dbuf;
 	int i = 0;
 
-	struct msm_vidc_buf_details buffer_details[] = {
+	static const struct msm_vidc_buf_type_name buf_type_name[] = {
 		{MSM_VIDC_BUF_INPUT,             "INPUT"      },
 		{MSM_VIDC_BUF_OUTPUT,            "OUTPUT"     },
 		{MSM_VIDC_BUF_INPUT_META,        "IN_META"    },
@@ -3114,13 +3283,13 @@ int msm_vidc_print_inst_info(struct msm_vidc_inst *inst)
 		frame_rate, bit_rate, bit_depth);
 
 	/* Print buffer details */
-	for (i = 0; i < ARRAY_SIZE(buffer_details); i++) {
-		buffers = msm_vidc_get_buffers(inst, buffer_details[i].type, __func__);
+	for (i = 0; i < ARRAY_SIZE(buf_type_name); i++) {
+		buffers = msm_vidc_get_buffers(inst, buf_type_name[i].type, __func__);
 		if (!buffers)
 			continue;
 
 		i_vpr_e(inst, "count: type: %8s, min: %2d, extra: %2d, actual: %2d\n",
-			buffer_details[i].name, buffers->min_count,
+			buf_type_name[i].name, buffers->min_count,
 			buffers->extra_count, buffers->actual_count);
 
 		list_for_each_entry(buf, &buffers->list, list) {
@@ -3129,7 +3298,7 @@ int msm_vidc_print_inst_info(struct msm_vidc_inst *inst)
 			dbuf = (struct dma_buf *)buf->dmabuf;
 			i_vpr_e(inst,
 				"buf: type: %8s, index: %2d, fd: %4d, size: %9u, off: %8u, filled: %9u, iova: %8x, inode: %9ld, flags: %8x, ts: %16lld, attr: %8x\n",
-				buffer_details[i].name, buf->index, buf->fd, buf->buffer_size,
+				buf_type_name[i].name, buf->index, buf->fd, buf->buffer_size,
 				buf->data_offset, buf->data_size, buf->device_addr,
 				file_inode(dbuf->file)->i_ino,
 				buf->flags, buf->timestamp, buf->attr);
@@ -3259,7 +3428,8 @@ void msm_vidc_batch_handler(struct work_struct *work)
 
 	allow = msm_vidc_allow_qbuf(inst, OUTPUT_MPLANE);
 	if (allow != MSM_VIDC_ALLOW) {
-		i_vpr_e(inst, "%s: not allowed in state: %s\n", __func__, state_name(inst->state));
+		i_vpr_e(inst, "%s: not allowed in state: %s\n", __func__,
+			state_name(inst->state));
 		goto exit;
 	}
 
@@ -3323,7 +3493,7 @@ void msm_vidc_destroy_buffers(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_buffers *buffers;
 	struct msm_vidc_buffer *buf, *dummy;
-	enum msm_vidc_buffer_type buf_types[] = {
+	static const enum msm_vidc_buffer_type buf_types[] = {
 		MSM_VIDC_BUF_INPUT,
 		MSM_VIDC_BUF_OUTPUT,
 		MSM_VIDC_BUF_INPUT_META,

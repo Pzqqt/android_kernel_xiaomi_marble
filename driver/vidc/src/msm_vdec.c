@@ -22,7 +22,7 @@
 #define MAX_DEC_BATCH_SIZE 6
 #define SKIP_BATCH_WINDOW 100
 
-u32 msm_vdec_subscribe_for_psc_avc[] = {
+static const u32 msm_vdec_subscribe_for_psc_avc[] = {
 	HFI_PROP_BITSTREAM_RESOLUTION,
 	HFI_PROP_CROP_OFFSETS,
 	HFI_PROP_CODED_FRAMES,
@@ -33,7 +33,7 @@ u32 msm_vdec_subscribe_for_psc_avc[] = {
 	HFI_PROP_SIGNAL_COLOR_INFO,
 };
 
-u32 msm_vdec_subscribe_for_psc_hevc[] = {
+static const u32 msm_vdec_subscribe_for_psc_hevc[] = {
 	HFI_PROP_BITSTREAM_RESOLUTION,
 	HFI_PROP_CROP_OFFSETS,
 	HFI_PROP_LUMA_CHROMA_BIT_DEPTH,
@@ -44,7 +44,7 @@ u32 msm_vdec_subscribe_for_psc_hevc[] = {
 	HFI_PROP_SIGNAL_COLOR_INFO,
 };
 
-u32 msm_vdec_subscribe_for_psc_vp9[] = {
+static const u32 msm_vdec_subscribe_for_psc_vp9[] = {
 	HFI_PROP_BITSTREAM_RESOLUTION,
 	HFI_PROP_CROP_OFFSETS,
 	HFI_PROP_LUMA_CHROMA_BIT_DEPTH,
@@ -53,14 +53,26 @@ u32 msm_vdec_subscribe_for_psc_vp9[] = {
 	HFI_PROP_LEVEL,
 };
 
-u32 msm_vdec_input_subscribe_for_properties[] = {
+static const u32 msm_vdec_input_subscribe_for_properties[] = {
 	HFI_PROP_NO_OUTPUT,
 	HFI_PROP_CABAC_SESSION,
 };
 
-u32 msm_vdec_output_subscribe_for_properties[] = {
+static const u32 msm_vdec_output_subscribe_for_properties[] = {
 	HFI_PROP_WORST_COMPRESSION_RATIO,
 	HFI_PROP_WORST_COMPLEXITY_FACTOR,
+};
+
+static const u32 msm_vdec_internal_buffer_type[] = {
+	MSM_VIDC_BUF_BIN,
+	MSM_VIDC_BUF_COMV,
+	MSM_VIDC_BUF_NON_COMV,
+	MSM_VIDC_BUF_LINE,
+};
+
+struct msm_vdec_prop_type_handle {
+	u32 type;
+	int (*handle)(struct msm_vidc_inst *inst, enum msm_vidc_port_type port);
 };
 
 static int msm_vdec_codec_change(struct msm_vidc_inst *inst, u32 v4l2_codec)
@@ -817,27 +829,18 @@ static int msm_vdec_set_output_properties(struct msm_vidc_inst *inst)
 static int msm_vdec_get_input_internal_buffers(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
+	u32 i = 0;
 
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 
-	rc = msm_vidc_get_internal_buffers(inst, MSM_VIDC_BUF_BIN);
-	if (rc)
-		return rc;
-
-	rc = msm_vidc_get_internal_buffers(inst, MSM_VIDC_BUF_COMV);
-	if (rc)
-		return rc;
-
-	rc = msm_vidc_get_internal_buffers(inst, MSM_VIDC_BUF_NON_COMV);
-	if (rc)
-		return rc;
-
-	rc = msm_vidc_get_internal_buffers(inst, MSM_VIDC_BUF_LINE);
-	if (rc)
-		return rc;
+	for (i = 0; i < ARRAY_SIZE(msm_vdec_internal_buffer_type); i++) {
+		rc = msm_vidc_get_internal_buffers(inst, msm_vdec_internal_buffer_type[i]);
+		if (rc)
+			return rc;
+	}
 
 	i_vpr_h(inst, "input internal buffer: min     size     reuse\n");
 	i_vpr_h(inst, "bin  buffer: %d      %d      %d\n",
@@ -885,24 +888,13 @@ static int msm_vdec_get_output_internal_buffers(struct msm_vidc_inst *inst)
 static int msm_vdec_create_input_internal_buffers(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
+	u32 i = 0;
 
-	if (!inst || !inst->core) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
+	for (i = 0; i < ARRAY_SIZE(msm_vdec_internal_buffer_type); i++) {
+		rc = msm_vidc_create_internal_buffers(inst, msm_vdec_internal_buffer_type[i]);
+		if (rc)
+			return rc;
 	}
-
-	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_BIN);
-	if (rc)
-		return rc;
-	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_COMV);
-	if (rc)
-		return rc;
-	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_NON_COMV);
-	if (rc)
-		return rc;
-	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_LINE);
-	if (rc)
-		return rc;
 
 	return 0;
 }
@@ -910,11 +902,6 @@ static int msm_vdec_create_input_internal_buffers(struct msm_vidc_inst *inst)
 static int msm_vdec_create_output_internal_buffers(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
-
-	if (!inst || !inst->core) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
 
 	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_DPB);
 	if (rc)
@@ -926,24 +913,13 @@ static int msm_vdec_create_output_internal_buffers(struct msm_vidc_inst *inst)
 static int msm_vdec_queue_input_internal_buffers(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
+	u32 i = 0;
 
-	if (!inst || !inst->core) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
+	for (i = 0; i < ARRAY_SIZE(msm_vdec_internal_buffer_type); i++) {
+		rc = msm_vidc_queue_internal_buffers(inst, msm_vdec_internal_buffer_type[i]);
+		if (rc)
+			return rc;
 	}
-
-	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_BIN);
-	if (rc)
-		return rc;
-	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_COMV);
-	if (rc)
-		return rc;
-	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_NON_COMV);
-	if (rc)
-		return rc;
-	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_LINE);
-	if (rc)
-		return rc;
 
 	return 0;
 }
@@ -951,11 +927,6 @@ static int msm_vdec_queue_input_internal_buffers(struct msm_vidc_inst *inst)
 static int msm_vdec_queue_output_internal_buffers(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
-
-	if (!inst || !inst->core) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
 
 	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_DPB);
 	if (rc)
@@ -967,25 +938,15 @@ static int msm_vdec_queue_output_internal_buffers(struct msm_vidc_inst *inst)
 static int msm_vdec_release_input_internal_buffers(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
+	u32 i = 0;
 
-	if (!inst || !inst->core) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
 	i_vpr_h(inst, "%s()\n",__func__);
 
-	rc = msm_vidc_release_internal_buffers(inst, MSM_VIDC_BUF_BIN);
-	if (rc)
-		return rc;
-	rc = msm_vidc_release_internal_buffers(inst, MSM_VIDC_BUF_COMV);
-	if (rc)
-		return rc;
-	rc = msm_vidc_release_internal_buffers(inst, MSM_VIDC_BUF_NON_COMV);
-	if (rc)
-		return rc;
-	rc = msm_vidc_release_internal_buffers(inst, MSM_VIDC_BUF_LINE);
-	if (rc)
-		return rc;
+	for (i = 0; i < ARRAY_SIZE(msm_vdec_internal_buffer_type); i++) {
+		rc = msm_vidc_release_internal_buffers(inst, msm_vdec_internal_buffer_type[i]);
+		if (rc)
+			return rc;
+	}
 
 	return 0;
 }
@@ -994,12 +955,7 @@ static int msm_vdec_release_output_internal_buffers(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 
-	if (!inst || !inst->core) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
 	i_vpr_h(inst, "%s()\n",__func__);
-
 	rc = msm_vidc_release_internal_buffers(inst, MSM_VIDC_BUF_DPB);
 	if (rc)
 		return rc;
@@ -1013,9 +969,21 @@ static int msm_vdec_subscribe_input_port_settings_change(struct msm_vidc_inst *i
 	int rc = 0;
 	struct msm_vidc_core *core;
 	u32 payload[32] = {0};
-	u32 i;
-	u32 subscribe_psc_size = 0;
-	u32 *psc = NULL;
+	u32 i, j;
+	u32 subscribe_psc_size;
+	const u32 *psc;
+	static const struct msm_vdec_prop_type_handle prop_type_handle_arr[] = {
+		{HFI_PROP_BITSTREAM_RESOLUTION,          msm_vdec_set_bitstream_resolution   },
+		{HFI_PROP_CROP_OFFSETS,                  msm_vdec_set_crop_offsets           },
+		{HFI_PROP_LUMA_CHROMA_BIT_DEPTH,         msm_vdec_set_bit_depth              },
+		{HFI_PROP_CODED_FRAMES,                  msm_vdec_set_coded_frames           },
+		{HFI_PROP_BUFFER_FW_MIN_OUTPUT_COUNT,    msm_vdec_set_min_output_count       },
+		{HFI_PROP_PIC_ORDER_CNT_TYPE,            msm_vdec_set_picture_order_count    },
+		{HFI_PROP_SIGNAL_COLOR_INFO,             msm_vdec_set_colorspace             },
+		{HFI_PROP_PROFILE,                       msm_vdec_set_profile                },
+		{HFI_PROP_LEVEL,                         msm_vdec_set_level                  },
+		{HFI_PROP_TIER,                          msm_vdec_set_tier                   },
+	};
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1057,46 +1025,19 @@ static int msm_vdec_subscribe_input_port_settings_change(struct msm_vidc_inst *i
 			sizeof(u32)));
 
 	for (i = 0; i < subscribe_psc_size; i++) {
-		switch (psc[i]) {
-		case HFI_PROP_BITSTREAM_RESOLUTION:
-			rc = msm_vdec_set_bitstream_resolution(inst, port);
-			break;
-		case HFI_PROP_CROP_OFFSETS:
-			rc = msm_vdec_set_crop_offsets(inst, port);
-			break;
-		case HFI_PROP_LUMA_CHROMA_BIT_DEPTH:
-			rc = msm_vdec_set_bit_depth(inst, port);
-			break;
-		case HFI_PROP_CODED_FRAMES:
-			rc = msm_vdec_set_coded_frames(inst, port);
-			break;
-		case HFI_PROP_BUFFER_FW_MIN_OUTPUT_COUNT:
-			rc = msm_vdec_set_min_output_count(inst, port);
-			break;
-		case HFI_PROP_PIC_ORDER_CNT_TYPE:
-			rc = msm_vdec_set_picture_order_count(inst, port);
-			break;
-		case HFI_PROP_SIGNAL_COLOR_INFO:
-			rc = msm_vdec_set_colorspace(inst, port);
-			break;
-		case HFI_PROP_PROFILE:
-			rc = msm_vdec_set_profile(inst, port);
-			break;
-		case HFI_PROP_LEVEL:
-			rc = msm_vdec_set_level(inst, port);
-			break;
-		case HFI_PROP_TIER:
-			rc = msm_vdec_set_tier(inst, port);
-			break;
-		default:
-			i_vpr_e(inst, "%s: unknown property %#x\n", __func__,
-				psc[i]);
-			rc = -EINVAL;
-			break;
+		/* set session properties */
+		for (j = 0; j < ARRAY_SIZE(prop_type_handle_arr); j++) {
+			if (prop_type_handle_arr[j].type == psc[i]) {
+				rc = prop_type_handle_arr[j].handle(inst, port);
+				if (rc)
+					goto exit;
+				break;
+			}
 		}
 
-		if (rc)
-			goto exit;
+		/* is property type unknown ? */
+		if (j == ARRAY_SIZE(prop_type_handle_arr))
+			i_vpr_e(inst, "%s: unknown property %#x\n", __func__, psc[i]);
 	}
 
 exit:
@@ -1156,7 +1097,7 @@ static int msm_vdec_subscribe_metadata(struct msm_vidc_inst *inst,
 	u32 payload[32] = {0};
 	u32 i, count = 0;
 	struct msm_vidc_inst_capability *capability;
-	u32 metadata_list[] = {
+	static const u32 metadata_list[] = {
 		META_DPB_MISR,
 		META_OPB_MISR,
 		META_INTERLACE,
@@ -1209,7 +1150,7 @@ static int msm_vdec_set_delivery_mode_metadata(struct msm_vidc_inst *inst,
 	u32 payload[32] = {0};
 	u32 i, count = 0;
 	struct msm_vidc_inst_capability *capability;
-	u32 metadata_list[] = {
+	static const u32 metadata_list[] = {
 		META_BUF_TAG,
 	};
 
@@ -1248,12 +1189,7 @@ static int msm_vdec_session_resume(struct msm_vidc_inst *inst,
 {
 	int rc = 0;
 
-	if (!inst) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
 	i_vpr_h(inst, "%s()\n", __func__);
-
 	rc = venus_hfi_session_command(inst,
 			HFI_CMD_RESUME,
 			port,
@@ -1631,7 +1567,7 @@ static int msm_vdec_subscribe_output_port_settings_change(struct msm_vidc_inst *
 	u32 i;
 	struct msm_vidc_subscription_params subsc_params;
 	u32 subscribe_psc_size = 0;
-	u32 *psc = NULL;
+	const u32 *psc = NULL;
 
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);

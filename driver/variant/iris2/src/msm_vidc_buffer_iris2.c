@@ -455,90 +455,68 @@ static u32 msm_vidc_encoder_vpss_size_iris2(struct msm_vidc_inst* inst)
 	return size;
 }
 
+struct msm_vidc_buf_type_handle {
+	enum msm_vidc_buffer_type type;
+	u32 (*handle)(struct msm_vidc_inst *inst);
+};
+
 int msm_buffer_size_iris2(struct msm_vidc_inst *inst,
 		enum msm_vidc_buffer_type buffer_type)
 {
-	int size = 0;
+	int i, size = 0;
+	u32 buf_type_handle_size = 0;
+	const struct msm_vidc_buf_type_handle *buf_type_handle_arr = NULL;
+	static const struct msm_vidc_buf_type_handle dec_buf_type_handle[] = {
+		{MSM_VIDC_BUF_INPUT,           msm_vidc_decoder_input_size              },
+		{MSM_VIDC_BUF_OUTPUT,          msm_vidc_decoder_output_size             },
+		{MSM_VIDC_BUF_INPUT_META,      msm_vidc_decoder_input_meta_size         },
+		{MSM_VIDC_BUF_OUTPUT_META,     msm_vidc_decoder_output_meta_size        },
+		{MSM_VIDC_BUF_BIN,             msm_vidc_decoder_bin_size_iris2          },
+		{MSM_VIDC_BUF_COMV,            msm_vidc_decoder_comv_size_iris2         },
+		{MSM_VIDC_BUF_NON_COMV,        msm_vidc_decoder_non_comv_size_iris2     },
+		{MSM_VIDC_BUF_LINE,            msm_vidc_decoder_line_size_iris2         },
+		{MSM_VIDC_BUF_PERSIST,         msm_vidc_decoder_persist_size_iris2      },
+		{MSM_VIDC_BUF_DPB,             msm_vidc_decoder_dpb_size_iris2          },
+	};
+	static const struct msm_vidc_buf_type_handle enc_buf_type_handle[] = {
+		{MSM_VIDC_BUF_INPUT,           msm_vidc_encoder_input_size              },
+		{MSM_VIDC_BUF_OUTPUT,          msm_vidc_encoder_output_size             },
+		{MSM_VIDC_BUF_INPUT_META,      msm_vidc_encoder_input_meta_size         },
+		{MSM_VIDC_BUF_OUTPUT_META,     msm_vidc_encoder_output_meta_size        },
+		{MSM_VIDC_BUF_BIN,             msm_vidc_encoder_bin_size_iris2          },
+		{MSM_VIDC_BUF_COMV,            msm_vidc_encoder_comv_size_iris2         },
+		{MSM_VIDC_BUF_NON_COMV,        msm_vidc_encoder_non_comv_size_iris2     },
+		{MSM_VIDC_BUF_LINE,            msm_vidc_encoder_line_size_iris2         },
+		{MSM_VIDC_BUF_DPB,             msm_vidc_encoder_dpb_size_iris2          },
+		{MSM_VIDC_BUF_ARP,             msm_vidc_encoder_arp_size_iris2          },
+		{MSM_VIDC_BUF_VPSS,            msm_vidc_encoder_vpss_size_iris2         },
+	};
 
-	if (!inst) {
-		d_vpr_e("%s: invalid params\n", __func__);
+	if (is_decode_session(inst)) {
+		buf_type_handle_size = ARRAY_SIZE(dec_buf_type_handle);
+		buf_type_handle_arr = dec_buf_type_handle;
+	} else if (is_encode_session(inst)) {
+		buf_type_handle_size = ARRAY_SIZE(enc_buf_type_handle);
+		buf_type_handle_arr = enc_buf_type_handle;
+	}
+
+	/* handle invalid session */
+	if (!buf_type_handle_arr || !buf_type_handle_size) {
+		i_vpr_e(inst, "%s: invalid session %d\n", __func__, inst->domain);
 		return size;
 	}
 
-	if (is_decode_session(inst)) {
-		switch (buffer_type) {
-		case MSM_VIDC_BUF_INPUT:
-			size = msm_vidc_decoder_input_size(inst);
-			break;
-		case MSM_VIDC_BUF_OUTPUT:
-			size = msm_vidc_decoder_output_size(inst);
-			break;
-		case MSM_VIDC_BUF_INPUT_META:
-			size = msm_vidc_decoder_input_meta_size(inst);
-			break;
-		case MSM_VIDC_BUF_OUTPUT_META:
-			size = msm_vidc_decoder_output_meta_size(inst);
-			break;
-		case MSM_VIDC_BUF_BIN:
-			size = msm_vidc_decoder_bin_size_iris2(inst);
-			break;
-		case MSM_VIDC_BUF_COMV:
-			size = msm_vidc_decoder_comv_size_iris2(inst);
-			break;
-		case MSM_VIDC_BUF_NON_COMV:
-			size = msm_vidc_decoder_non_comv_size_iris2(inst);
-			break;
-		case MSM_VIDC_BUF_LINE:
-			size = msm_vidc_decoder_line_size_iris2(inst);
-			break;
-		case MSM_VIDC_BUF_PERSIST:
-			size = msm_vidc_decoder_persist_size_iris2(inst);
-			break;
-		case MSM_VIDC_BUF_DPB:
-			size = msm_vidc_decoder_dpb_size_iris2(inst);
-			break;
-		default:
-			break;
-		}
-	} else if (is_encode_session(inst)) {
-		switch (buffer_type) {
-		case MSM_VIDC_BUF_INPUT:
-			size = msm_vidc_encoder_input_size(inst);
-			break;
-		case MSM_VIDC_BUF_OUTPUT:
-			size = msm_vidc_encoder_output_size(inst);
-			break;
-		case MSM_VIDC_BUF_INPUT_META:
-			size = msm_vidc_encoder_input_meta_size(inst);
-			break;
-		case MSM_VIDC_BUF_OUTPUT_META:
-			size = msm_vidc_encoder_output_meta_size(inst);
-			break;
-		case MSM_VIDC_BUF_BIN:
-			size = msm_vidc_encoder_bin_size_iris2(inst);
-			break;
-		case MSM_VIDC_BUF_COMV:
-			size = msm_vidc_encoder_comv_size_iris2(inst);
-			break;
-		case MSM_VIDC_BUF_NON_COMV:
-			size = msm_vidc_encoder_non_comv_size_iris2(inst);
-			break;
-		case MSM_VIDC_BUF_LINE:
-			size = msm_vidc_encoder_line_size_iris2(inst);
-			break;
-		case MSM_VIDC_BUF_DPB:
-			size = msm_vidc_encoder_dpb_size_iris2(inst);
-			break;
-		case MSM_VIDC_BUF_ARP:
-			size = msm_vidc_encoder_arp_size_iris2(inst);
-			break;
-		case MSM_VIDC_BUF_VPSS:
-			size = msm_vidc_encoder_vpss_size_iris2(inst);
-			break;
-		default:
+	/* fetch buffer size */
+	for (i = 0; i < buf_type_handle_size; i++) {
+		if (buf_type_handle_arr[i].type == buffer_type) {
+			size = buf_type_handle_arr[i].handle(inst);
 			break;
 		}
 	}
+
+	/* handle unknown buffer type */
+	if (i == buf_type_handle_size)
+		i_vpr_e(inst, "%s: unknown buffer type %#x\n", __func__, buffer_type);
 
 	return size;
 }
