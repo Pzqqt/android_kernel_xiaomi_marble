@@ -377,6 +377,7 @@ static struct interp_sample_rate sr_val_tbl[] = {
 	{176400, 0xB}, {352800, 0xC},
 };
 
+static int lpass_cdc_rx_macro_core_vote(void *handle, bool enable);
 static int lpass_cdc_rx_macro_hw_params(struct snd_pcm_substream *substream,
 			       struct snd_pcm_hw_params *params,
 			       struct snd_soc_dai *dai);
@@ -1301,10 +1302,12 @@ static int lpass_cdc_rx_macro_mclk_enable(
 		if (rx_priv->rx_mclk_users == 0) {
 			if (rx_priv->is_native_on)
 				rx_priv->clk_id = RX_CORE_CLK;
+			lpass_cdc_rx_macro_core_vote(rx_priv, true);
 			ret = lpass_cdc_clk_rsc_request_clock(rx_priv->dev,
 							   rx_priv->default_clk_id,
 							   rx_priv->clk_id,
 							   true);
+			lpass_cdc_rx_macro_core_vote(rx_priv, false);
 			if (ret < 0) {
 				dev_err(rx_priv->dev,
 					"%s: rx request clock enable failed\n",
@@ -1354,10 +1357,12 @@ static int lpass_cdc_rx_macro_mclk_enable(
 				0x01, 0x00);
 			lpass_cdc_clk_rsc_fs_gen_request(rx_priv->dev,
 			   false);
+			lpass_cdc_rx_macro_core_vote(rx_priv, true);
 			lpass_cdc_clk_rsc_request_clock(rx_priv->dev,
 						 rx_priv->default_clk_id,
 						 rx_priv->clk_id,
 						 false);
+			lpass_cdc_rx_macro_core_vote(rx_priv, false);
 			rx_priv->clk_id = rx_priv->default_clk_id;
 		}
 	}
@@ -1467,6 +1472,7 @@ static int lpass_cdc_rx_macro_event_handler(struct snd_soc_component *component,
 		}
 		break;
 	case LPASS_CDC_MACRO_EVT_PRE_SSR_UP:
+		lpass_cdc_rx_macro_core_vote(rx_priv, true);
 		/* enable&disable RX_CORE_CLK to reset GFMUX reg */
 		ret = lpass_cdc_clk_rsc_request_clock(rx_priv->dev,
 						rx_priv->default_clk_id,
@@ -1479,6 +1485,7 @@ static int lpass_cdc_rx_macro_event_handler(struct snd_soc_component *component,
 			lpass_cdc_clk_rsc_request_clock(rx_priv->dev,
 						rx_priv->default_clk_id,
 						RX_CORE_CLK, false);
+		lpass_cdc_rx_macro_core_vote(rx_priv, false);
 		break;
 	case LPASS_CDC_MACRO_EVT_SSR_UP:
 		trace_printk("%s, enter SSR up\n", __func__);
@@ -3746,6 +3753,7 @@ static const struct snd_soc_dapm_route rx_audio_map[] = {
 
 static int lpass_cdc_rx_macro_core_vote(void *handle, bool enable)
 {
+	int rc = 0;
 	struct lpass_cdc_rx_macro_priv *rx_priv = (struct lpass_cdc_rx_macro_priv *) handle;
 
 	if (rx_priv == NULL) {
@@ -3754,14 +3762,15 @@ static int lpass_cdc_rx_macro_core_vote(void *handle, bool enable)
 	}
 	if (enable) {
 		pm_runtime_get_sync(rx_priv->dev);
+		if (lpass_cdc_check_core_votes(rx_priv->dev))
+			rc = 0;
+		else
+			rc = -ENOTSYNC;
+	} else {
 		pm_runtime_put_autosuspend(rx_priv->dev);
 		pm_runtime_mark_last_busy(rx_priv->dev);
 	}
-
-	if (lpass_cdc_check_core_votes(rx_priv->dev))
-		return 0;
-	else
-		return -EINVAL;
+	return rc;
 }
 
 static int rx_swrm_clock(void *handle, bool enable)
