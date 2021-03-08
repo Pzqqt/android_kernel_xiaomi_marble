@@ -915,6 +915,78 @@ end:
 	return qdf_status_to_os_return(status);
 }
 
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+static int target_if_mc_cp_stats_big_data_stats_event_handler(ol_scn_t scn,
+							      uint8_t *data,
+							      uint32_t datalen)
+{
+	QDF_STATUS status;
+	struct big_data_stats_event ev = {0};
+	struct wlan_objmgr_psoc *psoc;
+	struct wmi_unified *wmi_handle;
+	struct wlan_lmac_if_cp_stats_rx_ops *rx_ops;
+
+	if (!scn || !data) {
+		cp_stats_err("scn: 0x%pK, data: 0x%pK", scn, data);
+		return -EINVAL;
+	}
+	psoc = target_if_get_psoc_from_scn_hdl(scn);
+	if (!psoc) {
+		cp_stats_err("null psoc");
+		return -EINVAL;
+	}
+
+	rx_ops = target_if_cp_stats_get_rx_ops(psoc);
+	if (!rx_ops || !rx_ops->process_big_data_stats_event) {
+		cp_stats_err("callback not registered");
+		return -EINVAL;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		cp_stats_err("wmi_handle is null");
+		return -EINVAL;
+	}
+
+	status = wmi_extract_big_data_stats_param(wmi_handle, data, &ev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cp_stats_err("extract event failed");
+		goto end;
+	}
+
+	status = rx_ops->process_big_data_stats_event(psoc, &ev);
+
+end:
+	return qdf_status_to_os_return(status);
+}
+
+/**
+ * target_if_cp_stats_send_big_data_stats_req() - API to send request to wmi
+ * @psoc: pointer to psoc object
+ * @req: pointer to object containing stats request parameters
+ *
+ * Return: status of operation.
+ */
+static QDF_STATUS target_if_cp_stats_send_big_data_stats_req(
+				struct wlan_objmgr_psoc *psoc,
+				struct request_info *req)
+
+{
+	struct wmi_unified *wmi_handle;
+	struct stats_request_params param = {0};
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		cp_stats_err("wmi_handle is null.");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	param.vdev_id = req->vdev_id;
+
+	return wmi_unified_big_data_stats_request_send(wmi_handle,
+						       &param);
+}
+#endif
+
 static QDF_STATUS
 target_if_cp_stats_extract_peer_stats_event(struct wmi_unified *wmi_hdl,
 					    struct stats_event *ev,
@@ -1121,6 +1193,62 @@ static void target_if_cp_stats_inc_wake_lock_stats(uint32_t reason,
 	}
 }
 
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+static QDF_STATUS
+target_if_register_big_data_event_handler(struct wmi_unified *wmi_handle)
+{
+	return wmi_unified_register_event_handler(
+			    wmi_handle, wmi_vdev_send_big_data_p2_eventid,
+			    target_if_mc_cp_stats_big_data_stats_event_handler,
+			    WMI_RX_WORK_CTX);
+}
+
+static void
+target_if_unregister_big_data_event_handler(struct wmi_unified *wmi_handle)
+{
+	wmi_unified_unregister_event_handler(wmi_handle,
+					     wmi_vdev_send_big_data_p2_eventid);
+}
+
+static QDF_STATUS
+target_if_big_data_stats_register_tx_ops(struct wlan_lmac_if_cp_stats_tx_ops
+					 *cp_stats_tx_ops)
+{
+	cp_stats_tx_ops->send_req_big_data_stats =
+			target_if_cp_stats_send_big_data_stats_req;
+	return QDF_STATUS_SUCCESS;
+}
+
+static void
+target_if_big_data_stats_unregister_tx_ops(struct wlan_lmac_if_cp_stats_tx_ops
+					   *cp_stats_tx_ops)
+{
+	cp_stats_tx_ops->send_req_big_data_stats = NULL;
+}
+#else
+static QDF_STATUS
+target_if_register_big_data_event_handler(struct wmi_unified *wmi_handle)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static void
+target_if_unregister_big_data_event_handler(struct wmi_unified *wmi_handle)
+{}
+
+static QDF_STATUS
+target_if_big_data_stats_register_tx_ops(struct wlan_lmac_if_cp_stats_tx_ops
+					 *cp_stats_tx_ops)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static void
+target_if_big_data_stats_unregister_tx_ops(struct wlan_lmac_if_cp_stats_tx_ops
+					   *cp_stats_tx_ops)
+{}
+#endif
+
 static QDF_STATUS
 target_if_mc_cp_stats_register_event_handler(struct wlan_objmgr_psoc *psoc)
 {
@@ -1153,6 +1281,10 @@ target_if_mc_cp_stats_register_event_handler(struct wlan_objmgr_psoc *psoc)
 	if (QDF_IS_STATUS_ERROR(ret_val))
 		cp_stats_err("Failed to register peer stats info event cb");
 
+	ret_val = target_if_register_big_data_event_handler(wmi_handle);
+	if (QDF_IS_STATUS_ERROR(ret_val))
+		cp_stats_err("Failed to register big data stats info event cb");
+
 	return ret_val;
 }
 
@@ -1171,6 +1303,9 @@ target_if_mc_cp_stats_unregister_event_handler(struct wlan_objmgr_psoc *psoc)
 		cp_stats_err("wmi_handle is null");
 		return QDF_STATUS_E_INVAL;
 	}
+
+	target_if_unregister_big_data_event_handler(wmi_handle);
+
 	wmi_unified_unregister_event_handler(wmi_handle,
 					     wmi_peer_stats_info_event_id);
 	wmi_unified_unregister_event_handler(wmi_handle,
@@ -1329,6 +1464,8 @@ target_if_mc_cp_stats_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	cp_stats_tx_ops->send_req_peer_stats =
 		target_if_cp_stats_send_peer_stats_req;
 
+	target_if_big_data_stats_register_tx_ops(cp_stats_tx_ops);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1348,6 +1485,7 @@ target_if_mc_cp_stats_unregister_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	target_if_big_data_stats_unregister_tx_ops(cp_stats_tx_ops);
 	cp_stats_tx_ops->inc_wake_lock_stats = NULL;
 	cp_stats_tx_ops->send_req_stats = NULL;
 	cp_stats_tx_ops->send_req_peer_stats = NULL;

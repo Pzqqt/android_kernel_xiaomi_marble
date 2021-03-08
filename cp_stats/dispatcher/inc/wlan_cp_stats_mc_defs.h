@@ -61,6 +61,7 @@
  * @TYPE_MIB_STATS: MIB stats was requested
  * @TYPE_PEER_STATS_INFO_EXT: peer stats info ext was requested
  * @TYPE_CONGESTION_STATS: congestion stats was requested
+ * @TYPE_BIG_DATA_STATS: big data stats was requested
  */
 enum stats_req_type {
 	TYPE_CONNECTION_TX_POWER = 0,
@@ -69,6 +70,7 @@ enum stats_req_type {
 	TYPE_MIB_STATS,
 	TYPE_PEER_STATS_INFO_EXT,
 	TYPE_CONGESTION_STATS,
+	TYPE_BIG_DATA_STATS,
 	TYPE_MAX,
 };
 
@@ -179,6 +181,28 @@ struct wake_lock_stats {
 struct stats_event;
 
 /**
+ * struct big_data_stats_event - big data stats event param
+ * @vdev_id:               vdev id
+ * @tsf_out_of_sync:       tsf out of sync
+ * @ani_level:             ani level
+ * @last_data_tx_pwr:  tx pwr last data frm
+ * @target_power_dsss:  tx power dsss
+ * @target_power_ofdm:  target power ofdm
+ * @last_tx_data_rix:     rx lateset data frame
+ * @last_tx_data_rate_kbps: tx latest data frame
+ */
+struct big_data_stats_event {
+	uint32_t vdev_id;
+	uint32_t tsf_out_of_sync;
+	int32_t ani_level;
+	uint32_t last_data_tx_pwr;
+	uint32_t target_power_dsss;
+	uint32_t target_power_ofdm;
+	uint32_t last_tx_data_rix;
+	uint32_t last_tx_data_rate_kbps;
+};
+
+/**
  * struct request_info: details of each request
  * @cookie: identifier for os_if request
  * @u: unified data type for callback to process tx power/peer rssi/
@@ -201,6 +225,10 @@ struct request_info {
 					  void *cookie);
 		void (*congestion_notif_cb)(uint8_t vdev_id,
 					    uint8_t congestion);
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+		void (*get_big_data_stats_cb)(struct big_data_stats_event *ev,
+					      void *cookie);
+#endif
 	} u;
 	uint32_t vdev_id;
 	uint32_t pdev_id;

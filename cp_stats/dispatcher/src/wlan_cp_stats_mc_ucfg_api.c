@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -705,6 +705,24 @@ QDF_STATUS ucfg_mc_cp_stats_send_stats_request(struct wlan_objmgr_vdev *vdev,
 
 	return tgt_send_mc_cp_stats_req(wlan_vdev_get_psoc(vdev), type, info);
 }
+
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+QDF_STATUS ucfg_send_big_data_stats_request(struct wlan_objmgr_vdev *vdev,
+					    enum stats_req_type type,
+					    struct request_info *info)
+{
+	QDF_STATUS status;
+
+	status = ucfg_mc_cp_stats_set_pending_req(wlan_vdev_get_psoc(vdev),
+						  type, info);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cp_stats_err("ucfg_mc_cp_stats_set_pending_req pdev failed: %d",
+			     status);
+		return status;
+	}
+	return tgt_send_mc_cp_stats_req(wlan_vdev_get_psoc(vdev), type, info);
+}
+#endif
 
 QDF_STATUS ucfg_mc_cp_stats_get_tx_power(struct wlan_objmgr_vdev *vdev,
 					 int *dbm)
