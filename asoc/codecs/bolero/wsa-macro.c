@@ -3237,13 +3237,12 @@ static int wsa_macro_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "%s: register macro failed\n", __func__);
 		goto reg_macro_fail;
 	}
-	schedule_work(&wsa_priv->wsa_macro_add_child_devices_work);
 	pm_runtime_set_autosuspend_delay(&pdev->dev, AUTO_SUSPEND_DELAY);
 	pm_runtime_use_autosuspend(&pdev->dev);
 	pm_runtime_set_suspended(&pdev->dev);
 	pm_suspend_ignore_children(&pdev->dev, true);
 	pm_runtime_enable(&pdev->dev);
-
+	schedule_work(&wsa_priv->wsa_macro_add_child_devices_work);
 	return ret;
 reg_macro_fail:
 	mutex_destroy(&wsa_priv->mclk_lock);
