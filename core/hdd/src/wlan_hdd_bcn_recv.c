@@ -486,7 +486,7 @@ void hdd_beacon_recv_pause_indication(hdd_handle_t hdd_handle,
 							    adapter);
 
 		switch (type) {
-		case SCAN_EVENT_TYPE_FOREIGN_CHANNEL:
+		case SCAN_EVENT_TYPE_STARTED:
 			abort_reason =
 		     QCA_WLAN_VENDOR_BEACON_REPORTING_PAUSE_REASON_SCAN_STARTED;
 			break;
