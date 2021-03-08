@@ -142,6 +142,7 @@ static struct interp_sample_rate int_mix_sample_rate_val[] = {
 
 #define WSA_MACRO_SWR_STRING_LEN 80
 
+static int wsa_macro_core_vote(void *handle, bool enable);
 static int wsa_macro_hw_params(struct snd_pcm_substream *substream,
 			       struct snd_pcm_hw_params *params,
 			       struct snd_soc_dai *dai);
@@ -1023,6 +1024,7 @@ static int wsa_macro_event_handler(struct snd_soc_component *component,
 		break;
 	case BOLERO_MACRO_EVT_PRE_SSR_UP:
 		/* enable&disable WSA_CORE_CLK to reset GFMUX reg */
+		wsa_macro_core_vote(wsa_priv, true);
 		ret = bolero_clk_rsc_request_clock(wsa_priv->dev,
 						wsa_priv->default_clk_id,
 						WSA_CORE_CLK, true);
@@ -1034,6 +1036,7 @@ static int wsa_macro_event_handler(struct snd_soc_component *component,
 			bolero_clk_rsc_request_clock(wsa_priv->dev,
 						wsa_priv->default_clk_id,
 						WSA_CORE_CLK, false);
+		wsa_macro_core_vote(wsa_priv, false);
 		break;
 	case BOLERO_MACRO_EVT_SSR_UP:
 		trace_printk("%s, enter SSR up\n", __func__);
