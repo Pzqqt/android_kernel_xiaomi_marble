@@ -3079,7 +3079,6 @@ static int lpass_cdc_wsa_macro_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "%s: register macro failed\n", __func__);
 		goto reg_macro_fail;
 	}
-	schedule_work(&wsa_priv->lpass_cdc_wsa_macro_add_child_devices_work);
 
 	if (of_find_property(wsa_priv->dev->of_node, "#cooling-cells", NULL)) {
 		ret = of_property_read_u32(pdev->dev.of_node,
@@ -3111,7 +3110,7 @@ static int lpass_cdc_wsa_macro_probe(struct platform_device *pdev)
 	pm_runtime_set_suspended(&pdev->dev);
 	pm_suspend_ignore_children(&pdev->dev, true);
 	pm_runtime_enable(&pdev->dev);
-
+	schedule_work(&wsa_priv->lpass_cdc_wsa_macro_add_child_devices_work);
 	return ret;
 reg_macro_fail:
 	mutex_destroy(&wsa_priv->mclk_lock);

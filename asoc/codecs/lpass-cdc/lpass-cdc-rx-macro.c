@@ -4194,13 +4194,12 @@ static int lpass_cdc_rx_macro_probe(struct platform_device *pdev)
 			"%s: register macro failed\n", __func__);
 		goto err_reg_macro;
 	}
-	schedule_work(&rx_priv->lpass_cdc_rx_macro_add_child_devices_work);
 	pm_runtime_set_autosuspend_delay(&pdev->dev, AUTO_SUSPEND_DELAY);
 	pm_runtime_use_autosuspend(&pdev->dev);
 	pm_runtime_set_suspended(&pdev->dev);
 	pm_suspend_ignore_children(&pdev->dev, true);
 	pm_runtime_enable(&pdev->dev);
-
+	schedule_work(&rx_priv->lpass_cdc_rx_macro_add_child_devices_work);
 	return 0;
 
 err_reg_macro:
