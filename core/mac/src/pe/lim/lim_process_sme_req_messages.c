@@ -115,7 +115,12 @@ static const enum phy_ch_width get_next_higher_bw[] = {
 	[CH_WIDTH_20MHZ] = CH_WIDTH_40MHZ,
 	[CH_WIDTH_40MHZ] = CH_WIDTH_80MHZ,
 	[CH_WIDTH_80MHZ] = CH_WIDTH_160MHZ,
+#ifndef WLAN_FEATURE_11BE
 	[CH_WIDTH_160MHZ] = CH_WIDTH_INVALID
+#else
+	[CH_WIDTH_160MHZ] = CH_WIDTH_320MHZ,
+	[CH_WIDTH_320MHZ] = CH_WIDTH_INVALID
+#endif
 };
 
 /**
