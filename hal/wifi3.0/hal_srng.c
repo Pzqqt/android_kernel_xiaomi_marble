@@ -576,6 +576,46 @@ int hal_get_reg_write_pending_work(void *hal_soc)
 #define HAL_REG_WRITE_QUEUE_LEN 32
 #endif
 
+#ifdef FEATURE_HAL_DELAYED_REG_WRITE_V2
+/**
+ * hal_process_reg_write_q_elem() - process a regiter write queue element
+ * @hal: hal_soc pointer
+ * @q_elem: pointer to hal regiter write queue element
+ *
+ * Return: The value which was written to the address
+ */
+static uint32_t
+hal_process_reg_write_q_elem(struct hal_soc *hal,
+			     struct hal_reg_write_q_elem *q_elem)
+{
+	struct hal_srng *srng = q_elem->srng;
+	uint32_t write_val;
+
+	SRNG_LOCK(&srng->lock);
+	srng->reg_write_in_progress = false;
+	srng->wstats.dequeues++;
+
+	if (srng->ring_dir == HAL_SRNG_SRC_RING) {
+		write_val = srng->u.src_ring.hp;
+		q_elem->dequeue_val = write_val;
+		q_elem->valid = 0;
+		SRNG_UNLOCK(&srng->lock);
+		hal_write_address_32_mb(hal,
+					srng->u.src_ring.hp_addr,
+					write_val, false);
+	} else {
+		write_val = srng->u.dst_ring.tp;
+		q_elem->dequeue_val = write_val;
+		q_elem->valid = 0;
+		SRNG_UNLOCK(&srng->lock);
+		hal_write_address_32_mb(hal,
+					srng->u.dst_ring.tp_addr,
+					write_val, false);
+	}
+
+	return write_val;
+}
+#else
 /**
  * hal_process_reg_write_q_elem() - process a regiter write queue element
  * @hal: hal_soc pointer
@@ -614,6 +654,7 @@ hal_process_reg_write_q_elem(struct hal_soc *hal,
 
 	return write_val;
 }
+#endif
 
 /**
  * hal_reg_write_fill_sched_delay_hist() - fill reg write delay histogram in hal
@@ -1165,6 +1206,26 @@ static inline void hal_delayed_tcl_reg_write_deinit(struct hal_soc *hal)
 #endif
 
 #ifdef FEATURE_HAL_DELAYED_REG_WRITE_V2
+#ifdef FEATURE_HAL_DELAYED_REG_WRITE
+static inline void hal_reg_write_enqueue_v2(struct hal_soc *hal_soc,
+					    struct hal_srng *srng,
+					    void __iomem *addr,
+					    uint32_t value)
+{
+	hal_reg_write_enqueue(hal_soc, srng, addr, value);
+}
+#else
+static inline void hal_reg_write_enqueue_v2(struct hal_soc *hal_soc,
+					    struct hal_srng *srng,
+					    void __iomem *addr,
+					    uint32_t value)
+{
+	qdf_atomic_inc(&hal_soc->stats.wstats.direct);
+	srng->wstats.direct++;
+	hal_write_address_32_mb(hal_soc, addr, value, false);
+}
+#endif
+
 void hal_delayed_reg_write(struct hal_soc *hal_soc,
 			   struct hal_srng *srng,
 			   void __iomem *addr,
@@ -1200,6 +1261,11 @@ void hal_delayed_reg_write(struct hal_soc *hal_soc,
 							  addr, value);
 			}
 		}
+		break;
+	case CE_SRC:
+	case CE_DST:
+	case CE_DST_STATUS:
+		hal_reg_write_enqueue_v2(hal_soc, srng, addr, value);
 		break;
 	default:
 		qdf_atomic_inc(&hal_soc->stats.wstats.direct);
