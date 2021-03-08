@@ -784,6 +784,28 @@ wlan_cm_roam_get_vendor_btm_params(struct wlan_objmgr_psoc *psoc,
 								*param);
 
 /**
+ * wlan_cm_roam_get_score_delta_params() - API to get roam score delta param
+ * @psoc: PSOC pointer
+ * @params: roam trigger param
+ *
+ * Return: none
+ */
+void
+wlan_cm_roam_get_score_delta_params(struct wlan_objmgr_psoc *psoc,
+				    struct wlan_roam_triggers *params);
+
+/**
+ * wlan_cm_roam_get_min_rssi_params() - API to get roam trigger min rssi param
+ * @psoc: PSOC pointer
+ * @params: roam trigger param
+ *
+ * Return: none
+ */
+void
+wlan_cm_roam_get_min_rssi_params(struct wlan_objmgr_psoc *psoc,
+				 struct wlan_roam_triggers *params);
+
+/**
  * wlan_cm_update_roam_scan_scheme_bitmap() - Set roam scan scheme bitmap for
  * each vdev
  * @psoc: PSOC pointer
@@ -903,6 +925,17 @@ static inline void
 wlan_cm_roam_get_vendor_btm_params(struct wlan_objmgr_psoc *psoc,
 				   uint8_t vdev_id,
 				   struct wlan_cm_roam_vendor_btm_params *param)
+{}
+
+static inline void
+wlan_cm_roam_get_score_delta_params(struct wlan_objmgr_psoc *psoc,
+				    uint8_t vdev_id,
+				    struct roam_trigger_score_delta *param)
+{}
+
+static inline void
+wlan_cm_roam_get_min_rssi_params(struct wlan_objmgr_psoc *psoc,
+				 struct wlan_roam_triggers *params)
 {}
 
 static inline QDF_STATUS
