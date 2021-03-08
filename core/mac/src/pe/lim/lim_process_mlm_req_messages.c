@@ -502,7 +502,7 @@ error:
 	qdf_mem_free(mlm_join_req);
 	if (session)
 		session->pLimMlmJoinReq = NULL;
-	mlmjoin_cnf.resultCode = eSIR_SME_RESOURCES_UNAVAILABLE;
+	mlmjoin_cnf.resultCode = eSIR_SME_PEER_CREATE_FAILED;
 	mlmjoin_cnf.sessionId = sessionid;
 	mlmjoin_cnf.protStatusCode = STATUS_UNSPECIFIED_FAILURE;
 	lim_post_sme_message(mac_ctx, LIM_MLM_JOIN_CNF,
