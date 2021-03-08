@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019,2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -274,11 +274,6 @@ int epping_enable(struct device *parent_dev, bool rtnl_held)
 	tgt_info = hif_get_target_info_handle(scn);
 
 	ol_ctx = cds_get_context(QDF_MODULE_ID_BMI);
-	if (!ol_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-			  "%s: ol_ctx is NULL", __func__);
-		return A_ERROR;
-	}
 
 	if (epping_bmi_download_fw(ol_ctx) != QDF_STATUS_SUCCESS)
 		return A_ERROR;
