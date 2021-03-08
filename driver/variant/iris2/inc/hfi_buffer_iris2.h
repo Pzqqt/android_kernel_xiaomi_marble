@@ -26,9 +26,6 @@ typedef HFI_U32 HFI_BOOL;
 #define  MAX(x, y) (((x) > (y)) ? (x) : (y))
 #endif
 
-/*
- * Default buffer size alignment value
- */
 #define HFI_ALIGNMENT_4096 (4096)
 
 #define BUF_SIZE_ALIGN_16 (16)
@@ -39,37 +36,15 @@ typedef HFI_U32 HFI_BOOL;
 #define BUF_SIZE_ALIGN_512 (512)
 #define BUF_SIZE_ALIGN_4096 (4096)
 
-/*
- * Macro to align a to b
- */
 #define HFI_ALIGN(a, b) (((b) & ((b) - 1)) ? (((a) + (b) - 1) / \
 	(b) * (b)) : (((a) + (b) - 1) & (~((b) - 1))))
 
+#define HFI_WORKMODE_1 1
+#define HFI_WORKMODE_2 2
 
-#define HFI_WORKMODE_1 1 /* stage 1 */
-#define HFI_WORKMODE_2 2 /* stage 2 */
-
-/*
- * Default ubwc metadata buffer stride and height alignment values
- */
 #define HFI_DEFAULT_METADATA_STRIDE_MULTIPLE (64)
 #define HFI_DEFAULT_METADATA_BUFFERHEIGHT_MULTIPLE (16)
 
-/*
- * Level 2 Comment: "Default Parameters for Firmware "
- * This section defines all the default constants used by Firmware
- * for any encoding session:
- * 1. Bitstream Restriction VUI: TRUE
- * 2. Picture Order Count: 2 (for all profiles except B frame case)
- * 3. Constrained intra pred flag : TRUE (if Intra-refresh (IR) is enabled)
- */
-
-/*
- * Level 2 Comment: "Tile dimensions(in pixels) macros for
- * different color formats"
- * @datatypes
- * @sa
- */
 #define HFI_COLOR_FORMAT_YUV420_NV12_UBWC_Y_TILE_HEIGHT (8)
 #define HFI_COLOR_FORMAT_YUV420_NV12_UBWC_Y_TILE_WIDTH (32)
 #define HFI_COLOR_FORMAT_YUV420_NV12_UBWC_UV_TILE_HEIGHT (8)
@@ -81,80 +56,33 @@ typedef HFI_U32 HFI_BOOL;
 #define HFI_COLOR_FORMAT_RGBA8888_UBWC_TILE_HEIGHT (4)
 #define HFI_COLOR_FORMAT_RGBA8888_UBWC_TILE_WIDTH (16)
 
-/*
- * Level 2 Comment: "Macros to calculate YUV strides and size"
- * @datatypes
- * HFI_UNCOMPRESSED_FORMAT_SUPPORTED_TYPE
- * HFI_UNCOMPRESSED_PLANE_INFO_TYPE
- * HFI_UNCOMPRESSED_PLANE_CONSTRAINTS_TYPE
- * @sa
- * HFI_PROPERTY_PARAM_UNCOMPRESSED_FORMAT_SUPPORTED
- */
-
-/*
- * Luma stride calculation for YUV420, NV12/NV21, NV12_UBWC color format
- * Stride arrived at here is the minimum required stride. Host may
- * set a stride higher than the one calculated here, till the stride
- * is a multiple of "nStrideMultiples" in
- * HFI_UNCOMPRESSED_PLANE_CONSTRAINTS_TYPE
- */
 #define HFI_NV12_IL_CALC_Y_STRIDE(stride, frame_width, stride_multiple) \
 	stride = HFI_ALIGN(frame_width, stride_multiple)
 
-/*
- * Luma plane height calculation for YUV420 NV12/NV21, NV12_UBWC color format
- * Luma plane height used by the host needs to be either equal
- * to higher than the value calculated here
- */
 #define HFI_NV12_IL_CALC_Y_BUFHEIGHT(buf_height, frame_height, \
 	min_buf_height_multiple) buf_height = HFI_ALIGN(frame_height, \
 	min_buf_height_multiple)
 
-/*
- * Chroma stride calculation for NV12/NV21, NV12_UBWC color format
- */
 #define HFI_NV12_IL_CALC_UV_STRIDE(stride, frame_width, stride_multiple) \
 	stride = HFI_ALIGN(frame_width, stride_multiple)
 
-/*
- * Chroma plane height calculation for NV12/NV21, NV12_UBWC color format
- */
 #define HFI_NV12_IL_CALC_UV_BUFHEIGHT(buf_height, frame_height, \
 	min_buf_height_multiple) buf_height = HFI_ALIGN(((frame_height + 1) \
 	 >> 1),	min_buf_height_multiple)
 
-/*
- * Minimum buffer size that needs to be allocated for current
- * frame dimensions for NV12/N21 Linear format
- * (calcualtion includes both luma and chroma plane)
- */
 #define HFI_NV12_IL_CALC_BUF_SIZE(buf_size, y_bufSize, y_stride, y_buf_height, \
 	uv_buf_size, uv_stride, uv_buf_height) \
 	y_bufSize = (y_stride * y_buf_height); \
 	uv_buf_size = (uv_stride * uv_buf_height); \
 	buf_size = HFI_ALIGN(y_bufSize + uv_buf_size, HFI_ALIGNMENT_4096)
 
-/*
- * Minimum Luma buffer size that needs to be allocated for current
- * frame dimensions NV12_UBWC format
- */
 #define HFI_NV12_UBWC_IL_CALC_Y_BUF_SIZE(y_bufSize, y_stride, y_buf_height) \
 	y_bufSize = HFI_ALIGN(y_stride * y_buf_height, HFI_ALIGNMENT_4096)
 
-/*
- * Minimum chroma buffer size that needs to be allocated for current
- * frame dimensions NV12_UBWC format
- */
 #define HFI_NV12_UBWC_IL_CALC_UV_BUF_SIZE(uv_buf_size, \
 	uv_stride, uv_buf_height) \
 	uv_buf_size = HFI_ALIGN(uv_stride * uv_buf_height, HFI_ALIGNMENT_4096)
 
-/*
- * This is for sdm845 onwards:
- * Ver2.0: Minimum buffer size that needs to be allocated for current
- * frame dimensions NV12_UBWC format (including interlace UBWC)
- * (calculation includes all data & metadata planes)
- */
 #define HFI_NV12_UBWC_IL_CALC_BUF_SIZE_V2(buf_size,\
 	frame_width, frame_height, y_stride_multiple,\
 	y_buffer_height_multiple, uv_stride_multiple, \
@@ -196,73 +124,37 @@ typedef HFI_U32 HFI_BOOL;
 			uv_meta_size) << 1;\
 	} while (0)
 
-/*
- * Luma stride calculation for YUV420_TP10 color format
- * Stride arrived at here is the minimum required stride. Host may
- * set a stride higher than the one calculated here, till the stride
- * is a multiple of "nStrideMultiples" in
- * HFI_UNCOMPRESSED_PLANE_CONSTRAINTS_TYPE
- */
 #define HFI_YUV420_TP10_CALC_Y_STRIDE(stride, frame_width, stride_multiple) \
 	stride = HFI_ALIGN(frame_width, 192); \
 	stride = HFI_ALIGN(stride * 4 / 3, stride_multiple)
 
-/*
- * Luma plane height calculation for YUV420_TP10 linear & UBWC color format
- * Luma plane height used by the host needs to be either equal
- * to higher than the value calculated here
- */
 #define HFI_YUV420_TP10_CALC_Y_BUFHEIGHT(buf_height, frame_height, \
 				min_buf_height_multiple) \
 	buf_height = HFI_ALIGN(frame_height, min_buf_height_multiple)
 
-/*
- * Chroma stride calculation for YUV420_TP10 linear & UBWC color format
- */
 #define HFI_YUV420_TP10_CALC_UV_STRIDE(stride, frame_width, stride_multiple) \
 	stride = HFI_ALIGN(frame_width, 192); \
 	stride = HFI_ALIGN(stride * 4 / 3, stride_multiple)
 
-/*
- * Chroma plane height calculation for YUV420_TP10 linear & UBWC color format
- */
 #define HFI_YUV420_TP10_CALC_UV_BUFHEIGHT(buf_height, frame_height, \
 				min_buf_height_multiple) \
 	buf_height = HFI_ALIGN(((frame_height + 1) >> 1), \
 			min_buf_height_multiple)
 
-/*
- * Minimum buffer size that needs to be allocated for current
- * frame dimensions for YUV420_TP10 linear format
- * (calcualtion includes both luma and chroma plane)
- */
 #define HFI_YUV420_TP10_CALC_BUF_SIZE(buf_size, y_buf_size, y_stride,\
 		y_buf_height, uv_buf_size, uv_stride, uv_buf_height) \
 	y_buf_size = (y_stride * y_buf_height); \
 	uv_buf_size = (uv_stride * uv_buf_height); \
 	buf_size = y_buf_size + uv_buf_size
 
-/*
- * Minimum Luma data buffer size that needs to be allocated for current
- * frame dimensions YUV420_TP10_UBWC format
- */
 #define HFI_YUV420_TP10_UBWC_CALC_Y_BUF_SIZE(y_buf_size, y_stride, \
 					y_buf_height) \
 	y_buf_size = HFI_ALIGN(y_stride * y_buf_height, HFI_ALIGNMENT_4096)
 
-/*
- * Minimum chroma data buffer size that needs to be allocated for current
- * frame dimensions YUV420_TP10_UBWC format
- */
 #define HFI_YUV420_TP10_UBWC_CALC_UV_BUF_SIZE(uv_buf_size, uv_stride, \
 					uv_buf_height) \
 	uv_buf_size = HFI_ALIGN(uv_stride * uv_buf_height, HFI_ALIGNMENT_4096)
 
-/*
- * Minimum buffer size that needs to be allocated for current
- * frame dimensions NV12_UBWC format
- * (calculation includes all data & metadata planes)
- */
 #define HFI_YUV420_TP10_UBWC_CALC_BUF_SIZE(buf_size, y_stride, y_buf_height, \
 	uv_stride, uv_buf_height, y_md_stride, y_md_height, uv_md_stride, \
 	uv_md_height)\
@@ -281,45 +173,21 @@ typedef HFI_U32 HFI_BOOL;
 						uv_md_size; \
 	} while (0)
 
-/*
- * Luma stride calculation for YUV420_P010 color format
- * Stride arrived at here is the minimum required stride. Host may
- * set a stride higher than the one calculated here, till the stride
- * is a multiple of "nStrideMultiples" in
- * HFI_UNCOMPRESSED_PLANE_CONSTRAINTS_TYPE
- */
-
 #define HFI_YUV420_P010_CALC_Y_STRIDE(stride, frame_width, stride_multiple) \
 	stride = HFI_ALIGN(frame_width * 2, stride_multiple)
 
-/*
- * Luma plane height calculation for YUV420_P010 linear color format
- * Luma plane height used by the host needs to be either equal
- * to higher than the value calculated here
- */
 #define HFI_YUV420_P010_CALC_Y_BUFHEIGHT(buf_height, frame_height, \
 				min_buf_height_multiple) \
 	buf_height = HFI_ALIGN(frame_height, min_buf_height_multiple)
 
-/*
- * Chroma stride calculation for YUV420_P010 linear color format
- */
 #define HFI_YUV420_P010_CALC_UV_STRIDE(stride, frame_width, stride_multiple) \
 	stride = HFI_ALIGN(frame_width * 2, stride_multiple)
 
-/*
- * Chroma plane height calculation for YUV420_P010 linear  color format
- */
 #define HFI_YUV420_P010_CALC_UV_BUFHEIGHT(buf_height, frame_height, \
 				min_buf_height_multiple) \
 	buf_height = HFI_ALIGN(((frame_height + 1) >> 1), \
 			min_buf_height_multiple)
 
-/*
- * Minimum buffer size that needs to be allocated for current
- * frame dimensions for YUV420_P010 linear format
- * (calculation includes both luma and chroma plane)
- */
 #define HFI_YUV420_P010_CALC_BUF_SIZE(buf_size, y_data_size, y_stride, \
 	y_buf_height, uv_data_size, uv_stride, uv_buf_height) \
 	do \
@@ -331,69 +199,32 @@ typedef HFI_U32 HFI_BOOL;
 		buf_size = y_data_size + uv_data_size; \
 	} while (0)
 
-/*
- * Plane stride calculation for RGB888/BGR888 color format
- * Stride arrived at here is the minimum required stride. Host may
- * set a stride higher than the one calculated here, till the stride
- * is a multiple of "nStrideMultiples" in
- * HFI_UNCOMPRESSED_PLANE_CONSTRAINTS_TYPE
- */
 #define HFI_RGB888_CALC_STRIDE(stride, frame_width, stride_multiple) \
 	stride = ((frame_width * 3) + stride_multiple - 1) & \
 			 (0xffffffff - (stride_multiple - 1))
 
-/*
- * Plane height calculation for RGB888/BGR888 color format
- * Luma plane height used by the host needs to be either equal
- * to higher than the value calculated here
- */
 #define HFI_RGB888_CALC_BUFHEIGHT(buf_height, frame_height, \
 			min_buf_height_multiple) \
 	buf_height = ((frame_height + min_buf_height_multiple - 1) & \
 			(0xffffffff - (min_buf_height_multiple - 1)))
 
-/*
- * Minimum buffer size that needs to be allocated for current
- * frame dimensions for RGB888/BGR888 format
- */
 #define HFI_RGB888_CALC_BUF_SIZE(buf_size, stride, buf_height) \
 	buf_size = ((stride) * (buf_height))
 
-/*
- * Plane stride calculation for RGBA8888 color format
- * Stride arrived at here is the minimum required stride. Host may
- * set a stride higher than the one calculated here, till the stride
- * is a multiple of "nStrideMultiples" in
- * HFI_UNCOMPRESSED_PLANE_CONSTRAINTS_TYPE
- */
 #define HFI_RGBA8888_CALC_STRIDE(stride, frame_width, stride_multiple) \
 	stride = HFI_ALIGN((frame_width << 2), stride_multiple)
-/*
- * Plane height calculation for RGBA8888 color format
- * Luma plane height used by the host needs to be either equal
- * to higher than the value calculated here
- */
+
 #define HFI_RGBA8888_CALC_BUFHEIGHT(buf_height, frame_height, \
 			min_buf_height_multiple) \
 	buf_height = HFI_ALIGN(frame_height, min_buf_height_multiple)
-/*
- * Minimum buffer size that needs to be allocated for current
- * frame dimensions for RGBA8888 format
- */
+
 #define HFI_RGBA8888_CALC_BUF_SIZE(buf_size, stride, buf_height) \
 	buf_size = (stride) * (buf_height)
-/*
- * Minimum buffer size that needs to be allocated for current
- * frame dimensions for data plane of RGBA8888_UBWC format
- */
+
 #define HFI_RGBA8888_UBWC_CALC_DATA_PLANE_BUF_SIZE(buf_size, stride, \
 				buf_height) \
 	buf_size = HFI_ALIGN((stride) * (buf_height), HFI_ALIGNMENT_4096)
 
-/*
- * Minimum buffer size that needs to be allocated for current
- * frame dimensions for of RGBA8888_UBWC format
- */
 #define HFI_RGBA8888_UBWC_BUF_SIZE(buf_size, data_buf_size, \
 	metadata_buffer_size, stride, buf_height, _metadata_tride, \
 	_metadata_buf_height) \
@@ -403,72 +234,33 @@ typedef HFI_U32 HFI_BOOL;
 			_metadata_tride, _metadata_buf_height); \
 	buf_size = data_buf_size + metadata_buffer_size
 
-/*
- * Metadata plane stride calculation for all UBWC color formats
- * Should be used for Y metadata Plane & all single plane color
- * formats. Stride arrived at here is the minimum required
- * stride. Host may set a stride higher than the one calculated
- * here, till the stride is a multiple of
- * "_metadata_trideMultiple" in
- * HFI_UNCOMPRESSED_PLANE_CONSTRAINTS_TYPE Default
- * metadataDataStrideMultiple = 64
- */
 #define HFI_UBWC_CALC_METADATA_PLANE_STRIDE(metadata_stride, frame_width,\
 	metadata_stride_multiple, tile_width_in_pels) \
 	metadata_stride = HFI_ALIGN(((frame_width + (tile_width_in_pels - 1)) /\
 	tile_width_in_pels), metadata_stride_multiple)
 
-/*
- * Metadata plane height calculation for all UBWC color formats
- * Should be used for Y metadata Plane & all single plane color
- * formats. Plane height used by the host needs to be either
- * equal to higher than the value calculated here
- * Default metadataHeightMultiple = 16
- */
 #define HFI_UBWC_METADATA_PLANE_BUFHEIGHT(metadata_buf_height, frame_height, \
 	metadata_height_multiple, tile_height_in_pels) \
 	metadata_buf_height = HFI_ALIGN(((frame_height + \
 	(tile_height_in_pels - 1)) / tile_height_in_pels), \
 	metadata_height_multiple)
 
-/*
- * UV Metadata plane stride calculation for NV12_UBWC color
- * format. Stride arrived at here is the minimum required
- * stride. Host may set a stride higher than the one calculated
- * here, till the stride is a multiple of
- * "_metadata_trideMultiple" in
- * HFI_UNCOMPRESSED_PLANE_CONSTRAINTS_TYPE Default
- * metadataDataStrideMultiple = 64
- */
 #define HFI_UBWC_UV_METADATA_PLANE_STRIDE(metadata_stride, frame_width, \
 	metadata_stride_multiple, tile_width_in_pels) \
 	metadata_stride = HFI_ALIGN(((((frame_width + 1) >> 1) +\
 	(tile_width_in_pels - 1)) / tile_width_in_pels), \
 	metadata_stride_multiple)
 
-/*
- * UV Metadata plane height calculation for NV12_UBWC color
- * format. Plane height used by the host needs to be either
- * equal to higher than the value calculated here Default
- * metadata_height_multiple = 16
- */
 #define HFI_UBWC_UV_METADATA_PLANE_BUFHEIGHT(metadata_buf_height, frame_height,\
 	metadata_height_multiple, tile_height_in_pels) \
 	metadata_buf_height = HFI_ALIGN(((((frame_height + 1) >> 1) + \
 	(tile_height_in_pels - 1)) / tile_height_in_pels), \
 	metadata_height_multiple)
 
-/*
- * Minimum metadata buffer size that needs to be allocated for
- * current frame dimensions for each metadata plane.
- * This macro applies to all UBWC color format
- */
 #define HFI_UBWC_METADATA_PLANE_BUFFER_SIZE(buffer_size, _metadata_tride, \
 					_metadata_buf_height) \
 	buffer_size = HFI_ALIGN(_metadata_tride * _metadata_buf_height, \
 					HFI_ALIGNMENT_4096)
-
-
 
 #define BUFFER_ALIGNMENT_512_BYTES 512
 #define BUFFER_ALIGNMENT_256_BYTES 256
@@ -496,27 +288,7 @@ typedef HFI_U32 HFI_BOOL;
 #define MAX_PE_NBR_DATA_LCU32_LINE_BUFFER_SIZE (32 * 2 * 3)
 #define MAX_PE_NBR_DATA_LCU16_LINE_BUFFER_SIZE (16 * 2 * 3)
 
-/* Begin of IRIS2 */
-
-/*
- * VPSS internal buffer definition
- * Only for 1:1 DS ratio case
- */
-#define MAX_TILE_COLUMNS 32     /* 8K/256 */
-
-/*
- * For all buffer size calculators using num_vpp_pipes,
- * use per chipset "static" pipe count.
- * Note that this applies to all use-cases,
- * e.g. buffer sizes for interlace decode
- * will be calculated using 4 vpp pipes on Kona,
- * even though interlace decode uses single vpp pipe.
- * __________________________________________________________
- * |_____________Target_____________|_______numVPPpipes_______|
- * |       IRIS2(e.g. Kona)         |           4             |
- * |       IRIS2(e.g. Cedros)       |           2             |
- * |_______IRIS2(e.g. Bitra)________|___________1_____________|
- */
+#define MAX_TILE_COLUMNS 32
 
 #define SIZE_VPSS_LB(Size, frame_width, frame_height, num_vpp_pipes) \
 	do \
@@ -554,20 +326,15 @@ typedef HFI_U32 HFI_BOOL;
 			   opb_lb_wr_llb_y_buffer_size; \
 	} while (0)
 
-/*
- * H264d internal buffer definition
- */
 #define VPP_CMD_MAX_SIZE (1 << 20)
 #define NUM_HW_PIC_BUF 32
 #define BIN_BUFFER_THRESHOLD (1280 * 736)
 #define H264D_MAX_SLICE 1800
-#define SIZE_H264D_BUFTAB_T (256)  /* sizeof(h264d_buftab_t) aligned to 256 */
-#define SIZE_H264D_HW_PIC_T (1 << 11) /* sizeof(h264d_hw_pic_t) 32 aligned */
+#define SIZE_H264D_BUFTAB_T (256)
+#define SIZE_H264D_HW_PIC_T (1 << 11)
 #define SIZE_H264D_BSE_CMD_PER_BUF (32 * 4)
 #define SIZE_H264D_VPP_CMD_PER_BUF (512)
 
-/* Line Buffer definitions */
-/* one for luma and 1/2 for each chroma */
 #define SIZE_H264D_LB_FE_TOP_DATA(frame_width, frame_height) \
 	(MAX_FE_NBR_DATA_LUMA_LINE_BUFFER_SIZE * HFI_ALIGN(frame_width, 16) * 3)
 
@@ -600,7 +367,7 @@ typedef HFI_U32 HFI_BOOL;
 
 #define SIZE_H264D_BSE_CMD_BUF(_size, frame_width, frame_height) \
 	do \
-	{   /* this could change alignment */ \
+	{    \
 		HFI_U32 _height = HFI_ALIGN(frame_height, \
 				BUFFER_ALIGNMENT_32_BYTES);  \
 		_size = MIN((((_height + 15) >> 4) * 3 * 4), H264D_MAX_SLICE) *\
@@ -609,7 +376,7 @@ typedef HFI_U32 HFI_BOOL;
 
 #define SIZE_H264D_VPP_CMD_BUF(_size, frame_width, frame_height)    \
 	do \
-	{   /* this could change alignment */ \
+	{    \
 		HFI_U32 _height = HFI_ALIGN(frame_height, \
 				BUFFER_ALIGNMENT_32_BYTES); \
 		_size = MIN((((_height + 15) >> 4) * 3 * 4), H264D_MAX_SLICE) * \
@@ -699,10 +466,7 @@ typedef HFI_U32 HFI_BOOL;
 
 #define H264_CABAC_HDR_RATIO_HD_TOT 1
 #define H264_CABAC_RES_RATIO_HD_TOT 3
-/*
- * some content need more bin buffer,
- * but limit buffer size for high resolution
- */
+
 #define SIZE_H264D_HW_BIN_BUFFER(_size, frame_width, frame_height, \
 				delay, num_vpp_pipes) \
 	do \
@@ -751,9 +515,6 @@ typedef HFI_U32 HFI_BOOL;
 	_size = HFI_ALIGN((SIZE_SLIST_BUF_H264 * NUM_SLIST_BUF_H264 + \
 	NUM_HW_PIC_BUF * SIZE_SEI_USERDATA), VENUS_DMA_ALIGNMENT)
 
-/*
- * H265d internal buffer definition
- */
 #define LCU_MAX_SIZE_PELS 64
 #define LCU_MIN_SIZE_PELS 16
 
@@ -841,7 +602,6 @@ typedef HFI_U32 HFI_BOOL;
 
 #define HDR10_HIST_EXTRADATA_SIZE (4 * 1024)
 
-/* c2 divide this into NON_COMV and LINE */
 #define HFI_BUFFER_NON_COMV_H265D(_size, frame_width, frame_height, \
 				num_vpp_pipes) \
 	do \
@@ -903,10 +663,7 @@ typedef HFI_U32 HFI_BOOL;
 
 #define H265_CABAC_HDR_RATIO_HD_TOT 2
 #define H265_CABAC_RES_RATIO_HD_TOT 2
-/*
- * some content need more bin buffer,
- * but limit buffer size for high resolution
- */
+
 #define SIZE_H265D_HW_BIN_BUFFER(_size, frame_width, frame_height, \
 				delay, num_vpp_pipes)    \
 	do                                        \
@@ -959,9 +716,6 @@ typedef HFI_U32 HFI_BOOL;
 	H265_NUM_TILE * sizeof(HFI_U32) + NUM_HW_PIC_BUF * SIZE_SEI_USERDATA),\
 	VENUS_DMA_ALIGNMENT)
 
-/*
- * VPxd internal buffer definition
- */
 #define SIZE_VPXD_LB_FE_LEFT_CTRL(frame_width, frame_height)   \
 	MAX(((frame_height + 15) >> 4) * \
 	MAX_FE_NBR_CTRL_LCU16_LINE_BUFFER_SIZE, \
@@ -969,7 +723,7 @@ typedef HFI_U32 HFI_BOOL;
 	MAX_FE_NBR_CTRL_LCU32_LINE_BUFFER_SIZE, \
 	((frame_height + 63) >> 6) * MAX_FE_NBR_CTRL_LCU64_LINE_BUFFER_SIZE))
 #define SIZE_VPXD_LB_FE_TOP_CTRL(frame_width, frame_height) \
-	(((HFI_ALIGN(frame_width, 64) + 8) * 10 * 2)) /* + small line */
+	(((HFI_ALIGN(frame_width, 64) + 8) * 10 * 2))
 #define SIZE_VPXD_LB_SE_TOP_CTRL(frame_width, frame_height) \
 	(((frame_width + 15) >> 4) * MAX_FE_NBR_CTRL_LCU16_LINE_BUFFER_SIZE)
 #define SIZE_VPXD_LB_SE_LEFT_CTRL(frame_width, frame_height)  \
@@ -994,7 +748,6 @@ typedef HFI_U32 HFI_BOOL;
 #define SIZE_VP9D_LB_VSP_TOP(frame_width, frame_height) \
 	((((HFI_ALIGN(HFI_ALIGN(frame_width, 8), 64) >> 6) * 64 * 8) + 256))
 
-/* sizeof(VP9_COL_MV_BUFFER) */
 #define HFI_IRIS2_VP9D_COMV_SIZE \
 	((((8192 + 63) >> 6) * ((4320 + 63) >> 6) * 8 * 8 * 2 * 8))
 
@@ -1019,9 +772,6 @@ typedef HFI_U32 HFI_BOOL;
 		VENUS_DMA_ALIGNMENT); \
 	} while (0)
 
-/* _yuv_bufcount_min = MAX(Min YUV Buffer count,
- * (HFI_PROPERTY_PARAM_VDEC_VPP_DELAY + 1))
- */
 #define HFI_BUFFER_LINE_VP9D(_size, frame_width, frame_height, \
 		_yuv_bufcount_min, is_opb, num_vpp_pipes) \
 	do                                                \
@@ -1051,7 +801,6 @@ typedef HFI_U32 HFI_BOOL;
 		HFI_ALIGN(frame_height, BUFFER_ALIGNMENT_16_BYTES) * 3 / 2;  \
 		if (!is_interlaced)  \
 		{               \
-			/* binbuffer1_size + binbufer2_size */   \
 			_size = HFI_ALIGN(((MAX(_size_yuv, \
 			((BIN_BUFFER_THRESHOLD * 3) >> 1)) * \
 			VPX_DECODER_FRAME_BIN_HDR_BUDGET_RATIO * \
@@ -1085,9 +834,6 @@ typedef HFI_U32 HFI_BOOL;
 	VENUS_DMA_ALIGNMENT) + HFI_ALIGN(VP9_NUM_FRAME_INFO_BUF * \
 	CCE_TILE_OFFSET_SIZE, VENUS_DMA_ALIGNMENT)
 
-/*
- * MP2d internal buffer definition
- */
 #define HFI_BUFFER_LINE_MP2D(_size, frame_width, frame_height, \
 _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 	do                                                \
@@ -1123,13 +869,6 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 #define HFI_BUFFER_PERSIST_MP2D(_size) \
 	_size = QMATRIX_SIZE + MP2D_QPDUMP_SIZE;
 
-/* Begin of IRIS2 Encoder */
-
-/*
- * Encoder Output Bitstream Buffer definition
- * To match with driver Calculation,
- * the output bitstream = YUV/4 for larger than 4K size.
- */
 #define HFI_BUFFER_BITSTREAM_ENC(size, frame_width, frame_height, \
 			rc_type, is_ten_bit) \
 	do \
@@ -1177,9 +916,6 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 					height_in_lcus * 2 + 256; \
 	} while (0)
 
-/*
- * Encoder Input Extradata Buffer definition
- */
 #define HFI_BUFFER_INPUT_METADATA_ENC(size, frame_width, frame_height, \
 				is_roi_enabled, lcu_size) \
 	do \
@@ -1216,9 +952,6 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 		size = 204800; \
 	} while (0)
 
-/*
- * Encoder Scratch Buffer definition
- */
 #define HFI_MAX_COL_FRAME 6
 #define HFI_VENUS_VENC_TRE_WB_BUFF_SIZE (65 << 4) // bytes
 #define HFI_VENUS_VENC_DB_LINE_BUFF_PER_MB 512
@@ -1233,11 +966,6 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 #define SYSTEM_LAL_TILE10 192
 #endif
 
-/*
- * Host uses following macro to calculate num_ref for encoder
- * Here: _total_hp_layers = HFI_PROPERTY_PARAM_VENC_HIER_P_MAX_NUM_ENH_LAYER + 1
- * Here: _total_hb_layers = HFI_PROPERTY_PARAM_VENC_HIER_B_MAX_NUM_ENH_LAYER + 1
- */
 #define HFI_IRIS2_ENC_RECON_BUF_COUNT(num_recon, n_bframe, ltr_count, \
 		_total_hp_layers, _total_hb_layers, hybrid_hp, codec_standard) \
 	do \
@@ -1245,32 +973,28 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 		HFI_U32 num_ref = 1; \
 		if (n_bframe) \
 			num_ref = 2; \
-		if (ltr_count) \
-			/* B and LTR can't be at same time */\
-			num_ref = num_ref + ltr_count; \
-		if (_total_hp_layers) \
+		if (_total_hp_layers > 1) \
 		{ \
 			if (hybrid_hp) \
-			/* LTR and B-frame not supported with hybrid HP */\
-				num_ref = (_total_hp_layers - 1);  \
-			if (codec_standard == HFI_CODEC_ENCODE_HEVC) \
-				num_ref = (_total_hp_layers + 1) / 2 + \
-					ltr_count; \
+				num_ref = (_total_hp_layers + 1) >> 1; \
+			else if (codec_standard == HFI_CODEC_ENCODE_HEVC) \
+				num_ref = (_total_hp_layers + 1) >> 1; \
 			else if (codec_standard == HFI_CODEC_ENCODE_AVC && \
-					_total_hp_layers <= 4) \
-				num_ref = (2 ^ (_total_hp_layers - 1)) - 1 + \
-					ltr_count; \
+				_total_hp_layers < 4) \
+				num_ref = (_total_hp_layers - 1);  \
 			else \
-			/* AVC normal HP and TotalHPLayer>4.*/ \
-			/* This is NPOR. uses MMCO. */ \
-				num_ref = (_total_hp_layers + 1) / 2 + \
-					ltr_count; \
+				num_ref = _total_hp_layers; \
 		} \
-		if (_total_hb_layers >= 2) \
+		if (ltr_count) \
+			num_ref = num_ref + ltr_count; \
+		if (_total_hb_layers > 1) \
 		{ \
-			num_ref = (2 ^ (_total_hb_layers - 1)) / 2 + 1; \
+			if (codec_standard == HFI_CODEC_ENCODE_HEVC) \
+				num_ref = (_total_hb_layers); \
+			else if (codec_standard == HFI_CODEC_ENCODE_AVC) \
+				num_ref = (1 << (_total_hb_layers - 2)) + 1; \
 		} \
-        num_recon = num_ref + 1; \
+		num_recon = num_ref + 1; \
 	} while (0)
 
 #define SIZE_BIN_BITSTREAM_ENC(_size, rc_type, frame_width, frame_height, \
@@ -1285,22 +1009,29 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 		{ \
 			if ((rc_type == HFI_RC_CQ) || (rc_type == HFI_RC_OFF)) \
 			{ \
-				bitstream_size_eval = (((size_aligned_width)* (size_aligned_height)* 3) >> 1); \
+				bitstream_size_eval = (((size_aligned_width) * \
+							(size_aligned_height) * 3) >> 1); \
 			} \
 			else \
 			{ \
-				bitstream_size_eval = (((size_aligned_width) * \
-					(size_aligned_height)*3 * 5) >> 2); \
-				if (size_aligned_width * size_aligned_height > \
+				bitstream_size_eval = ((size_aligned_width) * \
+							(size_aligned_height) * 3); \
+				if (rc_type == HFI_RC_LOSSLESS) \
+				{ \
+					bitstream_size_eval = (bitstream_size_eval * 3 >> 2); \
+				} \
+				else if ((size_aligned_width * size_aligned_height) > \
 					(4096 * 2176)) \
 				{ \
-					bitstream_size_eval = \
-						(bitstream_size_eval >> 3); \
+					bitstream_size_eval >>= 3; \
 				} \
-				else if (size_aligned_width * size_aligned_height > (352 * 288 * 4)) \
+				else if ((size_aligned_width * size_aligned_height) > (480 * 320)) \
 				{ \
-					bitstream_size_eval = \
-						(bitstream_size_eval >> 2); \
+					bitstream_size_eval >>= 2; \
+				} \
+				if (lcu_size == 32) \
+				{ \
+					bitstream_size_eval = (bitstream_size_eval * 5 >> 2); \
 				} \
 			} \
 		} \
@@ -1312,13 +1043,32 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 		_size = HFI_ALIGN(bitstream_size_eval, VENUS_DMA_ALIGNMENT); \
 	} while (0)
 
-#define SIZE_ENC_SINGLE_PIPE(size, bitbin_size, num_vpp_pipes, \
-					frame_height, frame_width) \
+#define SIZE_ENC_SINGLE_PIPE(size, rc_type, bitbin_size, num_vpp_pipes, \
+			frame_width, frame_height, lcu_size) \
 	do \
 	{ \
 		HFI_U32 size_single_pipe_eval = 0, sao_bin_buffer_size = 0, \
 			_padded_bin_sz = 0; \
-		if (num_vpp_pipes > 2) \
+		HFI_U32 size_aligned_width = 0, size_aligned_height = 0; \
+		size_aligned_width = HFI_ALIGN((frame_width), lcu_size); \
+		size_aligned_height = HFI_ALIGN((frame_height), lcu_size); \
+		if ((size_aligned_width * size_aligned_height) > \
+			(3840 * 2160)) \
+		{ \
+			if (num_vpp_pipes == 4) \
+			{ \
+				size_single_pipe_eval = bitbin_size / 4; \
+			} \
+			else if (num_vpp_pipes == 2) \
+			{ \
+				size_single_pipe_eval = bitbin_size / 2; \
+			} \
+			else if (num_vpp_pipes == 1) \
+			{ \
+				size_single_pipe_eval = bitbin_size; \
+			} \
+		} \
+		else if (num_vpp_pipes > 2) \
 		{ \
 			size_single_pipe_eval = bitbin_size / 2; \
 		} \
@@ -1326,8 +1076,10 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 		{ \
 			size_single_pipe_eval = bitbin_size; \
 		} \
-		size_single_pipe_eval = HFI_ALIGN(size_single_pipe_eval, \
-				VENUS_DMA_ALIGNMENT); \
+		if (rc_type == HFI_RC_LOSSLESS) \
+		{ \
+			size_single_pipe_eval = (size_single_pipe_eval << 1); \
+		} \
 		sao_bin_buffer_size = (64 * ((((frame_width) + \
 				BUFFER_ALIGNMENT_32_BYTES) * ((frame_height) +\
 				BUFFER_ALIGNMENT_32_BYTES)) >> 10)) + 384; \
@@ -1354,13 +1106,13 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 			bitbin_size = HFI_ALIGN(bitbin_size, \
 				VENUS_DMA_ALIGNMENT); \
 		} \
-		else \
+		else if ((lcu_size == 16) || (num_vpp_pipes > 1)) \
 		{ \
 			total_bitbin_buffers = 1; \
 			bitbin_size = bitstream_size; \
 		} \
-		SIZE_ENC_SINGLE_PIPE(size_single_pipe, bitbin_size, \
-			num_vpp_pipes, frame_height, frame_width); \
+		SIZE_ENC_SINGLE_PIPE(size_single_pipe, rc_type, bitbin_size, \
+			num_vpp_pipes, frame_width, frame_height, lcu_size); \
 		bitbin_size = size_single_pipe * num_vpp_pipes; \
 		_size = HFI_ALIGN(bitbin_size, VENUS_DMA_ALIGNMENT) * \
 				total_bitbin_buffers + 512; \
@@ -1484,11 +1236,11 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 		_size = (standard == HFI_CODEC_ENCODE_HEVC) ? (256 + 16 * \
 			(14 + ((((frame_height_coded) >> 5) + 7) >> 3))) : \
 			(256 + 16 * (14 + ((((frame_height_coded) >> 4) + 7) >> 3))); \
-		_size *= 6; /* multiply by max numtilescol */ \
+		_size *= 6; \
 		if (num_vpp_pipes_enc > 1) \
 		{ \
-			_size = HFI_ALIGN(_size, VENUS_DMA_ALIGNMENT) \
-				* num_vpp_pipes_enc;\
+			_size = HFI_ALIGN(_size, VENUS_DMA_ALIGNMENT) * \
+					num_vpp_pipes_enc;\
 		} \
 		_size = HFI_ALIGN(_size, BUFFER_ALIGNMENT_512_BYTES) * \
 				HFI_MAX_COL_FRAME; \
@@ -1606,7 +1358,7 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 	} while (0)
 
 #define HFI_BUFFER_COMV_ENC(_size, frame_width, frame_height, lcu_size, \
-			num_ref, standard) \
+			num_recon, standard) \
 	do \
 	{ \
 		HFI_U32 size_colloc_mv = 0, size_colloc_rc = 0; \
@@ -1622,25 +1374,25 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 		(3 * 16 * (width_in_lcus * height_in_lcus +\
 		BUFFER_ALIGNMENT_32_BYTES)); \
 		size_colloc_mv = HFI_ALIGN(size_colloc_mv, \
-		VENUS_DMA_ALIGNMENT) * (num_ref + 1); \
+		VENUS_DMA_ALIGNMENT) * num_recon; \
 		size_colloc_rc = (((mb_width + 7) >> 3) * 16 * 2 * mb_height); \
 		size_colloc_rc = HFI_ALIGN(size_colloc_rc, \
 		VENUS_DMA_ALIGNMENT) * HFI_MAX_COL_FRAME; \
 		_size = size_colloc_mv + size_colloc_rc; \
 	} while (0)
 
-#define HFI_BUFFER_COMV_H264E(_size, frame_width, frame_height, num_ref) \
+#define HFI_BUFFER_COMV_H264E(_size, frame_width, frame_height, num_recon) \
 	do \
 	{ \
 		HFI_BUFFER_COMV_ENC(_size, frame_width, frame_height, 16, \
-			num_ref, HFI_CODEC_ENCODE_AVC); \
+			num_recon, HFI_CODEC_ENCODE_AVC); \
 	} while (0)
 
-#define HFI_BUFFER_COMV_H265E(_size, frame_width, frame_height, num_ref) \
+#define HFI_BUFFER_COMV_H265E(_size, frame_width, frame_height, num_recon) \
 	do \
 	{ \
 		HFI_BUFFER_COMV_ENC(_size, frame_width, frame_height, 32,\
-			num_ref, HFI_CODEC_ENCODE_HEVC); \
+			num_recon, HFI_CODEC_ENCODE_HEVC); \
 	} while (0)
 
 #define HFI_BUFFER_NON_COMV_ENC(_size, frame_width, frame_height, \
@@ -1737,9 +1489,6 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 		size = ref_buf_size; \
 	} while (0)
 
-/*
- * Encoder Scratch2 Buffer definition
- */
 #define HFI_BUFFER_DPB_ENC(_size, frame_width, frame_height, is_ten_bit) \
 	do \
 	{ \
@@ -1822,5 +1571,4 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 		} \
 	} while (0)
 
-/* End of IRIS2 */
 #endif /* __HFI_BUFFER_IRIS2__ */
