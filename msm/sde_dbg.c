@@ -259,7 +259,7 @@ struct sde_dbg_regbuf {
  * @vbif_dbgbus_dump_idx: index for tracking vbif dumps in hw recovery
  * @hw_ownership: indicates if the VM owns the HW resources
  */
-static struct sde_dbg_base {
+struct sde_dbg_base {
 	struct sde_dbg_evtlog *evtlog;
 	struct sde_dbg_reglog *reglog;
 	struct list_head reg_base_list;
