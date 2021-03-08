@@ -1741,6 +1741,9 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 	/* Get last digit from HEX format */
 	dev_index = (int)((char)(pdev->addr & 0xF));
 
+	if (of_device_is_compatible(pdev->dev.of_node, "qcom,wsa883x_2"))
+		dev_index += 2;
+
 	snprintf(buffer, sizeof(buffer), "wsa-codec.%d", dev_index);
 	wsa883x->driver->name = kstrndup(buffer, strlen(buffer), GFP_KERNEL);
 
