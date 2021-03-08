@@ -418,9 +418,9 @@ static void lim_process_sae_auth_frame(struct mac_context *mac_ctx,
 	body_ptr = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
 	frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
 
-	pe_nofl_info("SAE Auth RX type %d subtype %d from "QDF_MAC_ADDR_FMT,
-		     mac_hdr->fc.type, mac_hdr->fc.subType,
-		     QDF_MAC_ADDR_REF(mac_hdr->sa));
+	pe_nofl_rl_info("SAE Auth RX type %d subtype %d from "QDF_MAC_ADDR_FMT,
+			mac_hdr->fc.type, mac_hdr->fc.subType,
+			QDF_MAC_ADDR_REF(mac_hdr->sa));
 
 	if (LIM_IS_STA_ROLE(pe_session) &&
 	    pe_session->limMlmState != eLIM_MLM_WT_SAE_AUTH_STATE)
@@ -1339,12 +1339,12 @@ lim_process_auth_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	}
 	auth_alg = *(uint16_t *) body_ptr;
 
-	pe_nofl_info("Auth RX: vdev %d sys role %d lim_state %d from " QDF_MAC_ADDR_FMT " rssi %d auth_alg %d seq %d",
-		     pe_session->vdev_id, GET_LIM_SYSTEM_ROLE(pe_session),
-		     pe_session->limMlmState,
-		     QDF_MAC_ADDR_REF(mac_hdr->sa),
-		     WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info),
-		     auth_alg, curr_seq_num);
+	pe_nofl_rl_info("Auth RX: vdev %d sys role %d lim_state %d from " QDF_MAC_ADDR_FMT " rssi %d auth_alg %d seq %d",
+			pe_session->vdev_id, GET_LIM_SYSTEM_ROLE(pe_session),
+			pe_session->limMlmState,
+			QDF_MAC_ADDR_REF(mac_hdr->sa),
+			WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info),
+			auth_alg, curr_seq_num);
 
 	/* Restore default failure timeout */
 	if (QDF_P2P_CLIENT_MODE == pe_session->opmode &&

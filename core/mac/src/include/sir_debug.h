@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014-2015, 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014-2015, 2017-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -56,6 +56,10 @@
 	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_PE, params)
 #define pe_nofl_debug(params...) \
 	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_PE, params)
+#define pe_nofl_rl_debug(params...) \
+	QDF_TRACE_DEBUG_RL_NO_FL(QDF_MODULE_ID_PE, params)
+#define pe_nofl_rl_info(params...) \
+	QDF_TRACE_INFO_RL_NO_FL(QDF_MODULE_ID_PE, params)
 
 #define PE_ENTER() QDF_TRACE_ENTER(QDF_MODULE_ID_PE, "enter")
 #define PE_EXIT() QDF_TRACE_EXIT(QDF_MODULE_ID_PE, "exit")
