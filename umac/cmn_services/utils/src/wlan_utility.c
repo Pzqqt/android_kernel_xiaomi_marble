@@ -26,6 +26,7 @@
 #include <qdf_module.h>
 #include <wlan_vdev_mlme_api.h>
 #include "cfg_ucfg_api.h"
+#include <wlan_serialization_api.h>
 
 uint32_t wlan_chan_to_freq(uint8_t chan)
 {
@@ -293,13 +294,16 @@ static void wlan_vdev_down_pending(struct wlan_objmgr_pdev *pdev,
 	unsigned long *vdev_id_map = (unsigned long *)arg;
 	uint8_t id = 0;
 	struct wlan_objmgr_psoc *psoc;
+	enum wlan_serialization_cmd_type cmd_type;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	if (!psoc)
 		return;
 
+	cmd_type = wlan_serialization_get_vdev_active_cmd_type(vdev);
 	wlan_vdev_obj_lock(vdev);
-	if (wlan_vdev_mlme_is_init_state(vdev) != QDF_STATUS_SUCCESS) {
+	if ((wlan_vdev_mlme_is_init_state(vdev) != QDF_STATUS_SUCCESS) ||
+	    (cmd_type == WLAN_SER_CMD_VDEV_START_BSS)) {
 		id = wlan_vdev_get_id(vdev);
 		/* Invalid vdev id */
 		if (id >= wlan_psoc_get_max_vdev_count(psoc)) {
@@ -319,6 +323,7 @@ static void wlan_vdev_ap_down_pending(struct wlan_objmgr_pdev *pdev,
 	unsigned long *vdev_id_map = (unsigned long *)arg;
 	uint8_t id = 0;
 	struct wlan_objmgr_psoc *psoc;
+	enum wlan_serialization_cmd_type cmd_type;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	if (!psoc)
@@ -327,8 +332,10 @@ static void wlan_vdev_ap_down_pending(struct wlan_objmgr_pdev *pdev,
 	if (wlan_vdev_mlme_get_opmode(vdev) != QDF_SAP_MODE)
 		return;
 
+	cmd_type = wlan_serialization_get_vdev_active_cmd_type(vdev);
 	wlan_vdev_obj_lock(vdev);
-	if (wlan_vdev_mlme_is_init_state(vdev) != QDF_STATUS_SUCCESS) {
+	if ((wlan_vdev_mlme_is_init_state(vdev) != QDF_STATUS_SUCCESS) ||
+	    (cmd_type == WLAN_SER_CMD_VDEV_START_BSS)) {
 		id = wlan_vdev_get_id(vdev);
 		/* Invalid vdev id */
 		if (id >= wlan_psoc_get_max_vdev_count(psoc)) {
