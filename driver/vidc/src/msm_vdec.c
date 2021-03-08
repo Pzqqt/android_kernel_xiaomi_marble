@@ -53,9 +53,14 @@ u32 msm_vdec_subscribe_for_psc_vp9[] = {
 	HFI_PROP_LEVEL,
 };
 
-u32 msm_vdec_subscribe_for_properties[] = {
+u32 msm_vdec_input_subscribe_for_properties[] = {
 	HFI_PROP_NO_OUTPUT,
 	HFI_PROP_CABAC_SESSION,
+};
+
+u32 msm_vdec_output_subscribe_for_properties[] = {
+	HFI_PROP_WORST_COMPRESSION_RATIO,
+	HFI_PROP_WORST_COMPLEXITY_FACTOR,
 };
 
 static int msm_vdec_codec_change(struct msm_vidc_inst *inst, u32 v4l2_codec)
@@ -1105,6 +1110,7 @@ static int msm_vdec_subscribe_property(struct msm_vidc_inst *inst,
 	struct msm_vidc_core *core;
 	u32 payload[32] = {0};
 	u32 i;
+	u32 payload_size = 0;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1114,16 +1120,30 @@ static int msm_vdec_subscribe_property(struct msm_vidc_inst *inst,
 	i_vpr_h(inst, "%s()\n", __func__);
 
 	payload[0] = HFI_MODE_PROPERTY;
-	for (i = 0; i < ARRAY_SIZE(msm_vdec_subscribe_for_properties); i++)
-		payload[i + 1] = msm_vdec_subscribe_for_properties[i];
+
+	if (port == INPUT_PORT) {
+		for (i = 0; i < ARRAY_SIZE(msm_vdec_input_subscribe_for_properties); i++)
+			payload[i + 1] = msm_vdec_input_subscribe_for_properties[i];
+		payload_size = (ARRAY_SIZE(msm_vdec_input_subscribe_for_properties) + 1) *
+			sizeof(u32);
+	}
+	else if (port == OUTPUT_PORT) {
+		for (i = 0; i < ARRAY_SIZE(msm_vdec_output_subscribe_for_properties); i++)
+			payload[i + 1] = msm_vdec_output_subscribe_for_properties[i];
+		payload_size = (ARRAY_SIZE(msm_vdec_output_subscribe_for_properties) + 1) *
+			sizeof(u32);
+	}
+	else {
+		i_vpr_e(inst, "%s: invalid port: %d\n", __func__, port);
+		return -EINVAL;
+	}
 
 	rc = venus_hfi_session_command(inst,
 			HFI_CMD_SUBSCRIBE_MODE,
 			port,
 			HFI_PAYLOAD_U32_ARRAY,
 			&payload[0],
-			(ARRAY_SIZE(msm_vdec_subscribe_for_properties) + 1) *
-			sizeof(u32));
+			payload_size);
 
 	return rc;
 }
@@ -1764,6 +1784,10 @@ int msm_vdec_streamon_output(struct msm_vidc_inst *inst)
 			goto error;
 		inst->opsc_properties_set = true;
 	}
+
+	rc = msm_vdec_subscribe_property(inst, OUTPUT_PORT);
+	if (rc)
+		return rc;
 
 	rc = msm_vdec_subscribe_metadata(inst, OUTPUT_PORT);
 	if (rc)

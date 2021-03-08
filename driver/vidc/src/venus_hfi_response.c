@@ -1171,6 +1171,12 @@ static int handle_session_property(struct msm_vidc_inst *inst,
 		}
 		inst->hfi_frame_info.no_output = 1;
 		break;
+	case HFI_PROP_WORST_COMPRESSION_RATIO:
+		inst->power.fw_cr = payload_ptr[0];
+		break;
+	case HFI_PROP_WORST_COMPLEXITY_FACTOR:
+		inst->power.fw_cf = payload_ptr[0];
+		break;
 	default:
 		i_vpr_e(inst, "%s: invalid port settings property %#x\n",
 			__func__, pkt->type);

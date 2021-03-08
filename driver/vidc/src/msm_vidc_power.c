@@ -14,6 +14,7 @@
 #include "msm_vidc_buffer.h"
 #include "venus_hfi.h"
 
+/* Q16 Format */
 #define MSM_VIDC_MIN_UBWC_COMPLEXITY_FACTOR (1 << 16)
 #define MSM_VIDC_MAX_UBWC_COMPLEXITY_FACTOR (4 << 16)
 #define MSM_VIDC_MIN_UBWC_COMPRESSION_RATIO (1 << 16)
@@ -123,17 +124,12 @@ static int fill_dynamic_stats(struct msm_vidc_inst *inst,
 	u32 min_input_cr = MSM_VIDC_MAX_UBWC_COMPRESSION_RATIO;
 	u32 min_cr = MSM_VIDC_MAX_UBWC_COMPRESSION_RATIO;
 
-	/* TODO: get ubwc stats from firmware
-	if (inst->core->resources.ubwc_stats_in_fbd == 1) {
-		mutex_lock(&inst->ubwc_stats_lock);
-		if (inst->ubwc_stats.is_valid == 1) {
-			min_cr = inst->ubwc_stats.worst_cr;
-			max_cf = inst->ubwc_stats.worst_cf;
-			min_input_cr = inst->ubwc_stats.worst_cr;
-		}
-		mutex_unlock(&inst->ubwc_stats_lock);
-	}
-	*/
+	/* TODO: get ubwc stats from firmware */
+	min_cr = inst->power.fw_cr;
+	max_cf = inst->power.fw_cf;
+	max_cf = max_cf / ((msm_vidc_get_mbs_per_frame(inst)) / (32 * 8) * 3) / 2;
+	// Todo: min_input_cr = 0;
+
 	/* Sanitize CF values from HW */
 	max_cf = min_t(u32, max_cf, MSM_VIDC_MAX_UBWC_COMPLEXITY_FACTOR);
 	min_cf = max_t(u32, min_cf, MSM_VIDC_MIN_UBWC_COMPLEXITY_FACTOR);
@@ -605,7 +601,8 @@ void msm_vidc_power_data_reset(struct msm_vidc_inst *inst)
 	msm_vidc_dcvs_data_reset(inst);
 
 	inst->power.buffer_counter = 0;
-	//inst->ubwc_stats.is_valid = 0; TODO: fix it
+	inst->power.fw_cr = 0;
+	inst->power.fw_cf = INT_MAX;
 
 	rc = msm_vidc_scale_power(inst, true);
 	if (rc)

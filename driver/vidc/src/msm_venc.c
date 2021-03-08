@@ -39,6 +39,7 @@ u32 msm_venc_input_subscribe_for_properties[] = {
 u32 msm_venc_output_subscribe_for_properties[] = {
 	HFI_PROP_PICTURE_TYPE,
 	HFI_PROP_BUFFER_MARK,
+	HFI_PROP_WORST_COMPRESSION_RATIO,
 };
 
 static int msm_venc_codec_change(struct msm_vidc_inst *inst, u32 v4l2_codec)
