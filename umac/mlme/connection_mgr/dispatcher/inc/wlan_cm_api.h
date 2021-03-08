@@ -25,6 +25,7 @@
 
 #ifdef FEATURE_CM_ENABLE
 #include "wlan_cm_public_struct.h"
+#include "wlan_ext_mlme_obj_types.h"
 
 /**
  * wlan_cm_start_connect() - connect start request
@@ -336,6 +337,14 @@ const char *wlan_cm_reason_code_to_str(enum wlan_reason_code reason);
  */
 enum wlan_cm_active_request_type
 wlan_cm_get_active_req_type(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * wlan_cm_get_ext_hdl() - Get connection manager ext context from vdev
+ * @vdev: vdev pointer
+ *
+ * Return: pointer to connection manager ext context
+ */
+cm_ext_t *wlan_cm_get_ext_hdl(struct wlan_objmgr_vdev *vdev);
 
 #ifdef WLAN_FEATURE_HOST_ROAM
 /**

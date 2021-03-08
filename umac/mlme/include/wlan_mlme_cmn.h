@@ -169,8 +169,10 @@ struct mlme_ext_ops {
 				struct wlan_objmgr_psoc *psoc,
 				struct multi_vdev_restart_resp *resp);
 #ifdef FEATURE_CM_ENABLE
-	QDF_STATUS (*mlme_cm_ext_hdl_create_cb)(struct cnx_mgr *cm_ctx);
-	QDF_STATUS (*mlme_cm_ext_hdl_destroy_cb)(struct cnx_mgr *cm_ctx);
+	QDF_STATUS (*mlme_cm_ext_hdl_create_cb)(struct wlan_objmgr_vdev *vdev,
+						cm_ext_t **ext_cm_ptr);
+	QDF_STATUS (*mlme_cm_ext_hdl_destroy_cb)(struct wlan_objmgr_vdev *vdev,
+						 cm_ext_t *ext_cm_ptr);
 	QDF_STATUS (*mlme_cm_ext_connect_start_ind_cb)(
 				struct wlan_objmgr_vdev *vdev,
 				struct wlan_cm_connect_req *req);
@@ -407,20 +409,24 @@ QDF_STATUS mlme_vdev_ops_ext_hdl_delete_rsp(struct wlan_objmgr_psoc *psoc,
 /**
  * mlme_cm_ext_hdl_create() - Connection manager callback to create ext
  * context
- * @cm_ctx: common cm context object
+ * @vdev: VDEV object
+ * @ext_cm_ptr: pointer to connection manager ext pointer
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS mlme_cm_ext_hdl_create(struct cnx_mgr *cm_ctx);
+QDF_STATUS mlme_cm_ext_hdl_create(struct wlan_objmgr_vdev *vdev,
+				  cm_ext_t **ext_cm_ptr);
 
 /**
  * mlme_cm_ext_hdl_destroy() - Connection manager callback to destroy ext
  * context
- * @cm_ctx: common cm context object
+ * @vdev: VDEV object
+ * @ext_cm_ptr: connection manager ext pointer
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS mlme_cm_ext_hdl_destroy(struct cnx_mgr *cm_ctx);
+QDF_STATUS mlme_cm_ext_hdl_destroy(struct wlan_objmgr_vdev *vdev,
+				   cm_ext_t *ext_cm_ptr);
 
 /**
  * mlme_cm_connect_start_ind() - Connection manager ext Connect start indication
