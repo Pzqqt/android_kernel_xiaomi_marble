@@ -1539,6 +1539,9 @@ struct hdd_adapter {
 	/* Flag to indicate whether it is a pre cac adapter or not */
 	bool is_pre_cac_adapter;
 	bool delete_in_progress;
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+	struct big_data_stats_event big_data_stats;
+#endif
 };
 
 #define WLAN_HDD_GET_STATION_CTX_PTR(adapter) (&(adapter)->session.station)

@@ -30,6 +30,10 @@
 #include "wlan_osif_request_manager.h"
 #include "wlan_objmgr_peer_obj.h"
 #include "wlan_mlme_twt_ucfg_api.h"
+#include "cds_utils.h"
+#include "wlan_hdd_main.h"
+#include "wlan_hdd_stats.h"
+
 
 /* max time in ms, caller may wait for stats request get serviced */
 #define CP_STATS_WAIT_TIME_STAT 800
@@ -489,6 +493,34 @@ get_peer_rssi_fail:
 
 	return NULL;
 }
+
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+static void get_big_data_stats_cb(struct big_data_stats_event *ev, void *cookie)
+{
+	struct big_data_stats_event *priv;
+	struct osif_request *request;
+
+	request = osif_request_get(cookie);
+	if (!request) {
+		osif_err("Obsolete request");
+		return;
+	}
+
+	priv = osif_request_priv(request);
+	priv->tsf_out_of_sync = ev->tsf_out_of_sync;
+	priv->vdev_id = ev->vdev_id;
+	priv->ani_level = ev->ani_level;
+
+	priv->last_data_tx_pwr = ev->last_data_tx_pwr;
+	priv->target_power_dsss = ev->target_power_dsss;
+	priv->target_power_ofdm = ev->target_power_ofdm;
+	priv->last_tx_data_rix = ev->last_tx_data_rix;
+	priv->last_tx_data_rate_kbps = ev->last_tx_data_rate_kbps;
+
+	osif_request_complete(request);
+	osif_request_put(request);
+}
+#endif
 
 /**
  * get_station_stats_cb() - get_station_stats_cb callback function
@@ -1011,6 +1043,97 @@ get_station_stats_fail:
 	return NULL;
 }
 
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+struct big_data_stats_event *
+wlan_cfg80211_mc_cp_get_big_data_stats(struct wlan_objmgr_vdev *vdev,
+				       int *errno)
+{
+	void *cookie;
+	QDF_STATUS status;
+	struct big_data_stats_event *priv, *out;
+	struct hdd_context *hdd_ctx = NULL;
+	struct osif_request *request;
+	struct request_info info = {0};
+	struct request_info last_req = {0};
+	bool pending = false;
+
+	static const struct osif_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = 2 * CP_STATS_WAIT_TIME_STAT,
+	};
+
+	osif_debug("Enter");
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (wlan_hdd_validate_context(hdd_ctx))
+		return NULL;
+
+	out = qdf_mem_malloc(sizeof(*out));
+	if (!out)
+		return NULL;
+
+	request = osif_request_alloc(&params);
+	if (!request) {
+		qdf_mem_free(out);
+		return NULL;
+	}
+
+	cookie = osif_request_cookie(request);
+	priv = osif_request_priv(request);
+	info.cookie = cookie;
+	info.u.get_big_data_stats_cb = get_big_data_stats_cb;
+	info.vdev_id = wlan_vdev_get_id(vdev);
+	info.pdev_id = wlan_objmgr_pdev_get_pdev_id(wlan_vdev_get_pdev(vdev));
+
+	status = ucfg_send_big_data_stats_request(vdev,
+						  TYPE_BIG_DATA_STATS,
+						  &info);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		osif_err("Failed to send stats request status: %d", status);
+		*errno = qdf_status_to_os_return(status);
+		goto get_station_stats_fail;
+	}
+
+	*errno = osif_request_wait_for_response(request);
+	if (*errno) {
+		osif_err("wait failed or timed out ret: %d", *errno);
+		ucfg_mc_cp_stats_reset_pending_req(hdd_ctx->psoc,
+						   TYPE_BIG_DATA_STATS,
+						   &last_req, &pending);
+		goto get_station_stats_fail;
+	}
+
+	osif_debug("vdev_id: %d tsf_out_of_sync: %d ani_level: %d tx_pwr_last_data_frm: %d target_power_dsss: %d target_power_ofdm: %d rix_last_data_frm: %d tx_rate_last_data_frm: %d",
+		   priv->vdev_id,
+		   priv->tsf_out_of_sync, priv->ani_level,
+		   priv->last_data_tx_pwr, priv->target_power_dsss,
+		   priv->target_power_ofdm, priv->last_tx_data_rix,
+		   priv->last_tx_data_rate_kbps);
+
+	out->vdev_id = priv->vdev_id;
+	out->tsf_out_of_sync = priv->tsf_out_of_sync;
+	out->ani_level = priv->ani_level;
+	out->last_data_tx_pwr = priv->last_data_tx_pwr;
+	out->target_power_dsss = priv->target_power_dsss;
+	out->target_power_ofdm = priv->target_power_ofdm;
+	out->last_tx_data_rix = priv->last_tx_data_rix;
+	out->last_tx_data_rate_kbps = priv->last_tx_data_rate_kbps;
+	osif_request_put(request);
+
+	osif_debug("Exit");
+
+	return out;
+
+get_station_stats_fail:
+	osif_request_put(request);
+	wlan_cfg80211_mc_cp_stats_free_big_data_stats_event(out);
+
+	osif_debug("Exit");
+
+	return NULL;
+}
+#endif
+
 #ifdef WLAN_FEATURE_MIB_STATS
 /**
  * get_mib_stats_cb() - get mib stats from fw callback function
@@ -1334,3 +1457,15 @@ void wlan_cfg80211_mc_cp_stats_free_stats_event(struct stats_event *stats)
 	qdf_mem_free(stats->peer_stats_info_ext);
 	qdf_mem_free(stats);
 }
+
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+void
+wlan_cfg80211_mc_cp_stats_free_big_data_stats_event(
+					struct big_data_stats_event *stats)
+{
+	if (!stats)
+		return;
+
+	qdf_mem_free(stats);
+}
+#endif

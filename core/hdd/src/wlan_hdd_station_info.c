@@ -1789,6 +1789,36 @@ static int hdd_add_pmf_bcn_protect_stats(struct sk_buff *skb,
 	return 0;
 }
 
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+/**
+ * hdd_big_data_pack_resp_nlmsg() - pack big data nl resp msg
+ * @skb: pointer to response skb buffer
+ * @adapter: adapter holding big data stats
+ * @hdd_ctx: hdd context
+ *
+ * This function adds big data stats in response.
+ *
+ * Return: 0 on success
+ */
+static int
+hdd_big_data_pack_resp_nlmsg(struct sk_buff *skb,
+			     struct hdd_adapter *adapter,
+			     struct hdd_context *hdd_ctx)
+{
+	//add stats
+
+	return 0;
+}
+#else
+static int
+hdd_big_data_pack_resp_nlmsg(struct sk_buff *skb,
+			     struct hdd_adapter *adapter,
+			     struct hdd_context *hdd_ctx)
+{
+	return 0;
+}
+#endif
+
 /**
  * hdd_add_connect_fail_reason_code() - Fills connect fail reason code
  * @skb: pointer to skb
@@ -2050,11 +2080,23 @@ static int hdd_get_station_info_ex(struct hdd_context *hdd_ctx,
 	struct sk_buff *skb;
 	uint32_t nl_buf_len, connect_fail_rsn_len;
 	struct hdd_station_ctx *hdd_sta_ctx;
+	bool big_data_stats_req = false;
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
+	if (hdd_cm_is_disconnected(adapter))
+		big_data_stats_req = true;
+
 	if (wlan_hdd_get_station_stats(adapter))
 		hdd_err_rl("wlan_hdd_get_station_stats fail");
+
+	if (big_data_stats_req) {
+		if (wlan_hdd_get_big_data_station_stats(adapter)) {
+			hdd_err_rl("wlan_hdd_get_big_data_station_stats fail");
+			return -EINVAL;
+		}
+		// allocate memory to nl_buf_len to send data
+	}
 
 	nl_buf_len = hdd_get_pmf_bcn_protect_stats_len(adapter);
 	connect_fail_rsn_len = hdd_get_connect_fail_reason_code_len(adapter);
@@ -2064,6 +2106,7 @@ static int hdd_get_station_info_ex(struct hdd_context *hdd_ctx,
 		hdd_err_rl("Failed to get bcn pmf stats");
 		return -EINVAL;
 	}
+
 	nl_buf_len += NLMSG_HDRLEN;
 
 	skb = cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy, nl_buf_len);
@@ -2082,6 +2125,13 @@ static int hdd_get_station_info_ex(struct hdd_context *hdd_ctx,
 		if (hdd_add_connect_fail_reason_code(skb, adapter)) {
 			hdd_err_rl("hdd_add_connect_fail_reason_code fail");
 			return -ENOMEM;
+		}
+	}
+
+	if (big_data_stats_req) {
+		if (hdd_big_data_pack_resp_nlmsg(skb, adapter, hdd_ctx)) {
+			kfree_skb(skb);
+			return -EINVAL;
 		}
 	}
 
