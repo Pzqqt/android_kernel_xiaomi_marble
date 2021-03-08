@@ -3275,7 +3275,6 @@ void sde_encoder_helper_phys_disable(struct sde_encoder_phys *phys_enc,
 	struct sde_hw_dsc *hw_dsc = NULL;
 	int i;
 
-	ctl->ops.reset(ctl);
 	sde_encoder_helper_reset_mixers(phys_enc, NULL);
 
 	sde_enc = to_sde_encoder_virt(phys_enc->parent);
