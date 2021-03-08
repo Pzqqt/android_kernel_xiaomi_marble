@@ -177,6 +177,7 @@ static struct interp_sample_rate int_mix_sample_rate_val[] = {
 
 #define LPASS_CDC_WSA2_MACRO_SWR_STRING_LEN 80
 
+static int lpass_cdc_wsa2_macro_core_vote(void *handle, bool enable);
 static int lpass_cdc_wsa2_macro_hw_params(struct snd_pcm_substream *substream,
 			       struct snd_pcm_hw_params *params,
 			       struct snd_soc_dai *dai);
@@ -957,6 +958,7 @@ static int lpass_cdc_wsa2_macro_event_handler(struct snd_soc_component *componen
 		break;
 	case LPASS_CDC_MACRO_EVT_PRE_SSR_UP:
 		/* enable&disable WSA_CORE_CLK to reset GFMUX reg */
+		lpass_cdc_wsa2_macro_core_vote(wsa2_priv, true);
 		ret = lpass_cdc_clk_rsc_request_clock(wsa2_priv->dev,
 						wsa2_priv->default_clk_id,
 						WSA_CORE_CLK, true);
@@ -968,6 +970,7 @@ static int lpass_cdc_wsa2_macro_event_handler(struct snd_soc_component *componen
 			lpass_cdc_clk_rsc_request_clock(wsa2_priv->dev,
 						wsa2_priv->default_clk_id,
 						WSA_CORE_CLK, false);
+		lpass_cdc_wsa2_macro_core_vote(wsa2_priv, true);
 		break;
 	case LPASS_CDC_MACRO_EVT_SSR_UP:
 		trace_printk("%s, enter SSR up\n", __func__);
@@ -2601,6 +2604,7 @@ static void lpass_cdc_wsa2_macro_init_reg(struct snd_soc_component *component)
 
 static int lpass_cdc_wsa2_macro_core_vote(void *handle, bool enable)
 {
+	int rc = 0;
 	struct lpass_cdc_wsa2_macro_priv *wsa2_priv = (struct lpass_cdc_wsa2_macro_priv *) handle;
 
 	if (wsa2_priv == NULL) {
@@ -2609,14 +2613,15 @@ static int lpass_cdc_wsa2_macro_core_vote(void *handle, bool enable)
 	}
 	if (enable) {
 		pm_runtime_get_sync(wsa2_priv->dev);
+		if (lpass_cdc_check_core_votes(wsa2_priv->dev))
+			rc = 0;
+		else
+			rc = -ENOTSYNC;
+	} else {
 		pm_runtime_put_autosuspend(wsa2_priv->dev);
 		pm_runtime_mark_last_busy(wsa2_priv->dev);
 	}
-
-	if (lpass_cdc_check_core_votes(wsa2_priv->dev))
-		return 0;
-	else
-		return -EINVAL;
+	return rc;
 }
 
 static int wsa2_swrm_clock(void *handle, bool enable)

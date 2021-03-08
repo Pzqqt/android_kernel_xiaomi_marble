@@ -61,6 +61,7 @@ static int va_tx_unmute_delay = LPASS_CDC_VA_TX_DMIC_UNMUTE_DELAY_MS;
 module_param(va_tx_unmute_delay, int, 0664);
 MODULE_PARM_DESC(va_tx_unmute_delay, "delay to unmute the tx path");
 
+static int lpass_cdc_va_macro_core_vote(void *handle, bool enable);
 enum {
 	LPASS_CDC_VA_MACRO_AIF_INVALID = 0,
 	LPASS_CDC_VA_MACRO_AIF1_CAP,
@@ -299,6 +300,7 @@ static int lpass_cdc_va_macro_event_handler(struct snd_soc_component *component,
 		break;
 	case LPASS_CDC_MACRO_EVT_PRE_SSR_UP:
 		/* enable&disable VA_CORE_CLK to reset GFMUX reg */
+		lpass_cdc_va_macro_core_vote(va_priv, true);
 		ret = lpass_cdc_clk_rsc_request_clock(va_priv->dev,
 						va_priv->default_clk_id,
 						VA_CORE_CLK, true);
@@ -310,6 +312,7 @@ static int lpass_cdc_va_macro_event_handler(struct snd_soc_component *component,
 			lpass_cdc_clk_rsc_request_clock(va_priv->dev,
 						va_priv->default_clk_id,
 						VA_CORE_CLK, false);
+		lpass_cdc_va_macro_core_vote(va_priv, false);
 		break;
 	case LPASS_CDC_MACRO_EVT_SSR_UP:
 		trace_printk("%s, enter SSR up\n", __func__);

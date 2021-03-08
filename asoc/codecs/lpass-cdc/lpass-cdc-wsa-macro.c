@@ -177,6 +177,7 @@ static struct interp_sample_rate int_mix_sample_rate_val[] = {
 
 #define LPASS_CDC_WSA_MACRO_SWR_STRING_LEN 80
 
+static int lpass_cdc_wsa_macro_core_vote(void *handle, bool enable);
 static int lpass_cdc_wsa_macro_hw_params(struct snd_pcm_substream *substream,
 			       struct snd_pcm_hw_params *params,
 			       struct snd_soc_dai *dai);
@@ -960,6 +961,7 @@ static int lpass_cdc_wsa_macro_event_handler(struct snd_soc_component *component
 		break;
 	case LPASS_CDC_MACRO_EVT_PRE_SSR_UP:
 		/* enable&disable WSA_CORE_CLK to reset GFMUX reg */
+		lpass_cdc_wsa_macro_core_vote(wsa_priv, true);
 		ret = lpass_cdc_clk_rsc_request_clock(wsa_priv->dev,
 						wsa_priv->default_clk_id,
 						WSA_CORE_CLK, true);
@@ -971,6 +973,7 @@ static int lpass_cdc_wsa_macro_event_handler(struct snd_soc_component *component
 			lpass_cdc_clk_rsc_request_clock(wsa_priv->dev,
 						wsa_priv->default_clk_id,
 						WSA_CORE_CLK, false);
+		lpass_cdc_wsa_macro_core_vote(wsa_priv, false);
 		break;
 	case LPASS_CDC_MACRO_EVT_SSR_UP:
 		trace_printk("%s, enter SSR up\n", __func__);
