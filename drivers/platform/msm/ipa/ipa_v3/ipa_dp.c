@@ -1951,10 +1951,11 @@ int ipa3_tx_dp(enum ipa_client_type dst, struct sk_buff *skb,
 			data_idx++;
 		}
 
-		if ((network_header->version == 4 &&
+		if ((ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0) &&
+		    ((network_header->version == 4 &&
 		     network_header->protocol == IPPROTO_ICMP) ||
 		    (((struct ipv6hdr *)network_header)->version == 6 &&
-		     ((struct ipv6hdr *)network_header)->nexthdr == NEXTHDR_ICMP)) {
+		     ((struct ipv6hdr *)network_header)->nexthdr == NEXTHDR_ICMP))) {
 			ipa_imm_cmd_modify_ip_packet_init_ex_dest_pipe(
 				ipa3_ctx->pkt_init_ex_imm[ipa3_ctx->ipa_num_pipes].base,
 				dst_ep_idx);

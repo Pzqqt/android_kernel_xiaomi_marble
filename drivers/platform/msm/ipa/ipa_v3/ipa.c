@@ -6756,11 +6756,13 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 		goto fail_alloc_pkt_init;
 	}
 
-	result = ipa_alloc_pkt_init_ex();
-	if (result) {
-		IPAERR("Failed to alloc pkt_init_ex payload\n");
-		result = -ENODEV;
-		goto fail_alloc_pkt_init_ex;
+	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0) {
+		result = ipa_alloc_pkt_init_ex();
+		if (result) {
+			IPAERR("Failed to alloc pkt_init_ex payload\n");
+			result = -ENODEV;
+			goto fail_alloc_pkt_init_ex;
+		}
 	}
 
 	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v3_5)
@@ -6970,7 +6972,8 @@ fail_register_device:
 fail_init_interrupts:
 	ipa3_remove_interrupt_handler(IPA_TX_SUSPEND_IRQ);
 	ipa3_interrupts_destroy(ipa3_res.ipa_irq, &ipa3_ctx->master_pdev->dev);
-	ipa3_free_pkt_init_ex();
+	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0)
+		ipa3_free_pkt_init_ex();
 fail_alloc_pkt_init_ex:
 	ipa3_free_pkt_init();
 fail_alloc_pkt_init:
