@@ -2723,74 +2723,29 @@ cm_roam_offload_per_config(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 	return status;
 }
 
-#ifdef FEATURE_CM_ENABLE
-#ifdef WLAN_ADAPTIVE_11R
-static bool
-cm_is_adaptive_11r_roam_supported(struct wlan_mlme_psoc_ext_obj *mlme_obj,
-				  struct rso_config *rso_cfg)
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+QDF_STATUS
+cm_akm_roam_allowed(struct wlan_objmgr_psoc *psoc,
+		    struct wlan_objmgr_vdev *vdev)
 {
-	if (rso_cfg->is_adaptive_11r_connection)
-		return mlme_obj->cfg.lfr.tgt_adaptive_11r_cap;
-
-	return true;
-}
-#else
-static bool
-cm_is_adaptive_11r_roam_supported(struct wlan_mlme_psoc_ext_obj *mlme_obj,
-				  struct rso_config *rso_cfg)
-
-{
-	return true;
-}
-#endif
-
-static QDF_STATUS
-cm_roam_cmd_allowed(struct wlan_objmgr_psoc *psoc,
-		    struct wlan_objmgr_vdev *vdev,
-		    uint8_t command, uint8_t reason)
-{
-	uint8_t vdev_id = wlan_vdev_get_id(vdev);
 	int32_t akm;
-	struct rso_config *rso_cfg;
 	struct wlan_mlme_psoc_ext_obj *mlme_obj;
 	uint32_t fw_akm_bitmap;
-	bool p2p_disable_sta_roaming = 0, nan_disable_sta_roaming = 0;
+
+	akm = wlan_crypto_get_param(vdev,
+				    WLAN_CRYPTO_PARAM_KEY_MGMT);
+	mlme_debug("akm %x", akm);
 
 	mlme_obj = mlme_get_psoc_ext_obj(psoc);
 	if (!mlme_obj)
 		return QDF_STATUS_E_FAILURE;
 
-	rso_cfg = wlan_cm_get_rso_config(vdev);
-	if (!rso_cfg)
-		return QDF_STATUS_E_FAILURE;
-
-	akm = wlan_crypto_get_param(vdev,
-				    WLAN_CRYPTO_PARAM_KEY_MGMT);
-
-	mlme_debug("RSO Command %d, vdev %d, Reason %d AKM %x",
-		   command, vdev_id, reason, akm);
-
-	if (!cm_is_vdev_connected(vdev) &&
-	    (command == ROAM_SCAN_OFFLOAD_UPDATE_CFG ||
-	     command == ROAM_SCAN_OFFLOAD_START ||
-	     command == ROAM_SCAN_OFFLOAD_RESTART)) {
-		mlme_debug("vdev not in connected state and command %d ",
-			   command);
-		return QDF_STATUS_E_FAILURE;
-	}
-
 	if ((QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FILS_SHA384) ||
 	     QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FILS_SHA256)) &&
 	    !mlme_obj->cfg.lfr.rso_user_config.is_fils_roaming_supported) {
-		mlme_info("FILS Roaming not suppprted by fw, akm %x", akm);
+		mlme_info("FILS Roaming not suppprted by fw");
 		return QDF_STATUS_E_NOSUPPORT;
 	}
-
-	if (!cm_is_adaptive_11r_roam_supported(mlme_obj, rso_cfg)) {
-		mlme_info("Adaptive 11r Roaming not suppprted by fw");
-		return QDF_STATUS_E_NOSUPPORT;
-	}
-
 	fw_akm_bitmap = mlme_obj->cfg.lfr.fw_akm_bitmap;
 	/* Roaming is not supported currently for OWE akm */
 	if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_OWE) &&
@@ -2835,6 +2790,71 @@ cm_roam_cmd_allowed(struct wlan_objmgr_psoc *psoc,
 		mlme_info("Roaming not suppprted for FT FILS akm");
 		return QDF_STATUS_E_NOSUPPORT;
 	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+#ifdef FEATURE_CM_ENABLE
+#ifdef WLAN_ADAPTIVE_11R
+static bool
+cm_is_adaptive_11r_roam_supported(struct wlan_mlme_psoc_ext_obj *mlme_obj,
+				  struct rso_config *rso_cfg)
+{
+	if (rso_cfg->is_adaptive_11r_connection)
+		return mlme_obj->cfg.lfr.tgt_adaptive_11r_cap;
+
+	return true;
+}
+#else
+static bool
+cm_is_adaptive_11r_roam_supported(struct wlan_mlme_psoc_ext_obj *mlme_obj,
+				  struct rso_config *rso_cfg)
+
+{
+	return true;
+}
+#endif
+
+static QDF_STATUS
+cm_roam_cmd_allowed(struct wlan_objmgr_psoc *psoc,
+		    struct wlan_objmgr_vdev *vdev,
+		    uint8_t command, uint8_t reason)
+{
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+	struct rso_config *rso_cfg;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	bool p2p_disable_sta_roaming = 0, nan_disable_sta_roaming = 0;
+	QDF_STATUS  status;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
+
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg)
+		return QDF_STATUS_E_FAILURE;
+
+	mlme_debug("RSO Command %d, vdev %d, Reason %d",
+		   command, vdev_id, reason);
+
+	if (!cm_is_vdev_connected(vdev) &&
+	    (command == ROAM_SCAN_OFFLOAD_UPDATE_CFG ||
+	     command == ROAM_SCAN_OFFLOAD_START ||
+	     command == ROAM_SCAN_OFFLOAD_RESTART)) {
+		mlme_debug("vdev not in connected state and command %d ",
+			   command);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!cm_is_adaptive_11r_roam_supported(mlme_obj, rso_cfg)) {
+		mlme_info("Adaptive 11r Roaming not suppprted by fw");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
+	status = cm_akm_roam_allowed(psoc, vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
 
 	p2p_disable_sta_roaming =
 		(cfg_p2p_is_roam_config_disabled(psoc) &&

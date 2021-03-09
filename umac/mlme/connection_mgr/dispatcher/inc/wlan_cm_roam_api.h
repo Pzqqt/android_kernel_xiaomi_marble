@@ -862,6 +862,19 @@ void wlan_cm_set_psk_pmk(struct wlan_objmgr_pdev *pdev,
 void wlan_cm_get_psk_pmk(struct wlan_objmgr_pdev *pdev,
 			 uint8_t vdev_id, uint8_t *psk_pmk,
 			 uint8_t *pmk_len);
+
+/**
+ * cm_akm_roam_allowed() - check if  roam allowed for some akm type
+ * roaming using single pmk
+ * with same pmk or not
+ * @psoc: psoc
+ * @vdev: vdev pointer
+ *
+ * Return: QDF_STATUS: QDF_STATUS_SUCCESS is allowed
+ */
+QDF_STATUS
+cm_akm_roam_allowed(struct wlan_objmgr_psoc *psoc,
+		    struct wlan_objmgr_vdev *vdev);
 #else
 static inline
 void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,
@@ -971,5 +984,12 @@ static inline void wlan_cm_set_psk_pmk(struct wlan_objmgr_pdev *pdev,
 				       uint8_t vdev_id, uint8_t *psk_pmk,
 				       uint8_t pmk_len)
 {}
+
+static inline QDF_STATUS
+cm_akm_roam_allowed(struct wlan_objmgr_psoc *psoc,
+		    struct wlan_objmgr_vdev *vdev)
+{
+	return false;
+}
 #endif  /* FEATURE_ROAM_OFFLOAD */
 #endif  /* WLAN_CM_ROAM_API_H__ */
