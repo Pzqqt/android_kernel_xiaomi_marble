@@ -8277,8 +8277,7 @@ static void dp_pdev_getstats(struct cdp_pdev *pdev_handle,
 	stats->rx_bytes = pdev->stats.rx.unicast.bytes +
 		pdev->stats.rx.multicast.bytes +
 		pdev->stats.rx.bcast.bytes;
-	stats->rx_errors = pdev->stats.err.desc_alloc_fail +
-		pdev->stats.err.ip_csum_err +
+	stats->rx_errors = pdev->stats.err.ip_csum_err +
 		pdev->stats.err.tcp_udp_csum_err +
 		pdev->stats.rx.err.mic_err +
 		pdev->stats.rx.err.decrypt_err +
