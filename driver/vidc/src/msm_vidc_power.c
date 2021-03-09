@@ -118,6 +118,7 @@ exit:
 static int fill_dynamic_stats(struct msm_vidc_inst *inst,
 	struct vidc_bus_vote_data *vote_data)
 {
+	struct msm_vidc_input_cr_data *temp, *next;
 	u32 max_cr = MSM_VIDC_MIN_UBWC_COMPRESSION_RATIO;
 	u32 max_cf = MSM_VIDC_MIN_UBWC_COMPLEXITY_FACTOR;
 	u32 max_input_cr = MSM_VIDC_MIN_UBWC_COMPRESSION_RATIO;
@@ -129,7 +130,12 @@ static int fill_dynamic_stats(struct msm_vidc_inst *inst,
 	min_cr = inst->power.fw_cr;
 	max_cf = inst->power.fw_cf;
 	max_cf = max_cf / ((msm_vidc_get_mbs_per_frame(inst)) / (32 * 8) * 3) / 2;
-	// Todo: min_input_cr = 0;
+
+	list_for_each_entry_safe(temp, next, &inst->enc_input_crs, list) {
+		min_input_cr = min(min_input_cr, temp->input_cr);
+		max_input_cr = max(max_input_cr, temp->input_cr);
+	}
+
 
 	/* Sanitize CF values from HW */
 	max_cf = min_t(u32, max_cf, MSM_VIDC_MAX_UBWC_COMPLEXITY_FACTOR);

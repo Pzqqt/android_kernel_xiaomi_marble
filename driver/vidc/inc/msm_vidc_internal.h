@@ -419,6 +419,7 @@ enum msm_vidc_inst_capability_type {
 	RAP_FRAME,
 	SEQ_CHANGE_AT_SYNC_FRAME,
 	PRIORITY,
+	ENC_IP_CR,
 	META_LTR_MARK_USE,
 	META_DPB_MISR,
 	META_OPB_MISR,

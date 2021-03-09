@@ -162,6 +162,7 @@ static const struct msm_vidc_cap_name cap_name_arr[] = {
 	{RAP_FRAME,                      "RAP_FRAME"                  },
 	{SEQ_CHANGE_AT_SYNC_FRAME,       "SEQ_CHANGE_AT_SYNC_FRAME"   },
 	{PRIORITY,                       "PRIORITY"                   },
+	{ENC_IP_CR,                      "ENC_IP_CR"                  },
 	{META_LTR_MARK_USE,              "META_LTR_MARK_USE"          },
 	{META_DPB_MISR,                  "META_DPB_MISR"              },
 	{META_OPB_MISR,                  "META_OPB_MISR"              },
@@ -1082,6 +1083,7 @@ bool msm_vidc_allow_s_ctrl(struct msm_vidc_inst *inst, u32 id)
 			case V4L2_CID_MPEG_VIDC_VIDEO_BLUR_TYPES:
 			case V4L2_CID_MPEG_VIDC_VIDEO_BLUR_RESOLUTION:
 			case V4L2_CID_MPEG_VIDEO_CONSTANT_QUALITY:
+			case V4L2_CID_MPEG_VIDC_ENC_INPUT_COMPRESSION_RATIO:
 				allow = true;
 				break;
 			default:
@@ -2121,11 +2123,47 @@ int msm_vidc_queue_buffer_batch(struct msm_vidc_inst *inst)
 	return 0;
 }
 
+void msm_vidc_update_input_cr(struct msm_vidc_inst *inst, u32 idx, u32 cr)
+{
+	struct msm_vidc_input_cr_data *temp, *next;
+	bool found = false;
+
+	list_for_each_entry_safe(temp, next, &inst->enc_input_crs, list) {
+		if (temp->index == idx) {
+			temp->input_cr = cr;
+			found = true;
+			break;
+		}
+	}
+	if (!found) {
+		temp = kzalloc(sizeof(*temp), GFP_KERNEL);
+		if (!temp) {
+			i_vpr_e(inst, "%s: malloc failure.\n", __func__);
+			return;
+		}
+		temp->index = idx;
+		temp->input_cr = cr;
+		list_add_tail(&temp->list, &inst->enc_input_crs);
+	}
+}
+
+void msm_vidc_free_input_cr_list(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_input_cr_data *temp, *next;
+
+	list_for_each_entry_safe(temp, next, &inst->enc_input_crs, list) {
+		list_del(&temp->list);
+		kfree(temp);
+	}
+	INIT_LIST_HEAD(&inst->enc_input_crs);
+}
+
 int msm_vidc_queue_buffer_single(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 {
 	int rc = 0;
 	struct msm_vidc_buffer *buf;
 	enum msm_vidc_allow allow;
+	u32 cr = 0;
 
 	if (!inst || !vb2) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -2146,6 +2184,11 @@ int msm_vidc_queue_buffer_single(struct msm_vidc_inst *inst, struct vb2_buffer *
 	}
 
 	if (buf->type == MSM_VIDC_BUF_INPUT) {
+		if (is_encode_session(inst)) {
+			cr = inst->capabilities->cap[ENC_IP_CR].value;
+			msm_vidc_update_input_cr(inst, vb2->index, cr);
+			inst->capabilities->cap[ENC_IP_CR].value = 0;
+		}
 		inst->power.buffer_counter++;
 		msm_vidc_scale_power(inst, true);
 	}
@@ -3583,6 +3626,7 @@ static void msm_vidc_close_helper(struct kref *kref)
 		msm_vdec_inst_deinit(inst);
 	else if (is_encode_session(inst))
 		msm_venc_inst_deinit(inst);
+	msm_vidc_free_input_cr_list(inst);
 	kfree(inst->capabilities);
 	if (inst->response_workq)
 		destroy_workqueue(inst->response_workq);
