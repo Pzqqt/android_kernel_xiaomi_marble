@@ -745,6 +745,7 @@ static int handle_dequeue_buffers(struct msm_vidc_inst* inst)
 	return rc;
 }
 
+/* todo: remove below funcs once fw supports rel done flag for internl buf*/
 static int handle_dpb_buffer(struct msm_vidc_inst *inst,
 	struct hfi_buffer *buffer)
 {
@@ -948,6 +949,41 @@ static int handle_arp_buffer(struct msm_vidc_inst *inst,
 	return rc;
 }
 
+static int handle_release_buffer(struct msm_vidc_inst *inst,
+	struct hfi_buffer *buffer, enum hfi_packet_port_type port_type)
+{
+	int rc = 0;
+	struct msm_vidc_buffers *buffers;
+	struct msm_vidc_buffer *buf;
+	bool found;
+
+	buffers = msm_vidc_get_buffers(inst, hfi_buf_type_to_driver(inst->domain,
+		buffer->type, port_type), __func__);
+	if (!buffers)
+		return -EINVAL;
+
+	found = false;
+	list_for_each_entry(buf, &buffers->list, list) {
+		if (buf->device_addr == buffer->base_address) {
+			found = true;
+			break;
+		}
+	}
+	if (!found) {
+		i_vpr_e(inst, "%s: invalid idx %d daddr %#x\n",
+			__func__, buffer->index, buffer->base_address);
+		return -EINVAL;
+	}
+	if (is_internal_buffer(buf->type))
+		rc = msm_vidc_destroy_internal_buffer(inst, buf);
+	else
+		rc = msm_vidc_put_driver_buf(inst, buf);
+	if (rc)
+		return rc;
+
+	return rc;
+}
+
 static int handle_session_buffer(struct msm_vidc_inst *inst,
 	struct hfi_packet *pkt)
 {
@@ -1006,6 +1042,8 @@ static int handle_session_buffer(struct msm_vidc_inst *inst,
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 		return 0;
 	}
+	if (buffer->flags & HFI_BUF_FW_FLAG_RELEASE_DONE)
+		return handle_release_buffer(inst, buffer, pkt->port);
 
 	if (is_encode_session(inst)) {
 		if (pkt->port == HFI_PORT_RAW) {

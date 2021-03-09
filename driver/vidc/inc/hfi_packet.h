@@ -16,8 +16,10 @@ u32 get_hfi_port(struct msm_vidc_inst *inst,
 	enum msm_vidc_port_type port);
 u32 get_hfi_port_from_buffer_type(struct msm_vidc_inst *inst,
 	enum msm_vidc_buffer_type buffer_type);
-u32 get_hfi_buffer_type(enum msm_vidc_domain_type domain,
+u32 hfi_buf_type_from_driver(enum msm_vidc_domain_type domain,
 	enum msm_vidc_buffer_type buffer_type);
+u32 hfi_buf_type_to_driver(enum msm_vidc_domain_type domain,
+	enum hfi_buffer_type buffer_type, enum hfi_packet_port_type port_type);
 u32 get_hfi_codec(struct msm_vidc_inst *inst);
 u32 get_hfi_colorformat(struct msm_vidc_inst *inst,
 	enum msm_vidc_colorformat_type colorformat);

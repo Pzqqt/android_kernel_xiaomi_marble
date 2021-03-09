@@ -113,7 +113,7 @@ u32 get_hfi_port_from_buffer_type(struct msm_vidc_inst *inst,
 	return hfi_port;
 }
 
-u32 get_hfi_buffer_type(enum msm_vidc_domain_type domain,
+u32 hfi_buf_type_from_driver(enum msm_vidc_domain_type domain,
 	enum msm_vidc_buffer_type buffer_type)
 {
 	switch (buffer_type) {
@@ -144,6 +144,52 @@ u32 get_hfi_buffer_type(enum msm_vidc_domain_type domain,
 		return HFI_BUFFER_DPB;
 	case MSM_VIDC_BUF_PERSIST:
 		return HFI_BUFFER_PERSIST;
+	default:
+		d_vpr_e("invalid buffer type %d\n",
+			buffer_type);
+		return 0;
+	}
+}
+
+u32 hfi_buf_type_to_driver(enum msm_vidc_domain_type domain,
+	enum hfi_buffer_type buffer_type, enum hfi_packet_port_type port_type)
+{
+	switch (buffer_type) {
+	case HFI_BUFFER_BITSTREAM:
+		if (domain == MSM_VIDC_DECODER)
+			return MSM_VIDC_BUF_INPUT;
+		else
+			return MSM_VIDC_BUF_OUTPUT;
+	case HFI_BUFFER_RAW:
+		if (domain == MSM_VIDC_DECODER)
+			return MSM_VIDC_BUF_OUTPUT;
+		else
+			return MSM_VIDC_BUF_INPUT;
+	case HFI_BUFFER_METADATA:
+		if (domain == MSM_VIDC_DECODER)
+			if (port_type == HFI_PORT_BITSTREAM)
+				return MSM_VIDC_BUF_INPUT_META;
+			else
+				return MSM_VIDC_BUF_OUTPUT_META;
+		else
+			if (port_type == HFI_PORT_BITSTREAM)
+				return MSM_VIDC_BUF_OUTPUT_META;
+			else
+				return MSM_VIDC_BUF_INPUT_META;
+	case HFI_BUFFER_BIN:
+		return MSM_VIDC_BUF_BIN;
+	case HFI_BUFFER_ARP:
+		return MSM_VIDC_BUF_ARP;
+	case HFI_BUFFER_COMV:
+		return MSM_VIDC_BUF_COMV;
+	case HFI_BUFFER_NON_COMV:
+		return MSM_VIDC_BUF_NON_COMV;
+	case HFI_BUFFER_LINE:
+		return MSM_VIDC_BUF_LINE;
+	case HFI_BUFFER_DPB:
+		return MSM_VIDC_BUF_DPB;
+	case HFI_BUFFER_PERSIST:
+		return MSM_VIDC_BUF_PERSIST;
 	default:
 		d_vpr_e("invalid buffer type %d\n",
 			buffer_type);
@@ -244,7 +290,7 @@ int get_hfi_buffer(struct msm_vidc_inst *inst,
 	}
 
 	memset(buf, 0, sizeof(struct hfi_buffer));
-	buf->type = get_hfi_buffer_type(inst->domain, buffer->type);
+	buf->type = hfi_buf_type_from_driver(inst->domain, buffer->type);
 	buf->index = buffer->index;
 	buf->base_address = buffer->device_addr;
 	buf->addr_offset = 0;
