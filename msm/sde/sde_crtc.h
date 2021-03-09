@@ -29,6 +29,7 @@
 #include "sde_core_perf.h"
 #include "sde_hw_ds.h"
 #include "sde_color_processing.h"
+#include "sde_encoder.h"
 
 #define SDE_CRTC_NAME_SIZE	12
 
@@ -632,12 +633,15 @@ int sde_crtc_reset_hw(struct drm_crtc *crtc, struct drm_crtc_state *old_state,
 /**
  * sde_crtc_request_frame_reset - requests for next frame reset
  * @crtc: Pointer to drm crtc object
+ * @encoder: Pointer to drm encoder object
  */
-static inline int sde_crtc_request_frame_reset(struct drm_crtc *crtc)
+static inline int sde_crtc_request_frame_reset(struct drm_crtc *crtc,
+		struct drm_encoder *encoder)
 {
 	struct sde_crtc *sde_crtc = to_sde_crtc(crtc);
 
-	if (sde_crtc->frame_trigger_mode == FRAME_DONE_WAIT_POSTED_START)
+	if (sde_crtc->frame_trigger_mode == FRAME_DONE_WAIT_POSTED_START ||
+			!sde_encoder_is_dsi_display(encoder))
 		sde_crtc_reset_hw(crtc, crtc->state, false);
 
 	return 0;

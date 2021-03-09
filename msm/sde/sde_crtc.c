@@ -3892,11 +3892,8 @@ int sde_crtc_reset_hw(struct drm_crtc *crtc, struct drm_crtc_state *old_state,
 	}
 
 	/* Early out if simple ctl reset succeeded */
-	if (i == sde_crtc->num_ctls) {
-		sde_kms_update_recovery_mask(_sde_crtc_get_kms(crtc),
-			crtc, false);
+	if (i == sde_crtc->num_ctls)
 		return 0;
-	}
 
 	SDE_DEBUG("crtc%d: issuing hard reset\n", DRMID(crtc));
 
@@ -3954,8 +3951,6 @@ int sde_crtc_reset_hw(struct drm_crtc *crtc, struct drm_crtc_state *old_state,
 			sde_encoder_kickoff(encoder, false, true);
 	}
 
-	sde_kms_update_recovery_mask(_sde_crtc_get_kms(crtc),
-			crtc, false);
 	/* panic the device if VBIF is not in good state */
 	return !recovery_events ? 0 : -EAGAIN;
 }
@@ -4030,8 +4025,6 @@ void sde_crtc_commit_kickoff(struct drm_crtc *crtc,
 						params.recovery_events_enabled))
 			is_error = true;
 		sde_crtc->needs_hw_reset = false;
-	} else {
-		sde_kms_update_recovery_mask(sde_kms, crtc, false);
 	}
 
 	sde_crtc_calc_fps(sde_crtc);
@@ -4052,10 +4045,9 @@ void sde_crtc_commit_kickoff(struct drm_crtc *crtc,
 
 	sde_vbif_clear_errors(sde_kms);
 
-	if (is_error || sde_kms->recovery_mask) {
+	if (is_error) {
 		_sde_crtc_remove_pipe_flush(crtc);
 		_sde_crtc_blend_setup(crtc, old_state, false);
-		SDE_EVT32(sde_kms->recovery_mask);
 	}
 
 	list_for_each_entry(encoder, &dev->mode_config.encoder_list, head) {
