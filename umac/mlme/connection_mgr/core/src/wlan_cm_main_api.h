@@ -961,13 +961,15 @@ cm_update_scan_mlme_on_disconnect(struct wlan_objmgr_vdev *vdev,
 /**
  * cm_calculate_scores() - Score the candidates obtained from scan
  * manager after filtering
+ * @cm_ctx: Connection manager context
  * @pdev: Object manager pdev
  * @filter: Scan filter params
  * @list: List of candidates to be scored
  *
  * Return: void
  */
-void cm_calculate_scores(struct wlan_objmgr_pdev *pdev,
+void cm_calculate_scores(struct cnx_mgr *cm_ctx,
+			 struct wlan_objmgr_pdev *pdev,
 			 struct scan_filter *filter, qdf_list_t *list);
 
 /**
@@ -1063,4 +1065,33 @@ static inline void cm_req_history_print(struct cnx_mgr *cm_ctx)
  */
 QDF_STATUS cm_activate_cmd_req_flush_cb(struct scheduler_msg *msg);
 #endif
+
+#ifndef CONN_MGR_ADV_FEATURE
+/**
+ * cm_set_candidate_advance_filter_cb() - Set CM candidate advance
+ * filter cb
+ * @vdev: Objmgr vdev
+ * @filter_fun: CM candidate advance filter cb
+ *
+ * Return: void
+ */
+void cm_set_candidate_advance_filter_cb(
+		struct wlan_objmgr_vdev *vdev,
+		void (*filter_fun)(struct wlan_objmgr_vdev *vdev,
+				   struct scan_filter *filter));
+
+/**
+ * cm_set_candidate_custom_sort_cb() - Set CM candidate custom sort cb
+ * @vdev: Objmgr vdev
+ * @sort_fun: CM candidate custom sort cb
+ *
+ * Return: void
+ */
+void cm_set_candidate_custom_sort_cb(
+		struct wlan_objmgr_vdev *vdev,
+		void (*sort_fun)(struct wlan_objmgr_vdev *vdev,
+				 qdf_list_t *list));
+
+#endif
+
 #endif /* __WLAN_CM_MAIN_API_H__ */

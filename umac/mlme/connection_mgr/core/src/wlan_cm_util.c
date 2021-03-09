@@ -1300,7 +1300,8 @@ cm_get_pcl_chan_weigtage_for_sta(struct wlan_objmgr_pdev *pdev,
 	}
 }
 
-void cm_calculate_scores(struct wlan_objmgr_pdev *pdev,
+void cm_calculate_scores(struct cnx_mgr *cm_ctx,
+			 struct wlan_objmgr_pdev *pdev,
 			 struct scan_filter *filter, qdf_list_t *list)
 {
 	struct pcl_freq_weight_list *pcl_lst = NULL;
@@ -1319,10 +1320,17 @@ void cm_calculate_scores(struct wlan_objmgr_pdev *pdev,
 }
 #else
 inline
-void cm_calculate_scores(struct wlan_objmgr_pdev *pdev,
+void cm_calculate_scores(struct cnx_mgr *cm_ctx,
+			 struct wlan_objmgr_pdev *pdev,
 			 struct scan_filter *filter, qdf_list_t *list)
 {
 	wlan_cm_calculate_bss_score(pdev, NULL, list, &filter->bssid_hint);
+
+	/*
+	 * Custom sorting if enabled
+	 */
+	if (cm_ctx && cm_ctx->cm_candidate_list_custom_sort)
+		cm_ctx->cm_candidate_list_custom_sort(cm_ctx->vdev, list);
 }
 #endif
 
@@ -1431,5 +1439,35 @@ void cm_req_history_print(struct cnx_mgr *cm_ctx)
 		cm_req_history_print_entry(idx, &history->data[idx]);
 	}
 	qdf_spin_unlock_bh(&history->cm_req_hist_lock);
+}
+#endif
+
+#ifndef CONN_MGR_ADV_FEATURE
+void cm_set_candidate_advance_filter_cb(
+		struct wlan_objmgr_vdev *vdev,
+		void (*filter_fun)(struct wlan_objmgr_vdev *vdev,
+				   struct scan_filter *filter))
+{
+	struct cnx_mgr *cm_ctx;
+
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx)
+		return;
+
+	cm_ctx->cm_candidate_advance_filter = filter_fun;
+}
+
+void cm_set_candidate_custom_sort_cb(
+		struct wlan_objmgr_vdev *vdev,
+		void (*sort_fun)(struct wlan_objmgr_vdev *vdev,
+				 qdf_list_t *list))
+{
+	struct cnx_mgr *cm_ctx;
+
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx)
+		return;
+
+	cm_ctx->cm_candidate_list_custom_sort = sort_fun;
 }
 #endif

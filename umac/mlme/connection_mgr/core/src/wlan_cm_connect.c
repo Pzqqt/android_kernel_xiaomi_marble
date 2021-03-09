@@ -735,7 +735,12 @@ static inline void cm_update_advance_filter(struct wlan_objmgr_pdev *pdev,
 					    struct cnx_mgr *cm_ctx,
 					    struct scan_filter *filter,
 					    struct cm_connect_req *cm_req)
-{ }
+{
+	struct wlan_objmgr_vdev *vdev = cm_ctx->vdev;
+
+	if (cm_ctx->cm_candidate_advance_filter)
+		cm_ctx->cm_candidate_advance_filter(vdev, filter);
+}
 
 static void cm_update_security_filter(struct scan_filter *filter,
 				      struct wlan_cm_connect_req *req)
@@ -913,7 +918,7 @@ static QDF_STATUS cm_connect_get_candidates(struct wlan_objmgr_pdev *pdev,
 
 	op_mode = wlan_vdev_mlme_get_opmode(cm_ctx->vdev);
 	if (num_bss && op_mode == QDF_STA_MODE)
-		cm_calculate_scores(pdev, filter, candidate_list);
+		cm_calculate_scores(cm_ctx, pdev, filter, candidate_list);
 	qdf_mem_free(filter);
 
 	if (!candidate_list || !qdf_list_size(candidate_list)) {

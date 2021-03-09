@@ -278,6 +278,12 @@ struct cnx_mgr {
 #ifdef SM_ENG_HIST_ENABLE
 	struct cm_req_history req_history;
 #endif
+#ifndef CONN_MGR_ADV_FEATURE
+	void (*cm_candidate_advance_filter)(struct wlan_objmgr_vdev *vdev,
+					    struct scan_filter *filter);
+	void (*cm_candidate_list_custom_sort)(struct wlan_objmgr_vdev *vdev,
+					      qdf_list_t *list);
+#endif
 };
 
 /**

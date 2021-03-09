@@ -399,6 +399,49 @@ static inline void wlan_cm_req_history_print(struct wlan_objmgr_vdev *vdev)
 {}
 #endif
 
+#ifdef CONN_MGR_ADV_FEATURE
+/**
+ * wlan_cm_set_candidate_advance_filter_cb() - Set CM candidate advance
+ * filter cb
+ * @vdev: Objmgr vdev
+ * @filter_fun: CM candidate advance filter cb
+ *
+ * Return: void
+ */
+static inline
+void wlan_cm_set_candidate_advance_filter_cb(
+		struct wlan_objmgr_vdev *vdev,
+		void (*filter_fun)(struct wlan_objmgr_vdev *vdev,
+				   struct scan_filter *filter));
+{
+}
+
+/**
+ * wlan_cm_set_candidate_custom_sort_cb() - Set CM candidate custom sort cb
+ * @vdev: Objmgr vdev
+ * @sort_fun: CM candidate custom sort cb
+ *
+ * Return: void
+ */
+static inline
+void wlan_cm_set_candidate_custom_sort_cb(
+		struct wlan_objmgr_vdev *vdev,
+		void (*sort_fun)(struct wlan_objmgr_vdev *vdev,
+				 qdf_list_t *list))
+{
+}
+#else
+void wlan_cm_set_candidate_advance_filter_cb(
+		struct wlan_objmgr_vdev *vdev,
+		void (*filter_fun)(struct wlan_objmgr_vdev *vdev,
+				   struct scan_filter *filter));
+
+void wlan_cm_set_candidate_custom_sort_cb(
+		struct wlan_objmgr_vdev *vdev,
+		void (*sort_fun)(struct wlan_objmgr_vdev *vdev,
+				 qdf_list_t *list));
+#endif
+
 #else
 
 #ifdef WLAN_POLICY_MGR_ENABLE
