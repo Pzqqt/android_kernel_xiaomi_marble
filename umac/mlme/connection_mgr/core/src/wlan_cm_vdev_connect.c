@@ -217,6 +217,43 @@ void cm_update_wait_for_key_timer(struct wlan_objmgr_vdev *vdev,
 	}
 }
 
+void cm_update_prev_ap_ie(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			  uint32_t len, uint8_t *bcn_ptr)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct rso_config *rso_cfg;
+	struct element_info *bcn_ie;
+
+	if (!len || !bcn_ptr)
+		return;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev is NULL for vdev id %d", vdev_id);
+		return;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg)
+		goto end;
+
+	bcn_ie = &rso_cfg->prev_ap_bcn_ie;
+	if (bcn_ie->ptr) {
+		qdf_mem_free(bcn_ie->ptr);
+		bcn_ie->ptr = NULL;
+		bcn_ie->len = 0;
+	}
+	bcn_ie->ptr = qdf_mem_malloc(len);
+	if (!bcn_ie->ptr) {
+		bcn_ie->len = 0;
+		goto end;
+	}
+
+	qdf_mem_copy(bcn_ie->ptr, bcn_ptr, len);
+end:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+}
+
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 static const char *cm_diag_get_ch_width_str(uint8_t ch_width)
 {
@@ -1182,7 +1219,16 @@ static void cm_process_connect_complete(struct wlan_objmgr_psoc *psoc,
 	uint8_t vdev_id = wlan_vdev_get_id(vdev);
 	int32_t ucast_cipher, akm;
 	uint32_t key_interval;
+	struct element_info *bcn_probe_rsp = &rsp->connect_ies.bcn_probe_rsp;
 
+	if (bcn_probe_rsp->ptr &&
+	    bcn_probe_rsp->len > sizeof(struct wlan_frame_hdr)) {
+		cm_update_prev_ap_ie(psoc, vdev_id,
+				     bcn_probe_rsp->len -
+				     sizeof(struct wlan_frame_hdr),
+				     bcn_probe_rsp->ptr +
+				     sizeof(struct wlan_frame_hdr));
+	}
 	akm = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
 	if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_SAE)) {
 		mlme_debug("Update the MDID in PMK cache for FT-SAE case");
