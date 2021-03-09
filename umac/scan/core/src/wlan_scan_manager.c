@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1461,9 +1461,11 @@ scm_scan_event_handler(struct scheduler_msg *msg)
 
 	scm_event_duration_start(scan);
 
-	scm_debug("vdevid:%d, type:%d, reason:%d, freq:%d, reqstr:%d, scanid:%d",
-		  event->vdev_id, event->type, event->reason, event->chan_freq,
-		  event->requester, event->scan_id);
+	scm_debug("vdevid:%d, type:%d, reason:%d, freq:%d, reqstr:%d,"
+		  "scanid:%d (0x%x), timestamp:%u", event->vdev_id,
+		  event->type, event->reason, event->chan_freq,
+		  event->requester, event->scan_id, event->scan_id,
+		  event->timestamp);
 	/*
 	 * NLO requests are never queued, so post NLO events
 	 * without checking for their presence in active queue.
