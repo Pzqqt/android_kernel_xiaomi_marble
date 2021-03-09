@@ -3936,6 +3936,17 @@ void wlan_mlme_update_sae_single_pmk(struct wlan_objmgr_vdev *vdev,
 		mlme_priv->mlme_roam.sae_single_pmk.pmk_info = *sae_single_pmk;
 }
 
+bool wlan_mlme_is_sae_single_pmk_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return cfg_default(CFG_SAE_SINGLE_PMK);
+
+	return mlme_obj->cfg.lfr.sae_single_pmk_feature_enabled;
+}
+
 void wlan_mlme_get_sae_single_pmk_info(struct wlan_objmgr_vdev *vdev,
 				       struct wlan_mlme_sae_single_pmk *pmksa)
 {

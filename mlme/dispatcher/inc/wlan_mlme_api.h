@@ -2520,6 +2520,15 @@ wlan_mlme_update_sae_single_pmk(struct wlan_objmgr_vdev *vdev,
 void
 wlan_mlme_get_sae_single_pmk_info(struct wlan_objmgr_vdev *vdev,
 				  struct wlan_mlme_sae_single_pmk *pmksa);
+
+/**
+ * wlan_mlme_is_sae_single_pmk_enabled() - Get is SAE single pmk feature enabled
+ * @psoc: Pointer to Global psoc
+ *
+ * Return: True if SAE single PMK is enabled
+ */
+bool wlan_mlme_is_sae_single_pmk_enabled(struct wlan_objmgr_psoc *psoc);
+
 /**
  * wlan_mlme_clear_sae_single_pmk_info - API to clear mlme_pmkid_info ap caps
  * @vdev: vdev object
@@ -2534,6 +2543,12 @@ static inline void
 wlan_mlme_set_sae_single_pmk_bss_cap(struct wlan_objmgr_psoc *psoc,
 				     uint8_t vdev_id, bool val)
 {
+}
+
+static inline
+bool wlan_mlme_is_sae_single_pmk_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
 }
 
 static inline void
