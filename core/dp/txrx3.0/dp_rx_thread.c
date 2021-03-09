@@ -25,7 +25,7 @@
 #include <cds_sched.h>
 
 /* Timeout in ms to wait for a DP rx thread */
-#define DP_RX_THREAD_WAIT_TIMEOUT 1000
+#define DP_RX_THREAD_WAIT_TIMEOUT 2000
 
 #define DP_RX_TM_DEBUG 0
 #if DP_RX_TM_DEBUG
@@ -1047,10 +1047,17 @@ void dp_rx_thread_flush_by_vdev_id(struct dp_rx_thread *rx_thread,
 	if (QDF_IS_STATUS_SUCCESS(qdf_status))
 		dp_debug("thread:%d napi gro flush successfully",
 			 rx_thread->id);
-	else if (qdf_status == QDF_STATUS_E_TIMEOUT)
+	else if (qdf_status == QDF_STATUS_E_TIMEOUT) {
 		dp_err("thread:%d timed out waiting for napi gro flush",
 		       rx_thread->id);
-	else
+		/*
+		 * If timeout, then force flush here in case any rx packets
+		 * belong to this vdev is still pending on stack queue,
+		 * while net_vdev will be freed soon.
+		 */
+		dp_rx_thread_gro_flush(rx_thread,
+				       DP_RX_GRO_NORMAL_FLUSH);
+	} else
 		dp_err("thread:%d failed while waiting for napi gro flush",
 		       rx_thread->id);
 }
