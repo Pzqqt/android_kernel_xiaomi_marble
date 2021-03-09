@@ -46,6 +46,7 @@
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_mlme_api.h"
 #include "wlan_reg_services_api.h"
+#include "wlan_cm_roam_api.h"
 
 #define RSN_OUI_SIZE 4
 /* ////////////////////////////////////////////////////////////////////// */
@@ -7274,6 +7275,28 @@ wlan_get_ielen_from_bss_description(struct bss_description *bss_desc)
 			   ieFields_offset);
 
 	return ielen;
+}
+
+QDF_STATUS populate_dot11f_btm_extended_caps(struct mac_context *mac_ctx,
+					     struct pe_session *pe_session,
+					     struct sDot11fIEExtCap *dot11f)
+{
+	struct s_ext_cap *p_ext_cap;
+	QDF_STATUS  status;
+
+	pe_debug("enter");
+	dot11f->num_bytes = DOT11F_IE_EXTCAP_MAX_LEN;
+	p_ext_cap = (struct s_ext_cap *)dot11f->bytes;
+
+	status = cm_akm_roam_allowed(mac_ctx->psoc, pe_session->vdev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		p_ext_cap->bss_transition = 0;
+		pe_debug("Disable btm for roaming not suppprted");
+	}
+
+	dot11f->num_bytes = lim_compute_ext_cap_ie_length(dot11f);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /* parser_api.c ends here. */

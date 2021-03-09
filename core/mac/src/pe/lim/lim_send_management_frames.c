@@ -2375,6 +2375,9 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 			lim_merge_extcap_struct(&frm->ExtCap, &bcn_ext_cap,
 							false);
 		}
+
+		populate_dot11f_btm_extended_caps(mac_ctx, pe_session,
+						  &frm->ExtCap);
 		/*
 		 * TWT extended capabilities should be populated after the
 		 * intersection of beacon caps and self caps is done because
