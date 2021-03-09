@@ -478,7 +478,7 @@ static QDF_STATUS cm_process_roam_keys(struct wlan_objmgr_vdev *vdev,
 	if (roaming_info->auth_status == ROAM_AUTH_STATUS_AUTHENTICATED ||
 	    QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_SAE) ||
 	    QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_OWE)) {
-		struct wlan_crypto_pmksa *pmkid_cache;
+		struct wlan_crypto_pmksa *pmkid_cache, *pmksa;
 
 		cm_csr_set_ss_none(vdev_id);
 		/*
@@ -513,6 +513,89 @@ static QDF_STATUS cm_process_roam_keys(struct wlan_objmgr_vdev *vdev,
 		if (cm_lookup_pmkid_using_bssid(psoc,
 						vdev_id,
 						pmkid_cache)) {
+			/*
+			 * Consider two APs: AP1, AP2
+			 * Both APs configured with EAP 802.1x security mode
+			 * and OKC is enabled in both APs by default. Initially
+			 * DUT successfully associated with AP1, and generated
+			 * PMK1 by performing full EAP and added an entry for
+			 * AP1 in pmk table. At this stage, pmk table has only
+			 * one entry for PMK1 (1. AP1-->PMK1). Now DUT try to
+			 * roam to AP2 using PMK1 (as OKC is enabled) but
+			 * session timeout happens on AP2 just before 4 way
+			 * handshake completion in FW. At this point of time
+			 * DUT not in authenticated state. Due to this DUT
+			 * performs full EAP with AP2 and generates PMK2. As
+			 * there is no previous entry of AP2 (AP2-->PMK1) in pmk
+			 * table. When host gets pmk delete command for BSSID of
+			 * AP2, the BSSID match fails. Hence host will not
+			 * delete pmk entry of AP1 as well.
+			 * At this point of time, the PMK table has two entry
+			 * 1. AP1-->PMK1 and 2. AP2 --> PMK2.
+			 * Ideally, if OKC is enabled then whenever timeout
+			 * occurs in a mobility domain, then the driver should
+			 * clear all APs cache entries related to that domain
+			 * but as the BSSID doesn't exist yet in the driver
+			 * cache there is no way of clearing the cache entries,
+			 * without disturbing the legacy roaming.
+			 * Now security profile for both APs changed to FT-RSN.
+			 * DUT first disassociate with AP2 and successfully
+			 * associated with AP2 and perform full EAP and
+			 * generates PMK3. DUT first deletes PMK entry for AP2
+			 * and then adds a new entry for AP2.
+			 * At this point of time pmk table has two entry
+			 * AP2--> PMK3 and AP1-->PMK1. Now DUT roamed to AP1
+			 * using PMK3 but sends stale entry of AP1 (PMK1) to
+			 * fw via RSO command. This override PMK for both APs
+			 * with PMK1 (as FW uses mlme session PMK for both APs
+			 * in case of FT roaming) and next time when FW try to
+			 * roam to AP2 using PMK1, AP2 rejects PMK1 (As AP2 is
+			 * expecting PMK3) and initiates full EAP with AP2,
+			 * which is wrong.
+			 * To address this issue update pmk table entry for
+			 * roamed AP1 with pmk3 value comes to host via roam
+			 * sync indication event. By this host override stale
+			 * entry (if any) with the latest valid pmk for that AP
+			 * at a point of time.
+			 */
+			if (roaming_info->pmk_len) {
+				pmksa = qdf_mem_malloc(sizeof(*pmksa));
+				if (!pmksa) {
+					status = QDF_STATUS_E_NOMEM;
+					qdf_mem_zero(pmkid_cache,
+						     sizeof(*pmkid_cache));
+					qdf_mem_free(pmkid_cache);
+					goto end;
+				}
+
+				/*
+				 * This pmksa buffer is to update the
+				 * crypto table
+				 */
+				wlan_vdev_get_bss_peer_mac(vdev, &pmksa->bssid);
+				qdf_mem_copy(pmksa->pmkid,
+					     roaming_info->pmkid, PMKID_LEN);
+				qdf_mem_copy(pmksa->pmk, roaming_info->pmk,
+					     roaming_info->pmk_len);
+				pmksa->pmk_len = roaming_info->pmk_len;
+				status = wlan_crypto_set_del_pmksa(vdev,
+								   pmksa, true);
+				if (QDF_IS_STATUS_ERROR(status)) {
+					qdf_mem_zero(pmksa, sizeof(*pmksa));
+					qdf_mem_free(pmksa);
+				}
+
+				/* update the pmkid_cache buffer to
+				 * update the global session pmk
+				 */
+				qdf_mem_copy(pmkid_cache->pmkid,
+					     roaming_info->pmkid, PMKID_LEN);
+				qdf_mem_copy(pmkid_cache->pmk,
+					     roaming_info->pmk,
+					     roaming_info->pmk_len);
+				pmkid_cache->pmk_len = roaming_info->pmk_len;
+			}
+
 			wlan_cm_set_psk_pmk(pdev, vdev_id,
 					    pmkid_cache->pmk,
 					    pmkid_cache->pmk_len);

@@ -6673,15 +6673,18 @@ QDF_STATUS populate_dot11f_twt_extended_caps(struct mac_context *mac_ctx,
  * Return: None
  */
 static void
-wlan_fill_single_pmk_ap_cap_from_scan_entry(struct bss_description *bss_desc,
+wlan_fill_single_pmk_ap_cap_from_scan_entry(struct mac_context *mac_ctx,
+					    struct bss_description *bss_desc,
 					    struct scan_cache_entry *scan_entry)
 {
-	bss_desc->is_single_pmk = util_scan_entry_single_pmk(scan_entry);
+	bss_desc->is_single_pmk =
+		util_scan_entry_single_pmk(mac_ctx->psoc, scan_entry) &&
+		mac_ctx->mlme_cfg->lfr.sae_single_pmk_feature_enabled;
 }
-
 #else
 static inline void
-wlan_fill_single_pmk_ap_cap_from_scan_entry(struct bss_description *bss_desc,
+wlan_fill_single_pmk_ap_cap_from_scan_entry(struct mac_context *mac_ctx,
+					    struct bss_description *bss_desc,
 					    struct scan_cache_entry *scan_entry)
 {
 }
@@ -7262,7 +7265,8 @@ wlan_fill_bss_desc_from_scan_entry(struct mac_context *mac_ctx,
 	bss_desc->mbo_oce_enabled_ap =
 			util_scan_entry_mbo_oce(scan_entry) ? true : false;
 
-	wlan_fill_single_pmk_ap_cap_from_scan_entry(bss_desc, scan_entry);
+	wlan_fill_single_pmk_ap_cap_from_scan_entry(mac_ctx, bss_desc,
+						    scan_entry);
 
 	qdf_mem_copy(&bss_desc->mbssid_info, &scan_entry->mbssid_info,
 		     sizeof(struct scan_mbssid_info));
