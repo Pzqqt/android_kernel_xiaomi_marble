@@ -402,4 +402,10 @@ int dsi_phy_pll_toggle(struct msm_dsi_phy *dsi_phy, bool prepare);
  * Return: error code.
  */
 int dsi_phy_dynclk_configure(struct msm_dsi_phy *phy);
+
+/**
+ * dsi_phy_pll_parse_dfps_data() - parse dfps data for PLL
+ * @phy:	DSI PHY handle
+ */
+void dsi_phy_pll_parse_dfps_data(struct msm_dsi_phy *phy);
 #endif /* _DSI_PHY_H_ */

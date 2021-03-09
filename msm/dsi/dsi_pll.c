@@ -339,10 +339,13 @@ int dsi_pll_init(struct platform_device *pdev, struct dsi_pll_resource **pll)
 		return -EINVAL;
 	}
 
+	return rc;
+}
+
+void dsi_pll_parse_dfps_data(struct platform_device *pdev, struct dsi_pll_resource *pll_res)
+{
 	if (!(pll_res->index)) {
 		if (dsi_pll_parse_dfps_from_dt(pdev, pll_res))
 			dsi_pll_parse_dfps(pdev, pll_res);
 	}
-
-	return rc;
 }

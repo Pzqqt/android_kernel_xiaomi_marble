@@ -212,4 +212,7 @@ int dsi_pll_clock_register_5nm(struct platform_device *pdev,
 
 int dsi_pll_init(struct platform_device *pdev,
 				struct dsi_pll_resource **pll_res);
+
+void dsi_pll_parse_dfps_data(struct platform_device *pdev, struct dsi_pll_resource *pll_res);
+
 #endif
