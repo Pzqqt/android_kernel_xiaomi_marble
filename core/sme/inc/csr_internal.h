@@ -472,15 +472,15 @@ struct csr_roam_session {
 	eCsrConnectState connectState;
 	tCsrRoamConnectedProfile connectedProfile;
 	struct csr_roam_connectedinfo connectedInfo;
-	struct csr_roam_connectedinfo prev_assoc_ap_info;
 	struct csr_roam_profile *pCurRoamProfile;
-	struct bss_description *pConnectBssDesc;
 	/*
 	 * to remember some parameters needed for START_BSS.
 	 * All member must be set every time we try to join
 	 */
 	struct csr_roamstart_bssparams bssParams;
 #ifndef FEATURE_CM_ENABLE
+	struct csr_roam_connectedinfo prev_assoc_ap_info;
+	struct bss_description *pConnectBssDesc;
 	/* the byte count of pWpaRsnIE; */
 	uint32_t nWpaRsnReqIeLength;
 	/* contain the WPA/RSN IE in assoc req */
@@ -506,6 +506,7 @@ struct csr_roam_session {
 	qdf_mc_timer_t hTimerRoaming;
 	enum csr_roaming_reason roamingReason;
 	bool fCancelRoaming;
+	uint8_t bRefAssocStartCnt;      /* Tracking assoc start indication */
 #endif /* ndef FEATURE_CM_ENABLE */
 #ifdef WLAN_BCN_RECV_FEATURE
 	bool is_bcn_recv_start;
@@ -525,7 +526,6 @@ struct csr_roam_session {
 	tSirMacSSid prevApSSID;
 	uint32_t roamTS1;
 #endif
-	uint8_t bRefAssocStartCnt;      /* Tracking assoc start indication */
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	struct roam_offload_synch_ind *roam_synch_data;
 #endif

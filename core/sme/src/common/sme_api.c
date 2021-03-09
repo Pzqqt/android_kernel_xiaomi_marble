@@ -15754,46 +15754,46 @@ QDF_STATUS sme_get_prev_connected_bss_ies(mac_handle_t mac_handle,
 					  uint8_t vdev_id,
 					  uint8_t **ies, uint32_t *ie_len)
 {
-	struct csr_roam_session *session;
-	struct mac_context *mac;
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint32_t len;
 	uint8_t *beacon_ie;
+	struct rso_config *rso_cfg;
+	struct wlan_objmgr_vdev *vdev;
+	struct element_info *bcn_ie;
 
-	if (!mac_handle) {
-		sme_err("mac_handle is not valid");
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac->pdev, vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev)
 		return QDF_STATUS_E_INVAL;
-	}
-	mac = MAC_CONTEXT(mac_handle);
-	session = CSR_GET_SESSION(mac, vdev_id);
-	if (!session) {
-		sme_err("session not found");
-		return QDF_STATUS_E_INVAL;
+
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
+		status = QDF_STATUS_E_INVAL;
+		goto end;
 	}
 
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		sme_err("Failed to acquire sme lock; status: %d", status);
-		return status;
-	}
+	bcn_ie = &rso_cfg->prev_ap_bcn_ie;
 
-	len = session->prev_assoc_ap_info.nBeaconLength;
-	if (!len) {
+	if (!bcn_ie->len) {
 		sme_debug("No IEs to return");
 		status = QDF_STATUS_E_INVAL;
 		goto end;
 	}
+
+	len = bcn_ie->len;
 	beacon_ie = qdf_mem_malloc(len);
 	if (!beacon_ie) {
 		status = QDF_STATUS_E_NOMEM;
 		goto end;
 	}
-	qdf_mem_copy(beacon_ie, session->prev_assoc_ap_info.pbFrames, len);
+	qdf_mem_copy(beacon_ie, bcn_ie->ptr, len);
 
 	*ie_len = len;
 	*ies = beacon_ie;
 end:
-	sme_release_global_lock(&mac->sme);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+
 	return status;
 }
 

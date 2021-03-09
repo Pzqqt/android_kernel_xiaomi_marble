@@ -452,7 +452,7 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 		&mac_ctx->rrm.rrmSmeContext[measurement_index];
 	uint32_t session_id;
 	tSirScanType scan_type;
-	struct csr_roam_session *session;
+	struct qdf_mac_addr bss_peer_mac;
 
 	filter = qdf_mem_malloc(sizeof(*filter));
 	if (!filter)
@@ -572,20 +572,23 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 		goto rrm_send_scan_results_done;
 	}
 
-	session = CSR_GET_SESSION(mac_ctx, session_id);
+	status = wlan_mlme_get_bssid_vdev_id(mac_ctx->pdev, session_id,
+					     &bss_peer_mac);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("Invaild session %d", session_id);
+		status = QDF_STATUS_E_FAILURE;
+		goto rrm_send_scan_results_done;
+	}
 
 	/* This is temp ifdef will be removed in near future */
 #ifdef FEATURE_CM_ENABLE
-	if (!session || !cm_is_vdevid_connected(mac_ctx->pdev, session_id) ||
-	    !session->pConnectBssDesc) {
+	if (!cm_is_vdevid_connected(mac_ctx->pdev, session_id)) {
 		sme_err("Invaild session");
 		status = QDF_STATUS_E_FAILURE;
 		goto rrm_send_scan_results_done;
 	}
 #else
-	if (!session ||
-	    !csr_is_conn_state_connected_infra(mac_ctx, session_id) ||
-	    !session->pConnectBssDesc) {
+	if (!csr_is_conn_state_connected_infra(mac_ctx, session_id)) {
 		sme_err("Invaild session");
 		status = QDF_STATUS_E_FAILURE;
 		goto rrm_send_scan_results_done;
@@ -605,7 +608,7 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 		uint8_t is_nontx_of_conn_bss = false;
 
 		if (!qdf_mem_cmp(scan_results->BssDescriptor.bssId,
-				 session->pConnectBssDesc->bssId,
+				 bss_peer_mac.bytes,
 		    sizeof(struct qdf_mac_addr))) {
 			is_conn_bss_found = true;
 			sme_debug("Connected BSS in scan results");
@@ -613,7 +616,7 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 		if (scan_results->BssDescriptor.mbssid_info.profile_num) {
 			if (!qdf_mem_cmp(scan_results->BssDescriptor.
 					 mbssid_info.trans_bssid,
-					 session->pConnectBssDesc->bssId,
+					 bss_peer_mac.bytes,
 					 QDF_MAC_ADDR_SIZE)) {
 				is_nontx_of_conn_bss = true;
 				sme_debug("Non Tx BSS of Conn AP in results");

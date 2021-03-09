@@ -105,7 +105,6 @@ void csr_roam_save_ndi_connected_info(struct mac_context *mac_ctx,
 		     sizeof(roam_profile->Keys));
 	csr_get_bss_id_bss_desc(bssdesc, &connect_profile->bssid);
 	connect_profile->SSID.length = 0;
-	csr_free_connect_bss_desc(mac_ctx, session_id);
 	connect_profile->qap = false;
 	connect_profile->qosConnection = false;
 }

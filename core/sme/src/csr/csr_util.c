@@ -2692,6 +2692,7 @@ void csr_free_roam_profile(struct mac_context *mac, uint32_t sessionId)
 	}
 }
 
+#ifndef FEATURE_CM_ENABLE
 void csr_free_connect_bss_desc(struct mac_context *mac, uint32_t sessionId)
 {
 	struct csr_roam_session *pSession = &mac->roam.roamSession[sessionId];
@@ -2701,6 +2702,7 @@ void csr_free_connect_bss_desc(struct mac_context *mac, uint32_t sessionId)
 		pSession->pConnectBssDesc = NULL;
 	}
 }
+#endif
 
 tSirResultCodes csr_get_de_auth_rsp_status_code(struct deauth_rsp *pSmeRsp)
 {

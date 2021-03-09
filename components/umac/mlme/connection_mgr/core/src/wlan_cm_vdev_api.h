@@ -237,6 +237,8 @@ void cm_stop_wait_for_key_timer(struct wlan_objmgr_psoc *psoc,
 void cm_update_wait_for_key_timer(struct wlan_objmgr_vdev *vdev,
 				  uint8_t vdev_id, uint32_t interval);
 
+void cm_update_prev_ap_ie(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			  uint32_t len, uint8_t *bcn_ptr);
 bool cm_csr_is_ss_wait_for_key(uint8_t vdev_id);
 void cm_csr_set_ss_wait_for_key(uint8_t vdev_id);
 void cm_csr_set_ss_none(uint8_t vdev_id);

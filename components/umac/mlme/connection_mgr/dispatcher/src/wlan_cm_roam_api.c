@@ -1256,6 +1256,11 @@ void wlan_cm_rso_config_deinit(struct wlan_objmgr_vdev *vdev,
 		rso_cfg->assoc_ie.ptr = NULL;
 		rso_cfg->assoc_ie.len = 0;
 	}
+	if (rso_cfg->prev_ap_bcn_ie.ptr) {
+		qdf_mem_free(rso_cfg->prev_ap_bcn_ie.ptr);
+		rso_cfg->prev_ap_bcn_ie.ptr = NULL;
+		rso_cfg->prev_ap_bcn_ie.len = 0;
+	}
 	if (rso_cfg->roam_scan_freq_lst.freq_list)
 		qdf_mem_free(rso_cfg->roam_scan_freq_lst.freq_list);
 	rso_cfg->roam_scan_freq_lst.freq_list = NULL;

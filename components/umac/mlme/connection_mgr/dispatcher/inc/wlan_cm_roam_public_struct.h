@@ -267,6 +267,7 @@ enum roam_fail_params {
  * ROAM_TRIGGER_REASON_PER, ROAM_TRIGGER_REASON_BMISS
  * @cfg_param: per vdev config params
  * @assoc_ie: assoc IE
+ * @prev_ap_bcn_ie: last connetced AP ie
  * @occupied_chan_lst: occupied channel list
  * @roam_candidate_count: candidate count
  * @is_ese_assoc: is ese assoc
@@ -295,6 +296,7 @@ struct rso_config {
 	uint32_t roam_scan_scheme_bitmap;
 	struct rso_cfg_params cfg_param;
 	struct element_info assoc_ie;
+	struct element_info prev_ap_bcn_ie;
 	struct wlan_chan_list occupied_chan_lst;
 	int8_t roam_candidate_count;
 	uint8_t uapsd_mask;
