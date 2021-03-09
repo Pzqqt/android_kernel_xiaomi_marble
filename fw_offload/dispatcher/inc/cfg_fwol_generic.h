@@ -771,7 +771,7 @@
  * g_enable_ilp - ILP HW Block Configuration
  * @Min: 0
  * @Max: 3
- * @Default: 1
+ * @Default: 2
  *
  * This ini is used to configure ILP HW block with various options
  * 0: disable
@@ -792,7 +792,7 @@
 		"g_enable_ilp", \
 		0, \
 		3, \
-		1, \
+		2, \
 		CFG_VALUE_OR_DEFAULT, \
 		"ILP configuration")
 
