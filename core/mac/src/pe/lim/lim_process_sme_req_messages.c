@@ -3918,7 +3918,7 @@ static uint8_t lim_get_num_tpe_octets(uint8_t max_transmit_power_count)
 	if (!max_transmit_power_count)
 		return max_transmit_power_count;
 
-	return 1 << (max_transmit_power_count);
+	return 1 << (max_transmit_power_count - 1);
 }
 
 void lim_parse_tpe_ie(struct mac_context *mac, struct pe_session *session,
@@ -4311,6 +4311,9 @@ void lim_calculate_tpc(struct mac_context *mac,
 	mlme_obj->reg_tpc_obj.is_psd_power = is_psd_power;
 	mlme_obj->reg_tpc_obj.eirp_power = eirp_power;
 	mlme_obj->reg_tpc_obj.power_type_6g = ap_power_type_6g;
+
+	pe_debug("num_pwr_levels: %d, is_psd_power: %d, eirp_power: %d, ap_pwr_type: %d",
+		 num_pwr_levels, is_psd_power, eirp_power, ap_power_type_6g);
 }
 
 /**
