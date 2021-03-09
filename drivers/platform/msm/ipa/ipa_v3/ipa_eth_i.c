@@ -480,7 +480,7 @@ static int ipa3_smmu_map_eth_pipes(struct ipa_eth_client_pipe_info *pipe,
 	enum ipa_client_type client_type, bool map)
 {
 	struct iommu_domain *smmu_domain;
-	int result;
+	int result = -EINVAL;
 	int i;
 	u64 iova;
 	phys_addr_t pa;

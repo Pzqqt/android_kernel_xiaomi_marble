@@ -3300,6 +3300,9 @@ static ssize_t ipa3_eth_read_err_status(struct file *file,
 	struct ipa3_eth_error_stats tx_stats;
 	struct ipa3_eth_error_stats rx_stats;
 
+	memset(&tx_stats, 0, sizeof(struct ipa3_eth_error_stats));
+	memset(&rx_stats, 0, sizeof(struct ipa3_eth_error_stats));
+
 	if (ipa3_ctx->ipa_hw_type < IPA_HW_v4_5
 		&& (ipa3_ctx->ipa_hw_type != IPA_HW_v4_1
 		|| ipa3_ctx->platform_type != IPA_PLAT_TYPE_APQ)) {
@@ -3365,7 +3368,7 @@ static const struct file_operations fops_ipa_eth_client_status = {
 };
 void ipa3_eth_debugfs_add_node(struct ipa_eth_client *client)
 {
-	struct dentry *file;
+	struct dentry *file = NULL;
 	int type, inst_id;
 	char name[IPA_RESOURCE_NAME_MAX];
 
@@ -3381,18 +3384,22 @@ void ipa3_eth_debugfs_add_node(struct ipa_eth_client *client)
 
 	type = client->client_type;
 	inst_id = client->inst_id;
-	snprintf(name, IPA_RESOURCE_NAME_MAX,
-		"%s_%d_stats", ipa_eth_clients_strings[type], inst_id);
-	file = debugfs_create_file(name, IPA_READ_ONLY_MODE,
-		dent_eth, (void *)client, &fops_ipa_eth_stats);
+	if (type < IPA_ETH_CLIENT_MAX) {
+		snprintf(name, IPA_RESOURCE_NAME_MAX,
+			"%s_%d_stats", ipa_eth_clients_strings[type], inst_id);
+		file = debugfs_create_file(name, IPA_READ_ONLY_MODE,
+			dent_eth, (void *)client, &fops_ipa_eth_stats);
+	}
 	if (!file) {
 		IPAERR("could not create hw_type file\n");
 		return;
 	}
-	snprintf(name, IPA_RESOURCE_NAME_MAX,
-		"%s_%d_status", ipa_eth_clients_strings[type], inst_id);
-	file = debugfs_create_file(name, IPA_READ_ONLY_MODE,
-		dent_eth, (void *)client, &fops_ipa_eth_client_status);
+	if (type < IPA_ETH_CLIENT_MAX) {
+		snprintf(name, IPA_RESOURCE_NAME_MAX,
+			"%s_%d_status", ipa_eth_clients_strings[type], inst_id);
+		file = debugfs_create_file(name, IPA_READ_ONLY_MODE,
+			dent_eth, (void *)client, &fops_ipa_eth_client_status);
+	}
 	if (!file) {
 		IPAERR("could not create hw_type file\n");
 		goto fail;
