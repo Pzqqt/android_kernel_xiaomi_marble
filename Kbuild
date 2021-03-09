@@ -3408,6 +3408,7 @@ cppflags-y += -DDP_RX_DESC_COOKIE_INVALIDATE
 cppflags-y += -DMON_ENABLE_DROP_FOR_MAC
 cppflags-y += -DPCI_LINK_STATUS_SANITY
 cppflags-y += -DDP_MON_RSSI_IN_DBM
+cppflags-y += -DSYSTEM_PM_CHECK
 endif
 
 # Enable Low latency optimisation mode

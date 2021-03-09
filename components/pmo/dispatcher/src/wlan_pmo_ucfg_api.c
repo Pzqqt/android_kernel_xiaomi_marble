@@ -919,3 +919,10 @@ QDF_STATUS ucfg_pmo_core_txrx_resume(struct wlan_objmgr_psoc *psoc)
 {
 	return pmo_core_txrx_resume(psoc);
 }
+
+#ifdef SYSTEM_PM_CHECK
+void ucfg_pmo_notify_system_resume(struct wlan_objmgr_psoc *psoc)
+{
+	pmo_core_system_resume(psoc);
+}
+#endif
