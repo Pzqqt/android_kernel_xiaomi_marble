@@ -358,6 +358,23 @@ void pmo_register_wow_default_patterns(struct wlan_objmgr_vdev *vdev)
 
 }
 
+#ifdef CONFIG_LITHIUM
+#define ADDBA_REQ 0
+static void set_action_id_drop_pattern_for_block_ack(
+					uint32_t *action_category_map,
+					uint32_t *action_id_per_category)
+{
+	action_category_map[0] |= 1 << PMO_ACTION_BLKACK;
+	action_id_per_category[0] = 1 << ADDBA_REQ;
+}
+#else
+static inline void set_action_id_drop_pattern_for_block_ack(
+					uint32_t *action_category_map,
+					uint32_t *action_id_per_category)
+{
+}
+#endif
+
 /**
  * set_action_id_drop_pattern_for_spec_mgmt() - Set action id of action
  * frames for spectrum mgmt frames to be droppped in fw.
@@ -418,6 +435,8 @@ pmo_register_action_frame_patterns(struct wlan_objmgr_vdev *vdev,
 
 	set_action_id_drop_pattern_for_spec_mgmt(cmd->action_per_category);
 	set_action_id_drop_pattern_for_public_action(cmd->action_per_category);
+	set_action_id_drop_pattern_for_block_ack(&cmd->action_category_map[0],
+						 cmd->action_per_category);
 
 	for (i = 0; i < PMO_SUPPORTED_ACTION_CATE_ELE_LIST; i++) {
 		if (i < ALLOWED_ACTION_FRAME_MAP_WORDS)
