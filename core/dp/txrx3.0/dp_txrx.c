@@ -674,9 +674,9 @@ void *dp_prealloc_get_coherent(uint32_t *size, void **base_vaddr_unaligned,
 	}
 
 	if (i == QDF_ARRAY_SIZE(g_dp_consistent_allocs))
-		dp_err("unable to allocate memory for ring type %s (%d) size %d",
+		dp_info("unable to allocate memory for ring type %s (%d) size %d",
 			dp_srng_get_str_from_hal_ring_type(ring_type),
-			ring_type, p->size);
+			ring_type, *size);
 	return va_aligned;
 }
 
