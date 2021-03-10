@@ -279,7 +279,7 @@ static int msm_vidc_adjust_hevc_qp(struct msm_vidc_inst *inst,
 
 	capability = inst->capabilities;
 
-	if (inst->codec != MSM_VIDC_HEVC) {
+	if (!(inst->codec == MSM_VIDC_HEVC || inst->codec == MSM_VIDC_HEIC)) {
 		i_vpr_e(inst,
 			"%s: incorrect entry in database for cap %d. fix the database\n",
 			__func__, cap_id);
@@ -734,7 +734,7 @@ int msm_vidc_adjust_bitrate_mode(void *instance, struct v4l2_ctrl *ctrl)
 		goto update;
 	}
 
-	if (!frame_rc) {
+	if (!frame_rc && !is_image_session(inst)) {
 		hfi_value = HFI_RC_OFF;
 		goto update;
 	}
@@ -1562,6 +1562,9 @@ int msm_vidc_set_u32(void *instance,
 		hfi_value = inst->capabilities->cap[cap_id].value;
 	}
 
+	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
+		inst->capabilities->cap[cap_id].value, hfi_value);
+
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
 		&hfi_value, sizeof(u32), __func__);
 
@@ -1583,6 +1586,9 @@ int msm_vidc_set_u32_enum(void *instance,
 	rc = msm_vidc_v4l2_to_hfi_enum(inst, cap_id, &hfi_value);
 	if (rc)
 		return -EINVAL;
+
+	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
+		inst->capabilities->cap[cap_id].value, hfi_value);
 
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32_ENUM,
 		&hfi_value, sizeof(u32), __func__);

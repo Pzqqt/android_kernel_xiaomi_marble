@@ -214,6 +214,7 @@ static u64 __calculate_decoder(struct vidc_bus_vote_data *d)
 	num_vpp_pipes = d->num_vpp_pipes;
 
 	if (d->codec == MSM_VIDC_HEVC ||
+		d->codec == MSM_VIDC_HEIC ||
 		d->codec == MSM_VIDC_VP9) {
 		/* H264, VP8, MPEG2 use the same settings */
 		/* HEVC, VP9 use the same setting */

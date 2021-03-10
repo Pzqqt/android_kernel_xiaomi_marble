@@ -873,10 +873,11 @@ int msm_venc_streamon_input(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
-	//rc = msm_vidc_check_session_supported(inst);
+	rc = msm_vidc_check_session_supported(inst);
 	if (rc)
 		goto error;
-	//rc = msm_vidc_check_scaling_supported(inst);
+
+	rc = msm_vidc_check_scaling_supported(inst);
 	if (rc)
 		goto error;
 
@@ -1070,7 +1071,7 @@ static int msm_venc_s_fmt_output(struct msm_vidc_inst *inst, struct v4l2_format 
 	struct msm_vidc_core *core;
 	u32 codec_align;
 
-	if (!inst || !inst->core) {
+	if (!inst || !inst->core || !f) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
@@ -1087,11 +1088,14 @@ static int msm_venc_s_fmt_output(struct msm_vidc_inst *inst, struct v4l2_format 
 	}
 	fmt->type = OUTPUT_MPLANE;
 
-	codec_align = f->fmt.pix_mp.pixelformat ==
-		V4L2_PIX_FMT_HEVC ? 32 : 16;
+	codec_align = (f->fmt.pix_mp.pixelformat == V4L2_PIX_FMT_HEVC ||
+		f->fmt.pix_mp.pixelformat == V4L2_PIX_FMT_HEIC) ? 32 : 16;
 	/* width, height is readonly for client */
 	fmt->fmt.pix_mp.width = ALIGN(inst->crop.width, codec_align);
 	fmt->fmt.pix_mp.height = ALIGN(inst->crop.height, codec_align);
+	/* use grid dimension for image session */
+	if (is_image_session(inst))
+		fmt->fmt.pix_mp.width = fmt->fmt.pix_mp.height = HEIC_GRID_DIMENSION;
 	fmt->fmt.pix_mp.pixelformat = f->fmt.pix_mp.pixelformat;
 	fmt->fmt.pix_mp.num_planes = 1;
 	fmt->fmt.pix_mp.plane_fmt[0].bytesperline = 0;
@@ -1173,6 +1177,7 @@ static int msm_venc_s_fmt_input(struct msm_vidc_inst *inst, struct v4l2_format *
 	int rc = 0;
 	struct v4l2_format *fmt;
 	struct msm_vidc_core *core;
+	u32 pix_fmt;
 
 	if (!inst || !inst->core || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1183,6 +1188,8 @@ static int msm_venc_s_fmt_input(struct msm_vidc_inst *inst, struct v4l2_format *
 	fmt = &inst->fmts[INPUT_PORT];
 	fmt->type = INPUT_MPLANE;
 	fmt->fmt.pix_mp.pixelformat = f->fmt.pix_mp.pixelformat;
+	pix_fmt = v4l2_colorformat_to_driver(f->fmt.pix_mp.pixelformat, __func__);
+	msm_vidc_update_cap_value(inst, PIX_FMTS, pix_fmt, __func__);
 	fmt->fmt.pix_mp.width = VIDEO_Y_STRIDE_PIX(fmt->fmt.pix_mp.pixelformat,
 		f->fmt.pix_mp.width);
 	fmt->fmt.pix_mp.height = VIDEO_Y_SCANLINES(fmt->fmt.pix_mp.pixelformat,

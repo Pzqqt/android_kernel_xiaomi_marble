@@ -45,13 +45,9 @@ static const struct msm_vidc_cap_name cap_name_arr[] = {
 	{FRAME_WIDTH,                    "FRAME_WIDTH"                },
 	{LOSSLESS_FRAME_WIDTH,           "LOSSLESS_FRAME_WIDTH"       },
 	{SECURE_FRAME_WIDTH,             "SECURE_FRAME_WIDTH"         },
-	{HEVC_IMAGE_FRAME_WIDTH,         "HEVC_IMAGE_FRAME_WIDTH"     },
-	{HEIC_IMAGE_FRAME_WIDTH,         "HEIC_IMAGE_FRAME_WIDTH"     },
 	{FRAME_HEIGHT,                   "FRAME_HEIGHT"               },
 	{LOSSLESS_FRAME_HEIGHT,          "LOSSLESS_FRAME_HEIGHT"      },
 	{SECURE_FRAME_HEIGHT,            "SECURE_FRAME_HEIGHT"        },
-	{HEVC_IMAGE_FRAME_HEIGHT,        "HEVC_IMAGE_FRAME_HEIGHT"    },
-	{HEIC_IMAGE_FRAME_HEIGHT,        "HEIC_IMAGE_FRAME_HEIGHT"    },
 	{PIX_FMTS,                       "PIX_FMTS"                   },
 	{MIN_BUFFERS_INPUT,              "MIN_BUFFERS_INPUT"          },
 	{MIN_BUFFERS_OUTPUT,             "MIN_BUFFERS_OUTPUT"         },
@@ -96,7 +92,7 @@ static const struct msm_vidc_cap_name cap_name_arr[] = {
 	{BLUR_RESOLUTION,                "BLUR_RESOLUTION"            },
 	{CSC,                            "CSC"                        },
 	{CSC_CUSTOM_MATRIX,              "CSC_CUSTOM_MATRIX"          },
-	{HEIC,                           "HEIC"                       },
+	{GRID,                           "GRID"                       },
 	{LOWLATENCY_MODE,                "LOWLATENCY_MODE"            },
 	{LTR_COUNT,                      "LTR_COUNT"                  },
 	{USE_LTR,                        "USE_LTR"                    },
@@ -374,6 +370,9 @@ enum msm_vidc_codec_type v4l2_codec_to_driver(u32 v4l2_codec, const char *func)
 	case V4L2_PIX_FMT_VP9:
 		codec = MSM_VIDC_VP9;
 		break;
+	case V4L2_PIX_FMT_HEIC:
+		codec = MSM_VIDC_HEIC;
+		break;
 	default:
 		d_vpr_e("%s: invalid v4l2 codec %#x\n", func, v4l2_codec);
 		break;
@@ -394,6 +393,9 @@ u32 v4l2_codec_from_driver(enum msm_vidc_codec_type codec, const char *func)
 		break;
 	case MSM_VIDC_VP9:
 		v4l2_codec = V4L2_PIX_FMT_VP9;
+		break;
+	case MSM_VIDC_HEIC:
+		v4l2_codec = V4L2_PIX_FMT_HEIC;
 		break;
 	default:
 		d_vpr_e("%s: invalid driver codec %#x\n", func, codec);
@@ -2013,6 +2015,12 @@ bool msm_vidc_allow_decode_batch(struct msm_vidc_inst *inst)
 		goto exit;
 	}
 
+	allow = !is_image_session(inst);
+	if (!allow) {
+		i_vpr_h(inst, "%s: image session\n", __func__);
+		goto exit;
+	}
+
 	allow = is_realtime_session(inst);
 	if (!allow) {
 		i_vpr_h(inst, "%s: non-realtime session\n", __func__);
@@ -2127,7 +2135,7 @@ int msm_vidc_queue_buffer_single(struct msm_vidc_inst *inst, struct vb2_buffer *
 		i_vpr_e(inst, "%s: qbuf not allowed\n", __func__);
 		return -EINVAL;
 	} else if (allow == MSM_VIDC_DEFER) {
-		print_vidc_buffer(VIDC_HIGH, "high", "qbuf deferred", inst, buf);
+		print_vidc_buffer(VIDC_LOW, "high", "qbuf deferred", inst, buf);
 		return 0;
 	}
 
@@ -2686,15 +2694,20 @@ int msm_vidc_add_session(struct msm_vidc_inst *inst)
 	}
 	core = inst->core;
 
+	if (!core->capabilities) {
+		i_vpr_e(inst, "%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
 	core_lock(core, __func__);
 	list_for_each_entry(i, &core->instances, list)
 		count++;
 
-	if (count < 0xffffff /*TODO: MAX_SUPPORTED_INSTANCES*/) {
+	if (count < core->capabilities[MAX_SESSION_COUNT].value) {
 		list_add_tail(&inst->list, &core->instances);
 	} else {
 		i_vpr_e(inst, "%s: total sessions %d exceeded max limit %d\n",
-			__func__, count, MAX_SUPPORTED_INSTANCES);
+			__func__, count, core->capabilities[MAX_SESSION_COUNT].value);
 		rc = -EINVAL;
 	}
 	core_unlock(core, __func__);
@@ -3752,6 +3765,7 @@ static const char *get_codec_str(enum msm_vidc_codec_type type)
 	case MSM_VIDC_H264: return "h264";
 	case MSM_VIDC_HEVC: return "h265";
 	case MSM_VIDC_VP9:  return " vp9";
+	case MSM_VIDC_HEIC: return "heic";
 	}
 
 	return "....";
@@ -3786,3 +3800,182 @@ int msm_vidc_update_debug_str(struct msm_vidc_inst *inst)
 
 	return 0;
 }
+
+static int msm_vidc_check_mbps_supported(struct msm_vidc_inst *inst)
+{
+	u32 mbps = 0;
+	struct msm_vidc_core *core;
+	struct msm_vidc_inst *instance;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+
+	core_lock(core, __func__);
+	list_for_each_entry(instance, &core->instances, list) {
+		/* ignore invalid/error session */
+		if (instance->state == MSM_VIDC_ERROR)
+			continue;
+
+		/* ignore thumbnail, image, and non realtime sessions */
+		if (is_thumbnail_session(instance) ||
+			is_image_session(instance) ||
+			!is_realtime_session(instance))
+			continue;
+
+		mbps += msm_vidc_get_inst_load(instance, LOAD_ADMISSION_CONTROL);
+	}
+	core_unlock(core, __func__);
+
+	if (mbps > core->capabilities[MAX_MBPS].value) {
+		/* todo: print running instances */
+		//msm_vidc_print_running_insts(inst->core);
+		return -ENOMEM;
+	}
+
+	return 0;
+}
+
+static int msm_vidc_check_mbpf_supported(struct msm_vidc_inst *inst)
+{
+	u32 mbpf = 0;
+	struct msm_vidc_core *core;
+	struct msm_vidc_inst *instance;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+
+	core_lock(core, __func__);
+	list_for_each_entry(instance, &core->instances, list) {
+		/* ignore invalid/error session */
+		if (instance->state == MSM_VIDC_ERROR)
+			continue;
+
+		/* ignore thumbnail, image, and non realtime sessions */
+		if (is_thumbnail_session(instance) ||
+			is_image_session(instance) ||
+			!is_realtime_session(instance))
+			continue;
+
+		mbpf += msm_vidc_get_mbs_per_frame(instance);
+	}
+	core_unlock(core, __func__);
+
+	if (mbpf > core->capabilities[MAX_MBPF].value) {
+		/* todo: print running instances */
+		//msm_vidc_print_running_insts(inst->core);
+		return -ENOMEM;
+	}
+
+	return 0;
+}
+
+int msm_vidc_check_session_supported(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_inst_capability *capability;
+	struct v4l2_format *fmt;
+	bool allow = false;
+	int rc = 0;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	/* todo: enable checks for all session type */
+	if (!is_image_session(inst))
+		return 0;
+
+	if (is_image_encode_session(inst)) {
+		/* is linear color fmt */
+		allow = is_linear_colorformat(capability->cap[PIX_FMTS].value);
+		if (!allow) {
+			i_vpr_e(inst, "%s: compressed fmt: %#x\n", __func__,
+				capability->cap[PIX_FMTS].value);
+			goto exit;
+		}
+
+		/* is output grid dimension */
+		fmt = &inst->fmts[OUTPUT_PORT];
+		allow = fmt->fmt.pix_mp.width == HEIC_GRID_DIMENSION;
+		allow &= fmt->fmt.pix_mp.height == HEIC_GRID_DIMENSION;
+		if (!allow) {
+			i_vpr_e(inst, "%s: output is not a grid dimension: %u x %u\n", __func__,
+				fmt->fmt.pix_mp.width, fmt->fmt.pix_mp.height);
+			goto exit;
+		}
+
+		/* is bitrate mode CQ */
+		allow = capability->cap[BITRATE_MODE].value == HFI_RC_CQ;
+		if (!allow) {
+			i_vpr_e(inst, "%s: bitrate mode is not CQ: %#x\n", __func__,
+				capability->cap[BITRATE_MODE].value);
+			goto exit;
+		}
+
+		/* is all intra */
+		allow = !capability->cap[GOP_SIZE].value;
+		allow &= !capability->cap[B_FRAME].value;
+		if (!allow) {
+			i_vpr_e(inst, "%s: not all intra: gop: %u, bframe: %u\n", __func__,
+				capability->cap[GOP_SIZE].value, capability->cap[B_FRAME].value);
+			goto exit;
+		}
+
+		/* is time delta based rc disabled */
+		allow = !capability->cap[TIME_DELTA_BASED_RC].value;
+		if (!allow) {
+			i_vpr_e(inst, "%s: time delta based rc not disabled: %#x\n", __func__,
+				capability->cap[TIME_DELTA_BASED_RC].value);
+			goto exit;
+		}
+
+		/* is profile type Still Pic */
+		allow = (capability->cap[PROFILE].value ==
+			V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_STILL_PICTURE);
+		if (!allow) {
+			i_vpr_e(inst, "%s: profile is not still pic type: %#x\n", __func__,
+				capability->cap[PROFILE].value);
+			goto exit;
+		}
+	}
+
+	rc = msm_vidc_check_mbps_supported(inst);
+	if (rc)
+		goto exit;
+
+	rc = msm_vidc_check_mbpf_supported(inst);
+	if (rc)
+		goto exit;
+
+	/* todo: add additional checks related to capabilities */
+
+	return 0;
+
+exit:
+	i_vpr_e(inst, "%s: current session not supported\n", __func__);
+	return -EINVAL;
+}
+
+int msm_vidc_check_scaling_supported(struct msm_vidc_inst *inst)
+{
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (is_image_session(inst) || is_decode_session(inst)) {
+		i_vpr_h(inst, "%s: Scaling is supported for encode session only\n", __func__);
+		return 0;
+	}
+
+	/* todo: add scaling check for encode session */
+	return 0;
+}
+

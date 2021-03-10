@@ -50,7 +50,7 @@ static u32 msm_vidc_decoder_bin_size_iris2(struct msm_vidc_inst *inst)
 	if (inst->codec == MSM_VIDC_H264)
 		HFI_BUFFER_BIN_H264D(size, width, height,
 			is_interlaced, vpp_delay, num_vpp_pipes);
-	else if (inst->codec == MSM_VIDC_HEVC)
+	else if (inst->codec == MSM_VIDC_HEVC || inst->codec == MSM_VIDC_HEIC)
 		HFI_BUFFER_BIN_H265D(size, width, height,
 			0, vpp_delay, num_vpp_pipes);
 	else if (inst->codec == MSM_VIDC_VP9)
@@ -84,7 +84,7 @@ static u32 msm_vidc_decoder_comv_size_iris2(struct msm_vidc_inst* inst)
 
 	if (inst->codec == MSM_VIDC_H264)
 		HFI_BUFFER_COMV_H264D(size, width, height, out_min_count);
-	else if (inst->codec == MSM_VIDC_HEVC)
+	else if (inst->codec == MSM_VIDC_HEVC || inst->codec == MSM_VIDC_HEIC)
 		HFI_BUFFER_COMV_H265D(size, width, height, out_min_count);
 
 	i_vpr_l(inst, "%s: size %d\n", __func__, size);
@@ -115,7 +115,7 @@ static u32 msm_vidc_decoder_non_comv_size_iris2(struct msm_vidc_inst* inst)
 
 	if (inst->codec == MSM_VIDC_H264)
 		HFI_BUFFER_NON_COMV_H264D(size, width, height, num_vpp_pipes);
-	else if (inst->codec == MSM_VIDC_HEVC)
+	else if (inst->codec == MSM_VIDC_HEVC || inst->codec == MSM_VIDC_HEIC)
 		HFI_BUFFER_NON_COMV_H265D(size, width, height, num_vpp_pipes);
 
 	i_vpr_l(inst, "%s: size %d\n", __func__, size);
@@ -167,7 +167,7 @@ static u32 msm_vidc_decoder_line_size_iris2(struct msm_vidc_inst *inst)
 	if (inst->codec == MSM_VIDC_H264)
 		HFI_BUFFER_LINE_H264D(size, width, height, is_opb,
 			num_vpp_pipes);
-	else if (inst->codec == MSM_VIDC_HEVC)
+	else if (inst->codec == MSM_VIDC_HEVC || inst->codec == MSM_VIDC_HEIC)
 		HFI_BUFFER_LINE_H265D(size, width, height, is_opb,
 			num_vpp_pipes);
 	else if (inst->codec == MSM_VIDC_VP9)
@@ -189,7 +189,7 @@ static u32 msm_vidc_decoder_persist_size_iris2(struct msm_vidc_inst *inst)
 
 	if (inst->codec == MSM_VIDC_H264)
 		HFI_BUFFER_PERSIST_H264D(size);
-	else if (inst->codec == MSM_VIDC_HEVC)
+	else if (inst->codec == MSM_VIDC_HEVC || inst->codec == MSM_VIDC_HEIC)
 		HFI_BUFFER_PERSIST_H265D(size);
 	else if (inst->codec == MSM_VIDC_VP9)
 		HFI_BUFFER_PERSIST_VP9D(size);
@@ -269,7 +269,7 @@ static u32 msm_vidc_encoder_bin_size_iris2(struct msm_vidc_inst *inst)
 	if (inst->codec == MSM_VIDC_H264)
 		HFI_BUFFER_BIN_H264E(size, inst->hfi_rc_type, width,
 			height, stage, num_vpp_pipes);
-	else if (inst->codec == MSM_VIDC_HEVC)
+	else if (inst->codec == MSM_VIDC_HEVC || inst->codec == MSM_VIDC_HEIC)
 		HFI_BUFFER_BIN_H265E(size, inst->hfi_rc_type, width,
 			height, stage, num_vpp_pipes);
 
@@ -298,7 +298,7 @@ static u32 msm_vidc_encoder_comv_size_iris2(struct msm_vidc_inst* inst)
 			HFI_CODEC_ENCODE_AVC);
 		num_ref = num_recon - 1;
 		HFI_BUFFER_COMV_H264E(size, width, height, num_ref);
-	} else if (inst->codec == MSM_VIDC_HEVC) {
+	} else if (inst->codec == MSM_VIDC_HEVC || inst->codec == MSM_VIDC_HEIC) {
 		// TODO: replace zeros with appropriate variables
 		HFI_IRIS2_ENC_RECON_BUF_COUNT(num_recon, 0, 0, 0, 0, 0,
 			HFI_CODEC_ENCODE_HEVC);
@@ -333,7 +333,7 @@ static u32 msm_vidc_encoder_non_comv_size_iris2(struct msm_vidc_inst* inst)
 
 	if (inst->codec == MSM_VIDC_H264)
 		HFI_BUFFER_NON_COMV_H264E(size, width, height, num_vpp_pipes);
-	else if (inst->codec == MSM_VIDC_HEVC)
+	else if (inst->codec == MSM_VIDC_HEVC || inst->codec == MSM_VIDC_HEIC)
 		HFI_BUFFER_NON_COMV_H265E(size, width, height, num_vpp_pipes);
 
 	i_vpr_l(inst, "%s: size %d\n", __func__, size);
@@ -371,7 +371,7 @@ static u32 msm_vidc_encoder_line_size_iris2(struct msm_vidc_inst *inst)
 
 	if (inst->codec == MSM_VIDC_H264)
 		HFI_BUFFER_LINE_H264E(size, width, height, is_tenbit, num_vpp_pipes);
-	else if (inst->codec == MSM_VIDC_HEVC)
+	else if (inst->codec == MSM_VIDC_HEVC || inst->codec == MSM_VIDC_HEIC)
 		HFI_BUFFER_LINE_H265E(size, width, height, is_tenbit, num_vpp_pipes);
 
 	i_vpr_l(inst, "%s: size %d\n", __func__, size);
@@ -402,7 +402,7 @@ static u32 msm_vidc_encoder_dpb_size_iris2(struct msm_vidc_inst *inst)
 
 	if (inst->codec == MSM_VIDC_H264)
 		HFI_BUFFER_DPB_H264E(size, width, height);
-	else if (inst->codec == MSM_VIDC_HEVC)
+	else if (inst->codec == MSM_VIDC_HEVC || inst->codec == MSM_VIDC_HEIC)
 		HFI_BUFFER_DPB_H265E(size, width, height, is_tenbit);
 
 	i_vpr_l(inst, "%s: size %d\n", __func__, size);
@@ -534,7 +534,7 @@ static int msm_buffer_encoder_dpb_count(struct msm_vidc_inst *inst)
 		// TODO: replace zeros with appropriate variables
 		HFI_IRIS2_ENC_RECON_BUF_COUNT(count, 0, 0, 0, 0, 0,
 			HFI_CODEC_ENCODE_AVC);
-	} else if (inst->codec == MSM_VIDC_HEVC) {
+	} else if (inst->codec == MSM_VIDC_HEVC || inst->codec == MSM_VIDC_HEIC) {
 		// TODO: replace zeros with appropriate variables
 		HFI_IRIS2_ENC_RECON_BUF_COUNT(count, 0, 0, 0, 0, 0,
 			HFI_CODEC_ENCODE_HEVC);

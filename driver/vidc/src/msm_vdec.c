@@ -371,7 +371,9 @@ static int msm_vdec_set_colorspace(struct msm_vidc_inst *inst,
 		return -EINVAL;
 	}
 
-	if (inst->codec != MSM_VIDC_H264 && inst->codec != MSM_VIDC_HEVC)
+	if (inst->codec != MSM_VIDC_H264 &&
+		inst->codec != MSM_VIDC_HEVC &&
+		inst->codec != MSM_VIDC_HEIC)
 		return 0;
 
 	if (inst->fmts[port].fmt.pix_mp.colorspace != V4L2_COLORSPACE_DEFAULT ||
@@ -997,7 +999,7 @@ static int msm_vdec_subscribe_input_port_settings_change(struct msm_vidc_inst *i
 	if (inst->codec == MSM_VIDC_H264) {
 		subscribe_psc_size = ARRAY_SIZE(msm_vdec_subscribe_for_psc_avc);
 		psc = msm_vdec_subscribe_for_psc_avc;
-	} else if (inst->codec == MSM_VIDC_HEVC) {
+	} else if (inst->codec == MSM_VIDC_HEVC || inst->codec == MSM_VIDC_HEIC) {
 		subscribe_psc_size = ARRAY_SIZE(msm_vdec_subscribe_for_psc_hevc);
 		psc = msm_vdec_subscribe_for_psc_hevc;
 	} else if (inst->codec == MSM_VIDC_VP9) {
@@ -1448,10 +1450,11 @@ int msm_vdec_streamon_input(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
-	//rc = msm_vidc_check_session_supported(inst);
+	rc = msm_vidc_check_session_supported(inst);
 	if (rc)
 		goto error;
-	//rc = msm_vidc_check_scaling_supported(inst);
+
+	rc = msm_vidc_check_scaling_supported(inst);
 	if (rc)
 		goto error;
 
@@ -1578,7 +1581,7 @@ static int msm_vdec_subscribe_output_port_settings_change(struct msm_vidc_inst *
 	if (inst->codec == MSM_VIDC_H264) {
 		subscribe_psc_size = ARRAY_SIZE(msm_vdec_subscribe_for_psc_avc);
 		psc = msm_vdec_subscribe_for_psc_avc;
-	} else if (inst->codec == MSM_VIDC_HEVC) {
+	} else if (inst->codec == MSM_VIDC_HEVC || inst->codec == MSM_VIDC_HEIC) {
 		subscribe_psc_size = ARRAY_SIZE(msm_vdec_subscribe_for_psc_hevc);
 		psc = msm_vdec_subscribe_for_psc_hevc;
 	} else if (inst->codec == MSM_VIDC_VP9) {
@@ -1779,7 +1782,7 @@ static int msm_vdec_qbuf_batch(struct msm_vidc_inst *inst,
 		i_vpr_e(inst, "%s: qbuf not allowed\n", __func__);
 		return -EINVAL;
 	} else if (allow == MSM_VIDC_DEFER) {
-		print_vidc_buffer(VIDC_HIGH, "high", "qbuf deferred", inst, buf);
+		print_vidc_buffer(VIDC_LOW, "high", "qbuf deferred", inst, buf);
 		return 0;
 	}
 
@@ -1787,7 +1790,7 @@ static int msm_vdec_qbuf_batch(struct msm_vidc_inst *inst,
 	if (inst->power.buffer_counter > SKIP_BATCH_WINDOW) {
 		count = msm_vidc_num_buffers(inst, MSM_VIDC_BUF_OUTPUT, MSM_VIDC_ATTR_DEFERRED);
 		if (count < inst->decode_batch.size) {
-			print_vidc_buffer(VIDC_HIGH, "high", "batch-qbuf deferred", inst, buf);
+			print_vidc_buffer(VIDC_LOW, "high", "batch-qbuf deferred", inst, buf);
 			schedule_batch_work(inst);
 			return 0;
 		}
@@ -1880,7 +1883,7 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 	int rc = 0;
 	struct msm_vidc_core *core;
 	struct v4l2_format *fmt;
-	u32 codec_align;
+	u32 codec_align, pix_fmt;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -2007,8 +2010,8 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 		}
 		inst->buffers.output.size =
 			fmt->fmt.pix_mp.plane_fmt[0].sizeimage;
-		inst->capabilities->cap[PIX_FMTS].value =
-			v4l2_colorformat_to_driver(f->fmt.pix_mp.pixelformat, __func__);
+		pix_fmt = v4l2_colorformat_to_driver(f->fmt.pix_mp.pixelformat, __func__);
+		msm_vidc_update_cap_value(inst, PIX_FMTS, pix_fmt, __func__);
 		//rc = msm_vidc_check_session_supported(inst);
 		if (rc)
 			goto err_invalid_fmt;

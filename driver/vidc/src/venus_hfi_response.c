@@ -1322,8 +1322,7 @@ static int handle_system_response(struct msm_vidc_core *core,
 	int rc = 0;
 	struct hfi_packet *packet;
 	u8 *pkt, *start_pkt;
-	bool parsed = false;
-	int i, j, k;
+	int i, j;
 	static const struct msm_vidc_core_hfi_range be[] = {
 		{HFI_SYSTEM_ERROR_BEGIN,   HFI_SYSTEM_ERROR_END,   handle_system_error     },
 		{HFI_PROP_BEGIN,           HFI_PROP_END,           handle_system_property  },
@@ -1335,25 +1334,11 @@ static int handle_system_response(struct msm_vidc_core *core,
 		pkt = start_pkt;
 		for (j = 0; j < hdr->num_packets; j++) {
 			packet = (struct hfi_packet *)pkt;
-			parsed = false;
 			if (in_range(be[i], packet->type)) {
-				parsed = true;
 				rc = be[i].handle(core, packet);
 				if (rc)
 					return -EINVAL;
 			}
-
-			/* is pkt type unknown ? */
-			if (!parsed) {
-				for (k = 0; k < ARRAY_SIZE(be); k++)
-					if (in_range(be[k], packet->type))
-						parsed |= true;
-
-				if (!parsed)
-					d_vpr_e("%s: unknown packet received %#x\n",
-						__func__, packet->type);
-			}
-
 			pkt += packet->size;
 		}
 	}
@@ -1367,8 +1352,8 @@ static int __handle_session_response(struct msm_vidc_inst *inst,
 	int rc = 0;
 	struct hfi_packet *packet;
 	u8 *pkt, *start_pkt;
-	bool dequeue = false, parsed = false;
-	int i, j, k;
+	bool dequeue = false;
+	int i, j;
 	static const struct msm_vidc_inst_hfi_range be[] = {
 		{HFI_SESSION_ERROR_BEGIN,  HFI_SESSION_ERROR_END,  handle_session_error    },
 		{HFI_INFORMATION_BEGIN,    HFI_INFORMATION_END,    handle_session_info     },
@@ -1382,26 +1367,12 @@ static int __handle_session_response(struct msm_vidc_inst *inst,
 		pkt = start_pkt;
 		for (j = 0; j < hdr->num_packets; j++) {
 			packet = (struct hfi_packet *)pkt;
-			parsed = false;
 			if (in_range(be[i], packet->type)) {
-				parsed = true;
 				dequeue |= (packet->type == HFI_CMD_BUFFER);
 				rc = be[i].handle(inst, packet);
 				if (rc)
 					goto exit;
 			}
-
-			/* is pkt type unknown ? */
-			if (!parsed) {
-				for (k = 0; k < ARRAY_SIZE(be); k++)
-					if (in_range(be[k], packet->type))
-						parsed |= true;
-
-				if (!parsed)
-					d_vpr_e("%s: unknown packet received %#x\n",
-						__func__, packet->type);
-			}
-
 			pkt += packet->size;
 		}
 	}

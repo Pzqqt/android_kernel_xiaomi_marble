@@ -13,6 +13,7 @@
 #include "msm_vidc_inst.h"
 
 #define MSM_VIDC_SESSION_INACTIVE_THRESHOLD_MS 1000
+#define HEIC_GRID_DIMENSION 512
 
 static inline is_decode_session(struct msm_vidc_inst *inst)
 {
@@ -22,6 +23,21 @@ static inline is_decode_session(struct msm_vidc_inst *inst)
 static inline is_encode_session(struct msm_vidc_inst *inst)
 {
 	return inst->domain == MSM_VIDC_ENCODER;
+}
+
+static inline is_image_encode_session(struct msm_vidc_inst *inst)
+{
+	return inst->codec == MSM_VIDC_HEIC && inst->domain == MSM_VIDC_ENCODER;
+}
+
+static inline is_image_decode_session(struct msm_vidc_inst *inst)
+{
+	return inst->codec == MSM_VIDC_HEIC && inst->domain == MSM_VIDC_DECODER;
+}
+
+static inline is_image_session(struct msm_vidc_inst *inst)
+{
+	return inst->codec == MSM_VIDC_HEIC;
 }
 
 static inline is_secure_session(struct msm_vidc_inst *inst)
@@ -331,5 +347,7 @@ int msm_vidc_deinit_core_caps(struct msm_vidc_core* core);
 int msm_vidc_deinit_instance_caps(struct msm_vidc_core* core);
 int msm_vidc_update_debug_str(struct msm_vidc_inst *inst);
 bool msm_vidc_allow_decode_batch(struct msm_vidc_inst *inst);
+int msm_vidc_check_session_supported(struct msm_vidc_inst *inst);
+int msm_vidc_check_scaling_supported(struct msm_vidc_inst *inst);
 #endif // _MSM_VIDC_DRIVER_H_
 

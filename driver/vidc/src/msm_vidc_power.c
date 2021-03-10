@@ -97,18 +97,19 @@ int msm_vidc_get_inst_load(struct msm_vidc_inst *inst,
 	 *                 | Power Request Load =       |
 	 *                 |          res * max(op, fps)|
 	 * ----------------|----------------------------|
-	 * NON-REALTIME/   | Admission Control Load = 0	|
-	 *  THUMBNAIL      | Power Request Load =       |
-	 *                 |          res * max(op, fps)|
+	 * NON-REALTIME/   | Admission Control Load = 0 |
+	 * THUMBNAIL/      | Power Request Load =       |
+	 * IMAGE           |          res * max(op, fps)|
+	 *                 |                            |
 	 * ----------------|----------------------------|
 	 */
-	if (is_thumbnail_session(inst) ||
-		(!is_realtime_session(inst) &&
-		quirks == LOAD_ADMISSION_CONTROL)) {
-		load = 0;
-	} else {
-		load = msm_vidc_get_mbps(inst, quirks);
-	}
+	if (is_thumbnail_session(inst) || is_image_session(inst))
+		goto exit;
+
+	if (!is_realtime_session(inst) && quirks == LOAD_ADMISSION_CONTROL)
+		goto exit;
+
+	load = msm_vidc_get_mbps(inst, quirks);
 
 exit:
 	return load;
@@ -228,7 +229,7 @@ int msm_vidc_scale_buses(struct msm_vidc_inst *inst)
 		return 0;
 
 	vote_data->power_mode = VIDC_POWER_NORMAL;
-	if (inst->power.buffer_counter < DCVS_FTB_WINDOW)
+	if (inst->power.buffer_counter < DCVS_FTB_WINDOW || is_image_session(inst))
 		vote_data->power_mode = VIDC_POWER_TURBO;
 	if (msm_vidc_clock_voting)
 		vote_data->power_mode = VIDC_POWER_TURBO;
@@ -419,7 +420,7 @@ static int msm_vidc_apply_dcvs(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
-	if (!inst->power.dcvs_mode || inst->decode_batch.enable) {
+	if (!inst->power.dcvs_mode || inst->decode_batch.enable || is_image_session(inst)) {
 		i_vpr_l(inst, "Skip DCVS (dcvs %d, batching %d)\n",
 			inst->power.dcvs_mode, inst->decode_batch.enable);
 		inst->power.dcvs_flags = 0;
@@ -491,7 +492,7 @@ int msm_vidc_scale_clocks(struct msm_vidc_inst *inst)
 		return 0;
 
 	//todo: add turbo session check
-	if (inst->power.buffer_counter < DCVS_FTB_WINDOW) {
+	if (inst->power.buffer_counter < DCVS_FTB_WINDOW || is_image_session(inst)) {
 		inst->power.min_freq = msm_vidc_max_freq(inst);
 		inst->power.dcvs_flags = 0;
 	} else if (msm_vidc_clock_voting) {

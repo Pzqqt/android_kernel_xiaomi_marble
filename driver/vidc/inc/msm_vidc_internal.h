@@ -115,6 +115,7 @@ enum msm_vidc_codec_type {
 	MSM_VIDC_H264              = BIT(0),
 	MSM_VIDC_HEVC              = BIT(1),
 	MSM_VIDC_VP9               = BIT(2),
+	MSM_VIDC_HEIC              = BIT(3),
 };
 
 enum msm_vidc_colorformat_type {
@@ -295,13 +296,9 @@ enum msm_vidc_inst_capability_type {
 	FRAME_WIDTH,
 	LOSSLESS_FRAME_WIDTH,
 	SECURE_FRAME_WIDTH,
-	HEVC_IMAGE_FRAME_WIDTH,
-	HEIC_IMAGE_FRAME_WIDTH,
 	FRAME_HEIGHT,
 	LOSSLESS_FRAME_HEIGHT,
 	SECURE_FRAME_HEIGHT,
-	HEVC_IMAGE_FRAME_HEIGHT,
-	HEIC_IMAGE_FRAME_HEIGHT,
 	PIX_FMTS,
 	MIN_BUFFERS_INPUT,
 	MIN_BUFFERS_OUTPUT,
@@ -346,7 +343,7 @@ enum msm_vidc_inst_capability_type {
 	BLUR_RESOLUTION,
 	CSC,
 	CSC_CUSTOM_MATRIX,
-	HEIC,
+	GRID,
 	LOWLATENCY_MODE,
 	LTR_COUNT,
 	USE_LTR,

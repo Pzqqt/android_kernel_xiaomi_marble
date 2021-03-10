@@ -31,7 +31,7 @@ u32 msm_vidc_input_min_count(struct msm_vidc_inst* inst)
 		return 0;
 	}
 
-	if (is_thumbnail_session(inst))
+	if (is_thumbnail_session(inst) || is_image_session(inst))
 		input_min_count = 1;
 
 	//if (is_grid_session(inst))
@@ -58,7 +58,7 @@ u32 msm_vidc_output_min_count(struct msm_vidc_inst *inst)
 	if (!is_decode_session(inst) && !is_encode_session(inst))
 		return 0;
 
-	if (is_thumbnail_session(inst))
+	if (is_thumbnail_session(inst) || is_image_session(inst))
 		return 1;
 
 	if (is_decode_session(inst)) {
@@ -69,6 +69,9 @@ u32 msm_vidc_output_min_count(struct msm_vidc_inst *inst)
 			break;
 		case MSM_VIDC_VP9:
 			output_min_count = 9;
+			break;
+		case MSM_VIDC_HEIC:
+			output_min_count = 1;
 			break;
 		default:
 			output_min_count = 4;
@@ -102,7 +105,7 @@ u32 msm_vidc_input_extra_count(struct msm_vidc_inst *inst)
 	 * no extra buffers for thumbnail session because
 	 * neither dcvs nor batching will be enabled
 	 */
-	if (is_thumbnail_session(inst))
+	if (is_thumbnail_session(inst) || is_image_session(inst))
 		return 0;
 
 	if (is_decode_session(inst)) {
@@ -140,7 +143,7 @@ u32 msm_vidc_output_extra_count(struct msm_vidc_inst *inst)
 	 * no extra buffers for thumbnail session because
 	 * neither dcvs nor batching will be enabled
 	 */
-	if (is_thumbnail_session(inst))
+	if (is_thumbnail_session(inst) || is_image_session(inst))
 		return 0;
 
 	if (is_decode_session(inst)) {
@@ -180,8 +183,9 @@ u32 msm_vidc_internal_buffer_count(struct msm_vidc_inst *inst,
 			count = 1;
 		} else if (buffer_type == MSM_VIDC_BUF_COMV ||
 			buffer_type == MSM_VIDC_BUF_NON_COMV) {
-			if (inst->codec == MSM_VIDC_HEVC ||
-				inst->codec == MSM_VIDC_H264)
+			if (inst->codec == MSM_VIDC_H264 ||
+				inst->codec == MSM_VIDC_HEVC ||
+				inst->codec == MSM_VIDC_HEIC)
 				count = 1;
 			else
 				count = 0;
@@ -241,19 +245,18 @@ u32 msm_vidc_decoder_input_size(struct msm_vidc_inst *inst)
 	if (is_secure_session(inst))
 		div_factor = div_factor << 1;
 
-	/* For HEIF image, use the actual resolution to calc buffer size */
-	/* TODO: fix me
-	if (is_heif_decoder(inst)) {
+	/* For image session, use the actual resolution to calc buffer size */
+	if (is_image_session(inst)) {
 		base_res_mbs = num_mbs;
 		div_factor = 1;
 	}
-	*/
 
 	frame_size = base_res_mbs * MB_SIZE_IN_PIXEL * 3 / 2 / div_factor;
 
 	 /* multiply by 10/8 (1.25) to get size for 10 bit case */
 	if (f->fmt.pix_mp.pixelformat == V4L2_PIX_FMT_VP9 ||
-		f->fmt.pix_mp.pixelformat == V4L2_PIX_FMT_HEVC)
+		f->fmt.pix_mp.pixelformat == V4L2_PIX_FMT_HEVC ||
+		f->fmt.pix_mp.pixelformat == V4L2_PIX_FMT_HEIC)
 		frame_size = frame_size + (frame_size >> 2);
 
 	i_vpr_h(inst, "set input buffer size to %d\n", frame_size);
@@ -319,6 +322,10 @@ u32 msm_vidc_encoder_output_size(struct msm_vidc_inst *inst)
 	mbs_per_frame = NUM_MBS_PER_FRAME(width, height);
 	frame_size = (width * height * 3);
 
+	/* Image session: 2 x yuv size */
+	if (is_image_session(inst))
+		goto skip_calc;
+
 	if (mbs_per_frame < NUM_MBS_720P)
 		frame_size = frame_size << 1;
 	else if (mbs_per_frame <= NUM_MBS_4k)
@@ -333,8 +340,10 @@ u32 msm_vidc_encoder_output_size(struct msm_vidc_inst *inst)
 	if (inst->rc_type == RATE_CONTROL_LOSSLESS)
 		frame_size = (width * height * 9) >> 2; */
 
+skip_calc:
 	/* multiply by 10/8 (1.25) to get size for 10 bit case */
-	if (f->fmt.pix_mp.pixelformat == V4L2_PIX_FMT_HEVC)
+	if (f->fmt.pix_mp.pixelformat == V4L2_PIX_FMT_HEVC ||
+		f->fmt.pix_mp.pixelformat == V4L2_PIX_FMT_HEIC)
 		frame_size = frame_size + (frame_size >> 2);
 
 	return ALIGN(frame_size, SZ_4K);
