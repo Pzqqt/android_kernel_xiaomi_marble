@@ -14,6 +14,7 @@
 #include <linux/mem-buf.h>
 #include <linux/slab.h>
 #include <linux/types.h>
+#include <linux/qcom-dma-mapping.h>
 #include "msm_cvp_core.h"
 #include "msm_cvp_debug.h"
 #include "msm_cvp_resources.h"
