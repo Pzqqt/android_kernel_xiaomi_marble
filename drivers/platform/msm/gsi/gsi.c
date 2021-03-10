@@ -1928,6 +1928,7 @@ int gsi_alloc_evt_ring(struct gsi_evt_ring_props *props, unsigned long dev_hdl,
 	mutex_init(&ctx->mlock);
 	init_completion(&ctx->compl);
 	atomic_set(&ctx->chan_ref_cnt, 0);
+	ctx->num_of_chan_allocated = 0;
 	ctx->props = *props;
 
 	mutex_lock(&gsi_ctx->mlock);
@@ -3481,8 +3482,10 @@ int gsi_dealloc_channel(unsigned long chan_hdl)
 	}
 	devm_kfree(gsi_ctx->dev, ctx->user_data);
 	ctx->allocated = false;
-	if (ctx->evtr && (ctx->props.prot != GSI_CHAN_PROT_GCI))
+	if (ctx->evtr && (ctx->props.prot != GSI_CHAN_PROT_GCI)) {
 		atomic_dec(&ctx->evtr->chan_ref_cnt);
+		ctx->evtr->num_of_chan_allocated--;
+	}
 	atomic_dec(&gsi_ctx->num_chan);
 
 	if (ctx->props.prot == GSI_CHAN_PROT_GCI) {
