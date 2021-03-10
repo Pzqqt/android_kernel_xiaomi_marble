@@ -98,6 +98,38 @@ bool target_if_spectral_wmi_service_enabled(struct wlan_objmgr_psoc *psoc,
 }
 #endif /* SPECTRAL_MODULIZED_ENABLE */
 
+struct target_if_spectral *get_target_if_spectral_handle_from_pdev(
+	struct wlan_objmgr_pdev *pdev)
+{
+	struct target_if_spectral *spectral;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_rx_ops *rx_ops;
+
+	if (!pdev) {
+		spectral_err("pdev is null");
+		return NULL;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		spectral_err("psoc is null");
+		return NULL;
+	}
+
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (!rx_ops) {
+		spectral_err("rx_ops is null");
+		return NULL;
+	}
+
+	spectral = (struct target_if_spectral *)
+		rx_ops->sptrl_rx_ops.sptrlro_get_pdev_target_handle(pdev);
+
+	return spectral;
+}
+
+qdf_export_symbol(get_target_if_spectral_handle_from_pdev);
+
 /**
  * target_if_spectral_get_normal_mode_cap() - API to get normal
  * Spectral scan capability of a given pdev

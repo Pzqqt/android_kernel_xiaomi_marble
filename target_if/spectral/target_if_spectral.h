@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2017-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -1454,36 +1454,8 @@ void target_if_dbg_print_samp_msg(struct spectral_samp_msg *pmsg);
  * Return: Handle to target_if internal Spectral data on success, NULL on
  * failure
  */
-static inline
 struct target_if_spectral *get_target_if_spectral_handle_from_pdev(
-	struct wlan_objmgr_pdev *pdev)
-{
-	struct target_if_spectral *spectral;
-	struct wlan_objmgr_psoc *psoc;
-	struct wlan_lmac_if_rx_ops *rx_ops;
-
-	if (!pdev) {
-		spectral_err("pdev is null");
-		return NULL;
-	}
-
-	psoc = wlan_pdev_get_psoc(pdev);
-	if (!psoc) {
-		spectral_err("psoc is null");
-		return NULL;
-	}
-
-	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
-	if (!rx_ops) {
-		spectral_err("rx_ops is null");
-		return NULL;
-	}
-
-	spectral = (struct target_if_spectral *)
-		rx_ops->sptrl_rx_ops.sptrlro_get_pdev_target_handle(pdev);
-
-	return spectral;
-}
+	struct wlan_objmgr_pdev *pdev);
 
 /**
  * get_target_if_spectral_handle_from_psoc() - Get handle to psoc target_if
