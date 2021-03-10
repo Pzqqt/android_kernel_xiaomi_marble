@@ -29463,6 +29463,7 @@ typedef enum _WMI_PAUSE_TWT_STATUS_T {
     WMI_PAUSE_TWT_STATUS_NO_ACK,              /* peer AP/STA did not ACK the request/response frame */
     WMI_PAUSE_TWT_STATUS_UNKNOWN_ERROR,       /* pausing TWT dialog failed with an unknown reason */
     WMI_PAUSE_TWT_STATUS_ALREADY_PAUSED,      /* The TWT dialog is already paused */
+    WMI_PAUSE_TWT_STATUS_TWT_INFO_FRM_NOT_SUPPORTED, /* TWT information frame is not supported by AP */
 } WMI_PAUSE_TWT_STATUS_T;
 
 typedef struct {
@@ -29492,6 +29493,7 @@ typedef enum _WMI_RESUME_TWT_STATUS_T {
     WMI_RESUME_TWT_STATUS_NO_RESOURCE,         /* FW resource exhausted */
     WMI_RESUME_TWT_STATUS_NO_ACK,              /* peer AP/STA did not ACK the request/response frame */
     WMI_RESUME_TWT_STATUS_UNKNOWN_ERROR,       /* resuming TWT dialog failed with an unknown reason */
+    WMI_RESUME_TWT_STATUS_TWT_INFO_FRM_NOT_SUPPORTED, /* TWT information frame is not supported by AP */
 } WMI_RESUME_TWT_STATUS_T;
 
 typedef struct {
@@ -29521,6 +29523,7 @@ typedef enum _WMI_TWT_NUDGE_STATUS_T {
     WMI_NUDGE_TWT_STATUS_NO_ACK,              /* peer AP/STA did not ACK the request/response frame */
     WMI_NUDGE_TWT_STATUS_UNKNOWN_ERROR,       /* nudging TWT dialog failed with an unknown reason */
     WMI_NUDGE_TWT_STATUS_ALREADY_PAUSED,      /* The TWT dialog is already paused */
+    WMI_NUDGE_TWT_STATUS_TWT_INFO_FRM_NOT_SUPPORTED, /* TWT information frame is not supported by AP */
 } WMI_TWT_NUDGE_STATUS_T;
 
 typedef struct {
