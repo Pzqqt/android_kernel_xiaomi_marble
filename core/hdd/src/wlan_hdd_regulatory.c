@@ -742,6 +742,8 @@ int hdd_reg_set_country(struct hdd_context *hdd_ctx, char *country_code)
 {
 	QDF_STATUS status;
 	uint8_t cc[REG_ALPHA2_LEN + 1];
+	uint8_t alpha2[REG_ALPHA2_LEN + 1];
+	enum country_src cc_src;
 
 	if (!country_code) {
 		hdd_err("country_code is null");
@@ -750,6 +752,14 @@ int hdd_reg_set_country(struct hdd_context *hdd_ctx, char *country_code)
 
 	qdf_mem_copy(cc, country_code, REG_ALPHA2_LEN);
 	cc[REG_ALPHA2_LEN] = '\0';
+
+	if (!qdf_mem_cmp(country_code, hdd_ctx->reg.alpha2, REG_ALPHA2_LEN)) {
+		cc_src = ucfg_reg_get_cc_and_src(hdd_ctx->psoc, alpha2);
+		if (cc_src == SOURCE_USERSPACE || cc_src == SOURCE_CORE) {
+			hdd_debug("country code is the same");
+			return 0;
+		}
+	}
 
 	qdf_event_reset(&hdd_ctx->regulatory_update_event);
 	qdf_mutex_acquire(&hdd_ctx->regulatory_status_lock);
