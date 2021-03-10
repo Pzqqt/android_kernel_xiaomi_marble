@@ -219,6 +219,7 @@ static struct CE_pipe_config target_ce_config_wlan[] = {
 };
 
 #ifdef WLAN_FEATURE_EPPING
+#define EPPING_HOST_CE_COUNT 8
 static struct CE_attr host_ce_config_wlan_epping_poll[] = {
 	/* host->target HTC control and raw streams */
 	{ /* CE0 */ CE_ATTR_FLAGS, 0, 16, 2048, 0, NULL,},
@@ -371,6 +372,7 @@ static struct CE_pipe_config target_ce_config_wlan[] = {
 };
 
 #ifdef WLAN_FEATURE_EPPING
+#define EPPING_HOST_CE_COUNT 12
 static struct CE_attr host_ce_config_wlan_epping_poll[] = {
 	/* host->target HTC control and raw streams */
 	{ /* CE0 */ CE_ATTR_FLAGS, 0, 16, 256, 0, NULL,},

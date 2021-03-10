@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -344,14 +344,16 @@ void hif_get_target_ce_config(struct hif_softc *scn,
 		uint32_t *shadow_cfg_v1_sz_ret);
 
 #ifdef WLAN_FEATURE_EPPING
-void hif_ce_prepare_epping_config(struct HIF_CE_state *hif_state);
+void hif_ce_prepare_epping_config(struct hif_softc *scn,
+				  struct HIF_CE_state *hif_state);
 void hif_select_epping_service_to_pipe_map(struct service_to_pipe
 					   **tgt_svc_map_to_use,
 					   uint32_t *sz_tgt_svc_map_to_use);
 
 #else
 static inline
-void hif_ce_prepare_epping_config(struct HIF_CE_state *hif_state)
+void hif_ce_prepare_epping_config(struct hif_softc *scn,
+				  struct HIF_CE_state *hif_state)
 { }
 static inline
 void hif_select_epping_service_to_pipe_map(struct service_to_pipe
