@@ -3409,7 +3409,7 @@ QDF_STATUS policy_mgr_get_hw_mode_from_idx(
  * @psoc: Pointer to soc
  * @mode: new connection mode
  *
- * Current PORed 6ghz connection modes are STA, SAP.
+ * Current PORed 6ghz connection modes are STA, SAP, P2P.
  *
  * Return: true if supports else false.
  */
