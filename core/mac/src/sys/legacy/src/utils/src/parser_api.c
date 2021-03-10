@@ -1261,20 +1261,11 @@ populate_dot11f_vht_caps(struct mac_context *mac,
 		if (pe_session->ht_config.adv_coding_cap)
 			pDot11f->ldpcCodingCap =
 				pe_session->vht_config.ldpc_coding;
-		if (pe_session->ch_width < CH_WIDTH_80MHZ) {
-			 pDot11f->shortGI80MHz = 0;
-		} else {
-			pDot11f->shortGI80MHz =
-				pe_session->vht_config.shortgi80;
-		}
 
-		if (pe_session->ch_width < CH_WIDTH_160MHZ) {
-			pDot11f->shortGI160and80plus80MHz = 0;
-			pDot11f->supportedChannelWidthSet = 0;
-		} else {
-			pDot11f->shortGI160and80plus80MHz =
-				pe_session->vht_config.shortgi160and80plus80;
-		}
+		pDot11f->shortGI80MHz =
+			pe_session->vht_config.shortgi80;
+		pDot11f->shortGI160and80plus80MHz =
+			pe_session->vht_config.shortgi160and80plus80;
 
 		if (pe_session->ht_config.tx_stbc)
 			pDot11f->txSTBC = pe_session->vht_config.tx_stbc;
