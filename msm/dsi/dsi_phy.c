@@ -1396,6 +1396,15 @@ void dsi_phy_set_continuous_clk(struct msm_dsi_phy *phy, bool enable)
 
 }
 
+/**
+ * dsi_phy_pll_parse_dfps_data() - parse dfps data for PLL
+ * @phy:	DSI PHY handle
+ */
+void dsi_phy_pll_parse_dfps_data(struct msm_dsi_phy *phy)
+{
+	dsi_pll_parse_dfps_data(phy->pdev, phy->pll);
+}
+
 void dsi_phy_drv_register(void)
 {
 	platform_driver_register(&dsi_phy_platform_driver);

@@ -4091,6 +4091,14 @@ static int dsi_display_res_init(struct dsi_display *display)
 			display->panel->host_config.force_hs_clk_lane;
 		phy->cfg.phy_type =
 			display->panel->host_config.phy_type;
+
+		/*
+		 * Parse the dynamic clock trim codes for PLL, for video mode panels that have
+		 * dynamic clock property set.
+		 */
+		if ((display->panel->dyn_clk_caps.dyn_clk_support) &&
+				(display->panel->panel_mode == DSI_OP_VIDEO_MODE))
+			dsi_phy_pll_parse_dfps_data(phy);
 	}
 
 	rc = dsi_display_parse_lane_map(display);
