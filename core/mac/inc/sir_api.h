@@ -85,11 +85,11 @@ typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
 /* Add extra PMO_RESUME_TIMEOUT for runtime PM resume timeout */
 #define SIR_PEER_CREATE_RESPONSE_TIMEOUT (4000 + PMO_RESUME_TIMEOUT)
 #define SIR_DELETE_STA_TIMEOUT           (4000 + PMO_RESUME_TIMEOUT)
-#define SIR_VDEV_PLCY_MGR_TIMEOUT        (2000 + PMO_RESUME_TIMEOUT)
+#define SIR_VDEV_PLCY_MGR_TIMEOUT        (4000 + PMO_RESUME_TIMEOUT)
 #else
 #define SIR_PEER_CREATE_RESPONSE_TIMEOUT (4000)
 #define SIR_DELETE_STA_TIMEOUT           (4000) /* 4 seconds */
-#define SIR_VDEV_PLCY_MGR_TIMEOUT        (2000)
+#define SIR_VDEV_PLCY_MGR_TIMEOUT        (4000)
 #endif
 
 /* This should not be greater than MAX_NUMBER_OF_CONC_CONNECTIONS */
