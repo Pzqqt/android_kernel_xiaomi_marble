@@ -33,6 +33,7 @@
 #include <lim_admit_control.h>
 #include <wlan_scan_ucfg_api.h>
 #include "wma.h"
+#include "wlan_crypto_global_api.h"
 
 /**
  * lim_ft_cleanup_pre_auth_info() - Cleanup preauth related information
@@ -225,22 +226,26 @@ void lim_perform_ft_pre_auth(struct mac_context *mac, QDF_STATUS status,
 			     uint32_t *data, struct pe_session *pe_session)
 {
 	tSirMacAuthFrameBody authFrame;
-	unsigned int session_id;
-	enum csr_akm_type auth_type;
+	int32_t ucast_cipher;
+	bool is_open = false;
 
 	if (!pe_session) {
 		pe_err("pe_session is NULL");
 		return;
 	}
-	session_id = pe_session->smeSessionId;
-	auth_type =
-		mac->roam.roamSession[session_id].connectedProfile.AuthType;
+
+	ucast_cipher = wlan_crypto_get_param(pe_session->vdev,
+					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+	if (!ucast_cipher ||
+	    ((QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_NONE) ==
+	      ucast_cipher)))
+		is_open = true;
 
 	if (pe_session->is11Rconnection &&
 	    pe_session->ftPEContext.pFTPreAuthReq) {
 		/* Only 11r assoc has FT IEs */
-		if ((auth_type != eCSR_AUTH_TYPE_OPEN_SYSTEM) &&
-			(pe_session->ftPEContext.pFTPreAuthReq->ft_ies_length
+		if ((!is_open) &&
+		     (pe_session->ftPEContext.pFTPreAuthReq->ft_ies_length
 									== 0)) {
 			pe_err("FTIEs for Auth Req Seq 1 is absent");
 			goto preauth_fail;

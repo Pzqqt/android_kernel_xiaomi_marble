@@ -1098,8 +1098,14 @@ hdd_conn_save_connect_info(struct hdd_adapter *adapter,
 {
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	eCsrEncryptionType encrypt_type = eCSR_ENCRYPT_TYPE_NONE;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct wlan_channel *des_chan;
 
 	QDF_ASSERT(roam_info);
+
+	des_chan = wlan_vdev_mlme_get_des_chan(adapter->vdev);
+	if (!des_chan)
+		return;
 
 	if (roam_info) {
 		/* Save the BSSID for the connection */
@@ -1136,20 +1142,20 @@ hdd_conn_save_connect_info(struct hdd_adapter *adapter,
 				sta_ctx->conn_info.auth_type;
 
 			sta_ctx->conn_info.chan_freq =
-				roam_info->u.pConnectedProfile->op_freq;
-
+				wlan_get_operation_chan_freq_vdev_id(hdd_ctx->pdev,
+								     adapter->vdev_id);
+			wlan_mlme_get_ssid_vdev_id(hdd_ctx->pdev,
+					adapter->vdev_id,
+					sta_ctx->conn_info.ssid.SSID.ssId,
+					&sta_ctx->conn_info.ssid.SSID.length);
 			/* Save the ssid for the connection */
-			qdf_mem_copy(&sta_ctx->conn_info.ssid.SSID,
-				     &roam_info->u.pConnectedProfile->SSID,
-				     sizeof(tSirMacSSid));
 			qdf_mem_copy(&sta_ctx->conn_info.last_ssid.SSID,
-				     &roam_info->u.pConnectedProfile->SSID,
+				     &sta_ctx->conn_info.ssid.SSID,
 				     sizeof(tSirMacSSid));
 
 			/* Save dot11mode in which STA associated to AP */
 			sta_ctx->conn_info.dot11mode =
-				roam_info->u.pConnectedProfile->dot11Mode;
-
+				sme_phy_mode_to_dot11mode(des_chan->ch_phymode);
 			sta_ctx->conn_info.proxy_arp_service =
 				roam_info->u.pConnectedProfile->proxy_arp_service;
 
@@ -2840,6 +2846,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 					if (!hddDisconInProgress &&
 						roam_info->bss_desc) {
 						struct cfg80211_bss *roam_bss;
+						struct wlan_ssid ssid;
 
 						/*
 						 * After roaming is completed,
@@ -2868,16 +2875,15 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 						chan = ieee80211_get_channel(
 							adapter->wdev.wiphy,
 							roam_info->bss_desc->chan_freq);
-
+						wlan_mlme_get_ssid_vdev_id(hdd_ctx->pdev,
+							adapter->vdev_id,
+							ssid.ssid, &ssid.length);
 						roam_bss =
 							wlan_cfg80211_get_bss(
 							adapter->wdev.wiphy,
 							chan,
 							roam_info->bssid.bytes,
-							roam_info->u.
-							pConnectedProfile->SSID.ssId,
-							roam_info->u.
-							pConnectedProfile->SSID.length);
+							ssid.ssid, ssid.length);
 
 						cdp_hl_fc_set_td_limit(soc,
 							adapter->vdev_id,

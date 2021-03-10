@@ -271,6 +271,8 @@ enum roam_fail_params {
  * @occupied_chan_lst: occupied channel list
  * @roam_candidate_count: candidate count
  * @is_ese_assoc: is ese assoc
+ * @krk: krk data
+ * @btk: btk data
  * @psk_pmk: pmk
  * @pmk_len: length of pmk
  * @mdid: mdid info
@@ -302,6 +304,10 @@ struct rso_config {
 	uint8_t uapsd_mask;
 #ifdef FEATURE_WLAN_ESE
 	bool is_ese_assoc;
+	uint8_t krk[WMI_KRK_KEY_LEN];
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+	uint8_t btk[WMI_BTK_KEY_LEN];
+#endif
 #endif
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	uint8_t psk_pmk[ROAM_SCAN_PSK_SIZE];

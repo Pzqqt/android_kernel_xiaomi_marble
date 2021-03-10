@@ -118,8 +118,6 @@ typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
 #define SIR_SAP_MAX_NUM_PEERS 32
 #endif
 
-#define SIR_KRK_KEY_LEN 16
-#define SIR_BTK_KEY_LEN 32
 #define SIR_KCK_KEY_LEN 16
 #define KCK_192BIT_KEY_LEN 24
 #define KCK_256BIT_KEY_LEN 32

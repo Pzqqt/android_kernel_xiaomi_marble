@@ -1645,7 +1645,6 @@ QDF_STATUS sme_set_ese_beacon_request(mac_handle_t mac_handle,
 	tpSirBeaconReportReqInd sme_bcn_rpt_req = NULL;
 	const tCsrEseBeaconReqParams *bcn_req = NULL;
 	uint8_t counter = 0;
-	struct csr_roam_session *session = CSR_GET_SESSION(mac, sessionId);
 	tpRrmSMEContext sme_rrm_ctx = &mac->rrm.rrmSmeContext[0];
 
 	if (sme_rrm_ctx->eseBcnReqInProgress == true) {
@@ -1668,9 +1667,8 @@ QDF_STATUS sme_set_ese_beacon_request(mac_handle_t mac_handle,
 
 	sme_bcn_rpt_req->messageType = eWNI_SME_BEACON_REPORT_REQ_IND;
 	sme_bcn_rpt_req->length = sizeof(tSirBeaconReportReqInd);
-	qdf_mem_copy(sme_bcn_rpt_req->bssId,
-		     session->connectedProfile.bssid.bytes,
-		     sizeof(tSirMacAddr));
+	wlan_mlme_get_bssid_vdev_id(mac->pdev, sessionId,
+				    (struct qdf_mac_addr *)&sme_bcn_rpt_req->bssId);
 	sme_bcn_rpt_req->channel_info.chan_num = 255;
 	sme_bcn_rpt_req->channel_list.num_channels = in_req->numBcnReqIe;
 	sme_bcn_rpt_req->msgSource = eRRM_MSG_SOURCE_ESE_UPLOAD;
@@ -3676,8 +3674,8 @@ QDF_STATUS sme_dhcp_start_ind(mac_handle_t mac_handle,
 		pMsg->device_mode = device_mode;
 		qdf_mem_copy(pMsg->adapterMacAddr.bytes, macAddr,
 			     QDF_MAC_ADDR_SIZE);
-		qdf_copy_macaddr(&pMsg->peerMacAddr,
-				 &pSession->connectedProfile.bssid);
+		wlan_mlme_get_bssid_vdev_id(mac->pdev, sessionId,
+					    &pMsg->peerMacAddr);
 
 		message.type = WMA_DHCP_START_IND;
 		message.bodyptr = pMsg;
@@ -3743,8 +3741,9 @@ QDF_STATUS sme_dhcp_stop_ind(mac_handle_t mac_handle,
 		pMsg->device_mode = device_mode;
 		qdf_mem_copy(pMsg->adapterMacAddr.bytes, macAddr,
 			     QDF_MAC_ADDR_SIZE);
-		qdf_copy_macaddr(&pMsg->peerMacAddr,
-				 &pSession->connectedProfile.bssid);
+
+		wlan_mlme_get_bssid_vdev_id(mac->pdev, sessionId,
+					    &pMsg->peerMacAddr);
 
 		message.type = WMA_DHCP_STOP_IND;
 		message.bodyptr = pMsg;
@@ -4725,21 +4724,21 @@ QDF_STATUS sme_set_keep_alive(mac_handle_t mac_handle, uint8_t session_id,
 	struct keep_alive_req *request_buf;
 	struct scheduler_msg msg = {0};
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, session_id);
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			FL("WMA_SET_KEEP_ALIVE message"));
 
-	if (!pSession) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				FL("Session not Found"));
-		return QDF_STATUS_E_FAILURE;
+	if (!CSR_IS_SESSION_VALID(mac, session_id)) {
+		sme_err("CSR session is invalid");
+		return QDF_STATUS_E_INVAL;
 	}
+
 	request_buf = qdf_mem_malloc(sizeof(*request_buf));
 	if (!request_buf)
 		return QDF_STATUS_E_NOMEM;
 
-	qdf_copy_macaddr(&request->bssid, &pSession->connectedProfile.bssid);
+	wlan_mlme_get_bssid_vdev_id(mac->pdev, session_id,
+				    &request->bssid);
 	qdf_mem_copy(request_buf, request, sizeof(*request_buf));
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
@@ -5505,8 +5504,8 @@ QDF_STATUS sme_8023_multicast_list(mac_handle_t mac_handle, uint8_t sessionId,
 		     sizeof(tSirRcvFltMcAddrList));
 
 	qdf_copy_macaddr(&request_buf->self_macaddr, &pSession->self_mac_addr);
-	qdf_copy_macaddr(&request_buf->bssid,
-			 &pSession->connectedProfile.bssid);
+
+	wlan_mlme_get_bssid_vdev_id(mac->pdev, sessionId, &request_buf->bssid);
 
 	msg.type = WMA_8023_MULTICAST_LIST_REQ;
 	msg.reserved = 0;
@@ -6266,9 +6265,10 @@ int sme_add_key_krk(mac_handle_t mac_handle, uint8_t session_id,
 		    const uint8_t *key, const int key_len)
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-	struct csr_roam_session *session;
+	struct wlan_objmgr_vdev *vdev;
+	struct rso_config *rso_cfg;
 
-	if (key_len < SIR_KRK_KEY_LEN) {
+	if (key_len < WMI_KRK_KEY_LEN) {
 		sme_warn("Invalid KRK keylength [= %d]", key_len);
 		return -EINVAL;
 	}
@@ -6278,11 +6278,20 @@ int sme_add_key_krk(mac_handle_t mac_handle, uint8_t session_id,
 		return -EINVAL;
 	}
 
-	session = CSR_GET_SESSION(mac_ctx, session_id);
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac_ctx->pdev, session_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("vdev object is NULL for vdev %d", session_id);
+		return QDF_STATUS_E_INVAL;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		return QDF_STATUS_E_INVAL;
+	}
 
-	qdf_mem_copy(session->eseCckmInfo.krk, key, SIR_KRK_KEY_LEN);
-	session->eseCckmInfo.reassoc_req_num = 1;
-	session->eseCckmInfo.krk_plumbed = true;
+	qdf_mem_copy(rso_cfg->krk, key, WMI_KRK_KEY_LEN);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 
 	return 0;
 }
@@ -6293,9 +6302,10 @@ int sme_add_key_btk(mac_handle_t mac_handle, uint8_t session_id,
 		    const uint8_t *key, const int key_len)
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-	struct csr_roam_session *session;
+	struct wlan_objmgr_vdev *vdev;
+	struct rso_config *rso_cfg;
 
-	if (key_len < SIR_BTK_KEY_LEN) {
+	if (key_len < WMI_BTK_KEY_LEN) {
 		sme_warn("Invalid BTK keylength [= %d]", key_len);
 		return -EINVAL;
 	}
@@ -6305,14 +6315,26 @@ int sme_add_key_btk(mac_handle_t mac_handle, uint8_t session_id,
 		return -EINVAL;
 	}
 
-	session = CSR_GET_SESSION(mac_ctx, session_id);
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac_ctx->pdev, session_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("vdev object is NULL for vdev %d", session_id);
+		return QDF_STATUS_E_INVAL;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		return QDF_STATUS_E_INVAL;
+	}
 
-	qdf_mem_copy(session->eseCckmInfo.btk, key, SIR_BTK_KEY_LEN);
+	qdf_mem_copy(rso_cfg->btk, key, WMI_BTK_KEY_LEN);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 	/*
 	 * KRK and BTK are updated by upper layer back to back. Send
 	 * updated KRK and BTK together to FW here.
 	 */
-	wlan_roam_update_cfg(mac_ctx->psoc, session_id, REASON_ROAM_PSK_PMK_CHANGED);
+	wlan_roam_update_cfg(mac_ctx->psoc, session_id,
+			     REASON_ROAM_PSK_PMK_CHANGED);
 
 	return 0;
 }
@@ -7837,7 +7859,6 @@ int sme_send_addba_req(mac_handle_t mac_handle, uint8_t session_id, uint8_t tid,
 	QDF_STATUS status;
 	struct scheduler_msg msg = {0};
 	struct send_add_ba_req *send_ba_req;
-	struct csr_roam_session *csr_session = NULL;
 
 	/* This is temp ifdef will be removed in near future */
 #ifdef FEATURE_CM_ENABLE
@@ -7853,18 +7874,16 @@ int sme_send_addba_req(mac_handle_t mac_handle, uint8_t session_id, uint8_t tid,
 		return -EINVAL;
 	}
 #endif
-	csr_session = CSR_GET_SESSION(mac_ctx, session_id);
-	if (!csr_session) {
-		sme_err("CSR session is NULL");
+	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
+		sme_err("CSR session is invalid");
 		return -EINVAL;
 	}
 	send_ba_req = qdf_mem_malloc(sizeof(*send_ba_req));
 	if (!send_ba_req)
 		return -EIO;
 
-	qdf_mem_copy(send_ba_req->mac_addr,
-			csr_session->connectedProfile.bssid.bytes,
-			QDF_MAC_ADDR_SIZE);
+	wlan_mlme_get_bssid_vdev_id(mac_ctx->pdev, session_id,
+				    (struct qdf_mac_addr *)&send_ba_req->mac_addr);
 	ba_buff = buff_size;
 	if (!buff_size) {
 		if (mac_ctx->usr_cfg_ba_buff_size)
@@ -9026,7 +9045,7 @@ QDF_STATUS sme_update_dsc_pto_up_mapping(mac_handle_t mac_handle,
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	uint8_t i, j, peSessionId;
+	uint8_t i, j;
 	struct csr_roam_session *pCsrSession = NULL;
 	struct pe_session *pSession = NULL;
 
@@ -9040,13 +9059,10 @@ QDF_STATUS sme_update_dsc_pto_up_mapping(mac_handle_t mac_handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pSession = pe_find_session_by_bssid(mac,
-				pCsrSession->connectedProfile.bssid.bytes,
-				&peSessionId);
+	pSession = pe_find_session_by_vdev_id(mac, sessionId);
 
 	if (!pSession) {
-		sme_err("Session lookup fails for " QDF_MAC_ADDR_FMT,
-			QDF_MAC_ADDR_REF(pCsrSession->connectedProfile.bssid.bytes));
+		sme_err("Session lookup fails for vdev %d", sessionId);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -11004,6 +11020,10 @@ int sme_send_he_om_ctrl_update(mac_handle_t mac_handle, uint8_t session_id)
 	void *wma_handle;
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 	uint32_t param_val = 0;
+	qdf_freq_t op_chan_freq;
+	qdf_freq_t freq_seg_0;
+	enum phy_ch_width ch_width;
+	struct qdf_mac_addr connected_bssid;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma_handle)
@@ -11013,6 +11033,10 @@ int sme_send_he_om_ctrl_update(mac_handle_t mac_handle, uint8_t session_id)
 						     session);
 	if (QDF_IS_STATUS_ERROR(status))
 		return -EINVAL;
+
+	wlan_get_op_chan_freq_info_vdev_id(mac_ctx->pdev, session_id,
+					   &op_chan_freq, &freq_seg_0,
+					   &ch_width);
 
 	omi_data.a_ctrl_id = A_CTRL_ID_OMI;
 
@@ -11029,7 +11053,7 @@ int sme_send_he_om_ctrl_update(mac_handle_t mac_handle, uint8_t session_id)
 	if (mac_ctx->he_om_ctrl_cfg_bw_set)
 		omi_data.ch_bw = mac_ctx->he_om_ctrl_cfg_bw;
 	else
-		omi_data.ch_bw = session->connectedProfile.vht_channel_width;
+		omi_data.ch_bw = ch_width;
 
 	omi_data.ul_mu_dis = mac_ctx->he_om_ctrl_cfg_ul_mu_dis;
 	omi_data.ul_mu_data_dis = mac_ctx->he_om_ctrl_ul_mu_data_dis;
@@ -11040,10 +11064,12 @@ int sme_send_he_om_ctrl_update(mac_handle_t mac_handle, uint8_t session_id)
 		  omi_data.ch_bw, omi_data.tx_nsts, omi_data.rx_nss,
 		  omi_data.ul_mu_dis, omi_data.omi_in_vht, omi_data.omi_in_he);
 	qdf_mem_copy(&param_val, &omi_data, sizeof(omi_data));
+	wlan_mlme_get_bssid_vdev_id(mac_ctx->pdev, session_id,
+				    &connected_bssid);
 	sme_debug("param val %08X, bssid:"QDF_MAC_ADDR_FMT, param_val,
-		  QDF_MAC_ADDR_REF(session->connectedProfile.bssid.bytes));
+		  QDF_MAC_ADDR_REF(connected_bssid.bytes));
 	status = wma_set_peer_param(wma_handle,
-				    session->connectedProfile.bssid.bytes,
+				    connected_bssid.bytes,
 				    WMI_PEER_PARAM_XMIT_OMI,
 				    param_val, session_id);
 	if (QDF_STATUS_SUCCESS != status) {
@@ -11061,11 +11087,18 @@ int sme_set_he_om_ctrl_param(mac_handle_t mac_handle, uint8_t session_id,
 	QDF_STATUS status;
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
+	qdf_freq_t op_chan_freq;
+	qdf_freq_t freq_seg_0;
+	enum phy_ch_width ch_width;
 
 	status = sme_validate_session_for_cap_update(mac_ctx, session_id,
 						     session);
 	if (QDF_IS_STATUS_ERROR(status))
 		return -EINVAL;
+
+	wlan_get_op_chan_freq_info_vdev_id(mac_ctx->pdev, session_id,
+					    &op_chan_freq, &freq_seg_0,
+					    &ch_width);
 
 	switch(param) {
 		case QCA_WLAN_VENDOR_ATTR_HE_OMI_ULMU_DISABLE:
@@ -11084,12 +11117,9 @@ int sme_set_he_om_ctrl_param(mac_handle_t mac_handle, uint8_t session_id,
 			mac_ctx->he_om_ctrl_cfg_nss = cfg_val;
 			break;
 		case QCA_WLAN_VENDOR_ATTR_HE_OMI_CH_BW:
-			if (cfg_val >
-			    session->connectedProfile.vht_channel_width) {
-				sme_debug
-				  ("OMI BW %d is > connected BW %d",
-				   cfg_val,
-				   session->connectedProfile.vht_channel_width);
+			if (cfg_val > ch_width) {
+				sme_debug("OMI BW %d is > connected BW %d",
+					  cfg_val, ch_width);
 				mac_ctx->he_om_ctrl_cfg_bw_set = false;
 				return 0;
 			}
@@ -14600,33 +14630,28 @@ int16_t sme_get_oper_chan_freq(struct wlan_objmgr_vdev *vdev)
 enum phy_ch_width sme_get_oper_ch_width(struct wlan_objmgr_vdev *vdev)
 {
 	uint8_t vdev_id;
-	struct csr_roam_session *session;
 	struct mac_context *mac_ctx;
 	mac_handle_t mac_handle;
-	enum phy_ch_width ch_width = CH_WIDTH_20MHZ;
+	struct wlan_channel *des_chan;
 
 	if (!vdev) {
 		sme_err("Invalid vdev id is passed");
 		return CH_WIDTH_INVALID;
 	}
+	vdev_id = wlan_vdev_get_id(vdev);
+	des_chan = wlan_vdev_mlme_get_des_chan(vdev);
+	if (!des_chan)
+		return CH_WIDTH_INVALID;
 
 	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
 	if (!mac_handle)
 		return CH_WIDTH_INVALID;
 
 	mac_ctx = MAC_CONTEXT(mac_handle);
-	vdev_id = wlan_vdev_get_id(vdev);
-	if (!CSR_IS_SESSION_VALID(mac_ctx, vdev_id)) {
-		sme_err("Invalid vdev id is passed");
-		return CH_WIDTH_INVALID;
-	}
-
-	session = CSR_GET_SESSION(mac_ctx, vdev_id);
-
 	if (csr_is_conn_state_connected(mac_ctx, vdev_id))
-		ch_width = session->connectedProfile.vht_channel_width;
+		return des_chan->ch_width;
 
-	return ch_width;
+	return CH_WIDTH_INVALID;
 }
 
 int sme_get_sec20chan_freq_mhz(struct wlan_objmgr_vdev *vdev,

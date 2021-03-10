@@ -8252,12 +8252,14 @@ void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 
 	if (WLAN_STATUS_SUCCESS == status) {
 		struct ieee80211_channel *chan;
+		struct wlan_ssid ssid;
 
+		wlan_mlme_get_ssid_vdev_id(hdd_ctx->pdev, adapter->vdev_id,
+					   ssid.ssid, &ssid.length);
 		chan = ieee80211_get_channel(adapter->wdev.wiphy,
 					     roam_info->bss_desc->chan_freq);
 		bss = wlan_cfg80211_get_bss(adapter->wdev.wiphy, chan, bssid,
-			roam_info->u.pConnectedProfile->SSID.ssId,
-			roam_info->u.pConnectedProfile->SSID.length);
+					    ssid.ssid, ssid.length);
 	}
 	wlan_rec_conn_info(adapter->vdev_id, DEBUG_CONN_CONNECT_RESULT,
 			   bssid ? bssid : NULL,

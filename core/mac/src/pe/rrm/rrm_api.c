@@ -526,7 +526,6 @@ rrm_get_country_code_from_connected_profile(
 				uint8_t country_code[WNI_CFG_COUNTRY_CODE_LEN])
 {
 	uint8_t id;
-	uint8_t *country;
 
 	qdf_mem_zero(country_code, sizeof(country_code[0]) *
 					WNI_CFG_COUNTRY_CODE_LEN);
@@ -539,12 +538,8 @@ rrm_get_country_code_from_connected_profile(
 		pe_err("smeSessionId %d is invalid", id);
 		return;
 	}
-	country =
-		mac->roam.roamSession[id].connectedProfile.country_code;
-	if (country[0])
-		qdf_mem_copy(country_code, country, sizeof(country_code[0]) *
-						WNI_CFG_COUNTRY_CODE_LEN);
-	else
+	wlan_reg_read_current_country(mac->psoc, country_code);
+	if (!country_code[0])
 		country_code[2] = OP_CLASS_GLOBAL;
 }
 

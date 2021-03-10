@@ -521,9 +521,7 @@ struct csr_roam_session {
 	bool fWMMConnection;
 	bool fQOSConnection;
 #ifdef FEATURE_WLAN_ESE
-	tCsrEseCckmInfo eseCckmInfo;
 	bool isPrevApInfoValid;
-	tSirMacSSid prevApSSID;
 	uint32_t roamTS1;
 #endif
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
@@ -869,8 +867,8 @@ static inline QDF_STATUS csr_roam_offload_scan_rsp_hdlr(
 QDF_STATUS csr_handoff_request(struct mac_context *mac, uint8_t sessionId,
 		tCsrHandoffRequest
 		*pHandoffInfo);
-#endif
 bool csr_roam_is_sta_mode(struct mac_context *mac, uint8_t vdev_id);
+#endif
 
 /* Post Channel Change Indication */
 QDF_STATUS csr_roam_channel_change_req(struct mac_context *mac,

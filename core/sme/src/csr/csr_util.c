@@ -663,7 +663,7 @@ uint32_t csr_get_beaconing_concurrent_channel(struct mac_context *mac_ctx,
 		     (persona == QDF_SAP_MODE)) &&
 		     (session->connectState !=
 		      eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED))
-			return session->connectedProfile.op_freq;
+			return wlan_get_operation_chan_freq_vdev_id(mac_ctx->pdev, i);
 	}
 
 	return 0;

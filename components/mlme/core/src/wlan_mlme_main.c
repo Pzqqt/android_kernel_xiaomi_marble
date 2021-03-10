@@ -2825,6 +2825,8 @@ QDF_STATUS wlan_mlme_get_ssid_vdev_id(struct wlan_objmgr_pdev *pdev,
 	struct wlan_objmgr_vdev *vdev;
 	QDF_STATUS status;
 
+	*ssid_len = 0;
+
 	if (!pdev)
 		return QDF_STATUS_E_INVAL;
 

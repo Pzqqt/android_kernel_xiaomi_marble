@@ -235,6 +235,17 @@ cm_update_rso_ese_info(struct rso_config *rso_cfg,
 {
 	rso_config->rso_ese_info.is_ese_assoc = rso_cfg->is_ese_assoc;
 	rso_config->rso_11r_info.is_11r_assoc = rso_cfg->is_11r_assoc;
+	if (rso_cfg->is_ese_assoc) {
+		qdf_mem_copy(rso_config->rso_ese_info.krk, rso_cfg->krk,
+			     WMI_KRK_KEY_LEN);
+		qdf_mem_copy(rso_config->rso_ese_info.btk, rso_cfg->btk,
+			     WMI_BTK_KEY_LEN);
+		rso_config->rso_11i_info.fw_okc = 0;
+		rso_config->rso_11i_info.fw_pmksa_cache = 0;
+		rso_config->rso_11i_info.pmk_len = 0;
+		qdf_mem_zero(&rso_config->rso_11i_info.psk_pmk[0],
+			     sizeof(rso_config->rso_11i_info.psk_pmk));
+	}
 }
 #else
 static inline void

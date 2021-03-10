@@ -1444,15 +1444,6 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		assoc_ind->assocReqPtr = csr_roaminfo->assocReqPtr;
 		assoc_ind->fWmmEnabled = csr_roaminfo->wmmEnabledSta;
 		assoc_ind->ecsa_capable = csr_roaminfo->ecsa_capable;
-		if (csr_roaminfo->u.pConnectedProfile) {
-			assoc_ind->negotiatedAuthType =
-				csr_roaminfo->u.pConnectedProfile->AuthType;
-			assoc_ind->negotiatedUCEncryptionType =
-			    csr_roaminfo->u.pConnectedProfile->EncryptionType;
-			assoc_ind->negotiatedMCEncryptionType =
-			    csr_roaminfo->u.pConnectedProfile->mcEncryptionType;
-			assoc_ind->fAuthRequired = csr_roaminfo->fAuthRequired;
-		}
 		if (csr_roaminfo->owe_pending_assoc_ind) {
 			if (!sap_fill_owe_ie_in_assoc_ind(assoc_ind,
 					 csr_roaminfo->owe_pending_assoc_ind)) {

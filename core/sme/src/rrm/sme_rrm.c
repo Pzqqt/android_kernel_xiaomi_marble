@@ -1105,10 +1105,8 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 	}
 
 	qdf_mem_zero(country, WNI_CFG_COUNTRY_CODE_LEN);
-	if (session->connectedProfile.country_code[0])
-		qdf_mem_copy(country, session->connectedProfile.country_code,
-			     WNI_CFG_COUNTRY_CODE_LEN);
-	else
+	wlan_reg_read_current_country(mac->psoc, country);
+	if (!country[0])
 		country[2] = OP_CLASS_GLOBAL;
 
 	if (wlan_reg_is_6ghz_op_class(mac->pdev,
@@ -1339,14 +1337,12 @@ QDF_STATUS sme_rrm_neighbor_report_request(struct mac_context *mac, uint8_t
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpSirNeighborReportReqInd pMsg;
-	struct csr_roam_session *pSession;
 
 	sme_debug("Request to send Neighbor report request received ");
 	if (!CSR_IS_SESSION_VALID(mac, sessionId)) {
 		sme_err("Invalid session %d", sessionId);
 		return QDF_STATUS_E_INVAL;
 	}
-	pSession = CSR_GET_SESSION(mac, sessionId);
 
 	/* If already a report is pending, return failure */
 	if (true ==
@@ -1365,8 +1361,8 @@ QDF_STATUS sme_rrm_neighbor_report_request(struct mac_context *mac, uint8_t
 
 	pMsg->messageType = eWNI_SME_NEIGHBOR_REPORT_REQ_IND;
 	pMsg->length = sizeof(tSirNeighborReportReqInd);
-	qdf_mem_copy(&pMsg->bssId, &pSession->connectedProfile.bssid,
-		     sizeof(tSirMacAddr));
+	wlan_mlme_get_bssid_vdev_id(mac->pdev, sessionId,
+				    (struct qdf_mac_addr *)&pMsg->bssId);
 	pMsg->noSSID = pNeighborReq->no_ssid;
 	qdf_mem_copy(&pMsg->ucSSID, &pNeighborReq->ssid, sizeof(tSirMacSSid));
 

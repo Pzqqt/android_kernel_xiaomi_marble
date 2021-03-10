@@ -6152,6 +6152,7 @@ struct hdd_station_info *hdd_get_stainfo(struct hdd_station_info *astainfo,
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * hdd_get_roam_reason() - convert wmi roam reason to
  * enum qca_roam_reason
@@ -6185,7 +6186,7 @@ static enum qca_roam_reason hdd_get_roam_reason(uint16_t roam_scan_trigger)
 
 	return QCA_ROAM_REASON_UNKNOWN;
 }
-
+#endif
 /**
  * __wlan_hdd_cfg80211_keymgmt_set_key() - Store the Keys in the driver session
  * @wiphy: pointer to wireless wiphy structure.
@@ -6585,6 +6586,7 @@ end:
 }
 #endif
 
+#ifndef FEATURE_CM_ENABLE
 #if defined(WLAN_FEATURE_FILS_SK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
  * wlan_hdd_add_fils_params_roam_auth_event() - Adds FILS params in roam auth
@@ -6633,6 +6635,7 @@ wlan_hdd_add_fils_params_roam_auth_event(struct sk_buff *skb,
 	return 0;
 }
 #endif
+#endif /* FEATURE_CM_ENABLE */
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 void hdd_send_roam_scan_ch_list_event(struct hdd_context *hdd_ctx,
@@ -6676,6 +6679,7 @@ void hdd_send_roam_scan_ch_list_event(struct hdd_context *hdd_ctx,
 	cfg80211_vendor_event(vendor_event, GFP_KERNEL);
 }
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * lan_hdd_send_roam_auth_event() - Send the roamed and authorized event
  * @adapter: Pointer to adapter struct
@@ -6856,6 +6860,7 @@ nla_put_failure:
 	kfree_skb(skb);
 	return -EINVAL;
 }
+#endif
 #endif
 
 #define ANT_DIV_SET_PERIOD(probe_period, stay_period) \

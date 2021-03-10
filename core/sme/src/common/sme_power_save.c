@@ -631,7 +631,6 @@ QDF_STATUS sme_set_ps_host_offload(mac_handle_t mac_handle,
 	struct sir_host_offload_req *request_buf;
 	struct scheduler_msg msg = {0};
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			"%s: IP address = %d.%d.%d.%d", __func__,
@@ -640,18 +639,17 @@ QDF_STATUS sme_set_ps_host_offload(mac_handle_t mac_handle,
 			request->params.hostIpv4Addr[2],
 			request->params.hostIpv4Addr[3]);
 
-	if (!session) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"%s: SESSION not Found", __func__);
-		return QDF_STATUS_E_FAILURE;
+	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
+		sme_err("CSR session is invalid");
+		return QDF_STATUS_E_INVAL;
 	}
 
 	request_buf = qdf_mem_malloc(sizeof(struct sir_host_offload_req));
 	if (!request_buf)
 		return QDF_STATUS_E_NOMEM;
 
-	qdf_copy_macaddr(&request->bssid, &session->connectedProfile.bssid);
-
+	wlan_mlme_get_bssid_vdev_id(mac_ctx->pdev, session_id,
+				    &request->bssid);
 	qdf_mem_copy(request_buf, request, sizeof(struct sir_host_offload_req));
 
 	msg.type = WMA_SET_HOST_OFFLOAD;
@@ -689,14 +687,14 @@ QDF_STATUS sme_set_ps_ns_offload(mac_handle_t mac_handle,
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	struct sir_host_offload_req *request_buf;
 	struct scheduler_msg msg = {0};
-	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 
-	if (!session) {
-		sme_err("Session not found");
-		return QDF_STATUS_E_FAILURE;
+	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
+		sme_err("CSR session is invalid");
+		return QDF_STATUS_E_INVAL;
 	}
 
-	qdf_copy_macaddr(&request->bssid, &session->connectedProfile.bssid);
+	wlan_mlme_get_bssid_vdev_id(mac_ctx->pdev, session_id,
+				    &request->bssid);
 
 	request_buf = qdf_mem_malloc(sizeof(*request_buf));
 	if (!request_buf)

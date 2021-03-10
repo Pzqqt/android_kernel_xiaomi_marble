@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2359,29 +2359,28 @@ QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
 			   eCsrRoamBssType bss_type)
 {
 	int ac;
-	bool qap;
-	bool qos_connection;
-	uint8_t acm_mask;
+	bool qap = true;
+	bool qos_connection = true;
+	uint8_t acm_mask = 0x0;
+#ifndef FEATURE_CM_ENABLE
 	mac_handle_t mac_handle;
+#endif
 
+#ifndef FEATURE_CM_ENABLE
 	if ((eCSR_BSS_TYPE_INFRASTRUCTURE == bss_type) &&
 	    roam_info && roam_info->u.pConnectedProfile) {
 		qap = roam_info->u.pConnectedProfile->qap;
 		qos_connection = roam_info->u.pConnectedProfile->qosConnection;
 		acm_mask = roam_info->u.pConnectedProfile->acm_mask;
-	} else {
-		qap = true;
-		qos_connection = true;
-		acm_mask = 0x0;
 	}
-
+#endif
 	hdd_debug("qap is %d, qos_connection is %d, acm_mask is 0x%x",
 		 qap, qos_connection, acm_mask);
 
 	adapter->hdd_wmm_status.qap = qap;
 	adapter->hdd_wmm_status.qos_connection = qos_connection;
+#ifndef FEATURE_CM_ENABLE
 	mac_handle = hdd_adapter_get_mac_handle(adapter);
-
 	for (ac = 0; ac < WLAN_MAX_AC; ac++) {
 		if (qap && qos_connection && (acm_mask & acm_mask_bit[ac])) {
 			hdd_debug("ac %d on", ac);
@@ -2422,7 +2421,14 @@ QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
 		}
 
 	}
-
+#else
+	for (ac = 0; ac < WLAN_MAX_AC; ac++) {
+		hdd_debug("ac %d off", ac);
+		/* admission is not required so access is allowed */
+		adapter->hdd_wmm_status.ac_status[ac].is_access_required = false;
+		adapter->hdd_wmm_status.ac_status[ac].is_access_allowed = true;
+	}
+#endif
 	return QDF_STATUS_SUCCESS;
 }
 
