@@ -505,7 +505,7 @@ static bool sde_crtc_mode_fixup(struct drm_crtc *crtc,
 	struct drm_connector *connector;
 	struct drm_encoder *encoder;
 	struct drm_connector_state *new_conn_state;
-	struct sde_connector_state *c_conn_state;
+	struct sde_connector_state *c_conn_state = NULL;
 	bool encoder_valid = false;
 	int i;
 
@@ -529,12 +529,12 @@ static bool sde_crtc_mode_fixup(struct drm_crtc *crtc,
 
 	for_each_new_connector_in_state(c_state->state, connector,
 			new_conn_state, i) {
-		if (new_conn_state->best_encoder == encoder){
+		if (new_conn_state->best_encoder == encoder) {
+			c_conn_state = to_sde_connector_state(new_conn_state);
 			break;
 		}
 	}
 
-	c_conn_state = to_sde_connector_state(new_conn_state);
 	if (!c_conn_state) {
 		SDE_ERROR("could not get connector state\n");
 		return true;

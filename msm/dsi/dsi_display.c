@@ -6327,6 +6327,9 @@ int dsi_display_drm_ext_bridge_init(struct dsi_display *display,
 	if (display->panel && !display->panel->host_config.ext_bridge_mode)
 		return 0;
 
+	if (!bridge)
+		return -EINVAL;
+
 	for (i = 0; i < display->ext_bridge_cnt; i++) {
 		struct dsi_display_ext_bridge *ext_bridge_info =
 				&display->ext_bridge[i];
@@ -6376,6 +6379,14 @@ int dsi_display_drm_ext_bridge_init(struct dsi_display *display,
 		spin_lock_irq(&drm->mode_config.connector_list_lock);
 		ext_conn = list_last_entry(&drm->mode_config.connector_list,
 			struct drm_connector, head);
+
+		if (!ext_conn) {
+			DSI_ERR("failed to get external connector\n");
+			rc = PTR_ERR(ext_conn);
+
+			spin_unlock_irq(&drm->mode_config.connector_list_lock);
+			goto error;
+		}
 
 		drm_connector_for_each_possible_encoder(ext_conn, c_encoder)
 			break;
