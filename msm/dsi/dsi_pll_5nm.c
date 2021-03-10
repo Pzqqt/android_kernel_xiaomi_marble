@@ -711,8 +711,17 @@ static unsigned long dsi_pll_vco_recalc_rate(struct dsi_pll_resource *pll)
 	u32 pll_post_div;
 	u64 pll_freq, tmp64;
 	u64 vco_rate;
+	struct dsi_pll_5nm *pll_5nm;
+	struct dsi_pll_config *config;
 
 	ref_clk = pll->vco_ref_clk_rate;
+	pll_5nm = pll->priv;
+	if (!pll_5nm) {
+		DSI_PLL_ERR(pll, "pll configuration not found\n");
+		return -EINVAL;
+	}
+
+	config = &pll_5nm->pll_configuration;
 
 	dec = DSI_PLL_REG_R(pll->pll_base, PLL_DECIMAL_DIV_START_1);
 	dec &= 0xFF;
@@ -723,7 +732,7 @@ static unsigned long dsi_pll_vco_recalc_rate(struct dsi_pll_resource *pll)
 	frac |= ((DSI_PLL_REG_R(pll->pll_base, PLL_FRAC_DIV_START_HIGH_1) & 0x3)
 					<< 16);
 
-	multiplier = 1 << 18;
+	multiplier = 1 << config->frac_bits;
 	pll_freq = dec * (ref_clk * 2);
 	tmp64 = (ref_clk * 2 * frac);
 	pll_freq += div_u64(tmp64, multiplier);
