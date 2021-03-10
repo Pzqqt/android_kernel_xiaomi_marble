@@ -1015,7 +1015,7 @@ QDF_STATUS pmo_core_psoc_bus_runtime_suspend(struct wlan_objmgr_psoc *psoc,
 	ret = hif_pre_runtime_suspend(hif_ctx);
 	if (ret) {
 		status = qdf_status_from_os_return(ret);
-		goto pre_runtime_failure;
+		goto runtime_failure;
 	}
 
 	status = cdp_runtime_suspend(dp_soc, pdev_id);
@@ -1110,16 +1110,14 @@ cdp_runtime_resume:
 	PMO_CORE_PSOC_RUNTIME_PM_QDF_BUG(QDF_STATUS_SUCCESS !=
 		cdp_runtime_resume(dp_soc, pdev_id));
 
-/*
- * A race condition was observed where htc_try_send was called before
- * runtime pm state was set to active and it was not called again.
- * Schedule HTC queue kicker here to send the pending commands.
- */
 runtime_failure:
-	PMO_CORE_PSOC_RUNTIME_PM_QDF_BUG(htc_runtime_resume(htc_ctx));
-
-pre_runtime_failure:
 	hif_process_runtime_suspend_failure(hif_ctx);
+
+/* always make sure HTC queue kicker is at the end, so if any
+ * cmd is pending during suspending, it can re-trigger if suspend
+ * failure.
+ */
+PMO_CORE_PSOC_RUNTIME_PM_QDF_BUG(htc_runtime_resume(htc_ctx));
 
 dec_psoc_ref:
 	pmo_psoc_put_ref(psoc);
