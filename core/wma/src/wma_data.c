@@ -929,15 +929,13 @@ static void wma_data_tx_ack_work_handler(void *ack_work)
 	tp_wma_handle wma_handle;
 	wma_tx_ota_comp_callback ack_cb;
 
-	if (cds_is_load_or_unload_in_progress()) {
-		wma_err("Driver load/unload in progress");
-		qdf_mem_free(ack_work);
-		return;
-	}
-
 	work = (struct wma_tx_ack_work_ctx *)ack_work;
 
 	wma_handle = work->wma_handle;
+	if (!wma_handle || cds_is_load_or_unload_in_progress()) {
+		wma_err("Driver load/unload in progress");
+		goto end;
+	}
 	ack_cb = wma_handle->umac_data_ota_ack_cb;
 
 	if (work->status)
@@ -951,10 +949,13 @@ static void wma_data_tx_ack_work_handler(void *ack_work)
 	else
 		wma_err("Data Tx Ack Cb is NULL");
 
-	wma_handle->umac_data_ota_ack_cb = NULL;
-	wma_handle->last_umac_data_nbuf = NULL;
+end:
 	qdf_mem_free(work);
-	wma_handle->ack_work_ctx = NULL;
+	if (wma_handle) {
+		wma_handle->umac_data_ota_ack_cb = NULL;
+		wma_handle->last_umac_data_nbuf = NULL;
+		wma_handle->ack_work_ctx = NULL;
+	}
 }
 
 /**
