@@ -2629,10 +2629,28 @@ static void sde_crtc_frame_event_work(struct kthread_work *work)
 	SDE_ATRACE_END("crtc_frame_event");
 }
 
+static void sde_crtc_event_notify(struct drm_crtc *crtc, uint32_t type, uint32_t len, uint32_t val)
+{
+	struct drm_event event;
+
+	if (!crtc) {
+		SDE_ERROR("invalid crtc\n");
+		return;
+	}
+
+	event.type = type;
+	event.length = len;
+	msm_mode_object_event_notify(&crtc->base, crtc->dev, &event, (u8 *)&val);
+
+	SDE_EVT32(DRMID(crtc), type, len, val);
+	SDE_DEBUG("crtc:%d event(%d) value(%d) notified\n", DRMID(crtc), type, val);
+}
+
 void sde_crtc_complete_commit(struct drm_crtc *crtc,
 		struct drm_crtc_state *old_state)
 {
 	struct sde_crtc *sde_crtc;
+	u32 power_on = 1;
 
 	if (!crtc || !crtc->state) {
 		SDE_ERROR("invalid crtc\n");
@@ -2641,6 +2659,9 @@ void sde_crtc_complete_commit(struct drm_crtc *crtc,
 
 	sde_crtc = to_sde_crtc(crtc);
 	SDE_EVT32_VERBOSE(DRMID(crtc));
+
+	if (crtc->state->active_changed && crtc->state->active)
+		sde_crtc_event_notify(crtc, DRM_EVENT_CRTC_POWER, sizeof(u32), power_on);
 
 	sde_core_perf_crtc_update(crtc, 0, false);
 }
@@ -4105,7 +4126,6 @@ static void sde_crtc_mmrm_cb_notification(struct drm_crtc *crtc)
 	struct msm_drm_private *priv;
 	unsigned long requested_clk;
 	struct sde_kms *kms = NULL;
-	struct drm_event event;
 
 	if (!crtc->dev->dev_private) {
 		pr_err("invalid crtc priv\n");
@@ -4122,12 +4142,8 @@ static void sde_crtc_mmrm_cb_notification(struct drm_crtc *crtc)
 			kms->perf.clk_name);
 
 	/* notify user space the reduced clk rate */
-	event.type = DRM_EVENT_MMRM_CB;
-	event.length = sizeof(unsigned long);
-	msm_mode_object_event_notify(&crtc->base, crtc->dev,
-			&event, (u8 *)&requested_clk);
+	sde_crtc_event_notify(crtc, DRM_EVENT_MMRM_CB, sizeof(unsigned long), requested_clk);
 
-	SDE_EVT32(DRMID(crtc), requested_clk);
 	SDE_DEBUG("crtc[%d]: MMRM cb notified clk:%d\n",
 		crtc->base.id, requested_clk);
 }
@@ -4141,7 +4157,6 @@ static void sde_crtc_handle_power_event(u32 event_type, void *arg)
 	unsigned long flags;
 	struct sde_crtc_irq_info *node = NULL;
 	int ret = 0;
-	struct drm_event event;
 
 	if (!crtc) {
 		SDE_ERROR("invalid crtc\n");
@@ -4200,11 +4215,8 @@ static void sde_crtc_handle_power_event(u32 event_type, void *arg)
 	case SDE_POWER_EVENT_POST_DISABLE:
 		sde_crtc_reset_sw_state(crtc);
 		sde_cp_crtc_suspend(crtc);
-		event.type = DRM_EVENT_SDE_POWER;
-		event.length = sizeof(power_on);
 		power_on = 0;
-		msm_mode_object_event_notify(&crtc->base, crtc->dev, &event,
-				(u8 *)&power_on);
+		sde_crtc_event_notify(crtc, DRM_EVENT_SDE_POWER, sizeof(u32), power_on);
 		break;
 	case SDE_POWER_EVENT_MMRM_CALLBACK:
 		sde_crtc_mmrm_cb_notification(crtc);
@@ -4246,7 +4258,6 @@ static void sde_crtc_disable(struct drm_crtc *crtc)
 	struct msm_drm_private *priv;
 	unsigned long flags;
 	struct sde_crtc_irq_info *node = NULL;
-	struct drm_event event;
 	u32 power_on;
 	bool in_cont_splash = false;
 	int ret, i;
@@ -4279,12 +4290,7 @@ static void sde_crtc_disable(struct drm_crtc *crtc)
 	SDE_EVT32_VERBOSE(DRMID(crtc));
 
 	/* update color processing on suspend */
-	event.type = DRM_EVENT_CRTC_POWER;
-	event.length = sizeof(u32);
 	sde_cp_crtc_suspend(crtc);
-	power_on = 0;
-	msm_mode_object_event_notify(&crtc->base, crtc->dev, &event,
-			(u8 *)&power_on);
 
 	mutex_unlock(&sde_crtc->crtc_lock);
 	kthread_flush_worker(&priv->event_thread[crtc->index].worker);
@@ -4369,6 +4375,9 @@ static void sde_crtc_disable(struct drm_crtc *crtc)
 	_sde_crtc_reset(crtc);
 	sde_cp_crtc_disable(crtc);
 
+	power_on = 0;
+	sde_crtc_event_notify(crtc, DRM_EVENT_CRTC_POWER, sizeof(u32), power_on);
+
 	mutex_unlock(&sde_crtc->crtc_lock);
 }
 
@@ -4380,8 +4389,6 @@ static void sde_crtc_enable(struct drm_crtc *crtc,
 	struct msm_drm_private *priv;
 	unsigned long flags;
 	struct sde_crtc_irq_info *node = NULL;
-	struct drm_event event;
-	u32 power_on;
 	int ret, i;
 	struct sde_crtc_state *cstate;
 	struct msm_display_mode *msm_mode;
@@ -4455,12 +4462,7 @@ static void sde_crtc_enable(struct drm_crtc *crtc,
 	sde_crtc->enabled = true;
 	sde_cp_crtc_enable(crtc);
 	/* update color processing on resume */
-	event.type = DRM_EVENT_CRTC_POWER;
-	event.length = sizeof(u32);
 	sde_cp_crtc_resume(crtc);
-	power_on = 1;
-	msm_mode_object_event_notify(&crtc->base, crtc->dev, &event,
-			(u8 *)&power_on);
 
 	mutex_unlock(&sde_crtc->crtc_lock);
 
@@ -6840,19 +6842,14 @@ static void __sde_crtc_idle_notify_work(struct kthread_work *work)
 	struct sde_crtc *sde_crtc = container_of(work, struct sde_crtc,
 				idle_notify_work.work);
 	struct drm_crtc *crtc;
-	struct drm_event event;
 	int ret = 0;
 
 	if (!sde_crtc) {
 		SDE_ERROR("invalid sde crtc\n");
 	} else {
 		crtc = &sde_crtc->base;
-		event.type = DRM_EVENT_IDLE_NOTIFY;
-		event.length = sizeof(u32);
-		msm_mode_object_event_notify(&crtc->base, crtc->dev,
-				&event, (u8 *)&ret);
+		sde_crtc_event_notify(crtc, DRM_EVENT_IDLE_NOTIFY, sizeof(u32), ret);
 
-		SDE_EVT32(DRMID(crtc));
 		SDE_DEBUG("crtc[%d]: idle timeout notified\n", crtc->base.id);
 
 		sde_crtc_static_img_control(crtc, CACHE_STATE_PRE_CACHE, false);
