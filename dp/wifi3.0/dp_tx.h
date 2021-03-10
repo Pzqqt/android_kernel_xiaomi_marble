@@ -87,6 +87,8 @@ do {                                                           \
 #define dp_tx_comp_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_DP_TX_COMP, params)
 #define dp_tx_comp_info(params...) \
 	__QDF_TRACE_FL(QDF_TRACE_LEVEL_INFO_HIGH, QDF_MODULE_ID_DP_TX_COMP, ## params)
+#define dp_tx_comp_info_rl(params...) \
+	__QDF_TRACE_RL(QDF_TRACE_LEVEL_INFO_HIGH, QDF_MODULE_ID_DP_TX_COMP, ## params)
 #define dp_tx_comp_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_DP_TX_COMP, params)
 
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
