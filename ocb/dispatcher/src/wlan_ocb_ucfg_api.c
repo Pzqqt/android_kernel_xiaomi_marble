@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -257,8 +257,7 @@ QDF_STATUS ucfg_ocb_set_channel_config(struct wlan_objmgr_vdev *vdev,
 	}
 
 	for (i = 0; i < config->channel_count; i++) {
-		if (WLAN_REG_CHAN_TO_BAND(wlan_reg_freq_to_chan(pdev,
-					  config->channels[i].chan_freq))
+		if (wlan_reg_freq_to_band(config->channels[i].chan_freq)
 				== BAND_2G)
 			config->channels[i].ch_mode = MODE_11G;
 		else
