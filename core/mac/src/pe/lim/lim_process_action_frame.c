@@ -1613,7 +1613,6 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 	int8_t rssi;
 	uint32_t frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
 	tpSirMacVendorSpecificFrameHdr vendor_specific;
-	uint8_t oui[] = { 0x00, 0x00, 0xf0 };
 	uint8_t dpp_oui[] = { 0x50, 0x6F, 0x9A, 0x1A };
 	tpSirMacVendorSpecificPublicActionFrameHdr pub_action;
 
@@ -1821,6 +1820,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 		break;
 
 	case SIR_MAC_ACTION_VENDOR_SPECIFIC_CATEGORY:
+	case SIR_MAC_PROT_ACTION_VENDOR_SPECIFIC_CATEGORY:
 		vendor_specific = (tpSirMacVendorSpecificFrameHdr) action_hdr;
 		mac_hdr = NULL;
 
@@ -1832,12 +1832,9 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 			return;
 		}
 
-		/* Check if it is a vendor specific action frame. */
-		if (LIM_IS_STA_ROLE(session) &&
-		    (!qdf_mem_cmp(session->self_mac_addr,
-					&mac_hdr->da[0], sizeof(tSirMacAddr)))
-		    && IS_WES_MODE_ENABLED(mac_ctx)
-		    && !qdf_mem_cmp(vendor_specific->Oui, oui, 3)) {
+		/* Forward all vendor specific action frames. */
+		if (!qdf_mem_cmp(session->self_mac_addr,
+				 &mac_hdr->da[0], sizeof(tSirMacAddr))) {
 			pe_debug("Rcvd Vendor specific frame OUI: %x %x %x",
 				vendor_specific->Oui[0],
 				vendor_specific->Oui[1],
@@ -1857,16 +1854,8 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 					WMA_GET_RX_RSSI_NORMALIZED(
 					rx_pkt_info), RXMGMT_FLAG_NONE);
 		} else {
-			pe_debug("Dropping the vendor specific action frame"
-					"beacause of (WES Mode not enabled "
-					"(WESMODE: %d) or OUI mismatch "
-					"(%02x %02x %02x) or not received with"
-					"SelfSta address) system role: %d",
-				IS_WES_MODE_ENABLED(mac_ctx),
-				vendor_specific->Oui[0],
-				vendor_specific->Oui[1],
-				vendor_specific->Oui[2],
-				GET_LIM_SYSTEM_ROLE(session));
+			pe_debug("Dropping the vendor specific action frame SelfSta address system role: %d",
+				 GET_LIM_SYSTEM_ROLE(session));
 		}
 	break;
 	case ACTION_CATEGORY_PUBLIC:
@@ -1899,11 +1888,15 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 			/* send the frame to supplicant */
 			/* fallthrough */
 		case SIR_MAC_ACTION_VENDOR_SPECIFIC_CATEGORY:
+		case SIR_MAC_PROT_ACTION_VENDOR_SPECIFIC_CATEGORY:
 		case SIR_MAC_ACTION_2040_BSS_COEXISTENCE:
 		case SIR_MAC_ACTION_GAS_INITIAL_REQUEST:
 		case SIR_MAC_ACTION_GAS_INITIAL_RESPONSE:
 		case SIR_MAC_ACTION_GAS_COMEBACK_REQUEST:
 		case SIR_MAC_ACTION_GAS_COMEBACK_RESPONSE:
+		default:
+			pe_debug("Public action frame: %d",
+				 action_hdr->actionID);
 			/*
 			 * Forward to the SME to HDD to wpa_supplicant
 			 * type is ACTION
@@ -1916,10 +1909,6 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 					WMA_GET_RX_FREQ(rx_pkt_info), session,
 					WMA_GET_RX_RSSI_NORMALIZED(
 					rx_pkt_info), RXMGMT_FLAG_NONE);
-			break;
-		default:
-			pe_debug("Unhandled public action frame: %d",
-				 action_hdr->actionID);
 			break;
 		}
 		break;
