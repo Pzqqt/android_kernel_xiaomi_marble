@@ -800,16 +800,19 @@ static ssize_t lpass_cdc_version_read(struct snd_info_entry *entry,
 
 	switch (priv->version) {
 	case LPASS_CDC_VERSION_1_0:
-		len = snprintf(buffer, sizeof(buffer), "LPASS_CDC_1_0\n");
+		len = snprintf(buffer, sizeof(buffer), "LPASS-CDC_1_0\n");
 		break;
 	case LPASS_CDC_VERSION_1_1:
-		len = snprintf(buffer, sizeof(buffer), "LPASS_CDC_1_1\n");
+		len = snprintf(buffer, sizeof(buffer), "LPASS-CDC_1_1\n");
 		break;
 	case LPASS_CDC_VERSION_1_2:
-		len = snprintf(buffer, sizeof(buffer), "LPASS_CDC_1_2\n");
+		len = snprintf(buffer, sizeof(buffer), "LPASS-CDC_1_2\n");
 		break;
 	case LPASS_CDC_VERSION_2_1:
-		len = snprintf(buffer, sizeof(buffer), "LPASS_CDC_2_1\n");
+		len = snprintf(buffer, sizeof(buffer), "LPASS-CDC_2_1\n");
+		break;
+	case LPASS_CDC_VERSION_2_5:
+		len = snprintf(buffer, sizeof(buffer), "LPASS-CDC_2_5\n");
 		break;
 	default:
 		len = snprintf(buffer, sizeof(buffer), "VER_UNDEFINED\n");
@@ -941,7 +944,7 @@ int lpass_cdc_info_create_codec_entry(struct snd_info_entry *codec_root,
 	}
 	card = component->card;
 	priv->entry = snd_info_create_module_entry(codec_root->module,
-					     "lpass_cdc", codec_root);
+					     "lpass-cdc", codec_root);
 	if (!priv->entry) {
 		dev_dbg(component->dev, "%s: failed to create lpass_cdc entry\n",
 			__func__);
@@ -1114,6 +1117,8 @@ static int lpass_cdc_soc_codec_probe(struct snd_soc_component *component)
 		priv->version = LPASS_CDC_VERSION_2_0;
 	if ((core_id_0 == 0x02) && (core_id_1 == 0x0E))
 		priv->version = LPASS_CDC_VERSION_2_1;
+	if ((core_id_0 == 0x02) && (core_id_1 == 0x0F))
+		priv->version = LPASS_CDC_VERSION_2_5;
 
 	/* call init for supported macros */
 	for (macro_idx = START_MACRO; macro_idx < MAX_MACRO; macro_idx++) {
