@@ -986,11 +986,22 @@ int msm_venc_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 int msm_venc_streamoff_output(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
+	struct msm_vidc_core *core;
 
 	if (!inst || !inst->core || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
+
+	core = inst->core;
+	if (!core->capabilities) {
+		i_vpr_e(inst, "%s: core capabilities is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	/* restore LAYER_COUNT max allowed value */
+	inst->capabilities->cap[ENH_LAYER_COUNT].max =
+		core->capabilities[MAX_ENH_LAYER_COUNT].value;
 
 	rc = msm_vidc_session_streamoff(inst, OUTPUT_PORT);
 	if (rc)
@@ -1774,6 +1785,7 @@ int msm_venc_inst_init(struct msm_vidc_inst *inst)
 	inst->buffers.input_meta.size = 0;
 
 	inst->hfi_rc_type = HFI_RC_VBR_CFR;
+	inst->hfi_layer_type = HFI_HIER_P_SLIDING_WINDOW;
 
 	rc = msm_venc_codec_change(inst,
 			inst->fmts[OUTPUT_PORT].fmt.pix_mp.pixelformat);

@@ -18,6 +18,8 @@
 
 static bool is_priv_ctrl(u32 id)
 {
+	bool private = false;
+
 	if (IS_PRIV_CTRL(id))
 		return true;
 
@@ -25,8 +27,21 @@ static bool is_priv_ctrl(u32 id)
 	 * Treat below standard controls as private because
 	 * we have added custom values to the controls
 	 */
+	switch (id) {
+	/*
+	 * TODO: V4L2_CID_MPEG_VIDEO_H264_HIERARCHICAL_CODING_TYPE is
+	 * std ctrl. But needs some fixes in v4l2-ctrls.c. Hence,
+	 * make this as private ctrl for time being
+	 */
+	case V4L2_CID_MPEG_VIDEO_H264_HIERARCHICAL_CODING_TYPE:
+		private = true;
+		break;
+	default:
+		private = false;
+		break;
+	}
 
-	return false;
+	return private;
 }
 
 static bool is_meta_ctrl(u32 id)
@@ -75,6 +90,12 @@ static const char *const mpeg_video_blur_types[] = {
 	NULL,
 };
 
+static const char *const mpeg_video_avc_coding_layer[] = {
+	"B",
+	"P",
+	NULL,
+};
+
 static const char *const roi_map_type[] = {
 	"None",
 	"2-bit",
@@ -112,6 +133,8 @@ static const char * const * msm_vidc_get_qmenu_type(
 		return mpeg_video_stream_format;
 	case V4L2_CID_MPEG_VIDC_VIDEO_BLUR_TYPES:
 		return mpeg_video_blur_types;
+	case V4L2_CID_MPEG_VIDEO_H264_HIERARCHICAL_CODING_TYPE:
+		return mpeg_video_avc_coding_layer;
 	default:
 		i_vpr_e(inst, "%s: No available qmenu for ctrl %#x\n",
 			__func__, control_id);
@@ -257,10 +280,17 @@ static int msm_vidc_get_parent_value(struct msm_vidc_inst* inst,
 	int rc = 0;
 
 	if (is_parent_available(inst, cap, parent)) {
-		if (parent == BITRATE_MODE)
+		switch (parent) {
+		case BITRATE_MODE:
 			*value = inst->hfi_rc_type;
-		else
+			break;
+		case LAYER_TYPE:
+			*value = inst->hfi_layer_type;
+			break;
+		default:
 			*value = inst->capabilities->cap[parent].value;
+			break;
+		}
 	} else {
 		i_vpr_e(inst,
 			"%s: missing parent %d for cap %d, please correct database\n",
@@ -994,6 +1024,219 @@ int msm_vidc_adjust_transform_8x8(void *instance, struct v4l2_ctrl *ctrl)
 	return 0;
 }
 
+static int msm_vidc_adjust_static_layer_count_and_type(struct msm_vidc_inst *inst,
+	s32 layer_count)
+{
+	bool hb_requested = false;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!layer_count) {
+		i_vpr_h(inst, "client not enabled layer encoding\n");
+		goto exit;
+	}
+
+	if (inst->hfi_rc_type == HFI_RC_CQ) {
+		i_vpr_h(inst, "rc type is CQ, disabling layer encoding\n");
+		layer_count = 0;
+		goto exit;
+	}
+
+	if (inst->codec == MSM_VIDC_H264) {
+		if (!inst->capabilities->cap[LAYER_ENABLE].value) {
+			layer_count = 0;
+			goto exit;
+		}
+
+		hb_requested = (inst->capabilities->cap[LAYER_TYPE].value ==
+				V4L2_MPEG_VIDEO_H264_HIERARCHICAL_CODING_B) ?
+				true : false;
+	} else if (inst->codec == MSM_VIDC_HEVC) {
+		hb_requested = (inst->capabilities->cap[LAYER_TYPE].value ==
+				V4L2_MPEG_VIDEO_HEVC_HIERARCHICAL_CODING_B) ?
+				true : false;
+	}
+
+	if (hb_requested && inst->hfi_rc_type != HFI_RC_VBR_CFR) {
+		i_vpr_h(inst,
+			"%s: HB layer encoding is supported for VBR rc only\n",
+			__func__);
+		layer_count = 0;
+		goto exit;
+	}
+
+	/* decide hfi layer type */
+	if (hb_requested) {
+		inst->hfi_layer_type = HFI_HIER_B;
+	} else {
+		/* HP requested */
+		inst->hfi_layer_type = HFI_HIER_P_SLIDING_WINDOW;
+		if (inst->codec == MSM_VIDC_H264 &&
+			inst->hfi_rc_type == HFI_RC_VBR_CFR)
+			inst->hfi_layer_type = HFI_HIER_P_HYBRID_LTR;
+	}
+
+	/* sanitize layer count based on layer type and codec */
+	if (inst->hfi_layer_type == HFI_HIER_B) {
+		if (layer_count > MAX_ENH_LAYER_HB)
+			layer_count = MAX_ENH_LAYER_HB;
+	} else if (inst->hfi_layer_type == HFI_HIER_P_HYBRID_LTR) {
+		if (layer_count > MAX_AVC_ENH_LAYER_HYBRID_HP)
+			layer_count = MAX_AVC_ENH_LAYER_HYBRID_HP;
+	} else if (inst->hfi_layer_type == HFI_HIER_P_SLIDING_WINDOW) {
+		if (inst->codec == MSM_VIDC_H264) {
+			if (layer_count > MAX_AVC_ENH_LAYER_SLIDING_WINDOW)
+				layer_count = MAX_AVC_ENH_LAYER_SLIDING_WINDOW;
+		} else {
+			if (layer_count > MAX_HEVC_ENH_LAYER_SLIDING_WINDOW)
+				layer_count = MAX_HEVC_ENH_LAYER_SLIDING_WINDOW;
+		}
+	}
+
+exit:
+	msm_vidc_update_cap_value(inst, ENH_LAYER_COUNT,
+		layer_count, __func__);
+	inst->capabilities->cap[ENH_LAYER_COUNT].max = layer_count;
+	return 0;
+}
+
+int msm_vidc_adjust_layer_count(void *instance, struct v4l2_ctrl *ctrl)
+{
+	int rc = 0;
+	struct msm_vidc_inst_capability *capability;
+	s32 client_layer_count;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	client_layer_count = ctrl ? ctrl->val :
+		capability->cap[ENH_LAYER_COUNT].value;
+
+	if (!is_parent_available(inst, ENH_LAYER_COUNT, BITRATE_MODE)) {
+		i_vpr_e(inst, "%s: missing parent %d in database",
+			__func__, BITRATE_MODE);
+		return -EINVAL;
+	}
+
+	if (!inst->vb2q[OUTPUT_PORT].streaming) {
+		rc = msm_vidc_adjust_static_layer_count_and_type(inst,
+			client_layer_count);
+		if (rc)
+			goto exit;
+	} else {
+		if (inst->hfi_layer_type == HFI_HIER_P_HYBRID_LTR ||
+			inst->hfi_layer_type == HFI_HIER_P_SLIDING_WINDOW) {
+			/* dynamic layer count change is only supported for HP */
+			if (client_layer_count >
+				inst->capabilities->cap[ENH_LAYER_COUNT].max)
+				client_layer_count =
+					inst->capabilities->cap[ENH_LAYER_COUNT].max;
+
+			msm_vidc_update_cap_value(inst, ENH_LAYER_COUNT,
+				client_layer_count, __func__);
+		}
+	}
+
+exit:
+	return rc;
+}
+
+/*
+ * 1. GOP calibration is only done for HP layer encoding type.
+ * 2. Dynamic GOP size should not exceed static GOP size
+ * 3. For HB case, or when layer encoding is not enabled,
+ *    client set GOP size is directly set to FW.
+ */
+int msm_vidc_adjust_gop_size(void *instance, struct v4l2_ctrl *ctrl)
+{
+	struct msm_vidc_inst_capability *capability;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+	s32 adjusted_value, enh_layer_count = -1;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	adjusted_value = ctrl ? ctrl->val : capability->cap[GOP_SIZE].value;
+
+	if (msm_vidc_get_parent_value(inst, GOP_SIZE,
+		ENH_LAYER_COUNT, &enh_layer_count, __func__))
+		return -EINVAL;
+
+	if (!enh_layer_count)
+		goto exit;
+
+	/* calibrate GOP size */
+	if (inst->hfi_layer_type == HFI_HIER_P_SLIDING_WINDOW ||
+		inst->hfi_layer_type == HFI_HIER_P_HYBRID_LTR) {
+		/*
+		 * Layer encoding needs GOP size to be multiple of subgop size
+		 * And subgop size is 2 ^ number of enhancement layers.
+		 */
+		u32 min_gop_size;
+		u32 num_subgops;
+
+		/* v4l2 layer count is the number of enhancement layers */
+		min_gop_size = 1 << enh_layer_count;
+		num_subgops = (adjusted_value + (min_gop_size >> 1)) /
+				min_gop_size;
+		if (num_subgops)
+			adjusted_value = num_subgops * min_gop_size;
+		else
+			adjusted_value = min_gop_size;
+	}
+
+exit:
+	msm_vidc_update_cap_value(inst, GOP_SIZE, adjusted_value, __func__);
+	return 0;
+}
+
+int msm_vidc_adjust_b_frame(void *instance, struct v4l2_ctrl *ctrl)
+{
+	struct msm_vidc_inst_capability *capability;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+	s32 adjusted_value, enh_layer_count = -1;
+	const u32 max_bframe_size = 7;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	if (inst->vb2q[OUTPUT_PORT].streaming)
+		return 0;
+
+	adjusted_value = ctrl ? ctrl->val : capability->cap[B_FRAME].value;
+
+	if (msm_vidc_get_parent_value(inst, B_FRAME,
+		ENH_LAYER_COUNT, &enh_layer_count, __func__))
+		return -EINVAL;
+
+	if (!enh_layer_count || inst->hfi_layer_type != HFI_HIER_B) {
+		adjusted_value = 0;
+		goto exit;
+	}
+
+	adjusted_value = (2 << enh_layer_count) - 1;
+	/* Allowed Bframe values are 0, 1, 3, 7 */
+	if (adjusted_value > max_bframe_size)
+		adjusted_value = max_bframe_size;
+
+exit:
+	msm_vidc_update_cap_value(inst, B_FRAME, adjusted_value, __func__);
+	return 0;
+}
+
 int msm_vidc_adjust_hevc_min_qp(void *instance, struct v4l2_ctrl *ctrl)
 {
 	int rc = 0;
@@ -1488,6 +1731,79 @@ int msm_vidc_set_nal_length(void* instance,
 	}
 
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32_ENUM,
+		&hfi_value, sizeof(u32), __func__);
+
+	return rc;
+}
+
+int msm_vidc_set_layer_count_and_type(void *instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+	u32 hfi_layer_count, hfi_layer_type = 0;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!inst->vb2q[OUTPUT_PORT].streaming) {
+		/* set layer type */
+		hfi_layer_type = inst->hfi_layer_type;
+		cap_id = LAYER_TYPE;
+
+		rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32_ENUM,
+			&hfi_layer_type, sizeof(u32), __func__);
+		if (rc)
+			goto exit;
+	} else {
+		if (inst->hfi_layer_type == HFI_HIER_B) {
+			i_vpr_l(inst,
+				"%s: HB dyn layers change is not supported\n",
+				__func__);
+			return 0;
+		}
+	}
+
+	/* set layer count */
+	cap_id = ENH_LAYER_COUNT;
+	/* hfi baselayer starts from 1 */
+	hfi_layer_count = inst->capabilities->cap[ENH_LAYER_COUNT].value + 1;
+
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
+		&hfi_layer_count, sizeof(u32), __func__);
+	if (rc)
+		goto exit;
+
+exit:
+	return rc;
+}
+
+int msm_vidc_set_gop_size(void *instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+	u32 hfi_value;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (inst->vb2q[OUTPUT_PORT].streaming) {
+		if (inst->hfi_layer_type == HFI_HIER_B) {
+			i_vpr_l(inst,
+				"%s: HB dyn GOP setting is not supported\n",
+				__func__);
+			return 0;
+		}
+	}
+
+	hfi_value = inst->capabilities->cap[GOP_SIZE].value;
+
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
 		&hfi_value, sizeof(u32), __func__);
 
 	return rc;

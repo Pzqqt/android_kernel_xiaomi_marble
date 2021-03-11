@@ -62,7 +62,6 @@ static const struct msm_vidc_cap_name cap_name_arr[] = {
 	{OPERATING_RATE,                 "OPERATING_RATE"             },
 	{SCALE_X,                        "SCALE_X"                    },
 	{SCALE_Y,                        "SCALE_Y"                    },
-	{B_FRAME,                        "B_FRAME"                    },
 	{MB_CYCLES_VSP,                  "MB_CYCLES_VSP"              },
 	{MB_CYCLES_VPP,                  "MB_CYCLES_VPP"              },
 	{MB_CYCLES_LP,                   "MB_CYCLES_LP"               },
@@ -88,6 +87,7 @@ static const struct msm_vidc_cap_name cap_name_arr[] = {
 	{CONSTANT_QUALITY,               "CONSTANT_QUALITY"           },
 	{GOP_SIZE,                       "GOP_SIZE"                   },
 	{GOP_CLOSURE,                    "GOP_CLOSURE"                },
+	{B_FRAME,                        "B_FRAME"                    },
 	{BLUR_TYPES,                     "BLUR_TYPES"                 },
 	{BLUR_RESOLUTION,                "BLUR_RESOLUTION"            },
 	{CSC,                            "CSC"                        },
@@ -123,9 +123,9 @@ static const struct msm_vidc_cap_name cap_name_arr[] = {
 	{L4_QP,                          "L4_QP"                      },
 	{L5_QP,                          "L5_QP"                      },
 	{HIER_LAYER_QP,                  "HIER_LAYER_QP"              },
-	{HIER_CODING_TYPE,               "HIER_CODING_TYPE"           },
-	{HIER_CODING,                    "HIER_CODING"                },
-	{HIER_CODING_LAYER,              "HIER_CODING_LAYER"          },
+	{LAYER_TYPE,                     "LAYER_TYPE"                 },
+	{LAYER_ENABLE,                   "LAYER_ENABLE"               },
+	{ENH_LAYER_COUNT,                "ENH_LAYER_COUNT"            },
 	{L0_BR,                          "L0_BR"                      },
 	{L1_BR,                          "L1_BR"                      },
 	{L2_BR,                          "L2_BR"                      },
@@ -1063,6 +1063,7 @@ bool msm_vidc_allow_s_ctrl(struct msm_vidc_inst *inst, u32 id)
 			case V4L2_CID_VFLIP:
 			case V4L2_CID_MPEG_VIDEO_HEVC_I_FRAME_QP:
 			case V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_LAYER:
+			case V4L2_CID_MPEG_VIDEO_H264_HIERARCHICAL_CODING_LAYER:
 			case V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L0_BR:
 			case V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L1_BR:
 			case V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L2_BR:

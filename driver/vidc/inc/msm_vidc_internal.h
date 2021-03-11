@@ -50,6 +50,11 @@
 #define BIT_DEPTH_10 (10 << 16 | 10)
 #define CODED_FRAMES_PROGRESSIVE 0x0
 #define CODED_FRAMES_INTERLACE 0x1
+/* TODO: move below macros to waipio.c */
+#define MAX_ENH_LAYER_HB        3
+#define MAX_HEVC_ENH_LAYER_SLIDING_WINDOW     5
+#define MAX_AVC_ENH_LAYER_SLIDING_WINDOW      3
+#define MAX_AVC_ENH_LAYER_HYBRID_HP           5
 
 /* TODO
  * #define MAX_SUPERFRAME_COUNT     32
@@ -269,6 +274,7 @@ enum msm_vidc_core_capability_type {
 	MAX_MBPS_HQ,
 	MAX_MBPF_B_FRAME,
 	MAX_MBPS_B_FRAME,
+	MAX_ENH_LAYER_COUNT,
 	NUM_VPP_PIPE,
 	SW_PC,
 	SW_PC_DELAY,
@@ -313,7 +319,6 @@ enum msm_vidc_inst_capability_type {
 	OPERATING_RATE,
 	SCALE_X,
 	SCALE_Y,
-	B_FRAME,
 	MB_CYCLES_VSP,
 	MB_CYCLES_VPP,
 	MB_CYCLES_LP,
@@ -339,6 +344,7 @@ enum msm_vidc_inst_capability_type {
 	CONSTANT_QUALITY,
 	GOP_SIZE,
 	GOP_CLOSURE,
+	B_FRAME,
 	BLUR_TYPES,
 	BLUR_RESOLUTION,
 	CSC,
@@ -374,9 +380,9 @@ enum msm_vidc_inst_capability_type {
 	L4_QP,
 	L5_QP,
 	HIER_LAYER_QP,
-	HIER_CODING_TYPE,
-	HIER_CODING,
-	HIER_CODING_LAYER,
+	LAYER_TYPE,
+	LAYER_ENABLE,
+	ENH_LAYER_COUNT,
 	L0_BR,
 	L1_BR,
 	L2_BR,

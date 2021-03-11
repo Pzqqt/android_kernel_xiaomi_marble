@@ -103,6 +103,7 @@ struct msm_vidc_inst {
 	struct msm_vidc_inst_cap_entry     children;
 	struct msm_vidc_inst_cap_entry     firmware;
 	enum hfi_rate_control              hfi_rc_type;
+	enum hfi_layer_encoding_type       hfi_layer_type;
 	bool                               request;
 	struct vb2_queue                   vb2q[MAX_PORT];
 	struct msm_vidc_rectangle          crop;

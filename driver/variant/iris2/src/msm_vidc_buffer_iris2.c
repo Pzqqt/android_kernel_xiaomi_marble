@@ -277,13 +277,42 @@ static u32 msm_vidc_encoder_bin_size_iris2(struct msm_vidc_inst *inst)
 	return size;
 }
 
+static u32 msm_vidc_get_recon_buf_count(struct msm_vidc_inst *inst)
+{
+	u32 num_buf_recon = 0;
+	s32 n_bframe, ltr_count, hp_layers = 0, hb_layers = 0;
+	bool is_hybrid_hp = false;
+	u32 hfi_codec = 0;
+
+	n_bframe = inst->capabilities->cap[B_FRAME].value;
+	ltr_count = inst->capabilities->cap[LTR_COUNT].value;
+
+	if (inst->hfi_layer_type == HFI_HIER_B) {
+		hb_layers = inst->capabilities->cap[ENH_LAYER_COUNT].value + 1;
+	} else {
+		hp_layers = inst->capabilities->cap[ENH_LAYER_COUNT].value + 1;
+		if (inst->hfi_layer_type == HFI_HIER_P_HYBRID_LTR)
+			is_hybrid_hp = true;
+	}
+
+	if (inst->codec == MSM_VIDC_H264)
+		hfi_codec = HFI_CODEC_ENCODE_AVC;
+	else if (inst->codec == MSM_VIDC_HEVC || inst->codec == MSM_VIDC_HEIC)
+		hfi_codec = HFI_CODEC_ENCODE_HEVC;
+
+	HFI_IRIS2_ENC_RECON_BUF_COUNT(num_buf_recon, n_bframe, ltr_count,
+			hp_layers, hb_layers, is_hybrid_hp, hfi_codec);
+
+	return num_buf_recon;
+}
+
 static u32 msm_vidc_encoder_comv_size_iris2(struct msm_vidc_inst* inst)
 {
 	u32 size = 0;
 	u32 width, height, num_recon = 0;
 	struct v4l2_format* f;
 
-	if (!inst || !inst->core) {
+	if (!inst || !inst->core || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return size;
 	}
@@ -292,17 +321,11 @@ static u32 msm_vidc_encoder_comv_size_iris2(struct msm_vidc_inst* inst)
 	width = f->fmt.pix_mp.width;
 	height = f->fmt.pix_mp.height;
 
-	if (inst->codec == MSM_VIDC_H264) {
-		// TODO: replace zeros with appropriate variables
-		HFI_IRIS2_ENC_RECON_BUF_COUNT(num_recon, 0, 0, 0, 0, 0,
-			HFI_CODEC_ENCODE_AVC);
+	num_recon = msm_vidc_get_recon_buf_count(inst);
+	if (inst->codec == MSM_VIDC_H264)
 		HFI_BUFFER_COMV_H264E(size, width, height, num_recon);
-	} else if (inst->codec == MSM_VIDC_HEVC || inst->codec == MSM_VIDC_HEIC) {
-		// TODO: replace zeros with appropriate variables
-		HFI_IRIS2_ENC_RECON_BUF_COUNT(num_recon, 0, 0, 0, 0, 0,
-			HFI_CODEC_ENCODE_HEVC);
+	else if (inst->codec == MSM_VIDC_HEVC || inst->codec == MSM_VIDC_HEIC)
 		HFI_BUFFER_COMV_H265E(size, width, height, num_recon);
-	}
 
 	i_vpr_l(inst, "%s: size %d\n", __func__, size);
 	return size;
@@ -521,23 +544,12 @@ int msm_buffer_size_iris2(struct msm_vidc_inst *inst,
 
 static int msm_buffer_encoder_dpb_count(struct msm_vidc_inst *inst)
 {
-	int count = 0;
-
-	if (!inst) {
+	if (!inst || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return 0;
 	}
 
-	if (inst->codec == MSM_VIDC_H264) {
-		// TODO: replace zeros with appropriate variables
-		HFI_IRIS2_ENC_RECON_BUF_COUNT(count, 0, 0, 0, 0, 0,
-			HFI_CODEC_ENCODE_AVC);
-	} else if (inst->codec == MSM_VIDC_HEVC || inst->codec == MSM_VIDC_HEIC) {
-		// TODO: replace zeros with appropriate variables
-		HFI_IRIS2_ENC_RECON_BUF_COUNT(count, 0, 0, 0, 0, 0,
-			HFI_CODEC_ENCODE_HEVC);
-	}
-	return count;
+	return msm_vidc_get_recon_buf_count(inst);
 }
 
 static int msm_buffer_decoder_dpb_count(struct msm_vidc_inst *inst)
