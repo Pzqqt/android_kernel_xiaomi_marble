@@ -11334,6 +11334,30 @@ void hdd_switch_sap_channel(struct hdd_adapter *adapter, uint8_t channel,
 		hdd_ap_ctx->sap_config.ch_width_orig, forced);
 }
 
+void hdd_switch_sap_chan_freq(struct hdd_adapter *adapter, qdf_freq_t chan_freq,
+			      bool forced)
+{
+	struct hdd_ap_ctx *hdd_ap_ctx;
+	struct hdd_context *hdd_ctx;
+
+	if (hdd_validate_adapter(adapter))
+		return;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	if(wlan_hdd_validate_context(hdd_ctx))
+		return;
+
+	hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
+
+	hdd_debug("chan freq:%d width:%d",
+		  chan_freq, hdd_ap_ctx->sap_config.ch_width_orig);
+
+	policy_mgr_change_sap_channel_with_csa(
+		hdd_ctx->psoc, adapter->vdev_id, chan_freq,
+		hdd_ap_ctx->sap_config.ch_width_orig, forced);
+}
+
 int hdd_update_acs_timer_reason(struct hdd_adapter *adapter, uint8_t reason)
 {
 	struct hdd_external_acs_timer_context *timer_context;
@@ -11375,7 +11399,7 @@ int hdd_update_acs_timer_reason(struct hdd_adapter *adapter, uint8_t reason)
  * Return - none
  */
 static void
-hdd_store_sap_restart_channel(uint8_t restart_chan, uint8_t *restart_chan_store)
+hdd_store_sap_restart_channel(qdf_freq_t restart_chan, qdf_freq_t *restart_chan_store)
 {
 	uint8_t i;
 
@@ -11406,8 +11430,7 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 	struct hdd_adapter *adapter, *next_adapter = NULL;
 	uint32_t i;
 	bool found = false;
-	uint8_t restart_chan_store[SAP_MAX_NUM_SESSION] = {0};
-	uint8_t restart_chan, ap_chan;
+	qdf_freq_t restart_chan_store[SAP_MAX_NUM_SESSION] = {0};
 	uint8_t scc_on_lte_coex = 0;
 	uint32_t restart_freq, ap_chan_freq;
 	bool value;
@@ -11428,9 +11451,6 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 			continue;
 		}
 
-		ap_chan = wlan_reg_freq_to_chan(
-				hdd_ctxt->pdev,
-				adapter->session.ap.operating_chan_freq);
 		ap_chan_freq = adapter->session.ap.operating_chan_freq;
 
 		found = false;
@@ -11464,10 +11484,10 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 		}
 		if (!found) {
 			hdd_store_sap_restart_channel(
-				ap_chan,
+				ap_chan_freq,
 				restart_chan_store);
-			hdd_debug("ch:%d is safe. no need to change channel",
-				  ap_chan);
+			hdd_debug("ch freq:%d is safe. no need to change channel",
+				  ap_chan_freq);
 			hdd_adapter_dev_put_debug(adapter, dbgid);
 			continue;
 		}
@@ -11491,27 +11511,25 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 			continue;
 		}
 
-		restart_chan = 0;
+		restart_freq = 0;
 		for (i = 0; i < SAP_MAX_NUM_SESSION; i++) {
 			if (!restart_chan_store[i])
 				continue;
 
 			if (policy_mgr_is_force_scc(hdd_ctxt->psoc) &&
-			    WLAN_REG_IS_SAME_BAND_CHANNELS(
+			    WLAN_REG_IS_SAME_BAND_FREQS(
 					restart_chan_store[i],
-					ap_chan)) {
-				restart_chan = restart_chan_store[i];
+					ap_chan_freq)) {
+				restart_freq = restart_chan_store[i];
 				break;
 			}
 		}
-		if (!restart_chan) {
+		if (!restart_freq) {
 			restart_freq =
 				wlansap_get_safe_channel_from_pcl_and_acs_range(
 					WLAN_HDD_GET_SAP_CTX_PTR(adapter));
-			restart_chan = wlan_reg_freq_to_chan(hdd_ctxt->pdev,
-							     restart_freq);
 		}
-		if (!restart_chan) {
+		if (!restart_freq) {
 			hdd_err("fail to restart SAP");
 		} else {
 			/*
@@ -11529,8 +11547,8 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 				wlan_hdd_set_sap_csa_reason(hdd_ctxt->psoc,
 						adapter->vdev_id,
 						CSA_REASON_UNSAFE_CHANNEL);
-				hdd_switch_sap_channel(adapter, restart_chan,
-						       true);
+				hdd_switch_sap_chan_freq(adapter, restart_freq,
+							 true);
 				hdd_adapter_dev_put_debug(adapter, dbgid);
 				if (next_adapter)
 					hdd_adapter_dev_put_debug(next_adapter,
