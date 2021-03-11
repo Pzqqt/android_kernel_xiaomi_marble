@@ -4162,6 +4162,7 @@ int gsi_config_channel_mode(unsigned long chan_hdl, enum gsi_chan_mode mode)
 			gsihal_write_reg_n(GSI_EE_n_CNTXT_SRC_IEOB_IRQ_CLR,
 				gsi_ctx->per.ee, 1 << ctx->evtr->id);
 		}
+		atomic_set(&ctx->poll_mode, mode);
 		for(i = 0; i < ctx->evtr->num_of_chan_allocated; i++) {
 			atomic_set(&ctx->evtr->chan[i]->poll_mode, mode);
 		}
@@ -4180,6 +4181,7 @@ int gsi_config_channel_mode(unsigned long chan_hdl, enum gsi_chan_mode mode)
 
 	if (curr == GSI_CHAN_MODE_POLL &&
 			mode == GSI_CHAN_MODE_CALLBACK) {
+		atomic_set(&ctx->poll_mode, mode);
 		for(i = 0; i < ctx->evtr->num_of_chan_allocated; i++) {
 			atomic_set(&ctx->evtr->chan[i]->poll_mode, mode);
 		}
