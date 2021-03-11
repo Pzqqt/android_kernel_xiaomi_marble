@@ -51,6 +51,7 @@
 #include "wlan_reg_services_api.h"
 #include <wlan_scan_ucfg_api.h>
 #include <wlan_scan_utils_api.h>
+#include <wlan_mlme_ucfg_api.h>
 
 /*----------------------------------------------------------------------------
  * Preprocessor Definitions and Constants
@@ -846,6 +847,7 @@ QDF_STATUS wlansap_roam_callback(void *ctx,
 	mac_handle_t mac_handle;
 	struct mac_context *mac_ctx;
 	uint8_t intf;
+	bool dfs_disable_channel_switch = false;
 
 	if (QDF_IS_STATUS_ERROR(wlansap_context_get(sap_ctx)))
 		return QDF_STATUS_E_FAILURE;
@@ -951,6 +953,12 @@ QDF_STATUS wlansap_roam_callback(void *ctx,
 		sap_debug("sapdfs: Indicate eSAP_DFS_RADAR_DETECT to HDD");
 		sap_signal_hdd_event(sap_ctx, NULL, eSAP_DFS_RADAR_DETECT,
 				     (void *) eSAP_STATUS_SUCCESS);
+
+		ucfg_mlme_get_dfs_disable_channel_switch(mac_ctx->psoc,
+						&dfs_disable_channel_switch);
+		if (dfs_disable_channel_switch)
+			goto EXIT;
+
 		mac_ctx->sap.SapDfsInfo.target_chan_freq =
 			sap_indicate_radar(sap_ctx);
 
@@ -1156,8 +1164,11 @@ QDF_STATUS wlansap_roam_callback(void *ctx,
 
 		break;
 	case eCSR_ROAM_RESULT_DFS_RADAR_FOUND_IND:
+		ucfg_mlme_get_dfs_disable_channel_switch(mac_ctx->psoc,
+						&dfs_disable_channel_switch);
 		if (!policy_mgr_get_dfs_master_dynamic_enabled(
-				mac_ctx->psoc, sap_ctx->sessionId))
+				mac_ctx->psoc, sap_ctx->sessionId) ||
+		    dfs_disable_channel_switch)
 			break;
 		wlansap_roam_process_dfs_radar_found(mac_ctx, sap_ctx,
 						&qdf_ret_status);
