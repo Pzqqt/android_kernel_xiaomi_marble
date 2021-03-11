@@ -138,7 +138,6 @@ int hdd_twt_get_add_dialog_values(struct nlattr **tb,
 	uint32_t wake_intvl_exp, result;
 	int cmd_id;
 	QDF_STATUS qdf_status;
-	uint32_t wake_intvl_mantis_tu;
 
 	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID;
 	if (tb[cmd_id]) {
@@ -231,9 +230,7 @@ int hdd_twt_get_add_dialog_values(struct nlattr **tb,
 		hdd_err_rl("SETUP_WAKE_INTVL_MANTISSA is must");
 		return -EINVAL;
 	}
-	wake_intvl_mantis_tu = nla_get_u32(tb[cmd_id]);
-	params->wake_intvl_mantis = wake_intvl_mantis_tu *
-				    TWT_WAKE_INTVL_MULTIPLICATION_FACTOR;
+	params->wake_intvl_mantis = nla_get_u32(tb[cmd_id]);
 	if (params->wake_intvl_mantis >
 	    TWT_SETUP_WAKE_INTVL_MANTISSA_MAX) {
 		hdd_err_rl("Invalid wake_intvl_mantis %u",
