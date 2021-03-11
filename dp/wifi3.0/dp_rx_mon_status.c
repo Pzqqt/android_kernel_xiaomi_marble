@@ -628,6 +628,9 @@ static void dp_rx_stats_update(struct dp_pdev *pdev,
 		if (!peer)
 			peer = pdev->invalid_peer;
 
+		if ((preamble == DOT11_A) || (preamble == DOT11_B))
+			ppdu->u.nss = 1;
+
 		if (ppdu_type == HAL_RX_TYPE_SU) {
 			mcs = ppdu->u.mcs;
 			nss = ppdu->u.nss;
@@ -664,9 +667,6 @@ static void dp_rx_stats_update(struct dp_pdev *pdev,
 		else
 			CDP_SNR_UPDATE_AVG(peer->stats.rx.avg_snr,
 					   peer->stats.rx.snr);
-
-		if ((preamble == DOT11_A) || (preamble == DOT11_B))
-			nss = 1;
 
 		if (ppdu_type == HAL_RX_TYPE_SU) {
 			if (nss) {
