@@ -407,17 +407,6 @@ bool wlan_reg_is_channel_valid_5g_sbs(uint8_t curchan, uint8_t newchan);
 #endif /* CONFIG_CHAN_NUM_API */
 
 
-#ifdef CONFIG_CHAN_NUM_API
-/**
- * wlan_reg_chan_to_band() - Get band from channel number
- * @chan_num: channel number
- *
- * Return: band info
- */
-#define WLAN_REG_CHAN_TO_BAND(chan_num)  wlan_reg_chan_to_band(chan_num)
-enum band_info wlan_reg_chan_to_band(uint8_t chan_num);
-#endif /* CONFIG_CHAN_NUM_API */
-
 /**
  * wlan_reg_read_default_country() - Read the default country for the regdomain
  * @country: pointer to the country code.

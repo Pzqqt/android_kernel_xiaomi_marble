@@ -852,13 +852,6 @@ bool wlan_reg_is_channel_valid_5g_sbs(uint8_t curchan, uint8_t newchan)
 {
 	return reg_is_channel_valid_5g_sbs(curchan, newchan);
 }
-
-enum band_info wlan_reg_chan_to_band(uint8_t chan_num)
-{
-	return reg_chan_to_band(chan_num);
-}
-
-qdf_export_symbol(wlan_reg_chan_to_band);
 #endif /* CONFIG_CHAN_NUM_API */
 
 bool wlan_reg_is_regdmn_en302502_applicable(struct wlan_objmgr_pdev *pdev)

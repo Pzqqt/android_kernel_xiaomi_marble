@@ -307,16 +307,6 @@ uint16_t reg_get_bw_value(enum phy_ch_width bw);
 void reg_set_dfs_region(struct wlan_objmgr_pdev *pdev,
 			enum dfs_reg dfs_reg);
 
-#ifdef CONFIG_CHAN_NUM_API
-/**
- * reg_chan_to_band() - Get band from channel number
- * @chan_num: channel number
- *
- * Return: band info
- */
-enum band_info reg_chan_to_band(uint8_t chan_num);
-#endif /* CONFIG_CHAN_NUM_API */
-
 /**
  * reg_program_chan_list() - Set user country code and populate the channel list
  * @pdev: Pointer to pdev

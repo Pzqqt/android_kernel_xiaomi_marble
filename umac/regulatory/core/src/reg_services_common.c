@@ -1855,14 +1855,6 @@ bool reg_chan_is_49ghz(struct wlan_objmgr_pdev *pdev, uint8_t chan_num)
 	return REG_IS_49GHZ_FREQ(freq) ? true : false;
 }
 
-enum band_info reg_chan_to_band(uint8_t chan_num)
-{
-	if (chan_num <= 14)
-		return BAND_2G;
-
-	return BAND_5G;
-}
-
 void reg_update_nol_ch(struct wlan_objmgr_pdev *pdev,
 		       uint8_t *chan_list,
 		       uint8_t num_chan,
