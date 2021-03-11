@@ -1236,13 +1236,6 @@ static int handle_session_property(struct msm_vidc_inst *inst,
 		inst->subcr_params[port].tier = payload_ptr[0];
 		break;
 	case HFI_PROP_PICTURE_TYPE:
-		if (is_encode_session(inst) && port == INPUT_PORT) {
-			rc = -EINVAL;
-			i_vpr_e(inst,
-				"%s: invalid port: %d for property %#x\n",
-				__func__, pkt->port, pkt->type);
-			break;
-		}
 		inst->hfi_frame_info.picture_type = payload_ptr[0];
 		break;
 	case HFI_PROP_NO_OUTPUT:

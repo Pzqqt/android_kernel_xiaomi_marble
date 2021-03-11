@@ -61,6 +61,7 @@ static const u32 msm_vdec_input_subscribe_for_properties[] = {
 static const u32 msm_vdec_output_subscribe_for_properties[] = {
 	HFI_PROP_WORST_COMPRESSION_RATIO,
 	HFI_PROP_WORST_COMPLEXITY_FACTOR,
+	HFI_PROP_PICTURE_TYPE,
 };
 
 static const u32 msm_vdec_internal_buffer_type[] = {
@@ -1067,14 +1068,12 @@ static int msm_vdec_subscribe_property(struct msm_vidc_inst *inst,
 			payload[i + 1] = msm_vdec_input_subscribe_for_properties[i];
 		payload_size = (ARRAY_SIZE(msm_vdec_input_subscribe_for_properties) + 1) *
 			sizeof(u32);
-	}
-	else if (port == OUTPUT_PORT) {
+	} else if (port == OUTPUT_PORT) {
 		for (i = 0; i < ARRAY_SIZE(msm_vdec_output_subscribe_for_properties); i++)
 			payload[i + 1] = msm_vdec_output_subscribe_for_properties[i];
 		payload_size = (ARRAY_SIZE(msm_vdec_output_subscribe_for_properties) + 1) *
 			sizeof(u32);
-	}
-	else {
+	} else {
 		i_vpr_e(inst, "%s: invalid port: %d\n", __func__, port);
 		return -EINVAL;
 	}
