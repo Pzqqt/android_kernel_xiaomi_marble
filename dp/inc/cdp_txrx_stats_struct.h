@@ -1048,6 +1048,8 @@ struct cdp_tx_stats {
  * @mic_err: Rx MIC errors CCMP
  * @decrypt_err: Rx Decryption Errors CRC
  * @fcserr: rx MIC check failed (CCMP)
+ * @pn_err: pn check failed
+ * @oor_err: Rx OOR errors
  * @wme_ac_type[WME_AC_MAX]: Wireless Multimedia type Count
  * @reception_type[MAX_RECEPTION_TYPES]: Reception type os packets
  * @mcs_count[MAX_MCS]: mcs count
@@ -1118,6 +1120,8 @@ struct cdp_rx_stats {
 		uint32_t mic_err;
 		uint32_t decrypt_err;
 		uint32_t fcserr;
+		uint32_t pn_err;
+		uint32_t oor_err;
 	} err;
 
 	uint32_t wme_ac_type[WME_AC_MAX];

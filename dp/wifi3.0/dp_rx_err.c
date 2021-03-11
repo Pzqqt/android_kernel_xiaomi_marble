@@ -2239,6 +2239,9 @@ done:
 							  peer_id, tid);
 					break;
 				case HAL_REO_ERR_REGULAR_FRAME_OOR:
+					if (peer)
+						DP_STATS_INC(peer,
+							     rx.err.oor_err, 1);
 					if (hal_rx_msdu_end_first_msdu_get(soc->hal_soc,
 									   rx_tlv_hdr)) {
 						peer_id =
@@ -2262,6 +2265,14 @@ done:
 						dp_rx_err_handle_bar(soc,
 								     peer,
 								     nbuf);
+					qdf_nbuf_free(nbuf);
+					break;
+
+				case HAL_REO_ERR_PN_CHECK_FAILED:
+				case HAL_REO_ERR_PN_ERROR_HANDLING_FLAG_SET:
+					if (peer)
+						DP_STATS_INC(peer,
+							     rx.err.pn_err, 1);
 					qdf_nbuf_free(nbuf);
 					break;
 

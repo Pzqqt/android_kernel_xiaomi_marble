@@ -5779,8 +5779,12 @@ void dp_print_peer_stats(struct dp_peer *peer)
 		       peer->stats.rx.raw.bytes);
 	DP_PRINT_STATS("Errors: MIC Errors = %d",
 		       peer->stats.rx.err.mic_err);
-	DP_PRINT_STATS("Erros: Decryption Errors = %d",
+	DP_PRINT_STATS("Errors: Decryption Errors = %d",
 		       peer->stats.rx.err.decrypt_err);
+	DP_PRINT_STATS("Errors: PN Errors = %d",
+		       peer->stats.rx.err.pn_err);
+	DP_PRINT_STATS("Errors: OOR Errors = %d",
+		       peer->stats.rx.err.oor_err);
 	DP_PRINT_STATS("Msdu's Received As Part of Ampdu = %d",
 		       peer->stats.rx.non_ampdu_cnt);
 	DP_PRINT_STATS("Msdu's Recived As Ampdu = %d",
