@@ -70,6 +70,14 @@ typedef struct sk_buff_head __qdf_nbuf_queue_head_t;
 #define QDF_NBUF_CB_PACKET_TYPE_ICMP   5
 #define QDF_NBUF_CB_PACKET_TYPE_ICMPv6 6
 
+#define RADIOTAP_BASE_HEADER_LEN sizeof(struct ieee80211_radiotap_header)
+
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 19, 0))
+#define IEEE80211_RADIOTAP_HE 23
+#define IEEE80211_RADIOTAP_HE_MU 24
+#endif
+
+#define IEEE80211_RADIOTAP_HE_MU_OTHER 25
 
 /* mark the first packet after wow wakeup */
 #define QDF_MARK_FIRST_WAKEUP_PACKET   0x80000000
