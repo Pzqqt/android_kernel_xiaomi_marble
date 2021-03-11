@@ -68,6 +68,8 @@ struct mmrm_sw_peak_current_data {
 };
 
 struct mmrm_sw_clk_mgr_info {
+	void *driver_data;
+
 	/* client data */
 	struct mmrm_sw_clk_client_tbl_entry *clk_client_tbl;
 	u32 tot_clk_clients;

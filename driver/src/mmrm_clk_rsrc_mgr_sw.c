@@ -546,10 +546,12 @@ static struct mmrm_clk_mgr_client_ops clk_client_swops = {
 	.clk_client_getval = mmrm_sw_clk_client_getval,
 };
 
-static int mmrm_sw_update_entries(struct mmrm_clk_platform_resources *cres,
+static int mmrm_sw_update_entries(struct mmrm_sw_clk_mgr_info *sinfo,
 	struct mmrm_sw_clk_client_tbl_entry *tbl_entry)
 {
 	u32 i, j;
+	struct mmrm_driver_data *drv_data = (struct mmrm_driver_data *)sinfo->driver_data;
+	struct mmrm_clk_platform_resources *cres = &drv_data->clk_res;
 	struct voltage_corner_set *cset = &cres->corner_set;
 	u32 scaling_factor = 0, voltage_factor = 0;
 	fp_t nom_dyn_pwr, nom_leak_pwr, freq_sc, dyn_sc, leak_sc,
@@ -581,9 +583,6 @@ static int mmrm_sw_update_entries(struct mmrm_clk_platform_resources *cres,
 		dyn_pwr = fp_mult(pwr_mw, dyn_sc);
 		leak_pwr = fp_mult(nom_leak_pwr, leak_sc);
 
-		tbl_entry->dyn_pwr[i] = fp_round(dyn_pwr);
-		tbl_entry->leak_pwr[i] = fp_round(leak_pwr);
-
 		for (j = 0; j < MMRM_VDD_LEVEL_MAX; j++) {
 			voltage_factor = cset->corner_tbl[j].volt_factor;
 			volt = FP(Q16_INT(voltage_factor), Q16_FRAC(voltage_factor), 100);
@@ -594,8 +593,8 @@ static int mmrm_sw_update_entries(struct mmrm_clk_platform_resources *cres,
 				__func__,
 				tbl_entry->clk_src_id,
 				cset->corner_tbl[i].name,
-				tbl_entry->dyn_pwr[i],
-				tbl_entry->leak_pwr[i],
+				fp_round(dyn_pwr),
+				fp_round(leak_pwr),
 				fp_round(dyn_pwr+leak_pwr),
 				tbl_entry->current_ma[i][j]);
 		}
@@ -633,7 +632,7 @@ static int mmrm_sw_prepare_table(struct mmrm_clk_platform_resources *cres,
 			tbl_entry->leak_pwr[MMRM_VDD_LEVEL_NOM]);
 
 		/* calculate current & scale power for other levels */
-		rc = mmrm_sw_update_entries(cres, tbl_entry);
+		rc = mmrm_sw_update_entries(sinfo, tbl_entry);
 		if (rc) {
 			d_mpr_e("%s: csid(%d) failed to prepare table\n",
 				__func__, tbl_entry->clk_src_id);
@@ -670,6 +669,7 @@ int mmrm_init_sw_clk_mgr(void *driver_data)
 		cres->nom_clk_set.count;
 
 	sinfo = &(sw_clk_mgr->data.sw_info);
+	sinfo->driver_data = drv_data;
 	sinfo->clk_client_tbl = kzalloc(tbl_size, GFP_KERNEL);
 	if (!sinfo->clk_client_tbl) {
 		d_mpr_e(
