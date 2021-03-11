@@ -634,7 +634,7 @@ uint16_t wlan_reg_dmn_get_opclass_from_channel(uint8_t *country,
  */
 uint8_t wlan_reg_get_opclass_from_freq_width(uint8_t *country,
 					     qdf_freq_t freq,
-					     uint8_t ch_width,
+					     uint16_t ch_width,
 					     uint16_t behav_limit);
 
 /**

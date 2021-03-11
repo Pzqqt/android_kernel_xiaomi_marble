@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -59,7 +59,7 @@ uint16_t reg_dmn_get_opclass_from_channel(uint8_t *country, uint8_t channel,
  */
 uint8_t reg_dmn_get_opclass_from_freq_width(uint8_t *country,
 					    qdf_freq_t freq,
-					    uint8_t ch_width,
+					    uint16_t ch_width,
 					    uint16_t behav_limit);
 
 /**
@@ -308,7 +308,7 @@ static inline uint16_t reg_dmn_get_opclass_from_channel(
 static inline
 uint8_t reg_dmn_get_opclass_from_freq_width(uint8_t *country,
 					    qdf_freq_t freq,
-					    uint8_t ch_width,
+					    uint16_t ch_width,
 					    uint16_t behav_limit)
 {
 	return 0;

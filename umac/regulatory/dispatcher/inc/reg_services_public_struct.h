@@ -707,7 +707,7 @@ enum behav_limit {
  */
 struct reg_dmn_op_class_map_t {
 	uint8_t op_class;
-	uint8_t chan_spacing;
+	uint16_t chan_spacing;
 	enum offset_t offset;
 	uint16_t behav_limit;
 	qdf_freq_t start_freq;

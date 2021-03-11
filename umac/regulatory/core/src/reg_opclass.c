@@ -133,6 +133,16 @@ static const struct reg_dmn_op_class_map_t global_op_class[] = {
 
 	{136, 20, BW20, BIT(BEHAV_NONE), 5925,
 	 {2} },
+#ifdef WLAN_FEATURE_11BE
+	{137, 320, BW20, BIT(BEHAV_NONE), 5950,
+	 {1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41,
+	  45, 49, 53, 57, 61, 65, 69, 73, 77, 81,
+	  85, 89, 93, 97, 101, 105, 109, 113, 117,
+	  121, 125, 129, 133, 137, 141, 145, 149,
+	  153, 157, 161, 165, 169, 173, 177, 181,
+	  185, 189, 193, 197, 201, 205, 209, 213,
+	  217, 221, 225, 229, 233} },
+#endif
 #endif
 	{0, 0, 0, 0, 0, {0} },
 };
@@ -400,7 +410,7 @@ uint16_t reg_dmn_get_opclass_from_channel(uint8_t *country, uint8_t channel,
 
 uint8_t reg_dmn_get_opclass_from_freq_width(uint8_t *country,
 					    qdf_freq_t freq,
-					    uint8_t ch_width,
+					    uint16_t ch_width,
 					    uint16_t behav_limit)
 {
 	const struct reg_dmn_op_class_map_t *op_class_tbl = NULL;
