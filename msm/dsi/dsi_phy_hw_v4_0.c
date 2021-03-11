@@ -228,7 +228,7 @@ static void dsi_phy_hw_cphy_enable(struct dsi_phy_hw *phy,
 	if (cfg->bit_clk_rate_hz <= 1500000000)
 		less_than_1500_mhz = true;
 
-	if (phy->version == DSI_PHY_VERSION_4_2) {
+	if (phy->version >= DSI_PHY_VERSION_4_2) {
 		glbl_rescode_top_ctrl = less_than_1500_mhz ? 0x3d : 0x01;
 		glbl_rescode_bot_ctrl = less_than_1500_mhz ? 0x38 : 0x3b;
 	} else if (phy->version == DSI_PHY_VERSION_4_1) {
@@ -336,7 +336,7 @@ static void dsi_phy_hw_dphy_enable(struct dsi_phy_hw *phy,
 	if (cfg->bit_clk_rate_hz <= 1500000000)
 		less_than_1500_mhz = true;
 
-	if (phy->version == DSI_PHY_VERSION_4_2) {
+	if (phy->version >= DSI_PHY_VERSION_4_2) {
 		vreg_ctrl_0 = less_than_1500_mhz ? 0x53 : 0x52;
 		glbl_rescode_top_ctrl = less_than_1500_mhz ? 0x3c : 0x00;
 		glbl_rescode_bot_ctrl = less_than_1500_mhz ? 0x38 : 0x39;
