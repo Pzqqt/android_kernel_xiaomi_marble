@@ -2792,6 +2792,13 @@ static int swrm_probe(struct platform_device *pdev)
 
 		if (port_num != old_port_num)
 			ch_iter = 0;
+		if (port_num > SWR_MSTR_PORT_LEN ||
+			ch_iter >= SWR_MAX_CH_PER_PORT) {
+			dev_err(&pdev->dev,
+				"%s:invalid port_num %d or ch_iter %d\n",
+				__func__, port_num, ch_iter);
+			goto err_pdata_fail;
+		}
 		swrm->port_mapping[port_num][ch_iter].port_type = port_type;
 		swrm->port_mapping[port_num][ch_iter++].ch_mask = ch_mask;
 		old_port_num = port_num;

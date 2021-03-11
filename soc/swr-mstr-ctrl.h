@@ -171,7 +171,7 @@ struct swr_mstr_ctrl {
 	struct work_struct dc_presence_work;
 	u8 num_ports;
 	struct swrm_port_type
-			port_mapping[SWR_MSTR_PORT_LEN][SWR_MAX_CH_PER_PORT];
+			port_mapping[SWR_MSTR_PORT_LEN + 1][SWR_MAX_CH_PER_PORT];
 	int swr_irq;
 	u32 clk_stop_mode0_supp;
 	struct work_struct wakeup_work;
