@@ -163,8 +163,7 @@ static inline bool is_secondary_output_mode(struct msm_vidc_inst *inst)
 
 static inline bool is_thumbnail_session(struct msm_vidc_inst *inst)
 {
-	return false;
-	// todo: return !!(inst->capabilities->cap[THUMBNAIL_MODE].value);
+	return !!(inst->capabilities->cap[THUMBNAIL_MODE].value);
 }
 
 static inline bool is_low_power_session(struct msm_vidc_inst *inst)
