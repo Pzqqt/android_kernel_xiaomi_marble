@@ -2214,6 +2214,7 @@ struct ipa3_context {
 	struct ipa_mem_buffer pkt_init_mem;
 	struct ipa_mem_buffer pkt_init_ex_mem;
 	struct ipa_mem_buffer pkt_init_ex_imm[IPA_IMM_IP_PACKET_INIT_EX_CMD_NUM];
+	bool is_modem_up;
 };
 
 struct ipa3_plat_drv_res {
@@ -3324,4 +3325,8 @@ int ipa3_uc_send_update_flow_control(uint32_t bitmask,
 	uint8_t  add_delete);
 
 enum ipa_hw_type ipa_get_hw_type_internal(void);
+/* check if modem is up */
+bool ipa3_is_modem_up(void);
+/* set modem is up */
+void ipa3_set_modem_up(bool is_up);
 #endif /* _IPA3_I_H_ */
