@@ -528,6 +528,7 @@ typedef  enum  {
     WMI_SERVICE_ENABLE_LOWER_6G_EDGE_CH_SUPP = 283, /* Indicates FW support for enabling lower 6 GHz edge channel 5935 */
     WMI_SERVICE_DISABLE_UPPER_6G_EDGE_CH_SUPP = 284, /* Indicates FW support for disabling upper 6 GHz edge channel 7115 */
     WMI_SERVICE_FORCED_DTIM_SUPP = 285, /* Indicates FW supports forced DTIM configuration */
+    WMI_SERVICE_DCS_AWGN_INT_SUPPORT = 286, /* Indicates FW supports AWGN Int */
 
 
     WMI_MAX_EXT2_SERVICE
