@@ -62,6 +62,50 @@ static struct qmi_elem_info ipa3_route_tbl_info_type_data_v01_ei[] = {
 	},
 };
 
+static struct qmi_elem_info ipa3_filter_tbl_info_type_data_v01_ei[] = {
+	{
+		.data_type	= QMI_UNSIGNED_4_BYTE,
+		.elem_len	= 1,
+		.elem_size	= sizeof(uint32_t),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= QMI_COMMON_TLV_TYPE,
+		.offset		= offsetof(struct ipa_filter_stats_info_type_v01,
+					hw_filter_stats_start_addr),
+	},
+	{
+		.data_type	= QMI_UNSIGNED_4_BYTE,
+		.elem_len	= 1,
+		.elem_size	= sizeof(uint32_t),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= QMI_COMMON_TLV_TYPE,
+		.offset		= offsetof(struct ipa_filter_stats_info_type_v01,
+					hw_filter_stats_size),
+	},
+	{
+		.data_type	= QMI_UNSIGNED_1_BYTE,
+		.elem_len	= 1,
+		.elem_size	= sizeof(uint8_t),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= QMI_COMMON_TLV_TYPE,
+		.offset		= offsetof(struct ipa_filter_stats_info_type_v01,
+					hw_filter_stats_start_index),
+	},
+	{
+		.data_type	= QMI_UNSIGNED_1_BYTE,
+		.elem_len	= 1,
+		.elem_size	= sizeof(uint8_t),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= QMI_COMMON_TLV_TYPE,
+		.offset		= offsetof(struct ipa_filter_stats_info_type_v01,
+					hw_filter_stats_end_index),
+	},
+	{
+		.data_type	= QMI_EOTI,
+		.array_type	= NO_ARRAY,
+		.tlv_type	= QMI_COMMON_TLV_TYPE,
+	},
+};
+
 static struct qmi_elem_info ipa3_modem_mem_info_type_data_v01_ei[] = {
 	{
 		.data_type	= QMI_UNSIGNED_4_BYTE,
@@ -1163,6 +1207,27 @@ struct qmi_elem_info ipa3_init_modem_driver_req_msg_data_v01_ei[] = {
 		.offset		= offsetof(
 			struct ipa_init_modem_driver_req_msg_v01,
 			hw_drop_stats_table_size),
+	},
+	{
+		.data_type	= QMI_OPT_FLAG,
+		.elem_len	= 1,
+		.elem_size	= sizeof(uint8_t),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0x23,
+		.offset		= offsetof(
+			struct ipa_init_modem_driver_req_msg_v01,
+			hw_fiter_stats_info_valid),
+	},
+	{
+		.data_type	= QMI_STRUCT,
+		.elem_len	= 1,
+		.elem_size	= sizeof(struct ipa_filter_stats_info_type_v01),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0x23,
+		.offset		= offsetof(
+			struct ipa_init_modem_driver_req_msg_v01,
+			hw_filter_stats_info),
+		.ei_array	= ipa3_filter_tbl_info_type_data_v01_ei,
 	},
 	{
 		.data_type	= QMI_EOTI,
