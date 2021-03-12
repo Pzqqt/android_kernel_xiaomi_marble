@@ -25,6 +25,8 @@
 /* 32  ARGB-8-8-8-8 compressed */
 #define V4L2_PIX_FMT_VIDC_ARGB32C               v4l2_fourcc('Q', '2', '4', 'C')
 #define V4L2_META_FMT_VIDC                      v4l2_fourcc('Q', 'M', 'E', 'T')
+/* HEIC encoder and decoder */
+#define V4L2_PIX_FMT_HEIC                       v4l2_fourcc('H', 'E', 'I', 'C')
 
 /* start of vidc specific colorspace definitions */
 #define V4L2_COLORSPACE_VIDC_GENERIC_FILM    101
@@ -53,8 +55,6 @@
 #define V4L2_MPEG_MSM_VIDC_ENABLE 1
 
 #define V4L2_CID_MPEG_VIDC_SECURE               (V4L2_CID_MPEG_VIDC_BASE + 0x1)
-/* HEIC encoder and decoder */
-#define V4L2_CID_MPEG_VIDC_HEIC                 (V4L2_CID_MPEG_VIDC_BASE + 0x02)
 #define V4L2_CID_MPEG_VIDC_LOWLATENCY_REQUEST   (V4L2_CID_MPEG_VIDC_BASE + 0x3)
 /* FIXme: */
 #define V4L2_CID_MPEG_VIDC_CODEC_CONFIG         (V4L2_CID_MPEG_VIDC_BASE + 0x4)
