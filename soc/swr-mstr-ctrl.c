@@ -1182,8 +1182,7 @@ static bool swrm_remove_from_group(struct swr_master *master)
 		goto end;
 
 	mutex_lock(&swrm->mlock);
-	if ((swrm->num_rx_chs > 1) &&
-	    (swrm->num_rx_chs == swrm->num_cfg_devs)) {
+	if (swrm->num_rx_chs > 1) {
 		list_for_each_entry(swr_dev, &master->devices,
 				dev_list) {
 			swr_dev->group_id = SWR_GROUP_NONE;
