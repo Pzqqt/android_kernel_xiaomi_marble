@@ -843,11 +843,6 @@ qdf_freq_t wlan_reg_ch_to_freq(uint32_t ch_enum)
 }
 
 #ifdef CONFIG_CHAN_NUM_API
-bool wlan_reg_is_same_band_channels(uint8_t chan_num1, uint8_t chan_num2)
-{
-	return reg_is_same_band_channels(chan_num1, chan_num2);
-}
-
 bool wlan_reg_is_channel_valid_5g_sbs(uint8_t curchan, uint8_t newchan)
 {
 	return reg_is_channel_valid_5g_sbs(curchan, newchan);

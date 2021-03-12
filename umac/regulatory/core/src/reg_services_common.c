@@ -2806,12 +2806,6 @@ qdf_freq_t reg_ch_to_freq(uint32_t ch_enum)
 }
 
 #ifdef CONFIG_CHAN_NUM_API
-bool reg_is_same_band_channels(uint8_t chan_num1, uint8_t chan_num2)
-{
-	return (chan_num1 && chan_num2 &&
-		(REG_IS_5GHZ_CH(chan_num1) == REG_IS_5GHZ_CH(chan_num2)));
-}
-
 bool reg_is_channel_valid_5g_sbs(uint8_t curchan, uint8_t newchan)
 {
 	return REG_IS_CHANNEL_VALID_5G_SBS(curchan, newchan);

@@ -769,15 +769,6 @@ qdf_freq_t reg_ch_to_freq(uint32_t ch_enum);
 
 #ifdef CONFIG_CHAN_NUM_API
 /**
- * reg_is_same_band_channels() - Check if given channel numbers have same band
- * @chan_num1: Channel number1
- * @chan_num2: Channel number2
- *
- * Return: true if both the channels has the same band.
- */
-bool reg_is_same_band_channels(uint8_t chan_num1, uint8_t chan_num2);
-
-/**
  * reg_is_channel_valid_5g_sbs() Check if the given channel is 5G SBS.
  * @curchan: current channel
  * @newchan:new channel
