@@ -890,7 +890,7 @@ qdf_nbuf_t dp_rx_mon_frag_restitch_mpdu_from_msdus(struct dp_soc *soc,
 				qdf_nbuf_trim_add_frag_size(msdu_curr,
 							    frags_iter,
 							    amsdu_pad, 0);
-				frag_addr_temp = (char *)qdf_nbuf_get_frag_addr(msdu_curr, 0);
+				frag_addr_temp = (char *)qdf_nbuf_get_frag_addr(msdu_curr, frags_iter);
 				frag_addr_temp = (frag_addr_temp +
 					qdf_nbuf_get_frag_size_by_idx(msdu_curr, frags_iter)) -
 					amsdu_pad;
