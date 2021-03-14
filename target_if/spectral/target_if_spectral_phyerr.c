@@ -1418,6 +1418,12 @@ target_if_dump_fft_report_gen3(struct target_if_spectral *spectral,
 	size_t fft_bin_buf_size;
 	uint8_t tag, signature;
 
+	qdf_assert_always(spectral);
+
+	/* There won't be FFT report/bins in report mode 0, so return */
+	if (!spectral->params[smode].ss_rpt_mode)
+		return;
+
 	fft_hdr_length = get_bitfield(
 				p_fft_report->fft_hdr_lts,
 				SPECTRAL_REPORT_LTS_HDR_LENGTH_SIZE_GEN3,
