@@ -1337,6 +1337,15 @@ int hdd_send_twt_add_dialog_cmd(struct hdd_context *hdd_ctx,
  * Handles QCA_WLAN_TWT_SET
  *
  * Return: 0 for Success and negative value for failure
+ *
+ *    If the setup request is received:
+ *        before the host driver receiving the setup response event from
+ *        firmware for the previous setup request, then return -EINPROGRESS
+ *
+ *        after the host driver received the setup response event from
+ *        firmware for the previous setup request, then setup_done is
+ *        set to true and this new setup request is sent to firmware
+ *        for parameter re-negotiation.
  */
 static int hdd_twt_setup_session(struct hdd_adapter *adapter,
 				 struct nlattr *twt_param_attr)
@@ -1396,13 +1405,10 @@ static int hdd_twt_setup_session(struct hdd_adapter *adapter,
 
 	if (ucfg_mlme_is_twt_setup_in_progress(adapter->hdd_ctx->psoc,
 					       &hdd_sta_ctx->conn_info.bssid,
-					       params.dialog_id) ||
-	    ucfg_mlme_is_twt_setup_done(adapter->hdd_ctx->psoc,
-					&hdd_sta_ctx->conn_info.bssid,
 					params.dialog_id)) {
-		hdd_err_rl("TWT session exists for dialog:%d",
+		hdd_err_rl("TWT setup is in progress for dialog_id:%d",
 			   params.dialog_id);
-		return -EALREADY;
+		return -EINPROGRESS;
 	}
 
 	ret = hdd_send_twt_add_dialog_cmd(adapter->hdd_ctx, &params);
