@@ -141,6 +141,7 @@ err_out:
 	dev_dbg(&master->dev, "Failed to register swr device %s at 0x%lx %d\n",
 		swr->name, swr->addr, result);
 	swr_master_put(master);
+	list_del_init(&swr->dev_list);	
 	kfree(swr);
 	return NULL;
 }

@@ -1765,6 +1765,9 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 
 	wsa883x->parent_np = of_parse_phandle(pdev->dev.of_node,
 					      "qcom,bolero-handle", 0);
+	if (!wsa883x->parent_np)
+		wsa883x->parent_np = of_parse_phandle(pdev->dev.of_node,
+					      "qcom,lpass-cdc-handle", 0);
 	if (wsa883x->parent_np) {
 		wsa883x->parent_dev =
 				of_find_device_by_node(wsa883x->parent_np);
@@ -1950,12 +1953,16 @@ static const struct dev_pm_ops wsa883x_swr_pm_ops = {
 
 static const struct swr_device_id wsa883x_swr_id[] = {
 	{"wsa883x", 0},
+	{"wsa883x_2", 0},
 	{}
 };
 
 static const struct of_device_id wsa883x_swr_dt_match[] = {
 	{
 		.compatible = "qcom,wsa883x",
+	},
+	{
+		.compatible = "qcom,wsa883x_2",
 	},
 	{}
 };

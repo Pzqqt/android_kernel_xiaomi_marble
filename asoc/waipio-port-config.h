@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _WAIPIO_PORT_CONFIG
@@ -59,6 +59,7 @@ static struct swr_mstr_port_map sm_port_map[] = {
 	{RX_MACRO, SWR_UC1, rx_frame_params_dsd},
 	{RX_MACRO, SWR_UC2, rx_frame_params_44p1KHz},
 	{WSA_MACRO, SWR_UC0, wsa_frame_params_default},
+	{WSA2_MACRO, SWR_UC0, wsa_frame_params_default},
 };
 
 #endif /* _WAIPIO_PORT_CONFIG */

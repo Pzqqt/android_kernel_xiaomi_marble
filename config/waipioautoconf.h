@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/* Copyright (c) 2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
 #define CONFIG_SND_SOC_MSM_QDSP6V2_INTF 1
@@ -18,6 +18,7 @@
 #define CONFIG_PINCTRL_LPI 1
 #define CONFIG_SOUNDWIRE 1
 #define CONFIG_SOUNDWIRE_MSTR_CTRL 1
+#define CONFIG_SWRM_VER_1P7 1
 #define CONFIG_WCD9XXX_CODEC_CORE_V2 1
 #define CONFIG_MSM_CDC_PINCTRL 1
 #define CONFIG_SND_SOC_WSA883X 1
