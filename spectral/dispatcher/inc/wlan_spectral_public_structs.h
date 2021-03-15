@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2017-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -218,7 +218,8 @@ enum spectral_dma_debug {
 };
 
 struct wiphy;
-
+struct wlan_objmgr_pdev;
+struct wlan_objmgr_vdev;
 /**
  * struct spectral_cfg80211_vendor_cmd_handlers - Spectral vendor command
  * handlers
