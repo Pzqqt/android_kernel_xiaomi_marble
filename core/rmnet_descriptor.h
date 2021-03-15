@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -40,6 +40,7 @@ struct rmnet_frag_descriptor {
 	u32 hash;
 	__be32 tcp_seq;
 	__be16 ip_id;
+	__be16 tcp_flags;
 	u16 data_offset;
 	u16 gso_size;
 	u16 gso_segs;
@@ -53,7 +54,8 @@ struct rmnet_frag_descriptor {
 	   ip_id_set:1,
 	   tcp_seq_set:1,
 	   flush_shs:1,
-	   reserved:3;
+	   tcp_flags_set:1,
+	   reserved:2;
 };
 
 /* Descriptor management */

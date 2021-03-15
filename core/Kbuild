@@ -1,8 +1,14 @@
+ifneq (, $(filter y, $(CONFIG_ARCH_LAHAINA) $(CONFIG_ARCH_WAIPIO)))
+ccflags-y	+= -DRMNET_LA_PLATFORM
+endif
+
+ifeq ($(CONFIG_ARCH_SDXNIGHTJAR), y)
+ccflags-y	+= -DRMNET_TRACE_INCLUDE_LE
+endif
+
 obj-m += rmnet_core.o
 obj-m += rmnet_ctl.o
 rmnet_core-y := rmnet_config.o rmnet_handlers.o rmnet_descriptor.o \
 	rmnet_genl.o rmnet_map_command.o rmnet_map_data.o rmnet_vnd.o\
 	qmi_rmnet.o wda_qmi.o dfc_qmi.o dfc_qmap.o
 rmnet_ctl-y := rmnet_ctl_client.o rmnet_ctl_ipa.o
-
-

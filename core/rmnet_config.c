@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -29,6 +29,9 @@
 #define CONFIG_QTI_QMI_RMNET 1
 #define CONFIG_QTI_QMI_DFC  1
 #define CONFIG_QTI_QMI_POWER_COLLAPSE 1
+
+#define QMAP_SHS_MASK 0xFF
+#define QMAP_SHS_PKT_LIMIT 200
 
 /* Locking scheme -
  * The shared resource which needs to be protected is realdev->rx_handler_data.
@@ -122,6 +125,11 @@ static int rmnet_register_real_device(struct net_device *real_dev)
 		return -ENOMEM;
 
 	port->dev = real_dev;
+	port->phy_shs_cfg.config = RMNET_SHS_NO_DLMKR |	RMNET_SHS_NO_PSH |
+				   RMNET_SHS_STMP_ALL;
+	port->phy_shs_cfg.map_mask = QMAP_SHS_MASK;
+	port->phy_shs_cfg.max_pkts = QMAP_SHS_PKT_LIMIT;
+
 	rc = netdev_rx_handler_register(real_dev, rmnet_rx_handler, port);
 	if (rc) {
 		kfree(port);
@@ -331,7 +339,9 @@ static int rmnet_config_notify_cb(struct notifier_block *nb,
 		netdev_dbg(dev, "Kernel unregister\n");
 		rmnet_force_unassociate_device(dev);
 		break;
-
+	case NETDEV_DOWN:
+		rmnet_vnd_reset_mac_addr(dev);
+		break;
 	default:
 		break;
 	}

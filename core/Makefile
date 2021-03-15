@@ -9,6 +9,7 @@ else
 CCFLAGS += -m32
 endif
 
+M ?= $(shell pwd)
 #obj-m := rmnet_core.o rmnet_ctl.o
 
 rmnet_core-y += 	rmnet_config.o \
@@ -29,11 +30,14 @@ rmnet_ctl-y += 		rmnet_ctl_client.o \
 
 KERNEL_SRC ?= /lib/modules/$(shell uname -r)/build
 
+KBUILD_OPTIONS := RMNET_CORE_ROOT=$(PWD)
+KBUILD_OPTIONS += MODNAME?=rmnet_core
+
 all:
-	$(MAKE) -C $(KERNEL_SRC) M=$(shell pwd) modules $(KBUILD_OPTIONS)
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) modules $(KBUILD_OPTIONS)
 
 modules_install:
-	$(MAKE) -C $(KERNEL_SRC) M=$(shell pwd) modules_install
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) modules_install
 
 clean:
-	$(MAKE) -C $(KERNEL_SRC) M=$(PWD) clean
+	$(MAKE) -C $(KERNEL_SRC) M=$(M) clean

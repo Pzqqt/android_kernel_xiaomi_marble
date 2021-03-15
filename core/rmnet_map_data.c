@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -744,22 +744,23 @@ __rmnet_map_segment_coal_skb(struct sk_buff *coal_skb,
 	struct rmnet_priv *priv = netdev_priv(coal_skb->dev);
 	__sum16 *check = NULL;
 	u32 alloc_len;
+	u32 dlen = coal_meta->data_len * coal_meta->pkt_count;
+	u32 hlen = coal_meta->ip_len + coal_meta->trans_len;
 	bool zero_csum = false;
 
 	/* We can avoid copying the data if the SKB we got from the lower-level
 	 * drivers was nonlinear.
 	 */
 	if (skb_is_nonlinear(coal_skb))
-		alloc_len = coal_meta->ip_len + coal_meta->trans_len;
+		alloc_len = hlen;
 	else
-		alloc_len = coal_meta->ip_len + coal_meta->trans_len +
-			    (coal_meta->data_len * coal_meta->pkt_count);
+		alloc_len = hlen + dlen;
 
 	skbn = alloc_skb(alloc_len, GFP_ATOMIC);
 	if (!skbn)
 		return;
 
-	skb_reserve(skbn, coal_meta->ip_len + coal_meta->trans_len);
+	skb_reserve(skbn, hlen);
 	rmnet_map_nonlinear_copy(coal_skb, coal_meta, skbn);
 
 	/* Push transport header and update necessary fields */
@@ -771,6 +772,17 @@ __rmnet_map_segment_coal_skb(struct sk_buff *coal_skb,
 
 		th->seq = htonl(ntohl(th->seq) + coal_meta->data_offset);
 		check = &th->check;
+
+		/* Don't allow dangerous flags to be set in any segment but the
+		 * last one.
+		 */
+		if (th->fin || th->psh) {
+			if (hlen + coal_meta->data_offset + dlen <
+			    coal_skb->len) {
+				th->fin = 0;
+				th->psh = 0;
+			}
+		}
 	} else if (coal_meta->trans_proto == IPPROTO_UDP) {
 		struct udphdr *uh = udp_hdr(skbn);
 
@@ -846,7 +858,7 @@ __rmnet_map_segment_coal_skb(struct sk_buff *coal_skb,
 	__skb_queue_tail(list, skbn);
 
 	/* Update meta information to move past the data we just segmented */
-	coal_meta->data_offset += coal_meta->data_len * coal_meta->pkt_count;
+	coal_meta->data_offset += dlen;
 	coal_meta->pkt_id = pkt_id + 1;
 	coal_meta->pkt_count = 0;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -224,6 +224,7 @@ wda_qmi_client_init(void *port, struct svc_info *psvc, struct qmi_info *qmi);
 void wda_qmi_client_exit(void *wda_data);
 int wda_set_powersave_mode(void *wda_data, u8 enable);
 void qmi_rmnet_flush_ps_wq(void);
+void wda_qmi_client_release(void *wda_data);
 #else
 static inline int
 wda_qmi_client_init(void *port, struct svc_info *psvc, struct qmi_info *qmi)
@@ -240,6 +241,9 @@ static inline int wda_set_powersave_mode(void *wda_data, u8 enable)
 	return -EINVAL;
 }
 static inline void qmi_rmnet_flush_ps_wq(void)
+{
+}
+static inline void wda_qmi_client_release(void *wda_data)
 {
 }
 #endif
