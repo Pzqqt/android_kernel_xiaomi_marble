@@ -5351,17 +5351,7 @@ static int ipa_poll_gsi_n_pkt(struct ipa3_sys_context *sys,
 	int idx = 0;
 	int poll_num = 0;
 
-	if (!actual_num || expected_num <= 0 ||
-		(sys->ep->client == IPA_CLIENT_APPS_WAN_CONS &&
-		expected_num > IPA_WAN_NAPI_MAX_FRAMES) ||
-		(sys->ep->client == IPA_CLIENT_APPS_LAN_CONS &&
-		expected_num > IPA_LAN_NAPI_MAX_FRAMES) ||
-		(IPA_CLIENT_IS_APPS_PROD(sys->ep->client) &&
-		 expected_num > NAPI_TX_WEIGHT)) {
-		IPAERR("bad params actual_num=%pK expected_num=%d\n",
-			actual_num, expected_num);
-		return GSI_STATUS_INVALID_PARAMS;
-	}
+	/* Parameters validity isn't checked as this is a static function */
 
 	if (sys->ep->xfer_notify_valid) {
 		*notify = sys->ep->xfer_notify;
