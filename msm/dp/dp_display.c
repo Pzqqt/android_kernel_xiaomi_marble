@@ -2111,6 +2111,32 @@ error:
 	return rc;
 }
 
+static void dp_display_dbg_reister(struct dp_display_private *dp)
+{
+	struct dp_parser *parser = dp->parser;
+	struct dss_io_data *io;
+
+	io = &parser->get_io(parser, "dp_ahb")->io;
+	if (io)
+		sde_dbg_reg_register_base("dp_ahb", io->base, io->len);
+
+	io = &parser->get_io(parser, "dp_aux")->io;
+	if (io)
+		sde_dbg_reg_register_base("dp_aux", io->base, io->len);
+
+	io = &parser->get_io(parser, "dp_link")->io;
+	if (io)
+		sde_dbg_reg_register_base("dp_link", io->base, io->len);
+
+	io = &parser->get_io(parser, "dp_p0")->io;
+	if (io)
+		sde_dbg_reg_register_base("dp_p0", io->base, io->len);
+
+	io = &parser->get_io(parser, "hdcp_physical")->io;
+	if (io)
+		sde_dbg_reg_register_base("hdcp_physical", io->base, io->len);
+}
+
 static int dp_display_post_init(struct dp_display *dp_display)
 {
 	int rc = 0;
@@ -2132,6 +2158,8 @@ static int dp_display_post_init(struct dp_display *dp_display)
 	rc = dp_init_sub_modules(dp);
 	if (rc)
 		goto end;
+
+	dp_display_dbg_reister(dp);
 
 	dp_display->post_init = NULL;
 end:
