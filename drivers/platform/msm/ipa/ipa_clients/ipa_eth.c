@@ -200,13 +200,11 @@ static void ipa_eth_ready_notify_work(struct work_struct *work)
 		&ipa_eth_ctx->ready_cb_list, link) {
 		if (!entry)
 			break;
-		if (entry->info && entry->info->notify) {
+		if (entry->info && entry->info->notify)
 			entry->info->notify(entry->info->userdata);
-			/* remove from list once notify is done */
-			list_del(&entry->link);
-			kfree(entry);
-			break;
-		}
+		/* remove from list once notify is done */
+		list_del(&entry->link);
+		kfree(entry);
 	}
 	mutex_unlock(&ipa_eth_ctx->lock);
 }
