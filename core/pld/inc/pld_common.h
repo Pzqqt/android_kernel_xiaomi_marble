@@ -307,7 +307,20 @@ struct pld_device_version {
 	u32 minor_version;
 };
 
+/**
+ * struct pld_dev_mem_info - WLAN device memory info
+ * @start: start address of the memory block
+ * @size: size of the memory block
+ *
+ * pld_dev_mem_info is used to store WLAN device memory info
+ */
+struct pld_dev_mem_info {
+	u64 start;
+	u64 size;
+};
+
 #define PLD_MAX_TIMESTAMP_LEN 32
+#define PLD_MAX_DEV_MEM_NUM 4
 
 /**
  * struct pld_soc_info - SOC information
@@ -320,6 +333,7 @@ struct pld_device_version {
  * @fw_version: FW version
  * @fw_build_timestamp: FW build timestamp
  * @device_version: WLAN device version info
+ * @dev_mem_info: WLAN device memory info
  *
  * pld_soc_info is used to store WLAN SOC information.
  */
@@ -333,6 +347,7 @@ struct pld_soc_info {
 	u32 fw_version;
 	char fw_build_timestamp[PLD_MAX_TIMESTAMP_LEN + 1];
 	struct pld_device_version device_version;
+	struct pld_dev_mem_info dev_mem_info[PLD_MAX_DEV_MEM_NUM];
 };
 
 /**
