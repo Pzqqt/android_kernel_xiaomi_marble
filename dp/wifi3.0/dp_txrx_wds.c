@@ -15,7 +15,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-#include "../../../cmn_dev/fw_hdr/fw/htt.h"
+#include "htt.h"
 #include "dp_peer.h"
 #include "hal_rx.h"
 #include "hal_api.h"
@@ -226,7 +226,7 @@ dp_rx_da_learn(struct dp_soc *soc,
 				ta_peer,
 				qdf_nbuf_data(nbuf),
 				CDP_TXRX_AST_TYPE_DA,
-				IEEE80211_NODE_F_WDS_HM);
+				DP_AST_FLAGS_HM);
 	}
 }
 
