@@ -625,7 +625,14 @@ static int swr_dmic_probe(struct swr_device *pdev)
 		pdev->dev.of_node->full_name);
 		goto dev_err;
 	}
-	swr_dmic_parse_port_params(&pdev->dev, "qcom,swr-tx-port-params");
+
+	ret = swr_dmic_parse_port_params(&pdev->dev, "qcom,swr-tx-port-params");
+	if (ret) {
+		dev_err(&pdev->dev, "%s: Parsing %s failed in node %s\n",
+			__func__, "qcom,swr-tx-port-params",
+			pdev->dev.of_node->full_name);
+		goto dev_err;
+	}
 
 	/*
 	 * Add 5msec delay to provide sufficient time for
