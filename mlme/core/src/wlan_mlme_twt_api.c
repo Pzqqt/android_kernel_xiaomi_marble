@@ -51,10 +51,12 @@ bool mlme_is_twt_setup_in_progress(struct wlan_objmgr_psoc *psoc,
 	}
 
 	for (i = 0; i < peer_priv->twt_ctx.num_twt_sessions; i++) {
+		bool setup_done = peer_priv->twt_ctx.session_info[i].setup_done;
 		existing_session_dialog_id =
 			peer_priv->twt_ctx.session_info[i].dialog_id;
 		if (existing_session_dialog_id == dialog_id &&
-		    existing_session_dialog_id != WLAN_ALL_SESSIONS_DIALOG_ID) {
+		    existing_session_dialog_id != WLAN_ALL_SESSIONS_DIALOG_ID &&
+		    !setup_done) {
 			wlan_objmgr_peer_release_ref(peer, WLAN_MLME_NB_ID);
 			return true;
 		}
