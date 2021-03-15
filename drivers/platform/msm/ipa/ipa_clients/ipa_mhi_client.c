@@ -1380,6 +1380,11 @@ static int ipa_mhi_connect_pipe_internal(struct ipa_mhi_connect_params *in, u32 
 
 	}
 
+	if (in->sys.client == IPA_CLIENT_MHI_LOW_LAT_PROD)
+		ipa3_update_mhi_ctrl_state(IPA_MHI_CTRL_UL_SETUP, true);
+	else if (in->sys.client == IPA_CLIENT_MHI_LOW_LAT_CONS)
+		ipa3_update_mhi_ctrl_state(IPA_MHI_CTRL_DL_SETUP, true);
+
 	mutex_unlock(&mhi_client_general_mutex);
 
 	if (!in->sys.keep_ipa_awake)
@@ -1436,6 +1441,10 @@ static int ipa_mhi_disconnect_pipe_internal(u32 clnt_hdl)
 		return -EINVAL;
 	}
 
+	if (client == IPA_CLIENT_MHI_LOW_LAT_PROD)
+		ipa3_update_mhi_ctrl_state(IPA_MHI_CTRL_UL_SETUP, false);
+	else if (client == IPA_CLIENT_MHI_LOW_LAT_CONS)
+		ipa3_update_mhi_ctrl_state(IPA_MHI_CTRL_DL_SETUP, false);
 	IPA_ACTIVE_CLIENTS_INC_EP(client);
 
 	res = ipa_mhi_reset_channel(channel, false);
