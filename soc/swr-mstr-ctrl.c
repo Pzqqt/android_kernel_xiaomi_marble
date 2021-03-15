@@ -2681,7 +2681,7 @@ static int swrm_probe(struct platform_device *pdev)
 	if (ret) {
 		dev_dbg(&pdev->dev, "%s: swrm version not defined, use default\n",
 			 __func__);
-		swrm->version = SWRM_VERSION_1_6;
+		swrm->version = SWRM_VERSION_1_7;
 	}
 	ret = of_property_read_u32(pdev->dev.of_node, "qcom,swr_master_id",
 				&swrm->master_id);
