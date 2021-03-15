@@ -448,13 +448,13 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 	tgt_tx_ops = &tx_ops->target_tx_ops;
 	switch (dfsdomain) {
 	case DFS_FCC_DOMAIN:
-		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS, "FCC domain");
+		dfs_debug(dfs, WLAN_DEBUG_DFS, "FCC domain");
 		rinfo.dfsdomain = DFS_FCC_DOMAIN;
 		dfs_assign_fcc_pulse_table(&rinfo, target_type, tgt_tx_ops);
 		dfs->dfs_lowest_pri_limit = DFS_INVALID_PRI_LIMIT;
 		break;
 	case DFS_CN_DOMAIN:
-		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		dfs_debug(dfs, WLAN_DEBUG_DFS,
 			  "FCC domain -- Country China(156) override FCC radar pattern"
 			  );
 		rinfo.dfsdomain = DFS_FCC_DOMAIN;
@@ -470,7 +470,7 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 		dfs->dfs_lowest_pri_limit = DFS_INVALID_PRI_LIMIT;
 		break;
 	case DFS_ETSI_DOMAIN:
-		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS, "ETSI domain");
+		dfs_debug(dfs, WLAN_DEBUG_DFS, "ETSI domain");
 		rinfo.dfsdomain = DFS_ETSI_DOMAIN;
 
 		if (dfs_is_en302_502_applicable(dfs)) {
@@ -488,7 +488,7 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 		dfs->dfs_lowest_pri_limit = DFS_INVALID_PRI_LIMIT;
 		break;
 	case DFS_KR_DOMAIN:
-		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		dfs_debug(dfs, WLAN_DEBUG_DFS,
 			  "ETSI domain -- Korea(412)");
 		rinfo.dfsdomain = DFS_ETSI_DOMAIN;
 
@@ -507,7 +507,7 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 		dfs->dfs_lowest_pri_limit = DFS_INVALID_PRI_LIMIT;
 		break;
 	case DFS_MKKN_DOMAIN:
-		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS, "MKKN domain");
+		dfs_debug(dfs, WLAN_DEBUG_DFS, "MKKN domain");
 		rinfo.dfsdomain = DFS_MKKN_DOMAIN;
 		rinfo.dfs_radars = dfs_mkk4_radars;
 		rinfo.numradars = QDF_ARRAY_SIZE(dfs_mkk4_radars);
@@ -515,7 +515,7 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 		dfs->dfs_lowest_pri_limit = DFS_INVALID_PRI_LIMIT_MKKN;
 		break;
 	case DFS_MKK4_DOMAIN:
-		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS, "MKK4 domain");
+		dfs_debug(dfs, WLAN_DEBUG_DFS, "MKK4 domain");
 		rinfo.dfsdomain = DFS_MKK4_DOMAIN;
 		rinfo.dfs_radars = dfs_mkk4_radars;
 		rinfo.numradars = QDF_ARRAY_SIZE(dfs_mkk4_radars);
@@ -523,7 +523,7 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 		dfs->dfs_lowest_pri_limit = DFS_INVALID_PRI_LIMIT;
 		break;
 	default:
-		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS, "UNINIT domain");
+		dfs_debug(dfs, WLAN_DEBUG_DFS, "UNINIT domain");
 		dfs_handle_radar_tab_init_failure(&rinfo);
 		break;
 	}
