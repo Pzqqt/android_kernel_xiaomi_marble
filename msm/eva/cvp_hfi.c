@@ -52,6 +52,20 @@ const struct msm_cvp_hfi_defs cvp_hfi_defs[] = {
 	},
 	{
 		.size = 0xFFFFFFFF,
+		.type = HFI_CMD_SESSION_CVP_SGM_OF_CONFIG,
+		.buf_offset = 0,
+		.buf_num = 0,
+		.resp = HAL_SESSION_SGM_OF_CONFIG_CMD_DONE,
+	},
+	{
+		.size = 0xFFFFFFFF,
+		.type = HFI_CMD_SESSION_CVP_SGM_OF_FRAME,
+		.buf_offset = 0,
+		.buf_num = 0,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = 0xFFFFFFFF,
 		.type = HFI_CMD_SESSION_CVP_WARP_NCC_CONFIG,
 		.buf_offset = 0,
 		.buf_num = 0,
@@ -873,7 +887,8 @@ static int __smem_alloc(struct iris_hfi_device *dev, struct cvp_mem_addr *mem,
 	}
 
 	dprintk(CVP_INFO, "start to alloc size: %d, flags: %d\n", size, flags);
-	rc = msm_cvp_smem_alloc(size, align, flags, 1, (void *)dev->res, alloc);
+	alloc->flags = flags;
+	rc = msm_cvp_smem_alloc(size, align, 1, (void *)dev->res, alloc);
 	if (rc) {
 		dprintk(CVP_ERR, "Alloc failed\n");
 		rc = -ENOMEM;
@@ -1601,7 +1616,7 @@ static int __interface_dsp_queues_init(struct iris_hfi_device *dev)
 		dprintk(CVP_ERR, "%s: failed dma allocation\n", __func__);
 		goto fail_dma_alloc;
 	}
-	cb = msm_cvp_smem_get_context_bank(0, dev->res, 0);
+	cb = msm_cvp_smem_get_context_bank(dev->res, 0);
 	if (!cb) {
 		dprintk(CVP_ERR,
 			"%s: failed to get context bank\n", __func__);
@@ -1622,7 +1637,6 @@ static int __interface_dsp_queues_init(struct iris_hfi_device *dev)
 	mem_data->device_addr = iova;
 	mem_data->dma_handle = dma_handle;
 	mem_data->size = q_size;
-	mem_data->ion_flags = 0;
 	mem_data->mapping_info.cb_info = cb;
 
 	if (!is_iommu_present(dev->res))
@@ -1678,7 +1692,7 @@ static void __interface_queues_release(struct iris_hfi_device *device)
 		}
 
 		mem_map = (struct cvp_hfi_mem_map *)(qdss + 1);
-		cb = msm_cvp_smem_get_context_bank(false, device->res, 0);
+		cb = msm_cvp_smem_get_context_bank(device->res, 0);
 
 		for (i = 0; cb && i < num_entries; i++) {
 			iommu_unmap(cb->domain,
@@ -1902,7 +1916,7 @@ static int __interface_queues_init(struct iris_hfi_device *dev)
 		qdss->mem_map_table_base_addr = mem_map_table_base_addr;
 
 		mem_map = (struct cvp_hfi_mem_map *)(qdss + 1);
-		cb = msm_cvp_smem_get_context_bank(false, dev->res, 0);
+		cb = msm_cvp_smem_get_context_bank(dev->res, 0);
 		if (!cb) {
 			dprintk(CVP_ERR,
 				"%s: failed to get context bank\n", __func__);
@@ -2947,6 +2961,7 @@ static void **get_session_id(struct msm_cvp_cb_info *info)
 	case HAL_SESSION_DMM_CONFIG_CMD_DONE:
 	case HAL_SESSION_WARP_CONFIG_CMD_DONE:
 	case HAL_SESSION_WARP_NCC_CONFIG_CMD_DONE:
+	case HAL_SESSION_SGM_OF_CONFIG_CMD_DONE:
 	case HAL_SESSION_TME_CONFIG_CMD_DONE:
 	case HAL_SESSION_ODT_CONFIG_CMD_DONE:
 	case HAL_SESSION_OD_CONFIG_CMD_DONE:
@@ -2958,12 +2973,6 @@ static void **get_session_id(struct msm_cvp_cb_info *info)
 	case HAL_SESSION_PYS_HCD_CONFIG_CMD_DONE:
 	case HAL_SESSION_DMM_PARAMS_CMD_DONE:
 	case HAL_SESSION_WARP_DS_PARAMS_CMD_DONE:
-	case HAL_SESSION_DFS_FRAME_CMD_DONE:
-	case HAL_SESSION_DMM_FRAME_CMD_DONE:
-	case HAL_SESSION_WARP_FRAME_CMD_DONE:
-	case HAL_SESSION_WARP_NCC_FRAME_CMD_DONE:
-	case HAL_SESSION_ICA_FRAME_CMD_DONE:
-	case HAL_SESSION_FD_FRAME_CMD_DONE:
 	case HAL_SESSION_PERSIST_SET_DONE:
 	case HAL_SESSION_PERSIST_REL_DONE:
 	case HAL_SESSION_FD_CONFIG_CMD_DONE:
@@ -3128,6 +3137,7 @@ static void iris_hfi_core_work_handler(struct work_struct *work)
 	struct iris_hfi_device *device;
 	int num_responses = 0, i = 0;
 	u32 intr_status;
+	static bool warning_on = true;
 
 	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
 	if (core)
@@ -3139,9 +3149,15 @@ static void iris_hfi_core_work_handler(struct work_struct *work)
 
 
 	if (!__core_in_valid_state(device)) {
-		dprintk(CVP_WARN, "%s - Core not in init state\n", __func__);
+		if (warning_on) {
+			dprintk(CVP_WARN, "%s Core not in init state\n",
+				__func__);
+			warning_on = false;
+		}
 		goto err_no_work;
 	}
+
+	warning_on = true;
 
 	if (!device->callback) {
 		dprintk(CVP_ERR, "No interrupt callback function: %pK\n",

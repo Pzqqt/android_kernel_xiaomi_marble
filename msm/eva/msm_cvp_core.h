@@ -16,6 +16,11 @@
 #include "msm_cvp_buf.h"
 #include "msm_cvp_synx.h"
 
+#define DDR_TYPE_LPDDR4 0x6
+#define DDR_TYPE_LPDDR4X 0x7
+#define DDR_TYPE_LPDDR4Y 0x8
+#define DDR_TYPE_LPDDR5 0x9
+
 enum core_id {
 	MSM_CORE_CVP = 0,
 	MSM_CVP_CORES_MAX,
@@ -25,6 +30,7 @@ enum session_type {
 	MSM_CVP_USER = 1,
 	MSM_CVP_KERNEL,
 	MSM_CVP_BOOT,
+	MSM_CVP_DSP,
 	MSM_CVP_UNKNOWN,
 	MSM_CVP_MAX_DEVICES = MSM_CVP_UNKNOWN,
 };

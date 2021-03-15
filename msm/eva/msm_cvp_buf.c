@@ -345,21 +345,22 @@ int msm_cvp_map_buf_dsp_new(struct msm_cvp_inst *inst,
 		return -EINVAL;
 	}
 
-	// Temp workaround :  commented for passing compilation due to missing dependency in AU whitelist
-//	pid_s = find_get_pid(pid);
+	pid_s = find_get_pid(pid);
 
 
 	if (pid_s == NULL) {
 		dprintk(CVP_WARN, "%s incorrect pid\n", __func__);
 		return -EINVAL;
 	}
-	dprintk(CVP_WARN, "%s get pid_s 0x%x from pidA 0x%x\n", __func__, pid_s, pid);
+	dprintk(CVP_DSP, "%s get pid_s 0x%x from pidA 0x%x\n", __func__, pid_s, pid);
 	/* task = get_pid_task(pid, PIDTYPE_PID); */
-	// Temp workaround :  commented for passing compilation due to missing dependency in AU whitelist
-//	task = get_pid_task(pid_s, PIDTYPE_TGID);
+	task = get_pid_task(pid_s, PIDTYPE_TGID);
 
-	if (!task)
+	if (!task) {
 		dprintk(CVP_WARN, "%s task doesn't exist\n", __func__);
+		return -EINVAL;
+	}
+
 	file = msm_cvp_fget(buf->fd, task, FMODE_PATH, 1);
 	if (file == NULL) {
 		dprintk(CVP_WARN, "%s fail to get file from fd\n", __func__);
@@ -1013,17 +1014,30 @@ int msm_cvp_session_deinit_buffers(struct msm_cvp_inst *inst)
 	mutex_unlock(&inst->dma_cache.lock);
 
 	mutex_lock(&inst->cvpdspbufs.lock);
-	list_for_each_entry_safe(cbuf, dummy, &inst->cvpdspbufs.list,
-			list) {
+	list_for_each_entry_safe(cbuf, dummy, &inst->cvpdspbufs.list, list) {
 		print_internal_buffer(CVP_MEM, "remove dspbufs", inst, cbuf);
-		rc = cvp_dsp_deregister_buffer(hash32_ptr(session),
-			cbuf->fd, cbuf->smem->dma_buf->size, cbuf->size,
-			cbuf->offset, cbuf->index,
-			(uint32_t)cbuf->smem->device_addr);
-		if (rc)
-			dprintk(CVP_ERR,
+		if (cbuf->ownership == CLIENT) {
+			rc = cvp_dsp_deregister_buffer(hash32_ptr(session),
+				cbuf->fd, cbuf->smem->dma_buf->size, cbuf->size,
+				cbuf->offset, cbuf->index,
+				(uint32_t)cbuf->smem->device_addr);
+			if (rc)
+				dprintk(CVP_ERR,
 				"%s: failed dsp deregistration fd=%d rc=%d",
 				__func__, cbuf->fd, rc);
+		} else if (cbuf->ownership == DSP) {
+			rc = cvp_dsp_fastrpc_unmap(inst->process_id, cbuf);
+			if (rc)
+				dprintk(CVP_ERR,
+				"%s: failed to unmap buf from DSP\n",
+				__func__);
+
+			rc = cvp_release_dsp_buffers(inst, cbuf);
+			if (rc)
+				dprintk(CVP_ERR,
+					"%s Fail to free buffer 0x%x\n",
+					__func__, rc);
+		}
 
 		msm_cvp_unmap_smem(inst, cbuf->smem, "unmap dsp");
 		msm_cvp_smem_put_dma_buf(cbuf->smem->dma_buf);
@@ -1089,10 +1103,10 @@ struct cvp_internal_buf *cvp_allocate_arp_bufs(struct msm_cvp_inst *inst,
 	if (!buffer_size)
 		return NULL;
 
-	/* PERSIST buffer requires secure mapping */
-	/* Disable and wait for hyp_assign available
-	 * smem_flags |= SMEM_SECURE | SMEM_NON_PIXEL;
+	/* PERSIST buffer requires secure mapping
+	 * Disable and wait for hyp_assign available
 	 */
+	 smem_flags |= SMEM_SECURE | SMEM_NON_PIXEL;
 
 	buf = kmem_cache_zalloc(cvp_driver->buf_cache, GFP_KERNEL);
 	if (!buf) {
@@ -1106,8 +1120,9 @@ struct cvp_internal_buf *cvp_allocate_arp_bufs(struct msm_cvp_inst *inst,
 		goto fail_kzalloc;
 	}
 
-	rc = msm_cvp_smem_alloc(buffer_size, 1, smem_flags, 0,
-			&(inst->core->resources), buf->smem);
+	buf->smem->flags = smem_flags;
+	rc = msm_cvp_smem_alloc(buffer_size, 1, 0,
+		&(inst->core->resources), buf->smem);
 	if (rc) {
 		dprintk(CVP_ERR, "Failed to allocate ARP memory\n");
 		goto err_no_mem;
@@ -1234,25 +1249,26 @@ int cvp_allocate_dsp_bufs(struct msm_cvp_inst *inst,
 		return -EINVAL;
 	}
 
-	dprintk(CVP_ERR, "%s smem_flags 0x%x\n", __func__, smem_flags);
+	dprintk(CVP_MEM, "%s smem_flags 0x%x\n", __func__, smem_flags);
 	buf->smem = kmem_cache_zalloc(cvp_driver->smem_cache, GFP_KERNEL);
 	if (!buf->smem) {
 		dprintk(CVP_ERR, "%s Out of memory\n", __func__);
 		goto fail_kzalloc_smem_cache;
 	}
 
-	rc = msm_cvp_smem_alloc(buffer_size, 1, smem_flags, 0,
+	buf->smem->flags = smem_flags;
+	rc = msm_cvp_smem_alloc(buffer_size, 1, 0,
 			&(inst->core->resources), buf->smem);
 	if (rc) {
 		dprintk(CVP_ERR, "Failed to allocate ARP memory\n");
 		goto err_no_mem;
 	}
 
-	dprintk(CVP_ERR, "%s dma_buf %pK\n", __func__, buf->smem->dma_buf);
+	dprintk(CVP_MEM, "%s dma_buf %pK\n", __func__, buf->smem->dma_buf);
 
 	buf->size = buf->smem->size;
 	buf->type = HFI_BUFFER_INTERNAL_PERSIST_1;
-	buf->ownership = CLIENT;
+	buf->ownership = DSP;
 
 	return rc;
 
@@ -1284,13 +1300,18 @@ int cvp_release_dsp_buffers(struct msm_cvp_inst *inst,
 		return -EINVAL;
 	}
 
-	if (buf->ownership == CLIENT) {
+	if (buf->ownership == DSP) {
 		dprintk(CVP_MEM,
-		"%s: %x : fd %x %s size %d",
-		"free dsp buf", hash32_ptr(inst->session), buf->fd,
+			"%s: %x : fd %x %s size %d",
+			__func__, hash32_ptr(inst->session), buf->fd,
 			smem->dma_buf->name, buf->size);
 		msm_cvp_smem_free(smem);
 		kmem_cache_free(cvp_driver->smem_cache, smem);
+	} else {
+		dprintk(CVP_ERR,
+			"%s: wrong owner %d %x : fd %x %s size %d",
+			__func__, buf->ownership, hash32_ptr(inst->session),
+			buf->fd, smem->dma_buf->name, buf->size);
 	}
 
 	return rc;
