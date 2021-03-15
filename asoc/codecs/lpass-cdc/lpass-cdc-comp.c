@@ -103,7 +103,7 @@ int lpass_cdc_update_compander_setting(struct snd_soc_component *component,
 				start_addr + 0x20,
 				max_attn);
 
-	path_gain = upper_gain_int;
+	path_gain = zone6_rms - abs(lower_gain_int);
 	snd_soc_component_write(component,
 				start_addr + 0x24,
 				path_gain);
