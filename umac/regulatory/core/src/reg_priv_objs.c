@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -120,6 +120,7 @@ QDF_STATUS wlan_regulatory_psoc_obj_created_notification(
 	soc_reg_obj->five_dot_nine_ghz_supported = false;
 	reg_set_5dot9_ghz_chan_in_master_mode(soc_reg_obj);
 	soc_reg_obj->retain_nol_across_regdmn_update = false;
+	soc_reg_obj->is_ext_tpc_supported = false;
 
 	for (i = 0; i < MAX_STA_VDEV_CNT; i++)
 		soc_reg_obj->vdev_ids_11d[i] = INVALID_VDEV_ID;

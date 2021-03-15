@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -537,25 +537,6 @@ QDF_STATUS utils_dfs_get_vdev_random_channel_for_freq(
 	struct wlan_objmgr_pdev *pdev, struct wlan_objmgr_vdev *vdev,
 	uint16_t flags, struct ch_params *ch_params, uint32_t *hw_mode,
 	uint16_t *target_chan_freq, struct dfs_acs_info *acs_info);
-#endif
-
-/**
- * utils_dfs_bw_reduced_channel() - Get BW reduced channel.
- * @pdev: Pointer to DFS pdev object.
- * @ch_params: current channel params.
- * @hw_mode: current operating mode.
- * @target_chan: Pointer to target_chan.
- *
- * wrapper function for get bw_reduced_channel. this
- * function called from outside of dfs component.
- *
- * Return: QDF_STATUS
- */
-#ifdef CONFIG_CHAN_NUM_API
-QDF_STATUS utils_dfs_bw_reduced_channel(struct wlan_objmgr_pdev *pdev,
-					struct ch_params *ch_params,
-					uint32_t *hw_mode,
-					uint8_t *target_chan);
 #endif
 
 /**

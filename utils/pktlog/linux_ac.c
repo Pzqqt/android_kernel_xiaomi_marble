@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1073,5 +1073,6 @@ void pktlogmod_exit(void *context)
 	 *  pdev kill needs to be implemented
 	 */
 	remove_proc_entry(PKTLOG_PROC_DIR, NULL);
+	g_pktlog_pde = NULL;
 }
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -305,6 +305,8 @@ static int init_deinit_service_ext2_ready_event_handler(ol_scn_t scn_handle,
 		target_if_err("failed to populate scan radio cap ext2");
 		goto exit;
 	}
+
+	target_if_regulatory_set_ext_tpc(psoc);
 
 	/* send init command */
 	init_deinit_set_send_init_cmd(psoc, tgt_hdl);

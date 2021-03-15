@@ -26,6 +26,7 @@
 #include "qdf_str.h"
 #include <qdf_trace.h>
 #include <qdf_module.h>
+#include <qdf_util.h>
 
 /* macro to map qdf trace levels into the bitmask */
 #define QDF_TRACE_LEVEL_TO_MODULE_BITMASK(_level) ((1 << (_level)))
@@ -3284,7 +3285,7 @@ void qdf_rl_print_time_set(uint32_t rl_print_time)
 
 qdf_export_symbol(qdf_rl_print_time_set);
 
-static inline void qdf_rl_print_supressed_log(void)
+void qdf_rl_print_supressed_log(void)
 {
 	if (qdf_rl_print_supressed) {
 		pr_err("QDF Ratelimiting: %d prints supressed",
@@ -3293,7 +3294,7 @@ static inline void qdf_rl_print_supressed_log(void)
 	}
 }
 
-static inline void qdf_rl_print_supressed_inc(void)
+void qdf_rl_print_supressed_inc(void)
 {
 	qdf_rl_print_supressed++;
 }
@@ -3305,7 +3306,7 @@ static inline void qdf_rl_print_supressed_inc(void)
 #ifdef QDF_TRACE_PRINT_ENABLE
 static inline void print_to_console(char *str_buffer)
 {
-	if (qdf_detected_excessive_logging()) {
+	if (qdf_in_interrupt() && qdf_detected_excessive_logging()) {
 		qdf_rl_print_supressed_inc();
 		return;
 	}

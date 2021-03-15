@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -37,6 +37,14 @@ void dfs_mlme_start_rcsa(struct wlan_objmgr_pdev *pdev,
 {
 	if (global_dfs_to_mlme.dfs_start_rcsa)
 		global_dfs_to_mlme.dfs_start_rcsa(pdev, wait_for_csa);
+}
+#endif
+
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
+void dfs_mlme_proc_spoof_success(struct wlan_objmgr_pdev *pdev)
+{
+	if (global_dfs_to_mlme.mlme_proc_spoof_success)
+		global_dfs_to_mlme.mlme_proc_spoof_success(pdev);
 }
 #endif
 

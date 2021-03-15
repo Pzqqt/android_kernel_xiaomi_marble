@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -105,10 +105,11 @@ static ssize_t ath_procfs_diag_read_legacy(struct file *file,
 	     (tgt_info->target_type == TARGET_TYPE_QCA8074) ||
 	     (tgt_info->target_type == TARGET_TYPE_QCA8074V2) ||
 	     (tgt_info->target_type == TARGET_TYPE_QCN9000) ||
-	     (tgt_info->target_type == TARGET_TYPE_QCN9100) ||
+	     (tgt_info->target_type == TARGET_TYPE_QCN6122) ||
 	     (tgt_info->target_type == TARGET_TYPE_QCA5018) ||
 	     (tgt_info->target_type == TARGET_TYPE_QCA6018) ||
-	     (tgt_info->target_type == TARGET_TYPE_QCN7605))) ||
+	     (tgt_info->target_type == TARGET_TYPE_QCN7605) ||
+	     (tgt_info->target_type == TARGET_TYPE_WCN7850))) ||
 	    (scn->bus_type ==  QDF_BUS_TYPE_IPCI &&
 	     (tgt_info->target_type == TARGET_TYPE_QCA6750)) ||
 	    ((scn->bus_type ==  QDF_BUS_TYPE_USB) &&
@@ -184,10 +185,11 @@ static ssize_t ath_procfs_diag_write_legacy(struct file *file,
 	      (tgt_info->target_type == TARGET_TYPE_QCA8074) ||
 	      (tgt_info->target_type == TARGET_TYPE_QCA8074V2) ||
 	      (tgt_info->target_type == TARGET_TYPE_QCN9000) ||
-	      (tgt_info->target_type == TARGET_TYPE_QCN9100) ||
+	      (tgt_info->target_type == TARGET_TYPE_QCN6122) ||
 	      (tgt_info->target_type == TARGET_TYPE_QCA5018) ||
 	      (tgt_info->target_type == TARGET_TYPE_QCA6018) ||
-	      (tgt_info->target_type == TARGET_TYPE_QCN7605))) ||
+	      (tgt_info->target_type == TARGET_TYPE_QCN7605) ||
+	      (tgt_info->target_type == TARGET_TYPE_WCN7850))) ||
 	    (scn->bus_type ==  QDF_BUS_TYPE_IPCI &&
 	     (tgt_info->target_type == TARGET_TYPE_QCA6750)) ||
 	    ((scn->bus_type ==  QDF_BUS_TYPE_USB) &&
@@ -333,7 +335,7 @@ static ssize_t ath_procfs_diag_read_ext(struct file *file, char __user *buf,
 		switch (tgt_info->target_type) {
 		case TARGET_TYPE_QCA6390:
 		case TARGET_TYPE_QCA6490:
-		/* case Hamiltons: */
+		case TARGET_TYPE_WCN7850:
 			if (op_type == OP_TYPE_EXT_DIRECT)
 				rv = ath_procfs_direct_read(scn,
 							    offset,
@@ -408,7 +410,7 @@ static ssize_t ath_procfs_diag_write_ext(struct file *file,
 		switch (tgt_info->target_type) {
 		case TARGET_TYPE_QCA6390:
 		case TARGET_TYPE_QCA6490:
-		/* case Hamiltons: */
+		case TARGET_TYPE_WCN7850:
 			if (op_type == OP_TYPE_EXT_DIRECT)
 				rv = ath_procfs_direct_write(scn,
 							     offset,

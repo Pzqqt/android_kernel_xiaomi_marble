@@ -89,7 +89,7 @@
 #define QCA6290_EMULATION_DEVICE_ID (0xabcd)
 #define QCA6290_DEVICE_ID (0x1100)
 #define QCN9000_DEVICE_ID (0x1104)
-#define QCN9100_DEVICE_ID (0xFFFB)
+#define QCN6122_DEVICE_ID (0xFFFB)
 #define QCA6390_EMULATION_DEVICE_ID (0x0108)
 #define QCA6390_DEVICE_ID (0x1101)
 /* TODO: change IDs for HastingsPrime */
@@ -99,6 +99,10 @@
 /* TODO: change IDs for Moselle */
 #define QCA6750_EMULATION_DEVICE_ID (0x010c)
 #define QCA6750_DEVICE_ID (0x1105)
+
+/* TODO: change IDs for Hamilton */
+#define WCN7850_EMULATION_DEVICE_ID (0xfffa)
+#define WCN7850_DEVICE_ID (0x1107)
 
 #define ADRASTEA_DEVICE_ID_P2_E12 (0x7021)
 #define AR9887_DEVICE_ID    (0x0050)
@@ -186,7 +190,7 @@ struct hif_softc {
 	/* Packet statistics */
 	struct hif_ce_stats pkt_stats;
 	enum hif_target_status target_status;
-	uint64_t event_disable_mask;
+	uint64_t event_enable_mask;
 
 	struct targetdef_s *targetdef;
 	struct ce_reg_def *target_ce_def;
@@ -265,6 +269,10 @@ struct hif_softc {
 	/* Flag to indicate whether bus is suspended */
 	bool bus_suspended;
 	bool pktlog_init;
+#ifdef FEATURE_RUNTIME_PM
+	/* Variable to track the link state change in RTPM */
+	qdf_atomic_t pm_link_state;
+#endif
 };
 
 static inline
@@ -320,7 +328,7 @@ static inline void hif_set_event_hist_mask(struct hif_opaque_softc *hif_handle)
 {
 	struct hif_softc *scn = (struct hif_softc *)hif_handle;
 
-	scn->event_disable_mask = HIF_EVENT_HIST_DISABLE_MASK;
+	scn->event_enable_mask = HIF_EVENT_HIST_ENABLE_MASK;
 }
 #else
 static inline void hif_set_event_hist_mask(struct hif_opaque_softc *hif_handle)

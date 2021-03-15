@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1310,6 +1310,8 @@ QDF_STATUS wlan_crypto_delkey(struct wlan_objmgr_vdev *vdev,
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_lmac_if_tx_ops *tx_ops;
 	uint8_t bssid_mac[QDF_MAC_ADDR_SIZE];
+	struct wlan_objmgr_peer *peer = NULL;
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	if (!vdev || !macaddr ||
 		!is_valid_keyix(key_idx)) {
@@ -1337,7 +1339,6 @@ QDF_STATUS wlan_crypto_delkey(struct wlan_objmgr_vdev *vdev,
 			return QDF_STATUS_E_INVAL;
 		}
 	} else {
-		struct wlan_objmgr_peer *peer;
 		uint8_t pdev_id;
 
 		pdev_id = wlan_objmgr_pdev_get_pdev_id(
@@ -1352,10 +1353,10 @@ QDF_STATUS wlan_crypto_delkey(struct wlan_objmgr_vdev *vdev,
 		}
 		crypto_params = wlan_crypto_peer_get_comp_params(peer,
 								&crypto_priv);
-		wlan_objmgr_peer_release_ref(peer, WLAN_CRYPTO_ID);
 		if (!crypto_priv) {
 			crypto_err("crypto_priv NULL");
-			return QDF_STATUS_E_INVAL;
+			ret = QDF_STATUS_E_INVAL;
+			goto ret_rel_ref;
 		}
 	}
 
@@ -1365,7 +1366,8 @@ QDF_STATUS wlan_crypto_delkey(struct wlan_objmgr_vdev *vdev,
 
 		if (!is_igtk(key_idx) && !(is_bigtk(key_idx))) {
 			crypto_err("igtk/bigtk key invalid keyid %d", key_idx);
-			return QDF_STATUS_E_INVAL;
+			ret = QDF_STATUS_E_INVAL;
+			goto ret_rel_ref;
 		}
 		if (is_igtk(key_idx)) {
 			key = crypto_priv->igtk_key[igtk_idx];
@@ -1381,8 +1383,10 @@ QDF_STATUS wlan_crypto_delkey(struct wlan_objmgr_vdev *vdev,
 		crypto_priv->key[key_idx] = NULL;
 	}
 
-	if (!key)
-		return QDF_STATUS_E_INVAL;
+	if (!key) {
+		ret = QDF_STATUS_E_INVAL;
+		goto ret_rel_ref;
+	}
 
 	if (key->valid) {
 		cipher_table = (struct wlan_crypto_cipher *)key->cipher_table;
@@ -1391,7 +1395,8 @@ QDF_STATUS wlan_crypto_delkey(struct wlan_objmgr_vdev *vdev,
 		tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
 		if (!tx_ops) {
 			crypto_err("tx_ops is NULL");
-			return QDF_STATUS_E_INVAL;
+			ret = QDF_STATUS_E_INVAL;
+			goto ret_rel_ref;
 		}
 
 		if (!IS_FILS_CIPHER(cipher_table->cipher) &&
@@ -1408,7 +1413,11 @@ QDF_STATUS wlan_crypto_delkey(struct wlan_objmgr_vdev *vdev,
 	qdf_mem_zero(key, sizeof(struct wlan_crypto_key));
 	qdf_mem_free(key);
 
-	return QDF_STATUS_SUCCESS;
+ret_rel_ref:
+	if (peer)
+		wlan_objmgr_peer_release_ref(peer, WLAN_CRYPTO_ID);
+
+	return ret;
 }
 
 #ifdef CRYPTO_SET_KEY_CONVERGED

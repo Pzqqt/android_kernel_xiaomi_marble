@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -25,6 +25,8 @@
 #define _CDP_TXRX_MISC_H_
 
 #include "cdp_txrx_handle.h"
+#include <cdp_txrx_cmn.h>
+
 /**
  * cdp_tx_non_std() - Allow the control-path SW to send data frames
  * @soc: data path soc handle
@@ -52,8 +54,7 @@ cdp_tx_non_std(ol_txrx_soc_handle soc, uint8_t vdev_id,
 	       enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list)
 {
 	if (!soc || !soc->ops || !soc->ops->misc_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"%s invalid instance", __func__);
+		dp_cdp_debug("invalid instance");
 		return NULL;
 	}
 
@@ -664,6 +665,29 @@ cdp_register_rx_mic_error_ind_handler(ol_txrx_soc_handle soc,
 	soc->ol_ops->rx_mic_error = rx_mic_cb;
 }
 
+typedef void (*rx_refill_thread_sched_cb)(ol_txrx_soc_handle soc);
+
+/**
+ * cdp_register_rx_refill_thread_sched_handler() - API to register RX refill
+ *                                                 thread schedule handler
+ *
+ * @soc: soc handle
+ *
+ * Return: void
+ */
+static inline void
+cdp_register_rx_refill_thread_sched_handler(ol_txrx_soc_handle soc,
+					    rx_refill_thread_sched_cb rx_sched_cb)
+{
+	if (!soc || !soc->ol_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		return;
+	}
+
+	soc->ol_ops->dp_rx_sched_refill_thread = rx_sched_cb;
+}
+
 /**
  * cdp_pdev_reset_driver_del_ack() - reset driver TCP delayed ack flag
  * @soc: data path soc handle
@@ -761,8 +785,7 @@ cdp_txrx_ext_stats_request(ol_txrx_soc_handle soc, uint8_t pdev_id,
 			   struct cdp_txrx_ext_stats *req)
 {
 	if (!soc || !soc->ops || !soc->ops->misc_ops || !req) {
-		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s: Invalid Instance:", __func__);
+		dp_cdp_debug("Invalid Instance:");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -784,8 +807,7 @@ static inline QDF_STATUS
 cdp_request_rx_hw_stats(ol_txrx_soc_handle soc, uint8_t vdev_id)
 {
 	if (!soc || !soc->ops || !soc->ops->misc_ops) {
-		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s: Invalid Instance:", __func__);
+		dp_cdp_debug("Invalid Instance:");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -808,8 +830,7 @@ cdp_vdev_inform_ll_conn(ol_txrx_soc_handle soc, uint8_t vdev_id,
 			enum vdev_ll_conn_actions action)
 {
 	if (!soc || !soc->ops || !soc->ops->misc_ops) {
-		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s: Invalid Instance:", __func__);
+		dp_cdp_debug("Invalid Instance:");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -831,8 +852,7 @@ static inline QDF_STATUS
 cdp_soc_set_swlm_enable(ol_txrx_soc_handle soc, uint8_t value)
 {
 	if (!soc || !soc->ops || !soc->ops->misc_ops) {
-		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s: Invalid Instance:", __func__);
+		dp_cdp_debug("Invalid Instance:");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -853,8 +873,7 @@ static inline uint8_t
 cdp_soc_is_swlm_enabled(ol_txrx_soc_handle soc)
 {
 	if (!soc || !soc->ops || !soc->ops->misc_ops) {
-		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s: Invalid Instance:", __func__);
+		dp_cdp_debug("Invalid Instance:");
 		return 0;
 	}
 
@@ -874,8 +893,7 @@ static inline void
 cdp_display_txrx_hw_info(ol_txrx_soc_handle soc)
 {
 	if (!soc || !soc->ops || !soc->ops->misc_ops) {
-		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s: Invalid Instance:", __func__);
+		dp_cdp_debug("Invalid Instance:");
 		return;
 	}
 

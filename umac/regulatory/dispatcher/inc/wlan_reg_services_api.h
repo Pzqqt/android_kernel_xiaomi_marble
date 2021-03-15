@@ -158,6 +158,15 @@ bool wlan_reg_is_range_overlap_2g(qdf_freq_t low_freq, qdf_freq_t high_freq);
  */
 bool wlan_reg_is_range_overlap_5g(qdf_freq_t low_freq, qdf_freq_t high_freq);
 
+/**
+ * wlan_reg_is_freq_indoor() - Check if a frequency is indoor.
+ * @pdev: Pointer to pdev.
+ * @freq: Channel frequency.
+ *
+ * Return: Return true if a frequency is indoor, else false.
+ */
+bool wlan_reg_is_freq_indoor(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq);
+
 #ifdef CONFIG_BAND_6GHZ
 /**
  * wlan_reg_is_6ghz_chan_freq() - Check if the given channel frequency is 6GHz
@@ -924,15 +933,6 @@ bool wlan_reg_is_disable_ch(struct wlan_objmgr_pdev *pdev, uint8_t chan);
  */
 uint8_t wlan_reg_freq_to_chan(struct wlan_objmgr_pdev *pdev,
 			      qdf_freq_t freq);
-
-/**
- * wlan_reg_chan_to_freq () - convert channel number to frequency
- * @chan: channel number
- *
- * Return: true or false
- */
-qdf_freq_t wlan_reg_chan_to_freq(struct wlan_objmgr_pdev *pdev,
-				 uint8_t chan);
 
 /**
  * wlan_reg_legacy_chan_to_freq () - convert chan to freq, for 2G and 5G
@@ -1714,6 +1714,17 @@ wlan_reg_get_client_power_for_6ghz_ap(struct wlan_objmgr_pdev *pdev,
 				      qdf_freq_t chan_freq,
 				      bool *is_psd, uint16_t *tx_power,
 				      uint16_t *eirp_psd_power);
+
+/**
+ * wlan_reg_decide_6g_ap_pwr_type() - Decide which power mode AP should operate
+ * in
+ *
+ * @pdev: pdev ptr
+ *
+ * Return: AP power type
+ */
+enum reg_6g_ap_type
+wlan_reg_decide_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev);
 #else
 static inline QDF_STATUS
 wlan_reg_get_cur_6g_client_type(struct wlan_objmgr_pdev *pdev,
@@ -1783,5 +1794,21 @@ wlan_reg_get_client_power_for_6ghz_ap(struct wlan_objmgr_pdev *pdev,
 	*eirp_psd_power = 0;
 	return QDF_STATUS_E_NOSUPPORT;
 }
+
+static inline
+enum reg_6g_ap_type
+wlan_reg_decide_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev)
+{
+	return REG_INDOOR_AP;
+}
 #endif
+
+/**
+ * wlan_reg_is_ext_tpc_supported() - Checks if FW supports new WMI cmd for TPC
+ *
+ * @psoc: psoc ptr
+ *
+ * Return: true if FW supports new command or false otherwise
+ */
+bool wlan_reg_is_ext_tpc_supported(struct wlan_objmgr_psoc *psoc);
 #endif

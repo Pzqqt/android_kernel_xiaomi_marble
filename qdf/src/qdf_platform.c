@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -172,10 +172,10 @@ bool qdf_is_drv_connected(void)
 }
 qdf_export_symbol(qdf_is_drv_connected);
 
-void qdf_check_state_before_panic(void)
+void qdf_check_state_before_panic(const char *func, const uint32_t line)
 {
 	if (!qdf_is_recovering() && !qdf_is_fw_down())
-		QDF_BUG(0);
+		QDF_DEBUG_PANIC_FL(func, line, "");
 }
 
 qdf_export_symbol(qdf_check_state_before_panic);

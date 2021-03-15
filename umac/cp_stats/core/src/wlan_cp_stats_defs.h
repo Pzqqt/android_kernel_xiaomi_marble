@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -36,9 +36,15 @@
 #include "wlan_cp_stats_cmn_defs.h"
 #include <wlan_cp_stats_utils_api.h>
 #include <wlan_cp_stats_ext_type.h>
+#include <wlan_cp_stats_public_structs.h>
 
 /* noise floor */
 #define CP_STATS_TGT_NOISE_FLOOR_DBM (-96)
+
+#ifdef WLAN_SUPPORT_INFRA_CTRL_PATH_STATS
+typedef void (*get_infra_cp_stats_cb)(struct infra_cp_stats_event *ev,
+				      void *cookie);
+#endif
 
 /**
  * struct psoc_cp_stats - defines cp stats at psoc object
@@ -57,6 +63,11 @@ struct psoc_cp_stats {
 	struct psoc_cmn_cp_stats *cmn_stats;
 	psoc_ext_cp_stats_t *obj_stats;
 	void (*legacy_stats_cb)(void *stats);
+#ifdef WLAN_SUPPORT_INFRA_CTRL_PATH_STATS
+	void (*get_infra_cp_stats)(struct infra_cp_stats_event *ev,
+				   void *cookie);
+	void *infra_cp_stats_req_context;
+#endif
 };
 
 /**

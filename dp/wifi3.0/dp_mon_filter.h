@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -121,6 +121,7 @@ enum dp_mon_filter_mode {
 #ifdef WDI_EVENT_ENABLE
 	DP_MON_FILTER_PKT_LOG_FULL_MODE,
 	DP_MON_FILTER_PKT_LOG_LITE_MODE,
+	DP_MON_FILTER_PKT_LOG_CBF_MODE,
 #endif /* WDI_EVENT_ENABLE */
 	DP_MON_FILTER_MAX_MODE
 };
@@ -242,6 +243,19 @@ void dp_mon_filter_setup_rx_pkt_log_lite(struct dp_pdev *pdev);
  * @pdev: DP pdev handle
  */
 void dp_mon_filter_reset_rx_pkt_log_lite(struct dp_pdev *pdev);
+
+/**
+ * dp_mon_filter_setup_rx_pkt_log_cbf() - Setup the Rx pktlog cbf mode filter
+ * in the radio object.
+ * @pdev: DP pdev handle
+ */
+void dp_mon_filter_setup_rx_pkt_log_cbf(struct dp_pdev *pdev);
+
+/**
+ * dp_mon_filter_reset_rx_pktlog_cbf() - Reset the Rx pktlog cbf mode filter
+ * @pdev: DP pdev handle
+ */
+void dp_mon_filter_reset_rx_pktlog_cbf(struct dp_pdev *pdev);
 #endif /* WDI_EVENT_ENABLE */
 
 /**

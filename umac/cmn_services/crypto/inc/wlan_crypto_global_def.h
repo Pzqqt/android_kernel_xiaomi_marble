@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -112,6 +112,10 @@
 #define WLAN_AKM_SUITE_FT_8021X         0x000FAC03
 #define WLAN_AKM_SUITE_FT_PSK           0x000FAC04
 #endif
+
+/* Maximum lifetime for a PMKID entry - 12 Hrs */
+#define WLAN_CRYPTO_MAX_PMKID_LIFETIME 43200
+#define WLAN_CRYPTO_MAX_PMKID_LIFETIME_THRESHOLD 100
 
 /*
  * Cipher types
@@ -268,6 +272,10 @@ struct mobility_domain_params {
  * @ssid_len: ssid length
  * @ssid: ssid information
  * @cache_id: cache id
+ * @pmk_lifetime: Duration in seconds for which the pmk is valid
+ * @pmk_lifetime_threshold: Percentage of pmk liftime within which
+ * full authentication is expected to avoid disconnection.
+ * @pmk_entry_ts: System timestamp at which the PMK entry was created.
  * @single_pmk_supported: SAE single pmk supported BSS
  * @mdid: structure to contain mobility domain parameters
  */
@@ -279,6 +287,9 @@ struct wlan_crypto_pmksa {
 	uint8_t    ssid_len;
 	uint8_t    ssid[WLAN_SSID_MAX_LEN];
 	uint8_t    cache_id[WLAN_CACHE_ID_LEN];
+	uint32_t   pmk_lifetime;
+	uint8_t    pmk_lifetime_threshold;
+	qdf_time_t pmk_entry_ts;
 #if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 	bool       single_pmk_supported;
 #endif

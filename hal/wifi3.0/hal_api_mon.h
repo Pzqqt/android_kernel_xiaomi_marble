@@ -356,9 +356,8 @@ void hal_rx_reo_ent_buf_paddr_get(hal_rxdma_desc_t rx_desc,
 	buf_info->sw_cookie = HAL_RX_BUF_COOKIE_GET(buf_addr_info);
 	buf_info->rbm = HAL_RX_BUF_RBM_GET(buf_addr_info);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		"[%s][%d] ReoAddr=%pK, addrInfo=%pK, paddr=0x%llx, loopcnt=%d",
-		__func__, __LINE__, reo_ent_ring, buf_addr_info,
+	dp_nofl_debug("[%s][%d] ReoAddr=%pK, addrInfo=%pK, paddr=0x%llx, loopcnt=%d",
+		      __func__, __LINE__, reo_ent_ring, buf_addr_info,
 	(unsigned long long)buf_info->paddr, loop_cnt);
 }
 
@@ -407,10 +406,9 @@ void hal_rx_mon_msdu_link_desc_set(hal_soc_handle_t hal_soc_hdl,
 		((uint64_t)
 		(HAL_RX_BUFFER_ADDR_39_32_GET(buf_addr_info)) << 32));
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		"[%s][%d] src_srng_desc=%pK, buf_addr=0x%llx, cookie=0x%llx",
-		__func__, __LINE__, src_srng_desc, (unsigned long long)paddr,
-		(unsigned long long)p_buffer_addr_info->sw_buffer_cookie);
+	dp_nofl_debug("[%s][%d] src_srng_desc=%pK, buf_addr=0x%llx, cookie=0x%llx",
+		      __func__, __LINE__, src_srng_desc, (unsigned long long)paddr,
+		      (unsigned long long)p_buffer_addr_info->sw_buffer_cookie);
 
 	/* Structure copy !!! */
 	*wbm_srng_buffer_addr_info =

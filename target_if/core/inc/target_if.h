@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -537,12 +537,12 @@ bool target_is_tgt_type_adrastea(uint32_t target_type);
 bool target_is_tgt_type_qcn9000(uint32_t target_type);
 
 /**
- * target_is_tgt_type_qcn9100() - Check if the target type is QCN9100 (Spruce)
+ * target_is_tgt_type_qcn6122() - Check if the target type is QCN6122 (Spruce)
  * @target_type: target type to be checked.
  *
- * Return: true if the target_type is QCN9100, else false.
+ * Return: true if the target_type is QCN6122, else false.
  */
-bool target_is_tgt_type_qcn9100(uint32_t target_type);
+bool target_is_tgt_type_qcn6122(uint32_t target_type);
 
 /**
  * target_psoc_set_wlan_init_status() - set info wlan_init_status

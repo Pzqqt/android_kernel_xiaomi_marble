@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,7 +30,6 @@
 #include <linux/cpu.h>
 #include <linux/topology.h>
 #include <linux/interrupt.h>
-#include <linux/irq.h>
 #ifdef CONFIG_SCHED_CORE_CTL
 #include <linux/sched/core_ctl.h>
 #endif
@@ -48,6 +47,7 @@
 #include "qdf_module.h"
 #include "qdf_net_if.h"
 #include "qdf_dev.h"
+#include "qdf_irq.h"
 
 enum napi_decision_vector {
 	HIF_NAPI_NOEVENT = 0,
@@ -79,7 +79,9 @@ static int hif_rxthread_napi_poll(struct napi_struct *napi, int budget)
  */
 static void hif_init_rx_thread_napi(struct qca_napi_info *napii)
 {
-	init_dummy_netdev(&napii->rx_thread_netdev);
+	struct qdf_net_if *nd = (struct qdf_net_if *)&napii->rx_thread_netdev;
+
+	qdf_net_if_create_dummy_if(nd);
 	netif_napi_add(&napii->rx_thread_netdev, &napii->rx_thread_napi,
 		       hif_rxthread_napi_poll, 64);
 	napi_enable(&napii->rx_thread_napi);
@@ -200,7 +202,7 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 		if (napii->irq < 0)
 			hif_warn("bad IRQ value for CE %d: %d", i, napii->irq);
 
-		init_dummy_netdev(&(napii->netdev));
+		qdf_net_if_create_dummy_if((struct qdf_net_if *)&napii->netdev);
 
 		NAPI_DEBUG("adding napi=%pK to netdev=%pK (poll=%pK, bdgt=%d)",
 			   &(napii->napi), &(napii->netdev), poll, budget);
@@ -816,12 +818,14 @@ bool hif_napi_correct_cpu(struct qca_napi_info *napi_info)
 			NAPI_DEBUG("interrupt on wrong CPU, correcting");
 			napi_info->cpumask.bits[0] = (0x01 << napi_info->cpu);
 
-			irq_modify_status(napi_info->irq, IRQ_NO_BALANCING, 0);
+			qdf_dev_modify_irq_status(napi_info->irq,
+						  QDF_IRQ_NO_BALANCING, 0);
 			ret = qdf_dev_set_irq_affinity(napi_info->irq,
 						       (struct qdf_cpu_mask *)
 						       &napi_info->cpumask);
 			rc = qdf_status_to_os_return(ret);
-			irq_modify_status(napi_info->irq, 0, IRQ_NO_BALANCING);
+			qdf_dev_modify_irq_status(napi_info->irq, 0,
+						  QDF_IRQ_NO_BALANCING);
 
 			if (rc)
 				hif_err("Setting irq affinity hint: %d", rc);
@@ -989,7 +993,7 @@ void hif_update_napi_max_poll_time(struct CE_state *ce_state,
 {
 	struct hif_softc *hif;
 	struct qca_napi_info *napi_info;
-	unsigned long long napi_poll_time = sched_clock() -
+	unsigned long long napi_poll_time = qdf_time_sched_clock() -
 					ce_state->ce_service_start_time;
 
 	hif = ce_state->scn;
@@ -1462,7 +1466,8 @@ static int hncm_migrate_to(struct qca_napi_data *napid,
 
 	napid->napis[napi_ce]->cpumask.bits[0] = (1 << didx);
 
-	irq_modify_status(napid->napis[napi_ce]->irq, IRQ_NO_BALANCING, 0);
+	qdf_dev_modify_irq_status(napid->napis[napi_ce]->irq,
+				  QDF_IRQ_NO_BALANCING, 0);
 	status = qdf_dev_set_irq_affinity(napid->napis[napi_ce]->irq,
 					  (struct qdf_cpu_mask *)
 					  &napid->napis[napi_ce]->cpumask);
@@ -1653,11 +1658,11 @@ static inline void hif_napi_bl_irq(struct qca_napi_data *napid, bool bl_flag)
 			continue;
 
 		if (bl_flag == true)
-			irq_modify_status(napii->irq,
-					  0, IRQ_NO_BALANCING);
+			qdf_dev_modify_irq_status(napii->irq,
+						  0, QDF_IRQ_NO_BALANCING);
 		else
-			irq_modify_status(napii->irq,
-					  IRQ_NO_BALANCING, 0);
+			qdf_dev_modify_irq_status(napii->irq,
+						  QDF_IRQ_NO_BALANCING, 0);
 		hif_debug("bl_flag %d CE %d", bl_flag, i);
 	}
 }

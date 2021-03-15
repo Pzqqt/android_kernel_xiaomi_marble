@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1491,14 +1491,12 @@ QDF_STATUS wmi_unified_process_ll_stats_get_cmd(wmi_unified_t wmi_handle,
  *                                              get station request
  * @wmi_handle: wmi handle
  * @get_req: unified ll stats and get station request command params
- * @is_always_over_qmi: flag to send stats request always over qmi
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_process_unified_ll_stats_get_sta_cmd(
 				wmi_unified_t wmi_handle,
-				const struct ll_stats_get_params *get_req,
-				bool is_always_over_qmi);
+				const struct ll_stats_get_params *get_req);
 #endif /* FEATURE_CLUB_LL_STATS_AND_GET_STATION */
 #endif /* WLAN_FEATURE_LINK_LAYER_STATS */
 
@@ -4217,6 +4215,7 @@ wmi_unified_send_injector_frame_config_cmd(wmi_unified_t wmi_handle,
 QDF_STATUS wmi_unified_send_cp_stats_cmd(wmi_unified_t wmi_handle,
 					 void *buf_ptr, uint32_t buf_len);
 
+
 /**
  * wmi_unified_extract_cp_stats_more_pending() - extract more flag
  * @wmi_handle: wmi handle
@@ -4279,5 +4278,17 @@ QDF_STATUS wmi_extract_pdev_csa_switch_count_status(
 #define wmi_validate_handle(wmi_handle) \
         __wmi_validate_handle(wmi_handle, __func__)
 int __wmi_validate_handle(wmi_unified_t wmi_handle, const char *func);
+
+/**
+ * wmi_unified_send_set_tpc_power_cmd() - send set transmit power info
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ * @param: regulatory TPC info
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS wmi_unified_send_set_tpc_power_cmd(wmi_unified_t wmi_handle,
+					      uint8_t vdev_id,
+					      struct reg_tpc_power_info *param);
 
 #endif /* _WMI_UNIFIED_API_H_ */

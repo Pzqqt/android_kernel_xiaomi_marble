@@ -302,4 +302,11 @@ void wlan_cm_sm_history_print(struct wlan_objmgr_vdev *vdev)
 {
 	return cm_sm_history_print(vdev);
 }
-#endif
+
+void wlan_cm_req_history_print(struct wlan_objmgr_vdev *vdev)
+{
+	struct cnx_mgr *cm_ctx = cm_get_cm_ctx(vdev);
+
+	cm_req_history_print(cm_ctx);
+}
+#endif /* SM_ENG_HIST_ENABLE */

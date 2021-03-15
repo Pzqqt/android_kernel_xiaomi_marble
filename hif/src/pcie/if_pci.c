@@ -43,7 +43,8 @@
 #include "mp_dev.h"
 #include "hif_debug.h"
 
-#if (defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490))
+#if (defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490) || \
+	defined(QCA_WIFI_WCN7850))
 #include "hal_api.h"
 #endif
 
@@ -57,6 +58,8 @@
 #include "wlan_cfg.h"
 #include "qdf_hang_event_notifier.h"
 #include "qdf_platform.h"
+#include "qal_devnode.h"
+#include "qdf_irq.h"
 
 /* Maximum ms timeout for host to wake up target */
 #define PCIE_WAKE_TIMEOUT 1000
@@ -165,11 +168,7 @@ static inline int hif_get_pci_slot(struct hif_softc *scn)
 		 */
 		pcierp_node = mhi_node->parent;
 		pcie_node = pcierp_node->parent;
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 18, 0))
-		pci_id = 0;
-#else
-		pci_id = of_get_pci_domain_nr(pcie_node);
-#endif
+		qal_devnode_fetch_pci_domain_id(pcie_node, &pci_id);
 		if (pci_id < 0 || pci_id >= WLAN_CFG_MAX_PCIE_GROUPS) {
 			hif_err("pci_id: %d is invalid", pci_id);
 			QDF_ASSERT(0);
@@ -1713,7 +1712,7 @@ int hif_pci_bus_configure(struct hif_softc *hif_sc)
 	if (((hif_sc->target_info.target_type == TARGET_TYPE_QCA8074) ||
 	     (hif_sc->target_info.target_type == TARGET_TYPE_QCA8074V2) ||
 	     (hif_sc->target_info.target_type == TARGET_TYPE_QCA5018) ||
-	     (hif_sc->target_info.target_type == TARGET_TYPE_QCN9100) ||
+	     (hif_sc->target_info.target_type == TARGET_TYPE_QCN6122) ||
 	     (hif_sc->target_info.target_type == TARGET_TYPE_QCA6018)) &&
 	    (hif_sc->bus_type == QDF_BUS_TYPE_AHB)) {
 		hif_sc->per_ce_irq = true;
@@ -1735,7 +1734,7 @@ int hif_pci_bus_configure(struct hif_softc *hif_sc)
 	if (((hif_sc->target_info.target_type == TARGET_TYPE_QCA8074) ||
 	     (hif_sc->target_info.target_type == TARGET_TYPE_QCA8074V2) ||
 	     (hif_sc->target_info.target_type == TARGET_TYPE_QCA5018) ||
-	     (hif_sc->target_info.target_type == TARGET_TYPE_QCN9100) ||
+	     (hif_sc->target_info.target_type == TARGET_TYPE_QCN6122) ||
 	     (hif_sc->target_info.target_type == TARGET_TYPE_QCA6018)) &&
 	    (hif_sc->bus_type == QDF_BUS_TYPE_PCI))
 		hif_debug("Skip irq config for PCI based 8074 target");
@@ -2093,8 +2092,11 @@ static void hif_pci_deconfigure_grp_irq(struct hif_softc *scn)
 			hif_ext_group->irq_requested = false;
 			for (j = 0; j < hif_ext_group->numirq; j++) {
 				irq = hif_ext_group->os_irq[j];
-				if (scn->irq_unlazy_disable)
-					irq_clear_status_flags(irq, IRQ_DISABLE_UNLAZY);
+				if (scn->irq_unlazy_disable) {
+					qdf_dev_clear_irq_status_flags(
+							irq,
+							QDF_IRQ_DISABLE_UNLAZY);
+				}
 				pfrm_free_irq(scn->qdf_dev->dev,
 					      irq, hif_ext_group);
 			}
@@ -3155,7 +3157,8 @@ int hif_pci_configure_grp_irq(struct hif_softc *scn,
 	for (j = 0; j < hif_ext_group->numirq; j++) {
 		irq = hif_ext_group->irq[j];
 		if (scn->irq_unlazy_disable)
-			irq_set_status_flags(irq, IRQ_DISABLE_UNLAZY);
+			qdf_dev_set_irq_status_flags(irq,
+						     QDF_IRQ_DISABLE_UNLAZY);
 		hif_debug("request_irq = %d for grp %d",
 			  irq, hif_ext_group->grp_id);
 		ret = pfrm_request_irq(
@@ -3174,7 +3177,8 @@ int hif_pci_configure_grp_irq(struct hif_softc *scn,
 	return 0;
 }
 
-#if (defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490))
+#if (defined(QCA_WIFI_QCA6390) || defined(QCA_WIFI_QCA6490) || \
+	defined(QCA_WIFI_WCN7850))
 uint32_t hif_pci_reg_read32(struct hif_softc *hif_sc,
 			    uint32_t offset)
 {
@@ -3376,6 +3380,8 @@ static bool hif_is_pld_based_target(struct hif_pci_softc *sc,
 	case QCA6490_DEVICE_ID:
 	case AR6320_DEVICE_ID:
 	case QCN7605_DEVICE_ID:
+	case WCN7850_DEVICE_ID:
+	case WCN7850_EMULATION_DEVICE_ID:
 		return true;
 	}
 	return false;
@@ -3620,7 +3626,8 @@ int hif_pci_addr_in_boundary(struct hif_softc *scn, uint32_t offset)
 	    tgt_info->target_type == TARGET_TYPE_QCA6390 ||
 	    tgt_info->target_type == TARGET_TYPE_QCA6490 ||
 	    tgt_info->target_type == TARGET_TYPE_QCN7605 ||
-	    tgt_info->target_type == TARGET_TYPE_QCA8074) {
+	    tgt_info->target_type == TARGET_TYPE_QCA8074 ||
+	    tgt_info->target_type == TARGET_TYPE_WCN7850) {
 		/*
 		 * Need to consider offset's memtype for QCA6290/QCA8074,
 		 * also mem_len and DRAM_BASE_ADDRESS/DRAM_SIZE need to be

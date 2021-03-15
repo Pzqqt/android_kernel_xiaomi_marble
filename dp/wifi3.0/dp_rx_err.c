@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -45,6 +45,7 @@
 /* Max buffer in invalid peer SG list*/
 #define DP_MAX_INVALID_BUFFERS 10
 
+#ifdef FEATURE_MEC
 /**
  * dp_rx_mcast_echo_check() - check if the mcast pkt is a loop
  *			      back on same vap or a different vap.
@@ -58,13 +59,13 @@
  *
  */
 static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
-					struct dp_peer *peer,
-					uint8_t *rx_tlv_hdr,
-					qdf_nbuf_t nbuf)
+					  struct dp_peer *peer,
+					  uint8_t *rx_tlv_hdr,
+					  qdf_nbuf_t nbuf)
 {
 	struct dp_vdev *vdev = peer->vdev;
-	struct dp_ast_entry *ase = NULL;
-	uint16_t sa_idx = 0;
+	struct dp_pdev *pdev = vdev->pdev;
+	struct dp_mec_entry *mecentry = NULL;
 	uint8_t *data;
 
 	/*
@@ -102,67 +103,30 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 	 * wireless STAs MAC addr which are behind the Repeater,
 	 * then drop the pkt as it is looped back
 	 */
-	qdf_spin_lock_bh(&soc->ast_lock);
-	if (hal_rx_msdu_end_sa_is_valid_get(soc->hal_soc, rx_tlv_hdr)) {
-		sa_idx = hal_rx_msdu_end_sa_idx_get(soc->hal_soc, rx_tlv_hdr);
+	qdf_spin_lock_bh(&soc->mec_lock);
 
-		if ((sa_idx < 0) ||
-		    (sa_idx >= wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx))) {
-			qdf_spin_unlock_bh(&soc->ast_lock);
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-					"invalid sa_idx: %d", sa_idx);
-			qdf_assert_always(0);
-		}
-
-		ase = soc->ast_table[sa_idx];
-		if (!ase) {
-			/* We do not get a peer map event for STA and without
-			 * this event we don't know what is STA's sa_idx.
-			 * For this reason the AST is still not associated to
-			 * any index postion in ast_table.
-			 * In these kind of scenarios where sa is valid but
-			 * ast is not in ast_table, we use the below API to get
-			 * AST entry for STA's own mac_address.
-			 */
-			ase = dp_peer_ast_hash_find_by_vdevid
-				(soc, &data[QDF_MAC_ADDR_SIZE],
-				 peer->vdev->vdev_id);
-			if (ase) {
-				ase->ast_idx = sa_idx;
-				soc->ast_table[sa_idx] = ase;
-				ase->is_mapped = TRUE;
-			}
-		}
-	} else {
-		ase = dp_peer_ast_hash_find_by_pdevid(soc,
-						      &data[QDF_MAC_ADDR_SIZE],
-						      vdev->pdev->pdev_id);
+	mecentry = dp_peer_mec_hash_find_by_pdevid(soc, pdev->pdev_id,
+						   &data[QDF_MAC_ADDR_SIZE]);
+	if (!mecentry) {
+		qdf_spin_unlock_bh(&soc->mec_lock);
+		return false;
 	}
 
-	if (ase) {
+	qdf_spin_unlock_bh(&soc->mec_lock);
 
-		if (ase->pdev_id != vdev->pdev->pdev_id) {
-			qdf_spin_unlock_bh(&soc->ast_lock);
-			dp_rx_err_info("%pK: Detected DBDC Root AP "QDF_MAC_ADDR_FMT", %d %d",
-				       soc, QDF_MAC_ADDR_REF(&data[QDF_MAC_ADDR_SIZE]),
-				       vdev->pdev->pdev_id,
-				       ase->pdev_id);
-			return false;
-		}
-
-		if ((ase->type == CDP_TXRX_AST_TYPE_MEC) ||
-				(ase->peer_id != peer->peer_id)) {
-			qdf_spin_unlock_bh(&soc->ast_lock);
-			dp_rx_err_info("%pK: received pkt with same src mac "QDF_MAC_ADDR_FMT,
-				       soc, QDF_MAC_ADDR_REF(&data[QDF_MAC_ADDR_SIZE]));
-
-			return true;
-		}
-	}
-	qdf_spin_unlock_bh(&soc->ast_lock);
+	dp_rx_err_info("%pK: received pkt with same src mac " QDF_MAC_ADDR_FMT,
+		       soc, QDF_MAC_ADDR_REF(&data[QDF_MAC_ADDR_SIZE]));
+	return true;
+}
+#else
+static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
+					  struct dp_peer *peer,
+					  uint8_t *rx_tlv_hdr,
+					  qdf_nbuf_t nbuf)
+{
 	return false;
 }
-
+#endif
 #endif /* QCA_HOST_MODE_WIFI_DISABLED */
 
 void dp_rx_link_desc_refill_duplicate_check(
@@ -498,7 +462,8 @@ dp_rx_oor_handle(struct dp_soc *soc,
 	 * to stack in this case since the connection might fail due to
 	 * duplicated EAP response.
 	 */
-	if (mpdu_desc_info->mpdu_flags & HAL_MPDU_F_RETRY_BIT &&
+	if (mpdu_desc_info &&
+	    mpdu_desc_info->mpdu_flags & HAL_MPDU_F_RETRY_BIT &&
 	    peer->rx_tid[tid].ba_status == DP_RX_BA_ACTIVE) {
 		frame_mask &= ~FRAME_MASK_IPV4_EAPOL;
 		DP_STATS_INC(soc, rx.err.reo_err_oor_eapol_drop, 1);
@@ -1560,6 +1525,132 @@ fail:
 	return;
 }
 
+#ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
+/**
+ * dp_rx_err_route_hdl() - Function to send EAPOL frames to stack
+ *                            Free any other packet which comes in
+ *                            this path.
+ *
+ * @soc: core DP main context
+ * @nbuf: buffer pointer
+ * @peer: peer handle
+ * @rx_tlv_hdr: start of rx tlv header
+ * @err_src: rxdma/reo
+ *
+ * This function indicates EAPOL frame received in wbm error ring to stack.
+ * Any other frame should be dropped.
+ *
+ * Return: SUCCESS if delivered to stack
+ */
+static void
+dp_rx_err_route_hdl(struct dp_soc *soc, qdf_nbuf_t nbuf,
+		    struct dp_peer *peer, uint8_t *rx_tlv_hdr,
+		    enum hal_rx_wbm_error_source err_src)
+{
+	uint32_t pkt_len;
+	uint16_t msdu_len;
+	struct dp_vdev *vdev;
+	struct hal_rx_msdu_metadata msdu_metadata;
+
+	hal_rx_msdu_metadata_get(soc->hal_soc, rx_tlv_hdr, &msdu_metadata);
+	msdu_len = hal_rx_msdu_start_msdu_len_get(rx_tlv_hdr);
+	pkt_len = msdu_len + msdu_metadata.l3_hdr_pad + RX_PKT_TLVS_LEN;
+
+	if (qdf_likely(!qdf_nbuf_is_frag(nbuf))) {
+		if (dp_rx_check_pkt_len(soc, pkt_len))
+			goto drop_nbuf;
+
+		/* Set length in nbuf */
+		qdf_nbuf_set_pktlen(
+			nbuf, qdf_min(pkt_len, (uint32_t)RX_DATA_BUFFER_SIZE));
+		qdf_assert_always(nbuf->data == rx_tlv_hdr);
+	}
+
+	/*
+	 * Check if DMA completed -- msdu_done is the last bit
+	 * to be written
+	 */
+	if (!hal_rx_attn_msdu_done_get(rx_tlv_hdr)) {
+		dp_err_rl("MSDU DONE failure");
+		hal_rx_dump_pkt_tlvs(soc->hal_soc, rx_tlv_hdr,
+				     QDF_TRACE_LEVEL_INFO);
+		qdf_assert(0);
+	}
+
+	if (!peer)
+		goto drop_nbuf;
+
+	vdev = peer->vdev;
+	if (!vdev) {
+		dp_err_rl("Null vdev!");
+		DP_STATS_INC(soc, rx.err.invalid_vdev, 1);
+		goto drop_nbuf;
+	}
+
+	/*
+	 * Advance the packet start pointer by total size of
+	 * pre-header TLV's
+	 */
+	if (qdf_nbuf_is_frag(nbuf))
+		qdf_nbuf_pull_head(nbuf, RX_PKT_TLVS_LEN);
+	else
+		qdf_nbuf_pull_head(nbuf, (msdu_metadata.l3_hdr_pad +
+				   RX_PKT_TLVS_LEN));
+
+	dp_vdev_peer_stats_update_protocol_cnt(vdev, nbuf, NULL, 0, 1);
+
+	/*
+	 * Indicate EAPOL frame to stack only when vap mac address
+	 * matches the destination address.
+	 */
+	if (qdf_nbuf_is_ipv4_eapol_pkt(nbuf) ||
+	    qdf_nbuf_is_ipv4_wapi_pkt(nbuf)) {
+		qdf_ether_header_t *eh =
+			(qdf_ether_header_t *)qdf_nbuf_data(nbuf);
+		if (qdf_mem_cmp(eh->ether_dhost, &vdev->mac_addr.raw[0],
+				QDF_MAC_ADDR_SIZE) == 0) {
+			/*
+			 * Update the protocol tag in SKB based on
+			 * CCE metadata.
+			 */
+			dp_rx_update_protocol_tag(soc, vdev, nbuf, rx_tlv_hdr,
+						  EXCEPTION_DEST_RING_ID,
+						  true, true);
+			/* Update the flow tag in SKB based on FSE metadata */
+			dp_rx_update_flow_tag(soc, vdev, nbuf, rx_tlv_hdr,
+					      true);
+			DP_STATS_INC(peer, rx.to_stack.num, 1);
+			qdf_nbuf_set_exc_frame(nbuf, 1);
+			dp_rx_deliver_to_stack(soc, vdev, peer, nbuf, NULL);
+			return;
+		}
+	}
+
+drop_nbuf:
+
+	DP_STATS_INCC(soc, rx.reo2rel_route_drop, 1,
+		      err_src == HAL_RX_WBM_ERR_SRC_REO);
+	DP_STATS_INCC(soc, rx.rxdma2rel_route_drop, 1,
+		      err_src == HAL_RX_WBM_ERR_SRC_RXDMA);
+
+	qdf_nbuf_free(nbuf);
+}
+#else
+
+static void
+dp_rx_err_route_hdl(struct dp_soc *soc, qdf_nbuf_t nbuf,
+		    struct dp_peer *peer, uint8_t *rx_tlv_hdr,
+		    enum hal_rx_wbm_error_source err_src)
+{
+	DP_STATS_INCC(soc, rx.reo2rel_route_drop, 1,
+		      err_src == HAL_RX_WBM_ERR_SRC_REO);
+	DP_STATS_INCC(soc, rx.rxdma2rel_route_drop, 1,
+		      err_src == HAL_RX_WBM_ERR_SRC_RXDMA);
+
+	qdf_nbuf_free(nbuf);
+}
+#endif
+
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
 
 #ifdef DP_RX_DESC_COOKIE_INVALIDATE
@@ -2249,6 +2340,24 @@ done:
 							  rx_tlv_hdr,
 							  peer_id, tid);
 					break;
+				case HAL_REO_ERR_REGULAR_FRAME_OOR:
+					if (hal_rx_msdu_end_first_msdu_get(soc->hal_soc,
+									   rx_tlv_hdr)) {
+						peer_id =
+							hal_rx_mpdu_start_sw_peer_id_get(soc->hal_soc,
+											 rx_tlv_hdr);
+						tid =
+							hal_rx_mpdu_start_tid_get(hal_soc, rx_tlv_hdr);
+					}
+					QDF_NBUF_CB_RX_PKT_LEN(nbuf) =
+						hal_rx_msdu_start_msdu_len_get(
+									       rx_tlv_hdr);
+					nbuf->next = NULL;
+					dp_rx_oor_handle(soc, nbuf,
+							 rx_tlv_hdr,
+							 NULL,
+							 peer_id, tid);
+					break;
 				case HAL_REO_ERR_BAR_FRAME_2K_JUMP:
 				case HAL_REO_ERR_BAR_FRAME_OOR:
 					if (peer)
@@ -2264,10 +2373,10 @@ done:
 					qdf_nbuf_free(nbuf);
 				}
 			} else if (wbm_err_info.reo_psh_rsn
-				   == HAL_RX_WBM_REO_PSH_RSN_ROUTE) {
-				DP_STATS_INC(soc, rx.reo2rel_route_drop, 1);
-				qdf_nbuf_free(nbuf);
-			}
+					== HAL_RX_WBM_REO_PSH_RSN_ROUTE)
+				dp_rx_err_route_hdl(soc, nbuf, peer,
+						    rx_tlv_hdr,
+						    HAL_RX_WBM_ERR_SRC_REO);
 		} else if (wbm_err_info.wbm_err_src ==
 					HAL_RX_WBM_ERR_SRC_RXDMA) {
 			if (wbm_err_info.rxdma_psh_rsn
@@ -2332,10 +2441,10 @@ done:
 						  wbm_err_info.rxdma_err_code);
 				}
 			} else if (wbm_err_info.rxdma_psh_rsn
-				   == HAL_RX_WBM_RXDMA_PSH_RSN_ROUTE) {
-				DP_STATS_INC(soc, rx.rxdma2rel_route_drop, 1);
-				qdf_nbuf_free(nbuf);
-			}
+					== HAL_RX_WBM_RXDMA_PSH_RSN_ROUTE)
+				dp_rx_err_route_hdl(soc, nbuf, peer,
+						    rx_tlv_hdr,
+						    HAL_RX_WBM_ERR_SRC_RXDMA);
 		} else {
 			/* Should not come here */
 			qdf_assert(0);

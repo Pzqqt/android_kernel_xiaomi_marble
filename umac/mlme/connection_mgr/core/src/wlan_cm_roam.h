@@ -155,13 +155,15 @@ bool cm_roam_resp_cmid_match_list_head(struct cnx_mgr *cm_ctx,
  * @cm_ctx: connection manager context
  * @cm_id: active command id
  * @reason: failure reason
+ * @sync: Indicate if the event has to be dispatched in sync or async mode
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS
 cm_send_reassoc_start_fail(struct cnx_mgr *cm_ctx,
 			   wlan_cm_id cm_id,
-			   enum wlan_cm_connect_fail_reason reason);
+			   enum wlan_cm_connect_fail_reason reason,
+			   bool sync);
 
 #else
 static inline QDF_STATUS cm_reassoc_complete(struct cnx_mgr *cm_ctx,
@@ -236,16 +238,22 @@ cm_fill_bss_info_in_roam_rsp_by_cm_id(struct cnx_mgr *cm_ctx,
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
+ * cm_send_roam_invoke_req() - Send Roam invoke req to FW
+ * @cm_ctx: connection manager context
+ * @req: connection manager request
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_send_roam_invoke_req(struct cnx_mgr *cm_ctx, struct cm_req *req);
+/**
  * cm_roam_offload_enabled() - check if roam offload(LFR3) is enabled
  * @psoc: psoc pointer to get the INI
  *
  * Return: bool
  */
-static inline bool cm_roam_offload_enabled(struct wlan_objmgr_psoc *psoc)
-{
-	/* use INI CFG_LFR3_ROAMING_OFFLOAD,return true for now */
-	return true;
-}
+bool cm_roam_offload_enabled(struct wlan_objmgr_psoc *psoc);
+
 #else
 static inline bool cm_roam_offload_enabled(struct wlan_objmgr_psoc *psoc)
 {

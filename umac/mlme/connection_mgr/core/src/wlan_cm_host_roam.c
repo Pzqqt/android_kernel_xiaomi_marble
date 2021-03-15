@@ -58,7 +58,6 @@ cm_reassoc_fail_disconnect(struct wlan_objmgr_vdev *vdev,
 	 * to list is success after posting WLAN_CM_SM_EV_DISCONNECT_REQ.
 	 */
 	cm_req = qdf_mem_malloc(sizeof(*cm_req));
-
 	if (!cm_req)
 		return QDF_STATUS_E_NOMEM;
 
@@ -83,7 +82,8 @@ cm_reassoc_fail_disconnect(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS
 cm_send_reassoc_start_fail(struct cnx_mgr *cm_ctx,
 			   wlan_cm_id cm_id,
-			   enum wlan_cm_connect_fail_reason reason)
+			   enum wlan_cm_connect_fail_reason reason,
+			   bool sync)
 {
 	struct wlan_cm_roam_resp *resp;
 	QDF_STATUS status;
@@ -93,9 +93,15 @@ cm_send_reassoc_start_fail(struct cnx_mgr *cm_ctx,
 		return QDF_STATUS_E_NOMEM;
 
 	cm_fill_roam_fail_resp_from_cm_id(cm_ctx, resp, cm_id, reason);
-	status = cm_sm_deliver_event(cm_ctx->vdev,
-				     WLAN_CM_SM_EV_REASSOC_FAILURE,
-				     sizeof(*resp), resp);
+	if (sync)
+		status = cm_sm_deliver_event_sync(
+				cm_ctx, WLAN_CM_SM_EV_REASSOC_FAILURE,
+				sizeof(*resp), resp);
+	else
+		status = cm_sm_deliver_event(cm_ctx->vdev,
+					     WLAN_CM_SM_EV_REASSOC_FAILURE,
+					     sizeof(*resp), resp);
+
 	if (QDF_IS_STATUS_ERROR(status))
 		cm_reassoc_complete(cm_ctx, resp);
 
@@ -212,39 +218,51 @@ static QDF_STATUS cm_roam_get_candidates(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_PREAUTH_ENABLE
+static QDF_STATUS cm_host_roam_start(struct cnx_mgr *cm_ctx,
+				     struct cm_req *cm_req)
+{
+	/* start preauth process */
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS cm_host_roam_start(struct cnx_mgr *cm_ctx,
+				     struct cm_req *cm_req)
+{
+	return cm_sm_deliver_event_sync(cm_ctx, WLAN_CM_SM_EV_START_REASSOC,
+					sizeof(cm_req->roam_req),
+					&cm_req->roam_req);
+}
+#endif
+
 QDF_STATUS cm_host_roam_start_req(struct cnx_mgr *cm_ctx,
 				  struct cm_req *cm_req)
 {
 	QDF_STATUS status;
 	struct wlan_objmgr_pdev *pdev;
 	enum wlan_cm_connect_fail_reason reason = CM_GENERIC_FAILURE;
-	uint8_t vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
 
 	mlme_cm_roam_start_ind(cm_ctx->vdev, &cm_req->roam_req.req);
 
 	pdev = wlan_vdev_get_pdev(cm_ctx->vdev);
 	if (!pdev) {
-		mlme_err(CM_PREFIX_FMT "Failed to find pdev",
-			 CM_PREFIX_REF(vdev_id, cm_req->cm_id));
 		reason = CM_GENERIC_FAILURE;
 		goto roam_err;
 	}
 
-	status = cm_roam_get_candidates(pdev, cm_ctx,
-					&cm_req->roam_req);
+	status = cm_roam_get_candidates(pdev, cm_ctx, &cm_req->roam_req);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		reason = CM_NO_CANDIDATE_FOUND;
 		goto roam_err;
 	}
 
-	status = cm_sm_deliver_event_sync(cm_ctx, WLAN_CM_SM_EV_START_REASSOC,
-					  sizeof(cm_req->roam_req),
-					  &cm_req->roam_req);
+	status = cm_host_roam_start(cm_ctx, cm_req);
 	if (QDF_IS_STATUS_SUCCESS(status))
 		return status;
 
 roam_err:
-	return cm_send_reassoc_start_fail(cm_ctx, cm_req->cm_id, reason);
+	return cm_send_reassoc_start_fail(cm_ctx, cm_req->cm_id, reason, true);
 }
 
 bool cm_roam_resp_cmid_match_list_head(struct cnx_mgr *cm_ctx,
@@ -271,6 +289,7 @@ QDF_STATUS cm_reassoc_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 {
 	struct cm_req *cm_req;
 	struct wlan_cm_vdev_discon_req req;
+	struct cm_disconnect_req *discon_req;
 
 	cm_req = cm_get_req_by_cm_id(cm_ctx, *cm_id);
 	if (!cm_req)
@@ -283,6 +302,17 @@ QDF_STATUS cm_reassoc_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	req.req.source = CM_ROAM_DISCONNECT;
 	wlan_vdev_get_bss_peer_mac(cm_ctx->vdev, &req.req.bssid);
 
+	discon_req = qdf_mem_malloc(sizeof(*discon_req));
+	if (!discon_req)
+		return QDF_STATUS_E_NOMEM;
+
+	discon_req->cm_id = *cm_id;
+	discon_req->req.vdev_id = req.req.vdev_id;
+	qdf_copy_macaddr(&discon_req->req.bssid,
+			 &req.req.bssid);
+	cm_update_scan_mlme_on_disconnect(cm_ctx->vdev, discon_req);
+	qdf_mem_free(discon_req);
+
 	return mlme_cm_disconnect_req(cm_ctx->vdev, &req);
 }
 
@@ -292,7 +322,6 @@ QDF_STATUS cm_reassoc_disconnect_complete(struct cnx_mgr *cm_ctx,
 	QDF_STATUS status;
 	struct cm_req *cm_req;
 	struct qdf_mac_addr *bssid;
-	struct cm_disconnect_req discon_req;
 	uint8_t vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
 	wlan_cm_id cm_id = cm_ctx->active_cm_id;
 
@@ -300,22 +329,16 @@ QDF_STATUS cm_reassoc_disconnect_complete(struct cnx_mgr *cm_ctx,
 	if (!cm_req)
 		return QDF_STATUS_E_INVAL;
 
-	qdf_mem_zero(&discon_req, sizeof(discon_req));
-
-	discon_req.cm_id = cm_id;
-	discon_req.req.vdev_id = vdev_id;
-	qdf_copy_macaddr(&discon_req.req.bssid,
-			 &resp->req.req.bssid);
-	cm_update_scan_mlme_on_disconnect(cm_ctx->vdev, &discon_req);
 	mlme_cm_disconnect_complete_ind(cm_ctx->vdev, resp);
-
 	bssid = &cm_req->roam_req.cur_candidate->entry->bssid;
+
 	status = mlme_cm_bss_peer_create_req(cm_ctx->vdev, bssid);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		mlme_err(CM_PREFIX_FMT "Peer create request failed",
 			 CM_PREFIX_REF(vdev_id, cm_id));
 		status = cm_send_reassoc_start_fail(cm_ctx, cm_id,
-						    CM_PEER_CREATE_FAILED);
+						    CM_PEER_CREATE_FAILED,
+						    true);
 	}
 
 	return status;
@@ -324,7 +347,7 @@ QDF_STATUS cm_reassoc_disconnect_complete(struct cnx_mgr *cm_ctx,
 QDF_STATUS
 cm_resume_reassoc_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 {
-	struct wlan_cm_vdev_reassoc_req req;
+	struct wlan_cm_vdev_reassoc_req *req;
 	struct cm_req *cm_req;
 	QDF_STATUS status;
 
@@ -332,19 +355,24 @@ cm_resume_reassoc_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	if (!cm_req)
 		return QDF_STATUS_E_FAILURE;
 
-	req.vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
-	req.cm_id = *cm_id;
-	req.bss = cm_req->roam_req.cur_candidate;
+	req = qdf_mem_malloc(sizeof(*req));
+	if (!req)
+		return QDF_STATUS_E_NOMEM;
 
-	status = mlme_cm_reassoc_req(cm_ctx->vdev, &req);
+	req->vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
+	req->cm_id = *cm_id;
+	req->bss = cm_req->roam_req.cur_candidate;
+
+	status = mlme_cm_reassoc_req(cm_ctx->vdev, req);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		mlme_err(CM_PREFIX_FMT "Reassoc request failed",
-			 CM_PREFIX_REF(req.vdev_id, req.cm_id));
+			 CM_PREFIX_REF(req->vdev_id, req->cm_id));
 		mlme_cm_bss_peer_delete_req(cm_ctx->vdev);
 		status = cm_send_reassoc_start_fail(cm_ctx, *cm_id,
-						    CM_JOIN_FAILED);
+						    CM_JOIN_FAILED, true);
 	}
 
+	qdf_mem_free(req);
 	return status;
 }
 
@@ -360,10 +388,7 @@ cm_update_scan_db_on_reassoc_success(struct cnx_mgr *cm_ctx,
 		return;
 
 	cm_req = cm_get_req_by_cm_id(cm_ctx, resp->cm_id);
-	if (!cm_req)
-		return;
-
-	if (!cm_req->roam_req.cur_candidate)
+	if (!cm_req || !cm_req->roam_req.cur_candidate)
 		return;
 
 	/*
@@ -433,11 +458,7 @@ reassoc_fail:
 					wlan_vdev_get_pdev(vdev),
 					&bss_info, &mlme_info);
 	}
-
-	mlme_debug(CM_PREFIX_FMT,
-		   CM_PREFIX_REF(wlan_vdev_get_id(vdev),
-				 resp->cm_id));
-	cm_remove_cmd(cm_ctx, resp->cm_id);
+	cm_remove_cmd(cm_ctx, &resp->cm_id);
 
 	/*
 	 * If roaming fails and conn_sm is in ROAMING state, then
@@ -491,19 +512,6 @@ static QDF_STATUS cm_reassoc_cmd_timeout(struct cnx_mgr *cm_ctx,
 }
 
 #ifdef WLAN_CM_USE_SPINLOCK
-static QDF_STATUS cm_activate_reassoc_req_flush_cb(struct scheduler_msg *msg)
-{
-	struct wlan_serialization_command *cmd = msg->bodyptr;
-
-	if (!cmd || !cmd->vdev) {
-		mlme_err("Null input cmd:%pK", cmd);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	wlan_objmgr_vdev_release_ref(cmd->vdev, WLAN_MLME_CM_ID);
-	return QDF_STATUS_SUCCESS;
-}
-
 static QDF_STATUS cm_activate_reassoc_req_sched_cb(struct scheduler_msg *msg)
 {
 	struct wlan_serialization_command *cmd = msg->bodyptr;
@@ -511,17 +519,12 @@ static QDF_STATUS cm_activate_reassoc_req_sched_cb(struct scheduler_msg *msg)
 	struct cnx_mgr *cm_ctx;
 	QDF_STATUS ret = QDF_STATUS_E_FAILURE;
 
-	if (!cmd) {
-		mlme_err("cmd is null");
+	if (!cmd || !cmd->vdev) {
+		mlme_err("Invalid Input");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	vdev = cmd->vdev;
-	if (!vdev) {
-		mlme_err("vdev is null");
-		return QDF_STATUS_E_INVAL;
-	}
-
 	cm_ctx = cm_get_cm_ctx(vdev);
 	if (!cm_ctx)
 		return QDF_STATUS_E_INVAL;
@@ -530,16 +533,11 @@ static QDF_STATUS cm_activate_reassoc_req_sched_cb(struct scheduler_msg *msg)
 				  WLAN_CM_SM_EV_REASSOC_ACTIVE,
 				  sizeof(wlan_cm_id),
 				  &cmd->cmd_id);
-
 	/*
 	 * Called from scheduler context hence posting failure
 	 */
-	if (QDF_IS_STATUS_ERROR(ret)) {
-		mlme_err(CM_PREFIX_FMT "Activation failed for cmd:%d",
-			 CM_PREFIX_REF(wlan_vdev_get_id(vdev), cmd->cmd_id),
-			 cmd->cmd_type);
+	if (QDF_IS_STATUS_ERROR(ret))
 		cm_reassoc_handle_event_post_fail(cm_ctx, cmd->cmd_id);
-	}
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 	return ret;
@@ -554,7 +552,7 @@ cm_activate_reassoc_req(struct wlan_serialization_command *cmd)
 
 	msg.bodyptr = cmd;
 	msg.callback = cm_activate_reassoc_req_sched_cb;
-	msg.flush_callback = cm_activate_reassoc_req_flush_cb;
+	msg.flush_callback = cm_activate_cmd_req_flush_cb;
 
 	ret = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_MLME_CM_ID);
 	if (QDF_IS_STATUS_ERROR(ret))
@@ -570,9 +568,6 @@ cm_activate_reassoc_req(struct wlan_serialization_command *cmd)
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 		return ret;
 	}
-	mlme_debug(CM_PREFIX_FMT "Cmd act in sched cmd type:%d",
-		   CM_PREFIX_REF(wlan_vdev_get_id(vdev), cmd->cmd_id),
-		   cmd->cmd_type);
 
 	return ret;
 }
@@ -602,7 +597,6 @@ cm_ser_reassoc_cb(struct wlan_serialization_command *cmd,
 	}
 
 	vdev = cmd->vdev;
-
 	cm_ctx = cm_get_cm_ctx(vdev);
 	if (!cm_ctx)
 		return QDF_STATUS_E_NULL_VALUE;
@@ -639,7 +633,6 @@ cm_ser_reassoc_cb(struct wlan_serialization_command *cmd,
 		mlme_err(CM_PREFIX_FMT "Active command timeout",
 			 CM_PREFIX_REF(wlan_vdev_get_id(vdev), cmd->cmd_id));
 		QDF_ASSERT(0);
-
 		cm_reassoc_cmd_timeout(cm_ctx, cmd->cmd_id);
 		break;
 	case WLAN_SER_CB_RELEASE_MEM_CMD:
@@ -710,7 +703,7 @@ QDF_STATUS cm_reassoc_start(struct cnx_mgr *cm_ctx,
 		mlme_err(CM_PREFIX_FMT "Serialization of reassoc failed",
 			 CM_PREFIX_REF(vdev_id, cm_req->cm_id));
 		return cm_send_reassoc_start_fail(cm_ctx, cm_req->cm_id,
-						  CM_SER_FAILURE);
+						  CM_SER_FAILURE, true);
 	}
 
 	return status;
@@ -795,7 +788,7 @@ QDF_STATUS cm_roam_bss_peer_create_rsp(struct wlan_objmgr_vdev *vdev,
 
 		return cm_send_reassoc_start_fail(
 				cm_ctx, cm_id,
-				CM_PEER_CREATE_FAILED);
+				CM_PEER_CREATE_FAILED, false);
 	}
 
 	qdf_status = cm_sm_deliver_event(

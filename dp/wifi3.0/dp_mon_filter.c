@@ -398,13 +398,13 @@ static QDF_STATUS dp_mon_filter_check_co_exist(struct dp_pdev *pdev)
 	 * the enable modes.
 	 */
 	if ((pdev->rx_pktlog_mode != DP_RX_PKTLOG_DISABLED) &&
-	    (pdev->monitor_vdev || pdev->monitor_configured)) {
+	     !pdev->rx_pktlog_cbf &&
+	     (pdev->monitor_vdev || pdev->monitor_configured)) {
 		dp_mon_filter_err("%pK: Rx pktlog full/lite can't exist with modes\n"
 				  "Monitor Mode:%d", pdev->soc,
 				  pdev->monitor_configured);
 		return QDF_STATUS_E_FAILURE;
 	}
-
 	return QDF_STATUS_SUCCESS;
 }
 #else
@@ -499,6 +499,64 @@ static void dp_mon_filter_set_status_cmn(struct dp_pdev *pdev,
 	} else {
 		filter->tlv_filter.enable_mo = 0;
 	}
+}
+
+/**
+ * dp_mon_filter_set_status_cbf() - Set the cbf status filters
+ * @pdev: DP pdev handle
+ * @filter: Dp mon filters
+ *
+ * Return: void
+ */
+static void dp_mon_filter_set_status_cbf(struct dp_pdev *pdev,
+					 struct dp_mon_filter *filter)
+{
+	filter->tlv_filter.mpdu_start = 1;
+	filter->tlv_filter.msdu_start = 0;
+	filter->tlv_filter.packet = 0;
+	filter->tlv_filter.msdu_end = 0;
+	filter->tlv_filter.mpdu_end = 0;
+	filter->tlv_filter.attention = 0;
+	filter->tlv_filter.ppdu_start = 1;
+	filter->tlv_filter.ppdu_end = 1;
+	filter->tlv_filter.ppdu_end_user_stats = 1;
+	filter->tlv_filter.ppdu_end_user_stats_ext = 1;
+	filter->tlv_filter.ppdu_end_status_done = 1;
+	filter->tlv_filter.enable_fp = 1;
+	filter->tlv_filter.enable_md = 0;
+	filter->tlv_filter.fp_mgmt_filter = FILTER_MGMT_ACT_NO_ACK;
+	filter->tlv_filter.fp_ctrl_filter = 0;
+	filter->tlv_filter.fp_data_filter = 0;
+	filter->tlv_filter.offset_valid = false;
+	filter->tlv_filter.enable_mo = 0;
+}
+
+/**
+ * dp_mon_filter_set_cbf_cmn() - Set the common cbf mode filters
+ * @pdev: DP pdev handle
+ * @filter: Dp mon filters
+ *
+ * Return: void
+ */
+static void dp_mon_filter_set_cbf_cmn(struct dp_pdev *pdev,
+				      struct dp_mon_filter *filter)
+{
+	filter->tlv_filter.mpdu_start = 1;
+	filter->tlv_filter.msdu_start = 1;
+	filter->tlv_filter.packet = 1;
+	filter->tlv_filter.msdu_end = 1;
+	filter->tlv_filter.mpdu_end = 1;
+	filter->tlv_filter.attention = 1;
+	filter->tlv_filter.ppdu_start = 0;
+	filter->tlv_filter.ppdu_end =  0;
+	filter->tlv_filter.ppdu_end_user_stats = 0;
+	filter->tlv_filter.ppdu_end_user_stats_ext = 0;
+	filter->tlv_filter.ppdu_end_status_done = 0;
+	filter->tlv_filter.enable_fp = 1;
+	filter->tlv_filter.enable_md = 0;
+	filter->tlv_filter.fp_mgmt_filter = FILTER_MGMT_ACT_NO_ACK;
+	filter->tlv_filter.offset_valid = false;
+	filter->tlv_filter.enable_mo = 0;
 }
 
 #ifdef FEATURE_PERPKT_INFO
@@ -965,6 +1023,83 @@ void dp_mon_filter_reset_rx_pkt_log_lite(struct dp_pdev *pdev)
 		return;
 	}
 
+	pdev->filter[mode][srng_type] = filter;
+}
+
+/**
+ * dp_mon_filter_setup_rx_pkt_log_cbf() - Setup the Rx pktlog CBF mode filter
+ * @pdev: DP pdev handle
+ */
+void dp_mon_filter_setup_rx_pkt_log_cbf(struct dp_pdev *pdev)
+{
+	struct dp_mon_filter filter = {0};
+	struct dp_soc *soc = NULL;
+	enum dp_mon_filter_mode mode = DP_MON_FILTER_PKT_LOG_CBF_MODE;
+	enum dp_mon_filter_srng_type srng_type =
+				DP_MON_FILTER_SRNG_TYPE_RXDMA_MONITOR_STATUS;
+
+	if (!pdev) {
+		dp_mon_filter_err("pdev Context is null");
+		return;
+	}
+
+	soc = pdev->soc;
+	if (!soc) {
+		dp_mon_filter_err("Soc Context is null");
+		return;
+	}
+
+	/* Enabled the filter */
+	filter.valid = true;
+	dp_mon_filter_set_status_cbf(pdev, &filter);
+	dp_mon_filter_show_filter(pdev, mode, &filter);
+	pdev->filter[mode][srng_type] = filter;
+
+	/* Clear the filter as the same filter will be used to set the
+	 * monitor status ring
+	 */
+	qdf_mem_zero(&(filter), sizeof(struct dp_mon_filter));
+
+	filter.valid = true;
+	dp_mon_filter_set_cbf_cmn(pdev, &filter);
+	dp_mon_filter_show_filter(pdev, mode, &filter);
+
+	srng_type = ((soc->wlan_cfg_ctx->rxdma1_enable) ?
+			DP_MON_FILTER_SRNG_TYPE_RXDMA_MON_BUF :
+			DP_MON_FILTER_SRNG_TYPE_RXDMA_BUF);
+	pdev->filter[mode][srng_type] = filter;
+}
+
+/**
+ * dp_mon_filter_reset_rx_pktlog_cbf() - Reset the Rx pktlog CBF mode filter
+ * @pdev: DP pdev handle
+ */
+void dp_mon_filter_reset_rx_pktlog_cbf(struct dp_pdev *pdev)
+{
+	struct dp_mon_filter filter = {0};
+	struct dp_soc *soc = NULL;
+	enum dp_mon_filter_mode mode = DP_MON_FILTER_PKT_LOG_CBF_MODE;
+	enum dp_mon_filter_srng_type srng_type =
+				DP_MON_FILTER_SRNG_TYPE_RXDMA_BUF;
+	if (!pdev) {
+		QDF_TRACE(QDF_MODULE_ID_MON_FILTER, QDF_TRACE_LEVEL_ERROR,
+			  FL("pdev Context is null"));
+		return;
+	}
+
+	soc = pdev->soc;
+	if (!soc) {
+		QDF_TRACE(QDF_MODULE_ID_MON_FILTER, QDF_TRACE_LEVEL_ERROR,
+			  FL("Soc Context is null"));
+		return;
+	}
+
+	srng_type = ((soc->wlan_cfg_ctx->rxdma1_enable) ?
+			DP_MON_FILTER_SRNG_TYPE_RXDMA_MON_BUF :
+			DP_MON_FILTER_SRNG_TYPE_RXDMA_BUF);
+	pdev->filter[mode][srng_type] = filter;
+
+	srng_type = DP_MON_FILTER_SRNG_TYPE_RXDMA_MONITOR_STATUS;
 	pdev->filter[mode][srng_type] = filter;
 }
 #endif /* WDI_EVENT_ENABLE */

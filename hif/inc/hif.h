@@ -68,7 +68,8 @@ typedef void *hif_handle_t;
 #define HIF_TYPE_QCA6490 22
 #define HIF_TYPE_QCA6750 23
 #define HIF_TYPE_QCA5018 24
-#define HIF_TYPE_QCN9100 25
+#define HIF_TYPE_QCN6122 25
+#define HIF_TYPE_WCN7850 26
 
 #define DMA_COHERENT_MASK_DEFAULT   37
 
@@ -334,10 +335,30 @@ enum hif_event_type {
 
 #ifdef WLAN_FEATURE_DP_EVENT_HISTORY
 
+#if defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF)
 /* HIF_EVENT_HIST_MAX should always be power of 2 */
 #define HIF_EVENT_HIST_MAX		512
 #define HIF_NUM_INT_CONTEXTS		HIF_MAX_GROUP
-#define HIF_EVENT_HIST_DISABLE_MASK	0
+#define HIF_EVENT_HIST_ENABLE_MASK	0x3F
+
+static inline uint64_t hif_get_log_timestamp(void)
+{
+	return qdf_get_log_timestamp();
+}
+
+#else
+
+#define HIF_EVENT_HIST_MAX		32
+#define HIF_NUM_INT_CONTEXTS		HIF_MAX_GROUP
+/* Enable IRQ TRIGGER, NAPI SCHEDULE, SRNG ACCESS START */
+#define HIF_EVENT_HIST_ENABLE_MASK	0x19
+
+static inline uint64_t hif_get_log_timestamp(void)
+{
+	return qdf_sched_clock();
+}
+
+#endif
 
 /**
  * struct hif_event_record - an entry of the DP event history
@@ -1022,8 +1043,19 @@ static inline char *rtpm_string_from_dbgid(wlan_rtpm_dbgid id)
 	return (char *)strings[id];
 }
 
+/**
+ * enum hif_pm_link_state - hif link state
+ * HIF_PM_LINK_STATE_DOWN: hif link state is down
+ * HIF_PM_LINK_STATE_UP: hif link state is up
+ */
+enum hif_pm_link_state {
+	HIF_PM_LINK_STATE_DOWN,
+	HIF_PM_LINK_STATE_UP
+};
+
 #ifdef FEATURE_RUNTIME_PM
 struct hif_pm_runtime_lock;
+
 void hif_fastpath_resume(struct hif_opaque_softc *hif_ctx);
 int hif_pm_runtime_get_sync(struct hif_opaque_softc *hif_ctx,
 			    wlan_rtpm_dbgid rtpm_dbgid);
@@ -1058,6 +1090,22 @@ void hif_pm_runtime_mark_dp_rx_busy(struct hif_opaque_softc *hif_ctx);
 int hif_pm_runtime_is_dp_rx_busy(struct hif_opaque_softc *hif_ctx);
 qdf_time_t hif_pm_runtime_get_dp_rx_busy_mark(struct hif_opaque_softc *hif_ctx);
 int hif_pm_runtime_sync_resume(struct hif_opaque_softc *hif_ctx);
+
+/**
+ * hif_pm_set_link_state() - set link state during RTPM
+ * @hif_sc: HIF Context
+ *
+ * Return: None
+ */
+void hif_pm_set_link_state(struct hif_opaque_softc *hif_handle, uint8_t val);
+
+/**
+ * hif_is_link_state_up() - Is link state up
+ * @hif_sc: HIF Context
+ *
+ * Return: 1 link is up, 0 link is down
+ */
+uint8_t hif_pm_get_link_state(struct hif_opaque_softc *hif_handle);
 #else
 struct hif_pm_runtime_lock {
 	const char *name;
@@ -1132,6 +1180,10 @@ hif_pm_runtime_get_dp_rx_busy_mark(struct hif_opaque_softc *hif_ctx)
 { return 0; }
 static inline int hif_pm_runtime_sync_resume(struct hif_opaque_softc *hif_ctx)
 { return 0; }
+static inline
+void hif_pm_set_link_state(struct hif_opaque_softc *hif_handle, uint8_t val)
+{}
+
 #endif
 
 void hif_enable_power_management(struct hif_opaque_softc *hif_ctx,

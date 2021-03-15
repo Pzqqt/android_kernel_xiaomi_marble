@@ -153,6 +153,7 @@ dp_peer_copy_delay_stats(struct dp_peer *peer,
 
 	peer->delayed_ba_ppdu_stats.user_pos = ppdu->user_pos;
 	peer->delayed_ba_ppdu_stats.mu_group_id = ppdu->mu_group_id;
+	peer->delayed_ba_ppdu_stats.mcs = ppdu->mcs;
 
 	peer->last_delayed_ba = true;
 
@@ -199,6 +200,7 @@ dp_peer_copy_stats_to_bar(struct dp_peer *peer,
 
 	ppdu->user_pos = peer->delayed_ba_ppdu_stats.user_pos;
 	ppdu->mu_group_id = peer->delayed_ba_ppdu_stats.mu_group_id;
+	ppdu->mcs = peer->delayed_ba_ppdu_stats.mcs;
 
 	peer->last_delayed_ba = false;
 
@@ -463,6 +465,71 @@ dp_tx_stats_update(struct dp_pdev *pdev, struct dp_peer *peer,
 #endif
 }
 #endif
+
+QDF_STATUS dp_rx_populate_cbf_hdr(struct dp_soc *soc,
+				  uint32_t mac_id,
+				  uint32_t event,
+				  qdf_nbuf_t mpdu,
+				  uint32_t msdu_timestamp)
+{
+	uint32_t data_size, hdr_size, ppdu_id, align4byte;
+	struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
+	uint32_t *msg_word;
+
+	if (!pdev)
+		return QDF_STATUS_E_INVAL;
+
+	ppdu_id = pdev->ppdu_info.com_info.ppdu_id;
+
+	hdr_size = HTT_T2H_PPDU_STATS_IND_HDR_SIZE
+		+ qdf_offsetof(htt_ppdu_stats_rx_mgmtctrl_payload_tlv, payload);
+
+	data_size = qdf_nbuf_len(mpdu);
+
+	qdf_nbuf_push_head(mpdu, hdr_size);
+
+	msg_word = (uint32_t *)qdf_nbuf_data(mpdu);
+	/*
+	 * Populate the PPDU Stats Indication header
+	 */
+	HTT_H2T_MSG_TYPE_SET(*msg_word, HTT_T2H_MSG_TYPE_PPDU_STATS_IND);
+	HTT_T2H_PPDU_STATS_MAC_ID_SET(*msg_word, mac_id);
+	HTT_T2H_PPDU_STATS_PDEV_ID_SET(*msg_word, pdev->pdev_id);
+	align4byte = ((data_size +
+		qdf_offsetof(htt_ppdu_stats_rx_mgmtctrl_payload_tlv, payload)
+		+ 3) >> 2) << 2;
+	HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_SET(*msg_word, align4byte);
+	msg_word++;
+	HTT_T2H_PPDU_STATS_PPDU_ID_SET(*msg_word, ppdu_id);
+	msg_word++;
+
+	*msg_word = msdu_timestamp;
+	msg_word++;
+	/* Skip reserved field */
+	msg_word++;
+	/*
+	 * Populate MGMT_CTRL Payload TLV first
+	 */
+	HTT_STATS_TLV_TAG_SET(*msg_word,
+			      HTT_PPDU_STATS_RX_MGMTCTRL_PAYLOAD_TLV);
+
+	align4byte = ((data_size - sizeof(htt_tlv_hdr_t) +
+		qdf_offsetof(htt_ppdu_stats_rx_mgmtctrl_payload_tlv, payload)
+		+ 3) >> 2) << 2;
+	HTT_STATS_TLV_LENGTH_SET(*msg_word, align4byte);
+	msg_word++;
+
+	HTT_PPDU_STATS_RX_MGMTCTRL_TLV_FRAME_LENGTH_SET(
+		*msg_word, data_size);
+	msg_word++;
+
+	dp_wdi_event_handler(event, soc, (void *)mpdu,
+			     HTT_INVALID_PEER, WDI_NO_VAL, pdev->pdev_id);
+
+	qdf_nbuf_pull_head(mpdu, hdr_size);
+
+	return QDF_STATUS_SUCCESS;
+}
 
 #ifdef WLAN_TX_PKT_CAPTURE_ENH
 #include "dp_tx_capture.h"
@@ -2454,6 +2521,8 @@ static void dp_process_ppdu_stats_user_common_tlv(
 		HTT_PPDU_STATS_USER_COMMON_TLV_MPDUS_TRIED_GET(*tag_buf);
 	}
 
+	ppdu_user_desc->is_seq_num_valid =
+	HTT_PPDU_STATS_USER_COMMON_TLV_IS_SQNUM_VALID_IN_BUFFER_GET(*tag_buf);
 	tag_buf++;
 
 	ppdu_user_desc->qos_ctrl =
@@ -4448,7 +4517,7 @@ static void dp_htt_bkp_event_alert(u_int32_t *msg_word, struct htt_soc *soc)
 	dp_print_napi_stats(pdev->soc);
 }
 
-#ifdef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 /*
  * dp_offload_ind_handler() - offload msg handler
  * @htt_soc: HTT SOC handle
@@ -4466,7 +4535,7 @@ dp_offload_ind_handler(struct htt_soc *soc, uint32_t *msg_word)
 	pdev_id = dp_get_host_pdev_id_for_target_pdev_id(soc->dp_soc,
 							 target_pdev_id);
 	dp_wdi_event_handler(WDI_EVENT_PKT_CAPTURE_OFFLOAD_TX_DATA, soc->dp_soc,
-			     msg_word, HTT_INVALID_PEER, WDI_NO_VAL,
+			     msg_word, HTT_INVALID_VDEV, WDI_NO_VAL,
 			     pdev_id);
 }
 #else

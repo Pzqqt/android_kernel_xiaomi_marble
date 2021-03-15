@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,35 @@
 #include "wmi_unified_priv.h"
 #include "wmi_unified_param.h"
 #include "wmi_unified_cp_stats_api.h"
+
+#ifdef WLAN_SUPPORT_INFRA_CTRL_PATH_STATS
+QDF_STATUS
+wmi_unified_infra_cp_stats_request_send(wmi_unified_t wmi_handle,
+					struct infra_cp_stats_cmd_info *param)
+{
+	if (wmi_handle->ops->send_infra_cp_stats_request_cmd)
+		return wmi_handle->ops->send_infra_cp_stats_request_cmd(
+								wmi_handle,
+								param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+wmi_unified_extract_infra_cp_stats(wmi_unified_t wmi_handle,
+				   void *evt_buf, uint32_t evt_buf_len,
+				   struct infra_cp_stats_event *params)
+{
+	if (wmi_handle->ops->extract_infra_cp_stats)
+		return wmi_handle->ops->extract_infra_cp_stats(wmi_handle,
+								   evt_buf,
+								   evt_buf_len,
+								   params);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+#endif /* WLAN_SUPPORT_INFRA_CTRL_PATH_STATS */
 
 QDF_STATUS wmi_unified_stats_request_send(wmi_unified_t wmi_handle,
 					  uint8_t macaddr[QDF_MAC_ADDR_SIZE],

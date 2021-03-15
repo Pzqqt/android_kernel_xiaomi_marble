@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016-2020 The Linux Foundation.  All rights reserved.
+ * Copyright (c) 2013, 2016-2021 The Linux Foundation.  All rights reserved.
  * Copyright (c) 2005-2006 Atheros Communications, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -42,9 +42,6 @@
 #include <osdep.h>
 #include <wlan_cmn.h>
 #include "target_type.h"
-#ifdef QCA_SUPPORT_AGILE_DFS
-#include <wlan_sm_engine.h> /* for struct wlan_sm */
-#endif
 #include <wlan_dfs_public_struct.h>
 #include <reg_services_public_struct.h>
 
@@ -3194,4 +3191,24 @@ wlan_is_chan_history_radar(struct wlan_dfs *dfs, struct dfs_channel *chan)
 	return false;
 }
 #endif /* CONFIG_HOST_FIND_CHAN */
+
+#if defined(QCA_SUPPORT_ADFS_RCAC) && \
+	defined(WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT) && \
+	defined(QCA_SUPPORT_AGILE_DFS)
+/**
+ * dfs_restart_rcac_on_nol_expiry() - If the chosen desired channel is
+ * radar infected during RCAC, trigger RCAC on desired channel after
+ * NOL expiry.
+ * @dfs: Pointer to wlan_dfs structure.
+ *
+ * Return: True if rcac is started, false otherwise
+ */
+bool dfs_restart_rcac_on_nol_expiry(struct wlan_dfs *dfs);
+#else
+static inline bool
+dfs_restart_rcac_on_nol_expiry(struct wlan_dfs *dfs)
+{
+	return false;
+}
+#endif
 #endif  /* _DFS_H_ */

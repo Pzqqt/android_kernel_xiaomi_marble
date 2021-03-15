@@ -87,6 +87,7 @@ struct dbr_module_config;
 #endif
 
 #ifdef QCA_SUPPORT_CP_STATS
+#include <wlan_cp_stats_public_structs.h>
 
 /**
  * typedef cp_stats_event - Definition of cp stats event
@@ -124,6 +125,8 @@ typedef struct wake_lock_stats stats_wake_lock;
  *                       to FW
  * @set_pdev_stats_update_period: function pointer to set pdev stats update
  *                                period to FW
+ * @send_req_infra_cp_stats: function pointer to send infra cp stats request
+ *                           command to FW
  */
 struct wlan_lmac_if_cp_stats_tx_ops {
 	QDF_STATUS (*cp_stats_attach)(struct wlan_objmgr_psoc *psoc);
@@ -141,17 +144,28 @@ struct wlan_lmac_if_cp_stats_tx_ops {
 	QDF_STATUS (*set_pdev_stats_update_period)(
 					struct wlan_objmgr_psoc *psoc,
 					uint8_t pdev_id, uint32_t val);
+#ifdef WLAN_SUPPORT_INFRA_CTRL_PATH_STATS
+	QDF_STATUS (*send_req_infra_cp_stats)(
+					struct wlan_objmgr_psoc *psoc,
+					struct infra_cp_stats_cmd_info *req);
+#endif
 };
 
 /**
  * struct wlan_lmac_if_cp_stats_rx_ops - defines southbound rx callbacks for
  * control plane statistics component
  * @cp_stats_rx_event_handler:	function pointer to rx FW events
+ * @process_stats_event: function pointer to process stats event
  */
 struct wlan_lmac_if_cp_stats_rx_ops {
 	QDF_STATUS (*cp_stats_rx_event_handler)(struct wlan_objmgr_vdev *vdev);
 	QDF_STATUS (*process_stats_event)(struct wlan_objmgr_psoc *psoc,
-					  cp_stats_event *ev);
+					  struct stats_event *ev);
+#ifdef WLAN_SUPPORT_INFRA_CTRL_PATH_STATS
+	QDF_STATUS
+	(*process_infra_stats_event)(struct wlan_objmgr_psoc *psoc,
+				     struct infra_cp_stats_event *infra_event);
+#endif /* WLAN_SUPPORT_INFRA_CTRL_PATH_STATS */
 };
 #endif
 
@@ -822,6 +836,7 @@ struct wlan_lmac_if_ftm_rx_ops {
  * @register_11d_new_cc_handler: pointer to register 11d cc event handler
  * @unregister_11d_new_cc_handler:  pointer to unregister 11d cc event handler
  * @send_ctl_info: call-back function to send CTL info to firmware
+ * @set_tpc_power: send transmit power control info to firmware
  */
 struct wlan_lmac_if_reg_tx_ops {
 	QDF_STATUS (*register_master_handler)(struct wlan_objmgr_psoc *psoc,
@@ -861,6 +876,9 @@ struct wlan_lmac_if_reg_tx_ops {
 					      uint8_t pdev_id, uint8_t *phy_id);
 	QDF_STATUS (*get_pdev_id_from_phy_id)(struct wlan_objmgr_psoc *psoc,
 					      uint8_t phy_id, uint8_t *pdev_id);
+	QDF_STATUS (*set_tpc_power)(struct wlan_objmgr_psoc *psoc,
+				    uint8_t vdev_id,
+				    struct reg_tpc_power_info *param);
 };
 
 /**
@@ -959,7 +977,7 @@ struct wlan_lmac_if_dfs_tx_ops {
  * @tgt_is_tgt_type_qca9888: To check QCA9888 target type.
  * @tgt_is_tgt_type_adrastea: To check QCS40X target type.
  * @tgt_is_tgt_type_qcn9000: To check QCN9000 (Pine) target type.
- * @tgt_is_tgt_type_qcn9100: To check QCN9100 (Spruce) target type.
+ * @tgt_is_tgt_type_qcn6122: To check QCN6122 (Spruce) target type.
  * @tgt_get_tgt_type:        Get target type
  * @tgt_get_tgt_version:     Get target version
  * @tgt_get_tgt_revision:    Get target revision
@@ -971,7 +989,7 @@ struct wlan_lmac_if_target_tx_ops {
 	bool (*tgt_is_tgt_type_qca9888)(uint32_t);
 	bool (*tgt_is_tgt_type_adrastea)(uint32_t);
 	bool (*tgt_is_tgt_type_qcn9000)(uint32_t);
-	bool (*tgt_is_tgt_type_qcn9100)(uint32_t);
+	bool (*tgt_is_tgt_type_qcn6122)(uint32_t);
 	uint32_t (*tgt_get_tgt_type)(struct wlan_objmgr_psoc *psoc);
 	uint32_t (*tgt_get_tgt_version)(struct wlan_objmgr_psoc *psoc);
 	uint32_t (*tgt_get_tgt_revision)(struct wlan_objmgr_psoc *psoc);
@@ -1213,6 +1231,8 @@ struct wlan_lmac_if_reg_rx_ops {
 	bool (*reg_ignore_fw_reg_offload_ind)(struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*reg_get_unii_5g_bitmap)(struct wlan_objmgr_pdev *pdev,
 					     uint8_t *bitmap);
+	QDF_STATUS (*reg_set_ext_tpc_supported)(struct wlan_objmgr_psoc *psoc,
+						bool val);
 };
 
 #ifdef CONVERGED_P2P_ENABLE

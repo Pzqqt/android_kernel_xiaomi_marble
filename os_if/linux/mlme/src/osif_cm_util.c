@@ -279,10 +279,13 @@ void osif_cm_unlink_bss(struct wlan_objmgr_vdev *vdev,
 {
 	struct wiphy *wiphy = osif_priv->wdev->wiphy;
 	struct scan_filter *filter;
+	QDF_STATUS status;
 
-	__wlan_cfg80211_unlink_bss_list(wiphy, wlan_vdev_get_pdev(vdev),
+	status = __wlan_cfg80211_unlink_bss_list(wiphy, wlan_vdev_get_pdev(vdev),
 					bssid->bytes, ssid_len ? ssid : NULL,
 					ssid_len);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
 	filter = qdf_mem_malloc(sizeof(*filter));
 	if (!filter)
 		return;

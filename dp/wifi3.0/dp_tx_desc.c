@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -260,27 +260,30 @@ QDF_STATUS dp_tx_ext_desc_pool_alloc(struct dp_soc *soc, uint8_t num_pool,
 			goto free_ext_desc_page;
 		}
 	}
+
 	return status;
 
 free_ext_desc_page:
-	for (count = 0; count < pool_id; pool_id++) {
-		dp_tx_ext_desc_pool = &((soc)->tx_ext_desc[pool_id]);
+	for (count = 0; count < pool_id; count++) {
+		dp_tx_ext_desc_pool = &((soc)->tx_ext_desc[count]);
 		dp_desc_multi_pages_mem_free(
 					soc, DP_TX_EXT_DESC_LINK_TYPE,
 					&dp_tx_ext_desc_pool->desc_link_pages,
 					0, true);
 	}
+
 	pool_id = num_pool;
 
 fail_exit:
-	for (count = 0; count < pool_id; pool_id++) {
-		dp_tx_ext_desc_pool = &((soc)->tx_ext_desc[pool_id]);
+	for (count = 0; count < pool_id; count++) {
+		dp_tx_ext_desc_pool = &((soc)->tx_ext_desc[count]);
 		memctx = qdf_get_dma_mem_context(dp_tx_ext_desc_pool, memctx);
 		dp_desc_multi_pages_mem_free(
 					soc, DP_TX_EXT_DESC_TYPE,
 					&dp_tx_ext_desc_pool->desc_pages,
 					memctx, false);
 	}
+
 	return status;
 }
 

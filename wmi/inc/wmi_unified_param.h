@@ -1028,6 +1028,7 @@ typedef struct {
  * @peer_he_tx_mcs_set: Peer HE TX MCS MAP
  * @peer_ppet: Peer HE PPET info
  * @peer_bss_max_idle_option: Peer BSS Max Idle option update
+ * @akm: AKM info
  */
 struct peer_assoc_params {
 	uint32_t vdev_id;
@@ -1091,6 +1092,7 @@ struct peer_assoc_params {
 	struct wmi_host_ppe_threshold peer_ppet;
 	u_int8_t peer_bsscolor_rept_info;
 	uint32_t peer_bss_max_idle_option;
+	uint16_t akm;
 };
 
 /**
@@ -3341,6 +3343,16 @@ enum gpio_direction {
 };
 
 /**
+ * enum fw_gpio_direction - GPIO Direction
+ * @WMI_FW_GPIO_OUTPUT: set gpio as output mode
+ * @WMI_FW_GPIO_INPUT: set gpio as input mode
+ */
+enum fw_gpio_direction {
+	WMI_FW_GPIO_OUTPUT = 0,
+	WMI_FW_GPIO_INPUT = 1,
+};
+
+/**
  * enum qca_gpio_value - GPIO Value
  * @WLAN_GPIO_LEVEL_LOW: set gpio output level low
  * @WLAN_GPIO_LEVEL_HIGH: set gpio output level high
@@ -4705,6 +4717,8 @@ typedef enum {
 	wmi_pdev_param_pream_punct_bw,
 	wmi_pdev_param_enable_mbssid_ctrl_frame,
 	wmi_pdev_param_set_mesh_params,
+	wmi_pdev_param_mpd_userpd_ssr,
+	wmi_pdev_param_low_latency_mode,
 	wmi_pdev_param_max,
 } wmi_conv_pdev_params_id;
 
@@ -5071,6 +5085,7 @@ typedef enum {
 	wmi_service_5dot9_ghz_support,
 	wmi_service_cfr_ta_ra_as_fp_support,
 	wmi_service_cfr_capture_count_support,
+	wmi_service_ocv_support,
 	wmi_service_ll_stats_per_chan_rx_tx_time,
 	wmi_service_thermal_multi_client_support,
 	wmi_service_mbss_param_in_vdev_start_support,
@@ -5083,6 +5098,16 @@ typedef enum {
 	wmi_service_twt_bcast_req_support,
 	wmi_service_twt_bcast_resp_support,
 	wmi_service_spectral_scan_disabled,
+#ifdef WLAN_SUPPORT_TWT
+	wmi_service_twt_nudge,
+	wmi_service_all_twt,
+	wmi_service_twt_statistics,
+#endif
+	wmi_service_wapi_concurrency_supported,
+	wmi_service_sap_connected_d3_wow,
+	wmi_service_go_connected_d3_wow,
+	wmi_service_ext_tpc_reg_support,
+	wmi_service_ndi_txbf_support,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
@@ -5164,6 +5189,7 @@ struct wmi_host_fw_abi_ver {
  * @max_frag_entries: Max frag entries
  * @agile_capability: Target Agile Capability
  *      End common
+ * @enable_pci_gen: To enable pci gen switch
  * @max_peer_ext_stats: Max peer EXT stats
  * @smart_ant_cap: Smart antenna capabilities
  * @BK_Minfree: BIN configuration for BK traffic
@@ -5227,6 +5253,8 @@ struct wmi_host_fw_abi_ver {
  * @max_ndp_sessions: Max ndp sessions support
  * @max_ndi: max number of ndi host supports
  * @carrier_vow_optmization: configure vow-optimization for carrier-usecase
+ * @is_sap_connected_d3wow_enabled: is sap d3wow with connected client supported
+ * @is_go_connected_d3wow_enabled: is go d3wow with connected client supported
  */
 typedef struct {
 	uint32_t num_vdevs;
@@ -5259,6 +5287,7 @@ typedef struct {
 	uint32_t max_frag_entries;
 	uint32_t scheduler_params;
 	uint32_t agile_capability;
+	uint32_t enable_pci_gen;
 	/* End common */
 
 	/* Added for Beeliner */
@@ -5331,6 +5360,8 @@ typedef struct {
 	uint32_t max_ndp_sessions;
 	uint32_t max_ndi;
 	bool carrier_vow_optimization;
+	uint32_t is_sap_connected_d3wow_enabled;
+	uint32_t is_go_connected_d3wow_enabled;
 } target_resource_config;
 
 /**
@@ -6053,6 +6084,7 @@ enum {
 	WMI_HOST_PKTLOG_EVENT_STEERING_BIT,
 	WMI_HOST_PKTLOG_EVENT_TX_DATA_CAPTURE_BIT,
 	WMI_HOST_PKTLOG_EVENT_PHY_LOGGING_BIT,
+	WMI_HOST_PKTLOG_EVENT_CBF_BIT,
 };
 
 typedef enum {
@@ -6077,6 +6109,8 @@ typedef enum {
 	/* To support PHY logging */
 	WMI_HOST_PKTLOG_EVENT_PHY_LOGGING =
 		BIT(WMI_HOST_PKTLOG_EVENT_PHY_LOGGING_BIT),
+	WMI_HOST_PKTLOG_EVENT_CBF =
+		BIT(WMI_HOST_PKTLOG_EVENT_CBF_BIT),
 } WMI_HOST_PKTLOG_EVENT;
 
 /**

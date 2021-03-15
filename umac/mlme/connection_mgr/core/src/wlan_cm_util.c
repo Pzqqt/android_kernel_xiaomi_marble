@@ -35,6 +35,7 @@ static uint32_t cm_get_prefix_for_cm_id(enum wlan_cm_source source) {
 		return CONNECT_REQ_PREFIX;
 	case CM_ROAMING_HOST:
 	case CM_ROAMING_FW:
+	case CM_ROAMING_NUD_FAILURE:
 		return ROAM_REQ_PREFIX;
 	default:
 		return DISCONNECT_REQ_PREFIX;
@@ -128,6 +129,20 @@ inline void cm_req_lock_release(struct cnx_mgr *cm_ctx)
 {
 	qdf_spinlock_release(&cm_ctx->cm_req_lock);
 }
+
+QDF_STATUS cm_activate_cmd_req_flush_cb(struct scheduler_msg *msg)
+{
+	struct wlan_serialization_command *cmd = msg->bodyptr;
+
+	if (!cmd || !cmd->vdev) {
+		mlme_err("Null input cmd:%pK", cmd);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wlan_objmgr_vdev_release_ref(cmd->vdev, WLAN_MLME_CM_ID);
+	return QDF_STATUS_SUCCESS;
+}
+
 #else
 inline void cm_req_lock_acquire(struct cnx_mgr *cm_ctx)
 {
@@ -274,6 +289,16 @@ void cm_store_fils_key(struct cnx_mgr *cm_ctx, bool unicast,
 		   crypto_key->cipher_type, crypto_key->keylen,
 		   crypto_key->keyix, QDF_MAC_ADDR_REF(crypto_key->macaddr));
 }
+static void cm_set_fils_connection_from_req(struct wlan_cm_connect_req *req,
+					    struct wlan_cm_connect_resp *resp)
+{
+	resp->is_fils_connection = req->fils_info.is_fils_connection;
+}
+#else
+static inline
+void cm_set_fils_connection_from_req(struct wlan_cm_connect_req *req,
+				     struct wlan_cm_connect_resp *resp)
+{}
 #endif
 
 bool cm_check_cmid_match_list_head(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
@@ -399,6 +424,9 @@ cm_fill_connect_resp_from_req(struct wlan_cm_connect_resp *resp,
 		resp->freq = req->chan_freq;
 
 	resp->ssid = req->ssid;
+	resp->is_wps_connection = req->is_wps_connection;
+	resp->is_osen_connection = req->is_osen_connection;
+	cm_set_fils_connection_from_req(req, resp);
 }
 
 /**
@@ -521,6 +549,8 @@ cm_flush_pending_request(struct cnx_mgr *cm_ctx, uint32_t prefix,
 			cm_handle_disconnect_flush(cm_ctx, cm_req);
 			cm_ctx->disconnect_count--;
 		}
+
+		cm_req_history_del(cm_ctx, cm_req, CM_REQ_DEL_FLUSH);
 		mlme_debug(CM_PREFIX_FMT,
 			   CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
 					 cm_req->cm_id));
@@ -625,6 +655,7 @@ QDF_STATUS cm_add_req_to_list_and_indicate_osif(struct cnx_mgr *cm_ctx,
 	else if (prefix == DISCONNECT_REQ_PREFIX)
 		cm_ctx->disconnect_count++;
 
+	cm_req_history_add(cm_ctx, cm_req);
 	cm_req_lock_release(cm_ctx);
 	mlme_debug(CM_PREFIX_FMT,
 		   CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
@@ -701,6 +732,12 @@ cm_delete_req_from_list(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 	} else {
 		cm_ctx->disconnect_count--;
 	}
+
+	if (cm_id == cm_ctx->active_cm_id)
+		cm_req_history_del(cm_ctx, cm_req, CM_REQ_DEL_ACTIVE);
+	else
+		cm_req_history_del(cm_ctx, cm_req, CM_REQ_DEL_PENDING);
+
 	mlme_debug(CM_PREFIX_FMT,
 		   CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
 				 cm_req->cm_id));
@@ -711,7 +748,7 @@ cm_delete_req_from_list(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 	return QDF_STATUS_SUCCESS;
 }
 
-void cm_remove_cmd(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
+void cm_remove_cmd(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 {
 	struct wlan_objmgr_psoc *psoc;
 	QDF_STATUS status;
@@ -719,15 +756,15 @@ void cm_remove_cmd(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 	psoc = wlan_vdev_get_psoc(cm_ctx->vdev);
 	if (!psoc) {
 		mlme_err(CM_PREFIX_FMT "Failed to find psoc",
-			 CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev), cm_id));
+			 CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev), *cm_id));
 		return;
 	}
 
-	status = cm_delete_req_from_list(cm_ctx, cm_id);
+	status = cm_delete_req_from_list(cm_ctx, *cm_id);
 	if (QDF_IS_STATUS_ERROR(status))
 		return;
 
-	cm_remove_cmd_from_serialization(cm_ctx, cm_id);
+	cm_remove_cmd_from_serialization(cm_ctx, *cm_id);
 }
 
 void cm_vdev_scan_cancel(struct wlan_objmgr_pdev *pdev,
@@ -1090,6 +1127,10 @@ bool cm_get_active_connect_req(struct wlan_objmgr_vdev *vdev,
 			req->vdev_id = wlan_vdev_get_id(vdev);
 			req->cm_id = cm_req->connect_req.cm_id;
 			req->bss =  cm_req->connect_req.cur_candidate;
+			req->is_wps_connection =
+				cm_req->connect_req.req.is_wps_connection;
+			req->is_osen_connection =
+				cm_req->connect_req.req.is_osen_connection;
 			status = true;
 			cm_req_lock_release(cm_ctx);
 			return status;
@@ -1241,5 +1282,113 @@ void cm_calculate_scores(struct wlan_objmgr_pdev *pdev,
 			 struct scan_filter *filter, qdf_list_t *list)
 {
 	wlan_cm_calculate_bss_score(pdev, NULL, list, &filter->bssid_hint);
+}
+#endif
+
+#ifdef SM_ENG_HIST_ENABLE
+static const char *cm_id_to_string(wlan_cm_id cm_id)
+{
+	uint32_t prefix = CM_ID_GET_PREFIX(cm_id);
+
+	switch (prefix) {
+	case CONNECT_REQ_PREFIX:
+		return "CONNECT";
+	case DISCONNECT_REQ_PREFIX:
+		return "DISCONNECT";
+	case ROAM_REQ_PREFIX:
+		return "ROAM";
+	default:
+		return "INVALID";
+	}
+}
+
+void cm_req_history_add(struct cnx_mgr *cm_ctx,
+			struct cm_req *cm_req)
+{
+	struct cm_req_history *history = &cm_ctx->req_history;
+	struct cm_req_history_info *data;
+
+	qdf_spin_lock_bh(&history->cm_req_hist_lock);
+	data = &history->data[history->index];
+	history->index++;
+	history->index %= CM_REQ_HISTORY_SIZE;
+
+	qdf_mem_zero(data, sizeof(*data));
+	data->cm_id = cm_req->cm_id;
+	data->add_time = qdf_get_log_timestamp();
+	data->add_cm_state = cm_get_state(cm_ctx);
+	qdf_spin_unlock_bh(&history->cm_req_hist_lock);
+}
+
+void cm_req_history_del(struct cnx_mgr *cm_ctx,
+			struct cm_req *cm_req,
+			enum cm_req_del_type del_type)
+{
+	uint8_t i, idx;
+	struct cm_req_history_info *data;
+	struct cm_req_history *history = &cm_ctx->req_history;
+
+	qdf_spin_lock_bh(&history->cm_req_hist_lock);
+	for (i = 0; i < CM_REQ_HISTORY_SIZE; i++) {
+		if (history->index < i)
+			idx = CM_REQ_HISTORY_SIZE + history->index - i;
+		else
+			idx = history->index - i;
+
+		data = &history->data[idx];
+		if (data->cm_id == cm_req->cm_id) {
+			data->del_time = qdf_get_log_timestamp();
+			data->del_cm_state = cm_get_state(cm_ctx);
+			data->del_type = del_type;
+			break;
+		}
+
+		if (!data->cm_id)
+			break;
+	}
+	qdf_spin_unlock_bh(&history->cm_req_hist_lock);
+}
+
+void cm_req_history_init(struct cnx_mgr *cm_ctx)
+{
+	qdf_spinlock_create(&cm_ctx->req_history.cm_req_hist_lock);
+	qdf_mem_zero(&cm_ctx->req_history, sizeof(struct cm_req_history));
+}
+
+void cm_req_history_deinit(struct cnx_mgr *cm_ctx)
+{
+	qdf_spinlock_destroy(&cm_ctx->req_history.cm_req_hist_lock);
+}
+
+static inline void cm_req_history_print_entry(uint16_t idx,
+					      struct cm_req_history_info *data)
+{
+	if (!data->cm_id)
+		return;
+
+	mlme_nofl_err("    |%6u | 0x%016llx | 0x%016llx |%12s | 0x%08x |%15s |%15s |%8u",
+		      idx, data->add_time, data->del_time,
+		      cm_id_to_string(data->cm_id), data->cm_id,
+		      cm_sm_info[data->add_cm_state].name,
+		      cm_sm_info[data->del_cm_state].name,
+		      data->del_type);
+}
+
+void cm_req_history_print(struct cnx_mgr *cm_ctx)
+{
+	struct cm_req_history *history = &cm_ctx->req_history;
+	uint8_t i, idx;
+
+	mlme_nofl_err("CM Request history is as below");
+	mlme_nofl_err("|%6s |%19s |%19s |%12s |%11s |%15s |%15s |%8s",
+		      "Index", "Add Time", "Del Time", "Req type",
+		      "Cm Id", "Add State", "Del State", "Del Type");
+
+	qdf_spin_lock_bh(&history->cm_req_hist_lock);
+	for (i = 0; i < CM_REQ_HISTORY_SIZE; i++) {
+		idx = (history->index + i) % CM_REQ_HISTORY_SIZE;
+		cm_req_history_print_entry(idx, &history->data[idx]);
+	}
+	qdf_spin_unlock_bh(&history->cm_req_hist_lock);
 }
 #endif

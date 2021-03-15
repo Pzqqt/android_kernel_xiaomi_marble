@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -134,7 +134,7 @@ void hif_hist_record_event(struct hif_opaque_softc *hif_ctx,
 	struct hif_event_record *record;
 	int record_index;
 
-	if (scn->event_disable_mask & BIT(event->type))
+	if (!(scn->event_enable_mask & BIT(event->type)))
 		return;
 
 	if (qdf_unlikely(intr_grp_id >= HIF_NUM_INT_CONTEXTS)) {
@@ -156,14 +156,14 @@ void hif_hist_record_event(struct hif_opaque_softc *hif_ctx,
 
 	if (event->type == HIF_EVENT_IRQ_TRIGGER) {
 		hist_ev->misc.last_irq_index = record_index;
-		hist_ev->misc.last_irq_ts = qdf_get_log_timestamp();
+		hist_ev->misc.last_irq_ts = hif_get_log_timestamp();
 	}
 
 	record->hal_ring_id = event->hal_ring_id;
 	record->hp = event->hp;
 	record->tp = event->tp;
 	record->cpu_id = qdf_get_cpu();
-	record->timestamp = qdf_get_log_timestamp();
+	record->timestamp = hif_get_log_timestamp();
 	record->type = event->type;
 }
 
@@ -318,7 +318,7 @@ void hif_exec_fill_poll_time_histogram(struct hif_exec_context *hif_ext_group)
 	uint32_t bucket;
 	uint32_t cpu_id = qdf_get_cpu();
 
-	poll_time_ns = sched_clock() - hif_ext_group->poll_start_time;
+	poll_time_ns = qdf_time_sched_clock() - hif_ext_group->poll_start_time;
 	poll_time_us = qdf_do_div(poll_time_ns, 1000);
 
 	napi_stat = &hif_ext_group->stats[cpu_id];
@@ -345,7 +345,7 @@ static bool hif_exec_poll_should_yield(struct hif_exec_context *hif_ext_group)
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ext_group->hif);
 	struct hif_config_info *cfg = &scn->hif_config;
 
-	poll_time_ns = sched_clock() - hif_ext_group->poll_start_time;
+	poll_time_ns = qdf_time_sched_clock() - hif_ext_group->poll_start_time;
 	time_limit_reached =
 		poll_time_ns > cfg->rx_softirq_max_yield_duration_ns ? 1 : 0;
 
@@ -388,7 +388,7 @@ bool hif_exec_should_yield(struct hif_opaque_softc *hif_ctx, uint grp_id)
 static inline
 void hif_exec_update_service_start_time(struct hif_exec_context *hif_ext_group)
 {
-	hif_ext_group->poll_start_time = sched_clock();
+	hif_ext_group->poll_start_time = qdf_time_sched_clock();
 }
 
 void hif_print_napi_stats(struct hif_opaque_softc *hif_ctx)

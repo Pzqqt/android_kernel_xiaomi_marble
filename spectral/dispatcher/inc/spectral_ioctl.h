@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -111,6 +111,16 @@ enum spectral_report_mode {
 	SPECTRAL_REPORT_MODE_2,
 	SPECTRAL_REPORT_MODE_3,
 	SPECTRAL_REPORT_MODE_MAX,
+};
+
+/**
+ * enum spectral_scan_priority: Spectral scan priority
+ * @SPECTRAL_SCAN_PRIORITY_LOW: Low priority Spectral scan
+ * @SPECTRAL_SCAN_PRIORITY_HIGH: High priority Spectral scan
+ */
+enum spectral_scan_priority {
+	SPECTRAL_SCAN_PRIORITY_LOW = 0,
+	SPECTRAL_SCAN_PRIORITY_HIGH = 1,
 };
 
 /**

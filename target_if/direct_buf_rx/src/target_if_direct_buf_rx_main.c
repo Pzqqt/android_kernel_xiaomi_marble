@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1300,18 +1300,18 @@ static QDF_STATUS target_if_dbr_cfg_tgt(struct wlan_objmgr_pdev *pdev,
 	dbr_cfg_req.pdev_id = mod_param->pdev_id;
 	/* Module ID numbering starts from 1 in FW. need to fix it */
 	dbr_cfg_req.mod_id = mod_param->mod_id;
-	dbr_cfg_req.base_paddr_lo = (uint64_t)dbr_ring_cfg->base_paddr_aligned
-						& 0xFFFFFFFF;
-	dbr_cfg_req.base_paddr_hi = (uint64_t)dbr_ring_cfg->base_paddr_aligned
-						& 0xFFFFFFFF00000000;
-	dbr_cfg_req.head_idx_paddr_lo = (uint64_t)dbr_ring_cfg->head_idx_addr
-						& 0xFFFFFFFF;
-	dbr_cfg_req.head_idx_paddr_hi = (uint64_t)dbr_ring_cfg->head_idx_addr
-						& 0xFFFFFFFF00000000;
-	dbr_cfg_req.tail_idx_paddr_lo = (uint64_t)dbr_ring_cfg->tail_idx_addr
-						& 0xFFFFFFFF;
-	dbr_cfg_req.tail_idx_paddr_hi = (uint64_t)dbr_ring_cfg->tail_idx_addr
-						& 0xFFFFFFFF00000000;
+	dbr_cfg_req.base_paddr_lo =
+		qdf_get_lower_32_bits(dbr_ring_cfg->base_paddr_aligned);
+	dbr_cfg_req.base_paddr_hi =
+		qdf_get_upper_32_bits(dbr_ring_cfg->base_paddr_aligned);
+	dbr_cfg_req.head_idx_paddr_lo =
+		qdf_get_lower_32_bits(dbr_ring_cfg->head_idx_addr);
+	dbr_cfg_req.head_idx_paddr_hi =
+		qdf_get_upper_32_bits(dbr_ring_cfg->head_idx_addr);
+	dbr_cfg_req.tail_idx_paddr_lo =
+		qdf_get_lower_32_bits(dbr_ring_cfg->tail_idx_addr);
+	dbr_cfg_req.tail_idx_paddr_hi =
+		qdf_get_upper_32_bits(dbr_ring_cfg->tail_idx_addr);
 	dbr_cfg_req.num_elems = dbr_ring_cap->ring_elems_min;
 	dbr_cfg_req.buf_size = dbr_ring_cap->min_buf_size;
 	dbr_cfg_req.num_resp_per_event = dbr_config->num_resp_per_event;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -72,4 +72,13 @@ QDF_STATUS target_if_reg_set_5dot9_ghz_info(struct wlan_objmgr_psoc *psoc);
  */
 struct wlan_lmac_if_reg_rx_ops *
 target_if_regulatory_get_rx_ops(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * target_if_regulatory_set_ext_tpc() - populate FW support of new WMI command
+ * for TPC
+ * @psoc: psoc pointer
+ *
+ * Return: Success or Failure
+ */
+QDF_STATUS target_if_regulatory_set_ext_tpc(struct wlan_objmgr_psoc *psoc);
 #endif /* __TARGET_IF_REG_H__ */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1353,10 +1353,12 @@ struct qdf_tso_info_t {
  * enum qdf_suspend_type - type of suspend
  * @QDF_SYSTEM_SUSPEND: System suspend triggered wlan suspend
  * @QDF_RUNTIME_SUSPEND: Runtime pm inactivity timer triggered wlan suspend
+ * @QDF_UNIT_TEST_WOW_SUSPEND: WoW unit test suspend
  */
 enum qdf_suspend_type {
 	QDF_SYSTEM_SUSPEND,
-	QDF_RUNTIME_SUSPEND
+	QDF_RUNTIME_SUSPEND,
+	QDF_UNIT_TEST_WOW_SUSPEND
 };
 
 /**

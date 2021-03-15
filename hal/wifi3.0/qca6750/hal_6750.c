@@ -1478,8 +1478,17 @@ hal_reo_set_err_dst_remap_6750(void *hal_soc)
 		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 3) |
 		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 4) |
 		HAL_REO_ERR_REMAP_IX0(REO_REMAP_TCL, 5) |
-		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 6) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_TCL, 6) |
 		HAL_REO_ERR_REMAP_IX0(REO_REMAP_TCL, 7);
+
+	uint32_t dst_remap_ix1 =
+		HAL_REO_ERR_REMAP_IX1(REO_REMAP_RELEASE, 14) |
+		HAL_REO_ERR_REMAP_IX1(REO_REMAP_RELEASE, 13) |
+		HAL_REO_ERR_REMAP_IX1(REO_REMAP_RELEASE, 12) |
+		HAL_REO_ERR_REMAP_IX1(REO_REMAP_RELEASE, 11) |
+		HAL_REO_ERR_REMAP_IX1(REO_REMAP_RELEASE, 10) |
+		HAL_REO_ERR_REMAP_IX1(REO_REMAP_RELEASE, 9) |
+		HAL_REO_ERR_REMAP_IX1(REO_REMAP_TCL, 8);
 
 		HAL_REG_WRITE(hal_soc,
 			      HWIO_REO_R0_ERROR_DESTINATION_MAPPING_IX_0_ADDR(
@@ -1490,6 +1499,17 @@ hal_reo_set_err_dst_remap_6750(void *hal_soc)
 			 HAL_REG_READ(
 			 hal_soc,
 			 HWIO_REO_R0_ERROR_DESTINATION_MAPPING_IX_0_ADDR(
+			 SEQ_WCSS_UMAC_REO_REG_OFFSET)));
+
+		HAL_REG_WRITE(hal_soc,
+			      HWIO_REO_R0_ERROR_DESTINATION_MAPPING_IX_1_ADDR(
+			      SEQ_WCSS_UMAC_REO_REG_OFFSET),
+			      dst_remap_ix1);
+
+		hal_info("HWIO_REO_R0_ERROR_DESTINATION_MAPPING_IX_1 0x%x",
+			 HAL_REG_READ(
+			 hal_soc,
+			 HWIO_REO_R0_ERROR_DESTINATION_MAPPING_IX_1_ADDR(
 			 SEQ_WCSS_UMAC_REO_REG_OFFSET)));
 }
 
@@ -1926,6 +1946,9 @@ struct hal_hw_txrx_ops qca6750_hal_hw_txrx_ops = {
 	.hal_rx_msdu_start_offset_get = hal_rx_msdu_start_offset_get_generic,
 	.hal_rx_mpdu_start_offset_get = hal_rx_mpdu_start_offset_get_generic,
 	.hal_rx_mpdu_end_offset_get = hal_rx_mpdu_end_offset_get_generic,
+#ifndef NO_RX_PKT_HDR_TLV
+	.hal_rx_pkt_tlv_offset_get = hal_rx_pkt_tlv_offset_get_generic,
+#endif
 	.hal_rx_flow_setup_fse = hal_rx_flow_setup_fse_6750,
 	.hal_compute_reo_remap_ix2_ix3 = hal_compute_reo_remap_ix2_ix3_6750,
 

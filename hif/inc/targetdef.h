@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016,2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016,2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -46,7 +46,8 @@ extern struct targetdef_s *QCA8074V2_TARGETDEF;
 extern struct targetdef_s *QCA6018_TARGETDEF;
 extern struct targetdef_s *QCA5018_TARGETDEF;
 extern struct targetdef_s *QCN9000_TARGETDEF;
-extern struct targetdef_s *QCN9100_TARGETDEF;
+extern struct targetdef_s *QCN6122_TARGETDEF;
+extern struct targetdef_s *WCN7850_TARGETdef;
 
 extern struct ce_reg_def *AR6002_CE_TARGETdef;
 extern struct ce_reg_def *AR6003_CE_TARGETdef;
@@ -69,7 +70,7 @@ extern struct ce_reg_def *QCA8074V2_CE_TARGETDEF;
 extern struct ce_reg_def *QCA6018_CE_TARGETDEF;
 extern struct ce_reg_def *QCA5018_CE_TARGETDEF;
 extern struct ce_reg_def *QCN9000_CE_TARGETDEF;
-extern struct ce_reg_def *QCN9100_CE_TARGETDEF;
-
+extern struct ce_reg_def *QCN6122_CE_TARGETDEF;
+extern struct ce_reg_def *WCN7850_CE_TARGETdef;
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -302,8 +302,8 @@ bool hif_ce_service_should_yield(struct hif_softc *scn,
 {
 	bool yield, time_limit_reached, rxpkt_thresh_reached = 0;
 
-	time_limit_reached =
-		sched_clock() > ce_state->ce_service_yield_time ? 1 : 0;
+	time_limit_reached = qdf_time_sched_clock() >
+					ce_state->ce_service_yield_time ? 1 : 0;
 
 	if (!time_limit_reached)
 		rxpkt_thresh_reached = hif_max_num_receives_reached
@@ -1148,7 +1148,7 @@ int ce_per_engine_service(struct hif_softc *scn, unsigned int CE_id)
 	/* Clear force_break flag and re-initialize receive_count to 0 */
 	CE_state->receive_count = 0;
 	CE_state->force_break = 0;
-	CE_state->ce_service_start_time = sched_clock();
+	CE_state->ce_service_start_time = qdf_time_sched_clock();
 	CE_state->ce_service_yield_time =
 		CE_state->ce_service_start_time +
 		hif_get_ce_service_max_yield_time(

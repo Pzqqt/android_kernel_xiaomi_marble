@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -335,6 +335,10 @@ static bool mlme_vdev_state_dfs_cac_wait_event(void *ctx, uint16_t event,
 
 	switch (event) {
 	case WLAN_VDEV_SM_EV_DFS_CAC_WAIT:
+		/* Notify MLME about CAC wait state, MLME can perform
+		 * unblocking of some commands
+		 */
+		mlme_vdev_dfs_cac_wait_notify(vdev_mlme);
 		/* DFS timer should have started already, then only this event
 		 * could have been triggered
 		 */
@@ -1069,6 +1073,11 @@ static bool mlme_vdev_subst_start_disconn_progress_event(void *ctx,
 		status = true;
 		break;
 
+	case WLAN_VDEV_SM_EV_DOWN:
+		mlme_vdev_sta_disconn_start(vdev_mlme, event_data_len,
+					    event_data);
+		status = true;
+		break;
 	default:
 		status = false;
 		break;
@@ -1413,8 +1422,7 @@ static bool mlme_vdev_subst_suspend_csa_restart_event(void *ctx,
 			mlme_vdev_sm_deliver_event(vdev_mlme,
 						   WLAN_VDEV_SM_EV_RESTART_REQ,
 						   event_data_len, event_data);
-		} else if (mlme_vdev_replace_csa_with_stop_start(vdev_mlme) ==
-						QDF_STATUS_E_NOSUPPORT) {
+		} else  {
 			mlme_vdev_sm_transition_to
 				(vdev_mlme,
 				 WLAN_VDEV_SS_SUSPEND_SUSPEND_RESTART);

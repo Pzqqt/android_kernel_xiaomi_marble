@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -45,6 +45,7 @@
 #define DP_TX_DESC_FLAG_TDLS_FRAME	0x100
 #define DP_TX_DESC_FLAG_ALLOCATED	0x200
 #define DP_TX_DESC_FLAG_MESH_MODE	0x400
+#define DP_TX_DESC_FLAG_UNMAP_DONE	0x800
 
 #define DP_TX_EXT_DESC_FLAG_METADATA_VALID 0x1
 
@@ -424,9 +425,8 @@ static inline void dp_tx_get_queue(struct dp_vdev *vdev,
 	queue->desc_pool_id = queue_offset;
 	queue->ring_id = qdf_get_cpu();
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		  "%s, pool_id:%d ring_id: %d",
-		  __func__, queue->desc_pool_id, queue->ring_id);
+	dp_tx_debug("pool_id:%d ring_id: %d",
+		    queue->desc_pool_id, queue->ring_id);
 }
 
 /*
@@ -467,9 +467,8 @@ static inline void dp_tx_get_queue(struct dp_vdev *vdev,
 	queue->desc_pool_id = DP_TX_GET_DESC_POOL_ID(vdev);
 	queue->ring_id = DP_TX_GET_RING_ID(vdev);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		  "%s, pool_id:%d ring_id: %d",
-		  __func__, queue->desc_pool_id, queue->ring_id);
+	dp_tx_debug("pool_id:%d ring_id: %d",
+		    queue->desc_pool_id, queue->ring_id);
 }
 
 static inline hal_ring_handle_t dp_tx_get_hal_ring_hdl(struct dp_soc *soc,
@@ -660,7 +659,7 @@ QDF_STATUS dp_peer_set_tx_capture_enabled(struct dp_pdev *pdev,
 }
 #endif
 
-#ifdef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 void dp_send_completion_to_pkt_capture(struct dp_soc *soc,
 				       struct dp_tx_desc_s *desc,
 				       struct hal_tx_completion_status *ts);

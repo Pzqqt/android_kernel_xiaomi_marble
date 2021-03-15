@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -36,6 +36,7 @@
 #include "pci_api.h"
 #include "hif_napi.h"
 #include "qal_vbus_dev.h"
+#include "qdf_irq.h"
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
 #define IRQF_DISABLED 0x00000020
@@ -361,7 +362,7 @@ int hif_ahb_configure_grp_irq(struct hif_softc *scn,
 
 	for (j = 0; j < hif_ext_group->numirq; j++) {
 		irq = hif_ext_group->os_irq[j];
-		irq_set_status_flags(irq, IRQ_DISABLE_UNLAZY);
+		qdf_dev_set_irq_status_flags(irq, QDF_IRQ_DISABLE_UNLAZY);
 		ret = pfrm_request_irq(scn->qdf_dev->dev,
 				       irq, hif_ext_group_interrupt_handler,
 				       IRQF_TRIGGER_RISING,
@@ -399,8 +400,9 @@ void hif_ahb_deconfigure_grp_irq(struct hif_softc *scn)
 			for (j = 0; j < hif_ext_group->numirq; j++) {
 				irq = hif_ext_group->os_irq[j];
 				hif_ext_group->irq_enabled = false;
-				irq_clear_status_flags(irq,
-						       IRQ_DISABLE_UNLAZY);
+				qdf_dev_clear_irq_status_flags(
+							irq,
+							QDF_IRQ_DISABLE_UNLAZY);
 			}
 			qdf_spin_unlock_irqrestore(&hif_ext_group->irq_lock);
 
@@ -519,7 +521,7 @@ void hif_ahb_disable_bus(struct hif_softc *scn)
 		if ((tgt_info->target_type != TARGET_TYPE_QCA8074) &&
 		    (tgt_info->target_type != TARGET_TYPE_QCA8074V2) &&
 		    (tgt_info->target_type != TARGET_TYPE_QCA5018) &&
-		    (tgt_info->target_type != TARGET_TYPE_QCN9100) &&
+		    (tgt_info->target_type != TARGET_TYPE_QCN6122) &&
 		    (tgt_info->target_type != TARGET_TYPE_QCA6018)) {
 			hif_ahb_clk_enable_disable(&pdev->dev, 0);
 
@@ -583,7 +585,7 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (target_type == TARGET_TYPE_QCN9100) {
+	if (target_type == TARGET_TYPE_QCN6122) {
 		hif_ahb_get_soc_info_pld(sc, dev);
 		hif_update_irq_ops_with_pci(ol_sc);
 	} else {
@@ -664,7 +666,7 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 	if ((tgt_info->target_type != TARGET_TYPE_QCA8074) &&
 			(tgt_info->target_type != TARGET_TYPE_QCA8074V2) &&
 			(tgt_info->target_type != TARGET_TYPE_QCA5018) &&
-			(tgt_info->target_type != TARGET_TYPE_QCN9100) &&
+			(tgt_info->target_type != TARGET_TYPE_QCN6122) &&
 			(tgt_info->target_type != TARGET_TYPE_QCA6018)) {
 		if (hif_ahb_enable_radio(sc, pdev, id) != 0) {
 			hif_err("error in enabling soc");
@@ -683,7 +685,7 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 err_target_sync:
 	if ((tgt_info->target_type != TARGET_TYPE_QCA8074) &&
 	    (tgt_info->target_type != TARGET_TYPE_QCA8074V2) &&
-	    (tgt_info->target_type != TARGET_TYPE_QCN9100) &&
+	    (tgt_info->target_type != TARGET_TYPE_QCN6122) &&
 	    (tgt_info->target_type != TARGET_TYPE_QCA5018) &&
 	    (tgt_info->target_type != TARGET_TYPE_QCA6018)) {
 		hif_err("Disabling target");

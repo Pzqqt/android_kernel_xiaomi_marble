@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -27,6 +27,11 @@
 #include <linux/version.h>
 #include <linux/jiffies.h>
 #include <linux/delay.h>
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0))
+#include <linux/sched/clock.h>
+#else
+#include <linux/sched.h>
+#endif
 #include <linux/ktime.h>
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0))
 #include <linux/timekeeping.h>
@@ -36,9 +41,22 @@
 #ifdef MSM_PLATFORM
 #include <asm/arch_timer.h>
 #endif
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0))
+#include <linux/sched/clock.h>
+#else
+#include <linux/sched.h>
+#endif
 
 typedef unsigned long __qdf_time_t;
 typedef ktime_t  __qdf_ktime_t;
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 24)
+typedef struct timespec64 __qdf_timespec_t;
+#else
+typedef struct timeval __qdf_timespec_t;
+#endif
+
+typedef struct work_struct __qdf_work_struct_t;
 
 /**
  * __qdf_ns_to_ktime() - Converts nanoseconds to a ktime object
@@ -251,6 +269,16 @@ static inline bool __qdf_system_time_after_eq(__qdf_time_t a, __qdf_time_t b)
 }
 
 /**
+ * qdf_sched_clock() - use light weight timer to get timestamp
+ *
+ * Return: timestamp in ns
+ */
+static inline uint64_t __qdf_sched_clock(void)
+{
+	return sched_clock();
+}
+
+/**
  * __qdf_get_monotonic_boottime() - get monotonic kernel boot time
  * This API is similar to qdf_get_system_boottime but it includes
  * time spent in suspend.
@@ -343,6 +371,93 @@ static inline uint64_t __qdf_get_bootbased_boottime_ns(void)
 static inline uint64_t __qdf_get_bootbased_boottime_ns(void)
 {
 	return ktime_to_ns(ktime_get_boottime());
+}
+#endif
+
+/**
+ * __qdf_time_ms_to_ktime() - Converts milliseconds to a ktime object
+ * @ms: time in milliseconds
+ *
+ * Return: milliseconds as ktime object
+ */
+static inline ktime_t __qdf_time_ms_to_ktime(uint64_t ms)
+{
+	return ms_to_ktime(ms);
+}
+
+/**
+ * __qdf_time_ktime_real_get() - Gets the current wall clock as ktime object
+ *
+ * Return: current wall clock as ktime object
+ */
+static inline ktime_t __qdf_time_ktime_real_get(void)
+{
+	return ktime_get_real();
+}
+
+/**
+ * __qdf_time_sched_clock() - schedule clock
+ *
+ * Return: returns current time in nanosec units.
+ */
+static inline unsigned long long __qdf_time_sched_clock(void)
+{
+	return sched_clock();
+}
+
+/**
+ * __qdf_time_ktime_sub() - Subtract two ktime objects and returns
+ * a ktime object
+ * @time1: time as ktime object
+ * @time2: time as ktime object
+ *
+ * Return: subtraction of ktime objects as ktime object
+ */
+static inline ktime_t __qdf_time_ktime_sub(ktime_t ktime1, ktime_t ktime2)
+{
+	return ktime_sub(ktime1, ktime2);
+}
+
+/**
+ * __qdf_time_ktime_set() - Set a ktime_t variable from a seconds/nanoseconds
+ * value
+ * @secs: seconds to set
+ * @nsecs: nanoseconds to set
+ *
+ * Return: The ktime_t representation of the value.
+ */
+static inline ktime_t __qdf_time_ktime_set(const s64 secs,
+					   const unsigned long nsecs)
+{
+	return ktime_set(secs, nsecs);
+}
+
+/**
+ * __qdf_time_ktime_to_us() - Convert the ktime_t object into microseconds
+ * @ktime: time as ktime_t object
+ *
+ * Return: ktime_t in microseconds
+ */
+static inline int64_t __qdf_time_ktime_to_us(ktime_t ktime)
+{
+	return ktime_to_us(ktime);
+}
+
+/**
+ * __qdf_time_ktime_get_real_time() - Get the time of day in qdf_timespec_t
+ * @ts: pointer to the qdf_timespec_t to be set
+ *
+ * Return: none
+ */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 24)
+static inline void __qdf_time_ktime_get_real_time(__qdf_timespec_t *ts)
+{
+	ktime_get_real_ts64(ts);
+}
+#else
+static inline void __qdf_time_ktime_get_real_time(__qdf_timespec_t *ts)
+{
+	do_gettimeofday(ts);
 }
 #endif
 

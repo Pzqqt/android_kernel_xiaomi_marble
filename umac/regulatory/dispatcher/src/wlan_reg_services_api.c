@@ -584,14 +584,6 @@ uint8_t wlan_reg_freq_to_chan(struct wlan_objmgr_pdev *pdev,
 
 qdf_export_symbol(wlan_reg_freq_to_chan);
 
-qdf_freq_t wlan_reg_chan_to_freq(struct wlan_objmgr_pdev *pdev,
-				 uint8_t chan_num)
-{
-	return reg_chan_to_freq(pdev, chan_num);
-}
-
-qdf_export_symbol(wlan_reg_chan_to_freq);
-
 qdf_freq_t wlan_reg_legacy_chan_to_freq(struct wlan_objmgr_pdev *pdev,
 					uint8_t chan_num)
 {
@@ -828,6 +820,11 @@ bool wlan_reg_is_range_overlap_2g(qdf_freq_t low_freq, qdf_freq_t high_freq)
 bool wlan_reg_is_range_overlap_5g(qdf_freq_t low_freq, qdf_freq_t high_freq)
 {
 	return reg_is_range_overlap_5g(low_freq, high_freq);
+}
+
+bool wlan_reg_is_freq_indoor(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)
+{
+	return reg_is_freq_indoor(pdev, freq);
 }
 
 #ifdef CONFIG_BAND_6GHZ
@@ -1352,4 +1349,15 @@ wlan_reg_get_client_power_for_6ghz_ap(struct wlan_objmgr_pdev *pdev,
 						is_psd, tx_power,
 						eirp_psd_power);
 }
-#endif
+
+enum reg_6g_ap_type
+wlan_reg_decide_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev)
+{
+	return reg_decide_6g_ap_pwr_type(pdev);
+}
+#endif /* CONFIG_BAND_6GHZ */
+
+bool wlan_reg_is_ext_tpc_supported(struct wlan_objmgr_psoc *psoc)
+{
+	return reg_is_ext_tpc_supported(psoc);
+}

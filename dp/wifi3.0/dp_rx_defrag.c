@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -164,8 +164,7 @@ void dp_rx_defrag_waitlist_flush(struct dp_soc *soc)
 
 	TAILQ_INIT(&temp_list);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		  FL("Current time  %u"), now_ms);
+	dp_debug("Current time  %u", now_ms);
 
 	qdf_spin_lock_bh(&soc->rx.defrag.defrag_lock);
 	TAILQ_FOREACH_SAFE(rx_reorder, &soc->rx.defrag.waitlist,
@@ -849,9 +848,8 @@ static void dp_rx_frag_pull_hdr(qdf_nbuf_t nbuf, uint16_t hdrsize)
 
 	qdf_nbuf_pull_head(nbuf, RX_PKT_TLVS_LEN + hdrsize);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		  "%s: final pktlen %d .11len %d",
-		  __func__, (uint32_t)qdf_nbuf_len(nbuf), hdrsize);
+	dp_debug("final pktlen %d .11len %d",
+		 (uint32_t)qdf_nbuf_len(nbuf), hdrsize);
 }
 
 /*
@@ -941,12 +939,10 @@ dp_rx_construct_fraglist(struct dp_peer *peer, int tid, qdf_nbuf_t head,
 	qdf_nbuf_set_next(head, NULL);
 	qdf_nbuf_set_is_frag(head, 1);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		  "%s: head len %d ext len %d data len %d ",
-		  __func__,
-		  (uint32_t)qdf_nbuf_len(head),
-		  (uint32_t)qdf_nbuf_len(rx_nbuf),
-		  (uint32_t)(head->data_len));
+	dp_debug("head len %d ext len %d data len %d ",
+		 (uint32_t)qdf_nbuf_len(head),
+		 (uint32_t)qdf_nbuf_len(rx_nbuf),
+		 (uint32_t)(head->data_len));
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1334,7 +1330,7 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 
 	paddr = qdf_nbuf_get_frag_paddr(head, 0);
 
-	ret = check_x86_paddr(soc, &head, &paddr, rx_desc_pool);
+	ret = dp_check_paddr(soc, &head, &paddr, rx_desc_pool);
 
 	if (ret == QDF_STATUS_E_FAILURE) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -1402,8 +1398,7 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 	hal_srng_access_end(soc->hal_soc, hal_srng);
 
 	DP_STATS_INC(soc, rx.reo_reinject, 1);
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		  "%s: reinjection done !", __func__);
+	dp_debug("reinjection done !");
 	return QDF_STATUS_SUCCESS;
 }
 #endif
@@ -1951,8 +1946,8 @@ uint32_t dp_rx_frag_handle(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 	/* all buffers in MSDU link belong to same pdev */
 	pdev = dp_get_pdev_for_lmac_id(soc, rx_desc->pool_id);
 	if (!pdev) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "pdev is null for pool_id = %d", rx_desc->pool_id);
+		dp_nofl_debug("pdev is null for pool_id = %d",
+			      rx_desc->pool_id);
 		return rx_bufs_used;
 	}
 

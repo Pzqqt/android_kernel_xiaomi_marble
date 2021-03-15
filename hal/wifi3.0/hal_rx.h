@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1926,9 +1926,8 @@ static inline void hal_rx_msdu_list_get(hal_soc_handle_t hal_soc_hdl,
 
 	msdu_details = hal_rx_link_desc_msdu0_ptr(msdu_link, hal_soc);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		"[%s][%d] msdu_link=%pK msdu_details=%pK",
-		__func__, __LINE__, msdu_link, msdu_details);
+	dp_nofl_debug("[%s][%d] msdu_link=%pK msdu_details=%pK",
+		      __func__, __LINE__, msdu_link, msdu_details);
 
 	for (i = 0; i < HAL_RX_NUM_MSDU_DESC; i++) {
 		/* num_msdus received in mpdu descriptor may be incorrect
@@ -1967,9 +1966,8 @@ static inline void hal_rx_msdu_list_get(hal_soc_handle_t hal_soc_hdl,
 			   &msdu_details[i].buffer_addr_info_details) |
 			   (uint64_t)HAL_RX_BUFFER_ADDR_39_32_GET(
 			   &msdu_details[i].buffer_addr_info_details) << 32;
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"[%s][%d] i=%d sw_cookie=%d",
-			__func__, __LINE__, i, msdu_list->sw_cookie[i]);
+		dp_nofl_debug("[%s][%d] i=%d sw_cookie=%d",
+			      __func__, __LINE__, i, msdu_list->sw_cookie[i]);
 	}
 	*num_msdus = i;
 }
@@ -3979,6 +3977,20 @@ uint32_t hal_rx_mpdu_start_offset_get(hal_soc_handle_t hal_soc_hdl)
 	}
 
 	return hal_soc->ops->hal_rx_mpdu_start_offset_get();
+}
+
+static inline
+uint32_t hal_rx_pkt_tlv_offset_get(hal_soc_handle_t hal_soc_hdl)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (!hal_soc || !hal_soc->ops) {
+		hal_err("hal handle is NULL");
+		QDF_BUG(0);
+		return 0;
+	}
+
+	return hal_soc->ops->hal_rx_pkt_tlv_offset_get();
 }
 
 /**

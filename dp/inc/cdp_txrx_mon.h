@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -25,14 +25,14 @@
 #ifndef _CDP_TXRX_MON_H_
 #define _CDP_TXRX_MON_H_
 #include "cdp_txrx_handle.h"
+#include <cdp_txrx_cmn.h>
 
 static inline QDF_STATUS cdp_reset_monitor_mode(ol_txrx_soc_handle soc,
 						uint8_t pdev_id,
 						u_int8_t smart_monitor)
 {
 	if (!soc || !soc->ops) {
-		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
-				"%s: Invalid Instance", __func__);
+		dp_cdp_debug("Invalid Instance");
 		QDF_BUG(0);
 		return 0;
 	}
@@ -56,8 +56,7 @@ cdp_deliver_tx_mgmt(ol_txrx_soc_handle soc, uint8_t pdev_id,
 		    qdf_nbuf_t nbuf)
 {
 	if (!soc || !soc->ops) {
-		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s: Invalid Instance", __func__);
+		dp_cdp_debug("Invalid Instance");
 		QDF_BUG(0);
 		return QDF_STATUS_E_FAILURE;
 	}

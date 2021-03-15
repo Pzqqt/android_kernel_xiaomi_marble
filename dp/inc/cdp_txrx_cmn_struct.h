@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -402,7 +402,6 @@ enum cdp_txrx_ast_entry_type {
 	CDP_TXRX_AST_TYPE_STATIC, /* static ast entry for connected peer */
 	CDP_TXRX_AST_TYPE_SELF, /* static ast entry for self peer (STA mode) */
 	CDP_TXRX_AST_TYPE_WDS,	/* WDS peer ast entry type*/
-	CDP_TXRX_AST_TYPE_MEC,	/* Multicast echo ast entry type */
 	CDP_TXRX_AST_TYPE_WDS_HM, /* HM WDS entry */
 	CDP_TXRX_AST_TYPE_STA_BSS,	 /* BSS entry(STA mode) */
 	CDP_TXRX_AST_TYPE_DA,	/* AST entry based on Destination address */
@@ -1106,6 +1105,8 @@ enum cdp_pdev_param_type {
  * @cdp_vdev_param_drop_unenc: set drop unencrypted flag
  * @cdp_vdev_param_hlos_tid_override: set hlos tid override
  * @cdp_vdev_param_peer_authorize: set peer authorize
+ * @cdp_vdev_param_peer_tid_latency_enable: set peer tid latency enable flag
+ * @cdp_vdev_param_mesh_tid: config tatency tid on vdev
  *
  * @cdp_pdev_param_dbg_snf: Enable debug sniffer feature
  * @cdp_pdev_param_bpr_enable: Enable bcast probe feature
@@ -1173,6 +1174,8 @@ typedef union cdp_config_param_t {
 	uint8_t cdp_vdev_param_hlos_tid_override;
 	bool cdp_vdev_param_wds_ext;
 	uint8_t cdp_vdev_param_peer_authorize;
+	uint8_t cdp_vdev_param_peer_tid_latency_enable;
+	uint8_t cdp_vdev_param_mesh_tid;
 
 	/* pdev params */
 	bool cdp_pdev_param_cptr_latcy;
@@ -1285,6 +1288,8 @@ enum cdp_pdev_bpr_param {
  * @CDP_ENABLE_HLOS_TID_OVERRIDE: set hlos tid override flag
  * @CDP_CFG_WDS_EXT: enable/disable wds ext feature
  * @CDP_ENABLE_PEER_AUTHORIZE: enable peer authorize flag
+ * @CDP_ENABLE_PEER_TID_LATENCY: set peer tid latency enable flag
+ * @CDP_SET_VAP_MESH_TID : Set latency tid in vap
  */
 enum cdp_vdev_param_type {
 	CDP_ENABLE_NAWDS,
@@ -1316,6 +1321,10 @@ enum cdp_vdev_param_type {
 	CDP_CFG_WDS_EXT,
 #endif /* QCA_SUPPORT_WDS_EXTENDED */
 	CDP_ENABLE_PEER_AUTHORIZE,
+#ifdef WLAN_SUPPORT_MESH_LATENCY
+	CDP_ENABLE_PEER_TID_LATENCY,
+	CDP_SET_VAP_MESH_TID,
+#endif
 };
 
 /*
@@ -1636,6 +1645,9 @@ struct cdp_delayed_tx_completion_ppdu_user {
  * @ppdu_type: SU/MU_MIMO/MU_OFDMA/MU_MIMO_OFDMA/UL_TRIG/BURST_BCN/UL_BSR_RESP/
  * @pream_punct: Preamble Punctured PPDU
  * UL_BSR_TRIG/UNKNOWN
+ * @is_seq_num_valid:
+ *       1 - stats tlv has valid sequence number
+ *       0 - payload has valid sequence number
  * @ba_seq_no: Block Ack sequence number
  * @ba_bitmap: Block Ack bitmap
  * @start_seqa: Sequence number of first MPDU
@@ -1686,7 +1698,8 @@ struct cdp_tx_completion_ppdu_user {
 		 tx_ratecode:16,
 		 is_ampdu:1,
 		 ppdu_type:5,
-		 pream_punct:1;
+		 pream_punct:1,
+		 is_seq_num_valid:1;
 	uint32_t success_bytes;
 	uint32_t retry_bytes;
 	uint32_t failed_bytes;
@@ -1961,8 +1974,8 @@ struct cdp_tx_completion_ppdu {
 	uint32_t usr_ru_tones_sum;
 	uint32_t bar_ppdu_id;
 	uint32_t bar_tx_duration;
-	uint32_t bar_ppdu_start_timestamp;
-	uint32_t bar_ppdu_end_timestamp;
+	uint64_t bar_ppdu_start_timestamp;
+	uint64_t bar_ppdu_end_timestamp;
 	uint32_t tlv_bitmap;
 	uint16_t sched_cmdid;
 	uint16_t phy_ppdu_tx_time_us;

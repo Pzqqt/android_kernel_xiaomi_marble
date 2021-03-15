@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -101,7 +101,7 @@ QDF_STATUS hif_initialize_pci_ops(struct hif_softc *hif_sc)
 
 /**
  * hif_update_irq_ops_with_pci() - reinitialize the pci ops
- * for hybrid bus type device qcn9100 ie.connected to pci slot
+ * for hybrid bus type device qcn6122 ie.connected to pci slot
  * but act as ahb bus device from host perspective
  *
  * @hif_sc: hif_softc to get bus ops

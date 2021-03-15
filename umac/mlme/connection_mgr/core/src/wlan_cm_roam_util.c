@@ -40,14 +40,20 @@ QDF_STATUS cm_check_and_prepare_roam_req(struct cnx_mgr *cm_ctx,
 	struct qdf_mac_addr bssid;
 	struct wlan_ssid ssid;
 	struct cm_req *cm_req, *req_ptr;
+	qdf_freq_t freq = 0;
 
 	cm_req = qdf_container_of(connect_req, struct cm_req, connect_req);
 	req = &connect_req->req;
+
+	if (req->chan_freq)
+		freq = req->chan_freq;
+	else if (req->chan_freq_hint)
+		freq = req->chan_freq_hint;
 	/*
 	 * Reject re-assoc unless freq along with prev bssid and one
 	 * of bssid or bssid hint is present.
 	 */
-	if (!req->chan_freq || qdf_is_macaddr_zero(&req->prev_bssid) ||
+	if (!freq || qdf_is_macaddr_zero(&req->prev_bssid) ||
 	    (qdf_is_macaddr_zero(&req->bssid) &&
 	     qdf_is_macaddr_zero(&req->bssid_hint)))
 		return QDF_STATUS_E_FAILURE;
@@ -55,8 +61,12 @@ QDF_STATUS cm_check_and_prepare_roam_req(struct cnx_mgr *cm_ctx,
 	wlan_vdev_get_bss_peer_mac(cm_ctx->vdev, &bssid);
 
 	/* Reject re-assoc unless prev_bssid matches the current BSSID. */
-	if (!qdf_is_macaddr_equal(&req->prev_bssid, &bssid))
+	if (!qdf_is_macaddr_equal(&req->prev_bssid, &bssid)) {
+		mlme_debug("BSSID didn't matched: bssid: "QDF_MAC_ADDR_FMT " prev bssid: " QDF_MAC_ADDR_FMT,
+			   QDF_MAC_ADDR_REF(bssid.bytes),
+			   QDF_MAC_ADDR_REF(req->prev_bssid.bytes));
 		return QDF_STATUS_E_FAILURE;
+	}
 
 	status = wlan_vdev_mlme_get_ssid(cm_ctx->vdev, ssid.ssid, &ssid.length);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -66,8 +76,12 @@ QDF_STATUS cm_check_and_prepare_roam_req(struct cnx_mgr *cm_ctx,
 
 	/* Reject re-assoc unless ssid matches. */
 	if (ssid.length != req->ssid.length ||
-	    qdf_mem_cmp(ssid.ssid, req->ssid.ssid, ssid.length))
+	    qdf_mem_cmp(ssid.ssid, req->ssid.ssid, ssid.length)) {
+		mlme_debug("SSID didn't matched: self ssid: \"%.*s\", ssid in req: \"%.*s\"",
+			   ssid.length, ssid.ssid, req->ssid.length,
+			   req->ssid.ssid);
 		return QDF_STATUS_E_FAILURE;
+	}
 
 	/* fill roam_req for roaming and free cm_req */
 	*roam_req = qdf_mem_malloc(sizeof(**roam_req));
@@ -82,7 +96,7 @@ QDF_STATUS cm_check_and_prepare_roam_req(struct cnx_mgr *cm_ctx,
 				 &req->bssid_hint);
 
 	qdf_copy_macaddr(&req_ptr->roam_req.req.prev_bssid, &req->prev_bssid);
-	req_ptr->roam_req.req.chan_freq = req->chan_freq;
+	req_ptr->roam_req.req.chan_freq = freq;
 	req_ptr->roam_req.req.source = CM_ROAMING_HOST;
 
 	/* Free the connect req, as reassoc is tried */

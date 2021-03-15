@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -184,6 +184,32 @@ qal_vbus_register_driver(struct qdf_pfm_drv *pfdev);
  */
 QDF_STATUS
 qal_vbus_deregister_driver(struct qdf_pfm_drv *pfdev);
+
+/**
+ * qal_vbus_gpio_set_value_cansleep() - assign a gpio's value
+ * @gpio: gpio whose value will be assigned
+ * @value: value to assign
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+QDF_STATUS
+qal_vbus_gpio_set_value_cansleep(unsigned int gpio, int value);
+
+/**
+ * rcu_read_lock() - mark the beginning of an RCU read-side critical section
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+QDF_STATUS
+qal_vbus_rcu_read_lock(void);
+
+/**
+ * rcu_read_unlock() - mark the end of an RCU read-side critical section
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+QDF_STATUS
+qal_vbus_rcu_read_unlock(void);
 #else
 static inline QDF_STATUS
 qal_vbus_get_iorsc(int devnum, uint32_t flag, char *devname)
@@ -262,5 +288,24 @@ qal_vbus_deregister_driver(struct qdf_pfm_drv *pfdev)
 {
 	return __qal_vbus_deregister_driver(pfdev);
 }
+
+static inline QDF_STATUS
+qal_vbus_gpio_set_value_cansleep(unsigned int gpio, int value)
+{
+	return __qal_vbus_gpio_set_value_cansleep(gpio, value);
+}
+
+static inline QDF_STATUS
+qal_vbus_rcu_read_lock(void)
+{
+	return __qal_vbus_rcu_read_lock();
+}
+
+static inline QDF_STATUS
+qal_vbus_rcu_read_unlock(void)
+{
+	return __qal_vbus_rcu_read_unlock();
+}
 #endif
+
 #endif  /* __QAL_VBUS_DEV_H */

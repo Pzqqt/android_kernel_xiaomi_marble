@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -115,7 +115,7 @@ ol_txrx_soc_handle cdp_soc_attach(u_int16_t devid,
 	case QCA5018_DEVICE_ID:
 	case QCA6290_DEVICE_ID:
 	case QCN9000_DEVICE_ID:
-	case QCN9100_DEVICE_ID:
+	case QCN6122_DEVICE_ID:
 	case QCA6390_DEVICE_ID:
 	case QCA6490_DEVICE_ID:
 	case QCA6750_DEVICE_ID:
@@ -126,6 +126,8 @@ ol_txrx_soc_handle cdp_soc_attach(u_int16_t devid,
 	case RUMIM2M_DEVICE_ID_NODE3: /*lithium emulation */
 	case RUMIM2M_DEVICE_ID_NODE4: /*lithium emulation */
 	case RUMIM2M_DEVICE_ID_NODE5: /*lithium emulation */
+	case WCN7850_EMULATION_DEVICE_ID:
+	case WCN7850_DEVICE_ID:
 		return dp_soc_attach_wifi3(psoc, hif_handle, htc_handle,
 			qdf_dev, dp_ol_if_ops, devid);
 	break;

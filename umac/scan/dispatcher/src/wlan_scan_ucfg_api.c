@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -260,6 +260,8 @@ wlan_pno_global_init(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_MAX_SCHED_SCAN_PLAN_INTERVAL);
 	pno_def->max_sched_scan_plan_iterations =
 			cfg_get(psoc, CFG_MAX_SCHED_SCAN_PLAN_ITERATIONS);
+	pno_def->user_config_sched_scan_plan =
+			cfg_get(psoc, CFG_USER_CONFIG_SCHED_SCAN_PLAN);
 
 	mawc_cfg->enable = cfg_get(psoc, CFG_MAWC_NLO_ENABLED);
 	mawc_cfg->exp_backoff_ratio =
@@ -1804,4 +1806,17 @@ ucfg_scan_get_max_sched_scan_plan_iterations(struct wlan_objmgr_psoc *psoc)
 	return scan_obj->pno_cfg.max_sched_scan_plan_iterations;
 }
 
+bool
+ucfg_scan_get_user_config_sched_scan_plan(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj) {
+		scm_err("Failed to get scan object");
+		return cfg_default(CFG_MAX_SCHED_SCAN_PLAN_ITERATIONS);
+	}
+
+	return scan_obj->pno_cfg.user_config_sched_scan_plan;
+}
 #endif

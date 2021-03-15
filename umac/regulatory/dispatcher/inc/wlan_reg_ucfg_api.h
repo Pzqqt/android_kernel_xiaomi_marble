@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -104,15 +104,28 @@ void ucfg_reg_cache_channel_freq_state(struct wlan_objmgr_pdev *pdev,
 }
 #endif /* CONFIG_CHAN_FREQ_API */
 
+#ifdef DISABLE_CHANNEL_LIST
 /**
- * ucfg_reg_restore_cached_channels() - Cache the current state of the channles
+ * ucfg_reg_disable_cached_channels() - Disable cached channels
  * @pdev: The physical dev to cache the channels for
  *
- * Return: QDF_STATUS
+ * Return: Void
  */
-#ifdef DISABLE_CHANNEL_LIST
+void ucfg_reg_disable_cached_channels(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * ucfg_reg_restore_cached_channels() - Restore disabled cached channels
+ * @pdev: The physical dev to cache the channels for
+ *
+ * Return: Void
+ */
 void ucfg_reg_restore_cached_channels(struct wlan_objmgr_pdev *pdev);
 #else
+static inline
+void ucfg_reg_disable_cached_channels(struct wlan_objmgr_pdev *pdev)
+{
+}
+
 static inline
 void ucfg_reg_restore_cached_channels(struct wlan_objmgr_pdev *pdev)
 {

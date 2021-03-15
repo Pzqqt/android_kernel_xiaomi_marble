@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -251,6 +251,8 @@ struct dfs_to_mlme {
 	void (*mlme_acquire_radar_mode_switch_lock)
 			(struct wlan_objmgr_pdev *pdev);
 	void (*mlme_release_radar_mode_switch_lock)
+			(struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*mlme_proc_spoof_success)
 			(struct wlan_objmgr_pdev *pdev);
 };
 

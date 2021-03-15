@@ -798,6 +798,11 @@ tgt_dfs_send_avg_params_to_fw(struct wlan_objmgr_pdev *pdev,
 		return status;
 	}
 
+	dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		  "params->pri_min = %d; params->pri_max = %d; params->duration_min = %d; params->duration_max = %d; params->sidx_min = %d; params->sidx_max = %d",
+		  params->pri_min, params->pri_max,
+		  params->duration_min, params->duration_max,
+		  params->sidx_min, params->sidx_max);
 	dfs_tx_ops = wlan_psoc_get_dfs_txops(psoc);
 	if (dfs_tx_ops && dfs_tx_ops->dfs_send_avg_radar_params_to_fw)
 		status = dfs_tx_ops->dfs_send_avg_radar_params_to_fw(pdev,
@@ -805,9 +810,8 @@ tgt_dfs_send_avg_params_to_fw(struct wlan_objmgr_pdev *pdev,
 
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		dfs->dfs_average_params_sent = 1;
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-			 "Average radar parameters sent %d",
-			 dfs->dfs_average_params_sent);
+		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS, "Average radar parameters sent %d",
+			  dfs->dfs_average_params_sent);
 	}
 
 	return status;

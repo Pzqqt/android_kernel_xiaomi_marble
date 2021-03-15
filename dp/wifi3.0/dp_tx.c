@@ -102,6 +102,36 @@ dp_update_tx_desc_stats(struct dp_pdev *pdev)
 }
 #endif /* CONFIG_WLAN_SYSFS_MEM_STATS */
 
+#if defined(WLAN_TX_PKT_CAPTURE_ENH) || defined(FEATURE_PERPKT_INFO)
+static inline
+void dp_tx_enh_unmap(struct dp_soc *soc, struct dp_tx_desc_s *desc)
+{
+	qdf_nbuf_unmap_nbytes_single(soc->osdev, desc->nbuf,
+				     QDF_DMA_TO_DEVICE,
+				     desc->nbuf->len);
+	desc->flags |= DP_TX_DESC_FLAG_UNMAP_DONE;
+}
+
+static inline void dp_tx_unmap(struct dp_soc *soc, struct dp_tx_desc_s *desc)
+{
+	if (qdf_likely(!(desc->flags & DP_TX_DESC_FLAG_UNMAP_DONE)))
+		qdf_nbuf_unmap_nbytes_single(soc->osdev, desc->nbuf,
+					     QDF_DMA_TO_DEVICE,
+					     desc->nbuf->len);
+}
+#else
+static inline
+void dp_tx_enh_unmap(struct dp_soc *soc, struct dp_tx_desc_s *desc)
+{
+}
+
+static inline void dp_tx_unmap(struct dp_soc *soc, struct dp_tx_desc_s *desc)
+{
+	qdf_nbuf_unmap_nbytes_single(soc->osdev, desc->nbuf,
+				     QDF_DMA_TO_DEVICE, desc->nbuf->len);
+}
+#endif
+
 #ifdef QCA_TX_LIMIT_CHECK
 /**
  * dp_tx_limit_check - Check if allocated tx descriptors reached
@@ -1295,8 +1325,73 @@ dp_tx_ring_access_end(struct dp_soc *soc, hal_ring_handle_t hal_ring_hdl,
 {
 	dp_tx_hal_ring_access_end(soc, hal_ring_hdl);
 }
-
 #endif
+
+#ifdef FEATURE_RUNTIME_PM
+/**
+ * dp_tx_ring_access_end_wrapper() - Wrapper for ring access end
+ * @soc: Datapath soc handle
+ * @hal_ring_hdl: HAL ring handle
+ * @coalesce: Coalesce the current write or not
+ *
+ * Wrapper for HAL ring access end for data transmission for
+ * FEATURE_RUNTIME_PM
+ *
+ * Returns: none
+ */
+static inline void
+dp_tx_ring_access_end_wrapper(struct dp_soc *soc,
+			      hal_ring_handle_t hal_ring_hdl,
+			      int coalesce)
+{
+	int ret;
+
+	ret = hif_pm_runtime_get(soc->hif_handle,
+				 RTPM_ID_DW_TX_HW_ENQUEUE, true);
+	switch (ret) {
+	case 0:
+		dp_tx_ring_access_end(soc, hal_ring_hdl, coalesce);
+		hif_pm_runtime_put(soc->hif_handle,
+				   RTPM_ID_DW_TX_HW_ENQUEUE);
+		break;
+	/*
+	 * If hif_pm_runtime_get returns -EBUSY or -EINPROGRESS,
+	 * take the dp runtime refcount using dp_runtime_get,
+	 * check link state,if up, write TX ring HP, else just set flush event.
+	 * In dp_runtime_resume, wait until dp runtime refcount becomes
+	 * zero or time out, then flush pending tx.
+	 */
+	case -EBUSY:
+	case -EINPROGRESS:
+		dp_runtime_get(soc);
+		if (hif_pm_get_link_state(soc->hif_handle) ==
+		    HIF_PM_LINK_STATE_UP) {
+			dp_tx_ring_access_end(soc, hal_ring_hdl, coalesce);
+		} else {
+			dp_tx_hal_ring_access_end_reap(soc, hal_ring_hdl);
+			hal_srng_set_event(hal_ring_hdl, HAL_SRNG_FLUSH_EVENT);
+			hal_srng_inc_flush_cnt(hal_ring_hdl);
+		}
+		dp_runtime_put(soc);
+		break;
+	default:
+		dp_runtime_get(soc);
+		dp_tx_hal_ring_access_end_reap(soc, hal_ring_hdl);
+		hal_srng_set_event(hal_ring_hdl, HAL_SRNG_FLUSH_EVENT);
+		hal_srng_inc_flush_cnt(hal_ring_hdl);
+		dp_runtime_put(soc);
+	}
+}
+#else
+static inline void
+dp_tx_ring_access_end_wrapper(struct dp_soc *soc,
+			      hal_ring_handle_t hal_ring_hdl,
+			      int coalesce)
+{
+	dp_tx_ring_access_end(soc, hal_ring_hdl, coalesce);
+}
+#endif
+
 /**
  * dp_tx_hw_enqueue() - Enqueue to TCL HW for transmit
  * @soc: DP Soc Handle
@@ -1432,16 +1527,7 @@ dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	status = QDF_STATUS_SUCCESS;
 
 ring_access_fail:
-	if (hif_pm_runtime_get(soc->hif_handle,
-			       RTPM_ID_DW_TX_HW_ENQUEUE, true) == 0) {
-		dp_tx_ring_access_end(soc, hal_ring_hdl, coalesce);
-		hif_pm_runtime_put(soc->hif_handle,
-				   RTPM_ID_DW_TX_HW_ENQUEUE);
-	} else {
-		dp_tx_hal_ring_access_end_reap(soc, hal_ring_hdl);
-		hal_srng_set_event(hal_ring_hdl, HAL_SRNG_FLUSH_EVENT);
-		hal_srng_inc_flush_cnt(hal_ring_hdl);
-	}
+	dp_tx_ring_access_end_wrapper(soc, hal_ring_hdl, coalesce);
 
 	return status;
 }
@@ -2062,8 +2148,7 @@ static inline void dp_tx_comp_free_buf(struct dp_soc *soc,
 	if ((desc->flags & DP_TX_DESC_FLAG_ME) && qdf_nbuf_is_cloned(nbuf))
 		goto nbuf_free;
 
-	qdf_nbuf_unmap_nbytes_single(soc->osdev, nbuf,
-				     QDF_DMA_TO_DEVICE, nbuf->len);
+	dp_tx_unmap(soc, desc);
 
 	if (desc->flags & DP_TX_DESC_FLAG_MESH_MODE)
 		return dp_mesh_tx_comp_free_buff(soc, desc);
@@ -2258,7 +2343,8 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 						.curr_seg->next;
 					nbuf = msdu_info->u.sg_info
 					       .curr_seg->nbuf;
-				}
+				} else
+					break;
 				i++;
 				continue;
 			}
@@ -2300,7 +2386,8 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				msdu_info->u.sg_info.curr_seg =
 					msdu_info->u.sg_info.curr_seg->next;
 				nbuf = msdu_info->u.sg_info.curr_seg->nbuf;
-			}
+			} else
+				break;
 		}
 		i++;
 	}
@@ -2566,6 +2653,7 @@ static inline bool dp_tx_mcast_enhance(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 	if (DP_FRAME_IS_MULTICAST((eh)->ether_dhost) &&
 	    !DP_FRAME_IS_BROADCAST((eh)->ether_dhost)) {
 		dp_verbose_debug("Mcast frm for ME %pK", vdev);
+		qdf_nbuf_set_next(nbuf, NULL);
 
 		DP_STATS_INC_PKT(vdev, tx_i.mcast_en.mcast_pkt, 1,
 				 qdf_nbuf_len(nbuf));
@@ -2941,9 +3029,7 @@ void dp_tx_nawds_handler(struct dp_soc *soc, struct dp_vdev *vdev,
 			 * dropped in case of intra bss forwarding
 			 */
 			if (sa_peer_id == peer->peer_id) {
-				QDF_TRACE(QDF_MODULE_ID_DP,
-					  QDF_TRACE_LEVEL_DEBUG,
-					  " %s: multicast packet",  __func__);
+				dp_tx_debug("multicast packet");
 				DP_STATS_INC(peer, tx.nawds_mcast_drop, 1);
 				continue;
 			}
@@ -2961,9 +3047,7 @@ void dp_tx_nawds_handler(struct dp_soc *soc, struct dp_vdev *vdev,
 							    NULL);
 
 			if (nbuf_clone) {
-				QDF_TRACE(QDF_MODULE_ID_DP,
-					  QDF_TRACE_LEVEL_DEBUG,
-					  FL("pkt send failed"));
+				dp_tx_debug("pkt send failed");
 				qdf_nbuf_free(nbuf_clone);
 			} else {
 				if (peer_id != DP_INVALID_PEER)
@@ -3220,8 +3304,7 @@ void dp_tx_reinject_handler(struct dp_soc *soc,
 
 	dp_tx_get_queue(vdev, nbuf, &msdu_info.tx_queue);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"%s Tx reinject path", __func__);
+	dp_tx_debug("Tx reinject path");
 
 	DP_STATS_INC_PKT(vdev, tx_i.reinject_pkts, 1,
 			qdf_nbuf_len(tx_desc->nbuf));
@@ -3280,9 +3363,7 @@ void dp_tx_reinject_handler(struct dp_soc *soc,
 				nbuf_copy = qdf_nbuf_copy(nbuf);
 
 				if (!nbuf_copy) {
-					QDF_TRACE(QDF_MODULE_ID_DP,
-						QDF_TRACE_LEVEL_DEBUG,
-						FL("nbuf copy failed"));
+					dp_tx_debug("nbuf copy failed");
 					break;
 				}
 
@@ -3293,9 +3374,7 @@ void dp_tx_reinject_handler(struct dp_soc *soc,
 						NULL);
 
 				if (nbuf_copy) {
-					QDF_TRACE(QDF_MODULE_ID_DP,
-						QDF_TRACE_LEVEL_DEBUG,
-						FL("pkt send failed"));
+					dp_tx_debug("pkt send failed");
 					qdf_nbuf_free(nbuf_copy);
 				}
 			}
@@ -3818,7 +3897,7 @@ static inline void dp_tx_sojourn_stats_process(struct dp_pdev *pdev,
 }
 #endif
 
-#ifdef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 /**
  * dp_send_completion_to_pkt_capture() - send tx completion to packet capture
  * @soc: dp_soc handle
@@ -3864,6 +3943,8 @@ dp_tx_comp_process_desc(struct dp_soc *soc,
 	dp_send_completion_to_pkt_capture(soc, desc, ts);
 
 	if (!(desc->msdu_ext_desc)) {
+		dp_tx_enh_unmap(soc, desc);
+
 		if (QDF_STATUS_SUCCESS ==
 		    dp_tx_add_to_comp_queue(soc, desc, ts, peer)) {
 			return;
@@ -3875,9 +3956,6 @@ dp_tx_comp_process_desc(struct dp_soc *soc,
 							   peer, ts,
 							   desc->nbuf,
 							   time_latency)) {
-			qdf_nbuf_unmap_nbytes_single(soc->osdev, desc->nbuf,
-						     QDF_DMA_TO_DEVICE,
-						     desc->nbuf->len);
 			dp_send_completion_to_stack(soc,
 						    desc->pdev,
 						    ts->peer_id,
@@ -3972,34 +4050,33 @@ void dp_tx_comp_process_tx_status(struct dp_soc *soc,
 				 sizeof(qdf_nbuf_data(nbuf)),
 				 tx_desc->id, ts->status, dp_status));
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-				"-------------------- \n"
-				"Tx Completion Stats: \n"
-				"-------------------- \n"
-				"ack_frame_rssi = %d \n"
-				"first_msdu = %d \n"
-				"last_msdu = %d \n"
-				"msdu_part_of_amsdu = %d \n"
-				"rate_stats valid = %d \n"
-				"bw = %d \n"
-				"pkt_type = %d \n"
-				"stbc = %d \n"
-				"ldpc = %d \n"
-				"sgi = %d \n"
-				"mcs = %d \n"
-				"ofdma = %d \n"
-				"tones_in_ru = %d \n"
-				"tsf = %d \n"
-				"ppdu_id = %d \n"
-				"transmit_cnt = %d \n"
-				"tid = %d \n"
-				"peer_id = %d\n",
-				ts->ack_frame_rssi, ts->first_msdu,
-				ts->last_msdu, ts->msdu_part_of_amsdu,
-				ts->valid, ts->bw, ts->pkt_type, ts->stbc,
-				ts->ldpc, ts->sgi, ts->mcs, ts->ofdma,
-				ts->tones_in_ru, ts->tsf, ts->ppdu_id,
-				ts->transmit_cnt, ts->tid, ts->peer_id);
+	dp_tx_comp_debug("-------------------- \n"
+			 "Tx Completion Stats: \n"
+			 "-------------------- \n"
+			 "ack_frame_rssi = %d \n"
+			 "first_msdu = %d \n"
+			 "last_msdu = %d \n"
+			 "msdu_part_of_amsdu = %d \n"
+			 "rate_stats valid = %d \n"
+			 "bw = %d \n"
+			 "pkt_type = %d \n"
+			 "stbc = %d \n"
+			 "ldpc = %d \n"
+			 "sgi = %d \n"
+			 "mcs = %d \n"
+			 "ofdma = %d \n"
+			 "tones_in_ru = %d \n"
+			 "tsf = %d \n"
+			 "ppdu_id = %d \n"
+			 "transmit_cnt = %d \n"
+			 "tid = %d \n"
+			 "peer_id = %d\n",
+			 ts->ack_frame_rssi, ts->first_msdu,
+			 ts->last_msdu, ts->msdu_part_of_amsdu,
+			 ts->valid, ts->bw, ts->pkt_type, ts->stbc,
+			 ts->ldpc, ts->sgi, ts->mcs, ts->ofdma,
+			 ts->tones_in_ru, ts->tsf, ts->ppdu_id,
+			 ts->transmit_cnt, ts->tid, ts->peer_id);
 
 	/* Update SoC level stats */
 	DP_STATS_INCC(soc, tx.dropped_fw_removed, 1,
@@ -4292,9 +4369,8 @@ void dp_tx_process_htt_completion(struct dp_soc *soc,
 		break;
 	}
 	default:
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s Invalid HTT tx_status %d\n",
-			  __func__, tx_status);
+		dp_tx_comp_debug("Invalid HTT tx_status %d\n",
+				 tx_status);
 		break;
 	}
 

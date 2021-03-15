@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -305,6 +305,17 @@
 			       (reo_params)->frag_dst_ring); \
 		HAL_REG_WRITE((soc), \
 			      HWIO_REO_R0_MISC_CTL_ADDR( \
+			      SEQ_WCSS_UMAC_REO_REG_OFFSET), \
+			      (reg_val)); \
+		reg_val = \
+			HAL_REG_READ((soc), \
+				     HWIO_REO_R0_GENERAL_ENABLE_ADDR(	\
+				     SEQ_WCSS_UMAC_REO_REG_OFFSET)); \
+		reg_val &= \
+			(~HWIO_REO_R0_GENERAL_ENABLE_BAR_DEST_RING_BMSK |\
+				(REO_REMAP_TCL << HWIO_REO_R0_GENERAL_ENABLE_BAR_DEST_RING_SHFT)); \
+		HAL_REG_WRITE((soc), \
+			      HWIO_REO_R0_GENERAL_ENABLE_ADDR( \
 			      SEQ_WCSS_UMAC_REO_REG_OFFSET), \
 			      (reg_val)); \
 	} while (0)

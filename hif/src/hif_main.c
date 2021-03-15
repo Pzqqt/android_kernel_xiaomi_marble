@@ -349,6 +349,11 @@ static const struct qwlan_hw qwlan_hw_list[] = {
 		.id = QCA9379_REV1_VERSION,
 		.subid = 0xD,
 		.name = "QCA9379_REV1_1",
+	},
+	{
+		.id = WCN7850_V1,
+		.subid = 0xE,
+		.name = "WCN7850_V1",
 	}
 };
 
@@ -669,6 +674,7 @@ struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx,
 		     sizeof(struct hif_driver_state_callbacks));
 	scn->bus_type  = bus_type;
 
+	hif_pm_set_link_state(GET_HIF_OPAQUE_HDL(scn), HIF_PM_LINK_STATE_DOWN);
 	hif_get_cfg_from_psoc(scn, psoc);
 
 	hif_set_event_hist_mask(GET_HIF_OPAQUE_HDL(scn));
@@ -764,7 +770,8 @@ static inline int hif_get_num_active_grp_tasklets(struct hif_softc *scn)
 #if (defined(QCA_WIFI_QCA8074) || defined(QCA_WIFI_QCA6018) || \
 	defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
 	defined(QCA_WIFI_QCN9000) || defined(QCA_WIFI_QCA6490) || \
-	defined(QCA_WIFI_QCA6750) || defined(QCA_WIFI_QCA5018))
+	defined(QCA_WIFI_QCA6750) || defined(QCA_WIFI_QCA5018) || \
+	defined(QCA_WIFI_WCN7850))
 /**
  * hif_get_num_pending_work() - get the number of entries in
  *		the workqueue pending to be completed.
@@ -808,7 +815,8 @@ QDF_STATUS hif_try_complete_tasks(struct hif_softc *scn)
 #if (defined(QCA_WIFI_QCA8074) || defined(QCA_WIFI_QCA6018) || \
 	defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
 	defined(QCA_WIFI_QCN9000) || defined(QCA_WIFI_QCA6490) || \
-	defined(QCA_WIFI_QCA6750) || defined(QCA_WIFI_QCA5018))
+	defined(QCA_WIFI_QCA6750) || defined(QCA_WIFI_QCA5018) || \
+	defined(QCA_WIFI_WCN7850))
 static QDF_STATUS hif_hal_attach(struct hif_softc *scn)
 {
 	if (ce_srng_based(scn)) {
@@ -896,6 +904,7 @@ QDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
 		return status;
 	}
 
+	hif_pm_set_link_state(GET_HIF_OPAQUE_HDL(scn), HIF_PM_LINK_STATE_UP);
 	status = hif_hal_attach(scn);
 	if (status != QDF_STATUS_SUCCESS) {
 		hif_err("hal attach failed");
@@ -949,6 +958,7 @@ void hif_disable(struct hif_opaque_softc *hif_ctx, enum hif_disable_type type)
 
 	hif_hal_detach(scn);
 
+	hif_pm_set_link_state(hif_ctx, HIF_PM_LINK_STATE_DOWN);
 	hif_disable_bus(scn);
 
 	hif_wlan_disable(scn);
@@ -1176,10 +1186,10 @@ int hif_get_device_type(uint32_t device_id,
 		hif_info(" *********** QCN9000 *************");
 		break;
 
-	case QCN9100_DEVICE_ID:
-		*hif_type = HIF_TYPE_QCN9100;
-		*target_type = TARGET_TYPE_QCN9100;
-		hif_info(" *********** QCN9100 *************");
+	case QCN6122_DEVICE_ID:
+		*hif_type = HIF_TYPE_QCN6122;
+		*target_type = TARGET_TYPE_QCN6122;
+		hif_info(" *********** QCN6122 *************");
 		break;
 
 	case QCN7605_DEVICE_ID:
@@ -1211,6 +1221,13 @@ int hif_get_device_type(uint32_t device_id,
 		*hif_type = HIF_TYPE_QCA6750;
 		*target_type = TARGET_TYPE_QCA6750;
 		hif_info(" *********** QCA6750 *************");
+		break;
+
+	case WCN7850_DEVICE_ID:
+	case WCN7850_EMULATION_DEVICE_ID:
+		*hif_type = HIF_TYPE_WCN7850;
+		*target_type = TARGET_TYPE_WCN7850;
+		hif_info(" *********** WCN7850 *************");
 		break;
 
 	case QCA8074V2_DEVICE_ID:

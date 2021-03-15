@@ -41,6 +41,9 @@
 #include "targaddrs.h"
 #include "hif_exec.h"
 
+#define CNSS_RUNTIME_FILE "cnss_runtime_pm"
+#define CNSS_RUNTIME_FILE_PERM QDF_FILE_USR_READ
+
 #ifdef FEATURE_RUNTIME_PM
 /**
  * hif_pci_pm_runtime_enabled() - To check if Runtime PM is enabled
@@ -306,9 +309,11 @@ static void hif_runtime_pm_debugfs_create(struct hif_softc *scn)
 {
 	struct hif_runtime_pm_ctx *rpm_ctx = hif_bus_get_rpm_ctx(scn);
 
-	rpm_ctx->pm_dentry = debugfs_create_file("cnss_runtime_pm",
-						 0400, NULL, scn,
-						 &hif_pci_runtime_pm_fops);
+	rpm_ctx->pm_dentry = qdf_debugfs_create_entry(CNSS_RUNTIME_FILE,
+						      CNSS_RUNTIME_FILE_PERM,
+						      NULL,
+						      scn,
+						      &hif_pci_runtime_pm_fops);
 }
 
 /**
@@ -321,7 +326,7 @@ static void hif_runtime_pm_debugfs_remove(struct hif_softc *scn)
 {
 	struct hif_runtime_pm_ctx *rpm_ctx = hif_bus_get_rpm_ctx(scn);
 
-	debugfs_remove(rpm_ctx->pm_dentry);
+	qdf_debugfs_remove_file(rpm_ctx->pm_dentry);
 }
 
 /**
@@ -1774,5 +1779,19 @@ qdf_time_t hif_pm_runtime_get_dp_rx_busy_mark(struct hif_opaque_softc *hif_ctx)
 
 	rpm_ctx = hif_bus_get_rpm_ctx(scn);
 	return rpm_ctx->dp_last_busy_timestamp;
+}
+
+void hif_pm_set_link_state(struct hif_opaque_softc *hif_handle, uint8_t val)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_handle);
+
+	qdf_atomic_set(&scn->pm_link_state, val);
+}
+
+uint8_t hif_pm_get_link_state(struct hif_opaque_softc *hif_handle)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_handle);
+
+	return qdf_atomic_read(&scn->pm_link_state);
 }
 #endif /* FEATURE_RUNTIME_PM */

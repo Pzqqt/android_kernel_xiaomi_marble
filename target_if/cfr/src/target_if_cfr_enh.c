@@ -547,9 +547,14 @@ static QDF_STATUS check_dma_length(struct look_up_table *lut,
 		    lut->payload_length <= PINE_MAX_DATA_LENGTH_BYTES) {
 			return QDF_STATUS_SUCCESS;
 		}
-	} else if (target_type == TARGET_TYPE_QCN9100) {
+	} else if (target_type == TARGET_TYPE_QCN6122) {
 		if (lut->header_length <= SPRUCE_MAX_HEADER_LENGTH_WORDS &&
 		    lut->payload_length <= SPRUCE_MAX_DATA_LENGTH_BYTES) {
+			return QDF_STATUS_SUCCESS;
+		}
+	} else if (target_type == TARGET_TYPE_QCA5018) {
+		if (lut->header_length <= MAPLE_MAX_HEADER_LENGTH_WORDS &&
+		    lut->payload_length <= MAPLE_MAX_DATA_LENGTH_BYTES) {
 			return QDF_STATUS_SUCCESS;
 		}
 	} else {
@@ -1203,7 +1208,7 @@ static void enh_prepare_cfr_header_txstatus(wmi_cfr_peer_tx_event_param
 		header->chip_type      = CFR_CAPTURE_RADIO_PINE;
 	else if (target_type == TARGET_TYPE_QCA5018)
 		header->chip_type      = CFR_CAPTURE_RADIO_MAPLE;
-	else if (target_type == TARGET_TYPE_QCN9100)
+	else if (target_type == TARGET_TYPE_QCN6122)
 		header->chip_type      = CFR_CAPTURE_RADIO_SPRUCE;
 	else
 		header->chip_type      = CFR_CAPTURE_RADIO_CYP;
@@ -1411,7 +1416,7 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 		header->chip_type      = CFR_CAPTURE_RADIO_PINE;
 	else if (target_type == TARGET_TYPE_QCA5018)
 		header->chip_type      = CFR_CAPTURE_RADIO_MAPLE;
-	else if (target_type == TARGET_TYPE_QCN9100)
+	else if (target_type == TARGET_TYPE_QCN6122)
 		header->chip_type      = CFR_CAPTURE_RADIO_SPRUCE;
 	else
 		header->chip_type      = CFR_CAPTURE_RADIO_CYP;
@@ -1805,7 +1810,7 @@ QDF_STATUS cfr_enh_init_pdev(struct wlan_objmgr_psoc *psoc,
 		pcfr->num_subbufs = STREAMFS_NUM_SUBBUF_MAPLE;
 		pcfr->chip_type = CFR_CAPTURE_RADIO_MAPLE;
 		pcfr->max_mu_users = MAPLE_CFR_MU_USERS;
-	} else if (target_type == TARGET_TYPE_QCN9100) {
+	} else if (target_type == TARGET_TYPE_QCN6122) {
 		pcfr->subbuf_size = STREAMFS_MAX_SUBBUF_SPRUCE;
 		pcfr->num_subbufs = STREAMFS_NUM_SUBBUF_SPRUCE;
 		pcfr->chip_type = CFR_CAPTURE_RADIO_SPRUCE;

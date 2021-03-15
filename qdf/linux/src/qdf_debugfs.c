@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -543,3 +543,40 @@ int qdf_debugfs_printer(void *priv, const char *fmt, ...)
 	return 0;
 }
 qdf_export_symbol(qdf_debugfs_printer);
+
+qdf_dentry_t qdf_debugfs_create_blob(const char *name, umode_t mode,
+				     qdf_dentry_t parent,
+				     qdf_debugfs_blob_wrap_t blob)
+{
+	return debugfs_create_blob(name, mode, parent, blob);
+}
+
+qdf_export_symbol(qdf_debugfs_create_blob);
+
+qdf_dentry_t qdf_debugfs_create_entry(const char *name, uint16_t mode,
+				      qdf_dentry_t parent,
+				      qdf_entry_t data,
+				      const qdf_file_ops_t fops)
+{
+	qdf_dentry_t file;
+	umode_t filemode;
+
+	if (!name || !fops)
+		return NULL;
+
+	if (!parent)
+		parent = qdf_debugfs_get_root();
+
+	filemode = qdf_debugfs_get_filemode(mode);
+	file = debugfs_create_file(name, filemode, parent, data, fops);
+
+	if (IS_ERR_OR_NULL(file)) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "%s creation failed 0x%pK", name, file);
+		file = NULL;
+	}
+
+	return file;
+}
+
+qdf_export_symbol(qdf_debugfs_create_entry);

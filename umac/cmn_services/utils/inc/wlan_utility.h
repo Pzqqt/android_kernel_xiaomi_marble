@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -303,6 +303,20 @@ void wlan_chan_copy(struct wlan_channel *tgt, struct wlan_channel *src);
  */
 struct wlan_channel *wlan_vdev_get_active_channel
 				(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * wlan_get_connected_vdev_by_bssid() - check/get any vdev connected on bssid
+ * @pdev: pdev object
+ * @bssid: bssid to be checked
+ * @vdev_id: vdev id
+ *
+ * This function will loop through all the vdev in psoc and find/return the
+ * vdev which is connected to bssid provided.
+ *
+ * Return: bool
+ */
+bool wlan_get_connected_vdev_by_bssid(struct wlan_objmgr_pdev *pdev,
+				      uint8_t *bssid, uint8_t *vdev_id);
 
 /**
  * wlan_util_stats_get_rssi() - API to get rssi in dbm

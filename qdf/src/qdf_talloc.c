@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -112,8 +112,6 @@ qdf_talloc_parent_meta_alloc(const void *parent,
 {
 	struct qdf_talloc_parent_meta *pmeta;
 
-	QDF_BUG(qdf_spin_is_locked(&__qdf_talloc_meta_lock));
-
 	pmeta = __qdf_zalloc_atomic(sizeof(*pmeta), func, line);
 	if (!pmeta)
 		return NULL;
@@ -127,8 +125,6 @@ qdf_talloc_parent_meta_alloc(const void *parent,
 
 static void qdf_talloc_parent_meta_free(struct qdf_talloc_parent_meta *pmeta)
 {
-	QDF_BUG(qdf_spin_is_locked(&__qdf_talloc_meta_lock));
-
 	qdf_ht_remove(&pmeta->entry);
 	qdf_list_destroy(&pmeta->children);
 	__free(pmeta);
@@ -139,8 +135,6 @@ qdf_talloc_parent_meta_lookup(const void *parent)
 {
 	struct qdf_talloc_parent_meta *pmeta;
 	uintptr_t key = (uintptr_t)parent;
-
-	QDF_BUG(qdf_spin_is_locked(&__qdf_talloc_meta_lock));
 
 	qdf_ht_get(__qdf_talloc_meta_ht, pmeta, entry, key, key);
 
@@ -323,8 +317,6 @@ static QDF_STATUS qdf_talloc_meta_insert(struct qdf_talloc_header *header,
 	struct qdf_talloc_child_meta *cmeta = &header->meta;
 	struct qdf_talloc_parent_meta *pmeta;
 
-	QDF_BUG(qdf_spin_is_locked(&__qdf_talloc_meta_lock));
-
 	pmeta = qdf_talloc_parent_meta_lookup(cmeta->parent);
 	if (!pmeta)
 		pmeta = qdf_talloc_parent_meta_alloc(cmeta->parent, func, line);
@@ -376,8 +368,6 @@ __qdf_talloc_assert_no_children(const void *parent,
 	struct qdf_talloc_parent_meta *pmeta;
 	uint32_t count;
 
-	QDF_BUG(qdf_spin_is_locked(&__qdf_talloc_meta_lock));
-
 	pmeta = qdf_talloc_parent_meta_lookup(parent);
 	if (!pmeta)
 		return;
@@ -392,8 +382,6 @@ static void qdf_talloc_meta_remove(struct qdf_talloc_header *header,
 {
 	struct qdf_talloc_child_meta *cmeta = &header->meta;
 	struct qdf_talloc_parent_meta *pmeta;
-
-	QDF_BUG(qdf_spin_is_locked(&__qdf_talloc_meta_lock));
 
 	__qdf_talloc_assert_no_children(qdf_talloc_ptr(header), func, line);
 

@@ -662,6 +662,56 @@ target_if_register_master_ext_handler(struct wlan_lmac_if_reg_tx_ops *reg_ops)
 }
 #endif
 
+static QDF_STATUS
+tgt_if_regulatory_set_tpc_power(struct wlan_objmgr_psoc *psoc,
+				uint8_t vdev_id,
+				struct reg_tpc_power_info *param)
+{
+	wmi_unified_t wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+
+	if (!wmi_handle)
+		return QDF_STATUS_E_FAILURE;
+
+	return wmi_unified_send_set_tpc_power_cmd(wmi_handle, vdev_id, param);
+}
+
+/**
+ * tgt_if_regulatory_is_ext_tpc_supported() - Check if FW supports new
+ * WMI command for TPC power
+ *
+ * @psoc: Pointer to psoc
+ *
+ * Return: true if FW supports new WMI command for TPC, else false
+ */
+static bool
+tgt_if_regulatory_is_ext_tpc_supported(struct wlan_objmgr_psoc *psoc)
+{
+	wmi_unified_t wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+
+	if (!wmi_handle)
+		return false;
+
+	return wmi_service_enabled(wmi_handle, wmi_service_ext_tpc_reg_support);
+}
+
+QDF_STATUS target_if_regulatory_set_ext_tpc(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_lmac_if_reg_rx_ops *reg_rx_ops;
+
+	reg_rx_ops = target_if_regulatory_get_rx_ops(psoc);
+	if (!reg_rx_ops) {
+		target_if_err("reg_rx_ops is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (reg_rx_ops->reg_set_ext_tpc_supported)
+		reg_rx_ops->reg_set_ext_tpc_supported(
+			psoc,
+			tgt_if_regulatory_is_ext_tpc_supported(psoc));
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS target_if_register_regulatory_tx_ops(
 		struct wlan_lmac_if_tx_ops *tx_ops)
 {
@@ -710,6 +760,8 @@ QDF_STATUS target_if_register_regulatory_tx_ops(
 
 	reg_ops->get_pdev_id_from_phy_id =
 			tgt_if_regulatory_get_pdev_id_from_phy_id;
+
+	reg_ops->set_tpc_power = tgt_if_regulatory_set_tpc_power;
 
 	return QDF_STATUS_SUCCESS;
 }

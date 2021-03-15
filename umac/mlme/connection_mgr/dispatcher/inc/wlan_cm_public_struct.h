@@ -83,6 +83,20 @@ struct wlan_cm_connect_crypto_info {
 #define WLAN_CM_FILS_MAX_RRK_LENGTH 64
 
 /**
+ * enum wlan_fils_auth_type - fils auth type info
+ * @FILS_SK_WITHOUT_PFS: without pfs
+ * @FILS_SK_WITH_PFS: with pfs
+ * @FILS_PK_AUTH: fils auth
+ * @FILS_PK_MAX: max value
+ */
+enum wlan_fils_auth_type {
+	FILS_SK_WITHOUT_PFS,
+	FILS_SK_WITH_PFS,
+	FILS_PK_AUTH,
+	FILS_PK_MAX,
+};
+
+/**
  * struct wlan_fils_con_info - fils connect req info
  * @is_fils_connection: is fils connection
  * @username_len: username length
@@ -102,6 +116,7 @@ struct wlan_fils_con_info {
 	uint16_t next_seq_num;
 	uint32_t rrk_len;
 	uint8_t rrk[WLAN_CM_FILS_MAX_RRK_LENGTH];
+	enum wlan_fils_auth_type auth_type;
 };
 #endif
 
@@ -109,6 +124,7 @@ struct wlan_fils_con_info {
  * enum wlan_cm_source - connection manager req source
  * @CM_OSIF_CONNECT: Connect req initiated by OSIF or north bound
  * @CM_ROAMING_HOST: Roaming request initiated by host
+ * @CM_ROAMING_NUD_FAILURE: Roaming request initiated by NUD failure
  * @CM_ROAMING_FW: Roam req initiated by FW
  * @CM_OSIF_DISCONNECT: Disconnect req initiated by OSIF or north bound
  * @CM_PEER_DISCONNECT: Disconnect req initiated by peer sending deauth/disassoc
@@ -128,6 +144,7 @@ struct wlan_fils_con_info {
 enum wlan_cm_source {
 	CM_OSIF_CONNECT,
 	CM_ROAMING_HOST,
+	CM_ROAMING_NUD_FAILURE,
 	CM_ROAMING_FW,
 	CM_OSIF_DISCONNECT,
 	CM_PEER_DISCONNECT,
@@ -150,6 +167,7 @@ enum wlan_cm_source {
  * @ssid: profile SSID
  * @bssid_hint: bssid hint to connect
  * @chan_freq: channel of the AP
+ * @chan_freq_hint: channel hint
  * @crypto: crypto related info
  * @assoc_ie:Additional assoc IE to be appended in assoc req
  *           (Include RSN/WPA/WAPI/WPS ies)
@@ -158,6 +176,8 @@ enum wlan_cm_source {
  * used with out validation, used for the scenarios where the device is used
  * as a testbed device with special functionality and not recommended
  * for production.
+ * @is_wps_connection: if its wps connection
+ * @is_osen_connection: if its osen connection
  * @dot11mode_filter: dot11mode filter used to restrict connection to
  * 11n/11ac/11ax.
  * @sae_pwe: SAE mechanism for PWE derivation
@@ -177,11 +197,14 @@ struct wlan_cm_connect_req {
 	struct qdf_mac_addr prev_bssid;
 	struct wlan_ssid ssid;
 	struct qdf_mac_addr bssid_hint;
-	uint32_t chan_freq;
+	qdf_freq_t chan_freq;
+	qdf_freq_t chan_freq_hint;
 	struct wlan_cm_connect_crypto_info crypto;
 	struct element_info assoc_ie;
 	struct element_info scan_ie;
-	bool force_rsne_override;
+	uint8_t force_rsne_override:1,
+		is_wps_connection:1,
+		is_osen_connection:1;
 	enum dot11_mode_filter dot11mode_filter;
 	uint8_t sae_pwe;
 	uint16_t ht_caps;
@@ -202,6 +225,8 @@ struct wlan_cm_connect_req {
  * used with out validation, used for the scenarios where the device is used
  * as a testbed device with special functionality and not recommended
  * for production.
+ * @is_wps_connection: if its wps connection
+ * @is_osen_connection: if its osen connection
  * @ht_caps: ht capability
  * @ht_caps_mask: mask of valid ht caps
  * @vht_caps: vht capability
@@ -214,7 +239,9 @@ struct wlan_cm_connect_req {
 struct wlan_cm_vdev_connect_req {
 	uint8_t vdev_id;
 	wlan_cm_id cm_id;
-	bool force_rsne_override;
+	uint8_t force_rsne_override:1,
+		is_wps_connection:1,
+		is_osen_connection:1;
 	uint16_t ht_caps;
 	uint16_t ht_caps_mask;
 	uint32_t vht_caps;
@@ -234,6 +261,7 @@ struct wlan_cm_vdev_connect_req {
  * @bssid: bssid given
  * @prev_bssid: prev AP bssid, given in case supplican want to roam to new BSSID
  * @chan_freq: channel of the AP
+ * @forced_roaming: Roaming to be done without giving bssid, and channel.
  */
 struct wlan_cm_roam_req {
 	uint8_t vdev_id;
@@ -241,6 +269,7 @@ struct wlan_cm_roam_req {
 	struct qdf_mac_addr bssid;
 	struct qdf_mac_addr prev_bssid;
 	uint32_t chan_freq;
+	bool forced_roaming;
 };
 
 /**
@@ -367,14 +396,12 @@ struct fils_connect_rsp_params {
  * @bcn_probe_rsp: Raw beacon or probe rsp of connected AP
  * @assoc_req: assoc req IE pointer send during conenct
  * @assoc_rsq: assoc rsp IE received during connection
- * @ric_resp_ie: ric ie from assoc resp received during connection
  * @fills_ie: fills connection ie received during connection
  */
 struct wlan_connect_rsp_ies {
 	struct element_info bcn_probe_rsp;
 	struct element_info assoc_req;
 	struct element_info assoc_rsp;
-	struct element_info ric_resp_ie;
 #ifdef WLAN_FEATURE_FILS_SK
 	struct fils_connect_rsp_params *fils_ie;
 #endif
@@ -384,6 +411,8 @@ struct wlan_connect_rsp_ies {
  * struct wlan_cm_connect_rsp - connect resp from VDEV mgr and will be sent to
  * OSIF
  * @vdev_id: vdev id
+ * @is_wps_connection: if its wps connection
+ * @is_osen_connection: if its osen connection
  * @cm_id: Connect manager id
  * @bssid: BSSID of the ap
  * @ssid: SSID of the connection
@@ -397,6 +426,8 @@ struct wlan_connect_rsp_ies {
  */
 struct wlan_cm_connect_resp {
 	uint8_t vdev_id;
+	uint8_t is_wps_connection:1,
+		is_osen_connection:1;
 	wlan_cm_id cm_id;
 	struct qdf_mac_addr bssid;
 	struct wlan_ssid ssid;

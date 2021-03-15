@@ -749,8 +749,7 @@ QDF_STATUS (*send_process_roam_synch_complete_cmd)(wmi_unified_t wmi_handle,
 		 uint8_t vdev_id);
 
 QDF_STATUS (*send_roam_invoke_cmd)(wmi_unified_t wmi_handle,
-		struct wmi_roam_invoke_cmd *roaminvoke,
-		uint32_t ch_hz);
+		struct roam_invoke_req *roaminvoke);
 
 QDF_STATUS (*send_set_roam_trigger_cmd)(wmi_unified_t wmi_handle,
 					struct wlan_roam_triggers *triggers);
@@ -818,8 +817,7 @@ QDF_STATUS (*send_process_ll_stats_get_cmd)(wmi_unified_t wmi_handle,
 				const struct ll_stats_get_params *get_req);
 #ifdef FEATURE_CLUB_LL_STATS_AND_GET_STATION
 QDF_STATUS (*send_unified_ll_stats_get_sta_cmd)(wmi_unified_t wmi_handle,
-				const struct ll_stats_get_params *get_req,
-				bool is_always_over_qmi);
+				const struct ll_stats_get_params *get_req);
 #endif
 #endif
 
@@ -2474,6 +2472,16 @@ QDF_STATUS (*send_cp_stats_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*extract_cp_stats_more_pending)(wmi_unified_t wmi_handle,
 					    void *evt_buf,
 					    uint32_t *more_flag);
+#ifdef WLAN_SUPPORT_INFRA_CTRL_PATH_STATS
+QDF_STATUS
+(*extract_infra_cp_stats)(wmi_unified_t wmi_handle,
+			  void *evt_buf, uint32_t evt_buf_len,
+			  struct infra_cp_stats_event *params);
+
+QDF_STATUS
+(*send_infra_cp_stats_request_cmd)(wmi_unified_t wmi_handle,
+				   struct infra_cp_stats_cmd_info *param);
+#endif /* WLAN_SUPPORT_INFRA_CTRL_PATH_STATS */
 
 QDF_STATUS (*send_vdev_tsf_tstamp_action_cmd)(wmi_unified_t wmi,
 					      uint8_t vdev_id);
@@ -2489,7 +2497,22 @@ QDF_STATUS (*send_lcr_cmd)(wmi_unified_t wmi_handle,
 			   struct wmi_wifi_pos_lcr_info *lcr_info);
 QDF_STATUS (*send_lci_cmd)(wmi_unified_t wmi_handle,
 			   struct wifi_pos_lci_info *lci_info);
+
+#ifdef WLAN_SUPPORT_MESH_LATENCY
+QDF_STATUS (*config_vdev_tid_latency_info_cmd)(
+				wmi_unified_t wmi,
+				struct wmi_vdev_tid_latency_config_params
+				*param);
+QDF_STATUS (*config_peer_latency_info_cmd)(
+				wmi_unified_t wmi,
+				struct wmi_peer_latency_config_params
+				*param);
 #endif
+#endif
+
+QDF_STATUS (*send_set_tpc_power_cmd)(wmi_unified_t wmi_handle,
+				     uint8_t vdev_id,
+				     struct reg_tpc_power_info *param);
 };
 
 /* Forward declartion for psoc*/

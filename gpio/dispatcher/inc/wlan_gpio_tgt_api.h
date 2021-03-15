@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -80,7 +80,9 @@ QDF_STATUS tgt_gpio_output(struct wlan_objmgr_psoc *psoc, uint32_t gpio_num,
 #else
 static QDF_STATUS tgt_gpio_config(struct wlan_objmgr_psoc *psoc,
 				  uint32_t gpio_num, uint32_t input,
-				  uint32_t pull_type, uint32_t intr_mode)
+				  uint32_t pull_type, uint32_t intr_mode,
+				  uint32_t mux_config_val, uint32_t drive,
+				  uint32_t init_enable)
 {
 	return QDF_STATUS_SUCCESS;
 }

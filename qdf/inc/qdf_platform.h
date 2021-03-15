@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -250,10 +250,12 @@ void qdf_register_drv_connected_callback(qdf_is_drv_connected_callback
 /**
  * qdf_check_state_before_panic() - API to check if FW is down
  * or driver is in recovery before calling assert
+ * @func: Caller function pointer used for debug info
+ * @line: Caller function line number
  *
  * Return: none
  */
-void qdf_check_state_before_panic(void);
+void qdf_check_state_before_panic(const char *func, const uint32_t line);
 
 /**
  * qdf_is_drv_supported_callback() - callback to query if drv is supported

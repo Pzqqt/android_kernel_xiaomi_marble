@@ -713,7 +713,11 @@ int hif_force_wake_request(struct hif_opaque_softc *hif_handle)
 	HIF_STATS_INC(ipci_scn, mhi_force_wake_request_vote, 1);
 	while (!pld_is_device_awake(scn->qdf_dev->dev) &&
 	       timeout <= FORCE_WAKE_DELAY_TIMEOUT_MS) {
-		qdf_mdelay(FORCE_WAKE_DELAY_MS);
+		if (qdf_in_interrupt())
+			qdf_mdelay(FORCE_WAKE_DELAY_MS);
+		else
+			qdf_sleep(FORCE_WAKE_DELAY_MS);
+
 		timeout += FORCE_WAKE_DELAY_MS;
 	}
 
@@ -770,3 +774,14 @@ void hif_print_ipci_stats(struct hif_ipci_softc *ipci_handle)
 		  ipci_handle->stats.soc_force_wake_release_success);
 }
 #endif /* FORCE_WAKE */
+
+#ifdef FEATURE_HAL_DELAYED_REG_WRITE
+int hif_prevent_link_low_power_states(struct hif_opaque_softc *hif)
+{
+	return 0;
+}
+
+void hif_allow_link_low_power_states(struct hif_opaque_softc *hif)
+{
+}
+#endif

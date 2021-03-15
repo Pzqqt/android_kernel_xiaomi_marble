@@ -38,6 +38,7 @@
 #include <linux/tcp.h>
 #include <qdf_util.h>
 #include <qdf_nbuf_frag.h>
+#include "qdf_time.h"
 
 /*
  * Use socket buffer as the underlying implementation as skbuf .
@@ -1468,8 +1469,11 @@ static inline void __qdf_nbuf_set_pktlen(struct sk_buff *skb, uint32_t len)
 			if (unlikely(pskb_expand_head(skb, 0,
 				len - skb->len - skb_tailroom(skb),
 				GFP_ATOMIC))) {
+				QDF_DEBUG_PANIC(
+				   "SKB tailroom is lessthan requested length."
+				   " tail-room: %u, len: %u, skb->len: %u",
+				   skb_tailroom(skb), len, skb->len);
 				dev_kfree_skb_any(skb);
-				qdf_assert(0);
 			}
 		}
 		skb_put(skb, (len - skb->len));
@@ -2544,6 +2548,17 @@ static inline qdf_size_t __qdf_nbuf_get_data_len(__qdf_nbuf_t nbuf)
 static inline uint16_t __qdf_nbuf_get_gso_segs(struct sk_buff *skb)
 {
 	return skb_shinfo(skb)->gso_segs;
+}
+
+/*
+ * __qdf_nbuf_net_timedelta() - get time delta
+ * @t: time as __qdf_ktime_t object
+ *
+ * Return: time delta as ktime_t object
+ */
+static inline qdf_ktime_t __qdf_nbuf_net_timedelta(qdf_ktime_t t)
+{
+	return net_timedelta(t);
 }
 
 #ifdef CONFIG_NBUF_AP_PLATFORM

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -189,6 +189,8 @@ struct wlan_srng_cfg {
  * @pext_stats_enabled: Flag to enable and disabled peer extended stats
  * @is_rx_buff_pool_enabled: flag to enable/disable emergency RX buffer
  *                           pool support
+ * @is_rx_refill_buff_pool_enabled: flag to enable/disable RX refill buffer
+ *                           pool support
  * @rx_pending_high_threshold: threshold of starting pkt drop
  * @rx_pending_low_threshold: threshold of stopping pkt drop
  * @is_swlm_enabled: flag to enable/disable SWLM
@@ -304,6 +306,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	uint32_t reo_rings_mapping;
 	bool pext_stats_enabled;
 	bool is_rx_buff_pool_enabled;
+	bool is_rx_refill_buff_pool_enabled;
 	uint32_t rx_pending_high_threshold;
 	uint32_t rx_pending_low_threshold;
 	bool is_poll_mode_enabled;
@@ -1436,6 +1439,17 @@ bool wlan_cfg_is_rx_fisa_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
  * Return: true if enabled, false otherwise.
  */
 bool wlan_cfg_is_rx_buffer_pool_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/**
+ * wlan_cfg_is_rx_refill_buffer_pool_enabled() - Get RX refill buffer pool enabled flag
+ *
+ *
+ * @cfg: soc configuration context
+ *
+ * Return: true if enabled, false otherwise.
+ */
+bool wlan_cfg_is_rx_refill_buffer_pool_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
+
 
 void wlan_cfg_set_tso_desc_attach_defer(struct wlan_cfg_dp_soc_ctxt *cfg,
 					bool val);

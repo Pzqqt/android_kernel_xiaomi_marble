@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,6 +24,11 @@
 #define _WLAN_CMN_IEEE80211_H_
 #include <qdf_types.h>
 #include <osdep.h>
+
+/* Assoc resp IE offset Capability(2) + AID(2) + Status Code(2) */
+#define WLAN_ASSOC_RSP_IES_OFFSET 6
+/* Assoc req IE offset - Capability(2) + LI(2) */
+#define WLAN_ASSOC_REQ_IES_OFFSET 4
 
 #define IEEE80211_CCMP_HEADERLEN    8
 #define IEEE80211_HT_CTRL_LEN       4
@@ -123,7 +128,8 @@
 
 /* Individual element IEs length checks */
 
-#define WLAN_SUPPORTED_RATES_IE_MAX_LEN          12
+/* Maximum supported basic/mandatory rates are 8. */
+#define WLAN_SUPPORTED_RATES_IE_MAX_LEN          8
 #define WLAN_FH_PARAM_IE_MAX_LEN                 5
 #define WLAN_DS_PARAM_IE_MAX_LEN                 1
 #define WLAN_CF_PARAM_IE_MAX_LEN                 6
@@ -132,7 +138,14 @@
 #define WLAN_CSA_IE_MAX_LEN                      3
 #define WLAN_XCSA_IE_MAX_LEN                     4
 #define WLAN_SECCHANOFF_IE_MAX_LEN               1
-#define WLAN_EXT_SUPPORTED_RATES_IE_MAX_LEN      12
+
+#define WLAN_MAX_SUPPORTED_RATES                 44
+/* Maximum extended supported rates is equal to WLAN_MAX_SUPPORTED_RATES minus
+ * WLAN_SUPPORTED_RATES_IE_MAX_LEN.
+ */
+#define WLAN_EXT_SUPPORTED_RATES_IE_MAX_LEN      \
+	(WLAN_MAX_SUPPORTED_RATES - WLAN_SUPPORTED_RATES_IE_MAX_LEN)
+
 #define WLAN_EXTCAP_IE_MAX_LEN                   15
 #define WLAN_FILS_INDICATION_IE_MIN_LEN          2
 #define WLAN_MOBILITY_DOMAIN_IE_MAX_LEN          3
@@ -144,6 +157,22 @@
 #define WLAN_RNR_IE_MIN_LEN                      5
 #define WLAN_TPE_IE_MIN_LEN                      2
 #define WLAN_MAX_NUM_TPE_IE                      2
+
+/* Wide band channel switch IE length */
+#define WLAN_WIDE_BW_CHAN_SWITCH_IE_LEN          3
+
+/* Number of max TX power elements supported plus size of Transmit Power
+ * Information element.
+ */
+#define WLAN_TPE_IE_MAX_LEN                      9
+
+/* Max channel switch time IE length */
+#define WLAN_MAX_CHAN_SWITCH_TIME_IE_LEN         4
+
+#define WLAN_MAX_SRP_IE_LEN                      21
+#define WLAN_MAX_MUEDCA_IE_LEN                   14
+#define WLAN_MAX_HE_6G_CAP_IE_LEN                3
+#define WLAN_MAX_HEOP_IE_LEN                     16
 
 /* HT capability flags */
 #define WLAN_HTCAP_C_ADVCODING             0x0001
@@ -1597,6 +1626,7 @@ struct oce_reduced_wan_metrics {
 	uint8_t uplink_av_cap:4;
 };
 
+#define WLAN_VENDOR_WPA_IE_LEN 28
 /**
  * is_wpa_oui() - If vendor IE is WPA type
  * @frm: vendor IE pointer
@@ -1655,6 +1685,7 @@ is_wcn_oui(uint8_t *frm)
 		((WCN_OUI_TYPE << 24) | WCN_OUI));
 }
 
+#define WLAN_VENDOR_WME_IE_LEN 24
 /**
  * is_wme_param() - If vendor IE is WME param type
  * @frm: vendor IE pointer
@@ -1687,6 +1718,7 @@ is_wme_info(const uint8_t *frm)
 		(frm[6] == WME_INFO_OUI_SUBTYPE);
 }
 
+#define WLAN_VENDOR_ATHCAPS_IE_LEN 9
 /**
  * is_atheros_oui() - If vendor IE is Atheros type
  * @frm: vendor IE pointer
@@ -1702,6 +1734,7 @@ is_atheros_oui(const uint8_t *frm)
 		((ATH_OUI_TYPE << 24) | ATH_OUI);
 }
 
+#define WLAN_VENDOR_ATH_EXTCAP_IE_LEN 10
 /**
  * is_atheros_extcap_oui() - If vendor IE is Atheros ext cap
  * @frm: vendor IE pointer
@@ -1717,6 +1750,7 @@ is_atheros_extcap_oui(uint8_t *frm)
 		((ATH_OUI_EXTCAP_TYPE << 24) | ATH_OUI));
 }
 
+#define WLAN_VENDOR_SFA_IE_LEN 5
 /**
  * is_sfa_oui() - If vendor IE is SFA type
  * @frm: vendor IE pointer
@@ -1752,6 +1786,7 @@ is_p2p_oui(const uint8_t *frm)
 		(frm[5] == P2P_WFA_VER);
 }
 
+#define WLAN_VENDOR_SON_IE_LEN 31
 /**
  * is_qca_son_oui() - If vendor IE is QCA WHC type
  * @frm: vendor IE pointer
@@ -1831,7 +1866,7 @@ is_bwnss_oui(uint8_t *frm)
 		((ATH_OUI_BW_NSS_MAP_TYPE << 24) | ATH_OUI));
 }
 
-#define WLAN_BWNSS_MAP_OFFSET 6
+#define WLAN_BWNSS_MAP_OFFSET 7
 
 /**
  * is_he_cap_oui() - If vendor IE is HE CAP OUI

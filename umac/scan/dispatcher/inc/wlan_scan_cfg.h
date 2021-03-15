@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -375,6 +375,30 @@ enum scan_mode_6ghz {
 			"honour NL80211 scan policy flags")
 
 #ifdef FEATURE_WLAN_SCAN_PNO
+/*
+ * <ini>
+ * g_user_config_sched_scan_plan - set user config sched scan plans.
+ * @Min: 0
+ * @Max:1
+ * @Default: 1
+ *
+ * This ini is used to decide if user config number of sched scan plan needs to
+ * be configured or only one sched scan plan needs to be configured.
+ * If this ini is enabled then  user config number of sched scan plans will be
+ * configured else only one sched scan plan will be configured.
+ *
+ * Supported Feature: PNO scan
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+
+#define CFG_USER_CONFIG_SCHED_SCAN_PLAN CFG_INI_BOOL(\
+			"g_user_config_sched_scan_plan",\
+			true, \
+			"set user config sched scan plans")
+
 /*
  * <ini>
  * g_max_sched_scan_plan_iterations - pno sched max scan plan iterations.
@@ -805,7 +829,8 @@ enum scan_mode_6ghz {
 	CFG(CFG_MAWC_NLO_ENABLED) \
 	CFG(CFG_MAWC_NLO_EXP_BACKOFF_RATIO) \
 	CFG(CFG_MAWC_NLO_INIT_SCAN_INTERVAL) \
-	CFG(CFG_MAWC_NLO_MAX_SCAN_INTERVAL)
+	CFG(CFG_MAWC_NLO_MAX_SCAN_INTERVAL) \
+	CFG(CFG_USER_CONFIG_SCHED_SCAN_PLAN)
 
 #else
 #define CFG_SCAN_PNO

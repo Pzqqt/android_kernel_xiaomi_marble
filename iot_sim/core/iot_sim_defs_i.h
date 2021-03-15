@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -81,6 +81,11 @@
 #define IOT_SIM_DEBUGFS_FILE_NUM 3
 #define FRAME_TYPE_IS_BEACON(type, subtype) ((type) == 0 && (subtype) == 8)
 #define FRAME_TYPE_IS_ACTION(type, subtype) ((type) == 0 && (subtype) == 13)
+
+#define IOT_SIM_DBG_FILE_PERM (QDF_FILE_USR_READ | \
+			       QDF_FILE_USR_WRITE | \
+			       QDF_FILE_GRP_READ | \
+			       QDF_FILE_OTH_READ)
 
 enum iot_sim_action_cat_type {
 	CAT_SPECTRUM,

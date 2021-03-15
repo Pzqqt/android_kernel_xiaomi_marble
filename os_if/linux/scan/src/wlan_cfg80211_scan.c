@@ -150,24 +150,14 @@ static void wlan_scan_rand_attrs(struct wlan_objmgr_vdev *vdev,
  * Return: None
  */
 static void
-wlan_config_sched_scan_plan(struct pno_scan_req_params *pno_req,
+wlan_config_sched_scan_plan(struct wlan_objmgr_psoc *psoc,
+			    struct pno_scan_req_params *pno_req,
 			    struct cfg80211_sched_scan_request *request)
 {
-	/*
-	 * As of now max 2 scan plans were supported by firmware
-	 * if number of scan plan supported by firmware increased below logic
-	 * must change.
-	 */
-	if (request->n_scan_plans == SCAN_PNO_MAX_PLAN_REQUEST) {
+	if (!ucfg_scan_get_user_config_sched_scan_plan(psoc) ||
+	    request->n_scan_plans == 1) {
 		pno_req->fast_scan_period =
-			request->scan_plans[0].interval * MSEC_PER_SEC;
-		pno_req->fast_scan_max_cycles =
-			request->scan_plans[0].iterations;
-		pno_req->slow_scan_period =
-			request->scan_plans[1].interval * MSEC_PER_SEC;
-	} else if (request->n_scan_plans == 1) {
-		pno_req->fast_scan_period =
-			request->scan_plans[0].interval * MSEC_PER_SEC;
+		request->scan_plans[0].interval * MSEC_PER_SEC;
 		/*
 		 * if only one scan plan is configured from framework
 		 * then both fast and slow scan should be configured with the
@@ -176,13 +166,26 @@ wlan_config_sched_scan_plan(struct pno_scan_req_params *pno_req,
 		pno_req->fast_scan_max_cycles = 1;
 		pno_req->slow_scan_period =
 			request->scan_plans[0].interval * MSEC_PER_SEC;
+	}
+	/*
+	 * As of now max 2 scan plans were supported by firmware
+	 * if number of scan plan supported by firmware increased below logic
+	 * must change.
+	 */
+	else if (request->n_scan_plans == SCAN_PNO_MAX_PLAN_REQUEST) {
+		pno_req->fast_scan_period =
+			request->scan_plans[0].interval * MSEC_PER_SEC;
+		pno_req->fast_scan_max_cycles =
+			request->scan_plans[0].iterations;
+		pno_req->slow_scan_period =
+			request->scan_plans[1].interval * MSEC_PER_SEC;
 	} else {
 		osif_err("Invalid number of scan plans %d !!",
 			 request->n_scan_plans);
 	}
 }
 #else
-#define wlan_config_sched_scan_plan(pno_req, request) \
+#define wlan_config_sched_scan_plan(psoc, pno_req, request) \
 	__wlan_config_sched_scan_plan(pno_req, request, psoc)
 
 static void
@@ -566,7 +569,7 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_vdev *vdev,
 	 *   switches slow_scan_period. This is less frequent scans and firmware
 	 *   shall be in slow_scan_period mode until next PNO Start.
 	 */
-	wlan_config_sched_scan_plan(req, request);
+	wlan_config_sched_scan_plan(psoc, req, request);
 	req->delay_start_time = wlan_config_sched_scan_start_delay(request);
 	req->scan_backoff_multiplier = scan_backoff_multiplier;
 
@@ -2054,83 +2057,6 @@ struct cfg80211_bss *wlan_cfg80211_get_bss(struct wiphy *wiphy,
 				IEEE80211_PRIVACY_ANY);
 }
 #endif
-
-/**
- * struct wlan_check_bssid_context - bssid check context
- * @bssid: bssid to be checked
- * @connected: connected by vdev or not
- * @vdev_id: vdev id of connected vdev
- */
-struct wlan_check_bssid_context {
-	struct qdf_mac_addr bssid;
-	bool connected;
-	uint8_t vdev_id;
-};
-
-/**
- * wlan_get_connected_vdev_handler() - check vdev connected on bssid
- * @psoc: psoc object
- * @obj: vdev object
- * @args: handler context
- *
- * This function will check whether vdev is connected on bssid or not and
- * update the result to handler context accordingly.
- *
- * Return: void
- */
-static void wlan_get_connected_vdev_handler(struct wlan_objmgr_psoc *psoc,
-					    void *obj, void *args)
-{
-	struct wlan_objmgr_vdev *vdev = (struct wlan_objmgr_vdev *)obj;
-	struct wlan_check_bssid_context *context =
-				(struct wlan_check_bssid_context *)args;
-	struct qdf_mac_addr bss_peer_mac;
-	enum QDF_OPMODE op_mode;
-
-	if (context->connected)
-		return;
-	op_mode = wlan_vdev_mlme_get_opmode(vdev);
-	if (op_mode != QDF_STA_MODE && op_mode != QDF_P2P_CLIENT_MODE)
-		return;
-	if (wlan_vdev_is_up(vdev) != QDF_STATUS_SUCCESS)
-		return;
-	if (wlan_vdev_get_bss_peer_mac(vdev, &bss_peer_mac) !=
-	    QDF_STATUS_SUCCESS)
-		return;
-	if (qdf_is_macaddr_equal(&bss_peer_mac, &context->bssid)) {
-		context->connected = true;
-		context->vdev_id = wlan_vdev_get_id(vdev);
-	}
-}
-
-/**
- * wlan_get_connected_vdev_by_bssid() - check/get any vdev connected on bssid
- * @pdev: pdev object
- * @bssid: bssid to be checked
- * @vdev_id: vdev id
- *
- * This function will loop through all the vdev in psoc and find/return the
- * vdev which is connected to bssid provided.
- *
- * Return: bool
- */
-static bool wlan_get_connected_vdev_by_bssid(struct wlan_objmgr_pdev *pdev,
-					     uint8_t *bssid, uint8_t *vdev_id)
-{
-	struct wlan_objmgr_psoc *psoc;
-	struct wlan_check_bssid_context context;
-
-	psoc = wlan_pdev_get_psoc(pdev);
-	qdf_mem_zero(&context, sizeof(struct wlan_check_bssid_context));
-	qdf_mem_copy(context.bssid.bytes, bssid, QDF_MAC_ADDR_SIZE);
-	wlan_objmgr_iterate_obj_list(psoc, WLAN_VDEV_OP,
-				     wlan_get_connected_vdev_handler,
-				     &context, true, WLAN_OSIF_SCAN_ID);
-	if (context.connected)
-		*vdev_id = context.vdev_id;
-
-	return context.connected;
-}
 
 QDF_STATUS  __wlan_cfg80211_unlink_bss_list(struct wiphy *wiphy,
 					    struct wlan_objmgr_pdev *pdev,

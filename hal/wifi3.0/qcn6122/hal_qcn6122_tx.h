@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -24,14 +24,14 @@
 #include "hal_api_mon.h"
 
 /**
- * hal_tx_desc_set_dscp_tid_table_id_9100() - Sets DSCP to TID conversion
+ * hal_tx_desc_set_dscp_tid_table_id_6122() - Sets DSCP to TID conversion
  *						table ID
  * @desc: Handle to Tx Descriptor
  * @id: DSCP to tid conversion table to be used for this frame
  *
  * Return: void
  */
-static void hal_tx_desc_set_dscp_tid_table_id_9100(void *desc, uint8_t id)
+static void hal_tx_desc_set_dscp_tid_table_id_6122(void *desc, uint8_t id)
 {
 	HAL_SET_FLD(desc, TCL_DATA_CMD_5,
 		    DSCP_TID_TABLE_NUM) |=
@@ -43,7 +43,7 @@ static void hal_tx_desc_set_dscp_tid_table_id_9100(void *desc, uint8_t id)
 #define HAL_TX_NUM_DSCP_REGISTER_SIZE 32
 
 /**
- * hal_tx_set_dscp_tid_map_9100() - Configure default DSCP to TID map table
+ * hal_tx_set_dscp_tid_map_6122() - Configure default DSCP to TID map table
  * @soc: HAL SoC context
  * @map: DSCP-TID mapping table
  * @id: mapping table ID - 0,1
@@ -55,7 +55,7 @@ static void hal_tx_desc_set_dscp_tid_table_id_9100(void *desc, uint8_t id)
  *
  * Return: none
  */
-static void hal_tx_set_dscp_tid_map_9100(struct hal_soc *soc,
+static void hal_tx_set_dscp_tid_map_6122(struct hal_soc *soc,
 					 uint8_t *map, uint8_t id)
 {
 	int i;
@@ -111,7 +111,7 @@ static void hal_tx_set_dscp_tid_map_9100(struct hal_soc *soc,
 }
 
 /**
- * hal_tx_update_dscp_tid_9100() - Update the dscp tid map table as
+ * hal_tx_update_dscp_tid_6122() - Update the dscp tid map table as
 					updated by user
  * @soc: HAL SoC context
  * @map: DSCP-TID mapping table
@@ -120,7 +120,7 @@ static void hal_tx_set_dscp_tid_map_9100(struct hal_soc *soc,
  *
  * Return: void
  */
-static void hal_tx_update_dscp_tid_9100(struct hal_soc *soc, uint8_t tid,
+static void hal_tx_update_dscp_tid_6122(struct hal_soc *soc, uint8_t tid,
 					uint8_t id, uint8_t dscp)
 {
 	uint32_t addr, addr1, cmn_reg_addr;
@@ -191,7 +191,7 @@ static void hal_tx_update_dscp_tid_9100(struct hal_soc *soc, uint8_t tid,
 }
 
 /**
- * hal_tx_desc_set_lmac_id_9100 - Set the lmac_id value
+ * hal_tx_desc_set_lmac_id_6122 - Set the lmac_id value
  * @desc: Handle to Tx Descriptor
  * @lmac_id: mac Id to ast matching
  *		     b00 – mac 0
@@ -201,21 +201,21 @@ static void hal_tx_update_dscp_tid_9100(struct hal_soc *soc, uint8_t tid,
  *
  * Return: void
  */
-static void hal_tx_desc_set_lmac_id_9100(void *desc, uint8_t lmac_id)
+static void hal_tx_desc_set_lmac_id_6122(void *desc, uint8_t lmac_id)
 {
 	HAL_SET_FLD(desc, TCL_DATA_CMD_4, LMAC_ID) |=
 		HAL_TX_SM(TCL_DATA_CMD_4, LMAC_ID, lmac_id);
 }
 
 /**
- * hal_tx_init_cmd_credit_ring_9100() - Initialize TCL command/credit SRNG
+ * hal_tx_init_cmd_credit_ring_6122() - Initialize TCL command/credit SRNG
  * @hal_soc_hdl: Handle to HAL SoC structure
  * @hal_srng: Handle to HAL SRNG structure
  *
  * Return: none
  */
 static inline void
-hal_tx_init_cmd_credit_ring_9100(hal_soc_handle_t hal_soc_hdl,
+hal_tx_init_cmd_credit_ring_6122(hal_soc_handle_t hal_soc_hdl,
 				 hal_ring_handle_t hal_ring_hdl)
 {
 	uint8_t *desc_addr;

@@ -31,7 +31,8 @@
 
 /* Max candidate/attempts to be tried to connect */
 #define CM_MAX_CONNECT_ATTEMPTS 5
-#define CM_MAX_CONNECT_TIMEOUT 30000
+#define CM_MAX_CONNECT_TIMEOUT 10000
+
 /*
  * Default max retry attempts to be tried for a candidate.
  * In SAE connection this value will be overwritten from the sae_connect_retries
@@ -180,6 +181,56 @@ struct connect_ies {
 };
 
 /**
+ * enum cm_req_del_type - Context in which a request is removed from
+ * connection manager request list
+ * @CM_REQ_DEL_ACTIVE: Remove request from active queue
+ * @CM_REQ_DEL_PENDING: Remove request from pending queue
+ * @CM_REQ_DEL_FLUSH: Request removed due to request list flush
+ */
+enum cm_req_del_type {
+	CM_REQ_DEL_ACTIVE,
+	CM_REQ_DEL_PENDING,
+	CM_REQ_DEL_FLUSH,
+	CM_REQ_DEL_MAX,
+};
+
+#ifdef SM_ENG_HIST_ENABLE
+
+#define CM_REQ_HISTORY_SIZE 30
+
+/**
+ * struct cm_req_history_info - History element structure
+ * @cm_id: Request id
+ * @add_time: Timestamp when the request was added to the list
+ * @del_time: Timestamp when the request was removed from list
+ * @add_cm_state: Conn_SM state when req was added
+ * @del_cm_state: Conn_SM state when req was deleted
+ * @del_type: Context in which delete was triggered. i.e active removal,
+ * pending removal or flush from queue.
+ */
+struct cm_req_history_info {
+	wlan_cm_id cm_id;
+	uint64_t add_time;
+	uint64_t del_time;
+	enum wlan_cm_sm_state add_cm_state;
+	enum wlan_cm_sm_state del_cm_state;
+	enum cm_req_del_type del_type;
+};
+
+/**
+ * struct cm_req_history - Connection manager history
+ * @cm_req_hist_lock: CM request history lock
+ * @index: Index of next entry that will be updated
+ * @data: Array of history element
+ */
+struct cm_req_history {
+	qdf_spinlock_t cm_req_hist_lock;
+	uint8_t index;
+	struct cm_req_history_info data[CM_REQ_HISTORY_SIZE];
+};
+#endif
+
+/**
  * struct cnx_mgr - connect manager req
  * @vdev: vdev back pointer
  * @sm: state machine
@@ -198,6 +249,7 @@ struct connect_ies {
  * @scan_requester_id: scan requester id.
  * @disconnect_complete: disconnect completion wait event
  * @ext_cm_ptr: connection manager ext pointer
+ * @history: Holds the connection manager history
  */
 struct cnx_mgr {
 	struct wlan_objmgr_vdev *vdev;
@@ -219,6 +271,9 @@ struct cnx_mgr {
 	wlan_scan_requester scan_requester_id;
 	qdf_event_t disconnect_complete;
 	cm_ext_t *ext_cm_ptr;
+#ifdef SM_ENG_HIST_ENABLE
+	struct cm_req_history req_history;
+#endif
 };
 
 /**

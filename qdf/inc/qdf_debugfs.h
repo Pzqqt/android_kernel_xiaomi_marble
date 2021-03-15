@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,6 +32,9 @@
 /* representation of qdf dentry */
 typedef __qdf_dentry_t qdf_dentry_t;
 typedef __qdf_debugfs_file_t qdf_debugfs_file_t;
+typedef __qdf_debugfs_blob_wrap_t qdf_debugfs_blob_wrap_t;
+typedef __qdf_entry_t qdf_entry_t;
+typedef __qdf_file_ops_t qdf_file_ops_t;
 
 /* qdf file modes */
 #define QDF_FILE_USR_READ	00400
@@ -272,6 +275,39 @@ qdf_dentry_t qdf_debugfs_create_file_simplified(const char *name, uint16_t mode,
  */
 int qdf_debugfs_printer(void *priv, const char *fmt, ...);
 
+/**
+ * qdf_debugfs_create_blob() - create a debugfs file that is used to read
+ * a binary blob
+ * @name: a pointer to a string containing the name of the file to create.
+ * @mode: the permission that the file should have
+ * @parent: a pointer to the parent dentry for this file.  This should be a
+ *          directory dentry if set.  If this parameter is %NULL, then the
+ *          file will be created in the root of the debugfs filesystem.
+ * @blob: a pointer to a qdf_debugfs_blob_wrap_t which contains a pointer
+ *        to the blob data and the size of the data.
+ *
+ * Return: dentry structure pointer on success, NULL otherwise.
+ */
+qdf_dentry_t qdf_debugfs_create_blob(const char *name, umode_t mode,
+				     qdf_dentry_t parent,
+				     qdf_debugfs_blob_wrap_t blob);
+
+/**
+ * qdf_debugfs_create_entry() - create a debugfs file for read or write
+ * something
+ * @name: name of the file
+ * @mode: qdf file mode
+ * @parent: parent node. If NULL, defaults to base qdf_debugfs_root
+ * @data: Something data that caller want to read or write
+ * @fops: file operations { .read, .write ... }
+ *
+ * Return: dentry structure pointer on success, NULL otherwise.
+ */
+qdf_dentry_t qdf_debugfs_create_entry(const char *name, uint16_t mode,
+				      qdf_dentry_t parent,
+				      qdf_entry_t data,
+				      const qdf_file_ops_t fops);
+
 #else /* WLAN_DEBUGFS */
 
 static inline QDF_STATUS qdf_debugfs_init(void)
@@ -372,6 +408,23 @@ static inline
 int qdf_debugfs_printer(void *priv, const char *fmt, ...)
 {
 	return 0;
+}
+
+static inline
+qdf_dentry_t qdf_debugfs_create_blob(const char *name, umode_t mode,
+				     qdf_dentry_t parent,
+				     qdf_debugfs_blob_wrap_t blob)
+{
+	return NULL;
+}
+
+static inline
+qdf_dentry_t qdf_debugfs_create_entry(const char *name, uint16_t mode,
+				      qdf_dentry_t parent,
+				      qdf_entry_t data,
+				      const qdf_file_ops_t fops)
+{
+	return NULL;
 }
 #endif /* WLAN_DEBUGFS */
 #endif /* _QDF_DEBUGFS_H */

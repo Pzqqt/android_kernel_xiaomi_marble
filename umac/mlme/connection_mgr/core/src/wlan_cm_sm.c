@@ -304,6 +304,11 @@ static bool cm_state_connected_event(void *ctx, uint16_t event,
 		cm_reassoc_complete(cm_ctx, data);
 		event_handled = true;
 		break;
+	case WLAN_CM_SM_EV_ROAM_INVOKE_FAIL:
+		cm_remove_cmd(cm_ctx, data);
+		event_handled = true;
+		break;
+
 	default:
 		event_handled = false;
 		break;

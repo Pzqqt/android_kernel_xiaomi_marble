@@ -550,9 +550,9 @@ static inline void dp_rx_rate_stats_update(struct dp_peer *peer,
 	if (!peer || !ppdu)
 		return;
 
-	if (ppdu->u.ppdu_type != HAL_RX_TYPE_SU) {
-		ppdu_user = &ppdu->user[user];
+	ppdu_user = &ppdu->user[user];
 
+	if (ppdu->u.ppdu_type != HAL_RX_TYPE_SU) {
 		if (ppdu_user->nss == 0)
 			nss = 0;
 		else
@@ -575,8 +575,13 @@ static inline void dp_rx_rate_stats_update(struct dp_peer *peer,
 				   &rix,
 				   &ratecode);
 
-	if (!ratekbps)
+	if (!ratekbps) {
+		ppdu->rix = 0;
+		ppdu->rx_ratekbps = 0;
+		ppdu->rx_ratecode = 0;
+		ppdu_user->rx_ratekbps = 0;
 		return;
+	}
 
 	ppdu->rix = rix;
 	DP_STATS_UPD(peer, rx.last_rx_rate, ratekbps);
@@ -585,8 +590,7 @@ static inline void dp_rx_rate_stats_update(struct dp_peer *peer,
 	DP_STATS_UPD(peer, rx.rnd_avg_rx_rate, ppdu_rx_rate);
 	ppdu->rx_ratekbps = ratekbps;
 	ppdu->rx_ratecode = ratecode;
-	if (ppdu->u.ppdu_type != HAL_RX_TYPE_SU)
-		ppdu_user->rx_ratekbps = ratekbps;
+	ppdu_user->rx_ratekbps = ratekbps;
 
 	if (peer->vdev)
 		peer->vdev->stats.rx.last_rx_rate = ratekbps;

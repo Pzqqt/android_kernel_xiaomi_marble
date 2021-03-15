@@ -716,7 +716,9 @@ util_scan_copy_beacon_data(struct scan_cache_entry *new_entry,
 	ie_lst->bwnss_map = conv_ptr(ie_lst->bwnss_map, old_ptr, new_ptr);
 	ie_lst->mdie = conv_ptr(ie_lst->mdie, old_ptr, new_ptr);
 	ie_lst->hecap = conv_ptr(ie_lst->hecap, old_ptr, new_ptr);
+	ie_lst->hecap_6g = conv_ptr(ie_lst->hecap_6g, old_ptr, new_ptr);
 	ie_lst->heop = conv_ptr(ie_lst->heop, old_ptr, new_ptr);
+	ie_lst->srp = conv_ptr(ie_lst->srp, old_ptr, new_ptr);
 	ie_lst->fils_indication = conv_ptr(ie_lst->fils_indication,
 					   old_ptr, new_ptr);
 	ie_lst->esp = conv_ptr(ie_lst->esp, old_ptr, new_ptr);
@@ -1419,7 +1421,7 @@ util_scan_entry_get_extcap(struct scan_cache_entry *scan_entry,
 	if (!ext_cap)
 		return QDF_STATUS_E_NULL_VALUE;
 
-	if (ext_cap->ext_cap_len < ext_caps_byte)
+	if (ext_cap->ext_cap_len <= ext_caps_byte)
 		return QDF_STATUS_E_NULL_VALUE;
 
 	*extcap_value =

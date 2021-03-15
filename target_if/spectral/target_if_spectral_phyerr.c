@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2017-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -1317,6 +1317,7 @@ target_if_spectral_get_bin_count_after_len_adj(
  * target_if_process_sfft_report_gen3() - Process Search FFT Report for gen3
  * @p_fft_report: Pointer to fft report
  * @p_sfft: Pointer to search fft report
+ * @rparams: pointer to report params object
  *
  * Process Search FFT Report for gen3
  *
@@ -1325,8 +1326,16 @@ target_if_spectral_get_bin_count_after_len_adj(
 static int
 target_if_process_sfft_report_gen3(
 	struct spectral_phyerr_fft_report_gen3 *p_fft_report,
-	struct spectral_search_fft_info_gen3 *p_sfft)
+	struct spectral_search_fft_info_gen3 *p_sfft,
+	struct spectral_report_params *rparams)
 {
+	int32_t peak_sidx = 0;
+	int32_t peak_mag;
+
+	qdf_assert_always(p_fft_report);
+	qdf_assert_always(p_sfft);
+	qdf_assert_always(rparams);
+
 	/*
 	 * For simplicity, everything is defined as uint32_t (except one).
 	 * Proper code will later use the right sizes.
@@ -1335,37 +1344,49 @@ target_if_process_sfft_report_gen3(
 	 * For easy comparision between MDK team and OS team, the MDK script
 	 * variable names have been used
 	 */
-	int32_t peak_sidx;
-	int32_t peak_mag;
 
 	/* Populate the Search FFT Info */
-	if (p_sfft) {
-		p_sfft->timestamp = p_fft_report->fft_timestamp;
+	p_sfft->timestamp = p_fft_report->fft_timestamp;
 
-		p_sfft->fft_detector_id = get_bitfield(p_fft_report->hdr_a,
-						       2, 0);
-		p_sfft->fft_num = get_bitfield(p_fft_report->hdr_a, 3, 2);
+	p_sfft->fft_detector_id = get_bitfield(p_fft_report->hdr_a,
+					       2, 0);
+	p_sfft->fft_num = get_bitfield(p_fft_report->hdr_a, 3, 2);
+
+	switch (rparams->version) {
+	case SPECTRAL_REPORT_FORMAT_VERSION_1:
 		p_sfft->fft_radar_check = get_bitfield(p_fft_report->hdr_a,
 						       12, 5);
-
 		peak_sidx = get_bitfield(p_fft_report->hdr_a, 11, 17);
-		p_sfft->fft_peak_sidx = unsigned_to_signed(peak_sidx, 11);
 		p_sfft->fft_chn_idx = get_bitfield(p_fft_report->hdr_a, 3, 28);
-
 		p_sfft->fft_base_pwr_db = get_bitfield(p_fft_report->hdr_b,
 						       9, 0);
 		p_sfft->fft_total_gain_db = get_bitfield(p_fft_report->hdr_b,
 							 8, 9);
-
-		p_sfft->fft_num_str_bins_ib = get_bitfield(p_fft_report->hdr_c,
-							   8, 0);
-		peak_mag = get_bitfield(p_fft_report->hdr_c, 10, 8);
-		p_sfft->fft_peak_mag = unsigned_to_signed(peak_mag, 10);
-		p_sfft->fft_avgpwr_db = get_bitfield(p_fft_report->hdr_c,
-						     7, 18);
-		p_sfft->fft_relpwr_db = get_bitfield(p_fft_report->hdr_c,
-						     7, 25);
+		break;
+	case SPECTRAL_REPORT_FORMAT_VERSION_2:
+		p_sfft->fft_radar_check = get_bitfield(p_fft_report->hdr_a,
+						       14, 5);
+		peak_sidx = get_bitfield(p_fft_report->hdr_a, 11, 19);
+		p_sfft->fft_chn_idx = get_bitfield(p_fft_report->hdr_b, 3, 0);
+		p_sfft->fft_base_pwr_db = get_bitfield(p_fft_report->hdr_b,
+						       9, 3);
+		p_sfft->fft_total_gain_db = get_bitfield(p_fft_report->hdr_b,
+							 8, 12);
+		break;
+	default:
+		qdf_assert_always(0);
 	}
+
+	p_sfft->fft_peak_sidx = unsigned_to_signed(peak_sidx, 11);
+
+	p_sfft->fft_num_str_bins_ib = get_bitfield(p_fft_report->hdr_c,
+						   8, 0);
+	peak_mag = get_bitfield(p_fft_report->hdr_c, 10, 8);
+	p_sfft->fft_peak_mag = unsigned_to_signed(peak_mag, 10);
+	p_sfft->fft_avgpwr_db = get_bitfield(p_fft_report->hdr_c,
+					     7, 18);
+	p_sfft->fft_relpwr_db = get_bitfield(p_fft_report->hdr_c,
+					     7, 25);
 
 	return 0;
 }
@@ -2074,7 +2095,8 @@ target_if_consume_spectral_report_gen3(
 
 		report_len = (fft_hdr_length + 8);
 
-		target_if_process_sfft_report_gen3(p_fft_report, p_sfft);
+		target_if_process_sfft_report_gen3(p_fft_report, p_sfft,
+						   &spectral->rparams);
 		/* It is expected to have same detector id for
 		 * summary and fft report
 		 */
@@ -2251,7 +2273,8 @@ target_if_consume_spectral_report_gen3(
 
 		report_len     = (fft_hdr_length + 8);
 
-		target_if_process_sfft_report_gen3(p_fft_report, p_sfft);
+		target_if_process_sfft_report_gen3(p_fft_report, p_sfft,
+						   &spectral->rparams);
 		/* It is expected to have same detector id for
 		 * summary and fft report
 		 */

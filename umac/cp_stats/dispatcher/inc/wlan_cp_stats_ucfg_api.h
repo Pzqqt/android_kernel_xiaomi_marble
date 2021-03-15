@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,5 +30,29 @@
 #include "../../core/src/wlan_cp_stats_defs.h"
 #include "../../core/src/wlan_cp_stats_cmn_api_i.h"
 
+/**
+ * @ucfg_infra_cp_stats_register_resp_cb() - Register the response callback
+ * and cookie in the psoc mc_stats object
+ * @psoc: pointer to psoc object
+ * @req: pointer to request parameter structure
+ *
+ * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error codes on
+ * failure
+ */
+QDF_STATUS
+ucfg_infra_cp_stats_register_resp_cb(struct wlan_objmgr_psoc *psoc,
+				     struct infra_cp_stats_cmd_info *req);
+
+/**
+ * @ucfg_send_infra_cp_stats_request() - send a infra cp stats command
+ * @vdev: pointer to vdev object
+ * @req: pointer to request parameter structure
+ *
+ * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error codes
+ * on failure
+ */
+QDF_STATUS
+ucfg_send_infra_cp_stats_request(struct wlan_objmgr_vdev *vdev,
+				 struct infra_cp_stats_cmd_info *req);
 #endif /* QCA_SUPPORT_CP_STATS */
 #endif /* __WLAN_CP_STATS_UCFG_API_H__ */

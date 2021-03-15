@@ -1327,6 +1327,9 @@ struct hal_hw_txrx_ops qca8074_hal_hw_txrx_ops = {
 	.hal_rx_msdu_start_offset_get = hal_rx_msdu_start_offset_get_generic,
 	.hal_rx_mpdu_start_offset_get = hal_rx_mpdu_start_offset_get_generic,
 	.hal_rx_mpdu_end_offset_get = hal_rx_mpdu_end_offset_get_generic,
+#ifndef NO_RX_PKT_HDR_TLV
+	.hal_rx_pkt_tlv_offset_get = hal_rx_pkt_tlv_offset_get_generic,
+#endif
 	.hal_rx_flow_setup_fse = hal_rx_flow_setup_fse_8074v1,
 	.hal_compute_reo_remap_ix2_ix3 = hal_compute_reo_remap_ix2_ix3_8074v1,
 };

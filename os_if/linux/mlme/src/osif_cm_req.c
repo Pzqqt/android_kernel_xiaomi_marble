@@ -27,6 +27,9 @@
 #include "wlan_nl_to_crypto_params.h"
 #include <wlan_cfg80211.h>
 #include "osif_cm_util.h"
+#ifdef WLAN_FEATURE_FILS_SK
+#include <wlan_mlme_ucfg_api.h>
+#endif
 
 static void osif_cm_free_wep_key_params(struct wlan_cm_connect_req *connect_req)
 {
@@ -128,7 +131,8 @@ QDF_STATUS osif_cm_set_crypto_params(struct wlan_cm_connect_req *connect_req,
 	osif_cm_set_auth_type(connect_req, req);
 
 	if (req->crypto.cipher_group)
-		cipher = osif_nl_to_crypto_cipher_type(cipher);
+		cipher =
+			osif_nl_to_crypto_cipher_type(req->crypto.cipher_group);
 
 	QDF_SET_PARAM(connect_req->crypto.group_cipher, cipher);
 
@@ -168,18 +172,6 @@ QDF_STATUS osif_cm_set_crypto_params(struct wlan_cm_connect_req *connect_req,
 }
 
 #ifdef WLAN_FEATURE_FILS_SK
-static bool osif_cm_is_fils_auth_type(enum nl80211_auth_type auth_type)
-{
-	switch (auth_type) {
-	case NL80211_AUTHTYPE_FILS_SK:
-	case NL80211_AUTHTYPE_FILS_SK_PFS:
-	case NL80211_AUTHTYPE_FILS_PK:
-		return true;
-	default:
-		return false;
-	}
-}
-
 static bool osif_cm_is_akm_suite_fils(uint32_t key_mgmt)
 {
 	switch (key_mgmt) {
@@ -193,12 +185,11 @@ static bool osif_cm_is_akm_suite_fils(uint32_t key_mgmt)
 	}
 }
 
-static bool osif_cm_is_conn_type_fils(const struct cfg80211_connect_params *req)
+static bool osif_cm_is_conn_type_fils(struct wlan_cm_connect_req *connect_req,
+				      const struct cfg80211_connect_params *req)
 {
 	int num_akm_suites = req->crypto.n_akm_suites;
 	uint32_t key_mgmt = req->crypto.akm_suites[0];
-	bool is_fils_auth_type =
-		osif_cm_is_fils_auth_type(req->auth_type);
 
 	if (num_akm_suites <= 0)
 		return false;
@@ -206,7 +197,7 @@ static bool osif_cm_is_conn_type_fils(const struct cfg80211_connect_params *req)
 	/*
 	 * Auth type will be either be OPEN or FILS type for a FILS connection
 	 */
-	if (!is_fils_auth_type &&
+	if (connect_req->fils_info.auth_type == FILS_PK_MAX &&
 	    req->auth_type != NL80211_AUTHTYPE_OPEN_SYSTEM)
 		return false;
 
@@ -218,51 +209,119 @@ static bool osif_cm_is_conn_type_fils(const struct cfg80211_connect_params *req)
 	return true;
 }
 
+enum wlan_fils_auth_type
+osif_cm_get_fils_auth_type(enum nl80211_auth_type auth)
+{
+	switch (auth) {
+	case NL80211_AUTHTYPE_FILS_SK:
+		return FILS_SK_WITHOUT_PFS;
+	case NL80211_AUTHTYPE_FILS_SK_PFS:
+		return FILS_SK_WITH_PFS;
+	case NL80211_AUTHTYPE_FILS_PK:
+		return FILS_PK_AUTH;
+	default:
+		return FILS_PK_MAX;
+	}
+}
+
 static QDF_STATUS
-osif_cm_set_fils_info(struct wlan_cm_connect_req *connect_req,
+osif_cm_set_fils_info(struct wlan_objmgr_vdev *vdev,
+		      struct wlan_cm_connect_req *connect_req,
 		      const struct cfg80211_connect_params *req)
 {
-	connect_req->fils_info.is_fils_connection =
-					osif_cm_is_conn_type_fils(req);
-	connect_req->fils_info.username_len = req->fils_erp_username_len;
+	bool value = 0;
+	QDF_STATUS status;
+	uint8_t *buf;
+	struct wlan_objmgr_psoc *psoc;
 
-	if (connect_req->fils_info.username_len >
-					WLAN_CM_FILS_MAX_KEYNAME_NAI_LENGTH) {
-		osif_err("Invalid fils username len");
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc)
+		return -QDF_STATUS_E_INVAL;
+
+	connect_req->fils_info.auth_type =
+		osif_cm_get_fils_auth_type(req->auth_type);
+	connect_req->fils_info.is_fils_connection =
+					osif_cm_is_conn_type_fils(connect_req,
+								  req);
+	osif_debug("auth type %d is fils %d",
+		   connect_req->fils_info.auth_type,
+		   connect_req->fils_info.is_fils_connection);
+	if (!connect_req->fils_info.is_fils_connection)
+		return QDF_STATUS_SUCCESS;
+
+	status = ucfg_mlme_get_fils_enabled_info(psoc, &value);
+	if (QDF_IS_STATUS_ERROR(status) || !value) {
+		osif_err("get_fils_enabled status: %d fils_enabled: %d",
+			 status, value);
 		return QDF_STATUS_E_INVAL;
 	}
-	qdf_mem_zero(connect_req->fils_info.username,
-		     WLAN_CM_FILS_MAX_KEYNAME_NAI_LENGTH);
-	qdf_mem_copy(connect_req->fils_info.username, req->fils_erp_username,
-		     connect_req->fils_info.username_len);
 
-	connect_req->fils_info.realm_len = req->fils_erp_username_len;
+	/*
+	 * The initial connection for FILS may happen with an OPEN
+	 * auth type. Hence we need to allow the connection to go
+	 * through in that case as well.
+	 */
+	if (req->auth_type != NL80211_AUTHTYPE_FILS_SK) {
+		osif_debug("set is fils false for initial connection");
+		connect_req->fils_info.is_fils_connection = false;
+		return QDF_STATUS_SUCCESS;
+	}
+
+	connect_req->fils_info.realm_len = req->fils_erp_realm_len;
 
 	if (connect_req->fils_info.realm_len > WLAN_CM_FILS_MAX_REALM_LEN) {
-		osif_err("Invalid fils realm len");
+		osif_err("Invalid fils realm len %d",
+			 connect_req->fils_info.realm_len);
 		return QDF_STATUS_E_INVAL;
 	}
 	qdf_mem_zero(connect_req->fils_info.realm, WLAN_CM_FILS_MAX_REALM_LEN);
 	qdf_mem_copy(connect_req->fils_info.realm, req->fils_erp_realm,
 		     connect_req->fils_info.realm_len);
 
-	connect_req->fils_info.next_seq_num = req->fils_erp_next_seq_num;
+	connect_req->fils_info.next_seq_num = req->fils_erp_next_seq_num + 1;
 
 	connect_req->fils_info.rrk_len = req->fils_erp_rrk_len;
 
 	if (connect_req->fils_info.rrk_len > WLAN_CM_FILS_MAX_RRK_LENGTH) {
-		osif_err("Invalid fils rrk len");
+		osif_err("Invalid fils rrk len %d",
+			 connect_req->fils_info.rrk_len);
 		return QDF_STATUS_E_INVAL;
 	}
 	qdf_mem_zero(connect_req->fils_info.rrk, WLAN_CM_FILS_MAX_RRK_LENGTH);
 	qdf_mem_copy(connect_req->fils_info.rrk, req->fils_erp_rrk,
 		     connect_req->fils_info.rrk_len);
 
+	connect_req->fils_info.username_len = req->fils_erp_username_len +
+					sizeof(char) + req->fils_erp_realm_len;
+	osif_debug("usrname len %d = usrname recv len %zu + realm len %d + %zu",
+		   connect_req->fils_info.username_len,
+		   req->fils_erp_username_len,
+		   connect_req->fils_info.realm_len, sizeof(char));
+
+	if (connect_req->fils_info.username_len >
+					WLAN_CM_FILS_MAX_KEYNAME_NAI_LENGTH) {
+		osif_err("Invalid fils username len %d",
+			 connect_req->fils_info.username_len);
+		return QDF_STATUS_E_INVAL;
+	}
+	if (!req->fils_erp_username_len) {
+		osif_info("FILS_PMKSA: No ERP username, return success");
+		return QDF_STATUS_SUCCESS;
+	}
+	buf = connect_req->fils_info.username;
+	qdf_mem_zero(connect_req->fils_info.username,
+		     WLAN_CM_FILS_MAX_KEYNAME_NAI_LENGTH);
+	qdf_mem_copy(buf, req->fils_erp_username, req->fils_erp_username_len);
+	buf += req->fils_erp_username_len;
+	*buf++ = '@';
+	qdf_mem_copy(buf, req->fils_erp_realm, req->fils_erp_realm_len);
+
 	return QDF_STATUS_SUCCESS;
 }
 #else
 static inline
-QDF_STATUS osif_cm_set_fils_info(struct wlan_cm_connect_req *connect_req,
+QDF_STATUS osif_cm_set_fils_info(struct wlan_objmgr_vdev *vdev,
+				 struct wlan_cm_connect_req *connect_req,
 				 const struct cfg80211_connect_params *req)
 {
 	return QDF_STATUS_SUCCESS;
@@ -360,7 +419,7 @@ static void osif_cm_free_connect_req(struct wlan_cm_connect_req *connect_req)
 {
 	if (connect_req->scan_ie.ptr) {
 		qdf_mem_free(connect_req->scan_ie.ptr);
-		connect_req->assoc_ie.ptr = NULL;
+		connect_req->scan_ie.ptr = NULL;
 	}
 
 	if (connect_req->assoc_ie.ptr) {
@@ -435,8 +494,9 @@ int osif_cm_connect(struct net_device *dev, struct wlan_objmgr_vdev *vdev,
 
 	if (req->channel)
 		connect_req->chan_freq = req->channel->center_freq;
-	else
-		connect_req->chan_freq = 0;
+
+	if (req->channel_hint)
+		connect_req->chan_freq_hint = req->channel_hint->center_freq;
 
 	status = osif_cm_set_crypto_params(connect_req, req);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -448,17 +508,19 @@ int osif_cm_connect(struct net_device *dev, struct wlan_objmgr_vdev *vdev,
 	connect_req->vht_caps_mask = req->vht_capa_mask.vht_cap_info;
 
 	/* Copy complete ie */
-	connect_req->assoc_ie.len = req->ie_len;
-	connect_req->assoc_ie.ptr = qdf_mem_malloc(req->ie_len);
-	if (!connect_req->assoc_ie.ptr) {
-		connect_req->assoc_ie.len = 0;
-		status = QDF_STATUS_E_NOMEM;
-		goto connect_start_fail;
+	if (req->ie_len) {
+		connect_req->assoc_ie.len = req->ie_len;
+		connect_req->assoc_ie.ptr = qdf_mem_malloc(req->ie_len);
+		if (!connect_req->assoc_ie.ptr) {
+			connect_req->assoc_ie.len = 0;
+			status = QDF_STATUS_E_NOMEM;
+				goto connect_start_fail;
+		}
+		qdf_mem_copy(connect_req->assoc_ie.ptr, req->ie,
+			     connect_req->assoc_ie.len);
 	}
-	qdf_mem_copy(connect_req->assoc_ie.ptr, req->ie,
-		     connect_req->assoc_ie.len);
 
-	status = osif_cm_set_fils_info(connect_req, req);
+	status = osif_cm_set_fils_info(vdev, connect_req, req);
 	if (QDF_IS_STATUS_ERROR(status))
 		goto connect_start_fail;
 
