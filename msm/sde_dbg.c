@@ -26,6 +26,7 @@
 #define DEFAULT_DBGBUS_SDE	SDE_DBG_DUMP_IN_MEM
 #define DEFAULT_DBGBUS_VBIFRT	SDE_DBG_DUMP_IN_MEM
 #define DEFAULT_DBGBUS_DSI	SDE_DBG_DUMP_IN_MEM
+#define DEFAULT_DBGBUS_RSC	SDE_DBG_DUMP_IN_MEM
 #define DEFAULT_DBGBUS_LUTDMA	SDE_DBG_DUMP_IN_MEM
 #define DEFAULT_BASE_REG_CNT	DEFAULT_MDSS_HW_BLOCK_SIZE
 #define GROUP_BYTES		4
@@ -36,6 +37,7 @@
 #define DBGBUS_NAME_SDE		"sde"
 #define DBGBUS_NAME_VBIF_RT	"vbif_rt"
 #define DBGBUS_NAME_DSI		"dsi"
+#define DBGBUS_NAME_RSC		"sde_rsc_wrapper"
 #define DBGBUS_NAME_LUTDMA	"reg_dma"
 
 /* offsets from LUTDMA top address for the debug buses */
@@ -74,6 +76,9 @@
 #define MMSS_VBIF_ERR_INFO		0X1a0
 #define MMSS_VBIF_ERR_INFO_1		0x1a4
 #define MMSS_VBIF_CLIENT_NUM		14
+
+#define RSC_WRAPPER_DEBUG_BUS		0x010
+#define RSC_WRAPPER_DEBUG_BUS_DATA	0x014
 
 /* print debug ranges in groups of 4 u32s */
 #define REG_DUMP_ALIGN		16
@@ -238,6 +243,7 @@ struct sde_dbg_regbuf {
  * @dbgbus_sde: debug bus structure for the sde
  * @dbgbus_vbif_rt: debug bus structure for the realtime vbif
  * @dbgbus_dsi: debug bus structure for the dsi
+ * @dbgbus_rsc: debug bus structure for rscc
  * @dbgbus_lutdma: debug bus structure for the lutdma hw
  * @dump_all: dump all entries in register dump
  * @dump_secure: dump entries excluding few as it is in secure-session
@@ -262,6 +268,7 @@ static struct sde_dbg_base {
 	struct sde_dbg_sde_debug_bus dbgbus_sde;
 	struct sde_dbg_sde_debug_bus dbgbus_vbif_rt;
 	struct sde_dbg_sde_debug_bus dbgbus_dsi;
+	struct sde_dbg_sde_debug_bus dbgbus_rsc;
 	struct sde_dbg_sde_debug_bus dbgbus_lutdma;
 	bool dump_all;
 	bool dump_secure;
@@ -392,6 +399,10 @@ static struct sde_debug_bus_entry vbif_dbg_bus[] = {
 
 static struct sde_debug_bus_entry dsi_dbg_bus[] = {
 	{DSI_DEBUG_BUS_CTRL, DSI_DEBUG_BUS, 0, 4, 0, 64},
+};
+
+static struct sde_debug_bus_entry rsc_dbg_bus[] = {
+	{RSC_WRAPPER_DEBUG_BUS, RSC_WRAPPER_DEBUG_BUS_DATA, 0, 1, 0, 16},
 };
 
 static struct sde_debug_bus_entry dbg_bus_lutdma[] = {
@@ -686,6 +697,14 @@ static u32 _sde_dbg_cmn_read_test_point(void __iomem *mem_base, u32 wr_addr, u32
 static void _sde_dbg_cmn_clear_test_point(void __iomem *mem_base, u32 wr_addr)
 {
 	writel_relaxed(0, mem_base + wr_addr);
+}
+
+static u32 _sde_dbg_rsc_read_test_point(void __iomem *mem_base, u32 wr_addr, u32 rd_addr,
+			u32 block_id, u32 test_id)
+{
+	u32 val = ((test_id & 0xf) << 1) | BIT(0);
+
+	return _sde_dbg_cmn_read_test_point(mem_base, wr_addr, rd_addr, val);
 }
 
 static u32 _sde_dbg_lutdma_read_test_point(void __iomem *mem_base, u32 wr_addr, u32 rd_addr,
@@ -1008,6 +1027,7 @@ static void _sde_dump_array(struct sde_dbg_reg_base *blk_arr[],
 	if (dump_dbgbus_sde) {
 		_sde_dbg_dump_sde_dbg_bus(&sde_dbg_base.dbgbus_sde);
 		_sde_dbg_dump_sde_dbg_bus(&sde_dbg_base.dbgbus_lutdma);
+		_sde_dbg_dump_sde_dbg_bus(&sde_dbg_base.dbgbus_rsc);
 	}
 
 	if (dump_dbgbus_vbif_rt)
@@ -1119,12 +1139,10 @@ void sde_dbg_dump(enum sde_dbg_dump_context dump_mode, const char *name, ...)
 	if (dump_mode == SDE_DBG_DUMP_IRQ_CTX) {
 		/* schedule work to dump later */
 		sde_dbg_base.work_panic = do_panic;
-		sde_dbg_base.dbgbus_sde.cmn.include_in_deferred_work =
-				dump_dbgbus_sde;
-		sde_dbg_base.dbgbus_vbif_rt.cmn.include_in_deferred_work =
-				dump_dbgbus_vbif_rt;
-		sde_dbg_base.dbgbus_dsi.cmn.include_in_deferred_work =
-				dump_dbgbus_dsi;
+		sde_dbg_base.dbgbus_sde.cmn.include_in_deferred_work = dump_dbgbus_sde;
+		sde_dbg_base.dbgbus_vbif_rt.cmn.include_in_deferred_work = dump_dbgbus_vbif_rt;
+		sde_dbg_base.dbgbus_dsi.cmn.include_in_deferred_work = dump_dbgbus_dsi;
+		sde_dbg_base.dbgbus_rsc.cmn.include_in_deferred_work = dump_dbgbus_sde;
 		sde_dbg_base.dump_all = dump_all;
 		schedule_work(&sde_dbg_base.dump_work);
 	} else {
@@ -1671,6 +1689,27 @@ static const struct file_operations sde_recovery_dsi_dbgbus_fops = {
 	.read = sde_recovery_dbgbus_dump_read,
 };
 
+static int sde_recovery_rsc_dbgbus_dump_open(struct inode *inode,
+		struct file *file)
+{
+	if (!inode || !file)
+		return -EINVAL;
+
+	/* non-seekable */
+	file->f_mode &= ~(FMODE_LSEEK | FMODE_PREAD | FMODE_PWRITE);
+	file->private_data =  (void *)&sde_dbg_base.dbgbus_rsc.cmn;
+
+	mutex_lock(&sde_dbg_base.mutex);
+	sde_dbg_base.dbgbus_rsc.cmn.content_idx = 0;
+	mutex_unlock(&sde_dbg_base.mutex);
+
+	return 0;
+}
+
+static const struct file_operations sde_recovery_rsc_dbgbus_fops = {
+	.open = sde_recovery_rsc_dbgbus_dump_open,
+	.read = sde_recovery_dbgbus_dump_read,
+};
 
 static int sde_recovery_lutdma_dbgbus_dump_open(struct inode *inode,
 		struct file *file)
@@ -2118,6 +2157,15 @@ int sde_dbg_debugfs_register(struct device *dev)
 				&dbg->dbgbus_dsi.cmn.enable_mask);
 	}
 
+	if (dbg->dbgbus_rsc.entries) {
+		debugfs_create_file("recovery_rsc_dbgbus", 0400, debugfs_root,
+				NULL, &sde_recovery_rsc_dbgbus_fops);
+		snprintf(debug_name, sizeof(debug_name), "%s_dbgbus",
+				dbg->dbgbus_rsc.cmn.name);
+		debugfs_create_u32(debug_name, 0600, debugfs_root,
+				&dbg->dbgbus_rsc.cmn.enable_mask);
+	}
+
 	if (dbg->dbgbus_lutdma.entries) {
 		debugfs_create_file("recovery_lutdma_dbgbus", 0400,
 				debugfs_root, NULL,
@@ -2163,6 +2211,7 @@ void sde_dbg_init_dbg_buses(u32 hwversion)
 	memset(&dbg->dbgbus_sde, 0, sizeof(dbg->dbgbus_sde));
 	memset(&dbg->dbgbus_vbif_rt, 0, sizeof(dbg->dbgbus_vbif_rt));
 	memset(&dbg->dbgbus_dsi, 0, sizeof(dbg->dbgbus_dsi));
+	memset(&dbg->dbgbus_rsc, 0, sizeof(dbg->dbgbus_rsc));
 
 	dbg->dbgbus_sde.entries = dbg_bus_sde;
 	dbg->dbgbus_sde.cmn.entries_size = ARRAY_SIZE(dbg_bus_sde);
@@ -2189,6 +2238,13 @@ void sde_dbg_init_dbg_buses(u32 hwversion)
 	dbg->dbgbus_dsi.cmn.enable_mask = DEFAULT_DBGBUS_DSI;
 	dbg->dbgbus_dsi.read_tp = _sde_dbg_dsi_read_test_point;
 	dbg->dbgbus_dsi.clear_tp = _sde_dbg_cmn_clear_test_point;
+
+	dbg->dbgbus_rsc.entries = rsc_dbg_bus;
+	dbg->dbgbus_rsc.cmn.entries_size = ARRAY_SIZE(rsc_dbg_bus);
+	dbg->dbgbus_rsc.cmn.name = DBGBUS_NAME_RSC;
+	dbg->dbgbus_rsc.cmn.enable_mask = DEFAULT_DBGBUS_RSC;
+	dbg->dbgbus_rsc.read_tp = _sde_dbg_rsc_read_test_point;
+	dbg->dbgbus_rsc.clear_tp = _sde_dbg_cmn_clear_test_point;
 
 	if (SDE_HW_REV_MAJOR(hwversion) >= 0x7) {
 		dbg->dbgbus_lutdma.entries = dbg_bus_lutdma;
