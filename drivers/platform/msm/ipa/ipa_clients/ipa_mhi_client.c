@@ -15,6 +15,7 @@
 #include "ipa_common_i.h"
 #include "ipa_pm.h"
 #include "ipa_i.h"
+#include "ipahal.h"
 #include <linux/ipa_fmwk.h>
 
 #define IPA_MHI_DRV_NAME "ipa_mhi_client"
@@ -1003,23 +1004,38 @@ static int ipa_mhi_enable_force_clear(u32 request_id, bool throttle_source)
 	struct ipa_enable_force_clear_datapath_req_msg_v01 req;
 	int i;
 	int res;
+	u32 source_pipe_bitmask = 0;
+	u32 source_pipe_reg_idx = 0;
+	enum ipa_client_type client;
 
 	IPA_MHI_FUNC_ENTRY();
 	memset(&req, 0, sizeof(req));
 	req.request_id = request_id;
-	req.source_pipe_bitmask = 0;
 	for (i = 0; i < IPA_MHI_MAX_UL_CHANNELS; i++) {
 		if (!ipa_mhi_client_ctx->ul_channels[i].valid)
 			continue;
-		req.source_pipe_bitmask |= 1 << ipa_get_ep_mapping(
-				ipa_mhi_client_ctx->ul_channels[i].client);
+		client = ipa_mhi_client_ctx->ul_channels[i].client;
+		source_pipe_bitmask = ipahal_get_ep_bit(client);
+		source_pipe_reg_idx = ipahal_get_ep_reg_idx(client);
+		if (ipa3_ctx->ipa_hw_type < IPA_HW_v5_0) {
+			WARN_ON(source_pipe_reg_idx);
+			req.source_pipe_bitmask |= source_pipe_bitmask;
+		} else {
+			req.source_pipe_bitmask_ext_valid = 1;
+			req.source_pipe_bitmask_ext[source_pipe_reg_idx] |=
+				source_pipe_bitmask;
+		}
 	}
 	if (throttle_source) {
 		req.throttle_source_valid = 1;
 		req.throttle_source = 1;
 	}
-	IPA_MHI_DBG("req_id=0x%x src_pipe_btmk=0x%x throt_src=%d\n",
-		req.request_id, req.source_pipe_bitmask,
+	IPA_MHI_DBG("req_id=0x%x src_pipe_btmk=0x%x,0x%x,0x%x,0x%x throt_src=%d\n",
+		req.request_id,
+		req.source_pipe_bitmask_ext[0],
+		req.source_pipe_bitmask_ext[1],
+		req.source_pipe_bitmask_ext[2],
+		req.source_pipe_bitmask_ext[3],
 		req.throttle_source);
 	res = ipa3_qmi_enable_force_clear_datapath_send(&req);
 	if (res) {

@@ -1220,7 +1220,15 @@ int ipa3_qmi_enable_force_clear_datapath_send(
 	struct ipa_msg_desc req_desc, resp_desc;
 	int rc = 0;
 
-	if (!req || !req->source_pipe_bitmask) {
+	if (!req ||
+	    !((ipa3_ctx->ipa_hw_type < IPA_HW_v5_0 &&
+	       req->source_pipe_bitmask) ||
+	      (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0 &&
+	       req->source_pipe_bitmask_ext_valid &&
+	       (req->source_pipe_bitmask_ext[0] ||
+		req->source_pipe_bitmask_ext[1] ||
+		req->source_pipe_bitmask_ext[2] ||
+		req->source_pipe_bitmask_ext[3])))) {
 		IPAWANERR("invalid params\n");
 		return -EINVAL;
 	}
