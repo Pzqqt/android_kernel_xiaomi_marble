@@ -2891,7 +2891,7 @@ static int _sde_lm_noise_parse_dt(struct device_node *np,
 
 	if (!props->exists[NOISE_LAYER_OFF] ||
 		!props->exists[NOISE_LAYER_VERSION]) {
-		SDE_ERROR("noise: prop doesnt exist %d %d\n",
+		SDE_INFO("noise: prop doesnt exist %d %d\n",
 			props->exists[NOISE_LAYER_OFF],
 			props->exists[NOISE_LAYER_VERSION]);
 		goto exit;
