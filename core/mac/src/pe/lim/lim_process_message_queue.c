@@ -1830,11 +1830,6 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 	case WMA_ADD_TS_RSP:
 		lim_process_hal_add_ts_rsp(mac_ctx, msg);
 		break;
-	case SIR_LIM_BEACON_GEN_IND:
-		if (mac_ctx->lim.gLimSystemRole != eLIM_AP_ROLE)
-			sch_process_pre_beacon_ind(mac_ctx,
-						   msg, REASON_DEFAULT);
-		break;
 	case SIR_LIM_DELETE_STA_CONTEXT_IND:
 		lim_delete_sta_context(mac_ctx, msg);
 		break;

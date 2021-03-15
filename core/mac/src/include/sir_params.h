@@ -706,7 +706,6 @@ enum halmsgtype {
 #define SIR_LIM_WPS_OVERLAP_TIMEOUT      (SIR_LIM_TIMEOUT_MSG_START + 0x1D)
 #define SIR_LIM_FT_PREAUTH_RSP_TIMEOUT   (SIR_LIM_TIMEOUT_MSG_START + 0x1E)
 
-#define SIR_LIM_BEACON_GEN_IND          (SIR_LIM_TIMEOUT_MSG_START + 0x23)
 /* currently unused                     (SIR_LIM_TIMEOUT_MSG_START + 0x24) */
 /* currently unused                     (SIR_LIM_TIMEOUT_MSG_START + 0x25) */
 
