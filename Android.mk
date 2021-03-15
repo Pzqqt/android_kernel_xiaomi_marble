@@ -187,7 +187,7 @@ include $(DLKM_DIR)/Build_external_kernelmodule.mk
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES   := $(wildcard $(LOCAL_PATH)/**/*) $(wildcard $(LOCAL_PATH)/*)
 LOCAL_MODULE              := swr_dmic_dlkm.ko
-LOCAL_MODULE_KBUILD_NAME  := asoc/codecs/swr_dmic_dlkm.o
+LOCAL_MODULE_KBUILD_NAME  := asoc/codecs/swr_dmic_dlkm.ko
 LOCAL_MODULE_TAGS         := optional
 LOCAL_MODULE_DEBUG_ENABLE := true
 LOCAL_MODULE_PATH         := $(KERNEL_MODULES_OUT)
