@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef SDE_DBG_H_
@@ -41,6 +41,7 @@ enum sde_dbg_evtlog_flag {
 enum sde_dbg_dump_flag {
 	SDE_DBG_DUMP_IN_LOG = BIT(0),
 	SDE_DBG_DUMP_IN_MEM = BIT(1),
+	SDE_DBG_DUMP_IN_LOG_LIMITED = BIT(2),
 };
 
 enum sde_dbg_dump_context {
