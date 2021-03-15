@@ -4044,7 +4044,7 @@ void lim_parse_tpe_ie(struct mac_context *mac, struct pe_session *session,
 
 		wlan_reg_set_channel_params_for_freq(mac->pdev, curr_op_freq, 0,
 						     &ch_params);
-		curr_freq = ch_params.mhz_freq_seg0;
+		curr_freq = ch_params.mhz_freq_seg0 - bw_val / 2 + 10;
 
 		if (!num_octets) {
 			if (!he_op->oper_info_6g_present)
