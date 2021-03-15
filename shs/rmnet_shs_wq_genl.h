@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -20,6 +20,8 @@
 #define DATARMNETe64295b6cb (0xbb7+853-0xc3c)
 #define DATARMNET598eb03fad (0xbc7+788-0xc04)
 #define DATARMNET7afb49ee3f      (0xd07+2129-0x121c)
+#define DATARMNET2d19c9b1ef (0xcc7+5761-0x221c)
+#define DATARMNET96de786762 (0xcc7+5754-0x2214)
 #define DATARMNET00895c1601  (0xdc7+3085-0x163c)
 #define DATARMNET0cb8735618   (0xdb7+3102-0x1634)
 #define DATARMNET19092afcc2        (0xec7+1152-0x131d)

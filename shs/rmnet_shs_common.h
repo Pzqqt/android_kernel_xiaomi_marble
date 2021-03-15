@@ -30,16 +30,17 @@ list_head*DATARMNET4d030eb9b5,int DATARMNETa7a5705ab0);void DATARMNET4bde88919f(
 u8 cpu,int count);inline int DATARMNET362b15f941(u16 cpu);u64 
 DATARMNETfc888b4d3e(u16 cpu);u32 DATARMNETeb3978575d(u8 DATARMNET42a992465f);u32
  DATARMNETeea3cef5b6(u8 DATARMNET42a992465f);u8 DATARMNET928c931df9(struct 
-rps_map*map);int DATARMNETd5c15f1ff3(void*priv,struct list_head*
+rps_map*map);int DATARMNET3c489db64a(void*priv,struct list_head*
 DATARMNET9cf7d31274,struct list_head*DATARMNET5444bd3b6f);int 
-DATARMNET85af86a36d(void*priv,struct list_head*DATARMNET9cf7d31274,struct 
-list_head*DATARMNET5444bd3b6f);int DATARMNETf181a18009(struct net_device*dev);
-int DATARMNET98b2a0ce62(struct net_device*dev);void DATARMNET7f1d9480cb(void*
-port);void DATARMNETa4bd2ef52c(void*port);int DATARMNET310c3eb16e(u8 mask);void 
-DATARMNETb4a6870b3b(struct DATARMNET6c78e47d24*DATARMNETd2a694d52a);void 
-DATARMNETd8a6375e9c(struct DATARMNET6c78e47d24*DATARMNETd2a694d52a,struct 
-list_head*head);void DATARMNET9914e9761e(struct DATARMNET6c78e47d24*
-DATARMNETd2a694d52a,struct list_head*head);extern struct list_head 
-DATARMNET9825511866;
+DATARMNETd5c15f1ff3(void*priv,struct list_head*DATARMNET9cf7d31274,struct 
+list_head*DATARMNET5444bd3b6f);int DATARMNET85af86a36d(void*priv,struct 
+list_head*DATARMNET9cf7d31274,struct list_head*DATARMNET5444bd3b6f);int 
+DATARMNETf181a18009(struct net_device*dev);int DATARMNET98b2a0ce62(struct 
+net_device*dev);void DATARMNET7f1d9480cb(void*port);void DATARMNETa4bd2ef52c(
+void*port);int DATARMNET310c3eb16e(u8 mask);void DATARMNETb4a6870b3b(struct 
+DATARMNET6c78e47d24*DATARMNETd2a694d52a);void DATARMNETd8a6375e9c(struct 
+DATARMNET6c78e47d24*DATARMNETd2a694d52a,struct list_head*head);void 
+DATARMNET9914e9761e(struct DATARMNET6c78e47d24*DATARMNETd2a694d52a,struct 
+list_head*head);extern struct list_head DATARMNET9825511866;
 #endif
 

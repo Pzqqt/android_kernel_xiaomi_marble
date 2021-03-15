@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -33,6 +33,7 @@
 #define DATARMNET401583e606 (0xd11+230-0xdf3)
 #define DATARMNETc6782fed88  (0xd35+210-0xdff)
 #define DATARMNETbc3c416b77 (0xbf7+4405-0x1c3c)
+#define DATARMNET9273f84bf1 (0xeb7+1101-0x12f5)
 #define DATARMNET2edff26954 (0xd2d+202-0xdf7)
 #define DATARMNET752465942a (0xbf7+4364-0x1c04)
 #define DATARMNETbfe31ef643 (0xc07+1233-0xe1c)
@@ -62,39 +63,43 @@
 #define DATARMNET3a9bca9cba 20000
 #define DATARMNETcdee526004 (DATARMNET243c638e7d / (0xd1f+216-0xdf5))
 struct DATARMNETa6f2d499b2{struct hrtimer DATARMNET758a55f103;struct work_struct
- DATARMNET33110a3ff5;struct timespec DATARMNET251b97a380;int DATARMNETe61d62310f
-;u8 DATARMNET42c3ecbd5e;};struct DATARMNETa6b20d7e8b{struct hrtimer 
-DATARMNET6fd692fc7a;struct rmnet_map_dl_ind DATARMNET08dbb5ab35;struct 
+ DATARMNET33110a3ff5;struct timespec64 DATARMNET251b97a380;int 
+DATARMNETe61d62310f;u8 DATARMNET42c3ecbd5e;};struct DATARMNETa6b20d7e8b{struct 
+hrtimer DATARMNET6fd692fc7a;struct rmnet_map_dl_ind DATARMNET08dbb5ab35;struct 
 qmi_rmnet_ps_ind rmnet_idl_ind_cb;struct rmnet_port*port;struct 
 DATARMNETa6f2d499b2 DATARMNET132b9c7dc4[DATARMNETc6782fed88];u64 
 DATARMNETbd3a0ee74e[DATARMNETc6782fed88];long DATARMNETc252a1f55d;long 
 DATARMNETa2e32cdd3a;u32 DATARMNET9c869c1ec2;u16 DATARMNET64bb8a8f57;u8 
 DATARMNETd9cfd2812b;u8 DATARMNETf5ab31b9b0;u8 DATARMNET34097703c8;u8 
-DATARMNETfc89d842ae;u8 DATARMNET6fe0db3a49;u8 map_mask;u8 map_len;};struct 
-DATARMNETa034b2e60c{struct sk_buff*head;struct sk_buff*tail;u64 
-DATARMNETbaa5765693;u32 DATARMNET6215127f48;u32 DATARMNET35234676d4;};struct 
-DATARMNET63d7680df2{union{struct iphdr DATARMNETac9bbaad7c;struct ipv6hdr 
-DATARMNET1688a97aa4;}ip_hdr;union{struct tcphdr tp;struct udphdr up;}
-DATARMNETe33b41dad9;struct list_head DATARMNET04c88b8191;struct net_device*dev;
-struct DATARMNET6c78e47d24*DATARMNET341ea38662;struct DATARMNETa034b2e60c 
-DATARMNETae4b27456e;struct hlist_node list;u64 DATARMNET11930c5df8;u64 
-DATARMNETa8940e4a7b;u64 DATARMNET2594c418db;u32 queue_head;u32 hash;u16 
-map_index;u16 map_cpu;u16 DATARMNET1e9d25d9ff;u8 DATARMNETa1099c74fe;u8 
-DATARMNET6250e93187;u8 mux_id;};enum DATARMNET156842d55e{DATARMNET7bc926fdbe,
-DATARMNETb3e3b2a799,DATARMNET8dcf06727b};enum DATARMNET8463cba7c7{
-DATARMNETc3bce05be2,DATARMNET14067f0be4,DATARMNET28bb261646,DATARMNET67b67dc88f,
-DATARMNET0efbbe2821,DATARMNETa4267dfd8a,DATARMNETeccb61ebc3};enum 
-DATARMNETf355367410{DATARMNET557ff68d74,DATARMNET1c55e5fdb1,DATARMNET4ab5a31d0c,
-DATARMNETde2dd86539};enum DATARMNET3f3bc61c03{DATARMNETf5157a9b85,
-DATARMNET709b59b0e6,DATARMNET99db6e7d86,DATARMNETe3c02ddaeb,DATARMNET394acaf558,
-DATARMNETef8cbfa62f,DATARMNETe6e77f9f03,DATARMNETecdf13872c,DATARMNETd1687e0776,
-DATARMNET1828d69e96,DATARMNET40ceff078e,DATARMNET42b73d0f3f,DATARMNETb8fe2c0e64,
-DATARMNET72db8b9bac,DATARMNET33a9d4759f,DATARMNET46966e7828,DATARMNETa1f9420686,
-DATARMNET54b67b8a75,DATARMNETac729c3d29,DATARMNET6533f70c87,DATARMNET6f6efeaf61,
-DATARMNETcc0ef52ccb,DATARMNETf8de7cb644,DATARMNETdd6bf3de6b,DATARMNETf3110711cb}
-;enum DATARMNETd751e3ec84{DATARMNET802083239a,DATARMNETed69052342,
-DATARMNETcfb1764a91,DATARMNET84a9e136b8,DATARMNET01bf75e27c,DATARMNETd45c383019,
-DATARMNETbb5757569c,DATARMNETc8058e2cff,DATARMNET3cef75f6cd};struct 
+DATARMNETfc89d842ae;u8 DATARMNET6fe0db3a49;u8 DATARMNETba3f7a11ef;u8 map_mask;u8
+ map_len;u8 DATARMNET5c24e1df05;};struct DATARMNETa034b2e60c{struct sk_buff*head
+;struct sk_buff*tail;u64 DATARMNETbaa5765693;u32 DATARMNET6215127f48;u32 
+DATARMNET35234676d4;};struct DATARMNET63d7680df2{union{struct iphdr 
+DATARMNETac9bbaad7c;struct ipv6hdr DATARMNET1688a97aa4;}ip_hdr;union{struct 
+tcphdr tp;struct udphdr up;}DATARMNETe33b41dad9;struct list_head 
+DATARMNET04c88b8191;struct net_device*dev;struct DATARMNET6c78e47d24*
+DATARMNET341ea38662;struct DATARMNETa034b2e60c DATARMNETae4b27456e;struct 
+hlist_node list;u64 DATARMNET11930c5df8;u64 DATARMNETa8940e4a7b;u64 
+DATARMNET2594c418db;u32 queue_head;u32 hash;u16 map_index;u16 map_cpu;u16 
+DATARMNETfbbec4c537;u16 DATARMNETa59ce1fd2d;u8 DATARMNET85c698ec34;u16 
+DATARMNET1e9d25d9ff;u8 DATARMNETa1099c74fe;u8 DATARMNET6250e93187;u8 mux_id;};
+enum DATARMNET156842d55e{DATARMNET7bc926fdbe,DATARMNETb3e3b2a799,
+DATARMNET8dcf06727b};enum DATARMNET8463cba7c7{DATARMNETc3bce05be2,
+DATARMNET14067f0be4,DATARMNET28bb261646,DATARMNET67b67dc88f,DATARMNET0efbbe2821,
+DATARMNETa4267dfd8a,DATARMNETf13db5ace8,DATARMNETb6eae1e097,DATARMNET7f401828b3,
+DATARMNETeccb61ebc3};enum DATARMNETf355367410{DATARMNET557ff68d74,
+DATARMNET1c55e5fdb1,DATARMNET4ab5a31d0c,DATARMNETde2dd86539};enum 
+DATARMNET3f3bc61c03{DATARMNETf5157a9b85,DATARMNET709b59b0e6,DATARMNET99db6e7d86,
+DATARMNETe3c02ddaeb,DATARMNET394acaf558,DATARMNETef8cbfa62f,DATARMNETe6e77f9f03,
+DATARMNETecdf13872c,DATARMNETd1687e0776,DATARMNET1828d69e96,DATARMNET40ceff078e,
+DATARMNET42b73d0f3f,DATARMNETb8fe2c0e64,DATARMNET72db8b9bac,DATARMNET33a9d4759f,
+DATARMNET46966e7828,DATARMNETa1f9420686,DATARMNET54b67b8a75,DATARMNETac729c3d29,
+DATARMNET6533f70c87,DATARMNET6f6efeaf61,DATARMNETcc0ef52ccb,DATARMNETf8de7cb644,
+DATARMNETdd6bf3de6b,DATARMNETfeaf903a28,DATARMNET767c76ca08,DATARMNET048727d1d9,
+DATARMNET6ea8a58f4e,DATARMNETf3110711cb};enum DATARMNETd751e3ec84{
+DATARMNETcc3c294f38,DATARMNET802083239a,DATARMNETed69052342,DATARMNETcfb1764a91,
+DATARMNET84a9e136b8,DATARMNET01bf75e27c,DATARMNETd45c383019,DATARMNETbb5757569c,
+DATARMNETc8058e2cff,DATARMNET04dac3a62b,DATARMNET3cef75f6cd};struct 
 DATARMNETfd554c7eac{struct sk_buff*skb;struct DATARMNETfd554c7eac*next;};struct 
 DATARMNET37ef896af8{struct work_struct DATARMNET33110a3ff5;struct rmnet_port*
 port;};struct DATARMNETe600c5b727{struct list_head DATARMNET3dc4262f53;u32 
@@ -123,19 +128,20 @@ DATARMNET595eed6ea2,DATARMNETde090e8314,DATARMNETa593d87b38,DATARMNET8a2898988b,
 DATARMNET0709c9f764,};extern struct DATARMNET37ef896af8 DATARMNET1731db288b;
 extern spinlock_t DATARMNET3764d083f0;extern spinlock_t DATARMNETec2a4f5211;
 extern spinlock_t DATARMNETfbdbab2ef6;extern struct hlist_head 
-DATARMNETe603c3a4b3[(0xd26+209-0xdf6)<<(DATARMNET25437d35fd)];extern void 
-rmnet_deliver_skb(struct sk_buff*skb,struct rmnet_port*port);extern int(*
-rmnet_shs_skb_entry)(struct sk_buff*skb,struct rmnet_port*port);int 
-DATARMNET362b15f941(u16 cpu);void DATARMNETeacad8334e(void);void 
-DATARMNETe1f95274f1(void);unsigned int DATARMNET02cdd9b125(void);int 
-DATARMNET310c3eb16e(u8 mask);int DATARMNETe02152c351(struct DATARMNET63d7680df2*
-DATARMNET63b1a086d5,u8 DATARMNETd87669e323,u8 DATARMNET5447204733);void 
-DATARMNET78bb6be330(struct rmnet_map_dl_ind_hdr*dlhdr,struct 
-rmnet_map_control_command_header*qcmd);void DATARMNETf61cd23b90(struct 
-rmnet_map_dl_ind_trl*dltrl,struct rmnet_map_control_command_header*qcmd);void 
-DATARMNET7ed4cef8a3(struct rmnet_map_dl_ind_hdr*dlhdr);void DATARMNET613a81eca8(
-struct rmnet_map_dl_ind_trl*dltrl);int DATARMNET756778f14f(struct sk_buff*skb,
-struct rmnet_port*port);void DATARMNETa4bf9fbf64(u8 DATARMNET665469cfb6,u8 
+DATARMNETe603c3a4b3[(0xd26+209-0xdf6)<<(DATARMNET25437d35fd)];extern int(*
+rmnet_shs_skb_entry)(struct sk_buff*skb,struct rmnet_shs_clnt_s*
+DATARMNET9e820fbfe3);extern int(*rmnet_shs_switch)(struct sk_buff*skb,struct 
+rmnet_shs_clnt_s*DATARMNET9e820fbfe3);int DATARMNET362b15f941(u16 cpu);void 
+DATARMNETeacad8334e(void);void DATARMNETe1f95274f1(void);unsigned int 
+DATARMNET02cdd9b125(void);int DATARMNET310c3eb16e(u8 mask);int 
+DATARMNETe02152c351(struct DATARMNET63d7680df2*DATARMNET63b1a086d5,u8 
+DATARMNETd87669e323,u8 DATARMNET5447204733);void DATARMNET78bb6be330(struct 
+rmnet_map_dl_ind_hdr*dlhdr,struct rmnet_map_control_command_header*qcmd);void 
+DATARMNETf61cd23b90(struct rmnet_map_dl_ind_trl*dltrl,struct 
+rmnet_map_control_command_header*qcmd);void DATARMNET7ed4cef8a3(struct 
+rmnet_map_dl_ind_hdr*dlhdr);void DATARMNET613a81eca8(struct rmnet_map_dl_ind_trl
+*dltrl);int DATARMNET756778f14f(struct sk_buff*skb,struct rmnet_shs_clnt_s*
+DATARMNET9e820fbfe3);void DATARMNETa4bf9fbf64(u8 DATARMNET665469cfb6,u8 
 DATARMNET5447204733);void DATARMNETde8ee16f92(struct DATARMNET63d7680df2*
 DATARMNET63b1a086d5);void DATARMNET45d8cdb224(struct net_device*dev,struct 
 net_device*vnd);void DATARMNET9297340f58(unsigned int DATARMNET9f4bc49c6f);void 
