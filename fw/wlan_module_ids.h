@@ -118,6 +118,7 @@ typedef enum {
   WLAN_MODULE_CFIR,                     /* 0x54 */ /* Channel Capture */
   WLAN_MODULE_CODE_COVER,               /* 0x55 */ /* code coverage */
   WLAN_MODULE_SHO,                      /* 0x56 */ /* SAP HW offload */
+  WLAN_MODULE_MLO_MGR,                  /* 0x57 */ /* MLO manager */
 
 
   WLAN_MODULE_ID_MAX,

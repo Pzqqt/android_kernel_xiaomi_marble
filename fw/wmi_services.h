@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -509,6 +509,23 @@ typedef  enum  {
      * be sent on the WMI communication link.
      */
     WMI_SERVICE_UNIFIED_LL_GET_STA_OVER_QMI_SUPPORT = 274,
+    /*
+     * Indicates FW supports EAPOL offload for SAE roaming if PMK of
+     * candidate AP is present in FW.
+     */
+    WMI_SERVICE_SAE_EAPOL_OFFLOAD_SUPPORT = 275,
+    /*
+     * Indicates FW supports sending events to host during Thermal Throttling
+     * every duty cycle on detecting temperature change when dc_per_event is 0.
+     */
+    WMI_SERVICE_THERM_THROT_TEMP_CHANGE_DYNAMIC_EVENT_SUPPORT = 276,
+    WMI_SERVICE_WAPI_CONCURRENCY_SUPPORTED = 277, /* Indicates FW support for WAPI concurrency */
+    WMI_SERVICE_SAP_CONNECTED_D3WOW = 278,  /* Indicates FW support for D3WoW for SAP connected case */
+    WMI_SERVICE_GO_CONNECTED_D3WOW = 279,   /* Indicates FW support for D3WoW for P2P GO connected case */
+    WMI_SERVICE_EXT_TPC_REG_SUPPORT = 280, /* Support for new 6G TPC power limits */
+    WMI_SERVICE_REG_CC_EXT_EVENT_SUPPORT = 281, /* Support for Extended REG_CC Event with additional params for 6G */
+    WMI_SERVICE_NDI_TXBF_SUPPORT = 282, /* Indicates FW support for Tx beamforming with NDI VDEV */
+    WMI_SERVICE_6G_EDGE_CHANNEL_SUPPORT = 283, /* Indicates FW Support for 6GHz Edge Channels */
 
 
     WMI_MAX_EXT2_SERVICE
@@ -606,7 +623,7 @@ typedef  enum  {
         if (svc_id < WMI_MAX_SERVICE) { \
             WMI_SERVICE_DISABLE(pwmi_svc_bmap, svc_id); \
         } else if (svc_id < WMI_MAX_EXT_SERVICE) { \
-            WMI_SERVICE_DISABLE(pwmi_svc_bmap, pwmi_svc_ext_bmap, svc_id); \
+            WMI_SERVICE_EXT_DISABLE(pwmi_svc_bmap, pwmi_svc_ext_bmap, svc_id); \
         } else { \
             int word = ((svc_id) - WMI_MAX_EXT_SERVICE) / 32; \
             int bit = (svc_id) & 0x1f; /* svc_id mod 32 */ \

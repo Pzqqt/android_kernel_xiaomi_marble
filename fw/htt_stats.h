@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -627,7 +627,7 @@ typedef enum {
     HTT_TX_PDEV_MAX_URRN_STATS = 3,
 } htt_tx_pdev_underrun_enum;
 
-#define HTT_TX_PDEV_MAX_FLUSH_REASON_STATS 71
+#define HTT_TX_PDEV_MAX_FLUSH_REASON_STATS 150
 #define HTT_TX_PDEV_MAX_SIFS_BURST_STATS 9
 #define HTT_TX_PDEV_MAX_SIFS_BURST_HIST_STATS 10
 #define HTT_TX_PDEV_MAX_PHY_ERR_STATS 18
@@ -1620,20 +1620,20 @@ typedef struct {
 /* MU MIMO stats per hwQ */
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-    A_UINT32      mu_mimo_sch_posted;
-    A_UINT32      mu_mimo_sch_failed;
-    A_UINT32      mu_mimo_ppdu_posted;
+    A_UINT32      mu_mimo_sch_posted;  /* number of MU MIMO schedules posted to HW */
+    A_UINT32      mu_mimo_sch_failed;  /* number of MU MIMO schedules failed to post */
+    A_UINT32      mu_mimo_ppdu_posted; /* number of MU MIMO PPDUs posted to HW */
 } htt_tx_hwq_mu_mimo_sch_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-    A_UINT32      mu_mimo_mpdus_queued_usr;   /* Number of mpdus queued per user */
-    A_UINT32      mu_mimo_mpdus_tried_usr;    /* Number of mpdus actually transmitted by TxPCU per user */
-    A_UINT32      mu_mimo_mpdus_failed_usr;   /* Number of mpdus failed per user */
-    A_UINT32      mu_mimo_mpdus_requeued_usr; /* Number of mpdus requeued per user */
-    A_UINT32      mu_mimo_err_no_ba_usr;      /* Number of times BA is not received for a user in MU PPDU */
-    A_UINT32      mu_mimo_mpdu_underrun_usr;
-    A_UINT32      mu_mimo_ampdu_underrun_usr;
+    A_UINT32      mu_mimo_mpdus_queued_usr;   /* 11AC DL MU MIMO number of mpdus queued to HW, per user */
+    A_UINT32      mu_mimo_mpdus_tried_usr;    /* 11AC DL MU MIMO number of mpdus tried over the air, per user */
+    A_UINT32      mu_mimo_mpdus_failed_usr;   /* 11AC DL MU MIMO number of mpdus failed acknowledgement, per user */
+    A_UINT32      mu_mimo_mpdus_requeued_usr; /* 11AC DL MU MIMO number of mpdus re-queued to HW, per user */
+    A_UINT32      mu_mimo_err_no_ba_usr;      /* 11AC DL MU MIMO BA not receieved, per user */
+    A_UINT32      mu_mimo_mpdu_underrun_usr;  /* 11AC DL MU MIMO mpdu underrun encountered, per user */
+    A_UINT32      mu_mimo_ampdu_underrun_usr; /* 11AC DL MU MIMO ampdu underrun encountered, per user */
 } htt_tx_hwq_mu_mimo_mpdu_stats_tlv;
 
 #define HTT_TX_HWQ_MU_MIMO_CMN_STATS_MAC_ID_M 0x000000ff
@@ -1914,117 +1914,123 @@ typedef struct {
      * BIT [31 :  8]   :- reserved
      */
     A_UINT32 mac_id__word;
-    A_UINT32 su_bar;
-    A_UINT32 rts;
-    A_UINT32 cts2self;
-    A_UINT32 qos_null;
-    A_UINT32 delayed_bar_1; /* MU user 1 */
-    A_UINT32 delayed_bar_2; /* MU user 2 */
-    A_UINT32 delayed_bar_3; /* MU user 3 */
-    A_UINT32 delayed_bar_4; /* MU user 4 */
-    A_UINT32 delayed_bar_5; /* MU user 5 */
-    A_UINT32 delayed_bar_6; /* MU user 6 */
-    A_UINT32 delayed_bar_7; /* MU user 7 */
+    A_UINT32 su_bar;        /* BAR sent out for SU transmission */
+    A_UINT32 rts;           /* SW generated RTS frame sent */
+    A_UINT32 cts2self;      /* SW generated CTS-to-self frame sent */
+    A_UINT32 qos_null;      /* SW generated QOS NULL frame sent */
+    A_UINT32 delayed_bar_1; /* BAR sent for MU user 1 */
+    A_UINT32 delayed_bar_2; /* BAR sent for MU user 2 */
+    A_UINT32 delayed_bar_3; /* BAR sent for MU user 3 */
+    A_UINT32 delayed_bar_4; /* BAR sent for MU user 4 */
+    A_UINT32 delayed_bar_5; /* BAR sent for MU user 5 */
+    A_UINT32 delayed_bar_6; /* BAR sent for MU user 6 */
+    A_UINT32 delayed_bar_7; /* BAR sent for MU user 7 */
     A_UINT32 bar_with_tqm_head_seq_num;
     A_UINT32 bar_with_tid_seq_num;
 } htt_tx_selfgen_cmn_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-    /* 11AC
-     *
-     * Fields with suffix as tried -> Selfgen frames tried out in the air,
-     * Fields with suffix as queued -> Selfgen frames queued to hw
-     */
-    A_UINT32 ac_su_ndpa;
-    A_UINT32 ac_su_ndp;
-    A_UINT32 ac_mu_mimo_ndpa;
-    A_UINT32 ac_mu_mimo_ndp;
-    A_UINT32 ac_mu_mimo_brpoll_1; /* MU user 1 */
-    A_UINT32 ac_mu_mimo_brpoll_2; /* MU user 2 */
-    A_UINT32 ac_mu_mimo_brpoll_3; /* MU user 3 */
-    A_UINT32 ac_su_ndpa_queued;
-    A_UINT32 ac_su_ndp_queued;
-    A_UINT32 ac_mu_mimo_ndpa_queued;
-    A_UINT32 ac_mu_mimo_ndp_queued;
-    A_UINT32 ac_mu_mimo_brpoll_1_queued;
-    A_UINT32 ac_mu_mimo_brpoll_2_queued;
-    A_UINT32 ac_mu_mimo_brpoll_3_queued;
+    A_UINT32 ac_su_ndpa;                 /* 11AC VHT SU NDPA frame sent over the air */
+    A_UINT32 ac_su_ndp;                  /* 11AC VHT SU NDP frame sent over the air */
+    A_UINT32 ac_mu_mimo_ndpa;            /* 11AC VHT MU MIMO NDPA frame sent over the air */
+    A_UINT32 ac_mu_mimo_ndp;             /* 11AC VHT MU MIMO NDP frame sent over the air */
+    A_UINT32 ac_mu_mimo_brpoll_1;        /* 11AC VHT MU MIMO BR-POLL for user 1 sent over the air */
+    A_UINT32 ac_mu_mimo_brpoll_2;        /* 11AC VHT MU MIMO BR-POLL for user 2 sent over the air */
+    A_UINT32 ac_mu_mimo_brpoll_3;        /* 11AC VHT MU MIMO BR-POLL for user 3 sent over the air */
+    A_UINT32 ac_su_ndpa_queued;          /* 11AC VHT SU NDPA frame queued to the HW */
+    A_UINT32 ac_su_ndp_queued;           /* 11AC VHT SU NDP frame queued to the HW */
+    A_UINT32 ac_mu_mimo_ndpa_queued;     /* 11AC VHT MU MIMO NDPA frame queued to the HW */
+    A_UINT32 ac_mu_mimo_ndp_queued;      /* 11AC VHT MU MIMO NDP frame queued to the HW */
+    A_UINT32 ac_mu_mimo_brpoll_1_queued; /* 11AC VHT MU MIMO BR-POLL for user 1 frame queued to the HW */
+    A_UINT32 ac_mu_mimo_brpoll_2_queued; /* 11AC VHT MU MIMO BR-POLL for user 2 frame queued to the HW */
+    A_UINT32 ac_mu_mimo_brpoll_3_queued; /* 11AC VHT MU MIMO BR-POLL for user 3 frame queued to the HW */
 } htt_tx_selfgen_ac_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-    /* 11AX
-     *
-     * Fields with suffix as tried -> Selfgen frames tried out in the air,
-     * Fields with suffix as queued -> Selfgen frames queued to hw
-     */
-    A_UINT32 ax_su_ndpa;
-    A_UINT32 ax_su_ndp;
-    A_UINT32 ax_mu_mimo_ndpa;
-    A_UINT32 ax_mu_mimo_ndp;
+    A_UINT32 ax_su_ndpa;      /* 11AX HE SU NDPA frame sent over the air */
+    A_UINT32 ax_su_ndp;       /* 11AX HE NDP frame sent over the air */
+    A_UINT32 ax_mu_mimo_ndpa; /* 11AX HE MU MIMO NDPA frame sent over the air */
+    A_UINT32 ax_mu_mimo_ndp;  /* 11AX HE MU MIMO NDP frame sent over the air */
     union {
         struct {
             /* deprecated old names */
-            A_UINT32 ax_mu_mimo_brpoll_1; /* MU user 1 */
-            A_UINT32 ax_mu_mimo_brpoll_2; /* MU user 2 */
-            A_UINT32 ax_mu_mimo_brpoll_3; /* MU user 3 */
-            A_UINT32 ax_mu_mimo_brpoll_4; /* MU user 4 */
-            A_UINT32 ax_mu_mimo_brpoll_5; /* MU user 5 */
-            A_UINT32 ax_mu_mimo_brpoll_6; /* MU user 6 */
-            A_UINT32 ax_mu_mimo_brpoll_7; /* MU user 7 */
+            A_UINT32 ax_mu_mimo_brpoll_1;
+            A_UINT32 ax_mu_mimo_brpoll_2;
+            A_UINT32 ax_mu_mimo_brpoll_3;
+            A_UINT32 ax_mu_mimo_brpoll_4;
+            A_UINT32 ax_mu_mimo_brpoll_5;
+            A_UINT32 ax_mu_mimo_brpoll_6;
+            A_UINT32 ax_mu_mimo_brpoll_7;
         };
-        /* MU users 1-7 */
+        /* 11AX HE MU BR-POLL frame for users 1 - 7 sent over the air */
         A_UINT32 ax_mu_mimo_brpoll[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS - 1];
     };
-    A_UINT32 ax_basic_trigger;
-    A_UINT32 ax_bsr_trigger;
-    A_UINT32 ax_mu_bar_trigger;
-    A_UINT32 ax_mu_rts_trigger;
-    A_UINT32 ax_ulmumimo_trigger;
-    A_UINT32 ax_su_ndpa_queued;
-    A_UINT32 ax_su_ndp_queued;
-    A_UINT32 ax_mu_mimo_ndpa_queued;
-    A_UINT32 ax_mu_mimo_ndp_queued;
+    A_UINT32 ax_basic_trigger;       /* 11AX HE MU Basic Trigger frame sent over the air */
+    A_UINT32 ax_bsr_trigger;         /* 11AX HE MU BSRP Trigger frame sent over the air */
+    A_UINT32 ax_mu_bar_trigger;      /* 11AX HE MU BAR Trigger frame sent over the air */
+    A_UINT32 ax_mu_rts_trigger;      /* 11AX HE MU RTS Trigger frame sent over the air */
+    A_UINT32 ax_ulmumimo_trigger;    /* 11AX HE MU UL-MUMIMO Trigger frame sent over the air */
+    A_UINT32 ax_su_ndpa_queued;      /* 11AX HE SU NDPA frame queued to the HW */
+    A_UINT32 ax_su_ndp_queued;       /* 11AX HE SU NDP frame queued to the HW */
+    A_UINT32 ax_mu_mimo_ndpa_queued; /* 11AX HE MU MIMO NDPA frame queued to the HW */
+    A_UINT32 ax_mu_mimo_ndp_queued;  /* 11AX HE MU MIMO NDP frame queued to the HW */
+    /* 11AX HE MU BR-POLL frame for users 1 - 7 queued to the HW */
     A_UINT32 ax_mu_mimo_brpoll_queued[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS - 1];
+    /* 11AX HE UL-MUMIMO Trigger frame for users 0 - 7 successfully sent over the air */
     A_UINT32 ax_ul_mumimo_trigger[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
 } htt_tx_selfgen_ax_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-
+    /* 11AX HE OFDMA NDPA frame queued to the HW */
     A_UINT32 ax_ofdma_ndpa_queued[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    /* 11AX HE OFDMA NDPA frame sent over the air */
     A_UINT32 ax_ofdma_ndpa_tried[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    /* 11AX HE OFDMA NDPA frame flushed by HW */
     A_UINT32 ax_ofdma_ndpa_flushed[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    /* 11AX HE OFDMA NDPA frame completed with error(s) */
     A_UINT32 ax_ofdma_ndpa_err[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
 } htt_txbf_ofdma_ndpa_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-
+    /* 11AX HE OFDMA NDP frame queued to the HW */
     A_UINT32 ax_ofdma_ndp_queued[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    /* 11AX HE OFDMA NDPA frame sent over the air */
     A_UINT32 ax_ofdma_ndp_tried[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    /* 11AX HE OFDMA NDPA frame flushed by HW */
     A_UINT32 ax_ofdma_ndp_flushed[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    /* 11AX HE OFDMA NDPA frame completed with error(s) */
     A_UINT32 ax_ofdma_ndp_err[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
 } htt_txbf_ofdma_ndp_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-
+    /* 11AX HE OFDMA MU BRPOLL frame queued to the HW */
     A_UINT32 ax_ofdma_brpoll_queued[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    /* 11AX HE OFDMA MU BRPOLL frame sent over the air */
     A_UINT32 ax_ofdma_brpoll_tried[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    /* 11AX HE OFDMA MU BRPOLL frame flushed by HW */
     A_UINT32 ax_ofdma_brpoll_flushed[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    /* 11AX HE OFDMA MU BRPOLL frame completed with error(s) */
     A_UINT32 ax_ofdma_brp_err[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    /* Number of CBF(s) received when 11AX HE OFDMA MU BRPOLL frame completed with error(s) */
     A_UINT32 ax_ofdma_brp_err_num_cbf_rcvd[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS+1];
 } htt_txbf_ofdma_brp_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-
+    /* 11AX HE OFDMA PPDUs that were sent over the air with steering (TXBF + OFDMA) */
     A_UINT32 ax_ofdma_num_ppdu_steer[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    /* 11AX HE OFDMA PPDUs that were sent over the air in open loop */
     A_UINT32 ax_ofdma_num_ppdu_ol[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    /* 11AX HE OFDMA number of users for which CBF prefetch was initiated to PHY HW during TX */
     A_UINT32 ax_ofdma_num_usrs_prefetch[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    /* 11AX HE OFDMA number of users for which sounding was initiated during TX */
     A_UINT32 ax_ofdma_num_usrs_sound[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    /* 11AX HE OFDMA number of users for which sounding was forced during TX */
     A_UINT32 ax_ofdma_num_usrs_force_sound[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
 } htt_txbf_ofdma_steer_stats_tlv;
 
@@ -2048,40 +2054,28 @@ typedef struct {
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-    /* 11AC error stats
-     *
-     * Fields with suffix as err -> Selfgen frames failed after being tried out,
-     * Fields with suffix as flushed - Selfgen frames flushed out from hw queue
-     *     due to various reasons
-     */
-    A_UINT32 ac_su_ndp_err;
-    A_UINT32 ac_su_ndpa_err;
-    A_UINT32 ac_mu_mimo_ndpa_err;
-    A_UINT32 ac_mu_mimo_ndp_err;
-    A_UINT32 ac_mu_mimo_brp1_err;
-    A_UINT32 ac_mu_mimo_brp2_err;
-    A_UINT32 ac_mu_mimo_brp3_err;
-    A_UINT32 ac_su_ndpa_flushed;
-    A_UINT32 ac_su_ndp_flushed;
-    A_UINT32 ac_mu_mimo_ndpa_flushed;
-    A_UINT32 ac_mu_mimo_ndp_flushed;
-    A_UINT32 ac_mu_mimo_brpoll1_flushed;
-    A_UINT32 ac_mu_mimo_brpoll2_flushed;
-    A_UINT32 ac_mu_mimo_brpoll3_flushed;
+    A_UINT32 ac_su_ndp_err;              /* 11AC VHT SU NDP frame completed with error(s) */
+    A_UINT32 ac_su_ndpa_err;             /* 11AC VHT SU NDPA frame completed with error(s) */
+    A_UINT32 ac_mu_mimo_ndpa_err;        /* 11AC VHT MU MIMO NDPA frame completed with error(s) */
+    A_UINT32 ac_mu_mimo_ndp_err;         /* 11AC VHT MU MIMO NDP frame completed with error(s) */
+    A_UINT32 ac_mu_mimo_brp1_err;        /* 11AC VHT MU MIMO BRPOLL for user 1 frame completed with error(s) */
+    A_UINT32 ac_mu_mimo_brp2_err;        /* 11AC VHT MU MIMO BRPOLL for user 2 frame completed with error(s) */
+    A_UINT32 ac_mu_mimo_brp3_err;        /* 11AC VHT MU MIMO BRPOLL for user 3 frame completed with error(s) */
+    A_UINT32 ac_su_ndpa_flushed;         /* 11AC VHT SU NDPA frame flushed by HW */
+    A_UINT32 ac_su_ndp_flushed;          /* 11AC VHT SU NDP frame flushed by HW */
+    A_UINT32 ac_mu_mimo_ndpa_flushed;    /* 11AC VHT MU MIMO NDPA frame flushed by HW */
+    A_UINT32 ac_mu_mimo_ndp_flushed;     /* 11AC VHT MU MIMO NDP frame flushed by HW */
+    A_UINT32 ac_mu_mimo_brpoll1_flushed; /* 11AC VHT MU MIMO BRPOLL for user 1 frame flushed by HW */
+    A_UINT32 ac_mu_mimo_brpoll2_flushed; /* 11AC VHT MU MIMO BRPOLL for user 2 frame flushed by HW */
+    A_UINT32 ac_mu_mimo_brpoll3_flushed; /* 11AC VHT MU MIMO BRPOLL for user 3 frame flushed by HW */
 } htt_tx_selfgen_ac_err_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-    /* 11AX error stats
-     *
-     * Fields with suffix as err -> Selfgen frames failed after being tried out,
-     * Fields with suffix as flushed - Selfgen frames flushed out from hw queue
-     *     due to various reasons
-     */
-    A_UINT32 ax_su_ndp_err;
-    A_UINT32 ax_su_ndpa_err;
-    A_UINT32 ax_mu_mimo_ndpa_err;
-    A_UINT32 ax_mu_mimo_ndp_err;
+    A_UINT32 ax_su_ndp_err;       /* 11AX HE SU NDP frame completed with error(s) */
+    A_UINT32 ax_su_ndpa_err;      /* 11AX HE SU NDPA frame completed with error(s) */
+    A_UINT32 ax_mu_mimo_ndpa_err; /* 11AX HE MU MIMO NDPA frame completed with error(s) */
+    A_UINT32 ax_mu_mimo_ndp_err;  /* 11AX HE MU MIMO NDP frame completed with error(s) */
     union {
         struct {
             /* deprecated old names */
@@ -2093,50 +2087,107 @@ typedef struct {
             A_UINT32 ax_mu_mimo_brp6_err;
             A_UINT32 ax_mu_mimo_brp7_err;
         };
+        /* 11AX HE MU BR-POLL frame for 1 - 7 users completed with error(s) */
         A_UINT32 ax_mu_mimo_brp_err[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS - 1];
     };
-    A_UINT32 ax_basic_trigger_err;
-    A_UINT32 ax_bsr_trigger_err;
-    A_UINT32 ax_mu_bar_trigger_err;
-    A_UINT32 ax_mu_rts_trigger_err;
-    A_UINT32 ax_ulmumimo_trigger_err;
+    A_UINT32 ax_basic_trigger_err;    /* 11AX HE MU Basic Trigger frame completed with error(s) */
+    A_UINT32 ax_bsr_trigger_err;      /* 11AX HE MU BSRP Trigger frame completed with error(s) */
+    A_UINT32 ax_mu_bar_trigger_err;   /* 11AX HE MU BAR Trigger frame completed with error(s) */
+    A_UINT32 ax_mu_rts_trigger_err;   /* 11AX HE MU RTS Trigger frame completed with error(s) */
+    A_UINT32 ax_ulmumimo_trigger_err; /* 11AX HE MU ULMUMIMO Trigger frame completed with error(s) */
+    /* Number of CBF(s) received when 11AX HE MU MIMO BRPOLL frame completed with error(s) */
     A_UINT32 ax_mu_mimo_brp_err_num_cbf_received[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
-    A_UINT32 ax_su_ndpa_flushed;
-    A_UINT32 ax_su_ndp_flushed;
-    A_UINT32 ax_mu_mimo_ndpa_flushed;
-    A_UINT32 ax_mu_mimo_ndp_flushed;
+    A_UINT32 ax_su_ndpa_flushed;      /* 11AX HE SU NDPA frame flushed by HW */
+    A_UINT32 ax_su_ndp_flushed;       /* 11AX HE SU NDP frame flushed by HW */
+    A_UINT32 ax_mu_mimo_ndpa_flushed; /* 11AX HE MU MIMO NDPA frame flushed by HW */
+    A_UINT32 ax_mu_mimo_ndp_flushed;  /* 11AX HE MU MIMO NDP frame flushed by HW */
+    /* 11AX HE MU BR-POLL frame for users 1 - 7 flushed by HW */
     A_UINT32 ax_mu_mimo_brpoll_flushed[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS - 1];
+    /* 11AX HE UL-MUMIMO Trigger frame for users 0 - 7 completed with error(s) */
     A_UINT32 ax_ul_mumimo_trigger_err[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
 } htt_tx_selfgen_ax_err_stats_tlv;
 
+/*
+ * Scheduler completion status reason code.
+ * (0) HTT_TXERR_NONE - No error (Success).
+ * (1) HTT_TXERR_RESP - Response timeout, response mismatch, BW mismatch,
+ *     MIMO control mismatch, CRC error etc.
+ * (2) HTT_TXERR_FILT - Blocked by HW tx filtering.
+ * (3) HTT_TXERR_FIFO - FIFO, misc. errors in HW.
+ * (4) HTT_TXERR_SWABORT - Software initialted abort (TX_ABORT).
+ * (5) HTT_TXERR_RESERVED1 - Currently reserved.
+ * (6) HTT_TXERR_RESERVED2 - Currently reserved.
+ */
+
+/* Scheduler error code.
+ * (0) HTT_TX_SELFGEN_SCH_TSFLAG_FLUSH_RCVD_ERR - Flush received from HW.
+ * (1) HTT_TX_SELFGEN_SCH_TSFLAG_FILT_SCHED_CMD_ERR - Scheduler command was
+ *     filtered by HW.
+ * (2) HTT_TX_SELFGEN_SCH_TSFLAG_RESP_MISMATCH_ERR - Response frame mismatch
+ *     error.
+ * (3) HTT_TX_SELFGEN_SCH_TSFLAG_RESP_CBF_MIMO_CTRL_MISMATCH_ERR - CBF
+ *     received with MIMO control mismatch.
+ * (4) HTT_TX_SELFGEN_SCH_TSFLAG_RESP_CBF_BW_MISMATCH_ERR - CBF received with
+ *     BW mismatch.
+ * (5) HTT_TX_SELFGEN_SCH_TSFLAG_RETRY_COUNT_FAIL_ERR - Error in transmitting
+ *     frame even after maximum retries.
+ * (6) HTT_TX_SELFGEN_SCH_TSFLAG_RESP_TOO_LATE_RECEIVED_ERR - Response frame
+ *     received outside RX window.
+ * (7) HTT_TX_SELFGEN_SCH_TSFLAG_SIFS_STALL_NO_NEXT_CMD_ERR - No frame
+ *     received by HW for queuing within SIFS interval.
+ */
+
+
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-    /* 11AC sched status stats */
+    /* 11AC VHT SU NDPA scheduler completion status reason code */
     A_UINT32 ac_su_ndpa_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    /* 11AC VHT SU NDP scheduler completion status reason code */
     A_UINT32 ac_su_ndp_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    /* 11AC VHT SU NDP scheduler error code */
     A_UINT32 ac_su_ndp_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
+    /* 11AC VHT MU MIMO NDPA scheduler completion status reason code */
     A_UINT32 ac_mu_mimo_ndpa_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    /* 11AC VHT MU MIMO NDP scheduler completion status reason code */
     A_UINT32 ac_mu_mimo_ndp_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    /* 11AC VHT MU MIMO NDP scheduler error code */
     A_UINT32 ac_mu_mimo_ndp_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
+    /* 11AC VHT MU MIMO BRPOLL scheduler completion status reason code */
     A_UINT32 ac_mu_mimo_brp_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    /* 11AC VHT MU MIMO BRPOLL scheduler error code */
     A_UINT32 ac_mu_mimo_brp_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
 } htt_tx_selfgen_ac_sched_status_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-    /* 11AX error stats */
+    /* 11AX HE SU NDPA scheduler completion status reason code */
     A_UINT32 ax_su_ndpa_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    /* 11AX SU NDP scheduler completion status reason code */
     A_UINT32 ax_su_ndp_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    /* 11AX HE SU NDP scheduler error code */
     A_UINT32 ax_su_ndp_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
+    /* 11AX HE MU MIMO NDPA scheduler completion status reason code */
     A_UINT32 ax_mu_mimo_ndpa_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    /* 11AX HE MU MIMO NDP scheduler completion status reason code */
     A_UINT32 ax_mu_mimo_ndp_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    /* 11AX HE MU MIMO NDP scheduler error code */
     A_UINT32 ax_mu_mimo_ndp_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
+    /* 11AX HE MU MIMO MU BRPOLL scheduler completion status reason code */
     A_UINT32 ax_mu_brp_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    /* 11AX HE MU MIMO MU BRPOLL scheduler error code */
     A_UINT32 ax_mu_brp_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
+    /* 11AX HE MU BAR scheduler completion status reason code */
     A_UINT32 ax_mu_bar_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    /* 11AX HE MU BAR scheduler error code */
     A_UINT32 ax_mu_bar_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
+    /* 11AX HE UL OFDMA Basic Trigger scheduler completion status reason code */
     A_UINT32 ax_basic_trig_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    /* 11AX HE UL OFDMA Basic Trigger scheduler error code */
     A_UINT32 ax_basic_trig_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
+    /* 11AX HE UL MUMIMO Basic Trigger scheduler completion status reason code */
+    A_UINT32 ax_ulmumimo_trig_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    /* 11AX HE UL MUMIMO Basic Trigger scheduler error code */
+    A_UINT32 ax_ulmumimo_trig_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
 } htt_tx_selfgen_ax_sched_status_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_TX_SELFGEN_INFO
@@ -2153,17 +2204,11 @@ typedef struct {
  */
 typedef struct {
     htt_tx_selfgen_cmn_stats_tlv cmn_tlv;
-    /* 11AC */
     htt_tx_selfgen_ac_stats_tlv ac_tlv;
-    /* 11AX */
     htt_tx_selfgen_ax_stats_tlv ax_tlv;
-    /* 11AC error stats */
     htt_tx_selfgen_ac_err_stats_tlv ac_err_tlv;
-    /* 11AX error stats */
     htt_tx_selfgen_ax_err_stats_tlv ax_err_tlv;
-    /* 11AC sched stats */
     htt_tx_selfgen_ac_sched_status_stats_tlv ac_sched_status_tlv;
-    /* 11AX sched stats */
     htt_tx_selfgen_ax_sched_status_stats_tlv ax_sched_status_tlv;
 } htt_tx_pdev_selfgen_stats_t;
 
@@ -2171,138 +2216,125 @@ typedef struct {
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-    /* mu-mimo sw sched cmd stats */
-    A_UINT32 mu_mimo_sch_posted;
-    A_UINT32 mu_mimo_sch_failed;
-    /* MU PPDU stats per hwQ */
-    A_UINT32 mu_mimo_ppdu_posted;
+    A_UINT32 mu_mimo_sch_posted;  /* Number of MU MIMO schedules posted to HW */
+    A_UINT32 mu_mimo_sch_failed;  /* Number of MU MIMO schedules failed to post */
+    A_UINT32 mu_mimo_ppdu_posted; /* Number of MU MIMO PPDUs posted to HW */
     /*
-     * Counts the number of users in each transmission of
-     * the given TX mode.
-     *
-     * Index is the number of users - 1.
+     * This is the common description for the below sch stats.
+     * Counts the number of transmissions of each number of MU users
+     * in each TX mode.
+     * The array index is the "number of users - 1".
+     * For example, ac_mu_mimo_sch_nusers[1] counts the number of 11AC MU2
+     * TX PPDUs, ac_mu_mimo_sch_nusers[2] counts the number of 11AC MU3
+     * TX PPDUs and so on.
+     * The same is applicable for the other TX mode stats.
      */
+    /* Represents the count for 11AC DL MU MIMO sequences */
     A_UINT32 ac_mu_mimo_sch_nusers[HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS];
+    /* Represents the count for 11AX DL MU MIMO sequences */
     A_UINT32 ax_mu_mimo_sch_nusers[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
+    /* Represents the count for 11AX DL MU OFDMA sequences */
     A_UINT32 ax_ofdma_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    /* Represents the count for 11AX UL MU OFDMA sequences with Basic Triggers */
     A_UINT32 ax_ul_ofdma_basic_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    /* Represents the count for 11AX UL MU OFDMA sequences with BSRP Triggers */
     A_UINT32 ax_ul_ofdma_bsr_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    /* Represents the count for 11AX UL MU OFDMA sequences with BAR Triggers */
     A_UINT32 ax_ul_ofdma_bar_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    /* Represents the count for 11AX UL MU OFDMA sequences with BRP Triggers */
     A_UINT32 ax_ul_ofdma_brp_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
-
-    /* UL MUMIMO */
-    /*
-     * ax_ul_mumimo_basic_sch_nusers[i] is the number of basic triggers sent
-     * for (i+1) users
-     */
+    /* Represents the count for 11AX UL MU MIMO sequences with Basic Triggers */
     A_UINT32 ax_ul_mumimo_basic_sch_nusers[HTT_TX_PDEV_STATS_NUM_UL_MUMIMO_USER_STATS];
-    /*
-     * ax_ul_mumimo_brp_sch_nusers[i] is the number of brp triggers sent
-     * for (i+1) users
-     */
+    /* Represents the count for 11AX UL MU MIMO sequences with BRP Triggers */
     A_UINT32 ax_ul_mumimo_brp_sch_nusers[HTT_TX_PDEV_STATS_NUM_UL_MUMIMO_USER_STATS];
+    /* Number of 11AC DL MU MIMO schedules posted per group size */
     A_UINT32 ac_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS];
+    /* Number of 11AX DL MU MIMO schedules posted per group size */
     A_UINT32 ax_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
 } htt_tx_pdev_mu_mimo_sch_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-    /* mu-mimo sw sched cmd stats */
-    A_UINT32 mu_mimo_sch_posted;
-    A_UINT32 mu_mimo_sch_failed;
-    /* MU PPDU stats per hwQ */
-    A_UINT32 mu_mimo_ppdu_posted;
+    A_UINT32 mu_mimo_sch_posted;  /* Number of MU MIMO schedules posted to HW */
+    A_UINT32 mu_mimo_sch_failed;  /* Number of MU MIMO schedules failed to post */
+    A_UINT32 mu_mimo_ppdu_posted; /* Number of MU MIMO PPDUs posted to HW */
     /*
-     * Counts the number of users in each transmission of
-     * the given TX mode.
-     *
-     * Index is the number of users - 1.
+     * This is the common description for the below sch stats.
+     * Counts the number of transmissions of each number of MU users
+     * in each TX mode.
+     * The array index is the "number of users - 1".
+     * For example, ac_mu_mimo_sch_nusers[1] counts the number of 11AC MU2
+     * TX PPDUs, ac_mu_mimo_sch_nusers[2] counts the number of 11AC MU3
+     * TX PPDUs and so on.
+     * The same is applicable for the other TX mode stats.
      */
+    /* Represents the count for 11AC DL MU MIMO sequences */
     A_UINT32 ac_mu_mimo_sch_nusers[HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS];
+    /* Represents the count for 11AX DL MU MIMO sequences */
     A_UINT32 ax_mu_mimo_sch_nusers[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
+    /* Number of 11AC DL MU MIMO schedules posted per group size */
     A_UINT32 ac_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS];
+    /* Number of 11AX DL MU MIMO schedules posted per group size */
     A_UINT32 ax_mu_mimo_sch_posted_per_grp_sz[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
 } htt_tx_pdev_dl_mu_mimo_sch_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
+    /* Represents the count for 11AX DL MU OFDMA sequences */
     A_UINT32 ax_mu_ofdma_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
 } htt_tx_pdev_dl_mu_ofdma_sch_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
+    /* Represents the count for 11AX UL MU OFDMA sequences with Basic Triggers */
     A_UINT32 ax_ul_mu_ofdma_basic_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    /* Represents the count for 11AX UL MU OFDMA sequences with BSRP Triggers */
     A_UINT32 ax_ul_mu_ofdma_bsr_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    /* Represents the count for 11AX UL MU OFDMA sequences with BAR Triggers */
     A_UINT32 ax_ul_mu_ofdma_bar_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    /* Represents the count for 11AX UL MU OFDMA sequences with BRP Triggers */
     A_UINT32 ax_ul_mu_ofdma_brp_sch_nusers[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
 } htt_tx_pdev_ul_mu_ofdma_sch_stats_tlv;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-    /* UL MUMIMO */
-    /*
-     * ax_ul_mu_mimo_basic_sch_nusers[i] is the number of basic triggers sent
-     * for (i+1) users
-     */
+    /* Represents the count for 11AX UL MU MIMO sequences with Basic Triggers */
     A_UINT32 ax_ul_mu_mimo_basic_sch_nusers[HTT_TX_PDEV_STATS_NUM_UL_MUMIMO_USER_STATS];
-    /*
-     * ax_ul_mu_mimo_brp_sch_nusers[i] is the number of brp triggers sent
-     * for (i+1) users
-     */
+    /* Represents the count for 11AX UL MU MIMO sequences with BRP Triggers */
     A_UINT32 ax_ul_mu_mimo_brp_sch_nusers[HTT_TX_PDEV_STATS_NUM_UL_MUMIMO_USER_STATS];
 } htt_tx_pdev_ul_mu_mimo_sch_stats_tlv;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-    /* mu-mimo mpdu level stats */
-    /*
-     * This first block of stats is limited to 11ac
-     * MU-MIMO transmission.
-     */
-    A_UINT32 mu_mimo_mpdus_queued_usr;
-    A_UINT32 mu_mimo_mpdus_tried_usr;
-    A_UINT32 mu_mimo_mpdus_failed_usr;
-    A_UINT32 mu_mimo_mpdus_requeued_usr;
-    A_UINT32 mu_mimo_err_no_ba_usr;
-    A_UINT32 mu_mimo_mpdu_underrun_usr;
-    A_UINT32 mu_mimo_ampdu_underrun_usr;
+    A_UINT32 mu_mimo_mpdus_queued_usr;      /* 11AC DL MU MIMO number of mpdus queued to HW, per user */
+    A_UINT32 mu_mimo_mpdus_tried_usr;       /* 11AC DL MU MIMO number of mpdus tried over the air, per user */
+    A_UINT32 mu_mimo_mpdus_failed_usr;      /* 11AC DL MU MIMO number of mpdus failed acknowledgement, per user */
+    A_UINT32 mu_mimo_mpdus_requeued_usr;    /* 11AC DL MU MIMO number of mpdus re-queued to HW, per user */
+    A_UINT32 mu_mimo_err_no_ba_usr;         /* 11AC DL MU MIMO BA not receieved, per user */
+    A_UINT32 mu_mimo_mpdu_underrun_usr;     /* 11AC DL MU MIMO mpdu underrun encountered, per user */
+    A_UINT32 mu_mimo_ampdu_underrun_usr;    /* 11AC DL MU MIMO ampdu underrun encountered, per user */
 
-    A_UINT32 ax_mu_mimo_mpdus_queued_usr;
-    A_UINT32 ax_mu_mimo_mpdus_tried_usr;
-    A_UINT32 ax_mu_mimo_mpdus_failed_usr;
-    A_UINT32 ax_mu_mimo_mpdus_requeued_usr;
-    A_UINT32 ax_mu_mimo_err_no_ba_usr;
-    A_UINT32 ax_mu_mimo_mpdu_underrun_usr;
-    A_UINT32 ax_mu_mimo_ampdu_underrun_usr;
+    A_UINT32 ax_mu_mimo_mpdus_queued_usr;   /* 11AX MU MIMO number of mpdus queued to HW, per user */
+    A_UINT32 ax_mu_mimo_mpdus_tried_usr;    /* 11AX MU MIMO number of mpdus tried over the air, per user */
+    A_UINT32 ax_mu_mimo_mpdus_failed_usr;   /* 11AX DL MU MIMO number of mpdus failed acknowledgement, per user */
+    A_UINT32 ax_mu_mimo_mpdus_requeued_usr; /* 11AX DL MU MIMO number of mpdus re-queued to HW, per user */
+    A_UINT32 ax_mu_mimo_err_no_ba_usr;      /* 11AX DL MU MIMO BA not receieved, per user */
+    A_UINT32 ax_mu_mimo_mpdu_underrun_usr;  /* 11AX DL MU MIMO mpdu underrun encountered, per user */
+    A_UINT32 ax_mu_mimo_ampdu_underrun_usr; /* 11AX DL MU MIMO ampdu underrun encountered, per user */
 
-    A_UINT32 ax_ofdma_mpdus_queued_usr;
-    A_UINT32 ax_ofdma_mpdus_tried_usr;
-    A_UINT32 ax_ofdma_mpdus_failed_usr;
-    A_UINT32 ax_ofdma_mpdus_requeued_usr;
-    A_UINT32 ax_ofdma_err_no_ba_usr;
-    A_UINT32 ax_ofdma_mpdu_underrun_usr;
-    A_UINT32 ax_ofdma_ampdu_underrun_usr;
+    A_UINT32 ax_ofdma_mpdus_queued_usr;     /* 11AX MU OFDMA number of mpdus queued to HW, per user */
+    A_UINT32 ax_ofdma_mpdus_tried_usr;      /* 11AX MU OFDMA number of mpdus tried over the air, per user */
+    A_UINT32 ax_ofdma_mpdus_failed_usr;     /* 11AX MU OFDMA number of mpdus failed acknowledgement, per user */
+    A_UINT32 ax_ofdma_mpdus_requeued_usr;   /* 11AX MU OFDMA number of mpdus re-queued to HW, per user */
+    A_UINT32 ax_ofdma_err_no_ba_usr;        /* 11AX MU OFDMA BA not receieved, per user */
+    A_UINT32 ax_ofdma_mpdu_underrun_usr;    /* 11AX MU OFDMA mpdu underrun encountered, per user */
+    A_UINT32 ax_ofdma_ampdu_underrun_usr;   /* 11AX MU OFDMA ampdu underrun encountered, per user */
 } htt_tx_pdev_mu_mimo_mpdu_stats_tlv;
 
 #define HTT_STATS_TX_SCHED_MODE_MU_MIMO_AC 1  /* SCHED_TX_MODE_MU_MIMO_AC */
 #define HTT_STATS_TX_SCHED_MODE_MU_MIMO_AX 2  /* SCHED_TX_MODE_MU_MIMO_AX */
 #define HTT_STATS_TX_SCHED_MODE_MU_OFDMA_AX 3 /* SCHED_TX_MODE_MU_OFDMA_AX */
+#define HTT_STATS_TX_SCHED_MODE_MU_OFDMA_BE 4 /* SCHED_TX_MODE_MU_OFDMA_BE */
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
@@ -3563,9 +3595,9 @@ typedef struct {
     A_UINT32 tx_legacy_cck_rate[HTT_TX_PDEV_STATS_NUM_LEGACY_CCK_STATS];
     A_UINT32 tx_legacy_ofdm_rate[HTT_TX_PDEV_STATS_NUM_LEGACY_OFDM_STATS];
 
-    A_UINT32 ac_mu_mimo_tx_ldpc;
-    A_UINT32 ax_mu_mimo_tx_ldpc;
-    A_UINT32 ofdma_tx_ldpc;
+    A_UINT32 ac_mu_mimo_tx_ldpc; /* 11AC VHT DL MU MIMO LDPC count */
+    A_UINT32 ax_mu_mimo_tx_ldpc; /* 11AX HE DL MU MIMO LDPC count */
+    A_UINT32 ofdma_tx_ldpc;      /* 11AX HE DL MU OFDMA LDPC count */
 
     /*
      * Counters for 11ax HE LTF selection during TX.
@@ -3576,20 +3608,32 @@ typedef struct {
      */
     A_UINT32 tx_he_ltf[HTT_TX_PDEV_STATS_NUM_LTF];
 
+    /* 11AC VHT DL MU MIMO TX MCS stats */
     A_UINT32 ac_mu_mimo_tx_mcs[HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS];
+    /* 11AX HE DL MU MIMO TX MCS stats */
     A_UINT32 ax_mu_mimo_tx_mcs[HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS];
+    /* 11AX HE DL MU OFDMA TX MCS stats */
     A_UINT32 ofdma_tx_mcs[HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS];
 
+    /* 11AC VHT DL MU MIMO TX NSS stats (Indicates NSS for individual users) */
     A_UINT32 ac_mu_mimo_tx_nss[HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    /* 11AX HE DL MU MIMO TX NSS stats (Indicates NSS for individual users) */
     A_UINT32 ax_mu_mimo_tx_nss[HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    /* 11AX HE DL MU OFDMA TX NSS stats (Indicates NSS for individual users) */
     A_UINT32 ofdma_tx_nss[HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS];
 
+    /* 11AC VHT DL MU MIMO TX BW stats */
     A_UINT32 ac_mu_mimo_tx_bw[HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
+    /* 11AX HE DL MU MIMO TX BW stats */
     A_UINT32 ax_mu_mimo_tx_bw[HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
+    /* 11AX HE DL MU OFDMA TX BW stats */
     A_UINT32 ofdma_tx_bw[HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
 
+    /* 11AC VHT DL MU MIMO TX guard interval stats */
     A_UINT32 ac_mu_mimo_tx_gi[HTT_TX_PDEV_STATS_NUM_GI_COUNTERS][HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS];
+    /* 11AX HE DL MU MIMO TX guard interval stats */
     A_UINT32 ax_mu_mimo_tx_gi[HTT_TX_PDEV_STATS_NUM_GI_COUNTERS][HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS];
+    /* 11AX HE DL MU OFDMA TX guard interval stats */
     A_UINT32 ofdma_tx_gi[HTT_TX_PDEV_STATS_NUM_GI_COUNTERS][HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS];
     A_UINT32 trigger_type_11ax[HTT_TX_PDEV_STATS_NUM_11AX_TRIGGER_TYPES];
     A_UINT32 tx_11ax_su_ext;
@@ -3598,9 +3642,13 @@ typedef struct {
     A_UINT32 tx_mcs_ext[HTT_TX_PDEV_STATS_NUM_EXTRA_MCS_COUNTERS];
     A_UINT32 tx_stbc_ext[HTT_TX_PDEV_STATS_NUM_EXTRA_MCS_COUNTERS];
     A_UINT32 tx_gi_ext[HTT_TX_PDEV_STATS_NUM_GI_COUNTERS][HTT_TX_PDEV_STATS_NUM_EXTRA_MCS_COUNTERS];
+    /* 11AX VHT DL MU MIMO extended TX MCS stats for MCS 12/13 */
     A_UINT32 ax_mu_mimo_tx_mcs_ext[HTT_TX_PDEV_STATS_NUM_EXTRA_MCS_COUNTERS];
+    /* 11AX VHT DL MU OFDMA extended TX MCS stats for MCS 12/13 */
     A_UINT32 ofdma_tx_mcs_ext[HTT_TX_PDEV_STATS_NUM_EXTRA_MCS_COUNTERS];
+    /* 11AX VHT DL MU MIMO extended TX guard interval stats for MCS 12/13 */
     A_UINT32 ax_mu_mimo_tx_gi_ext[HTT_TX_PDEV_STATS_NUM_GI_COUNTERS][HTT_TX_PDEV_STATS_NUM_EXTRA_MCS_COUNTERS];
+    /* 11AX VHT DL MU OFDMA extended TX guard interval stats for MCS 12/13 */
     A_UINT32 ofdma_tx_gi_ext[HTT_TX_PDEV_STATS_NUM_GI_COUNTERS][HTT_TX_PDEV_STATS_NUM_EXTRA_MCS_COUNTERS];
 } htt_tx_pdev_rate_stats_tlv;
 
@@ -3706,20 +3754,30 @@ typedef struct {
     A_UINT32 rx_active_dur_us_low;
     A_UINT32 rx_active_dur_us_high;
 
+    /* number of times UL MU MIMO RX packets received */
     A_UINT32 rx_11ax_ul_ofdma;
 
+    /* 11AX HE UL OFDMA RX TB PPDU MCS stats */
     A_UINT32 ul_ofdma_rx_mcs[HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS];
+    /* 11AX HE UL OFDMA RX TB PPDU GI stats */
     A_UINT32 ul_ofdma_rx_gi[HTT_TX_PDEV_STATS_NUM_GI_COUNTERS][HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS];
+    /* 11AX HE UL OFDMA RX TB PPDU NSS stats (Increments the individual user NSS in the OFDMA PPDU received) */
     A_UINT32 ul_ofdma_rx_nss[HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    /* 11AX HE UL OFDMA RX TB PPDU BW stats */
     A_UINT32 ul_ofdma_rx_bw[HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
+    /* Number of times UL OFDMA TB PPDUs received with stbc */
     A_UINT32 ul_ofdma_rx_stbc;
+    /* Number of times UL OFDMA TB PPDUs received with ldpc */
     A_UINT32 ul_ofdma_rx_ldpc;
 
-    /* record the stats for each user index */
-    A_UINT32 rx_ulofdma_non_data_ppdu[HTT_RX_PDEV_MAX_OFDMA_NUM_USER]; /* ppdu level */
-    A_UINT32 rx_ulofdma_data_ppdu[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];     /* ppdu level */
-    A_UINT32 rx_ulofdma_mpdu_ok[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];       /* mpdu level */
-    A_UINT32 rx_ulofdma_mpdu_fail[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];     /* mpdu level */
+    /* Number of non data PPDUs received for each degree (number of users) in UL OFDMA */
+    A_UINT32 rx_ulofdma_non_data_ppdu[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];
+    /* Number of data ppdus received for each degree (number of users) in UL OFDMA */
+    A_UINT32 rx_ulofdma_data_ppdu[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];
+    /* Number of mpdus passed for each degree (number of users) in UL OFDMA TB PPDU */
+    A_UINT32 rx_ulofdma_mpdu_ok[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];
+    /* Number of mpdus failed for each degree (number of users) in UL OFDMA TB PPDU */
+    A_UINT32 rx_ulofdma_mpdu_fail[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];
 
     A_UINT32 nss_count;
     A_UINT32 pilot_count;
@@ -3749,11 +3807,17 @@ typedef struct {
     A_UINT32 rx_11ax_dl_ofdma_mcs[HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS];
     A_UINT32 rx_11ax_dl_ofdma_ru[HTT_RX_PDEV_STATS_NUM_RU_SIZE_COUNTERS];
 
-    A_UINT32 rx_ulmumimo_non_data_ppdu[HTT_RX_PDEV_MAX_ULMUMIMO_NUM_USER]; /* ppdu level */
-    A_UINT32 rx_ulmumimo_data_ppdu[HTT_RX_PDEV_MAX_ULMUMIMO_NUM_USER];     /* ppdu level */
-    A_UINT32 rx_ulmumimo_mpdu_ok[HTT_RX_PDEV_MAX_ULMUMIMO_NUM_USER];       /* mpdu level */
-    A_UINT32 rx_ulmumimo_mpdu_fail[HTT_RX_PDEV_MAX_ULMUMIMO_NUM_USER];     /* mpdu level */
+    /* Number of non data ppdus received for each degree (number of users) with UL MUMIMO */
+    A_UINT32 rx_ulmumimo_non_data_ppdu[HTT_RX_PDEV_MAX_ULMUMIMO_NUM_USER];
+    /* Number of data ppdus received for each degree (number of users) with UL MUMIMO */
+    A_UINT32 rx_ulmumimo_data_ppdu[HTT_RX_PDEV_MAX_ULMUMIMO_NUM_USER];
+    /* Number of mpdus passed for each degree (number of users) with UL MUMIMO TB PPDU */
+    A_UINT32 rx_ulmumimo_mpdu_ok[HTT_RX_PDEV_MAX_ULMUMIMO_NUM_USER];
+    /* Number of mpdus failed for each degree (number of users) with UL MUMIMO TB PPDU */
+    A_UINT32 rx_ulmumimo_mpdu_fail[HTT_RX_PDEV_MAX_ULMUMIMO_NUM_USER];
+    /* Number of non data ppdus received for each degree (number of users) in UL OFDMA */
     A_UINT32 rx_ulofdma_non_data_nusers[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];
+    /*  Number of data ppdus received for each degree (number of users) in UL OFDMA */
     A_UINT32 rx_ulofdma_data_nusers[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];
 
     /*
@@ -3921,13 +3985,25 @@ typedef struct {
      */
     A_UINT32 mac_id__word;
 
+    /* Number of times UL MUMIMO RX packets received */
     A_UINT32 rx_11ax_ul_mumimo;
 
+    /* 11AX HE UL MU-MIMO RX TB PPDU MCS stats */
     A_UINT32 ul_mumimo_rx_mcs[HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS];
+    /*
+     * 11AX HE UL MU-MIMO RX GI & LTF stats.
+     * Index 0 indicates 1xLTF + 1.6 msec GI
+     * Index 1 indicates 2xLTF + 1.6 msec GI
+     * Index 2 indicates 4xLTF + 3.2 msec GI
+     */
     A_UINT32 ul_mumimo_rx_gi[HTT_RX_PDEV_STATS_NUM_GI_COUNTERS][HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS];
+    /* 11AX HE UL MU-MIMO RX TB PPDU NSS stats (Increments the individual user NSS in the UL MU MIMO PPDU received) */
     A_UINT32 ul_mumimo_rx_nss[HTT_RX_PDEV_STATS_ULMUMIMO_NUM_SPATIAL_STREAMS];
+    /* 11AX HE UL MU-MIMO RX TB PPDU BW stats */
     A_UINT32 ul_mumimo_rx_bw[HTT_RX_PDEV_STATS_NUM_BW_COUNTERS];
+    /* Number of times UL MUMIMO TB PPDUs received with STBC */
     A_UINT32 ul_mumimo_rx_stbc;
+    /* Number of times UL MUMIMO TB PPDUs received with LDPC */
     A_UINT32 ul_mumimo_rx_ldpc;
 
     /* Stats for MCS 12/13 */
@@ -3936,11 +4012,11 @@ typedef struct {
 
     /* RSSI in dBm for Rx TB PPDUs */
     A_INT8 rx_ul_mumimo_chain_rssi_in_dbm[HTT_RX_PDEV_STATS_ULMUMIMO_NUM_SPATIAL_STREAMS][HTT_RX_PDEV_STATS_TOTAL_BW_COUNTERS];
-    /* Target RSSI stats for UL MUMIMO triggers. Units dBm */
+    /* Target RSSI programmed in UL MUMIMO triggers (units dBm) */
     A_INT8 rx_ul_mumimo_target_rssi[HTT_TX_PDEV_STATS_NUM_UL_MUMIMO_USER_STATS][HTT_RX_PDEV_STATS_NUM_BW_COUNTERS];
-    /* FD RSSI stats for UL TB PPDUs. Units dBm */
+    /* FD RSSI measured for Rx UL TB PPDUs (units dBm) */
     A_INT8 rx_ul_mumimo_fd_rssi[HTT_TX_PDEV_STATS_NUM_UL_MUMIMO_USER_STATS][HTT_RX_PDEV_STATS_ULMUMIMO_NUM_SPATIAL_STREAMS];
-    /* Pilot EVM Stats */
+    /* Average pilot EVM measued for RX UL TB PPDU */
     A_INT8 rx_ulmumimo_pilot_evm_dB_mean[HTT_TX_PDEV_STATS_NUM_UL_MUMIMO_USER_STATS][HTT_RX_PDEV_STATS_ULMUMIMO_NUM_SPATIAL_STREAMS];
 } htt_rx_pdev_ul_mumimo_trig_stats_tlv;
 
@@ -4998,16 +5074,25 @@ typedef struct {
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
-    /* Counters to track TxBF and OL separately */
+    /* SU TxBF TX MCS stats */
     A_UINT32 tx_su_txbf_mcs[HTT_TX_TXBF_RATE_STATS_NUM_MCS_COUNTERS];
+    /* Implicit BF TX MCS stats */
     A_UINT32 tx_su_ibf_mcs[HTT_TX_TXBF_RATE_STATS_NUM_MCS_COUNTERS];
+    /* Open loop TX MCS stats */
     A_UINT32 tx_su_ol_mcs[HTT_TX_TXBF_RATE_STATS_NUM_MCS_COUNTERS];
+    /* SU TxBF TX NSS stats */
     A_UINT32 tx_su_txbf_nss[HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    /* Implicit BF TX NSS stats */
     A_UINT32 tx_su_ibf_nss[HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    /* Open loop TX NSS stats */
     A_UINT32 tx_su_ol_nss[HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    /* SU TxBF TX BW stats */
     A_UINT32 tx_su_txbf_bw[HTT_TX_TXBF_RATE_STATS_NUM_BW_COUNTERS];
+    /* Implicit BF TX BW stats */
     A_UINT32 tx_su_ibf_bw[HTT_TX_TXBF_RATE_STATS_NUM_BW_COUNTERS];
+    /* Open loop TX BW stats */
     A_UINT32 tx_su_ol_bw[HTT_TX_TXBF_RATE_STATS_NUM_BW_COUNTERS];
+    /* Legacy and OFDM TX rate stats */
     A_UINT32 tx_legacy_ofdm_rate[HTT_TX_PDEV_STATS_NUM_LEGACY_OFDM_STATS];
 } htt_tx_pdev_txbf_rate_stats_tlv;
 
