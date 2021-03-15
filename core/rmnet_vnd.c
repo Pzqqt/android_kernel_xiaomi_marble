@@ -31,6 +31,11 @@
 #include "rmnet_qmi.h"
 #include "rmnet_trace.h"
 
+typedef void (*rmnet_perf_tether_egress_hook_t)(struct sk_buff *skb);
+
+rmnet_perf_tether_egress_hook_t rmnet_perf_tether_egress_hook __rcu __read_mostly;
+EXPORT_SYMBOL(rmnet_perf_tether_egress_hook);
+
 /* RX/TX Fixup */
 
 void rmnet_vnd_rx_fixup(struct net_device *dev, u32 skb_len)
@@ -68,6 +73,7 @@ static netdev_tx_t rmnet_vnd_start_xmit(struct sk_buff *skb,
 	int ip_type;
 	u32 mark;
 	unsigned int len;
+	rmnet_perf_tether_egress_hook_t rmnet_perf_tether_egress;
 
 	priv = netdev_priv(dev);
 	if (priv->real_dev) {
@@ -76,6 +82,10 @@ static netdev_tx_t rmnet_vnd_start_xmit(struct sk_buff *skb,
 		mark = skb->mark;
 		len = skb->len;
 		trace_rmnet_xmit_skb(skb);
+		rmnet_perf_tether_egress = rcu_dereference(rmnet_perf_tether_egress_hook);
+		if (rmnet_perf_tether_egress) {
+			rmnet_perf_tether_egress(skb);
+		}
 		rmnet_egress_handler(skb);
 		qmi_rmnet_burst_fc_check(dev, ip_type, mark, len);
 		qmi_rmnet_work_maybe_restart(rmnet_get_rmnet_port(dev));
