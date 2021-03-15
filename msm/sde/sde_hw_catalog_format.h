@@ -160,6 +160,7 @@ static const struct sde_format_extended true_inline_rot_v1_fmts[] = {
 static const struct sde_format_extended true_inline_rot_v2_fmts[] = {
 	{DRM_FORMAT_ABGR8888, DRM_FORMAT_MOD_QCOM_COMPRESSED},
 	{DRM_FORMAT_NV12, DRM_FORMAT_MOD_QCOM_COMPRESSED},
+	{DRM_FORMAT_ABGR2101010, DRM_FORMAT_MOD_QCOM_COMPRESSED},
 	TP10_UBWC_FMTS,
 	P010_UBWC_FMTS,
 	{0, 0},
