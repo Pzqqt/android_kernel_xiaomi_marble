@@ -94,6 +94,23 @@
 
 #define SDE_HW_REV_MAJOR(rev) ((rev) >> 28)
 
+#define SDE_DBG_LOG_START "start"
+#define SDE_DBG_LOG_END "end"
+
+#define SDE_DBG_LOG_MARKER(name, marker) \
+	dev_info(sde_dbg_base.dev, "======== %s %s dump =========\n", marker, name)
+
+#define SDE_DBG_LOG_ENTRY(off, x0, x4, x8, xc) \
+	dev_info(sde_dbg_base.dev, "0x%lx : %08x %08x %08x %08x\n", off, x0, x4, x8, xc)
+
+#define SDE_DBG_LOG_DUMP_ADDR(name, addr, size, off) \
+	dev_info(sde_dbg_base.dev, "%s: start_addr:0x%pK len:0x%x offset=0x%lx\n", \
+			name, addr, size, off)
+
+#define SDE_DBG_LOG_DEBUGBUS(name, addr, block_id, test_id, val) \
+	dev_err(sde_dbg_base.dev, "%s 0x%x %d %d 0x%x\n", \
+			name, addr, block_id, test_id, val)
+
 /**
  * struct sde_dbg_reg_offset - tracking for start and end of region
  * @start: start offset
@@ -159,9 +176,7 @@ struct sde_debug_bus_entry {
 	u32 block_id_max;
 	u32 test_id;
 	u32 test_id_max;
-	void (*analyzer)(void __iomem *mem_base,
-				struct sde_debug_bus_entry *entry, u32 val,
-				u32 block_id_cnt, u32 test_id_cnt);
+	void (*analyzer)(u32 wr_addr, u32 block_id, u32 test_id, u32 val);
 };
 
 struct sde_dbg_dsi_ctrl_list_entry {
@@ -261,49 +276,33 @@ static DEFINE_MUTEX(sde_dbg_dsi_mutex);
 /* sde_dbg_base_evtlog - global pointer to main sde event log for macro use */
 struct sde_dbg_evtlog *sde_dbg_base_evtlog;
 
-static void _sde_debug_bus_xbar_dump(void __iomem *mem_base,
-		struct sde_debug_bus_entry *entry, u32 val, u32 block_id_cnt,
-		u32 test_id_cnt)
+static void _sde_debug_bus_xbar_dump(u32 wr_addr, u32 block_id, u32 test_id, u32 val)
 {
-	dev_err(sde_dbg_base.dev, "xbar 0x%x %d %d 0x%x\n",
-			entry->wr_addr, entry->block_id + block_id_cnt,
-			entry->test_id + test_id_cnt, val);
+	SDE_DBG_LOG_DEBUGBUS("xbar", wr_addr, block_id, test_id, val);
 }
 
-static void _sde_debug_bus_lm_dump(void __iomem *mem_base,
-		struct sde_debug_bus_entry *entry, u32 val, u32 block_id_cnt,
-		u32 test_id_cnt)
+static void _sde_debug_bus_lm_dump(u32 wr_addr, u32 block_id, u32 test_id, u32 val)
 {
 	if (!(val & 0xFFF000))
 		return;
 
-	dev_err(sde_dbg_base.dev, "lm 0x%x %d %d 0x%x\n",
-			entry->wr_addr, entry->block_id + block_id_cnt,
-			entry->test_id + test_id_cnt, val);
+	SDE_DBG_LOG_DEBUGBUS("lm", wr_addr, block_id, test_id, val);
 }
 
-static void _sde_debug_bus_ppb0_dump(void __iomem *mem_base,
-		struct sde_debug_bus_entry *entry, u32 val, u32 block_id_cnt,
-		u32 test_id_cnt)
+static void _sde_debug_bus_ppb0_dump(u32 wr_addr, u32 block_id, u32 test_id, u32 val)
 {
 	if (!(val & BIT(15)))
 		return;
 
-	dev_err(sde_dbg_base.dev, "ppb0 0x%x %d %d 0x%x\n",
-			entry->wr_addr, entry->block_id + block_id_cnt,
-			entry->test_id + test_id_cnt, val);
+	SDE_DBG_LOG_DEBUGBUS("pp0", wr_addr, block_id, test_id, val);
 }
 
-static void _sde_debug_bus_ppb1_dump(void __iomem *mem_base,
-		struct sde_debug_bus_entry *entry, u32 val, u32 block_id_cnt,
-		u32 test_id_cnt)
+static void _sde_debug_bus_ppb1_dump(u32 wr_addr, u32 block_id, u32 test_id, u32 val)
 {
 	if (!(val & BIT(15)))
 		return;
 
-	dev_err(sde_dbg_base.dev, "ppb1 0x%x %d %d 0x%x\n",
-			entry->wr_addr, entry->block_id + block_id_cnt,
-			entry->test_id + test_id_cnt, val);
+	SDE_DBG_LOG_DEBUGBUS("pp1", wr_addr, block_id, test_id, val);
 }
 
 static struct sde_debug_bus_entry dbg_bus_sde[] = {
@@ -400,7 +399,7 @@ static void _sde_dump_reg(const char *dump_name, u32 reg_dump_flag,
 	int i;
 	int rc;
 
-	if (!len_bytes)
+	if (!len_bytes || !dump_mem)
 		return;
 
 	in_log = (reg_dump_flag & SDE_DBG_DUMP_IN_LOG);
@@ -412,31 +411,14 @@ static void _sde_dump_reg(const char *dump_name, u32 reg_dump_flag,
 	if (!in_log && !in_mem)
 		return;
 
-	if (in_log)
-		dev_info(sde_dbg_base.dev, "%s: start_offset 0x%lx len 0x%zx\n",
-				dump_name, (unsigned long)(addr - base_addr),
-					len_bytes);
-
 	len_align = (len_bytes + REG_DUMP_ALIGN - 1) / REG_DUMP_ALIGN;
 	len_padded = len_align * REG_DUMP_ALIGN;
 	end_addr = addr + len_bytes;
 
-	if (in_mem) {
-		if (dump_mem && !(*dump_mem))
-			*dump_mem = devm_kzalloc(sde_dbg_base.dev, len_padded,
-					GFP_KERNEL);
-
-		if (dump_mem && *dump_mem) {
-			dump_addr = *dump_mem;
-			dev_info(sde_dbg_base.dev,
-				"%s: start_addr:0x%pK len:0x%x reg_offset=0x%lx\n",
-				dump_name, dump_addr, len_padded,
-				(unsigned long)(addr - base_addr));
-		} else {
-			in_mem = 0;
-			pr_err("dump_mem: kzalloc fails!\n");
-		}
-	}
+	if (in_mem && !(*dump_mem))
+		*dump_mem = devm_kzalloc(sde_dbg_base.dev, len_padded, GFP_KERNEL);
+	dump_addr = *dump_mem;
+	SDE_DBG_LOG_DUMP_ADDR(dump_name, dump_addr, len_padded, (unsigned long)(addr - base_addr));
 
 	if (_sde_power_check(sde_dbg_base.dump_mode)) {
 		rc = pm_runtime_get_sync(sde_dbg_base.dev);
@@ -455,10 +437,7 @@ static void _sde_dump_reg(const char *dump_name, u32 reg_dump_flag,
 		xc = (addr + 0xc < end_addr) ? readl_relaxed(addr + 0xc) : 0;
 
 		if (in_log)
-			dev_info(sde_dbg_base.dev,
-					"0x%lx : %08x %08x %08x %08x\n",
-					(unsigned long)(addr - base_addr),
-					x0, x4, x8, xc);
+			SDE_DBG_LOG_ENTRY((unsigned long)(addr - base_addr), x0, x4, x8, xc);
 
 		if (dump_addr) {
 			dump_addr[i * 4] = x0;
@@ -548,8 +527,7 @@ static void _sde_dump_reg_by_ranges(struct sde_dbg_reg_base *dbg,
 		return;
 	}
 
-	dev_info(sde_dbg_base.dev, "%s:=========%s DUMP=========\n", __func__,
-			dbg->name);
+	SDE_DBG_LOG_MARKER(dbg->name, SDE_DBG_LOG_START);
 	if (dbg->cb) {
 		dbg->cb(dbg->cb_ptr);
 	/* If there is a list to dump the registers by ranges, use the ranges */
@@ -579,8 +557,7 @@ static void _sde_dump_reg_by_ranges(struct sde_dbg_reg_base *dbg,
 		/* If there is no list to dump ranges, dump all registers */
 		dev_info(sde_dbg_base.dev,
 				"Ranges not found, will dump full registers\n");
-		dev_info(sde_dbg_base.dev, "base:0x%pK len:0x%zx\n", dbg->base,
-				dbg->max_offset);
+		SDE_DBG_LOG_DUMP_ADDR("base", dbg->base, dbg->max_offset, 0);
 		addr = dbg->base;
 		len = dbg->max_offset;
 		_sde_dump_reg(dbg->name, reg_dump_flag, dbg->base, addr, len,
@@ -792,8 +769,8 @@ static void _sde_dbg_dump_bus_entry(struct sde_dbg_sde_debug_bus *bus,
 				status = bus->read_tp(mem_base, entry->wr_addr,
 							entry->rd_addr, i, j);
 				if (!entry->analyzer && in_log)
-					dev_info(sde_dbg_base.dev, "%08x %08x %08x %08x\n",
-							entry->wr_addr, i, j, status);
+					SDE_DBG_LOG_ENTRY(0, entry->wr_addr, i, j, status);
+
 				if (dump_addr && in_mem) {
 					*dump_addr++ = entry->wr_addr;
 					*dump_addr++ = i;
@@ -802,7 +779,7 @@ static void _sde_dbg_dump_bus_entry(struct sde_dbg_sde_debug_bus *bus,
 				}
 
 				if (entry->analyzer)
-					entry->analyzer(mem_base, entry, status, i, j);
+					entry->analyzer(entry->wr_addr, i, j, status);
 			}
 		}
 		/* Disable debug bus once we are done */
@@ -820,6 +797,7 @@ static void _sde_dbg_dump_sde_dbg_bus(struct sde_dbg_sde_debug_bus *bus)
 	struct sde_dbg_reg_base *reg_base;
 	struct sde_debug_bus_entry *entries;
 	u32 bus_size;
+	char name[20];
 
 	reg_base = _sde_dump_get_blk_addr(bus->cmn.name);
 	if (!reg_base || !reg_base->base) {
@@ -846,7 +824,8 @@ static void _sde_dbg_dump_sde_dbg_bus(struct sde_dbg_sde_debug_bus *bus)
 		list_size += (entries[i].block_id_max * entries[i].test_id_max);
 	list_size *= sizeof(u32) * DUMP_CLMN_COUNT;
 
-	dev_info(sde_dbg_base.dev, "======== start %s dump =========\n", bus->cmn.name);
+	snprintf(name, sizeof(name), "%s-debugbus", bus->cmn.name);
+	SDE_DBG_LOG_MARKER(name, SDE_DBG_LOG_START);
 
 	in_mem = (bus->cmn.enable_mask & SDE_DBG_DUMP_IN_MEM);
 	if (in_mem && (!(*dump_mem))) {
@@ -854,12 +833,11 @@ static void _sde_dbg_dump_sde_dbg_bus(struct sde_dbg_sde_debug_bus *bus)
 		bus->cmn.content_size = list_size / sizeof(u32);
 	}
 	dump_addr = *dump_mem;
-	dev_info(sde_dbg_base.dev, "%s: start_addr:0x%pK len:0x%x\n",
-			bus->cmn.name, dump_addr, list_size);
+	SDE_DBG_LOG_DUMP_ADDR(bus->cmn.name, dump_addr, list_size, 0);
 
 	_sde_dbg_dump_bus_entry(bus, entries, bus_size, mem_base, dump_addr);
 
-	dev_info(sde_dbg_base.dev, "======== end %s dump =========\n", bus->cmn.name);
+	SDE_DBG_LOG_MARKER(name, SDE_DBG_LOG_END);
 }
 
 static void _sde_dbg_dump_dsi_dbg_bus(struct sde_dbg_sde_debug_bus *bus)
@@ -872,6 +850,7 @@ static void _sde_dbg_dump_dsi_dbg_bus(struct sde_dbg_sde_debug_bus *bus)
 	u32 *dump_addr = NULL;
 	struct sde_debug_bus_entry *entries;
 	u32 bus_size;
+	char name[20];
 
 	entries = bus->entries;
 	bus_size = bus->cmn.entries_size;
@@ -887,7 +866,8 @@ static void _sde_dbg_dump_dsi_dbg_bus(struct sde_dbg_sde_debug_bus *bus)
 		list_size += (entries[i].block_id_max * entries[i].test_id_max);
 	list_size *= sizeof(u32) * DUMP_CLMN_COUNT * dsi_count;
 
-	dev_info(sde_dbg_base.dev, "======== start %s dump =========\n", bus->cmn.name);
+	snprintf(name, sizeof(name), "%s-debugbus", bus->cmn.name);
+	SDE_DBG_LOG_MARKER(name, SDE_DBG_LOG_START);
 
 	mutex_lock(&sde_dbg_dsi_mutex);
 	in_mem = (bus->cmn.enable_mask & SDE_DBG_DUMP_IN_MEM);
@@ -898,14 +878,13 @@ static void _sde_dbg_dump_dsi_dbg_bus(struct sde_dbg_sde_debug_bus *bus)
 	dump_addr = *dump_mem;
 
 	list_for_each_entry(ctl_entry, &sde_dbg_dsi_list, list) {
-		dev_info(sde_dbg_base.dev, "%s: start_addr:0x%pK len:0x%x\n",
-				ctl_entry->name, dump_addr, list_size / dsi_count);
+		SDE_DBG_LOG_DUMP_ADDR(ctl_entry->name, dump_addr, list_size / dsi_count, 0);
 
 		_sde_dbg_dump_bus_entry(bus, entries, bus_size, ctl_entry->base, dump_addr);
 	}
 	mutex_unlock(&sde_dbg_dsi_mutex);
 
-	dev_info(sde_dbg_base.dev, "======== end %s dump =========\n", bus->cmn.name);
+	SDE_DBG_LOG_MARKER(name, SDE_DBG_LOG_END);
 }
 
 /**
@@ -926,6 +905,7 @@ static void _sde_dump_array(struct sde_dbg_reg_base *blk_arr[],
 	bool dump_secure)
 {
 	int i, rc;
+	ktime_t start, end;
 
 	mutex_lock(&sde_dbg_base.mutex);
 
@@ -951,6 +931,7 @@ static void _sde_dump_array(struct sde_dbg_reg_base *blk_arr[],
 		}
 	}
 
+	start = ktime_get();
 	if (dump_dbgbus_sde) {
 		_sde_dbg_dump_sde_dbg_bus(&sde_dbg_base.dbgbus_sde);
 		_sde_dbg_dump_sde_dbg_bus(&sde_dbg_base.dbgbus_lutdma);
@@ -961,6 +942,11 @@ static void _sde_dump_array(struct sde_dbg_reg_base *blk_arr[],
 
 	if (dump_dbgbus_dsi)
 		_sde_dbg_dump_dsi_dbg_bus(&sde_dbg_base.dbgbus_dsi);
+
+	end = ktime_get();
+	dev_info(sde_dbg_base.dev,
+			"debug-bus logging time start_us:%llu, end_us:%llu , duration_us:%llu\n",
+			ktime_to_us(start), ktime_to_us(end), ktime_us_delta(end , start));
 
 	if (_sde_power_check(sde_dbg_base.dump_mode))
 		pm_runtime_put_sync(sde_dbg_base.dev);
