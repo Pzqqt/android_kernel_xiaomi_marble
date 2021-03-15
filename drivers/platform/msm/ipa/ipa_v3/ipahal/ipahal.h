@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _IPAHAL_H_
@@ -31,6 +31,7 @@ enum ipahal_imm_cmd_name {
 	IPA_IMM_CMD_DMA_TASK_32B_ADDR,
 	IPA_IMM_CMD_TABLE_DMA,
 	IPA_IMM_CMD_IP_V6_CT_INIT,
+	IPA_IMM_CMD_IP_PACKET_INIT_EX,
 	IPA_IMM_CMD_MAX,
 };
 
@@ -230,6 +231,48 @@ struct ipahal_imm_cmd_ip_packet_init {
 };
 
 /*
+ * struct ipahal_imm_cmd_ip_packet_init_ex - IP_PACKET_INIT_EX cmd payload
+ * @frag_disable: true - disabled. overrides IPA_ENDP_CONFIG_n:FRAG_OFFLOAD_EN
+ * @filter_disable: true - disabled, false - enabled
+ * @nat_disable: true - disabled, false - enabled
+ * @route_disable: true - disabled, false - enabled
+ * @hdr_removal_insertion_disable: true - disabled, false - enabled
+ * @cs_disable: true - disabled, false - enabled
+ * @quota_tethering_stats_disable: true - disabled, false - enabled
+ * fields @flt_rt_tbl_idx - @flt_retain_hdr are a logical software translation
+ * of ipa5_0_flt_rule_hw_hdr.
+ * fields @rt_pipe_dest_idx - @rt_system are a logical software translation
+ * ipa5_0_rt_rule_hw_hdr
+ */
+struct ipahal_imm_cmd_ip_packet_init_ex {
+	bool frag_disable;
+	bool filter_disable;
+	bool nat_disable;
+	bool route_disable;
+	bool hdr_removal_insertion_disable;
+	bool cs_disable;
+	bool quota_tethering_stats_disable;
+	u8 flt_rt_tbl_idx;
+	u8 flt_stats_cnt_idx;
+	u8 flt_priority;
+	bool flt_close_aggr_irq_mod;
+	u16 flt_rule_id ;
+	u8 flt_action;
+	u8 flt_pdn_idx;
+	bool flt_set_metadata;
+	bool flt_retain_hdr;
+	u8 rt_pipe_dest_idx;
+	u8 rt_stats_cnt_idx;
+	u8 rt_priority;
+	bool rt_close_aggr_irq_mod;
+	u16 rt_rule_id;
+	u16 rt_hdr_offset;
+	bool rt_proc_ctx;
+	bool rt_retain_hdr;
+	bool rt_system;
+};
+
+/*
  * enum ipa_pipeline_clear_option - Values for pipeline clear waiting options
  * @IPAHAL_HPS_CLEAR: Wait for HPS clear. All queues except high priority queue
  *  shall not be serviced until HPS is clear of packets or immediate commands.
@@ -367,6 +410,32 @@ const char *ipahal_imm_cmd_name_str(enum ipahal_imm_cmd_name cmd_name);
  */
 struct ipahal_imm_cmd_pyld *ipahal_construct_imm_cmd(
 	enum ipahal_imm_cmd_name cmd, const void *params, bool is_atomic_ctx);
+
+/*
+ * ipahal_modify_imm_cmd() - Modify immdiate command in an existing buffer
+ * This function modifies an existing imm cmd buffer
+ * @cmd_name: [in] Immediate command name
+ * @cmd_data: [in] Constructed immediate command buffer data
+ * @params: [in] Structure with specific IMM params
+ * @params_mask: [in] Same structure, but the fields filled with 0,
+ *  if they should not be changed, or any non-zero for fields to be updated
+ */
+int ipahal_modify_imm_cmd(
+	enum ipahal_imm_cmd_name cmd,
+	const void *cmd_data,
+	const void *params,
+	const void *params_mask);
+
+/*
+ * ipa_imm_cmd_modify_ip_packet_init_ex_dest_pipe() -
+ *   Modify ip_packet_init_ex immdiate command pipe_dest_idx field
+ * This function modifies an existing imm cmd buffer
+ * @cmd_data: [in] Constructed immediate command buffer data
+ * @pipe_dest_idx: [in] destination pipe index to set
+ */
+void ipa_imm_cmd_modify_ip_packet_init_ex_dest_pipe(
+	const void *cmd_data,
+	u64 pipe_dest_idx);
 
 /*
  * ipahal_construct_nop_imm_cmd() - Construct immediate comamnd for NO-Op

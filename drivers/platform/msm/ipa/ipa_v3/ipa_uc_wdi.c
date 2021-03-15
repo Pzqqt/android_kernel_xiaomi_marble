@@ -914,9 +914,12 @@ void ipa3_release_wdi3_gsi_smmu_mappings(u8 dir)
 	struct ipa_smmu_cb_ctx *cb = ipa3_get_smmu_ctx(IPA_SMMU_CB_AP);
 	int i, j, start, end;
 
-	if (dir == IPA_WDI3_TX_DIR) {
-		start = IPA_WDI_TX_RING_RES;
-		end = IPA_WDI_TX_DB_RES;
+	if ((dir == IPA_WDI3_TX_DIR) || (dir == IPA_WDI3_TX1_DIR)) {
+		start = (dir == IPA_WDI3_TX_DIR) ?
+				IPA_WDI_TX_RING_RES :
+				IPA_WDI_TX1_RING_RES;
+		end = (dir == IPA_WDI3_TX_DIR) ?
+				IPA_WDI_TX_DB_RES : IPA_WDI_TX1_DB_RES;
 	} else {
 		start = IPA_WDI_RX_RING_RES;
 		end = IPA_WDI_RX_COMP_RING_WP_RES;
@@ -974,6 +977,9 @@ int ipa_create_gsi_smmu_mapping(int res_idx, bool wlan_smmu_en,
 		case IPA_WDI_RX_COMP_RING_WP_RES:
 		case IPA_WDI_CE_DB_RES:
 		case IPA_WDI_TX_DB_RES:
+		case IPA_WDI_CE1_DB_RES:
+		case IPA_WDI_TX1_DB_RES:
+
 			if (ipa_create_ap_smmu_mapping_pa(pa, len,
 				(res_idx == IPA_WDI_CE_DB_RES) ? true : false,
 						iova)) {
@@ -987,6 +993,8 @@ int ipa_create_gsi_smmu_mapping(int res_idx, bool wlan_smmu_en,
 		case IPA_WDI_RX_COMP_RING_RES:
 		case IPA_WDI_TX_RING_RES:
 		case IPA_WDI_CE_RING_RES:
+		case IPA_WDI_TX1_RING_RES:
+		case IPA_WDI_CE1_RING_RES:
 			if (ipa_create_ap_smmu_mapping_sgt(sgt, iova)) {
 				IPAERR("Fail to create mapping res %d\n",
 						res_idx);
@@ -1404,12 +1412,6 @@ int ipa3_connect_gsi_wdi_pipe(struct ipa_wdi_in_params *in,
 	ep->skip_ep_cfg = in->sys.skip_ep_cfg;
 	ep->client_notify = in->sys.notify;
 	ep->priv = in->sys.priv;
-	if (IPA_CLIENT_IS_PROD(in->sys.client)) {
-		memset(&ep_cfg_ctrl, 0, sizeof(struct ipa_ep_cfg_ctrl));
-		ep_cfg_ctrl.ipa_ep_delay = true;
-		ipa3_cfg_ep_ctrl(ipa_ep_idx, &ep_cfg_ctrl);
-	}
-
 	if (IPA_CLIENT_IS_CONS(in->sys.client)) {
 		in->sys.ipa_ep_cfg.aggr.aggr_en = IPA_ENABLE_AGGR;
 		in->sys.ipa_ep_cfg.aggr.aggr = IPA_GENERIC;
@@ -1446,6 +1448,13 @@ int ipa3_connect_gsi_wdi_pipe(struct ipa_wdi_in_params *in,
 				&ep->gsi_chan_hdl, ep->gsi_evt_ring_hdl);
 	if (result)
 		goto fail_alloc_channel;
+
+	if (IPA_CLIENT_IS_PROD(in->sys.client)) {
+		memset(&ep_cfg_ctrl, 0, sizeof(struct ipa_ep_cfg_ctrl));
+		ep_cfg_ctrl.ipa_ep_delay = true;
+		ipa3_cfg_ep_ctrl(ipa_ep_idx, &ep_cfg_ctrl);
+	}
+
 	ep->gsi_mem_info.chan_ring_len = gsi_channel_props.ring_len;
 	ep->gsi_mem_info.chan_ring_base_addr = gsi_channel_props.ring_base_addr;
 	ep->gsi_mem_info.chan_ring_base_vaddr =
@@ -2662,10 +2671,15 @@ int ipa3_suspend_gsi_wdi_pipe(u32 clnt_hdl)
 				 */
 				IPAERR("failed to force clear %d\n", res);
 				IPAERR("remove delay from SCND reg\n");
-				ep_ctrl_scnd.endp_delay = false;
-				ipahal_write_reg_n_fields(
-					IPA_ENDP_INIT_CTRL_SCND_n, clnt_hdl,
-						&ep_ctrl_scnd);
+				if (ipa3_ctx->ipa_endp_delay_wa_v2) {
+					ipa3_remove_secondary_flow_ctrl(
+							ep->gsi_chan_hdl);
+				} else {
+					ep_ctrl_scnd.endp_delay = false;
+					ipahal_write_reg_n_fields(
+						IPA_ENDP_INIT_CTRL_SCND_n,
+						clnt_hdl, &ep_ctrl_scnd);
+				}
 			} else {
 				disable_force_clear = true;
 			}
@@ -2791,10 +2805,15 @@ int ipa3_suspend_wdi_pipe(u32 clnt_hdl)
 				 */
 				IPAERR("failed to force clear %d\n", result);
 				IPAERR("remove delay from SCND reg\n");
-				ep_ctrl_scnd.endp_delay = false;
-				ipahal_write_reg_n_fields(
+				if (ipa3_ctx->ipa_endp_delay_wa_v2) {
+					ipa3_remove_secondary_flow_ctrl(
+							ep->gsi_chan_hdl);
+				} else {
+					ep_ctrl_scnd.endp_delay = false;
+					ipahal_write_reg_n_fields(
 					IPA_ENDP_INIT_CTRL_SCND_n, clnt_hdl,
 					&ep_ctrl_scnd);
+				}
 			} else {
 				disable_force_clear = true;
 			}

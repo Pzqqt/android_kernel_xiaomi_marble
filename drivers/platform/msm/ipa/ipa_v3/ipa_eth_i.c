@@ -27,8 +27,22 @@
 #define IPA_RTK_RX_MBOX_VAL (1)
 #define IPA_RTK_TX_MBOX_VAL (2)
 
+#define IPA_ETH_MSI_DB_VAL (0xFDB)
+
 #define IPA_ETH_PCIE_MASK BIT_ULL(40)
 #define IPA_ETH_PCIE_SET(val) (val | IPA_ETH_PCIE_MASK)
+
+#define IPA_CLIENT_IS_SMMU_ETH_INSTANCE(client) \
+	((client) == IPA_CLIENT_AQC_ETHERNET_PROD || \
+	(client) == IPA_CLIENT_AQC_ETHERNET_CONS || \
+	(client) == IPA_CLIENT_RTK_ETHERNET_PROD || \
+	(client) == IPA_CLIENT_RTK_ETHERNET_CONS || \
+	(client) == IPA_CLIENT_ETHERNET_PROD || \
+	(client) == IPA_CLIENT_ETHERNET_CONS)
+
+#define IPA_CLIENT_IS_SMMU_ETH1_INSTANCE(client) \
+	((client) == IPA_CLIENT_ETHERNET2_PROD || \
+	(client) == IPA_CLIENT_ETHERNET2_CONS)
 
 enum ipa_eth_dir {
 	IPA_ETH_RX = 0,
@@ -319,7 +333,7 @@ static int ipa_eth_setup_rtk_gsi_channel(
 	memset(&gsi_evt_ring_props, 0, sizeof(gsi_evt_ring_props));
 	gsi_evt_ring_props.intf = GSI_EVT_CHTYPE_RTK_EV;
 	gsi_evt_ring_props.intr = GSI_INTR_MSI;
-	gsi_evt_ring_props.re_size = GSI_EVT_RING_RE_SIZE_16B;
+	gsi_evt_ring_props.re_size = GSI_EVT_RING_RE_SIZE_32B;
 	if (pipe->dir == IPA_ETH_PIPE_DIR_TX) {
 		gsi_evt_ring_props.int_modt = IPA_ETH_RTK_MODT;
 		gsi_evt_ring_props.int_modc = IPA_ETH_RTK_MODC;
@@ -362,8 +376,9 @@ static int ipa_eth_setup_rtk_gsi_channel(
 	} else
 		gsi_channel_props.ch_id = gsi_ep_info->ipa_gsi_chan_num;
 	gsi_channel_props.evt_ring_hdl = ep->gsi_evt_ring_hdl;
-	gsi_channel_props.re_size = GSI_CHAN_RE_SIZE_16B;
+	gsi_channel_props.re_size = GSI_CHAN_RE_SIZE_32B;
 	gsi_channel_props.use_db_eng = GSI_CHAN_DB_MODE;
+	gsi_channel_props.db_in_bytes = 1;
 	gsi_channel_props.max_prefetch = GSI_ONE_PREFETCH_SEG;
 	gsi_channel_props.prefetch_mode =
 		gsi_ep_info->prefetch_mode;
@@ -426,17 +441,54 @@ fail_get_gsi_ep_info:
 	return result;
 }
 
+static struct iommu_domain *ipa_eth_get_smmu_domain(
+	enum ipa_client_type client_type)
+{
+	if (ipa3_ctx->ipa_hw_type < IPA_HW_v5_0)
+		return ipa3_get_smmu_domain();
+	if (IPA_CLIENT_IS_SMMU_ETH_INSTANCE(client_type))
+		return ipa3_get_eth_smmu_domain();
+	if (IPA_CLIENT_IS_SMMU_ETH1_INSTANCE(client_type))
+		return ipa3_get_eth1_smmu_domain();
+	return NULL;
+}
+
+static bool ipa_eth_is_smmu_buff_cb_bypass(
+	enum ipa_client_type client_type)
+{
+	if (ipa3_ctx->ipa_hw_type < IPA_HW_v5_0)
+		return ipa3_ctx->s1_bypass_arr[IPA_SMMU_CB_AP];
+	if (IPA_CLIENT_IS_SMMU_ETH_INSTANCE(client_type))
+		return ipa3_ctx->s1_bypass_arr[IPA_SMMU_CB_ETH];
+	if (IPA_CLIENT_IS_SMMU_ETH1_INSTANCE(client_type))
+		return ipa3_ctx->s1_bypass_arr[IPA_SMMU_CB_ETH1];
+	return false;
+}
+
+static enum ipa_smmu_cb_type ipa_eth_get_cb_type(
+	enum ipa_client_type client_type)
+{
+	if (IPA_CLIENT_IS_SMMU_ETH_INSTANCE(client_type))
+		return IPA_SMMU_CB_ETH;
+	if (IPA_CLIENT_IS_SMMU_ETH1_INSTANCE(client_type))
+		return IPA_SMMU_CB_ETH1;
+
+	return IPA_SMMU_CB_MAX;
+}
+
 static int ipa3_smmu_map_eth_pipes(struct ipa_eth_client_pipe_info *pipe,
-	bool map)
+	enum ipa_client_type client_type, bool map)
 {
 	struct iommu_domain *smmu_domain;
-	int result;
+	int result = -EINVAL;
 	int i;
 	u64 iova;
 	phys_addr_t pa;
 	u64 iova_p;
+	u64 prev_iova_p;
 	phys_addr_t pa_p;
 	u32 size_p;
+	enum ipa_smmu_cb_type cb_type;
 
 	if (pipe->info.fix_buffer_size > PAGE_SIZE) {
 		IPAERR("invalid data buff size\n");
@@ -445,13 +497,7 @@ static int ipa3_smmu_map_eth_pipes(struct ipa_eth_client_pipe_info *pipe,
 
 	if (ipa3_ctx->s1_bypass_arr[IPA_SMMU_CB_AP]) {
 		IPADBG("AP SMMU is set to s1 bypass\n");
-		return 0;
-	}
-
-	smmu_domain = ipa3_get_smmu_domain();
-	if (!smmu_domain) {
-		IPAERR("invalid smmu domain\n");
-		return -EINVAL;
+		goto map_buffer;
 	}
 
 	result = ipa3_smmu_map_peer_buff(
@@ -466,11 +512,47 @@ static int ipa3_smmu_map_eth_pipes(struct ipa_eth_client_pipe_info *pipe,
 		return -EINVAL;
 	}
 
+map_buffer:
+	if (ipa_eth_is_smmu_buff_cb_bypass(client_type)) {
+		IPADBG("SMMU cb for buffer is set to s1 bypass\n");
+		return 0;
+	}
+
+	cb_type = ipa_eth_get_cb_type(client_type);
+	if (cb_type >= IPA_SMMU_CB_MAX) {
+		IPAERR("invalid CB type %d\n", cb_type);
+		goto fail_map_buffer_smmu_enabled;
+	}
+
+	if ((ipa3_get_smmu_ctx(cb_type))->shared) {
+		IPADBG("SMMU cb %d is shared, no need to map buffers\n", cb_type);
+		return 0;
+	} else {
+		IPADBG(
+		"SMMU cb %d is not shared, continue to map buffers\n", cb_type);
+	}
+
+	smmu_domain = ipa_eth_get_smmu_domain(client_type);
+	if (!smmu_domain) {
+		IPAERR("invalid smmu domain\n");
+		result = -EINVAL;
+		goto fail_map_buffer_smmu_enabled;
+	}
+
+	prev_iova_p = 0;
 	for (i = 0; i < pipe->info.data_buff_list_size; i++) {
 		iova = (u64)pipe->info.data_buff_list[i].iova;
 		pa = (phys_addr_t)pipe->info.data_buff_list[i].pa;
 		IPA_SMMU_ROUND_TO_PAGE(iova, pa, pipe->info.fix_buffer_size,
 			iova_p, pa_p, size_p);
+		/* Add check on every 2nd buffer for AQC smmu-dup issue */
+		if (prev_iova_p == iova_p) {
+			IPADBG_LOW(
+				"current buffer and previous are on the same page, skip page mapping\n"
+			);
+			continue;
+		}
+		prev_iova_p = iova_p;
 		IPADBG_LOW("%s 0x%llx to 0x%pa size %d\n", map ? "mapping" :
 			"unmapping", iova_p, &pa_p, size_p);
 		if (map) {
@@ -482,7 +564,6 @@ static int ipa3_smmu_map_eth_pipes(struct ipa_eth_client_pipe_info *pipe,
 			result = iommu_unmap(smmu_domain, iova_p, size_p);
 			if (result != size_p) {
 				IPAERR("Fail to unmap 0x%llx\n", iova);
-				goto fail_map_buffer_smmu_enabled;
 			}
 		}
 	}
@@ -559,6 +640,7 @@ static int ipa_eth_setup_aqc_gsi_channel(
 		IPAERR("Failed getting GSI EP info for client=%d\n",
 		       ep->client);
 		result = -EINVAL;
+		goto fail_get_gsi_ep_info;
 	} else
 		gsi_channel_props.ch_id = gsi_ep_info->ipa_gsi_chan_num;
 	gsi_channel_props.evt_ring_hdl = ep->gsi_evt_ring_hdl;
@@ -575,7 +657,8 @@ static int ipa_eth_setup_aqc_gsi_channel(
 	gsi_channel_props.ring_len = len;
 	gsi_channel_props.ring_base_addr =
 		(u64)pipe->info.transfer_ring_base;
-	result = gsi_alloc_channel(&gsi_channel_props, ipa3_ctx->gsi_dev_hdl,
+	result = gsi_alloc_channel(&gsi_channel_props,
+		ipa3_ctx->gsi_dev_hdl,
 		&ep->gsi_chan_hdl);
 	if (result != GSI_STATUS_SUCCESS)
 		goto fail_get_gsi_ep_info;
@@ -684,7 +767,7 @@ int ipa3_eth_connect(
 		return -EFAULT;
 	}
 
-	result = ipa3_smmu_map_eth_pipes(pipe, true);
+	result = ipa3_smmu_map_eth_pipes(pipe, client_type, true);
 	if (result) {
 		IPAERR("failed to map SMMU %d\n", result);
 		return result;
@@ -738,73 +821,45 @@ int ipa3_eth_connect(
 			goto setup_gsi_ch_fail;
 		}
 	}
-
 	if (gsi_query_channel_db_addr(ep->gsi_chan_hdl,
 		&gsi_db_addr_low, &gsi_db_addr_high)) {
 		IPAERR("failed to query gsi rx db addr\n");
 		result = -EFAULT;
 		goto query_ch_db_fail;
 	}
-	/* only 32 bit lsb is used */
-	db_addr = ioremap((phys_addr_t)(gsi_db_addr_low), 4);
-	if (IPA_CLIENT_IS_PROD(client_type)) {
-		/* Rx: Initialize to ring base (i.e point 6) */
-		db_val = (u32)ep->gsi_mem_info.chan_ring_base_addr;
-	} else {
-		/* TX: Initialize to end of ring */
-		db_val = (u32)ep->gsi_mem_info.chan_ring_base_addr;
-		db_val += (u32)ep->gsi_mem_info.chan_ring_len;
-	}
-	iowrite32(db_val, db_addr);
-	iounmap(db_addr);
-	gsi_query_evt_ring_db_addr(ep->gsi_evt_ring_hdl,
-		&evt_ring_db_addr_low, &evt_ring_db_addr_high);
-	IPADBG("evt_ring_hdl %lu, db_addr_low %u db_addr_high %u\n",
-		ep->gsi_evt_ring_hdl, evt_ring_db_addr_low,
-		evt_ring_db_addr_high);
-	/* only 32 bit lsb is used */
-	db_addr = ioremap((phys_addr_t)(evt_ring_db_addr_low), 4);
-	/*
-	* IPA/GSI driver should ring the event DB once after
-	* initialization of the event, with a value that is
-	* outside of the ring range. Eg: ring base = 0x1000,
-	* ring size = 0x100 => AP can write value > 0x1100
-	* into the doorbell address. Eg: 0x 1110.
-	* Use event ring base addr + event ring size + 1 element size.
-	*/
-	db_val = (u32)ep->gsi_mem_info.evt_ring_base_addr;
-	db_val += (u32)ep->gsi_mem_info.evt_ring_len;
-	db_val += GSI_EVT_RING_RE_SIZE_16B;
-	iowrite32(db_val, db_addr);
-	iounmap(db_addr);
 	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0) {
 		if (prot == IPA_HW_PROTOCOL_AQC) {
 			if (IPA_CLIENT_IS_PROD(client_type)) {
-				if (gsi_query_aqc_msi_addr(ep->gsi_chan_hdl,
+				if (gsi_query_msi_addr(ep->gsi_chan_hdl,
 					&pipe->info.db_pa)) {
 					result = -EFAULT;
 					goto query_msi_fail;
 				}
+				/* we don't need to ring the MSI doorbell in RX case */
 			} else {
 				pipe->info.db_pa = gsi_db_addr_low;
 				pipe->info.db_val = 0;
+				/* only 32 bit lsb is used */
+				db_addr = ioremap((phys_addr_t)(gsi_db_addr_low), 4);
+				/* TX: Initialize to end of ring */
+				db_val = (u32)ep->gsi_mem_info.chan_ring_base_addr;
+				db_val += (u32)ep->gsi_mem_info.chan_ring_len;
+				iowrite32(db_val, db_addr);
+				iounmap(db_addr);
 			}
 		} else if (prot == IPA_HW_PROTOCOL_RTK) {
-			/* SDX65 Phase 1, uC still doing doorbell fwd */
-			if (IPA_CLIENT_IS_PROD(client_type)) {
-				pipe->info.db_pa = ipa3_ctx->ipa_wrapper_base +
-					ipahal_get_reg_base() +
-					ipahal_get_reg_mn_ofst(IPA_UC_MAILBOX_m_n,
-						IPA_ETH_MBOX_M,
-						IPA_RTK_RX_MBOX_N);
-				pipe->info.db_val = IPA_RTK_RX_MBOX_VAL;
-			} else {
-				pipe->info.db_pa = ipa3_ctx->ipa_wrapper_base +
-					ipahal_get_reg_base() +
-					ipahal_get_reg_mn_ofst(IPA_UC_MAILBOX_m_n,
-						IPA_ETH_MBOX_M,
-						IPA_RTK_TX_MBOX_N);
-				pipe->info.db_val = IPA_RTK_TX_MBOX_VAL;
+			if (gsi_query_msi_addr(ep->gsi_chan_hdl,
+					&pipe->info.db_pa)) {
+				result = -EFAULT;
+				goto query_msi_fail;
+			}
+			if (IPA_CLIENT_IS_CONS(client_type)) {
+				/* only 32 bit lsb is used */
+				db_addr = ioremap((phys_addr_t)(pipe->info.db_pa), 4);
+				/* TX: ring MSI doorbell */
+				db_val = IPA_ETH_MSI_DB_VAL;
+				iowrite32(db_val, db_addr);
+				iounmap(db_addr);
 			}
 		}
 	} else {
@@ -825,6 +880,12 @@ int ipa3_eth_connect(
 						IPA_AQC_RX_MBOX_N);
 				pipe->info.db_val = IPA_AQC_RX_MBOX_VAL;
 			}
+			/* only 32 bit lsb is used */
+			db_addr = ioremap((phys_addr_t)(gsi_db_addr_low), 4);
+			/* Rx: Initialize to ring base (i.e point 6) */
+			db_val = (u32)ep->gsi_mem_info.chan_ring_base_addr;
+			iowrite32(db_val, db_addr);
+			iounmap(db_addr);
 		} else {
 			/* TX mailbox */
 			if (prot == IPA_HW_PROTOCOL_RTK) {
@@ -838,9 +899,40 @@ int ipa3_eth_connect(
 				pipe->info.db_pa = gsi_db_addr_low;
 				pipe->info.db_val = 0;
 			}
+			/* only 32 bit lsb is used */
+			db_addr = ioremap((phys_addr_t)(gsi_db_addr_low), 4);
+			/* TX: Initialize to end of ring */
+			db_val = (u32)ep->gsi_mem_info.chan_ring_base_addr;
+			db_val += (u32)ep->gsi_mem_info.chan_ring_len;
+			iowrite32(db_val, db_addr);
+			iounmap(db_addr);
 		}
 	}
-
+	gsi_query_evt_ring_db_addr(ep->gsi_evt_ring_hdl,
+		&evt_ring_db_addr_low, &evt_ring_db_addr_high);
+	IPADBG("evt_ring_hdl %lu, db_addr_low %u db_addr_high %u\n",
+		ep->gsi_evt_ring_hdl, evt_ring_db_addr_low,
+		evt_ring_db_addr_high);
+	/* only 32 bit lsb is used */
+	db_addr = ioremap((phys_addr_t)(evt_ring_db_addr_low), 4);
+	/*
+	* IPA/GSI driver should ring the event DB once after
+	* initialization of the event, with a value that is
+	* outside of the ring range. Eg: ring base = 0x1000,
+	* ring size = 0x100 => AP can write value > 0x1100
+	* into the doorbell address. Eg: 0x 1110.
+	* Use event ring base addr + event ring size + 1 element size.
+	*/
+	db_val = (u32)ep->gsi_mem_info.evt_ring_base_addr;
+	db_val += (u32)ep->gsi_mem_info.evt_ring_len;
+	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0 &&
+		prot == IPA_HW_PROTOCOL_RTK) {
+		db_val += GSI_EVT_RING_RE_SIZE_32B;
+	} else {
+		db_val += GSI_EVT_RING_RE_SIZE_16B;
+	}
+	iowrite32(db_val, db_addr);
+	iounmap(db_addr);
 
 	/* enable data path */
 	result = ipa3_enable_data_path(ep_idx);
@@ -930,7 +1022,7 @@ query_ch_db_fail:
 setup_gsi_ch_fail:
 cfg_ep_fail:
 disable_data_path_fail:
-	ipa3_smmu_map_eth_pipes(pipe, false);
+	ipa3_smmu_map_eth_pipes(pipe, client_type, false);
 	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
 	return result;
 }
@@ -1031,7 +1123,7 @@ int ipa3_eth_disconnect(
 	if (IPA_CLIENT_IS_PROD(client_type))
 		ipa3_delete_dflt_flt_rules(ep_idx);
 	/* unmap th pipe */
-	result = ipa3_smmu_map_eth_pipes(pipe, false);
+	result = ipa3_smmu_map_eth_pipes(pipe, client_type, false);
 	if (result)
 		IPAERR("failed to unmap SMMU %d\n", result);
 	ipa3_eth_release_client_mapping(pipe, id);

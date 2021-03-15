@@ -1128,6 +1128,29 @@ static int ipa3_xdci_stop_gsi_ch_brute_force(u32 clnt_hdl,
 	}
 }
 
+int ipa3_remove_secondary_flow_ctrl(int gsi_chan_hdl)
+{
+	int code = 0;
+	int result;
+
+	result = gsi_query_flow_control_state_ee(gsi_chan_hdl, 0, 1, &code);
+	if (result == GSI_STATUS_SUCCESS) {
+		code = 0;
+		result = gsi_flow_control_ee(gsi_chan_hdl, 0, false, true,
+							&code);
+		if (result == GSI_STATUS_SUCCESS) {
+			IPADBG("flow control sussess ch %d code %d\n",
+					gsi_chan_hdl, code);
+		} else {
+			IPADBG("failed to flow control ch %d code %d\n",
+					gsi_chan_hdl, code);
+		}
+	} else {
+		IPADBG("failed to query flow control mode ch %d code %d\n",
+					gsi_chan_hdl, code);
+	}
+	return result;
+}
 /* Clocks should be voted for before invoking this function */
 static int ipa3_stop_ul_chan_with_data_drain(u32 qmi_req_id,
 		u32 source_pipe_bitmask, u32 source_pipe_reg_idx,
@@ -1213,10 +1236,15 @@ static int ipa3_stop_ul_chan_with_data_drain(u32 qmi_req_id,
 			IPAERR(
 				"failed to force clear %d, remove delay from SCND reg\n"
 				, result);
-			ep_ctrl_scnd.endp_delay = false;
-			ipahal_write_reg_n_fields(
-				IPA_ENDP_INIT_CTRL_SCND_n, clnt_hdl,
-				&ep_ctrl_scnd);
+			if (ipa3_ctx->ipa_endp_delay_wa_v2) {
+				ipa3_remove_secondary_flow_ctrl(
+						ep->gsi_chan_hdl);
+			} else {
+				ep_ctrl_scnd.endp_delay = false;
+				ipahal_write_reg_n_fields(
+					IPA_ENDP_INIT_CTRL_SCND_n, clnt_hdl,
+					&ep_ctrl_scnd);
+			}
 		}
 	}
 	/* with force clear, wait for emptiness */
@@ -1235,6 +1263,7 @@ static int ipa3_stop_ul_chan_with_data_drain(u32 qmi_req_id,
 	if (result) {
 		IPAERR("fail to stop UL channel - hdl=%d clnt=%d\n",
 			clnt_hdl, ep->client);
+		ipa_assert();
 		goto disable_force_clear_and_exit;
 	}
 	result = stop_in_proc ? -EFAULT : 0;
@@ -1469,6 +1498,7 @@ EXPORT_SYMBOL(ipa3_xdci_ep_delay_rm);
 int ipa3_xdci_disconnect(u32 clnt_hdl, bool should_force_clear, u32 qmi_req_id)
 {
 	struct ipa3_ep_context *ep;
+	struct ipa_ep_cfg_ctrl ep_cfg_ctrl;
 	int result;
 	u32 source_pipe_bitmask = 0;
 	u32 source_pipe_reg_idx = 0;
@@ -1508,6 +1538,12 @@ int ipa3_xdci_disconnect(u32 clnt_hdl, bool should_force_clear, u32 qmi_req_id)
 			IPAERR("Error stopping channel (CONS client): %d\n",
 				result);
 			goto stop_chan_fail;
+		}
+		if (ipa3_ctx->ipa_hw_type < IPA_HW_v4_0) {
+			/* Unsuspend the pipe */
+			memset(&ep_cfg_ctrl, 0, sizeof(struct ipa_ep_cfg_ctrl));
+			ep_cfg_ctrl.ipa_ep_suspend = false;
+			ipa3_cfg_ep_ctrl(clnt_hdl, &ep_cfg_ctrl);
 		}
 	}
 	IPA_ACTIVE_CLIENTS_DEC_EP(ipa3_get_client_mapping(clnt_hdl));

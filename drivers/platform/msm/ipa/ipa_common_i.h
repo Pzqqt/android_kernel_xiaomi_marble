@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _IPA_COMMON_I_H_
@@ -106,6 +106,23 @@
 		ipa3_dec_client_disable_clks(&log_info); \
 	} while (0)
 
+#define IPA_ACTIVE_CLIENTS_INC_EP_NO_BLOCK(client) ({\
+	int __ret = 0; \
+	do { \
+		struct ipa_active_client_logging_info log_info; \
+		IPA_ACTIVE_CLIENTS_PREP_EP(log_info, client); \
+		__ret = ipa3_inc_client_enable_clks_no_block(&log_info); \
+	} while (0); \
+	(__ret); \
+})
+
+#define IPA_ACTIVE_CLIENTS_DEC_EP_NO_BLOCK(client) \
+	do { \
+		struct ipa_active_client_logging_info log_info; \
+		IPA_ACTIVE_CLIENTS_PREP_EP(log_info, client); \
+		ipa3_dec_client_disable_clks_no_block(&log_info); \
+	} while (0)
+
 /*
  * Printing one warning message in 5 seconds if multiple warning messages
  * are coming back to back.
@@ -148,8 +165,8 @@ do {\
 #define IPA_CLIENT_IS_CONS(x) \
 	(x < IPA_CLIENT_MAX && (x & 0x1) == 1)
 
-#define IPA_GSI_CHANNEL_STOP_SLEEP_MIN_USEC (1000)
-#define IPA_GSI_CHANNEL_STOP_SLEEP_MAX_USEC (2000)
+#define IPA_GSI_CHANNEL_STOP_SLEEP_MIN_USEC (3000)
+#define IPA_GSI_CHANNEL_STOP_SLEEP_MAX_USEC (5000)
 
 enum ipa_active_client_log_type {
 	EP,
@@ -532,11 +549,14 @@ int ipa3_conn_wdi3_pipes(struct ipa_wdi_conn_in_params *in,
 	struct ipa_wdi_conn_out_params *out,
 	ipa_wdi_meter_notifier_cb wdi_notify);
 
-int ipa3_disconn_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx);
+int ipa3_disconn_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx,
+	int ipa_ep_idx_tx1);
 
-int ipa3_enable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx);
+int ipa3_enable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx,
+	int ipa_ep_idx_tx1);
 
-int ipa3_disable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx);
+int ipa3_disable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx,
+	int ipa_ep_idx_tx1);
 
 const char *ipa_get_version_string(enum ipa_hw_type ver);
 int ipa3_start_gsi_channel(u32 clnt_hdl);
@@ -705,6 +725,11 @@ int ipa3_nat_mdfy_pdn(struct ipa_ioc_nat_pdn_entry *mdfy_pdn);
 */
 int ipa3_rx_poll(u32 clnt_hdl, int budget);
 void ipa3_recycle_wan_skb(struct sk_buff *skb);
+
+/*
+ * Low lat data path
+ */
+int ipa3_low_lat_rx_poll(u32 clnt_hdl, int budget);
 
 /*
 * System pipes

@@ -83,6 +83,7 @@ const char *ipa3_event_name[IPA_EVENT_MAX_NUM] = {
 	__stringify(IPA_GSB_DISCONNECT),
 	__stringify(IPA_COALESCE_ENABLE),
 	__stringify(IPA_COALESCE_DISABLE),
+	__stringify(IPA_SET_MTU),
 	__stringify_1(WIGIG_CLIENT_CONNECT),
 	__stringify_1(WIGIG_FST_SWITCH),
 	__stringify(IPA_PDN_DEFAULT_MODE_CONFIG),
@@ -107,6 +108,8 @@ const char *ipa3_hdr_proc_type_name[] = {
 	__stringify(IPA_HDR_PROC_L2TP_HEADER_ADD),
 	__stringify(IPA_HDR_PROC_L2TP_HEADER_REMOVE),
 	__stringify(IPA_HDR_PROC_ETHII_TO_ETHII_EX),
+	__stringify(IPA_HDR_PROC_L2TP_UDP_HEADER_ADD),
+	__stringify(IPA_HDR_PROC_L2TP_UDP_HEADER_REMOVE),
 };
 
 static struct dentry *dent;
@@ -745,6 +748,9 @@ static int ipa3_attrib_dump(struct ipa_rule_attrib *attrib,
 	if (attrib->attrib_mask & IPA_FLT_NEXT_HDR)
 		pr_cont("next_hdr:%d ", attrib->u.v6.next_hdr);
 
+	if (attrib->ext_attrib_mask & IPA_FLT_EXT_NEXT_HDR)
+		pr_err("next_hdr:%d ", attrib->u.v6.next_hdr);
+
 	if (attrib->attrib_mask & IPA_FLT_META_DATA) {
 		pr_cont(
 			"metadata:%x metadata_mask:%x ",
@@ -763,11 +769,16 @@ static int ipa3_attrib_dump(struct ipa_rule_attrib *attrib,
 	if ((attrib->attrib_mask & IPA_FLT_MAC_DST_ADDR_ETHER_II) ||
 		(attrib->attrib_mask & IPA_FLT_MAC_DST_ADDR_802_3) ||
 		(attrib->attrib_mask & IPA_FLT_MAC_DST_ADDR_L2TP) ||
-		(attrib->attrib_mask & IPA_FLT_MAC_DST_ADDR_802_1Q)) {
+		(attrib->attrib_mask & IPA_FLT_MAC_DST_ADDR_802_1Q) ||
+		(attrib->attrib_mask & IPA_FLT_L2TP_UDP_INNER_MAC_DST_ADDR)) {
 		pr_cont("dst_mac_addr:%pM ", attrib->dst_mac_addr);
 	}
 
-	if (attrib->attrib_mask & IPA_FLT_MAC_ETHER_TYPE)
+	if (attrib->ext_attrib_mask & IPA_FLT_EXT_MTU)
+		pr_err("Payload Length:%d ", attrib->payload_length);
+
+	if (attrib->attrib_mask & IPA_FLT_MAC_ETHER_TYPE ||
+		attrib->ext_attrib_mask & IPA_FLT_EXT_L2TP_UDP_INNER_ETHER_TYPE)
 		pr_cont("ether_type:%x ", attrib->ether_type);
 
 	if (attrib->attrib_mask & IPA_FLT_VLAN_ID)
@@ -776,7 +787,8 @@ static int ipa3_attrib_dump(struct ipa_rule_attrib *attrib,
 	if (attrib->attrib_mask & IPA_FLT_TCP_SYN)
 		pr_cont("tcp syn ");
 
-	if (attrib->attrib_mask & IPA_FLT_TCP_SYN_L2TP)
+	if (attrib->attrib_mask & IPA_FLT_TCP_SYN_L2TP ||
+		attrib->ext_attrib_mask & IPA_FLT_EXT_L2TP_UDP_TCP_SYN)
 		pr_cont("tcp syn l2tp ");
 
 	if (attrib->attrib_mask & IPA_FLT_L2TP_INNER_IP_TYPE)
@@ -1559,6 +1571,13 @@ nxt_clnt_cons:
 				cnt += nbytes;
 				continue;
 			case IPA_CLIENT_WLAN2_CONS:
+				client = IPA_CLIENT_WLAN2_CONS1;
+				nbytes = scnprintf(dbg_buff + cnt,
+					IPA_MAX_MSG_LEN - cnt, HEAD_FRMT_STR,
+					"Client IPA_CLIENT_WLAN2_CONS1 Stats:");
+				cnt += nbytes;
+				continue;
+			case IPA_CLIENT_WLAN2_CONS1:
 				client = IPA_CLIENT_WLAN3_CONS;
 				nbytes = scnprintf(dbg_buff + cnt,
 					IPA_MAX_MSG_LEN - cnt, HEAD_FRMT_STR,
@@ -2433,6 +2452,18 @@ static ssize_t ipa3_read_wdi3_gsi_stats(struct file *file,
 			stats.u.ring[1].RingUtilCount);
 		cnt += nbytes;
 		nbytes = scnprintf(dbg_buff + cnt, IPA_MAX_MSG_LEN - cnt,
+			"TX1 ringFull=%u\n"
+			"TX1 ringEmpty=%u\n"
+			"TX1 ringUsageHigh=%u\n"
+			"TX1 ringUsageLow=%u\n"
+			"TX1 RingUtilCount=%u\n",
+			stats.u.ring[2].ringFull,
+			stats.u.ring[2].ringEmpty,
+			stats.u.ring[2].ringUsageHigh,
+			stats.u.ring[2].ringUsageLow,
+			stats.u.ring[2].RingUtilCount);
+		cnt += nbytes;
+		nbytes = scnprintf(dbg_buff + cnt, IPA_MAX_MSG_LEN - cnt,
 			"RX ringFull=%u\n"
 			"RX ringEmpty=%u\n"
 			"RX ringUsageHigh=%u\n"
@@ -3269,6 +3300,9 @@ static ssize_t ipa3_eth_read_err_status(struct file *file,
 	struct ipa3_eth_error_stats tx_stats;
 	struct ipa3_eth_error_stats rx_stats;
 
+	memset(&tx_stats, 0, sizeof(struct ipa3_eth_error_stats));
+	memset(&rx_stats, 0, sizeof(struct ipa3_eth_error_stats));
+
 	if (ipa3_ctx->ipa_hw_type < IPA_HW_v4_5
 		&& (ipa3_ctx->ipa_hw_type != IPA_HW_v4_1
 		|| ipa3_ctx->platform_type != IPA_PLAT_TYPE_APQ)) {
@@ -3334,7 +3368,7 @@ static const struct file_operations fops_ipa_eth_client_status = {
 };
 void ipa3_eth_debugfs_add_node(struct ipa_eth_client *client)
 {
-	struct dentry *file;
+	struct dentry *file = NULL;
 	int type, inst_id;
 	char name[IPA_RESOURCE_NAME_MAX];
 
@@ -3350,18 +3384,22 @@ void ipa3_eth_debugfs_add_node(struct ipa_eth_client *client)
 
 	type = client->client_type;
 	inst_id = client->inst_id;
-	snprintf(name, IPA_RESOURCE_NAME_MAX,
-		"%s_%d_stats", ipa_eth_clients_strings[type], inst_id);
-	file = debugfs_create_file(name, IPA_READ_ONLY_MODE,
-		dent_eth, (void *)client, &fops_ipa_eth_stats);
+	if (type < IPA_ETH_CLIENT_MAX) {
+		snprintf(name, IPA_RESOURCE_NAME_MAX,
+			"%s_%d_stats", ipa_eth_clients_strings[type], inst_id);
+		file = debugfs_create_file(name, IPA_READ_ONLY_MODE,
+			dent_eth, (void *)client, &fops_ipa_eth_stats);
+	}
 	if (!file) {
 		IPAERR("could not create hw_type file\n");
 		return;
 	}
-	snprintf(name, IPA_RESOURCE_NAME_MAX,
-		"%s_%d_status", ipa_eth_clients_strings[type], inst_id);
-	file = debugfs_create_file(name, IPA_READ_ONLY_MODE,
-		dent_eth, (void *)client, &fops_ipa_eth_client_status);
+	if (type < IPA_ETH_CLIENT_MAX) {
+		snprintf(name, IPA_RESOURCE_NAME_MAX,
+			"%s_%d_status", ipa_eth_clients_strings[type], inst_id);
+		file = debugfs_create_file(name, IPA_READ_ONLY_MODE,
+			dent_eth, (void *)client, &fops_ipa_eth_client_status);
+	}
 	if (!file) {
 		IPAERR("could not create hw_type file\n");
 		goto fail;

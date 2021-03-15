@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
-* Copyright (c) 2020, The Linux Foundation. All rights reserved.
+* Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
 */
 
 #include "gsihal_i.h"
@@ -60,6 +60,7 @@ static const char *gsireg_name_to_str[GSI_REG_MAX] = {
 	__stringify(GSI_EE_n_CNTXT_MSI_BASE_MSB),
 	__stringify(GSI_EE_n_GSI_STATUS),
 	__stringify(GSI_EE_n_CNTXT_SCRATCH_0),
+	__stringify(GSI_EE_n_CNTXT_SCRATCH_1),
 	__stringify(GSI_EE_n_EV_CH_k_CNTXT_1),
 	__stringify(GSI_EE_n_EV_CH_k_CNTXT_2),
 	__stringify(GSI_EE_n_EV_CH_k_CNTXT_3),
@@ -1068,6 +1069,9 @@ static void gsireg_construct_gsi_ee_generic_cmd_v3_0(enum gsihal_reg_name reg,
 	GSI_SETFIELD_IN_REG(*val, cmd->ee,
 		GSI_V3_0_EE_n_GSI_EE_GENERIC_CMD_EE_SHFT,
 		GSI_V3_0_EE_n_GSI_EE_GENERIC_CMD_EE_BMSK);
+	GSI_SETFIELD_IN_REG(*val, cmd->prmy_scnd_fc,
+		GSI_V3_0_EE_n_GSI_EE_GENERIC_CMD_PARAM_SHFT,
+		GSI_V3_0_EE_n_GSI_EE_GENERIC_CMD_PARAM_BMSK);
 }
 
 static void gsireg_construct_cntxt_gsi_irq_en(enum gsihal_reg_name reg,
@@ -1205,6 +1209,9 @@ static struct gsihal_reg_obj gsihal_reg_objs[GSI_VER_MAX][GSI_REG_MAX] = {
 	[GSI_VER_1_0][GSI_EE_n_CNTXT_SCRATCH_0] = {
 	gsireg_construct_dummy, gsireg_parse_dummy,
 	0x0001f400, 0x4000, 0},
+	[GSI_VER_1_0][GSI_EE_n_CNTXT_SCRATCH_1] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x0001f404, 0x4000, 0},
 	[GSI_VER_1_0][GSI_EE_n_EV_CH_k_CNTXT_1] = {
 	gsireg_construct_ev_ch_k_cntxt_1, gsireg_parse_dummy,
 	0x0001d004, 0x4000, 0x80},
@@ -1554,6 +1561,9 @@ static struct gsihal_reg_obj gsihal_reg_objs[GSI_VER_MAX][GSI_REG_MAX] = {
 	[GSI_VER_2_5][GSI_EE_n_CNTXT_SCRATCH_0] = {
 	gsireg_construct_dummy, gsireg_parse_dummy,
 	0x00012400, 0x4000, 0},
+	[GSI_VER_2_5][GSI_EE_n_CNTXT_SCRATCH_1] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00012404, 0x4000, 0},
 	[GSI_VER_2_5][GSI_EE_n_EV_CH_k_CNTXT_1] = {
 	gsireg_construct_ev_ch_k_cntxt_1, gsireg_parse_dummy,
 	0x00010004, 0x4000, 0x80},
@@ -1904,7 +1914,10 @@ static struct gsihal_reg_obj gsihal_reg_objs[GSI_VER_MAX][GSI_REG_MAX] = {
 	0x00025244, 0x12000, 0 },
 	[GSI_VER_3_0][GSI_EE_n_CNTXT_SCRATCH_0] = {
 	gsireg_construct_dummy, gsireg_parse_dummy,
-	0x00024500, 0x12000, 0},
+	0x00025400, 0x12000, 0},
+	[GSI_VER_3_0][GSI_EE_n_CNTXT_SCRATCH_1] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00024504, 0x12000, 0},
 	[GSI_VER_3_0][GSI_INTER_EE_n_SRC_GSI_CH_IRQ_k] = {
 	gsireg_construct_dummy, gsireg_parse_dummy,
 	0x0000c018, 0x1000, 0x18 },
@@ -1977,6 +1990,7 @@ void gsihal_write_reg_nk(enum gsihal_reg_name reg, u32 n, u32 k, u32 val)
 	offset += gsihal_reg_objs[gsihal_ctx->gsi_ver][reg].n_ofst * n;
 	gsi_writel(val, gsihal_ctx->base + offset);
 }
+EXPORT_SYMBOL(gsihal_write_reg_nk);
 
 /*
  * gsihal_write_reg_fields() - Write to reg a prased value
@@ -2222,6 +2236,7 @@ u32 gsihal_get_reg_nk_ofst(enum gsihal_reg_name reg, u32 n, u32 k)
 
 	return offset;
 }
+EXPORT_SYMBOL(gsihal_get_reg_nk_ofst);
 
 /*
 * gsihal_get_bit_map_array_size() - Get the size of the bit map

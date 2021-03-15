@@ -2585,9 +2585,9 @@ static ssize_t ipa_debugfs_enable_disable_drop_stats(struct file *file,
 	unsigned long missing;
 	unsigned int pipe_num = 0;
 	bool enable_pipe = true;
-	u32 pipe_bitmask[IPAHAL_IPA5_PIPE_REG_NUM];
-	u32 pipe_ep_reg_idx;
-	u32 pipe_ep_reg_bit;
+	u32 pipe_bitmask[IPAHAL_IPA5_PIPE_REG_NUM] = {0};
+	u32 pipe_ep_reg_idx = 0;
+	u32 pipe_ep_reg_bit = 0;
 	char seprator = ',';
 	int i, j;
 	bool is_pipe = false;

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _IPAHAL_I_H_
@@ -366,6 +366,52 @@ struct ipa_imm_cmd_hw_ip_packet_init_v_5_0 {
     u64 destination_pipe_index : 8;
     u64 rsv1 : 56;
 };
+
+/*
+ * struct ipa_imm_cmd_hw_ip_packet_init_ex - IP_PACKET_INIT_EX command payload
+ *  in H/W format for IPA v5_0.
+ * @frag_disable: 1 - disabled. overrides IPA_ENDP_CONFIG_n:FRAG_OFFLOAD_EN
+ * @filter_disable: 1 - disabled, 0 enabled
+ * @nat_disable: 1 - disabled, 0 enabled
+ * @route_disable: 1 - disabled, 0 enabled
+ * @hdr_removal_insertion_disable: 1 - disabled, 0 enabled
+ * @cs_disable: 1 - disabled, 0 enabled
+ * @quota_tethering_stats_disable: 1 - disabled, 0 enabled
+ * fields @flt_rt_tbl_idx - @rsvd4 are a copy of ipa5_0_flt_rule_hw_hdr
+ * fields @rt_pipe_dest_idx - @rt_system are a copy of ipa5_0_rt_rule_hw_hdr
+ */
+struct ipa_imm_cmd_hw_ip_packet_init_ex {
+    u64 rsvd1 : 16;
+    u64 frag_disable : 1;
+    u64 filter_disable : 1;
+    u64 nat_disable : 1;
+    u64 route_disable : 1;
+    u64 hdr_removal_insertion_disable : 1;
+    u64 cs_disable : 1;
+    u64 quota_tethering_stats_disable : 1;
+    u64 rsvd2 : 9;
+	u64 flt_rt_tbl_idx : 8;
+	u64 flt_stats_cnt_idx : 8;
+	u64 flt_priority : 8;
+	u64 rsvd3 : 1;
+	u64 flt_close_aggr_irq_mod : 1;
+	u64 flt_rule_id : 10;
+	u64 flt_action : 5;
+	u64 flt_pdn_idx : 4;
+	u64 flt_set_metadata : 1;
+	u64 flt_retain_hdr : 1;
+	u64 rsvd4 : 1;
+	u64 rt_pipe_dest_idx : 8;
+	u64 rt_stats_cnt_idx : 8;
+	u64 rt_priority : 8;
+	u64 rt_rsvd : 1;
+	u64 rt_close_aggr_irq_mod : 1;
+	u64 rt_rule_id : 10;
+	u64 rt_hdr_offset : 9;
+	u64 rt_proc_ctx : 1;
+	u64 rt_retain_hdr : 1;
+	u64 rt_system : 1;
+} __packed;
 
 /*
  * struct ipa_imm_cmd_hw_register_write - REGISTER_WRITE command payload
@@ -839,9 +885,10 @@ union ipa_pkt_status_hw_v5_0 {
 #define IPA_HDR_UCP_ETHII_TO_ETHII		9
 #define IPA_HDR_UCP_L2TP_HEADER_ADD		10
 #define IPA_HDR_UCP_L2TP_HEADER_REMOVE		11
-#define IPA_HDR_UCP_L2TP_UDP_HEADER_ADD	12
+#define IPA_HDR_UCP_L2TP_UDP_HEADER_ADD		12
 #define IPA_HDR_UCP_L2TP_UDP_HEADER_REMOVE	13
 #define IPA_HDR_UCP_ETHII_TO_ETHII_EX		14
+#define IPA_HDR_UCP_SET_DSCP			16
 
 /* Processing context TLV type */
 #define IPA_PROC_CTX_TLV_TYPE_END 0
@@ -976,6 +1023,17 @@ struct ipa_hw_hdr_proc_ctx_add_hdr_ex {
 struct ipa_hw_hdr_proc_ctx_add_hdr_cmd_seq_ex {
 	struct ipa_hw_hdr_proc_ctx_hdr_add hdr_add;
 	struct ipa_hw_hdr_proc_ctx_add_hdr_ex hdr_add_ex;
+	struct ipa_hw_hdr_proc_ctx_tlv end;
+};
+
+/**
+ * struct ipa_hw_hdr_proc_ctx_remove_l2tp_udp_hdr_cmd_seq -
+ * IPA processing context header - process command sequence
+ * @l2tp_params: l2tp params for header removal
+ * @end: tlv end command (cmd.type must be 0)
+ */
+struct ipa_hw_hdr_proc_ctx_remove_l2tp_udp_hdr_cmd_seq {
+	struct ipa_hw_hdr_proc_ctx_l2tp_remove_hdr l2tp_params;
 	struct ipa_hw_hdr_proc_ctx_tlv end;
 };
 

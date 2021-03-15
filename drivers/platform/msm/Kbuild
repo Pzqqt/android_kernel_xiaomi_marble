@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: GPL-2.0-only
+DATAIPADRVTOP = $(srctree)/techpack/dataipa/drivers/platform/msm
 
 #MSMs - GKI
 ifeq ($(filter $(CONFIG_ARCH_LAHAINA) $(CONFIG_ARCH_HOLI), y),y)
@@ -14,6 +15,16 @@ include $(srctree)/techpack/dataipa/config/dataipa_GKI.conf
 endif
 endif
 
+#MSM - Vendor SI
+ifeq ($(CONFIG_ARCH_WAIPIO), y)
+DATAIPADRVTOP = $(srctree)/../../vendor/qcom/opensource/dataipa/drivers/platform/msm
+LINUXINCLUDE    += -include $(srctree)/../../vendor/qcom/opensource/dataipa/config/dataipa_vendor.h
+include $(srctree)/../../vendor/qcom/opensource/dataipa/config/dataipa_GKI.conf
+ifeq ($(CONFIG_LOCALVERSION), "-gki-consolidate")
+include $(srctree)/../../vendor/qcom/opensource/dataipa/config/dataipa_debug.conf
+LINUXINCLUDE    += -include $(srctree)/../../vendor/qcom/opensource/dataipa/config/dataipa_debug.h
+endif
+endif
 
 #MDMs
 ifeq ($(CONFIG_ARCH_SDXLEMUR), y)
@@ -33,8 +44,6 @@ include $(srctree)/techpack/dataipa/config/dataipa_debug.conf
 LINUXINCLUDE    += -include $(srctree)/techpack/dataipa/config/dataipa_debug.h
 endif
 endif
-
-DATAIPADRVTOP = $(srctree)/techpack/dataipa/drivers/platform/msm
 
 ifneq (,$(filter $(CONFIG_IPA3) $(CONFIG_GSI),y m))
 LINUXINCLUDE += -I$(DATAIPADRVTOP)/gsi

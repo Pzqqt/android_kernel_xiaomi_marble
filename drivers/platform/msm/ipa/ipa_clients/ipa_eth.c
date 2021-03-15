@@ -134,7 +134,6 @@ static int ipa_eth_init_internal(void)
 	ipa_eth_ctx->wq = alloc_workqueue(buff,
 		WQ_MEM_RECLAIM | WQ_UNBOUND | WQ_SYSFS, 1);
 	if (!ipa_eth_ctx->wq) {
-		kfree(ipa_eth_ctx);
 		goto wq_err;
 	}
 	mutex_init(&ipa_eth_ctx->lock);
@@ -199,11 +198,15 @@ static void ipa_eth_ready_notify_work(struct work_struct *work)
 	ipa_eth_ctx->is_eth_ready = true;
 	list_for_each_entry_safe(entry, next,
 		&ipa_eth_ctx->ready_cb_list, link) {
-		if (entry && entry->info && entry->info->notify)
+		if (!entry)
+			break;
+		if (entry->info && entry->info->notify) {
 			entry->info->notify(entry->info->userdata);
-		/* remove from list once notify is done */
-		list_del(&entry->link);
-		kfree(entry);
+			/* remove from list once notify is done */
+			list_del(&entry->link);
+			kfree(entry);
+			break;
+		}
 	}
 	mutex_unlock(&ipa_eth_ctx->lock);
 }
@@ -232,8 +235,8 @@ static int ipa_eth_register_ready_cb_internal(struct ipa_eth_ready *ready_info)
 			GFP_KERNEL);
 		if (!ready_cb) {
 			mutex_unlock(&ipa_eth_ctx->lock);
-			rc = -ENOMEM;
-			goto err_uc;
+			ipa_eth_cleanup_internal();
+			return -ENOMEM;
 		}
 		ready_cb->info = ready_info;
 		list_add_tail(&ready_cb->link, &ipa_eth_ctx->ready_cb_list);
@@ -294,7 +297,9 @@ static int ipa_eth_unregister_ready_cb_internal(struct ipa_eth_ready *ready_info
 	mutex_lock(&ipa_eth_ctx->lock);
 	list_for_each_entry(entry, &ipa_eth_ctx->ready_cb_list,
 		link) {
-		if (entry && entry->info == ready_info) {
+		if (!entry)
+			break;
+		if (entry->info == ready_info) {
 			list_del(&entry->link);
 			find_ready_info = true;
 			break;
@@ -545,8 +550,8 @@ static int ipa_eth_pm_register(struct ipa_eth_client *client)
 	int rc;
 
 	/* validate user input */
-	if (!client) {
-		IPA_ETH_ERR("null client");
+	if (!client || (client->client_type >= IPA_ETH_CLIENT_MAX)) {
+		IPA_ETH_ERR("null client or eth client doesn't exist");
 		return -EFAULT;
 	}
 	client_type = client->client_type;
@@ -603,8 +608,8 @@ static int ipa_eth_pm_deregister(struct ipa_eth_client *client)
 	int client_type, inst_id;
 
 	/* validate user input */
-	if (!client) {
-		IPA_ETH_ERR("null client");
+	if (!client || (client->client_type >= IPA_ETH_CLIENT_MAX)) {
+		IPA_ETH_ERR("null client or client type not defined");
 		return -EFAULT;
 	}
 	client_type = client->client_type;
@@ -635,8 +640,8 @@ static int ipa_eth_client_conn_pipes_internal(struct ipa_eth_client *client)
 	int client_type, inst_id, traff_type;
 
 	/* validate user input */
-	if (!client) {
-		IPA_ETH_ERR("null client");
+	if (!client || (client->client_type >= IPA_ETH_CLIENT_MAX)) {
+		IPA_ETH_ERR("null client or client type not defined");
 		return -EFAULT;
 	}
 	if (!ipa_eth_ctx) {
@@ -725,8 +730,8 @@ static int ipa_eth_client_reg_intf_internal(struct ipa_eth_intf_info *intf)
 	struct ipa_ioc_add_hdr *hdr;
 	struct ipa_tx_intf tx;
 	struct ipa_rx_intf rx;
-	enum ipa_client_type tx_client[IPA_CLIENT_MAX];
-	enum ipa_client_type rx_client[IPA_CLIENT_MAX];
+	enum ipa_client_type tx_client[IPA_CLIENT_MAX] = {0};
+	enum ipa_client_type rx_client[IPA_CLIENT_MAX] = {0};
 	struct ipa_ioc_tx_intf_prop *tx_prop =  NULL;
 	struct ipa_ioc_rx_intf_prop *rx_prop = NULL;
 	struct ipa_eth_client_pipe_info *pipe;
@@ -907,13 +912,13 @@ static int ipa_eth_client_unreg_intf_internal(struct ipa_eth_intf_info *intf)
 			IPA_ETH_DBG("IPv4 hdr hdl: %d IPv6 hdr hdl: %d\n",
 				hdr->hdl[0].hdl, hdr->hdl[1].hdl);
 
-			if (ipa_del_hdr(hdr)) {
+			if (ipa3_del_hdr(hdr)) {
 				IPA_ETH_ERR("fail to delete partial header\n");
 				ret = -EFAULT;
 				goto fail;
 			}
 
-			if (ipa_deregister_intf(entry->netdev_name)) {
+			if (ipa3_deregister_intf(entry->netdev_name)) {
 				IPA_ETH_ERR("fail to del interface props\n");
 				ret = -EFAULT;
 				goto fail;
@@ -936,12 +941,13 @@ static int ipa_eth_client_set_perf_profile_internal(struct ipa_eth_client *clien
 {
 	int client_type, inst_id;
 
-	client_type = client->client_type;
-	inst_id = client->inst_id;
-	if (profile == NULL) {
+	if ((!profile) || (!client) || (client->client_type >= IPA_ETH_CLIENT_MAX)) {
 		IPA_ETH_ERR("Invalid input\n");
 		return -EINVAL;
 	}
+
+	client_type = client->client_type;
+	inst_id = client->inst_id;
 
 	if (ipa_pm_set_throughput(
 		ipa_eth_ctx->client[client_type][inst_id].pm_hdl,

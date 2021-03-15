@@ -1344,6 +1344,12 @@ static int ecm_ipa_ep_registers_cfg(u32 usb_to_ipa_hdl, u32 ipa_to_usb_hdl,
 
 	/* enable hdr_metadata_reg_valid */
 	usb_to_ipa_ep_cfg.hdr.hdr_metadata_reg_valid = true;
+	/*xlat config in vlan mode */
+	if (is_vlan_mode) {
+		usb_to_ipa_ep_cfg.hdr.hdr_ofst_metadata_valid = 1;
+		usb_to_ipa_ep_cfg.hdr.hdr_ofst_metadata = ETH_HLEN;
+		usb_to_ipa_ep_cfg.hdr.hdr_metadata_reg_valid = false;
+	}
 
 	result = ipa3_cfg_ep(usb_to_ipa_hdl, &usb_to_ipa_ep_cfg);
 	if (result) {

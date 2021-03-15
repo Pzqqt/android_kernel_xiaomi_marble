@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/debugfs.h>
@@ -457,6 +457,11 @@ static void delayed_deferred_deactivate_work_func(struct work_struct *work)
 
 	dwork = container_of(work, struct delayed_work, work);
 	client = container_of(dwork, struct ipa_pm_client, deactivate_work);
+
+	if (unlikely(client == NULL)) {
+		IPA_PM_ERR("Client already deregistered\n");
+		return;
+	}
 
 	spin_lock_irqsave(&client->state_lock, flags);
 	IPA_PM_DBG_STATE(client->hdl, client->name, client->state);
@@ -1197,6 +1202,8 @@ int ipa_pm_deactivate_sync(u32 hdl)
 	client->state = IPA_PM_DEACTIVATED;
 	IPA_PM_DBG_STATE(hdl, client->name, client->state);
 	spin_unlock_irqrestore(&client->state_lock, flags);
+	/*Check any delayed work queue scheduled*/
+	cancel_delayed_work_sync(&client->deactivate_work);
 	deactivate_client(hdl);
 	do_clk_scaling();
 
@@ -1269,14 +1276,15 @@ int ipa_pm_set_throughput(u32 hdl, int throughput)
 		return -EINVAL;
 	}
 
+	mutex_lock(&ipa_pm_ctx->client_mutex);
 	if (hdl >= IPA_PM_MAX_CLIENTS || ipa_pm_ctx->clients[hdl] == NULL
 		|| throughput < 0) {
 		IPA_PM_ERR("Invalid Params\n");
+		mutex_unlock(&ipa_pm_ctx->client_mutex);
 		return -EINVAL;
 	}
 	client = ipa_pm_ctx->clients[hdl];
 
-	mutex_lock(&ipa_pm_ctx->client_mutex);
 	if (client->group == IPA_PM_GROUP_DEFAULT)
 		IPA_PM_DBG_LOW("Old throughput: %d\n",  client->throughput);
 	else
@@ -1295,14 +1303,16 @@ int ipa_pm_set_throughput(u32 hdl, int throughput)
 			client->group, ipa_pm_ctx->group_tput[client->group]);
 	mutex_unlock(&ipa_pm_ctx->client_mutex);
 
-	spin_lock_irqsave(&client->state_lock, flags);
-	if (IPA_PM_STATE_ACTIVE(client->state) || (client->group !=
+	if (ipa_pm_ctx->clients[hdl]) {
+		spin_lock_irqsave(&client->state_lock, flags);
+		if (IPA_PM_STATE_ACTIVE(client->state) || (client->group !=
 			IPA_PM_GROUP_DEFAULT)) {
+			spin_unlock_irqrestore(&client->state_lock, flags);
+			do_clk_scaling();
+			return 0;
+		}
 		spin_unlock_irqrestore(&client->state_lock, flags);
-		do_clk_scaling();
-		return 0;
 	}
-	spin_unlock_irqrestore(&client->state_lock, flags);
 
 	return 0;
 }

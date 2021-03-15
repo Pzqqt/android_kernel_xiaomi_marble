@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef IPA_QMI_SERVICE_H
@@ -22,7 +22,11 @@
 #define MAX_NUM_QMI_RULE_CACHE 10
 #define MAX_NUM_QMI_MPM_AGGR_CACHE 3
 #define DEV_NAME "ipa-wan"
+#if IS_ENABLED(CONFIG_QCOM_Q6V5_PAS)
+#define SUBSYS_LOCAL_MODEM "mpss"
+#else
 #define SUBSYS_LOCAL_MODEM "modem"
+#endif
 #define SUBSYS_REMOTE_MODEM "esoc0"
 
 
@@ -121,6 +125,8 @@ struct ipa3_rmnet_mux_val {
 	bool ul_flt_reg;
 	bool mux_hdr_set;
 	uint32_t  hdr_hdl;
+	uint16_t mtu_v4;
+	uint16_t mtu_v6;
 };
 
 extern struct qmi_elem_info
@@ -303,6 +309,12 @@ int rmnet_ipa3_send_lan_client_msg(struct wan_ioctl_send_lan_client_msg *data);
 int rmnet_ipa3_enable_per_client_stats(bool *data);
 
 int rmnet_ipa3_query_per_client_stats(
+	struct wan_ioctl_query_per_client_stats *data);
+
+int rmnet_ipa3_get_wan_mtu(
+	struct ipa_mtu_info *data);
+
+int rmnet_ipa3_query_per_client_stats_v2(
 	struct wan_ioctl_query_per_client_stats *data);
 
 int ipa3_qmi_get_data_stats(struct ipa_get_data_stats_req_msg_v01 *req,
