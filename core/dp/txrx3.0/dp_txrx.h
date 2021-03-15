@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -37,12 +37,14 @@ struct dp_txrx_handle_cmn;
 /**
  * struct dp_txrx_handle - main dp txrx container handle
  * @soc: ol_txrx_soc_handle soc handle
+ * @refill_thread: rx refill thread infra handle
  * @rx_tm_hdl: rx thread infrastructure handle
  */
 struct dp_txrx_handle {
 	ol_txrx_soc_handle soc;
 	struct cdp_pdev *pdev;
 	struct dp_rx_tm_handle rx_tm_hdl;
+	struct dp_rx_refill_thread refill_thread;
 	struct dp_txrx_config config;
 };
 
@@ -187,6 +189,7 @@ static inline QDF_STATUS dp_txrx_resume(ol_txrx_soc_handle soc)
 {
 	struct dp_txrx_handle *dp_ext_hdl;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	struct dp_rx_refill_thread *refill_thread;
 
 	if (!soc) {
 		qdf_status = QDF_STATUS_E_INVAL;
@@ -197,6 +200,13 @@ static inline QDF_STATUS dp_txrx_resume(ol_txrx_soc_handle soc)
 	if (!dp_ext_hdl) {
 		qdf_status = QDF_STATUS_E_FAULT;
 		goto ret;
+	}
+
+	refill_thread = &dp_ext_hdl->refill_thread;
+	if (refill_thread->enabled) {
+		qdf_status = dp_rx_refill_thread_resume(refill_thread);
+		if (qdf_status != QDF_STATUS_SUCCESS)
+			return qdf_status;
 	}
 
 	qdf_status = dp_rx_tm_resume(&dp_ext_hdl->rx_tm_hdl);
@@ -214,6 +224,7 @@ static inline QDF_STATUS dp_txrx_suspend(ol_txrx_soc_handle soc)
 {
 	struct dp_txrx_handle *dp_ext_hdl;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	struct dp_rx_refill_thread *refill_thread;
 
 	if (!soc) {
 		qdf_status = QDF_STATUS_E_INVAL;
@@ -224,6 +235,13 @@ static inline QDF_STATUS dp_txrx_suspend(ol_txrx_soc_handle soc)
 	if (!dp_ext_hdl) {
 		qdf_status = QDF_STATUS_E_FAULT;
 		goto ret;
+	}
+
+	refill_thread = &dp_ext_hdl->refill_thread;
+	if (refill_thread->enabled) {
+		qdf_status = dp_rx_refill_thread_suspend(refill_thread);
+		if (qdf_status != QDF_STATUS_SUCCESS)
+			return qdf_status;
 	}
 
 	qdf_status = dp_rx_tm_suspend(&dp_ext_hdl->rx_tm_hdl);

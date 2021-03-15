@@ -70,6 +70,7 @@
 #include <wlan_blm_api.h>
 #include <lim_assoc_utils.h>
 #include "wlan_mlme_ucfg_api.h"
+#include "nan_ucfg_api.h"
 
 /** -------------------------------------------------------------
    \fn lim_delete_dialogue_token_list
@@ -234,8 +235,6 @@ char *lim_msg_str(uint32_t msgType)
 		return "eWNI_SME_DEAUTH_RSP";
 	case eWNI_SME_DEAUTH_IND:
 		return "eWNI_SME_DEAUTH_IND";
-	case eWNI_SME_WM_STATUS_CHANGE_NTF:
-		return "eWNI_SME_WM_STATUS_CHANGE_NTF";
 	case eWNI_SME_START_BSS_REQ:
 		return "eWNI_SME_START_BSS_REQ";
 	case eWNI_SME_START_BSS_RSP:
@@ -706,8 +705,8 @@ uint8_t lim_write_deferred_msg_q(struct mac_context *mac_ctx,
 			 * We reach the quota for management frames,
 			 * drop this one
 			 */
-			pe_warn("Too many queue->MsgQ Msg: %d count: %d",
-				lim_msg->type, count);
+			pe_warn_rl("Too many queue->MsgQ Msg: %d count: %d",
+				   lim_msg->type, count);
 			/* Return error, caller knows what to do */
 			return TX_QUEUE_FULL;
 		}
@@ -2002,6 +2001,13 @@ void lim_switch_channel_cback(struct mac_context *mac, QDF_STATUS status,
 	struct wlan_channel *des_chan;
 	struct vdev_mlme_obj *mlme_obj;
 
+	if (QDF_IS_STATUS_ERROR(status)) {
+		lim_tear_down_link_with_ap(mac, pe_session->peSessionId,
+					   REASON_CHANNEL_SWITCH_FAILED,
+					   eLIM_HOST_DISASSOC);
+		return;
+	}
+
 	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(pe_session->vdev);
 	if (!mlme_obj) {
 		pe_err("vdev component object is NULL");
@@ -2043,6 +2049,7 @@ void lim_switch_channel_cback(struct mac_context *mac, QDF_STATUS status,
 		pSirSmeSwitchChInd->chan_params.mhz_freq_seg1 =
 							des_chan->ch_cfreq2;
 	}
+	pSirSmeSwitchChInd->ch_phymode = des_chan->ch_phymode;
 
 	pSirSmeSwitchChInd->status = status;
 	qdf_mem_copy(pSirSmeSwitchChInd->bssid.bytes, pe_session->bssId,
@@ -2055,8 +2062,7 @@ void lim_switch_channel_cback(struct mac_context *mac, QDF_STATUS status,
 
 	sys_process_mmh_msg(mac, &mmhMsg);
 
-	if (QDF_IS_STATUS_SUCCESS(status))
-		lim_switch_channel_vdev_started(pe_session);
+	lim_switch_channel_vdev_started(pe_session);
 }
 
 void lim_switch_primary_channel(struct mac_context *mac,
@@ -4813,11 +4819,12 @@ void pe_set_resume_channel(struct mac_context *mac, uint16_t channel,
 	mac->lim.gResumePhyCbState = phyCbState;
 }
 
-bool lim_isconnected_on_dfs_channel(struct mac_context *mac_ctx,
-		uint8_t currentChannel)
+bool lim_isconnected_on_dfs_freq(struct mac_context *mac_ctx,
+				 qdf_freq_t oper_freq)
 {
 	if (CHANNEL_STATE_DFS ==
-	    wlan_reg_get_channel_state(mac_ctx->pdev, currentChannel)) {
+	    wlan_reg_get_channel_state_for_freq(mac_ctx->pdev,
+						oper_freq)) {
 		return true;
 	} else {
 		return false;
@@ -5513,6 +5520,7 @@ static QDF_STATUS lim_send_ht_caps_ie(struct mac_context *mac_ctx,
 	uint8_t ht_caps[DOT11F_IE_HTCAPS_MIN_LEN + 2] = {0};
 	tHtCaps *p_ht_cap = (tHtCaps *)(&ht_caps[2]);
 	QDF_STATUS status_5g, status_2g;
+	bool nan_beamforming_supported;
 
 	ht_caps[0] = DOT11F_EID_HTCAPS;
 	ht_caps[1] = DOT11F_IE_HTCAPS_MIN_LEN;
@@ -5532,7 +5540,10 @@ static QDF_STATUS lim_send_ht_caps_ie(struct mac_context *mac_ctx,
 
 	lim_populate_mcs_set_ht_per_vdev(mac_ctx, p_ht_cap, vdev_id,
 					 NSS_CHAINS_BAND_2GHZ);
-	if(device_mode == QDF_NDI_MODE) {
+
+	nan_beamforming_supported =
+		ucfg_nan_is_beamforming_supported(mac_ctx->psoc);
+	if (device_mode == QDF_NDI_MODE && !nan_beamforming_supported) {
 		p_ht_cap->txBF = 0;
 		p_ht_cap->implicitTxBF = 0;
 		p_ht_cap->explicitCSITxBF = 0;
@@ -5584,7 +5595,7 @@ static QDF_STATUS lim_send_vht_caps_ie(struct mac_context *mac_ctx,
 				       uint8_t vdev_id)
 {
 	uint8_t vht_caps[DOT11F_IE_VHTCAPS_MAX_LEN + 2] = {0};
-	bool vht_for_2g_enabled = false;
+	bool vht_for_2g_enabled = false, nan_beamforming_supported;
 	tSirMacVHTCapabilityInfo *p_vht_cap =
 			(tSirMacVHTCapabilityInfo *)(&vht_caps[2]);
 	QDF_STATUS status_5g, status_2g;
@@ -5601,7 +5612,9 @@ static QDF_STATUS lim_send_vht_caps_ie(struct mac_context *mac_ctx,
 	lim_populate_mcs_set_vht_per_vdev(mac_ctx, vht_caps, vdev_id,
 					  NSS_CHAINS_BAND_5GHZ);
 
-	if (device_mode == QDF_NDI_MODE) {
+	nan_beamforming_supported =
+		ucfg_nan_is_beamforming_supported(mac_ctx->psoc);
+	if (device_mode == QDF_NDI_MODE && !nan_beamforming_supported) {
 		p_vht_cap->muBeamformeeCap = 0;
 		p_vht_cap->muBeamformerCap = 0;
 		p_vht_cap->suBeamformeeCap = 0;
@@ -5847,11 +5860,10 @@ uint8_t lim_op_class_from_bandwidth(struct mac_context *mac_ctx,
 	} else if (ch_bandwidth == CH_WIDTH_80P80MHZ) {
 		ch_behav_limit = BEHAV_BW80_PLUS;
 	}
-	wlan_reg_freq_width_to_chan_op_class_auto
-		(mac_ctx->pdev, channel_freq,
-		 ch_width_in_mhz(ch_bandwidth),
-		 true, BIT(ch_behav_limit), &op_class,
-		 &channel);
+	wlan_reg_freq_width_to_chan_op_class(mac_ctx->pdev, channel_freq,
+					     ch_width_in_mhz(ch_bandwidth),
+					     true, BIT(ch_behav_limit),
+					     &op_class, &channel);
 
 	return op_class;
 }
@@ -6728,6 +6740,10 @@ void lim_update_stads_he_caps(struct mac_context *mac_ctx,
 			      struct pe_session *session_entry,
 			      tSchBeaconStruct *beacon)
 {
+	/* If HE is not supported, do not fill sta_ds and return */
+	if (!IS_DOT11_MODE_HE(session_entry->dot11mode))
+		goto out;
+
 	if (!assoc_rsp->he_cap.present && beacon && beacon->he_cap.present) {
 		/* Use beacon HE caps if assoc resp doesn't have he caps */
 		pe_debug("he_caps missing in assoc rsp");
@@ -6737,7 +6753,7 @@ void lim_update_stads_he_caps(struct mac_context *mac_ctx,
 
 	/* assoc resp and beacon doesn't have he caps */
 	if (!assoc_rsp->he_cap.present)
-		return;
+		goto out;
 
 	sta_ds->mlmStaContext.he_capable = assoc_rsp->he_cap.present;
 
@@ -6753,18 +6769,12 @@ void lim_update_stads_he_caps(struct mac_context *mac_ctx,
 	qdf_mem_copy(&sta_ds->he_config, &assoc_rsp->he_cap,
 		     sizeof(tDot11fIEhe_cap));
 
-	/* If HE is not supported, do not fill sta_ds and return */
-	if (!IS_DOT11_MODE_HE(session_entry->dot11mode))
-		return;
-
 	/* If MCS 12/13 is supported by the assoc resp QCN IE */
 	if (assoc_rsp->qcn_ie.present &&
 	    assoc_rsp->qcn_ie.he_mcs13_attr.present) {
 		sta_ds->he_mcs_12_13_map =
 		assoc_rsp->qcn_ie.he_mcs13_attr.he_mcs_12_13_supp_80 |
 		assoc_rsp->qcn_ie.he_mcs13_attr.he_mcs_12_13_supp_160 << 8;
-	} else {
-		return;
 	}
 
 	/* Take intersection of the FW capability for HE MCS 12/13 */
@@ -6774,7 +6784,11 @@ void lim_update_stads_he_caps(struct mac_context *mac_ctx,
 	else
 		sta_ds->he_mcs_12_13_map &=
 			mac_ctx->mlme_cfg->he_caps.he_mcs_12_13_supp_5g;
-
+out:
+	pe_debug("he_mcs_12_13_map: sta_ds 0x%x, 2g_fw 0x%x, 5g_fw 0x%x",
+		 sta_ds->he_mcs_12_13_map,
+		 mac_ctx->mlme_cfg->he_caps.he_mcs_12_13_supp_2g,
+		 mac_ctx->mlme_cfg->he_caps.he_mcs_12_13_supp_5g);
 	lim_update_he_mcs_12_13_map(mac_ctx->psoc,
 				    session_entry->smeSessionId,
 				    sta_ds->he_mcs_12_13_map);
@@ -6816,6 +6830,8 @@ void lim_update_usr_he_cap(struct mac_context *mac_ctx, struct pe_session *sessi
 	uint8_t extracted_buff[DOT11F_IE_HE_CAP_MAX_LEN + 2];
 	QDF_STATUS status;
 	struct wlan_vht_config *vht_cfg = &session->vht_config;
+	struct mlme_legacy_priv *mlme_priv;
+
 	qdf_mem_zero(extracted_buff, sizeof(extracted_buff));
 	status = lim_strip_ie(mac_ctx, add_ie->probeRespBCNData_buff,
 			&add_ie->probeRespBCNDataLen,
@@ -6856,6 +6872,19 @@ void lim_update_usr_he_cap(struct mac_context *mac_ctx, struct pe_session *sessi
 		vht_cfg->su_beam_formee = 0;
 		vht_cfg->mu_beam_formee = 0;
 		vht_cfg->csnof_beamformer_antSup = 0;
+	}
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(session->vdev);
+	if (mlme_priv) {
+		mlme_priv->he_config.mu_beamformer = he_cap->mu_beamformer;
+		mlme_priv->he_config.su_beamformer = he_cap->su_beamformer;
+		mlme_priv->he_config.su_beamformee = he_cap->su_beamformee;
+		mlme_priv->he_config.bfee_sts_lt_80 = he_cap->bfee_sts_lt_80;
+		mlme_priv->he_config.bfee_sts_gt_80 = he_cap->bfee_sts_gt_80;
+		mlme_priv->he_config.num_sounding_lt_80 =
+						he_cap->num_sounding_lt_80;
+		mlme_priv->he_config.num_sounding_gt_80 =
+						he_cap->num_sounding_gt_80;
 	}
 	wma_set_he_txbf_params(session->vdev_id, he_cap->su_beamformer,
 			       he_cap->su_beamformee, he_cap->mu_beamformer);
@@ -7403,6 +7432,7 @@ QDF_STATUS lim_send_he_caps_ie(struct mac_context *mac_ctx,
 				   HE_CAP_160M_MCS_MAP_LEN +
 				   HE_CAP_80P80_MCS_MAP_LEN;
 	uint8_t num_ppe_th = 0;
+	bool nan_beamforming_supported;
 
 	/* Sending only minimal info(no PPET) to FW now, update if required */
 	qdf_mem_zero(he_caps, he_cap_total_len);
@@ -7411,7 +7441,10 @@ QDF_STATUS lim_send_he_caps_ie(struct mac_context *mac_ctx,
 	qdf_mem_copy(&he_caps[2], HE_CAP_OUI_TYPE, HE_CAP_OUI_SIZE);
 	lim_set_he_caps(mac_ctx, session, he_caps, he_cap_total_len);
 	he_cap = (struct he_capability_info *) (&he_caps[2 + HE_CAP_OUI_SIZE]);
-	if(device_mode == QDF_NDI_MODE) {
+
+	nan_beamforming_supported =
+		ucfg_nan_is_beamforming_supported(mac_ctx->psoc);
+	if (device_mode == QDF_NDI_MODE && !nan_beamforming_supported) {
 		he_cap->su_beamformee = 0;
 		he_cap->su_beamformer = 0;
 		he_cap->mu_beamformer = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -162,9 +162,9 @@ struct sap_context {
 	/* Mac filtering settings */
 	eSapMacAddrACL eSapMacAddrAclMode;
 	struct qdf_mac_addr acceptMacList[MAX_ACL_MAC_ADDRESS];
-	uint8_t nAcceptMac;
+	uint16_t nAcceptMac;
 	struct qdf_mac_addr denyMacList[MAX_ACL_MAC_ADDRESS];
-	uint8_t nDenyMac;
+	uint16_t nDenyMac;
 
 	void *user_context;
 
@@ -319,22 +319,22 @@ QDF_STATUS
 sap_is_peer_mac_allowed(struct sap_context *sap_ctx, uint8_t *peerMac);
 
 void
-sap_sort_mac_list(struct qdf_mac_addr *macList, uint8_t size);
+sap_sort_mac_list(struct qdf_mac_addr *macList, uint16_t size);
 
 void
-sap_add_mac_to_acl(struct qdf_mac_addr *macList, uint8_t *size,
-	       uint8_t *peerMac);
+sap_add_mac_to_acl(struct qdf_mac_addr *macList, uint16_t *size,
+		   uint8_t *peerMac);
 
 void
-sap_remove_mac_from_acl(struct qdf_mac_addr *macList, uint8_t *size,
-		    uint8_t index);
+sap_remove_mac_from_acl(struct qdf_mac_addr *macList, uint16_t *size,
+			uint16_t index);
 
 void
-sap_print_acl(struct qdf_mac_addr *macList, uint8_t size);
+sap_print_acl(struct qdf_mac_addr *macList, uint16_t size);
 
 bool
-sap_search_mac_list(struct qdf_mac_addr *macList, uint8_t num_mac,
-		 uint8_t *peerMac, uint8_t *index);
+sap_search_mac_list(struct qdf_mac_addr *macList, uint16_t num_mac,
+		    uint8_t *peerMac, uint16_t *index);
 
 QDF_STATUS sap_init_dfs_channel_nol_list(struct sap_context *sap_ctx);
 

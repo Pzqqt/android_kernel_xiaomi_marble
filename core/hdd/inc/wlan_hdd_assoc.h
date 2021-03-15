@@ -198,21 +198,29 @@ struct hdd_adapter;
 struct hdd_station_ctx;
 struct hdd_context;
 
-/**
- * hdd_is_connecting() - Function to check connection progress
- * @hdd_sta_ctx:    pointer to global HDD Station context
- *
- * Return: true if connecting, false otherwise
- */
-bool hdd_is_connecting(struct hdd_station_ctx *hdd_sta_ctx);
-
 /*
  * hdd_is_fils_connection: API to determine if connection is FILS
+ * @hdd_ctx: hdd context
  * @adapter: hdd adapter
  *
  * Return: true if fils connection else false
  */
-bool hdd_is_fils_connection(struct hdd_adapter *adapter);
+bool hdd_is_fils_connection(struct hdd_context *hdd_ctx,
+			    struct hdd_adapter *adapter);
+
+/**
+ * hdd_conn_set_authenticated() - set authentication state
+ * @adapter: pointer to the adapter
+ * @auth_state: authentication state
+ *
+ * This function updates the global HDD station context
+ * authentication state. And to start auto powersave timer
+ * if ptk installed case and open security case.
+ *
+ * Return: none
+ */
+void
+hdd_conn_set_authenticated(struct hdd_adapter *adapter, uint8_t auth_state);
 
 /**
  * hdd_conn_set_connection_state() - set connection state
@@ -225,22 +233,6 @@ bool hdd_is_fils_connection(struct hdd_adapter *adapter);
  */
 void hdd_conn_set_connection_state(struct hdd_adapter *adapter,
 				   eConnectionState conn_state);
-
-/**
- * hdd_conn_is_connected() - Function to check connection status
- * @sta_ctx:    pointer to global HDD Station context
- *
- * Return: false if any errors encountered, true otherwise
- */
-bool hdd_conn_is_connected(struct hdd_station_ctx *sta_ctx);
-
-/**
- * hdd_adapter_is_connected_sta() - check if @adapter is a connected station
- * @adapter: the adapter to check
- *
- * Return: true if @adapter is a connected station
- */
-bool hdd_adapter_is_connected_sta(struct hdd_adapter *adapter);
 
 /**
  * hdd_conn_get_connected_band() - get current connection radio band
@@ -287,6 +279,7 @@ QDF_STATUS hdd_sme_roam_callback(void *context,
 				 eRoamCmdStatus roam_status,
 				 eCsrRoamResult roam_result);
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * hdd_set_genie_to_csr() - set genie to csr
  * @adapter: pointer to adapter
@@ -297,6 +290,7 @@ QDF_STATUS hdd_sme_roam_callback(void *context,
 int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 			 enum csr_akm_type *rsn_auth_type);
 
+
 /**
  * hdd_set_csr_auth_type() - set csr auth type
  * @adapter: pointer to adapter
@@ -306,7 +300,7 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
  */
 int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 			  enum csr_akm_type rsn_auth_type);
-
+#endif
 #ifdef FEATURE_WLAN_TDLS
 /**
  * hdd_roam_register_tdlssta() - register new TDLS station
@@ -403,12 +397,12 @@ bool hdd_save_peer(struct hdd_station_ctx *sta_ctx,
 void hdd_delete_peer(struct hdd_station_ctx *sta_ctx,
 		     struct qdf_mac_addr *peer_mac_addr);
 
+#ifndef FEATURE_CM_ENABLE
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS
 hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
 			     const tSirMacAddr bssid, uint32_t ch_freq);
 
-#ifndef FEATURE_CM_ENABLE
 /**
  * hdd_save_gtk_params() - Save GTK offload params
  * @adapter: HDD adapter
@@ -419,24 +413,19 @@ hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
  */
 void hdd_save_gtk_params(struct hdd_adapter *adapter,
 			 struct csr_roam_info *csr_roam_info, bool is_reassoc);
-#endif
-
 #else
-
-#ifndef FEATURE_CM_ENABLE
 static inline void hdd_save_gtk_params(struct hdd_adapter *adapter,
 				       struct csr_roam_info *csr_roam_info,
 				       bool is_reassoc)
 {
 }
-#endif
-
 static inline QDF_STATUS
 hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
 			     const tSirMacAddr bssid, uint32_t ch_freq)
 {
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 #endif
 
 /**

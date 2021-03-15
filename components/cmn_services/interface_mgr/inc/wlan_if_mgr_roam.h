@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -52,6 +52,49 @@ struct change_roam_state_arg {
 struct bssid_search_arg {
 	struct qdf_mac_addr peer_addr;
 	uint8_t vdev_id;
+};
+
+/**
+ * allow_mcc_go_diff_bi_definition - Defines the config values for allowing
+ * different beacon intervals between P2P-G0 and STA
+ * @ALLOW_MCC_GO_DIFF_BI_WFA_CERT: GO Beacon interval is not changed.
+ *	MCC GO doesn't work well in optimized way. In worst scenario, it may
+ *	invite STA disconnection.
+ * @ALLOW_MCC_GO_DIFF_BI_WORKAROUND: Workaround 1 disassoc all the clients and
+ *	update beacon Interval.
+ * @ALLOW_MCC_GO_DIFF_BI_TEAR_DOWN: Tear down the P2P link in
+ *	auto/Non-autonomous -GO case.
+ * @ALLOW_MCC_GO_DIFF_BI_NO_DISCONNECT: Don't disconnect the P2P client in
+ *	autonomous/Non-autonomous -GO case update the BI dynamically
+ */
+enum allow_mcc_go_diff_bi_definition {
+	ALLOW_MCC_GO_DIFF_BI_WFA_CERT = 1,
+	ALLOW_MCC_GO_DIFF_BI_WORKAROUND,
+	ALLOW_MCC_GO_DIFF_BI_TEAR_DOWN,
+	ALLOW_MCC_GO_DIFF_BI_NO_DISCONNECT,
+};
+
+/**
+ * struct beacon_interval_arg - Contains beacon interval validation arguments
+ * @curr_vdev_id: current iterator vdev ID
+ * @curr_bss_opmode: current iterator BSS's opmode
+ * @ch_freq: current operating channel frequency
+ * @bss_beacon_interval: beacon interval that can be updated by callee
+ * @status: status to be filled by callee
+ * @is_done: boolean to stop iterating
+ * @update_beacon_interval: boolean to mark beacon interval as updated by callee
+ *
+ * This structure is used to pass the candidate validation information to the
+ * callback
+ */
+struct beacon_interval_arg {
+	uint8_t curr_vdev_id;
+	enum QDF_OPMODE curr_bss_opmode;
+	qdf_freq_t ch_freq;
+	uint16_t bss_beacon_interval;
+	QDF_STATUS status;
+	bool is_done;
+	bool update_beacon_interval;
 };
 
 /**
@@ -119,6 +162,23 @@ QDF_STATUS if_mgr_enable_roaming_after_p2p_disconnect(
 				struct wlan_objmgr_pdev *pdev,
 				struct wlan_objmgr_vdev *vdev,
 				enum wlan_cm_rso_control_requestor requestor);
+
+/**
+ * if_mgr_is_beacon_interval_valid() - checks if the concurrent session is
+ * valid
+ * @pdev: pdev object
+ * @vdev_id: vdev ID
+ * @candidate: concurrent candidate info
+ *
+ * This function validates the beacon interval with all other active vdevs.
+ *
+ * Context: It should run in thread context
+ *
+ * Return: true if session is valid, false if not
+ */
+bool if_mgr_is_beacon_interval_valid(struct wlan_objmgr_pdev *pdev,
+				     uint8_t vdev_id,
+				     struct validate_bss_data *candidate);
 
 /**
  * if_mgr_validate_candidate() - validate candidate event handler

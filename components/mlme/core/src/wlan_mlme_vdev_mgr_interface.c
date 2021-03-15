@@ -16,7 +16,8 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 /**
- * DOC: define internal APIs related to the mlme component
+ * DOC: define internal APIs related to the mlme component, legacy APIs are
+ *	called for the time being, but will be cleaned up after convergence
  */
 #include "wlan_mlme_main.h"
 #include "wlan_mlme_vdev_mgr_interface.h"
@@ -31,6 +32,7 @@
 #include "wlan_crypto_global_api.h"
 #include "target_if_wfa_testcmd.h"
 #include <../../core/src/wlan_cm_vdev_api.h>
+#include "csr_api.h"
 
 static struct vdev_mlme_ops sta_mlme_ops;
 static struct vdev_mlme_ops ap_mlme_ops;
@@ -1160,6 +1162,46 @@ static QDF_STATUS mlme_get_vdev_types(enum QDF_OPMODE mode, uint8_t *type,
 	return status;
 }
 
+#ifdef WLAN_FEATURE_FILS_SK
+static inline void mlme_free_fils_info(struct mlme_connect_info *connect_info)
+{
+	qdf_mem_free(connect_info->fils_con_info);
+	qdf_mem_free(connect_info->hlp_ie);
+	connect_info->hlp_ie = NULL;
+	connect_info->hlp_ie_len = 0;
+	connect_info->fils_con_info = NULL;
+}
+#else
+static inline void mlme_free_fils_info(struct mlme_connect_info *connect_info)
+{}
+#endif
+
+static
+void mlme_init_wait_for_key_timer(struct wlan_objmgr_vdev *vdev,
+				  struct wait_for_key_timer *wait_key_timer)
+{
+	QDF_STATUS status;
+
+	if (!vdev || !wait_key_timer) {
+		mlme_err("vdev or wait for key is NULL");
+		return;
+	}
+
+	wait_key_timer->vdev = vdev;
+	status = qdf_mc_timer_init(&wait_key_timer->timer, QDF_TIMER_TYPE_SW,
+				   cm_wait_for_key_time_out_handler,
+				   wait_key_timer);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_err("cannot allocate memory for WaitForKey time out timer");
+}
+
+static
+void mlme_deinit_wait_for_key_timer(struct wait_for_key_timer *wait_key_timer)
+{
+	qdf_mc_timer_stop(&wait_key_timer->timer);
+	qdf_mc_timer_destroy(&wait_key_timer->timer);
+}
+
 static void mlme_ext_handler_destroy(struct vdev_mlme_obj *vdev_mlme)
 {
 	if (!vdev_mlme || !vdev_mlme->ext_vdev_ptr)
@@ -1172,8 +1214,8 @@ static void mlme_ext_handler_destroy(struct vdev_mlme_obj *vdev_mlme)
 	wlan_cm_rso_config_deinit(vdev_mlme->vdev,
 				  &vdev_mlme->ext_vdev_ptr->rso_cfg);
 #endif
-	qdf_mem_free(vdev_mlme->ext_vdev_ptr->fils_con_info);
-	vdev_mlme->ext_vdev_ptr->fils_con_info = NULL;
+	mlme_deinit_wait_for_key_timer(&vdev_mlme->ext_vdev_ptr->wait_key_timer);
+	mlme_free_fils_info(&vdev_mlme->ext_vdev_ptr->connect_info);
 	qdf_mem_free(vdev_mlme->ext_vdev_ptr);
 	vdev_mlme->ext_vdev_ptr = NULL;
 }
@@ -1196,12 +1238,15 @@ QDF_STATUS vdevmgr_mlme_ext_hdl_create(struct vdev_mlme_obj *vdev_mlme)
 		return QDF_STATUS_E_NOMEM;
 
 	mlme_init_rate_config(vdev_mlme);
-	vdev_mlme->ext_vdev_ptr->fils_con_info = NULL;
+	vdev_mlme->ext_vdev_ptr->connect_info.fils_con_info = NULL;
 	/* This is temp ifdef will be removed in near future */
 #ifndef FEATURE_CM_ENABLE
 	wlan_cm_rso_config_init(vdev_mlme->vdev,
 				&vdev_mlme->ext_vdev_ptr->rso_cfg);
 #endif
+	mlme_init_wait_for_key_timer(vdev_mlme->vdev,
+				     &vdev_mlme->ext_vdev_ptr->wait_key_timer);
+
 	sme_get_vdev_type_nss(wlan_vdev_mlme_get_opmode(vdev_mlme->vdev),
 			      &vdev_mlme->proto.generic.nss_2g,
 			      &vdev_mlme->proto.generic.nss_5g);
@@ -1601,6 +1646,21 @@ QDF_STATUS mlme_vdev_self_peer_delete(struct scheduler_msg *self_peer_del_msg)
 		mlme_err("Failed to detach vdev");
 
 	return status;
+}
+
+QDF_STATUS wlan_sap_disconnect_all_p2p_client(uint8_t vdev_id)
+{
+	return csr_mlme_vdev_disconnect_all_p2p_client_event(vdev_id);
+}
+
+QDF_STATUS wlan_sap_stop_bss(uint8_t vdev_id)
+{
+	return csr_mlme_vdev_stop_bss(vdev_id);
+}
+
+qdf_freq_t wlan_get_conc_freq(void)
+{
+	return csr_mlme_get_concurrent_operation_freq();
 }
 
 /**

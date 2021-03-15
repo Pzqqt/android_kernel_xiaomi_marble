@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -131,7 +131,7 @@ bbm_get_bus_bw_level_vote(struct hdd_adapter *adapter,
 	case QDF_STA_MODE:
 	case QDF_P2P_CLIENT_MODE:
 		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-		if (!hdd_conn_is_connected(sta_ctx))
+		if (!hdd_cm_is_vdev_associated(adapter))
 			break;
 
 		dot11_mode = hdd_convert_cfgdot11mode_to_80211mode(sta_ctx->

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -160,7 +160,6 @@ typedef struct sLimMlmAuthReq {
 } tLimMlmAuthReq, *tpLimMlmAuthReq;
 
 typedef struct sLimMlmJoinReq {
-	tSirMacRateSet operationalRateSet;
 	uint8_t sessionId;
 	struct bss_description bssDescription;
 	/*

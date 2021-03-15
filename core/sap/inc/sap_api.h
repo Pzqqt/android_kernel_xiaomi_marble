@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -487,8 +487,8 @@ struct sap_config {
 	uint32_t ch_width_orig;
 	uint8_t max_num_sta;      /* maximum number of STAs in station table */
 	uint8_t dtim_period;      /* dtim interval */
-	uint8_t num_accept_mac;
-	uint8_t num_deny_mac;
+	uint16_t num_accept_mac;
+	uint16_t num_deny_mac;
 	/* Max ie length 255 * 2(WPA+RSN) + 2 bytes(vendor specific ID) * 2 */
 	uint8_t RSNWPAReqIE[(WLAN_MAX_IE_LEN * 2) + 4];
 	/* it is ignored if [0] is 0. */
@@ -1002,7 +1002,7 @@ QDF_STATUS wlansap_clear_acl(struct sap_context *sap_ctx);
  */
 QDF_STATUS wlansap_get_acl_accept_list(struct sap_context *sap_ctx,
 				       struct qdf_mac_addr *pAcceptList,
-				       uint8_t *nAcceptList);
+				       uint16_t *nAcceptList);
 
 /**
  * wlansap_is_channel_present_in_acs_list() - Freq present in ACS list or not
@@ -1028,7 +1028,7 @@ bool wlansap_is_channel_present_in_acs_list(uint32_t freq,
  */
 QDF_STATUS wlansap_get_acl_deny_list(struct sap_context *sap_ctx,
 				     struct qdf_mac_addr *pDenyList,
-				     uint8_t *nDenyList);
+				     uint16_t *nDenyList);
 
 /**
  * wlansap_set_acl_mode() - Set the SAP ACL mode

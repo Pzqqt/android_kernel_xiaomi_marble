@@ -31,6 +31,22 @@
 #include "wlan_cm_roam_public_struct.h"
 #include "wlan_wfa_config_public_struct.h"
 
+#define MAC_MAX_ADD_IE_LENGTH       2048
+
+/* QCN IE definitions */
+#define QCN_IE_HDR_LEN     6
+
+#define QCN_IE_VERSION_SUBATTR_ID        1
+#define QCN_IE_VERSION_SUBATTR_DATA_LEN  2
+#define QCN_IE_VERSION_SUBATTR_LEN       4
+#define QCN_IE_VERSION_SUPPORTED    1
+#define QCN_IE_SUBVERSION_SUPPORTED 0
+
+#define QCN_IE_ATTR_ID_VERSION 1
+#define QCN_IE_ATTR_ID_VHT_MCS11 2
+#define QCN_IE_ATTR_ID_ALL 0xFF
+
+
 #define mlme_legacy_fatal(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_MLME, params)
 #define mlme_legacy_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_MLME, params)
 #define mlme_legacy_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_MLME, params)
@@ -40,6 +56,12 @@
 enum size_of_len_field {
 	ONE_BYTE = 1,
 	TWO_BYTE = 2
+};
+
+struct pwr_channel_info {
+	uint32_t first_freq;
+	uint8_t num_chan;
+	int8_t max_tx_pwr;
 };
 
 /**
@@ -88,6 +110,7 @@ struct sae_auth_retry {
  * @is_pmf_enabled: True if PMF is enabled
  * @last_assoc_received_time: last assoc received time
  * @last_disassoc_deauth_received_time: last disassoc/deauth received time
+ * @twt_ctx: TWT context
  */
 struct peer_mlme_priv_obj {
 	uint8_t last_pn_valid;
@@ -96,6 +119,9 @@ struct peer_mlme_priv_obj {
 	bool is_pmf_enabled;
 	qdf_time_t last_assoc_received_time;
 	qdf_time_t last_disassoc_deauth_received_time;
+#ifdef WLAN_SUPPORT_TWT
+	struct twt_context twt_ctx;
+#endif
 };
 
 /**
@@ -217,6 +243,13 @@ struct mscs_req_info {
 };
 #endif
 
+struct ft_context {
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+	uint32_t r0kh_id_len;
+	uint8_t r0kh_id[ROAM_R0KH_ID_MAX_LEN];
+#endif
+};
+
 /**
  * struct mlme_connect_info - mlme connect information
  * @timing_meas_cap: Timing meas cap
@@ -227,6 +260,10 @@ struct mscs_req_info {
  * derived from JOIN_REQ and REASSOC_REQ. If a particular AC bit is set, it
  * means the AC is both trigger enabled and delivery enabled.
  * @qos_enabled: is qos enabled
+ * @ft_info: ft related info
+ * @hlp_ie: hldp ie
+ * @hlp_ie_len: hlp ie length
+ * @fils_con_info: Pointer to fils connection info from connect req
  */
 struct mlme_connect_info {
 	uint8_t timing_meas_cap;
@@ -237,6 +274,21 @@ struct mlme_connect_info {
 #endif
 	uint8_t uapsd_per_ac_bitmask;
 	bool qos_enabled;
+	struct ft_context ft_info;
+#ifdef WLAN_FEATURE_FILS_SK
+	uint8_t *hlp_ie;
+	uint32_t hlp_ie_len;
+	struct wlan_fils_connection_info *fils_con_info;
+#endif
+};
+
+/** struct wait_for_key_timer - wait for key timer object
+ * @vdev: Pointer to vdev
+ * @timer: timer for wati for key
+ */
+struct wait_for_key_timer {
+	struct wlan_objmgr_vdev *vdev;
+	qdf_mc_timer_t timer;
 };
 
 /**
@@ -262,14 +314,16 @@ struct mlme_connect_info {
  * @sae_auth_retry: SAE auth retry information
  * @roam_reason_better_ap: roam due to better AP found
  * @hb_failure_rssi: heartbeat failure AP RSSI
- * @fils_con_info: Pointer to fils connection info from csr roam profile
  * @opr_rate_set: operational rates set
  * @ext_opr_rate_set: extended operational rates set
  * @mscs_req_info: Information related to mscs request
  * @he_config: he config
  * @he_sta_obsspd: he_sta_obsspd
+ * @twt_wait_for_notify: TWT session teardown received, wait for
+ * notify event from firmware before next TWT setup is done.
  * @rso_cfg: per vdev RSO config to be sent to FW
  * @connect_info: mlme connect information
+ * @wait_key_timer: wait key timer
  */
 struct mlme_legacy_priv {
 	bool chan_switch_in_progress;
@@ -292,11 +346,9 @@ struct mlme_legacy_priv {
 	struct sae_auth_retry sae_retry;
 	bool roam_reason_better_ap;
 	uint32_t hb_failure_rssi;
-#ifdef WLAN_FEATURE_FILS_SK
-	struct wlan_fils_connection_info *fils_con_info;
-#endif
 	struct mlme_cfg_str opr_rate_set;
 	struct mlme_cfg_str ext_opr_rate_set;
+	bool twt_wait_for_notify;
 #ifdef WLAN_FEATURE_MSCS
 	struct mscs_req_info mscs_req_info;
 #endif
@@ -308,6 +360,7 @@ struct mlme_legacy_priv {
 	struct rso_config rso_cfg;
 #endif
 	struct mlme_connect_info connect_info;
+	struct wait_for_key_timer wait_key_timer;
 };
 
 /**
@@ -387,6 +440,15 @@ uint8_t *mlme_get_dynamic_oce_flags(struct wlan_objmgr_vdev *vdev);
  */
 struct wlan_mlme_nss_chains *mlme_get_dynamic_vdev_config(
 					struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlme_get_vdev_he_ops()  - Get vdev HE operations IE info
+ * @psoc: Pointer to PSOC object
+ * @vdev_id: vdev id
+ *
+ * Return: HE ops IE
+ */
+uint32_t mlme_get_vdev_he_ops(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id);
 
 /**
  * mlme_get_ini_vdev_config() - get the vdev ini config params
@@ -652,6 +714,7 @@ QDF_STATUS wlan_mlme_get_bssid_vdev_id(struct wlan_objmgr_pdev *pdev,
  * Return: chan freq of given vdev id
  */
 qdf_freq_t wlan_get_operation_chan_freq(struct wlan_objmgr_vdev *vdev);
+
 /**
  * wlan_get_operation_chan_freq_vdev_id() - get operating chan freq of
  * given vdev id
@@ -688,6 +751,22 @@ QDF_STATUS wlan_strip_ie(uint8_t *addn_ie, uint16_t *addn_ielen,
 			 uint8_t eid, enum size_of_len_field size_of_len_field,
 			 uint8_t *oui, uint8_t oui_length,
 			 uint8_t *extracted_ie, uint32_t eid_max_len);
+
+/**
+ * wlan_is_channel_present_in_list() - check if rfeq is present in the list
+ * given vdev id
+ * @freq_lst: given freq list
+ * @num_chan: num of chan freq
+ * @chan_freq: chan freq to check
+ *
+ * Return: chan freq of given vdev id
+ */
+bool wlan_is_channel_present_in_list(qdf_freq_t *freq_lst,
+				     uint32_t num_chan, qdf_freq_t chan_freq);
+
+int8_t wlan_get_cfg_max_tx_power(struct wlan_objmgr_psoc *psoc,
+				 struct wlan_objmgr_pdev *pdev,
+				 uint32_t ch_freq);
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**

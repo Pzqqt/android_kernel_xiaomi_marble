@@ -51,6 +51,7 @@
 #include <wma_api.h>
 #include "wlan_hdd_object_manager.h"
 
+#ifndef WLAN_MAC_ADDR_UPDATE_DISABLE
 /**
  * get_next_line() - find and locate the new line pointer
  * @str: pointer to string
@@ -181,45 +182,6 @@ static QDF_STATUS update_mac_from_string(struct hdd_context *hdd_ctx,
 }
 
 /**
- * hdd_set_power_save_offload_config() - set power save offload configuration
- * @hdd_ctx: the pointer to hdd context
- *
- * Return: none
- */
-static void hdd_set_power_save_offload_config(struct hdd_context *hdd_ctx)
-{
-	uint32_t listen_interval = 0;
-	char *power_usage = NULL;
-
-	power_usage = ucfg_mlme_get_power_usage(hdd_ctx->psoc);
-	if (!power_usage) {
-		hdd_err("invalid power usage");
-		return;
-	}
-
-	if (strcmp(power_usage, "Min") == 0)
-		ucfg_mlme_get_bmps_min_listen_interval(hdd_ctx->psoc,
-						       &listen_interval);
-	else if (strcmp(power_usage, "Max") == 0)
-		ucfg_mlme_get_bmps_max_listen_interval(hdd_ctx->psoc,
-						       &listen_interval);
-	/*
-	 * Based on Mode Set the LI
-	 * Otherwise default LI value of 1 will
-	 * be taken
-	 */
-	if (listen_interval) {
-		/*
-		 * setcfg for listenInterval.
-		 * Make sure CFG is updated because PE reads this
-		 * from CFG at the time of assoc or reassoc
-		 */
-		ucfg_mlme_set_sap_listen_interval(hdd_ctx->psoc,
-						  listen_interval);
-	}
-}
-
-/**
  * hdd_update_mac_config() - update MAC address from cfg file
  * @hdd_ctx: the pointer to hdd context
  *
@@ -240,6 +202,11 @@ QDF_STATUS hdd_update_mac_config(struct hdd_context *hdd_ctx)
 	tSirMacAddr custom_mac_addr;
 
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+
+	if (!hdd_ctx->config->read_mac_addr_from_mac_file) {
+		hdd_debug("Reading MAC address from MAC file is not enabled.");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	memset(mac_table, 0, sizeof(mac_table));
 	status = request_firmware(&fw, WLAN_MAC_FILE, hdd_ctx->parent_dev);
@@ -337,6 +304,51 @@ config_exit:
 	qdf_mem_free(temp);
 	release_firmware(fw);
 	return qdf_status;
+}
+#else
+QDF_STATUS hdd_update_mac_config(struct hdd_context *hdd_ctx)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
+
+/**
+ * hdd_set_power_save_offload_config() - set power save offload configuration
+ * @hdd_ctx: the pointer to hdd context
+ *
+ * Return: none
+ */
+static void hdd_set_power_save_offload_config(struct hdd_context *hdd_ctx)
+{
+	uint32_t listen_interval = 0;
+	char *power_usage = NULL;
+
+	power_usage = ucfg_mlme_get_power_usage(hdd_ctx->psoc);
+	if (!power_usage) {
+		hdd_err("invalid power usage");
+		return;
+	}
+
+	if (strcmp(power_usage, "Min") == 0)
+		ucfg_mlme_get_bmps_min_listen_interval(hdd_ctx->psoc,
+						       &listen_interval);
+	else if (strcmp(power_usage, "Max") == 0)
+		ucfg_mlme_get_bmps_max_listen_interval(hdd_ctx->psoc,
+						       &listen_interval);
+	/*
+	 * Based on Mode Set the LI
+	 * Otherwise default LI value of 1 will
+	 * be taken
+	 */
+	if (listen_interval) {
+		/*
+		 * setcfg for listenInterval.
+		 * Make sure CFG is updated because PE reads this
+		 * from CFG at the time of assoc or reassoc
+		 */
+		ucfg_mlme_set_sap_listen_interval(hdd_ctx->psoc,
+						  listen_interval);
+	}
 }
 
 #ifdef FEATURE_RUNTIME_PM
@@ -539,12 +551,29 @@ static void hdd_set_fine_time_meas_cap(struct hdd_context *hdd_ctx)
  */
 static void hdd_set_oem_6g_supported(struct hdd_context *hdd_ctx)
 {
-	bool oem_6g_disable = 1;
+	bool oem_6g_disable = true;
+	bool is_reg_6g_support, set_wifi_pos_6g_disabled;
 
 	ucfg_mlme_get_oem_6g_supported(hdd_ctx->psoc, &oem_6g_disable);
-	ucfg_wifi_pos_set_oem_6g_supported(hdd_ctx->psoc, oem_6g_disable);
+	is_reg_6g_support = wlan_reg_is_6ghz_supported(hdd_ctx->psoc);
+	set_wifi_pos_6g_disabled = (oem_6g_disable || !is_reg_6g_support);
+
+	/**
+	 * Host uses following truth table to set wifi pos 6Ghz disable in
+	 * ucfg_wifi_pos_set_oem_6g_supported().
+	 * -----------------------------------------------------------------
+	 * oem_6g_disable INI value | reg domain 6G support | Disable 6Ghz |
+	 * -----------------------------------------------------------------
+	 *            1             |           1           |        1     |
+	 *            1             |           0           |        1     |
+	 *            0             |           1           |        0     |
+	 *            0             |           0           |        1     |
+	 * -----------------------------------------------------------------
+	 */
+	ucfg_wifi_pos_set_oem_6g_supported(hdd_ctx->psoc,
+					   set_wifi_pos_6g_disabled);
 	hdd_debug("oem 6g support is - %s",
-		  oem_6g_disable ? "Enabled" : "Disbaled");
+		  set_wifi_pos_6g_disabled ? "Disbaled" : "Enabled");
 }
 
 /**
@@ -878,6 +907,11 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	bool ese_enabled;
 #endif
 	struct hdd_config *config = hdd_ctx->config;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(hdd_ctx->psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_INVAL;
 
 	sme_config = qdf_mem_malloc(sizeof(*sme_config));
 	if (!sme_config)
@@ -944,9 +978,9 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 
 	cds_set_multicast_logging(hdd_ctx->config->multicast_host_fw_msgs);
 
-	sme_config->csr_config.sta_roam_policy_params.dfs_mode =
+	mlme_obj->cfg.lfr.rso_user_config.policy_params.dfs_mode =
 		CSR_STA_ROAM_POLICY_DFS_ENABLED;
-	sme_config->csr_config.sta_roam_policy_params.skip_unsafe_channels = 0;
+	mlme_obj->cfg.lfr.rso_user_config.policy_params.skip_unsafe_channels = 0;
 
 	status = hdd_set_sme_cfgs_related_to_mlme(hdd_ctx, sme_config);
 	if (!QDF_IS_STATUS_SUCCESS(status))

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -74,10 +74,35 @@ target_if_cm_roam_send_vdev_set_pcl_cmd(struct wlan_objmgr_vdev *vdev,
 	return wmi_unified_vdev_set_pcl_cmd(wmi_handle, &params);
 }
 
+#ifdef FEATURE_CM_ENABLE
+/**
+ * target_if_cm_roam_send_roam_invoke_cmd  - Send roam invoke command to wmi.
+ * @vdev: VDEV object pointer
+ * @req:  Pointer to the roam invoke request msg
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+target_if_cm_roam_send_roam_invoke_cmd(struct wlan_objmgr_vdev *vdev,
+				       struct roam_invoke_req *req)
+{
+	wmi_unified_t wmi_handle;
+
+	wmi_handle = target_if_cm_roam_get_wmi_handle_from_vdev(vdev);
+	if (!wmi_handle)
+		return QDF_STATUS_E_FAILURE;
+
+	return wmi_unified_roam_invoke_cmd(wmi_handle, req);
+}
+#endif
+
 static void
 target_if_cm_roam_register_lfr3_ops(struct wlan_cm_roam_tx_ops *tx_ops)
 {
 	tx_ops->send_vdev_set_pcl_cmd = target_if_cm_roam_send_vdev_set_pcl_cmd;
+#ifdef FEATURE_CM_ENABLE
+	tx_ops->send_roam_invoke_cmd = target_if_cm_roam_send_roam_invoke_cmd;
+#endif
 }
 #else
 static inline void
@@ -979,8 +1004,6 @@ target_if_cm_roam_send_stop(struct wlan_objmgr_vdev *vdev,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	wmi_unified_t wmi_handle;
-	uint32_t mode = 0;
-	bool is_roam_offload_enabled = false;
 	struct wlan_objmgr_psoc *psoc;
 	uint8_t vdev_id;
 
@@ -1009,20 +1032,6 @@ target_if_cm_roam_send_stop(struct wlan_objmgr_vdev *vdev,
 	if (!psoc) {
 		target_if_err("psoc handle is NULL");
 		return QDF_STATUS_E_INVAL;
-	}
-
-	wlan_mlme_get_roaming_offload(psoc, &is_roam_offload_enabled);
-	if (req->reason == REASON_ROAM_STOP_ALL ||
-	    req->reason == REASON_DISCONNECTED ||
-	    req->reason == REASON_ROAM_SYNCH_FAILED ||
-	    req->reason == REASON_SUPPLICANT_DISABLED_ROAMING) {
-		mode = WMI_ROAM_SCAN_MODE_NONE;
-	} else {
-		if (is_roam_offload_enabled)
-			mode = WMI_ROAM_SCAN_MODE_NONE |
-				WMI_ROAM_SCAN_MODE_ROAMOFFLOAD;
-		else
-			mode = WMI_ROAM_SCAN_MODE_NONE;
 	}
 
 	status = target_if_cm_roam_scan_offload_mode(wmi_handle,
@@ -1067,7 +1076,7 @@ target_if_cm_roam_send_stop(struct wlan_objmgr_vdev *vdev,
 	 * disconnect
 	 */
 	vdev_id = wlan_vdev_get_id(vdev);
-	if (mode == WMI_ROAM_SCAN_MODE_NONE) {
+	if (req->rso_config.rso_mode_info.roam_scan_mode == WMI_ROAM_SCAN_MODE_NONE) {
 		req->roam_triggers.vdev_id = vdev_id;
 		req->roam_triggers.trigger_bitmap = 0;
 		req->roam_triggers.roam_scan_scheme_bitmap = 0;

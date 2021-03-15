@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -80,6 +80,20 @@ bool lim_is_valid_fils_auth_frame(struct mac_context *mac_ctx,
 QDF_STATUS lim_create_fils_rik(uint8_t *rrk, uint8_t rrk_len,
 			       uint8_t *rik, uint32_t *rik_len);
 
+#ifdef FEATURE_CM_ENABLE
+/**
+ * lim_update_fils_config()- This API updates fils session info to csr config
+ * from join request.
+ * @mac_ctx: pointer to mac context
+ * @session: PE session
+ * @join_req: pointer to join request
+ *
+ * Return: None
+ */
+void lim_update_fils_config(struct mac_context *mac_ctx,
+			    struct pe_session *session,
+			    struct cm_vdev_join_req *join_req);
+#else
 /**
  * lim_update_fils_config()- This API updates fils session info to csr config
  * from join request.
@@ -92,7 +106,7 @@ QDF_STATUS lim_create_fils_rik(uint8_t *rrk, uint8_t rrk_len,
 void lim_update_fils_config(struct mac_context *mac_ctx,
 			    struct pe_session *session,
 			    struct join_req *sme_join_req);
-
+#endif
 /**
  * lim_create_fils_auth_data()- This API creates the fils auth data
  * which needs to be sent in auth req.
@@ -255,11 +269,18 @@ static inline bool lim_is_valid_fils_auth_frame(struct mac_context *mac_ctx,
 	return true;
 }
 
+#ifdef FEATURE_CM_ENABLE
+static inline void lim_update_fils_config(struct mac_context *mac_ctx,
+			    struct pe_session *session,
+			    struct cm_vdev_join_req *join_req)
+{}
+#else
 static inline
 void lim_update_fils_config(struct mac_context *mac_ctx,
 			    struct pe_session *session,
 			    struct join_req *sme_join_req)
 { }
+#endif
 
 static inline
 QDF_STATUS lim_create_fils_auth_data(struct mac_context *mac_ctx,
@@ -319,8 +340,4 @@ static inline bool lim_verify_fils_params_assoc_rsp(struct mac_context *mac_ctx,
 {
 	return true;
 }
-
-static inline void lim_update_fils_rik(struct pe_session *pe_session,
-				       struct roam_offload_scan_req *req_buffer)
-{ }
 #endif

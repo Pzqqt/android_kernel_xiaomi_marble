@@ -34,6 +34,7 @@
 #include "utils_parser.h"
 #include "sme_power_save_api.h"
 #include "wlan_mlme_ucfg_api.h"
+#include "wlan_cm_roam_api.h"
 
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
 /* TODO : 6Mbps as Cisco APs seem to like only this value; analysis req.   */
@@ -890,6 +891,21 @@ QDF_STATUS sme_qos_msg_processor(struct mac_context *mac_ctx,
 	return status;
 }
 
+/**
+ * sme_qos_process_disconnect_roam_ind() - Delete the existing TSPEC
+ * flows when roaming due to disconnect is complete.
+ * @mac - Pointer to the global MAC parameter structure.
+ * @vdev_id: Vdev id
+ *
+ * Return: None
+ */
+static void
+sme_qos_process_disconnect_roam_ind(struct mac_context *mac,
+				    uint8_t vdev_id)
+{
+	sme_qos_delete_existing_flows(mac, vdev_id);
+}
+
 /*
  * sme_qos_csr_event_ind() - The QoS sub-module in SME expects notifications
  * from CSR when certain events occur as mentioned in sme_qos_csr_event_indType.
@@ -960,6 +976,10 @@ QDF_STATUS sme_qos_csr_event_ind(struct mac_context *mac,
 		status =
 			sme_qos_process_set_key_success_ind(mac, sessionId,
 							    pEvent_info);
+		break;
+	case SME_QOS_CSR_DISCONNECT_ROAM_COMPLETE:
+		sme_qos_process_disconnect_roam_ind(mac, sessionId);
+		status = QDF_STATUS_SUCCESS;
 		break;
 	default:
 		/* Err msg */
@@ -3131,65 +3151,68 @@ uint8_t sme_qos_ese_retrieve_tspec_info(struct mac_context *mac_ctx,
 
 static
 QDF_STATUS sme_qos_create_tspec_ricie(struct mac_context *mac,
-				      struct sme_qos_wmmtspecinfo *pTspec_Info,
-				      uint8_t *pRICBuffer, uint32_t *pRICLength,
-				      uint8_t *pRICIdentifier)
+				      struct sme_qos_wmmtspecinfo *tspec_info,
+				      uint8_t *ric_buffer, uint32_t *ric_length,
+				      uint8_t *ric_identifier)
 {
-	tDot11fIERICDataDesc ricIE;
-	uint32_t nStatus;
+	tDot11fIERICDataDesc *ric_ie;
+	uint32_t status;
 
-	if (!pRICBuffer || !pRICIdentifier || pRICLength ==
+	if (!ric_buffer || !ric_identifier || ric_length ==
 								NULL) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("RIC data is NULL, %pK, %pK, %pK"),
-			pRICBuffer, pRICIdentifier, pRICLength);
+			ric_buffer, ric_identifier, ric_length);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	qdf_mem_zero(&ricIE, sizeof(tDot11fIERICDataDesc));
+	ric_ie = qdf_mem_malloc(sizeof(*ric_ie));
+	if (!ric_ie) {
+		sme_err("malloc failed for ric IE");
+		return QDF_STATUS_E_NOMEM;
+	}
 
-	ricIE.present = 1;
-	ricIE.RICData.present = 1;
-	ricIE.RICData.resourceDescCount = 1;
-	ricIE.RICData.statusCode = 0;
-	ricIE.RICData.Identifier = sme_qos_assign_dialog_token();
+	ric_ie->present = 1;
+	ric_ie->RICData.present = 1;
+	ric_ie->RICData.resourceDescCount = 1;
+	ric_ie->RICData.statusCode = 0;
+	ric_ie->RICData.Identifier = sme_qos_assign_dialog_token();
 #ifndef USE_80211_WMMTSPEC_FOR_RIC
-	ricIE.TSPEC.present = 1;
-	ricIE.TSPEC.delay_bound = pTspec_Info->delay_bound;
-	ricIE.TSPEC.inactivity_int = pTspec_Info->inactivity_interval;
-	ricIE.TSPEC.burst_size = pTspec_Info->max_burst_size;
-	ricIE.TSPEC.max_msdu_size = pTspec_Info->maximum_msdu_size;
-	ricIE.TSPEC.max_service_int = pTspec_Info->max_service_interval;
-	ricIE.TSPEC.mean_data_rate = pTspec_Info->mean_data_rate;
-	ricIE.TSPEC.medium_time = 0;
-	ricIE.TSPEC.min_data_rate = pTspec_Info->min_data_rate;
-	ricIE.TSPEC.min_phy_rate = pTspec_Info->min_phy_rate;
-	ricIE.TSPEC.min_service_int = pTspec_Info->min_service_interval;
-	ricIE.TSPEC.size = pTspec_Info->nominal_msdu_size;
-	ricIE.TSPEC.peak_data_rate = pTspec_Info->peak_data_rate;
-	ricIE.TSPEC.surplus_bw_allowance = pTspec_Info->surplus_bw_allowance;
-	ricIE.TSPEC.suspension_int = pTspec_Info->suspension_interval;
-	ricIE.TSPEC.service_start_time = pTspec_Info->svc_start_time;
-	ricIE.TSPEC.direction = pTspec_Info->ts_info.direction;
+	ric_ie->TSPEC.present = 1;
+	ric_ie->TSPEC.delay_bound = tspec_info->delay_bound;
+	ric_ie->TSPEC.inactivity_int = tspec_info->inactivity_interval;
+	ric_ie->TSPEC.burst_size = tspec_info->max_burst_size;
+	ric_ie->TSPEC.max_msdu_size = tspec_info->maximum_msdu_size;
+	ric_ie->TSPEC.max_service_int = tspec_info->max_service_interval;
+	ric_ie->TSPEC.mean_data_rate = tspec_info->mean_data_rate;
+	ric_ie->TSPEC.medium_time = 0;
+	ric_ie->TSPEC.min_data_rate = tspec_info->min_data_rate;
+	ric_ie->TSPEC.min_phy_rate = tspec_info->min_phy_rate;
+	ric_ie->TSPEC.min_service_int = tspec_info->min_service_interval;
+	ric_ie->TSPEC.size = tspec_info->nominal_msdu_size;
+	ric_ie->TSPEC.peak_data_rate = tspec_info->peak_data_rate;
+	ric_ie->TSPEC.surplus_bw_allowance = tspec_info->surplus_bw_allowance;
+	ric_ie->TSPEC.suspension_int = tspec_info->suspension_interval;
+	ric_ie->TSPEC.service_start_time = tspec_info->svc_start_time;
+	ric_ie->TSPEC.direction = tspec_info->ts_info.direction;
 	/* Make sure UAPSD is allowed */
-	if (pTspec_Info->ts_info.psb)
-		ricIE.TSPEC.psb = pTspec_Info->ts_info.psb;
+	if (tspec_info->ts_info.psb)
+		ric_ie->TSPEC.psb = tspec_info->ts_info.psb;
 	else
-		ricIE.TSPEC.psb = 0;
+		ric_ie->TSPEC.psb = 0;
 
-	ricIE.TSPEC.tsid = pTspec_Info->ts_info.tid;
-	ricIE.TSPEC.user_priority = pTspec_Info->ts_info.up;
-	ricIE.TSPEC.access_policy = SME_QOS_ACCESS_POLICY_EDCA;
+	ric_ie->TSPEC.tsid = tspec_info->ts_info.tid;
+	ric_ie->TSPEC.user_priority = tspec_info->ts_info.up;
+	ric_ie->TSPEC.access_policy = SME_QOS_ACCESS_POLICY_EDCA;
 
-	*pRICIdentifier = ricIE.RICData.Identifier;
+	*ric_identifier = ric_ie->RICData.Identifier;
 
-	nStatus =
-		dot11f_pack_ie_ric_data_desc(mac, &ricIE, pRICBuffer,
-					sizeof(ricIE), pRICLength);
-	if (DOT11F_FAILED(nStatus)) {
+	status = dot11f_pack_ie_ric_data_desc(mac, ric_ie, ric_buffer,
+					      sizeof(*ric_ie), ric_length);
+	if (DOT11F_FAILED(status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			"Packing of RIC Data of length %d failed with status %d",
-			  *pRICLength, nStatus);
+			  *ric_length, status);
 	}
 #else                           /* WMM TSPEC */
 	/* As per WMM_AC_testplan_v0.39 Minimum Service Interval, Maximum
@@ -3197,45 +3220,47 @@ QDF_STATUS sme_qos_create_tspec_ricie(struct mac_context *mac,
 	 * Bound are all intended for HCCA operation and therefore must be set
 	 * to zero
 	 */
-	ricIE.WMMTSPEC.present = 1;
-	ricIE.WMMTSPEC.version = 1;
-	ricIE.WMMTSPEC.delay_bound = pTspec_Info->delay_bound;
-	ricIE.WMMTSPEC.inactivity_int = pTspec_Info->inactivity_interval;
-	ricIE.WMMTSPEC.burst_size = pTspec_Info->max_burst_size;
-	ricIE.WMMTSPEC.max_msdu_size = pTspec_Info->maximum_msdu_size;
-	ricIE.WMMTSPEC.max_service_int = pTspec_Info->max_service_interval;
-	ricIE.WMMTSPEC.mean_data_rate = pTspec_Info->mean_data_rate;
-	ricIE.WMMTSPEC.medium_time = 0;
-	ricIE.WMMTSPEC.min_data_rate = pTspec_Info->min_data_rate;
-	ricIE.WMMTSPEC.min_phy_rate = pTspec_Info->min_phy_rate;
-	ricIE.WMMTSPEC.min_service_int = pTspec_Info->min_service_interval;
-	ricIE.WMMTSPEC.size = pTspec_Info->nominal_msdu_size;
-	ricIE.WMMTSPEC.peak_data_rate = pTspec_Info->peak_data_rate;
-	ricIE.WMMTSPEC.surplus_bw_allowance = pTspec_Info->surplus_bw_allowance;
-	ricIE.WMMTSPEC.suspension_int = pTspec_Info->suspension_interval;
-	ricIE.WMMTSPEC.service_start_time = pTspec_Info->svc_start_time;
-	ricIE.WMMTSPEC.direction = pTspec_Info->ts_info.direction;
+	ric_ie->WMMTSPEC.present = 1;
+	ric_ie->WMMTSPEC.version = 1;
+	ric_ie->WMMTSPEC.delay_bound = tspec_info->delay_bound;
+	ric_ie->WMMTSPEC.inactivity_int = tspec_info->inactivity_interval;
+	ric_ie->WMMTSPEC.burst_size = tspec_info->max_burst_size;
+	ric_ie->WMMTSPEC.max_msdu_size = tspec_info->maximum_msdu_size;
+	ric_ie->WMMTSPEC.max_service_int = tspec_info->max_service_interval;
+	ric_ie->WMMTSPEC.mean_data_rate = tspec_info->mean_data_rate;
+	ric_ie->WMMTSPEC.medium_time = 0;
+	ric_ie->WMMTSPEC.min_data_rate = tspec_info->min_data_rate;
+	ric_ie->WMMTSPEC.min_phy_rate = tspec_info->min_phy_rate;
+	ric_ie->WMMTSPEC.min_service_int = tspec_info->min_service_interval;
+	ric_ie->WMMTSPEC.size = tspec_info->nominal_msdu_size;
+	ric_ie->WMMTSPEC.peak_data_rate = tspec_info->peak_data_rate;
+	ric_ie->WMMTSPEC.surplus_bw_allowance =
+				tspec_info->surplus_bw_allowance;
+	ric_ie->WMMTSPEC.suspension_int = tspec_info->suspension_interval;
+	ric_ie->WMMTSPEC.service_start_time = tspec_info->svc_start_time;
+	ric_ie->WMMTSPEC.direction = tspec_info->ts_info.direction;
 	/* Make sure UAPSD is allowed */
-	if (pTspec_Info->ts_info.psb)
-		ricIE.WMMTSPEC.psb = pTspec_Info->ts_info.psb;
+	if (tspec_info->ts_info.psb)
+		ric_ie->WMMTSPEC.psb = tspec_info->ts_info.psb;
 	else
-		ricIE.WMMTSPEC.psb = 0;
+		ric_ie->WMMTSPEC.psb = 0;
 
-	ricIE.WMMTSPEC.tsid = pTspec_Info->ts_info.tid;
-	ricIE.WMMTSPEC.user_priority = pTspec_Info->ts_info.up;
-	ricIE.WMMTSPEC.access_policy = SME_QOS_ACCESS_POLICY_EDCA;
+	ric_ie->WMMTSPEC.tsid = tspec_info->ts_info.tid;
+	ric_ie->WMMTSPEC.user_priority = tspec_info->ts_info.up;
+	ric_ie->WMMTSPEC.access_policy = SME_QOS_ACCESS_POLICY_EDCA;
 
-	nStatus =
-		dot11f_pack_ie_ric_data_desc(mac, &ricIE, pRICBuffer,
-					sizeof(ricIE), pRICLength);
-	if (DOT11F_FAILED(nStatus)) {
+	status = dot11f_pack_ie_ric_data_desc(mac, ric_ie, ric_buffer,
+					      sizeof(*ric_ie), ric_length);
+	if (DOT11F_FAILED(status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			"Packing of RIC Data of length %d failed with status %d",
-			  *pRICLength, nStatus);
+			  *ric_length, status);
 	}
 #endif /* 80211_TSPEC */
-	*pRICIdentifier = ricIE.RICData.Identifier;
-	return nStatus;
+	*ric_identifier = ric_ie->RICData.Identifier;
+
+	qdf_mem_free(ric_ie);
+	return status;
 }
 /**
  * sme_qos_process_ft_reassoc_req_ev()- processes reassoc request
@@ -3887,9 +3912,6 @@ static QDF_STATUS sme_qos_add_ts_req(struct mac_context *mac,
 	tSirAddtsReq *pMsg = NULL;
 	struct sme_qos_sessioninfo *pSession;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-#ifdef FEATURE_WLAN_ESE
-	struct csr_roam_session *pCsrSession = CSR_GET_SESSION(mac, sessionId);
-#endif
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 	WLAN_HOST_DIAG_EVENT_DEF(qos, host_event_wlan_qos_payload_type);
 #endif
@@ -3970,7 +3992,7 @@ static QDF_STATUS sme_qos_add_ts_req(struct mac_context *mac,
 		  __func__, __LINE__,
 		  pTspec_Info->ts_info.up, pTspec_Info->ts_info.tid);
 #ifdef FEATURE_WLAN_ESE
-	if (pCsrSession->connectedProfile.isESEAssoc) {
+	if (wlan_cm_get_ese_assoc(mac->pdev, sessionId)) {
 		pMsg->req.tsrsIE.tsid = pTspec_Info->ts_info.up;
 		pMsg->req.tsrsPresent = 1;
 	}
@@ -5580,7 +5602,7 @@ static QDF_STATUS sme_qos_process_add_ts_success_rsp(struct mac_context *mac,
 	/* Inform this TSPEC IE change to FW */
 	opmode = wlan_get_opmode_from_vdev_id(mac->pdev, sessionId);
 	if (opmode == QDF_STA_MODE)
-		csr_roam_update_cfg(mac, sessionId,
+		wlan_roam_update_cfg(mac->psoc, sessionId,
 				    REASON_CONNECT_IES_CHANGED);
 
 	(void)sme_qos_process_buffered_cmd(sessionId);
@@ -7558,10 +7580,13 @@ static QDF_STATUS sme_qos_request_reassoc(struct mac_context *mac,
 	struct sme_qos_sessioninfo *pSession;
 	struct sme_qos_acinfo *pACInfo;
 	QDF_STATUS status;
+#ifndef FEATURE_CM_ENABLE
 	struct csr_roam_session *session;
-	tCsrRoamConnectedProfile connected_profile;
 	struct csr_roam_profile *roam_profile;
 	bool roam_offload_enable = true;
+#endif
+	struct qdf_mac_addr bssid;
+	qdf_freq_t ch_freq;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: %d: Invoked on session %d with UAPSD mask 0x%X",
@@ -7573,22 +7598,27 @@ static QDF_STATUS sme_qos_request_reassoc(struct mac_context *mac,
 	}
 
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
+	wlan_mlme_get_bssid_vdev_id(mac->pdev, sessionId, &bssid);
+	ch_freq = wlan_get_operation_chan_freq_vdev_id(mac->pdev, sessionId);
+#ifdef FEATURE_CM_ENABLE
+	status = wlan_cm_roam_invoke(mac->pdev, sessionId, &bssid, ch_freq);
+#else
 	status = ucfg_mlme_get_roaming_offload(mac->psoc, &roam_offload_enable);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 	if (roam_offload_enable) {
 		session = CSR_GET_SESSION(mac, sessionId);
 		roam_profile = session->pCurRoamProfile;
-		connected_profile = session->connectedProfile;
-		status = sme_fast_reassoc(MAC_HANDLE(mac), roam_profile,
-					  connected_profile.bssid.bytes,
-					  connected_profile.op_freq,
-					  sessionId,
-					  connected_profile.bssid.bytes);
+	status = sme_fast_reassoc(MAC_HANDLE(mac), roam_profile,
+				  bssid.bytes,
+				  ch_freq,
+				  sessionId,
+				  bssid.bytes);
 	} else {
 		status = csr_reassoc(mac, sessionId, pModFields,
 				     &pSession->roamID, fForce);
 	}
+#endif
 
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/* Update the state to Handoff so subsequent requests are

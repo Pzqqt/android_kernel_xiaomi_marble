@@ -61,19 +61,6 @@
 #define NSS_4x4_MODE 4
 #define MBO_IE_ASSOC_DISALLOWED_SUBATTR_ID 0x04
 
-/* QCN IE definitions */
-#define QCN_IE_HDR_LEN     6
-
-#define QCN_IE_VERSION_SUBATTR_ID        1
-#define QCN_IE_VERSION_SUBATTR_DATA_LEN  2
-#define QCN_IE_VERSION_SUBATTR_LEN       4
-#define QCN_IE_VERSION_SUPPORTED    1
-#define QCN_IE_SUBVERSION_SUPPORTED 0
-
-#define QCN_IE_ATTR_ID_VERSION 1
-#define QCN_IE_ATTR_ID_VHT_MCS11 2
-#define QCN_IE_ATTR_ID_ALL 0xFF
-
 #define SIZE_OF_FIXED_PARAM 12
 #define SIZE_OF_TAG_PARAM_NUM 1
 #define SIZE_OF_TAG_PARAM_LEN 1
@@ -83,6 +70,8 @@
 
 #define SIZE_MASK 0x7FFF
 #define FIXED_MASK 0x8000
+
+#define MAX_TPE_IES 8
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 #define QCOM_VENDOR_IE_MCC_AVOID_CH 0x01
@@ -193,6 +182,19 @@ struct sir_fils_indication {
 };
 #endif
 
+enum operating_class_num {
+	OP_CLASS_131 = 131,
+	OP_CLASS_132,
+	OP_CLASS_133,
+	OP_CLASS_134,
+	OP_CLASS_135,
+	OP_CLASS_136,
+};
+
+enum operating_extension_identifier {
+	OP_CLASS_ID_200 = 200,
+};
+
 /* Structure common to Beacons & Probe Responses */
 typedef struct sSirProbeRespBeacon {
 	tSirMacTimeStamp timeStamp;
@@ -288,6 +290,9 @@ typedef struct sSirProbeRespBeacon {
 #ifdef WLAN_FEATURE_FILS_SK
 	struct sir_fils_indication fils_ind;
 #endif
+	uint8_t num_transmit_power_env;
+	tDot11fIEtransmit_power_env transmit_power_env[MAX_TPE_IES];
+	uint8_t ap_power_type;
 } tSirProbeRespBeacon, *tpSirProbeRespBeacon;
 
 /* probe Request structure */
@@ -355,6 +360,7 @@ typedef struct sSirAssocReq {
 	tDot11fIEVHTCaps VHTCaps;
 	tDot11fIEOperatingMode operMode;
 	tDot11fIEExtCap ExtCap;
+	tDot11fIEbss_max_idle_period bss_max_idle_period;
 	tDot11fIEvendor_vht_ie vendor_vht_ie;
 	tDot11fIEhs20vendor_ie hs20vendor_ie;
 	tDot11fIEhe_cap he_cap;
@@ -465,6 +471,7 @@ typedef struct sSirAssocRsp {
 	tDot11fIEhe_6ghz_band_cap he_6ghz_band_cap;
 	bool mu_edca_present;
 	tSirMacEdcaParamSetIE mu_edca;
+	tDot11fIEbss_max_idle_period bss_max_idle_period;
 #ifdef WLAN_FEATURE_FILS_SK
 	tDot11fIEfils_session fils_session;
 	tDot11fIEfils_key_confirmation fils_key_auth;
@@ -474,6 +481,8 @@ typedef struct sSirAssocRsp {
 	uint16_t hlp_data_len;
 	uint8_t hlp_data[FILS_MAX_HLP_DATA_LEN];
 #endif
+	uint32_t iot_amsdu_sz;
+	uint32_t iot_ampdu_sz;
 } tSirAssocRsp, *tpSirAssocRsp;
 
 #ifdef FEATURE_WLAN_ESE
@@ -1059,6 +1068,10 @@ void populate_dot11f_assoc_rsp_rates(struct mac_context *mac,
 
 int find_ie_location(struct mac_context *mac, tpSirRSNie pRsnIe, uint8_t EID);
 
+ePhyChanBondState wlan_get_cb_mode(struct mac_context *mac,
+				   qdf_freq_t ch_freq,
+				   tDot11fBeaconIEs *ie_struct);
+
 void lim_log_vht_cap(struct mac_context *mac, tDot11fIEVHTCaps *pDot11f);
 
 QDF_STATUS
@@ -1262,7 +1275,8 @@ wlan_get_parsed_bss_description_ies(struct mac_context *mac_ctx,
 				    struct bss_description *bss_desc,
 				    tDot11fBeaconIEs **ie_struct);
 
-int8_t wlan_get_cfg_max_tx_power(struct mac_context *mac, uint32_t ch_freq);
+uint32_t wlan_get_11h_power_constraint(struct mac_context *mac_ctx,
+				       tDot11fIEPowerConstraints *constraints);
 
 QDF_STATUS
 wlan_fill_bss_desc_from_scan_entry(struct mac_context *mac_ctx,

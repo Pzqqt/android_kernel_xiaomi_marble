@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016, 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016, 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -61,7 +61,9 @@ uint8_t *mac_trace_get_info_log_string(uint16_t infoLog);
 
 #endif
 uint8_t *mac_trace_get_wma_msg_string(uint16_t wmaMsg);
+#ifndef FEATURE_CM_ENABLE
 uint8_t *mac_trace_get_neighbour_roam_state(uint16_t neighbourRoamState);
+#endif
 uint8_t *mac_trace_getcsr_roam_state(uint16_t csr_roamState);
 uint8_t *mac_trace_getcsr_roam_sub_state(uint16_t csr_roamSubState);
 uint8_t *mac_trace_get_lim_sme_state(uint16_t limState);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -760,7 +760,6 @@ struct mac_context {
 	tRrmContext rrm;
 	uint8_t beacon_offload;
 	bool pmf_offload;
-	bool is_fils_roaming_supported;
 	uint32_t f_sta_miracast_mcc_rest_time_val;
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
 	csr_readyToExtWoWCallback readyToExtWoWCallback;
@@ -777,7 +776,6 @@ struct mac_context {
 	void (*chan_info_cb)(struct scan_chan_info *chan_info);
 	void (*del_peers_ind_cb)(struct wlan_objmgr_psoc *psoc,
 				 uint8_t vdev_id);
-	enum  country_src reg_hint_src;
 	uint32_t rx_packet_drop_counter;
 	enum tx_ack_status auth_ack_status;
 	enum tx_ack_status assoc_ack_status;
@@ -789,7 +787,6 @@ struct mac_context {
 	uint32_t rx_mc_bc_cnt;
 	/* 11k Offload Support */
 	bool is_11k_offload_supported;
-	uint8_t reject_addba_req;
 	bool usr_cfg_ps_enable;
 	uint16_t usr_cfg_ba_buff_size;
 	bool is_usr_cfg_amsdu_enabled;

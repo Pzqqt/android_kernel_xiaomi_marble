@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -277,6 +277,7 @@ static ssize_t __show_device_power_stats(struct hdd_context *hdd_ctx,
 	ret_cnt = osif_request_wait_for_response(request);
 	if (ret_cnt) {
 		hdd_err("Target response timed out Power stats");
+		sme_reset_power_debug_stats_cb(hdd_ctx->mac_handle);
 		ret_cnt = -ETIMEDOUT;
 		goto cleanup;
 	}
@@ -405,7 +406,7 @@ static ssize_t __show_beacon_reception_stats(struct net_device *net_dev,
 		return -ENOTSUPP;
 	}
 
-	if (!hdd_adapter_is_connected_sta(adapter)) {
+	if (!hdd_cm_is_vdev_associated(adapter)) {
 		hdd_err("Adapter is not in connected state");
 		return -EINVAL;
 	}

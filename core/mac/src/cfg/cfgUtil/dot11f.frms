@@ -100,6 +100,7 @@ const EID_20_40_BSS_INTOLERANT_REPORT=  73;
 const EID_OBSS_SCAN_PARAMETERS       =  74;
 const EID_FT_RIC_DESCRIPTOR          =  75;
 const EID_MSCS_STATUS                =  76;
+const EID_BSS_MAX_IDLE_PERIOD        =  90;
 const EID_LINK_IDENTIFIER            = 101;
 const EID_PTI_CONTROL                = 105;
 const EID_PU_BUFFER_STATUS           = 106;
@@ -2381,6 +2382,14 @@ IE PUBufferStatus (EID_PU_BUFFER_STATUS)        // 7.3.2.66
 }
 
 
+IE bss_max_idle_period (EID_BSS_MAX_IDLE_PERIOD)
+{
+    max_idle_period,     2;
+    {
+        prot_keep_alive_reqd: 1;
+        reserved:             7;
+    }
+}
 
 IE VHTCaps (EID_VHT_CAPABILITIES)
 {
@@ -3589,6 +3598,7 @@ FRAME Beacon                              // C.f. Sec. 7.2.3.1
     OPTIE  P2PBeacon;
     OPTIE  VHTCaps;
     OPTIE  VHTOperation;
+    OPTIE  transmit_power_env[0..8];
     OPTIE  VHTExtBssLoad;
     OPTIE  ExtCap;
     OPTIE  OperatingMode;
@@ -3806,6 +3816,7 @@ FRAME AssocRequest                        // 7.2.3.4
     OPTIE  WAPIOpaque;
     OPTIE  WAPI;
     OPTIE  RRMEnabledCap;
+    OPTIE  bss_max_idle_period;
     OPTIE  QosMapSet;
     OPTIE  ExtCap;
     OPTIE  VHTCaps;
@@ -3846,6 +3857,7 @@ FRAME AssocResponse                       // 7.2.3.5
     OPTIE  MobilityDomain;
     OPTIE  FTInfo;
     OPTIE  RICDataDesc[2];
+    OPTIE  bss_max_idle_period;
     OPTIE  WPA;
     OPTIE  TimeoutInterval;
     OPTIE  HTCaps;
@@ -3895,6 +3907,7 @@ FRAME ReAssocRequest                      // 7.2.3.6
     OPTIE  MobilityDomain;
     OPTIE  FTInfo;
     OPTIE  RICDataDesc[2];
+    OPTIE  bss_max_idle_period;
     OPTIE  SuppOperatingClasses;
     OPTIE  WPAOpaque;
     OPTIE  HTCaps;
@@ -3935,6 +3948,7 @@ FRAME ReAssocResponse                     // 7.2.3.7
     OPTIE  MobilityDomain;
     OPTIE  FTInfo;
     OPTIE  RICDataDesc[2];
+    OPTIE  bss_max_idle_period;
     OPTIE  WPA;
     OPTIE  TimeoutInterval;
     OPTIE  HTCaps;
@@ -4297,6 +4311,7 @@ FRAME TDLSDisRsp
     OPTIE  ht2040_bss_coexistence;
     MANDIE LinkIdentifier;
     OPTIE  VHTCaps;
+    OPTIE  he_cap;
 }
 
 FRAME TDLSSetupReq
@@ -4322,6 +4337,7 @@ FRAME TDLSSetupReq
     OPTIE  WMMInfoStation;
     OPTIE  AID;
     OPTIE  VHTCaps;
+    OPTIE  he_cap;
 }
 
 FRAME TDLSSetupRsp
@@ -4349,6 +4365,7 @@ FRAME TDLSSetupRsp
     OPTIE  AID;
     OPTIE  VHTCaps;
     OPTIE  OperatingMode;
+    OPTIE  he_cap;
 }
 
 FRAME TDLSSetupCnf
@@ -4366,6 +4383,7 @@ FRAME TDLSSetupCnf
     OPTIE  WMMParams;
     OPTIE  VHTOperation;
     OPTIE  OperatingMode;
+    OPTIE  he_op;
 }
 FRAME TDLSTeardown
 {

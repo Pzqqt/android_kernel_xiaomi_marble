@@ -23,6 +23,7 @@
  */
 
 #include <wlan_cfg80211.h>
+#include <wlan_cp_stats_ucfg_api.h>
 #include <wlan_cp_stats_mc_defs.h>
 #include <wlan_cp_stats_mc_ucfg_api.h>
 #include <wlan_cfg80211_mc_cp_stats.h>
@@ -49,6 +50,41 @@ static void wlan_free_mib_stats(struct stats_event *stats)
 {
 }
 #endif
+
+#ifdef WLAN_SUPPORT_INFRA_CTRL_PATH_STATS
+#ifdef WLAN_SUPPORT_TWT
+static void wlan_cfg80211_infra_cp_stats_twt_dealloc(void *priv)
+{
+	struct infra_cp_stats_event *stats = priv;
+
+	qdf_mem_free(stats->twt_infra_cp_stats);
+	stats->twt_infra_cp_stats = NULL;
+}
+#else
+static void wlan_cfg80211_infra_cp_stats_twt_dealloc(void *priv)
+{
+}
+#endif /* WLAN_SUPPORT_TWT */
+
+/**
+ * wlan_cfg80211_mc_infra_cp_stats_dealloc() - callback to free priv
+ * allocations for infra cp stats
+ * @priv: Pointer to priv data statucture
+ *
+ * Return: None
+ */
+static inline
+void wlan_cfg80211_mc_infra_cp_stats_dealloc(void *priv)
+{
+	struct infra_cp_stats_event *stats = priv;
+
+	if (!stats) {
+		osif_err("infar_cp_stats is NULL");
+		return;
+	}
+	wlan_cfg80211_infra_cp_stats_twt_dealloc(priv);
+}
+#endif /* WLAN_SUPPORT_INFRA_CTRL_PATH_STATS */
 
 /**
  * wlan_cfg80211_mc_cp_stats_dealloc() - callback to free priv
@@ -521,6 +557,345 @@ station_stats_cb_fail:
 	osif_request_complete(request);
 	osif_request_put(request);
 }
+
+#ifdef WLAN_SUPPORT_INFRA_CTRL_PATH_STATS
+
+#ifdef WLAN_SUPPORT_TWT
+static void get_twt_infra_cp_stats(struct infra_cp_stats_event *ev,
+				   struct infra_cp_stats_event *priv)
+
+{
+	priv->num_twt_infra_cp_stats = ev->num_twt_infra_cp_stats;
+	priv->twt_infra_cp_stats->dialog_id = ev->twt_infra_cp_stats->dialog_id;
+	priv->twt_infra_cp_stats->status = ev->twt_infra_cp_stats->status;
+	priv->twt_infra_cp_stats->num_sp_cycles =
+					ev->twt_infra_cp_stats->num_sp_cycles;
+	priv->twt_infra_cp_stats->avg_sp_dur_us =
+					ev->twt_infra_cp_stats->avg_sp_dur_us;
+	priv->twt_infra_cp_stats->min_sp_dur_us =
+					ev->twt_infra_cp_stats->min_sp_dur_us;
+	priv->twt_infra_cp_stats->max_sp_dur_us =
+					ev->twt_infra_cp_stats->max_sp_dur_us;
+	priv->twt_infra_cp_stats->tx_mpdu_per_sp =
+					ev->twt_infra_cp_stats->tx_mpdu_per_sp;
+	priv->twt_infra_cp_stats->rx_mpdu_per_sp =
+				ev->twt_infra_cp_stats->rx_mpdu_per_sp;
+	priv->twt_infra_cp_stats->tx_bytes_per_sp =
+				ev->twt_infra_cp_stats->tx_bytes_per_sp;
+	priv->twt_infra_cp_stats->rx_bytes_per_sp =
+				ev->twt_infra_cp_stats->rx_bytes_per_sp;
+}
+
+static void
+wlan_cfg80211_mc_infra_cp_free_twt_stats(struct infra_cp_stats_event *stats)
+{
+	qdf_mem_free(stats->twt_infra_cp_stats);
+}
+#else
+static void get_twt_infra_cp_stats(struct infra_cp_stats_event *ev,
+				   struct infra_cp_stats_event *priv)
+{
+}
+
+static void
+wlan_cfg80211_mc_infra_cp_free_twt_stats(struct infra_cp_stats_event *stats)
+{
+}
+#endif /* WLAN_SUPPORT_TWT */
+
+static inline void
+wlan_cfg80211_mc_infra_cp_stats_free_stats_event(
+					struct infra_cp_stats_event *stats)
+{
+	if (!stats)
+		return;
+	wlan_cfg80211_mc_infra_cp_free_twt_stats(stats);
+	qdf_mem_free(stats);
+}
+
+/**
+ * infra_cp_stats_response_cb() - callback function to handle stats event
+ * @ev: stats event buffer
+ * @cookie: a cookie for the request context
+ *
+ * Return: None
+ */
+static inline
+void infra_cp_stats_response_cb(struct infra_cp_stats_event *ev,
+				void *cookie)
+{
+	struct infra_cp_stats_event *priv;
+	struct osif_request *request;
+
+	request = osif_request_get(cookie);
+	if (!request) {
+		osif_err("Obsolete request");
+		return;
+	}
+
+	priv = osif_request_priv(request);
+
+	priv->action = ev->action;
+	priv->request_id = ev->request_id;
+	priv->status = ev->status;
+	get_twt_infra_cp_stats(ev, priv);
+
+	osif_request_complete(request);
+	osif_request_put(request);
+}
+
+#ifdef WLAN_SUPPORT_TWT
+/*Infra limits Add comment here*/
+#define MAX_TWT_STAT_VDEV_ENTRIES 1
+#define MAX_TWT_STAT_MAC_ADDR_ENTRIES 1
+struct infra_cp_stats_event *
+wlan_cfg80211_mc_twt_get_infra_cp_stats(struct wlan_objmgr_vdev *vdev,
+					uint32_t dialog_id,
+					uint8_t twt_peer_mac[QDF_MAC_ADDR_SIZE],
+					int *errno)
+{
+	void *cookie;
+	QDF_STATUS status;
+	struct infra_cp_stats_event *priv, *out;
+	struct twt_infra_cp_stats_event *twt_event;
+	struct wlan_objmgr_peer *peer;
+	struct osif_request *request;
+	struct infra_cp_stats_cmd_info info = {0};
+	static const struct osif_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = 2 * CP_STATS_WAIT_TIME_STAT,
+		.dealloc = wlan_cfg80211_mc_infra_cp_stats_dealloc,
+	};
+
+	osif_debug("Enter");
+
+	out = qdf_mem_malloc(sizeof(*out));
+	if (!out) {
+		*errno = -ENOMEM;
+		return NULL;
+	}
+
+	out->twt_infra_cp_stats =
+			qdf_mem_malloc(sizeof(*out->twt_infra_cp_stats));
+	if (!out->twt_infra_cp_stats) {
+		*errno = -ENOMEM;
+		return NULL;
+	}
+
+	request = osif_request_alloc(&params);
+	if (!request) {
+		qdf_mem_free(out);
+		*errno = -ENOMEM;
+		return NULL;
+	}
+
+	cookie = osif_request_cookie(request);
+	priv = osif_request_priv(request);
+
+	priv->twt_infra_cp_stats =
+			qdf_mem_malloc(sizeof(*priv->twt_infra_cp_stats));
+	if (!priv->twt_infra_cp_stats) {
+		*errno = -ENOMEM;
+		return NULL;
+	}
+	twt_event = priv->twt_infra_cp_stats;
+
+	info.request_cookie = cookie;
+	info.stats_id = TYPE_REQ_CTRL_PATH_TWT_STAT;
+	info.action = ACTION_REQ_CTRL_PATH_STAT_GET;
+	info.infra_cp_stats_resp_cb = infra_cp_stats_response_cb;
+	info.num_pdev_ids = 0;
+	info.num_vdev_ids = MAX_TWT_STAT_VDEV_ENTRIES;
+	info.vdev_id[0] = wlan_vdev_get_id(vdev);
+	info.num_mac_addr_list = MAX_TWT_STAT_MAC_ADDR_ENTRIES;
+	qdf_mem_copy(&info.peer_mac_addr[0], twt_peer_mac, QDF_MAC_ADDR_SIZE);
+
+	info.dialog_id = dialog_id;
+	info.num_pdev_ids = 0;
+
+	peer = wlan_objmgr_vdev_try_get_bsspeer(vdev, WLAN_CP_STATS_ID);
+	if (!peer) {
+		osif_err("peer is null");
+		*errno = -EINVAL;
+		goto get_twt_stats_fail;
+	}
+	wlan_objmgr_peer_release_ref(peer, WLAN_CP_STATS_ID);
+
+	status = ucfg_infra_cp_stats_register_resp_cb(wlan_vdev_get_psoc(vdev),
+						      &info);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		osif_err("Failed to register resp callback: %d", status);
+		*errno = qdf_status_to_os_return(status);
+		goto get_twt_stats_fail;
+	}
+
+	status = ucfg_send_infra_cp_stats_request(vdev, &info);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		osif_err("Failed to send twt stats request status: %d",
+			 status);
+		*errno = qdf_status_to_os_return(status);
+		goto get_twt_stats_fail;
+	}
+
+	*errno = osif_request_wait_for_response(request);
+	if (*errno) {
+		osif_err("wait failed or timed out ret: %d", *errno);
+		goto get_twt_stats_fail;
+	}
+
+	out->num_twt_infra_cp_stats = priv->num_twt_infra_cp_stats;
+	out->request_id = priv->request_id;
+	out->twt_infra_cp_stats->dialog_id = twt_event->dialog_id;
+	out->twt_infra_cp_stats->status = twt_event->status;
+	out->twt_infra_cp_stats->num_sp_cycles = twt_event->num_sp_cycles;
+	out->twt_infra_cp_stats->avg_sp_dur_us = twt_event->avg_sp_dur_us;
+	out->twt_infra_cp_stats->min_sp_dur_us = twt_event->min_sp_dur_us;
+	out->twt_infra_cp_stats->max_sp_dur_us = twt_event->max_sp_dur_us;
+	out->twt_infra_cp_stats->tx_mpdu_per_sp = twt_event->tx_mpdu_per_sp;
+	out->twt_infra_cp_stats->rx_mpdu_per_sp = twt_event->rx_mpdu_per_sp;
+	out->twt_infra_cp_stats->tx_bytes_per_sp = twt_event->tx_bytes_per_sp;
+	out->twt_infra_cp_stats->rx_bytes_per_sp = twt_event->rx_bytes_per_sp;
+	qdf_mem_copy(&out->twt_infra_cp_stats->peer_macaddr, twt_peer_mac,
+		     QDF_MAC_ADDR_SIZE);
+	osif_request_put(request);
+
+	osif_debug("Exit");
+
+	return out;
+
+get_twt_stats_fail:
+	osif_request_put(request);
+	wlan_cfg80211_mc_infra_cp_stats_free_stats_event(out);
+
+	osif_debug("Exit");
+
+	return NULL;
+}
+
+/**
+ * infra_cp_stats_reset_cb() - callback function to handle stats event
+ * due to reset action
+ * @ev: stats event buffer
+ * @cookie: a cookie for the request context
+ *
+ * Return: None
+ */
+static void infra_cp_stats_reset_cb(struct infra_cp_stats_event *ev,
+				    void *cookie)
+{
+	struct infra_cp_stats_event *priv;
+	struct osif_request *request;
+
+	request = osif_request_get(cookie);
+	if (!request) {
+		osif_err("Obsolete request");
+		return;
+	}
+
+	priv = osif_request_priv(request);
+
+	osif_debug("clear stats action %d req_id %d, status %d num_cp_stats %d",
+		   ev->action, ev->request_id, ev->status,
+		   ev->num_twt_infra_cp_stats);
+
+	osif_request_complete(request);
+	osif_request_put(request);
+}
+
+/**
+ * @wlan_cfg80211_mc_twt_clear_infra_cp_stats() - send clear twt statistics
+ * request to firmware
+ * @vdev: vdev id
+ * @dialog_id: dialog id of the twt session.
+ * @twt_peer_mac: peer mac address
+ *
+ * Return: 0 for success or error code for failure
+ */
+int
+wlan_cfg80211_mc_twt_clear_infra_cp_stats(
+					struct wlan_objmgr_vdev *vdev,
+					uint32_t dialog_id,
+					uint8_t twt_peer_mac[QDF_MAC_ADDR_SIZE])
+{
+	int ret;
+	void *cookie;
+	QDF_STATUS status;
+	struct infra_cp_stats_event *priv;
+	struct wlan_objmgr_peer *peer;
+	struct osif_request *request;
+	struct infra_cp_stats_cmd_info info = {0};
+	static const struct osif_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = 2 * CP_STATS_WAIT_TIME_STAT,
+		.dealloc = wlan_cfg80211_mc_infra_cp_stats_dealloc,
+	};
+
+	osif_debug("Enter");
+
+	request = osif_request_alloc(&params);
+	if (!request)
+		return -ENOMEM;
+
+	cookie = osif_request_cookie(request);
+	priv = osif_request_priv(request);
+
+	priv->twt_infra_cp_stats =
+			qdf_mem_malloc(sizeof(*priv->twt_infra_cp_stats));
+	if (!priv->twt_infra_cp_stats) {
+		ret = -ENOMEM;
+		goto clear_twt_stats_fail;
+	}
+
+	info.request_cookie = cookie;
+	info.stats_id = TYPE_REQ_CTRL_PATH_TWT_STAT;
+	info.action = ACTION_REQ_CTRL_PATH_STAT_RESET;
+
+	info.infra_cp_stats_resp_cb = infra_cp_stats_reset_cb;
+	info.num_pdev_ids = 0;
+	info.num_vdev_ids = MAX_TWT_STAT_VDEV_ENTRIES;
+	info.vdev_id[0] = wlan_vdev_get_id(vdev);
+	info.num_mac_addr_list = MAX_TWT_STAT_MAC_ADDR_ENTRIES;
+	qdf_mem_copy(&info.peer_mac_addr[0], twt_peer_mac, QDF_MAC_ADDR_SIZE);
+
+	info.dialog_id = dialog_id;
+	info.num_pdev_ids = 0;
+
+	peer = wlan_objmgr_vdev_try_get_bsspeer(vdev, WLAN_CP_STATS_ID);
+	if (!peer) {
+		osif_err("peer is null");
+		ret = -EINVAL;
+		goto clear_twt_stats_fail;
+	}
+	wlan_objmgr_peer_release_ref(peer, WLAN_CP_STATS_ID);
+
+	status = ucfg_infra_cp_stats_register_resp_cb(wlan_vdev_get_psoc(vdev),
+						      &info);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		osif_err("Failed to register resp callback: %d", status);
+		ret = qdf_status_to_os_return(status);
+		goto clear_twt_stats_fail;
+	}
+
+	status = ucfg_send_infra_cp_stats_request(vdev, &info);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		osif_err("Failed to send twt stats request status: %d",
+			 status);
+		ret = qdf_status_to_os_return(status);
+		goto clear_twt_stats_fail;
+	}
+
+	ret = osif_request_wait_for_response(request);
+	if (ret)
+		osif_err("wait failed or timed out ret: %d", ret);
+
+clear_twt_stats_fail:
+	osif_request_put(request);
+	osif_debug("Exit");
+
+	return ret;
+}
+#endif
+#endif /* WLAN_SUPPORT_INFRA_CTRL_PATH_STATS */
 
 struct stats_event *
 wlan_cfg80211_mc_cp_stats_get_station_stats(struct wlan_objmgr_vdev *vdev,

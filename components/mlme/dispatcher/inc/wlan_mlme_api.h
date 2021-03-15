@@ -837,6 +837,16 @@ QDF_STATUS wlan_mlme_get_bigtk_support(struct wlan_objmgr_psoc *psoc,
 				       bool *value);
 
 /**
+ * wlan_mlme_get_ocv_support() - Get the OCV support
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_ocv_support(struct wlan_objmgr_psoc *psoc,
+				     bool *value);
+
+/**
  * wlan_mlme_get_host_scan_abort_support() - Get support for stop all host
  * scans service capability.
  * @psoc: PSOC object pointer
@@ -3068,4 +3078,24 @@ mlme_is_twt_enabled(struct wlan_objmgr_psoc *psoc)
 	return false;
 }
 #endif /* WLAN_SUPPORT_TWT */
+
+/**
+ * wlan_mlme_is_local_tpe_pref() - Get preference to use local TPE or
+ * regulatory TPE values
+ * @psoc: pointer to psoc object
+ *
+ * Return: True if there is local preference, false if there is regulatory
+ * preference
+ */
+bool wlan_mlme_is_local_tpe_pref(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_mlme_is_data_stall_recovery_fw_supported() - Check if data stall
+ * recovery is supported by fw
+ * @psoc: pointer to psoc object
+ *
+ * Return: True if supported
+ */
+bool
+wlan_mlme_is_data_stall_recovery_fw_supported(struct wlan_objmgr_psoc *psoc);
 #endif /* _WLAN_MLME_API_H_ */

@@ -293,129 +293,6 @@ int wma_roam_vdev_disconnect_event_handler(void *handle, uint8_t *event,
 #endif
 
 /**
- * e_csr_auth_type_to_rsn_authmode() - map csr auth type to rsn authmode
- * @authtype: CSR authtype
- * @encr: CSR Encryption
- *
- * Map CSR's authentication type into RSN auth mode used by firmware
- *
- * Return: WMI RSN auth mode
- */
-A_UINT32 e_csr_auth_type_to_rsn_authmode(enum csr_akm_type authtype,
-					 eCsrEncryptionType encr)
-{
-	switch (authtype) {
-	case eCSR_AUTH_TYPE_OPEN_SYSTEM:
-		return WMI_AUTH_OPEN;
-	case eCSR_AUTH_TYPE_WPA:
-		return WMI_AUTH_WPA;
-	case eCSR_AUTH_TYPE_WPA_PSK:
-		return WMI_AUTH_WPA_PSK;
-	case eCSR_AUTH_TYPE_RSN:
-		return WMI_AUTH_RSNA;
-	case eCSR_AUTH_TYPE_RSN_PSK:
-		return WMI_AUTH_RSNA_PSK;
-	case eCSR_AUTH_TYPE_FT_RSN:
-		return WMI_AUTH_FT_RSNA;
-	case eCSR_AUTH_TYPE_FT_RSN_PSK:
-		return WMI_AUTH_FT_RSNA_PSK;
-#ifdef FEATURE_WLAN_WAPI
-	case eCSR_AUTH_TYPE_WAPI_WAI_CERTIFICATE:
-		return WMI_AUTH_WAPI;
-	case eCSR_AUTH_TYPE_WAPI_WAI_PSK:
-		return WMI_AUTH_WAPI_PSK;
-#endif /* FEATURE_WLAN_WAPI */
-#ifdef FEATURE_WLAN_ESE
-	case eCSR_AUTH_TYPE_CCKM_WPA:
-		return WMI_AUTH_CCKM_WPA;
-	case eCSR_AUTH_TYPE_CCKM_RSN:
-		return WMI_AUTH_CCKM_RSNA;
-#endif /* FEATURE_WLAN_ESE */
-#ifdef WLAN_FEATURE_11W
-	case eCSR_AUTH_TYPE_RSN_PSK_SHA256:
-		return WMI_AUTH_RSNA_PSK_SHA256;
-	case eCSR_AUTH_TYPE_RSN_8021X_SHA256:
-		return WMI_AUTH_RSNA_8021X_SHA256;
-#endif /* WLAN_FEATURE_11W */
-	case eCSR_AUTH_TYPE_NONE:
-	case eCSR_AUTH_TYPE_AUTOSWITCH:
-		/* In case of WEP and other keys, NONE means OPEN auth */
-		if (encr == eCSR_ENCRYPT_TYPE_WEP40_STATICKEY ||
-		    encr == eCSR_ENCRYPT_TYPE_WEP104_STATICKEY ||
-		    encr == eCSR_ENCRYPT_TYPE_WEP40 ||
-		    encr == eCSR_ENCRYPT_TYPE_WEP104 ||
-		    encr == eCSR_ENCRYPT_TYPE_TKIP ||
-		    encr == eCSR_ENCRYPT_TYPE_AES ||
-		    encr == eCSR_ENCRYPT_TYPE_AES_GCMP ||
-		    encr == eCSR_ENCRYPT_TYPE_AES_GCMP_256) {
-			return WMI_AUTH_OPEN;
-		}
-		return WMI_AUTH_NONE;
-	case eCSR_AUTH_TYPE_SHARED_KEY:
-		return WMI_AUTH_SHARED;
-	case eCSR_AUTH_TYPE_FILS_SHA256:
-		return WMI_AUTH_RSNA_FILS_SHA256;
-	case eCSR_AUTH_TYPE_FILS_SHA384:
-		return WMI_AUTH_RSNA_FILS_SHA384;
-	case eCSR_AUTH_TYPE_FT_FILS_SHA256:
-		return WMI_AUTH_FT_RSNA_FILS_SHA256;
-	case eCSR_AUTH_TYPE_FT_FILS_SHA384:
-		return WMI_AUTH_FT_RSNA_FILS_SHA384;
-	case eCSR_AUTH_TYPE_SUITEB_EAP_SHA256:
-		return WMI_AUTH_RSNA_SUITE_B_8021X_SHA256;
-	case eCSR_AUTH_TYPE_SUITEB_EAP_SHA384:
-		return WMI_AUTH_RSNA_SUITE_B_8021X_SHA384;
-	case eCSR_AUTH_TYPE_OWE:
-		return WMI_AUTH_WPA3_OWE;
-	case eCSR_AUTH_TYPE_SAE:
-		return WMI_AUTH_WPA3_SAE;
-	case eCSR_AUTH_TYPE_FT_SAE:
-		return WMI_AUTH_FT_RSNA_SAE;
-	case eCSR_AUTH_TYPE_FT_SUITEB_EAP_SHA384:
-		return WMI_AUTH_FT_RSNA_SUITE_B_8021X_SHA384;
-	default:
-		return WMI_AUTH_NONE;
-	}
-}
-
-/**
- * e_csr_encryption_type_to_rsn_cipherset() - map csr enc type to ESN cipher
- * @encr: CSR Encryption
- *
- * Map CSR's encryption type into RSN cipher types used by firmware
- *
- * Return: WMI RSN cipher
- */
-A_UINT32 e_csr_encryption_type_to_rsn_cipherset(eCsrEncryptionType encr)
-{
-
-	switch (encr) {
-	case eCSR_ENCRYPT_TYPE_WEP40_STATICKEY:
-	case eCSR_ENCRYPT_TYPE_WEP104_STATICKEY:
-	case eCSR_ENCRYPT_TYPE_WEP40:
-	case eCSR_ENCRYPT_TYPE_WEP104:
-		return WMI_CIPHER_WEP;
-	case eCSR_ENCRYPT_TYPE_TKIP:
-		return WMI_CIPHER_TKIP;
-	case eCSR_ENCRYPT_TYPE_AES:
-		return WMI_CIPHER_AES_CCM;
-	/* FWR will use key length to distinguish GCMP 128 or 256 */
-	case eCSR_ENCRYPT_TYPE_AES_GCMP:
-	case eCSR_ENCRYPT_TYPE_AES_GCMP_256:
-		return WMI_CIPHER_AES_GCM;
-#ifdef FEATURE_WLAN_WAPI
-	case eCSR_ENCRYPT_TYPE_WPI:
-		return WMI_CIPHER_WAPI;
-#endif /* FEATURE_WLAN_WAPI */
-	case eCSR_ENCRYPT_TYPE_ANY:
-		return WMI_CIPHER_ANY;
-	case eCSR_ENCRYPT_TYPE_NONE:
-	default:
-		return WMI_CIPHER_NONE;
-	}
-}
-
-/**
  * wma_process_set_pdev_ie_req() - process the pdev set IE req
  * @wma: Pointer to wma handle
  * @ie_params: Pointer to IE data.
@@ -600,7 +477,7 @@ wma_send_roam_preauth_status(tp_wma_handle wma_handle,
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-
+#ifndef FEATURE_CM_ENABLE
 /**
  * wma_process_roam_invoke() - send roam invoke command to fw.
  * @handle: wma handle
@@ -611,10 +488,9 @@ wma_send_roam_preauth_status(tp_wma_handle wma_handle,
  * Return: none
  */
 void wma_process_roam_invoke(WMA_HANDLE handle,
-		struct wma_roam_invoke_cmd *roaminvoke)
+		struct roam_invoke_req *roaminvoke)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-	uint32_t ch_hz;
 	struct wmi_unified *wmi_handle;
 
 	if (wma_validate_handle(wma_handle))
@@ -628,16 +504,17 @@ void wma_process_roam_invoke(WMA_HANDLE handle,
 		wma_err("Invalid vdev id:%d", roaminvoke->vdev_id);
 		goto free_frame_buf;
 	}
-	ch_hz = roaminvoke->ch_freq;
+	wma_err("Sending ROAM INVOKE CMD vdev id:%d", roaminvoke->vdev_id);
+
 	wmi_unified_roam_invoke_cmd(wmi_handle,
-				(struct wmi_roam_invoke_cmd *)roaminvoke,
-				ch_hz);
+				(struct roam_invoke_req *)roaminvoke);
 free_frame_buf:
 	if (roaminvoke->frame_len) {
 		qdf_mem_free(roaminvoke->frame_buf);
 		roaminvoke->frame_buf = NULL;
 	}
 }
+#endif
 
 /**
  * wma_process_roam_synch_fail() -roam synch failure handle
@@ -954,7 +831,7 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 	fils_info = param_buf->roam_fils_synch_info;
 	if (fils_info) {
 		if ((fils_info->kek_len > SIR_KEK_KEY_LEN_FILS) ||
-		    (fils_info->pmk_len > SIR_PMK_LEN)) {
+		    (fils_info->pmk_len > MAX_PMK_LEN)) {
 			wma_err("Invalid kek_len %d or pmk_len %d",
 				 fils_info->kek_len,
 				 fils_info->pmk_len);
@@ -985,7 +862,7 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 
 	pmk_cache_info = param_buf->roam_pmk_cache_synch_info;
 	if (pmk_cache_info && (pmk_cache_info->pmk_len)) {
-		if (pmk_cache_info->pmk_len > SIR_PMK_LEN) {
+		if (pmk_cache_info->pmk_len > MAX_PMK_LEN) {
 			wma_err("Invalid pmk_len %d",
 				 pmk_cache_info->pmk_len);
 			wma_free_roam_synch_frame_ind(iface);
@@ -1839,7 +1716,7 @@ wma_get_trigger_detail_str(struct wmi_roam_trigger_info *roam_info, char *buf)
 		return;
 	case WMI_ROAM_TRIGGER_REASON_WTC_BTM:
 		buf_cons =
-		  qdf_snprint(temp, buf_left, "Raoming Mode: %d, Trigger Reason: %d, Sub code:%d, wtc mode:%d, wtc scan mode:%d, wtc rssi th:%d, wtc candi rssi th:%d",
+		  qdf_snprint(temp, buf_left, "Roaming Mode: %d, Trigger Reason: %d, Sub code:%d, wtc mode:%d, wtc scan mode:%d, wtc rssi th:%d, wtc candi rssi th:%d",
 			      roam_info->wtc_btm_trig_data.roaming_mode,
 			      roam_info->wtc_btm_trig_data.vsie_trigger_reason,
 			      roam_info->wtc_btm_trig_data.sub_code,
@@ -2277,6 +2154,14 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 			return -EINVAL;
 		}
 
+		if (roam_info->trigger.present) {
+			wma_rso_print_trigger_info(&roam_info->trigger,
+						   vdev_id);
+			wlan_cm_update_roam_states(wma->psoc, vdev_id,
+					roam_info->trigger.trigger_reason,
+					ROAM_TRIGGER_REASON);
+		}
+
 		/* Roam scan related details - Scan channel, scan type .. */
 		status = wmi_unified_extract_roam_scan_stats(
 							wma->wmi_handle, event,
@@ -2291,6 +2176,11 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 		num_chan += roam_info->scan.num_chan;
 		num_ap += roam_info->scan.num_ap;
 
+		if (roam_info->scan.present && roam_info->trigger.present)
+			wma_rso_print_scan_info(&roam_info->scan, vdev_id,
+					roam_info->trigger.trigger_reason,
+					roam_info->trigger.timestamp);
+
 		/* Roam result - Success/Failure status, failure reason */
 		status = wmi_unified_extract_roam_result_stats(
 							wma->wmi_handle, event,
@@ -2301,7 +2191,12 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 			qdf_mem_free(roam_info);
 			return -EINVAL;
 		}
-
+		if (roam_info->result.present) {
+			wma_rso_print_roam_result(&roam_info->result, vdev_id);
+			wlan_cm_update_roam_states(wma->psoc, vdev_id,
+						roam_info->result.fail_reason,
+						ROAM_FAIL_REASON);
+		}
 		/* BTM resp info */
 		status = wlan_cm_roam_extract_btm_response(wma->wmi_handle,
 							   event,
@@ -2313,6 +2208,9 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 			qdf_mem_free(roam_info);
 			return -EINVAL;
 		}
+		if (roam_info->btm_rsp.present)
+			wma_rso_print_btm_rsp_info(&roam_info->btm_rsp,
+						   vdev_id);
 
 		/* Initial Roam info */
 		status = wlan_cm_roam_extract_roam_initial_info(
@@ -2324,6 +2222,9 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 			qdf_mem_free(roam_info);
 			return -EINVAL;
 		}
+		if (roam_info->roam_init_info.present)
+			wma_rso_print_roam_initial_info(
+					&roam_info->roam_init_info, vdev_id);
 
 		/* Roam message info */
 		status = wlan_cm_roam_extract_roam_msg_info(
@@ -2335,6 +2236,10 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 			qdf_mem_free(roam_info);
 			return -EINVAL;
 		}
+		if (roam_info->roam_msg_info.present) {
+			rem_tlv++;
+			wma_rso_print_roam_msg_info(
+					&roam_info->roam_msg_info, vdev_id);
 
 		/* BTM req/resp or Neighbor report/response info */
 		status = wmi_unified_extract_roam_11kv_stats(
@@ -2347,35 +2252,8 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 			return -EINVAL;
 		}
 		num_rpt += roam_info->data_11kv.num_freq;
-
-		/* Driver debug logs */
-		if (roam_info->trigger.present)
-			wma_rso_print_trigger_info(&roam_info->trigger,
-						   vdev_id);
-
-		if (roam_info->scan.present && roam_info->trigger.present)
-			wma_rso_print_scan_info(&roam_info->scan, vdev_id,
-					roam_info->trigger.trigger_reason,
-					roam_info->trigger.timestamp);
-
-		if (roam_info->result.present)
-			wma_rso_print_roam_result(&roam_info->result, vdev_id);
-
 		if (roam_info->data_11kv.present)
 			wma_rso_print_11kv_info(&roam_info->data_11kv, vdev_id);
-
-		if (roam_info->btm_rsp.present)
-			wma_rso_print_btm_rsp_info(&roam_info->btm_rsp,
-						   vdev_id);
-
-		if (roam_info->roam_init_info.present)
-			wma_rso_print_roam_initial_info(
-					&roam_info->roam_init_info, vdev_id);
-
-		if (roam_info->roam_msg_info.present) {
-			rem_tlv++;
-			wma_rso_print_roam_msg_info(
-					&roam_info->roam_msg_info, vdev_id);
 		}
 
 		qdf_mem_free(roam_info);
@@ -2396,6 +2274,9 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 			return -EINVAL;
 		}
 
+		if (roam_info->data_11kv.present)
+			wma_rso_print_11kv_info(&roam_info->data_11kv, vdev_id);
+
 		status = wmi_unified_extract_roam_trigger_stats(
 						wma->wmi_handle, event,
 						&roam_info->trigger, 0);
@@ -2405,6 +2286,10 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 			qdf_mem_free(roam_info);
 			return -EINVAL;
 		}
+
+		if (roam_info->trigger.present)
+			wma_rso_print_trigger_info(&roam_info->trigger,
+						   vdev_id);
 
 		status = wmi_unified_extract_roam_scan_stats(wma->wmi_handle,
 							     event,
@@ -2417,6 +2302,11 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 			return -EINVAL;
 		}
 
+		if (roam_info->scan.present && roam_info->trigger.present)
+			wma_rso_print_scan_info(&roam_info->scan, vdev_id,
+					roam_info->trigger.trigger_reason,
+					roam_info->trigger.timestamp);
+
 		status = wlan_cm_roam_extract_btm_response(wma->wmi_handle,
 							   event,
 							   &roam_info->btm_rsp,
@@ -2427,19 +2317,6 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 			qdf_mem_free(roam_info);
 			return -EINVAL;
 		}
-
-		/* Driver debug logs */
-		if (roam_info->data_11kv.present)
-			wma_rso_print_11kv_info(&roam_info->data_11kv, vdev_id);
-
-		if (roam_info->trigger.present)
-			wma_rso_print_trigger_info(&roam_info->trigger,
-						   vdev_id);
-
-		if (roam_info->scan.present && roam_info->trigger.present)
-			wma_rso_print_scan_info(&roam_info->scan, vdev_id,
-					roam_info->trigger.trigger_reason,
-					roam_info->trigger.timestamp);
 
 		if (roam_info->btm_rsp.present)
 			wma_rso_print_btm_rsp_info(&roam_info->btm_rsp,
@@ -4312,6 +4189,7 @@ QDF_STATUS wma_scan_probe_setoui(tp_wma_handle wma,
  */
 void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 {
+#ifndef FEATURE_CM_ENABLE
 	struct scheduler_msg cds_msg = {0};
 	tSirSmeCandidateFoundInd *candidate_ind;
 	QDF_STATUS status;
@@ -4334,6 +4212,9 @@ void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 					QDF_MODULE_ID_SCAN,  &cds_msg);
 	if (QDF_IS_STATUS_ERROR(status))
 		qdf_mem_free(candidate_ind);
+#else
+	/* post to osif queue to call cm API for LFR2 */
+#endif
 }
 
 /**
@@ -4594,6 +4475,10 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 		wma_handle->csr_roam_synch_cb(wma_handle->mac_context,
 					      roam_synch_data, NULL,
 					      SIR_ROAMING_INVOKE_FAIL);
+		wlan_cm_update_roam_states(wma_handle->psoc, wmi_event->vdev_id,
+					   wmi_event->notif_params,
+					   ROAM_INVOKE_FAIL_REASON);
+
 		qdf_mem_free(roam_synch_data);
 		break;
 	case WMI_ROAM_REASON_DEAUTH:

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -345,9 +345,14 @@ static void wma_set_default_tgt_config(tp_wma_handle wma_handle,
 	tgt_cfg->num_ocb_channels = CFG_TGT_NUM_OCB_CHANNELS;
 	tgt_cfg->num_ocb_schedules = CFG_TGT_NUM_OCB_SCHEDULES;
 	tgt_cfg->twt_ap_sta_count = CFG_TGT_DEFAULT_TWT_AP_STA_COUNT;
+	tgt_cfg->enable_pci_gen = cfg_get(wma_handle->psoc, CFG_ENABLE_PCI_GEN);
 
 	tgt_cfg->mgmt_comp_evt_bundle_support = true;
 	tgt_cfg->tx_msdu_new_partition_id_support = true;
+	tgt_cfg->is_sap_connected_d3wow_enabled =
+		ucfg_pmo_get_sap_mode_bus_suspend(wma_handle->psoc);
+	tgt_cfg->is_go_connected_d3wow_enabled =
+		ucfg_pmo_get_go_mode_bus_suspend(wma_handle->psoc);
 
 	cfg_nan_get_max_ndi(wma_handle->psoc,
 			    &tgt_cfg->max_ndi);
@@ -2945,6 +2950,8 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 			"wlan_roam_ho_wl");
 		qdf_wake_lock_create(&wma_handle->roam_preauth_wl,
 				     "wlan_roam_preauth_wl");
+		qdf_wake_lock_create(&wma_handle->probe_req_wps_wl,
+				     "wlan_probe_req_wps_wl");
 	}
 
 	qdf_status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_LEGACY_WMA_ID);
@@ -3454,6 +3461,7 @@ err_get_psoc_ref:
 		qdf_wake_lock_destroy(&wma_handle->wow_auto_shutdown_wl);
 		qdf_wake_lock_destroy(&wma_handle->roam_ho_wl);
 		qdf_wake_lock_destroy(&wma_handle->roam_preauth_wl);
+		qdf_wake_lock_destroy(&wma_handle->probe_req_wps_wl);
 	}
 err_free_wma_handle:
 	cds_free_context(QDF_MODULE_ID_WMA, wma_handle);
@@ -4429,6 +4437,7 @@ QDF_STATUS wma_close(void)
 		qdf_wake_lock_destroy(&wma_handle->wow_auto_shutdown_wl);
 		qdf_wake_lock_destroy(&wma_handle->roam_ho_wl);
 		qdf_wake_lock_destroy(&wma_handle->roam_preauth_wl);
+		qdf_wake_lock_destroy(&wma_handle->probe_req_wps_wl);
 	}
 
 	/* unregister Firmware debug log */
@@ -4663,6 +4672,7 @@ static inline void wma_update_target_services(struct wmi_unified *wmi_handle,
 				    wmi_service_ll_stats_per_chan_rx_tx_time);
 
 	wma_get_service_cap_club_get_sta_in_ll_stats_req(wmi_handle, cfg);
+
 }
 
 /**
@@ -5262,6 +5272,10 @@ static void wma_update_nan_target_caps(tp_wma_handle wma_handle,
 	if (wmi_service_enabled(wma_handle->wmi_handle,
 				wmi_service_sta_nan_ndi_four_port))
 		tgt_cfg->nan_caps.sta_nan_ndi_ndi_allowed = 1;
+
+	if (wmi_service_enabled(wma_handle->wmi_handle,
+				wmi_service_ndi_txbf_support))
+		tgt_cfg->nan_caps.ndi_txbf_supported = 1;
 }
 #else
 static void wma_update_nan_target_caps(tp_wma_handle wma_handle,
@@ -5342,7 +5356,12 @@ static void wma_update_mlme_related_tgt_caps(struct wlan_objmgr_psoc *psoc,
 		wmi_service_enabled(wmi_handle,
 				    wmi_service_dual_sta_roam_support);
 
-	wma_debug("beacon protection support %d", mlme_tgt_cfg.bigtk_support);
+	mlme_tgt_cfg.ocv_support =
+		wmi_service_enabled(wmi_handle,
+				    wmi_service_ocv_support);
+
+	wma_debug("beacon protection support %d, ocv support %d",
+		  mlme_tgt_cfg.bigtk_support, mlme_tgt_cfg.ocv_support);
 
 	/* Call this at last only after filling all the tgt caps */
 	wlan_mlme_update_cfg_with_tgt_caps(psoc, &mlme_tgt_cfg);
@@ -5490,6 +5509,7 @@ static int wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	wma_update_hdd_cfg_ndp(wma_handle, &tgt_cfg);
 	wma_update_nan_target_caps(wma_handle, &tgt_cfg);
 	wma_update_bcast_twt_support(wma_handle, &tgt_cfg);
+	wma_update_twt_tgt_cap(wma_handle, &tgt_cfg);
 	wma_update_restricted_80p80_bw_support(wma_handle, &tgt_cfg);
 	/* Take the max of chains supported by FW, which will limit nss */
 	for (i = 0; i < tgt_hdl->info.total_mac_phy_cnt; i++)
@@ -8697,11 +8717,14 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 			(struct roam_offload_synch_fail *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
+#ifndef FEATURE_CM_ENABLE
 	case SIR_HAL_ROAM_INVOKE:
+		wma_debug("SIR_HAL_ROAM_INVOKE - wma_process_roam_invoke");
 		wma_process_roam_invoke(wma_handle,
-			(struct wma_roam_invoke_cmd *)msg->bodyptr);
+			(struct roam_invoke_req *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
+#endif
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 	case SIR_HAL_SET_BASE_MACADDR_IND:
 		wma_set_base_macaddr_indicate(wma_handle,

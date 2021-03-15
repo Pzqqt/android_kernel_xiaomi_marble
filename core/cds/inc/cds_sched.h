@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -47,6 +47,10 @@
 #define RX_SUSPEND_EVENT            0x002
 #define RX_VDEV_DEL_EVENT           0x004
 #define RX_SHUTDOWN_EVENT           0x010
+
+#define RX_REFILL_POST_EVENT           0x001
+#define RX_REFILL_SUSPEND_EVENT        0x002
+#define RX_REFILL_SHUTDOWN_EVENT       0x004
 
 #ifdef QCA_CONFIG_SMP
 /*

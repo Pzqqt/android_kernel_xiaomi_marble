@@ -991,6 +991,11 @@ enum hdd_mic_work_status {
 	MIC_DISABLED
 };
 
+enum hdd_work_status {
+	HDD_WORK_UNINITIALIZED,
+	HDD_WORK_INITIALIZED,
+};
+
 /**
  * struct hdd_mic_work - mic work info in HDD
  * @mic_error_work: mic error work
@@ -1216,7 +1221,11 @@ struct hdd_context;
  * @handle_feature_update: Handle feature update only if it is triggered
  *			   by hdd_netdev_feature_update
  * @netdev_features_update_work: work for handling the netdev features update
-				 for the adapter.
+ *				 for the adapter.
+ * @netdev_features_update_work_status: status for netdev_features_update_work
+ * @delete_in_progress: Flag to indicate that the adapter delete is in
+ *			progress, and any operation using rtnl lock inside
+ *			the driver can be avoided/skipped.
  */
 struct hdd_adapter {
 	/* Magic cookie for adapter sanity verification.  Note that this
@@ -1265,8 +1274,10 @@ struct hdd_adapter {
 #endif
 
 	struct hdd_mic_work mic_work;
+#ifndef FEATURE_CM_ENABLE
 	bool disconnection_in_progress;
 	qdf_mutex_t disconnection_status_lock;
+#endif
 	unsigned long event_flags;
 
 	/**Device TX/RX statistics*/
@@ -1524,9 +1535,11 @@ struct hdd_adapter {
 	ol_txrx_rx_fp rx_stack;
 
 	qdf_work_t netdev_features_update_work;
-	uint8_t net_dev_hold_ref_count[NET_DEV_HOLD_ID_MAX];
+	enum hdd_work_status netdev_features_update_work_status;
+	qdf_atomic_t net_dev_hold_ref_count[NET_DEV_HOLD_ID_MAX];
 	/* Flag to indicate whether it is a pre cac adapter or not */
 	bool is_pre_cac_adapter;
+	bool delete_in_progress;
 };
 
 #define WLAN_HDD_GET_STATION_CTX_PTR(adapter) (&(adapter)->session.station)
@@ -3554,6 +3567,18 @@ int hdd_update_config(struct hdd_context *hdd_ctx);
  */
 int hdd_update_components_config(struct hdd_context *hdd_ctx);
 
+/**
+ * hdd_chan_change_notify() - Function to notify hostapd about channel change
+ * @hostapd_adapter:	hostapd adapter
+ * @dev:		Net device structure
+ * @chan_change:	New channel change parameters
+ * @legacy_phymode:	is the phymode legacy
+ *
+ * This function is used to notify hostapd about the channel change
+ *
+ * Return: Success on intimating userspace
+ *
+ */
 QDF_STATUS hdd_chan_change_notify(struct hdd_adapter *adapter,
 		struct net_device *dev,
 		struct hdd_chan_change_params chan_change,
@@ -3752,6 +3777,7 @@ QDF_STATUS hdd_sme_open_session_callback(uint8_t vdev_id,
 					 QDF_STATUS qdf_status);
 QDF_STATUS hdd_sme_close_session_callback(uint8_t vdev_id);
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * hdd_reassoc() - perform a userspace-directed reassoc
  * @adapter:    Adapter upon which the command was received
@@ -3765,6 +3791,7 @@ QDF_STATUS hdd_sme_close_session_callback(uint8_t vdev_id);
  */
 int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
 		uint32_t ch_freq, const handoff_src src);
+#endif
 
 int hdd_register_cb(struct hdd_context *hdd_ctx);
 void hdd_deregister_cb(struct hdd_context *hdd_ctx);
@@ -4208,19 +4235,10 @@ int hdd_get_rssi_snr_by_bssid(struct hdd_adapter *adapter, const uint8_t *bssid,
  */
 int hdd_reset_limit_off_chan(struct hdd_adapter *adapter);
 
+#ifndef FEATURE_CM_ENABLE
 #if defined(WLAN_FEATURE_FILS_SK) && \
 	(defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) || \
 		 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)))
-/**
- * hdd_clear_fils_connection_info: API to clear fils info from roam profile and
- * free allocated memory
- * @adapter: pointer to hdd adapter
- *
- * Return: None
- */
-void hdd_clear_fils_connection_info(struct hdd_adapter *adapter);
-
-#ifndef FEATURE_CM_ENABLE
 /**
  * hdd_update_hlp_info() - Update HLP packet received in FILS (re)assoc rsp
  * @dev: net device
@@ -4233,11 +4251,7 @@ void hdd_clear_fils_connection_info(struct hdd_adapter *adapter);
  */
 void hdd_update_hlp_info(struct net_device *dev,
 			 struct csr_roam_info *roam_info);
-#endif
 #else
-static inline void hdd_clear_fils_connection_info(struct hdd_adapter *adapter)
-{ }
-#ifndef FEATURE_CM_ENABLE
 static inline void hdd_update_hlp_info(struct net_device *dev,
 				       struct csr_roam_info *roam_info)
 {}
@@ -4378,6 +4392,8 @@ static inline void hdd_driver_mem_cleanup(void)
 {
 }
 #endif /* WLAN_FEATURE_MEMDUMP_ENABLE */
+
+#ifndef FEATURE_CM_ENABLE
 /**
  * hdd_set_disconnect_status() - set adapter disconnection status
  * @hdd_adapter: Pointer to hdd adapter
@@ -4386,6 +4402,7 @@ static inline void hdd_driver_mem_cleanup(void)
  * Return: None
  */
 void hdd_set_disconnect_status(struct hdd_adapter *adapter, bool disconnecting);
+#endif
 
 #ifdef FEATURE_MONITOR_MODE_SUPPORT
 /**

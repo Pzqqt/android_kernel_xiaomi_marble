@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -388,50 +388,57 @@ QDF_STATUS
 pmo_register_action_frame_patterns(struct wlan_objmgr_vdev *vdev,
 				   enum qdf_suspend_type suspend_type)
 {
-
-	struct pmo_action_wakeup_set_params cmd = {0};
+	struct pmo_action_wakeup_set_params *cmd;
 	int i = 0;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	cmd.vdev_id = pmo_vdev_get_id(vdev);
-	cmd.operation = pmo_action_wakeup_set;
+	cmd = qdf_mem_malloc(sizeof(*cmd));
+	if (!cmd) {
+		pmo_err("memory allocation failed for wakeup set params");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd->vdev_id = pmo_vdev_get_id(vdev);
+	cmd->operation = pmo_action_wakeup_set;
 
 	if (suspend_type == QDF_SYSTEM_SUSPEND)
-		cmd.action_category_map[i++] =
+		cmd->action_category_map[i++] =
 			SYSTEM_SUSPEND_ALLOWED_ACTION_FRAMES_BITMAP0;
 	else
-		cmd.action_category_map[i++] =
+		cmd->action_category_map[i++] =
 				RUNTIME_PM_ALLOWED_ACTION_FRAMES_BITMAP0;
 
-	cmd.action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP1;
-	cmd.action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP2;
-	cmd.action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP3;
-	cmd.action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP4;
-	cmd.action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP5;
-	cmd.action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP6;
-	cmd.action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP7;
+	cmd->action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP1;
+	cmd->action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP2;
+	cmd->action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP3;
+	cmd->action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP4;
+	cmd->action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP5;
+	cmd->action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP6;
+	cmd->action_category_map[i++] = ALLOWED_ACTION_FRAMES_BITMAP7;
 
-	set_action_id_drop_pattern_for_spec_mgmt(cmd.action_per_category);
-	set_action_id_drop_pattern_for_public_action(cmd.action_per_category);
+	set_action_id_drop_pattern_for_spec_mgmt(cmd->action_per_category);
+	set_action_id_drop_pattern_for_public_action(cmd->action_per_category);
 
 	for (i = 0; i < PMO_SUPPORTED_ACTION_CATE_ELE_LIST; i++) {
 		if (i < ALLOWED_ACTION_FRAME_MAP_WORDS)
 			pmo_debug("%d action Wakeup pattern 0x%x in fw",
-				  i, cmd.action_category_map[i]);
+				  i, cmd->action_category_map[i]);
 		else
-			cmd.action_category_map[i] = 0;
+			cmd->action_category_map[i] = 0;
 	}
 
 	pmo_debug("Spectrum mgmt action id drop bitmap: 0x%x",
-			cmd.action_per_category[PMO_MAC_ACTION_SPECTRUM_MGMT]);
+			cmd->action_per_category[PMO_MAC_ACTION_SPECTRUM_MGMT]);
 	pmo_debug("Public action id drop bitmap: 0x%x",
-			cmd.action_per_category[PMO_MAC_ACTION_PUBLIC_USAGE]);
+			cmd->action_per_category[PMO_MAC_ACTION_PUBLIC_USAGE]);
 
 	/*  config action frame patterns */
-	status = pmo_tgt_send_action_frame_pattern_req(vdev, &cmd);
+	status = pmo_tgt_send_action_frame_pattern_req(vdev, cmd);
 	if (status != QDF_STATUS_SUCCESS)
 		pmo_err("Failed to config wow action frame map, ret %d",
 			status);
+
+	qdf_mem_free(cmd);
 
 	return status;
 }
@@ -439,17 +446,25 @@ pmo_register_action_frame_patterns(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS
 pmo_clear_action_frame_patterns(struct wlan_objmgr_vdev *vdev)
 {
-	struct pmo_action_wakeup_set_params cmd = {0};
+	struct pmo_action_wakeup_set_params *cmd;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	cmd.vdev_id = pmo_vdev_get_id(vdev);
-	cmd.operation = pmo_action_wakeup_reset;
+	cmd = qdf_mem_malloc(sizeof(*cmd));
+	if (!cmd) {
+		pmo_err("memory allocation failed for wakeup set params");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd->vdev_id = pmo_vdev_get_id(vdev);
+	cmd->operation = pmo_action_wakeup_reset;
 
 	/*  clear action frame pattern */
-	status = pmo_tgt_send_action_frame_pattern_req(vdev, &cmd);
+	status = pmo_tgt_send_action_frame_pattern_req(vdev, cmd);
 	if (QDF_IS_STATUS_ERROR(status))
 		pmo_err("Failed to clear wow action frame map, ret %d",
 			status);
+
+	qdf_mem_free(cmd);
 
 	return status;
 }

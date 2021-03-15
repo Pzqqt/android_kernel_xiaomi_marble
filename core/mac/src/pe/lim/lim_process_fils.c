@@ -1025,7 +1025,7 @@ void lim_add_fils_data_to_auth_frame(struct pe_session *session,
 	 * MDIE to be sent in auth frame during initial
 	 * mobility domain association
 	 */
-	if (session->lim_join_req->is11Rconnection) {
+	if (session->is11Rconnection) {
 		struct bss_description *bss_desc;
 
 		bss_desc = &session->lim_join_req->bssDescription;
@@ -1408,6 +1408,149 @@ bool lim_process_fils_auth_frame2(struct mac_context *mac_ctx,
 	return true;
 }
 
+#ifdef FEATURE_CM_ENABLE
+static enum eAniAuthType lim_get_auth_type(uint8_t auth_type)
+{
+	switch (auth_type) {
+	case FILS_SK_WITHOUT_PFS:
+		return SIR_FILS_SK_WITHOUT_PFS;
+	case FILS_SK_WITH_PFS:
+		return SIR_FILS_SK_WITH_PFS;
+	case FILS_PK_AUTH:
+		return SIR_FILS_PK_AUTH;
+	default:
+		return eSIR_DONOT_USE_AUTH_TYPE;
+	}
+}
+
+static uint8_t lim_get_akm_type(struct wlan_objmgr_vdev *vdev)
+{
+	int32_t akm;
+
+	akm = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
+
+	if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA384))
+		return eCSR_AUTH_TYPE_FT_FILS_SHA384;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA256))
+		return eCSR_AUTH_TYPE_FT_FILS_SHA256;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FILS_SHA384))
+		return eCSR_AUTH_TYPE_FILS_SHA384;
+	else
+		return eCSR_AUTH_TYPE_FILS_SHA256;
+}
+
+void lim_update_fils_config(struct mac_context *mac_ctx,
+			    struct pe_session *session,
+			    struct cm_vdev_join_req *join_req)
+{
+	struct pe_fils_session *pe_fils_info;
+	struct wlan_fils_connection_info *fils_info = NULL;
+	tDot11fIERSN dot11f_ie_rsn = {0};
+	uint32_t ret;
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(session->vdev);
+	if (!mlme_priv)
+		return;
+	fils_info = mlme_priv->connect_info.fils_con_info;
+	if (!fils_info)
+		return;
+	pe_fils_info = session->fils_info;
+	if (!pe_fils_info)
+		return;
+
+	if (!fils_info->is_fils_connection)
+		return;
+
+	pe_fils_info->is_fils_connection = fils_info->is_fils_connection;
+	pe_fils_info->keyname_nai_length = fils_info->key_nai_length;
+	pe_fils_info->fils_rrk_len = fils_info->r_rk_length;
+	pe_fils_info->akm = lim_get_akm_type(session->vdev);
+	pe_fils_info->auth = lim_get_auth_type(fils_info->auth_type);
+	pe_fils_info->sequence_number = fils_info->erp_sequence_number;
+
+	if (fils_info->key_nai_length > FILS_MAX_KEYNAME_NAI_LENGTH) {
+		pe_err("Restricting the key_nai_length of %d to max %d",
+		       fils_info->key_nai_length,
+		       FILS_MAX_KEYNAME_NAI_LENGTH);
+		fils_info->key_nai_length = FILS_MAX_KEYNAME_NAI_LENGTH;
+	}
+
+	if (fils_info->key_nai_length) {
+		pe_fils_info->keyname_nai_data =
+			qdf_mem_malloc(fils_info->key_nai_length);
+		if (!pe_fils_info->keyname_nai_data)
+			return;
+
+		qdf_mem_copy(pe_fils_info->keyname_nai_data,
+			     fils_info->keyname_nai,
+			     fils_info->key_nai_length);
+	}
+
+	if (fils_info->r_rk_length) {
+		pe_fils_info->fils_rrk =
+			qdf_mem_malloc(fils_info->r_rk_length);
+		if (!pe_fils_info->fils_rrk) {
+			qdf_mem_free(pe_fils_info->keyname_nai_data);
+			return;
+		}
+
+		if (fils_info->r_rk_length <= WLAN_FILS_MAX_RRK_LENGTH)
+			qdf_mem_copy(pe_fils_info->fils_rrk,
+				     fils_info->r_rk,
+				     fils_info->r_rk_length);
+	}
+
+	qdf_mem_copy(pe_fils_info->fils_pmkid, fils_info->pmkid,
+		     PMKID_LEN);
+	pe_fils_info->rsn_ie_len = session->lim_join_req->rsnIE.length;
+	qdf_mem_copy(pe_fils_info->rsn_ie,
+		     session->lim_join_req->rsnIE.rsnIEdata,
+		     session->lim_join_req->rsnIE.length);
+
+	/*
+	 * When AP is MFP capable and STA is also MFP capable,
+	 * the supplicant fills the RSN IE with PMKID count as 0
+	 * and PMKID as 0, then appends the group management cipher
+	 * suite. This opaque RSN IE is copied into fils_info in pe
+	 * session. For FT-FILS association, STA has to fill the
+	 * PMKR0 derived after authentication response is received from
+	 * the AP. So unpack the RSN IE to find if group management cipher
+	 * suite is present and based on this RSN IE will be constructed in
+	 * lim_generate_fils_pmkr1_name() for FT-FILS connection.
+	 */
+	ret = dot11f_unpack_ie_rsn(mac_ctx, pe_fils_info->rsn_ie + 2,
+				   pe_fils_info->rsn_ie_len - 2,
+				   &dot11f_ie_rsn, 0);
+	if (DOT11F_SUCCEEDED(ret))
+		pe_fils_info->group_mgmt_cipher_present =
+			dot11f_ie_rsn.gp_mgmt_cipher_suite_present;
+	else
+		pe_err("FT-FILS: Invalid RSN IE");
+
+	pe_fils_info->fils_pmk_len = fils_info->pmk_len;
+	if (fils_info->pmk_len) {
+		pe_fils_info->fils_pmk =
+			qdf_mem_malloc(fils_info->pmk_len);
+		if (!pe_fils_info->fils_pmk) {
+			qdf_mem_free(pe_fils_info->keyname_nai_data);
+			qdf_mem_free(pe_fils_info->fils_rrk);
+			return;
+		}
+		qdf_mem_copy(pe_fils_info->fils_pmk, fils_info->pmk,
+			     fils_info->pmk_len);
+	}
+
+	pe_debug("FILS: fils=%d nai-len=%d rrk_len=%d akm=%d auth=%d pmk_len=%d",
+		 fils_info->is_fils_connection,
+		 fils_info->key_nai_length,
+		 fils_info->r_rk_length,
+		 fils_info->akm_type,
+		 fils_info->auth_type,
+		 fils_info->pmk_len);
+}
+
+#else
 void lim_update_fils_config(struct mac_context *mac_ctx,
 			    struct pe_session *session,
 			    struct join_req *sme_join_req)
@@ -1518,6 +1661,7 @@ void lim_update_fils_config(struct mac_context *mac_ctx,
 		 fils_info->auth_type,
 		 fils_info->pmk_len);
 }
+#endif
 
 #define EXTENDED_IE_HEADER_LEN 3
 /**
@@ -2221,6 +2365,11 @@ QDF_STATUS aead_decrypt_assoc_rsp(struct mac_context *mac_ctx,
 	uint32_t data_len, fils_ies_len;
 	uint8_t *fils_ies;
 	struct pe_fils_session *fils_info = session->fils_info;
+
+	if (*n_frame < FIXED_PARAM_OFFSET_ASSOC_RSP) {
+		pe_debug("payload len is less than ASSOC RES offset");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	status = find_ie_data_after_fils_session_ie(mac_ctx, p_frame +
 					      FIXED_PARAM_OFFSET_ASSOC_RSP,

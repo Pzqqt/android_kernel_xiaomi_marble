@@ -563,9 +563,23 @@ static void __lim_process_add_ts_rsp(struct mac_context *mac_ctx,
 				addts.tspec.tsinfo.traffic.userPrio);
 		}
 	}
+
 	pe_debug("Recv AddTsRsp: tsid: %d UP: %d status: %d",
 		addts.tspec.tsinfo.traffic.tsid,
 		addts.tspec.tsinfo.traffic.userPrio, addts.status);
+
+	/*
+	 * If AP sends ADD TS response for an AC with medium time as 0
+	 * treat it as ADD TS failure.
+	 */
+	if (!addts.tspec.mediumTime) {
+		pe_err("Medium Time 0! Add TS failed");
+		/*
+		 * Change the status to failure and fallthrough to send response
+		 * to SME to cleanup the flow.
+		 */
+		addts.status = STATUS_UNSPECIFIED_FAILURE;
+	}
 
 	/* deactivate the response timer */
 	lim_deactivate_and_change_timer(mac_ctx, eLIM_ADDTS_RSP_TIMER);
@@ -1773,8 +1787,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 	case ACTION_CATEGORY_RRM:
 		/* Ignore RRM measurement request until DHCP is set */
 		if (mac_ctx->rrm.rrmPEContext.rrmEnable &&
-		    mac_ctx->roam.roamSession
-		    [session->smeSessionId].dhcp_done) {
+		    mac_ctx->roam.roamSession[session->smeSessionId].dhcp_done) {
 			switch (action_hdr->actionID) {
 			case RRM_RADIO_MEASURE_REQ:
 				__lim_process_radio_measure_request(mac_ctx,
@@ -1811,8 +1824,7 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 			/* Else we will just ignore the RRM messages. */
 			pe_debug("RRM frm ignored, it is disabled in cfg: %d or DHCP not completed: %d",
 			  mac_ctx->rrm.rrmPEContext.rrmEnable,
-			  mac_ctx->roam.roamSession
-			  [session->smeSessionId].dhcp_done);
+			  mac_ctx->roam.roamSession[session->smeSessionId].dhcp_done);
 		}
 		break;
 

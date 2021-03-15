@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -251,8 +251,9 @@ lim_process_probe_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	uint8_t *body_ptr;
 	tpSirMacMgmtHdr mac_hdr;
 	uint32_t frame_len;
-	tSirProbeReq probe_req;
+	tpSirProbeReq probe_req = NULL;
 	tAniSSID ssid;
+	uint8_t *uuid;
 
 	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 	if (LIM_IS_AP_ROLE(session)) {
@@ -277,21 +278,25 @@ lim_process_probe_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 			}
 		}
 
+		probe_req = qdf_mem_malloc(sizeof(tSirProbeReq));
+		if (!probe_req)
+			return;
+
 		/* Parse Probe Request frame */
 		if (sir_convert_probe_req_frame2_struct(mac_ctx, body_ptr,
-				frame_len, &probe_req) == QDF_STATUS_E_FAILURE) {
+				frame_len, probe_req) == QDF_STATUS_E_FAILURE) {
 			pe_err("Parse error ProbeReq, length: %d, SA is: "
 					QDF_MAC_ADDR_FMT, frame_len,
 					QDF_MAC_ADDR_REF(mac_hdr->sa));
-			return;
+			goto free_and_exit;
 		}
 		if (session->opmode == QDF_P2P_GO_MODE) {
 			uint8_t i = 0, rate_11b = 0, other_rates = 0;
 			/* Check 11b rates in supported rates */
-			for (i = 0; i < probe_req.supportedRates.numRates;
+			for (i = 0; i < probe_req->supportedRates.numRates;
 				i++) {
 				if (lim_check11b_rates(
-					probe_req.supportedRates.rate[i] &
+					probe_req->supportedRates.rate[i] &
 								0x7f))
 					rate_11b++;
 				else
@@ -299,9 +304,11 @@ lim_process_probe_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 			}
 
 			/* Check 11b rates in extended rates */
-			for (i = 0; i < probe_req.extendedRates.numRates; i++) {
+			for (i = 0; i < probe_req->extendedRates.numRates;
+			     i++) {
 				if (lim_check11b_rates(
-					probe_req.extendedRates.rate[i] & 0x7f))
+					probe_req->extendedRates.rate[i] &
+					0x7f))
 					rate_11b++;
 				else
 					other_rates++;
@@ -311,16 +318,16 @@ lim_process_probe_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 				pe_debug("Received a probe req frame with only 11b rates, SA is: ");
 					lim_print_mac_addr(mac_ctx,
 						mac_hdr->sa, LOGD);
-					return;
+					goto free_and_exit;
 			}
 		}
 		if (LIM_IS_AP_ROLE(session) &&
 			((session->APWPSIEs.SirWPSProbeRspIE.FieldPresent
-				& SIR_WPS_PROBRSP_VER_PRESENT)
-			&& (probe_req.wscIePresent == 1)
-			&& (probe_req.probeReqWscIeInfo.DevicePasswordID.id ==
-				WSC_PASSWD_ID_PUSH_BUTTON)
-			&& (probe_req.probeReqWscIeInfo.UUID_E.present == 1))) {
+				& SIR_WPS_PROBRSP_VER_PRESENT) &&
+			(probe_req->wscIePresent == 1) &&
+			(probe_req->probeReqWscIeInfo.DevicePasswordID.id ==
+				WSC_PASSWD_ID_PUSH_BUTTON) &&
+			(probe_req->probeReqWscIeInfo.UUID_E.present == 1))) {
 			if (session->fwdWPSPBCProbeReq) {
 				QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE,
 						   QDF_TRACE_LEVEL_DEBUG,
@@ -332,10 +339,11 @@ lim_process_probe_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 				lim_send_sme_probe_req_ind(mac_ctx, mac_hdr->sa,
 					body_ptr, frame_len, session);
 			} else {
+				uuid = probe_req->probeReqWscIeInfo.UUID_E.uuid;
 				lim_update_pbc_session_entry(mac_ctx,
-					mac_hdr->sa,
-					probe_req.probeReqWscIeInfo.UUID_E.uuid,
-					session);
+							     mac_hdr->sa,
+							     uuid,
+							     session);
 			}
 		}
 		ssid.length = session->ssId.length;
@@ -347,32 +355,31 @@ lim_process_probe_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 		 * Compare received SSID with current SSID. If they match,
 		 * reply with Probe Response
 		 */
-		if (probe_req.ssId.length) {
+		if (probe_req->ssId.length) {
 			if (!ssid.length)
 				goto multipleSSIDcheck;
 
 			if (!qdf_mem_cmp((uint8_t *) &ssid,
-						(uint8_t *) &(probe_req.ssId),
-						(uint8_t) (ssid.length + 1))) {
+						(uint8_t *)&probe_req->ssId,
+						(uint8_t)(ssid.length + 1))) {
 				lim_send_probe_rsp_mgmt_frame(mac_ctx,
 						mac_hdr->sa, &ssid,
 						session,
-						probe_req.p2pIePresent);
-				return;
+						probe_req->p2pIePresent);
+				goto free_and_exit;
 			} else if (session->opmode ==
 					QDF_P2P_GO_MODE) {
 				uint8_t direct_ssid[7] = "DIRECT-";
 				uint8_t direct_ssid_len = 7;
 
 				if (!qdf_mem_cmp((uint8_t *) &direct_ssid,
-					(uint8_t *) &(probe_req.ssId.ssId),
-					(uint8_t) (direct_ssid_len))) {
-					lim_send_probe_rsp_mgmt_frame(mac_ctx,
-							mac_hdr->sa,
-							&ssid,
-							session,
-							probe_req.p2pIePresent);
-					return;
+					(uint8_t *)&probe_req->ssId.ssId,
+					(uint8_t)(direct_ssid_len))) {
+					lim_send_probe_rsp_mgmt_frame(
+						mac_ctx, mac_hdr->sa, &ssid,
+						session,
+						probe_req->p2pIePresent);
+					goto free_and_exit;
 				}
 			} else {
 				pe_debug("Ignore ProbeReq frm with unmatch SSID received from");
@@ -392,12 +399,12 @@ lim_process_probe_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 				 * contains the broadcast SSID. So no need to
 				 * send the probe resp
 				 */
-				return;
+				goto free_and_exit;
 			lim_send_probe_rsp_mgmt_frame(mac_ctx, mac_hdr->sa,
 					&ssid,
 					session,
-					probe_req.p2pIePresent);
-			return;
+					probe_req->p2pIePresent);
+			goto free_and_exit;
 		}
 multipleSSIDcheck:
 		pe_debug("Ignore ProbeReq frm with unmatch SSID rcved from");
@@ -407,6 +414,9 @@ multipleSSIDcheck:
 		pe_debug("Ignoring Probe Request frame received from");
 		lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGD);
 	}
+
+free_and_exit:
+	qdf_mem_free(probe_req);
 	return;
 }
 

@@ -141,8 +141,8 @@ static bool hdd_is_ndp_allowed(struct hdd_context *hdd_ctx)
 			break;
 		case QDF_P2P_CLIENT_MODE:
 			sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-			if (hdd_conn_is_connected(sta_ctx) ||
-			    hdd_is_connecting(sta_ctx)) {
+			if (hdd_cm_is_vdev_associated(adapter) ||
+			    hdd_cm_is_connecting(adapter)) {
 				hdd_adapter_dev_put_debug(adapter, dbgid);
 				if (next_adapter)
 					hdd_adapter_dev_put_debug(next_adapter,
@@ -181,8 +181,8 @@ static bool hdd_is_ndp_allowed(struct hdd_context *hdd_ctx)
 			break;
 		case QDF_P2P_CLIENT_MODE:
 			sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-			if (hdd_conn_is_connected(sta_ctx) ||
-			    hdd_is_connecting(sta_ctx)) {
+			if (hdd_cm_is_vdev_associated(adapter) ||
+			    hdd_cm_is_connecting(adapter)) {
 				hdd_adapter_dev_put_debug(adapter, dbgid);
 				if (next_adapter)
 					hdd_adapter_dev_put_debug(next_adapter,
@@ -203,12 +203,12 @@ static bool hdd_is_ndp_allowed(struct hdd_context *hdd_ctx)
 /**
  * hdd_ndi_start_bss() - Start BSS on NAN data interface
  * @adapter: adapter context
- * @operating_channel: channel on which the BSS to be started
+ * @oper_freq: freq on which the BSS to be started
  *
  * Return: 0 on success, error value on failure
  */
 static int hdd_ndi_start_bss(struct hdd_adapter *adapter,
-				uint8_t operating_channel)
+			     qdf_freq_t oper_freq)
 {
 	QDF_STATUS status;
 	uint32_t roam_id;
@@ -217,7 +217,6 @@ static int hdd_ndi_start_bss(struct hdd_adapter *adapter,
 	uint8_t wmm_mode = 0;
 	struct hdd_context *hdd_ctx;
 	uint8_t value = 0;
-	uint32_t oper_freq;
 
 	hdd_enter();
 
@@ -245,12 +244,11 @@ static int hdd_ndi_start_bss(struct hdd_adapter *adapter,
 
 	roam_profile->csrPersona = adapter->device_mode;
 
-	if (!operating_channel)
-		operating_channel = NAN_SOCIAL_CHANNEL_2_4GHZ;
-	oper_freq = wlan_reg_chan_to_freq(hdd_ctx->pdev, operating_channel);
+	if (!oper_freq)
+		oper_freq = NAN_SOCIAL_FREQ_2_4GHZ;
 
 	roam_profile->ChannelInfo.numOfChannels = 1;
-	roam_profile->ChannelInfo.freq_list = &oper_freq;
+	roam_profile->ChannelInfo.freq_list = (uint32_t *)&oper_freq;
 
 	roam_profile->SSIDs.numOfSSIDs = 1;
 	roam_profile->SSIDs.SSIDList->SSID.length = 0;
@@ -625,7 +623,7 @@ int hdd_ndi_start(char *iface_name, uint16_t transaction_id)
 {
 	int ret;
 	QDF_STATUS status;
-	uint8_t op_channel;
+	qdf_freq_t op_freq;
 	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	struct wlan_objmgr_vdev *vdev;
@@ -674,11 +672,11 @@ int hdd_ndi_start(char *iface_name, uint16_t transaction_id)
 	 */
 
 	if (hdd_is_5g_supported(hdd_ctx))
-		op_channel = NAN_SOCIAL_CHANNEL_5GHZ_LOWER_BAND;
+		op_freq = NAN_SOCIAL_FREQ_5GHZ_LOWER_BAND;
 	else
-		op_channel = NAN_SOCIAL_CHANNEL_2_4GHZ;
+		op_freq = NAN_SOCIAL_FREQ_2_4GHZ;
 
-	if (hdd_ndi_start_bss(adapter, op_channel)) {
+	if (hdd_ndi_start_bss(adapter, op_freq)) {
 		hdd_err("NDI start bss failed");
 		ret = -EFAULT;
 		goto err_handler;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -452,7 +452,6 @@ lim_tear_down_link_with_ap(struct mac_context *mac, uint8_t sessionId,
 void lim_handle_heart_beat_failure(struct mac_context *mac_ctx,
 				   struct pe_session *session)
 {
-	uint8_t curr_chan;
 	tpSirAddie scan_ie = NULL;
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
@@ -494,9 +493,8 @@ void lim_handle_heart_beat_failure(struct mac_context *mac_ctx,
 		 * DFS channel then only send the probe request otherwise tear
 		 * down the link
 		 */
-		curr_chan = wlan_reg_freq_to_chan(
-					mac_ctx->pdev, session->curr_op_freq);
-		if (!lim_isconnected_on_dfs_channel(mac_ctx, curr_chan)) {
+		if (!lim_isconnected_on_dfs_freq(mac_ctx,
+						 session->curr_op_freq)) {
 			/* Detected continuous Beacon Misses */
 			session->LimHBFailureStatus = true;
 

@@ -51,6 +51,7 @@
 #include "lim_session.h"
 #include "wma_types.h"
 #include "wlan_crypto_global_api.h"
+#include "wlan_crypto_def_i.h"
 
 #include "rrm_api.h"
 
@@ -1517,13 +1518,12 @@ lim_detect_change_in_ap_capabilities(struct mac_context *mac,
 				     struct pe_session *pe_session)
 {
 	uint8_t len;
-	struct ap_new_caps apNewCaps;
 	uint32_t new_chan_freq;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	bool security_caps_matched = true;
+	uint16_t ap_cap;
 
-	apNewCaps.capabilityInfo =
-		lim_get_u16((uint8_t *) &pBeacon->capabilityInfo);
+	ap_cap = lim_get_u16((uint8_t *) &pBeacon->capabilityInfo);
 	new_chan_freq = pBeacon->chan_freq;
 
 	security_caps_matched = lim_enc_type_matched(mac, pBeacon,
@@ -1531,11 +1531,11 @@ lim_detect_change_in_ap_capabilities(struct mac_context *mac,
 	if ((false == pe_session->limSentCapsChangeNtf) &&
 	    (((!lim_is_null_ssid(&pBeacon->ssId)) &&
 	       lim_cmp_ssid(&pBeacon->ssId, pe_session)) ||
-	     ((SIR_MAC_GET_ESS(apNewCaps.capabilityInfo) !=
+	     ((SIR_MAC_GET_ESS(ap_cap) !=
 	       SIR_MAC_GET_ESS(pe_session->limCurrentBssCaps)) ||
-	      (SIR_MAC_GET_PRIVACY(apNewCaps.capabilityInfo) !=
+	      (SIR_MAC_GET_PRIVACY(ap_cap) !=
 	       SIR_MAC_GET_PRIVACY(pe_session->limCurrentBssCaps)) ||
-	      (SIR_MAC_GET_QOS(apNewCaps.capabilityInfo) !=
+	      (SIR_MAC_GET_QOS(ap_cap) !=
 	       SIR_MAC_GET_QOS(pe_session->limCurrentBssCaps)) ||
 	      ((new_chan_freq != pe_session->curr_op_freq) &&
 		(new_chan_freq != 0)) ||
@@ -1573,8 +1573,6 @@ lim_detect_change_in_ap_capabilities(struct mac_context *mac,
 		len = sizeof(tSirMacCapabilityInfo) + sizeof(tSirMacAddr) + sizeof(uint8_t) + 3 * sizeof(uint8_t) + /* reserved fields */
 		      pBeacon->ssId.length + 1;
 
-		qdf_mem_copy(apNewCaps.bssId.bytes,
-			     pe_session->bssId, QDF_MAC_ADDR_SIZE);
 		if (new_chan_freq != pe_session->curr_op_freq) {
 			pe_err("Channel freq Change from %d --> %d Ignoring beacon!",
 			       pe_session->curr_op_freq, new_chan_freq);
@@ -1591,21 +1589,22 @@ lim_detect_change_in_ap_capabilities(struct mac_context *mac,
 		 * disconnect from the AP. The following check makes sure that we can
 		 * connect to such APs
 		 */
-		else if ((SIR_MAC_GET_PRIVACY(apNewCaps.capabilityInfo) == 0) &&
+		else if ((SIR_MAC_GET_PRIVACY(ap_cap) == 0) &&
 			 (pBeacon->rsnPresent || pBeacon->wpaPresent)) {
 			pe_err("BSS Caps (Privacy) bit 0 in beacon, but WPA or RSN IE present, Ignore Beacon!");
 			return;
 		}
-		qdf_mem_copy((uint8_t *) &apNewCaps.ssId,
-			     (uint8_t *) &pBeacon->ssId,
-			     pBeacon->ssId.length + 1);
 
 		pe_session->fIgnoreCapsChange = false;
 		pe_session->fWaitForProbeRsp = false;
 		pe_session->limSentCapsChangeNtf = true;
-		lim_send_sme_wm_status_change_ntf(mac, eSIR_SME_AP_CAPS_CHANGED,
-						  (uint32_t *) &apNewCaps,
-						  len, pe_session->smeSessionId);
+		pe_err("Disconnect as cap mismatch!");
+		lim_send_deauth_mgmt_frame(mac, REASON_UNSPEC_FAILURE,
+					   pe_session->bssId, pe_session,
+					   false);
+		lim_tear_down_link_with_ap(mac, pe_session->peSessionId,
+					   REASON_UNSPEC_FAILURE,
+					   eLIM_HOST_DISASSOC);
 	} else if (true == pe_session->fWaitForProbeRsp) {
 		/* Only for probe response frames and matching capabilities the control
 		 * will come here. If beacon is with broadcast ssid then fWaitForProbeRsp
@@ -1644,7 +1643,7 @@ QDF_STATUS lim_update_short_slot(struct mac_context *mac,
 				    struct pe_session *pe_session)
 {
 
-	struct ap_new_caps apNewCaps;
+	uint16_t ap_cap;
 	uint32_t nShortSlot;
 	uint32_t phyMode;
 
@@ -1658,8 +1657,7 @@ QDF_STATUS lim_update_short_slot(struct mac_context *mac,
 	    || (phyMode == WNI_CFG_PHY_MODE_11B))
 		return QDF_STATUS_SUCCESS;
 
-	apNewCaps.capabilityInfo =
-		lim_get_u16((uint8_t *) &pBeacon->capabilityInfo);
+	ap_cap = lim_get_u16((uint8_t *) &pBeacon->capabilityInfo);
 
 	/*  Earlier implementation: determine the appropriate short slot mode based on AP advertised modes */
 	/* when erp is present, apply short slot always unless, prot=on  && shortSlot=off */
@@ -1680,7 +1678,7 @@ QDF_STATUS lim_update_short_slot(struct mac_context *mac,
 	   Case7        0                                   0                       1                       1
 	   Case8        0                                   0                       0                       0
 	 */
-	nShortSlot = SIR_MAC_GET_SHORT_SLOT_TIME(apNewCaps.capabilityInfo);
+	nShortSlot = SIR_MAC_GET_SHORT_SLOT_TIME(ap_cap);
 
 	if (nShortSlot != pe_session->shortSlotTimeSupported) {
 		/* Short slot time capability of AP has changed. Adopt to it. */
@@ -1749,6 +1747,7 @@ static void pe_set_rmf_caps(struct mac_context *mac_ctx,
 	tDot11fReAssocRequest *assoc_req;
 	uint32_t status;
 	tSirMacRsnInfo rsn_ie;
+	uint32_t value = WPA_TYPE_OUI;
 
 	assoc_body = (uint8_t *)roam_synch + roam_synch->reassoc_req_offset +
 			sizeof(tSirMacMgmtHdr);
@@ -1773,16 +1772,31 @@ static void pe_set_rmf_caps(struct mac_context *mac_ctx,
 			 status, len);
 	}
 	ft_session->limRmfEnabled = false;
-	if (!assoc_req->RSNOpaque.present) {
+	if (!assoc_req->RSNOpaque.present && !assoc_req->WPAOpaque.present) {
 		qdf_mem_free(assoc_req);
 		return;
 	}
-	rsn_ie.info[0] = WLAN_ELEMID_RSN;
-	rsn_ie.info[1] = assoc_req->RSNOpaque.num_data;
 
-	rsn_ie.length = assoc_req->RSNOpaque.num_data + 2;
-	qdf_mem_copy(&rsn_ie.info[2], assoc_req->RSNOpaque.data,
-		     assoc_req->RSNOpaque.num_data);
+	if (assoc_req->RSNOpaque.present) {
+		rsn_ie.info[0] = WLAN_ELEMID_RSN;
+		rsn_ie.info[1] = assoc_req->RSNOpaque.num_data;
+
+		rsn_ie.length = assoc_req->RSNOpaque.num_data + 2;
+		qdf_mem_copy(&rsn_ie.info[2], assoc_req->RSNOpaque.data,
+			     assoc_req->RSNOpaque.num_data);
+	} else if (assoc_req->WPAOpaque.present) {
+		rsn_ie.info[0] = WLAN_ELEMID_VENDOR;
+		rsn_ie.info[1] = WLAN_OUI_SIZE + assoc_req->WPAOpaque.num_data;
+
+		rsn_ie.length = WLAN_OUI_SIZE +
+				assoc_req->WPAOpaque.num_data + 2;
+
+		qdf_mem_copy(&rsn_ie.info[2], (uint8_t *)&value, WLAN_OUI_SIZE);
+		qdf_mem_copy(&rsn_ie.info[WLAN_OUI_SIZE + 2],
+			     assoc_req->WPAOpaque.data,
+			     assoc_req->WPAOpaque.num_data);
+	}
+
 	qdf_mem_free(assoc_req);
 	wlan_set_vdev_crypto_prarams_from_ie(ft_session->vdev, rsn_ie.info,
 					     rsn_ie.length);
@@ -2092,6 +2106,7 @@ lim_roam_fill_bss_descr(struct mac_context *mac,
 				sizeof(bss_desc_ptr->length) + ie_len);
 
 	bss_desc_ptr->fProbeRsp = !roam_synch_ind_ptr->isBeacon;
+	bss_desc_ptr->rssi = roam_synch_ind_ptr->rssi;
 	/* Copy Timestamp */
 	bss_desc_ptr->scansystimensec = qdf_get_monotonic_boottime_ns();
 	if (parsed_frm_ptr->he_op.oper_info_6g_present) {
@@ -2128,6 +2143,11 @@ lim_roam_fill_bss_descr(struct mac_context *mac,
 	qdf_mem_copy((uint8_t *) &bss_desc_ptr->bssId,
 		     (uint8_t *)roam_synch_ind_ptr->bssid.bytes,
 		     sizeof(tSirMacAddr));
+
+	qdf_mem_copy((uint8_t *)&bss_desc_ptr->seq_ctrl,
+		     (uint8_t *)&mac_hdr->seqControl,
+		     sizeof(tSirMacSeqCtl));
+
 	bss_desc_ptr->received_time =
 		      (uint64_t)qdf_mc_timer_get_system_time();
 	if (parsed_frm_ptr->mdiePresent) {
@@ -2531,7 +2551,7 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 
 
 	if (roam_sync_ind_ptr->authStatus ==
-	    CSR_ROAM_AUTH_STATUS_AUTHENTICATED) {
+	    ROAM_AUTH_STATUS_AUTHENTICATED) {
 		ft_session_ptr->is_key_installed = true;
 		curr_sta_ds->is_key_installed = true;
 	}

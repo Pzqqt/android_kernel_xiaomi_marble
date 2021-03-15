@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -128,12 +128,18 @@ enum hdd_dot11_mode {
 			CFG_VALUE_OR_DEFAULT, \
 			"dot11 mode")
 
+#ifdef QCA_WIFI_EMULATION
+#define CFG_INTERFACE_CHANGE_WAIT_DEFAULT	300000
+#else
+#define CFG_INTERFACE_CHANGE_WAIT_DEFAULT	10000
+#endif
+
 /*
  * <ini>
  * gInterfaceChangeWait - Interface change wait
  * @Min: 0,
  * @Max: 500000
- * @Default: 10000
+ * @Default: 10000 (300000 for emulation)
  *
  * Timer waiting for interface up from the upper layer. If
  * this timer expires all the cds modules shall be closed.
@@ -151,11 +157,11 @@ enum hdd_dot11_mode {
 			"gInterfaceChangeWait", \
 			0, \
 			500000, \
-			10000, \
+			CFG_INTERFACE_CHANGE_WAIT_DEFAULT, \
 			CFG_VALUE_OR_DEFAULT, \
 			"Interface change wait")
 
-#ifdef QCA_WIFI_NAPIER_EMULATION
+#ifdef QCA_WIFI_EMULATION
 #define CFG_TIMER_MULTIPLIER_DEFAULT	100
 #else
 #define CFG_TIMER_MULTIPLIER_DEFAULT	1
@@ -770,6 +776,26 @@ struct dhcp_server {
 	"enable_mac_provision", \
 	0, \
 	"enable/disable MAC address provisioning feature")
+
+/*
+ * </ini>
+ * read_mac_addr_from_mac_file - Use/ignore MAC address from mac cfg file
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used whether to configure MAC address from the cfg file or not
+ *
+ * Supported Feature: STA/SAP/P2P
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_READ_MAC_ADDR_FROM_MAC_FILE CFG_INI_BOOL( \
+	"read_mac_addr_from_mac_file", \
+	0, \
+	"Use/ignore MAC address from cfg file")
 
 /*
  * <ini>
@@ -1624,33 +1650,9 @@ struct dhcp_server {
 			CFG_VALUE_OR_DEFAULT, \
 			"Station stats cache expiry")
 
-/*
- * <ini>
- * send_ll_and_get_station_stats_over_qmi - Flag to send clubbed ll_stats and
- *                                          get_station request over qmi
- *
- * @Min: 0
- * @Max: 1
- * Default: 0
- *
- * This ini param is used to send the unified ll_stats and get_station request
- * over qmi.
- *
- * Supported Feature: STA
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_SEND_LL_AND_GET_STATION_STATS_OVER_QMI CFG_INI_BOOL( \
-			"send_ll_and_get_station_stats_over_qmi", \
-			0, \
-			"send ll and get station stats over qmi")
-
 #define CFG_WLAN_CLUB_GET_STA_IN_LL_STA_REQ \
 	 CFG(CFG_CLUB_LL_STA_AND_GET_STATION) \
-	 CFG(CFG_STA_STATS_CACHE_EXPIRY) \
-	 CFG(CFG_SEND_LL_AND_GET_STATION_STATS_OVER_QMI)
+	 CFG(CFG_STA_STATS_CACHE_EXPIRY)
 #else
 #define CFG_WLAN_CLUB_GET_STA_IN_LL_STA_REQ
 #endif /* FEATURE_CLUB_LL_STATS_AND_GET_STATION */
@@ -1808,6 +1810,7 @@ enum host_log_level {
 	CFG(CFG_NB_COMMANDS_RATE_LIMIT) \
 	CFG(CFG_HDD_DOT11_MODE) \
 	CFG(CFG_ENABLE_DISABLE_CHANNEL) \
+	CFG(CFG_READ_MAC_ADDR_FROM_MAC_FILE) \
 	CFG(CFG_SAR_CONVERSION) \
 	CFG(CFG_WOW_DISABLE) \
 	CFG(CFG_ENABLE_HOST_MODULE_LOG_LEVEL) \

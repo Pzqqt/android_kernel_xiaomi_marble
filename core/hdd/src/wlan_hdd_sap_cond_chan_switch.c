@@ -181,6 +181,11 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 	mac_handle_t mac_handle;
 	bool val;
 
+	if (!policy_mgr_is_hw_dbs_capable(hdd_ctx->psoc)) {
+		hdd_debug("Pre CAC is not supported on non-dbs platforms");
+		return -EINVAL;
+	}
+
 	pre_cac_adapter = hdd_get_adapter_by_iface_name(hdd_ctx,
 							SAP_PRE_CAC_IFNAME);
 	if (pre_cac_adapter) {
@@ -197,6 +202,11 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 	ap_adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
 	if (!ap_adapter) {
 		hdd_err("unable to get SAP adapter");
+		return -EINVAL;
+	}
+
+	if (qdf_atomic_read(&ap_adapter->ch_switch_in_progress)) {
+		hdd_err("pre cac not allowed during CSA");
 		return -EINVAL;
 	}
 

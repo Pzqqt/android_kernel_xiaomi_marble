@@ -25,6 +25,7 @@
 #include "wlan_blm_ucfg_api.h"
 #include "hdd_dp_cfg.h"
 #include <cdp_txrx_misc.h>
+#include "wlan_cm_roam_ucfg_api.h"
 
 void hdd_nud_set_gateway_addr(struct hdd_adapter *adapter,
 			      struct qdf_mac_addr gw_mac_addr)
@@ -234,7 +235,12 @@ hdd_handle_nud_fail_sta(struct hdd_context *hdd_ctx,
 {
 	struct reject_ap_info ap_info;
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+#ifdef FEATURE_CM_ENABLE
+	struct qdf_mac_addr bssid;
+#endif
 
+	/* This is temp ifdef will be removed in near future */
+#ifndef FEATURE_CM_ENABLE
 	qdf_mutex_acquire(&adapter->disconnection_status_lock);
 	if (adapter->disconnection_in_progress) {
 		qdf_mutex_release(&adapter->disconnection_status_lock);
@@ -242,7 +248,7 @@ hdd_handle_nud_fail_sta(struct hdd_context *hdd_ctx,
 		return;
 	}
 	qdf_mutex_release(&adapter->disconnection_status_lock);
-
+#endif
 	if (hdd_is_roaming_in_progress(hdd_ctx)) {
 		hdd_debug("Roaming already in progress, cannot trigger roam.");
 		return;
@@ -257,9 +263,17 @@ hdd_handle_nud_fail_sta(struct hdd_context *hdd_ctx,
 	ap_info.source = ADDED_BY_DRIVER;
 	ucfg_blm_add_bssid_to_reject_list(hdd_ctx->pdev, &ap_info);
 
-	if (roaming_offload_enabled(hdd_ctx))
+	if (roaming_offload_enabled(hdd_ctx)) {
+#ifndef FEATURE_CM_ENABLE
 		sme_roam_invoke_nud_fail(hdd_ctx->mac_handle,
 					 adapter->vdev_id);
+#else
+		qdf_zero_macaddr(&bssid);
+		ucfg_wlan_cm_roam_invoke(hdd_ctx->pdev,
+					 adapter->vdev_id,
+					 &bssid, 0);
+#endif
+	}
 }
 
 static void

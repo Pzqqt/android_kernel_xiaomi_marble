@@ -581,6 +581,8 @@ struct pe_session {
 	uint16_t prot_status_code;
 	tSirResultCodes result_code;
 	uint32_t dfs_regdomain;
+	/* AP power type */
+	uint8_t ap_power_type;
 };
 
 /*-------------------------------------------------------------------------

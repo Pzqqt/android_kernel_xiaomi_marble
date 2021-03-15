@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -203,6 +203,21 @@ void hdd_softap_tx_resume_cb(void *adapter_context, bool tx_resume)
 {
 }
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
+
+/**
+ * hdd_ipa_update_rx_mcbc_stats() - Update broadcast multicast stats
+ * @adapter: pointer to hdd adapter
+ * @skb: pointer to netbuf
+ *
+ * Check if multicast or broadcast pkt was received and increment
+ * the stats accordingly. This is required only if IPA is enabled
+ * as in case of regular Rx path mcast/bcast stats are processed
+ * in the dp layer.
+ *
+ * Return: None
+ */
+void hdd_ipa_update_rx_mcbc_stats(struct hdd_adapter *adapter,
+				  struct sk_buff *skb);
 
 #ifdef SAP_DHCP_FW_IND
 /**

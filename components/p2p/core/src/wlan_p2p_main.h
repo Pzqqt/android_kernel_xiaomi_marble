@@ -199,11 +199,13 @@ enum p2p_connection_status {
  * @p2p_device_addr_admin:          enable/disable to derive the P2P
  *                                  MAC address from the primary MAC address
  * @skip_dfs_channel_p2p_search:    skip DFS Channel in case of P2P Search
+ * @is_random_seq_num_enabled:      Flag to generate random sequence numbers
  */
 struct p2p_param {
 	uint32_t go_keepalive_period;
 	uint32_t go_link_monitor_period;
 	bool p2p_device_addr_admin;
+	bool is_random_seq_num_enabled;
 };
 
 /**
@@ -319,6 +321,8 @@ struct p2p_set_mac_filter_req {
  * @random_mac_lock:    lock for random_mac list
  * @random_mac:         active random mac filter lists
  * @pending_req:        pending set mac filter request.
+ * @prev_action_frame_addr2: Address2 field (TA) of the last transmitted
+ *                           action frame.
  */
 struct p2p_vdev_priv_obj {
 	struct   wlan_objmgr_vdev *vdev;
@@ -330,6 +334,7 @@ struct p2p_vdev_priv_obj {
 	qdf_spinlock_t random_mac_lock;
 	struct action_frame_random_mac random_mac[MAX_RANDOM_MAC_ADDRS];
 	struct p2p_set_mac_filter_req pending_req;
+	uint8_t prev_action_frame_addr2[QDF_MAC_ADDR_SIZE];
 };
 
 /**

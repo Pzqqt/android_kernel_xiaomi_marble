@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019,2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -19,6 +19,7 @@
 #ifndef CSR_HOST_SCAN_ROAM_H
 #define CSR_HOST_SCAN_ROAM_H
 
+#ifndef FEATURE_CM_ENABLE
 #ifdef WLAN_FEATURE_HOST_ROAM
 /**
  * csr_roam_issue_reassociate() - Issue Reassociate
@@ -263,4 +264,5 @@ csr_neighbor_roam_candidate_found_ind_hdlr(struct mac_context *mac,
 	return QDF_STATUS_E_NOSUPPORT;
 }
 #endif /* WLAN_FEATURE_HOST_ROAM */
+#endif /* FEATURE_CM_ENABLE */
 #endif /* CSR_HOST_SCAN_ROAM_H */

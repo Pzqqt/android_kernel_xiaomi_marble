@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -267,6 +267,7 @@ struct hdd_config {
 	uint32_t sta_stats_cache_expiry_time;
 #endif
 	int icmp_req_to_fw_mark_interval;
+	bool read_mac_addr_from_mac_file;
 };
 
 /**
@@ -401,7 +402,6 @@ void hdd_restore_all_ps(struct hdd_context *hdd_ctx);
  * gEnableBmps=0
  * gRuntimePM=0
  * gWlanAutoShutdown = 0
- * gEnableSuspend=0
  * gEnableWoW=0
  *
  * Return: None

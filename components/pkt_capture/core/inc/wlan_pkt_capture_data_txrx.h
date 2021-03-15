@@ -29,7 +29,7 @@
 
 #include "cdp_txrx_cmn_struct.h"
 #include <qdf_nbuf.h>
-#ifndef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+#ifndef WLAN_FEATURE_PKT_CAPTURE_V2
 #include <htt_internal.h>
 #endif
 
@@ -75,7 +75,7 @@ void pkt_capture_datapkt_process(
 			uint8_t *bssid, void *pdev,
 			uint8_t tx_retry_cnt);
 
-#ifndef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+#ifndef WLAN_FEATURE_PKT_CAPTURE_V2
 /**
  * pkt_capture_msdu_process_pkts() - process data rx pkts
  * @bssid: bssid
@@ -89,13 +89,13 @@ void pkt_capture_msdu_process_pkts(
 			uint8_t *bssid,
 			qdf_nbuf_t head_msdu,
 			uint8_t vdev_id,
-			htt_pdev_handle pdev);
+			htt_pdev_handle pdev, uint16_t status);
 #else
 void pkt_capture_msdu_process_pkts(
 			uint8_t *bssid,
 			qdf_nbuf_t head_msdu,
 			uint8_t vdev_id,
-			void *psoc);
+			void *psoc, uint16_t status);
 #endif
 
 /**
@@ -115,7 +115,7 @@ void pkt_capture_rx_in_order_drop_offload_pkt(qdf_nbuf_t head_msdu);
  */
 bool pkt_capture_rx_in_order_offloaded_pkt(qdf_nbuf_t rx_ind_msg);
 
-#ifndef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+#ifndef WLAN_FEATURE_PKT_CAPTURE_V2
 /**
  * pkt_capture_offload_deliver_indication_handler() - Handle offload data pkts
  * @msg: offload netbuf msg

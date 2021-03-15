@@ -1034,17 +1034,20 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 		} else if (cc_switch_mode ==
 			   QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL) {
 			status = policy_mgr_get_sap_mandatory_channel(
-					mac_ctx->psoc,
+					mac_ctx->psoc, sap_ch_freq,
 					&intf_ch_freq);
 			if (QDF_IS_STATUS_ERROR(status))
-				sme_err("no mandatory channel");
+				sme_err("no mandatory channels (%d, %d)",
+					sap_ch_freq, intf_ch_freq);
 		}
 	} else if ((intf_ch_freq == sap_ch_freq) && (cc_switch_mode ==
 				QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL)) {
-		if (WLAN_REG_IS_24GHZ_CH_FREQ(intf_ch_freq)) {
+		if (WLAN_REG_IS_24GHZ_CH_FREQ(intf_ch_freq) ||
+		    WLAN_REG_IS_6GHZ_CHAN_FREQ(sap_ch_freq)) {
 			status =
 				policy_mgr_get_sap_mandatory_channel(
-					mac_ctx->psoc, &intf_ch_freq);
+					mac_ctx->psoc, sap_ch_freq,
+					&intf_ch_freq);
 			if (QDF_IS_STATUS_ERROR(status))
 				sme_err("no mandatory channel");
 		}
@@ -1053,7 +1056,8 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 	if (intf_ch_freq == sap_ch_freq)
 		intf_ch_freq = 0;
 
-	sme_debug("##Concurrent Channels %s Interfering",
+	sme_debug("##Concurrent Channels (%d, %d) %s Interfering", sap_ch_freq,
+		  intf_ch_freq,
 		  intf_ch_freq == 0 ? "Not" : "Are");
 
 	return intf_ch_freq;
@@ -1140,40 +1144,6 @@ bool csr_is_conn_state_disconnected(struct mac_context *mac, uint8_t vdev_id)
 }
 #endif
 
-/**
- * csr_is_valid_mc_concurrent_session() - To check concurren session is valid
- * @mac_ctx: pointer to mac context
- * @session_id: session id
- * @bss_descr: bss description
- *
- * This function validates the concurrent session
- *
- * Return: true or false
- */
-bool csr_is_valid_mc_concurrent_session(struct mac_context *mac_ctx,
-		uint32_t session_id,
-		struct bss_description *bss_descr)
-{
-	struct csr_roam_session *pSession = NULL;
-	enum QDF_OPMODE opmode;
-
-	/* Check for MCC support */
-	if (!mac_ctx->roam.configParam.fenableMCCMode)
-		return false;
-	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id))
-		return false;
-	/* Validate BeaconInterval */
-	pSession = CSR_GET_SESSION(mac_ctx, session_id);
-	opmode = wlan_get_opmode_from_vdev_id(mac_ctx->pdev, session_id);
-	if (QDF_STATUS_SUCCESS == csr_validate_mcc_beacon_interval(
-				mac_ctx,
-				bss_descr->chan_freq,
-				&bss_descr->beaconInterval, session_id,
-				opmode))
-		return true;
-	return false;
-}
-
 bool csr_is_infra_bss_desc(struct bss_description *pSirBssDesc)
 {
 	tSirMacCapabilityInfo dot11Caps = csr_get_bss_capabilities(pSirBssDesc);
@@ -1206,6 +1176,7 @@ bool csr_is_wmm_supported(struct mac_context *mac)
 		return true;
 }
 
+#ifndef FEATURE_CM_ENABLE
 /* pIes is the IEs for pSirBssDesc2 */
 bool csr_is_ssid_equal(struct mac_context *mac,
 		       struct bss_description *pSirBssDesc1,
@@ -1253,7 +1224,7 @@ bool csr_is_ssid_equal(struct mac_context *mac,
 
 	return fEqual;
 }
-
+#endif
 /* pIes can be passed in as NULL if the caller doesn't have one prepared */
 static bool csr_is_bss_description_wme(struct mac_context *mac,
 				       struct bss_description *pSirBssDesc,
@@ -2002,21 +1973,7 @@ eCsrPhyMode csr_convert_from_reg_phy_mode(enum reg_phymode phymode)
 	}
 }
 
-uint32_t csr_get11h_power_constraint(struct mac_context *mac_ctx,
-				     tDot11fIEPowerConstraints *constraints)
-{
-	uint32_t localPowerConstraint = 0;
-
-	/* check if .11h support is enabled, if not,
-	 * the power constraint is 0.
-	 */
-	if (mac_ctx->mlme_cfg->gen.enabled_11h &&
-	    constraints->present)
-		localPowerConstraint = constraints->localPowerConstraints;
-
-	return localPowerConstraint;
-}
-
+#ifndef FEATURE_CM_ENABLE
 bool csr_is_profile_wpa(struct csr_roam_profile *pProfile)
 {
 	bool fWpaProfile = false;
@@ -2116,387 +2073,7 @@ bool csr_is_profile_rsn(struct csr_roam_profile *pProfile)
 	}
 	return fRSNProfile;
 }
-
-/**
- * csr_update_mcc_p2p_beacon_interval() - update p2p beacon interval
- * @mac_ctx: pointer to mac context
- *
- * This function is to update the mcc p2p beacon interval
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS csr_update_mcc_p2p_beacon_interval(struct mac_context *mac_ctx)
-{
-	uint32_t session_id = 0;
-	struct csr_roam_session *roam_session;
-
-	/* If MCC is not supported just break and return SUCCESS */
-	if (!mac_ctx->roam.configParam.fenableMCCMode)
-		return QDF_STATUS_E_FAILURE;
-
-	for (session_id = 0; session_id < WLAN_MAX_VDEVS; session_id++) {
-		/*
-		 * If GO in MCC support different beacon interval,
-		 * change the BI of the P2P-GO
-		 */
-		roam_session = &mac_ctx->roam.roamSession[session_id];
-		if (roam_session->bssParams.bssPersona != QDF_P2P_GO_MODE)
-			continue;
-		/*
-		 * Handle different BI scneario based on the
-		 * configuration set.If Config is set to 0x02 then
-		 * Disconnect all the P2P clients associated. If config
-		 * is set to 0x04 then update the BI without
-		 * disconnecting all the clients
-		 */
-		if ((mac_ctx->roam.configParam.fAllowMCCGODiffBI == 0x04)
-				&& (roam_session->bssParams.
-					updatebeaconInterval)) {
-			return csr_send_chng_mcc_beacon_interval(mac_ctx,
-					session_id);
-		} else if (roam_session->bssParams.updatebeaconInterval) {
-			/*
-			 * If the configuration of fAllowMCCGODiffBI is set to
-			 * other than 0x04
-			 */
-			return csr_roam_call_callback(mac_ctx,
-					session_id,
-					NULL, 0,
-					eCSR_ROAM_DISCONNECT_ALL_P2P_CLIENTS,
-					eCSR_ROAM_RESULT_NONE);
-		}
-	}
-	return QDF_STATUS_E_FAILURE;
-}
-
-static uint16_t csr_calculate_mcc_beacon_interval(struct mac_context *mac,
-						  uint16_t sta_bi,
-						  uint16_t go_gbi)
-{
-	uint8_t num_beacons = 0;
-	uint8_t is_multiple = 0;
-	uint16_t go_cbi = 0;
-	uint16_t go_fbi = 0;
-	uint16_t sta_cbi = 0;
-
-	/* If GO's given beacon Interval is less than 100 */
-	if (go_gbi < 100)
-		go_cbi = 100;
-	/* if GO's given beacon Interval is greater than or equal to 100 */
-	else
-		go_cbi = 100 + (go_gbi % 100);
-
-	if (sta_bi == 0) {
-		/* There is possibility to receive zero as value.
-		 * Which will cause divide by zero. Hence initialise with 100
-		 */
-		sta_bi = 100;
-		sme_warn("sta_bi 2nd parameter is zero, initialize to %d",
-			sta_bi);
-	}
-	/* check, if either one is multiple of another */
-	if (sta_bi > go_cbi)
-		is_multiple = !(sta_bi % go_cbi);
-	else
-		is_multiple = !(go_cbi % sta_bi);
-
-	/* if it is multiple, then accept GO's beacon interval
-	 * range [100,199] as it is
-	 */
-	if (is_multiple)
-		return go_cbi;
-
-	/* else , if it is not multiple, then then check for number of beacons
-	 * to be inserted based on sta BI
-	 */
-	num_beacons = sta_bi / 100;
-	if (num_beacons) {
-		/* GO's final beacon interval will be aligned to sta beacon
-		 * interval, but in the range of [100, 199].
-		 */
-		sta_cbi = sta_bi / num_beacons;
-		go_fbi = sta_cbi;
-	} else
-		/* if STA beacon interval is less than 100, use GO's change
-		 * bacon interval instead of updating to STA's beacon interval.
-		 */
-		go_fbi = go_cbi;
-
-	return go_fbi;
-}
-
-/**
- * csr_validate_p2pcli_bcn_intrvl() - to validate p2pcli beacon interval
- * @mac_ctx: pointer to mac context
- * @chnl_id: channel id variable
- * @bcn_interval: pointer to given beacon interval
- * @session_id: given session id
- * @status: fill the status in terms of QDF_STATUS to inform caller
- *
- * This API can provide the validation the beacon interval and re-calculate
- * in case concurrency
- *
- * Return: bool
- */
-static bool csr_validate_p2pcli_bcn_intrvl(struct mac_context *mac_ctx,
-		uint32_t ch_freq, uint16_t *bcn_interval, uint32_t session_id,
-		QDF_STATUS *status)
-{
-	struct csr_roam_session *roamsession;
-	enum QDF_OPMODE opmode;
-
-	opmode = wlan_get_opmode_from_vdev_id(mac_ctx->pdev, session_id);
-	roamsession = &mac_ctx->roam.roamSession[session_id];
-	if (opmode == QDF_STA_MODE) {
-		/* check for P2P client mode */
-		sme_debug("Ignore Beacon Interval Validation...");
-	} else if (opmode == QDF_P2P_GO_MODE) {
-		/* Check for P2P go scenario */
-		if (roamsession->bssParams.operation_chan_freq != ch_freq &&
-		    roamsession->bssParams.beaconInterval != *bcn_interval) {
-			sme_err("BcnIntrvl is diff can't connect to P2P_GO network");
-			*status = QDF_STATUS_E_FAILURE;
-			return true;
-		}
-	}
-	return false;
-}
-
-/**
- * csr_validate_p2pgo_bcn_intrvl() - to validate p2pgo beacon interval
- * @mac_ctx: pointer to mac context
- * @chnl_id: channel id variable
- * @bcn_interval: pointer to given beacon interval
- * @session_id: given session id
- * @status: fill the status in terms of QDF_STATUS to inform caller
- *
- * This API can provide the validation the beacon interval and re-calculate
- * in case concurrency
- *
- * Return: bool
- */
-static bool csr_validate_p2pgo_bcn_intrvl(struct mac_context *mac_ctx,
-		uint32_t ch_freq, uint16_t *bcn_interval,
-		uint32_t session_id, QDF_STATUS *status)
-{
-	struct csr_roam_session *roamsession;
-	struct csr_config *cfg_param;
-	tCsrRoamConnectedProfile *conn_profile;
-	uint16_t new_bcn_interval;
-	enum QDF_OPMODE opmode;
-
-	roamsession = &mac_ctx->roam.roamSession[session_id];
-	cfg_param = &mac_ctx->roam.configParam;
-	conn_profile = &roamsession->connectedProfile;
-	opmode = wlan_get_opmode_from_vdev_id(mac_ctx->pdev, session_id);
-	if (opmode == QDF_P2P_CLIENT_MODE || opmode == QDF_STA_MODE) {
-		/* check for P2P_client scenario */
-		if ((conn_profile->op_freq == 0) &&
-		    (conn_profile->beaconInterval == 0))
-			return false;
-
-		/* This is temp ifdef will be removed in near future */
-#ifdef FEATURE_CM_ENABLE
-		if (cm_is_vdevid_connected(mac_ctx->pdev, session_id) &&
-#else
-		if (csr_is_conn_state_connected_infra(mac_ctx, session_id) &&
 #endif
-		    conn_profile->op_freq != ch_freq &&
-		    conn_profile->beaconInterval != *bcn_interval) {
-			/*
-			 * Updated beaconInterval should be used only when
-			 * we are starting a new BSS not incase of
-			 * client or STA case
-			 */
-
-			/* Calculate beacon Interval for P2P-GO incase of MCC */
-			if (cfg_param->conc_custom_rule1 ||
-					cfg_param->conc_custom_rule2) {
-				new_bcn_interval = CSR_CUSTOM_CONC_GO_BI;
-			} else {
-				new_bcn_interval =
-					csr_calculate_mcc_beacon_interval(
-						mac_ctx,
-						conn_profile->beaconInterval,
-						*bcn_interval);
-			}
-			if (*bcn_interval != new_bcn_interval)
-				*bcn_interval = new_bcn_interval;
-			*status = QDF_STATUS_SUCCESS;
-			return true;
-		}
-	}
-	return false;
-}
-
-/**
- * csr_validate_sta_bcn_intrvl() - to validate sta beacon interval
- * @mac_ctx: pointer to mac context
- * @chnl_id: channel id variable
- * @bcn_interval: pointer to given beacon interval
- * @session_id: given session id
- * @status: fill the status in terms of QDF_STATUS to inform caller
- *
- * This API can provide the validation the beacon interval and re-calculate
- * in case concurrency
- *
- * Return: bool
- */
-static bool csr_validate_sta_bcn_intrvl(struct mac_context *mac_ctx,
-			uint32_t ch_freq, uint16_t *bcn_interval,
-			uint32_t session_id, QDF_STATUS *status)
-{
-	struct csr_roam_session *roamsession;
-	struct csr_config *cfg_param;
-	uint16_t new_bcn_interval;
-	enum QDF_OPMODE opmode;
-
-	roamsession = &mac_ctx->roam.roamSession[session_id];
-	cfg_param = &mac_ctx->roam.configParam;
-
-	opmode = wlan_get_opmode_from_vdev_id(mac_ctx->pdev, session_id);
-	if (opmode == QDF_P2P_CLIENT_MODE) {
-		/* check for P2P client mode */
-		sme_debug("Bcn Intrvl validation not require for STA/CLIENT");
-		return false;
-	}
-	if (opmode == QDF_SAP_MODE &&
-	    roamsession->bssParams.operation_chan_freq != ch_freq) {
-		/*
-		 * IF SAP has started and STA wants to connect
-		 * on different channel MCC should
-		 *  MCC should not be enabled so making it
-		 * false to enforce on same channel
-		 */
-		sme_debug("*** MCC with SAP+STA sessions ****");
-		*status = QDF_STATUS_SUCCESS;
-		return true;
-	}
-	/*
-	 * Check for P2P go scenario
-	 * if GO in MCC support different
-	 * beacon interval,
-	 * change the BI of the P2P-GO
-	 */
-	if (opmode == QDF_P2P_GO_MODE &&
-	    roamsession->bssParams.operation_chan_freq != ch_freq &&
-	    roamsession->bssParams.beaconInterval != *bcn_interval) {
-		/* if GO in MCC support diff beacon interval, return success */
-		if (cfg_param->fAllowMCCGODiffBI == 0x01) {
-			*status = QDF_STATUS_SUCCESS;
-			return true;
-		}
-		/*
-		 * Send only Broadcast disassoc and update bcn_interval
-		 * If configuration is set to 0x04 then dont
-		 * disconnect all the station
-		 */
-		if ((cfg_param->fAllowMCCGODiffBI == 0x02)
-			|| (cfg_param->fAllowMCCGODiffBI == 0x04)) {
-			/* Check to pass the right beacon Interval */
-			if (cfg_param->conc_custom_rule1 ||
-				cfg_param->conc_custom_rule2) {
-				new_bcn_interval = CSR_CUSTOM_CONC_GO_BI;
-			} else {
-				new_bcn_interval =
-				csr_calculate_mcc_beacon_interval(
-					mac_ctx, *bcn_interval,
-					roamsession->bssParams.beaconInterval);
-			}
-			sme_debug("Peer AP BI : %d, new Beacon Interval: %d",
-				*bcn_interval, new_bcn_interval);
-			/* Update the becon Interval */
-			if (new_bcn_interval !=
-					roamsession->bssParams.beaconInterval) {
-				/* Update the bcn_interval now */
-				sme_err("Beacon Interval got changed config used: %d",
-					cfg_param->fAllowMCCGODiffBI);
-
-				roamsession->bssParams.beaconInterval =
-					new_bcn_interval;
-				roamsession->bssParams.updatebeaconInterval =
-					true;
-				*status = csr_update_mcc_p2p_beacon_interval(
-					mac_ctx);
-				return true;
-			}
-			*status = QDF_STATUS_SUCCESS;
-			return true;
-		}
-		if (cfg_param->fAllowMCCGODiffBI
-				== 0x03) {
-			/* Disconnect the P2P session */
-			roamsession->bssParams.updatebeaconInterval = false;
-			*status = csr_roam_call_callback(mac_ctx,
-					session_id, NULL, 0,
-					eCSR_ROAM_SEND_P2P_STOP_BSS,
-					eCSR_ROAM_RESULT_NONE);
-			return true;
-		}
-		sme_err("BcnIntrvl is diff can't connect to preferred AP");
-		*status = QDF_STATUS_E_FAILURE;
-		return true;
-	}
-	return false;
-}
-
-QDF_STATUS csr_validate_mcc_beacon_interval(struct mac_context *mac_ctx,
-					    uint32_t ch_freq,
-					    uint16_t *bcn_interval,
-					    uint32_t cur_session_id,
-					    enum QDF_OPMODE cur_bss_persona)
-{
-	uint32_t session_id = 0;
-	QDF_STATUS status;
-	bool is_done;
-
-	/* If MCC is not supported just break */
-	if (!mac_ctx->roam.configParam.fenableMCCMode)
-		return QDF_STATUS_E_FAILURE;
-
-	for (session_id = 0; session_id < WLAN_MAX_VDEVS; session_id++) {
-		if (cur_session_id == session_id)
-			continue;
-
-		if (!CSR_IS_SESSION_VALID(mac_ctx, session_id))
-			continue;
-
-		switch (cur_bss_persona) {
-		case QDF_STA_MODE:
-			is_done = csr_validate_sta_bcn_intrvl(
-						mac_ctx, ch_freq, bcn_interval,
-						session_id, &status);
-			if (true == is_done)
-				return status;
-			break;
-
-		case QDF_P2P_CLIENT_MODE:
-			is_done = csr_validate_p2pcli_bcn_intrvl(mac_ctx,
-					ch_freq, bcn_interval, session_id,
-					&status);
-			if (true == is_done)
-				return status;
-			break;
-
-		case QDF_SAP_MODE:
-		case QDF_IBSS_MODE:
-			break;
-
-		case QDF_P2P_GO_MODE:
-			is_done = csr_validate_p2pgo_bcn_intrvl(mac_ctx,
-					ch_freq, bcn_interval,
-					session_id, &status);
-			if (true == is_done)
-				return status;
-			break;
-
-		default:
-			sme_err("Persona not supported: %d", cur_bss_persona);
-			return QDF_STATUS_E_FAILURE;
-		}
-	}
-	return QDF_STATUS_SUCCESS;
-}
 
 /**
  * csr_is_auth_type11r() - Check if Authentication type is 11R
@@ -2648,11 +2225,16 @@ bool csr_lookup_pmkid_using_bssid(struct mac_context *mac,
 	qdf_mem_copy(pmk_cache->PMKID, pmksa->pmkid, sizeof(pmk_cache->PMKID));
 	qdf_mem_copy(pmk_cache->pmk, pmksa->pmk, pmksa->pmk_len);
 	pmk_cache->pmk_len = pmksa->pmk_len;
+	pmk_cache->pmk_lifetime = pmksa->pmk_lifetime;
+	pmk_cache->pmk_lifetime_threshold = pmksa->pmk_lifetime_threshold;
+	pmk_cache->pmk_ts = pmksa->pmk_entry_ts;
+
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 
 	return true;
 }
 
+#ifndef FEATURE_CM_ENABLE
 bool csr_lookup_fils_pmkid(struct mac_context *mac,
 			   uint8_t vdev_id, uint8_t *cache_id,
 			   uint8_t *ssid, uint8_t ssid_len,
@@ -2681,28 +2263,6 @@ bool csr_lookup_fils_pmkid(struct mac_context *mac,
 	return true;
 }
 
-/**
- * csr_update_session_pmk() - Update the pmk len and pmk in the roam session
- * @session: pointer to the CSR Roam session
- * @pmkid_cache: pointer to the pmkid cache
- *
- * Return: None
- */
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-static void csr_update_session_pmk(struct csr_roam_session *session,
-				   struct wlan_crypto_pmksa *pmksa)
-{
-	session->pmk_len = pmksa->pmk_len;
-	qdf_mem_zero(session->psk_pmk, sizeof(session->psk_pmk));
-	qdf_mem_copy(session->psk_pmk, pmksa->pmk, session->pmk_len);
-}
-#else
-static inline void csr_update_session_pmk(struct csr_roam_session *session,
-					  struct wlan_crypto_pmksa *pmksa)
-{
-}
-#endif
-
 #ifdef WLAN_FEATURE_FILS_SK
 /**
  * csr_update_pmksa_to_profile() - update pmk and pmkid to profile which will be
@@ -2712,20 +2272,26 @@ static inline void csr_update_session_pmk(struct csr_roam_session *session,
  *
  * Return: None
  */
-static inline void csr_update_pmksa_to_profile(struct csr_roam_profile *profile,
+static inline void csr_update_pmksa_to_profile(struct wlan_objmgr_vdev *vdev,
 					       struct wlan_crypto_pmksa *pmksa)
 {
-	if (!profile->fils_con_info)
-		return;
+	struct mlme_legacy_priv *mlme_priv;
 
-	profile->fils_con_info->pmk_len = pmksa->pmk_len;
-	qdf_mem_copy(profile->fils_con_info->pmk,
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_err("vdev legacy private object is NULL");
+		return;
+	}
+	if (!mlme_priv->connect_info.fils_con_info)
+		return;
+	mlme_priv->connect_info.fils_con_info->pmk_len = pmksa->pmk_len;
+	qdf_mem_copy(mlme_priv->connect_info.fils_con_info->pmk,
 		     pmksa->pmk, pmksa->pmk_len);
-	qdf_mem_copy(profile->fils_con_info->pmkid,
+	qdf_mem_copy(mlme_priv->connect_info.fils_con_info->pmkid,
 		     pmksa->pmkid, PMKID_LEN);
 }
 #else
-static inline void csr_update_pmksa_to_profile(struct csr_roam_profile *profile,
+static inline void csr_update_pmksa_to_profile(struct wlan_objmgr_vdev *vdev,
 					       struct wlan_crypto_pmksa *pmksa)
 {
 }
@@ -2744,8 +2310,6 @@ uint8_t csr_construct_rsn_ie(struct mac_context *mac, uint32_t sessionId,
 	uint16_t rsn_cap = 0, self_rsn_cap;
 	int32_t rsn_val;
 	struct wlan_crypto_pmksa pmksa, *pmksa_peer;
-	struct csr_roam_session *session = &mac->roam.roamSession[sessionId];
-	struct rso_config *rso_cfg;
 
 	if (!local_ap_ie &&
 	    (!QDF_IS_STATUS_SUCCESS(csr_get_parsed_bss_description_ies
@@ -2821,16 +2385,9 @@ uint8_t csr_construct_rsn_ie(struct mac_context *mac, uint32_t sessionId,
 	 * will be sent to the FW during RSO.
 	 */
 	if (pmksa_peer) {
-		csr_update_session_pmk(session, pmksa_peer);
-		csr_update_pmksa_to_profile(pProfile, pmksa_peer);
-	}
-	rso_cfg = wlan_cm_get_rso_config(vdev);
-	if (rso_cfg) {
-		rso_cfg->rsn_cap = 0;
-		if (pProfile->MFPRequired)
-			rso_cfg->rsn_cap |= WLAN_CRYPTO_RSN_CAP_MFP_REQUIRED;
-		if (pProfile->MFPCapable)
-			rso_cfg->rsn_cap |= WLAN_CRYPTO_RSN_CAP_MFP_ENABLED;
+		wlan_cm_set_psk_pmk(mac->pdev, sessionId,
+				    pmksa_peer->pmk, pmksa_peer->pmk_len);
+		csr_update_pmksa_to_profile(vdev, pmksa_peer);
 	}
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
@@ -2994,6 +2551,7 @@ uint8_t csr_retrieve_wapi_ie(struct mac_context *mac, uint32_t sessionId,
 	return cbWapiIe;
 }
 #endif /* FEATURE_WLAN_WAPI */
+#endif
 
 bool csr_rates_is_dot11_rate11b_supported_rate(uint8_t dot11Rate)
 {
@@ -3139,6 +2697,7 @@ bool csr_is_ssid_match(struct mac_context *mac, uint8_t *ssid1, uint8_t ssid1Len
 	return fMatch;
 }
 
+#ifndef FEATURE_CM_ENABLE
 /* Null ssid means match */
 bool csr_is_ssid_in_list(tSirMacSSid *pSsid, tCsrSSIDs *pSsidList)
 {
@@ -3164,7 +2723,7 @@ bool csr_is_ssid_in_list(tSirMacSSid *pSsid, tCsrSSIDs *pSsidList)
 
 	return fMatch;
 }
-
+#endif
 bool csr_is_bssid_match(struct qdf_mac_addr *pProfBssid,
 			struct qdf_mac_addr *BssBssid)
 {
@@ -3467,6 +3026,7 @@ bool csr_rates_is_dot11_rate_supported(struct mac_context *mac_ctx, uint8_t rate
 	return csr_is_aggregate_rate_supported(mac_ctx, n);
 }
 
+#ifndef FEATURE_CM_ENABLE
 #ifdef WLAN_FEATURE_FILS_SK
 static inline
 void csr_free_fils_profile_info(struct mac_context *mac,
@@ -3476,17 +3036,12 @@ void csr_free_fils_profile_info(struct mac_context *mac,
 		qdf_mem_free(profile->fils_con_info);
 		profile->fils_con_info = NULL;
 	}
-
-	if (profile->hlp_ie) {
-		qdf_mem_free(profile->hlp_ie);
-		profile->hlp_ie = NULL;
-		profile->hlp_ie_len = 0;
-	}
 }
 #else
 static inline void csr_free_fils_profile_info(struct mac_context *mac,
 					      struct csr_roam_profile *profile)
 { }
+#endif
 #endif
 
 void csr_release_profile(struct mac_context *mac,
@@ -3529,7 +3084,9 @@ void csr_release_profile(struct mac_context *mac,
 			qdf_mem_free(pProfile->ChannelInfo.freq_list);
 			pProfile->ChannelInfo.freq_list = NULL;
 		}
+#ifndef FEATURE_CM_ENABLE
 		csr_free_fils_profile_info(mac, pProfile);
+#endif
 		qdf_mem_zero(pProfile, sizeof(struct csr_roam_profile));
 	}
 }
@@ -3568,18 +3125,6 @@ tSirResultCodes csr_get_de_auth_rsp_status_code(struct deauth_rsp *pSmeRsp)
 	qdf_get_u32(pBuffer, &ret);
 
 	return (tSirResultCodes) ret;
-}
-
-tSirScanType csr_get_scan_type(struct mac_context *mac, uint8_t chnId)
-{
-	tSirScanType scanType = eSIR_PASSIVE_SCAN;
-	enum channel_state channelEnabledType;
-
-	channelEnabledType = wlan_reg_get_channel_state(mac->pdev, chnId);
-	if (CHANNEL_STATE_ENABLE == channelEnabledType)
-		scanType = eSIR_ACTIVE_SCAN;
-
-	return scanType;
 }
 
 enum bss_type csr_translate_bsstype_to_mac_type(eCsrRoamBssType csrtype)
@@ -3790,25 +3335,6 @@ void csr_clear_channel_status(struct mac_context *mac)
 	return;
 }
 
-bool csr_is_channel_present_in_list(uint32_t *pChannelList,
-				    int numChannels, uint32_t chan_freq)
-{
-	int i = 0;
-
-	/* Check for NULL pointer */
-	if (!pChannelList || (numChannels == 0))
-		return false;
-
-	/* Look for the channel in the list */
-	for (i = 0; (i < numChannels) &&
-	     (i < CFG_VALID_CHANNEL_LIST_LEN); i++) {
-		if (pChannelList[i] == chan_freq)
-			return true;
-	}
-
-	return false;
-}
-
 /**
  * sme_bsstype_to_string() - converts bss type to string.
  * @bss_type: bss type enum
@@ -3824,25 +3350,6 @@ const char *sme_bss_type_to_string(const uint8_t bss_type)
 	default:
 		return "unknown bss type";
 	}
-}
-
-QDF_STATUS csr_add_to_channel_list_front(uint32_t *pChannelList,
-					 int numChannels, uint32_t chan_freq)
-{
-	int i = 0;
-
-	/* Check for NULL pointer */
-	if (!pChannelList)
-		return QDF_STATUS_E_NULL_VALUE;
-
-	/* Make room for the addition.  (Start moving from the back.) */
-	for (i = numChannels; i > 0; i--)
-		pChannelList[i] = pChannelList[i - 1];
-
-	/* Now add the NEW channel...at the front */
-	pChannelList[0] = chan_freq;
-
-	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -3998,4 +3505,38 @@ enum csr_cfgdot11mode csr_phy_mode_to_dot11mode(enum wlan_phymode phy_mode)
 		sme_err("invalid phy mode %d", phy_mode);
 		return eCSR_CFG_DOT11_MODE_MAX;
 	}
+}
+
+QDF_STATUS csr_mlme_vdev_disconnect_all_p2p_client_event(uint8_t vdev_id)
+{
+	struct mac_context *mac_ctx = cds_get_context(QDF_MODULE_ID_SME);
+
+	if (!mac_ctx)
+		return QDF_STATUS_E_FAILURE;
+
+	return csr_roam_call_callback(mac_ctx, vdev_id, NULL, 0,
+				      eCSR_ROAM_DISCONNECT_ALL_P2P_CLIENTS,
+				      eCSR_ROAM_RESULT_NONE);
+}
+
+QDF_STATUS csr_mlme_vdev_stop_bss(uint8_t vdev_id)
+{
+	struct mac_context *mac_ctx = cds_get_context(QDF_MODULE_ID_SME);
+
+	if (!mac_ctx)
+		return QDF_STATUS_E_FAILURE;
+
+	return csr_roam_call_callback(mac_ctx, vdev_id, NULL, 0,
+				      eCSR_ROAM_SEND_P2P_STOP_BSS,
+				      eCSR_ROAM_RESULT_NONE);
+}
+
+qdf_freq_t csr_mlme_get_concurrent_operation_freq(void)
+{
+	struct mac_context *mac_ctx = cds_get_context(QDF_MODULE_ID_SME);
+
+	if (!mac_ctx)
+		return QDF_STATUS_E_FAILURE;
+
+	return csr_get_concurrent_operation_freq(mac_ctx);
 }

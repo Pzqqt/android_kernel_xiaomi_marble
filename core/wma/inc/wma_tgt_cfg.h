@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -235,6 +235,9 @@ struct wma_tgt_cfg {
 #ifdef WLAN_SUPPORT_TWT
 	bool twt_bcast_req_support;
 	bool twt_bcast_res_support;
+	bool twt_nudge_enabled;
+	bool all_twt_enabled;
+	bool twt_stats_enabled;
 #endif
 };
 #endif /* WMA_TGT_CFG_H */

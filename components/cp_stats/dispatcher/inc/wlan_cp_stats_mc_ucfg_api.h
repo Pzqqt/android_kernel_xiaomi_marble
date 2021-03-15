@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -154,6 +154,35 @@ QDF_STATUS ucfg_mc_cp_stats_send_stats_request(struct wlan_objmgr_vdev *vdev,
 					       struct request_info *info);
 
 /**
+ * wlan_cfg80211_mc_twt_clear_infra_cp_stats() - send request to reset
+ * control path statistics
+ * @vdev: pointer to vdev object
+ * @dialog_id: dialod id of the twt session
+ * @twt_peer_mac: mac address of the peer
+ *
+ * Return: 0 for success or error code for failure
+ */
+int
+wlan_cfg80211_mc_twt_clear_infra_cp_stats(
+				struct wlan_objmgr_vdev *vdev,
+				uint32_t dialog_id,
+				uint8_t twt_peer_mac[QDF_MAC_ADDR_SIZE]);
+
+/**
+ * wlan_cfg80211_mc_twt_get_infra_cp_stats() - send twt get statistic request
+ * @vdev: pointer to vdev object
+ * @dialog_id: TWT session dialog id
+ * @twt_peer_mac: mac address of the peer
+ * @errno: error code
+ *
+ * Return: pointer to infra cp stats event for success or NULL for failure
+ */
+struct infra_cp_stats_event *
+wlan_cfg80211_mc_twt_get_infra_cp_stats(struct wlan_objmgr_vdev *vdev,
+					uint32_t dialog_id,
+					uint8_t twt_peer_mac[QDF_MAC_ADDR_SIZE],
+					int *errno);
+/**
  * ucfg_mc_cp_stats_get_tx_power() - API to fetch tx_power
  * @vdev: pointer to vdev object
  * @dbm: pointer to tx power in dbm
@@ -221,7 +250,6 @@ bool ucfg_mc_cp_stats_is_req_pending(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS ucfg_mc_cp_stats_set_pending_req(struct wlan_objmgr_psoc *psoc,
 					    enum stats_req_type type,
 					    struct request_info *req);
-
 /**
  * ucfg_mc_cp_stats_reset_pending_req() - API to reset pending request
  * @psoc: pointer to psoc object
@@ -251,9 +279,19 @@ QDF_STATUS ucfg_mc_cp_stats_get_pending_req(struct wlan_objmgr_psoc *psoc,
 					    struct request_info *info);
 
 /**
+ * ucfg_mc_infra_cp_stats_free_stats_resources() - API to free buffers within
+ * infra cp stats_event structure
+ * @ev: structure whose buffer are to freed
+ *
+ * Return: none
+ */
+void
+ucfg_mc_infra_cp_stats_free_stats_resources(struct infra_cp_stats_event *ev);
+
+/**
  * ucfg_mc_cp_stats_free_stats_resources() - API to free buffers within stats_event
  * structure
- * @ev: strcture whose buffer are to freed
+ * @ev: structure whose buffer are to freed
  *
  * Return: none
  */

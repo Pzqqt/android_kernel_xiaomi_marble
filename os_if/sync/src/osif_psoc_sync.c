@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -46,14 +46,10 @@ static qdf_spinlock_t __osif_psoc_sync_lock;
 	qdf_spinlock_destroy(&__osif_psoc_sync_lock)
 #define osif_psoc_sync_lock() qdf_spin_lock_bh(&__osif_psoc_sync_lock)
 #define osif_psoc_sync_unlock() qdf_spin_unlock_bh(&__osif_psoc_sync_lock)
-#define osif_psoc_sync_lock_assert() \
-	QDF_BUG(qdf_spin_is_locked(&__osif_psoc_sync_lock))
 
 static struct osif_psoc_sync *osif_psoc_sync_lookup(struct device *dev)
 {
 	int i;
-
-	osif_psoc_sync_lock_assert();
 
 	for (i = 0; i < QDF_ARRAY_SIZE(__osif_psoc_sync_arr); i++) {
 		struct osif_psoc_sync *psoc_sync = __osif_psoc_sync_arr + i;
@@ -72,8 +68,6 @@ static struct osif_psoc_sync *osif_psoc_sync_get(void)
 {
 	int i;
 
-	osif_psoc_sync_lock_assert();
-
 	for (i = 0; i < QDF_ARRAY_SIZE(__osif_psoc_sync_arr); i++) {
 		struct osif_psoc_sync *psoc_sync = __osif_psoc_sync_arr + i;
 
@@ -88,8 +82,6 @@ static struct osif_psoc_sync *osif_psoc_sync_get(void)
 
 static void osif_psoc_sync_put(struct osif_psoc_sync *psoc_sync)
 {
-	osif_psoc_sync_lock_assert();
-
 	qdf_mem_zero(psoc_sync, sizeof(*psoc_sync));
 }
 
@@ -202,8 +194,6 @@ __osif_psoc_sync_start_callback(struct device *dev,
 {
 	QDF_STATUS status;
 	struct osif_psoc_sync *psoc_sync;
-
-	osif_psoc_sync_lock_assert();
 
 	*out_psoc_sync = NULL;
 
@@ -352,8 +342,6 @@ __osif_psoc_sync_dsc_vdev_create(struct device *dev,
 				 struct dsc_vdev **out_dsc_vdev)
 {
 	struct osif_psoc_sync *psoc_sync;
-
-	osif_psoc_sync_lock_assert();
 
 	psoc_sync = osif_psoc_sync_lookup(dev);
 	if (!psoc_sync)

@@ -47,7 +47,9 @@ int wlan_hdd_cm_connect(struct wiphy *wiphy,
  * wlan_hdd_cm_issue_disconnect() - initiate disconnect from osif
  * @adapter: Pointer to adapter
  * @reason: Disconnect reason code
- * @sync: true if wait for disconnect to complete is required.
+ * @sync: true if wait for disconnect to complete is required. for the
+ *        supplicant initiated disconnect or during vdev delete/change interface
+ *        sync should be true.
  *
  * This function is used to issue disconnect request to conection manager
  *
@@ -165,6 +167,18 @@ void __hdd_cm_disconnect_handler_pre_user_update(struct hdd_adapter *adapter);
 void __hdd_cm_disconnect_handler_post_user_update(struct hdd_adapter *adapter);
 
 /**
+ * hdd_cm_set_peer_authenticate() - set peer as authenticated
+ * @adapter: pointer to adapter
+ * @bssid: bssid of the connection
+ * @is_auth_required: is upper layer authenticatoin required
+ *
+ * Return: QDF_STATUS enumeration
+ */
+void hdd_cm_set_peer_authenticate(struct hdd_adapter *adapter,
+				  struct qdf_mac_addr *bssid,
+				  bool is_auth_required);
+
+/**
  * hdd_cm_update_rssi_snr_by_bssid() - update rsi and snr into adapter
  * @adapter: Pointer to adapter
  *
@@ -229,5 +243,29 @@ void hdd_cm_save_connect_status(struct hdd_adapter *adapter,
  * Returns: True if vdev is associated else false
  */
 bool hdd_cm_is_vdev_associated(struct hdd_adapter *adapter);
+
+/**
+ * hdd_cm_is_connecting() - Function to check connection in progress
+ * @adapter: pointer to the adapter structure
+ *
+ * Return: true if connecting, false otherwise
+ */
+bool hdd_cm_is_connecting(struct hdd_adapter *adapter);
+
+/**
+ * hdd_cm_is_disconnected() - Function to check if vdev is disconnected or not
+ * @adapter: pointer to the adapter structure
+ *
+ * Return: true if disconnected, false otherwise
+ */
+bool hdd_cm_is_disconnected(struct hdd_adapter *adapter);
+
+/**
+ * hdd_cm_is_disconnecting() - Function to check disconnection in progress
+ * @adapter: pointer to the adapter structure
+ *
+ * Return: true if disconnecting, false otherwise
+ */
+bool hdd_cm_is_disconnecting(struct hdd_adapter *adapter);
 
 #endif

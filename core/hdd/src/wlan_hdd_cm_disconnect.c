@@ -155,7 +155,6 @@ void __hdd_cm_disconnect_handler_post_user_update(struct hdd_adapter *adapter)
 	if (adapter->device_mode == QDF_STA_MODE) {
 		vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_ID);
 		if (vdev) {
-			wlan_crypto_free_vdev_key(vdev);
 			wlan_crypto_reset_vdev_params(vdev);
 			hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 		}
@@ -268,7 +267,19 @@ int wlan_hdd_cm_disconnect(struct wiphy *wiphy,
 		qdf_dp_trace_dump_all(
 				WLAN_DEAUTH_DPTRACE_DUMP_COUNT,
 				QDF_TRACE_DEFAULT_PDEV_ID);
-	status = wlan_hdd_cm_issue_disconnect(adapter, reason, false);
+	/*
+	 * for Supplicant initiated disconnect always wait for complete,
+	 * as for WPS connection or back to back connect, supplicant initiate a
+	 * disconnect which is followed by connect and if kernel is not yet
+	 * disconnected, this new connect will be rejected by kernel with status
+	 * EALREADY. In case connect is rejected with EALREADY, supplicant will
+	 * queue one more disconnect followed by connect immediately, Now if
+	 * driver is not disconnected by this time, the kernel will again reject
+	 * connect and thus the failing the connect req in supplicant.
+	 * Thus we need to wait for disconnect to complete in this case,
+	 * and thus use sync API here.
+	 */
+	status = wlan_hdd_cm_issue_disconnect(adapter, reason, true);
 
 	return qdf_status_to_os_return(status);
 }

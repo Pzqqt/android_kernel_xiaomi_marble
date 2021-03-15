@@ -468,6 +468,20 @@ QDF_STATUS wlan_mlme_get_tx_chainmask_1ss(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+bool
+wlan_mlme_is_data_stall_recovery_fw_supported(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("MLME obj is NULL");
+		return false;
+	}
+
+	return mlme_obj->cfg.gen.data_stall_recovery_fw_support;
+}
+
 void
 wlan_mlme_update_cfg_with_tgt_caps(struct wlan_objmgr_psoc *psoc,
 				   struct mlme_tgt_caps *tgt_caps)
@@ -488,7 +502,7 @@ wlan_mlme_update_cfg_with_tgt_caps(struct wlan_objmgr_psoc *psoc,
 			tgt_caps->stop_all_host_scan_support;
 	mlme_obj->cfg.gen.dual_sta_roam_fw_support =
 			tgt_caps->dual_sta_roam_fw_support;
-
+	mlme_obj->cfg.gen.ocv_support = tgt_caps->ocv_support;
 }
 
 #ifdef WLAN_FEATURE_11AX
@@ -626,9 +640,8 @@ QDF_STATUS mlme_update_tgt_he_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
 			mlme_obj->cfg.he_caps.dot11_he_cap.broadcast_twt);
 	mlme_obj->cfg.he_caps.dot11_he_cap.broadcast_twt = value;
 
-	value = QDF_MIN(he_cap->flex_twt_sched,
-			mlme_obj->cfg.he_caps.dot11_he_cap.flex_twt_sched);
-	mlme_obj->cfg.he_caps.dot11_he_cap.flex_twt_sched = value;
+	mlme_obj->cfg.he_caps.dot11_he_cap.flex_twt_sched =
+			he_cap->flex_twt_sched;
 
 	mlme_obj->cfg.he_caps.dot11_he_cap.ba_32bit_bitmap =
 					he_cap->ba_32bit_bitmap;
@@ -2110,6 +2123,19 @@ QDF_STATUS wlan_mlme_get_bigtk_support(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 
 	*value = mlme_obj->cfg.gen.bigtk_support;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_get_ocv_support(struct wlan_objmgr_psoc *psoc,
+				     bool *value)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj = mlme_get_psoc_ext_obj(psoc);
+
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
+
+	*value = mlme_obj->cfg.gen.ocv_support;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -3700,6 +3726,8 @@ char *mlme_get_roam_trigger_str(uint32_t roam_scan_trigger)
 		return "WTC BTM";
 	case WMI_ROAM_TRIGGER_REASON_NONE:
 		return "NONE";
+	case WMI_ROAM_TRIGGER_REASON_PMK_TIMEOUT:
+		return "PMK Expired";
 	default:
 		return "UNKNOWN";
 	}
@@ -3779,7 +3807,7 @@ void wlan_mlme_get_sae_single_pmk_info(struct wlan_objmgr_vdev *vdev,
 				       struct wlan_mlme_sae_single_pmk *pmksa)
 {
 	struct mlme_legacy_priv *mlme_priv;
-	struct mlme_pmk_info pmk_info;
+	struct mlme_pmk_info *pmk_info;
 
 	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
 	if (!mlme_priv) {
@@ -3787,15 +3815,17 @@ void wlan_mlme_get_sae_single_pmk_info(struct wlan_objmgr_vdev *vdev,
 		return;
 	}
 
-	pmk_info = mlme_priv->mlme_roam.sae_single_pmk.pmk_info;
+	pmk_info = &mlme_priv->mlme_roam.sae_single_pmk.pmk_info;
 
 	pmksa->sae_single_pmk_ap =
 		mlme_priv->mlme_roam.sae_single_pmk.sae_single_pmk_ap;
+	pmksa->pmk_info.spmk_timeout_period = pmk_info->spmk_timeout_period;
+	pmksa->pmk_info.spmk_timestamp = pmk_info->spmk_timestamp;
 
-	if (pmk_info.pmk_len) {
-		qdf_mem_copy(pmksa->pmk_info.pmk, pmk_info.pmk,
-			     pmk_info.pmk_len);
-		pmksa->pmk_info.pmk_len = pmk_info.pmk_len;
+	if (pmk_info->pmk_len) {
+		qdf_mem_copy(pmksa->pmk_info.pmk, pmk_info->pmk,
+			     pmk_info->pmk_len);
+		pmksa->pmk_info.pmk_len = pmk_info->pmk_len;
 		return;
 	}
 
@@ -4592,12 +4622,6 @@ QDF_STATUS mlme_get_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *dst,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (*len < mlme_priv->opr_rate_set.len) {
-		mlme_legacy_err("Invalid len %zd, opr_rate len %zd",
-				*len, mlme_priv->opr_rate_set.len);
-		return QDF_STATUS_E_INVAL;
-	}
-
 	*len = mlme_priv->opr_rate_set.len;
 	qdf_mem_copy(dst, mlme_priv->opr_rate_set.data, *len);
 
@@ -4646,12 +4670,6 @@ QDF_STATUS mlme_get_ext_opr_rate(struct wlan_objmgr_vdev *vdev, uint8_t *dst,
 	if (!mlme_priv) {
 		mlme_legacy_err("vdev legacy private object is NULL");
 		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (*len < mlme_priv->ext_opr_rate_set.len) {
-		mlme_legacy_err("Invalid len %zd, ext_opr_rate len %zd",
-				*len, mlme_priv->ext_opr_rate_set.len);
-		return QDF_STATUS_E_INVAL;
 	}
 
 	*len = mlme_priv->ext_opr_rate_set.len;
@@ -4709,15 +4727,13 @@ bool wlan_mlme_is_sta_mon_conc_supported(struct wlan_objmgr_psoc *psoc)
 	return false;
 }
 
-#ifdef WLAN_SUPPORT_TWT
-bool mlme_is_twt_enabled(struct wlan_objmgr_psoc *psoc)
+bool wlan_mlme_is_local_tpe_pref(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_mlme_psoc_ext_obj *mlme_obj;
 
 	mlme_obj = mlme_get_psoc_ext_obj(psoc);
 	if (!mlme_obj)
-		return cfg_default(CFG_ENABLE_TWT);
+		return false;
 
-	return mlme_obj->cfg.twt_cfg.is_twt_enabled;
+	return mlme_obj->cfg.power.use_local_tpe;
 }
-#endif

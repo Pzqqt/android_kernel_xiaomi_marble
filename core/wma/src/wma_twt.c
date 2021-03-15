@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -207,7 +207,8 @@ int wma_twt_add_dialog_complete_event_handler(void *handle,
 			return qdf_status_to_os_return(status);
 	}
 
-	wma_debug("TWT: Extract TWT add dialog event :%d", status);
+	wma_debug("TWT: Extract TWT add dialog event id:%d",
+		  add_dialog_event->params.dialog_id);
 
 	sme_msg.type = eWNI_SME_TWT_ADD_DIALOG_EVENT;
 	sme_msg.bodyptr = add_dialog_event;
@@ -443,6 +444,58 @@ wma_twt_process_resume_dialog(t_wma_handle *wma_handle,
 }
 
 /**
+ * wma_twt_notify_event_handler - TWT notify event handler
+ * @handle: wma handle
+ * @event: buffer with event
+ * @len: buffer length
+ *
+ * Return: 0 on success, negative value on failure
+ */
+static
+int wma_twt_notify_event_handler(void *handle, uint8_t *event, uint32_t len)
+{
+	struct wmi_twt_notify_event_param *param;
+	struct scheduler_msg sme_msg = {0};
+	tp_wma_handle wma_handle = handle;
+	wmi_unified_t wmi_handle;
+	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
+	int status = -EINVAL;
+
+	if (!mac)
+		return status;
+
+	if (wma_validate_handle(wma_handle))
+		return status;
+
+	wmi_handle = (wmi_unified_t)wma_handle->wmi_handle;
+	if (!wmi_handle) {
+		wma_err("Invalid wmi handle for TWT notify event");
+		return status;
+	}
+
+	param = qdf_mem_malloc(sizeof(*param));
+	if (!param)
+		return -ENOMEM;
+
+	if (wmi_handle->ops->extract_twt_notify_event)
+		status = wmi_handle->ops->extract_twt_notify_event(wmi_handle,
+								   event,
+								   param);
+	wma_debug("Extract Notify event status:%d", status);
+
+	sme_msg.type = eWNI_SME_TWT_NOTIFY_EVENT;
+	sme_msg.bodyptr = param;
+	sme_msg.bodyval = 0;
+	status = scheduler_post_message(QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_SME,
+					QDF_MODULE_ID_SME, &sme_msg);
+	if (QDF_IS_STATUS_ERROR(status))
+		return -EINVAL;
+
+	return 0;
+}
+
+/**
  * wma_twt_resume_dialog_complete_event_handler - TWT resume dlg complete evt
  * handler
  * @handle: wma handle
@@ -525,6 +578,18 @@ void wma_update_bcast_twt_support(tp_wma_handle wh,
 		tgt_cfg->twt_bcast_res_support = false;
 }
 
+void wma_update_twt_tgt_cap(tp_wma_handle wh, struct wma_tgt_cfg *tgt_cfg)
+{
+	if (wmi_service_enabled(wh->wmi_handle, wmi_service_twt_nudge))
+		tgt_cfg->twt_nudge_enabled = true;
+
+	if (wmi_service_enabled(wh->wmi_handle, wmi_service_all_twt))
+		tgt_cfg->all_twt_enabled = true;
+
+	if (wmi_service_enabled(wh->wmi_handle, wmi_service_twt_statistics))
+		tgt_cfg->twt_stats_enabled = true;
+}
+
 void wma_register_twt_events(tp_wma_handle wma_handle)
 {
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
@@ -560,5 +625,10 @@ void wma_register_twt_events(tp_wma_handle wma_handle)
 				(wma_handle->wmi_handle,
 				 wmi_twt_nudge_dialog_complete_event_id,
 				 wma_twt_nudge_dialog_complete_event_handler,
+				 WMA_RX_SERIALIZER_CTX);
+	wmi_unified_register_event_handler
+				(wma_handle->wmi_handle,
+				 wmi_twt_notify_event_id,
+				 wma_twt_notify_event_handler,
 				 WMA_RX_SERIALIZER_CTX);
 }

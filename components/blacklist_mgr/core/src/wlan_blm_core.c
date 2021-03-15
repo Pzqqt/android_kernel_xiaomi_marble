@@ -733,6 +733,40 @@ blm_fill_rssi_reject_params(struct blm_reject_ap *blm_entry,
 		   blm_reject_list->reject_reason);
 }
 
+/**
+ * blm_find_reject_type_string() - Function to convert int to string
+ * @reject_ap_type:   blm_reject_ap_type
+ *
+ * This function is used to convert int value of enum blm_reject_ap_type
+ * to string format.
+ *
+ * Return: String
+ *
+ */
+static const char *
+blm_find_reject_type_string(enum blm_reject_ap_type reject_ap_type)
+{
+	switch (reject_ap_type) {
+	CASE_RETURN_STRING(USERSPACE_AVOID_TYPE);
+	CASE_RETURN_STRING(USERSPACE_BLACKLIST_TYPE);
+	CASE_RETURN_STRING(DRIVER_AVOID_TYPE);
+	CASE_RETURN_STRING(DRIVER_BLACKLIST_TYPE);
+	CASE_RETURN_STRING(DRIVER_RSSI_REJECT_TYPE);
+	CASE_RETURN_STRING(DRIVER_MONITOR_TYPE);
+	default:
+		return "REJECT_REASON_UNKNOWN";
+	}
+}
+
+/**
+ * blm_get_reject_ap_type() - Function to find reject ap type
+ * @blm_entry:   blm_reject_ap
+ *
+ * This function is used to get reject ap type.
+ *
+ * Return: blm_reject_ap_type
+ *
+ */
 static enum blm_reject_ap_type
 blm_get_reject_ap_type(struct blm_reject_ap *blm_entry)
 {
@@ -752,6 +786,16 @@ blm_get_reject_ap_type(struct blm_reject_ap *blm_entry)
 	return REJECT_REASON_UNKNOWN;
 }
 
+/**
+ * blm_dump_blacklist_bssid() - Function to dump blacklisted bssid
+ * @pdev:  pdev object
+ *
+ * This function is used to dump blacklisted bssid along with reject
+ * ap type, source, delay and required rssi
+ *
+ * Return: None
+ *
+ */
 void blm_dump_blacklist_bssid(struct wlan_objmgr_pdev *pdev)
 {
 	struct blm_reject_ap *blm_entry = NULL;
@@ -791,9 +835,9 @@ void blm_dump_blacklist_bssid(struct wlan_objmgr_pdev *pdev)
 						reject_ap_type, blm_entry,
 						&blm_psoc_obj->blm_cfg);
 
-			blm_nofl_debug("BLACKLIST BSSID "QDF_MAC_ADDR_FMT" type %d retry delay %d expected RSSI %d reject reason %d rejection source %d",
+			blm_nofl_debug("BLACKLIST BSSID "QDF_MAC_ADDR_FMT" type %s retry delay %dms expected RSSI %d reject reason %d rejection source %d",
 				QDF_MAC_ADDR_REF(blm_entry->bssid.bytes),
-				reject_ap_type,
+				blm_find_reject_type_string(reject_ap_type),
 				reject_duration,
 				blm_entry->rssi_reject_params.expected_rssi,
 				blm_entry->reject_ap_reason,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -425,6 +425,46 @@ static uint8_t sap_ch_params_to_bonding_channels(
 	return nchannels;
 }
 
+/**
+ * sap_operating_on_dfs() - check current sap operating on dfs
+ * @mac_ctx: mac ctx
+ * @sap_ctx: SAP context
+ *
+ * Return: true if any sub channel is dfs channel
+ */
+static
+bool sap_operating_on_dfs(struct mac_context *mac_ctx,
+			  struct sap_context *sap_ctx)
+{
+	uint8_t is_dfs = false;
+	struct csr_roam_profile *profile =
+			&sap_ctx->csr_roamProfile;
+	uint32_t chan_freq = profile->op_freq;
+	struct ch_params *ch_params = &profile->ch_params;
+
+	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(chan_freq) ||
+	    WLAN_REG_IS_24GHZ_CH_FREQ(chan_freq))
+		return false;
+	if (ch_params->ch_width == CH_WIDTH_160MHZ) {
+		is_dfs = true;
+	} else if (ch_params->ch_width == CH_WIDTH_80P80MHZ) {
+		if (wlan_reg_is_passive_or_disable_for_freq(
+						mac_ctx->pdev,
+						chan_freq) ||
+		    wlan_reg_is_passive_or_disable_for_freq(
+					mac_ctx->pdev,
+					ch_params->mhz_freq_seg1 - 10))
+			is_dfs = true;
+	} else {
+		if (wlan_reg_is_passive_or_disable_for_freq(
+						mac_ctx->pdev,
+						chan_freq))
+			is_dfs = true;
+	}
+
+	return is_dfs;
+}
+
 void sap_get_cac_dur_dfs_region(struct sap_context *sap_ctx,
 		uint32_t *cac_duration_ms,
 		uint32_t *dfs_region)
@@ -578,6 +618,7 @@ sap_dfs_is_channel_in_nol_list(struct sap_context *sap_context,
 	uint8_t num_channels;
 	struct wlan_objmgr_pdev *pdev = NULL;
 	enum channel_state ch_state;
+	qdf_freq_t ch_freq;
 
 	mac_ctx = sap_get_mac_context();
 	if (!mac_ctx) {
@@ -604,11 +645,13 @@ sap_dfs_is_channel_in_nol_list(struct sap_context *sap_context,
 
 	/* check for NOL, first on will break the loop */
 	for (i = 0; i < num_channels; i++) {
-		ch_state = wlan_reg_get_channel_state(pdev, channels[i]);
+		ch_freq = wlan_reg_legacy_chan_to_freq(pdev, channels[i]);
+
+		ch_state = wlan_reg_get_channel_state_for_freq(pdev, ch_freq);
 		if (CHANNEL_STATE_ENABLE != ch_state &&
 		    CHANNEL_STATE_DFS != ch_state) {
-			sap_err("Invalid ch num=%d, ch state=%d",
-				  channels[i], ch_state);
+			sap_err_rl("Invalid ch num=%d chfreq = %d, ch state=%d",
+				   channels[i], ch_freq, ch_state);
 			return true;
 		}
 	} /* loop for bonded channels */
@@ -2327,7 +2370,6 @@ static QDF_STATUS sap_fsm_handle_radar_during_cac(struct sap_context *sap_ctx,
 
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
 		struct sap_context *t_sap_ctx;
-		struct csr_roam_profile *profile;
 
 		t_sap_ctx = mac_ctx->sap.sapCtxList[intf].sap_context;
 		if (((QDF_SAP_MODE ==
@@ -2335,10 +2377,8 @@ static QDF_STATUS sap_fsm_handle_radar_during_cac(struct sap_context *sap_ctx,
 		     (QDF_P2P_GO_MODE ==
 		      mac_ctx->sap.sapCtxList[intf].sapPersona)) &&
 		    t_sap_ctx && t_sap_ctx->fsm_state != SAP_INIT) {
-			profile = &t_sap_ctx->csr_roamProfile;
-			if (!wlan_reg_is_passive_or_disable_for_freq(
-				mac_ctx->pdev, profile->op_freq))
-			continue;
+			if (!sap_operating_on_dfs(mac_ctx, t_sap_ctx))
+				continue;
 			t_sap_ctx->is_chan_change_inprogress = true;
 			/*
 			 * eSAP_DFS_CHANNEL_CAC_RADAR_FOUND:
@@ -2679,13 +2719,14 @@ static QDF_STATUS sap_fsm_state_started(struct sap_context *sap_ctx,
 				 * no need to move them
 				 */
 				profile = &temp_sap_ctx->csr_roamProfile;
-				if (!wlan_reg_is_passive_or_disable_for_freq(
-				    mac_ctx->pdev, profile->op_freq)) {
+				if (!sap_operating_on_dfs(
+						mac_ctx, temp_sap_ctx)) {
 					sap_debug("vdev %d freq %d (state %d) is not DFS or disabled so continue",
 						  temp_sap_ctx->sessionId,
 						  profile->op_freq,
-						 wlan_reg_get_channel_state_for_freq(mac_ctx->pdev,
-						 profile->op_freq));
+						  wlan_reg_get_channel_state_for_freq(
+						  mac_ctx->pdev,
+						  profile->op_freq));
 					continue;
 				}
 				sap_debug("vdev %d switch freq %d -> %d",
@@ -3024,9 +3065,9 @@ void sap_free_roam_profile(struct csr_roam_profile *profile)
 	}
 }
 
-void sap_sort_mac_list(struct qdf_mac_addr *macList, uint8_t size)
+void sap_sort_mac_list(struct qdf_mac_addr *macList, uint16_t size)
 {
-	uint8_t outer, inner;
+	uint16_t outer, inner;
 	struct qdf_mac_addr temp;
 	int32_t nRes = -1;
 
@@ -3057,11 +3098,10 @@ void sap_sort_mac_list(struct qdf_mac_addr *macList, uint8_t size)
 
 bool
 sap_search_mac_list(struct qdf_mac_addr *macList,
-		    uint8_t num_mac, uint8_t *peerMac,
-		    uint8_t *index)
+		    uint16_t num_mac, uint8_t *peerMac,
+		    uint16_t *index)
 {
-	int32_t nRes = -1;
-	int8_t nStart = 0, nEnd, nMiddle;
+	int32_t nRes = -1, nStart = 0, nEnd, nMiddle;
 
 	nEnd = num_mac - 1;
 
@@ -3081,7 +3121,7 @@ sap_search_mac_list(struct qdf_mac_addr *macList,
 			/* "index equals NULL" means the caller does not need the */
 			/* index value of the peerMac being searched */
 			if (index) {
-				*index = (uint8_t) nMiddle;
+				*index = (uint16_t)nMiddle;
 				sap_debug("index %d", *index);
 			}
 			return true;
@@ -3097,7 +3137,7 @@ sap_search_mac_list(struct qdf_mac_addr *macList,
 }
 
 void sap_add_mac_to_acl(struct qdf_mac_addr *macList,
-			uint8_t *size, uint8_t *peerMac)
+			uint16_t *size, uint8_t *peerMac)
 {
 	int32_t nRes = -1;
 	int i;
@@ -3129,7 +3169,7 @@ void sap_add_mac_to_acl(struct qdf_mac_addr *macList,
 }
 
 void sap_remove_mac_from_acl(struct qdf_mac_addr *macList,
-			     uint8_t *size, uint8_t index)
+			     uint16_t *size, uint16_t index)
 {
 	int i;
 
@@ -3158,9 +3198,9 @@ void sap_remove_mac_from_acl(struct qdf_mac_addr *macList,
 	(*size)--;
 }
 
-void sap_print_acl(struct qdf_mac_addr *macList, uint8_t size)
+void sap_print_acl(struct qdf_mac_addr *macList, uint16_t size)
 {
-	int i;
+	uint16_t i;
 	uint8_t *macArray;
 
 	sap_debug("print acl entered");
@@ -3672,7 +3712,7 @@ static int sap_start_dfs_cac_timer(struct sap_context *sap_ctx)
 	if (0 == cac_dur)
 		return 0;
 
-#ifdef QCA_WIFI_NAPIER_EMULATION
+#ifdef QCA_WIFI_EMULATION
 	cac_dur = cac_dur / 100;
 #endif
 	sap_debug("sapdfs: SAP_DFS_CHANNEL_CAC_START on CH freq %d, CAC_DUR-%d sec",

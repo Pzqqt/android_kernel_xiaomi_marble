@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -176,9 +176,6 @@ void lim_send_sme_deauth_ntf(struct mac_context *mac, tSirMacAddr peerMacAddr,
 void lim_send_sme_disassoc_ind(struct mac_context *, tpDphHashNode, struct pe_session *);
 void lim_send_sme_deauth_ind(struct mac_context *, tpDphHashNode,
 			     struct pe_session *pe_session);
-void lim_send_sme_wm_status_change_ntf(struct mac_context *, tSirSmeStatusChangeCode,
-				       uint32_t *, uint16_t, uint8_t);
-
 /**
  * lim_send_sme_set_context_rsp() - Send set context response to upper layer
  * @mac: Pointer to Global MAC structure

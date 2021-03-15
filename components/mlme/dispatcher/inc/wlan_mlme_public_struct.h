@@ -28,12 +28,12 @@
 #include <wmi_unified_param.h>
 #include <sir_api.h>
 #include "wlan_cm_roam_public_struct.h"
+#include "wlan_mlme_twt_public_struct.h"
 #include "cfg_mlme_generic.h"
+#include "host_diag_core_event.h"
 
 #define OWE_TRANSITION_OUI_TYPE "\x50\x6f\x9a\x1c"
 #define OWE_TRANSITION_OUI_SIZE 4
-
-#define CFG_VALID_CHANNEL_LIST_LEN              100
 
 #define CFG_PMKID_MODES_OKC                        (0x1)
 #define CFG_PMKID_MODES_PMKSA_CACHING              (0x2)
@@ -92,6 +92,26 @@
  * and not less than 20db of host cached RSSI
  */
 #define AP_OFF_RSSI_OFFSET 20
+
+/* Default beacon interval of 100 ms */
+#define CUSTOM_CONC_GO_BI 100
+
+enum diagwlan_status_eventsubtype {
+	DIAG_WLAN_STATUS_CONNECT = 0,
+	DIAG_WLAN_STATUS_DISCONNECT
+};
+
+enum diagwlan_status_eventreason {
+	DIAG_REASON_UNSPECIFIED = 0,
+	DIAG_REASON_USER_REQUESTED,
+	DIAG_REASON_MIC_ERROR,
+	DIAG_REASON_DISASSOC,
+	DIAG_REASON_DEAUTH,
+	DIAG_REASON_HANDOFF,
+	DIAG_REASON_ROAM_SYNCH_IND,
+	DIAG_REASON_ROAM_SYNCH_CNF,
+	DIAG_REASON_ROAM_HO_FAIL,
+};
 
 /**
  * struct mlme_cfg_str - generic structure for all mlme CFG string items
@@ -991,6 +1011,7 @@ struct wlan_vht_config {
  * @sap_max_inactivity_override: Override updating ap_sta_inactivity from
  * hostapd.conf
  * @sap_uapsd_enabled: Flag to enable/disable UAPSD for SAP
+ * @reject_addba_req: Flag to decline ADDBA Req from SAP
  */
 struct wlan_mlme_qos {
 	uint32_t tx_aggregation_size;
@@ -1011,6 +1032,7 @@ struct wlan_mlme_qos {
 	uint32_t tx_non_aggr_sw_retry_threshold;
 	bool sap_max_inactivity_override;
 	bool sap_uapsd_enabled;
+	bool reject_addba_req;
 };
 
 #ifdef WLAN_FEATURE_11AX
@@ -1057,6 +1079,7 @@ struct wlan_mlme_chain_cfg {
  * supports stop all host scan request type.
  * @peer_create_conf_support: Peer create confirmation command support
  * @dual_sta_roam_fw_support: Firmware support for dual sta roaming feature
+ * @ocv_support: FW supports OCV
  *
  * Add all the mlme-tgt related capablities here, and the public API would fill
  * the related capability in the required mlme cfg structure.
@@ -1067,6 +1090,7 @@ struct mlme_tgt_caps {
 	bool stop_all_host_scan_support;
 	bool peer_create_conf_support;
 	bool dual_sta_roam_fw_support;
+	bool ocv_support;
 };
 
 /**
@@ -1283,6 +1307,7 @@ struct wlan_mlme_ratemask {
  * @sae_connect_retries: sae connect retry bitmask
  * @wls_6ghz_capable: wifi location service(WLS) is 6ghz capable
  * @monitor_mode_concurrency: Monitor mode concurrency supported
+ * @ocv_support: FW supports OCV or not
  */
 struct wlan_mlme_generic {
 	uint32_t band_capability;
@@ -1325,6 +1350,7 @@ struct wlan_mlme_generic {
 	uint32_t sae_connect_retries;
 	bool wls_6ghz_capable;
 	enum monitor_mode_concurrency monitor_mode_concurrency;
+	bool ocv_support;
 };
 
 /*
@@ -1400,10 +1426,13 @@ struct wlan_mlme_acs {
 /*
  * struct wlan_mlme_cfg_twt - All twt related cfg items
  * @is_twt_enabled: global twt configuration
- * @bcast_requestor_tgt_cap: Broadcast requestor target capability
- * @bcast_responder_tgt_cap: Broadcast responder target capability
  * @is_bcast_responder_enabled: bcast responder enable/disable
  * @is_bcast_requestor_enabled: bcast requestor enable/disable
+ * @bcast_requestor_tgt_cap: Broadcast requestor target capability
+ * @bcast_responder_tgt_cap: Broadcast responder target capability
+ * @is_twt_nudge_tgt_cap_enabled: support for nudge request enable/disable
+ * @is_all_twt_tgt_cap_enabled: support for all twt enable/disable
+ * @is_twt_statistics_tgt_cap_enabled: support for twt statistics
  * @twt_congestion_timeout: congestion timeout value
  */
 struct wlan_mlme_cfg_twt {
@@ -1412,6 +1441,9 @@ struct wlan_mlme_cfg_twt {
 	bool is_bcast_requestor_enabled;
 	bool bcast_requestor_tgt_cap;
 	bool bcast_responder_tgt_cap;
+	bool is_twt_nudge_tgt_cap_enabled;
+	bool is_all_twt_tgt_cap_enabled;
+	bool is_twt_statistics_tgt_cap_enabled;
 	uint32_t twt_congestion_timeout;
 };
 
@@ -1537,6 +1569,9 @@ struct wlan_mlme_sta_cfg {
 	bool allow_tpc_from_ap;
 	enum station_keepalive_method sta_keepalive_method;
 	bool usr_disabled_roaming;
+#ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
+	host_event_wlan_status_payload_type event_payload;
+#endif
 };
 
 /**
@@ -2128,6 +2163,7 @@ struct mlme_power_usage {
  * @tx_power_5g: limit tx power in 5 ghz
  * @current_tx_power_level: current tx power level
  * @local_power_constraint: local power constraint
+ * @use_local_tpe: preference to use local or regulatory TPE
  */
 struct wlan_mlme_power {
 	struct mlme_max_tx_power_24 max_tx_power_24;
@@ -2139,11 +2175,13 @@ struct wlan_mlme_power {
 	uint8_t tx_power_5g;
 	uint8_t current_tx_power_level;
 	uint8_t local_power_constraint;
+	bool use_local_tpe;
 };
 
 /*
  * struct wlan_mlme_timeout - mlme timeout related config items
- * @join_failure_timeout: join failure timeout
+ * @join_failure_timeout: join failure timeout (can be changed in connect req)
+ * @join_failure_timeout_ori: original value of above join timeout
  * @auth_failure_timeout: authenticate failure timeout
  * @auth_rsp_timeout: authenticate response timeout
  * @assoc_failure_timeout: assoc failure timeout
@@ -2159,6 +2197,7 @@ struct wlan_mlme_power {
  */
 struct wlan_mlme_timeout {
 	uint32_t join_failure_timeout;
+	uint32_t join_failure_timeout_ori;
 	uint32_t auth_failure_timeout;
 	uint32_t auth_rsp_timeout;
 	uint32_t assoc_failure_timeout;
@@ -2375,6 +2414,34 @@ struct wlan_mlme_reg {
 	bool retain_nol_across_regdmn_update;
 };
 
+#define IOT_AGGR_INFO_MAX_NUM 32
+
+/**
+ * struct wlan_iot_aggr - IOT related AGGR rule
+ *
+ * @oui: OUI for the rule
+ * @oui_len: length of the OUI
+ * @ampdu_sz: max aggregation size in no. of MPDUs
+ * @amsdu_sz: max aggregation size in no. of MSDUs
+ */
+struct wlan_iot_aggr {
+	uint8_t oui[OUI_LENGTH];
+	uint32_t oui_len;
+	uint32_t ampdu_sz;
+	uint32_t amsdu_sz;
+};
+
+/**
+ * struct wlan_mlme_iot - IOT related CFG Items
+ *
+ * @aggr: aggr rules
+ * @aggr_num: number of the configured aggr rules
+ */
+struct wlan_mlme_iot {
+	struct wlan_iot_aggr aggr[IOT_AGGR_INFO_MAX_NUM];
+	uint32_t aggr_num;
+};
+
 /**
  * struct wlan_mlme_cfg - MLME config items
  * @chainmask_cfg: VHT chainmask related cfg items
@@ -2418,6 +2485,7 @@ struct wlan_mlme_reg {
  * @trig_score_delta: Roam score delta value for various roam triggers
  * @trig_min_rssi: Expected minimum RSSI value of candidate AP for
  * various roam triggers
+ * @iot: IOT related CFG items
  */
 struct wlan_mlme_cfg {
 	struct wlan_mlme_chainmask chainmask_cfg;
@@ -2462,6 +2530,7 @@ struct wlan_mlme_cfg {
 	struct roam_trigger_score_delta trig_score_delta[NUM_OF_ROAM_TRIGGERS];
 	struct roam_trigger_min_rssi trig_min_rssi[NUM_OF_ROAM_MIN_RSSI];
 	struct wlan_mlme_ratemask ratemask_cfg;
+	struct wlan_mlme_iot iot;
 };
 
 enum pkt_origin {
@@ -2473,10 +2542,14 @@ enum pkt_origin {
  * struct mlme_pmk_info - SAE Roaming using single pmk info
  * @pmk: pmk
  * @pmk_len: pmk length
+ * @spmk_timeout_period: Time to generate new SPMK in seconds.
+ * @spmk_timestamp: System timestamp at which the Single PMK entry was added.
  */
 struct mlme_pmk_info {
 	uint8_t pmk[CFG_MAX_PMK_LEN];
 	uint8_t pmk_len;
+	uint16_t spmk_timeout_period;
+	qdf_time_t spmk_timestamp;
 };
 
 /**
@@ -2509,4 +2582,21 @@ struct mlme_roam_debug_info {
 	struct roam_initial_data roam_init_info;
 	struct roam_msg_info roam_msg_info;
 };
+
+/**
+ * struct wlan_change_bi - Message struct to update beacon interval
+ * @message_type: type of message
+ * @length: length of message
+ * @beacon_interval: beacon interval to update to (seconds)
+ * @bssid: BSSID of vdev
+ * @session_id: session ID of vdev
+ */
+struct wlan_change_bi {
+	uint16_t message_type;
+	uint16_t length;
+	uint16_t beacon_interval;
+	struct qdf_mac_addr bssid;
+	uint8_t session_id;
+};
+
 #endif

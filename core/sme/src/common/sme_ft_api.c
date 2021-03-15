@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,7 +26,9 @@
 void sme_ft_open(mac_handle_t mac_handle, uint32_t sessionId)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+#ifndef FEATURE_CM_ENABLE
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+#endif
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
 
 	if (pSession) {
@@ -38,12 +40,12 @@ void sme_ft_open(mac_handle_t mac_handle, uint32_t sessionId)
 		if (!pSession->ftSmeContext.pUsrCtx)
 			return;
 
+#ifndef FEATURE_CM_ENABLE
 		pSession->ftSmeContext.pUsrCtx->mac = mac;
 		pSession->ftSmeContext.pUsrCtx->sessionId = sessionId;
 
 		status =
-			qdf_mc_timer_init(&pSession->ftSmeContext.
-					  preAuthReassocIntvlTimer,
+			qdf_mc_timer_init(&pSession->ftSmeContext.preAuthReassocIntvlTimer,
 					  QDF_TIMER_TYPE_SW,
 				sme_preauth_reassoc_intvl_timer_callback,
 					(void *)pSession->ftSmeContext.pUsrCtx);
@@ -54,6 +56,7 @@ void sme_ft_open(mac_handle_t mac_handle, uint32_t sessionId)
 			pSession->ftSmeContext.pUsrCtx = NULL;
 			return;
 		}
+#endif
 	}
 }
 
@@ -68,6 +71,7 @@ void sme_ft_close(mac_handle_t mac_handle, uint32_t sessionId)
 
 	pSession = CSR_GET_SESSION(mac, sessionId);
 	if (pSession) {
+#ifndef FEATURE_CM_ENABLE
 		/* check if the timer is running */
 		if (QDF_TIMER_STATE_RUNNING ==
 		    qdf_mc_timer_get_current_state(&pSession->ftSmeContext.
@@ -78,7 +82,7 @@ void sme_ft_close(mac_handle_t mac_handle, uint32_t sessionId)
 
 		qdf_mc_timer_destroy(&pSession->ftSmeContext.
 					preAuthReassocIntvlTimer);
-
+#endif
 		if (pSession->ftSmeContext.pUsrCtx) {
 			qdf_mem_free(pSession->ftSmeContext.pUsrCtx);
 			pSession->ftSmeContext.pUsrCtx = NULL;
@@ -263,7 +267,6 @@ QDF_STATUS sme_check_ft_status(mac_handle_t mac_handle, uint32_t session_id)
 #ifdef WLAN_FEATURE_HOST_ROAM
 bool sme_ft_key_ready_for_install(mac_handle_t mac_handle, uint32_t session_id)
 {
-	QDF_STATUS status;
 	bool ret = false;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct csr_roam_session *session = CSR_GET_SESSION(mac, session_id);
@@ -273,16 +276,11 @@ bool sme_ft_key_ready_for_install(mac_handle_t mac_handle, uint32_t session_id)
 		return false;
 	}
 
-	status = sme_acquire_global_lock(&mac->sme);
-	if (!(QDF_IS_STATUS_SUCCESS(status)))
-		return false;
-
 	if (sme_get_ft_pre_auth_state(mac_handle, session_id) &&
 	    session->ftSmeContext.FTState == eFT_START_READY) {
 		ret = true;
 		sme_set_ft_pre_auth_state(mac_handle, session_id, false);
 	}
-	sme_release_global_lock(&mac->sme);
 
 	return ret;
 }
@@ -381,6 +379,7 @@ void sme_get_rici_es(mac_handle_t mac_handle, uint32_t sessionId,
 	sme_release_global_lock(&mac->sme);
 }
 
+#ifndef FEATURE_CM_ENABLE
 /*
  * Timer callback for the timer that is started between the preauth completion
  * and reassoc request to the PE. In this interval, it is expected that the
@@ -395,6 +394,7 @@ void sme_preauth_reassoc_intvl_timer_callback(void *context)
 		csr_neighbor_roam_request_handoff(pUsrCtx->mac,
 						  pUsrCtx->sessionId);
 }
+#endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 #ifdef FEATURE_WLAN_ESE
@@ -417,11 +417,10 @@ void sme_reset_key(mac_handle_t mac_handle, uint32_t vdev_id)
 		return;
 	}
 
+	wlan_cm_set_psk_pmk(mac->pdev, vdev_id, NULL, 0);
 	session = CSR_GET_SESSION(mac, vdev_id);
 	if (!session)
 		return;
-	qdf_mem_zero(&session->psk_pmk, sizeof(session->psk_pmk));
-	session->pmk_len = 0;
 	sme_reset_esecckm_info(session);
 }
 #endif

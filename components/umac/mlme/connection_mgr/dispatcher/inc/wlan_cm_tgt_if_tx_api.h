@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -127,6 +127,19 @@ QDF_STATUS wlan_cm_tgt_send_roam_per_config(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS wlan_cm_tgt_send_roam_triggers(struct wlan_objmgr_psoc *psoc,
 					  uint8_t vdev_id,
 					  struct wlan_roam_triggers *req);
+
+#ifdef FEATURE_CM_ENABLE
+/**
+ * wlan_cm_tgt_send_roam_triggers()  - Send roam trigger command to FW
+ * @psoc: psoc pointer
+ * @roam_invoke_req: roam invoke parameter
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_cm_tgt_send_roam_invoke_req(struct wlan_objmgr_psoc *psoc,
+				 struct roam_invoke_req *roam_invoke_req);
+#endif
 #endif
 
 /**

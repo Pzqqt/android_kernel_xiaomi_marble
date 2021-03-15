@@ -365,7 +365,7 @@ static QDF_STATUS target_if_cp_stats_extract_pdev_stats(
 {
 	uint32_t i;
 	QDF_STATUS status;
-	wmi_host_pdev_stats pdev_stats;
+	wmi_host_pdev_stats *pdev_stats;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	cdp_config_param_type val;
 
@@ -382,20 +382,29 @@ static QDF_STATUS target_if_cp_stats_extract_pdev_stats(
 	if (!ev->pdev_stats)
 		return QDF_STATUS_E_NOMEM;
 
+	pdev_stats = qdf_mem_malloc(sizeof(*pdev_stats));
+
+	if (!pdev_stats) {
+		cp_stats_err("malloc failed for pdev_stats");
+		return QDF_STATUS_E_NOMEM;
+	}
+
 	for (i = 0; i < ev->num_pdev_stats; i++) {
-		status = wmi_extract_pdev_stats(wmi_hdl, data, i, &pdev_stats);
+		status = wmi_extract_pdev_stats(wmi_hdl, data, i, pdev_stats);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			cp_stats_err("wmi_extract_pdev_stats failed");
+			qdf_mem_free(pdev_stats);
 			return status;
 		}
-		ev->pdev_stats[i].max_pwr = pdev_stats.chan_tx_pwr;
+		ev->pdev_stats[i].max_pwr = pdev_stats->chan_tx_pwr;
 
 		target_if_cp_stats_extract_congestion(&ev->pdev_stats[i],
-						      &pdev_stats);
+						      pdev_stats);
 
-		val.cdp_pdev_param_chn_noise_flr = pdev_stats.chan_nf;
+		val.cdp_pdev_param_chn_noise_flr = pdev_stats->chan_nf;
 		cdp_txrx_set_pdev_param(soc, 0, CDP_CHAN_NOISE_FLOOR, val);
 	}
+	qdf_mem_free(pdev_stats);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -642,7 +651,7 @@ static QDF_STATUS target_if_cp_stats_extract_vdev_summary_stats(
 	uint32_t i, j;
 	QDF_STATUS status;
 	int32_t bcn_snr, dat_snr;
-	wmi_host_vdev_stats vdev_stats;
+	wmi_host_vdev_stats *vdev_stats;
 	bool db2dbm_enabled;
 
 	ev->num_summary_stats = stats_param->num_vdev_stats;
@@ -657,40 +666,47 @@ static QDF_STATUS target_if_cp_stats_extract_vdev_summary_stats(
 
 	db2dbm_enabled = wmi_service_enabled(wmi_hdl,
 					     wmi_service_hw_db2dbm_support);
+
+	vdev_stats = qdf_mem_malloc(sizeof(*vdev_stats));
+	if (!vdev_stats) {
+		cp_stats_err("malloc failed for vdev stats");
+		return QDF_STATUS_E_NOMEM;
+	}
+
 	for (i = 0; i < ev->num_summary_stats; i++) {
-		status = wmi_extract_vdev_stats(wmi_hdl, data, i, &vdev_stats);
+		status = wmi_extract_vdev_stats(wmi_hdl, data, i, vdev_stats);
 		if (QDF_IS_STATUS_ERROR(status))
 			continue;
 
-		bcn_snr = vdev_stats.vdev_snr.bcn_snr;
-		dat_snr = vdev_stats.vdev_snr.dat_snr;
-		ev->vdev_summary_stats[i].vdev_id = vdev_stats.vdev_id;
+		bcn_snr = vdev_stats->vdev_snr.bcn_snr;
+		dat_snr = vdev_stats->vdev_snr.dat_snr;
+		ev->vdev_summary_stats[i].vdev_id = vdev_stats->vdev_id;
 
 		cp_stats_debug("vdev %d SNR bcn: %d data: %d",
 			       ev->vdev_summary_stats[i].vdev_id, bcn_snr,
 			       dat_snr);
 
 		for (j = 0; j < 4; j++) {
-			ev->vdev_summary_stats[i].stats.tx_frm_cnt[j]
-					= vdev_stats.tx_frm_cnt[j];
-			ev->vdev_summary_stats[i].stats.fail_cnt[j]
-					= vdev_stats.fail_cnt[j];
-			ev->vdev_summary_stats[i].stats.multiple_retry_cnt[j]
-					= vdev_stats.multiple_retry_cnt[j];
+			ev->vdev_summary_stats[i].stats.tx_frm_cnt[j] =
+					vdev_stats->tx_frm_cnt[j];
+			ev->vdev_summary_stats[i].stats.fail_cnt[j] =
+					vdev_stats->fail_cnt[j];
+			ev->vdev_summary_stats[i].stats.multiple_retry_cnt[j] =
+					vdev_stats->multiple_retry_cnt[j];
 		}
 
 		ev->vdev_summary_stats[i].stats.rx_frm_cnt =
-						vdev_stats.rx_frm_cnt;
+						vdev_stats->rx_frm_cnt;
 		ev->vdev_summary_stats[i].stats.rx_error_cnt =
-						vdev_stats.rx_err_cnt;
+						vdev_stats->rx_err_cnt;
 		ev->vdev_summary_stats[i].stats.rx_discard_cnt =
-						vdev_stats.rx_discard_cnt;
+						vdev_stats->rx_discard_cnt;
 		ev->vdev_summary_stats[i].stats.ack_fail_cnt =
-						vdev_stats.ack_fail_cnt;
+						vdev_stats->ack_fail_cnt;
 		ev->vdev_summary_stats[i].stats.rts_succ_cnt =
-						vdev_stats.rts_succ_cnt;
+						vdev_stats->rts_succ_cnt;
 		ev->vdev_summary_stats[i].stats.rts_fail_cnt =
-						vdev_stats.rts_fail_cnt;
+						vdev_stats->rts_fail_cnt;
 		/* Update SNR and RSSI in SummaryStats */
 		wlan_util_stats_get_rssi(db2dbm_enabled, bcn_snr, dat_snr,
 					 &ev->vdev_summary_stats[i].stats.rssi);
@@ -698,6 +714,7 @@ static QDF_STATUS target_if_cp_stats_extract_vdev_summary_stats(
 				ev->vdev_summary_stats[i].stats.rssi -
 				TGT_NOISE_FLOOR_DBM;
 	}
+	qdf_mem_free(vdev_stats);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -850,7 +867,7 @@ static int target_if_mc_cp_stats_stats_event_handler(ol_scn_t scn,
 						     uint32_t datalen)
 {
 	QDF_STATUS status;
-	struct stats_event ev = {0};
+	struct stats_event *ev;
 	struct wlan_objmgr_psoc *psoc;
 	struct wmi_unified *wmi_handle;
 	struct wlan_lmac_if_cp_stats_rx_ops *rx_ops;
@@ -877,16 +894,23 @@ static int target_if_mc_cp_stats_stats_event_handler(ol_scn_t scn,
 		return -EINVAL;
 	}
 
-	status = target_if_cp_stats_extract_event(wmi_handle, &ev, data);
+	ev = qdf_mem_malloc(sizeof(*ev));
+	if (!ev) {
+		cp_stats_err("");
+		return -EINVAL;
+	}
+
+	status = target_if_cp_stats_extract_event(wmi_handle, ev, data);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		cp_stats_err("extract event failed");
 		goto end;
 	}
 
-	status = rx_ops->process_stats_event(psoc, &ev);
+	status = rx_ops->process_stats_event(psoc, ev);
 
 end:
-	target_if_cp_stats_free_stats_event(&ev);
+	target_if_cp_stats_free_stats_event(ev);
+	qdf_mem_free(ev);
 
 	return qdf_status_to_os_return(status);
 }

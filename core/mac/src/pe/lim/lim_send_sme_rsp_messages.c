@@ -179,6 +179,7 @@ static void lim_set_fils_connection(struct wlan_cm_connect_resp *connect_rsp,
 {
 	if (lim_is_fils_connection(session_entry))
 		connect_rsp->is_fils_connection = true;
+	pe_debug("is_fils_connection %d", connect_rsp->is_fils_connection);
 }
 #else
 static inline
@@ -194,7 +195,7 @@ static void lim_copy_tspec_ie(struct pe_session *pe_session,
 	if (pe_session->tspecIes) {
 		rsp->tspec_ie.len = pe_session->tspecLen;
 		rsp->tspec_ie.ptr =
-		    qdf_mem_malloc(sizeof(rsp->tspec_ie.len));
+		    qdf_mem_malloc(rsp->tspec_ie.len);
 		if (!rsp->tspec_ie.ptr)
 			return;
 
@@ -266,7 +267,7 @@ lim_cm_prepare_join_rsp_from_pe_session(struct mac_context *mac_ctx,
 	if (pe_session->beacon) {
 		connect_ie->bcn_probe_rsp.len = pe_session->bcnLen;
 		connect_ie->bcn_probe_rsp.ptr =
-			qdf_mem_malloc(sizeof(connect_ie->bcn_probe_rsp.len));
+			qdf_mem_malloc(connect_ie->bcn_probe_rsp.len);
 		if (!connect_ie->bcn_probe_rsp.ptr)
 			return QDF_STATUS_E_NOMEM;
 
@@ -279,7 +280,7 @@ lim_cm_prepare_join_rsp_from_pe_session(struct mac_context *mac_ctx,
 	if (pe_session->assoc_req) {
 		connect_ie->assoc_req.len = pe_session->assocReqLen;
 		connect_ie->assoc_req.ptr =
-			qdf_mem_malloc(sizeof(connect_ie->assoc_req.len));
+				qdf_mem_malloc(connect_ie->assoc_req.len);
 		if (!connect_ie->assoc_req.ptr)
 			return QDF_STATUS_E_NOMEM;
 
@@ -290,15 +291,18 @@ lim_cm_prepare_join_rsp_from_pe_session(struct mac_context *mac_ctx,
 	if (pe_session->assocRsp) {
 		connect_ie->assoc_rsp.len = pe_session->assocRspLen;
 		connect_ie->assoc_rsp.ptr =
-			qdf_mem_malloc(sizeof(connect_ie->assoc_rsp.len));
+			qdf_mem_malloc(connect_ie->assoc_rsp.len);
 		if (!connect_ie->assoc_rsp.ptr)
 			return QDF_STATUS_E_NOMEM;
 
 		qdf_mem_copy(connect_ie->assoc_rsp.ptr, pe_session->assocRsp,
 			     connect_ie->assoc_rsp.len);
 	}
+	connect_rsp->is_wps_connection = pe_session->wps_registration;
+	connect_rsp->is_osen_connection = pe_session->isOSENConnection;
 
 	if (QDF_IS_STATUS_SUCCESS(connect_status)) {
+		connect_rsp->status_code = STATUS_SUCCESS;
 		populate_fils_connect_params(mac_ctx, pe_session, connect_rsp);
 		connect_rsp->aid = pe_session->limAID;
 
@@ -306,7 +310,7 @@ lim_cm_prepare_join_rsp_from_pe_session(struct mac_context *mac_ctx,
 		if (pe_session->ricData) {
 			rsp->ric_resp_ie.len = pe_session->RICDataLen;
 			rsp->ric_resp_ie.ptr =
-			    qdf_mem_malloc(sizeof(rsp->ric_resp_ie.len));
+			    qdf_mem_malloc(rsp->ric_resp_ie.len);
 			if (!rsp->ric_resp_ie.ptr)
 				return QDF_STATUS_E_NOMEM;
 
@@ -317,7 +321,6 @@ lim_cm_prepare_join_rsp_from_pe_session(struct mac_context *mac_ctx,
 		lim_copy_tspec_ie(pe_session, rsp);
 
 		lim_send_smps_intolerent(mac_ctx, pe_session, bcn_len, bcn_ptr);
-		rsp->supported_nss_1x1 = pe_session->supported_nss_1x1;
 		lim_cm_fill_rsp_from_stads(mac_ctx, pe_session, rsp);
 		rsp->uapsd_mask = pe_session->gUapsdPerAcBitmask;
 	}
@@ -339,6 +342,8 @@ lim_cm_fill_join_rsp_from_connect_req(struct cm_vdev_join_req *req,
 	connect_rsp->connect_status = QDF_STATUS_E_FAILURE;
 	connect_rsp->reason = reason;
 	connect_rsp->ssid = req->entry->ssid;
+	connect_rsp->is_wps_connection = req->is_wps_connection;
+	connect_rsp->is_osen_connection = req->is_osen_connection;
 }
 
 static QDF_STATUS lim_cm_flush_connect_rsp(struct scheduler_msg *msg)
@@ -426,8 +431,8 @@ void lim_cm_send_connect_rsp(struct mac_context *mac_ctx,
 	msg.flush_callback = lim_cm_flush_connect_rsp;
 
 	status = scheduler_post_message(QDF_MODULE_ID_PE,
-					QDF_MODULE_ID_SME,
-					QDF_MODULE_ID_SME, &msg);
+					QDF_MODULE_ID_OS_IF,
+					QDF_MODULE_ID_OS_IF, &msg);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		pe_err("vdev_id: %d cm_id 0x%x : msg post fails",
@@ -862,11 +867,6 @@ void lim_send_sme_join_reassoc_rsp(struct mac_context *mac_ctx,
 		lim_handle_join_rsp_status(mac_ctx, session_entry, result_code,
 			sme_join_rsp);
 		sme_join_rsp->uapsd_mask = session_entry->gUapsdPerAcBitmask;
-		/* Send supported NSS 1x1 to SME */
-		sme_join_rsp->supported_nss_1x1 =
-			session_entry->supported_nss_1x1;
-		pe_debug("SME Join Rsp is supported NSS 1X1: %d",
-		       sme_join_rsp->supported_nss_1x1);
 	}
 
 	sme_join_rsp->messageType = msg_type;
@@ -891,7 +891,7 @@ void lim_send_sme_start_bss_rsp(struct mac_context *mac,
 	uint16_t size = 0;
 	struct scheduler_msg mmhMsg = {0};
 	struct start_bss_rsp *pSirSmeRsp;
-	uint16_t ieLen;
+	uint16_t beacon_length, ieLen;
 	uint16_t ieOffset, curLen;
 
 	pe_debug("Sending message: %s with reasonCode: %s",
@@ -906,8 +906,13 @@ void lim_send_sme_start_bss_rsp(struct mac_context *mac,
 	} else {
 		/* subtract size of beaconLength + Mac Hdr + Fixed Fields before SSID */
 		ieOffset = sizeof(tAniBeaconStruct) + SIR_MAC_B_PR_SSID_OFFSET;
-		ieLen = pe_session->schBeaconOffsetBegin
-			+ pe_session->schBeaconOffsetEnd - ieOffset;
+		beacon_length = pe_session->schBeaconOffsetBegin +
+						pe_session->schBeaconOffsetEnd;
+		ieLen = beacon_length - ieOffset;
+
+		/* Invalidate for non-beaconing entities */
+		if (beacon_length <= ieOffset)
+			ieLen = ieOffset = 0;
 		/* calculate the memory size to allocate */
 		size += ieLen;
 
@@ -1025,8 +1030,8 @@ static void lim_send_sta_disconnect_ind(struct mac_context *mac,
 	ind_msg.type = msg->type;
 	qdf_mem_free(msg->bodyptr);
 
-	status = scheduler_post_message(QDF_MODULE_ID_PE, QDF_MODULE_ID_SME,
-					QDF_MODULE_ID_SME, &ind_msg);
+	status = scheduler_post_message(QDF_MODULE_ID_PE, QDF_MODULE_ID_OS_IF,
+					QDF_MODULE_ID_OS_IF, &ind_msg);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		pe_err("vdev_id: %d, source %d, reason %d, type %d msg post fails",
@@ -1053,8 +1058,8 @@ void lim_cm_send_disconnect_rsp(struct mac_context *mac_ctx, uint8_t vdev_id)
 	rsp_msg.bodyptr = rsp;
 	rsp_msg.callback = cm_handle_disconnect_resp;
 
-	status = scheduler_post_message(QDF_MODULE_ID_PE, QDF_MODULE_ID_SME,
-					QDF_MODULE_ID_SME, &rsp_msg);
+	status = scheduler_post_message(QDF_MODULE_ID_PE, QDF_MODULE_ID_OS_IF,
+					QDF_MODULE_ID_OS_IF, &rsp_msg);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		pe_err("Failed to post disconnect rsp to sme vdev_id %d",
@@ -1663,71 +1668,6 @@ void lim_send_sme_deauth_ntf(struct mac_context *mac, tSirMacAddr peerMacAddr,
 					 (uint32_t *) pMsg);
 
 } /*** end lim_send_sme_deauth_ntf() ***/
-
-/**
- * lim_send_sme_wm_status_change_ntf() - Send Notification
- * @mac_ctx:             Global MAC Context
- * @status_change_code:  Indicates the change in the wireless medium.
- * @status_change_info:  Indicates the information associated with
- *                       change in the wireless medium.
- * @info_len:            Indicates the length of status change information
- *                       being sent.
- * @session_id           SessionID
- *
- * This function is called by limProcessSmeMessages() to send
- * eWNI_SME_WM_STATUS_CHANGE_NTF message to host.
- *
- * Return: None
- */
-void
-lim_send_sme_wm_status_change_ntf(struct mac_context *mac_ctx,
-	tSirSmeStatusChangeCode status_change_code,
-	uint32_t *status_change_info, uint16_t info_len, uint8_t session_id)
-{
-	struct scheduler_msg msg = {0};
-	struct wm_status_change_ntf *wm_status_change_ntf;
-	uint32_t max_info_len;
-
-	wm_status_change_ntf = qdf_mem_malloc(sizeof(*wm_status_change_ntf));
-	if (!wm_status_change_ntf)
-		return;
-
-	msg.type = eWNI_SME_WM_STATUS_CHANGE_NTF;
-	msg.bodyval = 0;
-	msg.bodyptr = wm_status_change_ntf;
-
-	switch (status_change_code) {
-	case eSIR_SME_AP_CAPS_CHANGED:
-		max_info_len = sizeof(struct ap_new_caps);
-		break;
-	default:
-		max_info_len = sizeof(wm_status_change_ntf->statusChangeInfo);
-		break;
-	}
-
-	switch (status_change_code) {
-	case eSIR_SME_RADAR_DETECTED:
-		break;
-	default:
-		wm_status_change_ntf->messageType =
-			eWNI_SME_WM_STATUS_CHANGE_NTF;
-		wm_status_change_ntf->statusChangeCode = status_change_code;
-		wm_status_change_ntf->length = sizeof(*wm_status_change_ntf);
-		wm_status_change_ntf->sessionId = session_id;
-		if (info_len <= max_info_len && status_change_info) {
-			qdf_mem_copy(
-			    (uint8_t *) &wm_status_change_ntf->statusChangeInfo,
-			    (uint8_t *) status_change_info, info_len);
-		}
-		pe_debug("StatusChg code: 0x%x length: %d",
-			status_change_code, info_len);
-		break;
-	}
-
-	MTRACE(mac_trace(mac_ctx, TRACE_CODE_TX_SME_MSG, session_id, msg.type));
-	lim_sys_process_mmh_msg_api(mac_ctx, &msg);
-
-} /*** end lim_send_sme_wm_status_change_ntf() ***/
 
 void lim_send_sme_set_context_rsp(struct mac_context *mac,
 				  struct qdf_mac_addr peer_macaddr,

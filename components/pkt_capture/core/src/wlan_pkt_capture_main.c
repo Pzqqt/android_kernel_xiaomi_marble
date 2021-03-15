@@ -21,7 +21,7 @@
  * internally in pkt_capture component only.
  */
 
-#ifdef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 #include <dp_types.h>
 #endif
 #include "wlan_pkt_capture_main.h"
@@ -34,7 +34,7 @@
 
 static struct wlan_objmgr_vdev *gp_pkt_capture_vdev;
 
-#ifdef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 wdi_event_subscribe PKT_CAPTURE_TX_SUBSCRIBER;
 wdi_event_subscribe PKT_CAPTURE_RX_SUBSCRIBER;
 wdi_event_subscribe PKT_CAPTURE_OFFLOAD_TX_SUBSCRIBER;
@@ -104,7 +104,7 @@ static void pkt_capture_wdi_event_unsubscribe(struct wlan_objmgr_psoc *psoc)
 }
 
 enum pkt_capture_mode
-pkt_capture_get_pktcap_mode_lithium()
+pkt_capture_get_pktcap_mode_v2()
 {
 	enum pkt_capture_mode mode = PACKET_CAPTURE_MODE_DISABLE;
 	struct pkt_capture_vdev_priv *vdev_priv;
@@ -142,7 +142,7 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 		int nbuf_len;
 
 		hal_tx_comp_get_status(&desc->comp, &ppdu_hdr, psoc->hal_soc);
-		if (!(pkt_capture_get_pktcap_mode_lithium() &
+		if (!(pkt_capture_get_pktcap_mode_v2() &
 					PKT_CAPTURE_MODE_DATA_ONLY)) {
 			return;
 		}
@@ -212,11 +212,12 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 
 	case WDI_EVENT_PKT_CAPTURE_RX_DATA:
 	{
-		if (!(pkt_capture_get_pktcap_mode_lithium() &
+		if (!(pkt_capture_get_pktcap_mode_v2() &
 					PKT_CAPTURE_MODE_DATA_ONLY))
 			return;
 
-		pkt_capture_msdu_process_pkts(bssid, log_data, vdev_id, soc);
+		pkt_capture_msdu_process_pkts(bssid, log_data, vdev_id, soc,
+					      status);
 		break;
 	}
 
@@ -226,7 +227,7 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 		bool is_pkt_during_roam = false;
 		uint32_t freq = 0;
 
-		if (!(pkt_capture_get_pktcap_mode_lithium() &
+		if (!(pkt_capture_get_pktcap_mode_v2() &
 					PKT_CAPTURE_MODE_DATA_ONLY))
 			return;
 

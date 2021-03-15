@@ -575,6 +575,69 @@ static void p2p_set_ht_caps(struct tx_action_context *tx_ctx,
 }
 
 /**
+ * p2p_get_next_seq_num() - get next sequence number to fill mac header
+ * @peer:   PEER object
+ * @tx_ctx: tx context
+ * @ta : transmitter address
+ *
+ * API to get next sequence number of action frame for the peer.
+ *
+ * Return: Next sequence number of the peer
+ */
+static uint16_t p2p_get_next_seq_num(struct wlan_objmgr_peer *peer,
+				     struct tx_action_context *tx_ctx,
+				     uint8_t *ta)
+{
+	uint16_t random_num, random_num_bitmask = 0x03FF;
+	uint16_t seq_num, seq_num_bitmask = 0x0FFF;
+	struct p2p_vdev_priv_obj *p2p_vdev_obj;
+	struct wlan_objmgr_vdev *vdev;
+	bool is_new_random_ta;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(tx_ctx->p2p_soc_obj->soc,
+						    tx_ctx->vdev_id,
+						    WLAN_P2P_ID);
+	if (!vdev) {
+		p2p_debug("vdev is null");
+		return false;
+	}
+
+	p2p_vdev_obj = wlan_objmgr_vdev_get_comp_private_obj(
+						vdev, WLAN_UMAC_COMP_P2P);
+	if (!p2p_vdev_obj) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_P2P_ID);
+		p2p_debug("p2p vdev object is NULL");
+		return false;
+	}
+
+	is_new_random_ta = qdf_mem_cmp(p2p_vdev_obj->prev_action_frame_addr2,
+				       ta, QDF_MAC_ADDR_SIZE);
+	if (is_new_random_ta &&
+	    tx_ctx->p2p_soc_obj->param.is_random_seq_num_enabled) {
+		/**
+		 * Increment the previous sequence number with 10-bits
+		 * random number to get the next sequence number.
+		 */
+
+		qdf_get_random_bytes(&random_num, sizeof(random_num));
+		random_num &= random_num_bitmask;
+		seq_num = (peer->peer_mlme.seq_num + random_num) &
+			  seq_num_bitmask;
+		peer->peer_mlme.seq_num = seq_num;
+
+		qdf_mem_copy(p2p_vdev_obj->prev_action_frame_addr2, ta,
+			     QDF_MAC_ADDR_SIZE);
+
+	} else {
+		seq_num = wlan_peer_mlme_get_next_seq_num(peer);
+	}
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_P2P_ID);
+
+	return seq_num;
+}
+
+/**
  * p2p_populate_mac_header() - update sequence number
  * @tx_ctx:      tx context
  *
@@ -626,7 +689,7 @@ static QDF_STATUS p2p_populate_mac_header(
 		p2p_err("no valid peer");
 		return QDF_STATUS_E_INVAL;
 	}
-	seq_num = (uint16_t)wlan_peer_mlme_get_next_seq_num(peer);
+	seq_num = (uint16_t)p2p_get_next_seq_num(peer, tx_ctx, wh->i_addr2);
 	seq_ctl = (struct wlan_seq_ctl *)(tx_ctx->buf +
 			WLAN_SEQ_CTL_OFFSET);
 	seq_ctl->seq_num_lo = (seq_num & WLAN_LOW_SEQ_NUM_MASK);

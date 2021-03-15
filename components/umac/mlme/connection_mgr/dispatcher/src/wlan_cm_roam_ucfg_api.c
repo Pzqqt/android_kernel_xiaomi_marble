@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -96,20 +96,65 @@ QDF_STATUS ucfg_cm_abort_roam_scan(struct wlan_objmgr_pdev *pdev,
 	QDF_STATUS status;
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 	bool roam_scan_offload_enabled;
+	struct wlan_objmgr_vdev *vdev;
 
 	ucfg_mlme_is_roam_scan_offload_enabled(psoc,
 					       &roam_scan_offload_enabled);
 	if (!roam_scan_offload_enabled)
 		return QDF_STATUS_SUCCESS;
 
-	status = cm_roam_acquire_lock();
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+	status = cm_roam_acquire_lock(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
-		return status;
+		goto release_ref;
 
 	status = cm_roam_send_rso_cmd(psoc, vdev_id,
 				      ROAM_SCAN_OFFLOAD_ABORT_SCAN,
 				      REASON_ROAM_ABORT_ROAM_SCAN);
-	cm_roam_release_lock();
+	cm_roam_release_lock(vdev);
+
+release_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 
 	return status;
 }
+
+#ifdef FEATURE_CM_ENABLE
+#ifdef WLAN_FEATURE_FILS_SK
+QDF_STATUS
+ucfg_cm_update_fils_config(struct wlan_objmgr_psoc *psoc,
+			   uint8_t vdev_id,
+			   struct wlan_fils_con_info *fils_info)
+{
+	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wlan_cm_update_mlme_fils_info(vdev, fils_info);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+
+	return status;
+}
+#endif
+#endif
+
+#ifdef FEATURE_CM_ENABLE
+QDF_STATUS
+ucfg_wlan_cm_roam_invoke(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
+			 struct qdf_mac_addr *bssid, qdf_freq_t ch_freq)
+{
+	return wlan_cm_roam_invoke(pdev, vdev_id, bssid, ch_freq);
+}
+
+#endif

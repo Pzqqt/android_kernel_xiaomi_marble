@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -233,8 +233,7 @@ bool csr_is_infra_bss_desc(struct bss_description *pSirBssDesc);
 tSirResultCodes csr_get_de_auth_rsp_status_code(struct deauth_rsp *pSmeRsp);
 uint32_t csr_get_frag_thresh(struct mac_context *mac_ctx);
 uint32_t csr_get_rts_thresh(struct mac_context *mac_ctx);
-uint32_t csr_get11h_power_constraint(struct mac_context *mac_ctx,
-				     tDot11fIEPowerConstraints *constraints);
+
 uint8_t csr_construct_rsn_ie(struct mac_context *mac, uint32_t sessionId,
 			     struct csr_roam_profile *pProfile,
 			     struct bss_description *pSirBssDesc,
@@ -248,6 +247,7 @@ uint8_t csr_construct_wpa_ie(struct mac_context *mac, uint8_t session_id,
 #ifdef FEATURE_WLAN_WAPI
 bool csr_is_profile_wapi(struct csr_roam_profile *pProfile);
 #endif /* FEATURE_WLAN_WAPI */
+#ifndef FEATURE_CM_ENABLE
 /*
  * If a WPAIE exists in the profile, just use it.
  * Or else construct one from the BSS Caller allocated memory for pWpaIe and
@@ -257,7 +257,6 @@ uint8_t csr_retrieve_wpa_ie(struct mac_context *mac, uint8_t session_id,
 			    struct csr_roam_profile *pProfile,
 			    struct bss_description *pSirBssDesc,
 			    tDot11fBeaconIEs *pIes, tCsrWpaIe *pWpaIe);
-
 bool csr_is_ssid_equal(struct mac_context *mac,
 		       struct bss_description *pSirBssDesc1,
 		       struct bss_description *pSirBssDesc2,
@@ -287,6 +286,7 @@ uint8_t csr_retrieve_wapi_ie(struct mac_context *mac, uint32_t sessionId,
 			     struct bss_description *pSirBssDesc,
 			     tDot11fBeaconIEs *pIes, tCsrWapiIe *pWapiIe);
 #endif /* FEATURE_WLAN_WAPI */
+#endif
 bool csr_rates_is_dot11_rate11b_supported_rate(uint8_t dot11Rate);
 bool csr_rates_is_dot11_rate11a_supported_rate(uint8_t dot11Rate);
 tAniEdType csr_translate_encrypt_type_to_ed_type(
@@ -311,11 +311,11 @@ QDF_STATUS csr_get_parsed_bss_description_ies(struct mac_context *mac_ctx,
 					      struct bss_description *bss_desc,
 					      tDot11fBeaconIEs **ppIEStruct);
 
-tSirScanType csr_get_scan_type(struct mac_context *mac, uint8_t chnId);
-
 QDF_STATUS csr_get_phy_mode_from_bss(struct mac_context *mac,
 		struct bss_description *pBSSDescription,
 		eCsrPhyMode *pPhyMode, tDot11fBeaconIEs *pIes);
+
+#ifndef FEATURE_CM_ENABLE
 /*
  * fForce -- force reassoc regardless of whether there is any change.
  * The reason is that for UAPSD-bypass, the code underneath this call determine
@@ -326,24 +326,7 @@ QDF_STATUS csr_get_phy_mode_from_bss(struct mac_context *mac,
 QDF_STATUS csr_reassoc(struct mac_context *mac, uint32_t sessionId,
 		tCsrRoamModifyProfileFields *pModProfileFields,
 		uint32_t *pRoamId, bool fForce);
-
-/**
- * csr_validate_mcc_beacon_interval() - to validate the mcc beacon interval
- * @mac_ctx: pointer to mac context
- * @ch_freq: channel frequency
- * @bcn_interval: provided beacon interval
- * @cur_session_id: current session id
- * @cur_bss_persona: Current BSS persona
- *
- * This API will validate the mcc beacon interval
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS csr_validate_mcc_beacon_interval(struct mac_context *mac_ctx,
-					    uint32_t ch_freq,
-					    uint16_t *bcn_interval,
-					    uint32_t cur_session_id,
-					    enum QDF_OPMODE cur_bss_persona);
+#endif
 
 bool csr_is_profile11r(struct mac_context *mac, struct csr_roam_profile *pProfile);
 bool csr_is_auth_type11r(struct mac_context *mac, enum csr_akm_type AuthType,

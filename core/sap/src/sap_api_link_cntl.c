@@ -794,7 +794,9 @@ static void wlansap_update_vendor_acs_chan(struct mac_context *mac_ctx,
 	}
 
 	mac_ctx->sap.SapDfsInfo.target_chan_freq =
-				wlan_reg_chan_to_freq(mac_ctx->pdev, sap_ctx->dfs_vendor_channel);
+				wlan_reg_legacy_chan_to_freq(
+						mac_ctx->pdev,
+						sap_ctx->dfs_vendor_channel);
 
 	mac_ctx->sap.SapDfsInfo.new_chanWidth =
 				sap_ctx->dfs_vendor_chan_bw;

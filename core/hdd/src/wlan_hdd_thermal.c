@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -396,14 +396,13 @@ QDF_STATUS hdd_restore_thermal_mitigation_config(struct hdd_context *hdd_ctx)
 	return status;
 }
 
-int wlan_hdd_pld_set_thermal_mitigation(struct device *dev, unsigned long state,
-					int mon_id)
+static int
+__wlan_hdd_pld_set_thermal_mitigation(struct device *dev, unsigned long state,
+				      int mon_id)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	QDF_STATUS status;
 	int ret;
-
-	hdd_enter();
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)
@@ -414,8 +413,27 @@ int wlan_hdd_pld_set_thermal_mitigation(struct device *dev, unsigned long state,
 
 	status = hdd_send_thermal_mitigation_val(hdd_ctx, state, mon_id);
 
-	hdd_exit();
 	return qdf_status_to_os_return(status);
+}
+
+int wlan_hdd_pld_set_thermal_mitigation(struct device *dev, unsigned long state,
+					int mon_id)
+{
+	struct osif_psoc_sync *psoc_sync;
+	int ret;
+
+	hdd_enter();
+
+	ret = osif_psoc_sync_op_start(dev, &psoc_sync);
+	if (ret)
+		return ret;
+
+	ret =  __wlan_hdd_pld_set_thermal_mitigation(dev, state, mon_id);
+
+	osif_psoc_sync_op_stop(psoc_sync);
+	hdd_exit();
+
+	return ret;
 }
 
 #ifdef FEATURE_WPSS_THERMAL_MITIGATION

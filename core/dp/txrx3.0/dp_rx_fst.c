@@ -28,6 +28,8 @@
 /* Timeout in milliseconds to wait for CMEM FST HTT response */
 #define DP_RX_FST_CMEM_RESP_TIMEOUT 2000
 
+#define INVALID_NAPI 0Xff
+
 #ifdef WLAN_SUPPORT_RX_FISA
 void dp_fisa_rx_fst_update_work(void *arg);
 
@@ -45,7 +47,7 @@ void dp_rx_dump_fisa_table(struct dp_soc *soc)
 
 	if (hif_force_wake_request(((struct hal_soc *)hal_soc_hdl)->hif_handle)) {
 		dp_err("Wake up request failed");
-		qdf_check_state_before_panic();
+		qdf_check_state_before_panic(__func__, __LINE__);
 		return;
 	}
 
@@ -55,7 +57,7 @@ void dp_rx_dump_fisa_table(struct dp_soc *soc)
 
 	if (hif_force_wake_release(((struct hal_soc *)hal_soc_hdl)->hif_handle)) {
 		dp_err("Wake up release failed");
-		qdf_check_state_before_panic();
+		qdf_check_state_before_panic(__func__, __LINE__);
 		return;
 	}
 }
@@ -205,8 +207,10 @@ static QDF_STATUS dp_rx_fst_cmem_init(struct dp_rx_fst *fst)
 QDF_STATUS dp_rx_fst_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 {
 	struct dp_rx_fst *fst;
+	struct dp_fisa_rx_sw_ft *ft_entry;
 	uint8_t *hash_key;
 	struct wlan_cfg_dp_soc_ctxt *cfg = soc->wlan_cfg_ctx;
+	int i = 0;
 	QDF_STATUS status;
 
 	/* Check if it is enabled in the INI */
@@ -249,6 +253,10 @@ QDF_STATUS dp_rx_fst_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 
 	if (!fst->base)
 		goto out2;
+
+	ft_entry = (struct dp_fisa_rx_sw_ft *)fst->base;
+	for (i = 0; i < fst->max_entries; i++)
+		ft_entry[i].napi_id = INVALID_NAPI;
 
 	fst->hal_rx_fst = hal_rx_fst_attach(soc->osdev,
 					    &fst->hal_rx_fst_base_paddr,

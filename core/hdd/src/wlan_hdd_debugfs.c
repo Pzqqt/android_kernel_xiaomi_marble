@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -348,7 +348,7 @@ static ssize_t __wcnss_patterngen_write(struct net_device *net_dev,
 	 */
 	hdd_debug("device mode %d", adapter->device_mode);
 	if ((QDF_STA_MODE == adapter->device_mode) &&
-	    (!hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(adapter)))) {
+	    (!hdd_cm_is_vdev_associated(adapter))) {
 		hdd_err("Not in Connected state!");
 		goto failure;
 	}

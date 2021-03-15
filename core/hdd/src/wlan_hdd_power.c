@@ -86,7 +86,7 @@
 #include "wlan_hdd_thermal.h"
 #include "wlan_hdd_object_manager.h"
 /* Preprocessor definitions and constants */
-#ifdef QCA_WIFI_NAPIER_EMULATION
+#ifdef QCA_WIFI_EMULATION
 #define HDD_SSR_BRING_UP_TIME 3000000
 #else
 #define HDD_SSR_BRING_UP_TIME 30000
@@ -917,7 +917,6 @@ static void __hdd_ipv4_notifier_work_queue(struct hdd_adapter *adapter)
 {
 	struct hdd_context *hdd_ctx;
 	int errno;
-	struct csr_roam_profile *roam_profile;
 	struct in_ifaddr *ifa;
 	enum station_keepalive_method val;
 	QDF_STATUS status;
@@ -944,12 +943,11 @@ static void __hdd_ipv4_notifier_work_queue(struct hdd_adapter *adapter)
 
 	hdd_debug("FILS Roaming support: %d",
 		  hdd_ctx->is_fils_roaming_supported);
-	roam_profile = hdd_roam_profile(adapter);
 
 	ifa = hdd_lookup_ifaddr(adapter);
 	if (ifa && hdd_ctx->is_fils_roaming_supported)
 		sme_send_hlp_ie_info(hdd_ctx->mac_handle, adapter->vdev_id,
-				     roam_profile, ifa->ifa_local);
+				     ifa->ifa_local);
 	hdd_send_ps_config_to_fw(adapter);
 exit:
 	hdd_exit();
@@ -1204,7 +1202,7 @@ void hdd_enable_mc_addr_filtering(struct hdd_adapter *adapter,
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
 
-	if (!hdd_adapter_is_connected_sta(adapter))
+	if (!hdd_cm_is_vdev_associated(adapter))
 		return;
 
 	status = ucfg_pmo_enable_mc_addr_filtering_in_fwr(hdd_ctx->psoc,
@@ -1224,7 +1222,7 @@ void hdd_disable_mc_addr_filtering(struct hdd_adapter *adapter,
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
 
-	if (!hdd_adapter_is_connected_sta(adapter))
+	if (!hdd_cm_is_vdev_associated(adapter))
 		return;
 
 	status = ucfg_pmo_disable_mc_addr_filtering_in_fwr(hdd_ctx->psoc,
@@ -1249,7 +1247,7 @@ void hdd_disable_and_flush_mc_addr_list(struct hdd_adapter *adapter,
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	QDF_STATUS status;
 
-	if (!hdd_adapter_is_connected_sta(adapter))
+	if (!hdd_cm_is_vdev_associated(adapter))
 		goto flush_mc_list;
 
 	/* disable mc list first because the mc list is cached in PMO */
@@ -2374,7 +2372,7 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 
 	status = wlan_hdd_set_powersave(adapter, allow_power_save, timeout);
 
-	if (hdd_adapter_is_connected_sta(adapter)) {
+	if (hdd_cm_is_vdev_associated(adapter)) {
 		hdd_debug("vdev mode %d enable dhcp protection",
 			  adapter->device_mode);
 		allow_power_save ? hdd_stop_dhcp_ind(adapter) :
@@ -2855,7 +2853,7 @@ static void __hdd_wlan_fake_apps_resume(struct wiphy *wiphy,
 	/* simulate kernel enable irqs */
 	QDF_BUG(!hif_apps_irqs_enable(hif_ctx));
 
-	QDF_BUG(!wlan_hdd_bus_resume());
+	QDF_BUG(!wlan_hdd_bus_resume(QDF_UNIT_TEST_WOW_SUSPEND));
 
 	QDF_BUG(!wlan_hdd_cfg80211_resume_wlan(wiphy));
 
@@ -2992,7 +2990,7 @@ enable_irqs:
 	QDF_BUG(!hif_apps_irqs_enable(hif_ctx));
 
 bus_resume:
-	QDF_BUG(!wlan_hdd_bus_resume());
+	QDF_BUG(!wlan_hdd_bus_resume(QDF_UNIT_TEST_WOW_SUSPEND));
 
 cfg80211_resume:
 	QDF_BUG(!wlan_hdd_cfg80211_resume_wlan(wiphy));

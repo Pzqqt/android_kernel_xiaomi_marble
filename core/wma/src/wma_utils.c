@@ -2026,6 +2026,13 @@ static int wma_copy_chan_stats(uint32_t num_chan,
 		rs_results->channels = channels;
 		return 0;
 	}
+	if (rs_results->num_channels + num_chan > NUM_CHANNELS) {
+		wma_err("total chan stats num unexpected %d new %d",
+			rs_results->num_channels, num_chan);
+		/* do not add more */
+		qdf_mem_free(channels);
+		return 0;
+	}
 
 	rs_results->num_channels += num_chan;
 	rs_results->channels = qdf_mem_malloc(rs_results->num_channels *
@@ -2238,7 +2245,8 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 		chn_results =
 			(struct wifi_channel_stats *)&channels_in_this_event[0];
 		next_chan_offset = WMI_TLV_HDR_SIZE;
-		wma_debug("Channel Stats Info");
+		wma_debug("Channel Stats Info, radio id %d",
+			  radio_stats->radio_id);
 		for (count = 0; count < radio_stats->num_channels; count++) {
 			wma_nofl_debug("freq %u width %u freq0 %u freq1 %u awake time %u cca busy time %u",
 				       channel_stats->center_freq,
@@ -2541,10 +2549,8 @@ wma_send_ll_stats_get_cmd(tp_wma_handle wma_handle,
 		return wmi_unified_process_ll_stats_get_cmd(
 						wma_handle->wmi_handle, cmd);
 
-	return wmi_process_unified_ll_stats_get_sta_cmd(
-			wma_handle->wmi_handle, cmd,
-			cfg_get(wma_handle->psoc,
-				CFG_SEND_LL_AND_GET_STATION_STATS_OVER_QMI));
+	return wmi_process_unified_ll_stats_get_sta_cmd(wma_handle->wmi_handle,
+							cmd);
 }
 #else
 static QDF_STATUS

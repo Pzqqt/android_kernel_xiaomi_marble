@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -841,9 +841,10 @@ struct wlan_nan_rx_ops {
  * @nan_dbs_supported: Target supports NAN Discovery with DBS
  * @ndi_dbs_supported: Target supports NAN Datapath with DBS
  * @nan_sap_supported: Target supports NAN Discovery with SAP concurrency
- * @ndi_sap_supported: Target supports NAN Datapth with SAP concurrency
+ * @ndi_sap_supported: Target supports NAN Datapath with SAP concurrency
  * @nan_vdev_allowed: Allow separate vdev creation for NAN discovery
  * @sta_nan_ndi_ndi_allowed: 4 port concurrency of STA+NAN+NDI+NDI is supported
+ * @ndi_txbf_supported: Target supports NAN Datapath with TX beamforming
  * by Fw or not.
  */
 struct nan_tgt_caps {
@@ -854,6 +855,7 @@ struct nan_tgt_caps {
 	uint32_t ndi_sap_supported:1;
 	uint32_t nan_vdev_allowed:1;
 	uint32_t sta_nan_ndi_ndi_allowed:1;
+	uint32_t ndi_txbf_supported:1;
 };
 
 #endif

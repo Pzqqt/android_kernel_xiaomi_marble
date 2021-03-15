@@ -1094,10 +1094,10 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 	bool chan_valid;
 	uint32_t *rrm_freq_list, *local_rrm_freq_list;
 	uint32_t bcn_chan_freq, local_bcn_chan_freq;
-	tRrmPEContext rrm_context;
+	tpRrmPEContext rrm_ctx;
 
 	sme_rrm_ctx = &mac->rrm.rrmSmeContext[beacon_req->measurement_idx];
-	rrm_context = mac->rrm.rrmPEContext;
+	rrm_ctx = &mac->rrm.rrmPEContext;
 
 	status = csr_roam_get_session_id_from_bssid(mac, (struct qdf_mac_addr *)
 						    beacon_req->bssId,
@@ -1233,8 +1233,8 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 		chan_valid = true;
 
 		if (beacon_req->measurement_idx > 0) {
-			for (j = 0; j < rrm_context.beacon_rpt_chan_num; j ++) {
-				if (rrm_context.beacon_rpt_chan_list[j] ==
+			for (j = 0; j < rrm_ctx->beacon_rpt_chan_num; j++) {
+				if (rrm_ctx->beacon_rpt_chan_list[j] ==
 				    local_bcn_chan_freq) {
 				/*
 				 * Ignore this channel, As this is already
@@ -1247,17 +1247,19 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 		}
 
 		if (chan_valid) {
-			rrm_context.
-			beacon_rpt_chan_list[rrm_context.beacon_rpt_chan_num] =
-							local_bcn_chan_freq;
-			rrm_context.beacon_rpt_chan_num++;
+			uint8_t beacon_rpt_chan_num;
 
-			if (rrm_context.beacon_rpt_chan_num >=
+			beacon_rpt_chan_num = rrm_ctx->beacon_rpt_chan_num;
+			rrm_ctx->beacon_rpt_chan_list[beacon_rpt_chan_num] =
+						local_bcn_chan_freq;
+			rrm_ctx->beacon_rpt_chan_num++;
+
+			if (rrm_ctx->beacon_rpt_chan_num >=
 			    MAX_NUM_CHANNELS) {
 			    /* this should never happen */
 				sme_err("Reset beacon_rpt_chan_num : %d",
-					rrm_context.beacon_rpt_chan_num);
-				rrm_context.beacon_rpt_chan_num = 0;
+					rrm_ctx->beacon_rpt_chan_num);
+				rrm_ctx->beacon_rpt_chan_num = 0;
 			}
 			local_rrm_freq_list[local_num_channel] =
 							local_bcn_chan_freq;

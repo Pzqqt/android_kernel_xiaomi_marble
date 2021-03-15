@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -490,7 +490,7 @@ int wlan_hdd_send_hang_reason_event(struct hdd_context *hdd_ctx,
 				    size_t data_len);
 
 int wlan_hdd_send_avoid_freq_for_dnbs(struct hdd_context *hdd_ctx,
-				      uint8_t op_chan);
+				      qdf_freq_t op_freq);
 
 /**
  * wlan_hdd_rso_cmd_status_cb() - HDD callback to read RSO command status
@@ -710,18 +710,6 @@ int wlan_hdd_try_disconnect(struct hdd_adapter *adapter,
 int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason,
 			enum wlan_reason_code mac_reason);
 #endif
-/**
- * wlan_hdd_get_adjacent_chan(): Gets next/previous channel
- * to the channel passed.
- * @chan: Channel
- * @upper: If "true" then next channel is returned or else
- * previous channel is returned.
- *
- * This function returns the next/previous adjacent-channel to
- * the channel passed. If "upper = true" then next channel is
- * returned else previous is returned.
- */
-int wlan_hdd_get_adjacent_chan(uint8_t chan, bool upper);
 
 /**
  * wlan_hdd_merge_avoid_freqs(): Merge two tHddAvoidFreqList
@@ -791,12 +779,10 @@ int wlan_hdd_send_mode_change_event(void);
  * wlan_hdd_restore_channels() - Restore the channels which were cached
  * and disabled in wlan_hdd_disable_channels api.
  * @hdd_ctx: Pointer to the HDD context
- * @notify_sap_event: Indicates if SAP event needs to be notified
  *
  * Return: 0 on success, Error code on failure
  */
-int wlan_hdd_restore_channels(struct hdd_context *hdd_ctx,
-			      bool notify_sap_event);
+int wlan_hdd_restore_channels(struct hdd_context *hdd_ctx);
 
 /*
  * wlan_hdd_send_sta_authorized_event: Function to send station authorized

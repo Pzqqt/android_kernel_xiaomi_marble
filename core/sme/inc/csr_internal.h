@@ -74,8 +74,6 @@
 	)
 #define CSR_IS_CHANNEL_24GHZ(chnNum) \
 	(((chnNum) > 0) && ((chnNum) <= 14))
-/* Support for "Fast roaming" (i.e., ESE, LFR, or 802.11r.) */
-#define CSR_BG_SCAN_OCCUPIED_CHANNEL_LIST_LEN 15
 
 /* Used to determine what to set to the MLME_DOT11_MODE */
 enum csr_cfgdot11mode {
@@ -111,22 +109,22 @@ enum csr_roam_reason {
 #ifndef FEATURE_CM_ENABLE
 	/* roaming because we need to force a Disassoc due to MIC failure */
 	eCsrForcedDisassocMICFailure,
-#endif
 	eCsrHddIssuedReassocToSameAP,
 	eCsrSmeIssuedReassocToSameAP,
-#ifndef FEATURE_CM_ENABLE
 	/* roaming because someone asked us to deauth and stay disassociated. */
 	eCsrForcedDeauth,
 	/* will be issued by Handoff logic to disconect from current AP */
 	eCsrSmeIssuedDisassocForHandoff,
-#endif
 	/* will be issued by Handoff logic to join a new AP with same profile */
 	eCsrSmeIssuedAssocToSimilarAP,
+#endif
 	eCsrStopBss,
 	eCsrSmeIssuedFTReassoc,
 	eCsrForcedDisassocSta,
 	eCsrForcedDeauthSta,
+#ifndef FEATURE_CM_ENABLE
 	eCsrPerformPreauth,
+#endif
 	/* Roaming disabled from driver during connect/start BSS */
 	ecsr_driver_disabled,
 };
@@ -147,7 +145,9 @@ enum csr_roam_substate {
 	eCSR_ROAM_SUBSTATE_DISASSOC_REASSOC_FAILURE,
 	eCSR_ROAM_SUBSTATE_DISASSOC_FORCED,
 	eCSR_ROAM_SUBSTATE_WAIT_FOR_KEY,
+#ifndef FEATURE_CM_ENABLE
 	eCSR_ROAM_SUBSTATE_DISASSOC_HANDOFF,
+#endif
 	eCSR_ROAM_SUBSTATE_JOINED_NO_TRAFFIC,
 	eCSR_ROAM_SUBSTATE_JOINED_NON_REALTIME_TRAFFIC,
 	eCSR_ROAM_SUBSTATE_JOINED_REALTIME_TRAFFIC,
@@ -184,23 +184,6 @@ enum csr_roam_wmstatus_changetypes {
 	eCsrDeauthenticated
 };
 
-enum csr_diagwlan_status_eventsubtype {
-	eCSR_WLAN_STATUS_CONNECT = 0,
-	eCSR_WLAN_STATUS_DISCONNECT
-};
-
-enum csr_diagwlan_status_eventreason {
-	eCSR_REASON_UNSPECIFIED = 0,
-	eCSR_REASON_USER_REQUESTED,
-	eCSR_REASON_MIC_ERROR,
-	eCSR_REASON_DISASSOC,
-	eCSR_REASON_DEAUTH,
-	eCSR_REASON_HANDOFF,
-	eCSR_REASON_ROAM_SYNCH_IND,
-	eCSR_REASON_ROAM_SYNCH_CNF,
-	eCSR_REASON_ROAM_HO_FAIL,
-};
-
 struct csr_channel {
 	uint8_t numChannels;
 	uint32_t channel_freq_list[CFG_VALID_CHANNEL_LIST_LEN];
@@ -210,16 +193,8 @@ struct bss_config_param {
 	eCsrMediaAccessType qosType;
 	tSirMacSSid SSID;
 	enum csr_cfgdot11mode uCfgDot11Mode;
-	enum reg_wifi_band band;
 	tAniAuthType authType;
-	eCsrEncryptionType encType;
-	uint32_t uShortSlotTime;
-	uint32_t uHTSupport;
-	uint32_t uPowerLimit;
-	uint32_t uHeartBeatThresh;
-	uint32_t uJoinTimeOut;
 	tSirMacCapabilityInfo BssCap;
-	bool f11hSupport;
 	ePhyChanBondState cbMode;
 };
 
@@ -324,24 +299,12 @@ struct delstafor_sessionCmd {
 	void *context;
 };
 
-/*
- * Neighbor Report Params Bitmask
- */
-#define NEIGHBOR_REPORT_PARAMS_TIME_OFFSET            0x01
-#define NEIGHBOR_REPORT_PARAMS_LOW_RSSI_OFFSET        0x02
-#define NEIGHBOR_REPORT_PARAMS_BMISS_COUNT_TRIGGER    0x04
-#define NEIGHBOR_REPORT_PARAMS_PER_THRESHOLD_OFFSET   0x08
-#define NEIGHBOR_REPORT_PARAMS_CACHE_TIMEOUT          0x10
-#define NEIGHBOR_REPORT_PARAMS_MAX_REQ_CAP            0x20
-#define NEIGHBOR_REPORT_PARAMS_ALL                    0x3F
-
 struct csr_config {
 	uint32_t channelBondingMode24GHz;
 	uint32_t channelBondingMode5GHz;
 	eCsrPhyMode phyMode;
 	enum csr_cfgdot11mode uCfgDot11Mode;
 	uint32_t HeartbeatThresh50;
-	uint32_t HeartbeatThresh24;
 	eCsrRoamWmmUserModeType WMMSupportMode;
 	bool Is11eSupportEnabled;
 	bool ProprietaryRatesEnabled;
@@ -349,7 +312,6 @@ struct csr_config {
 	bool mcc_rts_cts_prot_enable;
 	bool mcc_bcast_prob_resp_enable;
 	uint8_t fAllowMCCGODiffBI;
-	uint8_t bCatRssiOffset; /* to set RSSI difference for each category */
 	bool nRoamScanControl;
 	uint32_t nVhtChannelWidth;
 	bool send_smps_action;
@@ -360,12 +322,8 @@ struct csr_config {
 	uint8_t conc_custom_rule1;
 	uint8_t conc_custom_rule2;
 	uint8_t is_sta_connection_in_5gz_enabled;
-	struct roam_ext_params roam_params;
-	struct csr_sta_roam_policy_params sta_roam_policy;
 	enum force_1x1_type is_force_1x1;
-	uint32_t offload_11k_enable_bitmask;
 	bool wep_tkip_in_he;
-	struct csr_neighbor_report_offload_params neighbor_report_offload;
 };
 
 struct csr_channel_powerinfo {
@@ -387,7 +345,6 @@ struct csr_roam_joinstatus {
 };
 
 struct csr_scanstruct {
-	tSirScanType curScanType;
 	struct csr_channel channels11d;
 	struct channel_power defaultPowerTable[CFG_VALID_CHANNEL_LIST_LEN];
 	uint32_t numChannelsDefault;
@@ -399,9 +356,6 @@ struct csr_scanstruct {
 	uint8_t countryCodeDefault[REG_ALPHA2_LEN + 1];
 	uint8_t countryCodeCurrent[REG_ALPHA2_LEN + 1];
 	uint8_t countryCode11d[REG_ALPHA2_LEN + 1];
-	v_REGDOMAIN_t domainIdDefault;  /* default regulatory domain */
-	v_REGDOMAIN_t domainIdCurrent;  /* current regulatory domain */
-
 	/*
 	 * in 11d IE from probe rsp or beacons of neighboring APs
 	 * will use the most popular one (max count)
@@ -414,10 +368,6 @@ struct csr_scanstruct {
 	 */
 	uint8_t fEnableDFSChnlScan;
 	bool fDropScanCmd;      /* true means we don't accept scan commands */
-
-	/* This includes all channels on which candidate APs are found */
-	struct csr_channel occupiedChannels[WLAN_MAX_VDEVS];
-	int8_t roam_candidate_count[WLAN_MAX_VDEVS];
 	int8_t inScanResultBestAPRssi;
 	bool fcc_constraint;
 	bool pending_channel_list_req;
@@ -507,6 +457,8 @@ struct csr_disconnect_stats {
  * @vdev_id: ID of the vdev for which this entry is applicable
  * @is_bcn_recv_start: Allow to process bcn recv indication
  * @beacon_report_do_not_resume: Do not resume the beacon reporting after scan
+ * @wait_for_key_timer: wait for key timer
+ * @wait_for_key_timer_info: CSR-specific timer info
  */
 struct csr_roam_session {
 	union {
@@ -543,7 +495,14 @@ struct csr_roam_session {
 	uint32_t nAddIEScanLength;      /* the byte count of pAddIeScanIE; */
 	/* contains the additional IE in (unicast) probe req at time of join */
 	uint8_t *pAddIEScan;
-#endif
+	/* This count represents the number of bssid's we try to join. */
+	uint8_t join_bssid_count;
+	enum wlan_reason_code disconnect_reason;
+	struct scan_cmd_info scan_info;
+	bool is_fils_connection;
+	uint16_t fils_seq_num;
+	bool discon_in_progress;
+#endif /* ndef FEATURE_CM_ENABLE */
 	struct csr_timer_info roamingTimerInfo;
 	enum csr_roaming_reason roamingReason;
 	bool fCancelRoaming;
@@ -564,41 +523,18 @@ struct csr_roam_session {
 	tCsrEseCckmInfo eseCckmInfo;
 	bool isPrevApInfoValid;
 	tSirMacSSid prevApSSID;
-	struct qdf_mac_addr prevApBssid;
-	uint16_t clientDissSecs;
 	uint32_t roamTS1;
 	tCsrEseCckmIe suppCckmIeInfo;
 #endif
 	uint8_t bRefAssocStartCnt;      /* Tracking assoc start indication */
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	uint8_t psk_pmk[SIR_ROAM_SCAN_PSK_SIZE];
-	size_t pmk_len;
 	struct roam_offload_synch_ind *roam_synch_data;
-	struct pmkid_mode_bits pmkid_modes;
 #endif
 	tftSMEContext ftSmeContext;
-#ifndef FEATURE_CM_ENABLE
-	/* This count represents the number of bssid's we try to join. */
-	uint8_t join_bssid_count;
-#endif
-	struct csr_roam_stored_profile stored_roam_profile;
 	bool ch_switch_in_progress;
-	bool supported_nss_1x1;
-	uint8_t vdev_nss;
 	uint8_t nss;
 	bool dhcp_done;
-#ifndef FEATURE_CM_ENABLE
-	enum wlan_reason_code disconnect_reason;
-#endif
-	uint8_t uapsd_mask;
-	struct scan_cmd_info scan_info;
 	qdf_mc_timer_t roaming_offload_timer;
-#ifndef FEATURE_CM_ENABLE
-	bool is_fils_connection;
-	uint16_t fils_seq_num;
-#endif
-	bool discon_in_progress;
-	bool is_adaptive_11r_connection;
 	struct csr_disconnect_stats disconnect_stats;
 };
 
@@ -611,14 +547,11 @@ struct csr_roamstruct {
 	 * This may or may not have the up-to-date valid channel list. It is
 	 * used to get CFG_VALID_CHANNEL_LIST and not alloc mem all time
 	 */
-	uint32_t valid_ch_freq_list[CFG_VALID_CHANNEL_LIST_LEN];
-	uint32_t numValidChannels;       /* total number of channels in CFG */
 	int32_t sPendingCommands;
-	qdf_mc_timer_t hTimerWaitForKey; /* support timeout for WaitForKey */
-	struct csr_timer_info WaitForKeyTimerInfo;
 	struct csr_roam_session *roamSession;
+#ifndef FEATURE_CM_ENABLE
 	tCsrNeighborRoamControlInfo neighborRoamInfo[WLAN_MAX_VDEVS];
-	uint8_t isFastRoamIniFeatureEnabled;
+#endif
 #ifdef FEATURE_WLAN_ESE
 	uint8_t isEseIniFeatureEnabled;
 #endif
@@ -683,9 +616,11 @@ struct csr_roamstruct {
 #define CSR_IS_ROAM_SUBSTATE_WAITFORKEY(mac, sessionId) \
 		CSR_IS_ROAM_SUBSTATE((mac), \
 			eCSR_ROAM_SUBSTATE_WAIT_FOR_KEY, sessionId)
+#ifndef FEATURE_CM_ENABLE
 #define CSR_IS_ROAM_SUBSTATE_DISASSOC_HO(mac, sessionId) \
 		CSR_IS_ROAM_SUBSTATE((mac), \
 			eCSR_ROAM_SUBSTATE_DISASSOC_HANDOFF, sessionId)
+#endif
 #define CSR_IS_ROAM_SUBSTATE_HO_NT(mac, sessionId) \
 		CSR_IS_ROAM_SUBSTATE((mac), \
 			eCSR_ROAM_SUBSTATE_JOINED_NO_TRAFFIC, sessionId)
@@ -852,9 +787,6 @@ bool csr_is_all_session_disconnected(struct mac_context *mac);
 
 bool csr_is_concurrent_session_running(struct mac_context *mac);
 bool csr_is_infra_ap_started(struct mac_context *mac);
-bool csr_is_valid_mc_concurrent_session(struct mac_context *mac,
-					uint32_t sessionId,
-					struct bss_description *bss_desc);
 bool csr_is_conn_state_connected_infra_ap(struct mac_context *mac,
 		uint32_t sessionId);
 QDF_STATUS csr_get_snr(struct mac_context *mac, tCsrSnrCallback callback,
@@ -933,10 +865,7 @@ QDF_STATUS csr_get_tsm_stats(struct mac_context *mac,
 bool csr_roam_is_fast_roam_enabled(struct mac_context *mac,  uint8_t vdev_id);
 bool csr_roam_is_roam_offload_scan_enabled(
 	struct mac_context *mac);
-bool csr_is_channel_present_in_list(uint32_t *pChannelList,
-				    int numChannels, uint32_t chan_freq);
-QDF_STATUS csr_add_to_channel_list_front(uint32_t *pChannelList,
-					 int numChannels, uint32_t chan_freq);
+#ifndef FEATURE_CM_ENABLE
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 QDF_STATUS csr_roam_offload_scan_rsp_hdlr(struct mac_context *mac,
 		struct roam_offload_scan_rsp *scanOffloadRsp);
@@ -951,6 +880,7 @@ static inline QDF_STATUS csr_roam_offload_scan_rsp_hdlr(
 QDF_STATUS csr_handoff_request(struct mac_context *mac, uint8_t sessionId,
 		tCsrHandoffRequest
 		*pHandoffInfo);
+#endif
 bool csr_roam_is_sta_mode(struct mac_context *mac, uint8_t vdev_id);
 
 /* Post Channel Change Indication */
@@ -1005,12 +935,12 @@ void csr_process_ho_fail_ind(struct mac_context *mac, void *msg_buf);
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 void csr_roaming_report_diag_event(struct mac_context *mac_ctx,
 		struct roam_offload_synch_ind *roam_synch_ind_ptr,
-		enum csr_diagwlan_status_eventreason reason);
+		enum diagwlan_status_eventreason reason);
 #else
 static inline void csr_roaming_report_diag_event(
 		struct mac_context *mac_ctx,
 		struct roam_offload_synch_ind *roam_synch_ind_ptr,
-		enum csr_diagwlan_status_eventreason reason)
+		enum diagwlan_status_eventreason reason)
 {}
 #endif
 

@@ -1300,12 +1300,14 @@ QDF_STATUS lim_populate_vht_mcs_set(struct mac_context *mac_ctx,
 		}
 	}
 
-	rates->vhtTxHighestDataRate =
-		QDF_MIN(rates->vhtTxHighestDataRate,
-			peer_vht_caps->txSupDataRate);
-	rates->vhtRxHighestDataRate =
-		QDF_MIN(rates->vhtRxHighestDataRate,
-			peer_vht_caps->rxHighSupDataRate);
+	if (peer_vht_caps->txSupDataRate)
+		rates->vhtTxHighestDataRate =
+			QDF_MIN(rates->vhtTxHighestDataRate,
+				peer_vht_caps->txSupDataRate);
+	if (peer_vht_caps->rxHighSupDataRate)
+		rates->vhtRxHighestDataRate =
+			QDF_MIN(rates->vhtRxHighestDataRate,
+				peer_vht_caps->rxHighSupDataRate);
 
 	if (session_entry && session_entry->nss == NSS_2x2_MODE)
 		mcs_map_mask2x2 = MCSMAPMASK2x2;
@@ -1750,7 +1752,11 @@ QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
 	if (IS_DOT11_MODE_HE(pe_session->dot11mode) && he_caps) {
 		lim_calculate_he_nss(pRates, pe_session);
 	} else if (pe_session->vhtCapability) {
-		if ((pRates->vhtRxMCSMap & MCSMAPMASK2x2) == MCSMAPMASK2x2)
+		/*
+		 * pRates->vhtTxMCSMap is intersection of self tx and peer rx
+		 * mcs so update nss as per peer rx mcs
+		 */
+		if ((pRates->vhtTxMCSMap & MCSMAPMASK2x2) == MCSMAPMASK2x2)
 			pe_session->nss = NSS_1x1_MODE;
 	} else if (pRates->supportedMCSSet[1] == 0) {
 		pe_session->nss = NSS_1x1_MODE;
@@ -3485,6 +3491,14 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 			(pAssocRsp->he_cap.present)) {
 		lim_add_bss_he_cap(pAddBssParams, pAssocRsp);
 		lim_add_bss_he_cfg(pAddBssParams, pe_session);
+	}
+	if (pAssocRsp->bss_max_idle_period.present) {
+		pAddBssParams->bss_max_idle_period =
+			pAssocRsp->bss_max_idle_period.max_idle_period;
+		pe_debug("bss_max_idle_period %d",
+			 pAddBssParams->bss_max_idle_period);
+	} else {
+		pAddBssParams->bss_max_idle_period = 0;
 	}
 	/*
 	 * Populate the STA-related parameters here

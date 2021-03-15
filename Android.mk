@@ -125,6 +125,7 @@ KBUILD_OPTIONS += DYNAMIC_SINGLE_CHIP=$(DYNAMIC_SINGLE_CHIP)
 # This means we need to rename the module to <chipset>_wlan.ko
 # after wlan.ko is built.
 KBUILD_OPTIONS += MODNAME=$(LOCAL_MOD_NAME)
+KBUILD_OPTIONS += DEVNAME=$(LOCAL_DEV_NAME)
 KBUILD_OPTIONS += BOARD_PLATFORM=$(TARGET_BOARD_PLATFORM)
 KBUILD_OPTIONS += $(WLAN_SELECT)
 
@@ -165,7 +166,7 @@ endif
 # Create Symbolic link
 ifneq ($(findstring $(WLAN_CHIPSET),$(WIFI_DRIVER_DEFAULT)),)
 ifeq ($(PRODUCT_VENDOR_MOVE_ENABLED),true)
-ifneq ($(WIFI_DRIVER_INSTALL_TO_KERNEL_OUT),)
+ifneq ($(WIFI_DRIVER_INSTALL_TO_KERNEL_OUT),true)
 $(shell mkdir -p $(TARGET_OUT_VENDOR)/lib/modules; \
 	ln -sf /$(TARGET_COPY_OUT_VENDOR)/lib/modules/$(WLAN_CHIPSET)/$(LOCAL_MODULE) $(TARGET_OUT_VENDOR)/lib/modules/$(LOCAL_MODULE))
 endif

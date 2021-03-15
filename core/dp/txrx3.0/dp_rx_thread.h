@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -71,6 +71,21 @@ struct dp_rx_thread_stats {
 };
 
 /**
+ * enum dp_rx_refill_thread_state - enum to keep track of rx refill thread state
+ * @DP_RX_REFILL_THREAD_INVALID: initial invalid state
+ * @DP_RX_REFILL_THREAD_RUNNING: rx refill thread functional(NOT suspended,
+ *                      processing packets or waiting on a wait_queue)
+ * @DP_RX_REFILL_THREAD_SUSPENDING: rx refill thread is suspending
+ * @DP_RX_REFILL_THREAD_SUSPENDED: rx refill_thread suspended
+ */
+enum dp_rx_refill_thread_state {
+	DP_RX_REFILL_THREAD_INVALID,
+	DP_RX_REFILL_THREAD_RUNNING,
+	DP_RX_REFILL_THREAD_SUSPENDING,
+	DP_RX_REFILL_THREAD_SUSPENDED
+};
+
+/**
  * struct dp_rx_thread - structure holding variables for a single DP RX thread
  * @id: id of the dp_rx_thread (0 or 1 or 2..DP_MAX_RX_THREADS - 1)
  * @task: task structure corresponding to the thread
@@ -107,6 +122,32 @@ struct dp_rx_thread {
 	struct napi_struct napi;
 	qdf_wait_queue_head_t wait_q;
 	struct net_device netdev;
+};
+
+/**
+ * struct dp_rx_refill_thread - structure holding info of DP Rx refill thread
+ * @task: task structure corresponding to the thread
+ * @start_event: handle of Event for DP Rx refill thread to signal startup
+ * @suspend_event: handle of Event for DP Rx refill thread to signal suspend
+ * @resume_event: handle of Event for DP Rx refill thread to signal resume
+ * @shutdown_event: handle of Event for DP Rx refill thread to signal shutdown
+ * @event_flag: event flag to post events to DP Rx refill thread
+ * @wait_q: wait queue to conditionally wait on events for DP Rx refill thread
+ * @enabled: flag to check whether DP Rx refill thread is enabled
+ * @soc: abstract DP soc reference used in internal API's
+ * @state: state of DP Rx refill thread
+ */
+struct dp_rx_refill_thread {
+	qdf_thread_t *task;
+	qdf_event_t start_event;
+	qdf_event_t suspend_event;
+	qdf_event_t resume_event;
+	qdf_event_t shutdown_event;
+	unsigned long event_flag;
+	qdf_wait_queue_head_t wait_q;
+	bool enabled;
+	void *soc;
+	enum dp_rx_refill_thread_state state;
 };
 
 /**
@@ -153,6 +194,23 @@ enum dp_rx_gro_flush_code {
 };
 
 /**
+ * dp_rx_refill_thread_init() - Initialize DP Rx refill threads
+ * @refill_thread: Contains over all rx refill thread info
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS dp_rx_refill_thread_init(struct dp_rx_refill_thread *refill_thread);
+
+/**
+ * dp_rx_refill_thread_deinit() - De-initialize DP Rx refill threads
+ * @refill_thread: Contains over all rx refill thread info
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+dp_rx_refill_thread_deinit(struct dp_rx_refill_thread *refill_thread);
+
+/**
  * dp_rx_tm_init() - initialize DP Rx thread infrastructure
  * @rx_tm_hdl: dp_rx_tm_handle containing the overall thread infrastructure
  * @num_dp_rx_threads: number of DP Rx threads to be initialized
@@ -191,6 +249,14 @@ QDF_STATUS dp_rx_tm_enqueue_pkt(struct dp_rx_tm_handle *rx_tm_hdl,
 QDF_STATUS dp_rx_tm_gro_flush_ind(struct dp_rx_tm_handle *rx_tm_handle,
 				  int rx_ctx_id,
 				  enum dp_rx_gro_flush_code flush_code);
+/**
+ * dp_rx_refill_thread_suspend() - Suspend RX refill thread
+ * @refill_thread: pointer to dp_rx_refill_thread object
+ *
+ * Return: QDF_STATUS_SUCCESS on success, error qdf status on failure
+ */
+QDF_STATUS
+dp_rx_refill_thread_suspend(struct dp_rx_refill_thread *refill_thread);
 
 /**
  * dp_rx_tm_suspend() - suspend all threads in RXTI
@@ -211,6 +277,15 @@ QDF_STATUS dp_rx_tm_suspend(struct dp_rx_tm_handle *rx_tm_handle);
  */
 QDF_STATUS dp_rx_tm_flush_by_vdev_id(struct dp_rx_tm_handle *rx_tm_hdl,
 				     uint8_t vdev_id);
+
+/**
+ * dp_rx_refill_thread_resume() - Resume RX refill thread
+ * @refill_thread: pointer to dp_rx_refill_thread
+ *
+ * Return: QDF_STATUS_SUCCESS on success, error qdf status on failure
+ */
+QDF_STATUS
+dp_rx_refill_thread_resume(struct dp_rx_refill_thread *refill_thread);
 
 /**
  * dp_rx_tm_resume() - resume all threads in RXTI

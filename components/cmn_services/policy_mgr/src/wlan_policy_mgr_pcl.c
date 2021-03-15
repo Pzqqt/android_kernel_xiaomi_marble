@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -658,6 +658,67 @@ policy_mgr_modify_pcl_based_on_srd(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * policy_mgr_modify_pcl_based_on_indoor() - filter out indoor channel if needed
+ * @psoc: pointer to soc
+ * @pcl_list_org: channel list to filter out
+ * @weight_list_org: weight of channel list
+ * @pcl_len_org: length of channel list
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+policy_mgr_modify_pcl_based_on_indoor(struct wlan_objmgr_psoc *psoc,
+				      uint32_t *pcl_list_org,
+				      uint8_t *weight_list_org,
+				      uint32_t *pcl_len_org)
+{
+	uint32_t i, pcl_len = 0;
+	uint32_t pcl_list[NUM_CHANNELS];
+	uint8_t weight_list[NUM_CHANNELS];
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	bool include_indoor_channel;
+	QDF_STATUS status;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (*pcl_len_org > NUM_CHANNELS) {
+		policy_mgr_err("Invalid PCL List Length %d", *pcl_len_org);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = ucfg_mlme_get_indoor_channel_support(psoc,
+						      &include_indoor_channel);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		policy_mgr_err("failed to get indoor channel skip info");
+		return status;
+	}
+
+	if (include_indoor_channel) {
+		policy_mgr_debug("No more operation on indoor channel");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	for (i = 0; i < *pcl_len_org; i++) {
+		if (wlan_reg_is_freq_indoor(pm_ctx->pdev, pcl_list_org[i]))
+			continue;
+		pcl_list[pcl_len] = pcl_list_org[i];
+		weight_list[pcl_len++] = weight_list_org[i];
+	}
+
+	qdf_mem_zero(pcl_list_org, *pcl_len_org * sizeof(*pcl_list_org));
+	qdf_mem_zero(weight_list_org, *pcl_len_org);
+	qdf_mem_copy(pcl_list_org, pcl_list, pcl_len * sizeof(*pcl_list_org));
+	qdf_mem_copy(weight_list_org, weight_list, pcl_len);
+	*pcl_len_org = pcl_len;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static QDF_STATUS policy_mgr_pcl_modification_for_sap(
 			struct wlan_objmgr_psoc *psoc,
 			uint32_t *pcl_channels, uint8_t *pcl_weight,
@@ -667,6 +728,7 @@ static QDF_STATUS policy_mgr_pcl_modification_for_sap(
 	bool mandatory_modified_pcl = false;
 	bool nol_modified_pcl = false;
 	bool dfs_modified_pcl = false;
+	bool indoor_modified_pcl = false;
 	bool modified_final_pcl = false;
 	bool srd_chan_enabled;
 
@@ -709,11 +771,20 @@ static QDF_STATUS policy_mgr_pcl_modification_for_sap(
 		}
 	}
 
+	status = policy_mgr_modify_pcl_based_on_indoor(psoc, pcl_channels,
+						       pcl_weight, len);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		policy_mgr_err("failed to get indoor modified pcl for SAP");
+		return status;
+	}
+	indoor_modified_pcl = true;
+
 	modified_final_pcl = true;
-	policy_mgr_debug(" %d %d %d %d",
+	policy_mgr_debug(" %d %d %d %d %d",
 			 mandatory_modified_pcl,
 			 nol_modified_pcl,
 			 dfs_modified_pcl,
+			 indoor_modified_pcl,
 			 modified_final_pcl);
 
 	return QDF_STATUS_SUCCESS;
@@ -2367,11 +2438,15 @@ QDF_STATUS policy_mgr_modify_sap_pcl_based_on_mandatory_channel(
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
-						uint32_t *ch_freq)
+QDF_STATUS
+policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
+				     uint32_t sap_ch_freq,
+				     uint32_t *intf_ch_freq)
 {
 	QDF_STATUS status;
 	struct policy_mgr_pcl_list pcl;
+	uint32_t i;
+	uint32_t sap_new_freq;
 
 	qdf_mem_zero(&pcl, sizeof(pcl));
 
@@ -2417,8 +2492,19 @@ QDF_STATUS policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	*ch_freq = pcl.pcl_list[0];
-	policy_mgr_debug("mandatory channel:%d", *ch_freq);
+	sap_new_freq = pcl.pcl_list[0];
+	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(sap_ch_freq)) {
+		for (i = 0; i < pcl.pcl_len; i++) {
+			if (pcl.pcl_list[i] == *intf_ch_freq) {
+				sap_new_freq = pcl.pcl_list[i];
+				break;
+			}
+		}
+	}
+
+	*intf_ch_freq = sap_new_freq;
+	policy_mgr_debug("mandatory channel:%d org sap ch %d", *intf_ch_freq,
+			 sap_ch_freq);
 
 	return QDF_STATUS_SUCCESS;
 }

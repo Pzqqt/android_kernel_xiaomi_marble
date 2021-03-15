@@ -53,6 +53,30 @@ struct wlan_mlme_nss_chains *mlme_get_dynamic_vdev_config(
 	return &mlme_priv->dynamic_cfg;
 }
 
+uint32_t mlme_get_vdev_he_ops(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	struct vdev_mlme_obj *mlme_obj;
+	uint32_t he_ops = 0;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev)
+		return he_ops;
+
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!mlme_obj) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		mlme_legacy_err("Failed to get vdev MLME Obj");
+		return he_ops;
+	}
+
+	he_ops = mlme_obj->proto.he_ops_info.he_ops;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+
+	return he_ops;
+}
+
 struct wlan_mlme_nss_chains *mlme_get_ini_vdev_config(
 				struct wlan_objmgr_vdev *vdev)
 {
@@ -629,6 +653,7 @@ static void mlme_init_timeout_cfg(struct wlan_objmgr_psoc *psoc,
 {
 	timeouts->join_failure_timeout =
 			cfg_get(psoc, CFG_JOIN_FAILURE_TIMEOUT);
+	timeouts->join_failure_timeout_ori = timeouts->join_failure_timeout;
 	timeouts->auth_failure_timeout =
 			cfg_get(psoc, CFG_AUTH_FAILURE_TIMEOUT);
 	timeouts->auth_rsp_timeout =
@@ -767,6 +792,8 @@ static void mlme_init_qos_cfg(struct wlan_objmgr_psoc *psoc,
 				cfg_get(psoc, CFG_SAP_MAX_INACTIVITY_OVERRIDE);
 	qos_aggr_params->sap_uapsd_enabled =
 				cfg_get(psoc, CFG_SAP_QOS_UAPSD);
+	qos_aggr_params->reject_addba_req =
+				cfg_get(psoc, CFG_REJECT_ADDBA_REQ);
 }
 
 static void mlme_init_mbo_cfg(struct wlan_objmgr_psoc *psoc,
@@ -1804,6 +1831,7 @@ static void mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
 	mlme_init_bss_load_trigger_params(psoc, &lfr->bss_load_trig);
 	mlme_init_adaptive_11r_cfg(psoc, lfr);
 	mlme_init_subnet_detection(psoc, lfr);
+	lfr->rso_user_config.cat_rssi_offset = DEFAULT_RSSI_DB_GAP;
 }
 
 static void mlme_init_power_cfg(struct wlan_objmgr_psoc *psoc,
@@ -1832,6 +1860,7 @@ static void mlme_init_power_cfg(struct wlan_objmgr_psoc *psoc,
 			(uint8_t)cfg_default(CFG_CURRENT_TX_POWER_LEVEL);
 	power->local_power_constraint =
 			(uint8_t)cfg_default(CFG_LOCAL_POWER_CONSTRAINT);
+	power->use_local_tpe = cfg_get(psoc, CFG_USE_LOCAL_TPE);
 }
 
 static void mlme_init_roam_scoring_cfg(struct wlan_objmgr_psoc *psoc,
@@ -2301,6 +2330,126 @@ mlme_init_dot11_mode_cfg(struct wlan_objmgr_psoc *psoc,
 	dot11_mode->vdev_type_dot11_mode = cfg_get(psoc, CFG_VDEV_DOT11_MODE);
 }
 
+/**
+ * mlme_iot_parse_aggr_info - parse aggr related items in ini
+ *
+ * @psoc: PSOC pointer
+ * @iot: IOT related CFG items
+ *
+ * Return: None
+ */
+static void
+mlme_iot_parse_aggr_info(struct wlan_objmgr_psoc *psoc,
+			 struct wlan_mlme_iot *iot)
+{
+	char *aggr_info, *oui, *msdu, *mpdu, *aggr_info_temp;
+	uint32_t ampdu_sz, amsdu_sz, index = 0, oui_len, cfg_str_len;
+	struct wlan_iot_aggr *aggr_info_list;
+	const char *cfg_str;
+	int ret;
+
+	cfg_str = cfg_get(psoc, CFG_TX_IOT_AGGR);
+	if (!cfg_str)
+		return;
+
+	cfg_str_len = qdf_str_len(cfg_str);
+	if (!cfg_str_len)
+		return;
+
+	aggr_info = qdf_mem_malloc(cfg_str_len + 1);
+	if (!aggr_info)
+		return;
+
+	aggr_info_list = iot->aggr;
+	qdf_mem_copy(aggr_info, cfg_str, cfg_str_len);
+	aggr_info_temp = aggr_info;
+	while (aggr_info_temp) {
+		/* skip possible spaces before oui string */
+		mlme_legacy_err("aggr_info=[%s]", aggr_info_temp);
+		while (*aggr_info_temp == ' ')
+			aggr_info_temp++;
+
+		oui = strsep(&aggr_info_temp, ",");
+		if (!oui) {
+			mlme_legacy_err("oui error");
+			goto end;
+		}
+
+		oui_len = qdf_str_len(oui) / 2;
+		if (oui_len > sizeof(aggr_info_list[index].oui)) {
+			mlme_legacy_err("size error");
+			goto end;
+		}
+
+		amsdu_sz = 0;
+		msdu = strsep(&aggr_info_temp, ",");
+		if (!msdu) {
+			mlme_legacy_err("msdu error");
+			goto end;
+		}
+
+		ret = kstrtou32(msdu, 10, &amsdu_sz);
+		if (ret || amsdu_sz > IOT_AGGR_MSDU_MAX_NUM) {
+			mlme_legacy_err("invalid msdu no. %s [%u]",
+					msdu, amsdu_sz);
+			goto end;
+		}
+
+		ampdu_sz = 0;
+		mpdu = strsep(&aggr_info_temp, ",");
+		if (!mpdu) {
+			mlme_legacy_err("mpdu error");
+			goto end;
+		}
+
+		ret = kstrtou32(mpdu, 10, &ampdu_sz);
+		if (ret || ampdu_sz > IOT_AGGR_MPDU_MAX_NUM) {
+			mlme_legacy_err("invalid mpdu no. %s [%u]",
+					mpdu, ampdu_sz);
+			goto end;
+		}
+
+		mlme_legacy_debug("id %u oui[%s] len %u msdu %u mpdu %u",
+				  index, oui, oui_len, amsdu_sz, ampdu_sz);
+
+		ret = qdf_hex_str_to_binary(aggr_info_list[index].oui,
+					    oui, oui_len);
+		if (ret) {
+			mlme_legacy_err("oui error: %d", ret);
+			goto end;
+		}
+
+		aggr_info_list[index].amsdu_sz = amsdu_sz;
+		aggr_info_list[index].ampdu_sz = ampdu_sz;
+		aggr_info_list[index].oui_len = oui_len;
+		index++;
+		if (index >= IOT_AGGR_INFO_MAX_NUM) {
+			mlme_legacy_err("exceed max num, index = %d", index);
+			break;
+		}
+	}
+	iot->aggr_num = index;
+
+end:
+	mlme_legacy_debug("configured aggr num %d", iot->aggr_num);
+	qdf_mem_free(aggr_info);
+}
+
+/**
+ * mlme_iot_parse_aggr_info - parse IOT related items in ini
+ *
+ * @psoc: PSOC pointer
+ * @iot: IOT related CFG items
+ *
+ * Return: None
+ */
+static void
+mlme_init_iot_cfg(struct wlan_objmgr_psoc *psoc,
+		  struct wlan_mlme_iot *iot)
+{
+	mlme_iot_parse_aggr_info(psoc, iot);
+}
+
 QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_mlme_psoc_ext_obj *mlme_obj;
@@ -2353,6 +2502,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_btm_cfg(psoc, &mlme_cfg->btm);
 	mlme_init_roam_score_config(psoc, mlme_cfg);
 	mlme_init_ratemask_cfg(psoc, &mlme_cfg->ratemask_cfg);
+	mlme_init_iot_cfg(psoc, &mlme_cfg->iot);
 
 	return status;
 }
@@ -2831,6 +2981,8 @@ QDF_STATUS wlan_strip_ie(uint8_t *addn_ie, uint16_t *addn_ielen,
 		mlme_debug("NULL addn_ie pointer");
 		return QDF_STATUS_E_INVAL;
 	}
+	if (!left)
+		return QDF_STATUS_E_INVAL;
 
 	tmp_buf = qdf_mem_malloc(left);
 	if (!tmp_buf)
@@ -2887,6 +3039,94 @@ QDF_STATUS wlan_strip_ie(uint8_t *addn_ie, uint16_t *addn_ielen,
 	qdf_mem_free(tmp_buf);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+bool wlan_is_channel_present_in_list(qdf_freq_t *freq_lst,
+				     uint32_t num_chan, qdf_freq_t chan_freq)
+{
+	int i = 0;
+
+	/* Check for NULL pointer */
+	if (!freq_lst || (num_chan == 0))
+		return false;
+
+	/* Look for the channel in the list */
+	for (i = 0; (i < num_chan) && (i < CFG_VALID_CHANNEL_LIST_LEN); i++) {
+		if (freq_lst[i] == chan_freq)
+			return true;
+	}
+
+	return false;
+}
+
+int8_t wlan_get_cfg_max_tx_power(struct wlan_objmgr_psoc *psoc,
+				 struct wlan_objmgr_pdev *pdev,
+				 uint32_t ch_freq)
+{
+	uint32_t cfg_length = 0;
+	int8_t max_tx_pwr = 0;
+	struct pwr_channel_info *country_info = NULL;
+	uint8_t count = 0;
+	uint8_t maxChannels;
+	int32_t rem_length = 0;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return max_tx_pwr;
+
+	if (WLAN_REG_IS_5GHZ_CH_FREQ(ch_freq)) {
+		cfg_length = mlme_obj->cfg.power.max_tx_power_5.len;
+	} else if (WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq)) {
+		cfg_length = mlme_obj->cfg.power.max_tx_power_24.len;
+
+	} else if (wlan_reg_is_6ghz_chan_freq(ch_freq)) {
+		return wlan_reg_get_channel_reg_power_for_freq(pdev,
+							       ch_freq);
+	} else {
+		return max_tx_pwr;
+	}
+
+	if (!cfg_length)
+		goto error;
+
+	country_info = qdf_mem_malloc(cfg_length);
+	if (!country_info)
+		goto error;
+
+	if (WLAN_REG_IS_5GHZ_CH_FREQ(ch_freq)) {
+		if (cfg_length > CFG_MAX_TX_POWER_5_LEN)
+			goto error;
+		qdf_mem_copy(country_info,
+			     mlme_obj->cfg.power.max_tx_power_5.data,
+			     cfg_length);
+	} else if (WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq)) {
+		if (cfg_length > CFG_MAX_TX_POWER_2_4_LEN)
+			goto error;
+		qdf_mem_copy(country_info,
+			     mlme_obj->cfg.power.max_tx_power_24.data,
+			     cfg_length);
+	}
+
+	/* Identify the channel and maxtxpower */
+	rem_length = cfg_length;
+	while (rem_length >= (sizeof(struct pwr_channel_info))) {
+		maxChannels = country_info[count].num_chan;
+		max_tx_pwr = country_info[count].max_tx_pwr;
+		count++;
+		rem_length -= (sizeof(struct pwr_channel_info));
+
+		if (ch_freq >= country_info[count].first_freq &&
+		    ch_freq < (country_info[count].first_freq + maxChannels)) {
+			break;
+		}
+	}
+
+error:
+	if (country_info)
+		qdf_mem_free(country_info);
+
+	return max_tx_pwr;
 }
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)

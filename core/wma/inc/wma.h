@@ -208,6 +208,8 @@
 #define WMA_ROAM_HO_WAKE_LOCK_DURATION          (500)          /* in msec */
 #define WMA_ROAM_PREAUTH_WAKE_LOCK_DURATION     (2 * 1000)
 
+#define WMA_REASON_PROBE_REQ_WPS_IE_RECV_DURATION     (3 * 1000)
+
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 #define WMA_AUTO_SHUTDOWN_WAKE_LOCK_DURATION    WAKELOCK_DURATION_RECOMMENDED
 #endif
@@ -739,6 +741,7 @@ struct wma_txrx_node {
 	struct sir_roam_scan_stats *roam_scan_stats_req;
 	struct wma_invalid_peer_params invalid_peers[INVALID_PEER_MAX_NUM];
 	uint8_t invalid_peer_idx;
+	uint16_t bss_max_idle_period;
 };
 
 /**
@@ -968,6 +971,7 @@ typedef struct {
 	qdf_wake_lock_t wow_auto_shutdown_wl;
 	qdf_wake_lock_t roam_ho_wl;
 	qdf_wake_lock_t roam_preauth_wl;
+	qdf_wake_lock_t probe_req_wps_wl;
 	int wow_nack;
 	qdf_atomic_t is_wow_bus_suspended;
 #ifdef WLAN_FEATURE_LPSS
@@ -1410,30 +1414,6 @@ enum uapsd_up {
 	UAPSD_UP_NC,
 	UAPSD_UP_MAX
 };
-
-/**
- * struct wma_roam_invoke_cmd - roam invoke command
- * @vdev_id: vdev id
- * @bssid: mac address
- * @ch_freq: channel frequency
- * @frame_len: frame length, includs mac header, fixed params and ies
- * @frame_buf: buffer contaning probe response or beacon
- * @is_same_bssid: flag to indicate if roaming is requested for same bssid
- * @forced_roaming: Roaming to be done without giving bssid, and channel.
- */
-struct wma_roam_invoke_cmd {
-	uint32_t vdev_id;
-	uint8_t bssid[QDF_MAC_ADDR_SIZE];
-	uint32_t ch_freq;
-	uint32_t frame_len;
-	uint8_t *frame_buf;
-	uint8_t is_same_bssid;
-	bool forced_roaming;
-};
-
-A_UINT32 e_csr_auth_type_to_rsn_authmode(enum csr_akm_type authtype,
-					 eCsrEncryptionType encr);
-A_UINT32 e_csr_encryption_type_to_rsn_cipherset(eCsrEncryptionType encr);
 
 /**
  * wma_trigger_uapsd_params() - set trigger uapsd parameter

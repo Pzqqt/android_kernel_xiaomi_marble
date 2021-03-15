@@ -27,7 +27,8 @@
 #include <wlan_reg_services_api.h>
 #include <cds_ieee80211_common.h>
 #include <ol_txrx_htt_api.h>
-#ifdef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+#include "wlan_policy_mgr_ucfg.h"
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 #include "dp_internal.h"
 #include "cds_utils.h"
 #endif
@@ -216,7 +217,7 @@ static void pkt_capture_tx_get_phy_info(
 		tx_status->vht_flag_values2 = 4;
 }
 
-#ifndef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+#ifndef WLAN_FEATURE_PKT_CAPTURE_V2
 /**
  * pkt_capture_update_tx_status() - tx status for tx packets, for
  * pkt capture mode(normal tx + offloaded tx) to prepare radiotap header
@@ -254,10 +255,35 @@ pkt_capture_update_tx_status(
 #else
 static void
 pkt_capture_update_tx_status(
-			void *pdev,
+			void *context,
 			struct mon_rx_status *tx_status,
 			struct pkt_capture_tx_hdr_elem_t *pktcapture_hdr)
 {
+	struct connection_info info[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	struct wlan_objmgr_vdev *vdev = context;
+	struct wlan_objmgr_psoc *psoc;
+	uint32_t conn_count;
+	uint8_t vdev_id;
+	int i;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		pkt_capture_err("Failed to get psoc");
+		return;
+	}
+
+	vdev_id = wlan_vdev_get_id(vdev);
+
+	/* Update the connected channel info from policy manager */
+	conn_count = policy_mgr_get_connection_info(psoc, info);
+	for (i = 0; i < conn_count; i++) {
+		if (info[i].vdev_id == vdev_id) {
+			tx_status->chan_freq = info[0].ch_freq;
+			tx_status->chan_num = info[0].channel;
+			break;
+		}
+	}
+
 	pkt_capture_tx_get_phy_info(pktcapture_hdr, tx_status);
 
 	tx_status->tsft = (u_int64_t)(pktcapture_hdr->timestamp);
@@ -269,7 +295,7 @@ pkt_capture_update_tx_status(
 }
 #endif
 
-#ifndef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+#ifndef WLAN_FEATURE_PKT_CAPTURE_V2
 /**
  * pkt_capture_rx_convert8023to80211() - convert 802.3 packet to 802.11
  * format from rx desc
@@ -478,11 +504,11 @@ bool pkt_capture_rx_in_order_offloaded_pkt(qdf_nbuf_t rx_ind_msg)
 					(*(msg_word + 1));
 }
 
-#ifndef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+#ifndef WLAN_FEATURE_PKT_CAPTURE_V2
 void pkt_capture_msdu_process_pkts(
 				uint8_t *bssid,
-				qdf_nbuf_t head_msdu,
-				uint8_t vdev_id, htt_pdev_handle pdev)
+				qdf_nbuf_t head_msdu, uint8_t vdev_id,
+				htt_pdev_handle pdev, uint16_t status)
 {
 	qdf_nbuf_t loop_msdu, pktcapture_msdu;
 	qdf_nbuf_t msdu, prev = NULL;
@@ -518,12 +544,12 @@ void pkt_capture_msdu_process_pkts(
 			bssid, pdev, 0);
 }
 #else
+#define RX_OFFLOAD_PKT 1
 void pkt_capture_msdu_process_pkts(
-				uint8_t *bssid,
-				qdf_nbuf_t head_msdu,
-				uint8_t vdev_id, void *psoc)
+				uint8_t *bssid, qdf_nbuf_t head_msdu,
+				uint8_t vdev_id, void *psoc, uint16_t status)
 {
-	qdf_nbuf_t loop_msdu, pktcapture_msdu;
+	qdf_nbuf_t loop_msdu, pktcapture_msdu, offload_msdu = NULL;
 	qdf_nbuf_t msdu, prev = NULL;
 
 	pktcapture_msdu = NULL;
@@ -542,7 +568,15 @@ void pkt_capture_msdu_process_pkts(
 				prev = msdu;
 			}
 		}
+		if (status == RX_OFFLOAD_PKT)
+			offload_msdu = loop_msdu;
 		loop_msdu = qdf_nbuf_next(loop_msdu);
+
+		/* Free offload msdu as it is delivered only to pkt capture */
+		if (offload_msdu) {
+			qdf_nbuf_free(offload_msdu);
+			offload_msdu = NULL;
+		}
 	}
 
 	if (!pktcapture_msdu)
@@ -556,7 +590,7 @@ void pkt_capture_msdu_process_pkts(
 }
 #endif
 
-#ifdef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 /**
  * pkt_capture_dp_rx_skip_tlvs() - Skip TLVs len + L2 hdr_offset, save in nbuf
  * @nbuf: nbuf to be updated
@@ -717,7 +751,7 @@ static void pkt_capture_rx_mon_get_rx_status(void *psoc, void *desc,
 }
 #endif
 
-#ifndef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+#ifndef WLAN_FEATURE_PKT_CAPTURE_V2
 /**
  * pkt_capture_rx_data_cb(): callback to process data rx packets
  * for pkt capture mode. (normal rx + offloaded rx)
@@ -947,7 +981,7 @@ free_buf:
 
 #endif
 
-#ifndef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+#ifndef WLAN_FEATURE_PKT_CAPTURE_V2
 /**
  * pkt_capture_tx_data_cb() - process data tx and rx packets
  * for pkt capture mode. (normal tx/rx + offloaded tx/rx)
@@ -1299,7 +1333,7 @@ pkt_capture_tx_data_cb(
 		}
 
 		pkt_capture_update_tx_status(
-				ppdev,
+				context,
 				&tx_status,
 				&pktcapture_hdr);
 		/*
@@ -1424,7 +1458,7 @@ struct htt_tx_data_hdr_information *pkt_capture_tx_get_txcomplete_data_hdr(
 	return txcomplete_data_hrd_list;
 }
 
-#ifndef WLAN_FEATURE_PKT_CAPTURE_LITHIUM
+#ifndef WLAN_FEATURE_PKT_CAPTURE_V2
 void pkt_capture_offload_deliver_indication_handler(
 					void *msg, uint8_t vdev_id,
 					uint8_t *bssid, htt_pdev_handle pdev)

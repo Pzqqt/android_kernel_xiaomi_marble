@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -474,13 +474,6 @@ QDF_STATUS policy_mgr_psoc_enable(struct wlan_objmgr_psoc *psoc)
 		return status;
 	}
 
-	/* init dual_mac_configuration_complete_evt */
-	status = qdf_event_create(&pm_ctx->dual_mac_configuration_complete_evt);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		policy_mgr_err("dual_mac_configuration_complete_evt init failed");
-		return status;
-	}
-
 	status = qdf_event_create(&pm_ctx->opportunistic_update_done_evt);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		policy_mgr_err("opportunistic_update_done_evt init failed");
@@ -638,14 +631,6 @@ QDF_STATUS policy_mgr_psoc_disable(struct wlan_objmgr_psoc *psoc)
 		QDF_ASSERT(0);
 	}
 
-	/* destroy dual_mac_configuration_complete_evt */
-	if (!QDF_IS_STATUS_SUCCESS(qdf_event_destroy
-		(&pm_ctx->dual_mac_configuration_complete_evt))) {
-		policy_mgr_err("Failed to destroy dual_mac_configuration_complete_evt");
-		status = QDF_STATUS_E_FAILURE;
-		QDF_ASSERT(0);
-	}
-
 	/* deinit pm_conc_connection_list */
 	qdf_mem_zero(pm_conc_connection_list, sizeof(pm_conc_connection_list));
 
@@ -673,10 +658,6 @@ QDF_STATUS policy_mgr_register_sme_cb(struct wlan_objmgr_psoc *psoc,
 		sme_cbacks->sme_soc_set_dual_mac_config;
 	pm_ctx->sme_cbacks.sme_change_mcc_beacon_interval =
 		sme_cbacks->sme_change_mcc_beacon_interval;
-	pm_ctx->sme_cbacks.sme_get_ap_channel_from_scan =
-		sme_cbacks->sme_get_ap_channel_from_scan;
-	pm_ctx->sme_cbacks.sme_scan_result_purge =
-		sme_cbacks->sme_scan_result_purge;
 	pm_ctx->sme_cbacks.sme_rso_start_cb =
 		sme_cbacks->sme_rso_start_cb;
 	pm_ctx->sme_cbacks.sme_rso_stop_cb =

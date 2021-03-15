@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -476,7 +476,7 @@ static void lim_fill_dot11mode(struct mac_context *mac_ctx,
 			       enum wlan_phymode bss_phymode)
 {
 	if (pe_session->ftPEContext.pFTPreAuthReq &&
-	    !csr_is_roam_offload_enabled(mac_ctx)) {
+	    !wlan_is_roam_offload_enabled(mac_ctx->mlme_cfg->lfr)) {
 		ft_session->dot11mode =
 			pe_session->ftPEContext.pFTPreAuthReq->dot11mode;
 		return;
@@ -534,7 +534,8 @@ void lim_fill_ft_session(struct mac_context *mac,
 	int8_t regMax;
 	tSchBeaconStruct *pBeaconStruct;
 	ePhyChanBondState cbEnabledMode;
-	struct lim_max_tx_pwr_attr tx_pwr_attr = {0};
+	struct vdev_mlme_obj *mlme_obj;
+	bool is_pwr_constraint;
 
 	pBeaconStruct = qdf_mem_malloc(sizeof(tSchBeaconStruct));
 	if (!pBeaconStruct)
@@ -654,8 +655,12 @@ void lim_fill_ft_session(struct mac_context *mac,
 					PHY_DOUBLE_CHANNEL_HIGH_PRIMARY)
 				ft_session->ch_center_freq_seg0 =
 					bss_chan_id - 2;
-			else
+			else {
 				pe_warn("Invalid sec ch offset");
+				ft_session->ch_width = CH_WIDTH_20MHZ;
+				ft_session->ch_center_freq_seg0 = 0;
+				ft_session->ch_center_freq_seg1 = 0;
+			}
 		}
 	} else {
 		ft_session->ch_width = CH_WIDTH_20MHZ;
@@ -692,15 +697,23 @@ void lim_fill_ft_session(struct mac_context *mac,
 		ft_session->shortSlotTimeSupported = true;
 	}
 
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(pe_session->vdev);
+	if (!mlme_obj) {
+		pe_err("vdev component object is NULL");
+		qdf_mem_free(pBeaconStruct);
+		return;
+	}
+
 	regMax = wlan_reg_get_channel_reg_power_for_freq(
 		mac->pdev, ft_session->curr_op_freq);
 	localPowerConstraint = regMax;
 	lim_extract_ap_capability(mac, (uint8_t *) pbssDescription->ieFields,
-
 		lim_get_ielen_from_bss_description(pbssDescription),
 		&ft_session->limCurrentBssQosCaps,
 		&currentBssUapsd,
-		&localPowerConstraint, ft_session);
+		&localPowerConstraint, ft_session, &is_pwr_constraint);
+	if (is_pwr_constraint)
+		localPowerConstraint = regMax - localPowerConstraint;
 
 	ft_session->limReassocBssQosCaps =
 		ft_session->limCurrentBssQosCaps;
@@ -717,12 +730,12 @@ void lim_fill_ft_session(struct mac_context *mac,
 	ft_session->isFastRoamIniFeatureEnabled =
 		pe_session->isFastRoamIniFeatureEnabled;
 
-	tx_pwr_attr.reg_max = regMax;
-	tx_pwr_attr.ap_tx_power = localPowerConstraint;
-	tx_pwr_attr.frequency = ft_session->curr_op_freq;
+	mlme_obj->reg_tpc_obj.reg_max[0] = regMax;
+	mlme_obj->reg_tpc_obj.ap_constraint_power = localPowerConstraint;
+	mlme_obj->reg_tpc_obj.frequency[0] = ft_session->curr_op_freq;
 
 #ifdef FEATURE_WLAN_ESE
-	ft_session->maxTxPower = lim_get_max_tx_power(mac, &tx_pwr_attr);
+	ft_session->maxTxPower = lim_get_max_tx_power(mac, mlme_obj);
 #else
 	ft_session->maxTxPower = QDF_MIN(regMax, (localPowerConstraint));
 #endif

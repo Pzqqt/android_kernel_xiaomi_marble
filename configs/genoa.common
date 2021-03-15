@@ -258,4 +258,6 @@ else
 CONFIG_WLAN_OPEN_P2P_INTERFACE := y
 CONFIG_WLAN_ENABLE_SOCIAL_CHANNELS_5G_ONLY := y
 endif
+
+CONFIG_WLAN_SYSFS_MEM_STATS := y
 ###################################

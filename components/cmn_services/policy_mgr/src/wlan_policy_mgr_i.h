@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -31,6 +31,8 @@
 
 #define POLICY_MGR_SER_CMD_TIMEOUT 4000
 
+#define SAP_MANDATORY_5G_CH_FREQ 5745
+
 #ifdef QCA_WIFI_3_0_EMU
 #define CONNECTION_UPDATE_TIMEOUT (POLICY_MGR_SER_CMD_TIMEOUT + 3000)
 #else
@@ -40,8 +42,6 @@
 #define PM_24_GHZ_CH_FREQ_6   (2437)
 #define PM_5_GHZ_CH_FREQ_36   (5180)
 #define CHANNEL_SWITCH_COMPLETE_TIMEOUT   (2000)
-
-#define DUAL_MAC_CONFIG_TIMEOUT   (POLICY_MGR_SER_CMD_TIMEOUT + 1000)
 
 /**
  * Policy Mgr hardware mode list bit-mask definitions.
@@ -331,8 +331,6 @@ struct policy_mgr_cfg {
  * @cfg: Policy manager config data
  * @dynamic_mcc_adaptive_sched: disable/enable mcc adaptive scheduler feature
  * @dynamic_dfs_master_disabled: current state of dynamic dfs master
- * @dual_mac_configuration_complete_evt: qdf event to synchronize dual mac
- *					 configuration setting
  */
 struct policy_mgr_psoc_priv_obj {
 	struct wlan_objmgr_psoc *psoc;
@@ -374,7 +372,6 @@ struct policy_mgr_psoc_priv_obj {
 	uint32_t valid_ch_freq_list_count;
 	bool dynamic_mcc_adaptive_sched;
 	bool dynamic_dfs_master_disabled;
-	qdf_event_t dual_mac_configuration_complete_evt;
 };
 
 /**
@@ -622,10 +619,27 @@ bool policy_mgr_is_5g_channel_allowed(struct wlan_objmgr_psoc *psoc,
 				uint32_t ch_freq, uint32_t *list,
 				enum policy_mgr_con_mode mode);
 
+/**
+ * policy_mgr_complete_action() - initiates actions needed on
+ * current connections once channel has been decided for the new
+ * connection
+ * @new_nss: the new nss value
+ * @next_action: next action to happen at policy mgr after
+ *		beacon update
+ * @reason: Reason for connection update
+ * @session_id: Session id
+ * @request_id: connection manager req id
+ *
+ * This function initiates actions
+ * needed on current connections once channel has been decided
+ * for the new connection. Notifies UMAC & FW as well
+ *
+ * Return: QDF_STATUS enum
+ */
 QDF_STATUS policy_mgr_complete_action(struct wlan_objmgr_psoc *psoc,
 				uint8_t  new_nss, uint8_t next_action,
 				enum policy_mgr_conn_update_reason reason,
-				uint32_t session_id);
+				uint32_t session_id, uint32_t request_id);
 enum policy_mgr_con_mode policy_mgr_get_mode_by_vdev_id(
 		struct wlan_objmgr_psoc *psoc,
 		uint8_t vdev_id);
@@ -681,6 +695,7 @@ void policy_mgr_reg_chan_change_callback(struct wlan_objmgr_psoc *psoc,
  * @band: update AP vdev on the Band.
  * @reason: action reason
  * @original_vdev_id: original request hwmode change vdev id
+ * @request_id: request id
  *
  * The function will update AP vdevs on specific band.
  *  eg. band = POLICY_MGR_ANY will request to update all band (2g and 5g)
@@ -691,7 +706,7 @@ QDF_STATUS policy_mgr_nss_update(struct wlan_objmgr_psoc *psoc,
 		uint8_t  new_nss, uint8_t next_action,
 		enum policy_mgr_band band,
 		enum policy_mgr_conn_update_reason reason,
-		uint32_t original_vdev_id);
+		uint32_t original_vdev_id, uint32_t request_id);
 
 /**
  * policy_mgr_is_concurrency_allowed() - Check for allowed
