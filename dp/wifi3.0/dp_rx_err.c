@@ -54,6 +54,8 @@ bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 	struct dp_vdev *vdev = peer->vdev;
 	struct dp_pdev *pdev = vdev->pdev;
 	struct dp_mec_entry *mecentry = NULL;
+	struct dp_ast_entry *ase = NULL;
+	uint16_t sa_idx = 0;
 	uint8_t *data;
 	/*
 	 * Multicast Echo Check is required only if vdev is STA and
@@ -66,6 +68,7 @@ bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 		return false;
 
 	data = qdf_nbuf_data(nbuf);
+
 	/*
 	 * if the received pkts src mac addr matches with vdev
 	 * mac address then drop the pkt as it is looped back
@@ -84,11 +87,42 @@ bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 	if (qdf_unlikely(vdev->isolation_vdev))
 		return false;
 
-	/* if the received pkts src mac addr matches with the
+	/*
+	 * if the received pkts src mac addr matches with the
 	 * wired PCs MAC addr which is behind the STA or with
 	 * wireless STAs MAC addr which are behind the Repeater,
 	 * then drop the pkt as it is looped back
 	 */
+	if (hal_rx_msdu_end_sa_is_valid_get(soc->hal_soc, rx_tlv_hdr)) {
+		sa_idx = hal_rx_msdu_end_sa_idx_get(soc->hal_soc, rx_tlv_hdr);
+
+		if ((sa_idx < 0) ||
+		    (sa_idx >= wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx))) {
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				  "invalid sa_idx: %d", sa_idx);
+			qdf_assert_always(0);
+		}
+
+		qdf_spin_lock_bh(&soc->ast_lock);
+		ase = soc->ast_table[sa_idx];
+
+		/*
+		 * this check was not needed since MEC is not dependent on AST,
+		 * but if we dont have this check SON has some issues in
+		 * dual backhaul scenario. in APS SON mode, client connected
+		 * to RE 2G and sends multicast packets. the RE sends it to CAP
+		 * over 5G backhaul. the CAP loopback it on 2G to RE.
+		 * On receiving in 2G STA vap, we assume that client has roamed
+		 * and kickout the client.
+		 */
+		if (ase && (ase->peer_id != peer->peer_id)) {
+			qdf_spin_unlock_bh(&soc->ast_lock);
+			goto drop;
+		}
+
+		qdf_spin_unlock_bh(&soc->ast_lock);
+	}
+
 	qdf_spin_lock_bh(&soc->mec_lock);
 
 	mecentry = dp_peer_mec_hash_find_by_pdevid(soc, pdev->pdev_id,
@@ -100,6 +134,7 @@ bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 
 	qdf_spin_unlock_bh(&soc->mec_lock);
 
+drop:
 	dp_rx_err_info("%pK: received pkt with same src mac " QDF_MAC_ADDR_FMT,
 		       soc, QDF_MAC_ADDR_REF(&data[QDF_MAC_ADDR_SIZE]));
 
