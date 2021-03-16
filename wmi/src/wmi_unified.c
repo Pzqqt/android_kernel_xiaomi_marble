@@ -1942,14 +1942,54 @@ static inline void wmi_unified_debug_dump(wmi_unified_t wmi_handle)
 						"WMI_NON_TLV_TARGET"));
 }
 
+#ifdef SYSTEM_PM_CHECK
+/**
+ * wmi_set_system_pm_pkt_tag() - API to set tag for system pm packets
+ * @htc_tag: HTC tag
+ * @buf: wmi cmd buffer
+ * @cmd_id: cmd id
+ *
+ * Return: None
+ */
+static void wmi_set_system_pm_pkt_tag(uint16_t *htc_tag, wmi_buf_t buf,
+				      uint32_t cmd_id)
+{
+	switch (cmd_id) {
+	case WMI_WOW_ENABLE_CMDID:
+	case WMI_PDEV_SUSPEND_CMDID:
+		*htc_tag = HTC_TX_PACKET_SYSTEM_SUSPEND;
+		break;
+	case WMI_WOW_HOSTWAKEUP_FROM_SLEEP_CMDID:
+	case WMI_PDEV_RESUME_CMDID:
+		*htc_tag = HTC_TX_PACKET_SYSTEM_RESUME;
+		break;
+	case WMI_D0_WOW_ENABLE_DISABLE_CMDID:
+		if (wmi_is_legacy_d0wow_disable_cmd(buf, cmd_id))
+			*htc_tag = HTC_TX_PACKET_SYSTEM_RESUME;
+		else
+			*htc_tag = HTC_TX_PACKET_SYSTEM_SUSPEND;
+		break;
+	default:
+		break;
+	}
+}
+#else
+static inline void wmi_set_system_pm_pkt_tag(uint16_t *htc_tag, wmi_buf_t buf,
+					     uint32_t cmd_id)
+{
+}
+#endif
+
 QDF_STATUS wmi_unified_cmd_send_fl(wmi_unified_t wmi_handle, wmi_buf_t buf,
 				   uint32_t len, uint32_t cmd_id,
 				   const char *func, uint32_t line)
 {
 	HTC_PACKET *pkt;
 	uint16_t htc_tag = 0;
+	bool rtpm_inprogress;
 
-	if (wmi_get_runtime_pm_inprogress(wmi_handle)) {
+	rtpm_inprogress = wmi_get_runtime_pm_inprogress(wmi_handle);
+	if (rtpm_inprogress) {
 		htc_tag = wmi_handle->ops->wmi_set_htc_tx_tag(wmi_handle, buf,
 							      cmd_id);
 	} else if (qdf_atomic_read(&wmi_handle->is_target_suspended) &&
@@ -2010,6 +2050,9 @@ QDF_STATUS wmi_unified_cmd_send_fl(wmi_unified_t wmi_handle, wmi_buf_t buf,
 		qdf_atomic_dec(&wmi_handle->pending_cmds);
 		return QDF_STATUS_E_NOMEM;
 	}
+
+	if (!rtpm_inprogress)
+		wmi_set_system_pm_pkt_tag(&htc_tag, buf, cmd_id);
 
 	SET_HTC_PACKET_INFO_TX(pkt,
 			       NULL,

@@ -292,6 +292,9 @@ struct hif_softc {
 #ifdef HIF_DETECTION_LATENCY_ENABLE
 	struct hif_latency_detect latency_detect;
 #endif
+#ifdef SYSTEM_PM_CHECK
+	qdf_atomic_t sys_pm_state;
+#endif
 };
 
 static inline

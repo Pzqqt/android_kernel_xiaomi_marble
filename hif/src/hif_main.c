@@ -898,6 +898,7 @@ struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx,
 	qdf_atomic_init(&scn->active_grp_tasklet_cnt);
 	qdf_atomic_init(&scn->link_suspended);
 	qdf_atomic_init(&scn->tasklet_from_intr);
+	hif_system_pm_set_state_on(GET_HIF_OPAQUE_HDL(scn));
 	qdf_mem_copy(&scn->callbacks, cbk,
 		     sizeof(struct hif_driver_state_callbacks));
 	scn->bus_type  = bus_type;
@@ -2035,3 +2036,41 @@ void hif_set_ce_service_max_rx_ind_flush(struct hif_opaque_softc *hif,
 		hif_ctx->ce_service_max_rx_ind_flush =
 						ce_service_max_rx_ind_flush;
 }
+
+#ifdef SYSTEM_PM_CHECK
+void __hif_system_pm_set_state(struct hif_opaque_softc *hif,
+			       enum hif_system_pm_state state)
+{
+	struct hif_softc *hif_ctx = HIF_GET_SOFTC(hif);
+
+	qdf_atomic_set(&hif_ctx->sys_pm_state, state);
+}
+
+int32_t hif_system_pm_get_state(struct hif_opaque_softc *hif)
+{
+	struct hif_softc *hif_ctx = HIF_GET_SOFTC(hif);
+
+	return qdf_atomic_read(&hif_ctx->sys_pm_state);
+}
+
+int hif_system_pm_state_check(struct hif_opaque_softc *hif)
+{
+	struct hif_softc *hif_ctx = HIF_GET_SOFTC(hif);
+	int32_t sys_pm_state;
+
+	if (!hif_ctx) {
+		hif_err("hif context is null");
+		return -EFAULT;
+	}
+
+	sys_pm_state = qdf_atomic_read(&hif_ctx->sys_pm_state);
+	if (sys_pm_state == HIF_SYSTEM_PM_STATE_BUS_SUSPENDING ||
+	    sys_pm_state == HIF_SYSTEM_PM_STATE_BUS_SUSPENDED) {
+		hif_info("Triggering system wakeup");
+		qdf_pm_system_wakeup();
+		return -EAGAIN;
+	}
+
+	return 0;
+}
+#endif
