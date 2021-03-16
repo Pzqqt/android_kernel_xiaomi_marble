@@ -1450,7 +1450,6 @@ static int _sde_sspp_setup_vigs(struct device_node *np,
 	struct sde_dt_props *props[SSPP_SUBBLK_COUNT_MAX] = {NULL, NULL};
 	struct sde_dt_props *props_tmp = NULL;
 	struct device_node *snp = NULL;
-	struct sde_sc_cfg *sc_cfg = sde_cfg->sc_cfg;
 	int vig_count = 0, vcm_count = 0;
 	const char *type;
 
@@ -1614,14 +1613,6 @@ static int _sde_sspp_setup_vigs(struct device_node *np,
 				MAX_DOWNSCALE_RATIO_INROT_NOPD_RT_DENOMINATOR;
 			sblk->in_rot_maxdwnscale_nrt =
 					MAX_DOWNSCALE_RATIO_INROT_NRT_DEFAULT;
-		}
-
-		if (sc_cfg[SDE_SYS_CACHE_ROT].has_sys_cache) {
-			set_bit(SDE_PERF_SSPP_SYS_CACHE, &sspp->perf_features);
-			sblk->llcc_scid =
-				sc_cfg[SDE_SYS_CACHE_ROT].llcc_scid;
-			sblk->llcc_slice_size =
-				sc_cfg[SDE_SYS_CACHE_ROT].llcc_slice_size;
 		}
 
 		if (sde_cfg->inline_disable_const_clr)
@@ -3477,11 +3468,8 @@ static int sde_cache_parse_dt(struct device_node *np,
 		struct sde_mdss_cfg *sde_cfg)
 {
 	struct llcc_slice_desc *slice;
-	struct platform_device *pdev;
-	struct of_phandle_args phargs;
 	struct sde_sc_cfg *sc_cfg = sde_cfg->sc_cfg;
 	struct device_node *llcc_node;
-	int rc = 0;
 
 	if (!sde_cfg) {
 		SDE_ERROR("invalid argument\n");
@@ -3499,67 +3487,19 @@ static int sde_cache_parse_dt(struct device_node *np,
 
 	slice = llcc_slice_getd(LLCC_DISP);
 	if (IS_ERR_OR_NULL(slice)) {
-		SDE_ERROR("failed to get system cache %ld\n",
-				PTR_ERR(slice));
-	} else {
-		sc_cfg[SDE_SYS_CACHE_DISP].has_sys_cache = true;
-		sc_cfg[SDE_SYS_CACHE_DISP].llcc_scid = llcc_get_slice_id(slice);
-		sc_cfg[SDE_SYS_CACHE_DISP].llcc_slice_size =
-				llcc_get_slice_size(slice);
-		SDE_DEBUG("img cache scid:%d slice_size:%zu kb\n",
-				sc_cfg[SDE_SYS_CACHE_DISP].llcc_scid,
-				sc_cfg[SDE_SYS_CACHE_DISP].llcc_slice_size);
-		llcc_slice_putd(slice);
+		SDE_ERROR("failed to get system cache %ld\n", PTR_ERR(slice));
+		return -EINVAL;
 	}
 
-	/* Read inline rot node */
-	rc = of_parse_phandle_with_args(np,
-		"qcom,sde-inline-rotator", "#list-cells", 0, &phargs);
-	if (rc) {
-		/*
-		 * This is not a fatal error, system cache can be disabled
-		 * in device tree
-		 */
-		SDE_DEBUG("sys cache will be disabled rc:%d\n", rc);
-		rc = 0;
-		goto end;
-	}
-
-	if (!phargs.np || !phargs.args_count) {
-		SDE_ERROR("wrong phandle args %d %d\n",
-			!phargs.np, !phargs.args_count);
-		rc = -EINVAL;
-		goto end;
-	}
-
-	pdev = of_find_device_by_node(phargs.np);
-	if (!pdev) {
-		SDE_ERROR("invalid sde rotator node\n");
-		goto end;
-	}
-
-	slice = llcc_slice_getd(LLCC_ROTATOR);
-	if (IS_ERR_OR_NULL(slice))  {
-		SDE_ERROR("failed to get rotator slice!\n");
-		rc = -EINVAL;
-		goto cleanup;
-	}
-
-	sc_cfg[SDE_SYS_CACHE_ROT].llcc_scid = llcc_get_slice_id(slice);
-	sc_cfg[SDE_SYS_CACHE_ROT].llcc_slice_size =
-			llcc_get_slice_size(slice);
+	sc_cfg[SDE_SYS_CACHE_DISP].has_sys_cache = true;
+	sc_cfg[SDE_SYS_CACHE_DISP].llcc_scid = llcc_get_slice_id(slice);
+	sc_cfg[SDE_SYS_CACHE_DISP].llcc_slice_size = llcc_get_slice_size(slice);
+	SDE_DEBUG("img cache scid:%d slice_size:%zu kb\n",
+			sc_cfg[SDE_SYS_CACHE_DISP].llcc_scid,
+			sc_cfg[SDE_SYS_CACHE_DISP].llcc_slice_size);
 	llcc_slice_putd(slice);
 
-	sc_cfg[SDE_SYS_CACHE_ROT].has_sys_cache = true;
-
-	SDE_DEBUG("rotator llcc scid:%d slice_size:%zukb\n",
-			sc_cfg[SDE_SYS_CACHE_ROT].llcc_scid,
-			sc_cfg[SDE_SYS_CACHE_ROT].llcc_slice_size);
-
-cleanup:
-	of_node_put(phargs.np);
-end:
-	return rc;
+	return 0;
 }
 
 static int _sde_vbif_populate_ot_parsing(struct sde_vbif_cfg *vbif,
