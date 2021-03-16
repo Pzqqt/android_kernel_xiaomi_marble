@@ -13,6 +13,134 @@
 
 #define Q16_INT(q) ((q) >> 16)
 #define Q16_FRAC(q) ((((q) & 0xFFFF) * 100) >> 16)
+#define CLK_RATE_STEP 1000000
+
+static int mmrm_sw_update_freq(
+	struct mmrm_sw_clk_mgr_info *sinfo, struct mmrm_sw_clk_client_tbl_entry *tbl_entry)
+{
+	int rc = 0;
+	u32 i;
+	struct mmrm_driver_data *drv_data = (struct mmrm_driver_data *)sinfo->driver_data;
+	struct mmrm_clk_platform_resources *cres = &drv_data->clk_res;
+	struct voltage_corner_set *cset = &cres->corner_set;
+	long clk_val_min, clk_val_max, clk_val, clk_val_round;
+	int voltage_corner;
+
+	clk_val_min = clk_round_rate(tbl_entry->clk, 1);
+	clk_val_max = clk_round_rate(tbl_entry->clk, ~0UL);
+	d_mpr_h("%s: csid(%d): min_clk_rate(%llu) max_clk_rate(%llu)\n",
+		__func__,
+		tbl_entry->clk_src_id,
+		clk_val_min,
+		clk_val_max);
+
+	/* init with min val */
+	for (i = 0; i < MMRM_VDD_LEVEL_MAX; i++) {
+		tbl_entry->freq[i] = clk_val_min;
+	}
+
+	/* step through rates */
+	for (clk_val = clk_val_min; clk_val < clk_val_max; clk_val += CLK_RATE_STEP) {
+		/* get next clk rate */
+		clk_val_round = clk_round_rate(tbl_entry->clk, clk_val);
+		if (clk_val_round > clk_val_min) {
+			clk_val_min = clk_val_round;
+
+			/* Get voltage corner */
+			voltage_corner = qcom_clk_get_voltage(tbl_entry->clk, clk_val_round);
+			if (voltage_corner < 0 || voltage_corner > mmrm_sw_vdd_corner[MMRM_VDD_LEVEL_TURBO]) {
+				break;
+			}
+
+			/* voltage corner is below svsl1 */
+			if (voltage_corner < mmrm_sw_vdd_corner[MMRM_VDD_LEVEL_SVS_L1]) {
+				voltage_corner = mmrm_sw_vdd_corner[MMRM_VDD_LEVEL_SVS_L1];
+			}
+
+			/* match vdd level */
+			for (i = 0; i < MMRM_VDD_LEVEL_MAX; i++) {
+				if (voltage_corner == mmrm_sw_vdd_corner[i])
+					break;
+			}
+
+			/* update freq */
+			while (i < MMRM_VDD_LEVEL_MAX) {
+				tbl_entry->freq[i++] = clk_val_round;
+			}
+		}
+	}
+
+	/* print results */
+	for (i = 0; i < MMRM_VDD_LEVEL_MAX; i++) {
+		d_mpr_h("%s: csid(%d) corner(%s) clk_rate(%llu) dyn_pwr(%zu) leak_pwr(%zu)\n",
+			__func__,
+			tbl_entry->clk_src_id,
+			cset->corner_tbl[i].name,
+			tbl_entry->freq[i],
+			tbl_entry->dyn_pwr[i],
+			tbl_entry->leak_pwr[i]);
+	}
+
+	return rc;
+}
+
+static int mmrm_sw_update_curr(struct mmrm_sw_clk_mgr_info *sinfo,
+	struct mmrm_sw_clk_client_tbl_entry *tbl_entry)
+{
+	u32 i, j;
+	struct mmrm_driver_data *drv_data = (struct mmrm_driver_data *)sinfo->driver_data;
+	struct mmrm_clk_platform_resources *cres = &drv_data->clk_res;
+	struct voltage_corner_set *cset = &cres->corner_set;
+	u32 scaling_factor = 0, voltage_factor = 0;
+	fp_t nom_dyn_pwr, nom_leak_pwr, dyn_sc, leak_sc,
+		volt, dyn_pwr, leak_pwr, pwr_mw, nom_freq;
+
+	nom_dyn_pwr = FP(Q16_INT(tbl_entry->dyn_pwr[MMRM_VDD_LEVEL_NOM]),
+		Q16_FRAC(tbl_entry->dyn_pwr[MMRM_VDD_LEVEL_NOM]), 100);
+
+	nom_leak_pwr = FP(Q16_INT(tbl_entry->leak_pwr[MMRM_VDD_LEVEL_NOM]),
+		Q16_FRAC(tbl_entry->leak_pwr[MMRM_VDD_LEVEL_NOM]), 100);
+
+	nom_freq = tbl_entry->freq[MMRM_VDD_LEVEL_NOM];
+
+	/* update power & current entries for all levels */
+	for (i = 0; i < MMRM_VDD_LEVEL_MAX; i++) {
+		scaling_factor = cset->corner_tbl[i].scaling_factor_dyn;
+		dyn_sc = FP(
+			Q16_INT(scaling_factor), Q16_FRAC(scaling_factor), 100);
+
+		scaling_factor = cset->corner_tbl[i].scaling_factor_leak;
+		leak_sc = FP(
+			Q16_INT(scaling_factor), Q16_FRAC(scaling_factor), 100);
+
+		/* Frequency scaling */
+		pwr_mw = fp_mult(nom_dyn_pwr, tbl_entry->freq[i]);
+		pwr_mw = fp_div(pwr_mw, nom_freq);
+
+		/* Scaling factor */
+		dyn_pwr = fp_mult(pwr_mw, dyn_sc);
+		leak_pwr = fp_mult(nom_leak_pwr, leak_sc);
+
+
+		for (j = 0; j < MMRM_VDD_LEVEL_MAX; j++) {
+			voltage_factor = cset->corner_tbl[j].volt_factor;
+			volt = FP(Q16_INT(voltage_factor), Q16_FRAC(voltage_factor), 100);
+
+			tbl_entry->current_ma[i][j] = fp_round(fp_div((dyn_pwr+leak_pwr), volt));
+
+			d_mpr_h("%s: csid(%d) corner(%s) dyn_pwr(%zu) leak_pwr(%zu) tot_pwr(%d) cur_ma(%d)\n",
+				__func__,
+				tbl_entry->clk_src_id,
+				cset->corner_tbl[i].name,
+				fp_round(dyn_pwr),
+				fp_round(leak_pwr),
+				fp_round(dyn_pwr+leak_pwr),
+				tbl_entry->current_ma[i][j]);
+		}
+	}
+
+	return 0;
+}
 
 static struct mmrm_client *mmrm_sw_clk_client_register(
 	struct mmrm_clk_mgr *sw_clk_mgr,
@@ -95,11 +223,28 @@ static struct mmrm_client *mmrm_sw_clk_client_register(
 		tbl_entry->pvt_data,
 		tbl_entry->notifier_cb_fn);
 
+	/* determine full range of clock freq */
+	rc = mmrm_sw_update_freq(sinfo, tbl_entry);
+	if (rc) {
+		d_mpr_e("%s: csid(%d) failed to update freq\n",
+			__func__, tbl_entry->clk_src_id);
+		goto err_fail_update_entry;
+	}
+
+	/* calculate current & scale power for other levels */
+	rc = mmrm_sw_update_curr(sinfo, tbl_entry);
+	if (rc) {
+		d_mpr_e("%s: csid(%d) failed to update current\n",
+			__func__, tbl_entry->clk_src_id);
+		goto err_fail_update_entry;
+	}
+
 	mutex_unlock(&sw_clk_mgr->lock);
 
 	d_mpr_h("%s: exiting with success\n", __func__);
 	return clk_client;
 
+err_fail_update_entry:
 err_fail_alloc_clk_client:
 err_already_registered:
 err_nofree_entry:
@@ -546,63 +691,6 @@ static struct mmrm_clk_mgr_client_ops clk_client_swops = {
 	.clk_client_getval = mmrm_sw_clk_client_getval,
 };
 
-static int mmrm_sw_update_entries(struct mmrm_sw_clk_mgr_info *sinfo,
-	struct mmrm_sw_clk_client_tbl_entry *tbl_entry)
-{
-	u32 i, j;
-	struct mmrm_driver_data *drv_data = (struct mmrm_driver_data *)sinfo->driver_data;
-	struct mmrm_clk_platform_resources *cres = &drv_data->clk_res;
-	struct voltage_corner_set *cset = &cres->corner_set;
-	u32 scaling_factor = 0, voltage_factor = 0;
-	fp_t nom_dyn_pwr, nom_leak_pwr, freq_sc, dyn_sc, leak_sc,
-		volt, dyn_pwr, leak_pwr, pwr_mw;
-
-	nom_dyn_pwr = FP(Q16_INT(tbl_entry->dyn_pwr[MMRM_VDD_LEVEL_NOM]),
-		Q16_FRAC(tbl_entry->dyn_pwr[MMRM_VDD_LEVEL_NOM]), 100);
-	nom_leak_pwr = FP(Q16_INT(tbl_entry->leak_pwr[MMRM_VDD_LEVEL_NOM]),
-		Q16_FRAC(tbl_entry->leak_pwr[MMRM_VDD_LEVEL_NOM]), 100);
-
-	/* freq scaling only for svsl1, TBD: enhance with actual numbers */
-	freq_sc = FP(0, 86, 100);
-
-	/* update power & current entries for all levels */
-	for (i = 0; i < MMRM_VDD_LEVEL_MAX; i++) {
-		scaling_factor = cset->corner_tbl[i].scaling_factor_dyn;
-		dyn_sc = FP(
-			Q16_INT(scaling_factor), Q16_FRAC(scaling_factor), 100);
-
-		scaling_factor = cset->corner_tbl[i].scaling_factor_leak;
-		leak_sc = FP(
-			Q16_INT(scaling_factor), Q16_FRAC(scaling_factor), 100);
-
-		if (!i)
-			pwr_mw = fp_mult(nom_dyn_pwr, freq_sc);
-		else
-			pwr_mw = nom_dyn_pwr;
-
-		dyn_pwr = fp_mult(pwr_mw, dyn_sc);
-		leak_pwr = fp_mult(nom_leak_pwr, leak_sc);
-
-		for (j = 0; j < MMRM_VDD_LEVEL_MAX; j++) {
-			voltage_factor = cset->corner_tbl[j].volt_factor;
-			volt = FP(Q16_INT(voltage_factor), Q16_FRAC(voltage_factor), 100);
-
-			tbl_entry->current_ma[i][j] = fp_round(fp_div((dyn_pwr+leak_pwr), volt));
-
-			d_mpr_h("%s: csid(%d) corner(%s) dyn_pwr(%zu) leak_pwr(%zu) tot_pwr(%d) cur_ma(%d)\n",
-				__func__,
-				tbl_entry->clk_src_id,
-				cset->corner_tbl[i].name,
-				fp_round(dyn_pwr),
-				fp_round(leak_pwr),
-				fp_round(dyn_pwr+leak_pwr),
-				tbl_entry->current_ma[i][j]);
-		}
-	}
-
-	return 0;
-}
-
 static int mmrm_sw_prepare_table(struct mmrm_clk_platform_resources *cres,
 	struct mmrm_sw_clk_mgr_info *sinfo)
 {
@@ -630,13 +718,6 @@ static int mmrm_sw_prepare_table(struct mmrm_clk_platform_resources *cres,
 			tbl_entry->clk_src_id,
 			tbl_entry->dyn_pwr[MMRM_VDD_LEVEL_NOM],
 			tbl_entry->leak_pwr[MMRM_VDD_LEVEL_NOM]);
-
-		/* calculate current & scale power for other levels */
-		rc = mmrm_sw_update_entries(sinfo, tbl_entry);
-		if (rc) {
-			d_mpr_e("%s: csid(%d) failed to prepare table\n",
-				__func__, tbl_entry->clk_src_id);
-		}
 	}
 
 	d_mpr_h("%s: exiting\n", __func__);
