@@ -13814,10 +13814,6 @@ QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
 		return status;
 	}
 
-	mlme_set_twt_command_in_progress(mac->psoc,
-				(struct qdf_mac_addr *)twt_params->peer_macaddr,
-				twt_params->dialog_id, WLAN_TWT_SETUP);
-
 	/*
 	 * Add the dialog id to TWT context to drop back to back
 	 * commands
@@ -13825,6 +13821,10 @@ QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
 	mlme_add_twt_session(mac->psoc,
 			     (struct qdf_mac_addr *)twt_params->peer_macaddr,
 			     twt_params->dialog_id);
+
+	mlme_set_twt_command_in_progress(mac->psoc,
+				(struct qdf_mac_addr *)twt_params->peer_macaddr,
+				twt_params->dialog_id, WLAN_TWT_SETUP);
 
 	/* Serialize the req through MC thread */
 	mac->sme.twt_add_dialog_cb = twt_add_dialog_cb;
