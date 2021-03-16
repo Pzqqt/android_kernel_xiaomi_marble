@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
@@ -23,6 +23,7 @@
 
 #include <drm/drm_drv.h>
 
+#include <linux/qcom-dma-mapping.h>
 #include <linux/dma-buf.h>
 #include <linux/ion.h>
 #include <linux/msm_ion.h>

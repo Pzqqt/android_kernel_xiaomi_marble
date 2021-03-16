@@ -19,6 +19,7 @@
 #include <linux/module.h>
 #include <linux/of_platform.h>
 #include <linux/pm_runtime.h>
+#include <linux/qcom-dma-mapping.h>
 #include <linux/msm_dma_iommu_mapping.h>
 #include <linux/dma-mapping.h>
 
