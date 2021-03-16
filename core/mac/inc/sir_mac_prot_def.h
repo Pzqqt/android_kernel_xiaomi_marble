@@ -531,7 +531,7 @@ typedef struct sSirMacTim {
 /* The parser assume this to be at least 12 */
 typedef struct sSirMacRateSet {
 	uint8_t numRates;
-	uint8_t rate[WLAN_SUPPORTED_RATES_IE_MAX_LEN];
+	uint8_t rate[SIR_MAC_MAX_NUMBER_OF_RATES];
 } qdf_packed tSirMacRateSet;
 
 /** struct merged_mac_rate_set - merged mac rate set

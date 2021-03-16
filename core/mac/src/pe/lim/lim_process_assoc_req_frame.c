@@ -375,14 +375,14 @@ static bool lim_chk_rates(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 	 */
 	basic_rates.numRates = 0;
 
-	for (i = 0; i < assoc_req->supportedRates.numRates
-			&& (i < WLAN_SUPPORTED_RATES_IE_MAX_LEN); i++) {
+	for (i = 0; i < assoc_req->supportedRates.numRates &&
+	     (i < SIR_MAC_MAX_NUMBER_OF_RATES); i++) {
 		basic_rates.rate[i] = assoc_req->supportedRates.rate[i];
 		basic_rates.numRates++;
 	}
 
-	for (j = 0; (j < assoc_req->extendedRates.numRates)
-			&& (i < WLAN_SUPPORTED_RATES_IE_MAX_LEN); i++, j++) {
+	for (j = 0; (j < assoc_req->extendedRates.numRates) &&
+	     (i < SIR_MAC_MAX_NUMBER_OF_RATES); i++, j++) {
 		basic_rates.rate[i] = assoc_req->extendedRates.rate[j];
 		basic_rates.numRates++;
 	}

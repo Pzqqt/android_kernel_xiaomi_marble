@@ -202,7 +202,8 @@ lim_check_rx_basic_rates(struct mac_context *mac, tSirMacRateSet rxRateSet,
 
 	/* Extract BSS basic rateset from operational rateset */
 	for (i = 0, j = 0;
-	     ((i < pRateSet->numRates) && (i < WLAN_SUPPORTED_RATES_IE_MAX_LEN)); i++) {
+	     ((i < pRateSet->numRates) && (i < SIR_MAC_MAX_NUMBER_OF_RATES));
+	     i++) {
 		if ((pRateSet->rate[i] & 0x80) == 0x80) {
 			/* msb is set, so this is a basic rate */
 			basicRate.rate[j++] = pRateSet->rate[i];
@@ -216,8 +217,8 @@ lim_check_rx_basic_rates(struct mac_context *mac, tSirMacRateSet rxRateSet,
 	for (k = 0; k < j; k++) {
 		match = 0;
 		for (i = 0;
-		     ((i < rxRateSet.numRates)
-		      && (i < WLAN_SUPPORTED_RATES_IE_MAX_LEN)); i++) {
+		     ((i < rxRateSet.numRates) &&
+		      (i < SIR_MAC_MAX_NUMBER_OF_RATES)); i++) {
 			if ((rxRateSet.rate[i] | 0x80) == basicRate.rate[k])
 				match = 1;
 		}
@@ -1480,7 +1481,7 @@ QDF_STATUS lim_populate_own_rate_set(struct mac_context *mac_ctx,
 		is_arate = 0;
 
 		for (j = 0; (j < temp_rate_set.numRates) &&
-			 (j < WLAN_SUPPORTED_RATES_IE_MAX_LEN); j++) {
+			 (j < SIR_MAC_MAX_NUMBER_OF_RATES); j++) {
 			if ((uint32_t) (temp_rate_set.rate[j] & 0x7f) <
 					val) {
 				val = temp_rate_set.rate[j] & 0x7f;
@@ -1607,13 +1608,13 @@ QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
 	tSchBeaconStruct *pBeaconStruct = NULL;
 
 	/* copy operational rate set from pe_session */
-	if (pe_session->rateSet.numRates <= WLAN_SUPPORTED_RATES_IE_MAX_LEN) {
+	if (pe_session->rateSet.numRates <= SIR_MAC_MAX_NUMBER_OF_RATES) {
 		qdf_mem_copy((uint8_t *) tempRateSet.rate,
 			     (uint8_t *) (pe_session->rateSet.rate),
 			     pe_session->rateSet.numRates);
 		tempRateSet.numRates = pe_session->rateSet.numRates;
 	} else {
-		pe_err("more than WLAN_SUPPORTED_RATES_IE_MAX_LEN rates");
+		pe_err("more than SIR_MAC_MAX_NUMBER_OF_RATES rates");
 		return QDF_STATUS_E_FAILURE;
 	}
 	if ((pe_session->dot11mode == MLME_DOT11_MODE_11G) ||
@@ -1622,7 +1623,7 @@ QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
 		(pe_session->dot11mode == MLME_DOT11_MODE_11N) ||
 		(pe_session->dot11mode == MLME_DOT11_MODE_11AX)) {
 		if (pe_session->extRateSet.numRates <=
-		    WLAN_SUPPORTED_RATES_IE_MAX_LEN) {
+		    SIR_MAC_MAX_NUMBER_OF_RATES) {
 			qdf_mem_copy((uint8_t *) tempRateSet2.rate,
 				     (uint8_t *) (pe_session->extRateSet.
 						  rate),
@@ -1630,14 +1631,14 @@ QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
 			tempRateSet2.numRates =
 				pe_session->extRateSet.numRates;
 		} else {
-			pe_err("pe_session->extRateSet.numRates more than WLAN_SUPPORTED_RATES_IE_MAX_LEN rates");
+			pe_err("numRates more than SIR_MAC_MAX_NUM_OF_RATES");
 			return QDF_STATUS_E_FAILURE;
 		}
 	} else
 		tempRateSet2.numRates = 0;
 	if ((tempRateSet.numRates + tempRateSet2.numRates) >
-	    WLAN_SUPPORTED_RATES_IE_MAX_LEN) {
-		pe_err("more than 12 rates in CFG");
+	    SIR_MAC_MAX_NUMBER_OF_RATES) {
+		pe_err("rates in CFG are more than SIR_MAC_MAX_NUM_OF_RATES");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1657,7 +1658,7 @@ QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
 		val = 0xff;
 		isArate = 0;
 		for (j = 0; (j < tempRateSet.numRates) &&
-		     (j < WLAN_SUPPORTED_RATES_IE_MAX_LEN); j++) {
+		     (j < SIR_MAC_MAX_NUMBER_OF_RATES); j++) {
 			if ((uint32_t)(tempRateSet.rate[j] & 0x7f) <
 					val) {
 				val = tempRateSet.rate[j] & 0x7f;
@@ -1887,7 +1888,7 @@ QDF_STATUS lim_populate_matching_rate_set(struct mac_context *mac_ctx,
 	 * unicity of the rates so there cannot be more than 12
 	 */
 	for (i = 0; (i < oper_rate_set->numRates &&
-			 i < WLAN_SUPPORTED_RATES_IE_MAX_LEN); i++)
+			 i < SIR_MAC_MAX_NUMBER_OF_RATES); i++)
 		temp_rate_set.rate[i] = oper_rate_set->rate[i];
 
 	temp_rate_set.numRates = oper_rate_set->numRates;
@@ -1902,7 +1903,7 @@ QDF_STATUS lim_populate_matching_rate_set(struct mac_context *mac_ctx,
 		int tail = temp_rate_set.numRates;
 
 		for (i = 0; (i < ext_rate_set->numRates &&
-				i < WLAN_SUPPORTED_RATES_IE_MAX_LEN); i++) {
+				i < SIR_MAC_MAX_NUMBER_OF_RATES); i++) {
 			found = 0;
 			for (j = 0; j < (uint32_t) tail; j++) {
 				if ((temp_rate_set.rate[j] & 0x7F) ==
@@ -1922,8 +1923,8 @@ QDF_STATUS lim_populate_matching_rate_set(struct mac_context *mac_ctx,
 	} else if (ext_rate_set->numRates &&
 		 ((temp_rate_set.numRates + ext_rate_set->numRates) <= 12)) {
 		for (j = 0; ((j < ext_rate_set->numRates) &&
-				 (j < WLAN_SUPPORTED_RATES_IE_MAX_LEN) &&
-				 ((i + j) < WLAN_SUPPORTED_RATES_IE_MAX_LEN)); j++)
+				 (j < SIR_MAC_MAX_NUMBER_OF_RATES) &&
+				 ((i + j) < SIR_MAC_MAX_NUMBER_OF_RATES)); j++)
 			temp_rate_set.rate[i + j] = ext_rate_set->rate[j];
 
 		temp_rate_set.numRates += ext_rate_set->numRates;
@@ -1934,9 +1935,9 @@ QDF_STATUS lim_populate_matching_rate_set(struct mac_context *mac_ctx,
 	rates = &sta_ds->supportedRates;
 	qdf_mem_zero(rates, sizeof(*rates));
 	for (i = 0; (i < temp_rate_set2.numRates &&
-			 i < WLAN_SUPPORTED_RATES_IE_MAX_LEN); i++) {
+			 i < SIR_MAC_MAX_NUMBER_OF_RATES); i++) {
 		for (j = 0; (j < temp_rate_set.numRates &&
-				 j < WLAN_SUPPORTED_RATES_IE_MAX_LEN); j++) {
+				 j < SIR_MAC_MAX_NUMBER_OF_RATES); j++) {
 			if ((temp_rate_set2.rate[i] & 0x7F) !=
 				(temp_rate_set.rate[j] & 0x7F))
 				continue;

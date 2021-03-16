@@ -825,7 +825,7 @@ populate_dot11f_ext_supp_rates(struct mac_context *mac, uint8_t nChannelNum,
 {
 	QDF_STATUS nsir_status;
 	qdf_size_t nRates = 0;
-	uint8_t rates[WLAN_SUPPORTED_RATES_IE_MAX_LEN];
+	uint8_t rates[SIR_MAC_MAX_NUMBER_OF_RATES];
 
 	/* Use the ext rates present in session entry whenever nChannelNum is set to OPERATIONAL
 	   else use the ext supported rate set from CFG, which is fixed and does not change dynamically and is used for
@@ -844,7 +844,7 @@ populate_dot11f_ext_supp_rates(struct mac_context *mac, uint8_t nChannelNum,
 			pe_err("null pe_session");
 			return QDF_STATUS_E_INVAL;
 		}
-		nRates = WLAN_SUPPORTED_RATES_IE_MAX_LEN;
+		nRates = SIR_MAC_MAX_NUMBER_OF_RATES;
 		nsir_status = mlme_get_ext_opr_rate(pe_session->vdev, rates,
 						    &nRates);
 		if (QDF_IS_STATUS_ERROR(nsir_status)) {

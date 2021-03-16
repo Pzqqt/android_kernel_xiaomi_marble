@@ -11558,9 +11558,9 @@ static void csr_populate_supported_rates_from_hostapd(tSirMacRateSet *opr_rates,
 		profile->supported_rates.numRates =
 			WLAN_SUPPORTED_RATES_IE_MAX_LEN;
 
-	if (profile->extended_rates.numRates > WLAN_SUPPORTED_RATES_IE_MAX_LEN)
+	if (profile->extended_rates.numRates > SIR_MAC_MAX_NUMBER_OF_RATES)
 		profile->extended_rates.numRates =
-			WLAN_SUPPORTED_RATES_IE_MAX_LEN;
+			SIR_MAC_MAX_NUMBER_OF_RATES;
 
 	if (profile->supported_rates.numRates) {
 		opr_rates->numRates = profile->supported_rates.numRates;
@@ -11745,12 +11745,12 @@ csr_roam_get_bss_start_parms_from_bss_desc(
 	}
 	if (pIes->ExtSuppRates.present) {
 		pParam->extendedRateSet.numRates = pIes->ExtSuppRates.num_rates;
-		if (pIes->ExtSuppRates.num_rates > WLAN_SUPPORTED_RATES_IE_MAX_LEN) {
-			sme_err(
-				"num_rates: %d > max val, resetting",
+		if (pIes->ExtSuppRates.num_rates >
+		    SIR_MAC_MAX_NUMBER_OF_RATES) {
+			sme_err("num_rates: %d > max val, resetting",
 				pIes->ExtSuppRates.num_rates);
 			pIes->ExtSuppRates.num_rates =
-				WLAN_SUPPORTED_RATES_IE_MAX_LEN;
+				SIR_MAC_MAX_NUMBER_OF_RATES;
 		}
 		qdf_mem_copy(pParam->extendedRateSet.rate,
 			     pIes->ExtSuppRates.rates,
