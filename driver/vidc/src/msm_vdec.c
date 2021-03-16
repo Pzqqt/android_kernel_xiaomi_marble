@@ -1976,8 +1976,8 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 		fmt = &inst->fmts[OUTPUT_PORT];
 		fmt->type = OUTPUT_MPLANE;
 		if (inst->vb2q[INPUT_PORT].streaming) {
-			f->fmt.pix_mp.height = fmt->fmt.pix_mp.height;
-			f->fmt.pix_mp.width = fmt->fmt.pix_mp.width;
+			f->fmt.pix_mp.height = inst->fmts[INPUT_PORT].fmt.pix_mp.height;
+			f->fmt.pix_mp.width = inst->fmts[INPUT_PORT].fmt.pix_mp.width;
 		}
 		fmt->fmt.pix_mp.pixelformat = f->fmt.pix_mp.pixelformat;
 		fmt->fmt.pix_mp.width = VIDEO_Y_STRIDE_PIX(
