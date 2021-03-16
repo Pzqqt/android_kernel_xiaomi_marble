@@ -7,6 +7,7 @@
 #include <linux/delay.h>
 #include <linux/device.h>
 #include "ipa_i.h"
+#include "ipahal.h"
 #include <linux/msm_gsi.h>
 #include "gsi.h"
 
@@ -1014,7 +1015,14 @@ int ipa3_enable_force_clear(u32 request_id, bool throttle_source,
 
 	memset(&req, 0, sizeof(req));
 	req.request_id = request_id;
-	req.source_pipe_bitmask = source_pipe_bitmask;
+	if (ipa3_ctx->ipa_hw_type < IPA_HW_v5_0) {
+		WARN_ON(source_pipe_reg_idx);
+		req.source_pipe_bitmask = source_pipe_bitmask;
+	} else {
+		req.source_pipe_bitmask_ext_valid = 1;
+		req.source_pipe_bitmask_ext[source_pipe_reg_idx] =
+			source_pipe_bitmask;
+	}
 	if (throttle_source) {
 		req.throttle_source_valid = 1;
 		req.throttle_source = 1;
@@ -1945,10 +1953,19 @@ int ipa3_clear_endpoint_delay(u32 clnt_hdl)
 	ep = &ipa3_ctx->ep[clnt_hdl];
 
 	if (!ipa3_ctx->tethered_flow_control) {
+		u32 source_pipe_bitmask = ipahal_get_ep_bit(clnt_hdl);
+		int source_pipe_reg_idx = ipahal_get_ep_reg_idx(clnt_hdl);
 		IPADBG("APPS flow control is not enabled\n");
 		/* Send a message to modem to disable flow control honoring. */
 		req.request_id = clnt_hdl;
-		req.source_pipe_bitmask = 1 << clnt_hdl;
+		if (ipa3_ctx->ipa_hw_type < IPA_HW_v5_0) {
+			WARN_ON(source_pipe_reg_idx);
+			req.source_pipe_bitmask = source_pipe_bitmask;
+		} else {
+			req.source_pipe_bitmask_ext_valid = 1;
+			req.source_pipe_bitmask_ext[source_pipe_reg_idx] =
+				source_pipe_bitmask;
+		}
 		res = ipa3_qmi_enable_force_clear_datapath_send(&req);
 		if (res) {
 			IPADBG("enable_force_clear_datapath failed %d\n",

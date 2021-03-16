@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -4749,6 +4749,7 @@ u32 ipahal_get_ep_bit(u32 ep_num)
 {
 	return IPA_BIT_MAP_CELL_MSK(ep_num);
 }
+EXPORT_SYMBOL(ipahal_get_ep_bit);
 
 /*
  * ipahal_get_ep_reg_idx() - get ep reg index according to ep num
@@ -4757,6 +4758,7 @@ u32 ipahal_get_ep_reg_idx(u32 ep_num)
 {
 	return IPA_BIT_MAP_CELL_NUM(ep_num);
 }
+EXPORT_SYMBOL(ipahal_get_ep_reg_idx);
 
 /*
  * ipahal_read_reg_mn() - Get mn parameterized reg value
