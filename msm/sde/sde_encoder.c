@@ -2733,95 +2733,12 @@ void sde_encoder_virt_restore(struct drm_encoder *drm_enc)
 	_sde_encoder_virt_enable_helper(drm_enc);
 }
 
-static void sde_encoder_off_work(struct kthread_work *work)
+static void sde_encoder_populate_encoder_phys(struct drm_encoder *drm_enc,
+		struct sde_encoder_virt *sde_enc, struct msm_display_mode *msm_mode)
 {
-	struct sde_encoder_virt *sde_enc = container_of(work,
-			struct sde_encoder_virt, delayed_off_work.work);
-	struct drm_encoder *drm_enc;
-
-	if (!sde_enc) {
-		SDE_ERROR("invalid sde encoder\n");
-		return;
-	}
-	drm_enc = &sde_enc->base;
-
-	SDE_ATRACE_BEGIN("sde_encoder_off_work");
-	sde_encoder_idle_request(drm_enc);
-	SDE_ATRACE_END("sde_encoder_off_work");
-}
-
-static void sde_encoder_virt_enable(struct drm_encoder *drm_enc)
-{
-	struct sde_encoder_virt *sde_enc = NULL;
-	int i, ret = 0;
-	struct sde_connector_state *c_state;
-	struct msm_compression_info *comp_info = NULL;
-	struct drm_display_mode *cur_mode = NULL;
-	struct msm_display_mode *msm_mode;
-	struct msm_display_info *disp_info;
-
-	if (!drm_enc || !drm_enc->crtc) {
-		SDE_ERROR("invalid encoder\n");
-		return;
-	}
-	sde_enc = to_sde_encoder_virt(drm_enc);
-	disp_info = &sde_enc->disp_info;
-
-	if (!sde_kms_power_resource_is_enabled(drm_enc->dev)) {
-		SDE_ERROR("power resource is not enabled\n");
-		return;
-	}
-
-	if (!sde_enc->crtc)
-		sde_enc->crtc = drm_enc->crtc;
-
-	comp_info = &sde_enc->mode_info.comp_info;
-	cur_mode = &sde_enc->base.crtc->state->adjusted_mode;
-
-	SDE_DEBUG_ENC(sde_enc, "\n");
-	SDE_EVT32(DRMID(drm_enc), cur_mode->hdisplay, cur_mode->vdisplay);
-
-	sde_enc->cur_master = NULL;
-	for (i = 0; i < sde_enc->num_phys_encs; i++) {
-		struct sde_encoder_phys *phys = sde_enc->phys_encs[i];
-
-		if (phys && phys->ops.is_master && phys->ops.is_master(phys)) {
-			SDE_DEBUG_ENC(sde_enc, "master is now idx %d\n", i);
-			sde_enc->cur_master = phys;
-			break;
-		}
-	}
-
-	if (!sde_enc->cur_master) {
-		SDE_ERROR("virt encoder has no master! num_phys %d\n", i);
-		return;
-	}
-
-	_sde_encoder_input_handler_register(drm_enc);
-	c_state = to_sde_connector_state(sde_enc->cur_master->connector->state);
-	if (!c_state) {
-		SDE_ERROR("invalid connector state\n");
-		return;
-	}
-
-	msm_mode = &c_state->msm_mode;
-	if ((drm_enc->crtc->state->connectors_changed &&
-			sde_encoder_in_clone_mode(drm_enc)) ||
-			!(msm_is_mode_seamless_vrr(msm_mode)
-			|| msm_is_mode_seamless_dms(msm_mode)
-			|| msm_is_mode_seamless_dyn_clk(msm_mode)))
-		kthread_init_delayed_work(&sde_enc->delayed_off_work,
-			sde_encoder_off_work);
-
-	ret = sde_encoder_resource_control(drm_enc, SDE_ENC_RC_EVENT_KICKOFF);
-	if (ret) {
-		SDE_ERROR_ENC(sde_enc, "sde resource control failed: %d\n",
-				ret);
-		return;
-	}
-
-	memset(&sde_enc->cur_master->intf_cfg_v1, 0,
-			sizeof(sde_enc->cur_master->intf_cfg_v1));
+	struct msm_compression_info *comp_info = &sde_enc->mode_info.comp_info;
+	struct msm_display_info *disp_info = &sde_enc->disp_info;
+	int i;
 
 	for (i = 0; i < sde_enc->num_phys_encs; i++) {
 		struct sde_encoder_phys *phys = sde_enc->phys_encs[i];
@@ -2873,6 +2790,95 @@ static void sde_encoder_virt_enable(struct drm_encoder *drm_enc)
 		sde_enc->cur_master->ops.restore(sde_enc->cur_master);
 	else if (sde_enc->cur_master->ops.enable)
 		sde_enc->cur_master->ops.enable(sde_enc->cur_master);
+}
+
+static void sde_encoder_off_work(struct kthread_work *work)
+{
+	struct sde_encoder_virt *sde_enc = container_of(work,
+			struct sde_encoder_virt, delayed_off_work.work);
+	struct drm_encoder *drm_enc;
+
+	if (!sde_enc) {
+		SDE_ERROR("invalid sde encoder\n");
+		return;
+	}
+	drm_enc = &sde_enc->base;
+
+	SDE_ATRACE_BEGIN("sde_encoder_off_work");
+	sde_encoder_idle_request(drm_enc);
+	SDE_ATRACE_END("sde_encoder_off_work");
+}
+
+static void sde_encoder_virt_enable(struct drm_encoder *drm_enc)
+{
+	struct sde_encoder_virt *sde_enc = NULL;
+	int i, ret = 0;
+	struct sde_connector_state *c_state;
+	struct drm_display_mode *cur_mode = NULL;
+	struct msm_display_mode *msm_mode;
+
+	if (!drm_enc || !drm_enc->crtc) {
+		SDE_ERROR("invalid encoder\n");
+		return;
+	}
+	sde_enc = to_sde_encoder_virt(drm_enc);
+
+	if (!sde_kms_power_resource_is_enabled(drm_enc->dev)) {
+		SDE_ERROR("power resource is not enabled\n");
+		return;
+	}
+
+	if (!sde_enc->crtc)
+		sde_enc->crtc = drm_enc->crtc;
+
+	cur_mode = &sde_enc->base.crtc->state->adjusted_mode;
+
+	SDE_DEBUG_ENC(sde_enc, "\n");
+	SDE_EVT32(DRMID(drm_enc), cur_mode->hdisplay, cur_mode->vdisplay);
+
+	sde_enc->cur_master = NULL;
+	for (i = 0; i < sde_enc->num_phys_encs; i++) {
+		struct sde_encoder_phys *phys = sde_enc->phys_encs[i];
+
+		if (phys && phys->ops.is_master && phys->ops.is_master(phys)) {
+			SDE_DEBUG_ENC(sde_enc, "master is now idx %d\n", i);
+			sde_enc->cur_master = phys;
+			break;
+		}
+	}
+
+	if (!sde_enc->cur_master) {
+		SDE_ERROR("virt encoder has no master! num_phys %d\n", i);
+		return;
+	}
+
+	_sde_encoder_input_handler_register(drm_enc);
+	c_state = to_sde_connector_state(sde_enc->cur_master->connector->state);
+	if (!c_state) {
+		SDE_ERROR("invalid connector state\n");
+		return;
+	}
+
+	msm_mode = &c_state->msm_mode;
+	if ((drm_enc->crtc->state->connectors_changed &&
+			sde_encoder_in_clone_mode(drm_enc)) ||
+			!(msm_is_mode_seamless_vrr(msm_mode)
+			|| msm_is_mode_seamless_dms(msm_mode)
+			|| msm_is_mode_seamless_dyn_clk(msm_mode)))
+		kthread_init_delayed_work(&sde_enc->delayed_off_work,
+			sde_encoder_off_work);
+
+	ret = sde_encoder_resource_control(drm_enc, SDE_ENC_RC_EVENT_KICKOFF);
+	if (ret) {
+		SDE_ERROR_ENC(sde_enc, "sde resource control failed: %d\n",
+				ret);
+		return;
+	}
+
+	memset(&sde_enc->cur_master->intf_cfg_v1, 0,
+			sizeof(sde_enc->cur_master->intf_cfg_v1));
+
+	sde_encoder_populate_encoder_phys(drm_enc, sde_enc, msm_mode);
 
 	_sde_encoder_virt_enable_helper(drm_enc);
 }

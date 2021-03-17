@@ -295,6 +295,36 @@ static void sde_hw_sspp_set_src_split_order(struct sde_hw_pipe *ctx,
 	SDE_REG_WRITE(c, op_mode_off + idx, opmode);
 }
 
+static void sde_hw_sspp_setup_ubwc(struct sde_hw_pipe *ctx, struct sde_hw_blk_reg_map *c,
+		const struct sde_format *fmt, bool const_alpha_en, bool const_color_en)
+{
+	u32 alpha_en_mask = 0, color_en_mask = 0;
+
+	SDE_REG_WRITE(c, SSPP_FETCH_CONFIG,
+		SDE_FETCH_CONFIG_RESET_VALUE |
+		ctx->mdp->highest_bank_bit << 18);
+
+	if (IS_UBWC_40_SUPPORTED(ctx->catalog->ubwc_version)) {
+		SDE_REG_WRITE(c, SSPP_UBWC_STATIC_CTRL,
+			SDE_FORMAT_IS_YUV(fmt) ? 0 : BIT(30));
+	} else if (IS_UBWC_30_SUPPORTED(ctx->catalog->ubwc_version)) {
+		color_en_mask = const_color_en ? BIT(30) : 0;
+		SDE_REG_WRITE(c, SSPP_UBWC_STATIC_CTRL,
+			color_en_mask | (ctx->mdp->ubwc_swizzle) |
+			(ctx->mdp->highest_bank_bit << 4));
+	} else if (IS_UBWC_20_SUPPORTED(ctx->catalog->ubwc_version)) {
+		alpha_en_mask = const_alpha_en ? BIT(31) : 0;
+		SDE_REG_WRITE(c, SSPP_UBWC_STATIC_CTRL,
+			alpha_en_mask | (ctx->mdp->ubwc_swizzle) |
+			(ctx->mdp->highest_bank_bit << 4));
+	} else if (IS_UBWC_10_SUPPORTED(ctx->catalog->ubwc_version)) {
+		alpha_en_mask = const_alpha_en ? BIT(31) : 0;
+		SDE_REG_WRITE(c, SSPP_UBWC_STATIC_CTRL,
+			alpha_en_mask | (ctx->mdp->ubwc_swizzle & 0x1) |
+			BIT(8) | (ctx->mdp->highest_bank_bit << 4));
+	}
+}
+
 /**
  * Setup source pixel format, flip,
  */
@@ -306,7 +336,6 @@ static void sde_hw_sspp_setup_format(struct sde_hw_pipe *ctx,
 	struct sde_hw_blk_reg_map *c;
 	u32 chroma_samp, unpack, src_format;
 	u32 opmode = 0;
-	u32 alpha_en_mask = 0, color_en_mask = 0;
 	u32 op_mode_off, unpack_pat_off, format_off;
 	u32 idx;
 	bool const_color_en = true;
@@ -377,28 +406,8 @@ static void sde_hw_sspp_setup_format(struct sde_hw_pipe *ctx,
 		if (SDE_FORMAT_IS_UBWC(fmt))
 			opmode |= MDSS_MDP_OP_BWC_EN;
 		src_format |= (fmt->fetch_mode & 3) << 30; /*FRAME_FORMAT */
-		SDE_REG_WRITE(c, SSPP_FETCH_CONFIG,
-			SDE_FETCH_CONFIG_RESET_VALUE |
-			ctx->mdp->highest_bank_bit << 18);
-		if (IS_UBWC_40_SUPPORTED(ctx->catalog->ubwc_version)) {
-			SDE_REG_WRITE(c, SSPP_UBWC_STATIC_CTRL,
-				SDE_FORMAT_IS_YUV(fmt) ? 0 : BIT(30));
-		} else if (IS_UBWC_10_SUPPORTED(ctx->catalog->ubwc_version)) {
-			alpha_en_mask = const_alpha_en ? BIT(31) : 0;
-			SDE_REG_WRITE(c, SSPP_UBWC_STATIC_CTRL,
-				alpha_en_mask | (ctx->mdp->ubwc_swizzle & 0x1) |
-				BIT(8) | (ctx->mdp->highest_bank_bit << 4));
-		} else if (IS_UBWC_20_SUPPORTED(ctx->catalog->ubwc_version)) {
-			alpha_en_mask = const_alpha_en ? BIT(31) : 0;
-			SDE_REG_WRITE(c, SSPP_UBWC_STATIC_CTRL,
-				alpha_en_mask | (ctx->mdp->ubwc_swizzle) |
-				(ctx->mdp->highest_bank_bit << 4));
-		} else if (IS_UBWC_30_SUPPORTED(ctx->catalog->ubwc_version)) {
-			color_en_mask = const_color_en ? BIT(30) : 0;
-			SDE_REG_WRITE(c, SSPP_UBWC_STATIC_CTRL,
-				color_en_mask | (ctx->mdp->ubwc_swizzle) |
-				(ctx->mdp->highest_bank_bit << 4));
-		}
+
+		sde_hw_sspp_setup_ubwc(ctx, c, fmt, const_alpha_en, const_color_en);
 	}
 
 	opmode |= MDSS_MDP_OP_PE_OVERRIDE;
