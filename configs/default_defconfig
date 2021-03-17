@@ -1190,7 +1190,9 @@ CONFIG_WLAN_FEATURE_DP_BUS_BANDWIDTH := y
 ifeq ($(CONFIG_CNSS_QCA6750), y)
 #Enable 6 GHz Band
 CONFIG_BAND_6GHZ := y
+ifneq ($(CONFIG_IPCIE_FW_SIM), y)
 CONFIG_RX_FISA := y
+endif
 CONFIG_MORE_TX_DESC := y
 	ifeq ($(CONFIG_SLUB_DEBUG_ON), y)
 		CONFIG_DP_FT_LOCK_HISTORY := y
@@ -1201,7 +1203,9 @@ ifeq ($(CONFIG_CNSS_QCA6490), y)
 
 #Enable 6 GHz Band
 CONFIG_BAND_6GHZ := y
+ifneq ($(CONFIG_PCIE_FW_SIM), y)
 CONFIG_RX_FISA := y
+endif
 CONFIG_MORE_TX_DESC := y
 
 endif
