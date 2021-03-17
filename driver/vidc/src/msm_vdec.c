@@ -681,32 +681,6 @@ static int msm_vdec_set_thumbnail_mode(struct msm_vidc_inst *inst,
 	return rc;
 }
 
-static int msm_vdec_set_realtime(struct msm_vidc_inst *inst,
-	enum msm_vidc_port_type port)
-{
-	int rc = 0;
-	u32 realtime = 1;  //todo
-
-	if (port != INPUT_PORT) {
-		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
-		return -EINVAL;
-	}
-
-	realtime = inst->capabilities->cap[PRIORITY].value;
-	i_vpr_h(inst, "%s: priority: %d", __func__, realtime);
-	rc = venus_hfi_session_property(inst,
-			HFI_PROP_REALTIME,
-			HFI_HOST_FLAGS_NONE,
-			get_hfi_port(inst, port),
-			HFI_PAYLOAD_U32,
-			&realtime,
-			sizeof(u32));
-	if (rc)
-		i_vpr_e(inst, "%s: set property failed\n", __func__);
-
-	return rc;
-}
-
 static int msm_vdec_set_conceal_color_8bit(struct msm_vidc_inst *inst,
 	enum msm_vidc_port_type port)
 {
@@ -783,10 +757,6 @@ static int msm_vdec_set_input_properties(struct msm_vidc_inst *inst)
 		return rc;
 
 	rc = msm_vdec_set_rap_frame(inst, INPUT_PORT);
-	if (rc)
-		return rc;
-
-	rc = msm_vdec_set_realtime(inst, INPUT_PORT);
 	if (rc)
 		return rc;
 
@@ -2158,12 +2128,35 @@ int msm_vdec_s_param(struct msm_vidc_inst *inst,
 
 set_default:
 	q16_rate = (u32)input_rate << 16;
-	i_vpr_h(inst, "%s: type %u value %#x\n",
-		__func__, s_parm->type, q16_rate);
+	i_vpr_h(inst, "%s: %s value %d\n",
+		__func__, is_frame_rate ? "frame rate" : "operating rate", input_rate);
 
 	msm_vidc_update_cap_value(inst,
 		is_frame_rate ? FRAME_RATE : OPERATING_RATE,
 		q16_rate, __func__);
+
+	if ((s_parm->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE &&
+		inst->vb2q[INPUT_PORT].streaming) ||
+		(s_parm->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE &&
+			inst->vb2q[OUTPUT_PORT].streaming)) {
+		if (msm_vidc_check_mbps_supported(inst)) {
+			i_vpr_e(inst,
+				"%s: Unsupported load with rate %d, setting default rate %d\n",
+				__func__, input_rate, default_rate);
+			msm_vidc_update_cap_value(inst,
+				is_frame_rate ? FRAME_RATE : OPERATING_RATE,
+				default_rate << 16, __func__);
+			return -ENOMEM;
+		}
+	}
+
+	if (!is_realtime_session(inst))
+		inst->priority_level = MSM_VIDC_PRIORITY_HIGH;
+
+	if (is_frame_rate)
+		capability->cap[FRAME_RATE].flags |= CAP_FLAG_CLIENT_SET;
+	else
+		capability->cap[OPERATING_RATE].flags |= CAP_FLAG_CLIENT_SET;
 
 exit:
 	return rc;

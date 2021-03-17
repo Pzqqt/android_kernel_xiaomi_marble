@@ -45,8 +45,7 @@ u64 msm_vidc_max_freq(struct msm_vidc_inst *inst)
 	return freq;
 }
 
-static int msm_vidc_get_mbps(struct msm_vidc_inst *inst,
-		enum load_calc_quirks quirks)
+static int msm_vidc_get_mbps(struct msm_vidc_inst *inst)
 {
 	int input_port_mbs, output_port_mbs;
 	int fps, operating_rate, frame_rate;
@@ -63,11 +62,7 @@ static int msm_vidc_get_mbps(struct msm_vidc_inst *inst,
 	frame_rate = inst->capabilities->cap[FRAME_RATE].value;
 	operating_rate = inst->capabilities->cap[OPERATING_RATE].value;
 
-	fps = frame_rate;
-
-	/* For admission control operating rate is ignored */
-	if (quirks == LOAD_POWER)
-		fps = max(operating_rate, frame_rate);
+	fps = max(operating_rate, frame_rate);
 
 	/* In case of fps < 1 we assume 1 */
 	fps = max(fps >> 16, 1);
@@ -75,8 +70,7 @@ static int msm_vidc_get_mbps(struct msm_vidc_inst *inst,
 	return max(input_port_mbs, output_port_mbs) * fps;
 }
 
-int msm_vidc_get_inst_load(struct msm_vidc_inst *inst,
-		enum load_calc_quirks quirks)
+int msm_vidc_get_inst_load(struct msm_vidc_inst *inst)
 {
 	int load = 0;
 
@@ -85,34 +79,18 @@ int msm_vidc_get_inst_load(struct msm_vidc_inst *inst,
 		return -EINVAL;
 	}
 
-	if (inst->state == MSM_VIDC_OPEN ||
-		inst->state == MSM_VIDC_ERROR)
+	if (inst->state == MSM_VIDC_ERROR)
 		goto exit;
 
 	/*
-	 * Clock and Load calculations for REALTIME/NON-REALTIME
-	 * Operating rate will either Default or Client value.
-	 * Session admission control will be based on Load.
-	 * Power requests based of calculated Clock/Freq.
-	 * ----------------|----------------------------|
-	 * REALTIME        | Admission Control Load =   |
-	 *                 |          res * fps         |
-	 *                 | Power Request Load =       |
-	 *                 |          res * max(op, fps)|
-	 * ----------------|----------------------------|
-	 * NON-REALTIME/   | Admission Control Load = 0 |
-	 * THUMBNAIL/      | Power Request Load =       |
-	 * IMAGE           |          res * max(op, fps)|
-	 *                 |                            |
-	 * ----------------|----------------------------|
+	 * NRT sessions - clock scaling is based on OPP table.
+	 *              - No load based rejection.
+	 * RT sessions  - clock scaling and session admission based on load.
 	 */
-	if (is_thumbnail_session(inst) || is_image_session(inst))
-		goto exit;
-
-	if (!is_realtime_session(inst) && quirks == LOAD_ADMISSION_CONTROL)
-		goto exit;
-
-	load = msm_vidc_get_mbps(inst, quirks);
+	if (is_thumbnail_session(inst) || !is_realtime_session(inst))
+		load = 0;
+	else
+		load = msm_vidc_get_mbps(inst);
 
 exit:
 	return load;
@@ -174,7 +152,12 @@ static int msm_vidc_set_buses(struct msm_vidc_inst* inst)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
+
 	core = inst->core;
+	if (!core || !core->platform || !core->platform->data.bus_bw_nrt) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
 
 	mutex_lock(&core->lock);
 	curr_time_ns = ktime_get_ns();
@@ -198,6 +181,12 @@ static int msm_vidc_set_buses(struct msm_vidc_inst* inst)
 			total_bw_ddr = total_bw_llcc = INT_MAX;
 			break;
 		}
+
+		if (!is_realtime_session(inst)) {
+			temp->power.ddr_bw = core->platform->data.bus_bw_nrt[0];
+			temp->power.sys_cache_bw = 0;
+		}
+
 		total_bw_ddr += temp->power.ddr_bw;
 		total_bw_llcc += temp->power.sys_cache_bw;
 	}

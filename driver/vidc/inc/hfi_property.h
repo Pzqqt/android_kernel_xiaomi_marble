@@ -83,7 +83,7 @@ enum hfi_color_format {
 #define HFI_BITMASK_CROP_TOP_OFFSET          0x0000ffff
 #define HFI_PROP_CROP_OFFSETS                                   0x03000105
 
-#define HFI_PROP_REALTIME                                       0x03000106
+#define HFI_PROP_SESSION_PRIORITY                               0x03000106
 
 enum hfi_avc_profile_type {
     HFI_AVC_PROFILE_BASELINE             = 0,

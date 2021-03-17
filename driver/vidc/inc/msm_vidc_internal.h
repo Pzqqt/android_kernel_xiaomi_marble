@@ -124,6 +124,11 @@ enum msm_vidc_codec_type {
 	MSM_VIDC_HEIC              = BIT(3),
 };
 
+enum priority_level {
+	MSM_VIDC_PRIORITY_LOW,
+	MSM_VIDC_PRIORITY_HIGH,
+};
+
 enum msm_vidc_colorformat_type {
 	MSM_VIDC_FMT_NONE = 0,
 	MSM_VIDC_FMT_NV12          = BIT(0),
@@ -684,11 +689,6 @@ struct msm_vidc_decode_batch {
 	bool                   enable;
 	u32                    size;
 	struct delayed_work    work;
-};
-
-enum load_calc_quirks {
-	LOAD_POWER = 0,
-	LOAD_ADMISSION_CONTROL = 1,
 };
 
 enum msm_vidc_power_mode {

@@ -180,7 +180,7 @@ static inline bool is_low_power_session(struct msm_vidc_inst *inst)
 
 static inline bool is_realtime_session(struct msm_vidc_inst *inst)
 {
-	return !inst->capabilities->cap[PRIORITY].value;
+	return inst->capabilities->cap[PRIORITY].value == 0 ? true : false;
 }
 
 static inline bool is_lowlatency_session(struct msm_vidc_inst *inst)
@@ -353,6 +353,7 @@ int msm_vidc_deinit_instance_caps(struct msm_vidc_core* core);
 int msm_vidc_update_debug_str(struct msm_vidc_inst *inst);
 bool msm_vidc_allow_decode_batch(struct msm_vidc_inst *inst);
 int msm_vidc_check_session_supported(struct msm_vidc_inst *inst);
+int msm_vidc_check_mbps_supported(struct msm_vidc_inst *inst);
 int msm_vidc_check_scaling_supported(struct msm_vidc_inst *inst);
 #endif // _MSM_VIDC_DRIVER_H_
 

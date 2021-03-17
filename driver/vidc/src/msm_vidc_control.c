@@ -655,6 +655,13 @@ int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl)
 			if (rc)
 				return rc;
 		}
+
+		if (ctrl->id == V4L2_CID_MPEG_VIDC_PRIORITY) {
+			rc = msm_vidc_adjust_session_priority(inst, ctrl);
+			if (rc)
+				return rc;
+		}
+
 		if (is_meta_ctrl(ctrl->id)) {
 			rc = msm_vidc_update_meta_port_settings(inst);
 			if (rc)
@@ -1421,6 +1428,52 @@ int msm_vidc_adjust_hevc_frame_qp(void *instance, struct v4l2_ctrl *ctrl)
 	return rc;
 }
 
+int msm_vidc_adjust_session_priority(void *instance, struct v4l2_ctrl *ctrl)
+{
+	int rc = 0;
+	int adjusted_value;
+	bool rate_by_client = false;
+	struct msm_vidc_inst_capability *capability;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+	adjusted_value = ctrl ? ctrl->val :
+		capability->cap[PRIORITY].value;
+
+	if (capability->cap[FRAME_RATE].flags & CAP_FLAG_CLIENT_SET ||
+		capability->cap[OPERATING_RATE].flags & CAP_FLAG_CLIENT_SET)
+		rate_by_client = true;
+
+	/*
+	 * For RT, check for resource feasability if rate is set by client.
+	 * For RT, move to NRT, if rate is not set by client.
+	 * For NRT, sessions with rate set by client takes higher order
+	 * among NRT sessions. They are constraint RT or low priority RT.
+	 */
+	if (adjusted_value == 0 && rate_by_client) {
+		rc = msm_vidc_check_mbps_supported(inst);
+		if (rc) {
+			d_vpr_e("%s: priority 0 not feasible due to resource\n", __func__);
+			return rc;
+		}
+	}
+	if (adjusted_value == 0 && !rate_by_client) {
+		adjusted_value = 1;
+		inst->priority_level = MSM_VIDC_PRIORITY_LOW;
+	}
+
+	if (adjusted_value > 0 && rate_by_client)
+		inst->priority_level = MSM_VIDC_PRIORITY_HIGH;
+
+	msm_vidc_update_cap_value(inst, PRIORITY, adjusted_value, __func__);
+
+	return rc;
+}
+
 /*
  * Loop over instance capabilities with CAP_FLAG_ROOT
  * and call adjust function, where
@@ -2095,6 +2148,26 @@ set_total_bitrate:
 	rc = msm_vidc_packetize_control(inst, BIT_RATE, HFI_PAYLOAD_U32,
 			&hfi_value, sizeof(u32), __func__);
 exit:
+	return rc;
+}
+
+int msm_vidc_set_session_priority(void *instance,
+		enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	u32 hfi_value = 0;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	hfi_value = (inst->capabilities->cap[cap_id].value * 2) + inst->priority_level;
+
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
+		&hfi_value, sizeof(u32), __func__);
+
 	return rc;
 }
 

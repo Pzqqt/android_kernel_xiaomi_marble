@@ -1603,6 +1603,28 @@ set_default:
 		is_frame_rate ? FRAME_RATE : OPERATING_RATE,
 		q16_rate, __func__);
 
+	if ((s_parm->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE &&
+		inst->vb2q[INPUT_PORT].streaming) ||
+		(s_parm->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE &&
+		inst->vb2q[OUTPUT_PORT].streaming)) {
+		if (msm_vidc_check_mbps_supported(inst)) {
+			i_vpr_e(inst,
+				"%s: Unsupported load with rate %d, setting default rate %d\n",
+				__func__, input_rate, default_rate);
+			msm_vidc_update_cap_value(inst,
+				is_frame_rate ? FRAME_RATE : OPERATING_RATE,
+				default_rate << 16, __func__);
+			return -ENOMEM;
+		}
+	}
+
+	if (!is_realtime_session(inst))
+		inst->priority_level = MSM_VIDC_PRIORITY_HIGH;
+
+	if (is_frame_rate)
+		capability->cap[FRAME_RATE].flags |= CAP_FLAG_CLIENT_SET;
+	else
+		capability->cap[OPERATING_RATE].flags |= CAP_FLAG_CLIENT_SET;
 	/*
 	 * In static case, frame rate is set via
 	 * inst database set function mentioned in

@@ -1146,10 +1146,10 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 	{PRIORITY, DEC|ENC, CODECS_ALL,
 		0, 2, 1, 1,
 		V4L2_CID_MPEG_VIDC_PRIORITY,
-		HFI_PROP_REALTIME,
-		CAP_FLAG_ROOT,
+		HFI_PROP_SESSION_PRIORITY,
+		CAP_FLAG_ROOT | CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
-		NULL, NULL},
+		msm_vidc_adjust_session_priority, msm_vidc_set_session_priority},
 
 	{ENC_IP_CR, ENC, CODECS_ALL,
 		0, S32_MAX, 1, 0,
@@ -1395,6 +1395,12 @@ static struct msm_vidc_ubwc_config_data ubwc_config_waipio[] = {
 	UBWC_CONFIG(8, 32, 16, 0, 1, 1, 1),
 };
 
+/* Default bus bandwidth for non_real time session based on priority */
+static u32 bus_bw_nrt[] = {
+	15000000,
+	11000000,
+};
+
 static struct msm_vidc_platform_data waipio_data = {
 	.core_data = core_data_waipio,
 	.core_data_size = ARRAY_SIZE(core_data_waipio),
@@ -1404,6 +1410,7 @@ static struct msm_vidc_platform_data waipio_data = {
 	.csc_data.vpe_csc_custom_matrix_coeff = vpe_csc_custom_matrix_coeff,
 	.csc_data.vpe_csc_custom_limit_coeff = vpe_csc_custom_limit_coeff,
 	.ubwc_config = ubwc_config_waipio,
+	.bus_bw_nrt = bus_bw_nrt,
 };
 
 static int msm_vidc_init_data(struct msm_vidc_core *core)

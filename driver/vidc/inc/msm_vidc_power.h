@@ -247,8 +247,7 @@ static inline int __bpp(enum msm_vidc_colorformat_type f)
 }
 
 u64 msm_vidc_max_freq(struct msm_vidc_inst* inst);
-int msm_vidc_get_inst_load(struct msm_vidc_inst* inst,
-	enum load_calc_quirks quirks);
+int msm_vidc_get_inst_load(struct msm_vidc_inst *inst);
 int msm_vidc_scale_power(struct msm_vidc_inst *inst, bool scale_buses);
 
 #endif

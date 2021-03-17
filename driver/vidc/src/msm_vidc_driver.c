@@ -3855,7 +3855,7 @@ int msm_vidc_update_debug_str(struct msm_vidc_inst *inst)
 	return 0;
 }
 
-static int msm_vidc_check_mbps_supported(struct msm_vidc_inst *inst)
+int msm_vidc_check_mbps_supported(struct msm_vidc_inst *inst)
 {
 	u32 mbps = 0;
 	struct msm_vidc_core *core;
@@ -3879,7 +3879,7 @@ static int msm_vidc_check_mbps_supported(struct msm_vidc_inst *inst)
 			!is_realtime_session(instance))
 			continue;
 
-		mbps += msm_vidc_get_inst_load(instance, LOAD_ADMISSION_CONTROL);
+		mbps += msm_vidc_get_inst_load(instance);
 	}
 	core_unlock(core, __func__);
 

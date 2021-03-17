@@ -136,6 +136,7 @@ struct msm_vidc_inst {
 	struct debug_buf_count             debug_count;
 	struct msm_vidc_inst_capability   *capabilities;
 	struct completion                  completions[MAX_SIGNAL];
+	enum priority_level                priority_level;
 	bool                               active;
 	u64                                last_qbuf_time_ns;
 	bool                               vb2q_init;

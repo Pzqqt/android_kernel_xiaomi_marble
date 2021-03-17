@@ -8,6 +8,7 @@
 #include "msm_vidc_core.h"
 #include "msm_vidc_driver.h"
 #include "msm_vidc_debug.h"
+#include "msm_vidc_dt.h"
 
 u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 {
@@ -21,15 +22,29 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 	u32 operating_rate, vsp_factor_num = 1, vsp_factor_den = 1;
 	u32 base_cycles = 0;
 	u32 fps;
+	u32 prio_val;
 
 	if (!inst || !inst->core || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return freq;
 	}
-	core = inst->core;
-	power = &inst->power;
 
-	mbs_per_second = msm_vidc_get_inst_load(inst, LOAD_POWER);
+	power = &inst->power;
+	core = inst->core;
+	if (!core->dt) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return freq;
+	}
+
+	if (!is_realtime_session(inst)) {
+		prio_val = inst->capabilities->cap[PRIORITY].value;
+		if (!prio_val || prio_val > core->dt->allowed_clks_tbl_size)
+			prio_val = core->dt->allowed_clks_tbl_size;
+
+		return core->dt->allowed_clks_tbl[prio_val-1].clock_rate;
+	}
+
+	mbs_per_second = msm_vidc_get_inst_load(inst);
 	fps = msm_vidc_get_fps(inst);
 
 	/*
