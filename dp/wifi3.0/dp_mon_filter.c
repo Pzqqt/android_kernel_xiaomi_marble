@@ -371,7 +371,7 @@ static QDF_STATUS dp_mon_filter_check_co_exist(struct dp_pdev *pdev)
 	 */
 	if (pdev->neighbour_peers_added &&
 	    ((pdev->mcopy_mode) || pdev->monitor_configured)) {
-		dp_mon_filter_err("%pk: Smart Monitor mode can't exist with modes\n"
+		dp_mon_filter_err("%pK: Smart Monitor mode can't exist with modes\n"
 				  "M_Copy Mode:%d\n"
 				  "Monitor Mode:%d",
 				  pdev->soc, pdev->mcopy_mode,

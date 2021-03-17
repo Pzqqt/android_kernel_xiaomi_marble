@@ -10032,7 +10032,7 @@ static QDF_STATUS dp_get_vdev_param(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 		break;
 #endif
 	default:
-		dp_cdp_err("%pk: param value %d is wrong\n",
+		dp_cdp_err("%pK: param value %d is wrong",
 			   soc, param);
 		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 		return QDF_STATUS_E_FAILURE;
