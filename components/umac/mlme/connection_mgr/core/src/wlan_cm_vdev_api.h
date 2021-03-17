@@ -338,6 +338,22 @@ QDF_STATUS
 cm_send_bss_peer_create_req(struct wlan_objmgr_vdev *vdev,
 			    struct qdf_mac_addr *peer_mac);
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * cm_csr_roam_sync_rsp() - Connection manager ext roam sync resp indication
+ * @vdev: VDEV object
+ * @rsp: Connection vdev response
+ *
+ * This API is to update legacy struct and should be removed once
+ * CSR is cleaned up fully. No new params should be added to CSR, use
+ * vdev/pdev/psoc instead.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_csr_roam_sync_rsp(struct wlan_objmgr_vdev *vdev,
+				struct cm_vdev_join_rsp *rsp);
+#endif
+
 /**
  * cm_csr_connect_rsp() - Connection manager ext connect resp indication
  * @vdev: VDEV object
@@ -387,6 +403,14 @@ cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
  * Return: bool
  */
 bool cm_is_vdevid_connected(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id);
+
+/**
+ * cm_is_vdevid_active() - check if vdev_id is in conneted/roaming state
+ * @vdev: vdev pointer
+ *
+ * Return: bool
+ */
+bool cm_is_vdevid_active(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id);
 
 /**
  * cm_disconnect_start_ind() - Connection manager ext disconnect start

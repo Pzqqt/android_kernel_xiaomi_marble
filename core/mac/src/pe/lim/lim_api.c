@@ -1326,7 +1326,9 @@ void pe_register_callbacks_with_wma(struct mac_context *mac,
 	QDF_STATUS status;
 
 	status = wma_register_roaming_callbacks(
+#ifndef FEATURE_CM_ENABLE
 			ready_req->csr_roam_synch_cb,
+#endif
 			ready_req->csr_roam_auth_event_handle_cb,
 			ready_req->pe_roam_synch_cb,
 			ready_req->pe_disconnect_cb,
@@ -2492,7 +2494,7 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 
 	pe_debug("LFR3:Received ROAM SYNCH IND bssid "QDF_MAC_ADDR_FMT" auth: %d vdevId: %d",
 		 QDF_MAC_ADDR_REF(roam_sync_ind_ptr->bssid.bytes),
-		 roam_sync_ind_ptr->authStatus,
+		 roam_sync_ind_ptr->auth_status,
 		 roam_sync_ind_ptr->roamed_vdev_id);
 
 	/*
@@ -2571,7 +2573,7 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 	}
 
 
-	if (roam_sync_ind_ptr->authStatus ==
+	if (roam_sync_ind_ptr->auth_status ==
 	    ROAM_AUTH_STATUS_AUTHENTICATED) {
 		ft_session_ptr->is_key_installed = true;
 		curr_sta_ds->is_key_installed = true;

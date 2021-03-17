@@ -455,7 +455,7 @@ scan_ie_send_fail:
 /**
  * lim_process_hw_mode_trans_ind() - Process set HW mode transition indication
  * @mac: Global MAC pointer
- * @body: Set HW mode response in sir_hw_mode_trans_ind format
+ * @body: Set HW mode response in cm_hw_mode_trans_ind format
  *
  * Process the set HW mode transition indication and post the message
  * to SME to invoke the HDD callback
@@ -465,11 +465,11 @@ scan_ie_send_fail:
  */
 static void lim_process_hw_mode_trans_ind(struct mac_context *mac, void *body)
 {
-	struct sir_hw_mode_trans_ind *ind, *param;
+	struct cm_hw_mode_trans_ind *ind, *param;
 	uint32_t len, i;
 	struct scheduler_msg msg = {0};
 
-	ind = (struct sir_hw_mode_trans_ind *)body;
+	ind = (struct cm_hw_mode_trans_ind *)body;
 	if (!ind) {
 		pe_err("Set HW mode trans ind param is NULL");
 		return;

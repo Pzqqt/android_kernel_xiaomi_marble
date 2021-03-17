@@ -139,6 +139,17 @@ QDF_STATUS wlan_cm_tgt_send_roam_triggers(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 wlan_cm_tgt_send_roam_invoke_req(struct wlan_objmgr_psoc *psoc,
 				 struct roam_invoke_req *roam_invoke_req);
+
+/**
+ * wlan_cm_tgt_send_roam_sync_complete_cmd()  - Send roam sync command to FW
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_cm_tgt_send_roam_sync_complete_cmd(struct wlan_objmgr_psoc *psoc,
+					uint8_t vdev_id);
 #endif
 #endif
 

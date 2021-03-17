@@ -721,13 +721,6 @@ struct csr_roamstruct {
 #define CSR_IS_ADDTS_WHEN_ACMOFF_SUPPORTED(mac) \
 	(mac->mlme_cfg->wmm_params.wmm_tspec_element.ts_acm_is_off)
 
-#ifdef FEATURE_LFR_SUBNET_DETECTION
-/* bit-4 and bit-5 indicate the subnet status */
-#define CSR_GET_SUBNET_STATUS(roam_reason) (((roam_reason) & 0x30) >> 4)
-#else
-#define CSR_GET_SUBNET_STATUS(roam_reason) (0)
-#endif
-
 /**
  * csr_get_vdev_dot11_mode() - get the supported dot11mode by vdev
  * @mac_ctx:  pointer to global mac structure

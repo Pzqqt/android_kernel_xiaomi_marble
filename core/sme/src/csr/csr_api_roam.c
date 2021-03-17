@@ -80,6 +80,7 @@
 #include "wlan_if_mgr_ucfg_api.h"
 #include "wlan_if_mgr_roam.h"
 #include "wlan_roam_debug.h"
+#include "wlan_cm_roam_public_struct.h"
 
 #define RSN_AUTH_KEY_MGMT_SAE           WLAN_RSN_SEL(WLAN_AKM_SAE)
 #define MAX_PWR_FCC_CHAN_12 8
@@ -109,11 +110,6 @@
 #define ROAMING_OFFLOAD_TIMER_STOP	2
 #define CSR_ROAMING_OFFLOAD_TIMEOUT_PERIOD    (5 * QDF_MC_TIMER_TO_SEC_UNIT)
 
-/*
- * To get 4 LSB of roam reason of roam_synch_data
- * received from firmware
- */
-#define ROAM_REASON_MASK 0x0F
 
 #ifdef WLAN_FEATURE_SAE
 /**
@@ -12350,7 +12346,6 @@ static inline void csr_qos_send_assoc_ind(struct mac_context *mac_ctx,
 	sme_qos_csr_event_ind(mac_ctx, vdev_id, SME_QOS_CSR_ASSOC_COMPLETE,
 			      assoc_info);
 }
-
 #else
 static inline void csr_qos_send_disconnect_ind(struct mac_context *mac_ctx,
 					       uint8_t vdev_id)
@@ -12360,6 +12355,70 @@ static inline void csr_qos_send_disconnect_ind(struct mac_context *mac_ctx,
 static inline void csr_qos_send_assoc_ind(struct mac_context *mac_ctx,
 					  uint8_t vdev_id,
 					  sme_QosAssocInfo *assoc_info)
+{
+}
+#endif
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+static void
+csr_qos_send_reassoc_ind(struct mac_context *mac_ctx,
+			 uint8_t vdev_id,
+			 sme_QosAssocInfo *assoc_info,
+			 struct wlan_cm_connect_resp *connect_rsp)
+{
+	sme_qos_csr_event_ind(mac_ctx, vdev_id, SME_QOS_CSR_HANDOFF_ASSOC_REQ,
+			      NULL);
+	sme_qos_csr_event_ind(mac_ctx, vdev_id, SME_QOS_CSR_REASSOC_REQ,
+			      NULL);
+	sme_qos_csr_event_ind(mac_ctx, vdev_id, SME_QOS_CSR_HANDOFF_COMPLETE,
+			      NULL);
+	sme_qos_csr_event_ind(mac_ctx, vdev_id, SME_QOS_CSR_REASSOC_COMPLETE,
+			      &assoc_info);
+
+	if (IS_ROAM_REASON_DISCONNECTION(
+		connect_rsp->roaming_info->roam_reason))
+		sme_qos_csr_event_ind(mac_ctx, vdev_id,
+				      SME_QOS_CSR_DISCONNECT_ROAM_COMPLETE,
+				      NULL);
+}
+#else
+static inline void
+csr_qos_send_reassoc_ind(struct mac_context *mac_ctx,
+			 uint8_t vdev_id,
+			 sme_QosAssocInfo *assoc_info,
+			 struct wlan_cm_connect_resp *connect_rsp)
+{}
+#endif
+
+#ifdef FEATURE_WLAN_ESE
+static void
+csr_fill_ese_params(struct mac_context *mac_ctx,
+		    struct wlan_objmgr_vdev *vdev,
+		    tDot11fBeaconIEs *bcn_ies)
+{
+	int32_t ucast_cipher;
+	int32_t akm;
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+
+	ucast_cipher = wlan_crypto_get_param(vdev,
+					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+	akm = wlan_crypto_get_param(vdev,
+				    WLAN_CRYPTO_PARAM_KEY_MGMT);
+
+	if (mac_ctx->mlme_cfg->lfr.ese_enabled &&
+	    (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_CCKM) ||
+	     (bcn_ies->ESEVersion.present && (!ucast_cipher ||
+	       QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_NONE) ==
+	       ucast_cipher))))
+		wlan_cm_set_ese_assoc(mac_ctx->pdev, vdev_id, true);
+	else
+		wlan_cm_set_ese_assoc(mac_ctx->pdev, vdev_id, false);
+}
+#else
+static inline void
+csr_fill_ese_params(struct mac_context *mac_ctx,
+		    struct wlan_objmgr_vdev *vdev,
+		    tDot11fBeaconIEs *bcn_ies)
 {
 }
 #endif
@@ -12437,8 +12496,19 @@ static void csr_fill_connected_profile(struct mac_context *mac_ctx,
 				   MOBILITY_DOMAIN, &src_cfg);
 
 	assoc_info.bss_desc = bss_desc;
-	assoc_info.uapsd_mask = rsp->uapsd_mask;
-	csr_qos_send_assoc_ind(mac_ctx, vdev_id, &assoc_info);
+	if (rsp->connect_rsp.is_reassoc) {
+		csr_fill_ese_params(mac_ctx, vdev, bcn_ies);
+		wlan_cm_roam_cfg_get_value(mac_ctx->psoc, vdev_id, UAPSD_MASK,
+					   &src_cfg);
+		assoc_info.uapsd_mask = src_cfg.uint_value;
+		csr_qos_send_reassoc_ind(mac_ctx, vdev_id, &assoc_info,
+					 &rsp->connect_rsp);
+		if (src_cfg.uint_value)
+			sme_ps_start_uapsd(MAC_HANDLE(mac_ctx), vdev_id);
+	} else {
+		assoc_info.uapsd_mask = rsp->uapsd_mask;
+		csr_qos_send_assoc_ind(mac_ctx, vdev_id, &assoc_info);
+	}
 
 	qdf_mem_free(bcn_ies);
 
@@ -12449,6 +12519,42 @@ purge_list:
 		wlan_scan_purge_results(list);
 
 }
+
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+QDF_STATUS cm_csr_roam_sync_rsp(struct wlan_objmgr_vdev *vdev,
+				struct cm_vdev_join_rsp *rsp)
+{
+	struct mac_context *mac_ctx;
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+	struct csr_roam_session *session;
+
+	/*
+	 * This API is to update legacy struct and should be removed once
+	 * CSR is cleaned up fully. No new params should be added to CSR, use
+	 * vdev/pdev/psoc instead
+	 */
+	if (QDF_IS_STATUS_ERROR(rsp->connect_rsp.connect_status))
+		return QDF_STATUS_SUCCESS;
+
+	/* handle below only in case of success */
+	mac_ctx = cds_get_context(QDF_MODULE_ID_SME);
+	if (!mac_ctx)
+		return QDF_STATUS_E_INVAL;
+
+	session = CSR_GET_SESSION(mac_ctx, vdev_id);
+	if (!session || !CSR_IS_SESSION_VALID(mac_ctx, vdev_id)) {
+		sme_err("session not found for vdev_id %d", vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	session->nss = rsp->nss;
+	csr_fill_connected_info(mac_ctx, session, rsp);
+	csr_fill_connected_profile(mac_ctx, session, vdev, rsp);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 QDF_STATUS cm_csr_connect_rsp(struct wlan_objmgr_vdev *vdev,
 			      struct cm_vdev_join_rsp *rsp)
@@ -16259,7 +16365,6 @@ QDF_STATUS csr_fast_reassoc(mac_handle_t mac_handle,
 
 	return status;
 }
-#endif
 
 static QDF_STATUS
 csr_process_roam_sync_callback(struct mac_context *mac_ctx,
@@ -16337,7 +16442,7 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		wlan_blm_update_bssid_connect_params(mac_ctx->pdev,
 						     connected_bssid,
 						     BLM_AP_DISCONNECTED);
-		if (IS_ROAM_REASON_STA_KICKOUT(roam_synch_data->roamReason)) {
+		if (IS_ROAM_REASON_STA_KICKOUT(roam_synch_data->roam_reason)) {
 			struct reject_ap_info ap_info;
 
 			ap_info.bssid = connected_bssid;
@@ -16346,7 +16451,6 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 			ap_info.source = ADDED_BY_DRIVER;
 			wlan_blm_add_bssid_to_reject_list(mac_ctx->pdev, &ap_info);
 		}
-#ifndef FEATURE_CM_ENABLE
 		/* use API similar to cm_update_scan_mlme_on_disconnect for CM */
 		csr_update_scan_entry_associnfo(mac_ctx, session_id,
 						SCAN_ENTRY_CON_STATE_NONE);
@@ -16363,18 +16467,15 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 			status = QDF_STATUS_E_FAILURE;
 			goto end;
 		}
-#endif
 		status = wlan_cm_roam_state_change(mac_ctx->pdev, session_id,
 						    WLAN_ROAM_SYNCH_IN_PROG,
 						    REASON_ROAM_HANDOFF_DONE);
 		if (QDF_IS_STATUS_ERROR(status))
 			goto end;
 
-		/* This is temp ifdef will be removed in near future */
-#ifndef FEATURE_CM_ENABLE
+
 		csr_roam_call_callback(mac_ctx, session_id, NULL, 0,
 				eCSR_ROAM_FT_START, eCSR_ROAM_RESULT_SUCCESS);
-#endif
 		goto end;
 	case SIR_ROAMING_START:
 		status = wlan_cm_roam_state_change(mac_ctx->pdev, session_id,
@@ -16383,14 +16484,11 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		if (QDF_IS_STATUS_ERROR(status))
 			goto end;
 
-		/* This is temp ifdef will be removed in near future */
-#ifndef FEATURE_CM_ENABLE
 		csr_roam_roaming_offload_timer_action(mac_ctx,
 				CSR_ROAMING_OFFLOAD_TIMEOUT_PERIOD, session_id,
 				ROAMING_OFFLOAD_TIMER_START);
 		csr_roam_call_callback(mac_ctx, session_id, NULL, 0,
 				eCSR_ROAM_START, eCSR_ROAM_RESULT_SUCCESS);
-#endif
 		/*
 		 * For emergency deauth roaming, firmware sends ROAM start
 		 * instead of ROAM scan start notification as data path queues
@@ -16427,21 +16525,15 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		wlan_cm_roam_state_change(mac_ctx->pdev, session_id,
 					   WLAN_ROAM_RSO_ENABLED,
 					   REASON_ROAM_ABORT);
-		/* This is temp ifdef will be removed in near future */
-#ifndef FEATURE_CM_ENABLE
 		csr_roam_roaming_offload_timer_action(mac_ctx,
 				0, session_id, ROAMING_OFFLOAD_TIMER_STOP);
 		csr_roam_call_callback(mac_ctx, session_id, NULL, 0,
 				eCSR_ROAM_ABORT, eCSR_ROAM_RESULT_SUCCESS);
-#endif
 		vdev_roam_params->roam_invoke_in_progress = false;
 		goto end;
 	case SIR_ROAM_SYNCH_NAPI_OFF:
-		/* This is temp ifdef will be removed in near future */
-#ifndef FEATURE_CM_ENABLE
 		csr_roam_call_callback(mac_ctx, session_id, NULL, 0,
 				eCSR_ROAM_NAPI_OFF, eCSR_ROAM_RESULT_SUCCESS);
-#endif
 		goto end;
 	case SIR_ROAMING_INVOKE_FAIL:
 		sme_debug("Roaming triggered failed source %d nud behaviour %d",
@@ -16450,19 +16542,9 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		/* Userspace roam req fail, disconnect with AP */
 		if (vdev_roam_params->source == USERSPACE_INITIATED ||
 		    mac_ctx->nud_fail_behaviour == DISCONNECT_AFTER_ROAM_FAIL) {
-			/* This is temp ifdef will be removed in near future */
-#ifdef FEATURE_CM_ENABLE
-			sme_release_global_lock(&mac_ctx->sme);
-			/* do not call cm disconnect while holding Sme lock */
-			cm_disconnect(mac_ctx->psoc, session_id,
-				      CM_ROAM_DISCONNECT,
-				      REASON_USER_TRIGGERED_ROAM_FAILURE, NULL);
-			sme_acquire_global_lock(&mac_ctx->sme);
-#else
 			csr_roam_disconnect(mac_ctx, session_id,
 				    eCSR_DISCONNECT_REASON_DEAUTH,
 				    REASON_USER_TRIGGERED_ROAM_FAILURE);
-#endif
 		}
 
 		vdev_roam_params->roam_invoke_in_progress = false;
@@ -16482,19 +16564,9 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		 */
 		if (wlan_reg_is_disable_for_freq(mac_ctx->pdev,
 						 roam_synch_data->chan_freq)) {
-			/* This is temp ifdef will be removed in near future */
-#ifdef FEATURE_CM_ENABLE
-			sme_release_global_lock(&mac_ctx->sme);
-			/* do not call cm disconnect while holding Sme lock */
-			cm_disconnect(mac_ctx->psoc, session_id,
-				      CM_ROAM_DISCONNECT,
-				      REASON_OPER_CHANNEL_BAND_CHANGE, NULL);
-			sme_acquire_global_lock(&mac_ctx->sme);
-#else
 			csr_roam_disconnect(mac_ctx, session_id,
 					    eCSR_DISCONNECT_REASON_DEAUTH,
 					    REASON_OPER_CHANNEL_BAND_CHANGE);
-#endif
 			sme_debug("Roaming Failed for disabled channel or band");
 			vdev_roam_params->roam_invoke_in_progress = false;
 			goto end;
@@ -16538,7 +16610,7 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		policy_mgr_check_concurrent_intf_and_restart_sap(mac_ctx->psoc);
 		vdev_roam_params->roam_invoke_in_progress = false;
 
-		if (roam_synch_data->authStatus ==
+		if (roam_synch_data->auth_status ==
 		    ROAM_AUTH_STATUS_AUTHENTICATED) {
 			wlan_cm_roam_state_change(mac_ctx->pdev, session_id,
 						   WLAN_ROAM_RSO_ENABLED,
@@ -16556,11 +16628,8 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		}
 		goto end;
 	case SIR_ROAMING_DEAUTH:
-		/* This is temp ifdef will be removed in near future */
-#ifndef FEATURE_CM_ENABLE
 		csr_roam_roaming_offload_timer_action(
 			mac_ctx, 0, session_id, ROAMING_OFFLOAD_TIMER_STOP);
-#endif
 		goto end;
 	default:
 		status = QDF_STATUS_E_FAILURE;
@@ -16575,8 +16644,6 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	}
 
 	conn_profile = &session->connectedProfile;
-	/* This is temp ifdef will be removed in near future */
-#ifndef FEATURE_CM_ENABLE
 	status = csr_roam_stop_network(mac_ctx, session_id,
 				       session->pCurRoamProfile,
 				       bss_desc, ies_local);
@@ -16584,13 +16651,9 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		goto end;
 
 	session->connectState = eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED;
-#endif
 
-	/* This is temp ifdef will be removed in near future */
-#ifndef FEATURE_CM_ENABLE
 	/* use cm_inform_bcn_probe for connection manager */
 	csr_rso_save_ap_to_scan_cache(mac_ctx, roam_synch_data, bss_desc);
-#endif
 	/* For CM fill struct cm_vdev_join_rsp and struct wlan_cm_connect_resp
 	 * instead of roam info */
 	roam_info = qdf_mem_malloc(sizeof(struct csr_roam_info));
@@ -16603,8 +16666,6 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 
 	qdf_mem_copy(&roam_info->bssid.bytes, &bss_desc->bssId,
 			sizeof(struct qdf_mac_addr));
-	/* This is temp ifdef will be removed in near future */
-#ifndef FEATURE_CM_ENABLE
 	/* for CM hande same way as cm_csr_connect_rsp and
 	 * cm_csr_connect_done_ind */
 	csr_roam_save_connected_information(mac_ctx, session_id,
@@ -16614,7 +16675,6 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	/* For CM handle similar to cm_connect_complete to update */
 	csr_update_scan_entry_associnfo(mac_ctx, session_id,
 					SCAN_ENTRY_CON_STATE_ASSOC);
-#endif
 
 #ifdef FEATURE_WLAN_ESE
 	roam_info->isESEAssoc = wlan_cm_get_ese_assoc(mac_ctx->pdev,
@@ -16623,13 +16683,13 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 
 	/*
 	 * Encryption keys for new connection are obtained as follows:
-	 * authStatus = CSR_ROAM_AUTH_STATUS_AUTHENTICATED
+	 * auth_status = CSR_ROAM_AUTH_STATUS_AUTHENTICATED
 	 * Open - No keys required.
 	 * Static WEP - Firmware copies keys from old AP to new AP.
 	 * Fast roaming authentications e.g. PSK, FT, CCKM - firmware
 	 *      supplicant obtains them through 4-way handshake.
 	 *
-	 * authStatus = CSR_ROAM_AUTH_STATUS_CONNECTED
+	 * auth_status = CSR_ROAM_AUTH_STATUS_CONNECTED
 	 * All other authentications - Host supplicant performs EAPOL
 	 *      with AP after this point and sends new keys to the driver.
 	 *      Driver starts wait_for_key timer for that purpose.
@@ -16645,7 +16705,7 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	 */
 
 	/* for CM handle this similar to cm_connect_complete_ind */
-	if (roam_synch_data->authStatus == ROAM_AUTH_STATUS_AUTHENTICATED ||
+	if (roam_synch_data->auth_status == ROAM_AUTH_STATUS_AUTHENTICATED ||
 	    session->pCurRoamProfile->negotiatedAuthType ==
 	    eCSR_AUTH_TYPE_SAE ||
 	    session->pCurRoamProfile->negotiatedAuthType ==
@@ -16654,7 +16714,7 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 
 		cm_csr_set_ss_none(session_id);
 		/*
-		 * If authStatus is AUTHENTICATED, then we have done successful
+		 * If auth_status is AUTHENTICATED, then we have done successful
 		 * 4 way handshake in FW using the cached PMKID.
 		 * However, the session->psk_pmk has the PMK of the older AP
 		 * as set_key is not received from supplicant.
@@ -16724,11 +16784,8 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		roam_info->fAuthRequired = true;
 		cm_update_wait_for_key_timer(vdev, session_id,
 					     WAIT_FOR_KEY_TIMEOUT_PERIOD);
-		/* This is temp ifdef will be removed in near future */
-#ifndef FEATURE_CM_ENABLE
 		csr_neighbor_roam_state_transition(mac_ctx,
 				eCSR_NEIGHBOR_ROAM_STATE_INIT, session_id);
-#endif
 	}
 
 	if (roam_synch_data->is_ft_im_roam) {
@@ -16794,21 +16851,15 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	roam_info->chan_info.nss = roam_synch_data->nss;
 	roam_info->chan_info.rate_flags = roam_synch_data->max_rate_flags;
 	roam_info->chan_info.ch_width = roam_synch_data->chan_width;
-	/* This is temp ifdef will be removed in near future */
-#ifndef FEATURE_CM_ENABLE
 	csr_roam_fill_tdls_info(mac_ctx, roam_info, vdev);
-#endif
 	assoc_info.bss_desc = bss_desc;
 	roam_info->status_code = eSIR_SME_SUCCESS;
 	roam_info->reasonCode = eSIR_SME_SUCCESS;
 	wlan_cm_roam_cfg_get_value(mac_ctx->psoc, session_id, UAPSD_MASK,
 				   &config);
 	assoc_info.uapsd_mask = config.uint_value;
-	/* This is temp ifdef will be removed in near future */
-#ifndef FEATURE_CM_ENABLE
 	mac_ctx->roam.roamSession[session_id].connectState =
 		eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED;
-#endif
 	/* for CM move all this sme qos API to cm_csr * API as in
 	 * cm_csr_connect_rsp */
 	sme_qos_csr_event_ind(mac_ctx, session_id,
@@ -16817,21 +16868,17 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		SME_QOS_CSR_REASSOC_REQ, NULL);
 	sme_qos_csr_event_ind(mac_ctx, session_id,
 		SME_QOS_CSR_HANDOFF_COMPLETE, NULL);
-	/* This is temp ifdef will be removed in near future */
-#ifndef FEATURE_CM_ENABLE
+
 	mac_ctx->roam.roamSession[session_id].connectState =
 		eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED;
-#endif
 	/* for CM move all this sme qos API to cm_csr * API as in
 	 * cm_csr_connect_rsp */
 	sme_qos_csr_event_ind(mac_ctx, session_id,
 		SME_QOS_CSR_REASSOC_COMPLETE, &assoc_info);
 	roam_info->bss_desc = bss_desc;
-		/* This is temp ifdef will be removed in near future */
-#ifndef FEATURE_CM_ENABLE
+
 	conn_profile->acm_mask = sme_qos_get_acm_mask(mac_ctx,
 			bss_desc, NULL);
-#endif
 	if (conn_profile->modifyProfileFields.uapsd_mask) {
 		sme_debug(
 				" uapsd_mask (0x%X) set, request UAPSD now",
@@ -16846,7 +16893,7 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		roam_info->chan_info.rate_flags);
 
 	roam_info->roamSynchInProgress = true;
-	roam_info->synchAuthStatus = roam_synch_data->authStatus;
+	roam_info->synchAuthStatus = roam_synch_data->auth_status;
 	roam_info->kck_len = roam_synch_data->kck_len;
 	roam_info->kek_len = roam_synch_data->kek_len;
 	roam_info->pmk_len = roam_synch_data->pmk_len;
@@ -16862,11 +16909,10 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 			roam_synch_data->update_erp_next_seq_num;
 	roam_info->next_erp_seq_num = roam_synch_data->next_erp_seq_num;
 	/* for cm enable copy to reassoc/connect resp */
-#ifndef FEATURE_CM_ENABLE
 	/* for CM fill fils info in struct wlan_cm_connect_resp */
 	csr_update_fils_erp_seq_num(session->pCurRoamProfile,
 				    roam_info->next_erp_seq_num);
-#endif
+
 	sme_debug("Update ERP Seq Num : %d, Next ERP Seq Num : %d",
 			roam_info->update_erp_next_seq_num,
 			roam_info->next_erp_seq_num);
@@ -16877,27 +16923,24 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		roam_info->kek_len);
 	/* bit-4 and bit-5 indicate the subnet status */
 	roam_info->subnet_change_status =
-		CSR_GET_SUBNET_STATUS(roam_synch_data->roamReason);
+		CM_GET_SUBNET_STATUS(roam_synch_data->roam_reason);
 
 	/* fetch 4 LSB to get roam reason */
-	roam_info->roam_reason = roam_synch_data->roamReason &
+	roam_info->roam_reason = roam_synch_data->roam_reason &
 				 ROAM_REASON_MASK;
 	sme_debug("Update roam reason : %d", roam_info->roam_reason);
 	/* for cm enable copy to reassoc/connect resp */
-#ifndef FEATURE_CM_ENABLE
 	/* for CM fill fils info in struct wlan_cm_connect_resp */
 	csr_copy_fils_join_rsp_roam_info(roam_info, roam_synch_data);
 	csr_roam_call_callback(mac_ctx, session_id, roam_info, 0,
 		eCSR_ROAM_ASSOCIATION_COMPLETION, eCSR_ROAM_RESULT_ASSOCIATED);
-#endif
+
 	/* for CM move all this sme qos API to cm_csr * API as in
 	 * cm_csr_connect_rsp */
-	if (IS_ROAM_REASON_DISCONNECTION(roam_synch_data->roamReason))
+	if (IS_ROAM_REASON_DISCONNECTION(roam_synch_data->roam_reason))
 		sme_qos_csr_event_ind(mac_ctx, session_id,
 				      SME_QOS_CSR_DISCONNECT_ROAM_COMPLETE,
 				      NULL);
-	/* for cm enable copy to reassoc/connect resp */
-#ifndef FEATURE_CM_ENABLE
 	/* for CM move hanlde all roam specific handling in new func */
 	if (!CSR_IS_WAIT_FOR_KEY(mac_ctx, session_id)) {
 		wlan_mlme_get_bssid_vdev_id(mac_ctx->pdev, session_id,
@@ -16908,7 +16951,7 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 				("NO CSR_IS_WAIT_FOR_KEY -> csr_roam_link_up"));
 		csr_roam_link_up(mac_ctx, connected_bssid);
 	}
-#endif
+
 	sme_free_join_rsp_fils_params(roam_info);
 	qdf_mem_free(roam_info->pbFrames);
 	qdf_mem_free(roam_info);
@@ -16954,7 +16997,7 @@ csr_roam_synch_callback(struct mac_context *mac_ctx,
 
 	return status;
 }
-
+#endif
 #ifdef WLAN_FEATURE_SAE
 /**
  * csr_process_roam_auth_sae_callback() - API to trigger the

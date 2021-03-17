@@ -1043,13 +1043,17 @@ QDF_STATUS hdd_cm_connect_complete(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 #ifdef WLAN_FEATURE_FILS_SK
 QDF_STATUS hdd_cm_save_gtk(struct wlan_objmgr_vdev *vdev,
 			   struct wlan_cm_connect_resp *rsp)
 {
 	uint8_t *kek;
 	uint32_t kek_len;
-	uint8_t replay_ctr[REPLAY_CTR_LEN] = {0};
+	uint8_t *kck = NULL;
+	uint8_t kck_len = 0;
+	uint8_t replay_ctr_def[REPLAY_CTR_LEN] = {0};
+	uint8_t *replay_ctr;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx,
 						wlan_vdev_get_id(vdev));
@@ -1059,14 +1063,66 @@ QDF_STATUS hdd_cm_save_gtk(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	kek = rsp->connect_ies.fils_ie->kek;
-	kek_len = rsp->connect_ies.fils_ie->kek_len;
-	wlan_hdd_save_gtk_offload_params(adapter, NULL, 0, kek, kek_len,
+	if (rsp->is_reassoc && rsp->roaming_info) {
+		kek = rsp->roaming_info->kek;
+		kek_len = rsp->roaming_info->kek_len;
+		kck = rsp->roaming_info->kck;
+		kck_len = rsp->roaming_info->kck_len;
+		replay_ctr = rsp->roaming_info->replay_ctr;
+	} else if (rsp->connect_ies.fils_ie) {
+		kek = rsp->connect_ies.fils_ie->kek;
+		kek_len = rsp->connect_ies.fils_ie->kek_len;
+		replay_ctr = replay_ctr_def;
+	} else {
+		return QDF_STATUS_SUCCESS;
+	}
+	wlan_hdd_save_gtk_offload_params(adapter, kck, kck_len, kek, kek_len,
 					 replay_ctr, true);
 
 	return QDF_STATUS_SUCCESS;
 }
+#else
+QDF_STATUS hdd_cm_save_gtk(struct wlan_objmgr_vdev *vdev,
+			   struct wlan_cm_connect_resp *rsp)
+{
+	uint8_t *kek;
+	uint32_t kek_len;
+	uint8_t *kck = NULL;
+	uint8_t kck_len = 0;
+	uint8_t *replay_ctr;
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx,
+						wlan_vdev_get_id(vdev));
 
+	if (!adapter || !rsp) {
+		hdd_err("adapter/connect rsp is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (rsp->is_reassoc && rsp->roaming_info) {
+		kek = rsp->roaming_info.kek;
+		kek_len = rsp->roaming_info.kek_len;
+		kck = rsp->roaming_info.kck;
+		kck_len = rsp->roaming_info.kck_len;
+		replay_ctr = rsp->roaming_info.replay_ctr;
+	} else {
+		return QDF_STATUS_SUCCESS;
+	}
+	wlan_hdd_save_gtk_offload_params(adapter, kck, kck_len, kek, kek_len,
+					 replay_ctr, true);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_FEATURE_FILS_SK*/
+#else
+QDF_STATUS hdd_cm_save_gtk(struct wlan_objmgr_vdev *vdev,
+			   struct wlan_cm_connect_resp *rsp)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+#ifdef WLAN_FEATURE_FILS_SK
 static void hdd_update_hlp_info(struct net_device *dev,
 				struct wlan_cm_connect_resp *rsp)
 {

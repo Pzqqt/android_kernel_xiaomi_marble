@@ -510,7 +510,7 @@ QDF_STATUS csr_neighbor_roam_indicate_connect(
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(mac->psoc, session_id) &&
 	    eSIR_ROAM_AUTH_STATUS_AUTHENTICATED ==
-	     session->roam_synch_data->authStatus) {
+	     session->roam_synch_data->auth_status) {
 		sme_debug("LFR3: Authenticated");
 		roam_info = qdf_mem_malloc(sizeof(*roam_info));
 		if (!roam_info)

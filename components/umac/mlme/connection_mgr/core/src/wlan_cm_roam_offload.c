@@ -3413,7 +3413,7 @@ cm_roam_switch_to_roam_sync(struct wlan_objmgr_pdev *pdev,
 		 */
 	case WLAN_ROAMING_IN_PROG:
 #ifdef FEATURE_CM_ENABLE
-		if (!cm_is_vdevid_connected(pdev, vdev_id))
+		if (!cm_is_vdevid_active(pdev, vdev_id))
 #else
 		if (!wlan_cm_is_sta_connected(vdev_id))
 #endif

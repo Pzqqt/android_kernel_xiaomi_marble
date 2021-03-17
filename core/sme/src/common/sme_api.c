@@ -305,9 +305,9 @@ end:
 static QDF_STATUS sme_process_hw_mode_trans_ind(struct mac_context *mac,
 						uint8_t *msg)
 {
-	struct sir_hw_mode_trans_ind *param;
+	struct cm_hw_mode_trans_ind *param;
 
-	param = (struct sir_hw_mode_trans_ind *)msg;
+	param = (struct cm_hw_mode_trans_ind *)msg;
 	if (!param) {
 		sme_err("HW mode trans ind param is NULL");
 		return QDF_STATUS_E_FAILURE;
@@ -1101,7 +1101,9 @@ QDF_STATUS sme_hdd_ready_ind(mac_handle_t mac_handle)
 
 		msg->messageType = eWNI_SME_SYS_READY_IND;
 		msg->length = sizeof(*msg);
+#ifndef FEATURE_CM_ENABLE
 		msg->csr_roam_synch_cb = csr_roam_synch_callback;
+#endif
 		msg->sme_msg_cb = sme_process_msg_callback;
 		msg->stop_roaming_cb = sme_stop_roaming;
 		msg->csr_roam_auth_event_handle_cb =

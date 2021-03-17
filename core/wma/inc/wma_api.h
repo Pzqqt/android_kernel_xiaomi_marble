@@ -296,7 +296,7 @@ bool wma_capability_enhanced_mcast_filter(void);
 void wma_process_pdev_hw_mode_trans_ind(void *wma,
 	wmi_pdev_hw_mode_transition_event_fixed_param *fixed_param,
 	wmi_pdev_set_hw_mode_response_vdev_mac_entry *vdev_mac_entry,
-	struct sir_hw_mode_trans_ind *hw_mode_trans_ind);
+	struct cm_hw_mode_trans_ind *hw_mode_trans_ind);
 
 /**
  * wma_set_cts2self_for_p2p_go() - set CTS2SELF command for P2P GO.

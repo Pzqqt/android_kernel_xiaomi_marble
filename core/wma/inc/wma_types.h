@@ -726,7 +726,9 @@ QDF_STATUS wma_register_mgmt_frm_client(void);
 QDF_STATUS wma_de_register_mgmt_frm_client(void);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS wma_register_roaming_callbacks(
+#ifndef FEATURE_CM_ENABLE
 		csr_roam_synch_fn_t csr_roam_synch_cb,
+#endif
 		QDF_STATUS (*csr_roam_auth_event_handle_cb)(
 			struct mac_context *mac,
 			uint8_t vdev_id,
@@ -740,7 +742,9 @@ QDF_STATUS wma_register_roaming_callbacks(
 		csr_roam_pmkid_req_fn_t csr_roam_pmkid_req_cb);
 #else
 static inline QDF_STATUS wma_register_roaming_callbacks(
+#ifndef FEATURE_CM_ENABLE
 		csr_roam_synch_fn_t csr_roam_synch_cb,
+#endif
 		QDF_STATUS (*csr_roam_auth_event_handle_cb)(
 			struct mac_context *mac,
 			uint8_t vdev_id,

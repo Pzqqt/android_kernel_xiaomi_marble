@@ -558,8 +558,10 @@ void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id);
 int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 			    uint32_t len);
 
+#ifndef FEATURE_CM_ENABLE
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 void wma_process_roam_synch_complete(WMA_HANDLE handle, uint8_t vdev_id);
+#endif
 #endif
 
 /*

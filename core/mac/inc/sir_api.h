@@ -92,9 +92,6 @@ typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
 #define SIR_VDEV_PLCY_MGR_TIMEOUT        (4000)
 #endif
 
-/* This should not be greater than MAX_NUMBER_OF_CONC_CONNECTIONS */
-#define MAX_VDEV_SUPPORTED                        4
-
 #define MAX_POWER_DBG_ARGS_SUPPORTED 8
 #define QOS_MAP_MAX_EX  21
 #define QOS_MAP_RANGE_NUM 8
@@ -118,7 +115,6 @@ typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
 #define SIR_SAP_MAX_NUM_PEERS 32
 #endif
 
-#define SIR_KCK_KEY_LEN 16
 #define KCK_192BIT_KEY_LEN 24
 #define KCK_256BIT_KEY_LEN 32
 
@@ -531,6 +527,7 @@ struct bss_description;
 struct roam_offload_synch_ind;
 struct roam_pmkid_req_event;
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * typedef csr_roam_synch_fn_t - CSR roam synch callback routine pointer
  * @mac: Global MAC context
@@ -551,6 +548,7 @@ typedef QDF_STATUS
 		       struct roam_offload_synch_ind *roam_synch_data,
 		       struct bss_description *bss_desc_ptr,
 		       enum sir_roam_op_code reason);
+#endif
 
 /**
  * typedef pe_roam_synch_fn_t - PE roam synch callback routine pointer
@@ -607,7 +605,9 @@ typedef QDF_STATUS
 struct sme_ready_req {
 	uint16_t messageType;   /* eWNI_SME_SYS_READY_IND */
 	uint16_t length;
+#ifndef FEATURE_CM_ENABLE
 	csr_roam_synch_fn_t csr_roam_synch_cb;
+#endif
 	QDF_STATUS (*csr_roam_auth_event_handle_cb)(struct mac_context *mac,
 						    uint8_t vdev_id,
 						    struct qdf_mac_addr bssid);
@@ -2163,20 +2163,6 @@ struct sir_set_hw_mode_resp {
 };
 
 /**
- * struct sir_hw_mode_trans_ind - HW mode transition indication
- * @old_hw_mode_index: Index of old HW mode
- * @new_hw_mode_index: Index of new HW mode
- * @num_vdev_mac_entries: Number of vdev-mac id entries
- * @vdev_mac_map: vdev id-mac id map
- */
-struct sir_hw_mode_trans_ind {
-	uint32_t old_hw_mode_index;
-	uint32_t new_hw_mode_index;
-	uint32_t num_vdev_mac_entries;
-	struct policy_mgr_vdev_mac_map vdev_mac_map[MAX_VDEV_SUPPORTED];
-};
-
-/**
  * struct sir_dual_mac_config_resp - Dual MAC config response
  * @status: Status of setting the dual mac configuration
  */
@@ -2589,51 +2575,6 @@ typedef struct {
 	uint8_t event_data[];
 } tSirStatsExtEvent, *tpSirStatsExtEvent;
 #endif
-
-struct roam_offload_synch_ind {
-	uint16_t beaconProbeRespOffset;
-	uint16_t beaconProbeRespLength;
-	uint16_t reassocRespOffset;
-	uint16_t reassocRespLength;
-	uint16_t reassoc_req_offset;
-	uint16_t reassoc_req_length;
-	uint8_t isBeacon;
-	uint8_t roamed_vdev_id;
-	struct qdf_mac_addr bssid;
-	struct qdf_mac_addr self_mac;
-	int8_t txMgmtPower;
-	uint32_t authStatus;
-	uint8_t rssi;
-	uint8_t roamReason;
-	uint32_t chan_freq;
-	uint8_t kck[MAX_KCK_LEN];
-	uint8_t kck_len;
-	uint32_t kek_len;
-	uint8_t kek[MAX_KEK_LENGTH];
-	uint32_t   pmk_len;
-	uint8_t    pmk[MAX_PMK_LEN];
-	uint8_t    pmkid[PMKID_LEN];
-	bool update_erp_next_seq_num;
-	uint16_t next_erp_seq_num;
-	uint8_t replay_ctr[REPLAY_CTR_LEN];
-	void *add_bss_params;
-	enum phy_ch_width chan_width;
-	uint32_t max_rate_flags;
-	uint32_t ric_data_len;
-#ifdef FEATURE_WLAN_ESE
-	uint32_t tspec_len;
-#endif
-	uint8_t *ric_tspec_data;
-	uint16_t aid;
-	struct sir_hw_mode_trans_ind hw_mode_trans_ind;
-	uint8_t nss;
-	struct qdf_mac_addr dst_mac;
-	struct qdf_mac_addr src_mac;
-	uint16_t hlp_data_len;
-	uint8_t hlp_data[FILS_MAX_HLP_DATA_LEN];
-	bool is_ft_im_roam;
-	enum wlan_phymode phy_mode; /*phy mode sent by fw */
-};
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 struct handoff_failure_ind {

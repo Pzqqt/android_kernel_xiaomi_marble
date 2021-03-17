@@ -3758,7 +3758,7 @@ fail:
 void wma_process_pdev_hw_mode_trans_ind(void *handle,
 	wmi_pdev_hw_mode_transition_event_fixed_param *fixed_param,
 	wmi_pdev_set_hw_mode_response_vdev_mac_entry *vdev_mac_entry,
-	struct sir_hw_mode_trans_ind *hw_mode_trans_ind)
+	struct cm_hw_mode_trans_ind *hw_mode_trans_ind)
 {
 	uint32_t i;
 	tp_wma_handle wma = (tp_wma_handle) handle;
@@ -3840,7 +3840,7 @@ static int wma_pdev_hw_mode_transition_evt_handler(void *handle,
 	WMI_PDEV_HW_MODE_TRANSITION_EVENTID_param_tlvs *param_buf;
 	wmi_pdev_hw_mode_transition_event_fixed_param *wmi_event;
 	wmi_pdev_set_hw_mode_response_vdev_mac_entry *vdev_mac_entry;
-	struct sir_hw_mode_trans_ind *hw_mode_trans_ind;
+	struct cm_hw_mode_trans_ind *hw_mode_trans_ind;
 	tp_wma_handle wma = (tp_wma_handle) handle;
 
 	if (wma_validate_handle(wma)) {

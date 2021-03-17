@@ -94,6 +94,25 @@ target_if_cm_roam_send_roam_invoke_cmd(struct wlan_objmgr_vdev *vdev,
 
 	return wmi_unified_roam_invoke_cmd(wmi_handle, req);
 }
+
+/**
+ * target_if_cm_roam_send_roam_sync_complete  - Send roam sync complete to wmi.
+ * @vdev: VDEV object pointer
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+target_if_cm_roam_send_roam_sync_complete(struct wlan_objmgr_vdev *vdev)
+{
+	wmi_unified_t wmi_handle;
+
+	wmi_handle = target_if_cm_roam_get_wmi_handle_from_vdev(vdev);
+	if (!wmi_handle)
+		return QDF_STATUS_E_FAILURE;
+
+	return wmi_unified_roam_synch_complete_cmd(wmi_handle,
+						   wlan_vdev_get_id(vdev));
+}
 #endif
 
 static void
@@ -102,6 +121,7 @@ target_if_cm_roam_register_lfr3_ops(struct wlan_cm_roam_tx_ops *tx_ops)
 	tx_ops->send_vdev_set_pcl_cmd = target_if_cm_roam_send_vdev_set_pcl_cmd;
 #ifdef FEATURE_CM_ENABLE
 	tx_ops->send_roam_invoke_cmd = target_if_cm_roam_send_roam_invoke_cmd;
+	tx_ops->send_roam_sync_complete_cmd = target_if_cm_roam_send_roam_sync_complete;
 #endif
 }
 #else
