@@ -65,6 +65,8 @@ enum {
 	LPASS_CDC_WSA2_MACRO_RX_MIX,
 	LPASS_CDC_WSA2_MACRO_RX_MIX0 = LPASS_CDC_WSA2_MACRO_RX_MIX,
 	LPASS_CDC_WSA2_MACRO_RX_MIX1,
+	LPASS_CDC_WSA2_MACRO_RX4,
+	LPASS_CDC_WSA2_MACRO_RX5,
 	LPASS_CDC_WSA2_MACRO_RX_MAX,
 };
 
@@ -98,6 +100,8 @@ enum {
 	INTn_1_INP_SEL_RX1,
 	INTn_1_INP_SEL_RX2,
 	INTn_1_INP_SEL_RX3,
+	INTn_1_INP_SEL_RX4,
+	INTn_1_INP_SEL_RX5,
 	INTn_1_INP_SEL_DEC0,
 	INTn_1_INP_SEL_DEC1,
 };
@@ -108,6 +112,8 @@ enum {
 	INTn_2_INP_SEL_RX1,
 	INTn_2_INP_SEL_RX2,
 	INTn_2_INP_SEL_RX3,
+	INTn_2_INP_SEL_RX4,
+	INTn_2_INP_SEL_RX5,
 };
 
 enum {
@@ -272,11 +278,11 @@ static struct snd_soc_dai_driver lpass_cdc_wsa2_macro_dai[];
 static const DECLARE_TLV_DB_SCALE(digital_gain, 0, 1, 0);
 
 static const char *const rx_text[] = {
-	"ZERO", "RX0", "RX1", "RX_MIX0", "RX_MIX1", "DEC0", "DEC1"
+	"ZERO", "RX0", "RX1", "RX_MIX0", "RX_MIX1", "RX4", "RX5", "DEC0", "DEC1"
 };
 
 static const char *const rx_mix_text[] = {
-	"ZERO", "RX0", "RX1", "RX_MIX0", "RX_MIX1"
+	"ZERO", "RX0", "RX1", "RX_MIX0", "RX_MIX1", "RX4", "RX5",
 };
 
 static const char *const rx_mix_ec_text[] = {
@@ -316,19 +322,19 @@ static SOC_ENUM_SINGLE_EXT_DECL(lpass_cdc_wsa2_macro_comp_mode_enum,
 /* RX INT0 */
 static const struct soc_enum rx0_prim_inp0_chain_enum =
 	SOC_ENUM_SINGLE(LPASS_CDC_WSA2_RX_INP_MUX_RX_INT0_CFG0,
-		0, 7, rx_text);
+		0, 9, rx_text);
 
 static const struct soc_enum rx0_prim_inp1_chain_enum =
 	SOC_ENUM_SINGLE(LPASS_CDC_WSA2_RX_INP_MUX_RX_INT0_CFG0,
-		3, 7, rx_text);
+		3, 9, rx_text);
 
 static const struct soc_enum rx0_prim_inp2_chain_enum =
 	SOC_ENUM_SINGLE(LPASS_CDC_WSA2_RX_INP_MUX_RX_INT0_CFG1,
-		3, 7, rx_text);
+		3, 9, rx_text);
 
 static const struct soc_enum rx0_mix_chain_enum =
 	SOC_ENUM_SINGLE(LPASS_CDC_WSA2_RX_INP_MUX_RX_INT0_CFG1,
-		0, 5, rx_mix_text);
+		0, 7, rx_mix_text);
 
 static const struct soc_enum rx0_sidetone_mix_enum =
 	SOC_ENUM_SINGLE(SND_SOC_NOPM, 0, 2, rx_sidetone_mix_text);
@@ -351,19 +357,19 @@ static const struct snd_kcontrol_new rx0_sidetone_mix_mux =
 /* RX INT1 */
 static const struct soc_enum rx1_prim_inp0_chain_enum =
 	SOC_ENUM_SINGLE(LPASS_CDC_WSA2_RX_INP_MUX_RX_INT1_CFG0,
-		0, 7, rx_text);
+		0, 9, rx_text);
 
 static const struct soc_enum rx1_prim_inp1_chain_enum =
 	SOC_ENUM_SINGLE(LPASS_CDC_WSA2_RX_INP_MUX_RX_INT1_CFG0,
-		3, 7, rx_text);
+		3, 9, rx_text);
 
 static const struct soc_enum rx1_prim_inp2_chain_enum =
 	SOC_ENUM_SINGLE(LPASS_CDC_WSA2_RX_INP_MUX_RX_INT1_CFG1,
-		3, 7, rx_text);
+		3, 9, rx_text);
 
 static const struct soc_enum rx1_mix_chain_enum =
 	SOC_ENUM_SINGLE(LPASS_CDC_WSA2_RX_INP_MUX_RX_INT1_CFG1,
-		0, 5, rx_mix_text);
+		0, 7, rx_mix_text);
 
 static const struct snd_kcontrol_new rx1_prim_inp0_mux =
 	SOC_DAPM_ENUM("WSA2_RX1 INP0 Mux", rx1_prim_inp0_chain_enum);
@@ -2197,6 +2203,10 @@ static const struct snd_kcontrol_new rx_mux[LPASS_CDC_WSA2_MACRO_RX_MAX] = {
 			  lpass_cdc_wsa2_macro_rx_mux_get, lpass_cdc_wsa2_macro_rx_mux_put),
 	SOC_DAPM_ENUM_EXT("WSA2 RX_MIX1 Mux", rx_mux_enum,
 			  lpass_cdc_wsa2_macro_rx_mux_get, lpass_cdc_wsa2_macro_rx_mux_put),
+	SOC_DAPM_ENUM_EXT("WSA2 RX4 Mux", rx_mux_enum,
+			lpass_cdc_wsa2_macro_rx_mux_get, lpass_cdc_wsa2_macro_rx_mux_put),
+	SOC_DAPM_ENUM_EXT("WSA2 RX5 Mux", rx_mux_enum,
+			lpass_cdc_wsa2_macro_rx_mux_get, lpass_cdc_wsa2_macro_rx_mux_put),
 };
 
 static int lpass_cdc_wsa2_macro_vi_feed_mixer_get(struct snd_kcontrol *kcontrol,
@@ -2322,11 +2332,17 @@ static const struct snd_soc_dapm_widget lpass_cdc_wsa2_macro_dapm_widgets[] = {
 				&rx_mux[LPASS_CDC_WSA2_MACRO_RX_MIX0]),
 	SND_SOC_DAPM_MUX("WSA2 RX_MIX1 MUX", SND_SOC_NOPM, LPASS_CDC_WSA2_MACRO_RX_MIX1, 0,
 				&rx_mux[LPASS_CDC_WSA2_MACRO_RX_MIX1]),
+	SND_SOC_DAPM_MUX("WSA2 RX4 MUX", SND_SOC_NOPM, LPASS_CDC_WSA2_MACRO_RX4, 0,
+				&rx_mux[LPASS_CDC_WSA2_MACRO_RX4]),
+	SND_SOC_DAPM_MUX("WSA2 RX5 MUX", SND_SOC_NOPM, LPASS_CDC_WSA2_MACRO_RX5, 0,
+				&rx_mux[LPASS_CDC_WSA2_MACRO_RX5]),
 
 	SND_SOC_DAPM_MIXER("WSA2 RX0", SND_SOC_NOPM, 0, 0, NULL, 0),
 	SND_SOC_DAPM_MIXER("WSA2 RX1", SND_SOC_NOPM, 0, 0, NULL, 0),
 	SND_SOC_DAPM_MIXER("WSA2 RX_MIX0", SND_SOC_NOPM, 0, 0, NULL, 0),
 	SND_SOC_DAPM_MIXER("WSA2 RX_MIX1", SND_SOC_NOPM, 0, 0, NULL, 0),
+	SND_SOC_DAPM_MIXER("WSA2 RX4", SND_SOC_NOPM, 0, 0, NULL, 0),
+	SND_SOC_DAPM_MIXER("WSA2 RX5", SND_SOC_NOPM, 0, 0, NULL, 0),
 
 	SND_SOC_DAPM_MUX_E("WSA2_RX0 INP0", SND_SOC_NOPM, 0, 0,
 		&rx0_prim_inp0_mux, lpass_cdc_wsa2_macro_enable_swr,
@@ -2430,21 +2446,29 @@ static const struct snd_soc_dapm_route wsa2_audio_map[] = {
 	{"WSA2 RX1 MUX", "AIF1_PB", "WSA2 AIF1 PB"},
 	{"WSA2 RX_MIX0 MUX", "AIF1_PB", "WSA2 AIF1 PB"},
 	{"WSA2 RX_MIX1 MUX", "AIF1_PB", "WSA2 AIF1 PB"},
+	{"WSA2 RX4 MUX", "AIF1_PB", "WSA2 AIF1 PB"},
+	{"WSA2 RX5 MUX", "AIF1_PB", "WSA2 AIF1 PB"},
 
 	{"WSA2 RX0 MUX", "AIF_MIX1_PB", "WSA2 AIF_MIX1 PB"},
 	{"WSA2 RX1 MUX", "AIF_MIX1_PB", "WSA2 AIF_MIX1 PB"},
 	{"WSA2 RX_MIX0 MUX", "AIF_MIX1_PB", "WSA2 AIF_MIX1 PB"},
 	{"WSA2 RX_MIX1 MUX", "AIF_MIX1_PB", "WSA2 AIF_MIX1 PB"},
+	{"WSA2 RX4 MUX", "AIF_MIX1_PB", "WSA2 AIF_MIX1 PB"},
+	{"WSA2 RX5 MUX", "AIF_MIX1_PB", "WSA2 AIF_MIX1 PB"},
 
 	{"WSA2 RX0", NULL, "WSA2 RX0 MUX"},
 	{"WSA2 RX1", NULL, "WSA2 RX1 MUX"},
 	{"WSA2 RX_MIX0", NULL, "WSA2 RX_MIX0 MUX"},
 	{"WSA2 RX_MIX1", NULL, "WSA2 RX_MIX1 MUX"},
+	{"WSA2 RX4", NULL, "WSA2 RX4 MUX"},
+	{"WSA2 RX5", NULL, "WSA2 RX5 MUX"},
 
 	{"WSA2_RX0 INP0", "RX0", "WSA2 RX0"},
 	{"WSA2_RX0 INP0", "RX1", "WSA2 RX1"},
 	{"WSA2_RX0 INP0", "RX_MIX0", "WSA2 RX_MIX0"},
 	{"WSA2_RX0 INP0", "RX_MIX1", "WSA2 RX_MIX1"},
+	{"WSA2_RX0 INP0", "RX4", "WSA2 RX4"},
+	{"WSA2_RX0 INP0", "RX5", "WSA2 RX5"},
 	{"WSA2_RX0 INP0", "DEC0", "WSA2_TX DEC0_INP"},
 	{"WSA2_RX0 INP0", "DEC1", "WSA2_TX DEC1_INP"},
 	{"WSA2_RX INT0 MIX", NULL, "WSA2_RX0 INP0"},
@@ -2453,6 +2477,8 @@ static const struct snd_soc_dapm_route wsa2_audio_map[] = {
 	{"WSA2_RX0 INP1", "RX1", "WSA2 RX1"},
 	{"WSA2_RX0 INP1", "RX_MIX0", "WSA2 RX_MIX0"},
 	{"WSA2_RX0 INP1", "RX_MIX1", "WSA2 RX_MIX1"},
+	{"WSA2_RX0 INP1", "RX4", "WSA2 RX4"},
+	{"WSA2_RX0 INP1", "RX5", "WSA2 RX5"},
 	{"WSA2_RX0 INP1", "DEC0", "WSA2_TX DEC0_INP"},
 	{"WSA2_RX0 INP1", "DEC1", "WSA2_TX DEC1_INP"},
 	{"WSA2_RX INT0 MIX", NULL, "WSA2_RX0 INP1"},
@@ -2461,6 +2487,8 @@ static const struct snd_soc_dapm_route wsa2_audio_map[] = {
 	{"WSA2_RX0 INP2", "RX1", "WSA2 RX1"},
 	{"WSA2_RX0 INP2", "RX_MIX0", "WSA2 RX_MIX0"},
 	{"WSA2_RX0 INP2", "RX_MIX1", "WSA2 RX_MIX1"},
+	{"WSA2_RX0 INP2", "RX4", "WSA2 RX4"},
+	{"WSA2_RX0 INP2", "RX5", "WSA2 RX5"},
 	{"WSA2_RX0 INP2", "DEC0", "WSA2_TX DEC0_INP"},
 	{"WSA2_RX0 INP2", "DEC1", "WSA2_TX DEC1_INP"},
 	{"WSA2_RX INT0 MIX", NULL, "WSA2_RX0 INP2"},
@@ -2469,6 +2497,8 @@ static const struct snd_soc_dapm_route wsa2_audio_map[] = {
 	{"WSA2_RX0 MIX INP", "RX1", "WSA2 RX1"},
 	{"WSA2_RX0 MIX INP", "RX_MIX0", "WSA2 RX_MIX0"},
 	{"WSA2_RX0 MIX INP", "RX_MIX1", "WSA2 RX_MIX1"},
+	{"WSA2_RX0 MIX INP", "RX4", "WSA2 RX4"},
+	{"WSA2_RX0 MIX INP", "RX5", "WSA2 RX5"},
 	{"WSA2_RX INT0 SEC MIX", NULL, "WSA2_RX0 MIX INP"},
 
 	{"WSA2_RX INT0 SEC MIX", NULL, "WSA2_RX INT0 MIX"},
@@ -2487,6 +2517,8 @@ static const struct snd_soc_dapm_route wsa2_audio_map[] = {
 	{"WSA2_RX1 INP0", "RX1", "WSA2 RX1"},
 	{"WSA2_RX1 INP0", "RX_MIX0", "WSA2 RX_MIX0"},
 	{"WSA2_RX1 INP0", "RX_MIX1", "WSA2 RX_MIX1"},
+	{"WSA2_RX1 INP0", "RX4", "WSA2 RX4"},
+	{"WSA2_RX1 INP0", "RX5", "WSA2 RX5"},
 	{"WSA2_RX1 INP0", "DEC0", "WSA2_TX DEC0_INP"},
 	{"WSA2_RX1 INP0", "DEC1", "WSA2_TX DEC1_INP"},
 	{"WSA2_RX INT1 MIX", NULL, "WSA2_RX1 INP0"},
@@ -2495,6 +2527,8 @@ static const struct snd_soc_dapm_route wsa2_audio_map[] = {
 	{"WSA2_RX1 INP1", "RX1", "WSA2 RX1"},
 	{"WSA2_RX1 INP1", "RX_MIX0", "WSA2 RX_MIX0"},
 	{"WSA2_RX1 INP1", "RX_MIX1", "WSA2 RX_MIX1"},
+	{"WSA2_RX1 INP1", "RX4", "WSA2 RX4"},
+	{"WSA2_RX1 INP1", "RX5", "WSA2 RX5"},
 	{"WSA2_RX1 INP1", "DEC0", "WSA2_TX DEC0_INP"},
 	{"WSA2_RX1 INP1", "DEC1", "WSA2_TX DEC1_INP"},
 	{"WSA2_RX INT1 MIX", NULL, "WSA2_RX1 INP1"},
@@ -2503,6 +2537,8 @@ static const struct snd_soc_dapm_route wsa2_audio_map[] = {
 	{"WSA2_RX1 INP2", "RX1", "WSA2 RX1"},
 	{"WSA2_RX1 INP2", "RX_MIX0", "WSA2 RX_MIX0"},
 	{"WSA2_RX1 INP2", "RX_MIX1", "WSA2 RX_MIX1"},
+	{"WSA2_RX1 INP2", "RX4", "WSA2 RX4"},
+	{"WSA2_RX1 INP2", "RX5", "WSA2 RX5"},
 	{"WSA2_RX1 INP2", "DEC0", "WSA2_TX DEC0_INP"},
 	{"WSA2_RX1 INP2", "DEC1", "WSA2_TX DEC1_INP"},
 	{"WSA2_RX INT1 MIX", NULL, "WSA2_RX1 INP2"},
@@ -2511,6 +2547,8 @@ static const struct snd_soc_dapm_route wsa2_audio_map[] = {
 	{"WSA2_RX1 MIX INP", "RX1", "WSA2 RX1"},
 	{"WSA2_RX1 MIX INP", "RX_MIX0", "WSA2 RX_MIX0"},
 	{"WSA2_RX1 MIX INP", "RX_MIX1", "WSA2 RX_MIX1"},
+	{"WSA2_RX1 MIX INP", "RX4", "WSA2 RX4"},
+	{"WSA2_RX1 MIX INP", "RX5", "WSA2 RX5"},
 	{"WSA2_RX INT1 SEC MIX", NULL, "WSA2_RX1 MIX INP"},
 
 	{"WSA2_RX INT1 SEC MIX", NULL, "WSA2_RX INT1 MIX"},
