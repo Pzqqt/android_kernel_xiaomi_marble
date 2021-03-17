@@ -85,13 +85,6 @@ QDF_STATUS wlan_reg_get_max_5g_bw_from_regdomain(uint16_t regdmn,
 }
 
 #ifdef CONFIG_CHAN_NUM_API
-
-bool
-wlan_reg_chan_has_dfs_attribute(struct wlan_objmgr_pdev *pdev, uint8_t ch)
-{
-	return reg_chan_has_dfs_attribute(pdev, ch);
-}
-
 /**
  * wlan_reg_get_5g_bonded_channel_state() - Get 5G bonded channel state
  * @ch: channel number.

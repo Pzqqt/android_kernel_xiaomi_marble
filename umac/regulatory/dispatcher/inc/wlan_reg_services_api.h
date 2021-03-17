@@ -449,17 +449,6 @@ QDF_STATUS wlan_reg_read_current_country(struct wlan_objmgr_psoc *psoc,
 
 #ifdef CONFIG_CHAN_NUM_API
 /**
- * wlan_reg_chan_has_dfs_attribute() - check channel has dfs attribute flag
- * @ch: channel number.
- *
- * This API get chan initial dfs attribute from regdomain
- *
- * Return: true if chan is dfs, otherwise false
- */
-bool
-wlan_reg_chan_has_dfs_attribute(struct wlan_objmgr_pdev *pdev, uint8_t ch);
-
-/**
  * wlan_reg_is_etsi13_srd_chan () - Checks if the ch is ETSI13 srd ch or not
  * @pdev: pdev ptr
  * @chan_num: channel

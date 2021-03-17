@@ -56,16 +56,6 @@ bool reg_is_world_ctry_code(uint16_t ctry_code);
 
 #if defined(CONFIG_REG_CLIENT) && defined(CONFIG_CHAN_NUM_API)
 /**
- * reg_chan_has_dfs_attribute() - check channel has dfs attribue or not
- * @ch: channel number.
- *
- * This API get chan initial dfs attribue flag from regdomain
- *
- * Return: true if chan is dfs, otherwise false
- */
-bool reg_chan_has_dfs_attribute(struct wlan_objmgr_pdev *pdev, uint8_t ch);
-
-/**
  * reg_is_passive_or_disable_ch() - Check if the given channel is passive or
  * disabled.
  * @pdev: Pointer to physical dev
@@ -75,12 +65,6 @@ bool reg_chan_has_dfs_attribute(struct wlan_objmgr_pdev *pdev, uint8_t ch);
  */
 bool reg_is_passive_or_disable_ch(struct wlan_objmgr_pdev *pdev, uint8_t chan);
 #else
-static inline bool
-reg_chan_has_dfs_attribute(struct wlan_objmgr_pdev *pdev, uint8_t ch)
-{
-	return false;
-}
-
 static inline bool
 reg_is_passive_or_disable_ch(struct wlan_objmgr_pdev *pdev, uint8_t chan)
 {

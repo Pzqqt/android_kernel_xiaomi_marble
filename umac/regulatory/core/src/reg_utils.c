@@ -42,32 +42,6 @@
 #define IS_VALID_PSOC_REG_OBJ(psoc_priv_obj) (psoc_priv_obj)
 #define IS_VALID_PDEV_REG_OBJ(pdev_priv_obj) (pdev_priv_obj)
 
-#ifdef CONFIG_CHAN_NUM_API
-bool reg_chan_has_dfs_attribute(struct wlan_objmgr_pdev *pdev, uint8_t ch)
-{
-	enum channel_enum ch_idx;
-	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
-
-	ch_idx = reg_get_chan_enum(ch);
-
-	if (ch_idx == INVALID_CHANNEL)
-		return false;
-
-	pdev_priv_obj = reg_get_pdev_obj(pdev);
-
-	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
-		reg_err("pdev reg obj is NULL");
-		return false;
-	}
-
-	if (pdev_priv_obj->cur_chan_list[ch_idx].chan_flags &
-	    REGULATORY_CHAN_RADAR)
-		return true;
-
-	return false;
-}
-#endif /* CONFIG_CHAN_NUM_API */
-
 #ifdef CONFIG_CHAN_FREQ_API
 bool reg_chan_has_dfs_attribute_for_freq(struct wlan_objmgr_pdev *pdev,
 					 qdf_freq_t freq)
