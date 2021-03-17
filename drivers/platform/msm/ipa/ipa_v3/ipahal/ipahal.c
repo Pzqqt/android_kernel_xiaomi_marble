@@ -401,7 +401,9 @@ static struct ipahal_imm_cmd_pyld *ipa_imm_cmd_construct_ip_packet_init_ex(
 	data->flt_priority = packet_init_ex_params->flt_priority;
 	data->flt_close_aggr_irq_mod =
 	packet_init_ex_params->flt_close_aggr_irq_mod;
-	data->flt_rule_id = packet_init_ex_params->flt_rule_id;
+	/* rule id value of 0x3FF is required */
+	/*  (if not set correctly, filtering stats may be updated) */
+	data->flt_rule_id = 0x3FF;
 	data->flt_action = packet_init_ex_params->flt_action;
 	data->flt_pdn_idx = packet_init_ex_params->flt_pdn_idx;
 	data->flt_set_metadata = packet_init_ex_params->flt_set_metadata;
@@ -409,8 +411,11 @@ static struct ipahal_imm_cmd_pyld *ipa_imm_cmd_construct_ip_packet_init_ex(
 	data->rt_pipe_dest_idx = packet_init_ex_params->rt_pipe_dest_idx;
 	data->rt_stats_cnt_idx = packet_init_ex_params->rt_stats_cnt_idx;
 	data->rt_priority = packet_init_ex_params->rt_priority;
-	data->rt_close_aggr_irq_mod = packet_init_ex_params->rt_close_aggr_irq_mod;
-	data->rt_rule_id = packet_init_ex_params->rt_rule_id;
+	data->rt_close_aggr_irq_mod =
+		packet_init_ex_params->rt_close_aggr_irq_mod;
+	/* rule id value of 0x3FF is required */
+	/*  (if not set correctly, filtering stats may be updated) */
+	data->rt_rule_id = 0x3FF;
 	data->rt_hdr_offset = packet_init_ex_params->rt_hdr_offset;
 	data->rt_proc_ctx = packet_init_ex_params->rt_proc_ctx;
 	data->rt_retain_hdr = packet_init_ex_params->rt_retain_hdr;
@@ -443,7 +448,6 @@ int ipa_imm_cmd_modify_ip_packet_init_ex(
 	CHECK_SET_PARAM(flt_stats_cnt_idx, data, prms, mask);
 	CHECK_SET_PARAM(flt_priority, data, prms, mask);
 	CHECK_SET_PARAM(flt_close_aggr_irq_mod, data, prms, mask);
-	CHECK_SET_PARAM(flt_rule_id, data, prms, mask);
 	CHECK_SET_PARAM(flt_action, data, prms, mask);
 	CHECK_SET_PARAM(flt_pdn_idx, data, prms, mask);
 	CHECK_SET_PARAM(flt_set_metadata, data, prms, mask);
@@ -452,7 +456,6 @@ int ipa_imm_cmd_modify_ip_packet_init_ex(
 	CHECK_SET_PARAM(rt_stats_cnt_idx, data, prms, mask);
 	CHECK_SET_PARAM(rt_priority, data, prms, mask);
 	CHECK_SET_PARAM(rt_close_aggr_irq_mod, data, prms, mask);
-	CHECK_SET_PARAM(rt_rule_id, data, prms, mask);
 	CHECK_SET_PARAM(rt_hdr_offset, data, prms, mask);
 	CHECK_SET_PARAM(rt_proc_ctx, data, prms, mask);
 	CHECK_SET_PARAM(rt_retain_hdr, data, prms, mask);

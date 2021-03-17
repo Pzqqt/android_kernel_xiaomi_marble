@@ -256,7 +256,6 @@ struct ipahal_imm_cmd_ip_packet_init_ex {
 	u8 flt_stats_cnt_idx;
 	u8 flt_priority;
 	bool flt_close_aggr_irq_mod;
-	u16 flt_rule_id ;
 	u8 flt_action;
 	u8 flt_pdn_idx;
 	bool flt_set_metadata;
@@ -265,7 +264,6 @@ struct ipahal_imm_cmd_ip_packet_init_ex {
 	u8 rt_stats_cnt_idx;
 	u8 rt_priority;
 	bool rt_close_aggr_irq_mod;
-	u16 rt_rule_id;
 	u16 rt_hdr_offset;
 	bool rt_proc_ctx;
 	bool rt_retain_hdr;
