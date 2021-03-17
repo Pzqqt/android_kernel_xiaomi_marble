@@ -1429,6 +1429,97 @@ end:
 	return rc;
 }
 
+static int _sde_connector_set_prop_out_fb(struct drm_connector *connector,
+		struct drm_connector_state *state,
+		uint64_t val)
+{
+	int rc = 0;
+	struct sde_connector *c_conn;
+	struct sde_connector_state *c_state;
+
+	c_conn = to_sde_connector(connector);
+	c_state = to_sde_connector_state(state);
+
+	/* clear old fb, if present */
+	if (c_state->out_fb)
+		_sde_connector_destroy_fb(c_conn, c_state);
+
+	/* convert fb val to drm framebuffer and prepare it */
+	c_state->out_fb =
+		drm_framebuffer_lookup(connector->dev, NULL, val);
+	if (!c_state->out_fb && val) {
+		SDE_ERROR("failed to look up fb %lld\n", val);
+		rc = -EFAULT;
+	} else if (!c_state->out_fb && !val) {
+		SDE_DEBUG("cleared fb_id\n");
+		rc = 0;
+	}
+
+	return rc;
+}
+
+static int _sde_connector_set_prop_retire_fence(struct drm_connector *connector,
+		struct drm_connector_state *state,
+		uint64_t val)
+{
+	int rc = 0;
+	struct sde_connector *c_conn;
+	uint64_t fence_user_fd;
+	uint64_t __user prev_user_fd;
+
+	c_conn = to_sde_connector(connector);
+
+	if (!val) {
+		rc = -EINVAL;
+		goto end;
+	}
+
+	rc = copy_from_user(&prev_user_fd, (void __user *)val,
+			sizeof(uint64_t));
+	if (rc) {
+		SDE_ERROR("copy from user failed rc:%d\n", rc);
+		rc = -EFAULT;
+		goto end;
+	}
+
+	/*
+	 * client is expected to reset the property to -1 before
+	 * requesting for the retire fence
+	 */
+	if (prev_user_fd == -1) {
+		uint32_t offset;
+
+		offset = sde_connector_get_property(state,
+				CONN_PROP_RETIRE_FENCE_OFFSET);
+		/*
+		 * update the offset to a timeline for
+		 * commit completion
+		 */
+		offset++;
+		rc = sde_fence_create(c_conn->retire_fence,
+					&fence_user_fd, offset);
+		if (rc) {
+			SDE_ERROR("fence create failed rc:%d\n", rc);
+			goto end;
+		}
+
+		rc = copy_to_user((uint64_t __user *)(uintptr_t)val,
+				&fence_user_fd, sizeof(uint64_t));
+		if (rc) {
+			SDE_ERROR("copy to user failed rc:%d\n", rc);
+			/*
+			 * fence will be released with timeline
+			 * update
+			 */
+			put_unused_fd(fence_user_fd);
+			rc = -EFAULT;
+			goto end;
+		}
+	}
+end:
+	return rc;
+}
+
 static int sde_connector_atomic_set_property(struct drm_connector *connector,
 		struct drm_connector_state *state,
 		struct drm_property *property,
@@ -1437,8 +1528,6 @@ static int sde_connector_atomic_set_property(struct drm_connector *connector,
 	struct sde_connector *c_conn;
 	struct sde_connector_state *c_state;
 	int idx, rc;
-	uint64_t fence_user_fd;
-	uint64_t __user prev_user_fd;
 
 	if (!connector || !state || !property) {
 		SDE_ERROR("invalid argument(s), conn %pK, state %pK, prp %pK\n",
@@ -1459,67 +1548,13 @@ static int sde_connector_atomic_set_property(struct drm_connector *connector,
 	idx = msm_property_index(&c_conn->property_info, property);
 	switch (idx) {
 	case CONNECTOR_PROP_OUT_FB:
-		/* clear old fb, if present */
-		if (c_state->out_fb)
-			_sde_connector_destroy_fb(c_conn, c_state);
-
-		/* convert fb val to drm framebuffer and prepare it */
-		c_state->out_fb =
-			drm_framebuffer_lookup(connector->dev, NULL, val);
-		if (!c_state->out_fb && val) {
-			SDE_ERROR("failed to look up fb %lld\n", val);
-			rc = -EFAULT;
-		} else if (!c_state->out_fb && !val) {
-			SDE_DEBUG("cleared fb_id\n");
-			rc = 0;
-		}
+		rc = _sde_connector_set_prop_out_fb(connector, state, val);
 		break;
 	case CONNECTOR_PROP_RETIRE_FENCE:
-		if (!val)
+		rc = _sde_connector_set_prop_retire_fence(connector, state, val);
+		if (!rc)
 			goto end;
 
-		rc = copy_from_user(&prev_user_fd, (void __user *)val,
-				sizeof(uint64_t));
-		if (rc) {
-			SDE_ERROR("copy from user failed rc:%d\n", rc);
-			rc = -EFAULT;
-			goto end;
-		}
-
-		/*
-		 * client is expected to reset the property to -1 before
-		 * requesting for the retire fence
-		 */
-		if (prev_user_fd == -1) {
-			uint32_t offset;
-
-			offset = sde_connector_get_property(state,
-					CONN_PROP_RETIRE_FENCE_OFFSET);
-			/*
-			 * update the offset to a timeline for
-			 * commit completion
-			 */
-			offset++;
-			rc = sde_fence_create(c_conn->retire_fence,
-						&fence_user_fd, offset);
-			if (rc) {
-				SDE_ERROR("fence create failed rc:%d\n", rc);
-				goto end;
-			}
-
-			rc = copy_to_user((uint64_t __user *)(uintptr_t)val,
-					&fence_user_fd, sizeof(uint64_t));
-			if (rc) {
-				SDE_ERROR("copy to user failed rc:%d\n", rc);
-				/*
-				 * fence will be released with timeline
-				 * update
-				 */
-				put_unused_fd(fence_user_fd);
-				rc = -EFAULT;
-				goto end;
-			}
-		}
 		break;
 	case CONNECTOR_PROP_ROI_V1:
 		rc = _sde_connector_set_roi_v1(c_conn, c_state,
