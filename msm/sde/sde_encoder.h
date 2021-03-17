@@ -392,6 +392,12 @@ enum sde_intf_mode sde_encoder_get_intf_mode(struct drm_encoder *encoder);
  */
 u32 sde_encoder_get_frame_count(struct drm_encoder *encoder);
 
+/**
+ * sde_encoder_get_avr_status - get combined avr_status from all intfs for given virt encoder
+ * @drm_enc: Pointer to drm encoder structure
+ */
+int sde_encoder_get_avr_status(struct drm_encoder *drm_enc);
+
 /*
  * sde_encoder_get_vblank_timestamp - get the last vsync timestamp
  * @encoder: Pointer to drm encoder object

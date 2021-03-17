@@ -387,6 +387,8 @@ static ssize_t vsync_event_show(struct device *device,
 {
 	struct drm_crtc *crtc;
 	struct sde_crtc *sde_crtc;
+	struct drm_encoder *encoder;
+	int avr_status = -EPIPE;
 
 	if (!device || !buf) {
 		SDE_ERROR("invalid input param(s)\n");
@@ -395,8 +397,21 @@ static ssize_t vsync_event_show(struct device *device,
 
 	crtc = dev_get_drvdata(device);
 	sde_crtc = to_sde_crtc(crtc);
-	return scnprintf(buf, PAGE_SIZE, "VSYNC=%llu\n",
-			ktime_to_ns(sde_crtc->vblank_last_cb_time));
+
+	mutex_lock(&sde_crtc->crtc_lock);
+	if (sde_crtc->enabled) {
+		drm_for_each_encoder_mask(encoder, crtc->dev, crtc->state->encoder_mask) {
+			if (sde_encoder_in_clone_mode(encoder))
+				continue;
+
+			avr_status = sde_encoder_get_avr_status(encoder);
+			break;
+		}
+	}
+	mutex_unlock(&sde_crtc->crtc_lock);
+
+	return scnprintf(buf, PAGE_SIZE, "VSYNC=%llu\nAVR_STATUS=%d\n",
+			ktime_to_ns(sde_crtc->vblank_last_cb_time), avr_status);
 }
 
 static ssize_t retire_frame_event_show(struct device *device,

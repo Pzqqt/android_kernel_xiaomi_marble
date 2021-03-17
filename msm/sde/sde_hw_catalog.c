@@ -2431,6 +2431,7 @@ static int sde_intf_parse_dt(struct device_node *np,
 			set_bit(SDE_INTF_WD_TIMER, &intf->features);
 			set_bit(SDE_INTF_RESET_COUNTER, &intf->features);
 			set_bit(SDE_INTF_VSYNC_TIMESTAMP, &intf->features);
+			set_bit(SDE_INTF_AVR_STATUS, &intf->features);
 		}
 	}
 
