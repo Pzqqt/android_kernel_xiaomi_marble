@@ -9243,6 +9243,15 @@ QDF_STATUS wma_send_pdev_set_dual_mac_config(tp_wma_handle wma_handle,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
+	req_msg = wma_fill_hold_req(wma_handle, 0,
+				    SIR_HAL_PDEV_DUAL_MAC_CFG_REQ,
+				    WMA_PDEV_MAC_CFG_RESP, NULL,
+				    WMA_VDEV_DUAL_MAC_CFG_TIMEOUT);
+	if (!req_msg) {
+		wma_err("Failed to allocate request for SIR_HAL_PDEV_DUAL_MAC_CFG_REQ");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	/*
 	 * aquire the wake lock here and release it in response handler function
 	 * In error condition, release the wake lock right away
@@ -9256,19 +9265,11 @@ QDF_STATUS wma_send_pdev_set_dual_mac_config(tp_wma_handle wma_handle,
 		wma_err("Failed to send WMI_PDEV_SET_DUAL_MAC_CONFIG_CMDID: %d",
 			status);
 		wma_release_wakelock(&wma_handle->wmi_cmd_rsp_wake_lock);
+		wma_remove_req(wma_handle, 0, WMA_PDEV_MAC_CFG_RESP);
 		goto fail;
 	}
 	policy_mgr_update_dbs_req_config(wma_handle->psoc,
 	msg->scan_config, msg->fw_mode_config);
-
-	req_msg = wma_fill_hold_req(wma_handle, 0,
-				SIR_HAL_PDEV_DUAL_MAC_CFG_REQ,
-				WMA_PDEV_MAC_CFG_RESP, NULL,
-				WMA_VDEV_DUAL_MAC_CFG_TIMEOUT);
-	if (!req_msg) {
-		wma_err("Failed to allocate request for SIR_HAL_PDEV_DUAL_MAC_CFG_REQ");
-		wma_remove_req(wma_handle, 0, WMA_PDEV_MAC_CFG_RESP);
-	}
 
 	return QDF_STATUS_SUCCESS;
 
@@ -9280,8 +9281,8 @@ fail:
 	resp->status = SET_HW_MODE_STATUS_ECANCELED;
 	wma_debug("Sending failure response to LIM");
 	wma_send_msg(wma_handle, SIR_HAL_PDEV_MAC_CFG_RESP, (void *) resp, 0);
-	return QDF_STATUS_E_FAILURE;
 
+	return QDF_STATUS_E_FAILURE;
 }
 
 /**
