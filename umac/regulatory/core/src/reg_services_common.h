@@ -141,6 +141,10 @@ extern const struct chan_map channel_map_jp[];
 extern const struct chan_map channel_map_china[];
 extern const struct chan_map channel_map_global[];
 
+#ifdef WLAN_FEATURE_11BE
+#define ALL_SCHANS_PUNC 0x0000 /* all subchannels punctured */
+#endif
+
 #ifdef CONFIG_CHAN_NUM_API
 /**
  * reg_get_chan_enum() - Get channel enum for given channel number
@@ -989,6 +993,32 @@ void reg_set_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
 				     qdf_freq_t sec_ch_2g_freq,
 				     struct ch_params *ch_params);
 
+/**
+ * reg_fill_channel_list() - Fills an array of ch_params (list of
+ * channels) for the given channel width and primary freq.
+ * If 320 band_center is given, ch_params corresponding to the
+ * given band_center is filled.
+ *
+ * @pdev: Pointer to pdev
+ * @freq: Center frequency of the primary channel in MHz
+ * @sec_ch_2g_freq: Secondary 2G channel frequency in MHZ
+ * @ch_width: Input channel width.
+ * @band_center: Center frequency of the 320MHZ channel.
+ * @chan_list: Pointer to struct reg_channel_list to be filled (Output).
+ * The caller is supposed to provide enough storage for the elements
+ * in the list.
+ *
+ * Return: None
+ */
+#ifdef WLAN_FEATURE_11BE
+void
+reg_fill_channel_list(struct wlan_objmgr_pdev *pdev,
+		      qdf_freq_t freq,
+		      qdf_freq_t sec_ch_2g_freq,
+		      enum phy_ch_width ch_width,
+		      qdf_freq_t band_center_320,
+		      struct reg_channel_list *chan_list);
+#endif
 /**
  * reg_get_channel_reg_power_for_freq() - Get the txpower for the given channel
  * @pdev: Pointer to pdev

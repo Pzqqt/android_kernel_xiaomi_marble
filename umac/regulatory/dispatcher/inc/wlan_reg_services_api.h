@@ -1163,6 +1163,26 @@ wlan_reg_get_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
 				    qdf_freq_t freq);
 
 /**
+ * wlan_reg_fill_channel_list() - Fills the reg_channel_list (list of channels)
+ * @pdev: Pointer to struct wlan_objmgr_pdev.
+ * @freq: Center frequency of the primary channel in MHz
+ * @sec_ch_2g_freq: Secondary channel center frequency.
+ * @ch_width: Channel width of type 'enum phy_ch_width'.
+ * @band_center_320: Center frequency of 320MHZ channel.
+ * @chan_list: Pointer to struct reg_channel_list to be filled (Output param).
+ *
+ * Return: None
+ */
+#ifdef WLAN_FEATURE_11BE
+void wlan_reg_fill_channel_list(struct wlan_objmgr_pdev *pdev,
+				qdf_freq_t freq,
+				qdf_freq_t sec_ch_2g_freq,
+				enum phy_ch_width ch_width,
+				qdf_freq_t band_center_320,
+				struct reg_channel_list *chan_list);
+#endif
+
+/**
  * wlan_reg_set_channel_params_for_freq() - Sets channel parameteres for
  * given bandwidth
  * @pdev: The physical dev to program country code or regdomain

@@ -620,6 +620,7 @@ enum ctl_value {
  * @center_freq_seg1: channel number segment 1
  * @mhz_freq_seg0: Center frequency for segment 0
  * @mhz_freq_seg1: Center frequency for segment 1
+ * @reg_punc_pattern: Output puncturing pattern
  */
 struct ch_params {
 	enum phy_ch_width ch_width;
@@ -628,7 +629,27 @@ struct ch_params {
 	uint8_t center_freq_seg1;
 	qdf_freq_t mhz_freq_seg0;
 	qdf_freq_t mhz_freq_seg1;
+#ifdef WLAN_FEATURE_11BE
+	uint16_t reg_punc_pattern;
+#endif
 };
+
+/**
+ * struct reg_channel_list
+ * @num_ch_params: Number of chan_param elements
+ * @chan_param: Object of type struct ch_params to hold channel params
+ * Currently chan_param is an array of 2 because maximum possible 320
+ * channels for a given primary channel is 2. This may be dynamically
+ * allocated in the future by the caller if num_ch_params is greater than 2.
+ *
+ */
+#ifdef WLAN_FEATURE_11BE
+#define MAX_NUM_CHAN_PARAM 2
+struct reg_channel_list {
+	uint8_t num_ch_params;
+	struct ch_params chan_param[MAX_NUM_CHAN_PARAM];
+};
+#endif
 
 /**
  * struct channel_power
