@@ -108,7 +108,7 @@
 #define ROAM_MAX_CFG_VALUE 0xffffffff
 
 #define CFG_VALID_CHANNEL_LIST_LEN 100
-#define MAX_SSID_ALLOWED_LIST    4
+#define MAX_SSID_ALLOWED_LIST    8
 #define MAX_BSSID_AVOID_LIST     16
 #define MAX_BSSID_FAVORED      16
 
