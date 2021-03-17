@@ -336,7 +336,7 @@ osif_cm_roam_start_cb(struct wlan_objmgr_vdev *vdev)
  * @vdev: vdev pointer
  *
  * This callback indicates os_if that roaming has been aborted
- * so that os_if can stop all the activity on this connection
+ * so that os_if can resume all the activity on this connection
  *
  * Return: QDF_STATUS
  */
@@ -347,6 +347,42 @@ osif_cm_roam_abort_cb(struct wlan_objmgr_vdev *vdev)
 	return osif_cm_netif_queue_ind(vdev,
 				       WLAN_WAKE_ALL_NETIF_QUEUE,
 				       WLAN_CONTROL_PATH);
+}
+
+/**
+ * osif_cm_roam_sync_cb() - Roam sync callback
+ * @vdev: vdev pointer
+ *
+ * This callback indicates os_if that roam sync ind received
+ * so that os_if can stop all the activity on this connection
+ *
+ * Return: QDF_STATUS
+ */
+
+static QDF_STATUS
+osif_cm_roam_sync_cb(struct wlan_objmgr_vdev *vdev)
+{
+	osif_cm_napi_serialize(true);
+	return osif_cm_netif_queue_ind(vdev,
+				       WLAN_STOP_ALL_NETIF_QUEUE,
+				       WLAN_CONTROL_PATH);
+}
+
+/**
+ * osif_cm_roam_cmpl_cb() - Roam sync complete callback
+ * @vdev: vdev pointer
+ * @rsp: connect rsp
+ *
+ * This callback indicates os_if that roam sync is complete
+ * so that os_if can stop all the activity on this connection
+ *
+ * Return: QDF_STATUS
+ */
+
+static QDF_STATUS
+osif_cm_roam_cmpl_cb(struct wlan_objmgr_vdev *vdev)
+{
+	return osif_cm_napi_serialize(false);
 }
 #endif
 
@@ -359,6 +395,8 @@ static struct mlme_cm_ops cm_ops = {
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	.mlme_cm_roam_start_cb = osif_cm_roam_start_cb,
 	.mlme_cm_roam_abort_cb = osif_cm_roam_abort_cb,
+	.mlme_cm_roam_sync_cb = osif_cm_roam_sync_cb,
+	.mlme_cm_roam_cmpl_cb = osif_cm_roam_cmpl_cb,
 #endif
 };
 
@@ -472,8 +510,7 @@ QDF_STATUS osif_cm_napi_serialize(bool action)
 
 	return ret;
 }
-#endif
-#ifdef WLAN_FEATURE_FILS_SK
+
 QDF_STATUS osif_cm_save_gtk(struct wlan_objmgr_vdev *vdev,
 			    struct wlan_cm_connect_resp *rsp)
 {
@@ -487,7 +524,9 @@ QDF_STATUS osif_cm_save_gtk(struct wlan_objmgr_vdev *vdev,
 
 	return ret;
 }
+#endif
 
+#ifdef WLAN_FEATURE_FILS_SK
 QDF_STATUS osif_cm_set_hlp_data(struct net_device *dev,
 				struct wlan_objmgr_vdev *vdev,
 				struct wlan_cm_connect_resp *rsp)

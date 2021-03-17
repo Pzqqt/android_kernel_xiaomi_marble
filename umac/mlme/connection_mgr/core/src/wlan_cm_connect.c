@@ -561,7 +561,7 @@ static inline QDF_STATUS cm_set_fils_key(struct cnx_mgr *cm_ctx,
 }
 #endif /* WLAN_FEATURE_FILS_SK */
 
-static QDF_STATUS
+QDF_STATUS
 cm_inform_blm_connect_complete(struct wlan_objmgr_vdev *vdev,
 			       struct wlan_cm_connect_resp *resp)
 {
@@ -716,12 +716,6 @@ static void cm_set_fils_wep_key(struct cnx_mgr *cm_ctx,
 	cm_set_key(cm_ctx, false, 0, &broadcast_mac);
 }
 #else
-static inline QDF_STATUS
-cm_inform_blm_connect_complete(struct wlan_objmgr_vdev *vdev,
-			       struct wlan_cm_connect_resp *resp)
-{
-	return QDF_STATUS_SUCCESS;
-}
 
 static inline
 bool cm_is_retry_with_same_candidate(struct cnx_mgr *cm_ctx,
@@ -969,9 +963,8 @@ QDF_STATUS cm_if_mgr_validate_candidate(struct cnx_mgr *cm_ctx,
 				    &event_data);
 }
 
-static QDF_STATUS
-cm_if_mgr_inform_connect_complete(struct wlan_objmgr_vdev *vdev,
-				  QDF_STATUS connect_status)
+QDF_STATUS cm_if_mgr_inform_connect_complete(struct wlan_objmgr_vdev *vdev,
+					     QDF_STATUS connect_status)
 {
 	struct if_mgr_event_data *connect_complete;
 

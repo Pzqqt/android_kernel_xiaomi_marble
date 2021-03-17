@@ -229,9 +229,7 @@ bool cm_handle_fw_roam_connected_event(struct cnx_mgr *cm_ctx, uint16_t event,
 	switch (event) {
 	case WLAN_CM_SM_EV_ROAM_INVOKE:
 		cm_sm_transition_to(cm_ctx, WLAN_CM_S_ROAMING);
-		cm_sm_deliver_event_sync(cm_ctx,
-					 WLAN_CM_SM_EV_ROAM_INVOKE,
-					 data_len, data);
+		cm_sm_deliver_event_sync(cm_ctx, event, data_len, data);
 		break;
 	case WLAN_CM_SM_EV_ROAM_ABORT:
 	case WLAN_CM_SM_EV_ROAM_INVOKE_FAIL:
@@ -245,9 +243,21 @@ bool cm_handle_fw_roam_connected_event(struct cnx_mgr *cm_ctx, uint16_t event,
 			break;
 		}
 		cm_sm_transition_to(cm_ctx, WLAN_CM_S_ROAMING);
-		cm_sm_deliver_event_sync(cm_ctx,
-					 WLAN_CM_SM_EV_ROAM_START,
+		cm_sm_deliver_event_sync(cm_ctx, event,
 					 sizeof(*roam_cm_req), roam_cm_req);
+		break;
+	case WLAN_CM_SM_EV_ROAM_SYNC:
+		status = cm_prepare_roam_cmd(cm_ctx, &roam_cm_req,
+					     CM_ROAMING_FW);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			event_handled = false;
+			break;
+		}
+		cm_sm_transition_to(cm_ctx, WLAN_CM_S_ROAMING);
+		cm_sm_deliver_event_sync(cm_ctx, event, data_len, data);
+		break;
+	case WLAN_CM_SM_EV_ROAM_DONE:
+		cm_fw_roam_complete(cm_ctx, data);
 		break;
 	default:
 		event_handled = false;
@@ -992,6 +1002,7 @@ static const char *cm_sm_event_names[] = {
 	"EV_ROAM_REQ",
 	"EV_ROAM_INVOKE",
 	"EV_ROAM_ABORT",
+	"EV_ROAM_DONE",
 };
 
 enum wlan_cm_sm_state cm_get_state(struct cnx_mgr *cm_ctx)

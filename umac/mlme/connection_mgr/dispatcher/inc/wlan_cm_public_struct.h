@@ -408,8 +408,8 @@ struct wlan_connect_rsp_ies {
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
- * struct wlan_cm_connect_rsp - connect resp from VDEV mgr and will be sent to
- * OSIF
+ * struct wlan_roam_sync_info - roam sync information populated
+ * from roam sync indication struct
  * @auth_status: roam auth status (authenticated or connected)
  * @kck_len: kck length
  * @kck: kck info in roam sync
@@ -436,13 +436,11 @@ struct wlan_roam_sync_info {
 	uint8_t replay_ctr[REPLAY_CTR_LEN];
 	uint8_t subnet_change_status;
 	uint16_t roam_reason;
-#ifdef WLAN_FEATURE_FILS_SK
 	uint32_t pmk_len;
 	uint8_t pmk[MAX_PMK_LEN];
 	uint8_t pmkid[PMKID_LEN];
 	bool update_erp_next_seq_num;
 	uint16_t next_erp_seq_num;
-#endif
 };
 #endif
 
@@ -453,6 +451,7 @@ struct wlan_roam_sync_info {
  * @is_wps_connection: if its wps connection
  * @is_osen_connection: if its osen connection
  * @is_reassoc: if response is for reassoc/roam
+ * @is_ft: is FT reassoc
  * @cm_id: Connect manager id
  * @bssid: BSSID of the ap
  * @ssid: SSID of the connection
@@ -469,7 +468,8 @@ struct wlan_cm_connect_resp {
 	uint8_t vdev_id;
 	uint8_t is_wps_connection:1,
 		is_osen_connection:1,
-		is_reassoc:1;
+		is_reassoc:1,
+		is_ft:1;
 	wlan_cm_id cm_id;
 	struct qdf_mac_addr bssid;
 	struct wlan_ssid ssid;

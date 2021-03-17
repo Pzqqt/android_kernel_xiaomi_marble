@@ -292,6 +292,7 @@ struct cm_roam_req *cm_get_first_roam_command(struct wlan_objmgr_vdev *vdev);
 QDF_STATUS cm_prepare_roam_cmd(struct cnx_mgr *cm_ctx,
 			       struct cm_req **roam_req,
 			       enum wlan_cm_source source);
+
 /**
  * cm_add_fw_roam_cmd_to_list_n_ser() - Add roam req to list and serialize req
  * @cm_ctx: connection mgr context
@@ -303,6 +304,34 @@ QDF_STATUS cm_prepare_roam_cmd(struct cnx_mgr *cm_ctx,
  */
 QDF_STATUS cm_add_fw_roam_cmd_to_list_n_ser(struct cnx_mgr *cm_ctx,
 					    struct cm_req *cm_req);
+
+/**
+ * cm_fw_send_vdev_roam_event() - CM send VDEV ROAM Event
+ * @cm_ctx: connection mgr context
+ * @data_len: data size
+ * @data: event data
+ *
+ * This function sends ROAM Event to vdev manager
+ * state machine
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_fw_send_vdev_roam_event(struct cnx_mgr *cm_ctx, uint16_t data_len,
+			   void *data);
+
+/**
+ * cm_fw_roam_complete() - CM handle roam complete
+ * @cm_ctx: connection mgr context
+ * @data: join rsp data
+ *
+ * This function CM handle roam complete
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_fw_roam_complete(struct cnx_mgr *cm_ctx, void *data);
+
 #else
 static inline bool cm_roam_offload_enabled(struct wlan_objmgr_psoc *psoc)
 {

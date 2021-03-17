@@ -276,9 +276,9 @@ struct osif_cm_ops {
 #ifdef CONN_MGR_ADV_FEATURE
 	osif_cm_netif_queue_ctrl_cb netif_queue_control_cb;
 	os_if_cm_napi_serialize_ctrl_cb napi_serialize_control_cb;
+	osif_cm_save_gtk_cb save_gtk_cb;
 #endif
 #ifdef WLAN_FEATURE_FILS_SK
-	osif_cm_save_gtk_cb save_gtk_cb;
 	osif_cm_set_hlp_data_cb set_hlp_data_cb;
 #endif
 };
@@ -343,9 +343,7 @@ QDF_STATUS osif_cm_netif_queue_ind(struct wlan_objmgr_vdev *vdev,
  * Return: QDF_STATUS
  */
 QDF_STATUS osif_cm_napi_serialize(bool action);
-#endif
 
-#ifdef WLAN_FEATURE_FILS_SK
 /**
  * osif_cm_save_gtk() - Function to save gtk in legacy module
  * @vdev: vdev pointer
@@ -358,7 +356,9 @@ QDF_STATUS osif_cm_napi_serialize(bool action);
  */
 QDF_STATUS osif_cm_save_gtk(struct wlan_objmgr_vdev *vdev,
 			    struct wlan_cm_connect_resp *rsp);
+#endif
 
+#ifdef WLAN_FEATURE_FILS_SK
 /**
  * osif_cm_set_hlp_data() - Function to set hlp data for dhcp in legacy module
  * @dev: Pointer to net device

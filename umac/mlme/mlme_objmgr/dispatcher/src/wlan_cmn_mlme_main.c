@@ -481,6 +481,30 @@ QDF_STATUS mlme_cm_osif_roam_abort_ind(struct wlan_objmgr_vdev *vdev)
 
 	return ret;
 }
+
+QDF_STATUS mlme_cm_osif_roam_sync_ind(struct wlan_objmgr_vdev *vdev)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if (glbl_cm_ops &&
+	    glbl_cm_ops->mlme_cm_roam_sync_cb)
+		ret = glbl_cm_ops->mlme_cm_roam_sync_cb(vdev);
+
+	return ret;
+}
+
+QDF_STATUS
+mlme_cm_osif_roam_complete(struct wlan_objmgr_vdev *vdev)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if (glbl_cm_ops &&
+	    glbl_cm_ops->mlme_cm_roam_cmpl_cb)
+		ret = glbl_cm_ops->mlme_cm_roam_cmpl_cb(vdev);
+
+	return ret;
+}
+
 #endif
 void mlme_set_osif_cm_cb(osif_cm_get_global_ops_cb osif_cm_ops)
 {

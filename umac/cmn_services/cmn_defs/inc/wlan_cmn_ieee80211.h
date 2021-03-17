@@ -29,6 +29,8 @@
 #define WLAN_ASSOC_RSP_IES_OFFSET 6
 /* Assoc req IE offset - Capability(2) + LI(2) */
 #define WLAN_ASSOC_REQ_IES_OFFSET 4
+/* Assoc req IE offset - Capability(2) + LI(2) + current AP address(6) */
+#define WLAN_REASSOC_REQ_IES_OFFSET 10
 
 #define IEEE80211_CCMP_HEADERLEN    8
 #define IEEE80211_HT_CTRL_LEN       4
@@ -860,6 +862,7 @@ enum wlan_status_code {
 #define MAX_KEK_LENGTH 64
 #define MAX_KCK_LEN 32
 #define REPLAY_CTR_LEN 8
+#define KCK_KEY_LEN 16
 
 #define WLAN_WPA_OUI 0xf25000
 #define WLAN_WPA_OUI_TYPE 0x01
