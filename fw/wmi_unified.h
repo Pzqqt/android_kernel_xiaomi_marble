@@ -29423,6 +29423,7 @@ typedef struct {
      * Refer to 11ax spec session "9.4.2.199 TWT element" for more info.
      */
     A_UINT32 b_twt_persistence;
+    A_UINT32 is_bcast_twt;
 } wmi_twt_del_dialog_cmd_fixed_param;
 
 /* status code of deleting TWT dialog */
