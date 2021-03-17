@@ -1105,16 +1105,6 @@ struct policy_mgr_hw_mode_params {
 };
 
 /**
- * struct policy_mgr_vdev_mac_map - vdev id-mac id map
- * @vdev_id: VDEV id
- * @mac_id: MAC id
- */
-struct policy_mgr_vdev_mac_map {
-	uint32_t vdev_id;
-	uint32_t mac_id;
-};
-
-/**
  * struct policy_mgr_dual_mac_config - Dual MAC configuration
  * @scan_config: Scan configuration
  * @fw_mode_config: FW mode configuration

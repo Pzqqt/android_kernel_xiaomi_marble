@@ -115,6 +115,12 @@
 #define MAX_FTIE_SIZE 384
 #define ESE_MAX_TSPEC_IES 4
 
+/*
+ * To get 4 LSB of roam reason of roam_synch_data
+ * received from firmware
+ */
+#define ROAM_REASON_MASK 0x0F
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 #define ROAM_SCAN_PSK_SIZE    48
 #define ROAM_R0KH_ID_MAX_LEN  48
@@ -1689,6 +1695,7 @@ struct wlan_cm_roam_tx_ops {
 #ifdef FEATURE_CM_ENABLE
 	QDF_STATUS (*send_roam_invoke_cmd)(struct wlan_objmgr_vdev *vdev,
 					   struct roam_invoke_req *req);
+	QDF_STATUS (*send_roam_sync_complete_cmd)(struct wlan_objmgr_vdev *vdev);
 #endif
 };
 
@@ -1739,5 +1746,84 @@ struct cm_roam_values_copy {
 	int32_t int_value;
 	bool bool_value;
 	struct rso_chan_info chan_info;
+};
+
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+/* bit-4 and bit-5 indicate the subnet status */
+#define CM_GET_SUBNET_STATUS(roam_reason) (((roam_reason) & 0x30) >> 4)
+#else
+#define CM_GET_SUBNET_STATUS(roam_reason) (0)
+#endif
+
+/* This should not be greater than MAX_NUMBER_OF_CONC_CONNECTIONS */
+#define MAX_VDEV_SUPPORTED 4
+
+/**
+ * struct policy_mgr_vdev_mac_map - vdev id-mac id map
+ * @vdev_id: VDEV id
+ * @mac_id: MAC id
+ */
+struct policy_mgr_vdev_mac_map {
+	uint32_t vdev_id;
+	uint32_t mac_id;
+};
+
+/**
+ * struct cm_hw_mode_trans_ind - HW mode transition indication
+ * @old_hw_mode_index: Index of old HW mode
+ * @new_hw_mode_index: Index of new HW mode
+ * @num_vdev_mac_entries: Number of vdev-mac id entries
+ * @vdev_mac_map: vdev id-mac id map
+ */
+struct cm_hw_mode_trans_ind {
+	uint32_t old_hw_mode_index;
+	uint32_t new_hw_mode_index;
+	uint32_t num_vdev_mac_entries;
+	struct policy_mgr_vdev_mac_map vdev_mac_map[MAX_VDEV_SUPPORTED];
+};
+
+struct roam_offload_synch_ind {
+	uint16_t beaconProbeRespOffset;
+	uint16_t beaconProbeRespLength;
+	uint16_t reassocRespOffset;
+	uint16_t reassocRespLength;
+	uint16_t reassoc_req_offset;
+	uint16_t reassoc_req_length;
+	uint8_t isBeacon;
+	uint8_t roamed_vdev_id;
+	struct qdf_mac_addr bssid;
+	struct qdf_mac_addr self_mac;
+	int8_t txMgmtPower;
+	uint32_t auth_status;
+	uint8_t rssi;
+	uint8_t roam_reason;
+	uint32_t chan_freq;
+	uint8_t kck[MAX_KCK_LEN];
+	uint8_t kck_len;
+	uint32_t kek_len;
+	uint8_t kek[MAX_KEK_LENGTH];
+	uint32_t   pmk_len;
+	uint8_t    pmk[MAX_PMK_LEN];
+	uint8_t    pmkid[PMKID_LEN];
+	bool update_erp_next_seq_num;
+	uint16_t next_erp_seq_num;
+	uint8_t replay_ctr[REPLAY_CTR_LEN];
+	void *add_bss_params;
+	enum phy_ch_width chan_width;
+	uint32_t max_rate_flags;
+	uint32_t ric_data_len;
+#ifdef FEATURE_WLAN_ESE
+	uint32_t tspec_len;
+#endif
+	uint8_t *ric_tspec_data;
+	uint16_t aid;
+	struct cm_hw_mode_trans_ind hw_mode_trans_ind;
+	uint8_t nss;
+	struct qdf_mac_addr dst_mac;
+	struct qdf_mac_addr src_mac;
+	uint16_t hlp_data_len;
+	uint8_t hlp_data[FILS_MAX_HLP_DATA_LEN];
+	bool is_ft_im_roam;
+	enum wlan_phymode phy_mode; /*phy mode sent by fw */
 };
 #endif

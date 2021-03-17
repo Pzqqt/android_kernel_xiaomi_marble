@@ -1342,6 +1342,18 @@ static void cm_free_tspec_ie(struct cm_vdev_join_rsp *rsp)
 {}
 #endif
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+static void cm_free_roaming_info(struct wlan_cm_connect_resp *connect_rsp)
+{
+	qdf_mem_free(connect_rsp->roaming_info);
+	connect_rsp->roaming_info = NULL;
+}
+#else
+static inline void
+cm_free_roaming_info(struct wlan_cm_connect_resp *connect_rsp)
+{}
+#endif
+
 void wlan_cm_free_connect_rsp(struct cm_vdev_join_rsp *rsp)
 {
 	struct wlan_connect_rsp_ies *connect_ie =
@@ -1353,6 +1365,7 @@ void wlan_cm_free_connect_rsp(struct cm_vdev_join_rsp *rsp)
 	cm_free_fils_ie(connect_ie);
 	cm_free_tspec_ie(rsp);
 	qdf_mem_free(rsp->ric_resp_ie.ptr);
+	cm_free_roaming_info(&rsp->connect_rsp);
 	qdf_mem_zero(rsp, sizeof(*rsp));
 	qdf_mem_free(rsp);
 }
@@ -1379,4 +1392,28 @@ bool cm_is_vdevid_connected(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 
 	return connected;
 }
+
+bool cm_is_vdevid_active(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	bool active;
+	enum QDF_OPMODE opmode;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev %d: vdev not found", vdev_id);
+		return false;
+	}
+	opmode = wlan_vdev_mlme_get_opmode(vdev);
+	if (opmode != QDF_STA_MODE && opmode != QDF_P2P_CLIENT_MODE) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		return false;
+	}
+	active = cm_is_vdev_active(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+
+	return active;
+}
+
 #endif
