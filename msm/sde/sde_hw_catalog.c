@@ -3492,8 +3492,7 @@ static int sde_cache_parse_dt(struct device_node *np,
 		return 0;
 
 	llcc_node = of_find_node_by_name(NULL, "cache-controller");
-	if (!llcc_node ||
-		(!of_device_is_compatible(llcc_node, "qcom,llcc-v2"))) {
+	if (!llcc_node) {
 		SDE_DEBUG("cache controller missing, will disable img cache\n");
 		return 0;
 	}
