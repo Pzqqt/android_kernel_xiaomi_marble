@@ -16,7 +16,7 @@
 #define IR_SPI_DRIVER_NAME		"ir-spi"
 
 #define IR_SPI_DEFAULT_FREQUENCY	38000
-#define IR_SPI_MAX_BUFSIZE		 4096
+#define IR_SPI_MAX_BUFSIZE		32768
 
 struct ir_spi_data {
 	u32 freq;
