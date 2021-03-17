@@ -1023,8 +1023,16 @@ static void
 reg_append_mas_chan_list_for_6g(struct wlan_regulatory_pdev_priv_obj
 				*pdev_priv_obj)
 {
-	struct regulatory_channel *master_chan_list_6g_client =
-		pdev_priv_obj->mas_chan_list_6g_client
+	struct regulatory_channel *master_chan_list_6g_client;
+
+	if (pdev_priv_obj->reg_cur_6g_ap_pwr_type >= REG_CURRENT_MAX_AP_TYPE ||
+	    pdev_priv_obj->reg_cur_6g_client_mobility_type >=
+	    REG_MAX_CLIENT_TYPE) {
+		reg_debug("invalid 6G AP or client power type");
+		return;
+	}
+
+	master_chan_list_6g_client = pdev_priv_obj->mas_chan_list_6g_client
 			[pdev_priv_obj->reg_cur_6g_ap_pwr_type]
 			[pdev_priv_obj->reg_cur_6g_client_mobility_type];
 
@@ -1039,6 +1047,11 @@ reg_append_mas_chan_list_for_6g(struct wlan_regulatory_pdev_priv_obj
 				*pdev_priv_obj)
 {
 	enum reg_6g_ap_type ap_pwr_type = pdev_priv_obj->reg_cur_6g_ap_pwr_type;
+
+	if (ap_pwr_type >= REG_CURRENT_MAX_AP_TYPE) {
+		reg_debug("invalid 6G AP power type");
+		return;
+	}
 
 	qdf_mem_copy(&pdev_priv_obj->mas_chan_list[MIN_6GHZ_CHANNEL],
 		     pdev_priv_obj->mas_chan_list_6g_ap[ap_pwr_type],
