@@ -3588,8 +3588,7 @@ void sde_encoder_helper_hw_reset(struct sde_encoder_phys *phys_enc)
 			if (rc) {
 				SDE_ERROR_ENC(sde_enc,
 						"connector soft reset failure\n");
-				SDE_DBG_DUMP("all", "dbg_bus", "vbif_dbg_bus",
-								"panic");
+				SDE_DBG_DUMP(SDE_DBG_BUILT_IN_ALL, "panic");
 			}
 		}
 	}

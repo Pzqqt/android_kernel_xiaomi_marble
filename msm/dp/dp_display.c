@@ -2118,23 +2118,23 @@ static void dp_display_dbg_reister(struct dp_display_private *dp)
 
 	io = &parser->get_io(parser, "dp_ahb")->io;
 	if (io)
-		sde_dbg_reg_register_base("dp_ahb", io->base, io->len);
+		sde_dbg_reg_register_base("dp_ahb", io->base, io->len, SDE_DBG_DP);
 
 	io = &parser->get_io(parser, "dp_aux")->io;
 	if (io)
-		sde_dbg_reg_register_base("dp_aux", io->base, io->len);
+		sde_dbg_reg_register_base("dp_aux", io->base, io->len, SDE_DBG_DP);
 
 	io = &parser->get_io(parser, "dp_link")->io;
 	if (io)
-		sde_dbg_reg_register_base("dp_link", io->base, io->len);
+		sde_dbg_reg_register_base("dp_link", io->base, io->len, SDE_DBG_DP);
 
 	io = &parser->get_io(parser, "dp_p0")->io;
 	if (io)
-		sde_dbg_reg_register_base("dp_p0", io->base, io->len);
+		sde_dbg_reg_register_base("dp_p0", io->base, io->len, SDE_DBG_DP);
 
 	io = &parser->get_io(parser, "hdcp_physical")->io;
 	if (io)
-		sde_dbg_reg_register_base("hdcp_physical", io->base, io->len);
+		sde_dbg_reg_register_base("hdcp_physical", io->base, io->len, SDE_DBG_DP);
 }
 
 static int dp_display_post_init(struct dp_display *dp_display)

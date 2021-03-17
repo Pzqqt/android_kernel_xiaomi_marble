@@ -544,9 +544,9 @@ static int _sde_encoder_phys_cmd_handle_ppdone_timeout(
 		mutex_lock(phys_enc->vblank_ctl_lock);
 		sde_encoder_helper_unregister_irq(phys_enc, INTR_IDX_RDPTR);
 		if (sde_kms_is_secure_session_inprogress(phys_enc->sde_kms))
-			SDE_DBG_DUMP("secure", "all", "dbg_bus");
+			SDE_DBG_DUMP(SDE_DBG_BUILT_IN_ALL, "secure");
 		else
-			SDE_DBG_DUMP("all", "dbg_bus", "vbif_dbg_bus");
+			SDE_DBG_DUMP(SDE_DBG_BUILT_IN_ALL);
 		sde_encoder_helper_register_irq(phys_enc, INTR_IDX_RDPTR);
 		mutex_unlock(phys_enc->vblank_ctl_lock);
 	}
@@ -559,7 +559,7 @@ static int _sde_encoder_phys_cmd_handle_ppdone_timeout(
 		sde_connector_event_notify(conn, DRM_EVENT_SDE_HW_RECOVERY,
 				sizeof(uint8_t), SDE_RECOVERY_CAPTURE);
 	else if (cmd_enc->pp_timeout_report_cnt)
-		SDE_DBG_DUMP("dsi_dbg_bus", "panic");
+		SDE_DBG_DUMP(0x0, "panic");
 
 	/* request a ctl reset before the next kickoff */
 	phys_enc->enable_state = SDE_ENC_ERR_NEEDS_HW_RESET;
@@ -649,12 +649,9 @@ static int _sde_encoder_phys_cmd_poll_write_pointer_started(
 		ret = hw_pp->ops.poll_timeout_wr_ptr(hw_pp, timeout_us);
 
 	if (ret) {
-		SDE_EVT32(DRMID(phys_enc->parent),
-				phys_enc->hw_pp->idx - PINGPONG_0,
-				phys_enc->hw_intf->idx - INTF_0,
-				timeout_us,
-				ret);
-		SDE_DBG_DUMP("all", "dbg_bus", "vbif_dbg_bus", "panic");
+		SDE_EVT32(DRMID(phys_enc->parent), phys_enc->hw_pp->idx - PINGPONG_0,
+				phys_enc->hw_intf->idx - INTF_0, timeout_us, ret);
+		SDE_DBG_DUMP(SDE_DBG_BUILT_IN_ALL, "panic");
 	}
 
 end:
@@ -1870,7 +1867,7 @@ static void _sde_encoder_autorefresh_disable_seq2(
 			> AUTOREFRESH_SEQ2_POLL_TIMEOUT) {
 			SDE_ERROR_CMDENC(cmd_enc,
 					"disable autorefresh failed\n");
-			SDE_DBG_DUMP("all", "dbg_bus", "vbif_dbg_bus", "panic");
+			SDE_DBG_DUMP(SDE_DBG_BUILT_IN_ALL, "panic");
 			break;
 		}
 
