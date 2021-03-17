@@ -292,21 +292,21 @@ sap_is_channel_bonding_etsi_weather_channel(struct sap_context *sap_ctx)
 /*
  * sap_get_bonding_channels() - get bonding channels from primary channel.
  * @sap_ctx: Handle to SAP context.
- * @channel: Channel to get bonded channels.
- * @channels: Bonded channel list
+ * @chan_freq: Channel frequency to get bonded channels.
+ * @freq_list: Bonded channel frequency list
  * @size: Max bonded channels
  * @chanBondState: The channel bonding mode of the passed channel.
  *
  * Return: Number of sub channels
  */
 static uint8_t sap_get_bonding_channels(struct sap_context *sap_ctx,
-					uint8_t channel,
-					uint8_t *channels, uint8_t size,
+					qdf_freq_t chan_freq,
+					qdf_freq_t *freq_list, uint8_t size,
 					ePhyChanBondState chanBondState)
 {
-	uint8_t numChannel;
+	uint8_t num_freq;
 
-	if (!channels)
+	if (!freq_list)
 		return 0;
 
 	if (size < MAX_BONDED_CHANNELS)
@@ -314,115 +314,115 @@ static uint8_t sap_get_bonding_channels(struct sap_context *sap_ctx,
 
 	switch (chanBondState) {
 	case PHY_SINGLE_CHANNEL_CENTERED:
-		numChannel = 1;
-		channels[0] = channel;
+		num_freq = 1;
+		freq_list[0] = chan_freq;
 		break;
 	case PHY_DOUBLE_CHANNEL_HIGH_PRIMARY:
-		numChannel = 2;
-		channels[0] = channel - 4;
-		channels[1] = channel;
+		num_freq = 2;
+		freq_list[0] = chan_freq - 20;
+		freq_list[1] = chan_freq;
 		break;
 	case PHY_DOUBLE_CHANNEL_LOW_PRIMARY:
-		numChannel = 2;
-		channels[0] = channel;
-		channels[1] = channel + 4;
+		num_freq = 2;
+		freq_list[0] = chan_freq;
+		freq_list[1] = chan_freq + 20;
 		break;
 	case PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_LOW:
-		numChannel = 4;
-		channels[0] = channel;
-		channels[1] = channel + 4;
-		channels[2] = channel + 8;
-		channels[3] = channel + 12;
+		num_freq = 4;
+		freq_list[0] = chan_freq;
+		freq_list[1] = chan_freq + 20;
+		freq_list[2] = chan_freq + 40;
+		freq_list[3] = chan_freq + 60;
 		break;
 	case PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_LOW:
-		numChannel = 4;
-		channels[0] = channel - 4;
-		channels[1] = channel;
-		channels[2] = channel + 4;
-		channels[3] = channel + 8;
+		num_freq = 4;
+		freq_list[0] = chan_freq - 20;
+		freq_list[1] = chan_freq;
+		freq_list[2] = chan_freq + 20;
+		freq_list[3] = chan_freq + 40;
 		break;
 	case PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_HIGH:
-		numChannel = 4;
-		channels[0] = channel - 8;
-		channels[1] = channel - 4;
-		channels[2] = channel;
-		channels[3] = channel + 4;
+		num_freq = 4;
+		freq_list[0] = chan_freq - 40;
+		freq_list[1] = chan_freq - 20;
+		freq_list[2] = chan_freq;
+		freq_list[3] = chan_freq + 20;
 		break;
 	case PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_HIGH:
-		numChannel = 4;
-		channels[0] = channel - 12;
-		channels[1] = channel - 8;
-		channels[2] = channel - 4;
-		channels[3] = channel;
+		num_freq = 4;
+		freq_list[0] = chan_freq - 60;
+		freq_list[1] = chan_freq - 40;
+		freq_list[2] = chan_freq - 20;
+		freq_list[3] = chan_freq;
 		break;
 	default:
-		numChannel = 1;
-		channels[0] = channel;
+		num_freq = 1;
+		freq_list[0] = chan_freq;
 		break;
 	}
 
-	return numChannel;
+	return num_freq;
 }
 
 /**
  * sap_ch_params_to_bonding_channels() - get bonding channels from channel param
  * @ch_params: channel params ( bw, pri and sec channel info)
- * @channels: bonded channel list
+ * @freq_list: bonded channel frequency list
  *
- * Return: Number of sub channels
+ * Return: Number of sub channel frequencies
  */
 static uint8_t sap_ch_params_to_bonding_channels(
 		struct ch_params *ch_params,
-		uint8_t *channels)
+		qdf_freq_t *freq_list)
 {
-	uint8_t center_chan = ch_params->center_freq_seg0;
-	uint8_t nchannels = 0;
+	qdf_freq_t center_freq = ch_params->mhz_freq_seg0;
+	uint8_t num_freq = 0;
 
 	switch (ch_params->ch_width) {
 	case CH_WIDTH_160MHZ:
-		nchannels = 8;
-		center_chan = ch_params->center_freq_seg1;
-		channels[0] = center_chan - 14;
-		channels[1] = center_chan - 10;
-		channels[2] = center_chan - 6;
-		channels[3] = center_chan - 2;
-		channels[4] = center_chan + 2;
-		channels[5] = center_chan + 6;
-		channels[6] = center_chan + 10;
-		channels[7] = center_chan + 14;
+		num_freq = 8;
+		center_freq = ch_params->mhz_freq_seg1;
+		freq_list[0] = center_freq - 70;
+		freq_list[1] = center_freq - 50;
+		freq_list[2] = center_freq - 30;
+		freq_list[3] = center_freq - 10;
+		freq_list[4] = center_freq + 10;
+		freq_list[5] = center_freq + 30;
+		freq_list[6] = center_freq + 50;
+		freq_list[7] = center_freq + 70;
 		break;
 	case CH_WIDTH_80P80MHZ:
-		nchannels = 8;
-		channels[0] = center_chan - 6;
-		channels[1] = center_chan - 2;
-		channels[2] = center_chan + 2;
-		channels[3] = center_chan + 6;
+		num_freq = 8;
+		freq_list[0] = center_freq - 30;
+		freq_list[1] = center_freq - 10;
+		freq_list[2] = center_freq + 10;
+		freq_list[3] = center_freq + 30;
 
-		center_chan = ch_params->center_freq_seg1;
-		channels[4] = center_chan - 6;
-		channels[5] = center_chan - 2;
-		channels[6] = center_chan + 2;
-		channels[7] = center_chan + 6;
+		center_freq = ch_params->mhz_freq_seg1;
+		freq_list[4] = center_freq - 30;
+		freq_list[5] = center_freq - 10;
+		freq_list[6] = center_freq + 10;
+		freq_list[7] = center_freq + 30;
 		break;
 	case CH_WIDTH_80MHZ:
-		nchannels = 4;
-		channels[0] = center_chan - 6;
-		channels[1] = center_chan - 2;
-		channels[2] = center_chan + 2;
-		channels[3] = center_chan + 6;
+		num_freq = 4;
+		freq_list[0] = center_freq - 30;
+		freq_list[1] = center_freq - 10;
+		freq_list[2] = center_freq + 10;
+		freq_list[3] = center_freq + 30;
 		break;
 	case CH_WIDTH_40MHZ:
-		nchannels = 2;
-		channels[0] = center_chan - 2;
-		channels[1] = center_chan + 2;
+		num_freq = 2;
+		freq_list[0] = center_freq - 10;
+		freq_list[1] = center_freq + 10;
 		break;
 	default:
-		nchannels = 1;
-		channels[0] = center_chan;
+		num_freq = 1;
+		freq_list[0] = center_freq;
 		break;
 	}
 
-	return nchannels;
+	return num_freq;
 }
 
 /**
@@ -470,8 +470,8 @@ void sap_get_cac_dur_dfs_region(struct sap_context *sap_ctx,
 		uint32_t *dfs_region)
 {
 	int i;
-	uint8_t channels[MAX_BONDED_CHANNELS];
-	uint8_t num_channels;
+	qdf_freq_t freq_list[MAX_BONDED_CHANNELS];
+	uint8_t num_freq;
 	struct ch_params *ch_params = &sap_ctx->ch_params;
 	struct mac_context *mac;
 
@@ -505,13 +505,13 @@ void sap_get_cac_dur_dfs_region(struct sap_context *sap_ctx,
 		return;
 	}
 
-	qdf_mem_zero(channels, sizeof(channels));
-	num_channels = sap_ch_params_to_bonding_channels(ch_params, channels);
-	for (i = 0; i < num_channels; i++) {
-		if (IS_ETSI_WEATHER_CH(channels[i])) {
+	qdf_mem_zero(freq_list, sizeof(freq_list));
+	num_freq = sap_ch_params_to_bonding_channels(ch_params, freq_list);
+	for (i = 0; i < num_freq; i++) {
+		if (IS_ETSI_WEATHER_FREQ(freq_list[i])) {
 			*cac_duration_ms = ETSI_WEATHER_CH_CAC_TIMEOUT;
-			sap_debug("sapdfs: ch=%d is etsi weather channel",
-				  channels[i]);
+			sap_debug("sapdfs: ch freq=%d is etsi weather channel",
+				  freq_list[i]);
 			return;
 		}
 	}
@@ -599,7 +599,7 @@ bool sap_check_in_avoid_ch_list(struct sap_context *sap_ctx, uint8_t channel)
 /**
  * sap_dfs_is_channel_in_nol_list() - given bonded channel is available
  * @sap_context: Handle to SAP context.
- * @channel_number: Channel on which availability should be checked.
+ * @channel_freq: Channel freq on which availability should be checked.
  * @chan_bondState: The channel bonding mode of the passed channel.
  *
  * This function Checks if a given bonded channel is available or
@@ -609,13 +609,13 @@ bool sap_check_in_avoid_ch_list(struct sap_context *sap_ctx, uint8_t channel)
  */
 bool
 sap_dfs_is_channel_in_nol_list(struct sap_context *sap_context,
-			       uint8_t channel_number,
+			       qdf_freq_t channel_freq,
 			       ePhyChanBondState chan_bondState)
 {
 	int i;
 	struct mac_context *mac_ctx;
-	uint8_t channels[MAX_BONDED_CHANNELS];
-	uint8_t num_channels;
+	qdf_freq_t freq_list[MAX_BONDED_CHANNELS];
+	uint8_t num_ch_freq;
 	struct wlan_objmgr_pdev *pdev = NULL;
 	enum channel_state ch_state;
 	qdf_freq_t ch_freq;
@@ -632,26 +632,35 @@ sap_dfs_is_channel_in_nol_list(struct sap_context *sap_context,
 		return false;
 	}
 
+	sap_context->ch_params.mhz_freq_seg0 =
+			wlan_reg_legacy_chan_to_freq(
+				pdev,
+				sap_context->ch_params.center_freq_seg0);
+	sap_context->ch_params.mhz_freq_seg1 =
+			wlan_reg_legacy_chan_to_freq(
+				pdev,
+				sap_context->ch_params.center_freq_seg1);
+
 	/* get the bonded channels */
-	if ((channel_number == wlan_reg_freq_to_chan(pdev,
-						     sap_context->chan_freq)) &&
-	     chan_bondState >= PHY_CHANNEL_BONDING_STATE_MAX)
-		num_channels = sap_ch_params_to_bonding_channels(
-					&sap_context->ch_params, channels);
+	if (channel_freq == sap_context->chan_freq &&
+	    chan_bondState >= PHY_CHANNEL_BONDING_STATE_MAX)
+		num_ch_freq = sap_ch_params_to_bonding_channels(
+					&sap_context->ch_params, freq_list);
 	else
-		num_channels = sap_get_bonding_channels(sap_context,
-					channel_number, channels,
-					MAX_BONDED_CHANNELS, chan_bondState);
+		num_ch_freq = sap_get_bonding_channels(
+					sap_context, sap_context->chan_freq,
+					freq_list, MAX_BONDED_CHANNELS,
+					chan_bondState);
 
 	/* check for NOL, first on will break the loop */
-	for (i = 0; i < num_channels; i++) {
-		ch_freq = wlan_reg_legacy_chan_to_freq(pdev, channels[i]);
+	for (i = 0; i < num_ch_freq; i++) {
+		ch_freq = freq_list[i];
 
 		ch_state = wlan_reg_get_channel_state_for_freq(pdev, ch_freq);
 		if (CHANNEL_STATE_ENABLE != ch_state &&
 		    CHANNEL_STATE_DFS != ch_state) {
-			sap_err_rl("Invalid ch num=%d chfreq = %d, ch state=%d",
-				   channels[i], ch_freq, ch_state);
+			sap_err_rl("Invalid ch freq = %d, ch state=%d", ch_freq,
+				   ch_state);
 			return true;
 		}
 	} /* loop for bonded channels */
@@ -661,13 +670,13 @@ sap_dfs_is_channel_in_nol_list(struct sap_context *sap_context,
 
 bool
 sap_chan_bond_dfs_sub_chan(struct sap_context *sap_context,
-			   uint8_t channel_number,
+			   qdf_freq_t channel_freq,
 			   ePhyChanBondState bond_state)
 {
 	int i;
 	struct mac_context *mac_ctx;
-	uint8_t channels[MAX_BONDED_CHANNELS];
-	uint8_t num_channels;
+	qdf_freq_t freq_list[MAX_BONDED_CHANNELS];
+	uint8_t num_freq;
 	struct wlan_objmgr_pdev *pdev;
 
 	mac_ctx = sap_get_mac_context();
@@ -682,24 +691,23 @@ sap_chan_bond_dfs_sub_chan(struct sap_context *sap_context,
 		return false;
 	}
 
-	if (wlan_reg_chan_has_dfs_attribute(pdev, channel_number))
+	if (wlan_reg_chan_has_dfs_attribute_for_freq(pdev, channel_freq))
 		return true;
 
 	/* get the bonded channels */
-	if ((channel_number == wlan_reg_freq_to_chan(pdev,
-						     sap_context->chan_freq)) &&
+	if (channel_freq == sap_context->chan_freq &&
 	    bond_state >= PHY_CHANNEL_BONDING_STATE_MAX)
-		num_channels = sap_ch_params_to_bonding_channels(
-					&sap_context->ch_params, channels);
+		num_freq = sap_ch_params_to_bonding_channels(
+					&sap_context->ch_params, freq_list);
 	else
-		num_channels = sap_get_bonding_channels(
-					sap_context, channel_number, channels,
+		num_freq = sap_get_bonding_channels(
+					sap_context, channel_freq, freq_list,
 					MAX_BONDED_CHANNELS, bond_state);
 
-	for (i = 0; i < num_channels; i++) {
-		if (wlan_reg_chan_has_dfs_attribute(pdev, channels[i])) {
-			sap_debug("sub ch num=%d is dfs in %d",
-				  channels[i], channel_number);
+	for (i = 0; i < num_freq; i++) {
+		if (wlan_reg_chan_has_dfs_attribute_for_freq(pdev, freq_list[i])) {
+			sap_debug("sub ch freq=%d is dfs in %d",
+				  freq_list[i], channel_freq);
 			return true;
 		}
 	}
@@ -2107,25 +2115,25 @@ static QDF_STATUS sap_validate_dfs_nol(struct sap_context *sap_ctx,
 				       struct mac_context *mac_ctx)
 {
 	bool b_leak_chan = false;
-	uint8_t temp_chan;
-	uint8_t sap_chan;
+	uint16_t temp_freq;
+	uint16_t sap_freq;
 
-	sap_chan = wlan_reg_freq_to_chan(mac_ctx->pdev, sap_ctx->chan_freq);
-	temp_chan = sap_chan;
-	utils_dfs_mark_leaking_ch(mac_ctx->pdev,
-				  sap_ctx->ch_params.ch_width,
-				  1, &temp_chan);
+	sap_freq = sap_ctx->chan_freq;
+	temp_freq = sap_freq;
+	utils_dfs_mark_leaking_chan_for_freq(mac_ctx->pdev,
+					     sap_ctx->ch_params.ch_width, 1,
+					     &temp_freq);
 
 	/*
 	 * if selelcted channel has leakage to channels
-	 * in NOL, the temp_chan will be reset
+	 * in NOL, the temp_freq will be reset
 	 */
-	b_leak_chan = (temp_chan != sap_chan);
+	b_leak_chan = (temp_freq != sap_freq);
 	/*
 	 * check if channel is in DFS_NOL or if the channel
 	 * has leakage to the channels in NOL
 	 */
-	if (sap_dfs_is_channel_in_nol_list(sap_ctx, sap_chan,
+	if (sap_dfs_is_channel_in_nol_list(sap_ctx, sap_ctx->chan_freq,
 					   PHY_CHANNEL_BONDING_STATE_MAX) ||
 	    b_leak_chan) {
 		qdf_freq_t chan_freq;
@@ -3384,10 +3392,9 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 					loop_count))) {
 			if (sap_dfs_is_channel_in_nol_list(
 					sap_ctx,
-					WLAN_REG_CH_NUM(loop_count),
+					chan_freq,
 					PHY_SINGLE_CHANNEL_CENTERED)) {
-				sap_debug("Ch %d in NOL list",
-					  WLAN_REG_CH_NUM(loop_count));
+				sap_debug("Ch freq %d in NOL list", chan_freq);
 				continue;
 			}
 		}

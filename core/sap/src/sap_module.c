@@ -406,7 +406,7 @@ QDF_STATUS sap_destroy_ctx(struct sap_context *sap_ctx)
 } /* sap_destroy_ctx */
 
 bool wlansap_is_channel_in_nol_list(struct sap_context *sap_ctx,
-				    uint8_t channelNumber,
+				    qdf_freq_t chan_freq,
 				    ePhyChanBondState chanBondState)
 {
 	if (!sap_ctx) {
@@ -414,7 +414,7 @@ bool wlansap_is_channel_in_nol_list(struct sap_context *sap_ctx,
 		return QDF_STATUS_E_FAULT;
 	}
 
-	return sap_dfs_is_channel_in_nol_list(sap_ctx, channelNumber,
+	return sap_dfs_is_channel_in_nol_list(sap_ctx, chan_freq,
 					      chanBondState);
 }
 

@@ -12883,9 +12883,9 @@ static QDF_STATUS wlan_hdd_validate_acs_channel(struct hdd_adapter *adapter,
 
 	channel = (uint8_t)wlan_reg_freq_to_chan(hdd_ctx->pdev, chan_freq);
 	if ((wlansap_is_channel_in_nol_list(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
-				channel,
+				chan_freq,
 				PHY_SINGLE_CHANNEL_CENTERED))) {
-		hdd_info("channel %d is in nol", channel);
+		hdd_info("channel %d is in nol", chan_freq);
 		return -EINVAL;
 	}
 

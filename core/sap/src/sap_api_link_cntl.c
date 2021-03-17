@@ -925,9 +925,8 @@ QDF_STATUS wlansap_roam_callback(void *ctx,
 		}
 
 		if (!sap_chan_bond_dfs_sub_chan(
-			sap_ctx, wlan_reg_freq_to_chan(mac_ctx->pdev,
-						       sap_ctx->chan_freq),
-			PHY_CHANNEL_BONDING_STATE_MAX))  {
+				sap_ctx, sap_ctx->chan_freq,
+				PHY_CHANNEL_BONDING_STATE_MAX)) {
 			sap_debug("Ignore Radar event for sap ch freq: %d",
 				  sap_ctx->chan_freq);
 			goto EXIT;
