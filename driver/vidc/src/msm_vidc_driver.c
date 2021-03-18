@@ -3885,6 +3885,7 @@ int msm_vidc_check_session_supported(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_inst_capability *capability;
 	struct v4l2_format *fmt;
+	u32 pix_fmt, profile;
 	bool allow = false;
 	int rc = 0;
 
@@ -3898,12 +3899,14 @@ int msm_vidc_check_session_supported(struct msm_vidc_inst *inst)
 	if (!is_image_session(inst))
 		return 0;
 
+	pix_fmt = capability->cap[PIX_FMTS].value;
+	profile = capability->cap[PROFILE].value;
+
 	if (is_image_encode_session(inst)) {
 		/* is linear color fmt */
-		allow = is_linear_colorformat(capability->cap[PIX_FMTS].value);
+		allow = is_linear_colorformat(pix_fmt);
 		if (!allow) {
-			i_vpr_e(inst, "%s: compressed fmt: %#x\n", __func__,
-				capability->cap[PIX_FMTS].value);
+			i_vpr_e(inst, "%s: compressed fmt: %#x\n", __func__, pix_fmt);
 			goto exit;
 		}
 
@@ -3943,10 +3946,12 @@ int msm_vidc_check_session_supported(struct msm_vidc_inst *inst)
 		}
 
 		/* is profile type Still Pic */
-		allow = (capability->cap[PROFILE].value ==
-			V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_STILL_PICTURE);
+		if (is_10bit_colorformat(pix_fmt))
+			allow = profile == V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10;
+		else
+			allow = profile == V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_STILL_PICTURE;
 		if (!allow) {
-			i_vpr_e(inst, "%s: profile is not still pic type: %#x\n", __func__,
+			i_vpr_e(inst, "%s: profile not valid: %#x\n", __func__,
 				capability->cap[PROFILE].value);
 			goto exit;
 		}

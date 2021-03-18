@@ -542,17 +542,7 @@ int msm_buffer_size_iris2(struct msm_vidc_inst *inst,
 	return size;
 }
 
-static int msm_buffer_encoder_dpb_count(struct msm_vidc_inst *inst)
-{
-	if (!inst || !inst->capabilities) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		return 0;
-	}
-
-	return msm_vidc_get_recon_buf_count(inst);
-}
-
-static int msm_buffer_decoder_dpb_count(struct msm_vidc_inst *inst)
+static int msm_buffer_dpb_count(struct msm_vidc_inst *inst)
 {
 	int count = 0;
 	u32 color_fmt;
@@ -562,11 +552,17 @@ static int msm_buffer_decoder_dpb_count(struct msm_vidc_inst *inst)
 		return 0;
 	}
 
-	color_fmt = inst->capabilities->cap[PIX_FMTS].value;
-	if (is_linear_colorformat(color_fmt))
-		count = inst->buffers.output.min_count;
+	/* decoder dpb buffer count */
+	if (is_decode_session(inst)) {
+		color_fmt = inst->capabilities->cap[PIX_FMTS].value;
+		if (is_linear_colorformat(color_fmt))
+			count = inst->buffers.output.min_count;
 
-	return count;
+		return count;
+	}
+
+	/* encoder dpb buffer count */
+	return msm_vidc_get_recon_buf_count(inst);
 }
 
 int msm_buffer_min_count_iris2(struct msm_vidc_inst *inst,
@@ -579,54 +575,32 @@ int msm_buffer_min_count_iris2(struct msm_vidc_inst *inst,
 		return 0;
 	}
 
-	if (is_decode_session(inst)) {
-		switch (buffer_type) {
-		case MSM_VIDC_BUF_INPUT:
-		case MSM_VIDC_BUF_INPUT_META:
-			count = msm_vidc_input_min_count(inst);
-			break;
-		case MSM_VIDC_BUF_OUTPUT:
-		case MSM_VIDC_BUF_OUTPUT_META:
-			count = msm_vidc_output_min_count(inst);
-			break;
-		case MSM_VIDC_BUF_BIN:
-		case MSM_VIDC_BUF_COMV:
-		case MSM_VIDC_BUF_NON_COMV:
-		case MSM_VIDC_BUF_LINE:
-		case MSM_VIDC_BUF_PERSIST:
-			count = msm_vidc_internal_buffer_count(inst, buffer_type);
-			break;
-		case MSM_VIDC_BUF_DPB:
-			count = msm_buffer_decoder_dpb_count(inst);
-			break;
-		default:
-			break;
-		}
-	} else if (is_encode_session(inst)) {
-		switch (buffer_type) {
-		case MSM_VIDC_BUF_INPUT:
-		case MSM_VIDC_BUF_INPUT_META:
-			count = msm_vidc_input_min_count(inst);
-			break;
-		case MSM_VIDC_BUF_OUTPUT:
-		case MSM_VIDC_BUF_OUTPUT_META:
-			count = msm_vidc_output_min_count(inst);
-			break;
-		case MSM_VIDC_BUF_BIN:
-		case MSM_VIDC_BUF_COMV:
-		case MSM_VIDC_BUF_NON_COMV:
-		case MSM_VIDC_BUF_LINE:
-		case MSM_VIDC_BUF_ARP:
-		case MSM_VIDC_BUF_VPSS:
-			count = 1;
-			break;
-		case MSM_VIDC_BUF_DPB:
-			count = msm_buffer_encoder_dpb_count(inst);
-		default:
-			break;
-		}
+	switch (buffer_type) {
+	case MSM_VIDC_BUF_INPUT:
+	case MSM_VIDC_BUF_INPUT_META:
+		count = msm_vidc_input_min_count(inst);
+		break;
+	case MSM_VIDC_BUF_OUTPUT:
+	case MSM_VIDC_BUF_OUTPUT_META:
+		count = msm_vidc_output_min_count(inst);
+		break;
+	case MSM_VIDC_BUF_BIN:
+	case MSM_VIDC_BUF_COMV:
+	case MSM_VIDC_BUF_NON_COMV:
+	case MSM_VIDC_BUF_LINE:
+	case MSM_VIDC_BUF_PERSIST:
+	case MSM_VIDC_BUF_ARP:
+	case MSM_VIDC_BUF_VPSS:
+		count = msm_vidc_internal_buffer_count(inst, buffer_type);
+		break;
+	case MSM_VIDC_BUF_DPB:
+		count = msm_buffer_dpb_count(inst);
+		break;
+	default:
+		break;
 	}
 
+	i_vpr_l(inst, "%s: type %u, count %u\n", __func__, buffer_type, count);
 	return count;
 }
 
@@ -653,5 +627,6 @@ int msm_buffer_extra_count_iris2(struct msm_vidc_inst *inst,
 		break;
 	}
 
+	i_vpr_l(inst, "%s: type %u, count %u\n", __func__, buffer_type, count);
 	return count;
 }

@@ -123,7 +123,7 @@ static int msm_venc_set_colorformat(struct msm_vidc_inst *inst,
 	return 0;
 }
 
-static int msm_venc_set_linear_alignment_factor(struct msm_vidc_inst *inst,
+static int msm_venc_set_stride_scanline(struct msm_vidc_inst *inst,
 	enum msm_vidc_port_type port)
 {
 	int rc = 0;
@@ -239,6 +239,9 @@ static int msm_venc_set_crop_offsets(struct msm_vidc_inst *inst,
 		inst->crop.width);
 	bottom_offset = (inst->fmts[port].fmt.pix_mp.height -
 		inst->crop.height);
+
+	if (is_image_session(inst))
+		right_offset = bottom_offset = 0;
 
 	crop[0] = left_offset << 16 | top_offset;
 	crop[1] = right_offset << 16 | bottom_offset;
@@ -475,7 +478,7 @@ static int msm_venc_set_input_properties(struct msm_vidc_inst *inst)
 	static const struct msm_venc_prop_type_handle prop_type_handle_arr[] = {
 		{HFI_PROP_COLOR_FORMAT,               msm_venc_set_colorformat                 },
 		{HFI_PROP_RAW_RESOLUTION,             msm_venc_set_raw_resolution              },
-		{HFI_PROP_LINEAR_STRIDE_SCANLINE,     msm_venc_set_linear_alignment_factor     },
+		{HFI_PROP_LINEAR_STRIDE_SCANLINE,     msm_venc_set_stride_scanline             },
 		{HFI_PROP_BUFFER_HOST_MAX_COUNT,      msm_venc_set_host_max_buf_count          },
 		{HFI_PROP_SIGNAL_COLOR_INFO,          msm_venc_set_colorspace                  },
 	};

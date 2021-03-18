@@ -532,6 +532,12 @@ int msm_vidc_decide_work_mode_iris2(struct msm_vidc_inst* inst)
 	out_f = &inst->fmts[OUTPUT_PORT];
 	inp_f = &inst->fmts[INPUT_PORT];
 
+	if (is_image_decode_session(inst))
+		work_mode = MSM_VIDC_STAGE_1;
+
+	if (is_image_session(inst))
+		goto exit;
+
 	if (is_decode_session(inst)) {
 		height = out_f->fmt.pix_mp.height;
 		width = out_f->fmt.pix_mp.width;
@@ -563,6 +569,7 @@ int msm_vidc_decide_work_mode_iris2(struct msm_vidc_inst* inst)
 		return -EINVAL;
 	}
 
+exit:
 	i_vpr_h(inst, "Configuring work mode = %u low latency = %u",
 		work_mode, lowlatency);
 	msm_vidc_update_cap_value(inst, STAGE, work_mode, __func__);
@@ -587,6 +594,9 @@ int msm_vidc_decide_work_route_iris2(struct msm_vidc_inst* inst)
 	core = inst->core;
 	work_route = core->capabilities[NUM_VPP_PIPE].value;
 
+	if (is_image_session(inst))
+		goto exit;
+
 	if (is_decode_session(inst)) {
 		if (inst->capabilities->cap[CODED_FRAMES].value ==
 				CODED_FRAMES_INTERLACE)
@@ -609,6 +619,7 @@ int msm_vidc_decide_work_route_iris2(struct msm_vidc_inst* inst)
 		return -EINVAL;
 	}
 
+exit:
 	i_vpr_h(inst, "Configuring work route = %u", work_route);
 	msm_vidc_update_cap_value(inst, PIPE, work_route, __func__);
 
@@ -620,7 +631,7 @@ int msm_vidc_decide_quality_mode_iris2(struct msm_vidc_inst* inst)
 	struct msm_vidc_inst_capability* capability = NULL;
 	struct msm_vidc_core *core;
 	u32 mbpf, mbps, max_hq_mbpf, max_hq_mbps;
-	u32 mode;
+	u32 mode = MSM_VIDC_POWER_SAVE_MODE;
 
 	if (!inst || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -632,7 +643,12 @@ int msm_vidc_decide_quality_mode_iris2(struct msm_vidc_inst* inst)
 	if (!is_encode_session(inst))
 		return 0;
 
-	mode = MSM_VIDC_POWER_SAVE_MODE;
+	/* image session always runs at quality mode */
+	if (is_image_session(inst)) {
+		mode = MSM_VIDC_MAX_QUALITY_MODE;
+		goto exit;
+	}
+
 	mbpf = msm_vidc_get_mbs_per_frame(inst);
 	mbps = mbpf * msm_vidc_get_fps(inst);
 	core = inst->core;
@@ -644,6 +660,7 @@ int msm_vidc_decide_quality_mode_iris2(struct msm_vidc_inst* inst)
 		(mbpf <= max_hq_mbpf && mbps <= max_hq_mbps))
 		mode = MSM_VIDC_MAX_QUALITY_MODE;
 
+exit:
 	msm_vidc_update_cap_value(inst, QUALITY_MODE, mode, __func__);
 
 	return 0;

@@ -817,8 +817,12 @@ int msm_vidc_adjust_profile(void *instance, struct v4l2_ctrl *ctrl)
 		adjusted_value = V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10;
 	} else {
 		/* 8 bit profile for 8 bit color format */
-		if (adjusted_value == V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10)
-			adjusted_value = V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN;
+		if (adjusted_value == V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10) {
+			if (is_image_session(inst))
+				adjusted_value = V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_STILL_PICTURE;
+			else
+				adjusted_value = V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN;
+		}
 	}
 
 	msm_vidc_update_cap_value(inst, PROFILE,
@@ -1367,13 +1371,14 @@ int msm_vidc_set_header_mode(void *instance,
 	else if (header_mode == V4L2_MPEG_VIDEO_HEADER_MODE_JOINED_WITH_1ST_FRAME)
 		hfi_value |= HFI_SEQ_HEADER_JOINED_WITH_1ST_FRAME;
 
-	if (prepend_sps_pps) {
+	if (prepend_sps_pps)
 		hfi_value |= HFI_SEQ_HEADER_PREFIX_WITH_SYNC_FRAME;
-	}
 
-	if (hdr_metadata) {
+	if (hdr_metadata)
 		hfi_value |= HFI_SEQ_HEADER_METADATA;
-	}
+
+	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
+		inst->capabilities->cap[cap_id].value, hfi_value);
 
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32_ENUM,
 		&hfi_value, sizeof(u32), __func__);
@@ -1402,8 +1407,11 @@ int msm_vidc_set_deblock_mode(void *instance,
 
 	beta = inst->capabilities->cap[LF_BETA].value + lf_offset;
 	alpha = inst->capabilities->cap[LF_ALPHA].value + lf_offset;
-
 	hfi_value = (alpha << 16) | (beta << 8) | lf_mode;
+
+	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
+		inst->capabilities->cap[cap_id].value, hfi_value);
+
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_32_PACKED,
 		&hfi_value, sizeof(u32), __func__);
 
@@ -1432,6 +1440,9 @@ int msm_vidc_set_constant_quality(void *instance,
 
 	hfi_value = inst->capabilities->cap[cap_id].value;
 
+	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
+		inst->capabilities->cap[cap_id].value, hfi_value);
+
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
 		&hfi_value, sizeof(u32), __func__);
 
@@ -1454,6 +1465,9 @@ int msm_vidc_set_use_and_mark_ltr(void *instance,
 		return 0;
 
 	hfi_value = inst->capabilities->cap[cap_id].value;
+
+	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
+		inst->capabilities->cap[cap_id].value, hfi_value);
 
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
 		&hfi_value, sizeof(u32), __func__);
@@ -1510,6 +1524,10 @@ int msm_vidc_set_min_qp(void *instance,
 
 	hfi_value = i_frame_qp | p_frame_qp << 8 | b_frame_qp << 16 |
 		client_qp_enable << 24;
+
+	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
+		inst->capabilities->cap[cap_id].value, hfi_value);
+
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_32_PACKED,
 		&hfi_value, sizeof(u32), __func__);
 
@@ -1565,6 +1583,10 @@ int msm_vidc_set_max_qp(void *instance,
 
 	hfi_value = i_frame_qp | p_frame_qp << 8 | b_frame_qp << 16 |
 		client_qp_enable << 24;
+
+	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
+		inst->capabilities->cap[cap_id].value, hfi_value);
+
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_32_PACKED,
 		&hfi_value, sizeof(u32), __func__);
 
@@ -1618,6 +1640,10 @@ int msm_vidc_set_frame_qp(void *instance,
 
 	hfi_value = i_frame_qp | p_frame_qp << 8 | b_frame_qp << 16 |
 		client_qp_enable << 24;
+
+	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
+		inst->capabilities->cap[cap_id].value, hfi_value);
+
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_32_PACKED,
 		&hfi_value, sizeof(u32), __func__);
 
@@ -1642,6 +1668,9 @@ int msm_vidc_set_req_sync_frame(void *instance,
 		hfi_value = HFI_SYNC_FRAME_REQUEST_WITH_PREFIX_SEQ_HDR;
 	else
 		hfi_value = HFI_SYNC_FRAME_REQUEST_WITHOUT_SEQ_HDR;
+
+	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
+		inst->capabilities->cap[cap_id].value, hfi_value);
 
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32_ENUM,
 		&hfi_value, sizeof(u32), __func__);
@@ -1669,6 +1698,9 @@ int msm_vidc_set_chroma_qp_index_offset(void *instance,
 
 	chroma_qp = inst->capabilities->cap[cap_id].value + offset;
 	hfi_value = chroma_qp_offset_mode | chroma_qp << 8 | chroma_qp << 16 ;
+
+	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
+		inst->capabilities->cap[cap_id].value, hfi_value);
 
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_32_PACKED,
 		&hfi_value, sizeof(u32), __func__);
@@ -1703,6 +1735,8 @@ int msm_vidc_set_slice_count(void* instance,
 		hfi_value = inst->capabilities->cap[SLICE_MAX_BYTES].value;
 		set_cap_id = SLICE_MAX_BYTES;
 	}
+	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
+		inst->capabilities->cap[cap_id].value, hfi_value);
 
 	rc = msm_vidc_packetize_control(inst, set_cap_id, HFI_PAYLOAD_U32,
 		&hfi_value, sizeof(u32), __func__);
@@ -1729,6 +1763,8 @@ int msm_vidc_set_nal_length(void* instance,
 		if (rc)
 			return -EINVAL;
 	}
+	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
+		inst->capabilities->cap[cap_id].value, hfi_value);
 
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32_ENUM,
 		&hfi_value, sizeof(u32), __func__);
@@ -1831,6 +1867,9 @@ int msm_vidc_set_flip(void *instance,
 	if (vflip)
 		hfi_value |= HFI_VERTICAL_FLIP;
 
+	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
+		inst->capabilities->cap[cap_id].value, hfi_value);
+
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32_ENUM,
 		&hfi_value, sizeof(u32), __func__);
 
@@ -1851,6 +1890,9 @@ int msm_vidc_set_q16(void *instance,
 	}
 
 	hfi_value = inst->capabilities->cap[cap_id].value;
+
+	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
+		inst->capabilities->cap[cap_id].value, hfi_value);
 
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_Q16,
 		&hfi_value, sizeof(u32), __func__);
@@ -1877,7 +1919,6 @@ int msm_vidc_set_u32(void *instance,
 	} else {
 		hfi_value = inst->capabilities->cap[cap_id].value;
 	}
-
 	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
 		inst->capabilities->cap[cap_id].value, hfi_value);
 
@@ -1923,8 +1964,11 @@ int msm_vidc_set_s32(void *instance,
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-
 	hfi_value = inst->capabilities->cap[cap_id].value;
+
+	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
+		inst->capabilities->cap[cap_id].value, hfi_value);
+
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_S32,
 		&hfi_value, sizeof(s32), __func__);
 

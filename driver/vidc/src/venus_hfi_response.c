@@ -462,6 +462,9 @@ static int get_driver_buffer_flags(struct msm_vidc_inst *inst, u32 hfi_flags)
 	if (inst->hfi_frame_info.data_corrupt)
 		driver_flags |= MSM_VIDC_BUF_FLAG_ERROR;
 
+	if (inst->hfi_frame_info.overflow)
+		driver_flags |= MSM_VIDC_BUF_FLAG_ERROR;
+
 	if (inst->hfi_frame_info.no_output) {
 		if (inst->capabilities->cap[META_BUF_TAG].value &&
 			!(hfi_flags & HFI_BUF_FW_FLAG_CODEC_CONFIG))
@@ -544,7 +547,7 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 	int rc = 0;
 	struct msm_vidc_buffers *buffers;
 	struct msm_vidc_buffer *buf;
-	bool found;
+	bool found, fatal = false;
 
 	buffers = msm_vidc_get_buffers(inst, MSM_VIDC_BUF_OUTPUT, __func__);
 	if (!buffers)
@@ -573,8 +576,25 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 		/* encoder output is not expected to be corrupted */
 		if (inst->hfi_frame_info.data_corrupt) {
 			i_vpr_e(inst, "%s: encode output is corrupted\n", __func__);
-			msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
+			fatal = true;
 		}
+		if (inst->hfi_frame_info.overflow) {
+			/* overflow not expected for image session */
+			if (is_image_session(inst)) {
+				i_vpr_e(inst, "%s: overflow detected for an image session\n",
+					__func__);
+				fatal = true;
+			}
+
+			/* overflow not expected for cbr_cfr session */
+			if (!buffer->data_size && inst->hfi_rc_type == HFI_RC_CBR_CFR) {
+				i_vpr_e(inst, "%s: overflow detected for cbr_cfr session\n",
+					__func__);
+				fatal = true;
+			}
+		}
+		if (fatal)
+			msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 	}
 
 	/*

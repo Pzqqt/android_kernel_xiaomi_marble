@@ -176,6 +176,9 @@ u32 msm_vidc_internal_buffer_count(struct msm_vidc_inst *inst,
 		return 0;
 	}
 
+	if (is_encode_session(inst))
+		return 1;
+
 	if (is_decode_session(inst)) {
 		if (buffer_type == MSM_VIDC_BUF_BIN ||
 			buffer_type == MSM_VIDC_BUF_LINE ||
