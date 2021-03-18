@@ -7598,6 +7598,10 @@ int ipa3_cfg_ep_ctrl(u32 clnt_hdl, const struct ipa_ep_cfg_ctrl *ep_ctrl)
 		ep_ctrl->ipa_ep_suspend,
 		ep_ctrl->ipa_ep_delay);
 	ep = &ipa3_ctx->ep[clnt_hdl];
+	if (ep->client == IPA_CLIENT_MHI_LOW_LAT_PROD) {
+		IPAERR("WAR: DON'T SET FLOW CONTROL FOR MHI LOW LAT PIPE\n");
+		return 0;
+	}
 	if (ipa3_ctx->ipa_endp_delay_wa_v2 &&
 		IPA_CLIENT_IS_PROD(ep->client)) {
 
