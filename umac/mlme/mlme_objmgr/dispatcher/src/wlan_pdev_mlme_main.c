@@ -83,9 +83,9 @@ static QDF_STATUS mlme_pdev_obj_destroy_handler(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_SUCCESS;
 	}
 
+	mlme_pdev_ops_ext_hdl_destroy(pdev_mlme);
 	wlan_objmgr_pdev_component_obj_detach(pdev, WLAN_UMAC_COMP_MLME,
 					      (void *)pdev_mlme);
-	mlme_pdev_ops_ext_hdl_destroy(pdev_mlme);
 
 	wlan_minidump_remove(pdev_mlme, sizeof(*pdev_mlme),
 			     wlan_pdev_get_psoc(pdev),
