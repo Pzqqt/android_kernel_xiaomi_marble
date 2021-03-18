@@ -128,16 +128,17 @@ int msm_vidc_queue_setup(struct vb2_queue *q,
 		inst->buffers.output_meta.actual_count = *num_buffers;
 	}
 
-	if (port == INPUT_PORT || port == OUTPUT_PORT)
+	if (port == INPUT_PORT || port == OUTPUT_PORT) {
 		sizes[0] = inst->fmts[port].fmt.pix_mp.plane_fmt[0].sizeimage;
-	else if (port == OUTPUT_META_PORT)
+	} else if (port == OUTPUT_META_PORT) {
 		sizes[0] = inst->fmts[port].fmt.meta.buffersize;
-	else if (port == INPUT_META_PORT)
+	} else if (port == INPUT_META_PORT) {
 		if (inst->capabilities->cap[SUPER_FRAME].value)
 			sizes[0] = inst->capabilities->cap[SUPER_FRAME].value *
 				inst->fmts[port].fmt.meta.buffersize;
 		else
 			sizes[0] = inst->fmts[port].fmt.meta.buffersize;
+	}
 
 	i_vpr_h(inst,
 		"queue_setup: type %d num_buffers %d sizes[0] %d\n",
