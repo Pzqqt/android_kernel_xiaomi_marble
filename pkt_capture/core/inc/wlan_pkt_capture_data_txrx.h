@@ -176,6 +176,8 @@ struct pkt_capture_tx_hdr_elem_t {
 	bool dir; /* rx:0 , tx:1 */
 	uint8_t status; /* tx status */
 	uint8_t tx_retry_cnt;
+	uint16_t framectrl;
+	uint16_t seqno;
 };
 
 /**

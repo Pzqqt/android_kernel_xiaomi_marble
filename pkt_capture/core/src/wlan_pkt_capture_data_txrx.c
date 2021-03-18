@@ -1200,8 +1200,9 @@ pkt_capture_tx_data_cb(
 	struct wlan_objmgr_vdev *vdev = context;
 	struct pkt_capture_cb_context *cb_ctx;
 	uint8_t drop_count;
-	struct htt_tx_data_hdr_information *cmpl_desc = NULL;
+	struct pkt_capture_tx_hdr_elem_t *ptr_pktcapture_hdr = NULL;
 	struct pkt_capture_tx_hdr_elem_t pktcapture_hdr = {0};
+	uint32_t txcap_hdr_size = sizeof(struct pkt_capture_tx_hdr_elem_t);
 	struct ethernet_hdr_t *eth_hdr;
 	struct llc_snap_hdr_t *llc_hdr;
 	struct ieee80211_frame *wh;
@@ -1230,26 +1231,14 @@ pkt_capture_tx_data_cb(
 		next_buf = qdf_nbuf_queue_next(msdu);
 		qdf_nbuf_set_next(msdu, NULL);   /* Add NULL terminator */
 
-		cmpl_desc = (struct htt_tx_data_hdr_information *)
+		ptr_pktcapture_hdr = (struct pkt_capture_tx_hdr_elem_t *)
 					(qdf_nbuf_data(msdu));
 
-		pktcapture_hdr.timestamp = cmpl_desc->phy_timestamp_l32;
-		pktcapture_hdr.preamble = cmpl_desc->preamble;
-		pktcapture_hdr.mcs = cmpl_desc->mcs;
-		pktcapture_hdr.bw = cmpl_desc->bw;
-		pktcapture_hdr.nss = cmpl_desc->nss;
-		pktcapture_hdr.rssi_comb = cmpl_desc->rssi;
-		pktcapture_hdr.rate = cmpl_desc->rate;
-		pktcapture_hdr.stbc = cmpl_desc->stbc;
-		pktcapture_hdr.sgi = cmpl_desc->sgi;
-		pktcapture_hdr.ldpc = cmpl_desc->ldpc;
-		pktcapture_hdr.beamformed = cmpl_desc->beamformed;
+		qdf_mem_copy(&pktcapture_hdr, ptr_pktcapture_hdr,
+			     txcap_hdr_size);
 		pktcapture_hdr.status = status;
-		pktcapture_hdr.tx_retry_cnt = tx_retry_cnt;
 
-		qdf_nbuf_pull_head(
-			msdu,
-			sizeof(struct htt_tx_data_hdr_information));
+		qdf_nbuf_pull_head(msdu, txcap_hdr_size);
 
 		if (pkt_format == TXRX_PKTCAPTURE_PKT_FORMAT_8023) {
 			eth_hdr = (struct ethernet_hdr_t *)qdf_nbuf_data(msdu);
@@ -1277,10 +1266,10 @@ pkt_capture_tx_data_cb(
 			qdf_mem_copy(wh->i_addr3, eth_hdr->dest_addr,
 				     QDF_MAC_ADDR_SIZE);
 
-			seq_no = cmpl_desc->seqno;
+			seq_no = pktcapture_hdr.seqno;
 			seq_no = (seq_no << IEEE80211_SEQ_SEQ_SHIFT) &
 					IEEE80211_SEQ_SEQ_MASK;
-			fc_ctrl = cmpl_desc->framectrl;
+			fc_ctrl = pktcapture_hdr.framectrl;
 			qdf_mem_copy(wh->i_fc, &fc_ctrl, sizeof(fc_ctrl));
 			qdf_mem_copy(wh->i_seq, &seq_no, sizeof(seq_no));
 
@@ -1511,7 +1500,6 @@ void pkt_capture_offload_deliver_indication_handler(
 			offload_deliver_msg->tx_retry_cnt);
 }
 #else
-#define FRAME_CTRL_TYPE_DATA	0x0008
 void pkt_capture_offload_deliver_indication_handler(
 					void *msg, uint8_t vdev_id,
 					uint8_t *bssid, void *soc)
@@ -1521,16 +1509,33 @@ void pkt_capture_offload_deliver_indication_handler(
 	uint8_t status;
 	uint8_t tid = 0;
 	bool pkt_format;
-	u_int32_t *msg_word = (u_int32_t *)msg;
 	u_int8_t *buf = (u_int8_t *)msg;
-	struct htt_tx_data_hdr_information *txhdr;
 	struct htt_tx_offload_deliver_ind_hdr_t *offload_deliver_msg;
-	struct htt_tx_data_hdr_information *cmpl_desc = NULL;
+
+	struct pkt_capture_tx_hdr_elem_t *ptr_pktcapture_hdr;
+	struct pkt_capture_tx_hdr_elem_t pktcapture_hdr = {0};
+	uint32_t txcap_hdr_size = sizeof(struct pkt_capture_tx_hdr_elem_t);
 
 	offload_deliver_msg = (struct htt_tx_offload_deliver_ind_hdr_t *)msg;
 
-	txhdr = (struct htt_tx_data_hdr_information *)
-		(msg_word + 1);
+	pktcapture_hdr.timestamp = offload_deliver_msg->phy_timestamp_l32;
+	pktcapture_hdr.preamble = offload_deliver_msg->preamble;
+	pktcapture_hdr.mcs = offload_deliver_msg->mcs;
+	pktcapture_hdr.bw = offload_deliver_msg->bw;
+	pktcapture_hdr.nss = offload_deliver_msg->nss;
+	pktcapture_hdr.rssi_comb = offload_deliver_msg->rssi;
+	pktcapture_hdr.rate = offload_deliver_msg->rate;
+	pktcapture_hdr.stbc = offload_deliver_msg->stbc;
+	pktcapture_hdr.sgi = offload_deliver_msg->sgi;
+	pktcapture_hdr.ldpc = offload_deliver_msg->ldpc;
+	/* Beamformed not available */
+	pktcapture_hdr.beamformed = 0;
+	pktcapture_hdr.framectrl = offload_deliver_msg->framectrl;
+	pktcapture_hdr.tx_retry_cnt = offload_deliver_msg->tx_retry_cnt;
+	pktcapture_hdr.seqno = offload_deliver_msg->seqno;
+	tid = offload_deliver_msg->tid_num;
+	status = offload_deliver_msg->status;
+	pkt_format = offload_deliver_msg->format;
 
 	nbuf_len = offload_deliver_msg->tx_mpdu_bytes;
 
@@ -1547,22 +1552,11 @@ void pkt_capture_offload_deliver_indication_handler(
 		     buf + sizeof(struct htt_tx_offload_deliver_ind_hdr_t),
 		     nbuf_len);
 
-	qdf_nbuf_push_head(
-			netbuf,
-			sizeof(struct htt_tx_data_hdr_information));
+	qdf_nbuf_push_head(netbuf, txcap_hdr_size);
 
-	qdf_mem_copy(qdf_nbuf_data(netbuf), txhdr,
-		     sizeof(struct htt_tx_data_hdr_information));
-
-	status = offload_deliver_msg->status;
-	pkt_format = offload_deliver_msg->format;
-	tid = offload_deliver_msg->tid_num;
-
-	cmpl_desc = (struct htt_tx_data_hdr_information *)
-				(qdf_nbuf_data(netbuf));
-
-	/* filling packet type as data, as framectrl is not available */
-	cmpl_desc->framectrl = FRAME_CTRL_TYPE_DATA;
+	ptr_pktcapture_hdr =
+	(struct pkt_capture_tx_hdr_elem_t *)qdf_nbuf_data(netbuf);
+	qdf_mem_copy(ptr_pktcapture_hdr, &pktcapture_hdr, txcap_hdr_size);
 
 	pkt_capture_datapkt_process(
 			vdev_id,
