@@ -5080,12 +5080,6 @@ struct he_capability {
 };
 #endif
 
-#define EHT_CAP_OUI_TYPE "\xfd"
-#define EHT_CAP_OUI_SIZE 1
-
-#define EHT_OP_OUI_TYPE "\xfe"
-#define EHT_OP_OUI_SIZE 1
-
 #define HE_GET_NSS(mcs, nss)                                         \
 	do {                                                         \
 		(nss) = 0;                                           \
@@ -5093,6 +5087,26 @@ struct he_capability {
 			(nss)++;                                     \
 	} while (0)
 
+#ifdef WLAN_FEATURE_11BE
+#define EHT_MAX_PHY_CAP_SIZE 3
+#define EHT_CAP_OUI_TYPE "\xfd"
+#define EHT_CAP_OUI_SIZE 1
+
+#define EHT_OP_OUI_TYPE "\xfe"
+#define EHT_OP_OUI_SIZE 1
+
+/**
+ * struct eht_capability - to store 11be EHT capabilities
+ * @phy_cap: EHT PHY capabilities
+ * @mac_cap: EHT MAC capabilities
+ * @mcs: EHT MCS
+ */
+struct eht_capability {
+	uint32_t phy_cap[EHT_MAX_PHY_CAP_SIZE];
+	uint32_t mac_cap;
+	uint32_t mcs;
+};
+#endif
 /**
  * struct rsp_stats - arp packet stats
  * @arp_req_enqueue: fw tx count

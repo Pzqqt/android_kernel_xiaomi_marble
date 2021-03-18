@@ -757,6 +757,24 @@ static void wma_cp_stats_set_rate_flag(tp_wma_handle wma, uint8_t vdev_id)
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
 }
 
+#ifdef WLAN_FEATURE_11BE
+/**
+ * wma_get_bss_eht_capable() - whether bss is eht capable or not
+ * @add_bss: add_bss params
+ *
+ * Return: true if eht capable is present
+ */
+static bool wma_get_bss_eht_capable(struct bss_params *add_bss)
+{
+	return add_bss->eht_capable;
+}
+#else
+static bool wma_get_bss_eht_capable(struct bss_params *add_bss)
+{
+	return false;
+}
+#endif
+
 #ifdef WLAN_FEATURE_11AX
 /**
  * wma_set_bss_rate_flags_he() - set rate flags based on BSS capability
@@ -876,7 +894,8 @@ void wma_set_bss_rate_flags(tp_wma_handle wma, uint8_t vdev_id,
 		*rate_flags |= TX_RATE_SGI;
 
 	if (!add_bss->htCapable && !add_bss->vhtCapable &&
-	    !wma_get_bss_he_capable(add_bss))
+	    !wma_get_bss_he_capable(add_bss) &&
+	    !wma_get_bss_eht_capable(add_bss))
 		*rate_flags = TX_RATE_LEGACY;
 
 	wma_debug("capable: vht %u, ht %u, rate_flags %x, ch_width %d",

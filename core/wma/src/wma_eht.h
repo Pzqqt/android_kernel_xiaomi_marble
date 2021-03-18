@@ -47,6 +47,104 @@ void wma_update_target_ext_eht_cap(struct target_psoc_info *tgt_hdl,
 				   struct wma_tgt_cfg *tgt_cfg);
 
 void wma_update_vdev_eht_ops(uint32_t *eht_ops, tDot11fIEeht_op *eht_op);
+
+/**
+ * wma_print_eht_cap() - Print EHT capabilities
+ * @eht_cap: pointer to EHT Capability
+ *
+ * Received EHT capabilities are converted into dot11f structure.
+ * This function will print all the EHT capabilities as stored
+ * in the dot11f structure.
+ *
+ * Return: None
+ */
+void wma_print_eht_cap(tDot11fIEeht_cap *eht_cap);
+
+/**
+ * wma_print_eht_phy_cap() - Print EHT PHY Capability
+ * @phy_cap: pointer to PHY Capability
+ *
+ * This function prints EHT PHY Capability received from FW.
+ *
+ * Return: none
+ */
+void wma_print_eht_phy_cap(uint32_t *phy_cap);
+
+/**
+ * wma_print_eht_mac_cap_w1() - Print EHT MAC Capability
+ * @mac_cap: MAC Capability
+ *
+ * This function prints EHT MAC Capability received from FW.
+ *
+ * Return: none
+ */
+void wma_print_eht_mac_cap_w1(uint32_t mac_cap);
+
+/**
+ * wma_print_eht_mac_cap_w2() - Print EHT MAC Capability
+ * @mac_cap: MAC Capability
+ *
+ * This function prints EHT MAC Capability received from FW.
+ *
+ * Return: none
+ */
+void wma_print_eht_mac_cap_w2(uint32_t mac_cap);
+
+/**
+ * wma_print_eht_op() - Print EHT Operation
+ * @eht_cap: pointer to EHT Operation
+ *
+ * Print EHT operation stored as dot11f structure
+ *
+ * Return: None
+ */
+void wma_print_eht_op(tDot11fIEeht_op *eht_ops);
+
+/**
+ * wma_populate_peer_eht_cap() - populate peer EHT capabilities in
+ *                               peer assoc cmd
+ * @peer: pointer to peer assoc params
+ * @params: pointer to ADD STA params
+ *
+ * Return: None
+ */
+void wma_populate_peer_eht_cap(struct peer_assoc_params *peer,
+			       tpAddStaParams params);
+
+/**
+ * wma_vdev_set_eht_bss_params() - set EHT OPs in vdev start
+ * @wma: pointer to wma handle
+ * @vdev_id: VDEV id
+ * @eht_info: pointer to eht info
+ *
+ * Return: None
+ */
+void wma_vdev_set_eht_bss_params(tp_wma_handle wma, uint8_t vdev_id,
+				 struct vdev_mlme_eht_ops_info *eht_info);
+
+/**
+ * wma_is_peer_eht_capable() - whether peer is eht capable or not
+ * @params: add sta params
+ *
+ * Return: true if eht capable is present
+ */
+static inline bool wma_is_peer_eht_capable(tpAddStaParams params)
+{
+	return params->eht_capable;
+}
+
+/**
+ * wma_get_eht_capabilities() - Get EHT capabilities from WMA
+ * @eht_cap: Pointer to EHT capabilities
+ *
+ * Currently EHT capabilities are not updated in wma_handle. This
+ * is an interface for upper layer to query capabilities from WMA.
+ * When the real use case arise, update wma_handle with EHT capabilities
+ * as required.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wma_get_eht_capabilities(struct eht_capability *eht_cap);
 #else
 static inline void wma_eht_update_tgt_services(struct wmi_unified *wmi_handle,
 					       struct wma_tgt_services *cfg)
@@ -65,5 +163,42 @@ static inline
 void wma_update_vdev_eht_ops(uint32_t *eht_ops, tDot11fIEeht_op *eht_op)
 {
 }
+
+static inline
+void wma_print_eht_cap(tDot11fIEeht_cap *eht_cap)
+{
+}
+
+static inline
+void wma_print_eht_phy_cap(uint32_t *phy_cap)
+{
+}
+
+static inline
+void wma_print_eht_mac_cap_w1(uint32_t mac_cap)
+{
+}
+
+static inline
+void wma_print_eht_mac_cap_w2(uint32_t mac_cap)
+{
+}
+
+static inline
+void wma_print_eht_op(tDot11fIEeht_op *eht_ops)
+{
+}
+
+static inline
+void wma_populate_peer_eht_cap(struct peer_assoc_params *peer,
+			       tpAddStaParams params)
+{
+}
+
+static inline bool wma_is_peer_eht_capable(tpAddStaParams params)
+{
+	return false;
+}
+
 #endif
 #endif

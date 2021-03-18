@@ -118,8 +118,76 @@ void wma_update_target_ext_eht_cap(struct target_psoc_info *tgt_hdl,
 		}
 	}
 	qdf_mem_copy(eht_cap, &eht_cap_mac, sizeof(tDot11fIEeht_cap));
+	wma_print_eht_cap(eht_cap);
 }
 
 void wma_update_vdev_eht_ops(uint32_t *eht_ops, tDot11fIEeht_op *eht_op)
 {
+}
+
+void wma_print_eht_cap(tDot11fIEeht_cap *eht_cap)
+{
+	if (!eht_cap->present)
+		return;
+
+	wma_debug("EHT Capabilities:");
+}
+
+void wma_print_eht_phy_cap(uint32_t *phy_cap)
+{
+	wma_debug("EHT PHY Capabilities:");
+}
+
+void wma_print_eht_mac_cap_w1(uint32_t mac_cap)
+{
+	wma_debug("EHT MAC Capabilities:");
+}
+
+void wma_print_eht_mac_cap_w2(uint32_t mac_cap)
+{
+}
+
+void wma_print_eht_op(tDot11fIEeht_op *eht_ops)
+{
+}
+
+void wma_populate_peer_eht_cap(struct peer_assoc_params *peer,
+			       tpAddStaParams params)
+{
+	tDot11fIEeht_cap *eht_cap = &params->eht_config;
+	uint32_t *phy_cap = peer->peer_eht_cap_phyinfo;
+	uint32_t mac_cap[PSOC_HOST_MAX_MAC_SIZE] = {0};
+
+	if (params->eht_capable)
+		peer->eht_flag = 1;
+	else
+		return;
+
+	wma_print_eht_cap(eht_cap);
+	wma_debug("Peer EHT Capabilities:");
+	wma_print_eht_phy_cap(phy_cap);
+	wma_print_eht_mac_cap_w1(mac_cap[0]);
+	wma_print_eht_mac_cap_w2(mac_cap[1]);
+}
+
+void wma_vdev_set_eht_bss_params(tp_wma_handle wma, uint8_t vdev_id,
+				 struct vdev_mlme_eht_ops_info *eht_info)
+{
+	if (!eht_info->eht_ops)
+		return;
+}
+
+QDF_STATUS wma_get_eht_capabilities(struct eht_capability *eht_cap)
+{
+	tp_wma_handle wma_handle;
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle)
+		return QDF_STATUS_E_FAILURE;
+
+	qdf_mem_copy(eht_cap->phy_cap,
+		     &wma_handle->eht_cap.phy_cap,
+		     WMI_MAX_EHTCAP_PHY_SIZE);
+	eht_cap->mac_cap = wma_handle->eht_cap.mac_cap;
+	return QDF_STATUS_SUCCESS;
 }
