@@ -2604,6 +2604,7 @@ static void lpass_cdc_wsa_macro_init_reg(struct snd_soc_component *component)
 
 static int lpass_cdc_wsa_macro_core_vote(void *handle, bool enable)
 {
+	int rc = 0;
 	struct lpass_cdc_wsa_macro_priv *wsa_priv = (struct lpass_cdc_wsa_macro_priv *) handle;
 
 	if (wsa_priv == NULL) {
@@ -2612,14 +2613,16 @@ static int lpass_cdc_wsa_macro_core_vote(void *handle, bool enable)
 	}
 	if (enable) {
 		pm_runtime_get_sync(wsa_priv->dev);
+		if (lpass_cdc_check_core_votes(wsa_priv->dev))
+			rc = 0;
+		else
+			rc = -ENOTSYNC;
+	} else {
 		pm_runtime_put_autosuspend(wsa_priv->dev);
 		pm_runtime_mark_last_busy(wsa_priv->dev);
 	}
 
-	if (lpass_cdc_check_core_votes(wsa_priv->dev))
-		return 0;
-	else
-		return -EINVAL;
+	return rc;
 }
 
 static int wsa_swrm_clock(void *handle, bool enable)

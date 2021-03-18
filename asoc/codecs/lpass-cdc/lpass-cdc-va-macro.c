@@ -657,6 +657,7 @@ done:
 
 static int lpass_cdc_va_macro_core_vote(void *handle, bool enable)
 {
+	int rc = 0;
 	struct lpass_cdc_va_macro_priv *va_priv =
 					(struct lpass_cdc_va_macro_priv *) handle;
 
@@ -666,14 +667,15 @@ static int lpass_cdc_va_macro_core_vote(void *handle, bool enable)
 	}
 	if (enable) {
 		pm_runtime_get_sync(va_priv->dev);
+		if (lpass_cdc_check_core_votes(va_priv->dev))
+			rc = 0;
+		else
+			rc = -ENOTSYNC;
+	} else {
 		pm_runtime_put_autosuspend(va_priv->dev);
 		pm_runtime_mark_last_busy(va_priv->dev);
 	}
-
-	if (lpass_cdc_check_core_votes(va_priv->dev))
-		return 0;
-	else
-		return -EINVAL;
+	return rc;
 }
 
 static int lpass_cdc_va_macro_swrm_clock(void *handle, bool enable)
