@@ -46,28 +46,15 @@
 #define DP_MAX_INVALID_BUFFERS 10
 
 #ifdef FEATURE_MEC
-/**
- * dp_rx_mcast_echo_check() - check if the mcast pkt is a loop
- *			      back on same vap or a different vap.
- *
- * @soc: core DP main context
- * @peer: dp peer handler
- * @rx_tlv_hdr: start of the rx TLV header
- * @nbuf: pkt buffer
- *
- * Return: bool (true if it is a looped back pkt else false)
- *
- */
-static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
-					  struct dp_peer *peer,
-					  uint8_t *rx_tlv_hdr,
-					  qdf_nbuf_t nbuf)
+bool dp_rx_mcast_echo_check(struct dp_soc *soc,
+			    struct dp_peer *peer,
+			    uint8_t *rx_tlv_hdr,
+			    qdf_nbuf_t nbuf)
 {
 	struct dp_vdev *vdev = peer->vdev;
 	struct dp_pdev *pdev = vdev->pdev;
 	struct dp_mec_entry *mecentry = NULL;
 	uint8_t *data;
-
 	/*
 	 * Multicast Echo Check is required only if vdev is STA and
 	 * received pkt is a multicast/broadcast pkt. otherwise
@@ -75,7 +62,6 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 	 */
 	if (vdev->opmode != wlan_op_mode_sta)
 		return false;
-
 	if (!hal_rx_msdu_end_da_is_mcbc_get(soc->hal_soc, rx_tlv_hdr))
 		return false;
 
@@ -85,8 +71,8 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 	 * mac address then drop the pkt as it is looped back
 	 */
 	if (!(qdf_mem_cmp(&data[QDF_MAC_ADDR_SIZE],
-			vdev->mac_addr.raw,
-			QDF_MAC_ADDR_SIZE)))
+			  vdev->mac_addr.raw,
+			  QDF_MAC_ADDR_SIZE)))
 		return true;
 
 	/*
@@ -116,15 +102,8 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 
 	dp_rx_err_info("%pK: received pkt with same src mac " QDF_MAC_ADDR_FMT,
 		       soc, QDF_MAC_ADDR_REF(&data[QDF_MAC_ADDR_SIZE]));
+
 	return true;
-}
-#else
-static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
-					  struct dp_peer *peer,
-					  uint8_t *rx_tlv_hdr,
-					  qdf_nbuf_t nbuf)
-{
-	return false;
 }
 #endif
 #endif /* QCA_HOST_MODE_WIFI_DISABLED */
