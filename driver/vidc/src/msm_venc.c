@@ -1630,25 +1630,26 @@ int msm_venc_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 	int rc = 0;
 	struct msm_vidc_core *core;
 	u32 array[32] = {0};
-	u32 i = 0, idx = 0;
+	u32 i = 0;
 
-	if (!inst || !inst->core || !inst->capabilities || !f) {
+	if (!inst || !inst->core || !inst->capabilities || !f ||
+	    f->index >= ARRAY_SIZE(array)) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 	core = inst->core;
 
 	if (f->type == OUTPUT_MPLANE) {
-		u32 codecs = core->capabilities[DEC_CODECS].value;
+		u32 codecs = core->capabilities[ENC_CODECS].value;
+		u32 idx = 0;
 
-		while (codecs) {
-			if (i > 31)
-				break;
+		for (i = 0; i <= 31; i++) {
 			if (codecs & BIT(i)) {
+				if (idx >= ARRAY_SIZE(array))
+					break;
 				array[idx] = codecs & BIT(i);
 				idx++;
 			}
-			i++;
 		}
 		f->pixelformat = v4l2_codec_from_driver(array[f->index],
 				__func__);
@@ -1658,15 +1659,15 @@ int msm_venc_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 		strlcpy(f->description, "codec", sizeof(f->description));
 	} else if (f->type == INPUT_MPLANE) {
 		u32 formats = inst->capabilities->cap[PIX_FMTS].step_or_mask;
+		u32 idx = 0;
 
-		while (formats) {
-			if (idx > 31)
-				break;
+		for (i = 0; i <= 31; i++) {
 			if (formats & BIT(i)) {
+				if (idx >= ARRAY_SIZE(array))
+					break;
 				array[idx] = formats & BIT(i);
 				idx++;
 			}
-			i++;
 		}
 		f->pixelformat = v4l2_colorformat_from_driver(array[f->index],
 				__func__);
