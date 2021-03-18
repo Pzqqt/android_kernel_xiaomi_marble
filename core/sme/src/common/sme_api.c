@@ -3435,6 +3435,13 @@ uint32_t sme_get_vht_ch_width(void)
 	return wma_get_vht_ch_width();
 }
 
+#ifdef WLAN_FEATURE_11BE
+uint32_t sme_get_eht_ch_width(void)
+{
+	return wma_get_eht_ch_width();
+}
+#endif
+
 #ifndef FEATURE_CM_ENABLE
 /*
  * sme_get_modify_profile_fields() -

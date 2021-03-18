@@ -4451,4 +4451,18 @@ void sme_fill_auth_type(enum csr_akm_type *auth_type,
  */
 enum csr_cfgdot11mode sme_phy_mode_to_dot11mode(enum wlan_phymode phy_mode);
 
+#ifdef WLAN_FEATURE_11BE
+/**
+ * sme_get_eht_ch_width() - SME API to get max supported EHT chan width by FW
+ *
+ * Return: Max EHT channel width supported by FW (eg. 80, 160, 320)
+ */
+uint32_t sme_get_eht_ch_width(void);
+#else /* !WLAN_FEATURE_11BE */
+static inline uint32_t sme_get_eht_ch_width(void)
+{
+	return 0;
+}
+#endif /* WLAN_FEATURE_11BE */
+
 #endif /* #if !defined( __SME_API_H ) */
