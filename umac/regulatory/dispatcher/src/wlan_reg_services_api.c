@@ -591,11 +591,6 @@ bool wlan_reg_11d_enabled_on_host(struct wlan_objmgr_psoc *psoc)
 }
 
 #ifdef CONFIG_CHAN_NUM_API
-bool wlan_reg_is_dsrc_chan(struct wlan_objmgr_pdev *pdev, uint8_t chan_num)
-{
-	return reg_is_dsrc_chan(pdev, chan_num);
-}
-
 bool wlan_reg_is_etsi13_srd_chan(struct wlan_objmgr_pdev *pdev,
 				 uint8_t chan_num)
 {

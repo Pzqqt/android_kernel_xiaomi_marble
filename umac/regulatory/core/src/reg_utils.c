@@ -352,34 +352,7 @@ bool reg_is_dsrc_freq(qdf_freq_t freq)
 	return true;
 }
 #endif  /*CONFIG_CHAN_FREQ_API*/
-
-#ifdef CONFIG_CHAN_NUM_API
-bool reg_is_dsrc_chan(struct wlan_objmgr_pdev *pdev, uint8_t chan)
-{
-	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
-	qdf_freq_t freq = 0;
-
-	pdev_priv_obj = reg_get_pdev_obj(pdev);
-
-	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
-		reg_err("reg pdev priv obj is NULL");
-		return false;
-	}
-
-	if (!REG_IS_5GHZ_CH(chan))
-		return false;
-
-	freq = reg_legacy_chan_to_freq(pdev, chan);
-
-	if (!(freq >= REG_DSRC_START_FREQ && freq <= REG_DSRC_END_FREQ))
-		return false;
-
-	return true;
-}
-#endif /* CONFIG_CHAN_NUM_API */
-
 #else
-
 bool reg_is_etsi13_regdmn(struct wlan_objmgr_pdev *pdev)
 {
 	struct cur_regdmn_info cur_reg_dmn;

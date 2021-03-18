@@ -489,17 +489,6 @@ bool reg_get_fcc_constraint(struct wlan_objmgr_pdev *pdev, uint32_t freq)
 bool reg_is_dsrc_freq(qdf_freq_t freq);
 #endif /* CONFIG_CHAN_FREQ_API*/
 
-#ifdef CONFIG_CHAN_NUM_API
-/**
- * reg_is_dsrc_chan () - Checks the channel for DSRC or not
- * @chan: channel
- * @pdev: pdev ptr
- *
- * Return: true or false
- */
-bool reg_is_dsrc_chan(struct wlan_objmgr_pdev *pdev, uint8_t chan);
-#endif /* CONFIG_CHAN_NUM_API */
-
 static inline bool reg_is_etsi13_srd_chan(struct wlan_objmgr_pdev *pdev,
 					  uint8_t chan)
 {
@@ -531,12 +520,6 @@ reg_is_etsi13_srd_chan_allowed_master_mode(struct wlan_objmgr_pdev *pdev)
 	return true;
 }
 #elif defined(CONFIG_REG_CLIENT)
-static inline bool reg_is_dsrc_chan(struct wlan_objmgr_pdev *pdev,
-				    uint8_t chan)
-{
-	return false;
-}
-
 static inline bool reg_is_dsrc_freq(qdf_freq_t freq)
 {
 	return false;
@@ -576,12 +559,6 @@ bool reg_is_etsi13_srd_chan(struct wlan_objmgr_pdev *pdev, uint8_t chan);
  */
 bool reg_is_etsi13_srd_chan_allowed_master_mode(struct wlan_objmgr_pdev *pdev);
 #else
-static inline bool reg_is_dsrc_chan(struct wlan_objmgr_pdev *pdev,
-				    uint8_t chan)
-{
-	return false;
-}
-
 static inline bool reg_is_dsrc_freq(qdf_freq_t freq)
 {
 	return false;

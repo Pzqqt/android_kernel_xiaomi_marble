@@ -828,16 +828,6 @@ void wlan_reg_update_nol_ch(struct wlan_objmgr_pdev *pdev,
 			    uint8_t *ch_list,
 			    uint8_t num_ch,
 			    bool nol_ch);
-
-/**
- * wlan_reg_is_dsrc_chan () - Checks if the channel is dsrc channel or not
- * @pdev: pdev ptr
- * @chan_num: channel
- *
- * Return: true or false
- */
-bool wlan_reg_is_dsrc_chan(struct wlan_objmgr_pdev *pdev, uint8_t chan_num);
-
 /**
  * wlan_reg_is_passive_or_disable_ch () - Checks chan state for passive
  * and disabled
