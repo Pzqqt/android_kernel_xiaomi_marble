@@ -280,7 +280,7 @@ static u32 msm_vidc_encoder_bin_size_iris2(struct msm_vidc_inst *inst)
 static u32 msm_vidc_encoder_comv_size_iris2(struct msm_vidc_inst* inst)
 {
 	u32 size = 0;
-	u32 width, height, num_ref = 0, num_recon = 0;
+	u32 width, height, num_recon = 0;
 	struct v4l2_format* f;
 
 	if (!inst || !inst->core) {
@@ -296,14 +296,12 @@ static u32 msm_vidc_encoder_comv_size_iris2(struct msm_vidc_inst* inst)
 		// TODO: replace zeros with appropriate variables
 		HFI_IRIS2_ENC_RECON_BUF_COUNT(num_recon, 0, 0, 0, 0, 0,
 			HFI_CODEC_ENCODE_AVC);
-		num_ref = num_recon - 1;
-		HFI_BUFFER_COMV_H264E(size, width, height, num_ref);
+		HFI_BUFFER_COMV_H264E(size, width, height, num_recon);
 	} else if (inst->codec == MSM_VIDC_HEVC || inst->codec == MSM_VIDC_HEIC) {
 		// TODO: replace zeros with appropriate variables
 		HFI_IRIS2_ENC_RECON_BUF_COUNT(num_recon, 0, 0, 0, 0, 0,
 			HFI_CODEC_ENCODE_HEVC);
-		num_ref = num_recon - 1;
-		HFI_BUFFER_COMV_H265E(size, width, height, num_ref);
+		HFI_BUFFER_COMV_H265E(size, width, height, num_recon);
 	}
 
 	i_vpr_l(inst, "%s: size %d\n", __func__, size);
