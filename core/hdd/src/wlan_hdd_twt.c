@@ -576,7 +576,7 @@ hdd_twt_pack_get_params_resp_nlmsg(struct wlan_objmgr_psoc *psoc,
 			}
 		}
 
-		if (params[i].info_frame_disabled) {
+		if (!params[i].info_frame_disabled) {
 			attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TWT_INFO_ENABLED;
 			if (nla_put_flag(reply_skb, attr)) {
 				hdd_err("TWT: get_params put Info Enable fail");
