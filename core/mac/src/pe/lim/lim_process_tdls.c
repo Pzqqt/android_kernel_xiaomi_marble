@@ -233,9 +233,9 @@ static void populate_dot11f_tdls_offchannel_params(
 				validChan[i], nss_5g, nss_2g);
 			continue;
 		} else {
-			if (wlan_reg_is_dsrc_chan(mac->pdev, validChan[i])) {
-				pe_debug("skipping channel: %d from the valid channel list",
-					validChan[i]);
+			if (wlan_reg_is_dsrc_freq(ch_freq)) {
+				pe_debug("skipping freq: %d from the valid freq list",
+					 ch_freq);
 				continue;
 			}
 		}

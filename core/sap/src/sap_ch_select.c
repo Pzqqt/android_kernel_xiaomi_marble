@@ -484,7 +484,7 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 			continue;
 
 		/* Skip DSRC channels */
-		if (wlan_reg_is_dsrc_chan(mac->pdev, channel))
+		if (wlan_reg_is_dsrc_freq(pSpectCh->chan_freq))
 			continue;
 
 		/*

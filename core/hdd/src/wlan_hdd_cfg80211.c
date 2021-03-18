@@ -15180,34 +15180,6 @@ wlan_hdd_extscan_get_valid_channels_policy[EXTSCAN_CONFIG_MAX + 1] = {
 };
 
 /**
- * hdd_remove_dsrc_channels () - remove dsrc chanels
- * @hdd_ctx: hdd context
- * @wiphy: Pointer to wireless phy
- * @chan_list: channel list
- * @num_channels: number of channels
- *
- * Return: none
- */
-static void hdd_remove_dsrc_channels(struct hdd_context *hdd_ctx,
-				     struct wiphy *wiphy, uint32_t *chan_list,
-				     uint8_t *num_channels)
-{
-	uint8_t num_chan_temp = 0;
-	int i;
-
-	for (i = 0; i < *num_channels; i++) {
-		if (!wlan_reg_is_dsrc_chan(hdd_ctx->pdev,
-					   wlan_reg_freq_to_chan(
-					   hdd_ctx->pdev,
-					   chan_list[i]))) {
-			chan_list[num_chan_temp] = chan_list[i];
-			num_chan_temp++;
-		}
-	}
-	*num_channels = num_chan_temp;
-}
-
-/**
  * hdd_remove_passive_channels () - remove passive channels
  * @wiphy: Pointer to wireless phy
  * @chan_list: channel list
@@ -15323,7 +15295,6 @@ __wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
 
 	num_channels = QDF_MIN(num_channels, max_channels);
 
-	hdd_remove_dsrc_channels(hdd_ctx, wiphy, chan_list, &num_channels);
 	if ((QDF_SAP_MODE == adapter->device_mode) ||
 	    !strncmp(hdd_get_fwpath(), "ap", 2))
 		hdd_remove_passive_channels(wiphy, chan_list,
@@ -24078,8 +24049,8 @@ void wlan_hdd_init_chan_info(struct hdd_context *hdd_ctx)
 
 	num_5g = QDF_ARRAY_SIZE(hdd_channels_5_ghz);
 	for (; (index - num_2g) < num_5g; index++) {
-		if (wlan_reg_is_dsrc_chan(hdd_ctx->pdev,
-		    hdd_channels_5_ghz[index - num_2g].hw_value))
+		if (wlan_reg_is_dsrc_freq(
+		    hdd_channels_5_ghz[index - num_2g].center_freq))
 			continue;
 		hdd_ctx->chan_info[index].freq =
 			hdd_channels_5_ghz[index - num_2g].center_freq;
