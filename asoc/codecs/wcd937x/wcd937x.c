@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -2120,15 +2120,24 @@ static int wcd937x_tx_master_ch_get(struct snd_kcontrol *kcontrol,
 {
 	struct snd_soc_component *component =
 				snd_soc_kcontrol_component(kcontrol);
-	struct wcd937x_priv *wcd937x = snd_soc_component_get_drvdata(component);
-	int slave_ch_idx;
+	struct wcd937x_priv *wcd937x = NULL;
+	int slave_ch_idx = -EINVAL;
+
+	if (component == NULL)
+		return -EINVAL;
+
+	wcd937x = snd_soc_component_get_drvdata(component);
+	if (wcd937x == NULL)
+		return -EINVAL;
 
 	wcd937x_tx_get_slave_ch_type_idx(kcontrol->id.name, &slave_ch_idx);
 
-	if (slave_ch_idx != -EINVAL)
-		ucontrol->value.integer.value[0] =
-				wcd937x_slave_get_master_ch_val(
-				wcd937x->tx_master_ch_map[slave_ch_idx]);
+	if (slave_ch_idx < 0 || slave_ch_idx >= WCD937X_MAX_SLAVE_CH_TYPES)
+		return -EINVAL;
+
+	ucontrol->value.integer.value[0] =
+			wcd937x_slave_get_master_ch_val(
+			wcd937x->tx_master_ch_map[slave_ch_idx]);
 
 	dev_dbg(component->dev, "%s: ucontrol->value.integer.value[0] = %ld\n",
 			__func__, ucontrol->value.integer.value[0]);
@@ -2140,19 +2149,31 @@ static int wcd937x_tx_master_ch_put(struct snd_kcontrol *kcontrol,
 {
 	struct snd_soc_component *component =
 				snd_soc_kcontrol_component(kcontrol);
-	struct wcd937x_priv *wcd937x = snd_soc_component_get_drvdata(component);
-	int slave_ch_idx;
+	struct wcd937x_priv *wcd937x;
+	int slave_ch_idx = -EINVAL, idx = 0;
+
+	if (component == NULL)
+		return -EINVAL;
+
+	wcd937x = snd_soc_component_get_drvdata(component);
+	if (wcd937x == NULL)
+		return -EINVAL;
 
 	wcd937x_tx_get_slave_ch_type_idx(kcontrol->id.name, &slave_ch_idx);
+
+	if (slave_ch_idx < 0 || slave_ch_idx >= WCD937X_MAX_SLAVE_CH_TYPES)
+		return -EINVAL;
 
 	dev_dbg(component->dev, "%s: slave_ch_idx: %d", __func__, slave_ch_idx);
 	dev_dbg(component->dev, "%s: ucontrol->value.enumerated.item[0] = %ld\n",
 			__func__, ucontrol->value.enumerated.item[0]);
 
-	if (slave_ch_idx != -EINVAL)
-		wcd937x->tx_master_ch_map[slave_ch_idx] =
-				wcd937x_slave_get_master_ch(
-					ucontrol->value.enumerated.item[0]);
+	idx = ucontrol->value.enumerated.item[0];
+	if (idx < 0 || idx >= ARRAY_SIZE(wcd937x_swr_master_ch_map))
+		return -EINVAL;
+
+	wcd937x->tx_master_ch_map[slave_ch_idx] =
+			wcd937x_slave_get_master_ch(idx);
 
 	return 0;
 }
