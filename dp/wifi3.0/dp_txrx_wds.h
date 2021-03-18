@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -19,6 +19,9 @@
 
 #ifndef _DP_TXRX_WDS_H_
 #define _DP_TXRX_WDS_H_
+
+/* host managed flag */
+#define DP_AST_FLAGS_HM 0x0020
 
 /* WDS AST entry aging timer value */
 #define DP_WDS_AST_AGING_TIMER_DEFAULT_MS	120000
@@ -137,7 +140,7 @@ dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
 {
 	struct dp_peer *sa_peer;
 	struct dp_ast_entry *ast;
-	uint32_t flags = IEEE80211_NODE_F_WDS_HM;
+	uint32_t flags = DP_AST_FLAGS_HM;
 	uint32_t ret = 0;
 	struct dp_neighbour_peer *neighbour_peer = NULL;
 	struct dp_pdev *pdev = ta_peer->vdev->pdev;
