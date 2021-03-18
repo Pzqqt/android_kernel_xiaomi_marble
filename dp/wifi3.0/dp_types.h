@@ -2253,6 +2253,10 @@ struct dp_pdev {
 #ifdef ATH_SUPPORT_NAC_RSSI
 	bool nac_rssi_filtering;
 #endif
+
+	/* ppdu_stats lock for queue concurrency between cores*/
+	qdf_spinlock_t ppdu_stats_lock;
+
 	/* list of ppdu tlvs */
 	TAILQ_HEAD(, ppdu_info) ppdu_info_list;
 	TAILQ_HEAD(, ppdu_info) sched_comp_ppdu_list;
