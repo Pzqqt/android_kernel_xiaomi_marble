@@ -9779,7 +9779,7 @@ static inline void hdd_pm_qos_update_request(struct hdd_context *hdd_ctx,
 
 	if (qdf_cpumask_empty(pm_qos_cpu_mask)) {
 		latency = wlan_hdd_get_pm_qos_cpu_latency();
-		qdf_for_each_possible_cpu(cpu) {
+		for_each_present_cpu(cpu) {
 			dev_pm_qos_update_request(
 				&hdd_ctx->pm_qos_req[cpu],
 				latency);
@@ -9815,7 +9815,7 @@ static inline void hdd_pm_qos_add_request(struct hdd_context *hdd_ctx)
 	qdf_cpumask_clear(&hdd_ctx->qos_cpu_mask);
 	hdd_pm_qos_update_cpu_mask(&hdd_ctx->qos_cpu_mask, false);
 
-	for_each_possible_cpu(cpu) {
+	for_each_present_cpu(cpu) {
 		cpu_dev = get_cpu_device(cpu);
 
 		dev_pm_qos_add_request(cpu_dev, &hdd_ctx->pm_qos_req[cpu],
@@ -9830,7 +9830,7 @@ static inline void hdd_pm_qos_remove_request(struct hdd_context *hdd_ctx)
 {
 	int cpu;
 
-	for_each_possible_cpu(cpu) {
+	for_each_present_cpu(cpu) {
 		dev_pm_qos_remove_request(&hdd_ctx->pm_qos_req[cpu]);
 		hdd_debug("Remove dev_pm_qos_request for all cpus: %d", cpu);
 	}
