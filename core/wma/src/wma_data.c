@@ -886,6 +886,27 @@ void wma_set_bss_rate_flags(tp_wma_handle wma, uint8_t vdev_id,
 	wma_cp_stats_set_rate_flag(wma, vdev_id);
 }
 
+void wma_set_vht_txbf_cfg(struct mac_context *mac, uint8_t vdev_id)
+{
+	wmi_vdev_txbf_en txbf_en = {0};
+	QDF_STATUS status;
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (!wma)
+		return;
+
+	txbf_en.sutxbfee = mac->mlme_cfg->vht_caps.vht_cap_info.su_bformee;
+	txbf_en.mutxbfee =
+		mac->mlme_cfg->vht_caps.vht_cap_info.enable_mu_bformee;
+	txbf_en.sutxbfer = mac->mlme_cfg->vht_caps.vht_cap_info.su_bformer;
+
+	status = wma_vdev_set_param(wma->wmi_handle, vdev_id,
+				    WMI_VDEV_PARAM_TXBF,
+				    *((A_UINT8 *)&txbf_en));
+	if (QDF_IS_STATUS_ERROR(status))
+		wma_err("failed to set VHT TXBF(status = %d)", status);
+}
+
 /**
  * wmi_unified_send_txbf() - set txbf parameter to fw
  * @wma: wma handle

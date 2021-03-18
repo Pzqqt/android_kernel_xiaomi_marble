@@ -963,6 +963,15 @@ enum tx_rate_info wma_get_ht_rate_flags(enum phy_ch_width ch_width);
  */
 enum tx_rate_info wma_get_he_rate_flags(enum phy_ch_width ch_width);
 
+/**
+ * wma_set_vht_txbf_cfg() - set VHT Tx beamforming capability to FW
+ * @mac: Global MAC context
+ * @vdev_id: VDEV id
+ *
+ * Return: None
+ */
+void wma_set_vht_txbf_cfg(struct mac_context *mac, uint8_t vdev_id);
+
 int32_t wmi_unified_send_txbf(tp_wma_handle wma, tpAddStaParams params);
 
 /**
