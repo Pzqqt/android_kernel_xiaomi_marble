@@ -22,7 +22,7 @@
 #include <linux/io.h>
 #include "hif.h"
 #include "hif_main.h"
-
+#include "pld_common.h"
 /* Device memory is 32MB but bar size is only 1MB.
  * Register remapping logic is used to access 32MB device memory.
  * 0-512KB : Fixed address, 512KB-1MB : remapped address.
