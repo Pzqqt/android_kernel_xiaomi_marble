@@ -26,13 +26,22 @@
 #if !defined(__I_QDF_TRACE_H)
 #define __I_QDF_TRACE_H
 
+/*
+ * The CONFIG_QCOM_MINIDUMP feature can only be used
+ * beginning with kernel version msm-4.19 since that is
+ * when msm_minidump_removerefion() was added.
+ */
+#if defined(CONFIG_QCOM_MINIDUMP) && \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
+#define WLAN_QCOM_MINIDUMP
+#endif
 /* older kernels have a bug in kallsyms, so ensure module.h is included */
 #include <linux/module.h>
 #include <linux/kallsyms.h>
 #ifdef CONFIG_QCA_MINIDUMP
 #include <linux/minidump_tlv.h>
 #endif
-#ifdef CONFIG_QCOM_MINIDUMP
+#ifdef WLAN_QCOM_MINIDUMP
 #include <soc/qcom/minidump.h>
 #endif
 
@@ -475,7 +484,7 @@ __qdf_minidump_remove(void *addr, size_t size, const char *name)
 {
 	minidump_remove_segments((const uintptr_t)addr);
 }
-#elif defined(CONFIG_QCOM_MINIDUMP)
+#elif defined(WLAN_QCOM_MINIDUMP)
 static inline void
 __qdf_minidump_log(void *start_addr, const size_t size,
 		   const char *name)
