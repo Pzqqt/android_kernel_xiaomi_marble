@@ -6387,9 +6387,12 @@ static int drv_cmd_set_fcc_channel(struct hdd_adapter *adapter,
 				   struct hdd_priv_data *priv_data)
 {
 	QDF_STATUS status;
+	QDF_STATUS status_6G = QDF_STATUS_SUCCESS;
 	int8_t input_value;
 	bool fcc_constraint;
 	int err;
+	uint32_t band_bitmap = 0;
+	bool rf_test_mode;
 
 	/*
 	 * This command would be called by user-space when it detects WLAN
@@ -6412,9 +6415,28 @@ static int drv_cmd_set_fcc_channel(struct hdd_adapter *adapter,
 
 	status = ucfg_reg_set_fcc_constraint(hdd_ctx->pdev, fcc_constraint);
 
+	status_6G = ucfg_mlme_is_rf_test_mode_enabled(hdd_ctx->psoc,
+						      &rf_test_mode);
+	if (!QDF_IS_STATUS_SUCCESS(status_6G)) {
+		hdd_err("Get rf test mode failed");
+		goto send_status;
+	}
+
+	if (!rf_test_mode) {
+		if (fcc_constraint)
+			band_bitmap |= (BIT(REG_BAND_5G) | BIT(REG_BAND_2G));
+		else
+			band_bitmap = REG_BAND_MASK_ALL;
+		if (hdd_reg_set_band(adapter->dev, band_bitmap))
+			status_6G = QDF_STATUS_E_FAILURE;
+	}
+
+send_status:
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("Failed to %s tx power for channels 12/13",
 			fcc_constraint ? "restore" : "reduce");
+	else
+		status = status_6G;
 
 	return qdf_status_to_os_return(status);
 }

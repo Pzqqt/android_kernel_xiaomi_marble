@@ -161,6 +161,23 @@ enum wlan_wds_mode {
 		"11d Enable Flag")
 
 /*
+ * rf_test_mode_enabled - Enable rf test mode support
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This cfg is used to set rf test mode support flag
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ */
+#define CFG_RF_TEST_MODE_SUPP_ENABLED CFG_BOOL( \
+		"rf_test_mode_enabled", \
+		1, \
+		"rf test mode Enable Flag")
+
+/*
  * <ini>
  * BandCapability - Preferred band (0: 2.4G, 5G, and 6G,
  *				    1: 2.4G only,
@@ -906,5 +923,6 @@ enum wlan_wds_mode {
 	CFG(CFG_SAE_CONNECION_RETRIES) \
 	CFG(CFG_WLS_6GHZ_CAPABLE) \
 	CFG(CFG_MONITOR_MODE_CONCURRENCY) \
+	CFG(CFG_RF_TEST_MODE_SUPP_ENABLED) \
 	CFG_WDS_MODE_ALL
 #endif /* __CFG_MLME_GENERIC_H */

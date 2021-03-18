@@ -13827,6 +13827,7 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 	int ret;
 	mac_handle_t mac_handle;
 	bool b_cts2self, is_imps_enabled;
+	bool rf_test_mode;
 
 	hdd_enter();
 
@@ -13914,6 +13915,18 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 	wlan_hdd_init_chan_info(hdd_ctx);
 	wlan_hdd_twt_init(hdd_ctx);
 	wlan_hdd_gpio_wakeup_init(hdd_ctx);
+
+	status = ucfg_mlme_is_rf_test_mode_enabled(hdd_ctx->psoc,
+						   &rf_test_mode);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("Get rf test mode failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+	if (!rf_test_mode) {
+		wlan_cm_set_check_6ghz_security(hdd_ctx->psoc, true);
+		wlan_cm_set_6ghz_key_mgmt_mask(hdd_ctx->psoc,
+					       ALLOWED_KEYMGMT_6G_MASK);
+	}
 
 	hdd_exit();
 	return 0;
@@ -18014,7 +18027,7 @@ static int hdd_update_dfs_config(struct hdd_context *hdd_ctx)
  *
  * Return: 0 if success else err
  */
-static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
+int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 {
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->psoc;
 	struct scan_user_cfg scan_cfg;

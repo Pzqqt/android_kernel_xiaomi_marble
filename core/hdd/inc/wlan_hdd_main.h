@@ -4185,6 +4185,14 @@ void hdd_unregister_notifiers(struct hdd_context *hdd_ctx);
 int hdd_dbs_scan_selection_init(struct hdd_context *hdd_ctx);
 
 /**
+ * hdd_update_scan_config - API to update scan configuration parameters
+ * @hdd_ctx: HDD context
+ *
+ * Return: 0 if success else err
+ */
+int hdd_update_scan_config(struct hdd_context *hdd_ctx);
+
+/**
  * hdd_start_complete()- complete the start event
  * @ret: return value for complete event.
  *
