@@ -1273,6 +1273,7 @@ static int lpass_cdc_probe(struct platform_device *pdev)
 		ret = 0;
 	}
 
+	BLOCKING_INIT_NOTIFIER_HEAD(&priv->notifier);
 	priv->dev = &pdev->dev;
 	priv->dev_up = true;
 	priv->initial_boot = true;
