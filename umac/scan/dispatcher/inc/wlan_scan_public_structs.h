@@ -63,7 +63,7 @@ typedef uint32_t wlan_scan_id;
 /**
  * IE Field nomenclature
  * @MBSSID_INDICATOR_POS: Position of MaxBSSID indicator inside MBSSID tag
- * @UPTO_TAG_LEN: 2bytes, which includes Tag Number and Tag length field
+ * @MIN_IE_LEN: 2bytes, which includes Tag Number and Tag length field
  * @TAG_LEN_POS: Position of tag length field in MBSSID tag
  * @VALID_ELEM_LEAST_LEN: Minimum fields required after tag length to call
  * a MBSSID tag valid. (MaxBSSID Indicator + subelement ID + Subelement length
@@ -87,9 +87,14 @@ typedef uint32_t wlan_scan_id;
  * profile, which includes at least one tag, which may have tag number + tag
  * length + atleast 1 byte of datai
  * @BSS_INDEX_POS: Position of BSSID index field in Multiple BSSID index tag
+ * @MIN_VENDOR_TAG_LEN: Minimum length of a vendor specific tag
+ * @OUI_LEN: OUI + OUI Type + Min DATA
+ * @ELEM_ID_EXTN_POS: Position of element ID extension in an extension element
+ * @ELEM_ID_LIST_LEN_POS: Position of length field in list of element IDs
+ * @ELEM_ID_LIST_POS: Position to the start of element ID list
  */
 #define MBSSID_INDICATOR_POS 2
-#define UPTO_TAG_LEN 2
+#define MIN_IE_LEN 2
 #define TAG_LEN_POS 1
 #define VALID_ELEM_LEAST_LEN 4
 #define SUBELEMENT_START_POS 3
@@ -104,6 +109,11 @@ typedef uint32_t wlan_scan_id;
 #define VALID_BSS_PROF_LEAST_LEN 4
 #define SPLIT_PROF_DATA_LEAST_LEN 3
 #define BSS_INDEX_POS 2
+#define MIN_VENDOR_TAG_LEN 7
+#define OUI_LEN 5
+#define ELEM_ID_EXTN_POS 2
+#define ELEM_ID_LIST_LEN_POS 3
+#define ELEM_ID_LIST_POS 4
 
 /* forward declaration */
 struct wlan_objmgr_vdev;
@@ -338,6 +348,23 @@ enum nontx_profile_reasoncode {
 	VALID_NONTX_PROF = 0,
 	INVALID_SPLIT_PROF = 0x1,
 	INVALID_NONTX_PROF = 0x2
+};
+
+/**
+ * struct non_inheritance_ie - Non inheritance tag information
+ * @list_len: Length of element ID list
+ * @extn_len: Length of element ID extension list
+ * @non_inherit: Flag to indicate if any noninheritance tag present
+ *              in the non tx BSSID profile
+ * @non_inh_ie_found: Flag to indicate if the noninheritance tag found
+ *                   from non tx BSSID profile present in the tx profile
+ *                   so that the copy of that IE can be skipped.
+ */
+struct non_inheritance_ie {
+	uint8_t list_len;
+	uint8_t extn_len;
+	bool non_inherit;
+	bool non_inh_ie_found;
 };
 
 /**
