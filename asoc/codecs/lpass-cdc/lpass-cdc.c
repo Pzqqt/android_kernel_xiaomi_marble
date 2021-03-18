@@ -192,13 +192,11 @@ static int lpass_cdc_update_wcd_event(void *handle, u16 event, u32 data)
 				LPASS_CDC_MACRO_EVT_BCS_CLK_OFF, data);
 		break;
 	case WCD_LPASS_CDC_EVT_RX_PA_GAIN_UPDATE:
-		/* Update PA Gain only for lpass_cdc version 2.1 */
-		if (priv->version == LPASS_CDC_VERSION_2_1)
-			if (priv->macro_params[RX_MACRO].event_handler)
-				priv->macro_params[RX_MACRO].event_handler(
-					priv->component,
-					LPASS_CDC_MACRO_EVT_RX_PA_GAIN_UPDATE,
-					data);
+		if (priv->macro_params[RX_MACRO].event_handler)
+			priv->macro_params[RX_MACRO].event_handler(
+				priv->component,
+				LPASS_CDC_MACRO_EVT_RX_PA_GAIN_UPDATE,
+				data);
 		break;
 	case WCD_LPASS_CDC_EVT_HPHL_HD2_ENABLE:
 		if (priv->macro_params[RX_MACRO].event_handler)

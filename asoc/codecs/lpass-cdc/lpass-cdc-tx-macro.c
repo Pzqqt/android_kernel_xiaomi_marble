@@ -770,12 +770,8 @@ static int lpass_cdc_tx_macro_get_bcs_ch_sel(struct snd_kcontrol *kcontrol,
 	if (!lpass_cdc_tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
 		return -EINVAL;
 
-	//if (tx_priv->version == LPASS_CDC_VERSION_2_1)
 	value = (snd_soc_component_read(component,
 			LPASS_CDC_VA_TOP_CSR_SWR_CTRL)) & 0x0F;
-	//else if (tx_priv->version == LPASS_CDC_VERSION_2_0)
-	//	value = (snd_soc_component_read32(component,
-	//		LPASS_CDC_TX_TOP_CSR_SWR_CTRL)) & 0x0F;
 
 	ucontrol->value.integer.value[0] = value;
 	return 0;
@@ -798,12 +794,8 @@ static int lpass_cdc_tx_macro_put_bcs_ch_sel(struct snd_kcontrol *kcontrol,
 		return -EINVAL;
 
 	value = ucontrol->value.integer.value[0];
-	//if (tx_priv->version == LPASS_CDC_VERSION_2_1)
 	snd_soc_component_update_bits(component,
 			LPASS_CDC_VA_TOP_CSR_SWR_CTRL, 0x0F, value);
-	//else if (tx_priv->version == LPASS_CDC_VERSION_2_0)
-	//	snd_soc_component_update_bits(component,
-	//		LPASS_CDC_TX_TOP_CSR_SWR_CTRL, 0x0F, value);
 
 	return 0;
 }
@@ -951,14 +943,9 @@ static int lpass_cdc_tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 			      snd_soc_component_read(component,
 					tx_gain_ctl_reg));
 		if (tx_priv->bcs_enable) {
-			if (tx_priv->version == LPASS_CDC_VERSION_2_1)
-				snd_soc_component_update_bits(component,
-					LPASS_CDC_VA_TOP_CSR_SWR_CTRL, 0x0F,
-					tx_priv->bcs_ch);
-			else if (tx_priv->version == LPASS_CDC_VERSION_2_0)
-				snd_soc_component_update_bits(component,
-					LPASS_CDC_TX_TOP_CSR_SWR_CTRL, 0xF0,
-					(tx_priv->bcs_ch << 4));
+			snd_soc_component_update_bits(component,
+				LPASS_CDC_VA_TOP_CSR_SWR_CTRL, 0x0F,
+				tx_priv->bcs_ch);
 
 			snd_soc_component_update_bits(component, dec_cfg_reg,
 					0x01, 0x01);
@@ -968,32 +955,6 @@ static int lpass_cdc_tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 					LPASS_CDC_TX0_TX_PATH_SEC7, 0x40,
 					0x40);
 		}
-		//if (tx_priv->version == LPASS_CDC_VERSION_2_0) {
-			if (snd_soc_component_read(component, adc_mux_reg)
-							& SWR_MIC) {
-				snd_soc_component_update_bits(component,
-					LPASS_CDC_TX_TOP_CSR_SWR_CTRL,
-					0x01, 0x01);
-				snd_soc_component_update_bits(component,
-					LPASS_CDC_TX_TOP_CSR_SWR_MIC0_CTL,
-					0x0E, 0x0C);
-				snd_soc_component_update_bits(component,
-					LPASS_CDC_TX_TOP_CSR_SWR_MIC1_CTL,
-					0x0E, 0x0C);
-				snd_soc_component_update_bits(component,
-					LPASS_CDC_TX_TOP_CSR_SWR_MIC2_CTL,
-					0x0E, 0x00);
-				snd_soc_component_update_bits(component,
-					LPASS_CDC_TX_TOP_CSR_SWR_MIC3_CTL,
-					0x0E, 0x00);
-				snd_soc_component_update_bits(component,
-					LPASS_CDC_TX_TOP_CSR_SWR_MIC4_CTL,
-					0x0E, 0x00);
-				snd_soc_component_update_bits(component,
-					LPASS_CDC_TX_TOP_CSR_SWR_MIC5_CTL,
-					0x0E, 0x00);
-			}
-		//}
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
 		hpf_cut_off_freq =
@@ -1029,13 +990,11 @@ static int lpass_cdc_tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		cancel_delayed_work_sync(
 				&tx_priv->tx_mute_dwork[decimator].dwork);
 
-		//if (tx_priv->version == LPASS_CDC_VERSION_2_0) {
-			if (snd_soc_component_read(component, adc_mux_reg)
-							& SWR_MIC)
-				snd_soc_component_update_bits(component,
-					LPASS_CDC_TX_TOP_CSR_SWR_CTRL,
-					0x01, 0x00);
-		//}
+		if (snd_soc_component_read(component, adc_mux_reg)
+						& SWR_MIC)
+			snd_soc_component_update_bits(component,
+				LPASS_CDC_TX_TOP_CSR_SWR_CTRL,
+				0x01, 0x00);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		snd_soc_component_update_bits(component, tx_vol_ctl_reg,
@@ -1050,14 +1009,9 @@ static int lpass_cdc_tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 			snd_soc_component_update_bits(component,
 				LPASS_CDC_TX0_TX_PATH_SEC7, 0x40, 0x00);
 			tx_priv->bcs_clk_en = false;
-			//if (tx_priv->version == LPASS_CDC_VERSION_2_1)
 			snd_soc_component_update_bits(component,
 					LPASS_CDC_VA_TOP_CSR_SWR_CTRL, 0x0F,
 					0x00);
-			//else if (tx_priv->version == LPASS_CDC_VERSION_2_0)
-			//	snd_soc_component_update_bits(component,
-			//		LPASS_CDC_TX_TOP_CSR_SWR_CTRL, 0xF0,
-			//		0x00);
 		}
 		break;
 	}

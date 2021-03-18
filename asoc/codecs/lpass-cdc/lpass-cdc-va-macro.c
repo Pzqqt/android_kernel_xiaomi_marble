@@ -1174,32 +1174,6 @@ static int lpass_cdc_va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		/* apply gain after decimator is enabled */
 		snd_soc_component_write(component, tx_gain_ctl_reg,
 			snd_soc_component_read(component, tx_gain_ctl_reg));
-		if (va_priv->version == LPASS_CDC_VERSION_2_0) {
-			if (snd_soc_component_read(component, adc_mux_reg)
-							& SWR_MIC) {
-				snd_soc_component_update_bits(component,
-					LPASS_CDC_TX_TOP_CSR_SWR_CTRL,
-					0x01, 0x01);
-				snd_soc_component_update_bits(component,
-					LPASS_CDC_TX_TOP_CSR_SWR_MIC0_CTL,
-					0x0E, 0x0C);
-				snd_soc_component_update_bits(component,
-					LPASS_CDC_TX_TOP_CSR_SWR_MIC1_CTL,
-					0x0E, 0x0C);
-				snd_soc_component_update_bits(component,
-					LPASS_CDC_TX_TOP_CSR_SWR_MIC2_CTL,
-					0x0E, 0x00);
-				snd_soc_component_update_bits(component,
-					LPASS_CDC_TX_TOP_CSR_SWR_MIC3_CTL,
-					0x0E, 0x00);
-				snd_soc_component_update_bits(component,
-					LPASS_CDC_TX_TOP_CSR_SWR_MIC4_CTL,
-					0x0E, 0x00);
-				snd_soc_component_update_bits(component,
-					LPASS_CDC_TX_TOP_CSR_SWR_MIC5_CTL,
-					0x0E, 0x00);
-			}
-		}
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
 		hpf_cut_off_freq =
@@ -1233,13 +1207,6 @@ static int lpass_cdc_va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		}
 		cancel_delayed_work_sync(
 				&va_priv->va_mute_dwork[decimator].dwork);
-		if (va_priv->version == LPASS_CDC_VERSION_2_0) {
-			if (snd_soc_component_read(component, adc_mux_reg)
-							& SWR_MIC)
-				snd_soc_component_update_bits(component,
-					LPASS_CDC_TX_TOP_CSR_SWR_CTRL,
-					0x01, 0x00);
-		}
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		/* Disable TX CLK */
