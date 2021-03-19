@@ -7690,8 +7690,6 @@ static void dp_vdev_set_monitor_mode_buf_rings(struct dp_pdev *pdev)
 	uint32_t num_entries;
 	struct dp_soc *soc = pdev->soc;
 
-	dp_soc_config_full_mon_mode(pdev, DP_FULL_MON_ENABLE);
-
 	/* If delay monitor replenish is disabled, allocate link descriptor
 	 * monitor ring buffers of ring size.
 	 */
@@ -7758,6 +7756,8 @@ static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_soc_t *dp_soc,
 	 * for lite monitor required configuration done through
 	 * dp_set_pdev_param
 	 */
+
+	dp_soc_config_full_mon_mode(pdev, DP_FULL_MON_ENABLE);
 	if (special_monitor) {
 		status = QDF_STATUS_SUCCESS;
 		goto fail;
