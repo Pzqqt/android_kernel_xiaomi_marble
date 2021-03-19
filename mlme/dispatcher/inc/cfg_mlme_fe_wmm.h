@@ -855,28 +855,6 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"setup U-APSD mask for ACs")
 
-/*
- * <ini>
- * ImplicitQosIsEnabled - Enableimplicit QOS
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable/disable implicit QOS.
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_QOS_WMM_IMPLICIT_SETUP_ENABLED CFG_INI_BOOL( \
-		"ImplicitQosIsEnabled", \
-		0, \
-		"Enable implicit QOS")
-
 #ifdef FEATURE_WLAN_ESE
 /*
  * <ini>
@@ -1048,7 +1026,6 @@
 	CFG(CFG_QOS_WMM_MODE) \
 	CFG(CFG_QOS_WMM_80211E_ENABLED) \
 	CFG(CFG_QOS_WMM_UAPSD_MASK) \
-	CFG(CFG_QOS_WMM_IMPLICIT_SETUP_ENABLED) \
 	QOS_CFG \
 	CFG(CFG_QOS_WMM_BURST_SIZE_DEFN) \
 	CFG(CFG_QOS_WMM_TS_INFO_ACK_POLICY) \

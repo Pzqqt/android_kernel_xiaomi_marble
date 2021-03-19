@@ -3274,22 +3274,6 @@ ucfg_mlme_get_wmm_uapsd_mask(struct wlan_objmgr_psoc *psoc, uint8_t *value)
 	return wlan_mlme_get_wmm_uapsd_mask(psoc, value);
 }
 
-/**
- * ucfg_mlme_get_implicit_qos_is_enabled() - Enable implicit QOS
- * @psoc: pointer to psoc object
- * @value: Value that needs to be set from the caller
- *
- * Inline UCFG API to be used by HDD/OSIF callers
- *
- * Return: QDF Status
- */
-static inline
-QDF_STATUS ucfg_mlme_get_implicit_qos_is_enabled(struct wlan_objmgr_psoc *psoc,
-						 bool *value)
-{
-	return wlan_mlme_get_implicit_qos_is_enabled(psoc, value);
-}
-
 #ifdef FEATURE_WLAN_ESE
 /**
  * ucfg_mlme_get_inactivity_interval() - Infra Inactivity Interval
