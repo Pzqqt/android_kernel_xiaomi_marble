@@ -29437,6 +29437,7 @@ typedef enum _WMI_DEL_TWT_STATUS_T {
     WMI_DEL_TWT_STATUS_UNKNOWN_ERROR,       /* deleting TWT dialog failed with an unknown reason */
     WMI_DEL_TWT_STATUS_PEER_INIT_TEARDOWN,  /* Peer Initiated Teardown */
     WMI_DEL_TWT_STATUS_ROAMING,             /* Reason Roaming Start*/
+    WMI_DEL_TWT_STATUS_CONCURRENCY,         /* Teardown due to concurrency */
 } WMI_DEL_TWT_STATUS_T;
 
 typedef struct {
