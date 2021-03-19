@@ -1273,28 +1273,6 @@ ucfg_mlme_set_wmi_wq_watchdog_timeout(struct wlan_objmgr_psoc *psoc,
 				      uint32_t wmi_wq_watchdog_timeout);
 
 /**
- * ucfg_mlme_get_ps_data_inactivity_timeout() - Get data inactivity timeout
- * @psoc: pointer to psoc object
- * @inactivity_timeout: buffer to hold value
- *
- * Return: QDF Status
- */
-QDF_STATUS
-ucfg_mlme_get_ps_data_inactivity_timeout(struct wlan_objmgr_psoc *psoc,
-					 uint32_t *inactivity_timeout);
-
-/**
- * ucfg_mlme_set_ps_data_inactivity_timeout() - Set data inactivity timeout
- * @psoc: pointer to psoc object
- * @inactivity_timeout: value to be set
- *
- * Return: QDF Status
- */
-QDF_STATUS
-ucfg_mlme_set_ps_data_inactivity_timeout(struct wlan_objmgr_psoc *psoc,
-					 uint32_t inactivity_timeout);
-
-/**
  * ucfg_mlme_set_sap_listen_interval() - Set the Sap listen interval
  * @psoc: pointer to psoc object
  * @value: Value that needs to be set from the caller
