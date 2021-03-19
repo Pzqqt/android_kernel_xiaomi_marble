@@ -6361,6 +6361,7 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 	bool enable_dtim_1chrx;
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx;
+	bool is_lprx_enabled;
 	bool bval = false;
 	uint8_t enable_tx_sch_delay, dfs_chan_ageout_time;
 	uint32_t dtim_sel_diversity, enable_secondary_rate;
@@ -6377,13 +6378,13 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 		return 0;
 	}
 
-	ret = -1;
-	if (QDF_IS_STATUS_SUCCESS(ucfg_fwol_get_lprx_enable(hdd_ctx->psoc,
-							    &bval))) {
-		ret = sme_cli_set_command(adapter->vdev_id,
-					  WMI_PDEV_PARAM_DTIM_SYNTH,
-					  bval, PDEV_CMD);
-	}
+	/* The ini gEnableLPRx is deprecated. By default, the ini
+	 * is enabled. So, making the variable is_lprx_enabled true.
+	 */
+	is_lprx_enabled = true;
+	ret = sme_cli_set_command(adapter->vdev_id,
+				  WMI_PDEV_PARAM_DTIM_SYNTH,
+				  is_lprx_enabled, PDEV_CMD);
 	if (ret) {
 		hdd_err("Failed to set LPRx");
 		goto error;

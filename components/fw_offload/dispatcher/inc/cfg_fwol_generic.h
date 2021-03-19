@@ -625,25 +625,6 @@
 #define CFG_FWOL_DHCP
 #endif
 
-/*
- * <ini>
- * gEnableLPRx - Enable/Disable LPRx
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini Enables or disables the LPRx in FW
- *
- * Usage: External
- *
- * </ini>
- */
-
-#define CFG_LPRX CFG_INI_BOOL( \
-		"gEnableLPRx", \
-		1, \
-		"LPRx control")
-
 #ifdef WLAN_FEATURE_SAE
 /*
  * <ini>
@@ -886,7 +867,6 @@
 	__CFG_SET_TSF_IRQ_HOST_GPIO_PIN \
 	__CFG_SET_TSF_SYNC_HOST_GPIO_PIN \
 	__CFG_SET_TSF_PTP_OPT \
-	CFG(CFG_LPRX) \
 	__CFG_IS_SAE_ENABLED \
 	CFG(CFG_ENABLE_GCMP) \
 	CFG(CFG_TX_SCH_DELAY) \

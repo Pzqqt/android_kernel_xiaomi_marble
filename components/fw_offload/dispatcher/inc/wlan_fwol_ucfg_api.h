@@ -454,15 +454,6 @@ QDF_STATUS ucfg_fwol_get_dhcp_max_num_clients(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS ucfg_fwol_get_tsf_ptp_options(struct wlan_objmgr_psoc *psoc,
 					 uint32_t *tsf_ptp_options);
-/**
- * ucfg_fwol_get_lprx_enable() - Get LPRx feature enable status
- * @psoc: pointer to the psoc object
- * @lprx_enable: Pointer to return LPRX feature enable status
- *
- * Return: QDF Status
- */
-QDF_STATUS ucfg_fwol_get_lprx_enable(struct wlan_objmgr_psoc *psoc,
-				     bool *lprx_enable);
 
 /**
  * ucfg_fwol_get_sae_enable() - Get SAE feature enable status
@@ -883,13 +874,6 @@ ucfg_fwol_get_tsf_gpio_pin(struct wlan_objmgr_psoc *psoc,
 static inline QDF_STATUS
 ucfg_fwol_get_tsf_ptp_options(struct wlan_objmgr_psoc *psoc,
 			      uint32_t *tsf_ptp_options)
-{
-	return QDF_STATUS_E_FAILURE;
-}
-
-static inline QDF_STATUS
-ucfg_fwol_get_lprx_enable(struct wlan_objmgr_psoc *psoc,
-			  bool *lprx_enable)
 {
 	return QDF_STATUS_E_FAILURE;
 }
