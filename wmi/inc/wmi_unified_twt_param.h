@@ -405,6 +405,8 @@ struct wmi_twt_del_dialog_param {
  * unknown reason
  * @WMI_HOST_DEL_TWT_STATUS_PEER_INIT_TEARDOWN: Peer initiated TWT teardown
  * @WMI_HOST_DEL_TWT_STATUS_ROAMING: TWT teardown due to roaming.
+ * @WMI_HOST_DEL_TWT_STATUS_CONCURRENCY: TWT session teardown due to
+ * concurrent session comming up.
  */
 enum WMI_HOST_DEL_TWT_STATUS {
 	WMI_HOST_DEL_TWT_STATUS_OK,
@@ -416,6 +418,7 @@ enum WMI_HOST_DEL_TWT_STATUS {
 	WMI_HOST_DEL_TWT_STATUS_UNKNOWN_ERROR,
 	WMI_HOST_DEL_TWT_STATUS_PEER_INIT_TEARDOWN,
 	WMI_HOST_DEL_TWT_STATUS_ROAMING,
+	WMI_HOST_DEL_TWT_STATUS_CONCURRENCY,
 };
 
 /**
