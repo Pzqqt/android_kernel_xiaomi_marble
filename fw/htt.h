@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -209,9 +209,10 @@
  * 3.85 Add HTT_RX_PEER_META_DATA defs.
  * 3.86 Add HTT_T2H_MSG_TYPE_FSE_CMEM_BASE_SEND def.
  * 3.87 Add on-chip AST index field to PEER_MAP_V2 msg.
+ * 3.88 Add HTT_H2T_MSG_TYPE_HOST_PADDR_SIZE def.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 87
+#define HTT_CURRENT_VERSION_MINOR 88
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -523,6 +524,7 @@ enum htt_h2t_msg_type {
     HTT_H2T_MSG_TYPE_RX_FISA_CFG           = 0x15,
     HTT_H2T_MSG_TYPE_3_TUPLE_HASH_CFG      = 0x16,
     HTT_H2T_MSG_TYPE_RX_FULL_MONITOR_MODE  = 0x17,
+    HTT_H2T_MSG_TYPE_HOST_PADDR_SIZE       = 0x18,
 
     /* keep this last */
     HTT_H2T_NUM_MSGS
@@ -6869,6 +6871,81 @@ PREPACK struct htt_h2t_msg_rx_3_tuple_hash_cfg_t {
 
 #define HTT_3_TUPLE_HASH_CFG_REQ_BYTES     8
 
+/**
+ * @brief HTT_H2T_MSG_TYPE_HOST_PADDR_SIZE message
+ *
+ * @details
+ *  The HTT_H2T_MSG_TYPE_HOST_PADDR_SIZE message is sent by the host to
+ *  provide the physical start address and size of each of the memory
+ *  areas within host DDR that the target FW may need to access.
+ *
+ *  For example, the host can use this message to allow the target FW
+ *  to set up access to the host's pools of TQM link descriptors.
+ *  The message would appear as follows:
+ *
+ *     |31            24|23            16|15             8|7              0|
+ *     |----------------+----------------+----------------+----------------|
+ *     |             reserved            |  num_entries   |   msg_type     |
+ *     |-=-=-=-=-=-=-=-=+-=-=-=-=-=-=-=-=+=-=-=-=-=-=-=-=-+=-=-=-=-=-=-=-=-|
+ *     |                          mem area 0 size                          |
+ *     |----------------+----------------+----------------+----------------|
+ *     |                    mem area 0 physical_address_lo                 |
+ *     |----------------+----------------+----------------+----------------|
+ *     |                    mem area 0 physical_address_hi                 |
+ *     |-=-=-=-=-=-=-=-=+-=-=-=-=-=-=-=-=+=-=-=-=-=-=-=-=-+=-=-=-=-=-=-=-=-|
+ *     |                          mem area 1 size                          |
+ *     |----------------+----------------+----------------+----------------|
+ *     |                    mem area 1 physical_address_lo                 |
+ *     |----------------+----------------+----------------+----------------|
+ *     |                    mem area 1 physical_address_hi                 |
+ *     |----------------+----------------+----------------+----------------|
+ *                                      ...
+ *     |-=-=-=-=-=-=-=-=+-=-=-=-=-=-=-=-=+=-=-=-=-=-=-=-=-+=-=-=-=-=-=-=-=-|
+ *     |                          mem area N size                          |
+ *     |----------------+----------------+----------------+----------------|
+ *     |                    mem area N physical_address_lo                 |
+ *     |----------------+----------------+----------------+----------------|
+ *     |                    mem area N physical_address_hi                 |
+ *     |----------------+----------------+----------------+----------------|
+ *
+ * The message is interpreted as follows:
+ * dword0 - b'0:7   - msg_type: This will be set to
+ *                    HTT_H2T_MSG_TYPE_HOST_PADDR_SIZE
+ *          b'8:15  - number_entries: Indicated the number of host memory
+ *                    areas specified within the remainder of the message
+ *          b'16:31 - reserved.
+ * dword1 - b'0:31  - memory area 0 size in bytes
+ * dword2 - b'0:31  - memory area 0 physical address, lower 32 bits
+ * dword3 - b'0:31  - memory area 0 physical address, upper 32 bits
+ * and similar for memory area 1 through memory area N.
+ */
+
+PREPACK struct htt_h2t_host_paddr_size {
+    A_UINT32 msg_type:      8,
+             num_entries:   8,
+             reserved:     16;
+} POSTPACK;
+
+PREPACK struct htt_h2t_host_paddr_size_entry_t {
+    A_UINT32 size;
+    A_UINT32 physical_address_lo;
+    A_UINT32 physical_address_hi;
+} POSTPACK;
+
+#define HTT_H2T_HOST_PADDR_SIZE_ENTRY_SIZE  (sizeof(struct htt_h2t_host_paddr_size_entry_t))
+
+#define HTT_H2T_HOST_PADDR_SIZE_NUM_ENTRIES_M 0x0000FF00
+#define HTT_H2T_HOST_PADDR_SIZE_NUM_ENTRIES_S 8
+
+#define HTT_H2T_HOST_PADDR_SIZE_NUM_ENTRIES_GET(_var) \
+    (((_var) & HTT_H2T_HOST_PADDR_SIZE_NUM_ENTRIES_M) >> \
+    HTT_H2T_HOST_PADDR_SIZE_NUM_ENTRIES_S)
+
+#define HTT_H2T_HOST_PADDR_SIZE_NUM_ENTRIES_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_H2T_HOST_PADDR_SIZE_NUM_ENTRIES, _val); \
+        ((_var) |= ((_val) << HTT_H2T_HOST_PADDR_SIZE_NUM_ENTRIES_S)); \
+    } while (0)
 
 
 /*=== target -> host messages ===============================================*/
