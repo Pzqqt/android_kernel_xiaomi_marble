@@ -156,6 +156,12 @@ static inline bool is_8bit_colorformat(enum msm_vidc_colorformat_type colorforma
 		colorformat == MSM_VIDC_FMT_RGBA8888C;
 }
 
+static inline bool is_rgba_colorformat(enum msm_vidc_colorformat_type colorformat)
+{
+	return colorformat == MSM_VIDC_FMT_RGBA8888 ||
+		colorformat == MSM_VIDC_FMT_RGBA8888C;
+}
+
 static inline bool is_secondary_output_mode(struct msm_vidc_inst *inst)
 {
 	return false; // TODO: inst->stream_output_mode == HAL_VIDEO_DECODER_SECONDARY;

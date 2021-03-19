@@ -422,6 +422,9 @@ enum msm_vidc_colorformat_type v4l2_colorformat_to_driver(u32 v4l2_colorformat,
 	case V4L2_PIX_FMT_VIDC_TP10C:
 		colorformat = MSM_VIDC_FMT_TP10C;
 		break;
+	case V4L2_PIX_FMT_RGBA32:
+		colorformat = MSM_VIDC_FMT_RGBA8888;
+		break;
 	case V4L2_PIX_FMT_VIDC_ARGB32C:
 		colorformat = MSM_VIDC_FMT_RGBA8888C;
 		break;
@@ -453,6 +456,9 @@ u32 v4l2_colorformat_from_driver(enum msm_vidc_colorformat_type colorformat,
 		break;
 	case MSM_VIDC_FMT_TP10C:
 		v4l2_colorformat = V4L2_PIX_FMT_VIDC_TP10C;
+		break;
+	case MSM_VIDC_FMT_RGBA8888:
+		v4l2_colorformat = V4L2_PIX_FMT_RGBA32;
 		break;
 	case MSM_VIDC_FMT_RGBA8888C:
 		v4l2_colorformat = V4L2_PIX_FMT_VIDC_ARGB32C;
