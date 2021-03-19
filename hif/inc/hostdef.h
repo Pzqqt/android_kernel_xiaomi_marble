@@ -48,4 +48,5 @@ extern struct hostdef_s *QCA6018_HOSTDEF;
 extern struct hostdef_s *QCA5018_HOSTDEF;
 extern struct hostdef_s *QCN9000_HOSTDEF;
 extern struct hostdef_s *QCN6122_HOSTDEF;
+extern struct hostdef_s *QCN9224_HOSTDEF;
 #endif
