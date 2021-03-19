@@ -3674,13 +3674,8 @@ static int hdd_we_set_max_assoc(struct hdd_adapter *adapter, int value)
 static int hdd_we_set_data_inactivity_timeout(struct hdd_adapter *adapter,
 					      int inactivity_timeout)
 {
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	QDF_STATUS status;
-
-	status = ucfg_mlme_set_ps_data_inactivity_timeout(hdd_ctx->psoc,
-							  inactivity_timeout);
-
-	return qdf_status_to_os_return(status);
+	/* data inactivity timeout is no longer supported and is not used */
+	return -ENOTSUPP;
 }
 
 static int hdd_we_set_wow_data_inactivity_timeout(struct hdd_adapter *adapter,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -264,30 +264,6 @@
 
 /*
  * <ini>
- * gDataInactivityTimeout - Data inactivity timeout for non wow mode.
- * @Min: 1
- * @Max: 255
- * @Default: 200
- *
- * This ini is used to set data inactivity timeout value, in milliseconds, of
- * non wow mode.
- *
- * Supported Feature: inactivity timeout in non wow mode
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_PS_DATA_INACTIVITY_TIMEOUT CFG_INI_UINT( \
-		"gDataInactivityTimeout", \
-		1, \
-		255, \
-		200, \
-		CFG_VALUE_OR_DEFAULT, \
-		"PS data inactivity timeout")
-
-/*
- * <ini>
  * wmi_wq_watchdog - Sets timeout period for wmi watchdog bite.
  * @Min: 0
  * @Max: 30
@@ -324,7 +300,6 @@
 	CFG(CFG_HEART_BEAT_THRESHOLD) \
 	CFG(CFG_AP_KEEP_ALIVE_TIMEOUT) \
 	CFG(CFG_AP_LINK_MONITOR_TIMEOUT) \
-	CFG(CFG_WMI_WQ_WATCHDOG) \
-	CFG(CFG_PS_DATA_INACTIVITY_TIMEOUT)
+	CFG(CFG_WMI_WQ_WATCHDOG)
 
 #endif /* __CFG_MLME_TIMEOUT_H */
