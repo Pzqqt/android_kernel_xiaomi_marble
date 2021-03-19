@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -25,6 +25,19 @@
 
 #ifndef _DFS_PROCESS_RADAR_FOUND_IND_H_
 #define _DFS_PROCESS_RADAR_FOUND_IND_H_
+#include "dfs_partial_offload_radar.h"
+
+/**
+ * dfs_false_radarfound_reset_vars () - Reset dfs radar detection related
+ * variables and queues after processing radar and disabling phyerror reception.
+ *
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+static inline void
+dfs_flush_additional_pulses(struct wlan_dfs *dfs)
+{
+	dfs_false_radarfound_reset_vars(dfs);
+}
 
 /* Number of channel marking offsets */
 #define DFS_NUM_FREQ_OFFSET   3
