@@ -2101,19 +2101,18 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
 {
 	struct hdd_wmm_qos_context *qos_context;
 	struct hdd_context *hdd_ctx;
-	bool enable;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	/* The ini ImplicitQosIsEnabled is deprecated. By default, the ini
+	 * value is disabled. So, setting the variable is_implicit_qos_enabled
+	 * value to false.
+	 */
+	bool is_implicit_qos_enabled = false;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: Entered for AC %d", __func__, ac_type);
 
-	status = ucfg_mlme_get_implicit_qos_is_enabled(hdd_ctx->psoc, &enable);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			hdd_err("Get implicit_qos_is_enabled failed");
-		}
-	if (!hdd_wmm_is_active(adapter) || !(enable) ||
+	if (!hdd_wmm_is_active(adapter) || !(is_implicit_qos_enabled) ||
 	    !adapter->hdd_wmm_status.ac_status[ac_type].is_access_required) {
 		/* either we don't want QoS or the AP doesn't support
 		 * QoS or we don't want to do implicit QoS

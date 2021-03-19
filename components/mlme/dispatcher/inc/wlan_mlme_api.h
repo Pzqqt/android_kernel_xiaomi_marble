@@ -1308,16 +1308,6 @@ wlan_mlme_get_80211e_is_enabled(struct wlan_objmgr_psoc *psoc, bool *value);
 QDF_STATUS
 wlan_mlme_get_wmm_uapsd_mask(struct wlan_objmgr_psoc *psoc, uint8_t *value);
 
-/**
- * wlan_mlme_get_implicit_qos_is_enabled() - Enable implicit QOS
- * @psoc: pointer to psoc object
- * @value: pointer to the value which will be filled for the caller
- *
- * Return: QDF Status
- */
-QDF_STATUS wlan_mlme_get_implicit_qos_is_enabled(struct wlan_objmgr_psoc *psoc,
-						 bool *value);
-
 #ifdef FEATURE_WLAN_ESE
 /**
  * wlan_mlme_get_inactivity_interval() - Infra Inactivity Interval

@@ -2077,8 +2077,6 @@ static void mlme_init_wmm_in_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_QOS_WMM_80211E_ENABLED);
 	wmm_params->wmm_config.uapsd_mask =
 		cfg_get(psoc, CFG_QOS_WMM_UAPSD_MASK);
-	wmm_params->wmm_config.bimplicit_qos_enabled =
-		cfg_get(psoc, CFG_QOS_WMM_IMPLICIT_SETUP_ENABLED);
 
 	mlme_init_inactivity_intv(psoc, wmm_params);
 	wmm_params->wmm_tspec_element.burst_size_def =
