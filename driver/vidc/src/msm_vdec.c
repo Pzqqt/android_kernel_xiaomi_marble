@@ -377,16 +377,16 @@ static int msm_vdec_set_colorspace(struct msm_vidc_inst *inst,
 		return 0;
 
 	if (inst->fmts[port].fmt.pix_mp.colorspace != V4L2_COLORSPACE_DEFAULT ||
-	    inst->fmts[port].fmt.pix_mp.ycbcr_enc != V4L2_XFER_FUNC_DEFAULT ||
-	    inst->fmts[port].fmt.pix_mp.xfer_func != V4L2_YCBCR_ENC_DEFAULT) {
+	    inst->fmts[port].fmt.pix_mp.ycbcr_enc != V4L2_YCBCR_ENC_DEFAULT ||
+	    inst->fmts[port].fmt.pix_mp.xfer_func != V4L2_XFER_FUNC_DEFAULT) {
 		colour_description_present_flag = 1;
 		video_signal_type_present_flag = 1;
 		primaries = v4l2_color_primaries_to_driver(inst,
-			inst->fmts[port].fmt.pix_mp.colorspace);
+			inst->fmts[port].fmt.pix_mp.colorspace, __func__);
 		matrix_coeff = v4l2_matrix_coeff_to_driver(inst,
-			inst->fmts[port].fmt.pix_mp.ycbcr_enc);
+			inst->fmts[port].fmt.pix_mp.ycbcr_enc, __func__);
 		transfer_char = v4l2_transfer_char_to_driver(inst,
-			inst->fmts[port].fmt.pix_mp.xfer_func);
+			inst->fmts[port].fmt.pix_mp.xfer_func, __func__);
 	}
 
 	if (inst->fmts[port].fmt.pix_mp.quantization !=
@@ -1235,13 +1235,13 @@ int msm_vdec_init_input_subcr_params(struct msm_vidc_inst *inst)
 
 	subsc_params->fw_min_count = inst->buffers.output.min_count;
 
-	primaries = v4l2_color_primaries_from_driver(inst,
-		inst->fmts[INPUT_PORT].fmt.pix_mp.colorspace);
-	matrix_coeff = v4l2_matrix_coeff_from_driver(inst,
-		inst->fmts[INPUT_PORT].fmt.pix_mp.ycbcr_enc);
-	transfer_char = v4l2_transfer_char_from_driver(inst,
-		inst->fmts[INPUT_PORT].fmt.pix_mp.xfer_func);
-	full_range = inst->fmts[INPUT_PORT].fmt.pix_mp.quantization ==
+	primaries = v4l2_color_primaries_to_driver(inst,
+		inst->fmts[OUTPUT_PORT].fmt.pix_mp.colorspace, __func__);
+	matrix_coeff = v4l2_matrix_coeff_to_driver(inst,
+		inst->fmts[OUTPUT_PORT].fmt.pix_mp.ycbcr_enc, __func__);
+	transfer_char = v4l2_transfer_char_to_driver(inst,
+		inst->fmts[OUTPUT_PORT].fmt.pix_mp.xfer_func, __func__);
+	full_range = inst->fmts[OUTPUT_PORT].fmt.pix_mp.quantization ==
 		V4L2_QUANTIZATION_FULL_RANGE ? 1 : 0;
 	subsc_params->color_info =
 		(matrix_coeff & 0xFF) |
@@ -1324,11 +1324,11 @@ static int msm_vdec_read_input_subcr_params(struct msm_vidc_inst *inst)
 			V4L2_QUANTIZATION_LIM_RANGE;
 		if (colour_description_present_flag) {
 			inst->fmts[OUTPUT_PORT].fmt.pix_mp.colorspace =
-				v4l2_color_primaries_from_driver(inst, primaries);
+				v4l2_color_primaries_from_driver(inst, primaries, __func__);
 			inst->fmts[OUTPUT_PORT].fmt.pix_mp.xfer_func =
-				v4l2_transfer_char_from_driver(inst, transfer_char);
+				v4l2_transfer_char_from_driver(inst, transfer_char, __func__);
 			inst->fmts[OUTPUT_PORT].fmt.pix_mp.ycbcr_enc =
-				v4l2_matrix_coeff_from_driver(inst, matrix_coeff);
+				v4l2_matrix_coeff_from_driver(inst, matrix_coeff, __func__);
 		} else {
 			i_vpr_h(inst,
 				"%s: color description flag is not present\n",
