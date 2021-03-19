@@ -1007,7 +1007,7 @@ static inline int hif_get_num_active_grp_tasklets(struct hif_softc *scn)
 	defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
 	defined(QCA_WIFI_QCN9000) || defined(QCA_WIFI_QCA6490) || \
 	defined(QCA_WIFI_QCA6750) || defined(QCA_WIFI_QCA5018) || \
-	defined(QCA_WIFI_WCN7850))
+	defined(QCA_WIFI_WCN7850) || defined(QCA_WIFI_QCN9224))
 /**
  * hif_get_num_pending_work() - get the number of entries in
  *		the workqueue pending to be completed.
@@ -1052,7 +1052,7 @@ QDF_STATUS hif_try_complete_tasks(struct hif_softc *scn)
 	defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
 	defined(QCA_WIFI_QCN9000) || defined(QCA_WIFI_QCA6490) || \
 	defined(QCA_WIFI_QCA6750) || defined(QCA_WIFI_QCA5018) || \
-	defined(QCA_WIFI_WCN7850))
+	defined(QCA_WIFI_WCN7850) || defined(QCA_WIFI_QCN9224))
 static QDF_STATUS hif_hal_attach(struct hif_softc *scn)
 {
 	if (ce_srng_based(scn)) {
@@ -1424,6 +1424,12 @@ int hif_get_device_type(uint32_t device_id,
 		*hif_type = HIF_TYPE_QCN9000;
 		*target_type = TARGET_TYPE_QCN9000;
 		hif_info(" *********** QCN9000 *************");
+		break;
+
+	case QCN9224_DEVICE_ID:
+		*hif_type = HIF_TYPE_QCN9224;
+		*target_type = TARGET_TYPE_QCN9224;
+		hif_info(" *********** QCN9224 *************");
 		break;
 
 	case QCN6122_DEVICE_ID:

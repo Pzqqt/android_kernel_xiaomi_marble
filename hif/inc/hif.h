@@ -70,6 +70,7 @@ typedef void *hif_handle_t;
 #define HIF_TYPE_QCA5018 24
 #define HIF_TYPE_QCN6122 25
 #define HIF_TYPE_WCN7850 26
+#define HIF_TYPE_QCN9224 27
 
 #define DMA_COHERENT_MASK_DEFAULT   37
 
@@ -120,7 +121,11 @@ enum hif_ic_irq {
 };
 
 struct CE_state;
+#ifdef QCA_WIFI_QCN9224
+#define CE_COUNT_MAX 16
+#else
 #define CE_COUNT_MAX 12
+#endif
 #define HIF_MAX_GRP_IRQ 16
 
 #ifndef HIF_MAX_GROUP
