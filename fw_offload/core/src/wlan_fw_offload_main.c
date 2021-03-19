@@ -598,7 +598,6 @@ QDF_STATUS fwol_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 				(uint8_t)enable_fw_wow_mod_log_level_num;
 	ucfg_fwol_init_tsf_ptp_options(psoc, fwol_cfg);
 	ucfg_fwol_init_sae_cfg(psoc, fwol_cfg);
-	fwol_cfg->lprx_enable = cfg_get(psoc, CFG_LPRX);
 	fwol_cfg->gcmp_enable = cfg_get(psoc, CFG_ENABLE_GCMP);
 	fwol_cfg->enable_tx_sch_delay = cfg_get(psoc, CFG_TX_SCH_DELAY);
 	fwol_cfg->enable_secondary_rate = cfg_get(psoc,
