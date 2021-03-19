@@ -163,10 +163,35 @@
 		     TWT_BCAST_RES_INDEX, \
 		     TWT_BCAST_RES_BITS)
 
+/*
+ * <ini>
+ * enable_twt_24ghz - Enable Target wake time when STA is connected on 2.4Ghz
+ * band.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable/disable the host TWT when STA is connected to AP
+ * in 2.4Ghz band.
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11AX
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_TWT_24GHZ CFG_INI_BOOL( \
+		"enable_twt_24ghz", \
+		true, \
+		"enable twt in 2.4Ghz band")
+
 #define CFG_TWT_ALL \
 	CFG(CFG_ENABLE_TWT) \
 	CFG(CFG_TWT_REQUESTOR) \
 	CFG(CFG_TWT_RESPONDER) \
 	CFG(CFG_TWT_CONGESTION_TIMEOUT) \
-	CFG(CFG_BCAST_TWT_REQ_RESP)
+	CFG(CFG_BCAST_TWT_REQ_RESP) \
+	CFG(CFG_ENABLE_TWT_24GHZ)
 #endif /* __CFG_MLME_TWT_H */

@@ -1242,6 +1242,7 @@ static void mlme_init_twt_cfg(struct wlan_objmgr_psoc *psoc,
 
 	twt_cfg->is_twt_enabled = cfg_get(psoc, CFG_ENABLE_TWT);
 	twt_cfg->twt_congestion_timeout = cfg_get(psoc, CFG_TWT_CONGESTION_TIMEOUT);
+	twt_cfg->enable_twt_24ghz = cfg_get(psoc, CFG_ENABLE_TWT_24GHZ);
 	twt_cfg->is_bcast_requestor_enabled = CFG_TWT_GET_BCAST_REQ(bcast_conf);
 	twt_cfg->is_bcast_responder_enabled = CFG_TWT_GET_BCAST_RES(bcast_conf);
 }
