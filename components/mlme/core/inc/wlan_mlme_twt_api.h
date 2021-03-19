@@ -201,6 +201,15 @@ bool mlme_twt_is_command_in_progress(struct wlan_objmgr_psoc *psoc,
 				     struct qdf_mac_addr *peer_mac,
 				     uint8_t dialog_id,
 				     enum wlan_twt_commands cmd);
+
+/**
+ * mlme_is_24ghz_twt_enabled() - Get if TWT is enabled on 2.4Ghz
+ * @psoc: Pointer to psoc object
+ *
+ * Return: True if TWT is allowed on 2.4Ghz connection.
+ */
+bool mlme_is_24ghz_twt_enabled(struct wlan_objmgr_psoc *psoc);
+
 #else
 static inline
 void mlme_set_twt_peer_capabilities(struct wlan_objmgr_psoc *psoc,

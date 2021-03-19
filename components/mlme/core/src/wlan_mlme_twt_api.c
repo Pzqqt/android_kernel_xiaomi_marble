@@ -524,3 +524,14 @@ bool mlme_twt_is_command_in_progress(struct wlan_objmgr_psoc *psoc,
 
 	return is_command_in_progress;
 }
+
+bool mlme_is_24ghz_twt_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return cfg_default(CFG_ENABLE_TWT_24GHZ);
+
+	return mlme_obj->cfg.twt_cfg.enable_twt_24ghz;
+}

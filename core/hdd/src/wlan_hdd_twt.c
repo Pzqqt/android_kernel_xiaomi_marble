@@ -2306,8 +2306,10 @@ hdd_twt_pack_get_capabilities_resp(struct hdd_adapter *adapter)
 	struct sk_buff *reply_skb;
 	size_t skb_len = NLMSG_HDRLEN;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	uint8_t connected_band;
 	uint8_t peer_cap = 0, self_cap = 0;
 	bool twt_req = false, twt_bcast_req = false;
+	bool is_twt_24ghz_allowed = true;
 
 	/*
 	 * Length of attribute QCA_WLAN_VENDOR_ATTR_TWT_CAPABILITIES_SELF &
@@ -2330,9 +2332,20 @@ hdd_twt_pack_get_capabilities_resp(struct hdd_adapter *adapter)
 		goto free_skb;
 	}
 
+	/*
+	 * Userspace will query the TWT get capabilities before
+	 * issuing a get capabilities request. If the STA is
+	 * connected, then check the "enable_twt_24ghz" ini
+	 * value to advertise the TWT requestor capability.
+	 */
+	connected_band = hdd_conn_get_connected_band(adapter);
+	if (connected_band == BAND_2G &&
+	    !ucfg_mlme_is_24ghz_twt_enabled(hdd_ctx->psoc))
+		is_twt_24ghz_allowed = false;
+
 	/* fill the self_capability bitmap  */
 	ucfg_mlme_get_twt_requestor(hdd_ctx->psoc, &twt_req);
-	if (twt_req)
+	if (twt_req && is_twt_24ghz_allowed)
 		self_cap |= QCA_WLAN_TWT_CAPA_REQUESTOR;
 
 	ucfg_mlme_get_twt_bcast_requestor(hdd_ctx->psoc,
