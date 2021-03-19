@@ -65,6 +65,7 @@
 #define IPA_QMAP_HEADER_LENGTH (4)
 #define IPA_DL_CHECKSUM_LENGTH (8)
 #define IPA_NUM_DESC_PER_SW_TX (3)
+#define IPA_GENERIC_RX_POOL_SZ_WAN 224
 #define IPA_GENERIC_RX_POOL_SZ 192
 #define IPA_UC_FINISH_MAX 6
 #define IPA_UC_WAIT_MIN_SLEEP 1000
@@ -101,6 +102,10 @@ enum {
 #define NAPI_TX_WEIGHT 32
 
 #define IPA_WAN_AGGR_PKT_CNT 1
+
+#define IPA_PAGE_POLL_DEFAULT_THRESHOLD 15
+#define IPA_PAGE_POLL_THRESHOLD_MAX 30
+
 
 #define IPADBG(fmt, args...) \
 	do { \
@@ -1067,6 +1072,12 @@ struct ipa3_repl_ctx {
 	atomic_t pending;
 };
 
+struct ipa3_page_repl_ctx {
+	struct list_head page_repl_head;
+	u32 capacity;
+	atomic_t pending;
+};
+
 /**
  * struct ipa3_sys_context - IPA GPI pipes context
  * @head_desc_list: header descriptors list
@@ -1110,7 +1121,7 @@ struct ipa3_sys_context {
 	struct work_struct repl_work;
 	void (*repl_hdlr)(struct ipa3_sys_context *sys);
 	struct ipa3_repl_ctx *repl;
-	struct ipa3_repl_ctx *page_recycle_repl;
+	struct ipa3_page_repl_ctx *page_recycle_repl;
 	u32 pkt_sent;
 	struct napi_struct *napi_obj;
 	struct list_head pending_pkts[GSI_VEID_MAX];
@@ -1449,8 +1460,10 @@ enum ipa3_config_this_ep {
 
 struct ipa3_page_recycle_stats {
 	u64 total_replenished;
+	u64 page_recycled;
 	u64 tmp_alloc;
 };
+
 struct ipa3_stats {
 	u32 tx_sw_pkts;
 	u32 tx_hw_pkts;
@@ -1475,6 +1488,7 @@ struct ipa3_stats {
 	u32 tx_non_linear;
 	u32 rx_page_drop_cnt;
 	struct ipa3_page_recycle_stats page_recycle_stats[2];
+	u64 page_recycle_cnt[2][IPA_PAGE_POLL_THRESHOLD_MAX];
 };
 
 /* offset for each stats */
@@ -2229,6 +2243,7 @@ struct ipa3_context {
 	u16 ulso_ip_id_min;
 	u16 ulso_ip_id_max;
 	bool use_pm_wrapper;
+	u8 page_poll_threshold;
 };
 
 struct ipa3_plat_drv_res {

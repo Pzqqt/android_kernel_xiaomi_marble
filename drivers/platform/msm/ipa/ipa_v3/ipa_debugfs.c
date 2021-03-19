@@ -1476,23 +1476,37 @@ static ssize_t ipa3_read_odlstats(struct file *file, char __user *ubuf,
 	return simple_read_from_buffer(ubuf, count, ppos, dbg_buff, cnt);
 }
 
+
 static ssize_t ipa3_read_page_recycle_stats(struct file *file,
 		char __user *ubuf, size_t count, loff_t *ppos)
 {
 	int nbytes;
-	int cnt = 0;
+	int cnt = 0, i = 0, k = 0;
 
 	nbytes = scnprintf(dbg_buff, IPA_MAX_MSG_LEN,
 			"COAL : Total number of packets replenished =%llu\n"
+			"COAL : Number of page recycled packets  =%llu\n"
 			"COAL : Number of tmp alloc packets  =%llu\n"
 			"DEF  : Total number of packets replenished =%llu\n"
+			"DEF  : Number of page recycled packets =%llu\n"
 			"DEF  : Number of tmp alloc packets  =%llu\n",
 			ipa3_ctx->stats.page_recycle_stats[0].total_replenished,
+			ipa3_ctx->stats.page_recycle_stats[0].page_recycled,
 			ipa3_ctx->stats.page_recycle_stats[0].tmp_alloc,
 			ipa3_ctx->stats.page_recycle_stats[1].total_replenished,
+			ipa3_ctx->stats.page_recycle_stats[1].page_recycled,
 			ipa3_ctx->stats.page_recycle_stats[1].tmp_alloc);
 
 	cnt += nbytes;
+
+	for (k = 0; k < 2; k++) {
+		for (i = 0; i < ipa3_ctx->page_poll_threshold; i++) {
+			nbytes = scnprintf(dbg_buff + cnt, IPA_MAX_MSG_LEN,
+				"COMMON  : Page replenish efficiency[%d][%d]  =%llu\n",
+				k, i, ipa3_ctx->stats.page_recycle_cnt[k][i]);
+			cnt += nbytes;
+		}
+	}
 
 	return simple_read_from_buffer(ubuf, count, ppos, dbg_buff, cnt);
 }
@@ -2856,6 +2870,40 @@ static ssize_t ipa3_enable_ipc_low(struct file *file,
 	return count;
 }
 
+static ssize_t ipa3_read_page_poll_threshold(struct file *file,
+	char __user *buf, size_t count, loff_t *ppos) {
+
+	int nbytes;
+	nbytes = scnprintf(dbg_buff, IPA_MAX_MSG_LEN,
+				"Page Poll Threshold = %d\n",
+				ipa3_ctx->page_poll_threshold);
+	return simple_read_from_buffer(buf, count, ppos, dbg_buff, nbytes);
+
+}
+static ssize_t ipa3_write_page_poll_threshold(struct file *file,
+	const char __user *buf, size_t count, loff_t *ppos) {
+
+	int ret;
+	u8 page_poll_threshold =0;
+
+	if (count >= sizeof(dbg_buff))
+		return -EFAULT;
+
+	ret = kstrtou8_from_user(buf, count, 0, &page_poll_threshold);
+	if(ret)
+		return ret;
+
+	if(page_poll_threshold != 0 &&
+		page_poll_threshold <= IPA_PAGE_POLL_THRESHOLD_MAX)
+		ipa3_ctx->page_poll_threshold = page_poll_threshold;
+	else
+		IPAERR("Invalid value \n");
+
+	IPADBG("Updated page poll threshold = %d", ipa3_ctx->page_poll_threshold);
+
+	return count;
+}
+
 static const struct ipa3_debugfs_file debugfs_files[] = {
 	{
 		"gen_reg", IPA_READ_ONLY_MODE, NULL, {
@@ -3032,6 +3080,11 @@ static const struct ipa3_debugfs_file debugfs_files[] = {
 	}, {
 		"app_clk_vote_cnt", IPA_READ_ONLY_MODE, NULL, {
 			.read = ipa3_read_app_clk_vote,
+		}
+	}, {
+		"page_poll_threshold", IPA_READ_WRITE_MODE, NULL, {
+			.read = ipa3_read_page_poll_threshold,
+			.write = ipa3_write_page_poll_threshold,
 		}
 	},
 };

@@ -1215,7 +1215,8 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 		snprintf(buff, IPA_RESOURCE_NAME_MAX, "iparepwq%d",
 				sys_in->client);
 		ep->sys->repl_wq = alloc_workqueue(buff,
-				WQ_MEM_RECLAIM | WQ_UNBOUND | WQ_SYSFS, 1);
+				WQ_MEM_RECLAIM | WQ_UNBOUND | WQ_SYSFS | WQ_HIGHPRI,
+				1);
 		if (!ep->sys->repl_wq) {
 			IPAERR("failed to create rep wq for client %d\n",
 					sys_in->client);
@@ -1397,12 +1398,7 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 		atomic_set(&ep->sys->page_recycle_repl->pending, 0);
 		ep->sys->page_recycle_repl->capacity =
 				(ep->sys->rx_pool_sz + 1) * 2;
-
-		ep->sys->page_recycle_repl->cache =
-				kcalloc(ep->sys->page_recycle_repl->capacity,
-				sizeof(void *), GFP_KERNEL);
-		atomic_set(&ep->sys->page_recycle_repl->head_idx, 0);
-		atomic_set(&ep->sys->page_recycle_repl->tail_idx, 0);
+		INIT_LIST_HEAD(&ep->sys->page_recycle_repl->page_repl_head);
 		ep->sys->repl = kzalloc(sizeof(*ep->sys->repl), GFP_KERNEL);
 		if (!ep->sys->repl) {
 			IPAERR("failed to alloc repl for client %d\n",
@@ -2222,8 +2218,10 @@ static void ipa3_replenish_rx_page_cache(struct ipa3_sys_context *sys)
 			ipa_assert();
 			break;
 		}
+		INIT_LIST_HEAD(&rx_pkt->link);
 		rx_pkt->sys = sys;
-		sys->page_recycle_repl->cache[curr] = rx_pkt;
+		list_add_tail(&rx_pkt->link,
+			&sys->page_recycle_repl->page_repl_head);
 	}
 
 	return;
@@ -2291,6 +2289,34 @@ static inline void __trigger_repl_work(struct ipa3_sys_context *sys)
 	}
 }
 
+static struct ipa3_rx_pkt_wrapper * ipa3_get_free_page
+(
+	struct ipa3_sys_context *sys,
+	u32 stats_i
+)
+{
+	struct ipa3_rx_pkt_wrapper *rx_pkt = NULL;
+	struct ipa3_rx_pkt_wrapper *tmp = NULL;
+	struct page *cur_page;
+	int i = 0;
+	u8 LOOP_THRESHOLD = ipa3_ctx->page_poll_threshold;
+
+	list_for_each_entry_safe(rx_pkt, tmp,
+		&sys->page_recycle_repl->page_repl_head, link) {
+		if (i == LOOP_THRESHOLD)
+			break;
+		cur_page = rx_pkt->page_data.page;
+		if (page_ref_count(cur_page) == 1) {
+			/* Found a free page. */
+			page_ref_inc(cur_page);
+			list_del_init(&rx_pkt->link);
+			++ipa3_ctx->stats.page_recycle_cnt[stats_i][i];
+			return rx_pkt;
+		}
+		i++;
+	}
+	return NULL;
+}
 
 static void ipa3_replenish_rx_page_recycle(struct ipa3_sys_context *sys)
 {
@@ -2298,10 +2324,8 @@ static void ipa3_replenish_rx_page_recycle(struct ipa3_sys_context *sys)
 	int ret;
 	int rx_len_cached = 0;
 	struct gsi_xfer_elem gsi_xfer_elem_array[IPA_REPL_XFER_MAX];
-	u32 curr;
 	u32 curr_wq;
 	int idx = 0;
-	struct page *cur_page;
 	u32 stats_i = 0;
 
 	/* start replenish only when buffers go lower than the threshold */
@@ -2311,17 +2335,13 @@ static void ipa3_replenish_rx_page_recycle(struct ipa3_sys_context *sys)
 
 	spin_lock_bh(&sys->spinlock);
 	rx_len_cached = sys->len;
-	curr = atomic_read(&sys->page_recycle_repl->head_idx);
 	curr_wq = atomic_read(&sys->repl->head_idx);
 
 	while (rx_len_cached < sys->rx_pool_sz) {
-		cur_page = sys->page_recycle_repl->cache[curr]->page_data.page;
-		/* Found an idle page that can be used */
-		if (page_ref_count(cur_page) == 1) {
-			page_ref_inc(cur_page);
-			rx_pkt = sys->page_recycle_repl->cache[curr];
-			curr = (++curr == sys->page_recycle_repl->capacity) ?
-								0 : curr;
+		/* check for an idle page that can be used */
+		if ((rx_pkt = ipa3_get_free_page(sys,stats_i)) != NULL) {
+			ipa3_ctx->stats.page_recycle_stats[stats_i].page_recycled++;
+
 		} else {
 			/*
 			 * Could not find idle page at curr index.
@@ -2371,7 +2391,6 @@ static void ipa3_replenish_rx_page_recycle(struct ipa3_sys_context *sys)
 		/* ensure write is done before setting head index */
 		mb();
 		atomic_set(&sys->repl->head_idx, curr_wq);
-		atomic_set(&sys->page_recycle_repl->head_idx, curr);
 		sys->len = rx_len_cached;
 	} else {
 		/* we don't expect this will happen */
@@ -2886,19 +2905,14 @@ static void free_rx_page(void *chan_user_data, void *xfer_user_data)
 {
 	struct ipa3_rx_pkt_wrapper *rx_pkt = (struct ipa3_rx_pkt_wrapper *)
 		xfer_user_data;
-	struct ipa3_sys_context *sys = rx_pkt->sys;
-	int i;
 
-	for (i = 0; i < sys->page_recycle_repl->capacity; i++)
-		if (sys->page_recycle_repl->cache[i] == rx_pkt)
-			break;
-	if (i < sys->page_recycle_repl->capacity) {
+	if (!rx_pkt->page_data.is_tmp_alloc) {
+		list_del_init(&rx_pkt->link);
 		page_ref_dec(rx_pkt->page_data.page);
-		sys->page_recycle_repl->cache[i] = NULL;
 	}
 	dma_unmap_page(ipa3_ctx->pdev, rx_pkt->page_data.dma_addr,
 		rx_pkt->len, DMA_FROM_DEVICE);
-	__free_pages(rx_pkt->page_data.page, sys->page_order);
+	__free_pages(rx_pkt->page_data.page, rx_pkt->sys->page_order);
 	kmem_cache_free(ipa3_ctx->rx_pkt_wrapper_cache, rx_pkt);
 }
 
@@ -2912,7 +2926,6 @@ static void ipa3_cleanup_rx(struct ipa3_sys_context *sys)
 	struct ipa3_rx_pkt_wrapper *r;
 	u32 head;
 	u32 tail;
-	int i;
 
 	/*
 	 * buffers not consumed by gsi are cleaned up using cleanup callback
@@ -2960,20 +2973,19 @@ static void ipa3_cleanup_rx(struct ipa3_sys_context *sys)
 		kfree(sys->repl);
 	}
 	if (sys->page_recycle_repl) {
-		for (i = 0; i < sys->page_recycle_repl->capacity; i++) {
-			rx_pkt = sys->page_recycle_repl->cache[i];
-			if (rx_pkt) {
-				dma_unmap_page(ipa3_ctx->pdev,
-					rx_pkt->page_data.dma_addr,
-					rx_pkt->len,
-					DMA_FROM_DEVICE);
-				__free_pages(rx_pkt->page_data.page, sys->page_order);
-				kmem_cache_free(
-					ipa3_ctx->rx_pkt_wrapper_cache,
-					rx_pkt);
-			}
+		list_for_each_entry_safe(rx_pkt, r,
+		&sys->page_recycle_repl->page_repl_head, link) {
+			list_del(&rx_pkt->link);
+			dma_unmap_page(ipa3_ctx->pdev,
+				rx_pkt->page_data.dma_addr,
+				rx_pkt->len,
+				DMA_FROM_DEVICE);
+			__free_pages(rx_pkt->page_data.page,
+				sys->page_order);
+			kmem_cache_free(
+				ipa3_ctx->rx_pkt_wrapper_cache,
+				rx_pkt);
 		}
-		kfree(sys->page_recycle_repl->cache);
 		kfree(sys->page_recycle_repl);
 	}
 }
@@ -3760,6 +3772,11 @@ static struct sk_buff *handle_page_completion(struct gsi_chan_xfer_notify
 		IPAERR("notify->veid > GSI_VEID_MAX\n");
 		if (!rx_page.is_tmp_alloc) {
 			init_page_count(rx_page.page);
+			spin_lock_bh(&rx_pkt->sys->spinlock);
+			/* Add the element to head. */
+			list_add(&rx_pkt->link,
+				&rx_pkt->sys->page_recycle_repl->page_repl_head);
+			spin_unlock_bh(&rx_pkt->sys->spinlock);
 		} else {
 			dma_unmap_page(ipa3_ctx->pdev, rx_page.dma_addr,
 					rx_pkt->len, DMA_FROM_DEVICE);
@@ -3781,9 +3798,14 @@ static struct sk_buff *handle_page_completion(struct gsi_chan_xfer_notify
 		rx_skb = alloc_skb(0, GFP_ATOMIC);
 		if (unlikely(!rx_skb)) {
 			IPAERR("skb alloc failure\n");
-			list_del(&rx_pkt->link);
+			list_del_init(&rx_pkt->link);
 			if (!rx_page.is_tmp_alloc) {
 				init_page_count(rx_page.page);
+				spin_lock_bh(&rx_pkt->sys->spinlock);
+				/* Add the element to head. */
+				list_add(&rx_pkt->link,
+					&rx_pkt->sys->page_recycle_repl->page_repl_head);
+				spin_unlock_bh(&rx_pkt->sys->spinlock);
 			} else {
 				dma_unmap_page(ipa3_ctx->pdev, rx_page.dma_addr,
 					rx_pkt->len, DMA_FROM_DEVICE);
@@ -3797,14 +3819,20 @@ static struct sk_buff *handle_page_completion(struct gsi_chan_xfer_notify
 			rx_page = rx_pkt->page_data;
 			size = rx_pkt->data_len;
 
-			list_del(&rx_pkt->link);
-			if (rx_page.is_tmp_alloc)
+			list_del_init(&rx_pkt->link);
+			if (rx_page.is_tmp_alloc) {
 				dma_unmap_page(ipa3_ctx->pdev, rx_page.dma_addr,
 					rx_pkt->len, DMA_FROM_DEVICE);
-			else
+			} else {
+				spin_lock_bh(&rx_pkt->sys->spinlock);
+				/* Add the element back to tail. */
+				list_add_tail(&rx_pkt->link,
+					&rx_pkt->sys->page_recycle_repl->page_repl_head);
+				spin_unlock_bh(&rx_pkt->sys->spinlock);
 				dma_sync_single_for_cpu(ipa3_ctx->pdev,
 					rx_page.dma_addr,
 					rx_pkt->len, DMA_FROM_DEVICE);
+			}
 			rx_pkt->sys->free_rx_wrapper(rx_pkt);
 
 			skb_add_rx_frag(rx_skb,
