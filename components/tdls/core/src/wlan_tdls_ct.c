@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -249,6 +249,24 @@ void tdls_update_rx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
 	if (!tdls_soc_obj->enable_tdls_connection_tracker)
 		return;
 
+	/* Here we do without lock to ensure that in high throughput scenarios
+	 * its fast and we quickly check the right mac entry and increment
+	 * the pkt count. Here it may happen that
+	 * "tdls_vdev_obj->valid_mac_entries", "tdls_vdev_obj->ct_peer_table"
+	 * becomes zero in another thread but we are ok as this will not
+	 * lead to any crash.
+	 */
+	valid_mac_entries = tdls_vdev_obj->valid_mac_entries;
+	mac_table = tdls_vdev_obj->ct_peer_table;
+
+	for (mac_cnt = 0; mac_cnt < valid_mac_entries; mac_cnt++) {
+		if (qdf_mem_cmp(mac_table[mac_cnt].mac_address.bytes,
+		    mac_addr, QDF_MAC_ADDR_SIZE) == 0) {
+			mac_table[mac_cnt].rx_packet_cnt++;
+			return;
+		}
+	}
+
 	if (qdf_is_macaddr_group(mac_addr))
 		return;
 
@@ -269,16 +287,15 @@ void tdls_update_rx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
 		wlan_objmgr_peer_release_ref(bss_peer, WLAN_TDLS_NB_ID);
 	}
 	qdf_spin_lock_bh(&tdls_soc_obj->tdls_ct_spinlock);
-	valid_mac_entries = tdls_vdev_obj->valid_mac_entries;
-	mac_table = tdls_vdev_obj->ct_peer_table;
 
-	for (mac_cnt = 0; mac_cnt < valid_mac_entries; mac_cnt++) {
-		if (qdf_mem_cmp(mac_table[mac_cnt].mac_address.bytes,
-		    mac_addr, QDF_MAC_ADDR_SIZE) == 0) {
-			mac_table[mac_cnt].rx_packet_cnt++;
-			goto rx_cnt_return;
-		}
-	}
+	/* when we take the lock we need to get the valid mac entries
+	 * again as it may become zero in another thread and if is 0 then
+	 * we need to reset "mac_cnt" to zero so that at zeroth index we
+	 * add new entry
+	 */
+	valid_mac_entries = tdls_vdev_obj->valid_mac_entries;
+	if (!valid_mac_entries)
+		mac_cnt = 0;
 
 	/* If we have more than 8 peers within 30 mins. we will
 	 *  stop tracking till the old entries are removed
@@ -290,7 +307,6 @@ void tdls_update_rx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
 		mac_table[mac_cnt].rx_packet_cnt = 1;
 	}
 
-rx_cnt_return:
 	qdf_spin_unlock_bh(&tdls_soc_obj->tdls_ct_spinlock);
 	return;
 }
@@ -312,6 +328,24 @@ void tdls_update_tx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
 	if (!tdls_soc_obj->enable_tdls_connection_tracker)
 		return;
 
+	/* Here we do without lock to ensure that in high throughput scenarios
+	 * its fast and we quickly check the right mac entry and increment
+	 * the pkt count. Here it may happen that
+	 * "tdls_vdev_obj->valid_mac_entries", "tdls_vdev_obj->ct_peer_table"
+	 * becomes zero in another thread but we are ok as this will not
+	 * lead to any crash.
+	 */
+	mac_table = tdls_vdev_obj->ct_peer_table;
+	valid_mac_entries = tdls_vdev_obj->valid_mac_entries;
+
+	for (mac_cnt = 0; mac_cnt < valid_mac_entries; mac_cnt++) {
+		if (qdf_mem_cmp(mac_table[mac_cnt].mac_address.bytes,
+		    mac_addr, QDF_MAC_ADDR_SIZE) == 0) {
+			mac_table[mac_cnt].tx_packet_cnt++;
+			return;
+		}
+	}
+
 	if (qdf_is_macaddr_group(mac_addr))
 		return;
 
@@ -329,17 +363,15 @@ void tdls_update_tx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
 	}
 
 	qdf_spin_lock_bh(&tdls_soc_obj->tdls_ct_spinlock);
-	mac_table = tdls_vdev_obj->ct_peer_table;
 
+	/* when we take the lock we need to get the valid mac entries
+	 * again as it may become zero in another thread and if is 0 then
+	 * we need to reset "mac_cnt" to zero so that at zeroth index we
+	 * add new entry
+	 */
 	valid_mac_entries = tdls_vdev_obj->valid_mac_entries;
-
-	for (mac_cnt = 0; mac_cnt < valid_mac_entries; mac_cnt++) {
-		if (qdf_mem_cmp(mac_table[mac_cnt].mac_address.bytes,
-		    mac_addr, QDF_MAC_ADDR_SIZE) == 0) {
-			mac_table[mac_cnt].tx_packet_cnt++;
-			goto tx_cnt_return;
-		}
-	}
+	if (!valid_mac_entries)
+		mac_cnt = 0;
 
 	/* If we have more than 8 peers within 30 mins. we will
 	 *  stop tracking till the old entries are removed
@@ -351,7 +383,6 @@ void tdls_update_tx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
 		tdls_vdev_obj->valid_mac_entries++;
 	}
 
-tx_cnt_return:
 	qdf_spin_unlock_bh(&tdls_soc_obj->tdls_ct_spinlock);
 	return;
 }
