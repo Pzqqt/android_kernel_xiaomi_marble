@@ -304,16 +304,16 @@ static int msm_venc_set_colorspace(struct msm_vidc_inst* inst,
 	}
 
 	if (inst->fmts[port].fmt.pix_mp.colorspace != V4L2_COLORSPACE_DEFAULT ||
-	    inst->fmts[port].fmt.pix_mp.ycbcr_enc != V4L2_XFER_FUNC_DEFAULT ||
-	    inst->fmts[port].fmt.pix_mp.xfer_func != V4L2_YCBCR_ENC_DEFAULT) {
+	    inst->fmts[port].fmt.pix_mp.ycbcr_enc != V4L2_YCBCR_ENC_DEFAULT ||
+	    inst->fmts[port].fmt.pix_mp.xfer_func != V4L2_XFER_FUNC_DEFAULT) {
 		colour_description_present_flag = 1;
 		video_signal_type_present_flag = 1;
 		primaries = v4l2_color_primaries_to_driver(inst,
-			inst->fmts[port].fmt.pix_mp.colorspace);
+			inst->fmts[port].fmt.pix_mp.colorspace, __func__);
 		matrix_coeff = v4l2_matrix_coeff_to_driver(inst,
-			inst->fmts[port].fmt.pix_mp.ycbcr_enc);
+			inst->fmts[port].fmt.pix_mp.ycbcr_enc, __func__);
 		transfer_char = v4l2_transfer_char_to_driver(inst,
-			inst->fmts[port].fmt.pix_mp.xfer_func);
+			inst->fmts[port].fmt.pix_mp.xfer_func, __func__);
 	}
 
 	if (inst->fmts[port].fmt.pix_mp.quantization !=

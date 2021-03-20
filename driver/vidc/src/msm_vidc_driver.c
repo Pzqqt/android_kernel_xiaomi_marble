@@ -469,7 +469,7 @@ u32 v4l2_colorformat_from_driver(enum msm_vidc_colorformat_type colorformat,
 }
 
 u32 v4l2_color_primaries_to_driver(struct msm_vidc_inst *inst,
-	u32 v4l2_primaries)
+	u32 v4l2_primaries, const char *func)
 {
 	u32 vidc_color_primaries = MSM_VIDC_PRIMARIES_RESERVED;
 
@@ -508,8 +508,8 @@ u32 v4l2_color_primaries_to_driver(struct msm_vidc_inst *inst,
 		vidc_color_primaries = MSM_VIDC_PRIMARIES_SMPTE_EBU_TECH;
 		break;
 	default:
-		i_vpr_e(inst, "%s: invalid color primaries %d\n",
-			__func__, v4l2_primaries);
+		i_vpr_e(inst, "%s: invalid v4l2 color primaries %d\n",
+			func, v4l2_primaries);
 		break;
 	}
 
@@ -517,7 +517,7 @@ u32 v4l2_color_primaries_to_driver(struct msm_vidc_inst *inst,
 }
 
 u32 v4l2_color_primaries_from_driver(struct msm_vidc_inst *inst,
-	u32 vidc_color_primaries)
+	u32 vidc_color_primaries, const char *func)
 {
 	u32 v4l2_primaries = V4L2_COLORSPACE_DEFAULT;
 
@@ -557,8 +557,7 @@ u32 v4l2_color_primaries_from_driver(struct msm_vidc_inst *inst,
 		break;
 	default:
 		i_vpr_e(inst, "%s: invalid hfi color primaries %d\n",
-			__func__, vidc_color_primaries);
-		v4l2_primaries = V4L2_COLORSPACE_DEFAULT;
+			func, vidc_color_primaries);
 		break;
 	}
 
@@ -566,7 +565,7 @@ u32 v4l2_color_primaries_from_driver(struct msm_vidc_inst *inst,
 }
 
 u32 v4l2_transfer_char_to_driver(struct msm_vidc_inst *inst,
-	u32 v4l2_transfer_char)
+	u32 v4l2_transfer_char, const char *func)
 {
 	u32 vidc_transfer_char = MSM_VIDC_TRANSFER_RESERVED;
 
@@ -614,8 +613,8 @@ u32 v4l2_transfer_char_to_driver(struct msm_vidc_inst *inst,
 		vidc_transfer_char = MSM_VIDC_TRANSFER_BT2100_2_HLG;
 		break;
 	default:
-		i_vpr_e(inst, "%s: invalid transfer char %d\n",
-			__func__, v4l2_transfer_char);
+		i_vpr_e(inst, "%s: invalid v4l2 transfer char %d\n",
+			func, v4l2_transfer_char);
 		break;
 	}
 
@@ -623,7 +622,7 @@ u32 v4l2_transfer_char_to_driver(struct msm_vidc_inst *inst,
 }
 
 u32 v4l2_transfer_char_from_driver(struct msm_vidc_inst *inst,
-	u32 vidc_transfer_char)
+	u32 vidc_transfer_char, const char *func)
 {
 	u32  v4l2_transfer_char = V4L2_XFER_FUNC_DEFAULT;
 
@@ -672,8 +671,8 @@ u32 v4l2_transfer_char_from_driver(struct msm_vidc_inst *inst,
 		v4l2_transfer_char = V4L2_XFER_FUNC_VIDC_HLG;
 		break;
 	default:
-		i_vpr_e(inst, "%s: invalid transfer char %d\n",
-			__func__, vidc_transfer_char);
+		i_vpr_e(inst, "%s: invalid hfi transfer char %d\n",
+			func, vidc_transfer_char);
 		break;
 	}
 
@@ -681,11 +680,14 @@ u32 v4l2_transfer_char_from_driver(struct msm_vidc_inst *inst,
 }
 
 u32 v4l2_matrix_coeff_to_driver(struct msm_vidc_inst *inst,
-	u32 v4l2_matrix_coeff)
+	u32 v4l2_matrix_coeff, const char *func)
 {
 	u32 vidc_matrix_coeff = MSM_VIDC_MATRIX_COEFF_RESERVED;
 
 	switch(v4l2_matrix_coeff) {
+	case V4L2_YCBCR_ENC_DEFAULT:
+		vidc_matrix_coeff = MSM_VIDC_MATRIX_COEFF_RESERVED;
+		break;
 	case V4L2_YCBCR_VIDC_SRGB_OR_SMPTE_ST428:
 		vidc_matrix_coeff = MSM_VIDC_MATRIX_COEFF_SRGB_SMPTE_ST428_1;
 		break;
@@ -712,8 +714,8 @@ u32 v4l2_matrix_coeff_to_driver(struct msm_vidc_inst *inst,
 		vidc_matrix_coeff = MSM_VIDC_MATRIX_COEFF_BT2020_CONSTANT;
 		break;
 	default:
-		i_vpr_e(inst, "%s: invalid matrix coeff %d\n",
-			__func__, v4l2_matrix_coeff);
+		i_vpr_e(inst, "%s: invalid v4l2 matrix coeff %d\n",
+			func, v4l2_matrix_coeff);
 		break;
 	}
 
@@ -721,7 +723,7 @@ u32 v4l2_matrix_coeff_to_driver(struct msm_vidc_inst *inst,
 }
 
 u32 v4l2_matrix_coeff_from_driver(struct msm_vidc_inst *inst,
-	u32 vidc_matrix_coeff)
+	u32 vidc_matrix_coeff, const char *func)
 {
 	u32 v4l2_matrix_coeff = V4L2_YCBCR_ENC_DEFAULT;
 
@@ -731,6 +733,9 @@ u32 v4l2_matrix_coeff_from_driver(struct msm_vidc_inst *inst,
 		break;
 	case MSM_VIDC_MATRIX_COEFF_BT709:
 		v4l2_matrix_coeff = V4L2_YCBCR_ENC_709;
+		break;
+	case MSM_VIDC_MATRIX_COEFF_UNSPECIFIED:
+		v4l2_matrix_coeff = V4L2_YCBCR_ENC_DEFAULT;
 		break;
 	case MSM_VIDC_MATRIX_COEFF_FCC_TITLE_47:
 		v4l2_matrix_coeff = V4L2_YCBCR_VIDC_FCC47_73_682;
@@ -751,8 +756,8 @@ u32 v4l2_matrix_coeff_from_driver(struct msm_vidc_inst *inst,
 		v4l2_matrix_coeff = V4L2_YCBCR_ENC_BT2020_CONST_LUM;
 		break;
 	default:
-		i_vpr_e(inst, "%s: invalid matrix coeff %d\n",
-			__func__, vidc_matrix_coeff);
+		i_vpr_e(inst, "%s: invalid hfi matrix coeff %d\n",
+			func, vidc_matrix_coeff);
 		break;
 	}
 
