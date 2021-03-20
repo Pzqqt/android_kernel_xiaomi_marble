@@ -1366,6 +1366,12 @@ typedef enum {
     /** WMI commands specific to MLO **/
     /** MLO link active / inactive Request command */
     WMI_MLO_LINK_SET_ACTIVE_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_MLO),
+    /** WMI cmd used to indicate hw_links part of MLO */
+    WMI_MLO_SETUP_CMDID,
+    /** WMI cmd used for init synchronization of hw_links part of MLO */
+    WMI_MLO_READY_CMDID,
+    /** WMI cmd used for tearing down a hw_link part of MLO */
+    WMI_MLO_TEARDOWN_CMDID,
 } WMI_CMD_ID;
 
 typedef enum {
@@ -2077,6 +2083,10 @@ typedef enum {
     /** WMI event specific to MLO **/
     /** MLO link active / inactive response event */
     WMI_MLO_LINK_SET_ACTIVE_RESP_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_MLO),
+    /* Response event for MLO setup cmd */
+    WMI_MLO_SETUP_COMPLETE_EVENTID,
+    /* Response event for MLO teardown cmd */
+    WMI_MLO_TEARDOWN_COMPLETE_EVENTID,
 } WMI_EVT_ID;
 
 /* defines for OEM message sub-types */
@@ -5660,6 +5670,14 @@ typedef struct {
 } wmi_tx_send_params;
 
 typedef struct {
+    A_UINT32 tlv_header; /* TLV tag (WMITLV_TAG_STRUC_wmi_mlo_tx_send_params) and len */
+    A_UINT32 hw_link_id; /** Unique link id across SOCs, provided by QMI handshake.
+                           * If 0xFFFF then the frame will be queued in the MLO queue
+                           * If valid hw_link_id
+                           */
+} wmi_mlo_tx_send_params;
+
+typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mgmt_tx_send_cmd_fixed_param */
     A_UINT32 vdev_id;
     A_UINT32 desc_id;  /* echoed in tx_compl_event */
@@ -5699,6 +5717,7 @@ typedef struct {
  */
 /* This TLV is followed by wmi_tx_send_params
  * wmi_tx_send_params tx_send_params;
+ * wmi_mlo_tx_send_params mlo_tx_send_params[];
  */
 } wmi_mgmt_tx_send_cmd_fixed_param;
 
@@ -10352,6 +10371,8 @@ typedef struct {
  * bits 0    - mlo enable flag;
  * bits 1    - assoc link flag;
  * bits 2    - primary_umac flag;
+ * bits 3    - is logical link index valid
+ * bits 4    - is mlo peer id valid
  */
 #define WMI_MLO_FLAGS_GET_ENABLED(mlo_flags)                WMI_GET_BITS(mlo_flags, 0, 1)
 #define WMI_MLO_FLAGS_SET_ENABLED(mlo_flags, value)         WMI_SET_BITS(mlo_flags, 0, 1, value)
@@ -10359,6 +10380,10 @@ typedef struct {
 #define WMI_MLO_FLAGS_SET_ASSOC_LINK(mlo_flags, value)      WMI_SET_BITS(mlo_flags, 1, 1, value)
 #define WMI_MLO_FLAGS_GET_PRIMARY_UMAC(mlo_flags)           WMI_GET_BITS(mlo_flags, 2, 1)
 #define WMI_MLO_FLAGS_SET_PRIMARY_UMAC(mlo_flags, value)    WMI_SET_BITS(mlo_flags, 2, 1, value)
+#define WMI_MLO_FLAGS_GET_LINK_INDEX_VALID(mlo_flags)       WMI_GET_BITS(mlo_flags, 3, 1)
+#define WMI_MLO_FLAGS_SET_LINK_INDEX_VALID(mlo_flags, value) WMI_SET_BITS(mlo_flags, 3, 1, value)
+#define WMI_MLO_FLAGS_GET_PEER_ID_VALID(mlo_flags)          WMI_GET_BITS(mlo_flags, 4, 1)
+#define WMI_MLO_FLAGS_SET_PEER_ID_VALID(mlo_flags, value)   WMI_SET_BITS(mlo_flags, 4, 1, value)
 
 /* this structure used for pass mlo flags*/
 typedef struct {
@@ -10367,11 +10392,20 @@ typedef struct {
             A_UINT32 mlo_enabled:1, /* indicate is MLO enabled */
                      mlo_assoc_link:1, /* indicate is the link used to initialize the association of mlo connection */
                      mlo_primary_umac:1, /* indicate is the link on primary UMAC, WIN only flag */
-                     unused: 29;
+                     mlo_logical_link_index_valid:1, /* indicate if the logial link index in wmi_peer_assoc_mlo_params is valid */
+                     mlo_peer_id_valid:1, /* indicate if the mlo peer id in wmi_peer_assoc_mlo_params is valid */
+                     unused: 27;
         };
         A_UINT32 mlo_flags;
     };
 } wmi_mlo_flags;
+
+typedef struct {
+    A_UINT32 tlv_header;/** TLV tag (WMITLV_TAG_STRUC_wmi_partner_link_params) and len;*/
+    A_UINT32 vdev_id; /** partner vdev_id */
+    A_UINT32 hw_link_id; /** hw_link_id: Unique link id across SOCs, got as part of QMI handshake */
+    wmi_mac_addr vdev_macaddr; /** VDEV MAC address */
+} wmi_partner_link_params;
 
 /* this TLV structure used for pass mlo parameters on vdev create*/
 typedef struct {
@@ -11145,6 +11179,9 @@ typedef struct {
  *     wmi_channel chan; <-- WMI channel
  *     wmi_p2p_noa_descriptor  noa_descriptors[]; <-- actual p2p NOA descriptor from scan entry
  *     wmi_vdev_start_mlo_params  mlo_params[0,1]; <-- vdev start MLO parameters
+ *         optional TLV, only present for MLO vdevs,
+ *         If the vdev is non-MLO the array length should be 0.
+ *     wmi_partner_link_info link_info[]; <-- partner link info
  *         optional TLV, only present for MLO vdevs,
  *         If the vdev is non-MLO the array length should be 0.
  */
@@ -14234,6 +14271,12 @@ enum WMI_PEER_STA_TYPE {
 #define WMI_PEER_ASSOC_GET_BSS_MAX_IDLE_PERIOD(_dword) \
     WMI_GET_BITS(_dword, WMI_PEER_ASSOC_BSS_MAX_IDLE_PERIOD_BITPOS, 16)
 
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag (MITLV_TAG_STRUC_wmi_peer_assoc_mlo_partner_link_params) and len */
+    A_UINT32 vdev_id; /** unique id identifying the VDEV, generated by the caller */
+    A_UINT32 hw_mld_link_id; /** Unique link id across SOCs, got as part of QMI handshake. */
+} wmi_peer_assoc_mlo_partner_link_params;
+
 /* This TLV structure used to pass mlo Parameters on peer assoc, only apply for mlo-peers */
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; */
@@ -14241,6 +14284,13 @@ typedef struct {
     wmi_mlo_flags mlo_flags;
     /** MLD MAC address */
     wmi_mac_addr mld_macaddr;
+    /** Unique index for links of the mlo. Starts with Zero */
+    A_UINT32 logical_link_index;
+    /** ML Peer ID
+     * In WIN systems, mld_peer_id is generated by Host.
+     * In MCL systems, mld_peer_id will be set to invalid peer id.
+     */
+    A_UINT32 mld_peer_id;
 } wmi_peer_assoc_mlo_params;
 
 typedef struct {
@@ -14383,6 +14433,7 @@ typedef struct {
  *         Only present for MLO peers.
  *         For non-MLO peers the array length should be 0.
  *     wmi_eht_rate_set_peer_eht_rates; <-- EHT capabilities of the peer
+ *     wmi_peer_assoc_mlo_partner_link_params link_info[] <-- partner link info
  */
 } wmi_peer_assoc_complete_cmd_fixed_param;
 
@@ -26907,7 +26958,7 @@ typedef enum wmi_hw_mode_config_type {
 
 /*
  * Per HW mode MLO capability flags
- * use bits 31:28 of A_UINT32 hw_mode_config_type for Per HW mode MLO
+ * use bits 31:27 of A_UINT32 hw_mode_config_type for Per HW mode MLO
  * capability flags...
  * WMI_MLO_CAP_FLAG_NONE:           Do not support MLO for the specific HW mode
  * WMI_MLO_CAP_FLAG_NON_STR_IN_DBS: Support STR MLO when DBS for the specific
@@ -26918,22 +26969,35 @@ typedef enum wmi_hw_mode_config_type {
  *                                  HW mode
  * WMI_MLO_CAP_FLAG_STR_IN_SBS:     Support Non-STR MLO when SBS for the
  *                                  specific HW mode
+ * WMI_MLO_CAP_FLAG_STR:            Support STR for the specific HW mode.
  */
-#define WMI_MLO_CAP_FLAG_NONE           0x0
-#define WMI_MLO_CAP_FLAG_NON_STR_IN_DBS 0x1
-#define WMI_MLO_CAP_FLAG_STR_IN_DBS     0x2
-#define WMI_MLO_CAP_FLAG_NON_STR_IN_SBS 0x4
-#define WMI_MLO_CAP_FLAG_STR_IN_SBS     0x8
+#define WMI_MLO_CAP_FLAG_NONE           0x00
+#define WMI_MLO_CAP_FLAG_NON_STR_IN_DBS 0x01
+#define WMI_MLO_CAP_FLAG_STR_IN_DBS     0x02
+#define WMI_MLO_CAP_FLAG_NON_STR_IN_SBS 0x04
+#define WMI_MLO_CAP_FLAG_STR_IN_SBS     0x08
+#define WMI_MLO_CAP_FLAG_STR            0x10
 
 /*
  * hw_mode_config_type sub-fields for chips that support 802.11BE/MLO:
- * bits 28:0  - hw_mode_config
- * bits 31:28 - per HW mode MLO capability flags
+ * bits 26:0  - hw_mode_config
+ * bits 31:27 - per HW mode MLO capability flags
  */
-#define WMI_BECAP_PHY_GET_HW_MODE_CFG(hw_mode_config_type) WMI_GET_BITS(hw_mode_config_type, 0, 28)
-#define WMI_BECAP_PHY_SET_HW_MODE_CFG(hw_mode_config_type, value) WMI_SET_BITS(hw_mode_config_type, 0, 28, value)
-#define WMI_BECAP_PHY_GET_MLO_CAP(hw_mode_config_type) WMI_GET_BITS(hw_mode_config_type, 28, 4)
-#define WMI_BECAP_PHY_SET_MLO_CAP(hw_mode_config_type, value) WMI_SET_BITS(hw_mode_config_type, 28, 4, value)
+#define WMI_BECAP_PHY_GET_HW_MODE_CFG(hw_mode_config_type) WMI_GET_BITS(hw_mode_config_type, 0, 27)
+#define WMI_BECAP_PHY_SET_HW_MODE_CFG(hw_mode_config_type, value) WMI_SET_BITS(hw_mode_config_type, 0, 27, value)
+#define WMI_BECAP_PHY_GET_MLO_CAP(hw_mode_config_type) WMI_GET_BITS(hw_mode_config_type, 27, 5)
+#define WMI_BECAP_PHY_SET_MLO_CAP(hw_mode_config_type, value) WMI_SET_BITS(hw_mode_config_type, 27, 5, value)
+
+/*
+ * pdev_id sub-fields for chips that support 802.11BE/MLO
+ * as part of WMI_MAC_PHY_CAPABILITIES and WMI_MAC_PHY_CAPABILITIES_EXT:
+ * bits 16:0  - pdev_id
+ * bits 32:16 - Unique link id across SOCs, got as part of QMI handshake.
+ */
+#define WMI_PHY_GET_PDEV_ID(pdev_id) WMI_GET_BITS(pdev_id, 0, 16)
+#define WMI_PHY_SET_PDEV_ID(pdev_id, value) WMI_SET_BITS(pdev_id, 0, 16, value)
+#define WMI_PHY_GET_HW_LINK_ID(pdev_id) WMI_GET_BITS(pdev_id, 16, 16)
+#define WMI_PHY_SET_HW_LINK_ID(pdev_id, value) WMI_SET_BITS(pdev_id, 16, 16, value)
 
 #define WMI_SUPPORT_11B_GET(flags) WMI_GET_BITS(flags, 0, 1)
 #define WMI_SUPPORT_11B_SET(flags, value) WMI_SET_BITS(flags, 0, 1, value)
@@ -27035,8 +27099,20 @@ typedef struct {
      * No particular ordering of WMI_MAC_PHY_CAPABILITIES elements should be assumed,
      * though in practice the elements may always be ordered by hw_mode_id */
     A_UINT32 hw_mode_id;
-    /* pdev_id starts with 1. pdev_id 1 => phy_id 0, pdev_id 2 => phy_id 1 */
-    A_UINT32 pdev_id;
+    /*
+     * pdev_id starts with 1. pdev_id 1 => phy_id 0, pdev_id 2 => phy_id 1
+     * hw_link_id: Unique link id across SOCs, got as part of QMI handshake.
+     * For legacy chips which do not support MLO, these top bits will always
+     * be set to 0, so it won't impact the legacy chips which treat pdev_id
+     * as 32 bits.
+     */
+    union {
+        struct {
+            A_UINT32 pdev_id:16,
+                     hw_link_id:16;
+        } wmi_pdev_to_link_map;
+        A_UINT32 pdev_id;
+    };
     /* phy id. Starts with 0 */
     A_UINT32 phy_id;
     /* supported modulations and number of MU beamformees */
@@ -27211,8 +27287,20 @@ typedef struct {
      * No particular ordering of WMI_MAC_PHY_CAPABILITIES elements should be assumed,
      * though in practice the elements may always be ordered by hw_mode_id */
     A_UINT32 hw_mode_id;
-    /* pdev_id starts with 1. pdev_id 1 => phy_id 0, pdev_id 2 => phy_id 1 */
-    A_UINT32 pdev_id;
+    /*
+     * pdev_id starts with 1. pdev_id 1 => phy_id 0, pdev_id 2 => phy_id 1
+     * hw_link_id: Unique link id across SOCs, got as part of QMI handshake.
+     * For legacy chips which do not support MLO, these top bits will always
+     * be set to 0, so it won't impact the legacy chips which treat pdev_id
+     * as 32 bits.
+     */
+    union {
+        struct {
+            A_UINT32 pdev_id:16,
+                     hw_link_id:16;
+        } wmi_pdev_to_link_map;
+        A_UINT32 pdev_id;
+    };
     /* phy id. Starts with 0 */
     A_UINT32 phy_id;
     A_UINT32 wireless_modes_ext; /* REGDMN MODE EXT, see REGDMN_MODE_ enum */
@@ -27253,7 +27341,7 @@ typedef struct {
      * Identify a particular type of HW mode such as SBS, DBS etc.
      * Refer to WMI_HW_MODE_CONFIG_TYPE values.
      *
-     * Use bits 31:28 of hw_mode_config_type for Per HW mode MLO capability
+     * Use bits 31:27 of hw_mode_config_type for Per HW mode MLO capability
      * flags.
      * Refer to WMI_MLO_CAP_FLAG_XXX. For legacy chips which do not support
      * MLO, these top bits will always be set to 0, so it won't impact the
@@ -27261,8 +27349,8 @@ typedef struct {
      */
     union {
         struct {
-            A_UINT32 hw_mode_config   :28,
-                     mlo_cap_flag     :4; /* see WMI_MLO_CAP_FLAG_ defs */
+            A_UINT32 hw_mode_config   :27,
+                     mlo_cap_flag     :5; /* see WMI_MLO_CAP_FLAG_ defs */
         };
         A_UINT32 hw_mode_config_type;
     };
@@ -28380,6 +28468,9 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PEER_TID_LATENCY_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_MLO_LINK_SET_ACTIVE_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_GET_DPD_STATUS_CMDID);
+        WMI_RETURN_STRING(WMI_MLO_SETUP_CMDID);
+        WMI_RETURN_STRING(WMI_MLO_READY_CMDID);
+        WMI_RETURN_STRING(WMI_MLO_TEARDOWN_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -33818,6 +33909,57 @@ typedef struct wmi_mlo_link_set_active_resp_event
  *     A_UINT32 force_inactive_vdev_bitmap[]; <-- current force inactive vdevs
  */
 } wmi_mlo_link_set_active_resp_event_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mlo_setup_cmd_fixed_param; */
+    A_UINT32 tlv_header;
+    /** Unique ID reprsenting the hw_links part of the MLD */
+    A_UINT32 mld_group_id;
+    /** pdev_id for identifying the MAC, See macros starting with WMI_PDEV_ID_ for values. */
+    A_UINT32 pdev_id;
+/*
+ * Followed by TLVs:
+ *     A_UINT32 hw_link_ids[];
+ */
+} wmi_mlo_setup_cmd_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mlo_setup_complete_event_fixed_param; */
+    A_UINT32 tlv_header;
+    /** pdev_id for identifying the MAC, See macros starting with WMI_PDEV_ID_ for values. */
+    A_UINT32 pdev_id;
+    /** Return status. 0 for success, non-zero otherwise */
+    A_UINT32 status;
+} wmi_mlo_setup_complete_event_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mlo_ready_cmd_fixed_param; */
+    A_UINT32 tlv_header;
+    /** pdev_id for identifying the MAC, See macros starting with WMI_PDEV_ID_ for values. */
+    A_UINT32 pdev_id;
+} wmi_mlo_ready_cmd_fixed_param;
+
+typedef enum wmi_mlo_tear_down_reason_code_type {
+    WMI_MLO_TEARDOWN_SSR_REASON,
+} WMI_MLO_TEARDOWN_REASON_TYPE;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mlo_teardown_fixed_param; */
+    A_UINT32 tlv_header;
+    /** pdev_id for identifying the MAC, See macros starting with WMI_PDEV_ID_ for values. */
+    A_UINT32 pdev_id;
+    /** reason_code: of type WMI_TEARDOWN_REASON_TYPE */
+    A_UINT32 reason_code;
+} wmi_mlo_teardown_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mlo_teardown_complete_fixed_param; */
+    A_UINT32 tlv_header;
+    /** pdev_id for identifying the MAC, See macros starting with WMI_PDEV_ID_ for values. */
+    A_UINT32 pdev_id;
+    /** Return status. 0 for success, non-zero otherwise */
+    A_UINT32 status;
+} wmi_mlo_teardown_complete_fixed_param;
 
 
 /* ADD NEW DEFS HERE */
