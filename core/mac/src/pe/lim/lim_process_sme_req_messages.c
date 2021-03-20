@@ -4038,9 +4038,14 @@ void lim_parse_tpe_ie(struct mac_context *mac, struct pe_session *session,
 			lim_get_num_tpe_octets(single_tpe.max_tx_pwr_count);
 		vdev_mlme->reg_tpc_obj.num_pwr_levels = num_octets;
 
+		ch_params.ch_width = session->ch_width;
 		wlan_reg_set_channel_params_for_freq(mac->pdev, curr_op_freq, 0,
 						     &ch_params);
-		curr_freq = ch_params.mhz_freq_seg0 - bw_val / 2 + 10;
+
+		if (ch_params.mhz_freq_seg1)
+			curr_freq = ch_params.mhz_freq_seg1 - bw_val / 2 + 10;
+		else
+			curr_freq = ch_params.mhz_freq_seg0 - bw_val / 2 + 10;
 
 		if (!num_octets) {
 			if (!he_op->oper_info_6g_present)
@@ -4191,7 +4196,7 @@ void lim_calculate_tpc(struct mac_context *mac,
 	bool is_tpe_present = false, is_6ghz_freq = false;
 	uint8_t i = 0;
 	int8_t max_tx_power;
-	uint16_t reg_max, eirp_power = 0;
+	uint16_t reg_max = 0, psd_power = 0;
 	uint16_t local_constraint, bw_val = 0;
 	uint32_t num_pwr_levels, ap_power_type_6g = 0;
 	qdf_freq_t oper_freq, start_freq = 0;
@@ -4207,10 +4212,14 @@ void lim_calculate_tpc(struct mac_context *mac,
 	oper_freq = session->curr_op_freq;
 	bw_val = wlan_reg_get_bw_value(session->ch_width);
 
+	ch_params.ch_width = session->ch_width;
 	/* start frequency calculation */
 	wlan_reg_set_channel_params_for_freq(mac->pdev, oper_freq, 0,
 					     &ch_params);
-	start_freq = ch_params.mhz_freq_seg0 - bw_val / 2;
+	if (ch_params.mhz_freq_seg1)
+		start_freq = ch_params.mhz_freq_seg1 - bw_val / 2 + 10;
+	else
+		start_freq = ch_params.mhz_freq_seg0 - bw_val / 2 + 10;
 
 	if (!wlan_reg_is_6ghz_chan_freq(oper_freq)) {
 		reg_max = wlan_reg_get_channel_reg_power_for_freq(mac->pdev,
@@ -4237,13 +4246,13 @@ void lim_calculate_tpc(struct mac_context *mac,
 				wlan_reg_get_client_power_for_connecting_ap
 				(mac->pdev, ap_power_type_6g,
 				 mlme_obj->reg_tpc_obj.frequency[i],
-				 &is_psd_power, &reg_max, &eirp_power);
+				 &is_psd_power, &reg_max, &psd_power);
 			}
 		} else {
 			/* center frequency calculation */
 			if (is_psd_power) {
 				mlme_obj->reg_tpc_obj.frequency[i] =
-						start_freq + 10 + (20 * i);
+						start_freq + (20 * i);
 			} else {
 				wlan_reg_set_channel_params_for_freq
 					(mac->pdev, oper_freq, 0, &ch_params);
@@ -4259,12 +4268,12 @@ void lim_calculate_tpc(struct mac_context *mac,
 					wlan_reg_get_client_power_for_connecting_ap
 					(mac->pdev, ap_power_type_6g,
 					 mlme_obj->reg_tpc_obj.frequency[i],
-					 &is_psd_power, &reg_max, &eirp_power);
+					 &is_psd_power, &reg_max, &psd_power);
 				} else {
 					wlan_reg_get_6g_chan_ap_power
 					(mac->pdev,
 					 mlme_obj->reg_tpc_obj.frequency[i],
-					 &is_psd_power, &reg_max, &eirp_power);
+					 &is_psd_power, &reg_max, &psd_power);
 				}
 			}
 		}
@@ -4286,9 +4295,11 @@ void lim_calculate_tpc(struct mac_context *mac,
 				max_tx_power = reg_max - local_constraint;
 		}
 		/* If TPE is present */
-		if (is_tpe_present)
+		if (is_tpe_present) {
 			max_tx_power = QDF_MIN(max_tx_power, (int8_t)
 					       mlme_obj->reg_tpc_obj.tpe[i]);
+			pe_debug("TPE: %d", mlme_obj->reg_tpc_obj.tpe[i]);
+		}
 
 		/** If firmware updated max tx power is non zero,
 		 * then allocate the min of firmware updated ap tx
@@ -4303,15 +4314,18 @@ void lim_calculate_tpc(struct mac_context *mac,
 			pe_err("HW power limit from FW is zero");
 		mlme_obj->reg_tpc_obj.chan_power_info[i].tx_power =
 						(uint8_t)max_tx_power;
+
+		pe_debug("freq: %d max_tx_power: %d",
+			 mlme_obj->reg_tpc_obj.frequency[i], max_tx_power);
 	}
 
 	mlme_obj->reg_tpc_obj.num_pwr_levels = num_pwr_levels;
 	mlme_obj->reg_tpc_obj.is_psd_power = is_psd_power;
-	mlme_obj->reg_tpc_obj.eirp_power = eirp_power;
+	mlme_obj->reg_tpc_obj.eirp_power = reg_max;
 	mlme_obj->reg_tpc_obj.power_type_6g = ap_power_type_6g;
 
-	pe_debug("num_pwr_levels: %d, is_psd_power: %d, eirp_power: %d, ap_pwr_type: %d",
-		 num_pwr_levels, is_psd_power, eirp_power, ap_power_type_6g);
+	pe_debug("num_pwr_levels: %d, is_psd_power: %d, total eirp_power: %d, ap_pwr_type: %d",
+		 num_pwr_levels, is_psd_power, reg_max, ap_power_type_6g);
 }
 
 /**
