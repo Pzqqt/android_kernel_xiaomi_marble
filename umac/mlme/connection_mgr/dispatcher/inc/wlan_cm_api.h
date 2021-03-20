@@ -412,7 +412,7 @@ static inline
 void wlan_cm_set_candidate_advance_filter_cb(
 		struct wlan_objmgr_vdev *vdev,
 		void (*filter_fun)(struct wlan_objmgr_vdev *vdev,
-				   struct scan_filter *filter));
+				   struct scan_filter *filter))
 {
 }
 
