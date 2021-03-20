@@ -1118,7 +1118,7 @@ static void sde_kms_prepare_commit(struct msm_kms *kms,
 	struct drm_device *dev;
 	struct drm_encoder *encoder;
 	struct drm_crtc *crtc;
-	struct drm_crtc_state *crtc_state;
+	struct drm_crtc_state *cstate;
 	struct sde_vm_ops *vm_ops;
 	int i, rc;
 
@@ -1144,12 +1144,8 @@ static void sde_kms_prepare_commit(struct msm_kms *kms,
 		sde_kms->first_kickoff = false;
 	}
 
-	for_each_old_crtc_in_state(state, crtc, crtc_state, i) {
-		list_for_each_entry(encoder, &dev->mode_config.encoder_list,
-				head) {
-			if (encoder->crtc != crtc)
-				continue;
-
+	for_each_new_crtc_in_state(state, crtc, cstate, i) {
+		drm_for_each_encoder_mask(encoder, dev, cstate->encoder_mask) {
 			if (sde_encoder_prepare_commit(encoder) == -ETIMEDOUT) {
 				SDE_ERROR("crtc:%d, initiating hw reset\n",
 						DRMID(crtc));
