@@ -632,7 +632,7 @@ int hif_apps_grp_irqs_enable(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_exec_context *hif_exec;
 	struct hif_softc *scn;
-	int i;
+	int i, j;
 
 	QDF_BUG(hif_ctx);
 	scn = HIF_GET_SOFTC(hif_ctx);
@@ -644,7 +644,9 @@ int hif_apps_grp_irqs_enable(struct hif_opaque_softc *hif_ctx)
 		if (!hif_exec)
 			continue;
 
-		hif_exec->irq_enable(hif_exec);
+		for (j = 0; j < hif_exec->numirq; j++)
+			pfrm_enable_irq(scn->qdf_dev->dev,
+					hif_exec->os_irq[j]);
 	}
 
 	return 0;
@@ -654,7 +656,7 @@ int hif_apps_grp_irqs_disable(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_exec_context *hif_exec;
 	struct hif_softc *scn;
-	int i;
+	int i, j;
 
 	QDF_BUG(hif_ctx);
 	scn = HIF_GET_SOFTC(hif_ctx);
@@ -666,7 +668,9 @@ int hif_apps_grp_irqs_disable(struct hif_opaque_softc *hif_ctx)
 		if (!hif_exec)
 			continue;
 
-		hif_exec->irq_disable(hif_exec);
+		for (j = 0; j < hif_exec->numirq; j++)
+			pfrm_disable_irq(scn->qdf_dev->dev,
+					 hif_exec->os_irq[j]);
 	}
 
 	return 0;
