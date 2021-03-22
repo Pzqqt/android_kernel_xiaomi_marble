@@ -590,6 +590,43 @@ static bool lim_check_11ax_basic_mcs(struct mac_context *mac_ctx,
 #endif
 
 /**
+ * lim_chk_11be_only() - checks for non 11be STA
+ * @mac_ctx: pointer to Global MAC structure
+ * @hdr: pointer to the MAC head
+ * @session: pointer to pe session entry
+ * @assoc_req: pointer to ASSOC/REASSOC Request frame
+ * @sub_type: Assoc(=0) or Reassoc(=1) Requestframe
+ *
+ * Checks for non 11be STA
+ *
+ * Return: true if no error, false otherwise
+ */
+#ifdef WLAN_FEATURE_11BE
+static bool lim_chk_11be_only(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
+			      struct pe_session *session,
+			      tpSirAssocReq assoc_req, uint8_t sub_type)
+{
+	if (LIM_IS_AP_ROLE(session) &&
+	    (session->dot11mode == MLME_DOT11_MODE_11BE_ONLY) &&
+	    !assoc_req->eht_cap.present) {
+		lim_send_assoc_rsp_mgmt_frame(
+			mac_ctx, STATUS_CAPS_UNSUPPORTED,
+			1, hdr->sa, sub_type, 0, session, false);
+		pe_err("SOFTAP was in 11BE only mode, reject");
+		return false;
+	}
+	return true;
+}
+#else
+static bool lim_chk_11be_only(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
+			      struct pe_session *session,
+			      tpSirAssocReq assoc_req, uint8_t sub_type)
+{
+	return true;
+}
+#endif
+
+/**
  * lim_process_for_spectrum_mgmt() - process assoc req for spectrum mgmt
  * @mac_ctx: pointer to Global MAC structure
  * @hdr: pointer to the MAC head
@@ -1542,6 +1579,7 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 	}
 
 	lim_update_stads_he_capable(sta_ds, assoc_req);
+	lim_update_stads_eht_capable(sta_ds, assoc_req);
 	sta_ds->qos.addtsPresent =
 		(assoc_req->addtsPresent == 0) ? false : true;
 	sta_ds->qos.addts = assoc_req->addtsReq;
@@ -1710,6 +1748,8 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 				vht_mcs_10_11_supp;
 	}
 	lim_intersect_sta_he_caps(mac_ctx, assoc_req, session, sta_ds);
+
+	lim_intersect_sta_eht_caps(mac_ctx, assoc_req, session, sta_ds);
 
 	if (lim_populate_matching_rate_set(mac_ctx, sta_ds,
 			&(assoc_req->supportedRates),
@@ -2462,6 +2502,10 @@ void lim_process_assoc_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_in
 					      sub_type))
 		goto error;
 
+	if (false == lim_chk_11be_only(mac_ctx, hdr, session, assoc_req,
+				       sub_type))
+		goto error;
+
 	/* Spectrum Management (11h) specific checks */
 	lim_process_for_spectrum_mgmt(mac_ctx, hdr, session,
 				assoc_req, sub_type, local_cap);
@@ -2470,7 +2514,8 @@ void lim_process_assoc_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_in
 		goto error;
 
 	if (false == lim_chk_is_11b_sta_supported(mac_ctx, hdr, session,
-				assoc_req, sub_type, phy_mode))
+						  assoc_req, sub_type,
+						  phy_mode))
 		goto error;
 
 	/*

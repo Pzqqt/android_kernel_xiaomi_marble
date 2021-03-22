@@ -191,6 +191,9 @@ void lim_update_assoc_sta_datas(struct mac_context *mac_ctx,
 	lim_update_stads_he_caps(mac_ctx, sta_ds, assoc_rsp,
 				 session_entry, beacon);
 
+	lim_update_stads_eht_caps(mac_ctx, sta_ds, assoc_rsp,
+				  session_entry, beacon);
+
 	if (lim_is_sta_he_capable(sta_ds))
 		he_cap = &assoc_rsp->he_cap;
 
@@ -538,6 +541,20 @@ static void lim_process_he_info(tpSirProbeRespBeacon beacon,
 #else
 static inline void lim_process_he_info(tpSirProbeRespBeacon beacon,
 				       tpDphHashNode sta_ds)
+{
+}
+#endif
+
+#ifdef WLAN_FEATURE_11BE
+static void lim_process_eht_info(tpSirProbeRespBeacon beacon,
+				 tpDphHashNode sta_ds)
+{
+	if (beacon->eht_op.present)
+		sta_ds->parsed_ies.eht_operation = beacon->eht_op;
+}
+#else
+static inline void lim_process_eht_info(tpSirProbeRespBeacon beacon,
+					tpDphHashNode sta_ds)
 {
 }
 #endif
@@ -1142,6 +1159,8 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 		sta_ds->parsed_ies.vht_operation = beacon->VHTOperation;
 
 	lim_process_he_info(beacon, sta_ds);
+
+	lim_process_eht_info(beacon, sta_ds);
 
 	if (mac_ctx->lim.gLimProtectionControl !=
 	    MLME_FORCE_POLICY_PROTECTION_DISABLE)

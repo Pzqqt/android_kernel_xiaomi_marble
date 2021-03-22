@@ -848,6 +848,8 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 		if (IS_DOT11_MODE_EHT(session->dot11mode)) {
 			lim_update_session_eht_capable(mac_ctx, session);
 			lim_copy_bss_eht_cap(session);
+		} else {
+			lim_strip_eht_ies_from_add_ies(mac_ctx, session);
 		}
 
 		session->txLdpcIniFeatureEnabled =
@@ -7705,7 +7707,7 @@ static void lim_process_sme_channel_change_request(struct mac_context *mac_ctx,
 	uint8_t session_id;      /* PE session_id */
 	int8_t max_tx_pwr;
 	uint32_t target_freq;
-	bool is_curr_ch_2g, is_new_ch_2g, update_he_cap;
+	bool is_curr_ch_2g, is_new_ch_2g, update_he_cap, update_eht_cap;
 
 	if (!msg_buf) {
 		pe_err("msg_buf is NULL");
@@ -7782,6 +7784,34 @@ static void lim_process_sme_channel_change_request(struct mac_context *mac_ctx,
 			 target_freq, ch_change_req->dot11mode,
 			 lim_is_session_he_capable(session_entry));
 		return;
+	}
+
+	if (IS_DOT11_MODE_EHT(ch_change_req->dot11mode) &&
+	    ((QDF_MONITOR_MODE == session_entry->opmode) ||
+	     lim_is_session_eht_capable(session_entry))) {
+		lim_update_session_eht_capable_chan_switch(
+				mac_ctx, session_entry, target_freq);
+		is_new_ch_2g = wlan_reg_is_24ghz_ch_freq(target_freq);
+		is_curr_ch_2g = wlan_reg_is_24ghz_ch_freq(
+					session_entry->curr_op_freq);
+		if ((is_new_ch_2g && !is_curr_ch_2g) ||
+		    (!is_new_ch_2g && is_curr_ch_2g))
+			update_eht_cap = true;
+		else
+			update_eht_cap = false;
+		if (!update_eht_cap) {
+			if ((session_entry->ch_width !=
+			     ch_change_req->ch_width) &&
+			    (session_entry->ch_width > CH_WIDTH_80MHZ ||
+			     ch_change_req->ch_width > CH_WIDTH_80MHZ))
+				update_eht_cap = true;
+		}
+		if (update_eht_cap) {
+			session_entry->curr_op_freq = target_freq;
+			session_entry->ch_width = ch_change_req->ch_width;
+			lim_copy_bss_eht_cap(session_entry);
+			lim_update_eht_bw_cap_mcs(session_entry, NULL);
+		}
 	}
 
 	/* Store the New Channel Params in session_entry */

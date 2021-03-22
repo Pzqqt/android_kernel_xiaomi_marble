@@ -78,6 +78,9 @@ struct parsed_ies {
 #ifdef WLAN_FEATURE_11AX
 	tDot11fIEhe_op he_operation;
 #endif
+#ifdef WLAN_FEATURE_11BE
+	tDot11fIEeht_op eht_operation;
+#endif
 };
 
 /* STA state node */

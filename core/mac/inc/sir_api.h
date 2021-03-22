@@ -1113,7 +1113,9 @@ struct join_rsp {
 	struct fils_join_rsp_params *fils_join_rsp;
 #endif
 	uint8_t frames[1];
+#ifdef WLAN_FEATURE_11BE
 	tDot11fIEeht_op eht_operation;
+#endif
 };
 #endif
 

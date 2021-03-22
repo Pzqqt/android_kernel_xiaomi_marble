@@ -219,6 +219,12 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 		lim_add_bss_he_cfg(pAddBssParams, ft_session);
 	}
 
+	if (lim_is_session_eht_capable(ft_session) &&
+	    pBeaconStruct->eht_cap.present) {
+		lim_update_bss_eht_capable(mac, pAddBssParams);
+		lim_add_bss_eht_cfg(pAddBssParams, ft_session);
+	}
+
 	pe_debug("SIR_HAL_ADD_BSS_REQ with frequency: %d",
 		bssDescription->chan_freq);
 
@@ -268,6 +274,12 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 				pBeaconStruct->he_cap.present)
 				lim_intersect_ap_he_caps(ft_session,
 					pAddBssParams, pBeaconStruct, NULL);
+
+			if (lim_is_session_eht_capable(ft_session) &&
+			    pBeaconStruct->eht_cap.present)
+				lim_intersect_ap_eht_caps(ft_session,
+							  pAddBssParams,
+							  pBeaconStruct, NULL);
 
 			if (pBeaconStruct->HTCaps.supportedChannelWidthSet &&
 			    chan_width_support) {
@@ -591,6 +603,10 @@ void lim_fill_ft_session(struct mac_context *mac,
 	if (IS_DOT11_MODE_HE(ft_session->dot11mode) &&
 	    pBeaconStruct->he_cap.present)
 		lim_update_session_he_capable(mac, ft_session);
+
+	if (IS_DOT11_MODE_EHT(ft_session->dot11mode) &&
+	    pBeaconStruct->eht_cap.present)
+		lim_update_session_eht_capable(mac, ft_session);
 
 	/* Assign default configured nss value in the new session */
 	if (!wlan_reg_is_24ghz_ch_freq(ft_session->curr_op_freq))

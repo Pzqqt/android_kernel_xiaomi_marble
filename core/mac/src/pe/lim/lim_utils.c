@@ -5504,6 +5504,32 @@ static bool is_dot11mode_support_he_cap(enum csr_cfgdot11mode dot11mode)
 	return false;
 }
 
+#ifdef WLAN_FEATURE_11BE
+/**
+ * is_dot11mode_support_eht_cap() - Check dot11mode supports EHT capability
+ * @dot11mode: dot11mode
+ *
+ * This function checks whether dot11mode support EHT capability or not
+ *
+ * Return: True, if supports. False otherwise
+ */
+static bool is_dot11mode_support_eht_cap(enum csr_cfgdot11mode dot11mode)
+{
+	if ((dot11mode == eCSR_CFG_DOT11_MODE_AUTO) ||
+	    (dot11mode == eCSR_CFG_DOT11_MODE_11BE) ||
+	    (dot11mode == eCSR_CFG_DOT11_MODE_11BE_ONLY)) {
+		return true;
+	}
+
+	return false;
+}
+#else
+static bool is_dot11mode_support_eht_cap(enum csr_cfgdot11mode dot11mode)
+{
+	return false;
+}
+#endif
+
 /**
  * lim_send_ht_caps_ie() - gets HT capability and send to firmware via wma
  * @mac_ctx: global mac context
@@ -5686,6 +5712,11 @@ QDF_STATUS lim_send_ies_per_band(struct mac_context *mac_ctx,
 			status_he = lim_send_he_6g_band_caps_ie(mac_ctx,
 								session,
 								vdev_id);
+	}
+
+	if (is_dot11mode_support_eht_cap(dot11_mode)) {
+		status_he = lim_send_eht_caps_ie(mac_ctx, session,
+						 device_mode, vdev_id);
 	}
 
 	if (QDF_IS_STATUS_SUCCESS(status_ht) &&
@@ -7707,6 +7738,15 @@ QDF_STATUS lim_populate_eht_mcs_set(struct mac_context *mac_ctx,
 void lim_add_self_eht_cap(tpAddStaParams add_sta_params,
 			  struct pe_session *session)
 {
+	if (!session)
+		return;
+
+	add_sta_params->eht_capable = true;
+
+	qdf_mem_copy(&add_sta_params->eht_config, &session->eht_config,
+		     sizeof(add_sta_params->eht_config));
+	qdf_mem_copy(&add_sta_params->eht_op, &session->eht_op,
+		     sizeof(add_sta_params->eht_op));
 }
 
 /**
@@ -7748,6 +7788,13 @@ void lim_copy_bss_eht_cap(struct pe_session *session)
 
 void lim_copy_join_req_eht_cap(struct pe_session *session)
 {
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(session->vdev);
+	if (!mlme_priv)
+		return;
+	qdf_mem_copy(&session->eht_config, &mlme_priv->eht_config,
+		     sizeof(session->eht_config));
 }
 
 void lim_add_eht_cap(struct mac_context *mac_ctx, struct pe_session *pe_session,
@@ -7760,10 +7807,32 @@ void lim_intersect_ap_eht_caps(struct pe_session *session,
 			       tSchBeaconStruct *beacon,
 			       tpSirAssocRsp assoc_rsp)
 {
+	tDot11fIEeht_cap *rcvd_eht;
+	tDot11fIEeht_cap *peer_eht = &add_bss->staContext.eht_config;
+
+	if (assoc_rsp && assoc_rsp->eht_cap.present)
+		rcvd_eht = &assoc_rsp->eht_cap;
+	else
+		rcvd_eht = &beacon->eht_cap;
+
+	lim_intersect_eht_caps(rcvd_eht, peer_eht, session);
+	add_bss->staContext.eht_capable = true;
 }
 
 void lim_add_bss_eht_cap(struct bss_params *add_bss, tpSirAssocRsp assoc_rsp)
 {
+	tDot11fIEeht_cap *eht_cap;
+	tDot11fIEeht_op *eht_op;
+
+	eht_cap = &assoc_rsp->eht_cap;
+	eht_op = &assoc_rsp->eht_op;
+	add_bss->eht_capable = eht_cap->present;
+	if (eht_cap)
+		qdf_mem_copy(&add_bss->staContext.eht_config,
+			     eht_cap, sizeof(*eht_cap));
+	if (eht_op)
+		qdf_mem_copy(&add_bss->staContext.eht_op,
+			     eht_op, sizeof(*eht_op));
 }
 
 void lim_intersect_sta_eht_caps(struct mac_context *mac_ctx,
@@ -7821,6 +7890,137 @@ void lim_decide_eht_op(struct mac_context *mac_ctx, uint32_t *mlme_eht_ops,
 
 	wma_update_vdev_eht_ops(mlme_eht_ops, &eht_ops);
 }
+
+void lim_update_stads_eht_capable(tpDphHashNode sta_ds, tpSirAssocReq assoc_req)
+{
+	sta_ds->mlmStaContext.eht_capable = assoc_req->eht_cap.present;
+}
+
+void lim_update_sta_eht_capable(struct mac_context *mac,
+				tpAddStaParams add_sta_params,
+				tpDphHashNode sta_ds,
+				struct pe_session *session_entry)
+{
+	if (LIM_IS_AP_ROLE(session_entry))
+		add_sta_params->eht_capable =
+			sta_ds->mlmStaContext.eht_capable &&
+					session_entry->eht_capable;
+	else
+		add_sta_params->eht_capable = session_entry->eht_capable;
+
+	pe_debug("eht_capable: %d", add_sta_params->eht_capable);
+}
+
+void lim_update_session_eht_capable_chan_switch(struct mac_context *mac,
+						struct pe_session *session,
+						uint32_t new_chan_freq)
+{
+	session->eht_capable = true;
+	session->he_capable = true;
+	/* TODO: Updat*/
+	if (wlan_reg_is_6ghz_chan_freq(session->curr_op_freq) &&
+	    !wlan_reg_is_6ghz_chan_freq(new_chan_freq)) {
+		session->htCapability = 1;
+		session->vhtCapability = 1;
+		session->he_6ghz_band = 0;
+	} else if (!wlan_reg_is_6ghz_chan_freq(session->curr_op_freq) &&
+		   wlan_reg_is_6ghz_chan_freq(new_chan_freq)) {
+		session->htCapability = 0;
+		session->vhtCapability = 0;
+		session->he_6ghz_band = 1;
+	}
+
+	/*
+	 * If new channel is 2.4gh set VHT as per the b24ghz_band INI
+	 * if new channel is 5Ghz set the vht, this will happen if we move from
+	 * 2.4Ghz to 5Ghz.
+	 */
+	if (wlan_reg_is_24ghz_ch_freq(new_chan_freq) &&
+	    !mac->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band)
+		session->vhtCapability = 0;
+	else if (wlan_reg_is_5ghz_ch_freq(new_chan_freq))
+		session->vhtCapability = 1;
+
+	pe_debug("eht_capable:%d he_capable:%d  ht:%d vht:%d 6ghz_band:%d new freq:%d vht in 2.4gh:%d",
+		 session->eht_capable, session->he_capable,
+		 session->htCapability, session->vhtCapability,
+		 session->he_6ghz_band, new_chan_freq,
+		 mac->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band);
+}
+
+void lim_update_bss_eht_capable(struct mac_context *mac,
+				struct bss_params *add_bss)
+{
+	add_bss->eht_capable = true;
+	pe_debug("eht_capable: %d", add_bss->eht_capable);
+}
+
+void lim_log_eht_cap(struct mac_context *mac, tDot11fIEeht_cap *eht_cap)
+{
+	if (!eht_cap->present)
+		return;
+
+	pe_nofl_debug("EHT Capabilities:");
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+			   eht_cap, sizeof(tDot11fIEeht_cap));
+}
+
+void lim_log_eht_op(struct mac_context *mac, tDot11fIEeht_op *eht_ops,
+		    struct pe_session *session)
+{
+	if (!eht_ops->present)
+		return;
+
+	pe_nofl_debug("EHT operation element:");
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+			   eht_ops, sizeof(tDot11fIEeht_op));
+}
+
+void lim_set_eht_caps(struct mac_context *mac, struct pe_session *session,
+		      uint8_t *ie_start, uint32_t num_bytes)
+{
+	tDot11fIEeht_cap dot11_cap;
+
+	populate_dot11f_eht_caps(mac, session, &dot11_cap);
+	lim_log_eht_cap(mac, &dot11_cap);
+
+	/* TODO: Update */
+}
+
+QDF_STATUS lim_send_eht_caps_ie(struct mac_context *mac_ctx,
+				struct pe_session *session,
+				enum QDF_OPMODE device_mode,
+				uint8_t vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+void lim_update_stads_eht_caps(struct mac_context *mac_ctx,
+			       tpDphHashNode sta_ds, tpSirAssocRsp assoc_rsp,
+			       struct pe_session *session_entry,
+			       tSchBeaconStruct *beacon)
+{
+	/* If EHT is not supported, do not fill sta_ds and return */
+	if (!IS_DOT11_MODE_EHT(session_entry->dot11mode))
+		return;
+
+	if (!assoc_rsp->eht_cap.present && beacon && beacon->eht_cap.present) {
+		/* Use beacon EHT caps if assoc resp doesn't have he caps */
+		pe_debug("eht_caps missing in assoc rsp");
+		qdf_mem_copy(&assoc_rsp->eht_cap, &beacon->eht_cap,
+			     sizeof(tDot11fIEeht_cap));
+	}
+
+	/* assoc resp and beacon doesn't have eht caps */
+	if (!assoc_rsp->eht_cap.present)
+		return;
+
+	sta_ds->mlmStaContext.eht_capable = assoc_rsp->eht_cap.present;
+
+	qdf_mem_copy(&sta_ds->eht_config, &assoc_rsp->eht_cap,
+		     sizeof(tDot11fIEeht_cap));
+}
+
 #endif
 
 #if defined(CONFIG_BAND_6GHZ) && defined(WLAN_FEATURE_11AX)

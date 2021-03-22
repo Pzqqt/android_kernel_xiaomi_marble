@@ -472,6 +472,7 @@ typedef struct sSirAssocRsp {
 	tDot11fIEhe_op he_op;
 	tDot11fIEhe_6ghz_band_cap he_6ghz_band_cap;
 	tDot11fIEeht_cap eht_cap;
+	tDot11fIEeht_op eht_op;
 	bool mu_edca_present;
 	tSirMacEdcaParamSetIE mu_edca;
 	tDot11fIEbss_max_idle_period bss_max_idle_period;

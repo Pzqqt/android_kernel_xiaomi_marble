@@ -2129,6 +2129,20 @@ static void lim_add_tdls_sta_he_config(tpAddStaParams add_sta_params,
 #endif /* WLAN_FEATURE_11AX */
 #endif /* FEATURE_WLAN_TDLS */
 
+#ifdef WLAN_FEATURE_11BE
+static bool lim_is_add_sta_params_eht_capable(tpAddStaParams add_sta_params)
+{
+	return add_sta_params->eht_capable;
+}
+
+#else
+static bool lim_is_add_sta_params_eht_capable(tpAddStaParams add_sta_params)
+{
+	return false;
+}
+
+#endif
+
 /**
  * lim_add_sta()- called to add an STA context at hardware
  * @mac_ctx: pointer to global mac structure
@@ -2266,6 +2280,9 @@ lim_add_sta(struct mac_context *mac_ctx,
 
 	lim_update_sta_he_capable(mac_ctx, add_sta_params, sta_ds,
 				  session_entry);
+
+	lim_update_sta_eht_capable(mac_ctx, add_sta_params, sta_ds,
+				   session_entry);
 
 	add_sta_params->maxAmpduDensity = sta_ds->htAMpduDensity;
 	add_sta_params->maxAmpduSize = sta_ds->htMaxRxAMpduFactor;
@@ -2471,7 +2488,8 @@ lim_add_sta(struct mac_context *mac_ctx,
 	add_sta_params->nwType = session_entry->nwType;
 
 	if (!(add_sta_params->htCapable || add_sta_params->vhtCapable ||
-	    lim_is_add_sta_params_he_capable(add_sta_params))) {
+	    lim_is_add_sta_params_he_capable(add_sta_params) ||
+	    lim_is_add_sta_params_eht_capable(add_sta_params))) {
 		nw_type_11b = 1;
 		for (i = 0; i < SIR_NUM_11A_RATES; i++) {
 			if (sirIsArate(sta_ds->supportedRates.llaRates[i] &
@@ -3639,6 +3657,15 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 						sta);
 		}
 
+		if (lim_is_session_eht_capable(pe_session) &&
+		    (pAssocRsp->eht_cap.present ||
+		     pBeaconStruct->eht_cap.present)) {
+			lim_intersect_ap_eht_caps(pe_session,
+						  pAddBssParams,
+						  pBeaconStruct,
+						  pAssocRsp);
+		}
+
 		/*
 		 * in limExtractApCapability function intersection of FW
 		 * advertised channel width and AP advertised channel
@@ -3744,6 +3771,14 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 			lim_update_he_6ghz_band_caps(mac,
 						&pAssocRsp->he_6ghz_band_cap,
 						&pAddBssParams->staContext);
+		}
+		if (lim_is_session_eht_capable(pe_session) &&
+		    (pAssocRsp->eht_cap.present ||
+		     pBeaconStruct->eht_cap.present)) {
+			lim_intersect_ap_eht_caps(pe_session,
+						  pAddBssParams,
+						  pBeaconStruct,
+						  pAssocRsp);
 		}
 	}
 	pAddBssParams->staContext.smesessionId =
@@ -3953,6 +3988,12 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac,
 		lim_add_bss_he_cfg(pAddBssParams, pe_session);
 	}
 
+	if (lim_is_session_eht_capable(pe_session) &&
+	    pBeaconStruct->eht_cap.present) {
+		lim_update_bss_eht_capable(mac, pAddBssParams);
+		lim_add_bss_eht_cfg(pAddBssParams, pe_session);
+	}
+
 	/*
 	 * Populate the STA-related parameters here
 	 * Note that the STA here refers to the AP
@@ -4003,6 +4044,11 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac,
 			pBeaconStruct->he_cap.present)
 			lim_intersect_ap_he_caps(pe_session, pAddBssParams,
 					      pBeaconStruct, NULL);
+
+		if (lim_is_session_eht_capable(pe_session) &&
+		    pBeaconStruct->eht_cap.present)
+			lim_intersect_ap_eht_caps(pe_session, pAddBssParams,
+						  pBeaconStruct, NULL);
 
 		if (pBeaconStruct->HTCaps.supportedChannelWidthSet &&
 		    chan_width_support) {
