@@ -2381,6 +2381,26 @@ struct qmi_elem_info ipa3_enable_force_clear_datapath_req_msg_data_v01_ei[] = {
 			throttle_source),
 	},
 	{
+		.data_type	= QMI_OPT_FLAG,
+		.elem_len	= 1,
+		.elem_size	= sizeof(uint8_t),
+		.array_type	= NO_ARRAY,
+		.tlv_type	= 0x11,
+		.offset		= offsetof(
+			struct ipa_enable_force_clear_datapath_req_msg_v01,
+			source_pipe_bitmask_ext_valid),
+	},
+	{
+		.data_type	= QMI_UNSIGNED_4_BYTE,
+		.elem_len	= 4,
+		.elem_size	= sizeof(uint32_t),
+		.array_type	= STATIC_ARRAY,
+		.tlv_type	= 0x11,
+		.offset		= offsetof(
+			struct ipa_enable_force_clear_datapath_req_msg_v01,
+			source_pipe_bitmask_ext),
+	},
+	{
 		.data_type	= QMI_EOTI,
 		.array_type	= NO_ARRAY,
 		.tlv_type	= QMI_COMMON_TLV_TYPE,

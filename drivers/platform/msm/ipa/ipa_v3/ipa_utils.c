@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <net/ip.h>
@@ -6874,7 +6874,8 @@ void ipa_init_ep_flt_bitmap(void)
 		if (ipa3_ep_mapping[hw_idx][cl].support_flt &&
 		    (!IPA_CLIENT_IS_TEST(cl) ||
 		     ipa3_ctx->ipa3_hw_mode == IPA_HW_MODE_VIRTUAL ||
-		     ipa3_ctx->ipa3_hw_mode == IPA_HW_MODE_EMULATION)) {
+		     ipa3_ctx->ipa3_hw_mode == IPA_HW_MODE_EMULATION ||
+		     ipa3_ctx->ipa3_hw_mode == IPA_HW_MODE_TEST)) {
 			gsi_ep_ptr =
 				&ipa3_ep_mapping[hw_idx][cl].ipa_gsi_ep_info;
 			pipe_num = gsi_ep_ptr->ipa_ep_num;
@@ -11644,4 +11645,21 @@ int ipa3_get_max_pdn(void)
 		return IPA_MAX_PDN_NUM;
 	else
 		return IPA_MAX_PDN_NUM_v4;
+}
+
+bool ipa3_is_modem_up(void)
+{
+	bool is_up;
+
+	mutex_lock(&ipa3_ctx->lock);
+	is_up = ipa3_ctx->is_modem_up;
+	mutex_unlock(&ipa3_ctx->lock);
+	return is_up;
+}
+
+void ipa3_set_modem_up(bool is_up)
+{
+	mutex_lock(&ipa3_ctx->lock);
+	ipa3_ctx->is_modem_up = is_up;
+	mutex_unlock(&ipa3_ctx->lock);
 }

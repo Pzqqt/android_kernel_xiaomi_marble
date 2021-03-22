@@ -3850,6 +3850,11 @@ int __gsi_populate_tre(struct gsi_chan_ctx *ctx,
 	tre.ieob = (xfer->flags & GSI_XFER_FLAG_EOB) ? 1 : 0;
 	tre.chain = (xfer->flags & GSI_XFER_FLAG_CHAIN) ? 1 : 0;
 
+	if (unlikely(ctx->state  == GSI_CHAN_STATE_NOT_ALLOCATED)) {
+		GSIERR("bad state %d\n", ctx->state);
+		return -GSI_STATUS_UNSUPPORTED_OP;
+	}
+
 	idx = gsi_find_idx_from_addr(&ctx->ring, ctx->ring.wp_local);
 	tre_ptr = (struct gsi_tre *)(ctx->ring.base_va +
 		idx * ctx->ring.elem_sz);
@@ -4162,6 +4167,7 @@ int gsi_config_channel_mode(unsigned long chan_hdl, enum gsi_chan_mode mode)
 			gsihal_write_reg_n(GSI_EE_n_CNTXT_SRC_IEOB_IRQ_CLR,
 				gsi_ctx->per.ee, 1 << ctx->evtr->id);
 		}
+		atomic_set(&ctx->poll_mode, mode);
 		for(i = 0; i < ctx->evtr->num_of_chan_allocated; i++) {
 			atomic_set(&ctx->evtr->chan[i]->poll_mode, mode);
 		}
@@ -4180,6 +4186,7 @@ int gsi_config_channel_mode(unsigned long chan_hdl, enum gsi_chan_mode mode)
 
 	if (curr == GSI_CHAN_MODE_POLL &&
 			mode == GSI_CHAN_MODE_CALLBACK) {
+		atomic_set(&ctx->poll_mode, mode);
 		for(i = 0; i < ctx->evtr->num_of_chan_allocated; i++) {
 			atomic_set(&ctx->evtr->chan[i]->poll_mode, mode);
 		}

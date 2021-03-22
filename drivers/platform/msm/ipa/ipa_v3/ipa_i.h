@@ -1409,12 +1409,15 @@ struct ipa3_ipv6ct_mem {
  * @IPA_HW_Virtual: IPA hardware supporting virtual memory allocation
  * @IPA_HW_PCIE: IPA hardware supporting memory allocation over PCIE Bridge
  * @IPA_HW_Emulation: IPA emulation hardware
+ * @IPA_HW_Test: Regular IPA hardware in test mode (for
+ *             kernel-tests)
  */
 enum ipa3_hw_mode {
 	IPA_HW_MODE_NORMAL    = 0,
 	IPA_HW_MODE_VIRTUAL   = 1,
 	IPA_HW_MODE_PCIE      = 2,
 	IPA_HW_MODE_EMULATION = 3,
+	IPA_HW_MODE_TEST      = 4,
 };
 
 /*
@@ -2211,6 +2214,7 @@ struct ipa3_context {
 	struct ipa_mem_buffer pkt_init_mem;
 	struct ipa_mem_buffer pkt_init_ex_mem;
 	struct ipa_mem_buffer pkt_init_ex_imm[IPA_IMM_IP_PACKET_INIT_EX_CMD_NUM];
+	bool is_modem_up;
 };
 
 struct ipa3_plat_drv_res {
@@ -3321,4 +3325,8 @@ int ipa3_uc_send_update_flow_control(uint32_t bitmask,
 	uint8_t  add_delete);
 
 enum ipa_hw_type ipa_get_hw_type_internal(void);
+/* check if modem is up */
+bool ipa3_is_modem_up(void);
+/* set modem is up */
+void ipa3_set_modem_up(bool is_up);
 #endif /* _IPA3_I_H_ */

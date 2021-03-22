@@ -28,7 +28,9 @@
 #include "ipa_qmi_service.h"
 #include <linux/rmnet_ipa_fd_ioctl.h>
 #include <linux/ipa.h>
+#include <uapi/linux/ip.h>
 #include <uapi/linux/msm_rmnet.h>
+#include <net/ipv6.h>
 #include <net/rmnet_config.h>
 #include "ipa_mhi_proxy.h"
 
@@ -102,6 +104,12 @@ enum ipa3_wwan_device_status {
 	WWAN_DEVICE_ACTIVE   = 1
 };
 
+enum dflt_wan_rt_rule {
+	WAN_RT_COMMON = 0,
+	WAN_RT_ICMP,
+	WAN_RT_RULES_TOTAL,
+};
+
 struct ipa3_rmnet_plat_drv_res {
 	bool ipa_rmnet_ssr;
 	bool ipa_advertise_sg_support;
@@ -148,8 +156,8 @@ struct rmnet_ipa3_context {
 	struct ipa_sys_connect_params apps_to_ipa_ep_cfg;
 	struct ipa_sys_connect_params ipa_to_apps_ep_cfg;
 	u32 qmap_hdr_hdl;
-	u32 dflt_v4_wan_rt_hdl;
-	u32 dflt_v6_wan_rt_hdl;
+	/* For both IPv4 and IPv6, one rule for ICMP and one for the rest */
+	u32 dflt_wan_rt_hdl[IPA_IP_MAX][WAN_RT_RULES_TOTAL];
 	struct ipa3_rmnet_mux_val mux_channel[MAX_NUM_OF_MUX_CHANNEL];
 	int num_q6_rules;
 	int old_num_q6_rules;
@@ -422,55 +430,105 @@ bail:
  */
 static int ipa3_setup_dflt_wan_rt_tables(void)
 {
-	struct ipa_ioc_add_rt_rule *rt_rule;
-	struct ipa_rt_rule_add *rt_rule_entry;
+	int ret = 0;
+	struct ipa_ioc_add_rt_rule_ext_v2 *rt_rule;
+	struct ipa_rt_rule_add_ext_v2 *rt_rule_entry;
 
-	rt_rule =
-	   kzalloc(sizeof(struct ipa_ioc_add_rt_rule) + 1 *
-			   sizeof(struct ipa_rt_rule_add), GFP_KERNEL);
+	rt_rule = kzalloc(sizeof(struct ipa_ioc_add_rt_rule_ext_v2),
+		GFP_KERNEL);
 	if (!rt_rule)
 		return -ENOMEM;
+	rt_rule->num_rules =
+		ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0 ? WAN_RT_RULES_TOTAL : 1;
+	rt_rule->rules = (uint64_t)kzalloc(
+		rt_rule->num_rules * sizeof(struct ipa_rt_rule_add_ext_v2),
+		GFP_KERNEL);
+	if (!(struct ipa_rt_rule_add_ext_v2 *)(rt_rule->rules)) {
+		ret = -ENOMEM;
+		goto free_rule;
+	}
 
 	/* setup a default v4 route to point to Apps */
-	rt_rule->num_rules = 1;
 	rt_rule->commit = 1;
+	rt_rule->rule_add_ext_size = sizeof(struct ipa_rt_rule_add_ext_v2);
 	rt_rule->ip = IPA_IP_v4;
 	strlcpy(rt_rule->rt_tbl_name, IPA_DFLT_WAN_RT_TBL_NAME,
 			IPA_RESOURCE_NAME_MAX);
 
-	rt_rule_entry = &rt_rule->rules[0];
-	rt_rule_entry->at_rear = 1;
-	rt_rule_entry->rule.dst = IPA_CLIENT_APPS_WAN_CONS;
-	rt_rule_entry->rule.hdr_hdl = rmnet_ipa3_ctx->qmap_hdr_hdl;
+	rt_rule_entry = (struct ipa_rt_rule_add_ext_v2 *)rt_rule->rules;
+	rt_rule_entry[WAN_RT_COMMON].at_rear = 1;
+	rt_rule_entry[WAN_RT_COMMON].rule.dst = IPA_CLIENT_APPS_WAN_CONS;
+	rt_rule_entry[WAN_RT_COMMON].rule.hdr_hdl =
+		rmnet_ipa3_ctx->qmap_hdr_hdl;
 
-	if (ipa3_add_rt_rule(rt_rule)) {
-		IPAWANERR("fail to add dflt_wan v4 rule\n");
-		kfree(rt_rule);
-		return -EPERM;
+	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0) {
+		rt_rule_entry[WAN_RT_ICMP].at_rear = 0;
+		rt_rule_entry[WAN_RT_ICMP].rule.dst = IPA_CLIENT_APPS_WAN_CONS;
+		rt_rule_entry[WAN_RT_ICMP].rule.hdr_hdl =
+			rmnet_ipa3_ctx->qmap_hdr_hdl;
+		rt_rule_entry[WAN_RT_ICMP].rule.close_aggr_irq_mod = true;
+		rt_rule_entry[WAN_RT_ICMP].rule.attrib.attrib_mask =
+			IPA_FLT_PROTOCOL;
+		rt_rule_entry[WAN_RT_ICMP].rule.attrib.u.v4.protocol =
+			(uint8_t)IPPROTO_ICMP;
 	}
 
-	IPAWANDBG("dflt v4 rt rule hdl=%x\n", rt_rule_entry->rt_rule_hdl);
-	rmnet_ipa3_ctx->dflt_v4_wan_rt_hdl = rt_rule_entry->rt_rule_hdl;
+	if (ipa3_add_rt_rule_ext_v2(rt_rule)) {
+		IPAWANERR("fail to add dflt_wan v4 rule\n");
+		ret = -EPERM;
+		goto free_rule_entry;
+	}
+	IPAWANDBG("dflt v4 rt rule hdl[WAN_RT_COMMON]=%x\n",
+		rt_rule_entry[WAN_RT_COMMON].rt_rule_hdl);
+	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0)
+		IPAWANDBG("dflt v4 rt rule hdl[WAN_RT_ICMP]=%x\n",
+			rt_rule_entry[WAN_RT_ICMP].rt_rule_hdl);
+	rmnet_ipa3_ctx->dflt_wan_rt_hdl[IPA_IP_v4][WAN_RT_COMMON] =
+		rt_rule_entry[WAN_RT_COMMON].rt_rule_hdl;
+	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0)
+		rmnet_ipa3_ctx->dflt_wan_rt_hdl[IPA_IP_v4][WAN_RT_ICMP] =
+			rt_rule_entry[WAN_RT_ICMP].rt_rule_hdl;
 
 	/* setup a default v6 route to point to A5 */
 	rt_rule->ip = IPA_IP_v6;
-	if (ipa3_add_rt_rule(rt_rule)) {
-		IPAWANERR("fail to add dflt_wan v6 rule\n");
-		kfree(rt_rule);
-		return -EPERM;
+	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0) {
+		rt_rule_entry[WAN_RT_ICMP].rule.attrib.attrib_mask =
+			IPA_FLT_NEXT_HDR;
+		rt_rule_entry[WAN_RT_ICMP].rule.attrib.u.v6.next_hdr =
+			(uint8_t)NEXTHDR_ICMP;
 	}
-	IPAWANDBG("dflt v6 rt rule hdl=%x\n", rt_rule_entry->rt_rule_hdl);
-	rmnet_ipa3_ctx->dflt_v6_wan_rt_hdl = rt_rule_entry->rt_rule_hdl;
+	if (ipa3_add_rt_rule_ext_v2(rt_rule)) {
+		IPAWANERR("fail to add dflt_wan v6 rule\n");
+		ret = -EPERM;
+		goto free_rule_entry;
+	}
+	IPAWANDBG("dflt v6 rt rule hdl[WAN_RT_COMMON]=%x\n",
+		rt_rule_entry[WAN_RT_COMMON].rt_rule_hdl);
+	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0)
+		IPAWANDBG("dflt v6 rt rule hdl[WAN_RT_ICMP]=%x\n",
+			rt_rule_entry[WAN_RT_ICMP].rt_rule_hdl);
+	rmnet_ipa3_ctx->dflt_wan_rt_hdl[IPA_IP_v6][WAN_RT_COMMON] =
+		rt_rule_entry[WAN_RT_COMMON].rt_rule_hdl;
+	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0)
+		rmnet_ipa3_ctx->dflt_wan_rt_hdl[IPA_IP_v6][WAN_RT_ICMP] =
+			rt_rule_entry[WAN_RT_ICMP].rt_rule_hdl;
 
+free_rule_entry:
+	kfree((void *)(rt_rule->rules));
+free_rule:
 	kfree(rt_rule);
-	return 0;
+	return ret;
 }
 
 static void ipa3_del_dflt_wan_rt_tables(void)
 {
 	struct ipa_ioc_del_rt_rule *rt_rule;
 	struct ipa_rt_rule_del *rt_rule_entry;
-	int len;
+	int i, len, num_of_rules_per_ip_type;
+	enum ipa_ip_type ip_type;
+
+	num_of_rules_per_ip_type =
+		ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0 ? WAN_RT_RULES_TOTAL : 1;
 
 	len = sizeof(struct ipa_ioc_del_rt_rule) + 1 *
 			   sizeof(struct ipa_rt_rule_del);
@@ -478,29 +536,24 @@ static void ipa3_del_dflt_wan_rt_tables(void)
 	if (!rt_rule)
 		return;
 
-	memset(rt_rule, 0, len);
 	rt_rule->commit = 1;
 	rt_rule->num_hdls = 1;
-	rt_rule->ip = IPA_IP_v4;
 
 	rt_rule_entry = &rt_rule->hdl[0];
 	rt_rule_entry->status = -1;
-	rt_rule_entry->hdl = rmnet_ipa3_ctx->dflt_v4_wan_rt_hdl;
 
-	IPAWANERR("Deleting Route hdl:(0x%x) with ip type: %d\n",
-		rt_rule_entry->hdl, IPA_IP_v4);
-	if (ipa3_del_rt_rule(rt_rule) ||
-			(rt_rule_entry->status)) {
-		IPAWANERR("Routing rule deletion failed\n");
-	}
-
-	rt_rule->ip = IPA_IP_v6;
-	rt_rule_entry->hdl = rmnet_ipa3_ctx->dflt_v6_wan_rt_hdl;
-	IPAWANERR("Deleting Route hdl:(0x%x) with ip type: %d\n",
-		rt_rule_entry->hdl, IPA_IP_v6);
-	if (ipa3_del_rt_rule(rt_rule) ||
-			(rt_rule_entry->status)) {
-		IPAWANERR("Routing rule deletion failed\n");
+	for (ip_type = IPA_IP_v4; ip_type <= IPA_IP_v6; ip_type++) {
+		for (i = WAN_RT_COMMON; i < num_of_rules_per_ip_type; i++) {
+			rt_rule->ip = ip_type;
+			rt_rule_entry->hdl =
+				rmnet_ipa3_ctx->dflt_wan_rt_hdl[ip_type][i];
+			IPAWANERR("Deleting Route hdl:(0x%x) with ip type: %d\n",
+				rt_rule_entry->hdl, ip_type);
+			if (ipa3_del_rt_rule(rt_rule) ||
+					(rt_rule_entry->status)) {
+				IPAWANERR("Routing rule deletion failed\n");
+			}
+		}
 	}
 
 	kfree(rt_rule);
@@ -3632,13 +3685,13 @@ static int ipa3_lcl_mdm_ssr_notifier_cb(struct notifier_block *this,
 	case SUBSYS_AFTER_SHUTDOWN:
 #endif
 		IPAWANINFO("IPA Received MPSS AFTER_SHUTDOWN\n");
+		ipa3_set_modem_up(false);
 		if (atomic_read(&rmnet_ipa3_ctx->is_ssr) &&
 			ipa3_ctx_get_type(IPA_HW_TYPE) < IPA_HW_v4_0)
 			ipa3_q6_post_shutdown_cleanup();
 
 		if (ipa3_ctx_get_flag(IPA_ENDP_DELAY_WA_EN))
 			ipa3_client_prod_post_shutdown_cleanup();
-
 		IPAWANINFO("IPA AFTER_SHUTDOWN handling is complete\n");
 		break;
 #if IS_ENABLED(CONFIG_QCOM_Q6V5_PAS)
@@ -3663,6 +3716,7 @@ static int ipa3_lcl_mdm_ssr_notifier_cb(struct notifier_block *this,
 	case SUBSYS_AFTER_POWERUP:
 #endif
 		IPAWANINFO("IPA received MPSS AFTER_POWERUP\n");
+		ipa3_set_modem_up(true);
 		if (!atomic_read(&rmnet_ipa3_ctx->is_initialized) &&
 		       atomic_read(&rmnet_ipa3_ctx->is_ssr))
 			platform_driver_register(&rmnet_ipa_driver);
