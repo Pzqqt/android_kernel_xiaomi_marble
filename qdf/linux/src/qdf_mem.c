@@ -493,9 +493,40 @@ static int qdf_err_printer(void *priv, const char *fmt, ...)
 
 #endif /* MEMORY_DEBUG */
 
-u_int8_t prealloc_disabled = 1;
-qdf_declare_param(prealloc_disabled, byte);
+bool prealloc_disabled = 1;
+qdf_declare_param(prealloc_disabled, bool);
 qdf_export_symbol(prealloc_disabled);
+
+/**
+ * qdf_prealloc_disabled_config_get() - Get the user configuration of
+ *                                       prealloc_disabled
+ *
+ * Return: value of prealloc_disabled qdf module argument
+ */
+bool qdf_prealloc_disabled_config_get(void)
+{
+	return prealloc_disabled;
+}
+
+qdf_export_symbol(qdf_prealloc_disabled_config_get);
+
+#ifdef QCA_WIFI_MODULE_PARAMS_FROM_INI
+/**
+ * qdf_prealloc_disabled_config_set() - Set prealloc_disabled
+ * @str_value: value of the module param
+ *
+ * This function will set qdf module param prealloc_disabled
+ *
+ * Return: QDF_STATUS_SUCCESS on Success
+ */
+QDF_STATUS qdf_prealloc_disabled_config_set(const char *str_value)
+{
+	QDF_STATUS status;
+
+	status = qdf_bool_parse(str_value, &prealloc_disabled);
+	return status;
+}
+#endif
 
 #if defined WLAN_DEBUGFS
 
@@ -1405,6 +1436,24 @@ bool qdf_mem_debug_config_get(void)
 #endif /* DISABLE_MEM_DBG_LOAD_CONFIG */
 
 /**
+ * qdf_mem_debug_disabled_set() - Set mem_debug_disabled
+ * @str_value: value of the module param
+ *
+ * This function will se qdf module param mem_debug_disabled
+ *
+ * Return: QDF_STATUS_SUCCESS on Success
+ */
+#ifdef QCA_WIFI_MODULE_PARAMS_FROM_INI
+QDF_STATUS qdf_mem_debug_disabled_config_set(const char *str_value)
+{
+	QDF_STATUS status;
+
+	status = qdf_bool_parse(str_value, &mem_debug_disabled);
+	return status;
+}
+#endif
+
+/**
  * qdf_mem_debug_init() - initialize qdf memory debug functionality
  *
  * Return: none
@@ -2018,6 +2067,33 @@ void *__qdf_mem_malloc(size_t size, const char *func, uint32_t line)
 }
 
 qdf_export_symbol(__qdf_mem_malloc);
+
+#ifdef QCA_WIFI_MODULE_PARAMS_FROM_INI
+void __qdf_untracked_mem_free(void *ptr)
+{
+	if (!ptr)
+		return;
+
+	kfree(ptr);
+}
+
+void *__qdf_untracked_mem_malloc(size_t size, const char *func, uint32_t line)
+{
+	void *ptr;
+
+	if (!size || size > QDF_MEM_MAX_MALLOC) {
+		qdf_nofl_err("Cannot malloc %zu bytes @ %s:%d", size, func,
+			     line);
+		return NULL;
+	}
+
+	ptr = kzalloc(size, qdf_mem_malloc_flags());
+	if (!ptr)
+		return NULL;
+
+	return ptr;
+}
+#endif
 
 void *qdf_aligned_malloc_fl(uint32_t *size,
 			    void **vaddr_unaligned,

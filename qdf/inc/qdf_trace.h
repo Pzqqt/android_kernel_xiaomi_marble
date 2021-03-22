@@ -538,6 +538,8 @@ enum qdf_dpt_debugfs_state {
 	QDF_DPT_DEBUGFS_STATE_SHOW_COMPLETE,
 };
 
+#define QDF_WIFI_MODULE_PARAMS_FILE "wifi_module_param.ini"
+
 typedef void (*tp_qdf_trace_cb)(void *p_mac, tp_qdf_trace_record, uint16_t);
 typedef void (*tp_qdf_state_info_cb) (char **buf, uint16_t *size);
 #ifdef WLAN_FEATURE_MEMDUMP_ENABLE
@@ -1426,6 +1428,24 @@ int qdf_print_ctrl_register(const struct category_info *cinfo,
 			    void *custom_ctx,
 			    const char *pctrl_name);
 
+#ifdef QCA_WIFI_MODULE_PARAMS_FROM_INI
+/**
+ * qdf_update_module_param() - Update qdf module params
+ *
+ *
+ * Read the file which has wifi module params, parse and update
+ * qdf module params.
+ *
+ * Return: void
+ */
+void qdf_initialize_module_param_from_ini(void);
+#else
+static inline
+void qdf_initialize_module_param_from_ini(void)
+{
+}
+#endif
+
 /**
  * qdf_shared_print_ctrl_init() - Initialize the shared print ctrl obj with
  *                                all categories set to the default level
@@ -1564,6 +1584,30 @@ QDF_STATUS qdf_print_set_node_flag(unsigned int idx,
  */
 bool qdf_print_get_node_flag(unsigned int idx);
 
+#endif
+
+#ifdef QCA_WIFI_MODULE_PARAMS_FROM_INI
+/**
+ * qdf_module_param_handler() - Function to store module params
+ *
+ * @context : NULL, unused.
+ * @key : Name of the module param
+ * @value: Value of the module param
+ *
+ * Handler function to be called from qdf_ini_parse()
+ * function when a valid parameter is found in a file.
+ *
+ * Return : QDF_STATUS_SUCCESS on Success
+ */
+QDF_STATUS qdf_module_param_handler(void *context, const char *key,
+				    const char *value);
+#else
+static inline
+QDF_STATUS qdf_module_param_handler(void *context, const char *key,
+				    const char *value)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 
 /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018, 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -48,6 +48,7 @@ static int __init qdf_mod_init(void)
 int qdf_mod_init(void)
 #endif
 {
+	qdf_initialize_module_param_from_ini();
 	qdf_shared_print_ctrl_init();
 	qdf_debugfs_init();
 	qdf_mem_init();
