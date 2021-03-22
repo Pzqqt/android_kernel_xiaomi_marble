@@ -95,8 +95,6 @@ void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 		goto send_rsp;
 	}
 
-	wmi_unified_send_txbf(wma, add_sta);
-
 	wma_debug("Moving peer "QDF_MAC_ADDR_FMT" to state %d",
 		  QDF_MAC_ADDR_REF(add_sta->staMac), state);
 	cdp_peer_state_update(soc, add_sta->staMac, state);
