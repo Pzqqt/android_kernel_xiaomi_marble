@@ -3957,6 +3957,11 @@ else
 	ccflags-y += -DWLAN_HOST_ARCH_ARM=1
 endif
 
+# Android wifi state control interface
+ifneq ($(WLAN_CTRL_NAME),)
+ccflags-y += -DWLAN_CTRL_NAME=\"$(WLAN_CTRL_NAME)\"
+endif
+
 # inject some build related information
 ifeq ($(CONFIG_BUILD_TAG), y)
 CLD_CHECKOUT = $(shell cd "$(WLAN_ROOT)" && \

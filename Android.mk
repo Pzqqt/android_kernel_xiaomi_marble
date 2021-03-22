@@ -130,6 +130,14 @@ ifneq ($(WLAN_CFG_OVERRIDE_$(LOCAL_DEV_NAME)),)
 KBUILD_OPTIONS += WLAN_CFG_OVERRIDE="$(WLAN_CFG_OVERRIDE_$(LOCAL_DEV_NAME))"
 endif
 
+# driver expects "/dev/<name>" for WIFI_DRIVER_STATE_CTRL_PARAM
+$(call wlog,WIFI_DRIVER_STATE_CTRL_PARAM=$(WIFI_DRIVER_STATE_CTRL_PARAM))
+PARAM := $(patsubst "%",%,$(WIFI_DRIVER_STATE_CTRL_PARAM))
+$(call wlog,PARAM=$(PARAM))
+ifeq ($(dir $(PARAM)),/dev/)
+KBUILD_OPTIONS += WLAN_CTRL_NAME=$(notdir $(PARAM))
+endif
+
 # Pass build options per chip to Kbuild. This will be injected from upper layer
 # makefile.
 #

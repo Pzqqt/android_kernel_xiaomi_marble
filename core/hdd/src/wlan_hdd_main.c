@@ -241,10 +241,6 @@
 int wlan_start_ret_val;
 static DECLARE_COMPLETION(wlan_start_comp);
 static qdf_atomic_t wlan_hdd_state_fops_ref;
-static unsigned int dev_num = 1;
-static struct cdev wlan_hdd_state_cdev;
-static struct class *class;
-static dev_t device;
 #ifndef MODULE
 static struct gwlan_loader *wlan_loader;
 static ssize_t wlan_boot_cb(struct kobject *kobj,
@@ -16221,6 +16217,17 @@ void hdd_deinit(void)
 #define HDD_WLAN_START_WAIT_TIME (CDS_WMA_TIMEOUT + 5000)
 #endif
 
+void hdd_init_start_completion(void)
+{
+	INIT_COMPLETION(wlan_start_comp);
+}
+
+#ifdef WLAN_CTRL_NAME
+static unsigned int dev_num = 1;
+static struct cdev wlan_hdd_state_cdev;
+static struct class *class;
+static dev_t device;
+
 static void hdd_set_adapter_wlm_def_level(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter, *next_adapter = NULL;
@@ -16276,11 +16283,6 @@ static void hdd_inform_wifi_off(void)
 	__hdd_inform_wifi_off();
 
 	osif_psoc_sync_op_stop(psoc_sync);
-}
-
-void hdd_init_start_completion(void)
-{
-	INIT_COMPLETION(wlan_start_comp);
 }
 
 static ssize_t wlan_hdd_state_ctrl_param_write(struct file *filp,
@@ -16382,13 +16384,13 @@ static int  wlan_hdd_state_ctrl_param_create(void)
 	}
 	wlan_hdd_state_major = MAJOR(device);
 
-	class = class_create(THIS_MODULE, WLAN_MODULE_NAME);
+	class = class_create(THIS_MODULE, WLAN_CTRL_NAME);
 	if (IS_ERR(class)) {
 		pr_err("wlan_hdd_state class_create error");
 		goto class_err;
 	}
 
-	dev = device_create(class, NULL, device, NULL, WLAN_MODULE_NAME);
+	dev = device_create(class, NULL, device, NULL, WLAN_CTRL_NAME);
 	if (IS_ERR(dev)) {
 		pr_err("wlan_hdd_statedevice_create error");
 		goto err_class_destroy;
@@ -16405,7 +16407,7 @@ static int  wlan_hdd_state_ctrl_param_create(void)
 	}
 
 	pr_info("wlan_hdd_state %s major(%d) initialized",
-		WLAN_MODULE_NAME, wlan_hdd_state_major);
+		WLAN_CTRL_NAME, wlan_hdd_state_major);
 
 	return 0;
 
@@ -16428,6 +16430,19 @@ static void wlan_hdd_state_ctrl_param_destroy(void)
 
 	pr_info("Device node unregistered");
 }
+
+#else /* WLAN_CTRL_NAME */
+
+static int  wlan_hdd_state_ctrl_param_create(void)
+{
+	return 0;
+}
+
+static void wlan_hdd_state_ctrl_param_destroy(void)
+{
+}
+
+#endif /* WLAN_CTRL_NAME */
 
 /**
  * hdd_component_cb_init() - Initialize component callbacks
