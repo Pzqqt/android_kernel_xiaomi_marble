@@ -325,7 +325,7 @@ static int rmnet_map_egress_handler(struct sk_buff *skb,
 				    struct rmnet_port *port, u8 mux_id,
 				    struct net_device *orig_dev)
 {
-	int required_headroom, additional_header_len, csum_type;
+	int required_headroom, additional_header_len, csum_type, tso = 0;
 	struct rmnet_map_header *map_header;
 
 	additional_header_len = 0;
@@ -351,6 +351,20 @@ static int rmnet_map_egress_handler(struct sk_buff *skb,
 	if (port->data_format & RMNET_INGRESS_FORMAT_PS)
 		qmi_rmnet_work_maybe_restart(port);
 
+	if (csum_type &&
+	    (skb_shinfo(skb)->gso_type & (SKB_GSO_UDP_L4 | SKB_GSO_TCPV4 | SKB_GSO_TCPV6)) &&
+	     skb_shinfo(skb)->gso_size) {
+		unsigned long flags;
+
+		spin_lock_irqsave(&port->agg_lock, flags);
+		rmnet_map_send_agg_skb(port, flags);
+
+		if (rmnet_map_add_tso_header(skb, port, orig_dev))
+			return -EINVAL;
+		csum_type = 0;
+		tso = 1;
+	}
+
 	if (csum_type)
 		rmnet_map_checksum_uplink_packet(skb, port, orig_dev,
 						 csum_type);
@@ -363,7 +377,7 @@ static int rmnet_map_egress_handler(struct sk_buff *skb,
 	map_header->mux_id = mux_id;
 
 	if (port->data_format & RMNET_EGRESS_FORMAT_AGGREGATION) {
-		if (rmnet_map_tx_agg_skip(skb, required_headroom))
+		if (rmnet_map_tx_agg_skip(skb, required_headroom) || tso)
 			goto done;
 
 		rmnet_map_tx_aggregate(skb, port);
@@ -467,7 +481,7 @@ void rmnet_egress_handler(struct sk_buff *skb)
 
 	skb_len = skb->len;
 	err = rmnet_map_egress_handler(skb, port, mux_id, orig_dev);
-	if (err == -ENOMEM) {
+	if (err == -ENOMEM || err == -EINVAL) {
 		goto drop;
 	} else if (err == -EINPROGRESS) {
 		rmnet_vnd_tx_fixup(orig_dev, skb_len);

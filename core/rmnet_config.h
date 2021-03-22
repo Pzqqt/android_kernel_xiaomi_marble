@@ -175,6 +175,8 @@ struct rmnet_priv_stats {
 	u64 csum_hw;
 	struct rmnet_coal_stats coal;
 	u64 ul_prio;
+	u64 tso_pkts;
+	u64 tso_arriv_errs;
 };
 
 struct rmnet_priv {
