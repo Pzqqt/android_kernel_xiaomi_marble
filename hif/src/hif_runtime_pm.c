@@ -45,6 +45,8 @@
 #define CNSS_RUNTIME_FILE_PERM QDF_FILE_USR_READ
 
 #ifdef FEATURE_RUNTIME_PM
+#define PREVENT_LIST_STRING_LEN 200
+
 /**
  * hif_pci_pm_runtime_enabled() - To check if Runtime PM is enabled
  * @scn: hif context
@@ -738,29 +740,40 @@ void hif_process_runtime_suspend_failure(struct hif_opaque_softc *hif_ctx)
 	hif_runtime_pm_set_state_on(scn);
 }
 
-static void hif_pm_runtime_print_prevent_list(struct hif_softc *scn)
-{
-	struct hif_runtime_pm_ctx *rpm_ctx = hif_bus_get_rpm_ctx(scn);
-	struct hif_pm_runtime_lock *ctx;
-
-	hif_info("prevent_suspend_cnt %u", rpm_ctx->prevent_suspend_cnt);
-	list_for_each_entry(ctx, &rpm_ctx->prevent_suspend_list, list)
-		hif_info("%s", ctx->name);
-}
-
 static bool hif_pm_runtime_is_suspend_allowed(struct hif_softc *scn)
 {
 	struct hif_runtime_pm_ctx *rpm_ctx = hif_bus_get_rpm_ctx(scn);
-	bool ret;
+	struct hif_pm_runtime_lock *ctx;
+	uint32_t prevent_suspend_cnt;
+	char *str_buf;
+	bool is_suspend_allowed;
+	int len = 0;
 
 	if (!scn->hif_config.enable_runtime_pm)
-		return 0;
+		return false;
+
+	str_buf = qdf_mem_malloc(PREVENT_LIST_STRING_LEN);
+	if (!str_buf)
+		return false;
 
 	spin_lock_bh(&rpm_ctx->runtime_lock);
-	ret = (rpm_ctx->prevent_suspend_cnt == 0);
+	prevent_suspend_cnt = rpm_ctx->prevent_suspend_cnt;
+	is_suspend_allowed = (prevent_suspend_cnt == 0);
+	if (!is_suspend_allowed) {
+		list_for_each_entry(ctx, &rpm_ctx->prevent_suspend_list, list)
+			len += qdf_scnprintf(str_buf + len,
+				PREVENT_LIST_STRING_LEN - len,
+				"%s ", ctx->name);
+	}
 	spin_unlock_bh(&rpm_ctx->runtime_lock);
 
-	return ret;
+	if (!is_suspend_allowed)
+		hif_info("prevent_suspend_cnt %u, prevent_list: %s",
+			 rpm_ctx->prevent_suspend_cnt, str_buf);
+
+	qdf_mem_free(str_buf);
+
+	return is_suspend_allowed;
 }
 
 /**
@@ -788,7 +801,6 @@ int hif_pre_runtime_suspend(struct hif_opaque_softc *hif_ctx)
 	/* keep this after set suspending */
 	if (!hif_pm_runtime_is_suspend_allowed(scn)) {
 		hif_info("Runtime PM not allowed now");
-		hif_pm_runtime_print_prevent_list(scn);
 		return -EINVAL;
 	}
 

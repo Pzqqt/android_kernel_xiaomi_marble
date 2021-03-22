@@ -235,6 +235,9 @@ struct cm_req_history {
  * @vdev: vdev back pointer
  * @sm: state machine
  * @active_cm_id: cm_id of the active command, if any active command present
+ * @preauth_in_progress: is roaming in preauth state, set during preauth state,
+ * this is used to get which command to flush from serialization during
+ * host roaming.
  * @req_list: connect/disconnect req list
  * @cm_req_lock: lock to manupulate/read the cm req list
  * @disconnect_count: disconnect count
@@ -255,6 +258,7 @@ struct cnx_mgr {
 	struct wlan_objmgr_vdev *vdev;
 	struct cm_state_sm sm;
 	wlan_cm_id active_cm_id;
+	bool preauth_in_progress;
 	qdf_list_t req_list;
 #ifdef WLAN_CM_USE_SPINLOCK
 	qdf_spinlock_t cm_req_lock;

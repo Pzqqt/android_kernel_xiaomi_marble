@@ -125,8 +125,9 @@ int target_if_cfr_start_capture(struct wlan_objmgr_pdev *pdev,
 	return retv;
 }
 
-int target_if_cfr_pdev_set_param(struct wlan_objmgr_pdev *pdev,
-				 uint32_t param_id, uint32_t param_value)
+#ifdef ENABLE_HOST_TO_TARGET_CONVERSION
+int target_if_cfr_periodic_peer_cfr_enable(struct wlan_objmgr_pdev *pdev,
+					   uint32_t param_value)
 {
 	struct pdev_params pparam;
 	uint32_t pdev_id;
@@ -142,12 +143,37 @@ int target_if_cfr_pdev_set_param(struct wlan_objmgr_pdev *pdev,
 		return -EINVAL;
 	}
 	qdf_mem_set(&pparam, sizeof(pparam), 0);
-	pparam.param_id = param_id;
+	pparam.param_id = wmi_pdev_param_per_peer_prd_cfr_enable;
 	pparam.param_value = param_value;
 
 	return wmi_unified_pdev_param_send(pdev_wmi_handle,
 					   &pparam, pdev_id);
 }
+#else
+int target_if_cfr_periodic_peer_cfr_enable(struct wlan_objmgr_pdev *pdev,
+					   uint32_t param_value)
+{
+	struct pdev_params pparam;
+	uint32_t pdev_id;
+	struct wmi_unified *pdev_wmi_handle = NULL;
+
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	if (pdev_id < 0)
+		return -EINVAL;
+
+	pdev_wmi_handle = lmac_get_pdev_wmi_handle(pdev);
+	if (!pdev_wmi_handle) {
+		cfr_err("pdev wmi handle NULL");
+		return -EINVAL;
+	}
+	qdf_mem_set(&pparam, sizeof(pparam), 0);
+	pparam.param_id = WMI_PDEV_PARAM_PER_PEER_PERIODIC_CFR_ENABLE;
+	pparam.param_value = param_value;
+
+	return wmi_unified_pdev_param_send(pdev_wmi_handle,
+					   &pparam, pdev_id);
+}
+#endif
 
 int target_if_cfr_enable_cfr_timer(struct wlan_objmgr_pdev *pdev,
 				   uint32_t cfr_timer)
@@ -162,18 +188,16 @@ int target_if_cfr_enable_cfr_timer(struct wlan_objmgr_pdev *pdev,
 	if (!cfr_timer) {
 	     /* disable periodic cfr capture */
 		retval =
-	target_if_cfr_pdev_set_param(pdev,
-				     wmi_pdev_param_per_peer_prd_cfr_enable,
-				     WMI_HOST_PEER_CFR_TIMER_DISABLE);
+	target_if_cfr_periodic_peer_cfr_enable(pdev,
+					       WMI_HOST_PEER_CFR_TIMER_DISABLE);
 
 		if (retval == QDF_STATUS_SUCCESS)
 			pa->cfr_timer_enable = 0;
 	} else {
 	    /* enable periodic cfr capture (default base timer is 10ms ) */
 		retval =
-	target_if_cfr_pdev_set_param(pdev,
-				     wmi_pdev_param_per_peer_prd_cfr_enable,
-				     WMI_HOST_PEER_CFR_TIMER_ENABLE);
+	target_if_cfr_periodic_peer_cfr_enable(pdev,
+					       WMI_HOST_PEER_CFR_TIMER_ENABLE);
 
 		if (retval == QDF_STATUS_SUCCESS)
 			pa->cfr_timer_enable = 1;

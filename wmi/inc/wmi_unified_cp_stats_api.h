@@ -76,6 +76,20 @@ QDF_STATUS wmi_unified_stats_request_send(wmi_unified_t wmi_handle,
 					  uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 					  struct stats_request_params *param);
 
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+/**
+ * wmi_unified_big_data_stats_request_send() - WMI request big data stats
+ * function
+ * @wmi_handle: handle to WMI
+ * @param: pointer to hold stats request parameter
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_unified_big_data_stats_request_send(wmi_unified_t wmi_handle,
+					struct stats_request_params *param);
+#endif
+
 /**
  * wmi_extract_stats_param() - extract all stats count from event
  * @wmi_handle: wmi handle

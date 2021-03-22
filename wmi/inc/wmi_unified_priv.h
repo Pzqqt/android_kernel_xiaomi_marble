@@ -1788,7 +1788,11 @@ QDF_STATUS (*extract_rtt_error_report_ev)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*extract_all_stats_count)(wmi_unified_t wmi_handle, void *evt_buf,
 			   wmi_host_stats_event *stats_param);
-
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+QDF_STATUS (*extract_big_data_stats)(
+			   wmi_unified_t wmi_handle, void *evt_buf,
+			   struct big_data_stats_event *stats_param);
+#endif
 QDF_STATUS (*extract_pdev_stats)(wmi_unified_t wmi_handle, void *evt_buf,
 			 uint32_t index, wmi_host_pdev_stats *pdev_stats);
 
@@ -2513,6 +2517,11 @@ QDF_STATUS (*config_peer_latency_info_cmd)(
 QDF_STATUS (*send_set_tpc_power_cmd)(wmi_unified_t wmi_handle,
 				     uint8_t vdev_id,
 				     struct reg_tpc_power_info *param);
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+QDF_STATUS (*send_big_data_stats_request_cmd)(
+				wmi_unified_t wmi_handle,
+				struct stats_request_params *param);
+#endif
 };
 
 /* Forward declartion for psoc*/

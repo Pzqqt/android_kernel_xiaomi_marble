@@ -857,6 +857,9 @@ enum wlan_status_code {
 #define PMKID_LEN 16
 #define MAX_PMK_LEN 64
 #define MAX_PMKID 4
+#define MAX_KEK_LENGTH 64
+#define MAX_KCK_LEN 32
+#define REPLAY_CTR_LEN 8
 
 #define WLAN_WPA_OUI 0xf25000
 #define WLAN_WPA_OUI_TYPE 0x01

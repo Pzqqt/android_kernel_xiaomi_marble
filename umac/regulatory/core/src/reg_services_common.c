@@ -164,6 +164,45 @@ static const struct bonded_channel_freq bonded_chan_160mhz_list_freq[] = {
 	{6915, 7055}
 #endif /*CONFIG_BAND_6GHZ*/
 };
+
+const struct bonded_channel_freq *
+reg_get_bonded_chan_entry(qdf_freq_t freq,
+			  enum phy_ch_width chwidth)
+{
+	const struct bonded_channel_freq *bonded_chan_arr;
+	uint16_t array_size, i;
+
+	switch (chwidth) {
+	case CH_WIDTH_160MHZ:
+		bonded_chan_arr = bonded_chan_160mhz_list_freq;
+		array_size = QDF_ARRAY_SIZE(bonded_chan_160mhz_list_freq);
+		break;
+	case CH_WIDTH_80MHZ:
+	case CH_WIDTH_80P80MHZ:
+		bonded_chan_arr = bonded_chan_80mhz_list_freq;
+		array_size = QDF_ARRAY_SIZE(bonded_chan_80mhz_list_freq);
+		break;
+	case CH_WIDTH_40MHZ:
+		bonded_chan_arr = bonded_chan_40mhz_list_freq;
+		array_size = QDF_ARRAY_SIZE(bonded_chan_40mhz_list_freq);
+		break;
+	default:
+		reg_debug("Could not find bonded_chan_array for chwidth %d",
+			  chwidth);
+		return NULL;
+	}
+
+	for (i = 0; i < array_size; i++) {
+		if ((freq >= bonded_chan_arr[i].start_freq) &&
+		    (freq <= bonded_chan_arr[i].end_freq)) {
+			return &bonded_chan_arr[i];
+		}
+	}
+
+	reg_debug("Could not find a bonded pair for freq %d and width %d",
+		  freq, chwidth);
+	return NULL;
+}
 #endif /*CONFIG_CHAN_FREQ_API*/
 
 static const enum phy_ch_width get_next_lower_bw[] = {
@@ -2363,15 +2402,6 @@ void reg_update_nol_history_ch(struct wlan_objmgr_pdev *pdev,
 	}
 }
 
-bool reg_is_24ghz_ch(uint32_t chan)
-{
-	return REG_IS_24GHZ_CH(chan);
-}
-
-bool reg_is_5ghz_ch(uint32_t chan)
-{
-	return REG_IS_5GHZ_CH(chan);
-}
 #endif /* CONFIG_CHAN_NUM_API */
 
 bool reg_is_24ghz_ch_freq(uint32_t freq)
@@ -3228,39 +3258,20 @@ static uint32_t reg_get_channel_flags_for_freq(struct wlan_objmgr_pdev *pdev,
  * 5G or 6G channel frequency based on the bonded channel.
  * @pdev: Pointer to pdev.
  * @freq: Channel center frequency.
- * @bonded_chan_ar: Array of bonded channel frequencies.
- * @array_size: Array size.
- * @bonded_chan_ptr_ptr: Pointer to bonded_channel_freq.
+ * @bonded_chan_ptr: Pointer to bonded_channel_freq.
  *
  * Return: Channel State
  */
 static enum channel_state
 reg_get_5g_bonded_chan_array_for_freq(struct wlan_objmgr_pdev *pdev,
 				      uint16_t freq,
-				      const struct bonded_channel_freq
-				      bonded_chan_ar[],
-				      uint16_t array_size,
-				      const struct bonded_channel_freq
-				      **bonded_chan_ptr_ptr)
+				      const struct bonded_channel_freq *
+				      bonded_chan_ptr)
 {
-	int i;
 	uint16_t chan_cfreq;
-	const struct bonded_channel_freq *bonded_chan_ptr = NULL;
 	enum channel_state chan_state = CHANNEL_STATE_INVALID;
 	enum channel_state temp_chan_state;
 
-	for (i = 0; i < array_size; i++) {
-		if ((freq >= bonded_chan_ar[i].start_freq) &&
-		    (freq <= bonded_chan_ar[i].end_freq)) {
-			bonded_chan_ptr = &bonded_chan_ar[i];
-			break;
-		}
-	}
-
-	if (!bonded_chan_ptr)
-		return chan_state;
-
-	*bonded_chan_ptr_ptr = bonded_chan_ptr;
 	chan_cfreq =  bonded_chan_ptr->start_freq;
 	while (chan_cfreq <= bonded_chan_ptr->end_freq) {
 		temp_chan_state = reg_get_channel_state_for_freq(pdev,
@@ -3291,28 +3302,17 @@ reg_get_5g_bonded_channel_for_freq(struct wlan_objmgr_pdev *pdev,
 				   **bonded_chan_ptr_ptr)
 
 {
-	if (ch_width == CH_WIDTH_80P80MHZ)
-		return reg_get_5g_bonded_chan_array_for_freq(pdev, freq,
-				bonded_chan_80mhz_list_freq,
-				QDF_ARRAY_SIZE(bonded_chan_80mhz_list_freq),
-				bonded_chan_ptr_ptr);
-	else if (ch_width == CH_WIDTH_160MHZ)
-		return reg_get_5g_bonded_chan_array_for_freq(pdev, freq,
-				bonded_chan_160mhz_list_freq,
-				QDF_ARRAY_SIZE(bonded_chan_160mhz_list_freq),
-				bonded_chan_ptr_ptr);
-	else if (ch_width == CH_WIDTH_80MHZ)
-		return reg_get_5g_bonded_chan_array_for_freq(pdev, freq,
-				bonded_chan_80mhz_list_freq,
-				QDF_ARRAY_SIZE(bonded_chan_80mhz_list_freq),
-				bonded_chan_ptr_ptr);
-	else if (ch_width == CH_WIDTH_40MHZ)
-		return reg_get_5g_bonded_chan_array_for_freq(pdev, freq,
-				bonded_chan_40mhz_list_freq,
-				QDF_ARRAY_SIZE(bonded_chan_40mhz_list_freq),
-				bonded_chan_ptr_ptr);
-	else
+	if (ch_width == CH_WIDTH_20MHZ)
 		return reg_get_channel_state_for_freq(pdev, freq);
+
+	/* Fetch the bonded_chan_ptr for width greater than 20MHZ. */
+	*bonded_chan_ptr_ptr = reg_get_bonded_chan_entry(freq, ch_width);
+
+	if (!(*bonded_chan_ptr_ptr))
+		return CHANNEL_STATE_INVALID;
+
+	return reg_get_5g_bonded_chan_array_for_freq(pdev, freq,
+						     *bonded_chan_ptr_ptr);
 }
 
 enum channel_state
@@ -3547,10 +3547,9 @@ static void reg_set_5g_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
 						 ch_params->mhz_freq_seg0);
 			break;
 		} else if (ch_params->ch_width >= CH_WIDTH_40MHZ) {
-			reg_get_5g_bonded_chan_array_for_freq(
-			pdev, freq, bonded_chan_40mhz_list_freq,
-			QDF_ARRAY_SIZE(bonded_chan_40mhz_list_freq),
-			&bonded_chan_ptr2);
+			bonded_chan_ptr2 =
+				reg_get_bonded_chan_entry(freq, CH_WIDTH_40MHZ);
+
 			if (!bonded_chan_ptr || !bonded_chan_ptr2)
 				goto update_bw;
 			if (freq == bonded_chan_ptr2->start_freq)

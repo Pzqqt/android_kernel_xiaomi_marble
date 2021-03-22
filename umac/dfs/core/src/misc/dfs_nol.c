@@ -469,6 +469,84 @@ void dfs_get_nol(struct wlan_dfs *dfs,
 	}
 }
 
+#ifdef CONFIG_CHAN_FREQ_API
+void dfs_set_nol(struct wlan_dfs *dfs,
+		 struct dfsreq_nolelem *dfs_nol,
+		 int nchan)
+{
+#define TIME_IN_MS 1000
+	uint32_t nol_time_lft_ms;
+	struct dfs_channel chan;
+	int i;
+
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
+		return;
+	}
+
+	for (i = 0; i < nchan; i++) {
+		nol_time_lft_ms = qdf_do_div(qdf_get_monotonic_boottime() -
+					     dfs_nol[i].nol_start_us, 1000);
+
+		if (nol_time_lft_ms < dfs_nol[i].nol_timeout_ms) {
+			chan.dfs_ch_freq = dfs_nol[i].nol_freq;
+			chan.dfs_ch_flags = 0;
+			chan.dfs_ch_flagext = 0;
+			nol_time_lft_ms =
+				(dfs_nol[i].nol_timeout_ms - nol_time_lft_ms);
+
+			DFS_NOL_ADD_CHAN_LOCKED(dfs, chan.dfs_ch_freq,
+						(nol_time_lft_ms / TIME_IN_MS));
+			utils_dfs_reg_update_nol_chan_for_freq(
+						dfs->dfs_pdev_obj,
+						&chan.dfs_ch_freq,
+						1, DFS_NOL_SET);
+		}
+	}
+#undef TIME_IN_MS
+	dfs_nol_update(dfs);
+}
+#else
+#ifdef CONFIG_CHAN_NUM_API
+void dfs_set_nol(struct wlan_dfs *dfs,
+		 struct dfsreq_nolelem *dfs_nol,
+		 int nchan)
+{
+#define TIME_IN_MS 1000
+	uint32_t nol_time_lft_ms;
+	struct dfs_channel chan;
+	int i;
+	uint8_t chan_num;
+
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
+		return;
+	}
+
+	for (i = 0; i < nchan; i++) {
+		nol_time_lft_ms = qdf_do_div(qdf_get_monotonic_boottime() -
+					      dfs_nol[i].nol_start_us, 1000);
+
+		if (nol_time_lft_ms < dfs_nol[i].nol_timeout_ms) {
+			chan.dfs_ch_freq = dfs_nol[i].nol_freq;
+			chan.dfs_ch_flags = 0;
+			chan.dfs_ch_flagext = 0;
+			nol_time_lft_ms =
+				(dfs_nol[i].nol_timeout_ms - nol_time_lft_ms);
+
+			DFS_NOL_ADD_CHAN_LOCKED(dfs, chan.dfs_ch_freq,
+						(nol_time_lft_ms / TIME_IN_MS));
+			chan_num = utils_dfs_freq_to_chan(chan.dfs_ch_freq);
+			utils_dfs_reg_update_nol_ch(dfs->dfs_pdev_obj,
+						    &chan_num, 1, DFS_NOL_SET);
+		}
+	}
+#undef TIME_IN_MS
+	dfs_nol_update(dfs);
+}
+#endif
+#endif
+
 void dfs_nol_addchan(struct wlan_dfs *dfs,
 		uint16_t freq,
 		uint32_t dfs_nol_timeout)

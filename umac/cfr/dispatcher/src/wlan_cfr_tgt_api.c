@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -102,6 +102,39 @@ int tgt_cfr_get_target_type(struct wlan_objmgr_psoc *psoc)
 		target_type = target_type_tx_ops->tgt_get_tgt_type(psoc);
 
 	return target_type;
+}
+
+int tgt_cfr_validate_period(struct wlan_objmgr_psoc *psoc, u_int32_t period)
+{
+	uint32_t target_type = tgt_cfr_get_target_type(psoc);
+	int status = 0;
+
+	if (target_type == TARGET_TYPE_UNKNOWN) {
+		cfr_err("cfr period validation fail due to invalid target type");
+		return status;
+	}
+
+	/* Basic check is the period should be between 0 and MAX_CFR_PRD */
+	if ((period < 0) || (period > MAX_CFR_PRD)) {
+		cfr_err("Invalid period value: %d\n", period);
+		return status;
+	}
+
+	if (target_type == TARGET_TYPE_QCN9000 ||
+	    target_type == TARGET_TYPE_QCA6018 ||
+	    target_type == TARGET_TYPE_QCA8074V2 ||
+	    target_type == TARGET_TYPE_QCA5018) {
+		/* No additional check required for these targets */
+		status = 1;
+	} else {
+		if (!(period % CFR_MOD_PRD)) {
+			status = 1;
+		} else {
+			cfr_err("Invalid period value. Value must be mod of %d",
+				CFR_MOD_PRD);
+		}
+	}
+	return status;
 }
 
 QDF_STATUS tgt_cfr_init_pdev(struct wlan_objmgr_pdev *pdev)

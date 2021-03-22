@@ -513,21 +513,6 @@ void reg_update_nol_history_ch(struct wlan_objmgr_pdev *pdev,
 			       uint8_t num_chan,
 			       bool nol_history_chan);
 
-/**
- * reg_is_24ghz_ch() - Check if the given channel number is 2.4GHz
- * @chan: Channel number
- *
- * Return: true if channel number is 2.4GHz, else false
- */
-bool reg_is_24ghz_ch(uint32_t chan);
-
-/**
- * reg_is_5ghz_ch() - Check if the given channel number is 5GHz
- * @chan: Channel number
- *
- * Return: true if channel number is 5GHz, else false
- */
-bool reg_is_5ghz_ch(uint32_t chan);
 #endif /* CONFIG_CHAN_NUM_API */
 
 /**
@@ -1618,4 +1603,15 @@ QDF_STATUS reg_set_ext_tpc_supported(struct wlan_objmgr_psoc *psoc,
  * Return: true if FW supports the new TPC command, else false
  */
 bool reg_is_ext_tpc_supported(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * reg_get_bonded_chan_entry() - Fetch the bonded channel pointer given a
+ * frequency and channel width.
+ * @freq: Input frequency.
+ * @chwidth: Input channel width.
+ *
+ * Return: A valid bonded channel pointer if found, else NULL.
+ */
+const struct bonded_channel_freq *
+reg_get_bonded_chan_entry(qdf_freq_t freq, enum phy_ch_width chwidth);
 #endif

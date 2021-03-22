@@ -303,6 +303,10 @@ struct wmi_twt_add_dialog_param {
  * WMI_HOST_ADD_TWT_STATUS_DENIED: AP did not accept the request
  * WMI_HOST_ADD_TWT_STATUS_UNKNOWN_ERROR: adding TWT dialog failed with
  *                                 an unknown reason
+ * WMI_HOST_ADD_TWT_STATUS_AP_PARAMS_NOT_IN_RANGE: peer AP wake interval,
+ *                                 duration not in range
+ * WMI_HOST_ADD_TWT_STATUS_AP_IE_VALIDATION_FAILED:
+ *                                 peer AP IE Validation Failed
  */
 enum WMI_HOST_ADD_TWT_STATUS {
 	WMI_HOST_ADD_TWT_STATUS_OK,
@@ -315,6 +319,8 @@ enum WMI_HOST_ADD_TWT_STATUS {
 	WMI_HOST_ADD_TWT_STATUS_NO_RESPONSE,
 	WMI_HOST_ADD_TWT_STATUS_DENIED,
 	WMI_HOST_ADD_TWT_STATUS_UNKNOWN_ERROR,
+	WMI_HOST_ADD_TWT_STATUS_AP_PARAMS_NOT_IN_RANGE,
+	WMI_HOST_ADD_TWT_STATUS_AP_IE_VALIDATION_FAILED
 };
 
 /**

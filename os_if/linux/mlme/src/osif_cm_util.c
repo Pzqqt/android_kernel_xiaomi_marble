@@ -199,20 +199,6 @@ osif_cm_connect_complete_cb(struct wlan_objmgr_vdev *vdev,
 }
 
 /**
- * osif_cm_reassoc_complete_cb() - Reassoc complete callback
- * @vdev: vdev pointer
- * @rsp: Reassoc response
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS
-osif_cm_reassoc_complete_cb(struct wlan_objmgr_vdev *vdev,
-			    struct wlan_cm_roam_resp *rsp)
-{
-	return osif_reassoc_handler(vdev, rsp);
-}
-
-/**
  * osif_cm_failed_candidate_cb() - Callback to indicate failed candidate
  * @vdev: vdev pointer
  * @rsp: connect response
@@ -310,6 +296,7 @@ osif_cm_disable_netif_queue(struct wlan_objmgr_vdev *vdev)
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
 /**
  * osif_cm_disconnect_start_cb() - Disconnect start callback
  * @vdev: vdev pointer
@@ -326,13 +313,53 @@ osif_cm_disconnect_start_cb(struct wlan_objmgr_vdev *vdev)
 	return osif_cm_disable_netif_queue(vdev);
 }
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * osif_cm_roam_start_cb() - Roam start callback
+ * @vdev: vdev pointer
+ *
+ * This callback indicates os_if that roaming has started
+ * so that os_if can stop all the activity on this connection
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+osif_cm_roam_start_cb(struct wlan_objmgr_vdev *vdev)
+{
+	return osif_cm_netif_queue_ind(vdev,
+				       WLAN_STOP_ALL_NETIF_QUEUE,
+				       WLAN_CONTROL_PATH);
+}
+
+/**
+ * osif_cm_roam_abort_cb() - Roam abort callback
+ * @vdev: vdev pointer
+ *
+ * This callback indicates os_if that roaming has been aborted
+ * so that os_if can stop all the activity on this connection
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+osif_cm_roam_abort_cb(struct wlan_objmgr_vdev *vdev)
+{
+	osif_cm_napi_serialize(false);
+	return osif_cm_netif_queue_ind(vdev,
+				       WLAN_WAKE_ALL_NETIF_QUEUE,
+				       WLAN_CONTROL_PATH);
+}
+#endif
+
 static struct mlme_cm_ops cm_ops = {
 	.mlme_cm_connect_complete_cb = osif_cm_connect_complete_cb,
 	.mlme_cm_failed_candidate_cb = osif_cm_failed_candidate_cb,
 	.mlme_cm_update_id_and_src_cb = osif_cm_update_id_and_src_cb,
 	.mlme_cm_disconnect_complete_cb = osif_cm_disconnect_complete_cb,
 	.mlme_cm_disconnect_start_cb = osif_cm_disconnect_start_cb,
-	.mlme_cm_reassoc_complete_cb = osif_cm_reassoc_complete_cb,
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+	.mlme_cm_roam_start_cb = osif_cm_roam_start_cb,
+	.mlme_cm_roam_abort_cb = osif_cm_roam_abort_cb,
+#endif
 };
 
 /**
@@ -402,21 +429,6 @@ QDF_STATUS osif_cm_connect_comp_ind(struct wlan_objmgr_vdev *vdev,
 	return ret;
 }
 
-QDF_STATUS osif_cm_reassoc_comp_ind(struct wlan_objmgr_vdev *vdev,
-				    struct wlan_cm_roam_resp *rsp,
-				    enum osif_cb_type type)
-{
-	osif_cm_reassoc_comp_cb cb = NULL;
-	QDF_STATUS ret = QDF_STATUS_SUCCESS;
-
-	if (osif_cm_legacy_ops)
-		cb = osif_cm_legacy_ops->reassoc_complete_cb;
-	if (cb)
-		ret = cb(vdev, rsp, type);
-
-	return ret;
-}
-
 QDF_STATUS osif_cm_disconnect_comp_ind(struct wlan_objmgr_vdev *vdev,
 				       struct wlan_cm_discon_rsp *rsp,
 				       enum osif_cb_type type)
@@ -447,8 +459,20 @@ QDF_STATUS osif_cm_netif_queue_ind(struct wlan_objmgr_vdev *vdev,
 
 	return ret;
 }
-#endif
 
+QDF_STATUS osif_cm_napi_serialize(bool action)
+{
+	os_if_cm_napi_serialize_ctrl_cb cb = NULL;
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if (osif_cm_legacy_ops)
+		cb = osif_cm_legacy_ops->napi_serialize_control_cb;
+	if (cb)
+		ret = cb(action);
+
+	return ret;
+}
+#endif
 #ifdef WLAN_FEATURE_FILS_SK
 QDF_STATUS osif_cm_save_gtk(struct wlan_objmgr_vdev *vdev,
 			    struct wlan_cm_connect_resp *rsp)

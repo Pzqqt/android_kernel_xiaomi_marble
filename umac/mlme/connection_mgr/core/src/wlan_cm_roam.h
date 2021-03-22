@@ -23,6 +23,8 @@
 #ifndef __WLAN_CM_ROAM_H__
 #define __WLAN_CM_ROAM_H__
 
+#include "wlan_cm_main.h"
+
 #ifdef WLAN_FEATURE_HOST_ROAM
 /**
  * cm_roam_bss_peer_create_rsp() - handle bss peer create response for roam
@@ -39,12 +41,12 @@ QDF_STATUS cm_roam_bss_peer_create_rsp(struct wlan_objmgr_vdev *vdev,
 /**
  * cm_reassoc_rsp() - Connection manager reassoc response
  * @vdev: vdev pointer
- * @resp: Reassoc response
+ * @resp: Connect response
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS cm_reassoc_rsp(struct wlan_objmgr_vdev *vdev,
-			  struct wlan_cm_roam_resp *resp);
+			  struct wlan_cm_connect_resp *resp);
 
 /**
  * cm_roam_disconnect_rsp() - Connection manager api to post connect event
@@ -62,14 +64,14 @@ QDF_STATUS cm_roam_disconnect_rsp(struct wlan_objmgr_vdev *vdev,
  * cm_reassoc_complete() - This API would be called after reassoc complete
  * request from the serialization.
  * @cm_ctx: connection manager context
- * @resp: Roam complete resp.
+ * @resp: connect resp.
  *
  * This API would be called after roam completion resp from VDEV mgr
  *
  * Return: QDF status
  */
 QDF_STATUS cm_reassoc_complete(struct cnx_mgr *cm_ctx,
-			       struct wlan_cm_roam_resp *resp);
+			       struct wlan_cm_connect_resp *resp);
 
 /**
  * cm_get_active_reassoc_req() - Get copy of active reassoc request
@@ -83,7 +85,6 @@ QDF_STATUS cm_reassoc_complete(struct cnx_mgr *cm_ctx,
  */
 bool cm_get_active_reassoc_req(struct wlan_objmgr_vdev *vdev,
 			       struct wlan_cm_vdev_reassoc_req *req);
-
 /**
  * cm_host_roam_start_req() - Start host roam request
  * @cm_ctx: Connection manager context
@@ -143,12 +144,12 @@ cm_resume_reassoc_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id);
  * cm_roam_resp_cmid_match_list_head() - Check if resp cmid is same as list
  * head
  * @cm_ctx: connection manager context
- * @resp: roam resp
+ * @resp: connect resp
  *
  * Return: bool
  */
 bool cm_roam_resp_cmid_match_list_head(struct cnx_mgr *cm_ctx,
-				       struct wlan_cm_roam_resp *resp);
+				       struct wlan_cm_connect_resp *resp);
 
 /**
  * cm_send_reassoc_start_fail() - initiate reassoc failure
@@ -167,7 +168,7 @@ cm_send_reassoc_start_fail(struct cnx_mgr *cm_ctx,
 
 #else
 static inline QDF_STATUS cm_reassoc_complete(struct cnx_mgr *cm_ctx,
-					     struct wlan_cm_roam_resp *resp)
+					     struct wlan_cm_connect_resp *resp)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -234,9 +235,19 @@ QDF_STATUS cm_add_roam_req_to_list(struct cnx_mgr *cm_ctx,
 QDF_STATUS
 cm_fill_bss_info_in_roam_rsp_by_cm_id(struct cnx_mgr *cm_ctx,
 				      wlan_cm_id cm_id,
-				      struct wlan_cm_roam_resp *resp);
+				      struct wlan_cm_connect_resp *resp);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * cm_fw_roam_start() - Handle roam start event
+ * @cm_ctx: connection mgr context
+ *
+ * This function handles the roam start event received from FW.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_fw_roam_start(struct cnx_mgr *cm_ctx);
+
 /**
  * cm_send_roam_invoke_req() - Send Roam invoke req to FW
  * @cm_ctx: connection manager context
@@ -246,6 +257,7 @@ cm_fill_bss_info_in_roam_rsp_by_cm_id(struct cnx_mgr *cm_ctx,
  */
 QDF_STATUS
 cm_send_roam_invoke_req(struct cnx_mgr *cm_ctx, struct cm_req *req);
+
 /**
  * cm_roam_offload_enabled() - check if roam offload(LFR3) is enabled
  * @psoc: psoc pointer to get the INI
@@ -254,6 +266,43 @@ cm_send_roam_invoke_req(struct cnx_mgr *cm_ctx, struct cm_req *req);
  */
 bool cm_roam_offload_enabled(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * cm_get_first_roam_command() - Get first roam request from list
+ * @vdev: vdev pointer
+ *
+ * Context: Can be called from any context and to be used only after posting a
+ * msg to SM (ie holding the SM lock) to avoid use after free. also returned req
+ * should only be used till SM lock is hold.
+ *
+ * Return: cm roam req from the req list
+ */
+struct cm_roam_req *cm_get_first_roam_command(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * cm_prepare_roam_cmd() - Prepare roam req
+ * @cm_ctx: connection mgr context
+ * @cm_req: connection mgr req
+ * @source: connection mgr req source
+ *
+ * This function prepares roam request when roam start ind is received
+ * when CM SM is in connected state.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_prepare_roam_cmd(struct cnx_mgr *cm_ctx,
+			       struct cm_req **roam_req,
+			       enum wlan_cm_source source);
+/**
+ * cm_add_fw_roam_cmd_to_list_n_ser() - Add roam req to list and serialize req
+ * @cm_ctx: connection mgr context
+ * @cm_req: connection mgr req
+ *
+ * This function adds roam request to list and the serialization queue.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_add_fw_roam_cmd_to_list_n_ser(struct cnx_mgr *cm_ctx,
+					    struct cm_req *cm_req);
 #else
 static inline bool cm_roam_offload_enabled(struct wlan_objmgr_psoc *psoc)
 {

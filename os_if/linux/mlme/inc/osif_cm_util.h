@@ -184,22 +184,6 @@ typedef QDF_STATUS (*osif_cm_set_hlp_data_cb)(struct net_device *dev,
 #endif
 
 /**
- * typedef osif_cm_reassoc_comp_cb  - Reassoc complete callback
- * @vdev: vdev pointer
- * @rsp: Reassoc response
- * @type: indicates update type
- *
- * This callback indicates reassoc complete to the legacy module
- *
- * Context: Any context.
- * Return: QDF_STATUS
- */
-typedef QDF_STATUS
-	(*osif_cm_reassoc_comp_cb)(struct wlan_objmgr_vdev *vdev,
-				   struct wlan_cm_roam_resp *rsp,
-				   enum osif_cb_type type);
-
-/**
  * typedef  osif_cm_disconnect_comp_cb: Disonnect complete callback
  * @vdev: vdev pointer
  * @rsp: disconnect response
@@ -234,6 +218,20 @@ typedef QDF_STATUS
 				       enum netif_reason_type reason);
 
 /**
+ * typedef os_if_cm_napi_serialize_ctrl_cb: Callback to update
+ * NAPI serialization
+ * @action: bool action to take on napi serialization
+ *
+ * This callback indicates legacy modules to take the actions
+ * related to napi serialization
+ *
+ * Context: Any context.
+ * Return: QDF_STATUS
+ */
+typedef QDF_STATUS
+	(*os_if_cm_napi_serialize_ctrl_cb)(bool action);
+
+/**
  * osif_cm_unlink_bss() - function to unlink bss from kernel and scan database
  * on connect timeouts reasons
  * @vdev: vdev pointer
@@ -261,21 +259,23 @@ void osif_cm_unlink_bss(struct wlan_objmgr_vdev *vdev,
 
 /**
  * osif_cm_ops: connection manager legacy callbacks
- * osif_cm_connect_comp_cb: callback for connect complete to legacy
+ * @osif_cm_connect_comp_cb: callback for connect complete to legacy
  * modules
- *  osif_cm_disconnect_comp_cb: callback for disconnect complete to
+ * @osif_cm_disconnect_comp_cb: callback for disconnect complete to
  * legacy modules
- * osif_cm_reassoc_comp_cb: callback for reassoc complete to legacy
- * modules
- * osif_cm_netif_queue_ctrl_cb: callback to legacy module to take
+ * @osif_cm_netif_queue_ctrl_cb: callback to legacy module to take
  * actions on netif queue
+ * @os_if_cm_napi_serialize_ctrl_cb: callback to legacy module to take
+ * actions on napi serialization
+ * @save_gtk_cb : callback to legacy module to save gtk
+ * @set_hlp_data_cb: callback to legacy module to save hlp data
  */
 struct osif_cm_ops {
 	osif_cm_connect_comp_cb connect_complete_cb;
 	osif_cm_disconnect_comp_cb disconnect_complete_cb;
-	osif_cm_reassoc_comp_cb reassoc_complete_cb;
 #ifdef CONN_MGR_ADV_FEATURE
 	osif_cm_netif_queue_ctrl_cb netif_queue_control_cb;
+	os_if_cm_napi_serialize_ctrl_cb napi_serialize_control_cb;
 #endif
 #ifdef WLAN_FEATURE_FILS_SK
 	osif_cm_save_gtk_cb save_gtk_cb;
@@ -297,22 +297,6 @@ struct osif_cm_ops {
  */
 QDF_STATUS osif_cm_connect_comp_ind(struct wlan_objmgr_vdev *vdev,
 				    struct wlan_cm_connect_resp *rsp,
-				    enum osif_cb_type type);
-
-/**
- * osif_cm_reassoc_comp_ind() - Function to indicate reassoc
- * complete to legacy module
- * @vdev: vdev pointer
- * @rsp: Roam response
- * @type: indicates update type
- *
- * This function indicates connect complete to the legacy module
- *
- * Context: Any context.
- * Return: QDF_STATUS
- */
-QDF_STATUS osif_cm_reassoc_comp_ind(struct wlan_objmgr_vdev *vdev,
-				    struct wlan_cm_roam_resp *rsp,
 				    enum osif_cb_type type);
 
 /**
@@ -347,6 +331,18 @@ QDF_STATUS osif_cm_disconnect_comp_ind(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS osif_cm_netif_queue_ind(struct wlan_objmgr_vdev *vdev,
 				   enum netif_action_type action,
 				   enum netif_reason_type reason);
+
+/**
+ * osif_cm_napi_serialize() - Function to indicate napi serialize
+ * action to legacy module
+ * @action: Action to take on napi serialization
+ *
+ * This function indicates to take the actions related to napi activities
+ *
+ * Context: Any context.
+ * Return: QDF_STATUS
+ */
+QDF_STATUS osif_cm_napi_serialize(bool action);
 #endif
 
 #ifdef WLAN_FEATURE_FILS_SK

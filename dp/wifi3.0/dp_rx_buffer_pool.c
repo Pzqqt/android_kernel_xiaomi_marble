@@ -195,15 +195,13 @@ static inline qdf_nbuf_t dp_rx_refill_buff_pool_dequeue_nbuf(struct dp_soc *soc)
 	qdf_nbuf_t nbuf = NULL;
 	struct rx_refill_buff_pool *buff_pool = &soc->rx_refill_buff_pool;
 
-	if (!buff_pool->is_initialized || !buff_pool->bufq_len)
+	if (!buff_pool->in_rx_refill_lock || !buff_pool->bufq_len)
 		return nbuf;
 
-	qdf_spin_lock_bh(&buff_pool->bufq_lock);
 	nbuf = buff_pool->buf_head;
 	buff_pool->buf_head = qdf_nbuf_next(buff_pool->buf_head);
 	qdf_nbuf_set_next(nbuf, NULL);
 	buff_pool->bufq_len--;
-	qdf_spin_unlock_bh(&buff_pool->bufq_lock);
 
 	return nbuf;
 }
@@ -219,7 +217,7 @@ dp_rx_buffer_pool_nbuf_alloc(struct dp_soc *soc, uint32_t mac_id,
 	qdf_nbuf_t nbuf;
 
 	nbuf = dp_rx_refill_buff_pool_dequeue_nbuf(soc);
-	if (nbuf) {
+	if (qdf_likely(nbuf)) {
 		DP_STATS_INC(dp_pdev,
 			     rx_refill_buff_pool.num_bufs_allocated, 1);
 		return nbuf;

@@ -20,6 +20,7 @@
 
 #include "wlan_cm_main_api.h"
 #include "wlan_scan_api.h"
+#include "wlan_cm_roam.h"
 #include "wlan_cm_sm.h"
 #ifdef WLAN_POLICY_MGR_ENABLE
 #include "wlan_policy_mgr_api.h"
@@ -994,6 +995,11 @@ cm_handle_connect_req_in_non_init_state(struct cnx_mgr *cm_ctx,
 {
 	switch (cm_state_substate) {
 	case WLAN_CM_S_ROAMING:
+		/* for FW roam/LFR3 remove the req from the list */
+		if (cm_roam_offload_enabled(wlan_vdev_get_psoc(cm_ctx->vdev)))
+			cm_flush_pending_request(cm_ctx, ROAM_REQ_PREFIX,
+						 false);
+		/* fallthrough */
 	case WLAN_CM_S_CONNECTED:
 	case WLAN_CM_SS_JOIN_ACTIVE:
 		/*
@@ -1440,7 +1446,7 @@ cm_resume_connect_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	QDF_STATUS status;
 	struct security_info *neg_sec_info;
 	uint16_t rsn_caps;
-	uint8_t country_code[REG_ALPHA2_LEN + 1];
+	uint8_t country_code[REG_ALPHA2_LEN + 1] = {0};
 	struct wlan_objmgr_psoc *psoc;
 
 	psoc = wlan_pdev_get_psoc(wlan_vdev_get_pdev(cm_ctx->vdev));
@@ -1562,6 +1568,7 @@ QDF_STATUS cm_connect_complete(struct cnx_mgr *cm_ctx,
 	enum wlan_cm_sm_state sm_state;
 	struct bss_info bss_info;
 	struct mlme_info mlme_info;
+	bool send_ind = true;
 
 	/*
 	 * If the entry is not present in the list, it must have been cleared
@@ -1579,10 +1586,17 @@ QDF_STATUS cm_connect_complete(struct cnx_mgr *cm_ctx,
 		cm_set_fils_wep_key(cm_ctx, resp);
 	}
 
-	mlme_cm_connect_complete_ind(cm_ctx->vdev, resp);
-	mlme_cm_osif_connect_complete(cm_ctx->vdev, resp);
-	cm_if_mgr_inform_connect_complete(cm_ctx->vdev, resp->connect_status);
-	cm_inform_blm_connect_complete(cm_ctx->vdev, resp);
+	/* In case of reassoc failure no need to inform osif/legacy/ifmanager */
+	if (resp->is_reassoc && QDF_IS_STATUS_ERROR(resp->connect_status))
+		send_ind = false;
+
+	if (send_ind) {
+		mlme_cm_connect_complete_ind(cm_ctx->vdev, resp);
+		mlme_cm_osif_connect_complete(cm_ctx->vdev, resp);
+		cm_if_mgr_inform_connect_complete(cm_ctx->vdev,
+						  resp->connect_status);
+		cm_inform_blm_connect_complete(cm_ctx->vdev, resp);
+	}
 
 	/* Update scan entry in case connect is success or fails with bssid */
 	if (!qdf_is_macaddr_zero(&resp->bssid)) {

@@ -118,7 +118,7 @@ QDF_STATUS wlan_cm_disconnect_rsp(struct wlan_objmgr_vdev *vdev,
 
 #ifdef WLAN_FEATURE_HOST_ROAM
 QDF_STATUS wlan_cm_reassoc_rsp(struct wlan_objmgr_vdev *vdev,
-			       struct wlan_cm_roam_resp *resp)
+			       struct wlan_cm_connect_resp *resp)
 {
 	return cm_reassoc_rsp(vdev, resp);
 }
@@ -306,6 +306,9 @@ void wlan_cm_sm_history_print(struct wlan_objmgr_vdev *vdev)
 void wlan_cm_req_history_print(struct wlan_objmgr_vdev *vdev)
 {
 	struct cnx_mgr *cm_ctx = cm_get_cm_ctx(vdev);
+
+	if (!cm_ctx)
+		return;
 
 	cm_req_history_print(cm_ctx);
 }

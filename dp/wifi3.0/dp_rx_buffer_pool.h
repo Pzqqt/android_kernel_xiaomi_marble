@@ -109,6 +109,34 @@ static inline void dp_rx_schedule_refill_thread(struct dp_soc *soc)
 		soc->cdp_soc.ol_ops->dp_rx_sched_refill_thread(dp_soc_to_cdp_soc_t(soc));
 }
 
+/**
+ * dp_rx_refill_buff_pool_lock() - Acquire Rx refill buff pool lock
+ * @soc: SoC handle
+ *
+ */
+static inline void dp_rx_refill_buff_pool_lock(struct dp_soc *soc)
+{
+	struct rx_refill_buff_pool *buff_pool = &soc->rx_refill_buff_pool;
+
+	if (buff_pool->is_initialized  &&
+	    qdf_spin_trylock_bh(&buff_pool->bufq_lock))
+		buff_pool->in_rx_refill_lock = true;
+}
+
+/**
+ * dp_rx_refill_buff_pool_unlock() - Release Rx refill buff pool lock
+ * @soc: SoC handle
+ *
+ */
+static inline void dp_rx_refill_buff_pool_unlock(struct dp_soc *soc)
+{
+	struct rx_refill_buff_pool *buff_pool = &soc->rx_refill_buff_pool;
+
+	if (buff_pool->in_rx_refill_lock) {
+		qdf_spin_unlock_bh(&buff_pool->bufq_lock);
+		buff_pool->in_rx_refill_lock = false;
+	}
+}
 #else
 /**
  * dp_rx_buffer_pool_init() - Initialize emergency buffer pool
@@ -206,5 +234,10 @@ dp_rx_buffer_pool_nbuf_map(struct dp_soc *soc,
 }
 
 static inline void dp_rx_schedule_refill_thread(struct dp_soc *soc) { }
+
+static inline void dp_rx_refill_buff_pool_lock(struct dp_soc *soc) { }
+
+static inline void dp_rx_refill_buff_pool_unlock(struct dp_soc *soc) { }
+
 #endif /* WLAN_FEATURE_RX_PREALLOC_BUFFER_POOL */
 #endif /* _DP_RX_BUFFER_POOL_H_ */

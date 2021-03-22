@@ -534,16 +534,6 @@ static QDF_STATUS extract_twt_add_dialog_comp_additional_parameters
 
 	ev = param_buf->fixed_param;
 
-	/*
-	 * For Alternate values from AP, Firmware sends additional params
-	 * with WMI_HOST_ADD_TWT_STATUS_DENIED
-	 */
-	if (ev->status != WMI_HOST_ADD_TWT_STATUS_OK &&
-	    ev->status != WMI_HOST_ADD_TWT_STATUS_DENIED) {
-		wmi_err("Status of add dialog complete is not success");
-		return QDF_STATUS_E_INVAL;
-	}
-
 	if (idx >= param_buf->num_twt_params) {
 		wmi_err("Invalid idx %d while num_twt_params = %d",
 			 idx, param_buf->num_twt_params);

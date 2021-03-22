@@ -1635,19 +1635,9 @@ void dfs_get_nol(struct wlan_dfs *dfs,
  * @dfs_nol: Pointer to dfsreq_nolelem structure.
  * @nchan: Number of channels.
  */
-#ifdef QCA_RADARTOOL_CMD
 void dfs_set_nol(struct wlan_dfs *dfs,
 		 struct dfsreq_nolelem *dfs_nol,
 		 int nchan);
-#else
-static inline
-void dfs_set_nol(struct wlan_dfs *dfs,
-		 struct dfsreq_nolelem *dfs_nol,
-		 int nchan)
-{
-}
-#endif
-
 
 /**
  * dfs_nol_update() - NOL update

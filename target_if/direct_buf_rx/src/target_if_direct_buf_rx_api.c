@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -240,3 +240,29 @@ void target_if_direct_buf_rx_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	target_if_direct_buf_rx_debug_register_tx_ops(tx_ops);
 }
 qdf_export_symbol(target_if_direct_buf_rx_register_tx_ops);
+
+QDF_STATUS target_if_dbr_update_pdev_for_hw_mode_change(
+		struct wlan_objmgr_pdev *pdev, int phy_idx)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct direct_buf_rx_psoc_obj *dbr_psoc_obj;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		direct_buf_rx_err("psoc is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	dbr_psoc_obj = wlan_objmgr_psoc_get_comp_private_obj(
+			psoc, WLAN_TARGET_IF_COMP_DIRECT_BUF_RX);
+	if (!dbr_psoc_obj) {
+		direct_buf_rx_err("dir buf rx psoc object is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	/* Update DBR object in pdev */
+	pdev->pdev_comp_priv_obj[WLAN_TARGET_IF_COMP_DIRECT_BUF_RX] =
+		(void *)dbr_psoc_obj->dbr_pdev_obj[phy_idx];
+
+	return QDF_STATUS_SUCCESS;
+}

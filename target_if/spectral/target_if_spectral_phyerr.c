@@ -2039,8 +2039,10 @@ target_if_consume_spectral_report_gen3(
 	}
 
 	/* Drop the sample if Spectral is not active for the current mode */
-	if (!p_sops->is_spectral_active(spectral, spectral_mode))
-		return -EINVAL;
+	if (!p_sops->is_spectral_active(spectral, spectral_mode)) {
+		spectral_info_rl("Spectral scan is not active");
+		goto fail_no_print;
+	}
 
 	ret = target_if_spectral_is_finite_scan(spectral, spectral_mode,
 						&finite_scan);

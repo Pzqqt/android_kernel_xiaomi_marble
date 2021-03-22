@@ -1144,6 +1144,7 @@ struct rx_refill_buff_pool {
 	qdf_spinlock_t bufq_lock;
 	uint32_t bufq_len;
 	uint32_t max_bufq_len;
+	bool in_rx_refill_lock;
 	bool is_initialized;
 };
 

@@ -133,6 +133,8 @@ bool cm_get_active_reassoc_req(struct wlan_objmgr_vdev *vdev,
 	uint32_t cm_id_prefix;
 
 	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx)
+		return status;
 
 	cm_req_lock_acquire(cm_ctx);
 	qdf_list_peek_front(&cm_ctx->req_list, &cur_node);
@@ -162,11 +164,10 @@ bool cm_get_active_reassoc_req(struct wlan_objmgr_vdev *vdev,
 	return status;
 }
 #endif
-
 QDF_STATUS
 cm_fill_bss_info_in_roam_rsp_by_cm_id(struct cnx_mgr *cm_ctx,
 				      wlan_cm_id cm_id,
-				      struct wlan_cm_roam_resp *resp)
+				      struct wlan_cm_connect_resp *resp)
 {
 	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
 	struct cm_req *cm_req;
@@ -202,3 +203,35 @@ cm_fill_bss_info_in_roam_rsp_by_cm_id(struct cnx_mgr *cm_ctx,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+struct cm_roam_req *cm_get_first_roam_command(struct wlan_objmgr_vdev *vdev)
+{
+	struct cnx_mgr *cm_ctx;
+	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
+	struct cm_req *cm_req = NULL;
+	uint32_t cm_id_prefix;
+
+	cm_ctx = cm_get_cm_ctx(vdev);
+
+	cm_req_lock_acquire(cm_ctx);
+	qdf_list_peek_front(&cm_ctx->req_list, &cur_node);
+	while (cur_node) {
+		qdf_list_peek_next(&cm_ctx->req_list, cur_node, &next_node);
+
+		cm_req = qdf_container_of(cur_node, struct cm_req, node);
+		cm_id_prefix = CM_ID_GET_PREFIX((cm_req->cm_id));
+
+		if (cm_id_prefix == ROAM_REQ_PREFIX) {
+			cm_req_lock_release(cm_ctx);
+			return &cm_req->roam_req;
+		}
+
+		cur_node = next_node;
+		next_node = NULL;
+	}
+	cm_req_lock_release(cm_ctx);
+
+	return NULL;
+}
+#endif

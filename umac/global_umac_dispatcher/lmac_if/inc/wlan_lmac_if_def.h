@@ -111,6 +111,13 @@ typedef struct request_info stats_req_info;
 typedef struct wake_lock_stats stats_wake_lock;
 
 /**
+ * typedef struct big_data_stats_event - Definition of big data cp stats
+ * Define big_data_stats_event from external cp stats component to
+ * big_data_stats_event
+ */
+typedef struct big_data_stats_event stats_big_data_stats_event;
+
+/**
  * struct wlan_lmac_if_cp_stats_tx_ops - defines southbound tx callbacks for
  * control plane statistics component
  * @cp_stats_attach: function pointer to register events from FW
@@ -127,6 +134,7 @@ typedef struct wake_lock_stats stats_wake_lock;
  *                                period to FW
  * @send_req_infra_cp_stats: function pointer to send infra cp stats request
  *                           command to FW
+ * @send_req_big_data_stats: Function pointer to send big data stats
  */
 struct wlan_lmac_if_cp_stats_tx_ops {
 	QDF_STATUS (*cp_stats_attach)(struct wlan_objmgr_psoc *psoc);
@@ -149,6 +157,11 @@ struct wlan_lmac_if_cp_stats_tx_ops {
 					struct wlan_objmgr_psoc *psoc,
 					struct infra_cp_stats_cmd_info *req);
 #endif
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+	QDF_STATUS (*send_req_big_data_stats)(
+					struct wlan_objmgr_psoc *psoc,
+					stats_req_info *req);
+#endif
 };
 
 /**
@@ -166,6 +179,11 @@ struct wlan_lmac_if_cp_stats_rx_ops {
 	(*process_infra_stats_event)(struct wlan_objmgr_psoc *psoc,
 				     struct infra_cp_stats_event *infra_event);
 #endif /* WLAN_SUPPORT_INFRA_CTRL_PATH_STATS */
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+	QDF_STATUS (*process_big_data_stats_event)(
+					struct wlan_objmgr_psoc *psoc,
+					stats_big_data_stats_event *ev);
+#endif
 };
 #endif
 

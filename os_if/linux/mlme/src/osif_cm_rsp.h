@@ -44,6 +44,32 @@ QDF_STATUS osif_disconnect_handler(struct wlan_objmgr_vdev *vdev,
 				   struct wlan_cm_discon_rsp *rsp);
 
 /**
+ * osif_cm_get_assoc_req_ie_data() - Get the assoc req IE offset and length
+ * if valid assoc req is present
+ * @assoc_req: assoc req info
+ * @ie_data_len: IE date length to be calculated
+ * @ie_data_ptr: IE data pointer to be calculated
+ *
+ * Return: void
+ */
+void osif_cm_get_assoc_req_ie_data(struct element_info *assoc_req,
+				   size_t *ie_data_len,
+				   const uint8_t **ie_data_ptr);
+
+/**
+ * osif_cm_get_assoc_rsp_ie_data() - Get the assoc resp IE offset and length
+ * if valid assoc req is present
+ * @assoc_req: assoc req info
+ * @ie_data_len: IE date length to be calculated
+ * @ie_data_ptr: IE data pointer to be calculated
+ *
+ * Return: void
+ */
+void osif_cm_get_assoc_rsp_ie_data(struct element_info *assoc_rsp,
+				   size_t *ie_data_len,
+				   const uint8_t **ie_data_ptr);
+
+/**
  * osif_connect_handler() - API to send connect response to kernel
  * @vdev: vdev pointer
  * @rsp: Connection manager connect response
@@ -56,18 +82,28 @@ QDF_STATUS osif_disconnect_handler(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS osif_connect_handler(struct wlan_objmgr_vdev *vdev,
 				struct wlan_cm_connect_resp *rsp);
 
+#ifdef CONN_MGR_ADV_FEATURE
 /**
- * osif_reassoc_handler() - API to send reassoc response to kernel
+ * osif_indicate_reassoc_results() - API to send reassoc response to kernel
  * @vdev: vdev pointer
- * @rsp: Connection manager reassoc response
+ * @osif_priv: OS private structure of vdev
+ * @rsp: Connection manager response
  *
  * The API is used to send reassoc response to kernel
  *
  * Context: Any context.
  * Return: QDF_STATUS
  */
-QDF_STATUS osif_reassoc_handler(struct wlan_objmgr_vdev *vdev,
-				struct wlan_cm_roam_resp *rsp);
+void osif_indicate_reassoc_results(struct wlan_objmgr_vdev *vdev,
+				   struct vdev_osif_priv *osif_priv,
+				   struct wlan_cm_connect_resp *rsp);
+#else
+static inline void
+osif_indicate_reassoc_results(struct wlan_objmgr_vdev *vdev,
+			      struct vdev_osif_priv *osif_priv,
+			      struct wlan_cm_connect_resp *rsp)
+{}
+#endif
 
 /**
  * osif_failed_candidate_handler() - API to indicate individual candidate

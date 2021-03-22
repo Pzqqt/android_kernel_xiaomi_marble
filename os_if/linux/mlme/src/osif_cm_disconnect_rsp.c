@@ -114,6 +114,27 @@ osif_cm_get_disconnect_reason(struct vdev_osif_priv *osif_priv, uint16_t reason)
 	return ieee80211_reason;
 }
 
+#ifdef CONN_MGR_ADV_FEATURE
+static inline bool
+osif_is_disconnect_locally_generated(struct wlan_cm_discon_rsp *rsp)
+{
+	if (rsp->req.req.source == CM_PEER_DISCONNECT)
+		return false;
+
+	return true;
+}
+#else
+static inline bool
+osif_is_disconnect_locally_generated(struct wlan_cm_discon_rsp *rsp)
+{
+	if (rsp->req.req.source == CM_PEER_DISCONNECT ||
+	    rsp->req.req.source == CM_SB_DISCONNECT)
+		return false;
+
+	return true;
+}
+#endif
+
 QDF_STATUS osif_disconnect_handler(struct wlan_objmgr_vdev *vdev,
 				   struct wlan_cm_discon_rsp *rsp)
 {
@@ -127,8 +148,8 @@ QDF_STATUS osif_disconnect_handler(struct wlan_objmgr_vdev *vdev,
 	ieee80211_reason =
 		osif_cm_get_disconnect_reason(osif_priv,
 					      rsp->req.req.reason_code);
-	if (rsp->req.req.source == CM_PEER_DISCONNECT)
-		locally_generated = false;
+
+	locally_generated = osif_is_disconnect_locally_generated(rsp);
 
 	osif_nofl_info("%s(vdevid-%d): " QDF_MAC_ADDR_FMT " %sdisconnect " QDF_MAC_ADDR_FMT " cm_id 0x%x source %d reason:%u %s vendor:%u %s",
 		       osif_priv->wdev->netdev->name,
