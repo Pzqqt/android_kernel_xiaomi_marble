@@ -43,6 +43,8 @@
 #include "wlan_crypto_global_api.h"
 #include "wlan_mlme_vdev_mgr_interface.h"
 #include "hif.h"
+#include "wlan_hdd_power.h"
+#include "wlan_hdd_napi.h"
 
 void hdd_handle_disassociation_event(struct hdd_adapter *adapter,
 				     struct qdf_mac_addr *peer_macaddr)
@@ -292,6 +294,8 @@ hdd_cm_disconnect_complete_pre_user_update(struct wlan_objmgr_vdev *vdev,
 	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx,
 					wlan_vdev_get_id(vdev));
 
+	hdd_napi_serialize(0);
+	hdd_disable_and_flush_mc_addr_list(adapter, pmo_peer_disconnect);
 	__hdd_cm_disconnect_handler_pre_user_update(adapter);
 
 	hdd_handle_disassociation_event(adapter, &rsp->req.req.bssid);
@@ -348,5 +352,13 @@ QDF_STATUS hdd_cm_netif_queue_control(struct wlan_objmgr_vdev *vdev,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS hdd_cm_napi_serialize_control(bool action)
+{
+	hdd_napi_serialize(action);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #endif
 

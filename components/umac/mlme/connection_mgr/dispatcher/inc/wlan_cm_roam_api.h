@@ -312,6 +312,12 @@ QDF_STATUS wlan_cm_roam_cfg_get_value(struct wlan_objmgr_psoc *psoc,
 				      enum roam_cfg_param roam_cfg_type,
 				      struct cm_roam_values_copy *dst_config);
 
+static inline void
+wlan_cm_flush_roam_channel_list(struct rso_chan_info *channel_info)
+{
+	cm_flush_roam_channel_list(channel_info);
+}
+
 /**
  * wlan_cm_roam_cfg_set_value  - Set RSO config value
  * @psoc: psoc pointer
@@ -585,19 +591,6 @@ static inline void wlan_cm_update_hlp_info(struct wlan_objmgr_psoc *psoc,
 {}
 #endif
 
-#if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
-void
-cm_store_sae_single_pmk_to_global_cache(struct wlan_objmgr_psoc *psoc,
-					struct wlan_objmgr_pdev *pdev,
-					struct wlan_objmgr_vdev *vdev);
-#else
-static inline void
-cm_store_sae_single_pmk_to_global_cache(struct wlan_objmgr_psoc *psoc,
-					struct wlan_objmgr_pdev *pdev,
-					struct wlan_objmgr_vdev *vdev)
-{}
-#endif
-
 static inline
 bool wlan_cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
 			      struct wlan_objmgr_vdev *vdev,
@@ -606,7 +599,6 @@ bool wlan_cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
 	return cm_is_auth_type_11r(mlme_obj, vdev, mdie_present);
 }
 
-#ifdef FEATURE_CM_ENABLE
 /**
  * cm_roam_start_init_on_connect() - init roaming
  * @pdev: pdev pointer
@@ -616,19 +608,39 @@ bool wlan_cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
  */
 void cm_roam_start_init_on_connect(struct wlan_objmgr_pdev *pdev,
 				   uint8_t vdev_id);
+#ifdef FEATURE_CM_ENABLE
 /**
  * wlan_cm_roam_invoke() - Validate and send Roam invoke req to CM
  * @pdev: Pdev pointer
  * @vdev_id: vdev_id
  * @bssid: Target bssid
  * @chan_freq: channel frequency on which reassoc should be send
+ * @source: source of roam
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS
 wlan_cm_roam_invoke(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
-		    struct qdf_mac_addr *bssid, qdf_freq_t chan_freq);
+		    struct qdf_mac_addr *bssid, qdf_freq_t chan_freq,
+		    enum wlan_cm_source source);
 
+#ifdef WLAN_FEATURE_HOST_ROAM
+/**
+ * wlan_cm_host_roam_start() - fw host roam start handler
+ * @msg: msg pointer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_host_roam_start(struct scheduler_msg *msg);
+#else
+static inline QDF_STATUS wlan_cm_host_roam_start(struct scheduler_msg *msg)
+{
+	if (msg && msg->bodyptr)
+		qdf_mem_free(msg->bodyptr);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD

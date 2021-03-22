@@ -23,6 +23,7 @@
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_cm_roam_ucfg_api.h"
 #include "../../core/src/wlan_cm_roam_offload.h"
+#include "wlan_reg_ucfg_api.h"
 
 QDF_STATUS
 ucfg_user_space_enable_disable_rso(struct wlan_objmgr_pdev *pdev,
@@ -124,6 +125,97 @@ release_ref:
 	return status;
 }
 
+#ifdef FEATURE_WLAN_ESE
+QDF_STATUS ucfg_cm_set_ese_roam_scan_channel_list(struct wlan_objmgr_pdev *pdev,
+						  uint8_t vdev_id,
+						  qdf_freq_t *chan_freq_list,
+						  uint8_t num_chan)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	enum band_info band = -1;
+	uint32_t band_bitmap;
+	struct wlan_objmgr_vdev *vdev;
+	struct rso_config *rso_cfg;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc)
+		return QDF_STATUS_E_INVAL;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_INVAL;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+	status = cm_roam_acquire_lock(vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto release_ref;
+
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
+		status = QDF_STATUS_E_FAILURE;
+		goto error;
+	}
+
+	mlme_debug("Chan list Before");
+	cm_dump_freq_list(&rso_cfg->roam_scan_freq_lst);
+	ucfg_reg_get_band(pdev, &band_bitmap);
+	band = wlan_reg_band_bitmap_to_band_info(band_bitmap);
+	status = cm_create_roam_scan_channel_list(pdev, rso_cfg, num_chan,
+						  chan_freq_list, num_chan,
+						  band);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		mlme_debug("Chan list After");
+		cm_dump_freq_list(&rso_cfg->roam_scan_freq_lst);
+	}
+
+	if (mlme_obj->cfg.lfr.roam_scan_offload_enabled)
+		wlan_roam_update_cfg(psoc, vdev_id,
+				     REASON_CHANNEL_LIST_CHANGED);
+
+
+error:
+	cm_roam_release_lock(vdev);
+release_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+
+	return status;
+}
+
+QDF_STATUS ucfg_cm_set_cckm_ie(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			       const uint8_t *cck_ie, const uint8_t cck_ie_len)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_CM_ID);
+
+	if (!vdev) {
+		mlme_err("vdev not found for id %d", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		return QDF_STATUS_E_FAILURE;
+	}
+	qdf_mem_copy(mlme_priv->connect_info.cckm_ie, cck_ie, cck_ie_len);
+	mlme_priv->connect_info.cckm_ie_len = cck_ie_len;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+#endif
+
 #ifdef FEATURE_CM_ENABLE
 #ifdef WLAN_FEATURE_FILS_SK
 QDF_STATUS
@@ -147,14 +239,13 @@ ucfg_cm_update_fils_config(struct wlan_objmgr_psoc *psoc,
 	return status;
 }
 #endif
-#endif
 
-#ifdef FEATURE_CM_ENABLE
 QDF_STATUS
 ucfg_wlan_cm_roam_invoke(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
-			 struct qdf_mac_addr *bssid, qdf_freq_t ch_freq)
+			 struct qdf_mac_addr *bssid, qdf_freq_t ch_freq,
+			 enum wlan_cm_source source)
 {
-	return wlan_cm_roam_invoke(pdev, vdev_id, bssid, ch_freq);
+	return wlan_cm_roam_invoke(pdev, vdev_id, bssid, ch_freq, source);
 }
 
 #endif

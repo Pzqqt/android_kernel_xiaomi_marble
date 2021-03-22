@@ -196,9 +196,9 @@ extern struct policy_mgr_conc_connection_info
 extern const enum policy_mgr_pcl_type
 	first_connection_pcl_table[PM_MAX_NUM_OF_MODE]
 			[PM_MAX_CONC_PRIORITY_MODE];
-extern enum policy_mgr_pcl_type
-	(*second_connection_pcl_dbs_table)[PM_MAX_ONE_CONNECTION_MODE]
-			[PM_MAX_NUM_OF_MODE][PM_MAX_CONC_PRIORITY_MODE];
+extern  pm_dbs_pcl_second_connection_table_type
+	*second_connection_pcl_dbs_table;
+
 extern enum policy_mgr_pcl_type const
 	(*second_connection_pcl_non_dbs_table)[PM_MAX_ONE_CONNECTION_MODE]
 			[PM_MAX_NUM_OF_MODE][PM_MAX_CONC_PRIORITY_MODE];
@@ -252,7 +252,6 @@ extern enum policy_mgr_conc_next_action
  * @enable_sta_cxn_5g_band: Enable/Disable STA connection in 5G band
  * @go_force_scc: Enable/Disable P2P GO force SCC
  * @pcl_band_priority: PCL channel order between 5G and 6G.
- * @prefer_5g_scc_to_dbs: Prefer to work in 5G SCC mode.
  */
 struct policy_mgr_cfg {
 	uint8_t mcc_to_scc_switch;
@@ -276,7 +275,6 @@ struct policy_mgr_cfg {
 	uint32_t chnl_select_plcy;
 	uint8_t go_force_scc;
 	enum policy_mgr_pcl_band_priority pcl_band_priority;
-	uint32_t prefer_5g_scc_to_dbs;
 };
 
 /**

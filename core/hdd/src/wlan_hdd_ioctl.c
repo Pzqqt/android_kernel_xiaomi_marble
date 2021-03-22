@@ -704,7 +704,8 @@ static int hdd_parse_reassoc_v1(struct hdd_adapter *adapter, const char *command
 	qdf_mem_copy(target_bssid.bytes, bssid, sizeof(tSirMacAddr));
 	status = ucfg_wlan_cm_roam_invoke(hdd_ctx->pdev,
 					  adapter->vdev_id,
-					  &target_bssid, freq);
+					  &target_bssid, freq,
+					  CM_ROAMING_HOST);
 	return qdf_status_to_os_return(status);
 #else
 	ret = hdd_reassoc(adapter, bssid, freq, REASSOC);
@@ -766,7 +767,8 @@ static int hdd_parse_reassoc_v2(struct hdd_adapter *adapter,
 		qdf_mem_copy(target_bssid.bytes, bssid, sizeof(tSirMacAddr));
 		status = ucfg_wlan_cm_roam_invoke(hdd_ctx->pdev,
 						  adapter->vdev_id,
-						  &target_bssid, freq);
+						  &target_bssid, freq,
+						  CM_ROAMING_HOST);
 		ret = qdf_status_to_os_return(status);
 #else
 		ret = hdd_reassoc(adapter, bssid, freq, REASSOC);
@@ -4619,7 +4621,7 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 #ifdef FEATURE_CM_ENABLE
 	qdf_mem_copy(target_bssid.bytes, bssid, sizeof(tSirMacAddr));
 	ucfg_wlan_cm_roam_invoke(hdd_ctx->pdev, adapter->vdev_id,
-				 &target_bssid, freq);
+				 &target_bssid, freq, CM_ROAMING_HOST);
 #else
 	mac_handle = hdd_ctx->mac_handle;
 	chan_freq = wlan_get_operation_chan_freq(adapter->vdev);
@@ -5008,10 +5010,10 @@ static int drv_cmd_set_ccx_roam_scan_channels(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
-	status = sme_set_ese_roam_scan_channel_list(mac_handle,
-						    adapter->vdev_id,
-						    channel_freq_list,
-						    num_channels);
+	status = ucfg_cm_set_ese_roam_scan_channel_list(hdd_ctx->pdev,
+							adapter->vdev_id,
+							channel_freq_list,
+							num_channels);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Failed to update channel list information");
 		ret = -EINVAL;
@@ -5153,8 +5155,8 @@ static int drv_cmd_set_cckm_ie(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
-	sme_set_cckm_ie(hdd_ctx->mac_handle, adapter->vdev_id,
-			cckm_ie, cckm_ie_len);
+	ucfg_cm_set_cckm_ie(hdd_ctx->psoc, adapter->vdev_id, cckm_ie,
+			    cckm_ie_len);
 	if (cckm_ie) {
 		qdf_mem_free(cckm_ie);
 		cckm_ie = NULL;
@@ -6616,19 +6618,18 @@ static bool check_disable_channels(struct hdd_context *hdd_ctx,
 }
 
 /**
- * disconnect_sta_and_stop_sap() - Disconnect STA and stop SAP
+ * disconnect_sta_and_restart_sap() - Disconnect STA and restart SAP
  *
  * @hdd_ctx: Pointer to hdd context
  * @reason: Disconnect reason code as per @enum wlan_reason_code
  *
  * Disable channels provided by user and disconnect STA if it is
- * connected to any AP, stop SAP and send deauthentication request
- * to STAs connected to SAP.
+ * connected to any AP, restart SAP.
  *
  * Return: None
  */
-static void disconnect_sta_and_stop_sap(struct hdd_context *hdd_ctx,
-					enum wlan_reason_code reason)
+static void disconnect_sta_and_restart_sap(struct hdd_context *hdd_ctx,
+					   enum wlan_reason_code reason)
 {
 	struct hdd_adapter *adapter, *next = NULL;
 	QDF_STATUS status;
@@ -6647,7 +6648,8 @@ static void disconnect_sta_and_stop_sap(struct hdd_context *hdd_ctx,
 				hdd_ctx->pdev,
 				adapter->session.ap.operating_chan_freq);
 			if (check_disable_channels(hdd_ctx, ap_ch))
-				wlan_hdd_stop_sap(adapter);
+				policy_mgr_check_sap_restart(hdd_ctx->psoc,
+							     adapter->vdev_id);
 		}
 
 		status = hdd_get_next_adapter(hdd_ctx, adapter, &next);
@@ -6834,8 +6836,9 @@ mem_alloc_failed:
 		ret = wlan_hdd_disable_channels(hdd_ctx);
 		if (ret)
 			return ret;
-		disconnect_sta_and_stop_sap(hdd_ctx,
-					    REASON_OPER_CHANNEL_BAND_CHANGE);
+		disconnect_sta_and_restart_sap(
+					hdd_ctx,
+					REASON_OPER_CHANNEL_BAND_CHANGE);
 	}
 
 	hdd_exit();

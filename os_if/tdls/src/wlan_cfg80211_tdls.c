@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -237,6 +237,39 @@ tdls_calc_channels_from_staparams(struct tdls_update_peer_params *req_info,
 		   req_info->supported_channels_len);
 }
 
+#ifdef WLAN_FEATURE_11AX
+#define MIN_TDLS_HE_CAP_LEN 21
+
+static void
+wlan_cfg80211_tdls_extract_he_params(struct tdls_update_peer_params *req_info,
+				     struct station_parameters *params)
+{
+	if (params->he_capa_len < MIN_TDLS_HE_CAP_LEN) {
+		osif_debug("he_capa_len %d less than MIN_TDLS_HE_CAP_LEN",
+			   params->he_capa_len);
+		return;
+	}
+
+	if (!params->he_capa) {
+		osif_debug("he_capa not present");
+		return;
+	}
+
+	req_info->he_cap_len = params->he_capa_len;
+	qdf_mem_copy(&req_info->he_cap, params->he_capa,
+		     sizeof(struct hecap));
+
+	return;
+}
+
+#else
+static void
+wlan_cfg80211_tdls_extract_he_params(struct tdls_update_peer_params *req_info,
+				     struct station_parameters *params)
+{
+}
+#endif
+
 static void
 wlan_cfg80211_tdls_extract_params(struct tdls_update_peer_params *req_info,
 				  struct station_parameters *params)
@@ -319,6 +352,8 @@ wlan_cfg80211_tdls_extract_params(struct tdls_update_peer_params *req_info,
 		osif_debug("TDLS peer pmf capable");
 		req_info->is_pmf = 1;
 	}
+
+	wlan_cfg80211_tdls_extract_he_params(req_info, params);
 }
 
 int wlan_cfg80211_tdls_update_peer(struct wlan_objmgr_vdev *vdev,

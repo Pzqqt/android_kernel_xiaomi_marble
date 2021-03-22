@@ -1028,6 +1028,10 @@ wmi_twt_add_status_to_vendor_twt_status(enum WMI_HOST_ADD_TWT_STATUS status)
 		return QCA_WLAN_VENDOR_TWT_STATUS_DENIED;
 	case WMI_HOST_ADD_TWT_STATUS_UNKNOWN_ERROR:
 		return QCA_WLAN_VENDOR_TWT_STATUS_UNKNOWN_ERROR;
+	case WMI_HOST_ADD_TWT_STATUS_AP_PARAMS_NOT_IN_RANGE:
+		return QCA_WLAN_VENDOR_TWT_STATUS_PARAMS_NOT_IN_RANGE;
+	case WMI_HOST_ADD_TWT_STATUS_AP_IE_VALIDATION_FAILED:
+		return QCA_WLAN_VENDOR_TWT_STATUS_IE_INVALID;
 	default:
 		return QCA_WLAN_VENDOR_TWT_STATUS_UNKNOWN_ERROR;
 	}
@@ -2667,12 +2671,25 @@ static int hdd_twt_clear_session_traffic_stats(struct hdd_adapter *adapter,
 		return -EOPNOTSUPP;
 	}
 
+	if (ucfg_mlme_twt_is_command_in_progress(adapter->hdd_ctx->psoc,
+						 &hdd_sta_ctx->conn_info.bssid,
+						 WLAN_ALL_SESSIONS_DIALOG_ID,
+						 WLAN_TWT_STATISTICS) ||
+	   ucfg_mlme_twt_is_command_in_progress(adapter->hdd_ctx->psoc,
+						&hdd_sta_ctx->conn_info.bssid,
+						WLAN_ALL_SESSIONS_DIALOG_ID,
+						WLAN_TWT_CLEAR_STATISTICS)) {
+		hdd_warn("Already TWT statistics or clear statistics exists");
+		return -EALREADY;
+	}
+
 	if (!ucfg_mlme_is_twt_setup_done(adapter->hdd_ctx->psoc,
 					 &hdd_sta_ctx->conn_info.bssid,
 					 dialog_id)) {
 		hdd_debug("TWT session %d setup incomplete", dialog_id);
 		return -EINVAL;
 	}
+
 	ret = wlan_cfg80211_mc_twt_clear_infra_cp_stats(adapter->vdev,
 							dialog_id, peer_mac);
 
@@ -2769,6 +2786,18 @@ static int hdd_twt_get_session_traffic_stats(struct hdd_adapter *adapter,
 		return -EOPNOTSUPP;
 	}
 
+	if (ucfg_mlme_twt_is_command_in_progress(adapter->hdd_ctx->psoc,
+						 &hdd_sta_ctx->conn_info.bssid,
+						 WLAN_ALL_SESSIONS_DIALOG_ID,
+						 WLAN_TWT_STATISTICS) ||
+	    ucfg_mlme_twt_is_command_in_progress(adapter->hdd_ctx->psoc,
+						 &hdd_sta_ctx->conn_info.bssid,
+						 WLAN_ALL_SESSIONS_DIALOG_ID,
+						 WLAN_TWT_CLEAR_STATISTICS)) {
+		hdd_warn("Already TWT statistics or clear statistics exists");
+		return -EALREADY;
+	}
+
 	id = QCA_WLAN_VENDOR_ATTR_TWT_STATS_FLOW_ID;
 	if (tb[id])
 		dialog_id = (uint32_t)nla_get_u8(tb[id]);
@@ -2790,8 +2819,16 @@ static int hdd_twt_get_session_traffic_stats(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
+	ucfg_mlme_set_twt_command_in_progress(adapter->hdd_ctx->psoc,
+					      &hdd_sta_ctx->conn_info.bssid,
+					      dialog_id,
+					      WLAN_TWT_STATISTICS);
 	qdf_status = hdd_twt_request_session_traffic_stats(adapter,
 							   dialog_id, peer_mac);
+	ucfg_mlme_set_twt_command_in_progress(adapter->hdd_ctx->psoc,
+					      &hdd_sta_ctx->conn_info.bssid,
+					      dialog_id,
+					      WLAN_TWT_NONE);
 
 	return qdf_status_to_os_return(qdf_status);
 }
@@ -2890,12 +2927,13 @@ static int hdd_twt_configure(struct hdd_adapter *adapter,
 
 	id = QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_OPERATION;
 	twt_oper_attr = tb[id];
-	twt_oper = nla_get_u8(twt_oper_attr);
 
 	if (!twt_oper_attr) {
 		hdd_err("TWT operation NOT specified");
 		return -EINVAL;
 	}
+
+	twt_oper = nla_get_u8(twt_oper_attr);
 
 	id = QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS;
 	twt_param_attr = tb[id];

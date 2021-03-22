@@ -1226,8 +1226,6 @@ hdd_send_ft_assoc_response(struct net_device *dev,
 	qdf_mem_free(buff);
 }
 
-#endif
-
 /**
  * hdd_send_ft_event() - send fast transition event
  * @adapter: pointer to adapter
@@ -1334,8 +1332,6 @@ static void hdd_send_ft_event(struct hdd_adapter *adapter)
 	qdf_mem_free(buff);
 #endif
 }
-
-#ifndef FEATURE_CM_ENABLE
 #ifdef FEATURE_WLAN_ESE
 /**
  * hdd_send_new_ap_channel_info() - send new ap channel info
@@ -3563,6 +3559,7 @@ hdd_indicate_tsm_ie(struct hdd_adapter *adapter, uint8_t tid,
 	hdd_wext_send_event(adapter->dev, IWEVCUSTOM, &wrqu, buf);
 }
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * hdd_indicate_cckm_pre_auth() - send cckm preauth indication
  * @adapter: pointer to adapter
@@ -3612,6 +3609,7 @@ hdd_indicate_cckm_pre_auth(struct hdd_adapter *adapter,
 	/* send the event */
 	hdd_wext_send_event(adapter->dev, IWEVCUSTOM, &wrqu, buf);
 }
+#endif
 
 /**
  * hdd_indicate_ese_adj_ap_rep_ind() - send adjacent AP report indication
@@ -3904,6 +3902,7 @@ hdd_indicate_ese_bcn_report_ind(const struct hdd_adapter *adapter,
 
 #endif /* FEATURE_WLAN_ESE */
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * hdd_is_8021x_sha256_auth_type() - check authentication type to 8021x_sha256
  * @sta_ctx:	Station Context
@@ -3926,7 +3925,7 @@ hdd_is_8021x_sha256_auth_type(struct hdd_station_ctx *sta_ctx)
 	return false;
 }
 #endif
-
+#endif
 /*
  * hdd_roam_channel_switch_handler() - hdd channel switch handler
  * @adapter: Pointer to adapter context
@@ -4039,11 +4038,11 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
 	struct hdd_adapter *adapter = context;
 	struct hdd_station_ctx *sta_ctx = NULL;
-	struct cfg80211_bss *bss_status;
 	struct hdd_context *hdd_ctx;
 
-	hdd_debug("CSR Callback: status=%d result=%d roamID=%d",
-		  roam_status, roam_result, roam_id);
+	hdd_debug("CSR Callback: status=%s (%d) result= %s (%d) roamID=%d",
+		  get_e_roam_cmd_status_str(roam_status), roam_status,
+		  get_e_csr_roam_result_str(roam_result), roam_result, roam_id);
 
 	/* Sanity check */
 	if ((!adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
@@ -4058,6 +4057,7 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 				 adapter->vdev_id, roam_status));
 
 	switch (roam_status) {
+#ifndef FEATURE_CM_ENABLE
 	/*
 	 * We did pre-auth,then we attempted a 11r or ese reassoc.
 	 * reassoc failed due to failure, timeout, reject from ap
@@ -4068,17 +4068,14 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 		hdd_err("Reassoc Failed with roam_status: %d roam_result: %d SessionID: %d",
 			 roam_status, roam_result, adapter->vdev_id);
 		/* This is temp ifdef will be removed in near future */
-#ifndef FEATURE_CM_ENABLE
 		qdf_ret_status =
 			hdd_dis_connect_handler(adapter, roam_info, roam_id,
 						roam_status, roam_result);
-#endif
 		sta_ctx->ft_carrier_on = false;
 		sta_ctx->hdd_reassoc_scenario = false;
 		hdd_debug("hdd_reassoc_scenario set to: %d, ReAssoc Failed, session: %d",
 			  sta_ctx->hdd_reassoc_scenario, adapter->vdev_id);
 		break;
-
 	case eCSR_ROAM_FT_START:
 		/*
 		 * When we roam for ESE and 11r, we dont want the OS to be
@@ -4147,12 +4144,10 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 		 */
 		hdd_disable_and_flush_mc_addr_list(adapter,
 			pmo_peer_disconnect);
-		/* This is temp ifdef will be removed in near future */
-#ifndef FEATURE_CM_ENABLE
+
 		qdf_ret_status =
 			hdd_dis_connect_handler(adapter, roam_info, roam_id,
 						roam_status, roam_result);
-#endif
 	}
 	break;
 	case eCSR_ROAM_ASSOCIATION_COMPLETION:
@@ -4174,13 +4169,11 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 				  sta_ctx->hdd_reassoc_scenario,
 				  adapter->vdev_id);
 		}
-		/* This is temp ifdef will be removed in near future */
-#ifndef FEATURE_CM_ENABLE
+
 		qdf_ret_status =
 			hdd_association_completion_handler(adapter, roam_info,
 							   roam_id, roam_status,
 							   roam_result);
-#endif
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 		if (roam_info)
 			roam_info->roamSynchInProgress = false;
@@ -4190,15 +4183,13 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 		hdd_debug("****eCSR_ROAM_CANCELLED****");
 		/* fallthrough */
 	case eCSR_ROAM_ASSOCIATION_FAILURE:
-		/* This is temp ifdef will be removed in near future */
-#ifndef FEATURE_CM_ENABLE
 		qdf_ret_status = hdd_association_completion_handler(adapter,
 								    roam_info,
 								    roam_id,
 								    roam_status,
 								    roam_result);
-#endif
 		break;
+#endif /* ndef FEATURE_CM_ENABLE */
 	case eCSR_ROAM_MIC_ERROR_IND:
 		hdd_roam_mic_error_indication_handler(adapter, roam_info);
 		break;
@@ -4221,11 +4212,10 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 			roam_info->roamSynchInProgress = false;
 #endif
 		break;
-
+#ifndef FEATURE_CM_ENABLE
 	case eCSR_ROAM_FT_RESPONSE:
 		hdd_send_ft_event(adapter);
 		break;
-
 	case eCSR_ROAM_PMK_NOTIFY:
 		if (eCSR_AUTH_TYPE_RSN == sta_ctx->conn_info.auth_type
 				|| hdd_is_8021x_sha256_auth_type(sta_ctx)) {
@@ -4276,6 +4266,7 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 		}
 		break;
 #endif
+#endif /* ndef FEATURE_CM_ENABLE */
 #ifdef WLAN_FEATURE_11W
 	case eCSR_ROAM_UNPROT_MGMT_FRAME_IND:
 		if (roam_info)
@@ -4292,7 +4283,7 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 				    roam_info->tsm_ie.state,
 				    roam_info->tsm_ie.msmt_interval);
 		break;
-
+#ifndef FEATURE_CM_ENABLE
 	case eCSR_ROAM_CCKM_PREAUTH_NOTIFY:
 	{
 		if (eCSR_AUTH_TYPE_CCKM_WPA ==
@@ -4303,7 +4294,7 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 		}
 		break;
 	}
-
+#endif
 	case eCSR_ROAM_ESE_ADJ_AP_REPORT_IND:
 	{
 		hdd_indicate_ese_adj_ap_rep_ind(adapter, roam_info);
@@ -4320,24 +4311,11 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 		hdd_roam_channel_switch_handler(adapter, roam_info);
 		break;
 
-	case eCSR_ROAM_UPDATE_SCAN_RESULT:
-		if ((roam_info) && (roam_info->bss_desc)) {
-			bss_status = wlan_hdd_inform_bss_frame(adapter,
-							roam_info->bss_desc);
-			if (!bss_status)
-				hdd_debug("UPDATE_SCAN_RESULT returned NULL");
-			else
-				cfg80211_put_bss(
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0)) || defined(WITH_BACKPORTS)
-					(WLAN_HDD_GET_CTX(adapter))->wiphy,
-#endif
-					bss_status);
-		}
-		break;
 	case eCSR_ROAM_NDP_STATUS_UPDATE:
 		hdd_ndp_event_handler(adapter, roam_info, roam_id, roam_status,
 			roam_result);
 		break;
+#ifndef FEATURE_CM_ENABLE
 	case eCSR_ROAM_START:
 		hdd_debug("Process ROAM_START from firmware");
 		wlan_hdd_netif_queue_control(adapter,
@@ -4358,12 +4336,6 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 		sta_ctx->ft_carrier_on = false;
 		complete(&adapter->roaming_comp_var);
 		break;
-
-	case eCSR_ROAM_SAE_COMPUTE:
-		if (roam_info)
-			wlan_hdd_sae_callback(adapter, roam_info);
-		break;
-
 	case eCSR_ROAM_ROAMING_START:
 		/*
 		 * For LFR2, Handle roaming start to remove disassociated
@@ -4380,7 +4352,11 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 							adapter->vdev_id);
 		}
 		break;
-
+#endif /* ndef FEATURE_CM_ENABLE */
+	case eCSR_ROAM_SAE_COMPUTE:
+		if (roam_info)
+			wlan_hdd_sae_callback(adapter, roam_info);
+		break;
 	case eCSR_ROAM_FIPS_PMK_REQUEST:
 		/* notify the supplicant of a new candidate */
 		qdf_ret_status = wlan_hdd_cfg80211_pmksa_candidate_notify(
@@ -5249,6 +5225,7 @@ struct osif_cm_ops osif_ops = {
 	.connect_complete_cb = hdd_cm_connect_complete,
 	.disconnect_complete_cb = hdd_cm_disconnect_complete,
 	.netif_queue_control_cb = hdd_cm_netif_queue_control,
+	.napi_serialize_control_cb = hdd_cm_napi_serialize_control,
 #ifdef WLAN_FEATURE_FILS_SK
 	.save_gtk_cb = hdd_cm_save_gtk,
 	.set_hlp_data_cb = hdd_cm_set_hlp_data,

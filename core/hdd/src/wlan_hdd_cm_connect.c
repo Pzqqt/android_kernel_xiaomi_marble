@@ -458,7 +458,7 @@ hdd_cm_connect_failure_post_user_update(struct wlan_objmgr_vdev *vdev,
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx,
 						wlan_vdev_get_id(vdev));
-	bool is_roam = false;
+	bool is_roam = rsp->is_reassoc;
 
 	if (!is_roam) {
 		/* call only for connect */
@@ -783,7 +783,7 @@ hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
 	uint32_t ie_len;
 	uint8_t *ie_field;
 	mac_handle_t mac_handle;
-	bool is_roam = false;
+	bool is_roam = rsp->is_reassoc;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -929,7 +929,6 @@ bool hdd_cm_is_fils_connection(struct wlan_cm_connect_resp *rsp)
 static bool hdd_cm_is_roam_auth_required(struct hdd_station_ctx *sta_ctx,
 					 struct wlan_cm_connect_resp *rsp)
 {
-#if 0
 	if (!rsp->roaming_info)
 		return false;
 
@@ -937,7 +936,7 @@ static bool hdd_cm_is_roam_auth_required(struct hdd_station_ctx *sta_ctx,
 	    sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_SAE ||
 	    sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_OWE)
 		return false;
-#endif
+
 	return true;
 }
 #else
@@ -962,7 +961,7 @@ hdd_cm_connect_success_post_user_update(struct wlan_objmgr_vdev *vdev,
 		mlme_obj->ext_vdev_ptr->connect_info.uapsd_per_ac_bitmask;
 	bool is_auth_required = true;
 	bool is_roam_offload = false;
-	bool is_roam = false;
+	bool is_roam = rsp->is_reassoc;
 
 	if (is_roam) {
 		/* If roaming is set check if FW roaming/LFR3  */
@@ -1048,7 +1047,7 @@ QDF_STATUS hdd_cm_save_gtk(struct wlan_objmgr_vdev *vdev,
 {
 	uint8_t *kek;
 	uint32_t kek_len;
-	uint8_t replay_ctr[SIR_REPLAY_CTR_LEN] = {0};
+	uint8_t replay_ctr[REPLAY_CTR_LEN] = {0};
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx,
 						wlan_vdev_get_id(vdev));

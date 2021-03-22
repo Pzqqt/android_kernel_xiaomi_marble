@@ -177,7 +177,7 @@ int wma_twt_add_dialog_complete_event_handler(void *handle,
 	tp_wma_handle wma_handle = handle;
 	wmi_unified_t wmi_handle;
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
-	int status = -EINVAL;
+	QDF_STATUS status;
 
 	if (wma_validate_handle(wma_handle))
 		return -EINVAL;
@@ -196,7 +196,7 @@ int wma_twt_add_dialog_complete_event_handler(void *handle,
 	status = wmi_extract_twt_add_dialog_comp_event(wmi_handle, event,
 						       &add_dialog_event->params);
 	if (QDF_IS_STATUS_ERROR(status))
-		return qdf_status_to_os_return(status);
+		goto exit;
 
 	if (add_dialog_event->params.num_additional_twt_params) {
 		status = wmi_extract_twt_add_dialog_comp_additional_params(wmi_handle,
@@ -204,7 +204,7 @@ int wma_twt_add_dialog_complete_event_handler(void *handle,
 									   len, 0,
 									   &add_dialog_event->additional_params);
 		if (QDF_IS_STATUS_ERROR(status))
-			return qdf_status_to_os_return(status);
+			goto exit;
 	}
 
 	wma_debug("TWT: Extract TWT add dialog event id:%d",
@@ -217,9 +217,13 @@ int wma_twt_add_dialog_complete_event_handler(void *handle,
 					QDF_MODULE_ID_SME,
 					QDF_MODULE_ID_SME, &sme_msg);
 	if (QDF_IS_STATUS_ERROR(status))
-		return -EINVAL;
+		goto exit;
 
-	return status;
+exit:
+	if (QDF_IS_STATUS_ERROR(status))
+		qdf_mem_free(add_dialog_event);
+
+	return qdf_status_to_os_return(status);
 }
 
 QDF_STATUS

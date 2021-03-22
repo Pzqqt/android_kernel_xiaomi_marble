@@ -2638,48 +2638,6 @@ QDF_STATUS mlme_get_wep_key(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS mlme_set_wep_key(struct wlan_mlme_wep_cfg *wep_params,
-			    enum wep_key_id wep_keyid, uint8_t *key_to_set,
-			    qdf_size_t len)
-{
-	if (len == 0)
-		return QDF_STATUS_E_FAILURE;
-
-	mlme_legacy_debug("WEP set key for key_id:%d key_len:%zd",
-			  wep_keyid, len);
-	switch (wep_keyid) {
-	case MLME_WEP_DEFAULT_KEY_1:
-		wlan_mlme_set_cfg_str(key_to_set,
-				      &wep_params->wep_default_key_1,
-				      len);
-		break;
-
-	case MLME_WEP_DEFAULT_KEY_2:
-		wlan_mlme_set_cfg_str(key_to_set,
-				      &wep_params->wep_default_key_2,
-				      len);
-		break;
-
-	case MLME_WEP_DEFAULT_KEY_3:
-		wlan_mlme_set_cfg_str(key_to_set,
-				      &wep_params->wep_default_key_3,
-				      len);
-		break;
-
-	case MLME_WEP_DEFAULT_KEY_4:
-		wlan_mlme_set_cfg_str(key_to_set,
-				      &wep_params->wep_default_key_4,
-				      len);
-		break;
-
-	default:
-		mlme_legacy_err("Invalid key id:%d", wep_keyid);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
 QDF_STATUS
 wlan_mlme_is_11h_enabled(struct wlan_objmgr_psoc *psoc, bool *value)
 {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014-2016, 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014-2016, 2018-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -62,8 +62,6 @@ typedef struct tagDblLinkList {
 #define GET_FIELD_OFFSET(type, field)  ((uintptr_t)(&(((type *)0)->field)))
 #define GET_ROUND_UP(_Field, _Boundary) \
 	(((_Field) + ((_Boundary) - 1))  & ~((_Boundary) - 1))
-#define BITS_ON(_Field, _Bitmask)  ((_Field) |=  (_Bitmask))
-#define BITS_OFF(_Field, _Bitmask) ((_Field) &= ~(_Bitmask))
 #define csrIsListEmpty(pHead) ((pHead)->next == (pHead))
 
 uint32_t csr_ll_count(tDblLinkList *pList);

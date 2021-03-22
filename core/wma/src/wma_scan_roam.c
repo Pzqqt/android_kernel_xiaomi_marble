@@ -85,6 +85,9 @@
 #ifdef FEATURE_WLAN_DIAG_SUPPORT    /* FEATURE_WLAN_DIAG_SUPPORT */
 #include "host_diag_core_log.h"
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
+#ifdef FEATURE_CM_ENABLE
+#include <../../core/src/wlan_cm_roam_i.h>
+#endif
 
 #ifdef FEATURE_WLAN_EXTSCAN
 #define WMA_EXTSCAN_CYCLE_WAKE_LOCK_DURATION WAKELOCK_DURATION_RECOMMENDED
@@ -793,7 +796,7 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 		qdf_mem_copy(roam_synch_ind_ptr->kek, key->kek,
 			     SIR_KEK_KEY_LEN);
 		qdf_mem_copy(roam_synch_ind_ptr->replay_ctr,
-			     key->replay_counter, SIR_REPLAY_CTR_LEN);
+			     key->replay_counter, REPLAY_CTR_LEN);
 	} else if (key_ft) {
 		/*
 		 * For AKM 00:0F:AC (FT suite-B-SHA384)
@@ -817,7 +820,7 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 
 		qdf_mem_copy(roam_synch_ind_ptr->replay_ctr,
 			     (key_ft->key_buffer + kek_len + kck_len),
-			     SIR_REPLAY_CTR_LEN);
+			     REPLAY_CTR_LEN);
 	}
 
 	if (param_buf->hw_mode_transition_fixed_param)
@@ -830,7 +833,7 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 
 	fils_info = param_buf->roam_fils_synch_info;
 	if (fils_info) {
-		if ((fils_info->kek_len > SIR_KEK_KEY_LEN_FILS) ||
+		if ((fils_info->kek_len > MAX_KEK_LENGTH) ||
 		    (fils_info->pmk_len > MAX_PMK_LEN)) {
 			wma_err("Invalid kek_len %d or pmk_len %d",
 				 fils_info->kek_len,
@@ -879,72 +882,6 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 	return 0;
 }
 
-static void wma_update_roamed_peer_unicast_cipher(tp_wma_handle wma,
-						  uint32_t uc_cipher,
-						  uint32_t cipher_cap,
-						  uint8_t *peer_mac)
-{
-	struct wlan_objmgr_peer *peer;
-
-	if (!peer_mac) {
-		wma_err("wma ctx or peer mac is NULL");
-		return;
-	}
-
-	peer = wlan_objmgr_get_peer(wma->psoc,
-				    wlan_objmgr_pdev_get_pdev_id(wma->pdev),
-				    peer_mac, WLAN_LEGACY_WMA_ID);
-	if (!peer) {
-		wma_err("Peer of peer_mac "QDF_MAC_ADDR_FMT" not found",
-			QDF_MAC_ADDR_REF(peer_mac));
-		return;
-	}
-	wlan_crypto_set_peer_param(peer, WLAN_CRYPTO_PARAM_CIPHER_CAP,
-				   cipher_cap);
-	wlan_crypto_set_peer_param(peer, WLAN_CRYPTO_PARAM_UCAST_CIPHER,
-				   uc_cipher);
-
-	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
-
-	wma_debug("Set unicast cipher %x and cap %x for "QDF_MAC_ADDR_FMT,
-		  uc_cipher, cipher_cap, QDF_MAC_ADDR_REF(peer_mac));
-}
-
-static void wma_get_peer_uc_cipher(tp_wma_handle wma, uint8_t *peer_mac,
-				   uint32_t *uc_cipher, uint32_t *cipher_cap)
-{
-	int32_t cipher, cap;
-	struct wlan_objmgr_peer *peer;
-
-	if (!peer_mac) {
-		wma_err("wma ctx or peer_mac is NULL");
-		return;
-	}
-	peer = wlan_objmgr_get_peer(wma->psoc,
-				    wlan_objmgr_pdev_get_pdev_id(wma->pdev),
-				    peer_mac, WLAN_LEGACY_WMA_ID);
-	if (!peer) {
-		wma_err("Peer of peer_mac "QDF_MAC_ADDR_FMT" not found",
-			 QDF_MAC_ADDR_REF(peer_mac));
-		return;
-	}
-
-	cipher = wlan_crypto_get_peer_param(peer,
-					    WLAN_CRYPTO_PARAM_UCAST_CIPHER);
-	cap = wlan_crypto_get_peer_param(peer, WLAN_CRYPTO_PARAM_CIPHER_CAP);
-	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
-
-	if (cipher < 0 || cap < 0) {
-		wma_err("Invalid mgmt cipher");
-		return;
-	}
-
-	if (uc_cipher)
-		*uc_cipher = cipher;
-	if (cipher_cap)
-		*cipher_cap = cap;
-}
-
 /**
  * wma_roam_update_vdev() - Update the STA and BSS
  * @wma: Global WMA Handle
@@ -962,8 +899,8 @@ wma_roam_update_vdev(tp_wma_handle wma,
 {
 	tDeleteStaParams *del_sta_params;
 	tAddStaParams *add_sta_params;
-	uint32_t uc_cipher = 0, cipher_cap = 0;
 	uint8_t vdev_id, *bssid;
+	int32_t uc_cipher, cipher_cap;
 
 	vdev_id = roam_synch_ind_ptr->roamed_vdev_id;
 	wma->interfaces[vdev_id].nss = roam_synch_ind_ptr->nss;
@@ -995,25 +932,24 @@ wma_roam_update_vdev(tp_wma_handle wma,
 		return;
 	}
 
-	/*
-	 * Get uc cipher of old peer to update new peer as it doesnt
-	 * change in roaming
-	 */
-	wma_get_peer_uc_cipher(wma, bssid,
-			       &uc_cipher, &cipher_cap);
-
 	wma_delete_sta(wma, del_sta_params);
 	wma_delete_bss(wma, vdev_id);
 	wma_create_peer(wma, roam_synch_ind_ptr->bssid.bytes,
 			WMI_PEER_TYPE_DEFAULT, vdev_id);
 
 	/* Update new peer's uc cipher */
-	wma_update_roamed_peer_unicast_cipher(wma, uc_cipher, cipher_cap,
-					      roam_synch_ind_ptr->bssid.bytes);
+	uc_cipher = wlan_crypto_get_param(wma->interfaces[vdev_id].vdev,
+					   WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+	cipher_cap = wlan_crypto_get_param(wma->interfaces[vdev_id].vdev,
+					   WLAN_CRYPTO_PARAM_CIPHER_CAP);
+	wma_set_peer_ucast_cipher(roam_synch_ind_ptr->bssid.bytes, uc_cipher,
+				  cipher_cap);
 	wma_add_bss_lfr3(wma, roam_synch_ind_ptr->add_bss_params);
 	wma_add_sta(wma, add_sta_params);
 	qdf_mem_copy(bssid, roam_synch_ind_ptr->bssid.bytes,
 		     QDF_MAC_ADDR_SIZE);
+	lim_fill_roamed_peer_twt_caps(wma->mac_context, vdev_id,
+				      roam_synch_ind_ptr);
 	qdf_mem_free(add_sta_params);
 }
 
@@ -1253,9 +1189,8 @@ int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
 	/* update freq and channel width */
 	wma->interfaces[synch_event->vdev_id].ch_freq =
 		roam_synch_ind_ptr->chan_freq;
-	if (roam_synch_ind_ptr->join_rsp)
-		wma->interfaces[synch_event->vdev_id].chan_width =
-			roam_synch_ind_ptr->join_rsp->vht_channel_width;
+	wma->interfaces[synch_event->vdev_id].chan_width =
+		roam_synch_ind_ptr->chan_width;
 	/*
 	 * update phy_mode in wma to avoid mismatch in phymode between host and
 	 * firmware. The phymode stored in peer->peer_mlme.phymode is
@@ -1288,8 +1223,8 @@ cleanup_label:
 		if (synch_event)
 			wma_post_roam_sync_failure(wma, synch_event->vdev_id);
 	}
-	if (roam_synch_ind_ptr && roam_synch_ind_ptr->join_rsp)
-		qdf_mem_free(roam_synch_ind_ptr->join_rsp);
+	if (roam_synch_ind_ptr && roam_synch_ind_ptr->ric_tspec_data)
+		qdf_mem_free(roam_synch_ind_ptr->ric_tspec_data);
 	if (roam_synch_ind_ptr)
 		qdf_mem_free(roam_synch_ind_ptr);
 	if (bss_desc_ptr)
@@ -2456,19 +2391,14 @@ wma_roam_ho_fail_handler(tp_wma_handle wma, uint32_t vdev_id,
 	struct handoff_failure_ind *ho_failure_ind;
 	struct scheduler_msg sme_msg = { 0 };
 	QDF_STATUS qdf_status;
-	struct reject_ap_info ap_info;
-
-	ap_info.bssid = bssid;
-	ap_info.reject_ap_type = DRIVER_AVOID_TYPE;
-	ap_info.reject_reason = REASON_ROAM_HO_FAILURE;
-	ap_info.source = ADDED_BY_DRIVER;
-	wlan_blm_add_bssid_to_reject_list(wma->pdev, &ap_info);
 
 	ho_failure_ind = qdf_mem_malloc(sizeof(*ho_failure_ind));
 	if (!ho_failure_ind)
 		return;
 
 	ho_failure_ind->vdev_id = vdev_id;
+	ho_failure_ind->bssid = bssid;
+
 	sme_msg.type = eWNI_SME_HO_FAIL_IND;
 	sme_msg.bodyptr = ho_failure_ind;
 	sme_msg.bodyval = 0;
@@ -4189,11 +4119,31 @@ QDF_STATUS wma_scan_probe_setoui(tp_wma_handle wma,
  */
 void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 {
-#ifndef FEATURE_CM_ENABLE
-	struct scheduler_msg cds_msg = {0};
-	tSirSmeCandidateFoundInd *candidate_ind;
+	struct scheduler_msg msg = {0};
 	QDF_STATUS status;
+#ifdef FEATURE_CM_ENABLE
+	struct cm_host_roam_start_ind *ind;
+#else
+	tSirSmeCandidateFoundInd *candidate_ind;
+#endif
 
+#ifdef FEATURE_CM_ENABLE
+	ind = qdf_mem_malloc(sizeof(*ind));
+	if (!ind)
+		return;
+
+	wma->interfaces[vdev_id].roaming_in_progress = true;
+	ind->pdev = wma->pdev;
+	ind->vdev_id = vdev_id;
+	msg.bodyptr = ind;
+	msg.callback = wlan_cm_host_roam_start;
+	wma_debug("Posting ROam start ind to connection manager, vdev %d",
+		  vdev_id);
+	status = scheduler_post_message(QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_OS_IF,
+					QDF_MODULE_ID_SCAN, &msg);
+
+#else
 	candidate_ind = qdf_mem_malloc(sizeof(tSirSmeCandidateFoundInd));
 	if (!candidate_ind)
 		return;
@@ -4203,18 +4153,16 @@ void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 	candidate_ind->sessionId = vdev_id;
 	candidate_ind->length = sizeof(tSirSmeCandidateFoundInd);
 
-	cds_msg.type = eWNI_SME_CANDIDATE_FOUND_IND;
-	cds_msg.bodyptr = candidate_ind;
-	cds_msg.callback = sme_mc_process_handler;
+	msg.type = eWNI_SME_CANDIDATE_FOUND_IND;
+	msg.bodyptr = candidate_ind;
+	msg.callback = sme_mc_process_handler;
 	wma_debug("Posting candidate ind to SME, vdev %d", vdev_id);
 
 	status = scheduler_post_message(QDF_MODULE_ID_WMA, QDF_MODULE_ID_SME,
-					QDF_MODULE_ID_SCAN,  &cds_msg);
-	if (QDF_IS_STATUS_ERROR(status))
-		qdf_mem_free(candidate_ind);
-#else
-	/* post to osif queue to call cm API for LFR2 */
+					QDF_MODULE_ID_SCAN,  &msg);
 #endif
+	if (QDF_IS_STATUS_ERROR(status))
+		qdf_mem_free(msg.bodyptr);
 }
 
 /**
@@ -4285,7 +4233,6 @@ static void wma_invalid_roam_reason_handler(tp_wma_handle wma_handle,
 		wma_debug("Invalid notif %d", notif);
 		return;
 	}
-
 	roam_synch_data = qdf_mem_malloc(sizeof(*roam_synch_data));
 	if (!roam_synch_data)
 		return;
@@ -4294,9 +4241,15 @@ static void wma_invalid_roam_reason_handler(tp_wma_handle wma_handle,
 	if (notif != WMI_ROAM_NOTIF_ROAM_START)
 		wma_handle->pe_roam_synch_cb(wma_handle->mac_context,
 					     roam_synch_data, NULL, op_code);
-
+#if defined(FEATURE_CM_ENABLE) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
+	if (notif == WMI_ROAM_NOTIF_ROAM_START)
+		cm_fw_roam_start_req(wma_handle->psoc, vdev_id);
+	else
+		cm_fw_roam_abort_req(wma_handle->psoc, vdev_id);
+#else
 	wma_handle->csr_roam_synch_cb(wma_handle->mac_context, roam_synch_data,
 				      NULL, op_code);
+#endif
 	qdf_mem_free(roam_synch_data);
 }
 

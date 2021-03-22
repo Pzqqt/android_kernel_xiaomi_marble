@@ -146,17 +146,6 @@ typedef struct sSirAddie {
 	uint8_t addIEdata[SIR_MAC_MAX_ADD_IE_LENGTH + 2];
 } tSirAddie, *tpSirAddie;
 
-#ifdef FEATURE_WLAN_ESE
-
-/* The CCKM IE needs to be in the */
-/* Join and Reassoc Req. */
-typedef struct sSirCCKMie {
-	uint16_t length;
-	uint8_t cckmIEdata[WLAN_MAX_IE_LEN + 2];
-} tSirCCKMie, *tpSirCCKMie;
-
-#endif
-
 /* / Definition for Encryption Keys */
 typedef struct sSirKeys {
 	uint8_t keyId;

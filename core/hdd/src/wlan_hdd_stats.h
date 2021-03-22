@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -43,10 +43,10 @@
 
 #define WLAN_HDD_TGT_NOISE_FLOOR_DBM     (-96)
 
+#ifdef WLAN_FEATURE_LINK_LAYER_STATS
 extern const struct nla_policy qca_wlan_vendor_ll_ext_policy[
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_EXT_MAX + 1];
 
-#ifdef WLAN_FEATURE_LINK_LAYER_STATS
 /* QCA_NL80211_VENDOR_SUBCMD_LL_STATS_CLR */
 extern const struct nla_policy qca_wlan_vendor_ll_clr_policy[
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_CLR_MAX + 1];

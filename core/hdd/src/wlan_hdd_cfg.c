@@ -979,7 +979,7 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	cds_set_multicast_logging(hdd_ctx->config->multicast_host_fw_msgs);
 
 	mlme_obj->cfg.lfr.rso_user_config.policy_params.dfs_mode =
-		CSR_STA_ROAM_POLICY_DFS_ENABLED;
+		STA_ROAM_POLICY_DFS_ENABLED;
 	mlme_obj->cfg.lfr.rso_user_config.policy_params.skip_unsafe_channels = 0;
 
 	status = hdd_set_sme_cfgs_related_to_mlme(hdd_ctx, sme_config);

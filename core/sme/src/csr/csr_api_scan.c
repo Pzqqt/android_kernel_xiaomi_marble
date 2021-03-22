@@ -321,6 +321,7 @@ QDF_STATUS csr_scan_result_purge(struct mac_context *mac,
 	return status;
 }
 
+#ifndef FEATURE_CM_ENABLE
 /* Put the BSS into the scan result list */
 /* pIes can not be NULL */
 static void csr_scan_add_result(struct mac_context *mac_ctx,
@@ -418,7 +419,7 @@ bool csr_scan_append_bss_description(struct mac_context *mac,
 {
 	return csr_scan_save_bss_description(mac, pSirBssDescription);
 }
-
+#endif
 static void csr_purge_channel_power(struct mac_context *mac,
 				    tDblLinkList *pChannelList)
 {
@@ -1207,10 +1208,6 @@ error:
 		csr_release_profile(mac_ctx, session->scan_info.profile);
 		qdf_mem_free(session->scan_info.profile);
 		session->scan_info.profile = NULL;
-		if (notify)
-			csr_roam_call_callback(mac_ctx, session_id, NULL,
-					roam_id, eCSR_ROAM_FAILED,
-					eCSR_ROAM_RESULT_FAILURE);
 	}
 	return status;
 }
@@ -1416,7 +1413,6 @@ bool csr_roam_is_valid_channel(struct mac_context *mac, uint32_t ch_freq)
 	}
 	return fValid;
 }
-#endif
 
 QDF_STATUS csr_scan_create_entry_in_scan_cache(struct mac_context *mac,
 					       uint32_t sessionId,
@@ -1464,6 +1460,7 @@ free_mem:
 
 	return status;
 }
+#endif
 
 #ifdef FEATURE_WLAN_ESE
 /*  Update the TSF with the difference in system time */
@@ -1478,6 +1475,7 @@ void update_cckmtsf(uint32_t *timeStamp0, uint32_t *timeStamp1,
 }
 #endif
 
+#ifndef FEATURE_CM_ENABLE
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS
 csr_rso_save_ap_to_scan_cache(struct mac_context *mac,
@@ -1504,6 +1502,7 @@ csr_rso_save_ap_to_scan_cache(struct mac_context *mac,
 	csr_free_scan_result_entry(mac, scan_res_ptr);
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 #endif
 
 /**

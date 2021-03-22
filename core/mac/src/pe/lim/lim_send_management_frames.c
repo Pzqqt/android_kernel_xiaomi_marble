@@ -2147,11 +2147,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 
 	frm->ListenInterval.interval = mlm_assoc_req->listenInterval;
 
-	qdf_mem_copy(frm->SSID.ssid, pe_session->ssId.ssId,
-		     pe_session->ssId.length);
-	frm->SSID.present = 1;
-	frm->SSID.num_ssid = pe_session->ssId.length;
-
+	populate_dot11f_ssid2(pe_session, &frm->SSID);
 	populate_dot11f_supp_rates(mac_ctx, POPULATE_DOT11F_RATES_OPERATIONAL,
 		&frm->SuppRates, pe_session);
 

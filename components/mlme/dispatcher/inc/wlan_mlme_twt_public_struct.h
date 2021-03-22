@@ -29,16 +29,20 @@
  * @WLAN_TWT_SUSPEND: TWT suspend
  * @WLAN_TWT_RESUME: TWT resume
  * @WLAN_TWT_NUDGE: TWT nudge
+ * @WLAN_TWT_STATISTICS: TWT statistics
+ * @WLAN_TWT_CLEAR_STATISTICS: TWT clear statistics
  * @WLAN_TWT_ANY: Indicates one of the commands is in progress.
  */
 enum wlan_twt_commands {
-	WLAN_TWT_NONE       = 0,
-	WLAN_TWT_SETUP      = BIT(0),
-	WLAN_TWT_TERMINATE  = BIT(1),
-	WLAN_TWT_SUSPEND    = BIT(2),
-	WLAN_TWT_RESUME     = BIT(3),
-	WLAN_TWT_NUDGE      = BIT(4),
-	WLAN_TWT_ANY        = 0xFF,
+	WLAN_TWT_NONE             = 0,
+	WLAN_TWT_SETUP            = BIT(0),
+	WLAN_TWT_TERMINATE        = BIT(1),
+	WLAN_TWT_SUSPEND          = BIT(2),
+	WLAN_TWT_RESUME           = BIT(3),
+	WLAN_TWT_NUDGE            = BIT(4),
+	WLAN_TWT_STATISTICS       = BIT(5),
+	WLAN_TWT_CLEAR_STATISTICS = BIT(6),
+	WLAN_TWT_ANY              = 0xFF,
 };
 
 /**

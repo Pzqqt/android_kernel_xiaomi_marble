@@ -7601,7 +7601,8 @@ static QDF_STATUS sme_qos_request_reassoc(struct mac_context *mac,
 	wlan_mlme_get_bssid_vdev_id(mac->pdev, sessionId, &bssid);
 	ch_freq = wlan_get_operation_chan_freq_vdev_id(mac->pdev, sessionId);
 #ifdef FEATURE_CM_ENABLE
-	status = wlan_cm_roam_invoke(mac->pdev, sessionId, &bssid, ch_freq);
+	status = wlan_cm_roam_invoke(mac->pdev, sessionId, &bssid, ch_freq,
+				     CM_ROAMING_HOST);
 #else
 	status = ucfg_mlme_get_roaming_offload(mac->psoc, &roam_offload_enable);
 	if (QDF_IS_STATUS_ERROR(status))

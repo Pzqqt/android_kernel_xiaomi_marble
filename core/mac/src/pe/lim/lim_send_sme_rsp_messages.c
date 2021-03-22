@@ -389,7 +389,8 @@ void lim_cm_send_connect_rsp(struct mac_context *mac_ctx,
 			     struct cm_vdev_join_req *req,
 			     enum wlan_cm_connect_fail_reason reason,
 			     QDF_STATUS connect_status,
-			     enum wlan_status_code status_code)
+			     enum wlan_status_code status_code,
+			     bool is_reassoc)
 {
 	struct cm_vdev_join_rsp *rsp;
 	QDF_STATUS status;
@@ -424,6 +425,7 @@ void lim_cm_send_connect_rsp(struct mac_context *mac_ctx,
 		}
 	}
 
+	rsp->connect_rsp.is_reassoc = is_reassoc;
 	qdf_mem_zero(&msg, sizeof(msg));
 
 	msg.bodyptr = rsp;
@@ -522,10 +524,11 @@ void lim_send_sme_join_reassoc_rsp(struct mac_context *mac_ctx,
 			lim_cm_get_fail_reason_from_result_code(result_code);
 	}
 
-	if (msg_type == eWNI_SME_JOIN_RSP)
-		return lim_cm_send_connect_rsp(mac_ctx, session_entry, NULL,
-					       fail_reason, connect_status,
-					       prot_status_code);
+	return lim_cm_send_connect_rsp(mac_ctx, session_entry, NULL,
+				       fail_reason, connect_status,
+				       prot_status_code,
+				       msg_type == eWNI_SME_JOIN_RSP ?
+				       false : true);
 
 	/* add reassoc resp API */
 }
@@ -655,7 +658,6 @@ static void lim_handle_join_rsp_status(struct mac_context *mac_ctx,
 				sme_join_rsp->tspecIeLen);
 		}
 #endif
-		sme_join_rsp->aid = session_entry->limAID;
 		sme_join_rsp->vht_channel_width =
 			session_entry->ch_width;
 

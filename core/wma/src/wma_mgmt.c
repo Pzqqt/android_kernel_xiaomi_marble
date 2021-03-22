@@ -1574,7 +1574,8 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 				     ((1 << cmd->peer_nss) - 1));
 			WMI_VHT_MCS_NOTIFY_EXT_SS_SET(cmd->tx_mcs_set, 1);
 		}
-		if (params->vht_extended_nss_bw_cap) {
+		if (params->vht_extended_nss_bw_cap &&
+		    (params->vht_160mhz_nss || params->vht_80p80mhz_nss)) {
 			/*
 			 * bit[2:0] : Represents value of Rx NSS for 160 MHz
 			 * bit[5:3] : Represents value of Rx NSS for 80_80 MHz
@@ -1583,9 +1584,12 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 			 * bit[31]  : MSB(0/1): 1 in case of valid data
 			 */
 			cmd->peer_bw_rxnss_override |= (1 << 31);
-			cmd->peer_bw_rxnss_override |= params->vht_160mhz_nss;
-			cmd->peer_bw_rxnss_override |=
-				(params->vht_80p80mhz_nss << 3);
+			if (params->vht_160mhz_nss)
+				cmd->peer_bw_rxnss_override |=
+					(params->vht_160mhz_nss - 1);
+			if (params->vht_80p80mhz_nss)
+				cmd->peer_bw_rxnss_override |=
+					((params->vht_80p80mhz_nss - 1) << 3);
 			wma_debug("peer_bw_rxnss_override %0X",
 				  cmd->peer_bw_rxnss_override);
 		}

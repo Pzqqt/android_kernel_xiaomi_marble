@@ -181,46 +181,9 @@ void csr_roam_process_get_disconnect_stats_command(struct mac_context *mac,
 void csr_reinit_roam_cmd(struct mac_context *mac, tSmeCmd *pCommand);
 void csr_reinit_wm_status_change_cmd(struct mac_context *mac,
 				     tSmeCmd *pCommand);
-QDF_STATUS csr_is_valid_channel(struct mac_context *mac, uint32_t freq);
 
 QDF_STATUS sme_acquire_global_lock(struct sme_context *sme);
 QDF_STATUS sme_release_global_lock(struct sme_context *sme);
-
-/**
- * csr_flush_cfg_bg_scan_roam_channel_list() - Flush the channel list
- * @channel_info: Channel list to be flushed
- *
- * Return: None
- */
-void csr_flush_cfg_bg_scan_roam_channel_list(struct rso_chan_info *channel_info);
-
-#ifdef FEATURE_WLAN_ESE
-/**
- * csr_create_roam_scan_channel_list() - create roam scan channel list
- * @mac: Global mac pointer
- * @rso_cfg: roam config
- * @sessionId: session id
- * @chan_freq_list: pointer to channel list
- * @numChannels: number of channels
- * @band: band enumeration
- *
- * This function modifies the roam scan channel list as per AP neighbor
- * report; AP neighbor report may be empty or may include only other AP
- * channels; in any case, we merge the channel list with the learned occupied
- * channels list.
- * if the band is 2.4G, then make sure channel list contains only 2.4G
- * valid channels if the band is 5G, then make sure channel list contains
- * only 5G valid channels
- *
- * Return: QDF_STATUS enumeration
- */
-QDF_STATUS csr_create_roam_scan_channel_list(struct mac_context *mac,
-		struct rso_config *rso_cfg,
-		uint8_t sessionId,
-		uint32_t *chan_freq_list,
-		uint8_t numChannels,
-		const enum band_info band);
-#endif
 
 ePhyChanBondState csr_convert_cb_ini_value_to_phy_cb_state(uint32_t cbIniValue);
 void csr_process_set_dual_mac_config(struct mac_context *mac, tSmeCmd *command);

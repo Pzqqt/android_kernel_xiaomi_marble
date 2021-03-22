@@ -74,6 +74,7 @@
 #include <wlan_tdls_cfg_api.h>
 #include "cfg_ucfg_api.h"
 #include "wlan_mlme_public_struct.h"
+#include "wlan_mlme_twt_api.h"
 #include "wlan_scan_utils_api.h"
 #include <qdf_hang_event_notifier.h>
 #include <qdf_notifier.h>
@@ -2381,6 +2382,55 @@ lim_fill_fils_ft(struct pe_session *src_session,
 {}
 #endif
 
+#ifdef WLAN_SUPPORT_TWT
+void
+lim_fill_roamed_peer_twt_caps(struct mac_context *mac_ctx,
+			      uint8_t vdev_id,
+			      struct roam_offload_synch_ind *roam_synch)
+{
+	uint8_t *reassoc_body;
+	uint16_t len;
+	uint32_t status;
+	tDot11fReAssocResponse *reassoc_rsp;
+	struct pe_session *pe_session;
+
+	pe_session = pe_find_session_by_vdev_id(mac_ctx, vdev_id);
+	if (!pe_session) {
+		pe_err("session not found for given vdev_id %d", vdev_id);
+		return;
+	}
+
+	reassoc_rsp = qdf_mem_malloc(sizeof(*reassoc_rsp));
+	if (!reassoc_rsp)
+		return;
+
+	len = roam_synch->reassocRespLength - sizeof(tSirMacMgmtHdr);
+	reassoc_body = (uint8_t *)roam_synch + sizeof(tSirMacMgmtHdr) +
+			roam_synch->reassocRespOffset;
+
+	status = dot11f_unpack_re_assoc_response(mac_ctx, reassoc_body, len,
+						 reassoc_rsp, false);
+	if (DOT11F_FAILED(status)) {
+		pe_err("Failed to parse a Re-association Rsp (0x%08x, %d bytes):",
+		       status, len);
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
+				   reassoc_body, len);
+		qdf_mem_free(reassoc_rsp);
+		return;
+	} else if (DOT11F_WARNED(status)) {
+		pe_debug("Warnings while unpacking a Re-association Rsp (0x%08x, %d bytes):",
+			 status, len);
+	}
+
+	if (lim_is_session_he_capable(pe_session))
+		mlme_set_twt_peer_capabilities(mac_ctx->psoc,
+					       &roam_synch->bssid,
+					       &reassoc_rsp->he_cap,
+					       &reassoc_rsp->he_op);
+	qdf_mem_free(reassoc_rsp);
+}
+#endif
+
 /**
  * lim_check_ft_initial_im_association() - To check FT initial mobility(im)
  * association
@@ -2424,7 +2474,7 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 	uint16_t aid;
 	struct bss_params *add_bss_params;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	uint16_t join_rsp_len;
+	uint16_t ric_tspec_len;
 
 	if (!roam_sync_ind_ptr) {
 		pe_err("LFR3:roam_sync_ind_ptr is NULL");
@@ -2574,54 +2624,46 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 	ft_session_ptr->limMlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;
 	ft_session_ptr->limPrevMlmState = ft_session_ptr->limMlmState;
 	lim_init_tdls_data(mac_ctx, ft_session_ptr);
-	join_rsp_len = ft_session_ptr->RICDataLen +
-			sizeof(struct join_rsp) - sizeof(uint8_t);
-
+	ric_tspec_len = ft_session_ptr->RICDataLen;
+	pe_debug("LFR3: Session RicLength: %d", ft_session_ptr->RICDataLen);
 #ifdef FEATURE_WLAN_ESE
-	join_rsp_len += ft_session_ptr->tspecLen;
+	ric_tspec_len += ft_session_ptr->tspecLen;
 	pe_debug("LFR3: tspecLen: %d", ft_session_ptr->tspecLen);
 #endif
+	if (ric_tspec_len) {
+		roam_sync_ind_ptr->ric_tspec_data =
+				qdf_mem_malloc(ric_tspec_len);
+		if (!roam_sync_ind_ptr->ric_tspec_data) {
+			ft_session_ptr->bRoamSynchInProgress = false;
+			return QDF_STATUS_E_NOMEM;
+		}
 
-	roam_sync_ind_ptr->join_rsp = qdf_mem_malloc(join_rsp_len);
-	if (!roam_sync_ind_ptr->join_rsp) {
-		ft_session_ptr->bRoamSynchInProgress = false;
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	pe_debug("LFR3: Session RicLength: %d", ft_session_ptr->RICDataLen);
-	if (ft_session_ptr->ricData) {
-		roam_sync_ind_ptr->join_rsp->parsedRicRspLen =
+		if (ft_session_ptr->ricData) {
+			roam_sync_ind_ptr->ric_data_len =
 					ft_session_ptr->RICDataLen;
-		qdf_mem_copy(roam_sync_ind_ptr->join_rsp->frames,
-			     ft_session_ptr->ricData,
-			     roam_sync_ind_ptr->join_rsp->parsedRicRspLen);
-		qdf_mem_free(ft_session_ptr->ricData);
-		ft_session_ptr->ricData = NULL;
-		ft_session_ptr->RICDataLen = 0;
-	}
-
+			qdf_mem_copy(roam_sync_ind_ptr->ric_tspec_data,
+				     ft_session_ptr->ricData,
+				     roam_sync_ind_ptr->ric_data_len);
+			qdf_mem_free(ft_session_ptr->ricData);
+			ft_session_ptr->ricData = NULL;
+			ft_session_ptr->RICDataLen = 0;
+		}
 #ifdef FEATURE_WLAN_ESE
-	if (ft_session_ptr->tspecIes) {
-		roam_sync_ind_ptr->join_rsp->tspecIeLen =
-					ft_session_ptr->tspecLen;
-		qdf_mem_copy(roam_sync_ind_ptr->join_rsp->frames +
-			     roam_sync_ind_ptr->join_rsp->parsedRicRspLen,
-			     ft_session_ptr->tspecIes,
-			     roam_sync_ind_ptr->join_rsp->tspecIeLen);
-		qdf_mem_free(ft_session_ptr->tspecIes);
-		ft_session_ptr->tspecIes = NULL;
-		ft_session_ptr->tspecLen = 0;
-	}
+		if (ft_session_ptr->tspecIes) {
+			roam_sync_ind_ptr->tspec_len = ft_session_ptr->tspecLen;
+			qdf_mem_copy(roam_sync_ind_ptr->ric_tspec_data +
+				     roam_sync_ind_ptr->ric_data_len,
+				     ft_session_ptr->tspecIes,
+				     roam_sync_ind_ptr->tspec_len);
+			qdf_mem_free(ft_session_ptr->tspecIes);
+			ft_session_ptr->tspecIes = NULL;
+			ft_session_ptr->tspecLen = 0;
+		}
 #endif
-
-	roam_sync_ind_ptr->join_rsp->vht_channel_width =
-					ft_session_ptr->ch_width;
-	roam_sync_ind_ptr->join_rsp->timingMeasCap = curr_sta_ds->timingMeasCap;
-	roam_sync_ind_ptr->join_rsp->nss = curr_sta_ds->nss;
-	roam_sync_ind_ptr->join_rsp->max_rate_flags =
+	}
+	roam_sync_ind_ptr->chan_width = ft_session_ptr->ch_width;
+	roam_sync_ind_ptr->max_rate_flags =
 			lim_get_max_rate_flags(mac_ctx, curr_sta_ds);
-	lim_set_tdls_flags(roam_sync_ind_ptr, ft_session_ptr);
-	roam_sync_ind_ptr->join_rsp->aid = ft_session_ptr->limAID;
 	ft_session_ptr->limSmeState = eLIM_SME_LINK_EST_STATE;
 	ft_session_ptr->limPrevSmeState = ft_session_ptr->limSmeState;
 	ft_session_ptr->bRoamSynchInProgress = false;

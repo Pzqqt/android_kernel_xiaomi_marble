@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -828,5 +828,15 @@ QDF_STATUS wma_vdev_self_peer_create(struct vdev_mlme_obj *vdev_mlme);
  * Return: None
  */
 void wma_cleanup_vdev(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * wma_set_wakeup_logs_to_console() - Enable/disable wakeup logs to console
+ * @value: boolean value
+ *
+ * API to enable/disable wow host wakeup event logs to console.
+ *
+ * Return: None
+ */
+void wma_set_wakeup_logs_to_console(bool value);
 
 #endif /* WMA_API_H */

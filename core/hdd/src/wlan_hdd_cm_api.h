@@ -83,6 +83,15 @@ QDF_STATUS hdd_cm_netif_queue_control(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS hdd_cm_connect_complete(struct wlan_objmgr_vdev *vdev,
 				   struct wlan_cm_connect_resp *rsp,
 				   enum osif_cb_type type);
+/**
+ * hdd_cm_napi_serialize_control() - NAPI serialize hdd cb
+ * @action: serialize or de-serialize NAPI activities
+ *
+ * This function is for napi serialize
+ *
+ * Return: qdf status
+ */
+QDF_STATUS hdd_cm_napi_serialize_control(bool action);
 
 #ifdef WLAN_FEATURE_FILS_SK
 /**

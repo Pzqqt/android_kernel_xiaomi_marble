@@ -1236,7 +1236,7 @@ cm_is_dfs_unsafe_extra_band_chan(struct wlan_objmgr_vdev *vdev,
 	roam_policy = &mlme_obj->cfg.lfr.rso_user_config.policy_params;
 	if ((mlme_obj->cfg.lfr.roaming_dfs_channel ==
 	     ROAMING_DFS_CHANNEL_DISABLED ||
-	     roam_policy->dfs_mode == CSR_STA_ROAM_POLICY_DFS_DISABLED) &&
+	     roam_policy->dfs_mode == STA_ROAM_POLICY_DFS_DISABLED) &&
 	    (wlan_reg_is_dfs_for_freq(pdev, freq)))
 		return true;
 
@@ -2889,11 +2889,7 @@ static QDF_STATUS cm_is_rso_allowed(struct wlan_objmgr_psoc *psoc,
 	return wlan_cm_roam_cmd_allowed(psoc, vdev_id, command, reason);
 }
 #endif
-/*
- * similar to csr_roam_offload_scan, will be used from many legacy
- * process directly, generate a new function wlan_cm_roam_send_rso_cmd
- * for external usage.
- */
+
 QDF_STATUS cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
 				uint8_t vdev_id, uint8_t rso_command,
 				uint8_t reason)
@@ -3474,6 +3470,524 @@ cm_roam_state_change(struct wlan_objmgr_pdev *pdev,
 	return status;
 }
 
+#ifdef FEATURE_WLAN_ESE
+static QDF_STATUS
+cm_roam_channels_filter_by_current_band(struct wlan_objmgr_pdev *pdev,
+					uint8_t vdev_id,
+					qdf_freq_t *in_chan_freq_list,
+					uint8_t in_num_chan,
+					qdf_freq_t *out_chan_freq_list,
+					uint8_t *merged_num_chan)
+{
+	uint8_t i = 0;
+	uint8_t num_chan = 0;
+	uint32_t curr_ap_op_chan_freq =
+		wlan_get_operation_chan_freq_vdev_id(pdev, vdev_id);
+
+	/* Check for NULL pointer */
+	if (!in_chan_freq_list)
+		return QDF_STATUS_E_INVAL;
+
+	/* Check for NULL pointer */
+	if (!out_chan_freq_list)
+		return QDF_STATUS_E_INVAL;
+
+	if (in_num_chan > CFG_VALID_CHANNEL_LIST_LEN) {
+		mlme_err("Wrong Number of Input Channels %d", in_num_chan);
+		return QDF_STATUS_E_INVAL;
+	}
+	for (i = 0; i < in_num_chan; i++) {
+		if (WLAN_REG_IS_SAME_BAND_FREQS(curr_ap_op_chan_freq,
+						in_chan_freq_list[i])) {
+			out_chan_freq_list[num_chan] = in_chan_freq_list[i];
+			num_chan++;
+		}
+	}
+
+	/* Return final number of channels */
+	*merged_num_chan = num_chan;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS cm_roam_merge_channel_lists(qdf_freq_t *in_chan_freq_list,
+					      uint8_t in_num_chan,
+					      qdf_freq_t *out_chan_freq_list,
+					      uint8_t out_num_chan,
+					      uint8_t *merged_num_chan)
+{
+	uint8_t i = 0;
+	uint8_t j = 0;
+	uint8_t num_chan = out_num_chan;
+
+	/* Check for NULL pointer */
+	if (!in_chan_freq_list)
+		return QDF_STATUS_E_INVAL;
+
+	/* Check for NULL pointer */
+	if (!out_chan_freq_list)
+		return QDF_STATUS_E_INVAL;
+
+	if (in_num_chan > CFG_VALID_CHANNEL_LIST_LEN) {
+		mlme_err("Wrong Number of Input Channels %d", in_num_chan);
+		return QDF_STATUS_E_INVAL;
+	}
+	if (out_num_chan >= CFG_VALID_CHANNEL_LIST_LEN) {
+		mlme_err("Wrong Number of Output Channels %d", out_num_chan);
+		return QDF_STATUS_E_INVAL;
+	}
+	/* Add the "new" channels in the input list to the end of the
+	 * output list.
+	 */
+	for (i = 0; i < in_num_chan; i++) {
+		for (j = 0; j < out_num_chan; j++) {
+			if (in_chan_freq_list[i] == out_chan_freq_list[j])
+				break;
+		}
+		if (j == out_num_chan) {
+			if (in_chan_freq_list[i]) {
+				mlme_debug("Adding extra %d to roam channel list",
+					   in_chan_freq_list[i]);
+				out_chan_freq_list[num_chan] =
+							in_chan_freq_list[i];
+				num_chan++;
+			}
+		}
+		if (num_chan >= CFG_VALID_CHANNEL_LIST_LEN) {
+			mlme_debug("Merge Neighbor channel list reached Max limit %d",
+				   in_num_chan);
+			break;
+		}
+	}
+
+	/* Return final number of channels */
+	*merged_num_chan = num_chan;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS cm_create_roam_scan_channel_list(struct wlan_objmgr_pdev *pdev,
+					    struct rso_config *rso_cfg,
+					    uint8_t vdev_id,
+					    qdf_freq_t *chan_freq_list,
+					    uint8_t num_chan,
+					    const enum band_info band)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	uint8_t out_num_chan = 0;
+	uint8_t in_chan_num = num_chan;
+	qdf_freq_t *in_ptr = chan_freq_list;
+	uint8_t i = 0;
+	qdf_freq_t *freq_list;
+	qdf_freq_t *tmp_chan_freq_list;
+	uint8_t merged_out_chan_num = 0;
+	struct rso_chan_info *chan_lst;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct wlan_mlme_reg *reg;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc)
+		return QDF_STATUS_E_INVAL;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_INVAL;
+
+	reg = &mlme_obj->cfg.reg;
+	chan_lst = &rso_cfg->roam_scan_freq_lst;
+	/*
+	 * Create a Union of occupied channel list learnt by the DUT along
+	 * with the Neighbor report Channels. This increases the chances of
+	 * the DUT to get a candidate AP while roaming even if the Neighbor
+	 * Report is not able to provide sufficient information.
+	 */
+	if (rso_cfg->occupied_chan_lst.num_chan) {
+		cm_roam_merge_channel_lists(rso_cfg->occupied_chan_lst.freq_list,
+					    rso_cfg->occupied_chan_lst.num_chan,
+					    in_ptr, in_chan_num,
+					    &merged_out_chan_num);
+		in_chan_num = merged_out_chan_num;
+	}
+
+	freq_list = qdf_mem_malloc(CFG_VALID_CHANNEL_LIST_LEN *
+				       sizeof(qdf_freq_t));
+	if (!freq_list)
+		return QDF_STATUS_E_NOMEM;
+
+	if (band == BAND_2G) {
+		for (i = 0; i < in_chan_num; i++) {
+			if (WLAN_REG_IS_24GHZ_CH_FREQ(in_ptr[i]) &&
+			    wlan_roam_is_channel_valid(reg, in_ptr[i])) {
+				freq_list[out_num_chan++] = in_ptr[i];
+			}
+		}
+	} else if (band == BAND_5G) {
+		for (i = 0; i < in_chan_num; i++) {
+			/* Add 5G Non-DFS channel */
+			if (WLAN_REG_IS_5GHZ_CH_FREQ(in_ptr[i]) &&
+			    wlan_roam_is_channel_valid(reg, in_ptr[i]) &&
+			    !wlan_reg_is_dfs_for_freq(pdev, in_ptr[i])) {
+				freq_list[out_num_chan++] = in_ptr[i];
+			}
+		}
+	} else if (band == BAND_ALL) {
+		for (i = 0; i < in_chan_num; i++) {
+			if (wlan_roam_is_channel_valid(reg, in_ptr[i]) &&
+			    !wlan_reg_is_dfs_for_freq(pdev, in_ptr[i])) {
+				freq_list[out_num_chan++] = in_ptr[i];
+			}
+		}
+	} else {
+		mlme_warn("Invalid band, No operation carried out (Band %d)",
+			  band);
+		qdf_mem_free(freq_list);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	tmp_chan_freq_list = qdf_mem_malloc(CFG_VALID_CHANNEL_LIST_LEN *
+					    sizeof(qdf_freq_t));
+	if (!tmp_chan_freq_list) {
+		qdf_mem_free(freq_list);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	/*
+	 * if roaming within band is enabled, then select only the
+	 * in band channels .
+	 * This is required only if the band capability is set to ALL,
+	 * E.g., if band capability is only 2.4G then all the channels in the
+	 * list are already filtered for 2.4G channels, hence ignore this check
+	 */
+	if ((band == BAND_ALL) && mlme_obj->cfg.lfr.roam_intra_band)
+		cm_roam_channels_filter_by_current_band(pdev, vdev_id,
+							freq_list, out_num_chan,
+							tmp_chan_freq_list,
+							&out_num_chan);
+
+	/* Prepare final roam scan channel list */
+	if (out_num_chan) {
+		/* Clear the channel list first */
+		cm_flush_roam_channel_list(chan_lst);
+		chan_lst->freq_list =
+			qdf_mem_malloc(out_num_chan * sizeof(qdf_freq_t));
+		if (!chan_lst->freq_list) {
+			chan_lst->num_chan = 0;
+			status = QDF_STATUS_E_NOMEM;
+			goto error;
+		}
+		for (i = 0; i < out_num_chan; i++)
+			chan_lst->freq_list[i] = tmp_chan_freq_list[i];
+
+		chan_lst->num_chan = out_num_chan;
+	}
+
+error:
+	qdf_mem_free(tmp_chan_freq_list);
+	qdf_mem_free(freq_list);
+
+	return status;
+}
+#endif
+
+static const char *cm_get_config_item_string(uint8_t reason)
+{
+	switch (reason) {
+	CASE_RETURN_STRING(REASON_LOOKUP_THRESH_CHANGED);
+	CASE_RETURN_STRING(REASON_OPPORTUNISTIC_THRESH_DIFF_CHANGED);
+	CASE_RETURN_STRING(REASON_ROAM_RESCAN_RSSI_DIFF_CHANGED);
+	CASE_RETURN_STRING(REASON_ROAM_BMISS_FIRST_BCNT_CHANGED);
+	CASE_RETURN_STRING(REASON_ROAM_BMISS_FINAL_BCNT_CHANGED);
+	default:
+		return "unknown";
+	}
+}
+
+QDF_STATUS cm_neighbor_roam_update_config(struct wlan_objmgr_pdev *pdev,
+					  uint8_t vdev_id, uint8_t value,
+					  uint8_t reason)
+{
+	uint8_t old_value;
+	struct wlan_objmgr_vdev *vdev;
+	struct rso_config *rso_cfg;
+	struct rso_cfg_params *cfg_params;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc)
+		return QDF_STATUS_E_FAILURE;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL for vdev %d", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		return QDF_STATUS_E_FAILURE;
+	}
+	cfg_params = &rso_cfg->cfg_param;
+	switch (reason) {
+	case REASON_LOOKUP_THRESH_CHANGED:
+		old_value = cfg_params->neighbor_lookup_threshold;
+		cfg_params->neighbor_lookup_threshold = value;
+		break;
+	case REASON_OPPORTUNISTIC_THRESH_DIFF_CHANGED:
+		old_value = cfg_params->opportunistic_threshold_diff;
+		cfg_params->opportunistic_threshold_diff = value;
+		break;
+	case REASON_ROAM_RESCAN_RSSI_DIFF_CHANGED:
+		old_value = cfg_params->roam_rescan_rssi_diff;
+		cfg_params->roam_rescan_rssi_diff = value;
+		rso_cfg->rescan_rssi_delta = value;
+		break;
+	case REASON_ROAM_BMISS_FIRST_BCNT_CHANGED:
+		old_value = cfg_params->roam_bmiss_first_bcn_cnt;
+		cfg_params->roam_bmiss_first_bcn_cnt = value;
+		break;
+	case REASON_ROAM_BMISS_FINAL_BCNT_CHANGED:
+		old_value = cfg_params->roam_bmiss_final_cnt;
+		cfg_params->roam_bmiss_final_cnt = value;
+		break;
+	default:
+		mlme_debug("Unknown update cfg reason");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		return QDF_STATUS_E_FAILURE;
+	}
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+	mlme_debug("CONNECTED, send update cfg cmd");
+	wlan_roam_update_cfg(psoc, vdev_id, reason);
+
+	mlme_debug("LFR config for %s changed from %d to %d",
+		   cm_get_config_item_string(reason), old_value, value);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+void cm_flush_roam_channel_list(struct rso_chan_info *channel_info)
+{
+	/* Free up the memory first (if required) */
+	if (channel_info->freq_list) {
+		qdf_mem_free(channel_info->freq_list);
+		channel_info->freq_list = NULL;
+		channel_info->num_chan = 0;
+	}
+}
+
+static void
+cm_restore_default_roaming_params(struct wlan_mlme_psoc_ext_obj *mlme_obj,
+				   struct wlan_objmgr_vdev *vdev)
+{
+	struct rso_config *rso_cfg;
+	struct rso_cfg_params *cfg_params;
+
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg)
+		return;
+	cfg_params = &rso_cfg->cfg_param;
+	cfg_params->enable_scoring_for_roam =
+			mlme_obj->cfg.roam_scoring.enable_scoring_for_roam;
+	cfg_params->empty_scan_refresh_period =
+			mlme_obj->cfg.lfr.empty_scan_refresh_period;
+	cfg_params->full_roam_scan_period =
+			mlme_obj->cfg.lfr.roam_full_scan_period;
+	cfg_params->neighbor_scan_period =
+			mlme_obj->cfg.lfr.neighbor_scan_timer_period;
+	cfg_params->neighbor_lookup_threshold =
+			mlme_obj->cfg.lfr.neighbor_lookup_rssi_threshold;
+	cfg_params->roam_rssi_diff =
+			mlme_obj->cfg.lfr.roam_rssi_diff;
+	cfg_params->bg_rssi_threshold =
+			mlme_obj->cfg.lfr.bg_rssi_threshold;
+
+	cfg_params->max_chan_scan_time =
+			mlme_obj->cfg.lfr.neighbor_scan_max_chan_time;
+	cfg_params->roam_scan_home_away_time =
+			mlme_obj->cfg.lfr.roam_scan_home_away_time;
+	cfg_params->roam_scan_n_probes =
+			mlme_obj->cfg.lfr.roam_scan_n_probes;
+	cfg_params->roam_scan_inactivity_time =
+			mlme_obj->cfg.lfr.roam_scan_inactivity_time;
+	cfg_params->roam_inactive_data_packet_count =
+			mlme_obj->cfg.lfr.roam_inactive_data_packet_count;
+	cfg_params->roam_scan_period_after_inactivity =
+			mlme_obj->cfg.lfr.roam_scan_period_after_inactivity;
+}
+
+QDF_STATUS cm_roam_control_restore_default_config(struct wlan_objmgr_pdev *pdev,
+						  uint8_t vdev_id)
+{
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
+	struct rso_chan_info *chan_info;
+	struct wlan_objmgr_vdev *vdev;
+	struct rso_config *rso_cfg;
+	struct rso_cfg_params *cfg_params;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc)
+		goto out;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		goto out;
+
+	if (!mlme_obj->cfg.lfr.roam_scan_offload_enabled) {
+		mlme_err("roam_scan_offload_enabled is not supported");
+		goto out;
+	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL for vdev %d", vdev_id);
+		goto out;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		goto out;
+	}
+	cfg_params = &rso_cfg->cfg_param;
+	mlme_obj->cfg.lfr.rso_user_config.roam_scan_control = false;
+
+	chan_info = &cfg_params->pref_chan_info;
+	cm_flush_roam_channel_list(chan_info);
+
+	chan_info = &cfg_params->specific_chan_info;
+	cm_flush_roam_channel_list(chan_info);
+
+	mlme_reinit_control_config_lfr_params(psoc, &mlme_obj->cfg.lfr);
+
+	cm_restore_default_roaming_params(mlme_obj, vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+
+	if (MLME_IS_ROAM_STATE_RSO_ENABLED(psoc, vdev_id)) {
+		cm_roam_send_rso_cmd(psoc, vdev_id,
+				     ROAM_SCAN_OFFLOAD_UPDATE_CFG,
+				     REASON_FLUSH_CHANNEL_LIST);
+		cm_roam_send_rso_cmd(psoc, vdev_id,
+				     ROAM_SCAN_OFFLOAD_UPDATE_CFG,
+				     REASON_SCORING_CRITERIA_CHANGED);
+	}
+
+	status = QDF_STATUS_SUCCESS;
+out:
+	return status;
+}
+
+void cm_update_pmk_cache_ft(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_crypto_pmksa pmksa;
+	enum QDF_OPMODE vdev_mode;
+	struct cm_roam_values_copy src_cfg;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev is NULL");
+		return;
+	}
+
+	vdev_mode = wlan_vdev_mlme_get_opmode(vdev);
+	/* If vdev mode is STA then proceed further */
+	if (vdev_mode != QDF_STA_MODE) {
+		mlme_err("vdev mode is not STA");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		return;
+	}
+
+	/*
+	 * In FT connection fetch the MDID from Session and send it to crypto
+	 * so that it will update the crypto PMKSA table with the MDID for the
+	 * matching BSSID or SSID PMKSA entry. And delete the old/stale PMK
+	 * cache entries for the same mobility domain as of the newly added
+	 * entry to avoid multiple PMK cache entries for the same MDID.
+	 */
+	wlan_vdev_get_bss_peer_mac(vdev, &pmksa.bssid);
+	wlan_vdev_mlme_get_ssid(vdev, pmksa.ssid, &pmksa.ssid_len);
+	wlan_cm_roam_cfg_get_value(psoc, vdev_id,
+				   MOBILITY_DOMAIN, &src_cfg);
+	mlme_debug("copied the BSSID/SSID from session to PMKSA mdie %d",
+		  src_cfg.bool_value);
+	if (src_cfg.bool_value) {
+		pmksa.mdid.mdie_present = 1;
+		pmksa.mdid.mobility_domain = src_cfg.uint_value;
+		mlme_debug("copied the MDID from session to PMKSA");
+
+		status = wlan_crypto_update_pmk_cache_ft(vdev, &pmksa);
+		if (status == QDF_STATUS_SUCCESS)
+			mlme_debug("Updated the crypto cache table");
+	}
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+}
+
+bool cm_lookup_pmkid_using_bssid(struct wlan_objmgr_psoc *psoc,
+				 uint8_t vdev_id,
+				 struct wlan_crypto_pmksa *pmk_cache)
+{
+	struct wlan_crypto_pmksa *pmksa;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("Invalid vdev");
+		return false;
+	}
+
+	pmksa = wlan_crypto_get_pmksa(vdev, &pmk_cache->bssid);
+	if (!pmksa) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		return false;
+	}
+	qdf_mem_copy(pmk_cache->pmkid, pmksa->pmkid, sizeof(pmk_cache->pmkid));
+	qdf_mem_copy(pmk_cache->pmk, pmksa->pmk, pmksa->pmk_len);
+	pmk_cache->pmk_len = pmksa->pmk_len;
+	pmk_cache->pmk_lifetime = pmksa->pmk_lifetime;
+	pmk_cache->pmk_lifetime_threshold = pmksa->pmk_lifetime_threshold;
+	pmk_cache->pmk_entry_ts = pmksa->pmk_entry_ts;
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+
+	return true;
+}
+
+void cm_roam_restore_default_config(struct wlan_objmgr_pdev *pdev,
+				    uint8_t vdev_id)
+{
+	struct wlan_roam_triggers triggers;
+	struct cm_roam_values_copy src_config;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc)
+		return;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return;
+
+	if (mlme_obj->cfg.lfr.roam_scan_offload_enabled) {
+		src_config.bool_value = 0;
+		wlan_cm_roam_cfg_set_value(psoc, vdev_id, ROAM_CONFIG_ENABLE,
+					   &src_config);
+	}
+
+	triggers.vdev_id = vdev_id;
+	triggers.trigger_bitmap = wlan_mlme_get_roaming_triggers(psoc);
+	mlme_debug("Reset roam trigger bitmap to 0x%x", triggers.trigger_bitmap);
+	cm_rso_set_roam_trigger(pdev, vdev_id, &triggers);
+	cm_roam_control_restore_default_config(pdev, vdev_id);
+}
+
 #if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 void
 cm_store_sae_single_pmk_to_global_cache(struct wlan_objmgr_psoc *psoc,
@@ -3521,6 +4035,95 @@ cm_store_sae_single_pmk_to_global_cache(struct wlan_objmgr_psoc *psoc,
 	qdf_mem_zero(pmk_info, sizeof(*pmk_info));
 	qdf_mem_free(pmk_info);
 }
+
+void cm_check_and_set_sae_single_pmk_cap(struct wlan_objmgr_psoc *psoc,
+					 uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_pmk_info *pmk_info;
+	struct wlan_crypto_pmksa *pmkid_cache;
+	int32_t keymgmt;
+	bool lookup_success;
+	QDF_STATUS status;
+	struct qdf_mac_addr bssid = QDF_MAC_ADDR_ZERO_INIT;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("get vdev failed");
+		return;
+	}
+	status = wlan_vdev_get_bss_peer_mac(vdev, &bssid);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("Failed to find connected bssid");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		return;
+	}
+	keymgmt = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
+	if (keymgmt < 0) {
+		mlme_err("Invalid mgmt cipher");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		return;
+	}
+
+	if (keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_SAE)) {
+		struct cm_roam_values_copy src_cfg;
+
+		wlan_cm_roam_cfg_get_value(psoc, vdev_id, IS_SINGLE_PMK,
+					   &src_cfg);
+		wlan_mlme_set_sae_single_pmk_bss_cap(psoc, vdev_id,
+						     src_cfg.bool_value);
+		if (!src_cfg.bool_value)
+			goto end;
+
+		wlan_crypto_set_sae_single_pmk_bss_cap(vdev, &bssid, true);
+
+		pmkid_cache = qdf_mem_malloc(sizeof(*pmkid_cache));
+		if (!pmkid_cache)
+			goto end;
+
+		qdf_copy_macaddr(&pmkid_cache->bssid, &bssid);
+		/*
+		 * In SAE single pmk roaming case, there will
+		 * be no PMK entry found for the AP in pmk cache.
+		 * So if the lookup is successful, then we have done
+		 * a FULL sae here. In that case, clear all other
+		 * single pmk entries.
+		 */
+		lookup_success =
+			cm_lookup_pmkid_using_bssid(psoc, vdev_id, pmkid_cache);
+		if (lookup_success) {
+			wlan_crypto_selective_clear_sae_single_pmk_entries(vdev,
+					&bssid);
+
+			pmk_info = qdf_mem_malloc(sizeof(*pmk_info));
+			if (!pmk_info) {
+				qdf_mem_zero(pmkid_cache, sizeof(*pmkid_cache));
+				qdf_mem_free(pmkid_cache);
+				goto end;
+			}
+
+			qdf_mem_copy(pmk_info->pmk, pmkid_cache->pmk,
+				     pmkid_cache->pmk_len);
+			pmk_info->pmk_len = pmkid_cache->pmk_len;
+			pmk_info->spmk_timestamp = pmkid_cache->pmk_entry_ts;
+			pmk_info->spmk_timeout_period  =
+				(pmkid_cache->pmk_lifetime *
+				 pmkid_cache->pmk_lifetime_threshold / 100);
+
+			wlan_mlme_update_sae_single_pmk(vdev, pmk_info);
+
+			qdf_mem_zero(pmk_info, sizeof(*pmk_info));
+			qdf_mem_free(pmk_info);
+		}
+
+		qdf_mem_zero(pmkid_cache, sizeof(*pmkid_cache));
+		qdf_mem_free(pmkid_cache);
+	}
+
+end:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+}
 #endif
 
 bool cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
@@ -3552,7 +4155,6 @@ bool cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
 	return false;
 }
 
-#ifdef FEATURE_CM_ENABLE
 static void cm_roam_start_init(struct wlan_objmgr_psoc *psoc,
 			       struct wlan_objmgr_pdev *pdev,
 			       struct wlan_objmgr_vdev *vdev)
@@ -3565,7 +4167,7 @@ static void cm_roam_start_init(struct wlan_objmgr_psoc *psoc,
 
 	opmode = wlan_vdev_mlme_get_opmode(vdev);
 	if (opmode != QDF_STA_MODE) {
-		sme_debug("Wrong opmode %d", opmode);
+		mlme_debug("Wrong opmode %d", opmode);
 		return;
 	}
 	mlme_obj = mlme_get_psoc_ext_obj(psoc);
@@ -3633,9 +4235,76 @@ void cm_roam_start_init_on_connect(struct wlan_objmgr_pdev *pdev,
 	cm_roam_start_init(psoc, pdev, vdev);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 }
-#endif
 
-#if defined(WLAN_FEATURE_ROAM_OFFLOAD) && defined(FEATURE_CM_ENABLE)
+#ifdef FEATURE_CM_ENABLE
+QDF_STATUS cm_start_roam_invoke(struct wlan_objmgr_psoc *psoc,
+				struct wlan_objmgr_vdev *vdev,
+				struct qdf_mac_addr *bssid,
+				qdf_freq_t chan_freq,
+				enum wlan_cm_source source)
+{
+	struct cm_req *cm_req;
+	QDF_STATUS status;
+	uint8_t roam_control_bitmap;
+	uint8_t vdev_id = vdev->vdev_objmgr.vdev_id;
+	bool roam_offload_enabled = cm_roam_offload_enabled(psoc);
+
+	roam_control_bitmap = mlme_get_operations_bitmap(psoc, vdev_id);
+	if (roam_offload_enabled && (roam_control_bitmap ||
+	    !MLME_IS_ROAM_INITIALIZED(psoc, vdev_id))) {
+		mlme_debug("ROAM: RSO Disabled internaly: vdev[%d] bitmap[0x%x]",
+			   vdev_id, roam_control_bitmap);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cm_req = qdf_mem_malloc(sizeof(*cm_req));
+	if (!cm_req)
+		return QDF_STATUS_E_NOMEM;
+
+	/* Ignore BSSID and channel validation for FW host roam */
+	if (source == CM_ROAMING_FW)
+		goto send_evt;
+
+	if (qdf_is_macaddr_zero(bssid) ||
+	    cm_req->roam_req.req.source == CM_ROAMING_NUD_FAILURE) {
+		if (!wlan_mlme_is_data_stall_recovery_fw_supported(psoc)) {
+			mlme_debug("FW does not support data stall recovery, aborting roam invoke");
+			qdf_mem_free(cm_req);
+			return QDF_STATUS_E_NOSUPPORT;
+		}
+		cm_req->roam_req.req.forced_roaming = true;
+		source = CM_ROAMING_NUD_FAILURE;
+		goto send_evt;
+	}
+
+	if (!chan_freq || qdf_is_macaddr_zero(bssid)) {
+		mlme_debug("bssid " QDF_MAC_ADDR_FMT " chan_freq %d",
+			   QDF_MAC_ADDR_REF(bssid->bytes), chan_freq);
+		qdf_mem_free(cm_req);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_copy_macaddr(&cm_req->roam_req.req.bssid, bssid);
+	cm_req->roam_req.req.chan_freq = chan_freq;
+
+send_evt:
+	cm_req->roam_req.req.source = source;
+
+	cm_req->roam_req.req.vdev_id = vdev_id;
+	/*
+	 * For LFR3 WLAN_CM_SM_EV_ROAM_REQ will be converted to
+	 * WLAN_CM_SM_EV_ROAM_INVOKE.
+	 */
+	status = cm_sm_deliver_event(vdev, WLAN_CM_SM_EV_ROAM_REQ,
+				     sizeof(*cm_req), cm_req);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		qdf_mem_free(cm_req);
+
+	return status;
+}
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static QDF_STATUS
 cm_find_roam_candidate(struct wlan_objmgr_pdev *pdev,
 		       struct cnx_mgr *cm_ctx,
@@ -3710,64 +4379,6 @@ cm_find_roam_candidate(struct wlan_objmgr_pdev *pdev,
 	wlan_scan_purge_results(candidate_list);
 
 	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS cm_start_roam_invoke(struct wlan_objmgr_psoc *psoc,
-				struct wlan_objmgr_vdev *vdev,
-				struct qdf_mac_addr *bssid,
-				qdf_freq_t chan_freq)
-{
-	struct cm_req *cm_req;
-	QDF_STATUS status;
-	uint8_t roam_control_bitmap;
-	uint8_t vdev_id = vdev->vdev_objmgr.vdev_id;
-
-	roam_control_bitmap = mlme_get_operations_bitmap(psoc, vdev_id);
-	if (roam_control_bitmap ||
-	    !MLME_IS_ROAM_INITIALIZED(psoc, vdev_id)) {
-		mlme_debug("ROAM: RSO Disabled internaly: vdev[%d] bitmap[0x%x]",
-			   vdev_id, roam_control_bitmap);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	cm_req = qdf_mem_malloc(sizeof(*cm_req));
-	if (!cm_req)
-		return QDF_STATUS_E_NOMEM;
-
-	if (qdf_is_macaddr_zero(bssid)) {
-		if (!wlan_mlme_is_data_stall_recovery_fw_supported(psoc)) {
-			mlme_debug("FW does not support data stall recovery, aborting roam invoke");
-			qdf_mem_free(cm_req);
-			return QDF_STATUS_E_NOSUPPORT;
-		}
-		cm_req->roam_req.req.forced_roaming = true;
-		goto send_evt;
-	}
-
-	if (!chan_freq || qdf_is_macaddr_zero(bssid)) {
-		mlme_debug("bssid " QDF_MAC_ADDR_FMT " chan_freq %d",
-			   QDF_MAC_ADDR_REF(bssid->bytes), chan_freq);
-		qdf_mem_free(cm_req);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	qdf_copy_macaddr(&cm_req->roam_req.req.bssid, bssid);
-	cm_req->roam_req.req.chan_freq = chan_freq;
-
-send_evt:
-	if (cm_req->roam_req.req.forced_roaming)
-		cm_req->roam_req.req.source = CM_ROAMING_NUD_FAILURE;
-	else
-		cm_req->roam_req.req.source = CM_ROAMING_HOST;
-
-	cm_req->roam_req.req.vdev_id = vdev_id;
-	status = cm_sm_deliver_event(vdev, WLAN_CM_SM_EV_ROAM_INVOKE,
-				     sizeof(*cm_req), cm_req);
-
-	if (QDF_IS_STATUS_ERROR(status))
-		qdf_mem_free(cm_req);
-
-	return status;
 }
 
 QDF_STATUS
@@ -3873,4 +4484,5 @@ bool cm_roam_offload_enabled(struct wlan_objmgr_psoc *psoc)
 
 	return val;
 }
-#endif
+#endif  /* WLAN_FEATURE_ROAM_OFFLOAD */
+#endif  /* FEATURE_CM_ENABLE */

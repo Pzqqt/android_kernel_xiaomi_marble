@@ -78,6 +78,13 @@
  */
 #define WMA_SET_VDEV_IE_SOURCE_HOST 0x0
 
+static bool is_wakeup_event_console_logs_enabled = false;
+
+void wma_set_wakeup_logs_to_console(bool value)
+{
+	is_wakeup_event_console_logs_enabled = value;
+}
+
 #if defined(FEATURE_WLAN_DIAG_SUPPORT)
 /**
  * qdf_wma_wow_wakeup_stats_event()- send wow wakeup stats
@@ -1545,40 +1552,44 @@ static void wma_inc_wow_stats(t_wma_handle *wma,
 
 static void wma_wow_stats_display(struct wake_lock_stats *stats)
 {
-	wma_nofl_alert("WLAN wake reason counters:");
-	wma_nofl_alert("uc:%d bc:%d v4_mc:%d v6_mc:%d ra:%d ns:%d na:%d "
-		      "icmp:%d icmpv6:%d",
-		      stats->ucast_wake_up_count,
-		      stats->bcast_wake_up_count,
-		      stats->ipv4_mcast_wake_up_count,
-		      stats->ipv6_mcast_wake_up_count,
-		      stats->ipv6_mcast_ra_stats,
-		      stats->ipv6_mcast_ns_stats,
-		      stats->ipv6_mcast_na_stats,
-		      stats->icmpv4_count,
-		      stats->icmpv6_count);
+	wma_conditional_log(is_wakeup_event_console_logs_enabled,
+			    "WLAN wake reason counters:");
+	wma_conditional_log(is_wakeup_event_console_logs_enabled,
+			    "uc:%d bc:%d v4_mc:%d v6_mc:%d ra:%d ns:%d na:%d "
+			    "icmp:%d icmpv6:%d",
+			    stats->ucast_wake_up_count,
+			    stats->bcast_wake_up_count,
+			    stats->ipv4_mcast_wake_up_count,
+			    stats->ipv6_mcast_wake_up_count,
+			    stats->ipv6_mcast_ra_stats,
+			    stats->ipv6_mcast_ns_stats,
+			    stats->ipv6_mcast_na_stats,
+			    stats->icmpv4_count,
+			    stats->icmpv6_count);
 
-	wma_nofl_alert("assoc:%d disassoc:%d assoc_resp:%d reassoc:%d "
-		      "reassoc_resp:%d auth:%d deauth:%d action:%d",
-		      stats->mgmt_assoc,
-		      stats->mgmt_disassoc,
-		      stats->mgmt_assoc_resp,
-		      stats->mgmt_reassoc,
-		      stats->mgmt_reassoc_resp,
-		      stats->mgmt_auth,
-		      stats->mgmt_deauth,
-		      stats->mgmt_action);
+	wma_conditional_log(is_wakeup_event_console_logs_enabled,
+			    "assoc:%d disassoc:%d assoc_resp:%d reassoc:%d "
+			    "reassoc_resp:%d auth:%d deauth:%d action:%d",
+			    stats->mgmt_assoc,
+			    stats->mgmt_disassoc,
+			    stats->mgmt_assoc_resp,
+			    stats->mgmt_reassoc,
+			    stats->mgmt_reassoc_resp,
+			    stats->mgmt_auth,
+			    stats->mgmt_deauth,
+			    stats->mgmt_action);
 
-	wma_nofl_alert("pno_match:%d pno_complete:%d gscan:%d "
-		      "low_rssi:%d rssi_breach:%d oem:%d ucdrop:%d scan_11d:%d",
-		      stats->pno_match_wake_up_count,
-		      stats->pno_complete_wake_up_count,
-		      stats->gscan_wake_up_count,
-		      stats->low_rssi_wake_up_count,
-		      stats->rssi_breach_wake_up_count,
-		      stats->oem_response_wake_up_count,
-		      stats->uc_drop_wake_up_count,
-		      stats->scan_11d);
+	wma_conditional_log(is_wakeup_event_console_logs_enabled,
+			    "pno_match:%d pno_complete:%d gscan:%d low_rssi:%d"
+			    " rssi_breach:%d oem:%d ucdrop:%d scan_11d:%d",
+			    stats->pno_match_wake_up_count,
+			    stats->pno_complete_wake_up_count,
+			    stats->gscan_wake_up_count,
+			    stats->low_rssi_wake_up_count,
+			    stats->rssi_breach_wake_up_count,
+			    stats->oem_response_wake_up_count,
+			    stats->uc_drop_wake_up_count,
+			    stats->scan_11d);
 }
 
 static void wma_print_wow_stats(t_wma_handle *wma,
@@ -2124,15 +2135,18 @@ static void wma_wow_parse_data_pkt(t_wma_handle *wma,
 
 	src_mac = data + QDF_NBUF_SRC_MAC_OFFSET;
 	dest_mac = data + QDF_NBUF_DEST_MAC_OFFSET;
-	wma_info("Src_mac: " QDF_MAC_ADDR_FMT ", Dst_mac: " QDF_MAC_ADDR_FMT,
-		 QDF_MAC_ADDR_REF(src_mac), QDF_MAC_ADDR_REF(dest_mac));
+	wma_conditional_log(is_wakeup_event_console_logs_enabled,
+			    "Src_mac: " QDF_MAC_ADDR_FMT ", Dst_mac: "
+			    QDF_MAC_ADDR_FMT, QDF_MAC_ADDR_REF(src_mac),
+			    QDF_MAC_ADDR_REF(dest_mac));
 
 	wma_wow_inc_wake_lock_stats_by_dst_addr(wma, vdev_id, dest_mac);
 
 	proto_subtype = wma_wow_get_pkt_proto_subtype(data, length);
 	proto_subtype_name = wma_pkt_proto_subtype_to_string(proto_subtype);
 	if (proto_subtype_name)
-		wma_info("WOW Wakeup: %s rcvd", proto_subtype_name);
+		wma_conditional_log(is_wakeup_event_console_logs_enabled,
+				    "WOW Wakeup: %s rcvd", proto_subtype_name);
 
 	switch (proto_subtype) {
 	case QDF_PROTO_EAPOL_M1:
@@ -2215,32 +2229,43 @@ static void wma_wow_dump_mgmt_buffer(uint8_t *wow_packet_buffer,
 		uint8_t to_from_ds, frag_num;
 		uint32_t seq_num;
 
-		wma_err("RA: " QDF_MAC_ADDR_FMT " TA: " QDF_MAC_ADDR_FMT,
-			QDF_MAC_ADDR_REF(wh->i_addr1),
-			QDF_MAC_ADDR_REF(wh->i_addr2));
+		wma_conditional_log(is_wakeup_event_console_logs_enabled,
+				    "RA: " QDF_MAC_ADDR_FMT " TA: "
+				    QDF_MAC_ADDR_FMT,
+				    QDF_MAC_ADDR_REF(wh->i_addr1),
+				    QDF_MAC_ADDR_REF(wh->i_addr2));
 
-		wma_err("TO_DS: %u, FROM_DS: %u",
-			wh->i_fc[1] & IEEE80211_FC1_DIR_TODS,
-			wh->i_fc[1] & IEEE80211_FC1_DIR_FROMDS);
+		wma_conditional_log(is_wakeup_event_console_logs_enabled,
+				    "TO_DS: %u, FROM_DS: %u",
+				    wh->i_fc[1] & IEEE80211_FC1_DIR_TODS,
+				    wh->i_fc[1] & IEEE80211_FC1_DIR_FROMDS);
 
 		to_from_ds = wh->i_fc[1] & IEEE80211_FC1_DIR_MASK;
 
 		switch (to_from_ds) {
 		case IEEE80211_FC1_DIR_NODS:
-			wma_err("BSSID: " QDF_MAC_ADDR_FMT,
+			wma_conditional_log(
+				is_wakeup_event_console_logs_enabled,
+				"BSSID: " QDF_MAC_ADDR_FMT,
 				QDF_MAC_ADDR_REF(wh->i_addr3));
 			break;
 		case IEEE80211_FC1_DIR_TODS:
-			wma_err("DA: " QDF_MAC_ADDR_FMT,
+			wma_conditional_log(
+				is_wakeup_event_console_logs_enabled,
+				"DA: " QDF_MAC_ADDR_FMT,
 				QDF_MAC_ADDR_REF(wh->i_addr3));
 			break;
 		case IEEE80211_FC1_DIR_FROMDS:
-			wma_err("SA: " QDF_MAC_ADDR_FMT,
+			wma_conditional_log(
+				is_wakeup_event_console_logs_enabled,
+				"SA: " QDF_MAC_ADDR_FMT,
 				QDF_MAC_ADDR_REF(wh->i_addr3));
 			break;
 		case IEEE80211_FC1_DIR_DSTODS:
 			if (buf_len >= sizeof(struct ieee80211_frame_addr4))
-				wma_err("DA: " QDF_MAC_ADDR_FMT " SA: "
+				wma_conditional_log(
+					is_wakeup_event_console_logs_enabled,
+					"DA: " QDF_MAC_ADDR_FMT " SA: "
 					QDF_MAC_ADDR_FMT,
 					QDF_MAC_ADDR_REF(wh->i_addr3),
 					QDF_MAC_ADDR_REF(wh->i_addr4));
@@ -2254,8 +2279,9 @@ static void wma_wow_dump_mgmt_buffer(uint8_t *wow_packet_buffer,
 				IEEE80211_SEQ_FRAG_MASK) >>
 				IEEE80211_SEQ_FRAG_SHIFT);
 
-		wma_err("SEQ_NUM: %u, FRAG_NUM: %u",
-			seq_num, frag_num);
+		wma_conditional_log(is_wakeup_event_console_logs_enabled,
+				    "SEQ_NUM: %u, FRAG_NUM: %u", seq_num,
+				    frag_num);
 	} else {
 		wma_err("Insufficient buffer length for mgmt. packet");
 	}
@@ -5064,36 +5090,14 @@ static void wma_send_set_key_rsp(uint8_t vdev_id, bool pairwise,
 	}
 }
 
-static uint32_t wma_cipher_to_cap(enum wlan_crypto_cipher_type cipher)
+void wma_set_peer_ucast_cipher(uint8_t *mac_addr, int32_t uc_cipher,
+			       int32_t cipher_cap)
 {
-	switch (cipher) {
-	case WLAN_CRYPTO_CIPHER_WEP:  return WLAN_CRYPTO_CAP_WEP;
-	case WLAN_CRYPTO_CIPHER_WEP_40:  return WLAN_CRYPTO_CAP_WEP;
-	case WLAN_CRYPTO_CIPHER_WEP_104:  return WLAN_CRYPTO_CAP_WEP;
-	case WLAN_CRYPTO_CIPHER_AES_OCB:  return WLAN_CRYPTO_CAP_AES;
-	case WLAN_CRYPTO_CIPHER_AES_CCM:  return WLAN_CRYPTO_CAP_AES;
-	case WLAN_CRYPTO_CIPHER_AES_CCM_256:  return WLAN_CRYPTO_CAP_AES;
-	case WLAN_CRYPTO_CIPHER_AES_GCM:  return WLAN_CRYPTO_CAP_AES;
-	case WLAN_CRYPTO_CIPHER_AES_GCM_256:  return WLAN_CRYPTO_CAP_AES;
-	case WLAN_CRYPTO_CIPHER_CKIP: return WLAN_CRYPTO_CAP_CKIP;
-	case WLAN_CRYPTO_CIPHER_TKIP: return WLAN_CRYPTO_CAP_TKIP_MIC;
-	case WLAN_CRYPTO_CIPHER_WAPI_SMS4: return WLAN_CRYPTO_CAP_WAPI_SMS4;
-	case WLAN_CRYPTO_CIPHER_WAPI_GCM4: return WLAN_CRYPTO_CAP_WAPI_GCM4;
-	case WLAN_CRYPTO_CIPHER_FILS_AEAD: return WLAN_CRYPTO_CAP_FILS_AEAD;
-	default: return 0;
-	}
-}
-
-void wma_set_peer_ucast_cipher(uint8_t *mac_addr,
-			       enum wlan_crypto_cipher_type cipher)
-{
-	int32_t set_val = 0, cipher_cap;
 	struct wlan_objmgr_peer *peer;
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
 	if (!wma)
 		return;
-
 	peer = wlan_objmgr_get_peer(wma->psoc,
 				    wlan_objmgr_pdev_get_pdev_id(wma->pdev),
 				    mac_addr, WLAN_LEGACY_WMA_ID);
@@ -5102,19 +5106,15 @@ void wma_set_peer_ucast_cipher(uint8_t *mac_addr,
 			QDF_MAC_ADDR_REF(mac_addr));
 		return;
 	}
-	cipher_cap = wma_cipher_to_cap(cipher);
-	MLME_SET_BIT(set_val, cipher_cap);
+
 	wlan_crypto_set_peer_param(peer, WLAN_CRYPTO_PARAM_CIPHER_CAP,
-				   set_val);
-	set_val = 0;
-	MLME_SET_BIT(set_val, cipher);
+				   cipher_cap);
 	wlan_crypto_set_peer_param(peer, WLAN_CRYPTO_PARAM_UCAST_CIPHER,
-				   set_val);
+				   uc_cipher);
 	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
 
 	wma_debug("Set unicast cipher %x and cap %x for "QDF_MAC_ADDR_FMT,
-		  1 << cipher, 1 << cipher_cap,
-		  QDF_MAC_ADDR_REF(mac_addr));
+		  uc_cipher, cipher_cap, QDF_MAC_ADDR_REF(mac_addr));
 }
 
 void wma_update_set_key(uint8_t session_id, bool pairwise,

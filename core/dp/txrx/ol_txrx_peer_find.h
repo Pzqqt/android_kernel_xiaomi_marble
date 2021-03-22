@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2015-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2015-2019,2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -114,6 +114,8 @@ ol_txrx_peer_find_hash_remove(struct ol_txrx_pdev_t *pdev,
 			      struct ol_txrx_peer_t *peer);
 
 void ol_txrx_peer_find_hash_erase(struct ol_txrx_pdev_t *pdev);
+
+void ol_txrx_peer_free_inactive_list(struct ol_txrx_pdev_t *pdev);
 
 struct ol_txrx_peer_t *ol_txrx_assoc_peer_find(struct ol_txrx_vdev_t *vdev);
 void ol_txrx_peer_remove_obj_map_entries(ol_txrx_pdev_handle pdev,

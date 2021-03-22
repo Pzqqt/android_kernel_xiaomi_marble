@@ -718,7 +718,8 @@ void fwol_release_rx_event(struct wlan_fwol_rx_event *event)
 	qdf_mem_free(event);
 }
 
-QDF_STATUS fwol_set_ilp_config(struct wlan_objmgr_pdev *pdev, bool enable_ilp)
+QDF_STATUS fwol_set_ilp_config(struct wlan_objmgr_pdev *pdev,
+			       uint32_t enable_ilp)
 {
 	QDF_STATUS status;
 	struct pdev_params pdev_param;

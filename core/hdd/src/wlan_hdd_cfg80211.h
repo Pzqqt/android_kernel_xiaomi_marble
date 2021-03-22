@@ -286,9 +286,11 @@ typedef enum {
 #define PCL_CHANNEL_SUPPORT_CLI			BIT(1)
 #define PCL_CHANNEL_EXCLUDE_IN_GO_NEG		BIT(3)
 
+#ifndef FEATURE_CM_ENABLE
 struct cfg80211_bss *
 wlan_hdd_cfg80211_update_bss_db(struct hdd_adapter *adapter,
 				struct csr_roam_info *roam_info);
+#endif
 
 #define CONNECTIVITY_CHECK_SET_ARP \
 	QCA_WLAN_VENDOR_CONNECTIVITY_CHECK_SET_ARP
@@ -337,12 +339,11 @@ wlan_hdd_wifi_test_config_policy[
 int wlan_hdd_cfg80211_pmksa_candidate_notify(struct hdd_adapter *adapter,
 					struct csr_roam_info *roam_info,
 					int index, bool preauth);
-
+#ifndef FEATURE_CM_ENABLE
 #ifdef FEATURE_WLAN_LFR_METRICS
 QDF_STATUS
 wlan_hdd_cfg80211_roam_metrics_preauth(struct hdd_adapter *adapter,
 				       struct csr_roam_info *roam_info);
-
 QDF_STATUS
 wlan_hdd_cfg80211_roam_metrics_preauth_status(struct hdd_adapter *adapter,
 					      struct csr_roam_info *roam_info,
@@ -351,6 +352,7 @@ wlan_hdd_cfg80211_roam_metrics_preauth_status(struct hdd_adapter *adapter,
 QDF_STATUS
 wlan_hdd_cfg80211_roam_metrics_handover(struct hdd_adapter *adapter,
 					struct csr_roam_info *roam_info);
+#endif
 #endif
 
 extern const struct nla_policy
@@ -505,6 +507,7 @@ int wlan_hdd_send_avoid_freq_for_dnbs(struct hdd_context *hdd_ctx,
 void wlan_hdd_rso_cmd_status_cb(hdd_handle_t hdd_handle,
 				struct rso_cmd_status *rso_status);
 
+#ifndef FEATURE_CM_ENABLE
 /*
  * wlan_hdd_cfg80211_unlink_bss :to inform nl80211
  * interface that BSS might have been lost.
@@ -518,6 +521,7 @@ void wlan_hdd_rso_cmd_status_cb(hdd_handle_t hdd_handle,
 void wlan_hdd_cfg80211_unlink_bss(struct hdd_adapter *adapter,
 				  tSirMacAddr bssid, uint8_t *ssid,
 				  uint8_t ssid_len);
+#endif
 
 void wlan_hdd_cfg80211_acs_ch_select_evt(struct hdd_adapter *adapter);
 
@@ -610,19 +614,6 @@ wlan_hdd_cfg80211_indicate_disconnect(struct hdd_adapter *adapter,
 				      enum wlan_reason_code reason,
 				      uint8_t *disconnect_ies,
 				      uint16_t disconnect_ies_len);
-
-/**
- * wlan_hdd_inform_bss_frame() - inform bss details to NL80211
- * @adapter: Pointer to adapter
- * @bss_desc: Pointer to bss descriptor
- *
- * This function is used to inform the BSS details to nl80211 interface.
- *
- * Return: struct cfg80211_bss pointer
- */
-struct cfg80211_bss *
-wlan_hdd_inform_bss_frame(struct hdd_adapter *adapter,
-				     struct bss_description *bss_desc);
 
 /**
  * wlan_hdd_change_hw_mode_for_given_chnl() - change HW mode for given channel

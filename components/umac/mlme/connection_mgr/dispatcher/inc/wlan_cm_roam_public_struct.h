@@ -112,6 +112,9 @@
 #define MAX_BSSID_AVOID_LIST     16
 #define MAX_BSSID_FAVORED      16
 
+#define MAX_FTIE_SIZE 384
+#define ESE_MAX_TSPEC_IES 4
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 #define ROAM_SCAN_PSK_SIZE    48
 #define ROAM_R0KH_ID_MAX_LEN  48
@@ -119,6 +122,11 @@
 #define ROAM_AUTH_STATUS_CONNECTED      0x1
 /* connected and authenticated */
 #define ROAM_AUTH_STATUS_AUTHENTICATED  0x2
+
+#define IS_ROAM_REASON_STA_KICKOUT(reason) ((reason & 0xF) == \
+	WMI_ROAM_TRIGGER_REASON_STA_KICKOUT)
+#define IS_ROAM_REASON_DISCONNECTION(reason) ((reason & 0xF) == \
+	WMI_ROAM_TRIGGER_REASON_DEAUTH)
 #endif
 
 /*
@@ -311,16 +319,16 @@ struct rso_config {
 
 /**
  * enum sta_roam_policy_dfs_mode - state of DFS mode for STA ROME policy
- * @CSR_STA_ROAM_POLICY_NONE: DFS mode attribute is not valid
- * @CSR_STA_ROAM_POLICY_DFS_ENABLED:  DFS mode is enabled
- * @CSR_STA_ROAM_POLICY_DFS_DISABLED: DFS mode is disabled
- * @CSR_STA_ROAM_POLICY_DFS_DEPRIORITIZE: Deprioritize DFS channels in scanning
+ * @STA_ROAM_POLICY_NONE: DFS mode attribute is not valid
+ * @STA_ROAM_POLICY_DFS_ENABLED:  DFS mode is enabled
+ * @STA_ROAM_POLICY_DFS_DISABLED: DFS mode is disabled
+ * @STA_ROAM_POLICY_DFS_DEPRIORITIZE: Deprioritize DFS channels in scanning
  */
 enum sta_roam_policy_dfs_mode {
-	CSR_STA_ROAM_POLICY_NONE,
-	CSR_STA_ROAM_POLICY_DFS_ENABLED,
-	CSR_STA_ROAM_POLICY_DFS_DISABLED,
-	CSR_STA_ROAM_POLICY_DFS_DEPRIORITIZE
+	STA_ROAM_POLICY_NONE,
+	STA_ROAM_POLICY_DFS_ENABLED,
+	STA_ROAM_POLICY_DFS_DISABLED,
+	STA_ROAM_POLICY_DFS_DEPRIORITIZE
 };
 
 /**
@@ -358,6 +366,7 @@ struct rso_roam_policy_params {
  * @drop_factor_5g: Penalty factor
  * @max_raise_rssi_5g: Maximum amount of Boost that can added
  * @is_fils_roaming_supported: fils roaming supported
+ * @roam_scan_control: roam scan control
  * @policy_params: roam policy params
  * @neighbor_report_offload: neighbor report offload params
  */
@@ -377,6 +386,7 @@ struct rso_config_params {
 	int max_raise_rssi_5g;
 	uint8_t cat_rssi_offset;
 	bool is_fils_roaming_supported;
+	bool roam_scan_control;
 	struct rso_roam_policy_params policy_params;
 	struct cm_roam_neighbor_report_offload_params neighbor_report_offload;
 };
@@ -1668,6 +1678,15 @@ struct wlan_cm_roam_tx_ops {
 	QDF_STATUS (*send_roam_invoke_cmd)(struct wlan_objmgr_vdev *vdev,
 					   struct roam_invoke_req *req);
 #endif
+};
+
+/**
+ * wlan_cm_roam_rx_ops  - structure of tx function pointers for
+ * roaming related commands
+ * @roam_sync_event_rx: RX ops function pointer for roam sync event
+ */
+struct wlan_cm_roam_rx_ops {
+	QDF_STATUS (*roam_sync_event_rx)(struct wlan_objmgr_vdev *vdev);
 };
 
 /**

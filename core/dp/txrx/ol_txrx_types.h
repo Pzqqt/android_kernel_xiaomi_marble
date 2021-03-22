@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -545,6 +545,7 @@ struct ol_tx_flow_pool_t {
  */
 struct ol_txrx_peer_id_map {
 	struct ol_txrx_peer_t *peer;
+	struct ol_txrx_peer_t *del_peer;
 	qdf_atomic_t peer_id_ref_cnt;
 	qdf_atomic_t del_peer_id_ref_cnt;
 	qdf_atomic_t peer_id_unmap_cnt;
@@ -725,6 +726,9 @@ struct ol_txrx_pdev_t {
 
 	/* ol_txrx_vdev list */
 	TAILQ_HEAD(, ol_txrx_vdev_t) vdev_list;
+
+	/* Inactive peer list */
+	TAILQ_HEAD(, ol_txrx_peer_t) inactive_peer_list;
 
 	TAILQ_HEAD(, ol_txrx_stats_req_internal) req_list;
 	int req_list_depth;
@@ -1430,6 +1434,7 @@ struct ol_txrx_peer_t {
 	struct cdp_ctrl_objmgr_peer *ctrl_peer;
 
 	qdf_atomic_t ref_cnt;
+	qdf_atomic_t del_ref_cnt;
 	qdf_atomic_t access_list[PEER_DEBUG_ID_MAX];
 	qdf_atomic_t delete_in_progress;
 	qdf_atomic_t flush_in_progress;
@@ -1463,6 +1468,8 @@ struct ol_txrx_peer_t {
 	TAILQ_ENTRY(ol_txrx_peer_t) peer_list_elem;
 	/* node in the hash table bin's list of peers */
 	TAILQ_ENTRY(ol_txrx_peer_t) hash_list_elem;
+	/* node in the pdev's inactive list of peers */
+	TAILQ_ENTRY(ol_txrx_peer_t)inactive_peer_list_elem;
 
 	/*
 	 * per TID info -

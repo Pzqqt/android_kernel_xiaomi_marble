@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -31,8 +31,6 @@
 /*--------------------------------------------------------------------------
    Preprocessor definitions and constants
    ------------------------------------------------------------------------*/
-#define MAX_FTIE_SIZE             384   /* Max size limited to 384, on acct. of IW custom events */
-
 /* Time to dwell on preauth channel during roaming, in milliseconds */
 #define LIM_FT_PREAUTH_SCAN_TIME 50
 

@@ -1277,6 +1277,7 @@ struct hdd_adapter {
 #ifndef FEATURE_CM_ENABLE
 	bool disconnection_in_progress;
 	qdf_mutex_t disconnection_status_lock;
+	struct completion roaming_comp_var;
 #endif
 	unsigned long event_flags;
 
@@ -1311,9 +1312,6 @@ struct hdd_adapter {
 	/* TODO: move these to sta ctx. These may not be used in AP */
 	/** completion variable for disconnect callback */
 	struct completion disconnect_comp_var;
-
-	struct completion roaming_comp_var;
-
 	/* completion variable for Linkup Event */
 	struct completion linkup_event_var;
 
@@ -2209,6 +2207,9 @@ struct hdd_context {
 	struct bbm_context *bbm_ctx;
 #endif
 	bool is_dual_mac_cfg_updated;
+	bool is_regulatory_update_in_progress;
+	qdf_event_t regulatory_update_event;
+	qdf_mutex_t regulatory_status_lock;
 };
 
 /**

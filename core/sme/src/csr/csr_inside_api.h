@@ -152,17 +152,14 @@ QDF_STATUS csr_roam_copy_profile(struct mac_context *mac,
 				 struct csr_roam_profile *pDstProfile,
 				 struct csr_roam_profile *pSrcProfile,
 				 uint8_t vdev_id);
-QDF_STATUS csr_roam_start(struct mac_context *mac);
-void csr_roam_stop(struct mac_context *mac, uint32_t sessionId);
-
 QDF_STATUS csr_scan_open(struct mac_context *mac);
 QDF_STATUS csr_scan_close(struct mac_context *mac);
 
+#ifndef FEATURE_CM_ENABLE
 bool
 csr_scan_append_bss_description(struct mac_context *mac,
 				struct bss_description *pSirBssDescription);
 
-#ifndef FEATURE_CM_ENABLE
 QDF_STATUS csr_scan_for_ssid(struct mac_context *mac, uint32_t sessionId,
 			     struct csr_roam_profile *pProfile, uint32_t roamId,
 			     bool notify);
@@ -249,21 +246,23 @@ QDF_STATUS csr_roam_issue_start_bss(struct mac_context *mac, uint32_t sessionId,
 					uint32_t roamId);
 QDF_STATUS csr_roam_issue_stop_bss(struct mac_context *mac, uint32_t sessionId,
 				   enum csr_roam_substate NewSubstate);
+#ifndef FEATURE_CM_ENABLE
 bool csr_is_roam_command_waiting_for_session(struct mac_context *mac,
 					uint32_t sessionId);
 eRoamCmdStatus csr_get_roam_complete_status(struct mac_context *mac,
 					    uint32_t sessionId);
+#endif
 /* pBand can be NULL if caller doesn't need to get it */
 QDF_STATUS csr_roam_issue_disassociate_cmd(struct mac_context *mac,
 					   uint32_t sessionId,
 					   eCsrRoamDisconnectReason reason,
 					   enum wlan_reason_code mac_reason);
+#ifndef FEATURE_CM_ENABLE
 /* pCommand may be NULL */
 void csr_roam_remove_duplicate_command(struct mac_context *mac, uint32_t sessionId,
 				       tSmeCmd *pCommand,
 				       enum csr_roam_reason eRoamReason);
 
-#ifndef FEATURE_CM_ENABLE
 bool csr_is_same_profile(struct mac_context *mac, tCsrRoamConnectedProfile
 			*pProfile1, struct csr_roam_profile *pProfile2,
 			uint8_t vdev_id);
@@ -305,18 +304,6 @@ bool csr_is_phy_mode_match(struct mac_context *mac, uint32_t phyMode,
 			   tDot11fBeaconIEs *pIes);
 
 /**
- * csr_roam_is_channel_valid() - validate channel frequency
- * @mac: mac context
- * @chan_freq: channel frequency
- *
- * This function validates channel frequency present in valid channel
- * list or not.
- *
- * Return: true or false
- */
-bool csr_roam_is_channel_valid(struct mac_context *mac, uint32_t chan_freq);
-
-/**
  * csr_get_cfg_valid_channels() - Get valid channel frequency list
  * @mac: mac context
  * @ch_freq_list: valid channel frequencies
@@ -353,6 +340,7 @@ void csr_apply_channel_power_info_to_fw(struct mac_context *mac,
 					uint8_t *countryCode);
 void csr_apply_power2_current(struct mac_context *mac);
 
+#ifndef FEATURE_CM_ENABLE
 /* return a bool to indicate whether roaming completed or continue. */
 bool csr_roam_complete_roaming(struct mac_context *mac, uint32_t sessionId,
 			       bool fForce, eCsrRoamResult roamResult);
@@ -360,6 +348,7 @@ void csr_roam_completion(struct mac_context *mac, uint32_t sessionId,
 			 struct csr_roam_info *roam_info, tSmeCmd *pCommand,
 			 eCsrRoamResult roamResult, bool fSuccess);
 void csr_roam_cancel_roaming(struct mac_context *mac, uint32_t sessionId);
+#endif
 void csr_apply_channel_power_info_wrapper(struct mac_context *mac);
 QDF_STATUS csr_save_to_channel_power2_g_5_g(struct mac_context *mac,
 					uint32_t tableSize,
@@ -676,7 +665,7 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
  * Return: none
  */
 void csr_get_pmk_info(struct mac_context *mac_ctx, uint8_t session_id,
-		      tPmkidCacheInfo *pmk_cache);
+		      struct wlan_crypto_pmksa *pmk_cache);
 
 /*
  * csr_roam_set_psk_pmk() - store PSK/PMK in CSR session
@@ -741,11 +730,13 @@ QDF_STATUS csr_roam_disconnect(struct mac_context *mac, uint32_t session_id,
 QDF_STATUS csr_roam_issue_stop_bss_cmd(struct mac_context *mac, uint32_t sessionId,
 				       bool fHighPriority);
 
+#ifndef FEATURE_CM_ENABLE
 void csr_call_roaming_completion_callback(struct mac_context *mac,
 					  struct csr_roam_session *pSession,
 					  struct csr_roam_info *roam_info,
 					  uint32_t roamId,
 					  eCsrRoamResult roamResult);
+#endif
 /**
  * csr_roam_issue_disassociate_sta_cmd() - disassociate a associated station
  * @mac:          Pointer to global structure for MAC
@@ -823,24 +814,14 @@ QDF_STATUS csr_roam_enqueue_preauth(struct mac_context *mac, uint32_t sessionId,
 QDF_STATUS csr_dequeue_roam_command(struct mac_context *mac,
 				enum csr_roam_reason reason,
 				uint8_t session_id);
-#endif
 
 QDF_STATUS csr_scan_create_entry_in_scan_cache(struct mac_context *mac,
 						uint32_t sessionId,
 						struct qdf_mac_addr bssid,
 						uint32_t ch_freq);
+#endif
 
 QDF_STATUS csr_update_channel_list(struct mac_context *mac);
-
-/**
- * csr_update_pmk_cache_ft - API to update MDID in PMKSA cache entry
- * @session_id: session ID
- * @session: sme session pointer
- *
- * Return: None
- */
-void csr_update_pmk_cache_ft(struct mac_context *mac, uint32_t session_id,
-			     struct csr_roam_session *session);
 
 #if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
@@ -852,23 +833,13 @@ void csr_update_pmk_cache_ft(struct mac_context *mac, uint32_t session_id,
  * Return : None
  */
 void csr_clear_sae_single_pmk(struct wlan_objmgr_psoc *psoc,
-			      uint8_t vdev_id, tPmkidCacheInfo *pmksa);
-
-void csr_store_sae_single_pmk_to_global_cache(struct mac_context *mac,
-					      struct csr_roam_session *session,
-					      uint8_t vdev_id);
+			      uint8_t vdev_id, struct wlan_crypto_pmksa *pmksa);
 #else
 static inline void
 csr_clear_sae_single_pmk(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
-			 tPmkidCacheInfo *pmksa)
+			 struct wlan_crypto_pmksa *pmksa)
 {
 }
-
-static inline
-void csr_store_sae_single_pmk_to_global_cache(struct mac_context *mac,
-					      struct csr_roam_session *session,
-					      uint8_t vdev_id)
-{}
 #endif
 
 QDF_STATUS csr_send_ext_change_freq(struct mac_context *mac_ctx,
@@ -952,18 +923,6 @@ csr_roam_set_bss_config_cfg(struct mac_context *mac_ctx, uint32_t session_id,
 
 void csr_prune_channel_list_for_mode(struct mac_context *mac,
 				     struct csr_channel *pChannelList);
-
-/**
- * csr_lookup_pmkid_using_bssid() - lookup pmkid using bssid
- * @mac: pointer to mac
- * @session: sme session pointer
- * @pmk_cache: pointer to pmk cache
- *
- * Return: true if pmkid is found else false
- */
-bool csr_lookup_pmkid_using_bssid(struct mac_context *mac,
-					struct csr_roam_session *session,
-					tPmkidCacheInfo *pmk_cache);
 
 #ifndef FEATURE_CM_ENABLE
 

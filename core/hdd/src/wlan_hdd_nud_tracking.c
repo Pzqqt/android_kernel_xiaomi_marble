@@ -271,7 +271,7 @@ hdd_handle_nud_fail_sta(struct hdd_context *hdd_ctx,
 		qdf_zero_macaddr(&bssid);
 		ucfg_wlan_cm_roam_invoke(hdd_ctx->pdev,
 					 adapter->vdev_id,
-					 &bssid, 0);
+					 &bssid, 0, CM_ROAMING_NUD_FAILURE);
 #endif
 	}
 }

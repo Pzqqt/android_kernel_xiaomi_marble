@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -299,6 +299,21 @@ void ol_txrx_peer_find_hash_erase(struct ol_txrx_pdev_t *pdev)
 			}
 		}
 	}
+}
+
+void ol_txrx_peer_free_inactive_list(struct ol_txrx_pdev_t *pdev)
+{
+	struct ol_txrx_peer_t *peer = NULL, *tmp;
+
+	qdf_spin_lock_bh(&pdev->peer_map_unmap_lock);
+	if (!TAILQ_EMPTY(&pdev->inactive_peer_list)) {
+		TAILQ_FOREACH_SAFE(peer, &pdev->inactive_peer_list,
+				   inactive_peer_list_elem, tmp) {
+			qdf_atomic_init(&peer->del_ref_cnt); /* set to 0 */
+			qdf_mem_free(peer);
+		}
+	}
+	qdf_spin_unlock_bh(&pdev->peer_map_unmap_lock);
 }
 
 /*=== function definitions for peer id --> peer object map ==================*/
@@ -618,6 +633,7 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 	struct ol_txrx_peer_t *peer;
 	int i = 0;
 	int32_t ref_cnt;
+	int del_ref_cnt;
 
 	if (peer_id == HTT_INVALID_PEER) {
 		ol_txrx_err(
@@ -638,16 +654,28 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 	if (qdf_atomic_read(
 		&pdev->peer_id_to_obj_map[peer_id].del_peer_id_ref_cnt)) {
 		/* This peer_id belongs to a peer already deleted */
-		qdf_atomic_dec(&pdev->peer_id_to_obj_map[peer_id].
-					del_peer_id_ref_cnt);
+		peer = pdev->peer_id_to_obj_map[peer_id].del_peer;
+		if (qdf_atomic_dec_and_test
+		    (&pdev->peer_id_to_obj_map[peer_id].del_peer_id_ref_cnt)) {
+			pdev->peer_id_to_obj_map[peer_id].del_peer = NULL;
+		}
+
+		del_ref_cnt = qdf_atomic_read(&peer->del_ref_cnt);
+		if (qdf_atomic_dec_and_test(&peer->del_ref_cnt)) {
+			TAILQ_REMOVE(&pdev->inactive_peer_list, peer,
+				     inactive_peer_list_elem);
+			qdf_mem_free(peer);
+		}
+		del_ref_cnt--;
+
 		ref_cnt = qdf_atomic_read(&pdev->peer_id_to_obj_map[peer_id].
 							del_peer_id_ref_cnt);
 		qdf_spin_unlock_bh(&pdev->peer_map_unmap_lock);
 		wlan_roam_debug_log(DEBUG_INVALID_VDEV_ID,
 				    DEBUG_PEER_UNMAP_EVENT,
 				    peer_id, NULL, NULL, ref_cnt, 0x101);
-		ol_txrx_dbg("peer already deleted, peer_id %d del_peer_id_ref_cnt %d",
-			    peer_id, ref_cnt);
+		ol_txrx_dbg("peer already deleted, peer_id %d del_ref_cnt:%d del_peer_id_ref_cnt %d",
+			    peer_id, del_ref_cnt, ref_cnt);
 		return;
 	}
 	peer = pdev->peer_id_to_obj_map[peer_id].peer;
@@ -755,8 +783,13 @@ void ol_txrx_peer_remove_obj_map_entries(ol_txrx_pdev_handle pdev,
 				peer_id_ref_cnt);
 		num_deleted_maps += peer_id_ref_cnt;
 		pdev->peer_id_to_obj_map[peer_id].peer = NULL;
+		pdev->peer_id_to_obj_map[peer_id].del_peer = peer;
 		peer->peer_ids[i] = HTT_INVALID_PEER;
 	}
+	qdf_atomic_init(&peer->del_ref_cnt);
+	qdf_atomic_add(num_deleted_maps, &peer->del_ref_cnt);
+	TAILQ_INSERT_TAIL(&pdev->inactive_peer_list, peer,
+			  inactive_peer_list_elem);
 	qdf_spin_unlock_bh(&pdev->peer_map_unmap_lock);
 
 	/* Debug print the information after releasing bh spinlock */

@@ -1553,6 +1553,7 @@ static uint32_t pm_get_vdev_id_of_first_conn_idx(struct wlan_objmgr_psoc *psoc)
 {
 	uint32_t conn_index = 0, vdev_id = 0;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	struct wlan_objmgr_vdev *vdev;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -1564,16 +1565,22 @@ static uint32_t pm_get_vdev_id_of_first_conn_idx(struct wlan_objmgr_psoc *psoc)
 	     conn_index++)  {
 		if (pm_conc_connection_list[conn_index].in_use) {
 			vdev_id = pm_conc_connection_list[conn_index].vdev_id;
+			policy_mgr_debug("Use vdev_id:%d for opportunistic upgrade",
+					 vdev_id);
 			break;
 		}
 	}
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
-	if (conn_index == MAX_NUMBER_OF_CONC_CONNECTIONS)
+	if (conn_index == MAX_NUMBER_OF_CONC_CONNECTIONS) {
+		vdev = wlan_objmgr_pdev_get_first_vdev(pm_ctx->pdev,
+						       WLAN_POLICY_MGR_ID);
+		if (vdev) {
+			vdev_id = wlan_vdev_get_id(vdev);
+			wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
+		}
 		policy_mgr_debug("Use default vdev_id:%d for opportunistic upgrade",
 				 vdev_id);
-	else
-		policy_mgr_debug("Use vdev_id:%d for opportunistic upgrade",
-				 vdev_id);
+	}
 
 	return vdev_id;
 }

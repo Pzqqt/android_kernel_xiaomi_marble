@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -16,25 +16,26 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef QWLAN_VERSION_H
-#define QWLAN_VERSION_H
-/*===========================================================================
+/*
+ * DOC: wlan_cm_roam_fw_sync.c
+ *
+ * Implementation for the FW based roaming sync api interfaces.
+ */
+#include "qdf_types.h"
+#include "wlan_objmgr_psoc_obj.h"
+#include "wlan_objmgr_pdev_obj.h"
+#include "wlan_objmgr_vdev_obj.h"
+#include "wlan_cm_roam_i.h"
 
-   FILE:
-   qwlan_version.h
+#ifdef FEATURE_CM_ENABLE
+QDF_STATUS cm_fw_roam_sync_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
 
-   BRIEF DESCRIPTION:
-   WLAN Host Version file.
-   Build number automatically updated by build scripts.
-
-   ===========================================================================*/
-
-#define QWLAN_VERSION_MAJOR            5
-#define QWLAN_VERSION_MINOR            2
-#define QWLAN_VERSION_PATCH            0
-#define QWLAN_VERSION_EXTRA            ""
-#define QWLAN_VERSION_BUILD            225
-
-#define QWLAN_VERSIONSTR               "5.2.0.225"
-
-#endif /* QWLAN_VERSION_H */
+QDF_STATUS
+cm_fw_roam_sync_propagation(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif

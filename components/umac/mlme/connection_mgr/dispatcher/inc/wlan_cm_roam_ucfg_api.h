@@ -52,6 +52,24 @@ ucfg_user_space_enable_disable_rso(struct wlan_objmgr_pdev *pdev,
 QDF_STATUS ucfg_cm_abort_roam_scan(struct wlan_objmgr_pdev *pdev,
 				   uint8_t vdev_id);
 
+#ifdef FEATURE_WLAN_ESE
+/**
+ * ucfg_cm_set_ese_roam_scan_channel_list() - To set ese roam scan channel list
+ * @pdev: pdev pointer
+ * @vdev_id: vdev_id id
+ * @chan_freq_list: Output channel list
+ * @num_chan: Output number of channels
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_cm_set_ese_roam_scan_channel_list(struct wlan_objmgr_pdev *pdev,
+						  uint8_t vdev_id,
+						  qdf_freq_t *chan_freq_list,
+						  uint8_t num_chan);
+QDF_STATUS ucfg_cm_set_cckm_ie(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			       const uint8_t *cck_ie, const uint8_t cck_ie_len);
+#endif
+
 /**
  * ucfg_cm_rso_set_roam_trigger() - Send roam trigger bitmap firmware
  * @pdev: Pointer to pdev
@@ -94,12 +112,14 @@ ucfg_cm_update_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
  * @vdev_id: vdev id
  * @bssid: Pointer to bssid to look for in scan cache
  * @ch_freq: channel on which reassoc should be send
+ * @source: source of roam
  *
  * Return: true or false
  */
 QDF_STATUS
 ucfg_wlan_cm_roam_invoke(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
-			 struct qdf_mac_addr *bssid, qdf_freq_t ch_freq);
+			 struct qdf_mac_addr *bssid, qdf_freq_t ch_freq,
+			 enum wlan_cm_source source);
 
 #ifdef WLAN_FEATURE_FILS_SK
 QDF_STATUS

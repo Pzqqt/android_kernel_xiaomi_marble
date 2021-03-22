@@ -49,9 +49,9 @@ first_connection_pcl_table[PM_MAX_NUM_OF_MODE]
 	[PM_NAN_DISC_MODE] = {PM_5G, PM_5G, PM_5G},
 };
 
-enum policy_mgr_pcl_type
-	(*second_connection_pcl_dbs_table)[PM_MAX_ONE_CONNECTION_MODE]
-			[PM_MAX_NUM_OF_MODE][PM_MAX_CONC_PRIORITY_MODE];
+pm_dbs_pcl_second_connection_table_type
+		*second_connection_pcl_dbs_table;
+
 enum policy_mgr_pcl_type const
 	(*second_connection_pcl_non_dbs_table)[PM_MAX_ONE_CONNECTION_MODE]
 			[PM_MAX_NUM_OF_MODE][PM_MAX_CONC_PRIORITY_MODE];
@@ -1482,7 +1482,7 @@ static enum policy_mgr_two_connection_mode
 		/* SBS */
 		if ((WLAN_REG_IS_5GHZ_CH_FREQ(
 		    pm_conc_connection_list[0].freq)) &&
-		    (WLAN_REG_IS_5GHZ_CH(
+		    (WLAN_REG_IS_5GHZ_CH_FREQ(
 		    pm_conc_connection_list[1].freq))) {
 			if (POLICY_MGR_ONE_ONE ==
 				pm_conc_connection_list[0].chain_mask)

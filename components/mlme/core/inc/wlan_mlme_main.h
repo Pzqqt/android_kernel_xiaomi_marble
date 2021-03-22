@@ -33,6 +33,20 @@
 
 #define MAC_MAX_ADD_IE_LENGTH       2048
 
+/*
+ * Following time is used to program WOW_TIMER_PATTERN to FW so that FW will
+ * wake host up to do graceful disconnect in case PEER remains un-authorized
+ * for this long.
+ */
+#define INSTALL_KEY_TIMEOUT_SEC      70
+#define INSTALL_KEY_TIMEOUT_MS       \
+			(INSTALL_KEY_TIMEOUT_SEC * SYSTEM_TIME_SEC_TO_MSEC)
+/* 70 seconds, for WPA, WPA2, CCKM */
+#define WAIT_FOR_KEY_TIMEOUT_PERIOD     \
+	(INSTALL_KEY_TIMEOUT_SEC * QDF_MC_TIMER_TO_SEC_UNIT)
+/* 120 seconds, for WPS */
+#define WAIT_FOR_WPS_KEY_TIMEOUT_PERIOD (120 * QDF_MC_TIMER_TO_SEC_UNIT)
+
 /* QCN IE definitions */
 #define QCN_IE_HDR_LEN     6
 
@@ -264,6 +278,8 @@ struct ft_context {
  * @hlp_ie: hldp ie
  * @hlp_ie_len: hlp ie length
  * @fils_con_info: Pointer to fils connection info from connect req
+ * @cckm_ie: cck IE
+ * @cckm_ie_len: cckm_ie len
  */
 struct mlme_connect_info {
 	uint8_t timing_meas_cap;
@@ -279,6 +295,10 @@ struct mlme_connect_info {
 	uint8_t *hlp_ie;
 	uint32_t hlp_ie_len;
 	struct wlan_fils_connection_info *fils_con_info;
+#endif
+#ifdef FEATURE_WLAN_ESE
+	uint8_t cckm_ie[DOT11F_IE_RSN_MAX_LEN];
+	uint8_t cckm_ie_len;
 #endif
 };
 
@@ -763,6 +783,19 @@ QDF_STATUS wlan_strip_ie(uint8_t *addn_ie, uint16_t *addn_ielen,
  */
 bool wlan_is_channel_present_in_list(qdf_freq_t *freq_lst,
 				     uint32_t num_chan, qdf_freq_t chan_freq);
+
+/**
+ * wlan_roam_is_channel_valid() - validate channel frequency
+ * @reg: regulatory context
+ * @chan_freq: channel frequency
+ *
+ * This function validates channel frequency present in valid channel
+ * list or not.
+ *
+ * Return: true or false
+ */
+bool wlan_roam_is_channel_valid(struct wlan_mlme_reg *reg,
+				qdf_freq_t chan_freq);
 
 int8_t wlan_get_cfg_max_tx_power(struct wlan_objmgr_psoc *psoc,
 				 struct wlan_objmgr_pdev *pdev,

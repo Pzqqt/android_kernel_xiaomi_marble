@@ -436,7 +436,7 @@ typedef struct sSirAssocRsp {
 
 #ifdef FEATURE_WLAN_ESE
 	uint8_t num_tspecs;
-	tDot11fIEWMMTSPEC TSPECInfo[SIR_ESE_MAX_TSPEC_IES];
+	tDot11fIEWMMTSPEC TSPECInfo[ESE_MAX_TSPEC_IES];
 	struct ese_tsm_ie tsmIE;
 #endif
 
@@ -850,7 +850,7 @@ populate_dot11f_ssid(struct mac_context *mac,
 		tSirMacSSid *pInternal, tDot11fIESSID *pDot11f);
 
 /* / Populate a tDot11fIESSID from CFG */
-QDF_STATUS populate_dot11f_ssid2(struct mac_context *mac,
+QDF_STATUS populate_dot11f_ssid2(struct pe_session *pe_session,
 				tDot11fIESSID *pDot11f);
 
 /**
@@ -931,7 +931,7 @@ void populate_dot11f_ese_version(tDot11fIEESEVersion *pESEVersion);
 void populate_dot11f_ese_rad_mgmt_cap(tDot11fIEESERadMgmtCap *pESERadMgmtCap);
 /* Fill the CCKM IE */
 QDF_STATUS populate_dot11f_ese_cckm_opaque(struct mac_context *mac,
-					tpSirCCKMie pCCKMie,
+					struct mlme_connect_info *connect_info,
 					tDot11fIEESECckmOpaque *pDot11f);
 
 void populate_dot11_tsrsie(struct mac_context *mac,
@@ -1275,6 +1275,9 @@ wlan_get_parsed_bss_description_ies(struct mac_context *mac_ctx,
 				    struct bss_description *bss_desc,
 				    tDot11fBeaconIEs **ie_struct);
 
+void wlan_populate_basic_rates(tSirMacRateSet *rate_set, bool is_ofdm_rates,
+			       bool is_basic_rates);
+
 uint32_t wlan_get_11h_power_constraint(struct mac_context *mac_ctx,
 				       tDot11fIEPowerConstraints *constraints);
 
@@ -1295,6 +1298,18 @@ wlan_fill_bss_desc_from_scan_entry(struct mac_context *mac_ctx,
  */
 uint16_t
 wlan_get_ielen_from_bss_description(struct bss_description *bss_desc);
+
+bool wlan_rates_is_dot11_rate_supported(struct mac_context *mac_ctx,
+					uint8_t rate);
+
+bool wlan_check_rate_bitmap(uint8_t rate, uint16_t rate_bitmap);
+
+QDF_STATUS wlan_get_rate_set(struct mac_context *mac,
+			     tDot11fBeaconIEs *ie_struct,
+			     tSirMacRateSet *op_rate,
+			     tSirMacRateSet *ext_rate);
+
+void wlan_add_rate_bitmap(uint8_t rate, uint16_t *rate_bitmap);
 
 /**
  * dot11f_parse_assoc_response() - API to parse Assoc IE buffer to struct
