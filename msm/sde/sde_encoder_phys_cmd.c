@@ -975,18 +975,18 @@ static int _get_tearcheck_threshold(struct sde_encoder_phys *phys_enc)
 		}
 
 		/* Calculate the number of extra lines*/
-		slow_time_ns = (1 * 1000000000) / qsync_min_fps;
-		default_time_ns = (1 * 1000000000) / default_fps;
-		sde_encoder_helper_get_transfer_time(phys_enc->parent,
+		slow_time_ns = DIV_ROUND_UP(1000000000, qsync_min_fps);
+		default_time_ns = DIV_ROUND_UP(1000000000, default_fps);
+		sde_encoder_get_transfer_time(phys_enc->parent,
 				&transfer_time_us);
 		if (transfer_time_us)
 			idle_time_ns = default_time_ns -
 					(1000 * transfer_time_us);
 
 		extra_time_ns = slow_time_ns - default_time_ns + idle_time_ns;
-		default_line_time_ns = (1 * 1000000000) / (default_fps * yres);
+		default_line_time_ns = DIV_ROUND_UP(1000000000, default_fps * yres);
 
-		threshold_lines = extra_time_ns / default_line_time_ns;
+		threshold_lines = DIV_ROUND_UP(extra_time_ns, default_line_time_ns);
 
 		SDE_DEBUG_CMDENC(cmd_enc, "slow:%d default:%d extra:%d(ns)\n",
 			slow_time_ns, default_time_ns, extra_time_ns);

@@ -150,11 +150,15 @@
 #define SDE_UIDLE_FAL10_DANGER 6
 #define SDE_UIDLE_FAL10_TARGET_IDLE 50
 #define SDE_UIDLE_FAL1_TARGET_IDLE 40
+#define SDE_UIDLE_FAL1_MAX_THRESHOLD 15
+#define SDE_UIDLE_REV102_FAL1_MAX_THRESHOLD 255
 #define SDE_UIDLE_FAL10_THRESHOLD_60 12
 #define SDE_UIDLE_FAL10_THRESHOLD_90 13
 #define SDE_UIDLE_MAX_DWNSCALE 1500
 #define SDE_UIDLE_MAX_FPS_60 60
 #define SDE_UIDLE_MAX_FPS_90 90
+#define SDE_UIDLE_MAX_FPS_120 120
+#define SDE_UIDLE_MAX_FPS_240 240
 
 #define SSPP_GET_REGDMA_BASE(blk_base, top_off) ((blk_base) >= (top_off) ?\
 		(blk_base) - (top_off) : (blk_base))
@@ -241,12 +245,7 @@ enum {
 	QOS_REFRESH_RATES,
 	QOS_DANGER_LUT,
 	QOS_SAFE_LUT,
-	QOS_CREQ_LUT_LINEAR,
-	QOS_CREQ_LUT_MACROTILE,
-	QOS_CREQ_LUT_NRT,
-	QOS_CREQ_LUT_CWB,
-	QOS_CREQ_LUT_MACROTILE_QSEED,
-	QOS_CREQ_LUT_LINEAR_QSEED,
+	QOS_CREQ_LUT,
 	QOS_PROP_MAX,
 };
 
@@ -648,18 +647,7 @@ static struct sde_prop_type sde_qos_prop[] = {
 			PROP_TYPE_U32_ARRAY},
 	{QOS_DANGER_LUT, "qcom,sde-danger-lut", false, PROP_TYPE_U32_ARRAY},
 	{QOS_SAFE_LUT, "qcom,sde-safe-lut", false, PROP_TYPE_U32_ARRAY},
-	{QOS_CREQ_LUT_LINEAR, "qcom,sde-qos-lut-linear", false,
-			PROP_TYPE_U32_ARRAY},
-	{QOS_CREQ_LUT_MACROTILE, "qcom,sde-qos-lut-macrotile", false,
-			PROP_TYPE_U32_ARRAY},
-	{QOS_CREQ_LUT_NRT, "qcom,sde-qos-lut-nrt", false,
-			PROP_TYPE_U32_ARRAY},
-	{QOS_CREQ_LUT_CWB, "qcom,sde-qos-lut-cwb", false,
-			PROP_TYPE_U32_ARRAY},
-	{QOS_CREQ_LUT_MACROTILE_QSEED, "qcom,sde-qos-lut-macrotile-qseed",
-			false, PROP_TYPE_U32_ARRAY},
-	{QOS_CREQ_LUT_LINEAR_QSEED, "qcom,sde-qos-lut-linear-qseed",
-			false, PROP_TYPE_U32_ARRAY},
+	{QOS_CREQ_LUT, "qcom,sde-creq-lut", false, PROP_TYPE_U32_ARRAY},
 };
 
 static struct sde_prop_type sspp_prop[] = {
@@ -1594,7 +1582,8 @@ static int _sde_sspp_setup_vigs(struct device_node *np,
 					MAX_PRE_ROT_HEIGHT_INLINE_ROT_DEFAULT;
 		}
 
-		if (IS_SDE_INLINE_ROT_REV_200(sde_cfg->true_inline_rot_rev)) {
+		if (IS_SDE_INLINE_ROT_REV_200(sde_cfg->true_inline_rot_rev) ||
+				IS_SDE_INLINE_ROT_REV_201(sde_cfg->true_inline_rot_rev)) {
 			set_bit(SDE_SSPP_PREDOWNSCALE, &sspp->features);
 			sblk->in_rot_maxdwnscale_rt_num =
 				MAX_DOWNSCALE_RATIO_INROT_PD_RT_NUMERATOR;
@@ -4235,7 +4224,7 @@ static int _sde_qos_parse_dt_cfg(struct sde_mdss_cfg *cfg, int *prop_count,
 	struct sde_prop_value *prop_value, bool *prop_exists)
 {
 	int i, j;
-	u32 qos_count = 1, index;
+	u32 qos_count = 1;
 
 	if (prop_exists[QOS_REFRESH_RATES]) {
 		qos_count = prop_count[QOS_REFRESH_RATES];
@@ -4259,7 +4248,7 @@ static int _sde_qos_parse_dt_cfg(struct sde_mdss_cfg *cfg, int *prop_count,
 	cfg->perf.safe_lut = kcalloc(qos_count,
 		sizeof(u64) * SDE_QOS_LUT_USAGE_MAX, GFP_KERNEL);
 	cfg->perf.creq_lut = kcalloc(qos_count,
-		sizeof(u64) * SDE_QOS_LUT_USAGE_MAX, GFP_KERNEL);
+		sizeof(u64) * SDE_QOS_LUT_USAGE_MAX * SDE_CREQ_LUT_TYPE_MAX, GFP_KERNEL);
 	if (!cfg->perf.creq_lut || !cfg->perf.safe_lut || !cfg->perf.danger_lut)
 		goto end;
 
@@ -4285,37 +4274,16 @@ static int _sde_qos_parse_dt_cfg(struct sde_mdss_cfg *cfg, int *prop_count,
 		}
 	}
 
-	for (i = 0; i < SDE_QOS_LUT_USAGE_MAX; i++) {
-		static const u32 prop_key[SDE_QOS_LUT_USAGE_MAX] = {
-			[SDE_QOS_LUT_USAGE_LINEAR] =
-					QOS_CREQ_LUT_LINEAR,
-			[SDE_QOS_LUT_USAGE_MACROTILE] =
-					QOS_CREQ_LUT_MACROTILE,
-			[SDE_QOS_LUT_USAGE_NRT] =
-					QOS_CREQ_LUT_NRT,
-			[SDE_QOS_LUT_USAGE_CWB] =
-					QOS_CREQ_LUT_CWB,
-			[SDE_QOS_LUT_USAGE_MACROTILE_QSEED] =
-					QOS_CREQ_LUT_MACROTILE_QSEED,
-			[SDE_QOS_LUT_USAGE_LINEAR_QSEED] =
-					QOS_CREQ_LUT_LINEAR_QSEED,
-		};
-		int key = prop_key[i];
+	if (prop_exists[QOS_CREQ_LUT] &&
+		(prop_count[QOS_CREQ_LUT] >=
+		(SDE_QOS_LUT_USAGE_MAX * qos_count * SDE_CREQ_LUT_TYPE_MAX))) {
 		u64 lut_hi, lut_lo;
 
-		if (!prop_exists[key])
-			continue;
-
-		for (j = 0; j < qos_count; j++) {
-			lut_hi = PROP_VALUE_ACCESS(prop_value, key,
-				(j * 2) + 0);
-			lut_lo = PROP_VALUE_ACCESS(prop_value, key,
-				(j * 2) + 1);
-			index = (j * SDE_QOS_LUT_USAGE_MAX) + i;
-			cfg->perf.creq_lut[index] =
-					(lut_hi << 32) | lut_lo;
-			SDE_DEBUG("creq usage:%d lut:0x%llx\n",
-				index, cfg->perf.creq_lut[index]);
+		for (j = 0; j < (qos_count * SDE_QOS_LUT_USAGE_MAX * SDE_CREQ_LUT_TYPE_MAX); j++) {
+			lut_hi = PROP_VALUE_ACCESS(prop_value, QOS_CREQ_LUT, (j * 2) + 0);
+			lut_lo = PROP_VALUE_ACCESS(prop_value, QOS_CREQ_LUT, (j * 2) + 1);
+			cfg->perf.creq_lut[j] = (lut_hi << 32) | lut_lo;
+			SDE_DEBUG("creq usage:%d lut:0x%llx\n", j, cfg->perf.creq_lut[j]);
 		}
 	}
 
@@ -4648,7 +4616,9 @@ static int sde_hardware_format_caps(struct sde_mdss_cfg *sde_cfg,
 	uint32_t virt_vig_list_size, in_rot_list_size = 0;
 	uint32_t cursor_list_size = 0;
 	uint32_t index = 0;
-	const struct sde_format_extended *inline_fmt_tbl;
+	uint32_t in_rot_restricted_list_size = 0;
+	const struct sde_format_extended *inline_fmt_tbl = NULL;
+	const struct sde_format_extended *inline_restricted_fmt_tbl = NULL;
 
 	/* cursor input formats */
 	if (sde_cfg->has_cursor) {
@@ -4745,12 +4715,14 @@ static int sde_hardware_format_caps(struct sde_mdss_cfg *sde_cfg,
 	} else if (IS_SDE_INLINE_ROT_REV_200(sde_cfg->true_inline_rot_rev)) {
 		inline_fmt_tbl = true_inline_rot_v2_fmts;
 		in_rot_list_size = ARRAY_SIZE(true_inline_rot_v2_fmts);
+	} else if (IS_SDE_INLINE_ROT_REV_201(sde_cfg->true_inline_rot_rev)) {
+		inline_fmt_tbl = true_inline_rot_v201_fmts;
+		in_rot_list_size = ARRAY_SIZE(true_inline_rot_v201_fmts);
+		inline_restricted_fmt_tbl = true_inline_rot_v201_restricted_fmts;
+		in_rot_restricted_list_size = ARRAY_SIZE(true_inline_rot_v201_fmts);
 	}
 
 	if (in_rot_list_size) {
-		if (sde_cfg->has_fp16)
-			in_rot_list_size += ARRAY_SIZE(fp_16_inline_rot_fmts);
-
 		sde_cfg->inline_rot_formats = kcalloc(in_rot_list_size,
 			sizeof(struct sde_format_extended), GFP_KERNEL);
 		if (!sde_cfg->inline_rot_formats) {
@@ -4761,14 +4733,25 @@ static int sde_hardware_format_caps(struct sde_mdss_cfg *sde_cfg,
 
 		index = sde_copy_formats(sde_cfg->inline_rot_formats,
 			in_rot_list_size, 0, inline_fmt_tbl, in_rot_list_size);
-		if (sde_cfg->has_fp16)
-			index += sde_copy_formats(sde_cfg->inline_rot_formats,
-				in_rot_list_size, index, fp_16_inline_rot_fmts,
-				ARRAY_SIZE(fp_16_inline_rot_fmts));
+	}
+
+	if (in_rot_restricted_list_size) {
+		sde_cfg->inline_rot_restricted_formats = kcalloc(in_rot_restricted_list_size,
+			sizeof(struct sde_format_extended), GFP_KERNEL);
+		if (!sde_cfg->inline_rot_restricted_formats) {
+			SDE_ERROR("failed to alloc inline rot restricted format list\n");
+			rc = -ENOMEM;
+			goto free_in_rot;
+		}
+
+		index = sde_copy_formats(sde_cfg->inline_rot_restricted_formats,
+			in_rot_restricted_list_size, 0, inline_restricted_fmt_tbl,
+			in_rot_restricted_list_size);
 	}
 
 	return 0;
-
+free_in_rot:
+	kfree(sde_cfg->inline_rot_formats);
 free_wb:
 	kfree(sde_cfg->wb_formats);
 free_virt:
@@ -4789,7 +4772,8 @@ static void _sde_hw_setup_uidle(struct sde_uidle_cfg *uidle_cfg)
 	if (!uidle_cfg->uidle_rev)
 		return;
 
-	if ((IS_SDE_UIDLE_REV_101(uidle_cfg->uidle_rev)) ||
+	if ((IS_SDE_UIDLE_REV_102(uidle_cfg->uidle_rev)) ||
+			(IS_SDE_UIDLE_REV_101(uidle_cfg->uidle_rev)) ||
 			(IS_SDE_UIDLE_REV_100(uidle_cfg->uidle_rev))) {
 		uidle_cfg->fal10_exit_cnt = SDE_UIDLE_FAL10_EXIT_CNT;
 		uidle_cfg->fal10_exit_danger = SDE_UIDLE_FAL10_EXIT_DANGER;
@@ -4798,6 +4782,7 @@ static void _sde_hw_setup_uidle(struct sde_uidle_cfg *uidle_cfg)
 		uidle_cfg->fal1_target_idle_time = SDE_UIDLE_FAL1_TARGET_IDLE;
 		uidle_cfg->max_dwnscale = SDE_UIDLE_MAX_DWNSCALE;
 		uidle_cfg->debugfs_ctrl = true;
+		uidle_cfg->fal1_max_threshold = SDE_UIDLE_FAL1_MAX_THRESHOLD;
 
 		if (IS_SDE_UIDLE_REV_100(uidle_cfg->uidle_rev)) {
 			uidle_cfg->fal10_threshold =
@@ -4809,6 +4794,15 @@ static void _sde_hw_setup_uidle(struct sde_uidle_cfg *uidle_cfg)
 			uidle_cfg->fal10_threshold =
 				SDE_UIDLE_FAL10_THRESHOLD_90;
 			uidle_cfg->max_fps = SDE_UIDLE_MAX_FPS_90;
+		} else if (IS_SDE_UIDLE_REV_102(uidle_cfg->uidle_rev)) {
+			set_bit(SDE_UIDLE_QACTIVE_OVERRIDE,
+					&uidle_cfg->features);
+			uidle_cfg->fal10_threshold =
+				SDE_UIDLE_FAL10_THRESHOLD_90;
+			uidle_cfg->max_fps = SDE_UIDLE_MAX_FPS_90;
+			uidle_cfg->max_fal1_fps = SDE_UIDLE_MAX_FPS_240;
+			uidle_cfg->fal1_max_threshold =
+					SDE_UIDLE_REV102_FAL1_MAX_THRESHOLD;
 		}
 	} else {
 		pr_err("invalid uidle rev:0x%x, disabling uidle\n",
@@ -5113,8 +5107,8 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->has_hdr_plus = true;
 		set_bit(SDE_MDP_DHDR_MEMPOOL_4K, &sde_cfg->mdp[0].features);
 		sde_cfg->has_vig_p010 = true;
-		sde_cfg->true_inline_rot_rev = SDE_INLINE_ROT_VERSION_2_0_0;
-		sde_cfg->uidle_cfg.uidle_rev = SDE_UIDLE_VERSION_1_0_1;
+		sde_cfg->true_inline_rot_rev = SDE_INLINE_ROT_VERSION_2_0_1;
+		sde_cfg->uidle_cfg.uidle_rev = SDE_UIDLE_VERSION_1_0_2;
 		sde_cfg->vbif_disable_inner_outer_shareable = true;
 		sde_cfg->dither_luma_mode_support = true;
 		sde_cfg->mdss_hw_block_size = 0x158;

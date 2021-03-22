@@ -581,6 +581,14 @@ void sde_encoder_irq_control(struct drm_encoder *drm_enc, bool enable);
 struct drm_connector *sde_encoder_get_connector(struct drm_device *dev,
 			struct drm_encoder *drm_enc);
 
+/**
+ * sde_encoder_get_transfer_time - get the mdp transfer time in usecs
+ * @drm_enc: Pointer to drm encoder structure
+ * @transfer_time_us: Pointer to store the output value
+ */
+void sde_encoder_get_transfer_time(struct drm_encoder *drm_enc,
+		u32 *transfer_time_us);
+
 /*
  * sde_encoder_get_dfps_maxfps - get dynamic FPS max frame rate of
 				the given encoder

@@ -4336,7 +4336,7 @@ void sde_encoder_helper_get_pp_line_count(struct drm_encoder *drm_enc,
 	}
 }
 
-void sde_encoder_helper_get_transfer_time(struct drm_encoder *drm_enc,
+void sde_encoder_get_transfer_time(struct drm_encoder *drm_enc,
 			u32 *transfer_time_us)
 {
 	struct sde_encoder_virt *sde_enc;

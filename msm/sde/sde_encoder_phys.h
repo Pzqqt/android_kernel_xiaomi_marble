@@ -543,14 +543,6 @@ void sde_encoder_helper_get_pp_line_count(struct drm_encoder *drm_enc,
 		struct sde_hw_pp_vsync_info *info);
 
 /**
- * sde_encoder_helper_get_transfer_time - get the mdp transfer time in usecs
- * @drm_enc: Pointer to drm encoder structure
- * @transfer_time_us: Pointer to store the output value
- */
-void sde_encoder_helper_get_transfer_time(struct drm_encoder *drm_enc,
-		u32 *transfer_time_us);
-
-/**
  * sde_encoder_helper_trigger_flush - control flush helper function
  *	This helper function may be optionally specified by physical
  *	encoders if they require ctl_flush triggering.

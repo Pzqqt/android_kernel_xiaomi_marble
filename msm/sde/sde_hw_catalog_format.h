@@ -56,6 +56,10 @@
 #define P010_UBWC_FMTS	{DRM_FORMAT_NV12, DRM_FORMAT_MOD_QCOM_DX | \
 		DRM_FORMAT_MOD_QCOM_COMPRESSED}
 
+#define SDE_IS_IN_ROT_RESTRICTED_FMT(catalog, fmt) (catalog ? \
+		(sde_format_validate_fmt(NULL, fmt, \
+		catalog->inline_rot_restricted_formats) == 0) : false)
+
 static const struct sde_format_extended plane_formats[] = {
 	RGB_FMTS,
 	RGB_10BIT_FMTS,
@@ -175,8 +179,21 @@ static const struct sde_format_extended fp16_formats[] = {
 	{0, 0}
 };
 
-static const struct sde_format_extended fp_16_inline_rot_fmts[] = {
+static const struct sde_format_extended true_inline_rot_v201_fmts[] = {
+	{DRM_FORMAT_NV12, DRM_FORMAT_MOD_QCOM_COMPRESSED},
+	{DRM_FORMAT_ABGR8888, DRM_FORMAT_MOD_QCOM_COMPRESSED},
+	{DRM_FORMAT_ABGR2101010, DRM_FORMAT_MOD_QCOM_COMPRESSED},
+	TP10_UBWC_FMTS,
+	P010_UBWC_FMTS,
 	{DRM_FORMAT_ABGR16161616F, DRM_FORMAT_MOD_QCOM_COMPRESSED},
-	{0, 0}
+	{0, 0},
+};
+
+static const struct sde_format_extended true_inline_rot_v201_restricted_fmts[] = {
+	{DRM_FORMAT_ABGR8888, DRM_FORMAT_MOD_QCOM_COMPRESSED},
+	{DRM_FORMAT_ABGR2101010, DRM_FORMAT_MOD_QCOM_COMPRESSED},
+	P010_UBWC_FMTS,
+	{DRM_FORMAT_ABGR16161616F, DRM_FORMAT_MOD_QCOM_COMPRESSED},
+	{0, 0},
 };
 

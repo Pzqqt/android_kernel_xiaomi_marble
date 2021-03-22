@@ -300,7 +300,7 @@ struct sde_crtc_misr_info {
  * @skip_blend_plane: enabled plane that has skip blending
  * @skip_blend_plane_w: skip blend plane width
  * @skip_blend_plane_h: skip blend plane height
- *
+ * @line_time_in_ns : current mode line time in nano sec is needed for QOS update
  */
 struct sde_crtc {
 	struct drm_crtc base;
@@ -397,6 +397,7 @@ struct sde_crtc {
 	enum sde_sspp skip_blend_plane;
 	u32 skip_blend_plane_w;
 	u32 skip_blend_plane_h;
+	u32 line_time_in_ns;
 };
 
 enum sde_crtc_dirty_flags {
@@ -739,6 +740,16 @@ static inline bool sde_crtc_is_rt_client(struct drm_crtc *crtc,
 static inline bool sde_crtc_is_enabled(struct drm_crtc *crtc)
 {
 	return crtc ? crtc->enabled : false;
+}
+
+static inline u32 sde_crtc_get_line_time(struct drm_crtc *crtc)
+{
+	struct sde_crtc *sde_crtc;
+
+	if (!crtc)
+		return 0;
+	sde_crtc = to_sde_crtc(crtc);
+	return sde_crtc->line_time_in_ns;
 }
 
 /**

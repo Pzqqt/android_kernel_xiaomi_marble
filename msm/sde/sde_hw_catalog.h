@@ -113,11 +113,14 @@
  */
 #define SDE_INLINE_ROT_VERSION_1_0_0	0x100
 #define SDE_INLINE_ROT_VERSION_2_0_0	0x200
+#define SDE_INLINE_ROT_VERSION_2_0_1	0x201
 
 #define IS_SDE_INLINE_ROT_REV_100(rev) \
 	((rev) == SDE_INLINE_ROT_VERSION_1_0_0)
 #define IS_SDE_INLINE_ROT_REV_200(rev) \
 	((rev) == SDE_INLINE_ROT_VERSION_2_0_0)
+#define IS_SDE_INLINE_ROT_REV_201(rev) \
+	((rev) == SDE_INLINE_ROT_VERSION_2_0_1)
 
 
 /*
@@ -125,11 +128,14 @@
  */
 #define SDE_UIDLE_VERSION_1_0_0		0x100
 #define SDE_UIDLE_VERSION_1_0_1		0x101
+#define SDE_UIDLE_VERSION_1_0_2		0x102
 
 #define IS_SDE_UIDLE_REV_100(rev) \
 	((rev) == SDE_UIDLE_VERSION_1_0_0)
 #define IS_SDE_UIDLE_REV_101(rev) \
 	((rev) == SDE_UIDLE_VERSION_1_0_1)
+#define IS_SDE_UIDLE_REV_102(rev) \
+	((rev) == SDE_UIDLE_VERSION_1_0_2)
 
 #define SDE_UIDLE_MAJOR(rev)		((rev) >> 8)
 
@@ -709,9 +715,20 @@ enum sde_qos_lut_usage {
 	SDE_QOS_LUT_USAGE_MACROTILE,
 	SDE_QOS_LUT_USAGE_NRT,
 	SDE_QOS_LUT_USAGE_CWB,
-	SDE_QOS_LUT_USAGE_MACROTILE_QSEED,
-	SDE_QOS_LUT_USAGE_LINEAR_QSEED,
+	SDE_QOS_LUT_USAGE_CWB_TILE,
+	SDE_QOS_LUT_USAGE_INLINE,
+	SDE_QOS_LUT_USAGE_INLINE_RESTRICTED_FMTS,
 	SDE_QOS_LUT_USAGE_MAX,
+};
+
+/**
+ * enum sde_creq_lut_types - define creq LUT types possible for all use cases
+ * This is second dimension to sde_qos_lut_usage enum.
+ */
+enum sde_creq_lut_types {
+	SDE_CREQ_LUT_TYPE_NOQSEED,
+	SDE_CREQ_LUT_TYPE_QSEED,
+	SDE_CREQ_LUT_TYPE_MAX,
 };
 
 /**
@@ -964,10 +981,12 @@ struct sde_mdp_cfg {
  * @fal10_target_idle_time: fal10 targeted time in uS
  * @fal1_target_idle_time:  fal1 targeted time in uS
  * @fal10_threshold:        fal10 threshold value
+ * @fal1_max_threshold      fal1 maximum allowed threshold value
  * @max_downscale:          maximum downscaling ratio x1000.
  *	                    This ratio is multiplied x1000 to allow
  *	                    3 decimal precision digits.
  * @max_fps:                maximum fps to allow micro idle
+ * @max_fal1_fps:           maximum fps to allow micro idle FAL1 only
  * @uidle_rev:              uidle revision supported by the target,
  *                          zero if no support
  * @debugfs_perf:           enable/disable performance counters and status
@@ -985,8 +1004,10 @@ struct sde_uidle_cfg {
 	u32 fal10_target_idle_time;
 	u32 fal1_target_idle_time;
 	u32 fal10_threshold;
+	u32 fal1_max_threshold;
 	u32 max_dwnscale;
 	u32 max_fps;
+	u32 max_fal1_fps;
 	u32 uidle_rev;
 	u32 debugfs_perf;
 	bool debugfs_ctrl;
@@ -1668,6 +1689,7 @@ struct sde_mdss_cfg {
 	struct sde_format_extended *wb_formats;
 	struct sde_format_extended *virt_vig_formats;
 	struct sde_format_extended *inline_rot_formats;
+	struct sde_format_extended *inline_rot_restricted_formats;
 
 	struct list_head irq_offset_list;
 };

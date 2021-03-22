@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  */
 
@@ -25,11 +25,18 @@ struct sde_hw_uidle;
 #define SDE_UIDLE_WD_HEART_BEAT 0
 #define SDE_UIDLE_WD_LOAD_VAL 18
 
+enum sde_uidle_state {
+	UIDLE_STATE_DISABLE = 0,
+	UIDLE_STATE_FAL1_ONLY,
+	UIDLE_STATE_FAL1_FAL10,
+	UIDLE_STATE_ENABLE_MAX,
+};
+
 struct sde_uidle_ctl_cfg {
 	u32 fal10_exit_cnt;
 	u32 fal10_exit_danger;
 	u32 fal10_danger;
-	bool uidle_enable;
+	enum sde_uidle_state uidle_state;
 };
 
 struct sde_uidle_wd_cfg {
