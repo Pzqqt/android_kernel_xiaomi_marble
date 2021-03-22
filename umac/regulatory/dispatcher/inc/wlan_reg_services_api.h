@@ -571,15 +571,6 @@ QDF_STATUS wlan_reg_get_dfs_region(struct wlan_objmgr_pdev *pdev,
 
 #ifdef CONFIG_CHAN_NUM_API
 /**
- * wlan_reg_get_channel_reg_power() - Provide the channel regulatory power
- * @chan_num: channel number
- *
- * Return: int
- */
-uint32_t wlan_reg_get_channel_reg_power(struct wlan_objmgr_pdev *pdev,
-					uint8_t chan_num);
-
-/**
  * wlan_reg_get_channel_freq() - provide the channel center freq
  * @chan_num: channel number
  *
