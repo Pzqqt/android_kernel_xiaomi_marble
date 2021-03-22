@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/irq.h>
@@ -481,7 +481,7 @@ static int swrm_get_ssp_period(struct swr_mstr_ctrl *swrm,
 	return ((swrm->bus_clk * 2) / ((row * col) * frame_sync));
 }
 
-static int swrm_core_vote_request(struct swr_mstr_ctrl *swrm)
+static int swrm_core_vote_request(struct swr_mstr_ctrl *swrm, bool enable)
 {
 	int ret = 0;
 
@@ -494,7 +494,7 @@ static int swrm_core_vote_request(struct swr_mstr_ctrl *swrm)
 		goto exit;
 	}
 	if (swrm->core_vote) {
-		ret = swrm->core_vote(swrm->handle, true);
+		ret = swrm->core_vote(swrm->handle, enable);
 		if (ret)
 			dev_err_ratelimited(swrm->dev,
 				"%s: core vote request failed\n", __func__);
@@ -525,8 +525,10 @@ static int swrm_clk_request(struct swr_mstr_ctrl *swrm, bool enable)
 					dev_err_ratelimited(swrm->dev,
 						"%s: core vote request failed\n",
 						__func__);
+					swrm->core_vote(swrm->handle, false);
 					goto exit;
 				}
+				ret = swrm->core_vote(swrm->handle, false);
 			}
 		}
 		swrm->clk_ref_count++;
@@ -562,6 +564,7 @@ static int swrm_ahb_write(struct swr_mstr_ctrl *swrm,
 {
 	u32 temp = (u32)(*value);
 	int ret = 0;
+	int vote_ret = 0;
 
 	mutex_lock(&swrm->devlock);
 	if (!swrm->dev_up)
@@ -575,13 +578,20 @@ static int swrm_ahb_write(struct swr_mstr_ctrl *swrm,
 					    __func__);
 			goto err;
 		}
-	} else if (swrm_core_vote_request(swrm)) {
-		goto err;
+	} else {
+		vote_ret = swrm_core_vote_request(swrm, true);
+		if (vote_ret == -ENOTSYNC)
+			goto err_vote;
+		else if (vote_ret)
+			goto err;
 	}
 
 	iowrite32(temp, swrm->swrm_dig_base + reg);
 	if (is_swr_clk_needed(swrm))
 		swrm_clk_request(swrm, FALSE);
+err_vote:
+	if (!is_swr_clk_needed(swrm))
+		swrm_core_vote_request(swrm, false);
 err:
 	mutex_unlock(&swrm->devlock);
 	return ret;
@@ -592,6 +602,7 @@ static int swrm_ahb_read(struct swr_mstr_ctrl *swrm,
 {
 	u32 temp = 0;
 	int ret = 0;
+	int vote_ret = 0;
 
 	mutex_lock(&swrm->devlock);
 	if (!swrm->dev_up)
@@ -604,14 +615,21 @@ static int swrm_ahb_read(struct swr_mstr_ctrl *swrm,
 					    __func__);
 			goto err;
 		}
-	} else if (swrm_core_vote_request(swrm)) {
-		goto err;
+	} else {
+		vote_ret = swrm_core_vote_request(swrm, true);
+		if (vote_ret == -ENOTSYNC)
+			goto err_vote;
+		else if (vote_ret)
+			goto err;
 	}
 
 	temp = ioread32(swrm->swrm_dig_base + reg);
 	*value = temp;
 	if (is_swr_clk_needed(swrm))
 		swrm_clk_request(swrm, FALSE);
+err_vote:
+	if (!is_swr_clk_needed(swrm))
+		swrm_core_vote_request(swrm, false);
 err:
 	mutex_unlock(&swrm->devlock);
 	return ret;
@@ -739,19 +757,29 @@ static int swrm_get_port_config(struct swr_mstr_ctrl *swrm)
 }
 
 static int swrm_pcm_port_config(struct swr_mstr_ctrl *swrm, u8 port_num,
-				bool dir, bool enable)
+				u8 stream_type, bool dir, bool enable)
 {
 	u16 reg_addr = 0;
 	u32 reg_val = SWRM_COMP_FEATURE_CFG_DEFAULT_VAL;
 
-	if (!port_num || port_num > 6) {
+	if (!port_num || port_num > SWR_MSTR_PORT_LEN) {
 		dev_err(swrm->dev, "%s: invalid port: %d\n",
 			__func__, port_num);
 		return -EINVAL;
 	}
-	reg_addr = ((dir) ? SWRM_DIN_DP_PCM_PORT_CTRL(port_num) : \
+
+	switch (stream_type) {
+	case SWR_PCM:
+		reg_addr = ((dir) ? SWRM_DIN_DP_PCM_PORT_CTRL(port_num) : \
 				SWRM_DOUT_DP_PCM_PORT_CTRL(port_num));
-	swr_master_write(swrm, reg_addr, enable);
+		swr_master_write(swrm, reg_addr, enable);
+		break;
+	case SWR_PDM_32:
+		break;
+	case SWR_PDM:
+	default:
+		return 0;
+	}
 
 	if (swrm->version >= SWRM_VERSION_1_7)
 		reg_val = SWRM_COMP_FEATURE_CFG_DEFAULT_VAL_V1P7;
@@ -1154,8 +1182,7 @@ static bool swrm_remove_from_group(struct swr_master *master)
 		goto end;
 
 	mutex_lock(&swrm->mlock);
-	if ((swrm->num_rx_chs > 1) &&
-	    (swrm->num_rx_chs == swrm->num_cfg_devs)) {
+	if (swrm->num_rx_chs > 1) {
 		list_for_each_entry(swr_dev, &master->devices,
 				dev_list) {
 			swr_dev->group_id = SWR_GROUP_NONE;
@@ -1266,8 +1293,8 @@ static void swrm_disable_ports(struct swr_master *master,
 			__func__, i,
 			(SWRM_DP_PORT_CTRL_BANK((i + 1), bank)), value);
 
-		if (mport->stream_type == SWR_PCM)
-			swrm_pcm_port_config(swrm, (i + 1), mport->dir, false);
+		swrm_pcm_port_config(swrm, (i + 1),
+				mport->stream_type, mport->dir, false);
 	}
 }
 
@@ -1416,8 +1443,8 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 		if (!mport->port_en)
 			continue;
 
-		if (mport->stream_type == SWR_PCM)
-			swrm_pcm_port_config(swrm, (i + 1), mport->dir, true);
+		swrm_pcm_port_config(swrm, (i + 1),
+				mport->stream_type, mport->dir, true);
 		j = 0;
 		lane_ctrl  = 0;
 		sinterval = 0xFFFF;
@@ -2613,6 +2640,7 @@ static int swrm_probe(struct platform_device *pdev)
 	int ret = 0;
 	struct clk *lpass_core_hw_vote = NULL;
 	struct clk *lpass_core_audio = NULL;
+	u32 swrm_hw_ver = 0;
 
 	/* Allocate soundwire master driver structure */
 	swrm = devm_kzalloc(&pdev->dev, sizeof(struct swr_mstr_ctrl),
@@ -2646,6 +2674,14 @@ static int swrm_probe(struct platform_device *pdev)
 			"%s: ee_val not specified, initialize with default val\n",
 			__func__);
 		swrm->ee_val = 0x1;
+	}
+	ret = of_property_read_u32(pdev->dev.of_node,
+				"qcom,swr-master-version",
+				&swrm->version);
+	if (ret) {
+		dev_dbg(&pdev->dev, "%s: swrm version not defined, use default\n",
+			 __func__);
+		swrm->version = SWRM_VERSION_1_7;
 	}
 	ret = of_property_read_u32(pdev->dev.of_node, "qcom,swr_master_id",
 				&swrm->master_id);
@@ -2755,6 +2791,13 @@ static int swrm_probe(struct platform_device *pdev)
 
 		if (port_num != old_port_num)
 			ch_iter = 0;
+		if (port_num > SWR_MSTR_PORT_LEN ||
+			ch_iter >= SWR_MAX_CH_PER_PORT) {
+			dev_err(&pdev->dev,
+				"%s:invalid port_num %d or ch_iter %d\n",
+				__func__, port_num, ch_iter);
+			goto err_pdata_fail;
+		}
 		swrm->port_mapping[port_num][ch_iter].port_type = port_type;
 		swrm->port_mapping[port_num][ch_iter++].ch_mask = ch_mask;
 		old_port_num = port_num;
@@ -2903,12 +2946,17 @@ static int swrm_probe(struct platform_device *pdev)
 		dev_dbg(&pdev->dev, "%s: Audio HW Vote is failed\n", __func__);
 	mutex_lock(&swrm->mlock);
 	swrm_clk_request(swrm, true);
-	swrm->version = swr_master_read(swrm, SWRM_COMP_HW_VERSION);
 
 	swrm->rd_fifo_depth = ((swr_master_read(swrm, SWRM_COMP_PARAMS)
 				& SWRM_COMP_PARAMS_RD_FIFO_DEPTH) >> 15);
 	swrm->wr_fifo_depth = ((swr_master_read(swrm, SWRM_COMP_PARAMS)
 				& SWRM_COMP_PARAMS_WR_FIFO_DEPTH) >> 10);
+
+	swrm_hw_ver = swr_master_read(swrm, SWRM_COMP_HW_VERSION);
+	if (swrm->version != swrm_hw_ver)
+		dev_info(&pdev->dev,
+			 "%s: version specified in dtsi: 0x%x not match with HW read version 0x%x\n",
+			 __func__, swrm->version, swrm_hw_ver);
 
 	swrm->num_auto_enum = ((swr_master_read(swrm, SWRM_COMP_PARAMS)
                                 & SWRM_COMP_PARAMS_AUTO_ENUM_SLAVES) >> 20);
@@ -2917,14 +2965,16 @@ static int swrm_probe(struct platform_device *pdev)
 	if (ret) {
 		dev_err(&pdev->dev, "%s: Looking up %s property failed\n",
 			__func__, "qcom,swr-num-dev");
-		goto err_pdata_fail;
+		mutex_unlock(&swrm->mlock);
+		goto err_parse_num_dev;
 	} else {
 		if (swrm->num_dev > swrm->num_auto_enum) {
 			dev_err(&pdev->dev, "%s: num_dev %d > max limit %d\n",
 				__func__, swrm->num_dev,
 				swrm->num_auto_enum);
 			ret = -EINVAL;
-			goto err_pdata_fail;
+			mutex_unlock(&swrm->mlock);
+			goto err_parse_num_dev;
 		} else {
 			dev_dbg(&pdev->dev,
 				"max swr devices expected to attach - %d, supported auto_enum - %d\n",
@@ -2984,6 +3034,7 @@ static int swrm_probe(struct platform_device *pdev)
 	return 0;
 err_irq_wakeup_fail:
 	device_init_wakeup(swrm->dev, false);
+err_parse_num_dev:
 err_mstr_init_fail:
 	swr_unregister_master(&swrm->master);
 err_mstr_fail:

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 #include <linux/module.h>
 #include <linux/init.h>
@@ -20,7 +20,6 @@
 #include <linux/pm_runtime.h>
 #include <linux/kernel.h>
 #include <linux/gpio.h>
-#include <audio/linux/mfd/wcd9xxx/wcd9xxx_registers.h>
 #include <soc/swr-wcd.h>
 #include <soc/snd_event.h>
 #include <sound/pcm.h>
@@ -41,6 +40,7 @@
 #include "wcd_cpe_core.h"
 #include <asoc/wcdcal-hwdep.h>
 #include <asoc/wcd-mbhc-v2-api.h>
+#include <asoc/wcd9xxx_registers.h>
 
 #define DRV_NAME "tasha_codec"
 

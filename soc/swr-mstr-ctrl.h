@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SWR_WCD_CTRL_H
@@ -75,6 +75,7 @@ enum {
 enum {
 	SWR_PDM = 0,
 	SWR_PCM,
+	SWR_PDM_32,
 };
 
 struct usecase {
@@ -170,7 +171,7 @@ struct swr_mstr_ctrl {
 	struct work_struct dc_presence_work;
 	u8 num_ports;
 	struct swrm_port_type
-			port_mapping[SWR_MSTR_PORT_LEN][SWR_MAX_CH_PER_PORT];
+			port_mapping[SWR_MSTR_PORT_LEN + 1][SWR_MAX_CH_PER_PORT];
 	int swr_irq;
 	u32 clk_stop_mode0_supp;
 	struct work_struct wakeup_work;

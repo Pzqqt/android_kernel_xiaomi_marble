@@ -1607,7 +1607,7 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 					     "qcom,spkr-sd-n-node", 0);
 	if (!wsa883x->wsa_rst_np) {
 		dev_dbg(&pdev->dev, "%s: pinctrl not defined\n", __func__);
-		goto err;
+		goto err_supply;
 	}
 	swr_set_dev_data(pdev, wsa883x);
 	wsa883x->swr_slave = pdev;
@@ -1625,7 +1625,7 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 			"%s get devnum %d for dev addr %lx failed\n",
 			__func__, devnum, pdev->addr);
 		ret = -EPROBE_DEFER;
-		goto err;
+		goto err_supply;
 	}
 	pdev->dev_num = devnum;
 
@@ -1857,6 +1857,10 @@ dev_err:
 	if (pin_state_current == false)
 		wsa883x_gpio_ctrl(wsa883x, false);
 	swr_remove_device(pdev);
+err_supply:
+	msm_cdc_release_supplies(&pdev->dev, wsa883x->supplies,
+				 wsa883x->regulator,
+				 wsa883x->num_supplies);
 err:
 	swr_set_dev_data(pdev, NULL);
 	return ret;
@@ -1902,6 +1906,9 @@ static int wsa883x_swr_remove(struct swr_device *pdev)
 		kfree(wsa883x->driver->name);
 		kfree(wsa883x->driver);
 	}
+	msm_cdc_release_supplies(&pdev->dev, wsa883x->supplies,
+				 wsa883x->regulator,
+				 wsa883x->num_supplies);
 	swr_set_dev_data(pdev, NULL);
 	return 0;
 }

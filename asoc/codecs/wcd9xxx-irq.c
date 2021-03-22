@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2011-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2021, The Linux Foundation. All rights reserved.
  */
 #include <linux/bitops.h>
 #include <linux/kernel.h>
@@ -18,9 +18,9 @@
 #include <soc/qcom/pm.h>
 #include <linux/gpio.h>
 #include <linux/of_gpio.h>
-#include <audio/linux/mfd/wcd9xxx/wcd9xxx_registers.h>
 #include <asoc/core.h>
 #include <asoc/wcd9xxx-irq.h>
+#include <asoc/wcd9xxx_registers.h>
 
 #define BYTE_BIT_MASK(nr)		(1UL << ((nr) % BITS_PER_BYTE))
 #define BIT_BYTE(nr)			((nr) / BITS_PER_BYTE)

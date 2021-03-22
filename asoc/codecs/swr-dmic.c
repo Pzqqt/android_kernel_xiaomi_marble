@@ -160,7 +160,7 @@ static int swr_dmic_tx_master_port_put(struct snd_kcontrol *kcontrol,
 				snd_soc_kcontrol_component(kcontrol);
 	struct swr_dmic_priv *swr_dmic = snd_soc_component_get_drvdata(component);
 	int ret = 0;
-	int slave_port_idx;
+	unsigned int slave_port_idx = SWR_DMIC_MAX_PORTS, idx = 0;
 
 	ret  = swr_dmic_tx_get_slave_port_type_idx(kcontrol->id.name,
 							&slave_port_idx);
@@ -169,8 +169,12 @@ static int swr_dmic_tx_master_port_put(struct snd_kcontrol *kcontrol,
 		return ret;
 	}
 
+	idx = ucontrol->value.enumerated.item[0];
+	if (idx < 0 || idx >= ARRAY_SIZE(swr_master_channel_map))
+		return -EINVAL;
+
 	swr_dmic->tx_master_port_map[slave_port_idx] =
-		swr_master_channel_map[ucontrol->value.enumerated.item[0]];
+			swr_master_channel_map[idx];
 	dev_dbg(component->dev, "%s: slv port id: %d, master_port_type: %d\n",
 		__func__, slave_port_idx,
 		swr_dmic->tx_master_port_map[slave_port_idx]);
@@ -625,7 +629,14 @@ static int swr_dmic_probe(struct swr_device *pdev)
 		pdev->dev.of_node->full_name);
 		goto dev_err;
 	}
-	swr_dmic_parse_port_params(&pdev->dev, "qcom,swr-tx-port-params");
+
+	ret = swr_dmic_parse_port_params(&pdev->dev, "qcom,swr-tx-port-params");
+	if (ret) {
+		dev_err(&pdev->dev, "%s: Parsing %s failed in node %s\n",
+			__func__, "qcom,swr-tx-port-params",
+			pdev->dev.of_node->full_name);
+		goto dev_err;
+	}
 
 	/*
 	 * Add 5msec delay to provide sufficient time for

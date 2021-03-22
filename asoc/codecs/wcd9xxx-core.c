@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2011-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/kernel.h>
@@ -13,7 +13,6 @@
 #include <linux/debugfs.h>
 #include <linux/i2c.h>
 #include <linux/regmap.h>
-#include <audio/linux/mfd/wcd9xxx/wcd9xxx_registers.h>
 #include <sound/soc.h>
 #include <asoc/core.h>
 #include <asoc/pdata.h>
@@ -23,6 +22,7 @@
 #include "wcd9xxx-utils.h"
 #include <asoc/wcd9xxx-regmap.h>
 #include <asoc/wcd9xxx-slimslave.h>
+#include <asoc/wcd9xxx_registers.h>
 
 #define WCD9XXX_REGISTER_START_OFFSET 0x800
 #define WCD9XXX_SLIM_RW_MAX_TRIES 3

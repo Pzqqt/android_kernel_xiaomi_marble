@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 #include <linux/module.h>
 #include <linux/init.h>
@@ -20,7 +20,6 @@
 #include <linux/regmap.h>
 #include <linux/spi/spi.h>
 #include <linux/regulator/consumer.h>
-#include <audio/linux/mfd/wcd9xxx/wcd9xxx_registers.h>
 #include <soc/swr-wcd.h>
 #include <soc/snd_event.h>
 #include <sound/pcm.h>
@@ -41,6 +40,7 @@
 #include <asoc/wcd9xxx-common-v2.h>
 #include <asoc/wcd9xxx-resmgr-v2.h>
 #include <asoc/wcdcal-hwdep.h>
+#include <asoc/wcd9xxx_registers.h>
 #include <ipc/gpr-lite.h>
 #include "wcd934x-dsd.h"
 
