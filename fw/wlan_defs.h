@@ -536,7 +536,7 @@ typedef struct {
 
 #define PROD_SCHED_BW_ENTRIES       (NUM_SCHED_ENTRIES * NUM_DYN_BW)
 
-#if NUM_DYN_BW  > 4
+#if NUM_DYN_BW  > 5
 /* Extend rate table module first */
 #error "Extend rate table module first"
 #endif
