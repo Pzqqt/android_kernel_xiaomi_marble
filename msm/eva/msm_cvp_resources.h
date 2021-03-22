@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef __MSM_CVP_RESOURCES_H__
@@ -137,8 +137,10 @@ struct msm_cvp_platform_resources {
 	phys_addr_t firmware_base;
 	phys_addr_t register_base;
 	phys_addr_t ipcc_reg_base;
+	phys_addr_t gcc_reg_base;
 	uint32_t register_size;
 	uint32_t ipcc_reg_size;
+	uint32_t gcc_reg_size;
 	uint32_t irq;
 	uint32_t sku_version;
 	struct allowed_clock_rates_table *allowed_clks_tbl;

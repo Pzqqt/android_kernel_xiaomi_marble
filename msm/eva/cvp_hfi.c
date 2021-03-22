@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <asm/memory.h>
@@ -3256,6 +3256,16 @@ static int __init_regs_and_interrupts(struct iris_hfi_device *device,
 		goto error_irq_fail;
 	}
 
+	if (res->gcc_reg_base) {
+		hal->gcc_reg_base = devm_ioremap(&res->pdev->dev,
+				res->gcc_reg_base, res->gcc_reg_size);
+		hal->gcc_reg_size = res->gcc_reg_size;
+		if (!hal->gcc_reg_base)
+			dprintk(CVP_ERR,
+				"could not map gcc reg addr %pa of size %d\n",
+				&res->gcc_reg_base, res->gcc_reg_size);
+	}
+
 	device->cvp_hal_data = hal;
 	rc = request_irq(res->irq, iris_hfi_isr, IRQF_TRIGGER_HIGH,
 			"msm_cvp", device);
@@ -4199,27 +4209,7 @@ static void power_off_iris2(struct iris_hfi_device *device)
 			sbm_ln0_low, main_sbm_ln0_low, main_sbm_ln1_high);
 	}
 
-	/* HPG 6.1.2 Step 3, debug bridge to low power */
-	__write_register(device,
-		CVP_WRAPPER_DEBUG_BRIDGE_LPI_CONTROL, 0x7);
-
-	reg_status = 0;
-	count = 0;
-	while ((reg_status != 0x7) && count < max_count) {
-		lpi_status = __read_register(device,
-			CVP_WRAPPER_DEBUG_BRIDGE_LPI_STATUS);
-		reg_status = lpi_status & 0x7;
-		/* Wait for debug bridge lpi status to be set */
-		usleep_range(50, 100);
-		count++;
-	}
-	dprintk(CVP_PWR,
-		"DBLP Set : lpi_status %d reg_status %d (count %d)\n",
-		lpi_status, reg_status, count);
-	if (count == max_count) {
-		dprintk(CVP_WARN,
-			"DBLP Set: status %x %x\n", reg_status, lpi_status);
-	}
+	/* HPG 6.1.2 Step 3, debug bridge to low power BYPASSED */
 
 	/* HPG 6.1.2 Step 4, debug bridge to lpi release */
 	__write_register(device,

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/dma-buf.h>
@@ -14,6 +14,7 @@
 #include <linux/mem-buf.h>
 #include <linux/slab.h>
 #include <linux/types.h>
+#include <linux/qcom-dma-mapping.h>
 #include "msm_cvp_core.h"
 #include "msm_cvp_debug.h"
 #include "msm_cvp_resources.h"

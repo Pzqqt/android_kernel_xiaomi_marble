@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only WITH Linux-syscall-note */
 /*
- * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  */
 #ifndef __MSM_EVA_PRIVATE_H__
 #define __MSM_EVA_PRIVATE_H__
@@ -121,7 +121,7 @@ struct eva_kmd_client_data {
 };
 
 
-#define	MAX_HFI_PKT_SIZE	470
+#define	MAX_HFI_PKT_SIZE	490
 
 struct eva_kmd_hfi_packet {
 	__u32 pkt_data[MAX_HFI_PKT_SIZE];
