@@ -3560,7 +3560,7 @@ qdf_freq_t sap_indicate_radar(struct sap_context *sap_ctx)
 		mac->sap.SapDfsInfo.csaIERequired = true;
 
 	if (mac->mlme_cfg->dfs_cfg.dfs_disable_channel_switch)
-		return wlan_reg_freq_to_chan(mac->pdev, sap_ctx->chan_freq);
+		return sap_ctx->chan_freq;
 
 	/* set the Radar Found flag in SapDfsInfo */
 	mac->sap.SapDfsInfo.sap_radar_found_status = true;
