@@ -31,6 +31,8 @@ int msm_vidc_adjust_transform_8x8(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_layer_count(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_gop_size(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_b_frame(void *instance, struct v4l2_ctrl *ctrl);
+int msm_vidc_adjust_bitrate(void *instance, struct v4l2_ctrl *ctrl);
+int msm_vidc_adjust_peak_bitrate(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_hevc_min_qp(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_hevc_max_qp(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_hevc_frame_qp(void *instance, struct v4l2_ctrl *ctrl);
@@ -56,11 +58,17 @@ int msm_vidc_set_layer_count_and_type(void *instance,
 	enum msm_vidc_inst_capability_type cap_id);
 int msm_vidc_set_gop_size(void *instance,
 	enum msm_vidc_inst_capability_type cap_id);
+int msm_vidc_set_bitrate(void *instance,
+	enum msm_vidc_inst_capability_type cap_id);
 int msm_vidc_set_u32(void *instance,
 	enum msm_vidc_inst_capability_type cap_id);
 int msm_vidc_set_u32_enum(void *instance,
 	enum msm_vidc_inst_capability_type cap_id);
 int msm_vidc_set_constant_quality(void *instance,
+	enum msm_vidc_inst_capability_type cap_id);
+int msm_vidc_set_vbr_related_properties(
+	void *instance, enum msm_vidc_inst_capability_type cap_id);
+int msm_vidc_set_cbr_related_properties(void *instance,
 	enum msm_vidc_inst_capability_type cap_id);
 int msm_vidc_set_use_and_mark_ltr(void *instance,
 	enum msm_vidc_inst_capability_type cap_id);

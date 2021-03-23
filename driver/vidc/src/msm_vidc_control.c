@@ -1241,6 +1241,135 @@ exit:
 	return 0;
 }
 
+int msm_vidc_adjust_bitrate(void *instance, struct v4l2_ctrl *ctrl)
+{
+	int i;
+	struct msm_vidc_inst_capability *capability;
+	s32 adjusted_value;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+	s32 rc_type = -1, enh_layer_count = -1;
+	u32 cap_id = 0, cumulative_bitrate = 0;
+	bool layer_bitrate_set = false;
+	u32 layer_br_caps[6] = {L0_BR, L1_BR, L2_BR, L3_BR, L4_BR, L5_BR};
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	adjusted_value = ctrl ? ctrl->val :
+		capability->cap[BIT_RATE].value;
+
+	/* ignore layer bitrate when total bitrate is set */
+	if (capability->cap[BIT_RATE].flags & CAP_FLAG_CLIENT_SET)
+		goto exit;
+
+	if (msm_vidc_get_parent_value(inst, BIT_RATE,
+		ENH_LAYER_COUNT, &enh_layer_count, __func__))
+		return -EINVAL;
+
+	if (msm_vidc_get_parent_value(inst, BIT_RATE,
+		BITRATE_MODE, &rc_type, __func__))
+		return -EINVAL;
+
+	/*
+	 * ENH_LAYER_COUNT cap max is positive only if
+	 * layer encoding is enabled for static setting
+	 */
+	if (capability->cap[ENH_LAYER_COUNT].max) {
+		layer_bitrate_set = true;
+		for (i = 0; i <= enh_layer_count; i++) {
+			if (i >= ARRAY_SIZE(layer_br_caps))
+				break;
+			cap_id = layer_br_caps[i];
+			if (!(capability->cap[cap_id].flags & CAP_FLAG_CLIENT_SET)) {
+				layer_bitrate_set = false;
+				break;
+			}
+			cumulative_bitrate += capability->cap[cap_id].value;
+		}
+
+		/* layer bitrate supported only for CBR rc */
+		if (layer_bitrate_set &&
+			(rc_type == HFI_RC_CBR_CFR || rc_type == HFI_RC_CBR_VFR)) {
+			if (cumulative_bitrate > capability->cap[BIT_RATE].max)
+				cumulative_bitrate =
+					capability->cap[BIT_RATE].max;
+			adjusted_value = cumulative_bitrate;
+			i_vpr_h(inst,
+				"%s: update BIT_RATE with cumulative bitrate\n",
+				__func__);
+		}
+	} else {
+		for (i = 0; i < sizeof(layer_br_caps) / sizeof(u32); i++) {
+			if (i >= ARRAY_SIZE(layer_br_caps))
+				break;
+			cap_id = layer_br_caps[i];
+			/*
+			 * layer bitrate cannot be set
+			 * when layer encoding is disabled
+			 */
+			if (capability->cap[cap_id].flags &
+					CAP_FLAG_CLIENT_SET) {
+				i_vpr_e(inst,
+					"%s: invalid layer bitrate set\n",
+					__func__);
+				return -EINVAL;
+			}
+		}
+	}
+
+exit:
+	msm_vidc_update_cap_value(inst, BIT_RATE,
+		adjusted_value, __func__);
+	return 0;
+}
+
+int msm_vidc_adjust_peak_bitrate(void *instance, struct v4l2_ctrl *ctrl)
+{
+	struct msm_vidc_inst_capability *capability;
+	s32 adjusted_value;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+	s32 rc_type = -1, bitrate = -1;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	adjusted_value = ctrl ? ctrl->val :
+		capability->cap[PEAK_BITRATE].value;
+
+	if (msm_vidc_get_parent_value(inst, PEAK_BITRATE,
+		BITRATE_MODE, &rc_type, __func__))
+		return -EINVAL;
+
+	if (rc_type != HFI_RC_CBR_CFR &&
+		rc_type != HFI_RC_CBR_VFR)
+		return 0;
+
+	if (msm_vidc_get_parent_value(inst, PEAK_BITRATE,
+		BIT_RATE, &bitrate, __func__))
+		return -EINVAL;
+
+	/* Peak Bitrate should be larger than or equal to avg bitrate */
+	if (capability->cap[PEAK_BITRATE].flags & CAP_FLAG_CLIENT_SET) {
+		if (adjusted_value < bitrate)
+			adjusted_value = bitrate;
+	} else {
+		adjusted_value = capability->cap[BIT_RATE].value +
+			(capability->cap[BIT_RATE].value /
+			PERCENT_PEAK_BITRATE_INCREASED);
+	}
+
+	msm_vidc_update_cap_value(inst, PEAK_BITRATE,
+		adjusted_value, __func__);
+
+	return 0;
+}
+
 int msm_vidc_adjust_hevc_min_qp(void *instance, struct v4l2_ctrl *ctrl)
 {
 	int rc = 0;
@@ -1442,6 +1571,63 @@ int msm_vidc_set_constant_quality(void *instance,
 
 	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
 		inst->capabilities->cap[cap_id].value, hfi_value);
+
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
+		&hfi_value, sizeof(u32), __func__);
+
+	return rc;
+}
+
+int msm_vidc_set_vbr_related_properties(void *instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+	u32 hfi_value = 0;
+	s32 rc_type = -1;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (msm_vidc_get_parent_value(inst, cap_id,
+		BITRATE_MODE, &rc_type, __func__))
+		return -EINVAL;
+
+	if (rc_type != HFI_RC_VBR_CFR)
+		return 0;
+
+	hfi_value = inst->capabilities->cap[cap_id].value;
+
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
+		&hfi_value, sizeof(u32), __func__);
+
+	return rc;
+}
+
+int msm_vidc_set_cbr_related_properties(void *instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+	u32 hfi_value = 0;
+	s32 rc_type = -1;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (msm_vidc_get_parent_value(inst, cap_id,
+		BITRATE_MODE, &rc_type, __func__))
+		return -EINVAL;
+
+	if (rc_type != HFI_RC_CBR_VFR &&
+		rc_type != HFI_RC_CBR_CFR)
+		return 0;
+
+	hfi_value = inst->capabilities->cap[cap_id].value;
 
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
 		&hfi_value, sizeof(u32), __func__);
@@ -1842,6 +2028,73 @@ int msm_vidc_set_gop_size(void *instance,
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
 		&hfi_value, sizeof(u32), __func__);
 
+	return rc;
+}
+
+int msm_vidc_set_bitrate(void *instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0, i;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+	u32 hfi_value = 0;
+	s32 rc_type = -1, enh_layer_count = -1;
+	u32 layer_br_caps[6] = {L0_BR, L1_BR, L2_BR, L3_BR, L4_BR, L5_BR};
+	bool layer_bitrate_set = false;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	/* set Total Bitrate */
+	if (inst->capabilities->cap[BIT_RATE].flags & CAP_FLAG_CLIENT_SET)
+		goto set_total_bitrate;
+
+	if (msm_vidc_get_parent_value(inst, BIT_RATE,
+		ENH_LAYER_COUNT, &enh_layer_count, __func__))
+		return -EINVAL;
+
+	if (msm_vidc_get_parent_value(inst, BIT_RATE,
+		BITRATE_MODE, &rc_type, __func__))
+		return -EINVAL;
+
+	if (inst->capabilities->cap[ENH_LAYER_COUNT].max &&
+		(rc_type == HFI_RC_CBR_CFR ||
+		rc_type == HFI_RC_CBR_VFR)) {
+		layer_bitrate_set = true;
+		for (i = 0; i <= enh_layer_count; i++) {
+			if (i >= ARRAY_SIZE(layer_br_caps))
+				break;
+			cap_id = layer_br_caps[i];
+			if (!(inst->capabilities->cap[cap_id].flags &
+					CAP_FLAG_CLIENT_SET)) {
+				layer_bitrate_set = false;
+				break;
+			}
+		}
+
+		if (layer_bitrate_set) {
+			/* set Layer Bitrate */
+			for (i = 0; i <= enh_layer_count; i++) {
+				if (i >= ARRAY_SIZE(layer_br_caps))
+					break;
+				cap_id = layer_br_caps[i];
+				hfi_value = inst->capabilities->cap[cap_id].value;
+				rc = msm_vidc_packetize_control(inst, cap_id,
+					HFI_PAYLOAD_U32, &hfi_value,
+					sizeof(u32), __func__);
+				if (rc)
+					return rc;
+			}
+			goto exit;
+		}
+	}
+
+set_total_bitrate:
+	hfi_value = inst->capabilities->cap[BIT_RATE].value;
+	rc = msm_vidc_packetize_control(inst, BIT_RATE, HFI_PAYLOAD_U32,
+			&hfi_value, sizeof(u32), __func__);
+exit:
 	return rc;
 }
 
