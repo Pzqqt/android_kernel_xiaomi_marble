@@ -365,7 +365,7 @@ static u32 msm_vidc_encoder_line_size_iris2(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_core *core;
 	u32 size = 0;
-	u32 width, height, pixelformat, num_vpp_pipes;
+	u32 width, height, pixfmt, num_vpp_pipes;
 	bool is_tenbit = false;
 	struct v4l2_format *f;
 
@@ -374,21 +374,17 @@ static u32 msm_vidc_encoder_line_size_iris2(struct msm_vidc_inst *inst)
 		return size;
 	}
 	core = inst->core;
-	if (!core->capabilities) {
-		i_vpr_e(inst, "%s: invalid core capabilities\n", __func__);
+	if (!core->capabilities || !inst->capabilities) {
+		i_vpr_e(inst, "%s: invalid capabilities\n", __func__);
 		return size;
 	}
 	num_vpp_pipes = core->capabilities[NUM_VPP_PIPE].value;
+	pixfmt = inst->capabilities->cap[PIX_FMTS].value;
 
 	f = &inst->fmts[OUTPUT_PORT];
 	width = f->fmt.pix_mp.width;
 	height = f->fmt.pix_mp.height;
-	pixelformat = f->fmt.pix_mp.pixelformat;
-	if (pixelformat == MSM_VIDC_FMT_P010 ||
-		pixelformat == MSM_VIDC_FMT_TP10C)
-		is_tenbit = true;
-	else
-		is_tenbit = false;
+	is_tenbit = (pixfmt == MSM_VIDC_FMT_P010 || pixfmt == MSM_VIDC_FMT_TP10C);
 
 	if (inst->codec == MSM_VIDC_H264)
 		HFI_BUFFER_LINE_H264E(size, width, height, is_tenbit, num_vpp_pipes);
@@ -402,11 +398,11 @@ static u32 msm_vidc_encoder_line_size_iris2(struct msm_vidc_inst *inst)
 static u32 msm_vidc_encoder_dpb_size_iris2(struct msm_vidc_inst *inst)
 {
 	u32 size = 0;
-	u32 width, height, pixelformat;
+	u32 width, height, pixfmt;
 	struct v4l2_format *f;
 	bool is_tenbit;
 
-	if (!inst || !inst->core) {
+	if (!inst || !inst->core || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return 0;
 	}
@@ -414,12 +410,9 @@ static u32 msm_vidc_encoder_dpb_size_iris2(struct msm_vidc_inst *inst)
 	f = &inst->fmts[OUTPUT_PORT];
 	width = f->fmt.pix_mp.width;
 	height = f->fmt.pix_mp.height;
-	pixelformat = f->fmt.pix_mp.pixelformat;
-	if (pixelformat == MSM_VIDC_FMT_P010 ||
-		pixelformat == MSM_VIDC_FMT_TP10C)
-		is_tenbit = true;
-	else
-		is_tenbit = false;
+
+	pixfmt = inst->capabilities->cap[PIX_FMTS].value;
+	is_tenbit = (pixfmt == MSM_VIDC_FMT_P010 || pixfmt == MSM_VIDC_FMT_TP10C);
 
 	if (inst->codec == MSM_VIDC_H264)
 		HFI_BUFFER_DPB_H264E(size, width, height);
@@ -448,27 +441,23 @@ static u32 msm_vidc_encoder_vpss_size_iris2(struct msm_vidc_inst* inst)
 {
 	u32 size = 0;
 	bool ds_enable, rot_enable, flip_enable, is_tenbit;
-	u32 width, height, pixelformat;
+	u32 width, height, pixfmt;
 	struct v4l2_format* f;
 
-	if (!inst || !inst->core) {
+	if (!inst || !inst->core || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return 0;
 	}
 	ds_enable = false; // TODO: fixme
 	rot_enable = false; // TODO: fixme
 	flip_enable = false; // TODO: fixme
-	is_tenbit = false;
 
 	f = &inst->fmts[OUTPUT_PORT];
 	width = f->fmt.pix_mp.width;
 	height = f->fmt.pix_mp.height;
-	pixelformat = f->fmt.pix_mp.pixelformat;
-	if (pixelformat == MSM_VIDC_FMT_P010 ||
-		pixelformat == MSM_VIDC_FMT_TP10C)
-		is_tenbit = true;
-	else
-		is_tenbit = false;
+
+	pixfmt = inst->capabilities->cap[PIX_FMTS].value;
+	is_tenbit = (pixfmt == MSM_VIDC_FMT_P010 || pixfmt == MSM_VIDC_FMT_TP10C);
 
 	HFI_BUFFER_VPSS_ENC(size, width, height, ds_enable,
 		rot_enable, flip_enable, is_tenbit);
