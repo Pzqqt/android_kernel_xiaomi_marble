@@ -342,7 +342,7 @@ err:
 
 	SDE_ATRACE_END("msm_bus_scale_req");
 	pr_err("failed to set data bus vote ab=%llu ib=%llu rc=%d\n",
-	       rc, in_ab_quota, in_ib_quota);
+			in_ab_quota, in_ib_quota, rc);
 
 	return rc;
 }

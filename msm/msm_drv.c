@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
@@ -499,7 +499,7 @@ static int msm_init_vram(struct drm_device *dev)
 		ret = of_property_read_u32(dev->dev->of_node,
 					"qcom,vram-size", &vram_size);
 		size = (ret < 0) ? memparse(vram, NULL) : vram_size;
-		DRM_INFO("using 0x%x VRAM carveout\n", size);
+		DRM_INFO("using 0x%lx VRAM carveout\n", size);
 		ret = 0;
 	}
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
 #include "sde_hw_mdss.h"
@@ -64,7 +64,7 @@
 
 #define VDC_CTL_BLOCK_SIZE         0x300
 
-static inline _vdc_subblk_offset(struct sde_hw_vdc *hw_vdc, int s_id,
+static inline int _vdc_subblk_offset(struct sde_hw_vdc *hw_vdc, int s_id,
 		u32 *idx)
 {
 	int rc = 0;

@@ -1636,7 +1636,7 @@ static ssize_t sde_recovery_dbgbus_dump_read(struct file *file,
 	if (cmn->content_idx < cmn->content_size) {
 		data = &cmn->dumped_content[cmn->content_idx];
 		len = scnprintf(log_buf, max_size,
-				"0x%.8X | %.8X %.8X %.8X %.8X\n",
+				"0x%.8lX | %.8X %.8X %.8X %.8X\n",
 				cmn->content_idx * sizeof(*data),
 				data[0], data[1], data[2], data[3]);
 

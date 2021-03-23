@@ -1006,7 +1006,7 @@ static struct sde_reg_dma_buffer *alloc_reg_dma_buf_v1(u32 size)
 	int rc = 0;
 
 	if (!size || SIZE_DWORD(size) > MAX_DWORDS_SZ) {
-		DRM_ERROR("invalid buffer size %d, max %d\n",
+		DRM_ERROR("invalid buffer size %lu, max %lu\n",
 				SIZE_DWORD(size), MAX_DWORDS_SZ);
 		return ERR_PTR(-EINVAL);
 	}

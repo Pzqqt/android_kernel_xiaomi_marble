@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 #include <linux/notifier.h>
 #include <linux/haven/hh_rm_drv.h>
@@ -127,14 +127,14 @@ static int _sde_vm_lend_mem(struct sde_vm *vm,
 
 	acl_desc = sde_vm_populate_acl(HH_TRUSTED_VM);
 	if (IS_ERR(acl_desc)) {
-		SDE_ERROR("failed to populate acl descriptor, rc = %d\n",
+		SDE_ERROR("failed to populate acl descriptor, rc = %ld\n",
 			   PTR_ERR(acl_desc));
 		return -EINVAL;
 	}
 
 	sgl_desc = sde_vm_populate_sgl(io_res);
 	if (IS_ERR_OR_NULL(sgl_desc)) {
-		SDE_ERROR("failed to populate sgl descriptor, rc = %d\n",
+		SDE_ERROR("failed to populate sgl descriptor, rc = %ld\n",
 			   PTR_ERR(sgl_desc));
 		rc = -EINVAL;
 		goto sgl_fail;

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
 #include "msm_drv.h"
@@ -244,7 +244,7 @@ static void sde_vdc_dump_core_params(struct msm_display_vdc_info *vdc_info)
 			 vdc_info->tot_pad_bits);
 	pr_debug("vdc_info->rc_stuffing_bits = %d\n",
 			 vdc_info->rc_stuffing_bits);
-	pr_debug("vdc_info->slice_num_bits = %d\n",
+	pr_debug("vdc_info->slice_num_bits = %llu\n",
 			vdc_info->slice_num_bits);
 	pr_debug("vdc_info->chunk_adj_bits = %d\n",
 			 vdc_info->chunk_adj_bits);
@@ -280,7 +280,7 @@ static void sde_vdc_dump_core_params(struct msm_display_vdc_info *vdc_info)
 			 vdc_info->rc_fullness_offset_thresh);
 	pr_debug("vdc_info->ramp_blocks = %d\n",
 			 vdc_info->ramp_blocks);
-	pr_debug("vdc_info->ramp_bits = %d\n",
+	pr_debug("vdc_info->ramp_bits = %llu\n",
 			 vdc_info->ramp_bits);
 	pr_debug("vdc_info->rc_fullness_offset_slope = %d\n",
 			 vdc_info->rc_fullness_offset_slope);

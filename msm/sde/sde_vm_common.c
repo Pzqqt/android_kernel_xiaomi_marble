@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/list_sort.h>
@@ -101,7 +101,7 @@ void _sde_vm_sort_and_align(struct list_head *mem)
 	}
 
 	list_for_each_entry(entry, mem, list)
-		SDE_DEBUG("base: 0x%x - size: 0x%x\n",
+		SDE_DEBUG("base: 0x%llx - size: 0x%llx\n",
 				entry->base, entry->size);
 }
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/haven/hh_rm_drv.h>
@@ -46,7 +46,7 @@ int _sde_vm_validate_sgl(struct hh_sgl_desc *expected,
 		struct hh_sgl_entry *a = &assigned->sgl_entries[idx];
 
 		if ((e->ipa_base != a->ipa_base) || (e->size != a->size)) {
-			SDE_DEBUG("sgl mismatch: (%ld - %d) vs (%ld - %d)\n",
+			SDE_DEBUG("sgl mismatch: (%llu - %llu) vs (%llu - %llu)\n",
 				   e->ipa_base, e->size, a->ipa_base, a->size);
 			return -EINVAL;
 		}
@@ -286,7 +286,7 @@ static int _sde_vm_accept_mem(struct sde_vm *vm)
 
 	acl_desc = sde_vm_populate_acl(HH_TRUSTED_VM);
 	if (IS_ERR(acl_desc)) {
-		SDE_ERROR("failed to populate acl data, rc=%d\n",
+		SDE_ERROR("failed to populate acl data, rc=%ld\n",
 			   PTR_ERR(acl_desc));
 		rc = PTR_ERR(acl_desc);
 		goto done;
@@ -301,7 +301,7 @@ static int _sde_vm_accept_mem(struct sde_vm *vm)
 				    SDE_VM_MEM_LABEL,
 				    acl_desc, NULL, NULL, 0);
 	if (IS_ERR_OR_NULL(sgl_desc)) {
-		SDE_ERROR("hh_rm_mem_accept failed with error, rc=%d\n",
+		SDE_ERROR("hh_rm_mem_accept failed with error, rc=%ld\n",
 			   PTR_ERR(sgl_desc));
 		rc = -EINVAL;
 
@@ -357,7 +357,7 @@ static int _sde_vm_accept_irq(struct sde_vm *vm)
 		exp_irq_data = irq_get_irq_data(expected_irq);
 		if (!exp_irq_data) {
 			SDE_ERROR("failed to get irq data for irq: %d\n",
-					exp_irq_data);
+					expected_irq);
 			rc = -EINVAL;
 			goto end;
 		}
@@ -377,7 +377,7 @@ static int _sde_vm_accept_irq(struct sde_vm *vm)
 			goto end;
 		}
 
-		SDE_INFO("IRQ accept succeeded for label %d irq: %d\n",
+		SDE_INFO("IRQ accept succeeded for label %u irq: %lu\n",
 				irq_entry->label, exp_irq_data->hwirq);
 	}
 end:

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
 #include "sde_hw_mdss.h"
@@ -77,7 +77,7 @@ static int _dsc_calc_ob_max_addr(struct sde_hw_dsc *hw_dsc, int num_ss)
 	return 0;
 }
 
-static inline _dsc_subblk_offset(struct sde_hw_dsc *hw_dsc, int s_id,
+static inline int _dsc_subblk_offset(struct sde_hw_dsc *hw_dsc, int s_id,
 		u32 *idx)
 {
 	const struct sde_dsc_sub_blks *sblk;

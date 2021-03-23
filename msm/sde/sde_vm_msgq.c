@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/haven/hh_msgq.h>
@@ -67,7 +67,7 @@ int sde_vm_msgq_send(struct sde_vm *sde_vm, void *msg, size_t msg_size)
 	}
 
 	if (msg_size > HH_MSGQ_MAX_MSG_SIZE_BYTES) {
-		SDE_ERROR("msg size unsupported for msgq: %d > %d\n", msg_size,
+		SDE_ERROR("msg size unsupported for msgq: %ld > %d\n", msg_size,
 				HH_MSGQ_MAX_MSG_SIZE_BYTES);
 		return -E2BIG;
 	}

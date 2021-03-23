@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[sde-hdcp-2x] %s: " fmt, __func__
@@ -182,9 +182,11 @@ static int sde_hdcp_2x_get_next_message(struct sde_hdcp_2x_ctrl *hdcp,
 	case SKE_SEND_EKS:
 		if (!hdcp->repeater_flag)
 			return SKE_SEND_TYPE_ID;
+		break;
 	case SKE_SEND_TYPE_ID:
 		if (!hdcp->repeater_flag)
 			return SKE_SEND_TYPE_ID;
+		break;
 	case REP_STREAM_READY:
 	case REP_SEND_ACK:
 		if (!hdcp->repeater_flag)
@@ -203,7 +205,10 @@ static int sde_hdcp_2x_get_next_message(struct sde_hdcp_2x_ctrl *hdcp,
 		pr_err("Unknown message ID (%d)\n", hdcp->last_msg);
 		return -EINVAL;
 	}
+
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT);
+
+	return -EINVAL;
 }
 
 static void sde_hdcp_2x_wait_for_response(struct sde_hdcp_2x_ctrl *hdcp)

@@ -65,6 +65,8 @@
 #define MEM_PROTECT_SD_CTRL_SWITCH 0x18
 #define MDP_DEVICE_ID            0x1A
 
+#define DEMURA_REGION_NAME_MAX      32
+
 EXPORT_TRACEPOINT_SYMBOL(tracing_mark_write);
 
 static const char * const iommu_ports[] = {
@@ -350,7 +352,7 @@ static int _sde_kms_scm_call(struct sde_kms *sde_kms, int vmid)
 	ret = qcom_scm_mem_protect_sd_ctrl(MDP_DEVICE_ID, mem_addr,
 				mem_size, vmid);
 	if (ret)
-		SDE_ERROR("Error:scm_call2, vmid %lld, ret%d\n",
+		SDE_ERROR("Error:scm_call2, vmid %d, ret%d\n",
 				vmid, ret);
 	SDE_EVT32(MEM_PROTECT_SD_CTRL_SWITCH, MDP_DEVICE_ID, mem_size,
 			vmid, qtee_en, num_sids, ret);
@@ -2989,7 +2991,7 @@ static int sde_kms_inform_cont_splash_res_disable(struct msm_kms *kms,
 		rc = dsi_display_get_info(NULL, &info, display);
 		if (rc) {
 			SDE_ERROR("%s: dsi get_info failed: %d\n",
-					rc, __func__);
+					__func__, rc);
 			encoder = NULL;
 		}
 	}
@@ -3358,7 +3360,7 @@ static int sde_kms_get_mixer_count(const struct msm_kms *kms,
 
 		mode_clock_hz = lm_clk_fp;
 	}
-	SDE_DEBUG("[%s] h=%d v=%d fps=%d lm=%d mode_clk=%llu max_clk=%llu\n",
+	SDE_DEBUG("[%s] h=%d v=%d fps=%d lm=%d mode_clk=%u max_clk=%llu\n",
 			mode->name, mode->htotal, mode->vtotal, drm_mode_vrefresh(mode),
 			*num_lm, drm_fixp2int(mode_clock_hz),
 			sde_kms->perf.max_core_clk_rate);
@@ -3366,7 +3368,7 @@ static int sde_kms_get_mixer_count(const struct msm_kms *kms,
 
 error:
 	SDE_ERROR("required mode clk exceeds max mdp clk\n");
-	SDE_ERROR("[%s] h=%d v=%d fps=%d lm=%d mode_clk=%llu max_clk=%llu\n",
+	SDE_ERROR("[%s] h=%d v=%d fps=%d lm=%d mode_clk=%u max_clk=%llu\n",
 			mode->name, mode->htotal, mode->vtotal, drm_mode_vrefresh(mode),
 			*num_lm, drm_fixp2int(mode_clock_hz),
 			sde_kms->perf.max_core_clk_rate);
@@ -4102,8 +4104,7 @@ static int _sde_kms_get_demura_plane_data(struct sde_splash_data *data)
 	int count = 0;
 	struct device_node *parent, *node;
 	struct resource r;
-	const int STRING_LIMIT = 32;
-	char node_name[STRING_LIMIT];
+	char node_name[DEMURA_REGION_NAME_MAX];
 	struct sde_splash_mem *mem;
 	struct sde_splash_display *splash_display;
 
@@ -4120,7 +4121,8 @@ static int _sde_kms_get_demura_plane_data(struct sde_splash_data *data)
 
 	for (i = 0; i < data->num_splash_displays; i++) {
 		splash_display = &data->splash_display[i];
-		snprintf(&node_name[0], STRING_LIMIT, "demura_region_%d", i);
+		snprintf(&node_name[0], DEMURA_REGION_NAME_MAX,
+				"demura_region_%d", i);
 
 		splash_display->demura = NULL;
 		node = of_find_node_by_name(parent, node_name);
@@ -4502,7 +4504,7 @@ static int _sde_kms_hw_init_blocks(struct sde_kms *sde_kms,
 				sde_kms->sid_len, sde_kms->catalog);
 		if (IS_ERR_OR_NULL(sde_kms->hw_sid)) {
 			rc = PTR_ERR(sde_kms->hw_sid);
-			SDE_ERROR("failed to init sid %ld\n", rc);
+			SDE_ERROR("failed to init sid %d\n", rc);
 			sde_kms->hw_sid = NULL;
 			goto power_error;
 		}

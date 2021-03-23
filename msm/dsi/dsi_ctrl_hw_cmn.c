@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/delay.h>
@@ -324,7 +324,7 @@ void dsi_ctrl_hw_cmn_set_video_timing(struct dsi_ctrl_hw *ctrl,
 	u32 reg = 0;
 	u32 hs_start = 0;
 	u32 hs_end, active_h_start, active_h_end, h_total, width = 0;
-	u32 bytes_per_pkt, pkt_per_line, eol_byte_num;
+	u32 bytes_per_pkt = 0, pkt_per_line = 0, eol_byte_num = 0;
 	u32 vs_start = 0, vs_end = 0;
 	u32 vpos_start = 0, vpos_end, active_v_start, active_v_end, v_total;
 
@@ -1325,7 +1325,7 @@ void dsi_ctrl_hw_cmn_enable_error_interrupts(struct dsi_ctrl_hw *ctrl,
 	DSI_W32(ctrl, DSI_ERR_INT_MASK0, int_mask0);
 
 	DSI_CTRL_HW_DBG(ctrl, "[DSI_%d] enable errors = 0x%llx, int_mask0=0x%x\n",
-		 errors, int_mask0);
+		 ctrl->index, errors, int_mask0);
 }
 
 /**

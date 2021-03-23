@@ -263,11 +263,11 @@ enum msm_display_spr_pack_type {
 };
 
 static const char *msm_spr_pack_type_str[MSM_DISPLAY_SPR_TYPE_MAX] = {
-	[MSM_DISPLAY_SPR_TYPE_NONE] = "",
-	[MSM_DISPLAY_SPR_TYPE_PENTILE] = "pentile",
-	[MSM_DISPLAY_SPR_TYPE_RGBW] = "rgbw",
-	[MSM_DISPLAY_SPR_TYPE_YYGM] = "yygm",
-	[MSM_DISPLAY_SPR_TYPE_YYGW] = "yygw"
+	[MSM_DISPLAY_SPR_TYPE_NONE] =  "",
+	[MSM_DISPLAY_SPR_TYPE_PENTILE] =  "pentile",
+	[MSM_DISPLAY_SPR_TYPE_RGBW] =  "rgbw",
+	[MSM_DISPLAY_SPR_TYPE_YYGM] =  "yygm",
+	[MSM_DISPLAY_SPR_TYPE_YYGW] =  "yygw",
 };
 
 /**
