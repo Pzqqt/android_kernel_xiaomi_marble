@@ -1759,6 +1759,18 @@ struct cm_roam_values_copy {
 #define MAX_VDEV_SUPPORTED 4
 
 /**
+ * struct cm_ho_fail_ind - ho fail indication to CM
+ * @vdev_id: vdev id
+ * @psoc: psoc object
+ * @bssid: bssid addr
+ */
+struct cm_ho_fail_ind {
+	uint8_t vdev_id;
+	struct wlan_objmgr_psoc *psoc;
+	struct qdf_mac_addr bssid;
+};
+
+/**
  * struct policy_mgr_vdev_mac_map - vdev id-mac id map
  * @vdev_id: VDEV id
  * @mac_id: MAC id
