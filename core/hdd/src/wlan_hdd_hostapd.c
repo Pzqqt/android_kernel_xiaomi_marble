@@ -2712,7 +2712,10 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 			hdd_dcs_hostapd_set_chan(
 				hdd_ctx, adapter->vdev_id,
 				adapter->session.ap.operating_chan_freq);
-
+		qdf_status = qdf_event_set(&hostapd_state->qdf_event);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+			hdd_err("qdf_event_set failed! status: %d",
+				qdf_status);
 		return hdd_hostapd_chan_change(adapter, sap_event);
 	default:
 		hdd_debug("SAP message is not handled");
