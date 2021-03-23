@@ -1449,6 +1449,7 @@ struct hal_hw_srng_config hw_srng_table_7850[] = {
 		.entry_size = sizeof(struct reo_destination_ring) >> 2,
 		.lmac_ring = FALSE,
 		.ring_dir = HAL_SRNG_DST_RING,
+		.nf_irq_support = true,
 		.reg_start = {
 			HWIO_REO_R0_REO2SW1_RING_BASE_LSB_ADDR(
 				REO_REG_REG_BASE),
@@ -1716,6 +1717,7 @@ struct hal_hw_srng_config hw_srng_table_7850[] = {
 		.entry_size = sizeof(struct wbm_release_ring) >> 2,
 		.lmac_ring = FALSE,
 		.ring_dir = HAL_SRNG_DST_RING,
+		.nf_irq_support = true,
 		.reg_start = {
 		HWIO_WBM_R0_WBM2SW0_RELEASE_RING_BASE_LSB_ADDR(WBM_REG_REG_BASE),
 		HWIO_WBM_R2_WBM2SW0_RELEASE_RING_HP_ADDR(WBM_REG_REG_BASE),
@@ -1857,9 +1859,13 @@ int32_t hal_hw_reg_offset_wcn7850[] = {
 	REG_OFFSET(DST, MSI1_BASE_LSB),
 	REG_OFFSET(DST, MSI1_BASE_MSB),
 	REG_OFFSET(DST, MSI1_DATA),
+	REG_OFFSET(DST, MSI2_BASE_LSB),
+	REG_OFFSET(DST, MSI2_BASE_MSB),
+	REG_OFFSET(DST, MSI2_DATA),
 	REG_OFFSET(DST, BASE_LSB),
 	REG_OFFSET(DST, BASE_MSB),
 	REG_OFFSET(DST, PRODUCER_INT_SETUP),
+	REG_OFFSET(DST, PRODUCER_INT2_SETUP),
 	/* src */
 	REG_OFFSET(SRC, HP),
 	REG_OFFSET(SRC, TP),

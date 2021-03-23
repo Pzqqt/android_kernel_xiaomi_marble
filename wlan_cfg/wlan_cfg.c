@@ -48,15 +48,6 @@
 #define WLAN_CFG_TX_RING_MASK_2 0x4
 #define WLAN_CFG_TX_RING_MASK_3 0x0
 
-#define WLAN_CFG_RX_RING_MASK_0 0x1
-#define WLAN_CFG_RX_RING_MASK_1 0x2
-#define WLAN_CFG_RX_RING_MASK_2 0x4
-#define WLAN_CFG_RX_RING_MASK_3 0x8
-#define WLAN_CFG_RX_RING_MASK_4 0x10
-#define WLAN_CFG_RX_RING_MASK_5 0x20
-#define WLAN_CFG_RX_RING_MASK_6 0x40
-#define WLAN_CFG_RX_RING_MASK_7 0x80
-
 
 #define WLAN_CFG_RX_MON_RING_MASK_0 0x1
 #define WLAN_CFG_RX_MON_RING_MASK_1 0x2
@@ -107,6 +98,9 @@ struct dp_int_mask_assignment {
 	uint8_t rx_err_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	uint8_t rx_wbm_rel_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	uint8_t reo_status_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	uint8_t rx_ring_near_full_irq_1_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	uint8_t rx_ring_near_full_irq_2_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	uint8_t tx_ring_near_full_irq_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 };
 
 #if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
@@ -185,6 +179,28 @@ static struct dp_int_mask_assignment dp_mask_assignment[NUM_INTERRUPT_COMBINATIO
 		/* reo status ring masks */
 		{ 0, 0, 0, 0, 0, 0,
 		  WLAN_CFG_REO_STATUS_RING_MASK_0},
+#ifdef CONFIG_BERYLLIUM
+		/* rx near full irq1 mask */
+		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		  WLAN_CFG_RX_NEAR_FULL_IRQ_MASK_1,
+		  0, 0},
+		/* rx near full irq2 mask */
+		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		  0,
+		  WLAN_CFG_RX_NEAR_FULL_IRQ_MASK_2,
+		  0},
+		/* tx near full irq mask */
+		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		  0, 0,
+		  WLAN_CFG_TX_RING_NEAR_FULL_IRQ_MASK},
+#else /* CONFIG_BERYLLIUM */
+		/* rx near full irq1 mask */
+		{ 0, 0, 0, 0, 0, 0, 0},
+		/* rx near full irq2 mask */
+		{ 0, 0, 0, 0, 0, 0, 0},
+		/* tx near full irq mask */
+		{ 0, 0, 0, 0, 0, 0, 0},
+#endif /* CONFIG_BERYLLIUM */
 	},
 };
 
@@ -889,32 +905,38 @@ void wlan_cfg_fill_interrupt_mask(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
 
 
 	for (i = 0; i < WLAN_CFG_INT_NUM_CONTEXTS; i++) {
-			wlan_cfg_ctx->int_tx_ring_mask[i] =
-				dp_mask_assignment[interrupt_index].tx_ring_mask[i];
-			wlan_cfg_ctx->int_rx_mon_ring_mask[i] =
-				dp_mask_assignment[interrupt_index].rx_mon_ring_mask[i];
-			wlan_cfg_ctx->int_rx_err_ring_mask[i] =
-				dp_mask_assignment[interrupt_index].rx_err_ring_mask[i];
-			wlan_cfg_ctx->int_rx_wbm_rel_ring_mask[i] =
-				dp_mask_assignment[interrupt_index].rx_wbm_rel_ring_mask[i];
-			wlan_cfg_ctx->int_reo_status_ring_mask[i] =
-				dp_mask_assignment[interrupt_index].reo_status_ring_mask[i];
-			if (is_monitor_mode) {
-				wlan_cfg_ctx->int_rx_ring_mask[i] = 0;
-				wlan_cfg_ctx->int_rxdma2host_ring_mask[i] = 0;
-			} else {
-				wlan_cfg_ctx->int_rx_ring_mask[i] =
-					dp_mask_assignment[interrupt_index].rx_ring_mask[i];
-				wlan_cfg_ctx->int_rxdma2host_ring_mask[i] =
-					dp_mask_assignment[interrupt_index].rxdma2host_ring_mask[i];
-			}
-			wlan_cfg_ctx->int_host2rxdma_ring_mask[i] =
-				dp_mask_assignment[interrupt_index].host2rxdma_ring_mask[i];
-			wlan_cfg_ctx->int_host2rxdma_mon_ring_mask[i] =
-				dp_mask_assignment[interrupt_index].host2rxdma_mon_ring_mask[i];
-			wlan_cfg_ctx->int_rxdma2host_mon_ring_mask[i] =
-				dp_mask_assignment[interrupt_index].rxdma2host_mon_ring_mask[i];
+		wlan_cfg_ctx->int_tx_ring_mask[i] =
+			dp_mask_assignment[interrupt_index].tx_ring_mask[i];
+		wlan_cfg_ctx->int_rx_mon_ring_mask[i] =
+			dp_mask_assignment[interrupt_index].rx_mon_ring_mask[i];
+		wlan_cfg_ctx->int_rx_err_ring_mask[i] =
+			dp_mask_assignment[interrupt_index].rx_err_ring_mask[i];
+		wlan_cfg_ctx->int_rx_wbm_rel_ring_mask[i] =
+			dp_mask_assignment[interrupt_index].rx_wbm_rel_ring_mask[i];
+		wlan_cfg_ctx->int_reo_status_ring_mask[i] =
+			dp_mask_assignment[interrupt_index].reo_status_ring_mask[i];
+		if (is_monitor_mode) {
+			wlan_cfg_ctx->int_rx_ring_mask[i] = 0;
+			wlan_cfg_ctx->int_rxdma2host_ring_mask[i] = 0;
+		} else {
+			wlan_cfg_ctx->int_rx_ring_mask[i] =
+				dp_mask_assignment[interrupt_index].rx_ring_mask[i];
+			wlan_cfg_ctx->int_rxdma2host_ring_mask[i] =
+				dp_mask_assignment[interrupt_index].rxdma2host_ring_mask[i];
 		}
+		wlan_cfg_ctx->int_host2rxdma_ring_mask[i] =
+			dp_mask_assignment[interrupt_index].host2rxdma_ring_mask[i];
+		wlan_cfg_ctx->int_host2rxdma_mon_ring_mask[i] =
+			dp_mask_assignment[interrupt_index].host2rxdma_mon_ring_mask[i];
+		wlan_cfg_ctx->int_rxdma2host_mon_ring_mask[i] =
+			dp_mask_assignment[interrupt_index].rxdma2host_mon_ring_mask[i];
+		wlan_cfg_ctx->int_rx_ring_near_full_irq_1_mask[i] =
+			dp_mask_assignment[interrupt_index].rx_ring_near_full_irq_1_mask[i];
+		wlan_cfg_ctx->int_rx_ring_near_full_irq_2_mask[i] =
+			dp_mask_assignment[interrupt_index].rx_ring_near_full_irq_2_mask[i];
+		wlan_cfg_ctx->int_tx_ring_near_full_irq_mask[i] =
+			dp_mask_assignment[interrupt_index].tx_ring_near_full_irq_mask[i];
+	}
 }
 
 #ifdef IPA_OFFLOAD
@@ -1278,6 +1300,24 @@ int wlan_cfg_get_host2rxdma_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
 	int context)
 {
 	return cfg->int_host2rxdma_ring_mask[context];
+}
+
+int wlan_cfg_get_rx_near_full_grp_1_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+					 int context)
+{
+	return cfg->int_rx_ring_near_full_irq_1_mask[context];
+}
+
+int wlan_cfg_get_rx_near_full_grp_2_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+					 int context)
+{
+	return cfg->int_rx_ring_near_full_irq_2_mask[context];
+}
+
+int wlan_cfg_get_tx_ring_near_full_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+					int context)
+{
+	return cfg->int_tx_ring_near_full_irq_mask[context];
 }
 
 void wlan_cfg_set_hw_mac_idx(struct wlan_cfg_dp_soc_ctxt *cfg, int pdev_idx,

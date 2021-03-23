@@ -989,6 +989,20 @@ struct hal_srng_params {
 	void *hwreg_base[MAX_SRNG_REG_GROUPS];
 	/* prefetch timer config - in micro seconds */
 	uint32_t prefetch_timer;
+#ifdef WLAN_FEATURE_NEAR_FULL_IRQ
+	/* Near full IRQ support flag */
+	uint32_t nf_irq_support;
+	/* MSI2 Address */
+	qdf_dma_addr_t msi2_addr;
+	/* MSI2 data */
+	uint32_t msi2_data;
+	/* Critical threshold */
+	uint16_t crit_thresh;
+	/* High threshold */
+	uint16_t high_thresh;
+	/* Safe threshold */
+	uint16_t safe_thresh;
+#endif
 };
 
 /* hal_construct_srng_shadow_regs() - initialize the shadow
@@ -1025,6 +1039,28 @@ QDF_STATUS hal_set_one_shadow_config(void *hal_soc, int ring_type,
 extern void hal_get_shadow_config(void *hal_soc,
 				  struct pld_shadow_reg_v2_cfg **shadow_config,
 				  int *num_shadow_registers_configured);
+
+#ifdef WLAN_FEATURE_NEAR_FULL_IRQ
+/**
+ * hal_srng_is_near_full_irq_supported() - Check if srng supports near full irq
+ * @hal_soc: HAL SoC handle [To be validated by caller]
+ * @ring_type: srng type
+ * @ring_num: The index of the srng (of the same type)
+ *
+ * Return: true, if srng support near full irq trigger
+ *	false, if the srng does not support near full irq support.
+ */
+bool hal_srng_is_near_full_irq_supported(hal_soc_handle_t hal_soc,
+					 int ring_type, int ring_num);
+#else
+static inline
+bool hal_srng_is_near_full_irq_supported(hal_soc_handle_t hal_soc,
+					 int ring_type, int ring_num)
+{
+	return false;
+}
+#endif
+
 /**
  * hal_srng_setup - Initialize HW SRNG ring.
  *

@@ -1221,20 +1221,271 @@ static int dp_srng_find_ring_in_mask(int ring_num, uint8_t *grp_mask)
 	return -QDF_STATUS_E_NOENT;
 }
 
+/**
+ * dp_is_msi_group_number_invalid() - check msi_group_number valid or not
+ * @msi_group_number: MSI group number.
+ * @msi_data_count: MSI data count.
+ *
+ * Return: true if msi_group_number is invalid.
+ */
+#ifdef WLAN_ONE_MSI_VECTOR
+static bool dp_is_msi_group_number_invalid(int msi_group_number,
+					   int msi_data_count)
+{
+	return false;
+}
+#else
+static bool dp_is_msi_group_number_invalid(int msi_group_number,
+					   int msi_data_count)
+{
+	return msi_group_number > msi_data_count;
+}
+#endif
+
+#ifdef WLAN_FEATURE_NEAR_FULL_IRQ
+/**
+ * dp_is_reo_ring_num_in_nf_grp1() - Check if the current reo ring is part of
+ *				rx_near_full_grp1 mask
+ * @soc: Datapath SoC Handle
+ * @ring_num: REO ring number
+ *
+ * Return: 1 if the ring_num belongs to reo_nf_grp1,
+ *	   0, otherwise.
+ */
+static inline int
+dp_is_reo_ring_num_in_nf_grp1(struct dp_soc *soc, int ring_num)
+{
+	return (WLAN_CFG_RX_NEAR_FULL_IRQ_MASK_1 & (1 << ring_num));
+}
+
+/**
+ * dp_is_reo_ring_num_in_nf_grp2() - Check if the current reo ring is part of
+ *				rx_near_full_grp2 mask
+ * @soc: Datapath SoC Handle
+ * @ring_num: REO ring number
+ *
+ * Return: 1 if the ring_num belongs to reo_nf_grp2,
+ *	   0, otherwise.
+ */
+static inline int
+dp_is_reo_ring_num_in_nf_grp2(struct dp_soc *soc, int ring_num)
+{
+	return (WLAN_CFG_RX_NEAR_FULL_IRQ_MASK_2 & (1 << ring_num));
+}
+
+/**
+ * dp_srng_get_near_full_irq_mask() - Get near-full irq mask for a particular
+ *				ring type and number
+ * @soc: Datapath SoC handle
+ * @ring_type: SRNG type
+ * @ring_num: ring num
+ *
+ * Return: near ful irq mask pointer
+ */
+static inline
+uint8_t *dp_srng_get_near_full_irq_mask(struct dp_soc *soc,
+					enum hal_ring_type ring_type,
+					int ring_num)
+{
+	uint8_t *nf_irq_mask = NULL;
+
+	switch (ring_type) {
+	case WBM2SW_RELEASE:
+		if (ring_num < 3) {
+			nf_irq_mask = &soc->wlan_cfg_ctx->
+					int_tx_ring_near_full_irq_mask[0];
+		}
+		break;
+	case REO_DST:
+		if (dp_is_reo_ring_num_in_nf_grp1(soc, ring_num))
+			nf_irq_mask =
+			&soc->wlan_cfg_ctx->int_rx_ring_near_full_irq_1_mask[0];
+		else if (dp_is_reo_ring_num_in_nf_grp2(soc, ring_num))
+			nf_irq_mask =
+			&soc->wlan_cfg_ctx->int_rx_ring_near_full_irq_2_mask[0];
+		else
+			qdf_assert(0);
+		break;
+	default:
+		break;
+	}
+
+	return nf_irq_mask;
+}
+
+/**
+ * dp_srng_set_msi2_ring_params() - Set the msi2 addr/data in the ring params
+ * @soc: Datapath SoC handle
+ * @ring_params: srng params handle
+ * @msi2_addr: MSI2 addr to be set for the SRNG
+ * @msi2_data: MSI2 data to be set for the SRNG
+ *
+ * Return: None
+ */
+static inline
+void dp_srng_set_msi2_ring_params(struct dp_soc *soc,
+				  struct hal_srng_params *ring_params,
+				  qdf_dma_addr_t msi2_addr,
+				  uint32_t msi2_data)
+{
+	ring_params->msi2_addr = msi2_addr;
+	ring_params->msi2_data = msi2_data;
+}
+
+/**
+ * dp_srng_msi2_setup() - Setup MSI2 details for near full IRQ of an SRNG
+ * @soc: Datapath SoC handle
+ * @ring_params: ring_params for SRNG
+ * @ring_type: SENG type
+ * @ring_num: ring number for the SRNG
+ * @nf_msi_grp_num: near full msi group number
+ *
+ * Return: None
+ */
+static inline void
+dp_srng_msi2_setup(struct dp_soc *soc,
+		   struct hal_srng_params *ring_params,
+		   int ring_type, int ring_num, int nf_msi_grp_num)
+{
+	uint32_t msi_data_start, msi_irq_start, addr_low, addr_high;
+	int msi_data_count, ret;
+
+	ret = pld_get_user_msi_assignment(soc->osdev->dev, "DP",
+					  &msi_data_count, &msi_data_start,
+					  &msi_irq_start);
+	if (ret)
+		return;
+
+	if (nf_msi_grp_num < 0) {
+		dp_init_info("%pK: ring near full IRQ not part of an ext_group; ring_type: %d,ring_num %d",
+			     soc, ring_type, ring_num);
+		ring_params->msi2_addr = 0;
+		ring_params->msi2_data = 0;
+		return;
+	}
+
+	if (dp_is_msi_group_number_invalid(nf_msi_grp_num, msi_data_count)) {
+		dp_init_warn("%pK: 2 msi_groups will share an msi for near full IRQ; msi_group_num %d",
+			     soc, nf_msi_grp_num);
+		QDF_ASSERT(0);
+	}
+
+	pld_get_msi_address(soc->osdev->dev, &addr_low, &addr_high);
+
+	ring_params->nf_irq_support = 1;
+	ring_params->msi2_addr = addr_low;
+	ring_params->msi2_addr |= (qdf_dma_addr_t)(((uint64_t)addr_high) << 32);
+	ring_params->msi2_data = (nf_msi_grp_num % msi_data_count)
+		+ msi_data_start;
+	ring_params->flags |= HAL_SRNG_MSI_INTR;
+}
+
+/* Percentage of ring entries considered as nearly full */
+#define DP_NF_HIGH_THRESH_PERCENTAGE	75
+/* Percentage of ring entries considered as critically full */
+#define DP_NF_CRIT_THRESH_PERCENTAGE	90
+/* Percentage of ring entries considered as safe threshold */
+#define DP_NF_SAFE_THRESH_PERCENTAGE	50
+
+/**
+ * dp_srng_configure_nf_interrupt_thresholds() - Configure the thresholds for
+ *			near full irq
+ * @soc: Datapath SoC handle
+ * @ring_params: ring params for SRNG
+ * @ring_type: ring type
+ */
+static inline void
+dp_srng_configure_nf_interrupt_thresholds(struct dp_soc *soc,
+					  struct hal_srng_params *ring_params,
+					  int ring_type)
+{
+	if (ring_params->nf_irq_support) {
+		ring_params->high_thresh = (ring_params->num_entries *
+					    DP_NF_HIGH_THRESH_PERCENTAGE) / 100;
+		ring_params->crit_thresh = (ring_params->num_entries *
+					    DP_NF_CRIT_THRESH_PERCENTAGE) / 100;
+		ring_params->safe_thresh = (ring_params->num_entries *
+					    DP_NF_SAFE_THRESH_PERCENTAGE) /100;
+	}
+}
+
+/**
+ * dp_srng_set_nf_thresholds() - Set the near full thresholds to srng data
+ *			structure from the ring params
+ * @soc: Datapath SoC handle
+ * @srng: SRNG handle
+ * @ring_params: ring params for a SRNG
+ *
+ * Return: None
+ */
+static inline void
+dp_srng_set_nf_thresholds(struct dp_soc *soc, struct dp_srng *srng,
+			  struct hal_srng_params *ring_params)
+{
+	srng->crit_thresh = ring_params->crit_thresh;
+	srng->safe_thresh = ring_params->safe_thresh;
+}
+
+#else
+static inline
+uint8_t *dp_srng_get_near_full_irq_mask(struct dp_soc *soc,
+					enum hal_ring_type ring_type,
+					int ring_num)
+{
+	return NULL;
+}
+
+static inline
+void dp_srng_set_msi2_ring_params(struct dp_soc *soc,
+				  struct hal_srng_params *ring_params,
+				  qdf_dma_addr_t msi2_addr,
+				  uint32_t msi2_data)
+{
+}
+
+static inline void
+dp_srng_msi2_setup(struct dp_soc *soc,
+		   struct hal_srng_params *ring_params,
+		   int ring_type, int ring_num, int nf_msi_grp_num)
+{
+}
+
+static inline void
+dp_srng_configure_nf_interrupt_thresholds(struct dp_soc *soc,
+					  struct hal_srng_params *ring_params,
+					  int ring_type)
+{
+}
+
+static inline void
+dp_srng_set_nf_thresholds(struct dp_soc *soc, struct dp_srng *srng,
+			  struct hal_srng_params *ring_params)
+{
+}
+#endif
+
 static int dp_srng_calculate_msi_group(struct dp_soc *soc,
 				       enum hal_ring_type ring_type,
-				       int ring_num)
+				       int ring_num,
+				       int *reg_msi_grp_num,
+				       bool nf_irq_support,
+				       int *nf_msi_grp_num)
 {
-	uint8_t *grp_mask;
+	uint8_t *grp_mask, *nf_irq_mask = NULL;
+	bool nf_irq_enabled = false;
 
 	switch (ring_type) {
 	case WBM2SW_RELEASE:
 		/* dp_tx_comp_handler - soc->tx_comp_ring */
-		if (ring_num < 3)
+		if (ring_num < 3) {
 			grp_mask = &soc->wlan_cfg_ctx->int_tx_ring_mask[0];
-
+			nf_irq_mask = dp_srng_get_near_full_irq_mask(soc,
+								     ring_type,
+								     ring_num);
+			if (nf_irq_mask)
+				nf_irq_enabled = true;
 		/* dp_rx_wbm_err_process - soc->rx_rel_ring */
-		else if (ring_num == 3) {
+		} else if (ring_num == 3) {
 			/* sw treats this as a separate ring type */
 			grp_mask = &soc->wlan_cfg_ctx->
 				int_rx_wbm_rel_ring_mask[0];
@@ -1253,6 +1504,10 @@ static int dp_srng_calculate_msi_group(struct dp_soc *soc,
 	case REO_DST:
 		/* dp_rx_process - soc->reo_dest_ring */
 		grp_mask = &soc->wlan_cfg_ctx->int_rx_ring_mask[0];
+		nf_irq_mask = dp_srng_get_near_full_irq_mask(soc, ring_type,
+							     ring_num);
+		if (nf_irq_mask)
+			nf_irq_enabled = true;
 	break;
 
 	case REO_STATUS:
@@ -1305,7 +1560,14 @@ static int dp_srng_calculate_msi_group(struct dp_soc *soc,
 	break;
 	}
 
-	return dp_srng_find_ring_in_mask(ring_num, grp_mask);
+	*reg_msi_grp_num = dp_srng_find_ring_in_mask(ring_num, grp_mask);
+
+	if (nf_irq_support && nf_irq_enabled) {
+		*nf_msi_grp_num = dp_srng_find_ring_in_mask(ring_num,
+							    nf_irq_mask);
+	}
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /*
@@ -1355,34 +1617,19 @@ static int dp_get_num_msi_available(struct dp_soc *soc, int interrupt_mode)
 }
 #endif
 
-/**
- * dp_is_msi_group_number_invalid() - check msi_group_number valid or not
- * @msi_group_number: MSI group number.
- * @msi_data_count: MSI data count.
- *
- * Return: true if msi_group_number is valid.
- */
-#ifdef WLAN_ONE_MSI_VECTOR
-static bool dp_is_msi_group_number_invalid(int msi_group_number,
-					   int msi_data_count)
-{
-	return false;
-}
-#else
-static bool dp_is_msi_group_number_invalid(int msi_group_number,
-					   int msi_data_count)
-{
-	return msi_group_number > msi_data_count;
-}
-#endif
-
 static void dp_srng_msi_setup(struct dp_soc *soc, struct hal_srng_params
 			      *ring_params, int ring_type, int ring_num)
 {
-	int msi_group_number;
+	int reg_msi_grp_num;
+	/*
+	 * nf_msi_grp_num needs to be initialized with negative value,
+	 * to avoid configuring near-full msi for WBM2SW3 ring
+	 */
+	int nf_msi_grp_num = -1;
 	int msi_data_count;
 	int ret;
 	uint32_t msi_data_start, msi_irq_start, addr_low, addr_high;
+	bool nf_irq_support;
 
 	ret = pld_get_user_msi_assignment(soc->osdev->dev, "DP",
 					    &msi_data_count, &msi_data_start,
@@ -1391,20 +1638,33 @@ static void dp_srng_msi_setup(struct dp_soc *soc, struct hal_srng_params
 	if (ret)
 		return;
 
-	msi_group_number = dp_srng_calculate_msi_group(soc, ring_type,
-						       ring_num);
-	if (msi_group_number < 0) {
+	nf_irq_support = hal_srng_is_near_full_irq_supported(soc->hal_soc,
+							     ring_type,
+							     ring_num);
+	ret = dp_srng_calculate_msi_group(soc, ring_type, ring_num,
+					  &reg_msi_grp_num,
+					  nf_irq_support,
+					  &nf_msi_grp_num);
+	if (ret < 0) {
 		dp_init_info("%pK: ring not part of an ext_group; ring_type: %d,ring_num %d",
 			     soc, ring_type, ring_num);
 		ring_params->msi_addr = 0;
 		ring_params->msi_data = 0;
+		dp_srng_set_msi2_ring_params(soc, ring_params, 0, 0);
 		return;
 	}
 
-	if (dp_is_msi_group_number_invalid(msi_group_number, msi_data_count)) {
-		dp_init_warn("%pK: 2 msi_groups will share an msi; msi_group_num %d",
-			     soc, msi_group_number);
+	if (reg_msi_grp_num < 0) {
+		dp_init_info("%pK: ring not part of an ext_group; ring_type: %d,ring_num %d",
+			     soc, ring_type, ring_num);
+		ring_params->msi_addr = 0;
+		ring_params->msi_data = 0;
+		goto configure_msi2;
+	}
 
+	if (dp_is_msi_group_number_invalid(reg_msi_grp_num, msi_data_count)) {
+		dp_init_warn("%pK: 2 msi_groups will share an msi; msi_group_num %d",
+			     soc, reg_msi_grp_num);
 		QDF_ASSERT(0);
 	}
 
@@ -1412,9 +1672,18 @@ static void dp_srng_msi_setup(struct dp_soc *soc, struct hal_srng_params
 
 	ring_params->msi_addr = addr_low;
 	ring_params->msi_addr |= (qdf_dma_addr_t)(((uint64_t)addr_high) << 32);
-	ring_params->msi_data = (msi_group_number % msi_data_count)
+	ring_params->msi_data = (reg_msi_grp_num % msi_data_count)
 		+ msi_data_start;
 	ring_params->flags |= HAL_SRNG_MSI_INTR;
+
+configure_msi2:
+	if (!nf_irq_support) {
+		dp_srng_set_msi2_ring_params(soc, ring_params, 0, 0);
+		return;
+	}
+
+	dp_srng_msi2_setup(soc, ring_params, ring_type, ring_num,
+			   nf_msi_grp_num);
 }
 
 #ifdef FEATURE_AST
@@ -1576,6 +1845,8 @@ dp_srng_configure_interrupt_thresholds(struct dp_soc *soc,
 			soc->wlan_srng_cfg[ring_type].low_threshold;
 	if (ring_params->low_threshold)
 		ring_params->flags |= HAL_SRNG_LOW_THRES_INTR_ENABLE;
+
+	dp_srng_configure_nf_interrupt_thresholds(soc, ring_params, ring_type);
 }
 #else
 static void
@@ -1886,6 +2157,7 @@ static QDF_STATUS dp_srng_init(struct dp_soc *soc, struct dp_srng *srng,
 	} else {
 		ring_params.msi_data = 0;
 		ring_params.msi_addr = 0;
+		dp_srng_set_msi2_ring_params(soc, &ring_params, 0, 0);
 		dp_verbose_debug("Skipping MSI for ring_type: %d, ring_num %d",
 				 ring_type, ring_num);
 	}
@@ -1893,6 +2165,8 @@ static QDF_STATUS dp_srng_init(struct dp_soc *soc, struct dp_srng *srng,
 	dp_srng_configure_interrupt_thresholds(soc, &ring_params,
 					       ring_type, ring_num,
 					       srng->num_entries);
+
+	dp_srng_set_nf_thresholds(soc, srng, &ring_params);
 
 	if (srng->cached)
 		ring_params.flags |= HAL_SRNG_CACHED_DESC;
@@ -2146,6 +2420,22 @@ static int dp_process_lmac_rings(struct dp_intr *int_ctx, int total_budget)
 budget_done:
 	return total_budget - budget;
 }
+
+#ifdef WLAN_FEATURE_NEAR_FULL_IRQ
+/**
+ * dp_service_near_full_srngs() - Bottom half handler to process the near
+ *				full IRQ on a SRNG
+ * @dp_ctx: Datapath SoC handle
+ * @dp_budget: Number of SRNGs which can be processed in a single attempt
+ *		without rescheduling
+ *
+ * Return: remaining budget/quota for the soc device
+ */
+static uint32_t dp_service_near_full_srngs(void *dp_ctx, uint32_t dp_budget)
+{
+	return 0;
+}
+#endif
 
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
 
@@ -2722,6 +3012,15 @@ static void dp_soc_interrupt_map_calculate_msi(struct dp_soc *soc,
 					soc->wlan_cfg_ctx, intr_ctx_num);
 	int host2rxdma_mon_ring_mask = wlan_cfg_get_host2rxdma_mon_ring_mask(
 					soc->wlan_cfg_ctx, intr_ctx_num);
+	int rx_near_full_grp_1_mask =
+		wlan_cfg_get_rx_near_full_grp_1_mask(soc->wlan_cfg_ctx,
+						     intr_ctx_num);
+	int rx_near_full_grp_2_mask =
+		wlan_cfg_get_rx_near_full_grp_2_mask(soc->wlan_cfg_ctx,
+						     intr_ctx_num);
+	int tx_ring_near_full_mask =
+		wlan_cfg_get_tx_ring_near_full_mask(soc->wlan_cfg_ctx,
+						    intr_ctx_num);
 
 	unsigned int vector =
 		(intr_ctx_num % msi_vector_count) + msi_vector_start;
@@ -2731,7 +3030,9 @@ static void dp_soc_interrupt_map_calculate_msi(struct dp_soc *soc,
 
 	if (tx_mask | rx_mask | rx_mon_mask | rx_err_ring_mask |
 	    rx_wbm_rel_ring_mask | reo_status_ring_mask | rxdma2host_ring_mask |
-	    host2rxdma_ring_mask | host2rxdma_mon_ring_mask)
+	    host2rxdma_ring_mask | host2rxdma_mon_ring_mask |
+	    rx_near_full_grp_1_mask | rx_near_full_grp_2_mask |
+	    tx_ring_near_full_mask)
 		irq_id_map[num_irq++] =
 			pld_get_msi_irq(soc->osdev->dev, vector);
 
@@ -2757,6 +3058,36 @@ static void dp_soc_interrupt_map_calculate(struct dp_soc *soc, int intr_ctx_num,
 				intr_ctx_num, irq_id_map, num_irq,
 				msi_vector_count, msi_vector_start);
 }
+
+#ifdef WLAN_FEATURE_NEAR_FULL_IRQ
+/**
+ * dp_soc_near_full_interrupt_attach() - Register handler for DP near fill irq
+ * @soc: DP soc handle
+ * @num_irq: IRQ number
+ * @irq_id_map: IRQ map
+ * intr_id: interrupt context ID
+ *
+ * Return: 0 for success. nonzero for failure.
+ */
+static inline int
+dp_soc_near_full_interrupt_attach(struct dp_soc *soc, int num_irq,
+				  int irq_id_map[], int intr_id)
+{
+	return hif_register_ext_group(soc->hif_handle,
+				      num_irq, irq_id_map,
+				      dp_service_near_full_srngs,
+				      &soc->intr_ctx[intr_id], "dp_nf_intr",
+				      HIF_EXEC_NAPI_TYPE,
+				      QCA_NAPI_DEF_SCALE_BIN_SHIFT);
+}
+#else
+static inline int
+dp_soc_near_full_interrupt_attach(struct dp_soc *soc, int num_irq,
+				  int *irq_id_map, int intr_id)
+{
+	return 0;
+}
+#endif
 
 /*
  * dp_soc_interrupt_attach() - Register handlers for DP interrupts
@@ -2803,6 +3134,15 @@ static QDF_STATUS dp_soc_interrupt_attach(struct cdp_soc_t *txrx_soc)
 		int host2rxdma_mon_ring_mask =
 			wlan_cfg_get_host2rxdma_mon_ring_mask(
 				soc->wlan_cfg_ctx, i);
+		int rx_near_full_grp_1_mask =
+			wlan_cfg_get_rx_near_full_grp_1_mask(soc->wlan_cfg_ctx,
+							     i);
+		int rx_near_full_grp_2_mask =
+			wlan_cfg_get_rx_near_full_grp_2_mask(soc->wlan_cfg_ctx,
+							     i);
+		int tx_ring_near_full_mask =
+			wlan_cfg_get_tx_ring_near_full_mask(soc->wlan_cfg_ctx,
+							    i);
 
 		soc->intr_ctx[i].dp_intr_id = i;
 		soc->intr_ctx[i].tx_ring_mask = tx_mask;
@@ -2815,6 +3155,12 @@ static QDF_STATUS dp_soc_interrupt_attach(struct cdp_soc_t *txrx_soc)
 		soc->intr_ctx[i].reo_status_ring_mask = reo_status_ring_mask;
 		soc->intr_ctx[i].host2rxdma_mon_ring_mask =
 			 host2rxdma_mon_ring_mask;
+		soc->intr_ctx[i].rx_near_full_grp_1_mask =
+						rx_near_full_grp_1_mask;
+		soc->intr_ctx[i].rx_near_full_grp_2_mask =
+						rx_near_full_grp_2_mask;
+		soc->intr_ctx[i].tx_ring_near_full_mask =
+						tx_ring_near_full_mask;
 
 		soc->intr_ctx[i].soc = soc;
 
@@ -2823,10 +3169,17 @@ static QDF_STATUS dp_soc_interrupt_attach(struct cdp_soc_t *txrx_soc)
 		dp_soc_interrupt_map_calculate(soc, i, &irq_id_map[0],
 					       &num_irq);
 
-		ret = hif_register_ext_group(soc->hif_handle,
+		if (rx_near_full_grp_1_mask | rx_near_full_grp_2_mask |
+		    tx_ring_near_full_mask) {
+			dp_soc_near_full_interrupt_attach(soc, num_irq,
+							  irq_id_map, i);
+		} else {
+			ret = hif_register_ext_group(soc->hif_handle,
 				num_irq, irq_id_map, dp_service_srngs,
 				&soc->intr_ctx[i], "dp_intr",
-				HIF_EXEC_NAPI_TYPE, QCA_NAPI_DEF_SCALE_BIN_SHIFT);
+				HIF_EXEC_NAPI_TYPE,
+				QCA_NAPI_DEF_SCALE_BIN_SHIFT);
+		}
 
 		if (ret) {
 			dp_init_err("%pK: failed, ret = %d", soc, ret);
@@ -2859,6 +3212,7 @@ static void dp_soc_interrupt_detach(struct cdp_soc_t *txrx_soc)
 	} else {
 		hif_deconfigure_ext_group_interrupts(soc->hif_handle);
 		hif_deregister_exec_group(soc->hif_handle, "dp_intr");
+		hif_deregister_exec_group(soc->hif_handle, "dp_nf_intr");
 	}
 
 	for (i = 0; i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++) {
@@ -2871,6 +3225,9 @@ static void dp_soc_interrupt_detach(struct cdp_soc_t *txrx_soc)
 		soc->intr_ctx[i].rxdma2host_ring_mask = 0;
 		soc->intr_ctx[i].host2rxdma_ring_mask = 0;
 		soc->intr_ctx[i].host2rxdma_mon_ring_mask = 0;
+		soc->intr_ctx[i].rx_near_full_grp_1_mask = 0;
+		soc->intr_ctx[i].rx_near_full_grp_2_mask = 0;
+		soc->intr_ctx[i].tx_ring_near_full_mask = 0;
 
 		hif_event_history_deinit(soc->hif_handle, i);
 		qdf_lro_deinit(soc->intr_ctx[i].lro_ctx);

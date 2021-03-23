@@ -134,8 +134,8 @@ struct CE_state;
 
 #ifndef HIF_MAX_GROUP
 #ifdef CONFIG_BERYLLIUM
-#define HIF_MAX_GROUP 11
-#define HIF_MAX_GRP_IRQ 20
+#define HIF_MAX_GROUP 14
+#define HIF_MAX_GRP_IRQ 23
 #else
 #define HIF_MAX_GROUP 7
 #define HIF_MAX_GRP_IRQ 16

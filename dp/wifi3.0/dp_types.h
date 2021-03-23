@@ -668,6 +668,9 @@ struct dp_txrx_pool_stats {
  * @cached: is the srng ring memory cached or un-cached memory
  * @irq: irq number of the srng ring
  * @num_entries: number of entries in the srng ring
+ * @is_mem_prealloc: Is this srng memeory pre-allocated
+ * @crit_thresh: Critical threshold for near-full processing of this srng
+ * @safe_thresh: Safe threshold for near-full processing of this srng
  */
 struct dp_srng {
 	hal_ring_handle_t hal_srng;
@@ -681,6 +684,10 @@ struct dp_srng {
 	uint32_t num_entries;
 #ifdef DP_MEM_PRE_ALLOC
 	uint8_t is_mem_prealloc;
+#endif
+#ifdef WLAN_FEATURE_NEAR_FULL_IRQ
+	uint16_t crit_thresh;
+	uint16_t safe_thresh;
 #endif
 };
 
@@ -831,6 +838,12 @@ struct dp_intr {
 	uint8_t host2rxdma_ring_mask; /* Host to RXDMA buffer ring */
 	/* Host to RXDMA monitor  buffer ring */
 	uint8_t host2rxdma_mon_ring_mask;
+	/* RX REO rings near full interrupt mask */
+	uint8_t rx_near_full_grp_1_mask;
+	/* RX REO rings near full interrupt mask */
+	uint8_t rx_near_full_grp_2_mask;
+	/* WBM TX completion rings near full interrupt mask */
+	uint8_t tx_ring_near_full_mask;
 	struct dp_soc *soc;    /* Reference to SoC structure ,
 				to get DMA ring handles */
 	qdf_lro_ctx_t lro_ctx;

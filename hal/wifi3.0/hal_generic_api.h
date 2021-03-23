@@ -292,6 +292,65 @@ void hal_srng_src_hw_init_generic(struct hal_soc *hal,
 	SRNG_SRC_REG_WRITE(srng, MISC, reg_val);
 }
 
+#ifdef WLAN_FEATURE_NEAR_FULL_IRQ
+/**
+ * hal_srng_dst_msi2_setup() - Configure MSI2 register for a SRNG
+ * @srng: SRNG handle
+ *
+ * Return: None
+ */
+static inline void hal_srng_dst_msi2_setup(struct hal_srng *srng)
+{
+	uint32_t reg_val = 0;
+
+	if (srng->u.dst_ring.nf_irq_support) {
+		SRNG_DST_REG_WRITE(srng, MSI2_BASE_LSB,
+				   srng->msi2_addr & 0xffffffff);
+		reg_val = SRNG_SM(SRNG_DST_FLD(MSI2_BASE_MSB, ADDR),
+				  (uint64_t)(srng->msi2_addr) >> 32) |
+				  SRNG_SM(SRNG_DST_FLD(MSI2_BASE_MSB,
+					  MSI2_ENABLE), 1);
+		SRNG_DST_REG_WRITE(srng, MSI2_BASE_MSB, reg_val);
+		SRNG_DST_REG_WRITE(srng, MSI2_DATA,
+				   qdf_cpu_to_le32(srng->msi2_data));
+	}
+}
+
+/**
+ * hal_srng_dst_near_full_int_setup() - Configure near-full params for SRNG
+ * @srng: SRNG handle
+ *
+ * Return: None
+ */
+static inline void hal_srng_dst_near_full_int_setup(struct hal_srng *srng)
+{
+	uint32_t reg_val = 0;
+
+	if (srng->u.dst_ring.nf_irq_support) {
+		if (srng->intr_timer_thres_us) {
+			reg_val |= SRNG_SM(SRNG_DST_FLD(PRODUCER_INT2_SETUP,
+					   INTERRUPT2_TIMER_THRESHOLD),
+					   srng->intr_timer_thres_us >> 3);
+		}
+
+		reg_val |= SRNG_SM(SRNG_DST_FLD(PRODUCER_INT2_SETUP,
+				   HIGH_THRESHOLD),
+				   srng->u.dst_ring.high_thresh *
+				   srng->entry_size);
+	}
+
+	SRNG_DST_REG_WRITE(srng, PRODUCER_INT2_SETUP, reg_val);
+}
+#else
+static inline void hal_srng_dst_msi2_setup(struct hal_srng *srng)
+{
+}
+
+static inline void hal_srng_dst_near_full_int_setup(struct hal_srng *srng)
+{
+}
+#endif
+
 /**
  * hal_srng_dst_hw_init - Private function to initialize SRNG
  * destination ring HW
@@ -317,6 +376,8 @@ void hal_srng_dst_hw_init_generic(struct hal_soc *hal,
 		SRNG_DST_REG_WRITE(srng, MSI1_BASE_MSB, reg_val);
 		SRNG_DST_REG_WRITE(srng, MSI1_DATA,
 				   qdf_cpu_to_le32(srng->msi_data));
+
+		hal_srng_dst_msi2_setup(srng);
 	}
 
 	SRNG_DST_REG_WRITE(srng, BASE_LSB, srng->ring_base_paddr & 0xffffffff);
@@ -351,6 +412,14 @@ void hal_srng_dst_hw_init_generic(struct hal_soc *hal,
 	}
 
 	SRNG_DST_REG_WRITE(srng, PRODUCER_INT_SETUP, reg_val);
+
+	/**
+	 * Near-Full Interrupt setup:
+	 * Default interrupt mode is 'pulse'. Need to setup SW_INTERRUPT_MODE
+	 * if level mode is required
+	 */
+	hal_srng_dst_near_full_int_setup(srng);
+
 	hp_addr = (uint64_t)(hal->shadow_rdptr_mem_paddr +
 		((unsigned long)(srng->u.dst_ring.hp_addr) -
 		(unsigned long)(hal->shadow_rdptr_mem_vaddr)));

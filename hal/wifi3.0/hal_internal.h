@@ -272,6 +272,44 @@ enum hal_ring_type {
 	MAX_RING_TYPES
 };
 
+enum SRNG_REGISTERS {
+	DST_HP = 0,
+	DST_TP,
+	DST_ID,
+	DST_MISC,
+	DST_HP_ADDR_LSB,
+	DST_HP_ADDR_MSB,
+	DST_MSI1_BASE_LSB,
+	DST_MSI1_BASE_MSB,
+	DST_MSI1_DATA,
+#ifdef CONFIG_BERYLLIUM
+	DST_MSI2_BASE_LSB,
+	DST_MSI2_BASE_MSB,
+	DST_MSI2_DATA,
+#endif
+	DST_BASE_LSB,
+	DST_BASE_MSB,
+	DST_PRODUCER_INT_SETUP,
+#ifdef CONFIG_BERYLLIUM
+	DST_PRODUCER_INT2_SETUP,
+#endif
+
+	SRC_HP,
+	SRC_TP,
+	SRC_ID,
+	SRC_MISC,
+	SRC_TP_ADDR_LSB,
+	SRC_TP_ADDR_MSB,
+	SRC_MSI1_BASE_LSB,
+	SRC_MSI1_BASE_MSB,
+	SRC_MSI1_DATA,
+	SRC_BASE_LSB,
+	SRC_BASE_MSB,
+	SRC_CONSUMER_INT_SETUP_IX0,
+	SRC_CONSUMER_INT_SETUP_IX1,
+	SRNG_REGISTER_MAX,
+};
+
 #define HAL_RXDMA_MAX_RING_SIZE 0xFFFF
 #define HAL_MAX_LMACS 3
 #define HAL_MAX_RINGS_PER_LMAC (HAL_SRNG_LMAC1_ID_END - HAL_SRNG_LMAC1_ID_START)
@@ -475,6 +513,14 @@ struct hal_srng {
 	/* MSI data */
 	uint32_t msi_data;
 
+#ifdef WLAN_FEATURE_NEAR_FULL_IRQ
+	/* MSI2 Address */
+	qdf_dma_addr_t msi2_addr;
+
+	/* MSI2 data */
+	uint32_t msi2_data;
+#endif
+
 	/* Misc flags */
 	uint32_t flags;
 
@@ -514,6 +560,14 @@ struct hal_srng {
 
 			/* max transfer size */
 			uint16_t max_buffer_length;
+
+#ifdef WLAN_FEATURE_NEAR_FULL_IRQ
+			/* near full IRQ supported */
+			uint16_t nf_irq_support;
+
+			/* High threshold for Near full IRQ */
+			uint16_t high_thresh;
+#endif
 		} dst_ring;
 
 		struct {
@@ -571,6 +625,7 @@ struct hal_hw_srng_config {
 	uint8_t lmac_ring;
 	enum hal_srng_dir ring_dir;
 	uint32_t max_size;
+	bool nf_irq_support;
 };
 
 #define MAX_SHADOW_REGISTERS 40

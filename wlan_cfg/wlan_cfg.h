@@ -27,7 +27,7 @@
 #define WLAN_CFG_DST_RING_CACHED_DESC 0
 #define MAX_PDEV_CNT 1
 #ifdef CONFIG_BERYLLIUM
-#define WLAN_CFG_INT_NUM_CONTEXTS 11
+#define WLAN_CFG_INT_NUM_CONTEXTS 14
 #else
 #define WLAN_CFG_INT_NUM_CONTEXTS 7
 #endif
@@ -54,7 +54,7 @@
 
 #endif
 
-#define WLAN_CFG_INT_NUM_CONTEXTS_MAX 11
+#define WLAN_CFG_INT_NUM_CONTEXTS_MAX 14
 
 /* Tx configuration */
 #define MAX_LINK_DESC_BANKS 8
@@ -91,6 +91,41 @@
 #define WLAN_CFG_RX_FST_TOEPLITZ_KEYLEN 40
 
 #define INVALID_PDEV_ID 0xFF
+
+#define WLAN_CFG_RX_RING_MASK_0 0x1
+#define WLAN_CFG_RX_RING_MASK_1 0x2
+#define WLAN_CFG_RX_RING_MASK_2 0x4
+#define WLAN_CFG_RX_RING_MASK_3 0x8
+#define WLAN_CFG_RX_RING_MASK_4 0x10
+#define WLAN_CFG_RX_RING_MASK_5 0x20
+#define WLAN_CFG_RX_RING_MASK_6 0x40
+#define WLAN_CFG_RX_RING_MASK_7 0x80
+
+#ifdef WLAN_FEATURE_NEAR_FULL_IRQ
+#ifdef IPA_OFFLOAD
+#define WLAN_CFG_RX_NEAR_FULL_IRQ_MASK_1 (WLAN_CFG_RX_RING_MASK_0 |	\
+					  WLAN_CFG_RX_RING_MASK_1 |	\
+					  WLAN_CFG_RX_RING_MASK_2)
+
+#define WLAN_CFG_RX_NEAR_FULL_IRQ_MASK_2 (WLAN_CFG_RX_RING_MASK_4 |	\
+					  WLAN_CFG_RX_RING_MASK_5 |	\
+					  WLAN_CFG_RX_RING_MASK_6)
+
+#define WLAN_CFG_TX_RING_NEAR_FULL_IRQ_MASK (WLAN_CFG_TX_RING_MASK_0)
+#else
+#define WLAN_CFG_RX_NEAR_FULL_IRQ_MASK_1 (WLAN_CFG_RX_RING_MASK_0 |	\
+					  WLAN_CFG_RX_RING_MASK_1 |	\
+					  WLAN_CFG_RX_RING_MASK_2 |	\
+					  WLAN_CFG_RX_RING_MASK_3)
+
+#define WLAN_CFG_RX_NEAR_FULL_IRQ_MASK_2 (WLAN_CFG_RX_RING_MASK_4 |	\
+					  WLAN_CFG_RX_RING_MASK_5 |	\
+					  WLAN_CFG_RX_RING_MASK_6 |	\
+					  WLAN_CFG_RX_RING_MASK_7)
+
+#define WLAN_CFG_TX_RING_NEAR_FULL_IRQ_MASK (WLAN_CFG_TX_RING_MASK_0)
+#endif
+#endif
 
 struct wlan_cfg_dp_pdev_ctxt;
 
@@ -135,6 +170,14 @@ struct wlan_srng_cfg {
  *			  NAPI/Intr context
  * @int_reo_status_ring_mask: Bitmap of reo status ring interrupts mapped to
  *                            each NAPI/Intr context
+ * @int_rxdma2host_ring_mask:
+ * @int_host2rxdma_ring_mask:
+ * @int_rx_ring_near_full_irq_1_mask: Bitmap of REO DST ring near full interrupt
+ *				mapped to each NAPI/INTR context
+ * @int_rx_ring_near_full_irq_2_mask: Bitmap of REO DST ring near full interrupt
+ *				mapped to each NAPI/INTR context
+ * @int_tx_ring_near_full_irq_mask: Bitmap of Tx completion ring near full
+ *				interrupt mapped to each NAPI/INTR context
  * @int_ce_ring_mask: Bitmap of CE interrupts mapped to each NAPI/Intr context
  * @lro_enabled: enable/disable lro feature
  * @rx_hash: Enable hash based steering of rx packets
@@ -246,6 +289,9 @@ struct wlan_cfg_dp_soc_ctxt {
 	uint8_t int_reo_status_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	uint8_t int_rxdma2host_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	uint8_t int_host2rxdma_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	uint8_t int_rx_ring_near_full_irq_1_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	uint8_t int_rx_ring_near_full_irq_2_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	uint8_t int_tx_ring_near_full_irq_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int hw_macid[MAX_PDEV_CNT];
 	int hw_macid_pdev_id_map[MAX_NUM_LMAC_HW];
 	int base_hw_macid;
@@ -527,6 +573,38 @@ void wlan_cfg_set_host2rxdma_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
 int wlan_cfg_get_host2rxdma_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
 	int context);
 
+/**
+ * wlan_cfg_get_rx_near_full_grp_1_mask() - Return REO near full interrupt mask
+ *					mapped to an interrupt context
+ * @cfg: Configuration Handle
+ * @context - Numerical ID identifying the Interrupt/NAPI context
+ *
+ * Return: REO near full interrupt mask[context]
+ */
+int wlan_cfg_get_rx_near_full_grp_1_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+					 int context);
+
+/**
+ * wlan_cfg_get_rx_near_full_grp_2_mask() - Return REO near full interrupt mask
+ *					mapped to an interrupt context
+ * @cfg: Configuration Handle
+ * @context - Numerical ID identifying the Interrupt/NAPI context
+ *
+ * Return: REO near full interrupt mask[context]
+ */
+int wlan_cfg_get_rx_near_full_grp_2_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+					 int context);
+
+/**
+ * wlan_cfg_get_tx_ring_near_full_mask() - Return tx completion ring near full
+ *				interrupt mask mapped to an interrupt context
+ * @cfg: Configuration Handle
+ * @context - Numerical ID identifying the Interrupt/NAPI context
+ *
+ * Return: tx completion near full interrupt mask[context]
+ */
+int wlan_cfg_get_tx_ring_near_full_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+					int context);
 /**
  * wlan_cfg_set_host2rxdma_mon_ring_mask() - Set host2rxdma monitor ring
  *                                interrupt mask for the given interrupt context

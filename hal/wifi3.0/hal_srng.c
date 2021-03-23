@@ -1767,6 +1767,92 @@ static inline void hal_srng_hw_init(struct hal_soc *hal,
 #define CHECK_SHADOW_REGISTERS false
 #endif
 
+#ifdef WLAN_FEATURE_NEAR_FULL_IRQ
+/**
+ * hal_srng_is_near_full_irq_supported() - Check if near full irq is
+ *				supported on this SRNG
+ * @hal_soc: HAL SoC handle
+ * @ring_type: SRNG type
+ * @ring_num: ring number
+ *
+ * Return: true, if near full irq is supported for this SRNG
+ *	   false, if near full irq is not supported for this SRNG
+ */
+bool hal_srng_is_near_full_irq_supported(hal_soc_handle_t hal_soc,
+					 int ring_type, int ring_num)
+{
+	struct hal_soc *hal = (struct hal_soc *)hal_soc;
+	struct hal_hw_srng_config *ring_config =
+		HAL_SRNG_CONFIG(hal, ring_type);
+
+	return ring_config->nf_irq_support;
+}
+
+/**
+ * hal_srng_set_msi2_params() - Set MSI2 params to SRNG data structure from
+ *				ring params
+ * @srng: SRNG handle
+ * @ring_params: ring params for this SRNG
+ *
+ * Return: None
+ */
+static inline void
+hal_srng_set_msi2_params(struct hal_srng *srng,
+			 struct hal_srng_params *ring_params)
+{
+	srng->msi2_addr = ring_params->msi2_addr;
+	srng->msi2_data = ring_params->msi2_data;
+}
+
+/**
+ * hal_srng_get_nf_params() - Get the near full MSI2 params from srng
+ * @srng: SRNG handle
+ * @ring_params: ring params for this SRNG
+ *
+ * Return: None
+ */
+static inline void
+hal_srng_get_nf_params(struct hal_srng *srng,
+		       struct hal_srng_params *ring_params)
+{
+	ring_params->msi2_addr = srng->msi2_addr;
+	ring_params->msi2_data = srng->msi2_data;
+}
+
+/**
+ * hal_srng_set_nf_thresholds() - Set the near full thresholds in SRNG
+ * @srng: SRNG handle where the params are to be set
+ * @ring_params: ring params, from where threshold is to be fetched
+ *
+ * Return: None
+ */
+static inline void
+hal_srng_set_nf_thresholds(struct hal_srng *srng,
+			   struct hal_srng_params *ring_params)
+{
+	srng->u.dst_ring.nf_irq_support = ring_params->nf_irq_support;
+	srng->u.dst_ring.high_thresh = ring_params->high_thresh;
+}
+#else
+static inline void
+hal_srng_set_msi2_params(struct hal_srng *srng,
+			 struct hal_srng_params *ring_params)
+{
+}
+
+static inline void
+hal_srng_get_nf_params(struct hal_srng *srng,
+		       struct hal_srng_params *ring_params)
+{
+}
+
+static inline void
+hal_srng_set_nf_thresholds(struct hal_srng *srng,
+			   struct hal_srng_params *ring_params)
+{
+}
+#endif
+
 /**
  * hal_srng_setup - Initialize HW SRNG ring.
  * @hal_soc: Opaque HAL SOC handle
@@ -1827,6 +1913,7 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 		ring_params->intr_batch_cntr_thres_entries;
 	srng->prefetch_timer = ring_params->prefetch_timer;
 	srng->hal_soc = hal_soc;
+	hal_srng_set_msi2_params(srng, ring_params);
 
 	for (i = 0 ; i < MAX_SRNG_REG_GROUPS; i++) {
 		srng->hwreg_base[i] = dev_base_addr + ring_config->reg_start[i]
@@ -1886,6 +1973,7 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 		 * loop count in descriptors updated by HW (to be processed
 		 * by SW).
 		 */
+		hal_srng_set_nf_thresholds(srng, ring_params);
 		srng->u.dst_ring.loop_cnt = 1;
 		srng->u.dst_ring.tp = 0;
 		srng->u.dst_ring.hp_addr =
@@ -2042,6 +2130,8 @@ extern void hal_get_srng_params(hal_soc_handle_t hal_soc_hdl,
 	ring_params->ring_id = srng->ring_id;
 	for (i = 0 ; i < MAX_SRNG_REG_GROUPS; i++)
 		ring_params->hwreg_base[i] = srng->hwreg_base[i];
+
+	hal_srng_get_nf_params(srng, ring_params);
 }
 qdf_export_symbol(hal_get_srng_params);
 
