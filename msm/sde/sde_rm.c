@@ -2675,61 +2675,6 @@ end:
 	return ret;
 }
 
-int sde_rm_ext_blk_create_reserve(struct sde_rm *rm,
-		struct sde_hw_blk *hw, struct drm_encoder *enc)
-{
-	struct sde_rm_hw_blk *blk;
-	struct sde_rm_rsvp *rsvp;
-	int ret = 0;
-
-	if (!rm || !hw || !enc) {
-		SDE_ERROR("invalid parameters\n");
-		return -EINVAL;
-	}
-
-	if (hw->type >= SDE_HW_BLK_MAX) {
-		SDE_ERROR("invalid HW type\n");
-		return -EINVAL;
-	}
-
-	mutex_lock(&rm->rm_lock);
-
-	rsvp = _sde_rm_get_rsvp_cur(rm, enc);
-	if (!rsvp) {
-		rsvp = kzalloc(sizeof(*rsvp), GFP_KERNEL);
-		if (!rsvp) {
-			ret = -ENOMEM;
-			goto end;
-		}
-
-		rsvp->seq = ++rm->rsvp_next_seq;
-		rsvp->enc_id = enc->base.id;
-		list_add_tail(&rsvp->list, &rm->rsvps);
-
-		SDE_DEBUG("create rsvp %d for enc %d\n",
-					rsvp->seq, rsvp->enc_id);
-	}
-
-	blk = kzalloc(sizeof(*blk), GFP_KERNEL);
-	if (!blk) {
-		ret = -ENOMEM;
-		goto end;
-	}
-
-	blk->type = hw->type;
-	blk->id = hw->id;
-	blk->hw = hw;
-	blk->rsvp = rsvp;
-	list_add_tail(&blk->list, &rm->hw_blks[hw->type]);
-
-	SDE_DEBUG("create blk %d %d for rsvp %d enc %d\n", blk->type, blk->id,
-					rsvp->seq, rsvp->enc_id);
-
-end:
-	mutex_unlock(&rm->rm_lock);
-	return ret;
-}
-
 int sde_rm_ext_blk_destroy(struct sde_rm *rm,
 		struct drm_encoder *enc)
 {

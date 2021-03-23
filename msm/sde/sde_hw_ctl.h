@@ -381,14 +381,6 @@ struct sde_hw_ctl_ops {
 			enum ctl_hw_flush_type type, u32 blk_idx, bool enable);
 
 	/**
-	 * read CTL_TOP register value and return
-	 * the data.
-	 * @ctx		: ctl path ctx pointer
-	 * @return	: CTL top register value
-	 */
-	u32 (*read_ctl_top)(struct sde_hw_ctl *ctx);
-
-	/**
 	 * get interfaces for the active CTL .
 	 * @ctx		: ctl path ctx pointer
 	 * @return	: bit mask with the active interfaces for the CTL

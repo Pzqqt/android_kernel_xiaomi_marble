@@ -148,41 +148,12 @@ struct sde_hw_mdp_ops {
 			enum sde_clk_ctrl_type clk_ctrl, bool *status);
 
 	/**
-	 * setup_dce - set DCE mux for DSC ctrl path
-	 * @mdp: mdp top context driver
-	 * @dce_sel: dce_mux value
-	 */
-	void (*setup_dce)(struct sde_hw_mdp *mdp, u32 dce_sel);
-
-	/**
-	 * get_danger_status - get danger status
-	 * @mdp: mdp top context driver
-	 * @status: Pointer to danger safe status
-	 */
-	void (*get_danger_status)(struct sde_hw_mdp *mdp,
-			struct sde_danger_safe_status *status);
-
-	/**
 	 * setup_vsync_source - setup vsync source configuration details
 	 * @mdp: mdp top context driver
 	 * @cfg: vsync source selection configuration
 	 */
 	void (*setup_vsync_source)(struct sde_hw_mdp *mdp,
 				struct sde_vsync_source_cfg *cfg);
-
-	/**
-	 * get_safe_status - get safe status
-	 * @mdp: mdp top context driver
-	 * @status: Pointer to danger safe status
-	 */
-	void (*get_safe_status)(struct sde_hw_mdp *mdp,
-			struct sde_danger_safe_status *status);
-
-	/**
-	 * get_split_flush_status - get split flush status
-	 * @mdp: mdp top context driver
-	 */
-	u32 (*get_split_flush_status)(struct sde_hw_mdp *mdp);
 
 	/**
 	 * reset_ubwc - reset top level UBWC configuration

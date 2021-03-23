@@ -313,18 +313,6 @@ static void sde_encoder_phys_cmd_wr_ptr_irq(void *arg, int irq_idx)
 	SDE_ATRACE_END("wr_ptr_irq");
 }
 
-static void sde_encoder_phys_cmd_underrun_irq(void *arg, int irq_idx)
-{
-	struct sde_encoder_phys *phys_enc = arg;
-
-	if (!phys_enc)
-		return;
-
-	if (phys_enc->parent_ops.handle_underrun_virt)
-		phys_enc->parent_ops.handle_underrun_virt(phys_enc->parent,
-			phys_enc);
-}
-
 static void _sde_encoder_phys_cmd_setup_irq_hw_idx(
 		struct sde_encoder_phys *phys_enc)
 {
@@ -355,9 +343,6 @@ static void _sde_encoder_phys_cmd_setup_irq_hw_idx(
 		irq->hw_idx = phys_enc->hw_intf->idx;
 	else
 		irq->hw_idx = phys_enc->hw_pp->idx;
-
-	irq = &phys_enc->irq[INTR_IDX_UNDERRUN];
-	irq->hw_idx = phys_enc->intf_idx;
 
 	irq = &phys_enc->irq[INTR_IDX_AUTOREFRESH_DONE];
 	if (phys_enc->has_intf_te)
@@ -1232,38 +1217,6 @@ static int sde_encoder_phys_cmd_te_get_line_count(
 	return line_count;
 }
 
-static int sde_encoder_phys_cmd_get_write_line_count(
-		struct sde_encoder_phys *phys_enc)
-{
-	struct sde_hw_pingpong *hw_pp;
-	struct sde_hw_intf *hw_intf;
-	struct sde_hw_pp_vsync_info info;
-
-	if (!phys_enc || !phys_enc->hw_pp || !phys_enc->hw_intf)
-		return -EINVAL;
-
-	if (!sde_encoder_phys_cmd_is_master(phys_enc))
-		return -EINVAL;
-
-	if (phys_enc->has_intf_te) {
-		hw_intf = phys_enc->hw_intf;
-		if (!hw_intf->ops.get_vsync_info)
-			return -EINVAL;
-
-		if (hw_intf->ops.get_vsync_info(hw_intf, &info))
-			return -EINVAL;
-	} else {
-		hw_pp = phys_enc->hw_pp;
-		if (!hw_pp->ops.get_vsync_info)
-			return -EINVAL;
-
-		if (hw_pp->ops.get_vsync_info(hw_pp, &info))
-			return -EINVAL;
-	}
-
-	return (int)info.wr_ptr_line_count;
-}
-
 static void sde_encoder_phys_cmd_disable(struct sde_encoder_phys *phys_enc)
 {
 	struct sde_encoder_phys_cmd *cmd_enc =
@@ -1939,7 +1892,6 @@ static void sde_encoder_phys_cmd_init_ops(struct sde_encoder_phys_ops *ops)
 	ops->is_autorefresh_enabled =
 			sde_encoder_phys_cmd_is_autorefresh_enabled;
 	ops->get_line_count = sde_encoder_phys_cmd_te_get_line_count;
-	ops->get_wr_line_count = sde_encoder_phys_cmd_get_write_line_count;
 	ops->wait_for_active = NULL;
 	ops->setup_vsync_source = sde_encoder_phys_cmd_setup_vsync_source;
 	ops->setup_misr = sde_encoder_helper_setup_misr;
@@ -2028,12 +1980,6 @@ struct sde_encoder_phys *sde_encoder_phys_cmd_init(
 		irq->intr_type = SDE_IRQ_TYPE_PING_PONG_RD_PTR;
 
 	irq->cb.func = sde_encoder_phys_cmd_te_rd_ptr_irq;
-
-	irq = &phys_enc->irq[INTR_IDX_UNDERRUN];
-	irq->name = "underrun";
-	irq->intr_type = SDE_IRQ_TYPE_INTF_UNDER_RUN;
-	irq->intr_idx = INTR_IDX_UNDERRUN;
-	irq->cb.func = sde_encoder_phys_cmd_underrun_irq;
 
 	irq = &phys_enc->irq[INTR_IDX_AUTOREFRESH_DONE];
 	irq->name = "autorefresh_done";
