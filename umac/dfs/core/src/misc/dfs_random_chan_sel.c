@@ -1152,7 +1152,7 @@ static uint16_t dfs_get_rand_from_lst_for_freq(struct wlan_dfs *dfs,
 	i = (rand_byte + qdf_mc_timer_get_system_ticks()) % num_chan;
 
 	dfs_info(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
-		 "random channel %d", freq_lst[i]);
+		 "random chan freq %d", freq_lst[i]);
 
 	return freq_lst[i];
 }
@@ -1654,7 +1654,7 @@ uint16_t dfs_prepare_random_channel_for_freq(struct wlan_dfs *dfs,
 				if (leakage_adjusted_lst[i] == 0)
 					continue;
 				dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
-					  "Channel=%d added to available list",
+					  "Chan freq =%d added to available list",
 					  leakage_adjusted_lst[i]);
 				final_lst[final_cnt] = leakage_adjusted_lst[i];
 				final_cnt++;
@@ -1702,7 +1702,7 @@ uint16_t dfs_prepare_random_channel_for_freq(struct wlan_dfs *dfs,
 		     DFS_ADJACENT_WEATHER_RADAR_CHANNEL_FREQ) &&
 		    (*chan_wd == DFS_CH_WIDTH_40MHZ)) {
 			dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
-				  "skip weather adjacent ch=%d\n",
+				  "skip weather adjacent ch freq =%d\n",
 				  target_freq);
 			continue;
 		}
