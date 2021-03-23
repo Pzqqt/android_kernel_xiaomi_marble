@@ -347,6 +347,7 @@ void hdd_softap_check_wait_for_tx_eap_pkt(struct hdd_adapter *adapter,
 			     STA_INFO_SOFTAP_CHECK_WAIT_FOR_TX_EAP_PKT);
 }
 
+#ifndef MDM_PLATFORM
 void hdd_ipa_update_rx_mcbc_stats(struct hdd_adapter *adapter,
 				  struct sk_buff *skb)
 {
@@ -374,6 +375,12 @@ void hdd_ipa_update_rx_mcbc_stats(struct hdd_adapter *adapter,
 	hdd_put_sta_info_ref(&adapter->sta_info_list, &hdd_sta_info,
 			     true, STA_INFO_SOFTAP_IPA_RX_PKT_CALLBACK);
 }
+#else
+void hdd_ipa_update_rx_mcbc_stats(struct hdd_adapter *adapter,
+				  struct sk_buff *skb)
+{
+}
+#endif
 
 #ifdef SAP_DHCP_FW_IND
 /**
