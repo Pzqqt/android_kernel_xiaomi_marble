@@ -922,7 +922,9 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	 */
 	sme_config->csr_config.phyMode =
 		hdd_cfg_xlate_to_csr_phy_mode(config->dot11Mode);
+#ifndef FEATURE_CM_ENABLE
 	sme_update_nud_config(mac_handle, config->enable_nud_tracking);
+#endif
 	if (config->dot11Mode == eHDD_DOT11_MODE_abg ||
 	    config->dot11Mode == eHDD_DOT11_MODE_11b ||
 	    config->dot11Mode == eHDD_DOT11_MODE_11g ||

@@ -918,13 +918,14 @@ void sme_update_fine_time_measurement_capab(mac_handle_t mac_handle,
 	}
 }
 
+#ifndef FEATURE_CM_ENABLE
 void sme_update_nud_config(mac_handle_t mac_handle, uint8_t nud_fail_behavior)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
 	mac->nud_fail_behaviour = nud_fail_behavior;
 }
-
+#endif
 /*
  * sme_update_config() - Change configurations for all SME moduels
  * The function updates some configuration for modules in SME, CSR, etc

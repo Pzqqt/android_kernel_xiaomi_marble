@@ -38,6 +38,7 @@
 #include "wlan_mlme_vdev_mgr_interface.h"
 #include "wlan_pkt_capture_ucfg_api.h"
 #include "cds_utils.h"
+#include "wlan_roam_debug.h"
 #ifdef FEATURE_CM_ENABLE
 #include "connection_mgr/core/src/wlan_cm_roam.h"
 #include "connection_mgr/core/src/wlan_cm_main.h"
@@ -766,5 +767,160 @@ QDF_STATUS cm_fw_roam_complete(struct cnx_mgr *cm_ctx, void *data)
 					  REASON_CONNECT);
 end:
 	return status;
+}
+
+QDF_STATUS cm_fw_roam_invoke_fail(struct wlan_objmgr_psoc *psoc,
+				  uint8_t vdev_id)
+{
+	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev;
+	wlan_cm_id cm_id;
+	enum wlan_cm_source source;
+	struct cnx_mgr *cm_ctx;
+	struct cm_roam_req *roam_req = NULL;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
+						    vdev_id,
+						    WLAN_MLME_SB_ID);
+
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx) {
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto error;
+	}
+
+	roam_req = cm_get_first_roam_command(vdev);
+	if (!roam_req) {
+		mlme_err("Failed to find roam req from list");
+		status = QDF_STATUS_E_FAILURE;
+		goto error;
+	}
+
+	cm_id = roam_req->cm_id;
+	source = roam_req->req.source;
+
+	status = cm_sm_deliver_event(vdev, WLAN_CM_SM_EV_ROAM_INVOKE_FAIL,
+				     sizeof(wlan_cm_id), &cm_id);
+
+	if (source == CM_ROAMING_HOST ||
+	    source == CM_ROAMING_NUD_FAILURE)
+		status = cm_disconnect(psoc, vdev_id,
+				       CM_ROAM_DISCONNECT,
+				       REASON_USER_TRIGGERED_ROAM_FAILURE,
+				       NULL);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		cm_remove_cmd(cm_ctx, &cm_id);
+
+error:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_SB_ID);
+	return status;
+}
+
+static QDF_STATUS cm_handle_ho_fail(struct scheduler_msg *msg)
+{
+	QDF_STATUS status;
+	struct cm_ho_fail_ind *ind = NULL;
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_pdev *pdev;
+	struct cnx_mgr *cm_ctx;
+	wlan_cm_id cm_id;
+	struct reject_ap_info ap_info;
+	struct cm_roam_req *roam_req = NULL;
+
+	if (!msg || !msg->bodyptr)
+		return QDF_STATUS_E_FAILURE;
+
+	ind = msg->bodyptr;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(ind->psoc, ind->vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev_id: %d : vdev not found", ind->vdev_id);
+		qdf_mem_free(ind);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		mlme_err("pdev object is NULL");
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto error;
+	}
+
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx) {
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto error;
+	}
+
+	roam_req = cm_get_first_roam_command(vdev);
+	if (!roam_req) {
+		mlme_err("Failed to find roam req from list");
+		status = QDF_STATUS_E_FAILURE;
+		goto error;
+	}
+
+	cm_id = roam_req->cm_id;
+	cm_sm_deliver_event(vdev, WLAN_CM_SM_EV_ROAM_HO_FAIL,
+			    sizeof(wlan_cm_id), &cm_id);
+
+	ap_info.bssid = ind->bssid;
+	ap_info.reject_ap_type = DRIVER_AVOID_TYPE;
+	ap_info.reject_reason = REASON_ROAM_HO_FAILURE;
+	ap_info.source = ADDED_BY_DRIVER;
+	wlan_blm_add_bssid_to_reject_list(pdev, &ap_info);
+
+	wlan_roam_debug_log(ind->vdev_id,
+			    DEBUG_ROAM_SYNCH_FAIL,
+			    DEBUG_INVALID_PEER_ID, NULL, NULL, 0, 0);
+
+	status = cm_disconnect(ind->psoc, ind->vdev_id,
+			       CM_MLME_DISCONNECT,
+			       REASON_FW_TRIGGERED_ROAM_FAILURE,
+			       NULL);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		cm_remove_cmd(cm_ctx, &cm_id);
+
+error:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+	qdf_mem_free(ind);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+void cm_fw_ho_fail_req(struct wlan_objmgr_psoc *psoc,
+		       uint8_t vdev_id, struct qdf_mac_addr bssid)
+{
+	QDF_STATUS status;
+	struct scheduler_msg ind_msg = {0};
+	struct cm_ho_fail_ind *ind = NULL;
+
+	ind = qdf_mem_malloc(sizeof(*ind));
+	if (!ind)
+		return;
+
+	ind->vdev_id = vdev_id;
+	ind->psoc = psoc;
+	ind->bssid = bssid;
+
+	ind_msg.bodyptr = ind;
+	ind_msg.callback = cm_handle_ho_fail;
+
+	status = scheduler_post_message(QDF_MODULE_ID_MLME, QDF_MODULE_ID_OS_IF,
+					QDF_MODULE_ID_OS_IF, &ind_msg);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("Failed to post HO fail indication on vdev_id %d",
+			 vdev_id);
+		qdf_mem_free(ind);
+		return;
+	}
 }
 #endif // FEATURE_CM_ENABLE

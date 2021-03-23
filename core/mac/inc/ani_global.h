@@ -746,7 +746,9 @@ struct mac_context {
 	struct wlan_mlme_chain_cfg fw_chain_cfg;
 	struct wlan_mlme_cfg *mlme_cfg;
 	tAniSirLim lim;
+#ifndef FEATURE_CM_ENABLE
 	uint8_t nud_fail_behaviour;
+#endif
 	struct sch_context sch;
 	tAniSirSys sys;
 

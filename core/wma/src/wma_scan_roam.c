@@ -2416,6 +2416,7 @@ int wma_rssi_breached_event_handler(void *handle,
 }
 #endif /* FEATURE_RSSI_MONITOR */
 
+#ifndef FEATURE_CM_ENABLE
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * wma_roam_ho_fail_handler() - LFR3.0 roam hand off failed handler
@@ -2453,7 +2454,6 @@ wma_roam_ho_fail_handler(tp_wma_handle wma, uint32_t vdev_id,
 	}
 }
 
-#ifndef FEATURE_CM_ENABLE
 /**
  * wma_process_roam_synch_complete() - roam synch complete command to fw.
  * @handle: wma handle
@@ -2490,8 +2490,8 @@ void wma_process_roam_synch_complete(WMA_HANDLE handle, uint8_t vdev_id)
 			    DEBUG_INVALID_PEER_ID, NULL, NULL, 0, 0);
 
 }
-#endif
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
+#endif /* FEATURE_CM_ENABLE */
 
 QDF_STATUS wma_pre_chan_switch_setup(uint8_t vdev_id)
 {
@@ -4448,7 +4448,11 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 		wma_debug("mac addr to avoid "QDF_MAC_ADDR_FMT,
 			  QDF_MAC_ADDR_REF(bssid.bytes));
 		wma_handle_hw_mode_transition(wma_handle, param_buf);
+#ifdef FEATURE_CM_ENABLE
+		cm_fw_ho_fail_req(wma_handle->psoc, wmi_event->vdev_id, bssid);
+#else
 		wma_roam_ho_fail_handler(wma_handle, wmi_event->vdev_id, bssid);
+#endif
 		lim_sae_auth_cleanup_retry(wma_handle->mac_context,
 					   wmi_event->vdev_id);
 		break;
@@ -4469,7 +4473,9 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 		lim_sae_auth_cleanup_retry(wma_handle->mac_context,
 					   wmi_event->vdev_id);
 		roam_synch_data->roamed_vdev_id = wmi_event->vdev_id;
-#ifndef FEATURE_CM_ENABLE
+#ifdef FEATURE_CM_ENABLE
+		cm_fw_roam_invoke_fail(wma_handle->psoc, wmi_event->vdev_id);
+#else
 		wma_handle->csr_roam_synch_cb(wma_handle->mac_context,
 					      roam_synch_data, NULL,
 					      SIR_ROAMING_INVOKE_FAIL);

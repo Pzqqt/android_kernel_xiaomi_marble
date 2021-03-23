@@ -140,6 +140,40 @@ cm_fw_roam_sync_start_ind(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS
 cm_fw_roam_sync_propagation(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			    struct roam_offload_synch_ind *roam_synch_data);
+
+/**
+ * cm_fw_ho_fail_req() - Post roam ho fail req to CM SM
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ * @bssid: bssid mac addr
+ *
+ * This function posts roam ho fail event change to
+ * connection manager state machine
+ *
+ * Return: void
+ */
+void cm_fw_ho_fail_req(struct wlan_objmgr_psoc *psoc,
+		       uint8_t vdev_id, struct qdf_mac_addr bssid);
+
+/**
+ * cm_fw_roam_invoke_fail() - Post roam invoke fail to CM SM
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ *
+ * This function posts roam invoke fail event change to
+ * connection manager state machine
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_fw_roam_invoke_fail(struct wlan_objmgr_psoc *psoc,
+				  uint8_t vdev_id);
+#else
+static inline
+QDF_STATUS cm_fw_roam_invoke_fail(struct wlan_objmgr_psoc *psoc,
+				  uint8_t vdev_id)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
 #endif /*WLAN_FEATURE_ROAM_OFFLOAD */
 #endif /* FEATURE_CM_ENABLE */
 #endif /* _WLAN_CM_ROAM_I_H_ */

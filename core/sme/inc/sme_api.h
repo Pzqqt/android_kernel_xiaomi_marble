@@ -432,14 +432,14 @@ void sme_cleanup_session(mac_handle_t mac_handle, uint8_t vdev_id);
  */
 void sme_set_curr_device_mode(mac_handle_t mac_handle,
 			      enum QDF_OPMODE curr_device_mode);
-
+#ifndef FEATURE_CM_ENABLE
 /**
  * sme_update_nud_config() - update nud config
  * @mac_handle: The handle returned by mac_open.
  * @nud_fail_behavior: Vlaue of nud fail behaviour
  */
 void sme_update_nud_config(mac_handle_t mac_handle, uint8_t nud_fail_behavior);
-
+#endif
 /**
  * sme_update_roam_params() - Store/Update the roaming params
  * @mac_handle: Opaque handle to the global MAC context
