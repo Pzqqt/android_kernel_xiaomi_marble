@@ -16500,6 +16500,39 @@ dev_alloc_err:
 	return -ENODEV;
 }
 
+/*
+ * When multiple instances of the driver are loaded in parallel, only
+ * one can create and own the state ctrl param. An instance of the
+ * driver that creates the state ctrl param will wait for
+ * HDD_WLAN_START_WAIT_TIME to be probed. If it is probed, then that
+ * instance of the driver will stay loaded and no other instances of
+ * the driver can load. But if it is not probed, then that instance of
+ * the driver will destroy the state ctrl param and exit, and another
+ * instance of the driver can then create the state ctrl param.
+ */
+
+/* max number of instances we expect (arbitrary) */
+#define WLAN_DRIVER_MAX_INSTANCES 5
+
+/* max amount of time an instance has to wait for all instances */
+#define CTRL_PARAM_WAIT (WLAN_DRIVER_MAX_INSTANCES * HDD_WLAN_START_WAIT_TIME)
+
+/* amount of time we sleep for each retry (arbitrary) */
+#define CTRL_PARAM_SLEEP 100
+
+static int wlan_hdd_state_ctrl_param_create_with_retry(void)
+{
+	int retries = CTRL_PARAM_WAIT / CTRL_PARAM_SLEEP;
+	int errno;
+
+	do {
+		errno = wlan_hdd_state_ctrl_param_create();
+		if (!errno || !--retries)
+			return errno;
+		msleep(CTRL_PARAM_SLEEP);
+	} while (true);
+}
+
 static void wlan_hdd_state_ctrl_param_destroy(void)
 {
 	cdev_del(&wlan_hdd_state_cdev);
@@ -16512,7 +16545,7 @@ static void wlan_hdd_state_ctrl_param_destroy(void)
 
 #else /* WLAN_CTRL_NAME */
 
-static int  wlan_hdd_state_ctrl_param_create(void)
+static int  wlan_hdd_state_ctrl_param_create_with_retry(void)
 {
 	return 0;
 }
@@ -17294,7 +17327,7 @@ int hdd_driver_load(void)
 
 	hdd_set_conparam(con_mode);
 
-	errno = wlan_hdd_state_ctrl_param_create();
+	errno = wlan_hdd_state_ctrl_param_create_with_retry();
 	if (errno) {
 		hdd_err("Failed to create ctrl param; errno:%d", errno);
 		goto wakelock_destroy;
