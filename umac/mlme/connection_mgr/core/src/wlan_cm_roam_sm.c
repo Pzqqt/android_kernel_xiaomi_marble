@@ -320,6 +320,7 @@ bool cm_subst_roam_start_event(void *ctx, uint16_t event,
 		break;
 	case WLAN_CM_SM_EV_ROAM_ABORT:
 	case WLAN_CM_SM_EV_ROAM_INVOKE_FAIL:
+	case WLAN_CM_SM_EV_ROAM_HO_FAIL:
 		cm_sm_transition_to(cm_ctx, WLAN_CM_S_CONNECTED);
 		cm_sm_deliver_event_sync(cm_ctx, event,
 					 data_len, data);
@@ -373,6 +374,7 @@ bool cm_subst_roam_sync_event(void *ctx, uint16_t event,
 					 data_len, data);
 		break;
 	case WLAN_CM_SM_EV_ROAM_ABORT:
+	case WLAN_CM_SM_EV_ROAM_HO_FAIL:
 		cm_sm_transition_to(cm_ctx, WLAN_CM_S_CONNECTED);
 		cm_sm_deliver_event_sync(cm_ctx, event,
 					 data_len, data);
