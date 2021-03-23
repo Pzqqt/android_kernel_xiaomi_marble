@@ -38,6 +38,8 @@ ipam-$(CONFIG_RMNET_IPA3) += ipa_v3/rmnet_ipa.o ipa_v3/ipa_qmi_service_v01.o \
 	ipa_v3/ipa_qmi_service.o ipa_v3/rmnet_ctl_ipa.o \
 	ipa_v3/rmnet_ipa_fd_ioctl.o
 
+ipam-$(CONFIG_IPA3_MHI_PRIME_MANAGER) += ipa_v3/ipa_mpm.o
+
 ipam-$(CONFIG_IPA3_MHI_PROXY) += ipa_v3/ipa_mhi_proxy.o
 ipam-$(CONFIG_IPA_EMULATION) += ipa_v3/ipa_dt_replacement.o
 ipam-$(CONFIG_IPA3_REGDUMP) += ipa_v3/dump/ipa_reg_dump.o

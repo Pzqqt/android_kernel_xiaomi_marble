@@ -3253,6 +3253,8 @@ int ipa3_get_gsi_chan_info(struct gsi_chan_info *gsi_chan_info,
 int ipa3_disable_apps_wan_cons_deaggr(uint32_t agg_size, uint32_t agg_count);
 
 #if IS_ENABLED(CONFIG_IPA3_MHI_PRIME_MANAGER)
+int ipa_mpm_init(void);
+void ipa_mpm_exit(void);
 int ipa_mpm_mhip_xdci_pipe_enable(enum ipa_usb_teth_prot prot);
 int ipa_mpm_mhip_xdci_pipe_disable(enum ipa_usb_teth_prot xdci_teth_prot);
 int ipa_mpm_notify_wan_state(struct wan_ioctl_notify_wan_state *state);
@@ -3263,6 +3265,14 @@ int ipa_mpm_panic_handler(char *buf, int size);
 int ipa3_mpm_enable_adpl_over_odl(bool enable);
 int ipa3_get_mhip_gsi_stats(struct ipa_uc_dbg_ring_stats *stats);
 #else /* IS_ENABLED(CONFIG_IPA3_MHI_PRIME_MANAGER) */
+static inline int ipa_mpm_init(void)
+{
+	return 0;
+}
+static inline void ipa_mpm_exit(void)
+{
+	return;
+}
 static inline int ipa_mpm_mhip_xdci_pipe_enable(
 	enum ipa_usb_teth_prot prot)
 {
