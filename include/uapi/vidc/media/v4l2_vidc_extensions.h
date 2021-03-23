@@ -12,8 +12,7 @@
 /*
  * supported standard color formats
  * V4L2_PIX_FMT_NV12   Y/CbCr 4:2:0
- * NV21?? // TODO: jdas
- * V4L2_PIX_FMT_ARGB32  ARGB-8-8-8-8
+ * V4L2_PIX_FMT_RGBA32  RGBA-8-8-8-8
  */
  /* Below are additional color formats */
 /* 12  Y/CbCr 4:2:0  compressed */
@@ -22,7 +21,7 @@
 #define V4L2_PIX_FMT_VIDC_TP10C                 v4l2_fourcc('Q', '1', '0', 'C')
 /* Y/CbCr 4:2:0, 10 bits per channel */
 #define V4L2_PIX_FMT_VIDC_P010                  v4l2_fourcc('P', '0', '1', '0')
-/* 32  ARGB-8-8-8-8 compressed */
+/* 32  RGBA-8-8-8-8 compressed */
 #define V4L2_PIX_FMT_VIDC_ARGB32C               v4l2_fourcc('Q', '2', '4', 'C')
 #define V4L2_META_FMT_VIDC                      v4l2_fourcc('Q', 'M', 'E', 'T')
 /* HEIC encoder and decoder */

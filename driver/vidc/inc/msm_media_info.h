@@ -384,7 +384,8 @@ static inline unsigned int VIDEO_RGB_STRIDE_BYTES(unsigned int v4l2_fmt,
 
 	switch (v4l2_fmt) {
 	case V4L2_PIX_FMT_VIDC_ARGB32C:
-		alignment = 64;
+	case V4L2_PIX_FMT_RGBA32:
+		alignment = 256;
 		break;
 	default:
 		goto invalid_input;
@@ -414,6 +415,7 @@ static inline unsigned int VIDEO_RGB_SCANLINES(unsigned int v4l2_fmt,
 
 	switch (v4l2_fmt) {
 	case V4L2_PIX_FMT_VIDC_ARGB32C:
+	case V4L2_PIX_FMT_RGBA32:
 		alignment = 16;
 		break;
 	default:
@@ -436,6 +438,7 @@ static inline unsigned int VIDEO_RGB_META_STRIDE(unsigned int v4l2_fmt,
 
 	switch (v4l2_fmt) {
 	case V4L2_PIX_FMT_VIDC_ARGB32C:
+	case V4L2_PIX_FMT_RGBA32:
 		rgb_tile_width = 16;
 		break;
 	default:
@@ -459,6 +462,7 @@ static inline unsigned int VIDEO_RGB_META_SCANLINES(unsigned int v4l2_fmt,
 
 	switch (v4l2_fmt) {
 	case V4L2_PIX_FMT_VIDC_ARGB32C:
+	case V4L2_PIX_FMT_RGBA32:
 		rgb_tile_height = 4;
 		break;
 	default:
@@ -483,7 +487,7 @@ static inline unsigned int VIDEO_RAW_BUFFER_SIZE(unsigned int v4l2_fmt,
 	unsigned int uv_meta_stride = 0, uv_meta_scanlines = 0;
 	unsigned int y_meta_plane = 0, uv_meta_plane = 0;
 	unsigned int rgb_stride = 0, rgb_scanlines = 0;
-	unsigned int rgb_ubwc_plane = 0, rgb_meta_plane = 0;
+	unsigned int rgb_plane = 0, rgb_ubwc_plane = 0, rgb_meta_plane = 0;
 	unsigned int rgb_meta_stride = 0, rgb_meta_scanlines = 0;
 
 	if (!pix_width || !pix_height)
@@ -587,6 +591,10 @@ static inline unsigned int VIDEO_RAW_BUFFER_SIZE(unsigned int v4l2_fmt,
 		rgb_meta_plane = MSM_MEDIA_ALIGN(rgb_meta_stride *
 			rgb_meta_scanlines, 4096);
 		size = rgb_ubwc_plane + rgb_meta_plane;
+		break;
+	case V4L2_PIX_FMT_RGBA32:
+		rgb_plane = MSM_MEDIA_ALIGN(rgb_stride * rgb_scanlines, 4096);
+		size = rgb_plane;
 		break;
 	default:
 		break;

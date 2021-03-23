@@ -127,7 +127,8 @@ static int msm_venc_set_stride_scanline(struct msm_vidc_inst *inst,
 	enum msm_vidc_port_type port)
 {
 	int rc = 0;
-	u32 pixelformat, stride_y, scanline_y, stride_uv, scanline_uv;
+	u32 color_format, stride_y, scanline_y;
+	u32 stride_uv = 0, scanline_uv = 0;
 	u32 payload[2];
 
 	if (port != INPUT_PORT) {
@@ -135,9 +136,8 @@ static int msm_venc_set_stride_scanline(struct msm_vidc_inst *inst,
 		return -EINVAL;
 	}
 
-	pixelformat = inst->fmts[INPUT_PORT].fmt.pix_mp.pixelformat;
-	if (pixelformat != V4L2_PIX_FMT_NV12 &&
-		pixelformat != V4L2_PIX_FMT_VIDC_P010) {
+	color_format = inst->capabilities->cap[PIX_FMTS].value;
+	if (!is_linear_colorformat(color_format)) {
 		i_vpr_e(inst,
 			"%s: not a linear color fmt, property is not set\n",
 			__func__);
@@ -146,8 +146,11 @@ static int msm_venc_set_stride_scanline(struct msm_vidc_inst *inst,
 
 	stride_y = inst->fmts[INPUT_PORT].fmt.pix_mp.width;
 	scanline_y = inst->fmts[INPUT_PORT].fmt.pix_mp.height;
-	stride_uv = stride_y;
-	scanline_uv = scanline_y / 2;
+	if (color_format == MSM_VIDC_FMT_NV12 ||
+		color_format == MSM_VIDC_FMT_P010) {
+		stride_uv = stride_y;
+		scanline_uv = scanline_y / 2;
+	}
 
 	payload[0] = stride_y << 16 | scanline_y;
 	payload[1] = stride_uv << 16 | scanline_uv;
@@ -1192,6 +1195,7 @@ static int msm_venc_s_fmt_input(struct msm_vidc_inst *inst, struct v4l2_format *
 	struct v4l2_format *fmt;
 	struct msm_vidc_core *core;
 	u32 pix_fmt;
+	u32 crop_width, crop_height;
 
 	if (!inst || !inst->core || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1204,15 +1208,33 @@ static int msm_venc_s_fmt_input(struct msm_vidc_inst *inst, struct v4l2_format *
 	fmt->fmt.pix_mp.pixelformat = f->fmt.pix_mp.pixelformat;
 	pix_fmt = v4l2_colorformat_to_driver(f->fmt.pix_mp.pixelformat, __func__);
 	msm_vidc_update_cap_value(inst, PIX_FMTS, pix_fmt, __func__);
-	fmt->fmt.pix_mp.width = VIDEO_Y_STRIDE_PIX(fmt->fmt.pix_mp.pixelformat,
-		f->fmt.pix_mp.width);
-	fmt->fmt.pix_mp.height = VIDEO_Y_SCANLINES(fmt->fmt.pix_mp.pixelformat,
-		f->fmt.pix_mp.height);
+	if (is_rgba_colorformat(pix_fmt)) {
+		fmt->fmt.pix_mp.width = VIDEO_RGB_STRIDE_PIX(fmt->fmt.pix_mp.pixelformat,
+			f->fmt.pix_mp.width);
+		fmt->fmt.pix_mp.height = VIDEO_RGB_SCANLINES(fmt->fmt.pix_mp.pixelformat,
+			f->fmt.pix_mp.height);
+		fmt->fmt.pix_mp.plane_fmt[0].bytesperline =
+			VIDEO_RGB_STRIDE_BYTES(fmt->fmt.pix_mp.pixelformat,
+				f->fmt.pix_mp.width);
+		crop_width = VIDEO_RGB_STRIDE_PIX(
+			fmt->fmt.pix_mp.pixelformat, inst->crop.width);
+		crop_height = VIDEO_RGB_SCANLINES(
+			fmt->fmt.pix_mp.pixelformat, inst->crop.height);
+	} else {
+		fmt->fmt.pix_mp.width = VIDEO_Y_STRIDE_PIX(fmt->fmt.pix_mp.pixelformat,
+			f->fmt.pix_mp.width);
+		fmt->fmt.pix_mp.height = VIDEO_Y_SCANLINES(fmt->fmt.pix_mp.pixelformat,
+			f->fmt.pix_mp.height);
+		fmt->fmt.pix_mp.plane_fmt[0].bytesperline =
+			VIDEO_Y_STRIDE_BYTES(fmt->fmt.pix_mp.pixelformat,
+				f->fmt.pix_mp.width);
+		crop_width = VIDEO_Y_STRIDE_PIX(
+			fmt->fmt.pix_mp.pixelformat, inst->crop.width);
+		crop_height = VIDEO_Y_SCANLINES(
+			fmt->fmt.pix_mp.pixelformat, inst->crop.height);
+	}
 
 	fmt->fmt.pix_mp.num_planes = 1;
-	fmt->fmt.pix_mp.plane_fmt[0].bytesperline =
-		VIDEO_Y_STRIDE_BYTES(fmt->fmt.pix_mp.pixelformat,
-		f->fmt.pix_mp.width);
 	fmt->fmt.pix_mp.plane_fmt[0].sizeimage = call_session_op(core,
 		buffer_size, inst, MSM_VIDC_BUF_INPUT);
 	fmt->fmt.pix_mp.colorspace = f->fmt.pix_mp.colorspace;
@@ -1233,10 +1255,8 @@ static int msm_venc_s_fmt_input(struct msm_vidc_inst *inst, struct v4l2_format *
 	inst->buffers.input.size =
 		fmt->fmt.pix_mp.plane_fmt[0].sizeimage;
 
-	if (fmt->fmt.pix_mp.width != VIDEO_Y_STRIDE_PIX(
-		fmt->fmt.pix_mp.pixelformat, inst->crop.width) ||
-		fmt->fmt.pix_mp.height != VIDEO_Y_SCANLINES(
-		fmt->fmt.pix_mp.pixelformat, inst->crop.height)) {
+	if (fmt->fmt.pix_mp.width != crop_width ||
+		fmt->fmt.pix_mp.height != crop_height) {
 
 		/* reset crop dimensions with updated resolution */
 		inst->crop.top = inst->crop.left = 0;
