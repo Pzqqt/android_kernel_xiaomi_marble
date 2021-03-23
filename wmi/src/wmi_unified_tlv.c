@@ -10447,6 +10447,7 @@ static QDF_STATUS extract_mgmt_rx_params_tlv(wmi_unified_t wmi_handle,
 	hdr->flags = ev_hdr->flags;
 	hdr->rssi = ev_hdr->rssi;
 	hdr->tsf_delta = ev_hdr->tsf_delta;
+	hdr->tsf_l32 = ev_hdr->rx_tsf_l32;
 	for (i = 0; i < ATH_MAX_ANTENNA; i++)
 		hdr->rssi_ctl[i] = ev_hdr->rssi_ctl[i];
 

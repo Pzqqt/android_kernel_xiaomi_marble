@@ -768,6 +768,7 @@ struct mgmt_rx_event_params {
 	uint32_t    flags;
 	int32_t     rssi;
 	uint32_t    tsf_delta;
+	uint32_t    tsf_l32;
 	uint8_t     pdev_id;
 	void        *rx_params;
 };
