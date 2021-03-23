@@ -6590,6 +6590,10 @@ static inline void ipa3_register_to_fmwk(void)
 	data.ipa_add_rt_rule = ipa3_add_rt_rule;
 	data.ipa_put_rt_tbl = ipa3_put_rt_tbl;
 	data.ipa_register_intf = ipa3_register_intf;
+	data.ipa_deregister_intf = ipa3_deregister_intf;
+	data.ipa_add_hdr = ipa3_add_hdr;
+	data.ipa_get_hdr = ipa3_get_hdr;
+	data.ipa_del_hdr = ipa3_del_hdr;
 	data.ipa_set_aggr_mode = ipa3_set_aggr_mode;
 	data.ipa_set_qcncm_ndp_sig = ipa3_set_qcncm_ndp_sig;
 	data.ipa_set_single_ndp_per_mbim = ipa3_set_single_ndp_per_mbim;
@@ -6600,6 +6604,14 @@ static inline void ipa3_register_to_fmwk(void)
 	data.ipa_rmnet_ctl_xmit = ipa3_rmnet_ctl_xmit;
 	data.ipa_register_rmnet_ctl_cb = ipa3_register_rmnet_ctl_cb;
 	data.ipa_unregister_rmnet_ctl_cb = ipa3_unregister_rmnet_ctl_cb;
+	data.ipa_enable_wdi_pipe = ipa3_enable_wdi_pipe;
+	data.ipa_disable_wdi_pipe = ipa3_disable_wdi_pipe;
+	data.ipa_resume_wdi_pipe = ipa3_resume_wdi_pipe;
+	data.ipa_suspend_wdi_pipe = ipa3_suspend_wdi_pipe;
+	data.ipa_connect_wdi_pipe = ipa3_connect_wdi_pipe;
+	data.ipa_disconnect_wdi_pipe = ipa3_disconnect_wdi_pipe;
+	data.ipa_uc_reg_rdyCB = ipa3_uc_reg_rdyCB;
+	data.ipa_uc_dereg_rdyCB = ipa3_uc_dereg_rdyCB;
 
 	if (ipa_fmwk_register_ipa(&data)) {
 		IPAERR("couldn't register to IPA framework\n");
