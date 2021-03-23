@@ -339,10 +339,12 @@ ifneq ($(CONFIG_QCA_CLD_WLAN),)
 	CONFIG_WLAN_FEATURE_11W := y
 	#Flag to enable LTE CoEx feature
 	CONFIG_QCOM_LTE_COEX := y
-		ifneq ($(CONFIG_MOBILE_ROUTER), y)
-		#Flag to enable LPSS feature
+	ifneq ($(CONFIG_MOBILE_ROUTER), y)
 		CONFIG_WLAN_FEATURE_LPSS := y
-		endif
+	endif
+	ifeq ($(CONFIG_ARCH_SDXLEMUR), y)
+		CONFIG_WLAN_FEATURE_LPSS := y
+	endif
 	endif
 
 endif
