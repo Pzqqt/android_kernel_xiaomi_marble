@@ -792,6 +792,9 @@ static int msm_drm_component_init(struct device *dev)
 	priv->wq = alloc_ordered_workqueue("msm_drm", 0);
 	init_waitqueue_head(&priv->pending_crtcs_event);
 
+	INIT_WORK(&priv->free_work, msm_gem_free_work);
+	init_llist_head(&priv->free_list);
+
 	INIT_LIST_HEAD(&priv->client_event_list);
 	INIT_LIST_HEAD(&priv->inactive_list);
 	INIT_LIST_HEAD(&priv->vm_client_list);
