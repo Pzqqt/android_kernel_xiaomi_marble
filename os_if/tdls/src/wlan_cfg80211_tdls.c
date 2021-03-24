@@ -238,7 +238,8 @@ tdls_calc_channels_from_staparams(struct tdls_update_peer_params *req_info,
 }
 
 #ifdef WLAN_FEATURE_11AX
-#define MIN_TDLS_HE_CAP_LEN 21
+#define MIN_TDLS_HE_CAP_LEN 17
+#define MAX_TDLS_HE_CAP_LEN 29
 
 static void
 wlan_cfg80211_tdls_extract_he_params(struct tdls_update_peer_params *req_info,
@@ -256,8 +257,11 @@ wlan_cfg80211_tdls_extract_he_params(struct tdls_update_peer_params *req_info,
 	}
 
 	req_info->he_cap_len = params->he_capa_len;
+	if (req_info->he_cap_len > MAX_TDLS_HE_CAP_LEN)
+		req_info->he_cap_len = MAX_TDLS_HE_CAP_LEN;
+
 	qdf_mem_copy(&req_info->he_cap, params->he_capa,
-		     sizeof(struct hecap));
+		     req_info->he_cap_len);
 
 	return;
 }
