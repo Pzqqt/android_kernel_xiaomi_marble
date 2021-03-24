@@ -140,6 +140,28 @@ QDF_STATUS ucfg_pmo_psoc_set_caps(struct wlan_objmgr_psoc *psoc,
 bool
 ucfg_pmo_is_arp_offload_enabled(struct wlan_objmgr_psoc *psoc);
 
+#ifdef WLAN_FEATURE_IGMP_OFFLOAD
+/**
+ * ucfg_pmo_is_igmp_offload_enabled() - Get igmp offload enable or not
+ * @psoc: pointer to psoc object
+ *
+ * Return: igmp offload enable or not
+ */
+bool
+ucfg_pmo_is_igmp_offload_enabled(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_set_igmp_offload_enabled() - Set igmp offload enable or not
+ * @psoc: pointer to psoc object
+ * @val:  enable/disable igmp offload
+ *
+ * Return: None
+ */
+void
+ucfg_pmo_set_igmp_offload_enabled(struct wlan_objmgr_psoc *psoc,
+				  bool val);
+#endif
+
 /**
  * ucfg_pmo_set_arp_offload_enabled() - Set arp offload enable or not
  * @psoc: pointer to psoc object
@@ -592,6 +614,27 @@ QDF_STATUS ucfg_pmo_flush_gtk_offload_req(struct wlan_objmgr_vdev *vdev);
  * Return QDF_STATUS_SUCCESS -in case of success else return error
  */
 QDF_STATUS ucfg_pmo_enable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev);
+
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+/**
+ * ucfg_pmo_enable_igmp_offload(): enable igmp request in fwr
+ * @vdev: objmgr vdev handle
+ * @pmo_igmp_req: struct pmo_igmp_offload_req
+ *
+ * Return QDF_STATUS_SUCCESS -in case of success else return error
+ */
+QDF_STATUS ucfg_pmo_enable_igmp_offload(
+				struct wlan_objmgr_vdev *vdev,
+				struct pmo_igmp_offload_req *pmo_igmp_req);
+#else
+static inline
+QDF_STATUS ucfg_pmo_enable_igmp_offload(
+				struct wlan_objmgr_vdev *vdev,
+				struct pmo_igmp_offload_req *pmo_igmp_req)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * ucfg_pmo_disable_gtk_offload_in_fwr(): disable cached gtk request in fwr
@@ -1452,6 +1495,13 @@ ucfg_pmo_enable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev)
 }
 
 static inline QDF_STATUS
+ucfg_pmo_enable_igmp_offload(struct wlan_objmgr_vdev *vdev,
+			     struct pmo_igmp_offload_req *pmo_igmp_req)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
 ucfg_pmo_disable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev)
 {
 	return QDF_STATUS_SUCCESS;
@@ -1713,9 +1763,21 @@ ucfg_pmo_is_arp_offload_enabled(struct wlan_objmgr_psoc *psoc)
 	return false;
 }
 
+static inline bool
+ucfg_pmo_is_igmp_offload_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
 static inline void
 ucfg_pmo_set_arp_offload_enabled(struct wlan_objmgr_psoc *psoc,
 				 bool val)
+{
+}
+
+static inline void
+ucfg_pmo_set_igmp_offload_enabled(struct wlan_objmgr_psoc *psoc,
+				  bool val)
 {
 }
 

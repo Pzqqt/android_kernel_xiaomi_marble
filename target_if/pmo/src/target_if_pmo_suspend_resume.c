@@ -87,6 +87,36 @@ QDF_STATUS target_if_pmo_send_vdev_update_param_req(
 	return wmi_unified_vdev_set_param_send(wmi_handle, &param);
 }
 
+#ifdef WLAN_FEATURE_IGMP_OFFLOAD
+QDF_STATUS target_if_pmo_send_igmp_offload_req(
+			struct wlan_objmgr_vdev *vdev,
+			struct pmo_igmp_offload_req *pmo_igmp_req)
+{
+	struct wlan_objmgr_psoc *psoc;
+	wmi_unified_t wmi_handle;
+
+	if (!vdev) {
+		target_if_err("vdev ptr passed is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		target_if_err("psoc handle is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return wmi_unified_send_igmp_offload_cmd(wmi_handle,
+						 pmo_igmp_req);
+}
+#endif
+
 QDF_STATUS target_if_pmo_send_vdev_ps_param_req(
 		struct wlan_objmgr_vdev *vdev,
 		uint32_t param_id,

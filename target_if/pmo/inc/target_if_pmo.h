@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -350,6 +350,28 @@ QDF_STATUS target_if_pmo_send_vdev_ps_param_req(
 		struct wlan_objmgr_vdev *vdev,
 		uint32_t param_id,
 		uint32_t param_value);
+
+#ifdef WLAN_FEATURE_IGMP_OFFLOAD
+/**
+ * target_if_pmo_send_igmp_offload_req() - Send igmp offload req to fw
+ * @vdev: objmgr vdev
+ * @pmo_igmp_req: igmp req
+ *
+ * Return: QDF status
+ */
+QDF_STATUS
+target_if_pmo_send_igmp_offload_req(
+		struct wlan_objmgr_vdev *vdev,
+		struct pmo_igmp_offload_req *pmo_igmp_req);
+#else
+static inline QDF_STATUS
+target_if_pmo_send_igmp_offload_req(
+		struct wlan_objmgr_vdev *vdev,
+		struct pmo_igmp_offload_req *pmo_igmp_req)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * target_if_pmo_psoc_update_bus_suspend() - update wmi bus suspend flag

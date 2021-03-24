@@ -280,6 +280,14 @@ QDF_STATUS ucfg_pmo_enable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev)
 	return pmo_core_enable_gtk_offload_in_fwr(vdev);
 }
 
+#ifdef WLAN_FEATURE_IGMP_OFFLOAD
+QDF_STATUS ucfg_pmo_enable_igmp_offload(struct wlan_objmgr_vdev *vdev,
+					struct pmo_igmp_offload_req *igmp_req)
+{
+	return pmo_core_enable_igmp_offload(vdev, igmp_req);
+}
+#endif
+
 QDF_STATUS ucfg_pmo_disable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev)
 {
 	return pmo_core_disable_gtk_offload_in_fwr(vdev);
@@ -547,6 +555,16 @@ ucfg_pmo_is_arp_offload_enabled(struct wlan_objmgr_psoc *psoc)
 	return pmo_psoc_ctx->psoc_cfg.arp_offload_enable;
 }
 
+#ifdef WLAN_FEATURE_IGMP_OFFLOAD
+bool
+ucfg_pmo_is_igmp_offload_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.igmp_offload_enable;
+}
+#endif
+
 void
 ucfg_pmo_set_arp_offload_enabled(struct wlan_objmgr_psoc *psoc,
 				 bool val)
@@ -555,6 +573,17 @@ ucfg_pmo_set_arp_offload_enabled(struct wlan_objmgr_psoc *psoc,
 
 	pmo_psoc_ctx->psoc_cfg.arp_offload_enable = val;
 }
+
+#ifdef WLAN_FEATURE_IGMP_OFFLOAD
+void
+ucfg_pmo_set_igmp_offload_enabled(struct wlan_objmgr_psoc *psoc,
+				  bool val)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	pmo_psoc_ctx->psoc_cfg.igmp_offload_enable = val;
+}
+#endif
 
 enum pmo_auto_pwr_detect_failure_mode
 ucfg_pmo_get_auto_power_fail_mode(struct wlan_objmgr_psoc *psoc)

@@ -1697,6 +1697,45 @@ out:
 	return status;
 }
 
+#ifdef WLAN_FEATURE_IGMP_OFFLOAD
+QDF_STATUS
+pmo_core_enable_igmp_offload(struct wlan_objmgr_vdev *vdev,
+			     struct pmo_igmp_offload_req *pmo_igmp_req)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	uint8_t vdev_id;
+	enum QDF_OPMODE op_mode;
+	struct pmo_vdev_priv_obj *vdev_ctx;
+	uint32_t version_support;
+
+	if (wlan_vdev_is_up(vdev) != QDF_STATUS_SUCCESS)
+		return QDF_STATUS_E_INVAL;
+
+	op_mode = pmo_get_vdev_opmode(vdev);
+	if (QDF_STA_MODE != op_mode) {
+		pmo_debug("igmp offload supported in STA mode");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	if (!vdev_ctx->pmo_psoc_ctx->psoc_cfg.igmp_offload_enable) {
+		pmo_debug("igmp offload not supported");
+		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+	version_support =
+		vdev_ctx->pmo_psoc_ctx->psoc_cfg.igmp_version_support;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+	vdev_id = pmo_vdev_get_id(vdev);
+	pmo_igmp_req->vdev_id = vdev_id;
+	pmo_igmp_req->version_support = version_support;
+	status = pmo_tgt_send_igmp_offload_req(vdev, pmo_igmp_req);
+
+	return status;
+}
+#endif
+
 QDF_STATUS pmo_core_config_forced_dtim(struct wlan_objmgr_vdev *vdev,
 				       uint32_t dynamic_dtim)
 {
