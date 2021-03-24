@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -345,6 +345,26 @@ QDF_STATUS pmo_tgt_vdev_update_param_req(struct wlan_objmgr_vdev *vdev,
  */
 QDF_STATUS pmo_tgt_send_vdev_sta_ps_param(struct wlan_objmgr_vdev *vdev,
 		enum pmo_sta_powersave_param ps_param, uint32_t param_value);
+
+#ifdef WLAN_FEATURE_IGMP_OFFLOAD
+/**
+ * pmo_tgt_send_igmp_offload_req() - Send igmp offload request to fw
+ * @vdev: objmgr vdev
+ * @pmo_igmp_req: igmp offload params
+ *
+ * Return: QDF status
+ */
+QDF_STATUS
+pmo_tgt_send_igmp_offload_req(struct wlan_objmgr_vdev *vdev,
+			      struct pmo_igmp_offload_req *pmo_igmp_req);
+#else
+static inline QDF_STATUS
+pmo_tgt_send_igmp_offload_req(struct wlan_objmgr_vdev *vdev,
+			      struct pmo_igmp_offload_req *pmo_igmp_req)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * pmo_tgt_update_wow_bus_suspend_state() - update wow bus suspend state flag

@@ -85,6 +85,8 @@
 #include "wlan_pkt_capture_ucfg_api.h"
 #include "wlan_hdd_thermal.h"
 #include "wlan_hdd_object_manager.h"
+#include <linux/igmp.h>
+#include "qdf_types.h"
 /* Preprocessor definitions and constants */
 #ifdef QCA_WIFI_EMULATION
 #define HDD_SSR_BRING_UP_TIME 3000000
@@ -191,6 +193,96 @@ static void hdd_enable_gtk_offload(struct hdd_adapter *adapter)
 		hdd_info("Failed to enable gtk offload");
 	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 }
+
+#ifdef WLAN_FEATURE_IGMP_OFFLOAD
+/**
+ * hdd_send_igmp_offload_params() - enable igmp offload
+ * @adapter: pointer to the adapter
+ * @enable: enable/disable
+ *
+ * Return: nothing
+ */
+static QDF_STATUS
+hdd_send_igmp_offload_params(struct hdd_adapter *adapter,
+			     bool enable)
+{
+	struct in_device *in_dev = in_dev_get(adapter->dev);
+	struct ip_mc_list *ip_list = in_dev->mc_list;
+	struct pmo_igmp_offload_req *igmp_req = NULL;
+	int count = 0;
+	QDF_STATUS status;
+
+	if (!ip_list) {
+		hdd_debug("ip list empty");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	igmp_req = qdf_mem_malloc(sizeof(*igmp_req));
+	if (!igmp_req)
+		return QDF_STATUS_E_FAILURE;
+
+	while (ip_list && ip_list->multiaddr && enable &&
+	       count < MAX_MC_IP_ADDR) {
+		if (IGMP_QUERY_ADDRESS !=  ip_list->multiaddr) {
+			igmp_req->grp_ip_address[count] = ip_list->multiaddr;
+			count++;
+		}
+
+		ip_list = ip_list->next;
+	}
+	igmp_req->enable = enable;
+	igmp_req->num_grp_ip_address = count;
+
+	status = ucfg_pmo_enable_igmp_offload(adapter->vdev, igmp_req);
+	if (status != QDF_STATUS_SUCCESS)
+		hdd_info("Failed to enable igmp offload");
+
+	qdf_mem_free(igmp_req);
+	return status;
+}
+
+/**
+ * hdd_enable_igmp_offload() - enable GTK offload
+ * @adapter: pointer to the adapter
+ *
+ * Enable IGMP offload in suspended case to save power
+ *
+ * Return: nothing
+ */
+static void hdd_enable_igmp_offload(struct hdd_adapter *adapter)
+{
+	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
+	if (!vdev) {
+		hdd_err("vdev is NULL");
+		return;
+	}
+	status = hdd_send_igmp_offload_params(adapter, true);
+	if (status != QDF_STATUS_SUCCESS)
+		hdd_info("Failed to enable gtk offload");
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
+}
+#else
+static inline void
+hdd_enable_igmp_offload(struct hdd_adapter *adapter)
+{}
+
+static inline QDF_STATUS
+hdd_send_igmp_offload_params(struct hdd_adapter *adapter,
+			     bool enable)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+wlan_hdd_send_igmp_offload_params(struct hdd_adapter *adapter, bool enable,
+				  uint32_t *mc_address, uint32_t count)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * hdd_disable_gtk_offload() - disable GTK offload
@@ -720,6 +812,9 @@ void hdd_enable_host_offloads(struct hdd_adapter *adapter,
 	hdd_enable_arp_offload(adapter, trigger);
 	hdd_enable_ns_offload(adapter, trigger);
 	hdd_enable_mc_addr_filtering(adapter, trigger);
+	if (adapter->device_mode == QDF_STA_MODE)
+		hdd_enable_igmp_offload(adapter);
+
 	if (adapter->device_mode != QDF_NDI_MODE)
 		hdd_enable_hw_filter(adapter);
 	hdd_enable_action_frame_patterns(adapter);

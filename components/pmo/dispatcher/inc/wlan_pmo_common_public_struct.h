@@ -51,6 +51,9 @@
 
 #define PMO_WOW_REQUIRED_CREDITS 1
 
+#define MAX_MC_IP_ADDR 10
+#define IGMP_QUERY_ADDRESS 0x10000e0
+
 /**
  * enum pmo_vdev_param_id: tell vdev param id
  * @pmo_vdev_param_listen_interval: vdev listen interval param id
@@ -425,4 +428,21 @@ struct pmo_device_caps {
 	bool li_offload;
 };
 
+/**
+ * pmo_igmp_offload_req - structure to hold igmp param
+ *
+ * @vdev_id: vdev id
+ * @enable: enable/disable
+ * @version_support: version support
+ * @num_grp_ip_address: num grp ip addr
+ * @grp_ip_address: array of grp_ip_address
+ *
+ **/
+struct pmo_igmp_offload_req {
+	uint32_t vdev_id;
+	bool enable;
+	uint32_t version_support;
+	uint32_t num_grp_ip_address;
+	uint32_t grp_ip_address[MAX_MC_IP_ADDR];
+};
 #endif /* end  of _WLAN_PMO_COMMONP_STRUCT_H_ */

@@ -1659,6 +1659,26 @@ hdd_init_get_sta_in_ll_stats_config(struct hdd_adapter *adapter)
 }
 #endif /* FEATURE_CLUB_LL_STATS_AND_GET_STATION */
 
+#ifdef WLAN_FEATURE_IGMP_OFFLOAD
+static void
+hdd_intersect_igmp_offload_setting(struct wlan_objmgr_psoc *psoc,
+				   struct wma_tgt_services *cfg)
+{
+	bool igmp_offload_enable;
+
+	igmp_offload_enable =
+		ucfg_pmo_is_igmp_offload_enabled(psoc);
+	ucfg_pmo_set_igmp_offload_enabled(psoc,
+					  igmp_offload_enable &
+					  cfg->igmp_offload_enable);
+}
+#else
+static inline void
+hdd_intersect_igmp_offload_setting(struct wlan_objmgr_psoc *psoc,
+				   struct wma_tgt_services *cfg)
+{}
+#endif
+
 static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
 				    struct wma_tgt_services *cfg)
 {
@@ -1691,6 +1711,10 @@ static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
 			ucfg_pmo_is_arp_offload_enabled(hdd_ctx->psoc);
 	ucfg_pmo_set_arp_offload_enabled(hdd_ctx->psoc,
 					 arp_offload_enable & cfg->arp_offload);
+
+	/* Intersect igmp offload ini configuration and fw cap*/
+	hdd_intersect_igmp_offload_setting(hdd_ctx->psoc, cfg);
+
 #ifdef FEATURE_WLAN_SCAN_PNO
 	/* PNO offload */
 	hdd_debug("PNO Capability in f/w = %d", cfg->pno_offload);

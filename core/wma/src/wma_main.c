@@ -4535,6 +4535,29 @@ static void wma_set_tx_partition_base(uint32_t value)
 }
 #endif
 
+#ifdef WLAN_FEATURE_IGMP_OFFLOAD
+/**
+ * wma_get_igmp_offload_enable() - update tgt service with igmp offload support
+ * @wmi_handle: Unified wmi handle
+ * @cfg: target services
+ *
+ * Return: none
+ */
+static inline void
+wma_get_igmp_offload_enable(struct wmi_unified *wmi_handle,
+			    struct wma_tgt_services *cfg)
+{
+	cfg->igmp_offload_enable = wmi_service_enabled(
+					wmi_handle,
+					wmi_service_igmp_offload_support);
+}
+#else
+static inline void
+wma_get_igmp_offload_enable(struct wmi_unified *wmi_handle,
+			    struct wma_tgt_services *cfg)
+{}
+#endif
+
 /**
  * wma_update_target_services() - update target services from wma handle
  * @wmi_handle: Unified wmi handle
@@ -4675,6 +4698,7 @@ static inline void wma_update_target_services(struct wmi_unified *wmi_handle,
 
 	wma_get_service_cap_club_get_sta_in_ll_stats_req(wmi_handle, cfg);
 
+	wma_get_igmp_offload_enable(wmi_handle, cfg);
 }
 
 /**
