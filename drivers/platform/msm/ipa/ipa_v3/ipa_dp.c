@@ -1959,14 +1959,17 @@ int ipa3_tx_dp(enum ipa_client_type dst, struct sk_buff *skb,
 			ipa_imm_cmd_modify_ip_packet_init_ex_dest_pipe(
 				ipa3_ctx->pkt_init_ex_imm[ipa3_ctx->ipa_num_pipes].base,
 				dst_ep_idx);
-			desc[data_idx].opcode =
-				ipa3_ctx->pkt_init_ex_imm_opcode;
+			desc[data_idx].opcode = ipa3_ctx->pkt_init_ex_imm_opcode;
 			desc[data_idx].dma_address =
 				ipa3_ctx->pkt_init_ex_imm[ipa3_ctx->ipa_num_pipes].phys_base;
+		} else if (ipa3_ctx->ep[dst_ep_idx].cfg.ulso.is_ulso_pipe &&
+			skb_is_gso(skb)) {
+			desc[data_idx].opcode = ipa3_ctx->pkt_init_ex_imm_opcode;
+			desc[data_idx].dma_address =
+				ipa3_ctx->pkt_init_ex_imm[dst_ep_idx].phys_base;
 		} else {
 			desc[data_idx].opcode = ipa3_ctx->pkt_init_imm_opcode;
-			desc[data_idx].dma_address =
-				ipa3_ctx->pkt_init_imm[dst_ep_idx];
+			desc[data_idx].dma_address = ipa3_ctx->pkt_init_imm[dst_ep_idx];
 		}
 		desc[data_idx].dma_address_valid = true;
 		desc[data_idx].type = IPA_IMM_CMD_DESC;

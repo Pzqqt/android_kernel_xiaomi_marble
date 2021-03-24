@@ -5284,6 +5284,15 @@ static int ipa3_setup_apps_pipes(void)
 		sys_in.client = IPA_CLIENT_APPS_LAN_PROD;
 		sys_in.desc_fifo_sz = IPA_SYS_TX_DATA_DESC_FIFO_SZ;
 		sys_in.ipa_ep_cfg.mode.mode = IPA_BASIC;
+		if (ipa3_ctx->ulso_supported) {
+			sys_in.ipa_ep_cfg.ulso.ipid_min_max_idx =
+				ENDP_INIT_ULSO_CFG_IP_ID_MIN_MAX_VAL_IDX_LINUX;
+			sys_in.ipa_ep_cfg.ulso.is_ulso_pipe = true;
+			sys_in.ipa_ep_cfg.cfg.cs_offload_en = IPA_ENABLE_CS_OFFLOAD_UL;
+			sys_in.ipa_ep_cfg.hdr.hdr_len = QMAP_HDR_LEN + ETH_HLEN;
+			sys_in.ipa_ep_cfg.hdr_ext.hdr_bytes_to_remove_valid = true;
+			sys_in.ipa_ep_cfg.hdr_ext.hdr_bytes_to_remove = QMAP_HDR_LEN;
+		}
 		if (ipa3_setup_sys_pipe(&sys_in,
 			&ipa3_ctx->clnt_hdl_data_out)) {
 			IPAERR(":setup sys pipe (LAN_PROD) failed.\n");
@@ -7812,6 +7821,9 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	ipa3_ctx->ipa_wdi3_5g_holb_timeout =
 		resource_p->ipa_wdi3_5g_holb_timeout;
 	ipa3_ctx->is_wdi3_tx1_needed = false;
+	ipa3_ctx->ulso_supported = resource_p->ulso_supported;
+	ipa3_ctx->ulso_ip_id_min = resource_p->ulso_ip_id_min;
+	ipa3_ctx->ulso_ip_id_max = resource_p->ulso_ip_id_max;
 
 	if (resource_p->gsi_fw_file_name) {
 		ipa3_ctx->gsi_fw_file_name =
@@ -8556,6 +8568,43 @@ static void get_dts_tx_wrapper_cache_size(struct platform_device *pdev,
 		ipa_drv_res->tx_wrapper_cache_max_size);
 }
 
+static void ipa_dts_get_ulso_data(struct platform_device *pdev,
+		struct ipa3_plat_drv_res *ipa_drv_res)
+{
+	int result;
+	u32 tmp;
+
+	ipa_drv_res->ulso_supported = of_property_read_bool(pdev->dev.of_node,
+		"qcom,ulso-supported");
+	IPADBG(": ulso_supported = %d", ipa_drv_res->ulso_supported);
+	if (!ipa_drv_res->ulso_supported)
+		return;
+
+	result = of_property_read_u32(
+		pdev->dev.of_node,
+		"qcom,ulso-ip-id-min-linux-val",
+		&tmp);
+	if (result) {
+		ipa_drv_res->ulso_ip_id_min = 0;
+	} else {
+		ipa_drv_res->ulso_ip_id_min = tmp;
+	}
+	IPADBG("ulso_ip_id_min is set to %d",
+		ipa_drv_res->ulso_ip_id_min);
+
+	result = of_property_read_u32(
+		pdev->dev.of_node,
+		"qcom,ulso-ip-id-max-linux-val",
+		&tmp);
+	if (result) {
+		ipa_drv_res->ulso_ip_id_max = 0xffff;
+	} else {
+		ipa_drv_res->ulso_ip_id_max = tmp;
+	}
+	IPADBG("ulso_ip_id_max is set to %d",
+		ipa_drv_res->ulso_ip_id_max);
+}
+
 static int get_ipa_dts_configuration(struct platform_device *pdev,
 		struct ipa3_plat_drv_res *ipa_drv_res)
 {
@@ -9194,6 +9243,8 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	ipa_drv_res->ipa_wan_aggr_pkt_cnt = ipa_wan_aggr_pkt_cnt;
 
 	get_dts_tx_wrapper_cache_size(pdev, ipa_drv_res);
+
+	ipa_dts_get_ulso_data(pdev, ipa_drv_res);
 
 	result = of_property_read_u32(pdev->dev.of_node,
 		"qcom,max_num_smmu_cb",

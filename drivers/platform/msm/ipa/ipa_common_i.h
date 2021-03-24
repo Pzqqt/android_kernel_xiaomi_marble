@@ -832,4 +832,7 @@ int ipa_eth_client_conn_evt(struct ipa_ecm_msg *msg);
 
 int ipa_eth_client_disconn_evt(struct ipa_ecm_msg *msg);
 
+/* ULSO mode Query */
+bool ipa3_is_ulso_supported(void);
+
 #endif /* _IPA_COMMON_I_H_ */
