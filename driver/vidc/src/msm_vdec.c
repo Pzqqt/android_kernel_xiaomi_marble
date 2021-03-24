@@ -954,18 +954,6 @@ static int msm_vdec_release_input_internal_buffers(struct msm_vidc_inst *inst)
 	return 0;
 }
 
-static int msm_vdec_release_output_internal_buffers(struct msm_vidc_inst *inst)
-{
-	int rc = 0;
-
-	i_vpr_h(inst, "%s()\n",__func__);
-	rc = msm_vidc_release_internal_buffers(inst, MSM_VIDC_BUF_DPB);
-	if (rc)
-		return rc;
-
-	return 0;
-}
-
 static int msm_vdec_subscribe_input_port_settings_change(struct msm_vidc_inst *inst,
 	enum msm_vidc_port_type port)
 {
@@ -1732,10 +1720,6 @@ int msm_vdec_streamon_output(struct msm_vidc_inst *inst)
 		goto error;
 
 	rc = msm_vdec_get_output_internal_buffers(inst);
-	if (rc)
-		goto error;
-
-	rc = msm_vdec_release_output_internal_buffers(inst);
 	if (rc)
 		goto error;
 
