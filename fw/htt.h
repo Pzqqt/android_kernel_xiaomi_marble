@@ -210,9 +210,10 @@
  * 3.86 Add HTT_T2H_MSG_TYPE_FSE_CMEM_BASE_SEND def.
  * 3.87 Add on-chip AST index field to PEER_MAP_V2 msg.
  * 3.88 Add HTT_H2T_MSG_TYPE_HOST_PADDR_SIZE def.
+ * 3.89 Add MSDU queue enumerations.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 88
+#define HTT_CURRENT_VERSION_MINOR 89
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -14431,5 +14432,68 @@ PREPACK struct htt_rx_peer_metadata_v1 {
         ((_var) |= ((_val) << HTT_RX_PEER_META_DATA_V1_CHIP_ID_S)); \
     } while (0)
 
+/*
+ * In some systems, the host SW wants to specify priorities between
+ * different MSDU / flow queues within the same peer-TID.
+ * The below enums are used for the host to identify to the target
+ * which MSDU queue's priority it wants to adjust.
+ */
+
+/*
+ * The MSDUQ index describe index of TCL HW, where each index is
+ * used for queuing particular types of MSDUs.
+ * The different MSDU queue types are defined in HTT_MSDU_QTYPE.
+ */
+enum HTT_MSDUQ_INDEX {
+    HTT_MSDUQ_INDEX_NON_UDP, /* NON UDP MSDUQ index */
+    HTT_MSDUQ_INDEX_UDP,     /* UDP MSDUQ index */
+
+    HTT_MSDUQ_INDEX_CUSTOM_PRIO_0, /* Latency priority 0 index */
+    HTT_MSDUQ_INDEX_CUSTOM_PRIO_1, /* Latency priority 1 index */
+
+    HTT_MSDUQ_INDEX_CUSTOM_EXT_PRIO_0, /* High num TID cases/ MLO dedicate link cases */
+    HTT_MSDUQ_INDEX_CUSTOM_EXT_PRIO_1, /* High num TID cases/ MLO dedicate link cases */
+
+    HTT_MSDUQ_INDEX_CUSTOM_EXT_PRIO_2, /* High num TID cases/ MLO dedicate link cases */
+    HTT_MSDUQ_INDEX_CUSTOM_EXT_PRIO_3, /* High num TID cases/ MLO dedicate link cases */
+
+    HTT_MSDUQ_MAX_INDEX,
+};
+
+/* MSDU qtype definition */
+enum HTT_MSDU_QTYPE {
+    /*
+     * The LATENCY_CRIT_0 and LATENCY_CRIT_1 queue types don't have a fixed
+     * relative priority.  Instead, the relative priority of CRIT_0 versus
+     * CRIT_1 is controlled by the FW, through the configuration parameters
+     * it applies to the queues.
+     */
+    HTT_MSDU_QTYPE_LATENCY_CRIT_0, /* Specified MSDUQ index used for latency critical 0 */
+    HTT_MSDU_QTYPE_LATENCY_CRIT_1, /* Specified MSDUQ index used for latency critical 1 */
+    HTT_MSDU_QTYPE_UDP, /* Specifies MSDUQ index used for UDP flow */
+    HTT_MSDU_QTYPE_NON_UDP, /* Specifies MSDUQ index used for non-udp flow */
+    HTT_MSDU_QTYPE_HOL, /* Specified MSDUQ index used for Head of Line */
+
+
+    /* New MSDU_QTYPE should be added above this line */
+    /*
+     * Below QTYPE_MAX will increase if additional QTYPEs are defined
+     * in the future. Hence HTT_MSDU_QTYPE_MAX can't be used in
+     * any host/target message definitions.  The QTYPE_MAX value can
+     * only be used internally within the host or within the target.
+     * If host or target find a qtype value is >= HTT_MSDU_QTYPE_MAX
+     * it must regard the unexpected value as a default qtype value,
+     * or ignore it.
+     */
+    HTT_MSDU_QTYPE_MAX,
+    HTT_MSDU_QTYPE_NOT_IN_USE = 255, /* corresponding MSDU index is not in use */
+};
+
+enum HTT_MSDUQ_LEGACY_FLOW_INDEX {
+    HTT_MSDUQ_LEGACY_HI_PRI_FLOW_INDEX = 0,
+    HTT_MSDUQ_LEGACY_LO_PRI_FLOW_INDEX = 1,
+    HTT_MSDUQ_LEGACY_UDP_FLOW_INDEX = 2,
+    HTT_MSDUQ_LEGACY_NON_UDP_FLOW_INDEX = 3,
+};
 
 #endif
