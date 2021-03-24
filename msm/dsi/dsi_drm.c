@@ -130,10 +130,9 @@ void dsi_convert_to_drm_mode(const struct dsi_display_mode *dsi_mode,
 		drm_mode->flags |= DRM_MODE_FLAG_PVSYNC;
 
 	/* set mode name */
-	snprintf(drm_mode->name, DRM_DISPLAY_MODE_LEN, "%dx%dx%dx%u%s",
+	snprintf(drm_mode->name, DRM_DISPLAY_MODE_LEN, "%dx%dx%d%s",
 			drm_mode->hdisplay, drm_mode->vdisplay,
-			drm_mode_vrefresh(drm_mode), dsi_mode->pixel_clk_khz,
-			panel_caps);
+			drm_mode_vrefresh(drm_mode), panel_caps);
 }
 
 static void dsi_convert_to_msm_mode(const struct dsi_display_mode *dsi_mode,
