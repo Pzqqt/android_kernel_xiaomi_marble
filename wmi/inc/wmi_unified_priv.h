@@ -1645,6 +1645,11 @@ QDF_STATUS (*extract_dcs_cw_int)(wmi_unified_t wmi_handle, void *evt_buf,
 
 QDF_STATUS (*extract_dcs_im_tgt_stats)(wmi_unified_t wmi_handle, void *evt_buf,
 	wmi_host_dcs_im_tgt_stats_t *wlan_stat);
+
+QDF_STATUS (*extract_dcs_awgn_info)(
+		wmi_unified_t wmi_handle,
+		void *evt_buf,
+		struct wmi_host_dcs_awgn_info *awgn_info);
 #endif
 
 QDF_STATUS (*extract_fips_event_data)(wmi_unified_t wmi_handle,
