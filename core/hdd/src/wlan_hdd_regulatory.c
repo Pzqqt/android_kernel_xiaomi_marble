@@ -1612,6 +1612,12 @@ static void __hdd_country_change_work_handle(struct hdd_context *hdd_ctx)
 	hdd_country_change_update_sta(hdd_ctx);
 	sme_generic_change_country_code(hdd_ctx->mac_handle,
 					hdd_ctx->reg.alpha2);
+
+	qdf_event_set(&hdd_ctx->regulatory_update_event);
+	qdf_mutex_acquire(&hdd_ctx->regulatory_status_lock);
+	hdd_ctx->is_regulatory_update_in_progress = false;
+	qdf_mutex_release(&hdd_ctx->regulatory_status_lock);
+
 	hdd_country_change_update_sap(hdd_ctx);
 }
 
@@ -1686,10 +1692,6 @@ static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 
 	hdd_config_tdls_with_band_switch(hdd_ctx);
 	qdf_sched_work(0, &hdd_ctx->country_change_work);
-	qdf_event_set(&hdd_ctx->regulatory_update_event);
-	qdf_mutex_acquire(&hdd_ctx->regulatory_status_lock);
-	hdd_ctx->is_regulatory_update_in_progress = false;
-	qdf_mutex_release(&hdd_ctx->regulatory_status_lock);
 }
 
 int hdd_update_regulatory_config(struct hdd_context *hdd_ctx)
