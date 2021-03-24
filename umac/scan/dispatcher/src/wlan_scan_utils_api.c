@@ -1751,6 +1751,7 @@ util_scan_gen_scan_entry(struct wlan_objmgr_pdev *pdev,
 	return status;
 }
 
+#ifdef WLAN_FEATURE_MBSSID
 /*
  * util_is_noninh_ie() - find the noninhertance information element
  * in the received frame's IE list, so that we can stop inheriting that IE
@@ -1776,6 +1777,7 @@ static bool util_is_noninh_ie(uint8_t elem_id,
 
 	return false;
 }
+#endif
 
 /*
  * util_scan_find_ie() - find information element
