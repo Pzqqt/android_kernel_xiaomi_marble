@@ -1210,7 +1210,7 @@ static void wmi_fill_default_roam_trigger_parameters(
 
 	roam_trigger_params->trigger_reason = roam_trigger;
 	roam_trigger_params->enable = 1;
-	roam_trigger_params->scan_mode = ROAM_TRIGGER_SCAN_MODE_PARTIAL;
+	roam_trigger_params->scan_mode = ROAM_TRIGGER_SCAN_MODE_NONE;
 	roam_trigger_params->trigger_rssi_threshold =
 			ROAM_MAX_CFG_VALUE;
 	roam_trigger_params->cand_ap_min_rssi_threshold =
