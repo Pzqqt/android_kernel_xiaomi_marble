@@ -11,6 +11,7 @@
 #include <linux/platform_device.h>
 #include <linux/pm_qos.h>
 #include <linux/spinlock.h>
+#include <linux/soc/qcom/msm_mmrm.h>
 #include "cvp_hfi_api.h"
 #include "cvp_hfi_helper.h"
 #include "cvp_hfi_api.h"
@@ -251,6 +252,8 @@ struct iris_hfi_device {
 	int reg_count;
 	struct iris_resources resources;
 	struct msm_cvp_platform_resources *res;
+	struct mmrm_client_desc mmrm_cvp_desc;
+	struct mmrm_client *mmrm_cvp;
 	enum iris_hfi_state state;
 	struct cvp_hfi_packetization_ops *pkt_ops;
 	enum hfi_packetization_type packetization_type;
