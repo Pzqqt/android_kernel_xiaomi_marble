@@ -463,6 +463,7 @@ QDF_STATUS wlan_crypto_set_del_pmksa(struct wlan_objmgr_vdev *vdev,
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 	struct wlan_crypto_comp_priv *crypto_priv;
 	struct wlan_crypto_params *crypto_params;
+	struct wlan_crypto_pmksa *pmkid_cache = NULL;
 	enum QDF_OPMODE op_mode;
 
 	op_mode = wlan_vdev_mlme_get_opmode(vdev);
@@ -484,6 +485,19 @@ QDF_STATUS wlan_crypto_set_del_pmksa(struct wlan_objmgr_vdev *vdev,
 
 	crypto_params = &crypto_priv->crypto_params;
 	if (set) {
+		if (!pmksa->pmk_len || pmksa->pmk_len > MAX_PMK_LEN) {
+			crypto_err("Invalid PMK length");
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		pmkid_cache = wlan_crypto_get_pmksa(vdev, &pmksa->bssid);
+		if (pmkid_cache && (!qdf_mem_cmp(pmkid_cache->pmk, pmksa->pmk,
+						 pmksa->pmk_len))) {
+			crypto_debug("PMKSA entry found with same PMK");
+			pmkid_cache = NULL;
+			return QDF_STATUS_E_EXISTS;
+		}
+
 		status = wlan_crypto_set_pmksa(crypto_params, pmksa);
 		/* Set pmksa */
 	} else {
@@ -640,6 +654,7 @@ wlan_crypto_get_pmksa(struct wlan_objmgr_vdev *vdev, struct qdf_mac_addr *bssid)
 			continue;
 		if (qdf_is_macaddr_equal(bssid,
 					 &crypto_params->pmksa[i]->bssid)) {
+			crypto_debug("PMKSA: Entry found at index %d", i);
 			return crypto_params->pmksa[i];
 		}
 	}
