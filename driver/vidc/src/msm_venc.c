@@ -1194,49 +1194,50 @@ static int msm_venc_s_fmt_input(struct msm_vidc_inst *inst, struct v4l2_format *
 	int rc = 0;
 	struct v4l2_format *fmt;
 	struct msm_vidc_core *core;
-	u32 pix_fmt;
-	u32 crop_width, crop_height;
+	u32 pix_fmt, width, height, size, bytesperline,
+		crop_width, crop_height;
 
 	if (!inst || !inst->core || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 	core = inst->core;
+	pix_fmt = v4l2_colorformat_to_driver(f->fmt.pix_mp.pixelformat, __func__);
+	msm_vidc_update_cap_value(inst, PIX_FMTS, pix_fmt, __func__);
+
+	if (is_rgba_colorformat(pix_fmt)) {
+		width = VIDEO_RGB_STRIDE_PIX(f->fmt.pix_mp.pixelformat, f->fmt.pix_mp.width);
+		height = VIDEO_RGB_SCANLINES(f->fmt.pix_mp.pixelformat, f->fmt.pix_mp.height);
+		crop_width = VIDEO_RGB_STRIDE_PIX(f->fmt.pix_mp.pixelformat, inst->crop.width);
+		crop_height = VIDEO_RGB_SCANLINES(f->fmt.pix_mp.pixelformat, inst->crop.height);
+		bytesperline =
+			VIDEO_RGB_STRIDE_BYTES(f->fmt.pix_mp.pixelformat, f->fmt.pix_mp.width);
+	} else if (is_image_session(inst)) {
+		width = ALIGN(f->fmt.pix_mp.width, HEIC_GRID_DIMENSION);
+		height = ALIGN(f->fmt.pix_mp.height, HEIC_GRID_DIMENSION);
+		crop_width = ALIGN(inst->crop.width, HEIC_GRID_DIMENSION);
+		crop_height = ALIGN(inst->crop.height, HEIC_GRID_DIMENSION);
+		bytesperline = width * (is_10bit_colorformat(pix_fmt) ? 2 : 1);
+	} else {
+		width = VIDEO_Y_STRIDE_PIX(f->fmt.pix_mp.pixelformat, f->fmt.pix_mp.width);
+		height = VIDEO_Y_SCANLINES(f->fmt.pix_mp.pixelformat, f->fmt.pix_mp.height);
+		crop_width = VIDEO_Y_STRIDE_PIX(f->fmt.pix_mp.pixelformat, inst->crop.width);
+		crop_height = VIDEO_Y_SCANLINES(f->fmt.pix_mp.pixelformat, inst->crop.height);
+		bytesperline = VIDEO_Y_STRIDE_BYTES(f->fmt.pix_mp.pixelformat, f->fmt.pix_mp.width);
+	}
 
 	fmt = &inst->fmts[INPUT_PORT];
 	fmt->type = INPUT_MPLANE;
-	fmt->fmt.pix_mp.pixelformat = f->fmt.pix_mp.pixelformat;
-	pix_fmt = v4l2_colorformat_to_driver(f->fmt.pix_mp.pixelformat, __func__);
-	msm_vidc_update_cap_value(inst, PIX_FMTS, pix_fmt, __func__);
-	if (is_rgba_colorformat(pix_fmt)) {
-		fmt->fmt.pix_mp.width = VIDEO_RGB_STRIDE_PIX(fmt->fmt.pix_mp.pixelformat,
-			f->fmt.pix_mp.width);
-		fmt->fmt.pix_mp.height = VIDEO_RGB_SCANLINES(fmt->fmt.pix_mp.pixelformat,
-			f->fmt.pix_mp.height);
-		fmt->fmt.pix_mp.plane_fmt[0].bytesperline =
-			VIDEO_RGB_STRIDE_BYTES(fmt->fmt.pix_mp.pixelformat,
-				f->fmt.pix_mp.width);
-		crop_width = VIDEO_RGB_STRIDE_PIX(
-			fmt->fmt.pix_mp.pixelformat, inst->crop.width);
-		crop_height = VIDEO_RGB_SCANLINES(
-			fmt->fmt.pix_mp.pixelformat, inst->crop.height);
-	} else {
-		fmt->fmt.pix_mp.width = VIDEO_Y_STRIDE_PIX(fmt->fmt.pix_mp.pixelformat,
-			f->fmt.pix_mp.width);
-		fmt->fmt.pix_mp.height = VIDEO_Y_SCANLINES(fmt->fmt.pix_mp.pixelformat,
-			f->fmt.pix_mp.height);
-		fmt->fmt.pix_mp.plane_fmt[0].bytesperline =
-			VIDEO_Y_STRIDE_BYTES(fmt->fmt.pix_mp.pixelformat,
-				f->fmt.pix_mp.width);
-		crop_width = VIDEO_Y_STRIDE_PIX(
-			fmt->fmt.pix_mp.pixelformat, inst->crop.width);
-		crop_height = VIDEO_Y_SCANLINES(
-			fmt->fmt.pix_mp.pixelformat, inst->crop.height);
-	}
-
+	fmt->fmt.pix_mp.width = width;
+	fmt->fmt.pix_mp.height = height;
 	fmt->fmt.pix_mp.num_planes = 1;
-	fmt->fmt.pix_mp.plane_fmt[0].sizeimage = call_session_op(core,
-		buffer_size, inst, MSM_VIDC_BUF_INPUT);
+	fmt->fmt.pix_mp.pixelformat = f->fmt.pix_mp.pixelformat;
+	fmt->fmt.pix_mp.plane_fmt[0].bytesperline = bytesperline;
+	if (is_image_session(inst))
+		size = bytesperline * height * 3 / 2;
+	else
+		size = call_session_op(core, buffer_size, inst, MSM_VIDC_BUF_INPUT);
+	fmt->fmt.pix_mp.plane_fmt[0].sizeimage = size;
 	fmt->fmt.pix_mp.colorspace = f->fmt.pix_mp.colorspace;
 	fmt->fmt.pix_mp.xfer_func = f->fmt.pix_mp.xfer_func;
 	fmt->fmt.pix_mp.ycbcr_enc = f->fmt.pix_mp.ycbcr_enc;
@@ -1252,8 +1253,7 @@ static int msm_venc_s_fmt_input(struct msm_vidc_inst *inst, struct v4l2_format *
 			inst->buffers.input.min_count +
 			inst->buffers.input.extra_count;
 	}
-	inst->buffers.input.size =
-		fmt->fmt.pix_mp.plane_fmt[0].sizeimage;
+	inst->buffers.input.size = size;
 
 	if (fmt->fmt.pix_mp.width != crop_width ||
 		fmt->fmt.pix_mp.height != crop_height) {
@@ -1264,7 +1264,7 @@ static int msm_venc_s_fmt_input(struct msm_vidc_inst *inst, struct v4l2_format *
 		inst->crop.height = f->fmt.pix_mp.height;
 
 		/* reset compose dimensions with updated resolution */
-		inst->compose.top = inst->crop.left = 0;
+		inst->compose.top = inst->compose.left = 0;
 		inst->compose.width = f->fmt.pix_mp.width;
 		inst->compose.height = f->fmt.pix_mp.height;
 

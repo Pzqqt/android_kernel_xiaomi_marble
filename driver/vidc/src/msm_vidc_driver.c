@@ -3960,6 +3960,16 @@ int msm_vidc_check_session_supported(struct msm_vidc_inst *inst)
 			goto exit;
 		}
 
+		/* is input grid aligned */
+		fmt = &inst->fmts[INPUT_PORT];
+		allow = IS_ALIGNED(fmt->fmt.pix_mp.width, HEIC_GRID_DIMENSION);
+		allow &= IS_ALIGNED(fmt->fmt.pix_mp.height, HEIC_GRID_DIMENSION);
+		if (!allow) {
+			i_vpr_e(inst, "%s: input is not grid aligned: %u x %u\n", __func__,
+				fmt->fmt.pix_mp.width, fmt->fmt.pix_mp.height);
+			goto exit;
+		}
+
 		/* is output grid dimension */
 		fmt = &inst->fmts[OUTPUT_PORT];
 		allow = fmt->fmt.pix_mp.width == HEIC_GRID_DIMENSION;
