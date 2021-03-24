@@ -114,6 +114,24 @@
 
 /*
  * <ini>
+ * CFG_PMO_ENABLE_IGMP_OFFLOAD - Enable/disable igmp offload
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable igmp offload feature to fw.
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_PMO_ENABLE_IGMP_OFFLOAD CFG_INI_BOOL( \
+	"igmp_offload_enable", \
+	0, \
+	"Enable/disable IGMP offload")
+
+/*
+ * <ini>
  * gEnableDynamicDTIM - Enable Dynamic DTIM
  * @Min: 0
  * @Max: 10
@@ -509,6 +527,7 @@
 	CFG(CFG_PMO_HW_FILTER_MODE) \
 	CFG(CFG_PMO_ENABLE_HOST_SSDP) \
 	CFG(CFG_PMO_ENABLE_HOST_NSOFFLOAD) \
+	CFG(CFG_PMO_ENABLE_IGMP_OFFLOAD) \
 	CFG(CFG_PMO_ENABLE_DYNAMIC_DTIM) \
 	CFG(CFG_PMO_ENABLE_MODULATED_DTIM) \
 	CFG(CFG_PMO_ENABLE_FORCED_DTIM) \
