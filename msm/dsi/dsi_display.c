@@ -4529,7 +4529,7 @@ static int _dsi_display_dyn_update_clks(struct dsi_display *display,
 	 */
 	if ((ctrl_version >= DSI_CTRL_VERSION_2_5) &&
 			(dyn_clk_caps->maintain_const_fps))
-		goto defer_dfps_wait;
+		return 0;
 
 	/* wait for dynamic refresh done */
 	display_for_each_ctrl(i, display) {
@@ -4549,7 +4549,6 @@ static int _dsi_display_dyn_update_clks(struct dsi_display *display,
 		dsi_phy_dynamic_refresh_clear(ctrl->phy);
 	}
 
-defer_dfps_wait:
 	if (rc)
 		DSI_ERR("could not switch back to src clks %d\n", rc);
 
