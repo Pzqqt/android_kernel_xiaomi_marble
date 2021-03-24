@@ -8782,7 +8782,7 @@ QDF_STATUS hdd_adapter_iterate(hdd_adapter_iterate_cb cb, void *context)
 	}
 	qdf_spin_unlock_bh(&hdd_ctx->hdd_adapter_lock);
 
-	for (i = 0; i < n_cache - 1; i++) {
+	for (i = 0; i < n_cache; i++) {
 		adapter = hdd_adapter_get_by_reference(hdd_ctx, cache[i]);
 		if (!adapter) {
 			/*
