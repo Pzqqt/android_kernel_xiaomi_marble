@@ -328,6 +328,7 @@ enum pmo_gpio_wakeup_mode {
  * @enable_gpio_wakeup: enable gpio wakeup
  * @gpio_wakeup_pin: gpio wakeup pin
  * @gpio_wakeup_mode: gpio wakeup mode
+ * @igmp_version_support: igmp version support
  */
 struct pmo_psoc_cfg {
 	bool ptrn_match_enable_all_vdev;
@@ -398,6 +399,9 @@ struct pmo_psoc_cfg {
 	bool enable_gpio_wakeup;
 	uint32_t gpio_wakeup_pin;
 	enum pmo_gpio_wakeup_mode gpio_wakeup_mode;
+#endif
+#ifdef WLAN_FEATURE_IGMP_OFFLOAD
+	uint32_t igmp_version_support;
 #endif
 };
 

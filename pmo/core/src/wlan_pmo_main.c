@@ -189,6 +189,20 @@ static void wlan_pmo_gpio_wakeup_init_cfg(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
+#ifdef WLAN_FEATURE_IGMP_OFFLOAD
+static void
+wlan_pmo_get_igmp_version_support_cfg(struct wlan_objmgr_psoc *psoc,
+				      struct pmo_psoc_cfg *psoc_cfg)
+{
+	psoc_cfg->igmp_version_support =
+				cfg_get(psoc, CFG_IGMP_VERSION_SUPPORT);
+}
+#else
+static void
+wlan_pmo_get_igmp_version_support_cfg(struct wlan_objmgr_psoc *psoc,
+				      struct pmo_psoc_cfg *psoc_cfg)
+{}
+#endif
 static void wlan_pmo_init_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct pmo_psoc_cfg *psoc_cfg)
 {
@@ -201,6 +215,7 @@ static void wlan_pmo_init_cfg(struct wlan_objmgr_psoc *psoc,
 	psoc_cfg->ns_offload_enable_dynamic =
 			cfg_get(psoc, CFG_PMO_ENABLE_HOST_NSOFFLOAD);
 	psoc_cfg->sta_dynamic_dtim = cfg_get(psoc, CFG_PMO_ENABLE_DYNAMIC_DTIM);
+	wlan_pmo_get_igmp_version_support_cfg(psoc, psoc_cfg);
 	psoc_cfg->sta_mod_dtim = cfg_get(psoc, CFG_PMO_ENABLE_MODULATED_DTIM);
 	psoc_cfg->enable_mc_list = cfg_get(psoc, CFG_PMO_MC_ADDR_LIST_ENABLE);
 	psoc_cfg->power_save_mode = cfg_get(psoc, CFG_PMO_POWERSAVE_MODE);
