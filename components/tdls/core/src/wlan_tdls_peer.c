@@ -538,7 +538,7 @@ void tdls_extract_peer_state_param(struct tdls_peer_update_state *peer_param,
 		    !wlan_reg_is_dsrc_freq(ch_freq)) {
 			peer_param->peer_cap.peer_chan[num].chan_id = chan_id;
 			peer_param->peer_cap.peer_chan[num].pwr =
-				wlan_reg_get_channel_reg_power(pdev, chan_id);
+				wlan_reg_get_channel_reg_power_for_freq(pdev, ch_freq);
 			peer_param->peer_cap.peer_chan[num].dfs_set = false;
 			peer_param->peer_cap.peer_chanlen++;
 			num++;

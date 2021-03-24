@@ -2177,8 +2177,8 @@ hdd_update_reg_chan_info(struct hdd_adapter *adapter,
 
 		icv->freq = freq_list[i];
 		icv->ieee_chan_number = chan;
-		icv->max_reg_power = wlan_reg_get_channel_reg_power(
-				hdd_ctx->pdev, chan);
+		icv->max_reg_power = wlan_reg_get_channel_reg_power_for_freq(
+				hdd_ctx->pdev, freq_list[i]);
 
 		/* filling demo values */
 		icv->max_radio_power = HDD_MAX_TX_POWER;
