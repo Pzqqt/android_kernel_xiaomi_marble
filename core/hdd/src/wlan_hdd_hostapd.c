@@ -4994,9 +4994,7 @@ int wlan_hdd_restore_channels(struct hdd_context *hdd_ctx)
 	}
 
 	for (i = 0; i < cache_chann->num_channels; i++) {
-		freq = wlan_reg_legacy_chan_to_freq(
-				hdd_ctx->pdev,
-				cache_chann->channel_info[i].channel_num);
+		freq = cache_chann->channel_info[i].freq;
 		if (!freq)
 			continue;
 
@@ -5010,8 +5008,8 @@ int wlan_hdd_restore_channels(struct hdd_context *hdd_ctx)
 		wiphy_channel->flags =
 				cache_chann->channel_info[i].wiphy_status;
 
-		hdd_debug("Restore channel %d reg_stat %d wiphy_stat 0x%x",
-			  cache_chann->channel_info[i].channel_num,
+		hdd_debug("Restore channel_freq %d reg_stat %d wiphy_stat 0x%x",
+			  cache_chann->channel_info[i].freq,
 			  cache_chann->channel_info[i].reg_status,
 			  wiphy_channel->flags);
 	}
@@ -5063,8 +5061,7 @@ int wlan_hdd_disable_channels(struct hdd_context *hdd_ctx)
 	}
 
 	for (i = 0; i < cache_chann->num_channels; i++) {
-		freq = wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev,
-						    cache_chann->channel_info[i].channel_num);
+		freq = cache_chann->channel_info[i].freq;
 		if (!freq)
 			continue;
 		wiphy_channel = wlan_hdd_get_wiphy_channel(wiphy, freq);
@@ -5080,8 +5077,8 @@ int wlan_hdd_disable_channels(struct hdd_context *hdd_ctx)
 							freq);
 		cache_chann->channel_info[i].wiphy_status =
 							wiphy_channel->flags;
-		hdd_debug("Disable channel %d reg_stat %d wiphy_stat 0x%x",
-			  cache_chann->channel_info[i].channel_num,
+		hdd_debug("Disable channel_freq %d reg_stat %d wiphy_stat 0x%x",
+			  cache_chann->channel_info[i].freq,
 			  cache_chann->channel_info[i].reg_status,
 			  wiphy_channel->flags);
 
