@@ -171,14 +171,14 @@ enum {
 
 /**
  * sde_sys_cache_type: Types of system cache supported
- * SDE_SYS_CACHE_ROT: Rotator system cache
  * SDE_SYS_CACHE_DISP: Static img system cache
+ * SDE_SYS_CACHE_MAX:  Maximum number of sys cache users
+ * SDE_SYS_CACHE_NONE: Sys cache not used
  */
 enum sde_sys_cache_type {
-	SDE_SYS_CACHE_ROT,
 	SDE_SYS_CACHE_DISP,
 	SDE_SYS_CACHE_MAX,
-	SDE_SYS_CACHE_NONE
+	SDE_SYS_CACHE_NONE = SDE_SYS_CACHE_MAX
 };
 
 /**

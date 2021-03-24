@@ -2767,19 +2767,18 @@ void sde_plane_set_error(struct drm_plane *plane, bool error)
 }
 
 static void _sde_plane_sspp_setup_sys_cache(struct sde_plane *psde,
-		struct sde_plane_state *pstate, bool is_tp10)
+		struct sde_plane_state *pstate)
 {
 	struct sde_sc_cfg *sc_cfg = psde->catalog->sc_cfg;
 	bool prev_rd_en;
 
-	if (!psde->pipe_hw->ops.setup_sys_cache ||
-			!(psde->perf_features & BIT(SDE_PERF_SSPP_SYS_CACHE)))
+	/* Only display system cache is currently supported */
+	if (!sc_cfg[SDE_SYS_CACHE_DISP].has_sys_cache)
 		return;
 
 	prev_rd_en = pstate->sc_cfg.rd_en;
 
-	SDE_DEBUG("features:0x%x rotation:0x%x\n",
-		psde->features, pstate->rotation);
+	SDE_DEBUG_PLANE(psde, "features:0x%x\n", psde->features);
 
 	pstate->sc_cfg.rd_en = false;
 	pstate->sc_cfg.rd_scid = 0x0;
@@ -2787,17 +2786,7 @@ static void _sde_plane_sspp_setup_sys_cache(struct sde_plane *psde,
 			SSPP_SYS_CACHE_SCID;
 	pstate->sc_cfg.type = SDE_SYS_CACHE_NONE;
 
-	if (pstate->rotation & DRM_MODE_ROTATE_90) {
-		if (is_tp10 && sc_cfg[SDE_SYS_CACHE_ROT].has_sys_cache) {
-			pstate->sc_cfg.rd_en = true;
-			pstate->sc_cfg.rd_scid =
-					sc_cfg[SDE_SYS_CACHE_ROT].llcc_scid;
-			pstate->sc_cfg.flags = SSPP_SYS_CACHE_EN_FLAG |
-					SSPP_SYS_CACHE_SCID;
-			pstate->sc_cfg.type = SDE_SYS_CACHE_ROT;
-		}
-	} else if (pstate->static_cache_state == CACHE_STATE_FRAME_WRITE &&
-			sc_cfg[SDE_SYS_CACHE_DISP].has_sys_cache) {
+	if (pstate->static_cache_state == CACHE_STATE_FRAME_WRITE) {
 		pstate->sc_cfg.rd_en = true;
 		pstate->sc_cfg.rd_scid =
 				sc_cfg[SDE_SYS_CACHE_DISP].llcc_scid;
@@ -2805,8 +2794,7 @@ static void _sde_plane_sspp_setup_sys_cache(struct sde_plane *psde,
 		pstate->sc_cfg.flags = SSPP_SYS_CACHE_EN_FLAG |
 				SSPP_SYS_CACHE_SCID | SSPP_SYS_CACHE_NO_ALLOC;
 		pstate->sc_cfg.type = SDE_SYS_CACHE_DISP;
-	} else if (pstate->static_cache_state == CACHE_STATE_FRAME_READ &&
-			sc_cfg[SDE_SYS_CACHE_DISP].has_sys_cache) {
+	} else if (pstate->static_cache_state == CACHE_STATE_FRAME_READ) {
 		pstate->sc_cfg.rd_en = true;
 		pstate->sc_cfg.rd_scid =
 				sc_cfg[SDE_SYS_CACHE_DISP].llcc_scid;
@@ -2843,7 +2831,7 @@ void sde_plane_static_img_control(struct drm_plane *plane,
 	pstate->static_cache_state = state;
 
 	if (state == CACHE_STATE_FRAME_WRITE || state == CACHE_STATE_FRAME_READ)
-		_sde_plane_sspp_setup_sys_cache(psde, pstate, false);
+		_sde_plane_sspp_setup_sys_cache(psde, pstate);
 }
 
 static void _sde_plane_map_prop_to_dirty_bits(void)
@@ -3124,8 +3112,7 @@ static void _sde_plane_update_format_and_rects(struct sde_plane *psde,
 			   pstate->multirect_index);
 	}
 
-	_sde_plane_sspp_setup_sys_cache(psde, pstate,
-			sde_format_is_tp10_ubwc(fmt));
+	_sde_plane_sspp_setup_sys_cache(psde, pstate);
 
 	/* update csc */
 	if (SDE_FORMAT_IS_YUV(fmt))

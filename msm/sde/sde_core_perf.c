@@ -327,7 +327,7 @@ static int _sde_core_perf_activate_llcc(struct sde_kms *kms,
 	struct drm_device *drm_dev;
 	struct device *dev;
 	struct platform_device *pdev;
-	u32 llcc_id[SDE_SYS_CACHE_MAX] = {LLCC_ROTATOR, LLCC_DISP};
+	u32 llcc_id[SDE_SYS_CACHE_MAX] = {LLCC_DISP};
 	int rc = 0;
 
 	if (!kms || !kms->dev || !kms->dev->dev) {
@@ -421,7 +421,7 @@ void sde_core_perf_crtc_update_llcc(struct drm_crtc *crtc)
 	struct sde_kms *kms;
 	struct sde_crtc *sde_crtc;
 	struct sde_core_perf_params *old, *new;
-	int update_llcc[SDE_SYS_CACHE_MAX] = {0, 0};
+	int update_llcc[SDE_SYS_CACHE_MAX] = {0};
 	int i;
 
 	if (!crtc) {
