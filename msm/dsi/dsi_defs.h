@@ -588,6 +588,16 @@ struct dsi_host_config {
 };
 
 /**
+ * struct dyn_clk_list - list of dynamic clock rates.
+ * @rates: list of supported clock rates
+ * @count: number of supported clock rates
+ */
+struct dyn_clk_list {
+	u32 *rates;
+	u32 count;
+};
+
+/**
  * struct dsi_display_mode_priv_info - private mode info that will be attached
  *                             with each drm mode
  * @cmd_sets:		  Command sets of the mode
@@ -600,6 +610,7 @@ struct dsi_host_config {
  * @dsi_transfer_time_us: Specifies the dsi transfer time for cmd panels.
  * @clk_rate_hz:          DSI bit clock per lane in hz.
  * @min_dsi_clk_hz:       Min dsi clk per lane to transfer frame in vsync time.
+ * @bit_clk_list:         List of dynamic bit clock rates supported.
  * @topology:             Topology selected for the panel
  * @dsc:                  DSC compression info
  * @vdc:                  VDC compression info
@@ -623,6 +634,7 @@ struct dsi_display_mode_priv_info {
 	u32 dsi_transfer_time_us;
 	u64 clk_rate_hz;
 	u64 min_dsi_clk_hz;
+	struct dyn_clk_list bit_clk_list;
 
 	struct msm_display_topology topology;
 	struct msm_display_dsc_info dsc;

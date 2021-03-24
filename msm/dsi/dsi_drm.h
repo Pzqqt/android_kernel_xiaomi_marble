@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DSI_DRM_H_
@@ -134,9 +134,6 @@ int dsi_conn_post_kickoff(struct drm_connector *connector,
 void dsi_convert_to_drm_mode(const struct dsi_display_mode *dsi_mode,
 				struct drm_display_mode *drm_mode);
 
-u64 dsi_drm_find_bit_clk_rate(void *display,
-			      const struct drm_display_mode *drm_mode);
-
 /**
  * dsi_conn_prepare_commit - program pre commit time features
  * @display: Pointer to private display structure
@@ -153,5 +150,14 @@ int dsi_conn_prepare_commit(void *display,
  */
 void dsi_conn_set_allowed_mode_switch(struct drm_connector *connector,
 		void *display);
+
+/**
+ * dsi_conn_set_dyn_bit_clk - set target dynamic clock rate
+ * @connector: Pointer to drm connector structure
+ * @value: Target dynamic clock rate
+ * Returns: Zero on success
+ */
+int dsi_conn_set_dyn_bit_clk(struct drm_connector *connector,
+		uint64_t value);
 
 #endif /* _DSI_DRM_H_ */

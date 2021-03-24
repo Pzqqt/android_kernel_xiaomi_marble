@@ -292,6 +292,9 @@ static inline bool msm_is_private_mode_changed(
 	if (msm_is_mode_seamless_poms(msm_mode))
 		return true;
 
+	if (msm_is_mode_seamless_dyn_clk(msm_mode))
+		return true;
+
 	return false;
 }
 

@@ -612,6 +612,16 @@ void sde_kms_info_append_format(struct sde_kms_info *info,
 void sde_kms_info_stop(struct sde_kms_info *info);
 
 /**
+ * sde_kms_info_add_list - add a space separated list to 'sde_kms_info'
+ * @info: Pointer to sde_kms_info structure
+ * @key: Pointer to key string
+ * @item: Pointer to array of integer values
+ * @size: Number of integers to parse
+ */
+void sde_kms_info_add_list(struct sde_kms_info *info,
+		const char *key, uint32_t *item, size_t size);
+
+/**
  * sde_kms_rect_intersect - intersect two rectangles
  * @r1: first rectangle
  * @r2: scissor rectangle

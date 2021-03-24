@@ -1326,13 +1326,48 @@ error:
 	return rc;
 }
 
+static int dsi_panel_parse_dyn_clk_list(struct dsi_display_mode *mode,
+		struct dsi_parser_utils *utils)
+{
+	int i, rc = 0;
+	struct dyn_clk_list *bit_clk_list;
+
+	if (!mode || !mode->priv_info) {
+		DSI_ERR("invalid arguments\n");
+		return -EINVAL;
+	}
+
+	bit_clk_list = &mode->priv_info->bit_clk_list;
+
+	bit_clk_list->count = utils->count_u32_elems(utils->data, "qcom,dsi-dyn-clk-list");
+	if (bit_clk_list->count < 1)
+		return 0;
+
+	bit_clk_list->rates = kcalloc(bit_clk_list->count, sizeof(u32), GFP_KERNEL);
+	if (!bit_clk_list->rates) {
+		DSI_ERR("failed to allocate space for bit clock list\n");
+		return -ENOMEM;
+	}
+
+	rc = utils->read_u32_array(utils->data, "qcom,dsi-dyn-clk-list",
+			bit_clk_list->rates, bit_clk_list->count);
+	if (rc) {
+		DSI_ERR("failed to parse supported bit clk list, rc=%d\n", rc);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < bit_clk_list->count; i++)
+		DSI_DEBUG("bit clk rate[%d]:%d\n", i, bit_clk_list->rates[i]);
+
+	return 0;
+}
+
 static int dsi_panel_parse_dyn_clk_caps(struct dsi_panel *panel)
 {
 	int rc = 0;
 	bool supported = false;
 	struct dsi_dyn_clk_caps *dyn_clk_caps = &panel->dyn_clk_caps;
 	struct dsi_parser_utils *utils = &panel->utils;
-	const char *name = panel->name;
 	const char *type;
 
 	supported = utils->read_bool(utils->data, "qcom,dsi-dyn-clk-enable");
@@ -1340,28 +1375,6 @@ static int dsi_panel_parse_dyn_clk_caps(struct dsi_panel *panel)
 	if (!supported) {
 		dyn_clk_caps->dyn_clk_support = false;
 		return rc;
-	}
-
-	dyn_clk_caps->bit_clk_list_len = utils->count_u32_elems(utils->data,
-			"qcom,dsi-dyn-clk-list");
-
-	if (dyn_clk_caps->bit_clk_list_len < 1) {
-		DSI_ERR("[%s] failed to get supported bit clk list\n", name);
-		return -EINVAL;
-	}
-
-	dyn_clk_caps->bit_clk_list = kcalloc(dyn_clk_caps->bit_clk_list_len,
-			sizeof(u32), GFP_KERNEL);
-	if (!dyn_clk_caps->bit_clk_list)
-		return -ENOMEM;
-
-	rc = utils->read_u32_array(utils->data, "qcom,dsi-dyn-clk-list",
-			dyn_clk_caps->bit_clk_list,
-			dyn_clk_caps->bit_clk_list_len);
-
-	if (rc) {
-		DSI_ERR("[%s] failed to parse supported bit clk list\n", name);
-		return -EINVAL;
 	}
 
 	dyn_clk_caps->dyn_clk_support = true;
@@ -4030,6 +4043,12 @@ int dsi_panel_get_mode(struct dsi_panel *panel,
 		if (rc) {
 			DSI_ERR("failed to parse panel timing, rc=%d\n", rc);
 			goto parse_fail;
+		}
+
+		if (panel->dyn_clk_caps.dyn_clk_support) {
+			rc = dsi_panel_parse_dyn_clk_list(mode, utils);
+			if (rc)
+				DSI_ERR("failed to parse dynamic clk rates, rc=%d\n", rc);
 		}
 
 		rc = dsi_panel_parse_dsc_params(mode, utils);

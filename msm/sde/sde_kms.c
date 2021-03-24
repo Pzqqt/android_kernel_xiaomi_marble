@@ -1736,6 +1736,7 @@ static int _sde_kms_setup_displays(struct drm_device *dev,
 		.cmd_receive = dsi_display_cmd_receive,
 		.install_properties = NULL,
 		.set_allowed_mode_switch = dsi_conn_set_allowed_mode_switch,
+		.set_dyn_bit_clk = dsi_conn_set_dyn_bit_clk,
 		.get_qsync_min_fps = dsi_display_get_qsync_min_fps,
 		.prepare_commit = dsi_conn_prepare_commit,
 	};
@@ -1756,6 +1757,7 @@ static int _sde_kms_setup_displays(struct drm_device *dev,
 		.get_panel_vfp = NULL,
 		.cmd_receive = NULL,
 		.install_properties = NULL,
+		.set_dyn_bit_clk = NULL,
 		.set_allowed_mode_switch = NULL,
 	};
 	static const struct sde_connector_ops dp_ops = {
@@ -1778,6 +1780,7 @@ static int _sde_kms_setup_displays(struct drm_device *dev,
 		.cmd_receive = NULL,
 		.install_properties = dp_connector_install_properties,
 		.set_allowed_mode_switch = NULL,
+		.set_dyn_bit_clk = NULL,
 	};
 	struct msm_display_info info;
 	struct drm_encoder *encoder;

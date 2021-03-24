@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"sde-kms_utils:[%s] " fmt, __func__
@@ -89,6 +89,28 @@ void sde_kms_info_append(struct sde_kms_info *info,
 			info->start = false;
 		}
 	}
+}
+
+void sde_kms_info_add_list(struct sde_kms_info *info, const char *key, uint32_t *value, size_t size)
+{
+	uint32_t i, len;
+
+	if (!info || !key || !value || !size)
+		return;
+
+	sde_kms_info_start(info, key);
+	for (i = 0; i < size; i++) {
+		len = scnprintf(info->data + info->staged_len,
+				SDE_KMS_INFO_MAX_SIZE - info->len, "%d ",
+				value[i]);
+
+		/* check if snprintf truncated the string */
+		if ((info->staged_len + len) < SDE_KMS_INFO_MAX_SIZE) {
+			info->staged_len += len;
+			info->start = false;
+		}
+	}
+	sde_kms_info_stop(info);
 }
 
 void sde_kms_info_append_format(struct sde_kms_info *info,

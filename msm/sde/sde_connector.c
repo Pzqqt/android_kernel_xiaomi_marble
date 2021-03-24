@@ -1595,6 +1595,15 @@ static int sde_connector_atomic_set_property(struct drm_connector *connector,
 			c_conn->expected_panel_mode =
 				MSM_DISPLAY_CMD_MODE;
 		break;
+	case CONNECTOR_PROP_DYN_BIT_CLK:
+		if (!c_conn->ops.set_dyn_bit_clk)
+			break;
+
+		rc = c_conn->ops.set_dyn_bit_clk(connector, val);
+		if (rc)
+			SDE_ERROR_CONN(c_conn, "dynamic bit clock set failed, rc: %d", rc);
+
+		break;
 	default:
 		break;
 	}
@@ -2614,6 +2623,12 @@ static int sde_connector_populate_mode_info(struct drm_connector *conn,
 		sde_kms_info_add_keyint(info, "bit_clk_rate",
 					mode_info.clk_rate);
 
+		if (mode_info.bit_clk_count > 0)
+			sde_kms_info_add_list(info, "dyn_bitclk_list",
+					mode_info.bit_clk_rates,
+					mode_info.bit_clk_count);
+
+
 		topology_idx = (int)sde_rm_get_topology_name(&sde_kms->rm,
 					mode_info.topology);
 		if (topology_idx < SDE_RM_TOPOLOGY_MAX) {
@@ -2787,6 +2802,12 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 				sizeof(dsi_display->panel->hdr_props),
 				CONNECTOR_PROP_HDR_INFO);
 		}
+
+		if (dsi_display && dsi_display->panel &&
+				dsi_display->panel->dyn_clk_caps.dyn_clk_support)
+			msm_property_install_range(&c_conn->property_info, "dyn_bit_clk",
+					0x0, 0, ~0, 0, CONNECTOR_PROP_DYN_BIT_CLK);
+
 
 		mutex_lock(&c_conn->base.dev->mode_config.mutex);
 		sde_connector_fill_modes(&c_conn->base,
