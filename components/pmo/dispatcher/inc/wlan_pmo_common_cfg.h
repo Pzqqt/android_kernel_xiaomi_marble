@@ -482,6 +482,27 @@
 		0, \
 		"This ini is used to enable bus suspend in P2PGO mode")
 
+/*
+ * <ini>
+ * igmp_version_support - Configure igmp version
+ * @Min: 0x00000000
+ * @Max: 0x7
+ * @Default: 0x0000000
+ *
+ * This ini is used to configure version while offloading igmp
+ *
+ * Bit 0: support igmp version 1
+ * Bit 1: support igmp version 2
+ * Bit 2: support igmp version 3
+ */
+#define CFG_IGMP_VERSION_SUPPORT CFG_INI_UINT( \
+		"igmp_version_support", \
+		0x00000000, \
+		0x7, \
+		0x7, \
+		CFG_VALUE_OR_DEFAULT, \
+		"configure igmp offload support version")
+
 #define CFG_PMO_COMMON_ALL \
 	CFG(CFG_ENABLE_SAP_SUSPEND) \
 	CFG(CFG_PMO_ENABLE_HOST_ARPOFFLOAD) \
@@ -501,6 +522,7 @@
 	CFG(CFG_RA_RATE_LIMIT_INTERVAL) \
 	CFG(CFG_PMO_MOD_DTIM_ON_SYS_SUSPEND) \
 	CFG(CFG_ENABLE_BUS_SUSPEND_IN_SAP_MODE) \
-	CFG(CFG_ENABLE_BUS_SUSPEND_IN_GO_MODE)
+	CFG(CFG_ENABLE_BUS_SUSPEND_IN_GO_MODE)\
+	CFG(CFG_IGMP_VERSION_SUPPORT)
 
 #endif /* WLAN_PMO_COMMON_CFG_H__ */
