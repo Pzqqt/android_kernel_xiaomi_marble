@@ -319,21 +319,6 @@ void ucfg_reg_cache_channel_freq_state(struct wlan_objmgr_pdev *pdev,
 }
 #endif /* CONFIG_CHAN_FREQ_API */
 
-#ifdef CONFIG_CHAN_NUM_API
-/**
- * ucfg_reg_cache_channel_state() - Cache the current state of the channles
- * @pdev: The physical dev to cache the channels for
- * @channel_list: List of the channels for which states needs to be cached
- * @num_channels: Number of channels in the list
- *
- */
-void ucfg_reg_cache_channel_state(struct wlan_objmgr_pdev *pdev,
-				  uint32_t *channel_list, uint32_t num_channels)
-{
-	reg_cache_channel_state(pdev, channel_list, num_channels);
-}
-#endif /* CONFIG_CHAN_NUM_API */
-
 void ucfg_reg_restore_cached_channels(struct wlan_objmgr_pdev *pdev)
 {
 	reg_restore_cached_channels(pdev);

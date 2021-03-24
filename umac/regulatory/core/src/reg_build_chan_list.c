@@ -731,8 +731,8 @@ static void reg_modify_chan_list_for_cached_channels(
 	if (pdev_priv_obj->disable_cached_channels) {
 		for (i = 0; i < num_cache_channels; i++)
 			for (j = 0; j < NUM_CHANNELS; j++)
-				if (cache_chan_list[i].chan_num ==
-							chan_list[j].chan_num) {
+				if (cache_chan_list[i].center_freq ==
+				    chan_list[j].center_freq) {
 					chan_list[j].state =
 							CHANNEL_STATE_DISABLE;
 					chan_list[j].chan_flags |=

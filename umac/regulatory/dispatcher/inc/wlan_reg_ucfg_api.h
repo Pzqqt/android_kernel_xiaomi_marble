@@ -62,27 +62,6 @@ QDF_STATUS ucfg_reg_notify_sap_event(struct wlan_objmgr_pdev *pdev,
 			bool sap_state);
 
 /**
- * ucfg_reg_cache_channel_state() - Cache the current state of the channles
- * @pdev: The physical dev to cache the channels for
- * @channel_list: List of the channels for which states needs to be cached
- * @num_channels: Number of channels in the list
- *
- * Return: QDF_STATUS
- */
-#if defined(DISABLE_CHANNEL_LIST) && defined(CONFIG_CHAN_NUM_API)
-void ucfg_reg_cache_channel_state(struct wlan_objmgr_pdev *pdev,
-				  uint32_t *channel_list,
-				  uint32_t num_channels);
-#else
-static inline
-void ucfg_reg_cache_channel_state(struct wlan_objmgr_pdev *pdev,
-				  uint32_t *channel_list,
-				  uint32_t num_channels)
-{
-}
-#endif /* CONFIG_CHAN_NUM_API */
-
-/**
  * ucfg_reg_cache_channel_freq_state() - Cache the current state of the
  * channels based on the channel center frequency.
  * @pdev: Pointer to pdev.
