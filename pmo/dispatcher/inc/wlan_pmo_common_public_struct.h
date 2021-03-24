@@ -329,6 +329,7 @@ enum pmo_gpio_wakeup_mode {
  * @gpio_wakeup_pin: gpio wakeup pin
  * @gpio_wakeup_mode: gpio wakeup mode
  * @igmp_version_support: igmp version support
+ * @igmp_offload_enable: enable/disable igmp offload feature to fw
  */
 struct pmo_psoc_cfg {
 	bool ptrn_match_enable_all_vdev;
@@ -402,6 +403,7 @@ struct pmo_psoc_cfg {
 #endif
 #ifdef WLAN_FEATURE_IGMP_OFFLOAD
 	uint32_t igmp_version_support;
+	bool igmp_offload_enable;
 #endif
 };
 
