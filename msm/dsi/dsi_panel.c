@@ -1157,7 +1157,7 @@ static void dsi_panel_parse_split_link_config(struct dsi_host_common_cfg *host,
 
 	if (!supported) {
 		DSI_DEBUG("[%s] Split link is not supported\n", name);
-		split_link->split_link_enabled = false;
+		split_link->enabled = false;
 		return;
 	}
 
@@ -1177,9 +1177,14 @@ static void dsi_panel_parse_split_link_config(struct dsi_host_common_cfg *host,
 		split_link->lanes_per_sublink = val;
 	}
 
+	supported = utils->read_bool(utils->data, "qcom,split-link-sublink-swap");
+
+	if (!supported)
+		split_link->sublink_swap = false;
+
 	DSI_DEBUG("[%s] Split link is supported %d-%d\n", name,
 		split_link->num_sublinks, split_link->lanes_per_sublink);
-	split_link->split_link_enabled = true;
+	split_link->enabled = true;
 }
 
 static int dsi_panel_parse_host_config(struct dsi_panel *panel)

@@ -290,4 +290,6 @@ int dsi_catalog_phy_pll_setup(struct dsi_phy_hw *phy, u32 pll_ver);
 int dsi_pll_5nm_configure(void *pll, bool commit);
 int dsi_pll_5nm_toggle(void *pll, bool prepare);
 
+void dsi_ctrl_hw_22_configure_splitlink(struct dsi_ctrl_hw *ctrl,
+		struct dsi_host_common_cfg *common_cfg, u32 sublink);
 #endif /* _DSI_CATALOG_H_ */

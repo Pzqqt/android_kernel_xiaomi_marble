@@ -56,7 +56,7 @@ static void dsi_split_link_setup(struct dsi_ctrl_hw *ctrl,
 {
 	u32 reg;
 
-	if (!cfg->split_link.split_link_enabled)
+	if (!cfg->split_link.enabled)
 		return;
 
 	reg = DSI_R32(ctrl, DSI_SPLIT_LINK);
@@ -68,6 +68,14 @@ static void dsi_split_link_setup(struct dsi_ctrl_hw *ctrl,
 	/* MDP0_LINK_SEL */
 	reg &= ~(0x7 << 20);
 	reg |= DSI_CTRL_MDP0_LINK_SEL;
+
+	/* COMMAND_INPUT_SWAP|VIDEO_INPUT_SWAP */
+	if (cfg->split_link.sublink_swap) {
+		if (cfg->split_link.panel_mode == DSI_OP_CMD_MODE)
+			reg |= BIT(8);
+		else
+			reg |= BIT(4);
+	}
 
 	/* EN */
 	reg |= 0x1;

@@ -7,6 +7,7 @@
 #include <linux/delay.h>
 #include <linux/iopoll.h>
 #include "dsi_hw.h"
+#include "dsi_defs.h"
 #include "dsi_phy_hw.h"
 #include "dsi_catalog.h"
 
@@ -61,6 +62,7 @@
 #define DSIPHY_CMN_LANE_STATUS0						0x148
 #define DSIPHY_CMN_LANE_STATUS1						0x14C
 #define DSIPHY_CMN_GLBL_DIGTOP_SPARE10                                  0x1AC
+#define DSIPHY_CMN_CMN_SL_DSI_LANE_CTRL1                                0x1B4
 
 /* n = 0..3 for data lanes and n = 4 for clock lane */
 #define DSIPHY_LNX_CFG0(n)                         (0x200 + (0x80 * (n)))
@@ -156,11 +158,16 @@ static void dsi_phy_hw_v4_0_lane_settings(struct dsi_phy_hw *phy,
 	u8 tx_dctrl_v4[] = {0x00, 0x00, 0x00, 0x04, 0x01};
 	u8 tx_dctrl_v4_1[] = {0x40, 0x40, 0x40, 0x46, 0x41};
 	u8 *tx_dctrl;
+	bool split_link_enabled;
+	u32 lanes_per_sublink;
 
 	if (phy->version >= DSI_PHY_VERSION_4_1)
 		tx_dctrl = &tx_dctrl_v4_1[0];
 	else
 		tx_dctrl = &tx_dctrl_v4[0];
+
+	split_link_enabled = cfg->split_link.enabled;
+	lanes_per_sublink = cfg->split_link.lanes_per_sublink;
 
 	/* Strength ctrl settings */
 	for (i = DSI_LOGICAL_LANE_0; i < DSI_LANE_MAX; i++) {
@@ -182,6 +189,19 @@ static void dsi_phy_hw_v4_0_lane_settings(struct dsi_phy_hw *phy,
 		DSI_W32(phy, DSIPHY_LNX_TX_DCTRL(i), tx_dctrl[i]);
 	}
 
+	/* remove below check if cphy splitlink is enabled */
+	if (split_link_enabled && (cfg->phy_type == DSI_PHY_TYPE_CPHY))
+		return;
+
+	/* Configure the splitlink clock lane with clk lane settings */
+	if (split_link_enabled) {
+		DSI_W32(phy, DSIPHY_LNX_LPRX_CTRL(5), 0x0);
+		DSI_W32(phy, DSIPHY_LNX_PIN_SWAP(5), 0x0);
+		DSI_W32(phy, DSIPHY_LNX_CFG0(5), cfg->lanecfg.lane[4][0]);
+		DSI_W32(phy, DSIPHY_LNX_CFG1(5), cfg->lanecfg.lane[4][1]);
+		DSI_W32(phy, DSIPHY_LNX_CFG2(5), cfg->lanecfg.lane[4][2]);
+		DSI_W32(phy, DSIPHY_LNX_TX_DCTRL(5), tx_dctrl[4]);
+	}
 }
 
 void dsi_phy_hw_v4_0_commit_phy_timing(struct dsi_phy_hw *phy,
@@ -331,6 +351,8 @@ static void dsi_phy_hw_dphy_enable(struct dsi_phy_hw *phy,
 	u32 glbl_hstx_str_ctrl_0 = 0;
 	u32 glbl_rescode_top_ctrl = 0;
 	u32 glbl_rescode_bot_ctrl = 0;
+	bool split_link_enabled;
+	u32 lanes_per_sublink;
 
 	/* Alter PHY configurations if data rate less than 1.5GHZ*/
 	if (cfg->bit_clk_rate_hz <= 1500000000)
@@ -356,10 +378,17 @@ static void dsi_phy_hw_dphy_enable(struct dsi_phy_hw *phy,
 		glbl_rescode_bot_ctrl = 0x3c;
 	}
 
+	split_link_enabled = cfg->split_link.enabled;
+	lanes_per_sublink = cfg->split_link.lanes_per_sublink;
 	/* de-assert digital and pll power down */
 	data = BIT(6) | BIT(5);
 	DSI_W32(phy, DSIPHY_CMN_CTRL_0, data);
 
+	if (split_link_enabled) {
+		data = DSI_R32(phy, DSIPHY_CMN_GLBL_CTRL);
+		/* set SPLIT_LINK_ENABLE in global control */
+		DSI_W32(phy, DSIPHY_CMN_GLBL_CTRL, (data | BIT(5)));
+	}
 	/* Assert PLL core reset */
 	DSI_W32(phy, DSIPHY_CMN_PLL_CNTRL, 0x00);
 
@@ -389,10 +418,23 @@ static void dsi_phy_hw_dphy_enable(struct dsi_phy_hw *phy,
 			glbl_rescode_bot_ctrl);
 	DSI_W32(phy, DSIPHY_CMN_GLBL_LPTX_STR_CTRL, 0x55);
 
-	/* Remove power down from all blocks */
-	DSI_W32(phy, DSIPHY_CMN_CTRL_0, 0x7f);
+	if (split_link_enabled) {
+		if (lanes_per_sublink == 1) {
+			/* remove Lane1 and Lane3 configs */
+			DSI_W32(phy, DSIPHY_CMN_CTRL_0, 0xed);
+			DSI_W32(phy, DSIPHY_CMN_LANE_CTRL0, 0x35);
+		} else {
+			/* enable all together with sublink clock */
+			DSI_W32(phy, DSIPHY_CMN_CTRL_0, 0xff);
+			DSI_W32(phy, DSIPHY_CMN_LANE_CTRL0, 0x3F);
+		}
 
-	DSI_W32(phy, DSIPHY_CMN_LANE_CTRL0, 0x1F);
+		DSI_W32(phy, DSIPHY_CMN_CMN_SL_DSI_LANE_CTRL1, 0x03);
+	} else {
+		/* Remove power down from all blocks */
+		DSI_W32(phy, DSIPHY_CMN_CTRL_0, 0x7f);
+		DSI_W32(phy, DSIPHY_CMN_LANE_CTRL0, 0x1F);
+	}
 
 	/* Select full-rate mode */
 	DSI_W32(phy, DSIPHY_CMN_CTRL_2, 0x40);
@@ -472,8 +514,8 @@ void dsi_phy_hw_v4_0_disable(struct dsi_phy_hw *phy,
 	dsi_phy_hw_v4_0_config_lpcdrx(phy, cfg, false);
 
 	data = DSI_R32(phy, DSIPHY_CMN_CTRL_0);
-	/* disable all lanes */
-	data &= ~0x1F;
+	/* disable all lanes and splitlink clk lane*/
+	data &= ~0x9F;
 	DSI_W32(phy, DSIPHY_CMN_CTRL_0, data);
 	DSI_W32(phy, DSIPHY_CMN_LANE_CTRL0, 0);
 

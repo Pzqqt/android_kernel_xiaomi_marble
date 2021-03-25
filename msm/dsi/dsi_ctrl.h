@@ -33,6 +33,8 @@
  *				   display panel dtsi file instead of default.
  * @DSI_CTRL_CMD_ASYNC_WAIT: Command flag to indicate that the wait for done
  *			for this command is asynchronous and must be queued.
+ * @DSI_CTRL_CMD_SUBLINK0: Send the command in splitlink sublink0 only.
+ * @DSI_CTRL_CMD_SUBLINK1: Send the command in splitlink sublink1 only.
  */
 #define DSI_CTRL_CMD_READ             0x1
 #define DSI_CTRL_CMD_BROADCAST        0x2
@@ -44,6 +46,8 @@
 #define DSI_CTRL_CMD_NON_EMBEDDED_MODE 0x80
 #define DSI_CTRL_CMD_CUSTOM_DMA_SCHED  0x100
 #define DSI_CTRL_CMD_ASYNC_WAIT 0x200
+#define DSI_CTRL_CMD_SUBLINK0 0x400
+#define DSI_CTRL_CMD_SUBLINK1 0x800
 
 /* DSI embedded mode fifo size
  * If the command is greater than 256 bytes it is sent in non-embedded mode.

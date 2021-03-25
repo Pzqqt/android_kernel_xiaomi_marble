@@ -2055,7 +2055,7 @@ static void adjust_timing_by_ctrl_count(const struct dsi_display *display,
 					struct dsi_display_mode *mode)
 {
 	struct dsi_host_common_cfg *host = &display->panel->host_config;
-	bool is_split_link = host->split_link.split_link_enabled;
+	bool is_split_link = host->split_link.enabled;
 	u32 sublinks_count = host->split_link.num_sublinks;
 
 	if (is_split_link && sublinks_count > 1) {
@@ -4104,6 +4104,7 @@ static int dsi_display_res_init(struct dsi_display *display)
 
 	display_for_each_ctrl(i, display) {
 		struct msm_dsi_phy *phy = display->ctrl[i].phy;
+		struct dsi_host_common_cfg *host = &display->panel->host_config;
 
 		phy->cfg.force_clk_lane_hs =
 			display->panel->host_config.force_hs_clk_lane;
@@ -4117,6 +4118,10 @@ static int dsi_display_res_init(struct dsi_display *display)
 		if ((display->panel->dyn_clk_caps.dyn_clk_support) &&
 				(display->panel->panel_mode == DSI_OP_VIDEO_MODE))
 			dsi_phy_pll_parse_dfps_data(phy);
+
+		phy->cfg.split_link.enabled = host->split_link.enabled;
+		phy->cfg.split_link.num_sublinks = host->split_link.num_sublinks;
+		phy->cfg.split_link.lanes_per_sublink = host->split_link.lanes_per_sublink;
 	}
 
 	rc = dsi_display_parse_lane_map(display);
@@ -5296,15 +5301,8 @@ static int dsi_display_validate_split_link(struct dsi_display *display)
 	struct dsi_display_ctrl *ctrl;
 	struct dsi_host_common_cfg *host = &display->panel->host_config;
 
-	if (!host->split_link.split_link_enabled)
+	if (!host->split_link.enabled)
 		return 0;
-
-	if (display->panel->panel_mode == DSI_OP_CMD_MODE) {
-		DSI_ERR("[%s] split link is not supported in command mode\n",
-			display->name);
-		rc = -ENOTSUPP;
-		goto error;
-	}
 
 	display_for_each_ctrl(i, display) {
 		ctrl = &display->ctrl[i];
@@ -5316,13 +5314,14 @@ static int dsi_display_validate_split_link(struct dsi_display *display)
 		}
 
 		set_bit(DSI_PHY_SPLIT_LINK, ctrl->phy->hw.feature_map);
+		host->split_link.panel_mode = display->panel->panel_mode;
 	}
 
 	DSI_DEBUG("Split link is enabled\n");
 	return 0;
 
 error:
-	host->split_link.split_link_enabled = false;
+	host->split_link.enabled = false;
 	return rc;
 }
 
@@ -6552,7 +6551,7 @@ int dsi_display_get_info(struct drm_connector *connector,
 	info->te_source = display->te_source;
 
 	host = &display->panel->host_config;
-	if (host->split_link.split_link_enabled)
+	if (host->split_link.enabled)
 		info->capabilities |= MSM_DISPLAY_SPLIT_LINK;
 
 	info->dsc_count = display->panel->dsc_count;
@@ -6818,7 +6817,7 @@ int dsi_display_get_modes(struct dsi_display *display,
 				display_mode.timing.mdp_transfer_time_us;
 		}
 
-		is_split_link = host->split_link.split_link_enabled;
+		is_split_link = host->split_link.enabled;
 		sublinks_count = host->split_link.num_sublinks;
 		if (is_split_link && sublinks_count > 1) {
 			display_mode.timing.h_active *= sublinks_count;
@@ -6916,7 +6915,7 @@ int dsi_display_get_panel_vfp(void *dsi_display,
 	}
 
 	host = &display->panel->host_config;
-	if (host->split_link.split_link_enabled)
+	if (host->split_link.enabled)
 		h_active *= host->split_link.num_sublinks;
 	else
 		h_active *= display->ctrl_count;

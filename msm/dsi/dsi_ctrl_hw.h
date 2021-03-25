@@ -869,6 +869,15 @@ struct dsi_ctrl_hw_ops {
 	 * @cmd_mode:	Boolean to indicate command mode operation.
 	 */
 	u32 (*log_line_count)(struct dsi_ctrl_hw *ctrl, bool cmd_mode);
+
+	/**
+	 * hw.ops.splitlink_cmd_setup() - configure the sublink to transfer
+	 * @ctrl:       Pointer to the controller host hardware.
+	 * @common_cfg: Common configuration parameters.
+	 * @sublink:    Which sublink to transfer the command.
+	 */
+	void (*splitlink_cmd_setup)(struct dsi_ctrl_hw *ctrl,
+			struct dsi_host_common_cfg *common_cfg, u32 sublink);
 };
 
 /*

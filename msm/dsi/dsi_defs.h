@@ -443,14 +443,20 @@ struct dsi_mode_info {
 
 /**
  * struct dsi_split_link_config - Split Link Configuration
- * @split_link_enabled:  Split Link Enabled.
+ * @enabled:  Split Link Enabled.
+ * @sublink_swap: Split link left right sublinks swap.
  * @num_sublinks:     Number of sublinks.
  * @lanes_per_sublink:   Number of lanes per sublink.
+ * @panel_mode: Specifies cmd or video mode.
+ * @lanes_enabled: Specifies what all lanes are enabled.
  */
 struct dsi_split_link_config {
-	bool split_link_enabled;
+	bool enabled;
+	bool sublink_swap;
 	u32 num_sublinks;
 	u32 lanes_per_sublink;
+	u8 lanes_enabled;
+	enum dsi_op_mode panel_mode;
 };
 
 /**
