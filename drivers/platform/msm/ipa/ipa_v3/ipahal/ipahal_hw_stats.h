@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _IPAHAL_HW_STATS_H_
@@ -12,6 +12,7 @@
 #define IPAHAL_MAX_PIPES_PER_REG 32
 #define IPAHAL_IPA5_PIPES_NUM 36
 #define IPAHAL_IPA5_PIPE_REG_NUM 2
+#define IPAHAL_IPA5_PRODUCER_PIPE_NUM 16
 #define IPAHAL_MAX_RULE_ID_32 (1024 / 32) /* 10 bits of rule id */
 
 enum ipahal_hw_stats_type {

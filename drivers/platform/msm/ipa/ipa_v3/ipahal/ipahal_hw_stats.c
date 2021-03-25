@@ -231,14 +231,14 @@ static struct ipahal_stats_init_pyld *ipahal_generate_init_pyld_tethering_v5_0(
 	struct ipahal_stats_init_pyld *pyld;
 	struct ipahal_stats_init_tethering *in =
 		(struct ipahal_stats_init_tethering *)params;
-	int hdr_entries;
+	int hdr_entries = 0;
 	int entries = 0;
 	int i, j, reg_idx;
 	void *pyld_ptr;
 	u32 incremental_offset;
 
 	for (i = 0; i < IPAHAL_IPA5_PIPE_REG_NUM; i++) {
-		hdr_entries = _count_ones(in->prod_bitmask[i]);
+		hdr_entries += _count_ones(in->prod_bitmask[i]);
 	}
 
 	IPAHAL_DBG_LOW("prod entries = %d\n", hdr_entries);
@@ -292,19 +292,32 @@ static struct ipahal_stats_init_pyld *ipahal_generate_init_pyld_tethering_v5_0(
 
 	reg_idx = 0;
 	for (i = 0; i < IPAHAL_IPA5_PIPES_NUM; i++) {
+
+		if (i > 0 && !(i % IPAHAL_MAX_PIPES_PER_REG)) {
+			reg_idx++;
+		}
+
 		if ((reg_idx < IPAHAL_IPA5_PIPE_REG_NUM) &&
 			(in->prod_bitmask[reg_idx] & ipahal_get_ep_bit(i))) {
 			struct ipahal_stats_tethering_hdr_v5_0_hw *hdr =
 				pyld_ptr;
-
-			if (i > 0 && !(i % IPAHAL_MAX_PIPES_PER_REG)) {
-				reg_idx++;
-			}
-			hdr->dst_mask1 = in->cons_bitmask[i][0];
-			hdr->dst_mask1 = in->cons_bitmask[i][1];
+			// TODO: for future versions of num HW consumers > 16
+			hdr->dst_mask_31_0 =
+				((in->cons_bitmask[i][0] >> IPAHAL_IPA5_PRODUCER_PIPE_NUM) |
+				(in->cons_bitmask[i][1] << IPAHAL_IPA5_PRODUCER_PIPE_NUM));
+			hdr->dst_mask_63_32 =
+				in->cons_bitmask[i][1] >> IPAHAL_IPA5_PRODUCER_PIPE_NUM;
+			// TODO: for future when num pipes > 64
+			hdr->dst_mask_95_64 = 0;
+			hdr->dst_mask_127_96 = 0;
 			hdr->offset = incremental_offset;
-			IPAHAL_DBG_LOW("hdr->dst_mask=0x[%X][%X]\n",
-				hdr->dst_mask1, hdr->dst_mask2);
+			IPAHAL_DBG_LOW("Pipe: %d\n", i);
+			IPAHAL_DBG_LOW("hdr->dst_mask_31_0=[0x%x],"
+				"hdr->dst_mask_63_32=[0x%x],"
+				"hdr->dst_mask_95_64=[0x%x],"
+				"hdr->dst_mask_127_96=[0x%x]\n",
+				hdr->dst_mask_31_0, hdr->dst_mask_63_32,
+				hdr->dst_mask_95_64, hdr->dst_mask_127_96);
 			IPAHAL_DBG_LOW("hdr->offset=0x%x\n", hdr->offset);
 			/* add the stats entry */
 			incremental_offset +=
