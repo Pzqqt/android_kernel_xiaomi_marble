@@ -839,6 +839,13 @@ static int sde_encoder_phys_wb_atomic_check(
 		return -EINVAL;
 	}
 
+	if (fmt->chroma_sample == SDE_CHROMA_H2V1 ||
+		fmt->chroma_sample == SDE_CHROMA_H1V2) {
+		SDE_ERROR("invalid chroma sample type in output format %x\n",
+			fmt->base.pixel_format);
+		return -EINVAL;
+	}
+
 	if (SDE_FORMAT_IS_UBWC(fmt) &&
 			!(wb_cfg->features & BIT(SDE_WB_UBWC))) {
 		SDE_ERROR("invalid output format %x\n", fmt->base.pixel_format);
