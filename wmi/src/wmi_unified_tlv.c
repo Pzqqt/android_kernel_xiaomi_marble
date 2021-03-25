@@ -15740,6 +15740,10 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_SCAN_CONFIG_PER_CHANNEL;
 	wmi_service[wmi_service_csa_beacon_template] =
 			WMI_SERVICE_CSA_BEACON_TEMPLATE;
+#ifdef WLAN_FEATURE_IGMP_OFFLOAD
+	wmi_service[wmi_service_igmp_offload_support] =
+			WMI_SERVICE_IGMP_OFFLOAD_SUPPORT;
+#endif
 #ifdef WLAN_SUPPORT_TWT
 	wmi_service[wmi_service_twt_bcast_req_support] =
 			WMI_SERVICE_BROADCAST_TWT_REQUESTER;

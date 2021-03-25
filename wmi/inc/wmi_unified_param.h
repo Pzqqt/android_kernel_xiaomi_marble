@@ -5114,6 +5114,9 @@ typedef enum {
 	wmi_service_disable_upper_6g_edge_ch_supp,
 #endif
 	wmi_service_dcs_awgn_int_support,
+#ifdef WLAN_FEATURE_IGMP_OFFLOAD
+	wmi_service_igmp_offload_support,
+#endif
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
