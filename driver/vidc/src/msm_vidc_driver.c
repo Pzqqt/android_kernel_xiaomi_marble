@@ -3410,6 +3410,9 @@ void msm_vidc_smmu_fault_work_handler(struct work_struct *work)
 		return;
 	}
 
+	/* print noc error log registers */
+	venus_print_noc_error_info(core);
+
 	core_lock(core, __func__);
 	list_for_each_entry(inst, &core->instances, list)
 		instances[num_instances++] = inst;

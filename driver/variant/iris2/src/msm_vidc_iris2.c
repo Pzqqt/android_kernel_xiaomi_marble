@@ -387,8 +387,12 @@ static int __noc_error_info_iris2(struct msm_vidc_core *vidc_core)
 		return -EINVAL;
 	}
 
-	//if (core->res->vpu_ver == VPU_VERSION_IRIS2_1)
-	//	return;
+	/* check ErrLog registers contain valid info */
+	if (!__read_register(core, VCODEC_NOC_ERL_MAIN_ERRVLD_LOW)) {
+		d_vpr_e("%s: VCODEC_NOC_ERL_MAIN_ERRVLD_LOW bit not-set\n", __func__);
+		/* todo: uncomment below line after validation */
+		//return 0;
+	}
 
 	val = __read_register(core, VCODEC_NOC_ERL_MAIN_SWID_LOW);
 	d_vpr_e("VCODEC_NOC_ERL_MAIN_SWID_LOW:     %#x\n", val);
@@ -396,8 +400,6 @@ static int __noc_error_info_iris2(struct msm_vidc_core *vidc_core)
 	d_vpr_e("VCODEC_NOC_ERL_MAIN_SWID_HIGH:     %#x\n", val);
 	val = __read_register(core, VCODEC_NOC_ERL_MAIN_MAINCTL_LOW);
 	d_vpr_e("VCODEC_NOC_ERL_MAIN_MAINCTL_LOW:     %#x\n", val);
-	val = __read_register(core, VCODEC_NOC_ERL_MAIN_ERRVLD_LOW);
-	d_vpr_e("VCODEC_NOC_ERL_MAIN_ERRVLD_LOW:     %#x\n", val);
 	val = __read_register(core, VCODEC_NOC_ERL_MAIN_ERRCLR_LOW);
 	d_vpr_e("VCODEC_NOC_ERL_MAIN_ERRCLR_LOW:     %#x\n", val);
 	val = __read_register(core, VCODEC_NOC_ERL_MAIN_ERRLOG0_LOW);
