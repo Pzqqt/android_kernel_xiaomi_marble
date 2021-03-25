@@ -806,8 +806,10 @@ struct dp_rx_tid {
  * @num_reo_status_ring_masks: interrupts with reo_status_ring_mask set
  * @num_rxdma2host_ring_masks: interrupts with rxdma2host_ring_mask set
  * @num_host2rxdma_ring_masks: interrupts with host2rxdma_ring_mask set
- * @num_host2rxdma_ring_masks: interrupts with host2rxdma_ring_mask set
+ * @num_rx_ring_near_full_masks: Near-full interrupts for REO DST ring
+ * @num_tx_comp_ring_near_full_masks: Near-full interrupts for TX completion
  * @num_masks: total number of times the interrupt was received
+ * @num_masks: total number of times the near full interrupt was received
  *
  * Counter for individual masks are incremented only if there are any packets
  * on that ring.
@@ -821,7 +823,12 @@ struct dp_intr_stats {
 	uint32_t num_reo_status_ring_masks;
 	uint32_t num_rxdma2host_ring_masks;
 	uint32_t num_host2rxdma_ring_masks;
+	uint32_t num_rx_ring_near_full_masks[MAX_REO_DEST_RINGS];
+	uint32_t num_tx_comp_ring_near_full_masks[MAX_TCL_DATA_RINGS];
+	uint32_t num_rx_wbm_rel_ring_near_full_masks;
+	uint32_t num_reo_status_ring_near_full_masks;
 	uint32_t num_masks;
+	uint32_t num_near_full_masks;
 };
 
 /* per interrupt context  */
@@ -1546,6 +1553,7 @@ enum dp_context_type {
  * @tx_hw_enqueue: enqueue TX data to HW
  * @tx_comp_get_params_from_hal_desc: get software tx descriptor and release
  * 				      source from HAL desc for wbm release ring
+ * @dp_service_near_full_srngs: Handler for servicing the near full IRQ
  * @txrx_set_vdev_param: target specific ops while setting vdev params
  */
 struct dp_arch_ops {
@@ -1598,6 +1606,9 @@ struct dp_arch_ops {
 
 	struct dp_rx_desc *(*dp_rx_desc_cookie_2_va)(struct dp_soc *soc,
 						     uint32_t cookie);
+	uint32_t (*dp_service_near_full_srngs)(struct dp_soc *soc,
+					       struct dp_intr *int_ctx,
+					       uint32_t dp_budget);
 
 	/* Control Arch Ops */
 	QDF_STATUS (*txrx_set_vdev_param)(struct dp_soc *soc,

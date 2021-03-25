@@ -429,3 +429,12 @@ void dp_tx_desc_pool_deinit_be(struct dp_soc *soc,
 				 page_desc_list->num_spt_pages);
 	page_desc_list->num_spt_pages = 0;
 }
+
+#ifdef WLAN_FEATURE_NEAR_FULL_IRQ
+uint32_t dp_tx_comp_nf_handler(struct dp_intr *int_ctx, struct dp_soc *soc,
+			       hal_ring_handle_t hal_ring_hdl, uint8_t ring_id,
+			       uint32_t quota)
+{
+	return 0;
+}
+#endif

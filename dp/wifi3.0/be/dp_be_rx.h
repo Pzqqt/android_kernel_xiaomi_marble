@@ -104,4 +104,29 @@ dp_rx_desc_sw_cc_check(struct dp_soc *soc,
 {
 }
 #endif /* DP_FEATURE_HW_COOKIE_CONVERSION && DP_HW_COOKIE_CONVERT_EXCEPTION */
+
+#ifdef WLAN_FEATURE_NEAR_FULL_IRQ
+/**
+ * dp_rx_nf_process() - Near Full state handler for RX rings.
+ * @int_ctx: interrupt context
+ * @hal_ring_hdl: Rx ring handle
+ * @reo_ring_num: RX ring number
+ * @quota: Quota of work to be done
+ *
+ * Return: work done in the handler
+ */
+uint32_t dp_rx_nf_process(struct dp_intr *int_ctx,
+			  hal_ring_handle_t hal_ring_hdl,
+			  uint8_t reo_ring_num,
+			  uint32_t quota);
+#else
+static inline
+uint32_t dp_rx_nf_process(struct dp_intr *int_ctx,
+			  hal_ring_handle_t hal_ring_hdl,
+			  uint8_t reo_ring_num,
+			  uint32_t quota)
+{
+	return 0;
+}
+#endif /*WLAN_FEATURE_NEAR_FULL_IRQ */
 #endif

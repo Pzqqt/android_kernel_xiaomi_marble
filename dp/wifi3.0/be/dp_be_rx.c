@@ -980,3 +980,13 @@ struct dp_rx_desc *dp_rx_desc_cookie_2_va_be(struct dp_soc *soc,
 {
 	return (struct dp_rx_desc *)dp_cc_desc_find(soc, cookie, true);
 }
+
+#ifdef WLAN_FEATURE_NEAR_FULL_IRQ
+uint32_t dp_rx_nf_process(struct dp_intr *int_ctx,
+			  hal_ring_handle_t hal_ring_hdl,
+			  uint8_t reo_ring_num,
+			  uint32_t quota)
+{
+	return 0;
+}
+#endif

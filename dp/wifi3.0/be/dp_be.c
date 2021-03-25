@@ -492,6 +492,96 @@ dp_rxdma_ring_sel_cfg_be(struct dp_soc *soc)
 
 }
 
+#ifdef WLAN_FEATURE_NEAR_FULL_IRQ
+/**
+ * dp_service_near_full_srngs_be() - Main bottom half callback for the
+ *				near-full IRQs.
+ * @soc: Datapath SoC handle
+ * @int_ctx: Interrupt context
+ * @dp_budget: Budget of the work that can be done in the bottom half
+ *
+ * Return: work done in the handler
+ */
+static uint32_t
+dp_service_near_full_srngs_be(struct dp_soc *soc, struct dp_intr *int_ctx,
+			      uint32_t dp_budget)
+{
+	int ring = 0;
+	int budget = dp_budget;
+	uint32_t work_done  = 0;
+	uint32_t remaining_quota = dp_budget;
+	struct dp_intr_stats *intr_stats = &int_ctx->intr_stats;
+	int tx_ring_near_full_mask = int_ctx->tx_ring_near_full_mask;
+	int rx_near_full_grp_1_mask = int_ctx->rx_near_full_grp_1_mask;
+	int rx_near_full_grp_2_mask = int_ctx->rx_near_full_grp_2_mask;
+	int rx_near_full_mask = rx_near_full_grp_1_mask |
+				rx_near_full_grp_2_mask;
+
+	dp_verbose_debug("rx_ring_near_full 0x%x tx_ring_near_full 0x%x",
+			 rx_near_full_mask,
+			 tx_ring_near_full_mask);
+
+	if (rx_near_full_mask) {
+		for (ring = 0; ring < soc->num_reo_dest_rings; ring++) {
+			if (!(rx_near_full_mask & (1 << ring)))
+				continue;
+
+			work_done = dp_rx_nf_process(int_ctx,
+					soc->reo_dest_ring[ring].hal_srng,
+					ring, remaining_quota);
+			if (work_done) {
+				intr_stats->num_rx_ring_near_full_masks[ring]++;
+				dp_verbose_debug("rx NF mask 0x%x ring %d, work_done %d budget %d",
+						 rx_near_full_mask, ring,
+						 work_done,
+						 budget);
+				budget -=  work_done;
+				if (budget <= 0)
+					goto budget_done;
+				remaining_quota = budget;
+			}
+		}
+	}
+
+	if (tx_ring_near_full_mask) {
+		for (ring = 0; ring < MAX_TCL_DATA_RINGS; ring++) {
+			if (!(tx_ring_near_full_mask & (1 << ring)))
+				continue;
+
+			work_done = dp_tx_comp_nf_handler(int_ctx, soc,
+					soc->tx_comp_ring[ring].hal_srng,
+					ring, remaining_quota);
+			if (work_done) {
+				intr_stats->num_tx_comp_ring_near_full_masks[ring]++;
+				dp_verbose_debug("tx NF mask 0x%x ring %d, work_done %d budget %d",
+						 tx_ring_near_full_mask, ring,
+						 work_done, budget);
+				budget -=  work_done;
+				if (budget <= 0)
+					break;
+				remaining_quota = budget;
+			}
+		}
+	}
+
+	intr_stats->num_near_full_masks++;
+
+budget_done:
+	return dp_budget - budget;
+}
+
+static inline void
+dp_init_near_full_arch_ops_be(struct dp_arch_ops *arch_ops)
+{
+	arch_ops->dp_service_near_full_srngs = dp_service_near_full_srngs_be;
+}
+#else
+static inline void
+dp_init_near_full_arch_ops_be(struct dp_arch_ops *arch_ops)
+{
+}
+#endif
+
 void dp_initialize_arch_ops_be(struct dp_arch_ops *arch_ops)
 {
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
@@ -520,4 +610,5 @@ void dp_initialize_arch_ops_be(struct dp_arch_ops *arch_ops)
 	arch_ops->txrx_vdev_detach = dp_vdev_detach_be;
 	arch_ops->dp_rxdma_ring_sel_cfg = dp_rxdma_ring_sel_cfg_be;
 
+	dp_init_near_full_arch_ops_be(arch_ops);
 }

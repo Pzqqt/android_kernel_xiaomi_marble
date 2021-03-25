@@ -2433,7 +2433,15 @@ budget_done:
  */
 static uint32_t dp_service_near_full_srngs(void *dp_ctx, uint32_t dp_budget)
 {
-	return 0;
+	struct dp_intr *int_ctx = (struct dp_intr *)dp_ctx;
+	struct dp_soc *soc = int_ctx->soc;
+
+	/*
+	 * dp_service_near_full_srngs arch ops should be initialized always
+	 * if the NEAR FULL IRQ feature is enabled.
+	 */
+	return soc->arch_ops.dp_service_near_full_srngs(soc, int_ctx,
+							dp_budget);
 }
 #endif
 
