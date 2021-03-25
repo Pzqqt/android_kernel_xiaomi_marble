@@ -19,28 +19,6 @@
 #include <wlan_dfs_public_struct.h>
 #include <reg_services_public_struct.h>
 
-/* dfs regions definitions */
-/* un-initialized region */
-#define DFS_UNINIT_REGION_VAL   0
-
-/* FCC region */
-#define DFS_FCC_REGION_VAL      1
-
-/* ETSI region */
-#define DFS_ETSI_REGION_VAL     2
-
-/* MKK region */
-#define DFS_MKK_REGION_VAL      3
-
-/* China region */
-#define DFS_CN_REGION_VAL       4
-
-/* Korea region */
-#define DFS_KR_REGION_VAL       5
-
-/* Undefined region */
-#define DFS_UNDEF_REGION_VAL    6
-
 /* Channel width definitions */
 /* 20MHz channel width */
 #define DFS_CH_WIDTH_20MHZ      0

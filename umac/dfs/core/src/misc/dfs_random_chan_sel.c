@@ -1443,10 +1443,11 @@ static void dfs_apply_rules_for_freq(struct wlan_dfs *dfs,
 	uint8_t num_channels = 0;
 
 	dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN, "flags %d", flags);
-	flag_no_weather = (dfs_region == DFS_ETSI_REGION_VAL) ?
+	flag_no_weather = (dfs_region == DFS_ETSI_REGION) ?
 		flags & DFS_RANDOM_CH_FLAG_NO_WEATHER_CH : 0;
 
-	if (dfs_region == DFS_MKK_REGION_VAL) {
+	if (dfs_region == DFS_MKK_REGION ||
+	    dfs_region == DFS_MKKN_REGION) {
 		flag_no_lower_5g = flags & DFS_RANDOM_CH_FLAG_NO_LOWER_5G_CH;
 		flag_no_upper_5g = flags & DFS_RANDOM_CH_FLAG_NO_UPEER_5G_CH;
 		flag_no_japan_w53 = flags & DFS_RANDOM_CH_FLAG_NO_JAPAN_W53_CH;
@@ -1619,7 +1620,7 @@ uint16_t dfs_prepare_random_channel_for_freq(struct wlan_dfs *dfs,
 	dfs_apply_rules_for_freq(dfs, flags, random_chan_freq_list,
 				 &random_chan_cnt, chan_list, chan_cnt,
 				 dfs_region, acs_info);
-	flag_no_weather = (dfs_region == DFS_ETSI_REGION_VAL) ?
+	flag_no_weather = (dfs_region == DFS_ETSI_REGION) ?
 		flags & DFS_RANDOM_CH_FLAG_NO_WEATHER_CH : 0;
 
 	/* list adjusted after leakage has been marked */
