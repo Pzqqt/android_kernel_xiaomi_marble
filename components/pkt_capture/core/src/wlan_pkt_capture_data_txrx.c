@@ -664,6 +664,7 @@ static void pkt_capture_rx_get_phy_info(void *psoc,
 	rx_status->mcs = mcs;
 	rx_status->bw = bw;
 	rx_status->nr_ant = nss;
+	rx_status->nss = nss;
 	/* is_stbc not available */
 	rx_status->is_stbc = is_stbc;
 	rx_status->sgi = sgi;
@@ -671,7 +672,7 @@ static void pkt_capture_rx_get_phy_info(void *psoc,
 	rx_status->ldpc = ldpc;
 	/* beamformed not available */
 	rx_status->beamformed = beamformed;
-	rx_status->vht_flag_values3[0] = mcs << 0x4 | (nss + 1);
+	rx_status->vht_flag_values3[0] = mcs << 0x4 | nss;
 	rx_status->ht_flags = ht_flags;
 	rx_status->vht_flags = vht_flags;
 	rx_status->he_flags = he_flags;
