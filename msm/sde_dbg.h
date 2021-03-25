@@ -28,6 +28,28 @@
 #define SDE_EVTLOG_FATAL	0xbad
 #define SDE_EVTLOG_ERROR	0xebad
 
+/* flags to enable the HW block dumping */
+#define SDE_DBG_SDE		BIT(0)
+#define SDE_DBG_RSC		BIT(1)
+#define SDE_DBG_SID		BIT(2)
+#define SDE_DBG_LUTDMA		BIT(3)
+#define SDE_DBG_VBIF_RT		BIT(4)
+#define SDE_DBG_DSI		BIT(5)
+
+/* flags to enable the HW block debugbus dumping */
+#define SDE_DBG_SDE_DBGBUS	BIT(12)
+#define SDE_DBG_RSC_DBGBUS	BIT(13)
+#define SDE_DBG_LUTDMA_DBGBUS	BIT(14)
+#define SDE_DBG_VBIF_RT_DBGBUS	BIT(15)
+#define SDE_DBG_DSI_DBGBUS	BIT(16)
+
+/* mask to enable all the built-in register blocks */
+#define SDE_DBG_BUILT_IN_ALL	0xffffff
+
+/* keeping DP separate as DP specific clks needs to be enabled for accessing */
+#define SDE_DBG_DP		BIT(24)
+#define SDE_DBG_DP_DBGBUS	BIT(25)
+
 #define SDE_DBG_DUMP_DATA_LIMITER (NULL)
 
 enum sde_dbg_evtlog_flag {
@@ -138,36 +160,39 @@ extern struct sde_dbg_evtlog *sde_dbg_base_evtlog;
 
 /**
  * SDE_DBG_DUMP - trigger dumping of all sde_dbg facilities
+ * @dump_blk_mask: mask of all the hw blk-ids that has to be dumped
  * @va_args:	list of named register dump ranges and regions to dump, as
  *		registered previously through sde_dbg_reg_register_base and
  *		sde_dbg_reg_register_dump_range.
  *		Including the special name "panic" will trigger a panic after
  *		the dumping work has completed.
  */
-#define SDE_DBG_DUMP(...) sde_dbg_dump(SDE_DBG_DUMP_PROC_CTX, __func__, \
-		##__VA_ARGS__, SDE_DBG_DUMP_DATA_LIMITER)
+#define SDE_DBG_DUMP(dump_blk_mask, ...) sde_dbg_dump(SDE_DBG_DUMP_PROC_CTX, __func__, \
+		dump_blk_mask, ##__VA_ARGS__, SDE_DBG_DUMP_DATA_LIMITER)
 
 /**
  * SDE_DBG_DUMP_WQ - trigger dumping of all sde_dbg facilities, queuing the work
+ * @dump_blk_mask: mask of all the hw blk-ids that has to be dumped
  * @va_args:	list of named register dump ranges and regions to dump, as
  *		registered previously through sde_dbg_reg_register_base and
  *		sde_dbg_reg_register_dump_range.
  *		Including the special name "panic" will trigger a panic after
  *		the dumping work has completed.
  */
-#define SDE_DBG_DUMP_WQ(...) sde_dbg_dump(SDE_DBG_DUMP_IRQ_CTX, __func__, \
-		##__VA_ARGS__, SDE_DBG_DUMP_DATA_LIMITER)
+#define SDE_DBG_DUMP_WQ(dump_blk_mask, ...) sde_dbg_dump(SDE_DBG_DUMP_IRQ_CTX, __func__, \
+		dump_blk_mask, ##__VA_ARGS__, SDE_DBG_DUMP_DATA_LIMITER)
 
 /**
  * SDE_DBG_DUMP_CLK_EN - trigger dumping of all sde_dbg facilities, without clk
+ * @dump_blk_mask: mask of all the hw blk-ids that has to be dumped
  * @va_args:	list of named register dump ranges and regions to dump, as
  *		registered previously through sde_dbg_reg_register_base and
  *		sde_dbg_reg_register_dump_range.
  *		Including the special name "panic" will trigger a panic after
  *		the dumping work has completed.
  */
-#define SDE_DBG_DUMP_CLK_EN(...) sde_dbg_dump(SDE_DBG_DUMP_CLK_ENABLED_CTX, \
-		__func__, ##__VA_ARGS__, SDE_DBG_DUMP_DATA_LIMITER)
+#define SDE_DBG_DUMP_CLK_EN(dump_blk_mask, ...) sde_dbg_dump(SDE_DBG_DUMP_CLK_ENABLED_CTX, \
+		__func__, dump_blk_mask, ##__VA_ARGS__, SDE_DBG_DUMP_DATA_LIMITER)
 
 /**
  * SDE_DBG_EVT_CTRL - trigger a different driver events
@@ -261,6 +286,7 @@ void sde_dbg_destroy(void);
  * sde_dbg_dump - trigger dumping of all sde_dbg facilities
  * @queue_work:	whether to queue the dumping work to the work_struct
  * @name:	string indicating origin of dump
+ * @dump_blk_mask: mask of all the hw blk-ids that has to be dumped
  * @va_args:	list of named register dump ranges and regions to dump, as
  *		registered previously through sde_dbg_reg_register_base and
  *		sde_dbg_reg_register_dump_range.
@@ -268,7 +294,7 @@ void sde_dbg_destroy(void);
  *		the dumping work has completed.
  * Returns:	none
  */
-void sde_dbg_dump(enum sde_dbg_dump_context mode, const char *name, ...);
+void sde_dbg_dump(enum sde_dbg_dump_context mode, const char *name, u64 dump_blk_mask, ...);
 
 /**
  * sde_dbg_ctrl - trigger specific actions for the driver with debugging
@@ -286,10 +312,11 @@ void sde_dbg_ctrl(const char *name, ...);
  * @name:	name of base region
  * @base:	base pointer of region
  * @max_offset:	length of region
+ * @blk_id:	hw block id
  * Returns:	0 or -ERROR
  */
 int sde_dbg_reg_register_base(const char *name, void __iomem *base,
-		size_t max_offset);
+		size_t max_offset, u64 blk_id);
 
 /**
  * sde_dbg_reg_register_cb - register a hw register callback for later

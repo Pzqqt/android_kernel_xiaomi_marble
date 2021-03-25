@@ -4274,66 +4274,51 @@ static int _sde_kms_hw_init_ioremap(struct sde_kms *sde_kms,
 	sde_kms->mmio_len = msm_iomap_size(platformdev, "mdp_phys");
 
 	rc = sde_dbg_reg_register_base(SDE_DBG_NAME, sde_kms->mmio,
-			sde_kms->mmio_len);
+				sde_kms->mmio_len, SDE_DBG_SDE);
 	if (rc)
 		SDE_ERROR("dbg base register kms failed: %d\n", rc);
 
-	sde_kms->vbif[VBIF_RT] = msm_ioremap(platformdev, "vbif_phys",
-								"vbif_phys");
+	sde_kms->vbif[VBIF_RT] = msm_ioremap(platformdev, "vbif_phys", "vbif_phys");
 	if (IS_ERR(sde_kms->vbif[VBIF_RT])) {
 		rc = PTR_ERR(sde_kms->vbif[VBIF_RT]);
 		SDE_ERROR("vbif register memory map failed: %d\n", rc);
 		sde_kms->vbif[VBIF_RT] = NULL;
 		goto error;
 	}
-	sde_kms->vbif_len[VBIF_RT] = msm_iomap_size(platformdev,
-								"vbif_phys");
+	sde_kms->vbif_len[VBIF_RT] = msm_iomap_size(platformdev, "vbif_phys");
 	rc = sde_dbg_reg_register_base("vbif_rt", sde_kms->vbif[VBIF_RT],
-				sde_kms->vbif_len[VBIF_RT]);
+				sde_kms->vbif_len[VBIF_RT], SDE_DBG_VBIF_RT);
 	if (rc)
 		SDE_ERROR("dbg base register vbif_rt failed: %d\n", rc);
 
-	sde_kms->vbif[VBIF_NRT] = msm_ioremap(platformdev, "vbif_nrt_phys",
-								"vbif_nrt_phys");
+	sde_kms->vbif[VBIF_NRT] = msm_ioremap(platformdev, "vbif_nrt_phys", "vbif_nrt_phys");
 	if (IS_ERR(sde_kms->vbif[VBIF_NRT])) {
 		sde_kms->vbif[VBIF_NRT] = NULL;
 		SDE_DEBUG("VBIF NRT is not defined");
 	} else {
-		sde_kms->vbif_len[VBIF_NRT] = msm_iomap_size(platformdev,
-							"vbif_nrt_phys");
-		rc = sde_dbg_reg_register_base("vbif_nrt",
-				sde_kms->vbif[VBIF_NRT],
-				sde_kms->vbif_len[VBIF_NRT]);
-		if (rc)
-			SDE_ERROR("dbg base register vbif_nrt failed: %d\n",
-					rc);
+		sde_kms->vbif_len[VBIF_NRT] = msm_iomap_size(platformdev, "vbif_nrt_phys");
 	}
 
-	sde_kms->reg_dma = msm_ioremap(platformdev, "regdma_phys",
-								"regdma_phys");
+	sde_kms->reg_dma = msm_ioremap(platformdev, "regdma_phys", "regdma_phys");
 	if (IS_ERR(sde_kms->reg_dma)) {
 		sde_kms->reg_dma = NULL;
 		SDE_DEBUG("REG_DMA is not defined");
 	} else {
-		sde_kms->reg_dma_len = msm_iomap_size(platformdev,
-								"regdma_phys");
-		rc =  sde_dbg_reg_register_base("reg_dma",
-				sde_kms->reg_dma,
-				sde_kms->reg_dma_len);
+		sde_kms->reg_dma_len = msm_iomap_size(platformdev, "regdma_phys");
+		rc =  sde_dbg_reg_register_base("reg_dma", sde_kms->reg_dma,
+				sde_kms->reg_dma_len, SDE_DBG_LUTDMA);
 		if (rc)
-			SDE_ERROR("dbg base register reg_dma failed: %d\n",
-					rc);
+			SDE_ERROR("dbg base register reg_dma failed: %d\n", rc);
 	}
 
-	sde_kms->sid = msm_ioremap(platformdev, "sid_phys",
-							"sid_phys");
+	sde_kms->sid = msm_ioremap(platformdev, "sid_phys", "sid_phys");
 	if (IS_ERR(sde_kms->sid)) {
 		SDE_DEBUG("sid register is not defined: %d\n", rc);
 		sde_kms->sid = NULL;
 	} else {
 		sde_kms->sid_len = msm_iomap_size(platformdev, "sid_phys");
 		rc =  sde_dbg_reg_register_base("sid", sde_kms->sid,
-				sde_kms->sid_len);
+				sde_kms->sid_len, SDE_DBG_SID);
 		if (rc)
 			SDE_ERROR("dbg base register sid failed: %d\n", rc);
 	}

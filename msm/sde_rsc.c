@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[sde_rsc:%s:%d]: " fmt, __func__, __LINE__
@@ -1626,9 +1626,9 @@ static int sde_rsc_bind(struct device *dev,
 	}
 
 	sde_dbg_reg_register_base(SDE_RSC_DRV_DBG_NAME, rsc->drv_io.base,
-							rsc->drv_io.len);
-	sde_dbg_reg_register_base(SDE_RSC_WRAPPER_DBG_NAME,
-				rsc->wrapper_io.base, rsc->wrapper_io.len);
+				rsc->drv_io.len, SDE_DBG_RSC);
+	sde_dbg_reg_register_base(SDE_RSC_WRAPPER_DBG_NAME, rsc->wrapper_io.base,
+				rsc->wrapper_io.len, SDE_DBG_RSC);
 	return 0;
 }
 
