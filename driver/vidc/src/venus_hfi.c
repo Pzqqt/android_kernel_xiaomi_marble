@@ -479,11 +479,11 @@ static int __vote_bandwidth(struct bus_info *bus,
 {
 	int rc = 0;
 
-	d_vpr_p("Voting bus %s to ab %llu kbps\n", bus->name, kbps_to_icc(bw_kbps));
-	rc = icc_set_bw(bus->path, kbps_to_icc(bw_kbps), 0);
+	d_vpr_p("Voting bus %s to ab %llu kBps\n", bus->name, bw_kbps);
+	rc = icc_set_bw(bus->path, bw_kbps, 0);
 	if (rc)
 		d_vpr_e("Failed voting bus %s to ab %llu, rc=%d\n",
-				bus->name, kbps_to_icc(bw_kbps), rc);
+				bus->name, bw_kbps, rc);
 
 	return rc;
 }
@@ -535,8 +535,8 @@ static int __vote_buses(struct msm_vidc_core *core,
 				bus->range[0], bus->range[1]);
 
 			if (TRIVIAL_BW_CHANGE(bw_kbps, bw_prev) && bw_prev) {
-				d_vpr_l("Skip voting bus %s to %llu bps\n",
-					bus->name, bw_kbps * 1000);
+				d_vpr_l("Skip voting bus %s to %llu kBps\n",
+					bus->name, bw_kbps);
 				continue;
 			}
 
