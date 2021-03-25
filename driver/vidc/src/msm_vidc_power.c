@@ -318,11 +318,11 @@ int msm_vidc_scale_buses(struct msm_vidc_inst *inst)
 
 	call_session_op(core, calc_bw, inst, vote_data);
 
-	inst->power.power_mode = vote_data->power_mode;
 	inst->power.ddr_bw = vote_data->calc_bw_ddr;
 	inst->power.sys_cache_bw = vote_data->calc_bw_llcc;
 
 set_buses:
+	inst->power.power_mode = vote_data->power_mode;
 	rc = msm_vidc_set_buses(inst);
 	if (rc)
 		return rc;
