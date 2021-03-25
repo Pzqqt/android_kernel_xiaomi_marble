@@ -467,6 +467,7 @@ static int ipa3_setup_dflt_wan_rt_tables(void)
 	rt_rule_entry[WAN_RT_COMMON].rule.dst = IPA_CLIENT_APPS_WAN_CONS;
 	rt_rule_entry[WAN_RT_COMMON].rule.hdr_hdl =
 		rmnet_ipa3_ctx->qmap_hdr_hdl;
+	rt_rule_entry[WAN_RT_COMMON].rule.hashable = true;
 
 	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0) {
 		rt_rule_entry[WAN_RT_ICMP].at_rear = 0;
