@@ -217,5 +217,13 @@ void mlme_set_twt_peer_capabilities(struct wlan_objmgr_psoc *psoc,
 				    tDot11fIEhe_cap *he_cap,
 				    tDot11fIEhe_op *he_op)
 {}
+
+static inline
+QDF_STATUS mlme_init_twt_context(struct wlan_objmgr_psoc *psoc,
+				 struct qdf_mac_addr *peer_mac,
+				 uint8_t dialog_id)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
 #endif /* WLAN_SUPPORT_TWT */
 #endif /* _WLAN_MLME_TWT_API_H_ */

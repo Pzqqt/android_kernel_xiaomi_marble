@@ -39,6 +39,7 @@
 #include "wlan_pkt_capture_ucfg_api.h"
 #include "cds_utils.h"
 #include "wlan_roam_debug.h"
+#include "wlan_mlme_twt_api.h"
 #ifdef FEATURE_CM_ENABLE
 #include "connection_mgr/core/src/wlan_cm_roam.h"
 #include "connection_mgr/core/src/wlan_cm_main.h"
@@ -154,6 +155,9 @@ cm_fw_roam_sync_start_ind(struct wlan_objmgr_vdev *vdev,
 	status = wlan_cm_roam_state_change(pdev, vdev_id,
 					   WLAN_ROAM_SYNCH_IN_PROG,
 					   REASON_ROAM_HANDOFF_DONE);
+
+	mlme_init_twt_context(wlan_pdev_get_psoc(pdev), &connected_bssid,
+			      TWT_ALL_SESSIONS_DIALOG_ID);
 
 	mlme_cm_osif_roam_sync_ind(vdev);
 
