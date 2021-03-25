@@ -2617,6 +2617,9 @@ static int __response_handler(struct msm_vidc_core *core)
 {
 	int rc = 0;
 
+	if (call_venus_op(core, watchdog, core, core->intr_status))
+		return handle_system_error(core, NULL);
+
 	memset(core->response_packet, 0, core->packet_size);
 	while (!__iface_msgq_read(core, core->response_packet)) {
 		rc = handle_response(core, core->response_packet);
