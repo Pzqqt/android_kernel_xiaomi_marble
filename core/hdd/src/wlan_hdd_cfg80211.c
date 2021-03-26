@@ -20983,9 +20983,16 @@ int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason,
 	reset_mscs_params(adapter);
 	wlan_hdd_netif_queue_control(adapter,
 		WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER, WLAN_CONTROL_PATH);
+
+	/* Disable STA power-save mode */
+	if ((adapter->device_mode == QDF_STA_MODE) &&
+	    wlan_hdd_set_powersave(adapter, false, 0))
+		hdd_debug("Not disable PS for STA");
+
 	wlan_rec_conn_info(adapter->vdev_id, DEBUG_CONN_DISCONNECT,
 			   sta_ctx->conn_info.bssid.bytes,
 			   sta_ctx->conn_info.conn_state, mac_reason);
+
 	ret = wlan_hdd_wait_for_disconnect(mac_handle, adapter, reason,
 					   mac_reason);
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
