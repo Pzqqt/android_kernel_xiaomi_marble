@@ -147,6 +147,8 @@ enum v4l2_mpeg_vidc_blur_types {
 /* Encoder Input Compression Ratio control */
 #define V4L2_CID_MPEG_VIDC_ENC_INPUT_COMPRESSION_RATIO                       \
 	(V4L2_CID_MPEG_VIDC_BASE + 0x2C)
+#define V4L2_CID_MPEG_VIDC_MIN_QUALITY                                       \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x2D)
 
 enum v4l2_mpeg_vidc_metapayload_header_flags {
 	METADATA_FLAGS_NONE             = 0,
