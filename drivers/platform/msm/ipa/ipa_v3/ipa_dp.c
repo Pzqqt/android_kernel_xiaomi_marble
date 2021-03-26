@@ -294,7 +294,6 @@ static int ipa3_aux_napi_poll_tx_complete(struct napi_struct *napi_tx,
 	int tx_done = 0;
 	int ret = 0;
 
-poll_tx:
 	tx_done += ipa3_napi_poll_tx_complete(sys, budget - tx_done);
 
 	/* Doorbell needed here for continuous polling */
@@ -305,11 +304,10 @@ poll_tx:
 		ret = ipa3_tx_switch_to_intr_mode(sys);
 
 		/* if we got an EOT while we marked NAPI as complete */
-		if (ret == -GSI_STATUS_PENDING_IRQ &&
-			napi_reschedule(napi_tx)) {
+		if (ret == -GSI_STATUS_PENDING_IRQ) {
 			/* rescheduale will perform poll again, don't dec vote twice*/
 			napi_rescheduled = true;
-			goto poll_tx;
+			napi_reschedule(napi_tx);
 		}
 
 		if(!napi_rescheduled)
@@ -4760,8 +4758,8 @@ static void ipa_gsi_irq_tx_notify_cb(struct gsi_chan_xfer_notify *notify)
 				/* dummy vote to prevent NoC error */
 				if(IPA_ACTIVE_CLIENTS_INC_EP_NO_BLOCK(
 					sys->ep->client)) {
-					IPAERR("clk isn't active");
-					ipa_assert();
+					IPAERR_RL("clk off, event likely handled in NAPI contxt");
+					return;
 				}
 				/* put the producer event ring into polling mode */
 				gsi_config_channel_mode(sys->ep->gsi_chan_hdl,
