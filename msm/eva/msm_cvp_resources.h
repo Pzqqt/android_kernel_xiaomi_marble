@@ -54,6 +54,7 @@ struct regulator_set {
 
 struct clock_info {
 	const char *name;
+	u32 clk_id;
 	struct clk *clk;
 	u32 count;
 	bool has_scaling;

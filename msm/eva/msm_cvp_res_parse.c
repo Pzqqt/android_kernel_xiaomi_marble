@@ -597,6 +597,7 @@ static int msm_cvp_load_clock_table(
 {
 	int rc = 0, num_clocks = 0, c = 0;
 	struct platform_device *pdev = res->pdev;
+	int *clock_ids = NULL;
 	int *clock_props = NULL;
 	struct clock_set *clocks = &res->clock_set;
 
@@ -607,6 +608,23 @@ static int msm_cvp_load_clock_table(
 		clocks->count = 0;
 		rc = 0;
 		goto err_load_clk_table_fail;
+	}
+
+	clock_ids = devm_kzalloc(&pdev->dev, num_clocks *
+		sizeof(*clock_ids), GFP_KERNEL);
+	if (!clock_ids) {
+		dprintk(CVP_ERR, "No memory to read clock ids\n");
+		rc = -ENOMEM;
+		goto err_load_clk_table_fail;
+	}
+
+	rc = of_property_read_u32_array(pdev->dev.of_node,
+		"clock-ids", clock_ids,
+		num_clocks);
+	if (rc) {
+		dprintk(CVP_CORE, "Failed to read clock ids: %d\n", rc);
+		msm_cvp_mmrm_enabled = false;
+		dprintk(CVP_CORE, "flag msm_cvp_mmrm_enabled disabled\n");
 	}
 
 	clock_props = devm_kzalloc(&pdev->dev, num_clocks *
@@ -642,6 +660,9 @@ static int msm_cvp_load_clock_table(
 		of_property_read_string_index(pdev->dev.of_node,
 				"clock-names", c, &vc->name);
 
+		if (msm_cvp_mmrm_enabled == true)
+			vc->clk_id = clock_ids[c];
+
 		if (clock_props[c] & CLOCK_PROP_HAS_SCALING) {
 			vc->has_scaling = true;
 		} else {
@@ -654,8 +675,8 @@ static int msm_cvp_load_clock_table(
 		else
 			vc->has_mem_retention = false;
 
-		dprintk(CVP_CORE, "Found clock %s: scale-able = %s\n", vc->name,
-			vc->count ? "yes" : "no");
+		dprintk(CVP_CORE, "Found clock %s id %d: scale-able = %s\n",
+			vc->name, vc->clk_id, vc->count ? "yes" : "no");
 	}
 
 	return 0;

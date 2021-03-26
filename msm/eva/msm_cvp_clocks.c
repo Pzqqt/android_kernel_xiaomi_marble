@@ -37,22 +37,22 @@ int msm_cvp_mmrm_register(struct iris_hfi_device *device)
 
 	device->mmrm_cvp = NULL;
 	device->mmrm_cvp_desc.client_type = MMRM_CLIENT_CLOCK;
+	device->mmrm_cvp_desc.priority = MMRM_CLIENT_PRIOR_LOW;
 	device->mmrm_cvp_desc.client_info.desc.client_domain = MMRM_CLIENT_DOMAIN_CVP;
-	/* TODO: use proper way to retrieve client id via dtsi */
-	device->mmrm_cvp_desc.client_info.desc.client_id = 8;
 
 	iris_hfi_for_each_clock(device, cl) {
 		if (cl->has_scaling) {	/* only clk source enabled in dtsi */
 			device->mmrm_cvp_desc.client_info.desc.clk = cl->clk;
+			device->mmrm_cvp_desc.client_info.desc.client_id = cl->clk_id;
 			strlcpy(name, cl->name,
 				sizeof(device->mmrm_cvp_desc.client_info.desc.name));
 		}
 	}
-	device->mmrm_cvp_desc.priority = MMRM_CLIENT_PRIOR_LOW;
 
 	dprintk(CVP_PWR,
-		"%s: Register for %s\n",
-		__func__, device->mmrm_cvp_desc.client_info.desc.name);
+		"%s: Register for %s, clk_id %d\n",
+		__func__, device->mmrm_cvp_desc.client_info.desc.name,
+		device->mmrm_cvp_desc.client_info.desc.client_id);
 
 	device->mmrm_cvp = mmrm_client_register(&(device->mmrm_cvp_desc));
 	if (device->mmrm_cvp == NULL) {
