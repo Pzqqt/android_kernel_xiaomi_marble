@@ -56,6 +56,7 @@ struct msm_vidc_mappings_info {
 struct msm_vidc_buffers_info {
 	struct msm_vidc_buffers        input;
 	struct msm_vidc_buffers        output;
+	struct msm_vidc_buffers        read_only;
 	struct msm_vidc_buffers        input_meta;
 	struct msm_vidc_buffers        output_meta;
 	struct msm_vidc_buffers        bin;

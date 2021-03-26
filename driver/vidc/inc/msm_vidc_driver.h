@@ -310,6 +310,8 @@ int msm_vidc_destroy_internal_buffer(struct msm_vidc_inst *inst,
 void msm_vidc_destroy_buffers(struct msm_vidc_inst *inst);
 int msm_vidc_flush_buffers(struct msm_vidc_inst* inst,
 	enum msm_vidc_buffer_type type);
+int msm_vidc_flush_delayed_unmap_buffers(struct msm_vidc_inst *inst,
+		enum msm_vidc_buffer_type type);
 struct msm_vidc_buffer *get_meta_buffer(struct msm_vidc_inst *inst,
 	struct msm_vidc_buffer *vbuf);
 struct msm_vidc_inst *get_inst_ref(struct msm_vidc_core *core,

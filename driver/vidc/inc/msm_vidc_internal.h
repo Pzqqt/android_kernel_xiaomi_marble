@@ -141,6 +141,7 @@ enum msm_vidc_buffer_type {
 	MSM_VIDC_BUF_OUTPUT        = 2,
 	MSM_VIDC_BUF_INPUT_META    = 3,
 	MSM_VIDC_BUF_OUTPUT_META   = 4,
+	MSM_VIDC_BUF_READ_ONLY     = 5,
 	MSM_VIDC_BUF_QUEUE         = 10,
 	MSM_VIDC_BUF_BIN           = 20,
 	MSM_VIDC_BUF_ARP           = 21,
@@ -757,6 +758,7 @@ struct msm_vidc_map {
 	u64                         device_addr;
 	struct sg_table            *table;
 	struct dma_buf_attachment  *attach;
+	u32                         skip_delayed_unmap:1;
 };
 
 struct msm_vidc_mappings {

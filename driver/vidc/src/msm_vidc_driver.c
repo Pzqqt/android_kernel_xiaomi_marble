@@ -881,6 +881,8 @@ struct msm_vidc_buffers *msm_vidc_get_buffers(
 		return &inst->buffers.output;
 	case MSM_VIDC_BUF_OUTPUT_META:
 		return &inst->buffers.output_meta;
+	case MSM_VIDC_BUF_READ_ONLY:
+		return &inst->buffers.read_only;
 	case MSM_VIDC_BUF_BIN:
 		return &inst->buffers.bin;
 	case MSM_VIDC_BUF_ARP:
@@ -1747,6 +1749,65 @@ static int vb2_buffer_to_driver(struct vb2_buffer *vb2,
 	return rc;
 }
 
+int msm_vidc_process_readonly_buffers(struct msm_vidc_inst *inst,
+	struct msm_vidc_buffer *buf)
+{
+	int rc = 0;
+	struct msm_vidc_buffer *ro_buf, *dummy;
+	struct msm_vidc_buffers *ro_buffers;
+
+	if (!inst || !buf) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!is_decode_session(inst) || !is_output_buffer(buf->type))
+		return 0;
+
+	ro_buffers = msm_vidc_get_buffers(inst, MSM_VIDC_BUF_READ_ONLY, __func__);
+	if (!ro_buffers)
+		return -EINVAL;
+
+	/*
+	 * check if buffer present in ro_buffers list
+	 * if present: add ro flag to buf and remove from ro_buffers list
+	 * if not present: do nothing
+	 */
+	list_for_each_entry_safe(ro_buf, dummy, &ro_buffers->list, list) {
+		if (ro_buf->device_addr == buf->device_addr) {
+			buf->attr |= MSM_VIDC_ATTR_READ_ONLY;
+			print_vidc_buffer(VIDC_LOW, "low", "ro buf removed", inst, ro_buf);
+			list_del(&ro_buf->list);
+			kfree(ro_buf);
+			break;
+		}
+	}
+	return rc;
+}
+
+int msm_vidc_unmap_buffers(struct msm_vidc_inst *inst,
+	enum msm_vidc_buffer_type type)
+{
+	int rc = 0;
+	struct msm_vidc_mappings *mappings;
+	struct msm_vidc_map *map, *dummy;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	mappings = msm_vidc_get_mappings(inst, type, __func__);
+	if (!mappings)
+		return -EINVAL;
+
+	list_for_each_entry_safe(map, dummy, &mappings->list, list) {
+		msm_vidc_memory_unmap_completely(inst->core, map);
+	}
+
+	return rc;
+}
+
 int msm_vidc_unmap_driver_buf(struct msm_vidc_inst *inst,
 	struct msm_vidc_buffer *buf)
 {
@@ -1786,7 +1847,75 @@ int msm_vidc_unmap_driver_buf(struct msm_vidc_inst *inst,
 	if (!map->refcount) {
 		list_del(&map->list);
 		kfree(map);
+		map = NULL;
+	} else {
+		/* we should not be here except decoder output buffer */
+		if (!is_decode_session(inst) || !is_output_buffer(buf->type)) {
+			print_vidc_buffer(VIDC_ERR, "err ", "non zero refcount found", inst, buf);
+			return -EINVAL;
+		}
 	}
+
+	return rc;
+}
+
+int msm_vidc_map_driver_buf(struct msm_vidc_inst *inst,
+	struct msm_vidc_buffer *buf)
+{
+	int rc = 0;
+	struct msm_vidc_mappings *mappings;
+	struct msm_vidc_map *map;
+	bool found = false;
+
+	if (!inst || !buf) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	mappings = msm_vidc_get_mappings(inst, buf->type, __func__);
+	if (!mappings)
+		return -EINVAL;
+
+	/*
+	 * new buffer: map twice for lazy unmap feature sake
+	 * existing buffer: map once
+	 */
+	list_for_each_entry(map, &mappings->list, list) {
+		if (map->dmabuf == buf->dmabuf) {
+			found = true;
+			break;
+		}
+	}
+	if (!found) {
+		/* new buffer case */
+		map = kzalloc(sizeof(struct msm_vidc_map), GFP_KERNEL);
+		if (!map) {
+			i_vpr_e(inst, "%s: alloc failed\n", __func__);
+			return -ENOMEM;
+		}
+		INIT_LIST_HEAD(&map->list);
+		map->type = buf->type;
+		map->dmabuf = msm_vidc_memory_get_dmabuf(buf->fd);
+		if (!map->dmabuf)
+			return -EINVAL;
+		map->region = msm_vidc_get_buffer_region(inst, buf->type, __func__);
+		/* lazy unmap feature not needed for decoder output buffers */
+		if (is_decode_session(inst) && is_output_buffer(buf->type)) {
+			map->skip_delayed_unmap = 1;
+			rc = msm_vidc_memory_map(inst->core, map);
+			if (rc) {
+				msm_vidc_memory_put_dmabuf(map->dmabuf);
+				kfree(map);
+				return rc;
+			}
+		}
+		list_add_tail(&map->list, &mappings->list);
+	}
+	rc = msm_vidc_memory_map(inst->core, map);
+	if (rc)
+		return rc;
+
+	buf->device_addr = map->device_addr;
 
 	return 0;
 }
@@ -1801,9 +1930,7 @@ int msm_vidc_put_driver_buf(struct msm_vidc_inst *inst,
 		return -EINVAL;
 	}
 
-	rc = msm_vidc_unmap_driver_buf(inst, buf);
-	if (rc)
-		return rc;
+	msm_vidc_unmap_driver_buf(inst, buf);
 
 	msm_vidc_memory_put_dmabuf(buf->dmabuf);
 
@@ -1811,61 +1938,7 @@ int msm_vidc_put_driver_buf(struct msm_vidc_inst *inst,
 	list_del(&buf->list);
 	kfree(buf);
 
-	return 0;
-}
-
-int msm_vidc_map_driver_buf(struct msm_vidc_inst *inst,
-	struct msm_vidc_buffer *buf)
-{
-	int rc = 0;
-	struct msm_vidc_mappings *mappings;
-	struct msm_vidc_map *map = NULL;
-	bool found = false;
-
-	if (!inst || !buf) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
-
-	mappings = msm_vidc_get_mappings(inst, buf->type, __func__);
-	if (!mappings)
-		return -EINVAL;
-
-	/* check if it is an existing one */
-	list_for_each_entry(map, &mappings->list, list) {
-		if (map->dmabuf == buf->dmabuf) {
-			found = true;
-			break;
-		}
-	}
-	if (found) {
-		/* skip mapping for RO buffer */
-		if (!(buf->attr & MSM_VIDC_ATTR_READ_ONLY)) {
-			rc = msm_vidc_memory_map(inst->core, map);
-			if (rc)
-				return -ENOMEM;
-			buf->device_addr = map->device_addr;
-		}
-		return 0;
-	}
-	map = kzalloc(sizeof(struct msm_vidc_map), GFP_KERNEL);
-	if (!map) {
-		i_vpr_e(inst, "%s: alloc failed\n", __func__);
-		return -ENOMEM;
-	}
-	INIT_LIST_HEAD(&map->list);
-	map->type = buf->type;
-	map->dmabuf = buf->dmabuf;
-	map->region = msm_vidc_get_buffer_region(inst, buf->type, __func__);
-	rc = msm_vidc_memory_map(inst->core, map);
-	if (rc) {
-		kfree(map);
-		return -ENOMEM;
-	}
-	buf->device_addr = map->device_addr;
-	list_add_tail(&map->list, &mappings->list);
-
-	return 0;
+	return rc;
 }
 
 struct msm_vidc_buffer *msm_vidc_get_driver_buf(struct msm_vidc_inst *inst,
@@ -1874,9 +1947,7 @@ struct msm_vidc_buffer *msm_vidc_get_driver_buf(struct msm_vidc_inst *inst,
 	int rc = 0;
 	struct msm_vidc_buffer *buf = NULL;
 	struct msm_vidc_buffers *buffers;
-	struct dma_buf *dmabuf;
 	enum msm_vidc_buffer_type buf_type;
-	bool found = false;
 
 	if (!inst || !vb2) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1891,57 +1962,24 @@ struct msm_vidc_buffer *msm_vidc_get_driver_buf(struct msm_vidc_inst *inst,
 	if (!buffers)
 		return NULL;
 
-	dmabuf = msm_vidc_memory_get_dmabuf(vb2->planes[0].m.fd);
-	if (!dmabuf)
+	buf = kzalloc(sizeof(struct msm_vidc_buffer), GFP_KERNEL);
+	if (!buf) {
+		i_vpr_e(inst, "%s: alloc failed\n", __func__);
 		return NULL;
-
-	/* check if it is an existing buffer */
-	list_for_each_entry(buf, &buffers->list, list) {
-		if (buf->dmabuf == dmabuf &&
-		    buf->data_offset == vb2->planes[0].data_offset) {
-			found = true;
-			break;
-		}
 	}
-	if (found) {
-		/* only YUV buffers are allowed to repeat */
-		if ((is_decode_session(inst) && vb2->type != OUTPUT_MPLANE) ||
-		    (is_encode_session(inst) && vb2->type != INPUT_MPLANE)) {
-			print_vidc_buffer(VIDC_ERR, "err ",
-				"existing buffer", inst, buf);
-			goto error;
-		}
-		/* for decoder, YUV with RO flag are allowed to repeat */
-		if (is_decode_session(inst) &&
-		    !(buf->attr & MSM_VIDC_ATTR_READ_ONLY)) {
-			print_vidc_buffer(VIDC_ERR, "err ",
-				"existing buffer without RO flag", inst, buf);
-			goto error;
-		}
-		/* for encoder, treat the repeated buffer as new buffer */
-		if (is_encode_session(inst) && vb2->type == INPUT_MPLANE)
-			found = false;
-	}
-	if (!found) {
-		buf = kzalloc(sizeof(struct msm_vidc_buffer), GFP_KERNEL);
-		if (!buf) {
-			i_vpr_e(inst, "%s: alloc failed\n", __func__);
-			goto error;
-		}
-		buf->dmabuf = dmabuf;
-		INIT_LIST_HEAD(&buf->list);
-		list_add_tail(&buf->list, &buffers->list);
-	} else {
-		/* reset all attributes except read only */
-		buf->attr &= MSM_VIDC_ATTR_READ_ONLY;
-	}
-
-	/* treat every buffer as deferred buffer initially */
-	buf->attr |= MSM_VIDC_ATTR_DEFERRED;
+	INIT_LIST_HEAD(&buf->list);
+	list_add_tail(&buf->list, &buffers->list);
 
 	rc = vb2_buffer_to_driver(vb2, buf);
 	if (rc)
 		goto error;
+
+	buf->dmabuf = msm_vidc_memory_get_dmabuf(buf->fd);
+	if (!buf->dmabuf)
+		goto error;
+
+	/* treat every buffer as deferred buffer initially */
+	buf->attr |= MSM_VIDC_ATTR_DEFERRED;
 
 	rc = msm_vidc_map_driver_buf(inst, buf);
 	if (rc)
@@ -1950,9 +1988,9 @@ struct msm_vidc_buffer *msm_vidc_get_driver_buf(struct msm_vidc_inst *inst,
 	return buf;
 
 error:
-	msm_vidc_memory_put_dmabuf(dmabuf);
-	if (!found)
-		kfree(buf);
+	msm_vidc_memory_put_dmabuf(buf->dmabuf);
+	list_del(&buf->list);
+	kfree(buf);
 	return NULL;
 }
 
@@ -2157,6 +2195,12 @@ static int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct msm_vidc_buf
 		inst->capabilities->cap[CODEC_CONFIG].value) {
 		buf->flags |= MSM_VIDC_BUF_FLAG_CODECCONFIG;
 		msm_vidc_update_cap_value(inst, CODEC_CONFIG, 0, __func__);
+	}
+
+	if (is_decode_session(inst) && is_output_buffer(buf->type)) {
+		rc = msm_vidc_process_readonly_buffers(inst, buf);
+		if (rc)
+			return rc;
 	}
 
 	print_vidc_buffer(VIDC_HIGH, "high", "qbuf", inst, buf);
@@ -3039,6 +3083,7 @@ int msm_vidc_session_streamoff(struct msm_vidc_inst *inst,
 
 	/* flush deferred buffers */
 	msm_vidc_flush_buffers(inst, buffer_type);
+	msm_vidc_flush_delayed_unmap_buffers(inst, buffer_type);
 	return 0;
 
 error:
@@ -3694,7 +3739,7 @@ int msm_vidc_flush_buffers(struct msm_vidc_inst* inst,
 		buffer_type[1] = MSM_VIDC_BUF_OUTPUT;
 	} else {
 		i_vpr_h(inst, "%s: invalid buffer type %d\n",
-				__func__, type);
+			__func__, type);
 		return -EINVAL;
 	}
 
@@ -3706,10 +3751,69 @@ int msm_vidc_flush_buffers(struct msm_vidc_inst* inst,
 		list_for_each_entry_safe(buf, dummy, &buffers->list, list) {
 			if (buf->attr & MSM_VIDC_ATTR_QUEUED ||
 				buf->attr & MSM_VIDC_ATTR_DEFERRED) {
-				print_vidc_buffer(VIDC_ERR, "err ", "flushing buffer", inst, buf);
-				msm_vidc_vb2_buffer_done(inst, buf);
+				print_vidc_buffer(VIDC_HIGH, "high", "flushing buffer", inst, buf);
+				if (!(buf->attr & MSM_VIDC_ATTR_BUFFER_DONE))
+					msm_vidc_vb2_buffer_done(inst, buf);
 				msm_vidc_put_driver_buf(inst, buf);
 			}
+		}
+	}
+
+	return rc;
+}
+
+int msm_vidc_flush_delayed_unmap_buffers(struct msm_vidc_inst *inst,
+		enum msm_vidc_buffer_type type)
+{
+	int rc = 0;
+	struct msm_vidc_mappings *maps;
+	struct msm_vidc_map *map, *dummy;
+	struct msm_vidc_buffer *ro_buf, *ro_dummy;
+	enum msm_vidc_buffer_type buffer_type[2];
+	int i;
+	bool found = false;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (type == MSM_VIDC_BUF_INPUT) {
+		buffer_type[0] = MSM_VIDC_BUF_INPUT_META;
+		buffer_type[1] = MSM_VIDC_BUF_INPUT;
+	} else if (type == MSM_VIDC_BUF_OUTPUT) {
+		buffer_type[0] = MSM_VIDC_BUF_OUTPUT_META;
+		buffer_type[1] = MSM_VIDC_BUF_OUTPUT;
+	} else {
+		i_vpr_h(inst, "%s: invalid buffer type %d\n",
+			__func__, type);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(buffer_type); i++) {
+		maps = msm_vidc_get_mappings(inst, buffer_type[i], __func__);
+		if (!maps)
+			return -EINVAL;
+
+		list_for_each_entry_safe(map, dummy, &maps->list, list) {
+			/*
+			 * decoder output bufs will have skip_delayed_unmap = true
+			 * unmap all decoder output buffers except those present in
+			 * read_only buffers list
+			 */
+			if (!map->skip_delayed_unmap)
+				continue;
+			found = false;
+			list_for_each_entry_safe(ro_buf, ro_dummy,
+					&inst->buffers.read_only.list, list) {
+				if (map->dmabuf == ro_buf->dmabuf) {
+					found = true;
+					break;
+				}
+			}
+			/* completely unmap */
+			if (!found)
+				msm_vidc_memory_unmap_completely(inst->core, map);
 		}
 	}
 
@@ -3720,11 +3824,13 @@ void msm_vidc_destroy_buffers(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_buffers *buffers;
 	struct msm_vidc_buffer *buf, *dummy;
-	static const enum msm_vidc_buffer_type buf_types[] = {
+	static const enum msm_vidc_buffer_type ext_buf_types[] = {
 		MSM_VIDC_BUF_INPUT,
 		MSM_VIDC_BUF_OUTPUT,
 		MSM_VIDC_BUF_INPUT_META,
 		MSM_VIDC_BUF_OUTPUT_META,
+	};
+	static const enum msm_vidc_buffer_type internal_buf_types[] = {
 		MSM_VIDC_BUF_BIN,
 		MSM_VIDC_BUF_ARP,
 		MSM_VIDC_BUF_COMV,
@@ -3741,19 +3847,35 @@ void msm_vidc_destroy_buffers(struct msm_vidc_inst *inst)
 		return;
 	}
 
-	for (i = 0; i < ARRAY_SIZE(buf_types); i++) {
-		buffers = msm_vidc_get_buffers(inst, buf_types[i], __func__);
+	for (i = 0; i < ARRAY_SIZE(internal_buf_types); i++) {
+		buffers = msm_vidc_get_buffers(inst, internal_buf_types[i], __func__);
 		if (!buffers)
 			continue;
 		list_for_each_entry_safe(buf, dummy, &buffers->list, list) {
 			i_vpr_h(inst,
-				"destroying buffer: type %d idx %d fd %d addr %#x size %d\n",
+				"destroying internal buffer: type %d idx %d fd %d addr %#x size %d\n",
 				buf->type, buf->index, buf->fd, buf->device_addr, buf->buffer_size);
-			if (is_internal_buffer(buf->type))
-				msm_vidc_destroy_internal_buffer(inst, buf);
-			else
-				msm_vidc_put_driver_buf(inst, buf);
+			msm_vidc_destroy_internal_buffer(inst, buf);
 		}
+		msm_vidc_unmap_buffers(inst, internal_buf_types[i]);
+	}
+
+	for (i = 0; i < ARRAY_SIZE(ext_buf_types); i++) {
+		buffers = msm_vidc_get_buffers(inst, ext_buf_types[i], __func__);
+		if (!buffers)
+			continue;
+
+		list_for_each_entry_safe(buf, dummy, &buffers->list, list) {
+			print_vidc_buffer(VIDC_ERR, "err", "destroying ", inst, buf);
+			msm_vidc_put_driver_buf(inst, buf);
+		}
+		msm_vidc_unmap_buffers(inst, ext_buf_types[i]);
+	}
+
+	list_for_each_entry_safe(buf, dummy, &inst->buffers.read_only.list, list) {
+		print_vidc_buffer(VIDC_ERR, "err", "destroying ro buffer", inst, buf);
+		list_del(&buf->list);
+		kfree(buf);
 	}
 }
 

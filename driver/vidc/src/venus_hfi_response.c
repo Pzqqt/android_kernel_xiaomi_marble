@@ -481,6 +481,61 @@ static int get_driver_buffer_flags(struct msm_vidc_inst *inst, u32 hfi_flags)
 	return driver_flags;
 }
 
+static int handle_read_only_buffer(struct msm_vidc_inst *inst,
+	struct msm_vidc_buffer *buffer)
+{
+	struct msm_vidc_buffer *ro_buf;
+	struct msm_vidc_buffers *ro_buffers;
+	bool found = false;
+
+	if (!inst || !buffer) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!is_decode_session(inst) || !is_output_buffer(buffer->type))
+		return 0;
+
+	ro_buffers = msm_vidc_get_buffers(inst, MSM_VIDC_BUF_READ_ONLY, __func__);
+	if (!ro_buffers)
+		return -EINVAL;
+
+	list_for_each_entry(ro_buf, &ro_buffers->list, list) {
+		if (ro_buf->device_addr == buffer->device_addr) {
+			found = true;
+			break;
+		}
+	}
+
+	/*
+	 * RO flag: add to read_only list if buffer is not present
+	 *          if present, do nothing
+	 * Without RO flag: remove buffer from read_only list if present
+	 *          if not present, do not error out
+	 */
+	if (buffer->attr & MSM_VIDC_ATTR_READ_ONLY) {
+		if (!found) {
+			ro_buf = kmemdup(buffer, sizeof(struct msm_vidc_buffer), GFP_KERNEL);
+			if (!ro_buf) {
+				i_vpr_e(inst, "%s: buffer alloc failed\n", __func__);
+				return -ENOMEM;
+			}
+			INIT_LIST_HEAD(&ro_buf->list);
+			list_add_tail(&ro_buf->list, &ro_buffers->list);
+			print_vidc_buffer(VIDC_LOW, "low", "ro buf added", inst, ro_buf);
+		}
+	} else {
+		if (found) {
+			print_vidc_buffer(VIDC_LOW, "low", "ro buf deleted", inst, ro_buf);
+			list_del(&ro_buf->list);
+			kfree(ro_buf);
+			ro_buf = NULL;
+		}
+	}
+
+	return 0;
+}
+
 static int handle_input_buffer(struct msm_vidc_inst *inst,
 	struct hfi_buffer *buffer)
 {
@@ -502,14 +557,15 @@ static int handle_input_buffer(struct msm_vidc_inst *inst,
 
 	found = false;
 	list_for_each_entry(buf, &buffers->list, list) {
-		if (buf->device_addr == buffer->base_address) {
+		if (buf->index == buffer->index) {
 			found = true;
 			break;
 		}
 	}
 	if (!found) {
-		i_vpr_e(inst, "%s: buffer not found for idx %d addr %#x\n",
-			__func__, buffer->index, buffer->base_address);
+		i_vpr_e(inst, "%s: invalid buffer idx %d addr %#x data_offset %d\n",
+			__func__, buffer->index, buffer->base_address,
+			buffer->data_offset);
 		return -EINVAL;
 	}
 
@@ -556,14 +612,15 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 
 	found = false;
 	list_for_each_entry(buf, &buffers->list, list) {
-		if (buf->device_addr == buffer->base_address) {
+		if (buf->index == buffer->index) {
 			found = true;
 			break;
 		}
 	}
 	if (!found) {
-		i_vpr_e(inst, "%s: invalid idx %d daddr %#x\n",
-			__func__, buffer->index, buffer->base_address);
+		i_vpr_e(inst, "%s: invalid idx %d daddr %#x data_offset %d\n",
+			__func__, buffer->index, buffer->base_address,
+			buffer->data_offset);
 		return -EINVAL;
 	}
 	buf->data_offset = buffer->data_offset;
@@ -615,11 +672,15 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 		}
 	}
 
-	if (buffer->flags & HFI_BUF_FW_FLAG_READONLY)
-		buf->attr |= MSM_VIDC_ATTR_READ_ONLY;
-	else
-		buf->attr &= ~MSM_VIDC_ATTR_READ_ONLY;
-
+	if (is_decode_session(inst)) {
+		if (buffer->flags & HFI_BUF_FW_FLAG_READONLY)
+			buf->attr |= MSM_VIDC_ATTR_READ_ONLY;
+		else
+			buf->attr &= ~MSM_VIDC_ATTR_READ_ONLY;
+		rc = handle_read_only_buffer(inst, buf);
+		if (rc)
+			return rc;
+	}
 
 	buf->flags = 0;
 	buf->flags = get_driver_buffer_flags(inst, buffer->flags);
@@ -651,14 +712,15 @@ static int handle_input_metadata_buffer(struct msm_vidc_inst *inst,
 
 	found = false;
 	list_for_each_entry(buf, &buffers->list, list) {
-		if (buf->device_addr == buffer->base_address) {
+		if (buf->index == buffer->index) {
 			found = true;
 			break;
 		}
 	}
 	if (!found) {
-		i_vpr_e(inst, "%s: invalid idx %d daddr %#x\n",
-			__func__, buffer->index, buffer->base_address);
+		i_vpr_e(inst, "%s: invalid idx %d daddr %#x data_offset %d\n",
+			__func__, buffer->index, buffer->base_address,
+			buffer->data_offset);
 		return -EINVAL;
 	}
 	/* attach dequeued flag for, only last frame in the batch */
@@ -701,14 +763,15 @@ static int handle_output_metadata_buffer(struct msm_vidc_inst *inst,
 
 	found = false;
 	list_for_each_entry(buf, &buffers->list, list) {
-		if (buf->device_addr == buffer->base_address) {
+		if (buf->index == buffer->index) {
 			found = true;
 			break;
 		}
 	}
 	if (!found) {
-		i_vpr_e(inst, "%s: invalid idx %d daddr %#x\n",
-			__func__, buffer->index, buffer->base_address);
+		i_vpr_e(inst, "%s: invalid idx %d daddr %#x data_offset %d\n",
+			__func__, buffer->index, buffer->base_address,
+			buffer->data_offset);
 		return -EINVAL;
 	}
 
@@ -756,9 +819,7 @@ static int handle_dequeue_buffers(struct msm_vidc_inst* inst)
 					buf->attr |= MSM_VIDC_ATTR_BUFFER_DONE;
 					msm_vidc_vb2_buffer_done(inst, buf);
 				}
-				/* do not unmap / delete read only buffer */
-				if (!(buf->attr & MSM_VIDC_ATTR_READ_ONLY))
-					msm_vidc_put_driver_buf(inst, buf);
+				msm_vidc_put_driver_buf(inst, buf);
 			}
 		}
 	}

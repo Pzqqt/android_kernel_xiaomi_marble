@@ -116,11 +116,14 @@ int msm_vidc_memory_map(struct msm_vidc_core *core, struct msm_vidc_map *map)
 		goto error_attach;
 	}
 
-	/*
-	 * Get the scatterlist for the given attachment
-	 * Mapping of sg is taken care by map attachment
-	 */
-	attach->dma_map_attrs = DMA_ATTR_DELAYED_UNMAP;
+	if (!map->skip_delayed_unmap) {
+		/*
+		 * Get the scatterlist for the given attachment
+		 * Mapping of sg is taken care by map attachment
+		 */
+		attach->dma_map_attrs |= DMA_ATTR_DELAYED_UNMAP;
+	}
+
 	/*
 	 * We do not need dma_map function to perform cache operations
 	 * on the whole buffer size and hence pass skip sync flag.
@@ -148,6 +151,11 @@ int msm_vidc_memory_map(struct msm_vidc_core *core, struct msm_vidc_map *map)
 	map->table = table;
 	map->attach = attach;
 	map->refcount++;
+
+	d_vpr_l(
+		"%s: type %d device_addr %#x refcount %d region %d\n",
+		__func__, map->type, map->device_addr, map->refcount, map->region);
+
 	return 0;
 
 error_sg:
@@ -159,7 +167,8 @@ error_cb:
 	return rc;
 }
 
-int msm_vidc_memory_unmap(struct msm_vidc_core *core, struct msm_vidc_map *map)
+int msm_vidc_memory_unmap(struct msm_vidc_core *core,
+	struct msm_vidc_map *map)
 {
 	int rc = 0;
 
@@ -178,6 +187,10 @@ int msm_vidc_memory_unmap(struct msm_vidc_core *core, struct msm_vidc_map *map)
 	if (map->refcount)
 		goto exit;
 
+	d_vpr_l(
+		"%s: type %d device_addr %#x refcount %d region %d\n",
+		__func__, map->type, map->device_addr, map->refcount, map->region);
+
 	dma_buf_unmap_attachment(map->attach, map->table, DMA_BIDIRECTIONAL);
 	dma_buf_detach(map->dmabuf, map->attach);
 
@@ -187,6 +200,33 @@ int msm_vidc_memory_unmap(struct msm_vidc_core *core, struct msm_vidc_map *map)
 	map->table = NULL;
 
 exit:
+	return rc;
+}
+
+int msm_vidc_memory_unmap_completely(struct msm_vidc_core *core,
+	struct msm_vidc_map *map)
+{
+	int rc = 0;
+
+	if (!core || !map) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!map->refcount)
+		return 0;
+
+	while (map->refcount) {
+		rc = msm_vidc_memory_unmap(core, map);
+		if (rc)
+			break;
+		if (!map->refcount) {
+			list_del(&map->list);
+			kfree(map);
+			map = NULL;
+			break;
+		}
+	}
 	return rc;
 }
 
