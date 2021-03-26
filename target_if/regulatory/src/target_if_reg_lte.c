@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -73,6 +73,11 @@ static int tgt_reg_ch_avoid_event_handler(ol_scn_t handle, uint8_t *event_buf,
 	    != QDF_STATUS_SUCCESS) {
 		target_if_err("Extraction of CH avoid event failed");
 		return -EFAULT;
+	}
+
+	if (!ch_avoid_event.ch_avoid_range_cnt) {
+		target_if_debug_rl("ch avoid range count is 0, dropping the event");
+		return 0;
 	}
 
 	status = reg_rx_ops->reg_ch_avoid_event_handler(psoc, &ch_avoid_event);
