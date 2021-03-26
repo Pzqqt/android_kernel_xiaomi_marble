@@ -36,6 +36,8 @@
 
 #define SEC_PANEL_NAME_MAX_LEN  256
 
+#define DSI_MODE_MATCH_TIMINGS (1 << 0)
+
 u8 dbgfs_tx_cmd_buf[SZ_4K];
 static char dsi_display_primary[MAX_CMDLINE_PARAM_LEN];
 static char dsi_display_secondary[MAX_CMDLINE_PARAM_LEN];
@@ -7019,6 +7021,37 @@ int dsi_display_get_qsync_min_fps(void *display_dsi, u32 mode_fps)
 	return -EINVAL;
 }
 
+static bool dsi_display_match_timings(const struct dsi_display_mode *mode1,
+		struct dsi_display_mode *mode2)
+{
+	return mode1->timing.h_active == mode2->timing.h_active &&
+		mode1->timing.h_sync_width == mode2->timing.h_sync_width &&
+		mode1->timing.h_back_porch == mode2->timing.h_back_porch &&
+		mode1->timing.h_front_porch == mode2->timing.h_front_porch &&
+		mode1->timing.h_skew == mode2->timing.h_skew &&
+		mode1->timing.v_active == mode2->timing.v_active &&
+		mode1->timing.v_sync_width == mode2->timing.v_sync_width &&
+		mode1->timing.v_back_porch == mode2->timing.v_back_porch &&
+		mode1->timing.v_front_porch == mode2->timing.v_front_porch &&
+		mode1->timing.refresh_rate == mode2->timing.refresh_rate;
+}
+
+
+static bool dsi_display_mode_match(const struct dsi_display_mode *mode1,
+		struct dsi_display_mode *mode2, unsigned int match_flags)
+{
+	if (!mode1 && !mode2)
+		return true;
+
+	if (!mode1 || !mode2)
+		return false;
+
+	if (match_flags & DSI_MODE_MATCH_TIMINGS && !dsi_display_match_timings(mode1, mode2))
+		return false;
+
+	return true;
+}
+
 int dsi_display_find_mode(struct dsi_display *display,
 		const struct dsi_display_mode *cmp,
 		struct dsi_display_mode **out_mode)
@@ -7047,9 +7080,7 @@ int dsi_display_find_mode(struct dsi_display *display,
 	for (i = 0; i < count; i++) {
 		struct dsi_display_mode *m = &display->modes[i];
 
-		if (cmp->timing.v_active == m->timing.v_active &&
-			cmp->timing.h_active == m->timing.h_active &&
-			cmp->timing.refresh_rate == m->timing.refresh_rate) {
+		if (dsi_display_mode_match(cmp, m, DSI_MODE_MATCH_TIMINGS)) {
 			*out_mode = m;
 			rc = 0;
 			break;
