@@ -1732,10 +1732,10 @@ reg_fill_master_channels(struct cur_regulatory_info *regulat_info,
 		reg_populate_band_channels(MIN_5GHZ_CHANNEL, MAX_5GHZ_CHANNEL,
 					   reg_rule_5g, num_5g_reg_rules,
 					   min_bw_5g, mas_chan_list_2g_5g);
-		reg_populate_band_channels(MIN_49GHZ_CHANNEL,
-					   MAX_49GHZ_CHANNEL,
-					   reg_rule_5g, num_5g_reg_rules,
-					   min_bw_5g, mas_chan_list_2g_5g);
+		reg_populate_49g_band_channels(reg_rule_5g,
+					       num_5g_reg_rules,
+					       min_bw_5g,
+					       mas_chan_list_2g_5g);
 	}
 
 	for (i = 0; i < REG_CURRENT_MAX_AP_TYPE; i++) {
