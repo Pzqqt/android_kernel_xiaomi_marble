@@ -3729,6 +3729,8 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 	uint8_t vdev_id = 0;
 	struct bss_description *bss_desc;
 	QDF_STATUS status;
+	int32_t ucast_cipher, auth_mode, akm;
+	tSirMacCapabilityInfo *ap_cap_info;
 
 	if (!mac_ctx || !msg_buf) {
 		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
@@ -3872,6 +3874,18 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 			 session->vht_config.su_beam_formee,
 			 session->vht_config.csnof_beamformer_antSup,
 			 session->isCiscoVendorAP);
+
+		ucast_cipher = wlan_crypto_get_param(session->vdev,
+						     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+		auth_mode = wlan_crypto_get_param(session->vdev,
+						  WLAN_CRYPTO_PARAM_AUTH_MODE);
+		akm = wlan_crypto_get_param(session->vdev,
+					    WLAN_CRYPTO_PARAM_KEY_MGMT);
+		ap_cap_info = (tSirMacCapabilityInfo *)
+			       &session->lim_join_req->bssDescription.capabilityInfo;
+
+		lim_set_privacy(mac_ctx, ucast_cipher, auth_mode, akm,
+				ap_cap_info->privacy);
 
 		/* Issue LIM_MLM_JOIN_REQ to MLM */
 		status = lim_send_connect_req_to_mlm(session);
