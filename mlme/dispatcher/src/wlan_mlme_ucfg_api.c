@@ -1298,7 +1298,7 @@ ucfg_mlme_get_etsi_srd_chan_in_master_mode(struct wlan_objmgr_psoc *psoc,
 
 	mlme_obj = mlme_get_psoc_ext_obj(psoc);
 	if (!mlme_obj) {
-		*value = cfg_default(CFG_ETSI_SRD_CHAN_IN_MASTER_MODE);
+		*value = ETSI_SRD_CHAN_IN_MASTER_MODE;
 		mlme_legacy_err("Failed to get MLME Obj");
 		return QDF_STATUS_E_INVAL;
 	}
