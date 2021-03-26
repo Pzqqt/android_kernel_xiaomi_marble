@@ -167,7 +167,7 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 		pktcapture_hdr.beamformed = 0;
 		pktcapture_hdr.framectrl = IEEE80211_FC0_TYPE_DATA |
 					   (IEEE80211_FC1_DIR_TODS << 8);
-		pktcapture_hdr.tx_retry_cnt = tx_comp_status.transmit_cnt;
+		pktcapture_hdr.tx_retry_cnt = tx_comp_status.transmit_cnt - 1;
 		/* seqno not available */
 		pktcapture_hdr.seqno = 0;
 		tid = tx_comp_status.tid;
@@ -212,7 +212,7 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 		pkt_capture_datapkt_process(
 			vdev_id, netbuf, TXRX_PROCESS_TYPE_DATA_TX_COMPL,
 			tid, status, TXRX_PKTCAPTURE_PKT_FORMAT_8023,
-			bssid, NULL, tx_retry_cnt);
+			bssid, NULL, pktcapture_hdr.tx_retry_cnt);
 
 		break;
 	}
