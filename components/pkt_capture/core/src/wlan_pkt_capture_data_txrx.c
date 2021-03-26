@@ -1280,6 +1280,9 @@ pkt_capture_tx_data_cb(
 
 			wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
 
+			if (tx_retry_cnt)
+				wh->i_fc[1] |= IEEE80211_FC1_RETRY;
+
 			new_hdsize = sizeof(struct ieee80211_frame);
 
 			if (wh->i_fc[0] & QDF_IEEE80211_FC0_SUBTYPE_QOS) {
