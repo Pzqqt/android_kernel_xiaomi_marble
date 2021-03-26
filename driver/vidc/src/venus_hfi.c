@@ -2847,9 +2847,9 @@ int venus_hfi_core_deinit(struct msm_vidc_core *core)
 	return 0;
 }
 
-int venus_print_noc_error_info(struct msm_vidc_core *core)
+int venus_hfi_noc_error_info(struct msm_vidc_core *core)
 {
-	if (!core) {
+	if (!core || !core->capabilities) {
 		d_vpr_e("%s: Invalid parameters: %pK\n",
 			__func__, core);
 		return -EINVAL;
@@ -2859,6 +2859,9 @@ int venus_print_noc_error_info(struct msm_vidc_core *core)
 		return 0;
 
 	core_lock(core, __func__);
+	if (core->state == MSM_VIDC_CORE_DEINIT)
+		goto unlock;
+
 	/* resume venus before accessing noc registers */
 	if (__resume(core)) {
 		d_vpr_e("%s: Power on failed\n", __func__);

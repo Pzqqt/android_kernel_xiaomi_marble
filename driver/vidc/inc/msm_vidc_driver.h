@@ -272,7 +272,7 @@ int msm_vidc_core_init(struct msm_vidc_core *core);
 int msm_vidc_core_deinit(struct msm_vidc_core *core, bool force);
 int msm_vidc_core_timeout(struct msm_vidc_core *core);
 int msm_vidc_print_inst_info(struct msm_vidc_inst *inst);
-void msm_vidc_smmu_fault_work_handler(struct work_struct *work);
+void msm_vidc_print_core_info(struct msm_vidc_core *core);
 int msm_vidc_smmu_fault_handler(struct iommu_domain *domain,
 		struct device *dev, unsigned long iova, int flags, void *data);
 int msm_vidc_trigger_ssr(struct msm_vidc_core *core,

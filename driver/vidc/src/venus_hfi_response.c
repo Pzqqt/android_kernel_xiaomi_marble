@@ -315,7 +315,7 @@ int handle_system_error(struct msm_vidc_core *core,
 {
 	d_vpr_e("%s: system error received\n", __func__);
 	print_sfr_message(core);
-	venus_print_noc_error_info(core);
+	venus_hfi_noc_error_info(core);
 	msm_vidc_core_deinit(core, true);
 	return 0;
 }

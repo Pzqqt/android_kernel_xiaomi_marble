@@ -46,7 +46,7 @@ int venus_hfi_session_open(struct msm_vidc_inst *inst);
 int venus_hfi_session_set_codec(struct msm_vidc_inst *inst);
 int venus_hfi_core_init(struct msm_vidc_core *core);
 int venus_hfi_core_deinit(struct msm_vidc_core *core);
-int venus_print_noc_error_info(struct msm_vidc_core *core);
+int venus_hfi_noc_error_info(struct msm_vidc_core *core);
 int venus_hfi_suspend(struct msm_vidc_core *core);
 int venus_hfi_scale_clocks(struct msm_vidc_inst* inst, u64 freq);
 int venus_hfi_scale_buses(struct msm_vidc_inst* inst, u64 bw_ddr, u64 bw_llcc);

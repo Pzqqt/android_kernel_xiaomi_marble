@@ -3397,21 +3397,16 @@ int msm_vidc_print_inst_info(struct msm_vidc_inst *inst)
 	return 0;
 }
 
-void msm_vidc_smmu_fault_work_handler(struct work_struct *work)
+void msm_vidc_print_core_info(struct msm_vidc_core *core)
 {
-	struct msm_vidc_core *core;
 	struct msm_vidc_inst *inst = NULL;
 	struct msm_vidc_inst *instances[MAX_SUPPORTED_INSTANCES];
 	s32 num_instances = 0;
 
-	core = container_of(work, struct msm_vidc_core, smmu_fault_work);
 	if (!core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return;
 	}
-
-	/* print noc error log registers */
-	venus_print_noc_error_info(core);
 
 	core_lock(core, __func__);
 	list_for_each_entry(inst, &core->instances, list)
@@ -3453,11 +3448,11 @@ int msm_vidc_smmu_fault_handler(struct iommu_domain *domain,
 	d_vpr_e("%s: faulting address: %lx\n", __func__, iova);
 
 	core->smmu_fault_handled = true;
-	/**
-	 * Fault handler shouldn't be blocked for longtime. So offload work
-	 * to device_workq to print buffer and memory consumption details.
-	 */
-	queue_work(core->device_workq, &core->smmu_fault_work);
+
+	/* print noc error log registers */
+	venus_hfi_noc_error_info(core);
+
+	msm_vidc_print_core_info(core);
 	/*
 	 * Return -ENOSYS to elicit the default behaviour of smmu driver.
 	 * If we return -ENOSYS, then smmu driver assumes page fault handler
