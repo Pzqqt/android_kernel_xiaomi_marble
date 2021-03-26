@@ -2283,8 +2283,7 @@ static void mlme_init_reg_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_reg *reg)
 {
 	reg->self_gen_frm_pwr = cfg_get(psoc, CFG_SELF_GEN_FRM_PWR);
-	reg->etsi_srd_chan_in_master_mode =
-			cfg_get(psoc, CFG_ETSI_SRD_CHAN_IN_MASTER_MODE);
+	reg->etsi_srd_chan_in_master_mode = ETSI_SRD_CHAN_IN_MASTER_MODE;
 	reg->fcc_5dot9_ghz_chan_in_master_mode =
 			cfg_get(psoc, CFG_FCC_5DOT9_GHZ_CHAN_IN_MASTER_MODE);
 	reg->restart_beaconing_on_ch_avoid =
