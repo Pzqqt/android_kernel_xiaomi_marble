@@ -6437,18 +6437,6 @@ int rmnet_ipa3_query_per_client_stats_v2(
 			return -EINVAL;
 		}
 
-		teth_ptr = &rmnet_ipa3_ctx->tether_device[data->device_type];
-		lan_client = &teth_ptr->lan_client[lan_clnt_idx];
-		/*
-		 * Check if disconnect flag is set and
-		 * and client is inited or not.
-		 * if inited ignore resetting stats and return.
-		 */
-		if (data->disconnect_clnt && lan_client->inited) {
-			IPAWANERR("Client not inited.\n");
-			mutex_unlock(&rmnet_ipa3_ctx->per_client_stats_guard);
-			return -EAGAIN;
-		}
 	} else {
 		/* Max number of clients. */
 		/* Check if disconnect flag is set and
