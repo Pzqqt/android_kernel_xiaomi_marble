@@ -847,7 +847,8 @@ void hif_latency_detect_credit_record_time(
 		scn->latency_detect.credit_request_time = qdf_system_ticks();
 	else if (HIF_PROCESS_CREDIT_REPORT == type)
 		scn->latency_detect.credit_report_time = qdf_system_ticks();
-		hif_check_detection_latency(scn, false, BIT(HIF_DETECT_CREDIT));
+
+	hif_check_detection_latency(scn, false, BIT(HIF_DETECT_CREDIT));
 }
 
 void hif_set_enable_detection(struct hif_opaque_softc *hif_ctx, bool value)
