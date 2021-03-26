@@ -30,6 +30,13 @@ extern struct msm_vidc_core *g_core;
 	}                           \
 }
 
+#define SSR_TYPE 0x0000000F
+#define SSR_TYPE_SHIFT 0
+#define SSR_SUB_CLIENT_ID 0x000000F0
+#define SSR_SUB_CLIENT_ID_SHIFT 4
+#define SSR_ADDR_ID 0xFFFFFFFF00000000
+#define SSR_ADDR_SHIFT 32
+
 struct msm_vidc_buf_type_name {
 	enum msm_vidc_buffer_type type;
 	char *name;
@@ -3463,13 +3470,64 @@ int msm_vidc_smmu_fault_handler(struct iommu_domain *domain,
 }
 
 int msm_vidc_trigger_ssr(struct msm_vidc_core *core,
-		enum msm_vidc_ssr_trigger_type type)
+		u64 trigger_ssr_val)
 {
+	struct msm_vidc_ssr *ssr;
+
+	if (!core) {
+		d_vpr_e("%s: Invalid parameters\n", __func__);
+		return -EINVAL;
+	}
+	ssr = &core->ssr;
+	/*
+	 * <test_addr><sub_client_id><ssr_type>
+	 * ssr_type: 0-3 bits
+	 * sub_client_id: 4-7 bits
+	 * reserved: 8-31 bits
+	 * test_addr: 32-63 bits
+	 */
+	ssr->ssr_type = (trigger_ssr_val &
+			(unsigned long)SSR_TYPE) >> SSR_TYPE_SHIFT;
+	ssr->sub_client_id = (trigger_ssr_val &
+			(unsigned long)SSR_SUB_CLIENT_ID) >> SSR_SUB_CLIENT_ID_SHIFT;
+	ssr->test_addr = (trigger_ssr_val &
+			(unsigned long)SSR_ADDR_ID) >> SSR_ADDR_SHIFT;
+	schedule_work(&core->ssr_work);
 	return 0;
 }
 
 void msm_vidc_ssr_handler(struct work_struct *work)
 {
+	int rc;
+	struct msm_vidc_core *core;
+	struct msm_vidc_ssr *ssr;
+
+	core = container_of(work, struct msm_vidc_core, ssr_work);
+	if (!core) {
+		d_vpr_e("%s: invalid params %pK\n", __func__, core);
+		return;
+	}
+	ssr = &core->ssr;
+
+	core_lock(core, __func__);
+	if (core->state == MSM_VIDC_CORE_INIT) {
+		/*
+		 * In current implementation, user-initiated SSR triggers
+		 * a fatal error from hardware. However, there is no way
+		 * to know if fatal error is due to SSR or not. Handle
+		 * user SSR as non-fatal.
+		 */
+		core->ssr.trigger = true;
+		rc = venus_hfi_trigger_ssr(core, ssr->ssr_type,
+			ssr->sub_client_id, ssr->test_addr);
+		if (rc) {
+			d_vpr_e("%s: trigger_ssr failed\n", __func__);
+			core->ssr.trigger = false;
+		}
+	} else {
+		d_vpr_e("%s: video core not initialized\n", __func__);
+	}
+	core_unlock(core, __func__);
 }
 
 void msm_vidc_pm_work_handler(struct work_struct *work)
