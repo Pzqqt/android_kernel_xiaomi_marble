@@ -57,15 +57,10 @@
 #define V4L2_CID_MPEG_VIDC_LOWLATENCY_REQUEST   (V4L2_CID_MPEG_VIDC_BASE + 0x3)
 /* FIXme: */
 #define V4L2_CID_MPEG_VIDC_CODEC_CONFIG         (V4L2_CID_MPEG_VIDC_BASE + 0x4)
-/* B frame min/max qp */
-#define V4L2_CID_MPEG_VIDC_B_FRAME_MIN_QP       (V4L2_CID_MPEG_VIDC_BASE + 0x5)
-#define V4L2_CID_MPEG_VIDC_B_FRAME_MAX_QP       (V4L2_CID_MPEG_VIDC_BASE + 0x6)
 /* LTR controls */
 #define V4L2_CID_MPEG_VIDC_LTRCOUNT             (V4L2_CID_MPEG_VIDC_BASE + 0x7)
 #define V4L2_CID_MPEG_VIDC_USELTRFRAME          (V4L2_CID_MPEG_VIDC_BASE + 0x8)
 #define V4L2_CID_MPEG_VIDC_MARKLTRFRAME         (V4L2_CID_MPEG_VIDC_BASE + 0x9)
-/* Base layer priority id value */
-#define V4L2_CID_MPEG_VIDC_BASELAYER_PRIORITY   (V4L2_CID_MPEG_VIDC_BASE + 0xA)
 /* Encoder Intra refresh period */
 #define V4L2_CID_MPEG_VIDC_INTRA_REFRESH_PERIOD (V4L2_CID_MPEG_VIDC_BASE + 0xB)
 #define V4L2_CID_MPEG_VIDC_AU_DELIMITER         (V4L2_CID_MPEG_VIDC_BASE + 0xC)
@@ -124,16 +119,6 @@ enum v4l2_mpeg_vidc_blur_types {
 	(V4L2_CID_MPEG_VIDC_BASE + 0x22)
 #define V4L2_CID_MPEG_VIDC_MIN_BITSTREAM_SIZE_OVERWRITE                       \
 	(V4L2_CID_MPEG_VIDC_BASE + 0x23)
-
-/* Deprecate below controls once they are available in upstream */
-#define V4L2_CID_MPEG_VIDC_HEVC_I_FRAME_MIN_QP                               \
-	(V4L2_CID_MPEG_VIDC_BASE + 0x24)
-#define V4L2_CID_MPEG_VIDC_HEVC_P_FRAME_MIN_QP                               \
-	(V4L2_CID_MPEG_VIDC_BASE + 0x25)
-#define V4L2_CID_MPEG_VIDC_HEVC_I_FRAME_MAX_QP                               \
-	(V4L2_CID_MPEG_VIDC_BASE + 0x26)
-#define V4L2_CID_MPEG_VIDC_HEVC_P_FRAME_MAX_QP                               \
-	(V4L2_CID_MPEG_VIDC_BASE + 0x27)
 
 /* Encoder Super frame control */
 #define V4L2_CID_MPEG_VIDC_SUPERFRAME           (V4L2_CID_MPEG_VIDC_BASE + 0x28)
