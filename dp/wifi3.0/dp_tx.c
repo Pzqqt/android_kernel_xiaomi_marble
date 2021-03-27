@@ -3355,7 +3355,7 @@ void dp_tx_reinject_handler(struct dp_soc *soc,
 				  ((is_mcast && peer->wds_ecm.wds_tx_mcast_4addr) ||
 				   (is_ucast && peer->wds_ecm.wds_tx_ucast_4addr))))) {
 #else
-			((peer->bss_peer &&
+			((peer->bss_peer && vdev->osif_proxy_arp &&
 			  !(vdev->osif_proxy_arp(vdev->osif_vdev, nbuf))))) {
 #endif
 				peer_id = DP_INVALID_PEER;
