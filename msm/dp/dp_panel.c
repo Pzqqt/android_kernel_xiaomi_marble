@@ -2994,6 +2994,7 @@ struct dp_panel *dp_panel_get(struct dp_panel_in *in)
 		dp_panel->fec_en = in->base_panel->fec_en;
 		dp_panel->dsc_en = in->base_panel->dsc_en;
 		dp_panel->fec_overhead_fp = in->base_panel->fec_overhead_fp;
+		dp_panel->sink_dsc_caps = in->base_panel->sink_dsc_caps;
 	}
 
 	dp_panel->init = dp_panel_init_panel_info;
