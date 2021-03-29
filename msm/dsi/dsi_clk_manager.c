@@ -775,8 +775,7 @@ static int dsi_display_link_clk_disable(struct dsi_link_clks *clks,
 		if (rc)
 			DSI_ERR("failed to turn off master hs link clocks, rc=%d\n",
 					rc);
-		if (!mngr->is_cont_splash_enabled)
-			mngr->phy_pll_toggle_cb(mngr->priv_data, false);
+		mngr->phy_pll_toggle_cb(mngr->priv_data, false);
 	}
 
 	return rc;
