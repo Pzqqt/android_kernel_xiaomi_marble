@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -220,4 +220,15 @@ QDF_STATUS wlan_vdev_mlme_is_scan_allowed(struct wlan_objmgr_vdev *vdev);
  *         FAILURE: otherwise failure
  */
 QDF_STATUS wlan_vdev_mlme_is_init_state(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * wlan_vdev_is_up_active_state() - Checks whether vdev is in up active state
+ * @vdev: Object manager VDEV object
+ *
+ * API to checks the VDEV MLME SM state is in UP ACTIVE state
+ *
+ * Return: SUCCESS: if vdev is in UP ACTIVE state
+ *         FAILURE: otherwise failure
+ */
+QDF_STATUS wlan_vdev_is_up_active_state(struct wlan_objmgr_vdev *vdev);
 #endif
