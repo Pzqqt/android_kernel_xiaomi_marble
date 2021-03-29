@@ -1740,7 +1740,6 @@ kgsl_allocate_secure_global(struct kgsl_device *device,
 	 * normally
 	 */
 	kgsl_mmu_map_global(device, &md->memdesc, 0);
-	kgsl_trace_gpu_mem_total(device, md->memdesc.size);
 
 	return &md->memdesc;
 }
@@ -1780,7 +1779,6 @@ struct kgsl_memdesc *kgsl_allocate_global(struct kgsl_device *device,
 	list_add_tail(&md->node, &device->globals);
 
 	kgsl_mmu_map_global(device, &md->memdesc, padding);
-	kgsl_trace_gpu_mem_total(device, md->memdesc.size);
 
 	return &md->memdesc;
 }
