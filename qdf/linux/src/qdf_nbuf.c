@@ -142,8 +142,6 @@ static inline uint8_t __qdf_nbuf_get_ip_offset(uint8_t *data)
 	return QDF_NBUF_TRAC_IP_OFFSET;
 }
 
-qdf_export_symbol(__qdf_nbuf_get_ip_offset);
-
 /**
  *  __qdf_nbuf_get_ether_type - Get the ether type
  * @data: Pointer to network data buffer
@@ -170,8 +168,6 @@ static inline uint16_t __qdf_nbuf_get_ether_type(uint8_t *data)
 
 	return ether_type;
 }
-
-qdf_export_symbol(__qdf_nbuf_get_ether_type);
 
 /**
  * qdf_nbuf_tx_desc_count_display() - Displays the packet counter
@@ -240,7 +236,6 @@ static inline void qdf_nbuf_tx_desc_count_update(uint8_t packet_type,
 		break;
 	}
 }
-qdf_export_symbol(qdf_nbuf_tx_desc_count_update);
 
 /**
  * qdf_nbuf_tx_desc_count_clear() - Clears packet counter for both data, mgmt

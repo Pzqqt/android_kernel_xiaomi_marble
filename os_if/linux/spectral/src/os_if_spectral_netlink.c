@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2017-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -565,8 +565,6 @@ os_if_spectral_free_skb(struct wlan_objmgr_pdev *pdev,
 	/* clear the local copy */
 	ps->skb[smsg_type] = NULL;
 }
-
-qdf_export_symbol(os_if_spectral_free_skb);
 
 void
 os_if_spectral_netlink_init(struct wlan_objmgr_pdev *pdev)
