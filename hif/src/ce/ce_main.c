@@ -1569,14 +1569,17 @@ alloc_mem_ce_debug_history(struct hif_softc *scn, unsigned int ce_id,
 			   uint32_t src_nentries)
 {
 	struct ce_desc_hist *ce_hist = &scn->hif_ce_desc_hist;
-
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	ce_hist->hist_ev[ce_id] = hif_ce_desc_history[ce_id];
 	ce_hist->enable[ce_id] = 1;
 
-	if (src_nentries)
-		alloc_mem_ce_debug_hist_data(scn, ce_id);
-	else
+	if (src_nentries) {
+		status = alloc_mem_ce_debug_hist_data(scn, ce_id);
+		if (status != QDF_STATUS_SUCCESS)
+			return status;
+	} else {
 		ce_hist->data_enable[ce_id] = false;
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1717,6 +1720,7 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 	bool malloc_CE_state = false;
 	bool malloc_src_ring = false;
 	int status;
+	QDF_STATUS mem_status = QDF_STATUS_SUCCESS;
 
 	QDF_ASSERT(CE_id < scn->ce_count);
 	ctrl_addr = CE_BASE_ADDRESS(CE_id);
@@ -1905,7 +1909,9 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 	ce_mark_datapath(CE_state);
 	scn->ce_id_to_state[CE_id] = CE_state;
 
-	alloc_mem_ce_debug_history(scn, CE_id, attr->src_nentries);
+	mem_status = alloc_mem_ce_debug_history(scn, CE_id, attr->src_nentries);
+	if (mem_status != QDF_STATUS_SUCCESS)
+		goto error_target_access;
 
 	return (struct CE_handle *)CE_state;
 
