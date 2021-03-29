@@ -152,6 +152,120 @@ void dsi_ctrl_hw_cmn_host_setup(struct dsi_ctrl_hw *ctrl,
 }
 
 /**
+ * ulps_request() - request ulps entry for specified lanes
+ * @ctrl:          Pointer to the controller host hardware.
+ * @lanes:         ORed list of lanes (enum dsi_data_lanes) which need
+ *                 to enter ULPS.
+ *
+ * Caller should check if lanes are in ULPS mode by calling
+ * get_lanes_in_ulps() operation.
+ */
+void dsi_ctrl_hw_cmn_ulps_request(struct dsi_ctrl_hw *ctrl, u32 lanes)
+{
+	u32 reg = 0;
+
+	reg = DSI_R32(ctrl, DSI_LANE_CTRL);
+
+	if (lanes & DSI_CLOCK_LANE)
+		reg |= BIT(4);
+	if (lanes & DSI_DATA_LANE_0)
+		reg |= BIT(0);
+	if (lanes & DSI_DATA_LANE_1)
+		reg |= BIT(1);
+	if (lanes & DSI_DATA_LANE_2)
+		reg |= BIT(2);
+	if (lanes & DSI_DATA_LANE_3)
+		reg |= BIT(3);
+
+	/*
+	 * ULPS entry request. Wait for short time to make sure
+	 * that the lanes enter ULPS. Recommended as per HPG.
+	 */
+	DSI_W32(ctrl, DSI_LANE_CTRL, reg);
+	usleep_range(100, 110);
+
+	DSI_CTRL_HW_DBG(ctrl, "ULPS requested for lanes 0x%x\n", lanes);
+}
+
+/**
+ * ulps_exit() - exit ULPS on specified lanes
+ * @ctrl:          Pointer to the controller host hardware.
+ * @lanes:         ORed list of lanes (enum dsi_data_lanes) which need
+ *                 to exit ULPS.
+ *
+ * Caller should check if lanes are in active mode by calling
+ * get_lanes_in_ulps() operation.
+ */
+void dsi_ctrl_hw_cmn_ulps_exit(struct dsi_ctrl_hw *ctrl, u32 lanes)
+{
+	u32 reg = 0;
+	u32 prev_reg = 0;
+
+	prev_reg = DSI_R32(ctrl, DSI_LANE_CTRL);
+	prev_reg &= BIT(24);
+
+	if (lanes & DSI_CLOCK_LANE)
+		reg |= BIT(12);
+	if (lanes & DSI_DATA_LANE_0)
+		reg |= BIT(8);
+	if (lanes & DSI_DATA_LANE_1)
+		reg |= BIT(9);
+	if (lanes & DSI_DATA_LANE_2)
+		reg |= BIT(10);
+	if (lanes & DSI_DATA_LANE_3)
+		reg |= BIT(11);
+
+	/*
+	 * ULPS Exit Request
+	 * Hardware requirement is to wait for at least 1ms
+	 */
+	DSI_W32(ctrl, DSI_LANE_CTRL, reg | prev_reg);
+	usleep_range(1000, 1010);
+	/*
+	 * Sometimes when exiting ULPS, it is possible that some DSI
+	 * lanes are not in the stop state which could lead to DSI
+	 * commands not going through. To avoid this, force the lanes
+	 * to be in stop state.
+	 */
+	DSI_W32(ctrl, DSI_LANE_CTRL, (reg << 8) | prev_reg);
+	wmb(); /* ensure lanes are put to stop state */
+	DSI_W32(ctrl, DSI_LANE_CTRL, 0x0 | prev_reg);
+	wmb(); /* ensure lanes are put to stop state */
+
+	DSI_CTRL_HW_DBG(ctrl, "ULPS exit request for lanes=0x%x\n", lanes);
+}
+
+/**
+ * get_lanes_in_ulps() - returns the list of lanes in ULPS mode
+ * @ctrl:          Pointer to the controller host hardware.
+ *
+ * Returns an ORed list of lanes (enum dsi_data_lanes) that are in ULPS
+ * state. If 0 is returned, all the lanes are active.
+ *
+ * Return: List of lanes in ULPS state.
+ */
+u32 dsi_ctrl_hw_cmn_get_lanes_in_ulps(struct dsi_ctrl_hw *ctrl)
+{
+	u32 reg = 0;
+	u32 lanes = 0;
+
+	reg = DSI_R32(ctrl, DSI_LANE_STATUS);
+	if (!(reg & BIT(8)))
+		lanes |= DSI_DATA_LANE_0;
+	if (!(reg & BIT(9)))
+		lanes |= DSI_DATA_LANE_1;
+	if (!(reg & BIT(10)))
+		lanes |= DSI_DATA_LANE_2;
+	if (!(reg & BIT(11)))
+		lanes |= DSI_DATA_LANE_3;
+	if (!(reg & BIT(12)))
+		lanes |= DSI_CLOCK_LANE;
+
+	DSI_CTRL_HW_DBG(ctrl, "lanes in ulps = 0x%x\n", lanes);
+	return lanes;
+}
+
+/**
  * phy_sw_reset() - perform a soft reset on the PHY.
  * @ctrl:        Pointer to the controller host hardware.
  */

@@ -67,45 +67,6 @@ static void dsi_catalog_cmn_init(struct dsi_ctrl_hw *ctrl,
 	ctrl->ops.vid_engine_busy = dsi_ctrl_hw_cmn_vid_engine_busy;
 
 	switch (version) {
-	case DSI_CTRL_VERSION_1_4:
-		ctrl->ops.setup_lane_map = dsi_ctrl_hw_14_setup_lane_map;
-		ctrl->ops.ulps_ops.ulps_request = dsi_ctrl_hw_cmn_ulps_request;
-		ctrl->ops.ulps_ops.ulps_exit = dsi_ctrl_hw_cmn_ulps_exit;
-		ctrl->ops.wait_for_lane_idle =
-			dsi_ctrl_hw_14_wait_for_lane_idle;
-		ctrl->ops.ulps_ops.get_lanes_in_ulps =
-			dsi_ctrl_hw_cmn_get_lanes_in_ulps;
-		ctrl->ops.clamp_enable = dsi_ctrl_hw_14_clamp_enable;
-		ctrl->ops.clamp_disable = dsi_ctrl_hw_14_clamp_disable;
-		ctrl->ops.reg_dump_to_buffer =
-			dsi_ctrl_hw_14_reg_dump_to_buffer;
-		ctrl->ops.schedule_dma_cmd = NULL;
-		ctrl->ops.kickoff_command_non_embedded_mode = NULL;
-		ctrl->ops.config_clk_gating = NULL;
-		ctrl->ops.configure_cmddma_window = NULL;
-		ctrl->ops.reset_trig_ctrl = NULL;
-		ctrl->ops.log_line_count = NULL;
-		ctrl->ops.splitlink_cmd_setup = NULL;
-		break;
-	case DSI_CTRL_VERSION_2_0:
-		ctrl->ops.setup_lane_map = dsi_ctrl_hw_20_setup_lane_map;
-		ctrl->ops.wait_for_lane_idle =
-			dsi_ctrl_hw_20_wait_for_lane_idle;
-		ctrl->ops.reg_dump_to_buffer =
-			dsi_ctrl_hw_20_reg_dump_to_buffer;
-		ctrl->ops.ulps_ops.ulps_request = NULL;
-		ctrl->ops.ulps_ops.ulps_exit = NULL;
-		ctrl->ops.ulps_ops.get_lanes_in_ulps = NULL;
-		ctrl->ops.clamp_enable = NULL;
-		ctrl->ops.clamp_disable = NULL;
-		ctrl->ops.schedule_dma_cmd = NULL;
-		ctrl->ops.kickoff_command_non_embedded_mode = NULL;
-		ctrl->ops.config_clk_gating = NULL;
-		ctrl->ops.configure_cmddma_window = NULL;
-		ctrl->ops.reset_trig_ctrl = NULL;
-		ctrl->ops.log_line_count = NULL;
-		ctrl->ops.splitlink_cmd_setup = NULL;
-		break;
 	case DSI_CTRL_VERSION_2_2:
 	case DSI_CTRL_VERSION_2_3:
 	case DSI_CTRL_VERSION_2_4:
@@ -173,10 +134,6 @@ int dsi_catalog_ctrl_setup(struct dsi_ctrl_hw *ctrl,
 	set_bit(DSI_CTRL_DPHY, ctrl->feature_map);
 
 	switch (version) {
-	case DSI_CTRL_VERSION_1_4:
-		dsi_catalog_cmn_init(ctrl, version);
-		break;
-	case DSI_CTRL_VERSION_2_0:
 	case DSI_CTRL_VERSION_2_2:
 	case DSI_CTRL_VERSION_2_3:
 	case DSI_CTRL_VERSION_2_4:
