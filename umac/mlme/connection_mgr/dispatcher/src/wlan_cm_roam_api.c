@@ -276,7 +276,7 @@ QDF_STATUS wlan_cm_abort_rso(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(psoc, vdev_id) ||
 	    wlan_cm_host_roam_in_progress(psoc, vdev_id)) {
 		cm_roam_release_lock(vdev);
-		status = QDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_BUSY;
 		goto release_ref;
 	}
 
@@ -290,7 +290,7 @@ QDF_STATUS wlan_cm_abort_rso(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 release_ref:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
 
 bool wlan_cm_roaming_in_progress(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
