@@ -815,6 +815,8 @@ struct response_work {
 struct msm_vidc_ssr {
 	bool                               trigger;
 	enum msm_vidc_ssr_trigger_type     ssr_type;
+	u32                                sub_client_id;
+	u32                                test_addr;
 };
 
 struct msm_vidc_sfr {

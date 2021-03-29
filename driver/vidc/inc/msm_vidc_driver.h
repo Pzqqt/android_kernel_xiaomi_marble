@@ -276,7 +276,7 @@ void msm_vidc_print_core_info(struct msm_vidc_core *core);
 int msm_vidc_smmu_fault_handler(struct iommu_domain *domain,
 		struct device *dev, unsigned long iova, int flags, void *data);
 int msm_vidc_trigger_ssr(struct msm_vidc_core *core,
-		enum msm_vidc_ssr_trigger_type type);
+		u64 trigger_ssr_val);
 void msm_vidc_ssr_handler(struct work_struct *work);
 void msm_vidc_pm_work_handler(struct work_struct *work);
 void msm_vidc_fw_unload_handler(struct work_struct *work);

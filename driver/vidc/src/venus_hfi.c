@@ -2897,6 +2897,49 @@ int venus_hfi_suspend(struct msm_vidc_core *core)
 	return rc;
 }
 
+int venus_hfi_trigger_ssr(struct msm_vidc_core *core, u32 type,
+	u32 client_id, u32 addr)
+{
+	int rc = 0;
+	u32 payload[2];
+
+	if (!core || !core->packet) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	payload[0] = client_id << 4 | type;
+	payload[1] = addr;
+
+	rc = hfi_create_header(core->packet, core->packet_size,
+			   0 /*session_id*/,
+			   core->header_id++);
+	if (rc)
+		goto err_ssr_pkt;
+
+	/* HFI_CMD_SSR */
+	rc = hfi_create_packet(core->packet, core->packet_size,
+				   HFI_CMD_SSR,
+				   HFI_HOST_FLAGS_RESPONSE_REQUIRED |
+				   HFI_HOST_FLAGS_INTR_REQUIRED,
+				   HFI_PAYLOAD_U64,
+				   HFI_PORT_NONE,
+				   core->packet_id++,
+				   &payload, sizeof(u64));
+	if (rc)
+		goto err_ssr_pkt;
+
+	rc = __iface_cmdq_write(core, core->packet);
+	if (rc)
+		return rc;
+
+	return 0;
+
+err_ssr_pkt:
+	d_vpr_e("%s: create packet failed\n", __func__);
+	return rc;
+}
+
 int venus_hfi_session_open(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
