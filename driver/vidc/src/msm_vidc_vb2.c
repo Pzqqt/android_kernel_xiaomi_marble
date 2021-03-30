@@ -8,6 +8,7 @@
 #include "msm_vidc_inst.h"
 #include "msm_vidc_internal.h"
 #include "msm_vidc_driver.h"
+#include "msm_vidc_power.h"
 #include "msm_vdec.h"
 #include "msm_venc.h"
 #include "msm_vidc_debug.h"
@@ -204,6 +205,12 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 		}
 	}
 
+	if (is_decode_session(inst))
+		inst->decode_batch.enable = msm_vidc_allow_decode_batch(inst);
+
+	msm_vidc_allow_dcvs(inst);
+	msm_vidc_power_data_reset(inst);
+
 	if (q->type == INPUT_MPLANE) {
 		if (is_decode_session(inst))
 			rc = msm_vdec_streamon_input(inst);
@@ -222,9 +229,9 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 		i_vpr_e(inst, "%s: invalid type %d\n", q->type);
 		goto error;
 	}
-
 	if (!rc)
 		i_vpr_h(inst, "Streamon: %d successful\n", q->type);
+
 	return rc;
 
 error:

@@ -227,7 +227,7 @@ int msm_vidc_scale_buses(struct msm_vidc_inst *inst)
 		return 0;
 
 	vote_data->power_mode = VIDC_POWER_NORMAL;
-	if (inst->power.buffer_counter < DCVS_FTB_WINDOW || is_image_session(inst))
+	if (inst->power.buffer_counter < DCVS_WINDOW || is_image_session(inst))
 		vote_data->power_mode = VIDC_POWER_TURBO;
 	if (msm_vidc_clock_voting)
 		vote_data->power_mode = VIDC_POWER_TURBO;
@@ -422,17 +422,15 @@ static int msm_vidc_apply_dcvs(struct msm_vidc_inst *inst)
 	int bufs_with_fw = 0;
 	struct msm_vidc_power *power;
 
-	if (!inst || !inst->core) {
+	if (!inst) {
 		d_vpr_e("%s: invalid params %pK\n", __func__, inst);
 		return -EINVAL;
 	}
 
-	if (!inst->power.dcvs_mode || inst->decode_batch.enable || is_image_session(inst)) {
-		i_vpr_l(inst, "Skip DCVS (dcvs %d, batching %d)\n",
-			inst->power.dcvs_mode, inst->decode_batch.enable);
-		inst->power.dcvs_flags = 0;
+	/* skip dcvs */
+	if (!inst->power.dcvs_mode)
 		return 0;
-	}
+
 	power = &inst->power;
 
 	if (is_decode_session(inst)) {
@@ -458,22 +456,36 @@ static int msm_vidc_apply_dcvs(struct msm_vidc_inst *inst)
 	 *    FW is slow and will impact pipeline, Increase clock.
 	 * 2) When pending buffers with FW are less than FW requested,
 	 *    pipeline has cushion to absorb FW slowness, Decrease clocks.
-	 * 3) When DCVS has engaged(Inc or Dec) and pending buffers with FW
-	 *    transitions past the nom_threshold, switch to calculated load.
-	 *    This smoothens the clock transitions.
+	 * 3) When DCVS has engaged(Inc or Dec):
+	 *    For decode:
+	 *        - Pending buffers with FW transitions past the nom_threshold,
+	 *        switch to calculated load, this smoothens the clock transitions.
+	 *    For encode:
+	 *        - Always switch to calculated load.
 	 * 4) Otherwise maintain previous Load config.
 	 */
 	if (bufs_with_fw >= power->max_threshold) {
 		power->dcvs_flags = MSM_VIDC_DCVS_INCR;
+		goto exit;
 	} else if (bufs_with_fw < power->min_threshold) {
 		power->dcvs_flags = MSM_VIDC_DCVS_DECR;
-	} else if ((power->dcvs_flags & MSM_VIDC_DCVS_DECR &&
-			   bufs_with_fw >= power->nom_threshold) ||
-			   (power->dcvs_flags & MSM_VIDC_DCVS_INCR &&
-			   bufs_with_fw <= power->nom_threshold))
-		power->dcvs_flags = 0;
+		goto exit;
+	}
 
-	i_vpr_p(inst, "DCVS: bufs_with_fw %d th[%d %d %d] flags %#x\n",
+	/* encoder: dcvs window handling */
+	if (is_encode_session(inst)) {
+		power->dcvs_flags = 0;
+		goto exit;
+	}
+
+	/* decoder: dcvs window handling */
+	if ((power->dcvs_flags & MSM_VIDC_DCVS_DECR && bufs_with_fw >= power->nom_threshold) ||
+		(power->dcvs_flags & MSM_VIDC_DCVS_INCR && bufs_with_fw <= power->nom_threshold)) {
+		power->dcvs_flags = 0;
+	}
+
+exit:
+	i_vpr_p(inst, "dcvs: bufs_with_fw %d th[%d %d %d] flags %#x\n",
 		bufs_with_fw, power->min_threshold,
 		power->nom_threshold, power->max_threshold,
 		power->dcvs_flags);
@@ -498,8 +510,7 @@ int msm_vidc_scale_clocks(struct msm_vidc_inst *inst)
 	if (!data_size)
 		return 0;
 
-	//todo: add turbo session check
-	if (inst->power.buffer_counter < DCVS_FTB_WINDOW || is_image_session(inst)) {
+	if (inst->power.buffer_counter < DCVS_WINDOW || is_image_session(inst)) {
 		inst->power.min_freq = msm_vidc_max_freq(inst);
 		inst->power.dcvs_flags = 0;
 	} else if (msm_vidc_clock_voting) {
@@ -524,7 +535,6 @@ int msm_vidc_scale_power(struct msm_vidc_inst *inst, bool scale_buses)
 		d_vpr_e("%s: invalid params %pK\n", __func__, inst);
 		return -EINVAL;
 	}
-
 	core = inst->core;
 
 	if (!inst->active) {
@@ -553,7 +563,7 @@ int msm_vidc_scale_power(struct msm_vidc_inst *inst, bool scale_buses)
 void msm_vidc_dcvs_data_reset(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_power *dcvs;
-	u32 min_count, actual_count;
+	u32 min_count, actual_count, max_count;
 
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -561,12 +571,14 @@ void msm_vidc_dcvs_data_reset(struct msm_vidc_inst *inst)
 	}
 
 	dcvs = &inst->power;
-	if (inst->domain == MSM_VIDC_ENCODER) {
+	if (is_encode_session(inst)) {
 		min_count = inst->buffers.input.min_count;
 		actual_count = inst->buffers.input.actual_count;
-	} else if (inst->domain == MSM_VIDC_DECODER) {
+		max_count = min((min_count + DCVS_ENC_EXTRA_INPUT_BUFFERS), actual_count);
+	} else if (is_decode_session(inst)) {
 		min_count = inst->buffers.output.min_count;
 		actual_count = inst->buffers.output.actual_count;
+		max_count = min((min_count + DCVS_DEC_EXTRA_OUTPUT_BUFFERS), actual_count);
 	} else {
 		i_vpr_e(inst, "%s: invalid domain type %d\n",
 			__func__, inst->domain);
@@ -574,23 +586,12 @@ void msm_vidc_dcvs_data_reset(struct msm_vidc_inst *inst)
 	}
 
 	dcvs->min_threshold = min_count;
-	if (inst->domain == MSM_VIDC_ENCODER)
-		dcvs->max_threshold = min((min_count + DCVS_ENC_EXTRA_INPUT_BUFFERS),
-								  actual_count);
-	else
-		dcvs->max_threshold = min((min_count + DCVS_DEC_EXTRA_OUTPUT_BUFFERS),
-								  actual_count);
-
-	dcvs->dcvs_window =
-		dcvs->max_threshold < dcvs->min_threshold ? 0 :
-		dcvs->max_threshold - dcvs->min_threshold;
-	dcvs->nom_threshold = dcvs->min_threshold +
-		(dcvs->dcvs_window ?
-		(dcvs->dcvs_window / 2) : 0);
-
+	dcvs->max_threshold = max_count;
+	dcvs->dcvs_window = min_count < max_count ? max_count - min_count : 0;
+	dcvs->nom_threshold = dcvs->min_threshold + (dcvs->dcvs_window / 2);
 	dcvs->dcvs_flags = 0;
 
-	i_vpr_p(inst, "%s: DCVS: thresholds [%d %d %d] flags %#x\n",
+	i_vpr_p(inst, "%s: dcvs: thresholds [%d %d %d] flags %#x\n",
 		__func__, dcvs->min_threshold,
 		dcvs->nom_threshold, dcvs->max_threshold,
 		dcvs->dcvs_flags);

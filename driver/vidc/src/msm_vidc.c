@@ -453,6 +453,8 @@ int msm_vidc_qbuf(void *instance, struct media_device *mdev,
 		goto unlock;
 	}
 
+	inst->last_qbuf_time_ns = ktime_get_ns();
+
 	rc = vb2_qbuf(q, mdev, b);
 	if (rc)
 		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);

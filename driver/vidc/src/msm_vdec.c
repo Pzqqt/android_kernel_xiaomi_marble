@@ -15,6 +15,7 @@
 #include "msm_vidc_platform.h"
 #include "msm_vidc_control.h"
 #include "msm_vidc_debug.h"
+#include "msm_vidc_power.h"
 #include "msm_vidc_control.h"
 #include "venus_hfi.h"
 #include "hfi_packet.h"
@@ -1322,8 +1323,6 @@ static int msm_vdec_read_input_subcr_params(struct msm_vidc_inst *inst)
 	else
 		msm_vidc_update_cap_value(inst, CODED_FRAMES, CODED_FRAMES_INTERLACE, __func__);
 
-	inst->decode_batch.enable = msm_vidc_allow_decode_batch(inst);
-
 	return 0;
 }
 
@@ -1462,8 +1461,6 @@ int msm_vdec_streamon_input(struct msm_vidc_inst *inst)
 	rc = msm_vidc_session_streamon(inst, INPUT_PORT);
 	if (rc)
 		goto error;
-
-	inst->decode_batch.enable = msm_vidc_allow_decode_batch(inst);
 
 	return 0;
 
@@ -1705,8 +1702,6 @@ int msm_vdec_streamon_output(struct msm_vidc_inst *inst)
 	if (rc)
 		goto error;
 
-	inst->decode_batch.enable = msm_vidc_allow_decode_batch(inst);
-
 	return 0;
 
 error:
@@ -1813,6 +1808,12 @@ int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 		port = (inst->state == MSM_VIDC_DRAIN_LAST_FLAG) ? INPUT_PORT : OUTPUT_PORT;
 		vb2_clear_last_buffer_dequeued(&inst->vb2q[OUTPUT_META_PORT]);
 		vb2_clear_last_buffer_dequeued(&inst->vb2q[OUTPUT_PORT]);
+
+		/* tune power features */
+		inst->decode_batch.enable = msm_vidc_allow_decode_batch(inst);
+		msm_vidc_allow_dcvs(inst);
+		msm_vidc_power_data_reset(inst);
+
 		rc = msm_vidc_state_change_start(inst);
 		if (rc)
 			return rc;

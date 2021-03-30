@@ -351,6 +351,7 @@ int msm_vidc_init_instance_caps(struct msm_vidc_core* core);
 int msm_vidc_deinit_core_caps(struct msm_vidc_core* core);
 int msm_vidc_deinit_instance_caps(struct msm_vidc_core* core);
 int msm_vidc_update_debug_str(struct msm_vidc_inst *inst);
+void msm_vidc_allow_dcvs(struct msm_vidc_inst *inst);
 bool msm_vidc_allow_decode_batch(struct msm_vidc_inst *inst);
 int msm_vidc_check_session_supported(struct msm_vidc_inst *inst);
 int msm_vidc_check_mbps_supported(struct msm_vidc_inst *inst);

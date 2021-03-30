@@ -57,12 +57,7 @@
 #define MAX_AVC_ENH_LAYER_HYBRID_HP           5
 #define PERCENT_PEAK_BITRATE_INCREASED       10
 
-/* TODO
- * #define MAX_SUPERFRAME_COUNT     32
-*/
-
-/* Maintains the number of FTB's between each FBD over a window */
-#define DCVS_FTB_WINDOW 16
+#define DCVS_WINDOW 16
 /* Superframe can have maximum of 32 frames */
 #define VIDC_SUPERFRAME_MAX 32
 #define COLOR_RANGE_UNSPECIFIED (-1)

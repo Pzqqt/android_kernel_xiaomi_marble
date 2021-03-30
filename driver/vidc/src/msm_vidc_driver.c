@@ -1995,6 +1995,60 @@ static bool is_single_session(struct msm_vidc_inst *inst)
 	return count == 1;
 }
 
+void msm_vidc_allow_dcvs(struct msm_vidc_inst *inst)
+{
+	bool allow = false;
+	struct msm_vidc_core *core;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: Invalid args: %pK\n", __func__, inst);
+		return;
+	}
+	core = inst->core;
+
+	allow = !msm_vidc_clock_voting;
+	if (!allow) {
+		i_vpr_h(inst, "%s: core_clock_voting is set\n", __func__);
+		goto exit;
+	}
+
+	allow = core->capabilities[DCVS].value;
+	if (!allow) {
+		i_vpr_h(inst, "%s: core doesn't support dcvs\n", __func__);
+		goto exit;
+	}
+
+	allow = !inst->decode_batch.enable;
+	if (!allow) {
+		i_vpr_h(inst, "%s: decode_batching enabled\n", __func__);
+		goto exit;
+	}
+
+	allow = !msm_vidc_is_super_buffer(inst);
+	if (!allow) {
+		i_vpr_h(inst, "%s: encode_batching(super_buffer) enabled\n", __func__);
+		goto exit;
+	}
+
+	allow = !is_thumbnail_session(inst);
+	if (!allow) {
+		i_vpr_h(inst, "%s: thumbnail session\n", __func__);
+		goto exit;
+	}
+
+	allow = !is_image_session(inst);
+	if (!allow) {
+		i_vpr_h(inst, "%s: image session\n", __func__);
+		goto exit;
+	}
+
+exit:
+	i_vpr_h(inst, "%s: dcvs: %s\n", __func__, allow ? "enabled" : "disabled");
+
+	inst->power.dcvs_flags = 0;
+	inst->power.dcvs_mode = allow;
+}
+
 bool msm_vidc_allow_decode_batch(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_core *core;
@@ -2002,7 +2056,7 @@ bool msm_vidc_allow_decode_batch(struct msm_vidc_inst *inst)
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
+		return false;
 	}
 	core = inst->core;
 
@@ -2055,7 +2109,7 @@ bool msm_vidc_allow_decode_batch(struct msm_vidc_inst *inst)
 	}
 
 exit:
-	i_vpr_h(inst, "%s: batching %s\n", __func__, allow ? "enabled" : "disabled");
+	i_vpr_h(inst, "%s: batching: %s\n", __func__, allow ? "enabled" : "disabled");
 
 	return allow;
 }
@@ -2203,8 +2257,9 @@ int msm_vidc_queue_buffer_single(struct msm_vidc_inst *inst, struct vb2_buffer *
 			inst->capabilities->cap[ENC_IP_CR].value = 0;
 		}
 		inst->power.buffer_counter++;
-		msm_vidc_scale_power(inst, true);
 	}
+
+	msm_vidc_scale_power(inst, is_input_buffer(buf->type));
 
 	rc = msm_vidc_queue_buffer(inst, buf);
 	if (rc)
