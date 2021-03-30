@@ -4423,16 +4423,20 @@ cm_send_roam_invoke_req(struct cnx_mgr *cm_ctx, struct cm_req *req)
 	struct wlan_objmgr_pdev *pdev;
 	struct wlan_objmgr_psoc *psoc;
 	struct roam_invoke_req *roam_invoke_req = NULL;
+	wlan_cm_id cm_id;
+	uint8_t vdev_id;
 
 	if (!req)
 		return QDF_STATUS_E_FAILURE;
 
 	roam_req = &req->roam_req;
+	cm_id = req->cm_id;
+	vdev_id = roam_req->req.vdev_id;
 
 	pdev = wlan_vdev_get_pdev(cm_ctx->vdev);
 	if (!pdev) {
 		mlme_err(CM_PREFIX_FMT "Failed to find pdev",
-			 CM_PREFIX_REF(roam_req->req.vdev_id, roam_req->cm_id));
+			 CM_PREFIX_REF(vdev_id, cm_id));
 		status = QDF_STATUS_E_FAILURE;
 		goto roam_err;
 	}
@@ -4440,7 +4444,7 @@ cm_send_roam_invoke_req(struct cnx_mgr *cm_ctx, struct cm_req *req)
 	psoc = wlan_pdev_get_psoc(pdev);
 	if (!psoc) {
 		mlme_err(CM_PREFIX_FMT "Failed to find psoc",
-			 CM_PREFIX_REF(roam_req->req.vdev_id, roam_req->cm_id));
+			 CM_PREFIX_REF(vdev_id, cm_id));
 		status = QDF_STATUS_E_FAILURE;
 		goto roam_err;
 	}
@@ -4453,7 +4457,7 @@ cm_send_roam_invoke_req(struct cnx_mgr *cm_ctx, struct cm_req *req)
 		goto roam_err;
 	}
 
-	roam_invoke_req->vdev_id = roam_req->req.vdev_id;
+	roam_invoke_req->vdev_id = vdev_id;
 	if (roam_req->req.forced_roaming) {
 		roam_invoke_req->forced_roaming = true;
 		goto send_cmd;
@@ -4470,14 +4474,13 @@ cm_send_roam_invoke_req(struct cnx_mgr *cm_ctx, struct cm_req *req)
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		mlme_err(CM_PREFIX_FMT "No Candidate found",
-			 CM_PREFIX_REF(roam_req->req.vdev_id, roam_req->cm_id));
+			 CM_PREFIX_REF(vdev_id, cm_id));
 		goto roam_err;
 	}
 
-	if (wlan_cm_get_ese_assoc(pdev, roam_req->req.vdev_id)) {
+	if (wlan_cm_get_ese_assoc(pdev, vdev_id)) {
 		mlme_debug(CM_PREFIX_FMT "Beacon is not required for ESE",
-			   CM_PREFIX_REF(roam_req->req.vdev_id,
-					 roam_req->cm_id));
+			   CM_PREFIX_REF(vdev_id, cm_id));
 		if (roam_invoke_req->frame_len) {
 			qdf_mem_free(roam_invoke_req->frame_buf);
 			roam_invoke_req->frame_buf = NULL;
@@ -4490,14 +4493,13 @@ send_cmd:
 roam_err:
 	if (QDF_IS_STATUS_ERROR(status)) {
 		mlme_debug(CM_PREFIX_FMT "fail to send roam invoke req",
-			   CM_PREFIX_REF(roam_req->req.vdev_id,
-					 roam_req->cm_id));
+			   CM_PREFIX_REF(vdev_id, cm_id));
 		status = cm_sm_deliver_event_sync(cm_ctx,
 						  WLAN_CM_SM_EV_ROAM_INVOKE_FAIL,
 						  sizeof(wlan_cm_id),
-						  &roam_req->cm_id);
+						  &cm_id);
 		if (QDF_IS_STATUS_ERROR(status))
-			cm_remove_cmd(cm_ctx, &roam_req->cm_id);
+			cm_remove_cmd(cm_ctx, &cm_id);
 	}
 
 	if (roam_invoke_req) {
