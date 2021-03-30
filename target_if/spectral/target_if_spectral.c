@@ -1502,6 +1502,18 @@ target_if_sops_stop_spectral_scan(void *arg, enum spectral_scan_mode smode)
 	if (tempret != 0)
 		ret = tempret;
 
+	if (ret == 0 && smode == SPECTRAL_SCAN_MODE_AGILE) {
+		struct target_if_spectral_ops *p_sops;
+		struct spectral_config *sparams;
+
+		p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
+		sparams = &spectral->params[smode];
+		sparams->ss_frequency.cfreq1 = 0;
+		sparams->ss_frequency.cfreq2 = 0;
+
+		p_sops->configure_spectral(spectral, sparams, smode);
+	}
+
 	return ret;
 }
 
