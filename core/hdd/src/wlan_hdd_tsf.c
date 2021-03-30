@@ -290,6 +290,17 @@ bool hdd_tsf_is_tsf64_tx_set(struct hdd_context *hdd)
 	else
 		return false;
 }
+
+static bool hdd_is_tsf_sync_enabled(struct hdd_context *hdd)
+{
+	bool is_tsf_sync_enable;
+
+	if (hdd && QDF_IS_STATUS_SUCCESS(
+	    ucfg_fwol_get_tsf_sync_enable(hdd->psoc, &is_tsf_sync_enable)))
+		return is_tsf_sync_enable;
+	else
+		return false;
+}
 #else
 
 static bool hdd_tsf_is_ptp_enabled(struct hdd_context *hdd)
@@ -1427,6 +1438,11 @@ static enum hdd_tsf_op_result hdd_tsf_sync_init(struct hdd_adapter *adapter)
 
 	if (!qdf_atomic_read(&hddctx->tsf_ready_flag)) {
 		hdd_err("TSF feature has NOT been initialized");
+		return HDD_TSF_OP_FAIL;
+	}
+
+	if (!hdd_is_tsf_sync_enabled(hddctx)) {
+		hdd_err("TSF sync feature not enabled");
 		return HDD_TSF_OP_FAIL;
 	}
 

@@ -539,6 +539,25 @@
 
 #if defined(WLAN_FEATURE_TSF) && defined(WLAN_FEATURE_TSF_PLUS)
 /* <ini>
+ * g_enable_tsf_sync: Enable TSF sync feature
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * Enable/disable periodic sync of TSF with firmware.
+ *
+ * Related: None
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_TSF_SYNC_ENABLE CFG_INI_BOOL( \
+		"g_enable_tsf_sync", \
+		0, \
+		"Enable TSF sync feature")
+
+/* <ini>
  * gtsf_ptp_options: TSF Plus feature options
  * @Min: 0
  * @Max: 0xff
@@ -570,7 +589,9 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"TSF Plus feature options")
 
-#define __CFG_SET_TSF_PTP_OPT CFG(CFG_SET_TSF_PTP_OPT)
+#define __CFG_SET_TSF_PTP_OPT \
+		CFG(CFG_SET_TSF_PTP_OPT) \
+		CFG(CFG_TSF_SYNC_ENABLE)
 #else
 #define __CFG_SET_TSF_PTP_OPT
 #endif
