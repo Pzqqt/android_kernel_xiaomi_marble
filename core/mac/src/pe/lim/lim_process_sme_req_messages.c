@@ -4218,6 +4218,7 @@ void lim_calculate_tpc(struct mac_context *mac,
 	qdf_freq_t oper_freq, start_freq = 0;
 	struct ch_params ch_params;
 	struct vdev_mlme_obj *mlme_obj;
+	uint8_t tpe_power;
 
 	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(session->vdev);
 	if (!mlme_obj) {
@@ -4259,10 +4260,10 @@ void lim_calculate_tpc(struct mac_context *mac,
 		if (is_tpe_present) {
 			if (is_6ghz_freq) {
 				ap_power_type_6g = session->ap_power_type;
-				wlan_reg_get_client_power_for_connecting_ap
-				(mac->pdev, ap_power_type_6g,
-				 mlme_obj->reg_tpc_obj.frequency[i],
-				 &is_psd_power, &reg_max, &psd_power);
+				wlan_reg_get_client_power_for_connecting_ap(
+				mac->pdev, ap_power_type_6g,
+				mlme_obj->reg_tpc_obj.frequency[i],
+				&is_psd_power, &reg_max, &psd_power);
 			}
 		} else {
 			/* center frequency calculation */
@@ -4270,8 +4271,8 @@ void lim_calculate_tpc(struct mac_context *mac,
 				mlme_obj->reg_tpc_obj.frequency[i] =
 						start_freq + (20 * i);
 			} else {
-				wlan_reg_set_channel_params_for_freq
-					(mac->pdev, oper_freq, 0, &ch_params);
+				wlan_reg_set_channel_params_for_freq(
+					mac->pdev, oper_freq, 0, &ch_params);
 				mlme_obj->reg_tpc_obj.frequency[i] =
 					ch_params.mhz_freq_seg0;
 				ch_params.ch_width =
@@ -4286,10 +4287,14 @@ void lim_calculate_tpc(struct mac_context *mac,
 					 mlme_obj->reg_tpc_obj.frequency[i],
 					 &is_psd_power, &reg_max, &psd_power);
 				} else {
-					wlan_reg_get_6g_chan_ap_power
-					(mac->pdev,
-					 mlme_obj->reg_tpc_obj.frequency[i],
-					 &is_psd_power, &reg_max, &psd_power);
+					ap_power_type_6g =
+						wlan_reg_get_cur_6g_ap_pwr_type(
+							mac->pdev,
+							&ap_power_type_6g);
+					wlan_reg_get_6g_chan_ap_power(
+					mac->pdev,
+					mlme_obj->reg_tpc_obj.frequency[i],
+					&is_psd_power, &reg_max, &psd_power);
 				}
 			}
 		}
@@ -4312,9 +4317,12 @@ void lim_calculate_tpc(struct mac_context *mac,
 		}
 		/* If TPE is present */
 		if (is_tpe_present) {
-			max_tx_power = QDF_MIN(max_tx_power, (int8_t)
-					       mlme_obj->reg_tpc_obj.tpe[i]);
-			pe_debug("TPE: %d", mlme_obj->reg_tpc_obj.tpe[i]);
+			if (!is_psd_power && mlme_obj->reg_tpc_obj.eirp_power)
+				tpe_power =  mlme_obj->reg_tpc_obj.eirp_power;
+			else
+				tpe_power = mlme_obj->reg_tpc_obj.tpe[i];
+			max_tx_power = QDF_MIN(max_tx_power, (int8_t)tpe_power);
+			pe_debug("TPE: %d", tpe_power);
 		}
 
 		/** If firmware updated max tx power is non zero,

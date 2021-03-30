@@ -346,9 +346,9 @@ populate_dot11f_tx_power_env(struct mac_context *mac,
 
 		bw_val = wlan_reg_get_bw_value(chan_width);
 		bw_threshold = 20;
-		power_for_bss = reg_power + 13;
+		power_for_bss = eirp_power + 13;
 
-		while ((eirp_power > power_for_bss) &&
+		while ((reg_power > power_for_bss) &&
 		       (bw_threshold < bw_val)) {
 			bw_threshold = 2 * bw_threshold;
 			power_for_bss += 3;
@@ -364,18 +364,11 @@ populate_dot11f_tx_power_env(struct mac_context *mac,
 			tpe_ptr->max_tx_pwr_interpret = 2;
 			tpe_ptr->max_tx_pwr_category = 0;
 			tpe_ptr->num_tx_power = num_tx_power;
-			for (count = 0, bw_val = 20; count < num_tx_power;
-			     count++, bw_val += 20) {
-				if (bw_val >= bw_threshold)
-					tpe_ptr->tx_power[count] =
-								eirp_power * 2;
-				else
-					tpe_ptr->tx_power[count] =
-								reg_power * 2;
+			for (count = 0; count < num_tx_power; count++) {
+				tpe_ptr->tx_power[count] = reg_power * 2;
 				pe_debug("non-psd default TPE %d %d",
 					 count, tpe_ptr->tx_power[count]);
 			}
-
 			num_tpe_ies++;
 			tpe_ptr++;
 		}
@@ -390,9 +383,9 @@ populate_dot11f_tx_power_env(struct mac_context *mac,
 		if (reg_power) {
 			bw_val = wlan_reg_get_bw_value(chan_width);
 			bw_threshold = 20;
-			power_for_bss = reg_power + 13;
+			power_for_bss = eirp_power + 13;
 
-			while ((eirp_power > power_for_bss) &&
+			while ((reg_power > power_for_bss) &&
 			       (bw_threshold < bw_val)) {
 				bw_threshold = 2 * bw_threshold;
 				power_for_bss += 3;
@@ -406,20 +399,13 @@ populate_dot11f_tx_power_env(struct mac_context *mac,
 				tpe_ptr->max_tx_pwr_interpret = 2;
 				tpe_ptr->max_tx_pwr_category = 1;
 				tpe_ptr->num_tx_power = num_tx_power;
-				for (count = 0, bw_val = 20;
-				     count < num_tx_power;
-				     count++, bw_val += 20) {
-					if (bw_val >= bw_threshold)
-						tpe_ptr->tx_power[count] =
-								eirp_power * 2;
-					else
-						tpe_ptr->tx_power[count] =
-								reg_power * 2;
+				for (count = 0; count < num_tx_power; count++) {
+					tpe_ptr->tx_power[count] =
+							reg_power * 2;
 					pe_debug("non-psd subord TPE %d %d",
 						 count,
 						 tpe_ptr->tx_power[count]);
 				}
-
 				num_tpe_ies++;
 				tpe_ptr++;
 			}
@@ -453,11 +439,10 @@ populate_dot11f_tx_power_env(struct mac_context *mac,
 							&psd_tpe,
 							&reg_power,
 							&eirp_power);
-			tpe_ptr->tx_power[count] = reg_power * 2;
+			tpe_ptr->tx_power[count] = eirp_power * 2;
 			pe_debug("psd default TPE %d %d",
 				 count, tpe_ptr->tx_power[count]);
 		}
-
 		num_tpe_ies++;
 		tpe_ptr++;
 
@@ -468,7 +453,7 @@ populate_dot11f_tx_power_env(struct mac_context *mac,
 						      &reg_power,
 						      &eirp_power);
 
-		if (reg_power) {
+		if (eirp_power) {
 			tpe_ptr->present = 1;
 			tpe_ptr->max_tx_pwr_count = max_tx_pwr_count_psd;
 			tpe_ptr->max_tx_pwr_interpret = 3;
@@ -484,16 +469,14 @@ populate_dot11f_tx_power_env(struct mac_context *mac,
 							&psd_tpe,
 							&reg_power,
 							&eirp_power);
-				tpe_ptr->tx_power[count] = reg_power * 2;
+				tpe_ptr->tx_power[count] = eirp_power * 2;
 				pe_debug("psd subord TPE %d %d",
 					 count, tpe_ptr->tx_power[count]);
 			}
-
 			num_tpe_ies++;
 			tpe_ptr++;
 		}
 	}
-
 	*num_tpe = num_tpe_ies;
 }
 
