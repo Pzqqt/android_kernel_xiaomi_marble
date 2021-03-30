@@ -181,6 +181,24 @@ static QDF_STATUS update_mac_from_string(struct hdd_context *hdd_ctx,
 	return status;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 18, 0))
+static inline
+int hdd_firmware_request_nowarn(const struct firmware **fw,
+				const char *name,
+				struct device *device)
+{
+	return firmware_request_nowarn(fw, name, device);
+}
+#else
+static inline
+int hdd_firmware_request_nowarn(const struct firmware **fw,
+				const char *name,
+				struct device *device)
+{
+	return request_firmware(fw, name, device);
+}
+#endif
+
 /**
  * hdd_update_mac_config() - update MAC address from cfg file
  * @hdd_ctx: the pointer to hdd context
@@ -209,7 +227,8 @@ QDF_STATUS hdd_update_mac_config(struct hdd_context *hdd_ctx)
 	}
 
 	memset(mac_table, 0, sizeof(mac_table));
-	status = request_firmware(&fw, WLAN_MAC_FILE, hdd_ctx->parent_dev);
+	status = hdd_firmware_request_nowarn(&fw, WLAN_MAC_FILE,
+					     hdd_ctx->parent_dev);
 	if (status) {
 		/*
 		 * request_firmware "fails" if the file is not found, which is a
