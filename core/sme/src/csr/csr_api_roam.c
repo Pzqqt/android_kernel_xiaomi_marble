@@ -12373,7 +12373,7 @@ csr_qos_send_reassoc_ind(struct mac_context *mac_ctx,
 	sme_qos_csr_event_ind(mac_ctx, vdev_id, SME_QOS_CSR_HANDOFF_COMPLETE,
 			      NULL);
 	sme_qos_csr_event_ind(mac_ctx, vdev_id, SME_QOS_CSR_REASSOC_COMPLETE,
-			      &assoc_info);
+			      assoc_info);
 
 	if (IS_ROAM_REASON_DISCONNECTION(
 		connect_rsp->roaming_info->roam_reason))
