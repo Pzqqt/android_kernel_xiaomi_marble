@@ -251,6 +251,13 @@ struct wlan_psoc_host_hw_mode_caps {
  * @pdev_id: Pdev id
  * @phy_id: Phy id
  * @wireless_modes_ext: Extended wireless modes
+ * @eht_cap_info_2G[]: EHT capability info field of 802.11ax, WMI_HE_CAP defines
+ * @eht_supp_mcs_2G: EHT Supported MCS Set field Rx/Tx same
+ * @eht_cap_info_5G[]: EHT capability info field of 802.11ax, WMI_HE_CAP defines
+ * @eht_supp_mcs_5G: EHT Supported MCS Set field Rx/Tx same
+ * @eht_cap_phy_info_2G: 2G EHT capability phy field
+ * @eht_cap_phy_info_5G: 5G EHT capability phy field
+ * @eht_cap_info_internal: EHT PHY internal feature capability
  */
 struct wlan_psoc_host_mac_phy_caps_ext2 {
 	uint32_t hw_mode_id;

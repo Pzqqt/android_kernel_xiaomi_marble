@@ -186,10 +186,10 @@ static bool util_is_pureg_rate(uint8_t *rates, uint8_t nrates)
 
 #ifdef WLAN_FEATURE_11BE
 static enum wlan_phymode
-util_scan_get_phymode_5g_11be(struct wlan_objmgr_pdev *pdev,
-			      struct scan_cache_entry *scan_params,
-			      enum wlan_phymode phymode,
-			      uint8_t band_mask)
+util_scan_get_phymode_11be(struct wlan_objmgr_pdev *pdev,
+			   struct scan_cache_entry *scan_params,
+			   enum wlan_phymode phymode,
+			   uint8_t band_mask)
 {
 	struct wlan_ie_ehtops *eht_ops;
 
@@ -231,10 +231,10 @@ util_scan_get_phymode_5g_11be(struct wlan_objmgr_pdev *pdev,
 }
 #else
 static enum wlan_phymode
-util_scan_get_phymode_5g_11be(struct wlan_objmgr_pdev *pdev,
-			      struct scan_cache_entry *scan_params,
-			      enum wlan_phymode phymode,
-			      uint8_t band_mask)
+util_scan_get_phymode_11be(struct wlan_objmgr_pdev *pdev,
+			   struct scan_cache_entry *scan_params,
+			   enum wlan_phymode phymode,
+			   uint8_t band_mask)
 {
 	return phymode;
 }
@@ -392,8 +392,8 @@ util_scan_get_phymode_6g(struct wlan_objmgr_pdev *pdev,
 					he_6g_params->chan_freq_seg1,
 					band_mask);
 
-	phymode = util_scan_get_phymode_5g_11be(pdev, scan_params,
-						phymode, band_mask);
+	phymode = util_scan_get_phymode_11be(pdev, scan_params,
+					     phymode, band_mask);
 
 	return phymode;
 }
@@ -528,8 +528,8 @@ util_scan_get_phymode_5g(struct wlan_objmgr_pdev *pdev,
 		break;
 	}
 
-	phymode = util_scan_get_phymode_5g_11be(pdev, scan_params,
-						phymode, band_mask);
+	phymode = util_scan_get_phymode_11be(pdev, scan_params,
+					     phymode, band_mask);
 
 	return phymode;
 }

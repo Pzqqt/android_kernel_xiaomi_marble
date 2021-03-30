@@ -730,6 +730,7 @@ util_scan_copy_beacon_data(struct scan_cache_entry *new_entry,
 	ie_lst->single_pmk = conv_ptr(ie_lst->single_pmk, old_ptr, new_ptr);
 	ie_lst->rsnxe = conv_ptr(ie_lst->rsnxe, old_ptr, new_ptr);
 #ifdef WLAN_FEATURE_11BE
+	/* This macro will be removed once 11be is enabled */
 	ie_lst->ehtcap = conv_ptr(ie_lst->ehtcap, old_ptr, new_ptr);
 	ie_lst->ehtop = conv_ptr(ie_lst->ehtop, old_ptr, new_ptr);
 #endif

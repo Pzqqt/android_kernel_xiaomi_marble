@@ -1129,9 +1129,9 @@ struct peer_assoc_params {
 	uint32_t peer_he_rx_mcs_set[WMI_HOST_MAX_HE_RATE_SET];
 	uint32_t peer_he_tx_mcs_set[WMI_HOST_MAX_HE_RATE_SET];
 #ifdef WLAN_FEATURE_11BE
-	uint32_t peer_eht_cap_macinfo[WMI_HOST_MAX_HECAP_MAC_SIZE];
+	uint32_t peer_eht_cap_macinfo[WMI_HOST_MAX_EHTCAP_MAC_SIZE];
 	uint32_t peer_eht_ops;
-	uint32_t peer_eht_cap_phyinfo[WMI_HOST_MAX_HECAP_PHY_SIZE];
+	uint32_t peer_eht_cap_phyinfo[WMI_HOST_MAX_EHTCAP_PHY_SIZE];
 	uint32_t peer_eht_mcs_count;
 	uint32_t peer_eht_rx_mcs_set[WMI_HOST_MAX_EHT_RATE_SET];
 	uint32_t peer_eht_tx_mcs_set[WMI_HOST_MAX_EHT_RATE_SET];

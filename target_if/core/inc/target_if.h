@@ -1440,6 +1440,7 @@ static inline struct wlan_psoc_host_mac_phy_caps
  * target_psoc_get_mac_phy_cap_ext2_for_mode() - get mac_phy_caps_ext2
  *                                               for a hw-mode
  * @psoc_info:  pointer to structure target_psoc_info
+ * @mode: hw mode
  *
  * API to get mac_phy_cap for a specified hw-mode
  *

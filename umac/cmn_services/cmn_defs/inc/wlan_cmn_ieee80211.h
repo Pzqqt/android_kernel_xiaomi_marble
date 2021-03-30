@@ -470,6 +470,8 @@ enum element_ie {
  * @WLAN_EXTN_ELEMID_HE_6G_CAP: HE 6GHz Band Capabilities IE
  * @WLAN_EXTN_ELEMID_SRP:    spatial reuse parameter IE
  * @WLAN_EXTN_ELEMID_NONINHERITANCE: Non inheritance IE
+ * @WLAN_EXTN_ELEMID_EHTCAP: EHT Capabilities IE
+ * @WLAN_EXTN_ELEMID_EHTOP: EHT Operation IE
  */
 enum extn_element_ie {
 	WLAN_EXTN_ELEMID_MAX_CHAN_SWITCH_TIME = 34,
@@ -1421,8 +1423,8 @@ struct wlan_ie_hecaps {
  * @elem_id: EHT caps IE
  * @elem_len: EHT caps IE len
  * @elem_id_extn: EHT caps extension id
- * @he_mac_cap: EHT mac capabilities
- * @he_phy_cap: EHT phy capabilities
+ * @eht_mac_cap: EHT mac capabilities
+ * @eht_phy_cap: EHT phy capabilities
  * @phy_cap_bytes: EHT phy capability bytes
  * @supported_ch_width_set: Supported channel width set
  * @mcs_bw_map: MCS NSS map per bandwidth
@@ -1448,7 +1450,7 @@ struct wlan_ie_ehtcaps {
 } qdf_packed;
 
 /**
- * struct wlan_ie_heops - EHT operation element
+ * struct wlan_ie_ehtops - EHT operation element
  * @elem_id: EHT caps IE
  * @elem_len: EHT caps IE len
  * @elem_id_extn: EHT caps extension id

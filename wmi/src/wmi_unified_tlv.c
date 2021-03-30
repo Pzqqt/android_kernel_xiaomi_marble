@@ -2584,34 +2584,30 @@ static inline void update_peer_flags_tlv_ehtinfo(
 			wmi_peer_assoc_complete_cmd_fixed_param * cmd,
 			struct peer_assoc_params *param, uint8_t *buf_ptr)
 {
-	wmi_he_rate_set *eht_mcs;
+	wmi_eht_rate_set *eht_mcs;
 	int i;
 
-	cmd->peer_eht_cap_info =
-		param->peer_eht_cap_macinfo[WMI_HOST_EHTCAP_MAC_WORD1];
-	cmd->peer_eht_cap_info_ext =
-		param->peer_eht_cap_macinfo[WMI_HOST_EHTCAP_MAC_WORD2];
 	cmd->peer_eht_ops = param->peer_eht_ops;
+	qdf_mem_copy(&cmd->peer_eht_cap_mac, &param->peer_eht_cap_macinfo,
+		     sizeof(param->peer_eht_cap_macinfo));
 	qdf_mem_copy(&cmd->peer_eht_cap_phy, &param->peer_eht_cap_phyinfo,
 		     sizeof(param->peer_eht_cap_phyinfo));
 
-	cmd->peer_eht_num_mcs = param->peer_eht_mcs_count;
-
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
-		       (param->peer_eht_mcs_count * sizeof(wmi_he_rate_set)));
+		       (param->peer_eht_mcs_count * sizeof(wmi_eht_rate_set)));
 	buf_ptr += WMI_TLV_HDR_SIZE;
 
 	/* Loop through the EHT rate set */
 	for (i = 0; i < param->peer_eht_mcs_count; i++) {
-		eht_mcs = (wmi_he_rate_set *)buf_ptr;
-		WMITLV_SET_HDR(eht_mcs, WMITLV_TAG_STRUC_wmi_he_rate_set,
-			       WMITLV_GET_STRUCT_TLVLEN(wmi_he_rate_set));
+		eht_mcs = (wmi_eht_rate_set *)buf_ptr;
+		WMITLV_SET_HDR(eht_mcs, WMITLV_TAG_STRUC_wmi_eht_rate_set,
+			       WMITLV_GET_STRUCT_TLVLEN(wmi_eht_rate_set));
 
 		eht_mcs->rx_mcs_set = param->peer_eht_rx_mcs_set[i];
 		eht_mcs->tx_mcs_set = param->peer_eht_tx_mcs_set[i];
 		wmi_debug("EHT idx %d RxMCSmap %x TxMCSmap %x ",
 			  i, eht_mcs->rx_mcs_set, eht_mcs->tx_mcs_set);
-		buf_ptr += sizeof(wmi_he_rate_set);
+		buf_ptr += sizeof(wmi_eht_rate_set);
 	}
 
 	if ((param->eht_flag) && (param->peer_eht_mcs_count > 1) &&
@@ -2629,9 +2625,9 @@ static inline void update_peer_flags_tlv_ehtinfo(
 			  QDF_MAC_ADDR_REF(param->peer_mac));
 	}
 
-	wmi_debug("EHT cap_info %x ops %x EHT cap_info_ext %x EHT phy %x  %x  %x  ",
-		  cmd->peer_eht_cap_info,
-		  cmd->peer_eht_ops, cmd->peer_he_cap_info_ext,
+	wmi_debug("EHT cap_mac %x %x ehtops %x  EHT phy %x  %x  %x  ",
+		  cmd->peer_eht_cap_mac[0],
+		  cmd->peer_eht_cap_mac[1], cmd->peer_eht_ops,
 		  cmd->peer_eht_cap_phy[0], cmd->peer_he_cap_phy[1],
 		  cmd->peer_eht_cap_phy[2]);
 }
@@ -11419,17 +11415,16 @@ static void extract_mac_phy_cap_ehtcaps(
 {
 	uint32_t i;
 
-	param->eht_cap_info_2G[WMI_HOST_EHTCAP_MAC_WORD1] =
-		mac_phy_caps->eht_cap_info_2G;
-	param->eht_cap_info_2G[WMI_HOST_EHTCAP_MAC_WORD2] =
-		mac_phy_caps->eht_cap_info_2G_ext;
 	param->eht_supp_mcs_2G = mac_phy_caps->eht_supp_mcs_2G;
-	param->eht_cap_info_5G[WMI_HOST_EHTCAP_MAC_WORD1] =
-		mac_phy_caps->eht_cap_info_5G;
-	param->eht_cap_info_5G[WMI_HOST_EHTCAP_MAC_WORD2] =
-		mac_phy_caps->eht_cap_info_5G_ext;
 	param->eht_supp_mcs_5G = mac_phy_caps->eht_supp_mcs_5G;
 	param->eht_cap_info_internal = mac_phy_caps->eht_cap_info_internal;
+
+	qdf_mem_copy(&param->eht_cap_info_2G,
+		     &mac_phy_caps->eht_cap_mac_info_2G,
+		     sizeof(param->eht_cap_info_2G));
+	qdf_mem_copy(&param->eht_cap_info_5G,
+		     &mac_phy_caps->eht_cap_mac_info_5G,
+		     sizeof(param->eht_cap_info_5G));
 
 	qdf_mem_copy(&param->eht_cap_phy_info_2G,
 		     &mac_phy_caps->eht_cap_phy_info_2G,
@@ -11438,11 +11433,11 @@ static void extract_mac_phy_cap_ehtcaps(
 		     &mac_phy_caps->eht_cap_phy_info_5G,
 		     sizeof(param->eht_cap_phy_info_5G));
 
-	wmi_debug("EHT mac caps: cap_info_2G %x, cap_info_2G_ext %x, cap_info_5G %x, cap_info_5G_ext %x, supp_mcs_2G %x, supp_mcs_5G %x, info_internal %x",
-		  mac_phy_caps->eht_cap_info_2G,
-		  mac_phy_caps->eht_cap_info_2G_ext,
-		  mac_phy_caps->eht_cap_info_5G,
-		  mac_phy_caps->eht_cap_info_5G_ext,
+	wmi_debug("EHT mac caps: mac cap_info_2G %x %x, mac cap_info_5G %x %x, supp_mcs_2G %x, supp_mcs_5G %x, info_internal %x",
+		  mac_phy_caps->eht_cap_mac_info_2G[0],
+		  mac_phy_caps->eht_cap_mac_info_2G[1],
+		  mac_phy_caps->eht_cap_mac_info_5G[0],
+		  mac_phy_caps->eht_cap_mac_info_5G[1],
 		  mac_phy_caps->eht_supp_mcs_2G, mac_phy_caps->eht_supp_mcs_5G,
 		  mac_phy_caps->eht_cap_info_internal);
 
