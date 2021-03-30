@@ -14881,6 +14881,36 @@ static QDF_STATUS send_set_tpc_power_cmd_tlv(wmi_unified_t wmi_handle,
 	return ret;
 }
 
+/**
+ * extract_dpd_status_ev_param_tlv() - extract dpd status from FW event
+ * @wmi_handle: wmi handle
+ * @evt_buf: event buffer
+ * @param: dpd status info
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS
+extract_dpd_status_ev_param_tlv(wmi_unified_t wmi_handle,
+				void *evt_buf,
+				struct wmi_host_pdev_get_dpd_status_event *param)
+{
+	WMI_PDEV_GET_DPD_STATUS_EVENTID_param_tlvs *param_buf;
+	wmi_pdev_get_dpd_status_evt_fixed_param *dpd_status;
+
+	param_buf = (WMI_PDEV_GET_DPD_STATUS_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		wmi_err("Invalid get dpd_status event");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	dpd_status = param_buf->fixed_param;
+	param->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host
+		(wmi_handle, dpd_status->pdev_id);
+	param->dpd_status = dpd_status->dpd_status;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -15247,6 +15277,7 @@ struct wmi_ops tlv_ops =  {
 	.extract_pdev_csa_switch_count_status =
 		extract_pdev_csa_switch_count_status_tlv,
 	.send_set_tpc_power_cmd = send_set_tpc_power_cmd_tlv,
+	.extract_dpd_status_ev_param = extract_dpd_status_ev_param_tlv,
 };
 
 /**
@@ -15651,6 +15682,8 @@ event_ids[wmi_roam_scan_chan_list_id] =
 			WMI_CTRL_PATH_STATS_EVENTID;
 	event_ids[wmi_vdev_send_big_data_p2_eventid] =
 			WMI_VDEV_SEND_BIG_DATA_P2_EVENTID;
+	event_ids[wmi_pdev_get_dpd_status_event_id] =
+			WMI_PDEV_GET_DPD_STATUS_EVENTID;
 }
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS

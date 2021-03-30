@@ -2531,6 +2531,9 @@ QDF_STATUS (*send_big_data_stats_request_cmd)(
 				wmi_unified_t wmi_handle,
 				struct stats_request_params *param);
 #endif
+QDF_STATUS (*extract_dpd_status_ev_param)(wmi_unified_t wmi_handle,
+					  void *evt_buf,
+					  struct wmi_host_pdev_get_dpd_status_event *param);
 };
 
 /* Forward declartion for psoc*/

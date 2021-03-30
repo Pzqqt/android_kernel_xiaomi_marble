@@ -4291,4 +4291,15 @@ QDF_STATUS wmi_unified_send_set_tpc_power_cmd(wmi_unified_t wmi_handle,
 					      uint8_t vdev_id,
 					      struct reg_tpc_power_info *param);
 
+/**
+ * wmi_extract_dpd_status_ev_param() - extract dpd status from FW event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buf
+ * @param: dpd status info
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS wmi_extract_dpd_status_ev_param(wmi_unified_t wmi_handle,
+					   void *evt_buf,
+					   struct wmi_host_pdev_get_dpd_status_event *param);
 #endif /* _WMI_UNIFIED_API_H_ */
