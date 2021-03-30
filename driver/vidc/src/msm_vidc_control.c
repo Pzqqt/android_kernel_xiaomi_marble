@@ -656,13 +656,16 @@ int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl)
 			if (rc)
 				return rc;
 		}
-
 		if (ctrl->id == V4L2_CID_MPEG_VIDC_PRIORITY) {
 			rc = msm_vidc_adjust_session_priority(inst, ctrl);
 			if (rc)
 				return rc;
 		}
-
+		if (ctrl->id == V4L2_CID_MPEG_VIDC_THUMBNAIL_MODE) {
+			rc = msm_vidc_update_buffer_count(inst, INPUT_PORT);
+			if (rc)
+				return rc;
+		}
 		if (is_meta_ctrl(ctrl->id)) {
 			if (cap_id == META_DPB_TAG_LIST) {
 				/*

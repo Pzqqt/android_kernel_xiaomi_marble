@@ -4056,6 +4056,80 @@ int msm_vidc_update_meta_port_settings(struct msm_vidc_inst *inst)
 	return 0;
 }
 
+int msm_vidc_update_buffer_count(struct msm_vidc_inst *inst, u32 port)
+{
+	struct msm_vidc_core *core;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+
+	switch (port) {
+	case INPUT_PORT:
+		inst->buffers.input.min_count = call_session_op(core,
+			min_count, inst, MSM_VIDC_BUF_INPUT);
+		inst->buffers.input.extra_count = call_session_op(core,
+			extra_count, inst, MSM_VIDC_BUF_INPUT);
+		if (inst->buffers.input.actual_count <
+			inst->buffers.input.min_count +
+			inst->buffers.input.extra_count) {
+			inst->buffers.input.actual_count =
+				inst->buffers.input.min_count +
+				inst->buffers.input.extra_count;
+		}
+		if (is_input_meta_enabled(inst)) {
+			inst->buffers.input_meta.min_count =
+					inst->buffers.input.min_count;
+			inst->buffers.input_meta.extra_count =
+					inst->buffers.input.extra_count;
+			inst->buffers.input_meta.actual_count =
+					inst->buffers.input.actual_count;
+		} else {
+			inst->buffers.input_meta.min_count = 0;
+			inst->buffers.input_meta.extra_count = 0;
+			inst->buffers.input_meta.actual_count = 0;
+		}
+		d_vpr_h("update input min buffer to %u\n",
+			inst->buffers.input.min_count);
+		break;
+	case OUTPUT_PORT:
+		if (!inst->vb2q[INPUT_PORT].streaming)
+			inst->buffers.output.min_count = call_session_op(core,
+				min_count, inst, MSM_VIDC_BUF_OUTPUT);
+		inst->buffers.output.extra_count = call_session_op(core,
+			extra_count, inst, MSM_VIDC_BUF_OUTPUT);
+		if (inst->buffers.output.actual_count <
+			inst->buffers.output.min_count +
+			inst->buffers.output.extra_count) {
+			inst->buffers.output.actual_count =
+				inst->buffers.output.min_count +
+				inst->buffers.output.extra_count;
+		}
+		if (is_output_meta_enabled(inst)) {
+			inst->buffers.output_meta.min_count =
+					inst->buffers.output.min_count;
+			inst->buffers.output_meta.extra_count =
+					inst->buffers.output.extra_count;
+			inst->buffers.output_meta.actual_count =
+					inst->buffers.output.actual_count;
+		} else {
+			inst->buffers.output_meta.min_count = 0;
+			inst->buffers.output_meta.extra_count = 0;
+			inst->buffers.output_meta.actual_count = 0;
+		}
+		d_vpr_h("update output min buffer to %u\n",
+			inst->buffers.output.min_count);
+		break;
+	default:
+		d_vpr_e("%s unknown port %d\n", __func__, port);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 void msm_vidc_schedule_core_deinit(struct msm_vidc_core *core)
 {
 	if (!core)
