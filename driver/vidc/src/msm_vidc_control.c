@@ -1389,6 +1389,10 @@ int msm_vidc_adjust_hevc_min_qp(void *instance, struct v4l2_ctrl *ctrl)
 	}
 	capability = inst->capabilities;
 
+	if (ctrl)
+		msm_vidc_update_cap_value(inst, MIN_FRAME_QP,
+			ctrl->val, __func__);
+
 	rc = msm_vidc_adjust_hevc_qp(inst, MIN_FRAME_QP);
 
 	return rc;
@@ -1406,6 +1410,10 @@ int msm_vidc_adjust_hevc_max_qp(void *instance, struct v4l2_ctrl *ctrl)
 	}
 	capability = inst->capabilities;
 
+	if (ctrl)
+		msm_vidc_update_cap_value(inst, MAX_FRAME_QP,
+			ctrl->val, __func__);
+
 	rc = msm_vidc_adjust_hevc_qp(inst, MAX_FRAME_QP);
 
 	return rc;
@@ -1422,6 +1430,10 @@ int msm_vidc_adjust_hevc_frame_qp(void *instance, struct v4l2_ctrl *ctrl)
 		return -EINVAL;
 	}
 	capability = inst->capabilities;
+
+	if (ctrl)
+		msm_vidc_update_cap_value(inst, I_FRAME_QP,
+			ctrl->val, __func__);
 
 	rc = msm_vidc_adjust_hevc_qp(inst, I_FRAME_QP);
 
