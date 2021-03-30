@@ -785,7 +785,7 @@ typedef HFI_U32 HFI_BOOL;
 			SIZE_VPSS_LB(vpss_lb_size, frame_width, frame_height, \
 			num_vpp_pipes); \
 		} \
-		_size = _lb_size + vpss_lb_size + HDR10_HIST_EXTRADATA_SIZE; \
+		_size = _lb_size + vpss_lb_size; \
 	} while (0)
 
 #define VPX_DECODER_FRAME_CONCURENCY_LVL (2)
@@ -832,7 +832,8 @@ typedef HFI_U32 HFI_BOOL;
 	VENUS_DMA_ALIGNMENT) + HFI_ALIGN(MAX_SUPERFRAME_HEADER_LEN, \
 	VENUS_DMA_ALIGNMENT) + HFI_ALIGN(VP9_UDC_HEADER_BUF_SIZE, \
 	VENUS_DMA_ALIGNMENT) + HFI_ALIGN(VP9_NUM_FRAME_INFO_BUF * \
-	CCE_TILE_OFFSET_SIZE, VENUS_DMA_ALIGNMENT)
+	CCE_TILE_OFFSET_SIZE, VENUS_DMA_ALIGNMENT) + \
+	HDR10_HIST_EXTRADATA_SIZE
 
 #define HFI_BUFFER_LINE_MP2D(_size, frame_width, frame_height, \
 _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
@@ -967,14 +968,12 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 #endif
 
 #define HFI_IRIS2_ENC_RECON_BUF_COUNT(num_recon, n_bframe, ltr_count, \
-		_total_hp_layers, _total_hb_layers, hybrid_hp, codec_standard) \
-	do \
-	{ \
+	_total_hp_layers, _total_hb_layers, hybrid_hp, codec_standard) \
+	do { \
 		HFI_U32 num_ref = 1; \
 		if (n_bframe) \
 			num_ref = 2; \
-		if (_total_hp_layers > 1) \
-		{ \
+		if (_total_hp_layers > 1) { \
 			if (hybrid_hp) \
 				num_ref = (_total_hp_layers + 1) >> 1; \
 			else if (codec_standard == HFI_CODEC_ENCODE_HEVC) \
@@ -987,8 +986,7 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 		} \
 		if (ltr_count) \
 			num_ref = num_ref + ltr_count; \
-		if (_total_hb_layers > 1) \
-		{ \
+		if (_total_hb_layers > 1) { \
 			if (codec_standard == HFI_CODEC_ENCODE_HEVC) \
 				num_ref = (_total_hb_layers); \
 			else if (codec_standard == HFI_CODEC_ENCODE_AVC) \
@@ -998,15 +996,13 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 	} while (0)
 
 #define SIZE_BIN_BITSTREAM_ENC(_size, rc_type, frame_width, frame_height, \
-				work_mode, lcu_size) \
-	do \
-	{ \
+		work_mode, lcu_size) \
+	do { \
 		HFI_U32 size_aligned_width = 0, size_aligned_height = 0; \
 		HFI_U32 bitstream_size_eval = 0; \
 		size_aligned_width = HFI_ALIGN((frame_width), lcu_size); \
 		size_aligned_height = HFI_ALIGN((frame_height), lcu_size); \
-		if (work_mode == HFI_WORKMODE_2) \
-		{ \
+		if (work_mode == HFI_WORKMODE_2) { \
 			if ((rc_type == HFI_RC_CQ) || (rc_type == HFI_RC_OFF)) \
 			{ \
 				bitstream_size_eval = (((size_aligned_width) * \
@@ -1045,8 +1041,7 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 
 #define SIZE_ENC_SINGLE_PIPE(size, rc_type, bitbin_size, num_vpp_pipes, \
 			frame_width, frame_height, lcu_size) \
-	do \
-	{ \
+	do { \
 		HFI_U32 size_single_pipe_eval = 0, sao_bin_buffer_size = 0, \
 			_padded_bin_sz = 0; \
 		HFI_U32 size_aligned_width = 0, size_aligned_height = 0; \
