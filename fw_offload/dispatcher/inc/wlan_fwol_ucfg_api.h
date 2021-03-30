@@ -446,6 +446,16 @@ QDF_STATUS ucfg_fwol_get_dhcp_max_num_clients(struct wlan_objmgr_psoc *psoc,
 #endif
 
 /**
+ * ucfg_fwol_get_tsf_sync_enable() - Get TSF sync enabled
+ * @psoc: pointer to the psoc object
+ * @tsf_sync_enable: Pointer to tsf sync enabled
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_fwol_get_tsf_sync_enable(struct wlan_objmgr_psoc *psoc,
+					 bool *tsf_sync_enable);
+
+/**
  * ucfg_fwol_get_tsf_ptp_options() - Get TSF Plus feature options
  * @psoc: pointer to the psoc object
  * @tsf_ptp_options: Pointer to return tsf ptp options

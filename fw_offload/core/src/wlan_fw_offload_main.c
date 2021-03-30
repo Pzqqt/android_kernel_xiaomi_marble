@@ -435,6 +435,7 @@ static void ucfg_fwol_init_tsf_ptp_options(struct wlan_objmgr_psoc *psoc,
 					   struct wlan_fwol_cfg *fwol_cfg)
 {
 	fwol_cfg->tsf_ptp_options = cfg_get(psoc, CFG_SET_TSF_PTP_OPT);
+	fwol_cfg->tsf_sync_enable = cfg_get(psoc, CFG_TSF_SYNC_ENABLE);
 }
 #else
 static void ucfg_fwol_init_tsf_ptp_options(struct wlan_objmgr_psoc *psoc,
