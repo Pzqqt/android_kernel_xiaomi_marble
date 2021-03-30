@@ -715,6 +715,43 @@ bool reg_get_fcc_constraint(struct wlan_objmgr_pdev *pdev, uint32_t freq)
 	return true;
 }
 
+#ifdef CONFIG_BAND_6GHZ
+/**
+ * reg_is_afc_available() - check if the automated frequency control system is
+ * available, function will need to be updated once AFC is implemented
+ * @pdev: Pointer to pdev structure
+ *
+ * Return: false since the AFC system is not yet available
+ */
+static bool reg_is_afc_available(struct wlan_objmgr_pdev *pdev)
+{
+	return false;
+}
+
+enum reg_6g_ap_type reg_decide_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	enum reg_6g_ap_type ap_pwr_type = REG_INDOOR_AP;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("pdev reg component is NULL");
+		return REG_VERY_LOW_POWER_AP;
+	}
+
+	if (reg_is_afc_available(pdev))
+		ap_pwr_type = REG_STANDARD_POWER_AP;
+	else if (pdev_priv_obj->reg_6g_superid != FCC1_6G &&
+		 pdev_priv_obj->reg_6g_superid != FCC1_6G_CL)
+		ap_pwr_type = REG_VERY_LOW_POWER_AP;
+
+	reg_set_cur_6g_ap_pwr_type(pdev, ap_pwr_type);
+	reg_compute_pdev_current_chan_list(pdev_priv_obj);
+
+	return ap_pwr_type;
+}
+#endif /* CONFIG_BAND_6GHZ */
+
 #endif /* CONFIG_REG_CLIENT */
 
 /**
