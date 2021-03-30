@@ -1228,6 +1228,12 @@ CONFIG_MORE_TX_DESC := y
 
 endif
 
+ifeq ($(CONFIG_RX_FISA), y)
+	 ifeq ($(CONFIG_SLUB_DEBUG_ON), y)
+	 	CONFIG_RX_FISA_HISTORY := y
+	 endif
+endif
+
 CONFIG_HANDLE_BC_EAP_TX_FRM := y
 
 ifeq ($(CONFIG_BAND_6GHZ), y)
