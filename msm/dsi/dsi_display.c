@@ -6778,11 +6778,6 @@ int dsi_display_get_modes(struct dsi_display *display,
 		bool is_preferred = false;
 		u32 frame_threshold_us = ctrl->ctrl->frame_threshold_time_us;
 
-		if (display->cmdline_timing == mode_idx) {
-			topology_override = display->cmdline_topology;
-			is_preferred = true;
-		}
-
 		memset(&display_mode, 0, sizeof(display_mode));
 
 		rc = dsi_panel_get_mode(display->panel, mode_idx,
@@ -6792,6 +6787,11 @@ int dsi_display_get_modes(struct dsi_display *display,
 			DSI_ERR("[%s] failed to get mode idx %d from panel\n",
 				   display->name, mode_idx);
 			goto error;
+		}
+
+		if (display->cmdline_timing == display_mode.mode_idx) {
+			topology_override = display->cmdline_topology;
+			is_preferred = true;
 		}
 
 		support_cmd_mode = display_mode.panel_mode_caps & DSI_OP_CMD_MODE;
@@ -6851,6 +6851,7 @@ int dsi_display_get_modes(struct dsi_display *display,
 			}
 
 			memcpy(sub_mode, &display_mode, sizeof(display_mode));
+			sub_mode->mode_idx = array_idx;
 			array_idx++;
 
 			if (!dfps_caps.dfps_support || !support_video_mode)

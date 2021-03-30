@@ -4039,6 +4039,10 @@ int dsi_panel_get_mode(struct dsi_panel *panel,
 			mode->panel_mode_caps = panel->panel_mode;
 		}
 
+		rc = utils->read_u32(utils->data, "cell-index", &mode->mode_idx);
+		if (rc)
+			mode->mode_idx = index;
+
 		rc = dsi_panel_parse_timing(&mode->timing, utils);
 		if (rc) {
 			DSI_ERR("failed to parse panel timing, rc=%d\n", rc);

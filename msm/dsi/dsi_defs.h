@@ -660,6 +660,7 @@ struct dsi_display_mode_priv_info {
  * @dsi_mode_flags: Flags to signal other drm components via private flags
  * @panel_mode_caps: panel mode capabilities.
  * @is_preferred:   Is mode preferred
+ * @mode_idx:       Mode index as defined by devicetree.
  * @priv_info:      Mode private info
  */
 struct dsi_display_mode {
@@ -668,6 +669,7 @@ struct dsi_display_mode {
 	u32 dsi_mode_flags;
 	u32 panel_mode_caps;
 	bool is_preferred;
+	u32 mode_idx;
 	struct dsi_display_mode_priv_info *priv_info;
 };
 
