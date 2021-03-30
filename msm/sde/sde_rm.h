@@ -215,6 +215,12 @@ struct sde_rm_hw_request {
 enum sde_rm_topology_name sde_rm_get_topology_name(struct sde_rm *rm,
 		struct msm_display_topology topology);
 
+/**
+ * sde_rm_debugfs_init - setup debugfs node for rm module
+ * @rm: SDE resource manager handle
+ * @parent: debugfs parent directory node
+ */
+void sde_rm_debugfs_init(struct sde_rm *rm, struct dentry *parent);
 
 /**
  * sde_rm_init - Read hardware catalog and create reservation tracking objects

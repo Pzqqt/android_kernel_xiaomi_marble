@@ -156,6 +156,7 @@ static int _sde_debugfs_init(struct sde_kms *sde_kms)
 		SDE_ERROR("failed to init perf %d\n", rc);
 		return rc;
 	}
+	sde_rm_debugfs_init(&sde_kms->rm, debugfs_root);
 
 	if (sde_kms->catalog->qdss_count)
 		debugfs_create_u32("qdss", 0600, debugfs_root,
