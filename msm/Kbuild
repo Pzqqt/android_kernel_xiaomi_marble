@@ -198,6 +198,8 @@ msm_drm-$(CONFIG_DRM_MSM_DSI) += dsi/dsi_phy.o \
 
 msm_drm-$(CONFIG_DSI_PARSER) += dsi/dsi_parser.o
 
+msm_drm-$(CONFIG_THERMAL_OF) += msm_cooling_device.o
+
 msm_drm-$(CONFIG_DRM_MSM) += msm_atomic.o \
 			     msm_fb.o \
 			     msm_iommu.o \
@@ -206,7 +208,6 @@ msm_drm-$(CONFIG_DRM_MSM) += msm_atomic.o \
 			     msm_gem_prime.o \
 			     msm_gem_vma.o \
 			     msm_smmu.o \
-			     msm_cooling_device.o \
 			     msm_prop.o
 
 CDEFINES += -DBUILD_TIMESTAMP=\"$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')\"
