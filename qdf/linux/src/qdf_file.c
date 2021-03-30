@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,6 +24,25 @@
 #include "qdf_trace.h"
 #include "qdf_types.h"
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 18, 0))
+static inline
+int qdf_firmware_request_nowarn(const struct firmware **fw,
+				const char *name,
+				struct device *device)
+{
+	return firmware_request_nowarn(fw, name, device);
+}
+#else
+static inline
+int qdf_firmware_request_nowarn(const struct firmware **fw,
+				const char *name,
+				struct device *device)
+{
+	return request_firmware(fw, name, device);
+}
+#endif
+
+
 QDF_STATUS qdf_file_read(const char *path, char **out_buf)
 {
 	int errno;
@@ -32,7 +51,7 @@ QDF_STATUS qdf_file_read(const char *path, char **out_buf)
 
 	*out_buf = NULL;
 
-	errno = request_firmware(&fw, path, NULL);
+	errno = qdf_firmware_request_nowarn(&fw, path, NULL);
 	if (errno) {
 		qdf_err("Failed to read file %s", path);
 		return QDF_STATUS_E_FAILURE;
