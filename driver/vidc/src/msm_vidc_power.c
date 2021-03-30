@@ -162,13 +162,8 @@ static int msm_vidc_set_buses(struct msm_vidc_inst* inst)
 	mutex_lock(&core->lock);
 	curr_time_ns = ktime_get_ns();
 	list_for_each_entry(temp, &core->instances, list) {
-		struct msm_vidc_buffer *vbuf, *next;
-		u32 data_size = 0;
-
-		/* TODO: accessing temp without lock */
-		list_for_each_entry_safe(vbuf, next, &temp->buffers.input.list, list)
-			data_size = max(data_size, vbuf->data_size);
-		if (!data_size)
+		/* skip no input data sessions */
+		if (!temp->max_input_data_size)
 			continue;
 
 		/* skip inactive session bus bandwidth */
@@ -223,6 +218,7 @@ int msm_vidc_scale_buses(struct msm_vidc_inst *inst)
 
 	list_for_each_entry(vbuf, &inst->buffers.input.list, list)
 		data_size = max(data_size, vbuf->data_size);
+	inst->max_input_data_size = data_size;
 	if (!data_size)
 		return 0;
 
@@ -325,8 +321,7 @@ int msm_vidc_set_clocks(struct msm_vidc_inst* inst)
 	struct msm_vidc_core* core;
 	struct msm_vidc_inst* temp;
 	u64 freq;
-        u64 rate = 0;
-	u32 data_size;
+	u64 rate = 0;
 	bool increment, decrement;
 	u64 curr_time_ns;
 	int i = 0;
@@ -347,12 +342,8 @@ int msm_vidc_set_clocks(struct msm_vidc_inst* inst)
 	freq = 0;
 	curr_time_ns = ktime_get_ns();
 	list_for_each_entry(temp, &core->instances, list) {
-		struct msm_vidc_buffer* vbuf, *next;
-
-		data_size = 0;
-		list_for_each_entry_safe(vbuf, next, &temp->buffers.input.list, list)
-			data_size = max(data_size, vbuf->data_size);
-		if (!data_size)
+		/* skip no input data sessions */
+		if (!temp->max_input_data_size)
 			continue;
 
 		/* skip inactive session clock rate */
@@ -507,6 +498,7 @@ int msm_vidc_scale_clocks(struct msm_vidc_inst *inst)
 
 	list_for_each_entry(vbuf, &inst->buffers.input.list, list)
 		data_size = max(data_size, vbuf->data_size);
+	inst->max_input_data_size = data_size;
 	if (!data_size)
 		return 0;
 
