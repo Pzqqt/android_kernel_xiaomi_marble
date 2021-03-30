@@ -202,9 +202,7 @@ ifdef CONFIG_SND_SOC_WCD_MBHC_LEGACY
 endif
 
 ifdef CONFIG_SND_SOC_MSM_HDMI_CODEC_RX
-ifdef CONFIG_AUDIO_QGKI
 	HDMICODEC_OBJS += msm_hdmi_codec_rx.o
-endif
 endif
 
 ifdef CONFIG_SND_SOC_WCD_IRQ
@@ -290,10 +288,8 @@ wcd_spi_dlkm-y := $(SPI_OBJS)
 obj-$(CONFIG_SND_SOC_WCD_MBHC) += mbhc_dlkm.o
 mbhc_dlkm-y := $(MBHC_OBJS)
 
-ifdef CONFIG_AUDIO_QGKI
 obj-$(CONFIG_SND_SOC_MSM_HDMI_CODEC_RX) += hdmi_dlkm.o
 hdmi_dlkm-y := $(HDMICODEC_OBJS)
-endif
 
 obj-$(CONFIG_SND_SWR_HAPTICS) += swr_haptics_dlkm.o
 swr_haptics_dlkm-y := $(SWR_HAP_OBJS)

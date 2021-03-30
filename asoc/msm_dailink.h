@@ -29,13 +29,15 @@ SND_SOC_DAILINK_DEFS(slimbus_7_tx,
 
 SND_SOC_DAILINK_DEFS(display_port,
 	DAILINK_COMP_ARRAY(COMP_CPU("snd-soc-dummy-dai")),
-	DAILINK_COMP_ARRAY(COMP_CODEC("msm-ext-disp-audio-codec-rx",
+	DAILINK_COMP_ARRAY(COMP_CODEC(
+			"soc:qcom,msm-ext-disp:qcom,msm-ext-disp-audio-codec-rx",
 			"msm_dp_audio_codec_rx_dai")),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("snd-soc-dummy")));
 
 SND_SOC_DAILINK_DEFS(display_port1,
 	DAILINK_COMP_ARRAY(COMP_CPU("snd-soc-dummy-dai")),
-	DAILINK_COMP_ARRAY(COMP_CODEC("msm-ext-disp-audio-codec-rx",
+	DAILINK_COMP_ARRAY(COMP_CODEC(
+			"soc:qcom,msm-ext-disp:qcom,msm-ext-disp-audio-codec-rx",
 			"msm_dp_audio_codec_rx1_dai")),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("snd-soc-dummy")));
 
