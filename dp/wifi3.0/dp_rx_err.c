@@ -2177,7 +2177,7 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 		mac_id = rx_desc->pool_id;
 
 		if (sw_pn_check_needed) {
-			goto process_oor_2k_jump;
+			goto process_reo_error_code;
 		}
 
 		if (mpdu_desc_info.bar_frame) {
@@ -2240,18 +2240,18 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 			goto next_entry;
 		}
 
+process_reo_error_code:
 		/*
 		 * Expect REO errors to be handled after this point
 		 */
 		qdf_assert_always(err_status == HAL_REO_ERROR_DETECTED);
 
-		if (hal_rx_reo_is_pn_error(error_code)) {
-			/* TOD0 */
-			DP_STATS_INC(soc,
-				rx.err.
-				reo_error[HAL_REO_ERR_PN_CHECK_FAILED],
-				1);
-			/* increment @pdev level */
+		dp_info_rl("Got pkt with REO ERROR: %d", error_code);
+
+		switch (error_code) {
+		case HAL_REO_ERR_PN_CHECK_FAILED:
+		case HAL_REO_ERR_PN_ERROR_HANDLING_FLAG_SET:
+			DP_STATS_INC(soc, rx.err.reo_error[error_code], 1);
 			dp_pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 			if (dp_pdev)
 				DP_STATS_INC(dp_pdev, err.reo_error, 1);
@@ -2261,17 +2261,11 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 						      quota);
 
 			rx_bufs_reaped[mac_id] += count;
-			goto next_entry;
-		}
-
-process_oor_2k_jump:
-		if (hal_rx_reo_is_2k_jump(error_code)) {
-			/* TOD0 */
-			DP_STATS_INC(soc,
-				rx.err.
-				reo_error[HAL_REO_ERR_REGULAR_FRAME_2K_JUMP],
-				1);
-			/* increment @pdev level */
+			break;
+		case HAL_REO_ERR_REGULAR_FRAME_2K_JUMP:
+		case HAL_REO_ERR_2K_ERROR_HANDLING_FLAG_SET:
+		case HAL_REO_ERR_BAR_FRAME_2K_JUMP:
+			DP_STATS_INC(soc, rx.err.reo_error[error_code], 1);
 			dp_pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 			if (dp_pdev)
 				DP_STATS_INC(dp_pdev, err.reo_error, 1);
@@ -2284,16 +2278,11 @@ process_oor_2k_jump:
 					HAL_REO_ERR_REGULAR_FRAME_2K_JUMP);
 
 			rx_bufs_reaped[mac_id] += count;
-			goto next_entry;
-		}
+			break;
 
-		if (hal_rx_reo_is_oor_error(error_code)) {
-			DP_STATS_INC(
-				soc,
-				rx.err.
-				reo_error[HAL_REO_ERR_REGULAR_FRAME_OOR],
-				1);
-			/* increment @pdev level */
+		case HAL_REO_ERR_REGULAR_FRAME_OOR:
+		case HAL_REO_ERR_BAR_FRAME_OOR:
+			DP_STATS_INC(soc, rx.err.reo_error[error_code], 1);
 			dp_pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 			if (dp_pdev)
 				DP_STATS_INC(dp_pdev, err.reo_error, 1);
@@ -2305,10 +2294,25 @@ process_oor_2k_jump:
 					HAL_REO_ERR_REGULAR_FRAME_OOR);
 
 			rx_bufs_reaped[mac_id] += count;
-			goto next_entry;
+			break;
+		case HAL_REO_ERR_QUEUE_DESC_ADDR_0:
+		case HAL_REO_ERR_QUEUE_DESC_INVALID:
+		case HAL_REO_ERR_AMPDU_IN_NON_BA:
+		case HAL_REO_ERR_NON_BA_DUPLICATE:
+		case HAL_REO_ERR_BA_DUPLICATE:
+		case HAL_REO_ERR_BAR_FRAME_NO_BA_SESSION:
+		case HAL_REO_ERR_BAR_FRAME_SN_EQUALS_SSN:
+		case HAL_REO_ERR_QUEUE_DESC_BLOCKED_SET:
+			DP_STATS_INC(soc, rx.err.reo_error[error_code], 1);
+			count = dp_rx_msdus_drop(soc, ring_desc,
+						 &mpdu_desc_info,
+						 &mac_id, quota);
+			rx_bufs_reaped[mac_id] += count;
+			break;
+		default:
+			/* Assert if unexpected error type */
+			qdf_assert_always(0);
 		}
-		/* Assert if unexpected error type */
-		qdf_assert_always(0);
 next_entry:
 		dp_rx_link_cookie_invalidate(ring_desc);
 		hal_srng_dst_get_next(hal_soc, hal_ring_hdl);
