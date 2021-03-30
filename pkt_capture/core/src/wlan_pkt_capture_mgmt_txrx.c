@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -485,12 +485,13 @@ pkt_capture_mgmt_rx_data_cb(struct wlan_objmgr_psoc *psoc,
 	txrx_status.rtap_flags |=
 		((txrx_status.rate == 6 /* Mbps */) ? BIT(1) : 0);
 
-	if (txrx_status.rate == 6)
+	if (rx_params->phy_mode != WLAN_PHYMODE_11B)
 		txrx_status.ofdm_flag = 1;
 	else
 		txrx_status.cck_flag = 1;
 
-	txrx_status.rate = ((txrx_status.rate == 6 /* Mbps */) ? 0x0c : 0x02);
+	/* Convert rate from Mbps to 500 Kbps */
+	txrx_status.rate = txrx_status.rate * 2;
 	txrx_status.add_rtap_ext = true;
 
 	wh = (struct ieee80211_frame *)qdf_nbuf_data(nbuf);
