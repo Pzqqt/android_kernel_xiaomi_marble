@@ -869,6 +869,15 @@ static int dsi_display_status_bta_request(struct dsi_display *display)
 	return rc;
 }
 
+static void dsi_display_release_te_irq(struct dsi_display *display)
+{
+	int te_irq = 0;
+
+	te_irq = gpio_to_irq(display->disp_te_gpio);
+	if (te_irq)
+		free_irq(te_irq, display);
+}
+
 static int dsi_display_status_check_te(struct dsi_display *display,
 		int rechecks)
 {
@@ -877,6 +886,9 @@ static int dsi_display_status_check_te(struct dsi_display *display,
 
 	if (!rechecks)
 		return rc;
+
+	/* register te irq handler */
+	dsi_display_register_te_irq(display);
 
 	dsi_display_change_te_irq_status(display, true);
 
@@ -891,6 +903,7 @@ static int dsi_display_status_check_te(struct dsi_display *display,
 	}
 
 	dsi_display_change_te_irq_status(display, false);
+	dsi_display_release_te_irq(display);
 
 	return rc;
 }
@@ -5558,8 +5571,6 @@ static int dsi_display_bind(struct device *dev,
 		}
 	}
 
-	/* register te irq handler */
-	dsi_display_register_te_irq(display);
 
 	msm_register_vm_event(master, dev, &vm_event_ops, (void *)display);
 
