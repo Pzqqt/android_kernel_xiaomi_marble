@@ -13393,6 +13393,8 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 
 	hal_reo_set_err_dst_remap(soc->hal_soc);
 
+	soc->features.pn_in_reo_dest = hal_reo_enable_pn_in_dest(soc->hal_soc);
+
 	qdf_atomic_set(&soc->cmn_init_done, 1);
 
 	qdf_nbuf_queue_init(&soc->htt_stats.msg);

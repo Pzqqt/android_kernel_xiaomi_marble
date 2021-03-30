@@ -6040,6 +6040,8 @@ void dp_txrx_path_stats(struct dp_soc *soc)
 			       pdev->soc->stats.rx.err.ipa_smmu_unmap_dup);
 		DP_PRINT_STATS("Rx ipa smmu unmap no pipes: %d",
 			       pdev->soc->stats.rx.err.ipa_unmap_no_pipe);
+		DP_PRINT_STATS("PN-in-Dest error frame pn-check fail: %d",
+			       soc->stats.rx.err.pn_in_dest_check_fail);
 
 		DP_PRINT_STATS("Reo Statistics");
 		DP_PRINT_STATS("near_full: %u ", soc->stats.rx.near_full);
@@ -6674,6 +6676,9 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 
 	DP_PRINT_STATS("bar handle update fail count: %d",
 		       soc->stats.rx.err.bar_handle_fail_count);
+
+	DP_PRINT_STATS("PN-in-Dest error frame pn-check fail: %d",
+		       soc->stats.rx.err.pn_in_dest_check_fail);
 
 	for (i = 0; i < HAL_RXDMA_ERR_MAX; i++) {
 		index += qdf_snprint(&rxdma_error[index],

@@ -2773,6 +2773,25 @@ static inline void hal_reo_set_err_dst_remap(hal_soc_handle_t hal_soc_hdl)
 		hal_soc->ops->hal_reo_set_err_dst_remap(hal_soc);
 }
 
+/**
+ * hal_reo_enable_pn_in_dest() - Subscribe for previous PN for 2k-jump or
+ *			OOR error frames
+ * @hal_soc_hdl: Opaque HAL soc handle
+ *
+ * Return: true if feature is enabled,
+ *	false, otherwise.
+ */
+static inline uint8_t
+hal_reo_enable_pn_in_dest(hal_soc_handle_t hal_soc_hdl)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (hal_soc->ops->hal_reo_enable_pn_in_dest)
+		return hal_soc->ops->hal_reo_enable_pn_in_dest(hal_soc);
+
+	return 0;
+}
+
 #ifdef GENERIC_SHADOW_REGISTER_ACCESS_ENABLE
 
 /**

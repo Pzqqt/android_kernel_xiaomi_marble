@@ -716,6 +716,7 @@ struct hal_hw_txrx_ops {
 	qdf_iomem_t (*hal_get_window_address)(struct hal_soc *hal_soc,
 					      qdf_iomem_t addr);
 	void (*hal_reo_set_err_dst_remap)(void *hal_soc);
+	uint8_t (*hal_reo_enable_pn_in_dest)(void *hal_soc);
 	void (*hal_reo_qdesc_setup)(hal_soc_handle_t hal_soc_hdl, int tid,
 				    uint32_t ba_window_size,
 				    uint32_t start_seq, void *hw_qdesc_vaddr,
@@ -904,6 +905,7 @@ struct hal_hw_txrx_ops {
 	uint32_t (*hal_rx_tlv_mic_err_get)(uint8_t *buf);
 	uint32_t (*hal_rx_tlv_get_pkt_type)(uint8_t *buf);
 	void (*hal_rx_tlv_get_pn_num)(uint8_t *buf, uint64_t *pn_num);
+	void (*hal_rx_reo_prev_pn_get)(void *ring_desc, uint64_t *prev_pn);
 	uint8_t * (*hal_rx_pkt_hdr_get)(uint8_t *buf);
 	uint32_t (*hal_rx_msdu_reo_dst_ind_get)(hal_soc_handle_t hal_soc_hdl,
 						void *msdu_link_desc);
@@ -958,6 +960,8 @@ struct hal_hw_txrx_ops {
 					      uint8_t *priv_data,
 					      uint32_t len);
 	void (*hal_rx_tlv_msdu_len_set)(uint8_t *buf, uint32_t len);
+	void (*hal_rx_tlv_populate_mpdu_desc_info)(uint8_t *buf,
+						   void *mpdu_desc_info_hdl);
 
 	/* REO CMD and STATUS */
 	int (*hal_reo_send_cmd)(hal_soc_handle_t hal_soc_hdl,

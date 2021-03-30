@@ -511,6 +511,32 @@ free_nbuf:
 }
 
 /**
+ * dp_rx_err_nbuf_pn_check() - Check if the PN number of this current packet
+ *				is a monotonous increment of packet number
+ *				from the previous successfully re-ordered
+ *				frame.
+ * @soc: Datapath SOC handle
+ * @ring_desc: REO ring descriptor
+ * @nbuf: Current packet
+ *
+ * Return: QDF_STATUS_SUCCESS, if the pn check passes, else QDF_STATUS_E_FAILURE
+ */
+static inline QDF_STATUS
+dp_rx_err_nbuf_pn_check(struct dp_soc *soc, hal_ring_desc_t ring_desc,
+			qdf_nbuf_t nbuf)
+{
+	uint64_t prev_pn, curr_pn;
+
+	hal_rx_reo_prev_pn_get(soc->hal_soc, ring_desc, &prev_pn);
+	hal_rx_tlv_get_pn_num(soc->hal_soc, qdf_nbuf_data(nbuf), &curr_pn);
+
+	if (curr_pn > prev_pn)
+		return QDF_STATUS_SUCCESS;
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  * dp_rx_reo_err_entry_process() - Handles for REO error entry processing
  *
  * @soc: core txrx main context
@@ -551,6 +577,7 @@ dp_rx_reo_err_entry_process(struct dp_soc *soc,
 	qdf_nbuf_t head_nbuf = NULL;
 	qdf_nbuf_t tail_nbuf = NULL;
 	uint16_t msdu_processed = 0;
+	QDF_STATUS status;
 	bool ret;
 
 	peer_id = DP_PEER_METADATA_PEER_ID_GET(
@@ -613,6 +640,22 @@ more_msdu_link_desc:
 			nbuf = dp_rx_sg_create(soc, head_nbuf);
 			qdf_nbuf_set_is_frag(nbuf, 1);
 			DP_STATS_INC(soc, rx.err.reo_err_oor_sg_count, 1);
+		}
+
+		if (soc->features.pn_in_reo_dest) {
+			status = dp_rx_err_nbuf_pn_check(soc, ring_desc, nbuf);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				DP_STATS_INC(soc, rx.err.pn_in_dest_check_fail,
+					     1);
+				qdf_nbuf_free(nbuf);
+				goto process_next_msdu;
+			}
+
+			hal_rx_tlv_populate_mpdu_desc_info(soc->hal_soc,
+							   qdf_nbuf_data(nbuf),
+							   mpdu_desc_info);
+			peer_id = DP_PEER_METADATA_PEER_ID_GET(
+					mpdu_desc_info->peer_meta_data);
 		}
 
 		switch (err_code) {
@@ -1948,6 +1991,27 @@ static int dp_rx_err_exception(struct dp_soc *soc, hal_ring_desc_t ring_desc)
 }
 #endif /* HANDLE_RX_REROUTE_ERR */
 
+/**
+ * dp_rx_err_is_pn_check_needed() - Check if the packet number check is needed
+ *				for this frame received in REO error ring.
+ * @soc: Datapath SOC handle
+ * @error: REO error detected or not
+ * @error_code: Error code in case of REO error
+ *
+ * Return: true if pn check if needed in software,
+ *	false, if pn check if not needed.
+ */
+static inline bool
+dp_rx_err_is_pn_check_needed(struct dp_soc *soc, uint8_t error,
+			     uint32_t error_code)
+{
+	return (soc->features.pn_in_reo_dest &&
+		(error == HAL_REO_ERROR_DETECTED &&
+		 (hal_rx_reo_is_2k_jump(error_code) ||
+		  hal_rx_reo_is_oor_error(error_code) ||
+		  hal_rx_reo_is_bar_oor_2k_jump(error_code))));
+}
+
 uint32_t
 dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 		  hal_ring_handle_t hal_ring_hdl, uint32_t quota)
@@ -1972,6 +2036,7 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 	QDF_STATUS status;
 	bool ret;
 	uint32_t error_code = 0;
+	bool sw_pn_check_needed;
 
 	/* Debug -- Remove later */
 	qdf_assert(soc && hal_ring_hdl);
@@ -2006,10 +2071,23 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 			error_code = hal_rx_get_reo_error_code(hal_soc,
 							       ring_desc);
 
-		/* Get the MPDU DESC info */
-		hal_rx_mpdu_desc_info_get(hal_soc, ring_desc, &mpdu_desc_info);
+		qdf_mem_set(&mpdu_desc_info, sizeof(mpdu_desc_info), 0);
+		sw_pn_check_needed = dp_rx_err_is_pn_check_needed(soc,
+								  err_status,
+								  error_code);
+		if (!sw_pn_check_needed) {
+			/*
+			 * MPDU desc info will be present in the REO desc
+			 * only in the below scenarios
+			 * 1) pn_in_dest_disabled:  always
+			 * 2) pn_in_dest enabled: All cases except 2k-jup
+			 *			and OOR errors
+			 */
+			hal_rx_mpdu_desc_info_get(hal_soc, ring_desc,
+						  &mpdu_desc_info);
+		}
 
-		if (mpdu_desc_info.msdu_count == 0)
+		if (HAL_RX_REO_DESC_MSDU_COUNT_GET(ring_desc) == 0)
 			goto next_entry;
 
 		/*
@@ -2073,6 +2151,10 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 		qdf_assert_always(rx_desc);
 
 		mac_id = rx_desc->pool_id;
+
+		if (sw_pn_check_needed) {
+			goto process_oor_2k_jump;
+		}
 
 		if (mpdu_desc_info.bar_frame) {
 			qdf_assert_always(mpdu_desc_info.msdu_count == 1);
@@ -2158,6 +2240,7 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 			goto next_entry;
 		}
 
+process_oor_2k_jump:
 		if (hal_rx_reo_is_2k_jump(error_code)) {
 			/* TOD0 */
 			DP_STATS_INC(soc,

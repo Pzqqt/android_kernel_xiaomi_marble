@@ -1084,6 +1084,8 @@ struct dp_soc_stats {
 			uint32_t bar_handle_fail_count;
 			/* EAPOL drop count in intrabss scenario */
 			uint32_t intrabss_eapol_drop;
+			/* PN check failed for 2K-jump or OOR error */
+			uint32_t pn_in_dest_check_fail;
 			/* MSDU len err count */
 			uint32_t msdu_len_err;
 		} err;
@@ -1627,6 +1629,14 @@ struct dp_arch_ops {
 						 int *max_reap_limit);
 };
 
+/**
+ * struct dp_soc_features: Data structure holding the SOC level feature flags.
+ * @pn_in_reo_dest: PN provided by hardware in the REO destination ring.
+ */
+struct dp_soc_features {
+	uint8_t pn_in_reo_dest;
+};
+
 /* SOC level structure for data path */
 struct dp_soc {
 	/**
@@ -2103,6 +2113,9 @@ struct dp_soc {
 	uint64_t cmem_base;
 	/* CMEM size in bytes */
 	uint64_t cmem_size;
+
+	/* SOC level feature flags */
+	struct dp_soc_features features;
 };
 
 #ifdef IPA_OFFLOAD

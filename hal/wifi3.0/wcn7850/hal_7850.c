@@ -32,6 +32,9 @@
 #include "rx_flow_search_entry.h"
 #include "hal_rx_flow_info.h"
 #include "hal_be_api.h"
+#include "reo_destination_ring_with_pn.h"
+
+#include <hal_be_rx.h>
 
 #define UNIFIED_RXPCU_PPDU_END_INFO_8_RX_PPDU_DURATION_OFFSET \
 	RXPCU_PPDU_END_INFO_RX_PPDU_DURATION_OFFSET
@@ -714,6 +717,33 @@ static void hal_rx_dump_pkt_tlvs_7850(hal_soc_handle_t hal_soc_hdl,
 }
 
 /**
+ * hal_rx_tlv_populate_mpdu_desc_info_7850() - Populate the local mpdu_desc_info
+ *			elements from the rx tlvs
+ * @buf: start address of rx tlvs [Validated by caller]
+ * @mpdu_desc_info_hdl: Buffer to populate the mpdu_dsc_info
+ *			[To be validated by caller]
+ *
+ * Return: None
+ */
+static void
+hal_rx_tlv_populate_mpdu_desc_info_7850(uint8_t *buf,
+					void *mpdu_desc_info_hdl)
+{
+	struct hal_rx_mpdu_desc_info *mpdu_desc_info =
+		(struct hal_rx_mpdu_desc_info *)mpdu_desc_info_hdl;
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_mpdu_start *mpdu_start =
+					&pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+	struct rx_mpdu_info *mpdu_info = &mpdu_start->rx_mpdu_info_details;
+
+	mpdu_desc_info->mpdu_seq = mpdu_info->mpdu_sequence_number;
+	mpdu_desc_info->mpdu_flags = hal_rx_get_mpdu_flags((uint32_t *)
+							    mpdu_info);
+	mpdu_desc_info->peer_meta_data = mpdu_info->peer_meta_data;
+	mpdu_desc_info->bar_frame = mpdu_info->bar_frame;
+}
+
+/**
  * hal_reo_status_get_header_7850 - Process reo desc info
  * @d - Pointer to reo descriptior
  * @b - tlv type info
@@ -1000,6 +1030,20 @@ hal_reo_set_err_dst_remap_7850(void *hal_soc)
 }
 
 /**
+ * hal_reo_enable_pn_in_dest_7850() - Set the REO register to enable previous PN
+ *				for OOR and 2K-jump frames
+ * @hal_soc: HAL SoC handle
+ *
+ * Return: 1, since the register is set.
+ */
+static uint8_t hal_reo_enable_pn_in_dest_7850(void *hal_soc)
+{
+	HAL_REG_WRITE(hal_soc, HWIO_REO_R0_PN_IN_DEST_ADDR(REO_REG_REG_BASE),
+		      1);
+	return 1;
+}
+
+/**
  * hal_rx_flow_setup_fse_7850() - Setup a flow search entry in HW FST
  * @fst: Pointer to the Rx Flow Search Table
  * @table_offset: offset into the table where the flow is to be setup
@@ -1223,6 +1267,24 @@ static uint8_t hal_tx_get_num_tcl_banks_7850(void)
 	return HAL_NUM_TCL_BANKS_7850;
 }
 
+/**
+ * hal_rx_reo_prev_pn_get_7850() - Get the previous PN from the REO ring desc.
+ * @ring_desc: REO ring descriptor [To be validated by caller ]
+ * @prev_pn: Buffer where the previous PN is to be populated.
+ *		[To be validated by caller]
+ *
+ * Return: None
+ */
+static void hal_rx_reo_prev_pn_get_7850(void *ring_desc,
+					uint64_t *prev_pn)
+{
+	struct reo_destination_ring_with_pn *reo_desc =
+		(struct reo_destination_ring_with_pn *)ring_desc;
+
+	*prev_pn = reo_desc->prev_pn_23_0;
+	*prev_pn |= ((uint64_t)reo_desc->prev_pn_55_24 << 24);
+}
+
 static void hal_hw_txrx_ops_attach_wcn7850(struct hal_soc *hal_soc)
 {
 	/* init and setup */
@@ -1233,6 +1295,8 @@ static void hal_hw_txrx_ops_attach_wcn7850(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_get_window_address = hal_get_window_address_7850;
 	hal_soc->ops->hal_reo_set_err_dst_remap =
 						hal_reo_set_err_dst_remap_7850;
+	hal_soc->ops->hal_reo_enable_pn_in_dest =
+						hal_reo_enable_pn_in_dest_7850;
 
 	/* tx */
 	hal_soc->ops->hal_tx_set_dscp_tid_map = hal_tx_set_dscp_tid_map_7850;
@@ -1383,6 +1447,7 @@ static void hal_hw_txrx_ops_attach_wcn7850(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_rx_get_fisa_timeout = hal_rx_get_fisa_timeout_be;
 	hal_soc->ops->hal_rx_mpdu_start_tlv_tag_valid =
 		hal_rx_mpdu_start_tlv_tag_valid_be;
+	hal_soc->ops->hal_rx_reo_prev_pn_get = hal_rx_reo_prev_pn_get_7850;
 
 	/* rx - TLV struct offsets */
 	hal_soc->ops->hal_rx_msdu_end_offset_get =
@@ -1439,6 +1504,8 @@ static void hal_hw_txrx_ops_attach_wcn7850(struct hal_soc *hal_soc)
 					hal_rx_mpdu_info_ampdu_flag_get_be;
 	hal_soc->ops->hal_rx_tlv_msdu_len_set =
 					hal_rx_msdu_start_msdu_len_set_be;
+	hal_soc->ops->hal_rx_tlv_populate_mpdu_desc_info =
+				hal_rx_tlv_populate_mpdu_desc_info_7850;
 };
 
 struct hal_hw_srng_config hw_srng_table_7850[] = {
