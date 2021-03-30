@@ -1471,11 +1471,6 @@ static int _sde_connector_set_prop_retire_fence(struct drm_connector *connector,
 
 	c_conn = to_sde_connector(connector);
 
-	if (!val) {
-		rc = -EINVAL;
-		goto end;
-	}
-
 	rc = copy_from_user(&prev_user_fd, (void __user *)val,
 			sizeof(uint64_t));
 	if (rc) {
@@ -1553,10 +1548,10 @@ static int sde_connector_atomic_set_property(struct drm_connector *connector,
 		rc = _sde_connector_set_prop_out_fb(connector, state, val);
 		break;
 	case CONNECTOR_PROP_RETIRE_FENCE:
-		rc = _sde_connector_set_prop_retire_fence(connector, state, val);
-		if (!rc)
+		if (!val)
 			goto end;
 
+		rc = _sde_connector_set_prop_retire_fence(connector, state, val);
 		break;
 	case CONNECTOR_PROP_ROI_V1:
 		rc = _sde_connector_set_roi_v1(c_conn, c_state,
