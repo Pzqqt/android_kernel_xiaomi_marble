@@ -52,7 +52,7 @@ bool sde_encoder_is_dsc_merge(struct drm_encoder *drm_enc)
 		return false;
 
 	phys_enc = sde_enc->phys_encs[0];
-	if (phys_enc->hw_intf->cfg.split_link_en)
+	if (phys_enc && phys_enc->hw_intf && phys_enc->hw_intf->cfg.split_link_en)
 		return false;
 
 	topology = sde_connector_get_topology_name(drm_conn);
