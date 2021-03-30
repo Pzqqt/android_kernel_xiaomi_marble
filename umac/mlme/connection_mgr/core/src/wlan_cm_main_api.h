@@ -701,11 +701,11 @@ void cm_flush_pending_request(struct cnx_mgr *cm_ctx, uint32_t prefix,
 /**
  * cm_remove_cmd() - Remove cmd from req list and serialization
  * @cm_ctx: connection manager context
- * @cm_id: cm id of connect/disconnect req
+ * @cm_id_to_remove: cm id of connect/disconnect/roam req
  *
  * Return: void
  */
-void cm_remove_cmd(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id);
+void cm_remove_cmd(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id_to_remove);
 
 /**
  * cm_add_req_to_list_and_indicate_osif() - Add the request to request list in

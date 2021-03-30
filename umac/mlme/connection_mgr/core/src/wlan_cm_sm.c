@@ -254,6 +254,11 @@ bool cm_handle_fw_roam_connected_event(struct cnx_mgr *cm_ctx, uint16_t event,
 			event_handled = false;
 			break;
 		}
+		status = cm_add_fw_roam_cmd_to_list_n_ser(cm_ctx, roam_cm_req);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			event_handled = false;
+			break;
+		}
 		cm_sm_transition_to(cm_ctx, WLAN_CM_S_ROAMING);
 		cm_sm_deliver_event_sync(cm_ctx, event, data_len, data);
 		break;
