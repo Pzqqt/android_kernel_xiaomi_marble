@@ -4581,7 +4581,6 @@ static void hdd_uninit(struct net_device *dev)
 	hdd_deinit_adapter(hdd_ctx, adapter, true);
 
 	/* after uninit our adapter structure will no longer be valid */
-	adapter->dev = NULL;
 	adapter->magic = 0;
 
 exit:
@@ -8614,7 +8613,12 @@ void hdd_adapter_dev_put_debug(struct hdd_adapter *adapter,
 		QDF_BUG(0);
 	}
 
-	dev_put(adapter->dev);
+	if (adapter->dev) {
+		dev_put(adapter->dev);
+	} else {
+		hdd_err("adapter->dev is NULL");
+		QDF_BUG(0);
+	}
 }
 
 QDF_STATUS hdd_get_front_adapter(struct hdd_context *hdd_ctx,
