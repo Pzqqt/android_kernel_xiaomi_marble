@@ -6435,6 +6435,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	bool srd_channel_allowed, disable_nan = true;
 	enum QDF_OPMODE vdev_opmode;
 	uint8_t vdev_id_list[MAX_NUMBER_OF_CONC_CONNECTIONS], i;
+	enum reg_6g_ap_type ap_pwr_type;
 
 	hdd_enter();
 
@@ -6528,6 +6529,9 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 						chandef->chan->center_freq);
 	if (!status)
 		return -EINVAL;
+
+	ap_pwr_type = wlan_reg_decide_6g_ap_pwr_type(hdd_ctx->pdev);
+	hdd_debug("selecting AP power type %d", ap_pwr_type);
 
 	vdev_opmode = wlan_vdev_mlme_get_opmode(adapter->vdev);
 	ucfg_mlme_get_srd_master_mode_for_vdev(hdd_ctx->psoc, vdev_opmode,
