@@ -258,6 +258,8 @@ QDF_STATUS cds_init(void)
 	qdf_register_self_recovery_callback(cds_trigger_recovery_psoc);
 	qdf_register_fw_down_callback(cds_is_fw_down);
 	qdf_register_is_driver_unloading_callback(cds_is_driver_unloading);
+	qdf_register_is_driver_state_module_stop_callback(
+					cds_is_driver_state_module_stop);
 	qdf_register_recovering_state_query_callback(cds_is_driver_recovering);
 	qdf_register_drv_connected_callback(cds_is_drv_connected);
 	qdf_register_drv_supported_callback(cds_is_drv_supported);
@@ -290,6 +292,7 @@ void cds_deinit(void)
 	qdf_register_recovering_state_query_callback(NULL);
 	qdf_register_fw_down_callback(NULL);
 	qdf_register_is_driver_unloading_callback(NULL);
+	qdf_register_is_driver_state_module_stop_callback(NULL);
 	qdf_register_self_recovery_callback(NULL);
 	qdf_register_wmi_send_recv_qmi_callback(NULL);
 

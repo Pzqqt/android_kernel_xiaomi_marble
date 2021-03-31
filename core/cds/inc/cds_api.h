@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -60,7 +60,7 @@
  * CDS_DRIVER_STATE_UNLOADING: Driver remove is in progress.
  * CDS_DRIVER_STATE_RECOVERING: Recovery in progress.
  * CDS_DRIVER_STATE_BAD: Driver in bad state.
- * CDS_DRIVER_STATE_MODULE_STOPPING: Module stop in progress.
+ * CDS_DRIVER_STATE_MODULE_STOP: Module stop in progress or done.
  * CDS_DRIVER_STATE_ASSERTING_TARGET: Driver assert target in progress.
  */
 enum cds_driver_state {
@@ -71,7 +71,7 @@ enum cds_driver_state {
 	CDS_DRIVER_STATE_RECOVERING             = BIT(3),
 	CDS_DRIVER_STATE_BAD                    = BIT(4),
 	CDS_DRIVER_STATE_FW_READY               = BIT(5),
-	CDS_DRIVER_STATE_MODULE_STOPPING        = BIT(6),
+	CDS_DRIVER_STATE_MODULE_STOP            = BIT(6),
 	CDS_DRIVER_STATE_ASSERTING_TARGET       = BIT(7),
 };
 
@@ -164,6 +164,18 @@ static inline bool cds_is_target_ready(void)
 }
 
 /**
+ * cds_is_driver_state_module_stop - Is module stop is in-progress or done
+ *
+ * Return: true if driver state is module stop and false otherwise.
+ */
+static inline bool cds_is_driver_state_module_stop(void)
+{
+	enum cds_driver_state state = cds_get_driver_state();
+
+	return __CDS_IS_DRIVER_STATE(state, CDS_DRIVER_STATE_MODULE_STOP);
+}
+
+/**
  * cds_set_recovery_in_progress() - Set recovery in progress
  * @value: value to set
  *
@@ -248,18 +260,18 @@ static inline void cds_set_unload_in_progress(uint8_t value)
 }
 
 /**
- * cds_set_module_stop_in_progress() - Setting module stop in progress
+ * cds_set_driver_state_module_stop() - Setting module stop in progress or done
  *
  * @value: value to set
  *
  * Return: none
  */
-static inline void cds_set_module_stop_in_progress(bool value)
+static inline void cds_set_driver_state_module_stop(bool value)
 {
 	if (value)
-		cds_set_driver_state(CDS_DRIVER_STATE_MODULE_STOPPING);
+		cds_set_driver_state(CDS_DRIVER_STATE_MODULE_STOP);
 	else
-		cds_clear_driver_state(CDS_DRIVER_STATE_MODULE_STOPPING);
+		cds_clear_driver_state(CDS_DRIVER_STATE_MODULE_STOP);
 }
 
 /**
