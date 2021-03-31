@@ -193,7 +193,8 @@ $(call wlog,"generate soft link because GENERIC_ODM_IMAGE not true")
 endif
 endif
 
-ifeq ($(TARGET_PRODUCT), taro)
+$(call wlog,TARGET_USES_KERNEL_PLATFORM=$(TARGET_USES_KERNEL_PLATFORM))
+ifeq ($(TARGET_USES_KERNEL_PLATFORM),true)
     include $(DLKM_DIR)/Build_external_kernelmodule.mk
 else
     include $(DLKM_DIR)/AndroidKernelModule.mk
