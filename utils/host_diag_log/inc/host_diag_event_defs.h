@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019,2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -384,6 +384,8 @@ typedef enum {
 	 * 5 - Devide Inserted
 	 * 6 - Driver Unloaded
 	 * 7 - Driver Loaded
+	 * 8 - bus/link down
+	 * 9 - chip temperature high
 	 *
 	 * driverVersion: offset: 2 length: 10
 	 *

@@ -237,6 +237,35 @@ enum mgmt_bss_type {
 	MAX_PERSONA = 0xff,
 };
 
+/**
+ * enum wlan_bringup_status: driver/device status
+ *
+ * @WLAN_STATUS_DISABLED: WLAN Disabled
+ * @WLAN_STATUS_ENABLED: WLAN Enabled
+ * @WLAN_STATUS_RESET_FAIL: Reset Fail
+ * @WLAN_STATUS_RESET_SUCCESS: Reset Success
+ * @WLAN_STATUS_DEVICE_REMOVED: Device Removed
+ * @WLAN_STATUS_DEVICE_INSERTED: Devide Inserted
+ * @WLAN_STATUS_DRIVER_UNLOADED: Driver Unloaded
+ * @WLAN_STATUS_DRIVER_LOADED: Driver Loaded
+ * @WLAN_STATUS_BUS_EXCEPTION: bus/link exception
+ * @WLAN_STATUS_DEVICE_TEMPERATURE_HIGH: chip temperature high
+ */
+enum wlan_bringup_status {
+	WLAN_STATUS_DISABLED = 0,
+	WLAN_STATUS_ENABLED = 1,
+	WLAN_STATUS_RESET_FAIL = 2,
+	WLAN_STATUS_RESET_SUCCESS = 3,
+	WLAN_STATUS_DEVICE_REMOVED = 4,
+	WLAN_STATUS_DEVICE_INSERTED = 5,
+	WLAN_STATUS_DRIVER_UNLOADED = 6,
+	WLAN_STATUS_DRIVER_LOADED = 7,
+	WLAN_STATUS_BUS_EXCEPTION = 8,
+	WLAN_STATUS_DEVICE_TEMPERATURE_HIGH = 9,
+
+	WLAN_STATUS_MAX = 0xffff,
+};
+
 /*-------------------------------------------------------------------------
    Event ID: EVENT_WLAN_SECURITY
    ------------------------------------------------------------------------*/
@@ -429,9 +458,18 @@ typedef struct {
 /*-------------------------------------------------------------------------
    Event ID: EVENT_WLAN_BRINGUP_STATUS
    ------------------------------------------------------------------------*/
+/**
+ * struct host_event_wlan_bringup_status_payload_type - Structure holding the
+ * device/driver status info
+ *
+ * @wlan_status: status code as defined by enum wlan_bringup_status
+ * @driver_version: version of WLAN driver
+ *
+ * This structure will hold WLAN device basic status and driver version
+ */
 typedef struct {
-	uint16_t wlanStatus;
-	char driverVersion[10];
+	uint16_t wlan_status;
+	char driver_version[10];
 } host_event_wlan_bringup_status_payload_type;
 
 /*-------------------------------------------------------------------------
