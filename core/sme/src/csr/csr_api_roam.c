@@ -12855,20 +12855,20 @@ static QDF_STATUS csr_iterate_triplets(tDot11fIECountry country_ie)
 {
 	u_int8_t i;
 
-	if (country_ie.first_triplet[0] >= OP_CLASS_ID_200) {
-		if (country_ie.more_triplets[0][0] < OP_CLASS_ID_200)
+	if (country_ie.first_triplet[0] > OP_CLASS_ID_200) {
+		if (country_ie.more_triplets[0][0] <= OP_CLASS_ID_200)
 			return QDF_STATUS_SUCCESS;
 	}
 
 	for (i = 0; i < country_ie.num_more_triplets; i++) {
-		if ((country_ie.more_triplets[i][0] >= OP_CLASS_ID_200) &&
+		if ((country_ie.more_triplets[i][0] > OP_CLASS_ID_200) &&
 		    (i < country_ie.num_more_triplets - 1)) {
-			if (country_ie.more_triplets[i + 1][0] <
+			if (country_ie.more_triplets[i + 1][0] <=
 			    OP_CLASS_ID_200)
 				return QDF_STATUS_SUCCESS;
 		}
 	}
-	sme_debug("No operating class triplet followed by channel range triplet");
+	sme_debug("No operating class triplet followed by sub-band triplet");
 	return QDF_STATUS_SUCCESS;
 }
 

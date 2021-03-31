@@ -556,6 +556,7 @@ populate_dot11f_country(struct mac_context *mac,
 	uint8_t buffer_triplets[81][3];
 	uint8_t i, j, num_triplets = 0;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	bool six_gig_started = false;
 
 	cur_chan_list = qdf_mem_malloc(NUM_CHANNELS * sizeof(*cur_chan_list));
 	if (!cur_chan_list)
@@ -598,6 +599,14 @@ populate_dot11f_country(struct mac_context *mac,
 		if (cur_chan->chan_flags & REGULATORY_CHAN_DISABLED)
 			continue;
 
+		if (wlan_reg_is_6ghz_chan_freq(cur_chan->center_freq) &&
+		    !six_gig_started) {
+			buffer_triplets[num_triplets][0] = OP_CLASS_ID_201;
+			buffer_triplets[num_triplets][1] = OP_CLASS_131;
+			num_triplets++;
+			six_gig_started = true;
+		}
+
 		if (start && prev &&
 		    prev->chan_num + chan_spacing == cur_chan->chan_num &&
 		    start->tx_power == cur_chan->tx_power) {
@@ -622,6 +631,20 @@ populate_dot11f_country(struct mac_context *mac,
 				status = QDF_STATUS_E_FAILURE;
 				goto out;
 			}
+		}
+
+		if ((chan_enum == NUM_CHANNELS - 1) && (six_gig_started)) {
+			buffer_triplets[num_triplets][0] = OP_CLASS_ID_201;
+			buffer_triplets[num_triplets][1] = OP_CLASS_132;
+			num_triplets++;
+
+			buffer_triplets[num_triplets][0] = OP_CLASS_ID_201;
+			buffer_triplets[num_triplets][1] = OP_CLASS_133;
+			num_triplets++;
+
+			buffer_triplets[num_triplets][0] = OP_CLASS_ID_201;
+			buffer_triplets[num_triplets][1] = OP_CLASS_134;
+			num_triplets++;
 		}
 
 		/* Start new group */

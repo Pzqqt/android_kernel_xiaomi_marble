@@ -193,6 +193,7 @@ enum operating_class_num {
 
 enum operating_extension_identifier {
 	OP_CLASS_ID_200 = 200,
+	OP_CLASS_ID_201,
 };
 
 /* Structure common to Beacons & Probe Responses */
