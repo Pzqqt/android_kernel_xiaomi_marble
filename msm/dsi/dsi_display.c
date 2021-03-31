@@ -3966,6 +3966,37 @@ end:
 	return rc;
 }
 
+static int dsi_display_validate_res(struct dsi_display *display)
+{
+	struct device_node *of_node = display->pdev->dev.of_node;
+	struct of_phandle_iterator it;
+	struct dsi_ctrl *dsi_ctrl;
+	bool ctrl_avail = false;
+
+	of_phandle_iterator_init(&it, of_node, "qcom,dsi-ctrl", NULL, 0);
+	while (of_phandle_iterator_next(&it) == 0) {
+		dsi_ctrl = dsi_ctrl_get(it.node);
+		if (IS_ERR(dsi_ctrl)) {
+			int rc = PTR_ERR(dsi_ctrl);
+
+			if (rc == -EPROBE_DEFER)
+				return rc;
+			/*
+			 * With dual display mode, the seconday display needs at least
+			 * one ctrl to proceed through the probe. Exact ctrl match
+			 * will be done after parsing the DT or firmware data.
+			 */
+			if (rc == -EBUSY)
+				ctrl_avail |= false;
+		} else {
+			dsi_ctrl_put(dsi_ctrl);
+			ctrl_avail = true;
+		}
+	}
+
+	return ctrl_avail ? 0 : -EBUSY;
+}
+
 static int dsi_display_get_phandle_count(struct dsi_display *display,
 			const char *propname)
 {
@@ -4048,7 +4079,7 @@ error:
 	return rc;
 }
 
-static int dsi_display_validate_resources(struct dsi_display *display)
+static int dsi_display_res_init(struct dsi_display *display)
 {
 	int rc = 0;
 	int i;
@@ -4061,7 +4092,7 @@ static int dsi_display_validate_resources(struct dsi_display *display)
 			rc = PTR_ERR(ctrl->ctrl);
 			DSI_ERR("failed to get dsi controller, rc=%d\n", rc);
 			ctrl->ctrl = NULL;
-			goto error;
+			goto error_ctrl_put;
 		}
 
 		ctrl->phy = dsi_phy_get(ctrl->phy_of_node);
@@ -4070,24 +4101,9 @@ static int dsi_display_validate_resources(struct dsi_display *display)
 			DSI_ERR("failed to get phy controller, rc=%d\n", rc);
 			dsi_ctrl_put(ctrl->ctrl);
 			ctrl->phy = NULL;
-			goto error;
+			goto error_ctrl_put;
 		}
 	}
-	return rc;
-
-error:
-	for (i = i - 1; i >= 0; i--) {
-		ctrl = &display->ctrl[i];
-		dsi_ctrl_put(ctrl->ctrl);
-		dsi_phy_put(ctrl->phy);
-	}
-	return -EPROBE_DEFER;
-}
-
-static int dsi_display_res_init(struct dsi_display *display)
-{
-	int rc = 0;
-	int i;
 
 	display->panel = dsi_panel_get(&display->pdev->dev,
 				display->panel_node,
@@ -4099,7 +4115,7 @@ static int dsi_display_res_init(struct dsi_display *display)
 		rc = PTR_ERR(display->panel);
 		DSI_ERR("failed to get panel, rc=%d\n", rc);
 		display->panel = NULL;
-		goto error;
+		goto error_ctrl_put;
 	}
 
 	display_for_each_ctrl(i, display) {
@@ -4127,13 +4143,13 @@ static int dsi_display_res_init(struct dsi_display *display)
 	rc = dsi_display_parse_lane_map(display);
 	if (rc) {
 		DSI_ERR("Lane map not found, rc=%d\n", rc);
-		goto error;
+		goto error_ctrl_put;
 	}
 
 	rc = dsi_display_clocks_init(display);
 	if (rc) {
 		DSI_ERR("Failed to parse clock data, rc=%d\n", rc);
-		goto error;
+		goto error_ctrl_put;
 	}
 
 	/**
@@ -4144,7 +4160,14 @@ static int dsi_display_res_init(struct dsi_display *display)
 		display->is_active = false;
 	else
 		display->is_active = true;
-error:
+
+	return 0;
+error_ctrl_put:
+	for (i = i - 1; i >= 0; i--) {
+		ctrl = &display->ctrl[i];
+		dsi_ctrl_put(ctrl->ctrl);
+		dsi_phy_put(ctrl->phy);
+	}
 	return rc;
 }
 
@@ -5126,6 +5149,12 @@ static int _dsi_display_dev_init(struct dsi_display *display)
 				display->parser, display->fw->data,
 				display->fw->size);
 
+	rc = dsi_display_parse_dt(display);
+	if (rc) {
+		DSI_ERR("[%s] failed to parse dt, rc=%d\n", display->name, rc);
+		goto error;
+	}
+
 	rc = dsi_display_res_init(display);
 	if (rc) {
 		DSI_ERR("[%s] failed to initialize resources, rc=%d\n",
@@ -5673,6 +5702,8 @@ static int dsi_display_init(struct dsi_display *display)
 	int rc = 0;
 	struct platform_device *pdev = display->pdev;
 
+	mutex_init(&display->display_lock);
+
 	rc = _dsi_display_dev_init(display);
 	if (rc) {
 		DSI_ERR("device init failed, rc=%d\n", rc);
@@ -5754,7 +5785,6 @@ int dsi_display_dev_probe(struct platform_device *pdev)
 		rc = -ENOMEM;
 		goto end;
 	}
-	mutex_init(&display->display_lock);
 
 	display->dma_cmd_workq = create_singlethread_workqueue(
 			"dsi_dma_cmd_workq");
@@ -5812,23 +5842,28 @@ int dsi_display_dev_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, display);
 
-	rc = dsi_display_parse_dt(display);
+	rc = dsi_display_validate_res(display);
 	if (rc) {
-		DSI_ERR("[%s] failed to parse dt, rc=%d\n", display->name, rc);
-		goto end;
-	}
+		/*
+		 * Display's bailing out without probe deferral must register its
+		 * components to complete MDSS binding. Scheduled to be fixed in the future
+		 * with dynamic component binding.
+		 */
+		if (rc == -EBUSY) {
+			int ret = component_add(&pdev->dev,
+					&dsi_display_comp_ops);
+			if (ret)
+				DSI_ERR(
+					"component add failed for display type: %s, rc=%d\n"
+					, display->type, ret);
+		}
 
-	rc = dsi_display_validate_resources(display);
-	if (rc) {
-		DSI_ERR("[%s] needed resources not probed yet, rc=%d\n",
-							display->name, rc);
 		goto end;
 	}
 
 	/* initialize display in firmware callback */
 	if (!boot_disp->boot_disp_en &&
-			IS_ENABLED(CONFIG_DSI_PARSER) &&
-			!display->trusted_vm_env) {
+			IS_ENABLED(CONFIG_DSI_PARSER)) {
 		if (!strcmp(display->display_type, "primary"))
 			firm_req = !request_firmware_nowait(
 				THIS_MODULE, 1, "dsi_prop",
@@ -5850,10 +5885,8 @@ int dsi_display_dev_probe(struct platform_device *pdev)
 
 	return 0;
 end:
-	if (display) {
-		mutex_destroy(&display->display_lock);
+	if (display)
 		devm_kfree(&pdev->dev, display);
-	}
 
 	return rc;
 }

@@ -2293,21 +2293,21 @@ static int dsi_panel_parse_tlmm_gpio(struct dsi_panel *panel)
 	u32 base, size, pin;
 	int pin_count, address_count, name_count, i;
 
-	address_count = of_property_count_u32_elems(utils->data,
+	address_count = utils->count_u32_elems(utils->data,
 				"qcom,dsi-panel-gpio-address");
 	if (address_count != 2) {
 		DSI_DEBUG("panel gpio address not defined\n");
 		return 0;
 	}
 
-	of_property_read_u32_index(utils->data,
+	utils->read_u32_index(utils->data,
 			"qcom,dsi-panel-gpio-address", 0, &base);
-	of_property_read_u32_index(utils->data,
+	utils->read_u32_index(utils->data,
 			"qcom,dsi-panel-gpio-address", 1, &size);
 
-	pin_count = of_property_count_u32_elems(utils->data,
+	pin_count = utils->count_u32_elems(utils->data,
 				"qcom,dsi-panel-gpio-pins");
-	name_count = of_property_count_strings(utils->data,
+	name_count = utils->count_strings(utils->data,
 				"qcom,dsi-panel-gpio-names");
 	if ((pin_count < 0) || (name_count < 0) || (pin_count != name_count)) {
 		DSI_ERR("invalid gpio pins/names\n");
@@ -2321,13 +2321,13 @@ static int dsi_panel_parse_tlmm_gpio(struct dsi_panel *panel)
 
 	panel->tlmm_gpio_count = pin_count;
 	for (i = 0; i < pin_count; i++) {
-		of_property_read_u32_index(utils->data,
+		utils->read_u32_index(utils->data,
 				"qcom,dsi-panel-gpio-pins", i, &pin);
 		panel->tlmm_gpio[i].num = pin;
 		panel->tlmm_gpio[i].addr = base + (pin * size);
 		panel->tlmm_gpio[i].size = size;
 
-		of_property_read_string_index(utils->data,
+		utils->read_string_index(utils->data,
 				"qcom,dsi-panel-gpio-names", i,
 				&(panel->tlmm_gpio[i].name));
 	}

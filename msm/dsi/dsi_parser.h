@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DSI_PARSER_H_
@@ -24,6 +24,8 @@ int dsi_parser_read_u64(const struct device_node *np, const char *propname,
 			 u64 *out_value);
 int dsi_parser_read_u32(const struct device_node *np,
 			const char *propname, u32 *out_value);
+int dsi_parser_read_u32_index(const struct device_node *np,
+			const char *propname, u32 index, u32 *out_value);
 int dsi_parser_read_u32_array(const struct device_node *np,
 			const char *propname,
 			u32 *out_values, size_t sz);
@@ -86,6 +88,12 @@ static inline int dsi_parser_read_u64(const struct device_node *np,
 
 static inline int dsi_parser_read_u32(const struct device_node *np,
 			const char *propname, u32 *out_value)
+{
+	return -ENODEV;
+}
+
+int dsi_parser_read_u32_index(const struct device_node *np,
+			const char *propname, u32 index, u32 *out_value)
 {
 	return -ENODEV;
 }
@@ -170,12 +178,17 @@ struct dsi_parser_utils {
 			const char *propname, u64 *out_value);
 	int (*read_u32)(const struct device_node *np,
 			const char *propname, u32 *out_value);
+	int (*read_u32_index)(const struct device_node *np,
+			const char *propname, u32 index, u32 *out_value);
 	bool (*read_bool)(const struct device_node *np,
 			 const char *propname);
 	int (*read_u32_array)(const struct device_node *np,
 			const char *propname, u32 *out_values, size_t sz);
 	int (*read_string)(const struct device_node *np, const char *propname,
 				const char **out_string);
+	int (*read_string_index)(const struct device_node *np,
+				const char *propname,
+				int index, const char **output);
 	struct device_node *(*get_child_by_name)(
 				const struct device_node *node,
 				const char *name);
@@ -186,6 +199,8 @@ struct dsi_parser_utils {
 		struct device_node *prev);
 	int (*count_u32_elems)(const struct device_node *np,
 		const char *propname);
+	int (*count_strings)(const struct device_node *np,
+					const char *propname);
 	int (*get_named_gpio)(struct device_node *np,
 				const char *propname, int index);
 	int (*get_available_child_count)(const struct device_node *np);
@@ -198,14 +213,17 @@ static inline struct dsi_parser_utils *dsi_parser_get_of_utils(void)
 		.read_bool = of_property_read_bool,
 		.read_u64 = of_property_read_u64,
 		.read_u32 = of_property_read_u32,
+		.read_u32_index = of_property_read_u32_index,
 		.read_u32_array = of_property_read_u32_array,
 		.read_string = of_property_read_string,
+		.read_string_index = of_property_read_string_index,
 		.get_child_by_name = of_get_child_by_name,
 		.get_child_count = of_get_child_count,
 		.get_available_child_count = of_get_available_child_count,
 		.find_property = of_find_property,
 		.get_next_child = of_get_next_child,
 		.count_u32_elems = of_property_count_u32_elems,
+		.count_strings = of_property_count_strings,
 		.get_named_gpio = of_get_named_gpio,
 	};
 
@@ -219,14 +237,17 @@ static inline struct dsi_parser_utils *dsi_parser_get_parser_utils(void)
 		.read_bool = dsi_parser_read_bool,
 		.read_u64 = dsi_parser_read_u64,
 		.read_u32 = dsi_parser_read_u32,
+		.read_u32_index = dsi_parser_read_u32_index,
 		.read_u32_array = dsi_parser_read_u32_array,
 		.read_string = dsi_parser_read_string,
+		.read_string_index = dsi_parser_read_string_index,
 		.get_child_by_name = dsi_parser_get_child_by_name,
 		.get_child_count = dsi_parser_get_child_count,
 		.get_available_child_count = dsi_parser_get_child_count,
 		.find_property = dsi_parser_find_property,
 		.get_next_child = dsi_parser_get_next_child,
 		.count_u32_elems = dsi_parser_count_u32_elems,
+		.count_strings = dsi_parser_count_strings,
 		.get_named_gpio = dsi_parser_get_named_gpio,
 	};
 
