@@ -64,6 +64,9 @@
  * @WLAN_CM_SM_EV_ROAM_INVOKE:            Host initiated LFR3/FW roam req
  * @WLAN_CM_SM_EV_ROAM_ABORT:             Roam abort
  * @WLAN_CM_SM_EV_ROAM_DONE:              Roam done
+ * @WLAN_CM_SM_EV_PREAUTH_ACTIVE:         Preauth active
+ * @WLAN_CM_SM_EV_PREAUTH_RESP:           Preauth response
+ * @WLAN_CM_SM_EV_REASSOC_TIMER：         Reassoc timer expired
  * @WLAN_CM_SM_EV_MAX:                    Max event
  */
 enum wlan_cm_sm_evt {
@@ -100,6 +103,9 @@ enum wlan_cm_sm_evt {
 	WLAN_CM_SM_EV_ROAM_INVOKE = 30,
 	WLAN_CM_SM_EV_ROAM_ABORT = 31,
 	WLAN_CM_SM_EV_ROAM_DONE = 32,
+	WLAN_CM_SM_EV_PREAUTH_ACTIVE = 33,
+	WLAN_CM_SM_EV_PREAUTH_RESP = 34,
+	WLAN_CM_SM_EV_REASSOC_TIMER = 35,
 	WLAN_CM_SM_EV_MAX,
 };
 

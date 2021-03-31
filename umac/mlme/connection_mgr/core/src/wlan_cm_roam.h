@@ -202,7 +202,91 @@ cm_send_reassoc_start_fail(struct cnx_mgr *cm_ctx,
 			   enum wlan_cm_connect_fail_reason reason,
 			   bool sync);
 
-#else
+#ifdef CONN_MGR_ADV_FEATURE
+/*
+ * cm_update_advance_roam_scan_filter() - fill scan filter for roam
+ * @vdev: vdev
+ * @filter: scan filter
+ *
+ * Return QDF_STATUS
+ */
+QDF_STATUS cm_update_advance_roam_scan_filter(
+		struct wlan_objmgr_vdev *vdev, struct scan_filter *filter);
+#endif
+
+#ifdef WLAN_FEATURE_PREAUTH_ENABLE
+/*
+ * cm_host_roam_preauth_start() - start preauth process
+ * @cm_ctx: Connection manager context
+ * @cm_req: Struct containing the roam request
+ *
+ * Return QDF_STATUS
+ */
+QDF_STATUS cm_host_roam_preauth_start(struct cnx_mgr *cm_ctx,
+				      struct cm_req *cm_req);
+
+/**
+ * cm_preauth_active() - This API would be called after the preauth
+ * request gets activated in serialization.
+ * @cm_ctx: connection manager context
+ * @cm_id: Connection mgr ID assigned to this preauth request.
+ *
+ * Return: QDF status
+ */
+QDF_STATUS cm_preauth_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id);
+
+/**
+ * cm_preauth_done_resp() - This API would be called when preauth
+ * response msg handling
+ * @cm_ctx: connection manager context
+ * @cm_id: Connection mgr ID assigned to this preauth request.
+ *
+ * Return: void
+ */
+void cm_preauth_done_resp(struct cnx_mgr *cm_ctx, struct wlan_preauth_rsp *rsp);
+
+/**
+ * cm_preauth_success() - Preauth is successfully completed
+ * @cm_ctx: connection manager context
+ * @rsp: Preauth resp
+ *
+ * Return: void
+ */
+void cm_preauth_success(struct cnx_mgr *cm_ctx, struct wlan_preauth_rsp *rsp);
+
+/**
+ * cm_preauth_fail() - This API would be called after the preauth
+ * request gets failed.
+ * @cm_ctx: connection manager context
+ * @preauth_fail_rsp: preauth fail response
+ *
+ * Return: none
+ */
+void cm_preauth_fail(struct cnx_mgr *cm_ctx,
+		     struct wlan_cm_preauth_fail *preauth_fail_rsp);
+
+/**
+ * cm_send_preauth_start_fail() - This API would be called after send preauth
+ * request failed.
+ * @cm_ctx: connection manager context
+ * @cm_id: connection mgr ID assigned to this preauth request.
+ * @reason: connect fail reason
+ *
+ * Return: QDF status
+ */
+QDF_STATUS cm_send_preauth_start_fail(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id,
+				      enum wlan_cm_connect_fail_reason reason);
+
+/**
+ * cm_handle_reassoc_timer() - handle ressoc timer expiry
+ * @cm_ctx: connection manager context
+ * @cm_id: connection mgr ID assigned to this preauth request.
+ *
+ * Return: QDF status
+ */
+QDF_STATUS cm_handle_reassoc_timer(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id);
+#endif /* WLAN_FEATURE_PREAUTH_ENABLE */
+#else /* WLAN_FEATURE_HOST_ROAM */
 
 #ifdef WLAN_POLICY_MGR_ENABLE
 static inline
@@ -231,7 +315,7 @@ QDF_STATUS cm_roam_bss_peer_create_rsp(struct wlan_objmgr_vdev *vdev,
 {
 	return QDF_STATUS_SUCCESS;
 }
-#endif
+#endif /* WLAN_FEATURE_HOST_ROAM */
 
 /**
  * cm_check_and_prepare_roam_req() - Initiate roam request

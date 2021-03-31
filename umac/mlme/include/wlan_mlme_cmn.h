@@ -52,17 +52,31 @@
  * @mlme_cm_disconnect_start_cb: Disconnect start callback
  * @vdev: vdev pointer
  *
+ * @mlme_cm_roam_sync_cb: Roam sync callback
+ * @vdev: vdev pointer
+ *
+ * @mlme_cm_pmksa_candidate_notify_cb: Roam pmksa candidate notify callback
+ * @vdev: vdev pointer
+ * @bssid: bssid
+ * @index: index
+ * @preauth: preauth flag
+ *
  * @mlme_cm_roam_start_cb: Roam start callback
  * @vdev: vdev pointer
  *
  * @mlme_cm_roam_abort_cb: Roam abort callback
  * @vdev: vdev pointer
  *
- * @mlme_cm_roam_sync_cb: Roam sync callback
- * @vdev: vdev pointer
- *
  * @mlme_cm_roam_cmpl_cb: Roam sync complete cb
  * @vdev: vdev pointer
+ *
+ * @mlme_cm_ft_preauth_cmpl_cb: Roam ft preauth complete cb
+ * @vdev: vdev pointer
+ * @rsp: preauth response pointer
+ *
+ * @mlme_cm_cckm_preauth_cmpl_cb: Roam cckm preauth complete cb
+ * @vdev: vdev pointer
+ * @rsp: preauth response pointer
  */
 struct mlme_cm_ops {
 	QDF_STATUS (*mlme_cm_connect_complete_cb)(
@@ -80,11 +94,27 @@ struct mlme_cm_ops {
 					struct wlan_cm_discon_rsp *rsp);
 	QDF_STATUS (*mlme_cm_disconnect_start_cb)(
 					struct wlan_objmgr_vdev *vdev);
+#ifdef CONN_MGR_ADV_FEATURE
+	QDF_STATUS (*mlme_cm_roam_sync_cb)(struct wlan_objmgr_vdev *vdev);
+	QDF_STATUS (*mlme_cm_pmksa_candidate_notify_cb)(
+						struct wlan_objmgr_vdev *vdev,
+						struct qdf_mac_addr *bssid,
+						int index, bool preauth);
+#endif
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	QDF_STATUS (*mlme_cm_roam_start_cb)(struct wlan_objmgr_vdev *vdev);
 	QDF_STATUS (*mlme_cm_roam_abort_cb)(struct wlan_objmgr_vdev *vdev);
-	QDF_STATUS (*mlme_cm_roam_sync_cb)(struct wlan_objmgr_vdev *vdev);
 	QDF_STATUS (*mlme_cm_roam_cmpl_cb)(struct wlan_objmgr_vdev *vdev);
+#endif
+#ifdef WLAN_FEATURE_PREAUTH_ENABLE
+	QDF_STATUS (*mlme_cm_ft_preauth_cmpl_cb)(
+					struct wlan_objmgr_vdev *vdev,
+					struct wlan_preauth_rsp *rsp);
+#ifdef FEATURE_WLAN_ESE
+	QDF_STATUS (*mlme_cm_cckm_preauth_cmpl_cb)(
+					struct wlan_objmgr_vdev *vdev,
+					struct wlan_preauth_rsp *rsp);
+#endif
 #endif
 };
 #endif
@@ -612,6 +642,35 @@ mlme_cm_osif_disconnect_complete(struct wlan_objmgr_vdev *vdev,
  */
 QDF_STATUS mlme_cm_osif_disconnect_start_ind(struct wlan_objmgr_vdev *vdev);
 
+#ifdef CONN_MGR_ADV_FEATURE
+/**
+ * mlme_cm_osif_roam_sync_ind() - osif Roam sync indication
+ * @vdev: vdev pointer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlme_cm_osif_roam_sync_ind(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlme_cm_osif_pmksa_candidate_notify() - osif roam pmksa candidate notify
+ * @vdev: vdev pointer
+ * @bssid: bssid
+ * @index: index
+ * @preauth: preauth flag
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlme_cm_osif_pmksa_candidate_notify(struct wlan_objmgr_vdev *vdev,
+					       struct qdf_mac_addr *bssid,
+					       int index, bool preauth);
+#else
+static inline
+QDF_STATUS mlme_cm_osif_roam_sync_ind(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * mlme_cm_osif_roam_start_ind() - osif Roam start indication
@@ -630,14 +689,6 @@ QDF_STATUS mlme_cm_osif_roam_start_ind(struct wlan_objmgr_vdev *vdev);
 QDF_STATUS mlme_cm_osif_roam_abort_ind(struct wlan_objmgr_vdev *vdev);
 
 /**
- * mlme_cm_osif_roam_sync_ind() - osif Roam sync indication
- * @vdev: vdev pointer
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS mlme_cm_osif_roam_sync_ind(struct wlan_objmgr_vdev *vdev);
-
-/**
  * mlme_cm_osif_roam_complete() - osif Roam sync complete callback
  * @vdev: vdev pointer
  *
@@ -645,6 +696,38 @@ QDF_STATUS mlme_cm_osif_roam_sync_ind(struct wlan_objmgr_vdev *vdev);
  */
 QDF_STATUS mlme_cm_osif_roam_complete(struct wlan_objmgr_vdev *vdev);
 #endif
+
+#ifdef WLAN_FEATURE_PREAUTH_ENABLE
+/**
+ * mlme_cm_osif_ft_preauth_complete() - osif roam ft preauth complete callback
+ * @vdev: vdev pointer
+ * @rsp: preauth response pointer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mlme_cm_osif_ft_preauth_complete(struct wlan_objmgr_vdev *vdev,
+				 struct wlan_preauth_rsp *rsp);
+#ifdef FEATURE_WLAN_ESE
+/**
+ * mlme_cm_osif_cckm_preauth_complete() - osif cckm preauth complete callback
+ * @vdev: vdev pointer
+ * @rsp: preauth response pointer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mlme_cm_osif_cckm_preauth_complete(struct wlan_objmgr_vdev *vdev,
+				   struct wlan_preauth_rsp *rsp);
+#else
+static inline QDF_STATUS
+mlme_cm_osif_cckm_preauth_complete(struct wlan_objmgr_vdev *vdev,
+				   struct wlan_preauth_rsp *rsp)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* FEATURE_WLAN_ESE */
+#endif /* WLAN_FEATURE_PREAUTH_ENABLE */
 
 /**
  * typedef osif_cm_get_global_ops_cb() - Callback to get connection manager

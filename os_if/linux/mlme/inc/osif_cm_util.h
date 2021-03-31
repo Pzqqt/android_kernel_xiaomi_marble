@@ -257,6 +257,40 @@ void osif_cm_unlink_bss(struct wlan_objmgr_vdev *vdev,
 			uint8_t *ssid, uint8_t ssid_len) {}
 #endif
 
+#ifdef WLAN_FEATURE_PREAUTH_ENABLE
+/**
+ * typedef osif_cm_ft_preauth_complete_cb: Callback to send fast
+ * transition event
+ * @vdev: vdev pointer
+ * @rsp: preauth response pointer
+ *
+ * This callback indicates legacy modules to send fast transition event
+ *
+ * Context: Any context.
+ * Return: QDF_STATUS
+ */
+typedef QDF_STATUS
+	(*osif_cm_ft_preauth_complete_cb)(struct wlan_objmgr_vdev *vdev,
+					  struct wlan_preauth_rsp *rsp);
+#ifdef FEATURE_WLAN_ESE
+/**
+ * typedef osif_cm_cckm_preauth_complete_cb: Callback to send cckm preauth
+ * indication to the supplicant via wireless custom event
+ * @vdev: vdev pointer
+ * @rsp: preauth response pointer
+ *
+ * This callback indicates legacy modules to send cckm preauth indication
+ * to the supplicant via wireless custom event
+ *
+ * Context: Any context.
+ * Return: QDF_STATUS
+ */
+typedef QDF_STATUS
+	(*osif_cm_cckm_preauth_complete_cb)(struct wlan_objmgr_vdev *vdev,
+					    struct wlan_preauth_rsp *rsp);
+#endif
+#endif
+
 /**
  * osif_cm_ops: connection manager legacy callbacks
  * @osif_cm_connect_comp_cb: callback for connect complete to legacy
@@ -269,6 +303,10 @@ void osif_cm_unlink_bss(struct wlan_objmgr_vdev *vdev,
  * actions on napi serialization
  * @save_gtk_cb : callback to legacy module to save gtk
  * @set_hlp_data_cb: callback to legacy module to save hlp data
+ * @ft_preauth_complete_cb: callback to legacy module to send fast
+ * transition event
+ * @cckm_preauth_complete_cb: callback to legacy module to send cckm
+ * preauth indication to the supplicant via wireless custom event.
  */
 struct osif_cm_ops {
 	osif_cm_connect_comp_cb connect_complete_cb;
@@ -280,6 +318,12 @@ struct osif_cm_ops {
 #endif
 #ifdef WLAN_FEATURE_FILS_SK
 	osif_cm_set_hlp_data_cb set_hlp_data_cb;
+#endif
+#ifdef WLAN_FEATURE_PREAUTH_ENABLE
+	osif_cm_ft_preauth_complete_cb ft_preauth_complete_cb;
+#ifdef FEATURE_WLAN_ESE
+	osif_cm_cckm_preauth_complete_cb cckm_preauth_complete_cb;
+#endif
 #endif
 };
 

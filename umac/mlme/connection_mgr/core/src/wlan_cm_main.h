@@ -124,12 +124,16 @@ struct cm_connect_req {
  * @req: roam req from osif
  * @candidate_list: candidate list
  * @cur_candidate: current candidate
+ * @num_preauth_retry: retry times for the same candidate
  */
 struct cm_roam_req {
 	wlan_cm_id cm_id;
 	struct wlan_cm_roam_req req;
 	qdf_list_t *candidate_list;
 	struct scan_cache_node *cur_candidate;
+#ifdef WLAN_FEATURE_PREAUTH_ENABLE
+	uint8_t num_preauth_retry;
+#endif
 };
 
 /**

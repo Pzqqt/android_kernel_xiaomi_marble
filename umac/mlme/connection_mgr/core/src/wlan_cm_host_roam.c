@@ -113,18 +113,21 @@ cm_send_reassoc_start_fail(struct cnx_mgr *cm_ctx,
 	return status;
 }
 
-static void cm_connect_prepare_scan_filter_for_roam(
-		struct wlan_objmgr_pdev *pdev,
-		struct cnx_mgr *cm_ctx, struct cm_roam_req *cm_req,
+#ifdef CONN_MGR_ADV_FEATURE
+static QDF_STATUS
+cm_update_roam_scan_filter(
+		struct wlan_objmgr_vdev *vdev, struct cm_roam_req *cm_req,
+		struct scan_filter *filter, bool security_valid_for_6ghz)
+{
+	return cm_update_advance_roam_scan_filter(vdev, filter);
+}
+#else
+static QDF_STATUS
+cm_update_roam_scan_filter(
+		struct wlan_objmgr_vdev *vdev, struct cm_roam_req *cm_req,
 		struct scan_filter *filter, bool security_valid_for_6ghz)
 {
 	uint16_t rsn_caps;
-	struct wlan_objmgr_vdev *vdev = cm_ctx->vdev;
-
-	if (!qdf_is_macaddr_zero(&cm_req->req.bssid)) {
-		filter->num_of_bssid = 1;
-		qdf_copy_macaddr(&filter->bssid_list[0], &cm_req->req.bssid);
-	}
 
 	filter->num_of_ssid = 1;
 	wlan_vdev_mlme_get_ssid(vdev, filter->ssid_list[0].ssid,
@@ -138,21 +141,6 @@ static void cm_connect_prepare_scan_filter_for_roam(
 	/* Security is not valid for 6Ghz so ignore 6Ghz APs */
 	if (!security_valid_for_6ghz)
 		filter->ignore_6ghz_channel = true;
-
-	filter->authmodeset =
-		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_AUTH_MODE);
-
-	filter->ucastcipherset =
-		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_UCAST_CIPHER);
-
-	filter->mcastcipherset =
-		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_MCAST_CIPHER);
-
-	filter->key_mgmt =
-		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
-
-	filter->mgmtcipherset =
-		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_MGMT_CIPHER);
 
 	if (!QDF_HAS_PARAM(filter->authmodeset, WLAN_CRYPTO_AUTH_WAPI) &&
 	    !QDF_HAS_PARAM(filter->authmodeset, WLAN_CRYPTO_AUTH_RSNA) &&
@@ -169,6 +157,38 @@ static void cm_connect_prepare_scan_filter_for_roam(
 		filter->pmf_cap = WLAN_PMF_CAPABLE;
 	else
 		filter->pmf_cap = WLAN_PMF_DISABLED;
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+static QDF_STATUS cm_connect_prepare_scan_filter_for_roam(
+		struct cnx_mgr *cm_ctx, struct cm_roam_req *cm_req,
+		struct scan_filter *filter, bool security_valid_for_6ghz)
+{
+	struct wlan_objmgr_vdev *vdev = cm_ctx->vdev;
+
+	if (!qdf_is_macaddr_zero(&cm_req->req.bssid)) {
+		filter->num_of_bssid = 1;
+		qdf_copy_macaddr(&filter->bssid_list[0], &cm_req->req.bssid);
+	}
+
+	filter->authmodeset =
+		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_AUTH_MODE);
+
+	filter->ucastcipherset =
+		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+
+	filter->mcastcipherset =
+		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_MCAST_CIPHER);
+
+	filter->key_mgmt =
+		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
+
+	filter->mgmtcipherset =
+		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_MGMT_CIPHER);
+
+	return cm_update_roam_scan_filter(vdev, cm_req, filter,
+					  security_valid_for_6ghz);
 }
 
 static QDF_STATUS cm_roam_get_candidates(struct wlan_objmgr_pdev *pdev,
@@ -187,7 +207,7 @@ static QDF_STATUS cm_roam_get_candidates(struct wlan_objmgr_pdev *pdev,
 	if (!filter)
 		return QDF_STATUS_E_NOMEM;
 
-	cm_connect_prepare_scan_filter_for_roam(pdev, cm_ctx, cm_req, filter,
+	cm_connect_prepare_scan_filter_for_roam(cm_ctx, cm_req, filter,
 						security_valid_for_6ghz);
 
 	candidate_list = wlan_scan_get_result(pdev, filter);
@@ -222,6 +242,22 @@ static QDF_STATUS cm_roam_get_candidates(struct wlan_objmgr_pdev *pdev,
 }
 
 #ifdef WLAN_FEATURE_PREAUTH_ENABLE
+QDF_STATUS cm_handle_reassoc_timer(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
+{
+	struct cm_req *cm_req;
+
+	if (!cm_id)
+		return QDF_STATUS_E_INVAL;
+
+	cm_req = cm_get_req_by_cm_id(cm_ctx, *cm_id);
+	if (!cm_req)
+		return QDF_STATUS_E_INVAL;
+
+	return cm_sm_deliver_event_sync(cm_ctx, WLAN_CM_SM_EV_START_REASSOC,
+					sizeof(cm_req->roam_req),
+					&cm_req->roam_req);
+}
+
 static QDF_STATUS cm_host_roam_start(struct cnx_mgr *cm_ctx,
 				     struct cm_req *cm_req)
 {
@@ -245,10 +281,7 @@ static QDF_STATUS cm_host_roam_start(struct cnx_mgr *cm_ctx,
 	 * all candidate.
 	 */
 	cm_req->roam_req.cur_candidate = NULL;
-
-	/* start preauth process */
-
-	return QDF_STATUS_SUCCESS;
+	return cm_host_roam_preauth_start(cm_ctx, cm_req);
 }
 
 static
@@ -256,10 +289,8 @@ QDF_STATUS cm_host_roam_start_fail(struct cnx_mgr *cm_ctx,
 				   struct cm_req *cm_req,
 				   enum wlan_cm_connect_fail_reason reason)
 {
-	/*
-	 * call API to send WLAN_CM_SM_EV_PREAUTH_FAIL to call preauth complete
-	 * and move SM to CONNECTED state
-	 */
+	cm_send_preauth_start_fail(cm_ctx, cm_req->cm_id, reason);
+
 	return QDF_STATUS_SUCCESS;
 }
 #else
@@ -622,6 +653,8 @@ static QDF_STATUS cm_ser_reassoc_req(struct cnx_mgr *cm_ctx,
 	enum wlan_serialization_status ser_cmd_status;
 	QDF_STATUS status;
 	uint8_t vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
+
+	mlme_cm_osif_roam_sync_ind(cm_ctx->vdev);
 
 	status = wlan_objmgr_vdev_try_get_ref(cm_ctx->vdev, WLAN_MLME_CM_ID);
 	if (QDF_IS_STATUS_ERROR(status)) {

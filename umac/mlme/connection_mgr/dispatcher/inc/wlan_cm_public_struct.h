@@ -491,6 +491,58 @@ struct wlan_cm_connect_resp {
 #endif
 };
 
+#ifdef WLAN_FEATURE_PREAUTH_ENABLE
+/**
+ * struct wlan_preauth_req - preauth request
+ * @vdev_id: vdev id
+ * @entry: scan entry for the candidate
+ */
+struct wlan_preauth_req {
+	uint8_t vdev_id;
+	struct scan_cache_entry *entry;
+};
+
+/**
+ * struct wlan_cm_preauth_fail - connection manager preauth fail
+ * @cm_id: connection id
+ * @reason: connect fail reason
+ */
+struct wlan_cm_preauth_fail {
+	wlan_cm_id cm_id;
+	enum wlan_cm_connect_fail_reason reason;
+};
+
+#define CM_MAX_FTIE_SIZE 384
+
+/**
+ * struct wlan_preauth_rsp - preauth response
+ * @psoc: psoc object
+ * @vdev_id: vdev id
+ * @cm_id: connection manager ID
+ * @pre_auth_bssid: bssid to preauth to
+ * @status: QDF_STATUS
+ * @ft_ie_length: ft ie length
+ * @ft_ie: ft ie
+ * @ric_ies_length: ric ies length
+ * @ric_ies: ric ies
+ * @timestamp: time stamp
+ */
+struct wlan_preauth_rsp {
+	struct wlan_objmgr_psoc *psoc;
+	uint8_t vdev_id;
+	wlan_cm_id cm_id;
+	struct qdf_mac_addr pre_auth_bssid;
+	QDF_STATUS status;
+	uint16_t ft_ie_length;
+	uint8_t ft_ie[CM_MAX_FTIE_SIZE];
+	uint16_t ric_ies_length;
+	uint8_t ric_ies[CM_MAX_FTIE_SIZE];
+#ifdef FEATURE_WLAN_ESE
+	uint32_t timestamp[2];
+#endif
+};
+#endif
+
 /**
  * struct wlan_cm_discon_rsp - disconnect resp from VDEV mgr and will be sent to
  * OSIF
