@@ -803,7 +803,9 @@ void dp_peer_ast_hash_remove(struct dp_soc *soc,
 	}
 
 	QDF_ASSERT(found);
-	TAILQ_REMOVE(&soc->ast_hash.bins[index], ase, hash_list_elem);
+
+	if (found)
+		TAILQ_REMOVE(&soc->ast_hash.bins[index], ase, hash_list_elem);
 }
 
 /*
