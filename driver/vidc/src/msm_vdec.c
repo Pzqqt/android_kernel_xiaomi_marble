@@ -1072,7 +1072,7 @@ static int msm_vdec_subscribe_metadata(struct msm_vidc_inst *inst,
 		META_SUBFRAME_OUTPUT,
 	};
 
-	if (!inst || !inst->core) {
+	if (!inst || !inst->core || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
@@ -1082,7 +1082,8 @@ static int msm_vdec_subscribe_metadata(struct msm_vidc_inst *inst,
 	capability = inst->capabilities;
 	payload[0] = HFI_MODE_METADATA;
 	for (i = 0; i < ARRAY_SIZE(metadata_list); i++) {
-		if (capability->cap[metadata_list[i]].value) {
+		if (capability->cap[metadata_list[i]].value &&
+			msm_vidc_allow_metadata(inst, metadata_list[i])) {
 			payload[count + 1] =
 				capability->cap[metadata_list[i]].hfi_id;
 			count++;
@@ -1110,11 +1111,14 @@ static int msm_vdec_set_delivery_mode_metadata(struct msm_vidc_inst *inst,
 	u32 payload[32] = {0};
 	u32 i, count = 0;
 	struct msm_vidc_inst_capability *capability;
-	static const u32 metadata_list[] = {
+	static const u32 metadata_input_list[] = {
 		META_BUF_TAG,
 	};
+	static const u32 metadata_output_list[] = {
+		META_OUTPUT_BUF_TAG,
+	};
 
-	if (!inst || !inst->core) {
+	if (!inst || !inst->core || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
@@ -1123,13 +1127,28 @@ static int msm_vdec_set_delivery_mode_metadata(struct msm_vidc_inst *inst,
 
 	capability = inst->capabilities;
 	payload[0] = HFI_MODE_METADATA;
-	for (i = 0; i < ARRAY_SIZE(metadata_list); i++) {
-		if (capability->cap[metadata_list[i]].value) {
-			payload[count + 1] =
-				capability->cap[metadata_list[i]].hfi_id;
-			count++;
+
+	if (port == INPUT_PORT) {
+		for (i = 0; i < ARRAY_SIZE(metadata_input_list); i++) {
+			if (capability->cap[metadata_input_list[i]].value) {
+				payload[count + 1] =
+					capability->cap[metadata_input_list[i]].hfi_id;
+				count++;
+			}
 		}
-	};
+	} else if (port == OUTPUT_PORT) {
+		for (i = 0; i < ARRAY_SIZE(metadata_output_list); i++) {
+			if (capability->cap[metadata_output_list[i]].value  &&
+				msm_vidc_allow_metadata(inst, metadata_output_list[i])) {
+				payload[count + 1] =
+					capability->cap[metadata_output_list[i]].hfi_id;
+				count++;
+			}
+		}
+	} else {
+		i_vpr_e(inst, "%s: invalid port: %d\n", __func__, port);
+		return -EINVAL;
+	}
 
 	if (!count)
 		return 0;
@@ -1685,6 +1704,10 @@ int msm_vdec_streamon_output(struct msm_vidc_inst *inst)
 	rc = msm_vdec_subscribe_metadata(inst, OUTPUT_PORT);
 	if (rc)
 		goto error;
+
+	rc = msm_vdec_set_delivery_mode_metadata(inst, OUTPUT_PORT);
+	if (rc)
+		return rc;
 
 	rc = msm_vdec_get_output_internal_buffers(inst);
 	if (rc)

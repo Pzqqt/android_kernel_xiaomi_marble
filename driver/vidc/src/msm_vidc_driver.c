@@ -179,6 +179,7 @@ static const struct msm_vidc_cap_name cap_name_arr[] = {
 	{META_EVA_STATS,                 "META_EVA_STATS"             },
 	{META_BUF_TAG,                   "META_BUF_TAG"               },
 	{META_DPB_TAG_LIST,              "META_DPB_TAG_LIST"          },
+	{META_OUTPUT_BUF_TAG,            "META_OUTPUT_BUF_TAG"        },
 	{META_SUBFRAME_OUTPUT,           "META_SUBFRAME_OUTPUT"       },
 	{META_ENC_QP_METADATA,           "META_ENC_QP_METADATA"       },
 	{META_ROI_INFO,                  "META_ROI_INFO"              },
@@ -1112,6 +1113,33 @@ exit:
 		i_vpr_e(inst, "%s: id %d not allowed in state %s\n",
 			__func__, id, state_name(inst->state));
 	return allow;
+}
+
+bool msm_vidc_allow_metadata(struct msm_vidc_inst *inst, u32 cap_id)
+{
+	bool is_allowed = true;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return false;
+	}
+
+	switch (cap_id) {
+	case META_OUTPUT_BUF_TAG:
+	case META_DPB_TAG_LIST:
+		if (!is_ubwc_colorformat(inst->capabilities->cap[PIX_FMTS].value)) {
+			i_vpr_h(inst,
+				"%s: cap: %24s not allowed for split mode\n",
+				__func__, cap_name(cap_id));
+			is_allowed = false;
+		}
+		break;
+	default:
+		is_allowed = true;
+		break;
+	}
+
+	return is_allowed;
 }
 
 bool msm_vidc_allow_reqbufs(struct msm_vidc_inst *inst, u32 type)

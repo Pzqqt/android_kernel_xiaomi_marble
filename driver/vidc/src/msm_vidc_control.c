@@ -58,6 +58,7 @@ static bool is_meta_ctrl(u32 id)
 		id == V4L2_CID_MPEG_VIDC_METADATA_HDR10PLUS ||
 		id == V4L2_CID_MPEG_VIDC_METADATA_EVA_STATS ||
 		id == V4L2_CID_MPEG_VIDC_METADATA_BUFFER_TAG ||
+		id == V4L2_CID_MPEG_VIDC_METADATA_DPB_TAG_LIST ||
 		id == V4L2_CID_MPEG_VIDC_METADATA_SUBFRAME_OUTPUT ||
 		id == V4L2_CID_MPEG_VIDC_METADATA_ROI_INFO ||
 		id == V4L2_CID_MPEG_VIDC_METADATA_TIMESTAMP ||
@@ -663,6 +664,18 @@ int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl)
 		}
 
 		if (is_meta_ctrl(ctrl->id)) {
+			if (cap_id == META_DPB_TAG_LIST) {
+				/*
+				* To subscribe HFI_PROP_DPB_TAG_LIST
+				* data in FBD, HFI_PROP_BUFFER_TAG data
+				* must be delivered via FTB. Hence, update
+				* META_OUTPUT_BUF_TAG when META_DPB_TAG_LIST
+				* is updated.
+				*/
+				msm_vidc_update_cap_value(inst, META_OUTPUT_BUF_TAG,
+					ctrl->val, __func__);
+			}
+
 			rc = msm_vidc_update_meta_port_settings(inst);
 			if (rc)
 				return rc;
