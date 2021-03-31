@@ -1020,15 +1020,16 @@ static void sap_interference_rssi_count_5G(tSapSpectChInfo *spect_ch,
  */
 
 static void sap_interference_rssi_count(tSapSpectChInfo *spect_ch,
-	tSapSpectChInfo *spectch_start,
-	tSapSpectChInfo *spectch_end)
+					tSapSpectChInfo *spectch_start,
+					tSapSpectChInfo *spectch_end,
+					struct mac_context *mac)
 {
 	if (!spect_ch) {
 		sap_err("spect_ch is NULL");
 		return;
 	}
 
-	switch (wlan_freq_to_chan(spect_ch->chan_freq)) {
+	switch (wlan_reg_freq_to_chan(mac->pdev, spect_ch->chan_freq)) {
 	case CHANNEL_1:
 		sap_update_rssi_bsscount(spect_ch, 1, true,
 			spectch_start, spectch_end);
@@ -1323,7 +1324,7 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 
 			if (WLAN_REG_IS_24GHZ_CH_FREQ(chan_freq))
 				sap_interference_rssi_count(pSpectCh,
-					spectch_start, spectch_end);
+					spectch_start, spectch_end, mac);
 			else
 				sap_interference_rssi_count_5G(
 				    pSpectCh, ch_width, secondaryChannelOffset,
@@ -1900,7 +1901,8 @@ static void sap_sort_chl_weight_ht40_24_g(struct mac_context *mac_ctx,
 	 */
 	for (i = 0; i < ARRAY_SIZE(acs_ht40_channels24_g); i++) {
 		for (j = 0; j < pSpectInfoParams->numSpectChans; j++) {
-			channel = wlan_freq_to_chan(pSpectInfo[j].chan_freq);
+			channel = wlan_reg_freq_to_chan(mac_ctx->pdev,
+							pSpectInfo[j].chan_freq);
 			if (channel == acs_ht40_channels24_g[i].chStartNum)
 				break;
 		}

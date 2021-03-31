@@ -389,6 +389,8 @@ static void tdls_determine_channel_opclass(struct tdls_soc_priv_obj *soc_obj,
 {
 	uint32_t vdev_id;
 	enum QDF_OPMODE opmode;
+	struct wlan_objmgr_pdev *pdev = NULL;
+
 	/*
 	 * If tdls offchannel is not enabled then we provide base channel
 	 * and in that case pass opclass as 0 since opclass is mainly needed
@@ -399,12 +401,12 @@ static void tdls_determine_channel_opclass(struct tdls_soc_priv_obj *soc_obj,
 	      soc_obj->tdls_fw_off_chan_mode != ENABLE_CHANSWITCH) {
 		vdev_id = wlan_vdev_get_id(vdev_obj->vdev);
 		opmode = wlan_vdev_mlme_get_opmode(vdev_obj->vdev);
+		pdev = wlan_vdev_get_pdev(vdev_obj->vdev);
 
-		*channel = wlan_freq_to_chan(
-			policy_mgr_get_channel(
-			soc_obj->soc,
-			policy_mgr_convert_device_mode_to_qdf_type(opmode),
-			&vdev_id));
+		*channel = wlan_reg_freq_to_chan(pdev, policy_mgr_get_channel(
+						 soc_obj->soc,
+						 policy_mgr_convert_device_mode_to_qdf_type(opmode),
+						 &vdev_id));
 		*opclass = 0;
 	} else {
 		*channel = peer->pref_off_chan_num;

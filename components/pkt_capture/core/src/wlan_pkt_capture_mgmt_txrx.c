@@ -290,7 +290,7 @@ pkt_capture_process_mgmt_tx_data(struct wlan_objmgr_pdev *pdev,
 	}
 
 	txrx_status.tsft = (u_int64_t)params->tsf_l32;
-	txrx_status.chan_num = wlan_freq_to_chan(params->chan_freq);
+	txrx_status.chan_num = wlan_reg_freq_to_chan(pdev, params->chan_freq);
 	txrx_status.chan_freq = params->chan_freq;
 	/* params->rate is in Kbps, convert into Mbps */
 	txrx_status.rate = (params->rate_kbps / 1000);
