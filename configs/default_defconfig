@@ -1257,9 +1257,6 @@ CONFIG_DEBUG_RX_RING_BUFFER := y
 #Enable Hash debug
 CONFIG_RX_HASH_DEBUG := y
 
-#Enable connection manager
-CONFIG_CM_ENABLE := n
-
 #Enable VDEV OPS wakelock feature
 CONFIG_FEATURE_VDEV_OPS_WAKELOCK := y
 

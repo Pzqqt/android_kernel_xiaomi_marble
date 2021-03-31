@@ -47,6 +47,11 @@ include $(WLAN_CFG_OVERRIDE_FILE)
 $(warning "Overriding WLAN config with: $(shell cat $(WLAN_CFG_OVERRIDE_FILE))")
 endif
 
+# For now enable Connection manager for all platform supporting LFR3
+ifeq ($(CONFIG_QCACLD_WLAN_LFR3), y)
+CONFIG_CM_ENABLE := y
+endif
+
 OBJS :=
 OBJS_DIRS :=
 
