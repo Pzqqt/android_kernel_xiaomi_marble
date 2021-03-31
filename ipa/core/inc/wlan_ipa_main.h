@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -91,6 +91,18 @@ ipa_pdev_get_priv_obj(struct wlan_objmgr_pdev *pdev)
 				WLAN_UMAC_COMP_IPA);
 
 	return pdev_obj;
+}
+
+/**
+ * ipa_priv_obj_get_pdev() - API to get pdev from IPA object
+ * @ipa_obj: IPA object
+ *
+ * Return: pdev object
+ */
+static inline struct wlan_objmgr_pdev *
+ipa_priv_obj_get_pdev(struct wlan_ipa_priv *ipa_obj)
+{
+	return ipa_obj->pdev;
 }
 
 /**
