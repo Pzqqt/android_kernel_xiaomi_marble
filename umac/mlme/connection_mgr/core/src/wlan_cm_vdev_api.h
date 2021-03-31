@@ -527,6 +527,16 @@ QDF_STATUS cm_process_join_req(struct scheduler_msg *msg);
 
 #ifdef WLAN_FEATURE_HOST_ROAM
 /**
+ * cm_process_preauth_req() - Process preauth request
+ * @msg: scheduler message
+ *
+ * Process preauth request in LIM.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_process_preauth_req(struct scheduler_msg *msg);
+
+/**
  * cm_process_reassoc_req() - Process vdev reassoc req
  * @msg: scheduler message
  *
@@ -547,11 +557,25 @@ QDF_STATUS cm_process_reassoc_req(struct scheduler_msg *msg);
 QDF_STATUS
 cm_handle_reassoc_req(struct wlan_objmgr_vdev *vdev,
 		      struct wlan_cm_vdev_reassoc_req *req);
+
+/**
+ * cm_csr_preauth_done() - Process preauth done from csr part
+ * @vdev: vdev object pointer
+ *
+ * Return: void
+ */
+void cm_csr_preauth_done(struct wlan_objmgr_vdev *vdev);
 #else
+static inline QDF_STATUS cm_process_preauth_req(struct scheduler_msg *msg)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
 static inline QDF_STATUS cm_process_reassoc_req(struct scheduler_msg *msg)
 {
 	return QDF_STATUS_SUCCESS;
 }
+
 static inline QDF_STATUS
 cm_handle_reassoc_req(struct wlan_objmgr_vdev *vdev,
 		      struct wlan_cm_vdev_reassoc_req *req)
@@ -637,6 +661,5 @@ QDF_STATUS wlan_cm_send_connect_rsp(struct scheduler_msg *msg);
  * Return: void
  */
 void wlan_cm_free_connect_rsp(struct cm_vdev_join_rsp *rsp);
-
 #endif /* FEATURE_CM_ENABLE */
 #endif /* __WLAN_CM_VDEV_API_H__ */

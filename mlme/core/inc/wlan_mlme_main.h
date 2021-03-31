@@ -303,7 +303,6 @@ struct ft_context {
 	enum ft_ie_state ft_state;
 	bool add_mdie;
 #endif
-
 };
 
 /**
