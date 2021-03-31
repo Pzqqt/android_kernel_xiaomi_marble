@@ -144,18 +144,35 @@ struct pld_platform_cap {
  * @PLD_FW_DOWN: firmware is down
  * @PLD_FW_CRASHED: firmware has crashed
  * @PLD_FW_RECOVERY_START: firmware is starting recovery
+ * @PLD_FW_HANG_EVENT: firmware update hang event
+ * @PLD_BUS_EVENT: update bus/link event
  */
 enum pld_uevent {
 	PLD_FW_DOWN,
 	PLD_FW_CRASHED,
 	PLD_FW_RECOVERY_START,
 	PLD_FW_HANG_EVENT,
+	PLD_BUS_EVENT,
+};
+
+/**
+ * enum pld_bus_event - PLD bus event types
+ * @PLD_BUS_EVENT_PCIE_LINK_DOWN: PCIe link is down
+ * @PLD_BUS_EVENT_INVALID: invalid event type
+ */
+
+enum pld_bus_event {
+	PLD_BUS_EVENT_PCIE_LINK_DOWN = 0,
+
+	PLD_BUS_EVENT_INVALID = 0xFFFF,
 };
 
 /**
  * struct pld_uevent_data - uevent status received from platform driver
  * @uevent: uevent type
  * @fw_down: FW down info
+ * @hang_data: FW hang data
+ * @bus_event: bus related data
  */
 struct pld_uevent_data {
 	enum pld_uevent uevent;
@@ -167,6 +184,10 @@ struct pld_uevent_data {
 			void *hang_event_data;
 			u16 hang_event_data_len;
 		} hang_data;
+		struct {
+			enum pld_bus_event etype;
+			void *event_data;
+		} bus_data;
 	};
 };
 
