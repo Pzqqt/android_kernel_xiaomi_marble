@@ -795,6 +795,7 @@ static int msm_drm_component_init(struct device *dev)
 	INIT_LIST_HEAD(&priv->client_event_list);
 	INIT_LIST_HEAD(&priv->inactive_list);
 	INIT_LIST_HEAD(&priv->vm_client_list);
+	mutex_init(&priv->mm_lock);
 
 	mutex_init(&priv->vm_client_lock);
 
