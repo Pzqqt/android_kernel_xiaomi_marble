@@ -636,6 +636,7 @@ void cm_roam_start_init_on_connect(struct wlan_objmgr_pdev *pdev,
 void cm_update_session_assoc_ie(struct wlan_objmgr_psoc *psoc,
 				uint8_t vdev_id,
 				struct element_info *assoc_ie);
+
 #ifdef FEATURE_CM_ENABLE
 /**
  * wlan_cm_roam_invoke() - Validate and send Roam invoke req to CM
@@ -652,6 +653,23 @@ wlan_cm_roam_invoke(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 		    struct qdf_mac_addr *bssid, qdf_freq_t chan_freq,
 		    enum wlan_cm_source source);
 
+/**
+ * cm_is_fast_roam_enabled() - check fast roam enabled or not
+ * @psoc: psoc pointer
+ *
+ * Return: true or false
+ */
+bool cm_is_fast_roam_enabled(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * cm_is_rsn_or_8021x_sha256_auth_type() - check whether auth type is rsn
+ * or 8021x_sha256 or not
+ * @vdev: vdev object pointer
+ *
+ * Return: true, if auth type is rsn/8021x_sha256, false otherwise
+ */
+bool cm_is_rsn_or_8021x_sha256_auth_type(struct wlan_objmgr_vdev *vdev);
+
 #ifdef WLAN_FEATURE_HOST_ROAM
 /**
  * wlan_cm_host_roam_start() - fw host roam start handler
@@ -660,6 +678,61 @@ wlan_cm_roam_invoke(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
  * Return: QDF_STATUS
  */
 QDF_STATUS wlan_cm_host_roam_start(struct scheduler_msg *msg);
+
+/**
+ * cm_handle_roam_start() - roam start indication
+ * @vdev: VDEV object
+ * @req: Connection manager roam request
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_handle_roam_start(struct wlan_objmgr_vdev *vdev,
+		     struct wlan_cm_roam_req *req);
+
+/**
+ * cm_mlme_roam_preauth_fail() - roam preauth fail
+ * @vdev: VDEV object
+ * @req: Connection manager roam request
+ * @reason: connection manager connect fail reason
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_mlme_roam_preauth_fail(struct wlan_objmgr_vdev *vdev,
+			  struct wlan_cm_roam_req *req,
+			  enum wlan_cm_connect_fail_reason reason);
+
+/**
+ * cm_free_preauth_req() - free preauth request related memory
+ * @preauth_req: preauth request
+ *
+ * Return: void
+ */
+void cm_free_preauth_req(struct wlan_preauth_req *preauth_req);
+
+/**
+ * cm_handle_preauth_rsp() - Process vdev preauth rsp and send to CM
+ * @msg: scheduler message
+ *
+ * Process preauth rsp and send it to CM SM.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_handle_preauth_rsp(struct scheduler_msg *msg);
+
+/**
+ * cm_reassoc_timer_callback() - reassoc timer callback, gets called at time out
+ * @context: context
+ *
+ * Timer callback for the timer that is started between the preauth completion
+ * and reassoc request. In this interval, it is expected that the
+ * pre-auth response and RIC IEs are passed up to the WPA supplicant and
+ * received back the necessary FTIEs required to be sent in the reassoc request
+ *
+ * Return: None
+ */
+void cm_reassoc_timer_callback(void *context);
 #else
 static inline QDF_STATUS wlan_cm_host_roam_start(struct scheduler_msg *msg)
 {

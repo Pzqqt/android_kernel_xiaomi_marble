@@ -5211,6 +5211,12 @@ struct osif_cm_ops osif_ops = {
 #ifdef WLAN_FEATURE_FILS_SK
 	.set_hlp_data_cb = hdd_cm_set_hlp_data,
 #endif
+#ifdef WLAN_FEATURE_PREAUTH_ENABLE
+	.ft_preauth_complete_cb = hdd_cm_ft_preauth_complete,
+#ifdef FEATURE_WLAN_ESE
+	.cckm_preauth_complete_cb = hdd_cm_cckm_preauth_complete,
+#endif
+#endif
 };
 
 QDF_STATUS hdd_cm_register_cb(void)

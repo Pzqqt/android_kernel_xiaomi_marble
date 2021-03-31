@@ -120,6 +120,36 @@ QDF_STATUS hdd_cm_set_hlp_data(struct net_device *dev,
 			       struct wlan_objmgr_vdev *vdev,
 			       struct wlan_cm_connect_resp *rsp);
 #endif
+
+#ifdef WLAN_FEATURE_PREAUTH_ENABLE
+/**
+ * hdd_cm_ft_preauth_complete() - send fast transition event
+ * @vdev: Pointer to vdev
+ * @rsp: Pointer to preauth rsp
+ *
+ * This function is used to send fast transition event in legacy mode
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hdd_cm_ft_preauth_complete(struct wlan_objmgr_vdev *vdev,
+				      struct wlan_preauth_rsp *rsp);
+
+#ifdef FEATURE_WLAN_ESE
+/**
+ * hdd_cm_cckm_preauth_complete() - send cckm preauth indication to
+ * the supplicant via wireless custom event
+ * @vdev: Pointer to vdev
+ * @rsp: Pointer to preauth rsp
+ *
+ * This function is used to send cckm preauth indication to
+ * the supplicant via wireless custom event in legacy mode
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hdd_cm_cckm_preauth_complete(struct wlan_objmgr_vdev *vdev,
+					struct wlan_preauth_rsp *rsp);
+#endif
+#endif
 #endif
 
 #ifdef WLAN_FEATURE_MSCS

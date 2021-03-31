@@ -795,8 +795,6 @@ void csr_roam_ft_pre_auth_rsp_processor(struct mac_context *mac_ctx,
 #endif
 
 #ifdef FEATURE_WLAN_ESE
-void update_cckmtsf(uint32_t *timeStamp0, uint32_t *timeStamp1,
-		    uint64_t *incr);
 void csr_update_prev_ap_info(struct csr_roam_session *session,
 			     struct wlan_objmgr_vdev *vdev);
 

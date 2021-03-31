@@ -1624,6 +1624,18 @@ QDF_STATUS csr_get_tsm_stats(struct mac_context *mac,
 }
 
 #ifndef FEATURE_CM_ENABLE
+
+/*  Update the TSF with the difference in system time */
+static void update_cckmtsf(uint32_t *timestamp0, uint32_t *timestamp1,
+			   uint64_t *incr)
+{
+	uint64_t timestamp64 = ((uint64_t)*timestamp1 << 32) | (*timestamp0);
+
+	timestamp64 = (uint64_t)(timestamp64 + (*incr));
+	*timestamp0 = (uint32_t)(timestamp64 & 0xffffffff);
+	*timestamp1 = (uint32_t)((timestamp64 >> 32) & 0xffffffff);
+}
+
 /**
  * csr_roam_read_tsf() - read TSF
  * @mac: Global MAC context
@@ -12876,6 +12888,34 @@ cm_csr_diconnect_done_ind(struct wlan_objmgr_vdev *vdev,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef WLAN_FEATURE_HOST_ROAM
+void cm_csr_preauth_done(struct wlan_objmgr_vdev *vdev)
+{
+	struct mac_context *mac_ctx;
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+	struct cm_roam_values_copy config;
+	bool is_11r;
+
+	/*
+	 * This API is to update legacy struct and should be removed once
+	 * CSR is cleaned up fully. No new params should be added to CSR, use
+	 * vdev/pdev/psoc instead
+	 */
+	mac_ctx = cds_get_context(QDF_MODULE_ID_SME);
+	if (!mac_ctx) {
+		sme_err("mac_ctx is NULL");
+		return;
+	}
+
+	wlan_cm_roam_cfg_get_value(mac_ctx->psoc, vdev_id, IS_11R_CONNECTION,
+				   &config);
+	is_11r = config.bool_value;
+	if (is_11r || wlan_cm_get_ese_assoc(mac_ctx->pdev, vdev_id))
+		sme_qos_csr_event_ind(mac_ctx, vdev_id,
+				      SME_QOS_CSR_PREAUTH_SUCCESS_IND, NULL);
+}
+#endif
 
 #else /* FEATURE_CM_ENABLE */
 

@@ -4224,7 +4224,150 @@ QDF_STATUS cm_process_reassoc_req(struct scheduler_msg *msg)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+static QDF_STATUS
+lim_fill_preauth_req_dot11_mode(struct mac_context *mac_ctx,
+				tpSirFTPreAuthReq req)
+{
+	QDF_STATUS status;
+	tDot11fBeaconIEs *ie_struct;
+	enum mlme_dot11_mode self_dot11_mode;
+	enum mlme_dot11_mode bss_dot11_mode;
+	enum mlme_dot11_mode intersected_mode;
+	struct bss_description *bss_desc = req->pbssDescription;
+
+	wlan_get_parsed_bss_description_ies(mac_ctx, bss_desc, &ie_struct);
+	self_dot11_mode = lim_get_self_dot11_mode(mac_ctx, QDF_STA_MODE);
+	bss_dot11_mode = lim_get_bss_dot11_mode(bss_desc, ie_struct);
+
+	status = lim_get_intersected_dot11_mode_sta_ap(mac_ctx, self_dot11_mode,
+						       bss_dot11_mode,
+						       &intersected_mode,
+						       ie_struct, bss_desc);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	req->dot11mode = intersected_mode;
+	pe_debug("self dot11mode %d bss_dot11 mode %d intersected_mode %d",
+		 self_dot11_mode, bss_dot11_mode, intersected_mode);
+
+	qdf_mem_free(ie_struct);
+	return status;
+}
+
+static QDF_STATUS lim_cm_handle_preauth_req(struct wlan_preauth_req *req)
+{
+	struct mac_context *mac_ctx;
+	struct wlan_objmgr_vdev *vdev;
+	struct scan_cache_entry *scan_entry;
+	struct bss_description *bss_desc = NULL;
+	uint32_t ie_len, bss_len;
+	uint8_t vdev_id;
+	struct mlme_legacy_priv *mlme_priv;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tpSirFTPreAuthReq preauth_req = NULL;
+	bool buf_consumed = true;
+
+	if (!req)
+		return QDF_STATUS_E_INVAL;
+
+	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac_ctx)
+		return QDF_STATUS_E_INVAL;
+
+	ie_len = util_scan_entry_ie_len(req->entry);
+	bss_len = (uint16_t)(offsetof(struct bss_description,
+			   ieFields[0]) + ie_len);
+
+	bss_desc = qdf_mem_malloc(sizeof(*bss_desc) + bss_len);
+	if (!bss_desc) {
+		status = QDF_STATUS_E_NOMEM;
+		goto end;
+	}
+
+	scan_entry = req->entry;
+	status = wlan_fill_bss_desc_from_scan_entry(mac_ctx, bss_desc,
+						    scan_entry);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto end;
+
+	preauth_req = qdf_mem_malloc(sizeof(tSirFTPreAuthReq));
+	if (!preauth_req) {
+		status = QDF_STATUS_E_NOMEM;
+		goto end;
+	}
+
+	preauth_req->pbssDescription = bss_desc;
+	status = lim_fill_preauth_req_dot11_mode(mac_ctx, preauth_req);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("dot11mode doesn't get proper filling");
+		goto end;
+	}
+
+	vdev_id = req->vdev_id;
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac_ctx->pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		status = QDF_STATUS_E_FAILURE;
+		goto end;
+	}
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		status =  QDF_STATUS_E_FAILURE;
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		goto end;
+	}
+	qdf_mem_copy(preauth_req->ft_ies,
+		     mlme_priv->connect_info.ft_info.auth_ft_ie,
+		     mlme_priv->connect_info.ft_info.auth_ie_len);
+	preauth_req->ft_ies_length =
+			mlme_priv->connect_info.ft_info.auth_ie_len;
+	preauth_req->pre_auth_channel_freq = scan_entry->channel.chan_freq;
+	wlan_mlme_get_bssid_vdev_id(
+			mac_ctx->pdev, vdev_id,
+			(struct qdf_mac_addr *)&preauth_req->currbssId);
+	qdf_mem_copy(&preauth_req->preAuthbssId,
+		     scan_entry->bssid.bytes, QDF_MAC_ADDR_SIZE);
+
+	wlan_vdev_obj_lock(vdev);
+	qdf_mem_copy(&preauth_req->self_mac_addr,
+		     wlan_vdev_mlme_get_macaddr(vdev), QDF_MAC_ADDR_SIZE);
+	wlan_vdev_obj_unlock(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+
+	buf_consumed = lim_process_ft_pre_auth_req(mac_ctx, preauth_req);
+
+end:
+	if (buf_consumed) {
+		if (bss_desc)
+			qdf_mem_free(bss_desc);
+		if (preauth_req)
+			qdf_mem_free(preauth_req);
+	}
+
+	return status;
+}
+
+QDF_STATUS cm_process_preauth_req(struct scheduler_msg *msg)
+{
+	struct wlan_preauth_req *req;
+	QDF_STATUS status;
+
+	if (!msg || !msg->bodyptr) {
+		mlme_err("msg or msg->bodyptr is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	req = msg->bodyptr;
+
+	status = lim_cm_handle_preauth_req(req);
+
+	cm_free_preauth_req(req);
+	return status;
+}
 #endif
+
 #else
 
 /**
@@ -7877,7 +8020,8 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 
 #ifndef FEATURE_CM_ENABLE
 	case eWNI_SME_FT_PRE_AUTH_REQ:
-		bufConsumed = (bool) lim_process_ft_pre_auth_req(mac, pMsg);
+		bufConsumed = lim_process_ft_pre_auth_req(
+					mac, (tpSirFTPreAuthReq)pMsg->bodyptr);
 		break;
 #else
 	/* handle new command */

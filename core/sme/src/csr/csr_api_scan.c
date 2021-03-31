@@ -1460,22 +1460,7 @@ free_mem:
 
 	return status;
 }
-#endif
 
-#ifdef FEATURE_WLAN_ESE
-/*  Update the TSF with the difference in system time */
-void update_cckmtsf(uint32_t *timeStamp0, uint32_t *timeStamp1,
-		    uint64_t *incr)
-{
-	uint64_t timeStamp64 = ((uint64_t) *timeStamp1 << 32) | (*timeStamp0);
-
-	timeStamp64 = (uint64_t)(timeStamp64 + (*incr));
-	*timeStamp0 = (uint32_t) (timeStamp64 & 0xffffffff);
-	*timeStamp1 = (uint32_t) ((timeStamp64 >> 32) & 0xffffffff);
-}
-#endif
-
-#ifndef FEATURE_CM_ENABLE
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS
 csr_rso_save_ap_to_scan_cache(struct mac_context *mac,

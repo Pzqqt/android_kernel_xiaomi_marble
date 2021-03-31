@@ -2112,6 +2112,9 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 	case CM_DISCONNECT_REQ:
 		cm_process_disconnect_req(msg);
 		break;
+	case CM_PREAUTH_REQ:
+		cm_process_preauth_req(msg);
+		break;
 #endif
 	default:
 		qdf_mem_free((void *)msg->bodyptr);

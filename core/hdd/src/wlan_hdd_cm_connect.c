@@ -42,6 +42,7 @@
 #include "sme_qos_internal.h"
 #include "wlan_blm_ucfg_api.h"
 #include "wlan_hdd_scan.h"
+#include "wlan_osif_priv.h"
 #include <enet.h>
 #include <wlan_mlme_twt_ucfg_api.h>
 #include "wlan_roam_debug.h"
@@ -1241,4 +1242,237 @@ QDF_STATUS hdd_cm_set_hlp_data(struct net_device *dev,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+#ifdef WLAN_FEATURE_PREAUTH_ENABLE
+/**
+ * hdd_cm_get_ft_preauth_response() - get ft preauth response
+ * related information
+ * @vdev: vdev pointer
+ * @rsp: preauth response
+ * @ft_ie: ft ie
+ * @ft_ie_ip_len: ft ie ip length
+ * @ft_ie_length: ft ies length
+ *
+ * This function is used to get ft ie related information
+ *
+ * Return: none
+ */
+static void
+hdd_cm_get_ft_preauth_response(struct wlan_objmgr_vdev *vdev,
+			       struct wlan_preauth_rsp *rsp, uint8_t *ft_ie,
+			       uint32_t ft_ie_ip_len, uint16_t *ft_ie_length)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	*ft_ie_length = 0;
+
+	if (!vdev)
+		return;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv)
+		return;
+
+	/* All or nothing - proceed only if both BSSID and FT IE fit */
+	if ((QDF_MAC_ADDR_SIZE + rsp->ft_ie_length) > ft_ie_ip_len)
+		return;
+	/*
+	 * hdd needs to pack the bssid also along with the
+	 * auth response to supplicant
+	 */
+	qdf_mem_copy(ft_ie, rsp->pre_auth_bssid.bytes, QDF_MAC_ADDR_SIZE);
+
+	/* Copy the auth resp FTIEs */
+	qdf_mem_copy(&ft_ie[QDF_MAC_ADDR_SIZE],
+		     rsp->ft_ie, rsp->ft_ie_length);
+
+	*ft_ie_length = QDF_MAC_ADDR_SIZE + rsp->ft_ie_length;
+
+	hdd_debug("Filled auth resp: %d", *ft_ie_length);
+}
+
+#if defined(KERNEL_SUPPORT_11R_CFG80211)
+QDF_STATUS hdd_cm_ft_preauth_complete(struct wlan_objmgr_vdev *vdev,
+				      struct wlan_preauth_rsp *rsp)
+{
+	mac_handle_t mac_handle;
+	struct vdev_osif_priv *osif_priv = wlan_vdev_get_ospriv(vdev);
+	struct wireless_dev *wdev;
+	uint16_t auth_resp_len = 0;
+	uint32_t ric_ies_length = 0;
+	struct cfg80211_ft_event_params ft_event;
+	uint8_t ft_ie[DOT11F_IE_FTINFO_MAX_LEN];
+	uint8_t ric_ies[DOT11F_IE_RICDESCRIPTOR_MAX_LEN];
+
+	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
+	if (!mac_handle) {
+		hdd_err("mac_handle is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!osif_priv) {
+		hdd_err("Invalid vdev osif priv");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wdev = osif_priv->wdev;
+	if (!wdev) {
+		hdd_err("wdev is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	qdf_mem_zero(ft_ie, DOT11F_IE_FTINFO_MAX_LEN);
+	qdf_mem_zero(ric_ies, DOT11F_IE_RICDESCRIPTOR_MAX_LEN);
+
+	if (rsp->ric_ies_length &&
+	    rsp->ric_ies_length <= DOT11F_IE_RICDESCRIPTOR_MAX_LEN) {
+		qdf_mem_copy(ric_ies, rsp->ric_ies, rsp->ric_ies_length);
+		ric_ies_length = rsp->ric_ies_length;
+	} else {
+		hdd_warn("Do not send RIC IEs as length is 0");
+	}
+
+	ft_event.ric_ies = ric_ies;
+	ft_event.ric_ies_len = ric_ies_length;
+	hdd_debug("RIC IEs is of length %d", ric_ies_length);
+
+	hdd_cm_get_ft_preauth_response(vdev, rsp, ft_ie,
+				       DOT11F_IE_FTINFO_MAX_LEN,
+				       &auth_resp_len);
+	if (!auth_resp_len) {
+		hdd_debug("AuthRsp FTIES is of length 0");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	sme_set_ft_pre_auth_state(mac_handle, wlan_vdev_get_id(vdev), true);
+
+	ft_event.target_ap = ft_ie;
+	ft_event.ies = (u8 *)(ft_ie + QDF_MAC_ADDR_SIZE);
+	ft_event.ies_len = auth_resp_len - QDF_MAC_ADDR_SIZE;
+
+	hdd_debug("ftEvent.ies_len %zu", ft_event.ies_len);
+	hdd_debug("ftEvent.ric_ies_len %zu", ft_event.ric_ies_len);
+	hdd_debug("ftEvent.target_ap %2x-%2x-%2x-%2x-%2x-%2x",
+		  ft_event.target_ap[0], ft_event.target_ap[1],
+		  ft_event.target_ap[2], ft_event.target_ap[3],
+		  ft_event.target_ap[4], ft_event.target_ap[5]);
+
+	(void)cfg80211_ft_event(wdev->netdev, &ft_event);
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+QDF_STATUS hdd_cm_ft_preauth_complete(struct wlan_objmgr_vdev *vdev,
+				      struct wlan_preauth_rsp *rsp)
+{
+	struct vdev_osif_priv *osif_priv = wlan_vdev_get_ospriv(vdev);
+	struct wireless_dev *wdev;
+	uint16_t auth_resp_len = 0;
+	uint32_t ric_ies_length = 0;
+	char *buff;
+	union iwreq_data wrqu;
+	uint16_t str_len;
+
+	if (!osif_priv) {
+		hdd_err("Invalid vdev osif priv");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wdev = osif_priv->wdev;
+	if (!wdev) {
+		hdd_err("wdev is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	/* need to send the IEs to the supplicant */
+	buff = qdf_mem_malloc(IW_CUSTOM_MAX);
+	if (!buff)
+		return QDF_STATUS_E_NOMEM;
+
+	/* need to send the RIC IEs first */
+	str_len = strlcpy(buff, "RIC=", IW_CUSTOM_MAX);
+	if (rsp->ric_ies_length &&
+	    (rsp->ric_ies_length <= (IW_CUSTOM_MAX - str_len))) {
+		qdf_mem_copy(&buff[str_len], rsp->ric_ies,
+			     rsp->ric_ies_length);
+		ric_ies_length = rsp->ric_ies_length;
+		wrqu.data.length = str_len + ric_ies_length;
+		hdd_wext_send_event(wdev->netdev, IWEVCUSTOM, &wrqu, buff);
+	} else {
+		hdd_warn("Do not send RIC IEs as length is 0");
+	}
+
+	/* need to provide the Auth Resp */
+	qdf_mem_zero(buff, IW_CUSTOM_MAX);
+	str_len = strlcpy(buff, "AUTH=", IW_CUSTOM_MAX);
+	hdd_cm_get_ft_preauth_response(vdev, rsp, &buff[str_len],
+				       (IW_CUSTOM_MAX - str_len),
+				       &auth_resp_len);
+	if (!auth_resp_len) {
+		qdf_mem_free(buff);
+		hdd_debug("AuthRsp FTIES is of length 0");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	wrqu.data.length = str_len + auth_resp_len;
+	hdd_wext_send_event(wdev->netdev, IWEVCUSTOM, &wrqu, buff);
+
+	qdf_mem_free(buff);
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+#ifdef FEATURE_WLAN_ESE
+QDF_STATUS hdd_cm_cckm_preauth_complete(struct wlan_objmgr_vdev *vdev,
+					struct wlan_preauth_rsp *rsp)
+{
+	struct vdev_osif_priv *osif_priv = wlan_vdev_get_ospriv(vdev);
+	struct wireless_dev *wdev;
+	union iwreq_data wrqu;
+	char buf[IW_CUSTOM_MAX + 1];
+	char *pos = buf;
+	int nbytes = 0, freebytes = IW_CUSTOM_MAX;
+
+	if (!osif_priv) {
+		hdd_err("Invalid vdev osif priv");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wdev = osif_priv->wdev;
+	if (!wdev) {
+		hdd_err("wdev is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	/* create the event */
+	memset(&wrqu, '\0', sizeof(wrqu));
+	memset(buf, '\0', sizeof(buf));
+
+	/* timestamp0 is lower 32 bits and timestamp1 is upper 32 bits */
+	hdd_debug("CCXPREAUTHNOTIFY=" QDF_MAC_ADDR_FMT " %d:%d",
+		  QDF_MAC_ADDR_REF(rsp->pre_auth_bssid.bytes),
+		  rsp->timestamp[0], rsp->timestamp[1]);
+
+	nbytes = snprintf(pos, freebytes, "CCXPREAUTHNOTIFY=");
+	pos += nbytes;
+	freebytes -= nbytes;
+
+	qdf_mem_copy(pos, rsp->pre_auth_bssid.bytes, QDF_MAC_ADDR_SIZE);
+	pos += QDF_MAC_ADDR_SIZE;
+	freebytes -= QDF_MAC_ADDR_SIZE;
+
+	nbytes = snprintf(pos, freebytes, " %u:%u",
+			  rsp->timestamp[0], rsp->timestamp[1]);
+	freebytes -= nbytes;
+
+	wrqu.data.pointer = buf;
+	wrqu.data.length = (IW_CUSTOM_MAX - freebytes);
+
+	/* send the event */
+	hdd_wext_send_event(wdev->netdev, IWEVCUSTOM, &wrqu, buf);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* FEATURE_WLAN_ESE */
+#endif /* WLAN_FEATURE_PREAUTH_ENABLE */
 #endif

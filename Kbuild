@@ -1460,6 +1460,14 @@ MLME_OBJS +=    $(CM_TGT_IF_DIR)/src/target_if_cm_roam_event.o \
 		$(CM_DIR)/core/src/wlan_cm_roam_offload_event.o
 endif
 
+ifeq ($(CONFIG_CM_ENABLE), y)
+ifeq ($(CONFIG_QCACLD_WLAN_LFR2), y)
+# Add LFR2/host roam specific connection manager files here
+MLME_OBJS +=    $(CM_DIR)/core/src/wlan_cm_host_roam_preauth.o \
+		$(CM_DIR)/core/src/wlan_cm_host_util.o
+endif
+endif
+
 ####### WFA_CONFIG ########
 
 WFA_DIR := components/umac/mlme/wfa_config
