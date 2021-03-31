@@ -198,8 +198,6 @@ static void ipa_eth_ready_notify_work(struct work_struct *work)
 	ipa_eth_ctx->is_eth_ready = true;
 	list_for_each_entry_safe(entry, next,
 		&ipa_eth_ctx->ready_cb_list, link) {
-		if (!entry)
-			break;
 		if (entry->info && entry->info->notify)
 			entry->info->notify(entry->info->userdata);
 		/* remove from list once notify is done */
