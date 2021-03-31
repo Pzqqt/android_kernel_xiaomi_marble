@@ -140,6 +140,7 @@ struct msm_vidc_inst {
 	bool                               active;
 	u64                                last_qbuf_time_ns;
 	bool                               vb2q_init;
+	u32                                max_input_data_size;
 };
 
 #endif // _MSM_VIDC_INST_H_
