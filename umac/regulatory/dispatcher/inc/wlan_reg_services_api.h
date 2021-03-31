@@ -1529,6 +1529,19 @@ enum band_info wlan_reg_band_bitmap_to_band_info(uint32_t band_bitmap);
 
 #if defined(CONFIG_BAND_6GHZ)
 /**
+ * wlan_reg_get_cur_6g_ap_pwr_type() - Get the current 6G regulatory AP power
+ * type.
+ * @pdev: Pointer to PDEV object.
+ * @reg_cur_6g_ap_pwr_type: The current regulatory 6G AP power type ie.
+ * LPI/SP/VLP.
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS
+wlan_reg_get_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
+				enum reg_6g_ap_type *reg_cur_6g_ap_pwr_type);
+
+/**
  * wlan_reg_get_cur_6g_client_type() - Get the current 6G regulatory client
  * type.
  * @pdev: Pointer to PDEV object.
@@ -1653,6 +1666,14 @@ wlan_reg_get_client_power_for_6ghz_ap(struct wlan_objmgr_pdev *pdev,
 enum reg_6g_ap_type
 wlan_reg_decide_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev);
 #else
+static inline QDF_STATUS
+wlan_reg_get_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
+				enum reg_6g_ap_type *reg_cur_6g_ap_pwr_type)
+{
+	*reg_cur_6g_ap_pwr_type = REG_CURRENT_MAX_AP_TYPE;
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
 static inline QDF_STATUS
 wlan_reg_get_cur_6g_client_type(struct wlan_objmgr_pdev *pdev,
 				enum reg_6g_client_type
