@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -51,7 +51,7 @@ void pkt_capture_mon(struct pkt_capture_cb_context *cb_ctx, qdf_nbuf_t msdu,
 
 	if ((type == IEEE80211_FC0_TYPE_MGT) &&
 	    (sub_type == MGMT_SUBTYPE_AUTH)) {
-		uint8_t chan = wlan_freq_to_chan(ch_freq);
+		uint8_t chan = wlan_reg_freq_to_chan(pdev, ch_freq);
 
 		val.cdp_pdev_param_monitor_chan = chan;
 		cdp_txrx_set_pdev_param(soc, wlan_objmgr_pdev_get_pdev_id(pdev),
