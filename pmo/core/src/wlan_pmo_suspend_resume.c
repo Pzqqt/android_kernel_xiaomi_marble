@@ -816,8 +816,7 @@ pmo_core_enable_wow_in_fw(struct wlan_objmgr_psoc *psoc,
 		pmo_info("RTPM wow");
 	}
 
-	if ((psoc_cfg) &&
-	    (psoc_cfg->is_mod_dtim_on_sys_suspend_enabled)) {
+	if (psoc_cfg->is_mod_dtim_on_sys_suspend_enabled) {
 		pmo_info("mod DTIM enabled");
 		param.flags |= WMI_WOW_FLAG_MOD_DTIM_ON_SYS_SUSPEND;
 	}
