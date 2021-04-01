@@ -3385,6 +3385,9 @@ void hdd_reset_tcp_delack(struct hdd_context *hdd_ctx)
 	enum wlan_tp_level next_level = WLAN_SVC_TP_LOW;
 	struct wlan_rx_tp_data rx_tp_data = {0};
 
+	if (!hdd_ctx->en_tcp_delack_no_lro)
+		return;
+
 	rx_tp_data.rx_tp_flags |= TCP_DEL_ACK_IND;
 	rx_tp_data.level = next_level;
 	hdd_ctx->rx_high_ind_cnt = 0;
