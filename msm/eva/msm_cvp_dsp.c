@@ -1062,85 +1062,16 @@ static void print_power(const struct eva_power_req *pwr_req)
 	}
 }
 
-static int msm_cvp_register_buffer_dsp(struct msm_cvp_inst *inst,
-		struct eva_kmd_buffer *buf,
-		int32_t pid,
-		uint32_t *iova)
-{
-	struct cvp_hfi_device *hdev;
-	struct cvp_hal_session *session;
-	struct msm_cvp_inst *s;
-	int rc = 0;
-
-	if (!inst || !inst->core || !buf) {
-		dprintk(CVP_ERR, "%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
-
-	if (!buf->index)
-		return 0;
-
-	s = cvp_get_inst_validate(inst->core, inst);
-	if (!s)
-		return -ECONNRESET;
-
-	inst->cur_cmd_type = EVA_KMD_REGISTER_BUFFER;
-	session = (struct cvp_hal_session *)inst->session;
-	if (!session) {
-		dprintk(CVP_ERR, "%s: invalid session\n", __func__);
-		rc = -EINVAL;
-		goto exit;
-	}
-	hdev = inst->core->device;
-	print_client_buffer(CVP_HFI, "register", inst, buf);
-
-	rc = msm_cvp_map_buf_dsp_new(inst, buf, pid, iova);
-	dprintk(CVP_DSP, "%s: fd %d, iova 0x%x\n", __func__, buf->fd, *iova);
-
-exit:
-	inst->cur_cmd_type = 0;
-	cvp_put_inst(s);
-	return rc;
-}
-
-static int msm_cvp_unregister_buffer_dsp(struct msm_cvp_inst *inst,
-		struct eva_kmd_buffer *buf)
-{
-	struct msm_cvp_inst *s;
-	int rc = 0;
-
-	if (!inst || !inst->core || !buf) {
-		dprintk(CVP_ERR, "%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
-
-	if (!buf->index)
-		return 0;
-
-	s = cvp_get_inst_validate(inst->core, inst);
-	if (!s)
-		return -ECONNRESET;
-
-	inst->cur_cmd_type = EVA_KMD_UNREGISTER_BUFFER;
-	print_client_buffer(CVP_HFI, "unregister", inst, buf);
-
-	rc = msm_cvp_unmap_buf_dsp_new(inst, buf);
-	inst->cur_cmd_type = 0;
-	cvp_put_inst(s);
-	return rc;
-}
-
 static void __dsp_cvp_sess_create(struct cvp_dsp_cmd_msg *cmd)
 {
 	struct cvp_dsp_apps *me = &gfa_cv;
 	struct msm_cvp_inst *inst = NULL;
 	uint64_t inst_handle = 0;
-	struct eva_kmd_arg *kmd;
-	struct eva_kmd_sys_properties *sys_prop = NULL;
-	struct eva_kmd_session_control *sys_ctrl = NULL;
 	int rc = 0;
 	struct cvp_dsp2cpu_cmd_msg *dsp2cpu_cmd = &me->pending_dsp2cpu_cmd;
 	struct cvp_dsp_fastrpc_driver_entry *frpc_node = NULL;
+	struct pid *pid_s = NULL;
+	struct task_struct *task = NULL;
 
 	cmd->ret = 0;
 
@@ -1152,16 +1083,11 @@ static void __dsp_cvp_sess_create(struct cvp_dsp_cmd_msg *cmd)
 		dsp2cpu_cmd->is_secure,
 		dsp2cpu_cmd->pid);
 
-	kmd = kzalloc(sizeof(*kmd), GFP_KERNEL);
-        if (!kmd) {
-		dprintk(CVP_ERR, "%s kzalloc failure\n", __func__);
-		goto fail_frpc_driver_reg;
-	}
-
 	rc = eva_fastrpc_driver_register(dsp2cpu_cmd->pid);
 	if (rc) {
 		dprintk(CVP_ERR, "%s Register fastrpc driver fail\n", __func__);
-		goto fail_frpc_driver_reg;
+		cmd->ret = -1;
+		return;
 	}
 
 	inst = msm_cvp_open(MSM_CORE_CVP, MSM_CVP_DSP);
@@ -1171,52 +1097,26 @@ static void __dsp_cvp_sess_create(struct cvp_dsp_cmd_msg *cmd)
 	}
 
 	inst->process_id = dsp2cpu_cmd->pid;
-	kmd->type = EVA_KMD_SET_SYS_PROPERTY;
-	sys_prop = (struct eva_kmd_sys_properties *)&kmd->data.sys_properties;
-	sys_prop->prop_num = 5;
+	inst->prop.kernel_mask = dsp2cpu_cmd->kernel_mask;
+	inst->prop.type =  dsp2cpu_cmd->session_type;
+	inst->prop.priority = dsp2cpu_cmd->session_prio;
+	inst->prop.is_secure = dsp2cpu_cmd->is_secure;
+	inst->prop.dsp_mask = dsp2cpu_cmd->dsp_access_mask;
 
-	sys_prop->prop_data[0].prop_type = EVA_KMD_PROP_SESSION_KERNELMASK;
-	sys_prop->prop_data[0].data = dsp2cpu_cmd->kernel_mask;
-	sys_prop->prop_data[1].prop_type = EVA_KMD_PROP_SESSION_TYPE;
-	sys_prop->prop_data[1].data = dsp2cpu_cmd->session_type;
-	sys_prop->prop_data[2].prop_type = EVA_KMD_PROP_SESSION_PRIORITY;
-	sys_prop->prop_data[2].data = dsp2cpu_cmd->session_prio;
-	sys_prop->prop_data[3].prop_type = EVA_KMD_PROP_SESSION_SECURITY;
-	sys_prop->prop_data[3].data = dsp2cpu_cmd->is_secure;
-	sys_prop->prop_data[4].prop_type = EVA_KMD_PROP_SESSION_DSPMASK;
-	sys_prop->prop_data[4].data = dsp2cpu_cmd->dsp_access_mask;
-
-	rc = msm_cvp_handle_syscall(inst, kmd);
-	if (rc) {
-		dprintk(CVP_ERR, "%s Failed to set sys property\n", __func__);
-		goto fail_set_sys_property;
-	}
-	dprintk(CVP_DSP, "%s set sys property done\n", __func__);
-
-
-	/* EVA_KMD_SESSION_CONTROL from DSP */
-	memset(kmd, 0, sizeof(struct eva_kmd_arg));
-	kmd->type = EVA_KMD_SESSION_CONTROL;
-	sys_ctrl = (struct eva_kmd_session_control *)&kmd->data.session_ctrl;
-	sys_ctrl->ctrl_type = SESSION_CREATE;
-
-	rc = msm_cvp_handle_syscall(inst, kmd);
+	rc = msm_cvp_session_create(inst);
 	if (rc) {
 		dprintk(CVP_ERR, "Warning: send Session Create failed\n");
 		goto fail_session_create;
+	} else {
+		dprintk(CVP_DSP, "%s DSP Session Create done\n", __func__);
 	}
-	dprintk(CVP_DSP, "%s send Session Create done\n", __func__);
-
 
 	/* Get session id */
-	memset(kmd, 0, sizeof(struct eva_kmd_arg));
-	kmd->type = EVA_KMD_GET_SESSION_INFO;
-	rc = msm_cvp_handle_syscall(inst, kmd);
+	rc = msm_cvp_get_session_info(inst, &cmd->session_id);
 	if (rc) {
-		dprintk(CVP_ERR, "Warning: get session index failed\n");
+		dprintk(CVP_ERR, "Warning: get session index failed %d\n", rc);
 		goto fail_get_session_info;
 	}
-	cmd->session_id = kmd->data.session.session_id;
 
 	inst_handle = (uint64_t)inst;
 	cmd->session_cpu_high = (uint32_t)((inst_handle & HIGH32) >> 32);
@@ -1226,30 +1126,43 @@ static void __dsp_cvp_sess_create(struct cvp_dsp_cmd_msg *cmd)
 	if (frpc_node)
 		eva_fastrpc_driver_add_sess(frpc_node, inst);
 
+	pid_s = find_get_pid(inst->process_id);
+	if (pid_s == NULL) {
+		dprintk(CVP_WARN, "%s incorrect pid\n", __func__);
+		goto fail_get_pid;
+	}
+	dprintk(CVP_DSP, "%s get pid_s 0x%x from pidA 0x%x\n", __func__,
+			pid_s, inst->process_id);
+
+	task = get_pid_task(pid_s, PIDTYPE_TGID);
+	if (!task) {
+		dprintk(CVP_WARN, "%s task doesn't exist\n", __func__);
+		goto fail_get_task;
+	}
+
+	inst->task = task;
 	dprintk(CVP_DSP,
 		"%s CREATE_SESS id 0x%x, cpu_low 0x%x, cpu_high 0x%x\n",
 		__func__, cmd->session_id, cmd->session_cpu_low,
 		cmd->session_cpu_high);
 
-	kfree(kmd);
 	return;
 
+fail_get_pid:
+fail_get_task:
 fail_get_session_info:
 fail_session_create:
-fail_set_sys_property:
+	msm_cvp_close(inst);
 fail_msm_cvp_open:
 	/* unregister fastrpc driver */
-fail_frpc_driver_reg:
+	eva_fastrpc_driver_unregister(dsp2cpu_cmd->pid, false);
 	cmd->ret = -1;
-	kfree(kmd);
 }
 
 static void __dsp_cvp_sess_delete(struct cvp_dsp_cmd_msg *cmd)
 {
 	struct cvp_dsp_apps *me = &gfa_cv;
 	struct msm_cvp_inst *inst;
-	struct eva_kmd_arg *kmd;
-	struct eva_kmd_session_control *sys_ctrl;
 	int rc;
 	struct cvp_dsp2cpu_cmd_msg *dsp2cpu_cmd = &me->pending_dsp2cpu_cmd;
 	struct cvp_dsp_fastrpc_driver_entry *frpc_node = NULL;
@@ -1271,24 +1184,11 @@ static void __dsp_cvp_sess_delete(struct cvp_dsp_cmd_msg *cmd)
 		return;
 	}
 
-	kmd = kzalloc(sizeof(*kmd), GFP_KERNEL);
-        if (!kmd) {
-		dprintk(CVP_ERR, "%s kzalloc failure\n", __func__);
-		cmd->ret = -1;
-		return;
-	}
-
 	inst = (struct msm_cvp_inst *)ptr_dsp2cpu(
 			dsp2cpu_cmd->session_cpu_high,
 			dsp2cpu_cmd->session_cpu_low);
 
-	kmd->type = EVA_KMD_SESSION_CONTROL;
-	sys_ctrl = (struct eva_kmd_session_control *)&kmd->data.session_ctrl;
-
-	/* Session delete does nothing here */
-	sys_ctrl->ctrl_type = SESSION_DELETE;
-
-	rc = msm_cvp_handle_syscall(inst, kmd);
+	rc = msm_cvp_session_delete(inst);
 	if (rc) {
 		dprintk(CVP_ERR, "Warning: send Delete Session failed\n");
 		cmd->ret = -1;
@@ -1305,17 +1205,18 @@ static void __dsp_cvp_sess_delete(struct cvp_dsp_cmd_msg *cmd)
 	/* unregister fastrpc driver */
 	eva_fastrpc_driver_unregister(dsp2cpu_cmd->pid, false);
 
+	if (inst->task)
+		put_task_struct(inst->task);
+
 	dprintk(CVP_DSP, "%s DSP2CPU_DETELE_SESSION Done\n", __func__);
 dsp_fail_delete:
-	kfree(kmd);
+	return;
 }
 
 static void __dsp_cvp_power_req(struct cvp_dsp_cmd_msg *cmd)
 {
 	struct cvp_dsp_apps *me = &gfa_cv;
 	struct msm_cvp_inst *inst;
-	struct eva_kmd_arg *kmd;
-	struct eva_kmd_sys_properties *sys_prop;
 	int rc;
 	struct cvp_dsp2cpu_cmd_msg *dsp2cpu_cmd = &me->pending_dsp2cpu_cmd;
 
@@ -1326,109 +1227,46 @@ static void __dsp_cvp_power_req(struct cvp_dsp_cmd_msg *cmd)
 		dsp2cpu_cmd->session_cpu_low,
 		dsp2cpu_cmd->session_cpu_high);
 
-	kmd = kzalloc(sizeof(*kmd), GFP_KERNEL);
-        if (!kmd) {
-		dprintk(CVP_ERR, "%s kzalloc failure\n", __func__);
-		cmd->ret = -1;
-		return;
-	}
-
 	inst = (struct msm_cvp_inst *)ptr_dsp2cpu(
 			dsp2cpu_cmd->session_cpu_high,
 			dsp2cpu_cmd->session_cpu_low);
 
+	if (!inst) {
+		cmd->ret = -1;
+		goto dsp_fail_power_req;
+	}
+
 	print_power(&dsp2cpu_cmd->power_req);
 
-	/* EVA_KMD_SET_SYS_PROPERTY
-	 * Total 14 properties, 8 max once
-	 * Need to do 2 rounds
-	 */
-	kmd->type = EVA_KMD_SET_SYS_PROPERTY;
-	sys_prop = (struct eva_kmd_sys_properties *)&kmd->data.sys_properties;
-	sys_prop->prop_num = 7;
+	inst->prop.fdu_cycles = dsp2cpu_cmd->power_req.clock_fdu;
+	inst->prop.ica_cycles =	dsp2cpu_cmd->power_req.clock_ica;
+	inst->prop.od_cycles =	dsp2cpu_cmd->power_req.clock_od;
+	inst->prop.mpu_cycles =	dsp2cpu_cmd->power_req.clock_mpu;
+	inst->prop.fw_cycles = dsp2cpu_cmd->power_req.clock_fw;
+	inst->prop.ddr_bw = dsp2cpu_cmd->power_req.bw_ddr;
+	inst->prop.ddr_cache = dsp2cpu_cmd->power_req.bw_sys_cache;
+	inst->prop.fdu_op_cycles = dsp2cpu_cmd->power_req.op_clock_fdu;
+	inst->prop.ica_op_cycles = dsp2cpu_cmd->power_req.op_clock_ica;
+	inst->prop.od_op_cycles = dsp2cpu_cmd->power_req.op_clock_od;
+	inst->prop.mpu_op_cycles = dsp2cpu_cmd->power_req.op_clock_mpu;
+	inst->prop.fw_op_cycles = dsp2cpu_cmd->power_req.op_clock_fw;
+	inst->prop.ddr_op_bw = dsp2cpu_cmd->power_req.op_bw_ddr;
+	inst->prop.ddr_op_cache = dsp2cpu_cmd->power_req.op_bw_sys_cache;
 
-	sys_prop->prop_data[0].prop_type = EVA_KMD_PROP_PWR_FDU;
-	sys_prop->prop_data[0].data =
-			dsp2cpu_cmd->power_req.clock_fdu;
-	sys_prop->prop_data[1].prop_type = EVA_KMD_PROP_PWR_ICA;
-	sys_prop->prop_data[1].data =
-			dsp2cpu_cmd->power_req.clock_ica;
-	sys_prop->prop_data[2].prop_type = EVA_KMD_PROP_PWR_OD;
-	sys_prop->prop_data[2].data =
-			dsp2cpu_cmd->power_req.clock_od;
-	sys_prop->prop_data[3].prop_type = EVA_KMD_PROP_PWR_MPU;
-	sys_prop->prop_data[3].data =
-			dsp2cpu_cmd->power_req.clock_mpu;
-	sys_prop->prop_data[4].prop_type = EVA_KMD_PROP_PWR_FW;
-	sys_prop->prop_data[4].data =
-			dsp2cpu_cmd->power_req.clock_fw;
-	sys_prop->prop_data[5].prop_type = EVA_KMD_PROP_PWR_DDR;
-	sys_prop->prop_data[5].data =
-			dsp2cpu_cmd->power_req.bw_ddr;
-	sys_prop->prop_data[6].prop_type = EVA_KMD_PROP_PWR_SYSCACHE;
-	sys_prop->prop_data[6].data =
-			dsp2cpu_cmd->power_req.bw_sys_cache;
-
-	rc = msm_cvp_handle_syscall(inst, kmd);
-	if (rc) {
-		dprintk(CVP_ERR, "%s Failed to set sys property\n", __func__);
-		cmd->ret = -1;
-		goto dsp_fail_power_req;
-	}
-	dprintk(CVP_DSP, "%s set sys property done part 1\n", __func__);
-
-	/* EVA_KMD_SET_SYS_PROPERTY Round 2 */
-	memset(kmd, 0, sizeof(struct eva_kmd_arg));
-	kmd->type = EVA_KMD_SET_SYS_PROPERTY;
-	sys_prop = (struct eva_kmd_sys_properties *)&kmd->data.sys_properties;
-	sys_prop->prop_num  = 7;
-
-	sys_prop->prop_data[0].prop_type = EVA_KMD_PROP_PWR_FDU_OP;
-	sys_prop->prop_data[0].data =
-			dsp2cpu_cmd->power_req.op_clock_fdu;
-	sys_prop->prop_data[1].prop_type = EVA_KMD_PROP_PWR_ICA_OP;
-	sys_prop->prop_data[1].data =
-			dsp2cpu_cmd->power_req.op_clock_ica;
-	sys_prop->prop_data[2].prop_type = EVA_KMD_PROP_PWR_OD_OP;
-	sys_prop->prop_data[2].data =
-			dsp2cpu_cmd->power_req.op_clock_od;
-	sys_prop->prop_data[3].prop_type = EVA_KMD_PROP_PWR_MPU_OP;
-	sys_prop->prop_data[3].data =
-			dsp2cpu_cmd->power_req.op_clock_mpu;
-	sys_prop->prop_data[4].prop_type = EVA_KMD_PROP_PWR_FW_OP;
-	sys_prop->prop_data[4].data =
-			dsp2cpu_cmd->power_req.op_clock_fw;
-	sys_prop->prop_data[5].prop_type = EVA_KMD_PROP_PWR_DDR_OP;
-	sys_prop->prop_data[5].data =
-			dsp2cpu_cmd->power_req.op_bw_ddr;
-	sys_prop->prop_data[6].prop_type = EVA_KMD_PROP_PWR_SYSCACHE_OP;
-	sys_prop->prop_data[6].data =
-			dsp2cpu_cmd->power_req.op_bw_sys_cache;
-
-	rc = msm_cvp_handle_syscall(inst, kmd);
-	if (rc) {
-		dprintk(CVP_ERR, "%s Failed to set sys property\n", __func__);
-		cmd->ret = -1;
-		goto dsp_fail_power_req;
-	}
-	dprintk(CVP_DSP, "%s set sys property done part 2\n", __func__);
-
-	memset(kmd, 0, sizeof(struct eva_kmd_arg));
-	kmd->type = EVA_KMD_UPDATE_POWER;
-	rc = msm_cvp_handle_syscall(inst, kmd);
+	rc = msm_cvp_update_power(inst);
 	if (rc) {
 		/* May need to define more error types
 		 * Check UMD implementation here:
 		 * https://opengrok.qualcomm.com/source/xref/LA.UM.9.14/vendor/qcom/proprietary/cv-noship/cvp/cpurev/src/cvpcpuRev_skel_imp_cvp2.cpp#380
 		 */
-		dprintk(CVP_ERR, "%s Failed to send update power numbers\n", __func__);
+		dprintk(CVP_ERR, "%s Failed update power\n", __func__);
 		cmd->ret = -1;
 		goto dsp_fail_power_req;
 	}
 
 	dprintk(CVP_DSP, "%s DSP2CPU_POWER_REQUEST Done\n", __func__);
 dsp_fail_power_req:
-	kfree(kmd);
+	return;
 }
 
 static void __dsp_cvp_buf_register(struct cvp_dsp_cmd_msg *cmd)
@@ -1470,8 +1308,7 @@ static void __dsp_cvp_buf_register(struct cvp_dsp_cmd_msg *cmd)
 	kmd_buf->pixelformat = 0;
 	kmd_buf->flags = EVA_KMD_FLAG_UNSECURE;
 
-	rc = msm_cvp_register_buffer_dsp(inst, kmd_buf,
-			dsp2cpu_cmd->pid, &cmd->sbuf.iova);
+	rc = msm_cvp_register_buffer(inst, kmd_buf);
 	if (rc) {
 		dprintk(CVP_ERR, "%s Failed to register buffer\n", __func__);
 		cmd->ret = -1;
@@ -1479,6 +1316,7 @@ static void __dsp_cvp_buf_register(struct cvp_dsp_cmd_msg *cmd)
 	}
 	dprintk(CVP_DSP, "%s register buffer done\n", __func__);
 
+	cmd->sbuf.iova = kmd_buf->reserved[0];
 	cmd->sbuf.size = kmd_buf->size;
 	cmd->sbuf.fd = kmd_buf->fd;
 	cmd->sbuf.index = kmd_buf->index;
@@ -1530,7 +1368,7 @@ static void __dsp_cvp_buf_deregister(struct cvp_dsp_cmd_msg *cmd)
 	kmd_buf->pixelformat = 0;
 	kmd_buf->flags = EVA_KMD_FLAG_UNSECURE;
 
-	rc = msm_cvp_unregister_buffer_dsp(inst, kmd_buf);
+	rc = msm_cvp_unregister_buffer(inst, kmd_buf);
 	if (rc) {
 		dprintk(CVP_ERR, "%s Failed to deregister buffer\n", __func__);
 		cmd->ret = -1;
