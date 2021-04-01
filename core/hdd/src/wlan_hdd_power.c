@@ -264,6 +264,30 @@ static void hdd_enable_igmp_offload(struct hdd_adapter *adapter)
 		hdd_info("Failed to enable gtk offload");
 	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 }
+
+/**
+ * hdd_disable_igmp_offload() - disable GTK offload
+ * @adapter: pointer to the adapter
+ *
+ * Enable IGMP offload in suspended case to save power
+ *
+ * Return: nothing
+ */
+static void hdd_disable_igmp_offload(struct hdd_adapter *adapter)
+{
+	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
+	if (!vdev) {
+		hdd_err("vdev is NULL");
+		return;
+	}
+	status = hdd_send_igmp_offload_params(adapter, false);
+	if (status != QDF_STATUS_SUCCESS)
+		hdd_info("Failed to enable igmp offload");
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
+}
 #else
 static inline void
 hdd_enable_igmp_offload(struct hdd_adapter *adapter)
@@ -282,6 +306,10 @@ wlan_hdd_send_igmp_offload_params(struct hdd_adapter *adapter, bool enable,
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+static inline void
+hdd_disable_igmp_offload(struct hdd_adapter *adapter)
+{}
 #endif
 
 /**
@@ -854,6 +882,8 @@ void hdd_disable_host_offloads(struct hdd_adapter *adapter,
 	hdd_disable_arp_offload(adapter, trigger);
 	hdd_disable_ns_offload(adapter, trigger);
 	hdd_disable_mc_addr_filtering(adapter, trigger);
+	if (adapter->device_mode == QDF_STA_MODE)
+		hdd_disable_igmp_offload(adapter);
 	if (adapter->device_mode != QDF_NDI_MODE)
 		hdd_disable_hw_filter(adapter);
 	hdd_disable_action_frame_patterns(adapter);
