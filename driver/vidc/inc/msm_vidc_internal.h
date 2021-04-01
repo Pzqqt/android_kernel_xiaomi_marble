@@ -136,21 +136,20 @@ enum msm_vidc_colorformat_type {
 };
 
 enum msm_vidc_buffer_type {
-	MSM_VIDC_BUF_NONE = 0,
-	MSM_VIDC_BUF_INPUT         = 1,
-	MSM_VIDC_BUF_OUTPUT        = 2,
-	MSM_VIDC_BUF_INPUT_META    = 3,
-	MSM_VIDC_BUF_OUTPUT_META   = 4,
-	MSM_VIDC_BUF_READ_ONLY     = 5,
-	MSM_VIDC_BUF_QUEUE         = 10,
-	MSM_VIDC_BUF_BIN           = 20,
-	MSM_VIDC_BUF_ARP           = 21,
-	MSM_VIDC_BUF_COMV          = 22,
-	MSM_VIDC_BUF_NON_COMV      = 23,
-	MSM_VIDC_BUF_LINE          = 24,
-	MSM_VIDC_BUF_DPB           = 25,
-	MSM_VIDC_BUF_PERSIST       = 26,
-	MSM_VIDC_BUF_VPSS          = 27,
+	MSM_VIDC_BUF_INPUT                 = 1,
+	MSM_VIDC_BUF_OUTPUT                = 2,
+	MSM_VIDC_BUF_INPUT_META            = 3,
+	MSM_VIDC_BUF_OUTPUT_META           = 4,
+	MSM_VIDC_BUF_READ_ONLY             = 5,
+	MSM_VIDC_BUF_QUEUE                 = 6,
+	MSM_VIDC_BUF_BIN                   = 7,
+	MSM_VIDC_BUF_ARP                   = 8,
+	MSM_VIDC_BUF_COMV                  = 9,
+	MSM_VIDC_BUF_NON_COMV              = 10,
+	MSM_VIDC_BUF_LINE                  = 11,
+	MSM_VIDC_BUF_DPB                   = 12,
+	MSM_VIDC_BUF_PERSIST               = 13,
+	MSM_VIDC_BUF_VPSS                  = 14,
 };
 
 /* always match with v4l2 flags V4L2_BUF_FLAG_* */

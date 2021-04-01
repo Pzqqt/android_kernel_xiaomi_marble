@@ -272,6 +272,7 @@ int msm_vidc_change_core_state(struct msm_vidc_core *core,
 int msm_vidc_core_init(struct msm_vidc_core *core);
 int msm_vidc_core_deinit(struct msm_vidc_core *core, bool force);
 int msm_vidc_core_timeout(struct msm_vidc_core *core);
+int msm_vidc_print_buffer_info(struct msm_vidc_inst *inst);
 int msm_vidc_print_inst_info(struct msm_vidc_inst *inst);
 void msm_vidc_print_core_info(struct msm_vidc_core *core);
 int msm_vidc_smmu_fault_handler(struct iommu_domain *domain,
@@ -360,5 +361,6 @@ bool msm_vidc_allow_decode_batch(struct msm_vidc_inst *inst);
 int msm_vidc_check_session_supported(struct msm_vidc_inst *inst);
 int msm_vidc_check_mbps_supported(struct msm_vidc_inst *inst);
 int msm_vidc_check_scaling_supported(struct msm_vidc_inst *inst);
+const char *buf_name(enum msm_vidc_buffer_type type);
 #endif // _MSM_VIDC_DRIVER_H_
 

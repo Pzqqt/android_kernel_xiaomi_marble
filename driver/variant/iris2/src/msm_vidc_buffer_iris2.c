@@ -473,8 +473,8 @@ struct msm_vidc_buf_type_handle {
 int msm_buffer_size_iris2(struct msm_vidc_inst *inst,
 		enum msm_vidc_buffer_type buffer_type)
 {
-	int i, size = 0;
-	u32 buf_type_handle_size = 0;
+	int i;
+	u32 size = 0, buf_type_handle_size = 0;
 	const struct msm_vidc_buf_type_handle *buf_type_handle_arr = NULL;
 	static const struct msm_vidc_buf_type_handle dec_buf_type_handle[] = {
 		{MSM_VIDC_BUF_INPUT,           msm_vidc_decoder_input_size              },
@@ -525,9 +525,14 @@ int msm_buffer_size_iris2(struct msm_vidc_inst *inst,
 	}
 
 	/* handle unknown buffer type */
-	if (i == buf_type_handle_size)
+	if (i == buf_type_handle_size) {
 		i_vpr_e(inst, "%s: unknown buffer type %#x\n", __func__, buffer_type);
+		goto exit;
+	}
 
+	i_vpr_l(inst, "buffer_size: type: %11s,  size: %9u\n", buf_name(buffer_type), size);
+
+exit:
 	return size;
 }
 
@@ -589,7 +594,7 @@ int msm_buffer_min_count_iris2(struct msm_vidc_inst *inst,
 		break;
 	}
 
-	i_vpr_l(inst, "%s: type %u, count %u\n", __func__, buffer_type, count);
+	i_vpr_l(inst, "  min_count: type: %11s, count: %9u\n", buf_name(buffer_type), count);
 	return count;
 }
 
@@ -616,6 +621,6 @@ int msm_buffer_extra_count_iris2(struct msm_vidc_inst *inst,
 		break;
 	}
 
-	i_vpr_l(inst, "%s: type %u, count %u\n", __func__, buffer_type, count);
+	i_vpr_l(inst, "extra_count: type: %11s, count: %9u\n", buf_name(buffer_type), count);
 	return count;
 }

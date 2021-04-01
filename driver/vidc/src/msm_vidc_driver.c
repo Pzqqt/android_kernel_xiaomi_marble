@@ -37,11 +37,6 @@ extern struct msm_vidc_core *g_core;
 #define SSR_ADDR_ID 0xFFFFFFFF00000000
 #define SSR_ADDR_SHIFT 32
 
-struct msm_vidc_buf_type_name {
-	enum msm_vidc_buffer_type type;
-	char *name;
-};
-
 struct msm_vidc_cap_name {
 	enum msm_vidc_inst_capability_type cap;
 	char *name;
@@ -202,6 +197,44 @@ exit:
 	return name;
 }
 
+struct msm_vidc_buf_type_name {
+	enum msm_vidc_buffer_type type;
+	char *name;
+};
+
+static const struct msm_vidc_buf_type_name buf_type_name_arr[] = {
+	{MSM_VIDC_BUF_INPUT,             "INPUT"                      },
+	{MSM_VIDC_BUF_OUTPUT,            "OUTPUT"                     },
+	{MSM_VIDC_BUF_INPUT_META,        "INPUT_META"                 },
+	{MSM_VIDC_BUF_OUTPUT_META,       "OUTPUT_META"                },
+	{MSM_VIDC_BUF_READ_ONLY,         "READ_ONLY"                  },
+	{MSM_VIDC_BUF_QUEUE,             "QUEUE"                      },
+	{MSM_VIDC_BUF_BIN,               "BIN"                        },
+	{MSM_VIDC_BUF_ARP,               "ARP"                        },
+	{MSM_VIDC_BUF_COMV,              "COMV"                       },
+	{MSM_VIDC_BUF_NON_COMV,          "NON_COMV"                   },
+	{MSM_VIDC_BUF_LINE,              "LINE"                       },
+	{MSM_VIDC_BUF_DPB,               "DPB"                        },
+	{MSM_VIDC_BUF_PERSIST,           "PERSIST"                    },
+	{MSM_VIDC_BUF_VPSS,              "VPSS"                       },
+};
+
+const char *buf_name(enum msm_vidc_buffer_type type)
+{
+	const char *name = "UNKNOWN BUF";
+
+	if (!type || type > ARRAY_SIZE(buf_type_name_arr))
+		goto exit;
+
+	if (buf_type_name_arr[type - 1].type != type)
+		goto exit;
+
+	name = buf_type_name_arr[type - 1].name;
+
+exit:
+	return name;
+}
+
 struct msm_vidc_inst_state_name {
 	enum msm_vidc_inst_state state;
 	char *name;
@@ -270,22 +303,12 @@ void print_vidc_buffer(u32 tag, const char *tag_str, const char *str, struct msm
 	if (!(tag & msm_vidc_debug) || !inst || !vbuf || !tag_str || !str)
 		return;
 
-	if (vbuf->type == MSM_VIDC_BUF_INPUT || vbuf->type == MSM_VIDC_BUF_OUTPUT) {
-		dprintk_inst(tag, tag_str, inst,
-			"%s: %s: idx %2d fd %3d off %d daddr %#llx size %d filled %d flags %#x ts %lld attr %#x\n",
-			str, vbuf->type == MSM_VIDC_BUF_INPUT ? "INPUT" : "OUTPUT",
-			vbuf->index, vbuf->fd, vbuf->data_offset,
-			vbuf->device_addr, vbuf->buffer_size, vbuf->data_size,
-			vbuf->flags, vbuf->timestamp, vbuf->attr);
-	} else if (vbuf->type == MSM_VIDC_BUF_INPUT_META ||
-			   vbuf->type == MSM_VIDC_BUF_OUTPUT_META) {
-		dprintk_inst(tag, tag_str, inst,
-			"%s: %s: idx %2d fd %3d off %d daddr %#llx size %d filled %d flags %#x ts %lld attr %#x\n",
-			str, vbuf->type == MSM_VIDC_BUF_INPUT_META ? "INPUT_META" : "OUTPUT_META",
-			vbuf->index, vbuf->fd, vbuf->data_offset,
-			vbuf->device_addr, vbuf->buffer_size, vbuf->data_size,
-			vbuf->flags, vbuf->timestamp, vbuf->attr);
-	}
+	dprintk_inst(tag, tag_str, inst,
+		"%s: %s: idx %2d fd %3d off %d daddr %#llx size %d filled %d flags %#x ts %lld attr %#x\n",
+		str, buf_name(vbuf->type),
+		vbuf->index, vbuf->fd, vbuf->data_offset,
+		vbuf->device_addr, vbuf->buffer_size, vbuf->data_size,
+		vbuf->flags, vbuf->timestamp, vbuf->attr);
 }
 
 void print_vb2_buffer(const char *str, struct msm_vidc_inst *inst,
@@ -899,6 +922,8 @@ struct msm_vidc_buffers *msm_vidc_get_buffers(
 		return &inst->buffers.persist;
 	case MSM_VIDC_BUF_VPSS:
 		return &inst->buffers.vpss;
+	case MSM_VIDC_BUF_QUEUE:
+		return NULL;
 	default:
 		i_vpr_e(inst, "%s: invalid driver buffer type %d\n",
 			func, buffer_type);
@@ -2103,6 +2128,12 @@ void msm_vidc_allow_dcvs(struct msm_vidc_inst *inst)
 		goto exit;
 	}
 
+	allow = is_realtime_session(inst);
+	if (!allow) {
+		i_vpr_h(inst, "%s: non-realtime session\n", __func__);
+		goto exit;
+	}
+
 	allow = !is_image_session(inst);
 	if (!allow) {
 		i_vpr_h(inst, "%s: image session\n", __func__);
@@ -2327,7 +2358,7 @@ int msm_vidc_queue_buffer_single(struct msm_vidc_inst *inst, struct vb2_buffer *
 		if (is_encode_session(inst)) {
 			cr = inst->capabilities->cap[ENC_IP_CR].value;
 			msm_vidc_update_input_cr(inst, vb2->index, cr);
-			inst->capabilities->cap[ENC_IP_CR].value = 0;
+			msm_vidc_update_cap_value(inst, ENC_IP_CR, 0, __func__);
 		}
 		inst->power.buffer_counter++;
 	}
@@ -2357,15 +2388,13 @@ int msm_vidc_destroy_internal_buffer(struct msm_vidc_inst *inst,
 	}
 
 	if (!is_internal_buffer(buffer->type)) {
-		i_vpr_e(inst, "%s: buffer type %#x is not internal\n",
-			__func__, buffer->type);
+		i_vpr_e(inst, "%s: type: %s is not internal\n",
+			__func__, buf_name(buffer->type));
 		return 0;
 	}
 
-	i_vpr_h(inst,
-		"%s: destroy buffer_type %#x, size %d device_addr %#x\n",
-		__func__, buffer->type, buffer->buffer_size,
-		buffer->device_addr);
+	i_vpr_h(inst, "%s: destroy: type: %8s, size: %9u, device_addr %#x\n", __func__,
+		buf_name(buffer->type), buffer->buffer_size, buffer->device_addr);
 
 	buffers = msm_vidc_get_buffers(inst, buffer->type, __func__);
 	if (!buffers)
@@ -2460,8 +2489,8 @@ int msm_vidc_create_internal_buffer(struct msm_vidc_inst *inst,
 		return -EINVAL;
 	}
 	if (!is_internal_buffer(buffer_type)) {
-		i_vpr_e(inst, "%s: buffer type %#x is not internal\n",
-			__func__, buffer_type);
+		i_vpr_e(inst, "%s: type %s is not internal\n",
+			__func__, buf_name(buffer_type));
 		return 0;
 	}
 
@@ -2522,10 +2551,8 @@ int msm_vidc_create_internal_buffer(struct msm_vidc_inst *inst,
 
 	buffer->dmabuf = alloc->dmabuf;
 	buffer->device_addr = map->device_addr;
-	i_vpr_h(inst,
-		"%s: created buffer_type %#x, size %d device_addr %#x\n",
-		__func__, buffer_type, buffers->size,
-		buffer->device_addr);
+	i_vpr_h(inst, "%s: create: type: %8s, size: %9u, device_addr %#x\n", __func__,
+		buf_name(buffer_type), buffers->size, buffer->device_addr);
 
 	return 0;
 }
@@ -2547,8 +2574,7 @@ int msm_vidc_create_internal_buffers(struct msm_vidc_inst *inst,
 		return -EINVAL;
 
 	if (buffers->reuse) {
-		i_vpr_l(inst, "%s: reuse enabled for buffer type %#x\n",
-			__func__, buffer_type);
+		i_vpr_l(inst, "%s: reuse enabled for %s\n", __func__, buf_name(buffer_type));
 		return 0;
 	}
 
@@ -2573,8 +2599,7 @@ int msm_vidc_queue_internal_buffers(struct msm_vidc_inst *inst,
 		return -EINVAL;
 	}
 	if (!is_internal_buffer(buffer_type)) {
-		i_vpr_e(inst, "%s: buffer type %#x is not internal\n",
-			__func__, buffer_type);
+		i_vpr_e(inst, "%s: %s is not internal\n", __func__, buf_name(buffer_type));
 		return 0;
 	}
 
@@ -2583,8 +2608,8 @@ int msm_vidc_queue_internal_buffers(struct msm_vidc_inst *inst,
 		return -EINVAL;
 
 	if (buffers->reuse) {
-		i_vpr_l(inst, "%s: reuse enabled for buffer type %#x\n",
-			__func__, buffer_type);
+		i_vpr_l(inst, "%s: reuse enabled for %s buf\n",
+			__func__, buf_name(buffer_type));
 		return 0;
 	}
 
@@ -2601,8 +2626,8 @@ int msm_vidc_queue_internal_buffers(struct msm_vidc_inst *inst,
 		/* mark queued */
 		buffer->attr |= MSM_VIDC_ATTR_QUEUED;
 
-		i_vpr_h(inst, "%s: queued buffer_type %#x, size %d\n",
-			__func__, buffer_type, buffers->size);
+		i_vpr_h(inst, "%s: queue: type: %8s, size: %9u, device_addr %#x\n", __func__,
+			buf_name(buffer->type), buffer->buffer_size, buffer->device_addr);
 	}
 
 	return 0;
@@ -2620,8 +2645,8 @@ int msm_vidc_alloc_and_queue_session_internal_buffers(struct msm_vidc_inst *inst
 
 	if (buffer_type != MSM_VIDC_BUF_ARP &&
 		buffer_type != MSM_VIDC_BUF_PERSIST) {
-		i_vpr_e(inst, "%s: invalid buffer type: %d\n",
-			__func__, buffer_type);
+		i_vpr_e(inst, "%s: invalid buffer type: %s\n",
+			__func__, buf_name(buffer_type));
 		rc = -EINVAL;
 		goto exit;
 	}
@@ -2654,8 +2679,8 @@ int msm_vidc_release_internal_buffers(struct msm_vidc_inst *inst,
 		return -EINVAL;
 	}
 	if (!is_internal_buffer(buffer_type)) {
-		i_vpr_e(inst, "%s: buffer type %#x is not internal\n",
-			__func__, buffer_type);
+		i_vpr_e(inst, "%s: %s is not internal\n",
+			__func__, buf_name(buffer_type));
 		return 0;
 	}
 
@@ -2664,8 +2689,8 @@ int msm_vidc_release_internal_buffers(struct msm_vidc_inst *inst,
 		return -EINVAL;
 
 	if (buffers->reuse) {
-		i_vpr_l(inst, "%s: reuse enabled for buffer type %#x\n",
-			__func__, buffer_type);
+		i_vpr_l(inst, "%s: reuse enabled for %s buf\n",
+			__func__, buf_name(buffer_type));
 		return 0;
 	}
 
@@ -2682,8 +2707,8 @@ int msm_vidc_release_internal_buffers(struct msm_vidc_inst *inst,
 		/* mark pending release */
 		buffer->attr |= MSM_VIDC_ATTR_PENDING_RELEASE;
 
-		i_vpr_h(inst, "%s: released buffer_type %#x, size %d\n",
-			__func__, buffer_type, buffers->size);
+		i_vpr_h(inst, "%s: release: type: %8s, size: %9u, device_addr %#x\n", __func__,
+			buf_name(buffer->type), buffer->buffer_size, buffer->device_addr);
 	}
 
 	return 0;
@@ -3461,6 +3486,31 @@ int msm_vidc_core_timeout(struct msm_vidc_core *core)
 	return msm_vidc_core_deinit(core, true);
 }
 
+int msm_vidc_print_buffer_info(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_buffers *buffers;
+	int i;
+
+	if (!inst) {
+		i_vpr_e(inst, "%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	/* Print buffer details */
+	for (i = 0; i < ARRAY_SIZE(buf_type_name_arr); i++) {
+		buffers = msm_vidc_get_buffers(inst, buf_type_name_arr[i].type, __func__);
+		if (!buffers)
+			continue;
+
+		i_vpr_h(inst, "buf: type: %11s, count %2d, extra %2d, actual %2d, size %9u\n",
+			buf_type_name_arr[i].name, buffers->min_count,
+			buffers->extra_count, buffers->actual_count,
+			buffers->size);
+	}
+
+	return 0;
+}
+
 int msm_vidc_print_inst_info(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_buffers *buffers;
@@ -3470,20 +3520,6 @@ int msm_vidc_print_inst_info(struct msm_vidc_inst *inst)
 	u32 bit_depth, bit_rate, frame_rate, width, height;
 	struct dma_buf *dbuf;
 	int i = 0;
-
-	static const struct msm_vidc_buf_type_name buf_type_name[] = {
-		{MSM_VIDC_BUF_INPUT,             "INPUT"      },
-		{MSM_VIDC_BUF_OUTPUT,            "OUTPUT"     },
-		{MSM_VIDC_BUF_INPUT_META,        "IN_META"    },
-		{MSM_VIDC_BUF_OUTPUT_META,       "OUT_META"   },
-		{MSM_VIDC_BUF_BIN,               "BIN"        },
-		{MSM_VIDC_BUF_ARP,               "ARP"        },
-		{MSM_VIDC_BUF_COMV,              "COMV"       },
-		{MSM_VIDC_BUF_NON_COMV,          "NON_COMV"   },
-		{MSM_VIDC_BUF_LINE,              "LINE"       },
-		{MSM_VIDC_BUF_PERSIST,           "PERSIST"    },
-		{MSM_VIDC_BUF_VPSS,              "VPSS"       },
-	};
 
 	if (!inst || !inst->capabilities) {
 		i_vpr_e(inst, "%s: invalid params\n", __func__);
@@ -3506,13 +3542,13 @@ int msm_vidc_print_inst_info(struct msm_vidc_inst *inst)
 		frame_rate, bit_rate, bit_depth);
 
 	/* Print buffer details */
-	for (i = 0; i < ARRAY_SIZE(buf_type_name); i++) {
-		buffers = msm_vidc_get_buffers(inst, buf_type_name[i].type, __func__);
+	for (i = 0; i < ARRAY_SIZE(buf_type_name_arr); i++) {
+		buffers = msm_vidc_get_buffers(inst, buf_type_name_arr[i].type, __func__);
 		if (!buffers)
 			continue;
 
-		i_vpr_e(inst, "count: type: %8s, min: %2d, extra: %2d, actual: %2d\n",
-			buf_type_name[i].name, buffers->min_count,
+		i_vpr_e(inst, "count: type: %11s, min: %2d, extra: %2d, actual: %2d\n",
+			buf_type_name_arr[i].name, buffers->min_count,
 			buffers->extra_count, buffers->actual_count);
 
 		list_for_each_entry(buf, &buffers->list, list) {
@@ -3520,8 +3556,8 @@ int msm_vidc_print_inst_info(struct msm_vidc_inst *inst)
 				continue;
 			dbuf = (struct dma_buf *)buf->dmabuf;
 			i_vpr_e(inst,
-				"buf: type: %8s, index: %2d, fd: %4d, size: %9u, off: %8u, filled: %9u, iova: %8x, inode: %9ld, flags: %8x, ts: %16lld, attr: %8x\n",
-				buf_type_name[i].name, buf->index, buf->fd, buf->buffer_size,
+				"buf: type: %11s, index: %2d, fd: %4d, size: %9u, off: %8u, filled: %9u, iova: %8x, inode: %9ld, flags: %8x, ts: %16lld, attr: %8x\n",
+				buf_type_name_arr[i].name, buf->index, buf->fd, buf->buffer_size,
 				buf->data_offset, buf->data_size, buf->device_addr,
 				file_inode(dbuf->file)->i_ino,
 				buf->flags, buf->timestamp, buf->attr);

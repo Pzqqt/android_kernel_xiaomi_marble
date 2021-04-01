@@ -266,7 +266,7 @@ int msm_vidc_update_cap_value(struct msm_vidc_inst *inst, u32 cap,
 
 	if (inst->capabilities->cap[cap].value != adjusted_val)
 		i_vpr_h(inst,
-			"%s: updated database: name %s, value %#x -> %#x\n",
+			"%s: updated database: name: %s, value: %#x -> %#x\n",
 			func, cap_name(cap),
 			inst->capabilities->cap[cap].value, adjusted_val);
 
@@ -1678,6 +1678,9 @@ int msm_vidc_set_vbr_related_properties(void *instance,
 
 	hfi_value = inst->capabilities->cap[cap_id].value;
 
+	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
+		inst->capabilities->cap[cap_id].value, hfi_value);
+
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
 		&hfi_value, sizeof(u32), __func__);
 
@@ -1706,6 +1709,9 @@ int msm_vidc_set_cbr_related_properties(void *instance,
 		return 0;
 
 	hfi_value = inst->capabilities->cap[cap_id].value;
+
+	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
+		inst->capabilities->cap[cap_id].value, hfi_value);
 
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
 		&hfi_value, sizeof(u32), __func__);
@@ -2071,6 +2077,9 @@ int msm_vidc_set_layer_count_and_type(void *instance,
 	/* hfi baselayer starts from 1 */
 	hfi_layer_count = inst->capabilities->cap[ENH_LAYER_COUNT].value + 1;
 
+	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
+		inst->capabilities->cap[cap_id].value, hfi_layer_count);
+
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
 		&hfi_layer_count, sizeof(u32), __func__);
 	if (rc)
@@ -2102,6 +2111,8 @@ int msm_vidc_set_gop_size(void *instance,
 	}
 
 	hfi_value = inst->capabilities->cap[GOP_SIZE].value;
+	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
+		inst->capabilities->cap[cap_id].value, hfi_value);
 
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
 		&hfi_value, sizeof(u32), __func__);
@@ -2170,6 +2181,10 @@ int msm_vidc_set_bitrate(void *instance,
 
 set_total_bitrate:
 	hfi_value = inst->capabilities->cap[BIT_RATE].value;
+
+	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
+		inst->capabilities->cap[cap_id].value, hfi_value);
+
 	rc = msm_vidc_packetize_control(inst, BIT_RATE, HFI_PAYLOAD_U32,
 			&hfi_value, sizeof(u32), __func__);
 exit:
@@ -2189,6 +2204,9 @@ int msm_vidc_set_session_priority(void *instance,
 	}
 
 	hfi_value = (inst->capabilities->cap[cap_id].value * 2) + inst->priority_level;
+
+	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
+		inst->capabilities->cap[cap_id].value, hfi_value);
 
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
 		&hfi_value, sizeof(u32), __func__);

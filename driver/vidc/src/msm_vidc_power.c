@@ -162,10 +162,6 @@ static int msm_vidc_set_buses(struct msm_vidc_inst* inst)
 	mutex_lock(&core->lock);
 	curr_time_ns = ktime_get_ns();
 	list_for_each_entry(temp, &core->instances, list) {
-		/* skip no input data sessions */
-		if (!temp->max_input_data_size)
-			continue;
-
 		/* skip inactive session bus bandwidth */
 		if (!is_active_session(temp->last_qbuf_time_ns, curr_time_ns)) {
 			temp->active = false;
@@ -201,8 +197,6 @@ int msm_vidc_scale_buses(struct msm_vidc_inst *inst)
 	struct vidc_bus_vote_data *vote_data;
 	struct v4l2_format *out_f;
 	struct v4l2_format *inp_f;
-	struct msm_vidc_buffer *vbuf;
-	u32 data_size = 0;
 	int codec = 0, frame_rate;
 
 	if (!inst || !inst->core || !inst->capabilities) {
@@ -215,12 +209,6 @@ int msm_vidc_scale_buses(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 	vote_data = &inst->bus_data;
-
-	list_for_each_entry(vbuf, &inst->buffers.input.list, list)
-		data_size = max(data_size, vbuf->data_size);
-	inst->max_input_data_size = data_size;
-	if (!data_size)
-		return 0;
 
 	vote_data->power_mode = VIDC_POWER_NORMAL;
 	if (inst->power.buffer_counter < DCVS_WINDOW || is_image_session(inst))
@@ -275,7 +263,7 @@ int msm_vidc_scale_buses(struct msm_vidc_inst *inst)
 		u32 color_format;
 
 		vote_data->domain = MSM_VIDC_DECODER;
-		vote_data->bitrate = data_size * vote_data->fps * 8;
+		vote_data->bitrate = inst->max_input_data_size * vote_data->fps * 8;
 		color_format = v4l2_colorformat_to_driver(
 			inst->fmts[OUTPUT_PORT].fmt.pix_mp.pixelformat, __func__);
 		if (is_linear_colorformat(color_format)) {
@@ -342,10 +330,6 @@ int msm_vidc_set_clocks(struct msm_vidc_inst* inst)
 	freq = 0;
 	curr_time_ns = ktime_get_ns();
 	list_for_each_entry(temp, &core->instances, list) {
-		/* skip no input data sessions */
-		if (!temp->max_input_data_size)
-			continue;
-
 		/* skip inactive session clock rate */
 		if (!is_active_session(temp->last_qbuf_time_ns, curr_time_ns)) {
 			temp->active = false;
@@ -398,7 +382,7 @@ int msm_vidc_set_clocks(struct msm_vidc_inst* inst)
 	 * TODO: Remove this scaling if using source clock instead of branch clock.
 	 */
 	rate = rate * MSM_VIDC_CLOCK_SOURCE_SCALING_RATIO;
-	i_vpr_h(inst, "%s: scaled clock rate %lu\n", __func__, rate);
+	i_vpr_l(inst, "%s: scaled clock rate %lu\n", __func__, rate);
 
 	rc = venus_hfi_scale_clocks(inst, rate);
 	if (rc)
@@ -487,20 +471,12 @@ exit:
 int msm_vidc_scale_clocks(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_core* core;
-	struct msm_vidc_buffer *vbuf;
-	u32 data_size = 0;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 	core = inst->core;
-
-	list_for_each_entry(vbuf, &inst->buffers.input.list, list)
-		data_size = max(data_size, vbuf->data_size);
-	inst->max_input_data_size = data_size;
-	if (!data_size)
-		return 0;
 
 	if (inst->power.buffer_counter < DCVS_WINDOW || is_image_session(inst)) {
 		inst->power.min_freq = msm_vidc_max_freq(inst);
@@ -510,7 +486,7 @@ int msm_vidc_scale_clocks(struct msm_vidc_inst *inst)
 		inst->power.dcvs_flags = 0;
 	} else {
 		inst->power.min_freq =
-			call_session_op(core, calc_freq, inst, data_size);
+			call_session_op(core, calc_freq, inst, inst->max_input_data_size);
 		msm_vidc_apply_dcvs(inst);
 	}
 	inst->power.curr_freq = inst->power.min_freq;
@@ -522,6 +498,8 @@ int msm_vidc_scale_clocks(struct msm_vidc_inst *inst)
 int msm_vidc_scale_power(struct msm_vidc_inst *inst, bool scale_buses)
 {
 	struct msm_vidc_core *core;
+	struct msm_vidc_buffer *vbuf;
+	u32 data_size = 0;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params %pK\n", __func__, inst);
@@ -534,6 +512,14 @@ int msm_vidc_scale_power(struct msm_vidc_inst *inst, bool scale_buses)
 		scale_buses = true;
 		inst->active = true;
 	}
+
+	list_for_each_entry(vbuf, &inst->buffers.input.list, list)
+		data_size = max(data_size, vbuf->data_size);
+	inst->max_input_data_size = data_size;
+
+	/* no pending inputs - skip scale power */
+	if (!inst->max_input_data_size)
+		return 0;
 
 	if (msm_vidc_scale_clocks(inst))
 		i_vpr_e(inst, "failed to scale clock\n");

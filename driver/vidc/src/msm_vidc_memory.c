@@ -13,6 +13,7 @@
 #include "msm_vidc_memory.h"
 #include "msm_vidc_debug.h"
 #include "msm_vidc_internal.h"
+#include "msm_vidc_driver.h"
 #include "msm_vidc_dt.h"
 #include "msm_vidc_core.h"
 
@@ -153,8 +154,8 @@ int msm_vidc_memory_map(struct msm_vidc_core *core, struct msm_vidc_map *map)
 	map->refcount++;
 
 	d_vpr_l(
-		"%s: type %d device_addr %#x refcount %d region %d\n",
-		__func__, map->type, map->device_addr, map->refcount, map->region);
+		"%s: type %11s, device_addr %#x, refcount %d, region %d\n",
+		__func__, buf_name(map->type), map->device_addr, map->refcount, map->region);
 
 	return 0;
 
@@ -188,8 +189,8 @@ int msm_vidc_memory_unmap(struct msm_vidc_core *core,
 		goto exit;
 
 	d_vpr_l(
-		"%s: type %d device_addr %#x refcount %d region %d\n",
-		__func__, map->type, map->device_addr, map->refcount, map->region);
+		"%s: type %11s, device_addr %#x, refcount %d, region %d\n",
+		__func__, buf_name(map->type), map->device_addr, map->refcount, map->region);
 
 	dma_buf_unmap_attachment(map->attach, map->table, DMA_BIDIRECTIONAL);
 	dma_buf_detach(map->dmabuf, map->attach);
@@ -281,8 +282,8 @@ int msm_vidc_memory_alloc(struct msm_vidc_core *core, struct msm_vidc_alloc *mem
 	}
 
 	d_vpr_h(
-		"%s: dmabuf = %pK, size = %d, kvaddr = %pK, buffer_type = %#x secure %d region %d\n",
-		__func__, mem->dmabuf, mem->size, mem->kvaddr, mem->type,
+		"%s: dmabuf %pK, size %d, kvaddr %pK, buffer_type %s, secure %d, region %d\n",
+		__func__, mem->dmabuf, mem->size, mem->kvaddr, buf_name(mem->type),
 		mem->secure, mem->region);
 	return 0;
 
@@ -301,8 +302,9 @@ int msm_vidc_memory_free(struct msm_vidc_core *core, struct msm_vidc_alloc *mem)
 	}
 
 	d_vpr_h(
-		"%s: dmabuf = %pK, size = %d, kvaddr = %pK, buffer_type = %#x\n",
-		__func__, mem->dmabuf, mem->size, mem->kvaddr, mem->type);
+		"%s: dmabuf %pK, size %d, kvaddr %pK, buffer_type %s, secure %d, region %d\n",
+		__func__, mem->dmabuf, mem->size, mem->kvaddr, buf_name(mem->type),
+		mem->secure, mem->region);
 
 	if (mem->kvaddr) {
 		dma_buf_vunmap(mem->dmabuf, mem->kvaddr);

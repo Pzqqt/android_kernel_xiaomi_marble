@@ -816,24 +816,6 @@ static int msm_vdec_get_input_internal_buffers(struct msm_vidc_inst *inst)
 			return rc;
 	}
 
-	i_vpr_h(inst, "input internal buffer: min     size     reuse\n");
-	i_vpr_h(inst, "bin  buffer: %d      %d      %d\n",
-		inst->buffers.bin.min_count,
-		inst->buffers.bin.size,
-		inst->buffers.bin.reuse);
-	i_vpr_h(inst, "comv  buffer: %d      %d      %d\n",
-		inst->buffers.comv.min_count,
-		inst->buffers.comv.size,
-		inst->buffers.comv.reuse);
-	i_vpr_h(inst, "non_comv  buffer: %d      %d      %d\n",
-		inst->buffers.non_comv.min_count,
-		inst->buffers.non_comv.size,
-		inst->buffers.non_comv.reuse);
-	i_vpr_h(inst, "line buffer: %d      %d      %d\n",
-		inst->buffers.line.min_count,
-		inst->buffers.line.size,
-		inst->buffers.line.reuse);
-
 	return rc;
 }
 
@@ -849,12 +831,6 @@ static int msm_vdec_get_output_internal_buffers(struct msm_vidc_inst *inst)
 	rc = msm_vidc_get_internal_buffers(inst, MSM_VIDC_BUF_DPB);
 	if (rc)
 		return rc;
-
-	i_vpr_h(inst, "output internal buffer: min     size     reuse\n");
-	i_vpr_h(inst, "dpb  buffer: %d      %d      %d\n",
-		inst->buffers.dpb.min_count,
-		inst->buffers.dpb.size,
-		inst->buffers.dpb.reuse);
 
 	return rc;
 }
@@ -1832,14 +1808,18 @@ int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 		vb2_clear_last_buffer_dequeued(&inst->vb2q[OUTPUT_META_PORT]);
 		vb2_clear_last_buffer_dequeued(&inst->vb2q[OUTPUT_PORT]);
 
+		rc = msm_vidc_state_change_start(inst);
+		if (rc)
+			return rc;
+
 		/* tune power features */
 		inst->decode_batch.enable = msm_vidc_allow_decode_batch(inst);
 		msm_vidc_allow_dcvs(inst);
 		msm_vidc_power_data_reset(inst);
 
-		rc = msm_vidc_state_change_start(inst);
-		if (rc)
-			return rc;
+		/* print final buffer counts & size details */
+		msm_vidc_print_buffer_info(inst);
+
 		rc = venus_hfi_session_command(inst,
 				HFI_CMD_RESUME,
 				port,
