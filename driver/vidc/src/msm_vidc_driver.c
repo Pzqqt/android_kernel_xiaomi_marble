@@ -2403,11 +2403,9 @@ int msm_vidc_create_internal_buffer(struct msm_vidc_inst *inst,
 	if (!mappings)
 		return -EINVAL;
 
-	if (!buffers->size) {
-		i_vpr_e(inst, "%s: invalid buffer %#x\n",
-			__func__, buffer_type);
-		return -EINVAL;
-	}
+	if (!buffers->size)
+		return 0;
+
 	buffer = kzalloc(sizeof(struct msm_vidc_buffer), GFP_KERNEL);
 	if (!buffer) {
 		i_vpr_e(inst, "%s: buf alloc failed\n", __func__);
