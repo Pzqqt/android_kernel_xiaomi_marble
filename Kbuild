@@ -55,6 +55,29 @@ ifeq ($(CONFIG_QCACLD_WLAN_LFR3), y)
 CONFIG_CM_ENABLE := y
 endif
 
+# KERNEL_SUPPORTS_NESTED_COMPOSITES := y is used to enable nested
+# composite support. The nested composite support is available in some
+# MSM kernels, and is available in all GKI kernels beginning with
+# 5.10.20, but unfortunately is not available in any upstream kernel.
+#
+# When the feature is present in an MSM kernel, the flag is explicitly
+# set in the kernel sources.  When a GKI kernel is used, there isn't a
+# flag set in the sources, so set the flag here if we are building
+# with GKI kernel 5.10.20 or greater
+KERNEL_VERSION = $(shell echo $$(( ( $1 << 16 ) + ( $2 << 8 ) + $3 )))
+LINUX_CODE := $(call KERNEL_VERSION,$(VERSION),$(PATCHLEVEL),$(SUBLEVEL))
+COMPOSITE_CODE := 330260 # hardcoded $(call KERNEL_VERSION,5,10,20)
+ifeq ($(KERNEL_SUPPORTS_NESTED_COMPOSITES),)
+  #flag is not explicitly present
+  ifneq ($(findstring gki,$(CONFIG_LOCALVERSION)),)
+    # GKI kernel
+    ifeq ($(shell test $(LINUX_CODE) -ge $(COMPOSITE_CODE); echo $$?),0)
+      # version >= 5.10.20
+      KERNEL_SUPPORTS_NESTED_COMPOSITES := y
+    endif
+  endif
+endif
+
 OBJS :=
 OBJS_DIRS :=
 
