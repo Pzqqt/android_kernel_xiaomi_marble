@@ -54,11 +54,18 @@ struct dp_debug_private {
 static int dp_debug_sim_hpd_cb(void *arg, bool hpd, bool hpd_irq)
 {
 	struct dp_debug_private *debug = arg;
+	int vdo = 0;
 
-	if (hpd_irq)
-		return debug->hpd->simulate_attention(debug->hpd, 0);
-	else
+	if (hpd_irq) {
+		vdo |= BIT(7);
+
+		if (hpd)
+			vdo |= BIT(8);
+
+		return debug->hpd->simulate_attention(debug->hpd, vdo);
+	} else {
 		return debug->hpd->simulate_connect(debug->hpd, hpd);
+	}
 }
 
 static int dp_debug_attach_sim_bridge(struct dp_debug_private *debug)

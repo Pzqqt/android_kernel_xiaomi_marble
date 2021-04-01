@@ -341,7 +341,7 @@ static void dp_sim_host_hpd_irq(void *host_dev)
 	struct dp_sim_device *sim_dev = host_dev;
 
 	if (sim_dev->hpd_cb)
-		sim_dev->hpd_cb(sim_dev->host_dev, false, true);
+		sim_dev->hpd_cb(sim_dev->host_dev, true, true);
 }
 
 int dp_sim_set_sim_mode(struct dp_aux_bridge *bridge, u32 sim_mode)
