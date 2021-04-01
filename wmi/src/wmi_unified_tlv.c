@@ -2456,6 +2456,24 @@ static QDF_STATUS send_beacon_tmpl_send_cmd_tlv(wmi_unified_t wmi_handle,
 	return 0;
 }
 
+#ifdef WLAN_FEATURE_11BE
+static inline void copy_peer_flags_tlv_11be(
+			wmi_peer_assoc_complete_cmd_fixed_param * cmd,
+			struct peer_assoc_params *param)
+{
+	if (param->bw_320)
+		cmd->peer_flags_ext |= WMI_PEER_EXT_320MHZ;
+	if (param->eht_flag)
+		cmd->peer_flags_ext |= WMI_PEER_EXT_EHT;
+}
+#else
+static inline void copy_peer_flags_tlv_11be(
+			wmi_peer_assoc_complete_cmd_fixed_param * cmd,
+			struct peer_assoc_params *param)
+{
+}
+#endif
+
 static inline void copy_peer_flags_tlv(
 			wmi_peer_assoc_complete_cmd_fixed_param * cmd,
 			struct peer_assoc_params *param)
@@ -2483,6 +2501,8 @@ static inline void copy_peer_flags_tlv(
 			cmd->peer_flags |= WMI_PEER_80MHZ;
 		if (param->bw_160)
 			cmd->peer_flags |= WMI_PEER_160MHZ;
+
+		copy_peer_flags_tlv_11be(cmd, param);
 
 		/* Typically if STBC is enabled for VHT it should be enabled
 		 * for HT as well
@@ -2559,6 +2579,85 @@ static inline void copy_peer_mac_addr_tlv(
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(param->peer_mac, &cmd->peer_macaddr);
 }
 
+#ifdef WLAN_FEATURE_11BE
+static inline void update_peer_flags_tlv_ehtinfo(
+			wmi_peer_assoc_complete_cmd_fixed_param * cmd,
+			struct peer_assoc_params *param, uint8_t *buf_ptr)
+{
+	wmi_he_rate_set *eht_mcs;
+	int i;
+
+	cmd->peer_eht_cap_info =
+		param->peer_eht_cap_macinfo[WMI_HOST_EHTCAP_MAC_WORD1];
+	cmd->peer_eht_cap_info_ext =
+		param->peer_eht_cap_macinfo[WMI_HOST_EHTCAP_MAC_WORD2];
+	cmd->peer_eht_ops = param->peer_eht_ops;
+	qdf_mem_copy(&cmd->peer_eht_cap_phy, &param->peer_eht_cap_phyinfo,
+		     sizeof(param->peer_eht_cap_phyinfo));
+
+	cmd->peer_eht_num_mcs = param->peer_eht_mcs_count;
+
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       (param->peer_eht_mcs_count * sizeof(wmi_he_rate_set)));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	/* Loop through the EHT rate set */
+	for (i = 0; i < param->peer_eht_mcs_count; i++) {
+		eht_mcs = (wmi_he_rate_set *)buf_ptr;
+		WMITLV_SET_HDR(eht_mcs, WMITLV_TAG_STRUC_wmi_he_rate_set,
+			       WMITLV_GET_STRUCT_TLVLEN(wmi_he_rate_set));
+
+		eht_mcs->rx_mcs_set = param->peer_eht_rx_mcs_set[i];
+		eht_mcs->tx_mcs_set = param->peer_eht_tx_mcs_set[i];
+		wmi_debug("EHT idx %d RxMCSmap %x TxMCSmap %x ",
+			  i, eht_mcs->rx_mcs_set, eht_mcs->tx_mcs_set);
+		buf_ptr += sizeof(wmi_he_rate_set);
+	}
+
+	if ((param->eht_flag) && (param->peer_eht_mcs_count > 1) &&
+	    (param->peer_eht_rx_mcs_set[WMI_HOST_EHT_TXRX_MCS_NSS_IDX_160]
+	     == WMI_HOST_EHT_INVALID_MCSNSSMAP ||
+	     param->peer_eht_tx_mcs_set[WMI_HOST_EHT_TXRX_MCS_NSS_IDX_160]
+	     == WMI_HOST_HE_INVALID_MCSNSSMAP)) {
+		wmi_debug("param->peer_eht_tx_mcs_set[160MHz]=%x",
+			  param->peer_eht_tx_mcs_set
+			  [WMI_HOST_HE_TXRX_MCS_NSS_IDX_160]);
+		wmi_debug("param->peer_eht_rx_mcs_set[160MHz]=%x",
+			  param->peer_eht_rx_mcs_set
+			  [WMI_HOST_HE_TXRX_MCS_NSS_IDX_160]);
+		wmi_debug("peer_mac="QDF_MAC_ADDR_FMT,
+			  QDF_MAC_ADDR_REF(param->peer_mac));
+	}
+
+	wmi_debug("EHT cap_info %x ops %x EHT cap_info_ext %x EHT phy %x  %x  %x  ",
+		  cmd->peer_eht_cap_info,
+		  cmd->peer_eht_ops, cmd->peer_he_cap_info_ext,
+		  cmd->peer_eht_cap_phy[0], cmd->peer_he_cap_phy[1],
+		  cmd->peer_eht_cap_phy[2]);
+}
+#else
+static inline void update_peer_flags_tlv_ehtinfo(
+			wmi_peer_assoc_complete_cmd_fixed_param * cmd,
+			struct peer_assoc_params *param, uint8_t *buf_ptr)
+{
+}
+#endif
+
+#ifdef WLAN_FEATURE_11BE
+static
+uint32_t wmi_eht_rate_set_len(struct peer_assoc_params *param)
+{
+	return (sizeof(wmi_he_rate_set) * param->peer_eht_mcs_count
+		+ WMI_TLV_HDR_SIZE);
+}
+#else
+static
+uint32_t wmi_eht_rate_set_len(struct peer_assoc_params *param)
+{
+	return 0;
+}
+#endif
+
 /**
  *  send_peer_assoc_cmd_tlv() - WMI peer assoc function
  *  @param wmi_handle      : handle to WMI.
@@ -2590,7 +2689,8 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 		(peer_ht_rates_align * sizeof(uint8_t)) +
 		sizeof(wmi_vht_rate_set) +
 		(sizeof(wmi_he_rate_set) * param->peer_he_mcs_count
-		+ WMI_TLV_HDR_SIZE);
+		+ WMI_TLV_HDR_SIZE)
+		+ wmi_eht_rate_set_len(param);
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf)
@@ -2726,6 +2826,8 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 		 cmd->peer_he_cap_phy[0], cmd->peer_he_cap_phy[1],
 		 cmd->peer_he_cap_phy[2],
 		 cmd->peer_bw_rxnss_override);
+
+	update_peer_flags_tlv_ehtinfo(cmd, param, buf_ptr);
 
 	wmi_mtrace(WMI_PEER_ASSOC_CMDID, cmd->vdev_id, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,

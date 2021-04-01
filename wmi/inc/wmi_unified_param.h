@@ -1027,6 +1027,7 @@ typedef struct {
  * @bw_40: 40 capabale
  * @bw_80: 80 capabale
  * @bw_160: 160 capabale
+ * @bw_320: 320 capabale
  * @stbc_flag: STBC flag
  * @ldpc_flag: LDPC flag
  * @static_mimops_flag: statis MIMO PS flags
@@ -1041,6 +1042,7 @@ typedef struct {
  * @amsdu_disable: AMSDU disble
  * @peer_mac: Peer mac address
  * @he_flag: HE flags
+ * @eht_flag: EHT flags
  * @twt_requester: TWT Requester Support bit in Extended Capabilities element
  * @twt_responder: TWT Responder Support bit in Extended Capabilities element
  * @peer_he_cap_macinfo: Peer HE Cap MAC info
@@ -1051,6 +1053,12 @@ typedef struct {
  * @peer_he_mcs_count: Peer HE MCS TX/RX MAP count
  * @peer_he_rx_mcs_set: Peer HE RX MCS MAP
  * @peer_he_tx_mcs_set: Peer HE TX MCS MAP
+ * @peer_eht_cap_macinfo: Peer EHT Cap MAC info
+ * @peer_eht_ops: Peer EHT operation info
+ * @peer_eht_cap_phyinfo: Peer EHT Cap PHY info
+ * @peer_eht_mcs_count: Peer EHT MCS TX/RX MAP count
+ * @peer_eht_rx_mcs_set: Peer EHT RX MCS MAP
+ * @peer_eht_tx_mcs_set: Peer EHT TX MCS MAP
  * @peer_ppet: Peer HE PPET info
  * @peer_bss_max_idle_option: Peer BSS Max Idle option update
  * @akm: AKM info
@@ -1087,6 +1095,9 @@ struct peer_assoc_params {
 		 bw_40:1,
 		 bw_80:1,
 		 bw_160:1,
+#ifdef WLAN_FEATURE_11BE
+		 bw_320:1,
+#endif
 		 stbc_flag:1,
 		 ldpc_flag:1,
 		 static_mimops_flag:1,
@@ -1104,6 +1115,9 @@ struct peer_assoc_params {
 	/* Use common structure */
 	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
 	bool he_flag;
+#ifdef WLAN_FEATURE_11BE
+	bool eht_flag;
+#endif
 	bool twt_requester;
 	bool twt_responder;
 	uint32_t peer_he_cap_macinfo[WMI_HOST_MAX_HECAP_MAC_SIZE];
@@ -1114,6 +1128,14 @@ struct peer_assoc_params {
 	uint32_t peer_he_mcs_count;
 	uint32_t peer_he_rx_mcs_set[WMI_HOST_MAX_HE_RATE_SET];
 	uint32_t peer_he_tx_mcs_set[WMI_HOST_MAX_HE_RATE_SET];
+#ifdef WLAN_FEATURE_11BE
+	uint32_t peer_eht_cap_macinfo[WMI_HOST_MAX_HECAP_MAC_SIZE];
+	uint32_t peer_eht_ops;
+	uint32_t peer_eht_cap_phyinfo[WMI_HOST_MAX_HECAP_PHY_SIZE];
+	uint32_t peer_eht_mcs_count;
+	uint32_t peer_eht_rx_mcs_set[WMI_HOST_MAX_EHT_RATE_SET];
+	uint32_t peer_eht_tx_mcs_set[WMI_HOST_MAX_EHT_RATE_SET];
+#endif
 	struct wmi_host_ppe_threshold peer_ppet;
 	u_int8_t peer_bsscolor_rept_info;
 	uint32_t peer_bss_max_idle_option;
