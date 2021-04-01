@@ -100,15 +100,18 @@ static QDF_STATUS __dp_ipa_handle_buf_smmu_mapping(struct dp_soc *soc,
 						   bool create)
 {
 	qdf_mem_info_t mem_map_table = {0};
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	qdf_update_mem_map_table(soc->osdev, &mem_map_table,
 				 qdf_nbuf_get_frag_paddr(nbuf, 0),
 				 size);
 
 	if (create)
-		return qdf_ipa_wdi_create_smmu_mapping(1, &mem_map_table);
+		ret = qdf_ipa_wdi_create_smmu_mapping(1, &mem_map_table);
 	else
-		return qdf_ipa_wdi_release_smmu_mapping(1, &mem_map_table);
+		ret = qdf_ipa_wdi_release_smmu_mapping(1, &mem_map_table);
+	qdf_assert_always(!ret);
+	return ret;
 }
 
 QDF_STATUS dp_ipa_handle_rx_buf_smmu_mapping(struct dp_soc *soc,
@@ -178,9 +181,8 @@ static QDF_STATUS __dp_ipa_tx_buf_smmu_mapping(
 		if (!nbuf)
 			continue;
 		buf_len = qdf_nbuf_get_data_len(nbuf);
-		ret = __dp_ipa_handle_buf_smmu_mapping(
+		return __dp_ipa_handle_buf_smmu_mapping(
 				soc, nbuf, buf_len, create);
-		qdf_assert_always(!ret);
 	}
 
 	return ret;
@@ -198,12 +200,13 @@ static QDF_STATUS dp_ipa_handle_rx_buf_pool_smmu_mapping(struct dp_soc *soc,
 	union dp_rx_desc_list_elem_t *rx_desc_elem;
 	struct dp_rx_desc *rx_desc;
 	qdf_nbuf_t nbuf;
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	if (!qdf_ipa_is_ready())
-		return QDF_STATUS_SUCCESS;
+		return ret;
 
 	if (!qdf_mem_smmu_s1_enabled(soc->osdev))
-		return QDF_STATUS_SUCCESS;
+		return ret;
 
 	pdev_id = pdev->pdev_id;
 	rx_pool = &soc->rx_desc_buf[pdev_id];
@@ -235,12 +238,12 @@ static QDF_STATUS dp_ipa_handle_rx_buf_pool_smmu_mapping(struct dp_soc *soc,
 		}
 		qdf_nbuf_set_rx_ipa_smmu_map(nbuf, create);
 
-		__dp_ipa_handle_buf_smmu_mapping(soc, nbuf,
-						 rx_pool->buf_size, create);
+		ret = __dp_ipa_handle_buf_smmu_mapping(
+				soc, nbuf, rx_pool->buf_size, create);
 	}
 	qdf_spin_unlock_bh(&rx_pool->lock);
 
-	return QDF_STATUS_SUCCESS;
+	return ret;
 }
 #else
 static QDF_STATUS dp_ipa_handle_rx_buf_pool_smmu_mapping(struct dp_soc *soc,
