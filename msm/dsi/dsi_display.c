@@ -6931,12 +6931,12 @@ int dsi_display_get_modes(struct dsi_display *display,
 			}
 
 			memcpy(sub_mode, &display_mode, sizeof(display_mode));
-			sub_mode->mode_idx = array_idx;
 			array_idx++;
 
 			if (!dfps_caps.dfps_support || !support_video_mode)
 				continue;
 
+			sub_mode->mode_idx += (array_idx - 1);
 			curr_refresh_rate = sub_mode->timing.refresh_rate;
 			sub_mode->timing.refresh_rate = dfps_caps.dfps_list[i];
 
