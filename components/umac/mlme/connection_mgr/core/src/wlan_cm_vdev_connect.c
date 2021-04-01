@@ -32,6 +32,7 @@
 #include "wlan_scan_api.h"
 #include "wlan_logging_sock_svc.h"
 #include "cfg_ucfg_api.h"
+#include "wlan_roam_debug.h"
 
 #ifdef WLAN_FEATURE_FILS_SK
 void cm_update_hlp_info(struct wlan_objmgr_vdev *vdev,
@@ -1141,6 +1142,10 @@ cm_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 
 	mlme_debug(CM_PREFIX_FMT "HT cap %x",
 		   CM_PREFIX_REF(req->vdev_id, req->cm_id), req->ht_caps);
+	wlan_rec_conn_info(req->vdev_id, DEBUG_CONN_CONNECTING,
+			   req->bss->entry->bssid.bytes,
+			   req->bss->entry->neg_sec_info.key_mgmt,
+			   req->bss->entry->channel.chan_freq);
 	if (mlme_obj->cfg.obss_ht40.is_override_ht20_40_24g &&
 	    !(req->ht_caps & WLAN_HTCAP_C_CHWIDTH40))
 		join_req->force_24ghz_in_ht20 = true;

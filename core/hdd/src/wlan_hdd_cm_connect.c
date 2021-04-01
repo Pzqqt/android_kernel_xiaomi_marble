@@ -44,6 +44,7 @@
 #include "wlan_hdd_scan.h"
 #include <enet.h>
 #include <wlan_mlme_twt_ucfg_api.h>
+#include "wlan_roam_debug.h"
 
 #ifdef FEATURE_CM_ENABLE
 bool hdd_cm_is_vdev_associated(struct hdd_adapter *adapter)
@@ -415,6 +416,19 @@ int wlan_hdd_cm_connect(struct wiphy *wiphy,
 	return status;
 }
 
+static void hdd_cm_rec_connect_info(struct hdd_adapter *adapter,
+				    struct wlan_cm_connect_resp *rsp)
+{
+	if (rsp->is_reassoc)
+		wlan_rec_conn_info(rsp->vdev_id, DEBUG_CONN_ROAMED_IND,
+				   rsp->bssid.bytes, rsp->cm_id, 0);
+	else
+		wlan_rec_conn_info(rsp->vdev_id, DEBUG_CONN_CONNECT_RESULT,
+				   rsp->bssid.bytes, rsp->cm_id << 16 |
+				   rsp->reason,
+				   rsp->status_code);
+}
+
 static void
 hdd_cm_connect_failure_pre_user_update(struct wlan_objmgr_vdev *vdev,
 				       struct wlan_cm_connect_resp *rsp)
@@ -444,7 +458,7 @@ hdd_cm_connect_failure_pre_user_update(struct wlan_objmgr_vdev *vdev,
 	hdd_cm_save_connect_status(adapter, rsp->status_code);
 	hdd_conn_remove_connect_info(hdd_sta_ctx);
 	hdd_cm_update_rssi_snr_by_bssid(adapter);
-
+	hdd_cm_rec_connect_info(adapter, rsp);
 	hdd_debug("Invoking packetdump deregistration API");
 	wlan_deregister_txrx_packetdump(OL_TXRX_PDEV_ID);
 }
@@ -810,6 +824,7 @@ hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
 
 	hdd_init_scan_reject_params(hdd_ctx);
 	hdd_start_tsf_sync(adapter);
+	hdd_cm_rec_connect_info(adapter, rsp);
 
 	hdd_cm_save_connect_info(adapter, rsp);
 

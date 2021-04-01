@@ -613,6 +613,8 @@ cm_fw_roam_sync_propagation(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		status = QDF_STATUS_E_FAILURE;
 		goto error;
 	}
+	wlan_rec_conn_info(vdev_id, DEBUG_CONN_ROAMING,
+			   roam_synch_data->bssid.bytes, 0, 0);
 
 	cm_id = roam_req->cm_id;
 	rsp = qdf_mem_malloc(sizeof(struct cm_vdev_join_rsp));
