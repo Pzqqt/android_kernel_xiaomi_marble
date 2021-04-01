@@ -106,6 +106,7 @@ static inline bool is_output_meta_enabled(struct msm_vidc_inst *inst)
 			inst->capabilities->cap[META_SEI_MASTERING_DISP].value ||
 			inst->capabilities->cap[META_SEI_CLL].value ||
 			inst->capabilities->cap[META_BUF_TAG].value ||
+			inst->capabilities->cap[META_DPB_TAG_LIST].value ||
 			inst->capabilities->cap[META_SUBFRAME_OUTPUT].value);
 	} else if (is_encode_session(inst)) {
 		enabled = inst->capabilities->cap[META_BUF_TAG].value ?
@@ -318,6 +319,7 @@ struct msm_vidc_inst *get_inst(struct msm_vidc_core *core,
 void put_inst(struct msm_vidc_inst *inst);
 bool msm_vidc_allow_s_fmt(struct msm_vidc_inst *inst, u32 type);
 bool msm_vidc_allow_s_ctrl(struct msm_vidc_inst *inst, u32 id);
+bool msm_vidc_allow_metadata(struct msm_vidc_inst *inst, u32 cap_id);
 bool msm_vidc_allow_reqbufs(struct msm_vidc_inst *inst, u32 type);
 enum msm_vidc_allow msm_vidc_allow_stop(struct msm_vidc_inst *inst);
 bool msm_vidc_allow_start(struct msm_vidc_inst *inst);

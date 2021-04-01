@@ -171,6 +171,7 @@ enum v4l2_mpeg_vidc_metadata {
 	METADATA_SUBFRAME_OUTPUT              = 0x0300016d,
 	METADATA_ENC_QP_METADATA              = 0x0300016e,
 	METADATA_ROI_INFO                     = 0x03000173,
+	METADATA_DPB_TAG_LIST                 = 0x03000179,
 };
 enum meta_interlace_info {
 	META_INTERLACE_INFO_NONE                            = 0x00000000,
