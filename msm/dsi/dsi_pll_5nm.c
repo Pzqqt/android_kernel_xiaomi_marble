@@ -240,8 +240,6 @@ static void dsi_pll_setup_config(struct dsi_pll_5nm *pll,
 		if (rsc->ssc_ppm)
 			config->ssc_offset = rsc->ssc_ppm;
 	}
-
-	dsi_pll_config_slave(rsc);
 }
 
 static void dsi_pll_calc_dec_frac(struct dsi_pll_5nm *pll,
@@ -778,9 +776,9 @@ static unsigned long dsi_pll_byteclk_recalc_rate(struct clk_hw *hw,
 	byte_rate = div_u64(vco_rate, phy_post_div);
 
 	if (pll->type == DSI_PHY_TYPE_DPHY)
-		byte_rate = div_u64(vco_rate, 8);
+		byte_rate = div_u64(byte_rate, 8);
 	else
-		byte_rate = div_u64(vco_rate, 7);
+		byte_rate = div_u64(byte_rate, 7);
 
 	return byte_rate;
 }
@@ -917,6 +915,8 @@ int dsi_pll_clock_register_5nm(struct platform_device *pdev,
 	pll_res->vco_delay = VCO_DELAY_USEC;
 	pll_res->vco_min_rate = 600000000;
 	pll_res->vco_ref_clk_rate = 19200000UL;
+
+	dsi_pll_setup_config(pll_res->priv, pll_res);
 
 	clk_data = devm_kzalloc(&pdev->dev, sizeof(struct clk_onecell_data),
 					GFP_KERNEL);
@@ -1076,9 +1076,6 @@ static int dsi_pll_5nm_vco_set_rate(struct dsi_pll_resource *pll_res)
 {
 	struct dsi_pll_5nm *pll;
 
-	if (pll_res->pll_on)
-		return 0;
-
 	pll = pll_res->priv;
 	if (!pll) {
 		DSI_PLL_ERR(pll_res, "pll configuration not found\n");
@@ -1091,7 +1088,7 @@ static int dsi_pll_5nm_vco_set_rate(struct dsi_pll_resource *pll_res)
 
 	dsi_pll_detect_phy_mode(pll, pll_res);
 
-	dsi_pll_setup_config(pll, pll_res);
+	dsi_pll_config_slave(pll_res);
 
 	dsi_pll_calc_dec_frac(pll, pll_res);
 
@@ -1364,7 +1361,7 @@ static int dsi_pll_5nm_dynamic_clk_vco_set_rate(struct dsi_pll_resource *rsc)
 
 	rsc->vco_current_rate = rate;
 
-	dsi_pll_setup_config(pll, rsc);
+	dsi_pll_config_slave(rsc);
 
 	dsi_pll_calc_dec_frac(pll, rsc);
 
@@ -1394,8 +1391,6 @@ static int dsi_pll_5nm_enable(struct dsi_pll_resource *rsc)
 		goto error;
 	}
 
-	rsc->pll_on = true;
-
 	/*
 	 * assert power on reset for PHY digital in case the PLL is
 	 * enabled after CX of analog domain power collapse. This needs
@@ -1419,11 +1414,6 @@ static int dsi_pll_5nm_disable(struct dsi_pll_resource *rsc)
 {
 	int rc = 0;
 
-	if (!rsc->pll_on) {
-		DSI_PLL_ERR(rsc, "is not enabled\n");
-		return -EINVAL;
-	}
-
 	DSI_PLL_DBG(rsc, "stop PLL\n");
 
 	/*
@@ -1442,7 +1432,6 @@ static int dsi_pll_5nm_disable(struct dsi_pll_resource *rsc)
 	}
 	/* flush, ensure all register writes are done*/
 	wmb();
-	rsc->pll_on = false;
 
 	return rc;
 }

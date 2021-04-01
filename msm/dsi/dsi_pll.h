@@ -136,12 +136,6 @@ struct dsi_pll_resource {
 
 
 	/*
-	 * Certain plls' do not allow vco rate update if it is on. Keep track of
-	 * status for them to turn on/off after set rate success.
-	 */
-	bool		pll_on;
-
-	/*
 	 * caching the pll trim codes in the case of dynamic refresh
 	 */
 	int		cache_pll_trim_codes[3];
