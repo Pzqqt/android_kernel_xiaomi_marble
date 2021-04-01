@@ -287,21 +287,6 @@ error:
 }
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
-static const char *cm_diag_get_ch_width_str(uint8_t ch_width)
-{
-	switch (ch_width) {
-	CASE_RETURN_STRING(BW_20MHZ);
-	CASE_RETURN_STRING(BW_40MHZ);
-	CASE_RETURN_STRING(BW_80MHZ);
-	CASE_RETURN_STRING(BW_160MHZ);
-	CASE_RETURN_STRING(BW_80P80MHZ);
-	CASE_RETURN_STRING(BW_5MHZ);
-	CASE_RETURN_STRING(BW_10MHZ);
-	default:
-		return "Unknown";
-	}
-}
-
 #ifdef WLAN_FEATURE_11BE
 static const
 char *cm_diag_get_eht_dot11_mode_str(enum mgmt_dot11_mode dot11mode)
@@ -314,13 +299,42 @@ char *cm_diag_get_eht_dot11_mode_str(enum mgmt_dot11_mode dot11mode)
 		return "Unknown";
 	}
 }
+
+static const char *cm_diag_get_320_ch_width_str(uint8_t ch_width)
+{
+	switch (ch_width) {
+	CASE_RETURN_STRING(BW_320MHZ);
+	default:
+		return "Unknown";
+	}
+}
 #else
 static const
 char *cm_diag_get_eht_dot11_mode_str(enum mgmt_dot11_mode dot11mode)
 {
 	return "Unknown";
 }
+
+static const char *cm_diag_get_320_ch_width_str(uint8_t ch_width)
+{
+	return "Unknown";
+}
 #endif
+
+static const char *cm_diag_get_ch_width_str(uint8_t ch_width)
+{
+	switch (ch_width) {
+	CASE_RETURN_STRING(BW_20MHZ);
+	CASE_RETURN_STRING(BW_40MHZ);
+	CASE_RETURN_STRING(BW_80MHZ);
+	CASE_RETURN_STRING(BW_160MHZ);
+	CASE_RETURN_STRING(BW_80P80MHZ);
+	CASE_RETURN_STRING(BW_5MHZ);
+	CASE_RETURN_STRING(BW_10MHZ);
+	default:
+		return cm_diag_get_320_ch_width_str(ch_width);
+	}
+}
 
 static const char *cm_diag_get_dot11_mode_str(enum mgmt_dot11_mode dot11mode)
 {
@@ -428,11 +442,26 @@ cm_diag_eht_dot11_mode_from_phy_mode(enum wlan_phymode phymode)
 	else
 		return DOT11_MODE_MAX;
 }
+
+static enum mgmt_ch_width
+cm_get_diag_eht_320_ch_width(enum phy_ch_width ch_width)
+{
+	if (ch_width == CH_WIDTH_320MHZ)
+		return BW_320MHZ;
+	else
+		return BW_MAX;
+}
 #else
 static enum mgmt_dot11_mode
 cm_diag_eht_dot11_mode_from_phy_mode(enum wlan_phymode phymode)
 {
 	return DOT11_MODE_MAX;
+}
+
+static enum mgmt_ch_width
+cm_get_diag_eht_320_ch_width(enum phy_ch_width ch_width)
+{
+	return BW_MAX;
 }
 #endif
 
@@ -480,7 +509,7 @@ static enum mgmt_ch_width cm_get_diag_ch_width(enum phy_ch_width ch_width)
 	case CH_WIDTH_10MHZ:
 		return BW_10MHZ;
 	default:
-		return BW_MAX;
+		return cm_get_diag_eht_320_ch_width(ch_width);
 	}
 }
 
