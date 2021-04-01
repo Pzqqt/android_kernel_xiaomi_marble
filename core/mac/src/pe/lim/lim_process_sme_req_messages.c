@@ -3460,6 +3460,8 @@ lim_cm_handle_join_req(struct cm_vdev_join_req *req)
 	if (!mac_ctx)
 		return QDF_STATUS_E_INVAL;
 
+	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_JOIN_REQ_EVENT, NULL, 0, 0);
+
 	pe_session = lim_cm_create_session(mac_ctx, req);
 
 	if (!pe_session)
@@ -4374,6 +4376,7 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 	}
 	qdf_mem_copy(reassoc_req, in_req, in_req->length);
 
+#ifndef FEATURE_CM_ENABLE
 	if (!lim_is_sme_join_req_valid(mac_ctx, reassoc_req)) {
 		/*
 		 * Received invalid eWNI_SME_REASSOC_REQ
@@ -4383,7 +4386,7 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 		ret_code = eSIR_SME_INVALID_PARAMETERS;
 		goto end;
 	}
-
+#endif
 	session_entry = pe_find_session_by_bssid(mac_ctx,
 			reassoc_req->bssDescription.bssId,
 			&session_id);
