@@ -111,11 +111,12 @@ static u32 msm_vidc_get_port_info(struct msm_vidc_inst *inst,
 
 	if (capability->cap[cap_id].flags & CAP_FLAG_INPUT_PORT &&
 		capability->cap[cap_id].flags & CAP_FLAG_OUTPUT_PORT) {
-		i_vpr_e(inst,
-			"%s: both ports enabled. Default port set: BITSTREAM\n",
-			__func__);
-		return HFI_PORT_BITSTREAM;
+		if (inst->vb2q[OUTPUT_PORT].streaming)
+			return get_hfi_port(inst, INPUT_PORT);
+		else
+			return get_hfi_port(inst, OUTPUT_PORT);
 	}
+
 	if (capability->cap[cap_id].flags & CAP_FLAG_INPUT_PORT)
 		return get_hfi_port(inst, INPUT_PORT);
 	else if (capability->cap[cap_id].flags & CAP_FLAG_OUTPUT_PORT)
@@ -149,9 +150,9 @@ static int msm_vidc_packetize_control(struct msm_vidc_inst *inst,
 {
 	int rc = 0;
 
-	i_vpr_l(inst,
-		"%s: hfi_id: %#x, value: %#x\n", func,
-		inst->capabilities->cap[cap_id].hfi_id,
+	i_vpr_h(inst,
+		"set cap: name: %24s, cap value: %#10x, hfi: %#10x\n",
+		cap_name(cap_id), inst->capabilities->cap[cap_id].value,
 		*(s64 *)hfi_val);
 
 	rc = venus_hfi_session_property(inst,
@@ -163,8 +164,8 @@ static int msm_vidc_packetize_control(struct msm_vidc_inst *inst,
 		sizeof(payload_size));
 	if (rc)
 		i_vpr_e(inst,
-			"%s: failed to set cap_id: %d to fw\n",
-			__func__, cap_id);
+			"%s: failed to set cap[%d] %s to fw\n",
+			__func__, cap_id, cap_name(cap_id));
 
 	return rc;
 }
@@ -199,8 +200,8 @@ static int msm_vidc_add_capid_to_list(struct msm_vidc_inst *inst,
 		list_for_each_entry(curr_node, &inst->firmware.list, list) {
 			if (curr_node->cap_id == cap_id) {
 				i_vpr_l(inst,
-					"%s: cap %d already present in FW_LIST\n",
-					__func__, cap_id);
+					"%s: cap[%d] %s already present in FW_LIST\n",
+					__func__, cap_id, cap_name(cap_id));
 				return 0;
 			}
 		}
@@ -294,8 +295,8 @@ static int msm_vidc_get_parent_value(struct msm_vidc_inst* inst,
 		}
 	} else {
 		i_vpr_e(inst,
-			"%s: missing parent %d for cap %d, please correct database\n",
-			func, parent, cap);
+			"%s: missing parent %d for cap[%d] %s, fix database\n",
+			func, parent, cap, cap_name(cap));
 		rc = -EINVAL;
 	}
 
@@ -312,8 +313,8 @@ static int msm_vidc_adjust_hevc_qp(struct msm_vidc_inst *inst,
 
 	if (!(inst->codec == MSM_VIDC_HEVC || inst->codec == MSM_VIDC_HEIC)) {
 		i_vpr_e(inst,
-			"%s: incorrect entry in database for cap %d. fix the database\n",
-			__func__, cap_id);
+			"%s: incorrect cap[%d] %s entry in database, fix database\n",
+			__func__, cap_id, cap_name(cap_id));
 		return -EINVAL;
 	}
 
@@ -394,8 +395,8 @@ static int msm_vidc_adjust_dynamic_property(struct msm_vidc_inst *inst,
 	 */
 	if (!(capability->cap[cap_id].flags & CAP_FLAG_DYNAMIC_ALLOWED)) {
 		i_vpr_e(inst,
-			"%s: dynamic setting of cap_id %d is not allowed\n",
-			__func__, cap_id);
+			"%s: dynamic setting of cap[%d] %s is not allowed\n",
+			__func__, cap_id, cap_name(cap_id));
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 		return -EINVAL;
 	}
@@ -406,8 +407,9 @@ static int msm_vidc_adjust_dynamic_property(struct msm_vidc_inst *inst,
 	 */
 	if (!ctrl && !capability->cap[cap_id].adjust) {
 		i_vpr_e(inst,
-			"%s: child cap %d must have ajdust function\n",
-			__func__, capability->cap[cap_id].cap);
+			"%s: child cap[%d] %s must have ajdust function\n",
+			__func__, capability->cap[cap_id].cap,
+			cap_name(capability->cap[cap_id].cap));
 		return -EINVAL;
 	}
 	prev_value = capability->cap[cap_id].value;
@@ -512,8 +514,8 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 			goto error;
 		}
 		i_vpr_h(inst,
-			"%s: cap idx %d, value %d min %d max %d step_or_mask %#x flags %#x v4l2_id %#x hfi_id %#x\n",
-			__func__, idx,
+			"%s: cap[%d] %24s, value %d min %d max %d step_or_mask %#x flags %#x v4l2_id %#x hfi_id %#x\n",
+			__func__, idx, cap_name(idx),
 			capability->cap[idx].value,
 			capability->cap[idx].min,
 			capability->cap[idx].max,
@@ -687,8 +689,8 @@ int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl)
 	if (inst->vb2q[OUTPUT_PORT].streaming &&
 		!(capability->cap[cap_id].flags & CAP_FLAG_DYNAMIC_ALLOWED)) {
 		i_vpr_e(inst,
-			"%s: dynamic setting of cap_id %d is not allowed\n",
-			__func__, cap_id);
+			"%s: dynamic setting of cap[%d] %s is not allowed\n",
+			__func__, cap_id, cap_name(cap_id));
 		return -EBUSY;
 	}
 
@@ -1584,11 +1586,10 @@ int msm_vidc_set_header_mode(void *instance,
 	if (hdr_metadata)
 		hfi_value |= HFI_SEQ_HEADER_METADATA;
 
-	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
-		inst->capabilities->cap[cap_id].value, hfi_value);
-
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32_ENUM,
 		&hfi_value, sizeof(u32), __func__);
+	if (rc)
+		return rc;
 
 	return rc;
 }
@@ -1616,11 +1617,10 @@ int msm_vidc_set_deblock_mode(void *instance,
 	alpha = inst->capabilities->cap[LF_ALPHA].value + lf_offset;
 	hfi_value = (alpha << 16) | (beta << 8) | lf_mode;
 
-	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
-		inst->capabilities->cap[cap_id].value, hfi_value);
-
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_32_PACKED,
 		&hfi_value, sizeof(u32), __func__);
+	if (rc)
+		return rc;
 
 	return rc;
 }
@@ -1647,11 +1647,10 @@ int msm_vidc_set_constant_quality(void *instance,
 
 	hfi_value = inst->capabilities->cap[cap_id].value;
 
-	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
-		inst->capabilities->cap[cap_id].value, hfi_value);
-
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
 		&hfi_value, sizeof(u32), __func__);
+	if (rc)
+		return rc;
 
 	return rc;
 }
@@ -1678,11 +1677,10 @@ int msm_vidc_set_vbr_related_properties(void *instance,
 
 	hfi_value = inst->capabilities->cap[cap_id].value;
 
-	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
-		inst->capabilities->cap[cap_id].value, hfi_value);
-
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
 		&hfi_value, sizeof(u32), __func__);
+	if (rc)
+		return rc;
 
 	return rc;
 }
@@ -1710,11 +1708,10 @@ int msm_vidc_set_cbr_related_properties(void *instance,
 
 	hfi_value = inst->capabilities->cap[cap_id].value;
 
-	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
-		inst->capabilities->cap[cap_id].value, hfi_value);
-
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
 		&hfi_value, sizeof(u32), __func__);
+	if (rc)
+		return rc;
 
 	return rc;
 }
@@ -1731,16 +1728,18 @@ int msm_vidc_set_use_and_mark_ltr(void *instance,
 		return -EINVAL;
 	}
 
-	if (!inst->capabilities->cap[LTR_COUNT].value)
+	if (!inst->capabilities->cap[LTR_COUNT].value) {
+		i_vpr_h(inst, "%s: ltr count is 0, cap %s is not set\n",
+			__func__, cap_name(cap_id));
 		return 0;
+	}
 
 	hfi_value = inst->capabilities->cap[cap_id].value;
 
-	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
-		inst->capabilities->cap[cap_id].value, hfi_value);
-
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
 		&hfi_value, sizeof(u32), __func__);
+	if (rc)
+		return rc;
 
 	return rc;
 }
@@ -1772,8 +1771,12 @@ int msm_vidc_set_min_qp(void *instance,
 		capability->cap[B_FRAME_MIN_QP].flags & CAP_FLAG_CLIENT_SET;
 
 	client_qp_enable = i_qp_enable | p_qp_enable << 1 | b_qp_enable << 2;
-	if (!client_qp_enable)
+	if (!client_qp_enable) {
+		i_vpr_h(inst,
+			"%s: client did not set min qp, cap %s is not set\n",
+			__func__, cap_name(cap_id));
 		return 0;
+	}
 
 	if (is_10bit_colorformat(capability->cap[PIX_FMTS].value))
 		offset = 12;
@@ -1795,11 +1798,10 @@ int msm_vidc_set_min_qp(void *instance,
 	hfi_value = i_frame_qp | p_frame_qp << 8 | b_frame_qp << 16 |
 		client_qp_enable << 24;
 
-	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
-		inst->capabilities->cap[cap_id].value, hfi_value);
-
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_32_PACKED,
 		&hfi_value, sizeof(u32), __func__);
+	if (rc)
+		return rc;
 
 	return rc;
 }
@@ -1831,8 +1833,12 @@ int msm_vidc_set_max_qp(void *instance,
 		capability->cap[B_FRAME_MIN_QP].flags & CAP_FLAG_CLIENT_SET;
 
 	client_qp_enable = i_qp_enable | p_qp_enable << 1 | b_qp_enable << 2;
-	if (!client_qp_enable)
+	if (!client_qp_enable) {
+		i_vpr_h(inst,
+			"%s: client did not set max qp, cap %s is not set\n",
+			__func__, cap_name(cap_id));
 		return 0;
+	}
 
 	if (is_10bit_colorformat(capability->cap[PIX_FMTS].value))
 		offset = 12;
@@ -1854,11 +1860,10 @@ int msm_vidc_set_max_qp(void *instance,
 	hfi_value = i_frame_qp | p_frame_qp << 8 | b_frame_qp << 16 |
 		client_qp_enable << 24;
 
-	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
-		inst->capabilities->cap[cap_id].value, hfi_value);
-
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_32_PACKED,
 		&hfi_value, sizeof(u32), __func__);
+	if (rc)
+		return rc;
 
 	return rc;
 }
@@ -1898,8 +1903,12 @@ int msm_vidc_set_frame_qp(void *instance,
 	}
 
 	client_qp_enable = i_qp_enable | p_qp_enable << 1 | b_qp_enable << 2;
-	if (!client_qp_enable)
+	if (!client_qp_enable) {
+		i_vpr_h(inst,
+			"%s: client did not set frame qp, cap %s is not set\n",
+			__func__, cap_name(cap_id));
 		return 0;
+	}
 
 	if (is_10bit_colorformat(capab->cap[PIX_FMTS].value))
 		offset = 12;
@@ -1911,11 +1920,10 @@ int msm_vidc_set_frame_qp(void *instance,
 	hfi_value = i_frame_qp | p_frame_qp << 8 | b_frame_qp << 16 |
 		client_qp_enable << 24;
 
-	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
-		inst->capabilities->cap[cap_id].value, hfi_value);
-
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_32_PACKED,
 		&hfi_value, sizeof(u32), __func__);
+	if (rc)
+		return rc;
 
 	return rc;
 }
@@ -1939,11 +1947,10 @@ int msm_vidc_set_req_sync_frame(void *instance,
 	else
 		hfi_value = HFI_SYNC_FRAME_REQUEST_WITHOUT_SEQ_HDR;
 
-	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
-		inst->capabilities->cap[cap_id].value, hfi_value);
-
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32_ENUM,
 		&hfi_value, sizeof(u32), __func__);
+	if (rc)
+		return rc;
 
 	return rc;
 }
@@ -1969,11 +1976,10 @@ int msm_vidc_set_chroma_qp_index_offset(void *instance,
 	chroma_qp = inst->capabilities->cap[cap_id].value + offset;
 	hfi_value = chroma_qp_offset_mode | chroma_qp << 8 | chroma_qp << 16 ;
 
-	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
-		inst->capabilities->cap[cap_id].value, hfi_value);
-
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_32_PACKED,
 		&hfi_value, sizeof(u32), __func__);
+	if (rc)
+		return rc;
 
 	return rc;
 }
@@ -1994,7 +2000,7 @@ int msm_vidc_set_slice_count(void* instance,
 	slice_mode = inst->capabilities->cap[SLICE_MODE].value;
 
 	if (slice_mode == V4L2_MPEG_VIDEO_MULTI_SLICE_MODE_SINGLE) {
-		i_vpr_l(inst, "%s: slice mode is: %u, ignore setting to fw\n",
+		i_vpr_h(inst, "%s: slice mode is: %u, ignore setting to fw\n",
 			__func__, slice_mode);
 		return 0;
 	}
@@ -2005,11 +2011,11 @@ int msm_vidc_set_slice_count(void* instance,
 		hfi_value = inst->capabilities->cap[SLICE_MAX_BYTES].value;
 		set_cap_id = SLICE_MAX_BYTES;
 	}
-	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
-		inst->capabilities->cap[cap_id].value, hfi_value);
 
 	rc = msm_vidc_packetize_control(inst, set_cap_id, HFI_PAYLOAD_U32,
 		&hfi_value, sizeof(u32), __func__);
+	if (rc)
+		return rc;
 
 	return rc;
 }
@@ -2033,11 +2039,11 @@ int msm_vidc_set_nal_length(void* instance,
 		if (rc)
 			return -EINVAL;
 	}
-	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
-		inst->capabilities->cap[cap_id].value, hfi_value);
 
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32_ENUM,
 		&hfi_value, sizeof(u32), __func__);
+	if (rc)
+		return rc;
 
 	return rc;
 }
@@ -2077,9 +2083,6 @@ int msm_vidc_set_layer_count_and_type(void *instance,
 	/* hfi baselayer starts from 1 */
 	hfi_layer_count = inst->capabilities->cap[ENH_LAYER_COUNT].value + 1;
 
-	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
-		inst->capabilities->cap[cap_id].value, hfi_layer_count);
-
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
 		&hfi_layer_count, sizeof(u32), __func__);
 	if (rc)
@@ -2111,11 +2114,11 @@ int msm_vidc_set_gop_size(void *instance,
 	}
 
 	hfi_value = inst->capabilities->cap[GOP_SIZE].value;
-	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
-		inst->capabilities->cap[cap_id].value, hfi_value);
 
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
 		&hfi_value, sizeof(u32), __func__);
+	if (rc)
+		return rc;
 
 	return rc;
 }
@@ -2181,12 +2184,10 @@ int msm_vidc_set_bitrate(void *instance,
 
 set_total_bitrate:
 	hfi_value = inst->capabilities->cap[BIT_RATE].value;
-
-	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
-		inst->capabilities->cap[cap_id].value, hfi_value);
-
 	rc = msm_vidc_packetize_control(inst, BIT_RATE, HFI_PAYLOAD_U32,
 			&hfi_value, sizeof(u32), __func__);
+	if (rc)
+		return rc;
 exit:
 	return rc;
 }
@@ -2205,11 +2206,10 @@ int msm_vidc_set_session_priority(void *instance,
 
 	hfi_value = (inst->capabilities->cap[cap_id].value * 2) + inst->priority_level;
 
-	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
-		inst->capabilities->cap[cap_id].value, hfi_value);
-
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
 		&hfi_value, sizeof(u32), __func__);
+	if (rc)
+		return rc;
 
 	return rc;
 }
@@ -2260,11 +2260,10 @@ int msm_vidc_set_q16(void *instance,
 
 	hfi_value = inst->capabilities->cap[cap_id].value;
 
-	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
-		inst->capabilities->cap[cap_id].value, hfi_value);
-
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_Q16,
 		&hfi_value, sizeof(u32), __func__);
+	if (rc)
+		return rc;
 
 	return rc;
 }
@@ -2288,11 +2287,11 @@ int msm_vidc_set_u32(void *instance,
 	} else {
 		hfi_value = inst->capabilities->cap[cap_id].value;
 	}
-	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
-		inst->capabilities->cap[cap_id].value, hfi_value);
 
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
 		&hfi_value, sizeof(u32), __func__);
+	if (rc)
+		return rc;
 
 	return rc;
 }
@@ -2313,11 +2312,10 @@ int msm_vidc_set_u32_enum(void *instance,
 	if (rc)
 		return -EINVAL;
 
-	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
-		inst->capabilities->cap[cap_id].value, hfi_value);
-
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32_ENUM,
 		&hfi_value, sizeof(u32), __func__);
+	if (rc)
+		return rc;
 
 	return rc;
 }
@@ -2335,58 +2333,10 @@ int msm_vidc_set_s32(void *instance,
 	}
 	hfi_value = inst->capabilities->cap[cap_id].value;
 
-	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
-		inst->capabilities->cap[cap_id].value, hfi_value);
-
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_S32,
 		&hfi_value, sizeof(s32), __func__);
-
-	return rc;
-}
-
-/* Please ignore this function for now. TO DO*/
-int msm_vidc_set_array(void *instance,
-	enum msm_vidc_inst_capability_type cap_id)
-{
-	int rc = 0;
-	struct msm_vidc_inst_capability *capability;
-	struct msm_vidc_core *core;
-
-	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
-
-	if (!inst || !inst->core || !inst->capabilities) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
-
-	capability = inst->capabilities;
-	core = (struct msm_vidc_core *)inst->core;
-
-	switch (cap_id) {
-	/*
-	 * Needed if any control needs to be packed into a structure
-	 * and sent for packetization.
-	 * payload types may be:
-	 * STRUCTURE, BLOB, STRING, PACKED, ARRAY,
-	 *
-	case BITRATE_MODE:
-		i_vpr_h(inst, "%s: %d\n", __func__, hfi_value);
-		hfi_create_packet(inst->packet, inst->packet_size,
-			offset,
-			capability->cap[cap_id].hfi_id,
-			HFI_HOST_FLAGS_NONE, HFI_PAYLOAD_ENUM,
-			HFI_PORT_NONE, core->packet_id++,
-			&capability->cap[PROFILE].value, sizeof(u32));
-		break;
-	}
-	*/
-	default:
-		i_vpr_e(inst,
-			"%s: Unknown cap id %d, cannot set to fw\n",
-			__func__, cap_id);
-		rc = -EINVAL;
-		break;
-	}
+	if (rc)
+		return rc;
 
 	return rc;
 }

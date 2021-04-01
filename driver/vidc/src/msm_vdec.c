@@ -588,14 +588,17 @@ static int msm_vdec_set_output_order(struct msm_vidc_inst *inst,
 	enum msm_vidc_port_type port)
 {
 	int rc = 0;
-	u32 output_order;
+	u32 output_order = 0;
 
 	if (port != INPUT_PORT) {
 		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
 		return -EINVAL;
 	}
 
-	output_order = inst->capabilities->cap[DISPLAY_DELAY_ENABLE].value;
+	if (inst->capabilities->cap[DISPLAY_DELAY_ENABLE].value &&
+		!inst->capabilities->cap[DISPLAY_DELAY].value)
+		output_order = 1;
+
 	i_vpr_h(inst, "%s: output order: %d", __func__, output_order);
 	rc = venus_hfi_session_property(inst,
 			HFI_PROP_DECODE_ORDER_OUTPUT,

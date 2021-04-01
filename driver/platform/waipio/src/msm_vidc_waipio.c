@@ -312,7 +312,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_BITRATE,
 		HFI_PROP_TOTAL_BITRATE,
-		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
+		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
+			CAP_FLAG_DYNAMIC_ALLOWED,
 		{ENH_LAYER_COUNT, BITRATE_MODE}, {PEAK_BITRATE},
 		msm_vidc_adjust_bitrate, msm_vidc_set_bitrate},
 
@@ -374,7 +375,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		1, MAX_CONSTANT_QUALITY, 1, 90,
 		V4L2_CID_MPEG_VIDEO_CONSTANT_QUALITY,
 		HFI_PROP_CONSTANT_QUALITY,
-		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
+		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
+			CAP_FLAG_DYNAMIC_ALLOWED,
 		{BITRATE_MODE}, {0},
 		NULL, msm_vidc_set_constant_quality},
 
@@ -382,7 +384,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		0, INT_MAX, 1, 2 * DEFAULT_FPS - 1,
 		V4L2_CID_MPEG_VIDEO_GOP_SIZE,
 		HFI_PROP_MAX_GOP_FRAMES,
-		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
+		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
+			CAP_FLAG_DYNAMIC_ALLOWED,
 		{ENH_LAYER_COUNT},
 		{0},
 		msm_vidc_adjust_gop_size, msm_vidc_set_gop_size},
@@ -539,7 +542,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 			(DEFAULT_BITRATE / PERCENT_PEAK_BITRATE_INCREASED)),
 		V4L2_CID_MPEG_VIDEO_BITRATE_PEAK,
 		HFI_PROP_TOTAL_PEAK_BITRATE,
-		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
+		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
+			CAP_FLAG_DYNAMIC_ALLOWED,
 		{BITRATE_MODE, BIT_RATE},
 		{0},
 		msm_vidc_adjust_peak_bitrate,
@@ -625,18 +629,12 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		MIN_QP_10BIT, MAX_QP, 1, MAX_QP,
 		V4L2_CID_MPEG_VIDEO_HEVC_B_FRAME_MAX_QP},
 
-	{HEVC_HIER_QP, ENC, HEVC|HEIC,
-		V4L2_MPEG_MSM_VIDC_DISABLE, V4L2_MPEG_MSM_VIDC_ENABLE,
-		1, V4L2_MPEG_MSM_VIDC_DISABLE,
-		V4L2_CID_MPEG_VIDEO_HEVC_HIER_QP,
-		HFI_PROP_QP_PACKED,
-		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT},
-
 	{I_FRAME_QP, ENC, HEVC|HEIC,
 		MIN_QP_10BIT, MAX_QP, 1, DEFAULT_QP,
 		V4L2_CID_MPEG_VIDEO_HEVC_I_FRAME_QP,
 		HFI_PROP_QP_PACKED,
-		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
+		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
+			CAP_FLAG_DYNAMIC_ALLOWED,
 		{PIX_FMTS, BITRATE_MODE}, {0},
 		msm_vidc_adjust_hevc_frame_qp, msm_vidc_set_frame_qp},
 
@@ -644,7 +642,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		MIN_QP_8BIT, MAX_QP, 1, DEFAULT_QP,
 		V4L2_CID_MPEG_VIDEO_H264_I_FRAME_QP,
 		HFI_PROP_QP_PACKED,
-		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
+		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
+			CAP_FLAG_DYNAMIC_ALLOWED,
 		{BITRATE_MODE}, {0},
 		NULL, msm_vidc_set_frame_qp},
 
@@ -663,12 +662,6 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 	{B_FRAME_QP, ENC, H264,
 		MIN_QP_8BIT, MAX_QP, 1, DEFAULT_QP,
 		V4L2_CID_MPEG_VIDEO_H264_B_FRAME_QP},
-
-	{HIER_LAYER_QP, ENC, H264,
-		0, 0x0060033, 1, 20,
-		V4L2_CID_MPEG_VIDEO_H264_HIERARCHICAL_CODING_LAYER_QP,
-		HFI_PROP_QP_PACKED,
-		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT},
 
 	{LAYER_TYPE, ENC, HEVC,
 		V4L2_MPEG_VIDEO_HEVC_HIERARCHICAL_CODING_B,
@@ -701,7 +694,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		0, 5, 1, 0,
 		V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_LAYER,
 		HFI_PROP_LAYER_COUNT,
-		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
+		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
+			CAP_FLAG_DYNAMIC_ALLOWED,
 		{BITRATE_MODE},
 		{GOP_SIZE, B_FRAME, BIT_RATE},
 		msm_vidc_adjust_layer_count, msm_vidc_set_layer_count_and_type},
@@ -710,7 +704,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		0, 5, 1, 0,
 		V4L2_CID_MPEG_VIDEO_H264_HIERARCHICAL_CODING_LAYER,
 		HFI_PROP_LAYER_COUNT,
-		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
+		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
+			CAP_FLAG_DYNAMIC_ALLOWED,
 		{BITRATE_MODE},
 		{GOP_SIZE, B_FRAME, BIT_RATE},
 		msm_vidc_adjust_layer_count, msm_vidc_set_layer_count_and_type},
@@ -723,7 +718,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L0_BR,
 		HFI_PROP_BITRATE_LAYER1,
-		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
+		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
+			CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
 		msm_vidc_adjust_bitrate, msm_vidc_set_bitrate},
 
@@ -731,7 +727,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L1_BR,
 		HFI_PROP_BITRATE_LAYER2,
-		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
+		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
+			CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
 		msm_vidc_adjust_bitrate, msm_vidc_set_bitrate},
 
@@ -739,7 +736,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L2_BR,
 		HFI_PROP_BITRATE_LAYER3,
-		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
+		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
+			CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
 		msm_vidc_adjust_bitrate, msm_vidc_set_bitrate},
 
@@ -747,7 +745,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L3_BR,
 		HFI_PROP_BITRATE_LAYER4,
-		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
+		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
+			CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
 		msm_vidc_adjust_bitrate, msm_vidc_set_bitrate},
 
@@ -755,7 +754,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L4_BR,
 		HFI_PROP_BITRATE_LAYER5,
-		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
+		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
+			CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
 		msm_vidc_adjust_bitrate, msm_vidc_set_bitrate},
 
@@ -763,7 +763,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L5_BR,
 		HFI_PROP_BITRATE_LAYER6,
-		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
+		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
+			CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
 		msm_vidc_adjust_bitrate, msm_vidc_set_bitrate},
 
@@ -771,7 +772,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_H264_HIER_CODING_L0_BR,
 		HFI_PROP_BITRATE_LAYER1,
-		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
+		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
+			CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
 		msm_vidc_adjust_bitrate, msm_vidc_set_bitrate},
 
@@ -779,7 +781,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_H264_HIER_CODING_L1_BR,
 		HFI_PROP_BITRATE_LAYER2,
-		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
+		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
+			CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
 		msm_vidc_adjust_bitrate, msm_vidc_set_bitrate},
 
@@ -787,7 +790,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_H264_HIER_CODING_L2_BR,
 		HFI_PROP_BITRATE_LAYER3,
-		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
+		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
+			CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
 		msm_vidc_adjust_bitrate, msm_vidc_set_bitrate},
 
@@ -795,7 +799,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_H264_HIER_CODING_L3_BR,
 		HFI_PROP_BITRATE_LAYER4,
-		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
+		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
+			CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
 		msm_vidc_adjust_bitrate, msm_vidc_set_bitrate},
 
@@ -803,7 +808,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_H264_HIER_CODING_L4_BR,
 		HFI_PROP_BITRATE_LAYER5,
-		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
+		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
+			CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
 		msm_vidc_adjust_bitrate, msm_vidc_set_bitrate},
 
@@ -811,7 +817,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_H264_HIER_CODING_L5_BR,
 		HFI_PROP_BITRATE_LAYER6,
-		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
+		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
+			CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
 		msm_vidc_adjust_bitrate, msm_vidc_set_bitrate},
 
@@ -1063,13 +1070,13 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		1, V4L2_MPEG_MSM_VIDC_DISABLE,
 		V4L2_CID_MPEG_MFC51_VIDEO_DECODER_H264_DISPLAY_DELAY_ENABLE,
 		HFI_PROP_DECODE_ORDER_OUTPUT,
-		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT},
+		CAP_FLAG_ROOT | CAP_FLAG_INPUT_PORT},
 
 	{DISPLAY_DELAY, DEC, H264|HEVC|VP9,
 		0, 1, 1, 0,
 		V4L2_CID_MPEG_MFC51_VIDEO_DECODER_H264_DISPLAY_DELAY,
 		HFI_PROP_DECODE_ORDER_OUTPUT,
-		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT},
+		CAP_FLAG_ROOT | CAP_FLAG_INPUT_PORT},
 
 	/* conceal color */
 	{CONCEAL_COLOR_8BIT, DEC, CODECS_ALL, 0x0, 0xff3fcff, 1,
@@ -1304,7 +1311,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		1, MAX_CONSTANT_QUALITY, 1, 100,
 		V4L2_CID_MPEG_VIDEO_CONSTANT_QUALITY,
 		HFI_PROP_CONSTANT_QUALITY,
-		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
+		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
+			CAP_FLAG_DYNAMIC_ALLOWED,
 		{BITRATE_MODE}, {0},
 		NULL, msm_vidc_set_constant_quality},
 	{GRID, ENC, HEIC,
@@ -1319,7 +1327,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		0, INT_MAX, 1, 0 /* all intra */,
 		V4L2_CID_MPEG_VIDEO_GOP_SIZE,
 		HFI_PROP_MAX_GOP_FRAMES,
-		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
+		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT |
+			CAP_FLAG_INPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
 		NULL, msm_vidc_set_u32},
 	{B_FRAME, ENC, HEIC,
