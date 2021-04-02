@@ -1019,13 +1019,13 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu,
 	}
 
 	if (qdf_nbuf_len(mpdu) < sizeof(struct ieee80211_frame)) {
-		dp_rx_err("%pK: Invalid nbuf length", soc);
+		dp_rx_info_rl("%pK: Invalid nbuf length", soc);
 		goto free;
 	}
 
 	pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 	if (!pdev) {
-		dp_rx_err("%pK: PDEV not found", soc);
+		dp_rx_info_rl("%pK: PDEV not found", soc);
 		goto free;
 	}
 
@@ -1040,7 +1040,7 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu,
 	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 
 	if (!vdev) {
-		dp_rx_err("%pK: VDEV not found", soc);
+		dp_rx_info_rl("%pK: VDEV not found", soc);
 		goto free;
 	}
 
