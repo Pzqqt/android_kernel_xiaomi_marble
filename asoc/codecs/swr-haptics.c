@@ -6,6 +6,7 @@
 #include <linux/device.h>
 #include <linux/init.h>
 #include <linux/module.h>
+#include <linux/of_device.h>
 #include <linux/platform_device.h>
 #include <linux/regmap.h>
 #include <linux/regulator/consumer.h>
@@ -40,6 +41,14 @@
 #define SWR_PLAY_SRC_VAL_SWR		4
 
 #define SWR_HAP_REG_MAX			(SWR_HAP_ACCESS_BASE + 0xff)
+
+enum pmic_type {
+	PM8350B = 1,
+};
+
+enum {
+	HAP_SSR_RECOVERY = BIT(0),
+};
 
 static struct reg_default swr_hap_reg_defaults[] = {
 	{FIFO_WR_READY_REG, 1},
@@ -81,7 +90,9 @@ struct swr_haptics_dev {
 	u32				hpwr_voltage_mv;
 	bool				slave_enabled;
 	bool				hpwr_vreg_enabled;
+	bool				ssr_recovery;
 	u8				vmax;
+	u8				flags;
 };
 
 static bool swr_hap_volatile_register(struct device *dev, unsigned int reg)
@@ -266,6 +277,14 @@ static int hap_enable_swr_dac_port(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
+		/* If SSR ever happened, toggle swr-slave-vdd for HW recovery */
+		if ((swr_hap->flags & HAP_SSR_RECOVERY)
+				&& swr_hap->ssr_recovery) {
+			swr_haptics_slave_disable(swr_hap);
+			swr_haptics_slave_enable(swr_hap);
+			swr_hap->ssr_recovery = false;
+		}
+
 		rc = regmap_write(swr_hap->regmap, SWR_VMAX_REG, swr_hap->vmax);
 		if (rc) {
 			dev_err(swr_hap->dev, "%s: SWR_VMAX update failed, rc=%d\n",
@@ -473,6 +492,7 @@ static int swr_haptics_probe(struct swr_device *sdev)
 	struct device_node *node = sdev->dev.of_node;
 	int rc;
 	u8 devnum;
+	u32 pmic_type;
 	int retry = 5;
 
 	swr_hap = devm_kzalloc(&sdev->dev,
@@ -484,6 +504,10 @@ static int swr_haptics_probe(struct swr_device *sdev)
 	swr_hap->vmax = 100;
 	swr_hap->swr_slave = sdev;
 	swr_hap->dev = &sdev->dev;
+	pmic_type = (uintptr_t)of_device_get_match_data(swr_hap->dev);
+	if (pmic_type == PM8350B)
+		swr_hap->flags |= HAP_SSR_RECOVERY;
+
 	swr_set_dev_data(sdev, swr_hap);
 
 	rc = swr_haptics_parse_port_mapping(sdev);
@@ -601,6 +625,9 @@ static int swr_haptics_device_up(struct swr_device *sdev)
 		return -ENODEV;
 	}
 
+	if (swr_hap->flags & HAP_SSR_RECOVERY)
+		swr_hap->ssr_recovery = true;
+
 	/* Take SWR slave out of reset */
 	return swr_haptics_slave_enable(swr_hap);
 }
@@ -658,8 +685,14 @@ static int swr_haptics_resume(struct device *dev)
 }
 
 static const struct of_device_id swr_haptics_match_table[] = {
-	{ .compatible = "qcom,swr-haptics", },
-	{ .compatible = "qcom,pm8350b-swr-haptics", },
+	{
+		.compatible = "qcom,swr-haptics",
+		.data = NULL,
+	},
+	{
+		.compatible = "qcom,pm8350b-swr-haptics",
+		.data = (void *)PM8350B,
+	},
 	{ },
 };
 
