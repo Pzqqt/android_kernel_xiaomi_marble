@@ -1197,6 +1197,9 @@ void lim_log_he_cap(struct mac_context *mac, tDot11fIEhe_cap *he_cap);
 bool lim_check_he_80_mcs11_supp(struct pe_session *session,
 				       tDot11fIEhe_cap *he_cap);
 
+void lim_check_and_force_he_ldpc_cap(struct pe_session *session,
+				     tDot11fIEhe_cap *he_cap);
+
 /**
  * lim_update_stads_he_caps() - Copy HE capability into STA DPH hash table entry
  * @mac_ctx: pointer to mac context

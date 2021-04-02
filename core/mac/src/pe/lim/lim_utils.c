@@ -6596,8 +6596,8 @@ bool lim_check_he_80_mcs11_supp(struct pe_session *session,
  * Return: None
  */
 
-static void lim_check_and_force_he_ldpc_cap(struct pe_session *session,
-					    tDot11fIEhe_cap *he_cap)
+void lim_check_and_force_he_ldpc_cap(struct pe_session *session,
+				     tDot11fIEhe_cap *he_cap)
 {
 	if (!he_cap->ldpc_coding &&
 	    (session->ch_width > CH_WIDTH_20MHZ ||
