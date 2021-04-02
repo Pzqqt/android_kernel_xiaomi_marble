@@ -3855,6 +3855,7 @@ struct sir_nss_update_request {
  * @REASON_SET_HT2040: HT2040 update
  * @REASON_COLOR_CHANGE: Color change
  * @REASON_CHANNEL_SWITCH: channel switch
+ * @REASON_MLO_IE_UPDATE: mlo ie update
  */
 enum sir_bcn_update_reason {
 	REASON_DEFAULT = 0,
@@ -3863,6 +3864,7 @@ enum sir_bcn_update_reason {
 	REASON_SET_HT2040 = 3,
 	REASON_COLOR_CHANGE = 4,
 	REASON_CHANNEL_SWITCH = 5,
+	REASON_MLO_IE_UPDATE = 6,
 };
 
 /**

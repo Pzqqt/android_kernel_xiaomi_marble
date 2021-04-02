@@ -625,6 +625,10 @@ ifeq ($(CONFIG_QCACLD_WLAN_LFR2), y)
 		$(MAC_SRC_DIR)/pe/lim/lim_reassoc_utils.o
 endif
 
+ifeq ($(CONFIG_WLAN_FEATURE_11BE_MLO), y)
+	MAC_LIM_OBJS += $(MAC_SRC_DIR)/pe/lim/lim_mlo.o
+endif
+
 MAC_SCH_OBJS := $(MAC_SRC_DIR)/pe/sch/sch_api.o \
 		$(MAC_SRC_DIR)/pe/sch/sch_beacon_gen.o \
 		$(MAC_SRC_DIR)/pe/sch/sch_beacon_process.o \
