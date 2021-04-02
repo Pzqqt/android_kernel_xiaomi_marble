@@ -6566,7 +6566,10 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 		goto error;
 	}
 
-	hdd_set_fw_log_params(hdd_ctx, adapter);
+	if (!hdd_ctx->is_fw_dbg_log_levels_configured) {
+		hdd_set_fw_log_params(hdd_ctx, adapter);
+		hdd_ctx->is_fw_dbg_log_levels_configured = true;
+	}
 
 	ret = hdd_send_coex_config_params(hdd_ctx, adapter);
 	if (ret) {
@@ -14588,6 +14591,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 	hdd_ctx->imps_enabled = false;
 	hdd_ctx->is_dual_mac_cfg_updated = false;
 	hdd_ctx->driver_status = DRIVER_MODULES_CLOSED;
+	hdd_ctx->is_fw_dbg_log_levels_configured = false;
 	hdd_debug("Wlan transitioned (now CLOSED)");
 
 done:

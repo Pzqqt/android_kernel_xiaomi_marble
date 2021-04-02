@@ -2218,6 +2218,7 @@ struct hdd_context {
 	bool is_regulatory_update_in_progress;
 	qdf_event_t regulatory_update_event;
 	qdf_mutex_t regulatory_status_lock;
+	bool is_fw_dbg_log_levels_configured;
 };
 
 /**
