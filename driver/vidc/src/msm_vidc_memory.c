@@ -195,7 +195,6 @@ int msm_vidc_memory_unmap(struct msm_vidc_core *core,
 	dma_buf_detach(map->dmabuf, map->attach);
 
 	map->device_addr = 0x0;
-	map->dmabuf = NULL;
 	map->attach = NULL;
 	map->table = NULL;
 
@@ -221,6 +220,7 @@ int msm_vidc_memory_unmap_completely(struct msm_vidc_core *core,
 		if (rc)
 			break;
 		if (!map->refcount) {
+			msm_vidc_memory_put_dmabuf(map->dmabuf);
 			list_del(&map->list);
 			kfree(map);
 			map = NULL;

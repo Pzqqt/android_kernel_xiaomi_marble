@@ -1845,15 +1845,10 @@ int msm_vidc_unmap_driver_buf(struct msm_vidc_inst *inst,
 
 	/* finally delete if refcount is zero */
 	if (!map->refcount) {
+		msm_vidc_memory_put_dmabuf(map->dmabuf);
 		list_del(&map->list);
 		kfree(map);
 		map = NULL;
-	} else {
-		/* we should not be here except decoder output buffer */
-		if (!is_decode_session(inst) || !is_output_buffer(buf->type)) {
-			print_vidc_buffer(VIDC_ERR, "err ", "non zero refcount found", inst, buf);
-			return -EINVAL;
-		}
 	}
 
 	return rc;
@@ -3812,8 +3807,15 @@ int msm_vidc_flush_delayed_unmap_buffers(struct msm_vidc_inst *inst,
 				}
 			}
 			/* completely unmap */
-			if (!found)
+			if (!found) {
+				if (map->refcount > 1) {
+					i_vpr_e(inst,
+						"%s: unexpected map refcount: %u device addr %#x\n",
+						__func__, map->refcount, map->device_addr);
+					msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
+				}
 				msm_vidc_memory_unmap_completely(inst->core, map);
+			}
 		}
 	}
 
@@ -3857,7 +3859,6 @@ void msm_vidc_destroy_buffers(struct msm_vidc_inst *inst)
 				buf->type, buf->index, buf->fd, buf->device_addr, buf->buffer_size);
 			msm_vidc_destroy_internal_buffer(inst, buf);
 		}
-		msm_vidc_unmap_buffers(inst, internal_buf_types[i]);
 	}
 
 	for (i = 0; i < ARRAY_SIZE(ext_buf_types); i++) {
