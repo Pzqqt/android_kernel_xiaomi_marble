@@ -51,17 +51,19 @@ OBJS :=
 OBJS_DIRS :=
 
 define add-wlan-objs
-$(eval
-  ifneq ($$(2),)
-    ifeq ($$(KERNEL_SUPPORTS_NESTED_COMPOSITES),y)
-      OBJS_DIRS += $$(dir $$(2))
-      OBJS += $$(1).o
-      $$(1)-y := $$(2)
+$(eval $(_add-wlan-objs))
+endef
+
+define _add-wlan-objs
+  ifneq ($(2),)
+    ifeq ($(KERNEL_SUPPORTS_NESTED_COMPOSITES),y)
+      OBJS_DIRS += $(dir $(2))
+      OBJS += $(1).o
+      $(1)-y := $(2)
     else
-      OBJS += $$(2)
+      OBJS += $(2)
     endif
   endif
-)
 endef
 
 ############ UAPI ############
