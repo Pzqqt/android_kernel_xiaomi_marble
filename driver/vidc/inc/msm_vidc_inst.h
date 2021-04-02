@@ -63,6 +63,7 @@ struct msm_vidc_buffers_info {
 	struct msm_vidc_buffers        input;
 	struct msm_vidc_buffers        output;
 	struct msm_vidc_buffers        read_only;
+	struct msm_vidc_buffers        release;
 	struct msm_vidc_buffers        input_meta;
 	struct msm_vidc_buffers        output_meta;
 	struct msm_vidc_buffers        bin;
@@ -149,6 +150,6 @@ struct msm_vidc_inst {
 	u64                                last_qbuf_time_ns;
 	bool                               vb2q_init;
 	u32                                max_input_data_size;
+	u32                                dpb_list_payload[MAX_DPB_LIST_ARRAY_SIZE];
 };
-
 #endif // _MSM_VIDC_INST_H_

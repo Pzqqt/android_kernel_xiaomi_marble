@@ -30,5 +30,7 @@ int msm_vdec_input_port_settings_change(struct msm_vidc_inst *inst);
 int msm_vdec_output_port_settings_change(struct msm_vidc_inst *inst);
 int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd);
 int msm_vidc_queue_buffer_batch(struct msm_vidc_inst *inst);
+int msm_vdec_handle_release_buffer(struct msm_vidc_inst *inst,
+	struct msm_vidc_buffer *buf);
 
 #endif // _MSM_VDEC_H_

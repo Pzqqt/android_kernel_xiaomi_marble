@@ -3440,18 +3440,11 @@ int venus_hfi_release_buffer(struct msm_vidc_inst *inst,
 		goto unlock;
 	}
 
-	if (!is_internal_buffer(buffer->type)) {
-		i_vpr_e(inst, "release not allowed for buffer_type %s\n",
-			buf_name(buffer->type));
-		goto unlock;
-	}
-	core = inst->core;
-
 	rc = get_hfi_buffer(inst, buffer, &hfi_buffer);
 	if (rc)
 		goto unlock;
 
-	/* add pending release flag */
+	/* add release flag */
 	hfi_buffer.flags |= HFI_BUF_HOST_FLAG_RELEASE;
 
 	rc = hfi_create_header(inst->packet, inst->packet_size,

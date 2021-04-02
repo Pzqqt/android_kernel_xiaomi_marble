@@ -159,6 +159,7 @@ static const struct msm_vidc_cap_name cap_name_arr[] = {
 	{SEQ_CHANGE_AT_SYNC_FRAME,       "SEQ_CHANGE_AT_SYNC_FRAME"   },
 	{PRIORITY,                       "PRIORITY"                   },
 	{ENC_IP_CR,                      "ENC_IP_CR"                  },
+	{DPB_LIST,                       "DPB_LIST"                   },
 	{META_LTR_MARK_USE,              "META_LTR_MARK_USE"          },
 	{META_DPB_MISR,                  "META_DPB_MISR"              },
 	{META_OPB_MISR,                  "META_OPB_MISR"              },
@@ -1172,6 +1173,64 @@ bool msm_vidc_allow_metadata(struct msm_vidc_inst *inst, u32 cap_id)
 	}
 
 	return is_allowed;
+}
+
+bool msm_vidc_allow_property(struct msm_vidc_inst *inst, u32 hfi_id)
+{
+	bool is_allowed = true;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return false;
+	}
+
+	switch (hfi_id) {
+	case HFI_PROP_WORST_COMPRESSION_RATIO:
+	case HFI_PROP_WORST_COMPLEXITY_FACTOR:
+	case HFI_PROP_PICTURE_TYPE:
+		is_allowed = true;
+		break;
+	case HFI_PROP_DPB_LIST:
+		if (!is_ubwc_colorformat(inst->capabilities->cap[PIX_FMTS].value)) {
+			i_vpr_h(inst,
+				"%s: cap: %24s not allowed for split mode\n",
+				__func__, cap_name(DPB_LIST));
+			is_allowed = false;
+		}
+		break;
+	default:
+		is_allowed = true;
+		break;
+	}
+
+	return is_allowed;
+}
+
+int msm_vidc_update_property_cap(struct msm_vidc_inst *inst, u32 hfi_id,
+	bool allow)
+{
+	int rc = 0;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	switch (hfi_id) {
+	case HFI_PROP_WORST_COMPRESSION_RATIO:
+	case HFI_PROP_WORST_COMPLEXITY_FACTOR:
+	case HFI_PROP_PICTURE_TYPE:
+		break;
+	case HFI_PROP_DPB_LIST:
+		if (!allow)
+			memset(inst->dpb_list_payload, 0, MAX_DPB_LIST_ARRAY_SIZE);
+		msm_vidc_update_cap_value(inst, DPB_LIST, allow, __func__);
+		break;
+	default:
+		break;
+	}
+
+	return rc;
 }
 
 bool msm_vidc_allow_reqbufs(struct msm_vidc_inst *inst, u32 type)
@@ -4115,6 +4174,12 @@ void msm_vidc_destroy_buffers(struct msm_vidc_inst *inst)
 
 	list_for_each_entry_safe(buf, dummy, &inst->buffers.read_only.list, list) {
 		print_vidc_buffer(VIDC_ERR, "err", "destroying ro buffer", inst, buf);
+		list_del(&buf->list);
+		msm_vidc_put_vidc_buffer(inst, buf);
+	}
+
+	list_for_each_entry_safe(buf, dummy, &inst->buffers.release.list, list) {
+		print_vidc_buffer(VIDC_ERR, "err", "destroying release buffer", inst, buf);
 		list_del(&buf->list);
 		msm_vidc_put_vidc_buffer(inst, buf);
 	}

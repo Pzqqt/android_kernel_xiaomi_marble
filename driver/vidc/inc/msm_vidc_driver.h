@@ -332,6 +332,9 @@ void put_inst(struct msm_vidc_inst *inst);
 bool msm_vidc_allow_s_fmt(struct msm_vidc_inst *inst, u32 type);
 bool msm_vidc_allow_s_ctrl(struct msm_vidc_inst *inst, u32 id);
 bool msm_vidc_allow_metadata(struct msm_vidc_inst *inst, u32 cap_id);
+bool msm_vidc_allow_property(struct msm_vidc_inst *inst, u32 hfi_id);
+int msm_vidc_update_property_cap(struct msm_vidc_inst *inst, u32 hfi_id,
+	bool allow);
 bool msm_vidc_allow_reqbufs(struct msm_vidc_inst *inst, u32 type);
 enum msm_vidc_allow msm_vidc_allow_stop(struct msm_vidc_inst *inst);
 bool msm_vidc_allow_start(struct msm_vidc_inst *inst);
