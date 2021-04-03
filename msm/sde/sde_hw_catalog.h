@@ -1496,6 +1496,7 @@ struct sde_perf_cfg {
  * @cwb_blk_stride     offset between each CWB blk
  * @ubwc_version       UBWC feature version (0x0 for not supported)
  * @ubwc_bw_calc_version indicate how UBWC BW has to be calculated
+ * @skip_inline_rot_thresh    Skip inline rotation threshold
  * @has_idle_pc        indicate if idle power collapse feature is supported
  * @wakeup_with_touch  indicate early wake up display with input touch event
  * @has_hdr            HDR feature support
@@ -1583,6 +1584,7 @@ struct sde_mdss_cfg {
 	u32 cwb_blk_stride;
 	u32 ubwc_version;
 	u32 ubwc_bw_calc_version;
+	bool skip_inline_rot_threshold;
 	bool has_idle_pc;
 	bool wakeup_with_touch;
 	u32 vbif_qos_nlvl;
