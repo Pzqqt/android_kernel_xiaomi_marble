@@ -195,6 +195,13 @@ struct sde_hw_intf_ops {
 			const struct intf_avr_params *avr_params);
 
 	/**
+	 * Indicates the AVR armed status
+	 *
+	 * @return: false if a trigger is pending, else true while AVR is enabled
+	 */
+	u32 (*get_avr_status)(struct sde_hw_intf *intf);
+
+	/**
 	 * Enable/disable 64 bit compressed data input to interface block
 	 */
 	void (*enable_compressed_input)(struct sde_hw_intf *intf,

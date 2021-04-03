@@ -4378,6 +4378,27 @@ void sde_encoder_get_transfer_time(struct drm_encoder *drm_enc,
 	*transfer_time_us = info->mdp_transfer_time_us;
 }
 
+int sde_encoder_get_avr_status(struct drm_encoder *drm_enc)
+{
+	struct sde_encoder_virt *sde_enc;
+	struct sde_encoder_phys *master;
+	bool is_vid_mode;
+
+	if (!drm_enc)
+		return -EINVAL;
+
+	sde_enc = to_sde_encoder_virt(drm_enc);
+	master = sde_enc->cur_master;
+	is_vid_mode = sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CAP_VID_MODE);
+	if (!master || !is_vid_mode || !sde_connector_get_qsync_mode(master->connector))
+		return -ENODATA;
+
+	if (!master->hw_intf->ops.get_avr_status)
+		return -EOPNOTSUPP;
+
+	return master->hw_intf->ops.get_avr_status(master->hw_intf);
+}
+
 int sde_encoder_helper_reset_mixers(struct sde_encoder_phys *phys_enc,
 		struct drm_framebuffer *fb)
 {

@@ -508,6 +508,7 @@ enum {
  * @SDE_INTF_STATUS             INTF block has INTF_STATUS register
  * @SDE_INTF_RESET_COUNTER      INTF block has frame/line counter reset support
  * @SDE_INTF_VSYNC_TIMESTAMP    INTF block has vsync timestamp logged
+ * @SDE_INTF_AVR_STATUS         INTF block has AVR_STATUS field in AVR_CONTROL register
  * @SDE_INTF_MAX
  */
 enum {
@@ -518,6 +519,7 @@ enum {
 	SDE_INTF_STATUS,
 	SDE_INTF_RESET_COUNTER,
 	SDE_INTF_VSYNC_TIMESTAMP,
+	SDE_INTF_AVR_STATUS,
 	SDE_INTF_MAX
 };
 

@@ -184,6 +184,20 @@ static void sde_hw_intf_avr_ctrl(struct sde_hw_intf *ctx,
 	SDE_REG_WRITE(c, INTF_AVR_MODE, avr_mode);
 }
 
+static u32 sde_hw_intf_get_avr_status(struct sde_hw_intf *ctx)
+{
+	struct sde_hw_blk_reg_map *c;
+	u32 avr_ctrl;
+
+	if (!ctx)
+		return false;
+
+	c = &ctx->hw;
+	avr_ctrl = SDE_REG_READ(c, INTF_AVR_CONTROL);
+
+	return avr_ctrl >> 31;
+}
+
 static inline void _check_and_set_comp_bit(struct sde_hw_intf *ctx,
 		bool dsc_4hs_merge, bool compression_en, u32 *intf_cfg2)
 {
@@ -867,6 +881,9 @@ static void _setup_intf_ops(struct sde_hw_intf_ops *ops,
 
 	if (cap & BIT(SDE_INTF_WD_TIMER))
 		ops->setup_vsync_source = sde_hw_intf_setup_vsync_source;
+
+	if (cap & BIT(SDE_INTF_AVR_STATUS))
+		ops->get_avr_status = sde_hw_intf_get_avr_status;
 
 	if (cap & BIT(SDE_INTF_TE)) {
 		ops->setup_tearcheck = sde_hw_intf_setup_te_config;
