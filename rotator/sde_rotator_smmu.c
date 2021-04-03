@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"%s: " fmt, __func__
@@ -459,11 +459,10 @@ static int sde_smmu_fault_handler(struct iommu_domain *domain,
 		int flags, void *token)
 {
 	struct sde_smmu_client *sde_smmu;
-	int rc = -EINVAL;
 
 	if (!token) {
 		SDEROT_ERR("Error: token is NULL\n");
-		return -EINVAL;
+		return -ENOSYS;
 	}
 
 	sde_smmu = (struct sde_smmu_client *)token;
@@ -480,7 +479,7 @@ static int sde_smmu_fault_handler(struct iommu_domain *domain,
 	 * return -ENOSYS to allow smmu driver to dump out useful
 	 * debug info.
 	 */
-	return rc;
+	return -ENOSYS;
 }
 
 static struct sde_smmu_domain sde_rot_unsec = {
