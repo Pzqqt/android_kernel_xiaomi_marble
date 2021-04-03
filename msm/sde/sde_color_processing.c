@@ -2389,7 +2389,8 @@ static int _sde_cp_flush_properties(struct drm_crtc *crtc)
 		cstate->cp_prop_values[feature].cp_node = 0;
 		cstate->cp_prop_values[feature].prop_val = 0;
 		SDE_EVT32(feature, val);
-		_sde_cp_crtc_cache_property(crtc, cstate, prop_node,
+		if (prop_node)
+			_sde_cp_crtc_cache_property(crtc, cstate, prop_node,
 					property, val);
 	}
 	cstate->cp_prop_cnt = 0;
