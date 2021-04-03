@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HW_PINGPONG_H
@@ -14,6 +14,11 @@
 
 struct sde_hw_pingpong;
 struct sde_hw_merge_3d;
+
+#define DITHER_DEPTH_MAP_INDEX 9
+static u32 dither_depth_map[DITHER_DEPTH_MAP_INDEX] = {
+	0, 0, 0, 0, 0, 1, 2, 3, 3
+};
 
 struct sde_hw_dsc_cfg {
 	u8 enable;

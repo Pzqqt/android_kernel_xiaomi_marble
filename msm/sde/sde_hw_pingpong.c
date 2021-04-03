@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/iopoll.h>
@@ -32,11 +32,6 @@
 #define PP_DSC_MODE                     0x0a0
 #define PP_DCE_DATA_IN_SWAP             0x0ac
 #define PP_DCE_DATA_OUT_SWAP            0x0c8
-
-#define DITHER_DEPTH_MAP_INDEX 9
-static u32 dither_depth_map[DITHER_DEPTH_MAP_INDEX] = {
-	0, 0, 0, 0, 0, 1, 2, 3, 3
-};
 
 #define DITHER_VER_MAJOR_1 1
 /* supports LUMA Dither */

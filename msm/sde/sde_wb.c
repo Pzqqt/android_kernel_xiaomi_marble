@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
@@ -366,6 +366,8 @@ int sde_wb_connector_set_info_blob(struct drm_connector *connector,
 {
 	struct sde_wb_device *wb_dev = display;
 	const struct sde_format_extended *format_list;
+	struct msm_drm_private *priv = NULL;
+	struct sde_kms *sde_kms = NULL;
 
 	if (!connector || !info || !display || !wb_dev->wb_cfg) {
 		SDE_ERROR("invalid params\n");
@@ -405,7 +407,72 @@ int sde_wb_connector_set_info_blob(struct drm_connector *connector,
 		sde_kms_info_append(info, "wb_ubwc");
 	sde_kms_info_stop(info);
 
+	if (wb_dev->drm_dev && wb_dev->drm_dev->dev_private) {
+		priv = wb_dev->drm_dev->dev_private;
+		if (!priv->kms) {
+			SDE_ERROR("invalid kms reference\n");
+			return -EINVAL;
+		}
+
+		sde_kms = to_sde_kms(priv->kms);
+		sde_kms_info_add_keyint(info, "has_cwb_dither", sde_kms->catalog->has_cwb_dither);
+	} else {
+		SDE_ERROR("invalid params %pK\n", wb_dev->drm_dev);
+		return -EINVAL;
+	}
+
 	return 0;
+}
+
+static void sde_wb_connector_install_dither_property(struct sde_wb_device *wb_dev,
+					struct sde_connector *c_conn)
+{
+	char prop_name[DRM_PROP_NAME_LEN];
+	struct sde_kms *sde_kms = NULL;
+	struct msm_drm_private *priv = NULL;
+	struct sde_mdss_cfg *catalog = NULL;
+	u32 version = 0;
+
+	if (!wb_dev || !c_conn) {
+		SDE_ERROR("invalid args (s), wb_dev %pK, c_conn %pK\n", wb_dev, c_conn);
+		return;
+	}
+
+	if (!wb_dev->drm_dev) {
+		SDE_ERROR("invalid drm_dev is null\n");
+		return;
+	}
+
+	if (!wb_dev->drm_dev->dev_private) {
+		SDE_ERROR("invalid dev_private is null\n");
+		return;
+	}
+
+	priv = wb_dev->drm_dev->dev_private;
+	if (!priv->kms) {
+		SDE_ERROR("invalid kms reference is null\n");
+		return;
+	}
+
+	sde_kms = to_sde_kms(priv->kms);
+	catalog = sde_kms->catalog;
+
+	if (!catalog->has_cwb_dither)
+		return;
+
+	version = SDE_COLOR_PROCESS_MAJOR(
+			catalog->pingpong[0].sblk->dither.version);
+	snprintf(prop_name, ARRAY_SIZE(prop_name), "%s%d",
+			"SDE_PP_CWB_DITHER_V", version);
+	switch (version) {
+	case 2:
+		msm_property_install_blob(&c_conn->property_info, prop_name,
+			DRM_MODE_PROP_BLOB, CONNECTOR_PROP_PP_CWB_DITHER);
+		break;
+	default:
+		SDE_ERROR("unsupported cwb dither version %d\n", version);
+		return;
+	}
 }
 
 int sde_wb_connector_post_init(struct drm_connector *connector, void *display)
@@ -445,6 +512,8 @@ int sde_wb_connector_post_init(struct drm_connector *connector, void *display)
 			0, e_fb_translation_mode,
 			ARRAY_SIZE(e_fb_translation_mode), 0,
 			CONNECTOR_PROP_FB_TRANSLATION_MODE);
+
+	sde_wb_connector_install_dither_property(wb_dev, c_conn);
 
 	return 0;
 }

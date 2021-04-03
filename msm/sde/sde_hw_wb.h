@@ -10,6 +10,7 @@
 #include "sde_hw_mdss.h"
 #include "sde_hw_top.h"
 #include "sde_hw_util.h"
+#include "sde_hw_pingpong.h"
 
 struct sde_hw_wb;
 
@@ -149,6 +150,17 @@ struct sde_hw_wb_ops {
 	 */
 	void (*program_dcwb_ctrl)(struct sde_hw_wb *ctx, const enum sde_dcwb cwb,
 		const enum sde_cwb data_src, int tap_location, bool enable);
+
+	/**
+	 * program_cwb_dither_ctrl - program cwb dither block config
+	 * @ctx: Pointer to wb context
+	 * @dcwb_idx: Current Ping-Pong CWB block index to program
+	 * @cfg: cwb dither data
+	 * @len: the size of cwb dither data
+	 * @enable: enable or disable the cwb dither
+	 */
+	void (*program_cwb_dither_ctrl)(struct sde_hw_wb *ctx,
+		const enum sde_dcwb dcwb_idx, void *cfg, size_t len, bool enable);
 };
 
 /**
@@ -163,6 +175,7 @@ struct sde_hw_wb_ops {
  * @hw_mdp: MDP top level hardware block
  * @cwb_hw: CWB control hwio details
  * @dcwb_hw: DCWB control hwio details
+ * @dcwb_pp_hw: DCWB PingPong control hwio details
  */
 struct sde_hw_wb {
 	struct sde_hw_blk base;
@@ -180,6 +193,7 @@ struct sde_hw_wb {
 	struct sde_hw_mdp *hw_mdp;
 	struct sde_hw_blk_reg_map cwb_hw;
 	struct sde_hw_blk_reg_map dcwb_hw;
+	struct sde_hw_pingpong dcwb_pp_hw[DCWB_MAX - DCWB_0];
 };
 
 /**

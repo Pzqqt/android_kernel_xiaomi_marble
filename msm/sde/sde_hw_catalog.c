@@ -328,6 +328,7 @@ enum {
 	DITHER_OFF,
 	DITHER_LEN,
 	DITHER_VER,
+	CWB_DITHER,
 	PP_MERGE_3D_ID,
 	PP_PROP_MAX,
 };
@@ -838,6 +839,7 @@ static struct sde_prop_type pp_prop[] = {
 	{DITHER_OFF, "qcom,sde-dither-off", false, PROP_TYPE_U32_ARRAY},
 	{DITHER_LEN, "qcom,sde-dither-size", false, PROP_TYPE_U32},
 	{DITHER_VER, "qcom,sde-dither-version", false, PROP_TYPE_U32},
+	{CWB_DITHER, "qcom,sde-cwb-dither", false, PROP_TYPE_U32_ARRAY},
 	{PP_MERGE_3D_ID, "qcom,sde-pp-merge-3d-id", false, PROP_TYPE_U32_ARRAY},
 };
 
@@ -2548,6 +2550,10 @@ static int sde_wb_parse_dt(struct device_node *np, struct sde_mdss_cfg *sde_cfg)
 				sde_cfg->cwb_blk_off = 0x83000;
 				sde_cfg->cwb_blk_stride = 0x100;
 			}
+
+			if (sde_cfg->has_cwb_dither)
+				set_bit(SDE_WB_CWB_DITHER_CTRL, &wb->features);
+
 		} else if (sde_cfg->has_cwb_support) {
 			set_bit(SDE_WB_HAS_CWB, &wb->features);
 			if (IS_SDE_CTL_REV_100(sde_cfg->ctl_rev))
@@ -3842,6 +3848,11 @@ static int sde_pp_parse_dt(struct device_node *np, struct sde_mdss_cfg *sde_cfg)
 		sblk->dither.version = PROP_VALUE_ACCESS(prop_value, DITHER_VER,
 								0);
 
+		if (sde_cfg->has_cwb_dither &&
+			PROP_VALUE_ACCESS(prop_value, CWB_DITHER, i)) {
+			set_bit(SDE_PINGPONG_CWB_DITHER, &pp->features);
+		}
+
 		if (sde_cfg->dither_luma_mode_support)
 			set_bit(SDE_PINGPONG_DITHER_LUMA, &pp->features);
 
@@ -5031,6 +5042,7 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->syscache_supported = true;
 	} else if (IS_WAIPIO_TARGET(hw_rev)) {
 		sde_cfg->has_dedicated_cwb_support = true;
+		sde_cfg->has_cwb_dither = true;
 		sde_cfg->has_wb_ubwc = true;
 		sde_cfg->has_cwb_crop = true;
 		sde_cfg->has_qsync = true;
