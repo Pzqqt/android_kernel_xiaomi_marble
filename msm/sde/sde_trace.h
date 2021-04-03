@@ -141,6 +141,21 @@ TRACE_EVENT(sde_evtlog,
 			__field(int, pid)
 			__string(evtlog_tag, tag)
 			__field(u32, tag_id)
+			__field(u32, d00)
+			__field(u32, d01)
+			__field(u32, d02)
+			__field(u32, d03)
+			__field(u32, d04)
+			__field(u32, d05)
+			__field(u32, d06)
+			__field(u32, d07)
+			__field(u32, d08)
+			__field(u32, d09)
+			__field(u32, d10)
+			__field(u32, d11)
+			__field(u32, d12)
+			__field(u32, d13)
+			__field(u32, d14)
 			__array(u32, data, SDE_TRACE_EVTLOG_SIZE)
 	),
 	TP_fast_assign(
@@ -152,6 +167,21 @@ TRACE_EVENT(sde_evtlog,
 			memcpy(__entry->data, data, cnt * sizeof(u32));
 			memset(&__entry->data[cnt], 0,
 				(SDE_TRACE_EVTLOG_SIZE - cnt) * sizeof(u32));
+			__entry->d00 = __entry->data[0];
+			__entry->d01 = __entry->data[1];
+			__entry->d02 = __entry->data[2];
+			__entry->d03 = __entry->data[3];
+			__entry->d04 = __entry->data[4];
+			__entry->d05 = __entry->data[5];
+			__entry->d06 = __entry->data[6];
+			__entry->d07 = __entry->data[7];
+			__entry->d08 = __entry->data[8];
+			__entry->d09 = __entry->data[9];
+			__entry->d10 = __entry->data[10];
+			__entry->d11 = __entry->data[11];
+			__entry->d12 = __entry->data[12];
+			__entry->d13 = __entry->data[13];
+			__entry->d14 = __entry->data[14];
 	),
 	TP_printk("%d|%s:%d|0x%x|0x%x|0x%x|0x%x|0x%x|0x%x|0x%x|0x%x|0x%x|0x%x|0x%x|0x%x|0x%x|0x%x|0x%x",
 			__entry->pid, __get_str(evtlog_tag),
