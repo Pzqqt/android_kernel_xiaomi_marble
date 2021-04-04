@@ -256,6 +256,21 @@ QDF_STATUS ucfg_mlme_set_band_capability(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * ucfg_mlme_set_dual_sta_policy() - Configures the Concurrent STA policy
+ * value
+ * @psoc: pointer to psoc object
+ * @dual_sta_config: Concurrent STA policy configuration value
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_set_dual_sta_policy(struct wlan_objmgr_psoc *psoc,
+					 uint8_t dual_sta_config)
+{
+	return wlan_mlme_set_dual_sta_policy(psoc, dual_sta_config);
+}
+
+/**
  * ucfg_mlme_get_prevent_link_down() - Get the prevent link down config
  * @psoc: pointer to psoc object
  * @prevent_link_down: Pointer to the variable from caller

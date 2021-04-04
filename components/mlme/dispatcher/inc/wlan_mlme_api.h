@@ -271,6 +271,16 @@ QDF_STATUS wlan_mlme_set_band_capability(struct wlan_objmgr_psoc *psoc,
 					 uint32_t band_capability);
 
 /**
+ * wlan_mlme_set_dual_sta_policy() - Set the dual sta config
+ * @psoc: pointer to psoc object
+ * @dual_sta_config: Value to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_set_dual_sta_policy(struct wlan_objmgr_psoc *psoc,
+					 uint8_t dual_sta_config);
+
+/**
  * wlan_mlme_get_prevent_link_down() - Get the prevent link down config
  * @psoc: pointer to psoc object
  * @prevent_link_down: Pointer to the variable from caller

@@ -12268,8 +12268,8 @@ QCA_WLAN_VENDOR_ATTR_STA_CONNECT_ROAM_POLICY_MAX + 1] = {
  */
 static int
 __wlan_hdd_cfg80211_sta_roam_policy(struct wiphy *wiphy,
-		struct wireless_dev *wdev,
-		const void *data, int data_len)
+				    struct wireless_dev *wdev,
+				    const void *data, int data_len)
 {
 	struct net_device *dev = wdev->netdev;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
@@ -12342,9 +12342,10 @@ __wlan_hdd_cfg80211_sta_roam_policy(struct wiphy *wiphy,
  * in Scanning.
  * Return: 0 on success; errno on failure
  */
-static int wlan_hdd_cfg80211_sta_roam_policy(struct wiphy *wiphy,
-		struct wireless_dev *wdev,
-		const void *data, int data_len)
+static int
+wlan_hdd_cfg80211_sta_roam_policy(struct wiphy *wiphy,
+				  struct wireless_dev *wdev, const void *data,
+				  int data_len)
 {
 	int errno;
 	struct osif_vdev_sync *vdev_sync;
@@ -12355,6 +12356,100 @@ static int wlan_hdd_cfg80211_sta_roam_policy(struct wiphy *wiphy,
 
 	errno = __wlan_hdd_cfg80211_sta_roam_policy(wiphy, wdev,
 						    data, data_len);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
+}
+
+const struct nla_policy
+wlan_hdd_set_dual_sta_policy[
+QCA_WLAN_VENDOR_ATTR_CONCURRENT_STA_POLICY_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_CONCURRENT_STA_POLICY_CONFIG] = {.type = NLA_U8 },
+};
+
+/**
+ * __wlan_hdd_cfg80211_dual_sta_policy() - Wrapper to configure the concurrent
+ * session policies
+ * @wiphy:    wiphy structure pointer
+ * @wdev:     Wireless device structure pointer
+ * @data:     Pointer to the data received
+ * @data_len: Length of @data
+ *
+ * Configure the concurrent session policies when multiple STA ifaces are
+ * (getting) active.
+ * Return: 0 on success; errno on failure
+ */
+static int __wlan_hdd_cfg80211_dual_sta_policy(struct wiphy *wiphy,
+					       struct wireless_dev *wdev,
+					       const void *data, int data_len)
+{
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
+	struct nlattr *tb[
+		QCA_WLAN_VENDOR_ATTR_CONCURRENT_STA_POLICY_MAX + 1];
+	QDF_STATUS status;
+	uint8_t dual_sta_config =
+		QCA_WLAN_CONCURRENT_STA_POLICY_UNBIASED;
+
+	if (wlan_hdd_validate_context(hdd_ctx)) {
+		hdd_err("Invalid hdd context");
+		return -EINVAL;
+	}
+
+	if (wlan_cfg80211_nla_parse(tb,
+			       QCA_WLAN_VENDOR_ATTR_CONCURRENT_STA_POLICY_MAX,
+			       data, data_len,
+			       wlan_hdd_set_dual_sta_policy)) {
+		hdd_err("nla_parse failed");
+		return -EINVAL;
+	}
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_CONCURRENT_STA_POLICY_CONFIG]) {
+		hdd_err("sta policy config attribute not present");
+		return -EINVAL;
+	}
+
+	dual_sta_config = nla_get_u8(
+			tb[QCA_WLAN_VENDOR_ATTR_CONCURRENT_STA_POLICY_CONFIG]);
+	hdd_debug("Concurrent STA policy : %d", dual_sta_config);
+
+	if (dual_sta_config > QCA_WLAN_CONCURRENT_STA_POLICY_UNBIASED)
+		return -EINVAL;
+
+	status = ucfg_mlme_set_dual_sta_policy(hdd_ctx->psoc, dual_sta_config);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("failed to set MLME dual sta config");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+/**
+ * wlan_hdd_cfg80211_dual_sta_policy() - Wrapper to configure the concurrent
+ * session policies
+ * @wiphy:    wiphy structure pointer
+ * @wdev:     Wireless device structure pointer
+ * @data:     Pointer to the data received
+ * @data_len: Length of @data
+ *
+ * Configure the concurrent session policies when multiple STA ifaces are
+ * (getting) active.
+ * Return: 0 on success; errno on failure
+ */
+static int wlan_hdd_cfg80211_dual_sta_policy(struct wiphy *wiphy,
+					     struct wireless_dev *wdev,
+					     const void *data, int data_len)
+{
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(wdev->netdev, &vdev_sync);
+	if (errno)
+		return errno;
+
+	errno = __wlan_hdd_cfg80211_dual_sta_policy(wiphy, wdev, data,
+						    data_len);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -15788,6 +15883,19 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 			wlan_hdd_set_sta_roam_config_policy,
 			QCA_WLAN_VENDOR_ATTR_STA_CONNECT_ROAM_POLICY_MAX)
 	},
+
+	{
+		.info.vendor_id = QCA_NL80211_VENDOR_ID,
+		.info.subcmd =
+			QCA_NL80211_VENDOR_SUBCMD_CONCURRENT_MULTI_STA_POLICY,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+			WIPHY_VENDOR_CMD_NEED_NETDEV,
+		.doit = wlan_hdd_cfg80211_dual_sta_policy,
+		vendor_command_policy(
+			wlan_hdd_set_dual_sta_policy,
+			QCA_WLAN_VENDOR_ATTR_CONCURRENT_STA_POLICY_MAX)
+	},
+
 #ifdef FEATURE_WLAN_CH_AVOID
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
