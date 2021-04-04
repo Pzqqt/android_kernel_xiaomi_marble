@@ -1276,6 +1276,15 @@ struct wlan_mlme_ratemask {
 	uint32_t higher32_2;
 };
 
+/**
+ * struct dual_sta_policy - Concurrent STA policy configuration
+ * @concurrent_sta_policy: Possible values are defined in enum
+ * qca_wlan_concurrent_sta_policy_config
+ */
+struct dual_sta_policy {
+	uint8_t concurrent_sta_policy;
+};
+
 /* struct wlan_mlme_generic - Generic CFG config items
  *
  * @band_capability: HW Band Capability - Both or 2.4G only or 5G only
@@ -1324,6 +1333,7 @@ struct wlan_mlme_ratemask {
  * @monitor_mode_concurrency: Monitor mode concurrency supported
  * @ocv_support: FW supports OCV or not
  * @wds_mode: wds mode supported
+ * @dual_sta_policy_cfg: Dual STA policies configuration
  */
 struct wlan_mlme_generic {
 	uint32_t band_capability;
@@ -1369,6 +1379,7 @@ struct wlan_mlme_generic {
 	enum monitor_mode_concurrency monitor_mode_concurrency;
 	bool ocv_support;
 	enum wlan_wds_mode wds_mode;
+	struct dual_sta_policy dual_sta_policy;
 };
 
 /*
