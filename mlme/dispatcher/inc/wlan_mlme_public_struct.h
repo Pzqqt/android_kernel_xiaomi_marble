@@ -1280,9 +1280,12 @@ struct wlan_mlme_ratemask {
  * struct dual_sta_policy - Concurrent STA policy configuration
  * @concurrent_sta_policy: Possible values are defined in enum
  * qca_wlan_concurrent_sta_policy_config
+ * @primary_vdev_id: specified iface is the primary STA iface, say 0 means
+ * vdev 0 is acting as primary interface
  */
 struct dual_sta_policy {
 	uint8_t concurrent_sta_policy;
+	uint8_t primary_vdev_id;
 };
 
 /* struct wlan_mlme_generic - Generic CFG config items

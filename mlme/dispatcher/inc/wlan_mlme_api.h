@@ -1054,6 +1054,20 @@ QDF_STATUS wlan_mlme_set_fils_enabled_info(struct wlan_objmgr_psoc *psoc,
 					   bool value);
 
 /**
+ * wlan_mlme_set_primary_interface() - Set the primary iface id for driver
+ * @psoc: pointer to psoc object
+ * @value: value that needs to be set from the caller
+ *
+ * When a vdev is set as primary then based on the dual sta policy
+ * "qca_wlan_concurrent_sta_policy_config" mcc preference and roaming has
+ * to be enabled on the primary vdev
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_set_primary_interface(struct wlan_objmgr_psoc *psoc,
+					   uint8_t value);
+
+/**
  * wlan_mlme_get_tl_delayed_trgr_frm_int() - Get delay interval(in ms)
  * of UAPSD auto trigger
  * @psoc: pointer to psoc object
