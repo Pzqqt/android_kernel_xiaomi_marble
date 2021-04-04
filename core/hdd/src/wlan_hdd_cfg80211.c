@@ -7001,7 +7001,8 @@ const struct nla_policy wlan_hdd_wifi_config_policy[
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANI_LEVEL] = {.type = NLA_S32 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_NSS] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_NSS] = {.type = NLA_U8 },
-
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_CONCURRENT_STA_PRIMARY] = {
+							.type = NLA_U8 },
 };
 
 static const struct nla_policy
@@ -8623,6 +8624,33 @@ static int hdd_config_disable_fils(struct hdd_adapter *adapter,
 	return qdf_status_to_os_return(status);
 }
 
+static int hdd_set_primary_interface(struct hdd_adapter *adapter,
+				     const struct nlattr *attr)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	bool is_set_primary_iface;
+	QDF_STATUS status;
+	uint8_t primary_vdev_id;
+
+	/* ignore unless in STA mode */
+	if (adapter->device_mode != QDF_STA_MODE)
+		return 0;
+
+	is_set_primary_iface = nla_get_u8(attr);
+
+	primary_vdev_id = is_set_primary_iface ? adapter->vdev_id : WLAN_UMAC_VDEV_ID_MAX;
+	hdd_debug("Primary interface: %d", primary_vdev_id);
+
+	status = ucfg_mlme_set_primary_interface(hdd_ctx->psoc,
+						 primary_vdev_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("could not set primary interface, %d", status);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 static int hdd_config_rsn_ie(struct hdd_adapter *adapter,
 			     const struct nlattr *attr)
 {
@@ -8976,6 +9004,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_power},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_UDP_QOS_UPGRADE,
 	 hdd_config_udp_qos_upgrade_threshold},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_CONCURRENT_STA_PRIMARY,
+	 hdd_set_primary_interface},
 };
 
 #ifdef WLAN_FEATURE_ELNA

@@ -1962,6 +1962,26 @@ QDF_STATUS ucfg_mlme_set_fils_enabled_info(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * ucfg_mlme_set_primary_interface() - Set primary STA iface id
+ *
+ * @psoc: pointer to psoc object
+ * @value: value that needs to be set from the caller
+ *
+ * When a vdev is set as primary then based on the dual sta policy
+ * "qca_wlan_concurrent_sta_policy_config" mcc preference and roaming has
+ * to be enabled on the primary vdev
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+static inline
+QDF_STATUS ucfg_mlme_set_primary_interface(struct wlan_objmgr_psoc *psoc,
+					   uint8_t value)
+{
+	return wlan_mlme_set_primary_interface(psoc, value);
+}
+
+
+/**
  * ucfg_mlme_set_enable_bcast_probe_rsp() - Set enable bcast probe resp info
  * @psoc: pointer to psoc object
  * @value: value that needs to be set from the caller
