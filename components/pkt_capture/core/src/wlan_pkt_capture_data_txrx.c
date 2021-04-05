@@ -726,33 +726,57 @@ static uint8_t pkt_capture_get_rx_rtap_flags(void *ptr_rx_tlv_hdr)
 #define CHANNEL_FREQ_5150 5150
 /**
  * pkt_capture_rx_mon_get_rx_status() - Get rx status
+ * @context: objmgr vdev
  * @psoc: dp_soc handle
  * @desc: Pointer to struct rx_pkt_tlvs
  * @rx_status: Pointer to struct mon_rx_status
  *
  * Return: none
  */
-static void pkt_capture_rx_mon_get_rx_status(void *psoc, void *desc,
+static void pkt_capture_rx_mon_get_rx_status(void *context, void *dp_soc,
+					     void *desc,
 					     struct mon_rx_status *rx_status)
 {
 	uint8_t *rx_tlv_hdr = desc;
 	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)desc;
 	struct rx_msdu_start *msdu_start =
 					&pkt_tlvs->msdu_start_tlv.rx_msdu_start;
+	struct connection_info info[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_vdev *vdev = context;
+	uint32_t conn_count;
+	uint8_t vdev_id;
+	int i;
 
 	rx_status->rtap_flags |= pkt_capture_get_rx_rtap_flags(rx_tlv_hdr);
-	rx_status->chan_freq = hal_rx_msdu_start_get_freq(rx_tlv_hdr) >> 16;
-	rx_status->chan_num = cds_freq_to_chan(rx_status->chan_freq);
 	rx_status->ant_signal_db = hal_rx_msdu_start_get_rssi(rx_tlv_hdr);
 	rx_status->rssi_comb = hal_rx_msdu_start_get_rssi(rx_tlv_hdr);
 	rx_status->tsft = msdu_start->ppdu_start_timestamp;
+
+	vdev_id = wlan_vdev_get_id(vdev);
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		pkt_capture_err("Failed to get psoc");
+		return;
+	}
+
+	/* Update the connected channel info from policy manager */
+	conn_count = policy_mgr_get_connection_info(psoc, info);
+	for (i = 0; i < conn_count; i++) {
+		if (info[i].vdev_id == vdev_id) {
+			rx_status->chan_freq = info[0].ch_freq;
+			rx_status->chan_num = info[0].channel;
+			break;
+		}
+	}
 
 	if (rx_status->chan_freq > CHANNEL_FREQ_5150)
 		rx_status->ofdm_flag = 1;
 	else
 		rx_status->cck_flag = 1;
 
-	pkt_capture_rx_get_phy_info(psoc, desc, rx_status);
+	pkt_capture_rx_get_phy_info(dp_soc, desc, rx_status);
 }
 #endif
 
@@ -948,7 +972,8 @@ pkt_capture_rx_data_cb(
 		 */
 
 		/* need to update this to fill rx_status*/
-		pkt_capture_rx_mon_get_rx_status(psoc, rx_tlv_hdr, &rx_status);
+		pkt_capture_rx_mon_get_rx_status(context, psoc,
+						 rx_tlv_hdr, &rx_status);
 		rx_status.chan_noise_floor = NORMALIZED_TO_NOISE_FLOOR;
 		rx_status.tx_status = status;
 		rx_status.tx_retry_cnt = tx_retry_cnt;
