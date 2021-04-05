@@ -745,6 +745,9 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 			handle_session_response_work_handler);
 
 	INIT_LIST_HEAD(&inst->response_works);
+	INIT_LIST_HEAD(&inst->pool.buffers.list);
+	INIT_LIST_HEAD(&inst->pool.mappings.list);
+	INIT_LIST_HEAD(&inst->pool.allocations.list);
 	INIT_LIST_HEAD(&inst->buffers.input.list);
 	INIT_LIST_HEAD(&inst->buffers.input_meta.list);
 	INIT_LIST_HEAD(&inst->buffers.output.list);

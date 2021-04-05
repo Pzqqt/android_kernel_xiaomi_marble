@@ -515,11 +515,12 @@ static int handle_read_only_buffer(struct msm_vidc_inst *inst,
 	 */
 	if (buffer->attr & MSM_VIDC_ATTR_READ_ONLY) {
 		if (!found) {
-			ro_buf = kmemdup(buffer, sizeof(struct msm_vidc_buffer), GFP_KERNEL);
+			ro_buf = msm_vidc_get_vidc_buffer(inst);
 			if (!ro_buf) {
 				i_vpr_e(inst, "%s: buffer alloc failed\n", __func__);
 				return -ENOMEM;
 			}
+			memcpy(ro_buf, buffer, sizeof(struct msm_vidc_buffer));
 			INIT_LIST_HEAD(&ro_buf->list);
 			list_add_tail(&ro_buf->list, &ro_buffers->list);
 			print_vidc_buffer(VIDC_LOW, "low", "ro buf added", inst, ro_buf);
@@ -528,8 +529,7 @@ static int handle_read_only_buffer(struct msm_vidc_inst *inst,
 		if (found) {
 			print_vidc_buffer(VIDC_LOW, "low", "ro buf deleted", inst, ro_buf);
 			list_del(&ro_buf->list);
-			kfree(ro_buf);
-			ro_buf = NULL;
+			msm_vidc_put_vidc_buffer(inst, ro_buf);
 		}
 	}
 

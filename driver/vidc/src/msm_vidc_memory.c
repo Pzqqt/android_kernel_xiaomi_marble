@@ -202,34 +202,6 @@ exit:
 	return rc;
 }
 
-int msm_vidc_memory_unmap_completely(struct msm_vidc_core *core,
-	struct msm_vidc_map *map)
-{
-	int rc = 0;
-
-	if (!core || !map) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
-
-	if (!map->refcount)
-		return 0;
-
-	while (map->refcount) {
-		rc = msm_vidc_memory_unmap(core, map);
-		if (rc)
-			break;
-		if (!map->refcount) {
-			msm_vidc_memory_put_dmabuf(map->dmabuf);
-			list_del(&map->list);
-			kfree(map);
-			map = NULL;
-			break;
-		}
-	}
-	return rc;
-}
-
 int msm_vidc_memory_alloc(struct msm_vidc_core *core, struct msm_vidc_alloc *mem)
 {
 	int rc = 0;

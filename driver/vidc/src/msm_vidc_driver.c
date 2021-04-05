@@ -1735,7 +1735,6 @@ static int vb2_buffer_to_driver(struct vb2_buffer *vb2,
 		return -EINVAL;
 	}
 
-	buf->valid = true;
 	buf->type = v4l2_type_to_driver(vb2->type, __func__);
 	if (!buf->type)
 		return -EINVAL;
@@ -1778,11 +1777,215 @@ int msm_vidc_process_readonly_buffers(struct msm_vidc_inst *inst,
 			buf->attr |= MSM_VIDC_ATTR_READ_ONLY;
 			print_vidc_buffer(VIDC_LOW, "low", "ro buf removed", inst, ro_buf);
 			list_del(&ro_buf->list);
-			kfree(ro_buf);
+			msm_vidc_put_vidc_buffer(inst, ro_buf);
 			break;
 		}
 	}
 	return rc;
+}
+
+int msm_vidc_memory_unmap_completely(struct msm_vidc_inst *inst,
+	struct msm_vidc_map *map)
+{
+	int rc = 0;
+
+	if (!inst || !map) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!map->refcount)
+		return 0;
+
+	while (map->refcount) {
+		rc = msm_vidc_memory_unmap(inst->core, map);
+		if (rc)
+			break;
+		if (!map->refcount) {
+			msm_vidc_memory_put_dmabuf(map->dmabuf);
+			list_del(&map->list);
+			msm_vidc_put_map_buffer(inst, map);
+			break;
+		}
+	}
+	return rc;
+}
+
+struct msm_vidc_buffer *msm_vidc_get_vidc_buffer(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_buffer *buf = NULL;
+
+	if (!inst) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return NULL;
+	}
+
+	if (!list_empty(&inst->pool.buffers.list)) {
+		buf = list_first_entry(&inst->pool.buffers.list, struct msm_vidc_buffer, list);
+		inst->pool.buffers.count--;
+		list_del(&buf->list);
+		memset(buf, 0, sizeof(struct msm_vidc_buffer));
+		return buf;
+	}
+
+	buf = kzalloc(sizeof(struct msm_vidc_buffer), GFP_KERNEL);
+	if (!buf) {
+		i_vpr_e(inst, "%s: buf failed\n", __func__);
+		return NULL;
+	}
+
+	return buf;
+}
+
+int msm_vidc_put_vidc_buffer(struct msm_vidc_inst *inst, struct msm_vidc_buffer *buf)
+{
+	if (!inst || !buf) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	inst->pool.buffers.count++;
+	list_add_tail(&buf->list, &inst->pool.buffers.list);
+
+	return 0;
+}
+
+int msm_vidc_destroy_vidc_buffer(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_buffer *buf, *dummy;
+
+	if (!inst) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	i_vpr_h(inst, "%s: pool: buffer count %u\n", __func__, inst->pool.buffers.count);
+
+	/* free all buffers from pool */
+	list_for_each_entry_safe(buf, dummy, &inst->pool.buffers.list, list) {
+		list_del(&buf->list);
+		kfree(buf);
+	}
+
+	return 0;
+}
+
+struct msm_vidc_alloc *msm_vidc_get_alloc_buffer(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_alloc *alloc = NULL;
+
+	if (!inst) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return NULL;
+	}
+
+	if (!list_empty(&inst->pool.allocations.list)) {
+		alloc = list_first_entry(&inst->pool.allocations.list, struct msm_vidc_alloc, list);
+		inst->pool.allocations.count--;
+		list_del(&alloc->list);
+		memset(alloc, 0, sizeof(struct msm_vidc_alloc));
+		return alloc;
+	}
+
+	alloc = kzalloc(sizeof(struct msm_vidc_alloc), GFP_KERNEL);
+	if (!alloc) {
+		i_vpr_e(inst, "%s: alloc failed\n", __func__);
+		return NULL;
+	}
+
+	return alloc;
+}
+
+int msm_vidc_put_alloc_buffer(struct msm_vidc_inst *inst, struct msm_vidc_alloc *alloc)
+{
+	if (!inst || !alloc) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	list_add_tail(&alloc->list, &inst->pool.allocations.list);
+	inst->pool.allocations.count++;
+
+	return 0;
+}
+
+int msm_vidc_destroy_alloc_buffer(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_alloc *alloc, *dummy;
+
+	if (!inst) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	i_vpr_h(inst, "%s: pool: allocations count %u\n", __func__, inst->pool.allocations.count);
+
+	/* free all allocations from pool */
+	list_for_each_entry_safe(alloc, dummy, &inst->pool.allocations.list, list) {
+		list_del(&alloc->list);
+		kfree(alloc);
+	}
+
+	return 0;
+}
+
+struct msm_vidc_map *msm_vidc_get_map_buffer(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_map *map = NULL;
+
+	if (!inst) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return NULL;
+	}
+
+	if (!list_empty(&inst->pool.mappings.list)) {
+		map = list_first_entry(&inst->pool.mappings.list, struct msm_vidc_map, list);
+		inst->pool.mappings.count--;
+		list_del(&map->list);
+		memset(map, 0, sizeof(struct msm_vidc_map));
+		return map;
+	}
+
+	map = kzalloc(sizeof(struct msm_vidc_map), GFP_KERNEL);
+	if (!map) {
+		i_vpr_e(inst, "%s: map failed\n", __func__);
+		return NULL;
+	}
+
+	return map;
+}
+
+int msm_vidc_put_map_buffer(struct msm_vidc_inst *inst, struct msm_vidc_map *map)
+{
+	if (!inst || !map) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	list_add_tail(&map->list, &inst->pool.mappings.list);
+	inst->pool.mappings.count++;
+
+	return 0;
+}
+
+int msm_vidc_destroy_map_buffer(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_map *map, *dummy;
+
+	if (!inst) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	i_vpr_h(inst, "%s: pool: mappings count %u\n", __func__, inst->pool.mappings.count);
+
+	/* free all mappings from pool */
+	list_for_each_entry_safe(map, dummy, &inst->pool.mappings.list, list) {
+		list_del(&map->list);
+		kfree(map);
+	}
+
+	return 0;
 }
 
 int msm_vidc_unmap_buffers(struct msm_vidc_inst *inst,
@@ -1802,7 +2005,7 @@ int msm_vidc_unmap_buffers(struct msm_vidc_inst *inst,
 		return -EINVAL;
 
 	list_for_each_entry_safe(map, dummy, &mappings->list, list) {
-		msm_vidc_memory_unmap_completely(inst->core, map);
+		msm_vidc_memory_unmap_completely(inst, map);
 	}
 
 	return rc;
@@ -1847,8 +2050,7 @@ int msm_vidc_unmap_driver_buf(struct msm_vidc_inst *inst,
 	if (!map->refcount) {
 		msm_vidc_memory_put_dmabuf(map->dmabuf);
 		list_del(&map->list);
-		kfree(map);
-		map = NULL;
+		msm_vidc_put_map_buffer(inst, map);
 	}
 
 	return rc;
@@ -1883,7 +2085,7 @@ int msm_vidc_map_driver_buf(struct msm_vidc_inst *inst,
 	}
 	if (!found) {
 		/* new buffer case */
-		map = kzalloc(sizeof(struct msm_vidc_map), GFP_KERNEL);
+		map = msm_vidc_get_map_buffer(inst);
 		if (!map) {
 			i_vpr_e(inst, "%s: alloc failed\n", __func__);
 			return -ENOMEM;
@@ -1900,7 +2102,7 @@ int msm_vidc_map_driver_buf(struct msm_vidc_inst *inst,
 			rc = msm_vidc_memory_map(inst->core, map);
 			if (rc) {
 				msm_vidc_memory_put_dmabuf(map->dmabuf);
-				kfree(map);
+				msm_vidc_put_map_buffer(inst, map);
 				return rc;
 			}
 		}
@@ -1931,7 +2133,7 @@ int msm_vidc_put_driver_buf(struct msm_vidc_inst *inst,
 
 	/* delete the buffer from buffers->list */
 	list_del(&buf->list);
-	kfree(buf);
+	msm_vidc_put_vidc_buffer(inst, buf);
 
 	return rc;
 }
@@ -1957,7 +2159,7 @@ struct msm_vidc_buffer *msm_vidc_get_driver_buf(struct msm_vidc_inst *inst,
 	if (!buffers)
 		return NULL;
 
-	buf = kzalloc(sizeof(struct msm_vidc_buffer), GFP_KERNEL);
+	buf = msm_vidc_get_vidc_buffer(inst);
 	if (!buf) {
 		i_vpr_e(inst, "%s: alloc failed\n", __func__);
 		return NULL;
@@ -1985,7 +2187,7 @@ struct msm_vidc_buffer *msm_vidc_get_driver_buf(struct msm_vidc_inst *inst,
 error:
 	msm_vidc_memory_put_dmabuf(buf->dmabuf);
 	list_del(&buf->list);
-	kfree(buf);
+	msm_vidc_put_vidc_buffer(inst, buf);
 	return NULL;
 }
 
@@ -2011,8 +2213,6 @@ struct msm_vidc_buffer *get_meta_buffer(struct msm_vidc_inst *inst,
 		return NULL;
 	}
 	list_for_each_entry(mbuf, &buffers->list, list) {
-		if (!mbuf->valid)
-			continue;
 		if (mbuf->index == buf->index) {
 			found = true;
 			break;
@@ -2376,7 +2576,7 @@ int msm_vidc_destroy_internal_buffer(struct msm_vidc_inst *inst,
 		if (map->dmabuf == buffer->dmabuf) {
 			msm_vidc_memory_unmap(inst->core, map);
 			list_del(&map->list);
-			kfree(map);
+			msm_vidc_put_map_buffer(inst, map);
 			break;
 		}
 	}
@@ -2385,7 +2585,7 @@ int msm_vidc_destroy_internal_buffer(struct msm_vidc_inst *inst,
 		if (alloc->dmabuf == buffer->dmabuf) {
 			msm_vidc_memory_free(inst->core, alloc);
 			list_del(&alloc->list);
-			kfree(alloc);
+			msm_vidc_put_alloc_buffer(inst, alloc);
 			break;
 		}
 	}
@@ -2393,7 +2593,7 @@ int msm_vidc_destroy_internal_buffer(struct msm_vidc_inst *inst,
 	list_for_each_entry_safe(buf, dummy, &buffers->list, list) {
 		if (buf->dmabuf == buffer->dmabuf) {
 			list_del(&buf->list);
-			kfree(buf);
+			msm_vidc_put_vidc_buffer(inst, buf);
 			break;
 		}
 	}
@@ -2473,19 +2673,18 @@ int msm_vidc_create_internal_buffer(struct msm_vidc_inst *inst,
 	if (!buffers->size)
 		return 0;
 
-	buffer = kzalloc(sizeof(struct msm_vidc_buffer), GFP_KERNEL);
+	buffer = msm_vidc_get_vidc_buffer(inst);
 	if (!buffer) {
 		i_vpr_e(inst, "%s: buf alloc failed\n", __func__);
 		return -ENOMEM;
 	}
 	INIT_LIST_HEAD(&buffer->list);
-	buffer->valid = true;
 	buffer->type = buffer_type;
 	buffer->index = index;
 	buffer->buffer_size = buffers->size;
 	list_add_tail(&buffer->list, &buffers->list);
 
-	alloc = kzalloc(sizeof(struct msm_vidc_alloc), GFP_KERNEL);
+	alloc = msm_vidc_get_alloc_buffer(inst);
 	if (!alloc) {
 		i_vpr_e(inst, "%s: alloc failed\n", __func__);
 		return -ENOMEM;
@@ -2501,7 +2700,7 @@ int msm_vidc_create_internal_buffer(struct msm_vidc_inst *inst,
 		return -ENOMEM;
 	list_add_tail(&alloc->list, &allocations->list);
 
-	map = kzalloc(sizeof(struct msm_vidc_map), GFP_KERNEL);
+	map = msm_vidc_get_map_buffer(inst);
 	if (!map) {
 		i_vpr_e(inst, "%s: map alloc failed\n", __func__);
 		return -ENOMEM;
@@ -3511,7 +3710,7 @@ int msm_vidc_print_inst_info(struct msm_vidc_inst *inst)
 			buffers->extra_count, buffers->actual_count);
 
 		list_for_each_entry(buf, &buffers->list, list) {
-			if (!buf->valid || !buf->dmabuf)
+			if (!buf->dmabuf)
 				continue;
 			dbuf = (struct dma_buf *)buf->dmabuf;
 			i_vpr_e(inst,
@@ -3814,7 +4013,7 @@ int msm_vidc_flush_delayed_unmap_buffers(struct msm_vidc_inst *inst,
 						__func__, map->refcount, map->device_addr);
 					msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 				}
-				msm_vidc_memory_unmap_completely(inst->core, map);
+				msm_vidc_memory_unmap_completely(inst, map);
 			}
 		}
 	}
@@ -3876,8 +4075,14 @@ void msm_vidc_destroy_buffers(struct msm_vidc_inst *inst)
 	list_for_each_entry_safe(buf, dummy, &inst->buffers.read_only.list, list) {
 		print_vidc_buffer(VIDC_ERR, "err", "destroying ro buffer", inst, buf);
 		list_del(&buf->list);
-		kfree(buf);
+		msm_vidc_put_vidc_buffer(inst, buf);
 	}
+
+	/* destroy buffers from pool */
+	msm_vidc_destroy_vidc_buffer(inst);
+	msm_vidc_destroy_alloc_buffer(inst);
+	msm_vidc_destroy_map_buffer(inst);
+
 }
 
 static void msm_vidc_close_helper(struct kref *kref)
