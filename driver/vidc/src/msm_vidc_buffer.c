@@ -34,15 +34,6 @@ u32 msm_vidc_input_min_count(struct msm_vidc_inst* inst)
 	if (is_thumbnail_session(inst) || is_image_session(inst))
 		input_min_count = 1;
 
-	//if (is_grid_session(inst))
-	//	input_min_count = 2;
-
-	//if (is_hier_b_session(inst)) {
-		//max_layer = get_ctrl(inst,
-		//	V4L2_CID_MPEG_VIDC_VIDEO_HEVC_MAX_HIER_CODING_LAYER);
-		//input_min_count = (1 << (max_layer->val - 1)) + 2;
-	//}
-
 	return input_min_count;
 }
 
@@ -193,8 +184,8 @@ u32 msm_vidc_internal_buffer_count(struct msm_vidc_inst *inst,
 			else
 				count = 0;
 		} else {
-			i_vpr_e(inst, "%s: unsupported buffer type %#x\n",
-				__func__, buffer_type);
+			i_vpr_e(inst, "%s: unsupported buffer type %s\n",
+				__func__, buf_name(buffer_type));
 			count = 0;
 		}
 	}
@@ -317,9 +308,6 @@ u32 msm_vidc_encoder_output_size(struct msm_vidc_inst *inst)
 	 * Initially frame_size = YUVsize * 2;
 	 */
 
-	/* if (is_grid_session(inst)) {
-		f->fmt.pix_mp.width = f->fmt.pix_mp.height = HEIC_GRID_DIMENSION;
-	} */
 	width = ALIGN(f->fmt.pix_mp.width, BUFFER_ALIGNMENT_SIZE(32));
 	height = ALIGN(f->fmt.pix_mp.height, BUFFER_ALIGNMENT_SIZE(32));
 	mbs_per_frame = NUM_MBS_PER_FRAME(width, height);

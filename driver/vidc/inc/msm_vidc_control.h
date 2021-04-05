@@ -79,8 +79,6 @@ int msm_vidc_set_session_priority(void *instance,
 	enum msm_vidc_inst_capability_type cap_id);
 int msm_vidc_set_s32(void *instance,
 	enum msm_vidc_inst_capability_type cap_id);
-int msm_vidc_set_array(void *instance,
-	enum msm_vidc_inst_capability_type cap_id);
 int msm_vidc_set_q16(void *instance,
 	enum msm_vidc_inst_capability_type cap_id);
 int msm_vidc_set_v4l2_properties(struct msm_vidc_inst *inst);

@@ -184,10 +184,6 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 				MSM_VIDC_BUF_ARP);
 			if (rc)
 				goto error;
-			i_vpr_h(inst, "session internal buffer: min     size\n");
-			i_vpr_h(inst, "arp  buffer: %d      %d\n",
-				inst->buffers.arp.min_count,
-				inst->buffers.arp.size);
 		} else if(is_decode_session(inst)) {
 			rc = msm_vidc_session_set_default_header(inst);
 			if (rc)
@@ -197,11 +193,6 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 				MSM_VIDC_BUF_PERSIST);
 			if (rc)
 				goto error;
-			i_vpr_h(inst, "session internal buffer: min     size     reuse\n");
-			i_vpr_h(inst, "persist  buffer: %d      %d      %d\n",
-				inst->buffers.persist.min_count,
-				inst->buffers.persist.size,
-				inst->buffers.persist.reuse);
 		}
 	}
 
@@ -229,8 +220,13 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 		i_vpr_e(inst, "%s: invalid type %d\n", q->type);
 		goto error;
 	}
-	if (!rc)
-		i_vpr_h(inst, "Streamon: %d successful\n", q->type);
+	if (rc)
+		goto error;
+
+	/* print final buffer counts & size details */
+	msm_vidc_print_buffer_info(inst);
+
+	i_vpr_h(inst, "Streamon: %d successful\n", q->type);
 
 	return rc;
 

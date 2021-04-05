@@ -3438,8 +3438,8 @@ int venus_hfi_release_buffer(struct msm_vidc_inst *inst,
 	}
 
 	if (!is_internal_buffer(buffer->type)) {
-		i_vpr_e(inst, "release not allowed for buffer type %d\n",
-			buffer->type);
+		i_vpr_e(inst, "release not allowed for buffer_type %s\n",
+			buf_name(buffer->type));
 		goto unlock;
 	}
 	core = inst->core;

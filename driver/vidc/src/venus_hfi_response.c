@@ -584,6 +584,7 @@ static int handle_input_buffer(struct msm_vidc_inst *inst,
 			return 0;
 		}
 	}
+
 	buf->data_offset = buffer->data_offset;
 	buf->data_size = buffer->data_size;
 	buf->attr &= ~MSM_VIDC_ATTR_QUEUED;
@@ -1274,7 +1275,7 @@ static int handle_session_property(struct msm_vidc_inst *inst,
 	u32 port;
 	u32 *payload_ptr;
 
-	i_vpr_h(inst, "%s: property type %#x\n", __func__, pkt->type);
+	i_vpr_l(inst, "%s: property type %#x\n", __func__, pkt->type);
 
 	port = vidc_port_from_hfi(inst, pkt->port);
 	if (port >= MAX_PORT) {
