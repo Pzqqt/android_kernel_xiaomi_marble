@@ -37,12 +37,12 @@ static int mmrm_read_clk_pltfrm_rsrc_frm_drv_data(
 
 	cres->threshold = mmrm_find_key_value(pdata,
 						"qcom,mmrm_clk_threshold");
-	d_mpr_e("%s: configured mmrm clk threshold %d\n",
+	d_mpr_h("%s: configured mmrm clk threshold %d\n",
 		__func__, cres->threshold);
 
 	cres->scheme = mmrm_find_key_value(pdata,
 					"qcom,mmrm_clk_mgr_scheme");
-	d_mpr_e("%s: configured mmrm scheme %d\n",
+	d_mpr_h("%s: configured mmrm scheme %d\n",
 		__func__, cres->scheme);
 
 	return rc;
@@ -100,7 +100,7 @@ static int mmrm_load_mm_rail_corner_table(
 	for (c = 0; c < num_corners; c++) {
 		struct corner_info *ci = &corners->corner_tbl[c];
 
-		d_mpr_e(
+		d_mpr_h(
 			"%s: corner_name:%s volt_factor: %d sc_dyn: %d sc_leak: %d\n",
 			__func__, ci->name, ci->volt_factor,
 			ci->scaling_factor_dyn, ci->scaling_factor_leak);
@@ -167,7 +167,7 @@ static int mmrm_load_nom_clk_src_table(
 	for (c = 0; c < num_clk_src; c++) {
 		struct nom_clk_src_info *ci = &clk_srcs->clk_src_tbl[c];
 
-		d_mpr_e("%s: domain: %d clk_src: %d dyn_pwr: %d leak_pwr: %d\n",
+		d_mpr_h("%s: domain: %d clk_src: %d dyn_pwr: %d leak_pwr: %d\n",
 			__func__, ci->domain, ci->clk_src_id, ci->nom_dyn_pwr,
 			ci->nom_leak_pwr);
 	}
