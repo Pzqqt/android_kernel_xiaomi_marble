@@ -243,6 +243,11 @@ dp_pdev_nbuf_alloc_and_map_replenish(struct dp_soc *dp_soc,
 	nbuf_frag_info_t->paddr =
 		qdf_nbuf_get_frag_paddr((nbuf_frag_info_t->virt_addr).nbuf, 0);
 
+	dp_ipa_handle_rx_buf_smmu_mapping(dp_soc,
+			       (qdf_nbuf_t)((nbuf_frag_info_t->virt_addr).nbuf),
+			       rx_desc_pool->buf_size,
+			       true);
+
 	ret = dp_check_paddr(dp_soc, &((nbuf_frag_info_t->virt_addr).nbuf),
 			     &nbuf_frag_info_t->paddr,
 			     rx_desc_pool);
