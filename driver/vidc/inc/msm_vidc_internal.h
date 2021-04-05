@@ -747,7 +747,6 @@ struct msm_vidc_allocations {
 
 struct msm_vidc_map {
 	struct list_head            list;
-	bool                        valid;
 	enum msm_vidc_buffer_type   type;
 	enum msm_vidc_buffer_region region;
 	struct dma_buf             *dmabuf;
@@ -764,7 +763,6 @@ struct msm_vidc_mappings {
 
 struct msm_vidc_buffer {
 	struct list_head                   list;
-	bool                               valid;
 	enum msm_vidc_buffer_type          type;
 	u32                                index;
 	int                                fd;
@@ -785,6 +783,11 @@ struct msm_vidc_buffers {
 	u32                    actual_count;
 	u32                    size;
 	bool                   reuse;
+};
+
+struct msm_vidc_pool {
+	struct list_head       list;
+	u32                    count;
 };
 
 enum msm_vidc_allow {

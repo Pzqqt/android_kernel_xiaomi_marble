@@ -27,6 +27,12 @@ struct msm_vidc_session_ops {
 	int (*extra_count)(struct msm_vidc_inst *inst, enum msm_vidc_buffer_type type);
 };
 
+struct msm_vidc_pool_info {
+	struct msm_vidc_pool            allocations;
+	struct msm_vidc_pool            mappings;
+	struct msm_vidc_pool            buffers;
+};
+
 struct msm_vidc_allocations_info {
 	struct msm_vidc_allocations     bin;
 	struct msm_vidc_allocations     arp;
@@ -111,6 +117,7 @@ struct msm_vidc_inst {
 	struct msm_vidc_rectangle          compose;
 	struct msm_vidc_power              power;
 	struct vidc_bus_vote_data          bus_data;
+	struct msm_vidc_pool_info          pool;
 	struct msm_vidc_buffers_info       buffers;
 	struct msm_vidc_mappings_info      mappings;
 	struct msm_vidc_allocations_info   allocations;
