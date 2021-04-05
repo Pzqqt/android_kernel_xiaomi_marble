@@ -12875,8 +12875,7 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 						    &value);
 	cds_cfg->ap_maxoffload_reorderbuffs = value;
 
-	cds_cfg->reorder_offload =
-			cfg_get(hdd_ctx->psoc, CFG_DP_REORDER_OFFLOAD_SUPPORT);
+	cds_cfg->reorder_offload = DP_REORDER_OFFLOAD_SUPPORT;
 
 	/* IPA micro controller data path offload resource config item */
 	cds_cfg->uc_offload_enabled = ucfg_ipa_uc_is_enabled();

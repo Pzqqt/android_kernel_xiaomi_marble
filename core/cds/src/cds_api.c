@@ -436,8 +436,7 @@ static void cds_cdp_cfg_attach(struct wlan_objmgr_psoc *psoc)
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct hdd_context *hdd_ctx = gp_cds_context->hdd_context;
 
-	cdp_cfg.is_full_reorder_offload =
-		cfg_get(psoc, CFG_DP_REORDER_OFFLOAD_SUPPORT);
+	cdp_cfg.is_full_reorder_offload = DP_REORDER_OFFLOAD_SUPPORT;
 	cdp_cfg.is_uc_offload_enabled = ucfg_ipa_uc_is_enabled();
 	cdp_cfg.uc_tx_buffer_count = cfg_get(psoc, CFG_DP_IPA_UC_TX_BUF_COUNT);
 	cdp_cfg.uc_tx_buffer_size =

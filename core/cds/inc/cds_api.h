@@ -46,6 +46,11 @@
 #include <wlan_objmgr_psoc_obj.h>
 #include <cdp_txrx_handle.h>
 
+/* The ini gReorderOffloadSupported is deprecated. So, defining a new macro
+ * DP_REORDER_OFFLOAD_SUPPORT with the ini's default value.
+ */
+#define DP_REORDER_OFFLOAD_SUPPORT (1)
+
 /* Amount of time to wait for WMA to perform an asynchronous activity.
  * This value should be larger than the timeout used by WMI to wait for
  * a response from target
