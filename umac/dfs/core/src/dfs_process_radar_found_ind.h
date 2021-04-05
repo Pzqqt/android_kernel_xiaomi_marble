@@ -205,25 +205,6 @@ dfs_process_radar_ind_on_home_chan(struct wlan_dfs *dfs,
 void dfs_radarfound_action_generic(struct wlan_dfs *dfs, uint8_t seg_id);
 
 /**
- * dfs_get_bonding_channels() - Get bonding channels.
- * @dfs:         Pointer to wlan_dfs structure.
- * @curchan:     Pointer to dfs_channels to know width and primary channel.
- * @segment_id:  Segment id, useful for 80+80/160 MHz operating band.
- * @detector_id: Detector id, used to find if radar is detected on
- *               Agile detector.
- * @channels:    Pointer to save radar affected channels.
- *
- * Return: Number of channels.
- */
-#ifdef CONFIG_CHAN_NUM_API
-uint8_t dfs_get_bonding_channels(struct wlan_dfs *dfs,
-				 struct dfs_channel *curchan,
-				 uint32_t segment_id,
-				 uint8_t detector_id,
-				 uint8_t *channels);
-#endif
-
-/**
  * dfs_get_bonding_channels_for_freq() - Get bonding channels.
  * @dfs:         Pointer to wlan_dfs structure.
  * @curchan:     Pointer to dfs_channels to know width and primary channel.
