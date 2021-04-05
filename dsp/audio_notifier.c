@@ -626,12 +626,12 @@ static int audio_notify_probe(struct platform_device *pdev)
 
 	priv->rproc_h = rproc_get_by_phandle(rproc_phandle);
 	if (!priv->rproc_h) {
-		dev_err(&pdev->dev, "remotproc handle NULL\n");
+		dev_info_ratelimited(&pdev->dev, "remotproc handle NULL\n");
+		ret = -EPROBE_DEFER;
 		return ret;
 	}
 
 	adsp_private = pdev;
-
 
 	audio_notifier_subsys_init();
 
