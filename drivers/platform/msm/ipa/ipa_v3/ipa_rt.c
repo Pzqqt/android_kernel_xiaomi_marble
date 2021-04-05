@@ -207,7 +207,7 @@ static int ipa_translate_rt_tbl_to_hw_fmt(enum ipa_ip_type ip,
 
 			/* update the hdr at the right index */
 			if (ipahal_fltrt_write_addr_to_hdr(offset, hdr,
-				tbl->idx - apps_start_idx, true)) {
+				tbl->idx, false)) {
 				IPAERR_RL("fail to wrt lcl tbl ofst to hdr\n");
 				goto hdr_update_fail;
 			}
