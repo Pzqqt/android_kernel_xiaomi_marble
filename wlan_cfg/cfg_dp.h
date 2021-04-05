@@ -903,11 +903,6 @@
 		0, 2048, WLAN_CFG_IPA_UC_RX_IND_RING_COUNT, \
 		CFG_VALUE_OR_DEFAULT, "IPA rx indication ring count")
 
-#define CFG_DP_REORDER_OFFLOAD_SUPPORT \
-		CFG_INI_UINT("gReorderOffloadSupported", \
-		0, 1, 1, \
-		CFG_VALUE_OR_DEFAULT, "Packet reordering offload to firmware")
-
 #define CFG_DP_AP_STA_SECURITY_SEPERATION \
 			CFG_INI_BOOL("gDisableIntraBssFwd", \
 			false, "Disable intrs BSS Rx packets")
@@ -1189,7 +1184,6 @@
 		CFG(CFG_DP_IPA_UC_TX_BUF_SIZE) \
 		CFG(CFG_DP_IPA_UC_TX_PARTITION_BASE) \
 		CFG(CFG_DP_IPA_UC_RX_IND_RING_COUNT) \
-		CFG(CFG_DP_REORDER_OFFLOAD_SUPPORT) \
 		CFG(CFG_DP_AP_STA_SECURITY_SEPERATION) \
 		CFG(CFG_DP_ENABLE_DATA_STALL_DETECTION) \
 		CFG(CFG_DP_RX_SW_DESC_WEIGHT) \
