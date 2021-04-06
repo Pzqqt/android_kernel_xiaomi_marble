@@ -1829,11 +1829,11 @@ int msm_vidc_set_max_qp(void *instance,
 		capability->cap[MAX_FRAME_QP].flags & CAP_FLAG_CLIENT_SET;
 
 	i_qp_enable = max_qp_enable ||
-		capability->cap[I_FRAME_MIN_QP].flags & CAP_FLAG_CLIENT_SET;
+		capability->cap[I_FRAME_MAX_QP].flags & CAP_FLAG_CLIENT_SET;
 	p_qp_enable = max_qp_enable ||
-		capability->cap[P_FRAME_MIN_QP].flags & CAP_FLAG_CLIENT_SET;
+		capability->cap[P_FRAME_MAX_QP].flags & CAP_FLAG_CLIENT_SET;
 	b_qp_enable = max_qp_enable ||
-		capability->cap[B_FRAME_MIN_QP].flags & CAP_FLAG_CLIENT_SET;
+		capability->cap[B_FRAME_MAX_QP].flags & CAP_FLAG_CLIENT_SET;
 
 	client_qp_enable = i_qp_enable | p_qp_enable << 1 | b_qp_enable << 2;
 	if (!client_qp_enable) {

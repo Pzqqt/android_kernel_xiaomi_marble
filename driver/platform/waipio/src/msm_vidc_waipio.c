@@ -595,7 +595,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		HFI_PROP_MAX_QP_PACKED,
 		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT,
 		{0}, {0},
-		NULL, msm_vidc_set_min_qp},
+		NULL, msm_vidc_set_max_qp},
 
 	{MAX_FRAME_QP, ENC, HEVC|HEIC,
 		MIN_QP_10BIT, MAX_QP, 1, MAX_QP,
@@ -603,7 +603,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		HFI_PROP_MAX_QP_PACKED,
 		CAP_FLAG_OUTPUT_PORT,
 		{PIX_FMTS}, {0},
-		msm_vidc_adjust_hevc_max_qp, msm_vidc_set_min_qp},
+		msm_vidc_adjust_hevc_max_qp, msm_vidc_set_max_qp},
 
 	{I_FRAME_MAX_QP, ENC, H264,
 		MIN_QP_8BIT, MAX_QP, 1, MAX_QP,
