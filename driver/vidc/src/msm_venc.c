@@ -139,7 +139,7 @@ static int msm_venc_set_stride_scanline(struct msm_vidc_inst *inst,
 
 	color_format = inst->capabilities->cap[PIX_FMTS].value;
 	if (!is_linear_colorformat(color_format)) {
-		i_vpr_e(inst,
+		i_vpr_h(inst,
 			"%s: not a linear color fmt, property is not set\n",
 			__func__);
 		return 0;

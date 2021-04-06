@@ -34,6 +34,16 @@ static bool is_priv_ctrl(u32 id)
 	 * make this as private ctrl for time being
 	 */
 	case V4L2_CID_MPEG_VIDEO_H264_HIERARCHICAL_CODING_TYPE:
+	/*
+	 * TODO: treat below std ctrls as private ctrls until
+	 * all below ctrls are available in upstream
+	 */
+	case V4L2_CID_MPEG_VIDEO_AU_DELIMITER:
+	case V4L2_CID_MPEG_VIDEO_LTR_COUNT:
+	case V4L2_CID_MPEG_VIDEO_FRAME_LTR_INDEX:
+	case V4L2_CID_MPEG_VIDEO_USE_LTR_FRAMES:
+	case V4L2_CID_MPEG_VIDEO_DEC_DISPLAY_DELAY:
+	case V4L2_CID_MPEG_VIDEO_DEC_DISPLAY_DELAY_ENABLE:
 		private = true;
 		break;
 	default:
