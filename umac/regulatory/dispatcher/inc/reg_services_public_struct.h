@@ -905,6 +905,9 @@ struct get_usable_chan_req_params {
  * @nol_chan: whether channel is nol
  * @nol_history: Set NOL-History when STA vap detects RADAR.
  * @is_chan_hop_blocked: Whether channel is blocked for ACS hopping.
+ * @ht40intol_flags: Contains Flags to indicate whether the 40PLUS/40MINUS
+ *                   version of the channel is blocked by ACS due to
+ *                   intolerance.
  * @psd_flag: is PSD channel or not
  * @psd_eirp: PSD power level
  */
@@ -921,6 +924,7 @@ struct regulatory_channel {
 	bool nol_history;
 #ifdef CONFIG_HOST_FIND_CHAN
 	bool is_chan_hop_blocked;
+	uint8_t ht40intol_flags;
 #endif
 #ifdef CONFIG_BAND_6GHZ
 	bool psd_flag;
