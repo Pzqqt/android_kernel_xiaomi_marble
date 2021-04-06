@@ -1939,7 +1939,7 @@ dp_rx_desc_nbuf_len_sanity_check(struct dp_soc *soc,
 	struct rx_desc_pool *rx_desc_pool;
 
 	rx_desc_pool = &soc->rx_desc_buf[0];
-	qdf_assert_always(pkt_len < rx_desc_pool->buf_size);
+	qdf_assert_always(pkt_len <= rx_desc_pool->buf_size);
 }
 #else
 static inline
