@@ -114,6 +114,7 @@ uint32_t dp_rx_process_li(struct dp_intr *int_ctx,
 	qdf_nbuf_t ebuf_head;
 	qdf_nbuf_t ebuf_tail;
 	uint8_t pkt_capture_offload = 0;
+	int max_reap_limit;
 
 	DP_HIST_INIT();
 
@@ -137,6 +138,7 @@ more_data:
 	num_rx_bufs_reaped = 0;
 	ebuf_head = NULL;
 	ebuf_tail = NULL;
+	max_reap_limit = dp_rx_get_loop_pkt_limit(soc);
 
 	qdf_mem_zero(rx_bufs_reaped, sizeof(rx_bufs_reaped));
 	qdf_mem_zero(&mpdu_desc_info, sizeof(mpdu_desc_info));
@@ -383,7 +385,8 @@ more_data:
 		 * then allow break.
 		 */
 		if (is_prev_msdu_last &&
-		    dp_rx_reap_loop_pkt_limit_hit(soc, num_rx_bufs_reaped))
+		    dp_rx_reap_loop_pkt_limit_hit(soc, num_rx_bufs_reaped,
+						  max_reap_limit))
 			break;
 	}
 done:

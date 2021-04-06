@@ -1886,39 +1886,6 @@ static inline void
 dp_rx_desc_nbuf_len_sanity_check(struct dp_soc *soc, uint32_t pkt_len) { }
 #endif
 
-#ifdef WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT
-bool dp_rx_reap_loop_pkt_limit_hit(struct dp_soc *soc, int num_reaped)
-{
-	bool limit_hit = false;
-	struct wlan_cfg_dp_soc_ctxt *cfg = soc->wlan_cfg_ctx;
-
-	limit_hit =
-		(num_reaped >= cfg->rx_reap_loop_pkt_limit) ? true : false;
-
-	if (limit_hit)
-		DP_STATS_INC(soc, rx.reap_loop_pkt_limit_hit, 1)
-
-	return limit_hit;
-}
-
-bool dp_rx_enable_eol_data_check(struct dp_soc *soc)
-{
-	return soc->wlan_cfg_ctx->rx_enable_eol_data_check;
-}
-
-#else
-bool dp_rx_reap_loop_pkt_limit_hit(struct dp_soc *soc, int num_reaped)
-{
-	return false;
-}
-
-bool dp_rx_enable_eol_data_check(struct dp_soc *soc)
-{
-	return false;
-}
-
-#endif /* WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT */
-
 #ifdef DP_RX_PKT_NO_PEER_DELIVER
 /**
  * dp_rx_deliver_to_stack_no_peer() - try deliver rx data even if

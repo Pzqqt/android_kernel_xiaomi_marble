@@ -100,6 +100,8 @@ uint32_t dp_rx_process_be(struct dp_intr *int_ctx,
 	qdf_nbuf_t ebuf_head;
 	qdf_nbuf_t ebuf_tail;
 	uint8_t pkt_capture_offload = 0;
+	struct dp_srng *rx_ring = &soc->reo_dest_ring[reo_ring_num];
+	int max_reap_limit, ring_near_full;
 
 	DP_HIST_INIT();
 
@@ -123,12 +125,17 @@ more_data:
 	num_rx_bufs_reaped = 0;
 	ebuf_head = NULL;
 	ebuf_tail = NULL;
+	ring_near_full = 0;
+	max_reap_limit = dp_rx_get_loop_pkt_limit(soc);
 
 	qdf_mem_zero(rx_bufs_reaped, sizeof(rx_bufs_reaped));
 	qdf_mem_zero(&mpdu_desc_info, sizeof(mpdu_desc_info));
 	qdf_mem_zero(&msdu_desc_info, sizeof(msdu_desc_info));
 	qdf_mem_zero(head, sizeof(head));
 	qdf_mem_zero(tail, sizeof(tail));
+
+	ring_near_full = dp_srng_test_and_update_nf_params(soc, rx_ring,
+							   &max_reap_limit);
 
 	if (qdf_unlikely(dp_rx_srng_access_start(int_ctx, soc, hal_ring_hdl))) {
 		/*
@@ -376,7 +383,8 @@ more_data:
 		 * then allow break.
 		 */
 		if (is_prev_msdu_last &&
-		    dp_rx_reap_loop_pkt_limit_hit(soc, num_rx_bufs_reaped))
+		    dp_rx_reap_loop_pkt_limit_hit(soc, num_rx_bufs_reaped,
+						  max_reap_limit))
 			break;
 	}
 done:
@@ -722,6 +730,17 @@ done:
 	if (qdf_likely(peer))
 		dp_peer_unref_delete(peer, DP_MOD_ID_RX);
 
+	/*
+	 * If we are processing in near-full condition, there are 3 scenario
+	 * 1) Ring entries has reached critical state
+	 * 2) Ring entries are still near high threshold
+	 * 3) Ring entries are below the safe level
+	 *
+	 * One more loop will move the state to normal processing and yield
+	 */
+	if (ring_near_full)
+		goto more_data;
+
 	if (dp_rx_enable_eol_data_check(soc) && rx_bufs_used) {
 		if (quota) {
 			num_pending =
@@ -987,6 +1006,17 @@ uint32_t dp_rx_nf_process(struct dp_intr *int_ctx,
 			  uint8_t reo_ring_num,
 			  uint32_t quota)
 {
-	return 0;
+	struct dp_soc *soc = int_ctx->soc;
+	struct dp_srng *rx_ring = &soc->reo_dest_ring[reo_ring_num];
+	uint32_t work_done = 0;
+
+	if (dp_srng_get_near_full_level(soc, rx_ring) <
+			DP_SRNG_THRESH_NEAR_FULL)
+		return 0;
+
+	qdf_atomic_set(&rx_ring->near_full, 1);
+	work_done++;
+
+	return work_done;
 }
 #endif

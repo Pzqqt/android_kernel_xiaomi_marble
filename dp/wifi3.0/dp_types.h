@@ -671,6 +671,7 @@ struct dp_txrx_pool_stats {
  * @is_mem_prealloc: Is this srng memeory pre-allocated
  * @crit_thresh: Critical threshold for near-full processing of this srng
  * @safe_thresh: Safe threshold for near-full processing of this srng
+ * @near_full: Flag to indicate srng is near-full
  */
 struct dp_srng {
 	hal_ring_handle_t hal_srng;
@@ -688,6 +689,7 @@ struct dp_srng {
 #ifdef WLAN_FEATURE_NEAR_FULL_IRQ
 	uint16_t crit_thresh;
 	uint16_t safe_thresh;
+	qdf_atomic_t near_full;
 #endif
 };
 

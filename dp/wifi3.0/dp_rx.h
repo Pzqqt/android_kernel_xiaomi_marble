@@ -1949,8 +1949,54 @@ void dp_rx_cksum_offload(struct dp_pdev *pdev,
 
 #endif /* QCA_HOST_MODE_WIFI_DISABLED */
 
-bool dp_rx_reap_loop_pkt_limit_hit(struct dp_soc *soc, int num_reaped);
-bool dp_rx_enable_eol_data_check(struct dp_soc *soc);
+#ifdef WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT
+static inline
+bool dp_rx_reap_loop_pkt_limit_hit(struct dp_soc *soc, int num_reaped,
+				   int max_reap_limit)
+{
+	bool limit_hit = false;
+
+	limit_hit =
+		(num_reaped >= max_reap_limit) ? true : false;
+
+	if (limit_hit)
+		DP_STATS_INC(soc, rx.reap_loop_pkt_limit_hit, 1)
+
+	return limit_hit;
+}
+
+static inline
+bool dp_rx_enable_eol_data_check(struct dp_soc *soc)
+{
+	return soc->wlan_cfg_ctx->rx_enable_eol_data_check;
+}
+
+static inline int dp_rx_get_loop_pkt_limit(struct dp_soc *soc)
+{
+	struct wlan_cfg_dp_soc_ctxt *cfg = soc->wlan_cfg_ctx;
+
+	return cfg->rx_reap_loop_pkt_limit;
+}
+#else
+static inline
+bool dp_rx_reap_loop_pkt_limit_hit(struct dp_soc *soc, int num_reaped,
+				   int max_reap_limit)
+{
+	return false;
+}
+
+static inline
+bool dp_rx_enable_eol_data_check(struct dp_soc *soc)
+{
+	return false;
+}
+
+static inline int dp_rx_get_loop_pkt_limit(struct dp_soc *soc)
+{
+	return 0;
+}
+#endif /* WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT */
+
 void dp_rx_update_stats(struct dp_soc *soc, qdf_nbuf_t nbuf);
 
 #ifdef QCA_SUPPORT_WDS_EXTENDED

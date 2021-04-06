@@ -1606,6 +1606,9 @@ void *hal_srng_dst_peek_sync_locked(hal_soc_handle_t hal_soc_hdl,
 	return ring_desc_ptr;
 }
 
+#define hal_srng_dst_num_valid_nolock(hal_soc, hal_ring_hdl, sync_hw_ptr) \
+		hal_srng_dst_num_valid(hal_soc, hal_ring_hdl, sync_hw_ptr)
+
 /**
  * hal_srng_dst_num_valid - Returns number of valid entries (to be processed
  * by SW) in destination ring

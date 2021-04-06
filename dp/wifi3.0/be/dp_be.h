@@ -368,4 +368,115 @@ static inline void *dp_cc_desc_find(struct dp_soc *soc,
 
 	return (void *)(uintptr_t)(*(spt_page_va  + spt_va_id));
 }
+
+#ifdef WLAN_FEATURE_NEAR_FULL_IRQ
+/**
+ * enum dp_srng_near_full_levels - SRNG Near FULL levels
+ * @DP_SRNG_THRESH_SAFE: SRNG level safe for yielding the near full mode
+ *		of processing the entries in SRNG
+ * @DP_SRNG_THRESH_NEAR_FULL: SRNG level enters the near full mode
+ *		of processing the entries in SRNG
+ * @DP_SRNG_THRESH_CRITICAL: SRNG level enters the critical level of full
+ *		condition and drastic steps need to be taken for processing
+ *		the entries in SRNG
+ */
+enum dp_srng_near_full_levels {
+	DP_SRNG_THRESH_SAFE,
+	DP_SRNG_THRESH_NEAR_FULL,
+	DP_SRNG_THRESH_CRITICAL,
+};
+
+/**
+ * dp_srng_check_ring_near_full() - Check if SRNG is marked as near-full from
+ *				its corresponding near-full irq handler
+ * @soc: Datapath SoC handle
+ * @dp_srng: datapath handle for this SRNG
+ *
+ * Return: 1, if the srng was marked as near-full
+ *	   0, if the srng was not marked as near-full
+ */
+static inline int dp_srng_check_ring_near_full(struct dp_soc *soc,
+					       struct dp_srng *dp_srng)
+{
+	return qdf_atomic_read(&dp_srng->near_full);
+}
+
+/**
+ * dp_srng_get_near_full_level() - Check the num available entries in the
+ *			consumer srng and return the level of the srng
+ *			near full state.
+ * @soc: Datapath SoC Handle [To be validated by the caller]
+ * @hal_ring_hdl: SRNG handle
+ *
+ * Return: near-full level
+ */
+static inline int
+dp_srng_get_near_full_level(struct dp_soc *soc, struct dp_srng *dp_srng)
+{
+	uint32_t num_valid;
+
+	num_valid = hal_srng_dst_num_valid_nolock(soc->hal_soc,
+						  dp_srng->hal_srng,
+						  true);
+
+	if (num_valid > dp_srng->crit_thresh)
+		return DP_SRNG_THRESH_CRITICAL;
+	else if (num_valid < dp_srng->safe_thresh)
+		return DP_SRNG_THRESH_SAFE;
+	else
+		return DP_SRNG_THRESH_NEAR_FULL;
+}
+
+#define DP_SRNG_PER_LOOP_NF_REAP_MULTIPLIER	2
+
+/**
+ * dp_srng_test_and_update_nf_params() - Test the near full level and update
+ *			the reap_limit and flags to reflect the state.
+ * @soc: Datapath soc handle
+ * @srng: Datapath handle for the srng
+ * @max_reap_limit: [Output Param] Buffer to set the map_reap_limit as
+ *			per the near-full state
+ *
+ * Return: 1, if the srng is near full
+ *	   0, if the srng is not near full
+ */
+static inline int
+dp_srng_test_and_update_nf_params(struct dp_soc *soc,
+				  struct dp_srng *srng,
+				  int *max_reap_limit)
+{
+	int ring_near_full = 0, near_full_level;
+
+	if (dp_srng_check_ring_near_full(soc, srng)) {
+		near_full_level = dp_srng_get_near_full_level(soc, srng);
+		switch (near_full_level) {
+		case DP_SRNG_THRESH_CRITICAL:
+			/* Currently not doing anything special here */
+			/* fall through */
+		case DP_SRNG_THRESH_NEAR_FULL:
+			ring_near_full = 1;
+			*max_reap_limit *= DP_SRNG_PER_LOOP_NF_REAP_MULTIPLIER;
+			break;
+		case DP_SRNG_THRESH_SAFE:
+			qdf_atomic_set(&srng->near_full, 0);
+			ring_near_full = 0;
+			break;
+		default:
+			qdf_assert(0);
+			break;
+		}
+	}
+
+	return ring_near_full;
+}
+#else
+static inline int
+dp_srng_test_and_update_nf_params(struct dp_soc *soc,
+				  struct dp_srng *srng,
+				  int *max_reap_limit)
+{
+	return 0;
+}
+#endif
+
 #endif
