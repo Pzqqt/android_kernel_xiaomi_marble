@@ -215,6 +215,14 @@ int msm_v4l2_enum_framesizes(struct file *file, void *fh,
 	return msm_vidc_enum_framesizes((void *)vidc_inst, fsize);
 }
 
+int msm_v4l2_enum_frameintervals(struct file *file, void *fh,
+				struct v4l2_frmivalenum *fival)
+{
+	struct msm_vidc_inst *vidc_inst = get_vidc_inst(file, fh);
+
+	return msm_vidc_enum_frameintervals((void *)vidc_inst, fival);
+}
+
 int msm_v4l2_queryctrl(struct file *file, void *fh,
 	struct v4l2_queryctrl *ctrl)
 {

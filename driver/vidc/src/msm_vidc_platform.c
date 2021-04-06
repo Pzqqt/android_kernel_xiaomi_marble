@@ -27,6 +27,7 @@ static struct v4l2_ioctl_ops msm_v4l2_ioctl_ops = {
 	.vidioc_enum_fmt_vid_cap        = msm_v4l2_enum_fmt,
 	.vidioc_enum_fmt_vid_out        = msm_v4l2_enum_fmt,
 	.vidioc_enum_framesizes         = msm_v4l2_enum_framesizes,
+	.vidioc_enum_frameintervals     = msm_v4l2_enum_frameintervals,
 	.vidioc_s_fmt_vid_cap           = msm_v4l2_s_fmt,
 	.vidioc_s_fmt_vid_out           = msm_v4l2_s_fmt,
 	.vidioc_s_fmt_vid_cap_mplane    = msm_v4l2_s_fmt,

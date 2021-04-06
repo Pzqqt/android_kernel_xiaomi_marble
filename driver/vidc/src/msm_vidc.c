@@ -603,6 +603,7 @@ int msm_vidc_enum_framesizes(void *instance, struct v4l2_frmsizeenum *fsize)
 {
 	struct msm_vidc_inst *inst = instance;
 	struct msm_vidc_inst_capability *capability;
+	enum msm_vidc_colorformat_type colorfmt;
 
 	if (!inst || !fsize) {
 		d_vpr_e("%s: invalid params: %pK %pK\n",
@@ -614,6 +615,18 @@ int msm_vidc_enum_framesizes(void *instance, struct v4l2_frmsizeenum *fsize)
 		return -EINVAL;
 	}
 	capability = inst->capabilities;
+
+	/* only index 0 allowed as per v4l2 spec */
+	if (fsize->index)
+		return -EINVAL;
+
+	/* validate pixel format */
+	colorfmt = v4l2_colorformat_to_driver(fsize->pixel_format, __func__);
+	if (colorfmt == MSM_VIDC_FMT_NONE) {
+		i_vpr_e(inst, "%s: unsupported pix fmt %#x\n", __func__, fsize->pixel_format);
+		return -EINVAL;
+	}
+
 	fsize->type = V4L2_FRMSIZE_TYPE_STEPWISE;
 	fsize->stepwise.min_width = capability->cap[FRAME_WIDTH].min;
 	fsize->stepwise.max_width = capability->cap[FRAME_WIDTH].max;
@@ -627,6 +640,64 @@ int msm_vidc_enum_framesizes(void *instance, struct v4l2_frmsizeenum *fsize)
 	return 0;
 }
 EXPORT_SYMBOL(msm_vidc_enum_framesizes);
+
+int msm_vidc_enum_frameintervals(void *instance, struct v4l2_frmivalenum *fival)
+{
+	struct msm_vidc_inst *inst = instance;
+	struct msm_vidc_core *core;
+	struct msm_vidc_inst_capability *capability;
+	enum msm_vidc_colorformat_type colorfmt;
+	u32 fps, mbpf;
+
+	if (!inst || !fival) {
+		d_vpr_e("%s: invalid params: %pK %pK\n",
+				__func__, inst, fival);
+		return -EINVAL;
+	}
+	core = inst->core;
+
+	if (!inst->capabilities || !core->capabilities) {
+		i_vpr_e(inst, "capabilities not available\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	/* only index 0 allowed as per v4l2 spec */
+	if (fival->index)
+		return -EINVAL;
+
+	/* validate pixel format */
+	colorfmt = v4l2_colorformat_to_driver(fival->pixel_format, __func__);
+	if (colorfmt == MSM_VIDC_FMT_NONE) {
+		i_vpr_e(inst, "%s: unsupported pix fmt %#x\n", __func__, fival->pixel_format);
+		return -EINVAL;
+	}
+
+	/* validate resolution */
+	if (fival->width > capability->cap[FRAME_WIDTH].max ||
+		fival->width < capability->cap[FRAME_WIDTH].min ||
+		fival->height > capability->cap[FRAME_HEIGHT].max ||
+		fival->height < capability->cap[FRAME_HEIGHT].min) {
+		i_vpr_e(inst, "%s: unsupported resolution %u x %u\n", __func__,
+			fival->width, fival->height);
+		return -EINVAL;
+	}
+
+	/* calculate max supported fps for a given resolution */
+	mbpf = NUM_MBS_PER_FRAME(fival->height, fival->width);
+	fps = core->capabilities[MAX_MBPS].value / mbpf;
+
+	fival->type = V4L2_FRMIVAL_TYPE_STEPWISE;
+	fival->stepwise.min.numerator = 1;
+	fival->stepwise.min.denominator = min_t(u32, fps, MAXIMUM_FPS);
+	fival->stepwise.max.numerator = 1;
+	fival->stepwise.max.denominator = 1;
+	fival->stepwise.step.numerator = 1;
+	fival->stepwise.step.denominator = MAXIMUM_FPS;
+
+	return 0;
+}
+EXPORT_SYMBOL(msm_vidc_enum_frameintervals);
 
 int msm_vidc_subscribe_event(void *instance,
 		const struct v4l2_event_subscription *sub)
