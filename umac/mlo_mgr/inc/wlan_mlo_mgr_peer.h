@@ -20,4 +20,86 @@
 #ifndef _WLAN_MLO_MGR_PEER_H_
 #define _WLAN_MLO_MGR_PEER_H_
 
+/**
+ * mlo_peer_create - Initiatiate peer create on second link by posting
+ * message to LIM
+ *
+ * @vdev: pointer to vdev
+ * @peer: pointer to peer context
+ * @mlo_ie: MLO information element
+ * @aid: association ID
+ *
+ * Initiate the peer on the second link
+ *
+ * Return: none
+ */
+void mlo_peer_create(struct wlan_objmgr_vdev *vdev,
+		     struct wlan_objmgr_peer *peer, uint8_t *mlo_ie,
+		     uint8_t aid);
+
+/**
+ * mlo_peer_attach - Update the MLO peer context with the new link information
+ *
+ * @vdev: pointer to vdev
+ * @peer: pointer to peer context
+ *
+ * Return: none
+ */
+void mlo_peer_attach(struct wlan_objmgr_vdev *vdev,
+		     struct wlan_objmgr_peer *peer);
+
+/**
+ * mlo_peer_setup_failed_notify - Notify MLO manageer to delete partner peers
+ *
+ * @vdev: pointer to vdev
+ *
+ * This API is called in scenarios where peer create or peer assoc fails
+ *
+ * Return: none
+ */
+void mlo_peer_setup_failed_notify(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlo_peer_disconnect_notify - Delete partner peers
+ *
+ * @vdev: pointer to vdev
+ *
+ * Return: none
+ */
+void mlo_peer_disconnect_notify(struct wlan_objmgr_peer *peer);
+
+/**
+ * wlan_peer_delete_complete - Unlink the peer object
+ *
+ * @peer: pointer to peer context
+ *
+ * Return: none
+ */
+void wlan_peer_delete_complete(struct wlan_objmgr_peer *peer);
+
+/**
+ * mlo_peer_delete - Delete the peer object
+ *
+ * @peer: pointer to peer context
+ *
+ * Return: none
+ */
+void mlo_peer_delete(struct wlan_objmgr_peer *peer);
+
+/**
+ * is_mlo_all_peer_links_deleted - Check if all the peer links are deleted
+ *
+ * Return: true if all the peer links are deleted, false otherwise
+ */
+bool is_mlo_all_peer_links_deleted(void);
+
+/**
+ * mlo_get_aid - Get the association ID
+ *
+ * @vdev: pointer to vdev
+ *
+ * Return: AID value
+ */
+uint8_t mlo_get_aid(struct wlan_objmgr_vdev *vdev);
+
 #endif

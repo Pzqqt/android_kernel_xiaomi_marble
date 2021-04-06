@@ -214,6 +214,7 @@ struct wlan_cm_connect_req {
 #ifdef WLAN_FEATURE_FILS_SK
 	struct wlan_fils_con_info fils_info;
 #endif
+	bool is_secondary_link_connect;
 };
 
 /**

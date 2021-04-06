@@ -20,4 +20,38 @@
 #ifndef _WLAN_MLO_MGR_AP_H_
 #define _WLAN_MLO_MGR_AP_H_
 
+/**
+ * mlo_ap_link_start_rsp_notify - Notifies that the link is completed
+ *
+ * @vdev: pointer to vdev
+ *
+ * Return: none
+ */
+void mlo_ap_link_start_rsp_notify(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlo_is_ap_vdev_up_allowed - Checks if the AP can be started
+ *
+ * Return: true if vdev is allowed to come up, false otherwise
+ */
+bool mlo_is_ap_vdev_up_allowed(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlo_ap_link_down_notify - Currently does nothing
+ *
+ * @vdev: pointer to vdev
+ *
+ * Return: none
+ */
+void mlo_ap_link_down_notify(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlo_is_mld_ap - Check if MLD associated with the vdev is an AP
+ *
+ * @vdev: pointer to vdev
+ *
+ * Return: true if MLD is an AP, false otherwise
+ */
+bool mlo_is_mld_ap(struct wlan_objmgr_vdev *vdev);
+
 #endif

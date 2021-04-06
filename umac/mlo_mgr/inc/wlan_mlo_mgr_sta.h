@@ -20,4 +20,62 @@
 #ifndef _WLAN_MLO_MGR_STA_H_
 #define _WLAN_MLO_MGR_STA_H_
 
+/**
+ * mlo_connect - Start the connection process
+ *
+ * @vdev: pointer to vdev
+ * @req: connection request
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlo_connect(struct wlan_objmgr_vdev *vdev,
+		       struct wlan_cm_connect_req *req);
+
+/**
+ * mlo_sta_link_up_notify - Called by connection manager to notify the
+ * STA link up is complete
+ *
+ * @vdev: pointer to vdev
+ * @mlo_ie: MLO information element
+ *
+ * Connection manager will notify the MLO manager when the link has started
+ * and MLO manager will start the subsequent connections, if necessary
+ *
+ * Return: none
+ */
+void mlo_sta_link_up_notify(struct wlan_objmgr_vdev *vdev, uint8_t *mlo_ie);
+
+/**
+ * mlo_disconnect - Start the disconnection process
+ *
+ * @vdev: pointer to vdev
+ * @source: source of the request (can be connect or disconnect request)
+ * @reason: reason for disconnect
+ * @bssid: BSSID
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlo_disconnect(struct wlan_objmgr_vdev *vdev,
+			  enum wlan_cm_source source,
+			  enum wlan_reason_code reason_code,
+			  struct qdf_mac_addr *bssid);
+
+/**
+ * mlo_sta_link_down_notify - Notifies that STA link has gone down
+ *
+ * @vdev: pointer to vdev
+ *
+ * Return: none
+ */
+void mlo_sta_link_down_notify(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlo_is_mld_sta - Check if MLD associated with the vdev is a station
+ *
+ * @vdev: pointer to vdev
+ *
+ * Return: true if MLD is a station, false otherwise
+ */
+bool mlo_is_mld_sta(struct wlan_objmgr_vdev *vdev);
+
 #endif
