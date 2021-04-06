@@ -4064,12 +4064,12 @@ int gsi_poll_n_channel(unsigned long chan_hdl,
 		if (rp == ctx->evtr->ring.rp_local) {
 			/* event ring is empty */
 			if (gsi_ctx->per.ver >= GSI_VER_3_0) {
-				gsihal_write_reg_nk(GSI_EE_n_CNTXT_SRC_IEOB_IRQ_k,
+				gsihal_write_reg_nk(GSI_EE_n_CNTXT_SRC_IEOB_IRQ_CLR_k,
 					ee, gsihal_get_ch_reg_idx(ctx->evtr->id),
 				gsihal_get_ch_reg_mask(ctx->evtr->id));
 			}
 			else {
-				gsihal_write_reg_n(GSI_EE_n_CNTXT_SRC_IEOB_IRQ,
+				gsihal_write_reg_n(GSI_EE_n_CNTXT_SRC_IEOB_IRQ_CLR,
 					ee, 1 << ctx->evtr->id);
 			}
 			/* do another read to close a small window */
