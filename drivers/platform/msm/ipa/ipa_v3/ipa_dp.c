@@ -304,10 +304,9 @@ static int ipa3_aux_napi_poll_tx_complete(struct napi_struct *napi_tx,
 		ret = ipa3_tx_switch_to_intr_mode(sys);
 
 		/* if we got an EOT while we marked NAPI as complete */
-		if (ret == -GSI_STATUS_PENDING_IRQ) {
+		if (ret == -GSI_STATUS_PENDING_IRQ && napi_reschedule(napi_tx)) {
 			/* rescheduale will perform poll again, don't dec vote twice*/
 			napi_rescheduled = true;
-			napi_reschedule(napi_tx);
 		}
 
 		if(!napi_rescheduled)
@@ -977,15 +976,6 @@ static int ipa3_tx_switch_to_intr_mode(struct ipa3_sys_context *sys) {
 			IPAERR("Failed to switch to intr mode %d ch_id %d\n",
 				sys->curr_polling_state, sys->ep->gsi_chan_hdl);
 		}
-	}
-
-	/* in case we miss an interrupt after NAPI complete */
-	if(gsi_is_event_pending(sys->ep->gsi_chan_hdl)) {
-		atomic_set(&sys->curr_polling_state, 1);
-		__ipa3_update_curr_poll_state(sys->ep->client, 1);
-		gsi_config_channel_mode(sys->ep->gsi_chan_hdl,
-					GSI_CHAN_MODE_POLL);
-		ret = -GSI_STATUS_PENDING_IRQ;
 	}
 	return ret;
 }
