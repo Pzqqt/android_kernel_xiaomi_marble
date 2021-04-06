@@ -314,7 +314,7 @@ static int dp_config_vco_rate_5nm(struct dp_pll *pll,
 	dp_pll_write(dp_ln_tx0, DP_TRAN_DRVR_EMP_EN, 0xf);
 	dp_pll_write(dp_ln_tx0, TXn_PARRATE_REC_DETECT_IDLE_EN, 0x00);
 	dp_pll_write(dp_ln_tx0, DP_TX_INTERFACE_MODE, 0x00);
-	dp_pll_write(dp_ln_tx0, TXn_RES_CODE_LANE_OFFSET_TX, 0x11);
+	dp_pll_write(dp_ln_tx0, TXn_RES_CODE_LANE_OFFSET_TX, 0x0A);
 	dp_pll_write(dp_ln_tx0, TXn_RES_CODE_LANE_OFFSET_RX, 0x11);
 	dp_pll_write(dp_ln_tx0, TXn_TX_BAND, 0x04);
 	/* Make sure the PLL register writes are done */
@@ -330,7 +330,7 @@ static int dp_config_vco_rate_5nm(struct dp_pll *pll,
 	dp_pll_write(dp_ln_tx1, DP_TRAN_DRVR_EMP_EN, 0xf);
 	dp_pll_write(dp_ln_tx1, TXn_PARRATE_REC_DETECT_IDLE_EN, 0x00);
 	dp_pll_write(dp_ln_tx1, DP_TX_INTERFACE_MODE, 0x00);
-	dp_pll_write(dp_ln_tx1, TXn_RES_CODE_LANE_OFFSET_TX, 0x11);
+	dp_pll_write(dp_ln_tx1, TXn_RES_CODE_LANE_OFFSET_TX, 0x0A);
 	dp_pll_write(dp_ln_tx1, TXn_RES_CODE_LANE_OFFSET_RX, 0x11);
 	dp_pll_write(dp_ln_tx1, TXn_TX_BAND, 0x04);
 	/* Make sure the PHY register writes are done */
