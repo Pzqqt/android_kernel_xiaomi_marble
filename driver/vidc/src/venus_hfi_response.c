@@ -744,6 +744,13 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 	buf->flags = 0;
 	buf->flags = get_driver_buffer_flags(inst, buffer->flags);
 
+	if (is_decode_session(inst)) {
+		inst->power.fw_cr = inst->hfi_frame_info.cr;
+		inst->power.fw_cf = inst->hfi_frame_info.cf;
+	} else {
+		inst->power.fw_cr = inst->hfi_frame_info.cr;
+	}
+
 	print_vidc_buffer(VIDC_HIGH, "high", "dqbuf", inst, buf);
 	msm_vidc_debugfs_update(inst, MSM_VIDC_DEBUGFS_EVENT_FBD);
 
@@ -1248,10 +1255,10 @@ static int handle_session_property(struct msm_vidc_inst *inst,
 		inst->hfi_frame_info.no_output = 1;
 		break;
 	case HFI_PROP_WORST_COMPRESSION_RATIO:
-		inst->power.fw_cr = payload_ptr[0];
+		inst->hfi_frame_info.cr = payload_ptr[0];
 		break;
 	case HFI_PROP_WORST_COMPLEXITY_FACTOR:
-		inst->power.fw_cf = payload_ptr[0];
+		inst->hfi_frame_info.cf = payload_ptr[0];
 		break;
 	case HFI_PROP_DPB_LIST:
 		if (is_decode_session(inst) && port == OUTPUT_PORT &&

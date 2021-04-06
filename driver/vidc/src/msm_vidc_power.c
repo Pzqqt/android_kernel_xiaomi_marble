@@ -100,37 +100,36 @@ static int fill_dynamic_stats(struct msm_vidc_inst *inst,
 	struct vidc_bus_vote_data *vote_data)
 {
 	struct msm_vidc_input_cr_data *temp, *next;
-	u32 max_cr = MSM_VIDC_MIN_UBWC_COMPRESSION_RATIO;
-	u32 max_cf = MSM_VIDC_MIN_UBWC_COMPLEXITY_FACTOR;
-	u32 max_input_cr = MSM_VIDC_MIN_UBWC_COMPRESSION_RATIO;
-	u32 min_cf = MSM_VIDC_MAX_UBWC_COMPLEXITY_FACTOR;
-	u32 min_input_cr = MSM_VIDC_MAX_UBWC_COMPRESSION_RATIO;
-	u32 min_cr = MSM_VIDC_MAX_UBWC_COMPRESSION_RATIO;
+	u32 cf = MSM_VIDC_MAX_UBWC_COMPLEXITY_FACTOR;
+	u32 cr = MSM_VIDC_MIN_UBWC_COMPRESSION_RATIO;
+	u32 input_cr = MSM_VIDC_MIN_UBWC_COMPRESSION_RATIO;
 
-	/* TODO: get ubwc stats from firmware */
-	min_cr = inst->power.fw_cr;
-	max_cf = inst->power.fw_cf;
-	max_cf = max_cf / ((msm_vidc_get_mbs_per_frame(inst)) / (32 * 8) * 3) / 2;
+	if (inst->power.fw_cr)
+		cr = inst->power.fw_cr;
 
-	list_for_each_entry_safe(temp, next, &inst->enc_input_crs, list) {
-		min_input_cr = min(min_input_cr, temp->input_cr);
-		max_input_cr = max(max_input_cr, temp->input_cr);
+	if (inst->power.fw_cf) {
+		cf = inst->power.fw_cf;
+		cf = cf / ((msm_vidc_get_mbs_per_frame(inst)) / (32 * 8) * 3) / 2;
 	}
 
+	list_for_each_entry_safe(temp, next, &inst->enc_input_crs, list)
+		input_cr = min(input_cr, temp->input_cr);
+
+	vote_data->compression_ratio = cr;
+	vote_data->complexity_factor = cf;
+	vote_data->input_cr = input_cr;
 
 	/* Sanitize CF values from HW */
-	max_cf = min_t(u32, max_cf, MSM_VIDC_MAX_UBWC_COMPLEXITY_FACTOR);
-	min_cf = max_t(u32, min_cf, MSM_VIDC_MIN_UBWC_COMPLEXITY_FACTOR);
-	max_cr = min_t(u32, max_cr, MSM_VIDC_MAX_UBWC_COMPRESSION_RATIO);
-	min_cr = max_t(u32, min_cr, MSM_VIDC_MIN_UBWC_COMPRESSION_RATIO);
-	max_input_cr = min_t(u32,
-		max_input_cr, MSM_VIDC_MAX_UBWC_COMPRESSION_RATIO);
-	min_input_cr = max_t(u32,
-		min_input_cr, MSM_VIDC_MIN_UBWC_COMPRESSION_RATIO);
+	cf = clamp_t(u32, cf, MSM_VIDC_MIN_UBWC_COMPLEXITY_FACTOR,
+			MSM_VIDC_MAX_UBWC_COMPLEXITY_FACTOR);
+	cr = clamp_t(u32, cr, MSM_VIDC_MIN_UBWC_COMPRESSION_RATIO,
+			MSM_VIDC_MAX_UBWC_COMPRESSION_RATIO);
+	input_cr = clamp_t(u32, input_cr, MSM_VIDC_MIN_UBWC_COMPRESSION_RATIO,
+			MSM_VIDC_MAX_UBWC_COMPRESSION_RATIO);
 
-	vote_data->compression_ratio = min_cr;
-	vote_data->complexity_factor = max_cf;
-	vote_data->input_cr = min_input_cr;
+	vote_data->compression_ratio = cr;
+	vote_data->complexity_factor = cf;
+	vote_data->input_cr = input_cr;
 
 	i_vpr_l(inst,
 		"Input CR = %d Recon CR = %d Complexity Factor = %d\n",
