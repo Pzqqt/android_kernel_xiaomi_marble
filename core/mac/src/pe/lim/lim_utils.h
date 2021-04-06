@@ -1024,7 +1024,6 @@ static inline void lim_deactivate_and_change_timer_host_roam(
 {}
 #endif
 
-bool lim_is_robust_mgmt_action_frame(uint8_t action_category);
 uint8_t lim_compute_ext_cap_ie_length(tDot11fIEExtCap *ext_cap);
 
 void lim_update_caps_info_for_bss(struct mac_context *mac_ctx,

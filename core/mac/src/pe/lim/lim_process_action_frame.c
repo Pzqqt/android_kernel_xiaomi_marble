@@ -1622,8 +1622,8 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 		return;
 	}
 
-	if (lim_is_robust_mgmt_action_frame(action_hdr->category) &&
-	   lim_drop_unprotected_action_frame(mac_ctx, session,
+	if (wlan_mgmt_is_rmf_mgmt_action_frame(action_hdr->category) &&
+	    lim_drop_unprotected_action_frame(mac_ctx, session,
 			mac_hdr_11w, action_hdr->category))
 		return;
 
