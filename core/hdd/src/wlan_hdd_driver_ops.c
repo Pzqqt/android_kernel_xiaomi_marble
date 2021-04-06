@@ -1575,6 +1575,11 @@ static int wlan_hdd_runtime_suspend(struct device *dev)
 		return -EBUSY;
 	}
 
+	if (ucfg_ipa_is_tx_pending(hdd_ctx->pdev)) {
+		hdd_debug("IPA TX comps pending, ignore rtpm suspend");
+		return -EBUSY;
+	}
+
 	status = ucfg_pmo_psoc_bus_runtime_suspend(hdd_ctx->psoc,
 						   hdd_pld_runtime_suspend_cb);
 	err = qdf_status_to_os_return(status);
