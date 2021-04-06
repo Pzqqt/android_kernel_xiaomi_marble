@@ -36,16 +36,9 @@ endif
 include $(WLAN_ROOT)/configs/$(CONFIG_QCA_CLD_WLAN_PROFILE)_defconfig
 
 # add configurations in WLAN_CFG_OVERRIDE
-ifneq ($(WLAN_CFG_OVERRIDE),)
-WLAN_CFG_OVERRIDE_FILE := $(WLAN_ROOT)/.wlan_cfg_override
-$(shell echo > $(WLAN_CFG_OVERRIDE_FILE))
-
 $(foreach cfg, $(WLAN_CFG_OVERRIDE), \
-	$(shell echo $(cfg) >> $(WLAN_CFG_OVERRIDE_FILE)))
-
-include $(WLAN_CFG_OVERRIDE_FILE)
-$(warning "Overriding WLAN config with: $(shell cat $(WLAN_CFG_OVERRIDE_FILE))")
-endif
+	$(eval $(cfg)) \
+	$(warning "Overriding WLAN config with: $(cfg)"))
 
 # This is temp change until connection manager changes for LFR2 are done.
 # Once LFR2 changes are done, CONFIG_CM_ENABLE will be removed and all
