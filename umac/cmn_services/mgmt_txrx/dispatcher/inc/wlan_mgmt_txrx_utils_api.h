@@ -115,6 +115,14 @@ enum mgmt_subtype {
  * @ACTION_CATEGORY_RVS: robust av streaming action category
  * @ACTION_CATEGORY_UNPROT_DMG: dmg action category
  * @ACTION_CATEGORY_VHT: vht action category
+ * @ACTION_CATEGORY_USIG: Unprotected S1G Action frame
+ * @ACTION_CATEGORY_SIG: S1G Action frame
+ * @ACTION_CATEGORY_FLOW_CONTROL: Flow Control Action frame
+ * @ACTION_CATEGORY_CONTROL_RSP_MCS_NEGO: Control Response MCS Negotiation frame
+ * @ACTION_CATEGORY_FIL: FILS Action frame
+ * @ACTION_CATEGORY_CDMG: CDMG Action frame
+ * @ACTION_CATEGORY_CMMG: CMMG Action frame
+ * @ACTION_CATEGORY_GLK: GLK Action frame
  * @ACTION_CATEGORY_VENDOR_SPECIFIC_PROTECTED: vendor specific protected
  *                                             action category
  * @ACTION_CATEGORY_VENDOR_SPECIFIC: vendor specific action category
@@ -142,6 +150,14 @@ enum mgmt_action_category {
 	ACTION_CATEGORY_RVS = 19,
 	ACTION_CATEGORY_UNPROT_DMG = 20,
 	ACTION_CATEGORY_VHT = 21,
+	ACTION_CATEGORY_USIG = 22,
+	ACTION_CATEGORY_SIG = 23,
+	ACTION_CATEGORY_FLOW_CONTROL = 24,
+	ACTION_CATEGORY_CONTROL_RSP_MCS_NEGO = 25,
+	ACTION_CATEGORY_FILS = 26,
+	ACTION_CATEGORY_CDMG = 27,
+	ACTION_CATEGORY_CMMG = 28,
+	ACTION_CATEGORY_GLK = 29,
 	ACTION_CATEGORY_VENDOR_SPECIFIC_PROTECTED = 126,
 	ACTION_CATEGORY_VENDOR_SPECIFIC = 127,
 };
@@ -886,6 +902,13 @@ QDF_STATUS wlan_mgmt_txrx_mgmt_frame_tx(struct wlan_objmgr_peer *peer,
 					mgmt_ota_comp_cb tx_ota_comp_cb,
 					enum wlan_umac_comp_id comp_id,
 					void *mgmt_tx_params);
+/**
+ * wlan_mgmt_is_rmf_mgmt_action_frame() - API to check action category is rmf
+ * @action_category: action category to check
+ *
+ * Return: true if action category is rmf else false
+ */
+bool wlan_mgmt_is_rmf_mgmt_action_frame(uint8_t action_category);
 
 /**
  * wlan_mgmt_txrx_beacon_frame_tx() - transmits mgmt. beacon

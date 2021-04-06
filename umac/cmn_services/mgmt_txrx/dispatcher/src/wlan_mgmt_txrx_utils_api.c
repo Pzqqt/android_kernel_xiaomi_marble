@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -503,6 +503,39 @@ QDF_STATUS wlan_mgmt_txrx_beacon_frame_tx(struct wlan_objmgr_peer *peer,
 		return QDF_STATUS_E_FAILURE;
 	}
 	return QDF_STATUS_SUCCESS;
+}
+
+bool wlan_mgmt_is_rmf_mgmt_action_frame(uint8_t action_category)
+{
+	switch (action_category) {
+	case ACTION_CATEGORY_SPECTRUM_MGMT:
+	case ACTION_CATEGORY_QOS:
+	case ACTION_CATEGORY_DLS:
+	case ACTION_CATEGORY_BACK:
+	case ACTION_CATEGORY_RRM:
+	case ACTION_FAST_BSS_TRNST:
+	case ACTION_CATEGORY_SA_QUERY:
+	case ACTION_CATEGORY_PROTECTED_DUAL_OF_PUBLIC_ACTION:
+	case ACTION_CATEGORY_WNM:
+	case ACTION_CATEGORY_MESH_ACTION:
+	case ACTION_CATEGORY_MULTIHOP_ACTION:
+	case ACTION_CATEGORY_DMG:
+	case ACTION_CATEGORY_FST:
+	case ACTION_CATEGORY_RVS:
+	case ACTION_CATEGORY_SIG:
+	case ACTION_CATEGORY_FLOW_CONTROL:
+	case ACTION_CATEGORY_CONTROL_RSP_MCS_NEGO:
+	case ACTION_CATEGORY_FILS:
+	case ACTION_CATEGORY_CDMG:
+	case ACTION_CATEGORY_CMMG:
+	case ACTION_CATEGORY_GLK:
+	case ACTION_CATEGORY_VENDOR_SPECIFIC_PROTECTED:
+		return true;
+	default:
+		break;
+	}
+
+	return false;
 }
 
 #ifdef WLAN_SUPPORT_FILS
