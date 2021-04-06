@@ -1578,13 +1578,13 @@ int msm_vidc_set_header_mode(void *instance,
 	prepend_sps_pps = capability->cap[PREPEND_SPSPPS_TO_IDR].value;
 	hdr_metadata = capability->cap[META_SEQ_HDR_NAL].value;
 
-	if (header_mode == V4L2_MPEG_VIDEO_HEADER_MODE_SEPARATE)
-		hfi_value |= HFI_SEQ_HEADER_SEPERATE_FRAME;
-	else if (header_mode == V4L2_MPEG_VIDEO_HEADER_MODE_JOINED_WITH_1ST_FRAME)
-		hfi_value |= HFI_SEQ_HEADER_JOINED_WITH_1ST_FRAME;
-
+	/* prioritize PREPEND_SPSPPS_TO_IDR mode over other header modes */
 	if (prepend_sps_pps)
-		hfi_value |= HFI_SEQ_HEADER_PREFIX_WITH_SYNC_FRAME;
+		hfi_value = HFI_SEQ_HEADER_PREFIX_WITH_SYNC_FRAME;
+	else if (header_mode == V4L2_MPEG_VIDEO_HEADER_MODE_JOINED_WITH_1ST_FRAME)
+		hfi_value = HFI_SEQ_HEADER_JOINED_WITH_1ST_FRAME;
+	else
+		hfi_value = HFI_SEQ_HEADER_SEPERATE_FRAME;
 
 	if (hdr_metadata)
 		hfi_value |= HFI_SEQ_HEADER_METADATA;
