@@ -2823,7 +2823,6 @@ int venus_hfi_core_init(struct msm_vidc_core *core)
 
 error:
 	d_vpr_h("%s(): failed\n", __func__);
-	venus_hfi_core_deinit(core);
 	return rc;
 }
 
@@ -2835,6 +2834,8 @@ int venus_hfi_core_deinit(struct msm_vidc_core *core)
 	}
 	d_vpr_h("%s(): core %pK\n", __func__, core);
 	__strict_check(core);
+	if (core->state == MSM_VIDC_CORE_DEINIT)
+		return 0;
 	__resume(core);
 	__flush_debug_queue(core, core->packet, core->packet_size);
 	__disable_subcaches(core);
