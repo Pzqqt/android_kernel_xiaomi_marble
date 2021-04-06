@@ -5803,7 +5803,6 @@ static QDF_STATUS dp_vdev_attach_wifi3(struct cdp_soc_t *cdp_soc,
 	qdf_spinlock_create(&vdev->peer_list_lock);
 	TAILQ_INIT(&vdev->peer_list);
 	dp_peer_multipass_list_init(vdev);
-
 	if ((soc->intr_mode == DP_INTR_POLL) &&
 	    wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx) != 0) {
 		if ((pdev->vdev_count == 0) ||
@@ -5846,8 +5845,12 @@ static QDF_STATUS dp_vdev_attach_wifi3(struct cdp_soc_t *cdp_soc,
 
 	dp_tx_vdev_attach(vdev);
 
-	if (pdev->vdev_count == 1)
-		dp_lro_hash_setup(soc, pdev);
+	if (!pdev->is_lro_hash_configured) {
+		if (QDF_IS_STATUS_SUCCESS(dp_lro_hash_setup(soc, pdev)))
+			pdev->is_lro_hash_configured = true;
+		else
+			dp_err("LRO hash setup failure!");
+	}
 
 	dp_info("Created vdev %pK ("QDF_MAC_ADDR_FMT")", vdev,
 		QDF_MAC_ADDR_REF(vdev->mac_addr.raw));
@@ -6110,6 +6113,7 @@ static QDF_STATUS dp_vdev_detach_wifi3(struct cdp_soc_t *cdp_soc,
 	if (vdev->opmode != wlan_op_mode_monitor)
 		dp_vdev_pdev_list_remove(soc, pdev, vdev);
 
+	pdev->vdev_count--;
 	/* release reference taken above for find */
 	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 

@@ -2383,6 +2383,9 @@ struct dp_pdev {
 #endif
 	qdf_nbuf_t mcopy_status_nbuf;
 
+	/* flag to indicate whether LRO hash command has been sent to FW */
+	uint8_t is_lro_hash_configured;
+
 	/* Flag to hold on to monitor destination ring */
 	bool hold_mon_dest_ring;
 
