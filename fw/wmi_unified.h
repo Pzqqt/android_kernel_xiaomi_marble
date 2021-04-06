@@ -535,6 +535,8 @@ typedef enum {
     WMI_VDEV_GET_BIG_DATA_P2_CMDID,
     /** set TPC PSD/non-PSD power */
     WMI_VDEV_SET_TPC_POWER_CMDID,
+    /** IGMP OFFLOAD */
+    WMI_VDEV_IGMP_OFFLOAD_CMDID,
 
     /* peer specific commands */
 
@@ -28471,6 +28473,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_MLO_SETUP_CMDID);
         WMI_RETURN_STRING(WMI_MLO_READY_CMDID);
         WMI_RETURN_STRING(WMI_MLO_TEARDOWN_CMDID);
+        WMI_RETURN_STRING(WMI_VDEV_IGMP_OFFLOAD_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -33967,6 +33970,24 @@ typedef struct {
     /** Return status. 0 for success, non-zero otherwise */
     A_UINT32 status;
 } wmi_mlo_teardown_complete_fixed_param;
+
+#define WMI_IGMP_OFFLOAD_SUPPORT_DISABLE_BITMASK    0x0
+#define WMI_IGMP_V1_OFFLOAD_SUPPORT_BITMASK         0x1
+#define WMI_IGMP_V2_OFFLOAD_SUPPORT_BITMASK         0x2
+#define WMI_IGMP_V3_OFFLOAD_SUPPORT_BITMASK         0x4
+#define WMI_IGMP_OFFLOAD_SUPPORT_ALL_VERSION        0x7
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_igmp_offload_fixed_param */
+    A_UINT32 vdev_id;                   /** VDEV identifier */
+    A_UINT32 enable;                    /** IGMP offload support enable/disable */
+    A_UINT32 version_support_bitmask;   /** IGMP version support v1, v2 and/or v3*/
+
+/* Following this structure are the TLVs:
+ *     WMI_IPV4_ADDR  grp_ip_address[num_mcast_ipv4_addr];
+ */
+} wmi_igmp_offload_fixed_param;
+
 
 
 /* ADD NEW DEFS HERE */
