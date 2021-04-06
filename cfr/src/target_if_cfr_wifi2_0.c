@@ -130,24 +130,7 @@ QDF_STATUS ol_txrx_htt_cfr_rx_ind_handler(void *pdev_ptr,
 	msg_info        = *msg_word;
 	cfr_msg_type    = *(msg_word + 1);
 
-    /* TODO: Need predefined values for Radio and platform, versions */
-
-	cfr_header.start_magic_num       = 0xDEADBEAF;
-	cfr_header.vendorid              = 0x8cfdf0;
-	cfr_header.cfr_metadata_version  = CFR_META_VERSION_1;
-	cfr_header.cfr_data_version      = CFR_DATA_VERSION_1;
-
-	if (target_type == TARGET_TYPE_IPQ4019)
-		cfr_header.chip_type = CFR_CAPTURE_RADIO_DAKOTA;
-	else if (target_type == TARGET_TYPE_QCA9888)
-		cfr_header.chip_type = CFR_CAPTURE_RADIO_BESRA;
-	else if (target_type == TARGET_TYPE_QCA9984)
-		cfr_header.chip_type = CFR_CAPTURE_RADIO_CASCADE;
-	else
-		cfr_header.chip_type = CFR_CAPTURE_RADIO_NONE;
-
-	cfr_header.pltform_type        = CFR_PLATFORM_TYPE_ARM;
-	cfr_header.cfr_metadata_len    = sizeof(struct cfr_metadata_version_1);
+	target_if_cfr_fill_header(&cfr_header, true, target_type, false);
 
 	switch (cfr_msg_type) {
 

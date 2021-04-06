@@ -423,12 +423,12 @@ void ucfg_cfr_capture_data(struct wlan_objmgr_psoc *psoc, uint32_t vdev_id,
 		goto exit;
 	}
 
-	hdr->vendorid               = CFR_VENDOR_ID;
-	hdr->cfr_metadata_version   = CFR_META_VERSION_1;
-	hdr->cfr_data_version       = CFR_DATA_VERSION_1;
-	hdr->chip_type              = CFR_CAPTURE_RADIO_ADRASTEA;
-	hdr->pltform_type           = CFR_PLATFORM_TYPE_ARM;
-	hdr->cfr_metadata_len       = sizeof(struct cfr_metadata_version_1);
+	hdr->cmn.vendorid               = CFR_VENDOR_ID;
+	hdr->cmn.cfr_metadata_version   = CFR_META_VERSION_1;
+	hdr->cmn.cfr_data_version       = CFR_DATA_VERSION_1;
+	hdr->cmn.chip_type              = CFR_CAPTURE_RADIO_ADRASTEA;
+	hdr->cmn.pltform_type           = CFR_PLATFORM_TYPE_ARM;
+	hdr->cmn.cfr_metadata_len       = CFR_META_DATA_LEN;
 
 	vaddr = pcfr->cfr_mem_chunk.vaddr;
 	rindex = (u32 *)vaddr;
