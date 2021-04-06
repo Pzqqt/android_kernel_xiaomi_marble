@@ -587,11 +587,29 @@ dp_rx_cookie_check_and_invalidate(hal_ring_desc_t ring_desc)
 	HAL_RX_REO_BUF_COOKIE_INVALID_SET(ring_desc);
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ * dp_rx_cookie_reset_invalid_bit() - Reset the invalid bit of the cookie
+ *  field in ring descriptor
+ * @ring_desc: ring descriptor
+ *
+ * Return: None
+ */
+static inline void
+dp_rx_cookie_reset_invalid_bit(hal_ring_desc_t ring_desc)
+{
+	HAL_RX_REO_BUF_COOKIE_INVALID_RESET(ring_desc);
+}
 #else
 static inline QDF_STATUS
 dp_rx_cookie_check_and_invalidate(hal_ring_desc_t ring_desc)
 {
 	return QDF_STATUS_SUCCESS;
+}
+
+static inline void
+dp_rx_cookie_reset_invalid_bit(hal_ring_desc_t ring_desc)
+{
 }
 #endif
 

@@ -2529,6 +2529,8 @@ more_data:
 						soc,
 						rx.msdu_scatter_wait_break,
 						1);
+					dp_rx_cookie_reset_invalid_bit(
+								     ring_desc);
 					break;
 				}
 				is_prev_msdu_last = false;

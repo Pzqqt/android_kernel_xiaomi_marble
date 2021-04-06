@@ -288,6 +288,14 @@ enum hal_rx_ret_buf_manager {
 		HAL_RX_COOKIE_INVALID_MASK)
 
 /*
+ * macro to reset the invalid bit for sw cookie
+ */
+#define HAL_RX_BUF_COOKIE_INVALID_RESET(buff_addr_info) \
+		((*(((unsigned int *)buff_addr_info) + \
+		(BUFFER_ADDR_INFO_1_SW_BUFFER_COOKIE_OFFSET >> 2))) &= \
+		~HAL_RX_COOKIE_INVALID_MASK)
+
+/*
  * macro to set the cookie into the rxdma ring entry
  */
 #define HAL_RXDMA_COOKIE_SET(buff_addr_info, cookie) \
@@ -389,6 +397,11 @@ enum hal_rx_ret_buf_manager {
 	(HAL_RX_BUF_COOKIE_GET(&		\
 	(((struct reo_destination_ring *)	\
 		reo_desc)->buf_or_link_desc_addr_info)))
+
+#define HAL_RX_REO_BUF_COOKIE_INVALID_RESET(reo_desc)	\
+		(HAL_RX_BUF_COOKIE_INVALID_RESET(&		\
+		(((struct reo_destination_ring *)	\
+			reo_desc)->buf_or_link_desc_addr_info)))
 
 #define HAL_RX_MPDU_SEQUENCE_NUMBER_GET(mpdu_info_ptr)	\
 	((mpdu_info_ptr					\
