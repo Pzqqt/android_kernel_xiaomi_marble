@@ -165,14 +165,6 @@ void dfs_mlme_deliver_event_up_after_cac(struct wlan_objmgr_pdev *pdev)
 				pdev);
 }
 
-void dfs_mlme_get_dfs_ch_nchans(struct wlan_objmgr_pdev *pdev,
-		int *nchans)
-{
-	if (global_dfs_to_mlme.mlme_get_dfs_ch_nchans)
-		global_dfs_to_mlme.mlme_get_dfs_ch_nchans(pdev,
-				nchans);
-}
-
 #ifdef CONFIG_CHAN_FREQ_API
 QDF_STATUS dfs_mlme_get_extchan_for_freq(struct wlan_objmgr_pdev *pdev,
 					 uint16_t *dfs_chan_freq,
@@ -299,32 +291,6 @@ void dfs_mlme_get_dfs_ch_channels(struct wlan_objmgr_pdev *pdev,
 				dfs_ch_ieee,
 				dfs_ch_vhtop_ch_freq_seg1,
 				dfs_ch_vhtop_ch_freq_seg2,
-				index);
-}
-#endif
-
-#ifdef CONFIG_CHAN_FREQ_API
-void dfs_mlme_get_dfs_channels_for_freq(struct wlan_objmgr_pdev *pdev,
-					uint16_t *dfs_chan_freq,
-					uint64_t *dfs_chan_flags,
-					uint16_t *dfs_chan_flagext,
-					uint8_t *dfs_chan_ieee,
-					uint8_t *dfs_chan_vhtop_freq_seg1,
-					uint8_t *dfs_chan_vhtop_freq_seg2,
-					uint16_t *dfs_ch_mhz_freq_seg1,
-					uint16_t *dfs_ch_mhz_freq_seg2,
-					int index)
-{
-	if (global_dfs_to_mlme.mlme_get_dfs_channels_for_freq)
-		global_dfs_to_mlme.mlme_get_dfs_channels_for_freq(pdev,
-				dfs_chan_freq,
-				dfs_chan_flags,
-				dfs_chan_flagext,
-				dfs_chan_ieee,
-				dfs_chan_vhtop_freq_seg1,
-				dfs_chan_vhtop_freq_seg2,
-				dfs_ch_mhz_freq_seg1,
-				dfs_ch_mhz_freq_seg2,
 				index);
 }
 #endif

@@ -111,8 +111,6 @@ register_dfs_callbacks_for_freq(struct dfs_to_mlme *mlme_callback)
 
 	mlme_callback->mlme_find_dot11_chan_for_freq =
 		mlme_dfs_find_dot11_chan_for_freq;
-	mlme_callback->mlme_get_dfs_channels_for_freq =
-		mlme_dfs_get_dfs_channels_for_freq;
 	mlme_callback->mlme_get_cac_timeout_for_freq =
 		mlme_dfs_get_cac_timeout_for_freq;
 	mlme_callback->mlme_get_extchan_for_freq =
@@ -136,7 +134,6 @@ void register_dfs_callbacks(void)
 	tmp_dfs_to_mlme->mlme_proc_cac = mlme_dfs_proc_cac;
 	tmp_dfs_to_mlme->mlme_deliver_event_up_after_cac =
 		mlme_dfs_deliver_event_up_after_cac;
-	tmp_dfs_to_mlme->mlme_get_dfs_ch_nchans = mlme_dfs_get_dfs_ch_nchans;
 	tmp_dfs_to_mlme->mlme_set_no_chans_available =
 		mlme_dfs_set_no_chans_available;
 	tmp_dfs_to_mlme->mlme_ieee2mhz = mlme_dfs_ieee2mhz;

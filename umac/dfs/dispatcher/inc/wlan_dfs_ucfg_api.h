@@ -39,8 +39,6 @@
  * @mlme_proc_cac:                     Process the CAC completion event.
  * @mlme_deliver_event_up_after_cac:   Send a CAC timeout, VAP up event to user
  *                                     space
- * @mlme_get_dfs_ch_nchans:            Get number of channels in the channel
- *                                     list.
  * @mlme_set_no_chans_available:       Sets no_chans_available flag.
  * @mlme_ieee2mhz:                     Gets Channel freq from ieee number.
  * @mlme_find_dot11_channel:           Find dot11 channel.
@@ -102,8 +100,6 @@ struct dfs_to_mlme {
 	QDF_STATUS (*mlme_proc_cac)(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*mlme_deliver_event_up_after_cac)(
 			struct wlan_objmgr_pdev *pdev);
-	QDF_STATUS (*mlme_get_dfs_ch_nchans)(struct wlan_objmgr_pdev *pdev,
-			int *nchans);
 #ifdef CONFIG_CHAN_FREQ_API
 	QDF_STATUS (*mlme_get_extchan_for_freq)(struct wlan_objmgr_pdev *pdev,
 						uint16_t *dfs_ch_freq,

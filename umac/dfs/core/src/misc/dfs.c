@@ -265,7 +265,6 @@ void dfs_timer_detach(struct wlan_dfs *dfs)
 	}
 
 	dfs_task_testtimer_detach(dfs);
-	dfs_nol_timer_detach(dfs);
 }
 
 void dfs_detach(struct wlan_dfs *dfs)
@@ -822,7 +821,6 @@ int dfs_reinit_timers(struct wlan_dfs *dfs)
 {
 	dfs_cac_timer_attach(dfs);
 	dfs_zero_cac_timer_init(dfs->dfs_soc_obj);
-	dfs_nol_timer_init(dfs);
 	dfs_main_task_testtimer_init(dfs);
 	return 0;
 }

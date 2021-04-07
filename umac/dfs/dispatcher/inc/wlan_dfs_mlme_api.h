@@ -95,13 +95,6 @@ void dfs_mlme_proc_cac(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id);
 void dfs_mlme_deliver_event_up_after_cac(struct wlan_objmgr_pdev *pdev);
 
 /**
- * dfs_mlme_get_dfs_ch_nchans() - Get number of channels in the channel list
- * @pdev: Pointer to DFS pdev object.
- * @nchans: Pointer to save the channel number.
- */
-void dfs_mlme_get_dfs_ch_nchans(struct wlan_objmgr_pdev *pdev, int *nchans);
-
-/**
  * dfs_mlme_get_extchan() - Get extension channel.
  * @pdev: Pointer to DFS pdev object.
  * @dfs_chan_freq:                Frequency in Mhz.
