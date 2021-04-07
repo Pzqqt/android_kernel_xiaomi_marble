@@ -1088,8 +1088,6 @@ static int dsi_pll_5nm_vco_set_rate(struct dsi_pll_resource *pll_res)
 
 	dsi_pll_detect_phy_mode(pll, pll_res);
 
-	dsi_pll_config_slave(pll_res);
-
 	dsi_pll_calc_dec_frac(pll, pll_res);
 
 	dsi_pll_calc_ssc(pll, pll_res);
@@ -1361,8 +1359,6 @@ static int dsi_pll_5nm_dynamic_clk_vco_set_rate(struct dsi_pll_resource *rsc)
 
 	rsc->vco_current_rate = rate;
 
-	dsi_pll_config_slave(rsc);
-
 	dsi_pll_calc_dec_frac(pll, rsc);
 
 	/* program dynamic refresh control registers */
@@ -1441,6 +1437,8 @@ int dsi_pll_5nm_configure(void *pll, bool commit)
 
 	int rc = 0;
 	struct dsi_pll_resource *rsc = (struct dsi_pll_resource *)pll;
+
+	dsi_pll_config_slave(rsc);
 
 	/* PLL power needs to be enabled before accessing PLL registers */
 	dsi_pll_enable_pll_bias(rsc);
