@@ -626,6 +626,28 @@ static const struct drm_bridge_funcs dsi_bridge_ops = {
 	.mode_set     = dsi_bridge_mode_set,
 };
 
+int dsi_conn_set_avr_step_info(struct dsi_panel *panel, void *info)
+{
+	u32 i;
+	int idx = 0;
+	size_t buff_sz = PAGE_SIZE;
+	char *buff;
+
+	buff = kzalloc(buff_sz, GFP_KERNEL);
+	if (!buff)
+		return -ENOMEM;
+
+	for (i = 0; i < panel->avr_caps.avr_step_fps_list_len && (idx < (buff_sz - 1)); i++)
+		idx += scnprintf(&buff[idx], buff_sz - idx, "%u@%u ",
+				 panel->avr_caps.avr_step_fps_list[i],
+				 panel->dfps_caps.dfps_list[i]);
+
+	sde_kms_info_add_keystr(info, "avr step requirement", buff);
+	kfree(buff);
+
+	return 0;
+}
+
 int dsi_conn_set_info_blob(struct drm_connector *connector,
 		void *info, void *display, struct msm_mode_info *mode_info)
 {
@@ -674,6 +696,8 @@ int dsi_conn_set_info_blob(struct drm_connector *connector,
 	switch (panel->panel_mode) {
 	case DSI_OP_VIDEO_MODE:
 		sde_kms_info_add_keystr(info, "panel mode", "video");
+		if (panel->avr_caps.avr_step_fps_list_len)
+			dsi_conn_set_avr_step_info(panel, info);
 		break;
 	case DSI_OP_CMD_MODE:
 		sde_kms_info_add_keystr(info, "panel mode", "command");

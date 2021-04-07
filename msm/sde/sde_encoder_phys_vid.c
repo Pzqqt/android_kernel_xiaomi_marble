@@ -367,21 +367,20 @@ static void _sde_encoder_phys_vid_setup_avr(
 static void _sde_encoder_phys_vid_avr_ctrl(struct sde_encoder_phys *phys_enc)
 {
 	struct intf_avr_params avr_params;
-	struct sde_encoder_phys_vid *vid_enc =
-			to_sde_encoder_phys_vid(phys_enc);
+	struct sde_encoder_phys_vid *vid_enc = to_sde_encoder_phys_vid(phys_enc);
+	u32 avr_step_fps = sde_connector_get_avr_step(phys_enc->connector);
 
-	avr_params.avr_mode = sde_connector_get_qsync_mode(
-			phys_enc->connector);
+	memset(&avr_params, 0, sizeof(avr_params));
+	avr_params.avr_mode = sde_connector_get_qsync_mode(phys_enc->connector);
+	if (avr_step_fps)
+		avr_params.avr_step_lines = mult_frac(phys_enc->cached_mode.vtotal,
+				vid_enc->timing_params.vrefresh, avr_step_fps);
 
-	if (vid_enc->base.hw_intf->ops.avr_ctrl) {
-		vid_enc->base.hw_intf->ops.avr_ctrl(
-				vid_enc->base.hw_intf,
-				&avr_params);
-	}
+	if (vid_enc->base.hw_intf->ops.avr_ctrl)
+		vid_enc->base.hw_intf->ops.avr_ctrl(vid_enc->base.hw_intf, &avr_params);
 
-	SDE_EVT32(DRMID(phys_enc->parent),
-		phys_enc->hw_intf->idx - INTF_0,
-		avr_params.avr_mode);
+	SDE_EVT32(DRMID(phys_enc->parent), phys_enc->hw_intf->idx - INTF_0,
+			avr_params.avr_mode, avr_params.avr_step_lines, avr_step_fps);
 }
 
 static void sde_encoder_phys_vid_setup_timing_engine(

@@ -95,6 +95,11 @@ struct dsi_qsync_capabilities {
 	int qsync_min_fps_list_len;
 };
 
+struct dsi_avr_capabilities {
+	u32 *avr_step_fps_list;
+	u32 avr_step_fps_list_len;
+};
+
 struct dsi_dyn_clk_caps {
 	bool dyn_clk_support;
 	enum dsi_dyn_clk_feature_type type;
@@ -247,6 +252,7 @@ struct dsi_panel {
 	bool panel_initialized;
 	bool te_using_watchdog_timer;
 	struct dsi_qsync_capabilities qsync_caps;
+	struct dsi_avr_capabilities avr_caps;
 
 	char dce_pps_cmd[DSI_CMD_PPS_SIZE];
 	enum dsi_dms_mode dms_mode;

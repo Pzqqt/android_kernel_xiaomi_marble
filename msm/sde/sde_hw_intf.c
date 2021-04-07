@@ -175,9 +175,10 @@ static void sde_hw_intf_avr_ctrl(struct sde_hw_intf *ctx,
 	c = &ctx->hw;
 	if (avr_params->avr_mode) {
 		avr_ctrl = BIT(0);
-		avr_mode =
-		(avr_params->avr_mode == SDE_RM_QSYNC_ONE_SHOT_MODE) ?
-			(BIT(0) | BIT(8)) : 0x0;
+		avr_mode = (avr_params->avr_mode == SDE_RM_QSYNC_ONE_SHOT_MODE) ?
+				(BIT(0) | BIT(8)) : 0x0;
+		if (avr_params->avr_step_lines)
+			avr_mode |= avr_params->avr_step_lines << 16;
 	}
 
 	SDE_REG_WRITE(c, INTF_AVR_CONTROL, avr_ctrl);
