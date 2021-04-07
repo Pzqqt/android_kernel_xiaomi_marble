@@ -2361,10 +2361,11 @@ mlme_iot_parse_aggr_info(struct wlan_objmgr_psoc *psoc,
 
 	aggr_info_list = iot->aggr;
 	qdf_mem_copy(aggr_info, cfg_str, cfg_str_len);
+	mlme_legacy_debug("aggr_info=[%s]", aggr_info);
+
 	aggr_info_temp = aggr_info;
 	while (aggr_info_temp) {
 		/* skip possible spaces before oui string */
-		mlme_legacy_err("aggr_info=[%s]", aggr_info_temp);
 		while (*aggr_info_temp == ' ')
 			aggr_info_temp++;
 
