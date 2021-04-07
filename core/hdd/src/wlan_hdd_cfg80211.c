@@ -9918,7 +9918,8 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 							&wmm_mode);
 			if (!QDF_IS_STATUS_SUCCESS(status)) {
 				hdd_err("Get wmm_mode failed");
-				return QDF_STATUS_E_FAILURE;
+				ret_val = -EINVAL;
+				goto send_err;
 			}
 			sme_config->csr_config.WMMSupportMode =
 				hdd_to_csr_wmm_mode(wmm_mode);
@@ -10415,11 +10416,13 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 							   &rf_test_mode);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("Get rf test mode failed");
-			return QDF_STATUS_E_FAILURE;
+			ret_val = -EINVAL;
+			goto send_err;
 		}
 		if (rf_test_mode) {
 			hdd_err("rf test mode is enabled, ignore setting");
-			return 0;
+			ret_val = 0;
+			goto send_err;
 		}
 		cfg_val = nla_get_u8(tb[cmd_id]);
 		hdd_debug("safe mode setting %d", cfg_val);
