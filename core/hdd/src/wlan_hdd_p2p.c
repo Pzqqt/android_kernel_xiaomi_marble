@@ -1445,8 +1445,7 @@ int wlan_hdd_set_mcc_p2p_quota(struct hdd_adapter *adapter,
 		set_value = set_second_connection_operating_channel(
 			hdd_ctx, set_value, adapter->vdev_id);
 
-
-		ret = wlan_hdd_send_p2p_quota(adapter, set_value);
+		ret = wlan_hdd_send_mcc_vdev_quota(adapter, set_value);
 	} else {
 		hdd_info("MCC is not active. Exit w/o setting latency");
 	}

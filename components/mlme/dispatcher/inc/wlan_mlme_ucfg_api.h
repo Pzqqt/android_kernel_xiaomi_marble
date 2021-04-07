@@ -271,6 +271,20 @@ QDF_STATUS ucfg_mlme_set_dual_sta_policy(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * ucfg_mlme_get_dual_sta_policy() - Get the Concurrent STA policy value
+ * @psoc: pointer to psoc object
+ * @dual_sta_config: Pointer to the variable from caller
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_dual_sta_policy(struct wlan_objmgr_psoc *psoc,
+					 uint8_t *dual_sta_config)
+{
+	return wlan_mlme_get_dual_sta_policy(psoc, dual_sta_config);
+}
+
+/**
  * ucfg_mlme_get_prevent_link_down() - Get the prevent link down config
  * @psoc: pointer to psoc object
  * @prevent_link_down: Pointer to the variable from caller
@@ -1978,6 +1992,28 @@ QDF_STATUS ucfg_mlme_set_primary_interface(struct wlan_objmgr_psoc *psoc,
 					   uint8_t value)
 {
 	return wlan_mlme_set_primary_interface(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_mcc_duty_cycle_percentage() - Get primary STA iface MCC
+ * duty-cycle
+ *
+ * @psoc: pointer to psoc object
+ * @value: value that needs to be set from the caller
+ *
+ * primary and secondary STA iface MCC duty-cycle value in below format
+ * ******************************************************
+ * |bit 31-24 | bit 23-16 | bits 15-8   |bits 7-0   |
+ * | Unused   | Quota for | chan. # for |chan. # for|
+ * |          | 1st chan  | 1st chan.   |2nd chan.  |
+ * *****************************************************
+ *
+ * Return: primary iface MCC duty-cycle value
+ */
+static inline
+int ucfg_mlme_get_mcc_duty_cycle_percentage(struct wlan_objmgr_pdev *pdev)
+{
+	return wlan_mlme_get_mcc_duty_cycle_percentage(pdev);
 }
 
 /**

@@ -12689,9 +12689,11 @@ cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
 {
 	struct mac_context *mac_ctx;
 	uint8_t vdev_id = wlan_vdev_get_id(vdev);
-	int32_t ucast_cipher;
+	int32_t ucast_cipher, count;
 	struct set_context_rsp install_key_rsp;
-	int32_t rsn_cap;
+	int32_t rsn_cap, set_value;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct dual_sta_policy *dual_sta_policy;
 
 	/*
 	 * This API is to update legacy struct and should be removed once
@@ -12702,6 +12704,10 @@ cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
 	if (!mac_ctx)
 		return QDF_STATUS_E_INVAL;
 
+	mlme_obj = mlme_get_psoc_ext_obj(mac_ctx->psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_INVAL;
+
 	if (QDF_IS_STATUS_ERROR(rsp->connect_status)) {
 		cm_csr_set_idle(vdev_id);
 		sme_qos_update_hand_off(vdev_id, false);
@@ -12710,6 +12716,25 @@ cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
 		/* Fill legacy structures from resp for failure */
 
 		return QDF_STATUS_SUCCESS;
+	}
+
+	dual_sta_policy = &mlme_obj->cfg.gen.dual_sta_policy;
+	count = policy_mgr_mode_specific_connection_count(mac_ctx->psoc,
+							  PM_STA_MODE, NULL);
+	/*
+	 * send duty cycle percentage to FW only if STA + STA
+	 * concurrency is in MCC.
+	 */
+	if (dual_sta_policy->primary_vdev_id != WLAN_UMAC_VDEV_ID_MAX &&
+	    dual_sta_policy->concurrent_sta_policy ==
+	    QCA_WLAN_CONCURRENT_STA_POLICY_PREFER_PRIMARY && count == 2 &&
+	    policy_mgr_current_concurrency_is_mcc(mac_ctx->psoc)) {
+		if (QDF_IS_STATUS_ERROR(sme_set_mas(false)))
+			sme_err("Failed to disable mcc_adaptive_scheduler");
+		set_value =
+			wlan_mlme_get_mcc_duty_cycle_percentage(mac_ctx->pdev);
+		sme_cli_set_command(vdev_id, WMA_VDEV_MCC_SET_TIME_QUOTA,
+				    set_value, VDEV_CMD);
 	}
 
 	/*

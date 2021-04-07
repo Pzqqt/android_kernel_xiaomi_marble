@@ -18629,13 +18629,13 @@ bool hdd_set_connection_in_progress(bool value)
 	return status;
 }
 
-int wlan_hdd_send_p2p_quota(struct hdd_adapter *adapter, int set_value)
+int wlan_hdd_send_mcc_vdev_quota(struct hdd_adapter *adapter, int set_value)
 {
 	if (!adapter) {
 		hdd_err("Invalid adapter");
 		return -EINVAL;
 	}
-	hdd_info("Send MCC P2P QUOTA to WMA: %d", set_value);
+	hdd_info("send mcc vdev quota to fw: %d", set_value);
 	sme_cli_set_command(adapter->vdev_id,
 			    WMA_VDEV_MCC_SET_TIME_QUOTA,
 			    set_value, VDEV_CMD);

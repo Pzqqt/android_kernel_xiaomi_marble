@@ -4146,15 +4146,15 @@ static inline void hdd_send_peer_status_ind_to_app(
 #endif /* WIFI_POS_CONVERGENCE */
 
 /**
- * wlan_hdd_send_p2p_quota()- Send P2P Quota value to FW
+ * wlan_hdd_send_mcc_vdev_quota()- Send mcc vdev quota value to FW
  * @adapter: Adapter data
- * @sval:    P2P quota value
+ * @sval:    mcc vdev quota value
  *
- * Send P2P quota value to FW
+ * Send mcc vdev quota value value to FW
  *
  * Return: 0 success else failure
  */
-int wlan_hdd_send_p2p_quota(struct hdd_adapter *adapter, int sval);
+int wlan_hdd_send_mcc_vdev_quota(struct hdd_adapter *adapter, int sval);
 
 /**
  * wlan_hdd_send_p2p_quota()- Send MCC latency to FW

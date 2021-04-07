@@ -281,6 +281,16 @@ QDF_STATUS wlan_mlme_set_dual_sta_policy(struct wlan_objmgr_psoc *psoc,
 					 uint8_t dual_sta_config);
 
 /**
+ * wlan_mlme_get_dual_sta_policy() - Get the dual sta policy
+ * @psoc: pointer to psoc object
+ * @dual_sta_config: Value to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_dual_sta_policy(struct wlan_objmgr_psoc *psoc,
+					 uint8_t *dual_sta_config);
+
+/**
  * wlan_mlme_get_prevent_link_down() - Get the prevent link down config
  * @psoc: pointer to psoc object
  * @prevent_link_down: Pointer to the variable from caller
@@ -1066,6 +1076,27 @@ QDF_STATUS wlan_mlme_set_fils_enabled_info(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS wlan_mlme_set_primary_interface(struct wlan_objmgr_psoc *psoc,
 					   uint8_t value);
+
+/**
+ * wlan_mlme_set_default_primary_iface() - Set the default primary iface id
+ * for driver
+ * @psoc: pointer to psoc object
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_set_default_primary_iface(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_mlme_get_mcc_duty_cycle_percentage() - Get primary STA iface duty
+ * cycle percentage
+ * @psoc: pointer to psoc object
+ * @value: value that needs to be set from the caller
+ *
+ * API to get the MCC duty cycle for primary and secondary STA's
+ *
+ * Return: primary iface quota on success
+ */
+int wlan_mlme_get_mcc_duty_cycle_percentage(struct wlan_objmgr_pdev *pdev);
 
 /**
  * wlan_mlme_get_tl_delayed_trgr_frm_int() - Get delay interval(in ms)

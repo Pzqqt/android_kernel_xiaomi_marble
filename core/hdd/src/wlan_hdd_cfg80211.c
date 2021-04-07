@@ -8633,7 +8633,9 @@ static int hdd_set_primary_interface(struct hdd_adapter *adapter,
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	bool is_set_primary_iface;
 	QDF_STATUS status;
-	uint8_t primary_vdev_id;
+	uint8_t primary_vdev_id, dual_sta_policy;
+	int set_value;
+	uint32_t count;
 
 	/* ignore unless in STA mode */
 	if (adapter->device_mode != QDF_STA_MODE)
@@ -8649,6 +8651,41 @@ static int hdd_set_primary_interface(struct hdd_adapter *adapter,
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("could not set primary interface, %d", status);
 		return -EINVAL;
+	}
+
+	/*
+	 * send duty cycle percentage to FW only if STA + STA
+	 * concurrency is in MCC.
+	 */
+	count = policy_mgr_mode_specific_connection_count(hdd_ctx->psoc,
+							  PM_STA_MODE, NULL);
+	if (count != 2 &&
+	    !policy_mgr_current_concurrency_is_mcc(hdd_ctx->psoc)) {
+		hdd_debug("STA + STA concurrency is in MCC not present");
+		return -EINVAL;
+	}
+
+	status = ucfg_mlme_get_dual_sta_policy(hdd_ctx->psoc, &dual_sta_policy);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("could not get dual sta policy, %d", status);
+		return -EINVAL;
+	}
+
+	if (is_set_primary_iface && dual_sta_policy ==
+	    QCA_WLAN_CONCURRENT_STA_POLICY_PREFER_PRIMARY) {
+		set_value =
+		   ucfg_mlme_get_mcc_duty_cycle_percentage(hdd_ctx->pdev);
+		if (set_value < 0) {
+			hdd_err("Invalid mcc duty cycle");
+			return -EINVAL;
+		}
+
+		if (QDF_IS_STATUS_ERROR(sme_set_mas(false))) {
+			hdd_err("Failed to disable mcc_adaptive_scheduler");
+				return -EINVAL;
+		}
+
+		wlan_hdd_send_mcc_vdev_quota(adapter, set_value);
 	}
 
 	return 0;
