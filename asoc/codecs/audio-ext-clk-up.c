@@ -665,17 +665,17 @@ static int audio_ref_clk_probe(struct platform_device *pdev)
 		clk_priv->clk_cfg.clk_id = clk_id;
 #ifdef CONFIG_AUDIO_PRM
 		clk_priv->prm_clk_cfg.clk_id = clk_id;
-		dev_info(&pdev->dev, "%s: PRM ext-clk freq: %d, lpass clk_id: %d, clk_src: %d\n",
+		dev_dbg(&pdev->dev, "%s: PRM ext-clk freq: %d, lpass clk_id: %d, clk_src: %d\n",
 			__func__, clk_priv->prm_clk_cfg.clk_freq_in_hz,
 			clk_priv->prm_clk_cfg.clk_id, clk_priv->clk_src);
 #endif
 	}
 
-	dev_info(&pdev->dev, "%s: ext-clk freq: %d, lpass clk_id: %d, clk_src: %d\n",
+	dev_dbg(&pdev->dev, "%s: ext-clk freq: %d, lpass clk_id: %d, clk_src: %d\n",
 			__func__, clk_priv->clk_cfg.clk_freq_in_hz,
 			clk_priv->clk_cfg.clk_id, clk_priv->clk_src);
 
-        dev_info(&pdev->dev, "%s: PRM2 ext-clk freq: %d, lpass clk_id: %d, clk_src: %d\n",
+        dev_dbg(&pdev->dev, "%s: PRM2 ext-clk freq: %d, lpass clk_id: %d, clk_src: %d\n",
                         __func__, clk_priv->prm_clk_cfg.clk_freq_in_hz,
                         clk_priv->prm_clk_cfg.clk_id, clk_priv->clk_src);
 
