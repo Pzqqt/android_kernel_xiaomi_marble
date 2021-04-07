@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _IPAHAL_HW_STATS_I_H_
@@ -23,10 +23,12 @@ struct ipahal_stats_tethering_hdr_hw {
 };
 
 struct ipahal_stats_tethering_hdr_v5_0_hw {
-	u64 dst_mask1;
-	u64 dst_mask2;
-	u64 offset : 32;
-	u64 reserved : 32;
+	u64 dst_mask_31_0:32;
+	u64 dst_mask_63_32:32;
+	u64 dst_mask_95_64:32;
+	u64 dst_mask_127_96:32;
+	u64 offset:32;
+	u64 reserved:32;
 };
 
 struct ipahal_stats_tethering_hw {

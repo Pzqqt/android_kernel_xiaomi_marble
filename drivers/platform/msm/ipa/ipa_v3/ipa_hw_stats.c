@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/debugfs.h>
@@ -838,7 +838,7 @@ int ipa_init_teth_stats(struct ipa_teth_stats_endpoints *in)
 		}
 	}
 
-	IPADBG_LOW("prod_mask=[0x%x][0x%x]\n",
+	IPADBG("prod_mask=[0x%x][0x%x]\n",
 		in->prod_mask[0], in->prod_mask[1]);
 
 	/* reset driver's cache */
@@ -2341,7 +2341,7 @@ static ssize_t ipa_debugfs_print_tethering_stats(struct file *file,
 			if (IPA_CLIENT_IS_TEST(j))
 				continue;
 
-			cons_reg = ipahal_get_ep_reg_idx(j);
+			cons_reg = ipahal_get_ep_reg_idx(cons_idx);
 			if (!(ipa3_ctx->hw_stats->teth.init.
 				cons_bitmask[ep_idx][cons_reg]
 				& ipahal_get_ep_bit(cons_idx)))
