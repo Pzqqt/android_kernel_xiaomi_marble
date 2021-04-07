@@ -56,6 +56,7 @@
 #define MAX_AVC_ENH_LAYER_SLIDING_WINDOW      3
 #define MAX_AVC_ENH_LAYER_HYBRID_HP           5
 #define PERCENT_PEAK_BITRATE_INCREASED       10
+#define INVALID_DEFAULT_MARK_OR_USE_LTR      -1
 
 #define DCVS_WINDOW 16
 /* Superframe can have maximum of 32 frames */

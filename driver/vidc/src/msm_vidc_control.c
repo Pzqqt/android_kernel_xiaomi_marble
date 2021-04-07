@@ -899,9 +899,8 @@ int msm_vidc_adjust_ltr_count(void *instance, struct v4l2_ctrl *ctrl)
 int msm_vidc_adjust_use_ltr(void *instance, struct v4l2_ctrl *ctrl)
 {
 	struct msm_vidc_inst_capability *capability;
-	s32 adjusted_value;
+	s32 adjusted_value, ltr_count;
 	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
-	s32 ltr_count = -1;
 
 	if (!inst || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -911,18 +910,25 @@ int msm_vidc_adjust_use_ltr(void *instance, struct v4l2_ctrl *ctrl)
 
 	adjusted_value = ctrl ? ctrl->val : capability->cap[USE_LTR].value;
 
-	if (msm_vidc_get_parent_value(inst, USE_LTR, LTR_COUNT,
-		&ltr_count, __func__))
-		return -EINVAL;
+	/*
+	 * Since USE_LTR is only set dynamically, and LTR_COUNT is static
+	 * control, no need to make LTR_COUNT as parent for USE_LTR as
+	 * LTR_COUNT value will always be updated when dynamically USE_LTR
+	 * is set
+	 */
+	ltr_count = capability->cap[LTR_COUNT].value;
+	if (!ltr_count)
+		return 0;
 
-	if (!ltr_count) {
-		adjusted_value = 0;
-	} else if (adjusted_value <= 0 ||
-		adjusted_value >= (1 << ltr_count)) {
-		/* USE_LTR value should be > 0 and < (2 ^ LTR_COUNT) */
+	if (adjusted_value <= 0 ||
+		adjusted_value > ((1 << ltr_count) - 1)) {
+		/*
+		 * USE_LTR is bitmask value, hence should be
+		 * > 0 and <= (2 ^ LTR_COUNT) - 1
+		 */
 		i_vpr_e(inst, "%s: invalid value %d\n",
 			__func__, adjusted_value);
-		return -EINVAL;
+		return 0;
 	}
 
 	/* USE_LTR value is a bitmask value */
@@ -935,9 +941,8 @@ int msm_vidc_adjust_use_ltr(void *instance, struct v4l2_ctrl *ctrl)
 int msm_vidc_adjust_mark_ltr(void *instance, struct v4l2_ctrl *ctrl)
 {
 	struct msm_vidc_inst_capability *capability;
-	s32 adjusted_value;
+	s32 adjusted_value, ltr_count;
 	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
-	s32 ltr_count = -1;
 
 	if (!inst || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -947,18 +952,22 @@ int msm_vidc_adjust_mark_ltr(void *instance, struct v4l2_ctrl *ctrl)
 
 	adjusted_value = ctrl ? ctrl->val : capability->cap[MARK_LTR].value;
 
-	if (msm_vidc_get_parent_value(inst, MARK_LTR, LTR_COUNT,
-		&ltr_count, __func__))
-		return -EINVAL;
+	/*
+	 * Since MARK_LTR is only set dynamically, and LTR_COUNT is static
+	 * control, no need to make LTR_COUNT as parent for MARK_LTR as
+	 * LTR_COUNT value will always be updated when dynamically MARK_LTR
+	 * is set
+	 */
+	ltr_count = capability->cap[LTR_COUNT].value;
+	if (!ltr_count)
+		return 0;
 
-	if (!ltr_count) {
-		adjusted_value = 0;
-	} else if (adjusted_value < 0 ||
+	if (adjusted_value < 0 ||
 		adjusted_value > (ltr_count - 1)) {
-		/* MARK_LTR value should be > 0 and <= (LTR_COUNT - 1) */
+		/* MARK_LTR value should be >= 0 and <= (LTR_COUNT - 1) */
 		i_vpr_e(inst, "%s: invalid value %d\n",
 			__func__, adjusted_value);
-		return -EINVAL;
+		return 0;
 	}
 
 	msm_vidc_update_cap_value(inst, MARK_LTR,
@@ -1741,9 +1750,15 @@ int msm_vidc_set_use_and_mark_ltr(void *instance,
 		return -EINVAL;
 	}
 
-	if (!inst->capabilities->cap[LTR_COUNT].value) {
-		i_vpr_h(inst, "%s: ltr count is 0, cap %s is not set\n",
-			__func__, cap_name(cap_id));
+	if (!inst->capabilities->cap[LTR_COUNT].value ||
+		(inst->capabilities->cap[cap_id].value ==
+			INVALID_DEFAULT_MARK_OR_USE_LTR)) {
+		i_vpr_h(inst,
+			"%s: LTR_COUNT: %d %s: %d, cap %s is not set\n",
+			__func__, inst->capabilities->cap[LTR_COUNT].value,
+			cap_name(cap_id),
+			inst->capabilities->cap[cap_id].value,
+			cap_name(cap_id));
 		return 0;
 	}
 
