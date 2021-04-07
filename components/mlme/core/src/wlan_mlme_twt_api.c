@@ -127,7 +127,7 @@ void mlme_set_twt_setup_done(struct wlan_objmgr_psoc *psoc,
 	for (i = 0; i < peer_priv->twt_ctx.num_twt_sessions; i++) {
 		if (peer_priv->twt_ctx.session_info[i].dialog_id == dialog_id) {
 			peer_priv->twt_ctx.session_info[i].setup_done = is_set;
-			mlme_legacy_debug("setup done dialog:%d",
+			mlme_legacy_debug("setup done:%d dialog:%d", is_set,
 					  dialog_id);
 			break;
 		}

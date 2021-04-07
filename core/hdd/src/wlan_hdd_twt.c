@@ -98,6 +98,10 @@ qca_wlan_vendor_twt_nudge_dialog_policy[QCA_WLAN_VENDOR_ATTR_TWT_NUDGE_MAX + 1] 
 	[QCA_WLAN_VENDOR_ATTR_TWT_NUDGE_MAC_ADDR] = VENDOR_NLA_POLICY_MAC_ADDR,
 };
 
+static
+int hdd_send_twt_del_dialog_cmd(struct hdd_context *hdd_ctx,
+				struct wmi_twt_del_dialog_param *twt_params);
+
 /**
  * hdd_twt_setup_req_type_to_cmd() - Converts twt setup request type to twt cmd
  * @req_type: twt setup request type
@@ -1277,16 +1281,51 @@ static QDF_STATUS hdd_send_twt_setup_response(
 }
 
 /**
+ * hdd_twt_handle_renego_failure() - Upon re-nego failure send TWT teardown
+ *
+ * @adapter: Adapter pointer
+ * @add_dialog_event: Pointer to Add dialog complete event structure
+ *
+ * Upon re-negotiation failure, this function constructs TWT teardown
+ * message to the target.
+ *
+ * Return: None
+ */
+static void
+hdd_twt_handle_renego_failure(struct hdd_adapter *adapter,
+			      struct twt_add_dialog_complete_event *add_dialog_event)
+{
+	struct wmi_twt_del_dialog_param params = {0};
+
+	if (!add_dialog_event)
+		return;
+
+	qdf_mem_copy(params.peer_macaddr,
+		     add_dialog_event->params.peer_macaddr,
+		     QDF_MAC_ADDR_SIZE);
+	params.vdev_id = add_dialog_event->params.vdev_id;
+	params.dialog_id = add_dialog_event->params.dialog_id;
+
+	hdd_debug("renego: twt_terminate: vdev_id:%d dialog_id:%d peer mac_addr "
+		  QDF_MAC_ADDR_FMT, params.vdev_id, params.dialog_id,
+		  QDF_MAC_ADDR_REF(params.peer_macaddr));
+
+	hdd_send_twt_del_dialog_cmd(adapter->hdd_ctx, &params);
+}
+
+/**
  * hdd_twt_add_dialog_comp_cb() - HDD callback for twt add dialog
  * complete event
  * @psoc: Pointer to global psoc
  * @add_dialog_event: Pointer to Add dialog complete event structure
+ * @renego_fail: Flag to indicate if its re-negotiation failure case
  *
  * Return: None
  */
 static void
 hdd_twt_add_dialog_comp_cb(struct wlan_objmgr_psoc *psoc,
-			   struct twt_add_dialog_complete_event *add_dialog_event)
+			   struct twt_add_dialog_complete_event *add_dialog_event,
+			   bool renego_fail)
 {
 	struct hdd_adapter *adapter;
 	uint8_t vdev_id = add_dialog_event->params.vdev_id;
@@ -1297,11 +1336,15 @@ hdd_twt_add_dialog_comp_cb(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 
-	hdd_debug("TWT: add dialog_id:%d, status:%d vdev_id %d peer mac_addr "
+	hdd_debug("TWT: add dialog_id:%d, status:%d vdev_id:%d renego_fail:%d peer mac_addr "
 		  QDF_MAC_ADDR_FMT, add_dialog_event->params.dialog_id,
-		  add_dialog_event->params.status, vdev_id,
+		  add_dialog_event->params.status, vdev_id, renego_fail,
 		  QDF_MAC_ADDR_REF(add_dialog_event->params.peer_macaddr));
+
 	hdd_send_twt_setup_response(adapter, add_dialog_event);
+
+	if (renego_fail)
+		hdd_twt_handle_renego_failure(adapter, add_dialog_event);
 }
 
 /**

@@ -1935,33 +1935,47 @@ static QDF_STATUS sme_process_antenna_mode_resp(struct mac_context *mac,
 
 #ifdef WLAN_SUPPORT_TWT
 /**
- * sme_process_twt_add_dialog_event() - Process twt add dialog event
- * response from firmware
+ * sme_process_twt_add_renego_failure() - Process TWT re-negotiation failure
+ *
  * @mac: Global MAC pointer
  * @add_dialog_event: pointer to event buf containing twt response parameters
  *
  * Return: None
  */
 static void
-sme_process_twt_add_dialog_event(struct mac_context *mac,
+sme_process_twt_add_renego_failure(struct mac_context *mac,
 				 struct twt_add_dialog_complete_event *add_dialog_event)
 {
 	twt_add_dialog_cb callback;
-	bool is_evt_allowed;
 
-	is_evt_allowed = mlme_twt_is_command_in_progress(
+	/* Reset the active TWT command to none */
+	mlme_set_twt_command_in_progress(
 		mac->psoc,
 		(struct qdf_mac_addr *)add_dialog_event->params.peer_macaddr,
-		add_dialog_event->params.dialog_id, WLAN_TWT_SETUP);
-	if (!is_evt_allowed) {
-		sme_debug("add dialog event dropped for id:%d",
-			  add_dialog_event->params.dialog_id);
-		return;
-	}
+		add_dialog_event->params.dialog_id, WLAN_TWT_NONE);
 
 	callback = mac->sme.twt_add_dialog_cb;
 	if (callback)
-		callback(mac->psoc, add_dialog_event);
+		callback(mac->psoc, add_dialog_event, true);
+}
+
+/**
+ * sme_process_twt_add_initial_nego() - Process initial TWT setup or
+ * re-negotiation successful setup
+ * @mac: Global MAC pointer
+ * @add_dialog_event: pointer to event buf containing twt response parameters
+ *
+ * Return: None
+ */
+static void
+sme_process_twt_add_initial_nego(struct mac_context *mac,
+				 struct twt_add_dialog_complete_event *add_dialog_event)
+{
+	twt_add_dialog_cb callback;
+
+	callback = mac->sme.twt_add_dialog_cb;
+	if (callback)
+		callback(mac->psoc, add_dialog_event, false);
 
 	/* Reset the active TWT command to none */
 	mlme_set_twt_command_in_progress(
@@ -1986,6 +2000,46 @@ sme_process_twt_add_dialog_event(struct mac_context *mac,
 		(struct qdf_mac_addr *)add_dialog_event->params.peer_macaddr,
 		add_dialog_event->params.dialog_id,
 		WLAN_TWT_SETUP_STATE_ACTIVE);
+}
+
+/**
+ * sme_process_twt_add_dialog_event() - Process twt add dialog event
+ * response from firmware
+ * @mac: Global MAC pointer
+ * @add_dialog_event: pointer to event buf containing twt response parameters
+ *
+ * Return: None
+ */
+static void
+sme_process_twt_add_dialog_event(struct mac_context *mac,
+				 struct twt_add_dialog_complete_event *add_dialog_event)
+{
+	bool is_evt_allowed;
+	bool setup_done;
+	enum WMI_HOST_ADD_TWT_STATUS status;
+
+	is_evt_allowed = mlme_twt_is_command_in_progress(
+		mac->psoc,
+		(struct qdf_mac_addr *)add_dialog_event->params.peer_macaddr,
+		add_dialog_event->params.dialog_id, WLAN_TWT_SETUP);
+	if (!is_evt_allowed) {
+		sme_debug("add dialog event dropped for id:%d",
+			  add_dialog_event->params.dialog_id);
+		return;
+	}
+
+	setup_done = ucfg_mlme_is_twt_setup_done(mac->psoc,
+		(struct qdf_mac_addr *)add_dialog_event->params.peer_macaddr,
+		add_dialog_event->params.dialog_id);
+	status = add_dialog_event->params.status;
+	sme_debug("setup_done: %d status: %d", setup_done, status);
+
+	if (setup_done && status) {
+		/* This is re-negotiation failure case */
+		sme_process_twt_add_renego_failure(mac, add_dialog_event);
+	} else {
+		sme_process_twt_add_initial_nego(mac, add_dialog_event);
+	}
 }
 
 static bool
@@ -13792,7 +13846,7 @@ QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
 			twt_params->dialog_id, WLAN_TWT_ANY);
 	if (is_twt_cmd_in_progress) {
 		sme_debug("Already TWT command is in progress");
-		return QDF_STATUS_E_AGAIN;
+		return QDF_STATUS_E_PENDING;
 	}
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
@@ -13875,7 +13929,7 @@ QDF_STATUS sme_del_dialog_cmd(mac_handle_t mac_handle,
 			twt_params->dialog_id, WLAN_TWT_TERMINATE);
 	if (is_twt_cmd_in_progress) {
 		sme_debug("Already TWT command is in progress");
-		return QDF_STATUS_E_AGAIN;
+		return QDF_STATUS_E_PENDING;
 	}
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
@@ -13943,7 +13997,7 @@ sme_pause_dialog_cmd(mac_handle_t mac_handle,
 			twt_params->dialog_id, WLAN_TWT_ANY);
 	if (is_twt_cmd_in_progress) {
 		sme_debug("Already TWT command is in progress");
-		return QDF_STATUS_E_AGAIN;
+		return QDF_STATUS_E_PENDING;
 	}
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
@@ -14010,7 +14064,7 @@ sme_nudge_dialog_cmd(mac_handle_t mac_handle,
 			twt_params->dialog_id, WLAN_TWT_ANY);
 	if (is_twt_cmd_in_progress) {
 		sme_debug("Already TWT command is in progress");
-		return QDF_STATUS_E_AGAIN;
+		return QDF_STATUS_E_PENDING;
 	}
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma_handle) {
@@ -14078,7 +14132,7 @@ sme_resume_dialog_cmd(mac_handle_t mac_handle,
 			twt_params->dialog_id, WLAN_TWT_ANY);
 	if (is_twt_cmd_in_progress) {
 		sme_debug("Already TWT command is in progress");
-		return QDF_STATUS_E_AGAIN;
+		return QDF_STATUS_E_PENDING;
 	}
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
