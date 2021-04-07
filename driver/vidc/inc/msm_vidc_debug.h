@@ -29,7 +29,7 @@
 #define MSM_VIDC_EMPTY_BRACE {},
 #endif
 
-extern int msm_vidc_debug;
+extern unsigned int msm_vidc_debug;
 extern bool msm_vidc_lossless_encode;
 extern bool msm_vidc_syscache_disable;
 extern int msm_vidc_clock_voting;

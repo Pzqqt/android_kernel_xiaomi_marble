@@ -108,6 +108,11 @@
 #define Q16_INT(q) ((q) >> 16)
 #define Q16_FRAC(q) ((((q) & 0xFFFF) * 100) >> 16)
 
+/* define timeout values */
+#define HW_RESPONSE_TIMEOUT_VALUE     (1000)
+#define SW_PC_DELAY_VALUE             (HW_RESPONSE_TIMEOUT_VALUE + 500)
+#define FW_UNLOAD_DELAY_VALUE         (SW_PC_DELAY_VALUE + 1500)
+
 enum msm_vidc_domain_type {
 	MSM_VIDC_ENCODER           = BIT(0),
 	MSM_VIDC_DECODER           = BIT(1),
