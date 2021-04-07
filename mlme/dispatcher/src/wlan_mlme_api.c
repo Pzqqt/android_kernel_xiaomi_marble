@@ -30,6 +30,9 @@
 #include "wlan_utility.h"
 #include "wlan_policy_mgr_ucfg.h"
 
+/* quota in milliseconds */
+#define MCC_DUTY_CYCLE 70
+
 QDF_STATUS wlan_mlme_get_cfg_str(uint8_t *dst, struct mlme_cfg_str *cfg_str,
 				 qdf_size_t *len)
 {
@@ -241,6 +244,22 @@ QDF_STATUS wlan_mlme_set_dual_sta_policy(struct wlan_objmgr_psoc *psoc,
 
 	mlme_obj->cfg.gen.dual_sta_policy.concurrent_sta_policy =
 								dual_sta_config;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_get_dual_sta_policy(struct wlan_objmgr_psoc *psoc,
+					 uint8_t *dual_sta_config)
+
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
+
+	*dual_sta_config =
+		mlme_obj->cfg.gen.dual_sta_policy.concurrent_sta_policy;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2420,7 +2439,104 @@ QDF_STATUS wlan_mlme_set_primary_interface(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 
 	mlme_obj->cfg.gen.dual_sta_policy.primary_vdev_id = value;
+	mlme_debug("Set primary iface to :%d", value);
+
 	return QDF_STATUS_SUCCESS;
+}
+
+int wlan_mlme_get_mcc_duty_cycle_percentage(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_objmgr_psoc *psoc = NULL;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	uint32_t op_ch_freq_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	uint8_t vdev_id_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	uint32_t i, operating_channel, quota_value = MCC_DUTY_CYCLE;
+	struct dual_sta_policy *dual_sta_policy;
+	uint32_t count, primary_sta_freq = 0, secondary_sta_freq = 0;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc)
+		return -EINVAL;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return -EINVAL;
+	dual_sta_policy  = &mlme_obj->cfg.gen.dual_sta_policy;
+
+	if (dual_sta_policy->primary_vdev_id == WLAN_INVALID_VDEV_ID ||
+	    (dual_sta_policy->concurrent_sta_policy ==
+	     QCA_WLAN_CONCURRENT_STA_POLICY_UNBIASED)) {
+		mlme_debug("Invalid primary vdev id or policy is unbaised :%d",
+			   dual_sta_policy->concurrent_sta_policy);
+		return -EINVAL;
+	}
+
+	count = policy_mgr_get_mode_specific_conn_info(psoc, op_ch_freq_list,
+						       vdev_id_list,
+						       PM_STA_MODE);
+
+	/* Proceed only in case of STA+STA */
+	if (count != 2) {
+		mlme_debug("STA+STA concurrency is not present");
+		return -EINVAL;
+	}
+
+	for (i = 0; i < count; i++) {
+		if (vdev_id_list[i] == dual_sta_policy->primary_vdev_id) {
+			primary_sta_freq = op_ch_freq_list[i];
+			mlme_debug("primary sta vdev:%d at inxex:%d, freq:%d",
+				   i, vdev_id_list[i], op_ch_freq_list[i]);
+		} else {
+			secondary_sta_freq = op_ch_freq_list[i];
+			mlme_debug("secondary sta vdev:%d at inxex:%d, freq:%d",
+				   i, vdev_id_list[i], op_ch_freq_list[i]);
+		}
+	}
+
+	if (!primary_sta_freq || !secondary_sta_freq) {
+		mlme_debug("Invalid primary or secondary sta freq");
+		return -EINVAL;
+	}
+
+	operating_channel = wlan_freq_to_chan(primary_sta_freq);
+
+	/*
+	 * The channel numbers for both adapters and the time
+	 * quota for the 1st adapter, i.e., one specified in cmd
+	 * are formatted as a bit vector
+	 * ******************************************************
+	 * |bit 31-24  | bit 23-16 |  bits 15-8  |bits 7-0   |
+	 * |  Unused   | Quota for | chan. # for |chan. # for|
+	 * |           |  1st chan | 1st chan.   |2nd chan.  |
+	 * ******************************************************
+	 */
+	mlme_debug("First connection channel No.:%d and quota:%dms",
+		   operating_channel, quota_value);
+	/* Move the time quota for first channel to bits 15-8 */
+	quota_value = quota_value << 8;
+	/*
+	 * Store the channel number of 1st channel at bits 7-0
+	 * of the bit vector
+	 */
+	quota_value |= operating_channel;
+		/* Second STA Connection */
+	operating_channel = wlan_freq_to_chan(secondary_sta_freq);
+	if (!operating_channel)
+		mlme_debug("Secondary adapter op channel is invalid");
+	/*
+	 * Now move the time quota and channel number of the
+	 * 1st adapter to bits 23-16 and bits 15-8 of the bit
+	 * vector, respectively.
+	 */
+	quota_value = quota_value << 8;
+	/*
+	 * Set the channel number for 2nd MCC vdev at bits
+	 * 7-0 of set_value
+	 */
+	quota_value |= operating_channel;
+	mlme_debug("quota value:%x", quota_value);
+
+	return quota_value;
 }
 
 QDF_STATUS wlan_mlme_set_enable_bcast_probe_rsp(struct wlan_objmgr_psoc *psoc,
