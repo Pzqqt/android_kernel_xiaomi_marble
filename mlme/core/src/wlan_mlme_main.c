@@ -761,8 +761,9 @@ static void mlme_init_ht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_SHORT_SLOT_TIME_ENABLED);
 }
 
-static void mlme_init_qos_cfg(struct wlan_objmgr_psoc *psoc,
-			      struct wlan_mlme_qos *qos_aggr_params)
+#ifdef TX_AGGREGATION_SIZE_ENABLE
+static void mlme_init_tx_aggregation_size(struct wlan_objmgr_psoc *psoc,
+					  struct wlan_mlme_qos *qos_aggr_params)
 {
 	qos_aggr_params->tx_aggregation_size =
 				cfg_get(psoc, CFG_TX_AGGREGATION_SIZE);
@@ -774,6 +775,23 @@ static void mlme_init_qos_cfg(struct wlan_objmgr_psoc *psoc,
 				cfg_get(psoc, CFG_TX_AGGREGATION_SIZEVI);
 	qos_aggr_params->tx_aggregation_size_vo =
 				cfg_get(psoc, CFG_TX_AGGREGATION_SIZEVO);
+}
+#else
+static void mlme_init_tx_aggregation_size(struct wlan_objmgr_psoc *psoc,
+					  struct wlan_mlme_qos *qos_aggr_params)
+{
+	qos_aggr_params->tx_aggregation_size = 0;
+	qos_aggr_params->tx_aggregation_size_be = 0;
+	qos_aggr_params->tx_aggregation_size_bk = 0;
+	qos_aggr_params->tx_aggregation_size_vi = 0;
+	qos_aggr_params->tx_aggregation_size_vo = 0;
+}
+#endif
+
+static void mlme_init_qos_cfg(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_mlme_qos *qos_aggr_params)
+{
+	mlme_init_tx_aggregation_size(psoc, qos_aggr_params);
 	qos_aggr_params->rx_aggregation_size =
 				cfg_get(psoc, CFG_RX_AGGREGATION_SIZE);
 	qos_aggr_params->tx_aggr_sw_retry_threshold_be =
