@@ -8242,6 +8242,7 @@ typedef enum {
     WMI_REQUEST_MIB_EXTD_STAT        = 0x04000,
     WMI_REQUEST_PMF_BCN_PROTECT_STAT = 0x08000,
     WMI_REQUEST_VDEV_EXTD_STAT       = 0x10000,
+    WMI_REQUEST_PDEV_EXTD_STAT       = 0x20000,
 } wmi_stats_id;
 
 /*
@@ -9038,6 +9039,10 @@ typedef struct {
  */
 /* If WMI_REQUEST_VDEV_EXTD_STAT is set in stats_id, then TLV
  * wmi_vdev_extd_stats wmi_vdev_extd_stats[]
+ * follows the other TLVs
+ */
+/* If WMI_REQUEST_PDEV_EXTD_STAT is set in stats_id, then TLV
+ * wmi_pdev_extd_stats wmi_pdev_extd_stats[]
  * follows the other TLVs
  */
 } wmi_stats_event_fixed_param;
@@ -10052,6 +10057,30 @@ typedef struct {
 #else
 #define wmi_pdev_stats wmi_pdev_stats_v1
 #endif
+
+/**
+ *  pdev extension statistics
+ */
+typedef struct {
+    A_UINT32 tlv_header;
+    /* pdev id */
+    A_UINT32 pdev_id;
+    /** my_rx_count
+     * What portion of time, as measured by the MAC HW clock was occupied
+     * by receiving PPDUs addressed to one of the vdevs within this pdev.
+     */
+    A_UINT32 my_rx_count;
+    /** rx_matched_11ax_msdu_cnt
+     * number of Rx 11ax MSDUs with matching BSS color counter
+     * updated at EOP (end of packet)
+     */
+    A_UINT32 rx_matched_11ax_msdu_cnt;
+    /** rx_other_11ax_msdu_cnt
+     * number of Rx 11ax MSDUs with other BSS color counter updated at EOP
+     * (end of packet)
+     */
+    A_UINT32 rx_other_11ax_msdu_cnt;
+} wmi_pdev_extd_stats;
 
 /**
  *  VDEV statistics
