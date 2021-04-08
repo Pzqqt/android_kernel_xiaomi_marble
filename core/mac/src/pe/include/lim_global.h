@@ -178,22 +178,24 @@ struct sDphHashNode;
  * @present: Indicates whether assoc data is present or not
  * @sub_type: Indicates whether it is Association Request(=0) or Reassociation
  *            Request(=1) frame
- * @hdr: MAC header
+ * @sa: Mac address of requesting peer
  * @assoc_req: pointer to parsed ASSOC/REASSOC Request frame
  * @pmf_connection: flag indicating pmf connection
  * @assoc_req_copied: boolean to indicate if assoc req was copied to tmp above
  * @dup_entry: flag indicating if duplicate entry found
  * @sta_ds: station dph entry
+ * @partner_peer_idx: peer_idx which is already allocated by partner link
  */
 struct lim_assoc_data {
 	bool present;
 	uint8_t sub_type;
-	tSirMacMgmtHdr hdr;
+	tSirMacAddr sa;
 	struct sSirAssocReq *assoc_req;
 	bool pmf_connection;
 	bool assoc_req_copied;
 	bool dup_entry;
 	struct sDphHashNode *sta_ds;
+	uint16_t partner_peer_idx;
 };
 
 /* Pre-authentication structure definition */

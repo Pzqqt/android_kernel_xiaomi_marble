@@ -56,6 +56,7 @@
 #include <wlan_mlme_api.h>
 #include <wlan_mlme_main.h>
 #include "wlan_crypto_global_api.h"
+#include "lim_mlo.h"
 
 /**
  *
@@ -1408,6 +1409,13 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 
 	if (!pe_session) {
 		pe_err("pe_session is NULL");
+		return;
+	}
+	if (sta && lim_is_mlo_conn(pe_session, sta) &&
+	    !lim_is_mlo_recv_assoc(sta)) {
+		pe_err("Do not send assoc rsp in mlo partner peer "
+		       QDF_MAC_ADDR_FMT,
+		       QDF_MAC_ADDR_REF(sta->staAddr));
 		return;
 	}
 

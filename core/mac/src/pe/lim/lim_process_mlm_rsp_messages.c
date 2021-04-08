@@ -43,6 +43,7 @@
 #include "wma.h"
 #include "wlan_pkt_capture_ucfg_api.h"
 #include "wlan_lmac_if_def.h"
+#include <lim_mlo.h>
 
 #define MAX_SUPPORTED_PEERS_WEP 16
 
@@ -1932,9 +1933,11 @@ void lim_process_ap_mlm_add_sta_rsp(struct mac_context *mac,
 {
 	tpAddStaParams pAddStaParams = (tpAddStaParams) limMsgQ->bodyptr;
 	tpDphHashNode sta = NULL;
+	bool add_sta_rsp_status = true;
 
 	if (!pAddStaParams) {
 		pe_err("Invalid body pointer in message");
+		add_sta_rsp_status = false;
 		goto end;
 	}
 
@@ -1943,12 +1946,14 @@ void lim_process_ap_mlm_add_sta_rsp(struct mac_context *mac,
 				   &pe_session->dph.dphHashTable);
 	if (!sta) {
 		pe_err("DPH Entry for STA %X missing", pAddStaParams->assocId);
+		add_sta_rsp_status = false;
 		goto end;
 	}
 
 	if (eLIM_MLM_WT_ADD_STA_RSP_STATE != sta->mlmStaContext.mlmState) {
 		pe_err("Received unexpected WMA_ADD_STA_RSP in state %X",
 			sta->mlmStaContext.mlmState);
+		add_sta_rsp_status = false;
 		goto end;
 	}
 	if (QDF_STATUS_SUCCESS != pAddStaParams->status) {
@@ -1960,6 +1965,7 @@ void lim_process_ap_mlm_add_sta_rsp(struct mac_context *mac,
 				       sta->assocId, true,
 				       STATUS_UNSPECIFIED_FAILURE,
 				       pe_session);
+		add_sta_rsp_status = false;
 		goto end;
 	}
 	sta->nss = pAddStaParams->nss;
@@ -1975,16 +1981,22 @@ void lim_process_ap_mlm_add_sta_rsp(struct mac_context *mac,
 	 * 2) PE receives eWNI_SME_ASSOC_CNF from SME
 	 * 3) BTAMP-AP sends Re/Association Response to BTAMP-STA
 	 */
-	if (lim_send_mlm_assoc_ind(mac, sta, pe_session) != QDF_STATUS_SUCCESS)
+	if (!lim_is_mlo_conn(pe_session, sta) &&
+	    lim_send_mlm_assoc_ind(mac, sta, pe_session) !=
+	    QDF_STATUS_SUCCESS) {
 		lim_reject_association(mac, sta->staAddr,
 				       sta->mlmStaContext.subType,
 				       true, sta->mlmStaContext.authType,
 				       sta->assocId, true,
 				       STATUS_UNSPECIFIED_FAILURE,
 				       pe_session);
-
+		add_sta_rsp_status = false;
+	}
 	/* fall though to reclaim the original Add STA Response message */
 end:
+	if (lim_is_mlo_conn(pe_session, sta))
+		lim_ap_mlo_sta_peer_ind(mac, pe_session, sta,
+					add_sta_rsp_status);
 	if (0 != limMsgQ->bodyptr) {
 		qdf_mem_free(pAddStaParams);
 		limMsgQ->bodyptr = NULL;

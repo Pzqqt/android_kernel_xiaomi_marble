@@ -169,12 +169,13 @@ static void lim_process_sae_msg_ap(struct mac_context *mac,
 		assoc_ind_sent =
 			lim_send_assoc_ind_to_sme(mac, session,
 						  assoc_req->sub_type,
-						  &assoc_req->hdr,
+						  assoc_req->sa,
 						  assoc_req->assoc_req,
 						  ANI_AKM_TYPE_SAE,
 						  assoc_req->pmf_connection,
 						  &assoc_req_copied,
-						  assoc_req->dup_entry, false);
+						  assoc_req->dup_entry, false,
+						  assoc_req->partner_peer_idx);
 		if (!assoc_ind_sent)
 			lim_process_assoc_cleanup(mac, session,
 						  assoc_req->assoc_req,

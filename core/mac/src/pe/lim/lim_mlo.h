@@ -27,6 +27,7 @@
 
 #include "ani_global.h"
 #include "lim_session.h"
+#include <wlan_mlo_mgr_public_structs.h>
 
 #ifdef WLAN_FEATURE_11BE_MLO
 
@@ -136,6 +137,72 @@ bool lim_is_mlo_recv_assoc(tpDphHashNode sta_ds);
  * Return: void
  */
 void lim_set_mlo_recv_assoc(tpDphHashNode sta_ds, bool mlo_recv_assoc_frm);
+
+/**
+ * lim_mlo_proc_assoc_req_frm() - process assoc frame for mlo partner link
+ *
+ * This function is triggered by mlo mgr
+ *
+ * @vdev: pointer to vdev
+ * @ml_peer: pointer to ml_peer
+ * @link_addr: link addr
+ * @frm_buf: assoc req buffer
+ *
+ * This function is called from mlo mgr.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS lim_mlo_proc_assoc_req_frm(struct wlan_objmgr_vdev *vdev,
+				      struct wlan_mlo_peer_context *ml_peer,
+				      struct qdf_mac_addr *link_addr,
+				      qdf_nbuf_t buf);
+
+/**
+ * lim_mlo_ap_sta_assoc_suc() - process add sta rsp for mlo connection
+ * @peer: pointer to peer to handle add sta response
+ *
+ * This function is triggered from mlo mgr.
+ *
+ * Return: void
+ */
+void lim_mlo_ap_sta_assoc_suc(struct wlan_objmgr_peer *peer);
+
+/**
+ * lim_ap_mlo_sta_peer_ind() - Indicate mlo mgr after receiving sta rsp
+ *
+ * @mac: pointer to mac_context
+ * @pe_session: pe session
+ * @sta_ds: Pointer to internal STA Datastructure
+ * @add_sta_rsp_status: add sta rsp status
+ *
+ * Return: void
+ */
+void lim_ap_mlo_sta_peer_ind(struct mac_context *mac,
+			     struct pe_session *pe_session,
+			     tpDphHashNode sta,
+			     bool add_sta_rsp_status);
+
+/**
+ * lim_mlo_partner_auth_type: update auth type from partner
+ * @session: pe session
+ * @partner_peer_idx: aid
+ * @auth_type: auth type to update
+ *
+ * Return: true if auth type is gotten successfully
+ */
+bool lim_mlo_partner_auth_type(struct pe_session *session,
+			       uint16_t partner_peer_idx,
+			       tAniAuthType *auth_type);
+
+/**
+ * lim_mlo_ap_sta_assoc_fail() - process add sta rsp fail for mlo connection
+ * @peer: pointer to peer to handle add sta response
+ *
+ * This function is triggered from mlo mgr.
+ *
+ * Return: void
+ */
+void lim_mlo_ap_sta_assoc_fail(struct wlan_objmgr_peer *peer);
 #else
 
 static inline void lim_mlo_notify_peer_disconn(struct pe_session *pe_session,
@@ -167,6 +234,20 @@ static inline bool lim_is_mlo_recv_assoc(tpDphHashNode sta_ds)
 
 static inline void lim_set_mlo_recv_assoc(tpDphHashNode sta_ds,
 					  bool mlo_recv_assoc_frm)
+{
+}
+
+static inline bool lim_mlo_partner_auth_type(struct pe_session *session,
+					     uint16_t partner_peer_idx,
+					     tAniAuthType *auth_type)
+{
+	return false;
+}
+
+static inline void lim_ap_mlo_sta_peer_ind(struct mac_context *mac,
+					   struct pe_session *pe_session,
+					   tpDphHashNode sta,
+					   bool add_sta_rsp_status)
 {
 }
 #endif
