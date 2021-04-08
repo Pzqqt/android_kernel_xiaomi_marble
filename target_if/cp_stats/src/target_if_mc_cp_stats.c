@@ -341,22 +341,6 @@ static void target_if_cp_stats_free_stats_event(struct stats_event *ev)
 	ev->peer_stats_info_ext = NULL;
 }
 
-#ifdef WLAN_FEATURE_MEDIUM_ASSESS
-static void
-target_if_cp_stats_extract_congestion(struct pdev_mc_cp_stats *pdev_stats,
-				      wmi_host_pdev_stats *fw_pdev_stats)
-{
-	pdev_stats->rx_clear_count = fw_pdev_stats->rx_clear_count;
-	pdev_stats->cycle_count = fw_pdev_stats->cycle_count;
-}
-#else
-static void
-target_if_cp_stats_extract_congestion(struct pdev_mc_cp_stats *pdev_stats,
-				      wmi_host_pdev_stats *fw_pdev_stats)
-{
-}
-#endif
-
 static QDF_STATUS target_if_cp_stats_extract_pdev_stats(
 					struct wmi_unified *wmi_hdl,
 					wmi_host_stats_event *stats_param,
@@ -398,8 +382,19 @@ static QDF_STATUS target_if_cp_stats_extract_pdev_stats(
 		}
 		ev->pdev_stats[i].max_pwr = pdev_stats->chan_tx_pwr;
 
-		target_if_cp_stats_extract_congestion(&ev->pdev_stats[i],
-						      pdev_stats);
+		/*
+		 * if pdev_stats->pdev_id is 0, then the event contains all
+		 * pdev info, else only contains 1 pdev with pdev id set.
+		 * minus 1: align fw pdev_id and driver
+		 */
+		if (pdev_stats->pdev_id)
+			ev->pdev_stats[i].pdev_id = pdev_stats->pdev_id - 1;
+		else
+			ev->pdev_stats[i].pdev_id = i;
+
+		ev->pdev_stats[i].rx_clear_count = pdev_stats->rx_clear_count;
+		ev->pdev_stats[i].tx_frame_count = pdev_stats->tx_frame_count;
+		ev->pdev_stats[i].cycle_count = pdev_stats->cycle_count;
 
 		val.cdp_pdev_param_chn_noise_flr = pdev_stats->chan_nf;
 		cdp_txrx_set_pdev_param(soc, 0, CDP_CHAN_NOISE_FLOOR, val);
@@ -837,7 +832,6 @@ static QDF_STATUS target_if_cp_stats_extract_event(struct wmi_unified *wmi_hdl,
 	status = target_if_cp_stats_extract_pmf_bcn_protect_stats(wmi_hdl,
 								  &stats_param,
 								  ev, data);
-
 	return status;
 }
 

@@ -750,55 +750,6 @@ QDF_STATUS ucfg_mc_cp_stats_get_tx_power(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef WLAN_FEATURE_MEDIUM_ASSESS
-QDF_STATUS
-ucfg_mc_cp_stats_reset_congestion_counter(struct wlan_objmgr_vdev *vdev)
-{
-	struct wlan_objmgr_pdev *pdev;
-	struct pdev_mc_cp_stats *pdev_mc_stats;
-	struct pdev_cp_stats *pdev_cp_stats_priv;
-
-	pdev = wlan_vdev_get_pdev(vdev);
-	pdev_cp_stats_priv = wlan_cp_stats_get_pdev_stats_obj(pdev);
-	if (!pdev_cp_stats_priv) {
-		cp_stats_err("pdev cp stats object is null");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-
-	wlan_cp_stats_pdev_obj_lock(pdev_cp_stats_priv);
-	pdev_mc_stats = pdev_cp_stats_priv->pdev_stats;
-	pdev_mc_stats->congestion = 0;
-	pdev_mc_stats->rx_clear_count = 0;
-	pdev_mc_stats->cycle_count = 0;
-	wlan_cp_stats_pdev_obj_unlock(pdev_cp_stats_priv);
-
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS
-ucfg_mc_cp_stats_set_congestion_threshold(struct wlan_objmgr_vdev *vdev,
-					  uint8_t threshold)
-{
-	struct wlan_objmgr_pdev *pdev;
-	struct pdev_mc_cp_stats *pdev_mc_stats;
-	struct pdev_cp_stats *pdev_cp_stats_priv;
-
-	pdev = wlan_vdev_get_pdev(vdev);
-	pdev_cp_stats_priv = wlan_cp_stats_get_pdev_stats_obj(pdev);
-	if (!pdev_cp_stats_priv) {
-		cp_stats_err("pdev cp stats object is null");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-
-	wlan_cp_stats_pdev_obj_lock(pdev_cp_stats_priv);
-	pdev_mc_stats = pdev_cp_stats_priv->pdev_stats;
-	pdev_mc_stats->congestion_threshold = threshold;
-	wlan_cp_stats_pdev_obj_unlock(pdev_cp_stats_priv);
-
-	return QDF_STATUS_SUCCESS;
-}
-#endif
-
 bool ucfg_mc_cp_stats_is_req_pending(struct wlan_objmgr_psoc *psoc,
 				     enum stats_req_type type)
 {
