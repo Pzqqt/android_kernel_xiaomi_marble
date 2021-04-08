@@ -1484,8 +1484,10 @@ int __reset_ahb2axi_bridge(struct msm_vidc_core *core)
 		}
 
 		/* wait for deassert */
-		usleep_range(400, 500);
+		usleep_range(1000, 1100);
+	}
 
+	for (i = 0; i < core->dt->reset_set.count; i++) {
 		rc = __handle_reset_clk(core, i, DEASSERT);
 		if (rc) {
 			d_vpr_e("failed to deassert reset clocks\n");
