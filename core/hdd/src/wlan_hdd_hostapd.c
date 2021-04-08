@@ -4347,6 +4347,8 @@ int wlan_hdd_cfg80211_update_apies(struct hdd_adapter *adapter)
 			      WLAN_EID_INTERWORKING);
 	wlan_hdd_add_extra_ie(adapter, genie, &total_ielen,
 			      WLAN_EID_ADVERTISEMENT_PROTOCOL);
+
+	wlan_hdd_add_extra_ie(adapter, genie, &total_ielen, WLAN_ELEMID_RSNXE);
 #ifdef FEATURE_WLAN_WAPI
 	if (QDF_SAP_MODE == adapter->device_mode) {
 		wlan_hdd_add_extra_ie(adapter, genie, &total_ielen,
@@ -4379,6 +4381,8 @@ int wlan_hdd_cfg80211_update_apies(struct hdd_adapter *adapter)
 
 	wlan_hdd_add_sap_obss_scan_ie(adapter, proberesp_ies,
 				     &proberesp_ies_len);
+	wlan_hdd_add_extra_ie(adapter, proberesp_ies, &proberesp_ies_len,
+			      WLAN_ELEMID_RSNXE);
 
 	if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
 		update_ie.ieBufferlength = proberesp_ies_len;
