@@ -337,7 +337,8 @@ cm_copy_tspec_ie(struct cm_vdev_join_rsp *rsp,
 #endif
 
 static QDF_STATUS
-cm_fill_roam_info(struct roam_offload_synch_ind *roam_synch_data,
+cm_fill_roam_info(struct wlan_objmgr_vdev *vdev,
+		  struct roam_offload_synch_ind *roam_synch_data,
 		  struct cm_vdev_join_rsp *rsp, wlan_cm_id cm_id)
 {
 	struct wlan_roam_sync_info *roaming_info;
@@ -348,6 +349,15 @@ cm_fill_roam_info(struct roam_offload_synch_ind *roam_synch_data,
 			return QDF_STATUS_E_NOMEM;
 	rsp->connect_rsp.vdev_id = roam_synch_data->roamed_vdev_id;
 	qdf_copy_macaddr(&rsp->connect_rsp.bssid, &roam_synch_data->bssid);
+
+	status = wlan_vdev_mlme_get_ssid(vdev,
+					 rsp->connect_rsp.ssid.ssid,
+					 &rsp->connect_rsp.ssid.length);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err(CM_PREFIX_FMT "Failed to get ssid",
+			 CM_PREFIX_REF(rsp->connect_rsp.vdev_id, cm_id));
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	rsp->connect_rsp.is_reassoc = true;
 	rsp->connect_rsp.connect_status = QDF_STATUS_SUCCESS;
@@ -626,7 +636,7 @@ cm_fw_roam_sync_propagation(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		status = QDF_STATUS_E_NOMEM;
 		goto error;
 	}
-	status = cm_fill_roam_info(roam_synch_data, rsp, cm_id);
+	status = cm_fill_roam_info(vdev, roam_synch_data, rsp, cm_id);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		mlme_err(CM_PREFIX_FMT " fail to prepare rsp",
 			 CM_PREFIX_REF(vdev_id, cm_id));
