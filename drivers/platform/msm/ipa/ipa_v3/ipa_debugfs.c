@@ -2258,6 +2258,11 @@ static ssize_t ipa3_read_nat4(
 		goto bail;
 	}
 
+	if (nm_ptr->sram_in_use) {
+		IPADBG("SRAM based table with client 0, enable clk\n");
+		IPA_ACTIVE_CLIENTS_INC_SPECIAL("SRAM");
+	}
+
 	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v4_0) {
 		ipa3_read_pdn_table();
 	} else {
@@ -2319,6 +2324,11 @@ static ssize_t ipa3_read_nat4(
 		dev,
 		num_ddr_ents,
 		num_sram_ents);
+
+	if (nm_ptr->sram_in_use) {
+		IPADBG("SRAM based table with client 0, disable clk\n");
+		IPA_ACTIVE_CLIENTS_DEC_SPECIAL("SRAM");
+	}
 
 bail:
 	mutex_unlock(&dev->lock);
