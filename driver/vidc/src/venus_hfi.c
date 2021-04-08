@@ -2686,6 +2686,7 @@ void venus_hfi_pm_work_handler(struct work_struct *work)
 		return;
 	}
 
+	d_vpr_h("%s\n", __func__);
 	/*
 	 * It is ok to check this variable outside the lock since
 	 * it is being updated in this context only
@@ -2699,6 +2700,15 @@ void venus_hfi_pm_work_handler(struct work_struct *work)
 	}
 
 	core_lock(core, __func__);
+
+	/* power collapse only if no session is present */
+	if (!list_empty(&core->instances)) {
+		d_vpr_h(
+			"%s: sessions available, skip power collapse\n",
+			__func__);
+		goto unlock;
+	}
+
 	rc = __power_collapse(core, false);
 	switch (rc) {
 	case 0:
@@ -2722,6 +2732,7 @@ void venus_hfi_pm_work_handler(struct work_struct *work)
 		d_vpr_e("%s: power collapse failed\n", __func__);
 		break;
 	}
+unlock:
 	core_unlock(core, __func__);
 }
 
