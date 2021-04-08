@@ -119,7 +119,7 @@ struct wlan_psoc_host_ppe_threshold {
  * @high_5ghz_chan: higher 5 GHz channels
  */
 struct wlan_psoc_host_hal_reg_cap_ext {
-	uint32_t wireless_modes;
+	uint64_t wireless_modes;
 	uint32_t low_2ghz_chan;
 	uint32_t high_2ghz_chan;
 	uint32_t low_5ghz_chan;
@@ -263,7 +263,7 @@ struct wlan_psoc_host_mac_phy_caps_ext2 {
 	uint32_t hw_mode_id;
 	uint32_t pdev_id;
 	uint32_t phy_id;
-	uint32_t wireless_modes_ext;
+	uint64_t wireless_modes_ext;
 #ifdef WLAN_FEATURE_11BE
 	uint32_t eht_cap_info_2G[PSOC_HOST_MAX_MAC_SIZE];
 	uint32_t eht_supp_mcs_2G;

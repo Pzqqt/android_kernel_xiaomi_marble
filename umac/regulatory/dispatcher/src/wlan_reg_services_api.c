@@ -609,7 +609,7 @@ bool wlan_reg_get_fcc_constraint(struct wlan_objmgr_pdev *pdev, uint32_t freq)
 }
 
 QDF_STATUS wlan_reg_get_chip_mode(struct wlan_objmgr_pdev *pdev,
-		uint32_t *chip_mode)
+		uint64_t *chip_mode)
 {
 	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
 

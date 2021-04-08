@@ -921,7 +921,7 @@ bool wlan_reg_11d_enabled_on_host(struct wlan_objmgr_psoc *psoc);
  * Return: QDF STATUS
  */
 QDF_STATUS wlan_reg_get_chip_mode(struct wlan_objmgr_pdev *pdev,
-		uint32_t *chip_mode);
+		uint64_t *chip_mode);
 
 /**
  * wlan_reg_is_11d_scan_inprogress() - checks 11d scan status

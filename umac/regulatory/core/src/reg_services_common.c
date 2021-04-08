@@ -2258,7 +2258,7 @@ QDF_STATUS reg_set_hal_reg_cap(
 }
 
 QDF_STATUS reg_update_hal_reg_cap(struct wlan_objmgr_psoc *psoc,
-				  uint32_t wireless_modes, uint8_t phy_id)
+				  uint64_t wireless_modes, uint8_t phy_id)
 {
 	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
 
@@ -4094,6 +4094,30 @@ reg_get_unii_5g_bitmap(struct wlan_objmgr_pdev *pdev, uint8_t *bitmap)
 }
 #endif
 
+#ifdef WLAN_FEATURE_11BE
+bool reg_is_phymode_unallowed(enum reg_phymode phy_in, uint32_t phymode_bitmap)
+{
+	if (!phymode_bitmap)
+		return false;
+
+	if (phy_in == REG_PHYMODE_11BE)
+		return phymode_bitmap & REGULATORY_PHYMODE_NO11BE;
+	else if (phy_in == REG_PHYMODE_11AX)
+		return phymode_bitmap & REGULATORY_PHYMODE_NO11AX;
+	else if (phy_in == REG_PHYMODE_11AC)
+		return phymode_bitmap & REGULATORY_PHYMODE_NO11AC;
+	else if (phy_in == REG_PHYMODE_11N)
+		return phymode_bitmap & REGULATORY_CHAN_NO11N;
+	else if (phy_in == REG_PHYMODE_11G)
+		return phymode_bitmap & REGULATORY_PHYMODE_NO11G;
+	else if (phy_in == REG_PHYMODE_11A)
+		return phymode_bitmap & REGULATORY_PHYMODE_NO11A;
+	else if (phy_in == REG_PHYMODE_11B)
+		return phymode_bitmap & REGULATORY_PHYMODE_NO11B;
+	else
+		return true;
+}
+#else
 bool reg_is_phymode_unallowed(enum reg_phymode phy_in, uint32_t phymode_bitmap)
 {
 	if (!phymode_bitmap)
@@ -4113,8 +4137,8 @@ bool reg_is_phymode_unallowed(enum reg_phymode phy_in, uint32_t phymode_bitmap)
 		return phymode_bitmap & REGULATORY_PHYMODE_NO11B;
 	else
 		return true;
-
 }
+#endif
 
 #ifdef CHECK_REG_PHYMODE
 enum reg_phymode reg_get_max_phymode(struct wlan_objmgr_pdev *pdev,

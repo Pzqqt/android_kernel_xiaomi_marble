@@ -401,7 +401,7 @@ struct wlan_psoc_host_hal_reg_capabilities_ext {
 	uint32_t eeprom_reg_domain_ext;
 	uint32_t regcap1;
 	uint32_t regcap2;
-	uint32_t wireless_modes;
+	uint64_t wireless_modes;
 	uint32_t low_2ghz_chan;
 	uint32_t high_2ghz_chan;
 	uint32_t low_5ghz_chan;
@@ -416,7 +416,7 @@ struct wlan_psoc_host_hal_reg_capabilities_ext {
  */
 struct wlan_psoc_host_hal_reg_capabilities_ext2 {
 	uint32_t phy_id;
-	uint32_t wireless_modes_ext;
+	uint64_t wireless_modes_ext;
 };
 
 /**

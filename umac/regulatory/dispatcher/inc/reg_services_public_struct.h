@@ -70,6 +70,9 @@
 #define REGULATORY_CHAN_NO11N        BIT(3)
 #define REGULATORY_PHYMODE_NO11AC    BIT(4)
 #define REGULATORY_PHYMODE_NO11AX    BIT(5)
+#ifdef WLAN_FEATURE_11BE
+#define REGULATORY_PHYMODE_NO11BE    BIT(6)
+#endif
 
 #define BW_5_MHZ      5
 #define BW_10_MHZ     10
@@ -1304,6 +1307,7 @@ struct reg_ctl_params {
  * @REG_PHYMODE_11N: 802.11n phymode
  * @REG_PHYMODE_11AC: 802.11ac phymode
  * @REG_PHYMODE_11AX: 802.11ax phymode
+ * @REG_PHYMODE_11BE: 802.11be phymode
  * @REG_PHYMODE_MAX: placeholder for future phymodes
  */
 enum reg_phymode {
@@ -1314,6 +1318,9 @@ enum reg_phymode {
 	REG_PHYMODE_11N,
 	REG_PHYMODE_11AC,
 	REG_PHYMODE_11AX,
+#ifdef WLAN_FEATURE_11BE
+	REG_PHYMODE_11BE,
+#endif
 	REG_PHYMODE_MAX,
 };
 

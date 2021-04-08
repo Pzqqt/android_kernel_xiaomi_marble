@@ -9921,6 +9921,30 @@ static inline uint32_t convert_wireless_modes_tlv(uint32_t target_wireless_mode)
 	return wireless_modes;
 }
 
+/**
+ * convert_11be_phybitmap_to_reg_flags() - Convert 11BE phybitmap to
+ * to regulatory flags.
+ * @target_phybitmap: target phybitmap.
+ * @phybitmap: host internal REGULATORY_PHYMODE set based on target
+ * phybitmap.
+ *
+ * Return: None
+ */
+
+#ifdef WLAN_FEATURE_11BE
+static void convert_11be_phybitmap_to_reg_flags(uint32_t target_phybitmap,
+						uint32_t *phybitmap)
+{
+	if (target_phybitmap & WMI_REGULATORY_PHYMODE_NO11BE)
+		*phybitmap |= REGULATORY_PHYMODE_NO11BE;
+}
+#else
+static void convert_11be_phybitmap_to_reg_flags(uint32_t target_phybitmap,
+						uint32_t *phybitmap)
+{
+}
+#endif
+
 /* convert_phybitmap_tlv() - Convert  WMI_REGULATORY_PHYBITMAP values sent by
  * target to host internal REGULATORY_PHYMODE values.
  *
@@ -9952,13 +9976,61 @@ static uint32_t convert_phybitmap_tlv(uint32_t target_phybitmap)
 	if (target_phybitmap & WMI_REGULATORY_PHYMODE_NO11AX)
 		phybitmap |= REGULATORY_PHYMODE_NO11AX;
 
+	convert_11be_phybitmap_to_reg_flags(target_phybitmap, &phybitmap);
+
 	return phybitmap;
 }
 
-static inline uint32_t convert_wireless_modes_ext_tlv(
+/**
+ * convert_11be_flags_to_modes_ext() - Convert 11BE wireless mode flag
+ * advertised by the target to wireless mode ext flags.
+ * @target_wireless_modes_ext: Target wireless mode
+ * @wireless_modes_ext: Variable to hold all the target wireless mode caps.
+ *
+ * Return: None
+ */
+#ifdef WLAN_FEATURE_11BE
+static void convert_11be_flags_to_modes_ext(uint32_t target_wireless_modes_ext,
+					    uint64_t *wireless_modes_ext)
+{
+	if (target_wireless_modes_ext & REGDMN_MODE_U32_11BEG_EHT20)
+		*wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11BEG_EHT20;
+
+	if (target_wireless_modes_ext & REGDMN_MODE_U32_11BEG_EHT40PLUS)
+		*wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11BEG_EHT40PLUS;
+
+	if (target_wireless_modes_ext & REGDMN_MODE_U32_11BEG_EHT40MINUS)
+		*wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11BEG_EHT40MINUS;
+
+	if (target_wireless_modes_ext & REGDMN_MODE_U32_11BEA_EHT20)
+		*wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11BEA_EHT20;
+
+	if (target_wireless_modes_ext & REGDMN_MODE_U32_11BEA_EHT40PLUS)
+		*wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11BEA_EHT40PLUS;
+
+	if (target_wireless_modes_ext & REGDMN_MODE_U32_11BEA_EHT40MINUS)
+		*wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11BEA_EHT40MINUS;
+
+	if (target_wireless_modes_ext & REGDMN_MODE_U32_11BEA_EHT80)
+		*wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11BEA_EHT80;
+
+	if (target_wireless_modes_ext & REGDMN_MODE_U32_11BEA_EHT160)
+		*wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11BEA_EHT160;
+
+	if (target_wireless_modes_ext & REGDMN_MODE_U32_11BEA_EHT320)
+		*wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11BEA_EHT320;
+}
+#else
+static void convert_11be_flags_to_modes_ext(uint32_t target_wireless_modes_ext,
+					    uint64_t *wireless_modes_ext)
+{
+}
+#endif
+
+static inline uint64_t convert_wireless_modes_ext_tlv(
 		uint32_t target_wireless_modes_ext)
 {
-	uint32_t wireless_modes_ext = 0;
+	uint64_t wireless_modes_ext = 0;
 
 	wmi_debug("Target wireless mode: 0x%x", target_wireless_modes_ext);
 
@@ -9988,6 +10060,9 @@ static inline uint32_t convert_wireless_modes_ext_tlv(
 
 	if (target_wireless_modes_ext & REGDMN_MODE_U32_11AXA_HE80_80)
 		wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11AXA_HE80_80;
+
+	convert_11be_flags_to_modes_ext(target_wireless_modes_ext,
+					&wireless_modes_ext);
 
 	return wireless_modes_ext;
 }

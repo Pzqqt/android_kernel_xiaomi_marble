@@ -456,7 +456,7 @@ QDF_STATUS reg_set_hal_reg_cap(
  * Return: QDF_STATUS
  */
 QDF_STATUS reg_update_hal_reg_cap(struct wlan_objmgr_psoc *psoc,
-				  uint32_t wireless_modes, uint8_t phy_id);
+				  uint64_t wireless_modes, uint8_t phy_id);
 
 /**
  * reg_chan_in_range() - Check if the given channel is in pdev's channel range

@@ -228,7 +228,7 @@ struct wlan_regulatory_pdev_priv_obj {
 	uint32_t band_capability;
 	bool indoor_chan_enabled;
 	bool en_chan_144;
-	uint32_t wireless_modes;
+	uint64_t wireless_modes;
 	struct ch_avoid_ind_type freq_avoid_list;
 	bool force_ssc_disable_indoor_channel;
 	bool sap_state;
