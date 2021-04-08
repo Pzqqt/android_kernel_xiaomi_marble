@@ -2095,7 +2095,8 @@ sme_process_twt_del_dialog_event(struct mac_context *mac,
 		callback(mac->psoc, param);
 
 	if (param->status == WMI_HOST_DEL_TWT_STATUS_ROAMING ||
-	    param->status == WMI_HOST_DEL_TWT_STATUS_PEER_INIT_TEARDOWN)
+	    param->status == WMI_HOST_DEL_TWT_STATUS_PEER_INIT_TEARDOWN ||
+	    param->status == WMI_HOST_DEL_TWT_STATUS_CONCURRENCY)
 		mlme_twt_set_wait_for_notify(
 			mac->psoc, param->vdev_id, true);
 
