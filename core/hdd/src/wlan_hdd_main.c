@@ -201,6 +201,7 @@
 #include "wlan_hdd_gpio_wakeup.h"
 #include "wlan_hdd_bootup_marker.h"
 #include "wlan_hdd_bus_bandwidth.h"
+#include "wlan_hdd_medium_assess.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -7730,6 +7731,7 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 
 		if (value &&
 		    adapter->device_mode == QDF_SAP_MODE) {
+			hdd_medium_assess_ssr_enable_flag();
 			wlan_hdd_netif_queue_control(adapter,
 						     WLAN_STOP_ALL_NETIF_QUEUE,
 						     WLAN_CONTROL_PATH);

@@ -703,16 +703,12 @@ tgt_mc_cp_stats_extract_congestion_stats(struct wlan_objmgr_psoc *psoc,
 					 struct stats_event *ev)
 {
 	QDF_STATUS status;
+	uint8_t i, index;
 	struct request_info last_req = {0};
-	struct wlan_objmgr_pdev *pdev;
-	struct pdev_mc_cp_stats *pdev_mc_stats, *fw_pdev_stats;
-	struct pdev_cp_stats *pdev_cp_stats_priv;
-	uint32_t rx_clear_count_delta, cycle_count_delta;
-	uint8_t congestion = 0;
-	bool is_congested = false;
+	struct medium_assess_data data[WLAN_UMAC_MAX_RP_PID] = { {0} };
 
-	if (!ev->pdev_stats) {
-		cp_stats_debug("no pdev_stats");
+	if (!ev->num_pdev_stats) {
+		cp_stats_err("no congestion sta for pdev");
 		return;
 	}
 
@@ -724,72 +720,22 @@ tgt_mc_cp_stats_extract_congestion_stats(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 
-	/* Check if stats for the specific pdev is present */
-	if (last_req.pdev_id >= ev->num_pdev_stats) {
-		cp_stats_err("no stat for pdev %d ", last_req.pdev_id);
-		return;
-	}
-
-	pdev = wlan_objmgr_get_pdev_by_id(psoc, last_req.pdev_id,
-					  WLAN_CP_STATS_ID);
-	if (!pdev) {
-		cp_stats_err("pdev is null");
-		return;
-	}
-
-	pdev_cp_stats_priv = wlan_cp_stats_get_pdev_stats_obj(pdev);
-	if (!pdev_cp_stats_priv) {
-		cp_stats_err("pdev_cp_stats_priv is null");
-		goto out;
-	}
-
-	wlan_cp_stats_pdev_obj_lock(pdev_cp_stats_priv);
-	pdev_mc_stats = pdev_cp_stats_priv->pdev_stats;
-	fw_pdev_stats = &ev->pdev_stats[last_req.pdev_id];
-	/*
-	 * Skip calculating deltas and congestion for the first received event
-	 * since enabled
-	 */
-	if (pdev_mc_stats->cycle_count || pdev_mc_stats->rx_clear_count) {
-		if (fw_pdev_stats->rx_clear_count >=
-		    pdev_mc_stats->rx_clear_count) {
-			rx_clear_count_delta = fw_pdev_stats->rx_clear_count -
-					       pdev_mc_stats->rx_clear_count;
-		} else {
-			/* Wrap around case */
-			rx_clear_count_delta = U32_MAX -
-					       pdev_mc_stats->rx_clear_count;
-			rx_clear_count_delta += fw_pdev_stats->rx_clear_count;
+	for (i = 0; (i < ev->num_pdev_stats) && (i < WLAN_UMAC_MAX_RP_PID);
+	     i++){
+		index = ev->pdev_stats[i].pdev_id;
+		if (index >= WLAN_UMAC_MAX_RP_PID) {
+			cp_stats_err("part1 pdev id error");
+			continue;
 		}
-		if (fw_pdev_stats->cycle_count >= pdev_mc_stats->cycle_count) {
-			cycle_count_delta = fw_pdev_stats->cycle_count -
-					    pdev_mc_stats->cycle_count;
-		} else {
-			/* Wrap around case */
-			cycle_count_delta = U32_MAX -
-					    pdev_mc_stats->cycle_count;
-			cycle_count_delta += fw_pdev_stats->cycle_count;
-		}
-		if (cycle_count_delta)
-			pdev_mc_stats->congestion = rx_clear_count_delta * 100 /
-						    cycle_count_delta;
-		else
-			cp_stats_err("cycle_count not increased %d",
-				     fw_pdev_stats->cycle_count);
+		data[index].part1_valid = 1;
+		data[index].cycle_count = ev->pdev_stats[i].cycle_count;
+		data[index].rx_clear_count = ev->pdev_stats[i].rx_clear_count;
+		data[index].tx_frame_count = ev->pdev_stats[i].tx_frame_count;
 	}
-	pdev_mc_stats->rx_clear_count = fw_pdev_stats->rx_clear_count;
-	pdev_mc_stats->cycle_count = fw_pdev_stats->cycle_count;
-	if (pdev_mc_stats->congestion >= pdev_mc_stats->congestion_threshold) {
-		is_congested = true;
-		congestion = pdev_mc_stats->congestion;
-	}
-	wlan_cp_stats_pdev_obj_unlock(pdev_cp_stats_priv);
 
-	if (last_req.u.congestion_notif_cb && is_congested)
-		last_req.u.congestion_notif_cb(last_req.vdev_id, congestion);
+	if (last_req.u.congestion_notif_cb)
+		last_req.u.congestion_notif_cb(last_req.vdev_id, data);
 
-out:
-	wlan_objmgr_pdev_release_ref(pdev, WLAN_CP_STATS_ID);
 }
 #else
 static void
