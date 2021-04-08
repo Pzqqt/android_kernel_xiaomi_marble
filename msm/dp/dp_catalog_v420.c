@@ -65,10 +65,10 @@ static u8 const dp_swing_hbr2_hbr3[MAX_VOLTAGE_LEVELS][MAX_PRE_EMP_LEVELS] = {
 };
 
 static u8 const dp_pre_emp_hbr_rbr[MAX_VOLTAGE_LEVELS][MAX_PRE_EMP_LEVELS] = {
-	{0x00, 0x0E, 0x15, 0x1B}, /* pe0, 0 db */
+	{0x00, 0x0D, 0x14, 0x1A}, /* pe0, 0 db */
 	{0x00, 0x0E, 0x15, 0xFF}, /* pe1, 3.5 db */
 	{0x00, 0x0E, 0xFF, 0xFF}, /* pe2, 6.0 db */
-	{0x04, 0xFF, 0xFF, 0xFF}  /* pe3, 9.5 db */
+	{0x03, 0xFF, 0xFF, 0xFF}  /* pe3, 9.5 db */
 };
 
 static u8 const dp_swing_hbr_rbr[MAX_VOLTAGE_LEVELS][MAX_PRE_EMP_LEVELS] = {
