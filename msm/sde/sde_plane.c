@@ -2854,6 +2854,7 @@ static void _sde_plane_map_prop_to_dirty_bits(void)
 	plane_prop_array[PLANE_PROP_SRC_CONFIG] =
 	plane_prop_array[PLANE_PROP_ZPOS] =
 	plane_prop_array[PLANE_PROP_EXCL_RECT_V1] =
+	plane_prop_array[PLANE_PROP_UBWC_STATS_ROI] =
 		SDE_PLANE_DIRTY_RECTS;
 
 	plane_prop_array[PLANE_PROP_CSC_V1] =
@@ -3141,6 +3142,15 @@ static void _sde_plane_update_format_and_rects(struct sde_plane *psde,
 	if (psde->pipe_hw->ops.setup_dgm_csc)
 		psde->pipe_hw->ops.setup_dgm_csc(psde->pipe_hw,
 			pstate->multirect_index, psde->csc_usr_ptr);
+
+	if (psde->pipe_hw->ops.set_ubwc_stats_roi) {
+		if (SDE_FORMAT_IS_UBWC(fmt) && !SDE_FORMAT_IS_YUV(fmt))
+			psde->pipe_hw->ops.set_ubwc_stats_roi(psde->pipe_hw,
+					pstate->multirect_index, &pstate->ubwc_stats_roi);
+		else
+			psde->pipe_hw->ops.set_ubwc_stats_roi(psde->pipe_hw,
+					pstate->multirect_index, NULL);
+	}
 }
 
 static void _sde_plane_update_sharpening(struct sde_plane *psde)
@@ -3862,6 +3872,9 @@ static void _sde_plane_install_properties(struct drm_plane *plane,
 			ARRAY_SIZE(e_fb_translation_mode), 0,
 			PLANE_PROP_FB_TRANSLATION_MODE);
 
+	if (psde->pipe_hw->ops.set_ubwc_stats_roi)
+		msm_property_install_range(&psde->property_info, "ubwc_stats_roi",
+				0, 0, 0xFFFFFFFF, 0, PLANE_PROP_UBWC_STATS_ROI);
 	kfree(info);
 }
 
@@ -4077,6 +4090,30 @@ static void _sde_plane_set_excl_rect_v1(struct sde_plane *psde,
 			pstate->excl_rect.w, pstate->excl_rect.h);
 }
 
+static void _sde_plane_set_ubwc_stats_roi(struct sde_plane *psde,
+		struct sde_plane_state *pstate, uint64_t roi)
+{
+	uint16_t y0, y1;
+
+	if (!psde || !pstate) {
+		SDE_ERROR("invalid argument(s)\n");
+		return;
+	}
+
+	y0 = roi & 0xFFFF;
+	y1 = (roi >> 0x10) & 0xFFFF;
+
+	if (y0 > psde->pipe_cfg.src_rect.h || y1 > psde->pipe_cfg.src_rect.h) {
+		SDE_ERROR_PLANE(psde, "invalid ubwc roi y0 0x%x, y1 0x%x, src height 0x%x",
+				y0, y1, psde->pipe_cfg.src_rect.h);
+		y0 = 0;
+		y1 = 0;
+	}
+
+	pstate->ubwc_stats_roi.y_coord0 = y0;
+	pstate->ubwc_stats_roi.y_coord1 = y1;
+}
+
 static int sde_plane_atomic_set_property(struct drm_plane *plane,
 		struct drm_plane_state *state, struct drm_property *property,
 		uint64_t val)
@@ -4117,6 +4154,9 @@ static int sde_plane_atomic_set_property(struct drm_plane *plane,
 			case PLANE_PROP_EXCL_RECT_V1:
 				_sde_plane_set_excl_rect_v1(psde, pstate,
 						(void *)(uintptr_t)val);
+				break;
+			case PLANE_PROP_UBWC_STATS_ROI:
+				_sde_plane_set_ubwc_stats_roi(psde, pstate, val);
 				break;
 			default:
 				/* nothing to do */
@@ -4385,76 +4425,51 @@ static void sde_plane_reset(struct drm_plane *plane)
 	plane->state = &pstate->base;
 }
 
-u32 sde_plane_get_ubwc_error(struct drm_plane *plane)
-{
-	u32 ubwc_error = 0;
-	struct sde_plane *psde;
-	struct sde_plane_state *pstate;
-
-	if (!plane) {
-		SDE_ERROR("invalid plane\n");
-		return 0;
-	}
-	psde = to_sde_plane(plane);
-	pstate = to_sde_plane_state(plane->state);
-
-	if (!psde->is_virtual && psde->pipe_hw->ops.get_ubwc_error)
-		ubwc_error = psde->pipe_hw->ops.get_ubwc_error(psde->pipe_hw,
-				pstate->multirect_index);
-
-	return ubwc_error;
-}
-
-void sde_plane_clear_ubwc_error(struct drm_plane *plane)
+void sde_plane_get_frame_data(struct drm_plane *plane,
+		struct sde_drm_plane_frame_data *data)
 {
 	struct sde_plane *psde;
 	struct sde_plane_state *pstate;
+	struct sde_drm_ubwc_stats_data *ubwc_stats;
 
 	if (!plane) {
 		SDE_ERROR("invalid plane\n");
 		return;
 	}
+
 	psde = to_sde_plane(plane);
 	pstate = to_sde_plane_state(plane->state);
+	ubwc_stats = &data->ubwc_stats;
 
-	if (psde->pipe_hw->ops.clear_ubwc_error)
-		psde->pipe_hw->ops.clear_ubwc_error(psde->pipe_hw, pstate->multirect_index);
-}
+	data->plane_id = DRMID(plane);
 
-u32 sde_plane_get_meta_error(struct drm_plane *plane)
-{
-	u32 meta_error = 0;
-	struct sde_plane *psde;
-	struct sde_plane_state *pstate;
-
-	if (!plane) {
-		SDE_ERROR("invalid plane\n");
-		return 0;
+	if (psde->pipe_hw->ops.get_ubwc_stats_data) {
+		memcpy(&ubwc_stats->roi, &pstate->ubwc_stats_roi,
+				sizeof(struct sde_drm_ubwc_stats_roi));
+		psde->pipe_hw->ops.get_ubwc_stats_data(psde->pipe_hw,
+				pstate->multirect_index, ubwc_stats);
 	}
-	psde = to_sde_plane(plane);
-	pstate = to_sde_plane_state(plane->state);
+
+	if (psde->pipe_hw->ops.get_ubwc_error)
+		ubwc_stats->error = psde->pipe_hw->ops.get_ubwc_error(psde->pipe_hw,
+				pstate->multirect_index);
+
+	if (psde->pipe_hw->ops.clear_ubwc_error && ubwc_stats->error)
+		psde->pipe_hw->ops.clear_ubwc_error(psde->pipe_hw, pstate->multirect_index);
 
 	if (psde->pipe_hw->ops.get_meta_error)
-		meta_error = psde->pipe_hw->ops.get_meta_error(psde->pipe_hw,
+		ubwc_stats->meta_error = psde->pipe_hw->ops.get_meta_error(psde->pipe_hw,
 				pstate->multirect_index);
 
-	return meta_error;
-}
-
-void sde_plane_clear_meta_error(struct drm_plane *plane)
-{
-	struct sde_plane *psde;
-	struct sde_plane_state *pstate;
-
-	if (!plane) {
-		SDE_ERROR("invalid plane\n");
-		return;
-	}
-	psde = to_sde_plane(plane);
-	pstate = to_sde_plane_state(plane->state);
-
-	if (psde->pipe_hw->ops.clear_meta_error)
+	if (psde->pipe_hw->ops.clear_meta_error && ubwc_stats->meta_error)
 		psde->pipe_hw->ops.clear_meta_error(psde->pipe_hw, pstate->multirect_index);
+
+	if (ubwc_stats->error || ubwc_stats->meta_error) {
+		SDE_EVT32(DRMID(plane),  ubwc_stats->error, ubwc_stats->meta_error,
+				SDE_EVTLOG_ERROR);
+		SDE_DEBUG_PLANE(psde, "plane%d ubwc_error %d meta_error %d\n",
+				ubwc_stats->error, ubwc_stats->meta_error);
+	}
 }
 
 #ifdef CONFIG_DEBUG_FS

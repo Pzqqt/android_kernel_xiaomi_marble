@@ -77,6 +77,10 @@
 #define SSPP_SRC_ADDR_SW_STATUS            0x70
 #define SSPP_CREQ_LUT_0                    0x74
 #define SSPP_CREQ_LUT_1                    0x78
+#define SSPP_UBWC_STATS_ROI                0x7C
+#define SSPP_UBWC_STATS_DATA               0x80
+#define SSPP_UBWC_STATS_ROI_REC1           0xB4
+#define SSPP_UBWC_STATS_DATA_REC1          0xB8
 #define SSPP_SW_PIX_EXT_C0_LR              0x100
 #define SSPP_SW_PIX_EXT_C0_TB              0x104
 #define SSPP_SW_PIX_EXT_C0_REQ_PIXELS      0x108
@@ -96,8 +100,9 @@
 #define SSPP_TRAFFIC_SHAPER_REC1           0x158
 #define SSPP_EXCL_REC_SIZE                 0x1B4
 #define SSPP_EXCL_REC_XY                   0x1B8
-#define SSPP_META_ERROR_STATUS_REC1        0x1C4
+#define SSPP_UBWC_STATIC_CTRL_REC1         0x1C0
 #define SSPP_UBWC_ERROR_STATUS_REC1        0x1C8
+#define SSPP_META_ERROR_STATUS_REC1        0x1C4
 #define SSPP_VIG_OP_MODE                   0x0
 #define SSPP_VIG_CSC_10_OP_MODE            0x0
 #define SSPP_TRAFFIC_SHAPER_BPC_MAX        0xFF
@@ -436,7 +441,8 @@ static void sde_hw_sspp_setup_format(struct sde_hw_pipe *ctx,
 	SDE_REG_WRITE(c, SSPP_UBWC_ERROR_STATUS + idx, BIT(31));
 }
 
-static void sde_hw_sspp_clear_ubwc_error(struct sde_hw_pipe *ctx, uint32_t multirect_index)
+static void sde_hw_sspp_clear_ubwc_error(struct sde_hw_pipe *ctx,
+		enum sde_sspp_multirect_index multirect_index)
 {
 	struct sde_hw_blk_reg_map *c;
 
@@ -445,7 +451,8 @@ static void sde_hw_sspp_clear_ubwc_error(struct sde_hw_pipe *ctx, uint32_t multi
 	SDE_REG_WRITE(c, SSPP_UBWC_ERROR_STATUS, BIT(31));
 }
 
-static u32 sde_hw_sspp_get_ubwc_error(struct sde_hw_pipe *ctx, uint32_t multirect_index)
+static u32 sde_hw_sspp_get_ubwc_error(struct sde_hw_pipe *ctx,
+		enum sde_sspp_multirect_index multirect_index)
 {
 	struct sde_hw_blk_reg_map *c;
 	u32 reg_code;
@@ -457,7 +464,8 @@ static u32 sde_hw_sspp_get_ubwc_error(struct sde_hw_pipe *ctx, uint32_t multirec
 	return reg_code;
 }
 
-static void sde_hw_sspp_clear_ubwc_error_v1(struct sde_hw_pipe *ctx, uint32_t multirect_index)
+static void sde_hw_sspp_clear_ubwc_error_v1(struct sde_hw_pipe *ctx,
+		enum sde_sspp_multirect_index multirect_index)
 {
 	struct sde_hw_blk_reg_map *c;
 
@@ -469,7 +477,8 @@ static void sde_hw_sspp_clear_ubwc_error_v1(struct sde_hw_pipe *ctx, uint32_t mu
 		SDE_REG_WRITE(c, SSPP_UBWC_ERROR_STATUS, BIT(31));
 }
 
-static u32 sde_hw_sspp_get_ubwc_error_v1(struct sde_hw_pipe *ctx, uint32_t multirect_index)
+static u32 sde_hw_sspp_get_ubwc_error_v1(struct sde_hw_pipe *ctx,
+		enum sde_sspp_multirect_index multirect_index)
 {
 	struct sde_hw_blk_reg_map *c;
 	u32 reg_code;
@@ -484,7 +493,8 @@ static u32 sde_hw_sspp_get_ubwc_error_v1(struct sde_hw_pipe *ctx, uint32_t multi
 	return reg_code;
 }
 
-static void sde_hw_sspp_clear_meta_error(struct sde_hw_pipe *ctx, uint32_t multirect_index)
+static void sde_hw_sspp_clear_meta_error(struct sde_hw_pipe *ctx,
+		enum sde_sspp_multirect_index multirect_index)
 {
 	struct sde_hw_blk_reg_map *c;
 
@@ -496,7 +506,8 @@ static void sde_hw_sspp_clear_meta_error(struct sde_hw_pipe *ctx, uint32_t multi
 		SDE_REG_WRITE(c, SSPP_META_ERROR_STATUS, BIT(31));
 }
 
-static u32 sde_hw_sspp_get_meta_error(struct sde_hw_pipe *ctx, uint32_t multirect_index)
+static u32 sde_hw_sspp_get_meta_error(struct sde_hw_pipe *ctx,
+		enum sde_sspp_multirect_index multirect_index)
 {
 	struct sde_hw_blk_reg_map *c;
 	u32 reg_code;
@@ -509,6 +520,75 @@ static u32 sde_hw_sspp_get_meta_error(struct sde_hw_pipe *ctx, uint32_t multirec
 		reg_code = SDE_REG_READ(c, SSPP_META_ERROR_STATUS);
 
 	return reg_code;
+}
+
+static void sde_hw_sspp_ubwc_stats_set_roi(struct sde_hw_pipe *ctx,
+		enum sde_sspp_multirect_index multirect_index,
+		struct sde_drm_ubwc_stats_roi *roi)
+{
+	struct sde_hw_blk_reg_map *c;
+	u32 idx, ctrl_off, roi_off;
+	u32 ctrl_val = 0, roi_val = 0;
+
+	if (_sspp_subblk_offset(ctx, SDE_SSPP_SRC, &idx))
+		return;
+
+	if (multirect_index == SDE_SSPP_RECT_SOLO || multirect_index == SDE_SSPP_RECT_0) {
+		ctrl_off = SSPP_UBWC_STATIC_CTRL + idx;
+		roi_off = SSPP_UBWC_STATS_ROI + idx;
+	} else {
+		ctrl_off = SSPP_UBWC_STATIC_CTRL_REC1 + idx;
+		roi_off = SSPP_UBWC_STATS_ROI_REC1 + idx;
+	}
+
+	c = &ctx->hw;
+
+	ctrl_val = SDE_REG_READ(c, ctrl_off);
+
+	if (roi) {
+		ctrl_val |= BIT(24);
+		if (roi->y_coord0) {
+			ctrl_val |= BIT(25);
+			roi_val |= roi->y_coord0;
+
+			if (roi->y_coord1) {
+				ctrl_val |= BIT(26);
+				roi_val |= (roi->y_coord1) << 0x10;
+			}
+		}
+	} else {
+		ctrl_val &= ~(BIT(24) | BIT(25) | BIT(26));
+	}
+
+	SDE_REG_WRITE(c, ctrl_off, ctrl_val);
+	SDE_REG_WRITE(c, roi_off, roi_val);
+}
+
+static void sde_hw_sspp_ubwc_stats_get_data(struct sde_hw_pipe *ctx,
+		enum sde_sspp_multirect_index multirect_index,
+		struct sde_drm_ubwc_stats_data *data)
+{
+	struct sde_hw_blk_reg_map *c;
+	u32 idx, value = 0;
+	int i;
+
+	if (_sspp_subblk_offset(ctx, SDE_SSPP_SRC, &idx))
+		return;
+
+	if (multirect_index == SDE_SSPP_RECT_SOLO || multirect_index == SDE_SSPP_RECT_0)
+		idx += SSPP_UBWC_STATS_DATA;
+	else
+		idx += SSPP_UBWC_STATS_DATA_REC1;
+
+	c = &ctx->hw;
+
+	for (i = 0; i < UBWC_STATS_MAX_ROI; i++) {
+		value = SDE_REG_READ(c, idx);
+		data->worst_bw[i] = value & 0xFFFF;
+		data->worst_bw_y_coord[i] = (value >> 0x10) & 0xFFFF;
+		data->total_bw[i] = SDE_REG_READ(c, idx + 4);
+		idx += 8;
+	}
 }
 
 static void sde_hw_sspp_setup_secure(struct sde_hw_pipe *ctx,
@@ -1373,6 +1453,11 @@ static void _setup_layer_ops(struct sde_hw_pipe *c,
 		c->ops.setup_inverse_pma = sde_hw_sspp_setup_dgm_inverse_pma;
 	else if (test_bit(SDE_SSPP_INVERSE_PMA, &features))
 		c->ops.setup_inverse_pma = sde_hw_sspp_setup_inverse_pma;
+
+	if (test_bit(SDE_SSPP_UBWC_STATS, &features)) {
+		c->ops.set_ubwc_stats_roi = sde_hw_sspp_ubwc_stats_set_roi;
+		c->ops.get_ubwc_stats_data = sde_hw_sspp_ubwc_stats_get_data;
+	}
 }
 
 static struct sde_sspp_cfg *_sspp_offset(enum sde_sspp sspp,

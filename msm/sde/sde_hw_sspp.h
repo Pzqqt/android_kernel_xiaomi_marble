@@ -596,28 +596,52 @@ struct sde_hw_sspp_ops {
 	 * @ctx: Pointer to pipe context
 	 * @multirect_index: rec in use
 	 */
-	void (*clear_meta_error)(struct sde_hw_pipe *ctx, uint32_t multirect_index);
+	void (*clear_meta_error)(struct sde_hw_pipe *ctx,
+			enum sde_sspp_multirect_index multirect_index);
 
 	/**
 	 * get_meta_error - get the meta error-code
 	 * @ctx: Pointer to pipe context
 	 * @multirect_index: rec in use
 	 */
-	u32 (*get_meta_error)(struct sde_hw_pipe *ctx, uint32_t multirect_index);
+	u32 (*get_meta_error)(struct sde_hw_pipe *ctx,
+			enum sde_sspp_multirect_index multirect_index);
 
 	/**
 	 * clear_ubwc_error - clear the ubwc error-code registers
 	 * @ctx: Pointer to pipe context
 	 * @multirect_index: rec in use
 	 */
-	void (*clear_ubwc_error)(struct sde_hw_pipe *ctx, uint32_t multirect_index);
+	void (*clear_ubwc_error)(struct sde_hw_pipe *ctx,
+			enum sde_sspp_multirect_index multirect_index);
 
 	/**
 	 * get_ubwc_error - get the ubwc error-code
 	 * @ctx: Pointer to pipe context
 	 * @multirect_index: rec in use
 	 */
-	u32 (*get_ubwc_error)(struct sde_hw_pipe *ctx, uint32_t multirect_index);
+	u32 (*get_ubwc_error)(struct sde_hw_pipe *ctx,
+			enum sde_sspp_multirect_index multirect_index);
+
+	/**
+	 * get_ubwc_stats_data - get ubwc stats data
+	 * @ctx: Pointer to pipe context
+	 * @multirect_index: rec in use
+	 * @data: Pointer to ubwc data to populate
+	 */
+	void (*get_ubwc_stats_data)(struct sde_hw_pipe *ctx,
+			enum sde_sspp_multirect_index multirect_index,
+			struct sde_drm_ubwc_stats_data *data);
+
+	/**
+	 * set_ubwc_stats_roi - set ubwc stats roi
+	 * @ctx: Pointer to pipe context
+	 * @multirect_index: rec in use
+	 * @roi: roi to be programmed
+	 */
+	void (*set_ubwc_stats_roi)(struct sde_hw_pipe *ctx,
+			enum sde_sspp_multirect_index multirect_index,
+			struct sde_drm_ubwc_stats_roi *roi);
 
 	/**
 	 * setup_fp16_csc - set FP16 CSC cp block

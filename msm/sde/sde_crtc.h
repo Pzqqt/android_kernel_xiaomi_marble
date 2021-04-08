@@ -225,6 +225,30 @@ struct sde_crtc_misr_info {
 #define SDE_CRTC_MAX_EVENT_COUNT	16
 
 /**
+ * struct sde_frame_data_buffer - defines frame data buffer structure
+ * @fd: framebuffer id associated with this buffer
+ * @fb: drm framebuffer for the buffer
+ * @gem: drm gem handle for he buffer
+ */
+struct sde_frame_data_buffer {
+	u32 fd;
+	struct drm_framebuffer *fb;
+	struct drm_gem_object *gem;
+};
+
+/**
+ * struct sde_frame_data - defines sde frame data structure
+ * @idx : currently used frame data buffe
+ * @cnt : rnumber of available frame data buffers
+ * @buf : list of frame data buffers
+ */
+struct sde_frame_data {
+	u32 idx;
+	u32 cnt;
+	struct sde_frame_data_buffer *buf[SDE_FRAME_DATA_BUFFER_MAX];
+};
+
+/**
  * struct sde_crtc - virtualized CRTC data structure
  * @base          : Base drm crtc structure
  * @name          : ASCII description of this crtc
@@ -303,6 +327,7 @@ struct sde_crtc_misr_info {
  * @skip_blend_plane_w: skip blend plane width
  * @skip_blend_plane_h: skip blend plane height
  * @line_time_in_ns : current mode line time in nano sec is needed for QOS update
+ * @frame_data      : Framedata data structure
  */
 struct sde_crtc {
 	struct drm_crtc base;
@@ -402,6 +427,8 @@ struct sde_crtc {
 	u32 skip_blend_plane_w;
 	u32 skip_blend_plane_h;
 	u32 line_time_in_ns;
+
+	struct sde_frame_data frame_data;
 };
 
 enum sde_crtc_dirty_flags {

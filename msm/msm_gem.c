@@ -28,6 +28,9 @@
 #include "msm_mmu.h"
 #include "sde_dbg.h"
 
+#define GUARD_BYTES (BIT(8) - 1)
+#define ALIGNED_OFFSET (U32_MAX & ~(GUARD_BYTES))
+
 static void msm_gem_vunmap_locked(struct drm_gem_object *obj);
 
 
@@ -1394,4 +1397,73 @@ void msm_gem_object_set_name(struct drm_gem_object *bo, const char *fmt, ...)
 	va_start(ap, fmt);
 	vsnprintf(msm_obj->name, sizeof(msm_obj->name), fmt, ap);
 	va_end(ap);
+}
+
+void msm_gem_put_buffer(struct drm_gem_object *gem)
+{
+	struct msm_gem_object *msm_gem;
+
+	if (!gem)
+		return;
+
+	msm_gem = to_msm_bo(gem);
+
+	msm_gem_put_iova(gem, msm_gem->aspace);
+	msm_gem_put_vaddr(gem);
+}
+
+int msm_gem_get_buffer(struct drm_gem_object *gem,
+		struct drm_device *dev, struct drm_framebuffer *fb,
+		uint32_t align_size)
+{
+	struct msm_gem_object *msm_gem;
+	uint32_t size;
+	uint64_t iova_aligned;
+	int ret = -EINVAL;
+
+	if (!gem) {
+		DRM_ERROR("invalid drm gem");
+		return ret;
+	}
+
+	msm_gem = to_msm_bo(gem);
+
+	size = PAGE_ALIGN(gem->size);
+	if (size < (align_size + GUARD_BYTES)) {
+		DRM_ERROR("invalid gem size");
+		goto exit;
+	}
+
+	msm_gem_smmu_address_space_get(dev, MSM_SMMU_DOMAIN_UNSECURE);
+
+	if (PTR_ERR(msm_gem->aspace) == -ENODEV) {
+		DRM_DEBUG("IOMMU not present, relying on VRAM.");
+	} else if (IS_ERR_OR_NULL(msm_gem->aspace)) {
+		ret = PTR_ERR(msm_gem->aspace);
+		DRM_ERROR("failed to get aspace");
+		goto exit;
+	}
+
+	ret = msm_gem_get_iova(gem, msm_gem->aspace, &msm_gem->iova);
+	if (ret) {
+		DRM_ERROR("failed to get the iova ret %d", ret);
+		goto exit;
+	}
+
+	msm_gem_get_vaddr(gem);
+	if (IS_ERR_OR_NULL(msm_gem->vaddr)) {
+		DRM_ERROR("failed to get vaddr");
+		goto exit;
+	}
+
+	iova_aligned = (msm_gem->iova + GUARD_BYTES) & ALIGNED_OFFSET;
+	msm_gem->offset = iova_aligned - msm_gem->iova;
+	msm_gem->iova = msm_gem->iova + msm_gem->offset;
+
+	return 0;
+
+exit:
+	msm_gem_put_buffer(gem);
+
+	return ret;
 }
