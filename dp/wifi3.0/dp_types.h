@@ -3169,14 +3169,18 @@ struct dp_wds_ext_peer {
  * parameters. This data is updated per peer per TID based on
  * the flow tuple classification in external rule database
  * during packet processing.
- * @service_interval - Service interval associated with TID
- * @burst_size - Burst size additive over multiple flows
+ * @service_interval_dl - Service interval associated with TID in DL
+ * @burst_size_dl - Burst size additive over multiple flows in DL
+ * @service_interval_ul - Service interval associated with TID in UL
+ * @burst_size_ul - Burst size additive over multiple flows in UL
  * @ac - custom ac derived from service interval
  * @msduq - MSDU queue number within TID
  */
 struct dp_peer_mesh_latency_parameter {
-	uint32_t service_interval;
-	uint32_t burst_size;
+	uint32_t service_interval_dl;
+	uint32_t burst_size_dl;
+	uint32_t service_interval_ul;
+	uint32_t burst_size_ul;
 	uint8_t ac;
 	uint8_t msduq;
 };

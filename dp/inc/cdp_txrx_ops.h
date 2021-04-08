@@ -1197,7 +1197,8 @@ struct ol_if_ops {
 	QDF_STATUS(*peer_update_mesh_latency_params)(
 			     struct cdp_ctrl_objmgr_psoc *psoc,
 				   uint8_t vdev_id, uint8_t *peer_mac, uint8_t tid,
-				   uint32_t service_interval, uint32_t burst_size,
+				   uint32_t service_interval_dl, uint32_t burst_size_dl,
+				   uint32_t service_interval_ul, uint32_t burst_size_ul,
 				   uint8_t add_or_sub, uint8_t ac);
 #endif
 };
@@ -1771,8 +1772,9 @@ struct cdp_mscs_ops {
 struct cdp_mesh_latency_ops {
 	QDF_STATUS (*mesh_latency_update_peer_parameter)(
 			struct cdp_soc_t *soc,
-			uint8_t *dest_mac, uint32_t service_interval,
-			uint32_t burst_size, uint16_t priority,
+			uint8_t *dest_mac, uint32_t service_interval_dl,
+			uint32_t burst_size_dl, uint32_t service_interval_ul,
+			uint32_t burst_size_ul, uint16_t priority,
 			uint8_t add_or_sub);
 };
 #endif
