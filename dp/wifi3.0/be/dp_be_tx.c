@@ -435,6 +435,16 @@ uint32_t dp_tx_comp_nf_handler(struct dp_intr *int_ctx, struct dp_soc *soc,
 			       hal_ring_handle_t hal_ring_hdl, uint8_t ring_id,
 			       uint32_t quota)
 {
-	return 0;
+	struct dp_srng *tx_comp_ring = &soc->tx_comp_ring[ring_id];
+	uint32_t work_done = 0;
+
+	if (dp_srng_get_near_full_level(soc, tx_comp_ring) <
+			DP_SRNG_THRESH_NEAR_FULL)
+		return 0;
+
+	qdf_atomic_set(&tx_comp_ring->near_full, 1);
+	work_done++;
+
+	return work_done;
 }
 #endif

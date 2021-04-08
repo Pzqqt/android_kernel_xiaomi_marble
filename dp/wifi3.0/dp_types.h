@@ -1557,6 +1557,8 @@ enum dp_context_type {
  * 				      source from HAL desc for wbm release ring
  * @dp_service_near_full_srngs: Handler for servicing the near full IRQ
  * @txrx_set_vdev_param: target specific ops while setting vdev params
+ * @dp_srng_test_and_update_nf_params: Check if the srng is in near full state
+ *				and set the near-full params.
  */
 struct dp_arch_ops {
 	/* INIT/DEINIT Arch Ops */
@@ -1620,6 +1622,9 @@ struct dp_arch_ops {
 
 	/* Misc Arch Ops */
 	qdf_size_t (*txrx_get_context_size)(enum dp_context_type);
+	int (*dp_srng_test_and_update_nf_params)(struct dp_soc *soc,
+						 struct dp_srng *dp_srng,
+						 int *max_reap_limit);
 };
 
 /* SOC level structure for data path */

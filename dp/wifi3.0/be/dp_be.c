@@ -570,11 +570,41 @@ budget_done:
 	return dp_budget - budget;
 }
 
+/**
+ * dp_srng_test_and_update_nf_params_be() - Check if the srng is in near full
+ *				state and set the reap_limit appropriately
+ *				as per the near full state
+ * @soc: Datapath soc handle
+ * @dp_srng: Datapath handle for SRNG
+ * @max_reap_limit: [Output Buffer] Buffer to set the max reap limit as per
+ *			the srng near-full state
+ *
+ * Return: 1, if the srng is in near-full state
+ *	   0, if the srng is not in near-full state
+ */
+static int
+dp_srng_test_and_update_nf_params_be(struct dp_soc *soc,
+				     struct dp_srng *dp_srng,
+				     int *max_reap_limit)
+{
+	return _dp_srng_test_and_update_nf_params(soc, dp_srng, max_reap_limit);
+}
+
+/**
+ * dp_init_near_full_arch_ops_be() - Initialize the arch ops handler for the
+ *			near full IRQ handling operations.
+ * @arch_ops: arch ops handle
+ *
+ * Return: none
+ */
 static inline void
 dp_init_near_full_arch_ops_be(struct dp_arch_ops *arch_ops)
 {
 	arch_ops->dp_service_near_full_srngs = dp_service_near_full_srngs_be;
+	arch_ops->dp_srng_test_and_update_nf_params =
+					dp_srng_test_and_update_nf_params_be;
 }
+
 #else
 static inline void
 dp_init_near_full_arch_ops_be(struct dp_arch_ops *arch_ops)

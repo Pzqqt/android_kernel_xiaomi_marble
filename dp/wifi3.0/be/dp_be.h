@@ -441,9 +441,9 @@ dp_srng_get_near_full_level(struct dp_soc *soc, struct dp_srng *dp_srng)
  *	   0, if the srng is not near full
  */
 static inline int
-dp_srng_test_and_update_nf_params(struct dp_soc *soc,
-				  struct dp_srng *srng,
-				  int *max_reap_limit)
+_dp_srng_test_and_update_nf_params(struct dp_soc *soc,
+				   struct dp_srng *srng,
+				   int *max_reap_limit)
 {
 	int ring_near_full = 0, near_full_level;
 
@@ -471,9 +471,9 @@ dp_srng_test_and_update_nf_params(struct dp_soc *soc,
 }
 #else
 static inline int
-dp_srng_test_and_update_nf_params(struct dp_soc *soc,
-				  struct dp_srng *srng,
-				  int *max_reap_limit)
+_dp_srng_test_and_update_nf_params(struct dp_soc *soc,
+				   struct dp_srng *srng,
+				   int *max_reap_limit)
 {
 	return 0;
 }

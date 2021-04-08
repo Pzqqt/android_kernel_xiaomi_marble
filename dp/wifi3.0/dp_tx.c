@@ -4355,13 +4355,13 @@ void dp_tx_process_htt_completion(struct dp_soc *soc,
 
 #ifdef WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT
 static inline
-bool dp_tx_comp_loop_pkt_limit_hit(struct dp_soc *soc, int num_reaped)
+bool dp_tx_comp_loop_pkt_limit_hit(struct dp_soc *soc, int num_reaped,
+				   int max_reap_limit)
 {
 	bool limit_hit = false;
-	struct wlan_cfg_dp_soc_ctxt *cfg = soc->wlan_cfg_ctx;
 
 	limit_hit =
-		(num_reaped >= cfg->tx_comp_loop_pkt_limit) ? true : false;
+		(num_reaped >= max_reap_limit) ? true : false;
 
 	if (limit_hit)
 		DP_STATS_INC(soc, tx.tx_comp_loop_pkt_limit_hit, 1);
@@ -4373,9 +4373,17 @@ static inline bool dp_tx_comp_enable_eol_data_check(struct dp_soc *soc)
 {
 	return soc->wlan_cfg_ctx->tx_comp_enable_eol_data_check;
 }
+
+static inline int dp_tx_comp_get_loop_pkt_limit(struct dp_soc *soc)
+{
+	struct wlan_cfg_dp_soc_ctxt *cfg = soc->wlan_cfg_ctx;
+
+	return cfg->tx_comp_loop_pkt_limit;
+}
 #else
 static inline
-bool dp_tx_comp_loop_pkt_limit_hit(struct dp_soc *soc, int num_reaped)
+bool dp_tx_comp_loop_pkt_limit_hit(struct dp_soc *soc, int num_reaped,
+				   int max_reap_limit)
 {
 	return false;
 }
@@ -4383,6 +4391,28 @@ bool dp_tx_comp_loop_pkt_limit_hit(struct dp_soc *soc, int num_reaped)
 static inline bool dp_tx_comp_enable_eol_data_check(struct dp_soc *soc)
 {
 	return false;
+}
+
+static inline int dp_tx_comp_get_loop_pkt_limit(struct dp_soc *soc)
+{
+	return 0;
+}
+#endif
+
+#ifdef WLAN_FEATURE_NEAR_FULL_IRQ
+static inline int
+dp_srng_test_and_update_nf_params(struct dp_soc *soc, struct dp_srng *dp_srng,
+				  int *max_reap_limit)
+{
+	return soc->arch_ops.dp_srng_test_and_update_nf_params(soc, dp_srng,
+							       max_reap_limit);
+}
+#else
+static inline int
+dp_srng_test_and_update_nf_params(struct dp_soc *soc, struct dp_srng *dp_srng,
+				  int *max_reap_limit)
+{
+	return 0;
 }
 #endif
 
@@ -4399,6 +4429,8 @@ uint32_t dp_tx_comp_handler(struct dp_intr *int_ctx, struct dp_soc *soc,
 	uint32_t count;
 	uint32_t num_avail_for_reap = 0;
 	bool force_break = false;
+	struct dp_srng *tx_comp_ring = &soc->tx_comp_ring[ring_id];
+	int max_reap_limit, ring_near_full;
 
 	DP_HIST_INIT();
 
@@ -4407,6 +4439,10 @@ more_data:
 	head_desc = NULL;
 	tail_desc = NULL;
 	count = 0;
+	max_reap_limit = dp_tx_comp_get_loop_pkt_limit(soc);
+
+	ring_near_full = dp_srng_test_and_update_nf_params(soc, tx_comp_ring,
+							   &max_reap_limit);
 
 	if (qdf_unlikely(dp_srng_access_start(int_ctx, soc, hal_ring_hdl))) {
 		dp_err("HAL RING Access Failed -- %pK", hal_ring_hdl);
@@ -4561,7 +4597,7 @@ next_desc:
 
 		count++;
 
-		if (dp_tx_comp_loop_pkt_limit_hit(soc, count))
+		if (dp_tx_comp_loop_pkt_limit_hit(soc, count, max_reap_limit))
 			break;
 	}
 
@@ -4570,6 +4606,17 @@ next_desc:
 	/* Process the reaped descriptors */
 	if (head_desc)
 		dp_tx_comp_process_desc_list(soc, head_desc, ring_id);
+
+	/*
+	 * If we are processing in near-full condition, there are 3 scenario
+	 * 1) Ring entries has reached critical state
+	 * 2) Ring entries are still near high threshold
+	 * 3) Ring entries are below the safe level
+	 *
+	 * One more loop will move te state to normal processing and yield
+	 */
+	if (ring_near_full)
+		goto more_data;
 
 	if (dp_tx_comp_enable_eol_data_check(soc)) {
 

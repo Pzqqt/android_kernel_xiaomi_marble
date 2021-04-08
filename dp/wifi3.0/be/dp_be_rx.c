@@ -134,8 +134,8 @@ more_data:
 	qdf_mem_zero(head, sizeof(head));
 	qdf_mem_zero(tail, sizeof(tail));
 
-	ring_near_full = dp_srng_test_and_update_nf_params(soc, rx_ring,
-							   &max_reap_limit);
+	ring_near_full = _dp_srng_test_and_update_nf_params(soc, rx_ring,
+							    &max_reap_limit);
 
 	if (qdf_unlikely(dp_rx_srng_access_start(int_ctx, soc, hal_ring_hdl))) {
 		/*
