@@ -95,6 +95,13 @@ const struct ol_rx_defrag_cipher f_wep = {
 	0,
 };
 
+const struct ol_rx_defrag_cipher f_gcmp = {
+	"AES-GCMP",
+	WLAN_IEEE80211_GCMP_HEADERLEN,
+	WLAN_IEEE80211_GCMP_MICLEN,
+	WLAN_IEEE80211_GCMP_MICLEN,
+};
+
 #if defined(CONFIG_HL_SUPPORT)
 
 /**
@@ -663,6 +670,79 @@ void ol_rx_defrag_waitlist_flush(struct ol_txrx_pdev_t *pdev)
 	}
 }
 
+/**
+ * ol_rx_frag_gcmp_decap() - Remove GCMP header from fragment
+ * @pdev - data path pdev handle
+ * @nbuf - network buffer
+ * @hdrlen - MAC header len
+ *
+ * Return: OL_RX_DEFRAG_OK on success else failure code
+ */
+static int
+ol_rx_frag_gcmp_decap(ol_txrx_pdev_handle pdev,
+		      qdf_nbuf_t nbuf, uint16_t hdrlen)
+{
+	uint8_t *ivp, *orig_hdr;
+	void *rx_desc_old_position = NULL;
+	void *ind_old_position = NULL;
+	int rx_desc_len = 0;
+
+	ol_rx_frag_desc_adjust(pdev,
+			       nbuf,
+			       &rx_desc_old_position,
+			       &ind_old_position, &rx_desc_len);
+
+	orig_hdr = (uint8_t *)(qdf_nbuf_data(nbuf) + rx_desc_len);
+	ivp = orig_hdr + hdrlen;
+	if (!(ivp[IEEE80211_WEP_IVLEN] & IEEE80211_WEP_EXTIV))
+		return OL_RX_DEFRAG_ERR;
+
+	qdf_mem_move(orig_hdr + f_gcmp.ic_header, orig_hdr, hdrlen);
+	ol_rx_frag_restructure(
+			pdev,
+			nbuf,
+			rx_desc_old_position,
+			ind_old_position,
+			&f_gcmp,
+			rx_desc_len);
+	qdf_nbuf_pull_head(nbuf, f_gcmp.ic_header);
+
+	return OL_RX_DEFRAG_OK;
+}
+
+/**
+ * ol_rx_frag_gcmp_demic() - Remove MIC info from GCMP fragment
+ * @pdev - data path pdev handle
+ * @nbuf - network buffer
+ * @hdrlen - MAC header len
+ *
+ * Return: OL_RX_DEFRAG_OK on success else failure code
+ */
+static int
+ol_rx_frag_gcmp_demic(ol_txrx_pdev_handle pdev,
+		      qdf_nbuf_t wbuf, uint16_t hdrlen)
+{
+	uint8_t *ivp, *orig_hdr;
+	void *rx_desc_old_position = NULL;
+	void *ind_old_position = NULL;
+	int rx_desc_len = 0;
+
+	ol_rx_frag_desc_adjust(pdev,
+			       wbuf,
+			       &rx_desc_old_position,
+			       &ind_old_position, &rx_desc_len);
+
+	orig_hdr = (uint8_t *)(qdf_nbuf_data(wbuf) + rx_desc_len);
+
+	ivp = orig_hdr + hdrlen;
+	if (!(ivp[IEEE80211_WEP_IVLEN] & IEEE80211_WEP_EXTIV))
+		return OL_RX_DEFRAG_ERR;
+
+	qdf_nbuf_trim_tail(wbuf, f_gcmp.ic_trailer);
+
+	return OL_RX_DEFRAG_OK;
+}
+
 /*
  * Handling security checking and processing fragments
  */
@@ -780,7 +860,24 @@ ol_rx_defrag(ol_txrx_pdev_handle pdev,
 			cur = tmp_next;
 		}
 		break;
+	case htt_sec_type_aes_gcmp:
+	case htt_sec_type_aes_gcmp_256:
+		while (cur) {
+			tmp_next = qdf_nbuf_next(cur);
+			if (!ol_rx_frag_gcmp_demic(pdev, cur, hdr_space)) {
+				ol_rx_frames_free(htt_pdev, frag_list);
+				ol_txrx_err("GCMP demic failed");
+				return;
+			}
+			if (!ol_rx_frag_gcmp_decap(pdev, cur, hdr_space)) {
+				ol_rx_frames_free(htt_pdev, frag_list);
+				ol_txrx_err("GCMP decap failed");
+				return;
+			}
+			cur = tmp_next;
+		}
 
+		break;
 	default:
 		break;
 	}
