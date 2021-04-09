@@ -34,5 +34,8 @@ int msm_cvp_session_init(struct msm_cvp_inst *inst);
 int msm_cvp_session_deinit(struct msm_cvp_inst *inst);
 int msm_cvp_session_queue_stop(struct msm_cvp_inst *inst);
 int msm_cvp_session_create(struct msm_cvp_inst *inst);
+int msm_cvp_session_delete(struct msm_cvp_inst *inst);
+int msm_cvp_get_session_info(struct msm_cvp_inst *inst, u32 *session);
+int msm_cvp_update_power(struct msm_cvp_inst *inst);
 int cvp_stop_clean_fence_queue(struct msm_cvp_inst *inst);
 #endif

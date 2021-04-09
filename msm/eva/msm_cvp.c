@@ -14,8 +14,7 @@ struct cvp_power_level {
 	unsigned long bw_sum;
 };
 
-static int msm_cvp_get_session_info(struct msm_cvp_inst *inst,
-		struct eva_kmd_session_info *session)
+int msm_cvp_get_session_info(struct msm_cvp_inst *inst, u32 *session)
 {
 	int rc = 0;
 	struct msm_cvp_inst *s;
@@ -30,8 +29,8 @@ static int msm_cvp_get_session_info(struct msm_cvp_inst *inst,
 		return -ECONNRESET;
 
 	s->cur_cmd_type = EVA_KMD_GET_SESSION_INFO;
-	session->session_id = hash32_ptr(inst->session);
-	dprintk(CVP_SESS, "%s: id 0x%x\n", __func__, session->session_id);
+	*session = hash32_ptr(inst->session);
+	dprintk(CVP_SESS, "%s: id 0x%x\n", __func__, *session);
 
 	s->cur_cmd_type = 0;
 	cvp_put_inst(s);
@@ -963,7 +962,7 @@ static int adjust_bw_freqs(void)
 	return rc;
 }
 
-static int msm_cvp_update_power(struct msm_cvp_inst *inst)
+int msm_cvp_update_power(struct msm_cvp_inst *inst)
 {
 	int rc = 0;
 	struct msm_cvp_core *core;
@@ -990,68 +989,9 @@ static int msm_cvp_update_power(struct msm_cvp_inst *inst)
 	return rc;
 }
 
-static int msm_cvp_register_buffer(struct msm_cvp_inst *inst,
-		struct eva_kmd_buffer *buf)
+int msm_cvp_session_delete(struct msm_cvp_inst *inst)
 {
-	struct cvp_hfi_device *hdev;
-	struct cvp_hal_session *session;
-	struct msm_cvp_inst *s;
-	int rc = 0;
-
-	if (!inst || !inst->core || !buf) {
-		dprintk(CVP_ERR, "%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
-
-	if (!buf->index)
-		return 0;
-
-	s = cvp_get_inst_validate(inst->core, inst);
-	if (!s)
-		return -ECONNRESET;
-
-	inst->cur_cmd_type = EVA_KMD_REGISTER_BUFFER;
-	session = (struct cvp_hal_session *)inst->session;
-	if (!session) {
-		dprintk(CVP_ERR, "%s: invalid session\n", __func__);
-		rc = -EINVAL;
-		goto exit;
-	}
-	hdev = inst->core->device;
-	print_client_buffer(CVP_HFI, "register", inst, buf);
-
-	rc = msm_cvp_map_buf_dsp(inst, buf);
-exit:
-	inst->cur_cmd_type = 0;
-	cvp_put_inst(s);
-	return rc;
-}
-
-static int msm_cvp_unregister_buffer(struct msm_cvp_inst *inst,
-		struct eva_kmd_buffer *buf)
-{
-	struct msm_cvp_inst *s;
-	int rc = 0;
-
-	if (!inst || !inst->core || !buf) {
-		dprintk(CVP_ERR, "%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
-
-	if (!buf->index)
-		return 0;
-
-	s = cvp_get_inst_validate(inst->core, inst);
-	if (!s)
-		return -ECONNRESET;
-
-	inst->cur_cmd_type = EVA_KMD_UNREGISTER_BUFFER;
-	print_client_buffer(CVP_HFI, "unregister", inst, buf);
-
-	rc = msm_cvp_unmap_buf_dsp(inst, buf);
-	inst->cur_cmd_type = 0;
-	cvp_put_inst(s);
-	return rc;
+	return 0;
 }
 
 int msm_cvp_session_create(struct msm_cvp_inst *inst)
@@ -1275,7 +1215,9 @@ static int msm_cvp_session_ctrl(struct msm_cvp_inst *inst,
 		break;
 	case SESSION_CREATE:
 		rc = msm_cvp_session_create(inst);
+		break;
 	case SESSION_DELETE:
+		rc = msm_cvp_session_delete(inst);
 		break;
 	case SESSION_INFO:
 	default:
@@ -1772,7 +1714,7 @@ int msm_cvp_handle_syscall(struct msm_cvp_inst *inst, struct eva_kmd_arg *arg)
 		struct eva_kmd_session_info *session =
 			(struct eva_kmd_session_info *)&arg->data.session;
 
-		rc = msm_cvp_get_session_info(inst, session);
+		rc = msm_cvp_get_session_info(inst, &session->session_id);
 		break;
 	}
 	case EVA_KMD_UPDATE_POWER:

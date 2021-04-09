@@ -295,6 +295,7 @@ struct msm_cvp_inst {
 	struct msm_cvp_core *core;
 	enum session_type session_type;
 	u32 process_id;
+	struct task_struct *task;
 	struct cvp_session_queue session_queue;
 	struct cvp_session_queue session_queue_fence;
 	struct cvp_session_event event_handler;
