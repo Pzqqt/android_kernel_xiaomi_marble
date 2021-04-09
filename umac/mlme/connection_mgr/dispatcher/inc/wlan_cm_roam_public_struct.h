@@ -1199,7 +1199,7 @@ struct wlan_rso_11r_params {
 	bool is_adaptive_11r;
 	bool enable_ft_im_roaming;
 	uint8_t psk_pmk[WMI_ROAM_SCAN_PSK_SIZE];
-	uint32_t pmk_len;
+	uint8_t pmk_len;
 	uint32_t r0kh_id_length;
 	uint8_t r0kh_id[WMI_ROAM_R0KH_ID_MAX_LEN];
 	struct mobility_domain_info mdid;

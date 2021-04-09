@@ -486,8 +486,8 @@ cm_roam_scan_offload_fill_lfr3_config(struct wlan_objmgr_vdev *vdev,
 		     mlme_priv->connect_info.ft_info.r0kh_id,
 		     mlme_priv->connect_info.ft_info.r0kh_id_len);
 	wlan_cm_get_psk_pmk(pdev, vdev_id,
-			    rso_config->rso_11i_info.psk_pmk,
-			    &rso_config->rso_11i_info.pmk_len);
+			    rso_config->rso_11r_info.psk_pmk,
+			    &rso_config->rso_11r_info.pmk_len);
 
 	cm_update_rso_adaptive_11r(&rso_config->rso_11r_info, rso_cfg);
 	cm_update_rso_ese_info(rso_cfg, rso_config);
