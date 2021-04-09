@@ -3547,6 +3547,11 @@ static void _sde_kms_pm_suspend_idle_helper(struct sde_kms *sde_kms,
 		if (sde_encoder_in_clone_mode(conn->encoder))
 			continue;
 
+		crtc_id = drm_crtc_index(conn->state->crtc);
+		if (priv->disp_thread[crtc_id].thread)
+			kthread_flush_worker(
+				&priv->disp_thread[crtc_id].worker);
+
 		ret = sde_encoder_wait_for_event(conn->encoder,
 						MSM_ENC_TX_COMPLETE);
 		if (ret && ret != -EWOULDBLOCK) {
@@ -3554,7 +3559,6 @@ static void _sde_kms_pm_suspend_idle_helper(struct sde_kms *sde_kms,
 				"[conn: %d] wait for commit done returned %d\n",
 				conn->base.id, ret);
 		} else if (!ret) {
-			crtc_id = drm_crtc_index(conn->state->crtc);
 			if (priv->event_thread[crtc_id].thread)
 				kthread_flush_worker(
 					&priv->event_thread[crtc_id].worker);
