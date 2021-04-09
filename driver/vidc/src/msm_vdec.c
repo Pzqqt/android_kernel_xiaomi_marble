@@ -739,6 +739,28 @@ static int msm_vdec_set_conceal_color_10bit(struct msm_vidc_inst *inst,
 	return rc;
 }
 
+static int msm_vdec_set_host_max_buf_count(struct msm_vidc_inst *inst,
+	enum msm_vidc_port_type port)
+{
+	int rc = 0;
+	u32 count = DEFAULT_MAX_HOST_BUF_COUNT;
+
+	if (is_image_session(inst))
+		count = DEFAULT_MAX_HOST_BURST_BUF_COUNT;
+
+	i_vpr_h(inst, "%s: count: %u port: %u\n", __func__, count, port);
+	rc = venus_hfi_session_property(inst,
+			HFI_PROP_BUFFER_HOST_MAX_COUNT,
+			HFI_HOST_FLAGS_NONE,
+			get_hfi_port(inst, port),
+			HFI_PAYLOAD_U32,
+			&count,
+			sizeof(u32));
+	if (rc)
+		return rc;
+	return 0;
+}
+
 static int msm_vdec_set_input_properties(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
@@ -772,6 +794,10 @@ static int msm_vdec_set_input_properties(struct msm_vidc_inst *inst)
 	if (rc)
 		return rc;
 
+	rc = msm_vdec_set_host_max_buf_count(inst, INPUT_PORT);
+	if (rc)
+		return rc;
+
 	return rc;
 }
 
@@ -797,6 +823,10 @@ static int msm_vdec_set_output_properties(struct msm_vidc_inst *inst)
 		return rc;
 
 	rc = msm_vdec_set_linear_stride_scanline(inst);
+	if (rc)
+		return rc;
+
+	rc = msm_vdec_set_host_max_buf_count(inst, OUTPUT_PORT);
 	if (rc)
 		return rc;
 
