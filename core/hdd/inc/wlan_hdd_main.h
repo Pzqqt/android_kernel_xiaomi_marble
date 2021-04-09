@@ -4936,6 +4936,14 @@ static inline unsigned long wlan_hdd_get_pm_qos_cpu_latency(void)
 #endif /* defined(CLD_PM_QOS) || defined(FEATURE_RUNTIME_PM) */
 
 /**
+ * hdd_is_runtime_pm_enabled - if runtime pm enabled
+ * @hdd_ctx: hdd context
+ *
+ * Return: true if runtime pm enabled. false if disabled.
+ */
+bool hdd_is_runtime_pm_enabled(struct hdd_context *hdd_ctx);
+
+/**
  * hdd_netdev_feature_update - Update the netdev features
  * @net_dev: Handle to net_device
  *

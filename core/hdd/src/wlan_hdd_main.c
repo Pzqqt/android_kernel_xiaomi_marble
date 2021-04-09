@@ -12331,11 +12331,21 @@ static void hdd_init_runtime_pm(struct hdd_config *config,
 {
 	config->runtime_pm = cfg_get(psoc, CFG_ENABLE_RUNTIME_PM);
 }
+
+bool hdd_is_runtime_pm_enabled(struct hdd_context *hdd_ctx)
+{
+	return hdd_ctx->config->runtime_pm != hdd_runtime_pm_disabled;
+}
 #else
 static void hdd_init_runtime_pm(struct hdd_config *config,
 				struct wlan_objmgr_psoc *psoc)
 
 {
+}
+
+bool hdd_is_runtime_pm_enabled(struct hdd_context *hdd_ctx)
+{
+	return false;
 }
 #endif
 

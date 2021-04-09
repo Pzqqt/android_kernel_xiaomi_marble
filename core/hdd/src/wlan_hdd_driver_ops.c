@@ -1569,6 +1569,9 @@ static int wlan_hdd_runtime_suspend(struct device *dev)
 		return 0;
 	}
 
+	if (!hdd_is_runtime_pm_enabled(hdd_ctx))
+		return 0;
+
 	if (ucfg_scan_get_pdev_status(hdd_ctx->pdev) !=
 	    SCAN_NOT_IN_PROGRESS) {
 		hdd_debug("Scan in progress, ignore runtime suspend");
@@ -1654,6 +1657,9 @@ static int wlan_hdd_runtime_resume(struct device *dev)
 		hdd_debug("Driver module closed skipping runtime resume");
 		return 0;
 	}
+
+	if (!hdd_is_runtime_pm_enabled(hdd_ctx))
+		return 0;
 
 	hdd_ctx->runtime_resume_start_time_stamp =
 						qdf_get_log_timestamp_usecs();
