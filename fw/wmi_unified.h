@@ -10475,13 +10475,16 @@ typedef struct {
 
 /*
  * Param values to be sent for WMI_VDEV_PARAM_SGI command
- * which are used in 11ax systems
+ * which are used in 11ax, 11be systems
  */
 #define WMI_SGI_LEGACY         0x1 /* for HT and VHT   */
 #define WMI_SGI_HE_400_NS      0x2 /* for HE 400 nsec  */
 #define WMI_SGI_HE_800_NS      0x4 /* for HE 800 nsec  */
 #define WMI_SGI_HE_1600_NS     0x8 /* for HE 1600 nsec */
 #define WMI_SGI_HE_3200_NS    0x10 /* for HE 3200 nsec */
+#define WMI_SGI_EHT_800_NS    0x20 /* for EHT 800 nsec  */
+#define WMI_SGI_EHT_1600_NS   0x40 /* for EHT 1600 nsec */
+#define WMI_SGI_EHT_3200_NS   0x80 /* for EHT 3200 nsec */
 
 /*
  * Param values to be sent for WMI_VDEV_PARAM_HE_LTF command
@@ -10491,6 +10494,14 @@ typedef struct {
 #define WMI_HE_LTF_1X      0x1
 #define WMI_HE_LTF_2X      0x2
 #define WMI_HE_LTF_4X      0x3
+/*
+ * Param values to be sent for WMI_VDEV_EHT_PARAM_LTF command
+ * which are used in 11be systems
+ */
+#define WMI_EHT_LTF_DEFAULT 0x4
+#define WMI_EHT_LTF_1X      0x5
+#define WMI_EHT_LTF_2X      0x6
+#define WMI_EHT_LTF_4X      0x7
 
 /** values for vdev_subtype */
 #define WMI_UNIFIED_VDEV_SUBTYPE_P2P_DEVICE 0x1
@@ -11350,6 +11361,7 @@ typedef enum {
     WMI_RATE_PREAMBLE_HT,
     WMI_RATE_PREAMBLE_VHT,
     WMI_RATE_PREAMBLE_HE,
+    WMI_RATE_PREAMBLE_EHT,
 } WMI_RATE_PREAMBLE;
 
 /** Value to disable fixed rate setting */
@@ -11924,7 +11936,10 @@ typedef enum {
      *     BIT0   = 1 (WMI_HE_LTF_1X)
      *     BIT1   = 1 (WMI_HE_LTF_2X)
      *     BIT2   = 1 (WMI_HE_LTF_4X)
-     *     BIT3-7 = Reserved bits.
+     *     BIT3   = 1 (WMI_EHT_LTF_1X)
+     *     BIT4   = 1 (WMI_EHT_LTF_2X)
+     *     BIT5   = 1 (WMI_EHT_LTF_4X)
+     *     BIT6-7 = Reserved bits.
      * bits 15:8 (SGI): When bitmask is set, then corresponding SGI value is
      *                 used for auto rate.
      *     BIT8     = 1 (400 NS)
@@ -12339,6 +12354,48 @@ typedef enum {
          *  9  | EHT UL OFDMA + MU-MIMO
          */
         WMI_VDEV_PARAM_SET_EHT_MU_MODE,                       /* 0x8005 */
+
+        /**
+         * Specify the EHT LTF setting that should be used for fixed rate
+         * transmissions.
+         *
+         * Expects values of WMI_EHT_LTF_DEFAULT, WMI_EHT_LTF_1X,
+         * WMI_EHT_LTF_2X, or WMI_EHT_LTF_4X.
+         */
+         WMI_VDEV_PARAM_EHT_LTF,                               /* 0x8006 */
+
+        /**
+         * Expects values of WMI_EHT_LTF_DEFAULT, WMI_EHT_LTF_1X,
+         * WMI_EHT_LTF_2X, or WMI_EHT_LTF_4X.
+         */
+        WMI_VDEV_PARAM_UL_EHT_LTF,                             /* 0x8007 */
+
+        /**
+         * Enable or disable Dual Carrier Modulation
+         * valid values: 0-Disable EHT DCM, 1-Enable EHT DCM.
+         */
+        WMI_VDEV_PARAM_EHT_DCM,                                /* 0x8008 */
+
+        /**
+         * Enable or disable Extended range
+         * valid values: 0-Disable ER, 1-Enable ER.
+         */
+        WMI_VDEV_PARAM_EHT_RANGE_EXT,                          /* 0x8009 */
+
+        /**
+         * Enable or disable Non-data EHT Extended range
+         *  valid values: 0-Disable ER, 1-Enable ER.
+         */
+        WMI_VDEV_PARAM_NON_DATA_EHT_RANGE_EXT,                 /* 0x800A */
+
+        /*
+         * 0 - fixed pattern disable,
+         * 1 - Fixed pattern enable and value pointed by
+         *     WMI_VDEV_PARAM_FIXED_PUNCTURE_PATTERN
+         *     punctured mode for 11be systems
+         */
+        WMI_VDEV_PARAM_FIXED_PUNCTURE_PATTERN,                /* 0x800B */
+
     /*=== END VDEV_PARAM_PROTOTYPE SECTION ===*/
 } WMI_VDEV_PARAM;
 
