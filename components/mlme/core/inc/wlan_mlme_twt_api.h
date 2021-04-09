@@ -189,18 +189,20 @@ QDF_STATUS mlme_set_twt_command_in_progress(struct wlan_objmgr_psoc *psoc,
 					    enum wlan_twt_commands cmd);
 
 /**
- * mlme_twt_is_command_in_progress() - Get TWT command in progress.
+ * mlme_twt_is_command_in_progress() - Check if given command is in progress
  * @psoc: Pointer to psoc object
  * @peer_mac: Pointer to peer mac address
  * @dialog_id: Dialog id
  * @cmd: TWT command
+ * @active_cmd: Fill the active command in this output parameter
  *
  * Return: True if given command is in progress.
  */
 bool mlme_twt_is_command_in_progress(struct wlan_objmgr_psoc *psoc,
 				     struct qdf_mac_addr *peer_mac,
 				     uint8_t dialog_id,
-				     enum wlan_twt_commands cmd);
+				     enum wlan_twt_commands cmd,
+				     enum wlan_twt_commands *active_cmd);
 
 /**
  * mlme_is_24ghz_twt_enabled() - Get if TWT is enabled on 2.4Ghz

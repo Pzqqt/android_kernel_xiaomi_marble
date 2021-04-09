@@ -476,7 +476,8 @@ bool mlme_is_twt_notify_in_progress(struct wlan_objmgr_psoc *psoc,
 bool mlme_twt_is_command_in_progress(struct wlan_objmgr_psoc *psoc,
 				     struct qdf_mac_addr *peer_mac,
 				     uint8_t dialog_id,
-				     enum wlan_twt_commands cmd)
+				     enum wlan_twt_commands cmd,
+				     enum wlan_twt_commands *pactive_cmd)
 {
 	struct wlan_objmgr_peer *peer;
 	struct peer_mlme_priv_obj *peer_priv;
@@ -501,6 +502,10 @@ bool mlme_twt_is_command_in_progress(struct wlan_objmgr_psoc *psoc,
 
 	for (i = 0; i < peer_priv->twt_ctx.num_twt_sessions; i++) {
 		active_cmd = peer_priv->twt_ctx.session_info[i].active_cmd;
+
+		if (pactive_cmd)
+			*pactive_cmd = active_cmd;
+
 		if (peer_priv->twt_ctx.session_info[i].dialog_id == dialog_id ||
 		    dialog_id == WLAN_ALL_SESSIONS_DIALOG_ID) {
 			if (cmd == WLAN_TWT_ANY) {
