@@ -613,10 +613,14 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 
 	found = false;
 	list_for_each_entry(buf, &buffers->list, list) {
-		if (buf->index == buffer->index) {
-			found = true;
+		if (is_decode_session(inst))
+			found = (buf->device_addr == buffer->base_address &&
+				buf->data_offset == buffer->data_offset);
+		else
+			found = (buf->index == buffer->index);
+
+		if (found)
 			break;
-		}
 	}
 	if (!found) {
 		i_vpr_e(inst, "%s: invalid idx %d daddr %#x data_offset %d\n",
