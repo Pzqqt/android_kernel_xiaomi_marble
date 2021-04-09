@@ -64,10 +64,10 @@ static struct msm_platform_core_capability core_data_waipio[] = {
 	{MAX_ENH_LAYER_COUNT, 5},
 	{NUM_VPP_PIPE, 4},
 	{SW_PC, 1},
-	{SW_PC_DELAY, 20000}, /* 20000 ms (>HW_RESPONSE_TIMEOUT)*/
 	{FW_UNLOAD, 0},
-	{FW_UNLOAD_DELAY, 25000}, /* 25000 ms (>PC_DELAY)*/
-	{HW_RESPONSE_TIMEOUT, 15000}, /* 1000 ms */
+	{HW_RESPONSE_TIMEOUT, HW_RESPONSE_TIMEOUT_VALUE}, /* 1000 ms */
+	{SW_PC_DELAY,         SW_PC_DELAY_VALUE        }, /* 1500 ms (>HW_RESPONSE_TIMEOUT)*/
+	{FW_UNLOAD_DELAY,     FW_UNLOAD_DELAY_VALUE    }, /* 3000 ms (>SW_PC_DELAY)*/
 	{DEBUG_TIMEOUT, 0},
 	// TODO: review below entries, and if required rename as PREFETCH
 	{PREFIX_BUF_COUNT_PIX, 18},

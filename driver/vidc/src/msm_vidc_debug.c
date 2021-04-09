@@ -11,11 +11,69 @@
 #include "msm_vidc_inst.h"
 #include "msm_vidc_internal.h"
 
+extern struct msm_vidc_core *g_core;
+
 #define MAX_SSR_STRING_LEN         64
 #define MAX_DEBUG_LEVEL_STRING_LEN 15
 
-int msm_vidc_debug = VIDC_ERR | VIDC_PRINTK | FW_ERROR | FW_FATAL;
-module_param(msm_vidc_debug, int, 0644);
+unsigned int msm_vidc_debug = VIDC_ERR | VIDC_PRINTK | FW_ERROR | FW_FATAL;
+
+static int debug_level_set(const char *val,
+	const struct kernel_param *kp)
+{
+	struct msm_vidc_core *core = NULL;
+	unsigned int dvalue;
+	int ret;
+
+	if (!kp || !kp->arg || !val) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = *(struct msm_vidc_core **)kp->arg;
+
+	if (!core || !core->capabilities) {
+		d_vpr_e("%s: Invalid core/capabilities\n", __func__);
+		return -EINVAL;
+	}
+
+	ret = kstrtouint(val, 0, &dvalue);
+	if (ret)
+		return ret;
+
+	msm_vidc_debug = dvalue;
+
+	/* check only driver logmask */
+	if ((dvalue & 0xFF) > (VIDC_ERR | VIDC_HIGH)) {
+		core->capabilities[HW_RESPONSE_TIMEOUT].value = 2 * HW_RESPONSE_TIMEOUT_VALUE;
+		core->capabilities[SW_PC_DELAY].value         = 2 * SW_PC_DELAY_VALUE;
+		core->capabilities[FW_UNLOAD_DELAY].value     = 2 * FW_UNLOAD_DELAY_VALUE;
+	} else {
+		/* reset timeout values, if user reduces the logging */
+		core->capabilities[HW_RESPONSE_TIMEOUT].value = HW_RESPONSE_TIMEOUT_VALUE;
+		core->capabilities[SW_PC_DELAY].value         = SW_PC_DELAY_VALUE;
+		core->capabilities[FW_UNLOAD_DELAY].value     = FW_UNLOAD_DELAY_VALUE;
+	}
+
+	d_vpr_h("timeout updated: hw_response %u, sw_pc %u, fw_unload %u, debug_level %#x\n",
+		core->capabilities[HW_RESPONSE_TIMEOUT].value,
+		core->capabilities[SW_PC_DELAY].value,
+		core->capabilities[FW_UNLOAD_DELAY].value,
+		msm_vidc_debug);
+
+	return 0;
+}
+
+static int debug_level_get(char *buffer, const struct kernel_param *kp)
+{
+	return scnprintf(buffer, PAGE_SIZE, "%#x", msm_vidc_debug);
+}
+
+static const struct kernel_param_ops msm_vidc_debug_fops = {
+	.set = debug_level_set,
+	.get = debug_level_get,
+};
+
+module_param_cb(msm_vidc_debug, &msm_vidc_debug_fops, &g_core, 0644);
 
 bool msm_vidc_lossless_encode = !true;
 EXPORT_SYMBOL(msm_vidc_lossless_encode);
