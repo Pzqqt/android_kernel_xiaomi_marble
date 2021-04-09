@@ -625,6 +625,33 @@ static void init_deinit_update_phy_reg_cap(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
+/**
+ * init_deinit_fill_host_reg_cap() - Fill the host regulatory cap
+ * with target hal reg capabilities.
+ * @cap: Pointer to wlan_psoc_hal_reg_capability where FW capabilities
+ * are extracted.
+ * @reg_cap: Pointer to wlan_psoc_host_hal_reg_capabilities_ext, host reg
+ * capabilities to be filled.
+ *
+ * Return - None
+ */
+static void
+init_deinit_fill_host_reg_cap(struct wlan_psoc_hal_reg_capability *cap,
+			      struct wlan_psoc_host_hal_reg_capabilities_ext
+			      *reg_cap)
+{
+	reg_cap->phy_id = 0;
+	reg_cap->eeprom_reg_domain = cap->eeprom_rd;
+	reg_cap->eeprom_reg_domain_ext = cap->eeprom_rd_ext;
+	reg_cap->regcap1 = cap->regcap1;
+	reg_cap->regcap2 = cap->regcap2;
+	reg_cap->wireless_modes = (uint64_t)cap->wireless_modes;
+	reg_cap->low_2ghz_chan = cap->low_2ghz_chan;
+	reg_cap->high_2ghz_chan = cap->high_2ghz_chan;
+	reg_cap->low_5ghz_chan = cap->low_5ghz_chan;
+	reg_cap->high_5ghz_chan = cap->high_5ghz_chan;
+}
+
 int init_deinit_populate_phy_reg_cap(struct wlan_objmgr_psoc *psoc,
 				     wmi_unified_t handle, uint8_t *event,
 				     struct tgt_info *info,
@@ -645,10 +672,8 @@ int init_deinit_populate_phy_reg_cap(struct wlan_objmgr_psoc *psoc,
 		}
 		info->service_ext_param.num_phy = 1;
 		num_phy_reg_cap = 1;
-		reg_cap[0].phy_id = 0;
-		qdf_mem_copy(&(reg_cap[0].eeprom_reg_domain), &cap,
-			     sizeof(struct wlan_psoc_hal_reg_capability));
-		target_if_debug("FW wireless modes 0x%x",
+		init_deinit_fill_host_reg_cap(&cap, &reg_cap[0]);
+		target_if_debug("FW wireless modes 0x%llx",
 				reg_cap[0].wireless_modes);
 	} else {
 		num_phy_reg_cap = info->service_ext_param.num_phy;
