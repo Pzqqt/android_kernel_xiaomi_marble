@@ -175,7 +175,7 @@ static int msm_vidc_set_buses(struct msm_vidc_inst* inst)
 
 		if (!is_realtime_session(inst)) {
 			temp->power.ddr_bw = core->platform->data.bus_bw_nrt[0];
-			temp->power.sys_cache_bw = 0;
+			temp->power.sys_cache_bw = core->platform->data.bus_bw_nrt[0];
 		}
 
 		total_bw_ddr += temp->power.ddr_bw;
