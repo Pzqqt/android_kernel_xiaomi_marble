@@ -6521,23 +6521,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		}
 	}
 
-	qdf_mutex_acquire(&hdd_ctx->regulatory_status_lock);
-	if (hdd_ctx->is_regulatory_update_in_progress) {
-		qdf_mutex_release(&hdd_ctx->regulatory_status_lock);
-		hdd_debug("waiting for channel list to update");
-		qdf_wait_for_event_completion(&hdd_ctx->regulatory_update_event,
-					      CHANNEL_LIST_UPDATE_TIMEOUT);
-		/* In case of set country failure in FW, response never comes
-		 * so wait the full timeout, then set in_progress to false.
-		 * If the response comes back, in_progress will already be set
-		 * to false anyways.
-		 */
-		qdf_mutex_acquire(&hdd_ctx->regulatory_status_lock);
-		hdd_ctx->is_regulatory_update_in_progress = false;
-		qdf_mutex_release(&hdd_ctx->regulatory_status_lock);
-	} else {
-		qdf_mutex_release(&hdd_ctx->regulatory_status_lock);
-	}
+	hdd_reg_wait_for_country_change(hdd_ctx);
 
 	channel_width = wlan_hdd_get_channel_bw(params->chandef.width);
 	freq = (qdf_freq_t)params->chandef.chan->center_freq;

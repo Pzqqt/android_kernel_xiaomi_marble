@@ -45,6 +45,7 @@
 #include <enet.h>
 #include <wlan_mlme_twt_ucfg_api.h>
 #include "wlan_roam_debug.h"
+#include <wlan_hdd_regulatory.h>
 
 #ifdef FEATURE_CM_ENABLE
 bool hdd_cm_is_vdev_associated(struct hdd_adapter *adapter)
@@ -373,6 +374,8 @@ int wlan_hdd_cm_connect(struct wiphy *wiphy,
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (status)
 		return status;
+
+	hdd_reg_wait_for_country_change(hdd_ctx);
 
 	qdf_mem_zero(&params, sizeof(params));
 	ucfg_blm_dump_black_list_ap(hdd_ctx->pdev);

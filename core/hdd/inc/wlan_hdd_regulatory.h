@@ -79,6 +79,14 @@ void hdd_reset_global_reg_params(void);
 void hdd_send_wiphy_regd_sync_event(struct hdd_context *hdd_ctx);
 
 /**
+ * hdd_reg_wait_for_country_change() - Wait for country change event
+ * @hdd_ctx: the HDD context
+ *
+ * Return: None
+ */
+void hdd_reg_wait_for_country_change(struct hdd_context *hdd_ctx);
+
+/**
  * hdd_reg_set_country() - helper function for setting the regulatory country
  * @hdd_ctx: the HDD context to set the country for
  * @country_code: the two character country code to configure
