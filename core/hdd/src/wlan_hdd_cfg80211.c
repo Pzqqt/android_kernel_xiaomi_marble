@@ -9870,6 +9870,40 @@ static void hdd_disable_runtime_pm_for_user(struct hdd_context *hdd_ctx)
 	qdf_runtime_pm_prevent_suspend(&ctx->user);
 }
 
+static int hdd_test_config_6ghz_security_test_mode(struct hdd_context *hdd_ctx,
+						   struct nlattr *attr)
+
+{
+	uint8_t cfg_val;
+	bool rf_test_mode = false;
+	QDF_STATUS status;
+
+	status = ucfg_mlme_is_rf_test_mode_enabled(hdd_ctx->psoc,
+						   &rf_test_mode);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("Get rf test mode failed");
+		return -EINVAL;
+	}
+	if (rf_test_mode) {
+		hdd_err("rf test mode is enabled, ignore setting");
+		return 0;
+	}
+
+	cfg_val = nla_get_u8(attr);
+	hdd_debug("safe mode setting %d", cfg_val);
+	if (cfg_val) {
+		wlan_cm_set_check_6ghz_security(hdd_ctx->psoc, false);
+		wlan_cm_set_6ghz_key_mgmt_mask(hdd_ctx->psoc,
+					       DEFAULT_KEYMGMT_6G_MASK);
+	} else {
+		wlan_cm_set_check_6ghz_security(hdd_ctx->psoc, true);
+		wlan_cm_set_6ghz_key_mgmt_mask(hdd_ctx->psoc,
+					       ALLOWED_KEYMGMT_6G_MASK);
+	}
+
+	return 0;
+}
+
 /**
  * __wlan_hdd_cfg80211_set_wifi_test_config() - Wifi test configuration
  * vendor command
@@ -9905,7 +9939,6 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 	uint8_t value = 0;
 	uint8_t wmm_mode = 0;
 	uint32_t cmd_id;
-	bool rf_test_mode = false;
 	struct set_wfatest_params wfa_param = {0};
 	struct hdd_station_ctx *hdd_sta_ctx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
@@ -10470,30 +10503,12 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 
 	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_6GHZ_SECURITY_TEST_MODE;
 	if (tb[cmd_id]) {
-		status = ucfg_mlme_is_rf_test_mode_enabled(hdd_ctx->psoc,
-							   &rf_test_mode);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			hdd_err("Get rf test mode failed");
-			ret_val = -EINVAL;
+		ret_val = hdd_test_config_6ghz_security_test_mode(hdd_ctx,
+								  tb[cmd_id]);
+		if (ret_val)
 			goto send_err;
-		}
-		if (rf_test_mode) {
-			hdd_err("rf test mode is enabled, ignore setting");
-			ret_val = 0;
-			goto send_err;
-		}
-		cfg_val = nla_get_u8(tb[cmd_id]);
-		hdd_debug("safe mode setting %d", cfg_val);
-		if (cfg_val) {
-			wlan_cm_set_check_6ghz_security(hdd_ctx->psoc, false);
-			wlan_cm_set_6ghz_key_mgmt_mask(hdd_ctx->psoc,
-						       DEFAULT_KEYMGMT_6G_MASK);
-		} else {
-			wlan_cm_set_check_6ghz_security(hdd_ctx->psoc, true);
-			wlan_cm_set_6ghz_key_mgmt_mask(hdd_ctx->psoc,
-						       ALLOWED_KEYMGMT_6G_MASK);
-		}
 	}
+
 	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_OCI_OVERRIDE;
 	if (tb[cmd_id]) {
 		struct nlattr *tb2[QCA_WLAN_VENDOR_ATTR_OCI_OVERRIDE_MAX + 1];
