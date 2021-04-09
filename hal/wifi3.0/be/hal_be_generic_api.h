@@ -21,6 +21,7 @@
 
 #include <hal_be_hw_headers.h>
 #include "hal_be_tx.h"
+#include "hal_be_reo.h"
 
 /**
  * hal_tx_comp_get_status() - TQM Release reason

@@ -106,6 +106,7 @@
 #include "hal_8074v1_rx.h"
 #include <hal_generic_api.h>
 #include "hal_li_rx.h"
+#include "hal_li_tx.h"
 #include "hal_li_api.h"
 #include "hal_li_generic_api.h"
 

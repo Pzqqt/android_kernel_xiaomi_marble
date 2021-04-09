@@ -31,7 +31,6 @@
 #include "hal_flow.h"
 #include "rx_flow_search_entry.h"
 #include "hal_rx_flow_info.h"
-
 #include "hal_be_api.h"
 
 #define UNIFIED_RXPCU_PPDU_END_INFO_8_RX_PPDU_DURATION_OFFSET \

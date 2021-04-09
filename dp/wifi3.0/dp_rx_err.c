@@ -301,7 +301,7 @@ dp_rx_msdus_drop(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 	struct buffer_addr_info cur_link_desc_addr_info = { 0 };
 	struct buffer_addr_info next_link_desc_addr_info = { 0 };
 
-	hal_rx_reo_buf_paddr_get(ring_desc, &buf_info);
+	hal_rx_reo_buf_paddr_get(soc->hal_soc, ring_desc, &buf_info);
 
 	/* buffer_addr_info is the first element of ring_desc */
 	hal_rx_buf_cookie_rbm_get(soc->hal_soc,
@@ -1759,7 +1759,7 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 		 * check for the magic number in the sw cookie
 		 */
 		qdf_assert_always((hbi.sw_cookie >> LINK_DESC_ID_SHIFT) &
-							LINK_DESC_ID_START);
+					soc->link_desc_id_start);
 
 		status = dp_rx_link_cookie_check(ring_desc);
 		if (qdf_unlikely(QDF_IS_STATUS_ERROR(status))) {
@@ -1767,7 +1767,7 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 			break;
 		}
 
-		hal_rx_reo_buf_paddr_get(ring_desc, &hbi);
+		hal_rx_reo_buf_paddr_get(soc->hal_soc, ring_desc, &hbi);
 		link_desc_va = dp_rx_cookie_2_link_desc_va(soc, &hbi);
 		hal_rx_msdu_list_get(soc->hal_soc, link_desc_va, &msdu_list,
 				     &num_msdus);
@@ -2799,7 +2799,7 @@ dp_handle_wbm_internal_error(struct dp_soc *soc, void *hal_desc,
 	union dp_rx_desc_list_elem_t *tail = NULL;
 	uint8_t pool_id;
 
-	hal_rx_reo_buf_paddr_get(hal_desc, &buf_info);
+	hal_rx_reo_buf_paddr_get(soc->hal_soc, hal_desc, &buf_info);
 
 	if (!buf_info.paddr) {
 		DP_STATS_INC(soc, tx.wbm_internal_error[WBM_INT_ERROR_REO_NULL_BUFFER], 1);

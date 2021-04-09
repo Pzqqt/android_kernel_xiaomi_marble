@@ -1572,8 +1572,6 @@ struct dp_soc {
 	/* OS device abstraction */
 	qdf_device_t osdev;
 
-	struct dp_arch_ops arch_ops;
-
 	/*cce disable*/
 	bool cce_disable;
 
@@ -1620,6 +1618,13 @@ struct dp_soc {
 
 	/* HAL SOC handle */
 	hal_soc_handle_t hal_soc;
+
+	/* rx monitor pkt tlv size */
+	uint16_t rx_mon_pkt_tlv_size;
+	/* rx pkt tlv size */
+	uint16_t rx_pkt_tlv_size;
+
+	struct dp_arch_ops arch_ops;
 
 	/* Device ID coming from Bus sub-system */
 	uint32_t device_id;
@@ -2010,10 +2015,11 @@ struct dp_soc {
 	/* BM id for first WBM2SW  ring */
 	uint32_t wbm_sw0_bm_id;
 
-	/* rx monitor pkt tlv size */
-	uint16_t rx_mon_pkt_tlv_size;
-	/* rx pkt tlv size */
-	uint16_t rx_pkt_tlv_size;
+	/* Store arch_id from device_id */
+	uint16_t arch_id;
+
+	/* link desc ID start per device type */
+	uint32_t link_desc_id_start;
 };
 
 #ifdef IPA_OFFLOAD
@@ -2068,19 +2074,20 @@ struct dp_ipa_resources {
 #ifdef MAX_ALLOC_PAGE_SIZE
 #define LINK_DESC_PAGE_ID_MASK  0x007FE0
 #define LINK_DESC_ID_SHIFT      5
-#define LINK_DESC_COOKIE(_desc_id, _page_id) \
-	((((_page_id) + LINK_DESC_ID_START) << LINK_DESC_ID_SHIFT) | (_desc_id))
+#define LINK_DESC_COOKIE(_desc_id, _page_id, _desc_id_start) \
+	((((_page_id) + (_desc_id_start)) << LINK_DESC_ID_SHIFT) | (_desc_id))
 #define LINK_DESC_COOKIE_PAGE_ID(_cookie) \
 	(((_cookie) & LINK_DESC_PAGE_ID_MASK) >> LINK_DESC_ID_SHIFT)
 #else
 #define LINK_DESC_PAGE_ID_MASK  0x7
 #define LINK_DESC_ID_SHIFT      3
-#define LINK_DESC_COOKIE(_desc_id, _page_id) \
-	((((_desc_id) + LINK_DESC_ID_START) << LINK_DESC_ID_SHIFT) | (_page_id))
+#define LINK_DESC_COOKIE(_desc_id, _page_id, _desc_id_start) \
+	((((_desc_id) + (_desc_id_start)) << LINK_DESC_ID_SHIFT) | (_page_id))
 #define LINK_DESC_COOKIE_PAGE_ID(_cookie) \
 	((_cookie) & LINK_DESC_PAGE_ID_MASK)
 #endif
-#define LINK_DESC_ID_START 0x8000
+#define LINK_DESC_ID_START_21_BITS_COOKIE 0x8000
+#define LINK_DESC_ID_START_20_BITS_COOKIE 0x4000
 
 /* same as ieee80211_nac_param */
 enum dp_nac_param_cmd {

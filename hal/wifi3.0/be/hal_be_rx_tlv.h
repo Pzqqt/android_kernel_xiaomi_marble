@@ -19,6 +19,8 @@
 #ifndef _HAL_BE_RX_TLV_H_
 #define _HAL_BE_RX_TLV_H_
 
+#include "hal_api_mon.h"
+
 /*
  * Structures & Macros to obtain fields from the TLV's in the Rx packet
  * pre-header.
@@ -27,6 +29,8 @@
 #define HAL_RX_BE_PKT_HDR_TLV_LEN		112
 
 #ifdef CONFIG_WORD_BASED_TLV
+typedef struct rx_mpdu_start hal_rx_mpdu_start_t;
+typedef struct rx_msdu_end hal_rx_msdu_end_t;
 #else
 typedef struct rx_mpdu_start hal_rx_mpdu_start_t;
 typedef struct rx_msdu_end hal_rx_msdu_end_t;
@@ -75,6 +79,16 @@ struct rx_pkt_tlvs {
 #define HAL_RX_MPDU_START(_rx_pkt_tlv)	\
 	(((struct rx_pkt_tlvs *)_rx_pkt_tlv)->mpdu_start_tlv.	\
 	  rx_mpdu_start.rx_mpdu_info_details)
+
+#else
+
+#define HAL_RX_MSDU_END(_rx_pkt_tlv)		\
+	(((struct rx_pkt_tlvs *)_rx_pkt_tlv)->msdu_end_tlv.rx_msdu_end)
+
+#define HAL_RX_MPDU_START(_rx_pkt_tlv)	\
+	(((struct rx_pkt_tlvs *)_rx_pkt_tlv)->mpdu_start_tlv.	\
+	 rx_mpdu_start.rx_mpdu_info_details)
+
 #endif	/* CONFIG_WORD_BASED_TLV */
 
 #define HAL_RX_TLV_MSDU_DONE_GET(_rx_pkt_tlv)	\

@@ -60,7 +60,8 @@ dp_tx_capture_get_user_id(struct dp_pdev *dp_pdev, void *rx_desc_tlv)
 	if (dp_pdev->tx_capture_enabled
 	    != CDP_TX_ENH_CAPTURE_DISABLED)
 		dp_pdev->ppdu_info.rx_info.user_id =
-			HAL_RX_HW_DESC_MPDU_USER_ID(rx_desc_tlv);
+			hal_rx_hw_desc_mpdu_user_id(dp_pdev->soc->hal_soc,
+						    rx_desc_tlv);
 }
 #else
 static inline void
@@ -576,7 +577,9 @@ qdf_nbuf_t dp_rx_mon_frag_restitch_mpdu_from_msdus(struct dp_soc *soc,
 	dp_pdev->ppdu_info.rx_status.rs_fcs_err = rx_status->cdp_rs_fcs_err;
 
 	rx_desc = qdf_nbuf_get_frag_addr(head_msdu, 0) - rx_mon_tlv_size;
-	hal_rx_mon_dest_get_buffer_info_from_tlv(rx_desc, &buf_info);
+	hal_rx_priv_info_get_from_tlv(soc->hal_soc, rx_desc,
+				      (uint8_t *)&buf_info,
+				      sizeof(buf_info));
 
 	/* Easy case - The MSDU status indicates that this is a non-decapped
 	 * packet in RAW mode.
@@ -674,7 +677,7 @@ qdf_nbuf_t dp_rx_mon_frag_restitch_mpdu_from_msdus(struct dp_soc *soc,
 	 *  ------------------------------------------------------------
 	 */
 	pad_byte_pholder =
-		(RX_MONITOR_BUFFER_SIZE - RX_PKT_TLVS_LEN) - frag_size;
+		(RX_MONITOR_BUFFER_SIZE - soc->rx_pkt_tlv_size) - frag_size;
 	/* Construct destination address
 	 *  --------------------------------------------------------------
 	 * | RX_PKT_TLV | L2_HDR_PAD   |   Decap HDR   |      Payload     |
@@ -782,8 +785,9 @@ qdf_nbuf_t dp_rx_mon_frag_restitch_mpdu_from_msdus(struct dp_soc *soc,
 							   msdu_curr, rx_desc);
 
 			/* Read buffer info from stored data in tlvs */
-			hal_rx_mon_dest_get_buffer_info_from_tlv(rx_desc,
-								 &buf_info);
+			hal_rx_priv_info_get_from_tlv(soc->hal_soc, rx_desc,
+						      (uint8_t *)&buf_info,
+						      sizeof(buf_info));
 
 			frag_size = qdf_nbuf_get_frag_size_by_idx(msdu_curr,
 								  frags_iter);
@@ -800,7 +804,8 @@ qdf_nbuf_t dp_rx_mon_frag_restitch_mpdu_from_msdus(struct dp_soc *soc,
 			 * to accommodate amsdu pad byte
 			 */
 			pad_byte_pholder =
-				(RX_MONITOR_BUFFER_SIZE - RX_PKT_TLVS_LEN) - frag_size;
+				(RX_MONITOR_BUFFER_SIZE - soc->rx_pkt_tlv_size)
+				- frag_size;
 			/*
 			 * We will come here only only three condition:
 			 * 1. Msdu with single Buffer

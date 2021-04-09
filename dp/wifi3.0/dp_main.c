@@ -3238,7 +3238,8 @@ void dp_link_desc_ring_replenish(struct dp_soc *soc, uint32_t mac_id)
 			(count < total_link_descs)) {
 			page_idx = count / pages->num_element_per_page;
 			offset = count % pages->num_element_per_page;
-			cookie = LINK_DESC_COOKIE(count, page_idx);
+			cookie = LINK_DESC_COOKIE(count, page_idx,
+						  soc->link_desc_id_start);
 
 			hal_set_link_desc_addr(soc->hal_soc, desc, cookie,
 					       dma_pages[page_idx].page_p_addr
@@ -3266,7 +3267,8 @@ void dp_link_desc_ring_replenish(struct dp_soc *soc, uint32_t mac_id)
 		while (count < total_link_descs) {
 			page_idx = count / num_descs_per_page;
 			offset = count % num_descs_per_page;
-			cookie = LINK_DESC_COOKIE(count, page_idx);
+			cookie = LINK_DESC_COOKIE(count, page_idx,
+						  soc->link_desc_id_start);
 			hal_set_link_desc_addr(soc->hal_soc,
 					       (void *)scatter_buf_ptr,
 					       cookie,
@@ -4580,8 +4582,9 @@ dp_soc_tx_hw_desc_history_detach(struct dp_soc *soc)
  */
 static void dp_soc_rx_reinject_ring_history_attach(struct dp_soc *soc)
 {
-	soc->rx_reinject_ring_history = dp_context_alloc_mem(
-			soc, DP_RX_REINJECT_RING_HIST_TYPE, rx_ring_hist_size);
+	soc->rx_reinject_ring_history =
+		dp_context_alloc_mem(soc, DP_RX_REINJECT_RING_HIST_TYPE,
+				     sizeof(struct dp_rx_reinject_history));
 	if (soc->rx_reinject_ring_history)
 		qdf_atomic_init(&soc->rx_reinject_ring_history->index);
 }
@@ -4608,13 +4611,9 @@ static void dp_soc_rx_history_attach(struct dp_soc *soc)
 {
 	int i;
 	uint32_t rx_ring_hist_size;
-	uint32_t rx_err_ring_hist_size;
-	uint32_t rx_reinject_hist_size;
 	uint32_t rx_refill_ring_hist_size;
 
 	rx_ring_hist_size = sizeof(*soc->rx_ring_history[0]);
-	rx_err_ring_hist_size = sizeof(*soc->rx_err_ring_history);
-	rx_reinject_hist_size = sizeof(*soc->rx_reinject_ring_history);
 	rx_refill_ring_hist_size = sizeof(*soc->rx_refill_ring_history[0]);
 
 	for (i = 0; i < MAX_REO_DEST_RINGS; i++) {
@@ -12687,6 +12686,21 @@ static inline void dp_soc_set_def_pdev(struct dp_soc *soc)
 	}
 }
 
+static uint32_t
+dp_get_link_desc_id_start(uint16_t arch_id)
+{
+	switch (arch_id) {
+	case LITHIUM_DP:
+		return LINK_DESC_ID_START_21_BITS_COOKIE;
+	case BERYLLIUM_DP:
+		return LINK_DESC_ID_START_20_BITS_COOKIE;
+	default:
+		dp_err("unkonwn arch_id 0x%x", arch_id);
+		QDF_BUG(0);
+		return LINK_DESC_ID_START_21_BITS_COOKIE;
+	}
+}
+
 /**
  * dp_soc_attach() - Attach txrx SOC
  * @ctrl_psoc: Opaque SOC handle from control plane
@@ -12706,18 +12720,18 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 {
 	int int_ctx;
 	struct dp_soc *soc =  NULL;
+	uint16_t arch_id;
 
 	if (!hif_handle) {
 		dp_err("HIF handle is NULL");
 		goto fail0;
 	}
-
+	arch_id = cdp_get_arch_type_from_devid(device_id);
 	soc = qdf_mem_malloc(dp_get_soc_context_size(device_id));
 	if (!soc) {
 		dp_err("DP SOC memory allocation failed");
 		goto fail0;
 	}
-
 	dp_info("soc memory allocated %pk", soc);
 	soc->hif_handle = hif_handle;
 	soc->hal_soc = hif_get_hal_handle(soc->hif_handle);
@@ -12734,6 +12748,9 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 	hal_rx_get_tlv_size(soc->hal_soc, &soc->rx_pkt_tlv_size,
 			    &soc->rx_mon_pkt_tlv_size);
 
+	soc->arch_id = arch_id;
+	soc->link_desc_id_start =
+			dp_get_link_desc_id_start(soc->arch_id);
 	dp_configure_arch_ops(soc);
 
 	/* Reset wbm sg list and flags */

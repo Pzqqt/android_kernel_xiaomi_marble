@@ -256,8 +256,6 @@ struct rx_pkt_hdr_tlv {
 	char rx_pkt_hdr[RX_PKT_HDR_TLV_LEN];	/* 120 B */
 };
 
-#define RXDMA_OPTIMIZATION
-
 /* rx_pkt_tlvs structure should be used to process Data buffers, monitor status
  * buffers, monitor destination buffers and monitor descriptor buffers.
  */
@@ -359,34 +357,16 @@ struct rx_mpdu_info *hal_rx_get_mpdu_info(struct rx_pkt_tlvs *pkt_tlvs)
 }
 
 /**
- * hal_rx_mon_dest_set_buffer_info_to_tlv(): Save the mon dest frame info
- *      into the reserved bytes of rx_tlv_hdr.
- * @buf: start of rx_tlv_hdr
- * @buf_info: hal_rx_mon_dest_buf_info structure
- *
- * Return: void
- */
-static inline void hal_rx_mon_dest_set_buffer_info_to_tlv(
-		uint8_t *buf,
-		struct hal_rx_mon_dest_buf_info *buf_info)
-{
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-
-	qdf_mem_copy(pkt_tlvs->rx_padding0, buf_info,
-		     sizeof(struct hal_rx_mon_dest_buf_info));
-}
-
-/**
  * hal_rx_mon_dest_get_buffer_info_from_tlv(): Retrieve mon dest frame info
- *      from the reserved bytes of rx_tlv_hdr.
+ * from the reserved bytes of rx_tlv_hdr.
  * @buf: start of rx_tlv_hdr
  * @buf_info: hal_rx_mon_dest_buf_info structure
  *
  * Return: void
  */
 static inline void hal_rx_mon_dest_get_buffer_info_from_tlv(
-		uint8_t *buf,
-		struct hal_rx_mon_dest_buf_info *buf_info)
+				uint8_t *buf,
+				struct hal_rx_mon_dest_buf_info *buf_info)
 {
 	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
 
@@ -775,25 +755,6 @@ hal_rx_attn_msdu_get_is_decrypted(uint8_t *buf)
 		RX_MSDU_END_2_KEY_ID_OCTET_OFFSET)),	\
 		RX_MSDU_END_2_KEY_ID_OCTET_MASK,	\
 		RX_MSDU_END_2_KEY_ID_OCTET_LSB))
-/*
- * hal_rx_msdu_get_keyid(): API to get the key id if the decrypted packet
- * from rx_msdu_end
- *
- * @buf: pointer to the start of RX PKT TLV header
- * Return: uint32_t(key id)
- */
-
-static inline uint32_t
-hal_rx_msdu_get_keyid(uint8_t *buf)
-{
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
-	uint32_t keyid_octet;
-
-	keyid_octet = HAL_RX_MSDU_END_KEYID_OCTET_GET(msdu_end);
-
-	return keyid_octet & 0x3;
-}
 
 #define HAL_RX_MSDU_START_RSSI_GET(_rx_msdu_start)	\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_start,  \
@@ -925,32 +886,6 @@ hal_rx_mpdu_end_mic_err_get(uint8_t *buf)
  * RX REO ERROR APIS
  ******************************************************************************/
 
-/**
- * hal_rx_msdu_reo_dst_ind_get: Gets the REO
- * destination ring ID from the msdu desc info
- *
- * @msdu_link_desc : Opaque cookie pointer used by HAL to get to
- * the current descriptor
- *
- * Return: dst_ind (REO destination ring ID)
- */
-static inline uint32_t
-hal_rx_msdu_reo_dst_ind_get(hal_soc_handle_t hal_soc_hdl, void *msdu_link_desc)
-{
-	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
-	struct rx_msdu_details *msdu_details;
-	struct rx_msdu_desc_info *msdu_desc_info;
-	struct rx_msdu_link *msdu_link = (struct rx_msdu_link *)msdu_link_desc;
-	uint32_t dst_ind;
-
-	msdu_details = hal_rx_link_desc_msdu0_ptr(msdu_link, hal_soc);
-
-	/* The first msdu in the link should exsist */
-	msdu_desc_info = hal_rx_msdu_desc_info_get_ptr(&msdu_details[0],
-						       hal_soc);
-	dst_ind = HAL_RX_MSDU_REO_DST_IND_GET(msdu_desc_info);
-	return dst_ind;
-}
 
 #define HAL_RX_REO_BUF_TYPE_GET(reo_desc) (((*(((uint32_t *)reo_desc) + \
 		(REO_DESTINATION_RING_7_REO_DEST_BUFFER_TYPE_OFFSET >> 2))) & \
@@ -1003,6 +938,17 @@ void hal_rx_msdu_link_desc_reinject(struct hal_soc *soc,
 #define HAL_RX_WBM_BUF_COOKIE_GET(wbm_desc) \
 	HAL_RX_BUF_COOKIE_GET(&((struct wbm_release_ring *) \
 	wbm_desc)->released_buff_or_desc_addr_info)
+
+static inline
+uint32_t
+HAL_RX_DESC_GET_DECAP_FORMAT(void *hw_desc_addr) {
+	struct rx_msdu_start *rx_msdu_start;
+	struct rx_pkt_tlvs *rx_desc = (struct rx_pkt_tlvs *)hw_desc_addr;
+
+	rx_msdu_start = &rx_desc->msdu_start_tlv.rx_msdu_start;
+
+	return HAL_RX_GET(rx_msdu_start, RX_MSDU_START_2, DECAP_FORMAT);
+}
 
 /**
  * hal_rx_dump_rx_attention_tlv: dump RX attention TLV in structured
@@ -1254,6 +1200,58 @@ static inline uint32_t hal_rx_attn_msdu_done_get_li(uint8_t *buf)
 	msdu_done = HAL_RX_ATTN_MSDU_DONE_GET(rx_attn);
 
 	return msdu_done;
+}
+
+#define HAL_RX_MSDU_FLAGS_GET(msdu_info_ptr) \
+	(HAL_RX_FIRST_MSDU_IN_MPDU_FLAG_GET(msdu_info_ptr) | \
+	HAL_RX_LAST_MSDU_IN_MPDU_FLAG_GET(msdu_info_ptr) | \
+	HAL_RX_MSDU_CONTINUATION_FLAG_GET(msdu_info_ptr) | \
+	HAL_RX_MSDU_SA_IS_VALID_FLAG_GET(msdu_info_ptr) | \
+	HAL_RX_MSDU_SA_IDX_TIMEOUT_FLAG_GET(msdu_info_ptr) | \
+	HAL_RX_MSDU_DA_IS_VALID_FLAG_GET(msdu_info_ptr) | \
+	HAL_RX_MSDU_DA_IS_MCBC_FLAG_GET(msdu_info_ptr) | \
+	HAL_RX_MSDU_DA_IDX_TIMEOUT_FLAG_GET(msdu_info_ptr))
+
+/**
+ * hal_rx_msdu_flags_get_li() - Get msdu flags from ring desc
+ * @msdu_desc_info_hdl: msdu desc info handle
+ *
+ * Return: msdu flags
+ */
+static inline
+uint32_t hal_rx_msdu_flags_get_li(rx_msdu_desc_info_t msdu_desc_info_hdl)
+{
+	struct rx_msdu_desc_info *msdu_desc_info =
+		(struct rx_msdu_desc_info *)msdu_desc_info_hdl;
+
+	return HAL_RX_MSDU_FLAGS_GET(msdu_desc_info);
+}
+
+/*
+ *hal_rx_msdu_desc_info_get_li: Gets the flags related to MSDU descriptor.
+ *@desc_addr: REO ring descriptor addr
+ *@msdu_desc_info: Holds MSDU descriptor info from HAL Rx descriptor
+ *
+ * Specifically flags needed are: first_msdu_in_mpdu,
+ * last_msdu_in_mpdu, msdu_continuation, sa_is_valid,
+ * sa_idx_timeout, da_is_valid, da_idx_timeout, da_is_MCBC
+ *
+
+ *Return: void
+ */
+static inline void
+hal_rx_msdu_desc_info_get_li(void *desc_addr,
+			     struct hal_rx_msdu_desc_info *msdu_desc_info)
+{
+	struct reo_destination_ring *reo_dst_ring;
+	uint32_t *msdu_info;
+
+	reo_dst_ring = (struct reo_destination_ring *)desc_addr;
+
+	msdu_info = (uint32_t *)&reo_dst_ring->rx_msdu_desc_info_details;
+	msdu_desc_info->msdu_flags =
+		hal_rx_msdu_flags_get_li((struct rx_msdu_desc_info *)msdu_info);
+	msdu_desc_info->msdu_len = HAL_RX_MSDU_PKT_LENGTH_GET(msdu_info);
 }
 
 #define HAL_RX_MSDU_START_NSS_GET(_rx_msdu_start)		\

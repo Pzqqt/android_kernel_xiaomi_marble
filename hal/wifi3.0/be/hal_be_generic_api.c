@@ -16,6 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <qdf_module.h>
 #include "hal_be_api.h"
 #include "hal_be_hw_headers.h"
 #include "hal_be_reo.h"
@@ -153,6 +154,33 @@ void hal_set_link_desc_addr_be(void *desc, uint32_t cookie,
 			   WBM_IDLE_DESC_LIST);
 	HAL_DESC_SET_FIELD(buf_addr, BUFFER_ADDR_INFO, SW_BUFFER_COOKIE,
 			   cookie);
+}
+
+static uint32_t hal_get_reo_qdesc_size_be(uint32_t ba_window_size, int tid)
+{
+	/* Return descriptor size corresponding to window size of 2 since
+	 * we set ba_window_size to 2 while setting up REO descriptors as
+	 * a WAR to get 2k jump exception aggregates are received without
+	 * a BA session.
+	 */
+	if (ba_window_size <= 1) {
+		if (tid != HAL_NON_QOS_TID)
+			return sizeof(struct rx_reo_queue) +
+				sizeof(struct rx_reo_queue_ext);
+		else
+			return sizeof(struct rx_reo_queue);
+	}
+
+	if (ba_window_size <= 105)
+		return sizeof(struct rx_reo_queue) +
+			sizeof(struct rx_reo_queue_ext);
+
+	if (ba_window_size <= 210)
+		return sizeof(struct rx_reo_queue) +
+			(2 * sizeof(struct rx_reo_queue_ext));
+
+	return sizeof(struct rx_reo_queue) +
+		(3 * sizeof(struct rx_reo_queue_ext));
 }
 
 void *hal_rx_msdu_ext_desc_info_get_ptr_be(void *msdu_details_ptr)
@@ -444,6 +472,63 @@ void hal_rx_wbm_err_info_get_generic_be(void *wbm_desc, void *wbm_er_info1)
 	wbm_er_info->rxdma_err_code = HAL_RX_WBM_RXDMA_ERROR_CODE_GET(wbm_desc);
 }
 
+static void hal_rx_reo_buf_paddr_get_be(hal_ring_desc_t rx_desc,
+					struct hal_buf_info *buf_info)
+{
+	struct reo_destination_ring *reo_ring =
+		 (struct reo_destination_ring *)rx_desc;
+
+	buf_info->paddr =
+	 (HAL_RX_REO_BUFFER_ADDR_31_0_GET(reo_ring) |
+	  ((uint64_t)(HAL_RX_REO_BUFFER_ADDR_39_32_GET(reo_ring)) << 32));
+	buf_info->sw_cookie = HAL_RX_REO_BUF_COOKIE_GET(reo_ring);
+}
+
+static void hal_rx_msdu_link_desc_set_be(hal_soc_handle_t hal_soc_hdl,
+					 void *src_srng_desc,
+					 hal_buff_addrinfo_t buf_addr_info,
+					 uint8_t bm_action)
+{
+	/*
+	 * The offsets for fields used in this function are same in
+	 * wbm_release_ring for Lithium and wbm_release_ring_tx
+	 * for Beryllium. hence we can use wbm_release_ring directly.
+	 */
+	struct wbm_release_ring *wbm_rel_srng =
+			(struct wbm_release_ring *)src_srng_desc;
+	uint32_t addr_31_0;
+	uint8_t addr_39_32;
+
+	/* Structure copy !!! */
+	wbm_rel_srng->released_buff_or_desc_addr_info =
+				*((struct buffer_addr_info *)buf_addr_info);
+
+	addr_31_0 =
+	wbm_rel_srng->released_buff_or_desc_addr_info.buffer_addr_31_0;
+	addr_39_32 =
+	wbm_rel_srng->released_buff_or_desc_addr_info.buffer_addr_39_32;
+
+	HAL_DESC_SET_FIELD(src_srng_desc, HAL_SW2WBM_RELEASE_RING,
+			   RELEASE_SOURCE_MODULE, HAL_RX_WBM_ERR_SRC_SW);
+	HAL_DESC_SET_FIELD(src_srng_desc, HAL_SW2WBM_RELEASE_RING, BM_ACTION,
+			   bm_action);
+	HAL_DESC_SET_FIELD(src_srng_desc, HAL_SW2WBM_RELEASE_RING,
+			   BUFFER_OR_DESC_TYPE,
+			   HAL_RX_WBM_BUF_TYPE_MSDU_LINK_DESC);
+
+	/* WBM error is indicated when any of the link descriptors given to
+	 * WBM has a NULL address, and one those paths is the link descriptors
+	 * released from host after processing RXDMA errors,
+	 * or from Rx defrag path, and we want to add an assert here to ensure
+	 * host is not releasing descriptors with NULL address.
+	 */
+
+	if (qdf_unlikely(!addr_31_0 && !addr_39_32)) {
+		hal_dump_wbm_rel_desc(src_srng_desc);
+		qdf_assert_always(0);
+	}
+}
+
 /**
  * hal_rx_reo_ent_buf_paddr_get_be: Gets the physical address and
  * cookie from the REO entrance ring element
@@ -455,7 +540,7 @@ void hal_rx_wbm_err_info_get_generic_be(void *wbm_desc, void *wbm_er_info1)
  * Return: void
  */
 static
-void hal_rx_buf_cookie_rbm_get_be(hal_buff_addrinfo_t buf_addr_info_hdl,
+void hal_rx_buf_cookie_rbm_get_be(uint32_t *buf_addr_info_hdl,
 				  hal_buf_info_t buf_info_hdl)
 {
 	struct hal_buf_info *buf_info =
@@ -493,41 +578,6 @@ hal_rxdma_buff_addr_info_set_be(void *rxdma_entry,
 	HAL_RXDMA_PADDR_HI_SET(rxdma_entry, paddr_hi);
 	HAL_RXDMA_COOKIE_SET(rxdma_entry, cookie);
 	HAL_RXDMA_MANAGER_SET(rxdma_entry, manager);
-}
-
-/**
- * hal_rx_msdu_flags_get_be() - Get msdu flags from ring desc
- * @msdu_desc_info_hdl: msdu desc info handle
- *
- * Return: msdu flags
- */
-static uint32_t hal_rx_msdu_flags_get_be(rx_msdu_desc_info_t msdu_desc_info_hdl)
-{
-	struct rx_msdu_desc_info *msdu_desc_info =
-		(struct rx_msdu_desc_info *)msdu_desc_info_hdl;
-	uint32_t flags = 0;
-
-// SA_IDX_TIMEOUT and DA_IDX_TIMEOUT is not present in hamilton
-// DA_IDX_TIMEOUT and DA_IDX_TIMEOUT is not present in hamilton
-	if (HAL_RX_FIRST_MSDU_IN_MPDU_FLAG_GET(msdu_desc_info))
-		flags |= HAL_MSDU_F_FIRST_MSDU_IN_MPDU;
-
-	if (HAL_RX_LAST_MSDU_IN_MPDU_FLAG_GET(msdu_desc_info))
-		flags |= HAL_MSDU_F_LAST_MSDU_IN_MPDU;
-
-	if (HAL_RX_MSDU_CONTINUATION_FLAG_GET(msdu_desc_info))
-		flags |= HAL_MSDU_F_MSDU_CONTINUATION;
-
-	if (HAL_RX_MSDU_SA_IS_VALID_FLAG_GET(msdu_desc_info))
-		flags |= HAL_MSDU_F_SA_IS_VALID;
-
-	if (HAL_RX_MSDU_DA_IS_VALID_FLAG_GET(msdu_desc_info))
-		flags |= HAL_MSDU_F_DA_IS_VALID;
-
-	if (HAL_RX_MSDU_DA_IS_MCBC_FLAG_GET(msdu_desc_info))
-		flags |= HAL_MSDU_F_DA_IS_MCBC;
-
-	return flags;
 }
 
 /**
@@ -584,28 +634,74 @@ hal_gen_reo_remap_val_generic_be(enum hal_reo_remap_reg remap_reg,
 	return ix_val;
 }
 
-void hal_rx_mpdu_desc_info_get_be(void *desc_addr,
-				  void *mpdu_desc_info_hdl)
-{
-	struct reo_destination_ring *reo_dst_ring;
-	struct hal_rx_mpdu_desc_info *mpdu_desc_info =
-		(struct hal_rx_mpdu_desc_info *)mpdu_desc_info_hdl;
-	uint32_t *mpdu_info;
-
-	reo_dst_ring = (struct reo_destination_ring *)desc_addr;
-
-	mpdu_info = (uint32_t *)&reo_dst_ring->rx_mpdu_desc_info_details;
-
-	mpdu_desc_info->msdu_count = HAL_RX_MPDU_MSDU_COUNT_GET(mpdu_info);
-	mpdu_desc_info->mpdu_flags = hal_rx_get_mpdu_flags(mpdu_info);
-	mpdu_desc_info->peer_meta_data =
-		HAL_RX_MPDU_DESC_PEER_META_DATA_GET(mpdu_info);
-	mpdu_desc_info->bar_frame = HAL_RX_MPDU_BAR_FRAME_GET(mpdu_info);
-}
-
 static uint8_t hal_rx_err_status_get_be(hal_ring_desc_t rx_desc)
 {
 	return HAL_RX_ERROR_STATUS_GET(rx_desc);
+}
+
+static QDF_STATUS hal_reo_status_update_be(hal_soc_handle_t hal_soc_hdl,
+					   hal_ring_desc_t reo_desc,
+					   void *st_handle,
+					   uint32_t tlv, int *num_ref)
+{
+	union hal_reo_status *reo_status_ref;
+
+	reo_status_ref = (union hal_reo_status *)st_handle;
+
+	switch (tlv) {
+	case HAL_REO_QUEUE_STATS_STATUS_TLV:
+		hal_reo_queue_stats_status_be(reo_desc,
+					      &reo_status_ref->queue_status,
+					      hal_soc_hdl);
+		*num_ref = reo_status_ref->queue_status.header.cmd_num;
+		break;
+	case HAL_REO_FLUSH_QUEUE_STATUS_TLV:
+		hal_reo_flush_queue_status_be(reo_desc,
+					      &reo_status_ref->fl_queue_status,
+					      hal_soc_hdl);
+		*num_ref = reo_status_ref->fl_queue_status.header.cmd_num;
+		break;
+	case HAL_REO_FLUSH_CACHE_STATUS_TLV:
+		hal_reo_flush_cache_status_be(reo_desc,
+					      &reo_status_ref->fl_cache_status,
+					      hal_soc_hdl);
+		*num_ref = reo_status_ref->fl_cache_status.header.cmd_num;
+		break;
+	case HAL_REO_UNBLK_CACHE_STATUS_TLV:
+		hal_reo_unblock_cache_status_be
+			(reo_desc, hal_soc_hdl,
+			 &reo_status_ref->unblk_cache_status);
+		*num_ref = reo_status_ref->unblk_cache_status.header.cmd_num;
+		break;
+	case HAL_REO_TIMOUT_LIST_STATUS_TLV:
+		hal_reo_flush_timeout_list_status_be(
+					reo_desc,
+					&reo_status_ref->fl_timeout_status,
+					hal_soc_hdl);
+		*num_ref = reo_status_ref->fl_timeout_status.header.cmd_num;
+		break;
+	case HAL_REO_DESC_THRES_STATUS_TLV:
+		hal_reo_desc_thres_reached_status_be(
+						reo_desc,
+						&reo_status_ref->thres_status,
+						hal_soc_hdl);
+		*num_ref = reo_status_ref->thres_status.header.cmd_num;
+		break;
+	case HAL_REO_UPDATE_RX_QUEUE_STATUS_TLV:
+		hal_reo_rx_update_queue_status_be(
+					reo_desc,
+					&reo_status_ref->rx_queue_status,
+					hal_soc_hdl);
+		*num_ref = reo_status_ref->rx_queue_status.header.cmd_num;
+		break;
+	default:
+		QDF_TRACE(QDF_MODULE_ID_DP_REO, QDF_TRACE_LEVEL_WARN,
+			  "hal_soc %pK: no handler for TLV:%d",
+			   hal_soc_hdl, tlv);
+		return QDF_STATUS_E_FAILURE;
+	} /* switch */
+
+	return QDF_STATUS_SUCCESS;
 }
 
 static uint8_t hal_rx_reo_buf_type_get_be(hal_ring_desc_t rx_desc)
@@ -622,6 +718,7 @@ static uint8_t hal_rx_reo_buf_type_get_be(hal_ring_desc_t rx_desc)
  */
 void hal_hw_txrx_default_ops_attach_be(struct hal_soc *hal_soc)
 {
+	hal_soc->ops->hal_get_reo_qdesc_size = hal_get_reo_qdesc_size_be;
 	hal_soc->ops->hal_set_link_desc_addr = hal_set_link_desc_addr_be;
 	hal_soc->ops->hal_tx_init_data_ring = hal_tx_init_data_ring_be;
 	hal_soc->ops->hal_get_ba_aging_timeout = hal_get_ba_aging_timeout_be;
@@ -631,7 +728,10 @@ void hal_hw_txrx_default_ops_attach_be(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_setup_link_idle_list =
 				hal_setup_link_idle_list_generic_be;
 
+	hal_soc->ops->hal_rx_reo_buf_paddr_get = hal_rx_reo_buf_paddr_get_be;
+	hal_soc->ops->hal_rx_msdu_link_desc_set = hal_rx_msdu_link_desc_set_be;
 	hal_soc->ops->hal_rx_buf_cookie_rbm_get = hal_rx_buf_cookie_rbm_get_be;
+
 	hal_soc->ops->hal_rx_ret_buf_manager_get =
 						hal_rx_ret_buf_manager_get_be;
 	hal_soc->ops->hal_rxdma_buff_addr_info_set =
@@ -648,19 +748,7 @@ void hal_hw_txrx_default_ops_attach_be(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_rx_reo_buf_type_get = hal_rx_reo_buf_type_get_be;
 	hal_soc->ops->hal_rx_wbm_err_src_get = hal_rx_wbm_err_src_get_be;
 	hal_soc->ops->hal_reo_send_cmd = hal_reo_send_cmd_be;
-	hal_soc->ops->hal_reo_queue_stats_status =
-						hal_reo_queue_stats_status_be;
-	hal_soc->ops->hal_reo_flush_queue_status =
-						hal_reo_flush_queue_status_be;
-	hal_soc->ops->hal_reo_flush_cache_status =
-						hal_reo_flush_cache_status_be;
-	hal_soc->ops->hal_reo_unblock_cache_status =
-						hal_reo_unblock_cache_status_be;
-	hal_soc->ops->hal_reo_flush_timeout_list_status =
-					hal_reo_flush_timeout_list_status_be;
-	hal_soc->ops->hal_reo_desc_thres_reached_status =
-					hal_reo_desc_thres_reached_status_be;
-	hal_soc->ops->hal_reo_rx_update_queue_status =
-					hal_reo_rx_update_queue_status_be;
 	hal_soc->ops->hal_reo_qdesc_setup = hal_reo_qdesc_setup_be;
+	hal_soc->ops->hal_reo_status_update = hal_reo_status_update_be;
+	hal_soc->ops->hal_get_tlv_hdr_size = hal_get_tlv_hdr_size_be;
 }

@@ -554,7 +554,7 @@ dp_rx_mon_parse_desc_buffer(struct dp_soc *dp_soc,
 {
 	struct hal_rx_mon_dest_buf_info frame_info;
 	uint16_t tot_payload_len =
-			RX_MONITOR_BUFFER_SIZE - soc->rx_pkt_tlv_size;
+			RX_MONITOR_BUFFER_SIZE - dp_soc->rx_pkt_tlv_size;
 
 	if (msdu_info->msdu_flags & HAL_MSDU_F_MSDU_CONTINUATION) {
 		/* First buffer of MSDU */
@@ -582,8 +582,10 @@ dp_rx_mon_parse_desc_buffer(struct dp_soc *dp_soc,
 
 			frame_info.first_buffer = 1;
 			frame_info.last_buffer = 0;
-			hal_rx_mon_dest_set_buffer_info_to_tlv(rx_desc_tlv,
-							       &frame_info);
+			hal_rx_priv_info_set_in_tlv(dp_soc->hal_soc,
+						    rx_desc_tlv,
+						    (uint8_t *)&frame_info,
+						    sizeof(frame_info));
 		} else {
 			/*
 			 * Continuation Middle frame
@@ -602,8 +604,10 @@ dp_rx_mon_parse_desc_buffer(struct dp_soc *dp_soc,
 
 			frame_info.first_buffer = 0;
 			frame_info.last_buffer = 0;
-			hal_rx_mon_dest_set_buffer_info_to_tlv(rx_desc_tlv,
-							       &frame_info);
+			hal_rx_priv_info_set_in_tlv(dp_soc->hal_soc,
+						    rx_desc_tlv,
+						    (uint8_t *)&frame_info,
+						    sizeof(frame_info));
 		}
 	} else {
 		/**
@@ -625,8 +629,10 @@ dp_rx_mon_parse_desc_buffer(struct dp_soc *dp_soc,
 
 			frame_info.first_buffer = 0;
 			frame_info.last_buffer = 1;
-			hal_rx_mon_dest_set_buffer_info_to_tlv(rx_desc_tlv,
-							       &frame_info);
+			hal_rx_priv_info_set_in_tlv(dp_soc->hal_soc,
+						    rx_desc_tlv,
+						    (uint8_t *)&frame_info,
+						    sizeof(frame_info));
 		} else {
 			/* MSDU with single buffer */
 			*frag_len_p = msdu_info->msdu_len;
@@ -644,8 +650,10 @@ dp_rx_mon_parse_desc_buffer(struct dp_soc *dp_soc,
 
 			frame_info.first_buffer = 1;
 			frame_info.last_buffer = 1;
-			hal_rx_mon_dest_set_buffer_info_to_tlv(
-						rx_desc_tlv, &frame_info);
+			hal_rx_priv_info_set_in_tlv(dp_soc->hal_soc,
+						    rx_desc_tlv,
+						    (uint8_t *)&frame_info,
+						    sizeof(frame_info));
 		}
 		/* Reset bool after complete processing of MSDU */
 		*is_frag_p = false;
@@ -780,7 +788,8 @@ void dp_rx_mon_remove_raw_frame_fcs_len(struct dp_soc *soc,
 	/* Strip FCS_LEN for Raw frame */
 	addr = qdf_nbuf_get_frag_addr(*head_msdu, 0);
 	addr -= soc->rx_mon_pkt_tlv_size;
-	if (hal_rx_tlv_decap_format_get(addr) == HAL_HW_RX_DECAP_FORMAT_RAW) {
+	if (hal_rx_tlv_decap_format_get(soc->hal_soc, addr) ==
+		HAL_HW_RX_DECAP_FORMAT_RAW) {
 		qdf_nbuf_trim_add_frag_size(*tail_msdu,
 			qdf_nbuf_get_nr_frags(*tail_msdu) - 1,
 					-HAL_RX_FCS_LEN, 0);

@@ -75,4 +75,5 @@ hal_reo_rx_update_queue_status_li(hal_ring_desc_t ring_desc,
 void hal_reo_init_cmd_ring_li(hal_soc_handle_t hal_soc_hdl,
 			      hal_ring_handle_t hal_ring_hdl);
 
+uint8_t hal_get_tlv_hdr_size_li(void);
 #endif /* _HAL_LI_REO_H_ */

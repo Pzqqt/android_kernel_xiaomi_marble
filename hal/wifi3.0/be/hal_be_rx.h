@@ -180,6 +180,11 @@
 	HAL_RX_FLD_SET(_mpdu_info_ptr, RX_MPDU_DESC_INFO,		\
 			_field, _val)
 
+#define HAL_RX_REO_MSDU_REO_DST_IND_GET(reo_desc)	\
+	(HAL_RX_MSDU_REO_DST_IND_GET(&		\
+	(((struct reo_destination_ring *)	\
+	   reo_desc)->rx_msdu_desc_info_details)))
+
 /**
  * enum hal_be_rx_wbm_error_source: Indicates which module initiated the
  * release of this buffer or descriptor
@@ -240,33 +245,6 @@ static inline uint32_t hal_rx_get_mpdu_flags(uint32_t *mpdu_info)
  * RX REO ERROR APIS
  ******************************************************************************/
 
-/**
- * hal_rx_msdu_reo_dst_ind_get: Gets the REO
- * destination ring ID from the msdu desc info
- *
- * @msdu_link_desc : Opaque cookie pointer used by HAL to get to
- * the current descriptor
- *
- * Return: dst_ind (REO destination ring ID)
- */
-static inline uint32_t
-hal_rx_msdu_reo_dst_ind_get(hal_soc_handle_t hal_soc_hdl, void *msdu_link_desc)
-{
-	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
-	struct rx_msdu_details *msdu_details;
-	struct rx_msdu_desc_info *msdu_desc_info;
-	struct rx_msdu_link *msdu_link = (struct rx_msdu_link *)msdu_link_desc;
-	uint32_t dst_ind;
-
-	msdu_details = hal_rx_link_desc_msdu0_ptr(msdu_link, hal_soc);
-
-	/* The first msdu in the link should exsist */
-	msdu_desc_info = hal_rx_msdu_ext_desc_info_get_ptr(&msdu_details[0],
-							   hal_soc);
-	dst_ind = HAL_RX_MSDU_REO_DST_IND_GET(msdu_desc_info);
-	return dst_ind;
-}
-
 #define HAL_RX_REO_BUF_TYPE_GET(reo_desc) (((*(((uint32_t *)reo_desc) + \
 		(REO_DESTINATION_RING_REO_DEST_BUFFER_TYPE_OFFSET >> 2))) & \
 		REO_DESTINATION_RING_REO_DEST_BUFFER_TYPE_MASK) >> \
@@ -316,5 +294,86 @@ hal_rx_msdu_link_desc_reinject(struct hal_soc *soc, uint64_t pa,
 #define HAL_RX_WBM_BUF_COOKIE_GET(wbm_desc) \
 	HAL_RX_BUF_COOKIE_GET(&((struct wbm_release_ring *) \
 	wbm_desc)->released_buff_or_desc_addr_info)
+
+/**
+ * hal_rx_msdu_flags_get_be() - Get msdu flags from ring desc
+ * @msdu_desc_info_hdl: msdu desc info handle
+ *
+ * Return: msdu flags
+ */
+static inline
+uint32_t hal_rx_msdu_flags_get_be(rx_msdu_desc_info_t msdu_desc_info_hdl)
+{
+	struct rx_msdu_desc_info *msdu_desc_info =
+		(struct rx_msdu_desc_info *)msdu_desc_info_hdl;
+	uint32_t flags = 0;
+
+	if (HAL_RX_FIRST_MSDU_IN_MPDU_FLAG_GET(msdu_desc_info))
+		flags |= HAL_MSDU_F_FIRST_MSDU_IN_MPDU;
+
+	if (HAL_RX_LAST_MSDU_IN_MPDU_FLAG_GET(msdu_desc_info))
+		flags |= HAL_MSDU_F_LAST_MSDU_IN_MPDU;
+
+	if (HAL_RX_MSDU_CONTINUATION_FLAG_GET(msdu_desc_info))
+		flags |= HAL_MSDU_F_MSDU_CONTINUATION;
+
+	if (HAL_RX_MSDU_SA_IS_VALID_FLAG_GET(msdu_desc_info))
+		flags |= HAL_MSDU_F_SA_IS_VALID;
+
+	if (HAL_RX_MSDU_DA_IS_VALID_FLAG_GET(msdu_desc_info))
+		flags |= HAL_MSDU_F_DA_IS_VALID;
+
+	if (HAL_RX_MSDU_DA_IS_MCBC_FLAG_GET(msdu_desc_info))
+		flags |= HAL_MSDU_F_DA_IS_MCBC;
+
+	return flags;
+}
+
+static inline
+void hal_rx_mpdu_desc_info_get_be(void *desc_addr,
+				  void *mpdu_desc_info_hdl)
+{
+	struct reo_destination_ring *reo_dst_ring;
+	struct hal_rx_mpdu_desc_info *mpdu_desc_info =
+		(struct hal_rx_mpdu_desc_info *)mpdu_desc_info_hdl;
+	uint32_t *mpdu_info;
+
+	reo_dst_ring = (struct reo_destination_ring *)desc_addr;
+
+	mpdu_info = (uint32_t *)&reo_dst_ring->rx_mpdu_desc_info_details;
+
+	mpdu_desc_info->msdu_count = HAL_RX_MPDU_MSDU_COUNT_GET(mpdu_info);
+	mpdu_desc_info->mpdu_flags = hal_rx_get_mpdu_flags(mpdu_info);
+	mpdu_desc_info->peer_meta_data =
+		HAL_RX_MPDU_DESC_PEER_META_DATA_GET(mpdu_info);
+	mpdu_desc_info->bar_frame = HAL_RX_MPDU_BAR_FRAME_GET(mpdu_info);
+}
+
+/*
+ *hal_rx_msdu_desc_info_get_be: Gets the flags related to MSDU descriptor.
+ *@desc_addr: REO ring descriptor addr
+ *@msdu_desc_info: Holds MSDU descriptor info from HAL Rx descriptor
+ *
+ * Specifically flags needed are: first_msdu_in_mpdu,
+ * last_msdu_in_mpdu, msdu_continuation, sa_is_valid,
+ * sa_idx_timeout, da_is_valid, da_idx_timeout, da_is_MCBC
+ *
+
+ *Return: void
+ */
+static inline void
+hal_rx_msdu_desc_info_get_be(void *desc_addr,
+			     struct hal_rx_msdu_desc_info *msdu_desc_info)
+{
+	struct reo_destination_ring *reo_dst_ring;
+	uint32_t *msdu_info;
+
+	reo_dst_ring = (struct reo_destination_ring *)desc_addr;
+
+	msdu_info = (uint32_t *)&reo_dst_ring->rx_msdu_desc_info_details;
+	msdu_desc_info->msdu_flags =
+		hal_rx_msdu_flags_get_be((struct rx_msdu_desc_info *)msdu_info);
+	msdu_desc_info->msdu_len = HAL_RX_MSDU_PKT_LENGTH_GET(msdu_info);
+}
 
 #endif /* _HAL_BE_RX_H_ */

@@ -593,136 +593,22 @@ hal_reo_send_cmd(hal_soc_handle_t hal_soc_hdl,
 	return -EINVAL;
 }
 
+static inline QDF_STATUS
+hal_reo_status_update(hal_soc_handle_t hal_soc_hdl,
+		      hal_ring_desc_t reo_desc, void *st_handle,
+		      uint32_t tlv, int *num_ref)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (hal_soc->ops->hal_reo_send_cmd)
+		return hal_soc->ops->hal_reo_status_update(hal_soc_hdl,
+							   reo_desc,
+							   st_handle,
+							   tlv, num_ref);
+	return QDF_STATUS_E_FAILURE;
+}
+
 /* REO Status ring routines */
-static inline void
-hal_reo_queue_stats_status(hal_ring_desc_t ring_desc,
-			   struct hal_reo_queue_status *st,
-			   hal_soc_handle_t hal_soc_hdl)
-{
-	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
-
-	if (!hal_soc || !hal_soc->ops) {
-		hal_err("hal handle is NULL");
-		QDF_BUG(0);
-		return;
-	}
-
-	if (hal_soc->ops->hal_reo_queue_stats_status)
-		return hal_soc->ops->hal_reo_queue_stats_status(ring_desc, st,
-								hal_soc_hdl);
-}
-
-static inline void
-hal_reo_flush_queue_status(hal_ring_desc_t ring_desc,
-			   struct hal_reo_flush_queue_status *st,
-			   hal_soc_handle_t hal_soc_hdl)
-{
-	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
-
-	if (!hal_soc || !hal_soc->ops) {
-		hal_err("hal handle is NULL");
-		QDF_BUG(0);
-		return;
-	}
-
-	if (hal_soc->ops->hal_reo_flush_queue_status)
-		return hal_soc->ops->hal_reo_flush_queue_status(ring_desc, st,
-								hal_soc_hdl);
-}
-
-static inline void
-hal_reo_flush_cache_status(hal_ring_desc_t ring_desc,
-			   struct hal_reo_flush_cache_status *st,
-			   hal_soc_handle_t hal_soc_hdl)
-{
-	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
-
-	if (!hal_soc || !hal_soc->ops) {
-		hal_err("hal handle is NULL");
-		QDF_BUG(0);
-		return;
-	}
-
-	if (hal_soc->ops->hal_reo_flush_cache_status)
-		return hal_soc->ops->hal_reo_flush_cache_status(ring_desc, st,
-								hal_soc_hdl);
-}
-
-static inline void
-hal_reo_unblock_cache_status(hal_ring_desc_t ring_desc,
-			     hal_soc_handle_t hal_soc_hdl,
-			     struct hal_reo_unblk_cache_status *st)
-{
-	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
-
-	if (!hal_soc || !hal_soc->ops) {
-		hal_err("hal handle is NULL");
-		QDF_BUG(0);
-		return;
-	}
-
-	if (hal_soc->ops->hal_reo_unblock_cache_status)
-		return hal_soc->ops->hal_reo_unblock_cache_status(ring_desc,
-								  hal_soc_hdl,
-								  st);
-}
-
-static inline void hal_reo_flush_timeout_list_status(
-			 hal_ring_desc_t ring_desc,
-			 struct hal_reo_flush_timeout_list_status *st,
-			 hal_soc_handle_t hal_soc_hdl)
-{
-	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
-
-	if (!hal_soc || !hal_soc->ops) {
-		hal_err("hal handle is NULL");
-		QDF_BUG(0);
-		return;
-	}
-
-	if (hal_soc->ops->hal_reo_flush_timeout_list_status)
-		return hal_soc->ops->hal_reo_flush_timeout_list_status(
-						ring_desc, st,
-						hal_soc_hdl);
-}
-
-static inline void hal_reo_desc_thres_reached_status(
-			 hal_ring_desc_t ring_desc,
-			 struct hal_reo_desc_thres_reached_status *st,
-			 hal_soc_handle_t hal_soc_hdl)
-{
-	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
-
-	if (!hal_soc || !hal_soc->ops) {
-		hal_err("hal handle is NULL");
-		QDF_BUG(0);
-		return;
-	}
-
-	if (hal_soc->ops->hal_reo_desc_thres_reached_status)
-		return hal_soc->ops->hal_reo_desc_thres_reached_status(
-						ring_desc, st,
-						hal_soc_hdl);
-}
-
-static inline void
-hal_reo_rx_update_queue_status(hal_ring_desc_t ring_desc,
-			       struct hal_reo_update_rx_queue_status *st,
-			       hal_soc_handle_t hal_soc_hdl)
-{
-	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
-
-	if (!hal_soc || !hal_soc->ops) {
-		hal_err("hal handle is NULL");
-		QDF_BUG(0);
-		return;
-	}
-
-	if (hal_soc->ops->hal_reo_rx_update_queue_status)
-		return hal_soc->ops->hal_reo_rx_update_queue_status(
-				ring_desc, st, hal_soc_hdl);
-}
-
 static inline void hal_reo_qdesc_setup(hal_soc_handle_t hal_soc_hdl, int tid,
 				       uint32_t ba_window_size,
 			 uint32_t start_seq, void *hw_qdesc_vaddr,
@@ -808,6 +694,16 @@ hal_gen_reo_remap_val(hal_soc_handle_t hal_soc_hdl,
 	return 0;
 }
 
+static inline uint8_t
+hal_get_tlv_hdr_size(hal_soc_handle_t hal_soc_hdl)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (hal_soc->ops->hal_get_tlv_hdr_size)
+		return hal_soc->ops->hal_get_tlv_hdr_size();
+
+	return 0;
+}
 /* Function Proto-types */
 
 /**
@@ -815,7 +711,6 @@ hal_gen_reo_remap_val(hal_soc_handle_t hal_soc_hdl,
  * with command number
  * @hal_soc: Handle to HAL SoC structure
  * @hal_ring: Handle to HAL SRNG structure
- *
  * Return: none
  */
 void hal_reo_init_cmd_ring(hal_soc_handle_t hal_soc_hdl,

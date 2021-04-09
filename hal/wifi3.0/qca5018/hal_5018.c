@@ -117,8 +117,8 @@
 
 #define HOST_CE_MASK_VALUE 0xFF000000
 
-#include <hal_5018_tx.h>
-#include <hal_5018_rx.h>
+#include "hal_5018_tx.h"
+#include "hal_5018_rx.h"
 #include <hal_generic_api.h>
 #include "hal_li_rx.h"
 #include "hal_li_api.h"

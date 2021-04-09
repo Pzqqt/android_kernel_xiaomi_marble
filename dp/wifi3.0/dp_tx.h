@@ -677,6 +677,8 @@ dp_send_completion_to_pkt_capture(struct dp_soc *soc,
 {
 }
 #endif
+
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
 #ifdef WLAN_DP_FEATURE_SW_LATENCY_MGR
 /**
  * dp_tx_update_stats() - Update soc level tx stats
@@ -754,6 +756,7 @@ dp_tx_ring_access_end_wrapper(struct dp_soc *soc,
 	dp_tx_ring_access_end(soc, hal_ring_hdl, coalesce);
 }
 #endif
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
 
 #ifdef DP_TX_HW_DESC_HISTORY
 static inline void

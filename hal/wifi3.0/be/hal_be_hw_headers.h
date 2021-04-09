@@ -19,6 +19,7 @@
 #ifndef _HAL_BE_HW_INTERNAL_H_
 #define _HAL_BE_HW_INTERNAL_H_
 
+#include "hal_hw_headers.h"
 #include "wcss_seq_hwioreg_umac.h"
 #include "phyrx_location.h"
 #include "receive_rssi_info.h"
@@ -30,6 +31,8 @@
 #if defined(QCA_WIFI_WCN7850)
 #include "msmhwioreg.h"
 #endif
+#include <reo_descriptor_threshold_reached_status.h>
+#include <reo_flush_queue.h>
 
 #define HAL_DESC_64_SET_FIELD(_desc, _word, _fld, _value) do { \
 	((uint64_t *)(_desc))[(_word ## _ ## _fld ## _OFFSET) >> 3] &= \

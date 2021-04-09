@@ -247,7 +247,12 @@ dp_rxdma_ring_sel_cfg_li(struct dp_soc *soc)
 
 void dp_initialize_arch_ops_li(struct dp_arch_ops *arch_ops)
 {
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
 	arch_ops->tx_hw_enqueue = dp_tx_hw_enqueue_li;
+	arch_ops->dp_rx_process = dp_rx_process_li;
+	arch_ops->tx_comp_get_params_from_hal_desc =
+		dp_tx_comp_get_params_from_hal_desc_li;
+#endif
 	arch_ops->txrx_get_context_size = dp_get_context_size_li;
 	arch_ops->txrx_soc_attach = dp_soc_attach_li;
 	arch_ops->txrx_soc_detach = dp_soc_detach_li;
@@ -255,8 +260,5 @@ void dp_initialize_arch_ops_li(struct dp_arch_ops *arch_ops)
 	arch_ops->txrx_pdev_detach = dp_pdev_detach_li;
 	arch_ops->txrx_vdev_attach = dp_vdev_attach_li;
 	arch_ops->txrx_vdev_detach = dp_vdev_detach_li;
-	arch_ops->tx_comp_get_params_from_hal_desc =
-		dp_tx_comp_get_params_from_hal_desc_li;
-	arch_ops->dp_rx_process = dp_rx_process_li;
 	arch_ops->dp_rxdma_ring_sel_cfg = dp_rxdma_ring_sel_cfg_li;
 }

@@ -708,7 +708,7 @@ void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	uint32_t bw;
 	uint8_t primary_chan_num;
 	uint32_t center_chan_freq;
-	struct dp_soc *soc;
+	struct dp_soc *soc = vdev->pdev->soc;
 
 	/* fill recv mesh stats */
 	rx_info = qdf_mem_malloc(sizeof(struct mesh_recv_hdr_s));
@@ -729,9 +729,10 @@ void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	if (qdf_nbuf_is_rx_chfrag_end(nbuf))
 		rx_info->rs_flags |= MESH_RX_LAST_MSDU;
 
-	if (hal_rx_attn_msdu_get_is_decrypted(rx_tlv_hdr)) {
+	if (hal_rx_tlv_get_is_decrypted(soc->hal_soc, rx_tlv_hdr)) {
 		rx_info->rs_flags |= MESH_RX_DECRYPTED;
-		rx_info->rs_keyix = hal_rx_msdu_get_keyid(rx_tlv_hdr);
+		rx_info->rs_keyix = hal_rx_msdu_get_keyid(soc->hal_soc,
+							  rx_tlv_hdr);
 		if (vdev->osif_get_key)
 			vdev->osif_get_key(vdev->osif_vdev,
 					&rx_info->rs_decryptkey[0],
@@ -743,8 +744,8 @@ void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	rx_info->rs_rssi = rx_info->rs_snr + DP_DEFAULT_NOISEFLOOR;
 
 	soc = vdev->pdev->soc;
-	primary_chan_num = hal_rx_msdu_start_get_freq(rx_tlv_hdr);
-	center_chan_freq = hal_rx_msdu_start_get_freq(rx_tlv_hdr) >> 16;
+	primary_chan_num = hal_rx_tlv_get_freq(soc->hal_soc, rx_tlv_hdr);
+	center_chan_freq = hal_rx_tlv_get_freq(soc->hal_soc, rx_tlv_hdr) >> 16;
 
 	if (soc->cdp_soc.ol_ops && soc->cdp_soc.ol_ops->freq_to_band) {
 		rx_info->rs_band = soc->cdp_soc.ol_ops->freq_to_band(
@@ -754,9 +755,9 @@ void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	}
 	rx_info->rs_channel = primary_chan_num;
 	pkt_type = hal_rx_tlv_get_pkt_type(soc->hal_soc, rx_tlv_hdr);
-	rate_mcs = hal_rx_msdu_start_rate_mcs_get(rx_tlv_hdr);
-	bw = hal_rx_msdu_start_bw_get(rx_tlv_hdr);
-	nss = hal_rx_msdu_start_nss_get(vdev->pdev->soc->hal_soc, rx_tlv_hdr);
+	rate_mcs = hal_rx_tlv_rate_mcs_get(soc->hal_soc, rx_tlv_hdr);
+	bw = hal_rx_tlv_bw_get(soc->hal_soc, rx_tlv_hdr);
+	nss = hal_rx_msdu_start_nss_get(soc->hal_soc, rx_tlv_hdr);
 	rx_info->rs_ratephy1 = rate_mcs | (nss << 0x8) | (pkt_type << 16) |
 				(bw << 24);
 
@@ -1171,11 +1172,6 @@ void dp_rx_fill_gro_info(struct dp_soc *soc, uint8_t *rx_tlv,
 	QDF_NBUF_CB_RX_FLOW_ID(msdu) = offload_info.flow_id;
 
 	dp_rx_print_offload_info(soc, msdu);
-}
-#else
-static void dp_rx_fill_gro_info(struct dp_soc *soc, uint8_t *rx_tlv,
-				qdf_nbuf_t msdu, uint32_t *rx_ol_pkt_cnt)
-{
 }
 #endif /* RECEIVE_OFFLOAD */
 
@@ -1847,12 +1843,13 @@ int dp_wds_rx_policy_check(uint8_t *rx_tlv_hdr,
  *
  * Return: NONE
  */
-QDF_STATUS dp_rx_desc_nbuf_sanity_check(hal_ring_desc_t ring_desc,
+QDF_STATUS dp_rx_desc_nbuf_sanity_check(struct dp_soc *soc,
+					hal_ring_desc_t ring_desc,
 					struct dp_rx_desc *rx_desc)
 {
 	struct hal_buf_info hbi;
 
-	hal_rx_reo_buf_paddr_get(ring_desc, &hbi);
+	hal_rx_reo_buf_paddr_get(soc->hal_soc, ring_desc, &hbi);
 	/* Sanity check for possible buffer paddr corruption */
 	if (dp_rx_desc_paddr_sanity_check(rx_desc, (&hbi)->paddr))
 		return QDF_STATUS_SUCCESS;
@@ -2100,7 +2097,7 @@ dp_rx_ring_record_entry(struct dp_soc *soc, uint8_t ring_num,
 	if (qdf_unlikely(!soc->rx_ring_history[ring_num]))
 		return;
 
-	hal_rx_reo_buf_paddr_get(ring_desc, &hbi);
+	hal_rx_reo_buf_paddr_get(soc->hal_soc, ring_desc, &hbi);
 
 	/* buffer_addr_info is the first element of ring_desc */
 	hal_rx_buf_cookie_rbm_get(soc->hal_soc, (uint32_t *)ring_desc,

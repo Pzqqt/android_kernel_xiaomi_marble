@@ -20,8 +20,8 @@
 #include "hal_api.h"
 #include "hal_reo.h"
 #include "target_type.h"
-#include "wcss_version.h"
 #include "qdf_module.h"
+#include "wcss_version.h"
 
 #ifdef QCA_WIFI_QCA8074
 void hal_qca6290_attach(struct hal_soc *hal);

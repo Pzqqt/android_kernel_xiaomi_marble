@@ -117,8 +117,7 @@
 		 (UMAC_WINDOW_ADDRESS_9000 << 12) | \
 		 WINDOW_ENABLE_BIT)
 
-#include <hal_9000_tx.h>
-#include <hal_9000_rx.h>
+#include "hal_9000_tx.h"
 #include <hal_generic_api.h>
 #include "hal_li_rx.h"
 #include "hal_li_api.h"

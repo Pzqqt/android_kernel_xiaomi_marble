@@ -31,7 +31,6 @@
 #include "if_meta_hdr.h"
 #endif
 #include "dp_internal.h"
-#include "dp_rx_mon.h"
 #include "dp_ipa.h"
 #ifdef FEATURE_WDS
 #include "dp_txrx_wds.h"
@@ -222,7 +221,7 @@ more_data:
 			continue;
 		}
 
-		status = dp_rx_desc_nbuf_sanity_check(ring_desc, rx_desc);
+		status = dp_rx_desc_nbuf_sanity_check(soc, ring_desc, rx_desc);
 		if (qdf_unlikely(QDF_IS_STATUS_ERROR(status))) {
 			DP_STATS_INC(soc, rx.err.nbuf_sanity_fail, 1);
 			dp_info_rl("Nbuf sanity check failure!");
@@ -244,7 +243,7 @@ more_data:
 		hal_rx_mpdu_desc_info_get_be(ring_desc, &mpdu_desc_info);
 
 		/* Get MSDU DESC info */
-		hal_rx_msdu_desc_info_get(hal_soc, ring_desc, &msdu_desc_info);
+		hal_rx_msdu_desc_info_get_be(ring_desc, &msdu_desc_info);
 
 		if (qdf_unlikely(msdu_desc_info.msdu_flags &
 				 HAL_MSDU_F_MSDU_CONTINUATION)) {

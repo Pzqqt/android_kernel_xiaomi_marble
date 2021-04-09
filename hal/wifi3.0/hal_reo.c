@@ -19,8 +19,6 @@
 #include "hal_api.h"
 #include "hal_hw_headers.h"
 #include "hal_reo.h"
-#include "hal_tx.h"
-#include "hal_rx.h"
 #include "qdf_module.h"
 
 void hal_reo_init_cmd_ring(hal_soc_handle_t hal_soc_hdl,
@@ -32,11 +30,13 @@ void hal_reo_init_cmd_ring(hal_soc_handle_t hal_soc_hdl,
 	uint32_t desc_size;
 	uint32_t num_desc;
 	struct hal_soc *soc = (struct hal_soc *)hal_soc_hdl;
+	uint8_t tlv_hdr_size;
 
 	hal_get_srng_params(hal_soc_hdl, hal_ring_hdl, &srng_params);
 
 	desc_addr = (uint32_t *)(srng_params.ring_base_vaddr);
-	desc_addr += HAL_GET_NUM_DWORDS(sizeof(struct tlv_32_hdr));
+	tlv_hdr_size = hal_get_tlv_hdr_size(hal_soc_hdl);
+	desc_addr += HAL_GET_NUM_DWORDS(tlv_hdr_size);
 	desc_size = HAL_GET_NUM_DWORDS(hal_srng_get_entrysize(soc, REO_CMD));
 	num_desc = srng_params.num_entries;
 	cmd_num = 1;

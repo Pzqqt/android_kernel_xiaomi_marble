@@ -86,7 +86,6 @@ void hal_hw_txrx_default_ops_attach_be(struct hal_soc *soc);
 uint32_t hal_tx_comp_get_buffer_source_generic_be(void *hal_desc);
 uint8_t hal_rx_ret_buf_manager_get_be(hal_ring_desc_t ring_desc);
 void hal_rx_wbm_err_info_get_generic_be(void *wbm_desc, void *wbm_er_info1);
-void hal_rx_mpdu_desc_info_get_be(void *desc_addr, void *mpdu_desc_info);
 
 /**
  * hal_reo_qdesc_setup - Setup HW REO queue descriptor

@@ -17,6 +17,11 @@
  */
 
 #include "hal_hw_headers.h"
+#ifndef RX_DEFRAG_DO_NOT_REINJECT
+#ifndef DP_BE_WAR
+#include "li/hal_li_rx.h"
+#endif
+#endif
 #include "dp_types.h"
 #include "dp_rx.h"
 #include "dp_peer.h"
@@ -1230,6 +1235,7 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 	struct dp_pdev *pdev = peer->vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
 	struct hal_buf_info buf_info;
+	struct hal_buf_info temp_buf_info;
 	void *link_desc_va;
 	void *msdu0, *msdu_desc_info;
 	void *ent_ring_desc, *ent_mpdu_desc_info, *ent_qdesc_addr;
@@ -1273,7 +1279,7 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	hal_rx_reo_buf_paddr_get(dst_ring_desc, &buf_info);
+	hal_rx_reo_buf_paddr_get(soc->hal_soc, dst_ring_desc, &buf_info);
 
 	/* buffer_addr_info is the first element of ring_desc */
 	hal_rx_buf_cookie_rbm_get(soc->hal_soc, (uint32_t *)dst_ring_desc,
@@ -1297,25 +1303,15 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 
 	qdf_mem_zero(msdu_desc_info, sizeof(struct rx_msdu_desc_info));
 
-	HAL_RX_MSDU_DESC_INFO_SET(msdu_desc_info,
-			FIRST_MSDU_IN_MPDU_FLAG, 1);
-	HAL_RX_MSDU_DESC_INFO_SET(msdu_desc_info,
-			LAST_MSDU_IN_MPDU_FLAG, 1);
-	HAL_RX_MSDU_DESC_INFO_SET(msdu_desc_info,
-			MSDU_CONTINUATION, 0x0);
-	HAL_RX_MSDU_DESC_INFO_SET(msdu_desc_info,
-			REO_DESTINATION_INDICATION, dst_ind);
-	HAL_RX_MSDU_DESC_INFO_SET(msdu_desc_info,
-			MSDU_LENGTH, nbuf_len);
-	HAL_RX_MSDU_DESC_INFO_SET(msdu_desc_info,
-			SA_IS_VALID, 1);
-	HAL_RX_MSDU_DESC_INFO_SET(msdu_desc_info,
-			DA_IS_VALID, 1);
+	hal_msdu_desc_info_set(soc->hal_soc, msdu_desc_info, dst_ind, nbuf_len);
 
 	/* change RX TLV's */
 	hal_rx_tlv_msdu_len_set(soc->hal_soc, qdf_nbuf_data(head), nbuf_len);
 
-	cookie = HAL_RX_BUF_COOKIE_GET(msdu0);
+	hal_rx_buf_cookie_rbm_get(soc->hal_soc, (uint32_t *)msdu0,
+				  &temp_buf_info);
+
+	cookie = temp_buf_info.sw_cookie;
 	rx_desc_pool = &soc->rx_desc_buf[pdev->lmac_id];
 
 	/* map the nbuf before reinject it into HW */
@@ -1349,8 +1345,8 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	hal_rxdma_buff_addr_info_set(soc->hal_osc, msdu0, paddr, cookie,
-				     DP_DEFRAG_RBM);
+	hal_rxdma_buff_addr_info_set(soc->hal_soc, msdu0, paddr, cookie,
+				     DP_DEFRAG_RBM(soc->wbm_sw0_bm_id));
 
 	/* Lets fill entrance ring now !!! */
 	if (qdf_unlikely(hal_srng_access_start(soc->hal_soc, hal_srng))) {
@@ -1361,12 +1357,13 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	dp_rx_reinject_ring_record_entry(soc, paddr, cookie, DP_DEFRAG_RBM);
+	dp_rx_reinject_ring_record_entry(soc, paddr, cookie,
+					 DP_DEFRAG_RBM(soc->wbm_sw0_bm_id));
 	paddr = (uint64_t)buf_info.paddr;
 	/* buf addr */
 	hal_rxdma_buff_addr_info_set(soc->hal_soc, ent_ring_desc, paddr,
 				     buf_info.sw_cookie,
-				     HAL_RX_BUF_RBM_WBM_IDLE_DESC_LIST);
+				     HAL_RX_BUF_RBM_WBM_CHIP0_IDLE_DESC_LIST);
 	/* mpdu desc info */
 	ent_mpdu_desc_info = hal_ent_mpdu_desc_info(soc->hal_soc,
 						    ent_ring_desc);
@@ -1380,21 +1377,7 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 	mpdu_wrd = (uint32_t *)dst_mpdu_desc_info;
 	seq_no = HAL_RX_MPDU_SEQUENCE_NUMBER_GET(mpdu_wrd);
 
-	HAL_RX_MPDU_DESC_INFO_SET(ent_mpdu_desc_info,
-			MSDU_COUNT, 0x1);
-	HAL_RX_MPDU_DESC_INFO_SET(ent_mpdu_desc_info,
-				  MPDU_SEQUENCE_NUMBER, seq_no);
-	/* unset frag bit */
-	HAL_RX_MPDU_DESC_INFO_SET(ent_mpdu_desc_info,
-			FRAGMENT_FLAG, 0x0);
-	/* set sa/da valid bits */
-	HAL_RX_MPDU_DESC_INFO_SET(ent_mpdu_desc_info,
-			SA_IS_VALID, 0x1);
-	HAL_RX_MPDU_DESC_INFO_SET(ent_mpdu_desc_info,
-			DA_IS_VALID, 0x1);
-	HAL_RX_MPDU_DESC_INFO_SET(ent_mpdu_desc_info,
-			RAW_MPDU, 0x0);
-
+	hal_mpdu_desc_info_set(soc->hal_soc, ent_mpdu_desc_info, seq_no);
 	/* qdesc addr */
 	ent_qdesc_addr = (uint8_t *)ent_ring_desc +
 		REO_ENTRANCE_RING_4_RX_REO_QUEUE_DESC_ADDR_31_0_OFFSET;

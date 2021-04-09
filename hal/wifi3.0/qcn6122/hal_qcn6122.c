@@ -116,7 +116,7 @@
 		 (UMAC_WINDOW_ADDRESS_6122 << 12) | \
 		 WINDOW_ENABLE_BIT)
 
-#include <hal_qcn6122_tx.h>
+#include "hal_qcn6122_tx.h"
 #include <hal_generic_api.h>
 #include "hal_li_rx.h"
 #include "hal_li_api.h"

@@ -812,6 +812,8 @@ struct hal_hw_txrx_ops {
 	void (*hal_rx_msdu_get_reo_destination_indication)(uint8_t *buf,
 							   uint32_t *reo_destination_indication);
 	uint8_t (*hal_tx_get_num_tcl_banks)(void);
+	uint32_t (*hal_get_reo_qdesc_size)(uint32_t ba_window_size, int tid);
+
 	void (*hal_set_link_desc_addr)(void *desc, uint32_t cookie,
 				       qdf_dma_addr_t link_desc_paddr);
 	void (*hal_tx_init_data_ring)(hal_soc_handle_t hal_soc_hdl,
@@ -841,15 +843,33 @@ struct hal_hw_txrx_ops {
 	uint32_t (*hal_rx_tlv_get_pkt_type)(uint8_t *buf);
 	void (*hal_rx_tlv_get_pn_num)(uint8_t *buf, uint64_t *pn_num);
 	uint8_t * (*hal_rx_pkt_hdr_get)(uint8_t *buf);
+	uint32_t (*hal_rx_msdu_reo_dst_ind_get)(hal_soc_handle_t hal_soc_hdl,
+						void *msdu_link_desc);
+	void (*hal_msdu_desc_info_set)(hal_soc_handle_t hal_soc_hdl,
+				       void *msdu_desc_info, uint32_t dst_ind,
+				       uint32_t nbuf_len);
+	void (*hal_mpdu_desc_info_set)(hal_soc_handle_t hal_soc_hdl,
+				       void *mpdu_desc_info, uint32_t seq_no);
 	uint32_t (*hal_rx_tlv_sgi_get)(uint8_t *buf);
+	uint32_t (*hal_rx_tlv_get_freq)(uint8_t *buf);
+	uint8_t (*hal_rx_msdu_get_keyid)(uint8_t *buf);
 	uint32_t (*hal_rx_tlv_rate_mcs_get)(uint8_t *buf);
 	uint32_t (*hal_rx_tlv_decrypt_err_get)(uint8_t *buf);
 	uint32_t (*hal_rx_tlv_first_mpdu_get)(uint8_t *buf);
 	uint32_t (*hal_rx_tlv_bw_get)(uint8_t *buf);
+	uint32_t (*hal_rx_tlv_get_is_decrypted)(uint8_t *buf);
+
 	uint32_t (*hal_rx_wbm_err_src_get)(hal_ring_desc_t ring_desc);
 	uint8_t (*hal_rx_ret_buf_manager_get)(hal_ring_desc_t ring_desc);
-	void (*hal_rx_buf_cookie_rbm_get)(hal_buff_addrinfo_t buf_addr_info_hdl,
+	void (*hal_rx_msdu_link_desc_set)(hal_soc_handle_t hal_soc_hdl,
+					  void *src_srng_desc,
+					  hal_buff_addrinfo_t buf_addr_info,
+					  uint8_t bm_action);
+
+	void (*hal_rx_buf_cookie_rbm_get)(uint32_t *buf_addr_info_hdl,
 					  hal_buf_info_t buf_info_hdl);
+	void (*hal_rx_reo_buf_paddr_get)(hal_ring_desc_t rx_desc,
+					 struct hal_buf_info *buf_info);
 	void (*hal_rxdma_buff_addr_info_set)(void *rxdma_entry,
 					     qdf_dma_addr_t paddr,
 					     uint32_t cookie, uint8_t manager);
@@ -882,27 +902,11 @@ struct hal_hw_txrx_ops {
 				hal_ring_handle_t  hal_ring_hdl,
 				enum hal_reo_cmd_type cmd,
 				void *params);
-	void (*hal_reo_queue_stats_status)(hal_ring_desc_t ring_desc,
-					   void *st_handle,
-					   hal_soc_handle_t hal_soc_hdl);
-	void (*hal_reo_flush_queue_status)(hal_ring_desc_t ring_desc,
-					   void *st_handle,
-					   hal_soc_handle_t hal_soc_hdl);
-	void (*hal_reo_flush_cache_status)(hal_ring_desc_t ring_desc,
-					   void *st_handle,
-					   hal_soc_handle_t hal_soc_hdl);
-	void (*hal_reo_unblock_cache_status)(hal_ring_desc_t ring_desc,
-					     hal_soc_handle_t hal_soc_hdl,
-					     void *st_handle);
-	void (*hal_reo_flush_timeout_list_status)(hal_ring_desc_t ring_desc,
-						  void *st_handle,
-						  hal_soc_handle_t hal_soc_hdl);
-	void (*hal_reo_desc_thres_reached_status)(hal_ring_desc_t ring_desc,
-						  void *st_handle,
-						  hal_soc_handle_t hal_soc_hdl);
-	void (*hal_reo_rx_update_queue_status)(hal_ring_desc_t ring_desc,
-					       void *st_handle,
-					       hal_soc_handle_t hal_soc_hdl);
+	QDF_STATUS (*hal_reo_status_update)(hal_soc_handle_t hal_soc_hdl,
+					    hal_ring_desc_t reo_desc,
+					    void *st_handle,
+					    uint32_t tlv, int *num_ref);
+	uint8_t (*hal_get_tlv_hdr_size)(void);
 };
 
 /**

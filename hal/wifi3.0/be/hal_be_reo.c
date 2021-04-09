@@ -193,7 +193,8 @@ void hal_reo_qdesc_setup_be(hal_soc_handle_t hal_soc_hdl, int tid,
 			   UNIFORM_DESCRIPTOR_HEADER, RESERVED_0A,
 			   0xCDBEEF);
 }
-qdf_export_symbol(hal_reo_qdesc_setup);
+
+qdf_export_symbol(hal_reo_qdesc_setup_be);
 
 /**
  * hal_get_ba_aging_timeout_be - Get BA Aging timeout
@@ -1355,4 +1356,9 @@ hal_reo_rx_update_queue_status_be(hal_ring_desc_t ring_desc,
 	hal_reo_status_get_header(ring_desc,
 				  HAL_REO_UPDATE_RX_QUEUE_STATUS_TLV,
 				  &(st->header), hal_soc);
+}
+
+uint8_t hal_get_tlv_hdr_size_be(void)
+{
+	return sizeof(struct tlv_32_hdr);
 }

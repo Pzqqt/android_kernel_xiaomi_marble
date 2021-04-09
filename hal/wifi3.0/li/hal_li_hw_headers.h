@@ -30,5 +30,20 @@
 #else
 #include "wfss_ce_reg_seq_hwioreg.h"
 #endif /* QCA_WIFI_QCA6490 */
+#include <reo_descriptor_threshold_reached_status.h>
+#include <reo_flush_queue.h>
+#include <reo_flush_timeout_list_status.h>
+#include <reo_unblock_cache.h>
+#include <reo_flush_cache.h>
+#include <reo_flush_queue_status.h>
+#include <reo_get_queue_stats.h>
+#include <reo_unblock_cache_status.h>
+#include <reo_flush_cache_status.h>
+#include <reo_flush_timeout_list.h>
+#include <reo_get_queue_stats_status.h>
+#include <reo_update_rx_reo_queue.h>
+#include <reo_update_rx_reo_queue_status.h>
+#include <tlv_tag_def.h>
+
 
 #endif /* _HAL_LI_HW_INTERNAL_H_ */
