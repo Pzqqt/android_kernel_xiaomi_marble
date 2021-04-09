@@ -217,11 +217,13 @@ ucfg_mlme_is_twt_setup_in_progress(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
- * ucfg_mlme_twt_is_command_in_progress() - Get TWT command in progress
+ * ucfg_mlme_twt_is_command_in_progress() - Check if given command is in
+ * progress
  * @psoc: Pointer to global PSOC object
  * @peer_mac: Global peer mac address
  * @dialog_id: TWT session dialog id
  * @cmd: TWT command
+ * @active_cmd: Fill active command in this output parameter
  *
  * Return: True if given command is in progress
  */
@@ -230,9 +232,11 @@ static inline bool
 ucfg_mlme_twt_is_command_in_progress(struct wlan_objmgr_psoc *psoc,
 				     struct qdf_mac_addr *peer_mac,
 				     uint8_t dialog_id,
-				     enum wlan_twt_commands cmd)
+				     enum wlan_twt_commands cmd,
+				     enum wlan_twt_commands *active_cmd)
 {
-	return mlme_twt_is_command_in_progress(psoc, peer_mac, dialog_id, cmd);
+	return mlme_twt_is_command_in_progress(psoc, peer_mac, dialog_id,
+					       cmd, active_cmd);
 }
 
 static inline QDF_STATUS
@@ -520,7 +524,8 @@ static inline bool
 ucfg_mlme_twt_is_command_in_progress(struct wlan_objmgr_psoc *psoc,
 				     struct qdf_mac_addr *peer_mac,
 				     uint8_t dialog_id,
-				     enum wlan_twt_commands cmd)
+				     enum wlan_twt_commands cmd,
+				     enum wlan_twt_commands *active_cmd)
 {
 	return false;
 }
