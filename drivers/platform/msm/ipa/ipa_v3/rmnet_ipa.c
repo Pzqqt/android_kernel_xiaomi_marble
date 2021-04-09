@@ -193,6 +193,8 @@ struct rmnet_ipa3_context {
 	bool ipa_config_is_apq;
 	bool ipa_mhi_aggr_formet_set;
 	struct ipa3_netmgr_clock_vote clock_vote;
+	int ingress_eps_mask;
+	bool wan_rt_table_setup;
 };
 
 static struct rmnet_ipa3_context *rmnet_ipa3_ctx;
@@ -1992,7 +1994,6 @@ static int handle3_ingress_format_v2(struct net_device *dev,
 {
 	struct ingress_format_v2 ingress_ioctl_v2_data;
 	struct rmnet_ingress_param ingress_param[RMNET_INGRESS_MAX];
-	int ingress_eps_mask = IPA_AP_INGRESS_NONE;
 	int i, j;
 	bool rmnet_config;
 	int rc = 0;
@@ -2074,7 +2075,7 @@ static int handle3_ingress_format_v2(struct net_device *dev,
 
 			rc = ipa3_setup_apps_wan_cons_pipes(&ingress_param[i],
 				&ingress_pipe_status[i],
-				&ingress_eps_mask,
+				&rmnet_ipa3_ctx->ingress_eps_mask,
 				dev);
 
 			if (rc == -EFAULT) {
@@ -2109,7 +2110,7 @@ static int handle3_ingress_format_v2(struct net_device *dev,
 				ingress_pipe_status[i].status = IPA_PIPE_SETUP_FAILURE;
 				continue;
 			}
-			ingress_eps_mask |= IPA_AP_INGRESS_EP_LOW_LAT;
+			rmnet_ipa3_ctx->ingress_eps_mask |= IPA_AP_INGRESS_EP_LOW_LAT;
 			IPAWANDBG("Ingress LOW LAT CTRL pipe setup successfully\n");
 			ingress_param[i].pipe_setup_status = IPA_PIPE_SETUP_SUCCESS;
 			/* caching the success status of the pipe */
@@ -2134,20 +2135,30 @@ static int handle3_ingress_format_v2(struct net_device *dev,
 
 	mutex_unlock(&rmnet_ipa3_ctx->pipe_handle_guard);
 
-	/* construct default WAN RT tbl for IPACM */
-	rc = ipa3_setup_a7_qmap_hdr();
-	if (rc) {
-		IPAWANERR("A7 QMAP header setup failed\n");
-		return -EFAULT;
+	if ((dev->features & NETIF_F_GRO_HW) ? (rmnet_ipa3_ctx->ingress_eps_mask &
+		(IPA_AP_INGRESS_EP_DEFAULT | IPA_AP_INGRESS_EP_COALS)) : (
+		rmnet_ipa3_ctx->ingress_eps_mask & IPA_AP_INGRESS_EP_DEFAULT)) {
+		if (rmnet_ipa3_ctx->wan_rt_table_setup) {
+			IPAWANERR("WAN rt table already exists\n");
+			return -EPERM;
+		}
+		/* construct default WAN RT tbl for IPACM */
+		rc = ipa3_setup_a7_qmap_hdr();
+		if (rc) {
+			IPAWANERR("A7 QMAP header setup failed\n");
+			return -EFAULT;
+		}
+
+		rc = ipa3_setup_dflt_wan_rt_tables();
+		if (rc) {
+			ipa3_del_a7_qmap_hdr();
+			return rc;
+		}
+		/* Sending QMI indication message share RSC/QMAP pipe details*/
+		IPAWANDBG("ingress_ep_mask = %d\n", rmnet_ipa3_ctx->ingress_eps_mask);
+		ipa_send_wan_pipe_ind_to_modem(rmnet_ipa3_ctx->ingress_eps_mask);
+		rmnet_ipa3_ctx->wan_rt_table_setup = true;
 	}
-
-	rc = ipa3_setup_dflt_wan_rt_tables();
-	if (rc)
-		ipa3_del_a7_qmap_hdr();
-
-	/* Sending QMI indication message share RSC/QMAP pipe details*/
-	ipa_send_wan_pipe_ind_to_modem(ingress_eps_mask);
-
 	return 0;
 }
 
@@ -3321,6 +3332,8 @@ static int ipa3_wwan_probe(struct platform_device *pdev)
 	rmnet_ipa3_ctx->egress_set = false;
 	rmnet_ipa3_ctx->a7_ul_flt_set = false;
 	rmnet_ipa3_ctx->ipa_mhi_aggr_formet_set = false;
+	rmnet_ipa3_ctx->ingress_eps_mask = IPA_AP_INGRESS_NONE;
+	rmnet_ipa3_ctx->wan_rt_table_setup = false;
 	for (i = 0; i < MAX_NUM_OF_MUX_CHANNEL; i++)
 		memset(&rmnet_ipa3_ctx->mux_channel[i], 0,
 				sizeof(struct ipa3_rmnet_mux_val));
@@ -3493,6 +3506,8 @@ static int ipa3_wwan_remove(struct platform_device *pdev)
 		egress_pipe_status[j].ep_type = 0;
 		egress_pipe_status[j].status = 0;
 	}
+	rmnet_ipa3_ctx->ingress_eps_mask = IPA_AP_INGRESS_NONE;
+	rmnet_ipa3_ctx->wan_rt_table_setup = false;
 	mutex_unlock(&rmnet_ipa3_ctx->pipe_handle_guard);
 	IPAWANINFO("rmnet_ipa unregister_netdev\n");
 	unregister_netdev(IPA_NETDEV());
