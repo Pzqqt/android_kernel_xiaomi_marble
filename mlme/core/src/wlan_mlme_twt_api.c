@@ -26,6 +26,46 @@
 #include "wlan_mlme_api.h"
 #include "wlan_mlme_twt_api.h"
 
+bool mlme_is_max_twt_sessions_reached(struct wlan_objmgr_psoc *psoc,
+				      struct qdf_mac_addr *peer_mac,
+				      uint8_t dialog_id)
+{
+	struct peer_mlme_priv_obj *peer_priv;
+	struct wlan_objmgr_peer *peer;
+	uint8_t i;
+	uint8_t num_twt_sessions = 0, max_twt_sessions;
+
+	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac->bytes,
+					   WLAN_MLME_NB_ID);
+	if (!peer) {
+		mlme_legacy_err("Peer object not found");
+		return true;
+	}
+
+	peer_priv = wlan_objmgr_peer_get_comp_private_obj(peer,
+							  WLAN_UMAC_COMP_MLME);
+	if (!peer_priv) {
+		wlan_objmgr_peer_release_ref(peer, WLAN_MLME_NB_ID);
+		mlme_legacy_err("peer mlme component object is NULL");
+		return true;
+	}
+
+	max_twt_sessions = peer_priv->twt_ctx.num_twt_sessions;
+	for (i = 0; i < max_twt_sessions; i++) {
+		uint8_t existing_session_dialog_id =
+				peer_priv->twt_ctx.session_info[i].dialog_id;
+
+		if (existing_session_dialog_id != WLAN_ALL_SESSIONS_DIALOG_ID &&
+		    existing_session_dialog_id != dialog_id)
+			num_twt_sessions++;
+	}
+	wlan_objmgr_peer_release_ref(peer, WLAN_MLME_NB_ID);
+
+	mlme_legacy_debug("num_twt_sessions:%d max_twt_sessions:%d",
+			  num_twt_sessions, max_twt_sessions);
+	return num_twt_sessions == max_twt_sessions;
+}
+
 bool mlme_is_twt_setup_in_progress(struct wlan_objmgr_psoc *psoc,
 				   struct qdf_mac_addr *peer_mac,
 				   uint8_t dialog_id)
