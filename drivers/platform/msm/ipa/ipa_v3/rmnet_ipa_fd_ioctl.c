@@ -287,6 +287,38 @@ static long ipa3_wan_ioctl(struct file *filp,
 		}
 		break;
 
+#ifdef IPA_DATA_WARNING_QUOTA
+	case WAN_IOC_SET_DATA_QUOTA_WARNING:
+		IPAWANDBG_LOW("device %s got WAN_IOC_SET_DATA_QUOTA_WARNING :>>>\n",
+			DRIVER_NAME);
+		pyld_sz = sizeof(struct wan_ioctl_set_data_quota_warning);
+		if (pyld_sz > _IOC_SIZE(cmd)) {
+			IPAWANERR("SET_DATA_QUOTA_WARNING failed, invalid params\n");
+			retval = -EINVAL;
+			break;
+		}
+		param = memdup_user((const void __user *)arg, pyld_sz);
+		if (IS_ERR(param)) {
+			retval = PTR_ERR(param);
+			break;
+		}
+		rc = rmnet_ipa3_set_data_quota_warning(
+			(struct wan_ioctl_set_data_quota_warning *)param);
+		if (rc != 0) {
+			IPAWANERR("SET_DATA_QUOTA_WARNING failed\n");
+			if (rc == -ENODEV)
+				retval = -ENODEV;
+			else
+				retval = -EFAULT;
+			break;
+		}
+		if (copy_to_user((u8 *)arg, param, pyld_sz)) {
+			retval = -EFAULT;
+			break;
+		}
+		break;
+#endif
+
 	case WAN_IOC_SET_TETHER_CLIENT_PIPE:
 		IPAWANDBG_LOW("got WAN_IOC_SET_TETHER_CLIENT_PIPE :>>>\n");
 		pyld_sz = sizeof(struct wan_ioctl_set_tether_client_pipe);

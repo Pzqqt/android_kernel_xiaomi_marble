@@ -2890,7 +2890,7 @@ int ipa3_broadcast_wdi_quota_reach_ind(uint32_t fid,
 {
 	IPAERR_RL("Quota reached indication on fid(%d) Mbytes(%lu)\n",
 			  fid, (unsigned long)num_bytes);
-	ipa3_broadcast_quota_reach_ind(0, IPA_UPSTEAM_WLAN);
+	ipa3_broadcast_quota_reach_ind(0, IPA_UPSTEAM_WLAN, false);
 	return 0;
 }
 
