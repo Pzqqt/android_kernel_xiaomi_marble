@@ -1447,6 +1447,14 @@ static int hdd_twt_setup_session(struct hdd_adapter *adapter,
 		hdd_send_twt_enable_cmd(adapter->hdd_ctx);
 	}
 
+	if (ucfg_mlme_is_max_twt_sessions_reached(adapter->hdd_ctx->psoc,
+					       &hdd_sta_ctx->conn_info.bssid,
+						params.dialog_id)) {
+		hdd_err_rl("TWT add failed(dialog_id:%d), another TWT already exists (max reached)",
+			   params.dialog_id);
+		return -EAGAIN;
+	}
+
 	if (ucfg_mlme_is_twt_setup_in_progress(adapter->hdd_ctx->psoc,
 					       &hdd_sta_ctx->conn_info.bssid,
 					params.dialog_id)) {

@@ -217,6 +217,29 @@ ucfg_mlme_is_twt_setup_in_progress(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * ucfg_mlme_is_max_twt_sessions_reached() - Check if the maximum number of
+ * TWT sessions reached or not excluding the given dialog_id
+ * @psoc: Pointer to global PSOC object
+ * @peer_mac: Global peer mac address
+ * @dialog_id: dialog id
+ *
+ * Check if the number of active TWT sessions is equal to the maximum number
+ * of TWT sessions supported. Only count the TWT session slot if it not
+ * WLAN_ALL_SESSIONS_DIALOG_ID and dialog id is different from input dialog_id,
+ * because if same dialog_id already exists in the TWT sessions, we should
+ * return false since re-negotiation is supported on existing dialog_id.
+ *
+ * Return: True if slot is available for dialog_id, false otherwise
+ */
+static inline bool
+ucfg_mlme_is_max_twt_sessions_reached(struct wlan_objmgr_psoc *psoc,
+				      struct qdf_mac_addr *peer_mac,
+				      uint8_t dialog_id)
+{
+	return mlme_is_max_twt_sessions_reached(psoc, peer_mac, dialog_id);
+}
+
+/**
  * ucfg_mlme_twt_is_command_in_progress() - Check if given command is in
  * progress
  * @psoc: Pointer to global PSOC object
@@ -227,7 +250,6 @@ ucfg_mlme_is_twt_setup_in_progress(struct wlan_objmgr_psoc *psoc,
  *
  * Return: True if given command is in progress
  */
-
 static inline bool
 ucfg_mlme_twt_is_command_in_progress(struct wlan_objmgr_psoc *psoc,
 				     struct qdf_mac_addr *peer_mac,
@@ -507,6 +529,14 @@ static inline bool
 ucfg_mlme_is_twt_setup_in_progress(struct wlan_objmgr_psoc *psoc,
 				   struct qdf_mac_addr *peer_mac,
 				   uint8_t dialog_id)
+{
+	return false;
+}
+
+static inline bool
+ucfg_mlme_is_max_twt_sessions_reached(struct wlan_objmgr_psoc *psoc,
+				      struct qdf_mac_addr *peer_mac,
+				      uint8_t dialog_id)
 {
 	return false;
 }
