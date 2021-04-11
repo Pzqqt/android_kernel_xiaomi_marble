@@ -13,9 +13,13 @@
 #define IPA_ETH_AQC_MODT (32)
 #define IPA_ETH_AQC_MODC (128)
 
+#define IPA_ETH_NTN_MODT (32)
+#define IPA_ETH_NTN_MODC (128)
+
+#define NTN_BUFFER_SIZE 2048 /* 2K */
 
 #define IPA_ETH_AGGR_PKT_LIMIT 1
-#define IPA_ETH_AGGR_BYTE_LIMIT 2 /*2 Kbytes Agger hard byte limit*/
+#define IPA_ETH_AGGR_BYTE_LIMIT 2 /* 2 Kbytes Agger hard byte limit */
 
 #define IPA_ETH_MBOX_M (1)
 
@@ -450,6 +454,7 @@ static struct iommu_domain *ipa_eth_get_smmu_domain(
 		return ipa3_get_eth_smmu_domain();
 	if (IPA_CLIENT_IS_SMMU_ETH1_INSTANCE(client_type))
 		return ipa3_get_eth1_smmu_domain();
+
 	return NULL;
 }
 
@@ -491,7 +496,9 @@ static int ipa3_smmu_map_eth_pipes(struct ipa_eth_client_pipe_info *pipe,
 	enum ipa_smmu_cb_type cb_type;
 
 	if (pipe->info.fix_buffer_size > PAGE_SIZE) {
-		IPAERR("invalid data buff size\n");
+		IPAERR("%s: invalid data buff size %d\n",
+			pipe->dir == IPA_ETH_PIPE_DIR_TX ? "TX" : "RX",
+			pipe->info.fix_buffer_size);
 		return -EINVAL;
 	}
 
@@ -507,7 +514,7 @@ static int ipa3_smmu_map_eth_pipes(struct ipa_eth_client_pipe_info *pipe,
 		pipe->info.transfer_ring_sgt,
 		IPA_SMMU_CB_AP);
 	if (result) {
-		IPAERR("failed to %s ntn ring %d\n",
+		IPAERR("failed to %s ring %d\n",
 			map ? "map" : "unmap", result);
 		return -EINVAL;
 	}
@@ -532,41 +539,58 @@ map_buffer:
 		"SMMU cb %d is not shared, continue to map buffers\n", cb_type);
 	}
 
-	smmu_domain = ipa_eth_get_smmu_domain(client_type);
-	if (!smmu_domain) {
-		IPAERR("invalid smmu domain\n");
-		result = -EINVAL;
-		goto fail_map_buffer_smmu_enabled;
-	}
-
-	prev_iova_p = 0;
-	for (i = 0; i < pipe->info.data_buff_list_size; i++) {
-		iova = (u64)pipe->info.data_buff_list[i].iova;
-		pa = (phys_addr_t)pipe->info.data_buff_list[i].pa;
-		IPA_SMMU_ROUND_TO_PAGE(iova, pa, pipe->info.fix_buffer_size,
-			iova_p, pa_p, size_p);
-		/* Add check on every 2nd buffer for AQC smmu-dup issue */
-		if (prev_iova_p == iova_p) {
-			IPADBG_LOW(
-				"current buffer and previous are on the same page, skip page mapping\n"
-			);
-			continue;
+	if (pipe->info.is_buffer_pool_valid) {
+		IPADBG("buffer pool valid\n");
+		result = ipa3_smmu_map_peer_buff(
+			(u64)pipe->info.buffer_pool_base_addr,
+			pipe->info.fix_buffer_size,
+			map,
+			pipe->info.buffer_pool_base_sgt,
+			cb_type);
+		if (result) {
+			IPAERR("failed to %s buffer %d cb_type %d\n",
+				map ? "map" : "unmap", result, cb_type);
+			goto fail_map_buffer_smmu_enabled;
 		}
-		prev_iova_p = iova_p;
-		IPADBG_LOW("%s 0x%llx to 0x%pa size %d\n", map ? "mapping" :
-			"unmapping", iova_p, &pa_p, size_p);
-		if (map) {
-			result = ipa3_iommu_map(smmu_domain, iova_p, pa_p,
-				size_p, IOMMU_READ | IOMMU_WRITE);
-			if (result)
-				IPAERR("Fail to map 0x%llx\n", iova);
-		} else {
-			result = iommu_unmap(smmu_domain, iova_p, size_p);
-			if (result != size_p) {
-				IPAERR("Fail to unmap 0x%llx\n", iova);
+	} else {
+		IPADBG("buffer pool not valid\n");
+		smmu_domain = ipa_eth_get_smmu_domain(client_type);
+		if (!smmu_domain) {
+			IPAERR("invalid smmu domain\n");
+			result = -EINVAL;
+			goto fail_map_buffer_smmu_enabled;
+		}
+
+		prev_iova_p = 0;
+		for (i = 0; i < pipe->info.data_buff_list_size; i++) {
+			iova = (u64)pipe->info.data_buff_list[i].iova;
+			pa = (phys_addr_t)pipe->info.data_buff_list[i].pa;
+			IPA_SMMU_ROUND_TO_PAGE(iova, pa, pipe->info.fix_buffer_size,
+				iova_p, pa_p, size_p);
+			/* Add check on every 2nd buffer for AQC smmu-dup issue */
+			if (prev_iova_p == iova_p) {
+				IPADBG_LOW(
+					"current buffer and previous are on the same page, skip page mapping\n"
+				);
+				continue;
+			}
+			prev_iova_p = iova_p;
+			IPADBG_LOW("%s 0x%llx to 0x%pa size %d\n", map ? "mapping" :
+				"unmapping", iova_p, &pa_p, size_p);
+			if (map) {
+				result = ipa3_iommu_map(smmu_domain, iova_p, pa_p,
+					size_p, IOMMU_READ | IOMMU_WRITE);
+				if (result)
+					IPAERR("Fail to map 0x%llx\n", iova);
+			} else {
+				result = iommu_unmap(smmu_domain, iova_p, size_p);
+				if (result != size_p) {
+					IPAERR("Fail to unmap 0x%llx\n", iova);
+				}
 			}
 		}
 	}
+
 	return 0;
 
 fail_map_buffer_smmu_enabled:
@@ -700,6 +724,139 @@ fail_get_gsi_ep_info:
 	return result;
 }
 
+static int ipa_eth_setup_ntn_gsi_channel(
+	struct ipa_eth_client_pipe_info *pipe,
+	struct ipa3_ep_context *ep)
+{
+	struct gsi_evt_ring_props gsi_evt_ring_props;
+	struct gsi_chan_props gsi_channel_props;
+	union __packed gsi_channel_scratch ch_scratch;
+	union __packed gsi_evt_scratch evt_scratch;
+	const struct ipa_gsi_ep_config *gsi_ep_info;
+	int result, len;
+	u64 bar_addr;
+
+	if (unlikely(!pipe->info.is_transfer_ring_valid)) {
+		IPAERR("NTN transfer ring invalid\n");
+		ipa_assert();
+		return -EFAULT;
+	}
+
+	/* don't assert bit 40 in test mode as we emulate regs on DDR not
+	 * on PICE address space */
+	bar_addr = pipe->client_info->test ?
+		pipe->info.client_info.ntn.bar_addr :
+		IPA_ETH_PCIE_SET(pipe->info.client_info.ntn.bar_addr);
+
+	/* setup event ring */
+	memset(&gsi_evt_ring_props, 0, sizeof(gsi_evt_ring_props));
+	gsi_evt_ring_props.intf = GSI_EVT_CHTYPE_NTN_EV;
+	gsi_evt_ring_props.re_size = GSI_EVT_RING_RE_SIZE_16B;
+	gsi_evt_ring_props.intr = GSI_INTR_MSI;
+	gsi_evt_ring_props.int_modt = IPA_ETH_NTN_MODT;
+	gsi_evt_ring_props.int_modc = IPA_ETH_NTN_MODC;
+	gsi_evt_ring_props.exclusive = true;
+	gsi_evt_ring_props.err_cb = ipa_eth_gsi_evt_ring_err_cb;
+	gsi_evt_ring_props.user_data = NULL;
+	gsi_evt_ring_props.msi_addr =
+		bar_addr +
+		pipe->info.client_info.ntn.tail_ptr_offs;
+	len = pipe->info.transfer_ring_size;
+	gsi_evt_ring_props.ring_len = len;
+	gsi_evt_ring_props.ring_base_addr =
+		(u64)pipe->info.transfer_ring_base;
+	result = gsi_alloc_evt_ring(&gsi_evt_ring_props,
+		ipa3_ctx->gsi_dev_hdl,
+		&ep->gsi_evt_ring_hdl);
+	if (result != GSI_STATUS_SUCCESS) {
+		IPAERR("fail to alloc RX event ring\n");
+		result = -EFAULT;
+	}
+
+	ep->gsi_mem_info.evt_ring_len =
+		gsi_evt_ring_props.ring_len;
+	ep->gsi_mem_info.evt_ring_base_addr =
+		gsi_evt_ring_props.ring_base_addr;
+
+	/* setup channel ring */
+	memset(&gsi_channel_props, 0, sizeof(gsi_channel_props));
+	gsi_channel_props.prot = GSI_CHAN_PROT_NTN;
+	if (pipe->dir == IPA_ETH_PIPE_DIR_TX)
+		gsi_channel_props.dir = GSI_CHAN_DIR_FROM_GSI;
+	else
+		gsi_channel_props.dir = GSI_CHAN_DIR_TO_GSI;
+	gsi_ep_info = ipa3_get_gsi_ep_info(ep->client);
+	if (!gsi_ep_info) {
+		IPAERR("Failed getting GSI EP info for client=%d\n",
+			ep->client);
+		result = -EINVAL;
+		goto fail_get_gsi_ep_info;
+	} else
+		gsi_channel_props.ch_id = gsi_ep_info->ipa_gsi_chan_num;
+	gsi_channel_props.evt_ring_hdl = ep->gsi_evt_ring_hdl;
+	gsi_channel_props.re_size = GSI_CHAN_RE_SIZE_16B;
+	if (pipe->dir == IPA_ETH_PIPE_DIR_TX)
+		gsi_channel_props.use_db_eng = GSI_CHAN_DB_MODE;
+	else
+		gsi_channel_props.use_db_eng = GSI_CHAN_DIRECT_MODE;
+	gsi_channel_props.db_in_bytes = 1;
+	gsi_channel_props.max_prefetch = GSI_ONE_PREFETCH_SEG;
+	gsi_channel_props.prefetch_mode =
+		gsi_ep_info->prefetch_mode;
+	gsi_channel_props.empty_lvl_threshold =
+		gsi_ep_info->prefetch_threshold;
+	gsi_channel_props.low_weight = 1;
+	gsi_channel_props.err_cb = ipa_eth_gsi_chan_err_cb;
+	gsi_channel_props.ring_len = len;
+	gsi_channel_props.ring_base_addr =
+		(u64)pipe->info.transfer_ring_base;
+	result = gsi_alloc_channel(&gsi_channel_props, ipa3_ctx->gsi_dev_hdl,
+		&ep->gsi_chan_hdl);
+	if (result != GSI_STATUS_SUCCESS)
+		goto fail_get_gsi_ep_info;
+	ep->gsi_mem_info.chan_ring_len = gsi_channel_props.ring_len;
+	ep->gsi_mem_info.chan_ring_base_addr =
+		gsi_channel_props.ring_base_addr;
+
+	/* write event scratch */
+	memset(&evt_scratch, 0, sizeof(evt_scratch));
+	/* nothing is needed for NTN event scratch */
+
+	/* write ch scratch */
+	memset(&ch_scratch, 0, sizeof(ch_scratch));
+	ch_scratch.ntn.fix_buff_size =
+		ilog2(pipe->info.fix_buffer_size);
+	if (pipe->info.is_buffer_pool_valid) {
+		ch_scratch.ntn.buff_addr_lsb =
+			(u32)pipe->info.buffer_pool_base_addr;
+		ch_scratch.ntn.buff_addr_msb =
+			(u32)((u64)(pipe->info.buffer_pool_base_addr) >> 32);
+	}
+	else {
+		ch_scratch.ntn.buff_addr_lsb =
+			(u32)pipe->info.data_buff_list[0].iova;
+		ch_scratch.ntn.buff_addr_msb =
+			(u32)((u64)(pipe->info.data_buff_list[0].iova) >> 32);
+	}
+
+	if (pipe->dir == IPA_ETH_PIPE_DIR_TX)
+		ch_scratch.ntn.ioc_mod_threshold = IPA_ETH_NTN_MODT;
+
+	result = gsi_write_channel_scratch(ep->gsi_chan_hdl, ch_scratch);
+	if (result != GSI_STATUS_SUCCESS) {
+		IPAERR("failed to write evt ring scratch\n");
+		goto fail_write_scratch;
+	}
+	return 0;
+fail_write_scratch:
+	gsi_dealloc_channel(ep->gsi_chan_hdl);
+	ep->gsi_chan_hdl = ~0;
+fail_get_gsi_ep_info:
+	gsi_dealloc_evt_ring(ep->gsi_evt_ring_hdl);
+	ep->gsi_evt_ring_hdl = ~0;
+	return result;
+}
+
 static int ipa3_eth_get_prot(struct ipa_eth_client_pipe_info *pipe,
 	enum ipa4_hw_protocol *prot)
 {
@@ -715,6 +872,8 @@ static int ipa3_eth_get_prot(struct ipa_eth_client_pipe_info *pipe,
 		*prot = IPA_HW_PROTOCOL_RTK;
 		break;
 	case IPA_ETH_CLIENT_NTN:
+		*prot = IPA_HW_PROTOCOL_NTN3;
+		break;
 	case IPA_ETH_CLIENT_EMAC:
 		*prot = IPA_HW_PROTOCOL_ETH;
 		break;
@@ -749,6 +908,21 @@ int ipa3_eth_connect(
 		IPAERR("undefined client_type\n");
 		return -EFAULT;
 	}
+
+	/* currently all protocols require valid transfer ring */
+	if (!pipe->info.is_transfer_ring_valid) {
+		IPAERR("transfer ring not valid!\n");
+		return -EINVAL;
+	}
+
+	if ((pipe->client_info->client_type == IPA_ETH_CLIENT_NTN)) {
+		if (pipe->info.fix_buffer_size != NTN_BUFFER_SIZE) {
+			IPAERR("fix buffer size %u not valid for NTN, use 2K\n"
+				, pipe->info.fix_buffer_size);
+			return -EINVAL;
+		}
+	}
+
 	/* need enhancement for vlan support on multiple attach */
 	result = ipa3_is_vlan_mode(IPA_VLAN_IF_ETH, &vlan_mode);
 	if (result) {
@@ -760,11 +934,6 @@ int ipa3_eth_connect(
 	if (result) {
 		IPAERR("Could not determine protocol\n");
 		return result;
-	}
-
-	if (prot == IPA_HW_PROTOCOL_ETH) {
-		IPAERR("EMAC\\NTN still not supported using this framework\n");
-		return -EFAULT;
 	}
 
 	result = ipa3_smmu_map_eth_pipes(pipe, client_type, true);
@@ -808,19 +977,26 @@ int ipa3_eth_connect(
 	IPADBG("client %d (ep: %d) connected\n", client_type,
 		ep_idx);
 
-	if (prot == IPA_HW_PROTOCOL_RTK) {
-		if (ipa_eth_setup_rtk_gsi_channel(pipe, ep)) {
-			IPAERR("fail to setup eth gsi rx channel\n");
-			result = -EFAULT;
-			goto setup_gsi_ch_fail;
-		}
-	} else if (prot == IPA_HW_PROTOCOL_AQC) {
-		if (ipa_eth_setup_aqc_gsi_channel(pipe, ep)) {
-			IPAERR("fail to setup eth gsi rx channel\n");
-			result = -EFAULT;
-			goto setup_gsi_ch_fail;
-		}
+	switch (prot) {
+	case IPA_HW_PROTOCOL_RTK:
+		result = ipa_eth_setup_rtk_gsi_channel(pipe, ep);
+		break;
+	case IPA_HW_PROTOCOL_AQC:
+		result = ipa_eth_setup_aqc_gsi_channel(pipe, ep);
+		break;
+	case IPA_HW_PROTOCOL_NTN3:
+		result = ipa_eth_setup_ntn_gsi_channel(pipe, ep);
+		break;
+	default:
+		IPAERR("unknown protocol %d\n", prot);
+		result = -EINVAL;
 	}
+	if (result) {
+			IPAERR("fail to setup eth gsi rx channel\n");
+			result = -EFAULT;
+			goto setup_gsi_ch_fail;
+	}
+
 	if (gsi_query_channel_db_addr(ep->gsi_chan_hdl,
 		&gsi_db_addr_low, &gsi_db_addr_high)) {
 		IPAERR("failed to query gsi rx db addr\n");
@@ -828,7 +1004,8 @@ int ipa3_eth_connect(
 		goto query_ch_db_fail;
 	}
 	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0) {
-		if (prot == IPA_HW_PROTOCOL_AQC) {
+		switch (prot) {
+		case IPA_HW_PROTOCOL_AQC:
 			if (IPA_CLIENT_IS_PROD(client_type)) {
 				if (gsi_query_msi_addr(ep->gsi_chan_hdl,
 					&pipe->info.db_pa)) {
@@ -841,13 +1018,19 @@ int ipa3_eth_connect(
 				pipe->info.db_val = 0;
 				/* only 32 bit lsb is used */
 				db_addr = ioremap((phys_addr_t)(gsi_db_addr_low), 4);
+				if (!db_addr) {
+					IPAERR("ioremap failed\n");
+					result = -EFAULT;
+					goto ioremap_fail;
+				}
 				/* TX: Initialize to end of ring */
 				db_val = (u32)ep->gsi_mem_info.chan_ring_base_addr;
 				db_val += (u32)ep->gsi_mem_info.chan_ring_len;
 				iowrite32(db_val, db_addr);
 				iounmap(db_addr);
 			}
-		} else if (prot == IPA_HW_PROTOCOL_RTK) {
+			break;
+		case IPA_HW_PROTOCOL_RTK:
 			if (gsi_query_msi_addr(ep->gsi_chan_hdl,
 					&pipe->info.db_pa)) {
 				result = -EFAULT;
@@ -856,11 +1039,45 @@ int ipa3_eth_connect(
 			if (IPA_CLIENT_IS_CONS(client_type)) {
 				/* only 32 bit lsb is used */
 				db_addr = ioremap((phys_addr_t)(pipe->info.db_pa), 4);
+				if (!db_addr) {
+					IPAERR("ioremap failed\n");
+					result = -EFAULT;
+					goto ioremap_fail;
+				}
 				/* TX: ring MSI doorbell */
 				db_val = IPA_ETH_MSI_DB_VAL;
 				iowrite32(db_val, db_addr);
 				iounmap(db_addr);
 			}
+			break;
+		case IPA_HW_PROTOCOL_NTN3:
+			pipe->info.db_pa = gsi_db_addr_low;
+			pipe->info.db_val = 0;
+
+			/* only 32 bit lsb is used */
+			db_addr = ioremap((phys_addr_t)(gsi_db_addr_low), 4);
+			if (!db_addr) {
+				IPAERR("ioremap failed\n");
+				result = -EFAULT;
+				goto ioremap_fail;
+			}
+			if (IPA_CLIENT_IS_PROD(client_type)) {
+				/* Rx: Initialize to ring base (i.e point 6) */
+				db_val =
+				(u32)ep->gsi_mem_info.chan_ring_base_addr;
+			} else {
+				/* TX: Initialize to end of ring */
+				db_val =
+				(u32)ep->gsi_mem_info.chan_ring_base_addr;
+				db_val +=
+				(u32)ep->gsi_mem_info.chan_ring_len;
+			}
+			iowrite32(db_val, db_addr);
+			iounmap(db_addr);
+			break;
+		default:
+			/* we can't really get here as we checked prot before */
+			IPAERR("unknown protocol %d\n", prot);
 		}
 	} else {
 		if (IPA_CLIENT_IS_PROD(client_type)) {
@@ -882,6 +1099,11 @@ int ipa3_eth_connect(
 			}
 			/* only 32 bit lsb is used */
 			db_addr = ioremap((phys_addr_t)(gsi_db_addr_low), 4);
+			if (!db_addr) {
+				IPAERR("ioremap failed\n");
+				result = -EFAULT;
+				goto ioremap_fail;
+			}
 			/* Rx: Initialize to ring base (i.e point 6) */
 			db_val = (u32)ep->gsi_mem_info.chan_ring_base_addr;
 			iowrite32(db_val, db_addr);
@@ -901,6 +1123,11 @@ int ipa3_eth_connect(
 			}
 			/* only 32 bit lsb is used */
 			db_addr = ioremap((phys_addr_t)(gsi_db_addr_low), 4);
+			if (!db_addr) {
+				IPAERR("ioremap failed\n");
+				result = -EFAULT;
+				goto ioremap_fail;
+			}
 			/* TX: Initialize to end of ring */
 			db_val = (u32)ep->gsi_mem_info.chan_ring_base_addr;
 			db_val += (u32)ep->gsi_mem_info.chan_ring_len;
@@ -915,6 +1142,11 @@ int ipa3_eth_connect(
 		evt_ring_db_addr_high);
 	/* only 32 bit lsb is used */
 	db_addr = ioremap((phys_addr_t)(evt_ring_db_addr_low), 4);
+	if (!db_addr) {
+		IPAERR("ioremap failed\n");
+		result = -EFAULT;
+		goto ioremap_fail;
+	}
 	/*
 	* IPA/GSI driver should ring the event DB once after
 	* initialization of the event, with a value that is
@@ -987,7 +1219,7 @@ int ipa3_eth_connect(
 	ipa3_eth_save_client_mapping(pipe, client_type,
 		id, ep_idx, ep->gsi_chan_hdl);
 	if ((ipa3_ctx->ipa_hw_type == IPA_HW_v4_5) ||
-		(prot != IPA_HW_PROTOCOL_AQC)) {
+		(prot == IPA_HW_PROTOCOL_RTK)) {
 		result = ipa3_eth_config_uc(true,
 			prot,
 			(pipe->dir == IPA_ETH_PIPE_DIR_TX)
@@ -1017,6 +1249,7 @@ uc_init_peripheral_fail:
 start_channel_fail:
 	ipa3_disable_data_path(ep_idx);
 enable_data_path_fail:
+ioremap_fail:
 query_msi_fail:
 query_ch_db_fail:
 setup_gsi_ch_fail:
@@ -1042,11 +1275,6 @@ int ipa3_eth_disconnect(
 	if (result) {
 		IPAERR("Could not determine protocol\n");
 		return result;
-	}
-
-	if (prot == IPA_HW_PROTOCOL_ETH) {
-		IPAERR("EMAC\\NTN still not supported using this framework\n");
-		return -EFAULT;
 	}
 
 	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
@@ -1086,7 +1314,7 @@ int ipa3_eth_disconnect(
 	}
 
 	if ((ipa3_ctx->ipa_hw_type == IPA_HW_v4_5) ||
-		(prot != IPA_HW_PROTOCOL_AQC)) {
+		(prot == IPA_HW_PROTOCOL_RTK)) {
 		result = ipa3_eth_config_uc(false,
 			prot,
 			(pipe->dir == IPA_ETH_PIPE_DIR_TX)

@@ -376,7 +376,7 @@ int ipa3_smmu_map_peer_buff(u64 iova, u32 size, bool map, struct sg_table *sgt,
 	enum ipa_smmu_cb_type cb_type)
 {
 	struct iommu_domain *smmu_domain;
-	int res;
+	int res, ret = 0;
 	phys_addr_t phys;
 	unsigned long va;
 	struct scatterlist *sg;
@@ -417,7 +417,8 @@ int ipa3_smmu_map_peer_buff(u64 iova, u32 size, bool map, struct sg_table *sgt,
 				res = ipa3_iommu_map(smmu_domain, va, phys,
 					len, IOMMU_READ | IOMMU_WRITE);
 				if (res) {
-					IPAERR("Fail to map pa=%pa\n", &phys);
+					IPAERR("Fail to map pa=%pa, va 0x%X\n",
+						&phys, va);
 					return -EINVAL;
 				}
 				va += len;
@@ -437,18 +438,39 @@ int ipa3_smmu_map_peer_buff(u64 iova, u32 size, bool map, struct sg_table *sgt,
 			}
 		}
 	} else {
-		res = iommu_unmap(smmu_domain,
-		rounddown(iova, PAGE_SIZE),
-		roundup(size + iova - rounddown(iova, PAGE_SIZE),
-		PAGE_SIZE));
-		if (res != roundup(size + iova - rounddown(iova, PAGE_SIZE),
-			PAGE_SIZE)) {
-			IPAERR("Fail to unmap 0x%llx\n", iova);
-			return -EINVAL;
+		if (sgt != NULL) {
+			va = rounddown(iova, PAGE_SIZE);
+			for_each_sg(sgt->sgl, sg, sgt->nents, i)
+			{
+				page = sg_page(sg);
+				phys = page_to_phys(page);
+				len = PAGE_ALIGN(sg->offset + sg->length);
+				res = iommu_unmap(smmu_domain, va, len);
+				if (res != len) {
+					IPAERR(
+						"Fail to unmap pa=%pa, va 0x%X, res %d\n"
+						, &phys, va, res);
+					ret = -EINVAL;
+				}
+				va += len;
+				count++;
+			}
+		} else {
+			res = iommu_unmap(smmu_domain,
+				rounddown(iova, PAGE_SIZE),
+				roundup(
+				size + iova - rounddown(iova, PAGE_SIZE),
+					PAGE_SIZE));
+			if (res != roundup(
+			size + iova - rounddown(iova, PAGE_SIZE),
+				PAGE_SIZE)) {
+				IPAERR("Fail to unmap 0x%llx\n", iova);
+				return -EINVAL;
+			}
 		}
 	}
 	IPADBG("Peer buff %s 0x%llx\n", map ? "map" : "unmap", iova);
-	return 0;
+	return ret;
 }
 EXPORT_SYMBOL(ipa3_smmu_map_peer_buff);
 

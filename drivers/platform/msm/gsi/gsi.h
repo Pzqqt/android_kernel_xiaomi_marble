@@ -144,6 +144,7 @@ enum gsi_evt_chtype {
 	GSI_EVT_CHTYPE_AQC_EV = 0x8,
 	GSI_EVT_CHTYPE_11AD_EV = 0x9,
 	GSI_EVT_CHTYPE_RTK_EV = 0xC,
+	GSI_EVT_CHTYPE_NTN_EV = 0xD,
 };
 
 enum gsi_evt_ring_elem_size {
@@ -227,6 +228,7 @@ enum gsi_chan_prot {
 	GSI_CHAN_PROT_MHIC = 0xA,
 	GSI_CHAN_PROT_QDSS = 0xB,
 	GSI_CHAN_PROT_RTK = 0xC,
+	GSI_CHAN_PROT_NTN = 0xD,
 };
 
 enum gsi_max_prefetch {
@@ -1029,6 +1031,26 @@ union __packed gsi_wdi3_channel_scratch2_reg {
 	 uint32_t reserved2 : 23;
  };
 
+ /**
+ * gsi_ntn_channel_scratch - NTN SW config area of
+ * channel scratch
+ *
+ * @buff_addr_lsb: NTN buffer address LSB
+ * @buff_addr_msb: NTN buffer address MSB
+ * @fix_buff_size: buff size in log2
+ * @ioc_mod_threshold: the threshold for IOC moderation (TX)
+ */
+ struct __packed gsi_ntn_channel_scratch {
+	 uint32_t buff_addr_lsb;
+	 uint32_t buff_addr_msb : 8;
+	 uint32_t fix_buff_size : 4;
+	 uint32_t reserved1 : 20;
+	 uint32_t ioc_mod_threshold : 16;
+	 uint32_t reserved2 : 16;
+	 uint32_t reserved3;
+	 uint32_t reserved4;
+ };
+
 /**
  * gsi_channel_scratch - channel scratch SW config area
  *
@@ -1046,6 +1068,7 @@ union __packed gsi_channel_scratch {
 	struct __packed gsi_wdi2_channel_scratch_new wdi2_new;
 	struct __packed gsi_aqc_channel_scratch aqc;
 	struct __packed gsi_rtk_channel_scratch rtk;
+	struct __packed gsi_ntn_channel_scratch ntn;
 	struct __packed gsi_qdss_channel_scratch qdss;
 	struct __packed {
 		uint32_t word1;
