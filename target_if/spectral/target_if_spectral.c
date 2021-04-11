@@ -4833,11 +4833,16 @@ target_if_start_spectral_scan(struct wlan_objmgr_pdev *pdev,
 		op_ch_width = ch_width[SPECTRAL_SCAN_MODE_NORMAL];
 		agile_ch_width = ch_width[SPECTRAL_SCAN_MODE_AGILE];
 
-		if (!spectral->params[smode].ss_frequency.cfreq1 ||
-		    (agile_ch_width == CH_WIDTH_80P80MHZ &&
-		    !spectral->params[smode].ss_frequency.cfreq2)) {
+		if (!spectral->params[smode].ss_frequency.cfreq1) {
 			*err = SPECTRAL_SCAN_ERR_PARAM_NOT_INITIALIZED;
 			qdf_spin_unlock(&spectral->spectral_lock);
+			spectral_err("Agile Spectral cfreq1 is 0");
+			return QDF_STATUS_E_FAILURE;
+		} else if (agile_ch_width == CH_WIDTH_80P80MHZ &&
+			   !spectral->params[smode].ss_frequency.cfreq2) {
+			*err = SPECTRAL_SCAN_ERR_PARAM_NOT_INITIALIZED;
+			qdf_spin_unlock(&spectral->spectral_lock);
+			spectral_err("Agile Spectral cfreq2 is 0");
 			return QDF_STATUS_E_FAILURE;
 		}
 
