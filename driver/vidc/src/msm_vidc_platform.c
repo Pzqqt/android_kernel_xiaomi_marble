@@ -4,15 +4,13 @@
  */
 
 #include <linux/of_platform.h>
-
-#include "msm_vidc_waipio.h"
-
 #include "msm_vidc_platform.h"
-#include "msm_vidc_iris2.h"
 #include "msm_vidc_debug.h"
 #include "msm_vidc_v4l2.h"
 #include "msm_vidc_vb2.h"
 #include "msm_vidc_control.h"
+#include "msm_vidc_waipio.h"
+#include "msm_vidc_iris2.h"
 
 static struct v4l2_file_operations msm_v4l2_file_operations = {
 	.owner                          = THIS_MODULE,
@@ -97,6 +95,102 @@ static int msm_vidc_init_ops(struct msm_vidc_core *core)
 	return 0;
 }
 
+static int msm_vidc_deinit_platform_variant(struct msm_vidc_core *core, struct device *dev)
+{
+	int rc = 0;
+
+	if (!core || !dev) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	d_vpr_h("%s()\n", __func__);
+
+	if (of_device_is_compatible(dev->of_node, "qcom,msm-vidc-waipio")) {
+		rc = msm_vidc_deinit_platform_waipio(core, dev);
+	} else {
+		d_vpr_e("%s(): unknown platform\n", __func__);
+		rc = -EINVAL;
+	}
+
+	if (rc)
+		d_vpr_e("%s: failed with %d\n", __func__, rc);
+
+	return rc;
+}
+
+static int msm_vidc_init_platform_variant(struct msm_vidc_core *core, struct device *dev)
+{
+	int rc = 0;
+
+	if (!core || !dev) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	d_vpr_h("%s()\n", __func__);
+
+	if (of_device_is_compatible(dev->of_node, "qcom,msm-vidc-waipio")) {
+		rc = msm_vidc_init_platform_waipio(core, dev);
+	} else {
+		d_vpr_e("%s(): unknown platform\n", __func__);
+		rc = -EINVAL;
+	}
+
+	if (rc)
+		d_vpr_e("%s: failed with %d\n", __func__, rc);
+
+	return rc;
+}
+
+static int msm_vidc_deinit_vpu(struct msm_vidc_core *core, struct device *dev)
+{
+	int rc = 0;
+
+	if (!core || !dev) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	d_vpr_h("%s()\n", __func__);
+
+	if (of_device_is_compatible(dev->of_node, "qcom,msm-vidc-iris2")) {
+		rc = msm_vidc_deinit_iris2(core);
+	} else {
+		d_vpr_e("%s(): unknown vpu\n", __func__);
+		rc = -EINVAL;
+	}
+
+	if (rc)
+		d_vpr_e("%s: failed with %d\n", __func__, rc);
+
+	return rc;
+}
+
+static int msm_vidc_init_vpu(struct msm_vidc_core *core, struct device *dev)
+{
+	int rc = 0;
+
+	if (!core || !dev) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	d_vpr_h("%s()\n", __func__);
+
+	if (of_device_is_compatible(dev->of_node, "qcom,msm-vidc-iris2")) {
+		rc = msm_vidc_init_iris2(core);
+	} else {
+		d_vpr_e("%s(): unknown vpu\n", __func__);
+		rc = -EINVAL;
+	}
+
+	if (rc)
+		d_vpr_e("%s: failed with %d\n", __func__, rc);
+
+	return rc;
+}
+
 int msm_vidc_deinit_platform(struct platform_device *pdev)
 {
 	struct msm_vidc_core *core;
@@ -115,11 +209,8 @@ int msm_vidc_deinit_platform(struct platform_device *pdev)
 
 	d_vpr_h("%s()\n", __func__);
 
-	if (of_device_is_compatible(pdev->dev.of_node, "qcom,msm-vidc"))
-		msm_vidc_deinit_iris2(core);
-
-	if (of_device_is_compatible(pdev->dev.of_node, "qcom,msm-vidc"))
-		msm_vidc_deinit_platform_waipio(core);
+	msm_vidc_deinit_vpu(core, &pdev->dev);
+	msm_vidc_deinit_platform_variant(core, &pdev->dev);
 
 	kfree(core->platform);
 	return 0;
@@ -157,17 +248,13 @@ int msm_vidc_init_platform(struct platform_device *pdev)
 	if (rc)
 		return rc;
 
-	if (of_device_is_compatible(pdev->dev.of_node, "qcom,msm-vidc")) { // "qcom,msm-vidc-waipio"
-		rc = msm_vidc_init_platform_waipio(core);
-		if (rc)
-			return rc;
-	}
+	rc = msm_vidc_init_platform_variant(core, &pdev->dev);
+	if (rc)
+		return rc;
 
-	if (of_device_is_compatible(pdev->dev.of_node, "qcom,msm-vidc")) { // "qcom,msm-vidc-iris2"
-		rc = msm_vidc_init_iris2(core);
-		if (rc)
-			return rc;
-	}
+	rc = msm_vidc_init_vpu(core, &pdev->dev);
+	if (rc)
+		return rc;
 
 	return rc;
 }
