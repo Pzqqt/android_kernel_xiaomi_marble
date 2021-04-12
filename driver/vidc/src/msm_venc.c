@@ -1245,6 +1245,7 @@ static int msm_venc_s_fmt_input(struct msm_vidc_inst *inst, struct v4l2_format *
 
 	if (fmt->fmt.pix_mp.width != crop_width ||
 		fmt->fmt.pix_mp.height != crop_height) {
+		struct v4l2_format *output_fmt;
 
 		/* reset crop dimensions with updated resolution */
 		inst->crop.top = inst->crop.left = 0;
@@ -1256,9 +1257,17 @@ static int msm_venc_s_fmt_input(struct msm_vidc_inst *inst, struct v4l2_format *
 		inst->compose.width = f->fmt.pix_mp.width;
 		inst->compose.height = f->fmt.pix_mp.height;
 
-		rc = msm_venc_s_fmt_output(inst, &inst->fmts[OUTPUT_PORT]);
+		output_fmt = &inst->fmts[OUTPUT_PORT];
+		rc = msm_venc_s_fmt_output(inst, output_fmt);
 		if (rc)
 			return rc;
+
+		i_vpr_h(inst,
+			"%s: type %d: format %#x width %d height %d size %d\n",
+			__func__, output_fmt->type, output_fmt->fmt.pix_mp.pixelformat,
+			output_fmt->fmt.pix_mp.width,
+			output_fmt->fmt.pix_mp.height,
+			output_fmt->fmt.pix_mp.plane_fmt[0].sizeimage);
 	}
 
 	//rc = msm_vidc_check_session_supported(inst);
@@ -1385,6 +1394,7 @@ int msm_venc_g_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 int msm_venc_s_selection(struct msm_vidc_inst* inst, struct v4l2_selection* s)
 {
 	int rc = 0;
+	struct v4l2_format *output_fmt;
 
 	if (!inst || !s) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1431,9 +1441,16 @@ int msm_venc_s_selection(struct msm_vidc_inst* inst, struct v4l2_selection* s)
 		if (inst->compose.height > inst->crop.height)
 			inst->compose.height = inst->crop.height;
 		/* update output format based on new crop dimensions */
-		rc = msm_venc_s_fmt_output(inst, &inst->fmts[OUTPUT_PORT]);
+		output_fmt = &inst->fmts[OUTPUT_PORT];
+		rc = msm_venc_s_fmt_output(inst, output_fmt);
 		if (rc)
 			return rc;
+		i_vpr_h(inst,
+			"%s: type %d: format %#x width %d height %d size %d\n",
+			__func__, output_fmt->type, output_fmt->fmt.pix_mp.pixelformat,
+			output_fmt->fmt.pix_mp.width,
+			output_fmt->fmt.pix_mp.height,
+			output_fmt->fmt.pix_mp.plane_fmt[0].sizeimage);
 		break;
 	case V4L2_SEL_TGT_COMPOSE_BOUNDS:
 	case V4L2_SEL_TGT_COMPOSE_PADDED:

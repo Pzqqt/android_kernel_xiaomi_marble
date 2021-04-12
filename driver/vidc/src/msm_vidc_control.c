@@ -1072,6 +1072,112 @@ int msm_vidc_adjust_transform_8x8(void *instance, struct v4l2_ctrl *ctrl)
 	return 0;
 }
 
+int msm_vidc_adjust_slice_count(void *instance, struct v4l2_ctrl *ctrl)
+{
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+	struct msm_vidc_inst_capability *capability;
+	struct v4l2_format *output_fmt;
+	s32 adjusted_value, rc_type = -1, slice_mode;
+	u32 slice_val, mbpf = 0, mbps = 0, max_mbpf = 0, max_mbps = 0;
+	u32 update_cap, max_avg_slicesize, output_width, output_height;
+	u32 min_width, min_height, max_width, max_height, fps;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	slice_mode = ctrl ? ctrl->val :
+		capability->cap[SLICE_MODE].value;
+
+	if (msm_vidc_get_parent_value(inst, SLICE_MODE,
+		BITRATE_MODE, &rc_type, __func__))
+		return -EINVAL;
+
+	if (slice_mode == V4L2_MPEG_VIDEO_MULTI_SLICE_MODE_SINGLE)
+		return 0;
+
+	fps = capability->cap[FRAME_RATE].value >> 16;
+	if (fps > MAX_SLICES_FRAME_RATE ||
+		(rc_type != HFI_RC_OFF &&
+		rc_type != HFI_RC_CBR_CFR &&
+		rc_type != HFI_RC_CBR_VFR)) {
+		adjusted_value = V4L2_MPEG_VIDEO_MULTI_SLICE_MODE_SINGLE;
+		update_cap = SLICE_MODE;
+		i_vpr_h(inst,
+			"%s: slice unsupported, fps: %u, rc_type: %#x\n",
+			__func__, fps, rc_type);
+		goto exit;
+	}
+
+	output_fmt = &inst->fmts[OUTPUT_PORT];
+	output_width = output_fmt->fmt.pix_mp.width;
+	output_height = output_fmt->fmt.pix_mp.height;
+
+	max_width = (slice_mode == V4L2_MPEG_VIDEO_MULTI_SLICE_MODE_MAX_MB) ?
+		MAX_MB_SLICE_WIDTH : MAX_BYTES_SLICE_WIDTH;
+	max_height = (slice_mode == V4L2_MPEG_VIDEO_MULTI_SLICE_MODE_MAX_MB) ?
+		MAX_MB_SLICE_HEIGHT : MAX_BYTES_SLICE_HEIGHT;
+	min_width = (inst->codec == MSM_VIDC_HEVC) ?
+		MIN_HEVC_SLICE_WIDTH : MIN_AVC_SLICE_WIDTH;
+	min_height = MIN_SLICE_HEIGHT;
+
+	/*
+	 * For V4L2_MPEG_VIDEO_MULTI_SLICE_MODE_MAX_MB:
+	 * 	- width >= 384 and height >= 128
+	 * 	- width and height <= 4096
+	 * For V4L2_MPEG_VIDEO_MULTI_SLICE_MODE_MAX_BYTES:
+	 * 	- width >= 192 and height >= 128
+	 * 	- width and height <= 1920
+	 */
+	if (output_width < min_width || output_height < min_height ||
+		output_width > max_width || output_height > max_width) {
+		adjusted_value = V4L2_MPEG_VIDEO_MULTI_SLICE_MODE_SINGLE;
+		update_cap = SLICE_MODE;
+		i_vpr_h(inst,
+			"%s: slice unsupported, codec: %#x wxh: [%dx%d]\n",
+			__func__, inst->codec, output_width, output_height);
+		goto exit;
+	}
+
+	mbpf = NUM_MBS_PER_FRAME(output_height, output_width);
+	mbps = NUM_MBS_PER_SEC(output_height, output_width, fps);
+	max_mbpf = NUM_MBS_PER_FRAME(max_height, max_width);
+	max_mbps = NUM_MBS_PER_SEC(max_height, max_width, fps);
+
+	if (mbpf > max_mbpf || mbps > max_mbps) {
+		adjusted_value = V4L2_MPEG_VIDEO_MULTI_SLICE_MODE_SINGLE;
+		update_cap = SLICE_MODE;
+		i_vpr_h(inst,
+			"%s: Unsupported, mbpf[%u] > max[%u], mbps[%u] > max[%u]\n",
+			__func__, mbpf, max_mbpf, mbps, max_mbps);
+		goto exit;
+	}
+
+	if (slice_mode == V4L2_MPEG_VIDEO_MULTI_SLICE_MODE_MAX_MB) {
+		update_cap = SLICE_MAX_MB;
+		slice_val = capability->cap[SLICE_MAX_MB].value;
+		slice_val = max(slice_val, mbpf / MAX_SLICES_PER_FRAME);
+	} else {
+		slice_val = capability->cap[SLICE_MAX_BYTES].value;
+		update_cap = SLICE_MAX_BYTES;
+		if (rc_type != HFI_RC_OFF) {
+			max_avg_slicesize = ((capability->cap[BIT_RATE].value /
+				fps) / 8) /
+				MAX_SLICES_PER_FRAME;
+			slice_val = max(slice_val, max_avg_slicesize);
+		}
+	}
+	adjusted_value = slice_val;
+
+exit:
+	msm_vidc_update_cap_value(inst, update_cap,
+		adjusted_value, __func__);
+
+	return 0;
+}
+
 static int msm_vidc_adjust_static_layer_count_and_type(struct msm_vidc_inst *inst,
 	s32 layer_count)
 {
@@ -2033,7 +2139,9 @@ int msm_vidc_set_slice_count(void* instance,
 		return 0;
 	}
 	if (slice_mode == V4L2_MPEG_VIDEO_MULTI_SLICE_MODE_MAX_MB) {
-		hfi_value = inst->capabilities->cap[SLICE_MAX_MB].value;
+		hfi_value = (inst->codec == MSM_VIDC_HEVC) ?
+			((inst->capabilities->cap[SLICE_MAX_MB].value + 3) / 4) :
+			inst->capabilities->cap[SLICE_MAX_MB].value;
 		set_cap_id = SLICE_MAX_MB;
 	} else if (slice_mode == V4L2_MPEG_VIDEO_MULTI_SLICE_MODE_MAX_BYTES) {
 		hfi_value = inst->capabilities->cap[SLICE_MAX_BYTES].value;

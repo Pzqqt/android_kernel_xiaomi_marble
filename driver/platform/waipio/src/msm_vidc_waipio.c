@@ -25,6 +25,11 @@
 #define MAX_QP                  51
 #define DEFAULT_QP              20
 #define MAX_CONSTANT_QUALITY    100
+#define MIN_SLICE_BYTE_SIZE     512
+#define MAX_SLICE_BYTE_SIZE       \
+	((MAX_BITRATE) >> 3)
+#define MAX_SLICE_MB_SIZE         \
+	(((4096 + 15) >> 4) * ((2304 + 15) >> 4))
 
 #define UBWC_CONFIG(mc, ml, hbb, bs1, bs2, bs3, bsp) \
 {	\
@@ -329,7 +334,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		{0},
 		{LTR_COUNT, IR_RANDOM, TIME_DELTA_BASED_RC, I_FRAME_QP,
 			ENH_LAYER_COUNT, BIT_RATE, CONTENT_ADAPTIVE_CODING,
-			BITRATE_BOOST, MIN_QUALITY, VBV_DELAY, PEAK_BITRATE},
+			BITRATE_BOOST, MIN_QUALITY, VBV_DELAY, PEAK_BITRATE,
+			SLICE_MODE},
 		msm_vidc_adjust_bitrate_mode, msm_vidc_set_u32_enum},
 
 	{BITRATE_MODE, ENC, HEVC,
@@ -347,7 +353,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 			CONSTANT_QUALITY, ENH_LAYER_COUNT,
 			CONTENT_ADAPTIVE_CODING, BIT_RATE,
 			BITRATE_BOOST, MIN_QUALITY, VBV_DELAY,
-			PEAK_BITRATE},
+			PEAK_BITRATE, SLICE_MODE},
 		msm_vidc_adjust_bitrate_mode, msm_vidc_set_u32_enum},
 
 	{LOSSLESS, ENC, HEVC|HEIC,
@@ -1027,18 +1033,19 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		V4L2_MPEG_VIDEO_MULTI_SLICE_MODE_SINGLE,
 		V4L2_CID_MPEG_VIDEO_MULTI_SLICE_MODE,
 		0,
-		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT | CAP_FLAG_MENU,
-		{0}, {0},
-		NULL, msm_vidc_set_slice_count},
+		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_MENU,
+		{BITRATE_MODE}, {0},
+		msm_vidc_adjust_slice_count, msm_vidc_set_slice_count},
 
 	{SLICE_MAX_BYTES, ENC, H264|HEVC|HEIC,
-		1, INT_MAX, 1, INT_MAX,
+		MIN_SLICE_BYTE_SIZE, MAX_SLICE_BYTE_SIZE,
+		1, MIN_SLICE_BYTE_SIZE,
 		V4L2_CID_MPEG_VIDEO_MULTI_SLICE_MAX_BYTES,
 		HFI_PROP_MULTI_SLICE_BYTES_COUNT,
 		CAP_FLAG_OUTPUT_PORT},
 
 	{SLICE_MAX_MB, ENC, H264|HEVC|HEIC,
-		1, INT_MAX, 1, INT_MAX,
+		1, MAX_SLICE_MB_SIZE, 1, 1,
 		V4L2_CID_MPEG_VIDEO_MULTI_SLICE_MAX_MB,
 		HFI_PROP_MULTI_SLICE_MB_COUNT,
 		CAP_FLAG_OUTPUT_PORT},

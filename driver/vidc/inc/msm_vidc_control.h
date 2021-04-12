@@ -28,6 +28,7 @@ int msm_vidc_adjust_mark_ltr(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_ir_random(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_delta_based_rc(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_transform_8x8(void *instance, struct v4l2_ctrl *ctrl);
+int msm_vidc_adjust_slice_count(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_layer_count(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_gop_size(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_b_frame(void *instance, struct v4l2_ctrl *ctrl);

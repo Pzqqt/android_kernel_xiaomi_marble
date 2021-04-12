@@ -56,6 +56,15 @@
 #define MAX_AVC_ENH_LAYER_HYBRID_HP           5
 #define PERCENT_PEAK_BITRATE_INCREASED       10
 #define INVALID_DEFAULT_MARK_OR_USE_LTR      -1
+#define MAX_SLICES_PER_FRAME                 10
+#define MAX_SLICES_FRAME_RATE                60
+#define MAX_MB_SLICE_WIDTH                 4096
+#define MAX_MB_SLICE_HEIGHT                2160
+#define MAX_BYTES_SLICE_WIDTH              1920
+#define MAX_BYTES_SLICE_HEIGHT             1088
+#define MIN_HEVC_SLICE_WIDTH                384
+#define MIN_AVC_SLICE_WIDTH                 192
+#define MIN_SLICE_HEIGHT                    128
 
 #define DCVS_WINDOW 16
 /* Superframe can have maximum of 32 frames */
