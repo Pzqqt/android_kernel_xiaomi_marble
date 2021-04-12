@@ -855,7 +855,9 @@ static void
 dp_rx_bar_frame_handle(struct dp_soc *soc,
 		       hal_ring_desc_t ring_desc,
 		       struct dp_rx_desc *rx_desc,
-		       struct hal_rx_mpdu_desc_info *mpdu_desc_info)
+		       struct hal_rx_mpdu_desc_info *mpdu_desc_info,
+		       uint8_t err_status,
+		       uint32_t err_code)
 {
 	qdf_nbuf_t nbuf;
 	struct dp_pdev *pdev;
@@ -864,7 +866,6 @@ dp_rx_bar_frame_handle(struct dp_soc *soc,
 	uint16_t peer_id;
 	uint8_t *rx_tlv_hdr;
 	uint32_t tid;
-	uint8_t reo_err_code;
 
 	nbuf = rx_desc->nbuf;
 	rx_desc_pool = &soc->rx_desc_buf[rx_desc->pool_id];
@@ -890,7 +891,6 @@ dp_rx_bar_frame_handle(struct dp_soc *soc,
 	if (!peer)
 		goto next;
 
-	reo_err_code = hal_rx_get_reo_error_code(soc->hal_soc, ring_desc);
 	dp_info("BAR frame: peer = "QDF_MAC_ADDR_FMT
 		" peer_id = %d"
 		" tid = %u"
@@ -900,18 +900,19 @@ dp_rx_bar_frame_handle(struct dp_soc *soc,
 		peer->peer_id,
 		tid,
 		mpdu_desc_info->mpdu_seq,
-		reo_err_code);
+		err_code);
 
-	switch (reo_err_code) {
-	case HAL_REO_ERR_BAR_FRAME_2K_JUMP:
-		/* fallthrough */
-	case HAL_REO_ERR_BAR_FRAME_OOR:
-		dp_rx_err_handle_bar(soc, peer, nbuf);
-		DP_STATS_INC(soc,
-			     rx.err.reo_error[reo_err_code], 1);
-		break;
-	default:
-		DP_STATS_INC(soc, rx.bar_frame, 1);
+	if (err_status == HAL_REO_ERROR_DETECTED) {
+		switch (err_code) {
+		case HAL_REO_ERR_BAR_FRAME_2K_JUMP:
+			/* fallthrough */
+		case HAL_REO_ERR_BAR_FRAME_OOR:
+			dp_rx_err_handle_bar(soc, peer, nbuf);
+			DP_STATS_INC(soc, rx.err.reo_error[err_code], 1);
+			break;
+		default:
+			DP_STATS_INC(soc, rx.bar_frame, 1);
+		}
 	}
 
 	dp_peer_unref_delete(peer, DP_MOD_ID_RX_ERR);
@@ -1958,7 +1959,7 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 	uint32_t rx_bufs_reaped[MAX_PDEV_CNT] = { 0 };
 	uint8_t mac_id = 0;
 	uint8_t buf_type;
-	uint8_t error;
+	uint8_t err_status;
 	struct hal_rx_mpdu_desc_info mpdu_desc_info;
 	struct hal_buf_info hbi;
 	struct dp_pdev *dp_pdev;
@@ -1998,10 +1999,12 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 						  hal_ring_hdl)))) {
 
 		DP_STATS_INC(soc, rx.err_ring_pkts, 1);
-
-		error = hal_rx_err_status_get(hal_soc, ring_desc);
-
+		err_status = hal_rx_err_status_get(hal_soc, ring_desc);
 		buf_type = hal_rx_reo_buf_type_get(hal_soc, ring_desc);
+
+		if (err_status == HAL_REO_ERROR_DETECTED)
+			error_code = hal_rx_get_reo_error_code(hal_soc,
+							       ring_desc);
 
 		/* Get the MPDU DESC info */
 		hal_rx_mpdu_desc_info_get(hal_soc, ring_desc, &mpdu_desc_info);
@@ -2074,10 +2077,9 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 		if (mpdu_desc_info.bar_frame) {
 			qdf_assert_always(mpdu_desc_info.msdu_count == 1);
 
-			dp_rx_bar_frame_handle(soc,
-					       ring_desc,
-					       rx_desc,
-					       &mpdu_desc_info);
+			dp_rx_bar_frame_handle(soc, ring_desc, rx_desc,
+					       &mpdu_desc_info, err_status,
+					       error_code);
 
 			rx_bufs_reaped[mac_id] += 1;
 			goto next_entry;
@@ -2135,9 +2137,7 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 		/*
 		 * Expect REO errors to be handled after this point
 		 */
-		qdf_assert_always(error == HAL_REO_ERROR_DETECTED);
-
-		error_code = hal_rx_get_reo_error_code(hal_soc, ring_desc);
+		qdf_assert_always(err_status == HAL_REO_ERROR_DETECTED);
 
 		if (hal_rx_reo_is_pn_error(error_code)) {
 			/* TOD0 */
