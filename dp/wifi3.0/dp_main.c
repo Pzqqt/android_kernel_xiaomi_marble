@@ -11448,6 +11448,7 @@ static void dp_drain_txrx(struct cdp_soc_t *soc_handle)
 	struct dp_soc *soc = (struct dp_soc *)soc_handle;
 	uint32_t cur_tx_limit, cur_rx_limit;
 	uint32_t budget = 0xffff;
+	uint32_t val;
 	int i;
 
 	cur_tx_limit = soc->wlan_cfg_ctx->tx_comp_loop_pkt_limit;
@@ -11465,6 +11466,12 @@ static void dp_drain_txrx(struct cdp_soc_t *soc_handle)
 		dp_service_srngs(&soc->intr_ctx[i], budget);
 
 	dp_update_soft_irq_limits(soc, cur_tx_limit, cur_rx_limit);
+
+	/* Do a dummy read at offset 0; this will ensure all
+	 * pendings writes(HP/TP) are flushed before read returns.
+	 */
+	val = HAL_REG_READ((struct hal_soc *)soc->hal_soc, 0);
+	dp_debug("Register value at offset 0: %u\n", val);
 }
 #endif
 
