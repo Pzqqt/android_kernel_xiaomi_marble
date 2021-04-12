@@ -445,17 +445,6 @@ static struct sde_debug_bus_entry dp_dbg_bus[] = {
 };
 
 /**
- * _sde_power_check - check if power needs to enabled
- * @dump_mode: to check if power need to be enabled
- * Return: true if success; false otherwise
- */
-static inline bool _sde_power_check(enum sde_dbg_dump_context dump_mode)
-{
-	return (dump_mode == SDE_DBG_DUMP_CLK_ENABLED_CTX ||
-		dump_mode == SDE_DBG_DUMP_IRQ_CTX) ? false : true;
-}
-
-/**
  * _sde_dump_reg - helper function for dumping rotator register set content
  * @dump_name: register set name
  * @reg_dump_flag: dumping flag controlling in-log/memory dump location
@@ -972,12 +961,19 @@ static void _sde_dump_array(bool do_panic, const char *name, bool dump_secure, u
 	int rc;
 	ktime_t start, end;
 	struct sde_dbg_base *dbg_base = &sde_dbg_base;
+	bool skip_power;
 
 	mutex_lock(&dbg_base->mutex);
 
+	/*
+	 * sde power resources are expected to be enabled in this context and might
+	 * result in deadlock if its called again.
+	 */
+	skip_power = (dbg_base->dump_mode == SDE_DBG_DUMP_CLK_ENABLED_CTX);
+
 	sde_evtlog_dump_all(dbg_base->evtlog);
 
-	if (_sde_power_check(dbg_base->dump_mode)) {
+	if (!skip_power) {
 		rc = pm_runtime_get_sync(dbg_base->dev);
 		if (rc < 0) {
 			pr_err("failed to enable power %d\n", rc);
@@ -989,8 +985,9 @@ static void _sde_dump_array(bool do_panic, const char *name, bool dump_secure, u
 	_sde_dump_reg_mask(dump_blk_mask, dump_secure);
 	end = ktime_get();
 	dev_info(dbg_base->dev,
-			"reg-dump logging time start_us:%llu, end_us:%llu , duration_us:%llu\n",
-			ktime_to_us(start), ktime_to_us(end), ktime_us_delta(end, start));
+		"ctx:%d, reg-dump logging time start_us:%llu, end_us:%llu , duration_us:%llu\n",
+		dbg_base->dump_mode, ktime_to_us(start), ktime_to_us(end),
+		ktime_us_delta(end, start));
 
 	start = ktime_get();
 	if (dump_blk_mask & SDE_DBG_SDE_DBGBUS)
@@ -1016,7 +1013,7 @@ static void _sde_dump_array(bool do_panic, const char *name, bool dump_secure, u
 			"debug-bus logging time start_us:%llu, end_us:%llu , duration_us:%llu\n",
 			ktime_to_us(start), ktime_to_us(end), ktime_us_delta(end, start));
 
-	if (_sde_power_check(dbg_base->dump_mode))
+	if (!skip_power)
 		pm_runtime_put_sync(dbg_base->dev);
 
 	if (do_panic && dbg_base->panic_on_err)
