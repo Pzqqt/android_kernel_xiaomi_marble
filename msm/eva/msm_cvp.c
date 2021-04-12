@@ -1228,6 +1228,57 @@ static int msm_cvp_session_ctrl(struct msm_cvp_inst *inst,
 	return rc;
 }
 
+static unsigned int msm_cvp_get_hw_aggregate_cycles(enum hw_block hwblk)
+{
+	struct msm_cvp_core *core;
+	struct msm_cvp_inst *inst;
+	unsigned long cycles_sum = 0;
+
+	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+
+	if (!core) {
+		dprintk(CVP_ERR, "%s: invalid core\n", __func__);
+		return -EINVAL;
+	}
+
+	mutex_lock(&core->clk_lock);
+	list_for_each_entry(inst, &core->instances, list) {
+		if (inst->state == MSM_CVP_CORE_INVALID ||
+			inst->state == MSM_CVP_CORE_UNINIT ||
+			!is_subblock_profile_existed(inst))
+			continue;
+		switch (hwblk) {
+		case CVP_FDU:
+		{
+			cycles_sum += inst->prop.fdu_cycles;
+			break;
+		}
+		case CVP_ICA:
+		{
+			cycles_sum += inst->prop.ica_cycles;
+			break;
+		}
+		case CVP_MPU:
+		{
+			cycles_sum += inst->prop.mpu_cycles;
+			break;
+		}
+		case CVP_OD:
+		{
+			cycles_sum += inst->prop.od_cycles;
+			break;
+		}
+		default:
+			dprintk(CVP_ERR, "unrecognized hw block %d\n",
+				hwblk);
+			break;
+		}
+	}
+	mutex_unlock(&core->clk_lock);
+	cycles_sum = cycles_sum&0xFFFFFFFF;
+	return (unsigned int)cycles_sum;
+}
+
 static int msm_cvp_get_sysprop(struct msm_cvp_inst *inst,
 		struct eva_kmd_arg *arg)
 {
@@ -1249,6 +1300,30 @@ static int msm_cvp_get_sysprop(struct msm_cvp_inst *inst,
 		case EVA_KMD_PROP_HFI_VERSION:
 		{
 			props->prop_data[i].data = hfi->version;
+			break;
+		}
+		case EVA_KMD_PROP_PWR_FDU:
+		{
+			props->prop_data[i].data =
+				msm_cvp_get_hw_aggregate_cycles(CVP_FDU);
+			break;
+		}
+		case EVA_KMD_PROP_PWR_ICA:
+		{
+			props->prop_data[i].data =
+				msm_cvp_get_hw_aggregate_cycles(CVP_ICA);
+			break;
+		}
+		case EVA_KMD_PROP_PWR_OD:
+		{
+			props->prop_data[i].data =
+				msm_cvp_get_hw_aggregate_cycles(CVP_OD);
+			break;
+		}
+		case EVA_KMD_PROP_PWR_MPU:
+		{
+			props->prop_data[i].data =
+				msm_cvp_get_hw_aggregate_cycles(CVP_MPU);
 			break;
 		}
 		default:
