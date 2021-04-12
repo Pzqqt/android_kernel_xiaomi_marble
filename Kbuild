@@ -47,7 +47,10 @@ include $(WLAN_CFG_OVERRIDE_FILE)
 $(warning "Overriding WLAN config with: $(shell cat $(WLAN_CFG_OVERRIDE_FILE))")
 endif
 
-# For now enable Connection manager for all platform supporting LFR3
+# This is temp change until connection manager changes for LFR2 are done.
+# Once LFR2 changes are done, CONFIG_CM_ENABLE will be removed and all
+# connection manager files would compile by default.
+# For now enable Connection manager only for platforms supporting LFR3
 ifeq ($(CONFIG_QCACLD_WLAN_LFR3), y)
 CONFIG_CM_ENABLE := y
 endif
