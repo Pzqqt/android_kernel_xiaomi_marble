@@ -14,6 +14,7 @@
 #include <linux/netlink.h>
 #include <uapi/linux/rtnetlink.h>
 #include <linux/net.h>
+#include <linux/workqueue.h>
 #include <net/sock.h>
 #include "dfc.h"
 #include "rmnet_qmi.h"
@@ -78,32 +79,102 @@ struct qmap_ll_switch_status {
 	struct qmap_ll_bearer	bearer[0];
 } __aligned(1);
 
-static void ll_send_nl_ack(struct rmnet_bearer_map *bearer)
+/*
+ * LL workqueue
+ */
+static DEFINE_SPINLOCK(ll_wq_lock);
+static struct workqueue_struct *ll_wq;
+
+struct ll_ack_work {
+	struct work_struct work;
+	u32 nl_pid;
+	u32 nl_seq;
+	u8 bearer_id;
+	u8 status_code;
+	u8 current_ch;
+};
+
+static void ll_ack_fn(struct work_struct *work)
 {
+	struct ll_ack_work *ack_work;
 	struct sk_buff *skb;
 	struct nlmsghdr *nlh;
 	struct nlmsgerr *errmsg;
 	unsigned int flags = NLM_F_CAPPED;
 
-	if (!(bearer->ch_switch.flags & LL_MASK_NL_ACK))
-		return;
+	ack_work = container_of(work, struct ll_ack_work, work);
 
-	skb = nlmsg_new(sizeof(*errmsg), GFP_ATOMIC);
+	skb = nlmsg_new(sizeof(*errmsg), GFP_KERNEL);
 	if (!skb)
-		return;
+		goto out;
 
-	nlh = __nlmsg_put(skb, bearer->ch_switch.nl_pid,
-			  bearer->ch_switch.nl_seq, NLMSG_ERROR,
+	nlh = __nlmsg_put(skb, ack_work->nl_pid,
+			  ack_work->nl_seq, NLMSG_ERROR,
 			  sizeof(*errmsg), flags);
 	errmsg = nlmsg_data(nlh);
 	errmsg->error = 0;
-	errmsg->msg.nlmsg_type = bearer->bearer_id;
-	errmsg->msg.nlmsg_flags = bearer->ch_switch.status_code;
-	errmsg->msg.nlmsg_seq = bearer->ch_switch.current_ch;
+	errmsg->msg.nlmsg_len = sizeof(struct nlmsghdr);
+	errmsg->msg.nlmsg_type = ack_work->bearer_id;
+	errmsg->msg.nlmsg_flags = ack_work->status_code;
+	errmsg->msg.nlmsg_seq = ack_work->current_ch;
+	errmsg->msg.nlmsg_pid = ack_work->nl_pid;
 	nlmsg_end(skb, nlh);
 
-	rtnl_unicast(skb, &init_net, bearer->ch_switch.nl_pid);
+	rtnl_unicast(skb, &init_net, ack_work->nl_pid);
+out:
+	kfree(ack_work);
 }
+
+static void ll_send_nl_ack(struct rmnet_bearer_map *bearer)
+{
+	struct ll_ack_work *ack_work;
+
+	if (!(bearer->ch_switch.flags & LL_MASK_NL_ACK))
+		return;
+
+	ack_work = kzalloc(sizeof(*ack_work), GFP_ATOMIC);
+	if (!ack_work)
+		return;
+
+	ack_work->nl_pid = bearer->ch_switch.nl_pid;
+	ack_work->nl_seq = bearer->ch_switch.nl_seq;
+	ack_work->bearer_id = bearer->bearer_id;
+	ack_work->status_code = bearer->ch_switch.status_code;
+	ack_work->current_ch = bearer->ch_switch.current_ch;
+	INIT_WORK(&ack_work->work, ll_ack_fn);
+
+	spin_lock_bh(&ll_wq_lock);
+	if (ll_wq)
+		queue_work(ll_wq, &ack_work->work);
+	else
+		kfree(ack_work);
+	spin_unlock_bh(&ll_wq_lock);
+}
+
+void rmnet_ll_wq_init(void)
+{
+	WARN_ON(ll_wq);
+	ll_wq = alloc_ordered_workqueue("rmnet_ll_wq", 0);
+}
+
+void rmnet_ll_wq_exit(void)
+{
+	struct workqueue_struct *tmp = NULL;
+
+	spin_lock_bh(&ll_wq_lock);
+	if (ll_wq) {
+		tmp = ll_wq;
+		ll_wq = NULL;
+	}
+	spin_unlock_bh(&ll_wq_lock);
+
+	if (tmp)
+		destroy_workqueue(tmp);
+}
+
+/*
+ * LLC switch
+ */
 
 static void ll_qmap_maybe_set_ch(struct qos_info *qos,
 				 struct rmnet_bearer_map *bearer, u8 status)

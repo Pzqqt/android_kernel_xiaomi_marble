@@ -202,8 +202,9 @@ void qmi_rmnet_watchdog_add(struct rmnet_bearer_map *bearer);
 void qmi_rmnet_watchdog_remove(struct rmnet_bearer_map *bearer);
 
 int rmnet_ll_switch(struct net_device *dev, struct tcmsg *tcm, int attrlen);
-
 void rmnet_ll_guard_fn(struct timer_list *t);
+void rmnet_ll_wq_init(void);
+void rmnet_ll_wq_exit(void);
 #else
 static inline struct rmnet_flow_map *
 qmi_rmnet_get_flow_map(struct qos_info *qos_info,

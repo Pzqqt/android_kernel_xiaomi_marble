@@ -758,6 +758,7 @@ int qmi_rmnet_change_link(struct net_device *dev, void *port, void *tcm_pt,
 			qmi_rmnet_work_init(port);
 			rmnet_set_powersave_format(port);
 		}
+		rmnet_ll_wq_init();
 		break;
 	case NLMSG_CLIENT_DELETE:
 		if (!qmi)
@@ -772,6 +773,7 @@ int qmi_rmnet_change_link(struct net_device *dev, void *port, void *tcm_pt,
 			qmi_rmnet_work_exit(port);
 		}
 		qmi_rmnet_delete_client(port, qmi, tcm);
+		rmnet_ll_wq_exit();
 		break;
 	case NLMSG_SCALE_FACTOR:
 		if (!tcm->tcm_ifindex)
@@ -815,6 +817,7 @@ void qmi_rmnet_qmi_exit(void *qmi_pt, void *port)
 
 	wda_qmi_client_release(data);
 	qmi_rmnet_work_exit(port);
+	rmnet_ll_wq_exit();
 
 	if (data) {
 		wda_qmi_client_exit(data);
