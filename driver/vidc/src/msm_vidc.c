@@ -824,6 +824,7 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	INIT_LIST_HEAD(&inst->buffers.output.list);
 	INIT_LIST_HEAD(&inst->buffers.output_meta.list);
 	INIT_LIST_HEAD(&inst->buffers.read_only.list);
+	INIT_LIST_HEAD(&inst->buffers.release.list);
 	INIT_LIST_HEAD(&inst->buffers.bin.list);
 	INIT_LIST_HEAD(&inst->buffers.arp.list);
 	INIT_LIST_HEAD(&inst->buffers.comv.list);

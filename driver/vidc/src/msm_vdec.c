@@ -17,6 +17,7 @@
 #include "msm_vidc_debug.h"
 #include "msm_vidc_power.h"
 #include "msm_vidc_control.h"
+#include "msm_vidc_memory.h"
 #include "venus_hfi.h"
 #include "hfi_packet.h"
 /* TODO: update based on clips */
@@ -63,6 +64,7 @@ static const u32 msm_vdec_output_subscribe_for_properties[] = {
 	HFI_PROP_WORST_COMPRESSION_RATIO,
 	HFI_PROP_WORST_COMPLEXITY_FACTOR,
 	HFI_PROP_PICTURE_TYPE,
+	HFI_PROP_DPB_LIST,
 };
 
 static const u32 msm_vdec_internal_buffer_type[] = {
@@ -1021,8 +1023,8 @@ static int msm_vdec_subscribe_property(struct msm_vidc_inst *inst,
 	int rc = 0;
 	struct msm_vidc_core *core;
 	u32 payload[32] = {0};
-	u32 i;
-	u32 payload_size = 0;
+	u32 i, count = 0;
+	bool allow = false;
 
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1034,15 +1036,21 @@ static int msm_vdec_subscribe_property(struct msm_vidc_inst *inst,
 	payload[0] = HFI_MODE_PROPERTY;
 
 	if (port == INPUT_PORT) {
-		for (i = 0; i < ARRAY_SIZE(msm_vdec_input_subscribe_for_properties); i++)
-			payload[i + 1] = msm_vdec_input_subscribe_for_properties[i];
-		payload_size = (ARRAY_SIZE(msm_vdec_input_subscribe_for_properties) + 1) *
-			sizeof(u32);
+		for (i = 0; i < ARRAY_SIZE(msm_vdec_input_subscribe_for_properties); i++) {
+			payload[count + 1] = msm_vdec_input_subscribe_for_properties[i];
+			count++;
+		}
 	} else if (port == OUTPUT_PORT) {
-		for (i = 0; i < ARRAY_SIZE(msm_vdec_output_subscribe_for_properties); i++)
-			payload[i + 1] = msm_vdec_output_subscribe_for_properties[i];
-		payload_size = (ARRAY_SIZE(msm_vdec_output_subscribe_for_properties) + 1) *
-			sizeof(u32);
+		for (i = 0; i < ARRAY_SIZE(msm_vdec_output_subscribe_for_properties); i++) {
+			allow = msm_vidc_allow_property(inst,
+				msm_vdec_output_subscribe_for_properties[i]);
+			if (allow) {
+				payload[count + 1] = msm_vdec_output_subscribe_for_properties[i];
+				count++;
+			}
+			msm_vidc_update_property_cap(inst,
+				msm_vdec_output_subscribe_for_properties[i], allow);
+		}
 	} else {
 		i_vpr_e(inst, "%s: invalid port: %d\n", __func__, port);
 		return -EINVAL;
@@ -1053,7 +1061,7 @@ static int msm_vdec_subscribe_property(struct msm_vidc_inst *inst,
 			port,
 			HFI_PAYLOAD_U32_ARRAY,
 			&payload[0],
-			payload_size);
+			(count + 1) * sizeof(u32));
 
 	return rc;
 }
@@ -1780,13 +1788,156 @@ static int msm_vdec_qbuf_batch(struct msm_vidc_inst *inst,
 	return rc;
 }
 
+static int msm_vdec_release_nonref_buffers(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+	u32 fw_ro_count = 0, nonref_ro_count = 0;
+	struct msm_vidc_buffer *ro_buf, *rel_buf, *dummy;
+	int i = 0;
+	bool found = false;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	/* count num buffers in read_only list */
+	list_for_each_entry(ro_buf, &inst->buffers.read_only.list, list)
+		fw_ro_count++;
+
+	if (fw_ro_count <= MAX_DPB_COUNT)
+		return 0;
+
+	/*
+	 * Mark those buffers present in read_only list as non-reference
+	 * if that buffer is not part of dpb_list_payload
+	 * count such non-ref read only buffers as nonref_ro_count
+	 * dpb_list_payload details:
+	 * payload[0-1]           : 64 bits base_address of DPB-1
+	 * payload[2]             : 32 bits addr_offset  of DPB-1
+	 * payload[3]             : 32 bits data_offset  of DPB-1
+	 */
+	list_for_each_entry(ro_buf, &inst->buffers.read_only.list, list) {
+		found = false;
+		for (i = 0; (i + 3) < MAX_DPB_LIST_ARRAY_SIZE; i = i + 4) {
+			if (ro_buf->device_addr == inst->dpb_list_payload[i] &&
+				ro_buf->data_offset == inst->dpb_list_payload[i + 3]) {
+				found = true;
+				break;
+			}
+		}
+		if (!found) {
+			ro_buf->attr &= ~MSM_VIDC_ATTR_READ_ONLY;
+			nonref_ro_count++;
+		}
+	}
+
+	if (nonref_ro_count <= inst->buffers.output.min_count)
+		return 0;
+
+	i_vpr_l(inst, "%s: fw ro buf count %d, non-ref ro count %d\n",
+		__func__, fw_ro_count, nonref_ro_count);
+	/*
+	 * move non-ref read only buffers from read_only list to
+	 * release list
+	 */
+	list_for_each_entry_safe(ro_buf, dummy, &inst->buffers.read_only.list, list) {
+		if (!(ro_buf->attr & MSM_VIDC_ATTR_READ_ONLY)) {
+			list_del(&ro_buf->list);
+			INIT_LIST_HEAD(&ro_buf->list);
+			list_add_tail(&ro_buf->list, &inst->buffers.release.list);
+		}
+	}
+
+	/* send release flag along with read only flag for release list bufs*/
+	list_for_each_entry(rel_buf, &inst->buffers.release.list, list) {
+		/* fw needs RO flag for FTB release buffer */
+		rel_buf->attr |= MSM_VIDC_ATTR_READ_ONLY;
+		print_vidc_buffer(VIDC_HIGH, "high", "release buf", inst, rel_buf);
+		rc = venus_hfi_release_buffer(inst, rel_buf);
+		if (rc)
+			return rc;
+	}
+
+	return rc;
+}
+
+int msm_vdec_handle_release_buffer(struct msm_vidc_inst *inst,
+	struct msm_vidc_buffer *buf)
+{
+	int rc = 0;
+
+	if (!inst || !buf) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	print_vidc_buffer(VIDC_HIGH, "high", "release done", inst, buf);
+	msm_vidc_unmap_driver_buf(inst, buf);
+
+	/* delete the buffer from release list */
+	list_del(&buf->list);
+	msm_vidc_put_vidc_buffer(inst, buf);
+
+	return rc;
+}
+
+static int msm_vidc_unmap_excessive_mappings(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+	struct msm_vidc_map *map;
+	u32 refcount_one_bufs_count = 0;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	/*
+	 * count entries from map list whose refcount is 1
+	 * these are excess mappings present due to lazy
+	 * unmap feature.
+	 */
+	list_for_each_entry(map, &inst->mappings.output.list, list) {
+		if (map->refcount == 1)
+			refcount_one_bufs_count++;
+	}
+
+	if (refcount_one_bufs_count <= MAX_MAPPED_OUTPUT_COUNT)
+		return 0;
+
+	/* unmap these buffers as they are stale entries */
+	list_for_each_entry(map, &inst->mappings.output.list, list) {
+		if (map->refcount == 1) {
+			d_vpr_h(
+				"%s: type %11s, device_addr %#x, refcount %d, region %d\n",
+				__func__, buf_name(map->type), map->device_addr, map->refcount,
+				map->region);
+			msm_vidc_memory_unmap(inst->core, map);
+		}
+	}
+	return rc;
+}
+
 int msm_vdec_qbuf(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 {
 	int rc = 0;
 
-	if (!inst || !vb2) {
+	if (!inst || !vb2 || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
+	}
+
+	if (vb2->type == OUTPUT_MPLANE) {
+		if (inst->capabilities->cap[DPB_LIST].value) {
+			rc = msm_vdec_release_nonref_buffers(inst);
+			if (rc)
+				return rc;
+		}
+
+		rc = msm_vidc_unmap_excessive_mappings(inst);
+		if (rc)
+			return rc;
 	}
 
 	/* batch decoder output & meta buffer only */

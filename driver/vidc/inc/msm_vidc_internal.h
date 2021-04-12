@@ -111,6 +111,23 @@
 #define HW_RESPONSE_TIMEOUT_VALUE     (1000)
 #define SW_PC_DELAY_VALUE             (HW_RESPONSE_TIMEOUT_VALUE + 500)
 #define FW_UNLOAD_DELAY_VALUE         (SW_PC_DELAY_VALUE + 1500)
+/*
+ * MAX_MAPPED_OUTPUT_COUNT: maximum mappings which can
+ * be present in output map list with refcount 1. These
+ * mappings exist due to lazy unmap feature. Current
+ * threshold is kept as 50 to handle vpp usecases
+ * which might have many output buffers.
+ */
+#define MAX_MAPPED_OUTPUT_COUNT 50
+ /*
+  * max dpb count = 16
+  * each dpb: 4 words - <base_address, addr_offset, data_offset>
+  * dpb list array size = 16 * 4
+  * dpb payload size = 16 * 4 * 4
+  */
+#define MAX_DPB_COUNT 16
+#define MAX_DPB_LIST_ARRAY_SIZE (MAX_DPB_COUNT * 4)
+#define MAX_DPB_LIST_PAYLOAD_SIZE (MAX_DPB_COUNT * 4 * 4)
 
 enum msm_vidc_domain_type {
 	MSM_VIDC_ENCODER           = BIT(0),
@@ -420,6 +437,7 @@ enum msm_vidc_inst_capability_type {
 	SEQ_CHANGE_AT_SYNC_FRAME,
 	PRIORITY,
 	ENC_IP_CR,
+	DPB_LIST,
 	META_LTR_MARK_USE,
 	META_DPB_MISR,
 	META_OPB_MISR,
