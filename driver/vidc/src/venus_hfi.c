@@ -1460,10 +1460,6 @@ void __disable_unprepare_clks(struct msm_vidc_core *core)
 
 		clk_disable_unprepare(cl->clk);
 		cl->prev = 0;
-
-		if (__clk_is_enabled(cl->clk))
-			d_vpr_e("%s: clock %s not disabled\n",
-				__func__, cl->name);
 	}
 }
 
@@ -1520,10 +1516,6 @@ static int __prepare_enable_clks(struct msm_vidc_core *core)
 		if (cl->has_scaling)
 			__set_clk_rate(core, cl,
 					clk_round_rate(cl->clk, 0));
-
-		if (__clk_is_enabled(cl->clk))
-			d_vpr_e("%s: clock %s already enabled\n",
-				__func__, cl->name);
 
 		rc = clk_prepare_enable(cl->clk);
 		if (rc) {
@@ -1812,10 +1804,6 @@ static int __disable_regulator(struct regulator_info *rinfo,
 		goto disable_regulator_failed;
 	}
 
-	if (regulator_is_enabled(rinfo->regulator))
-		d_vpr_e("%s: regulator %s not disabled\n",
-			__func__, rinfo->name);
-
 	return 0;
 disable_regulator_failed:
 
@@ -1844,10 +1832,6 @@ static int __enable_regulators(struct msm_vidc_core *core)
 	d_vpr_h("Enabling regulators\n");
 
 	venus_hfi_for_each_regulator(core, rinfo) {
-		if (regulator_is_enabled(rinfo->regulator))
-			d_vpr_e("%s: regulator %s already enabled\n",
-				__func__, rinfo->name);
-
 		rc = regulator_enable(rinfo->regulator);
 		if (rc) {
 			d_vpr_e("Failed to enable %s: %d\n",

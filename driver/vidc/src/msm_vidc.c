@@ -488,7 +488,7 @@ int msm_vidc_dqbuf(void *instance, struct v4l2_buffer *b)
 	if (rc == -EAGAIN) {
 		goto unlock;
 	} else if (rc) {
-		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
+		i_vpr_l(inst, "%s: failed with %d\n", __func__, rc);
 		goto unlock;
 	}
 
