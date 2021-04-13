@@ -364,7 +364,7 @@ static void set_action_id_drop_pattern_for_block_ack(
 					uint32_t *action_category_map,
 					uint32_t *action_id_per_category)
 {
-	action_category_map[0] |= 1 << PMO_ACTION_BLKACK;
+	action_category_map[0] |= 1 << PMO_MAC_ACTION_BLKACK;
 	action_id_per_category[0] = 1 << ADDBA_REQ;
 }
 #else
