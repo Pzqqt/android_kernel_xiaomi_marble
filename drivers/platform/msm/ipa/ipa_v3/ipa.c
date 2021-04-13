@@ -5665,6 +5665,8 @@ void ipa3_disable_clks(void)
 	type = gsi_pending_irq_type();
 	if (type) {
 		IPAERR("unexpected gsi irq type: %d\n", type);
+		/* increase ipa3_active_clients for smp2p response */
+		atomic_inc(&ipa3_ctx->ipa3_active_clients.cnt);
 		ipa_assert();
 	}
 
