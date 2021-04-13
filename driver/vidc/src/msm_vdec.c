@@ -57,7 +57,6 @@ static const u32 msm_vdec_subscribe_for_psc_vp9[] = {
 
 static const u32 msm_vdec_input_subscribe_for_properties[] = {
 	HFI_PROP_NO_OUTPUT,
-	HFI_PROP_CABAC_SESSION,
 };
 
 static const u32 msm_vdec_output_subscribe_for_properties[] = {
@@ -65,6 +64,7 @@ static const u32 msm_vdec_output_subscribe_for_properties[] = {
 	HFI_PROP_WORST_COMPLEXITY_FACTOR,
 	HFI_PROP_PICTURE_TYPE,
 	HFI_PROP_DPB_LIST,
+	HFI_PROP_CABAC_SESSION,
 };
 
 static const u32 msm_vdec_internal_buffer_type[] = {

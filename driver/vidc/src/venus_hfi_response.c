@@ -9,6 +9,7 @@
 #include "msm_vidc_debug.h"
 #include "msm_vidc_driver.h"
 #include "msm_vdec.h"
+#include "msm_vidc_control.h"
 
 #define in_range(range, val) (((range.begin) < (val)) && ((range.end) > (val)))
 
@@ -1253,6 +1254,15 @@ static int handle_session_property(struct msm_vidc_inst *inst,
 	case HFI_PROP_WORST_COMPLEXITY_FACTOR:
 		inst->power.fw_cf = payload_ptr[0];
 		break;
+	case HFI_PROP_CABAC_SESSION:
+		if (payload_ptr[0] == 1)
+			msm_vidc_update_cap_value(inst, ENTROPY_MODE,
+				V4L2_MPEG_VIDEO_H264_ENTROPY_MODE_CABAC,
+				__func__);
+		else
+			msm_vidc_update_cap_value(inst, ENTROPY_MODE,
+				V4L2_MPEG_VIDEO_H264_ENTROPY_MODE_CAVLC,
+				__func__);
 	case HFI_PROP_DPB_LIST:
 		if (is_decode_session(inst) && port == OUTPUT_PORT &&
 			inst->capabilities->cap[DPB_LIST].value) {
