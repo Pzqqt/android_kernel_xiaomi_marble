@@ -252,7 +252,7 @@ struct iris_hfi_device {
 	int reg_count;
 	struct iris_resources resources;
 	struct msm_cvp_platform_resources *res;
-	struct mmrm_client_desc mmrm_cvp_desc;
+	struct mmrm_client_desc mmrm_desc;
 	struct mmrm_client *mmrm_cvp;
 	enum iris_hfi_state state;
 	struct cvp_hfi_packetization_ops *pkt_ops;

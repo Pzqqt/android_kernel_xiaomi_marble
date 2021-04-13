@@ -324,15 +324,12 @@ static inline int __resume(struct iris_hfi_device *device);
 static inline int __suspend(struct iris_hfi_device *device);
 static int __disable_regulators(struct iris_hfi_device *device);
 static int __enable_regulators(struct iris_hfi_device *device);
-static inline int __prepare_enable_clks(struct iris_hfi_device *device);
-static inline void __disable_unprepare_clks(struct iris_hfi_device *device);
 static void __flush_debug_queue(struct iris_hfi_device *device, u8 *packet);
 static int __initialize_packetization(struct iris_hfi_device *device);
 static struct cvp_hal_session *__get_session(struct iris_hfi_device *device,
 		u32 session_id);
 static bool __is_session_valid(struct iris_hfi_device *device,
 		struct cvp_hal_session *session, const char *func);
-static int __set_clocks(struct iris_hfi_device *device, u32 freq);
 static int __iface_cmdq_write(struct iris_hfi_device *device,
 					void *pkt);
 static int __load_fw(struct iris_hfi_device *device);
@@ -1332,54 +1329,6 @@ exit:
 	return rc;
 }
 
-static int __set_clocks(struct iris_hfi_device *device, u32 freq)
-{
-	struct clock_info *cl;
-	int rc = 0;
-	int factorsrc2clk = 3;			// ratio factor for clock source : clk
-
-	dprintk(CVP_PWR, "%s: entering with freq : %ld\n", __func__, freq);
-
-	iris_hfi_for_each_clock(device, cl) {
-		if (cl->has_scaling) {/* has_scaling */
-			device->clk_freq = freq;
-			if (msm_cvp_clock_voting)
-				freq = msm_cvp_clock_voting;
-
-			freq = freq * factorsrc2clk;
-			dprintk(CVP_PWR, "%s: clock source rate set to: %ld\n", __func__, freq);
-
-			if (device->mmrm_cvp != NULL) {
-				/* set min freq as the value stored as 1st element in the table */
-				rc = msm_cvp_mmrm_set_value_in_range(device,
-					device->res->allowed_clks_tbl[0].clock_rate * factorsrc2clk,
-					freq);
-				if (rc) {
-					dprintk(CVP_ERR,
-						"%s: Failed to set clock rate for %s: %d\n",
-						__func__, cl->name, rc);
-					return rc;
-				}
-			} else {
-				dprintk(CVP_PWR, "%s: set clock rate with clk_set_rate\n",
-					__func__);
-				rc = clk_set_rate(cl->clk, freq);
-				if (rc) {
-					dprintk(CVP_ERR,
-						"Failed to set clock rate %u %s: %d %s\n",
-						freq, cl->name, rc, __func__);
-					return rc;
-				}
-
-				dprintk(CVP_PWR, "Scaling clock %s to %u\n",
-					cl->name, freq);
-			}
-		}
-	}
-
-	return 0;
-}
-
 static int iris_hfi_scale_clocks(void *dev, u32 freq)
 {
 	int rc = 0;
@@ -1398,26 +1347,10 @@ static int iris_hfi_scale_clocks(void *dev, u32 freq)
 		goto exit;
 	}
 
-	rc = __set_clocks(device, freq);
+	rc = msm_cvp_set_clocks_impl(device, freq);
 exit:
 	mutex_unlock(&device->lock);
 
-	return rc;
-}
-
-static int __scale_clocks(struct iris_hfi_device *device)
-{
-	int rc = 0;
-	struct allowed_clock_rates_table *allowed_clks_tbl = NULL;
-	u32 rate = 0;
-
-	allowed_clks_tbl = device->res->allowed_clks_tbl;
-
-	rate = device->clk_freq ? device->clk_freq :
-		allowed_clks_tbl[0].clock_rate;
-
-	dprintk(CVP_PWR, "%s: scale clock rate %d\n", __func__, rate);
-	rc = __set_clocks(device, rate);
 	return rc;
 }
 
@@ -3327,55 +3260,6 @@ err_core_init:
 
 }
 
-static inline void __deinit_clocks(struct iris_hfi_device *device)
-{
-	struct clock_info *cl;
-
-	device->clk_freq = 0;
-	iris_hfi_for_each_clock_reverse(device, cl) {
-		if (cl->clk) {
-			clk_put(cl->clk);
-			cl->clk = NULL;
-		}
-	}
-}
-
-static inline int __init_clocks(struct iris_hfi_device *device)
-{
-	int rc = 0;
-	struct clock_info *cl = NULL;
-
-	if (!device) {
-		dprintk(CVP_ERR, "Invalid params: %pK\n", device);
-		return -EINVAL;
-	}
-
-	iris_hfi_for_each_clock(device, cl) {
-
-		dprintk(CVP_PWR, "%s: scalable? %d, count %d\n",
-				cl->name, cl->has_scaling, cl->count);
-	}
-
-	iris_hfi_for_each_clock(device, cl) {
-		if (!cl->clk) {
-			cl->clk = clk_get(&device->res->pdev->dev, cl->name);
-			if (IS_ERR_OR_NULL(cl->clk)) {
-				dprintk(CVP_ERR,
-					"Failed to get clock: %s\n", cl->name);
-				rc = PTR_ERR(cl->clk) ?: -EINVAL;
-				cl->clk = NULL;
-				goto err_clk_get;
-			}
-		}
-	}
-	device->clk_freq = 0;
-	return 0;
-
-err_clk_get:
-	__deinit_clocks(device);
-	return rc;
-}
-
 static int __handle_reset_clk(struct msm_cvp_platform_resources *res,
 			int reset_index, enum reset_state state,
 			enum power_state pwr_state)
@@ -3440,22 +3324,6 @@ failed_to_reset:
 	return rc;
 }
 
-static inline void __disable_unprepare_clks(struct iris_hfi_device *device)
-{
-	struct clock_info *cl;
-
-	if (!device) {
-		dprintk(CVP_ERR, "Invalid params: %pK\n", device);
-		return;
-	}
-
-	iris_hfi_for_each_clock_reverse(device, cl) {
-		dprintk(CVP_PWR, "Clock: %s disable and unprepare\n",
-				cl->name);
-		clk_disable_unprepare(cl->clk);
-	}
-}
-
 static int reset_ahb2axi_bridge(struct iris_hfi_device *device)
 {
 	int rc, i;
@@ -3494,59 +3362,6 @@ static int reset_ahb2axi_bridge(struct iris_hfi_device *device)
 	return 0;
 
 failed_to_reset:
-	return rc;
-}
-
-static inline int __prepare_enable_clks(struct iris_hfi_device *device)
-{
-	struct clock_info *cl = NULL, *cl_fail = NULL;
-	int rc = 0, c = 0;
-
-	if (!device) {
-		dprintk(CVP_ERR, "Invalid params: %pK\n", device);
-		return -EINVAL;
-	}
-
-	iris_hfi_for_each_clock(device, cl) {
-		/*
-		 * For the clocks we control, set the rate prior to preparing
-		 * them.  Since we don't really have a load at this point, scale
-		 * it to the lowest frequency possible
-		 */
-		if (cl->has_scaling) {
-			if (device->mmrm_cvp != NULL) {
-				// set min freq and cur freq to 0;
-				rc = msm_cvp_mmrm_set_value_in_range(device, 0, 0);
-				if (rc)
-					dprintk(CVP_ERR,
-						"%s Failed to set clock rate for %s: %d\n",
-						__func__, cl->name, rc);
-			} else {
-				dprintk(CVP_PWR, "%s: set clock rate with clk_set_rate\n",
-					__func__);
-				clk_set_rate(cl->clk, clk_round_rate(cl->clk, 0));
-			}
-		}
-		rc = clk_prepare_enable(cl->clk);
-		if (rc) {
-			dprintk(CVP_ERR, "Failed to enable clocks\n");
-			cl_fail = cl;
-			goto fail_clk_enable;
-		}
-
-		c++;
-		dprintk(CVP_PWR, "Clock: %s prepared and enabled\n", cl->name);
-	}
-
-	return rc;
-
-fail_clk_enable:
-	iris_hfi_for_each_clock_reverse_continue(device, cl, c) {
-		dprintk(CVP_ERR, "Clock: %s disable and unprepare\n",
-			cl->name);
-		clk_disable_unprepare(cl->clk);
-	}
-
 	return rc;
 }
 
@@ -3717,7 +3532,7 @@ static int __init_resources(struct iris_hfi_device *device,
 		return -ENODEV;
 	}
 
-	rc = __init_clocks(device);
+	rc = msm_cvp_init_clocks(device);
 	if (rc) {
 		dprintk(CVP_ERR, "Failed to init clocks\n");
 		rc = -ENODEV;
@@ -3751,7 +3566,7 @@ static int __init_resources(struct iris_hfi_device *device,
 
 err_init_reset_clk:
 err_init_bus:
-	__deinit_clocks(device);
+	msm_cvp_deinit_clocks(device);
 err_init_clocks:
 	__deinit_regulators(device);
 	return rc;
@@ -3761,7 +3576,7 @@ static void __deinit_resources(struct iris_hfi_device *device)
 {
 	__deinit_subcaches(device);
 	__deinit_bus(device);
-	__deinit_clocks(device);
+	msm_cvp_deinit_clocks(device);
 	__deinit_regulators(device);
 	kfree(device->sys_init_capabilities);
 	device->sys_init_capabilities = NULL;
@@ -4122,13 +3937,13 @@ static int __iris_power_on(struct iris_hfi_device *device)
 		goto fail_enable_clks;
 	}
 
-	rc = __prepare_enable_clks(device);
+	rc = msm_cvp_prepare_enable_clks(device);
 	if (rc) {
 		dprintk(CVP_ERR, "Failed to enable clocks: %d\n", rc);
 		goto fail_enable_clks;
 	}
 
-	rc = __scale_clocks(device);
+	rc = msm_cvp_scale_clocks(device);
 	if (rc) {
 		dprintk(CVP_WARN,
 			"Failed to scale clocks, perf may regress\n");
@@ -4171,7 +3986,7 @@ void power_off_common(struct iris_hfi_device *device)
 		disable_irq_nosync(device->cvp_hal_data->irq);
 	device->intr_status = 0;
 
-	__disable_unprepare_clks(device);
+	msm_cvp_disable_unprepare_clks(device);
 	if (__disable_regulators(device))
 		dprintk(CVP_WARN, "Failed to disable regulators\n");
 
@@ -4281,7 +4096,7 @@ static void power_off_iris2(struct iris_hfi_device *device)
 	}
 
 	/* HPG 6.1.2 Step 6 */
-	__disable_unprepare_clks(device);
+	msm_cvp_disable_unprepare_clks(device);
 
 	/*
 	 * HPG 6.1.2 Step 7 & 8
