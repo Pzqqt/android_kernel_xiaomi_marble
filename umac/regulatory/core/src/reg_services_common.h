@@ -144,6 +144,13 @@ extern const struct chan_map channel_map_global[];
 #ifdef WLAN_FEATURE_11BE
 #define ALL_SCHANS_PUNC 0x0000 /* all subchannels punctured */
 #endif
+/**
+ * get_next_lower_bandwidth() - Get next lower bandwidth
+ * @ch_width: Channel width
+ *
+ * Return: Channel width
+ */
+enum phy_ch_width get_next_lower_bandwidth(enum phy_ch_width ch_width);
 
 #ifdef CONFIG_CHAN_NUM_API
 /**
@@ -1610,6 +1617,29 @@ bool reg_is_ext_tpc_supported(struct wlan_objmgr_psoc *psoc);
  */
 const struct bonded_channel_freq *
 reg_get_bonded_chan_entry(qdf_freq_t freq, enum phy_ch_width chwidth);
+
+/**
+ * reg_set_2g_channel_params_for_freq() - set the 2.4G bonded channel parameters
+ * @oper_freq: operating channel
+ * @ch_params: channel parameters
+ * @sec_ch_2g_freq: 2.4G secondary channel
+ *
+ * Return: void
+ */
+void reg_set_2g_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
+					uint16_t oper_freq,
+					struct ch_params *ch_params,
+					uint16_t sec_ch_2g_freq);
+
+/**
+ * reg_combine_channel_states() - Get minimum of channel state1 and state2
+ * @chan_state1: Channel state1
+ * @chan_state2: Channel state2
+ *
+ * Return: Channel state
+ */
+enum channel_state reg_combine_channel_states(enum channel_state chan_state1,
+					      enum channel_state chan_state2);
 
 #if defined(CONFIG_BAND_6GHZ) && defined(CONFIG_REG_CLIENT)
 /**
