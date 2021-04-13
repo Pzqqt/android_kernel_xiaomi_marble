@@ -881,6 +881,8 @@ u32 msm_vidc_get_buffer_region(struct msm_vidc_inst *inst,
 			region = MSM_VIDC_SECURE_PIXEL;
 			break;
 		case MSM_VIDC_BUF_BIN:
+			region = MSM_VIDC_SECURE_BITSTREAM;
+			break;
 		case MSM_VIDC_BUF_ARP:
 		case MSM_VIDC_BUF_COMV:
 		case MSM_VIDC_BUF_NON_COMV:

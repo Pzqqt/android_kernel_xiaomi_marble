@@ -7,8 +7,8 @@
 #include <linux/dma-heap.h>
 #include <linux/dma-mapping.h>
 #include <linux/qcom-dma-mapping.h>
-#include <linux/msm_ion.h>
-#include <linux/ion.h>
+#include <linux/mem-buf.h>
+#include <soc/qcom/secure_buffer.h>
 
 #include "msm_vidc_memory.h"
 #include "msm_vidc_debug.h"
@@ -209,6 +209,9 @@ int msm_vidc_memory_alloc(struct msm_vidc_core *core, struct msm_vidc_alloc *mem
 	int size = 0;
 	struct dma_heap *heap;
 	char *heap_name = NULL;
+	struct mem_buf_lend_kernel_arg lend_arg;
+	int vmids[1];
+	int perms[1];
 
 	if (!mem) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -226,6 +229,8 @@ int msm_vidc_memory_alloc(struct msm_vidc_core *core, struct msm_vidc_alloc *mem
 			heap_name = "qcom,secure-non-pixel";
 			break;
 		case MSM_VIDC_SECURE_BITSTREAM:
+			heap_name = "qcom,system";
+			break;
 		default:
 			d_vpr_e("invalid secure region : %#x\n", mem->region);
 			return -EINVAL;
@@ -241,6 +246,22 @@ int msm_vidc_memory_alloc(struct msm_vidc_core *core, struct msm_vidc_alloc *mem
 		mem->dmabuf = NULL;
 		rc = -ENOMEM;
 		goto error;
+	}
+
+	if (mem->secure && mem->type == MSM_VIDC_BUF_BIN)
+	{
+		vmids[0] = VMID_CP_BITSTREAM;
+		perms[0] = PERM_READ | PERM_WRITE;
+
+		lend_arg.nr_acl_entries = ARRAY_SIZE(vmids);
+		lend_arg.vmids = vmids;
+		lend_arg.perms = perms;
+
+		rc = mem_buf_lend(mem->dmabuf, &lend_arg);
+		if (rc) {
+			d_vpr_e("%s: BIN dmabuf %pK LEND failed, rc %d heap %s\n",
+				__func__, mem->dmabuf, rc, heap_name);
+		}
 	}
 
 	if (mem->map_kernel) {
