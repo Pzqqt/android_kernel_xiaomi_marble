@@ -8686,6 +8686,10 @@ static int hdd_set_primary_interface(struct hdd_adapter *adapter,
 		}
 
 		wlan_hdd_send_mcc_vdev_quota(adapter, set_value);
+		/* Enable roaming on requested interface */
+		wlan_cm_roam_state_change(hdd_ctx->pdev, adapter->vdev_id,
+					  WLAN_ROAM_RSO_ENABLED,
+					  REASON_ROAM_SET_PRIMARY);
 	}
 
 	return 0;

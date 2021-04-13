@@ -87,6 +87,7 @@
 #define REASON_ROAM_CANDIDATE_FOUND                 51
 #define REASON_ROAM_HANDOFF_DONE                    52
 #define REASON_ROAM_ABORT                           53
+#define REASON_ROAM_SET_PRIMARY                     54
 
 #ifdef FEATURE_CM_ENABLE
 #define FILS_MAX_KEYNAME_NAI_LENGTH WLAN_CM_FILS_MAX_KEYNAME_NAI_LENGTH
