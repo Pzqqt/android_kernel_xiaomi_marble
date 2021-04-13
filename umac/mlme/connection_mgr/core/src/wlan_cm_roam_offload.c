@@ -3131,10 +3131,22 @@ cm_roam_switch_to_init(struct wlan_objmgr_pdev *pdev,
 {
 	enum roam_offload_state cur_state;
 	uint8_t temp_vdev_id, roam_enabled_vdev_id;
-	uint32_t roaming_bitmap;
+	uint32_t roaming_bitmap, count;
 	bool dual_sta_roam_active, usr_disabled_roaming;
 	QDF_STATUS status;
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct dual_sta_policy *dual_sta_policy;
+	bool is_vdev_primary = false;
+
+	if (!psoc)
+		return QDF_STATUS_E_FAILURE;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
+
+	dual_sta_policy = &mlme_obj->cfg.gen.dual_sta_policy;
 
 	cm_roam_roam_invoke_in_progress(psoc, vdev_id, false);
 
@@ -3151,8 +3163,18 @@ cm_roam_switch_to_init(struct wlan_objmgr_pdev *pdev,
 			return QDF_STATUS_E_FAILURE;
 		}
 
-		if (dual_sta_roam_active)
+		/*
+		 * Enable roaming on other interface only if STA + STA
+		 * concurrency is in DBS.
+		 */
+		count = policy_mgr_mode_specific_connection_count(psoc,
+								  PM_STA_MODE,
+								  NULL);
+		if (dual_sta_roam_active && (count == 2 &&
+		    !policy_mgr_current_concurrency_is_mcc(psoc))) {
+			mlme_info("STA + STA concurrency is in DBS");
 			break;
+		}
 		/*
 		 * Disable roaming on the enabled sta if supplicant wants to
 		 * enable roaming on this vdev id
@@ -3168,13 +3190,23 @@ cm_roam_switch_to_init(struct wlan_objmgr_pdev *pdev,
 			 * vdev id if it is not an explicit enable from
 			 * supplicant.
 			 */
-			if (reason != REASON_SUPPLICANT_INIT_ROAMING) {
+			if (vdev_id == dual_sta_policy->primary_vdev_id &&
+			    dual_sta_policy ==
+			    QCA_WLAN_CONCURRENT_STA_POLICY_PREFER_PRIMARY)
+				is_vdev_primary = true;
+			mlme_debug("is_vdev_primary: %d, reason:%d",
+				   is_vdev_primary, reason);
+			if (is_vdev_primary ||
+			    reason == REASON_SUPPLICANT_INIT_ROAMING) {
+				cm_roam_state_change(pdev, temp_vdev_id,
+						     WLAN_ROAM_DEINIT,
+						     is_vdev_primary ?
+					     REASON_ROAM_SET_PRIMARY : reason);
+			} else {
 				mlme_info("CM_RSO: Roam module already initialized on vdev:[%d]",
 					  temp_vdev_id);
 				return QDF_STATUS_E_FAILURE;
 			}
-			cm_roam_state_change(pdev, temp_vdev_id,
-					     WLAN_ROAM_DEINIT, reason);
 		}
 		break;
 
