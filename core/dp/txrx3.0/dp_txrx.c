@@ -106,7 +106,8 @@ QDF_STATUS dp_txrx_init(ol_txrx_soc_handle soc, uint8_t pdev_id,
 						dp_rx_refill_thread_schedule);
 	}
 
-	num_dp_rx_threads = cdp_get_num_rx_contexts(soc);
+	/* Get num Rx thread config from INI? */
+	num_dp_rx_threads = 3;
 
 	if (dp_ext_hdl->config.enable_rx_threads) {
 		qdf_status = dp_rx_tm_init(&dp_ext_hdl->rx_tm_hdl,
@@ -328,12 +329,16 @@ static struct dp_prealloc_context g_dp_context_allocs[] = {
 };
 
 static struct  dp_consistent_prealloc g_dp_consistent_allocs[] = {
-	/* 5 REO DST rings */
 	{REO_DST, (sizeof(struct reo_destination_ring)) * REO_DST_RING_SIZE, 0, NULL, NULL, 0, 0},
 	{REO_DST, (sizeof(struct reo_destination_ring)) * REO_DST_RING_SIZE, 0, NULL, NULL, 0, 0},
 	{REO_DST, (sizeof(struct reo_destination_ring)) * REO_DST_RING_SIZE, 0, NULL, NULL, 0, 0},
 	{REO_DST, (sizeof(struct reo_destination_ring)) * REO_DST_RING_SIZE, 0, NULL, NULL, 0, 0},
+#ifdef CONFIG_BERYLLIUM
 	{REO_DST, (sizeof(struct reo_destination_ring)) * REO_DST_RING_SIZE, 0, NULL, NULL, 0, 0},
+	{REO_DST, (sizeof(struct reo_destination_ring)) * REO_DST_RING_SIZE, 0, NULL, NULL, 0, 0},
+	{REO_DST, (sizeof(struct reo_destination_ring)) * REO_DST_RING_SIZE, 0, NULL, NULL, 0, 0},
+	{REO_DST, (sizeof(struct reo_destination_ring)) * REO_DST_RING_SIZE, 0, NULL, NULL, 0, 0},
+#endif
 	/* 3 TCL data rings */
 	{TCL_DATA, (sizeof(struct tlv_32_hdr) + sizeof(struct tcl_data_cmd)) * TCL_DATA_RING_SIZE, 0, NULL, NULL, 0, 0},
 	{TCL_DATA, (sizeof(struct tlv_32_hdr) + sizeof(struct tcl_data_cmd)) * TCL_DATA_RING_SIZE, 0, NULL, NULL, 0, 0},
@@ -705,8 +710,8 @@ void *dp_prealloc_get_coherent(uint32_t *size, void **base_vaddr_unaligned,
 			va_aligned = p->va_aligned;
 			*size = p->size;
 			dp_debug("index %i -> ring type %s va-aligned %pK", i,
-				dp_srng_get_str_from_hal_ring_type(ring_type),
-				va_aligned);
+				 dp_srng_get_str_from_hal_ring_type(ring_type),
+				 va_aligned);
 			break;
 		}
 	}

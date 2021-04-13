@@ -25,10 +25,14 @@
 #include <wlan_objmgr_vdev_obj.h>
 
 /* Maximum number of REO rings supported (for stats tracking) */
+#ifdef CONFIG_BERYLLIUM
+#define DP_RX_TM_MAX_REO_RINGS 8
+#else
 #define DP_RX_TM_MAX_REO_RINGS 4
+#endif
 
 /* Number of DP RX threads supported */
-#define DP_MAX_RX_THREADS DP_RX_TM_MAX_REO_RINGS
+#define DP_MAX_RX_THREADS 3
 
 /*
  * struct dp_rx_tm_handle_cmn - Opaque handle for rx_threads to store

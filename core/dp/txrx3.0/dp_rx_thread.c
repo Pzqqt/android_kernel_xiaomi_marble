@@ -1240,14 +1240,10 @@ static uint8_t dp_rx_tm_select_thread(struct dp_rx_tm_handle *rx_tm_hdl,
 {
 	uint8_t selected_rx_thread;
 
-	if (reo_ring_num >= rx_tm_hdl->num_dp_rx_threads) {
-		dp_err_rl("unexpected ring number");
-		QDF_BUG(0);
-		return 0;
-	}
+	selected_rx_thread = reo_ring_num % rx_tm_hdl->num_dp_rx_threads;
+	dp_debug("ring_num %d, selected thread %u", reo_ring_num,
+		 selected_rx_thread);
 
-	selected_rx_thread = reo_ring_num;
-	dp_debug("selected thread %u", selected_rx_thread);
 	return selected_rx_thread;
 }
 
@@ -1280,13 +1276,11 @@ dp_rx_tm_gro_flush_ind(struct dp_rx_tm_handle *rx_tm_hdl, int rx_ctx_id,
 struct napi_struct *dp_rx_tm_get_napi_context(struct dp_rx_tm_handle *rx_tm_hdl,
 					      uint8_t rx_ctx_id)
 {
-	if (rx_ctx_id >= rx_tm_hdl->num_dp_rx_threads) {
-		dp_err_rl("unexpected rx_ctx_id %u", rx_ctx_id);
-		QDF_BUG(0);
-		return NULL;
-	}
+	uint8_t selected_thread_id;
 
-	return &rx_tm_hdl->rx_thread[rx_ctx_id]->napi;
+	selected_thread_id = dp_rx_tm_select_thread(rx_tm_hdl, rx_ctx_id);
+
+	return &rx_tm_hdl->rx_thread[selected_thread_id]->napi;
 }
 
 QDF_STATUS dp_rx_tm_set_cpu_mask(struct dp_rx_tm_handle *rx_tm_hdl,
