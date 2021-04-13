@@ -1980,7 +1980,6 @@ QDF_STATUS ucfg_mlme_set_primary_interface(struct wlan_objmgr_psoc *psoc,
 	return wlan_mlme_set_primary_interface(psoc, value);
 }
 
-
 /**
  * ucfg_mlme_set_enable_bcast_probe_rsp() - Set enable bcast probe resp info
  * @psoc: pointer to psoc object

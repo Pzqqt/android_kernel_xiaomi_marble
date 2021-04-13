@@ -1070,6 +1070,29 @@ bool policy_mgr_is_hw_dbs_capable(struct wlan_objmgr_psoc *psoc)
 	return true;
 }
 
+bool policy_mgr_is_pcl_weightage_required(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct dual_sta_policy *dual_sta_policy;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return true;
+
+	dual_sta_policy = &mlme_obj->cfg.gen.dual_sta_policy;
+
+	if (dual_sta_policy->concurrent_sta_policy  ==
+		QCA_WLAN_CONCURRENT_STA_POLICY_PREFER_PRIMARY &&
+		dual_sta_policy->primary_vdev_id != WLAN_UMAC_VDEV_ID_MAX) {
+		policy_mgr_debug("dual_sta_policy : %d, primary_vdev_id:%d",
+			dual_sta_policy->concurrent_sta_policy,
+			dual_sta_policy->primary_vdev_id);
+		return false;
+	}
+
+	return true;
+}
+
 bool policy_mgr_is_interband_mcc_supported(struct wlan_objmgr_psoc *psoc)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;

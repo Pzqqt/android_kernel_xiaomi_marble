@@ -492,6 +492,19 @@ bool policy_mgr_is_chnl_in_diff_band(struct wlan_objmgr_psoc *psoc,
 				     uint32_t ch_freq);
 
 /**
+ * policy_mgr_is_pcl_weightage_required() - to check that PCL weightage req or
+ * not
+ * @psoc: pointer to psoc
+ *
+ * This API will check that whether PCL weightage need to consider in best
+ * candidate selection or not. If some APs are in PCL list, those AP will get
+ * additional weightage.
+ *
+ * Return: true if pcl weightage is not required
+ */
+bool policy_mgr_is_pcl_weightage_required(struct wlan_objmgr_psoc *psoc);
+
+/**
  * policy_mgr_check_for_session_conc() - Check if concurrency is
  * allowed for a session
  * @psoc: PSOC object information
