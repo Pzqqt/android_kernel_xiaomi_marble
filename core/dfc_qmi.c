@@ -1119,9 +1119,18 @@ void dfc_do_burst_flow_control(struct dfc_qmi_data *dfc,
 
 		spin_lock_bh(&qos->qos_lock);
 
+		/* In powersave, change grant to 1 if it is a enable */
 		if (qmi_rmnet_ignore_grant(dfc->rmnet_port)) {
-			spin_unlock_bh(&qos->qos_lock);
-			continue;
+			if (flow_status->num_bytes) {
+				flow_status->num_bytes = DEFAULT_GRANT;
+				flow_status->seq_num = 0;
+				/* below is to reset bytes-in-flight */
+				flow_status->rx_bytes_valid = 1;
+				flow_status->rx_bytes = 0xFFFFFFFF;
+			} else {
+				spin_unlock_bh(&qos->qos_lock);
+				continue;
+			}
 		}
 
 		if (unlikely(flow_status->bearer_id == 0xFF))

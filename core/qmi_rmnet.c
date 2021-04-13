@@ -37,6 +37,7 @@
 #define FLAG_DFC_MASK 0x000F
 #define FLAG_POWERSAVE_MASK 0x0010
 #define FLAG_QMAP_MASK 0x0020
+#define FLAG_PS_EXT_MASK 0x0040
 
 #define FLAG_TO_MODE(f) ((f) & FLAG_DFC_MASK)
 
@@ -44,9 +45,11 @@
 	((m) == DFC_MODE_SA)
 
 #define FLAG_TO_QMAP(f) ((f) & FLAG_QMAP_MASK)
+#define FLAG_TO_PS_EXT(f) ((f) & FLAG_PS_EXT_MASK)
 
 int dfc_mode;
 int dfc_qmap;
+int dfc_ps_ext;
 
 unsigned int rmnet_wq_frequency __read_mostly = 1000;
 
@@ -633,6 +636,7 @@ qmi_rmnet_setup_client(void *port, struct qmi_info *qmi, struct tcmsg *tcm)
 	}
 
 	qmi->flag = tcm->tcm_ifindex;
+	qmi->ps_ext = FLAG_TO_PS_EXT(qmi->flag);
 	svc.instance = tcm->tcm_handle;
 	svc.ep_type = tcm->tcm_info;
 	svc.iface_id = tcm->tcm_parent;
@@ -736,6 +740,7 @@ int qmi_rmnet_change_link(struct net_device *dev, void *port, void *tcm_pt,
 	case NLMSG_CLIENT_SETUP:
 		dfc_mode = FLAG_TO_MODE(tcm->tcm_ifindex);
 		dfc_qmap = FLAG_TO_QMAP(tcm->tcm_ifindex);
+		dfc_ps_ext = FLAG_TO_PS_EXT(tcm->tcm_ifindex);
 
 		if (!DFC_SUPPORTED_MODE(dfc_mode) &&
 		    !(tcm->tcm_ifindex & FLAG_POWERSAVE_MASK))
@@ -892,6 +897,85 @@ bool qmi_rmnet_all_flows_enabled(struct net_device *dev)
 	return ret;
 }
 EXPORT_SYMBOL(qmi_rmnet_all_flows_enabled);
+
+/**
+ * qmi_rmnet_lock_unlock_all_flows - lock or unlock all bearers
+ */
+void qmi_rmnet_lock_unlock_all_flows(struct net_device *dev, bool lock)
+{
+	struct qos_info *qos;
+
+	qos = (struct qos_info *)rmnet_get_qos_pt(dev);
+	if (!qos)
+		return;
+
+	if (lock)
+		spin_lock_bh(&qos->qos_lock);
+	else
+		spin_unlock_bh(&qos->qos_lock);
+}
+EXPORT_SYMBOL(qmi_rmnet_lock_unlock_all_flows);
+
+/**
+ * qmi_rmnet_get_disabled_flows - get disabled bearers
+ * Needs to be called with qos_lock
+ */
+void qmi_rmnet_get_disabled_flows(struct net_device *dev, u8 *num_bearers,
+				  u8 *bearer_id)
+{
+	struct qos_info *qos;
+	struct rmnet_bearer_map *bearer;
+	u8 current_num_bearers = 0;
+	u8 num_bearers_left = 0;
+
+	qos = (struct qos_info *)rmnet_get_qos_pt(dev);
+	if (!qos || !num_bearers)
+		return;
+
+	num_bearers_left = *num_bearers;
+
+	list_for_each_entry(bearer, &qos->bearer_head, list) {
+		if (!bearer->grant_size && num_bearers_left) {
+			if (bearer_id)
+				bearer_id[current_num_bearers] =
+					bearer->bearer_id;
+			current_num_bearers++;
+			num_bearers_left--;
+		}
+	}
+
+	*num_bearers = current_num_bearers;
+}
+EXPORT_SYMBOL(qmi_rmnet_get_disabled_flows);
+
+/**
+ * qmi_rmnet_reset_enabled_flows - reset enabled bearers for powersave
+ * Needs to be called with qos_lock
+ */
+void qmi_rmnet_reset_enabled_flows(struct net_device *dev)
+{
+	struct qos_info *qos;
+	struct rmnet_bearer_map *bearer;
+
+	qos = (struct qos_info *)rmnet_get_qos_pt(dev);
+	if (!qos)
+		return;
+
+	list_for_each_entry(bearer, &qos->bearer_head, list) {
+		if (bearer->grant_size) {
+			bearer->seq = 0;
+			bearer->ack_req = 0;
+			bearer->bytes_in_flight = 0;
+			bearer->tcp_bidir = false;
+			bearer->rat_switch = false;
+			qmi_rmnet_watchdog_remove(bearer);
+			bearer->grant_size = DEFAULT_GRANT;
+			bearer->grant_thresh =
+				qmi_rmnet_grant_per(DEFAULT_GRANT);
+		}
+	}
+}
+EXPORT_SYMBOL(qmi_rmnet_reset_enabled_flows);
 
 #ifdef CONFIG_QTI_QMI_DFC
 bool qmi_rmnet_flow_is_low_latency(struct net_device *dev,
@@ -1088,6 +1172,7 @@ static struct rmnet_powersave_work *rmnet_work;
 static bool rmnet_work_quit;
 static bool rmnet_work_inited;
 static LIST_HEAD(ps_list);
+static u8 ps_bearer_id[32];
 
 struct rmnet_powersave_work {
 	struct delayed_work work;
@@ -1276,6 +1361,81 @@ end:
 	rcu_read_unlock();
 }
 
+static void qmi_rmnet_check_stats_2(struct work_struct *work)
+{
+	struct rmnet_powersave_work *real_work;
+	struct qmi_info *qmi;
+	u64 rxd, txd;
+	u64 rx, tx;
+	u8 num_bearers;
+
+	real_work = container_of(to_delayed_work(work),
+				 struct rmnet_powersave_work, work);
+
+	if (unlikely(!real_work->port))
+		return;
+
+	qmi = (struct qmi_info *)rmnet_get_qmi_pt(real_work->port);
+	if (unlikely(!qmi))
+		return;
+
+	if (qmi->ps_enabled) {
+
+		/* Ready to accept grant */
+		qmi->ps_ignore_grant = false;
+
+		/* Out of powersave */
+		if (dfc_qmap_set_powersave(0, 0, NULL))
+			goto end;
+
+		qmi->ps_enabled = false;
+
+		if (rmnet_get_powersave_notif(real_work->port))
+			qmi_rmnet_ps_off_notify(real_work->port);
+
+		goto end;
+	}
+
+	rmnet_get_packets(real_work->port, &rx, &tx);
+	rxd = rx - real_work->old_rx_pkts;
+	txd = tx - real_work->old_tx_pkts;
+	real_work->old_rx_pkts = rx;
+	real_work->old_tx_pkts = tx;
+
+	if (!rxd && !txd) {
+		rmnet_lock_unlock_all_flows(real_work->port, true);
+
+		num_bearers = sizeof(ps_bearer_id);
+		memset(ps_bearer_id, 0, sizeof(ps_bearer_id));
+		rmnet_get_disabled_flows(real_work->port, &num_bearers,
+					 ps_bearer_id);
+
+		/* Enter powersave */
+		if (dfc_qmap_set_powersave(1, num_bearers, ps_bearer_id)) {
+			rmnet_lock_unlock_all_flows(real_work->port, false);
+			goto end;
+		}
+
+		rmnet_reset_enabled_flows(real_work->port);
+		qmi->ps_ignore_grant = true;
+		qmi->ps_enabled = true;
+		clear_bit(PS_WORK_ACTIVE_BIT, &qmi->ps_work_active);
+
+		rmnet_lock_unlock_all_flows(real_work->port, false);
+
+		if (rmnet_get_powersave_notif(real_work->port))
+			qmi_rmnet_ps_on_notify(real_work->port);
+
+		return;
+	}
+end:
+	rcu_read_lock();
+	if (!rmnet_work_quit) {
+		alarm_start_relative(&real_work->atimer, PS_INTERVAL_KT);
+	}
+	rcu_read_unlock();
+}
+
 static void qmi_rmnet_work_set_active(void *port, int status)
 {
 	struct qmi_info *qmi;
@@ -1307,15 +1467,20 @@ void qmi_rmnet_work_init(void *port)
 		rmnet_ps_wq = NULL;
 		return;
 	}
-	INIT_DEFERRABLE_WORK(&rmnet_work->work, qmi_rmnet_check_stats);
+
+	if (dfc_qmap && dfc_ps_ext)
+		INIT_DEFERRABLE_WORK(&rmnet_work->work,
+				     qmi_rmnet_check_stats_2);
+	else
+		INIT_DEFERRABLE_WORK(&rmnet_work->work, qmi_rmnet_check_stats);
+
 	alarm_init(&rmnet_work->atimer, ALARM_BOOTTIME, qmi_rmnet_work_alarm);
 	rmnet_work->port = port;
 	rmnet_get_packets(rmnet_work->port, &rmnet_work->old_rx_pkts,
 			  &rmnet_work->old_tx_pkts);
 
 	rmnet_work_quit = false;
-	qmi_rmnet_work_set_active(rmnet_work->port, 1);
-	queue_delayed_work(rmnet_ps_wq, &rmnet_work->work, PS_INTERVAL);
+	qmi_rmnet_work_set_active(rmnet_work->port, 0);
 	rmnet_work_inited = true;
 }
 EXPORT_SYMBOL(qmi_rmnet_work_init);
@@ -1328,8 +1493,10 @@ void qmi_rmnet_work_maybe_restart(void *port)
 	if (unlikely(!qmi || !rmnet_work_inited))
 		return;
 
-	if (!test_and_set_bit(PS_WORK_ACTIVE_BIT, &qmi->ps_work_active))
+	if (!test_and_set_bit(PS_WORK_ACTIVE_BIT, &qmi->ps_work_active)) {
+		qmi->ps_ignore_grant = false;
 		qmi_rmnet_work_restart(port);
+	}
 }
 EXPORT_SYMBOL(qmi_rmnet_work_maybe_restart);
 

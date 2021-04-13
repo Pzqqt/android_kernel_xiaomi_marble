@@ -349,6 +349,24 @@ TRACE_EVENT(dfc_ll_switch,
 			      __entry->num_bearer, 1))
 );
 
+TRACE_EVENT(dfc_set_powersave_mode,
+
+	TP_PROTO(int enable),
+
+	TP_ARGS(enable),
+
+	TP_STRUCT__entry(
+		__field(int, enable)
+	),
+
+	TP_fast_assign(
+		__entry->enable = enable;
+	),
+
+	TP_printk("set powersave mode to %s",
+		__entry->enable ? "enable" : "disable")
+);
+
 #endif /* _TRACE_DFC_H */
 
 /* This part must be outside protection */

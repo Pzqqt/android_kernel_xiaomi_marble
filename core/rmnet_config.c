@@ -755,6 +755,70 @@ out:
 }
 EXPORT_SYMBOL(rmnet_all_flows_enabled);
 
+void rmnet_lock_unlock_all_flows(void *port, bool lock)
+{
+	struct rmnet_endpoint *ep;
+	unsigned long bkt;
+
+	if (unlikely(!port))
+		return;
+
+	rcu_read_lock();
+	hash_for_each_rcu(((struct rmnet_port *)port)->muxed_ep,
+			  bkt, ep, hlnode) {
+		qmi_rmnet_lock_unlock_all_flows(ep->egress_dev, lock);
+	}
+	rcu_read_unlock();
+}
+EXPORT_SYMBOL(rmnet_lock_unlock_all_flows);
+
+void rmnet_get_disabled_flows(void *port, u8 *num_bearers, u8 *bearer_id)
+{
+	struct rmnet_endpoint *ep;
+	unsigned long bkt;
+	u8 current_num_bearers = 0;
+	u8 number_bearers_left = 0;
+	u8 num_bearers_in_out;
+
+	if (unlikely(!port || !num_bearers))
+		return;
+
+	number_bearers_left = *num_bearers;
+
+	rcu_read_lock();
+	hash_for_each_rcu(((struct rmnet_port *)port)->muxed_ep,
+			  bkt, ep, hlnode) {
+		num_bearers_in_out = number_bearers_left;
+		qmi_rmnet_get_disabled_flows(ep->egress_dev,
+					     &num_bearers_in_out,
+					     bearer_id ? bearer_id +
+						current_num_bearers : NULL);
+		current_num_bearers += num_bearers_in_out;
+		number_bearers_left -= num_bearers_in_out;
+	}
+	rcu_read_unlock();
+
+	*num_bearers = current_num_bearers;
+}
+EXPORT_SYMBOL(rmnet_get_disabled_flows);
+
+void rmnet_reset_enabled_flows(void *port)
+{
+	struct rmnet_endpoint *ep;
+	unsigned long bkt;
+
+	if (unlikely(!port))
+		return;
+
+	rcu_read_lock();
+	hash_for_each_rcu(((struct rmnet_port *)port)->muxed_ep,
+			  bkt, ep, hlnode) {
+		qmi_rmnet_reset_enabled_flows(ep->egress_dev);
+	}
+	rcu_read_unlock();
+}
+EXPORT_SYMBOL(rmnet_reset_enabled_flows);
+
 int rmnet_get_powersave_notif(void *port)
 {
 	if (!port)
