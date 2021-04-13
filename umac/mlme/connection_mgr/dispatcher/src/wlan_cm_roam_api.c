@@ -428,6 +428,28 @@ wlan_cm_dual_sta_is_freq_allowed(struct wlan_objmgr_psoc *psoc,
 	uint8_t vdev_id_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	enum reg_wifi_band band;
 	uint32_t count, connected_sta_freq;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct dual_sta_policy *dual_sta_policy;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
+
+	/*
+	 * Check if primary iface is configured. If yes,
+	 * then allow further STA connection to all
+	 * available bands/channels irrespective of first
+	 * STA connection band, which allow driver to
+	 * connect with the best available AP present in
+	 * environment, so that user can switch to second
+	 * connection and mark it as primary.
+	 */
+	dual_sta_policy = &mlme_obj->cfg.gen.dual_sta_policy;
+	if (dual_sta_policy->primary_vdev_id != WLAN_UMAC_VDEV_ID_MAX) {
+		mlme_debug("primary iface is configured, vdev_id: %d",
+			   dual_sta_policy->primary_vdev_id);
+		return true;
+	}
 
 	/*
 	 * Check if already there is 1 STA connected. If this API is
@@ -459,9 +481,31 @@ wlan_cm_dual_sta_roam_update_connect_channels(struct wlan_objmgr_psoc *psoc,
 	uint32_t *channel_list;
 	bool is_ch_allowed;
 	QDF_STATUS status;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct dual_sta_policy *dual_sta_policy;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return;
+	dual_sta_policy = &mlme_obj->cfg.gen.dual_sta_policy;
 
 	if (!wlan_mlme_get_dual_sta_roaming_enabled(psoc))
 		return;
+
+	/*
+	 * Check if primary iface is configured. If yes,
+	 * then allow further STA connection to all
+	 * available bands/channels irrespective of first
+	 * STA connection band, which allow driver to
+	 * connect with the best available AP present in
+	 * environment, so that user can switch to second
+	 * connection and mark it as primary.
+	 */
+	if (dual_sta_policy->primary_vdev_id != WLAN_UMAC_VDEV_ID_MAX) {
+		mlme_debug("primary iface is configured, vdev_id: %d",
+			   dual_sta_policy->primary_vdev_id);
+		return;
+	}
 
 	channel_list = qdf_mem_malloc(NUM_CHANNELS * sizeof(uint32_t));
 	if (!channel_list)
