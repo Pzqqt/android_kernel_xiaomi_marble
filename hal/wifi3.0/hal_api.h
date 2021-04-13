@@ -1055,7 +1055,16 @@ extern void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 #define REO_REMAP_SW4 4
 #define REO_REMAP_RELEASE 5
 #define REO_REMAP_FW 6
-#define REO_REMAP_UNUSED 7
+/*
+ * In Beryllium: 4 bits REO destination ring value is defined as: 0: TCL
+ * 1:SW1  2:SW2  3:SW3  4:SW4  5:Release  6:FW(WIFI)  7:SW5
+ * 8:SW6 9:SW7  10:SW8  11: NOT_USED.
+ *
+ */
+#define REO_REMAP_SW5 7
+#define REO_REMAP_SW6 8
+#define REO_REMAP_SW7 9
+#define REO_REMAP_SW8 10
 
 /*
  * Macro to access HWIO_REO_R0_ERROR_DESTINATION_RING_CTRL_IX_0

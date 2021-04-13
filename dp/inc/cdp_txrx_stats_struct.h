@@ -72,7 +72,11 @@
 #define WME_AC_VO    3    /* voice */
 #define WME_AC_MAX   4    /* MAX AC Value */
 
+#ifdef CONFIG_BERYLLIUM
+#define CDP_MAX_RX_RINGS 8  /* max rx rings */
+#else
 #define CDP_MAX_RX_RINGS 4  /* max rx rings */
+#endif
 #define CDP_MAX_TX_COMP_RINGS 3  /* max tx completion rings */
 #define CDP_MAX_TX_TQM_STATUS 9  /* max tx tqm completion status */
 #define CDP_MAX_TX_HTT_STATUS 7  /* max tx htt completion status */

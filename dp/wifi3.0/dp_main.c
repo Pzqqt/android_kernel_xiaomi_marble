@@ -3300,6 +3300,8 @@ void dp_link_desc_ring_replenish(struct dp_soc *soc, uint32_t mac_id)
 }
 
 #ifdef IPA_OFFLOAD
+#define USE_1_IPA_RX_REO_RING 1
+#define USE_2_IPA_RX_REO_RINGS 2
 #define REO_DST_RING_SIZE_QCA6290 1023
 #ifndef CONFIG_WIFI_EMULATION_WIFI_3_0
 #define REO_DST_RING_SIZE_QCA8074 1023
@@ -3706,10 +3708,27 @@ static void dp_soc_reset_intr_mask(struct dp_soc *soc)
  */
 bool dp_reo_remap_config(struct dp_soc *soc, uint32_t *remap1, uint32_t *remap2)
 {
-	uint32_t ring[4] = {REO_REMAP_SW1, REO_REMAP_SW2,
-						REO_REMAP_SW3};
-	hal_compute_reo_remap_ix2_ix3(soc->hal_soc, ring,
-				      3, remap1, remap2);
+	uint32_t ring[8] = {REO_REMAP_SW1, REO_REMAP_SW2, REO_REMAP_SW3};
+	int target_type;
+
+	target_type = hal_get_target_type(soc->hal_soc);
+
+	switch (target_type) {
+	case TARGET_TYPE_WCN7850:
+		hal_compute_reo_remap_ix2_ix3(soc->hal_soc, ring,
+					      soc->num_reo_dest_rings -
+					      USE_2_IPA_RX_REO_RINGS, remap1,
+					      remap2);
+		break;
+
+	default:
+		hal_compute_reo_remap_ix2_ix3(soc->hal_soc, ring,
+					      soc->num_reo_dest_rings -
+					      USE_1_IPA_RX_REO_RING, remap1,
+					      remap2);
+		break;
+	}
+
 	dp_debug("remap1 %x remap2 %x", *remap1, *remap2);
 
 	return true;
@@ -3897,6 +3916,7 @@ static bool dp_reo_remap_config(struct dp_soc *soc,
 	case dp_nss_cfg_dbtc:
 		/* return false if both or all are offloaded to NSS */
 		return false;
+
 	}
 
 	dp_debug("remap1 %x remap2 %x offload_radio %u",

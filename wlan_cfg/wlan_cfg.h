@@ -26,7 +26,11 @@
 #if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
 #define WLAN_CFG_DST_RING_CACHED_DESC 0
 #define MAX_PDEV_CNT 1
+#ifdef CONFIG_BERYLLIUM
+#define WLAN_CFG_INT_NUM_CONTEXTS 11
+#else
 #define WLAN_CFG_INT_NUM_CONTEXTS 7
+#endif
 #define WLAN_CFG_RXDMA1_ENABLE 1
 /*
  * This mask defines how many transmit frames account for 1 NAPI work unit
@@ -59,7 +63,11 @@
 
 /* Rx configuration */
 #define MAX_RXDESC_POOLS 4
+#ifdef CONFIG_BERYLLIUM
+#define MAX_REO_DEST_RINGS 8
+#else
 #define MAX_REO_DEST_RINGS 4
+#endif
 #define MAX_RX_MAC_RINGS 2
 
 /* DP process status */

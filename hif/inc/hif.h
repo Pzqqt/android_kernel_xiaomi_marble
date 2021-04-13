@@ -131,10 +131,15 @@ struct CE_state;
 #else
 #define CE_COUNT_MAX 12
 #endif
-#define HIF_MAX_GRP_IRQ 16
 
 #ifndef HIF_MAX_GROUP
+#ifdef CONFIG_BERYLLIUM
+#define HIF_MAX_GROUP 11
+#define HIF_MAX_GRP_IRQ 20
+#else
 #define HIF_MAX_GROUP 7
+#define HIF_MAX_GRP_IRQ 16
+#endif
 #endif
 
 #ifndef NAPI_YIELD_BUDGET_BASED

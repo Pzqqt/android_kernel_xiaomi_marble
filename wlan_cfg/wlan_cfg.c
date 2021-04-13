@@ -52,6 +52,11 @@
 #define WLAN_CFG_RX_RING_MASK_1 0x2
 #define WLAN_CFG_RX_RING_MASK_2 0x4
 #define WLAN_CFG_RX_RING_MASK_3 0x8
+#define WLAN_CFG_RX_RING_MASK_4 0x10
+#define WLAN_CFG_RX_RING_MASK_5 0x20
+#define WLAN_CFG_RX_RING_MASK_6 0x40
+#define WLAN_CFG_RX_RING_MASK_7 0x80
+
 
 #define WLAN_CFG_RX_MON_RING_MASK_0 0x1
 #define WLAN_CFG_RX_MON_RING_MASK_1 0x2
@@ -117,20 +122,45 @@ static struct dp_int_mask_assignment dp_mask_assignment[NUM_INTERRUPT_COMBINATIO
 		{ WLAN_CFG_TX_RING_MASK_0,
 		  0, 0, 0, 0, 0, 0},
 		/* rx ring masks */
-#ifndef IPA_OFFLOAD
+#ifdef CONFIG_BERYLLIUM
+#ifdef IPA_OFFLOAD
+		{ 0,
+		  WLAN_CFG_RX_RING_MASK_0,
+		  WLAN_CFG_RX_RING_MASK_1,
+		  WLAN_CFG_RX_RING_MASK_2, 0, 0, 0,
+		  WLAN_CFG_RX_RING_MASK_4,
+		  WLAN_CFG_RX_RING_MASK_5,
+		  WLAN_CFG_RX_RING_MASK_6,
+		  0},
+#else /* IPA_OFFLOAD */
+		{ 0,
+		  WLAN_CFG_RX_RING_MASK_0,
+		  WLAN_CFG_RX_RING_MASK_1,
+		  WLAN_CFG_RX_RING_MASK_2,
+		  WLAN_CFG_RX_RING_MASK_3,
+		  0, 0,
+		  WLAN_CFG_RX_RING_MASK_4,
+		  WLAN_CFG_RX_RING_MASK_5,
+		  WLAN_CFG_RX_RING_MASK_6,
+		  0},
+#endif /* IPA_OFFLOAD */
+#else /* CONFIG_BERYLLIUM */
+#ifdef IPA_OFFLOAD
+		{ 0,
+		  WLAN_CFG_RX_RING_MASK_0,
+		  WLAN_CFG_RX_RING_MASK_1,
+		  WLAN_CFG_RX_RING_MASK_2,
+		  0, 0, 0},
+#else /* IPA_OFFLOAD */
 		{ 0,
 		  WLAN_CFG_RX_RING_MASK_0,
 		  WLAN_CFG_RX_RING_MASK_1,
 		  WLAN_CFG_RX_RING_MASK_2,
 		  WLAN_CFG_RX_RING_MASK_3,
 		  0, 0},
-#else
-		{ 0,
-		  WLAN_CFG_RX_RING_MASK_0,
-		  WLAN_CFG_RX_RING_MASK_1,
-		  WLAN_CFG_RX_RING_MASK_2,
-		  0, 0, 0},
-#endif
+#endif /* IPA_OFFLOAD */
+#endif /* CONFIG_BERYLLIUM */
+
 		/* rx mon ring masks */
 		{ 0,
 		  WLAN_CFG_RX_MON_RING_MASK_0,

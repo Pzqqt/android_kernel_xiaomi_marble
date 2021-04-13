@@ -87,6 +87,12 @@ const char *dp_irqname[WLAN_CFG_MAX_PCIE_GROUPS][WLAN_CFG_INT_NUM_CONTEXTS] = {
 "pci0_wlan_grp_dp_4",
 "pci0_wlan_grp_dp_5",
 "pci0_wlan_grp_dp_6",
+#ifdef CONFIG_BERYLLIUM
+"pci0_wlan_grp_dp_7",
+"pci0_wlan_grp_dp_8",
+"pci0_wlan_grp_dp_9",
+"pci0_wlan_grp_dp_10",
+#endif
 #if !defined(WLAN_MAX_PDEVS)
 "pci0_wlan_grp_dp_7",
 "pci0_wlan_grp_dp_8",
@@ -3163,6 +3169,7 @@ int hif_pci_configure_grp_irq(struct hif_softc *scn,
 		if (scn->irq_unlazy_disable)
 			qdf_dev_set_irq_status_flags(irq,
 						     QDF_IRQ_DISABLE_UNLAZY);
+
 		hif_debug("request_irq = %d for grp %d",
 			  irq, hif_ext_group->grp_id);
 		ret = pfrm_request_irq(

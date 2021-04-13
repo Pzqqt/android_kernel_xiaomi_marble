@@ -6502,6 +6502,37 @@ dp_print_soc_tx_stats(struct dp_soc *soc)
 		       soc->stats.tx.hp_oos2);
 }
 
+#ifdef CONFIG_BERYLLIUM
+void dp_print_soc_interrupt_stats(struct dp_soc *soc)
+{
+	int i = 0;
+	struct dp_intr_stats *intr_stats;
+
+	DP_PRINT_STATS("INT:     Total  |txComps|reo[0] |reo[1] |reo[2] |reo[3] |reo[4] |reo[5] |reo[6] |reo[7] |mon    |rx_err | wbm   |reo_sta|rxdm2hst|hst2rxdm|");
+	for (i = 0; i < WLAN_CFG_INT_NUM_CONTEXTS; i++) {
+		intr_stats = &soc->intr_ctx[i].intr_stats;
+		DP_PRINT_STATS("%3u[%3d]: %7u %7u %7u %7u %7u %7u %7u %7u %7u %7u %7u %7u %7u %7u %8u %8u",
+			       i,
+			       hif_get_int_ctx_irq_num(soc->hif_handle, i),
+			       intr_stats->num_masks,
+			       intr_stats->num_tx_ring_masks[0],
+			       intr_stats->num_rx_ring_masks[0],
+			       intr_stats->num_rx_ring_masks[1],
+			       intr_stats->num_rx_ring_masks[2],
+			       intr_stats->num_rx_ring_masks[3],
+			       intr_stats->num_rx_ring_masks[4],
+			       intr_stats->num_rx_ring_masks[5],
+			       intr_stats->num_rx_ring_masks[6],
+			       intr_stats->num_rx_ring_masks[7],
+			       intr_stats->num_rx_mon_ring_masks,
+			       intr_stats->num_rx_err_ring_masks,
+			       intr_stats->num_rx_wbm_rel_ring_masks,
+			       intr_stats->num_reo_status_ring_masks,
+			       intr_stats->num_rxdma2host_ring_masks,
+			       intr_stats->num_host2rxdma_ring_masks);
+		}
+}
+#else
 void dp_print_soc_interrupt_stats(struct dp_soc *soc)
 {
 	int i = 0;
@@ -6527,6 +6558,7 @@ void dp_print_soc_interrupt_stats(struct dp_soc *soc)
 			       intr_stats->num_host2rxdma_ring_masks);
 		}
 }
+#endif
 
 void
 dp_print_soc_rx_stats(struct dp_soc *soc)
