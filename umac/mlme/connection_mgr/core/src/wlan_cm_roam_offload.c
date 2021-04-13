@@ -920,10 +920,13 @@ static void cm_update_score_params(struct wlan_objmgr_psoc *psoc,
 	struct weight_cfg *weight_config;
 	struct psoc_mlme_obj *mlme_psoc_obj;
 	struct scoring_cfg *score_config;
+	struct dual_sta_policy *dual_sta_policy;
 
 	mlme_psoc_obj = wlan_psoc_mlme_get_cmpt_obj(psoc);
 	if (!mlme_psoc_obj)
 		return;
+
+	dual_sta_policy = &mlme_obj->cfg.gen.dual_sta_policy;
 
 	score_config = &mlme_psoc_obj->psoc_cfg.score_config;
 	roam_score_params = &mlme_obj->cfg.roam_scoring;
@@ -944,8 +947,14 @@ static void cm_update_score_params(struct wlan_objmgr_psoc *psoc,
 		weight_config->channel_congestion_weightage;
 	req_score_params->beamforming_weightage =
 		weight_config->beamforming_cap_weightage;
-	req_score_params->pcl_weightage =
-		weight_config->pcl_weightage;
+
+	/*
+	 * Don’t consider pcl weightage for STA connection,
+	 * if primary interface is configured.
+	 */
+	if (policy_mgr_is_pcl_weightage_required(psoc))
+		req_score_params->pcl_weightage = weight_config->pcl_weightage;
+
 	req_score_params->oce_wan_weightage = weight_config->oce_wan_weightage;
 	req_score_params->oce_ap_tx_pwr_weightage =
 		weight_config->oce_ap_tx_pwr_weightage;
