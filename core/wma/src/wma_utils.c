@@ -3189,18 +3189,13 @@ wma_peer_phymode(tSirNwType nw_type, uint8_t sta_type,
 	case eSIR_11B_NW_TYPE:
 #ifdef FEATURE_WLAN_TDLS
 	if (STA_ENTRY_TDLS_PEER == sta_type) {
-		if (is_vht) {
-			if (CH_WIDTH_80MHZ == ch_width)
-				phymode = WLAN_PHYMODE_11AC_VHT80;
-			else
-				phymode = (CH_WIDTH_40MHZ == ch_width) ?
-					  WLAN_PHYMODE_11AC_VHT40 :
-					  WLAN_PHYMODE_11AC_VHT20_2G;
-		} else if (is_ht) {
-			phymode = (CH_WIDTH_40MHZ == ch_width) ?
-				   WLAN_PHYMODE_11NG_HT40 :
-				   WLAN_PHYMODE_11NG_HT20;
-		} else
+		if (is_he)
+			phymode = WLAN_PHYMODE_11AXG_HE20;
+		else if (is_vht)
+			phymode = WLAN_PHYMODE_11AC_VHT20_2G;
+		else if (is_ht)
+			phymode = WLAN_PHYMODE_11NG_HT20;
+		else
 			phymode = WLAN_PHYMODE_11B;
 	} else
 #endif /* FEATURE_WLAN_TDLS */
