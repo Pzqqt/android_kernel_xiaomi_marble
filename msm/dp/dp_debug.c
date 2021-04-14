@@ -18,6 +18,7 @@
 #include "dp_pll.h"
 #include "dp_hpd.h"
 #include "dp_mst_sim.h"
+#include "dp_mst_drm.h"
 
 #define DEBUG_NAME "drm_dp"
 
@@ -178,6 +179,7 @@ static ssize_t dp_debug_write_edid(struct file *file,
 	}
 
 	dp_debug_enable_sim_mode(debug, DP_SIM_MODE_EDID);
+	dp_mst_clear_edid_cache(debug->display);
 	dp_sim_update_port_edid(debug->sim_bridge, debug->mst_edid_idx,
 			edid, edid_size);
 bail:
