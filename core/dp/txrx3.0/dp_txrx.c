@@ -210,6 +210,10 @@ int dp_rx_tm_get_pending(ol_txrx_soc_handle soc)
 /* Num TX desc in TX desc pool */
 #define DP_TX_DESC_POOL_SIZE 6144
 
+#define DP_TX_RX_DESC_MAX_NUM \
+		(WLAN_CFG_NUM_TX_DESC_MAX * MAX_TXDESC_POOLS + \
+			WLAN_CFG_RX_SW_DESC_NUM_SIZE_MAX * MAX_RXDESC_POOLS)
+
 /**
  * struct dp_consistent_prealloc - element representing DP pre-alloc memory
  * @ring_type: HAL ring type
@@ -416,7 +420,11 @@ static struct  dp_multi_page_prealloc g_dp_multi_page_allocs[] = {
 #endif
 	/* DP HW Link DESCs pools */
 	{DP_HW_LINK_DESC_TYPE, HW_LINK_DESC_SIZE, NUM_HW_LINK_DESCS, 0, NON_CACHEABLE, { 0 } },
-
+#ifdef CONFIG_BERYLLIUM
+	{DP_HW_CC_SPT_PAGE_TYPE, qdf_page_size,
+	 ((DP_TX_RX_DESC_MAX_NUM * sizeof(uint64_t)) / qdf_page_size),
+	 0, NON_CACHEABLE, { 0 } },
+#endif
 };
 
 static struct dp_consistent_prealloc_unaligned
