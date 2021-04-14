@@ -2476,8 +2476,6 @@ static int wma_wake_event_packet(
 		break;
 
 	default:
-		wma_err("Wake reason %s is not a packet event",
-			 wma_wow_wake_reason_str(wake_info->wake_reason));
 		return -EINVAL;
 	}
 
