@@ -119,7 +119,11 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		MSM_VIDC_FMT_NV12C,
 		MSM_VIDC_FMT_NV12 | MSM_VIDC_FMT_NV21 | MSM_VIDC_FMT_NV12C |
 		MSM_VIDC_FMT_RGBA8888 | MSM_VIDC_FMT_RGBA8888C,
-		MSM_VIDC_FMT_NV12C},
+		MSM_VIDC_FMT_NV12C,
+		0, 0,
+		CAP_FLAG_ROOT,
+		{0},
+		{META_ROI_INFO}},
 	{PIX_FMTS, ENC, HEVC,
 		MSM_VIDC_FMT_NV12,
 		MSM_VIDC_FMT_TP10C,
@@ -130,7 +134,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		0, 0,
 		CAP_FLAG_ROOT,
 		{0},
-		{PROFILE, MIN_FRAME_QP, MAX_FRAME_QP, I_FRAME_QP}},
+		{PROFILE, MIN_FRAME_QP, MAX_FRAME_QP, I_FRAME_QP, META_ROI_INFO}},
 
 	{PIX_FMTS, DEC, HEVC|HEIC,
 		MSM_VIDC_FMT_NV12,
@@ -335,7 +339,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		{LTR_COUNT, IR_RANDOM, TIME_DELTA_BASED_RC, I_FRAME_QP,
 			ENH_LAYER_COUNT, BIT_RATE, CONTENT_ADAPTIVE_CODING,
 			BITRATE_BOOST, MIN_QUALITY, VBV_DELAY, PEAK_BITRATE,
-			SLICE_MODE},
+			SLICE_MODE, META_ROI_INFO},
 		msm_vidc_adjust_bitrate_mode, msm_vidc_set_u32_enum},
 
 	{BITRATE_MODE, ENC, HEVC,
@@ -353,7 +357,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 			CONSTANT_QUALITY, ENH_LAYER_COUNT,
 			CONTENT_ADAPTIVE_CODING, BIT_RATE,
 			BITRATE_BOOST, MIN_QUALITY, VBV_DELAY,
-			PEAK_BITRATE, SLICE_MODE},
+			PEAK_BITRATE, SLICE_MODE, META_ROI_INFO},
 		msm_vidc_adjust_bitrate_mode, msm_vidc_set_u32_enum},
 
 	{LOSSLESS, ENC, HEVC|HEIC,
@@ -1290,7 +1294,11 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		V4L2_MPEG_MSM_VIDC_DISABLE, V4L2_MPEG_MSM_VIDC_ENABLE,
 		1, V4L2_MPEG_MSM_VIDC_DISABLE,
 		V4L2_CID_MPEG_VIDC_METADATA_ROI_INFO,
-		HFI_PROP_ROI_INFO},
+		HFI_PROP_ROI_INFO,
+		CAP_FLAG_INPUT_PORT,
+		{BITRATE_MODE, PIX_FMTS},
+		{0},
+		msm_vidc_adjust_roi_info, NULL},
 
 	/* configure image properties */
 	{FRAME_WIDTH, ENC, HEIC, 512, 16384, 1, 16384},

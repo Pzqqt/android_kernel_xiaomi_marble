@@ -87,7 +87,8 @@ static inline bool is_input_meta_enabled(struct msm_vidc_inst *inst)
 	} else if (is_encode_session(inst)) {
 		enabled = (inst->capabilities->cap[META_SEQ_HDR_NAL].value ||
 			inst->capabilities->cap[META_EVA_STATS].value ||
-			inst->capabilities->cap[META_BUF_TAG].value);
+			inst->capabilities->cap[META_BUF_TAG].value ||
+			inst->capabilities->cap[META_ROI_INFO].value);
 	}
 	return enabled;
 }
