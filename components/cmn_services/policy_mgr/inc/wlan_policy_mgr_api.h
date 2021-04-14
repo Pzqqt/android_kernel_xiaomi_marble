@@ -1622,6 +1622,20 @@ void policy_mgr_set_dual_mac_fw_mode_config(struct wlan_objmgr_psoc *psoc,
 		uint8_t dbs, uint8_t dfs);
 
 /**
+ * policy_mgr_is_scc_with_this_vdev_id() - Check if this vdev_id has SCC with
+ * other vdev_id's
+ * @psoc: PSOC object information
+ * @vdev_id: vdev_id
+ *
+ * This function checks if the given vdev_id has SCC with any other vdev's
+ * or not.
+ *
+ * Return: true if SCC exists, false otherwise
+ */
+bool policy_mgr_is_scc_with_this_vdev_id(struct wlan_objmgr_psoc *psoc,
+					 uint8_t vdev_id);
+
+/**
  * policy_mgr_soc_set_dual_mac_cfg_cb() - Callback for set dual mac config
  * @status: Status of set dual mac config
  * @scan_config: Current scan config whose status is the first param

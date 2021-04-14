@@ -1372,6 +1372,13 @@ int hdd_send_twt_add_dialog_cmd(struct hdd_context *hdd_ctx,
 	return ret;
 }
 
+static bool hdd_twt_setup_conc_allowed(struct hdd_context *hdd_ctx,
+				       uint8_t vdev_id)
+{
+	return policy_mgr_current_concurrency_is_mcc(hdd_ctx->psoc) ||
+	       policy_mgr_is_scc_with_this_vdev_id(hdd_ctx->psoc, vdev_id);
+}
+
 /**
  * hdd_twt_setup_session() - Process TWT setup operation in the
  * received vendor command and send it to firmare
@@ -1416,6 +1423,11 @@ static int hdd_twt_setup_session(struct hdd_adapter *adapter,
 
 	if (hdd_is_roaming_in_progress(hdd_ctx))
 		return -EBUSY;
+
+	if (hdd_twt_setup_conc_allowed(hdd_ctx, adapter->vdev_id)) {
+		hdd_err_rl("TWT setup reject: SCC or MCC concurrency exists");
+		return -EAGAIN;
+	}
 
 	qdf_mem_copy(params.peer_macaddr,
 		     hdd_sta_ctx->conn_info.bssid.bytes,
