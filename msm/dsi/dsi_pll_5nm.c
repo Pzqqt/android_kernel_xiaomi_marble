@@ -1354,9 +1354,8 @@ static int dsi_pll_5nm_dynamic_clk_vco_set_rate(struct dsi_pll_resource *rsc)
 		DSI_PLL_ERR(rsc, "cannot find pll codes rate=%ld\n", rate);
 		return -EINVAL;
 	}
-	DSI_PLL_DBG(rsc, "ndx=%d, rate=%lu\n", rate);
 
-
+	DSI_PLL_DBG(rsc, "ndx=%d, rate=%lu\n", rsc->index, rate);
 	rsc->vco_current_rate = rate;
 
 	dsi_pll_calc_dec_frac(pll, rsc);
