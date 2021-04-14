@@ -196,9 +196,15 @@ int validate_packet(u8 *response_pkt, u8 *core_resp_pkt,
 		return -EINVAL;
 	}
 
+	if (response_pkt_size < sizeof(struct hfi_packet)) {
+		d_vpr_e("%s: invalid packet size %d\n",
+			func, response_pkt_size);
+		return -EINVAL;
+	}
+
 	if (response_pkt + response_pkt_size > response_limit) {
 		d_vpr_e("%s: invalid packet size %d\n",
-			func, *(u32 *)response_pkt);
+			func, response_pkt_size);
 		return -EINVAL;
 	}
 	return 0;
@@ -216,6 +222,11 @@ static int validate_hdr_packet(struct msm_vidc_core *core,
 		return -EINVAL;
 	}
 
+	if (hdr->size < sizeof(struct hfi_header) + sizeof(struct hfi_packet)) {
+		d_vpr_e("%s: invalid header size %d\n", __func__, hdr->size);
+		return -EINVAL;
+	}
+
 	pkt = (u8 *)((u8 *)hdr + sizeof(struct hfi_header));
 
 	/* validate all packets */
@@ -229,6 +240,54 @@ static int validate_hdr_packet(struct msm_vidc_core *core,
 	}
 
 	return 0;
+}
+
+static bool check_for_packet_payload(struct msm_vidc_inst *inst,
+	struct hfi_packet *pkt, const char *func)
+{
+	u32 payload_size = 0;
+
+	if (!inst || !pkt) {
+		d_vpr_e("%s: invalid params %d\n", __func__);
+		return false;
+	}
+
+	if (pkt->payload_info == HFI_PAYLOAD_NONE) {
+		i_vpr_h(inst, "%s: no playload available for packet %#x\n",
+			func, pkt->type);
+		return false;
+	}
+
+	switch (pkt->payload_info) {
+	case HFI_PAYLOAD_U32:
+	case HFI_PAYLOAD_S32:
+	case HFI_PAYLOAD_Q16:
+	case HFI_PAYLOAD_U32_ENUM:
+	case HFI_PAYLOAD_32_PACKED:
+		payload_size = 4;
+		break;
+	case HFI_PAYLOAD_U64:
+	case HFI_PAYLOAD_S64:
+	case HFI_PAYLOAD_64_PACKED:
+		payload_size = 8;
+		break;
+	case HFI_PAYLOAD_STRUCTURE:
+		if (pkt->type == HFI_CMD_BUFFER)
+			payload_size = sizeof(struct hfi_buffer);
+		break;
+	default:
+		payload_size = 0;
+		break;
+	}
+
+	if (pkt->size < sizeof(struct hfi_packet) + payload_size) {
+		i_vpr_e(inst,
+			"%s: invalid payload size %u payload type %#x for packet %#x\n",
+			func, pkt->size, pkt->payload_info, pkt->type);
+		return false;
+	}
+
+	return true;
 }
 
 static bool check_last_flag(struct msm_vidc_inst *inst,
@@ -1004,6 +1063,11 @@ static int handle_session_buffer(struct msm_vidc_inst *inst,
 		return 0;
 	}
 
+	if (!check_for_packet_payload(inst, pkt, __func__)) {
+		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
+		return 0;
+	}
+
 	buffer = (struct hfi_buffer *)((u8 *)pkt + sizeof(struct hfi_packet));
 	if (!is_valid_hfi_buffer_type(inst, buffer->type, __func__)) {
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
@@ -1193,7 +1257,7 @@ static int handle_session_property(struct msm_vidc_inst *inst,
 {
 	int rc = 0;
 	u32 port;
-	u32 *payload_ptr;
+	u32 *payload_ptr = NULL;
 
 	if (!inst || !inst->capabilities) {
 		d_vpr_e("%s: Invalid params\n", __func__);
@@ -1209,7 +1273,20 @@ static int handle_session_property(struct msm_vidc_inst *inst,
 				__func__, pkt->port, pkt->type);
 		return -EINVAL;
 	}
-	payload_ptr = (u32 *)((u8 *)pkt + sizeof(struct hfi_packet));
+
+	if (pkt->payload_info != HFI_PAYLOAD_NONE) {
+		if (!check_for_packet_payload(inst, pkt, __func__))
+			return 0;
+
+		payload_ptr = (u32 *)((u8 *)pkt + sizeof(struct hfi_packet));
+	}
+
+	if (pkt->flags & HFI_FW_FLAGS_INFORMATION) {
+		i_vpr_h(inst,
+			"%s: information flag received for property %#x packet\n",
+			__func__, pkt->type);
+		return 0;
+	}
 
 	switch (pkt->type) {
 	case HFI_PROP_BITSTREAM_RESOLUTION:
