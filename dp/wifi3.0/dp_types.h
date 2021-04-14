@@ -1015,6 +1015,10 @@ struct dp_soc_stats {
 			uint32_t reo_err_oor_eapol_drop;
 			/* Non Eapol packet drop count due to peer not authorized  */
 			uint32_t peer_unauth_rx_pkt_drop;
+			/* count of start sequence (ssn) updates */
+			uint32_t ssn_update_count;
+			/* count of bar handling fail */
+			uint32_t bar_handle_fail_count;
 		} err;
 
 		/* packet count per core - per ring */
