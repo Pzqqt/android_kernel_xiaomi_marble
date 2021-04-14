@@ -1431,7 +1431,11 @@ static void hdd_country_change_update_sta(struct hdd_context *hdd_ctx)
 	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter,
 					   dbgid) {
 		oper_freq = hdd_get_adapter_home_channel(adapter);
-		freq_changed = wlan_reg_is_disable_for_freq(pdev, oper_freq);
+		if (oper_freq)
+			freq_changed = wlan_reg_is_disable_for_freq(pdev,
+								    oper_freq);
+		else
+			freq_changed = false;
 
 		switch (adapter->device_mode) {
 		case QDF_P2P_CLIENT_MODE:
