@@ -2931,7 +2931,7 @@ static uint32_t get_iir_band_coeff(struct snd_soc_component *component,
 	/* Mask bits top 2 bits since they are reserved */
 	value |= ((snd_soc_component_read(component,
 				(LPASS_CDC_RX_SIDETONE_IIR0_IIR_COEF_B2_CTL +
-				 16 * iir_idx)) & 0x3F) << 24);
+				 0x80 * iir_idx)) & 0x3F) << 24);
 
 	return value;
 }
@@ -3029,7 +3029,7 @@ static int lpass_cdc_rx_macro_iir_band_audio_mixer_put(struct snd_kcontrol *kcon
 	 * Updates addr automatically for each B2 write
 	 */
 	snd_soc_component_write(component,
-		(LPASS_CDC_RX_SIDETONE_IIR0_IIR_COEF_B1_CTL + 16 * iir_idx),
+		(LPASS_CDC_RX_SIDETONE_IIR0_IIR_COEF_B1_CTL + 0x80 * iir_idx),
 		(band_idx * BAND_MAX * sizeof(uint32_t)) & 0x7F);
 
 	/* Store the coefficients in sidetone coeff array */
