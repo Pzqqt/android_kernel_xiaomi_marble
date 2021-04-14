@@ -526,6 +526,7 @@ endif
 $(call add-wlan-objs,dsc,$(DSC_OBJS))
 
 cppflags-$(CONFIG_ONE_MSI_VECTOR) += -DWLAN_ONE_MSI_VECTOR
+cppflags-$(CONFIG_CNSS_UTILS) += -DCONFIG_CNSS_UTILS
 
 cppflags-$(CONFIG_DSC_DEBUG) += -DWLAN_DSC_DEBUG
 cppflags-$(CONFIG_DSC_TEST) += -DWLAN_DSC_TEST
