@@ -7269,6 +7269,7 @@ static void ipa3_load_ipa_fw(struct work_struct *work)
 		if (result) {
 			IPAERR("IPA uC loading process has failed result=%d\n",
 				result);
+			ipa3_proxy_clk_unvote();
 			return;
 		}
 		IPADBG("IPA uC loading succeeded\n");
@@ -8289,7 +8290,8 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 		goto fail_wwan_init;
 	}
 
-	if (ipa3_ctx->rmnet_ctl_enable) {
+	if (ipa3_ctx->rmnet_ctl_enable &&
+		ipa3_ctx->platform_type != IPA_PLAT_TYPE_APQ) {
 		result = ipa3_rmnet_ctl_init();
 		if (result) {
 			IPAERR(":ipa3_rmnet_ctl_init err=%d\n", -result);
