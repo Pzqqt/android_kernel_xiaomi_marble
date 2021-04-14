@@ -1095,6 +1095,7 @@ bool msm_vidc_allow_s_ctrl(struct msm_vidc_inst *inst, u32 id)
 		if (inst->vb2q[INPUT_PORT].streaming) {
 			switch (id) {
 			case V4L2_CID_MPEG_VIDC_CODEC_CONFIG:
+			case V4L2_CID_MPEG_VIDC_PRIORITY:
 				allow = true;
 				break;
 			default:
@@ -1132,6 +1133,7 @@ bool msm_vidc_allow_s_ctrl(struct msm_vidc_inst *inst, u32 id)
 			case V4L2_CID_MPEG_VIDEO_CONSTANT_QUALITY:
 			case V4L2_CID_MPEG_VIDC_ENC_INPUT_COMPRESSION_RATIO:
 			case V4L2_CID_MPEG_VIDEO_BITRATE_PEAK:
+			case V4L2_CID_MPEG_VIDC_PRIORITY:
 				allow = true;
 				break;
 			default:
