@@ -2205,6 +2205,37 @@ int dsi_ctrl_get_io_resources(struct msm_io_res *io_res)
 }
 
 /**
+ * dsi_ctrl_check_resource() - check if DSI controller is probed
+ * @of_node:    of_node of the DSI controller.
+ *
+ * Checks if the DSI controller has been probed and is available.
+ *
+ * Return: status of DSI controller
+ */
+bool dsi_ctrl_check_resource(struct device_node *of_node)
+{
+	struct list_head *pos, *tmp;
+	struct dsi_ctrl *ctrl = NULL;
+
+	mutex_lock(&dsi_ctrl_list_lock);
+	list_for_each_safe(pos, tmp, &dsi_ctrl_list) {
+		struct dsi_ctrl_list_item *n;
+
+		n = list_entry(pos, struct dsi_ctrl_list_item, list);
+		if (!n->ctrl || !n->ctrl->pdev)
+			break;
+
+		if (n->ctrl->pdev->dev.of_node == of_node) {
+			ctrl = n->ctrl;
+			break;
+		}
+	}
+	mutex_unlock(&dsi_ctrl_list_lock);
+
+	return ctrl ? true : false;
+}
+
+/**
  * dsi_ctrl_get() - get a dsi_ctrl handle from an of_node
  * @of_node:    of_node of the DSI controller.
  *

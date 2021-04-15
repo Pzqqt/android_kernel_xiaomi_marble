@@ -320,6 +320,16 @@ struct dsi_ctrl {
 };
 
 /**
+ * dsi_ctrl_check_resource() - check if DSI controller is probed
+ * @of_node:    of_node of the DSI controller.
+ *
+ * Checks if the DSI controller has been probed and is available.
+ *
+ * Return: status of DSI controller
+ */
+bool dsi_ctrl_check_resource(struct device_node *of_node);
+
+/**
  * dsi_ctrl_get() - get a dsi_ctrl handle from an of_node
  * @of_node:    of_node of the DSI controller.
  *
