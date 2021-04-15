@@ -4305,7 +4305,9 @@ static int _sde_kms_hw_init_ioremap(struct sde_kms *sde_kms,
 	sde_kms->mmio_len = msm_iomap_size(platformdev, "mdp_phys");
 
 	rc = sde_dbg_reg_register_base(SDE_DBG_NAME, sde_kms->mmio,
-				sde_kms->mmio_len, SDE_DBG_SDE);
+				sde_kms->mmio_len,
+				msm_get_phys_addr(platformdev, "mdp_phys"),
+				SDE_DBG_SDE);
 	if (rc)
 		SDE_ERROR("dbg base register kms failed: %d\n", rc);
 
@@ -4318,7 +4320,9 @@ static int _sde_kms_hw_init_ioremap(struct sde_kms *sde_kms,
 	}
 	sde_kms->vbif_len[VBIF_RT] = msm_iomap_size(platformdev, "vbif_phys");
 	rc = sde_dbg_reg_register_base("vbif_rt", sde_kms->vbif[VBIF_RT],
-				sde_kms->vbif_len[VBIF_RT], SDE_DBG_VBIF_RT);
+				sde_kms->vbif_len[VBIF_RT],
+				msm_get_phys_addr(platformdev, "vbif_phys"),
+				SDE_DBG_VBIF_RT);
 	if (rc)
 		SDE_ERROR("dbg base register vbif_rt failed: %d\n", rc);
 
@@ -4337,7 +4341,9 @@ static int _sde_kms_hw_init_ioremap(struct sde_kms *sde_kms,
 	} else {
 		sde_kms->reg_dma_len = msm_iomap_size(platformdev, "regdma_phys");
 		rc =  sde_dbg_reg_register_base("reg_dma", sde_kms->reg_dma,
-				sde_kms->reg_dma_len, SDE_DBG_LUTDMA);
+				sde_kms->reg_dma_len,
+				msm_get_phys_addr(platformdev, "regdma_phys"),
+				SDE_DBG_LUTDMA);
 		if (rc)
 			SDE_ERROR("dbg base register reg_dma failed: %d\n", rc);
 	}
@@ -4349,7 +4355,9 @@ static int _sde_kms_hw_init_ioremap(struct sde_kms *sde_kms,
 	} else {
 		sde_kms->sid_len = msm_iomap_size(platformdev, "sid_phys");
 		rc =  sde_dbg_reg_register_base("sid", sde_kms->sid,
-				sde_kms->sid_len, SDE_DBG_SID);
+				sde_kms->sid_len,
+				msm_get_phys_addr(platformdev, "sid_phys"),
+				SDE_DBG_SID);
 		if (rc)
 			SDE_ERROR("dbg base register sid failed: %d\n", rc);
 	}

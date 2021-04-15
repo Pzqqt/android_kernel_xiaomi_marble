@@ -151,6 +151,7 @@ struct sde_dbg_reg_range {
  * @sub_range_list: head to the list with dump ranges
  * @name: register base name
  * @base: base pointer
+ * @phys_addr: block physical address
  * @off: cached offset of region for manual register dumping
  * @cnt: cached range of region for manual register dumping
  * @max_offset: length of region
@@ -166,6 +167,7 @@ struct sde_dbg_reg_base {
 	struct list_head sub_range_list;
 	char name[REG_BASE_NAME_LEN];
 	void __iomem *base;
+	unsigned long phys_addr;
 	size_t off;
 	size_t cnt;
 	size_t max_offset;
@@ -543,6 +545,20 @@ static int _sde_dump_reg_range_cmp(void *priv, struct list_head *a,
 	return ar->offset.start - br->offset.start;
 }
 
+static int _sde_dump_blk_phys_addr_cmp(void *priv, struct list_head *a,
+		struct list_head *b)
+{
+	struct sde_dbg_reg_base *ar, *br;
+
+	if (!a || !b)
+		return 0;
+
+	ar = container_of(a, struct sde_dbg_reg_base, reg_base_head);
+	br = container_of(b, struct sde_dbg_reg_base, reg_base_head);
+
+	return ar->phys_addr - br->phys_addr;
+}
+
 static const char *const exclude_modules[] = {
 	"vbif_rt",
 	"vbif_nrt",
@@ -618,6 +634,8 @@ static void _sde_dump_reg_mask(u64 dump_blk_mask, bool dump_secure)
 
 	if (!dump_blk_mask)
 		return;
+
+	list_sort(NULL, &dbg_base->reg_base_list, _sde_dump_blk_phys_addr_cmp);
 
 	list_for_each_entry(blk_base, &dbg_base->reg_base_list, reg_base_head) {
 
@@ -971,7 +989,8 @@ static void _sde_dump_array(bool do_panic, const char *name, bool dump_secure, u
 	 */
 	skip_power = (dbg_base->dump_mode == SDE_DBG_DUMP_CLK_ENABLED_CTX);
 
-	sde_evtlog_dump_all(dbg_base->evtlog);
+	if (sde_evtlog_is_enabled(dbg_base->evtlog, SDE_EVTLOG_ALWAYS))
+		sde_evtlog_dump_all(dbg_base->evtlog);
 
 	if (!skip_power) {
 		rc = pm_runtime_get_sync(dbg_base->dev);
@@ -1407,8 +1426,8 @@ static int  _sde_dbg_recovery_dump_reg_blk(struct sde_dbg_reg_base *blk,
 	len += snprintf(buf + len, DUMP_LINE_SIZE,
 			"==========================================\n");
 	len += snprintf(buf + len, DUMP_LINE_SIZE,
-			"*********** DUMP of %s block *************\n",
-			blk->name);
+			"****** DUMP of %s block (0x%08x) ******\n",
+			blk->name, blk->phys_addr);
 	len += snprintf(buf + len, DUMP_LINE_SIZE,
 			"count:%ld max-off:0x%lx has_sub_blk:%d\n",
 			blk->cnt, blk->max_offset,
@@ -2300,7 +2319,8 @@ int sde_dbg_dsi_ctrl_register(void __iomem *base, const char *name)
 	return 0;
 }
 
-int sde_dbg_reg_register_base(const char *name, void __iomem *base, size_t max_offset, u64 blk_id)
+int sde_dbg_reg_register_base(const char *name, void __iomem *base, size_t max_offset,
+		unsigned long phys_addr, u64 blk_id)
 {
 	struct sde_dbg_base *dbg_base = &sde_dbg_base;
 	struct sde_dbg_reg_base *reg_base;
@@ -2316,6 +2336,7 @@ int sde_dbg_reg_register_base(const char *name, void __iomem *base, size_t max_o
 
 	strlcpy(reg_base->name, name, sizeof(reg_base->name));
 	reg_base->base = base;
+	reg_base->phys_addr = phys_addr;
 	reg_base->max_offset = max_offset;
 	reg_base->off = 0;
 	reg_base->cnt = DEFAULT_BASE_REG_CNT;

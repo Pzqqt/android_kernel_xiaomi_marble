@@ -400,11 +400,12 @@ void sde_dbg_ctrl(const char *name, ...);
  * @name:	name of base region
  * @base:	base pointer of region
  * @max_offset:	length of region
+ * @phys_addr:	physical address of region
  * @blk_id:	hw block id
  * Returns:	0 or -ERROR
  */
 int sde_dbg_reg_register_base(const char *name, void __iomem *base,
-		size_t max_offset, u64 blk_id);
+		size_t max_offset, unsigned long phys_addr, u64 blk_id);
 
 /**
  * sde_dbg_reg_register_cb - register a hw register callback for later

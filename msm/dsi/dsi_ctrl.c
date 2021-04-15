@@ -336,7 +336,8 @@ static int dsi_ctrl_debugfs_init(struct dsi_ctrl *dsi_ctrl,
 
 	snprintf(dbg_name, DSI_DEBUG_NAME_LEN, "dsi%d_ctrl", dsi_ctrl->cell_index);
 	sde_dbg_reg_register_base(dbg_name, dsi_ctrl->hw.base,
-				msm_iomap_size(dsi_ctrl->pdev, "dsi_ctrl"), SDE_DBG_DSI);
+			msm_iomap_size(dsi_ctrl->pdev, "dsi_ctrl"),
+			msm_get_phys_addr(dsi_ctrl->pdev, "dsi_ctrl"), SDE_DBG_DSI);
 error_remove_dir:
 	debugfs_remove(dir);
 error:
@@ -356,7 +357,9 @@ static int dsi_ctrl_debugfs_init(struct dsi_ctrl *dsi_ctrl,
 
 	snprintf(dbg_name, DSI_DEBUG_NAME_LEN, "dsi%d_ctrl", dsi_ctrl->cell_index);
 	sde_dbg_reg_register_base(dbg_name, dsi_ctrl->hw.base,
-				msm_iomap_size(dsi_ctrl->pdev, "dsi_ctrl"), SDE_DBG_DSI);
+			msm_iomap_size(dsi_ctrl->pdev, "dsi_ctrl"),
+			msm_get_phys_addr(dsi_ctrl->pdev, "dsi_ctrl"), SDE_DBG_DSI);
+
 	return 0;
 }
 static int dsi_ctrl_debugfs_deinit(struct dsi_ctrl *dsi_ctrl)
