@@ -18,6 +18,7 @@ static struct nla_policy rmnet_genl_attr_policy[RMNET_CORE_GENL_ATTR_MAX +
 	[RMNET_CORE_GENL_ATTR_INT]  = { .type = NLA_S32 },
 	[RMNET_CORE_GENL_ATTR_PID_BPS] = NLA_POLICY_EXACT_LEN(sizeof(struct rmnet_core_pid_bps_resp)),
 	[RMNET_CORE_GENL_ATTR_PID_BOOST] = NLA_POLICY_EXACT_LEN(sizeof(struct rmnet_core_pid_boost_req)),
+	[RMNET_CORE_GENL_ATTR_TETHER_INFO] = NLA_POLICY_EXACT_LEN(sizeof(struct rmnet_core_tether_info_req)),
 	[RMNET_CORE_GENL_ATTR_STR]  = { .type = NLA_NUL_STRING, .len =
 				RMNET_CORE_GENL_MAX_STR_LEN },
 };
@@ -35,6 +36,8 @@ static const struct genl_ops rmnet_core_genl_ops[] = {
 			   rmnet_core_genl_pid_bps_req_hdlr),
 	RMNET_CORE_GENL_OP(RMNET_CORE_GENL_CMD_PID_BOOST_REQ,
 			   rmnet_core_genl_pid_boost_req_hdlr),
+	RMNET_CORE_GENL_OP(RMNET_CORE_GENL_CMD_TETHER_INFO_REQ,
+			   rmnet_core_genl_tether_info_req_hdlr),
 };
 
 struct genl_family rmnet_core_genl_family = {
@@ -77,6 +80,10 @@ struct rmnet_pid_node_s {
 	int sched_boost_enable;
 	pid_t pid;
 };
+
+typedef void (*rmnet_perf_tether_cmd_hook_t)(u8 message, u64 val);
+rmnet_perf_tether_cmd_hook_t rmnet_perf_tether_cmd_hook __rcu __read_mostly;
+EXPORT_SYMBOL(rmnet_perf_tether_cmd_hook);
 
 void rmnet_update_pid_and_check_boost(pid_t pid, unsigned int len,
 				      int *boost_enable, u64 *boost_period)
@@ -376,6 +383,51 @@ int rmnet_core_genl_pid_boost_req_hdlr(struct sk_buff *skb_2,
 					    pid_boost_req.list[i].boost_period);
 		}
 	}
+
+	return RMNET_GENL_SUCCESS;
+}
+
+int rmnet_core_genl_tether_info_req_hdlr(struct sk_buff *skb_2,
+				       struct genl_info *info)
+{
+	struct nlattr *na;
+	struct rmnet_core_tether_info_req tether_info_req;
+	int is_req_valid = 0;
+	rmnet_perf_tether_cmd_hook_t rmnet_perf_tether_cmd;
+
+	rm_err("CORE_GNL: %s", __func__);
+
+	if (!info) {
+		rm_err("%s", "CORE_GNL: error - info is null");
+		return RMNET_GENL_FAILURE;
+	}
+
+	na = info->attrs[RMNET_CORE_GENL_ATTR_TETHER_INFO];
+	if (na) {
+		if (nla_memcpy(&tether_info_req, na, sizeof(tether_info_req)) > 0) {
+			is_req_valid = 1;
+		} else {
+			rm_err("CORE_GNL: nla_memcpy failed %d\n",
+			       RMNET_CORE_GENL_ATTR_TETHER_INFO);
+			return RMNET_GENL_FAILURE;
+		}
+	} else {
+		rm_err("CORE_GNL: no info->attrs %d\n",
+		       RMNET_CORE_GENL_ATTR_TETHER_INFO);
+		return RMNET_GENL_FAILURE;
+	}
+
+	if (!tether_info_req.valid) {
+		rm_err("%s", "CORE_GNL: tether info req is invalid");
+		return RMNET_GENL_FAILURE;
+	}
+
+	rmnet_perf_tether_cmd = rcu_dereference(rmnet_perf_tether_cmd_hook);
+	if (rmnet_perf_tether_cmd)
+		rmnet_perf_tether_cmd(1, tether_info_req.tether_filters_en);
+
+	rm_err("CORE_GNL: tether filters %s",
+	       tether_info_req.tether_filters_en ? "enabled" : "disabled");
 
 	return RMNET_GENL_SUCCESS;
 }
