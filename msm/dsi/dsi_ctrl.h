@@ -219,11 +219,10 @@ struct dsi_ctrl_interrupts {
  * @vaddr:               CPU virtual address of cmd buffer.
  * @secure_mode:         Indicates if secure-session is in progress
  * @esd_check_underway:  Indicates if esd status check is in progress
- * @dma_cmd_wait:	Work object waiting on DMA command transfer done.
- * @dma_cmd_workq:	Pointer to the workqueue of DMA command transfer done
- *				wait sequence.
- * @dma_wait_queued:	Indicates if any DMA command transfer wait work
- *				is queued.
+ * @post_cmd_tx_work:	 Work object to clean up post command transfer.
+ * @post_cmd_tx_workq:   Pointer to the workqueue of post command transfer work.
+ * @post_tx_queued:	     Indicates if any DMA command post transfer work
+ *				         is queued.
  * @dma_irq_trig:		 Atomic state to indicate DMA done IRQ
  *				triggered.
  * @debugfs_root:        Root for debugfs entries.
@@ -251,6 +250,8 @@ struct dsi_ctrl_interrupts {
  *				which command transfer is successful.
  * @cmd_success_frame:		unsigned integer that indicates the frame at
  *				which command transfer is successful.
+ * @cmd_engine_refcount: Reference count enforcing single instance of cmd engine
+ * @pending_cmd_flags: Flags associated with command that is currently being txed or pending.
  */
 struct dsi_ctrl {
 	struct platform_device *pdev;
@@ -289,9 +290,9 @@ struct dsi_ctrl {
 	void *vaddr;
 	bool secure_mode;
 	bool esd_check_underway;
-	struct work_struct dma_cmd_wait;
-	struct workqueue_struct *dma_cmd_workq;
-	bool dma_wait_queued;
+	struct work_struct post_cmd_tx_work;
+	struct workqueue_struct *post_cmd_tx_workq;
+	bool post_tx_queued;
 	atomic_t dma_irq_trig;
 
 	/* Debug Information */
@@ -317,6 +318,8 @@ struct dsi_ctrl {
 	u32 cmd_trigger_frame;
 	u32 cmd_success_line;
 	u32 cmd_success_frame;
+	u32 cmd_engine_refcount;
+	u32 pending_cmd_flags;
 };
 
 /**
@@ -579,6 +582,18 @@ int dsi_ctrl_set_roi(struct dsi_ctrl *dsi_ctrl, struct dsi_rect *roi,
 int dsi_ctrl_set_tpg_state(struct dsi_ctrl *dsi_ctrl, bool on);
 
 /**
+ * dsi_ctrl_transfer_prepare() - Set up a command transfer
+ * @dsi_ctrl:             DSI controller handle.
+ * @flags:                Controller flags of the command.
+ *
+ * Command transfer requires command engine to be enabled, along with
+ * clock votes and masking the overflow bits.
+ *
+ * Return: error code.
+ */
+int dsi_ctrl_transfer_prepare(struct dsi_ctrl *dsi_ctrl, u32 flags);
+
+/**
  * dsi_ctrl_cmd_transfer() - Transfer commands on DSI link
  * @dsi_ctrl:             DSI controller handle.
  * @cmd:                  Description of the cmd to be sent.
@@ -591,6 +606,19 @@ int dsi_ctrl_set_tpg_state(struct dsi_ctrl *dsi_ctrl, bool on);
  * Return: error code.
  */
 int dsi_ctrl_cmd_transfer(struct dsi_ctrl *dsi_ctrl, struct dsi_cmd_desc *cmd);
+
+/**
+ * dsi_ctrl_transfer_unprepare() - Clean up post a command transfer
+ * @dsi_ctrl:                 DSI controller handle.
+ * @flags:                    Controller flags of the command
+ *
+ * After the DSI controller has been programmed to trigger a DCS command
+ * the post transfer API is used to check for success and clean up the
+ * resources. Depending on the controller flags, this check is either
+ * scheduled on the same thread or queued.
+ *
+ */
+void dsi_ctrl_transfer_unprepare(struct dsi_ctrl *dsi_ctrl, u32 flags);
 
 /**
  * dsi_ctrl_cmd_tx_trigger() - Trigger a deferred command.
@@ -891,12 +919,5 @@ int dsi_ctrl_wait4dynamic_refresh_done(struct dsi_ctrl *ctrl);
  * Return: error code.
  */
 int dsi_ctrl_get_io_resources(struct msm_io_res *io_res);
-
-/**
- * dsi_ctrl_mask_overflow() -	API to mask/unmask overflow errors.
- * @dsi_ctrl:			DSI controller handle.
- * @enable:			variable to control masking/unmasking.
- */
-void dsi_ctrl_mask_overflow(struct dsi_ctrl *dsi_ctrl, bool enable);
 
 #endif /* _DSI_CTRL_H_ */

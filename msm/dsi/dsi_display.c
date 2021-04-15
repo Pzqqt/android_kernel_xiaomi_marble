@@ -78,9 +78,14 @@ static void dsi_display_mask_ctrl_error_interrupts(struct dsi_display *display,
 
 	display_for_each_ctrl(i, display) {
 		ctrl = &display->ctrl[i];
-		if (!ctrl)
+		if ((!ctrl) || (!ctrl->ctrl))
 			continue;
+
+		mutex_lock(&ctrl->ctrl->ctrl_lock);
+
 		dsi_ctrl_mask_error_status_interrupts(ctrl->ctrl, mask, enable);
+
+		mutex_unlock(&ctrl->ctrl->ctrl_lock);
 	}
 }
 
@@ -245,25 +250,10 @@ int dsi_display_set_backlight(struct drm_connector *connector,
 
 	DSI_DEBUG("bl_scale = %u, bl_scale_sv = %u, bl_lvl = %u\n",
 		bl_scale, bl_scale_sv, (u32)bl_temp);
-	rc = dsi_display_clk_ctrl(dsi_display->dsi_clk_handle,
-			DSI_CORE_CLK, DSI_CLK_ON);
-	if (rc) {
-		DSI_ERR("[%s] failed to enable DSI core clocks, rc=%d\n",
-		       dsi_display->name, rc);
-		goto error;
-	}
 
 	rc = dsi_panel_set_backlight(panel, (u32)bl_temp);
 	if (rc)
 		DSI_ERR("unable to set backlight\n");
-
-	rc = dsi_display_clk_ctrl(dsi_display->dsi_clk_handle,
-			DSI_CORE_CLK, DSI_CLK_OFF);
-	if (rc) {
-		DSI_ERR("[%s] failed to disable DSI core clocks, rc=%d\n",
-		       dsi_display->name, rc);
-		goto error;
-	}
 
 error:
 	mutex_unlock(&panel->panel_lock);
@@ -279,11 +269,6 @@ static int dsi_display_cmd_engine_enable(struct dsi_display *display)
 
 	m_ctrl = &display->ctrl[display->cmd_master_idx];
 	mutex_lock(&m_ctrl->ctrl->ctrl_lock);
-
-	if (display->cmd_engine_refcount > 0) {
-		display->cmd_engine_refcount++;
-		goto done;
-	}
 
 	rc = dsi_ctrl_set_cmd_engine_state(m_ctrl->ctrl,
 				DSI_CTRL_ENGINE_ON, skip_op);
@@ -308,7 +293,6 @@ static int dsi_display_cmd_engine_enable(struct dsi_display *display)
 		}
 	}
 
-	display->cmd_engine_refcount++;
 	goto done;
 error_disable_master:
 	(void)dsi_ctrl_set_cmd_engine_state(m_ctrl->ctrl,
@@ -328,14 +312,6 @@ static int dsi_display_cmd_engine_disable(struct dsi_display *display)
 	m_ctrl = &display->ctrl[display->cmd_master_idx];
 	mutex_lock(&m_ctrl->ctrl->ctrl_lock);
 
-	if (display->cmd_engine_refcount == 0) {
-		DSI_ERR("[%s] Invalid refcount\n", display->name);
-		goto done;
-	} else if (display->cmd_engine_refcount > 1) {
-		display->cmd_engine_refcount--;
-		goto done;
-	}
-
 	display_for_each_ctrl(i, display) {
 		ctrl = &display->ctrl[i];
 		if (!ctrl->ctrl || (ctrl == m_ctrl))
@@ -351,15 +327,10 @@ static int dsi_display_cmd_engine_disable(struct dsi_display *display)
 
 	rc = dsi_ctrl_set_cmd_engine_state(m_ctrl->ctrl,
 				DSI_CTRL_ENGINE_OFF, skip_op);
-	if (rc) {
+	if (rc)
 		DSI_ERR("[%s] disable mcmd engine failed, skip_op:%d rc:%d\n",
 			display->name, skip_op, rc);
-		goto error;
-	}
 
-error:
-	display->cmd_engine_refcount = 0;
-done:
 	mutex_unlock(&m_ctrl->ctrl->ctrl_lock);
 	return rc;
 }
@@ -804,15 +775,22 @@ static int dsi_display_read_status(struct dsi_display_ctrl *ctrl,
 		cmds[i].msg.rx_len = config->status_cmds_rlen[i];
 		cmds[i].ctrl_flags = flags;
 		dsi_display_set_cmd_tx_ctrl_flags(display,&cmds[i]);
-		rc = dsi_ctrl_cmd_transfer(ctrl->ctrl, &cmds[i]);
-		if (rc <= 0) {
-			DSI_ERR("rx cmd transfer failed rc=%d\n", rc);
+		rc = dsi_ctrl_transfer_prepare(ctrl->ctrl, cmds[i].ctrl_flags);
+		if (rc) {
+			DSI_ERR("prepare for rx cmd transfer failed rc=%d\n", rc);
 			return rc;
 		}
 
-		memcpy(config->return_buf + start,
-			config->status_buf, lenp[i]);
-		start += lenp[i];
+		rc = dsi_ctrl_cmd_transfer(ctrl->ctrl, &cmds[i]);
+		if (rc <= 0) {
+			DSI_ERR("rx cmd transfer failed rc=%d\n", rc);
+		} else {
+			memcpy(config->return_buf + start,
+				config->status_buf, lenp[i]);
+			start += lenp[i];
+		}
+
+		dsi_ctrl_transfer_unprepare(ctrl->ctrl, cmds[i].ctrl_flags);
 	}
 
 	return rc;
@@ -859,21 +837,15 @@ static int dsi_display_status_reg_read(struct dsi_display *display)
 		}
 	}
 
-	rc = dsi_display_cmd_engine_enable(display);
-	if (rc) {
-		DSI_ERR("cmd engine enable failed\n");
-		return -EPERM;
-	}
-
 	rc = dsi_display_validate_status(m_ctrl, display);
 	if (rc <= 0) {
 		DSI_ERR("[%s] read status failed on master,rc=%d\n",
 		       display->name, rc);
-		goto exit;
+		goto done;
 	}
 
 	if (!display->panel->sync_broadcast_en)
-		goto exit;
+		goto done;
 
 	display_for_each_ctrl(i, display) {
 		ctrl = &display->ctrl[i];
@@ -884,11 +856,10 @@ static int dsi_display_status_reg_read(struct dsi_display *display)
 		if (rc <= 0) {
 			DSI_ERR("[%s] read status failed on slave,rc=%d\n",
 			       display->name, rc);
-			goto exit;
+			goto done;
 		}
 	}
-exit:
-	dsi_display_cmd_engine_disable(display);
+
 done:
 	return rc;
 }
@@ -948,8 +919,7 @@ int dsi_display_check_status(struct drm_connector *connector, void *display,
 	struct dsi_display *dsi_display = display;
 	struct dsi_panel *panel;
 	u32 status_mode;
-	int rc = 0x1, ret;
-	u32 mask;
+	int rc = 0x1;
 	int te_rechecks = 1;
 
 	if (!dsi_display || !dsi_display->panel)
@@ -986,15 +956,7 @@ int dsi_display_check_status(struct drm_connector *connector, void *display,
 			(panel->panel_mode == DSI_OP_VIDEO_MODE))
 		te_rechecks = 0;
 
-	ret = dsi_display_clk_ctrl(dsi_display->dsi_clk_handle,
-		DSI_ALL_CLKS, DSI_CLK_ON);
-	if (ret)
-		goto release_panel_lock;
-
-	/* Mask error interrupts before attempting ESD read */
-	mask = BIT(DSI_FIFO_OVERFLOW) | BIT(DSI_FIFO_UNDERFLOW);
 	dsi_display_set_ctrl_esd_check_flag(dsi_display, true);
-	dsi_display_mask_ctrl_error_interrupts(dsi_display, mask, true);
 
 	if (status_mode == ESD_MODE_REG_READ) {
 		rc = dsi_display_status_reg_read(dsi_display);
@@ -1010,18 +972,12 @@ int dsi_display_check_status(struct drm_connector *connector, void *display,
 
 	if (rc <= 0 && te_check_override)
 		rc = dsi_display_status_check_te(dsi_display, te_rechecks);
-	/* Unmask error interrupts if check passed*/
 	if (rc > 0) {
 		dsi_display_set_ctrl_esd_check_flag(dsi_display, false);
-		dsi_display_mask_ctrl_error_interrupts(dsi_display, mask,
-							false);
 		if (te_check_override && panel->esd_config.esd_enabled == false)
 			rc = dsi_display_status_check_te(dsi_display,
 					te_rechecks);
 	}
-
-	dsi_display_clk_ctrl(dsi_display->dsi_clk_handle,
-		DSI_ALL_CLKS, DSI_CLK_OFF);
 
 	/* Handle Panel failures during display disable sequence */
 	if (rc <=0)
@@ -1053,7 +1009,7 @@ static int dsi_display_cmd_rx(struct dsi_display *display,
 			      struct dsi_cmd_desc *cmd)
 {
 	struct dsi_display_ctrl *m_ctrl = NULL;
-	u32 mask = 0, flags = 0;
+	u32 flags = 0;
 	int rc = 0;
 
 	if (!display || !display->panel)
@@ -1070,33 +1026,20 @@ static int dsi_display_cmd_rx(struct dsi_display *display,
 		goto release_panel_lock;
 	}
 
-	rc = dsi_display_clk_ctrl(display->dsi_clk_handle,
-		DSI_ALL_CLKS, DSI_CLK_ON);
-	if (rc)
-		goto release_panel_lock;
-
-	mask = BIT(DSI_FIFO_OVERFLOW) | BIT(DSI_FIFO_UNDERFLOW);
-	dsi_display_mask_ctrl_error_interrupts(display, mask, true);
-	rc = dsi_display_cmd_engine_enable(display);
-	if (rc) {
-		DSI_ERR("cmd engine enable failed rc = %d\n", rc);
-		goto error;
-	}
-
 	flags = DSI_CTRL_CMD_READ;
 
 	cmd->ctrl_flags = flags;
 	dsi_display_set_cmd_tx_ctrl_flags(display, cmd);
+	rc = dsi_ctrl_transfer_prepare(m_ctrl->ctrl, cmd->ctrl_flags);
+	if (rc) {
+		DSI_ERR("prepare for rx cmd transfer failed rc = %d\n", rc);
+		goto release_panel_lock;
+	}
 	rc = dsi_ctrl_cmd_transfer(m_ctrl->ctrl, cmd);
 	if (rc <= 0)
 		DSI_ERR("rx cmd transfer failed rc = %d\n", rc);
+	dsi_ctrl_transfer_unprepare(m_ctrl->ctrl, cmd->ctrl_flags);
 
-	dsi_display_cmd_engine_disable(display);
-
-error:
-	dsi_display_mask_ctrl_error_interrupts(display, mask, false);
-	dsi_display_clk_ctrl(display->dsi_clk_handle,
-		DSI_ALL_CLKS, DSI_CLK_OFF);
 release_panel_lock:
 	dsi_panel_release_panel_lock(display->panel);
 	return rc;
@@ -3016,6 +2959,20 @@ static int dsi_display_ctrl_host_disable(struct dsi_display *display)
 	struct dsi_display_ctrl *m_ctrl, *ctrl;
 	bool skip_op = is_skip_op_required(display);
 
+	/*
+	 * This is a defensive check. In reality as this is called after panel OFF commands, which
+	 * can never be ASYNC, the controller post_tx_queued flag will never be set when this API
+	 * is called.
+	 */
+	display_for_each_ctrl(i, display) {
+		ctrl = &display->ctrl[i];
+		if (!ctrl->ctrl || !(ctrl->ctrl->post_tx_queued))
+			continue;
+		flush_workqueue(display->post_cmd_tx_workq);
+		cancel_work_sync(&ctrl->ctrl->post_cmd_tx_work);
+		ctrl->ctrl->post_tx_queued = false;
+	}
+
 	m_ctrl = &display->ctrl[display->cmd_master_idx];
 	/*
 	 * For platforms where ULPS is controlled by DSI controller block,
@@ -3209,35 +3166,34 @@ static int dsi_display_wake_up(struct dsi_display *display)
 	return 0;
 }
 
-static void dsi_display_mask_overflow(struct dsi_display *display, u32 flags,
-						bool enable)
-{
-	struct dsi_display_ctrl *ctrl;
-	int i;
-
-	if (!(flags & DSI_CTRL_CMD_LAST_COMMAND))
-		return;
-
-	display_for_each_ctrl(i, display) {
-		ctrl = &display->ctrl[i];
-		if (!ctrl)
-			continue;
-		dsi_ctrl_mask_overflow(ctrl->ctrl, enable);
-	}
-}
-
 static int dsi_display_broadcast_cmd(struct dsi_display *display, struct dsi_cmd_desc *cmd)
 {
 	int rc = 0;
 	struct dsi_display_ctrl *ctrl, *m_ctrl;
 	int i;
+	u32 flags = 0;
 
 	/*
 	 * 1. Setup commands in FIFO
 	 * 2. Trigger commands
 	 */
 	m_ctrl = &display->ctrl[display->cmd_master_idx];
-	dsi_display_mask_overflow(display, cmd->ctrl_flags, true);
+
+	display_for_each_ctrl(i, display) {
+		ctrl = &display->ctrl[i];
+		flags = cmd->ctrl_flags;
+		if (ctrl == m_ctrl)
+			flags |= DSI_CTRL_CMD_BROADCAST_MASTER;
+		rc = dsi_ctrl_transfer_prepare(ctrl->ctrl, flags);
+		if (rc) {
+			DSI_ERR("[%s] prepare for cmd transfer failed,rc=%d\n",
+				   display->name, rc);
+			if (ctrl != m_ctrl)
+				dsi_ctrl_transfer_unprepare(m_ctrl->ctrl, flags |
+						DSI_CTRL_CMD_BROADCAST_MASTER);
+			return rc;
+		}
+	}
 
 	cmd->ctrl_flags |= DSI_CTRL_CMD_BROADCAST_MASTER;
 	rc = dsi_ctrl_cmd_transfer(m_ctrl->ctrl, cmd);
@@ -3246,8 +3202,8 @@ static int dsi_display_broadcast_cmd(struct dsi_display *display, struct dsi_cmd
 		       display->name, rc);
 		goto error;
 	}
-	cmd->ctrl_flags &= ~DSI_CTRL_CMD_BROADCAST_MASTER;
 
+	cmd->ctrl_flags &= ~DSI_CTRL_CMD_BROADCAST_MASTER;
 	display_for_each_ctrl(i, display) {
 		ctrl = &display->ctrl[i];
 		if (ctrl == m_ctrl)
@@ -3276,7 +3232,14 @@ static int dsi_display_broadcast_cmd(struct dsi_display *display, struct dsi_cmd
 	}
 
 error:
-	dsi_display_mask_overflow(display, cmd->ctrl_flags, false);
+	display_for_each_ctrl(i, display) {
+		ctrl = &display->ctrl[i];
+		flags = cmd->ctrl_flags;
+		if (ctrl == m_ctrl)
+			flags |= DSI_CTRL_CMD_BROADCAST_MASTER;
+		dsi_ctrl_transfer_unprepare(ctrl->ctrl, flags);
+	}
+
 	return rc;
 }
 
@@ -3337,7 +3300,7 @@ static int dsi_host_detach(struct mipi_dsi_host *host,
 int dsi_host_transfer_sub(struct mipi_dsi_host *host, struct dsi_cmd_desc *cmd)
 {
 	struct dsi_display *display;
-	int rc = 0, ret = 0;
+	int rc = 0;
 
 	if (!host || !cmd) {
 		DSI_ERR("Invalid params\n");
@@ -3352,33 +3315,17 @@ int dsi_host_transfer_sub(struct mipi_dsi_host *host, struct dsi_cmd_desc *cmd)
 		return 0;
 	}
 
-	rc = dsi_display_clk_ctrl(display->dsi_clk_handle,
-			DSI_ALL_CLKS, DSI_CLK_ON);
-	if (rc) {
-		DSI_ERR("[%s] failed to enable all DSI clocks, rc=%d\n",
-		       display->name, rc);
-		goto error;
-	}
-
 	rc = dsi_display_wake_up(display);
 	if (rc) {
-		DSI_ERR("[%s] failed to wake up display, rc=%d\n",
-		       display->name, rc);
-		goto error_disable_clks;
-	}
-
-	rc = dsi_display_cmd_engine_enable(display);
-	if (rc) {
-		DSI_ERR("[%s] failed to enable cmd engine, rc=%d\n",
-		       display->name, rc);
-		goto error_disable_clks;
+		DSI_ERR("[%s] failed to wake up display, rc=%d\n", display->name, rc);
+		goto error;
 	}
 
 	if (display->tx_cmd_buf == NULL) {
 		rc = dsi_host_alloc_cmd_tx_buffer(display);
 		if (rc) {
 			DSI_ERR("failed to allocate cmd tx buffer memory\n");
-			goto error_disable_cmd_engine;
+			goto error;
 		}
 	}
 
@@ -3388,32 +3335,24 @@ int dsi_host_transfer_sub(struct mipi_dsi_host *host, struct dsi_cmd_desc *cmd)
 		rc = dsi_display_broadcast_cmd(display, cmd);
 		if (rc) {
 			DSI_ERR("[%s] cmd broadcast failed, rc=%d\n", display->name, rc);
-			goto error_disable_cmd_engine;
+			goto error;
 		}
 	} else {
 		int idx = cmd->ctrl;
 
-		rc = dsi_ctrl_cmd_transfer(display->ctrl[idx].ctrl, cmd);
+		rc = dsi_ctrl_transfer_prepare(display->ctrl[idx].ctrl, cmd->ctrl_flags);
 		if (rc) {
-			DSI_ERR("[%s] cmd transfer failed, rc=%d\n",
-			       display->name, rc);
-			goto error_disable_cmd_engine;
+			DSI_ERR("failed to prepare for command transfer: %d\n", rc);
+			goto error;
 		}
+
+		rc = dsi_ctrl_cmd_transfer(display->ctrl[idx].ctrl, cmd);
+		if (rc)
+			DSI_ERR("[%s] cmd transfer failed, rc=%d\n", display->name, rc);
+
+		dsi_ctrl_transfer_unprepare(display->ctrl[idx].ctrl, cmd->ctrl_flags);
 	}
 
-error_disable_cmd_engine:
-	ret = dsi_display_cmd_engine_disable(display);
-	if (ret) {
-		DSI_ERR("[%s]failed to disable DSI cmd engine, rc=%d\n",
-				display->name, ret);
-	}
-error_disable_clks:
-	ret = dsi_display_clk_ctrl(display->dsi_clk_handle,
-			DSI_ALL_CLKS, DSI_CLK_OFF);
-	if (ret) {
-		DSI_ERR("[%s] failed to disable all DSI clocks, rc=%d\n",
-		       display->name, ret);
-	}
 error:
 	return rc;
 }
@@ -3623,22 +3562,6 @@ int dsi_pre_clkoff_cb(void *priv,
 	struct dsi_display *display = priv;
 	struct dsi_display_ctrl *ctrl;
 
-
-	/*
-	 * If Idle Power Collapse occurs immediately after a CMD
-	 * transfer with an asynchronous wait for DMA done, ensure
-	 * that the work queued is scheduled and completed before turning
-	 * off the clocks and disabling interrupts to validate the command
-	 * transfer.
-	 */
-	display_for_each_ctrl(i, display) {
-		ctrl = &display->ctrl[i];
-		if (!ctrl->ctrl || !ctrl->ctrl->dma_wait_queued)
-			continue;
-		flush_workqueue(display->dma_cmd_workq);
-		cancel_work_sync(&ctrl->ctrl->dma_cmd_wait);
-		ctrl->ctrl->dma_wait_queued = false;
-	}
 	if ((clk & DSI_LINK_CLK) && (new_state == DSI_CLK_OFF) &&
 		(l_type & DSI_LINK_LP_CLK)) {
 		/*
@@ -5588,7 +5511,7 @@ static int dsi_display_bind(struct device *dev,
 			goto error_ctrl_deinit;
 		}
 
-		display_ctrl->ctrl->dma_cmd_workq = display->dma_cmd_workq;
+		display_ctrl->ctrl->post_cmd_tx_workq = display->post_cmd_tx_workq;
 		memcpy(&info.c_clks[i],
 				(&display_ctrl->ctrl->clk_info.core_clks),
 				sizeof(struct dsi_core_clk_info));
@@ -5765,7 +5688,7 @@ static void dsi_display_unbind(struct device *dev,
 			DSI_ERR("[%s] failed to deinit phy%d driver, rc=%d\n",
 			       display->name, i, rc);
 
-		display->ctrl->ctrl->dma_cmd_workq = NULL;
+		display->ctrl->ctrl->post_cmd_tx_workq = NULL;
 		rc = dsi_ctrl_drv_deinit(display_ctrl->ctrl);
 		if (rc)
 			DSI_ERR("[%s] failed to deinit ctrl%d driver, rc=%d\n",
@@ -5882,9 +5805,9 @@ int dsi_display_dev_probe(struct platform_device *pdev)
 		goto end;
 	}
 
-	display->dma_cmd_workq = create_singlethread_workqueue(
-			"dsi_dma_cmd_workq");
-	if (!display->dma_cmd_workq)  {
+	display->post_cmd_tx_workq = create_singlethread_workqueue(
+			"dsi_post_cmd_tx_workq");
+	if (!display->post_cmd_tx_workq)  {
 		DSI_ERR("failed to create work queue\n");
 		rc =  -EINVAL;
 		goto end;
@@ -5992,15 +5915,15 @@ int dsi_display_dev_remove(struct platform_device *pdev)
 	/* decrement ref count */
 	of_node_put(display->panel_node);
 
-	if (display->dma_cmd_workq) {
-		flush_workqueue(display->dma_cmd_workq);
-		destroy_workqueue(display->dma_cmd_workq);
-		display->dma_cmd_workq = NULL;
+	if (display->post_cmd_tx_workq) {
+		flush_workqueue(display->post_cmd_tx_workq);
+		destroy_workqueue(display->post_cmd_tx_workq);
+		display->post_cmd_tx_workq = NULL;
 		display_for_each_ctrl(i, display) {
 			ctrl = &display->ctrl[i];
 			if (!ctrl->ctrl)
 				continue;
-			ctrl->ctrl->dma_cmd_workq = NULL;
+			ctrl->ctrl->post_cmd_tx_workq = NULL;
 		}
 	}
 
@@ -8449,44 +8372,15 @@ int dsi_display_pre_disable(struct dsi_display *display)
 		if (display->config.panel_mode == DSI_OP_CMD_MODE)
 			dsi_panel_switch_cmd_mode_out(display->panel);
 
-		if (display->config.panel_mode == DSI_OP_VIDEO_MODE) {
-			/*
-			 * Add unbalanced vote for clock & cmd engine to enable
-			 * async trigger of pre video to cmd mode switch.
-			 */
-			rc = dsi_display_clk_ctrl(display->dsi_clk_handle,
-					DSI_ALL_CLKS, DSI_CLK_ON);
-			if (rc) {
-				DSI_ERR("[%s]failed to enable all clocks,rc=%d",
-						display->name, rc);
-				goto exit;
-			}
-
-			rc = dsi_display_cmd_engine_enable(display);
-			if (rc) {
-				DSI_ERR("[%s]failed to enable cmd engine,rc=%d",
-						display->name, rc);
-				goto error_disable_clks;
-			}
-
+		if (display->config.panel_mode == DSI_OP_VIDEO_MODE)
 			dsi_panel_switch_video_mode_out(display->panel);
-		}
 	} else {
 		rc = dsi_panel_pre_disable(display->panel);
 		if (rc)
 			DSI_ERR("[%s] panel pre-disable failed, rc=%d\n",
 				display->name, rc);
 	}
-	goto exit;
 
-error_disable_clks:
-	rc = dsi_display_clk_ctrl(display->dsi_clk_handle,
-			DSI_ALL_CLKS, DSI_CLK_OFF);
-	if (rc)
-		DSI_ERR("[%s] failed to disable all DSI clocks, rc=%d\n",
-		       display->name, rc);
-
-exit:
 	mutex_unlock(&display->display_lock);
 	return rc;
 }
@@ -8705,8 +8599,7 @@ end:
 
 int dsi_display_unprepare(struct dsi_display *display)
 {
-	int rc = 0, i;
-	struct dsi_display_ctrl *ctrl;
+	int rc = 0;
 
 	if (!display) {
 		DSI_ERR("Invalid params\n");
@@ -8725,23 +8618,6 @@ int dsi_display_unprepare(struct dsi_display *display)
 		if (rc)
 			DSI_ERR("[%s] panel unprepare failed, rc=%d\n",
 			       display->name, rc);
-	}
-
-	/* Remove additional vote added for pre_mode_switch_to_cmd */
-	if (display->poms_pending &&
-			display->config.panel_mode == DSI_OP_VIDEO_MODE) {
-		display_for_each_ctrl(i, display) {
-			ctrl = &display->ctrl[i];
-			if (!ctrl->ctrl || !ctrl->ctrl->dma_wait_queued)
-				continue;
-			flush_workqueue(display->dma_cmd_workq);
-			cancel_work_sync(&ctrl->ctrl->dma_cmd_wait);
-			ctrl->ctrl->dma_wait_queued = false;
-		}
-
-		dsi_display_cmd_engine_disable(display);
-		dsi_display_clk_ctrl(display->dsi_clk_handle,
-				DSI_ALL_CLKS, DSI_CLK_OFF);
 	}
 
 	rc = dsi_display_ctrl_host_disable(display);
