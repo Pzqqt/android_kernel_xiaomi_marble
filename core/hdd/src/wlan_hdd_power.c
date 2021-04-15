@@ -206,20 +206,30 @@ static QDF_STATUS
 hdd_send_igmp_offload_params(struct hdd_adapter *adapter,
 			     bool enable)
 {
-	struct in_device *in_dev = in_dev_get(adapter->dev);
-	struct ip_mc_list *ip_list = in_dev->mc_list;
+	struct wlan_objmgr_vdev *vdev;
+	struct in_device *in_dev = adapter->dev->ip_ptr;
+	struct ip_mc_list *ip_list;
 	struct pmo_igmp_offload_req *igmp_req = NULL;
 	int count = 0;
 	QDF_STATUS status;
 
-	if (!ip_list) {
-		hdd_debug("ip list empty");
+	if (!in_dev) {
+		hdd_err("in_dev is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	ip_list = in_dev->mc_list;
+	if (!ip_list) {
+		hdd_debug("ip list empty");
+		status = QDF_STATUS_E_FAILURE;
+		goto out;
+	}
+
 	igmp_req = qdf_mem_malloc(sizeof(*igmp_req));
-	if (!igmp_req)
-		return QDF_STATUS_E_FAILURE;
+	if (!igmp_req) {
+		status = QDF_STATUS_E_FAILURE;
+		goto out;
+	}
 
 	while (ip_list && ip_list->multiaddr && enable &&
 	       count < MAX_MC_IP_ADDR) {
@@ -233,11 +243,21 @@ hdd_send_igmp_offload_params(struct hdd_adapter *adapter,
 	igmp_req->enable = enable;
 	igmp_req->num_grp_ip_address = count;
 
-	status = ucfg_pmo_enable_igmp_offload(adapter->vdev, igmp_req);
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_POWER_ID);
+	if (!vdev) {
+		hdd_err("vdev is NULL");
+		qdf_mem_free(igmp_req);
+		status = QDF_STATUS_E_FAILURE;
+		goto out;
+	}
+
+	status = ucfg_pmo_enable_igmp_offload(vdev, igmp_req);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_info("Failed to enable igmp offload");
 
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 	qdf_mem_free(igmp_req);
+out:
 	return status;
 }
 
