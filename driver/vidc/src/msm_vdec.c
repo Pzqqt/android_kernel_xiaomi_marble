@@ -1765,7 +1765,7 @@ static int msm_vdec_qbuf_batch(struct msm_vidc_inst *inst,
 		i_vpr_e(inst, "%s: qbuf not allowed\n", __func__);
 		return -EINVAL;
 	} else if (allow == MSM_VIDC_DEFER) {
-		print_vidc_buffer(VIDC_LOW, "high", "qbuf deferred", inst, buf);
+		print_vidc_buffer(VIDC_LOW, "low ", "qbuf deferred", inst, buf);
 		return 0;
 	}
 
@@ -1773,7 +1773,7 @@ static int msm_vdec_qbuf_batch(struct msm_vidc_inst *inst,
 	if (inst->power.buffer_counter > SKIP_BATCH_WINDOW) {
 		count = msm_vidc_num_buffers(inst, MSM_VIDC_BUF_OUTPUT, MSM_VIDC_ATTR_DEFERRED);
 		if (count < inst->decode_batch.size) {
-			print_vidc_buffer(VIDC_LOW, "high", "batch-qbuf deferred", inst, buf);
+			print_vidc_buffer(VIDC_LOW, "low ", "batch-qbuf deferred", inst, buf);
 			schedule_batch_work(inst);
 			return 0;
 		}

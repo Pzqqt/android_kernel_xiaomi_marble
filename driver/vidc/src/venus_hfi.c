@@ -2943,7 +2943,7 @@ int venus_hfi_session_open(struct msm_vidc_inst *inst)
 	int rc = 0;
 	struct msm_vidc_core *core;
 
-	if (!inst || !inst->core) {
+	if (!inst || !inst->core || !inst->packet) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
@@ -2985,7 +2985,7 @@ int venus_hfi_session_set_codec(struct msm_vidc_inst *inst)
 	struct msm_vidc_core *core;
 	u32 codec;
 
-	if (!inst || !inst->core) {
+	if (!inst || !inst->core || !inst->packet) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
@@ -3030,7 +3030,7 @@ int venus_hfi_session_property(struct msm_vidc_inst *inst,
 	int rc = 0;
 	struct msm_vidc_core *core;
 
-	if (!inst || !inst->core) {
+	if (!inst || !inst->core || !inst->packet) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
@@ -3103,7 +3103,7 @@ int venus_hfi_start(struct msm_vidc_inst *inst, enum msm_vidc_port_type port)
 	int rc = 0;
 	struct msm_vidc_core* core;
 
-	if (!inst || !inst->core) {
+	if (!inst || !inst->core || !inst->packet) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
@@ -3146,7 +3146,7 @@ int venus_hfi_stop(struct msm_vidc_inst *inst, enum msm_vidc_port_type port)
 	int rc = 0;
 	struct msm_vidc_core* core;
 
-	if (!inst || !inst->core) {
+	if (!inst || !inst->core || !inst->packet) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
@@ -3192,7 +3192,7 @@ int venus_hfi_session_command(struct msm_vidc_inst *inst,
 	int rc = 0;
 	struct msm_vidc_core *core;
 
-	if (!inst || !inst->core) {
+	if (!inst || !inst->core || !inst->packet) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
@@ -3242,7 +3242,7 @@ int venus_hfi_queue_super_buffer(struct msm_vidc_inst *inst,
 	u32 frame_size, meta_size, batch_size, cnt = 0;
 	u64 ts_delta_us;
 
-	if (!inst || !inst->core || !inst->capabilities) {
+	if (!inst || !inst->core || !inst->capabilities || !inst->packet) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
@@ -3357,7 +3357,7 @@ int venus_hfi_queue_buffer(struct msm_vidc_inst *inst,
 	struct msm_vidc_core *core;
 	struct hfi_buffer hfi_buffer;
 
-	if (!inst || !inst->core) {
+	if (!inst || !inst->core || !inst->packet) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
@@ -3423,7 +3423,7 @@ int venus_hfi_release_buffer(struct msm_vidc_inst *inst,
 	struct msm_vidc_core *core;
 	struct hfi_buffer hfi_buffer;
 
-	if (!inst || !inst->core || !buffer) {
+	if (!inst || !inst->core || !inst->packet || !buffer) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
