@@ -478,10 +478,9 @@ static void sde_hw_intf_bind_pingpong_blk(
 
 	c = &intf->hw;
 
-	mux_cfg = SDE_REG_READ(c, INTF_MUX);
-	mux_cfg &= ~0xf000f;
-
 	if (enable) {
+		mux_cfg = SDE_REG_READ(c, INTF_MUX);
+		mux_cfg &= ~0x0f;
 		mux_cfg |= (pp - PINGPONG_0) & 0x7;
 		/* Splitlink case, pp0->sublink0, pp1->sublink1 */
 		if (intf->cfg.split_link_en)
