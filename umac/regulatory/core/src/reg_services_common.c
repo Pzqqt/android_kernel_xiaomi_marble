@@ -3654,7 +3654,7 @@ reg_fill_channel_list_for_320(struct wlan_objmgr_pdev *pdev,
 	 * Try finding a channel in a lower mode.
 	 */
 	if (max_reg_bw <= BW_160MHZ) {
-		*in_ch_width =  get_next_lower_bw[*in_ch_width];
+		*in_ch_width =  get_next_lower_bandwidth(*in_ch_width);
 		*update_bw = true;
 		return;
 	}
@@ -3673,7 +3673,7 @@ reg_fill_channel_list_for_320(struct wlan_objmgr_pdev *pdev,
 			/* Could not find a 320 MHZ bonded channel pair,
 			 * find a channel of lower BW.
 			 */
-			*in_ch_width =  get_next_lower_bw[*in_ch_width];
+			*in_ch_width =  get_next_lower_bandwidth(*in_ch_width);
 			*update_bw = true;
 		}
 		return;
@@ -3708,7 +3708,7 @@ reg_fill_channel_list_for_320(struct wlan_objmgr_pdev *pdev,
 	 * lower the bandwidth to find a channel.
 	 */
 	if (!chan_list->num_ch_params) {
-		*in_ch_width =  get_next_lower_bw[*in_ch_width];
+		*in_ch_width =  get_next_lower_bandwidth(*in_ch_width);
 		*update_bw = true;
 	}
 }
