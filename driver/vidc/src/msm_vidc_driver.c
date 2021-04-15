@@ -1009,9 +1009,9 @@ int msm_vidc_change_core_state(struct msm_vidc_core *core,
 		return -EINVAL;
 	}
 
-	d_vpr_h("%s: core state changed from %s to %s\n",
-		func, core_state_name(core->state),
-		core_state_name(request_state));
+	d_vpr_h("%s: core state changed to %s from %s\n",
+		func, core_state_name(request_state),
+		core_state_name(core->state));
 	core->state = request_state;
 	return 0;
 }
@@ -1036,9 +1036,15 @@ int msm_vidc_change_inst_state(struct msm_vidc_inst *inst,
 		return 0;
 	}
 
-	i_vpr_h(inst, "%s: state changed from %s to %s\n",
-		   func, state_name(inst->state), state_name(request_state));
+	if (request_state == MSM_VIDC_ERROR)
+		i_vpr_e(inst, "%s: state changed to %s from %s\n",
+		   func, state_name(request_state), state_name(inst->state));
+	else
+		i_vpr_h(inst, "%s: state changed to %s from %s\n",
+		   func, state_name(request_state), state_name(inst->state));
+
 	inst->state = request_state;
+
 	return 0;
 }
 
@@ -1864,7 +1870,7 @@ int msm_vidc_process_readonly_buffers(struct msm_vidc_inst *inst,
 	list_for_each_entry_safe(ro_buf, dummy, &ro_buffers->list, list) {
 		if (ro_buf->device_addr == buf->device_addr) {
 			buf->attr |= MSM_VIDC_ATTR_READ_ONLY;
-			print_vidc_buffer(VIDC_LOW, "low", "ro buf removed", inst, ro_buf);
+			print_vidc_buffer(VIDC_LOW, "low ", "ro buf removed", inst, ro_buf);
 			list_del(&ro_buf->list);
 			msm_vidc_put_vidc_buffer(inst, ro_buf);
 			break;
@@ -2609,7 +2615,7 @@ int msm_vidc_queue_buffer_single(struct msm_vidc_inst *inst, struct vb2_buffer *
 		i_vpr_e(inst, "%s: qbuf not allowed\n", __func__);
 		return -EINVAL;
 	} else if (allow == MSM_VIDC_DEFER) {
-		print_vidc_buffer(VIDC_LOW, "high", "qbuf deferred", inst, buf);
+		print_vidc_buffer(VIDC_LOW, "low ", "qbuf deferred", inst, buf);
 		return 0;
 	}
 
@@ -3389,6 +3395,11 @@ int msm_vidc_session_close(struct msm_vidc_inst *inst)
 	if (rc)
 		return rc;
 
+	/* we are not supposed to send any more commands after close */
+	i_vpr_h(inst, "%s: free session packet data\n", __func__);
+	kfree(inst->packet);
+	inst->packet = NULL;
+
 	core = inst->core;
 	i_vpr_h(inst, "%s: wait on close for time: %d ms\n",
 		__func__, core->capabilities[HW_RESPONSE_TIMEOUT].value);
@@ -3408,10 +3419,6 @@ int msm_vidc_session_close(struct msm_vidc_inst *inst)
 	mutex_lock(&inst->lock);
 
 	msm_vidc_remove_session(inst);
-
-	i_vpr_h(inst, "%s: free session packet data\n", __func__);
-	kfree(inst->packet);
-	inst->packet = NULL;
 
 	return rc;
 }
@@ -4175,13 +4182,13 @@ void msm_vidc_destroy_buffers(struct msm_vidc_inst *inst)
 	}
 
 	list_for_each_entry_safe(buf, dummy, &inst->buffers.read_only.list, list) {
-		print_vidc_buffer(VIDC_ERR, "err", "destroying ro buffer", inst, buf);
+		print_vidc_buffer(VIDC_ERR, "err ", "destroying ro buffer", inst, buf);
 		list_del(&buf->list);
 		msm_vidc_put_vidc_buffer(inst, buf);
 	}
 
 	list_for_each_entry_safe(buf, dummy, &inst->buffers.release.list, list) {
-		print_vidc_buffer(VIDC_ERR, "err", "destroying release buffer", inst, buf);
+		print_vidc_buffer(VIDC_ERR, "err ", "destroying release buffer", inst, buf);
 		list_del(&buf->list);
 		msm_vidc_put_vidc_buffer(inst, buf);
 	}

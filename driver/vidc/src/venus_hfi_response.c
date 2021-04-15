@@ -523,7 +523,7 @@ static int handle_read_only_buffer(struct msm_vidc_inst *inst,
 		memcpy(ro_buf, buf, sizeof(struct msm_vidc_buffer));
 		INIT_LIST_HEAD(&ro_buf->list);
 		list_add_tail(&ro_buf->list, &ro_buffers->list);
-		print_vidc_buffer(VIDC_LOW, "low", "ro buf added", inst, ro_buf);
+		print_vidc_buffer(VIDC_LOW, "low ", "ro buf added", inst, ro_buf);
 	}
 	ro_buf->attr |= MSM_VIDC_ATTR_READ_ONLY;
 
@@ -564,7 +564,7 @@ static int handle_non_read_only_buffer(struct msm_vidc_inst *inst,
 	 *          if not present, do not error out
 	 */
 	if (found) {
-		print_vidc_buffer(VIDC_LOW, "low", "ro buf deleted", inst, ro_buf);
+		print_vidc_buffer(VIDC_LOW, "low ", "ro buf deleted", inst, ro_buf);
 		list_del(&ro_buf->list);
 		msm_vidc_put_vidc_buffer(inst, ro_buf);
 	}
@@ -729,7 +729,7 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 			(buffer->flags & HFI_BUF_FW_FLAG_READONLY)) {
 			buffer->flags &= ~HFI_BUF_FW_FLAG_READONLY;
 			print_vidc_buffer(
-				VIDC_HIGH, "err", "RO flag in linear colorformat", inst, buf);
+				VIDC_HIGH, "high", "RO flag in linear colorformat", inst, buf);
 		}
 
 		if (buffer->flags & HFI_BUF_FW_FLAG_READONLY) {

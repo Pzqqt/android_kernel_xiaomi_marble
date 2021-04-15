@@ -657,7 +657,7 @@ int hfi_packet_session_command(struct msm_vidc_inst *inst,
 	int rc = 0;
 	struct msm_vidc_core *core;
 
-	if (!inst || !inst->core) {
+	if (!inst || !inst->core || !inst->packet) {
 		d_vpr_e("%s: Invalid params\n", __func__);
 		return -EINVAL;
 	}
