@@ -381,7 +381,7 @@ int sde_encoder_helper_wait_for_irq(struct sde_encoder_phys *phys_enc,
 	u32 irq_status;
 	int ret, i;
 
-	if (!phys_enc || !wait_info || intr_idx >= INTR_IDX_MAX) {
+	if (!phys_enc || !phys_enc->hw_pp || !wait_info || intr_idx >= INTR_IDX_MAX) {
 		SDE_ERROR("invalid params\n");
 		return -EINVAL;
 	}
@@ -2529,10 +2529,10 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 		struct sde_encoder_phys *phys = sde_enc->phys_encs[i];
 
 		if (phys) {
-			if (!sde_enc->hw_pp[i * num_pp_per_intf] &&
+			if (!sde_enc->hw_pp[i * num_pp_per_intf] ||
 				sde_enc->topology.num_intf) {
-				SDE_ERROR_ENC(sde_enc, "invalid hw_pp[%d]\n",
-						i * num_pp_per_intf);
+				SDE_ERROR_ENC(sde_enc, "invalid phys %d pp_per_intf %d num_intf %d",
+						i, num_pp_per_intf, sde_enc->topology.num_intf);
 				return;
 			}
 			phys->hw_pp = sde_enc->hw_pp[i * num_pp_per_intf];
