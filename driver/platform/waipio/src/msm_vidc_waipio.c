@@ -1464,7 +1464,7 @@ static int msm_vidc_init_data(struct msm_vidc_core *core)
 	return rc;
 }
 
-int msm_vidc_init_platform_waipio(struct msm_vidc_core *core)
+int msm_vidc_init_platform_waipio(struct msm_vidc_core *core, struct device *dev)
 {
 	int rc = 0;
 
@@ -1475,7 +1475,7 @@ int msm_vidc_init_platform_waipio(struct msm_vidc_core *core)
 	return 0;
 }
 
-int msm_vidc_deinit_platform_waipio(struct msm_vidc_core *core)
+int msm_vidc_deinit_platform_waipio(struct msm_vidc_core *core, struct device *dev)
 {
 	/* do nothing */
 	return 0;

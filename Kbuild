@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
-include $(VIDEO_ROOT)/config/waipio_video.conf
-
 KBUILD_CPPFLAGS += -DCONFIG_MSM_MMRM=1
 
+ifeq ($(CONFIG_ARCH_WAIPIO), y)
+include $(VIDEO_ROOT)/config/waipio_video.conf
 LINUXINCLUDE    += -include $(VIDEO_ROOT)/config/waipio_video.h
+endif
 
 LINUXINCLUDE    += -I$(VIDEO_ROOT)/driver/vidc/inc \
                    -I$(VIDEO_ROOT)/include/uapi/vidc \
@@ -15,6 +16,16 @@ USERINCLUDE     += -I$(VIDEO_ROOT)/include/uapi/vidc/media \
                    -I$(VIDEO_ROOT)/include/uapi/vidc
 
 obj-m += msm_video.o
+
+ifeq ($(CONFIG_MSM_VIDC_WAIPIO), y)
+msm_video-objs += driver/platform/waipio/src/msm_vidc_waipio.o
+endif
+
+ifeq ($(CONFIG_MSM_VIDC_IRIS2), y)
+msm_video-objs += driver/variant/iris2/src/msm_vidc_buffer_iris2.o \
+                  driver/variant/iris2/src/msm_vidc_power_iris2.o \
+                  driver/variant/iris2/src/msm_vidc_iris2.o
+endif
 
 msm_video-objs += driver/vidc/src/msm_vidc_v4l2.o \
                   driver/vidc/src/msm_vidc_vb2.o \
@@ -32,8 +43,4 @@ msm_video-objs += driver/vidc/src/msm_vidc_v4l2.o \
                   driver/vidc/src/msm_vidc_memory.o \
                   driver/vidc/src/venus_hfi.o \
                   driver/vidc/src/hfi_packet.o \
-                  driver/vidc/src/venus_hfi_response.o \
-                  driver/variant/iris2/src/msm_vidc_buffer_iris2.o \
-                  driver/variant/iris2/src/msm_vidc_power_iris2.o \
-                  driver/variant/iris2/src/msm_vidc_iris2.o \
-                  driver/platform/waipio/src/msm_vidc_waipio.o
+                  driver/vidc/src/venus_hfi_response.o
