@@ -4166,7 +4166,9 @@ void msm_vidc_destroy_buffers(struct msm_vidc_inst *inst)
 			continue;
 
 		list_for_each_entry_safe(buf, dummy, &buffers->list, list) {
-			print_vidc_buffer(VIDC_ERR, "err", "destroying ", inst, buf);
+			print_vidc_buffer(VIDC_ERR, "err ", "destroying ", inst, buf);
+			if (!(buf->attr & MSM_VIDC_ATTR_BUFFER_DONE))
+				msm_vidc_vb2_buffer_done(inst, buf);
 			msm_vidc_put_driver_buf(inst, buf);
 		}
 		msm_vidc_unmap_buffers(inst, ext_buf_types[i]);
