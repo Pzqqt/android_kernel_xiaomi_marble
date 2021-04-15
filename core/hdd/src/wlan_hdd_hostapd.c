@@ -2988,6 +2988,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_chan_freq,
 	bool is_p2p_go_session = false;
 	struct wlan_objmgr_vdev *vdev;
 	bool strict;
+	uint32_t sta_cnt = 0;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -3031,6 +3032,21 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_chan_freq,
 			hdd_err("Channel switch not allowed after STA connection with conc_custom_rule1 enabled");
 			return -EBUSY;
 		}
+	}
+
+	sta_cnt = policy_mgr_mode_specific_connection_count(hdd_ctx->psoc,
+							    PM_STA_MODE,
+							    NULL);
+	/*
+	 * For non-dbs HW, don't allow Channel switch on DFS channel if STA is
+	 * not connected.
+	 */
+	if (!sta_cnt && !policy_mgr_is_hw_dbs_capable(hdd_ctx->psoc) &&
+	    (wlan_reg_is_dfs_for_freq(hdd_ctx->pdev, target_chan_freq) ||
+	    (wlan_reg_is_5ghz_ch_freq(target_chan_freq) &&
+	     target_bw == CH_WIDTH_160MHZ))) {
+		hdd_debug("Channel switch not allowed for non-DBS HW on DFS channel %d width %d", target_chan_freq, target_bw);
+		return -EINVAL;
 	}
 
 	/*
