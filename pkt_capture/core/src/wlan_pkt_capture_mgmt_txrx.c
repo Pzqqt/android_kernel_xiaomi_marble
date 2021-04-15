@@ -506,22 +506,24 @@ pkt_capture_mgmt_rx_data_cb(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS pkt_capture_mgmt_rx_ops(struct wlan_objmgr_psoc *psoc,
 				   bool is_register)
 {
-	struct mgmt_txrx_mgmt_frame_cb_info frm_cb_info;
+	struct mgmt_txrx_mgmt_frame_cb_info frm_cb_info[2];
 	QDF_STATUS status;
 	int num_of_entries;
 
-	frm_cb_info.frm_type = MGMT_FRAME_TYPE_ALL;
-	frm_cb_info.mgmt_rx_cb = pkt_capture_mgmt_rx_data_cb;
-	num_of_entries = 1;
+	frm_cb_info[0].frm_type = MGMT_FRAME_TYPE_ALL;
+	frm_cb_info[0].mgmt_rx_cb = pkt_capture_mgmt_rx_data_cb;
+	frm_cb_info[1].frm_type = MGMT_CTRL_FRAME;
+	frm_cb_info[1].mgmt_rx_cb = pkt_capture_mgmt_rx_data_cb;
+	num_of_entries = 2;
 
 	if (is_register)
 		status = wlan_mgmt_txrx_register_rx_cb(
 					psoc, WLAN_UMAC_COMP_PKT_CAPTURE,
-					&frm_cb_info, num_of_entries);
+					frm_cb_info, num_of_entries);
 	else
 		status = wlan_mgmt_txrx_deregister_rx_cb(
 					psoc, WLAN_UMAC_COMP_PKT_CAPTURE,
-					&frm_cb_info, num_of_entries);
+					frm_cb_info, num_of_entries);
 
 	return status;
 }
