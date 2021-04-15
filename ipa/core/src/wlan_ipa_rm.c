@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -105,7 +105,8 @@ void wlan_ipa_init_metering(struct wlan_ipa_priv *ipa_ctx)
 }
 #endif
 
-#ifndef CONFIG_IPA_WDI_UNIFIED_API
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 10, 0)) && \
+	!defined(CONFIG_IPA_WDI_UNIFIED_API)
 /**
  * wlan_ipa_rm_cons_release() - WLAN consumer resource release handler
  *
