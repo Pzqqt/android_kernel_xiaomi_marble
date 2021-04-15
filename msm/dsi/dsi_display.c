@@ -36,7 +36,9 @@
 
 #define SEC_PANEL_NAME_MAX_LEN  256
 
-#define DSI_MODE_MATCH_TIMINGS (1 << 0)
+#define DSI_MODE_MATCH_ACTIVE_TIMINGS (1 << 0)
+#define DSI_MODE_MATCH_PORCH_TIMINGS (1 << 1)
+#define DSI_MODE_MATCH_FULL_TIMINGS (DSI_MODE_MATCH_ACTIVE_TIMINGS | DSI_MODE_MATCH_PORCH_TIMINGS)
 
 u8 dbgfs_tx_cmd_buf[SZ_4K];
 static char dsi_display_primary[MAX_CMDLINE_PARAM_LEN];
@@ -7104,18 +7106,29 @@ int dsi_display_get_avr_step_req_fps(void *display_dsi, u32 mode_fps)
 }
 
 static bool dsi_display_match_timings(const struct dsi_display_mode *mode1,
-		struct dsi_display_mode *mode2)
+		struct dsi_display_mode *mode2, unsigned int match_flags)
 {
-	return mode1->timing.h_active == mode2->timing.h_active &&
-		mode1->timing.h_sync_width == mode2->timing.h_sync_width &&
-		mode1->timing.h_back_porch == mode2->timing.h_back_porch &&
-		mode1->timing.h_front_porch == mode2->timing.h_front_porch &&
-		mode1->timing.h_skew == mode2->timing.h_skew &&
-		mode1->timing.v_active == mode2->timing.v_active &&
-		mode1->timing.v_sync_width == mode2->timing.v_sync_width &&
-		mode1->timing.v_back_porch == mode2->timing.v_back_porch &&
-		mode1->timing.v_front_porch == mode2->timing.v_front_porch &&
-		mode1->timing.refresh_rate == mode2->timing.refresh_rate;
+	bool is_matching = false;
+
+	if (match_flags & DSI_MODE_MATCH_ACTIVE_TIMINGS) {
+		is_matching = mode1->timing.h_active == mode2->timing.h_active &&
+				mode1->timing.v_active == mode2->timing.v_active &&
+				mode1->timing.refresh_rate == mode2->timing.refresh_rate;
+		if (!is_matching)
+			goto end;
+	}
+
+	if (match_flags & DSI_MODE_MATCH_PORCH_TIMINGS)
+		is_matching = mode1->timing.h_back_porch == mode2->timing.h_back_porch &&
+				mode1->timing.h_front_porch == mode2->timing.h_front_porch &&
+				mode1->timing.h_sync_width == mode2->timing.h_sync_width &&
+				mode1->timing.h_skew == mode2->timing.h_skew &&
+				mode1->timing.v_back_porch == mode2->timing.v_back_porch &&
+				mode1->timing.v_front_porch == mode2->timing.v_front_porch &&
+				mode1->timing.v_sync_width == mode2->timing.v_sync_width;
+
+end:
+	return is_matching;
 }
 
 static bool dsi_display_mode_match(const struct dsi_display_mode *mode1,
@@ -7127,7 +7140,8 @@ static bool dsi_display_mode_match(const struct dsi_display_mode *mode1,
 	if (!mode1 || !mode2)
 		return false;
 
-	if (match_flags & DSI_MODE_MATCH_TIMINGS && !dsi_display_match_timings(mode1, mode2))
+	if ((match_flags & DSI_MODE_MATCH_FULL_TIMINGS) &&
+			!dsi_display_match_timings(mode1, mode2, match_flags))
 		return false;
 
 	return true;
@@ -7139,6 +7153,9 @@ int dsi_display_find_mode(struct dsi_display *display,
 {
 	u32 count, i;
 	int rc;
+	struct dsi_display_mode *m;
+	struct dsi_dyn_clk_caps *dyn_clk_caps;
+	unsigned int match_flags = DSI_MODE_MATCH_FULL_TIMINGS;
 
 	if (!display || !out_mode)
 		return -EINVAL;
@@ -7150,18 +7167,26 @@ int dsi_display_find_mode(struct dsi_display *display,
 	mutex_unlock(&display->display_lock);
 
 	if (!display->modes) {
-		struct dsi_display_mode *m;
-
 		rc = dsi_display_get_modes(display, &m);
 		if (rc)
 			return rc;
 	}
 
 	mutex_lock(&display->display_lock);
+	dyn_clk_caps = &(display->panel->dyn_clk_caps);
 	for (i = 0; i < count; i++) {
-		struct dsi_display_mode *m = &display->modes[i];
+		m = &display->modes[i];
 
-		if (dsi_display_mode_match(cmp, m, DSI_MODE_MATCH_TIMINGS)) {
+		/**
+		 * When dynamic bit clock is enabled with contants FPS,
+		 * the adjusted mode porches value may not match the panel
+		 * default mode porches and panel mode lookup will fail.
+		 * In that case we omit porches in mode matching function.
+		 */
+		if (dyn_clk_caps->maintain_const_fps)
+			match_flags = DSI_MODE_MATCH_ACTIVE_TIMINGS;
+
+		if (dsi_display_mode_match(cmp, m, match_flags)) {
 			*out_mode = m;
 			rc = 0;
 			break;
