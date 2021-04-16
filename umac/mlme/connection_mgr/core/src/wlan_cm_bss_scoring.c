@@ -591,16 +591,25 @@ cm_get_pcl_weight_of_channel(uint32_t chan_freq,
 
 /**
  * cm_calculate_pcl_score() - Calculate PCL score based on PCL weightage
+ * @psoc: psoc ptr
  * @pcl_chan_weight: pcl weight of BSS channel
  * @pcl_weightage: PCL _weightage out of total weightage
  *
  * Return: pcl score
  */
-static int32_t cm_calculate_pcl_score(int pcl_chan_weight,
+static int32_t cm_calculate_pcl_score(struct wlan_objmgr_psoc *psoc,
+				      int pcl_chan_weight,
 				      uint8_t pcl_weightage)
 {
 	int32_t pcl_score = 0;
 	int32_t temp_pcl_chan_weight = 0;
+
+	/*
+	 * Don’t consider pcl weightage for STA connection,
+	 * if primary interface is configured.
+	 */
+	if (!policy_mgr_is_pcl_weightage_required(psoc))
+		return 0;
 
 	if (pcl_chan_weight) {
 		temp_pcl_chan_weight =
@@ -1306,7 +1315,8 @@ cm_get_pcl_weight_of_channel(uint32_t chan_freq,
 	return false;
 }
 
-static int32_t cm_calculate_pcl_score(int pcl_chan_weight,
+static int32_t cm_calculate_pcl_score(struct wlan_objmgr_psoc *psoc,
+				      int pcl_chan_weight,
 				      uint8_t pcl_weightage)
 {
 	return 0;
@@ -1451,7 +1461,7 @@ static int cm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 					     weight_config->rssi_weightage);
 	score += rssi_score;
 
-	pcl_score = cm_calculate_pcl_score(pcl_chan_weight,
+	pcl_score = cm_calculate_pcl_score(psoc, pcl_chan_weight,
 					   weight_config->pcl_weightage);
 	score += pcl_score;
 
