@@ -2159,6 +2159,7 @@ int msm_vidc_map_driver_buf(struct msm_vidc_inst *inst,
 	int rc = 0;
 	struct msm_vidc_mappings *mappings;
 	struct msm_vidc_map *map;
+	struct msm_vidc_buffer *rel_buf;
 	bool found = false;
 
 	if (!inst || !buf) {
@@ -2204,6 +2205,16 @@ int msm_vidc_map_driver_buf(struct msm_vidc_inst *inst,
 			}
 		}
 		list_add_tail(&map->list, &mappings->list);
+	} else {
+		/* increment map ref_count, if buf already present in release list */
+		list_for_each_entry(rel_buf, &inst->buffers.release.list, list) {
+			if (rel_buf->device_addr == buf->device_addr) {
+				rc = msm_vidc_memory_map(inst->core, map);
+				if (rc)
+					return rc;
+				break;
+			}
+		}
 	}
 	rc = msm_vidc_memory_map(inst->core, map);
 	if (rc)
