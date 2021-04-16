@@ -1629,6 +1629,38 @@ int msm_vidc_adjust_session_priority(void *instance, struct v4l2_ctrl *ctrl)
 	return rc;
 }
 
+int msm_vidc_adjust_roi_info(void *instance, struct v4l2_ctrl *ctrl)
+{
+	struct msm_vidc_inst_capability *capability;
+	s32 adjusted_value;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+	s32 rc_type = -1, pix_fmt = -1;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	adjusted_value = ctrl ? ctrl->val : capability->cap[META_ROI_INFO].value;
+
+	if (msm_vidc_get_parent_value(inst, META_ROI_INFO, BITRATE_MODE,
+		&rc_type, __func__))
+		return -EINVAL;
+
+	if (msm_vidc_get_parent_value(inst, META_ROI_INFO, PIX_FMTS,
+		&pix_fmt, __func__))
+		return -EINVAL;
+
+	if (rc_type != HFI_RC_VBR_CFR || !is_8bit_colorformat(pix_fmt))
+		adjusted_value = 0;
+
+	msm_vidc_update_cap_value(inst, META_ROI_INFO,
+		adjusted_value, __func__);
+
+	return 0;
+}
+
 /*
  * Loop over instance capabilities with CAP_FLAG_ROOT
  * and call adjust function, where

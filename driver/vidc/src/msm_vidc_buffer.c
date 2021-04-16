@@ -340,9 +340,47 @@ skip_calc:
 	return ALIGN(frame_size, SZ_4K);
 }
 
+static inline u32 ROI_METADATA_SIZE(
+	u32 width, u32 height, u32 lcu_size) {
+	u32 lcu_width = 0;
+	u32 lcu_height = 0;
+	u32 n_shift = 0;
+
+	while (lcu_size && !(lcu_size & 0x1)) {
+		n_shift++;
+		lcu_size = lcu_size >> 1;
+	}
+	lcu_width = (width + (lcu_size - 1)) >> n_shift;
+	lcu_height = (height + (lcu_size - 1)) >> n_shift;
+
+	return (((lcu_width + 7) >> 3) << 3) * lcu_height * 2;
+}
+
 u32 msm_vidc_encoder_input_meta_size(struct msm_vidc_inst *inst)
 {
-	return ALIGN(1 * 1024 * 1024, SZ_4K);
+	u32 size = 0;
+	u32 lcu_size = 0;
+	struct v4l2_format *f;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return 0;
+	}
+
+	size = ALIGN(16 * 1024, SZ_4K);
+
+	if (inst->capabilities->cap[META_ROI_INFO].value) {
+		lcu_size = 16;
+
+		f = &inst->fmts[OUTPUT_PORT];
+		if (f->fmt.pix_mp.pixelformat == V4L2_PIX_FMT_HEVC)
+			lcu_size = 32;
+
+		f = &inst->fmts[INPUT_PORT];
+		size += ROI_METADATA_SIZE(f->fmt.pix_mp.width,
+			f->fmt.pix_mp.height, lcu_size);
+	}
+	return size;
 }
 
 u32 msm_vidc_encoder_output_meta_size(struct msm_vidc_inst *inst)
