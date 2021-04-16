@@ -2619,7 +2619,7 @@ static QDF_STATUS util_scan_parse_mbssid(struct wlan_objmgr_pdev *pdev,
 						     sizeof(mbssid_info));
 				}
 				qdf_mem_free(new_frame);
-				scm_err("failed to generate a scan entry");
+				scm_err_rl("failed to generate a scan entry");
 				break;
 			}
 			/* scan entry makes its own copy so free the frame*/
