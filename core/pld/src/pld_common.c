@@ -622,6 +622,16 @@ int pld_prevent_l1(struct device *dev)
 	case PLD_BUS_TYPE_PCIE:
 		ret = pld_pcie_prevent_l1(dev);
 		break;
+	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
+	case PLD_BUS_TYPE_SNOC_FW_SIM:
+	case PLD_BUS_TYPE_SNOC:
+	case PLD_BUS_TYPE_SDIO:
+	case PLD_BUS_TYPE_USB:
+		break;
+	case PLD_BUS_TYPE_IPCI:
+		ret = pld_ipci_prevent_l1(dev);
+		break;
 	default:
 		ret = -EINVAL;
 		pr_err("Invalid device type\n");
@@ -645,10 +655,51 @@ void pld_allow_l1(struct device *dev)
 	case PLD_BUS_TYPE_PCIE:
 		pld_pcie_allow_l1(dev);
 		break;
+	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
+	case PLD_BUS_TYPE_SNOC_FW_SIM:
+	case PLD_BUS_TYPE_SNOC:
+	case PLD_BUS_TYPE_SDIO:
+	case PLD_BUS_TYPE_USB:
+		break;
+	case PLD_BUS_TYPE_IPCI:
+		pld_ipci_allow_l1(dev);
+		break;
 	default:
 		pr_err("Invalid device type\n");
 		break;
 	}
+}
+
+/**
+ * pld_get_mhi_state() - Get MHI state Info
+ * @dev: device
+ *
+ * MHI state can be determined by reading this address.
+ *
+ * Return: MHI state
+ */
+int pld_get_mhi_state(struct device *dev)
+{
+	int ret = 0;
+
+	switch (pld_get_bus_type(dev)) {
+	case PLD_BUS_TYPE_PCIE:
+	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
+	case PLD_BUS_TYPE_SNOC_FW_SIM:
+	case PLD_BUS_TYPE_SNOC:
+	case PLD_BUS_TYPE_SDIO:
+	case PLD_BUS_TYPE_USB:
+		break;
+	case PLD_BUS_TYPE_IPCI:
+		ret = pld_ipci_mhi_state(dev);
+		break;
+	default:
+		pr_err("Invalid device type\n");
+		break;
+	}
+	return ret;
 }
 
 int pld_set_pcie_gen_speed(struct device *dev, u8 pcie_gen_speed)
@@ -1309,6 +1360,40 @@ int pld_is_device_awake(struct device *dev)
 		break;
 	case PLD_BUS_TYPE_IPCI:
 		ret = pld_ipci_is_device_awake(dev);
+		break;
+	default:
+		pr_err("Invalid device type %d\n", type);
+		ret = -EINVAL;
+		break;
+	}
+
+	return ret;
+}
+
+/**
+ * pld_is_pci_ep_awake() - Check if PCI EP is L0 state
+ * @dev: device
+ *
+ * Return: True for PCI EP awake
+ *         False for PCI EP not awake
+ *         Negative failure code for errors
+ */
+int pld_is_pci_ep_awake(struct device *dev)
+{
+	int ret = true;
+	enum pld_bus_type type = pld_get_bus_type(dev);
+
+	switch (type) {
+	case PLD_BUS_TYPE_PCIE:
+	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
+	case PLD_BUS_TYPE_SNOC_FW_SIM:
+	case PLD_BUS_TYPE_SNOC:
+	case PLD_BUS_TYPE_SDIO:
+	case PLD_BUS_TYPE_USB:
+		break;
+	case PLD_BUS_TYPE_IPCI:
+		ret = pld_ipci_is_pci_ep_awake(dev);
 		break;
 	default:
 		pr_err("Invalid device type %d\n", type);

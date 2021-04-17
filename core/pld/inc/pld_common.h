@@ -35,6 +35,7 @@
 #define PLD_SETUP_FILE               "athsetup.bin"
 #define PLD_EPPING_FILE              "epping.bin"
 #define PLD_EVICTED_FILE             ""
+#define PLD_MHI_STATE_L0	1
 
 #define TOTAL_DUMP_SIZE         0x00200000
 
@@ -719,6 +720,8 @@ int pld_ce_free_irq(struct device *dev, unsigned int ce_id, void *ctx);
 void pld_enable_irq(struct device *dev, unsigned int ce_id);
 void pld_disable_irq(struct device *dev, unsigned int ce_id);
 int pld_get_soc_info(struct device *dev, struct pld_soc_info *info);
+int pld_get_mhi_state(struct device *dev);
+int pld_is_pci_ep_awake(struct device *dev);
 int pld_get_ce_id(struct device *dev, int irq);
 int pld_get_irq(struct device *dev, int ce_id);
 void pld_lock_pm_sem(struct device *dev);
