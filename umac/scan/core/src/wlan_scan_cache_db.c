@@ -926,9 +926,6 @@ QDF_STATUS __scm_handle_bcn_probe(struct scan_bcn_probe_event *bcn)
 	struct scan_cache_node *scan_node;
 	struct wlan_frame_hdr *hdr = NULL;
 	struct wlan_crypto_params sec_params;
-	uint8_t sae_pwe = 0;
-	const uint8_t *rsnxe_cap;
-	uint8_t rsnxe_len = 0;
 
 	if (!bcn) {
 		scm_err("bcn is NULL");
@@ -1026,12 +1023,9 @@ QDF_STATUS __scm_handle_bcn_probe(struct scan_bcn_probe_event *bcn)
 		}
 		if (wlan_cm_get_check_6ghz_security(psoc) &&
 		    wlan_reg_is_6ghz_chan_freq(scan_entry->channel.chan_freq)) {
-			rsnxe_cap = wlan_crypto_parse_rsnxe_ie(
-					util_scan_entry_rsnxe(scan_entry),
-					&rsnxe_len);
-			if (!util_scan_entry_rsn(scan_entry) || !rsnxe_cap) {
+			if (!util_scan_entry_rsn(scan_entry)) {
 				scm_info("Drop frame from "QDF_MAC_ADDR_FMT
-					 ": No RSN/RSNXE IE for 6GHz AP",
+					 ": No RSN IE for 6GHz AP",
 					 QDF_MAC_ADDR_REF(
 						 scan_entry->bssid.bytes));
 				util_scan_free_cache_entry(scan_entry);
@@ -1051,16 +1045,14 @@ QDF_STATUS __scm_handle_bcn_probe(struct scan_bcn_probe_event *bcn)
 				qdf_mem_free(scan_node);
 				continue;
 			}
-			if (*rsnxe_cap & WLAN_CRYPTO_RSNX_CAP_SAE_H2E)
-				sae_pwe = 1;
 			if (!wlan_cm_6ghz_allowed_for_akm(psoc,
 					sec_params.key_mgmt,
 					sec_params.rsn_caps,
 					util_scan_entry_rsnxe(scan_entry),
-					sae_pwe, false)) {
-				scm_err("Drop frame from "QDF_MAC_ADDR_FMT
-					": Security check failed for 6GHz AP",
-					QDF_MAC_ADDR_REF(
+					0, false)) {
+				scm_info("Drop frame from "QDF_MAC_ADDR_FMT
+					 ": Security check failed for 6GHz AP",
+					 QDF_MAC_ADDR_REF(
 						scan_entry->bssid.bytes));
 				util_scan_free_cache_entry(scan_entry);
 				qdf_mem_free(scan_node);
