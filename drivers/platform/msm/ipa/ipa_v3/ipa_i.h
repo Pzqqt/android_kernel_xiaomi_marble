@@ -3365,4 +3365,5 @@ enum ipa_hw_type ipa_get_hw_type_internal(void);
 bool ipa3_is_modem_up(void);
 /* set modem is up */
 void ipa3_set_modem_up(bool is_up);
+int ipa3_qmi_reg_dereg_for_bw(bool bw_reg_dereg);
 #endif /* _IPA3_I_H_ */
