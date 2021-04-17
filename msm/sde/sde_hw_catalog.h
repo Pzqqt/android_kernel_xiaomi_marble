@@ -1060,6 +1060,7 @@ struct sde_sspp_cfg {
  * @dspp:              ID of connected DSPP, DSPP_MAX if unsupported
  * @pingpong:          ID of connected PingPong, PINGPONG_MAX if unsupported
  * @ds:                ID of connected DS, DS_MAX if unsupported
+ * @dummy_mixer:       identifies dcwb mixer is considered dummy
  * @lm_pair_mask:      Bitmask of LMs that can be controlled by same CTL
  */
 struct sde_lm_cfg {
@@ -1068,6 +1069,7 @@ struct sde_lm_cfg {
 	u32 dspp;
 	u32 pingpong;
 	u32 ds;
+	bool dummy_mixer;
 	unsigned long lm_pair_mask;
 };
 

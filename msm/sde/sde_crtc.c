@@ -641,8 +641,9 @@ static void _sde_crtc_setup_blend_cfg(struct sde_crtc_mixer *mixer,
 		break;
 	}
 
-	lm->ops.setup_blend_config(lm, pstate->stage, fg_alpha,
-						bg_alpha, blend_op);
+	if (lm->ops.setup_blend_config)
+		lm->ops.setup_blend_config(lm, pstate->stage, fg_alpha, bg_alpha, blend_op);
+
 	SDE_DEBUG(
 		"format: %4.4s, alpha_enable %u fg alpha:0x%x bg alpha:0x%x blend_op:0x%x\n",
 		(char *) &format->base.pixel_format,
@@ -1284,7 +1285,8 @@ static void _sde_crtc_program_lm_output_roi(struct drm_crtc *crtc)
 			cfg.right_mixer = right_mixer;
 			cfg.flags = 0;
 
-			hw_lm->ops.setup_mixer_out(hw_lm, &cfg);
+			if (hw_lm->ops.setup_mixer_out)
+				hw_lm->ops.setup_mixer_out(hw_lm, &cfg);
 			lm_updated = true;
 		}
 
@@ -1828,7 +1830,8 @@ static void _sde_crtc_blend_setup(struct drm_crtc *crtc,
 		if (sde_kms_rect_is_null(lm_roi))
 			sde_crtc->mixers[i].mixer_op_mode = 0;
 
-		lm->ops.setup_alpha_out(lm, mixer[i].mixer_op_mode);
+		if (lm->ops.setup_alpha_out)
+			lm->ops.setup_alpha_out(lm, mixer[i].mixer_op_mode);
 
 		/* stage config flush mask */
 		ctl->ops.update_bitmask_mixer(ctl, mixer[i].hw_lm->idx, 1);
@@ -6457,24 +6460,22 @@ static ssize_t _sde_crtc_misr_read(struct file *file,
 
 		m = &sde_crtc->mixers[i];
 		if (!m->hw_lm || !m->hw_lm->ops.collect_misr) {
-			len += scnprintf(buf + len, MISR_BUFF_SIZE - len,
-					"invalid\n");
-			SDE_ERROR("crtc:%d invalid misr ops\n", DRMID(crtc));
+			if (!m->hw_lm || !m->hw_lm->cap->dummy_mixer) {
+				len += scnprintf(buf + len, MISR_BUFF_SIZE - len, "invalid\n");
+				SDE_ERROR("crtc:%d invalid misr ops\n", DRMID(crtc));
+			}
 			continue;
 		}
 
 		rc = m->hw_lm->ops.collect_misr(m->hw_lm, false, &misr_value);
 		if (rc) {
-			len += scnprintf(buf + len, MISR_BUFF_SIZE - len,
-					"invalid\n");
-			SDE_ERROR("crtc:%d failed to collect misr %d\n",
-					DRMID(crtc), rc);
+			len += scnprintf(buf + len, MISR_BUFF_SIZE - len, "invalid\n");
+			SDE_ERROR("crtc:%d failed to collect misr %d\n", DRMID(crtc), rc);
 			continue;
 		} else {
 			len += scnprintf(buf + len, MISR_BUFF_SIZE - len,
 					"lm idx:%d\n", m->hw_lm->idx - LM_0);
-			len += scnprintf(buf + len, MISR_BUFF_SIZE - len,
-					"0x%x\n", misr_value);
+			len += scnprintf(buf + len, MISR_BUFF_SIZE - len, "0x%x\n", misr_value);
 		}
 	}
 
