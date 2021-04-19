@@ -98,7 +98,7 @@ int msm_vidc_memory_map(struct msm_vidc_core *core, struct msm_vidc_map *map)
 
 	if (map->refcount) {
 		map->refcount++;
-		goto exit;
+		return 0;
 	}
 
 	cb = get_context_bank(core, map->region);
@@ -153,11 +153,12 @@ int msm_vidc_memory_map(struct msm_vidc_core *core, struct msm_vidc_map *map)
 	map->attach = attach;
 	map->refcount++;
 
-exit:
 	d_vpr_l(
 		"%s: type %11s, device_addr %#x, refcount %d, region %d\n",
 		__func__, buf_name(map->type), map->device_addr, map->refcount, map->region);
+
 	return 0;
+
 error_sg:
 	dma_buf_unmap_attachment(attach, table, DMA_BIDIRECTIONAL);
 error_table:
@@ -184,12 +185,12 @@ int msm_vidc_memory_unmap(struct msm_vidc_core *core,
 		return -EINVAL;
 	}
 
+	if (map->refcount)
+		goto exit;
+
 	d_vpr_l(
 		"%s: type %11s, device_addr %#x, refcount %d, region %d\n",
 		__func__, buf_name(map->type), map->device_addr, map->refcount, map->region);
-
-	if (map->refcount)
-		goto exit;
 
 	dma_buf_unmap_attachment(map->attach, map->table, DMA_BIDIRECTIONAL);
 	dma_buf_detach(map->dmabuf, map->attach);

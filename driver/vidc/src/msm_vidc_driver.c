@@ -2161,6 +2161,7 @@ int msm_vidc_map_driver_buf(struct msm_vidc_inst *inst,
 	int rc = 0;
 	struct msm_vidc_mappings *mappings;
 	struct msm_vidc_map *map;
+	struct msm_vidc_buffer *rel_buf;
 	bool found = false;
 
 	if (!inst || !buf) {
@@ -2212,6 +2213,16 @@ int msm_vidc_map_driver_buf(struct msm_vidc_inst *inst,
 		return rc;
 
 	buf->device_addr = map->device_addr;
+
+	/* increment map ref_count, if buf already present in release list */
+	list_for_each_entry(rel_buf, &inst->buffers.release.list, list) {
+		if (rel_buf->device_addr == buf->device_addr) {
+			rc = msm_vidc_memory_map(inst->core, map);
+			if (rc)
+				return rc;
+			break;
+		}
+	}
 
 	return 0;
 }
@@ -2483,10 +2494,8 @@ exit:
 
 static int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct msm_vidc_buffer *buf)
 {
-	struct msm_vidc_buffer *meta, *rel_buf;
-	struct msm_vidc_map *map;
+	struct msm_vidc_buffer *meta;
 	int rc = 0;
-	bool found = false;
 
 	if (!inst || !buf || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -2503,28 +2512,6 @@ static int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct msm_vidc_buf
 		rc = msm_vidc_process_readonly_buffers(inst, buf);
 		if (rc)
 			return rc;
-
-		list_for_each_entry(map, &inst->mappings.output.list, list) {
-			if (map->dmabuf == buf->dmabuf) {
-				found = true;
-				break;
-			}
-		}
-
-		if (!found) {
-			print_vidc_buffer(VIDC_ERR, "err ", "missing map", inst, buf);
-			return -EINVAL;
-		}
-
-		/* increment map ref_count, if buf already present in release list */
-		list_for_each_entry(rel_buf, &inst->buffers.release.list, list) {
-			if (rel_buf->device_addr == buf->device_addr) {
-				rc = msm_vidc_memory_map(inst->core, map);
-				if (rc)
-					return rc;
-				break;
-			}
-		}
 	}
 
 	print_vidc_buffer(VIDC_HIGH, "high", "qbuf", inst, buf);
