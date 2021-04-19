@@ -127,14 +127,14 @@
  * threshold is kept as 50 to handle vpp usecases
  * which might have many output buffers.
  */
-#define MAX_MAPPED_OUTPUT_COUNT 50
+#define MAX_MAPPED_OUTPUT_COUNT 64
  /*
   * max dpb count = 16
   * each dpb: 4 words - <base_address, addr_offset, data_offset>
   * dpb list array size = 16 * 4
   * dpb payload size = 16 * 4 * 4
   */
-#define MAX_DPB_COUNT 16
+#define MAX_DPB_COUNT 64
 #define MAX_DPB_LIST_ARRAY_SIZE (MAX_DPB_COUNT * 4)
 #define MAX_DPB_LIST_PAYLOAD_SIZE (MAX_DPB_COUNT * 4 * 4)
 
