@@ -148,13 +148,3 @@ void hdd_update_wiphy_eht_cap(struct hdd_context *hdd_ctx,
 	hdd_exit();
 }
 
-void wlan_hdd_check_11be_support(struct hdd_beacon_data *beacon,
-				 struct sap_config *config)
-{
-	const uint8_t *ie;
-
-	ie = wlan_get_ext_ie_ptr_from_ext_id(EHT_CAP_OUI_TYPE, EHT_CAP_OUI_SIZE,
-					     beacon->tail, beacon->tail_len);
-	if (ie)
-		config->SapHw_mode = eCSR_DOT11_MODE_11be;
-}

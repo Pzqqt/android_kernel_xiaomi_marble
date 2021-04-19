@@ -15123,7 +15123,7 @@ void sme_reset_eht_caps(mac_handle_t mac_handle, uint8_t vdev_id)
 	}
 	sme_debug("reset EHT caps");
 	mac_ctx->mlme_cfg->eht_caps.dot11_eht_cap =
-		mac_ctx->mlme_cfg->eht_caps.eht_cap_orig;
+		mac_ctx->mlme_cfg->eht_caps.dot11_eht_cap;
 	csr_update_session_eht_cap(mac_ctx, session);
 
 	wlan_cm_reset_check_6ghz_security(mac_ctx->psoc);

@@ -2781,10 +2781,6 @@ lim_convert_channel_width_enum(enum phy_ch_width ch_width)
 #endif
 	case CH_WIDTH_MAX:
 		return eHT_MAX_CHANNEL_WIDTH;
-#ifdef WLAN_FEATURE_11BE
-	case CH_WIDTH_320MHZ:
-		return eHT_CHANNEL_WIDTH_320MHZ;
-#endif
 	case CH_WIDTH_5MHZ:
 		break;
 	case CH_WIDTH_10MHZ:

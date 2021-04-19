@@ -104,7 +104,7 @@ void wma_update_target_ext_eht_cap(struct target_psoc_info *tgt_hdl,
 					    mac_cap->eht_cap_phy_info_2G);
 			wma_convert_eht_cap(eht_cap_2g,
 					    mac_cap->eht_cap_info_2G,
-					    mac_cap->eht_cap_info_2G,
+					    mac_cap->eht_cap_phy_info_2G);
 		}
 
 		if (supported_bands & WLAN_5G_CAPABILITY) {
@@ -162,6 +162,18 @@ void wma_populate_peer_eht_cap(struct peer_assoc_params *peer,
 		peer->eht_flag = 1;
 	else
 		return;
+
+	qdf_mem_copy(peer->peer_eht_cap_macinfo, peer->peer_he_cap_macinfo,
+		     sizeof(mac_cap));
+	qdf_mem_copy(peer->peer_he_cap_phyinfo, peer->peer_he_cap_phyinfo,
+		     sizeof(peer->peer_he_cap_phyinfo));
+
+	qdf_mem_copy(peer->peer_eht_rx_mcs_set, peer->peer_he_rx_mcs_set,
+		     sizeof(peer->peer_he_rx_mcs_set));
+	qdf_mem_copy(peer->peer_eht_tx_mcs_set, peer->peer_he_tx_mcs_set,
+		     sizeof(peer->peer_he_tx_mcs_set));
+
+	peer->peer_eht_mcs_count = peer->peer_he_mcs_count;
 
 	wma_print_eht_cap(eht_cap);
 	wma_debug("Peer EHT Capabilities:");

@@ -557,6 +557,44 @@ QDF_STATUS wma_process_dhcp_ind(WMA_HANDLE handle,
 					    &peer_set_param_fp);
 }
 
+#ifdef WLAN_FEATURE_11BE
+static enum wlan_phymode
+wma_eht_chan_phy_mode(uint32_t freq, uint8_t dot11_mode, uint16_t bw_val,
+		      enum phy_ch_width chan_width)
+{
+	if((dot11_mode == MLME_DOT11_MODE_11BE) ||
+		(dot11_mode == MLME_DOT11_MODE_11BE_ONLY))
+	{
+		if (wlan_reg_is_24ghz_ch_freq(freq)) {
+			if (bw_val == 20)
+				return WLAN_PHYMODE_11BEG_EHT20;
+			else if (bw_val == 40)
+				return WLAN_PHYMODE_11BEG_EHT40;
+		} else {
+			if (bw_val == 20)
+				return WLAN_PHYMODE_11BEA_EHT20;
+			else if (bw_val == 40)
+				return WLAN_PHYMODE_11BEA_EHT40;
+			else if (bw_val == 80)
+				return WLAN_PHYMODE_11BEA_EHT80;
+			else if (chan_width == CH_WIDTH_160MHZ)
+				return WLAN_PHYMODE_11BEA_EHT160;
+			else if (chan_width == CH_WIDTH_320MHZ)
+				return WLAN_PHYMODE_11BEA_EHT320;
+		}
+	}
+
+	return WLAN_PHYMODE_AUTO;
+}
+#else
+static enum wlan_phymode
+wma_eht_chan_phy_mode(uint32_t freq, uint8_t dot11_mode, uint16_t bw_val,
+		      enum phy_ch_width chan_width)
+{
+	return WLAN_PHYMODE_AUTO;
+}
+#endif
+
 enum wlan_phymode wma_chan_phy_mode(uint32_t freq, enum phy_ch_width chan_width,
 				    uint8_t dot11_mode)
 {
@@ -619,6 +657,10 @@ enum wlan_phymode wma_chan_phy_mode(uint32_t freq, enum phy_ch_width chan_width,
 					phymode = WLAN_PHYMODE_11AXG_HE40;
 				break;
 			default:
+				phymode = wma_eht_chan_phy_mode(freq,
+								dot11_mode,
+								bw_val,
+								chan_width);
 				break;
 			}
 		}
@@ -674,6 +716,10 @@ enum wlan_phymode wma_chan_phy_mode(uint32_t freq, enum phy_ch_width chan_width,
 					phymode = WLAN_PHYMODE_11AXA_HE80_80;
 				break;
 			default:
+				phymode = wma_eht_chan_phy_mode(freq,
+								dot11_mode,
+								bw_val,
+								chan_width);
 				break;
 			}
 		}

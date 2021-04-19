@@ -943,6 +943,22 @@ void lim_update_probe_rsp_template_ie_bitmap_beacon2(struct mac_context *mac,
 			     sizeof(beacon2->he_6ghz_band_cap));
 	}
 
+	if (beacon2->eht_cap.present) {
+		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap,
+					DOT11F_EID_EHT_CAP);
+		qdf_mem_copy((void *)&prb_rsp->eht_cap,
+			     (void *)&beacon2->eht_cap,
+			     sizeof(beacon2->eht_cap));
+	}
+
+	if (beacon2->eht_op.present) {
+		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap,
+					DOT11F_EID_EHT_OP);
+		qdf_mem_copy((void *)&prb_rsp->eht_op,
+			     (void *)&beacon2->eht_op,
+			     sizeof(beacon2->eht_op));
+	}
+
 }
 
 void set_probe_rsp_ie_bitmap(uint32_t *IeBitmap, uint32_t pos)
