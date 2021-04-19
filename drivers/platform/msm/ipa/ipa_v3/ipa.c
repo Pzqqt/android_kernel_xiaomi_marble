@@ -7217,6 +7217,14 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 	uc_hdlrs.ipa_uc_holb_enabled_hdlr = ipa3_uc_holb_client_handler;
 	ipa3_uc_register_handlers(IPA_HW_FEATURE_COMMON, &uc_hdlrs);
 
+	if (ipa3_ctx->use_tput_est_ep) {
+		result = ipa3_setup_tput_pipe();
+		if (result)
+			IPAERR(":Failed configuring throughput moniter ep\n");
+		else
+			IPADBG(":Throughput moniter ep configured\n");
+	}
+
 	result = ipa3_wdi_init();
 	if (result)
 		IPAERR(":wdi init failed (%d)\n", -result);
@@ -8199,6 +8207,7 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	ipa3_ctx->ulso_ip_id_min = resource_p->ulso_ip_id_min;
 	ipa3_ctx->ulso_ip_id_max = resource_p->ulso_ip_id_max;
 	ipa3_ctx->use_pm_wrapper = resource_p->use_pm_wrapper;
+	ipa3_ctx->use_tput_est_ep = resource_p->use_tput_est_ep;
 
 	if (resource_p->gsi_fw_file_name) {
 		ipa3_ctx->gsi_fw_file_name =
@@ -9051,6 +9060,7 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	ipa_drv_res->ipa_config_is_auto = false;
 	ipa_drv_res->max_num_smmu_cb = IPA_SMMU_CB_MAX;
 	ipa_drv_res->ipa_endp_delay_wa_v2 = false;
+	ipa_drv_res->use_tput_est_ep = false;
 
 	/* Get IPA HW Version */
 	result = of_property_read_u32(pdev->dev.of_node, "qcom,ipa-hw-ver",
@@ -9504,6 +9514,13 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 		"qcom,use-wrapper-pm-support");
 	IPADBG(": Use PM wrapper Support = %s\n",
 		ipa_drv_res->use_pm_wrapper
+		? "Needed" : "Not needed");
+
+	ipa_drv_res->use_tput_est_ep =
+		of_property_read_bool(pdev->dev.of_node,
+		"qcom,use-tput-estmation-pipe");
+	IPADBG(": Use Tput estimation ep = %s\n",
+		ipa_drv_res->use_tput_est_ep
 		? "Needed" : "Not needed");
 
 	elem_num = of_property_count_elems_of_size(pdev->dev.of_node,

@@ -2640,7 +2640,12 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			IPA_DPS_HPS_SEQ_TYPE_INVALID,
 			QMB_MASTER_SELECT_DDR,
 			{ 31, 31, 8, 8, IPA_EE_AP }, IPA_TX_INSTANCE_NA },
-
+	[IPA_4_5][IPA_CLIENT_TPUT_CONS]          = {
+			true, IPA_v4_5_GROUP_UL_DL,
+			false,
+			IPA_DPS_HPS_SEQ_TYPE_INVALID,
+			QMB_MASTER_SELECT_DDR,
+			{ 25, 16, 9, 9, IPA_EE_AP, GSI_SMART_PRE_FETCH, 4 } },
 	/* IPA_4_5_MHI */
 	[IPA_4_5_MHI][IPA_CLIENT_APPS_CMD_PROD]		= {
 			true, IPA_v4_5_MHI_GROUP_DDR,
@@ -4331,6 +4336,13 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			QMB_MASTER_SELECT_DDR,
 			{ 18, 4, 9, 9, IPA_EE_Q6, GSI_ESCAPE_BUF_ONLY, 0 },
 			IPA_TX_INSTANCE_UL },
+	[IPA_5_0][IPA_CLIENT_TPUT_CONS] = {
+			true, IPA_v5_0_GROUP_UL,
+			false,
+			IPA_DPS_HPS_SEQ_TYPE_INVALID,
+			QMB_MASTER_SELECT_DDR,
+			{ 33, 6, 9, 9, IPA_EE_AP, GSI_SMART_PRE_FETCH, 3},
+			IPA_TX_INSTANCE_DL },
 
 	/* IPA_5_0_MHI */
 	[IPA_5_0_MHI][IPA_CLIENT_USB_PROD] = {
@@ -5948,6 +5960,9 @@ const char *ipa_clients_strings[IPA_CLIENT_MAX] = {
 	__stringify(IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_PROD),
 	__stringify(IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS),
 	__stringify(IPA_CLIENT_Q6_DL_NLO_LL_DATA_PROD),
+	__stringify(RESERVERD_CONS_123),
+	__stringify(RESERVERD_PROD_124),
+	__stringify(IPA_CLIENT_TPUT_CONS),
 };
 EXPORT_SYMBOL(ipa_clients_strings);
 
