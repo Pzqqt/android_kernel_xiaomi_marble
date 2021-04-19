@@ -271,6 +271,26 @@ static const char *cm_diag_get_ch_width_str(uint8_t ch_width)
 	}
 }
 
+#ifdef WLAN_FEATURE_11BE
+static const
+char *cm_diag_get_eht_dot11_mode_str(enum mgmt_dot11_mode dot11mode)
+{
+
+	switch (dot11mode) {
+	CASE_RETURN_STRING(DOT11_MODE_11BE);
+	CASE_RETURN_STRING(DOT11_MODE_11BE_ONLY);
+	default:
+		return "Unknown";
+	}
+}
+#else
+static const
+char *cm_diag_get_eht_dot11_mode_str(enum mgmt_dot11_mode dot11mode)
+{
+	return "Unknown";
+}
+#endif
+
 static const char *cm_diag_get_dot11_mode_str(enum mgmt_dot11_mode dot11mode)
 {
 	switch (dot11mode) {
@@ -287,7 +307,7 @@ static const char *cm_diag_get_dot11_mode_str(enum mgmt_dot11_mode dot11mode)
 	CASE_RETURN_STRING(DOT11_MODE_11AX);
 	CASE_RETURN_STRING(DOT11_MODE_11AX_ONLY);
 	default:
-		return "Unknown";
+		return cm_diag_get_eht_dot11_mode_str(dot11mode);
 	}
 }
 
@@ -368,6 +388,23 @@ static const uint8_t *cm_diag_get_akm_str(enum mgmt_auth_type auth_type,
 		return "NONE";
 }
 
+#ifdef WLAN_FEATURE_11BE
+static enum mgmt_dot11_mode
+cm_diag_eht_dot11_mode_from_phy_mode(enum wlan_phymode phymode)
+{
+	if (IS_WLAN_PHYMODE_EHT(phymode))
+		return DOT11_MODE_11BE;
+	else
+		return DOT11_MODE_MAX;
+}
+#else
+static enum mgmt_dot11_mode
+cm_diag_eht_dot11_mode_from_phy_mode(enum wlan_phymode phymode)
+{
+	return DOT11_MODE_MAX;
+}
+#endif
+
 static enum mgmt_dot11_mode
 cm_diag_dot11_mode_from_phy_mode(enum wlan_phymode phymode)
 {
@@ -390,7 +427,7 @@ cm_diag_dot11_mode_from_phy_mode(enum wlan_phymode phymode)
 		else if (IS_WLAN_PHYMODE_HE(phymode))
 			return DOT11_MODE_11AX;
 		else
-			return DOT11_MODE_MAX;
+			return cm_diag_eht_dot11_mode_from_phy_mode(phymode);
 	}
 }
 
