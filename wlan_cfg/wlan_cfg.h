@@ -1561,10 +1561,11 @@ void wlan_cfg_set_rxdma1_enable(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
  * is enabled
  * @cfg: soc configuration context
  *
- * Return: .
+ * Return: true if enabled, false otherwise.
  */
-void
-wlan_cfg_set_delay_mon_replenish(struct wlan_cfg_dp_soc_ctxt *cfg, bool val);
+bool
+wlan_cfg_is_delay_mon_replenish(struct wlan_cfg_dp_soc_ctxt *cfg);
+
 /**
  * wlan_cfg_set_delay_mon_replenish() - Set delayed monitor replenish
  * @cfg: soc configuration context
@@ -1572,5 +1573,13 @@ wlan_cfg_set_delay_mon_replenish(struct wlan_cfg_dp_soc_ctxt *cfg, bool val);
  *
  * Return: .
  */
-bool
-wlan_cfg_is_delay_mon_replenish(struct wlan_cfg_dp_soc_ctxt *cfg);
+void
+wlan_cfg_set_delay_mon_replenish(struct wlan_cfg_dp_soc_ctxt *cfg, bool val);
+
+/**
+ * wlan_cfg_dp_soc_ctx_dump() - Dump few DP cfg soc parameters
+ * @cfg: soc configuration context
+ *
+ * Return:
+ */
+void wlan_cfg_dp_soc_ctx_dump(struct wlan_cfg_dp_soc_ctxt *cfg);

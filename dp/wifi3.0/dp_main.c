@@ -14237,6 +14237,17 @@ fail1:
 	return QDF_STATUS_E_NOMEM;
 }
 
+static void dp_soc_cfg_dump(struct dp_soc *soc, uint32_t target_type)
+{
+	dp_init_info("DP soc Dump for Target = %d", target_type);
+	dp_init_info("ast_override_support = %d, da_war_enabled = %d,",
+		     soc->ast_override_support, soc->da_war_enabled);
+	dp_init_info("hw_nac_monitor_support = %d",
+		     soc->hw_nac_monitor_support);
+
+	wlan_cfg_dp_soc_ctx_dump(soc->wlan_cfg_ctx);
+}
+
 /**
  * dp_soc_cfg_init() - initialize target specific configuration
  *		       during dp_soc_init
@@ -14244,7 +14255,7 @@ fail1:
  */
 static void dp_soc_cfg_init(struct dp_soc *soc)
 {
-	int target_type;
+	uint32_t target_type;
 
 	target_type = hal_get_target_type(soc->hal_soc);
 	switch (target_type) {
@@ -14333,6 +14344,7 @@ static void dp_soc_cfg_init(struct dp_soc *soc)
 		qdf_assert_always(0);
 		break;
 	}
+	dp_soc_cfg_dump(soc, target_type);
 }
 
 /**

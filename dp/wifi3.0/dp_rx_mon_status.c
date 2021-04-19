@@ -1480,6 +1480,11 @@ dp_rx_handle_ppdu_stats(struct dp_soc *soc, struct dp_pdev *pdev,
 			}
 		}
 		qdf_spin_unlock_bh(&pdev->neighbour_peer_mutex);
+	} else {
+		dp_info("Neighbour peers RSSI update failed! fc_valid = %d, to_ds_flag = %d and mac_addr2_valid = %d",
+			ppdu_info->nac_info.fc_valid,
+			ppdu_info->nac_info.to_ds_flag,
+			ppdu_info->nac_info.mac_addr2_valid);
 	}
 
 	/* need not generate wdi event when mcopy, cfr rcc mode and
