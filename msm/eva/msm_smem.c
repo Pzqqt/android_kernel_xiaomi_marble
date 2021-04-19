@@ -79,7 +79,11 @@ static int msm_dma_get_device_address(struct dma_buf *dbuf, u32 align,
 		}
 
 		if (table->sgl) {
-			*iova = table->sgl->dma_address;
+			if (flags & SMEM_CAMERA) {
+				*iova = sg_phys(table->sgl);
+			} else {
+				*iova = table->sgl->dma_address;
+			}
 		} else {
 			dprintk(CVP_ERR, "sgl is NULL\n");
 			rc = -ENOMEM;
@@ -446,6 +450,8 @@ struct context_bank_info *msm_cvp_smem_get_context_bank(
 		search_str = secure_pixel_cb;
 	else if (flags & SMEM_NON_PIXEL)
 		search_str = secure_nonpixel_cb;
+	else if (flags & SMEM_CAMERA)
+		search_str = secure_pixel_cb;
 	else
 		search_str = non_secure_cb;
 
