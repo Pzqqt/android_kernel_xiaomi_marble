@@ -1356,7 +1356,7 @@ static int handle_session_property(struct msm_vidc_inst *inst,
 		} else {
 			i_vpr_e(inst,
 				"%s: invalid property %#x for %s port %d dpb cap value %d\n",
-				__func__, pkt->type, is_decode_session(inst) ? "decode" : "encode",
+				__func__, is_decode_session(inst) ? "decode" : "encode",
 				port, inst->capabilities->cap[DPB_LIST].value);
 		}
 		break;
