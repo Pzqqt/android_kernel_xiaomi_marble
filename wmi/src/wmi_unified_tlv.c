@@ -2641,14 +2641,39 @@ static inline void update_peer_flags_tlv_ehtinfo(
 
 #ifdef WLAN_FEATURE_11BE
 static
-uint32_t wmi_eht_rate_set_len(struct peer_assoc_params *param)
+uint32_t wmi_eht_peer_assoc_params_len(struct peer_assoc_params *param)
 {
-	return (sizeof(wmi_he_rate_set) * param->peer_eht_mcs_count
-		+ WMI_TLV_HDR_SIZE);
+	return (sizeof(wmi_peer_assoc_mlo_params) + WMI_TLV_HDR_SIZE) +
+			(sizeof(wmi_he_rate_set) * param->peer_eht_mcs_count
+			 + WMI_TLV_HDR_SIZE);
+}
+
+static void wmi_populate_service_11be(uint32_t *wmi_service)
+{
+	wmi_service[wmi_service_11be] = WMI_SERVICE_11BE;
+}
+
+static uint32_t wmi_update_peer_assoc_mlo_params(uint8_t *buf_ptr)
+{
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       sizeof(wmi_peer_assoc_mlo_params));
+	WMITLV_SET_HDR(buf_ptr + WMI_TLV_HDR_SIZE,
+		       WMITLV_TAG_STRUC_wmi_peer_assoc_mlo_params,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_peer_assoc_mlo_params));
+	return WMI_TLV_HDR_SIZE + sizeof(wmi_peer_assoc_mlo_params);
 }
 #else
 static
-uint32_t wmi_eht_rate_set_len(struct peer_assoc_params *param)
+uint32_t wmi_eht_peer_assoc_params_len(struct peer_assoc_params *param)
+{
+	return 0;
+}
+
+static void wmi_populate_service_11be(uint32_t *wmi_service)
+{
+}
+
+static uint32_t wmi_update_peer_assoc_mlo_params(uint8_t *buf_ptr)
 {
 	return 0;
 }
@@ -2686,7 +2711,7 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 		sizeof(wmi_vht_rate_set) +
 		(sizeof(wmi_he_rate_set) * param->peer_he_mcs_count
 		+ WMI_TLV_HDR_SIZE)
-		+ wmi_eht_rate_set_len(param);
+		+ wmi_eht_peer_assoc_params_len(param);
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf)
@@ -2804,7 +2829,7 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 			 QDF_MAC_ADDR_REF(param->peer_mac));
 	}
 
-	wmi_debug("vdev_id %d associd %d peer_flags %x rate_caps %x "
+	pr_err("vdev_id %d associd %d peer_flags %x rate_caps %x "
 		 "peer_caps %x listen_intval %d ht_caps %x max_mpdu %d "
 		 "nss %d phymode %d peer_mpdu_density %d "
 		 "cmd->peer_vht_caps %x "
@@ -2822,6 +2847,8 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 		 cmd->peer_he_cap_phy[0], cmd->peer_he_cap_phy[1],
 		 cmd->peer_he_cap_phy[2],
 		 cmd->peer_bw_rxnss_override);
+
+	buf_ptr += wmi_update_peer_assoc_mlo_params(buf_ptr);
 
 	update_peer_flags_tlv_ehtinfo(cmd, param, buf_ptr);
 
@@ -16078,6 +16105,7 @@ static void populate_tlv_service(uint32_t *wmi_service)
 #endif
 	wmi_service[wmi_service_dcs_awgn_int_support] =
 			WMI_SERVICE_DCS_AWGN_INT_SUPPORT;
+	wmi_populate_service_11be(wmi_service);
 }
 
 /**

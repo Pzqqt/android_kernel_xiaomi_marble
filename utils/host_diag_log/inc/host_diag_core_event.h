@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -192,6 +192,10 @@ enum mgmt_dot11_mode {
 	DOT11_MODE_AUTO = 0x09,
 	DOT11_MODE_11AX = 0x0a,
 	DOT11_MODE_11AX_ONLY = 0x0b,
+#ifdef WLAN_FEATURE_11BE
+	DOT11_MODE_11BE = 0x0c,
+	DOT11_MODE_11BE_ONLY = 0x0d,
+#endif
 	DOT11_MODE_MAX = 0xff,
 };
 
