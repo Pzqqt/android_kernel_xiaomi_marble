@@ -859,5 +859,4 @@ void hal_hw_txrx_default_ops_attach_be(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_reo_qdesc_setup = hal_reo_qdesc_setup_be;
 	hal_soc->ops->hal_reo_status_update = hal_reo_status_update_be;
 	hal_soc->ops->hal_get_tlv_hdr_size = hal_get_tlv_hdr_size_be;
-	hal_soc->ops->hal_rx_tlv_get_pn_num = hal_rx_tlv_get_pn_num_be;
 }
