@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -227,6 +227,8 @@ enum pmo_wow_state {
  * @pmo_lphb_callback: registered os if calllback function
  * @ptrn_id_def: default pattern id counter for legacy firmware
  * @ptrn_id_usr: user pattern id counter for legacy firmware
+ * @txrx_suspended: flag to determine if TX/RX is suspended
+ *		    during WoW
  *
  * This structure stores wow patterns and
  * wow related parameters in host.
@@ -251,6 +253,7 @@ struct pmo_wow {
 
 	uint8_t ptrn_id_def;
 	uint8_t ptrn_id_usr;
+	bool txrx_suspended;
 };
 
 /* WOW related structures */
