@@ -2623,6 +2623,21 @@ static uint32_t get_session_wake_duration(struct hdd_context *hdd_ctx,
 	return 0;
 }
 
+static int
+wmi_twt_get_stats_status_to_vendor_twt_status(enum WMI_HOST_GET_STATS_TWT_STATUS status)
+{
+	switch (status) {
+	case WMI_HOST_GET_STATS_TWT_STATUS_OK:
+		return QCA_WLAN_VENDOR_TWT_STATUS_OK;
+	case WMI_HOST_GET_STATS_TWT_STATUS_DIALOG_ID_NOT_EXIST:
+		return QCA_WLAN_VENDOR_TWT_STATUS_SESSION_NOT_EXIST;
+	case WMI_HOST_GET_STATS_TWT_STATUS_INVALID_PARAM:
+		return QCA_WLAN_VENDOR_TWT_STATUS_INVALID_PARAM;
+	default:
+		return QCA_WLAN_VENDOR_TWT_STATUS_UNKNOWN_ERROR;
+	}
+}
+
 /**
  * hdd_twt_pack_get_stats_resp_nlmsg()- Packs and sends twt get stats response
  * hdd_ctx: pointer to the hdd context
@@ -2640,6 +2655,7 @@ hdd_twt_pack_get_stats_resp_nlmsg(struct hdd_context *hdd_ctx,
 {
 	struct nlattr *config_attr, *nla_params;
 	int i, attr;
+	int vendor_status;
 	uint32_t duration;
 
 	config_attr = nla_nest_start(reply_skb,
@@ -2733,6 +2749,12 @@ hdd_twt_pack_get_stats_resp_nlmsg(struct hdd_context *hdd_ctx,
 			return QDF_STATUS_E_INVAL;
 		}
 
+		attr = QCA_WLAN_VENDOR_ATTR_TWT_STATS_STATUS;
+		vendor_status = wmi_twt_get_stats_status_to_vendor_twt_status(params[i].status);
+		if (nla_put_u32(reply_skb, attr, vendor_status)) {
+			hdd_err("get_params failed to put status");
+			return QDF_STATUS_E_INVAL;
+		}
 		nla_nest_end(reply_skb, nla_params);
 	}
 	nla_nest_end(reply_skb, config_attr);
