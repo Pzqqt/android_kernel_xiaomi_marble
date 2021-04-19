@@ -290,6 +290,19 @@ struct wmi_twt_add_dialog_param {
 		b_twt_recommendation:3;
 };
 
+/* enum - status code of Get stats TWT dialog
+ * @WMI_HOST_GET_STATS_TWT_STATUS_OK: Get status TWT dialog successfully completed
+ * @WMI_HOST_GET_STATS_TWT_STATUS_DIALOG_ID_NOT_EXIST: TWT dialog ID does not exist
+ * @WMI_HOST_GET_STATS_TWT_STATUS_INVALID_PARAM: Invalid parameters
+ * @WMI_HOST_GET_STATS_TWT_STATUS_UNKNOWN_ERROR: Unknown error
+ */
+enum WMI_HOST_GET_STATS_TWT_STATUS {
+	WMI_HOST_GET_STATS_TWT_STATUS_OK,
+	WMI_HOST_GET_STATS_TWT_STATUS_DIALOG_ID_NOT_EXIST,
+	WMI_HOST_GET_STATS_TWT_STATUS_INVALID_PARAM,
+	WMI_HOST_GET_STATS_TWT_STATUS_UNKNOWN_ERROR,
+};
+
 /* enum - status code of adding TWT dialog
  * @WMI_HOST_ADD_TWT_STATUS_OK: adding TWT dialog successfully completed
  * @WMI_HOST_ADD_TWT_STATUS_TWT_NOT_ENABLED: TWT not enabled
