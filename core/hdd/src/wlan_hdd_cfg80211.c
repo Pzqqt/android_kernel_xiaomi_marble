@@ -7623,8 +7623,8 @@ static int hdd_config_mpdu_aggregation(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 
 	if (!rx_attr) {
-		hdd_err("Missing attribute for RX");
-		return -EINVAL;
+		hdd_debug("Missing attribute for RX");
+		return 0;
 	}
 
 	rx_size = nla_get_u8(rx_attr);
@@ -7651,8 +7651,8 @@ static int hdd_config_msdu_aggregation(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 
 	if (!rx_attr) {
-		hdd_err("Missing attribute for RX");
-		return -EINVAL;
+		hdd_debug("Missing attribute for RX");
+		return 0;
 	}
 
 	rx_size = nla_get_u8(rx_attr);
