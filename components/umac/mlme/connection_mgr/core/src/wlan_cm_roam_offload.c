@@ -2503,9 +2503,10 @@ cm_roam_restart_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	 * and WMI_ROAM_REASON_SUITABLE_AP event was received earlier,
 	 * now it is time to call it heartbeat failure.
 	 */
-	if (reason == REASON_PREAUTH_FAILED_FOR_ALL
-	    && mlme_get_roam_reason_better_ap(vdev)) {
-		mlme_err("Sending heartbeat failure after preauth failures");
+	if ((reason == REASON_PREAUTH_FAILED_FOR_ALL ||
+	     reason == REASON_NO_CAND_FOUND_OR_NOT_ROAMING_NOW) &&
+	     mlme_get_roam_reason_better_ap(vdev)) {
+		mlme_err("Sending heartbeat failure, reason %d", reason);
 		wlan_cm_send_beacon_miss(vdev_id, mlme_get_hb_ap_rssi(vdev));
 		mlme_set_roam_reason_better_ap(vdev, false);
 	}
