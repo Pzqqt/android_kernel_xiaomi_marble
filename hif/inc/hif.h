@@ -1074,6 +1074,28 @@ enum hif_pm_link_state {
 	HIF_PM_LINK_STATE_UP
 };
 
+/**
+ * enum hif_pm_htc_stats - hif runtime PM stats for HTC layer
+ * HIF_PM_HTC_STATS_GET_HTT_RESPONSE: PM stats for RTPM GET for HTT packets
+				      with response
+ * HIF_PM_HTC_STATS_GET_HTT_NO_RESPONSE: PM stats for RTPM GET for HTT packets
+					 with no response
+ * HIF_PM_HTC_STATS_PUT_HTT_RESPONSE: PM stats for RTPM PUT for HTT packets
+				      with response
+ * HIF_PM_HTC_STATS_PUT_HTT_NO_RESPONSE: PM stats for RTPM PUT for HTT packets
+					 with no response
+ * HIF_PM_HTC_STATS_PUT_HTT_ERROR: PM stats for RTPM PUT for failed HTT packets
+ * HIF_PM_HTC_STATS_PUT_HTC_CLEANUP: PM stats for RTPM PUT during HTC cleanup
+ */
+enum hif_pm_htc_stats {
+	HIF_PM_HTC_STATS_GET_HTT_RESPONSE,
+	HIF_PM_HTC_STATS_GET_HTT_NO_RESPONSE,
+	HIF_PM_HTC_STATS_PUT_HTT_RESPONSE,
+	HIF_PM_HTC_STATS_PUT_HTT_NO_RESPONSE,
+	HIF_PM_HTC_STATS_PUT_HTT_ERROR,
+	HIF_PM_HTC_STATS_PUT_HTC_CLEANUP,
+};
+
 #ifdef FEATURE_RUNTIME_PM
 struct hif_pm_runtime_lock;
 
@@ -1111,6 +1133,9 @@ void hif_pm_runtime_mark_dp_rx_busy(struct hif_opaque_softc *hif_ctx);
 int hif_pm_runtime_is_dp_rx_busy(struct hif_opaque_softc *hif_ctx);
 qdf_time_t hif_pm_runtime_get_dp_rx_busy_mark(struct hif_opaque_softc *hif_ctx);
 int hif_pm_runtime_sync_resume(struct hif_opaque_softc *hif_ctx);
+void hif_pm_runtime_update_stats(struct hif_opaque_softc *hif_ctx,
+				 wlan_rtpm_dbgid rtpm_dbgid,
+				 enum hif_pm_htc_stats stats);
 
 /**
  * hif_pm_set_link_state() - set link state during RTPM
@@ -1205,6 +1230,11 @@ static inline
 void hif_pm_set_link_state(struct hif_opaque_softc *hif_handle, uint8_t val)
 {}
 
+static inline
+void hif_pm_runtime_update_stats(struct hif_opaque_softc *hif_ctx,
+				 wlan_rtpm_dbgid rtpm_dbgid,
+				 enum hif_pm_htc_stats stats)
+{}
 #endif
 
 void hif_enable_power_management(struct hif_opaque_softc *hif_ctx,

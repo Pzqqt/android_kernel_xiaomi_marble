@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -48,6 +48,16 @@ struct hif_pm_runtime_lock {
 	const char *name;
 };
 
+/* Debugging stats for RTPM for HTC layer */
+struct hif_pm_runtime_htc_stats {
+	uint32_t rtpm_get_htt_resp;
+	uint32_t rtpm_get_htt_no_resp;
+	uint32_t rtpm_put_htt_resp;
+	uint32_t rtpm_put_htt_no_resp;
+	uint32_t rtpm_put_htt_error;
+	uint32_t rtpm_put_htc_cleanup;
+};
+
 /* Debugging stats for Runtime PM */
 struct hif_pci_pm_stats {
 	u32 suspended;
@@ -69,6 +79,7 @@ struct hif_pci_pm_stats {
 	void *last_busy_marker;
 	qdf_time_t last_busy_timestamp;
 	unsigned long suspend_jiffies;
+	struct hif_pm_runtime_htc_stats pm_stats_htc;
 };
 
 struct hif_runtime_pm_ctx {

@@ -1806,4 +1806,57 @@ uint8_t hif_pm_get_link_state(struct hif_opaque_softc *hif_handle)
 
 	return qdf_atomic_read(&scn->pm_link_state);
 }
+
+/**
+ * hif_pm_runtime_update_stats() - API to update RTPM stats for HTC layer
+ * @scn: hif context
+ * @rtpm_dbgid: RTPM dbg_id
+ * @hif_pm_htc_stats: Stats category
+ *
+ * Return: void
+ */
+void hif_pm_runtime_update_stats(struct hif_opaque_softc *hif_ctx,
+				 wlan_rtpm_dbgid rtpm_dbgid,
+				 enum hif_pm_htc_stats stats)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct hif_runtime_pm_ctx *rpm_ctx;
+
+	if (rtpm_dbgid != RTPM_ID_HTC)
+		return;
+
+	if (!scn)
+		return;
+
+	if (!hif_pci_pm_runtime_enabled(scn))
+		return;
+
+	rpm_ctx = hif_bus_get_rpm_ctx(scn);
+	if (!rpm_ctx)
+		return;
+
+	switch (stats) {
+	case HIF_PM_HTC_STATS_GET_HTT_RESPONSE:
+		rpm_ctx->pm_stats.pm_stats_htc.rtpm_get_htt_resp++;
+		break;
+	case HIF_PM_HTC_STATS_GET_HTT_NO_RESPONSE:
+		rpm_ctx->pm_stats.pm_stats_htc.rtpm_get_htt_no_resp++;
+		break;
+	case HIF_PM_HTC_STATS_PUT_HTT_RESPONSE:
+		rpm_ctx->pm_stats.pm_stats_htc.rtpm_put_htt_resp++;
+		break;
+	case HIF_PM_HTC_STATS_PUT_HTT_NO_RESPONSE:
+		rpm_ctx->pm_stats.pm_stats_htc.rtpm_put_htt_no_resp++;
+		break;
+	case HIF_PM_HTC_STATS_PUT_HTT_ERROR:
+		rpm_ctx->pm_stats.pm_stats_htc.rtpm_put_htt_error++;
+		break;
+	case HIF_PM_HTC_STATS_PUT_HTC_CLEANUP:
+		rpm_ctx->pm_stats.pm_stats_htc.rtpm_put_htc_cleanup++;
+		break;
+	default:
+		break;
+	}
+}
+
 #endif /* FEATURE_RUNTIME_PM */
