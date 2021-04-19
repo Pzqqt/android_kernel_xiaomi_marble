@@ -241,6 +241,7 @@ struct wlan_lmac_if_mgmt_txrx_tx_ops {
  * @scan_cancel: function to cancel scan
  * @pno_start: start pno scan
  * @pno_stop: stop pno scan
+ * @obss_disable: disable obss scan
  * @scan_reg_ev_handler: function to register for scan events
  * @scan_unreg_ev_handler: function to unregister for scan events
  *
@@ -255,6 +256,8 @@ struct wlan_lmac_if_scan_tx_ops {
 			struct pno_scan_req_params *req);
 	QDF_STATUS (*pno_stop)(struct wlan_objmgr_psoc *psoc,
 			uint8_t vdev_id);
+	QDF_STATUS (*obss_disable)(struct wlan_objmgr_psoc *psoc,
+				   uint8_t vdev_id);
 	QDF_STATUS (*scan_reg_ev_handler)(struct wlan_objmgr_psoc *psoc,
 			void *arg);
 	QDF_STATUS (*scan_unreg_ev_handler)(struct wlan_objmgr_psoc *psoc,

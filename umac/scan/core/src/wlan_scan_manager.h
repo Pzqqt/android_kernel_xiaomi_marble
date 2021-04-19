@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018, 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -127,5 +127,15 @@ QDF_STATUS scm_scan_start_flush_callback(struct scheduler_msg *msg);
  * Return: QDF_STATUS
  */
 QDF_STATUS scm_scan_cancel_flush_callback(struct scheduler_msg *msg);
+
+/**
+ * scm_disable_obss_pdev_scan() - Public API to disable pdev obss scan
+ * @psoc: psoc pointer
+ * @pdev: pdev pointer
+ *
+ * Return: void
+ */
+void scm_disable_obss_pdev_scan(struct wlan_objmgr_psoc *psoc,
+				struct wlan_objmgr_pdev *pdev);
 
 #endif

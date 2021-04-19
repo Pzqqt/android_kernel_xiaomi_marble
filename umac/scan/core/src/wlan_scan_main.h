@@ -508,6 +508,7 @@ struct scan_cb {
  * @miracast_enabled: miracast enabled
  * @disable_timeout: command timeout disabled
  * @drop_bcn_on_chan_mismatch: drop bcn if channel mismatch
+ * @obss_scan_offload: if obss scan offload is enabled
  * @drop_bcn_on_invalid_freq: drop bcn if freq is invalid in IEs (DS/HT/HE)
  * @scan_start_request_buff: buffer used to pass
  *      scan config to event handlers
@@ -541,6 +542,7 @@ struct wlan_scan_obj {
 	bool disable_timeout;
 	bool drop_bcn_on_chan_mismatch;
 	bool drop_bcn_on_invalid_freq;
+	bool obss_scan_offload;
 	struct scan_start_request scan_start_request_buff;
 #ifdef FEATURE_6G_SCAN_CHAN_SORT_ALGO
 	struct channel_list_db rnr_channel_db;

@@ -1431,6 +1431,18 @@ wmi_unified_ipa_offload_control_cmd(
  */
 QDF_STATUS wmi_unified_pno_stop_cmd(wmi_unified_t wmi_handle, uint8_t vdev_id);
 
+/**
+ * wmi_unified_obss_disable_cmd() - disable obss scan request
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ *
+ * This function request FW to disable obss scan.
+ *
+ * Return: QDF_STATUS_SUCCESS on success and others for failure
+ */
+QDF_STATUS wmi_unified_obss_disable_cmd(wmi_unified_t wmi_handle,
+					uint8_t vdev_id);
+
 #ifdef FEATURE_WLAN_SCAN_PNO
 /**
  * wmi_unified_pno_start_cmd() - PNO start request

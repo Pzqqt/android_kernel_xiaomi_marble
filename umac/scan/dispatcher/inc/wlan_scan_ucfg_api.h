@@ -267,6 +267,15 @@ ucfg_scan_get_global_config(struct wlan_objmgr_psoc *psoc,
 		enum scan_config config, uint32_t *val);
 
 /**
+ * ucfg_scan_set_obss_scan_offload() - Public API to set obss scan flag
+ * @psoc: psoc context
+ * @val: the value to be set
+ *
+ * Return: void.
+ */
+void ucfg_scan_set_obss_scan_offload(struct wlan_objmgr_psoc *psoc, bool value);
+
+/**
  * ucfg_scan_set_wide_band_scan() - Public API to disable/enable wide band scan
  * @pdev: psoc on which scans need to be disabled
  * @enable: enable wide band scan if @enable is true, disable otherwise

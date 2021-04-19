@@ -4878,6 +4878,44 @@ static QDF_STATUS send_pno_stop_cmd_tlv(wmi_unified_t wmi_handle, uint8_t vdev_i
 }
 
 /**
+ * send_obss_disable_cmd_tlv() - disable obss scan request
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ *
+ * This function request FW to disable ongoing obss scan operation.
+ *
+ * Return: QDF status
+ */
+static QDF_STATUS send_obss_disable_cmd_tlv(wmi_unified_t wmi_handle,
+					    uint8_t vdev_id)
+{
+	QDF_STATUS status;
+	wmi_buf_t buf;
+	wmi_obss_scan_disable_cmd_fixed_param *cmd;
+	int len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	wmi_debug("cmd %x vdev_id %d", WMI_OBSS_SCAN_DISABLE_CMDID, vdev_id);
+
+	cmd = (wmi_obss_scan_disable_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_obss_scan_disable_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+			wmi_obss_scan_disable_cmd_fixed_param));
+
+	cmd->vdev_id = vdev_id;
+	status = wmi_unified_cmd_send(wmi_handle, buf, len,
+				      WMI_OBSS_SCAN_DISABLE_CMDID);
+	if (QDF_IS_STATUS_ERROR(status))
+		wmi_buf_free(buf);
+
+	return status;
+}
+
+/**
  * wmi_set_pno_channel_prediction() - Set PNO channel prediction
  * @buf_ptr:      Buffer passed by upper layers
  * @pno:	  Buffer to be sent to the firmware
@@ -15005,6 +15043,7 @@ struct wmi_ops tlv_ops =  {
 #endif
 	.send_pno_stop_cmd = send_pno_stop_cmd_tlv,
 	.send_pno_start_cmd = send_pno_start_cmd_tlv,
+	.send_obss_disable_cmd = send_obss_disable_cmd_tlv,
 	.send_nlo_mawc_cmd = send_nlo_mawc_cmd_tlv,
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 	.send_process_ll_stats_clear_cmd = send_process_ll_stats_clear_cmd_tlv,
