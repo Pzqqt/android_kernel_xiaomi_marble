@@ -135,8 +135,10 @@ QDF_STATUS wmi_stats_handler(void *buff, int32_t len,
 	uint8_t *tag_start_ptr;
 
 	param_buf = (WMI_CTRL_PATH_STATS_EVENTID_param_tlvs *)buff;
-	if (!param_buf)
+	if (!param_buf) {
+		wmi_err_rl("param_buf is NULL");
 		return QDF_STATUS_E_FAILURE;
+	}
 	ev = (wmi_ctrl_path_stats_event_fixed_param *)param_buf->fixed_param;
 
 	curr_tlv_tag = WMITLV_GET_TLVTAG(ev->tlv_header);

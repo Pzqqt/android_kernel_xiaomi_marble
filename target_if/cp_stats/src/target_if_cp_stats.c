@@ -168,6 +168,8 @@ int target_if_infra_cp_stats_event_handler(ol_scn_t scn, uint8_t *data,
 	struct wmi_unified *wmi_handle;
 	struct wlan_lmac_if_cp_stats_rx_ops *rx_ops;
 
+	cp_stats_debug("Enter");
+
 	if (!scn || !data) {
 		cp_stats_err("scn: 0x%pK, data: 0x%pK", scn, data);
 		return -EINVAL;
