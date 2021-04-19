@@ -17235,6 +17235,40 @@ static int con_mode_handler(const char *kmessage, const struct kernel_param *kp)
 	return hdd_set_con_mode_cb(mode);
 }
 
+/*
+ * If the wlan_hdd_register_driver will return an error
+ * if the wlan driver tries to register with the
+ * platform driver before cnss_probe is completed.
+ * Depending on the error code, the wlan driver waits
+ * and retries to register.
+ */
+
+/* Max number of retries (arbitrary)*/
+#define HDD_MAX_PLD_REGISTER_RETRY (50)
+
+/* Max amount of time we sleep before each retry */
+#define HDD_PLD_REGISTER_FAIL_SLEEP_DURATION (100)
+
+static int hdd_register_driver_retry(void)
+{
+	int count = 0;
+	int errno;
+
+	while (true) {
+		errno = wlan_hdd_register_driver();
+		if (errno != -EAGAIN)
+			return errno;
+		hdd_nofl_info("Retry Platform Driver Registration; errno:%d count:%d",
+			      errno, count);
+		if (++count == HDD_MAX_PLD_REGISTER_RETRY)
+			return errno;
+		msleep(HDD_PLD_REGISTER_FAIL_SLEEP_DURATION);
+		continue;
+	}
+
+	return errno;
+}
+
 int hdd_driver_load(void)
 {
 	struct osif_driver_sync *driver_sync;
@@ -17312,12 +17346,11 @@ int hdd_driver_load(void)
 	osif_driver_sync_trans_stop(driver_sync);
 
 	/* psoc probe can happen in registration; do after 'load' transition */
-	errno = wlan_hdd_register_driver();
+	errno = hdd_register_driver_retry();
 	if (errno) {
 		hdd_err("Failed to register driver; errno:%d", errno);
 		goto pld_deinit;
 	}
-
 	hdd_debug("%s: driver loaded", WLAN_MODULE_NAME);
 	hdd_place_marker(NULL, "DRIVER LOADED", NULL);
 
