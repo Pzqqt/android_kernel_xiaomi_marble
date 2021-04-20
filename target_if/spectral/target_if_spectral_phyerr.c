@@ -1637,6 +1637,7 @@ target_if_get_detector_id_sscan_summary_report_gen3(uint8_t *data) {
 	return detector_id;
 }
 
+#ifndef OPTIMIZED_SAMP_MESSAGE
 /**
  * target_if_consume_sscan_summary_report_gen3() - Consume Spectral summary
  * report
@@ -1692,6 +1693,7 @@ target_if_consume_sscan_summary_report_gen3(
 		qdf_assert_always(0);
 	}
 }
+#endif
 
 /**
  * target_if_verify_sig_and_tag_gen3() - Verify tag and signature
@@ -1958,6 +1960,101 @@ QDF_STATUS target_if_byte_swap_spectral_fft_bins_gen3(
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* BIG_ENDIAN_HOST */
+
+#ifdef OPTIMIZED_SAMP_MESSAGE
+/**
+ * target_if_consume_sscan_summary_report_gen3() - Consume Spectral summary
+ * report
+ * @data: Pointer to Spectral summary report
+ * @fields: Pointer to structure to be populated with extracted fields
+ * @spectral: Pointer to spectral object
+ *
+ * Consume Spectral summary report for gen3
+ *
+ * Return: Success/Failure
+ */
+static QDF_STATUS
+target_if_consume_sscan_summary_report_gen3(
+				uint8_t **data,
+				struct sscan_report_fields_gen3 *fields,
+				struct target_if_spectral *spectral)
+{
+	struct spectral_sscan_summary_report_gen3 *psscan_summary_report;
+
+	if (!data) {
+		spectral_err_rl("Summary report buffer is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!fields) {
+		spectral_err_rl("Invalid pointer to Summary report fields");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!spectral) {
+		spectral_err_rl("Spectral LMAC object is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	/* Validate Spectral scan summary report */
+	if (target_if_verify_sig_and_tag_gen3(
+			spectral, *data,
+			TLV_TAG_SPECTRAL_SUMMARY_REPORT_GEN3) != 0) {
+		spectral_err_rl("Wrong tag/sig in sscan summary");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	fields->sscan_detector_id =
+		target_if_get_detector_id_sscan_summary_report_gen3(*data);
+	if (fields->sscan_detector_id >=
+	    spectral->rparams.num_spectral_detectors) {
+		spectral->diag_stats.spectral_invalid_detector_id++;
+		spectral_err_rl("Invalid detector id %u, expected is 0 to %u",
+				fields->sscan_detector_id,
+				spectral->rparams.num_spectral_detectors);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	psscan_summary_report =
+		(struct spectral_sscan_summary_report_gen3 *)*data;
+
+	fields->sscan_agc_total_gain = get_bitfield(
+			psscan_summary_report->hdr_a,
+			SSCAN_SUMMARY_REPORT_HDR_A_AGC_TOTAL_GAIN_SIZE_GEN3,
+			SSCAN_SUMMARY_REPORT_HDR_A_AGC_TOTAL_GAIN_POS_GEN3);
+	fields->inband_pwr_db = get_bitfield(
+			psscan_summary_report->hdr_a,
+			SSCAN_SUMMARY_REPORT_HDR_A_INBAND_PWR_DB_SIZE_GEN3,
+			SSCAN_SUMMARY_REPORT_HDR_A_INBAND_PWR_DB_POS_GEN3);
+	fields->sscan_pri80 = get_bitfield(
+			psscan_summary_report->hdr_a,
+			SSCAN_SUMMARY_REPORT_HDR_A_PRI80_SIZE_GEN3,
+			SSCAN_SUMMARY_REPORT_HDR_A_PRI80_POS_GEN3);
+
+	switch (spectral->rparams.version) {
+	case SPECTRAL_REPORT_FORMAT_VERSION_1:
+		fields->sscan_gainchange = get_bitfield(
+			psscan_summary_report->hdr_b,
+			SSCAN_SUMMARY_REPORT_HDR_B_GAINCHANGE_SIZE_GEN3_V1,
+			SSCAN_SUMMARY_REPORT_HDR_B_GAINCHANGE_POS_GEN3_V1);
+		break;
+	case SPECTRAL_REPORT_FORMAT_VERSION_2:
+		fields->sscan_gainchange = get_bitfield(
+			psscan_summary_report->hdr_c,
+			SSCAN_SUMMARY_REPORT_HDR_C_GAINCHANGE_SIZE_GEN3_V2,
+			SSCAN_SUMMARY_REPORT_HDR_C_GAINCHANGE_POS_GEN3_V2);
+		break;
+	default:
+		qdf_assert_always(0);
+	}
+
+	/* Advance buf pointer to the search fft report */
+	*data += sizeof(struct spectral_sscan_summary_report_gen3);
+	*data += spectral->rparams.ssumaary_padding_bytes;
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* OPTIMIZED_SAMP_MESSAGE */
 
 int
 target_if_consume_spectral_report_gen3(

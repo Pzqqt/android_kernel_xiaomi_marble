@@ -366,12 +366,14 @@ struct spectral_phyerr_fft_report_gen3 {
  *                 performed on the pri80 segment. Software may choose to
  *                 disregard the FFT sample if this is set to 1 but detector ID
  *                 does not correspond to the ID for the pri80 segment.
+ * @sscan_detector_id: Detector ID in Spectral scan report
  */
 struct sscan_report_fields_gen3 {
 	uint8_t sscan_agc_total_gain;
 	int16_t inband_pwr_db;
 	uint8_t sscan_gainchange;
 	uint8_t sscan_pri80;
+	uint8_t sscan_detector_id;
 };
 
 /**
