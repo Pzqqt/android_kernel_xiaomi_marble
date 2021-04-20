@@ -4172,6 +4172,48 @@ update_bw:
 	ch_params->center_freq_seg1 = 0;
 }
 
+#if defined(WLAN_FEATURE_11BE) && defined(CONFIG_REG_CLIENT)
+static void reg_copy_ch_params(struct ch_params *ch_params,
+			       struct reg_channel_list chan_list)
+{
+	/* Taking only first set of chan params*/
+	if (chan_list.chan_param[0].ch_width != CH_WIDTH_320MHZ)
+		reg_info("coud not find ch_params for 320MHz downgrading to %d",
+			 chan_list.chan_param[0].ch_width);
+	ch_params->center_freq_seg0 = chan_list.chan_param[0].center_freq_seg0;
+	ch_params->center_freq_seg1 = chan_list.chan_param[0].center_freq_seg1;
+	ch_params->mhz_freq_seg0 = chan_list.chan_param[0].mhz_freq_seg0;
+	ch_params->mhz_freq_seg1 = chan_list.chan_param[0].mhz_freq_seg1;
+	ch_params->ch_width = chan_list.chan_param[0].ch_width;
+	ch_params->sec_ch_offset = chan_list.chan_param[0].sec_ch_offset;
+	ch_params->reg_punc_pattern = chan_list.chan_param[0].reg_punc_pattern;
+}
+
+void reg_set_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
+				     qdf_freq_t freq,
+				     qdf_freq_t sec_ch_2g_freq,
+				     struct ch_params *ch_params)
+{
+	if (reg_is_5ghz_ch_freq(freq) || reg_is_6ghz_chan_freq(freq)) {
+		if (ch_params->ch_width == CH_WIDTH_320MHZ) {
+			struct reg_channel_list chan_list;
+
+			qdf_mem_zero(&chan_list, sizeof(chan_list));
+			/* For now sending center freq as 0 */
+			reg_fill_channel_list(pdev, freq, sec_ch_2g_freq,
+					      ch_params->ch_width, 0,
+					      &chan_list);
+			reg_copy_ch_params(ch_params, chan_list);
+		} else {
+			reg_set_5g_channel_params_for_freq(pdev, freq,
+							   ch_params);
+		}
+	} else if  (reg_is_24ghz_ch_freq(freq)) {
+		reg_set_2g_channel_params_for_freq(pdev, freq, ch_params,
+						   sec_ch_2g_freq);
+	}
+}
+#else
 void reg_set_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
 				     qdf_freq_t freq,
 				     qdf_freq_t sec_ch_2g_freq,
@@ -4183,6 +4225,7 @@ void reg_set_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
 		reg_set_2g_channel_params_for_freq(pdev, freq, ch_params,
 						   sec_ch_2g_freq);
 }
+#endif
 
 uint8_t reg_get_channel_reg_power_for_freq(struct wlan_objmgr_pdev *pdev,
 					   qdf_freq_t freq)
