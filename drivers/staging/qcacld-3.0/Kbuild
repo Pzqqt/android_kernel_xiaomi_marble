@@ -10,7 +10,7 @@ ifeq ($(KERNEL_BUILD), y)
 	# These are provided in external module based builds
 	# Need to explicitly define for Kernel-based builds
 	MODNAME := wlan
-	WLAN_ROOT := drivers/staging/qcacld-3.0
+	WLAN_ROOT := $(srctree)/$(src)
 	WLAN_COMMON_ROOT := cmn
 	WLAN_COMMON_INC := $(WLAN_ROOT)/$(WLAN_COMMON_ROOT)
 	WLAN_FW_API := $(WLAN_ROOT)/../fw-api/
