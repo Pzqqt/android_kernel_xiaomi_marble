@@ -2499,19 +2499,11 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 	if (ret)
 		return;
 
-	if (drm_enc->crtc->state->active_changed ||
-		!(msm_is_mode_seamless_dms(msm_mode) ||
-		(msm_is_mode_seamless_dyn_clk(msm_mode) &&
-		sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE)))) {
-
-		/* reserve dynamic resources now, indicating non test-only */
-		ret = sde_rm_reserve(&sde_kms->rm, drm_enc, drm_enc->crtc->state,
-				conn->state, false);
-		if (ret) {
-			SDE_ERROR_ENC(sde_enc,
-				"failed to reserve hw resources, %d\n", ret);
-			return;
-		}
+	/* reserve dynamic resources now, indicating non test-only */
+	ret = sde_rm_reserve(&sde_kms->rm, drm_enc, drm_enc->crtc->state, conn->state, false);
+	if (ret) {
+		SDE_ERROR_ENC(sde_enc, "failed to reserve hw resources, %d\n", ret);
+		return;
 	}
 
 	/* assign the reserved HW blocks to this encoder */
