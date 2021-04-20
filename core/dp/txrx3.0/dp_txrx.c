@@ -192,6 +192,9 @@ int dp_rx_tm_get_pending(ol_txrx_soc_handle soc)
 
 #ifdef DP_MEM_PRE_ALLOC
 
+/* Max entries in FISA Flow table */
+#define FISA_RX_FT_SIZE 128
+
 /* Num elements in REO ring */
 #define REO_DST_RING_SIZE 1024
 
@@ -295,6 +298,9 @@ static struct dp_prealloc_context g_dp_context_allocs[] = {
 	 false, NULL},
 #endif	/* RX_DEFRAG_DO_NOT_REINJECT */
 #endif	/* WLAN_FEATURE_DP_RX_RING_HISTORY */
+#ifdef WLAN_SUPPORT_RX_FISA
+	{DP_FISA_RX_FT_TYPE, sizeof(struct dp_fisa_rx_sw_ft) * FISA_RX_FT_SIZE, false, NULL},
+#endif
 };
 
 static struct  dp_consistent_prealloc g_dp_consistent_allocs[] = {
