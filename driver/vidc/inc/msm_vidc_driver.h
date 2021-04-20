@@ -314,6 +314,10 @@ int msm_vidc_map_driver_buf(struct msm_vidc_inst *inst,
 	struct msm_vidc_buffer *buf);
 int msm_vidc_put_driver_buf(struct msm_vidc_inst *inst,
 	struct msm_vidc_buffer *buf);
+int msm_vidc_get_delayed_unmap(struct msm_vidc_inst *inst,
+	struct msm_vidc_map *map);
+int msm_vidc_put_delayed_unmap(struct msm_vidc_inst *inst,
+	struct msm_vidc_map *map);
 int msm_vidc_queue_buffer_single(struct msm_vidc_inst *inst, struct vb2_buffer *vb2);
 int msm_vidc_destroy_internal_buffer(struct msm_vidc_inst *inst,
 	struct msm_vidc_buffer *buffer);

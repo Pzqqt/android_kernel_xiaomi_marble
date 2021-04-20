@@ -1866,6 +1866,8 @@ int msm_vdec_handle_release_buffer(struct msm_vidc_inst *inst,
 	struct msm_vidc_buffer *buf)
 {
 	int rc = 0;
+	struct msm_vidc_map *map;
+	bool found;
 
 	if (!inst || !buf) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1873,7 +1875,26 @@ int msm_vdec_handle_release_buffer(struct msm_vidc_inst *inst,
 	}
 
 	print_vidc_buffer(VIDC_HIGH, "high", "release done", inst, buf);
-	msm_vidc_unmap_driver_buf(inst, buf);
+
+	found = false;
+	list_for_each_entry(map, &inst->mappings.output.list, list) {
+		if (map->device_addr == buf->device_addr) {
+			found = true;
+			break;
+		}
+	}
+	if (found) {
+		/*
+		 * finally remove mappings if no one using it.
+		 * refcount will be more than 1 if anyone using it.
+		 */
+		if (map->refcount == 1) {
+			rc = msm_vidc_put_delayed_unmap(inst, map);
+			if (rc)
+				print_vidc_buffer(VIDC_ERR, "err ",
+					"delayed unmap failed", inst, buf);
+		}
+	}
 
 	/* delete the buffer from release list */
 	list_del(&buf->list);
@@ -1895,7 +1916,7 @@ static int msm_vidc_unmap_excessive_mappings(struct msm_vidc_inst *inst)
 
 	/*
 	 * count entries from map list whose refcount is 1
-	 * these are excess mappings present due to lazy
+	 * these are excess mappings present due to delayed
 	 * unmap feature.
 	 */
 	list_for_each_entry(map, &inst->mappings.output.list, list) {

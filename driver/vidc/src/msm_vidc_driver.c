@@ -2067,6 +2067,52 @@ int msm_vidc_put_map_buffer(struct msm_vidc_inst *inst, struct msm_vidc_map *map
 	return 0;
 }
 
+int msm_vidc_get_delayed_unmap(struct msm_vidc_inst *inst, struct msm_vidc_map *map)
+{
+	int rc = 0;
+
+	if (!inst || !map) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	map->skip_delayed_unmap = 1;
+	rc = msm_vidc_memory_map(inst->core, map);
+	if (rc)
+		return rc;
+
+	return 0;
+}
+
+int msm_vidc_put_delayed_unmap(struct msm_vidc_inst *inst, struct msm_vidc_map *map)
+{
+	int rc = 0;
+
+	if (!inst || !map) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!map->skip_delayed_unmap) {
+		i_vpr_e(inst, "%s: no delayed unmap, addr %#x\n",
+			__func__, map->device_addr);
+		return -EINVAL;
+	}
+
+	map->skip_delayed_unmap = 0;
+	rc = msm_vidc_memory_unmap(inst->core, map);
+	if (rc)
+		i_vpr_e(inst, "%s: unmap failed\n", __func__);
+
+	if (!map->refcount) {
+		msm_vidc_memory_put_dmabuf(map->dmabuf);
+		list_del(&map->list);
+		msm_vidc_put_map_buffer(inst, map);
+	}
+
+	return rc;
+}
+
 int msm_vidc_destroy_map_buffer(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_map *map, *dummy;
@@ -2173,7 +2219,7 @@ int msm_vidc_map_driver_buf(struct msm_vidc_inst *inst,
 		return -EINVAL;
 
 	/*
-	 * new buffer: map twice for lazy unmap feature sake
+	 * new buffer: map twice for delayed unmap feature sake
 	 * existing buffer: map once
 	 */
 	list_for_each_entry(map, &mappings->list, list) {
@@ -2195,10 +2241,9 @@ int msm_vidc_map_driver_buf(struct msm_vidc_inst *inst,
 		if (!map->dmabuf)
 			return -EINVAL;
 		map->region = msm_vidc_get_buffer_region(inst, buf->type, __func__);
-		/* lazy unmap feature not needed for decoder output buffers */
+		/* delayed unmap feature needed for decoder output buffers */
 		if (is_decode_session(inst) && is_output_buffer(buf->type)) {
-			map->skip_delayed_unmap = 1;
-			rc = msm_vidc_memory_map(inst->core, map);
+			rc = msm_vidc_get_delayed_unmap(inst, map);
 			if (rc) {
 				msm_vidc_memory_put_dmabuf(map->dmabuf);
 				msm_vidc_put_map_buffer(inst, map);

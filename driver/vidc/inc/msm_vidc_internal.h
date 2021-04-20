@@ -123,7 +123,7 @@
 /*
  * MAX_MAPPED_OUTPUT_COUNT: maximum mappings which can
  * be present in output map list with refcount 1. These
- * mappings exist due to lazy unmap feature. Current
+ * mappings exist due to delayed unmap feature. Current
  * threshold is kept as 50 to handle vpp usecases
  * which might have many output buffers.
  */
