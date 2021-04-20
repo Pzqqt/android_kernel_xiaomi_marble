@@ -319,6 +319,9 @@ struct phyerr_info {
  * @fft_peak_mag:        Peak magnitude
  * @fft_avgpwr_db:       Average power in dB
  * @fft_relpwr_db:       Relative power in dB
+ * @fft_bin_count:       Number of FFT bins in the FFT report
+ * @fft_bin_size:        Size of one FFT bin in bytes
+ * @bin_pwr_data:        Contains FFT bins extracted from the report
  */
 struct spectral_search_fft_info_gen3 {
 	uint32_t timestamp;
@@ -333,6 +336,9 @@ struct spectral_search_fft_info_gen3 {
 	int32_t  fft_peak_mag;
 	uint32_t fft_avgpwr_db;
 	uint32_t fft_relpwr_db;
+	uint32_t fft_bin_count;
+	uint8_t  fft_bin_size;
+	uint8_t  *bin_pwr_data;
 };
 
 /**

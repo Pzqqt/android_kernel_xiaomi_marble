@@ -1313,6 +1313,7 @@ target_if_spectral_get_bin_count_after_len_adj(
 	return fft_bin_count;
 }
 
+#ifndef OPTIMIZED_SAMP_MESSAGE
 /**
  * target_if_process_sfft_report_gen3() - Process Search FFT Report for gen3
  * @p_fft_report: Pointer to fft report
@@ -1390,6 +1391,7 @@ target_if_process_sfft_report_gen3(
 
 	return 0;
 }
+#endif
 
 /**
  * target_if_dump_fft_report_gen3() - Dump FFT Report for gen3
@@ -2051,6 +2053,172 @@ target_if_consume_sscan_summary_report_gen3(
 	/* Advance buf pointer to the search fft report */
 	*data += sizeof(struct spectral_sscan_summary_report_gen3);
 	*data += spectral->rparams.ssumaary_padding_bytes;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * target_if_process_sfft_report_gen3() - Validate and Process Search
+ * FFT Report for gen3
+ * @data: Pointer to Spectral FFT report
+ * @p_sfft: Pointer to search fft report
+ * @spectral: Pointer to spectral object
+ * @sscan_detector_id: Spectral detector id extracted from Summary report
+ *
+ * Validate and Process Search FFT Report for gen3
+ *
+ * Return: Success/Failure
+ */
+static QDF_STATUS
+target_if_process_sfft_report_gen3(
+	uint8_t *data,
+	struct spectral_search_fft_info_gen3 *p_sfft,
+	struct target_if_spectral *spectral,
+	enum spectral_detector_id sscan_detector_id)
+{
+	struct spectral_phyerr_fft_report_gen3 *p_fft_report;
+	int32_t peak_sidx = 0;
+	int32_t peak_mag;
+	int fft_hdr_length = 0;
+	struct target_if_spectral_ops *p_sops;
+	enum spectral_scan_mode spectral_mode;
+	QDF_STATUS ret;
+
+	if (!data) {
+		spectral_err_rl("FFT report buffer is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!p_sfft) {
+		spectral_err_rl("Invalid pointer to Search FFT report info");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!spectral) {
+		spectral_err_rl("Spectral LMAC object is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	/*
+	 * For easy comparision between MDK team and OS team, the MDK script
+	 * variable names have been used
+	 */
+
+	p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
+
+	/* Validate Spectral search FFT report */
+	if (target_if_verify_sig_and_tag_gen3(
+			spectral, data, TLV_TAG_SEARCH_FFT_REPORT_GEN3) != 0) {
+		spectral_err_rl("Unexpected tag/sig in sfft, detid= %u",
+				sscan_detector_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	p_fft_report = (struct spectral_phyerr_fft_report_gen3 *)data;
+
+	fft_hdr_length = get_bitfield(
+			p_fft_report->fft_hdr_lts,
+			SPECTRAL_REPORT_LTS_HDR_LENGTH_SIZE_GEN3,
+			SPECTRAL_REPORT_LTS_HDR_LENGTH_POS_GEN3) * 4;
+	if (fft_hdr_length < 16) {
+		spectral_err("Wrong TLV length %u, detector id = %d",
+			     fft_hdr_length, sscan_detector_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	p_sfft->fft_detector_id = get_bitfield(p_fft_report->hdr_a,
+					       2, 0);
+
+	/* It is expected to have same detector id for
+	 * summary and fft report
+	 */
+	if (sscan_detector_id != p_sfft->fft_detector_id) {
+		spectral_err_rl("Different detid in ssummary(%u) and sfft(%u)",
+				sscan_detector_id, p_sfft->fft_detector_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (p_sfft->fft_detector_id >
+				spectral->rparams.num_spectral_detectors) {
+		spectral->diag_stats.spectral_invalid_detector_id++;
+		spectral_err("Invalid detector id %u, expected is 0 to %u",
+			     p_sfft->fft_detector_id,
+			     spectral->rparams.num_spectral_detectors);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Populate the Search FFT Info */
+	p_sfft->timestamp = p_fft_report->fft_timestamp;
+
+	p_sfft->fft_num = get_bitfield(p_fft_report->hdr_a, 3, 2);
+
+	switch (spectral->rparams.version) {
+	case SPECTRAL_REPORT_FORMAT_VERSION_1:
+		p_sfft->fft_radar_check = get_bitfield(p_fft_report->hdr_a,
+						       12, 5);
+		peak_sidx = get_bitfield(p_fft_report->hdr_a, 11, 17);
+		p_sfft->fft_chn_idx = get_bitfield(p_fft_report->hdr_a, 3, 28);
+		p_sfft->fft_base_pwr_db = get_bitfield(p_fft_report->hdr_b,
+						       9, 0);
+		p_sfft->fft_total_gain_db = get_bitfield(p_fft_report->hdr_b,
+							 8, 9);
+		break;
+	case SPECTRAL_REPORT_FORMAT_VERSION_2:
+		p_sfft->fft_radar_check = get_bitfield(p_fft_report->hdr_a,
+						       14, 5);
+		peak_sidx = get_bitfield(p_fft_report->hdr_a, 11, 19);
+		p_sfft->fft_chn_idx = get_bitfield(p_fft_report->hdr_b, 3, 0);
+		p_sfft->fft_base_pwr_db = get_bitfield(p_fft_report->hdr_b,
+						       9, 3);
+		p_sfft->fft_total_gain_db = get_bitfield(p_fft_report->hdr_b,
+							 8, 12);
+		break;
+	default:
+		qdf_assert_always(0);
+	}
+
+	p_sfft->fft_peak_sidx = unsigned_to_signed(peak_sidx, 11);
+
+	p_sfft->fft_num_str_bins_ib = get_bitfield(p_fft_report->hdr_c,
+						   8, 0);
+	peak_mag = get_bitfield(p_fft_report->hdr_c, 10, 8);
+	p_sfft->fft_peak_mag = unsigned_to_signed(peak_mag, 10);
+	p_sfft->fft_avgpwr_db = get_bitfield(p_fft_report->hdr_c,
+					     7, 18);
+	p_sfft->fft_relpwr_db = get_bitfield(p_fft_report->hdr_c,
+					     7, 25);
+
+	spectral_mode = target_if_get_spectral_mode(p_sfft->fft_detector_id,
+						    &spectral->rparams);
+	if (spectral_mode >= SPECTRAL_SCAN_MODE_MAX) {
+		spectral_err_rl("No valid Spectral mode for detector id %u",
+				p_sfft->fft_detector_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+	p_sfft->fft_bin_count =
+		target_if_spectral_get_bin_count_after_len_adj(
+			fft_hdr_length - spectral->rparams.fft_report_hdr_len,
+			spectral->params[spectral_mode].ss_rpt_mode,
+			&spectral->len_adj_swar,
+			(size_t *)&p_sfft->fft_bin_size);
+
+	p_sfft->bin_pwr_data = (uint8_t *)p_fft_report + SPECTRAL_FFT_BINS_POS;
+
+	/* Apply byte-swap on the FFT bins.
+	 * NOTE: Until this point, bytes of the FFT bins could be in
+	 *       reverse order on a big-endian machine. If the consumers
+	 *       of FFT bins expects bytes in the correct order,
+	 *       they should use them only after this point.
+	 */
+	if (p_sops->byte_swap_fft_bins) {
+		ret = p_sops->byte_swap_fft_bins(&spectral->len_adj_swar,
+						 &p_sfft->bin_pwr_data,
+						 p_sfft->fft_bin_count);
+		if (QDF_IS_STATUS_ERROR(ret)) {
+			spectral_err_rl("Byte-swap on the FFT bins failed");
+			return QDF_STATUS_E_FAILURE;
+		}
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
