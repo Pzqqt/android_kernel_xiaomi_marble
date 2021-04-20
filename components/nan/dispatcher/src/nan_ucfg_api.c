@@ -461,14 +461,14 @@ QDF_STATUS ucfg_nan_req_processor(struct wlan_objmgr_vdev *vdev,
 			nan_err("Request allocation failure");
 			return QDF_STATUS_E_NOMEM;
 		}
-		psoc_obj->request_context = osif_request_cookie(request);
+		psoc_obj->ndp_request_ctx = osif_request_cookie(request);
 
 		nan_debug("Wait for NDP END indication");
 		err = osif_request_wait_for_response(request);
 		if (err)
 			nan_debug("NAN request timed out: %d", err);
 		osif_request_put(request);
-		psoc_obj->request_context = NULL;
+		psoc_obj->ndp_request_ctx = NULL;
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -760,7 +760,7 @@ QDF_STATUS ucfg_nan_discovery_req(void *in_req, uint32_t req_type)
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	psoc_priv->request_context = osif_request_cookie(request);
+	psoc_priv->nan_disc_request_ctx = osif_request_cookie(request);
 	if (req_type == NAN_DISABLE_REQ)
 		psoc_priv->is_explicit_disable = true;
 
