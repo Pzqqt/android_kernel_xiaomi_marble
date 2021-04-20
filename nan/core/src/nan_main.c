@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -743,7 +743,7 @@ static QDF_STATUS nan_handle_ndp_end_rsp(
 
 	/* Unblock the wait here if NDP_END request is a failure */
 	if (rsp->status != 0) {
-		request = osif_request_get(psoc_nan_obj->request_context);
+		request = osif_request_get(psoc_nan_obj->ndp_request_ctx);
 		if (request) {
 			osif_request_complete(request);
 			osif_request_put(request);
@@ -811,7 +811,7 @@ static QDF_STATUS nan_handle_end_ind(
 						     NDP_END_IND, ind);
 
 	/* Unblock the NDP_END wait */
-	request = osif_request_get(psoc_nan_obj->request_context);
+	request = osif_request_get(psoc_nan_obj->ndp_request_ctx);
 	if (request) {
 		osif_request_complete(request);
 		osif_request_put(request);
@@ -876,7 +876,7 @@ fail:
 done:
 	call_back = psoc_nan_obj->cb_obj.ucfg_nan_request_process_cb;
 	if (call_back)
-		call_back(psoc_nan_obj->request_context);
+		call_back(psoc_nan_obj->nan_disc_request_ctx);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -909,7 +909,7 @@ QDF_STATUS nan_disable_cleanup(struct wlan_objmgr_psoc *psoc)
 		policy_mgr_decr_session_set_pcl(psoc, QDF_NAN_DISC_MODE,
 						vdev_id);
 		if (psoc_nan_obj->is_explicit_disable && call_back)
-			call_back(psoc_nan_obj->request_context);
+			call_back(psoc_nan_obj->nan_disc_request_ctx);
 
 		policy_mgr_nan_sap_post_disable_conc_check(psoc);
 	} else {
