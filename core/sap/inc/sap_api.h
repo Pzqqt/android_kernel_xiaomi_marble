@@ -1166,12 +1166,14 @@ QDF_STATUS wlansap_get_dfs_cac_state(mac_handle_t mac_handle,
  * channel width from user configured phymode for csa
  * @sap_context: sap adapter context
  * @chan_freq: target channel frequency (MHz)
+ * @tgt_ch_params: target new channel bw parameters to be updated
  *
  * Return: phy_ch_width
  */
 enum phy_ch_width
 wlansap_get_csa_chanwidth_from_phymode(struct sap_context *sap_context,
-				       uint32_t chan_freq);
+				       uint32_t chan_freq,
+				       struct ch_params *tgt_ch_params);
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 QDF_STATUS

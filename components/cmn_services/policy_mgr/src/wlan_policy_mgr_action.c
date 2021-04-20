@@ -2156,6 +2156,7 @@ static uint32_t policy_mgr_select_2g_chan(struct wlan_objmgr_psoc *psoc)
  * @sap_ch_freq: SAP starting channel
  * @sap_vdev_id: sap vdev id
  * @vdev_opmode: vdev opmode
+ * @ch_params: channel bw parameters
  *
  * Validate whether SAP can be forced scc to 6ghz band or not.
  * If not, select 2G band channel for DBS hw
@@ -2165,9 +2166,17 @@ static uint32_t policy_mgr_select_2g_chan(struct wlan_objmgr_psoc *psoc)
  */
 static QDF_STATUS policy_mgr_check_6ghz_sap_conc(
 	struct wlan_objmgr_psoc *psoc, uint32_t *con_ch_freq,
-	uint32_t sap_ch_freq, uint8_t sap_vdev_id, enum QDF_OPMODE vdev_opmode)
+	uint32_t sap_ch_freq, uint8_t sap_vdev_id, enum QDF_OPMODE vdev_opmode,
+	struct ch_params *ch_params)
 {
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	uint32_t ch_freq = *con_ch_freq;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid context");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	if (ch_freq && WLAN_REG_IS_6GHZ_CHAN_FREQ(ch_freq) &&
 	    !WLAN_REG_IS_6GHZ_CHAN_FREQ(sap_ch_freq) &&
@@ -2193,6 +2202,10 @@ static QDF_STATUS policy_mgr_check_6ghz_sap_conc(
 	}
 	if (ch_freq != sap_ch_freq)
 		*con_ch_freq = ch_freq;
+	if (*con_ch_freq &&
+	    pm_ctx->hdd_cbacks.wlan_get_ap_prefer_conc_ch_params)
+		pm_ctx->hdd_cbacks.wlan_get_ap_prefer_conc_ch_params(
+			psoc, sap_vdev_id, ch_freq, ch_params);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2210,6 +2223,7 @@ QDF_STATUS policy_mgr_valid_sap_conc_channel_check(
 	struct wlan_objmgr_vdev *vdev;
 	enum QDF_OPMODE vdev_opmode;
 	bool enable_srd_channel;
+	enum phy_ch_width old_ch_width;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, sap_vdev_id,
 						    WLAN_POLICY_MGR_ID);
@@ -2246,18 +2260,24 @@ QDF_STATUS policy_mgr_valid_sap_conc_channel_check(
 	 */
 	if (!ch_freq &&
 	    sap_ch_freq != policy_mgr_mode_specific_get_channel(psoc,
-	    PM_STA_MODE)) {
+	    PM_STA_MODE) &&
+	    sap_ch_freq != policy_mgr_mode_specific_get_channel(psoc,
+	    PM_P2P_CLIENT_MODE)) {
 		return QDF_STATUS_SUCCESS;
 	} else if (!ch_freq) {
 		ch_freq = sap_ch_freq;
 	} else if (ch_freq && WLAN_REG_IS_6GHZ_CHAN_FREQ(ch_freq)) {
 		return policy_mgr_check_6ghz_sap_conc(
 			psoc, con_ch_freq, sap_ch_freq, sap_vdev_id,
-			vdev_opmode);
+			vdev_opmode, ch_params);
 	}
 
 	sta_sap_scc_on_dfs_chan =
 		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(psoc);
+	old_ch_width = ch_params->ch_width;
+	if (pm_ctx->hdd_cbacks.wlan_get_ap_prefer_conc_ch_params)
+		pm_ctx->hdd_cbacks.wlan_get_ap_prefer_conc_ch_params(
+			psoc, sap_vdev_id, ch_freq, ch_params);
 	is_dfs = wlan_mlme_check_chan_param_has_dfs(
 			pm_ctx->pdev, ch_params, ch_freq);
 	if (policy_mgr_valid_sta_channel_check(psoc, ch_freq)) {
@@ -2307,8 +2327,12 @@ QDF_STATUS policy_mgr_valid_sap_conc_channel_check(
 	}
 
 update_chan:
-	if (ch_freq != sap_ch_freq)
+	if (ch_freq != sap_ch_freq || old_ch_width != ch_params->ch_width)
 		*con_ch_freq = ch_freq;
+	if (*con_ch_freq &&
+	    pm_ctx->hdd_cbacks.wlan_get_ap_prefer_conc_ch_params)
+		pm_ctx->hdd_cbacks.wlan_get_ap_prefer_conc_ch_params(
+			psoc, sap_vdev_id, ch_freq, ch_params);
 
 	return QDF_STATUS_SUCCESS;
 }

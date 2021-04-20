@@ -584,6 +584,7 @@ enum phy_ch_width wlan_sap_get_concurrent_bw(struct wlan_objmgr_pdev *pdev,
 	enum phy_ch_width sta_chan_width;
 	bool sta_present, is_con_chan_dfs = false;
 	uint8_t sta_vdev_id;
+	uint8_t sta_sap_scc_on_dfs_chnl;
 
 	if (WLAN_REG_IS_24GHZ_CH_FREQ(con_ch_freq))
 		return CH_WIDTH_20MHZ;
@@ -595,6 +596,32 @@ enum phy_ch_width wlan_sap_get_concurrent_bw(struct wlan_objmgr_pdev *pdev,
 							&sta_vdev_id,
 							con_ch_freq,
 							&sta_ch_width);
+	if (policy_mgr_is_hw_dbs_capable(psoc)) {
+		policy_mgr_get_sta_sap_scc_on_dfs_chnl(
+					psoc, &sta_sap_scc_on_dfs_chnl);
+		if (sta_sap_scc_on_dfs_chnl ==
+					PM_STA_SAP_ON_DFS_MASTER_MODE_FLEX) {
+			return channel_width;
+		} else if (sta_sap_scc_on_dfs_chnl ==
+				PM_STA_SAP_ON_DFS_MASTER_MODE_DISABLED) {
+			if (sta_present)
+				return channel_width;
+			/*
+			 * sta_sap_scc_on_dfs_chnl = 1, DFS master is disabled.
+			 * If STA not present (SAP single), the SAP (160Mhz) is
+			 * not allowed on DFS, so limit SAP to 80Mhz.
+			 */
+			return QDF_MIN(channel_width, CH_WIDTH_80MHZ);
+		}
+		/*
+		 * sta_sap_scc_on_dfs_chnl = 0, not allow STA+SAP SCC
+		 * on DFS. Limit SAP to 80Mhz if STA present.
+		 */
+		if (sta_present)
+			return QDF_MIN(channel_width, CH_WIDTH_80MHZ);
+
+		return channel_width;
+	}
 
 	/* if no STA present return max of BW and 80MHZ */
 	if (!sta_present)
@@ -1200,10 +1227,13 @@ QDF_STATUS wlansap_deauth_sta(struct sap_context *sap_ctx,
 
 enum phy_ch_width
 wlansap_get_csa_chanwidth_from_phymode(struct sap_context *sap_context,
-				       uint32_t chan_freq)
+				       uint32_t chan_freq,
+				       struct ch_params *tgt_ch_params)
 {
 	uint32_t max_fw_bw;
-	enum phy_ch_width ch_width;
+	enum phy_ch_width ch_width, concurrent_bw = 0;
+	struct mac_context *mac = sap_get_mac_context();
+	struct ch_params ch_params = {0};
 
 	if (WLAN_REG_IS_24GHZ_CH_FREQ(chan_freq)) {
 		/*
@@ -1239,7 +1269,23 @@ wlansap_get_csa_chanwidth_from_phymode(struct sap_context *sap_context,
 			/* For legacy 11a mode return 20MHz */
 			ch_width = CH_WIDTH_20MHZ;
 		}
+		concurrent_bw = wlan_sap_get_concurrent_bw(
+				mac->pdev, mac->psoc, chan_freq,
+				ch_width);
+		ch_width = QDF_MIN(ch_width, concurrent_bw);
+		ch_width = QDF_MIN(ch_width, sap_context->ch_width_orig);
 	}
+	ch_params.ch_width = ch_width;
+	wlan_reg_set_channel_params_for_freq(mac->pdev, chan_freq, 0,
+					     &ch_params);
+	ch_width = ch_params.ch_width;
+	if (tgt_ch_params)
+		*tgt_ch_params = ch_params;
+	sap_nofl_debug("freq %d bw %d (orig bw %d phymode %d, con bw %d)",
+		       chan_freq, ch_width,
+		       sap_context->ch_width_orig,
+		       sap_context->csr_roamProfile.phyMode,
+		       concurrent_bw);
 
 	return ch_width;
 }
@@ -1315,7 +1361,8 @@ wlansap_set_chan_params_for_csa(struct mac_context *mac,
 {
 	mac->sap.SapDfsInfo.new_chanWidth =
 		wlansap_get_csa_chanwidth_from_phymode(sap_ctx,
-						       target_chan_freq);
+						       target_chan_freq,
+						       NULL);
 	/*
 	 * Copy the requested target channel
 	 * to sap context.
@@ -1407,7 +1454,8 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 
 	tmp_ch_params.ch_width =
 		wlansap_get_csa_chanwidth_from_phymode(sap_ctx,
-						       target_chan_freq);
+						       target_chan_freq,
+						       NULL);
 	if (target_bw != CH_WIDTH_MAX) {
 		tmp_ch_params.ch_width =
 			QDF_MIN(tmp_ch_params.ch_width, target_bw);
