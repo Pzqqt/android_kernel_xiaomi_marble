@@ -66,6 +66,18 @@ struct hif_ipci_stats {
 #define FORCE_WAKE_DELAY_MS 5
 #endif /* FORCE_WAKE */
 
+#ifdef FEATURE_HAL_DELAYED_REG_WRITE
+#ifdef HAL_CONFIG_SLUB_DEBUG_ON
+#define EP_WAKE_RESET_DELAY_TIMEOUT_US 3000
+#define EP_WAKE_DELAY_TIMEOUT_US 7000
+#else
+#define EP_WAKE_RESET_DELAY_TIMEOUT_US 10000
+#define EP_WAKE_DELAY_TIMEOUT_US 10000
+#endif
+#define EP_WAKE_RESET_DELAY_US 50
+#define EP_WAKE_DELAY_US 200
+#endif
+
 struct hif_ipci_softc {
 	struct HIF_CE_state ce_sc;
 	void __iomem *mem;      /* PCI address. */
@@ -83,6 +95,12 @@ struct hif_ipci_softc {
 
 	void (*hif_ipci_get_soc_info)(struct hif_ipci_softc *sc,
 				      struct device *dev);
+#ifdef FEATURE_HAL_DELAYED_REG_WRITE
+	uint32_t ep_awake_reset_fail;
+	uint32_t prevent_l1_fail;
+	uint32_t ep_awake_set_fail;
+	bool prevent_l1;
+#endif
 #ifdef FORCE_WAKE
 	struct hif_ipci_stats stats;
 #endif

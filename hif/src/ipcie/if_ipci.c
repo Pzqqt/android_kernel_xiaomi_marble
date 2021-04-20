@@ -878,11 +878,54 @@ void hif_print_ipci_stats(struct hif_ipci_softc *ipci_handle)
 #ifdef FEATURE_HAL_DELAYED_REG_WRITE
 int hif_prevent_link_low_power_states(struct hif_opaque_softc *hif)
 {
+	struct hif_softc *scn = HIF_GET_SOFTC(hif);
+	struct hif_ipci_softc *ipci_scn = HIF_GET_IPCI_SOFTC(scn);
+	uint32_t timeout = 0;
+
+	while (pld_is_pci_ep_awake(scn->qdf_dev->dev) &&
+	       timeout <= EP_WAKE_RESET_DELAY_TIMEOUT_US) {
+		qdf_sleep_us(EP_WAKE_RESET_DELAY_US);
+		timeout += EP_WAKE_RESET_DELAY_US;
+	}
+
+	if (pld_is_pci_ep_awake(scn->qdf_dev->dev)) {
+		hif_err_rl(" EP state reset is not done to prevent l1");
+		ipci_scn->ep_awake_reset_fail++;
+		return 0;
+	}
+
+	if (pld_prevent_l1(scn->qdf_dev->dev)) {
+		hif_err_rl("pld prevent l1 failed");
+		ipci_scn->prevent_l1_fail++;
+		return 0;
+	}
+
+	ipci_scn->prevent_l1 = true;
+	timeout = 0;
+	while (!pld_is_pci_ep_awake(scn->qdf_dev->dev) &&
+	       timeout <= EP_WAKE_DELAY_TIMEOUT_US) {
+		qdf_sleep_us(EP_WAKE_DELAY_US);
+		timeout += EP_WAKE_DELAY_US;
+	}
+
+	if (pld_is_pci_ep_awake(scn->qdf_dev->dev) <= 0) {
+		hif_err_rl("Unable to wakeup pci ep");
+		ipci_scn->ep_awake_set_fail++;
+		return  0;
+	}
+
 	return 0;
 }
 
 void hif_allow_link_low_power_states(struct hif_opaque_softc *hif)
 {
+	struct hif_softc *scn = HIF_GET_SOFTC(hif);
+	struct hif_ipci_softc *ipci_scn = HIF_GET_IPCI_SOFTC(scn);
+
+	if (qdf_likely(ipci_scn->prevent_l1)) {
+		pld_allow_l1(scn->qdf_dev->dev);
+		ipci_scn->prevent_l1 = false;
+	}
 }
 #endif
 

@@ -1277,6 +1277,44 @@ void hal_delayed_reg_write(struct hal_soc *hal_soc,
 
 #else
 #ifdef FEATURE_HAL_DELAYED_REG_WRITE
+#ifdef QCA_WIFI_QCA6750
+void hal_delayed_reg_write(struct hal_soc *hal_soc,
+			   struct hal_srng *srng,
+			   void __iomem *addr,
+			   uint32_t value)
+{
+	switch (srng->ring_type) {
+	case CE_SRC:
+	case CE_DST:
+	case CE_DST_STATUS:
+		if (hif_get_ep_vote_access(hal_soc->hif_handle,
+					   HIF_EP_VOTE_NONDP_ACCESS) ==
+					   HIF_EP_VOTE_ACCESS_DISABLE) {
+			hal_write_address_32_mb(hal_soc, addr, value, false);
+			qdf_atomic_inc(&hal_soc->stats.wstats.direct);
+			srng->wstats.direct++;
+		} else {
+			hal_reg_write_enqueue(hal_soc, srng, addr, value);
+		}
+		break;
+	default:
+		if (hif_get_ep_vote_access(hal_soc->hif_handle,
+		    HIF_EP_VOTE_DP_ACCESS) ==
+		    HIF_EP_VOTE_ACCESS_DISABLE ||
+		    hal_is_reg_write_tput_level_high(hal_soc) ||
+		    PLD_MHI_STATE_L0 ==
+		    pld_get_mhi_state(hal_soc->qdf_dev->dev)) {
+			hal_write_address_32_mb(hal_soc, addr, value, false);
+			qdf_atomic_inc(&hal_soc->stats.wstats.direct);
+			srng->wstats.direct++;
+		} else {
+			hal_reg_write_enqueue(hal_soc, srng, addr, value);
+		}
+
+		break;
+	}
+}
+#else
 void hal_delayed_reg_write(struct hal_soc *hal_soc,
 			   struct hal_srng *srng,
 			   void __iomem *addr,
@@ -1291,6 +1329,7 @@ void hal_delayed_reg_write(struct hal_soc *hal_soc,
 		hal_reg_write_enqueue(hal_soc, srng, addr, value);
 	}
 }
+#endif
 #endif
 #endif
 
