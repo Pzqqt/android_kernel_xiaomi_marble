@@ -166,35 +166,14 @@ static inline int hif_get_pci_slot(struct hif_softc *scn)
 #else
 static inline int hif_get_pci_slot(struct hif_softc *scn)
 {
-	uint32_t pci_id;
-	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
-	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
-	uint32_t target_type = tgt_info->target_type;
-	struct device_node *mhi_node;
-	struct device_node *pcierp_node;
-	struct device_node *pcie_node;
+	int pci_slot = pld_get_pci_slot(scn->qdf_dev->dev);
 
-	switch (target_type) {
-	case TARGET_TYPE_QCN9000:
-	case TARGET_TYPE_QCN9224:
-		/* of_node stored in qdf_dev points to the mhi node */
-		mhi_node = scn->qdf_dev->dev->of_node;
-		/*
-		 * pcie id is stored in the main pci node which has to be taken
-		 * from the second parent of mhi_node.
-		 */
-		pcierp_node = mhi_node->parent;
-		pcie_node = pcierp_node->parent;
-		qal_devnode_fetch_pci_domain_id(pcie_node, &pci_id);
-		if (pci_id < 0 || pci_id >= WLAN_CFG_MAX_PCIE_GROUPS) {
-			hif_err("pci_id: %d is invalid", pci_id);
-			QDF_ASSERT(0);
-			return 0;
-		}
-		return pci_id;
-	default:
-		/* Send pci_id 0 for all other targets */
+	if (pci_slot < 0) {
+		hif_err("Invalid PCI SLOT %d", pci_slot);
+		qdf_assert_always(0);
 		return 0;
+	} else {
+		return pci_slot;
 	}
 }
 #endif
@@ -2931,7 +2910,6 @@ static int hif_ce_msi_configure_irq(struct hif_softc *scn)
 	uint32_t msi_irq_start;
 	struct HIF_CE_state *ce_sc = HIF_GET_CE_STATE(scn);
 	struct CE_attr *host_ce_conf = ce_sc->host_ce_config;
-	int pci_slot;
 
 	if (!scn->disable_wake_irq) {
 		/* do wake irq assignment */
@@ -2974,7 +2952,6 @@ static int hif_ce_msi_configure_irq(struct hif_softc *scn)
 	/* needs to match the ce_id -> irq data mapping
 	 * used in the srng parameter configuration
 	 */
-	pci_slot = hif_get_pci_slot(scn);
 	for (ce_id = 0; ce_id < scn->ce_count; ce_id++) {
 		if (host_ce_conf[ce_id].flags & CE_ATTR_DISABLE_INTR)
 			continue;
