@@ -194,6 +194,8 @@ struct sde_encoder_ops {
  *				of esd attack to ensure esd workqueue detects
  *				the previous frame transfer completion before
  *				next update is triggered.
+ * @autorefresh_solver_disable	It tracks if solver state is disabled from this
+ *				encoder due to autorefresh concurrency.
  */
 struct sde_encoder_virt {
 	struct drm_encoder base;
@@ -262,6 +264,7 @@ struct sde_encoder_virt {
 	struct cpumask valid_cpu_mask;
 	struct msm_mode_info mode_info;
 	bool delay_kickoff;
+	bool autorefresh_solver_disable;
 };
 
 #define to_sde_encoder_virt(x) container_of(x, struct sde_encoder_virt, base)
