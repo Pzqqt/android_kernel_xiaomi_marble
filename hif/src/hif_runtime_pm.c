@@ -1590,7 +1590,7 @@ int hif_runtime_lock_init(qdf_runtime_lock_t *lock, const char *name)
 {
 	struct hif_pm_runtime_lock *context;
 
-	hif_info("Initializing Runtime PM wakelock %s", name);
+	hif_debug("Initializing Runtime PM wakelock %s", name);
 
 	context = qdf_mem_malloc(sizeof(*context));
 	if (!context)
@@ -1620,7 +1620,7 @@ void hif_runtime_lock_deinit(struct hif_opaque_softc *hif_ctx,
 		return;
 	}
 
-	hif_info("Deinitializing Runtime PM wakelock %s", context->name);
+	hif_debug("Deinitializing Runtime PM wakelock %s", context->name);
 
 	/*
 	 * Ensure to delete the context list entry and reduce the usage count
