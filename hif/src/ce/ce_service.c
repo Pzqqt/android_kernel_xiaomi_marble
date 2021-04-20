@@ -1089,8 +1089,9 @@ more_watermarks:
 			goto more_completions;
 		} else {
 			if (!ce_srng_based(scn)) {
-				hif_err(
-					"Potential infinite loop detected during Rx processing nentries_mask:0x%x sw read_idx:0x%x hw read_idx:0x%x",
+				hif_err_rl(
+					"Potential infinite loop detected during Rx processing id:%u nentries_mask:0x%x sw read_idx:0x%x hw read_idx:0x%x",
+					CE_state->id,
 					CE_state->dest_ring->nentries_mask,
 					CE_state->dest_ring->sw_index,
 					CE_DEST_RING_READ_IDX_GET(scn,
@@ -1107,10 +1108,13 @@ more_watermarks:
 			goto more_completions;
 		} else {
 			if (!ce_srng_based(scn)) {
-				hif_err(
-					"Potential infinite loop detected during send completion nentries_mask:0x%x sw read_idx:0x%x hw read_idx:0x%x",
+				hif_err_rl(
+					"Potential infinite loop detected during send completion id:%u mask:0x%x sw read_idx:0x%x hw_index:0x%x write_index: 0x%x hw read_idx:0x%x",
+					CE_state->id,
 					CE_state->src_ring->nentries_mask,
 					CE_state->src_ring->sw_index,
+					CE_state->src_ring->hw_index,
+					CE_state->src_ring->write_index,
 					CE_SRC_RING_READ_IDX_GET(scn,
 							 CE_state->ctrl_addr));
 			}
