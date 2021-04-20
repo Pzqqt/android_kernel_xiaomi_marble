@@ -383,6 +383,9 @@ void lim_perform_disassoc(struct mac_context *mac_ctx, int32_t frame_rssi,
 
 	/* Update PE session Id  */
 	mlmDisassocInd.sessionId = pe_session->peSessionId;
+	if (LIM_IS_STA_ROLE(pe_session) &&
+	    (pe_session->limMlmState == eLIM_MLM_WT_ASSOC_RSP_STATE))
+		lim_stop_pmfcomeback_timer(pe_session);
 
 	if (lim_is_reassoc_in_progress(mac_ctx, pe_session)) {
 
