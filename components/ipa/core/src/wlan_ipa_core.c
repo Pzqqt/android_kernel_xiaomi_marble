@@ -2765,6 +2765,7 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 					 * unloading WLAN driver is in progress
 					 */
 
+					wlan_ipa_uc_bw_monitor(ipa_ctx, true);
 					wlan_ipa_uc_disable_pipes(ipa_ctx,
 								  true);
 				} else {
