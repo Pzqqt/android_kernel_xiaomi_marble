@@ -784,8 +784,6 @@ static void populate_dot11f_tdls_ht_vht_cap(struct mac_context *mac,
 
 #ifdef WLAN_FEATURE_11AX
 
-#define LIM_TDLS_MIN_LEN 21
-
 static void lim_tdls_set_he_chan_width(tDot11fIEhe_cap *heCap,
 				       struct pe_session *session)
 {
@@ -888,7 +886,7 @@ lim_tdls_populate_dot11f_he_caps(struct mac_context *mac,
 		struct he_capability_info he_cap;
 	} uHECapInfo;
 
-	if (add_sta_req->he_cap_len < LIM_TDLS_MIN_LEN) {
+	if (add_sta_req->he_cap_len < MIN_TDLS_HE_CAP_LEN) {
 		pe_debug("He_capability invalid");
 		return QDF_STATUS_E_INVAL;
 	}
