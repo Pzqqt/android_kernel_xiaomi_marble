@@ -3501,7 +3501,8 @@ reg_get_320_bonded_chan_array(struct wlan_objmgr_pdev *pdev,
 			if (((bonded_chan_ar[i].start_freq +
 			      bonded_chan_ar[i].end_freq) / 2) ==
 				band_center_320) {
-				bonded_chan_ptr[i] = &bonded_chan_ar[i];
+				bonded_chan_ptr[num_bonded_pairs] =
+					&bonded_chan_ar[i];
 				num_bonded_pairs++;
 				break;
 			}
