@@ -540,7 +540,7 @@ static void wifi_pos_get_ch_info(struct wlan_objmgr_psoc *psoc,
 	wlan_objmgr_iterate_obj_list(psoc, WLAN_PDEV_OP,
 				     wifi_pos_pdev_iterator,
 				     chan_list, true, WLAN_WIFI_POS_CORE_ID);
-	wifi_pos_notice("num channels: %d", chan_list->num_channels);
+	wifi_pos_debug("num channels: %d", chan_list->num_channels);
 }
 
 #else
@@ -768,7 +768,7 @@ static QDF_STATUS wifi_pos_process_app_reg_req(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	wifi_pos_err("Received App Req Req pid(%d), len(%d)",
+	wifi_pos_debug("Received App Req Req pid(%d), len(%d)",
 			req->pid, req->buf_len);
 
 	sign_str = (char *)req->buf;
