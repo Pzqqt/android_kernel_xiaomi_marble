@@ -10,6 +10,7 @@
 #include "venus_hfi.h"
 #include "msm_vidc_internal.h"
 #include "msm_vidc_driver.h"
+#include "msm_venc.h"
 
 #define CAP_TO_8BIT_QP(a) {          \
 	if ((a) < 0)                 \
@@ -662,6 +663,24 @@ int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl)
 	/* Static setting */
 	if (!inst->vb2q[OUTPUT_PORT].streaming) {
 		msm_vidc_update_cap_value(inst, cap_id, ctrl->val, __func__);
+
+		if (ctrl->id == V4L2_CID_ROTATE) {
+			if (ctrl->val == 90 || ctrl->val == 270) {
+				struct v4l2_format *output_fmt;
+
+				output_fmt = &inst->fmts[OUTPUT_PORT];
+				rc = msm_venc_s_fmt_output(inst, output_fmt);
+				if (rc)
+					return rc;
+
+				i_vpr_h(inst,
+					"%s: type %d: format %#x width %d height %d size %d\n",
+					__func__, output_fmt->type, output_fmt->fmt.pix_mp.pixelformat,
+					output_fmt->fmt.pix_mp.width,
+					output_fmt->fmt.pix_mp.height,
+					output_fmt->fmt.pix_mp.plane_fmt[0].sizeimage);
+			}
+		}
 
 		if (ctrl->id == V4L2_CID_MPEG_VIDC_MIN_BITSTREAM_SIZE_OVERWRITE) {
 			rc = msm_vidc_update_bitstream_buffer_size(inst);
@@ -2382,7 +2401,6 @@ int msm_vidc_set_session_priority(void *instance,
 	return rc;
 }
 
-/* TODO
 int msm_vidc_set_flip(void *instance,
 	enum msm_vidc_inst_capability_type cap_id)
 {
@@ -2404,15 +2422,35 @@ int msm_vidc_set_flip(void *instance,
 	if (vflip)
 		hfi_value |= HFI_VERTICAL_FLIP;
 
-	i_vpr_h(inst, "set cap: name: %24s, value: %#10x, hfi: %#10x\n", cap_name(cap_id),
-		inst->capabilities->cap[cap_id].value, hfi_value);
-
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32_ENUM,
 		&hfi_value, sizeof(u32), __func__);
 
 	return rc;
 }
-*/
+
+int msm_vidc_set_rotation(void *instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+	u32 hfi_value;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	rc = msm_vidc_v4l2_to_hfi_enum(inst, cap_id, &hfi_value);
+	if (rc)
+		return -EINVAL;
+
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
+		&hfi_value, sizeof(u32), __func__);
+	if (rc)
+		return rc;
+
+	return rc;
+}
 
 int msm_vidc_set_q16(void *instance,
 	enum msm_vidc_inst_capability_type cap_id)

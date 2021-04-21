@@ -13,6 +13,7 @@
 #include "msm_vidc_driver.h"
 #include "msm_vidc_debug.h"
 #include "msm_media_info.h"
+#include "msm_vidc_control.h"
 
 static u32 msm_vidc_decoder_bin_size_iris2(struct msm_vidc_inst *inst)
 {
@@ -440,27 +441,34 @@ static u32 msm_vidc_encoder_arp_size_iris2(struct msm_vidc_inst *inst)
 static u32 msm_vidc_encoder_vpss_size_iris2(struct msm_vidc_inst* inst)
 {
 	u32 size = 0;
-	bool ds_enable, rot_enable, flip_enable, is_tenbit;
-	u32 width, height, pixfmt;
+	bool ds_enable = false, is_tenbit = false;
+	u32 rotation_val = HFI_ROTATION_NONE;
+	u32 flip_val = HFI_DISABLE_FLIP;
+	u32 width, height, driver_colorfmt;
 	struct v4l2_format* f;
 
 	if (!inst || !inst->core || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return 0;
 	}
-	ds_enable = false; // TODO: fixme
-	rot_enable = false; // TODO: fixme
-	flip_enable = false; // TODO: fixme
 
-	f = &inst->fmts[OUTPUT_PORT];
-	width = f->fmt.pix_mp.width;
-	height = f->fmt.pix_mp.height;
+	ds_enable = is_scaling_enabled(inst);
+	msm_vidc_v4l2_to_hfi_enum(inst, ROTATION, &rotation_val);
+	if (inst->capabilities->cap[HFLIP].value)
+		flip_val |= HFI_HORIZONTAL_FLIP;
+	if (inst->capabilities->cap[VFLIP].value)
+		flip_val = HFI_VERTICAL_FLIP;
 
-	pixfmt = inst->capabilities->cap[PIX_FMTS].value;
-	is_tenbit = (pixfmt == MSM_VIDC_FMT_P010 || pixfmt == MSM_VIDC_FMT_TP10C);
+	width = inst->compose.width;
+	height = inst->compose.height;
+
+	f = &inst->fmts[INPUT_PORT];
+	driver_colorfmt = v4l2_colorformat_to_driver(
+			f->fmt.pix_mp.pixelformat, __func__);
+	is_tenbit = is_10bit_colorformat(driver_colorfmt);
 
 	HFI_BUFFER_VPSS_ENC(size, width, height, ds_enable,
-		rot_enable, flip_enable, is_tenbit);
+		rotation_val, flip_val, is_tenbit);
 	i_vpr_l(inst, "%s: size %d\n", __func__, size);
 	return size;
 }

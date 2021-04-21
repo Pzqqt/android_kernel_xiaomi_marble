@@ -65,6 +65,14 @@ static inline is_output_meta_buffer(enum msm_vidc_buffer_type buffer_type)
 	return buffer_type == MSM_VIDC_BUF_OUTPUT_META;
 }
 
+static inline is_scaling_enabled(struct msm_vidc_inst *inst)
+{
+	return inst->crop.left != inst->compose.left ||
+		inst->crop.top != inst->compose.top ||
+		inst->crop.width != inst->compose.width ||
+		inst->crop.height != inst->compose.height;
+}
+
 static inline is_internal_buffer(enum msm_vidc_buffer_type buffer_type)
 {
 	return buffer_type == MSM_VIDC_BUF_BIN ||

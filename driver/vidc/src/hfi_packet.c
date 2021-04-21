@@ -154,6 +154,8 @@ u32 hfi_buf_type_from_driver(enum msm_vidc_domain_type domain,
 		return HFI_BUFFER_DPB;
 	case MSM_VIDC_BUF_PERSIST:
 		return HFI_BUFFER_PERSIST;
+	case MSM_VIDC_BUF_VPSS:
+		return HFI_BUFFER_VPSS;
 	default:
 		d_vpr_e("invalid buffer type %d\n",
 			buffer_type);
@@ -200,6 +202,8 @@ u32 hfi_buf_type_to_driver(enum msm_vidc_domain_type domain,
 		return MSM_VIDC_BUF_DPB;
 	case HFI_BUFFER_PERSIST:
 		return MSM_VIDC_BUF_PERSIST;
+	case HFI_BUFFER_VPSS:
+		return MSM_VIDC_BUF_VPSS;
 	default:
 		d_vpr_e("invalid buffer type %d\n",
 			buffer_type);

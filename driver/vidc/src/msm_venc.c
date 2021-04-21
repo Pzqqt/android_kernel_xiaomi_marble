@@ -29,7 +29,6 @@ static const u32 msm_venc_input_set_prop[] = {
 static const u32 msm_venc_output_set_prop[] = {
 	HFI_PROP_BITSTREAM_RESOLUTION,
 	HFI_PROP_CROP_OFFSETS,
-	HFI_PROP_SCALAR,
 	HFI_PROP_BUFFER_HOST_MAX_COUNT,
 	HFI_PROP_CSC,
 };
@@ -44,12 +43,16 @@ static const u32 msm_venc_output_subscribe_for_properties[] = {
 	HFI_PROP_WORST_COMPRESSION_RATIO,
 };
 
-static const u32 msm_venc_internal_buffer_type[] = {
+static const u32 msm_venc_output_internal_buffer_type[] = {
 	MSM_VIDC_BUF_BIN,
 	MSM_VIDC_BUF_COMV,
 	MSM_VIDC_BUF_NON_COMV,
 	MSM_VIDC_BUF_LINE,
 	MSM_VIDC_BUF_DPB,
+};
+
+static const u32 msm_venc_input_internal_buffer_type[] = {
+	MSM_VIDC_BUF_VPSS,
 };
 
 struct msm_venc_prop_type_handle {
@@ -232,6 +235,7 @@ static int msm_venc_set_crop_offsets(struct msm_vidc_inst *inst,
 	int rc = 0;
 	u32 left_offset, top_offset, right_offset, bottom_offset;
 	u32 crop[2] = {0};
+	u32 width, height;
 
 	if (port != OUTPUT_PORT) {
 		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
@@ -240,10 +244,17 @@ static int msm_venc_set_crop_offsets(struct msm_vidc_inst *inst,
 
 	left_offset = inst->compose.left;
 	top_offset = inst->compose.top;
-	right_offset = (inst->fmts[port].fmt.pix_mp.width -
-		inst->compose.width);
-	bottom_offset = (inst->fmts[port].fmt.pix_mp.height -
-		inst->compose.height);
+
+	width = inst->compose.width;
+	height = inst->compose.height;
+	if (inst->capabilities->cap[ROTATION].value == 90 ||
+		inst->capabilities->cap[ROTATION].value == 270) {
+		width = inst->compose.height;
+		height = inst->compose.width;
+	}
+
+	right_offset = (inst->fmts[port].fmt.pix_mp.width - width);
+	bottom_offset = (inst->fmts[port].fmt.pix_mp.height - height);
 
 	if (is_image_session(inst))
 		right_offset = bottom_offset = 0;
@@ -260,43 +271,6 @@ static int msm_venc_set_crop_offsets(struct msm_vidc_inst *inst,
 			get_hfi_port(inst, port),
 			HFI_PAYLOAD_64_PACKED,
 			&crop,
-			sizeof(u64));
-	if (rc)
-		return rc;
-	return 0;
-}
-
-static int msm_venc_set_scalar(struct msm_vidc_inst *inst,
-	enum msm_vidc_port_type port)
-{
-	int rc = 0;
-	u32 scalar = 0;
-
-	if (port != OUTPUT_PORT) {
-		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
-		return -EINVAL;
-	}
-
-	if (inst->crop.left != inst->compose.left ||
-		inst->crop.top != inst->compose.top ||
-		inst->crop.width != inst->compose.width ||
-		inst->crop.height != inst->compose.height) {
-		scalar = 1;
-		i_vpr_h(inst,
-			"%s: crop: l %d t %d w %d h %d compose: l %d t %d w %d h %d\n",
-			__func__, inst->crop.left, inst->crop.top,
-			inst->crop.width, inst->crop.height,
-			inst->compose.left, inst->compose.top,
-			inst->compose.width, inst->compose.height);
-	}
-
-	i_vpr_h(inst, "%s: scalar: %d\n", __func__, scalar);
-	rc = venus_hfi_session_property(inst,
-			HFI_PROP_SCALAR,
-			HFI_HOST_FLAGS_NONE,
-			get_hfi_port(inst, port),
-			HFI_PAYLOAD_64_PACKED,
-			&scalar,
 			sizeof(u64));
 	if (rc)
 		return rc;
@@ -553,7 +527,6 @@ static int msm_venc_set_output_properties(struct msm_vidc_inst *inst)
 	static const struct msm_venc_prop_type_handle prop_type_handle_arr[] = {
 		{HFI_PROP_BITSTREAM_RESOLUTION,       msm_venc_set_bitstream_resolution    },
 		{HFI_PROP_CROP_OFFSETS,               msm_venc_set_crop_offsets            },
-		{HFI_PROP_SCALAR,                     msm_venc_set_scalar                  },
 		{HFI_PROP_BUFFER_HOST_MAX_COUNT,      msm_venc_set_host_max_buf_count      },
 		{HFI_PROP_CSC,                        msm_venc_set_csc                     },
 	};
@@ -613,8 +586,7 @@ static int msm_venc_set_internal_properties(struct msm_vidc_inst *inst)
 
 static int msm_venc_get_input_internal_buffers(struct msm_vidc_inst *inst)
 {
-	int rc = 0;
-/* TODO: VPSS
+	int i, rc = 0;
 	struct msm_vidc_core *core;
 
 	if (!inst || !inst->core) {
@@ -623,50 +595,51 @@ static int msm_venc_get_input_internal_buffers(struct msm_vidc_inst *inst)
 	}
 	core = inst->core;
 
-	inst->buffers.vpss.size = call_session_op(core, buffer_size,
-			inst, MSM_VIDC_BUF_VPSS) + 100000000;
+	for (i = 0; i < ARRAY_SIZE(msm_venc_input_internal_buffer_type); i++) {
+		rc = msm_vidc_get_internal_buffers(inst,
+			msm_venc_input_internal_buffer_type[i]);
+		if (rc)
+			return rc;
+	}
 
-	inst->buffers.dpb.min_count = call_session_op(core, min_count,
-			inst, MSM_VIDC_BUF_VPSS);
-
-	i_vpr_h(inst, "%s: internal buffer: min     size\n", __func__);
-	i_vpr_h(inst, "vpss  buffer: %d      %d\n",
-		inst->buffers.vpss.min_count,
-		inst->buffers.vpss.size);
-*/
 	return rc;
 }
 
 static int msm_venc_create_input_internal_buffers(struct msm_vidc_inst *inst)
 {
-	int rc = 0;
-/* TODO: VPSS
+	int i, rc = 0;
+
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 
-	rc = msm_vidc_create_internal_buffers(inst, MSM_VIDC_BUF_VPSS);
-	if (rc)
-		return rc;
-*/
+	for (i = 0; i < ARRAY_SIZE(msm_venc_input_internal_buffer_type); i++) {
+		rc = msm_vidc_create_internal_buffers(inst,
+			msm_venc_input_internal_buffer_type[i]);
+		if (rc)
+			return rc;
+	}
+
 	return rc;
 }
 
 static int msm_venc_queue_input_internal_buffers(struct msm_vidc_inst *inst)
 {
-	int rc = 0;
+	int i, rc = 0;
 
-/* TODO: VPSS
 	if (!inst || !inst->core) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 
-	rc = msm_vidc_queue_internal_buffers(inst, MSM_VIDC_BUF_VPSS);
-	if (rc)
-		return rc;
-*/
+	for (i = 0; i < ARRAY_SIZE(msm_venc_input_internal_buffer_type); i++) {
+		rc = msm_vidc_queue_internal_buffers(inst,
+			msm_venc_input_internal_buffer_type[i]);
+		if (rc)
+			return rc;
+	}
+
 	return rc;
 }
 
@@ -681,8 +654,9 @@ static int msm_venc_get_output_internal_buffers(struct msm_vidc_inst *inst)
 	}
 	core = inst->core;
 
-	for (i = 0; i < ARRAY_SIZE(msm_venc_internal_buffer_type); i++) {
-		rc = msm_vidc_get_internal_buffers(inst, msm_venc_internal_buffer_type[i]);
+	for (i = 0; i < ARRAY_SIZE(msm_venc_output_internal_buffer_type); i++) {
+		rc = msm_vidc_get_internal_buffers(inst,
+			msm_venc_output_internal_buffer_type[i]);
 		if (rc)
 			return rc;
 	}
@@ -699,8 +673,9 @@ static int msm_venc_create_output_internal_buffers(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
-	for (i = 0; i < ARRAY_SIZE(msm_venc_internal_buffer_type); i++) {
-		rc = msm_vidc_create_internal_buffers(inst, msm_venc_internal_buffer_type[i]);
+	for (i = 0; i < ARRAY_SIZE(msm_venc_output_internal_buffer_type); i++) {
+		rc = msm_vidc_create_internal_buffers(inst,
+			msm_venc_output_internal_buffer_type[i]);
 		if (rc)
 			return rc;
 	}
@@ -717,8 +692,9 @@ static int msm_venc_queue_output_internal_buffers(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
-	for (i = 0; i < ARRAY_SIZE(msm_venc_internal_buffer_type); i++) {
-		rc = msm_vidc_queue_internal_buffers(inst, msm_venc_internal_buffer_type[i]);
+	for (i = 0; i < ARRAY_SIZE(msm_venc_output_internal_buffer_type); i++) {
+		rc = msm_vidc_queue_internal_buffers(inst,
+			msm_venc_output_internal_buffer_type[i]);
 		if (rc)
 			return rc;
 	}
@@ -1108,12 +1084,13 @@ error:
 	return rc;
 }
 
-static int msm_venc_s_fmt_output(struct msm_vidc_inst *inst, struct v4l2_format *f)
+int msm_venc_s_fmt_output(struct msm_vidc_inst *inst, struct v4l2_format *f)
 {
 	int rc = 0;
 	struct v4l2_format *fmt;
 	struct msm_vidc_core *core;
 	u32 codec_align;
+	u32 width, height;
 
 	if (!inst || !inst->core || !f) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1134,9 +1111,17 @@ static int msm_venc_s_fmt_output(struct msm_vidc_inst *inst, struct v4l2_format 
 
 	codec_align = (f->fmt.pix_mp.pixelformat == V4L2_PIX_FMT_HEVC ||
 		f->fmt.pix_mp.pixelformat == V4L2_PIX_FMT_HEIC) ? 32 : 16;
+	/* use rotated width height if rotation is enabled */
+	width = inst->compose.width;
+	height = inst->compose.height;
+	if (inst->capabilities->cap[ROTATION].value == 90 ||
+		inst->capabilities->cap[ROTATION].value == 270) {
+		width = inst->compose.height;
+		height = inst->compose.width;
+	}
 	/* width, height is readonly for client */
-	fmt->fmt.pix_mp.width = ALIGN(inst->compose.width, codec_align);
-	fmt->fmt.pix_mp.height = ALIGN(inst->compose.height, codec_align);
+	fmt->fmt.pix_mp.width = ALIGN(width, codec_align);
+	fmt->fmt.pix_mp.height = ALIGN(height, codec_align);
 	/* use grid dimension for image session */
 	if (is_image_session(inst))
 		fmt->fmt.pix_mp.width = fmt->fmt.pix_mp.height = HEIC_GRID_DIMENSION;
@@ -1519,6 +1504,18 @@ int msm_venc_s_selection(struct msm_vidc_inst* inst, struct v4l2_selection* s)
 		inst->compose.top = s->r.top;
 		inst->compose.width = s->r.width;
 		inst->compose.height= s->r.height;
+
+		if (inst->crop.left != inst->compose.left ||
+			inst->crop.top != inst->compose.top ||
+			inst->crop.width != inst->compose.width ||
+			inst->crop.height != inst->compose.height) {
+			i_vpr_h(inst,
+				"%s: scaling enabled, crop: l %d t %d w %d h %d compose: l %d t %d w %d h %d\n",
+				__func__, inst->crop.left, inst->crop.top,
+				inst->crop.width, inst->crop.height,
+				inst->compose.left, inst->compose.top,
+				inst->compose.width, inst->compose.height);
+		}
 
 		/* update output format based on new compose dimensions */
 		output_fmt = &inst->fmts[OUTPUT_PORT];

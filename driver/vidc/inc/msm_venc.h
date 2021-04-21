@@ -16,6 +16,7 @@ int msm_venc_streamon_output(struct msm_vidc_inst *inst);
 int msm_venc_qbuf(struct msm_vidc_inst *inst, struct vb2_buffer *vb2);
 int msm_venc_process_cmd(struct msm_vidc_inst *inst, u32 cmd);
 int msm_venc_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f);
+int msm_venc_s_fmt_output(struct msm_vidc_inst *inst, struct v4l2_format *f);
 int msm_venc_g_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f);
 int msm_venc_s_selection(struct msm_vidc_inst* inst, struct v4l2_selection* s);
 int msm_venc_g_selection(struct msm_vidc_inst* inst, struct v4l2_selection* s);
