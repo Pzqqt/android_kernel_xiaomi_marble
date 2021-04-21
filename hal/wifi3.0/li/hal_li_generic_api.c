@@ -430,20 +430,19 @@ static int
 hal_rx_tlv_get_offload_info_li(uint8_t *rx_tlv,
 			       struct hal_offload_info *offload_info)
 {
+	offload_info->flow_id = HAL_RX_TLV_GET_FLOW_ID_TOEPLITZ(rx_tlv);
+	offload_info->ipv6_proto = HAL_RX_TLV_GET_IPV6(rx_tlv);
+	offload_info->lro_eligible = HAL_RX_TLV_GET_LRO_ELIGIBLE(rx_tlv);
 	offload_info->tcp_proto = HAL_RX_TLV_GET_TCP_PROTO(rx_tlv);
 
-	if (!offload_info->tcp_proto)
-		return -EINVAL;
-
-	offload_info->lro_eligible = HAL_RX_TLV_GET_LRO_ELIGIBLE(rx_tlv);
-	offload_info->tcp_pure_ack = HAL_RX_TLV_GET_TCP_PURE_ACK(rx_tlv);
-	offload_info->ipv6_proto = HAL_RX_TLV_GET_IPV6(rx_tlv);
-	offload_info->tcp_offset = HAL_RX_TLV_GET_TCP_OFFSET(rx_tlv);
-	offload_info->tcp_win = HAL_RX_TLV_GET_TCP_WIN(rx_tlv);
-	offload_info->tcp_seq_num = HAL_RX_TLV_GET_TCP_SEQ(rx_tlv);
-	offload_info->tcp_ack_num = HAL_RX_TLV_GET_TCP_ACK(rx_tlv);
-	offload_info->flow_id = HAL_RX_TLV_GET_FLOW_ID_TOEPLITZ(rx_tlv);
-
+	if (offload_info->tcp_proto) {
+		offload_info->tcp_pure_ack =
+					HAL_RX_TLV_GET_TCP_PURE_ACK(rx_tlv);
+		offload_info->tcp_offset = HAL_RX_TLV_GET_TCP_OFFSET(rx_tlv);
+		offload_info->tcp_win = HAL_RX_TLV_GET_TCP_WIN(rx_tlv);
+		offload_info->tcp_seq_num = HAL_RX_TLV_GET_TCP_SEQ(rx_tlv);
+		offload_info->tcp_ack_num = HAL_RX_TLV_GET_TCP_ACK(rx_tlv);
+	}
 	return 0;
 }
 

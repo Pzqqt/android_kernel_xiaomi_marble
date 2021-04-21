@@ -1152,7 +1152,6 @@ void dp_rx_fill_gro_info(struct dp_soc *soc, uint8_t *rx_tlv,
 	if (!wlan_cfg_is_gro_enabled(soc->wlan_cfg_ctx))
 		return;
 
-	/* Filling up RX offload info only for TCP packets */
 	if (hal_rx_tlv_get_offload_info(soc->hal_soc, rx_tlv, &offload_info))
 		return;
 

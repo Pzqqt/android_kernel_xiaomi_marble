@@ -3292,22 +3292,14 @@ enum fisa_aggr_ret {
 };
 
 /**
- * struct fisa_pkt_hist_elem - FISA Packet history element
- * @ts: timestamp indicating when the packet was received by FISA framework.
- * @tlvs: record of TLVS for the packet coming to FISA framework
- */
-struct fisa_pkt_hist_elem {
-	qdf_time_t ts;
-	struct rx_pkt_tlvs tlvs;
-};
-
-/**
  * struct fisa_pkt_hist - FISA Packet history structure
- * @hist_elem: array of hist elements
+ * @tlv_hist: array of TLV history
+ * @ts: array of timestamps of fisa packets
  * @idx: index indicating the next location to be used in the array.
  */
 struct fisa_pkt_hist {
-	struct fisa_pkt_hist_elem hist_elem[FISA_FLOW_MAX_AGGR_COUNT];
+	uint8_t *tlv_hist;
+	qdf_time_t ts_hist[FISA_FLOW_MAX_AGGR_COUNT];
 	uint32_t idx;
 };
 
@@ -3359,7 +3351,7 @@ struct dp_fisa_rx_sw_ft {
 	qdf_time_t flow_init_ts;
 	qdf_time_t last_accessed_ts;
 #ifdef WLAN_SUPPORT_RX_FISA_HIST
-	struct fisa_pkt_hist *pkt_hist;
+	struct fisa_pkt_hist pkt_hist;
 #endif
 };
 
