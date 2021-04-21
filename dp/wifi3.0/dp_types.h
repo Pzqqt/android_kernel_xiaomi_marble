@@ -821,6 +821,9 @@ struct reo_desc_list_node {
 	struct dp_rx_tid rx_tid;
 	bool resend_update_reo_cmd;
 	uint32_t pending_ext_desc_size;
+#ifdef REO_QDESC_HISTORY
+	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
+#endif
 };
 
 #ifdef WLAN_FEATURE_DP_EVENT_HISTORY

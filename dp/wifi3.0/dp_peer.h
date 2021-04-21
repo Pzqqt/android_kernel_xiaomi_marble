@@ -40,6 +40,20 @@
 	__QDF_TRACE_FL(QDF_TRACE_LEVEL_INFO_HIGH, QDF_MODULE_ID_DP_PEER, ## params)
 #define dp_peer_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_DP_PEER, params)
 
+#ifdef REO_QDESC_HISTORY
+enum reo_qdesc_event_type {
+	REO_QDESC_UPDATE_CB = 0,
+	REO_QDESC_FREE,
+};
+
+struct reo_qdesc_event {
+	qdf_dma_addr_t qdesc_addr;
+	uint64_t ts;
+	enum reo_qdesc_event_type type;
+	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
+};
+#endif
+
 typedef void dp_peer_iter_func(struct dp_soc *soc, struct dp_peer *peer,
 			       void *arg);
 void dp_peer_unref_delete(struct dp_peer *peer, enum dp_mod_id id);
