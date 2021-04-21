@@ -1920,6 +1920,8 @@ void hif_latency_detect_credit_record_time(
 
 void hif_latency_detect_timer_start(struct hif_opaque_softc *hif_ctx);
 void hif_latency_detect_timer_stop(struct hif_opaque_softc *hif_ctx);
+void hif_tasklet_latency(struct hif_softc *scn, bool from_timer);
+void hif_credit_latency(struct hif_softc *scn, bool from_timer);
 void hif_check_detection_latency(struct hif_softc *scn,
 				 bool from_timer,
 				 uint32_t bitmap_type);
