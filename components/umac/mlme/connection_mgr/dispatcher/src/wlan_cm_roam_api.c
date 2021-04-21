@@ -756,6 +756,9 @@ QDF_STATUS wlan_cm_roam_cfg_get_value(struct wlan_objmgr_psoc *psoc,
 	case IS_SINGLE_PMK:
 		dst_config->bool_value = rso_cfg->is_single_pmk;
 		break;
+	case LOST_LINK_RSSI:
+		dst_config->int_value = rso_cfg->lost_link_rssi;
+		break;
 	default:
 		mlme_err("Invalid roam config requested:%d", roam_cfg_type);
 		status = QDF_STATUS_E_FAILURE;
@@ -1128,6 +1131,9 @@ wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		break;
 	case IS_SINGLE_PMK:
 		rso_cfg->is_single_pmk = src_config->bool_value;
+		break;
+	case LOST_LINK_RSSI:
+		rso_cfg->lost_link_rssi = src_config->int_value;
 		break;
 	default:
 		mlme_err("Invalid roam config requested:%d", roam_cfg_type);

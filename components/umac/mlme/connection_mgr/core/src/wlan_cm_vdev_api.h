@@ -245,6 +245,8 @@ void cm_csr_set_ss_none(uint8_t vdev_id);
 void cm_csr_set_joining(uint8_t vdev_id);
 void cm_csr_set_joined(uint8_t vdev_id);
 void cm_csr_set_idle(uint8_t vdev_id);
+int8_t cm_get_rssi_by_bssid(struct wlan_objmgr_pdev *pdev,
+			    struct qdf_mac_addr *bssid);
 
 #ifndef FEATURE_CM_ENABLE
 /**

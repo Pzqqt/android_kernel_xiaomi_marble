@@ -2268,6 +2268,20 @@ sme_process_twt_notify_event(struct mac_context *mac,
 }
 #endif
 
+static void sme_link_lost_ind(struct mac_context *mac,
+				    struct sir_lost_link_info *ind)
+{
+	struct cm_roam_values_copy src_cfg;
+
+	if (ind) {
+		src_cfg.int_value = ind->rssi;
+		wlan_cm_roam_cfg_set_value(mac->psoc, ind->vdev_id,
+					   LOST_LINK_RSSI, &src_cfg);
+	}
+	if (mac->sme.lost_link_info_cb)
+		mac->sme.lost_link_info_cb(mac->hdd_handle, ind);
+}
+
 QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -2525,9 +2539,7 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 		}
 		break;
 	case eWNI_SME_LOST_LINK_INFO_IND:
-		if (mac->sme.lost_link_info_cb)
-			mac->sme.lost_link_info_cb(mac->hdd_handle,
-				(struct sir_lost_link_info *)pMsg->bodyptr);
+		sme_link_lost_ind(mac, pMsg->bodyptr);
 		qdf_mem_free(pMsg->bodyptr);
 		break;
 	case eWNI_SME_RSO_CMD_STATUS_IND:

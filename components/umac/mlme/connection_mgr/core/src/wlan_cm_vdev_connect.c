@@ -570,8 +570,8 @@ static void cm_diag_get_auth_type(uint8_t *auth_type,
 	*auth_type = AUTH_OPEN;
 }
 
-static int8_t cm_get_rssi_by_bssid(struct wlan_objmgr_pdev *pdev,
-				   struct qdf_mac_addr *bssid)
+int8_t cm_get_rssi_by_bssid(struct wlan_objmgr_pdev *pdev,
+			    struct qdf_mac_addr *bssid)
 {
 	struct scan_filter *scan_filter;
 	int8_t rssi = 0;

@@ -305,6 +305,7 @@ enum roam_fail_params {
  * @roam_trigger_reason: Roam trigger reason(enum WMI_ROAM_TRIGGER_REASON_ID)
  * @roam_invoke_fail_reason: One of reason id from enum
  * wmi_roam_invoke_status_error in case of forced roam
+ * @lost_link_rssi: lost link RSSI
  */
 struct rso_config {
 	qdf_mutex_t cm_rso_lock;
@@ -342,6 +343,7 @@ struct rso_config {
 	uint32_t roam_fail_reason;
 	uint32_t roam_trigger_reason;
 	uint32_t roam_invoke_fail_reason;
+	int32_t lost_link_rssi;
 };
 
 /**
@@ -445,6 +447,7 @@ struct rso_config_params {
  * @ADAPTIVE_11R_CONNECTION: adaptive 11r
  * @HS_20_AP: Hotspot 2.0 AP
  * @MBO_OCE_ENABLED_AP: MBO/OCE enabled network
+ * @LOST_LINK_RSSI: lost link RSSI
  */
 enum roam_cfg_param {
 	RSSI_CHANGE_THRESHOLD,
@@ -472,6 +475,7 @@ enum roam_cfg_param {
 	HS_20_AP,
 	MBO_OCE_ENABLED_AP,
 	IS_SINGLE_PMK,
+	LOST_LINK_RSSI,
 };
 
 /**

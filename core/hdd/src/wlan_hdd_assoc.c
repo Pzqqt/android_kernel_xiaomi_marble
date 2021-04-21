@@ -1708,6 +1708,7 @@ static void hdd_pmkid_clear_on_ap_off(struct hdd_adapter *adapter)
 	uint8_t lookup_threshold = 0;
 	struct wlan_crypto_pmksa *pmksa;
 
+	/* this is handled by cm_clear_pmkid_on_ap_off for conenction manager */
 	if (sta_ctx->conn_info.auth_type != eCSR_AUTH_TYPE_SAE)
 		return;
 	hdd_get_rssi_snr_by_bssid(adapter, sta_ctx->conn_info.bssid.bytes,
@@ -1846,6 +1847,8 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 						disconnect_ies.ptr,
 						disconnect_ies.len);
 	}
+
+	/* this is handled by cm_clear_pmkid_on_ap_off for conenction manager */
 	if (adapter->device_mode == QDF_STA_MODE &&
 	    roam_status == eCSR_ROAM_LOSTLINK &&
 	    reason_code == REASON_BEACON_MISSED)
