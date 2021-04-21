@@ -3108,8 +3108,17 @@ cm_roam_switch_to_deinit(struct wlan_objmgr_pdev *pdev,
 	mlme_set_roam_state(psoc, vdev_id, WLAN_ROAM_DEINIT);
 	mlme_clear_operations_bitmap(psoc, vdev_id);
 
-	if (reason != REASON_SUPPLICANT_INIT_ROAMING)
+	/* In case of roaming getting disabled due to
+	 * REASON_ROAM_SET_PRIMARY reason, don't enable roaming on
+	 * the other vdev as that is taken care by the caller once roaming
+	 * on this "vdev_id" is disabled.
+	 */
+	if (reason != REASON_SUPPLICANT_INIT_ROAMING &&
+	    reason != REASON_ROAM_SET_PRIMARY) {
+	    mlme_debug("enable roaming on connected sta vdev_id:%d, reason:%d",
+		       vdev_id, reason);
 		wlan_cm_enable_roaming_on_connected_sta(pdev, vdev_id);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -3190,12 +3199,13 @@ cm_roam_switch_to_init(struct wlan_objmgr_pdev *pdev,
 			 * vdev id if it is not an explicit enable from
 			 * supplicant.
 			 */
-			if (vdev_id == dual_sta_policy->primary_vdev_id &&
-			    dual_sta_policy ==
-			    QCA_WLAN_CONCURRENT_STA_POLICY_PREFER_PRIMARY)
+			mlme_debug("Interface vdev_id: %d, roaming enabled on vdev_id: %d, primary vdev_id:%d, reason:%d",
+				   vdev_id, temp_vdev_id,
+				   dual_sta_policy->primary_vdev_id, reason);
+
+			if (vdev_id == dual_sta_policy->primary_vdev_id)
 				is_vdev_primary = true;
-			mlme_debug("is_vdev_primary: %d, reason:%d",
-				   is_vdev_primary, reason);
+
 			if (is_vdev_primary ||
 			    reason == REASON_SUPPLICANT_INIT_ROAMING) {
 				cm_roam_state_change(pdev, temp_vdev_id,

@@ -12694,6 +12694,7 @@ cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
 	int32_t rsn_cap, set_value;
 	struct wlan_mlme_psoc_ext_obj *mlme_obj;
 	struct dual_sta_policy *dual_sta_policy;
+	bool enable_mcc_adaptive_sch = false;
 
 	/*
 	 * This API is to update legacy struct and should be removed once
@@ -12725,16 +12726,43 @@ cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
 	 * send duty cycle percentage to FW only if STA + STA
 	 * concurrency is in MCC.
 	 */
+	sme_debug("Current iface vdev_id:%d, Primary vdev_id:%d, Dual sta policy:%d, count:%d",
+		  vdev_id, dual_sta_policy->primary_vdev_id,
+		  dual_sta_policy->concurrent_sta_policy, count);
+
 	if (dual_sta_policy->primary_vdev_id != WLAN_UMAC_VDEV_ID_MAX &&
 	    dual_sta_policy->concurrent_sta_policy ==
 	    QCA_WLAN_CONCURRENT_STA_POLICY_PREFER_PRIMARY && count == 2 &&
 	    policy_mgr_current_concurrency_is_mcc(mac_ctx->psoc)) {
-		if (QDF_IS_STATUS_ERROR(sme_set_mas(false)))
-			sme_err("Failed to disable mcc_adaptive_scheduler");
+		policy_mgr_get_mcc_adaptive_sch(mac_ctx->psoc,
+						&enable_mcc_adaptive_sch);
+		if (enable_mcc_adaptive_sch) {
+			sme_debug("Disable mcc_adaptive_scheduler");
+			policy_mgr_set_dynamic_mcc_adaptive_sch(
+							mac_ctx->psoc, false);
+			if (QDF_STATUS_SUCCESS != sme_set_mas(false)) {
+				sme_err("Failed to disable mcc_adaptive_sched");
+				return -EAGAIN;
+			}
+		}
 		set_value =
 			wlan_mlme_get_mcc_duty_cycle_percentage(mac_ctx->pdev);
 		sme_cli_set_command(vdev_id, WMA_VDEV_MCC_SET_TIME_QUOTA,
 				    set_value, VDEV_CMD);
+	  } else if (dual_sta_policy->concurrent_sta_policy ==
+		     QCA_WLAN_CONCURRENT_STA_POLICY_UNBIASED && count == 2 &&
+		     policy_mgr_current_concurrency_is_mcc(mac_ctx->psoc)) {
+		policy_mgr_get_mcc_adaptive_sch(mac_ctx->psoc,
+						&enable_mcc_adaptive_sch);
+		if (enable_mcc_adaptive_sch) {
+			sme_debug("Enable mcc_adaptive_scheduler");
+			policy_mgr_set_dynamic_mcc_adaptive_sch(
+						  mac_ctx->psoc, true);
+			if (QDF_STATUS_SUCCESS != sme_set_mas(true)) {
+				sme_err("Failed to enable mcc_adaptive_sched");
+				return -EAGAIN;
+			}
+		}
 	}
 
 	/*

@@ -8636,6 +8636,7 @@ static int hdd_set_primary_interface(struct hdd_adapter *adapter,
 	uint8_t primary_vdev_id, dual_sta_policy;
 	int set_value;
 	uint32_t count;
+	bool enable_mcc_adaptive_sch = false;
 
 	/* ignore unless in STA mode */
 	if (adapter->device_mode != QDF_STA_MODE)
@@ -8643,8 +8644,8 @@ static int hdd_set_primary_interface(struct hdd_adapter *adapter,
 
 	is_set_primary_iface = nla_get_u8(attr);
 
-	primary_vdev_id = is_set_primary_iface ? adapter->vdev_id : WLAN_UMAC_VDEV_ID_MAX;
-	hdd_debug("Primary interface: %d", primary_vdev_id);
+	primary_vdev_id =
+		is_set_primary_iface ? adapter->vdev_id : WLAN_UMAC_VDEV_ID_MAX;
 
 	status = ucfg_mlme_set_primary_interface(hdd_ctx->psoc,
 						 primary_vdev_id);
@@ -8653,15 +8654,39 @@ static int hdd_set_primary_interface(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
+	count = policy_mgr_mode_specific_connection_count(hdd_ctx->psoc,
+							  PM_STA_MODE, NULL);
+
+	if (count != 2) {
+		hdd_debug("STA + STA concurrency not present, count:%d", count);
+		return -EINVAL;
+	}
+
+	/* if dual sta roaming enabled and both sta in DBS then no need
+	 * to enable roaming on primary as both STA's have roaming enabled.
+	 * if dual sta roaming enabled and both sta in MCC then need to enable
+	 * roaming on primary vdev.
+	 * if dual sta roaming NOT enabled then need to enable roaming on
+	 * primary vdev for dual STA concurrency in MCC or DBS.
+	 */
+	if ((is_set_primary_iface &&
+	     ucfg_mlme_get_dual_sta_roaming_enabled(hdd_ctx->psoc) &&
+	     policy_mgr_current_concurrency_is_mcc(hdd_ctx->psoc)) ||
+	    (is_set_primary_iface &&
+	     !ucfg_mlme_get_dual_sta_roaming_enabled(hdd_ctx->psoc))){
+		hdd_debug("Enable roaming on requested interface: %d",
+			  adapter->vdev_id);
+		wlan_cm_roam_state_change(hdd_ctx->pdev, adapter->vdev_id,
+					  WLAN_ROAM_RSO_ENABLED,
+					  REASON_ROAM_SET_PRIMARY);
+	}
+
 	/*
 	 * send duty cycle percentage to FW only if STA + STA
 	 * concurrency is in MCC.
 	 */
-	count = policy_mgr_mode_specific_connection_count(hdd_ctx->psoc,
-							  PM_STA_MODE, NULL);
-	if (count != 2 &&
-	    !policy_mgr_current_concurrency_is_mcc(hdd_ctx->psoc)) {
-		hdd_debug("STA + STA concurrency is in MCC not present");
+	if (!policy_mgr_current_concurrency_is_mcc(hdd_ctx->psoc)) {
+		hdd_debug("STA + STA concurrency not in MCC");
 		return -EINVAL;
 	}
 
@@ -8671,25 +8696,42 @@ static int hdd_set_primary_interface(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
+	hdd_debug("is_set_primary_iface: %d, primary vdev id: %d, dual_sta_policy:%d",
+		  is_set_primary_iface, primary_vdev_id, dual_sta_policy);
+
 	if (is_set_primary_iface && dual_sta_policy ==
 	    QCA_WLAN_CONCURRENT_STA_POLICY_PREFER_PRIMARY) {
+		hdd_debug("Disable mcc_adaptive_scheduler");
+		ucfg_policy_mgr_get_mcc_adaptive_sch(hdd_ctx->psoc,
+						     &enable_mcc_adaptive_sch);
+		if (enable_mcc_adaptive_sch) {
+			ucfg_policy_mgr_set_dynamic_mcc_adaptive_sch(
+							hdd_ctx->psoc, false);
+			if (QDF_IS_STATUS_ERROR(sme_set_mas(false))) {
+				hdd_err("Fail to disable mcc adaptive sched.");
+					return -EINVAL;
+			}
+		}
+		/* Configure mcc duty cycle percentage */
 		set_value =
 		   ucfg_mlme_get_mcc_duty_cycle_percentage(hdd_ctx->pdev);
 		if (set_value < 0) {
 			hdd_err("Invalid mcc duty cycle");
 			return -EINVAL;
 		}
-
-		if (QDF_IS_STATUS_ERROR(sme_set_mas(false))) {
-			hdd_err("Failed to disable mcc_adaptive_scheduler");
-				return -EINVAL;
-		}
-
 		wlan_hdd_send_mcc_vdev_quota(adapter, set_value);
-		/* Enable roaming on requested interface */
-		wlan_cm_roam_state_change(hdd_ctx->pdev, adapter->vdev_id,
-					  WLAN_ROAM_RSO_ENABLED,
-					  REASON_ROAM_SET_PRIMARY);
+	} else {
+		hdd_debug("Enable mcc_adaptive_scheduler");
+		ucfg_policy_mgr_get_mcc_adaptive_sch(hdd_ctx->psoc,
+						     &enable_mcc_adaptive_sch);
+		if (enable_mcc_adaptive_sch) {
+			ucfg_policy_mgr_set_dynamic_mcc_adaptive_sch(
+							hdd_ctx->psoc, true);
+			if (QDF_STATUS_SUCCESS != sme_set_mas(true)) {
+				hdd_err("Fail to enable mcc_adaptive_sched.");
+				return -EAGAIN;
+			}
+		}
 	}
 
 	return 0;

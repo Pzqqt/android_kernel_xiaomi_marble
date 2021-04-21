@@ -1199,6 +1199,15 @@ ucfg_mlme_get_roam_bmiss_final_bcnt(struct wlan_objmgr_psoc *psoc,
 				    uint8_t *val);
 
 /**
+ * ucfg_mlme_get_dual_sta_roaming_enabled() - Get dual sta roaming enable flag
+ * @psoc: pointer to psoc object
+ *
+ * Return: true if dual sta roaming allowed in fw
+ */
+bool
+ucfg_mlme_get_dual_sta_roaming_enabled(struct wlan_objmgr_psoc *psoc);
+
+/**
  * ucfg_mlme_get_roam_bmiss_first_bcnt() - Get roam bmiss final count
  * @psoc: pointer to psoc object
  * @val:  Pointer to the value which will be filled for the caller
