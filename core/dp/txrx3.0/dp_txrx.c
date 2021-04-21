@@ -196,16 +196,16 @@ int dp_rx_tm_get_pending(ol_txrx_soc_handle soc)
 #define REO_DST_RING_SIZE 1024
 
 /* Num elements in TCL Data ring */
-#define TCL_DATA_RING_SIZE 3072
+#define TCL_DATA_RING_SIZE 5120
 
 /* Num elements in WBM2SW ring */
-#define WBM2SW_RELEASE_RING_SIZE 4096
+#define WBM2SW_RELEASE_RING_SIZE 8192
 
 /* Num elements in WBM Idle Link */
 #define WBM_IDLE_LINK_RING_SIZE (32 * 1024)
 
 /* Num TX desc in TX desc pool */
-#define DP_TX_DESC_POOL_SIZE 4096
+#define DP_TX_DESC_POOL_SIZE 6144
 
 /**
  * struct dp_consistent_prealloc - element representing DP pre-alloc memory
