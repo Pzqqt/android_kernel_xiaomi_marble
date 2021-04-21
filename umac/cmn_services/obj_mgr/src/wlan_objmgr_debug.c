@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -34,8 +34,13 @@
  * Default TTL (of FW) for mgmt frames is 5 sec, by considering all the other
  * delays, arrived with this value
  */
+#ifndef LOG_DEL_OBJ_TIMEOUT_VALUE_MSEC
 #define LOG_DEL_OBJ_TIMEOUT_VALUE_MSEC   8000
+#endif
+#ifndef LOG_DEL_OBJ_DESTROY_DURATION_SEC
 #define LOG_DEL_OBJ_DESTROY_DURATION_SEC 8
+#endif
+
 /*
  * The max duration for which a obj can be allowed to remain in L-state
  * The duration  should be higher than the psoc idle timeout.
