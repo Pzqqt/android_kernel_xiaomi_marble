@@ -400,7 +400,10 @@ void dfs_print_nol(struct wlan_dfs *dfs)
 	while (nol) {
 		diff_ms = qdf_do_div(qdf_get_monotonic_boottime() -
 				     nol->nol_start_us, 1000);
-		diff_ms = (nol->nol_timeout_ms - diff_ms);
+		if (nol->nol_timeout_ms > diff_ms)
+			diff_ms = (nol->nol_timeout_ms - diff_ms);
+		else
+			diff_ms = 0;
 		remaining_sec = diff_ms / 1000; /* Convert to seconds */
 		dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS,
 			"nol:%d channel=%d MHz width=%d MHz time left=%u seconds nol start_us=%llu",
