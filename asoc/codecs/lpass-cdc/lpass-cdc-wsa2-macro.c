@@ -743,8 +743,10 @@ static int lpass_cdc_wsa2_macro_get_channel_map(struct snd_soc_dai *dai,
 			if (++cnt == LPASS_CDC_WSA2_MACRO_MAX_DMA_CH_PER_PORT)
 				break;
 		}
-		if (mask & 0x0C)
-			mask = mask >> 0x2;
+		if (mask & 0x30)
+			mask = mask >> 0x4;
+		if (mask & 0x03)
+			mask = mask << 0x2;
 		*rx_slot = mask;
 		*rx_num = cnt;
 		break;
