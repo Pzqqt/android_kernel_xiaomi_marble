@@ -128,6 +128,13 @@
 #define TLV_TAG_SEARCH_FFT_REPORT_GEN2           0xFB
 
 /**
+ * The Maximum number of detector informations to be filled in the SAMP msg
+ * is 3, only for 165MHz case. For all other cases this value will be 1.
+ */
+#define MAX_NUM_DEST_DETECTOR_INFO    (3)
+#define MAX_DETECTORS_PER_PDEV        (3)
+
+/**
  * enum spectral_160mhz_report_delivery_state - 160 MHz state machine states
  * @SPECTRAL_REPORT_WAIT_PRIMARY80:   Wait for primary80 report
  * @SPECTRAL_REPORT_RX_PRIMARY80:     Receive primary 80 report
@@ -899,6 +906,87 @@ struct target_if_finite_spectral_scan_params {
 };
 
 /**
+ * struct per_session_dest_det_info - Per-session Detector information to be
+ * filled to samp_detector_info
+ * @freq_span_id: Contiguous frequency span ID within the SAMP message
+ * @is_sec80: Indicates pri80/sec80 segment for 160/80p80 BW
+ * @det_id: Detector ID within samp_freq_span_info corresponding to
+ * freq_span_id
+ * @dest_start_bin_idx: Start index of FFT bins within SAMP msg's bin_pwr array
+ * @dest_end_bin_idx: End index of FFT bins within SAMP msg's bin_pwr array
+ * @lb_extrabins_start_idx: Left band edge extra bins start index
+ * @lb_extrabins_num: Number of left band edge extra bins
+ * @rb_extrabins_start_idx: Right band edge extra bins start index
+ * @rb_extrabins_num: Number of right band edge extra bins
+ * @start_freq: Indicates start frequency per-detector (in MHz)
+ * @end_freq: Indicates last frequency per-detector (in MHz)
+ * @src_start_bin_idx: Start index within the Spectral report's bin_pwr array,
+ * where the FFT bins corresponding to this dest_det_id start
+ */
+struct per_session_dest_det_info {
+	uint8_t freq_span_id;
+	bool is_sec80;
+	uint8_t det_id;
+	uint16_t dest_start_bin_idx;
+	uint16_t dest_end_bin_idx;
+	uint16_t lb_extrabins_start_idx;
+	uint16_t lb_extrabins_num;
+	uint16_t rb_extrabins_start_idx;
+	uint16_t rb_extrabins_num;
+	uint32_t start_freq;
+	uint32_t end_freq;
+	uint16_t src_start_bin_idx;
+};
+
+/**
+ * struct per_session_det_map - A map of per-session detector information,
+ * keyed by the detector id obtained from the Spectral FFT report, mapping to
+ * detination detector info in SAMP message.
+ * @dest_det_info: Struct containing per-session detector information
+ * @num_dest_det_info: Number of destination detectors to which information
+ * of this detector is to be filled
+ * @spectral_msg_buf_type: Spectral message buffer type
+ * @send_to_upper_layers: Indicates whether to send SAMP msg to upper layers
+ */
+struct per_session_det_map {
+	struct per_session_dest_det_info
+			dest_det_info[MAX_NUM_DEST_DETECTOR_INFO];
+	uint8_t num_dest_det_info;
+	enum spectral_msg_buf_type buf_type;
+	bool send_to_upper_layers;
+};
+
+/**
+ * struct per_session_report_info - Consists of per-session Spectral report
+ * information to be filled at report level in SAMP message.
+ * @pri20_freq: Primary 20MHz operating frequency in MHz
+ * @cfreq1: Centre frequency of the frequency span for 20/40/80 MHz BW.
+ * Segment 1 centre frequency in MHz for 80p80/160 BW.
+ * @cfreq2: For 80p80, indicates segment 2 centre frequency in MHz. For 160MHz,
+ * indicates the center frequency of 160MHz span.
+ * @operating_bw: Device's operating bandwidth.Valid values = enum phy_ch_width
+ * @sscan_cfreq1: Normal/Agile scan Centre frequency of the frequency span for
+ * 20/40/80 MHz BW. Center frequency of Primary Segment in MHz for 80p80/160 BW
+ * Based on Spectral scan mode.
+ * @sscan_cfreq2: For 80p80, Normal/Agile scan Center frequency for Sec80
+ * segment. For 160MHz, indicates the center frequency of 160MHz span. Based on
+ * spectral scan mode
+ * @sscan_bw: Normal/Agile Scan BW based on Spectral scan mode.
+ * Valid values = enum phy_ch_width
+ * @num_spans: Number of frequency spans
+ */
+struct per_session_report_info {
+	uint32_t pri20_freq;
+	uint32_t cfreq1;
+	uint32_t cfreq2;
+	enum phy_ch_width operating_bw;
+	uint32_t sscan_cfreq1;
+	uint32_t sscan_cfreq2;
+	enum phy_ch_width sscan_bw;
+	uint8_t num_spans;
+};
+
+/**
  * struct target_if_spectral - main spectral structure
  * @pdev: Pointer to pdev
  * @spectral_ops: Target if internal Spectral low level operations table
@@ -993,6 +1081,9 @@ struct target_if_finite_spectral_scan_params {
  * @rparams: Parameters related to Spectral report structure
  * @param_min_max: Spectral parameter's minimum and maximum values
  * @finite_scan: Parameters for finite Spectral scan
+ * @det_map: Map of per-session detector information keyed by the Spectral HW
+ * detector id.
+ * @report_info: Per session info to be filled at report level in SAMP message
  */
 struct target_if_spectral {
 	struct wlan_objmgr_pdev *pdev_obj;
@@ -1110,6 +1201,8 @@ struct target_if_spectral {
 	struct spectral_param_min_max param_min_max;
 	struct target_if_finite_spectral_scan_params
 					finite_scan[SPECTRAL_SCAN_MODE_MAX];
+	struct per_session_det_map det_map[MAX_DETECTORS_PER_PDEV];
+	struct per_session_report_info report_info[SPECTRAL_SCAN_MODE_MAX];
 };
 
 /**
