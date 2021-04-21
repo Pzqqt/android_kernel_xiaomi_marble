@@ -4008,35 +4008,27 @@ end:
 	return rc;
 }
 
-static int dsi_display_validate_res(struct dsi_display *display)
+static bool dsi_display_validate_res(struct dsi_display *display)
 {
 	struct device_node *of_node = display->pdev->dev.of_node;
 	struct of_phandle_iterator it;
-	struct dsi_ctrl *dsi_ctrl;
 	bool ctrl_avail = false;
+	bool phy_avail = false;
 
+	/*
+	 * At least if one of the controller or PHY is present or has been probed, the
+	 * dsi_display_dev_probe can pass this check.  Exact ctrl and PHY match will be
+	 * done after the DT is parsed.
+	 */
 	of_phandle_iterator_init(&it, of_node, "qcom,dsi-ctrl", NULL, 0);
-	while (of_phandle_iterator_next(&it) == 0) {
-		dsi_ctrl = dsi_ctrl_get(it.node);
-		if (IS_ERR(dsi_ctrl)) {
-			int rc = PTR_ERR(dsi_ctrl);
+	while (of_phandle_iterator_next(&it) == 0)
+		ctrl_avail |= dsi_ctrl_check_resource(it.node);
 
-			if (rc == -EPROBE_DEFER)
-				return rc;
-			/*
-			 * With dual display mode, the seconday display needs at least
-			 * one ctrl to proceed through the probe. Exact ctrl match
-			 * will be done after parsing the DT or firmware data.
-			 */
-			if (rc == -EBUSY)
-				ctrl_avail |= false;
-		} else {
-			dsi_ctrl_put(dsi_ctrl);
-			ctrl_avail = true;
-		}
-	}
+	of_phandle_iterator_init(&it, of_node, "qcom,dsi-phy", NULL, 0);
+	while (of_phandle_iterator_next(&it) == 0)
+		phy_avail |= dsi_phy_check_resource(it.node);
 
-	return ctrl_avail ? 0 : -EBUSY;
+	return (ctrl_avail & phy_avail);
 }
 
 static int dsi_display_get_phandle_count(struct dsi_display *display,
@@ -5902,22 +5894,9 @@ int dsi_display_dev_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, display);
 
-	rc = dsi_display_validate_res(display);
-	if (rc) {
-		/*
-		 * Display's bailing out without probe deferral must register its
-		 * components to complete MDSS binding. Scheduled to be fixed in the future
-		 * with dynamic component binding.
-		 */
-		if (rc == -EBUSY) {
-			int ret = component_add(&pdev->dev,
-					&dsi_display_comp_ops);
-			if (ret)
-				DSI_ERR(
-					"component add failed for display type: %s, rc=%d\n"
-					, display->type, ret);
-		}
-
+	if (!dsi_display_validate_res(display)) {
+		rc = -EPROBE_DEFER;
+		DSI_ERR("resources required for display probe not present: rc=%d\n", rc);
 		goto end;
 	}
 
