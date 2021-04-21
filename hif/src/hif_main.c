@@ -722,7 +722,7 @@ void hif_check_detection_latency(struct hif_softc *scn,
 	return;
 
 latency:
-	qdf_check_state_before_panic(__func__, __LINE__);
+	qdf_trigger_self_recovery(NULL, QDF_TASKLET_CREDIT_LATENCY_DETECT);
 }
 
 static void hif_latency_detect_timeout_handler(void *arg)

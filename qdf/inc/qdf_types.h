@@ -1390,6 +1390,7 @@ enum qdf_suspend_type {
  * @QDF_HAL_REG_WRITE_FAILURE: HAL register writing failures
  * @QDF_SUSPEND_NO_CREDIT: host lack of credit after suspend
  * @QCA_HANG_BUS_FAILURE: Bus failure
+ * @QDF_TASKLET_CREDIT_LATENCY_DETECT: tasklet or credit latency happened
  */
 enum qdf_hang_reason {
 	QDF_REASON_UNSPECIFIED,
@@ -1416,6 +1417,7 @@ enum qdf_hang_reason {
 	QDF_HAL_REG_WRITE_FAILURE,
 	QDF_SUSPEND_NO_CREDIT,
 	QCA_HANG_BUS_FAILURE,
+	QDF_TASKLET_CREDIT_LATENCY_DETECT,
 };
 
 /**
