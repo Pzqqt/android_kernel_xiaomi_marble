@@ -31,6 +31,9 @@
 #include "wlan_objmgr_psoc_obj.h"
 #include "wlan_lmac_if_def.h"
 #include "qdf_list.h"
+#ifdef WLAN_MGMT_RX_REO_SUPPORT
+#include "wlan_mgmt_txrx_rx_reo_i.h"
+#endif
 
 
 #define IEEE80211_FC0_TYPE_MASK             0x0c
@@ -205,6 +208,7 @@ struct mgmt_txrx_priv_psoc_context {
  * @mgmt_txrx_stats:  pointer to mgmt txrx stats
  * @wakelock_tx_cmp:  mgmt tx complete wake lock
  * @wakelock_tx_runtime_cmp: mgmt tx runtime complete wake lock
+ * @mgmt_rx_reo_pdev_ctx: pointer to pdev object of MGMT Rx REO module
  */
 struct mgmt_txrx_priv_pdev_context {
 	struct wlan_objmgr_pdev *pdev;
@@ -212,6 +216,9 @@ struct mgmt_txrx_priv_pdev_context {
 	struct mgmt_txrx_stats_t *mgmt_txrx_stats;
 	qdf_wake_lock_t wakelock_tx_cmp;
 	qdf_runtime_lock_t wakelock_tx_runtime_cmp;
+#ifdef WLAN_MGMT_RX_REO_SUPPORT
+	struct mgmt_rx_reo_pdev_info *mgmt_rx_reo_pdev_ctx;
+#endif
 };
 
 
