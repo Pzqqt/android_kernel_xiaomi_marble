@@ -445,8 +445,8 @@ scm_update_dbs_scan_ctrl_ext_flag(struct scan_start_request *req)
 								PM_NDI_MODE,
 								NULL);
 
-	if (ndi_present && !policy_mgr_is_hw_dbs_2x2_capable(psoc)) {
-		scm_debug("NDP present go for DBS scan");
+	if (ndi_present || policy_mgr_is_hw_dbs_2x2_capable(psoc)) {
+		scm_debug("NDP present or HW 2x2 capable, go for DBS scan");
 		goto end;
 	}
 
@@ -455,6 +455,7 @@ scm_update_dbs_scan_ctrl_ext_flag(struct scan_start_request *req)
 		scan_dbs_policy = SCAN_DBS_POLICY_FORCE_NONDBS;
 		goto end;
 	}
+
 	if ((req->scan_req.scan_policy_low_power) ||
 	    (req->scan_req.scan_policy_low_span)) {
 		scm_debug("low power/span scan received, going for dbs scan");
