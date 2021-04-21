@@ -1555,6 +1555,54 @@ target_if_dump_fft_report_gen3(struct target_if_spectral *spectral,
 }
 #endif
 
+#ifdef OPTIMIZED_SAMP_MESSAGE
+QDF_STATUS
+target_if_160mhz_delivery_state_change(struct target_if_spectral *spectral,
+				       enum spectral_scan_mode smode,
+				       uint8_t detector_id) {
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (smode >= SPECTRAL_SCAN_MODE_MAX) {
+		spectral_err_rl("Invalid Spectral mode %d", smode);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!is_ch_width_160_or_80p80(spectral->report_info[smode].sscan_bw)) {
+		spectral_err_rl("Scan BW %d is not 160/80p80 for mode %d",
+				spectral->report_info[smode].sscan_bw, smode);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	switch (spectral->state_160mhz_delivery[smode]) {
+	case SPECTRAL_REPORT_WAIT_PRIMARY80:
+		if (detector_id == SPECTRAL_DETECTOR_ID_0)
+			spectral->state_160mhz_delivery[smode] =
+				SPECTRAL_REPORT_WAIT_SECONDARY80;
+		else {
+			status = QDF_STATUS_E_FAILURE;
+			spectral->diag_stats.spectral_vhtseg1id_mismatch++;
+		}
+		break;
+
+	case SPECTRAL_REPORT_WAIT_SECONDARY80:
+		if (detector_id == SPECTRAL_DETECTOR_ID_1)
+			spectral->state_160mhz_delivery[smode] =
+				SPECTRAL_REPORT_WAIT_PRIMARY80;
+		else {
+			spectral->state_160mhz_delivery[smode] =
+				SPECTRAL_REPORT_WAIT_PRIMARY80;
+			status = QDF_STATUS_E_FAILURE;
+			spectral->diag_stats.spectral_vhtseg2id_mismatch++;
+		}
+		break;
+
+	default:
+		break;
+	}
+
+	return status;
+}
+#else
 QDF_STATUS
 target_if_160mhz_delivery_state_change(struct target_if_spectral *spectral,
 				       enum spectral_scan_mode smode,
@@ -1612,6 +1660,7 @@ target_if_160mhz_delivery_state_change(struct target_if_spectral *spectral,
 
 	return status;
 }
+#endif /* OPTIMIZED_SAMP_MESSAGE */
 
 #ifdef DIRECT_BUF_RX_ENABLE
 /**

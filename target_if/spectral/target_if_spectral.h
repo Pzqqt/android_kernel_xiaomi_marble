@@ -134,6 +134,17 @@
 #define MAX_NUM_DEST_DETECTOR_INFO    (3)
 #define MAX_DETECTORS_PER_PDEV        (3)
 
+#ifdef OPTIMIZED_SAMP_MESSAGE
+/**
+ * enum spectral_160mhz_report_delivery_state - 160 MHz state machine states
+ * @SPECTRAL_REPORT_WAIT_PRIMARY80:   Wait for primary80 report
+ * @SPECTRAL_REPORT_WAIT_SECONDARY80: Wait for secondory 80 report
+ */
+enum spectral_160mhz_report_delivery_state {
+	SPECTRAL_REPORT_WAIT_PRIMARY80,
+	SPECTRAL_REPORT_WAIT_SECONDARY80,
+};
+#else
 /**
  * enum spectral_160mhz_report_delivery_state - 160 MHz state machine states
  * @SPECTRAL_REPORT_WAIT_PRIMARY80:   Wait for primary80 report
@@ -147,6 +158,7 @@ enum spectral_160mhz_report_delivery_state {
 	SPECTRAL_REPORT_WAIT_SECONDARY80,
 	SPECTRAL_REPORT_RX_SECONDARY80,
 };
+#endif /* OPTIMIZED_SAMP_MESSAGE */
 
 /**
  * enum spectral_detector_id - Spectral detector id
@@ -2011,6 +2023,7 @@ bool is_primaryseg_expected(struct target_if_spectral *spectral,
 	  SPECTRAL_REPORT_WAIT_PRIMARY80));
 }
 
+#ifndef OPTIMIZED_SAMP_MESSAGE
 /**
  * is_primaryseg_rx_inprog() - Is primary 80 report processing is in progress
  * @spectral: Pointer to Spectral
@@ -2054,6 +2067,7 @@ bool is_secondaryseg_rx_inprog(struct target_if_spectral *spectral,
 	    spectral->state_160mhz_delivery[smode] ==
 	    SPECTRAL_REPORT_RX_SECONDARY80))));
 }
+#endif
 
 /**
  * target_if_160mhz_delivery_state_change() - State transition for 160Mhz
