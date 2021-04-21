@@ -3594,6 +3594,35 @@ reg_get_320_bonded_channel_state(struct wlan_objmgr_pdev *pdev,
 }
 
 /**
+ * reg_fill_primary_160mhz_centers() - Fill the primary 160MHz segment centers
+ * for a 320MHz channel in the given channel param.
+ * @pdev: Pointer to struct wlan_objmgr_pdev.
+ * @ch_param: channel params to be filled.
+ * @freq: Input primary frequency in MHZ.
+ *
+ * Return: void.
+ */
+static void
+reg_fill_primary_160mhz_centers(struct wlan_objmgr_pdev *pdev,
+				struct ch_params *ch_param, qdf_freq_t freq)
+{
+	const struct bonded_channel_freq *t_bonded_ch_ptr;
+
+	t_bonded_ch_ptr = reg_get_bonded_chan_entry(freq, CH_WIDTH_160MHZ);
+	if (t_bonded_ch_ptr) {
+		ch_param->mhz_freq_seg0 =
+			(t_bonded_ch_ptr->start_freq +
+			 t_bonded_ch_ptr->end_freq) / 2;
+		ch_param->center_freq_seg0 =
+			reg_freq_to_chan(pdev,
+					 ch_param->mhz_freq_seg0);
+	} else {
+		reg_err("Cannot find 160Mhz centers for freq %d", freq);
+		ch_param->ch_width = CH_WIDTH_INVALID;
+	}
+}
+
+/**
  * reg_fill_channel_list_for_320() - Fill 320MHZ channel list. If we
  * are unable to find a channel whose width is greater than 160MHZ and less
  * than 320 with the help of puncturing, using the given freq, set "update_bw"
@@ -3692,6 +3721,7 @@ reg_fill_channel_list_for_320(struct wlan_objmgr_pdev *pdev,
 		if (chan_state == CHANNEL_STATE_ENABLE) {
 			struct ch_params *t_chan_param =
 			    &chan_list->chan_param[num_ch_params];
+
 			t_chan_param->mhz_freq_seg1 =
 				(bonded_ch_ptr[i]->start_freq +
 				 bonded_ch_ptr[i]->end_freq) / 2;
@@ -3700,6 +3730,10 @@ reg_fill_channel_list_for_320(struct wlan_objmgr_pdev *pdev,
 						 t_chan_param->mhz_freq_seg1);
 			t_chan_param->ch_width = *in_ch_width;
 			t_chan_param->reg_punc_pattern = out_punc_pat;
+
+			reg_fill_primary_160mhz_centers(pdev,
+							t_chan_param,
+							freq);
 			num_ch_params++;
 			chan_list->num_ch_params = num_ch_params;
 		}
