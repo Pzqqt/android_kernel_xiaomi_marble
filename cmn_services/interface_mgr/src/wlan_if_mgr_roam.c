@@ -411,7 +411,7 @@ static bool if_mgr_validate_sta_bcn_intrvl(struct wlan_objmgr_vdev *vdev,
 
 	vdev_mlme =
 		wlan_objmgr_vdev_get_comp_private_obj(vdev,
-						      WLAN_UMAC_COMP_IF_MGR);
+						      WLAN_UMAC_COMP_MLME);
 	if (!vdev_mlme) {
 		QDF_ASSERT(0);
 		return false;
@@ -511,7 +511,7 @@ static bool if_mgr_validate_p2pcli_bcn_intrvl(struct wlan_objmgr_vdev *vdev,
 
 	vdev_mlme =
 		wlan_objmgr_vdev_get_comp_private_obj(vdev,
-						      WLAN_UMAC_COMP_IF_MGR);
+						      WLAN_UMAC_COMP_MLME);
 	if (!vdev_mlme) {
 		QDF_ASSERT(0);
 		return false;
@@ -557,7 +557,7 @@ if_mgr_validate_p2pgo_bcn_intrvl(struct wlan_objmgr_vdev *vdev,
 
 	vdev_mlme =
 		wlan_objmgr_vdev_get_comp_private_obj(vdev,
-						      WLAN_UMAC_COMP_IF_MGR);
+						      WLAN_UMAC_COMP_MLME);
 	if (!vdev_mlme) {
 		QDF_ASSERT(0);
 		return false;
