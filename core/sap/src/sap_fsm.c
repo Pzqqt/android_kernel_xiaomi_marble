@@ -650,7 +650,7 @@ sap_dfs_is_channel_in_nol_list(struct sap_context *sap_context,
 					&sap_context->ch_params, freq_list);
 	else
 		num_ch_freq = sap_get_bonding_channels(
-					sap_context, sap_context->chan_freq,
+					sap_context, channel_freq,
 					freq_list, MAX_BONDED_CHANNELS,
 					chan_bondState);
 
