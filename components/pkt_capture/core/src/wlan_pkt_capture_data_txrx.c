@@ -788,7 +788,7 @@ pkt_capture_rx_data_cb(
 	struct htt_host_rx_desc_base *rx_desc;
 	struct mon_rx_status rx_status = {0};
 	uint32_t headroom;
-	static uint8_t preamble_type;
+	static uint8_t preamble_type, rssi_comb;
 	static uint32_t vht_sig_a_1;
 	static uint32_t vht_sig_a_2;
 
@@ -814,6 +814,7 @@ pkt_capture_rx_data_cb(
 		 * till the last mpdu is reached
 		 */
 		if (rx_desc->attention.first_mpdu) {
+			rssi_comb = rx_desc->ppdu_start.rssi_comb;
 			preamble_type = rx_desc->ppdu_start.preamble_type;
 			if (preamble_type == 8 || preamble_type == 9 ||
 			    preamble_type == 0x0c || preamble_type == 0x0d) {
@@ -821,6 +822,7 @@ pkt_capture_rx_data_cb(
 				vht_sig_a_2 = VHT_SIG_A_2(rx_desc);
 			}
 		} else {
+			rx_desc->ppdu_start.rssi_comb = rssi_comb;
 			rx_desc->ppdu_start.preamble_type = preamble_type;
 			if (preamble_type == 8 || preamble_type == 9 ||
 			    preamble_type == 0x0c || preamble_type == 0x0d) {
