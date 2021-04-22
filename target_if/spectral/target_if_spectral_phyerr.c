@@ -2156,7 +2156,7 @@ target_if_consume_spectral_report_gen3(
 
 		vdev = target_if_spectral_get_vdev(spectral, spectral_mode);
 		if (!vdev) {
-			spectral_info("First vdev is NULL");
+			spectral_debug("First vdev is NULL");
 			reset_160mhz_delivery_state_machine(
 						spectral, spectral_mode);
 			return -EPERM;
