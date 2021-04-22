@@ -33,6 +33,31 @@ size_t vdev_create_mlo_params_size(void);
  */
 uint8_t *vdev_create_add_mlo_params(uint8_t *buf_ptr,
 				    struct vdev_create_params *param);
+/**
+ *  vdev_start_mlo_params_size() - Get MLO params size in vdev start
+ *  @req: Vdev start request params
+ *
+ *  Return: size of MLO params in vdev start
+ */
+size_t vdev_start_mlo_params_size(struct vdev_start_params *req);
+/**
+ *  vdev_start_add_mlo_params() - Add MLO params in vdev start cmd
+ *  @buf_ptr: pointer to vdev start buffer.
+ *  @req: ponter to vdev create request param
+ *
+ *  Return: pointer to new offset of cmd buffer
+ */
+uint8_t *vdev_start_add_mlo_params(uint8_t *buf_ptr,
+				   struct vdev_start_params *req);
+/**
+ *  vdev_start_add_ml_partner_links() - Add MLO partner links in vdev start cmd
+ *  @buf_ptr: pointer to vdev start cmd buffer.
+ *  @req: ponter to vdev start request param
+ *
+ *  Return: pointer to new offset of cmd buffer
+ */
+uint8_t *vdev_start_add_ml_partner_links(uint8_t *buf_ptr,
+					 struct vdev_start_params *req);
 #else
 static uint8_t *vdev_create_add_mlo_params(uint8_t *buf_ptr,
 					   struct vdev_create_params *param)
@@ -44,6 +69,25 @@ static uint8_t *vdev_create_add_mlo_params(uint8_t *buf_ptr,
 static size_t vdev_create_mlo_params_size(void)
 {
 	return WMI_TLV_HDR_SIZE;
+}
+
+static uint8_t *vdev_start_add_mlo_params(uint8_t *buf_ptr,
+					  struct vdev_start_params *req)
+{
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, 0);
+	return buf_ptr + WMI_TLV_HDR_SIZE;
+}
+
+static size_t vdev_start_mlo_params_size(struct vdev_start_params *req)
+{
+	return WMI_TLV_HDR_SIZE;
+}
+
+static uint8_t *vdev_start_add_ml_partner_links(uint8_t *buf_ptr,
+						struct vdev_start_params *req)
+{
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, 0);
+	return buf_ptr + WMI_TLV_HDR_SIZE;
 }
 #endif /*WLAN_FEATURE_11BE_MLO*/
 #endif /*_WMI_UNIFIED_11BE_TLV_H_*/

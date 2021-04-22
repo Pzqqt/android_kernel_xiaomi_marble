@@ -45,3 +45,70 @@ uint8_t *vdev_create_add_mlo_params(uint8_t *buf_ptr,
 		  QDF_MAC_ADDR_REF(param->mlo_mac));
 	return buf_ptr + sizeof(wmi_vdev_create_mlo_params);
 }
+
+size_t vdev_start_mlo_params_size(struct vdev_start_params *req)
+{
+	size_t vdev_start_mlo_size;
+
+	vdev_start_mlo_size = sizeof(wmi_vdev_start_mlo_params) +
+			      WMI_TLV_HDR_SIZE +
+			      (req->mlo_partner.num_links *
+			      sizeof(wmi_partner_link_params)) +
+			      WMI_TLV_HDR_SIZE;
+
+	return vdev_start_mlo_size;
+}
+
+uint8_t *vdev_start_add_mlo_params(uint8_t *buf_ptr,
+				   struct vdev_start_params *req)
+{
+	wmi_vdev_start_mlo_params *mlo_params;
+
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       sizeof(wmi_vdev_start_mlo_params));
+	buf_ptr += sizeof(uint32_t);
+
+	mlo_params = (wmi_vdev_start_mlo_params *)buf_ptr;
+	WMITLV_SET_HDR(&mlo_params->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_vdev_start_mlo_params,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_vdev_start_mlo_params));
+
+	mlo_params->mlo_flags.mlo_flags = 0;
+	WMI_MLO_FLAGS_SET_ENABLED(mlo_params->mlo_flags.mlo_flags,
+				  req->mlo_flags.mlo_enabled);
+	WMI_MLO_FLAGS_SET_ASSOC_LINK(mlo_params->mlo_flags.mlo_flags,
+				     req->mlo_flags.mlo_assoc_link);
+
+	return buf_ptr + sizeof(wmi_vdev_start_mlo_params);
+}
+
+uint8_t *vdev_start_add_ml_partner_links(uint8_t *buf_ptr,
+					 struct vdev_start_params *req)
+{
+	wmi_partner_link_params *ml_partner_link;
+	struct mlo_vdev_start_partner_links *req_partner;
+	uint8_t i;
+
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		      (req->mlo_partner.num_links *
+		      sizeof(wmi_partner_link_params)));
+	buf_ptr += sizeof(uint32_t);
+
+	req_partner = &req->mlo_partner;
+	ml_partner_link = (wmi_partner_link_params *)buf_ptr;
+	for (i = 0; i < req->mlo_partner.num_links; i++) {
+		WMITLV_SET_HDR(&ml_partner_link->tlv_header,
+			       WMITLV_TAG_STRUC_wmi_partner_link_params,
+			       WMITLV_GET_STRUCT_TLVLEN(wmi_partner_link_params));
+		ml_partner_link->vdev_id = req_partner->partner_info[i].vdev_id;
+		ml_partner_link->hw_link_id =
+				req_partner->partner_info[i].hw_mld_link_id;
+		WMI_CHAR_ARRAY_TO_MAC_ADDR(req_partner->partner_info[i].mac_addr,
+					   &ml_partner_link->vdev_macaddr);
+		ml_partner_link++;
+	}
+
+	return buf_ptr +
+		(req->mlo_partner.num_links *
+		 sizeof(wmi_partner_link_params));
+}
