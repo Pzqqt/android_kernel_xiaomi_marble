@@ -9420,6 +9420,9 @@ static QDF_STATUS dp_set_pdev_param(struct cdp_soc_t *cdp_soc, uint8_t pdev_id,
 		dp_set_atf_stats_enable(pdev,
 					val.cdp_pdev_param_atf_stats_enable);
 		break;
+	case CDP_CONFIG_SPECIAL_VAP:
+		dp_vdev_set_monitor_mode_buf_rings(pdev);
+		break;
 	default:
 		return QDF_STATUS_E_INVAL;
 	}
