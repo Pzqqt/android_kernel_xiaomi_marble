@@ -29,6 +29,7 @@ static const u32 msm_venc_input_set_prop[] = {
 static const u32 msm_venc_output_set_prop[] = {
 	HFI_PROP_BITSTREAM_RESOLUTION,
 	HFI_PROP_CROP_OFFSETS,
+	HFI_PROP_SCALAR,
 	HFI_PROP_BUFFER_HOST_MAX_COUNT,
 	HFI_PROP_CSC,
 };
@@ -237,12 +238,12 @@ static int msm_venc_set_crop_offsets(struct msm_vidc_inst *inst,
 		return -EINVAL;
 	}
 
-	left_offset = inst->crop.left;
-	top_offset = inst->crop.top;
+	left_offset = inst->compose.left;
+	top_offset = inst->compose.top;
 	right_offset = (inst->fmts[port].fmt.pix_mp.width -
-		inst->crop.width);
+		inst->compose.width);
 	bottom_offset = (inst->fmts[port].fmt.pix_mp.height -
-		inst->crop.height);
+		inst->compose.height);
 
 	if (is_image_session(inst))
 		right_offset = bottom_offset = 0;
@@ -259,6 +260,43 @@ static int msm_venc_set_crop_offsets(struct msm_vidc_inst *inst,
 			get_hfi_port(inst, port),
 			HFI_PAYLOAD_64_PACKED,
 			&crop,
+			sizeof(u64));
+	if (rc)
+		return rc;
+	return 0;
+}
+
+static int msm_venc_set_scalar(struct msm_vidc_inst *inst,
+	enum msm_vidc_port_type port)
+{
+	int rc = 0;
+	u32 scalar = 0;
+
+	if (port != OUTPUT_PORT) {
+		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
+		return -EINVAL;
+	}
+
+	if (inst->crop.left != inst->compose.left ||
+		inst->crop.top != inst->compose.top ||
+		inst->crop.width != inst->compose.width ||
+		inst->crop.height != inst->compose.height) {
+		scalar = 1;
+		i_vpr_h(inst,
+			"%s: crop: l %d t %d w %d h %d compose: l %d t %d w %d h %d\n",
+			__func__, inst->crop.left, inst->crop.top,
+			inst->crop.width, inst->crop.height,
+			inst->compose.left, inst->compose.top,
+			inst->compose.width, inst->compose.height);
+	}
+
+	i_vpr_h(inst, "%s: scalar: %d\n", __func__, scalar);
+	rc = venus_hfi_session_property(inst,
+			HFI_PROP_SCALAR,
+			HFI_HOST_FLAGS_NONE,
+			get_hfi_port(inst, port),
+			HFI_PAYLOAD_64_PACKED,
+			&scalar,
 			sizeof(u64));
 	if (rc)
 		return rc;
@@ -515,6 +553,7 @@ static int msm_venc_set_output_properties(struct msm_vidc_inst *inst)
 	static const struct msm_venc_prop_type_handle prop_type_handle_arr[] = {
 		{HFI_PROP_BITSTREAM_RESOLUTION,       msm_venc_set_bitstream_resolution    },
 		{HFI_PROP_CROP_OFFSETS,               msm_venc_set_crop_offsets            },
+		{HFI_PROP_SCALAR,                     msm_venc_set_scalar                  },
 		{HFI_PROP_BUFFER_HOST_MAX_COUNT,      msm_venc_set_host_max_buf_count      },
 		{HFI_PROP_CSC,                        msm_venc_set_csc                     },
 	};
@@ -1096,8 +1135,8 @@ static int msm_venc_s_fmt_output(struct msm_vidc_inst *inst, struct v4l2_format 
 	codec_align = (f->fmt.pix_mp.pixelformat == V4L2_PIX_FMT_HEVC ||
 		f->fmt.pix_mp.pixelformat == V4L2_PIX_FMT_HEIC) ? 32 : 16;
 	/* width, height is readonly for client */
-	fmt->fmt.pix_mp.width = ALIGN(inst->crop.width, codec_align);
-	fmt->fmt.pix_mp.height = ALIGN(inst->crop.height, codec_align);
+	fmt->fmt.pix_mp.width = ALIGN(inst->compose.width, codec_align);
+	fmt->fmt.pix_mp.height = ALIGN(inst->compose.height, codec_align);
 	/* use grid dimension for image session */
 	if (is_image_session(inst))
 		fmt->fmt.pix_mp.width = fmt->fmt.pix_mp.height = HEIC_GRID_DIMENSION;
@@ -1432,14 +1471,10 @@ int msm_venc_s_selection(struct msm_vidc_inst* inst, struct v4l2_selection* s)
 		inst->crop.width = s->r.width;
 		inst->crop.height = s->r.height;
 		/* adjust compose such that it is within crop */
-		if (inst->compose.left < inst->crop.left)
-			inst->compose.left = inst->crop.left;
-		if (inst->compose.top < inst->crop.top)
-			inst->compose.top = inst->crop.top;
-		if (inst->compose.width > inst->crop.width)
-			inst->compose.width = inst->crop.width;
-		if (inst->compose.height > inst->crop.height)
-			inst->compose.height = inst->crop.height;
+		inst->compose.left = inst->crop.left;
+		inst->compose.top = inst->crop.top;
+		inst->compose.width = inst->crop.width;
+		inst->compose.height = inst->crop.height;
 		/* update output format based on new crop dimensions */
 		output_fmt = &inst->fmts[OUTPUT_PORT];
 		rc = msm_venc_s_fmt_output(inst, output_fmt);
@@ -1484,6 +1519,18 @@ int msm_venc_s_selection(struct msm_vidc_inst* inst, struct v4l2_selection* s)
 		inst->compose.top = s->r.top;
 		inst->compose.width = s->r.width;
 		inst->compose.height= s->r.height;
+
+		/* update output format based on new compose dimensions */
+		output_fmt = &inst->fmts[OUTPUT_PORT];
+		rc = msm_venc_s_fmt_output(inst, output_fmt);
+		if (rc)
+			return rc;
+		i_vpr_h(inst,
+			"%s: type %d: format %#x width %d height %d size %d\n",
+			__func__, output_fmt->type, output_fmt->fmt.pix_mp.pixelformat,
+			output_fmt->fmt.pix_mp.width,
+			output_fmt->fmt.pix_mp.height,
+			output_fmt->fmt.pix_mp.plane_fmt[0].sizeimage);
 		break;
 	default:
 		i_vpr_e(inst, "%s: invalid target %d\n",
@@ -1789,6 +1836,10 @@ int msm_venc_inst_init(struct msm_vidc_inst *inst)
 	inst->crop.left = inst->crop.top = 0;
 	inst->crop.width = f->fmt.pix_mp.width;
 	inst->crop.height = f->fmt.pix_mp.height;
+
+	inst->compose.left = inst->compose.top = 0;
+	inst->compose.width = f->fmt.pix_mp.width;
+	inst->compose.height = f->fmt.pix_mp.height;
 
 	f = &inst->fmts[OUTPUT_META_PORT];
 	f->type = OUTPUT_META_PLANE;
