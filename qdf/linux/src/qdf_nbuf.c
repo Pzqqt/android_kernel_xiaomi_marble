@@ -735,7 +735,9 @@ struct qdf_nbuf_event {
 	qdf_dma_addr_t iova;
 };
 
+#ifndef QDF_NBUF_HISTORY_SIZE
 #define QDF_NBUF_HISTORY_SIZE 4096
+#endif
 static qdf_atomic_t qdf_nbuf_history_index;
 static struct qdf_nbuf_event qdf_nbuf_history[QDF_NBUF_HISTORY_SIZE];
 
