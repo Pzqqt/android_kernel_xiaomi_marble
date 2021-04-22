@@ -6147,8 +6147,8 @@ static void dp_vdev_flush_peers(struct cdp_vdev *vdev_handle, bool unmap_only)
 
 
 	if (!unmap_only)
-		dp_vdev_iterate_peer(vdev, dp_peer_delete, NULL,
-				     DP_MOD_ID_CDP);
+		dp_vdev_iterate_peer_lock_safe(vdev, dp_peer_delete, NULL,
+					       DP_MOD_ID_CDP);
 
 	for (i = 0; i < soc->max_peers ; i++) {
 		peer = __dp_peer_get_ref_by_id(soc, i, DP_MOD_ID_CDP);
