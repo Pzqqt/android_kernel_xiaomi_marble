@@ -4893,7 +4893,7 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 {
 	uint8_t oper_mode = BSS_OPERATIONAL_MODE_STA;
-	uint8_t smesession_id = del_sta->smesessionId;
+	uint8_t vdev_id = del_sta->smesessionId;
 	bool rsp_requested = del_sta->respReqd;
 	void *htc_handle;
 
@@ -4903,18 +4903,17 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 		return;
 	}
 
-	if (wma_is_vdev_in_ap_mode(wma, smesession_id))
+	if (wma_is_vdev_in_ap_mode(wma, vdev_id))
 		oper_mode = BSS_OPERATIONAL_MODE_AP;
 	if (del_sta->staType == STA_ENTRY_NDI_PEER)
 		oper_mode = BSS_OPERATIONAL_MODE_NDI;
 
-	wma_debug("vdev %d oper_mode %d", del_sta->smesessionId, oper_mode);
+	wma_debug("vdev %d oper_mode %d", vdev_id, oper_mode);
 
 	switch (oper_mode) {
 	case BSS_OPERATIONAL_MODE_STA:
-		if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(wma->psoc, smesession_id)) {
-			wma_debug("LFR3: Del STA on vdev_id %d",
-				  del_sta->smesessionId);
+		if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(wma->psoc, vdev_id)) {
+			wma_debug("LFR3: Del STA on vdev_id %d", vdev_id);
 			qdf_mem_free(del_sta);
 			return;
 		}
@@ -4943,7 +4942,7 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 		qdf_mem_free(del_sta);
 	}
 
-	if (wma_is_vdev_in_sap_mode(wma, del_sta->smesessionId)) {
+	if (wma_is_vdev_in_sap_mode(wma, vdev_id)) {
 		bool is_bus_suspend_allowed_in_sap_mode =
 			(wlan_pmo_get_sap_mode_bus_suspend(wma->psoc) &&
 				wmi_service_enabled(wma->wmi_handle,
@@ -4959,7 +4958,7 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 		return;
 	}
 
-	if (wma_is_vdev_in_go_mode(wma, del_sta->smesessionId)) {
+	if (wma_is_vdev_in_go_mode(wma, vdev_id)) {
 		bool is_bus_suspend_allowed_in_go_mode =
 			(wlan_pmo_get_go_mode_bus_suspend(wma->psoc) &&
 				wmi_service_enabled(wma->wmi_handle,
