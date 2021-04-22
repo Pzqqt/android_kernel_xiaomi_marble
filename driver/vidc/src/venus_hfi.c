@@ -368,6 +368,12 @@ static int __acquire_regulator(struct msm_vidc_core *core,
 	int rc = 0;
 
 	if (rinfo->has_hw_power_collapse) {
+		if (!rinfo->regulator) {
+			d_vpr_e("%s: invalid regulator\n", __func__);
+			rc = -EINVAL;
+			goto exit;
+		}
+
 		if (regulator_get_mode(rinfo->regulator) ==
 				REGULATOR_MODE_NORMAL) {
 			d_vpr_h("Skip acquire regulator %s\n", rinfo->name);
@@ -409,6 +415,11 @@ static int __hand_off_regulator(struct msm_vidc_core *core,
 	int rc = 0;
 
 	if (rinfo->has_hw_power_collapse) {
+		if (!rinfo->regulator) {
+			d_vpr_e("%s: invalid regulator\n", __func__);
+			return -EINVAL;
+		}
+
 		rc = regulator_set_mode(rinfo->regulator,
 				REGULATOR_MODE_FAST);
 		if (rc) {
@@ -478,6 +489,11 @@ static int __vote_bandwidth(struct bus_info *bus,
 	unsigned long bw_kbps)
 {
 	int rc = 0;
+
+	if (!bus->path) {
+		d_vpr_e("%s: invalid bus\n", __func__);
+		return -EINVAL;
+	}
 
 	d_vpr_p("Voting bus %s to ab %llu kBps\n", bus->name, bw_kbps);
 	rc = icc_set_bw(bus->path, bw_kbps, 0);
@@ -1451,6 +1467,8 @@ void __disable_unprepare_clks(struct msm_vidc_core *core)
 	}
 
 	venus_hfi_for_each_clock_reverse(core, cl) {
+		if (!cl->clk)
+			continue;
 		d_vpr_h("Clock: %s disable and unprepare\n",
 				cl->name);
 
@@ -1508,6 +1526,11 @@ static int __prepare_enable_clks(struct msm_vidc_core *core)
 	}
 
 	venus_hfi_for_each_clock(core, cl) {
+		if (!cl->clk) {
+			d_vpr_e("%s: invalid clock\n", __func__);
+			rc = -EINVAL;
+			goto fail_clk_enable;
+		}
 		/*
 		 * For the clocks we control, set the rate prior to preparing
 		 * them.  Since we don't really have a load at this point, scale
@@ -1537,6 +1560,8 @@ static int __prepare_enable_clks(struct msm_vidc_core *core)
 
 fail_clk_enable:
 	venus_hfi_for_each_clock_reverse_continue(core, cl, c) {
+		if (!cl->clk)
+			continue;
 		d_vpr_e("Clock: %s disable and unprepare\n",
 			cl->name);
 		clk_disable_unprepare(cl->clk);
@@ -1557,6 +1582,8 @@ static void __deinit_bus(struct msm_vidc_core *core)
 	core->power.bw_llcc = 0;
 
 	venus_hfi_for_each_bus_reverse(core, bus) {
+		if (!bus->path)
+			continue;
 		icc_put(bus->path);
 		bus->path = NULL;
 	}
@@ -1770,6 +1797,11 @@ static int __disable_regulator(struct regulator_info *rinfo,
 {
 	int rc = 0;
 
+	if (!rinfo->regulator) {
+		d_vpr_e("%s: invalid regulator\n", __func__);
+		return -EINVAL;
+	}
+
 	d_vpr_h("Disabling regulator %s\n", rinfo->name);
 
 	/*
@@ -1832,6 +1864,12 @@ static int __enable_regulators(struct msm_vidc_core *core)
 	d_vpr_h("Enabling regulators\n");
 
 	venus_hfi_for_each_regulator(core, rinfo) {
+		if (!rinfo->regulator) {
+			d_vpr_e("%s: invalid regulator\n", __func__);
+			rc = -EINVAL;
+			goto err_reg_enable_failed;
+		}
+
 		rc = regulator_enable(rinfo->regulator);
 		if (rc) {
 			d_vpr_e("Failed to enable %s: %d\n",
@@ -1851,8 +1889,11 @@ static int __enable_regulators(struct msm_vidc_core *core)
 	return 0;
 
 err_reg_enable_failed:
-	venus_hfi_for_each_regulator_reverse_continue(core, rinfo, c)
+	venus_hfi_for_each_regulator_reverse_continue(core, rinfo, c) {
+		if (!rinfo->regulator)
+			continue;
 		__disable_regulator(rinfo, core);
+	}
 
 	return rc;
 }
@@ -2783,7 +2824,7 @@ int venus_hfi_core_init(struct msm_vidc_core *core)
 
 	rc = __load_fw(core);
 	if (rc)
-		return rc;
+		goto error;
 
 	rc = __interface_queues_init(core);
 	if (rc)
@@ -2819,7 +2860,7 @@ int venus_hfi_core_init(struct msm_vidc_core *core)
 	return 0;
 
 error:
-	d_vpr_h("%s(): failed\n", __func__);
+	d_vpr_e("%s(): failed\n", __func__);
 	return rc;
 }
 
