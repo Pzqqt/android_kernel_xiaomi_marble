@@ -3993,6 +3993,10 @@ endif
 
 ccflags-y += -DSCHEDULER_CORE_MAX_MESSAGES=1000
 
+ccflags-y += -DLOG_DEL_OBJ_TIMEOUT_VALUE_MSEC=10000
+
+ccflags-y += -DLOG_DEL_OBJ_DESTROY_DURATION_SEC=10
+
 # Defining Reduction Limit 0 for MCL. If it is not defined,
 #then WLAN_SCHED_REDUCTION_LIMIT will be 32 for
 # WIN.
