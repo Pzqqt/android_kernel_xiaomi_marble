@@ -213,6 +213,8 @@ struct cm_roam_req *cm_get_first_roam_command(struct wlan_objmgr_vdev *vdev)
 	uint32_t cm_id_prefix;
 
 	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx)
+		return NULL;
 
 	cm_req_lock_acquire(cm_ctx);
 	qdf_list_peek_front(&cm_ctx->req_list, &cur_node);
