@@ -520,6 +520,9 @@ struct vdev_create_params {
 	uint32_t mbssid_flags;
 	uint8_t vdevid_trans;
 	bool special_vdev_mode;
+#ifdef WLAN_FEATURE_11BE_MLO
+	uint8_t mlo_mac[QDF_MAC_ADDR_SIZE];
+#endif
 };
 
 /**

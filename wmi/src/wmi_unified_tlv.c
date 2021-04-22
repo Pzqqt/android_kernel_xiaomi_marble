@@ -63,6 +63,7 @@
 
 #include <wmi_unified_vdev_api.h>
 #include <wmi_unified_vdev_tlv.h>
+#include <wmi_unified_11be_tlv.h>
 
 /*
  * If FW supports WMI_SERVICE_SCAN_CONFIG_PER_CHANNEL,
@@ -773,6 +774,8 @@ static QDF_STATUS send_vdev_create_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_vdev_txrx_streams *txrx_streams;
 
 	len += (num_bands * sizeof(*txrx_streams) + WMI_TLV_HDR_SIZE);
+	len += vdev_create_mlo_params_size();
+
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf)
 		return QDF_STATUS_E_NOMEM;
@@ -817,6 +820,10 @@ static QDF_STATUS send_vdev_create_cmd_tlv(wmi_unified_t wmi_handle,
 	WMITLV_SET_HDR(&txrx_streams->tlv_header,
 		       WMITLV_TAG_STRUC_wmi_vdev_txrx_streams,
 		       WMITLV_GET_STRUCT_TLVLEN(wmi_vdev_txrx_streams));
+
+	buf_ptr += (num_bands * sizeof(wmi_vdev_txrx_streams));
+	buf_ptr = vdev_create_add_mlo_params(buf_ptr, param);
+
 	wmi_mtrace(WMI_VDEV_CREATE_CMDID, cmd->vdev_id, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len, WMI_VDEV_CREATE_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
