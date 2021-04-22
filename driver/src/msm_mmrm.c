@@ -43,6 +43,11 @@ struct mmrm_client *mmrm_client_register(struct mmrm_client_desc *client_desc)
 		goto err_exit;
 	}
 
+	if (drv_data == (void *) -EPROBE_DEFER) {
+		d_mpr_e("%s: mmrm probe_init not done\n", __func__);
+		goto err_exit;
+	}
+
 	/* check for client type, then register */
 	if (client_desc->client_type == MMRM_CLIENT_CLOCK) {
 		client = mmrm_clk_client_register(
@@ -61,7 +66,7 @@ struct mmrm_client *mmrm_client_register(struct mmrm_client_desc *client_desc)
 	return client;
 
 err_exit:
-	d_mpr_h("%s: error exit\n", __func__);
+	d_mpr_e("%s: error exit\n", __func__);
 	return client;
 }
 EXPORT_SYMBOL(mmrm_client_register);
@@ -76,6 +81,11 @@ int mmrm_client_deregister(struct mmrm_client *client)
 	if (!client) {
 		d_mpr_e("%s: invalid input client\n", __func__);
 		rc = -EINVAL;
+		goto err_exit;
+	}
+
+	if (drv_data == (void *) -EPROBE_DEFER) {
+		d_mpr_e("%s: mmrm probe_init not done\n", __func__);
 		goto err_exit;
 	}
 
@@ -95,7 +105,7 @@ int mmrm_client_deregister(struct mmrm_client *client)
 	return rc;
 
 err_exit:
-	d_mpr_h("%s: error exit\n", __func__);
+	d_mpr_e("%s: error exit\n", __func__);
 	return rc;
 }
 EXPORT_SYMBOL(mmrm_client_deregister);
@@ -112,6 +122,11 @@ int mmrm_client_set_value(struct mmrm_client *client,
 		d_mpr_e("%s: invalid input client(%pK) client_data(%pK)\n",
 			__func__, client, client_data);
 		rc = -EINVAL;
+		goto err_exit;
+	}
+
+	if (drv_data == (void *) -EPROBE_DEFER) {
+		d_mpr_e("%s: mmrm probe_init not done\n", __func__);
 		goto err_exit;
 	}
 
@@ -132,7 +147,7 @@ int mmrm_client_set_value(struct mmrm_client *client,
 	return rc;
 
 err_exit:
-	d_mpr_h("%s: error exit\n", __func__);
+	d_mpr_e("%s: error exit\n", __func__);
 	return rc;
 }
 EXPORT_SYMBOL(mmrm_client_set_value);
@@ -154,6 +169,11 @@ int mmrm_client_set_value_in_range(struct mmrm_client *client,
 		goto err_exit;
 	}
 
+	if (drv_data == (void *) -EPROBE_DEFER) {
+		d_mpr_e("%s: mmrm probe_init not done\n", __func__);
+		goto err_exit;
+	}
+
 	/* check for client type, then set value */
 	if (client->client_type == MMRM_CLIENT_CLOCK) {
 		rc = mmrm_clk_client_setval_inrange(drv_data->clk_mgr,
@@ -171,7 +191,7 @@ int mmrm_client_set_value_in_range(struct mmrm_client *client,
 	return rc;
 
 err_exit:
-	d_mpr_h("%s: error exit\n", __func__);
+	d_mpr_e("%s: error exit\n", __func__);
 	return rc;
 }
 EXPORT_SYMBOL(mmrm_client_set_value_in_range);
@@ -188,6 +208,11 @@ int mmrm_client_get_value(struct mmrm_client *client,
 		d_mpr_e("%s: invalid input client(%pK) val(%pK)\n",
 			__func__, client, val);
 		rc = -EINVAL;
+		goto err_exit;
+	}
+
+	if (drv_data == (void *) -EPROBE_DEFER) {
+		d_mpr_e("%s: mmrm probe_init not done\n", __func__);
 		goto err_exit;
 	}
 
@@ -208,7 +233,7 @@ int mmrm_client_get_value(struct mmrm_client *client,
 	return rc;
 
 err_exit:
-	d_mpr_h("%s: error exit\n", __func__);
+	d_mpr_e("%s: error exit\n", __func__);
 	return rc;
 }
 EXPORT_SYMBOL(mmrm_client_get_value);
@@ -265,7 +290,7 @@ err_read_pltfrm_rsc:
 err_get_drv_data:
 	RESET_DRV_DATA(drv_data);
 err_no_mem:
-	d_mpr_h("%s: error exit\n", __func__);
+	d_mpr_e("%s: error exit\n", __func__);
 	return rc;
 }
 
@@ -284,7 +309,7 @@ static int msm_mmrm_probe(struct platform_device *pdev)
 	return rc;
 
 err_exit:
-	d_mpr_h("%s: error exit\n", __func__);
+	d_mpr_e("%s: error exit\n", __func__);
 	return rc;
 }
 
@@ -310,7 +335,7 @@ static int msm_mmrm_remove(struct platform_device *pdev)
 	return rc;
 
 err_exit:
-	d_mpr_h("%s: error exit\n", __func__);
+	d_mpr_e("%s: error exit\n", __func__);
 	return rc;
 }
 
@@ -347,7 +372,7 @@ static int __init msm_mmrm_init(void)
 	return rc;
 
 err_platform_drv_reg:
-	d_mpr_h("%s: error exit\n", __func__);
+	d_mpr_e("%s: error exit\n", __func__);
 	return rc;
 }
 
