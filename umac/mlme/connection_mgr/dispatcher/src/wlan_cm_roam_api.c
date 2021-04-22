@@ -295,8 +295,10 @@ release_ref:
 
 bool wlan_cm_roaming_in_progress(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 {
+#ifndef FEATURE_CM_ENABLE
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 	QDF_STATUS status;
+#endif
 	bool roaming_in_progress = false;
 	struct wlan_objmgr_vdev *vdev;
 
@@ -307,6 +309,10 @@ bool wlan_cm_roaming_in_progress(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 		return roaming_in_progress;
 	}
 
+	/* this is temp change will be removed in near future */
+#ifdef FEATURE_CM_ENABLE
+	roaming_in_progress = wlan_cm_is_vdev_roaming(vdev);
+#else
 	status = cm_roam_acquire_lock(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
 		goto release_ref;
@@ -318,8 +324,9 @@ bool wlan_cm_roaming_in_progress(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 		roaming_in_progress = true;
 
 	cm_roam_release_lock(vdev);
-
 release_ref:
+#endif
+
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 
 	return roaming_in_progress;
