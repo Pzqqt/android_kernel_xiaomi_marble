@@ -381,6 +381,26 @@ struct wlan_cfg_dp_pdev_ctxt {
 };
 
 /**
+ * struct wlan_dp_prealloc_cfg - DP prealloc related config
+ * @num_tx_ring_entries: num of tcl data ring entries
+ * @num_tx_comp_ring_entries: num of tx comp ring entries
+ * @num_wbm_rel_ring_entries: num of wbm err ring entries
+ * @num_rxdma_err_dst_ring_entries: num of rxdma err ring entries
+ * @num_reo_exception_ring_entries: num of rx exception ring entries
+ * @num_tx_desc: num of tx descriptors
+ * @num_tx_ext_desc: num of tx ext descriptors
+ */
+struct wlan_dp_prealloc_cfg {
+	int num_tx_ring_entries;
+	int num_tx_comp_ring_entries;
+	int num_wbm_rel_ring_entries;
+	int num_rxdma_err_dst_ring_entries;
+	int num_reo_exception_ring_entries;
+	int num_tx_desc;
+	int num_tx_ext_desc;
+};
+
+/**
  * wlan_cfg_soc_attach() - Attach configuration interface for SoC
  * @ctrl_obj - PSOC object
  *
@@ -1783,4 +1803,15 @@ wlan_cfg_get_dp_soc_ppe2tcl_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
 int
 wlan_cfg_get_dp_soc_ppe_release_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
 #endif
+
+/**
+ * wlan_cfg_get_prealloc_cfg() - Get dp prealloc related cfg param
+ * @ctrl_psoc - PSOC object
+ * @cfg - cfg ctx where values will be populated
+ *
+ * Return: None
+ */
+void
+wlan_cfg_get_prealloc_cfg(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
+			  struct wlan_dp_prealloc_cfg *cfg);
 #endif

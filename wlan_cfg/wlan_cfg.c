@@ -2226,3 +2226,23 @@ wlan_cfg_get_dp_soc_ppe_release_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
 	return cfg->ppe_release_ring;
 }
 #endif
+
+void
+wlan_cfg_get_prealloc_cfg(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
+			  struct wlan_dp_prealloc_cfg *cfg)
+{
+	if (!ctrl_psoc || !cfg)
+		return;
+
+	cfg->num_tx_ring_entries = cfg_get(ctrl_psoc, CFG_DP_TX_RING_SIZE);
+	cfg->num_tx_comp_ring_entries = cfg_get(ctrl_psoc,
+						CFG_DP_TX_COMPL_RING_SIZE);
+	cfg->num_wbm_rel_ring_entries = cfg_get(ctrl_psoc,
+						CFG_DP_WBM_RELEASE_RING);
+	cfg->num_rxdma_err_dst_ring_entries = cfg_get(ctrl_psoc,
+						     CFG_DP_RXDMA_ERR_DST_RING);
+	cfg->num_reo_exception_ring_entries = cfg_get(ctrl_psoc,
+						     CFG_DP_REO_EXCEPTION_RING);
+	cfg->num_tx_desc = cfg_get(ctrl_psoc, CFG_DP_TX_DESC);
+	cfg->num_tx_ext_desc = cfg_get(ctrl_psoc, CFG_DP_TX_EXT_DESC);
+}
