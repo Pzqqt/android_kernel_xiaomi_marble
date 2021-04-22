@@ -970,15 +970,15 @@ static int _sde_encoder_atomic_check_reserve(struct drm_encoder *drm_enc,
 		 * resource set validated. Reset the topology if we are
 		 * de-activating crtc.
 		 */
-		if (crtc_state->active)
+		if (crtc_state->active) {
 			topology = &sde_conn_state->mode_info.topology;
-
-		ret = sde_rm_update_topology(&sde_kms->rm,
-				conn_state, topology);
-		if (ret) {
-			SDE_ERROR_ENC(sde_enc,
-				"RM failed to update topology, rc: %d\n", ret);
-			return ret;
+			ret = sde_rm_update_topology(&sde_kms->rm,
+					conn_state, topology);
+			if (ret) {
+				SDE_ERROR_ENC(sde_enc,
+					"RM failed to update topology, rc: %d\n", ret);
+				return ret;
+			}
 		}
 
 		ret = sde_connector_set_blob_data(conn_state->connector,
@@ -3020,7 +3020,7 @@ static void sde_encoder_virt_disable(struct drm_encoder *drm_enc)
 	struct sde_encoder_virt *sde_enc = NULL;
 	struct sde_kms *sde_kms;
 	enum sde_intf_mode intf_mode;
-	int i = 0;
+	int ret, i = 0;
 
 	if (!drm_enc) {
 		SDE_ERROR("invalid encoder\n");
@@ -3094,6 +3094,16 @@ static void sde_encoder_virt_disable(struct drm_encoder *drm_enc)
 		sde_encoder_dce_disable(sde_enc);
 
 	sde_encoder_resource_control(drm_enc, SDE_ENC_RC_EVENT_STOP);
+
+	/* reset connector topology name property */
+	if (sde_enc->cur_master && sde_enc->cur_master->connector) {
+		ret = sde_rm_update_topology(&sde_kms->rm,
+				sde_enc->cur_master->connector->state, NULL);
+		if (ret) {
+			SDE_ERROR_ENC(sde_enc, "RM failed to update topology, rc: %d\n", ret);
+			return;
+		}
+	}
 
 	if (!sde_encoder_in_clone_mode(drm_enc))
 		sde_encoder_virt_reset(drm_enc);
