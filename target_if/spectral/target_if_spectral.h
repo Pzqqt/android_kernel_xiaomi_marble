@@ -133,6 +133,7 @@
  */
 #define MAX_NUM_DEST_DETECTOR_INFO    (3)
 #define MAX_DETECTORS_PER_PDEV        (3)
+#define FFT_BIN_SIZE_1BYTE            (1)
 
 #ifdef OPTIMIZED_SAMP_MESSAGE
 /**
@@ -159,6 +160,18 @@ enum spectral_160mhz_report_delivery_state {
 	SPECTRAL_REPORT_RX_SECONDARY80,
 };
 #endif /* OPTIMIZED_SAMP_MESSAGE */
+
+/**
+ * enum spectral_freq_span_id - Spectral frequency span id
+ * @SPECTRAL_FREQ_SPAN_ID_0: Frequency span 0
+ * @SPECTRAL_FREQ_SPAN_ID_1: Frequency span 1
+ * @SPECTRAL_FREQ_SPAN_ID_2: Frequency span 2
+ */
+enum spectral_freq_span_id {
+	SPECTRAL_FREQ_SPAN_ID_0,
+	SPECTRAL_FREQ_SPAN_ID_1,
+	SPECTRAL_FREQ_SPAN_ID_2,
+};
 
 /**
  * enum spectral_detector_id - Spectral detector id
@@ -1400,6 +1413,7 @@ uint32_t target_if_get_offset_swar_sec80(uint32_t channel_width);
  */
 void target_if_sptrl_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops);
 
+#ifndef OPTIMIZED_SAMP_MESSAGE
 /**
  * target_if_spectral_create_samp_msg() - Create the spectral samp message
  * @spectral : Pointer to spectral internal structure
@@ -1412,6 +1426,22 @@ void target_if_sptrl_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops);
 void target_if_spectral_create_samp_msg(
 	struct target_if_spectral *spectral,
 	struct target_if_samp_msg_params *params);
+#endif
+
+#ifdef OPTIMIZED_SAMP_MESSAGE
+/**
+ * target_if_spectral_fill_samp_msg() - Fill the Spectral SAMP message
+ * @spectral : Pointer to spectral internal structure
+ * @params: Spectral SAMP message fields
+ *
+ * Fill the spectral SAMP message fields using params and detector map.
+ *
+ * Return: Success/Failure
+ */
+QDF_STATUS target_if_spectral_fill_samp_msg(
+			struct target_if_spectral *spectral,
+			struct target_if_samp_msg_params *params);
+#endif
 
 /**
  * target_if_spectral_process_phyerr_gen3() - Process phyerror event for gen3
