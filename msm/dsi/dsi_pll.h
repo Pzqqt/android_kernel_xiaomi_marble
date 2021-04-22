@@ -190,8 +190,8 @@ struct dsi_pll_vco_calc {
 };
 
 struct dsi_pll_div_table {
-	u32 min_hz;
-	u32 max_hz;
+	u64 min_hz;
+	u64 max_hz;
 	int pll_div;
 	int phy_div;
 };

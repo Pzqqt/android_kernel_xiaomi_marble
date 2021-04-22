@@ -1004,16 +1004,29 @@ static int dsi_pll_5nm_set_byteclk_div(struct dsi_pll_resource *pll,
 	int table_size;
 	u32 pll_post_div = 0, phy_post_div = 0;
 	struct dsi_pll_div_table *table;
-	u32 bitclk_rate;
+	u64 bitclk_rate;
+	u64 const phy_rate_split = 1500000000UL;
 
 	if (pll->type == DSI_PHY_TYPE_DPHY) {
 		bitclk_rate = pll->byteclk_rate * 8;
-		table_size = ARRAY_SIZE(pll_5nm_dphy);
-		table = pll_5nm_dphy;
+
+		if (bitclk_rate <= phy_rate_split) {
+			table = pll_5nm_dphy_lb;
+			table_size = ARRAY_SIZE(pll_5nm_dphy_lb);
+		} else {
+			table = pll_5nm_dphy_hb;
+			table_size = ARRAY_SIZE(pll_5nm_dphy_hb);
+		}
 	} else {
 		bitclk_rate = pll->byteclk_rate * 7;
-		table_size = ARRAY_SIZE(pll_5nm_cphy);
-		table = pll_5nm_cphy;
+
+		if (bitclk_rate <= phy_rate_split) {
+			table = pll_5nm_cphy_lb;
+			table_size = ARRAY_SIZE(pll_5nm_cphy_lb);
+		} else {
+			table = pll_5nm_cphy_hb;
+			table_size = ARRAY_SIZE(pll_5nm_cphy_hb);
+		}
 	}
 
 	for (i = 0; i < table_size; i++) {
