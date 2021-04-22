@@ -84,7 +84,7 @@ static int ipa_commit_partial_hdr(
 		return -EINVAL;
 	}
 
-	hdr->commit = 1;
+	hdr->commit = 0;
 	hdr->num_hdrs = 2;
 
 	snprintf(hdr->hdr[0].name, sizeof(hdr->hdr[0].name),
