@@ -100,6 +100,7 @@
 #include "wlan_if_mgr_public_struct.h"
 #include "wlan_hdd_bootup_marker.h"
 #include "wlan_hdd_medium_assess.h"
+#include "wlan_hdd_scan.h"
 
 #define ACS_SCAN_EXPIRY_TIMEOUT_S 4
 
@@ -2266,6 +2267,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 	case eSAP_STA_ASSOC_EVENT:
 	case eSAP_STA_REASSOC_EVENT:
 		event = &sap_event->sapevt.sapStationAssocReassocCompleteEvent;
+
+		/* Reset scan reject params on assoc */
+		hdd_init_scan_reject_params(hdd_ctx);
 		if (eSAP_STATUS_FAILURE == event->status) {
 			hdd_info("assoc failure: " QDF_MAC_ADDR_FMT,
 				 QDF_MAC_ADDR_REF(wrqu.addr.sa_data));
@@ -2406,6 +2410,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		memcpy(wrqu.addr.sa_data,
 		       &disassoc_comp->staMac, QDF_MAC_ADDR_SIZE);
 
+		/* Reset scan reject params on disconnect */
+		hdd_init_scan_reject_params(hdd_ctx);
 		cache_stainfo = hdd_get_sta_info_by_mac(
 						&adapter->cache_sta_info_list,
 						disassoc_comp->staMac.bytes,
