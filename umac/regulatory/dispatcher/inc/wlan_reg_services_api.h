@@ -833,6 +833,14 @@ qdf_freq_t wlan_reg_legacy_chan_to_freq(struct wlan_objmgr_pdev *pdev,
  */
 bool wlan_reg_is_us(uint8_t *country);
 
+/**
+ * wlan_reg_is_etsi() - reg is a country in EU
+ * @country: The country information
+ *
+ * Return: true or false
+ */
+bool wlan_reg_is_etsi(uint8_t *country);
+
 #ifdef CONFIG_CHAN_NUM_API
 /**
  * wlan_reg_chan_is_49ghz() - Check if the input channel number is 4.9GHz
