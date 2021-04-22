@@ -23,6 +23,7 @@
  */
 
 #include "wlan_mgmt_txrx_utils_api.h"
+#include "wlan_mgmt_txrx_tgt_api.h"
 #include "../../core/src/wlan_mgmt_txrx_main_i.h"
 #include "wlan_objmgr_psoc_obj.h"
 #include "wlan_objmgr_global_obj.h"
@@ -783,6 +784,16 @@ QDF_STATUS wlan_mgmt_txrx_psoc_open(struct wlan_objmgr_psoc *psoc)
 QDF_STATUS wlan_mgmt_txrx_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mgmt_txrx_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	return tgt_mgmt_txrx_register_ev_handler(psoc);
+}
+
+QDF_STATUS wlan_mgmt_txrx_psoc_disable(struct wlan_objmgr_psoc *psoc)
+{
+	return tgt_mgmt_txrx_unregister_ev_handler(psoc);
 }
 
 QDF_STATUS wlan_mgmt_txrx_pdev_open(struct wlan_objmgr_pdev *pdev)

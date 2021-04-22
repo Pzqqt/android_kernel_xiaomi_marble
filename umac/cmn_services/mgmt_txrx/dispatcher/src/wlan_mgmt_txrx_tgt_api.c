@@ -1456,3 +1456,53 @@ uint32_t tgt_mgmt_txrx_get_free_desc_pool_count(
 fail:
 	return free_desc_count;
 }
+
+QDF_STATUS
+tgt_mgmt_txrx_register_ev_handler(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_lmac_if_tx_ops *tx_ops;
+	struct wlan_lmac_if_mgmt_txrx_tx_ops *mgmt_txrx_tx_ops;
+
+	if (!psoc) {
+		mgmt_txrx_err("psoc is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		mgmt_txrx_err("tx_ops is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	mgmt_txrx_tx_ops = &tx_ops->mgmt_txrx_tx_ops;
+
+	if (mgmt_txrx_tx_ops->reg_ev_handler)
+		return mgmt_txrx_tx_ops->reg_ev_handler(psoc);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+tgt_mgmt_txrx_unregister_ev_handler(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_lmac_if_tx_ops *tx_ops;
+	struct wlan_lmac_if_mgmt_txrx_tx_ops *mgmt_txrx_tx_ops;
+
+	if (!psoc) {
+		mgmt_txrx_err("psoc is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		mgmt_txrx_err("tx_ops is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	mgmt_txrx_tx_ops = &tx_ops->mgmt_txrx_tx_ops;
+
+	if (mgmt_txrx_tx_ops->unreg_ev_handler)
+		return mgmt_txrx_tx_ops->unreg_ev_handler(psoc);
+
+	return QDF_STATUS_SUCCESS;
+}

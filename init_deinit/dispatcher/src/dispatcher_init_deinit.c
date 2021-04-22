@@ -1310,8 +1310,13 @@ QDF_STATUS dispatcher_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	if (status != QDF_STATUS_SUCCESS && status != QDF_STATUS_COMP_DISABLED)
 		goto spectral_psoc_enable_fail;
 
+	if (QDF_STATUS_SUCCESS != wlan_mgmt_txrx_psoc_enable(psoc))
+		goto mgmt_txrx_psoc_enable_fail;
+
 	return QDF_STATUS_SUCCESS;
 
+mgmt_txrx_psoc_enable_fail:
+	spectral_psoc_disable(psoc);
 spectral_psoc_enable_fail:
 	wlan_mlme_psoc_disable(psoc);
 mlme_psoc_enable_fail:
@@ -1344,6 +1349,8 @@ qdf_export_symbol(dispatcher_psoc_enable);
 QDF_STATUS dispatcher_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status;
+
+	QDF_BUG(QDF_STATUS_SUCCESS == wlan_mgmt_txrx_psoc_disable(psoc));
 
 	QDF_BUG(QDF_STATUS_SUCCESS == wlan_mlme_psoc_disable(psoc));
 
