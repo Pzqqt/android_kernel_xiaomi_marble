@@ -5407,8 +5407,8 @@ QDF_STATUS wma_add_bss_peer_sta(uint8_t vdev_id, uint8_t *bssid,
 						      WMI_PEER_TYPE_DEFAULT,
 						      vdev_id);
 	else
-		status = wma_add_peer(wma, bssid, WMI_PEER_TYPE_DEFAULT,
-				      vdev_id);
+		status = wma_create_peer(wma, bssid, WMI_PEER_TYPE_DEFAULT,
+					 vdev_id);
 err:
 	return status;
 }
