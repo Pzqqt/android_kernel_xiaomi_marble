@@ -4347,6 +4347,11 @@ void lim_calculate_tpc(struct mac_context *mac,
 	struct vdev_mlme_obj *mlme_obj;
 	uint8_t tpe_power;
 
+	if (!session->lim_join_req) {
+		pe_err("Join Request is NULL");
+		return;
+	}
+
 	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(session->vdev);
 	if (!mlme_obj) {
 		pe_err("vdev component object is NULL");
@@ -4371,6 +4376,13 @@ void lim_calculate_tpc(struct mac_context *mac,
 	} else {
 		is_6ghz_freq = true;
 		is_psd_power = wlan_reg_is_6g_psd_power(mac->pdev);
+		if (LIM_IS_STA_ROLE(session)) {
+			if (session->lim_join_req->same_ctry_code)
+				ap_power_type_6g = session->ap_power_type;
+			else
+				ap_power_type_6g =
+					session->lim_join_req->ap_power_type_6g;
+		}
 	}
 
 	if (mlme_obj->reg_tpc_obj.num_pwr_levels) {
@@ -4386,7 +4398,6 @@ void lim_calculate_tpc(struct mac_context *mac,
 	for (i = 0; i < num_pwr_levels; i++) {
 		if (is_tpe_present) {
 			if (is_6ghz_freq) {
-				ap_power_type_6g = session->ap_power_type;
 				wlan_reg_get_client_power_for_connecting_ap(
 				mac->pdev, ap_power_type_6g,
 				mlme_obj->reg_tpc_obj.frequency[i],
@@ -4407,8 +4418,6 @@ void lim_calculate_tpc(struct mac_context *mac,
 			}
 			if (is_6ghz_freq) {
 				if (LIM_IS_STA_ROLE(session)) {
-					ap_power_type_6g =
-							session->ap_power_type;
 					wlan_reg_get_client_power_for_connecting_ap
 					(mac->pdev, ap_power_type_6g,
 					 mlme_obj->reg_tpc_obj.frequency[i],

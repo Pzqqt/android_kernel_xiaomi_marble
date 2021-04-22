@@ -1055,6 +1055,9 @@ struct join_req {
 #endif
 	struct supported_channels supportedChannels;
 	bool force_rsne_override;
+	bool same_ctry_code;  /* If AP Country IE has same country code as */
+	/* STA programmed country */
+	uint8_t ap_power_type_6g;  /* AP power type for 6G (LPI, SP, or VLP) */
 	/* Pls make this as last variable in struct */
 	struct bss_description bssDescription;
 	/*

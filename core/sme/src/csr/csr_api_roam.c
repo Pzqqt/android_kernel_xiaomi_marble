@@ -13352,10 +13352,30 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 				sme_debug("Channel is 6G but country IE not present");
 			wlan_reg_read_current_country(mac->psoc,
 						      programmed_country);
-			if (!qdf_mem_cmp(pIes->Country.country,
-					 programmed_country,
-					 REG_ALPHA2_LEN + 1))
-				sme_debug("Country IE does not match country stored in regulatory");
+			if (qdf_mem_cmp(pIes->Country.country,
+					programmed_country,
+					REG_ALPHA2_LEN)) {
+				sme_debug("Country IE:%c%c, STA country:%c%c",
+					  pIes->Country.country[0],
+					  pIes->Country.country[1],
+					  programmed_country[0],
+					  programmed_country[1]);
+				csr_join_req->same_ctry_code = false;
+				if (wlan_reg_is_us(programmed_country)) {
+					sme_err("US VLP not in place yet, connection not allowed");
+					status = QDF_STATUS_E_NOSUPPORT;
+					return status;
+				}
+				if (wlan_reg_is_etsi(programmed_country)) {
+					sme_debug("STA ctry:%c%c, doesn't match with AP ctry, switch to VLP",
+						  programmed_country[0],
+						  programmed_country[1]);
+					csr_join_req->ap_power_type_6g =
+							REG_VERY_LOW_POWER_AP;
+				}
+			} else {
+				csr_join_req->same_ctry_code = true;
+			}
 			status = csr_iterate_triplets(pIes->Country);
 		}
 
