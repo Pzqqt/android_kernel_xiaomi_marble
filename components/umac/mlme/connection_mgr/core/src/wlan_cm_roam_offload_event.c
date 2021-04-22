@@ -36,6 +36,7 @@
 #include "connection_mgr/core/src/wlan_cm_roam.h"
 #include "connection_mgr/core/src/wlan_cm_sm.h"
 #include "connection_mgr/core/src/wlan_cm_main_api.h"
+
 #define FW_ROAM_SYNC_TIMEOUT 7000
 
 static QDF_STATUS
@@ -89,6 +90,7 @@ QDF_STATUS cm_abort_fw_roam(struct cnx_mgr *cm_ctx,
 {
 	QDF_STATUS status;
 
+	mlme_cm_osif_roam_abort_ind(cm_ctx->vdev);
 	status = cm_sm_deliver_event(cm_ctx->vdev,
 				     WLAN_CM_SM_EV_ROAM_ABORT,
 				     sizeof(wlan_cm_id), &cm_id);
@@ -308,6 +310,10 @@ QDF_STATUS cm_fw_roam_abort_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 	}
 
 	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx) {
+		status = QDF_STATUS_E_FAILURE;
+		goto rel_ref;
+	}
 	roam_req = cm_get_first_roam_command(vdev);
 	if (!roam_req) {
 		mlme_err("Failed to find roam req from list");
@@ -325,16 +331,13 @@ QDF_STATUS cm_fw_roam_abort_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 		goto end;
 	}
 
-	mlme_cm_osif_roam_abort_ind(cm_ctx->vdev);
 	status = wlan_cm_roam_state_change(pdev,
 					   roam_req->req.vdev_id,
 					   WLAN_ROAM_RSO_ENABLED,
 					   REASON_ROAM_ABORT);
-
-	if (QDF_IS_STATUS_ERROR(status))
-		goto end;
 end:
 	cm_abort_fw_roam(cm_ctx, cm_id);
+rel_ref:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_SB_ID);
 
 	return status;

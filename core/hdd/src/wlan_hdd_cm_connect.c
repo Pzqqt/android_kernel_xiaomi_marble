@@ -405,9 +405,14 @@ int wlan_hdd_cm_connect(struct wiphy *wiphy,
 
 	status = osif_cm_connect(ndev, vdev, req, &params);
 
-	if (status) {
-		hdd_err("Vdev %d connect failed status %d",
-			adapter->vdev_id, status);
+	if (status || ucfg_cm_is_vdev_roaming(vdev)) {
+		/* Release suspend and wake lock for failure or roam invoke */
+		if (status)
+			hdd_err("Vdev %d connect failed status %d",
+				adapter->vdev_id, status);
+		else
+			hdd_debug("Vdev %d: connect lead to roam invoke",
+				  adapter->vdev_id);
 		qdf_runtime_pm_allow_suspend(&hdd_ctx->runtime_context.connect);
 		hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_CONNECT);
 	}

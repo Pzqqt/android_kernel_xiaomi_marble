@@ -366,7 +366,13 @@ QDF_STATUS hdd_cm_netif_queue_control(struct wlan_objmgr_vdev *vdev,
 
 QDF_STATUS hdd_cm_napi_serialize_control(bool action)
 {
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
 	hdd_napi_serialize(action);
+
+	/* reinit scan reject parms for napi off (roam abort/ho fail) */
+	if (!action)
+		hdd_init_scan_reject_params(hdd_ctx);
 
 	return QDF_STATUS_SUCCESS;
 }
