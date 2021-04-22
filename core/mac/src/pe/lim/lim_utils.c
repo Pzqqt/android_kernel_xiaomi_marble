@@ -8672,12 +8672,23 @@ QDF_STATUS lim_ap_mlme_vdev_update_beacon(struct vdev_mlme_obj *vdev_mlme,
 					  uint16_t data_len, void *data)
 {
 	struct pe_session *session;
+	struct mac_context *mac_ctx;
 
 	if (!data) {
-		pe_err("event_data is NULL");
-		return QDF_STATUS_E_INVAL;
+		mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+		if (!mac_ctx) {
+			pe_err("mac ctx is null");
+			return QDF_STATUS_E_INVAL;
+		}
+		session = pe_find_session_by_vdev_id(
+			mac_ctx, vdev_mlme->vdev->vdev_objmgr.vdev_id);
+		if (!session) {
+			pe_err("session is NULL");
+			return QDF_STATUS_E_INVAL;
+		}
+	} else {
+		session = (struct pe_session *)data;
 	}
-	session = (struct pe_session *)data;
 	if (LIM_IS_NDI_ROLE(session))
 		return QDF_STATUS_SUCCESS;
 
@@ -8698,12 +8709,25 @@ QDF_STATUS lim_ap_mlme_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
 {
 	struct scheduler_msg msg = {0};
 	QDF_STATUS status;
-	struct pe_session *session = (struct pe_session *)data;
+	struct pe_session *session;
+	struct mac_context *mac_ctx;
 
-	if (!session) {
-		pe_err("session is NULL");
-		return QDF_STATUS_E_INVAL;
+	if (!data) {
+		mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+		if (!mac_ctx) {
+			pe_err("mac ctx is null");
+			return QDF_STATUS_E_INVAL;
+		}
+		session = pe_find_session_by_vdev_id(
+			mac_ctx, vdev_mlme->vdev->vdev_objmgr.vdev_id);
+		if (!session) {
+			pe_err("session is NULL");
+			return QDF_STATUS_E_INVAL;
+		}
+	} else {
+		session = (struct pe_session *)data;
 	}
+
 	if (LIM_IS_NDI_ROLE(session))
 		return QDF_STATUS_SUCCESS;
 
@@ -8720,11 +8744,23 @@ QDF_STATUS lim_ap_mlme_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
 QDF_STATUS lim_ap_mlme_vdev_disconnect_peers(struct vdev_mlme_obj *vdev_mlme,
 					     uint16_t data_len, void *data)
 {
-	struct pe_session *session = (struct pe_session *)data;
+	struct pe_session *session;
+	struct mac_context *mac_ctx;
 
 	if (!data) {
-		pe_err("data is NULL");
-		return QDF_STATUS_E_INVAL;
+		mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+		if (!mac_ctx) {
+			pe_err("mac ctx is null");
+			return QDF_STATUS_E_INVAL;
+		}
+		session = pe_find_session_by_vdev_id(
+			mac_ctx, vdev_mlme->vdev->vdev_objmgr.vdev_id);
+		if (!session) {
+			pe_err("session is NULL");
+			return QDF_STATUS_E_INVAL;
+		}
+	} else {
+		session = (struct pe_session *)data;
 	}
 
 	lim_delete_all_peers(session);
