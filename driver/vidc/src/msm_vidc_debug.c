@@ -91,16 +91,45 @@ struct core_inst_pair {
 };
 
 /* debug fs support */
-
 static inline void tic(struct msm_vidc_inst *i, enum profiling_points p,
 				 char *b)
 {
-	return;
+	if (!i->debug.pdata[p].name[0])
+		memcpy(i->debug.pdata[p].name, b, 64);
+	if (i->debug.pdata[p].sampling) {
+		i->debug.pdata[p].start = ktime_get_ns() / 1000 / 1000;
+		i->debug.pdata[p].sampling = false;
+	}
 }
 
 static inline void toc(struct msm_vidc_inst *i, enum profiling_points p)
 {
-	return;
+	if (!i->debug.pdata[p].sampling) {
+		i->debug.pdata[p].stop = ktime_get_ns() / 1000 / 1000;
+		i->debug.pdata[p].cumulative += i->debug.pdata[p].stop -
+			i->debug.pdata[p].start;
+		i->debug.pdata[p].sampling = true;
+	}
+}
+
+void msm_vidc_show_stats(void *inst)
+{
+	int x;
+	struct msm_vidc_inst *i = (struct msm_vidc_inst *) inst;
+
+	for (x = 0; x < MAX_PROFILING_POINTS; x++) {
+		if (i->debug.pdata[x].name[0]) {
+			if (i->debug.samples) {
+				i_vpr_p(i, "%s averaged %d ms/sample\n",
+						i->debug.pdata[x].name,
+						i->debug.pdata[x].cumulative /
+						i->debug.samples);
+			}
+
+			i_vpr_p(i, "%s Samples: %d\n",
+				i->debug.pdata[x].name, i->debug.samples);
+		}
+	}
 }
 
 static u32 write_str(char *buffer,

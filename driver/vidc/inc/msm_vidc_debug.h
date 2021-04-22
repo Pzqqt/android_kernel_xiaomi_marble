@@ -135,5 +135,6 @@ void msm_vidc_debugfs_deinit_inst(void *inst);
 void msm_vidc_debugfs_update(void *inst,
 		enum msm_vidc_debugfs_event e);
 int msm_vidc_check_ratelimit(void);
+void msm_vidc_show_stats(void *inst);
 
 #endif

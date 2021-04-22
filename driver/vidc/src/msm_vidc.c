@@ -917,6 +917,7 @@ int msm_vidc_close(void *instance)
 	msm_vidc_remove_session(inst);
 	msm_vidc_destroy_buffers(inst);
 	mutex_unlock(&inst->lock);
+	msm_vidc_show_stats(inst);
 	put_inst(inst);
 	msm_vidc_schedule_core_deinit(core);
 

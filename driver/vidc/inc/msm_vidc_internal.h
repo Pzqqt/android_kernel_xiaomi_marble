@@ -637,12 +637,12 @@ struct buf_count {
 };
 
 struct profile_data {
-	u32                    start;
-	u32                    stop;
-	u32                    cumulative;
+	u64                    start;
+	u64                    stop;
+	u64                    cumulative;
 	char                   name[64];
 	u32                    sampling;
-	u32                    average;
+	u64                    average;
 };
 
 struct msm_vidc_debug {
