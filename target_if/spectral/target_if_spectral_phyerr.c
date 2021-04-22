@@ -2271,8 +2271,153 @@ target_if_process_sfft_report_gen3(
 
 	return QDF_STATUS_SUCCESS;
 }
-#endif /* OPTIMIZED_SAMP_MESSAGE */
 
+int
+target_if_consume_spectral_report_gen3(
+	 struct target_if_spectral *spectral,
+	 struct spectral_report *report)
+{
+	/*
+	 * XXX : The classifier do not use all the members of the SAMP
+	 *       message data format.
+	 *       The classifier only depends upon the following parameters
+	 *
+	 *          1. Frequency
+	 *          2. Spectral RSSI
+	 *          3. Bin Power Count
+	 *          4. Bin Power values
+	 *          5. Spectral Timestamp
+	 *          6. MAC Address
+	 *
+	 *       This function processes the Spectral summary and FFT reports
+	 *       and passes the processed information
+	 *       target_if_spectral_fill_samp_msg()
+	 *       to prepare fully formatted Spectral SAMP message
+	 *
+	 *       XXX : Need to verify
+	 *          1. Order of FFT bin values
+	 *
+	 */
+	struct target_if_samp_msg_params params = {0};
+	struct spectral_search_fft_info_gen3 search_fft_info;
+	struct spectral_search_fft_info_gen3 *p_sfft = &search_fft_info;
+	struct target_if_spectral_ops *p_sops;
+	struct spectral_phyerr_fft_report_gen3 *p_fft_report;
+	uint8_t *data;
+	struct sscan_report_fields_gen3 sscan_report_fields = {0};
+	QDF_STATUS ret;
+	enum spectral_scan_mode spectral_mode = SPECTRAL_SCAN_MODE_INVALID;
+	bool finite_scan = false;
+
+	if (!spectral) {
+		spectral_err_rl("Spectral LMAC object is null");
+		goto fail_no_print;
+	}
+
+	if (!report) {
+		spectral_err_rl("Spectral report is null");
+		goto fail_no_print;
+	}
+
+	p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
+	data = report->data;
+
+	/* Apply byte-swap on the headers */
+	if (p_sops->byte_swap_headers) {
+		ret = p_sops->byte_swap_headers(spectral, data);
+		if (QDF_IS_STATUS_ERROR(ret)) {
+			spectral_err_rl("Byte-swap on Spectral headers failed");
+			goto fail;
+		}
+	}
+
+	/* Validate and Process Spectral scan summary report */
+	ret = target_if_consume_sscan_summary_report_gen3(&data,
+							  &sscan_report_fields,
+							  spectral);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		spectral_err_rl("Failed to process Spectral summary report");
+		goto fail;
+	}
+
+	spectral_mode = target_if_get_spectral_mode(
+					sscan_report_fields.sscan_detector_id,
+					&spectral->rparams);
+	if (spectral_mode >= SPECTRAL_SCAN_MODE_MAX) {
+		spectral_err_rl("No valid Spectral mode for detector id %u",
+				sscan_report_fields.sscan_detector_id);
+		goto fail;
+	}
+
+	/* Drop the sample if Spectral is not active for the current mode */
+	if (!p_sops->is_spectral_active(spectral, spectral_mode)) {
+		spectral_info_rl("Spectral scan is not active");
+		goto fail_no_print;
+	}
+
+	ret = target_if_spectral_is_finite_scan(spectral, spectral_mode,
+						&finite_scan);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		spectral_err_rl("Failed to check scan is finite");
+		goto fail;
+	}
+
+	if (finite_scan) {
+		ret = target_if_spectral_finite_scan_update(spectral,
+							    spectral_mode);
+		if (QDF_IS_STATUS_ERROR(ret)) {
+			spectral_err_rl("Failed to update scan count");
+			goto fail;
+		}
+	}
+
+	/* Validate and Process the search FFT report */
+	ret = target_if_process_sfft_report_gen3(
+					data, p_sfft,
+					spectral,
+					sscan_report_fields.sscan_detector_id);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		spectral_err_rl("Failed to process search FFT report");
+		goto fail;
+	}
+
+	/* Check FFT report are in order for 160 MHz and 80p80 */
+	if (is_ch_width_160_or_80p80(
+	    spectral->report_info[spectral_mode].sscan_bw) &&
+	    spectral->rparams.fragmentation_160[spectral_mode]) {
+		ret = target_if_160mhz_delivery_state_change(
+				spectral, spectral_mode,
+				p_sfft->fft_detector_id);
+		if (ret != QDF_STATUS_SUCCESS)
+			goto fail;
+	}
+
+	p_fft_report = (struct spectral_phyerr_fft_report_gen3 *)data;
+	if (spectral_debug_level & (DEBUG_SPECTRAL2 | DEBUG_SPECTRAL4))
+		target_if_dump_fft_report_gen3(spectral, spectral_mode,
+					       p_fft_report, p_sfft);
+
+	target_if_spectral_check_buffer_poisoning(spectral, report,
+						  p_sfft->fft_bin_count,
+						  spectral_mode);
+
+	/* Fill SAMP message */
+	ret = target_if_spectral_fill_samp_msg(spectral, &params);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		spectral_err_rl("Failed to fill the SAMP msg");
+		goto fail;
+	}
+
+	return 0;
+ fail:
+	spectral_err_rl("Error while processing Spectral report");
+fail_no_print:
+	if (spectral_mode != SPECTRAL_SCAN_MODE_INVALID)
+		reset_160mhz_delivery_state_machine(spectral, spectral_mode);
+	return -EPERM;
+}
+
+#else
 int
 target_if_consume_spectral_report_gen3(
 	 struct target_if_spectral *spectral,
@@ -2708,6 +2853,7 @@ fail_no_print:
 		reset_160mhz_delivery_state_machine(spectral, spectral_mode);
 	return -EPERM;
 }
+#endif /* OPTIMIZED_SAMP_MESSAGE */
 
 int target_if_spectral_process_report_gen3(
 	struct wlan_objmgr_pdev *pdev,
