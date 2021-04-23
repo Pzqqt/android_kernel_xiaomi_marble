@@ -525,6 +525,20 @@ void ipa_flush_pending_vdev_events(struct wlan_objmgr_pdev *pdev,
  */
 bool ipa_cb_is_ready(void);
 
+/**
+ * ipa_init_deinit_lock() - lock ipa init deinit lock
+ *
+ * Return: None
+ */
+void ipa_init_deinit_lock(void);
+
+/**
+ * ipa_init_deinit_unlock() - unlock ipa init deinit lock
+ *
+ * Return: None
+ */
+void ipa_init_deinit_unlock(void);
+
 #else /* Not IPA_OFFLOAD */
 typedef QDF_STATUS (*wlan_ipa_softap_xmit)(qdf_nbuf_t nbuf, qdf_netdev_t dev);
 typedef void (*wlan_ipa_send_to_nw)(qdf_nbuf_t nbuf, qdf_netdev_t dev);
