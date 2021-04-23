@@ -2561,6 +2561,7 @@ static int ipa_usb_xdci_resume_internal(u32 ul_clnt_hdl, u32 dl_clnt_hdl,
 	enum ipa3_usb_state prev_state;
 	unsigned long flags;
 	enum ipa3_usb_transport_type ttype;
+	struct ipa_ep_cfg_ctrl ep_cfg_ctrl;
 
 	mutex_lock(&ipa3_usb_ctx->general_mutex);
 	IPA_USB_DBG_LOW("entry\n");
@@ -2604,6 +2605,13 @@ static int ipa_usb_xdci_resume_internal(u32 ul_clnt_hdl, u32 dl_clnt_hdl,
 		ipa3_usb_ctx->ttype_ctx[ttype].pm_ctx.hdl);
 	if (result)
 		goto activate_pm_fail;
+
+	if (ipa3_ctx->ipa_hw_type < IPA_HW_v4_0) {
+		/* Unsuspend the DL/DPL EP */
+		memset(&ep_cfg_ctrl, 0, sizeof(struct ipa_ep_cfg_ctrl));
+		ep_cfg_ctrl.ipa_ep_suspend = false;
+		ipa_cfg_ep_ctrl(dl_clnt_hdl, &ep_cfg_ctrl);
+	}
 
 	if (!IPA3_USB_IS_TTYPE_DPL(ttype)) {
 		/* Start UL channel */
