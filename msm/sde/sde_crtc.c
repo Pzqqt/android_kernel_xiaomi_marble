@@ -3506,35 +3506,16 @@ static void _sde_crtc_clear_all_blend_stages(struct sde_crtc *sde_crtc)
 	}
 }
 
-static void _sde_crtc_program_states(struct drm_crtc *crtc, struct drm_crtc_state *old_state)
-{
-	struct sde_crtc *sde_crtc = to_sde_crtc(crtc);
-	struct drm_plane *plane;
-	struct sde_kms *sde_kms = _sde_crtc_get_kms(crtc);
-
-	if (!sde_kms)
-		return;
-
-	_sde_crtc_blend_setup(crtc, old_state, true);
-	_sde_crtc_dest_scaler_setup(crtc);
-	sde_cp_crtc_apply_noise(crtc, old_state);
-
-	if (sde_kms_is_cp_operation_allowed(sde_kms))
-		sde_cp_crtc_apply_properties(crtc);
-
-	if (!sde_crtc->enabled)
-		sde_cp_crtc_suspend(crtc);
-
-	drm_atomic_crtc_for_each_plane(plane, crtc)
-		sde_plane_restore(plane);
-}
-
 static void sde_crtc_atomic_begin(struct drm_crtc *crtc,
 		struct drm_crtc_state *old_state)
 {
 	struct sde_crtc *sde_crtc;
 	struct drm_encoder *encoder;
 	struct drm_device *dev;
+	struct sde_kms *sde_kms;
+	struct sde_splash_display *splash_display;
+	bool cont_splash_enabled = false;
+	size_t i;
 
 	if (!crtc) {
 		SDE_ERROR("invalid crtc\n");
@@ -3551,6 +3532,10 @@ static void sde_crtc_atomic_begin(struct drm_crtc *crtc,
 		SDE_ERROR("power resource is not enabled\n");
 		return;
 	}
+
+	sde_kms = _sde_crtc_get_kms(crtc);
+	if (!sde_kms)
+		return;
 
 	SDE_ATRACE_BEGIN("crtc_atomic_begin");
 	SDE_DEBUG("crtc%d\n", crtc->base.id);
@@ -3584,10 +3569,41 @@ static void sde_crtc_atomic_begin(struct drm_crtc *crtc,
 	if (unlikely(!sde_crtc->num_mixers))
 		goto end;
 
+	_sde_crtc_blend_setup(crtc, old_state, true);
+	_sde_crtc_dest_scaler_setup(crtc);
+	sde_cp_crtc_apply_noise(crtc, old_state);
+
 	if (crtc->state->mode_changed)
 		sde_core_perf_crtc_update_uidle(crtc, true);
 
-	_sde_crtc_program_states(crtc, old_state);
+	/*
+	 * Since CP properties use AXI buffer to program the
+	 * HW, check if context bank is in attached state,
+	 * apply color processing properties only if
+	 * smmu state is attached,
+	 */
+	for (i = 0; i < MAX_DSI_DISPLAYS; i++) {
+		splash_display = &sde_kms->splash_data.splash_display[i];
+		if (splash_display->cont_splash_enabled &&
+			splash_display->encoder &&
+			crtc == splash_display->encoder->crtc)
+			cont_splash_enabled = true;
+	}
+
+	if (sde_kms_is_cp_operation_allowed(sde_kms))
+		sde_cp_crtc_apply_properties(crtc);
+
+	if (!sde_crtc->enabled)
+		sde_cp_crtc_suspend(crtc);
+
+	/*
+	 * PP_DONE irq is only used by command mode for now.
+	 * It is better to request pending before FLUSH and START trigger
+	 * to make sure no pp_done irq missed.
+	 * This is safe because no pp_done will happen before SW trigger
+	 * in command mode.
+	 */
+
 end:
 	SDE_ATRACE_END("crtc_atomic_begin");
 }
@@ -3664,6 +3680,8 @@ static void sde_crtc_atomic_flush(struct drm_crtc *crtc,
 		sde_crtc->new_perf.llcc_active[i] = false;
 
 	drm_atomic_crtc_for_each_plane(plane, crtc) {
+		sde_plane_restore(plane);
+
 		for (i = 0; i < SDE_SYS_CACHE_MAX; i++) {
 			if (sde_plane_is_cache_required(plane, i))
 				sde_crtc->new_perf.llcc_active[i] = true;
@@ -4236,9 +4254,12 @@ void sde_crtc_reset_sw_state(struct drm_crtc *crtc)
 
 static void sde_crtc_post_ipc(struct drm_crtc *crtc)
 {
+	struct sde_crtc *sde_crtc;
+	struct sde_crtc_state *cstate;
 	struct drm_encoder *encoder;
 
-	_sde_crtc_program_states(crtc, crtc->state);
+	sde_crtc = to_sde_crtc(crtc);
+	cstate = to_sde_crtc_state(crtc->state);
 
 	/* restore encoder; crtc will be programmed during commit */
 	drm_for_each_encoder_mask(encoder, crtc->dev, crtc->state->encoder_mask)
