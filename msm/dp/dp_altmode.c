@@ -28,6 +28,7 @@ struct dp_altmode_private {
 	struct dp_altmode dp_altmode;
 	struct altmode_client *amclient;
 	bool connected;
+	u32 lanes;
 };
 
 enum dp_altmode_pin_assignment {
@@ -47,7 +48,6 @@ static int dp_altmode_set_usb_dp_mode(struct dp_altmode_private *altmode)
 	struct device_node *usb_node;
 	struct platform_device *usb_pdev;
 	int timeout = 250;
-	u32 lanes = 4;
 
 	if (!altmode || !altmode->dev) {
 		DP_ERR("invalid args\n");
@@ -55,9 +55,6 @@ static int dp_altmode_set_usb_dp_mode(struct dp_altmode_private *altmode)
 	}
 
 	np = altmode->dev->of_node;
-
-	if (altmode->connected && altmode->dp_altmode.base.force_multi_func)
-		lanes = 2;
 
 	usb_node = of_parse_phandle(np, "usb-controller", 0);
 	if (!usb_node) {
@@ -73,7 +70,7 @@ static int dp_altmode_set_usb_dp_mode(struct dp_altmode_private *altmode)
 	}
 
 	while (timeout) {
-		rc = dwc3_msm_set_dp_mode(&usb_pdev->dev, altmode->connected, lanes);
+		rc = dwc3_msm_set_dp_mode(&usb_pdev->dev, altmode->connected, altmode->lanes);
 		if (rc != -EBUSY)
 			break;
 
@@ -167,6 +164,12 @@ static int dp_altmode_notify(void *priv, void *data, size_t len)
 		altmode->connected = true;
 		altmode->dp_altmode.base.alt_mode_cfg_done = true;
 		altmode->forced_disconnect = false;
+		altmode->lanes = 4;
+
+		if (altmode->dp_altmode.base.multi_func)
+			altmode->lanes = 2;
+
+		DP_DEBUG("Connected=%d, lanes=%d\n",altmode->connected,altmode->lanes);
 
 		switch (orientation) {
 		case 0:
