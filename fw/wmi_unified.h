@@ -26643,6 +26643,12 @@ typedef enum wmi_coex_config_type {
      * arg1: select fixed coex algorithm
      */
     WMI_COEX_CONFIG_FORCED_ALGO = 47,
+    /* WMI_COEX_CONFIG_LE_SCAN_POLICY
+     * BLE scan Coex policy hint
+     * 0 to place more emphasis on BLE Scan results
+     * 1 to place more emphasis on WLAN performance
+     */
+    WMI_COEX_CONFIG_LE_SCAN_POLICY = 48,
 } WMI_COEX_CONFIG_TYPE;
 
 typedef struct {
