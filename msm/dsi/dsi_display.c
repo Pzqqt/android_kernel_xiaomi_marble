@@ -7253,6 +7253,15 @@ int dsi_display_validate_mode_change(struct dsi_display *display,
 					goto error;
 				}
 
+				/**
+				 * Set VRR flag whenever there is a dynamic clock
+				 * change on video mode panel as dynamic refresh is
+				 * always required when fps compensation is enabled.
+				 */
+				if ((display->config.panel_mode == DSI_OP_VIDEO_MODE) &&
+						dyn_clk_caps->maintain_const_fps)
+					adj_mode->dsi_mode_flags |= DSI_MODE_FLAG_VRR;
+
 				adj_mode->dsi_mode_flags |=
 						DSI_MODE_FLAG_DYN_CLK;
 				SDE_EVT32(SDE_EVTLOG_FUNC_CASE2,
