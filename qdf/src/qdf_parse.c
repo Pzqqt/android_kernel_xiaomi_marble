@@ -122,11 +122,14 @@ QDF_STATUS qdf_ini_parse(const char *ini_path, void *context,
 			cursor++;
 	}
 
-	qdf_debug("INI values read: %d", ini_read_count);
-	if (ini_read_count != 0)
+	qdf_info("INI values read: %d", ini_read_count);
+	if (ini_read_count != 0) {
+		qdf_info("INI file parse successful");
 		status = QDF_STATUS_SUCCESS;
-	else
+	} else {
+		qdf_info("INI file parse fail: invalid file format");
 		status = QDF_STATUS_E_INVAL;
+	}
 
 free_fbuf:
 	qdf_file_buf_free(fbuf);
