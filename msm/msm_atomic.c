@@ -714,6 +714,16 @@ int msm_atomic_commit(struct drm_device *dev,
 		c->plane_mask |= (1 << drm_plane_index(plane));
 	}
 
+	/* Protection for prepare_fence callback */
+retry:
+	ret = drm_modeset_lock(&state->dev->mode_config.connection_mutex,
+		state->acquire_ctx);
+
+	if (ret == -EDEADLK) {
+		drm_modeset_backoff(state->acquire_ctx);
+		goto retry;
+	}
+
 	/*
 	 * Wait for pending updates on any of the same crtc's and then
 	 * mark our set of crtc's as busy:
