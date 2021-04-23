@@ -26,6 +26,7 @@
 #include <linux/of_irq.h>
 #include <linux/dma-buf.h>
 #include <linux/memblock.h>
+#include <linux/soc/qcom/panel_event_notifier.h>
 #include <drm/drm_atomic_uapi.h>
 #include <drm/drm_probe_helper.h>
 
@@ -926,15 +927,15 @@ static int _sde_kms_get_blank(struct drm_crtc_state *crtc_state,
 
 	switch (lp_mode) {
 	case SDE_MODE_DPMS_ON:
-		blank = DRM_PANEL_BLANK_UNBLANK;
+		blank = DRM_PANEL_EVENT_UNBLANK;
 		break;
 	case SDE_MODE_DPMS_LP1:
 	case SDE_MODE_DPMS_LP2:
-		blank = DRM_PANEL_BLANK_LP;
+		blank = DRM_PANEL_EVENT_BLANK_LP;
 		break;
 	case SDE_MODE_DPMS_OFF:
 	default:
-		blank = DRM_PANEL_BLANK_POWERDOWN;
+		blank = DRM_PANEL_EVENT_BLANK;
 		break;
 	}
 
@@ -942,14 +943,16 @@ static int _sde_kms_get_blank(struct drm_crtc_state *crtc_state,
 }
 
 static void _sde_kms_drm_check_dpms(struct drm_atomic_state *old_state,
-			unsigned long event)
+			bool is_pre_commit)
 {
+	struct panel_event_notification notification;
 	struct drm_connector *connector;
 	struct drm_connector_state *old_conn_state;
 	struct drm_crtc_state *old_crtc_state;
 	struct drm_crtc *crtc;
 	struct sde_connector *c_conn;
 	int i, old_mode, new_mode, old_fps, new_fps;
+	enum panel_event_notifier_tag panel_type;
 
 	for_each_old_connector_in_state(old_state, connector,
 			old_conn_state, i) {
@@ -960,6 +963,7 @@ static void _sde_kms_drm_check_dpms(struct drm_atomic_state *old_state,
 
 		new_fps = drm_mode_vrefresh(&crtc->state->mode);
 		new_mode = _sde_kms_get_blank(crtc->state, connector->state);
+
 		if (old_conn_state->crtc) {
 			old_crtc_state = drm_atomic_get_existing_crtc_state(
 					old_state, old_conn_state->crtc);
@@ -969,16 +973,16 @@ static void _sde_kms_drm_check_dpms(struct drm_atomic_state *old_state,
 							old_conn_state);
 		} else {
 			old_fps = 0;
-			old_mode = DRM_PANEL_BLANK_POWERDOWN;
+			old_mode = DRM_PANEL_EVENT_BLANK;
 		}
 
 		if ((old_mode != new_mode) || (old_fps != new_fps)) {
 			c_conn = to_sde_connector(connector);
 			SDE_EVT32(old_mode, new_mode, old_fps, new_fps,
 				c_conn->panel, crtc->state->active,
-				old_conn_state->crtc, event);
-			pr_debug("change detected (power mode %d->%d, fps %d->%d)\n",
-				old_mode, new_mode, old_fps, new_fps);
+				old_conn_state->crtc);
+			pr_debug("change detected for connector:%s (power mode %d->%d, fps %d->%d)\n",
+				c_conn->name, old_mode, new_mode, old_fps, new_fps);
 
 			/* If suspend resume and fps change are happening
 			 * at the same time, give preference to power mode
@@ -986,7 +990,23 @@ static void _sde_kms_drm_check_dpms(struct drm_atomic_state *old_state,
 			 */
 
 			if ((old_mode == new_mode) && (old_fps != new_fps))
-				new_mode = DRM_PANEL_BLANK_FPS_CHANGE;
+				new_mode = DRM_PANEL_EVENT_FPS_CHANGE;
+
+			if (!c_conn->panel)
+				continue;
+
+			panel_type = sde_encoder_is_primary_display(
+				connector->encoder) ?
+				PANEL_EVENT_NOTIFICATION_PRIMARY :
+				PANEL_EVENT_NOTIFICATION_SECONDARY;
+
+			notification.notif_type = new_mode;
+			notification.panel = c_conn->panel;
+			notification.notif_data.old_fps = old_fps;
+			notification.notif_data.new_fps = new_fps;
+			notification.notif_data.early_trigger = is_pre_commit;
+			panel_event_notification_trigger(panel_type,
+					&notification);
 		}
 	}
 
@@ -1178,7 +1198,7 @@ static void sde_kms_prepare_commit(struct msm_kms *kms,
 		vm_ops->vm_prepare_commit(sde_kms, state);
 
 end_vm:
-	_sde_kms_drm_check_dpms(state, DRM_PANEL_EARLY_EVENT_BLANK);
+	_sde_kms_drm_check_dpms(state, true);
 end:
 	SDE_ATRACE_END("prepare_commit");
 }
@@ -1500,7 +1520,7 @@ static void sde_kms_complete_commit(struct msm_kms *kms,
 			SDE_ERROR("vm post commit failed, rc = %d\n",
 				  rc);
 	}
-	_sde_kms_drm_check_dpms(old_state, DRM_PANEL_EVENT_BLANK);
+	_sde_kms_drm_check_dpms(old_state, false);
 
 	pm_runtime_put_sync(sde_kms->dev->dev);
 
