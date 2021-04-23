@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DP_MST_DRM_H_
@@ -39,6 +39,12 @@ int dp_mst_init(struct dp_display *dp_display);
  * @display: Pointer to private display structure
  */
 void dp_mst_deinit(struct dp_display *dp_display);
+
+/**
+ * dp_mst_clear_edid_cache - clear mst edid cache for the given display
+ * @display: Pointer to private display structure
+ */
+void dp_mst_clear_edid_cache(void *dp_display);
 #else
 
 static inline int dp_mst_drm_bridge_init(void *display,
@@ -59,6 +65,10 @@ static inline int dp_mst_init(struct dp_display *dp_display)
 static inline int dp_mst_deinit(struct dp_display *dp_display)
 {
 	return 0;
+}
+
+static inline void dp_mst_clear_edid_cache(void *display)
+{
 }
 #endif /* CONFIG_DRM_MSM_DP_MST */
 

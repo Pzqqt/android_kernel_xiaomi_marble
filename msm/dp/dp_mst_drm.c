@@ -927,6 +927,38 @@ dp_mst_connector_detect(struct drm_connector *connector, bool force,
 	return status;
 }
 
+void dp_mst_clear_edid_cache(void *dp_display) {
+	struct dp_display *dp = dp_display;
+	struct drm_connector_list_iter conn_iter;
+	struct drm_connector *conn;
+	struct sde_connector *c_conn;
+
+	DP_MST_DEBUG("enter:\n");
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
+
+	if (!dp) {
+		DP_ERR("invalid input\n");
+		return;
+	}
+
+	drm_connector_list_iter_begin(dp->drm_dev, &conn_iter);
+	drm_for_each_connector_iter(conn, &conn_iter) {
+		c_conn = to_sde_connector(conn);
+		if (!c_conn->mst_port)
+			continue;
+
+		mutex_lock(&dp_mst.edid_lock);
+		kfree(c_conn->cached_edid);
+		c_conn->cached_edid = NULL;
+		mutex_unlock(&dp_mst.edid_lock);
+	}
+
+	drm_connector_list_iter_end(&conn_iter);
+
+	DP_MST_DEBUG("exit:\n");
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT);
+}
+
 static int dp_mst_connector_get_modes(struct drm_connector *connector,
 		void *display, const struct msm_resource_caps_info *avail_res)
 {
@@ -1768,9 +1800,6 @@ static void dp_mst_display_hpd_irq(void *dp_display)
 	u8 esi[14];
 	unsigned int esi_res = DP_SINK_COUNT_ESI + 1;
 	bool handled;
-	struct drm_connector_list_iter conn_iter;
-	struct drm_connector *conn;
-	struct sde_connector *c_conn;
 
 	if (!mst->mst_session_state) {
 		DP_ERR("mst_hpd_irq received before mst session start\n");
@@ -1793,21 +1822,8 @@ static void dp_mst_display_hpd_irq(void *dp_display)
 	if (handled) {
 		rc = drm_dp_dpcd_write(mst->caps.drm_aux, esi_res, &esi[1], 3);
 
-		if (esi[1] & DP_UP_REQ_MSG_RDY) {
-			drm_connector_list_iter_begin(dp->drm_dev, &conn_iter);
-			drm_for_each_connector_iter(conn, &conn_iter) {
-
-				c_conn = to_sde_connector(conn);
-				if (!c_conn->mst_port)
-					continue;
-
-				mutex_lock(&mst->edid_lock);
-				kfree(c_conn->cached_edid);
-				c_conn->cached_edid = NULL;
-				mutex_unlock(&mst->edid_lock);
-			}
-			drm_connector_list_iter_end(&conn_iter);
-		}
+		if (esi[1] & DP_UP_REQ_MSG_RDY)
+			dp_mst_clear_edid_cache(dp);
 
 		if (rc != 3)
 			DP_ERR("dpcd esi_res failed. rlen=%d\n", rc);
