@@ -779,6 +779,9 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 		inst->power.fw_cr = inst->hfi_frame_info.cr;
 	}
 
+	if (is_decode_session(inst) && buf->data_size)
+		msm_vidc_update_timestamp(inst, buf->timestamp);
+
 	print_vidc_buffer(VIDC_HIGH, "high", "dqbuf", inst, buf);
 	msm_vidc_debugfs_update(inst, MSM_VIDC_DEBUGFS_EVENT_FBD);
 
@@ -1278,6 +1281,7 @@ static int handle_session_property(struct msm_vidc_inst *inst,
 				__func__, pkt->port, pkt->type);
 			break;
 		}
+		i_vpr_e(inst, "received prop_no_output attached input\n");
 		inst->hfi_frame_info.no_output = 1;
 		break;
 	case HFI_PROP_WORST_COMPRESSION_RATIO:

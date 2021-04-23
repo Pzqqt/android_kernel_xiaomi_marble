@@ -31,6 +31,7 @@ struct msm_vidc_pool_info {
 	struct msm_vidc_pool            allocations;
 	struct msm_vidc_pool            mappings;
 	struct msm_vidc_pool            buffers;
+	struct msm_vidc_pool            timestamps;
 };
 
 struct msm_vidc_allocations_info {
@@ -122,6 +123,7 @@ struct msm_vidc_inst {
 	struct msm_vidc_buffers_info       buffers;
 	struct msm_vidc_mappings_info      mappings;
 	struct msm_vidc_allocations_info   allocations;
+	struct msm_vidc_timestamps         timestamps;
 	bool                               subscribed_input_psc;
 	bool                               subscribed_output_psc;
 	bool                               subscribed_input_prop;

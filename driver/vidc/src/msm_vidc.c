@@ -594,6 +594,8 @@ int msm_vidc_cmd(void *instance, union msm_v4l2_cmd *cmd)
 		enc = (struct v4l2_encoder_cmd *)cmd;
 		rc = msm_venc_process_cmd(inst, enc->cmd);
 	}
+	if (rc)
+		return rc;
 
 	return 0;
 }
@@ -819,6 +821,8 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	INIT_LIST_HEAD(&inst->pool.buffers.list);
 	INIT_LIST_HEAD(&inst->pool.mappings.list);
 	INIT_LIST_HEAD(&inst->pool.allocations.list);
+	INIT_LIST_HEAD(&inst->pool.timestamps.list);
+	INIT_LIST_HEAD(&inst->timestamps.list);
 	INIT_LIST_HEAD(&inst->buffers.input.list);
 	INIT_LIST_HEAD(&inst->buffers.input_meta.list);
 	INIT_LIST_HEAD(&inst->buffers.output.list);

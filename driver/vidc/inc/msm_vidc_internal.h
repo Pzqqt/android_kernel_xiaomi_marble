@@ -662,13 +662,6 @@ struct msm_vidc_input_cr_data {
 	u32                    input_cr;
 };
 
-struct msm_vidc_timestamps {
-	struct list_head       list;
-	u64                    timestamp_us;
-	u32                    framerate;
-	bool                   is_valid;
-};
-
 struct msm_vidc_session_idle {
 	bool                   idle;
 	u64                    last_activity_time_ns;
@@ -819,6 +812,22 @@ struct msm_vidc_buffers {
 	u32                    actual_count;
 	u32                    size;
 	bool                   reuse;
+};
+
+struct msm_vidc_sort {
+	struct list_head       list;
+	u64                    val;
+};
+
+struct msm_vidc_timestamp {
+	struct msm_vidc_sort   sort;
+	u64                    rank;
+};
+
+struct msm_vidc_timestamps {
+	struct list_head       list;
+	u32                    count;
+	u32                    rank;
 };
 
 struct msm_vidc_pool {

@@ -3317,6 +3317,7 @@ int venus_hfi_queue_super_buffer(struct msm_vidc_inst *inst,
 		/* Create yuv packet */
 		update_offset(hfi_buffer.addr_offset, (cnt ? frame_size : 0u));
 		update_timestamp(hfi_buffer.timestamp, (cnt ? ts_delta_us : 0u));
+		msm_vidc_update_timestamp(inst, hfi_buffer.timestamp);
 		rc = hfi_create_packet(inst->packet,
 				inst->packet_size,
 				HFI_CMD_BUFFER,
@@ -3383,6 +3384,9 @@ int venus_hfi_queue_buffer(struct msm_vidc_inst *inst,
 	rc = get_hfi_buffer(inst, buffer, &hfi_buffer);
 	if (rc)
 		goto unlock;
+
+	if (is_encode_session(inst) && is_input_buffer(buffer->type))
+		msm_vidc_update_timestamp(inst, hfi_buffer.timestamp);
 
 	rc = hfi_create_header(inst->packet, inst->packet_size,
 			   inst->session_id, core->header_id++);
