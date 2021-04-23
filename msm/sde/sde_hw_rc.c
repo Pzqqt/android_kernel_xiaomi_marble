@@ -769,6 +769,12 @@ int sde_hw_rc_check_pu_roi(struct sde_hw_dspp *hw_dspp, void *cfg)
 		return -EINVAL;
 	}
 
+	roi_list = hw_cfg->payload;
+	if (!roi_list) {
+		SDE_DEBUG("empty list of roi\n");
+		return 0;
+	}
+
 	rc_mask_cfg = RC_STATE(hw_dspp).last_rc_mask_cfg;
 	mask_programmed = RC_STATE(hw_dspp).mask_programmed;
 
@@ -784,7 +790,6 @@ int sde_hw_rc_check_pu_roi(struct sde_hw_dspp *hw_dspp, void *cfg)
 		return rc;
 	}
 
-	roi_list = hw_cfg->payload;
 	sde_kms_rect_merge_rectangles(roi_list, &merged_roi);
 	rc = _sde_hw_rc_get_ajusted_roi(hw_cfg, &merged_roi, &rc_roi);
 	if (rc) {
@@ -825,6 +830,12 @@ int sde_hw_rc_setup_pu_roi(struct sde_hw_dspp *hw_dspp, void *cfg)
 		return -EINVAL;
 	}
 
+	roi_list = hw_cfg->payload;
+	if (!roi_list) {
+		SDE_DEBUG("empty list of roi\n");
+		return 0;
+	}
+
 	rc_mask_cfg = RC_STATE(hw_dspp).last_rc_mask_cfg;
 	mask_programmed = RC_STATE(hw_dspp).mask_programmed;
 
@@ -834,7 +845,6 @@ int sde_hw_rc_setup_pu_roi(struct sde_hw_dspp *hw_dspp, void *cfg)
 		return SDE_HW_RC_PU_SKIP_OP;
 	}
 
-	roi_list = hw_cfg->payload;
 	sde_kms_rect_merge_rectangles(roi_list, &merged_roi);
 	rc = _sde_hw_rc_get_ajusted_roi(hw_cfg, &merged_roi, &rc_roi);
 	if (rc) {
