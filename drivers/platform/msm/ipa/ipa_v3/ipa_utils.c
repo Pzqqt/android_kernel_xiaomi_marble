@@ -4877,7 +4877,7 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			IPA_DPS_HPS_SEQ_TYPE_INVALID,
 			QMB_MASTER_SELECT_DDR,
 			{ 31, 8, 9, 9, IPA_EE_AP, GSI_SMART_PRE_FETCH, 3 },
-			IPA_TX_INSTANCE_DL },
+			IPA_TX_INSTANCE_UL },
 	[IPA_5_1_APQ][IPA_CLIENT_APPS_LAN_CONS] = {
 			true, IPA_v5_0_GROUP_UL,
 			false,
