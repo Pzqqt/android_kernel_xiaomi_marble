@@ -1417,9 +1417,9 @@ static void __dsp_cvp_power_req(struct cvp_dsp_cmd_msg *cmd)
 	kmd->type = EVA_KMD_UPDATE_POWER;
 	rc = msm_cvp_handle_syscall(inst, kmd);
 	if (rc) {
-		/* May need to define more error types
-		 * Check UMD implementation here:
-		 * https://opengrok.qualcomm.com/source/xref/LA.UM.9.14/vendor/qcom/proprietary/cv-noship/cvp/cpurev/src/cvpcpuRev_skel_imp_cvp2.cpp#380
+		/*
+		 *May need to define more error types
+		 * Check UMD implementation
 		 */
 		dprintk(CVP_ERR, "%s Failed to send update power numbers\n", __func__);
 		cmd->ret = -1;
