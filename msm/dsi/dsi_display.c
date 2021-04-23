@@ -630,19 +630,19 @@ static void dsi_display_parse_demura_data(struct dsi_display *display)
 
 	display->panel_id = ~0x0;
 	if (display->fw) {
-		DSI_INFO("FW definition unsupported for Demura panel data\n");
+		DSI_DEBUG("FW definition unsupported for Demura panel data\n");
 		return;
 	}
 
 	rc = of_property_read_u64(display->pdev->dev.of_node,
 			"qcom,demura-panel-id", &display->panel_id);
 	if (rc) {
-		DSI_INFO("No panel ID is present for this display\n");
+		DSI_DEBUG("No panel ID is present for this display\n");
 	} else if (!display->panel_id) {
-		DSI_INFO("Dummy panel ID node present for this display\n");
+		DSI_DEBUG("Dummy panel ID node present for this display\n");
 		display->panel_id = ~0x0;
 	} else {
-		DSI_INFO("panel id found: %lx\n", display->panel_id);
+		DSI_DEBUG("panel id found: %lx\n", display->panel_id);
 	}
 }
 
