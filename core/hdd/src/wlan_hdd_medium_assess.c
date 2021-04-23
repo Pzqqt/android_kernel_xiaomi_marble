@@ -66,6 +66,7 @@
 #define REPORT_ENABLE 1
 
 #define MAX_CONGESTION_THRESHOLD 100
+#define CYCLE_THRESHOLD 6400000 /* 40000us * 160M */
 
 #define MEDIUM_ASSESS_TIMER_INTERVAL 1000 /* 1000ms */
 static qdf_mc_timer_t hdd_medium_assess_timer;
@@ -261,6 +262,7 @@ static void hdd_congestion_notification_cb(uint8_t vdev_id,
 {
 	struct hdd_medium_assess_info *mdata;
 	uint8_t i;
+	int32_t index;
 
 	/* the cb should not be delay more than 40 ms or drop it */
 	if (qdf_system_time_after(jiffies, stime)) {
@@ -270,6 +272,17 @@ static void hdd_congestion_notification_cb(uint8_t vdev_id,
 
 	for (i = 0; i < WLAN_UMAC_MAX_RP_PID; i++) {
 		mdata = &medium_assess_info[i];
+
+		index = mdata->index - 1;
+		if (index < 0)
+			index = MEDIUM_ASSESS_NUM - 1;
+
+		if (data[i].part1_valid && mdata->data[index].part1_valid) {
+			if (CYCLE_THRESHOLD > (data[i].cycle_count -
+			    mdata->data[index].cycle_count))
+				continue;
+		}
+
 		if (data[i].part1_valid) {
 			mdata->data[mdata->index].part1_valid = 1;
 			mdata->data[mdata->index].cycle_count =
