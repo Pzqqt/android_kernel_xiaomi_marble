@@ -106,11 +106,25 @@ static QDF_STATUS __dp_ipa_handle_buf_smmu_mapping(struct dp_soc *soc,
 				 qdf_nbuf_get_frag_paddr(nbuf, 0),
 				 size);
 
-	if (create)
+	if (create) {
+		/* Assert if PA is zero */
+		qdf_assert_always(mem_map_table.pa);
+
 		ret = qdf_ipa_wdi_create_smmu_mapping(1, &mem_map_table);
-	else
+	} else {
 		ret = qdf_ipa_wdi_release_smmu_mapping(1, &mem_map_table);
+	}
 	qdf_assert_always(!ret);
+
+	/* Return status of mapping/unmapping is stored in
+	 * mem_map_table.result field, assert if the result
+	 * is failure
+	 */
+	if (create)
+		qdf_assert_always(!mem_map_table.result);
+	else
+		qdf_assert_always(mem_map_table.result >= mem_map_table.size);
+
 	return ret;
 }
 
