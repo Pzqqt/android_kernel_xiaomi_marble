@@ -387,6 +387,8 @@ enum dp_ctxt_type {
 	DP_RX_RING_HIST_TYPE,
 	DP_RX_ERR_RING_HIST_TYPE,
 	DP_RX_REINJECT_RING_HIST_TYPE,
+	DP_TX_TCL_HIST_TYPE,
+	DP_TX_COMP_HIST_TYPE,
 	DP_FISA_RX_FT_TYPE,
 	DP_RX_REFILL_RING_HIST_TYPE,
 	DP_TX_HW_DESC_HIST_TYPE,
@@ -1275,6 +1277,41 @@ struct dp_rx_refill_history {
 
 #endif
 
+enum dp_tx_event_type {
+	DP_TX_DESC_INVAL_EVT = 0,
+	DP_TX_DESC_MAP,
+	DP_TX_DESC_COOKIE,
+	DP_TX_DESC_FLUSH,
+	DP_TX_DESC_UNMAP,
+	DP_TX_COMP_UNMAP,
+	DP_TX_COMP_UNMAP_ERR,
+	DP_TX_COMP_MSDU_EXT,
+};
+
+#ifdef WLAN_FEATURE_DP_TX_DESC_HISTORY
+/* Size must be in 2 power, for bitwise index rotation */
+#define DP_TX_TCL_HISTORY_SIZE 0x4000
+#define DP_TX_COMP_HISTORY_SIZE 0x4000
+
+struct dp_tx_desc_event {
+	qdf_nbuf_t skb;
+	dma_addr_t paddr;
+	uint32_t sw_cookie;
+	enum dp_tx_event_type type;
+	uint64_t ts;
+};
+
+struct dp_tx_tcl_history {
+	qdf_atomic_t index;
+	struct dp_tx_desc_event entry[DP_TX_TCL_HISTORY_SIZE];
+};
+
+struct dp_tx_comp_history {
+	qdf_atomic_t index;
+	struct dp_tx_desc_event entry[DP_TX_COMP_HISTORY_SIZE];
+};
+#endif /* WLAN_FEATURE_DP_TX_DESC_HISTORY */
+
 /* structure to record recent operation related variable */
 struct dp_last_op_info {
 	/* last link desc buf info through WBM release ring */
@@ -1684,6 +1721,11 @@ struct dp_soc {
 	struct dp_rx_refill_history *rx_refill_ring_history[MAX_PDEV_CNT];
 	struct dp_rx_err_history *rx_err_ring_history;
 	struct dp_rx_reinject_history *rx_reinject_ring_history;
+#endif
+
+#ifdef WLAN_FEATURE_DP_TX_DESC_HISTORY
+	struct dp_tx_tcl_history *tx_tcl_history;
+	struct dp_tx_comp_history *tx_comp_history;
 #endif
 
 	qdf_spinlock_t ast_lock;

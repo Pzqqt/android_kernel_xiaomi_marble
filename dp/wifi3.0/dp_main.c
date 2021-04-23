@@ -4622,6 +4622,62 @@ static inline void dp_soc_rx_history_detach(struct dp_soc *soc)
 }
 #endif
 
+#ifdef WLAN_FEATURE_DP_TX_DESC_HISTORY
+/**
+ * dp_soc_tx_history_attach() - Attach the ring history record buffers
+ * @soc: DP soc structure
+ *
+ * This function allocates the memory for recording the tx tcl ring and
+ * the tx comp ring entries. There is no error returned in case
+ * of allocation failure since the record function checks if the history is
+ * initialized or not. We do not want to fail the driver load in case of
+ * failure to allocate memory for debug history.
+ *
+ * Returns: None
+ */
+static void dp_soc_tx_history_attach(struct dp_soc *soc)
+{
+	uint32_t tx_tcl_hist_size;
+	uint32_t tx_comp_hist_size;
+
+	tx_tcl_hist_size = sizeof(*soc->tx_tcl_history);
+	soc->tx_tcl_history = dp_context_alloc_mem(soc, DP_TX_TCL_HIST_TYPE,
+						   tx_tcl_hist_size);
+	if (soc->tx_tcl_history)
+		qdf_atomic_init(&soc->tx_tcl_history->index);
+
+	tx_comp_hist_size = sizeof(*soc->tx_comp_history);
+	soc->tx_comp_history = dp_context_alloc_mem(soc, DP_TX_COMP_HIST_TYPE,
+						    tx_comp_hist_size);
+	if (soc->tx_comp_history)
+		qdf_atomic_init(&soc->tx_comp_history->index);
+}
+
+/**
+ * dp_soc_tx_history_detach() - Detach the ring history record buffers
+ * @soc: DP soc structure
+ *
+ * This function frees the memory for recording the tx tcl ring and
+ * the tx comp ring entries.
+ *
+ * Returns: None
+ */
+static void dp_soc_tx_history_detach(struct dp_soc *soc)
+{
+	dp_context_free_mem(soc, DP_TX_TCL_HIST_TYPE, soc->tx_tcl_history);
+	dp_context_free_mem(soc, DP_TX_COMP_HIST_TYPE, soc->tx_comp_history);
+}
+
+#else
+static inline void dp_soc_tx_history_attach(struct dp_soc *soc)
+{
+}
+
+static inline void dp_soc_tx_history_detach(struct dp_soc *soc)
+{
+}
+#endif /* WLAN_FEATURE_DP_TX_DESC_HISTORY */
+
 /*
 * dp_pdev_attach_wifi3() - attach txrx pdev
 * @txrx_soc: Datapath SOC handle
@@ -5193,6 +5249,7 @@ static void dp_soc_detach(struct cdp_soc_t *txrx_soc)
 	dp_hw_link_desc_pool_banks_free(soc, WLAN_INVALID_PDEV_ID);
 	wlan_cfg_soc_detach(soc->wlan_cfg_ctx);
 	dp_soc_tx_hw_desc_history_detach(soc);
+	dp_soc_tx_history_detach(soc);
 	dp_soc_rx_history_detach(soc);
 	if (soc->mon_vdev_timer_state & MON_VDEV_TIMER_INIT) {
 		qdf_timer_free(&soc->mon_vdev_timer);
@@ -12725,6 +12782,7 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 
 	dp_soc_tx_hw_desc_history_attach(soc);
 	dp_soc_rx_history_attach(soc);
+	dp_soc_tx_history_attach(soc);
 	wlan_set_srng_cfg(&soc->wlan_srng_cfg);
 	soc->wlan_cfg_ctx = wlan_cfg_soc_attach(soc->ctrl_psoc);
 	if (!soc->wlan_cfg_ctx) {
