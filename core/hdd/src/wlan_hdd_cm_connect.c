@@ -193,16 +193,7 @@ void hdd_cm_update_rssi_snr_by_bssid(struct hdd_adapter *adapter)
 	struct hdd_station_ctx *sta_ctx;
 	int8_t snr = 0;
 
-	if (!adapter) {
-		hdd_err("adapter is NULL");
-		return;
-	}
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (!sta_ctx) {
-		hdd_err("sta_ctx is NULL");
-		return;
-	}
-
 	hdd_get_rssi_snr_by_bssid(adapter, sta_ctx->conn_info.bssid.bytes,
 				  &adapter->rssi, &snr);
 
@@ -235,16 +226,11 @@ void hdd_cm_handle_assoc_event(struct wlan_objmgr_vdev *vdev, uint8_t *peer_mac)
 
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, wlan_vdev_get_id(vdev));
 	if (!adapter) {
-		hdd_err("adapter is NULL");
+		hdd_err("adapter is NULL for vdev %d", wlan_vdev_get_id(vdev));
 		return;
 	}
 
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (!sta_ctx) {
-		hdd_err("sta_ctx is NULL");
-		return;
-	}
-
 	ret = hdd_objmgr_set_peer_mlme_state(adapter->vdev,
 					     WLAN_ASSOC_STATE);
 	if (ret)
@@ -447,18 +433,13 @@ hdd_cm_connect_failure_pre_user_update(struct wlan_objmgr_vdev *vdev,
 		return;
 	}
 
-	adapter = hdd_get_adapter_by_vdev(hdd_ctx, wlan_vdev_get_id(vdev));
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, rsp->vdev_id);
 	if (!adapter) {
-		hdd_err("adapter is NULL");
+		hdd_err("adapter is NULL vdev %d", rsp->vdev_id);
 		return;
 	}
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (!hdd_sta_ctx) {
-		hdd_err("hdd_sta_ctx is NULL");
-		return;
-	}
-
 	hdd_init_scan_reject_params(hdd_ctx);
 	hdd_cm_save_connect_status(adapter, rsp->status_code);
 	hdd_conn_remove_connect_info(hdd_sta_ctx);
@@ -473,10 +454,19 @@ hdd_cm_connect_failure_post_user_update(struct wlan_objmgr_vdev *vdev,
 					struct wlan_cm_connect_resp *rsp)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx,
-						wlan_vdev_get_id(vdev));
+	struct hdd_adapter *adapter;
 	bool is_roam = rsp->is_reassoc;
 
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is NULL");
+		return;
+	}
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, rsp->vdev_id);
+	if (!adapter) {
+		hdd_err("adapter is NULL for vdev %d", rsp->vdev_id);
+		return;
+	}
 	if (!is_roam) {
 		/* call only for connect */
 		qdf_runtime_pm_allow_suspend(&hdd_ctx->runtime_context.connect);
@@ -517,22 +507,8 @@ static void hdd_cm_save_bss_info(struct hdd_adapter *adapter,
 	mac_handle_t mac_handle = hdd_adapter_get_mac_handle(adapter);
 	struct sDot11fAssocResponse *assoc_resp;
 
-	if (!adapter) {
-		hdd_err("Adapter is NULL");
-		return;
-	}
-
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	if (!hdd_ctx) {
-		hdd_err("hdd_ctx is NULL");
-		return;
-	}
-
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (!hdd_sta_ctx) {
-		hdd_err("hdd_sta_ctx is NULL");
-		return;
-	}
 
 	assoc_resp = qdf_mem_malloc(sizeof(struct sDot11fAssocResponse));
 	if (!assoc_resp)
@@ -706,17 +682,7 @@ static void hdd_cm_save_connect_info(struct hdd_adapter *adapter,
 	tDot11fBeaconIEs *bcn_ie;
 	mac_handle_t mac_handle = hdd_adapter_get_mac_handle(adapter);
 
-	if (!adapter) {
-		hdd_err("adapter is NULL");
-		return;
-	}
-
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (!sta_ctx) {
-		hdd_err("sta_ctx is NULL");
-		return;
-	}
-
 	bcn_ie = qdf_mem_malloc(sizeof(*bcn_ie));
 	if (!bcn_ie)
 		return;
@@ -725,14 +691,15 @@ static void hdd_cm_save_connect_info(struct hdd_adapter *adapter,
 
 	crypto_params = wlan_crypto_vdev_get_crypto_params(adapter->vdev);
 
-	sme_fill_enc_type(&sta_ctx->conn_info.uc_encrypt_type,
-			  crypto_params->ucastcipherset);
+	if (crypto_params) {
+		sme_fill_enc_type(&sta_ctx->conn_info.uc_encrypt_type,
+				  crypto_params->ucastcipherset);
 
-	sme_fill_auth_type(&sta_ctx->conn_info.auth_type,
-			   crypto_params->authmodeset,
-			   crypto_params->key_mgmt,
-			   crypto_params->ucastcipherset);
-
+		sme_fill_auth_type(&sta_ctx->conn_info.auth_type,
+				   crypto_params->authmodeset,
+				   crypto_params->key_mgmt,
+				   crypto_params->ucastcipherset);
+	}
 	des_chan = wlan_vdev_mlme_get_des_chan(adapter->vdev);
 
 	sta_ctx->conn_info.chan_freq = rsp->freq;
@@ -816,11 +783,6 @@ hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
 	}
 
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (!sta_ctx) {
-		hdd_err("sta_ctx is NULL");
-		return;
-	}
-
 	mac_handle = hdd_adapter_get_mac_handle(adapter);
 
 	wlan_hdd_ft_set_key_delay(mac_handle, adapter);
@@ -976,17 +938,30 @@ hdd_cm_connect_success_post_user_update(struct wlan_objmgr_vdev *vdev,
 					struct wlan_cm_connect_resp *rsp)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx,
-						wlan_vdev_get_id(vdev));
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct hdd_adapter *adapter;
+	struct hdd_station_ctx *sta_ctx;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct vdev_mlme_obj *mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	uint8_t uapsd_mask =
-		mlme_obj->ext_vdev_ptr->connect_info.uapsd_per_ac_bitmask;
+	uint8_t uapsd_mask = 0;
 	bool is_auth_required = true;
 	bool is_roam_offload = false;
 	bool is_roam = rsp->is_reassoc;
 
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is NULL");
+		return;
+	}
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, rsp->vdev_id);
+	if (!adapter) {
+		hdd_err("adapter is NULL for vdev %d", rsp->vdev_id);
+		return;
+	}
+
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	if (mlme_obj)
+		uapsd_mask =
+			mlme_obj->ext_vdev_ptr->connect_info.uapsd_per_ac_bitmask;
 	if (is_roam) {
 		/* If roaming is set check if FW roaming/LFR3  */
 		ucfg_mlme_get_roaming_offload(hdd_ctx->psoc, &is_roam_offload);
@@ -1077,12 +1052,17 @@ QDF_STATUS hdd_cm_save_gtk(struct wlan_objmgr_vdev *vdev,
 	uint8_t replay_ctr_def[REPLAY_CTR_LEN] = {0};
 	uint8_t *replay_ctr;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx,
-						wlan_vdev_get_id(vdev));
+	struct hdd_adapter *adapter;
 
-	if (!adapter || !rsp) {
-		hdd_err("adapter/connect rsp is NULL");
-		return QDF_STATUS_E_FAILURE;
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, rsp->vdev_id);
+	if (!adapter) {
+		hdd_err("adapter is NULL for vdev %d", rsp->vdev_id);
+		return QDF_STATUS_E_INVAL;
 	}
 
 	if (rsp->is_reassoc && rsp->roaming_info) {
@@ -1113,12 +1093,17 @@ QDF_STATUS hdd_cm_save_gtk(struct wlan_objmgr_vdev *vdev,
 	uint8_t kck_len = 0;
 	uint8_t *replay_ctr;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx,
-						wlan_vdev_get_id(vdev));
+	struct hdd_adapter *adapter;
 
-	if (!adapter || !rsp) {
-		hdd_err("adapter/connect rsp is NULL");
-		return QDF_STATUS_E_FAILURE;
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, rsp->vdev_id);
+	if (!adapter) {
+		hdd_err("adapter is NULL for vdev %d", rsp->vdev_id);
+		return QDF_STATUS_E_INVAL;
 	}
 
 	if (rsp->is_reassoc && rsp->roaming_info) {
