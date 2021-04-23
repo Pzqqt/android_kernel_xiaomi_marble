@@ -581,7 +581,7 @@ QDF_STATUS ipa_uc_ol_deinit(struct wlan_objmgr_pdev *pdev)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	qdf_mutex_acquire(&ipa_obj->init_deinit_lock);
+	ipa_init_deinit_lock();
 
 	if (!ipa_config_is_enabled()) {
 		ipa_debug("ipa is disabled");
@@ -598,7 +598,7 @@ QDF_STATUS ipa_uc_ol_deinit(struct wlan_objmgr_pdev *pdev)
 	status = wlan_ipa_uc_ol_deinit(ipa_obj);
 
 out:
-	qdf_mutex_release(&ipa_obj->init_deinit_lock);
+	ipa_init_deinit_unlock();
 	return status;
 }
 
