@@ -29452,8 +29452,17 @@ typedef struct {
 
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_disable_complete_event_fixed_param */
-    A_UINT32 reserved0;     /* unused right now */
+    A_UINT32 pdev_id;
+    A_UINT32 status; /* refer to WMI_DISABLE_TWT_STATUS_T enum */
 } wmi_twt_disable_complete_event_fixed_param;
+
+/* status code of TWT Disable */
+typedef enum _WMI_DISABLE_TWT_STATUS_T {
+    WMI_DISABLE_TWT_STATUS_OK,                  /*  Disabling TWT successfully completed */
+    WMI_DISABLE_TWT_STATUS_ROAM_IN_PROGRESS,    /* Roaming in progress */
+    WMI_DISABLE_TWT_STATUS_CHAN_SW_IN_PROGRESS, /* Channel switch in progress */
+    WMI_DISABLE_TWT_STATUS_SCAN_IN_PROGRESS,    /* Scan in progress */
+} WMI_DISABLE_TWT_STATUS_T;
 
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_notify_event_fixed_param */
@@ -29570,6 +29579,7 @@ typedef enum _WMI_ADD_TWT_STATUS_T {
     WMI_ADD_TWT_STATUS_AP_IE_VALIDATION_FAILED, /* peer AP IE Validation Failed */
     WMI_ADD_TWT_STATUS_ROAM_IN_PROGRESS,    /* Roaming in progress */
     WMI_ADD_TWT_STATUS_CHAN_SW_IN_PROGRESS, /* Channel switch in progress */
+    WMI_ADD_TWT_STATUS_SCAN_IN_PROGRESS,    /* Scan in progress */
 } WMI_ADD_TWT_STATUS_T;
 
 typedef struct {
@@ -29622,6 +29632,7 @@ typedef enum _WMI_DEL_TWT_STATUS_T {
     WMI_DEL_TWT_STATUS_ROAMING,             /* Reason Roaming Start*/
     WMI_DEL_TWT_STATUS_CONCURRENCY,         /* Teardown due to concurrency */
     WMI_DEL_TWT_STATUS_CHAN_SW_IN_PROGRESS, /* Channel switch in progress */
+    WMI_DEL_TWT_STATUS_SCAN_IN_PROGRESS,    /* Reason Scan in progress */
 } WMI_DEL_TWT_STATUS_T;
 
 typedef struct {
@@ -29651,6 +29662,8 @@ typedef enum _WMI_PAUSE_TWT_STATUS_T {
     WMI_PAUSE_TWT_STATUS_ALREADY_PAUSED,      /* The TWT dialog is already paused */
     WMI_PAUSE_TWT_STATUS_TWT_INFO_FRM_NOT_SUPPORTED, /* TWT information frame is not supported by AP */
     WMI_PAUSE_TWT_STATUS_CHAN_SW_IN_PROGRESS, /* Channel switch in progress */
+    WMI_PAUSE_TWT_STATUS_ROAM_IN_PROGRESS,    /* Roam in progress */
+    WMI_PAUSE_TWT_STATUS_SCAN_IN_PROGRESS,    /* Scan in progress */
 } WMI_PAUSE_TWT_STATUS_T;
 
 typedef struct {
@@ -29682,6 +29695,8 @@ typedef enum _WMI_RESUME_TWT_STATUS_T {
     WMI_RESUME_TWT_STATUS_UNKNOWN_ERROR,       /* resuming TWT dialog failed with an unknown reason */
     WMI_RESUME_TWT_STATUS_TWT_INFO_FRM_NOT_SUPPORTED, /* TWT information frame is not supported by AP */
     WMI_RESUME_TWT_STATUS_CHAN_SW_IN_PROGRESS, /* Channel switch in progress */
+    WMI_RESUME_TWT_STATUS_ROAM_IN_PROGRESS,    /* Roam in progress */
+    WMI_RESUME_TWT_STATUS_SCAN_IN_PROGRESS,    /* Scan in progress */
 } WMI_RESUME_TWT_STATUS_T;
 
 typedef struct {
@@ -29713,6 +29728,8 @@ typedef enum _WMI_TWT_NUDGE_STATUS_T {
     WMI_NUDGE_TWT_STATUS_ALREADY_PAUSED,      /* The TWT dialog is already paused */
     WMI_NUDGE_TWT_STATUS_TWT_INFO_FRM_NOT_SUPPORTED, /* TWT information frame is not supported by AP */
     WMI_NUDGE_TWT_STATUS_CHAN_SW_IN_PROGRESS, /* Channel switch in progress */
+    WMI_NUDGE_TWT_STATUS_ROAM_IN_PROGRESS,    /* Roam in progress */
+    WMI_NUDGE_TWT_STATUS_SCAN_IN_PROGRESS,    /* Scan in progress */
 } WMI_TWT_NUDGE_STATUS_T;
 
 typedef struct {
