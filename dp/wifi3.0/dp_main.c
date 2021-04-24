@@ -7029,13 +7029,13 @@ static int dp_update_filter_neighbour_peers(struct cdp_soc_t *soc_hdl,
 		if (TAILQ_EMPTY(&pdev->neighbour_peers_list)) {
 			QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-			pdev->neighbour_peers_added = false;
 			dp_mon_filter_reset_smart_monitor(pdev);
 			status = dp_mon_filter_update(pdev);
 			if (status != QDF_STATUS_SUCCESS) {
 				dp_cdp_err("%pK: smart mon filter clear failed",
 					   soc);
 			}
+			pdev->neighbour_peers_added = false;
 
 		}
 
@@ -7661,7 +7661,6 @@ static inline void
 dp_pdev_disable_mcopy_code(struct dp_pdev *pdev)
 {
 	pdev->mcopy_mode = M_COPY_DISABLED;
-	pdev->monitor_configured = false;
 	pdev->monitor_vdev = NULL;
 }
 
@@ -7689,7 +7688,6 @@ QDF_STATUS dp_reset_monitor_mode(struct cdp_soc_t *soc_hdl,
 
 	dp_soc_config_full_mon_mode(pdev, DP_FULL_MON_DISABLE);
 	pdev->monitor_vdev = NULL;
-	pdev->monitor_configured = false;
 
 	/*
 	 * Lite monitor mode, smart monitor mode and monitor
@@ -7713,6 +7711,7 @@ QDF_STATUS dp_reset_monitor_mode(struct cdp_soc_t *soc_hdl,
 		dp_rx_mon_dest_err("%pK: Failed to reset monitor filters",
 				   soc);
 	}
+	pdev->monitor_configured = false;
 
 	qdf_spin_unlock_bh(&pdev->mon_lock);
 	return QDF_STATUS_SUCCESS;
@@ -8925,6 +8924,7 @@ dp_config_debug_sniffer(struct dp_pdev *pdev, int val)
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				  FL("Failed to reset AM copy mode filters"));
 		}
+		pdev->monitor_configured = false;
 #endif /* FEATURE_PERPKT_INFO */
 	}
 	switch (val) {
