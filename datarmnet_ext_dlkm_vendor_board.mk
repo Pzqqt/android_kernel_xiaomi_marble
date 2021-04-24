@@ -9,5 +9,6 @@ BOARD_VENDOR_KERNEL_MODULES += $(KERNEL_MODULES_OUT)/rmnet_offload.ko
 endif
 ifeq ($(call is-board-platform-in-list,$(DATA_SHS_DLKM_BOARD_PLATFORMS_LIST)),true)
 BOARD_VENDOR_KERNEL_MODULES += $(KERNEL_MODULES_OUT)/rmnet_shs.ko
+BOARD_VENDOR_KERNEL_MODULES += $(KERNEL_MODULES_OUT)/rmnet_wlan.ko
 endif
 endif

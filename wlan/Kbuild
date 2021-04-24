@@ -1,0 +1,8 @@
+obj-m += rmnet_wlan.o
+ccflags-y := $(call cc-option,-Wno-misleading-indentation)
+rmnet_wlan-y := \
+	rmnet_wlan_main.o \
+	rmnet_wlan_genl.o \
+	rmnet_wlan_stats.o \
+	rmnet_wlan_fragment.o \
+	rmnet_wlan_connection.o
