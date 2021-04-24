@@ -353,9 +353,7 @@ enum halmsgtype {
 
 	SIR_HAL_TRAFFIC_STATS_IND         = (SIR_HAL_ITC_MSG_TYPES_BEGIN + 141),
 
-#ifdef WLAN_FEATURE_11W
 	SIR_HAL_EXCLUDE_UNENCRYPTED_IND   = (SIR_HAL_ITC_MSG_TYPES_BEGIN + 142),
-#endif
 #ifdef FEATURE_WLAN_TDLS
 /* / PE <-> HAL TDLS messages */
 	SIR_HAL_TDLS_LINK_ESTABLISH_REQ   = (SIR_HAL_ITC_MSG_TYPES_BEGIN + 143),
@@ -706,7 +704,6 @@ enum halmsgtype {
 #define SIR_LIM_WPS_OVERLAP_TIMEOUT      (SIR_LIM_TIMEOUT_MSG_START + 0x1D)
 #define SIR_LIM_FT_PREAUTH_RSP_TIMEOUT   (SIR_LIM_TIMEOUT_MSG_START + 0x1E)
 
-#define SIR_LIM_BEACON_GEN_IND          (SIR_LIM_TIMEOUT_MSG_START + 0x23)
 /* currently unused                     (SIR_LIM_TIMEOUT_MSG_START + 0x24) */
 /* currently unused                     (SIR_LIM_TIMEOUT_MSG_START + 0x25) */
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -200,7 +200,7 @@
  * gChannelBondingMode5GHz - Configures Channel Bonding in 5 GHz
  * @Min: 0
  * @Max: 10
- * @Default: 0
+ * @Default: 1
  *
  * This ini is used to set default channel bonding mode 5GHZ
  *
@@ -218,7 +218,7 @@
 	"gChannelBondingMode5GHz", \
 	0, \
 	10, \
-	0, \
+	1, \
 	CFG_VALUE_OR_DEFAULT, \
 	"Configures Channel Bonding in 5 GHz")
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018, 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018, 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -68,28 +68,6 @@
 
 /*
  * <ini>
- * bcast_twt - to bcast twt capability.
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This cfg is used to bcast twt capability.
- *
- * Related: NA
- *
- * Supported Feature: 11AX
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_BCAST_TWT CFG_INI_BOOL( \
-		"bcast_twt", \
-		0, \
-		"Bcast TWT")
-
-/*
- * <ini>
  * enable_twt - Enable Target Wake Time support.
  * @Min: 0
  * @Max: 1
@@ -143,7 +121,7 @@
  * twt_bcast_req_resp_config - To enable broadcast twt requestor and responder.
  * @Min: 0 Disable the extended twt capability
  * @Max: 3
- * @Default: 0
+ * @Default: 1
  *
  * This cfg is used to configure the broadcast TWT requestor and responder.
  * Bitmap for enabling the broadcast twt requestor and responder.
@@ -171,7 +149,7 @@
 		"twt_bcast_req_resp_config", \
 		0, \
 		3, \
-		0, \
+		1, \
 		CFG_VALUE_OR_DEFAULT, \
 		"BROADCAST TWT CAPABILITY")
 
@@ -185,11 +163,35 @@
 		     TWT_BCAST_RES_INDEX, \
 		     TWT_BCAST_RES_BITS)
 
+/*
+ * <ini>
+ * enable_twt_24ghz - Enable Target wake time when STA is connected on 2.4Ghz
+ * band.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable/disable the host TWT when STA is connected to AP
+ * in 2.4Ghz band.
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11AX
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_TWT_24GHZ CFG_INI_BOOL( \
+		"enable_twt_24ghz", \
+		true, \
+		"enable twt in 2.4Ghz band")
+
 #define CFG_TWT_ALL \
-	CFG(CFG_BCAST_TWT) \
 	CFG(CFG_ENABLE_TWT) \
 	CFG(CFG_TWT_REQUESTOR) \
 	CFG(CFG_TWT_RESPONDER) \
 	CFG(CFG_TWT_CONGESTION_TIMEOUT) \
-	CFG(CFG_BCAST_TWT_REQ_RESP)
+	CFG(CFG_BCAST_TWT_REQ_RESP) \
+	CFG(CFG_ENABLE_TWT_24GHZ)
 #endif /* __CFG_MLME_TWT_H */

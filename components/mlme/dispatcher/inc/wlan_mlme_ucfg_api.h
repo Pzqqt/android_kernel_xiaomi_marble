@@ -1273,28 +1273,6 @@ ucfg_mlme_set_wmi_wq_watchdog_timeout(struct wlan_objmgr_psoc *psoc,
 				      uint32_t wmi_wq_watchdog_timeout);
 
 /**
- * ucfg_mlme_get_ps_data_inactivity_timeout() - Get data inactivity timeout
- * @psoc: pointer to psoc object
- * @inactivity_timeout: buffer to hold value
- *
- * Return: QDF Status
- */
-QDF_STATUS
-ucfg_mlme_get_ps_data_inactivity_timeout(struct wlan_objmgr_psoc *psoc,
-					 uint32_t *inactivity_timeout);
-
-/**
- * ucfg_mlme_set_ps_data_inactivity_timeout() - Set data inactivity timeout
- * @psoc: pointer to psoc object
- * @inactivity_timeout: value to be set
- *
- * Return: QDF Status
- */
-QDF_STATUS
-ucfg_mlme_set_ps_data_inactivity_timeout(struct wlan_objmgr_psoc *psoc,
-					 uint32_t inactivity_timeout);
-
-/**
  * ucfg_mlme_set_sap_listen_interval() - Set the Sap listen interval
  * @psoc: pointer to psoc object
  * @value: Value that needs to be set from the caller
@@ -2664,6 +2642,36 @@ ucfg_mlme_set_11d_enabled(struct wlan_objmgr_psoc *psoc, bool value)
 }
 
 /**
+ * ucfg_mlme_is_rf_test_mode_enabled() - Get rf test mode flag
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_mlme_is_rf_test_mode_enabled(struct wlan_objmgr_psoc *psoc, bool *value)
+{
+	return wlan_mlme_is_rf_test_mode_enabled(psoc, value);
+}
+
+/**
+ * ucfg_mlme_set_rf_test_mode_enabled() - Set rf test mode flag
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_mlme_set_rf_test_mode_enabled(struct wlan_objmgr_psoc *psoc, bool value)
+{
+	return wlan_mlme_set_rf_test_mode_enabled(psoc, value);
+}
+
+/**
  * ucfg_mlme_get_opr_rate() - Get operational rate set
  * @psoc: pointer to vdev object
  * @buf: buffer to get rates set
@@ -3294,22 +3302,6 @@ static inline QDF_STATUS
 ucfg_mlme_get_wmm_uapsd_mask(struct wlan_objmgr_psoc *psoc, uint8_t *value)
 {
 	return wlan_mlme_get_wmm_uapsd_mask(psoc, value);
-}
-
-/**
- * ucfg_mlme_get_implicit_qos_is_enabled() - Enable implicit QOS
- * @psoc: pointer to psoc object
- * @value: Value that needs to be set from the caller
- *
- * Inline UCFG API to be used by HDD/OSIF callers
- *
- * Return: QDF Status
- */
-static inline
-QDF_STATUS ucfg_mlme_get_implicit_qos_is_enabled(struct wlan_objmgr_psoc *psoc,
-						 bool *value)
-{
-	return wlan_mlme_get_implicit_qos_is_enabled(psoc, value);
 }
 
 #ifdef FEATURE_WLAN_ESE

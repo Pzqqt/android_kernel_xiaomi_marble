@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -552,6 +552,8 @@ static void vdev_iterator(struct wlan_objmgr_psoc *psoc, void *vdev, void *arg)
 	stats->oem_response_wake_up_count +=
 			vdev_stats->oem_response_wake_up_count;
 	stats->uc_drop_wake_up_count += vdev_stats->uc_drop_wake_up_count;
+	stats->fatal_event_wake_up_count +=
+			vdev_stats->fatal_event_wake_up_count;
 	stats->pwr_save_fail_detected += vdev_stats->pwr_save_fail_detected;
 	stats->scan_11d += vdev_stats->scan_11d;
 }
@@ -663,6 +665,7 @@ QDF_STATUS ucfg_mc_cp_stats_write_wow_stats(
 			     "\tPNO Complete: %u\n"
 			     "\tPNO Match: %u\n"
 			     "\tUC Drop wake_count: %u\n"
+			     "\twake count due to fatal event: %u\n"
 			     "\tOEM rsp wake_count: %u\n"
 			     "\twake count due to pwr_save_fail_detected: %u\n"
 			     "\twake count due to 11d scan: %u\n",
@@ -682,6 +685,7 @@ QDF_STATUS ucfg_mc_cp_stats_write_wow_stats(
 			     wow_stats.pno_complete_wake_up_count,
 			     wow_stats.pno_match_wake_up_count,
 			     wow_stats.uc_drop_wake_up_count,
+			     wow_stats.fatal_event_wake_up_count,
 			     wow_stats.oem_response_wake_up_count,
 			     wow_stats.pwr_save_fail_detected,
 			     wow_stats.scan_11d);
@@ -705,6 +709,24 @@ QDF_STATUS ucfg_mc_cp_stats_send_stats_request(struct wlan_objmgr_vdev *vdev,
 
 	return tgt_send_mc_cp_stats_req(wlan_vdev_get_psoc(vdev), type, info);
 }
+
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+QDF_STATUS ucfg_send_big_data_stats_request(struct wlan_objmgr_vdev *vdev,
+					    enum stats_req_type type,
+					    struct request_info *info)
+{
+	QDF_STATUS status;
+
+	status = ucfg_mc_cp_stats_set_pending_req(wlan_vdev_get_psoc(vdev),
+						  type, info);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cp_stats_err("ucfg_mc_cp_stats_set_pending_req pdev failed: %d",
+			     status);
+		return status;
+	}
+	return tgt_send_mc_cp_stats_req(wlan_vdev_get_psoc(vdev), type, info);
+}
+#endif
 
 QDF_STATUS ucfg_mc_cp_stats_get_tx_power(struct wlan_objmgr_vdev *vdev,
 					 int *dbm)

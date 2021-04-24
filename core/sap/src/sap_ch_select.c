@@ -443,10 +443,6 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 	for (channelnum = 0;
 	     channelnum < pSpectInfoParams->numSpectChans;
 	     channelnum++, pChans++, pSpectCh++) {
-		uint8_t channel;
-
-		channel = wlan_reg_freq_to_chan(mac->pdev, *pChans);
-
 		pSpectCh->chan_freq = *pChans;
 		/* Initialise for all channels */
 		pSpectCh->rssiAgr = SOFTAP_MIN_RSSI;
@@ -455,9 +451,9 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 
 		/* check if the channel is in NOL blacklist */
 		if (sap_dfs_is_channel_in_nol_list(
-					sap_ctx, channel,
+					sap_ctx, *pChans,
 					PHY_SINGLE_CHANNEL_CENTERED)) {
-			sap_debug_rl("Ch %d is in NOL list", channel);
+			sap_debug_rl("Ch freq %d is in NOL list", *pChans);
 			continue;
 		}
 
@@ -466,8 +462,8 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 			if (wlan_reg_is_dfs_for_freq(mac->pdev,
 						     pSpectCh->chan_freq)) {
 				sap_debug("DFS Ch %d not considered for ACS. include_dfs_ch %u, sta_sap_scc_on_dfs_chnl_config_value %d",
-					channel, include_dfs_ch,
-					sta_sap_scc_on_dfs_chnl_config_value);
+					  *pChans, include_dfs_ch,
+					  sta_sap_scc_on_dfs_chnl_config_value);
 				continue;
 			}
 		}
@@ -478,13 +474,13 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 			continue;
 		}
 
-		/* OFDM rates are not supported on channel 14 */
-		if (channel == 14 &&
+		/* OFDM rates are not supported on frequency 2484 */
+		if (*pChans == 2484 &&
 		    eCSR_DOT11_MODE_11b != sap_ctx->csr_roamProfile.phyMode)
 			continue;
 
 		/* Skip DSRC channels */
-		if (wlan_reg_is_dsrc_chan(mac->pdev, channel))
+		if (wlan_reg_is_dsrc_freq(pSpectCh->chan_freq))
 			continue;
 
 		/*

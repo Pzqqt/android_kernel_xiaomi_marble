@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -172,12 +172,14 @@ struct dsc_psoc {
  * @psoc: parent psoc context
  * @trans: transition tracking container for this node
  * @ops: operations in flight tracking container for this node
+ * @nb_cmd_during_ssr: north bound command id
  */
 struct dsc_vdev {
 	qdf_list_node_t node;
 	struct dsc_psoc *psoc;
 	struct dsc_trans trans;
 	struct dsc_ops ops;
+	uint8_t nb_cmd_during_ssr;
 };
 
 #define dsc_for_each_driver_psoc(driver_ptr, psoc_cursor) \

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -315,7 +315,7 @@
  * InfraUapsdVoSrvIntv - Set Uapsd service interval for voice
  * @Min: 0
  * @Max: 4294967295UL
- * @Default: 20
+ * @Default: 0
  *
  * This ini is used to set Uapsd service interval(in ms) for voice.
  *
@@ -331,7 +331,7 @@
 		"InfraUapsdVoSrvIntv", \
 		0, \
 		4294967295UL, \
-		20, \
+		0, \
 		CFG_VALUE_OR_DEFAULT, \
 		"Infra uapsd vo srv intv")
 
@@ -365,7 +365,7 @@
  * InfraUapsdViSrvIntv - Set Uapsd service interval for video
  * @Min: 0
  * @Max: 4294967295UL
- * @Default: 300
+ * @Default: 0
  *
  * This ini is used to set Uapsd service interval(in ms) for video.
  *
@@ -382,7 +382,7 @@
 		"InfraUapsdViSrvIntv", \
 		0, \
 		4294967295UL, \
-		300, \
+		0, \
 		CFG_VALUE_OR_DEFAULT, \
 		"Infra uapsd vi srv intv")
 
@@ -546,7 +546,7 @@
  * InfraUapsdBeSrvIntv - Set Uapsd service interval for BE
  * @Min: 0
  * @Max: 4294967295UL
- * @Default: 300
+ * @Default: 0
  *
  * This ini is used to set Uapsd service interval(in ms) for BE
  *
@@ -562,7 +562,7 @@
 		"InfraUapsdBeSrvIntv", \
 		0, \
 		4294967295UL, \
-		300, \
+		0, \
 		CFG_VALUE_OR_DEFAULT, \
 		"Infra uapsd be srv intv")
 
@@ -731,7 +731,7 @@
  * InfraUapsdBkSrvIntv - Set Uapsd service interval for BK
  * @Min: 0
  * @Max: 4294967295UL
- * @Default: 300
+ * @Default: 0
  *
  * This ini is used to set Uapsd service interval(in ms) for BK
  *
@@ -747,7 +747,7 @@
 		"InfraUapsdBkSrvIntv", \
 		0, \
 		4294967295UL, \
-		300, \
+		0, \
 		CFG_VALUE_OR_DEFAULT, \
 		"Infra uapsd bk srv intv")
 
@@ -855,28 +855,6 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"setup U-APSD mask for ACs")
 
-/*
- * <ini>
- * ImplicitQosIsEnabled - Enableimplicit QOS
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable/disable implicit QOS.
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_QOS_WMM_IMPLICIT_SETUP_ENABLED CFG_INI_BOOL( \
-		"ImplicitQosIsEnabled", \
-		0, \
-		"Enable implicit QOS")
-
 #ifdef FEATURE_WLAN_ESE
 /*
  * <ini>
@@ -971,7 +949,7 @@
  * gAddTSWhenACMIsOff - Set ACM value for AC
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * This ini is used to set ACM value for AC
  *
@@ -985,7 +963,7 @@
  */
 #define CFG_QOS_ADDTS_WHEN_ACM_IS_OFF CFG_INI_BOOL( \
 		"gAddTSWhenACMIsOff", \
-		0, \
+		1, \
 		"ACM value for AC")
 
 /*
@@ -1048,7 +1026,6 @@
 	CFG(CFG_QOS_WMM_MODE) \
 	CFG(CFG_QOS_WMM_80211E_ENABLED) \
 	CFG(CFG_QOS_WMM_UAPSD_MASK) \
-	CFG(CFG_QOS_WMM_IMPLICIT_SETUP_ENABLED) \
 	QOS_CFG \
 	CFG(CFG_QOS_WMM_BURST_SIZE_DEFN) \
 	CFG(CFG_QOS_WMM_TS_INFO_ACK_POLICY) \

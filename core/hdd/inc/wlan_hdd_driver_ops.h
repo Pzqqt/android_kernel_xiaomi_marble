@@ -158,4 +158,20 @@ void hdd_set_hif_init_phase(struct hif_opaque_softc *hif_ctx,
 {
 }
 #endif /* FORCE_WAKE */
+
+#ifdef HIF_DETECTION_LATENCY_ENABLE
+/**
+ * hdd_hif_set_enable_detection() - enable detection
+ * @hif_ctx: hif opaque handle
+ * @value: enable/disable
+ *
+ * Return: None
+ */
+void hdd_hif_set_enable_detection(struct hif_opaque_softc *hif_ctx, bool value);
+#else
+static inline
+void hdd_hif_set_enable_detection(struct hif_opaque_softc *hif_ctx, bool value)
+{
+}
+#endif /* HIF_DETECTION_LATENCY_ENABLE */
 #endif /* __WLAN_HDD_DRIVER_OPS_H__ */

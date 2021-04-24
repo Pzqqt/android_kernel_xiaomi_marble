@@ -57,21 +57,19 @@ static uint8_t
 lim_is_rsn_ie_valid_in_sme_req_message(struct mac_context *mac_ctx,
 				       tpSirRSNie rsn_ie)
 {
-	uint8_t start = 0, privacy;
+	uint8_t start = 0;
 	uint32_t val;
 	int len;
 
-	privacy = mac_ctx->mlme_cfg->wep_params.is_privacy_enabled;
-
 	val = mac_ctx->mlme_cfg->feature_flags.enable_rsn;
-	if (rsn_ie->length && (!privacy || !val)) {
+	if (rsn_ie->length && !val) {
 		/* Privacy & RSN not enabled in CFG.
 		 * In order to allow mixed mode for Guest access
 		 * allow BSS creation/join with no Privacy capability
 		 * yet advertising WPA IE
 		 */
-		pe_debug("RSN ie len: %d PRIVACY: %d RSN: %d",
-			       rsn_ie->length, privacy, val);
+		pe_debug("RSN ie len: %d RSN: %d",
+			       rsn_ie->length, val);
 	}
 
 	if (!rsn_ie->length) {
@@ -154,6 +152,7 @@ lim_is_rsn_ie_valid_in_sme_req_message(struct mac_context *mac_ctx,
 	return true;
 } /*** end lim_is_rs_nie_valid_in_sme_req_message() ***/
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * lim_is_addie_valid_in_sme_req_message()
  *
@@ -200,6 +199,7 @@ lim_is_addie_valid_in_sme_req_message(struct mac_context *mac, tpSirAddie pAddie
 
 	return true;
 } /*** end lim_is_addie_valid_in_sme_req_message() ***/
+#endif
 
 /**
  * lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message() - to set rsnie/wpaie
@@ -323,6 +323,7 @@ lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(struct mac_context *mac_ctx,
 	return true;
 }
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * lim_is_bss_descr_valid_in_sme_req_message()
  *
@@ -353,6 +354,7 @@ lim_is_bss_descr_valid_in_sme_req_message(struct mac_context *mac,
 
 	return valid;
 } /*** end lim_is_bss_descr_valid_in_sme_req_message() ***/
+#endif
 
 bool lim_is_sme_start_bss_req_valid(struct mac_context *mac_ctx,
 				    struct start_bss_req *start_bss_req)
@@ -437,6 +439,7 @@ bool lim_is_sme_start_bss_req_valid(struct mac_context *mac_ctx,
 	return true;
 }
 
+#ifndef FEATURE_CM_ENABLE
 uint8_t lim_is_sme_join_req_valid(struct mac_context *mac,
 				  struct join_req *pJoinReq)
 {
@@ -478,6 +481,7 @@ uint8_t lim_is_sme_join_req_valid(struct mac_context *mac,
 end:
 	return valid;
 } /*** end lim_is_sme_join_req_valid() ***/
+#endif
 
 bool lim_is_sme_disassoc_req_valid(struct mac_context *mac,
 				   struct disassoc_req *disassoc_req,

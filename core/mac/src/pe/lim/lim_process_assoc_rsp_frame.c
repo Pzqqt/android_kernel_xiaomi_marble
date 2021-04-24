@@ -276,10 +276,8 @@ void lim_update_assoc_sta_datas(struct mac_context *mac_ctx,
 		sta_ds->qosMode = 1;
 		sta_ds->wmeEnabled = 1;
 	}
-#ifdef WLAN_FEATURE_11W
 	if (session_entry->limRmfEnabled)
 		sta_ds->rmfEnabled = 1;
-#endif
 }
 
 /**
@@ -540,8 +538,6 @@ static inline void lim_process_he_info(tpSirProbeRespBeacon beacon,
 }
 #endif
 
-#ifdef WLAN_FEATURE_11W
-
 #define MAX_RETRY_TIMER 1500
 static QDF_STATUS
 lim_handle_pmfcomeback_timer(struct pe_session *session_entry,
@@ -594,14 +590,6 @@ lim_handle_pmfcomeback_timer(struct pe_session *session_entry,
 
 	return QDF_STATUS_SUCCESS;
 }
-#else
-static QDF_STATUS
-lim_handle_pmfcomeback_timer(struct pe_session *session_entry,
-			     tpSirAssocRsp assoc_rsp)
-{
-	return QDF_STATUS_E_FAILURE;
-}
-#endif
 
 static void clean_up_ft_sha384(tpSirAssocRsp assoc_rsp, bool sha384_akm)
 {
@@ -670,7 +658,6 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	tpSirAssocRsp assoc_rsp;
 	tLimMlmAssocCnf assoc_cnf;
 	tSchBeaconStruct *beacon;
-	uint8_t vdev_id = session_entry->vdev_id;
 	uint8_t ap_nss;
 	int8_t rssi;
 	QDF_STATUS status;
@@ -708,11 +695,11 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 		return;
 	}
 
-	pe_nofl_info("Assoc rsp RX: subtype %d vdev %d sys role %d lim state %d rssi %d from " QDF_MAC_ADDR_FMT,
-		     subtype, vdev_id,
-		     GET_LIM_SYSTEM_ROLE(session_entry),
-		     session_entry->limMlmState, rssi,
-		     QDF_MAC_ADDR_REF(hdr->sa));
+	pe_nofl_rl_info("Assoc rsp RX: subtype %d vdev %d sys role %d lim state %d rssi %d from " QDF_MAC_ADDR_FMT,
+			subtype, session_entry->vdev_id,
+			GET_LIM_SYSTEM_ROLE(session_entry),
+			session_entry->limMlmState, rssi,
+			QDF_MAC_ADDR_REF(hdr->sa));
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			   (uint8_t *)hdr, frame_len + SIR_MAC_HDR_LEN_3A);
 

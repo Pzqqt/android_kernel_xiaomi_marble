@@ -220,20 +220,13 @@ void hdd_cm_handle_assoc_event(struct wlan_objmgr_vdev *vdev,
  */
 void hdd_cm_netif_queue_enable(struct hdd_adapter *adapter);
 
-#ifdef WLAN_FEATURE_11W
 /**
  * hdd_cm_clear_pmf_stats() - Clear pmf stats
  * @adapter: pointer to the adapter structure
  *
  * Returns: None
  */
-
 void hdd_cm_clear_pmf_stats(struct hdd_adapter *adapter);
-#else
-static inline void hdd_cm_clear_pmf_stats(struct hdd_adapter *adapter)
-{
-}
-#endif
 
 /**
  * hdd_cm_save_connect_status() - Save connect status

@@ -206,7 +206,6 @@ struct wlan_fwol_neighbor_report_cfg {
  * @tsf_irq_host_gpio_pin: TSF GPIO Pin config
  * @tsf_sync_host_gpio_pin: TSF Sync GPIO Pin config
  * @tsf_ptp_options: TSF Plus feature options config
- * @lprx_enable: LPRx feature enable config
  * @sae_enable: SAE feature enable config
  * @gcmp_enable: GCMP feature enable config
  * @enable_tx_sch_delay: Enable TX SCH delay value config
@@ -257,7 +256,6 @@ struct wlan_fwol_cfg {
 #endif
 #endif
 #endif
-	bool lprx_enable;
 #ifdef WLAN_FEATURE_SAE
 	bool sae_enable;
 #endif

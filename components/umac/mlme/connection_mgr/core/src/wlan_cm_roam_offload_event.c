@@ -38,21 +38,6 @@
 #include "connection_mgr/core/src/wlan_cm_main_api.h"
 #define FW_ROAM_SYNC_TIMEOUT 7000
 
-static QDF_STATUS cm_abort_fw_roam(struct cnx_mgr *cm_ctx,
-				   wlan_cm_id cm_id)
-{
-	QDF_STATUS status;
-
-	status = cm_sm_deliver_event(cm_ctx->vdev,
-				     WLAN_CM_SM_EV_ROAM_ABORT,
-				     sizeof(wlan_cm_id), &cm_id);
-
-	if (QDF_IS_STATUS_ERROR(status))
-		cm_remove_cmd(cm_ctx, &cm_id);
-
-	return status;
-}
-
 static QDF_STATUS
 cm_fw_roam_ser_cb(struct wlan_serialization_command *cmd,
 		  enum wlan_serialization_cb_reason reason)
@@ -99,6 +84,21 @@ cm_fw_roam_ser_cb(struct wlan_serialization_command *cmd,
 	return status;
 }
 
+QDF_STATUS cm_abort_fw_roam(struct cnx_mgr *cm_ctx,
+			    wlan_cm_id cm_id)
+{
+	QDF_STATUS status;
+
+	status = cm_sm_deliver_event(cm_ctx->vdev,
+				     WLAN_CM_SM_EV_ROAM_ABORT,
+				     sizeof(wlan_cm_id), &cm_id);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		cm_remove_cmd(cm_ctx, &cm_id);
+
+	return status;
+}
+
 QDF_STATUS
 cm_add_fw_roam_dummy_ser_cb(struct wlan_objmgr_pdev *pdev,
 			    struct cnx_mgr *cm_ctx,
@@ -140,7 +140,6 @@ cm_add_fw_roam_dummy_ser_cb(struct wlan_objmgr_pdev *pdev,
 
 		return QDF_STATUS_E_FAILURE;
 	}
-
 	return QDF_STATUS_SUCCESS;
 }
 

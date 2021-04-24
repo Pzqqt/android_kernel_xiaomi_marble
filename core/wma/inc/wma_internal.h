@@ -558,8 +558,10 @@ void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id);
 int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 			    uint32_t len);
 
+#ifndef FEATURE_CM_ENABLE
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 void wma_process_roam_synch_complete(WMA_HANDLE handle, uint8_t vdev_id);
+#endif
 #endif
 
 /*
@@ -962,6 +964,15 @@ enum tx_rate_info wma_get_ht_rate_flags(enum phy_ch_width ch_width);
  * Return: Rate flags corresponding to ch_width
  */
 enum tx_rate_info wma_get_he_rate_flags(enum phy_ch_width ch_width);
+
+/**
+ * wma_set_vht_txbf_cfg() - set VHT Tx beamforming capability to FW
+ * @mac: Global MAC context
+ * @vdev_id: VDEV id
+ *
+ * Return: None
+ */
+void wma_set_vht_txbf_cfg(struct mac_context *mac, uint8_t vdev_id);
 
 int32_t wmi_unified_send_txbf(tp_wma_handle wma, tpAddStaParams params);
 

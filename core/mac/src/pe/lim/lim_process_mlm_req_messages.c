@@ -202,18 +202,11 @@ void lim_process_mlm_req_messages(struct mac_context *mac_ctx,
 	} /* switch (msg->type) */
 }
 
-#ifdef WLAN_FEATURE_11W
 static void update_rmfEnabled(struct bss_params *addbss_param,
 			      struct pe_session *session)
 {
 	addbss_param->rmfEnabled = session->limRmfEnabled;
 }
-#else
-static void update_rmfEnabled(struct bss_params *addbss_param,
-			      struct pe_session *session)
-{
-}
-#endif
 
 /**
  * lim_mlm_add_bss() - HAL interface for WMA_ADD_BSS_REQ
@@ -431,7 +424,7 @@ lim_process_mlm_post_join_suspend_link(struct mac_context *mac_ctx,
 	mac_ctx->lim.lim_timers.gLimJoinFailureTimer.sessionId =
 		session->peSessionId;
 
-	wma_add_bss_peer_sta(session->vdev_id, session->bssId);
+	wma_add_bss_peer_sta(session->vdev_id, session->bssId, true);
 }
 #endif
 
@@ -502,7 +495,7 @@ error:
 	qdf_mem_free(mlm_join_req);
 	if (session)
 		session->pLimMlmJoinReq = NULL;
-	mlmjoin_cnf.resultCode = eSIR_SME_RESOURCES_UNAVAILABLE;
+	mlmjoin_cnf.resultCode = eSIR_SME_PEER_CREATE_FAILED;
 	mlmjoin_cnf.sessionId = sessionid;
 	mlmjoin_cnf.protStatusCode = STATUS_UNSPECIFIED_FAILURE;
 	lim_post_sme_message(mac_ctx, LIM_MLM_JOIN_CNF,
@@ -850,7 +843,6 @@ end:
 			     (uint32_t *) &mlm_auth_cnf);
 }
 
-#ifdef WLAN_FEATURE_11W
 static void lim_store_pmfcomeback_timerinfo(struct pe_session *session_entry)
 {
 	if (session_entry->opmode != QDF_STA_MODE ||
@@ -865,11 +857,6 @@ static void lim_store_pmfcomeback_timerinfo(struct pe_session *session_entry)
 	session_entry->pmf_retry_timer_info.lim_mlm_state =
 		session_entry->limMlmState;
 }
-#else
-static void lim_store_pmfcomeback_timerinfo(struct pe_session *session_entry)
-{
-}
-#endif /* WLAN_FEATURE_11W */
 
 /**
  * lim_process_mlm_assoc_req() - This function is called to process

@@ -417,14 +417,49 @@ release_intf_addr_and_return_failure:
 	return -EINVAL;
 }
 
+static int
+wlan_hdd_start_pre_cac_trans(struct hdd_context *hdd_ctx,
+			     struct osif_vdev_sync **out_vdev_sync,
+			     bool *is_vdev_sync_created)
+{
+	struct hdd_adapter *adapter, *next_adapter = NULL;
+	wlan_net_dev_ref_dbgid dbgid = NET_DEV_HOLD_START_PRE_CAC_TRANS;
+	int errno;
+
+	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter,
+					   dbgid) {
+		if (!qdf_str_cmp(adapter->dev->name, SAP_PRE_CAC_IFNAME)) {
+			errno = osif_vdev_sync_trans_start(adapter->dev,
+							   out_vdev_sync);
+
+			hdd_adapter_dev_put_debug(adapter, dbgid);
+			if (next_adapter)
+				hdd_adapter_dev_put_debug(next_adapter,
+							  dbgid);
+			return errno;
+
+		}
+		hdd_adapter_dev_put_debug(adapter, dbgid);
+	}
+
+	errno = osif_vdev_sync_create_and_trans(hdd_ctx->parent_dev,
+						out_vdev_sync);
+	if (errno)
+		return errno;
+
+	*is_vdev_sync_created = true;
+	return 0;
+}
+
 int wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx, uint32_t chan_freq)
 {
 	struct hdd_adapter *adapter;
 	struct osif_vdev_sync *vdev_sync;
 	int errno;
+	bool is_vdev_sync_created = false;
 
-	errno = osif_vdev_sync_create_and_trans(hdd_ctx->parent_dev,
-						&vdev_sync);
+	errno = wlan_hdd_start_pre_cac_trans(hdd_ctx, &vdev_sync,
+					     &is_vdev_sync_created);
 	if (errno)
 		return errno;
 
@@ -432,14 +467,16 @@ int wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx, uint32_t chan_freq)
 	if (errno)
 		goto destroy_sync;
 
-	osif_vdev_sync_register(adapter->dev, vdev_sync);
+	if (is_vdev_sync_created)
+		osif_vdev_sync_register(adapter->dev, vdev_sync);
 	osif_vdev_sync_trans_stop(vdev_sync);
 
 	return 0;
 
 destroy_sync:
 	osif_vdev_sync_trans_stop(vdev_sync);
-	osif_vdev_sync_destroy(vdev_sync);
+	if (is_vdev_sync_created)
+		osif_vdev_sync_destroy(vdev_sync);
 
 	return errno;
 }

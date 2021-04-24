@@ -196,9 +196,7 @@ const char *get_e_roam_cmd_status_str(eRoamCmdStatus val)
 #endif
 		CASE_RETURN_STR(eCSR_ROAM_DISCONNECT_ALL_P2P_CLIENTS);
 		CASE_RETURN_STR(eCSR_ROAM_SEND_P2P_STOP_BSS);
-#ifdef WLAN_FEATURE_11W
 		CASE_RETURN_STR(eCSR_ROAM_UNPROT_MGMT_FRAME_IND);
-#endif
 #ifdef FEATURE_WLAN_ESE
 		CASE_RETURN_STR(eCSR_ROAM_TSM_IE_IND);
 #ifndef FEATURE_CM_ENABLE
@@ -663,7 +661,7 @@ uint32_t csr_get_beaconing_concurrent_channel(struct mac_context *mac_ctx,
 		     (persona == QDF_SAP_MODE)) &&
 		     (session->connectState !=
 		      eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED))
-			return session->connectedProfile.op_freq;
+			return wlan_get_operation_chan_freq_vdev_id(mac_ctx->pdev, i);
 	}
 
 	return 0;
@@ -1945,10 +1943,8 @@ bool csr_is_profile_rsn(struct csr_roam_profile *pProfile)
 #ifdef FEATURE_WLAN_ESE
 	case eCSR_AUTH_TYPE_CCKM_RSN:
 #endif
-#ifdef WLAN_FEATURE_11W
 	case eCSR_AUTH_TYPE_RSN_PSK_SHA256:
 	case eCSR_AUTH_TYPE_RSN_8021X_SHA256:
-#endif
 	/* fallthrough */
 	case eCSR_AUTH_TYPE_FILS_SHA256:
 	case eCSR_AUTH_TYPE_FILS_SHA384:
@@ -2486,7 +2482,6 @@ tAniEdType csr_translate_encrypt_type_to_ed_type(eCsrEncryptionType EncryptType)
 		edType = eSIR_ED_WPI;
 		break;
 #endif
-#ifdef WLAN_FEATURE_11W
 	/* 11w BIP */
 	case eCSR_ENCRYPT_TYPE_AES_CMAC:
 		edType = eSIR_ED_AES_128_CMAC;
@@ -2503,7 +2498,6 @@ tAniEdType csr_translate_encrypt_type_to_ed_type(eCsrEncryptionType EncryptType)
 	case eCSR_ENCRYPT_TYPE_AES_GMAC_256:
 		edType = eSIR_ED_AES_GMAC_256;
 		break;
-#endif
 	}
 
 	return edType;
@@ -2692,6 +2686,7 @@ void csr_free_roam_profile(struct mac_context *mac, uint32_t sessionId)
 	}
 }
 
+#ifndef FEATURE_CM_ENABLE
 void csr_free_connect_bss_desc(struct mac_context *mac, uint32_t sessionId)
 {
 	struct csr_roam_session *pSession = &mac->roam.roamSession[sessionId];
@@ -2701,6 +2696,7 @@ void csr_free_connect_bss_desc(struct mac_context *mac, uint32_t sessionId)
 		pSession->pConnectBssDesc = NULL;
 	}
 }
+#endif
 
 tSirResultCodes csr_get_de_auth_rsp_status_code(struct deauth_rsp *pSmeRsp)
 {

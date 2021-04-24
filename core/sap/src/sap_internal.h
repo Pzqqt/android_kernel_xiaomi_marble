@@ -42,7 +42,7 @@
 
 #define SAP_DEBUG
 
-#define IS_ETSI_WEATHER_CH(_ch)   ((_ch >= 120) && (_ch <= 130))
+#define IS_ETSI_WEATHER_FREQ(_freq)   ((_freq >= 5600) && (_freq <= 5650))
 #define IS_CH_BONDING_WITH_WEATHER_CH(_ch)   (_ch == 116)
 #define IS_CHAN_JAPAN_INDOOR(_ch) ((_ch >= 36)  && (_ch <= 64))
 #define IS_CHAN_JAPAN_OUTDOOR(_ch)((_ch >= 100) && (_ch <= 140))
@@ -339,7 +339,7 @@ sap_search_mac_list(struct qdf_mac_addr *macList, uint16_t num_mac,
 QDF_STATUS sap_init_dfs_channel_nol_list(struct sap_context *sap_ctx);
 
 bool sap_dfs_is_channel_in_nol_list(struct sap_context *sap_ctx,
-				    uint8_t channelNumber,
+				    qdf_freq_t chan_freq,
 				    ePhyChanBondState chanBondState);
 void sap_dfs_cac_timer_callback(void *data);
 
@@ -475,7 +475,7 @@ bool sap_is_dfs_cac_wait_state(struct sap_context *sap_ctx);
 /**
  * sap_chan_bond_dfs_sub_chan - check bonded channel includes dfs sub chan
  * @sap_context: Handle to SAP context.
- * @channel_number: chan whose bonded chan will be checked
+ * @channel_freq: chan whose bonded chan will be checked
  * @bond_state: The channel bonding mode of the passed channel.
  *
  * This function checks if a given bonded channel includes dfs sub chan.
@@ -484,6 +484,6 @@ bool sap_is_dfs_cac_wait_state(struct sap_context *sap_ctx);
  */
 bool
 sap_chan_bond_dfs_sub_chan(struct sap_context *sap_context,
-			   uint8_t channel_number,
+			   qdf_freq_t channel_freq,
 			   ePhyChanBondState bond_state);
 #endif

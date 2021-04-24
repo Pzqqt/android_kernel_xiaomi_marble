@@ -69,6 +69,34 @@ QDF_STATUS tgt_mc_cp_stats_process_infra_stats_event(
 				struct infra_cp_stats_event *infra_event);
 
 #endif
+
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+/**
+ * tgt_mc_cp_stats_process_big_data_stats_event(): API to process big data
+ * stats event
+ * @psoc: pointer to psoc object
+ * @event: big data stats event parameters
+ *
+ * Return: status of operation
+ */
+QDF_STATUS
+tgt_mc_cp_stats_process_big_data_stats_event(
+				struct wlan_objmgr_psoc *psoc,
+				struct big_data_stats_event *event);
+
+/**
+ * tgt_send_cp_big_data_stats_req(): API to send big data stats request
+ * to lmac
+ * @psoc: pointer to psoc object
+ * @req: pointer to request info
+ *
+ * Return: status of operation
+ */
+QDF_STATUS tgt_send_cp_big_data_stats_req(struct wlan_objmgr_psoc *psoc,
+					  struct request_info *req);
+
+#endif
+
 /**
  * tgt_send_mc_cp_stats_req(): API to send stats request to lmac
  * @psoc: pointer to psoc object

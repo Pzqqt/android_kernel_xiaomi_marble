@@ -1304,8 +1304,10 @@ struct wlan_mlme_ratemask {
  * @dual_sta_roam_fw_support: Firmware support for dual sta roaming feature
  * @sae_connect_retries: sae connect retry bitmask
  * @wls_6ghz_capable: wifi location service(WLS) is 6ghz capable
+ * @enabled_rf_test_mode: Enable/disable the RF test mode config
  * @monitor_mode_concurrency: Monitor mode concurrency supported
  * @ocv_support: FW supports OCV or not
+ * @wds_mode: wds mode supported
  */
 struct wlan_mlme_generic {
 	uint32_t band_capability;
@@ -1347,8 +1349,10 @@ struct wlan_mlme_generic {
 	bool dual_sta_roam_fw_support;
 	uint32_t sae_connect_retries;
 	bool wls_6ghz_capable;
+	bool enabled_rf_test_mode;
 	enum monitor_mode_concurrency monitor_mode_concurrency;
 	bool ocv_support;
+	enum wlan_wds_mode wds_mode;
 };
 
 /*
@@ -1428,10 +1432,14 @@ struct wlan_mlme_acs {
  * @is_bcast_requestor_enabled: bcast requestor enable/disable
  * @bcast_requestor_tgt_cap: Broadcast requestor target capability
  * @bcast_responder_tgt_cap: Broadcast responder target capability
+ * @bcast_legacy_tgt_cap: Broadcast Target capability. This is the legacy
+ * capability.
  * @is_twt_nudge_tgt_cap_enabled: support for nudge request enable/disable
  * @is_all_twt_tgt_cap_enabled: support for all twt enable/disable
  * @is_twt_statistics_tgt_cap_enabled: support for twt statistics
  * @twt_congestion_timeout: congestion timeout value
+ * @enable_twt_24ghz: Enable/disable host TWT when STA is connected in
+ * 2.4Ghz
  */
 struct wlan_mlme_cfg_twt {
 	bool is_twt_enabled;
@@ -1439,10 +1447,12 @@ struct wlan_mlme_cfg_twt {
 	bool is_bcast_requestor_enabled;
 	bool bcast_requestor_tgt_cap;
 	bool bcast_responder_tgt_cap;
+	bool bcast_legacy_tgt_cap;
 	bool is_twt_nudge_tgt_cap_enabled;
 	bool is_all_twt_tgt_cap_enabled;
 	bool is_twt_statistics_tgt_cap_enabled;
 	uint32_t twt_congestion_timeout;
+	bool enable_twt_24ghz;
 };
 
 /**
@@ -1883,13 +1893,11 @@ struct wlan_mlme_lfr_cfg {
  * @wmm_mode: Enable WMM feature
  * @b80211e_is_enabled: Enable 802.11e feature
  * @uapsd_mask: what ACs to setup U-APSD for at assoc
- * @bimplicit_qos_enabled: Enable implicit QOS
  */
 struct wlan_mlme_wmm_config {
 	uint8_t wmm_mode;
 	bool b80211e_is_enabled;
 	uint8_t uapsd_mask;
-	bool bimplicit_qos_enabled;
 };
 
 /**
@@ -2190,7 +2198,6 @@ struct wlan_mlme_power {
  * @heart_beat_threshold: Heart beat threshold
  * @ap_keep_alive_timeout: AP keep alive timeout value
  * @ap_link_monitor_timeout: AP link monitor timeout value
- * @ps_data_inactivity_timeout: PS data inactivity timeout
  * @wmi_wq_watchdog_timeout: timeout period for wmi watchdog bite
  */
 struct wlan_mlme_timeout {
@@ -2206,7 +2213,6 @@ struct wlan_mlme_timeout {
 	uint32_t heart_beat_threshold;
 	uint32_t ap_keep_alive_timeout;
 	uint32_t ap_link_monitor_timeout;
-	uint32_t ps_data_inactivity_timeout;
 	uint32_t wmi_wq_watchdog_timeout;
 };
 

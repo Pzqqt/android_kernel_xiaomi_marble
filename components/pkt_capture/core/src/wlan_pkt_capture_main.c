@@ -31,6 +31,7 @@
 #include "target_if_pkt_capture.h"
 #include "cdp_txrx_ctrl.h"
 #include "wlan_pkt_capture_tgt_api.h"
+#include <cds_ieee80211_common.h>
 
 static struct wlan_objmgr_vdev *gp_pkt_capture_vdev;
 
@@ -128,44 +129,49 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 {
 	uint8_t bssid[QDF_MAC_ADDR_SIZE];
 	uint8_t tid = 0, tx_retry_cnt = 0;
-	struct htt_tx_data_hdr_information cmpl_desc;
-	struct htt_tx_data_hdr_information *ptr_cmpl_desc;
-	struct hal_tx_completion_status ppdu_hdr = {0};
-	uint32_t txcap_hdr_size = sizeof(struct htt_tx_data_hdr_information);
 	struct dp_soc *psoc = soc;
 
 	switch (event) {
 	case WDI_EVENT_PKT_CAPTURE_TX_DATA:
 	{
+		struct pkt_capture_tx_hdr_elem_t *ptr_pktcapture_hdr;
+		struct pkt_capture_tx_hdr_elem_t pktcapture_hdr = {0};
+		struct hal_tx_completion_status tx_comp_status = {0};
+		uint32_t txcap_hdr_size =
+				sizeof(struct pkt_capture_tx_hdr_elem_t);
+
 		struct dp_tx_desc_s *desc = log_data;
 		qdf_nbuf_t netbuf;
 		int nbuf_len;
 
-		hal_tx_comp_get_status(&desc->comp, &ppdu_hdr, psoc->hal_soc);
+		hal_tx_comp_get_status(&desc->comp, &tx_comp_status,
+				       psoc->hal_soc);
 		if (!(pkt_capture_get_pktcap_mode_v2() &
 					PKT_CAPTURE_MODE_DATA_ONLY)) {
 			return;
 		}
 
-		cmpl_desc.phy_timestamp_l32 = ppdu_hdr.tsf;
-		cmpl_desc.preamble = ppdu_hdr.pkt_type;
-		cmpl_desc.mcs = ppdu_hdr.mcs;
-		cmpl_desc.bw = ppdu_hdr.bw;
-		/* nss is not updated */
-		cmpl_desc.nss = 0;
-		cmpl_desc.rssi = ppdu_hdr.ack_frame_rssi;
-		/* rate is not updated */
-		cmpl_desc.rate = 0;
-		cmpl_desc.stbc = ppdu_hdr.stbc;
-		cmpl_desc.sgi = ppdu_hdr.sgi;
-		cmpl_desc.ldpc = ppdu_hdr.ldpc;
-		/* beamformed is not updated */
-		cmpl_desc.beamformed = 0;
-		cmpl_desc.framectrl = 0x0008;
-		cmpl_desc.tx_retry_cnt = ppdu_hdr.transmit_cnt;
-		tid = ppdu_hdr.tid;
-		status = ppdu_hdr.status;
-		tx_retry_cnt = ppdu_hdr.transmit_cnt;
+		pktcapture_hdr.timestamp = tx_comp_status.tsf;
+		pktcapture_hdr.preamble = tx_comp_status.pkt_type;
+		pktcapture_hdr.mcs = tx_comp_status.mcs;
+		pktcapture_hdr.bw = tx_comp_status.bw;
+		/* nss not available */
+		pktcapture_hdr.nss = 0;
+		pktcapture_hdr.rssi_comb = tx_comp_status.ack_frame_rssi;
+		/* rate not available */
+		pktcapture_hdr.rate = 0;
+		pktcapture_hdr.stbc = tx_comp_status.stbc;
+		pktcapture_hdr.sgi = tx_comp_status.sgi;
+		pktcapture_hdr.ldpc = tx_comp_status.ldpc;
+		/* Beamformed not available */
+		pktcapture_hdr.beamformed = 0;
+		pktcapture_hdr.framectrl = IEEE80211_FC0_TYPE_DATA |
+					   (IEEE80211_FC1_DIR_TODS << 8);
+		pktcapture_hdr.tx_retry_cnt = tx_comp_status.transmit_cnt;
+		/* seqno not available */
+		pktcapture_hdr.seqno = 0;
+		tid = tx_comp_status.tid;
+		status = tx_comp_status.status;
 
 		nbuf_len = qdf_nbuf_len(desc->nbuf);
 		netbuf = qdf_nbuf_alloc(NULL,
@@ -198,9 +204,10 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 			return;
 		}
 
-		ptr_cmpl_desc =
-		(struct htt_tx_data_hdr_information *)qdf_nbuf_data(netbuf);
-		qdf_mem_copy(ptr_cmpl_desc, &cmpl_desc, txcap_hdr_size);
+		ptr_pktcapture_hdr =
+		(struct pkt_capture_tx_hdr_elem_t *)qdf_nbuf_data(netbuf);
+		qdf_mem_copy(ptr_pktcapture_hdr, &pktcapture_hdr,
+			     txcap_hdr_size);
 
 		pkt_capture_datapkt_process(
 			vdev_id, netbuf, TXRX_PROCESS_TYPE_DATA_TX_COMPL,

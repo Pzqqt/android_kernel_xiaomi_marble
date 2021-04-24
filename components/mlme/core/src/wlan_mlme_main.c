@@ -337,7 +337,6 @@ static void mlme_init_ratemask_cfg(struct wlan_objmgr_psoc *psoc,
 			  ratemask_cfg->higher32_2);
 }
 
-#ifdef WLAN_FEATURE_11W
 static void mlme_init_pmf_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_generic *gen)
 {
@@ -346,16 +345,6 @@ static void mlme_init_pmf_cfg(struct wlan_objmgr_psoc *psoc,
 	gen->pmf_sa_query_retry_interval =
 		cfg_get(psoc, CFG_PMF_SA_QUERY_RETRY_INTERVAL);
 }
-#else
-static void mlme_init_pmf_cfg(struct wlan_objmgr_psoc *psoc,
-			      struct wlan_mlme_generic *gen)
-{
-	gen->pmf_sa_query_max_retries =
-		cfg_default(CFG_PMF_SA_QUERY_MAX_RETRIES);
-	gen->pmf_sa_query_retry_interval =
-		cfg_default(CFG_PMF_SA_QUERY_RETRY_INTERVAL);
-}
-#endif /*WLAN_FEATURE_11W*/
 
 #ifdef WLAN_FEATURE_LPSS
 static inline void
@@ -370,6 +359,26 @@ mlme_init_lpass_support_cfg(struct wlan_objmgr_psoc *psoc,
 			    struct wlan_mlme_generic *gen)
 {
 	gen->lpass_support = cfg_default(CFG_ENABLE_LPASS_SUPPORT);
+}
+#endif
+
+#ifdef FEATURE_WDS
+/**
+ * mlme_init_wds_config_cfg() - initialize wds_mode flag
+ * @psoc: Pointer to PSOC
+ * @gen: pointer to generic CFG items
+ *
+ * Return: None
+ */
+static void mlme_init_wds_config_cfg(struct wlan_objmgr_psoc *psoc,
+				     struct wlan_mlme_generic *gen)
+{
+	gen->wds_mode = cfg_get(psoc, CFG_WDS_MODE);
+}
+#else
+static void mlme_init_wds_config_cfg(struct wlan_objmgr_psoc *psoc,
+				     struct wlan_mlme_generic *gen)
+{
 }
 #endif
 
@@ -416,7 +425,7 @@ static void mlme_init_generic_cfg(struct wlan_objmgr_psoc *psoc,
 	gen->wls_6ghz_capable = cfg_get(psoc, CFG_WLS_6GHZ_CAPABLE);
 	mlme_init_pmf_cfg(psoc, gen);
 	mlme_init_lpass_support_cfg(psoc, gen);
-
+	gen->enabled_rf_test_mode = cfg_default(CFG_RF_TEST_MODE_SUPP_ENABLED);
 	gen->enabled_11h = cfg_get(psoc, CFG_11H_SUPPORT_ENABLED);
 	gen->enabled_11d = cfg_get(psoc, CFG_11D_SUPPORT_ENABLED);
 	gen->enable_beacon_reception_stats =
@@ -436,6 +445,7 @@ static void mlme_init_generic_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_SAE_CONNECION_RETRIES);
 	gen->monitor_mode_concurrency =
 		cfg_get(psoc, CFG_MONITOR_MODE_CONCURRENCY);
+	mlme_init_wds_config_cfg(psoc, gen);
 }
 
 static void mlme_init_edca_ani_cfg(struct wlan_mlme_edca_params *edca_params)
@@ -674,8 +684,6 @@ static void mlme_init_timeout_cfg(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_AP_KEEP_ALIVE_TIMEOUT);
 	timeouts->ap_link_monitor_timeout =
 			cfg_get(psoc, CFG_AP_LINK_MONITOR_TIMEOUT);
-	timeouts->ps_data_inactivity_timeout =
-			cfg_get(psoc, CFG_PS_DATA_INACTIVITY_TIMEOUT);
 	timeouts->wmi_wq_watchdog_timeout =
 			cfg_get(psoc, CFG_WMI_WQ_WATCHDOG);
 }
@@ -753,8 +761,9 @@ static void mlme_init_ht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_SHORT_SLOT_TIME_ENABLED);
 }
 
-static void mlme_init_qos_cfg(struct wlan_objmgr_psoc *psoc,
-			      struct wlan_mlme_qos *qos_aggr_params)
+#ifdef TX_AGGREGATION_SIZE_ENABLE
+static void mlme_init_tx_aggregation_size(struct wlan_objmgr_psoc *psoc,
+					  struct wlan_mlme_qos *qos_aggr_params)
 {
 	qos_aggr_params->tx_aggregation_size =
 				cfg_get(psoc, CFG_TX_AGGREGATION_SIZE);
@@ -766,6 +775,23 @@ static void mlme_init_qos_cfg(struct wlan_objmgr_psoc *psoc,
 				cfg_get(psoc, CFG_TX_AGGREGATION_SIZEVI);
 	qos_aggr_params->tx_aggregation_size_vo =
 				cfg_get(psoc, CFG_TX_AGGREGATION_SIZEVO);
+}
+#else
+static void mlme_init_tx_aggregation_size(struct wlan_objmgr_psoc *psoc,
+					  struct wlan_mlme_qos *qos_aggr_params)
+{
+	qos_aggr_params->tx_aggregation_size = 0;
+	qos_aggr_params->tx_aggregation_size_be = 0;
+	qos_aggr_params->tx_aggregation_size_bk = 0;
+	qos_aggr_params->tx_aggregation_size_vi = 0;
+	qos_aggr_params->tx_aggregation_size_vo = 0;
+}
+#endif
+
+static void mlme_init_qos_cfg(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_mlme_qos *qos_aggr_params)
+{
+	mlme_init_tx_aggregation_size(psoc, qos_aggr_params);
 	qos_aggr_params->rx_aggregation_size =
 				cfg_get(psoc, CFG_RX_AGGREGATION_SIZE);
 	qos_aggr_params->tx_aggr_sw_retry_threshold_be =
@@ -1032,7 +1058,12 @@ static void mlme_init_he_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_TWT_REQUESTOR);
 	he_caps->dot11_he_cap.twt_responder =
 			cfg_get(psoc, CFG_TWT_RESPONDER);
-	he_caps->dot11_he_cap.broadcast_twt = cfg_get(psoc, CFG_BCAST_TWT);
+	/*
+	 * Broadcast TWT capability will be filled in
+	 * populate_dot11f_he_caps() based on STA/SAP
+	 * role and "twt_bcast_req_resp_config" ini
+	 */
+	he_caps->dot11_he_cap.broadcast_twt = 0;
 	if (mlme_is_twt_enabled(psoc))
 		he_caps->dot11_he_cap.flex_twt_sched =
 				cfg_default(CFG_HE_FLEX_TWT_SCHED);
@@ -1227,6 +1258,7 @@ static void mlme_init_twt_cfg(struct wlan_objmgr_psoc *psoc,
 
 	twt_cfg->is_twt_enabled = cfg_get(psoc, CFG_ENABLE_TWT);
 	twt_cfg->twt_congestion_timeout = cfg_get(psoc, CFG_TWT_CONGESTION_TIMEOUT);
+	twt_cfg->enable_twt_24ghz = cfg_get(psoc, CFG_ENABLE_TWT_24GHZ);
 	twt_cfg->is_bcast_requestor_enabled = CFG_TWT_GET_BCAST_REQ(bcast_conf);
 	twt_cfg->is_bcast_responder_enabled = CFG_TWT_GET_BCAST_RES(bcast_conf);
 }
@@ -2063,8 +2095,6 @@ static void mlme_init_wmm_in_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_QOS_WMM_80211E_ENABLED);
 	wmm_params->wmm_config.uapsd_mask =
 		cfg_get(psoc, CFG_QOS_WMM_UAPSD_MASK);
-	wmm_params->wmm_config.bimplicit_qos_enabled =
-		cfg_get(psoc, CFG_QOS_WMM_IMPLICIT_SETUP_ENABLED);
 
 	mlme_init_inactivity_intv(psoc, wmm_params);
 	wmm_params->wmm_tspec_element.burst_size_def =
@@ -2271,8 +2301,7 @@ static void mlme_init_reg_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_reg *reg)
 {
 	reg->self_gen_frm_pwr = cfg_get(psoc, CFG_SELF_GEN_FRM_PWR);
-	reg->etsi_srd_chan_in_master_mode =
-			cfg_get(psoc, CFG_ETSI_SRD_CHAN_IN_MASTER_MODE);
+	reg->etsi_srd_chan_in_master_mode = ETSI_SRD_CHAN_IN_MASTER_MODE;
 	reg->fcc_5dot9_ghz_chan_in_master_mode =
 			cfg_get(psoc, CFG_FCC_5DOT9_GHZ_CHAN_IN_MASTER_MODE);
 	reg->restart_beaconing_on_ch_avoid =
@@ -2332,10 +2361,11 @@ mlme_iot_parse_aggr_info(struct wlan_objmgr_psoc *psoc,
 
 	aggr_info_list = iot->aggr;
 	qdf_mem_copy(aggr_info, cfg_str, cfg_str_len);
+	mlme_legacy_debug("aggr_info=[%s]", aggr_info);
+
 	aggr_info_temp = aggr_info;
 	while (aggr_info_temp) {
 		/* skip possible spaces before oui string */
-		mlme_legacy_err("aggr_info=[%s]", aggr_info_temp);
 		while (*aggr_info_temp == ' ')
 			aggr_info_temp++;
 
@@ -2824,6 +2854,8 @@ QDF_STATUS wlan_mlme_get_ssid_vdev_id(struct wlan_objmgr_pdev *pdev,
 {
 	struct wlan_objmgr_vdev *vdev;
 	QDF_STATUS status;
+
+	*ssid_len = 0;
 
 	if (!pdev)
 		return QDF_STATUS_E_INVAL;

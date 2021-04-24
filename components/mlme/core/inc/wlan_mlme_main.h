@@ -33,6 +33,19 @@
 
 #define MAC_MAX_ADD_IE_LENGTH       2048
 
+/* The ini etsi13_srd_chan_in_master_mode is to enable/disable ETSI SRD
+ * channels in master mode PCL and ACS functionality. It is now deprecated.
+ * So, defining a new macro ETSI_SRD_CHAN_IN_MASTER_MODE with default value.
+ *
+ * Bit map for enabling the SRD mode in various modes are as follows:-
+ * BIT 0:- Enable/Disable SRD channels for SAP.
+ * BIT 1:- Enable/Disable SRD channels for P2P-GO.
+ * BIT 2:- Enable/Disable SRD channels for NAN.
+ * Rest of the bits are currently reserved for future SRD channel support for
+ * other vdevs.
+ */
+#define ETSI_SRD_CHAN_IN_MASTER_MODE (6)
+
 /*
  * Following time is used to program WOW_TIMER_PATTERN to FW so that FW will
  * wake host up to do graceful disconnect in case PEER remains un-authorized

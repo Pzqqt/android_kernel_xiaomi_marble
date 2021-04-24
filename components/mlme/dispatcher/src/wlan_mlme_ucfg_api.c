@@ -1128,43 +1128,6 @@ ucfg_mlme_stats_is_link_speed_report_max_scaled(struct wlan_objmgr_psoc *psoc)
 }
 
 QDF_STATUS
-ucfg_mlme_get_ps_data_inactivity_timeout(struct wlan_objmgr_psoc *psoc,
-					 uint32_t *inactivity_timeout)
-{
-	struct wlan_mlme_psoc_ext_obj *mlme_obj;
-
-	mlme_obj = mlme_get_psoc_ext_obj(psoc);
-	if (!mlme_obj) {
-		*inactivity_timeout =
-			cfg_default(CFG_PS_DATA_INACTIVITY_TIMEOUT);
-		return QDF_STATUS_E_FAILURE;
-	}
-	*inactivity_timeout = mlme_obj->cfg.timeouts.ps_data_inactivity_timeout;
-
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS
-ucfg_mlme_set_ps_data_inactivity_timeout(struct wlan_objmgr_psoc *psoc,
-					 uint32_t inactivity_timeout)
-{
-	struct wlan_mlme_psoc_ext_obj *mlme_obj;
-
-	mlme_obj = mlme_get_psoc_ext_obj(psoc);
-	if (!mlme_obj)
-		return QDF_STATUS_E_INVAL;
-
-	if (!cfg_in_range(CFG_PS_DATA_INACTIVITY_TIMEOUT, inactivity_timeout)) {
-		mlme_legacy_err("inactivity timeout set value is invalid %d",
-				inactivity_timeout);
-		return QDF_STATUS_E_INVAL;
-	}
-	mlme_obj->cfg.timeouts.ps_data_inactivity_timeout = inactivity_timeout;
-
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS
 ucfg_mlme_get_sta_keepalive_method(struct wlan_objmgr_psoc *psoc,
 				   enum station_keepalive_method *val)
 {
@@ -1335,7 +1298,7 @@ ucfg_mlme_get_etsi_srd_chan_in_master_mode(struct wlan_objmgr_psoc *psoc,
 
 	mlme_obj = mlme_get_psoc_ext_obj(psoc);
 	if (!mlme_obj) {
-		*value = cfg_default(CFG_ETSI_SRD_CHAN_IN_MASTER_MODE);
+		*value = ETSI_SRD_CHAN_IN_MASTER_MODE;
 		mlme_legacy_err("Failed to get MLME Obj");
 		return QDF_STATUS_E_INVAL;
 	}

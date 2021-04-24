@@ -2357,7 +2357,8 @@ static bool policy_mgr_allow_multiple_sta_connections(struct wlan_objmgr_psoc *p
 bool policy_mgr_is_6ghz_conc_mode_supported(
 	struct wlan_objmgr_psoc *psoc, enum policy_mgr_con_mode mode)
 {
-	if (mode == PM_STA_MODE || mode == PM_SAP_MODE)
+	if (mode == PM_STA_MODE || mode == PM_SAP_MODE ||
+	    mode == PM_P2P_CLIENT_MODE || mode == PM_P2P_GO_MODE)
 		return true;
 	else
 		return false;

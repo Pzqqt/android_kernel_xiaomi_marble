@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -374,5 +374,15 @@ static void __dsc_vdev_wait_for_ops(struct dsc_vdev *vdev)
 void dsc_vdev_wait_for_ops(struct dsc_vdev *vdev)
 {
 	__dsc_vdev_wait_for_ops(vdev);
+}
+
+uint8_t dsc_vdev_get_cached_cmd(struct dsc_vdev *vdev)
+{
+	return vdev->nb_cmd_during_ssr;
+}
+
+void dsc_vdev_cache_command(struct dsc_vdev *vdev, uint8_t cmd_id)
+{
+	vdev->nb_cmd_during_ssr = cmd_id;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -187,7 +187,7 @@
  * gEnableTxBFin20MHz - Enables TXBF in 20mhz
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * Related: NA
  *
@@ -199,7 +199,7 @@
  */
 #define CFG_VHT_ENABLE_TXBF_IN_20MHZ CFG_INI_BOOL( \
 		"gEnableTxBFin20MHz", \
-		0, \
+		1, \
 		"VHT ENABLE TXBF 20MHZ")
 
 #define CFG_VHT_MU_BEAMFORMER_CAP CFG_BOOL( \
@@ -247,7 +247,7 @@
  * gVhtRxMCS - VHT Rx MCS capability for 1x1 mode
  * @Min: 0
  * @Max: 2
- * @Default: 0
+ * @Default: 2
  *
  * This ini is  used to set VHT Rx MCS capability for 1x1 mode.
  * 0, MCS0-7
@@ -266,7 +266,7 @@
 		"gVhtRxMCS", \
 		0, \
 		2, \
-		0, \
+		2, \
 		CFG_VALUE_OR_DEFAULT, \
 		"VHT Rx MCS")
 
@@ -275,7 +275,7 @@
  * gVhtTxMCS - VHT Tx MCS capability for 1x1 mode
  * @Min: 0
  * @Max: 2
- * @Default: 0
+ * @Default: 2
  *
  * This ini is  used to set VHT Tx MCS capability for 1x1 mode.
  * 0, MCS0-7
@@ -294,7 +294,7 @@
 		"gVhtTxMCS", \
 		0, \
 		2, \
-		0, \
+		2, \
 		CFG_VALUE_OR_DEFAULT, \
 		"VHT Tx MCS")
 
@@ -303,7 +303,7 @@
  * gVhtRxMCS2x2 - VHT Rx MCS capability for 2x2 mode
  * @Min: 0
  * @Max: 2
- * @Default: 0
+ * @Default: 2
  *
  * This ini is  used to set VHT Rx MCS capability for 2x2 mode.
  * 0, MCS0-7
@@ -322,7 +322,7 @@
 		"gVhtRxMCS2x2", \
 		0, \
 		2, \
-		0, \
+		2, \
 		CFG_VALUE_OR_DEFAULT, \
 		"VHT Rx MCS 2x2")
 
@@ -331,7 +331,7 @@
  * gVhtTxMCS2x2 - VHT Tx MCS capability for 2x2 mode
  * @Min: 0
  * @Max: 2
- * @Default: 0
+ * @Default: 2
  *
  * This ini is  used to set VHT Tx MCS capability for 2x2 mode.
  * 0, MCS0-7
@@ -350,7 +350,7 @@
 		"gVhtTxMCS2x2", \
 		0, \
 		2, \
-		0, \
+		2, \
 		CFG_VALUE_OR_DEFAULT, \
 		"VHT Tx MCS 2x2")
 
@@ -379,7 +379,7 @@
  * gEnable2x2 - Enables/disables VHT Tx/Rx MCS values for 2x2
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * This ini disables/enables 2x2 mode. If this is zero then DUT operates as 1x1
  *
@@ -396,7 +396,7 @@
  */
 #define CFG_VHT_ENABLE_2x2_CAP_FEATURE CFG_INI_BOOL( \
 		"gEnable2x2", \
-		0, \
+		1, \
 		"VHT Enable 2x2")
 
 /*
@@ -404,7 +404,7 @@
  * gEnableMuBformee - Enables/disables multi-user (MU) beam formee capability
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * This ini enables/disables multi-user (MU) beam formee
  * capability
@@ -422,7 +422,7 @@
  */
 #define CFG_VHT_ENABLE_MU_BFORMEE_CAP_FEATURE CFG_INI_BOOL( \
 		"gEnableMuBformee", \
-		0, \
+		1, \
 		"VHT Enable MU Beamformee")
 
 /*
@@ -472,7 +472,7 @@
  * gEnableVhtFor24GHzBand - Enable VHT for 2.4GHZ in SAP mode
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * Related: NA
  *
@@ -484,7 +484,7 @@
  */
 #define CFG_ENABLE_VHT_FOR_24GHZ CFG_INI_BOOL( \
 		"gEnableVhtFor24GHzBand", \
-		0, \
+		1, \
 		"VHT Enable for 24GHz")
 
 /*
@@ -513,7 +513,7 @@
  * gVhtAmpduLenExponent - maximum receive AMPDU size configuration
  * @Min: 0
  * @Max: 7
- * @Default: 3
+ * @Default: 7
  *
  * Related: NA
  *
@@ -527,7 +527,7 @@
 		"gVhtAmpduLenExponent", \
 		0, \
 		7, \
-		3, \
+		7, \
 		CFG_VALUE_OR_DEFAULT, \
 		"VHT AMPDU Len in Exponent")
 
@@ -536,7 +536,7 @@
  * gVhtMpduLen - VHT MPDU length
  * @Min: 0
  * @Max: 2
- * @Default: 0
+ * @Default: 2
  *
  * Related: NA
  *
@@ -550,7 +550,7 @@
 		"gVhtMpduLen", \
 		0, \
 		2, \
-		0, \
+		2, \
 		CFG_VALUE_OR_DEFAULT, \
 		"VHT MPDU Length")
 
@@ -559,7 +559,7 @@
  * gEnableTxBFeeSAP - Enable / Disable Tx beamformee in SAP mode
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * Related: NA
  *
@@ -571,7 +571,7 @@
  */
 #define CFG_VHT_ENABLE_TXBF_SAP_MODE CFG_INI_BOOL( \
 			"gEnableTxBFeeSAP", \
-			0, \
+			1, \
 			"Enable tx bf sap mode")
 
 /*

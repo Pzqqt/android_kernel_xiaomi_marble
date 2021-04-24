@@ -237,6 +237,8 @@ void cm_stop_wait_for_key_timer(struct wlan_objmgr_psoc *psoc,
 void cm_update_wait_for_key_timer(struct wlan_objmgr_vdev *vdev,
 				  uint8_t vdev_id, uint32_t interval);
 
+void cm_update_prev_ap_ie(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			  uint32_t len, uint8_t *bcn_ptr);
 bool cm_csr_is_ss_wait_for_key(uint8_t vdev_id);
 void cm_csr_set_ss_wait_for_key(uint8_t vdev_id);
 void cm_csr_set_ss_none(uint8_t vdev_id);
@@ -264,21 +266,26 @@ void cm_csr_disconnect_on_wait_key_timeout(uint8_t vdev_id);
 #endif
 
 #ifdef FEATURE_CM_ENABLE
-static inline QDF_STATUS cm_ext_hdl_create(struct cnx_mgr *cm_ctx)
+static inline QDF_STATUS
+cm_ext_hdl_create(struct wlan_objmgr_vdev *vdev, cm_ext_t **ext_cm_ptr)
 {
-	cm_ctx->ext_cm_ptr = qdf_mem_malloc(sizeof(struct cm_ext_obj));
-	if (!cm_ctx->ext_cm_ptr)
+	struct cm_ext_obj *cm_obj;
+
+	*ext_cm_ptr = qdf_mem_malloc(sizeof(struct cm_ext_obj));
+	if (!*ext_cm_ptr)
 		return QDF_STATUS_E_NOMEM;
 
-	wlan_cm_rso_config_init(cm_ctx->vdev, &cm_ctx->ext_cm_ptr->rso_cfg);
+	cm_obj = *ext_cm_ptr;
+	wlan_cm_rso_config_init(vdev, &cm_obj->rso_cfg);
 
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline QDF_STATUS cm_ext_hdl_destroy(struct cnx_mgr *cm_ctx)
+static inline QDF_STATUS
+cm_ext_hdl_destroy(struct wlan_objmgr_vdev *vdev, cm_ext_t *ext_cm_ptr)
 {
-	wlan_cm_rso_config_deinit(cm_ctx->vdev, &cm_ctx->ext_cm_ptr->rso_cfg);
-	qdf_mem_free(cm_ctx->ext_cm_ptr);
+	wlan_cm_rso_config_deinit(vdev, &ext_cm_ptr->rso_cfg);
+	qdf_mem_free(ext_cm_ptr);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -336,6 +343,22 @@ QDF_STATUS
 cm_send_bss_peer_create_req(struct wlan_objmgr_vdev *vdev,
 			    struct qdf_mac_addr *peer_mac);
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * cm_csr_roam_sync_rsp() - Connection manager ext roam sync resp indication
+ * @vdev: VDEV object
+ * @rsp: Connection vdev response
+ *
+ * This API is to update legacy struct and should be removed once
+ * CSR is cleaned up fully. No new params should be added to CSR, use
+ * vdev/pdev/psoc instead.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_csr_roam_sync_rsp(struct wlan_objmgr_vdev *vdev,
+				struct cm_vdev_join_rsp *rsp);
+#endif
+
 /**
  * cm_csr_connect_rsp() - Connection manager ext connect resp indication
  * @vdev: VDEV object
@@ -385,6 +408,14 @@ cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
  * Return: bool
  */
 bool cm_is_vdevid_connected(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id);
+
+/**
+ * cm_is_vdevid_active() - check if vdev_id is in conneted/roaming state
+ * @vdev: vdev pointer
+ *
+ * Return: bool
+ */
+bool cm_is_vdevid_active(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id);
 
 /**
  * cm_disconnect_start_ind() - Connection manager ext disconnect start

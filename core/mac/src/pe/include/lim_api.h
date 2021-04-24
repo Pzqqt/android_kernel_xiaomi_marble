@@ -146,7 +146,6 @@ QDF_STATUS lim_start(struct mac_context *mac);
 QDF_STATUS pe_start(struct mac_context *mac);
 void pe_stop(struct mac_context *mac);
 
-#ifdef WLAN_FEATURE_11W
 /**
  * lim_stop_pmfcomeback_timer() - stop pmf comeback timer
  * @session: Pointer to PE session
@@ -154,11 +153,6 @@ void pe_stop(struct mac_context *mac);
  * Return: None
  */
 void lim_stop_pmfcomeback_timer(struct pe_session *session);
-#else
-static inline void lim_stop_pmfcomeback_timer(struct pe_session *session)
-{
-}
-#endif
 
 /**
  * pe_register_mgmt_rx_frm_callback() - registers callback for receiving

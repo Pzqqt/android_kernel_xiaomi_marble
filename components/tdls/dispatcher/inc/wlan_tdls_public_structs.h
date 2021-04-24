@@ -774,8 +774,12 @@ struct hecap {
 	uint8_t mac_cap_info[6];
 	uint8_t phycap_info[11];
 	struct {
-		uint16_t rx_map;
-		uint16_t tx_map;
+		uint16_t rx_he_mcs_map_lt_80;
+		uint16_t tx_he_mcs_map_lt_80;
+		uint16_t rx_he_mcs_map_160;
+		uint16_t tx_he_mcs_map_160;
+		uint16_t rx_he_mcs_map_80_80;
+		uint16_t tx_he_mcs_map_80_80;
 	} he_cap_mcs_info;
 } qdf_packed;
 #endif

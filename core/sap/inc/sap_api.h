@@ -249,10 +249,6 @@ typedef struct sap_StationAssocIndication_s {
 	uint32_t assocReqLength;
 	uint8_t *assocReqPtr;
 	bool fWmmEnabled;
-	enum csr_akm_type negotiatedAuthType;
-	eCsrEncryptionType negotiatedUCEncryptionType;
-	eCsrEncryptionType negotiatedMCEncryptionType;
-	bool fAuthRequired;
 	uint8_t ecsa_capable;
 	uint32_t owe_ie_len;
 	uint8_t *owe_ie;
@@ -505,10 +501,8 @@ struct sap_config {
 	uint32_t beacon_int;            /* Beacon Interval */
 	enum QDF_OPMODE persona; /* Tells us which persona, GO or AP */
 	bool enOverLapCh;
-#ifdef WLAN_FEATURE_11W
 	bool mfpRequired;
 	bool mfpCapable;
-#endif
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	uint8_t cc_switch_mode;
 #endif
@@ -761,13 +755,13 @@ typedef QDF_STATUS (*sap_event_cb)(struct sap_event *sap_event,
  * wlansap_is_channel_in_nol_list() - This API checks if channel is
  * in nol list
  * @sap_ctx: SAP context pointer
- * @channelNumber: channel number
+ * @chan_freq: channel frequency
  * @chanBondState: channel bonding state
  *
  * Return: True if the channel is in the NOL list, false otherwise
  */
 bool wlansap_is_channel_in_nol_list(struct sap_context *sap_ctx,
-				    uint8_t channelNumber,
+				    qdf_freq_t chan_freq,
 				    ePhyChanBondState chanBondState);
 
 /**

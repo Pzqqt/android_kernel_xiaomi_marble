@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -68,39 +68,6 @@
 	"enable_11d_in_world_mode", \
 	0, \
 	"enable 11d in world mode")
-
-/*
- * <ini>
- * etsi_srd_chan_in_master_mode - Enable/disable ETSI SRD channels in
- * master mode PCL and ACS functionality
- * @Min: 0
- * @Max: 0xFF
- * @Default: 6
- *
- * etsi_srd_chan_in_master_mode is to enable/disable ETSI SRD channels in
- * master mode PCL and ACS functionality
- * Bit map for enabling the SRD mode in various modes are as follows:-
- * BIT 0:- Enable/Disable SRD channels for SAP.
- * BIT 1:- Enable/Disable SRD channels for P2P-GO.
- * BIT 2:- Enable/Disable SRD channels for NAN.
- * Rest of the bits are currently reserved for future SRD channel support for
- * other vdevs.
- *
- * Related: None
- *
- * Supported Feature: SAP/P2P-GO
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_ETSI_SRD_CHAN_IN_MASTER_MODE CFG_INI_UINT( \
-	"etsi13_srd_chan_in_master_mode", \
-	0, \
-	0xff, \
-	6, \
-	CFG_VALUE_OR_DEFAULT, \
-	"enable/disable ETSI SRD channels in master mode")
 
 /*
  * <ini>
@@ -314,7 +281,6 @@
 	CFG(CFG_SELF_GEN_FRM_PWR) \
 	CFG(CFG_ENABLE_PENDING_CHAN_LIST_REQ) \
 	CFG(CFG_ENABLE_11D_IN_WORLD_MODE) \
-	CFG(CFG_ETSI_SRD_CHAN_IN_MASTER_MODE) \
 	CFG(CFG_FCC_5DOT9_GHZ_CHAN_IN_MASTER_MODE) \
 	CFG(CFG_RESTART_BEACONING_ON_CH_AVOID) \
 	CFG(CFG_INDOOR_CHANNEL_SUPPORT) \

@@ -152,7 +152,6 @@ QDF_STATUS ucfg_mc_cp_stats_write_wow_stats(
 QDF_STATUS ucfg_mc_cp_stats_send_stats_request(struct wlan_objmgr_vdev *vdev,
 					       enum stats_req_type type,
 					       struct request_info *info);
-
 /**
  * wlan_cfg80211_mc_twt_clear_infra_cp_stats() - send request to reset
  * control path statistics
@@ -338,6 +337,30 @@ void ucfg_mc_cp_stats_register_pmo_handler(void);
 #else
 void static inline ucfg_mc_cp_stats_register_pmo_handler(void) { };
 #endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
+
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+/**
+ * ucfg_send_big_data_stats_request() - API to send big data stats
+ * request
+ * @vdev: pointer to vdev object
+ * @type: request type
+ * @info: request info
+ *
+ * Return: status of operation
+ */
+QDF_STATUS ucfg_send_big_data_stats_request(struct wlan_objmgr_vdev *vdev,
+					    enum stats_req_type type,
+					    struct request_info *info);
+#else
+static inline
+QDF_STATUS ucfg_send_big_data_stats_request(struct wlan_objmgr_vdev *vdev,
+					    enum stats_req_type type,
+					    struct request_info *info)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 #else
 void static inline ucfg_mc_cp_stats_register_pmo_handler(void) { };
 static inline QDF_STATUS ucfg_mc_cp_stats_send_stats_request(
@@ -391,5 +414,14 @@ static inline QDF_STATUS ucfg_mc_cp_stats_get_vdev_wake_lock_stats(
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+static inline
+QDF_STATUS ucfg_send_big_data_stats_request(struct wlan_objmgr_vdev *vdev,
+					    enum stats_req_type type,
+					    struct request_info *info)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif /* QCA_SUPPORT_CP_STATS */
+
 #endif /* __WLAN_CP_STATS_MC_UCFG_API_H__ */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -44,12 +44,10 @@
 /* DPH Hash Index for BSS(STA's Peer) on station. */
 #define DPH_STA_HASH_INDEX_PEER   1
 
-#ifdef WLAN_FEATURE_11W
 /* DPH PMF SA Query state for station */
 #define DPH_SA_QUERY_NOT_IN_PROGRESS      1
 #define DPH_SA_QUERY_IN_PROGRESS          2
 #define DPH_SA_QUERY_TIMED_OUT            3
-#endif
 
 typedef struct sDphQosParams {
 	uint8_t addtsPresent;
@@ -158,13 +156,11 @@ typedef struct sDphHashNode {
 	uint8_t vht_160mhz_nss;
 	uint8_t vht_80p80mhz_nss;
 	uint8_t vht_extended_nss_bw_cap;
-#ifdef WLAN_FEATURE_11W
 	TX_TIMER pmfSaQueryTimer;
 	uint16_t pmfSaQueryCurrentTransId;
 	uint16_t pmfSaQueryStartTransId;
 	uint8_t pmfSaQueryState;
 	uint8_t pmfSaQueryRetryCount;
-#endif
 	uint8_t htLdpcCapable;
 	uint8_t vhtLdpcCapable;
 #ifdef FEATURE_WLAN_TDLS

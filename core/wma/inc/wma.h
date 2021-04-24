@@ -683,7 +683,6 @@ struct wma_invalid_peer_params {
  * @roam_synch_in_progress: flag is in progress or not
  * @plink_status_req: link status request
  * @psnr_req: snr request
- * @delay_before_vdev_stop: delay
  * @tx_streams: number of tx streams can be used by the vdev
  * @mac_id: the mac on which vdev is on
  * @arp_offload_req: cached arp offload request
@@ -728,7 +727,6 @@ struct wma_txrx_node {
 	uint32_t peer_count;
 	void *plink_status_req;
 	void *psnr_req;
-	uint8_t delay_before_vdev_stop;
 #ifdef FEATURE_WLAN_EXTSCAN
 	bool extscan_in_progress;
 #endif
@@ -1002,10 +1000,12 @@ typedef struct {
 	bool tx_chain_mask_cck;
 	qdf_mc_timer_t service_ready_ext_timer;
 
+#ifndef FEATURE_CM_ENABLE
 	QDF_STATUS (*csr_roam_synch_cb)(struct mac_context *mac,
 		struct roam_offload_synch_ind *roam_synch_data,
 		struct bss_description *bss_desc_ptr,
 		enum sir_roam_op_code reason);
+#endif
 	QDF_STATUS (*csr_roam_auth_event_handle_cb)(struct mac_context *mac,
 						    uint8_t vdev_id,
 						    struct qdf_mac_addr bssid);
@@ -2048,13 +2048,6 @@ void wma_vdev_clear_pause_bit(uint8_t vdev_id, wmi_tx_pause_type bit_pos)
 void
 wma_send_roam_preauth_status(tp_wma_handle wma_handle,
 			     struct wmi_roam_auth_status_params *params);
-#else
-static inline void
-wma_send_roam_preauth_status(tp_wma_handle wma_handle,
-			     struct wmi_roam_auth_status_params *params)
-{}
-#endif
-
 /**
  * wma_handle_roam_sync_timeout() - Update roaming status at wma layer
  * @wma_handle: wma handle
@@ -2066,6 +2059,17 @@ wma_send_roam_preauth_status(tp_wma_handle wma_handle,
  */
 void wma_handle_roam_sync_timeout(tp_wma_handle wma_handle,
 				  struct roam_sync_timeout_timer_info *info);
+#else
+static inline void
+wma_send_roam_preauth_status(tp_wma_handle wma_handle,
+			     struct wmi_roam_auth_status_params *params)
+{}
+
+static inline void
+wma_handle_roam_sync_timeout(tp_wma_handle wma_handle,
+			     struct roam_sync_timeout_timer_info *info)
+{}
+#endif
 
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 static inline void wma_print_wmi_cmd_log(uint32_t count,
@@ -2386,10 +2390,14 @@ int wma_motion_det_base_line_host_event_handler(void *handle, u_int8_t *event,
  * @vdev_id: vdev id
  * @bssid: AP bssid
  * @roam_sync: if roam sync is in progress
+ * @is_resp_required: Peer create response is expected from firmware.
+ * This flag will be set to true for initial connection and false for
+ * LFR2 case.
  *
  * Return: 0 on success, else error on failure
  */
-QDF_STATUS wma_add_bss_peer_sta(uint8_t vdev_id, uint8_t *bssid);
+QDF_STATUS wma_add_bss_peer_sta(uint8_t vdev_id, uint8_t *bssid,
+				bool is_resp_required);
 
 /**
  * wma_send_vdev_stop() - WMA api to send vdev stop to fw

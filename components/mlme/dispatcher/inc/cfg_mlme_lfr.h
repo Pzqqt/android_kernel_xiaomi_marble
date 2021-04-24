@@ -1157,7 +1157,7 @@
  * FastRoamEnabled - Enable fast roaming
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * This ini is used to inform FW to enable fast roaming
  *
@@ -1171,7 +1171,7 @@
  */
 #define CFG_LFR_FEATURE_ENABLED CFG_INI_BOOL( \
 	"FastRoamEnabled", \
-	0, \
+	1, \
 	"Enable fast roaming")
 
 /*
@@ -1671,7 +1671,7 @@
  * gAllowDFSChannelRoam - Allow dfs channel in roam
  * @Min: 0
  * @Max: 2
- * @Default: 0
+ * @Default: 1
  *
  * This ini is used to set default dfs channel
  *
@@ -1687,7 +1687,7 @@
 	"gAllowDFSChannelRoam", \
 	0, \
 	2, \
-	0, \
+	1, \
 	CFG_VALUE_OR_DEFAULT, \
 	"Allow dfs channel in roam")
 

@@ -164,10 +164,12 @@ typedef void (*twt_disable_cb)(hdd_handle_t hdd_handle);
  * typedef twt_add_dialog_cb - TWT add dialog callback signature.
  * @psoc: Pointer to global psoc
  * @add_dialog_evt: pointer to event buf containing twt response parameters
+ * @renego_fail: Flag to indicate if its re-negotiation failure case
  */
 typedef
 void (*twt_add_dialog_cb)(struct wlan_objmgr_psoc *psoc,
-			  struct twt_add_dialog_complete_event *add_dialog_evt);
+			  struct twt_add_dialog_complete_event *add_dialog_evt,
+			  bool renego_fail);
 
 /**
  * typedef twt_del_dialog_cb - TWT delete dialog callback signature.
@@ -229,7 +231,8 @@ struct twt_callbacks {
 			      struct wmi_twt_enable_complete_event_param *params);
 	void (*twt_disable_cb)(hdd_handle_t hdd_handle);
 	void (*twt_add_dialog_cb)(struct wlan_objmgr_psoc *psoc,
-				  struct twt_add_dialog_complete_event *add_dialog_event);
+				  struct twt_add_dialog_complete_event *add_dialog_event,
+				  bool renego);
 	void (*twt_del_dialog_cb)(struct wlan_objmgr_psoc *psoc,
 				  struct wmi_twt_del_dialog_complete_event_param *params);
 	void (*twt_pause_dialog_cb)(struct wlan_objmgr_psoc *psoc,

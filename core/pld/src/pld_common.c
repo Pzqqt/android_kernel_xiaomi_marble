@@ -2013,10 +2013,13 @@ int pld_smmu_unmap(struct device *dev,
 	case PLD_BUS_TYPE_PCIE:
 		ret = pld_pcie_smmu_unmap(dev, iova_addr, size);
 		break;
-	case PLD_BUS_TYPE_PCIE_FW_SIM:
-	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_IPCI:
 		ret = pld_ipci_smmu_unmap(dev, iova_addr, size);
+		break;
+	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
+	case PLD_BUS_TYPE_SNOC_FW_SIM:
+		pr_err("Not supported on type %d\n", type);
 		break;
 	default:
 		pr_err("Invalid device type %d\n", type);
@@ -2231,6 +2234,35 @@ void pld_srng_disable_irq(struct device *dev, int irq)
 		break;
 	case PLD_BUS_TYPE_IPCI:
 		disable_irq_nosync(irq);
+		break;
+	default:
+		pr_err("Invalid device type\n");
+		break;
+	}
+}
+
+/**
+ * pld_srng_disable_irq_sync() - Synchronouus disable IRQ for SRNG
+ * @dev: device
+ * @irq: IRQ number
+ *
+ * Return: void
+ */
+void pld_srng_disable_irq_sync(struct device *dev, int irq)
+{
+	switch (pld_get_bus_type(dev)) {
+	case PLD_BUS_TYPE_SNOC:
+	case PLD_BUS_TYPE_SNOC_FW_SIM:
+		break;
+	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
+		pld_pcie_fw_sim_disable_irq(dev, irq);
+		break;
+	case PLD_BUS_TYPE_PCIE:
+	case PLD_BUS_TYPE_IPCI:
+		disable_irq(irq);
+		break;
+	case PLD_BUS_TYPE_SDIO:
 		break;
 	default:
 		pr_err("Invalid device type\n");

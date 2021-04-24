@@ -243,17 +243,6 @@ typedef struct tagCsrAuthList {
 	enum csr_akm_type authType[eCSR_NUM_OF_SUPPORT_AUTH_TYPE];
 } tCsrAuthList, *tpCsrAuthList;
 
-#ifdef FEATURE_WLAN_ESE
-typedef struct tagCsrEseCckmInfo {
-	uint32_t reassoc_req_num;
-	bool krk_plumbed;
-	uint8_t krk[SIR_KRK_KEY_LEN];
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	uint8_t btk[SIR_BTK_KEY_LEN];
-#endif
-} tCsrEseCckmInfo;
-#endif /* FEATURE_WLAN_ESE */
-
 typedef struct sCsrChannel_ {
 	uint8_t numChannels;
 	uint32_t channel_freq_list[CFG_VALID_CHANNEL_LIST_LEN];
@@ -325,9 +314,7 @@ typedef enum {
 	/* Stopbss triggered from SME due to different */
 	eCSR_ROAM_SEND_P2P_STOP_BSS = 32,
 	/* beacon interval */
-#ifdef WLAN_FEATURE_11W
 	eCSR_ROAM_UNPROT_MGMT_FRAME_IND = 33,
-#endif
 
 #ifdef FEATURE_WLAN_ESE
 	eCSR_ROAM_TSM_IE_IND = 34,
@@ -613,12 +600,10 @@ struct csr_roam_profile {
 	tCsrEncryptionList mcEncryptionType;
 	/* This field is for output only, not for input */
 	eCsrEncryptionType negotiatedMCEncryptionType;
-#ifdef WLAN_FEATURE_11W
 	/* Management Frame Protection */
 	bool MFPEnabled;
 	uint8_t MFPRequired;
 	uint8_t MFPCapable;
-#endif
 	tCsrKeys Keys;
 	tCsrChannelInfo ChannelInfo;
 	uint32_t op_freq;
@@ -688,17 +673,14 @@ struct csr_roam_profile {
 };
 
 typedef struct tagCsrRoamConnectedProfile {
-	tSirMacSSid SSID;
-	uint32_t op_freq;
-	struct qdf_mac_addr bssid;
-	uint16_t beaconInterval;
 	eCsrRoamBssType BSSType;
+	tCsrRoamModifyProfileFields modifyProfileFields;
+#ifndef FEATURE_CM_ENABLE
 	enum csr_akm_type AuthType;
 	eCsrEncryptionType EncryptionType;
 	eCsrEncryptionType mcEncryptionType;
-	uint8_t country_code[WNI_CFG_COUNTRY_CODE_LEN];
-	uint32_t vht_channel_width;
-	tCsrKeys Keys;
+	bool qosConnection;     /* A connection is QoS enabled */
+	bool qap;               /* AP supports QoS */
 	/*
 	 * meaningless on connect. It's an OUT param from CSR's point of view
 	 * During assoc response carries the ACM bit-mask i.e. what
@@ -706,11 +688,6 @@ typedef struct tagCsrRoamConnectedProfile {
 	 * all other bits are ignored)
 	 */
 	uint8_t acm_mask;
-	tCsrRoamModifyProfileFields modifyProfileFields;
-	bool qosConnection;     /* A connection is QoS enabled */
-	bool qap;               /* AP supports QoS */
-	uint32_t dot11Mode;
-#ifndef FEATURE_CM_ENABLE
 	uint8_t proxy_arp_service;
 #endif
 } tCsrRoamConnectedProfile;

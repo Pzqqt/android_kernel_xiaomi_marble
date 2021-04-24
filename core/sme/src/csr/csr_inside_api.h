@@ -139,14 +139,13 @@ void csr_roam_joined_state_msg_processor(struct mac_context *mac,
 #ifndef FEATURE_CM_ENABLE
 void csr_scan_callback(struct wlan_objmgr_vdev *vdev,
 				struct scan_event *event, void *arg);
+QDF_STATUS csr_roam_save_connected_bss_desc(struct mac_context *mac,
+					    uint32_t sessionId,
+					    struct bss_description *bss_desc);
 #endif
 void csr_release_command_roam(struct mac_context *mac, tSmeCmd *pCommand);
 void csr_release_command_wm_status_change(struct mac_context *mac,
 					  tSmeCmd *pCommand);
-
-QDF_STATUS csr_roam_save_connected_bss_desc(struct mac_context *mac,
-					    uint32_t sessionId,
-					    struct bss_description *bss_desc);
 
 QDF_STATUS csr_roam_copy_profile(struct mac_context *mac,
 				 struct csr_roam_profile *pDstProfile,
@@ -321,7 +320,9 @@ int8_t csr_get_cfg_max_tx_power(struct mac_context *mac, uint32_t ch_freq);
 
 /* To free the last roaming profile */
 void csr_free_roam_profile(struct mac_context *mac, uint32_t sessionId);
+#ifndef FEATURE_CM_ENABLE
 void csr_free_connect_bss_desc(struct mac_context *mac, uint32_t sessionId);
+#endif
 
 /* to free memory allocated inside the profile structure */
 void csr_release_profile(struct mac_context *mac,

@@ -229,10 +229,8 @@ struct csr_roamstart_bssparams {
 	uint8_t *pRSNIE;        /* If not null, it has IE byte stream for RSN */
 	/* Flag used to indicate update beaconInterval */
 	bool updatebeaconInterval;
-#ifdef WLAN_FEATURE_11W
 	bool mfpCapable;
 	bool mfpRequired;
-#endif
 	struct add_ie_params add_ie_params;
 	uint8_t sap_dot11mc;
 	uint16_t beacon_tx_rate;
@@ -472,15 +470,15 @@ struct csr_roam_session {
 	eCsrConnectState connectState;
 	tCsrRoamConnectedProfile connectedProfile;
 	struct csr_roam_connectedinfo connectedInfo;
-	struct csr_roam_connectedinfo prev_assoc_ap_info;
 	struct csr_roam_profile *pCurRoamProfile;
-	struct bss_description *pConnectBssDesc;
 	/*
 	 * to remember some parameters needed for START_BSS.
 	 * All member must be set every time we try to join
 	 */
 	struct csr_roamstart_bssparams bssParams;
 #ifndef FEATURE_CM_ENABLE
+	struct csr_roam_connectedinfo prev_assoc_ap_info;
+	struct bss_description *pConnectBssDesc;
 	/* the byte count of pWpaRsnIE; */
 	uint32_t nWpaRsnReqIeLength;
 	/* contain the WPA/RSN IE in assoc req */
@@ -506,6 +504,7 @@ struct csr_roam_session {
 	qdf_mc_timer_t hTimerRoaming;
 	enum csr_roaming_reason roamingReason;
 	bool fCancelRoaming;
+	uint8_t bRefAssocStartCnt;      /* Tracking assoc start indication */
 #endif /* ndef FEATURE_CM_ENABLE */
 #ifdef WLAN_BCN_RECV_FEATURE
 	bool is_bcn_recv_start;
@@ -520,12 +519,9 @@ struct csr_roam_session {
 	bool fWMMConnection;
 	bool fQOSConnection;
 #ifdef FEATURE_WLAN_ESE
-	tCsrEseCckmInfo eseCckmInfo;
 	bool isPrevApInfoValid;
-	tSirMacSSid prevApSSID;
 	uint32_t roamTS1;
 #endif
-	uint8_t bRefAssocStartCnt;      /* Tracking assoc start indication */
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	struct roam_offload_synch_ind *roam_synch_data;
 #endif
@@ -725,13 +721,6 @@ struct csr_roamstruct {
 #define CSR_IS_ADDTS_WHEN_ACMOFF_SUPPORTED(mac) \
 	(mac->mlme_cfg->wmm_params.wmm_tspec_element.ts_acm_is_off)
 
-#ifdef FEATURE_LFR_SUBNET_DETECTION
-/* bit-4 and bit-5 indicate the subnet status */
-#define CSR_GET_SUBNET_STATUS(roam_reason) (((roam_reason) & 0x30) >> 4)
-#else
-#define CSR_GET_SUBNET_STATUS(roam_reason) (0)
-#endif
-
 /**
  * csr_get_vdev_dot11_mode() - get the supported dot11mode by vdev
  * @mac_ctx:  pointer to global mac structure
@@ -869,8 +858,8 @@ static inline QDF_STATUS csr_roam_offload_scan_rsp_hdlr(
 QDF_STATUS csr_handoff_request(struct mac_context *mac, uint8_t sessionId,
 		tCsrHandoffRequest
 		*pHandoffInfo);
-#endif
 bool csr_roam_is_sta_mode(struct mac_context *mac, uint8_t vdev_id);
+#endif
 
 /* Post Channel Change Indication */
 QDF_STATUS csr_roam_channel_change_req(struct mac_context *mac,

@@ -146,6 +146,8 @@ cm_roam_triggers(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		wlan_cm_get_roam_scan_scheme_bitmap(psoc, vdev_id);
 	wlan_cm_roam_get_vendor_btm_params(psoc, vdev_id,
 					   &params->vendor_btm_param);
+	wlan_cm_roam_get_score_delta_params(psoc, params);
+	wlan_cm_roam_get_min_rssi_params(psoc, params);
 }
 
 /**
@@ -235,6 +237,17 @@ cm_update_rso_ese_info(struct rso_config *rso_cfg,
 {
 	rso_config->rso_ese_info.is_ese_assoc = rso_cfg->is_ese_assoc;
 	rso_config->rso_11r_info.is_11r_assoc = rso_cfg->is_11r_assoc;
+	if (rso_cfg->is_ese_assoc) {
+		qdf_mem_copy(rso_config->rso_ese_info.krk, rso_cfg->krk,
+			     WMI_KRK_KEY_LEN);
+		qdf_mem_copy(rso_config->rso_ese_info.btk, rso_cfg->btk,
+			     WMI_BTK_KEY_LEN);
+		rso_config->rso_11i_info.fw_okc = 0;
+		rso_config->rso_11i_info.fw_pmksa_cache = 0;
+		rso_config->rso_11i_info.pmk_len = 0;
+		qdf_mem_zero(&rso_config->rso_11i_info.psk_pmk[0],
+			     sizeof(rso_config->rso_11i_info.psk_pmk));
+	}
 }
 #else
 static inline void
@@ -473,8 +486,8 @@ cm_roam_scan_offload_fill_lfr3_config(struct wlan_objmgr_vdev *vdev,
 		     mlme_priv->connect_info.ft_info.r0kh_id,
 		     mlme_priv->connect_info.ft_info.r0kh_id_len);
 	wlan_cm_get_psk_pmk(pdev, vdev_id,
-			    rso_config->rso_11i_info.psk_pmk,
-			    &rso_config->rso_11i_info.pmk_len);
+			    rso_config->rso_11r_info.psk_pmk,
+			    &rso_config->rso_11r_info.pmk_len);
 
 	cm_update_rso_adaptive_11r(&rso_config->rso_11r_info, rso_cfg);
 	cm_update_rso_ese_info(rso_cfg, rso_config);
@@ -2710,74 +2723,29 @@ cm_roam_offload_per_config(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 	return status;
 }
 
-#ifdef FEATURE_CM_ENABLE
-#ifdef WLAN_ADAPTIVE_11R
-static bool
-cm_is_adaptive_11r_roam_supported(struct wlan_mlme_psoc_ext_obj *mlme_obj,
-				  struct rso_config *rso_cfg)
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+QDF_STATUS
+cm_akm_roam_allowed(struct wlan_objmgr_psoc *psoc,
+		    struct wlan_objmgr_vdev *vdev)
 {
-	if (rso_cfg->is_adaptive_11r_connection)
-		return mlme_obj->cfg.lfr.tgt_adaptive_11r_cap;
-
-	return true;
-}
-#else
-static bool
-cm_is_adaptive_11r_roam_supported(struct wlan_mlme_psoc_ext_obj *mlme_obj,
-				  struct rso_config *rso_cfg)
-
-{
-	return true;
-}
-#endif
-
-static QDF_STATUS
-cm_roam_cmd_allowed(struct wlan_objmgr_psoc *psoc,
-		    struct wlan_objmgr_vdev *vdev,
-		    uint8_t command, uint8_t reason)
-{
-	uint8_t vdev_id = wlan_vdev_get_id(vdev);
 	int32_t akm;
-	struct rso_config *rso_cfg;
 	struct wlan_mlme_psoc_ext_obj *mlme_obj;
 	uint32_t fw_akm_bitmap;
-	bool p2p_disable_sta_roaming = 0, nan_disable_sta_roaming = 0;
+
+	akm = wlan_crypto_get_param(vdev,
+				    WLAN_CRYPTO_PARAM_KEY_MGMT);
+	mlme_debug("akm %x", akm);
 
 	mlme_obj = mlme_get_psoc_ext_obj(psoc);
 	if (!mlme_obj)
 		return QDF_STATUS_E_FAILURE;
 
-	rso_cfg = wlan_cm_get_rso_config(vdev);
-	if (!rso_cfg)
-		return QDF_STATUS_E_FAILURE;
-
-	akm = wlan_crypto_get_param(vdev,
-				    WLAN_CRYPTO_PARAM_KEY_MGMT);
-
-	mlme_debug("RSO Command %d, vdev %d, Reason %d AKM %x",
-		   command, vdev_id, reason, akm);
-
-	if (!cm_is_vdev_connected(vdev) &&
-	    (command == ROAM_SCAN_OFFLOAD_UPDATE_CFG ||
-	     command == ROAM_SCAN_OFFLOAD_START ||
-	     command == ROAM_SCAN_OFFLOAD_RESTART)) {
-		mlme_debug("vdev not in connected state and command %d ",
-			   command);
-		return QDF_STATUS_E_FAILURE;
-	}
-
 	if ((QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FILS_SHA384) ||
 	     QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FILS_SHA256)) &&
 	    !mlme_obj->cfg.lfr.rso_user_config.is_fils_roaming_supported) {
-		mlme_info("FILS Roaming not suppprted by fw, akm %x", akm);
+		mlme_info("FILS Roaming not suppprted by fw");
 		return QDF_STATUS_E_NOSUPPORT;
 	}
-
-	if (!cm_is_adaptive_11r_roam_supported(mlme_obj, rso_cfg)) {
-		mlme_info("Adaptive 11r Roaming not suppprted by fw");
-		return QDF_STATUS_E_NOSUPPORT;
-	}
-
 	fw_akm_bitmap = mlme_obj->cfg.lfr.fw_akm_bitmap;
 	/* Roaming is not supported currently for OWE akm */
 	if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_OWE) &&
@@ -2822,6 +2790,71 @@ cm_roam_cmd_allowed(struct wlan_objmgr_psoc *psoc,
 		mlme_info("Roaming not suppprted for FT FILS akm");
 		return QDF_STATUS_E_NOSUPPORT;
 	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+#ifdef FEATURE_CM_ENABLE
+#ifdef WLAN_ADAPTIVE_11R
+static bool
+cm_is_adaptive_11r_roam_supported(struct wlan_mlme_psoc_ext_obj *mlme_obj,
+				  struct rso_config *rso_cfg)
+{
+	if (rso_cfg->is_adaptive_11r_connection)
+		return mlme_obj->cfg.lfr.tgt_adaptive_11r_cap;
+
+	return true;
+}
+#else
+static bool
+cm_is_adaptive_11r_roam_supported(struct wlan_mlme_psoc_ext_obj *mlme_obj,
+				  struct rso_config *rso_cfg)
+
+{
+	return true;
+}
+#endif
+
+static QDF_STATUS
+cm_roam_cmd_allowed(struct wlan_objmgr_psoc *psoc,
+		    struct wlan_objmgr_vdev *vdev,
+		    uint8_t command, uint8_t reason)
+{
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+	struct rso_config *rso_cfg;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	bool p2p_disable_sta_roaming = 0, nan_disable_sta_roaming = 0;
+	QDF_STATUS  status;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
+
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg)
+		return QDF_STATUS_E_FAILURE;
+
+	mlme_debug("RSO Command %d, vdev %d, Reason %d",
+		   command, vdev_id, reason);
+
+	if (!cm_is_vdev_connected(vdev) &&
+	    (command == ROAM_SCAN_OFFLOAD_UPDATE_CFG ||
+	     command == ROAM_SCAN_OFFLOAD_START ||
+	     command == ROAM_SCAN_OFFLOAD_RESTART)) {
+		mlme_debug("vdev not in connected state and command %d ",
+			   command);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!cm_is_adaptive_11r_roam_supported(mlme_obj, rso_cfg)) {
+		mlme_info("Adaptive 11r Roaming not suppprted by fw");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
+	status = cm_akm_roam_allowed(psoc, vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
 
 	p2p_disable_sta_roaming =
 		(cfg_p2p_is_roam_config_disabled(psoc) &&
@@ -3380,7 +3413,7 @@ cm_roam_switch_to_roam_sync(struct wlan_objmgr_pdev *pdev,
 		 */
 	case WLAN_ROAMING_IN_PROG:
 #ifdef FEATURE_CM_ENABLE
-		if (!cm_is_vdevid_connected(pdev, vdev_id))
+		if (!cm_is_vdevid_active(pdev, vdev_id))
 #else
 		if (!wlan_cm_is_sta_connected(vdev_id))
 #endif
@@ -4390,16 +4423,20 @@ cm_send_roam_invoke_req(struct cnx_mgr *cm_ctx, struct cm_req *req)
 	struct wlan_objmgr_pdev *pdev;
 	struct wlan_objmgr_psoc *psoc;
 	struct roam_invoke_req *roam_invoke_req = NULL;
+	wlan_cm_id cm_id;
+	uint8_t vdev_id;
 
 	if (!req)
 		return QDF_STATUS_E_FAILURE;
 
 	roam_req = &req->roam_req;
+	cm_id = req->cm_id;
+	vdev_id = roam_req->req.vdev_id;
 
 	pdev = wlan_vdev_get_pdev(cm_ctx->vdev);
 	if (!pdev) {
 		mlme_err(CM_PREFIX_FMT "Failed to find pdev",
-			 CM_PREFIX_REF(roam_req->req.vdev_id, roam_req->cm_id));
+			 CM_PREFIX_REF(vdev_id, cm_id));
 		status = QDF_STATUS_E_FAILURE;
 		goto roam_err;
 	}
@@ -4407,7 +4444,7 @@ cm_send_roam_invoke_req(struct cnx_mgr *cm_ctx, struct cm_req *req)
 	psoc = wlan_pdev_get_psoc(pdev);
 	if (!psoc) {
 		mlme_err(CM_PREFIX_FMT "Failed to find psoc",
-			 CM_PREFIX_REF(roam_req->req.vdev_id, roam_req->cm_id));
+			 CM_PREFIX_REF(vdev_id, cm_id));
 		status = QDF_STATUS_E_FAILURE;
 		goto roam_err;
 	}
@@ -4420,7 +4457,7 @@ cm_send_roam_invoke_req(struct cnx_mgr *cm_ctx, struct cm_req *req)
 		goto roam_err;
 	}
 
-	roam_invoke_req->vdev_id = roam_req->req.vdev_id;
+	roam_invoke_req->vdev_id = vdev_id;
 	if (roam_req->req.forced_roaming) {
 		roam_invoke_req->forced_roaming = true;
 		goto send_cmd;
@@ -4437,14 +4474,13 @@ cm_send_roam_invoke_req(struct cnx_mgr *cm_ctx, struct cm_req *req)
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		mlme_err(CM_PREFIX_FMT "No Candidate found",
-			 CM_PREFIX_REF(roam_req->req.vdev_id, roam_req->cm_id));
+			 CM_PREFIX_REF(vdev_id, cm_id));
 		goto roam_err;
 	}
 
-	if (wlan_cm_get_ese_assoc(pdev, roam_req->req.vdev_id)) {
+	if (wlan_cm_get_ese_assoc(pdev, vdev_id)) {
 		mlme_debug(CM_PREFIX_FMT "Beacon is not required for ESE",
-			   CM_PREFIX_REF(roam_req->req.vdev_id,
-					 roam_req->cm_id));
+			   CM_PREFIX_REF(vdev_id, cm_id));
 		if (roam_invoke_req->frame_len) {
 			qdf_mem_free(roam_invoke_req->frame_buf);
 			roam_invoke_req->frame_buf = NULL;
@@ -4457,14 +4493,13 @@ send_cmd:
 roam_err:
 	if (QDF_IS_STATUS_ERROR(status)) {
 		mlme_debug(CM_PREFIX_FMT "fail to send roam invoke req",
-			   CM_PREFIX_REF(roam_req->req.vdev_id,
-					 roam_req->cm_id));
+			   CM_PREFIX_REF(vdev_id, cm_id));
 		status = cm_sm_deliver_event_sync(cm_ctx,
 						  WLAN_CM_SM_EV_ROAM_INVOKE_FAIL,
 						  sizeof(wlan_cm_id),
-						  &roam_req->cm_id);
+						  &cm_id);
 		if (QDF_IS_STATUS_ERROR(status))
-			cm_remove_cmd(cm_ctx, &roam_req->cm_id);
+			cm_remove_cmd(cm_ctx, &cm_id);
 	}
 
 	if (roam_invoke_req) {

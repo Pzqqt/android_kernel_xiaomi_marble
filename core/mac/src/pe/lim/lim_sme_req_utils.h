@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012,2014-2015,2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012,2014-2015,2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -51,6 +51,7 @@ bool lim_is_sme_start_bss_req_valid(struct mac_context *mac_ctx,
 uint8_t lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(struct mac_context *,
 							    tpSirRSNie, struct pe_session *);
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * lim_is_sme_join_req_valid() - Verify join request message is valid
  * @mac: Pointer to Global MAC structure
@@ -64,7 +65,7 @@ uint8_t lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(struct mac_context *
  */
 uint8_t lim_is_sme_join_req_valid(struct mac_context *mac,
 				  struct join_req *pJoinReq);
-
+#endif
 /**
  * lim_is_sme_disassoc_req_valid() - Validate disassoc req message
  * @mac: Pointer to Global MAC structure

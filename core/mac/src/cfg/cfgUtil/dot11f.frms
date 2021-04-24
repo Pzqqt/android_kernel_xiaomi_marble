@@ -3150,6 +3150,31 @@ IE he_6ghz_band_cap (EID_EXTN_ID_ELEMENT) OUI (0x3B)
     }
 }
 
+IE eht_cap (EID_EXTN_ID_ELEMENT) OUI (0xFD)
+{
+    eht_mac_cap[6];
+    phy_cap_bytes[11];
+    {
+        reserved: 1;
+        supported_ch_width_set: 7;
+    }
+    rx_mcs_map, 2;
+    tx_mcs_map, 2;
+}
+
+IE eht_op (EID_EXTN_ID_ELEMENT) OUI (0xFE)
+{
+    basic_mcs_nss_set[2];
+    primary_channel, 1;
+    {
+        width: 3;
+	reserved: 5;
+    }
+    chan_freq_seg0, 1;
+    chan_freq_seg1, 1;
+    minimum_rate, 1;
+}
+
 IE mu_edca_param_set (EID_EXTN_ID_ELEMENT) OUI (0x26)
 {
     qos, 1;
@@ -3620,6 +3645,8 @@ FRAME Beacon                              // C.f. Sec. 7.2.3.1
     OPTIE  bss_color_change;
     OPTIE  mu_edca_param_set;
     OPTIE  esp_information;
+    OPTIE  eht_cap;
+    OPTIE  eht_op;
 } // End frame Beacon.
 
 // Ok, here's  the story on  Beacon1 & Beacon2.   We presumably beacon  a lot
@@ -3716,6 +3743,8 @@ FRAME Beacon2
     OPTIE  bss_color_change;
     OPTIE  mu_edca_param_set;
     OPTIE  esp_information;
+    OPTIE  eht_cap;
+    OPTIE  eht_op;
 }
 
 // This frame is just Beacon with its Fixed Fields stripped out.  It's handy
@@ -3789,6 +3818,8 @@ FRAME BeaconIEs
     OPTIE  bss_color_change;
     OPTIE  mu_edca_param_set;
     OPTIE  esp_information;
+    OPTIE  eht_cap;
+    OPTIE  eht_op;
 } // End frame BeaconIEs.
 
 FRAME Disassociation                      // 7.3.3.3
@@ -3841,6 +3872,7 @@ FRAME AssocRequest                        // 7.2.3.4
     OPTIE  he_6ghz_band_cap;
     OPTIE  osen_ie;
     OPTIE roaming_consortium_sel;
+    OPTIE  eht_cap;
 } // End frame AssocRequest.
 
 FRAME AssocResponse                       // 7.2.3.5
@@ -3889,6 +3921,8 @@ FRAME AssocResponse                       // 7.2.3.5
     OPTIE  bss_color_change;
     OPTIE  mu_edca_param_set;
     OPTIE  MBO_IE;
+    OPTIE  eht_cap;
+    OPTIE  eht_op;
 } // End frame AssocResponse.
 
 FRAME ReAssocRequest                      // 7.2.3.6
@@ -3931,6 +3965,7 @@ FRAME ReAssocRequest                      // 7.2.3.6
     OPTIE  hs20vendor_ie;
     OPTIE  he_cap;
     OPTIE  he_6ghz_band_cap;
+    OPTIE  eht_cap;
 } // End frame ReAssocRequest.
 
 FRAME ReAssocResponse                     // 7.2.3.7
@@ -3991,6 +4026,7 @@ FRAME ProbeRequest                        // 7.2.3.8
     OPTIE  qcn_ie;
     OPTIE  he_cap;
     OPTIE  he_6ghz_band_cap;
+    OPTIE  eht_cap;
 } // End frame ProbeRequest.
 
 FRAME ProbeResponse                       // 7.2.3.9
@@ -4057,6 +4093,8 @@ FRAME ProbeResponse                       // 7.2.3.9
     OPTIE  bss_color_change;
     OPTIE  mu_edca_param_set;
     OPTIE  esp_information;
+    OPTIE  eht_cap;
+    OPTIE  eht_op;
 } // End frame ProbeResponse.
 
 FRAME Authentication                      // 7.2.3.10

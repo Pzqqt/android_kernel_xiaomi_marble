@@ -742,22 +742,6 @@ QDF_STATUS ucfg_fwol_get_tsf_ptp_options(struct wlan_objmgr_psoc *psoc,
 
 #endif
 
-QDF_STATUS ucfg_fwol_get_lprx_enable(struct wlan_objmgr_psoc *psoc,
-				     bool *lprx_enable)
-{
-	struct wlan_fwol_psoc_obj *fwol_obj;
-
-	fwol_obj = fwol_get_psoc_obj(psoc);
-	if (!fwol_obj) {
-		fwol_err("Failed to get FWOL obj");
-		*lprx_enable = cfg_default(CFG_LPRX);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	*lprx_enable = fwol_obj->cfg.lprx_enable;
-	return QDF_STATUS_SUCCESS;
-}
-
 #ifdef WLAN_FEATURE_SAE
 bool ucfg_fwol_get_sae_enable(struct wlan_objmgr_psoc *psoc)
 {

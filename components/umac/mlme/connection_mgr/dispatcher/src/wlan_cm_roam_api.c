@@ -276,7 +276,7 @@ QDF_STATUS wlan_cm_abort_rso(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(psoc, vdev_id) ||
 	    wlan_cm_host_roam_in_progress(psoc, vdev_id)) {
 		cm_roam_release_lock(vdev);
-		status = QDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_BUSY;
 		goto release_ref;
 	}
 
@@ -290,7 +290,7 @@ QDF_STATUS wlan_cm_abort_rso(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 release_ref:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
 
 bool wlan_cm_roaming_in_progress(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
@@ -626,6 +626,39 @@ void wlan_cm_get_psk_pmk(struct wlan_objmgr_pdev *pdev,
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 }
 
+void
+wlan_cm_roam_get_score_delta_params(struct wlan_objmgr_psoc *psoc,
+				    struct wlan_roam_triggers *params)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return;
+
+	params->score_delta_param[IDLE_ROAM_TRIGGER] =
+			mlme_obj->cfg.trig_score_delta[IDLE_ROAM_TRIGGER];
+	params->score_delta_param[BTM_ROAM_TRIGGER] =
+			mlme_obj->cfg.trig_score_delta[BTM_ROAM_TRIGGER];
+}
+
+void
+wlan_cm_roam_get_min_rssi_params(struct wlan_objmgr_psoc *psoc,
+				 struct wlan_roam_triggers *params)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return;
+
+	params->min_rssi_params[DEAUTH_MIN_RSSI] =
+			mlme_obj->cfg.trig_min_rssi[DEAUTH_MIN_RSSI];
+	params->min_rssi_params[BMISS_MIN_RSSI] =
+			mlme_obj->cfg.trig_min_rssi[BMISS_MIN_RSSI];
+	params->min_rssi_params[MIN_RSSI_2G_TO_5G_ROAM] =
+			mlme_obj->cfg.trig_min_rssi[MIN_RSSI_2G_TO_5G_ROAM];
+}
 #endif
 
 QDF_STATUS wlan_cm_roam_cfg_get_value(struct wlan_objmgr_psoc *psoc,
@@ -1255,6 +1288,11 @@ void wlan_cm_rso_config_deinit(struct wlan_objmgr_vdev *vdev,
 		qdf_mem_free(rso_cfg->assoc_ie.ptr);
 		rso_cfg->assoc_ie.ptr = NULL;
 		rso_cfg->assoc_ie.len = 0;
+	}
+	if (rso_cfg->prev_ap_bcn_ie.ptr) {
+		qdf_mem_free(rso_cfg->prev_ap_bcn_ie.ptr);
+		rso_cfg->prev_ap_bcn_ie.ptr = NULL;
+		rso_cfg->prev_ap_bcn_ie.len = 0;
 	}
 	if (rso_cfg->roam_scan_freq_lst.freq_list)
 		qdf_mem_free(rso_cfg->roam_scan_freq_lst.freq_list);

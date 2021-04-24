@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -50,6 +50,29 @@ out:
 
 	return status;
 }
+
+#ifdef WLAN_FEATURE_IGMP_OFFLOAD
+QDF_STATUS
+pmo_tgt_send_igmp_offload_req(struct wlan_objmgr_vdev *vdev,
+			      struct pmo_igmp_offload_req *pmo_igmp_req)
+{
+	QDF_STATUS status;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_pmo_tx_ops pmo_tx_ops;
+
+	psoc = pmo_vdev_get_psoc(vdev);
+
+	pmo_tx_ops = GET_PMO_TX_OPS_FROM_PSOC(psoc);
+	if (!pmo_tx_ops.send_igmp_offload_req) {
+		pmo_err("send_vdev_param_set_req is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	status = pmo_tx_ops.send_igmp_offload_req(vdev, pmo_igmp_req);
+
+	return status;
+}
+#endif
 
 QDF_STATUS pmo_tgt_send_vdev_sta_ps_param(struct wlan_objmgr_vdev *vdev,
 		enum pmo_sta_powersave_param ps_param, uint32_t param_value)

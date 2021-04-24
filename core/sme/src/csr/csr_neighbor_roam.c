@@ -240,13 +240,9 @@ csr_neighbor_roam_get_scan_filter_from_profile(struct mac_context *mac,
 	} else {
 		filter->num_of_ssid = 1;
 
-		filter->ssid_list[0].length = profile->SSID.length;
-		if (filter->ssid_list[0].length > WLAN_SSID_MAX_LEN)
-			filter->ssid_list[0].length = WLAN_SSID_MAX_LEN;
-		qdf_mem_copy(filter->ssid_list[0].ssid,
-			     profile->SSID.ssId,
-			     filter->ssid_list[0].length);
-
+		wlan_mlme_get_ssid_vdev_id(mac->pdev, vdev_id,
+					   filter->ssid_list[0].ssid,
+					   &filter->ssid_list[0].length);
 		sme_debug("Filtering for SSID %.*s,length of SSID = %u",
 			  filter->ssid_list[0].length,
 			  filter->ssid_list[0].ssid,
@@ -311,6 +307,7 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(struct mac_context *mac,
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
 	struct wlan_objmgr_vdev *vdev;
 	enum QDF_OPMODE opmode;
+	struct qdf_mac_addr connected_bssid;
 
 	if (!pSession) {
 		sme_err("pSession is NULL");
@@ -322,11 +319,11 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(struct mac_context *mac,
 			  sessionId, opmode);
 		return QDF_STATUS_SUCCESS;
 	}
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			FL("Disconn ind on session %d in state %d from bss :"
-			QDF_MAC_ADDR_FMT), sessionId,
+	wlan_mlme_get_bssid_vdev_id(mac->pdev, sessionId, &connected_bssid);
+	sme_debug("Disconn ind on session %d in state %d from bss :"
+			QDF_MAC_ADDR_FMT, sessionId,
 			pNeighborRoamInfo->neighborRoamState,
-			QDF_MAC_ADDR_REF(pSession->connectedProfile.bssid.bytes));
+			QDF_MAC_ADDR_REF(connected_bssid.bytes));
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, sessionId,
 						    WLAN_LEGACY_SME_ID);
@@ -426,13 +423,12 @@ static void csr_neighbor_roam_info_ctx_init(struct mac_context *mac,
 {
 	tpCsrNeighborRoamControlInfo ngbr_roam_info =
 		&mac->roam.neighborRoamInfo[session_id];
-	struct csr_roam_session *session = &mac->roam.roamSession[session_id];
 	int init_ft_flag = false;
 
 	csr_neighbor_roam_state_transition(mac,
 			eCSR_NEIGHBOR_ROAM_STATE_CONNECTED, session_id);
-	qdf_copy_macaddr(&ngbr_roam_info->currAPbssid,
-			&session->connectedProfile.bssid);
+	wlan_mlme_get_bssid_vdev_id(mac->pdev, session_id,
+				    &ngbr_roam_info->currAPbssid);
 	cm_roam_start_init_on_connect(mac->pdev, session_id);
 
 	/*
@@ -514,13 +510,13 @@ QDF_STATUS csr_neighbor_roam_indicate_connect(
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(mac->psoc, session_id) &&
 	    eSIR_ROAM_AUTH_STATUS_AUTHENTICATED ==
-	     session->roam_synch_data->authStatus) {
+	     session->roam_synch_data->auth_status) {
 		sme_debug("LFR3: Authenticated");
 		roam_info = qdf_mem_malloc(sizeof(*roam_info));
 		if (!roam_info)
 			return QDF_STATUS_E_NOMEM;
-		qdf_copy_macaddr(&roam_info->peerMac,
-				 &session->connectedProfile.bssid);
+		wlan_mlme_get_bssid_vdev_id(mac->pdev, session_id,
+					    &roam_info->peerMac);
 		csr_roam_call_callback(mac, session_id, roam_info, 0,
 				       eCSR_ROAM_SET_KEY_COMPLETE,
 				       eCSR_ROAM_RESULT_AUTHENTICATED);

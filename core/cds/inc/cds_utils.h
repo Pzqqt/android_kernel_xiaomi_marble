@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -100,7 +100,6 @@ uint32_t cds_chan_to_freq(uint8_t chan);
 uint8_t cds_freq_to_chan(uint32_t freq);
 enum cds_band_type cds_chan_to_band(uint32_t chan);
 
-#ifdef WLAN_FEATURE_11W
 uint8_t cds_get_mmie_size(void);
 
 /**
@@ -110,7 +109,6 @@ uint8_t cds_get_mmie_size(void);
  */
 uint8_t cds_get_gmac_mmie_size(void);
 
-#endif /* WLAN_FEATURE_11W */
 static inline void cds_host_diag_log_work(qdf_wake_lock_t *lock, uint32_t msec,
 			    uint32_t reason) {
 	if (((cds_get_ring_log_level(RING_ID_WAKELOCK) >= WLAN_LOG_LEVEL_ACTIVE)

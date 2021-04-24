@@ -37,9 +37,7 @@
 #include "lim_send_messages.h"
 #include "lim_assoc_utils.h"
 #include "lim_ft.h"
-#ifdef WLAN_FEATURE_11W
 #include "wni_cfg.h"
-#endif
 
 #include "lim_ft_defs.h"
 #include "lim_session.h"
@@ -1399,10 +1397,8 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 	uint16_t stripoff_len = 0;
 	tDot11fIEExtCap extracted_ext_cap;
 	bool extracted_flag = false;
-#ifdef WLAN_FEATURE_11W
 	uint8_t retry_int;
 	uint16_t max_retries;
-#endif
 
 	if (!pe_session) {
 		pe_err("pe_session is NULL");
@@ -1556,7 +1552,6 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 			populate_dot11f_he_6ghz_cap(mac_ctx, pe_session,
 						    &frm.he_6ghz_band_cap);
 		}
-#ifdef WLAN_FEATURE_11W
 		if (status_code == STATUS_ASSOC_REJECTED_TEMPORARILY) {
 			max_retries =
 			mac_ctx->mlme_cfg->gen.pmf_sa_query_max_retries;
@@ -1569,7 +1564,6 @@ lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 						sta->pmfSaQueryRetryCount)
 						* retry_int);
 		}
-#endif
 
 		if (LIM_IS_AP_ROLE(pe_session)  && sta->non_ecsa_capable)
 			pe_session->lim_non_ecsa_cap_num++;
@@ -1914,9 +1908,9 @@ static QDF_STATUS lim_assoc_tx_complete_cnf(void *context,
 	uint16_t reason_code;
 	struct mac_context *mac_ctx = (struct mac_context *)context;
 
-	pe_nofl_info("Assoc req TX: %s (%d)",
-		     (tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK) ?
-		      "success" : "fail", tx_complete);
+	pe_nofl_rl_info("Assoc req TX: %s (%d)",
+			(tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK) ?
+			"success" : "fail", tx_complete);
 
 	if (tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK) {
 		assoc_ack_status = ACKED;
@@ -2375,6 +2369,9 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 			lim_merge_extcap_struct(&frm->ExtCap, &bcn_ext_cap,
 							false);
 		}
+
+		populate_dot11f_btm_extended_caps(mac_ctx, pe_session,
+						  &frm->ExtCap);
 		/*
 		 * TWT extended capabilities should be populated after the
 		 * intersection of beacon caps and self caps is done because
@@ -2801,9 +2798,9 @@ static QDF_STATUS lim_auth_tx_complete_cnf(void *context,
 	uint16_t reason_code;
 	bool sae_auth_acked;
 
-	pe_nofl_info("Auth TX: %s (%d)",
-		     (tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK) ?
-		     "success" : "fail", tx_complete);
+	pe_nofl_rl_info("Auth TX: %s (%d)",
+			(tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK) ?
+			"success" : "fail", tx_complete);
 	if (tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK) {
 		mac_ctx->auth_ack_status = LIM_ACK_RCD_SUCCESS;
 		auth_ack_status = ACKED;
@@ -3786,10 +3783,10 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 				&nPayload, discon_ie);
 	mlme_free_self_disconnect_ies(pe_session->vdev);
 
-	pe_nofl_info("Deauth TX: vdev %d seq_num %d reason %u waitForAck %d to " QDF_MAC_ADDR_FMT " from " QDF_MAC_ADDR_FMT,
-		     pe_session->vdev_id, mac->mgmtSeqNum, nReason, waitForAck,
-		     QDF_MAC_ADDR_REF(pMacHdr->da),
-		     QDF_MAC_ADDR_REF(pe_session->self_mac_addr));
+	pe_nofl_rl_info("Deauth TX: vdev %d seq_num %d reason %u waitForAck %d to " QDF_MAC_ADDR_FMT " from " QDF_MAC_ADDR_FMT,
+			pe_session->vdev_id, mac->mgmtSeqNum, nReason, waitForAck,
+			QDF_MAC_ADDR_REF(pMacHdr->da),
+			QDF_MAC_ADDR_REF(pe_session->self_mac_addr));
 
 	if (!wlan_reg_is_24ghz_ch_freq(pe_session->curr_op_freq) ||
 	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
@@ -4993,7 +4990,6 @@ returnAfterError:
 	return status_code;
 }
 
-#ifdef WLAN_FEATURE_11W
 /**
  * \brief Send SA query request action frame to peer
  *
@@ -5306,7 +5302,6 @@ returnAfterError:
 	cds_packet_free((void *)pPacket);
 	return nSirStatus;
 } /* End lim_send_sa_query_response_frame */
-#endif
 
 #if defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
     defined(QCA_WIFI_QCA6490) || defined(QCA_WIFI_QCA6750)

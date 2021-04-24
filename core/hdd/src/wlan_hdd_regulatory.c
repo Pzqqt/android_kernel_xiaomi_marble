@@ -742,6 +742,8 @@ int hdd_reg_set_country(struct hdd_context *hdd_ctx, char *country_code)
 {
 	QDF_STATUS status;
 	uint8_t cc[REG_ALPHA2_LEN + 1];
+	uint8_t alpha2[REG_ALPHA2_LEN + 1];
+	enum country_src cc_src;
 
 	if (!country_code) {
 		hdd_err("country_code is null");
@@ -751,14 +753,26 @@ int hdd_reg_set_country(struct hdd_context *hdd_ctx, char *country_code)
 	qdf_mem_copy(cc, country_code, REG_ALPHA2_LEN);
 	cc[REG_ALPHA2_LEN] = '\0';
 
+	if (!qdf_mem_cmp(country_code, hdd_ctx->reg.alpha2, REG_ALPHA2_LEN)) {
+		cc_src = ucfg_reg_get_cc_and_src(hdd_ctx->psoc, alpha2);
+		if (cc_src == SOURCE_USERSPACE || cc_src == SOURCE_CORE) {
+			hdd_debug("country code is the same");
+			return 0;
+		}
+	}
+
 	qdf_event_reset(&hdd_ctx->regulatory_update_event);
 	qdf_mutex_acquire(&hdd_ctx->regulatory_status_lock);
 	hdd_ctx->is_regulatory_update_in_progress = true;
 	qdf_mutex_release(&hdd_ctx->regulatory_status_lock);
 
 	status = ucfg_reg_set_country(hdd_ctx->pdev, cc);
-	if (QDF_IS_STATUS_ERROR(status))
+	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to set country");
+		qdf_mutex_acquire(&hdd_ctx->regulatory_status_lock);
+		hdd_ctx->is_regulatory_update_in_progress = false;
+		qdf_mutex_release(&hdd_ctx->regulatory_status_lock);
+	}
 
 	return qdf_status_to_os_return(status);
 }
@@ -931,8 +945,12 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 		break;
 	}
 
-	if (QDF_IS_STATUS_ERROR(status))
+	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to set country");
+		qdf_mutex_acquire(&hdd_ctx->regulatory_status_lock);
+		hdd_ctx->is_regulatory_update_in_progress = false;
+		qdf_mutex_release(&hdd_ctx->regulatory_status_lock);
+	}
 }
 #else
 void hdd_reg_notifier(struct wiphy *wiphy,
@@ -1594,6 +1612,12 @@ static void __hdd_country_change_work_handle(struct hdd_context *hdd_ctx)
 	hdd_country_change_update_sta(hdd_ctx);
 	sme_generic_change_country_code(hdd_ctx->mac_handle,
 					hdd_ctx->reg.alpha2);
+
+	qdf_event_set(&hdd_ctx->regulatory_update_event);
+	qdf_mutex_acquire(&hdd_ctx->regulatory_status_lock);
+	hdd_ctx->is_regulatory_update_in_progress = false;
+	qdf_mutex_release(&hdd_ctx->regulatory_status_lock);
+
 	hdd_country_change_update_sap(hdd_ctx);
 }
 
@@ -1668,10 +1692,6 @@ static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 
 	hdd_config_tdls_with_band_switch(hdd_ctx);
 	qdf_sched_work(0, &hdd_ctx->country_change_work);
-	qdf_event_set(&hdd_ctx->regulatory_update_event);
-	qdf_mutex_acquire(&hdd_ctx->regulatory_status_lock);
-	hdd_ctx->is_regulatory_update_in_progress = false;
-	qdf_mutex_release(&hdd_ctx->regulatory_status_lock);
 }
 
 int hdd_update_regulatory_config(struct hdd_context *hdd_ctx)

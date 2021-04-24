@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -665,6 +665,17 @@ static inline void pmo_get_event_bitmap_idx(WOW_WAKE_EVENT_TYPE event,
  */
 uint8_t pmo_get_num_wow_filters(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * pmo_core_get_wow_state() - Get wow state
+ * @pmo_ctx: Pointer to pmo priv object
+ *
+ * Return:  current WoW status(none/D0/D3)
+ */
+static inline
+enum pmo_wow_state pmo_core_get_wow_state(struct pmo_psoc_priv_obj *pmo_ctx)
+{
+	return pmo_ctx->wow.wow_state;
+}
 #endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 
 #endif /* end  of _WLAN_PMO_WOW_H_ */

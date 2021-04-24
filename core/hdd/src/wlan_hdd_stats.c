@@ -325,6 +325,33 @@ out:
 	return ret;
 }
 
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+/*
+ * copy_station_big_data_stats_to_adapter() - Copy big data stats to adapter
+ * @adapter: Pointer to the adapter
+ * @stats: Pointer to the big data stats event
+ *
+ * Return: 0 if success, non-zero for failure
+ */
+static void copy_station_big_data_stats_to_adapter(
+					struct hdd_adapter *adapter,
+					struct big_data_stats_event *stats)
+{
+	adapter->big_data_stats.vdev_id = stats->vdev_id;
+	adapter->big_data_stats.tsf_out_of_sync = stats->tsf_out_of_sync;
+	adapter->big_data_stats.ani_level = stats->ani_level;
+	adapter->big_data_stats.last_data_tx_pwr =
+					stats->last_data_tx_pwr;
+	adapter->big_data_stats.target_power_dsss =
+					stats->target_power_dsss;
+	adapter->big_data_stats.target_power_ofdm =
+					stats->target_power_ofdm;
+	adapter->big_data_stats.last_tx_data_rix = stats->last_tx_data_rix;
+	adapter->big_data_stats.last_tx_data_rate_kbps =
+					stats->last_tx_data_rate_kbps;
+}
+#endif
+
 #ifdef FEATURE_CLUB_LL_STATS_AND_GET_STATION
 static void
 hdd_update_station_stats_cached_timestamp(struct hdd_adapter *adapter)
@@ -6490,6 +6517,32 @@ out:
 	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_STATS_ID);
 	return ret;
 }
+
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+int wlan_hdd_get_big_data_station_stats(struct hdd_adapter *adapter)
+{
+	int ret = 0;
+	struct big_data_stats_event *big_data_stats;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_STATS_ID);
+	if (!vdev)
+		return -EINVAL;
+
+	big_data_stats = wlan_cfg80211_mc_cp_get_big_data_stats(vdev,
+								&ret);
+	if (ret || !big_data_stats)
+		goto out;
+
+	copy_station_big_data_stats_to_adapter(adapter, big_data_stats);
+out:
+	if (big_data_stats)
+		wlan_cfg80211_mc_cp_stats_free_big_data_stats_event(
+								big_data_stats);
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_STATS_ID);
+	return ret;
+}
+#endif
 
 struct temperature_priv {
 	int temperature;

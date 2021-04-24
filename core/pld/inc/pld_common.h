@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -847,6 +847,15 @@ void pld_srng_enable_irq(struct device *dev, int irq);
 void pld_srng_disable_irq(struct device *dev, int irq);
 
 /**
+ * pld_srng_disable_irq_sync() - Synchronouus disable IRQ for SRNG
+ * @dev: device
+ * @irq: IRQ number
+ *
+ * Return: void
+ */
+void pld_srng_disable_irq_sync(struct device *dev, int irq);
+
+/**
  * pld_pci_read_config_word() - Read PCI config
  * @pdev: pci device
  * @offset: Config space offset
@@ -987,6 +996,11 @@ static inline void pfrm_enable_irq(struct device *dev, int irq)
 static inline void pfrm_disable_irq_nosync(struct device *dev, int irq)
 {
 	pld_srng_disable_irq(dev, irq);
+}
+
+static inline void pfrm_disable_irq(struct device *dev, int irq)
+{
+	pld_srng_disable_irq_sync(dev, irq);
 }
 
 static inline int pfrm_read_config_word(struct pci_dev *pdev, int offset,

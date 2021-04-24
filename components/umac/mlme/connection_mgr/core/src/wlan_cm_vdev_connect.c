@@ -32,6 +32,7 @@
 #include "wlan_scan_api.h"
 #include "wlan_logging_sock_svc.h"
 #include "cfg_ucfg_api.h"
+#include "wlan_roam_debug.h"
 
 #ifdef WLAN_FEATURE_FILS_SK
 void cm_update_hlp_info(struct wlan_objmgr_vdev *vdev,
@@ -215,6 +216,43 @@ void cm_update_wait_for_key_timer(struct wlan_objmgr_vdev *vdev,
 		mlme_err("Failed wait for key timer start");
 		cm_csr_set_ss_none(vdev_id);
 	}
+}
+
+void cm_update_prev_ap_ie(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			  uint32_t len, uint8_t *bcn_ptr)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct rso_config *rso_cfg;
+	struct element_info *bcn_ie;
+
+	if (!len || !bcn_ptr)
+		return;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev is NULL for vdev id %d", vdev_id);
+		return;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg)
+		goto end;
+
+	bcn_ie = &rso_cfg->prev_ap_bcn_ie;
+	if (bcn_ie->ptr) {
+		qdf_mem_free(bcn_ie->ptr);
+		bcn_ie->ptr = NULL;
+		bcn_ie->len = 0;
+	}
+	bcn_ie->ptr = qdf_mem_malloc(len);
+	if (!bcn_ie->ptr) {
+		bcn_ie->len = 0;
+		goto end;
+	}
+
+	qdf_mem_copy(bcn_ie->ptr, bcn_ptr, len);
+end:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 }
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
@@ -1104,6 +1142,10 @@ cm_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 
 	mlme_debug(CM_PREFIX_FMT "HT cap %x",
 		   CM_PREFIX_REF(req->vdev_id, req->cm_id), req->ht_caps);
+	wlan_rec_conn_info(req->vdev_id, DEBUG_CONN_CONNECTING,
+			   req->bss->entry->bssid.bytes,
+			   req->bss->entry->neg_sec_info.key_mgmt,
+			   req->bss->entry->channel.chan_freq);
 	if (mlme_obj->cfg.obss_ht40.is_override_ht20_40_24g &&
 	    !(req->ht_caps & WLAN_HTCAP_C_CHWIDTH40))
 		join_req->force_24ghz_in_ht20 = true;
@@ -1182,7 +1224,16 @@ static void cm_process_connect_complete(struct wlan_objmgr_psoc *psoc,
 	uint8_t vdev_id = wlan_vdev_get_id(vdev);
 	int32_t ucast_cipher, akm;
 	uint32_t key_interval;
+	struct element_info *bcn_probe_rsp = &rsp->connect_ies.bcn_probe_rsp;
 
+	if (bcn_probe_rsp->ptr &&
+	    bcn_probe_rsp->len > sizeof(struct wlan_frame_hdr)) {
+		cm_update_prev_ap_ie(psoc, vdev_id,
+				     bcn_probe_rsp->len -
+				     sizeof(struct wlan_frame_hdr),
+				     bcn_probe_rsp->ptr +
+				     sizeof(struct wlan_frame_hdr));
+	}
 	akm = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
 	if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_SAE)) {
 		mlme_debug("Update the MDID in PMK cache for FT-SAE case");
@@ -1296,6 +1347,18 @@ static void cm_free_tspec_ie(struct cm_vdev_join_rsp *rsp)
 {}
 #endif
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+static void cm_free_roaming_info(struct wlan_cm_connect_resp *connect_rsp)
+{
+	qdf_mem_free(connect_rsp->roaming_info);
+	connect_rsp->roaming_info = NULL;
+}
+#else
+static inline void
+cm_free_roaming_info(struct wlan_cm_connect_resp *connect_rsp)
+{}
+#endif
+
 void wlan_cm_free_connect_rsp(struct cm_vdev_join_rsp *rsp)
 {
 	struct wlan_connect_rsp_ies *connect_ie =
@@ -1307,6 +1370,7 @@ void wlan_cm_free_connect_rsp(struct cm_vdev_join_rsp *rsp)
 	cm_free_fils_ie(connect_ie);
 	cm_free_tspec_ie(rsp);
 	qdf_mem_free(rsp->ric_resp_ie.ptr);
+	cm_free_roaming_info(&rsp->connect_rsp);
 	qdf_mem_zero(rsp, sizeof(*rsp));
 	qdf_mem_free(rsp);
 }
@@ -1333,4 +1397,28 @@ bool cm_is_vdevid_connected(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 
 	return connected;
 }
+
+bool cm_is_vdevid_active(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	bool active;
+	enum QDF_OPMODE opmode;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev %d: vdev not found", vdev_id);
+		return false;
+	}
+	opmode = wlan_vdev_mlme_get_opmode(vdev);
+	if (opmode != QDF_STA_MODE && opmode != QDF_P2P_CLIENT_MODE) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		return false;
+	}
+	active = cm_is_vdev_active(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+
+	return active;
+}
+
 #endif

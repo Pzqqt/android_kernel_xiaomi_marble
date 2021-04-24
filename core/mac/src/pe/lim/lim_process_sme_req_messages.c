@@ -812,10 +812,8 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 
 		session->txLdpcIniFeatureEnabled =
 			sme_start_bss_req->txLdpcIniFeatureEnabled;
-#ifdef WLAN_FEATURE_11W
 		session->limRmfEnabled = sme_start_bss_req->pmfCapable ? 1 : 0;
 		pe_debug("RMF enabled: %d", session->limRmfEnabled);
-#endif
 
 		qdf_mem_copy((void *)&session->rateSet,
 			     (void *)&sme_start_bss_req->operationalRateSet,
@@ -1280,7 +1278,6 @@ static QDF_STATUS lim_send_ft_reassoc_req(struct pe_session *session,
 					     reassoc_req);
 }
 
-#ifdef WLAN_FEATURE_11W
 bool
 lim_get_vdev_rmf_capable(struct mac_context *mac, struct pe_session *session)
 {
@@ -1317,7 +1314,6 @@ lim_get_vdev_rmf_capable(struct mac_context *mac, struct pe_session *session)
 
 	return peer_rmf_capable;
 }
-#endif
 
 static bool lim_is_fast_roam_enabled(struct mac_context *mac_ctx,
 				     struct wlan_objmgr_vdev *vdev)
@@ -2206,7 +2202,9 @@ lim_verify_dot11_mode_with_crypto(struct pe_session *session)
 		return;
 
 	if (!((ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_TKIP)) ||
-	      (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WEP))))
+	      (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WEP)) ||
+	      (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WEP_40)) ||
+	      (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_WEP_104))))
 		return;
 
 	if (WLAN_REG_IS_24GHZ_CH_FREQ(bss_desc->chan_freq))
@@ -3462,6 +3460,8 @@ lim_cm_handle_join_req(struct cm_vdev_join_req *req)
 	if (!mac_ctx)
 		return QDF_STATUS_E_INVAL;
 
+	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_JOIN_REQ_EVENT, NULL, 0, 0);
+
 	pe_session = lim_cm_create_session(mac_ctx, req);
 
 	if (!pe_session)
@@ -3700,7 +3700,7 @@ QDF_STATUS cm_process_peer_create(struct scheduler_msg *msg)
 
 	req = msg->bodyptr;
 
-	status = wma_add_bss_peer_sta(req->vdev_id, req->peer_mac.bytes);
+	status = wma_add_bss_peer_sta(req->vdev_id, req->peer_mac.bytes, true);
 
 	qdf_mem_free(req);
 
@@ -3729,6 +3729,8 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 	uint8_t vdev_id = 0;
 	struct bss_description *bss_desc;
 	QDF_STATUS status;
+	int32_t ucast_cipher, auth_mode, akm;
+	tSirMacCapabilityInfo *ap_cap_info;
 
 	if (!mac_ctx || !msg_buf) {
 		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
@@ -3873,6 +3875,18 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 			 session->vht_config.csnof_beamformer_antSup,
 			 session->isCiscoVendorAP);
 
+		ucast_cipher = wlan_crypto_get_param(session->vdev,
+						     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+		auth_mode = wlan_crypto_get_param(session->vdev,
+						  WLAN_CRYPTO_PARAM_AUTH_MODE);
+		akm = wlan_crypto_get_param(session->vdev,
+					    WLAN_CRYPTO_PARAM_KEY_MGMT);
+		ap_cap_info = (tSirMacCapabilityInfo *)
+			       &session->lim_join_req->bssDescription.capabilityInfo;
+
+		lim_set_privacy(mac_ctx, ucast_cipher, auth_mode, akm,
+				ap_cap_info->privacy);
+
 		/* Issue LIM_MLM_JOIN_REQ to MLM */
 		status = lim_send_connect_req_to_mlm(session);
 		if (QDF_IS_STATUS_ERROR(status)) {
@@ -3918,7 +3932,7 @@ static uint8_t lim_get_num_tpe_octets(uint8_t max_transmit_power_count)
 	if (!max_transmit_power_count)
 		return max_transmit_power_count;
 
-	return 1 << (max_transmit_power_count);
+	return 1 << (max_transmit_power_count - 1);
 }
 
 void lim_parse_tpe_ie(struct mac_context *mac, struct pe_session *session,
@@ -4040,9 +4054,14 @@ void lim_parse_tpe_ie(struct mac_context *mac, struct pe_session *session,
 			lim_get_num_tpe_octets(single_tpe.max_tx_pwr_count);
 		vdev_mlme->reg_tpc_obj.num_pwr_levels = num_octets;
 
+		ch_params.ch_width = session->ch_width;
 		wlan_reg_set_channel_params_for_freq(mac->pdev, curr_op_freq, 0,
 						     &ch_params);
-		curr_freq = ch_params.mhz_freq_seg0;
+
+		if (ch_params.mhz_freq_seg1)
+			curr_freq = ch_params.mhz_freq_seg1 - bw_val / 2 + 10;
+		else
+			curr_freq = ch_params.mhz_freq_seg0 - bw_val / 2 + 10;
 
 		if (!num_octets) {
 			if (!he_op->oper_info_6g_present)
@@ -4193,12 +4212,13 @@ void lim_calculate_tpc(struct mac_context *mac,
 	bool is_tpe_present = false, is_6ghz_freq = false;
 	uint8_t i = 0;
 	int8_t max_tx_power;
-	uint16_t reg_max, eirp_power = 0;
+	uint16_t reg_max = 0, psd_power = 0;
 	uint16_t local_constraint, bw_val = 0;
 	uint32_t num_pwr_levels, ap_power_type_6g = 0;
 	qdf_freq_t oper_freq, start_freq = 0;
 	struct ch_params ch_params;
 	struct vdev_mlme_obj *mlme_obj;
+	uint8_t tpe_power;
 
 	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(session->vdev);
 	if (!mlme_obj) {
@@ -4209,10 +4229,14 @@ void lim_calculate_tpc(struct mac_context *mac,
 	oper_freq = session->curr_op_freq;
 	bw_val = wlan_reg_get_bw_value(session->ch_width);
 
+	ch_params.ch_width = session->ch_width;
 	/* start frequency calculation */
 	wlan_reg_set_channel_params_for_freq(mac->pdev, oper_freq, 0,
 					     &ch_params);
-	start_freq = ch_params.mhz_freq_seg0 - bw_val / 2;
+	if (ch_params.mhz_freq_seg1)
+		start_freq = ch_params.mhz_freq_seg1 - bw_val / 2 + 10;
+	else
+		start_freq = ch_params.mhz_freq_seg0 - bw_val / 2 + 10;
 
 	if (!wlan_reg_is_6ghz_chan_freq(oper_freq)) {
 		reg_max = wlan_reg_get_channel_reg_power_for_freq(mac->pdev,
@@ -4236,19 +4260,19 @@ void lim_calculate_tpc(struct mac_context *mac,
 		if (is_tpe_present) {
 			if (is_6ghz_freq) {
 				ap_power_type_6g = session->ap_power_type;
-				wlan_reg_get_client_power_for_connecting_ap
-				(mac->pdev, ap_power_type_6g,
-				 mlme_obj->reg_tpc_obj.frequency[i],
-				 &is_psd_power, &reg_max, &eirp_power);
+				wlan_reg_get_client_power_for_connecting_ap(
+				mac->pdev, ap_power_type_6g,
+				mlme_obj->reg_tpc_obj.frequency[i],
+				&is_psd_power, &reg_max, &psd_power);
 			}
 		} else {
 			/* center frequency calculation */
 			if (is_psd_power) {
 				mlme_obj->reg_tpc_obj.frequency[i] =
-						start_freq + 10 + (20 * i);
+						start_freq + (20 * i);
 			} else {
-				wlan_reg_set_channel_params_for_freq
-					(mac->pdev, oper_freq, 0, &ch_params);
+				wlan_reg_set_channel_params_for_freq(
+					mac->pdev, oper_freq, 0, &ch_params);
 				mlme_obj->reg_tpc_obj.frequency[i] =
 					ch_params.mhz_freq_seg0;
 				ch_params.ch_width =
@@ -4261,12 +4285,16 @@ void lim_calculate_tpc(struct mac_context *mac,
 					wlan_reg_get_client_power_for_connecting_ap
 					(mac->pdev, ap_power_type_6g,
 					 mlme_obj->reg_tpc_obj.frequency[i],
-					 &is_psd_power, &reg_max, &eirp_power);
+					 &is_psd_power, &reg_max, &psd_power);
 				} else {
-					wlan_reg_get_6g_chan_ap_power
-					(mac->pdev,
-					 mlme_obj->reg_tpc_obj.frequency[i],
-					 &is_psd_power, &reg_max, &eirp_power);
+					ap_power_type_6g =
+						wlan_reg_get_cur_6g_ap_pwr_type(
+							mac->pdev,
+							&ap_power_type_6g);
+					wlan_reg_get_6g_chan_ap_power(
+					mac->pdev,
+					mlme_obj->reg_tpc_obj.frequency[i],
+					&is_psd_power, &reg_max, &psd_power);
 				}
 			}
 		}
@@ -4288,9 +4316,14 @@ void lim_calculate_tpc(struct mac_context *mac,
 				max_tx_power = reg_max - local_constraint;
 		}
 		/* If TPE is present */
-		if (is_tpe_present)
-			max_tx_power = QDF_MIN(max_tx_power, (int8_t)
-					       mlme_obj->reg_tpc_obj.tpe[i]);
+		if (is_tpe_present) {
+			if (!is_psd_power && mlme_obj->reg_tpc_obj.eirp_power)
+				tpe_power =  mlme_obj->reg_tpc_obj.eirp_power;
+			else
+				tpe_power = mlme_obj->reg_tpc_obj.tpe[i];
+			max_tx_power = QDF_MIN(max_tx_power, (int8_t)tpe_power);
+			pe_debug("TPE: %d", tpe_power);
+		}
 
 		/** If firmware updated max tx power is non zero,
 		 * then allocate the min of firmware updated ap tx
@@ -4305,12 +4338,18 @@ void lim_calculate_tpc(struct mac_context *mac,
 			pe_err("HW power limit from FW is zero");
 		mlme_obj->reg_tpc_obj.chan_power_info[i].tx_power =
 						(uint8_t)max_tx_power;
+
+		pe_debug("freq: %d max_tx_power: %d",
+			 mlme_obj->reg_tpc_obj.frequency[i], max_tx_power);
 	}
 
 	mlme_obj->reg_tpc_obj.num_pwr_levels = num_pwr_levels;
 	mlme_obj->reg_tpc_obj.is_psd_power = is_psd_power;
-	mlme_obj->reg_tpc_obj.eirp_power = eirp_power;
+	mlme_obj->reg_tpc_obj.eirp_power = reg_max;
 	mlme_obj->reg_tpc_obj.power_type_6g = ap_power_type_6g;
+
+	pe_debug("num_pwr_levels: %d, is_psd_power: %d, total eirp_power: %d, ap_pwr_type: %d",
+		 num_pwr_levels, is_psd_power, reg_max, ap_power_type_6g);
 }
 
 /**
@@ -4359,6 +4398,7 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 	}
 	qdf_mem_copy(reassoc_req, in_req, in_req->length);
 
+#ifndef FEATURE_CM_ENABLE
 	if (!lim_is_sme_join_req_valid(mac_ctx, reassoc_req)) {
 		/*
 		 * Received invalid eWNI_SME_REASSOC_REQ
@@ -4368,7 +4408,7 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 		ret_code = eSIR_SME_INVALID_PARAMETERS;
 		goto end;
 	}
-
+#endif
 	session_entry = pe_find_session_by_bssid(mac_ctx,
 			reassoc_req->bssDescription.bssId,
 			&session_id);
@@ -4394,6 +4434,7 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 
 	/* Store the reassoc handle in the session Table */
 	session_entry->pLimReAssocReq = reassoc_req;
+	session_entry->lim_join_req = reassoc_req;
 
 	status = wlan_get_parsed_bss_description_ies(mac_ctx,
 				&session_entry->pLimReAssocReq->bssDescription,
@@ -4463,6 +4504,7 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 		session_entry->htSmpsvalue,
 		session_entry->send_smps_action,
 		session_entry->supported_nss_1x1);
+	session_entry->lim_join_req = NULL;
 	/*
 	 * Reassociate request is expected
 	 * in link established state only.

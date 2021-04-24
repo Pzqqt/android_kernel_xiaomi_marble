@@ -45,6 +45,7 @@
 #include "hif.h"
 #include "wlan_hdd_power.h"
 #include "wlan_hdd_napi.h"
+#include "wlan_roam_debug.h"
 
 void hdd_handle_disassociation_event(struct hdd_adapter *adapter,
 				     struct qdf_mac_addr *peer_macaddr)
@@ -218,6 +219,7 @@ QDF_STATUS wlan_hdd_cm_issue_disconnect(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 	struct wlan_objmgr_vdev *vdev;
 	void *hif_ctx;
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_CM_ID);
 	if (!vdev)
@@ -234,6 +236,9 @@ QDF_STATUS wlan_hdd_cm_issue_disconnect(struct hdd_adapter *adapter,
 		 * Trigger runtime sync resume before sending disconneciton
 		 */
 		hif_pm_runtime_sync_resume(hif_ctx);
+
+	wlan_rec_conn_info(adapter->vdev_id, DEBUG_CONN_DISCONNECT,
+			   sta_ctx->conn_info.bssid.bytes, 0, reason);
 
 	if (sync)
 		status = osif_cm_disconnect_sync(vdev, reason);
@@ -300,6 +305,11 @@ hdd_cm_disconnect_complete_pre_user_update(struct wlan_objmgr_vdev *vdev,
 
 	hdd_handle_disassociation_event(adapter, &rsp->req.req.bssid);
 
+	wlan_rec_conn_info(adapter->vdev_id, DEBUG_CONN_DISCONNECT_HANDLER,
+			   rsp->req.req.bssid.bytes,
+			   rsp->req.cm_id,
+			   rsp->req.req.reason_code << 16 |
+			   rsp->req.req.source);
 	hdd_ipa_set_tx_flow_info();
 
 	return QDF_STATUS_SUCCESS;

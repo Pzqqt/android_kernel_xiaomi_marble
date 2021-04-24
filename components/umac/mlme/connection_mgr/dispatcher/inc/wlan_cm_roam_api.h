@@ -784,6 +784,28 @@ wlan_cm_roam_get_vendor_btm_params(struct wlan_objmgr_psoc *psoc,
 								*param);
 
 /**
+ * wlan_cm_roam_get_score_delta_params() - API to get roam score delta param
+ * @psoc: PSOC pointer
+ * @params: roam trigger param
+ *
+ * Return: none
+ */
+void
+wlan_cm_roam_get_score_delta_params(struct wlan_objmgr_psoc *psoc,
+				    struct wlan_roam_triggers *params);
+
+/**
+ * wlan_cm_roam_get_min_rssi_params() - API to get roam trigger min rssi param
+ * @psoc: PSOC pointer
+ * @params: roam trigger param
+ *
+ * Return: none
+ */
+void
+wlan_cm_roam_get_min_rssi_params(struct wlan_objmgr_psoc *psoc,
+				 struct wlan_roam_triggers *params);
+
+/**
  * wlan_cm_update_roam_scan_scheme_bitmap() - Set roam scan scheme bitmap for
  * each vdev
  * @psoc: PSOC pointer
@@ -840,6 +862,19 @@ void wlan_cm_set_psk_pmk(struct wlan_objmgr_pdev *pdev,
 void wlan_cm_get_psk_pmk(struct wlan_objmgr_pdev *pdev,
 			 uint8_t vdev_id, uint8_t *psk_pmk,
 			 uint8_t *pmk_len);
+
+/**
+ * cm_akm_roam_allowed() - check if  roam allowed for some akm type
+ * roaming using single pmk
+ * with same pmk or not
+ * @psoc: psoc
+ * @vdev: vdev pointer
+ *
+ * Return: QDF_STATUS: QDF_STATUS_SUCCESS is allowed
+ */
+QDF_STATUS
+cm_akm_roam_allowed(struct wlan_objmgr_psoc *psoc,
+		    struct wlan_objmgr_vdev *vdev);
 #else
 static inline
 void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,
@@ -905,6 +940,17 @@ wlan_cm_roam_get_vendor_btm_params(struct wlan_objmgr_psoc *psoc,
 				   struct wlan_cm_roam_vendor_btm_params *param)
 {}
 
+static inline void
+wlan_cm_roam_get_score_delta_params(struct wlan_objmgr_psoc *psoc,
+				    uint8_t vdev_id,
+				    struct roam_trigger_score_delta *param)
+{}
+
+static inline void
+wlan_cm_roam_get_min_rssi_params(struct wlan_objmgr_psoc *psoc,
+				 struct wlan_roam_triggers *params)
+{}
+
 static inline QDF_STATUS
 wlan_cm_update_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
 				       uint8_t vdev_id,
@@ -938,5 +984,12 @@ static inline void wlan_cm_set_psk_pmk(struct wlan_objmgr_pdev *pdev,
 				       uint8_t vdev_id, uint8_t *psk_pmk,
 				       uint8_t pmk_len)
 {}
+
+static inline QDF_STATUS
+cm_akm_roam_allowed(struct wlan_objmgr_psoc *psoc,
+		    struct wlan_objmgr_vdev *vdev)
+{
+	return false;
+}
 #endif  /* FEATURE_ROAM_OFFLOAD */
 #endif  /* WLAN_CM_ROAM_API_H__ */

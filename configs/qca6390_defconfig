@@ -162,8 +162,6 @@ CONFIG_WLAN_FEATURE_ACTION_OUI := y
 CONFIG_WLAN_FEATURE_FILS := y
 ifneq ($(CONFIG_QCA_CLD_WLAN),)
 	ifeq (y,$(findstring y,$(CONFIG_CNSS) $(CONFIG_CNSS2) $(CONFIG_ICNSS)))
-	#Flag to enable Protected Management Frames (11w) feature
-	CONFIG_WLAN_FEATURE_11W := y
 	#Flag to enable LTE CoEx feature
 	CONFIG_QCOM_LTE_COEX := y
 		ifneq ($(CONFIG_MOBILE_ROUTER), y)
@@ -173,8 +171,6 @@ ifneq ($(CONFIG_QCA_CLD_WLAN),)
 	endif
 
 	ifeq (m,$(findstring m,$(CONFIG_CNSS2)))
-	#Flag to enable Protected Management Frames (11w) feature
-	CONFIG_WLAN_FEATURE_11W := y
 	#Flag to enable LTE CoEx feature
 	CONFIG_QCOM_LTE_COEX := y
 		ifneq ($(CONFIG_MOBILE_ROUTER), y)
@@ -182,14 +178,6 @@ ifneq ($(CONFIG_QCA_CLD_WLAN),)
 		CONFIG_WLAN_FEATURE_LPSS := y
 		endif
 	endif
-endif
-
-#Flag to enable Protected Management Frames (11w) feature
-ifeq ($(CONFIG_ROME_IF),usb)
-	CONFIG_WLAN_FEATURE_11W := y
-endif
-ifeq ($(CONFIG_ROME_IF),sdio)
-	CONFIG_WLAN_FEATURE_11W := y
 endif
 
 #Flag to enable the tx desc sanity check
@@ -380,6 +368,9 @@ ifeq ($(CONFIG_DEBUG_FS), y)
        CONFIG_WLAN_DEBUGFS := y
 
        CONFIG_WLAN_POWER_DEBUGFS := y
+ifeq ($(CONFIG_RELAY), y)
+       CONFIG_WLAN_STREAMFS := y
+endif
 endif
 
 # Feature flags which are not (currently) configurable via Kconfig

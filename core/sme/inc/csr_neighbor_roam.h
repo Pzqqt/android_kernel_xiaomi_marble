@@ -174,10 +174,11 @@ QDF_STATUS csr_roam_read_tsf(struct mac_context *mac, uint8_t *pTimestamp,
 #endif /* FEATURE_CM_ENABLE */
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
+#ifndef FEATURE_CM_ENABLE
 QDF_STATUS csr_roam_synch_callback(struct mac_context *mac,
 	struct roam_offload_synch_ind *roam_synch_data,
 	struct bss_description *bss_desc_ptr, enum sir_roam_op_code reason);
-
+#endif
 /**
  * csr_roam_auth_offload_callback() - Registered CSR Callback function to handle
  * WPA3 roam pre-auth event from firmware.
@@ -242,13 +243,14 @@ csr_roam_pmkid_req_callback(uint8_t vdev_id,
 #endif /* WLAN_FEATURE_FIPS */
 
 #else
+#ifndef FEATURE_CM_ENABLE
 static inline QDF_STATUS csr_roam_synch_callback(struct mac_context *mac,
 	struct roam_offload_synch_ind *roam_synch_data,
 	struct bss_description *bss_desc_ptr, enum sir_roam_op_code reason)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
-
+#endif
 static inline QDF_STATUS
 csr_roam_auth_offload_callback(struct mac_context *mac_ctx,
 			       uint8_t vdev_id,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -269,7 +269,6 @@ restart_timer:
 	}
 }
 
-#ifdef WLAN_FEATURE_11W
 /**
  * pe_init_pmf_comeback_timer: init PMF comeback timer
  * @mac_ctx: pointer to global adapter context
@@ -296,13 +295,6 @@ pe_init_pmf_comeback_timer(tpAniSirGlobal mac_ctx, struct pe_session *session)
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		pe_err("cannot init pmf comeback timer");
 }
-#else
-static inline void
-pe_init_pmf_comeback_timer(tpAniSirGlobal mac_ctx, struct pe_session *session,
-			   uint8_t vdev_id)
-{
-}
-#endif
 
 #ifdef WLAN_FEATURE_FILS_SK
 /**
@@ -811,7 +803,6 @@ struct pe_session *pe_find_session_by_session_id(struct mac_context *mac,
 	return NULL;
 }
 
-#ifdef WLAN_FEATURE_11W
 static void lim_clear_pmfcomeback_timer(struct pe_session *session)
 {
 	if (session->opmode != QDF_STA_MODE)
@@ -824,11 +815,6 @@ static void lim_clear_pmfcomeback_timer(struct pe_session *session)
 	qdf_mc_timer_destroy(&session->pmf_retry_timer);
 	session->pmf_retry_timer_info.retried = false;
 }
-#else
-static void lim_clear_pmfcomeback_timer(struct pe_session *session)
-{
-}
-#endif
 
 /**
  * pe_delete_session() - deletes the PE session given the session ID.

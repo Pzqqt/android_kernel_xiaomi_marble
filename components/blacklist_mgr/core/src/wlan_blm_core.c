@@ -917,6 +917,7 @@ void blm_update_reject_ap_list_to_fw(struct wlan_objmgr_psoc *psoc)
 	struct wlan_objmgr_pdev *pdev;
 	struct blm_pdev_priv_obj *blm_ctx;
 	struct blm_psoc_priv_obj *blm_psoc_obj;
+	QDF_STATUS status;
 
 	blm_psoc_obj = blm_get_psoc_obj(psoc);
 	if (!blm_psoc_obj) {
@@ -937,8 +938,15 @@ void blm_update_reject_ap_list_to_fw(struct wlan_objmgr_psoc *psoc)
 		goto end;
 	}
 
+	status = qdf_mutex_acquire(&blm_ctx->reject_ap_list_lock);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		blm_err("failed to acquire reject_ap_list_lock");
+		goto end;
+	}
+
 	cfg = &blm_psoc_obj->blm_cfg;
 	blm_send_reject_ap_list_to_fw(pdev, &blm_ctx->reject_ap_list, cfg);
+	qdf_mutex_release(&blm_ctx->reject_ap_list_lock);
 
 end:
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_MLME_CM_ID);

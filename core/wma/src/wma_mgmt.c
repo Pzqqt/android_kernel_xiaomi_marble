@@ -2908,8 +2908,6 @@ QDF_STATUS wma_set_htconfig(uint8_t vdev_id, uint16_t ht_capab, int value)
 	return ret;
 }
 
-#ifdef WLAN_FEATURE_11W
-
 /**
  * wma_extract_ccmp_pn() - extract 6 byte PN from the CCMP header
  * @ccmp_ptr: CCMP header
@@ -2998,7 +2996,6 @@ wma_is_ccmp_pn_replay_attack(tp_wma_handle wma, struct ieee80211_frame *wh,
 	return ret;
 }
 
-#ifdef WLAN_FEATURE_11W
 /**
  * wma_process_bip() - process mmie in rmf frame
  * @wma_handle: wma handle
@@ -3077,7 +3074,6 @@ int wma_process_bip(tp_wma_handle wma_handle, struct wma_txrx_node *iface,
 
 	return 0;
 }
-#endif
 
 /**
  * wma_process_rmf_frame() - process rmf frame
@@ -3281,17 +3277,6 @@ wma_check_and_process_rmf_frame(tp_wma_handle wma_handle,
 
 	return 0;
 }
-#else
-static inline int
-wma_check_and_process_rmf_frame(tp_wma_handle wma_handle,
-				uint8_t vdev_id,
-				struct ieee80211_frame **wh,
-				cds_pkt_t *rx_pkt,
-				qdf_nbuf_t buf)
-{
-	return 0;
-}
-#endif
 
 /**
  * wma_is_pkt_drop_candidate() - check if the mgmt frame should be droppped
@@ -3723,7 +3708,9 @@ QDF_STATUS wma_de_register_mgmt_frm_client(void)
  * Return: Success or Failure Status
  */
 QDF_STATUS wma_register_roaming_callbacks(
+#ifndef FEATURE_CM_ENABLE
 	csr_roam_synch_fn_t csr_roam_synch_cb,
+#endif
 	QDF_STATUS (*csr_roam_auth_event_handle_cb)(struct mac_context *mac,
 						    uint8_t vdev_id,
 						    struct qdf_mac_addr bssid),
@@ -3741,7 +3728,9 @@ QDF_STATUS wma_register_roaming_callbacks(
 	if (!wma)
 		return QDF_STATUS_E_FAILURE;
 
+#ifndef FEATURE_CM_ENABLE
 	wma->csr_roam_synch_cb = csr_roam_synch_cb;
+#endif
 	wma->csr_roam_auth_event_handle_cb = csr_roam_auth_event_handle_cb;
 	wma->pe_roam_synch_cb = pe_roam_synch_cb;
 	wma->pe_disconnect_cb = pe_disconnect_cb;

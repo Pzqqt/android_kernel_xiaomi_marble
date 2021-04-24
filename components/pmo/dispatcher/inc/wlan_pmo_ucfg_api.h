@@ -140,6 +140,28 @@ QDF_STATUS ucfg_pmo_psoc_set_caps(struct wlan_objmgr_psoc *psoc,
 bool
 ucfg_pmo_is_arp_offload_enabled(struct wlan_objmgr_psoc *psoc);
 
+#ifdef WLAN_FEATURE_IGMP_OFFLOAD
+/**
+ * ucfg_pmo_is_igmp_offload_enabled() - Get igmp offload enable or not
+ * @psoc: pointer to psoc object
+ *
+ * Return: igmp offload enable or not
+ */
+bool
+ucfg_pmo_is_igmp_offload_enabled(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_set_igmp_offload_enabled() - Set igmp offload enable or not
+ * @psoc: pointer to psoc object
+ * @val:  enable/disable igmp offload
+ *
+ * Return: None
+ */
+void
+ucfg_pmo_set_igmp_offload_enabled(struct wlan_objmgr_psoc *psoc,
+				  bool val);
+#endif
+
 /**
  * ucfg_pmo_set_arp_offload_enabled() - Set arp offload enable or not
  * @psoc: pointer to psoc object
@@ -592,6 +614,27 @@ QDF_STATUS ucfg_pmo_flush_gtk_offload_req(struct wlan_objmgr_vdev *vdev);
  * Return QDF_STATUS_SUCCESS -in case of success else return error
  */
 QDF_STATUS ucfg_pmo_enable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev);
+
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+/**
+ * ucfg_pmo_enable_igmp_offload(): enable igmp request in fwr
+ * @vdev: objmgr vdev handle
+ * @pmo_igmp_req: struct pmo_igmp_offload_req
+ *
+ * Return QDF_STATUS_SUCCESS -in case of success else return error
+ */
+QDF_STATUS ucfg_pmo_enable_igmp_offload(
+				struct wlan_objmgr_vdev *vdev,
+				struct pmo_igmp_offload_req *pmo_igmp_req);
+#else
+static inline
+QDF_STATUS ucfg_pmo_enable_igmp_offload(
+				struct wlan_objmgr_vdev *vdev,
+				struct pmo_igmp_offload_req *pmo_igmp_req)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * ucfg_pmo_disable_gtk_offload_in_fwr(): disable cached gtk request in fwr
@@ -1183,6 +1226,21 @@ ucfg_pmo_get_gpio_wakeup_mode(struct wlan_objmgr_psoc *psoc)
 }
 #endif
 
+/**
+ * ucfg_pmo_core_txrx_suspend(): suspends TX/RX
+ * @psoc: objmgr psoc
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS ucfg_pmo_core_txrx_suspend(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_core_txrx_resume(): resumes TX/RX
+ * @psoc: objmgr psoc
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS ucfg_pmo_core_txrx_resume(struct wlan_objmgr_psoc *psoc);
 #else /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 static inline QDF_STATUS
 ucfg_pmo_psoc_open(struct wlan_objmgr_psoc *psoc)
@@ -1434,6 +1492,13 @@ static inline QDF_STATUS
 ucfg_pmo_enable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev)
 {
 	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+ucfg_pmo_enable_igmp_offload(struct wlan_objmgr_vdev *vdev,
+			     struct pmo_igmp_offload_req *pmo_igmp_req)
+{
+	return QDF_STATUS_E_NOSUPPORT;
 }
 
 static inline QDF_STATUS
@@ -1698,9 +1763,21 @@ ucfg_pmo_is_arp_offload_enabled(struct wlan_objmgr_psoc *psoc)
 	return false;
 }
 
+static inline bool
+ucfg_pmo_is_igmp_offload_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
 static inline void
 ucfg_pmo_set_arp_offload_enabled(struct wlan_objmgr_psoc *psoc,
 				 bool val)
+{
+}
+
+static inline void
+ucfg_pmo_set_igmp_offload_enabled(struct wlan_objmgr_psoc *psoc,
+				  bool val)
 {
 }
 
@@ -1831,6 +1908,16 @@ enum active_apf_mode
 ucfg_pmo_get_active_mc_bc_apf_mode(struct wlan_objmgr_psoc *psoc)
 {
 	return 0;
+}
+
+QDF_STATUS ucfg_pmo_core_txrx_suspend(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_pmo_core_txrx_resume(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
 }
 #endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 
@@ -2048,4 +2135,19 @@ ucfg_pmo_get_sap_mode_bus_suspend(struct wlan_objmgr_psoc *psoc);
 bool
 ucfg_pmo_get_go_mode_bus_suspend(struct wlan_objmgr_psoc *psoc);
 
+#ifdef SYSTEM_PM_CHECK
+/**
+ * ucfg_pmo_notify_system_resume() - system resume notification to pmo
+ * @psoc: pointer to psoc object
+ *
+ * Return: None
+ */
+void
+ucfg_pmo_notify_system_resume(struct wlan_objmgr_psoc *psoc);
+#else
+static inline
+void ucfg_pmo_notify_system_resume(struct wlan_objmgr_psoc *psoc)
+{
+}
+#endif
 #endif /* end  of _WLAN_PMO_UCFG_API_H_ */

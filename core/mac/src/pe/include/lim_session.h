@@ -35,7 +35,6 @@ typedef struct sPowersaveoffloadInfo {
 	uint8_t bcnmiss;
 } tPowersaveoffloadInfo, tpPowersaveoffloadInfo;
 
-#ifdef WLAN_FEATURE_11W
 struct comeback_timer_info {
 	struct mac_context *mac;
 	uint8_t vdev_id;
@@ -43,7 +42,6 @@ struct comeback_timer_info {
 	tLimMlmStates lim_prev_mlm_state;  /* Previous MLM State */
 	tLimMlmStates lim_mlm_state;       /* MLM State */
 };
-#endif /* WLAN_FEATURE_11W */
 /*--------------------------------------------------------------------------
    Include Files
    ------------------------------------------------------------------------*/
@@ -311,9 +309,7 @@ struct pe_session {
 	uint8_t limWmeEnabled:1;        /* WME */
 	uint8_t limWsmEnabled:1;        /* WSM */
 	uint8_t limHcfEnabled:1;
-#ifdef WLAN_FEATURE_11W
 	uint8_t limRmfEnabled:1;        /* 11W */
-#endif
 	uint32_t lim11hEnable;
 
 	int8_t maxTxPower;   /* MIN (Regulatory and local power constraint) */
@@ -483,10 +479,8 @@ struct pe_session {
 	/* Fast Transition (FT) */
 	tftPEContext ftPEContext;
 	bool isNonRoamReassoc;
-#ifdef WLAN_FEATURE_11W
 	qdf_mc_timer_t pmf_retry_timer;
 	struct comeback_timer_info pmf_retry_timer_info;
-#endif /* WLAN_FEATURE_11W */
 	uint8_t  is_key_installed;
 	/* timer for resetting protection fileds at regular intervals */
 	qdf_mc_timer_t protection_fields_reset_timer;

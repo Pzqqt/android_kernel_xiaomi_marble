@@ -26,6 +26,46 @@
 #include "wlan_mlme_api.h"
 #include "wlan_mlme_twt_api.h"
 
+bool mlme_is_max_twt_sessions_reached(struct wlan_objmgr_psoc *psoc,
+				      struct qdf_mac_addr *peer_mac,
+				      uint8_t dialog_id)
+{
+	struct peer_mlme_priv_obj *peer_priv;
+	struct wlan_objmgr_peer *peer;
+	uint8_t i;
+	uint8_t num_twt_sessions = 0, max_twt_sessions;
+
+	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_mac->bytes,
+					   WLAN_MLME_NB_ID);
+	if (!peer) {
+		mlme_legacy_err("Peer object not found");
+		return true;
+	}
+
+	peer_priv = wlan_objmgr_peer_get_comp_private_obj(peer,
+							  WLAN_UMAC_COMP_MLME);
+	if (!peer_priv) {
+		wlan_objmgr_peer_release_ref(peer, WLAN_MLME_NB_ID);
+		mlme_legacy_err("peer mlme component object is NULL");
+		return true;
+	}
+
+	max_twt_sessions = peer_priv->twt_ctx.num_twt_sessions;
+	for (i = 0; i < max_twt_sessions; i++) {
+		uint8_t existing_session_dialog_id =
+				peer_priv->twt_ctx.session_info[i].dialog_id;
+
+		if (existing_session_dialog_id != WLAN_ALL_SESSIONS_DIALOG_ID &&
+		    existing_session_dialog_id != dialog_id)
+			num_twt_sessions++;
+	}
+	wlan_objmgr_peer_release_ref(peer, WLAN_MLME_NB_ID);
+
+	mlme_legacy_debug("num_twt_sessions:%d max_twt_sessions:%d",
+			  num_twt_sessions, max_twt_sessions);
+	return num_twt_sessions == max_twt_sessions;
+}
+
 bool mlme_is_twt_setup_in_progress(struct wlan_objmgr_psoc *psoc,
 				   struct qdf_mac_addr *peer_mac,
 				   uint8_t dialog_id)
@@ -51,10 +91,12 @@ bool mlme_is_twt_setup_in_progress(struct wlan_objmgr_psoc *psoc,
 	}
 
 	for (i = 0; i < peer_priv->twt_ctx.num_twt_sessions; i++) {
+		bool setup_done = peer_priv->twt_ctx.session_info[i].setup_done;
 		existing_session_dialog_id =
 			peer_priv->twt_ctx.session_info[i].dialog_id;
 		if (existing_session_dialog_id == dialog_id &&
-		    existing_session_dialog_id != WLAN_ALL_SESSIONS_DIALOG_ID) {
+		    existing_session_dialog_id != WLAN_ALL_SESSIONS_DIALOG_ID &&
+		    !setup_done) {
 			wlan_objmgr_peer_release_ref(peer, WLAN_MLME_NB_ID);
 			return true;
 		}
@@ -125,7 +167,7 @@ void mlme_set_twt_setup_done(struct wlan_objmgr_psoc *psoc,
 	for (i = 0; i < peer_priv->twt_ctx.num_twt_sessions; i++) {
 		if (peer_priv->twt_ctx.session_info[i].dialog_id == dialog_id) {
 			peer_priv->twt_ctx.session_info[i].setup_done = is_set;
-			mlme_legacy_debug("setup done dialog:%d",
+			mlme_legacy_debug("setup done:%d dialog:%d", is_set,
 					  dialog_id);
 			break;
 		}
@@ -405,17 +447,6 @@ bool mlme_is_flexible_twt_enabled(struct wlan_objmgr_psoc *psoc)
 }
 #endif
 
-bool mlme_get_twt_bcast_requestor_tgt_cap(struct wlan_objmgr_psoc *psoc)
-{
-	struct wlan_mlme_psoc_ext_obj *mlme_obj;
-
-	mlme_obj = mlme_get_psoc_ext_obj(psoc);
-	if (!mlme_obj)
-		return false;
-
-	return mlme_obj->cfg.twt_cfg.bcast_requestor_tgt_cap;
-}
-
 QDF_STATUS mlme_set_twt_command_in_progress(struct wlan_objmgr_psoc *psoc,
 					    struct qdf_mac_addr *peer_mac,
 					    uint8_t dialog_id,
@@ -485,7 +516,8 @@ bool mlme_is_twt_notify_in_progress(struct wlan_objmgr_psoc *psoc,
 bool mlme_twt_is_command_in_progress(struct wlan_objmgr_psoc *psoc,
 				     struct qdf_mac_addr *peer_mac,
 				     uint8_t dialog_id,
-				     enum wlan_twt_commands cmd)
+				     enum wlan_twt_commands cmd,
+				     enum wlan_twt_commands *pactive_cmd)
 {
 	struct wlan_objmgr_peer *peer;
 	struct peer_mlme_priv_obj *peer_priv;
@@ -510,6 +542,10 @@ bool mlme_twt_is_command_in_progress(struct wlan_objmgr_psoc *psoc,
 
 	for (i = 0; i < peer_priv->twt_ctx.num_twt_sessions; i++) {
 		active_cmd = peer_priv->twt_ctx.session_info[i].active_cmd;
+
+		if (pactive_cmd)
+			*pactive_cmd = active_cmd;
+
 		if (peer_priv->twt_ctx.session_info[i].dialog_id == dialog_id ||
 		    dialog_id == WLAN_ALL_SESSIONS_DIALOG_ID) {
 			if (cmd == WLAN_TWT_ANY) {
@@ -532,4 +568,15 @@ bool mlme_twt_is_command_in_progress(struct wlan_objmgr_psoc *psoc,
 	wlan_objmgr_peer_release_ref(peer, WLAN_MLME_NB_ID);
 
 	return is_command_in_progress;
+}
+
+bool mlme_is_24ghz_twt_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return cfg_default(CFG_ENABLE_TWT_24GHZ);
+
+	return mlme_obj->cfg.twt_cfg.enable_twt_24ghz;
 }

@@ -189,6 +189,34 @@ static void wlan_pmo_gpio_wakeup_init_cfg(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
+#ifdef WLAN_FEATURE_IGMP_OFFLOAD
+static void
+wlan_pmo_get_igmp_version_support_cfg(struct wlan_objmgr_psoc *psoc,
+				      struct pmo_psoc_cfg *psoc_cfg)
+{
+	psoc_cfg->igmp_version_support =
+				cfg_get(psoc, CFG_IGMP_VERSION_SUPPORT);
+}
+
+static void
+wlan_pmo_get_igmp_offload_enable_cfg(struct wlan_objmgr_psoc *psoc,
+				     struct pmo_psoc_cfg *psoc_cfg)
+{
+	psoc_cfg->igmp_offload_enable = cfg_get(psoc,
+						CFG_PMO_ENABLE_IGMP_OFFLOAD);
+}
+#else
+static void
+wlan_pmo_get_igmp_version_support_cfg(struct wlan_objmgr_psoc *psoc,
+				      struct pmo_psoc_cfg *psoc_cfg)
+{}
+
+static void
+wlan_pmo_get_igmp_offload_enable_cfg(struct wlan_objmgr_psoc *psoc,
+				     struct pmo_psoc_cfg *psoc_cfg)
+{}
+#endif
+
 static void wlan_pmo_init_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct pmo_psoc_cfg *psoc_cfg)
 {
@@ -201,9 +229,11 @@ static void wlan_pmo_init_cfg(struct wlan_objmgr_psoc *psoc,
 	psoc_cfg->ns_offload_enable_dynamic =
 			cfg_get(psoc, CFG_PMO_ENABLE_HOST_NSOFFLOAD);
 	psoc_cfg->sta_dynamic_dtim = cfg_get(psoc, CFG_PMO_ENABLE_DYNAMIC_DTIM);
+	wlan_pmo_get_igmp_version_support_cfg(psoc, psoc_cfg);
 	psoc_cfg->sta_mod_dtim = cfg_get(psoc, CFG_PMO_ENABLE_MODULATED_DTIM);
 	psoc_cfg->enable_mc_list = cfg_get(psoc, CFG_PMO_MC_ADDR_LIST_ENABLE);
 	psoc_cfg->power_save_mode = cfg_get(psoc, CFG_PMO_POWERSAVE_MODE);
+	psoc_cfg->sta_forced_dtim = cfg_get(psoc, CFG_PMO_ENABLE_FORCED_DTIM);
 	psoc_cfg->is_mod_dtim_on_sys_suspend_enabled =
 			cfg_get(psoc, CFG_PMO_MOD_DTIM_ON_SYS_SUSPEND);
 	psoc_cfg->is_bus_suspend_enabled_in_sap_mode =
@@ -226,8 +256,6 @@ static void wlan_pmo_init_cfg(struct wlan_objmgr_psoc *psoc,
 	psoc_cfg->enable_sap_suspend = cfg_get(psoc, CFG_ENABLE_SAP_SUSPEND);
 	psoc_cfg->wow_data_inactivity_timeout =
 			cfg_get(psoc, CFG_PMO_WOW_DATA_INACTIVITY_TIMEOUT);
-	psoc_cfg->ps_data_inactivity_timeout =
-			cfg_get(psoc, CFG_PS_DATA_INACTIVITY_TIMEOUT);
 	psoc_cfg->active_uc_apf_mode =
 			cfg_get(psoc, CFG_ACTIVE_UC_APF_MODE);
 	psoc_cfg->active_mc_bc_apf_mode =
@@ -235,6 +263,7 @@ static void wlan_pmo_init_cfg(struct wlan_objmgr_psoc *psoc,
 	psoc_cfg->ito_repeat_count = cfg_get(psoc, CFG_ITO_REPEAT_COUNT);
 	wlan_pmo_ra_filtering_init_cfg(psoc, psoc_cfg);
 	wlan_pmo_gpio_wakeup_init_cfg(psoc, psoc_cfg);
+	wlan_pmo_get_igmp_offload_enable_cfg(psoc, psoc_cfg);
 }
 
 QDF_STATUS pmo_psoc_open(struct wlan_objmgr_psoc *psoc)

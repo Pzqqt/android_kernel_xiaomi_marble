@@ -48,6 +48,7 @@
  * @is_get_station_clubbed_in_ll_stats_req: Get station req support within ll
  *                                          stats req
  * @is_fw_therm_throt_supp: Get thermal throttling threshold
+ * @igmp_offload_enable: Get igmp offload enable or disable
  */
 struct wma_tgt_services {
 	uint32_t sta_power_save;
@@ -86,6 +87,9 @@ struct wma_tgt_services {
 	bool is_get_station_clubbed_in_ll_stats_req;
 #endif
 	bool is_fw_therm_throt_supp;
+#ifdef WLAN_FEATURE_IGMP_OFFLOAD
+	bool igmp_offload_enable;
+#endif
 };
 
 /**
@@ -185,7 +189,7 @@ struct board_info {
  * @obss_detection_offloaded: obss detection offloaded to firmware
  * @obss_color_collision_offloaded: obss color collision offloaded to firmware
  * @sar_version: Version of SAR supported by firmware
- * @bcast_twt_support: braodcast twt support
+ * @legacy_bcast_twt_support: broadcast twt support
  * @restricted_80p80_bw_supp: Restricted 80+80MHz(165MHz BW) support
  * @twt_bcast_req_support: twt bcast requestor support
  * @twt_bcast_res_support: twt bcast responder support
@@ -230,7 +234,7 @@ struct wma_tgt_cfg {
 	struct board_info hw_bd_info;
 	enum sar_version sar_version;
 	struct nan_tgt_caps nan_caps;
-	bool bcast_twt_support;
+	bool legacy_bcast_twt_support;
 	bool restricted_80p80_bw_supp;
 #ifdef WLAN_SUPPORT_TWT
 	bool twt_bcast_req_support;

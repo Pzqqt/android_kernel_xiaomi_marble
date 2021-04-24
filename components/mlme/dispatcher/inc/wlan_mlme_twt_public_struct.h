@@ -21,6 +21,8 @@
 #ifndef _WLAN_MLME_TWT_STRUCT_H_
 #define _WLAN_MLME_TWT_STRUCT_H_
 
+#define TWT_ALL_SESSIONS_DIALOG_ID 255
+
 /**
  * enum wlan_twt_commands  - TWT commands
  * @WLAN_TWT_NONE: Indicates none of the TWT commands are active.

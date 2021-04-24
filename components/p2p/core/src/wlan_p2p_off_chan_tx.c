@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2930,6 +2930,8 @@ QDF_STATUS p2p_process_mgmt_tx(struct tx_action_context *tx_ctx)
 				return QDF_STATUS_SUCCESS;
 		} else if (curr_roc_ctx->roc_state == ROC_STATE_ON_CHAN) {
 			p2p_adjust_tx_wait(tx_ctx);
+			if (curr_roc_ctx->duration < tx_ctx->duration)
+				curr_roc_ctx->duration = tx_ctx->duration;
 			status = p2p_restart_roc_timer(curr_roc_ctx);
 			curr_roc_ctx->tx_ctx = tx_ctx;
 			if (status != QDF_STATUS_SUCCESS) {

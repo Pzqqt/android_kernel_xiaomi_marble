@@ -114,6 +114,24 @@
 
 /*
  * <ini>
+ * CFG_PMO_ENABLE_IGMP_OFFLOAD - Enable/disable igmp offload
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable igmp offload feature to fw.
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_PMO_ENABLE_IGMP_OFFLOAD CFG_INI_BOOL( \
+	"igmp_offload_enable", \
+	0, \
+	"Enable/disable IGMP offload")
+
+/*
+ * <ini>
  * gEnableDynamicDTIM - Enable Dynamic DTIM
  * @Min: 0
  * @Max: 10
@@ -246,6 +264,28 @@
 	"enable_mod_dtim_on_system_suspend", \
 	0, \
 	"Modulated DTIM on System suspend wow")
+
+/*
+ * <ini>
+ * gEnableForcedDTIM - Enable/Disable forced DTIM feature
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable forced DTIM feature.
+ *
+ * 0 - Disable forced DTIM.
+ * 1 - Enable forced DTIM
+ *
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_PMO_ENABLE_FORCED_DTIM CFG_INI_BOOL( \
+	"gEnableForcedDTIM", \
+	0, \
+	"Enable/disable Forced DTIM feature")
 
 /*
  * <ini>
@@ -460,14 +500,37 @@
 		0, \
 		"This ini is used to enable bus suspend in P2PGO mode")
 
+/*
+ * <ini>
+ * igmp_version_support - Configure igmp version
+ * @Min: 0x00000000
+ * @Max: 0x7
+ * @Default: 0x0000000
+ *
+ * This ini is used to configure version while offloading igmp
+ *
+ * Bit 0: support igmp version 1
+ * Bit 1: support igmp version 2
+ * Bit 2: support igmp version 3
+ */
+#define CFG_IGMP_VERSION_SUPPORT CFG_INI_UINT( \
+		"igmp_version_support", \
+		0x00000000, \
+		0x7, \
+		0x7, \
+		CFG_VALUE_OR_DEFAULT, \
+		"configure igmp offload support version")
+
 #define CFG_PMO_COMMON_ALL \
 	CFG(CFG_ENABLE_SAP_SUSPEND) \
 	CFG(CFG_PMO_ENABLE_HOST_ARPOFFLOAD) \
 	CFG(CFG_PMO_HW_FILTER_MODE) \
 	CFG(CFG_PMO_ENABLE_HOST_SSDP) \
 	CFG(CFG_PMO_ENABLE_HOST_NSOFFLOAD) \
+	CFG(CFG_PMO_ENABLE_IGMP_OFFLOAD) \
 	CFG(CFG_PMO_ENABLE_DYNAMIC_DTIM) \
 	CFG(CFG_PMO_ENABLE_MODULATED_DTIM) \
+	CFG(CFG_PMO_ENABLE_FORCED_DTIM) \
 	CFG(CFG_PMO_MC_ADDR_LIST_ENABLE) \
 	CFG(CFG_PMO_POWERSAVE_MODE) \
 	CFG(CFG_PMO_MAX_PS_POLL) \
@@ -478,6 +541,7 @@
 	CFG(CFG_RA_RATE_LIMIT_INTERVAL) \
 	CFG(CFG_PMO_MOD_DTIM_ON_SYS_SUSPEND) \
 	CFG(CFG_ENABLE_BUS_SUSPEND_IN_SAP_MODE) \
-	CFG(CFG_ENABLE_BUS_SUSPEND_IN_GO_MODE)
+	CFG(CFG_ENABLE_BUS_SUSPEND_IN_GO_MODE)\
+	CFG(CFG_IGMP_VERSION_SUPPORT)
 
 #endif /* WLAN_PMO_COMMON_CFG_H__ */

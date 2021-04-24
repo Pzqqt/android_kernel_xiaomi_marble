@@ -594,7 +594,6 @@ static inline void lim_nan_register_callbacks(struct mac_context *mac_ctx)
 }
 #endif
 
-#ifdef WLAN_FEATURE_11W
 void lim_stop_pmfcomeback_timer(struct pe_session *session)
 {
 	if (session->opmode != QDF_STA_MODE)
@@ -603,7 +602,6 @@ void lim_stop_pmfcomeback_timer(struct pe_session *session)
 	qdf_mc_timer_stop(&session->pmf_retry_timer);
 	session->pmf_retry_timer_info.retried = false;
 }
-#endif
 
 /*
  * pe_shutdown_notifier_cb - Shutdown notifier callback
@@ -629,7 +627,6 @@ static void pe_shutdown_notifier_cb(void *ctx)
 	}
 }
 
-#ifdef WLAN_FEATURE_11W
 /**
  * is_mgmt_protected - check RMF enabled for the peer
  * @vdev_id: vdev id
@@ -675,24 +672,6 @@ static bool is_mgmt_protected(uint32_t vdev_id,
 
 	return protected;
 }
-
-#else
-/**
- * is_mgmt_protected - check RMF enabled for the peer
- * @vdev_id: vdev id
- * @peer_mac_addr: peer mac address
- *
- * The function check the mgmt frame protection enabled or not
- * for station mode and AP mode
- *
- * Return: true, if the connection is RMF enabled.
- */
-static bool is_mgmt_protected(uint32_t vdev_id,
-				  const uint8_t *peer_mac_addr)
-{
-	return false;
-}
-#endif
 
 static void p2p_register_callbacks(struct mac_context *mac_ctx)
 {
@@ -1225,6 +1204,11 @@ static QDF_STATUS pe_handle_mgmt_frame(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if (mac->usr_cfg_disable_rsp_tx) {
+		pe_debug("Drop Rx pkt with user config");
+		qdf_nbuf_free(buf);
+		return QDF_STATUS_SUCCESS;
+	}
 	pVosPkt = qdf_mem_malloc_atomic(sizeof(*pVosPkt));
 	if (!pVosPkt) {
 		qdf_nbuf_free(buf);
@@ -1347,7 +1331,9 @@ void pe_register_callbacks_with_wma(struct mac_context *mac,
 	QDF_STATUS status;
 
 	status = wma_register_roaming_callbacks(
+#ifndef FEATURE_CM_ENABLE
 			ready_req->csr_roam_synch_cb,
+#endif
 			ready_req->csr_roam_auth_event_handle_cb,
 			ready_req->pe_roam_synch_cb,
 			ready_req->pe_disconnect_cb,
@@ -1738,7 +1724,6 @@ void lim_ps_offload_handle_missed_beacon_ind(struct mac_context *mac,
 }
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-#ifdef WLAN_FEATURE_11W
 static void pe_set_rmf_caps(struct mac_context *mac_ctx,
 			    struct pe_session *ft_session,
 			    struct roam_offload_synch_ind *roam_synch)
@@ -1805,13 +1790,6 @@ static void pe_set_rmf_caps(struct mac_context *mac_ctx,
 	ft_session->limRmfEnabled =
 		lim_get_vdev_rmf_capable(mac_ctx, ft_session);
 }
-#else
-static inline void pe_set_rmf_caps(struct mac_context *mac_ctx,
-				   struct pe_session *ft_session,
-				   struct roam_offload_synch_ind *roam_synch)
-{
-}
-#endif
 
 /**
  * sir_parse_bcn_fixed_fields() - Parse fixed fields in Beacon IE's
@@ -2521,7 +2499,7 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 
 	pe_debug("LFR3:Received ROAM SYNCH IND bssid "QDF_MAC_ADDR_FMT" auth: %d vdevId: %d",
 		 QDF_MAC_ADDR_REF(roam_sync_ind_ptr->bssid.bytes),
-		 roam_sync_ind_ptr->authStatus,
+		 roam_sync_ind_ptr->auth_status,
 		 roam_sync_ind_ptr->roamed_vdev_id);
 
 	/*
@@ -2600,7 +2578,7 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 	}
 
 
-	if (roam_sync_ind_ptr->authStatus ==
+	if (roam_sync_ind_ptr->auth_status ==
 	    ROAM_AUTH_STATUS_AUTHENTICATED) {
 		ft_session_ptr->is_key_installed = true;
 		curr_sta_ds->is_key_installed = true;

@@ -11,13 +11,13 @@ ifeq ($(KERNEL_BUILD), y)
 	# Need to explicitly define for Kernel-based builds
 	MODNAME := wlan
 	WLAN_ROOT := drivers/staging/qcacld-3.0
-	WLAN_COMMON_ROOT := ../qca-wifi-host-cmn
+	WLAN_COMMON_ROOT := cmn
 	WLAN_COMMON_INC := $(WLAN_ROOT)/$(WLAN_COMMON_ROOT)
 	WLAN_FW_API := $(WLAN_ROOT)/../fw-api/
 	WLAN_PROFILE := default
 endif
 
-WLAN_COMMON_ROOT ?= ../qca-wifi-host-cmn
+WLAN_COMMON_ROOT ?= cmn
 WLAN_COMMON_INC ?= $(WLAN_ROOT)/$(WLAN_COMMON_ROOT)
 WLAN_FW_API ?= $(WLAN_ROOT)/../fw-api/
 WLAN_PROFILE ?= default
@@ -36,32 +36,58 @@ endif
 include $(WLAN_ROOT)/configs/$(CONFIG_QCA_CLD_WLAN_PROFILE)_defconfig
 
 # add configurations in WLAN_CFG_OVERRIDE
-ifneq ($(WLAN_CFG_OVERRIDE),)
-WLAN_CFG_OVERRIDE_FILE := $(WLAN_ROOT)/.wlan_cfg_override
-$(shell echo > $(WLAN_CFG_OVERRIDE_FILE))
-
 $(foreach cfg, $(WLAN_CFG_OVERRIDE), \
-	$(shell echo $(cfg) >> $(WLAN_CFG_OVERRIDE_FILE)))
+	$(eval $(cfg)) \
+	$(warning "Overriding WLAN config with: $(cfg)"))
 
-include $(WLAN_CFG_OVERRIDE_FILE)
-$(warning "Overriding WLAN config with: $(shell cat $(WLAN_CFG_OVERRIDE_FILE))")
+# This is temp change until connection manager changes for LFR2 are done.
+# Once LFR2 changes are done, CONFIG_CM_ENABLE will be removed and all
+# connection manager files would compile by default.
+# For now enable Connection manager only for platforms supporting LFR3
+ifeq ($(CONFIG_QCACLD_WLAN_LFR3), y)
+CONFIG_CM_ENABLE := y
+endif
+
+# KERNEL_SUPPORTS_NESTED_COMPOSITES := y is used to enable nested
+# composite support. The nested composite support is available in some
+# MSM kernels, and is available in all GKI kernels beginning with
+# 5.10.20, but unfortunately is not available in any upstream kernel.
+#
+# When the feature is present in an MSM kernel, the flag is explicitly
+# set in the kernel sources.  When a GKI kernel is used, there isn't a
+# flag set in the sources, so set the flag here if we are building
+# with GKI kernel 5.10.20 or greater
+KERNEL_VERSION = $(shell echo $$(( ( $1 << 16 ) + ( $2 << 8 ) + $3 )))
+LINUX_CODE := $(call KERNEL_VERSION,$(VERSION),$(PATCHLEVEL),$(SUBLEVEL))
+COMPOSITE_CODE := 330260 # hardcoded $(call KERNEL_VERSION,5,10,20)
+ifeq ($(KERNEL_SUPPORTS_NESTED_COMPOSITES),)
+  #flag is not explicitly present
+  ifneq ($(findstring gki,$(CONFIG_LOCALVERSION)),)
+    # GKI kernel
+    ifeq ($(shell test $(LINUX_CODE) -ge $(COMPOSITE_CODE); echo $$?),0)
+      # version >= 5.10.20
+      KERNEL_SUPPORTS_NESTED_COMPOSITES := y
+    endif
+  endif
 endif
 
 OBJS :=
 OBJS_DIRS :=
 
 define add-wlan-objs
-$(eval
-  ifneq ($$(2),)
-    ifeq ($$(KERNEL_SUPPORTS_NESTED_COMPOSITES),y)
-      OBJS_DIRS += $$(dir $$(2))
-      OBJS += $$(1).o
-      $$(1)-y := $$(2)
+$(eval $(_add-wlan-objs))
+endef
+
+define _add-wlan-objs
+  ifneq ($(2),)
+    ifeq ($(KERNEL_SUPPORTS_NESTED_COMPOSITES),y)
+      OBJS_DIRS += $(dir $(2))
+      OBJS += $(1).o
+      $(1)-y := $(2)
     else
-      OBJS += $$(2)
+      OBJS += $(2)
     endif
   endif
-)
 endef
 
 ############ UAPI ############
@@ -1941,6 +1967,10 @@ ifeq ($(CONFIG_WDI_EVENT_ENABLE), y)
 DP_OBJS +=     $(DP_SRC)/dp_wdi_event.o
 endif
 
+ifeq ($(CONFIG_FEATURE_MEC), y)
+DP_OBJS += $(DP_SRC)/dp_txrx_wds.o
+endif
+
 endif #LITHIUM
 
 $(call add-wlan-objs,dp,$(DP_OBJS))
@@ -2972,8 +3002,6 @@ endif
 
 cppflags-$(CONFIG_QCA_SUPPORT_TXRX_DRIVER_TCP_DEL_ACK) += -DQCA_SUPPORT_TXRX_DRIVER_TCP_DEL_ACK
 
-cppflags-$(CONFIG_WLAN_FEATURE_11W) += -DWLAN_FEATURE_11W
-
 cppflags-$(CONFIG_QCA_TXDESC_SANITY_CHECKS) += -DQCA_SUPPORT_TXDESC_SANITY_CHECKS
 
 cppflags-$(CONFIG_QCOM_LTE_COEX) += -DFEATURE_WLAN_CH_AVOID
@@ -3050,6 +3078,8 @@ cppflags-$(CONFIG_HL_DP_SUPPORT) += -DQCA_COMPUTE_TX_DELAY
 cppflags-$(CONFIG_HL_DP_SUPPORT) += -DQCA_COMPUTE_TX_DELAY_PER_TID
 cppflags-$(CONFIG_LL_DP_SUPPORT) += -DCONFIG_LL_DP_SUPPORT
 cppflags-$(CONFIG_LL_DP_SUPPORT) += -DWLAN_FULL_REORDER_OFFLOAD
+cppflags-$(CONFIG_WLAN_FEATURE_BIG_DATA_STATS) += -DWLAN_FEATURE_BIG_DATA_STATS
+cppflags-$(CONFIG_WLAN_FEATURE_IGMP_OFFLOAD) += -DWLAN_FEATURE_IGMP_OFFLOAD
 
 # For PCIe GEN switch
 cppflags-$(CONFIG_PCIE_GEN_SWITCH) += -DPCIE_GEN_SWITCH
@@ -3076,6 +3106,8 @@ else
 cppflags-y += -DCONFIG_SDIO_TRANSFER_MAILBOX
 endif
 endif
+
+cppflags-$(CONFIG_AR6320_SUPPORT) += -DCONFIG_AR6320_SUPPORT
 
 ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
 cppflags-y += -DWLAN_FEATURE_DSRC
@@ -3403,6 +3435,7 @@ cppflags-y += -DDP_RX_DESC_COOKIE_INVALIDATE
 cppflags-y += -DMON_ENABLE_DROP_FOR_MAC
 cppflags-y += -DPCI_LINK_STATUS_SANITY
 cppflags-y += -DDP_MON_RSSI_IN_DBM
+cppflags-y += -DSYSTEM_PM_CHECK
 endif
 
 # Enable Low latency optimisation mode
@@ -3601,6 +3634,10 @@ endif
 
 ifdef CONFIG_QDF_TIMER_MULTIPLIER_FRAC
 ccflags-y += -DQDF_TIMER_MULTIPLIER_FRAC=$(CONFIG_QDF_TIMER_MULTIPLIER_FRAC)
+endif
+
+ifdef CONFIG_DP_LEGACY_MODE_CSM_DEFAULT_DISABLE
+ccflags-y += -DDP_LEGACY_MODE_CSM_DEFAULT_DISABLE=$(CONFIG_DP_LEGACY_MODE_CSM_DEFAULT_DISABLE)
 endif
 
 # configure log buffer size
@@ -3826,6 +3863,7 @@ cppflags-$(CONFIG_HIF_CPU_PERF_AFFINE_MASK) += -DHIF_CPU_PERF_AFFINE_MASK
 cppflags-$(CONFIG_GENERIC_SHADOW_REGISTER_ACCESS_ENABLE) += -DGENERIC_SHADOW_REGISTER_ACCESS_ENABLE
 cppflags-$(CONFIG_IPA_SET_RESET_TX_DB_PA) += -DIPA_SET_RESET_TX_DB_PA
 cppflags-$(CONFIG_DEVICE_FORCE_WAKE_ENABLE) += -DDEVICE_FORCE_WAKE_ENABLE
+cppflags-$(CONFIG_DUMP_REO_QUEUE_INFO_IN_DDR) += -DDUMP_REO_QUEUE_INFO_IN_DDR
 
 ifdef CONFIG_MAX_CLIENTS_ALLOWED
 ccflags-y += -DWLAN_MAX_CLIENTS_ALLOWED=$(CONFIG_MAX_CLIENTS_ALLOWED)
@@ -3858,6 +3896,19 @@ endif
 cppflags-$(CONFIG_FEATURE_STA_MODE_VOTE_LINK) += -DFEATURE_STA_MODE_VOTE_LINK
 cppflags-$(CONFIG_WLAN_ENABLE_GPIO_WAKEUP) += -DWLAN_ENABLE_GPIO_WAKEUP
 cppflags-$(CONFIG_WLAN_MAC_ADDR_UPDATE_DISABLE) += -DWLAN_MAC_ADDR_UPDATE_DISABLE
+
+ifeq ($(CONFIG_SMP), y)
+ifeq ($(CONFIG_HIF_DETECTION_LATENCY_ENABLE), y)
+cppflags-y += -DHIF_DETECTION_LATENCY_ENABLE
+cppflags-y += -DDETECTION_TIMER_TIMEOUT=2000
+cppflags-y += -DDETECTION_LATENCY_THRESHOLD=1900
+endif
+endif
+
+#Flags to enable/disable WDS specific features
+cppflags-$(CONFIG_FEATURE_WDS) += -DFEATURE_WDS
+cppflags-$(CONFIG_FEATURE_MEC) += -DFEATURE_MEC
+cppflags-$(CONFIG_FEATURE_MCL_REPEATER) += -DFEATURE_MCL_REPEATER
 
 KBUILD_CPPFLAGS += $(cppflags-y)
 
@@ -3935,6 +3986,11 @@ ifeq ($(findstring arm, $(ARCH)),)
 	ccflags-y += -DWLAN_HOST_ARCH_ARM=0
 else
 	ccflags-y += -DWLAN_HOST_ARCH_ARM=1
+endif
+
+# Android wifi state control interface
+ifneq ($(WLAN_CTRL_NAME),)
+ccflags-y += -DWLAN_CTRL_NAME=\"$(WLAN_CTRL_NAME)\"
 endif
 
 # inject some build related information

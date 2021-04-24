@@ -175,15 +175,6 @@ bool mlme_is_twt_notify_in_progress(struct wlan_objmgr_psoc *psoc,
 bool mlme_is_flexible_twt_enabled(struct wlan_objmgr_psoc *psoc);
 
 /**
- * mlme_get_twt_bcast_requestor_tgt_cap() - Get broadcast requestor target
- * capability.
- * @psoc: Pointer to psoc object
- *
- * Return: True if tgt cap is advertised.
- */
-bool mlme_get_twt_bcast_requestor_tgt_cap(struct wlan_objmgr_psoc *psoc);
-
-/**
  * mlme_set_twt_command_in_progress() - Set TWT command is in progress.
  * @psoc: Pointer to psoc object
  * @peer_mac: Pointer to peer mac address
@@ -198,18 +189,48 @@ QDF_STATUS mlme_set_twt_command_in_progress(struct wlan_objmgr_psoc *psoc,
 					    enum wlan_twt_commands cmd);
 
 /**
- * mlme_twt_is_command_in_progress() - Get TWT command in progress.
+ * mlme_twt_is_command_in_progress() - Check if given command is in progress
  * @psoc: Pointer to psoc object
  * @peer_mac: Pointer to peer mac address
  * @dialog_id: Dialog id
  * @cmd: TWT command
+ * @active_cmd: Fill the active command in this output parameter
  *
  * Return: True if given command is in progress.
  */
 bool mlme_twt_is_command_in_progress(struct wlan_objmgr_psoc *psoc,
 				     struct qdf_mac_addr *peer_mac,
 				     uint8_t dialog_id,
-				     enum wlan_twt_commands cmd);
+				     enum wlan_twt_commands cmd,
+				     enum wlan_twt_commands *active_cmd);
+
+/**
+ * mlme_is_max_twt_sessions_reached() - Check if the maximum number of
+ * TWT sessions reached or not excluding the given dialog_id
+ * @psoc: Pointer to global PSOC object
+ * @peer_mac: Global peer mac address
+ * @dialog_id: dialog id
+ *
+ * Check if the number of active TWT sessions is equal to the maximum number
+ * of TWT sessions supported. Only count the TWT session slot if it not
+ * WLAN_ALL_SESSIONS_DIALOG_ID and dialog id is different from input dialog_id,
+ * because if same dialog_id already exists in the TWT sessions, we should
+ * return false since re-negotiation is supported on existing dialog_id.
+ *
+ * Return: True if slot is available for dialog_id, false otherwise
+ */
+bool mlme_is_max_twt_sessions_reached(struct wlan_objmgr_psoc *psoc,
+				      struct qdf_mac_addr *peer_mac,
+				      uint8_t dialog_id);
+
+/**
+ * mlme_is_24ghz_twt_enabled() - Get if TWT is enabled on 2.4Ghz
+ * @psoc: Pointer to psoc object
+ *
+ * Return: True if TWT is allowed on 2.4Ghz connection.
+ */
+bool mlme_is_24ghz_twt_enabled(struct wlan_objmgr_psoc *psoc);
+
 #else
 static inline
 void mlme_set_twt_peer_capabilities(struct wlan_objmgr_psoc *psoc,
@@ -217,5 +238,13 @@ void mlme_set_twt_peer_capabilities(struct wlan_objmgr_psoc *psoc,
 				    tDot11fIEhe_cap *he_cap,
 				    tDot11fIEhe_op *he_op)
 {}
+
+static inline
+QDF_STATUS mlme_init_twt_context(struct wlan_objmgr_psoc *psoc,
+				 struct qdf_mac_addr *peer_mac,
+				 uint8_t dialog_id)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
 #endif /* WLAN_SUPPORT_TWT */
 #endif /* _WLAN_MLME_TWT_API_H_ */

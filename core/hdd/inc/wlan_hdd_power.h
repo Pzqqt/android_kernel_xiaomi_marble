@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -185,6 +185,16 @@ QDF_STATUS hdd_wlan_shutdown(void);
  *	or an error status otherwise
  */
 QDF_STATUS hdd_wlan_re_init(void);
+
+/**
+ * hdd_handle_cached_commands() - Handle north bound commands during SSR
+ *
+ * This api will be invoked afte SSR re-initialization to execute the north
+ * bound commands received during SSR.
+ *
+ * Return: None
+ */
+void hdd_handle_cached_commands(void);
 
 /**
  * hdd_enable_arp_offload() - API to enable ARP offload

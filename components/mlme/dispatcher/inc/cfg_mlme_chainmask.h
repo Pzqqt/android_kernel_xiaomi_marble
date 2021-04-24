@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,9 +26,9 @@
 /*
  * <ini>
  * gSetTxChainmask1x1 - Sets Transmit chain mask.
- * @Min: 1
+ * @Min: 0
  * @Max: 3
- * @Default: 0
+ * @Default: 1
  *
  * This ini Sets Transmit chain mask.
  *
@@ -50,16 +50,16 @@
 				"gSetTxChainmask1x1", \
 				0, \
 				3, \
-				0, \
+				1, \
 				CFG_VALUE_OR_DEFAULT, \
 				"1x1 VHT Tx Chainmask")
 
 /*
  * <ini>
  * gSetRxChainmask1x1 - Sets Receive chain mask.
- * @Min: 1
+ * @Min: 0
  * @Max: 3
- * @Default: 0
+ * @Default: 1
  *
  * This ini is  used to set Receive chain mask.
  *
@@ -81,7 +81,7 @@
 				"gSetRxChainmask1x1", \
 				0, \
 				3, \
-				0, \
+				1, \
 				CFG_VALUE_OR_DEFAULT, \
 				"1x1 VHT Rx Chainmask")
 

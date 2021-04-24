@@ -258,6 +258,8 @@ QDF_STATUS cds_init(void)
 	qdf_register_self_recovery_callback(cds_trigger_recovery_psoc);
 	qdf_register_fw_down_callback(cds_is_fw_down);
 	qdf_register_is_driver_unloading_callback(cds_is_driver_unloading);
+	qdf_register_is_driver_state_module_stop_callback(
+					cds_is_driver_state_module_stop);
 	qdf_register_recovering_state_query_callback(cds_is_driver_recovering);
 	qdf_register_drv_connected_callback(cds_is_drv_connected);
 	qdf_register_drv_supported_callback(cds_is_drv_supported);
@@ -290,6 +292,7 @@ void cds_deinit(void)
 	qdf_register_recovering_state_query_callback(NULL);
 	qdf_register_fw_down_callback(NULL);
 	qdf_register_is_driver_unloading_callback(NULL);
+	qdf_register_is_driver_state_module_stop_callback(NULL);
 	qdf_register_self_recovery_callback(NULL);
 	qdf_register_wmi_send_recv_qmi_callback(NULL);
 
@@ -433,8 +436,7 @@ static void cds_cdp_cfg_attach(struct wlan_objmgr_psoc *psoc)
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct hdd_context *hdd_ctx = gp_cds_context->hdd_context;
 
-	cdp_cfg.is_full_reorder_offload =
-		cfg_get(psoc, CFG_DP_REORDER_OFFLOAD_SUPPORT);
+	cdp_cfg.is_full_reorder_offload = DP_REORDER_OFFLOAD_SUPPORT;
 	cdp_cfg.is_uc_offload_enabled = ucfg_ipa_uc_is_enabled();
 	cdp_cfg.uc_tx_buffer_count = cfg_get(psoc, CFG_DP_IPA_UC_TX_BUF_COUNT);
 	cdp_cfg.uc_tx_buffer_size =

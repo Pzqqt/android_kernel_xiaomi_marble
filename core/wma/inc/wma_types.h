@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -154,9 +154,7 @@ enum wmamsgtype {
 	WMA_TIMER_TRAFFIC_ACTIVITY_REQ = SIR_HAL_TIMER_TRAFFIC_ACTIVITY_REQ,
 	WMA_TIMER_ADC_RSSI_STATS = SIR_HAL_TIMER_ADC_RSSI_STATS,
 	WMA_TIMER_TRAFFIC_STATS_IND = SIR_HAL_TRAFFIC_STATS_IND,
-#ifdef WLAN_FEATURE_11W
 	WMA_EXCLUDE_UNENCRYPTED_IND = SIR_HAL_EXCLUDE_UNENCRYPTED_IND,
-#endif
 
 #ifdef FEATURE_WLAN_ESE
 	WMA_TSM_STATS_REQ = SIR_HAL_TSM_STATS_REQ,
@@ -442,7 +440,7 @@ enum wmamsgtype {
 	WMA_TWT_NUDGE_DIALOG_REQUEST = SIR_HAL_TWT_NUDGE_DIALOG_REQUEST,
 };
 
-#define WMA_DATA_STALL_TRIGGER 6
+#define WMA_DATA_STALL_TRIGGER 0x1006
 
 /* Bit 6 will be used to control BD rate for Management frames */
 #define HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME 0x40
@@ -728,7 +726,9 @@ QDF_STATUS wma_register_mgmt_frm_client(void);
 QDF_STATUS wma_de_register_mgmt_frm_client(void);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS wma_register_roaming_callbacks(
+#ifndef FEATURE_CM_ENABLE
 		csr_roam_synch_fn_t csr_roam_synch_cb,
+#endif
 		QDF_STATUS (*csr_roam_auth_event_handle_cb)(
 			struct mac_context *mac,
 			uint8_t vdev_id,
@@ -742,7 +742,9 @@ QDF_STATUS wma_register_roaming_callbacks(
 		csr_roam_pmkid_req_fn_t csr_roam_pmkid_req_cb);
 #else
 static inline QDF_STATUS wma_register_roaming_callbacks(
+#ifndef FEATURE_CM_ENABLE
 		csr_roam_synch_fn_t csr_roam_synch_cb,
+#endif
 		QDF_STATUS (*csr_roam_auth_event_handle_cb)(
 			struct mac_context *mac,
 			uint8_t vdev_id,

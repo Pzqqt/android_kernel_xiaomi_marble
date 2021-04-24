@@ -122,13 +122,11 @@ uint8_t ccp_rsn_oui04[HDD_RSN_OUI_SIZE] = { 0x00, 0x0F, 0xAC, 0x04 };
 /* WEP-104 */
 uint8_t ccp_rsn_oui05[HDD_RSN_OUI_SIZE] = { 0x00, 0x0F, 0xAC, 0x05 };
 
-#ifdef WLAN_FEATURE_11W
 /* RSN-PSK-SHA256 */
 uint8_t ccp_rsn_oui07[HDD_RSN_OUI_SIZE] = { 0x00, 0x0F, 0xAC, 0x06 };
 
 /* RSN-8021X-SHA256 */
 uint8_t ccp_rsn_oui08[HDD_RSN_OUI_SIZE] = { 0x00, 0x0F, 0xAC, 0x05 };
-#endif
 
 /* AES-GCMP-128 */
 uint8_t ccp_rsn_oui09[HDD_RSN_OUI_SIZE] = { 0x00, 0x0F, 0xAC, 0x08 };
@@ -1098,8 +1096,14 @@ hdd_conn_save_connect_info(struct hdd_adapter *adapter,
 {
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	eCsrEncryptionType encrypt_type = eCSR_ENCRYPT_TYPE_NONE;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct wlan_channel *des_chan;
 
 	QDF_ASSERT(roam_info);
+
+	des_chan = wlan_vdev_mlme_get_des_chan(adapter->vdev);
+	if (!des_chan)
+		return;
 
 	if (roam_info) {
 		/* Save the BSSID for the connection */
@@ -1136,20 +1140,20 @@ hdd_conn_save_connect_info(struct hdd_adapter *adapter,
 				sta_ctx->conn_info.auth_type;
 
 			sta_ctx->conn_info.chan_freq =
-				roam_info->u.pConnectedProfile->op_freq;
-
+				wlan_get_operation_chan_freq_vdev_id(hdd_ctx->pdev,
+								     adapter->vdev_id);
+			wlan_mlme_get_ssid_vdev_id(hdd_ctx->pdev,
+					adapter->vdev_id,
+					sta_ctx->conn_info.ssid.SSID.ssId,
+					&sta_ctx->conn_info.ssid.SSID.length);
 			/* Save the ssid for the connection */
-			qdf_mem_copy(&sta_ctx->conn_info.ssid.SSID,
-				     &roam_info->u.pConnectedProfile->SSID,
-				     sizeof(tSirMacSSid));
 			qdf_mem_copy(&sta_ctx->conn_info.last_ssid.SSID,
-				     &roam_info->u.pConnectedProfile->SSID,
+				     &sta_ctx->conn_info.ssid.SSID,
 				     sizeof(tSirMacSSid));
 
 			/* Save dot11mode in which STA associated to AP */
 			sta_ctx->conn_info.dot11mode =
-				roam_info->u.pConnectedProfile->dot11Mode;
-
+				sme_phy_mode_to_dot11mode(des_chan->ch_phymode);
 			sta_ctx->conn_info.proxy_arp_service =
 				roam_info->u.pConnectedProfile->proxy_arp_service;
 
@@ -1662,11 +1666,9 @@ void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter)
 
 	qdf_mem_zero(roam_profile->bssid_hint.bytes, QDF_MAC_ADDR_SIZE);
 
-#ifdef WLAN_FEATURE_11W
 	roam_profile->MFPEnabled = false;
 	roam_profile->MFPRequired = 0;
 	roam_profile->MFPCapable = 0;
-#endif
 
 	qdf_mem_zero(roam_profile->Keys.KeyLength, CSR_MAX_NUM_KEY);
 	qdf_mem_zero(roam_profile->Keys.KeyMaterial,
@@ -1941,6 +1943,41 @@ void hdd_set_unpause_queue(void *soc, struct hdd_adapter *adapter)
 { }
 #endif
 
+#ifdef FEATURE_WDS
+/**
+ * hdd_config_wds_repeater_mode() - configures vdev for wds repeater mode
+ * @adapter: pointer to adapter
+ * @peer_addr: peer mac address
+ *
+ * Configure dp vdev to detect and drop multicast echo packets and enable
+ * 4 address frame format in fw.
+ *
+ * Return: None
+ */
+static void
+hdd_config_wds_repeater_mode(struct hdd_adapter *adapter, uint8_t *peer_addr)
+{
+	cdp_config_param_type vdev_param;
+	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	vdev_param.cdp_vdev_param_mec = true;
+	if (cdp_txrx_set_vdev_param(soc, adapter->vdev_id, CDP_ENABLE_MEC,
+				    vdev_param))
+		hdd_debug("Failed to set MEC param on DP vdev");
+
+	hdd_nofl_info("Turn on 4 address for peer: " QDF_MAC_ADDR_FMT,
+		      QDF_MAC_ADDR_REF(peer_addr));
+	if (sme_set_peer_param(peer_addr, WMI_HOST_PEER_USE_4ADDR, true,
+			       adapter->vdev_id))
+		hdd_err("Failed to enable WDS on vdev");
+}
+#else
+static inline void
+hdd_config_wds_repeater_mode(struct hdd_adapter *adapter, uint8_t *peer_addr)
+{
+}
+#endif
+
 QDF_STATUS hdd_change_peer_state(struct hdd_adapter *adapter,
 				 uint8_t *peer_mac,
 				 enum ol_txrx_peer_state sta_state)
@@ -1980,6 +2017,11 @@ QDF_STATUS hdd_change_peer_state(struct hdd_adapter *adapter,
 		    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
 			hdd_set_unpause_queue(soc, adapter);
 		}
+
+		if (adapter->device_mode == QDF_STA_MODE &&
+		    (wlan_mlme_get_wds_mode(hdd_ctx->psoc) ==
+		    WLAN_WDS_MODE_REPEATER))
+			hdd_config_wds_repeater_mode(adapter, peer_mac);
 	}
 	return QDF_STATUS_SUCCESS;
 }
@@ -2692,6 +2734,9 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 					  WLAN_IPA_STA_CONNECT,
 					  roam_info->bssid.bytes);
 
+		if (adapter->device_mode == QDF_STA_MODE)
+			cdp_reset_rx_hw_ext_stats(soc);
+
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 		wlan_hdd_auto_shutdown_enable(hdd_ctx, false);
 #endif
@@ -2840,6 +2885,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 					if (!hddDisconInProgress &&
 						roam_info->bss_desc) {
 						struct cfg80211_bss *roam_bss;
+						struct wlan_ssid ssid;
 
 						/*
 						 * After roaming is completed,
@@ -2868,16 +2914,15 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 						chan = ieee80211_get_channel(
 							adapter->wdev.wiphy,
 							roam_info->bss_desc->chan_freq);
-
+						wlan_mlme_get_ssid_vdev_id(hdd_ctx->pdev,
+							adapter->vdev_id,
+							ssid.ssid, &ssid.length);
 						roam_bss =
 							wlan_cfg80211_get_bss(
 							adapter->wdev.wiphy,
 							chan,
 							roam_info->bssid.bytes,
-							roam_info->u.
-							pConnectedProfile->SSID.ssId,
-							roam_info->u.
-							pConnectedProfile->SSID.length);
+							ssid.ssid, ssid.length);
 
 						cdp_hl_fc_set_td_limit(soc,
 							adapter->vdev_id,
@@ -3030,6 +3075,8 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			ucfg_mlme_init_twt_context(hdd_ctx->psoc,
 						   &roam_info->bssid,
 						   WLAN_ALL_SESSIONS_DIALOG_ID);
+			sme_check_enable_ru_242_tx(hdd_ctx->mac_handle,
+						   adapter->vdev_id);
 		}
 
 		/*
@@ -3429,8 +3476,6 @@ QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
 
 #endif
 
-#ifdef WLAN_FEATURE_11W
-
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0))
 
 static void hdd_rx_unprot_disassoc(struct net_device *dev,
@@ -3516,7 +3561,6 @@ hdd_indicate_unprot_mgmt_frame(struct hdd_adapter *adapter,
 		break;
 	}
 }
-#endif /* WLAN_FEATURE_11W */
 
 #ifdef FEATURE_WLAN_ESE
 /**
@@ -3911,21 +3955,14 @@ hdd_indicate_ese_bcn_report_ind(const struct hdd_adapter *adapter,
  *
  * Return: bool
  */
-#ifdef WLAN_FEATURE_11W
 static inline bool
 hdd_is_8021x_sha256_auth_type(struct hdd_station_ctx *sta_ctx)
 {
 	return eCSR_AUTH_TYPE_RSN_8021X_SHA256 ==
 				sta_ctx->conn_info.auth_type;
 }
-#else
-static inline bool
-hdd_is_8021x_sha256_auth_type(struct hdd_station_ctx *sta_ctx)
-{
-	return false;
-}
 #endif
-#endif
+
 /*
  * hdd_roam_channel_switch_handler() - hdd channel switch handler
  * @adapter: Pointer to adapter context
@@ -4267,7 +4304,6 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 		break;
 #endif
 #endif /* ndef FEATURE_CM_ENABLE */
-#ifdef WLAN_FEATURE_11W
 	case eCSR_ROAM_UNPROT_MGMT_FRAME_IND:
 		if (roam_info)
 			hdd_indicate_unprot_mgmt_frame(adapter,
@@ -4275,7 +4311,6 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 					       roam_info->pbFrames,
 					       roam_info->frameType);
 		break;
-#endif
 #ifdef FEATURE_WLAN_ESE
 	case eCSR_ROAM_TSM_IE_IND:
 		if (roam_info)
@@ -4446,16 +4481,13 @@ enum csr_akm_type hdd_translate_rsn_to_csr_auth_type(uint8_t auth_suite[4])
 		auth_type = eCSR_AUTH_TYPE_CCKM_RSN;
 	} else
 #endif /* FEATURE_WLAN_ESE */
-#ifdef WLAN_FEATURE_11W
 	if (memcmp(auth_suite, ccp_rsn_oui07, 4) == 0) {
 		auth_type = eCSR_AUTH_TYPE_RSN_PSK_SHA256;
 	} else if (memcmp(auth_suite, ccp_rsn_oui08, 4) == 0) {
 		auth_type = eCSR_AUTH_TYPE_RSN_8021X_SHA256;
 	} else if (memcmp(auth_suite, ccp_rsn_oui_18, 4) == 0) {
 		auth_type = eCSR_AUTH_TYPE_OWE;
-	} else
-#endif
-	if (memcmp(auth_suite, ccp_rsn_oui_12, 4) == 0) {
+	} else if (memcmp(auth_suite, ccp_rsn_oui_12, 4) == 0) {
 		auth_type = eCSR_AUTH_TYPE_DPP_RSN;
 	} else if (memcmp(auth_suite, ccp_rsn_oui_0b, 4) == 0) {
 		/* Check for Suite B EAP 256 */
@@ -4595,7 +4627,6 @@ bool hdd_is_fils_connection(struct hdd_context *hdd_ctx,
  *
  * Return: 0 on success, error number otherwise
  */
-#ifdef WLAN_FEATURE_11W
 static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 				 u8 *bssid,
 				 eCsrEncryptionType *encrypt_type,
@@ -4603,14 +4634,6 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 				 enum csr_akm_type *auth_type,
 				 uint8_t *mfp_required, uint8_t *mfp_capable,
 				 uint16_t gen_ie_len, uint8_t *gen_ie)
-#else
-static int32_t hdd_process_genie(struct hdd_adapter *adapter,
-				 u8 *bssid,
-				 eCsrEncryptionType *encrypt_type,
-				 eCsrEncryptionType *mc_encrypt_type,
-				 enum csr_akm_type *auth_type,
-				 uint16_t gen_ie_len, uint8_t *gen_ie)
-#endif
 {
 	mac_handle_t mac_handle = hdd_adapter_get_mac_handle(adapter);
 	tDot11fIERSN dot11_rsn_ie = {0};
@@ -4667,12 +4690,10 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 			*mc_encrypt_type =
 			hdd_translate_rsn_to_csr_encryption_type(
 					dot11_rsn_ie.gp_cipher_suite);
-#ifdef WLAN_FEATURE_11W
 		*mfp_required = dot11_rsn_ie.RSN_Cap[0] &
 					WLAN_CRYPTO_RSN_CAP_MFP_REQUIRED;
 		*mfp_capable =  dot11_rsn_ie.RSN_Cap[0] &
 					WLAN_CRYPTO_RSN_CAP_MFP_ENABLED;
-#endif
 		qdf_mem_copy(&rsn_cap, dot11_rsn_ie.RSN_Cap, sizeof(rsn_cap));
 		wlan_crypto_set_vdev_param(adapter->vdev,
 					   WLAN_CRYPTO_PARAM_RSN_CAP, rsn_cap);
@@ -4719,7 +4740,6 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 	return 0;
 }
 
-#ifdef WLAN_FEATURE_11W
 /**
  * hdd_set_def_mfp_cap: Set default value for MFPCapable
  * @profile: Source profile
@@ -4731,12 +4751,6 @@ static void hdd_set_def_mfp_cap(
 {
 	roam_profile->MFPCapable = roam_profile->MFPEnabled;
 }
-#else
-static void hdd_set_def_mfp_cap(
-	struct csr_roam_profile *roam_profile)
-{
-}
-#endif
 
 /**
  * hdd_set_def_rsne_override() - set default encryption type and auth type
@@ -4768,7 +4782,6 @@ static void hdd_set_def_rsne_override(
 	*auth_type = eCSR_AUTH_TYPE_RSN_PSK;
 }
 
-#ifdef WLAN_FEATURE_11W
 /**
  * hdd_update_values_mfp_cap: Update values for MFPCapable,MFPEnabled
  * @profile: Source profile
@@ -4784,15 +4797,7 @@ static void hdd_update_values_mfp_cap(
 	roam_profile->MFPRequired = mfp_required;
 	roam_profile->MFPCapable = mfp_capable;
 }
-#else
-static void hdd_update_values_mfp_cap(
-	struct csr_roam_profile *roam_profile,
-	uint8_t mfp_required, uint8_t mfp_capable )
-{
-}
-#endif
 
-#ifdef WLAN_FEATURE_11W
 /**
  * hdd_set_mfp_enable: Set value for MFPEnabled
  * @profile: Source profile
@@ -4812,13 +4817,7 @@ static void hdd_set_mfp_enable(struct csr_roam_profile *roam_profile)
 		roam_profile->MFPEnabled = 0;
 	}
 }
-#else
-static void hdd_set_mfp_enable(struct csr_roam_profile *roam_profile)
-{
-}
-#endif
 
-#ifdef WLAN_FEATURE_11W
 static uint32_t wlan_hdd_process_genie(struct hdd_adapter *adapter,
 				   u8 *bssid,
 				   eCsrEncryptionType *encrypt_type,
@@ -4837,25 +4836,6 @@ static uint32_t wlan_hdd_process_genie(struct hdd_adapter *adapter,
 
 	return status;
 }
-#else
-static uint32_t wlan_hdd_process_genie(struct hdd_adapter *adapter,
-				   u8 *bssid,
-				   eCsrEncryptionType *encrypt_type,
-				   eCsrEncryptionType *mc_encrypt_type,
-				   enum csr_akm_type *auth_type,
-				   uint8_t *mfp_required,
-				   uint8_t *mfp_capable,
-				   uint16_t gen_ie_len, uint8_t *gen_ie)
-{
-	uint32_t status;
-
-	status = hdd_process_genie(adapter, bssid,
-				   encrypt_type, mc_encrypt_type,
-				   auth_type, gen_ie_len, gen_ie);
-
-	return status;
-}
-#endif
 
 /**
  * hdd_set_genie_to_csr() - set genie to csr
@@ -5063,19 +5043,16 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 				    == HDD_AUTH_KEY_MGMT_PSK)) {
 				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_FT_RSN_PSK;
-			} else
-
-#ifdef WLAN_FEATURE_11W
-			if (rsn_auth_type == eCSR_AUTH_TYPE_RSN_PSK_SHA256) {
+			} else if (rsn_auth_type ==
+					eCSR_AUTH_TYPE_RSN_PSK_SHA256) {
 				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_RSN_PSK_SHA256;
 			} else if (rsn_auth_type ==
 				   eCSR_AUTH_TYPE_RSN_8021X_SHA256) {
 				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_RSN_8021X_SHA256;
-			} else
-#endif
-			if (hdd_check_fils_rsn_n_set_auth_type(roam_profile,
+			} else if (hdd_check_fils_rsn_n_set_auth_type(
+				roam_profile,
 				rsn_auth_type)) {
 				roam_profile->AuthType.authType[0] =
 					rsn_auth_type;
@@ -5115,14 +5092,12 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 				/* FT Suite-B EAP SHA 384 */
 				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_FT_SUITEB_EAP_SHA384;
-
 			} else if ((key_mgmt & HDD_AUTH_KEY_MGMT_802_1X)
 				    == HDD_AUTH_KEY_MGMT_802_1X) {
 				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_RSN;
-			} else
-			if ((key_mgmt & HDD_AUTH_KEY_MGMT_PSK)
-			    == HDD_AUTH_KEY_MGMT_PSK) {
+			} else if ((key_mgmt & HDD_AUTH_KEY_MGMT_PSK)
+				  == HDD_AUTH_KEY_MGMT_PSK) {
 				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_RSN_PSK;
 			} else {
@@ -5226,8 +5201,8 @@ struct osif_cm_ops osif_ops = {
 	.disconnect_complete_cb = hdd_cm_disconnect_complete,
 	.netif_queue_control_cb = hdd_cm_netif_queue_control,
 	.napi_serialize_control_cb = hdd_cm_napi_serialize_control,
-#ifdef WLAN_FEATURE_FILS_SK
 	.save_gtk_cb = hdd_cm_save_gtk,
+#ifdef WLAN_FEATURE_FILS_SK
 	.set_hlp_data_cb = hdd_cm_set_hlp_data,
 #endif
 };

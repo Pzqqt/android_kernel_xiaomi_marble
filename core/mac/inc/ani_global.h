@@ -746,7 +746,9 @@ struct mac_context {
 	struct wlan_mlme_chain_cfg fw_chain_cfg;
 	struct wlan_mlme_cfg *mlme_cfg;
 	tAniSirLim lim;
+#ifndef FEATURE_CM_ENABLE
 	uint8_t nud_fail_behaviour;
+#endif
 	struct sch_context sch;
 	tAniSirSys sys;
 
@@ -804,7 +806,9 @@ struct mac_context {
 	bool he_om_ctrl_cfg_tx_nsts_set;
 	uint8_t he_om_ctrl_cfg_tx_nsts;
 	bool he_om_ctrl_ul_mu_data_dis;
+	uint8_t usr_cfg_disable_rsp_tx;
 	uint8_t is_usr_cfg_pmf_wep;
+	uint8_t usr_cfg_ru_242_tone_tx;
 #ifdef WLAN_FEATURE_11AX
 	tDot11fIEhe_cap he_cap_2g;
 	tDot11fIEhe_cap he_cap_5g;

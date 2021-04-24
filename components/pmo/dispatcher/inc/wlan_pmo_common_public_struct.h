@@ -51,15 +51,20 @@
 
 #define PMO_WOW_REQUIRED_CREDITS 1
 
+#define MAX_MC_IP_ADDR 10
+#define IGMP_QUERY_ADDRESS 0x10000e0
+
 /**
  * enum pmo_vdev_param_id: tell vdev param id
  * @pmo_vdev_param_listen_interval: vdev listen interval param id
  * @pmo_vdev_param_dtim_policy: vdev param dtim policy
+ * @pmo_vdev_param_forced_dtim_count: vdev param forced dtim count
  * @pmo_vdev_max_param: Max vdev param id
  */
 enum pmo_vdev_param_id {
 	pmo_vdev_param_listen_interval = 0,
 	pmo_vdev_param_dtim_policy,
+	pmo_vdev_param_forced_dtim_count,
 	pmo_vdev_max_param
 };
 
@@ -291,6 +296,7 @@ enum pmo_gpio_wakeup_mode {
  * @sta_dynamic_dtim: station dynamic DTIM value
  * @sta_mod_dtim: station modulated DTIM value
  * @sta_max_li_mod_dtim: station max listen interval DTIM value
+ * @sta_forced_dtim: station forced DTIM value
  * @wow_enable: enable wow with majic pattern match or pattern byte match
  * @power_save_mode: power save mode for psoc
  * @runtime_pm_delay: set runtime pm's inactivity timer
@@ -314,7 +320,6 @@ enum pmo_gpio_wakeup_mode {
  * @wow_pulse_init_state: Pulse init level
  * @packet_filters_bitmap: Packet filter bitmap configuration
  * @wow_data_inactivity_timeout: power save wow data inactivity timeout
- * @ps_data_inactivity_timeout: Power save data inactivity timeout for non
  *  wow mode
  * @active_uc_apf_mode: Setting that determines how APF is applied in active
  *	mode for uc packets
@@ -326,6 +331,8 @@ enum pmo_gpio_wakeup_mode {
  * @enable_gpio_wakeup: enable gpio wakeup
  * @gpio_wakeup_pin: gpio wakeup pin
  * @gpio_wakeup_mode: gpio wakeup mode
+ * @igmp_version_support: igmp version support
+ * @igmp_offload_enable: enable/disable igmp offload feature to fw
  */
 struct pmo_psoc_cfg {
 	bool ptrn_match_enable_all_vdev;
@@ -352,6 +359,7 @@ struct pmo_psoc_cfg {
 	uint8_t sta_dynamic_dtim;
 	uint8_t sta_mod_dtim;
 	uint8_t sta_max_li_mod_dtim;
+	bool sta_forced_dtim;
 	enum pmo_wow_enable_type wow_enable;
 	enum powersave_mode power_save_mode;
 	enum powersave_mode default_power_save_mode;
@@ -385,7 +393,6 @@ struct pmo_psoc_cfg {
 #endif
 	bool enable_sap_suspend;
 	uint8_t wow_data_inactivity_timeout;
-	uint8_t ps_data_inactivity_timeout;
 	enum active_apf_mode active_uc_apf_mode;
 	enum active_apf_mode active_mc_bc_apf_mode;
 	uint8_t ito_repeat_count;
@@ -396,6 +403,10 @@ struct pmo_psoc_cfg {
 	bool enable_gpio_wakeup;
 	uint32_t gpio_wakeup_pin;
 	enum pmo_gpio_wakeup_mode gpio_wakeup_mode;
+#endif
+#ifdef WLAN_FEATURE_IGMP_OFFLOAD
+	uint32_t igmp_version_support;
+	bool igmp_offload_enable;
 #endif
 };
 
@@ -417,4 +428,21 @@ struct pmo_device_caps {
 	bool li_offload;
 };
 
+/**
+ * pmo_igmp_offload_req - structure to hold igmp param
+ *
+ * @vdev_id: vdev id
+ * @enable: enable/disable
+ * @version_support: version support
+ * @num_grp_ip_address: num grp ip addr
+ * @grp_ip_address: array of grp_ip_address
+ *
+ **/
+struct pmo_igmp_offload_req {
+	uint32_t vdev_id;
+	bool enable;
+	uint32_t version_support;
+	uint32_t num_grp_ip_address;
+	uint32_t grp_ip_address[MAX_MC_IP_ADDR];
+};
 #endif /* end  of _WLAN_PMO_COMMONP_STRUCT_H_ */

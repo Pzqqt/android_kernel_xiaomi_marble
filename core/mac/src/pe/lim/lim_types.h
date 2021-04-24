@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -967,7 +967,6 @@ QDF_STATUS lim_sta_reassoc_error_handler(struct reassoc_params *param)
 }
 #endif
 
-#ifdef WLAN_FEATURE_11W
 /* 11w send SA query request action frame */
 QDF_STATUS lim_send_sa_query_request_frame(struct mac_context *mac, uint8_t *transId,
 					      tSirMacAddr peer,
@@ -976,8 +975,6 @@ QDF_STATUS lim_send_sa_query_request_frame(struct mac_context *mac, uint8_t *tra
 QDF_STATUS lim_send_sa_query_response_frame(struct mac_context *mac,
 					       uint8_t *transId, tSirMacAddr peer,
 					       struct pe_session *pe_session);
-#endif
-
 /* Inline functions */
 
 /**

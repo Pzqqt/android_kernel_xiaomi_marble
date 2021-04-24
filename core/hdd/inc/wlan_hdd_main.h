@@ -245,7 +245,6 @@ static inline bool in_compat_syscall(void) { return is_compat_task(); }
  * @DEVICE_IFACE_OPENED: Adapter has been "opened" via the kernel
  * @SOFTAP_INIT_DONE: Software Access Point (SAP) is initialized
  * @VENDOR_ACS_RESPONSE_PENDING: Waiting for event for vendor acs
- * @DOWN_DURING_SSR: Mark interface is down during SSR
  */
 enum hdd_adapter_flags {
 	NET_DEVICE_REGISTERED,
@@ -256,7 +255,16 @@ enum hdd_adapter_flags {
 	DEVICE_IFACE_OPENED,
 	SOFTAP_INIT_DONE,
 	VENDOR_ACS_RESPONSE_PENDING,
-	DOWN_DURING_SSR,
+};
+
+/**
+ * enum hdd_nb_cmd_id - North bound command IDs received during SSR
+ * @NO_COMMAND - No NB command received during SSR
+ * @INTERFACE_DOWN - Received interface down during SSR
+ */
+enum hdd_nb_cmd_id {
+	NO_COMMAND,
+	INTERFACE_DOWN
 };
 
 #define WLAN_WAIT_DISCONNECT_ALREADY_IN_PROGRESS  1000
@@ -515,6 +523,7 @@ typedef enum {
 	NET_DEV_HOLD_CACHE_STATION_STATS_CB = 57,
 	NET_DEV_HOLD_DISPLAY_TXRX_STATS = 58,
 	NET_DEV_HOLD_BUS_BW_MGR = 59,
+	NET_DEV_HOLD_START_PRE_CAC_TRANS = 60,
 
 	/* Keep it at the end */
 	NET_DEV_HOLD_ID_MAX
@@ -587,7 +596,6 @@ struct hdd_tx_rx_stats {
 	u64 jiffies_last_txtimeout;
 };
 
-#ifdef WLAN_FEATURE_11W
 /**
  * struct hdd_pmf_stats - Protected Management Frame statistics
  * @num_unprot_deauth_rx: Number of unprotected deauth frames received
@@ -597,7 +605,6 @@ struct hdd_pmf_stats {
 	uint8_t num_unprot_deauth_rx;
 	uint8_t num_unprot_disassoc_rx;
 };
-#endif
 
 /**
  * struct hdd_arp_stats_s - arp debug stats count
@@ -776,9 +783,7 @@ struct hdd_stats {
 	struct hdd_tcp_stats_s hdd_tcp_stats;
 	struct hdd_icmpv4_stats_s hdd_icmpv4_stats;
 	struct hdd_peer_stats peer_stats;
-#ifdef WLAN_FEATURE_11W
 	struct hdd_pmf_stats hdd_pmf_stats;
-#endif
 	struct hdd_eapol_stats_s hdd_eapol_stats;
 	struct hdd_dhcp_stats_s hdd_dhcp_stats;
 	struct pmf_bcn_protect_stats bcn_protect_stats;
@@ -1538,6 +1543,9 @@ struct hdd_adapter {
 	/* Flag to indicate whether it is a pre cac adapter or not */
 	bool is_pre_cac_adapter;
 	bool delete_in_progress;
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+	struct big_data_stats_event big_data_stats;
+#endif
 };
 
 #define WLAN_HDD_GET_STATION_CTX_PTR(adapter) (&(adapter)->session.station)
@@ -2210,6 +2218,7 @@ struct hdd_context {
 	bool is_regulatory_update_in_progress;
 	qdf_event_t regulatory_update_event;
 	qdf_mutex_t regulatory_status_lock;
+	bool is_fw_dbg_log_levels_configured;
 };
 
 /**
@@ -3351,6 +3360,20 @@ int hdd_update_acs_timer_reason(struct hdd_adapter *adapter, uint8_t reason);
 void hdd_switch_sap_channel(struct hdd_adapter *adapter, uint8_t channel,
 			    bool forced);
 
+/**
+ * hdd_switch_sap_chan_freq() - Move SAP to the given channel
+ * @adapter: AP adapter
+ * @chan_freq: Channel frequency
+ * @forced: Force to switch channel, ignore SCC/MCC check
+ *
+ * Moves the SAP interface by invoking the function which
+ * executes the callback to perform channel switch using (E)CSA.
+ *
+ * Return: None
+ */
+void hdd_switch_sap_chan_freq(struct hdd_adapter *adapter, qdf_freq_t chan_freq,
+			      bool forced);
+
 #if defined(FEATURE_WLAN_CH_AVOID)
 void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctx);
 
@@ -4177,6 +4200,14 @@ void hdd_unregister_notifiers(struct hdd_context *hdd_ctx);
 int hdd_dbs_scan_selection_init(struct hdd_context *hdd_ctx);
 
 /**
+ * hdd_update_scan_config - API to update scan configuration parameters
+ * @hdd_ctx: HDD context
+ *
+ * Return: 0 if success else err
+ */
+int hdd_update_scan_config(struct hdd_context *hdd_ctx);
+
+/**
  * hdd_start_complete()- complete the start event
  * @ret: return value for complete event.
  *
@@ -4905,6 +4936,14 @@ static inline unsigned long wlan_hdd_get_pm_qos_cpu_latency(void)
 #endif /* defined(CLD_PM_QOS) || defined(FEATURE_RUNTIME_PM) */
 
 /**
+ * hdd_is_runtime_pm_enabled - if runtime pm enabled
+ * @hdd_ctx: hdd context
+ *
+ * Return: true if runtime pm enabled. false if disabled.
+ */
+bool hdd_is_runtime_pm_enabled(struct hdd_context *hdd_ctx);
+
+/**
  * hdd_netdev_feature_update - Update the netdev features
  * @net_dev: Handle to net_device
  *
@@ -4913,6 +4952,17 @@ static inline unsigned long wlan_hdd_get_pm_qos_cpu_latency(void)
  * Return: None
  */
 void hdd_netdev_update_features(struct hdd_adapter *adapter);
+
+/**
+ * hdd_stop_no_trans() - HDD stop function
+ * @dev:	Pointer to net_device structure
+ *
+ * This is called in response to ifconfig down. Vdev sync transaction
+ * should be started before calling this API.
+ *
+ * Return: 0 for success; non-zero for failure
+ */
+int hdd_stop_no_trans(struct net_device *dev);
 
 #if defined(CLD_PM_QOS)
 /**

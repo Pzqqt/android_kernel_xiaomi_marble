@@ -1990,7 +1990,6 @@
  */
 #define WE_GET_TDLS_PEERS    8
 #endif
-#ifdef WLAN_FEATURE_11W
 /*
  * <ioctl>
  * getPMFInfo - get the PMF info of the connected session
@@ -2015,7 +2014,6 @@
  * </ioctl>
  */
 #define WE_GET_11W_INFO      9
-#endif
 #define WE_GET_STATES        10
 /*
  * <ioctl>
@@ -3676,13 +3674,8 @@ static int hdd_we_set_max_assoc(struct hdd_adapter *adapter, int value)
 static int hdd_we_set_data_inactivity_timeout(struct hdd_adapter *adapter,
 					      int inactivity_timeout)
 {
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	QDF_STATUS status;
-
-	status = ucfg_mlme_set_ps_data_inactivity_timeout(hdd_ctx->psoc,
-							  inactivity_timeout);
-
-	return qdf_status_to_os_return(status);
+	/* data inactivity timeout is no longer supported and is not used */
+	return -ENOTSUPP;
 }
 
 static int hdd_we_set_wow_data_inactivity_timeout(struct hdd_adapter *adapter,
@@ -4575,9 +4568,19 @@ static int hdd_we_set_dcm(struct hdd_adapter *adapter, int value)
 
 static int hdd_we_set_range_ext(struct hdd_adapter *adapter, int value)
 {
-	return hdd_we_set_vdev(adapter,
-			       WMI_VDEV_PARAM_HE_RANGE_EXT,
-			       value);
+	int status;
+
+	status = hdd_we_set_vdev(adapter, WMI_VDEV_PARAM_HE_RANGE_EXT, value);
+	if (status)
+		hdd_err("Failed to set HE_RANGE_EXT, errno %d", status);
+
+	status = hdd_we_set_vdev(adapter, WMI_VDEV_PARAM_NON_DATA_HE_RANGE_EXT,
+				 value);
+	if (status)
+		hdd_err("Failed to set NON_DATA_HE_RANGE_EXT, errno %d",
+			status);
+
+	return status;
 }
 
 static int hdd_we_set_dbg(struct hdd_adapter *adapter,
@@ -6347,7 +6350,6 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		break;
 	}
 #endif
-#ifdef WLAN_FEATURE_11W
 	case WE_GET_11W_INFO:
 	{
 		struct csr_roam_profile *roam_profile =
@@ -6375,7 +6377,6 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		wrqu->data.length = strlen(extra) + 1;
 		break;
 	}
-#endif
 	case WE_GET_PHYMODE:
 	{
 		bool ch_bond24 = false, ch_bond5g = false;
@@ -9881,12 +9882,11 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
 	 "getTdlsPeers"},
 #endif
-#ifdef WLAN_FEATURE_11W
 	{WE_GET_11W_INFO,
 	 0,
 	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
 	 "getPMFInfo"},
-#endif
+
 	{WE_GET_STA_CXN_INFO,
 	 0,
 	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,

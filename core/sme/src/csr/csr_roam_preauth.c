@@ -559,9 +559,8 @@ QDF_STATUS csr_roam_issue_ft_preauth_req(struct mac_context *mac_ctx,
 	preauth_req->pre_auth_channel_freq = bss_desc->chan_freq;
 	preauth_req->dot11mode = dot11mode;
 
-	qdf_mem_copy((void *)&preauth_req->currbssId,
-			(void *)csr_session->connectedProfile.bssid.bytes,
-			sizeof(tSirMacAddr));
+	wlan_mlme_get_bssid_vdev_id(mac_ctx->pdev, vdev_id,
+				    (struct qdf_mac_addr *)&preauth_req->currbssId);
 	qdf_mem_copy((void *)&preauth_req->preAuthbssId,
 			(void *)bss_desc->bssId, sizeof(tSirMacAddr));
 	qdf_mem_copy((void *)&preauth_req->self_mac_addr,

@@ -173,7 +173,8 @@ QDF_STATUS policy_mgr_pdev_set_hw_mode(struct wlan_objmgr_psoc *psoc,
 	 * is in progress state.
 	 */
 	if (pm_ctx->hdd_cbacks.hdd_is_cac_in_progress &&
-	    pm_ctx->hdd_cbacks.hdd_is_cac_in_progress()) {
+	    pm_ctx->hdd_cbacks.hdd_is_cac_in_progress() &&
+	    !policy_mgr_is_hw_dbs_2x2_capable(psoc)) {
 		policy_mgr_err("SAP CAC_IN_PROGRESS state, drop WMI_PDEV_SET_HW_MODE_CMDID");
 		return QDF_STATUS_E_FAILURE;
 	}

@@ -108,12 +108,18 @@
 #define ROAM_MAX_CFG_VALUE 0xffffffff
 
 #define CFG_VALID_CHANNEL_LIST_LEN 100
-#define MAX_SSID_ALLOWED_LIST    4
+#define MAX_SSID_ALLOWED_LIST    8
 #define MAX_BSSID_AVOID_LIST     16
 #define MAX_BSSID_FAVORED      16
 
 #define MAX_FTIE_SIZE 384
 #define ESE_MAX_TSPEC_IES 4
+
+/*
+ * To get 4 LSB of roam reason of roam_synch_data
+ * received from firmware
+ */
+#define ROAM_REASON_MASK 0x0F
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 #define ROAM_SCAN_PSK_SIZE    48
@@ -145,6 +151,19 @@
  * parameter is disabled from the ini
  */
 #define NEIGHBOR_REPORT_PARAM_INVALID (0xFFFFFFFFU)
+
+/*
+ * Currently roam score delta value is sent for 2 triggers and min rssi
+ * values are sent for 3 triggers
+ */
+#define NUM_OF_ROAM_TRIGGERS 2
+#define IDLE_ROAM_TRIGGER 0
+#define BTM_ROAM_TRIGGER  1
+
+#define NUM_OF_ROAM_MIN_RSSI 3
+#define DEAUTH_MIN_RSSI 0
+#define BMISS_MIN_RSSI  1
+#define MIN_RSSI_2G_TO_5G_ROAM 2
 
 /**
  * struct cm_roam_neighbor_report_offload_params - neighbor report offload
@@ -267,9 +286,12 @@ enum roam_fail_params {
  * ROAM_TRIGGER_REASON_PER, ROAM_TRIGGER_REASON_BMISS
  * @cfg_param: per vdev config params
  * @assoc_ie: assoc IE
+ * @prev_ap_bcn_ie: last connetced AP ie
  * @occupied_chan_lst: occupied channel list
  * @roam_candidate_count: candidate count
  * @is_ese_assoc: is ese assoc
+ * @krk: krk data
+ * @btk: btk data
  * @psk_pmk: pmk
  * @pmk_len: length of pmk
  * @mdid: mdid info
@@ -295,11 +317,16 @@ struct rso_config {
 	uint32_t roam_scan_scheme_bitmap;
 	struct rso_cfg_params cfg_param;
 	struct element_info assoc_ie;
+	struct element_info prev_ap_bcn_ie;
 	struct wlan_chan_list occupied_chan_lst;
 	int8_t roam_candidate_count;
 	uint8_t uapsd_mask;
 #ifdef FEATURE_WLAN_ESE
 	bool is_ese_assoc;
+	uint8_t krk[WMI_KRK_KEY_LEN];
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+	uint8_t btk[WMI_BTK_KEY_LEN];
+#endif
 #endif
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	uint8_t psk_pmk[ROAM_SCAN_PSK_SIZE];
@@ -495,26 +522,6 @@ struct wlan_cm_roam_vendor_btm_params {
 };
 
 /**
- * struct wlan_roam_triggers - vendor configured roam triggers
- * @vdev_id: vdev id
- * @trigger_bitmap: vendor configured roam trigger bitmap as
- *		    defined @enum roam_control_trigger_reason
- * @roam_score_delta: Value of roam score delta
- * percentage to trigger roam
- * @roam_scan_scheme_bitmap: Bitmap of roam triggers as defined in
- * enum roam_trigger_reason, for which the roam scan scheme should
- * be partial scan
- * @control_param: roam trigger param
- */
-struct wlan_roam_triggers {
-	uint32_t vdev_id;
-	uint32_t trigger_bitmap;
-	uint32_t roam_score_delta;
-	uint32_t roam_scan_scheme_bitmap;
-	struct wlan_cm_roam_vendor_btm_params vendor_btm_param;
-};
-
-/**
  * struct ap_profile - Structure ap profile to match candidate
  * @flags: flags
  * @rssi_threshold: the value of the the candidate AP should higher by this
@@ -618,19 +625,6 @@ struct scoring_param {
 	struct per_slot_score oce_wan_scoring;
 };
 
-/*
- * Currently roam score delta value is sent for 2 triggers and min rssi
- * values are sent for 3 triggers
- */
-#define NUM_OF_ROAM_TRIGGERS 2
-#define IDLE_ROAM_TRIGGER 0
-#define BTM_ROAM_TRIGGER  1
-
-#define NUM_OF_ROAM_MIN_RSSI 3
-#define DEAUTH_MIN_RSSI 0
-#define BMISS_MIN_RSSI  1
-#define MIN_RSSI_2G_TO_5G_ROAM 2
-
 /**
  * enum roam_trigger_reason - Reason for triggering roam
  * ROAM_TRIGGER_REASON_NONE: Roam trigger reason none
@@ -708,6 +702,30 @@ struct roam_trigger_min_rssi {
 struct roam_trigger_score_delta {
 	uint32_t roam_score_delta;
 	enum roam_trigger_reason trigger_reason;
+};
+
+/**
+ * struct wlan_roam_triggers - vendor configured roam triggers
+ * @vdev_id: vdev id
+ * @trigger_bitmap: vendor configured roam trigger bitmap as
+ *		    defined @enum roam_control_trigger_reason
+ * @roam_score_delta: Value of roam score delta
+ * percentage to trigger roam
+ * @roam_scan_scheme_bitmap: Bitmap of roam triggers as defined in
+ * enum roam_trigger_reason, for which the roam scan scheme should
+ * be partial scan
+ * @control_param: roam trigger param
+ * @min_rssi_params: Min RSSI values for different roam triggers
+ * @score_delta_params: Roam score delta values for different triggers
+ */
+struct wlan_roam_triggers {
+	uint32_t vdev_id;
+	uint32_t trigger_bitmap;
+	uint32_t roam_score_delta;
+	uint32_t roam_scan_scheme_bitmap;
+	struct wlan_cm_roam_vendor_btm_params vendor_btm_param;
+	struct roam_trigger_min_rssi min_rssi_params[NUM_OF_ROAM_MIN_RSSI];
+	struct roam_trigger_score_delta score_delta_param[NUM_OF_ROAM_TRIGGERS];
 };
 
 /**
@@ -1181,7 +1199,7 @@ struct wlan_rso_11r_params {
 	bool is_adaptive_11r;
 	bool enable_ft_im_roaming;
 	uint8_t psk_pmk[WMI_ROAM_SCAN_PSK_SIZE];
-	uint32_t pmk_len;
+	uint8_t pmk_len;
 	uint32_t r0kh_id_length;
 	uint8_t r0kh_id[WMI_ROAM_R0KH_ID_MAX_LEN];
 	struct mobility_domain_info mdid;
@@ -1677,6 +1695,7 @@ struct wlan_cm_roam_tx_ops {
 #ifdef FEATURE_CM_ENABLE
 	QDF_STATUS (*send_roam_invoke_cmd)(struct wlan_objmgr_vdev *vdev,
 					   struct roam_invoke_req *req);
+	QDF_STATUS (*send_roam_sync_complete_cmd)(struct wlan_objmgr_vdev *vdev);
 #endif
 };
 
@@ -1727,5 +1746,96 @@ struct cm_roam_values_copy {
 	int32_t int_value;
 	bool bool_value;
 	struct rso_chan_info chan_info;
+};
+
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+/* bit-4 and bit-5 indicate the subnet status */
+#define CM_GET_SUBNET_STATUS(roam_reason) (((roam_reason) & 0x30) >> 4)
+#else
+#define CM_GET_SUBNET_STATUS(roam_reason) (0)
+#endif
+
+/* This should not be greater than MAX_NUMBER_OF_CONC_CONNECTIONS */
+#define MAX_VDEV_SUPPORTED 4
+
+/**
+ * struct cm_ho_fail_ind - ho fail indication to CM
+ * @vdev_id: vdev id
+ * @psoc: psoc object
+ * @bssid: bssid addr
+ */
+struct cm_ho_fail_ind {
+	uint8_t vdev_id;
+	struct wlan_objmgr_psoc *psoc;
+	struct qdf_mac_addr bssid;
+};
+
+/**
+ * struct policy_mgr_vdev_mac_map - vdev id-mac id map
+ * @vdev_id: VDEV id
+ * @mac_id: MAC id
+ */
+struct policy_mgr_vdev_mac_map {
+	uint32_t vdev_id;
+	uint32_t mac_id;
+};
+
+/**
+ * struct cm_hw_mode_trans_ind - HW mode transition indication
+ * @old_hw_mode_index: Index of old HW mode
+ * @new_hw_mode_index: Index of new HW mode
+ * @num_vdev_mac_entries: Number of vdev-mac id entries
+ * @vdev_mac_map: vdev id-mac id map
+ */
+struct cm_hw_mode_trans_ind {
+	uint32_t old_hw_mode_index;
+	uint32_t new_hw_mode_index;
+	uint32_t num_vdev_mac_entries;
+	struct policy_mgr_vdev_mac_map vdev_mac_map[MAX_VDEV_SUPPORTED];
+};
+
+struct roam_offload_synch_ind {
+	uint16_t beaconProbeRespOffset;
+	uint16_t beaconProbeRespLength;
+	uint16_t reassocRespOffset;
+	uint16_t reassocRespLength;
+	uint16_t reassoc_req_offset;
+	uint16_t reassoc_req_length;
+	uint8_t isBeacon;
+	uint8_t roamed_vdev_id;
+	struct qdf_mac_addr bssid;
+	struct qdf_mac_addr self_mac;
+	int8_t txMgmtPower;
+	uint32_t auth_status;
+	uint8_t rssi;
+	uint8_t roam_reason;
+	uint32_t chan_freq;
+	uint8_t kck[MAX_KCK_LEN];
+	uint8_t kck_len;
+	uint32_t kek_len;
+	uint8_t kek[MAX_KEK_LENGTH];
+	uint32_t   pmk_len;
+	uint8_t    pmk[MAX_PMK_LEN];
+	uint8_t    pmkid[PMKID_LEN];
+	bool update_erp_next_seq_num;
+	uint16_t next_erp_seq_num;
+	uint8_t replay_ctr[REPLAY_CTR_LEN];
+	void *add_bss_params;
+	enum phy_ch_width chan_width;
+	uint32_t max_rate_flags;
+	uint32_t ric_data_len;
+#ifdef FEATURE_WLAN_ESE
+	uint32_t tspec_len;
+#endif
+	uint8_t *ric_tspec_data;
+	uint16_t aid;
+	struct cm_hw_mode_trans_ind hw_mode_trans_ind;
+	uint8_t nss;
+	struct qdf_mac_addr dst_mac;
+	struct qdf_mac_addr src_mac;
+	uint16_t hlp_data_len;
+	uint8_t hlp_data[FILS_MAX_HLP_DATA_LEN];
+	bool is_ft_im_roam;
+	enum wlan_phymode phy_mode; /*phy mode sent by fw */
 };
 #endif

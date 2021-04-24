@@ -181,6 +181,24 @@ static QDF_STATUS update_mac_from_string(struct hdd_context *hdd_ctx,
 	return status;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 18, 0))
+static inline
+int hdd_firmware_request_nowarn(const struct firmware **fw,
+				const char *name,
+				struct device *device)
+{
+	return firmware_request_nowarn(fw, name, device);
+}
+#else
+static inline
+int hdd_firmware_request_nowarn(const struct firmware **fw,
+				const char *name,
+				struct device *device)
+{
+	return request_firmware(fw, name, device);
+}
+#endif
+
 /**
  * hdd_update_mac_config() - update MAC address from cfg file
  * @hdd_ctx: the pointer to hdd context
@@ -209,7 +227,8 @@ QDF_STATUS hdd_update_mac_config(struct hdd_context *hdd_ctx)
 	}
 
 	memset(mac_table, 0, sizeof(mac_table));
-	status = request_firmware(&fw, WLAN_MAC_FILE, hdd_ctx->parent_dev);
+	status = hdd_firmware_request_nowarn(&fw, WLAN_MAC_FILE,
+					     hdd_ctx->parent_dev);
 	if (status) {
 		/*
 		 * request_firmware "fails" if the file is not found, which is a
@@ -922,7 +941,9 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	 */
 	sme_config->csr_config.phyMode =
 		hdd_cfg_xlate_to_csr_phy_mode(config->dot11Mode);
+#ifndef FEATURE_CM_ENABLE
 	sme_update_nud_config(mac_handle, config->enable_nud_tracking);
+#endif
 	if (config->dot11Mode == eHDD_DOT11_MODE_abg ||
 	    config->dot11Mode == eHDD_DOT11_MODE_11b ||
 	    config->dot11Mode == eHDD_DOT11_MODE_11g ||
