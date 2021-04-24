@@ -119,6 +119,7 @@ typedef enum {
   WLAN_MODULE_CODE_COVER,               /* 0x55 */ /* code coverage */
   WLAN_MODULE_SHO,                      /* 0x56 */ /* SAP HW offload */
   WLAN_MODULE_MLO_MGR,                  /* 0x57 */ /* MLO manager */
+  WLAN_MODULE_PEER_INIT,                /* 0x58 */ /* peer init connection handling */
 
 
   WLAN_MODULE_ID_MAX,

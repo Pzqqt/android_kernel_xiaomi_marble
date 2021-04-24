@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016, 2018-2020 The Linux Foundation. All rights reserved.*
+ * Copyright (c) 2013-2016, 2018-2021 The Linux Foundation. All rights reserved.*
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -351,6 +351,15 @@ enum {
     REGDMN_MODE_11AXA_HE80_BIT         = 38, /* 5Ghz, HE80 */
     REGDMN_MODE_11AXA_HE160_BIT        = 39, /* 5Ghz, HE160 */
     REGDMN_MODE_11AXA_HE80_80_BIT      = 40, /* 5Ghz, HE80+80 */
+    REGDMN_MODE_11BEG_EHT20_BIT        = 41, /* 2Ghz, EHT20 */
+    REGDMN_MODE_11BEA_EHT20_BIT        = 42, /* 5Ghz, EHT20 */
+    REGDMN_MODE_11BEG_EHT40PLUS_BIT    = 43, /* 2Ghz, EHT40+ */
+    REGDMN_MODE_11BEG_EHT40MINUS_BIT   = 44, /* 2Ghz, EHT40- */
+    REGDMN_MODE_11BEA_EHT40PLUS_BIT    = 45, /* 5Ghz, EHT40+ */
+    REGDMN_MODE_11BEA_EHT40MINUS_BIT   = 46, /* 5Ghz, EHT40- */
+    REGDMN_MODE_11BEA_EHT80_BIT        = 47, /* 5Ghz, EHT80 */
+    REGDMN_MODE_11BEA_EHT160_BIT       = 48, /* 5Ghz, EHT160 */
+    REGDMN_MODE_11BEA_EHT320_BIT       = 49, /* 5Ghz, EHT320 */
 };
 
 enum {
@@ -393,6 +402,15 @@ enum {
     REGDMN_MODE_U32_11AXA_HE80      = 1 << (REGDMN_MODE_11AXA_HE80_BIT - 32),
     REGDMN_MODE_U32_11AXA_HE160     = 1 << (REGDMN_MODE_11AXA_HE160_BIT - 32),
     REGDMN_MODE_U32_11AXA_HE80_80   = 1 << (REGDMN_MODE_11AXA_HE80_80_BIT - 32),
+    REGDMN_MODE_U32_11BEG_EHT20      = 1 << (REGDMN_MODE_11BEG_EHT20_BIT - 32),
+    REGDMN_MODE_U32_11BEA_EHT20      = 1 << (REGDMN_MODE_11BEA_EHT20_BIT - 32),
+    REGDMN_MODE_U32_11BEG_EHT40PLUS  = 1 << (REGDMN_MODE_11BEG_EHT40PLUS_BIT - 32),
+    REGDMN_MODE_U32_11BEG_EHT40MINUS = 1 << (REGDMN_MODE_11BEG_EHT40MINUS_BIT - 32),
+    REGDMN_MODE_U32_11BEA_EHT40PLUS  = 1 << (REGDMN_MODE_11BEA_EHT40PLUS_BIT - 32),
+    REGDMN_MODE_U32_11BEA_EHT40MINUS = 1 << (REGDMN_MODE_11BEA_EHT40MINUS_BIT - 32),
+    REGDMN_MODE_U32_11BEA_EHT80      = 1 << (REGDMN_MODE_11BEA_EHT80_BIT - 32),
+    REGDMN_MODE_U32_11BEA_EHT160     = 1 << (REGDMN_MODE_11BEA_EHT160_BIT - 32),
+    REGDMN_MODE_U32_11BEA_EHT320     = 1 << (REGDMN_MODE_11BEA_EHT320_BIT - 32),
 };
 
 #define REGDMN_MODE_ALL       (0xFFFFFFFF)       /* REGDMN_MODE_ALL is defined out of the enum
@@ -536,7 +554,7 @@ typedef struct {
 
 #define PROD_SCHED_BW_ENTRIES       (NUM_SCHED_ENTRIES * NUM_DYN_BW)
 
-#if NUM_DYN_BW  > 4
+#if NUM_DYN_BW  > 5
 /* Extend rate table module first */
 #error "Extend rate table module first"
 #endif
