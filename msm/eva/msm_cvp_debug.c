@@ -11,7 +11,7 @@
 
 #define CREATE_TRACE_POINTS
 #define MAX_SSR_STRING_LEN 10
-int msm_cvp_debug = CVP_ERR | CVP_WARN | CVP_FW | CVP_DBG;
+int msm_cvp_debug = CVP_ERR | CVP_WARN | CVP_FW;
 EXPORT_SYMBOL(msm_cvp_debug);
 
 int msm_cvp_debug_out = CVP_OUT_PRINTK;
@@ -27,6 +27,7 @@ bool msm_cvp_cacheop_disabled = !true;
 int msm_cvp_clock_voting = !1;
 bool msm_cvp_syscache_disable = !true;
 bool msm_cvp_dsp_disable = !true;
+bool msm_cvp_mmrm_enabled = true;
 
 #define MAX_DBG_BUF_SIZE 4096
 

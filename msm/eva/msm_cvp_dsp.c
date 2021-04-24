@@ -819,7 +819,7 @@ int cvp_dsp_del_sess(uint32_t process_id, struct msm_cvp_inst *inst)
 	}
 	mutex_lock(&frpc_node->dsp_sessions.lock);
 	list_for_each_safe(ptr, next, &frpc_node->dsp_sessions.list) {
-		sess = list_entry(ptr, struct msm_cvp_inst, list);
+		sess = list_entry(ptr, struct msm_cvp_inst, dsp_list);
 		if (sess == inst) {
 			dprintk(CVP_DSP, "%s Find sess %pK to be deleted\n",
 				__func__, inst);

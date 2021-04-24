@@ -4,9 +4,15 @@ LINUXINCLUDE    += -I$(EVA_ROOT)/include \
 
 #srctree is /kernel_platform/common/
 
-#ccflags-m not working,  why?
 ccflags-y += -I$(srctree)/techpack/eva/msm/eva/ \
     -I$(srctree)/drivers/media/platform/msm/synx/
+
+# add flag to compile mmrm actual implementatio instead of stub version.
+# to follow up with mmrm team if techpack users need to define this for long term?
+KBUILD_CPPFLAGS += -DCONFIG_MSM_MMRM
+
+# ported from Android.mk
+$(info within KBUILD file KBUILD_EXTRA_SYMBOLS = $(KBUILD_EXTRA_SYMBOLS))
 
 msm-eva-objs := eva/cvp.o \
         eva/msm_cvp_ioctl.o \

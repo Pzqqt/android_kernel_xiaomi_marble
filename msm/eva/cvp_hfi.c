@@ -29,6 +29,7 @@
 #include "cvp_hfi_helper.h"
 #include "cvp_hfi_io.h"
 #include "msm_cvp_dsp.h"
+#include "msm_cvp_clocks.h"
 
 #define FIRMWARE_SIZE			0X00A00000
 #define REG_ADDR_OFFSET_BITMASK	0x000FFFFF
@@ -1250,7 +1251,6 @@ static int iris_hfi_resume(void *dev)
 	return rc;
 }
 
-
 static int iris_hfi_suspend(void *dev)
 {
 	int rc = 0;
@@ -1349,16 +1349,31 @@ static int __set_clocks(struct iris_hfi_device *device, u32 freq)
 			freq = freq * factorsrc2clk;
 			dprintk(CVP_PWR, "%s: clock source rate set to: %ld\n", __func__, freq);
 
-			rc = clk_set_rate(cl->clk, freq);
-			if (rc) {
-				dprintk(CVP_ERR,
-					"Failed to set clock rate %u %s: %d %s\n",
-					freq, cl->name, rc, __func__);
-				return rc;
-			}
+			if (device->mmrm_cvp != NULL) {
+				/* set min freq as the value stored as 1st element in the table */
+				rc = msm_cvp_mmrm_set_value_in_range(device,
+					device->res->allowed_clks_tbl[0].clock_rate * factorsrc2clk,
+					freq);
+				if (rc) {
+					dprintk(CVP_ERR,
+						"%s: Failed to set clock rate for %s: %d\n",
+						__func__, cl->name, rc);
+					return rc;
+				}
+			} else {
+				dprintk(CVP_PWR, "%s: set clock rate with clk_set_rate\n",
+					__func__);
+				rc = clk_set_rate(cl->clk, freq);
+				if (rc) {
+					dprintk(CVP_ERR,
+						"Failed to set clock rate %u %s: %d %s\n",
+						freq, cl->name, rc, __func__);
+					return rc;
+				}
 
-			dprintk(CVP_PWR, "Scaling clock %s to %u\n",
+				dprintk(CVP_PWR, "Scaling clock %s to %u\n",
 					cl->name, freq);
+			}
 		}
 	}
 
@@ -2123,6 +2138,15 @@ static int iris_hfi_core_init(void *device)
 		cpu_latency_qos_add_request(&dev->qos,
 				dev->res->pm_qos_latency_us);
 
+	/* mmrm registration */
+	if (msm_cvp_mmrm_enabled) {
+		rc = msm_cvp_mmrm_register(device);
+		if (rc) {
+			dprintk(CVP_ERR, "Failed to register mmrm client\n");
+			goto err_core_init;
+		}
+	}
+
 	mutex_unlock(&dev->lock);
 
 	cvp_dsp_send_hfi_queue();
@@ -2161,6 +2185,21 @@ static int iris_hfi_core_release(void *dev)
 	__set_state(device, IRIS_STATE_DEINIT);
 
 	__dsp_shutdown(device, 0);
+
+	if (msm_cvp_mmrm_enabled) {
+		rc = mmrm_client_deregister(device->mmrm_cvp);
+		if (rc) {
+			dprintk(CVP_ERR,
+				"%s: Failed mmrm_client_deregister with rc: %d\n",
+				__func__, rc);
+		} else {
+			dprintk(CVP_PWR,
+				"%s: Succeed mmrm_client_deregister for mmrm_cvp:%p, type:%d, uid:%ld\n",
+				__func__, device->mmrm_cvp, device->mmrm_cvp->client_type,
+				device->mmrm_cvp->client_uid);
+			device->mmrm_cvp = NULL;
+		}
+	}
 
 	__unload_fw(device);
 
@@ -3474,9 +3513,20 @@ static inline int __prepare_enable_clks(struct iris_hfi_device *device)
 		 * them.  Since we don't really have a load at this point, scale
 		 * it to the lowest frequency possible
 		 */
-		if (cl->has_scaling)
-			clk_set_rate(cl->clk, clk_round_rate(cl->clk, 0));
-
+		if (cl->has_scaling) {
+			if (device->mmrm_cvp != NULL) {
+				// set min freq and cur freq to 0;
+				rc = msm_cvp_mmrm_set_value_in_range(device, 0, 0);
+				if (rc)
+					dprintk(CVP_ERR,
+						"%s Failed to set clock rate for %s: %d\n",
+						__func__, cl->name, rc);
+			} else {
+				dprintk(CVP_PWR, "%s: set clock rate with clk_set_rate\n",
+					__func__);
+				clk_set_rate(cl->clk, clk_round_rate(cl->clk, 0));
+			}
+		}
 		rc = clk_prepare_enable(cl->clk);
 		if (rc) {
 			dprintk(CVP_ERR, "Failed to enable clocks\n");
