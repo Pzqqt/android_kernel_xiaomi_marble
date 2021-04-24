@@ -6775,7 +6775,9 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 			hdd_ctx->psoc,
 			apps_args[0], apps_args[1], apps_args[2], apps_args[3],
 			apps_args[4], apps_args[5],
-			wlan_chan_to_freq(apps_args[6]), apps_args[7]);
+			wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev,
+						     apps_args[6]),
+						     apps_args[7]);
 	}
 	break;
 
@@ -6835,7 +6837,8 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 		}
 		policy_mgr_current_connections_update(
 			hdd_ctx->psoc, adapter->vdev_id,
-			wlan_chan_to_freq(apps_args[0]),
+			wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev,
+						     apps_args[0]),
 			POLICY_MGR_UPDATE_REASON_UT, POLICY_MGR_DEF_REQ_ID);
 	}
 	break;
@@ -6852,7 +6855,9 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 		}
 		allow = policy_mgr_allow_concurrency(
 				hdd_ctx->psoc, apps_args[0],
-				wlan_chan_to_freq(apps_args[1]), apps_args[2]);
+				wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev,
+							     apps_args[1]),
+							     apps_args[2]);
 		hdd_debug("allow %d {0 = don't allow, 1 = allow}", allow);
 	}
 	break;

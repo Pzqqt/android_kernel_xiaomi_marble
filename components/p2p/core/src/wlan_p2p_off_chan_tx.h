@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -412,6 +412,7 @@ void p2p_del_all_rand_mac_soc(struct wlan_objmgr_psoc *soc);
 
 /**
  * p2p_rand_mac_tx() - handle random mac mgmt tx
+ * @pdev: pdev object
  * @tx_action: tx action context
  *
  * This function will check whether need to set random mac tx filter for a
@@ -419,7 +420,8 @@ void p2p_del_all_rand_mac_soc(struct wlan_objmgr_psoc *soc);
  *
  * Return: void
  */
-void p2p_rand_mac_tx(struct  tx_action_context *tx_action);
+void p2p_rand_mac_tx(struct wlan_objmgr_pdev *pdev,
+		     struct tx_action_context *tx_action);
 
 /**
  * p2p_init_random_mac_vdev() - Init random mac data for vdev

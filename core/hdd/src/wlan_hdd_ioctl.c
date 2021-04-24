@@ -273,6 +273,7 @@ static void hdd_get_band_helper(struct hdd_context *hdd_ctx, int *ui_band)
  * hdd_check_and_fill_freq() - to validate chan and convert into freq
  * @in_chan: input as channel number or freq to be checked
  * @freq: frequency for input in_chan (output parameter)
+ * @pdev: pdev object
  *
  * This function checks input "in_chan" is channel number, if yes then fills
  * appropriate frequency into "freq" out param. If the "in_param" is greater
@@ -280,10 +281,11 @@ static void hdd_get_band_helper(struct hdd_context *hdd_ctx, int *ui_band)
  *
  * Return: true if "in_chan" is valid channel/frequency; false otherwise
  */
-static bool hdd_check_and_fill_freq(uint32_t in_chan, qdf_freq_t *freq)
+static bool hdd_check_and_fill_freq(uint32_t in_chan, qdf_freq_t *freq,
+				    struct wlan_objmgr_pdev *pdev)
 {
 	if (in_chan <= WNI_CFG_CURRENT_CHANNEL_STAMAX)
-		*freq = wlan_chan_to_freq(in_chan);
+		*freq = wlan_reg_legacy_chan_to_freq(pdev, in_chan);
 	else if (WLAN_REG_IS_24GHZ_CH_FREQ(in_chan) ||
 		 WLAN_REG_IS_5GHZ_CH_FREQ(in_chan) ||
 		 WLAN_REG_IS_6GHZ_CHAN_FREQ(in_chan))
@@ -299,12 +301,13 @@ static bool hdd_check_and_fill_freq(uint32_t in_chan, qdf_freq_t *freq)
  * @data:            input data
  * @target_ap_bssid: pointer to bssid (output parameter)
  * @freq:         pointer to freq (output parameter)
+ * @pdev: pdev object
  *
  * Return: 0 if parsing is successful; -EINVAL otherwise
  */
 static int _hdd_parse_bssid_and_chan(const uint8_t **data,
-				     uint8_t *bssid,
-				     qdf_freq_t *freq)
+				     uint8_t *bssid, qdf_freq_t *freq,
+				     struct wlan_objmgr_pdev *pdev)
 {
 	const uint8_t *in_ptr;
 	int            v = 0;
@@ -377,7 +380,7 @@ static int _hdd_parse_bssid_and_chan(const uint8_t **data,
 	v = kstrtos32(temp_buf, 10, &temp_int);
 	if (v < 0 || temp_int < 0)
 		goto error;
-	else if (!hdd_check_and_fill_freq(temp_int, freq))
+	else if (!hdd_check_and_fill_freq(temp_int, freq, pdev))
 		goto error;
 
 	*data = in_ptr;
@@ -396,6 +399,7 @@ error:
  *              after transmitting action frame
  * @buf: Pointer to data
  * @buf_len: Pointer to data length
+ * @pdev: pdev object
  *
  * This function parses the send action frame data passed in the format
  * SENDACTIONFRAME<space><bssid><space><channel | frequency><space><dwelltime>
@@ -407,7 +411,8 @@ static int
 hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 				    uint8_t *bssid,
 				    qdf_freq_t *freq, uint8_t *dwell_time,
-				    uint8_t **buf, uint8_t *buf_len)
+				    uint8_t **buf, uint8_t *buf_len,
+				    struct wlan_objmgr_pdev *pdev)
 {
 	const uint8_t *in_ptr = command;
 	const uint8_t *end_ptr;
@@ -418,7 +423,7 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
 	uint8_t temp_buf[32];
 	uint8_t temp_u8 = 0;
 
-	if (_hdd_parse_bssid_and_chan(&in_ptr, bssid, freq))
+	if (_hdd_parse_bssid_and_chan(&in_ptr, bssid, freq, pdev))
 		return -EINVAL;
 
 	/* point to the next argument */
@@ -504,6 +509,7 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
  * @command: Pointer to input data (its a NULL terminated string)
  * @bssid: Pointer to target Ap bssid
  * @freq: Pointer to the Target AP frequency
+ * @pdev: pdev object
  *
  * This function parses the reasoc command data passed in the format
  * REASSOC<space><bssid><space><channel/frequency>
@@ -511,12 +517,12 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *command,
  * Return: 0 for success non-zero for failure
  */
 static int hdd_parse_reassoc_command_v1_data(const uint8_t *command,
-					     uint8_t *bssid,
-					     qdf_freq_t *freq)
+					     uint8_t *bssid, qdf_freq_t *freq,
+					     struct wlan_objmgr_pdev *pdev)
 {
 	const uint8_t *in_ptr = command;
 
-	if (_hdd_parse_bssid_and_chan(&in_ptr, bssid, freq))
+	if (_hdd_parse_bssid_and_chan(&in_ptr, bssid, freq, pdev))
 		return -EINVAL;
 
 	return 0;
@@ -692,9 +698,9 @@ static int hdd_parse_reassoc_v1(struct hdd_adapter *adapter, const char *command
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	QDF_STATUS status;
 #endif
+	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(adapter->vdev);
 
-
-	ret = hdd_parse_reassoc_command_v1_data(command, bssid, &freq);
+	ret = hdd_parse_reassoc_command_v1_data(command, bssid, &freq, pdev);
 	if (ret) {
 		hdd_err("Failed to parse reassoc command data");
 		return ret;
@@ -740,7 +746,7 @@ static int hdd_parse_reassoc_v2(struct hdd_adapter *adapter,
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	QDF_STATUS status;
 #endif
-
+	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(adapter->vdev);
 
 	if (total_len < sizeof(params) + 8) {
 		hdd_err("Invalid command length");
@@ -760,7 +766,7 @@ static int hdd_parse_reassoc_v2(struct hdd_adapter *adapter,
 		 * is less than WNI_CFG_CURRENT_CHANNEL_STAMAX, then host
 		 * consider this as channel number else frequency.
 		 */
-		if (!hdd_check_and_fill_freq(params.channel, &freq))
+		if (!hdd_check_and_fill_freq(params.channel, &freq, pdev))
 			return -EINVAL;
 
 #ifdef FEATURE_CM_ENABLE
@@ -999,10 +1005,11 @@ hdd_parse_sendactionframe_v1(struct hdd_adapter *adapter, const char *command)
 	uint8_t *payload = NULL;
 	tSirMacAddr bssid;
 	int ret;
+	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(adapter->vdev);
 
 	ret = hdd_parse_send_action_frame_v1_data(command, bssid, &freq,
 						  &dwell_time, &payload,
-						  &payload_len);
+						  &payload_len, pdev);
 	if (ret) {
 		hdd_nofl_err("Failed to parse send action frame data");
 	} else {
@@ -1036,6 +1043,7 @@ hdd_parse_sendactionframe_v2(struct hdd_adapter *adapter,
 	int ret;
 	int len_wo_payload = 0;
 	qdf_freq_t freq = 0;
+	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(adapter->vdev);
 
 	/* The params are located after "SENDACTIONFRAME " */
 	total_len -= 16;
@@ -1069,7 +1077,7 @@ hdd_parse_sendactionframe_v2(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	if (!hdd_check_and_fill_freq(params->channel, &freq)) {
+	if (!hdd_check_and_fill_freq(params->channel, &freq, pdev)) {
 		hdd_err("Invalid channel: %d", params->channel);
 		return -EINVAL;
 	}
@@ -4612,7 +4620,7 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 	}
 
 	ret = hdd_parse_reassoc_command_v1_data(value, bssid,
-						&freq);
+						&freq, hdd_ctx->pdev);
 	if (ret) {
 		hdd_err("Failed to parse reassoc command data");
 		goto exit;

@@ -706,7 +706,8 @@ void wlan_hdd_two_connections_scenario(struct hdd_context *hdd_ctx,
 		policy_mgr_incr_connection_count_utfw(
 			hdd_ctx->psoc, vdevid, tx_stream,
 			rx_stream, chain_mask, type, dummy_type,
-			wlan_chan_to_freq(channel_id), mac_id);
+			wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev, channel_id),
+						     mac_id);
 		/* validate one connection is created or no */
 		if (policy_mgr_get_connection_count(hdd_ctx->psoc) != 1) {
 			hdd_err("Test failed - No. of connection is not 1");
@@ -813,7 +814,8 @@ void wlan_hdd_three_connections_scenario(struct hdd_context *hdd_ctx,
 		policy_mgr_incr_connection_count_utfw(
 			hdd_ctx->psoc, vdevid_1, tx_stream_1, rx_stream_1,
 			chain_mask_1, type_1, dummy_type_1,
-			wlan_chan_to_freq(channel_id_1), mac_id_1);
+			wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev,
+						     channel_id_1), mac_id_1);
 		/* validate one connection is created or no */
 		if (policy_mgr_get_connection_count(hdd_ctx->psoc) != 1) {
 			hdd_err("Test fail - No. of connection not 1");
@@ -830,7 +832,9 @@ void wlan_hdd_three_connections_scenario(struct hdd_context *hdd_ctx,
 				hdd_ctx->psoc, vdevid_2, tx_stream_2,
 				rx_stream_2, chain_mask_2, type_2,
 				dummy_type_2,
-				wlan_chan_to_freq(channel_id_2), mac_id_2);
+				wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev,
+							     channel_id_2),
+							     mac_id_2);
 			/* validate two connections are created or no */
 			if (policy_mgr_get_connection_count(hdd_ctx->psoc)
 				!= 2) {

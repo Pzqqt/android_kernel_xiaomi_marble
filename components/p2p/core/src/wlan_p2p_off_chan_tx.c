@@ -1064,20 +1064,35 @@ static QDF_STATUS p2p_mgmt_tx(struct tx_action_context *tx_ctx,
 	void *mac_addr;
 	uint8_t pdev_id;
 	struct wlan_objmgr_vdev *vdev;
-	uint16_t chanfreq = 0;
+	qdf_freq_t chanfreq = 0;
+	struct wlan_objmgr_pdev *pdev;
 
 	psoc = tx_ctx->p2p_soc_obj->soc;
 	mgmt_param.tx_frame = packet;
 	mgmt_param.frm_len = buf_len;
 	mgmt_param.vdev_id = tx_ctx->vdev_id;
 	mgmt_param.pdata = frame;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, tx_ctx->vdev_id,
+						    WLAN_P2P_ID);
+	if (!vdev)
+		return QDF_STATUS_E_INVAL;
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_P2P_ID);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	if (tx_ctx->chan)
-		chanfreq = (uint16_t)wlan_chan_to_freq(tx_ctx->chan);
+		chanfreq = wlan_reg_legacy_chan_to_freq(pdev, tx_ctx->chan);
+
 	mgmt_param.chanfreq = chanfreq;
 
 	mgmt_param.qdf_ctx = wlan_psoc_get_qdf_dev(psoc);
 	if (!(mgmt_param.qdf_ctx)) {
 		p2p_err("qdf ctx is null");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_P2P_ID);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -1092,15 +1107,13 @@ static QDF_STATUS p2p_mgmt_tx(struct tx_action_context *tx_ctx,
 					    WLAN_P2P_ID);
 	}
 	if (!peer && tx_ctx->rand_mac_tx) {
-		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
-				psoc, tx_ctx->vdev_id, WLAN_P2P_ID);
 		if (vdev) {
 			mac_addr = wlan_vdev_mlme_get_macaddr(vdev);
 			peer = wlan_objmgr_get_peer(psoc, pdev_id, mac_addr,
 						    WLAN_P2P_ID);
-			wlan_objmgr_vdev_release_ref(vdev, WLAN_P2P_ID);
 		}
 	}
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_P2P_ID);
 
 	if (!peer) {
 		p2p_err("no valid peer");
@@ -2706,7 +2719,8 @@ p2p_request_random_mac(struct wlan_objmgr_psoc *soc, uint32_t vdev_id,
 	return status;
 }
 
-void p2p_rand_mac_tx(struct  tx_action_context *tx_action)
+void p2p_rand_mac_tx(struct wlan_objmgr_pdev *pdev,
+		     struct tx_action_context *tx_action)
 {
 	struct wlan_objmgr_psoc *soc;
 	QDF_STATUS status;
@@ -2722,11 +2736,11 @@ void p2p_rand_mac_tx(struct  tx_action_context *tx_action)
 	    p2p_is_random_mac(soc, tx_action->vdev_id,
 			      &tx_action->buf[SRC_MAC_ADDR_OFFSET])) {
 		status = p2p_request_random_mac(
-					soc, tx_action->vdev_id,
-					&tx_action->buf[SRC_MAC_ADDR_OFFSET],
-					wlan_chan_to_freq(tx_action->chan),
-					tx_action->id,
-					tx_action->duration);
+			soc, tx_action->vdev_id,
+			&tx_action->buf[SRC_MAC_ADDR_OFFSET],
+			wlan_reg_legacy_chan_to_freq(pdev, tx_action->chan),
+			tx_action->id,
+			tx_action->duration);
 		if (status == QDF_STATUS_SUCCESS)
 			tx_action->rand_mac_tx = true;
 		else
