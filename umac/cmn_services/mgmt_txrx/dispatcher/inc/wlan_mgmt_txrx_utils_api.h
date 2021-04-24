@@ -512,7 +512,9 @@ struct action_frm_hdr {
  * @MGMT_ACTION_BA_ADDBA_RESPONSE:  ADDBA response action frame
  * @MGMT_ACTION_BA_DELBA:           DELBA action frame
  * @MGMT_ACTION_2040_BSS_COEXISTENCE: 20-40 bss coex action frame
- * @MGMT_ACTION_CATEGORY_VENDOR_SPECIFIC: category vendor spcific action frame
+ * @MGMT_ACTION_CATEGORY_VENDOR_SPECIFIC: category vendor specific action frame
+ * @MGMT_ACTION_CATEGORY_VENDOR_SPECIFIC_PROTECTED: category vendor specific
+ * protected action frame
  * @MGMT_ACTION_EXT_CHANNEL_SWITCH_ID: ext channel switch id action frame
  * @MGMT_ACTION_VENDOR_SPECIFIC:    vendor specific action frame
  * @MGMT_ACTION_TDLS_DISCRESP:      TDLS discovery response frame
@@ -633,6 +635,7 @@ enum mgmt_frame_type {
 	MGMT_ACTION_BA_DELBA,
 	MGMT_ACTION_2040_BSS_COEXISTENCE,
 	MGMT_ACTION_CATEGORY_VENDOR_SPECIFIC,
+	MGMT_ACTION_CATEGORY_VENDOR_SPECIFIC_PROTECTED,
 	MGMT_ACTION_EXT_CHANNEL_SWITCH_ID,
 	MGMT_ACTION_VENDOR_SPECIFIC,
 	MGMT_ACTION_TDLS_DISCRESP,

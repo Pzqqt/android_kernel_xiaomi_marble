@@ -274,6 +274,10 @@ static int init_deinit_service_ext2_ready_event_handler(ol_scn_t scn_handle,
 	if (err_code)
 		goto exit;
 
+	if (wmi_service_enabled(wmi_handle,
+				wmi_service_reg_cc_ext_event_support))
+		target_if_set_reg_cc_ext_supp(tgt_hdl, psoc);
+
 	/* dbr_ring_caps could have already come as part of EXT event */
 	if (info->service_ext2_param.num_dbr_ring_caps) {
 		err_code = init_deinit_populate_dbr_ring_cap_ext2(psoc,
@@ -307,6 +311,10 @@ static int init_deinit_service_ext2_ready_event_handler(ol_scn_t scn_handle,
 	}
 
 	target_if_regulatory_set_ext_tpc(psoc);
+
+	target_if_reg_set_lower_6g_edge_ch_info(psoc);
+
+	target_if_reg_set_disable_upper_6g_edge_ch_info(psoc);
 
 	/* send init command */
 	init_deinit_set_send_init_cmd(psoc, tgt_hdl);

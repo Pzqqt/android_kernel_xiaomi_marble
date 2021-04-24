@@ -136,7 +136,6 @@ dp_peer_copy_delay_stats(struct dp_peer *peer,
 	peer->delayed_ba_ppdu_stats.txbf = ppdu->txbf;
 	peer->delayed_ba_ppdu_stats.bw = ppdu->bw;
 	peer->delayed_ba_ppdu_stats.nss = ppdu->nss;
-	peer->delayed_ba_ppdu_stats.preamble = ppdu->preamble;
 	peer->delayed_ba_ppdu_stats.gi = ppdu->gi;
 	peer->delayed_ba_ppdu_stats.dcm = ppdu->dcm;
 	peer->delayed_ba_ppdu_stats.ldpc = ppdu->ldpc;
@@ -153,7 +152,6 @@ dp_peer_copy_delay_stats(struct dp_peer *peer,
 
 	peer->delayed_ba_ppdu_stats.user_pos = ppdu->user_pos;
 	peer->delayed_ba_ppdu_stats.mu_group_id = ppdu->mu_group_id;
-	peer->delayed_ba_ppdu_stats.mcs = ppdu->mcs;
 
 	peer->last_delayed_ba = true;
 
@@ -183,7 +181,6 @@ dp_peer_copy_stats_to_bar(struct dp_peer *peer,
 	ppdu->txbf = peer->delayed_ba_ppdu_stats.txbf;
 	ppdu->bw = peer->delayed_ba_ppdu_stats.bw;
 	ppdu->nss = peer->delayed_ba_ppdu_stats.nss;
-	ppdu->preamble = peer->delayed_ba_ppdu_stats.preamble;
 	ppdu->gi = peer->delayed_ba_ppdu_stats.gi;
 	ppdu->dcm = peer->delayed_ba_ppdu_stats.dcm;
 	ppdu->ldpc = peer->delayed_ba_ppdu_stats.ldpc;
@@ -200,7 +197,6 @@ dp_peer_copy_stats_to_bar(struct dp_peer *peer,
 
 	ppdu->user_pos = peer->delayed_ba_ppdu_stats.user_pos;
 	ppdu->mu_group_id = peer->delayed_ba_ppdu_stats.mu_group_id;
-	ppdu->mcs = peer->delayed_ba_ppdu_stats.mcs;
 
 	peer->last_delayed_ba = false;
 
@@ -4184,6 +4180,7 @@ static bool dp_txrx_ppdu_stats_handler(struct dp_soc *soc,
 	    !pdev->mcopy_mode && !pdev->bpr_enable)
 		return free_buf;
 
+	qdf_spin_lock_bh(&pdev->ppdu_stats_lock);
 	ppdu_info = dp_htt_process_tlv(pdev, htt_t2h_msg);
 
 	if (pdev->mgmtctrl_frm_info.mgmt_buf) {
@@ -4199,6 +4196,8 @@ static bool dp_txrx_ppdu_stats_handler(struct dp_soc *soc,
 	pdev->mgmtctrl_frm_info.mgmt_buf = NULL;
 	pdev->mgmtctrl_frm_info.mgmt_buf_len = 0;
 	pdev->mgmtctrl_frm_info.ppdu_id = 0;
+
+	qdf_spin_unlock_bh(&pdev->ppdu_stats_lock);
 
 	return free_buf;
 }
@@ -4363,8 +4362,10 @@ dp_ppdu_stats_ind_handler(struct htt_soc *soc,
 	dp_wdi_event_handler(WDI_EVENT_LITE_T2H, soc->dp_soc,
 			     htt_t2h_msg, HTT_INVALID_PEER, WDI_NO_VAL,
 			     pdev_id);
+
 	free_buf = dp_txrx_ppdu_stats_handler(soc->dp_soc, pdev_id,
 					      htt_t2h_msg);
+
 	return free_buf;
 }
 #else

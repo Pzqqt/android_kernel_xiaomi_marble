@@ -336,6 +336,44 @@ hif_ce_latency_stats(struct hif_softc *hif_ctx)
 }
 #endif /*CE_TASKLET_DEBUG_ENABLE*/
 
+#ifdef HIF_DETECTION_LATENCY_ENABLE
+static inline
+void hif_latency_detect_tasklet_sched(
+	struct hif_softc *scn,
+	struct ce_tasklet_entry *tasklet_entry)
+{
+	if (tasklet_entry->ce_id != CE_ID_2)
+		return;
+
+	scn->latency_detect.ce2_tasklet_sched_cpuid = qdf_get_cpu();
+	scn->latency_detect.ce2_tasklet_sched_time = qdf_system_ticks();
+}
+
+static inline
+void hif_latency_detect_tasklet_exec(
+	struct hif_softc *scn,
+	struct ce_tasklet_entry *tasklet_entry)
+{
+	if (tasklet_entry->ce_id != CE_ID_2)
+		return;
+
+	scn->latency_detect.ce2_tasklet_exec_time = qdf_system_ticks();
+	hif_check_detection_latency(scn, false, BIT(HIF_DETECT_TASKLET));
+}
+#else
+static inline
+void hif_latency_detect_tasklet_sched(
+	struct hif_softc *scn,
+	struct ce_tasklet_entry *tasklet_entry)
+{}
+
+static inline
+void hif_latency_detect_tasklet_exec(
+	struct hif_softc *scn,
+	struct ce_tasklet_entry *tasklet_entry)
+{}
+#endif
+
 /**
  * ce_tasklet() - ce_tasklet
  * @data: data
@@ -355,6 +393,8 @@ static void ce_tasklet(unsigned long data)
 
 	hif_record_ce_desc_event(scn, tasklet_entry->ce_id,
 				 HIF_CE_TASKLET_ENTRY, NULL, NULL, -1, 0);
+
+	hif_latency_detect_tasklet_exec(scn, tasklet_entry);
 
 	if (qdf_atomic_read(&scn->link_suspended)) {
 		hif_err("ce %d tasklet fired after link suspend",
@@ -382,6 +422,7 @@ static void ce_tasklet(unsigned long data)
 		}
 
 		ce_schedule_tasklet(tasklet_entry);
+		hif_latency_detect_tasklet_sched(scn, tasklet_entry);
 		return;
 	}
 
@@ -604,12 +645,74 @@ static inline bool hif_tasklet_schedule(struct hif_opaque_softc *hif_ctx,
 		qdf_atomic_dec(&scn->active_tasklet_cnt);
 		return false;
 	}
-
+	/* keep it before tasklet_schedule, this is to happy whunt.
+	 * in whunt, tasklet may run before finished hif_tasklet_schedule.
+	 */
+	hif_latency_detect_tasklet_sched(scn, tasklet_entry);
 	tasklet_schedule(&tasklet_entry->intr_tq);
+
 	if (scn->ce_latency_stats)
 		hif_record_tasklet_sched_entry_ts(scn, tasklet_entry->ce_id);
 
 	return true;
+}
+
+/**
+ * ce_poll_reap_by_id() - reap the available frames from CE by polling per ce_id
+ * @scn: hif context
+ * @ce_id: CE id
+ *
+ * This function needs to be called once after all the irqs are disabled
+ * and tasklets are drained during bus suspend.
+ *
+ * Return: 0 on success, unlikely -EBUSY if reaping goes infinite loop
+ */
+static int ce_poll_reap_by_id(struct hif_softc *scn, enum ce_id_type ce_id)
+{
+	struct HIF_CE_state *hif_ce_state = (struct HIF_CE_state *)scn;
+	struct CE_state *CE_state = scn->ce_id_to_state[ce_id];
+
+	if (scn->ce_latency_stats)
+		hif_record_tasklet_exec_entry_ts(scn, ce_id);
+
+	hif_record_ce_desc_event(scn, ce_id, HIF_CE_REAP_ENTRY,
+				 NULL, NULL, -1, 0);
+
+	ce_per_engine_service(scn, ce_id);
+
+	/*
+	 * In an unlikely case, if frames are still pending to reap,
+	 * could be an infinite loop, so return -EBUSY.
+	 */
+	if (ce_check_rx_pending(CE_state))
+		return -EBUSY;
+
+	hif_record_ce_desc_event(scn, ce_id, HIF_CE_REAP_EXIT,
+				 NULL, NULL, -1, 0);
+
+	if (scn->ce_latency_stats)
+		ce_tasklet_update_bucket(hif_ce_state, ce_id);
+
+	return 0;
+}
+
+/**
+ * hif_drain_fw_diag_ce() - reap all the available FW diag logs from CE
+ * @scn: hif context
+ *
+ * This function needs to be called once after all the irqs are disabled
+ * and tasklets are drained during bus suspend.
+ *
+ * Return: 0 on success, unlikely -EBUSY if reaping goes infinite loop
+ */
+int hif_drain_fw_diag_ce(struct hif_softc *scn)
+{
+	uint8_t ce_id;
+
+	if (hif_get_fw_diag_ce_id(scn, &ce_id))
+		return 0;
+
+	return ce_poll_reap_by_id(scn, ce_id);
 }
 
 /**

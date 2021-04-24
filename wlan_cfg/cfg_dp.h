@@ -374,6 +374,7 @@
 #define WLAN_CFG_RX_FLOW_SEARCH_TABLE_SIZE 16384
 #define WLAN_CFG_RX_FLOW_SEARCH_TABLE_SIZE_MIN 1
 #define WLAN_CFG_RX_FLOW_SEARCH_TABLE_SIZE_MAX 16384
+#define WLAN_CFG_RX_FLOW_SEARCH_TABLE_SIZE_DEFAULT 128
 
 #define WLAN_CFG_PKTLOG_BUFFER_SIZE 10
 #define WLAN_CFG_PKTLOG_MIN_BUFFER_SIZE 1
@@ -902,11 +903,6 @@
 		0, 2048, WLAN_CFG_IPA_UC_RX_IND_RING_COUNT, \
 		CFG_VALUE_OR_DEFAULT, "IPA rx indication ring count")
 
-#define CFG_DP_REORDER_OFFLOAD_SUPPORT \
-		CFG_INI_UINT("gReorderOffloadSupported", \
-		0, 1, 1, \
-		CFG_VALUE_OR_DEFAULT, "Packet reordering offload to firmware")
-
 #define CFG_DP_AP_STA_SECURITY_SEPERATION \
 			CFG_INI_BOOL("gDisableIntraBssFwd", \
 			false, "Disable intrs BSS Rx packets")
@@ -933,7 +929,7 @@
 	CFG_INI_UINT("dp_rx_flow_search_table_size", \
 		WLAN_CFG_RX_FLOW_SEARCH_TABLE_SIZE_MIN, \
 		WLAN_CFG_RX_FLOW_SEARCH_TABLE_SIZE_MAX, \
-		WLAN_CFG_RX_FLOW_SEARCH_TABLE_SIZE, \
+		WLAN_CFG_RX_FLOW_SEARCH_TABLE_SIZE_DEFAULT, \
 		CFG_VALUE_OR_DEFAULT, \
 		"DP Rx Flow Search Table Size in number of entries")
 
@@ -958,7 +954,7 @@
  * dp_rx_fisa_enable - Control Rx datapath FISA
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * This ini is used to enable DP Rx FISA feature
  *
@@ -966,12 +962,12 @@
  *
  * Supported Feature: STA,P2P and SAP IPA disabled terminating
  *
- * Usage: Internal/External
+ * Usage: Internal
  *
  * </ini>
  */
 #define CFG_DP_RX_FISA_ENABLE \
-	CFG_INI_BOOL("dp_rx_fisa_enable", false, \
+	CFG_INI_BOOL("dp_rx_fisa_enable", true, \
 		     "Enable/Disable DP Rx FISA")
 
 #define CFG_DP_RXDMA_MONITOR_RX_DROP_THRESHOLD \
@@ -1028,7 +1024,8 @@
  * legacy_mode_csum_disable - Disable csum offload for legacy 802.11abg modes
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: Default value indicating if checksum should be disabled for
+ * legacy WLAN modes
  *
  * This ini is used to disable HW checksum offload capability for legacy
  * connections
@@ -1039,9 +1036,13 @@
  *
  * </ini>
  */
+#ifndef DP_LEGACY_MODE_CSM_DEFAULT_DISABLE
+#define DP_LEGACY_MODE_CSM_DEFAULT_DISABLE 1
+#endif
 
 #define CFG_DP_LEGACY_MODE_CSUM_DISABLE \
-	CFG_INI_BOOL("legacy_mode_csum_disable", false, \
+	CFG_INI_BOOL("legacy_mode_csum_disable", \
+		     DP_LEGACY_MODE_CSM_DEFAULT_DISABLE, \
 		     "Enable/Disable legacy mode checksum")
 
 #define CFG_DP_RX_BUFF_POOL_ENABLE \
@@ -1183,7 +1184,6 @@
 		CFG(CFG_DP_IPA_UC_TX_BUF_SIZE) \
 		CFG(CFG_DP_IPA_UC_TX_PARTITION_BASE) \
 		CFG(CFG_DP_IPA_UC_RX_IND_RING_COUNT) \
-		CFG(CFG_DP_REORDER_OFFLOAD_SUPPORT) \
 		CFG(CFG_DP_AP_STA_SECURITY_SEPERATION) \
 		CFG(CFG_DP_ENABLE_DATA_STALL_DETECTION) \
 		CFG(CFG_DP_RX_SW_DESC_WEIGHT) \

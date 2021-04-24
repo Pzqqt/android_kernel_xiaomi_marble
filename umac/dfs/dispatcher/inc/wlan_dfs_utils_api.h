@@ -451,27 +451,6 @@ QDF_STATUS utils_dfs_get_nol_chfreq_and_chwidth(struct wlan_objmgr_pdev *pdev,
 		int index);
 
 /**
- * utils_dfs_get_random_channel() - Get random channel.
- * @pdev: Pointer to DFS pdev object.
- * @flags: random channel selection flags.
- * @ch_params: current channel params.
- * @hw_mode: current operating mode.
- * @target_chan: Pointer to target_chan.
- * @acs_info: acs range info.
- *
- * wrapper function for get_random_chan(). this
- * function called from outside of dfs component.
- *
- * Return: QDF_STATUS
- */
-#ifdef CONFIG_CHAN_NUM_API
-QDF_STATUS utils_dfs_get_random_channel(struct wlan_objmgr_pdev *pdev,
-		uint16_t flags, struct ch_params *ch_params,
-		uint32_t *hw_mode, uint8_t *target_chan,
-		struct dfs_acs_info *acs_info);
-#endif
-
-/**
  * utils_dfs_get_random_channel_for_freq() - Get random channel.
  * @pdev: Pointer to DFS pdev object.
  * @flags: random channel selection flags.
@@ -495,29 +474,7 @@ utils_dfs_get_random_channel_for_freq(struct wlan_objmgr_pdev *pdev,
 #endif
 
 /**
- * utils_dfs_get_vdev_random_channel() - Get random channel for vdev
- * @pdev: Pointer to DFS pdev object.
- * @vdev: vdev of the request
- * @flags: random channel selection flags.
- * @ch_params: current channel params.
- * @hw_mode: current operating mode.
- * @target_chan: Pointer to target_chan.
- * @acs_info: acs range info.
- *
- * Get random channel based on vdev interface type. If the vdev is null,
- * the function will get random channel by SAP interface type.
- *
- * Return: QDF_STATUS
- */
-#ifdef CONFIG_CHAN_NUM_API
-QDF_STATUS utils_dfs_get_vdev_random_channel(
-	struct wlan_objmgr_pdev *pdev, struct wlan_objmgr_vdev *vdev,
-	uint16_t flags, struct ch_params *ch_params, uint32_t *hw_mode,
-	uint8_t *target_chan, struct dfs_acs_info *acs_info);
-#endif
-
-/**
- * utils_dfs_get_vdev_random_channel() - Get random channel for vdev
+ * utils_dfs_get_vdev_random_channel_for_freq() - Get random channel for vdev
  * @pdev: Pointer to DFS pdev object.
  * @vdev: vdev of the request
  * @flags: random channel selection flags.
@@ -531,7 +488,6 @@ QDF_STATUS utils_dfs_get_vdev_random_channel(
  *
  * Return: QDF_STATUS
  */
-
 #ifdef CONFIG_CHAN_FREQ_API
 QDF_STATUS utils_dfs_get_vdev_random_channel_for_freq(
 	struct wlan_objmgr_pdev *pdev, struct wlan_objmgr_vdev *vdev,

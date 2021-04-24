@@ -126,6 +126,24 @@ void qdf_register_is_driver_unloading_callback(
 				qdf_is_driver_unloading_callback callback);
 
 /**
+ * qdf_is_driver_state_module_stop_callback() - callback to get driver state is
+ * module stop or not
+ *
+ * Return: true if driver state is module stop else false
+ */
+typedef bool (*qdf_is_driver_state_module_stop_callback)(void);
+
+/**
+ * qdf_register_is_driver_state_module_stop_callback() - driver state is
+ * module stop or not
+ * @callback:  driver state module stop callback
+ *
+ * Return: None
+ */
+void qdf_register_is_driver_state_module_stop_callback(
+			qdf_is_driver_state_module_stop_callback callback);
+
+/**
  * qdf_register_self_recovery_callback() - register self recovery callback
  * @callback:  self recovery callback
  *
@@ -173,6 +191,13 @@ void qdf_register_recovering_state_query_callback(
  * Return: true if driver is unloading else false
  */
 bool qdf_is_driver_unloading(void);
+
+/**
+ * qdf_is_driver_state_module_stop() - get driver state is module stop or not
+ *
+ * Return: true if driver state is module stop else false
+ */
+bool qdf_is_driver_state_module_stop(void);
 
 /**
  * qdf_is_recovering() - get driver recovering in progress status

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -831,6 +831,9 @@ mgmt_txrx_get_action_frm_subtype(uint8_t *mpdu_data_ptr)
 		break;
 	case ACTION_CATEGORY_VENDOR_SPECIFIC:
 		frm_type = MGMT_ACTION_CATEGORY_VENDOR_SPECIFIC;
+		break;
+	case ACTION_CATEGORY_VENDOR_SPECIFIC_PROTECTED:
+		frm_type = MGMT_ACTION_CATEGORY_VENDOR_SPECIFIC_PROTECTED;
 		break;
 	case ACTION_CATEGORY_FST:
 		frm_type = mgmt_get_fst_action_subtype(action_hdr->action_code);

@@ -128,6 +128,10 @@
 #define DP_TXRX_HLOS_TID_OVERRIDE_ENABLED 0x2
 #define DP_TX_MESH_ENABLED 0x4
 
+#ifdef WLAN_SUPPORT_RX_FISA
+#define FISA_FLOW_MAX_AGGR_COUNT        16 /* max flow aggregate count */
+#endif
+
 enum rx_pktlog_mode {
 	DP_RX_PKTLOG_DISABLED = 0,
 	DP_RX_PKTLOG_FULL,
@@ -692,6 +696,7 @@ struct dp_rx_tid {
 	uint8_t pn_size;
 	/* REO TID queue descriptors */
 	void *hw_qdesc_vaddr_unaligned;
+	void *hw_qdesc_vaddr_aligned;
 	qdf_dma_addr_t hw_qdesc_paddr_unaligned;
 	qdf_dma_addr_t hw_qdesc_paddr;
 	uint32_t hw_qdesc_alloc_size;
@@ -2253,6 +2258,10 @@ struct dp_pdev {
 #ifdef ATH_SUPPORT_NAC_RSSI
 	bool nac_rssi_filtering;
 #endif
+
+	/* ppdu_stats lock for queue concurrency between cores*/
+	qdf_spinlock_t ppdu_stats_lock;
+
 	/* list of ppdu tlvs */
 	TAILQ_HEAD(, ppdu_info) ppdu_info_list;
 	TAILQ_HEAD(, ppdu_info) sched_comp_ppdu_list;
@@ -2373,6 +2382,9 @@ struct dp_pdev {
 	struct hal_rx_mon_desc_info *mon_desc;
 #endif
 	qdf_nbuf_t mcopy_status_nbuf;
+
+	/* flag to indicate whether LRO hash command has been sent to FW */
+	uint8_t is_lro_hash_configured;
 
 	/* Flag to hold on to monitor destination ring */
 	bool hold_mon_dest_ring;
@@ -3010,11 +3022,33 @@ enum fisa_aggr_ret {
 	FISA_FLUSH_FLOW
 };
 
+/**
+ * struct fisa_pkt_hist_elem - FISA Packet history element
+ * @ts: timestamp indicating when the packet was received by FISA framework.
+ * @tlvs: record of TLVS for the packet coming to FISA framework
+ */
+struct fisa_pkt_hist_elem {
+	qdf_time_t ts;
+	struct rx_pkt_tlvs tlvs;
+};
+
+/**
+ * struct fisa_pkt_hist - FISA Packet history structure
+ * @hist_elem: array of hist elements
+ * @idx: index indicating the next location to be used in the array.
+ */
+struct fisa_pkt_hist {
+	struct fisa_pkt_hist_elem hist_elem[FISA_FLOW_MAX_AGGR_COUNT];
+	uint32_t idx;
+};
+
 struct dp_fisa_rx_sw_ft {
 	/* HAL Rx Flow Search Entry which matches HW definition */
 	void *hw_fse;
-	/* Toeplitz hash value */
+	/* hash value */
 	uint32_t flow_hash;
+	/* toeplitz hash value*/
+	uint32_t flow_id_toeplitz;
 	/* Flow index, equivalent to hash value truncated to FST size */
 	uint32_t flow_id;
 	/* Stats tracking for this flow */
@@ -3053,6 +3087,11 @@ struct dp_fisa_rx_sw_ft {
 	uint32_t cmem_offset;
 	uint32_t metadata;
 	uint32_t reo_dest_indication;
+	qdf_time_t flow_init_ts;
+	qdf_time_t last_accessed_ts;
+#ifdef WLAN_SUPPORT_RX_FISA_HIST
+	struct fisa_pkt_hist pkt_hist;
+#endif
 };
 
 #define DP_RX_GET_SW_FT_ENTRY_SIZE sizeof(struct dp_fisa_rx_sw_ft)

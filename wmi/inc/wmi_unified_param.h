@@ -485,8 +485,17 @@ typedef enum {
 	WMI_HOST_MODE_11AX_HE20_2G = 21,
 	WMI_HOST_MODE_11AX_HE40_2G = 22,
 	WMI_HOST_MODE_11AX_HE80_2G = 23,
-	WMI_HOST_MODE_UNKNOWN = 24,
-	WMI_HOST_MODE_MAX = 24
+#ifdef WLAN_FEATURE_11BE
+	WMI_HOST_MODE_11BE_EHT20 = 24,
+	WMI_HOST_MODE_11BE_EHT40 = 25,
+	WMI_HOST_MODE_11BE_EHT80 = 26,
+	WMI_HOST_MODE_11BE_EHT160 = 28,
+	WMI_HOST_MODE_11BE_EHT320 = 30,
+	WMI_HOST_MODE_11BE_EHT20_2G = 31,
+	WMI_HOST_MODE_11BE_EHT40_2G = 32,
+#endif
+	WMI_HOST_MODE_UNKNOWN,
+	WMI_HOST_MODE_MAX = WMI_HOST_MODE_UNKNOWN,
 } WMI_HOST_WLAN_PHY_MODE;
 
 /*
@@ -542,6 +551,15 @@ typedef struct {
  * @WMI_HOST_REGDMN_MODE_11AXA_HE80: 11ax 5GHz, HE80 channels
  * @WMI_HOST_REGDMN_MODE_11AXA_HE160: 11ax 5GHz, HE160 channels
  * @WMI_HOST_REGDMN_MODE_11AXA_HE80_80: 11ax 5GHz, HE80+80 channels
+ * @WMI_HOST_REGDMN_MODE_11BEG_EHT20: 11be 2GHz, EHT20 channels
+ * @WMI_HOST_REGDMN_MODE_11BEA_EHT20: 11be 5GHz, EHT20 channels
+ * @WMI_HOST_REGDMN_MODE_11BEG_EHT40PLUS: 11be 2GHz, EHT40+ channels
+ * @WMI_HOST_REGDMN_MODE_11BEG_EHT40MINUS: 11be 2GHz, EHT40- channels
+ * @WMI_HOST_REGDMN_MODE_11BEA_EHT40PLUS: 11be 5GHz, EHT40+ channels
+ * @WMI_HOST_REGDMN_MODE_11BEA_EHT40MINUS: 11be 5GHz, EHT40- channels
+ * @WMI_HOST_REGDMN_MODE_11BEA_EHT80: 11be 5GHz, EHT80 channels
+ * @WMI_HOST_REGDMN_MODE_11BEA_EHT160: 11be 5GHz, EHT160 channels
+ * @WMI_HOST_REGDMN_MODE_11BEA_EHT320: 11be 5GHz, EHT320 channels
  */
 typedef enum {
 	WMI_HOST_REGDMN_MODE_11A = 0x00000001,
@@ -576,7 +594,18 @@ typedef enum {
 	WMI_HOST_REGDMN_MODE_11AXA_HE80 = 0x20000000,
 	WMI_HOST_REGDMN_MODE_11AXA_HE160 = 0x40000000,
 	WMI_HOST_REGDMN_MODE_11AXA_HE80_80 = 0x80000000,
-	WMI_HOST_REGDMN_MODE_ALL = 0xffffffff
+#ifdef WLAN_FEATURE_11BE
+	WMI_HOST_REGDMN_MODE_11BEG_EHT20      = 0x0000000100000000,
+	WMI_HOST_REGDMN_MODE_11BEA_EHT20      = 0x0000000200000000,
+	WMI_HOST_REGDMN_MODE_11BEG_EHT40PLUS  = 0x0000000400000000,
+	WMI_HOST_REGDMN_MODE_11BEG_EHT40MINUS = 0x0000000800000000,
+	WMI_HOST_REGDMN_MODE_11BEA_EHT40PLUS  = 0x0000001000000000,
+	WMI_HOST_REGDMN_MODE_11BEA_EHT40MINUS = 0x0000002000000000,
+	WMI_HOST_REGDMN_MODE_11BEA_EHT80      = 0x0000004000000000,
+	WMI_HOST_REGDMN_MODE_11BEA_EHT160     = 0x0000008000000000,
+	WMI_HOST_REGDMN_MODE_11BEA_EHT320     = 0x0000010000000000,
+#endif
+	WMI_HOST_REGDMN_MODE_ALL = 0xffffffffffffffff
 } WMI_HOST_REGDMN_MODE;
 
 /**
@@ -611,6 +640,9 @@ typedef enum {
 	WMI_HOST_CHAN_WIDTH_5     = 5,
 	WMI_HOST_CHAN_WIDTH_10    = 6,
 	WMI_HOST_CHAN_WIDTH_165   = 7,
+#ifdef WLAN_FEATURE_11BE
+	WMI_HOST_CHAN_WIDTH_320   = 8,
+#endif
 } wmi_host_channel_width;
 
 #define ATH_EXPONENT_TO_VALUE(v)	((1<<v)-1)
@@ -948,6 +980,19 @@ typedef struct {
 #define WMI_HOST_HE_TXRX_MCS_NSS_IDX_160   1
 #define WMI_HOST_HE_TXRX_MCS_NSS_IDX_80_80 2
 
+#ifdef WLAN_FEATURE_11BE
+#define WMI_HOST_MAX_EHTCAP_PHY_SIZE	3
+#define WMI_HOST_MAX_EHTCAP_MAC_SIZE	2
+#define WMI_HOST_EHTCAP_MAC_WORD1	0
+#define WMI_HOST_EHTCAP_MAC_WORD2	1
+#define WMI_HOST_MAX_EHT_RATE_SET	3
+
+#define WMI_HOST_EHT_INVALID_MCSNSSMAP (0xFFFF)
+#define WMI_HOST_EHT_TXRX_MCS_NSS_IDX_80    0
+#define WMI_HOST_EHT_TXRX_MCS_NSS_IDX_160   1
+#define WMI_HOST_EHT_TXRX_MCS_NSS_IDX_320   2
+#endif
+
 /**
  * struct wmi_host_ppe_threshold -PPE threshold
  * @numss_m1: NSS - 1
@@ -1002,6 +1047,7 @@ typedef struct {
  * @bw_40: 40 capabale
  * @bw_80: 80 capabale
  * @bw_160: 160 capabale
+ * @bw_320: 320 capabale
  * @stbc_flag: STBC flag
  * @ldpc_flag: LDPC flag
  * @static_mimops_flag: statis MIMO PS flags
@@ -1016,6 +1062,7 @@ typedef struct {
  * @amsdu_disable: AMSDU disble
  * @peer_mac: Peer mac address
  * @he_flag: HE flags
+ * @eht_flag: EHT flags
  * @twt_requester: TWT Requester Support bit in Extended Capabilities element
  * @twt_responder: TWT Responder Support bit in Extended Capabilities element
  * @peer_he_cap_macinfo: Peer HE Cap MAC info
@@ -1026,6 +1073,12 @@ typedef struct {
  * @peer_he_mcs_count: Peer HE MCS TX/RX MAP count
  * @peer_he_rx_mcs_set: Peer HE RX MCS MAP
  * @peer_he_tx_mcs_set: Peer HE TX MCS MAP
+ * @peer_eht_cap_macinfo: Peer EHT Cap MAC info
+ * @peer_eht_ops: Peer EHT operation info
+ * @peer_eht_cap_phyinfo: Peer EHT Cap PHY info
+ * @peer_eht_mcs_count: Peer EHT MCS TX/RX MAP count
+ * @peer_eht_rx_mcs_set: Peer EHT RX MCS MAP
+ * @peer_eht_tx_mcs_set: Peer EHT TX MCS MAP
  * @peer_ppet: Peer HE PPET info
  * @peer_bss_max_idle_option: Peer BSS Max Idle option update
  * @akm: AKM info
@@ -1062,6 +1115,9 @@ struct peer_assoc_params {
 		 bw_40:1,
 		 bw_80:1,
 		 bw_160:1,
+#ifdef WLAN_FEATURE_11BE
+		 bw_320:1,
+#endif
 		 stbc_flag:1,
 		 ldpc_flag:1,
 		 static_mimops_flag:1,
@@ -1079,6 +1135,9 @@ struct peer_assoc_params {
 	/* Use common structure */
 	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
 	bool he_flag;
+#ifdef WLAN_FEATURE_11BE
+	bool eht_flag;
+#endif
 	bool twt_requester;
 	bool twt_responder;
 	uint32_t peer_he_cap_macinfo[WMI_HOST_MAX_HECAP_MAC_SIZE];
@@ -1089,6 +1148,14 @@ struct peer_assoc_params {
 	uint32_t peer_he_mcs_count;
 	uint32_t peer_he_rx_mcs_set[WMI_HOST_MAX_HE_RATE_SET];
 	uint32_t peer_he_tx_mcs_set[WMI_HOST_MAX_HE_RATE_SET];
+#ifdef WLAN_FEATURE_11BE
+	uint32_t peer_eht_cap_macinfo[WMI_HOST_MAX_EHTCAP_MAC_SIZE];
+	uint32_t peer_eht_ops;
+	uint32_t peer_eht_cap_phyinfo[WMI_HOST_MAX_EHTCAP_PHY_SIZE];
+	uint32_t peer_eht_mcs_count;
+	uint32_t peer_eht_rx_mcs_set[WMI_HOST_MAX_EHT_RATE_SET];
+	uint32_t peer_eht_tx_mcs_set[WMI_HOST_MAX_EHT_RATE_SET];
+#endif
 	struct wmi_host_ppe_threshold peer_ppet;
 	u_int8_t peer_bsscolor_rept_info;
 	uint32_t peer_bss_max_idle_option;
@@ -5108,6 +5175,15 @@ typedef enum {
 	wmi_service_go_connected_d3_wow,
 	wmi_service_ext_tpc_reg_support,
 	wmi_service_ndi_txbf_support,
+	wmi_service_reg_cc_ext_event_support,
+#if defined(CONFIG_BAND_6GHZ) && defined(CONFIG_REG_CLIENT)
+	wmi_service_lower_6g_edge_ch_supp,
+	wmi_service_disable_upper_6g_edge_ch_supp,
+#endif
+	wmi_service_dcs_awgn_int_support,
+#ifdef WLAN_FEATURE_IGMP_OFFLOAD
+	wmi_service_igmp_offload_support,
+#endif
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
@@ -5247,6 +5323,7 @@ struct wmi_host_fw_abi_ver {
  * @ast_tid_low_mask_enable: enable tid valid mask for low priority flow
  * @nan_separate_iface_support: Separate iface creation for NAN
  * @time_sync_ftm: enable ftm based time sync
+ * @is_reg_cc_ext_event_supported: Flag to indicate if reg_cc_ext is supported
  * @max_rnr_neighbours: Max supported RNR neighbors in multisoc APs
  * @ema_max_vap_cnt: Number of maximum EMA tx-vaps at any instance of time
  * @ema_max_profile_period: Maximum EMA profile periodicity on any pdev
@@ -5354,6 +5431,7 @@ typedef struct {
 		 ast_tid_low_mask_enable:8;
 	bool nan_separate_iface_support;
 	bool time_sync_ftm;
+	bool is_reg_cc_ext_event_supported;
 	uint32_t max_rnr_neighbours;
 	uint32_t ema_max_vap_cnt;
 	uint32_t ema_max_profile_period;
@@ -6437,6 +6515,22 @@ typedef struct {
 typedef struct {
 	uint32_t channel;
 } wmi_host_ath_dcs_cw_int;
+
+/**
+ * struct wmi_host_dcs_awgn_info:
+ * @channel_width      : Channel width of interference
+ * @center_freq        : Center frequency of primary channel
+ * @center_freq0       : Center frequency of segment 1
+ * @center_freq1       : Center frequency of segment 2
+ * @chan_bw_intf_bitmap: Per-20MHz interference bitmap
+ */
+struct wmi_host_dcs_awgn_info {
+	wmi_host_channel_width channel_width;
+	uint32_t               center_freq;
+	uint32_t               center_freq0;
+	uint32_t               center_freq1;
+	uint32_t               chan_bw_intf_bitmap;
+};
 
 #define WMI_MAX_POWER_DBG_ARGS 8
 

@@ -1600,19 +1600,23 @@ int qdf_sprint_symbol(char *buffer, void *addr);
  * @name: String to identify this entry
  */
 static inline
-void qdf_minidump_log(void *start_addr, size_t size, const char *name)
+void qdf_minidump_log(void *start_addr,
+		      const size_t size, const char *name)
 {
 	__qdf_minidump_log(start_addr, size, name);
 }
 
 /**
  * qdf_minidump_remove() - Remove memory address from minidump
- * @addr: Start address of the memory previously added
+ * @start_addr: Start address of the memory previously added
+ * @size: Size in bytes
+ * @name: String to identify this entry
  */
 static inline
-void qdf_minidump_remove(void *addr)
+void qdf_minidump_remove(void *start_addr,
+			 const size_t size, const char *name)
 {
-	__qdf_minidump_remove(addr);
+	__qdf_minidump_remove(start_addr, size, name);
 }
 
 #endif /* __QDF_TRACE_H */

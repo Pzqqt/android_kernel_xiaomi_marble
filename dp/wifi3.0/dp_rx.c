@@ -243,6 +243,11 @@ dp_pdev_nbuf_alloc_and_map_replenish(struct dp_soc *dp_soc,
 	nbuf_frag_info_t->paddr =
 		qdf_nbuf_get_frag_paddr((nbuf_frag_info_t->virt_addr).nbuf, 0);
 
+	dp_ipa_handle_rx_buf_smmu_mapping(dp_soc,
+			       (qdf_nbuf_t)((nbuf_frag_info_t->virt_addr).nbuf),
+			       rx_desc_pool->buf_size,
+			       true);
+
 	ret = dp_check_paddr(dp_soc, &((nbuf_frag_info_t->virt_addr).nbuf),
 			     &nbuf_frag_info_t->paddr,
 			     rx_desc_pool);
@@ -1019,13 +1024,13 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu,
 	}
 
 	if (qdf_nbuf_len(mpdu) < sizeof(struct ieee80211_frame)) {
-		dp_rx_err("%pK: Invalid nbuf length", soc);
+		dp_rx_info_rl("%pK: Invalid nbuf length", soc);
 		goto free;
 	}
 
 	pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 	if (!pdev) {
-		dp_rx_err("%pK: PDEV not found", soc);
+		dp_rx_info_rl("%pK: PDEV not found", soc);
 		goto free;
 	}
 
@@ -1040,7 +1045,7 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu,
 	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 
 	if (!vdev) {
-		dp_rx_err("%pK: VDEV not found", soc);
+		dp_rx_info_rl("%pK: VDEV not found", soc);
 		goto free;
 	}
 
@@ -1934,7 +1939,7 @@ dp_rx_desc_nbuf_len_sanity_check(struct dp_soc *soc,
 	struct rx_desc_pool *rx_desc_pool;
 
 	rx_desc_pool = &soc->rx_desc_buf[0];
-	qdf_assert_always(pkt_len < rx_desc_pool->buf_size);
+	qdf_assert_always(pkt_len <= rx_desc_pool->buf_size);
 }
 #else
 static inline
@@ -2271,6 +2276,33 @@ void dp_rx_deliver_to_pkt_capture_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf,
 
 #endif
 
+#if defined(FEATURE_MCL_REPEATER) && defined(FEATURE_MEC)
+/**
+ * dp_rx_mec_check_wrapper() - wrapper to dp_rx_mcast_echo_check
+ * @soc: core DP main context
+ * @peer: dp peer handler
+ * @rx_tlv_hdr: start of the rx TLV header
+ * @nbuf: pkt buffer
+ *
+ * Return: bool (true if it is a looped back pkt else false)
+ */
+static inline bool dp_rx_mec_check_wrapper(struct dp_soc *soc,
+					   struct dp_peer *peer,
+					   uint8_t *rx_tlv_hdr,
+					   qdf_nbuf_t nbuf)
+{
+	return dp_rx_mcast_echo_check(soc, peer, rx_tlv_hdr, nbuf);
+}
+#else
+static inline bool dp_rx_mec_check_wrapper(struct dp_soc *soc,
+					   struct dp_peer *peer,
+					   uint8_t *rx_tlv_hdr,
+					   qdf_nbuf_t nbuf)
+{
+	return false;
+}
+#endif
+
 /**
  * dp_rx_process() - Brain of the Rx processing functionality
  *		     Called from the bottom half (tasklet/NET_RX_SOFTIRQ)
@@ -2400,7 +2432,7 @@ more_data:
 		status = dp_rx_cookie_check_and_invalidate(ring_desc);
 		if (qdf_unlikely(QDF_IS_STATUS_ERROR(status))) {
 			DP_STATS_INC(soc, rx.err.stale_cookie, 1);
-			break;
+			qdf_assert_always(0);
 		}
 
 		rx_desc = dp_rx_cookie_2_va_rxdma_buf(soc, rx_buf_cookie);
@@ -2497,6 +2529,8 @@ more_data:
 						soc,
 						rx.msdu_scatter_wait_break,
 						1);
+					dp_rx_cookie_reset_invalid_bit(
+								     ring_desc);
 					break;
 				}
 				is_prev_msdu_last = false;
@@ -2933,6 +2967,18 @@ done:
 					tid_stats->intrabss_cnt++;
 					continue; /* Get next desc */
 				}
+
+			if (qdf_unlikely(dp_rx_mec_check_wrapper(soc,
+								 peer,
+								 rx_tlv_hdr,
+								 nbuf))) {
+				/* this is a looped back MCBC pkt,drop it */
+				DP_STATS_INC_PKT(peer, rx.mec_drop, 1,
+						 QDF_NBUF_CB_RX_PKT_LEN(nbuf));
+				qdf_nbuf_free(nbuf);
+				nbuf = next;
+				continue;
+			}
 		}
 
 		dp_rx_fill_gro_info(soc, rx_tlv_hdr, nbuf, &rx_ol_pkt_cnt);

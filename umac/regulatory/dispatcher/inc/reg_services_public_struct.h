@@ -70,6 +70,9 @@
 #define REGULATORY_CHAN_NO11N        BIT(3)
 #define REGULATORY_PHYMODE_NO11AC    BIT(4)
 #define REGULATORY_PHYMODE_NO11AX    BIT(5)
+#ifdef WLAN_FEATURE_11BE
+#define REGULATORY_PHYMODE_NO11BE    BIT(6)
+#endif
 
 #define BW_5_MHZ      5
 #define BW_10_MHZ     10
@@ -78,6 +81,9 @@
 #define BW_40_MHZ     40
 #define BW_80_MHZ     80
 #define BW_160_MHZ    160
+#ifdef WLAN_FEATURE_11BE
+#define BW_320_MHZ    320
+#endif
 #define BW_40_MHZ     40
 
 #define MAX_NUM_PWR_LEVEL 16
@@ -614,6 +620,7 @@ enum ctl_value {
  * @center_freq_seg1: channel number segment 1
  * @mhz_freq_seg0: Center frequency for segment 0
  * @mhz_freq_seg1: Center frequency for segment 1
+ * @reg_punc_pattern: Output puncturing pattern
  */
 struct ch_params {
 	enum phy_ch_width ch_width;
@@ -622,7 +629,27 @@ struct ch_params {
 	uint8_t center_freq_seg1;
 	qdf_freq_t mhz_freq_seg0;
 	qdf_freq_t mhz_freq_seg1;
+#ifdef WLAN_FEATURE_11BE
+	uint16_t reg_punc_pattern;
+#endif
 };
+
+/**
+ * struct reg_channel_list
+ * @num_ch_params: Number of chan_param elements
+ * @chan_param: Object of type struct ch_params to hold channel params
+ * Currently chan_param is an array of 2 because maximum possible 320
+ * channels for a given primary channel is 2. This may be dynamically
+ * allocated in the future by the caller if num_ch_params is greater than 2.
+ *
+ */
+#ifdef WLAN_FEATURE_11BE
+#define MAX_NUM_CHAN_PARAM 2
+struct reg_channel_list {
+	uint8_t num_ch_params;
+	struct ch_params chan_param[MAX_NUM_CHAN_PARAM];
+};
+#endif
 
 /**
  * struct channel_power
@@ -680,7 +707,7 @@ enum behav_limit {
  */
 struct reg_dmn_op_class_map_t {
 	uint8_t op_class;
-	uint8_t chan_spacing;
+	uint16_t chan_spacing;
 	enum offset_t offset;
 	uint16_t behav_limit;
 	qdf_freq_t start_freq;
@@ -1301,6 +1328,7 @@ struct reg_ctl_params {
  * @REG_PHYMODE_11N: 802.11n phymode
  * @REG_PHYMODE_11AC: 802.11ac phymode
  * @REG_PHYMODE_11AX: 802.11ax phymode
+ * @REG_PHYMODE_11BE: 802.11be phymode
  * @REG_PHYMODE_MAX: placeholder for future phymodes
  */
 enum reg_phymode {
@@ -1311,6 +1339,9 @@ enum reg_phymode {
 	REG_PHYMODE_11N,
 	REG_PHYMODE_11AC,
 	REG_PHYMODE_11AX,
+#ifdef WLAN_FEATURE_11BE
+	REG_PHYMODE_11BE,
+#endif
 	REG_PHYMODE_MAX,
 };
 

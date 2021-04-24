@@ -142,8 +142,6 @@ static inline uint8_t __qdf_nbuf_get_ip_offset(uint8_t *data)
 	return QDF_NBUF_TRAC_IP_OFFSET;
 }
 
-qdf_export_symbol(__qdf_nbuf_get_ip_offset);
-
 /**
  *  __qdf_nbuf_get_ether_type - Get the ether type
  * @data: Pointer to network data buffer
@@ -170,8 +168,6 @@ static inline uint16_t __qdf_nbuf_get_ether_type(uint8_t *data)
 
 	return ether_type;
 }
-
-qdf_export_symbol(__qdf_nbuf_get_ether_type);
 
 /**
  * qdf_nbuf_tx_desc_count_display() - Displays the packet counter
@@ -240,7 +236,6 @@ static inline void qdf_nbuf_tx_desc_count_update(uint8_t packet_type,
 		break;
 	}
 }
-qdf_export_symbol(qdf_nbuf_tx_desc_count_update);
 
 /**
  * qdf_nbuf_tx_desc_count_clear() - Clears packet counter for both data, mgmt
@@ -3104,6 +3099,10 @@ qdf_nbuf_unshare_debug(qdf_nbuf_t buf, const char *func_name,
 	if (is_initial_mem_debug_disabled)
 		return __qdf_nbuf_unshare(buf);
 
+	/* Not a shared buffer, nothing to do */
+	if (!qdf_nbuf_is_cloned(buf))
+		return buf;
+
 	/* Take care to delete the debug entries for frags */
 	num_nr_frags = qdf_nbuf_get_nr_frags(buf);
 
@@ -3115,17 +3114,14 @@ qdf_nbuf_unshare_debug(qdf_nbuf_t buf, const char *func_name,
 		idx++;
 	}
 
+	qdf_net_buf_debug_delete_node(buf);
+
 	unshared_buf = __qdf_nbuf_unshare(buf);
 
-	if (qdf_likely(buf != unshared_buf)) {
-		qdf_net_buf_debug_delete_node(buf);
+	if (qdf_likely(unshared_buf)) {
+		qdf_net_buf_debug_add_node(unshared_buf, 0,
+					   func_name, line_num);
 
-		if (unshared_buf)
-			qdf_net_buf_debug_add_node(unshared_buf, 0,
-						   func_name, line_num);
-	}
-
-	if (unshared_buf) {
 		/* Take care to add the debug entries for frags */
 		num_nr_frags = qdf_nbuf_get_nr_frags(unshared_buf);
 

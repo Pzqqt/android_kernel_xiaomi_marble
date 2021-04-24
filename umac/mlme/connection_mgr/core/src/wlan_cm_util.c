@@ -504,8 +504,13 @@ static void cm_remove_cmd_from_serialization(struct cnx_mgr *cm_ctx,
 		else
 			cmd_info.cmd_type = WLAN_SER_CMD_VDEV_ROAM;
 		cm_ctx->preauth_in_progress = false;
-	} else {
+	} else if (prefix == DISCONNECT_REQ_PREFIX) {
 		cmd_info.cmd_type = WLAN_SER_CMD_VDEV_DISCONNECT;
+	} else {
+		mlme_err(CM_PREFIX_FMT "Invalid prefix %x",
+			 CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev), cm_id),
+			 prefix);
+		return;
 	}
 
 	cmd_info.vdev = cm_ctx->vdev;
@@ -566,9 +571,13 @@ cm_flush_pending_request(struct cnx_mgr *cm_ctx, uint32_t prefix,
 			cm_free_connect_req_mem(&cm_req->connect_req);
 		} else if (req_prefix == ROAM_REQ_PREFIX) {
 			cm_free_roam_req_mem(&cm_req->roam_req);
-		} else {
+		} else if (req_prefix == DISCONNECT_REQ_PREFIX) {
 			cm_handle_disconnect_flush(cm_ctx, cm_req);
 			cm_ctx->disconnect_count--;
+		} else {
+			mlme_err(CM_PREFIX_FMT "Invalid prefix %x",
+				 CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
+					       cm_req->cm_id), prefix);
 		}
 
 		cm_req_history_del(cm_ctx, cm_req, CM_REQ_DEL_FLUSH);
@@ -750,8 +759,12 @@ cm_delete_req_from_list(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 		cm_free_connect_req_mem(&cm_req->connect_req);
 	} else if (prefix == ROAM_REQ_PREFIX) {
 		cm_free_roam_req_mem(&cm_req->roam_req);
-	} else {
+	} else if (prefix == DISCONNECT_REQ_PREFIX) {
 		cm_ctx->disconnect_count--;
+	} else {
+		mlme_err(CM_PREFIX_FMT "Invalid prefix %x",
+			 CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
+				       cm_req->cm_id), prefix);
 	}
 
 	if (cm_id == cm_ctx->active_cm_id)
@@ -769,36 +782,42 @@ cm_delete_req_from_list(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 	return QDF_STATUS_SUCCESS;
 }
 
-void cm_remove_cmd(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
+void cm_remove_cmd(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id_to_remove)
 {
 	struct wlan_objmgr_psoc *psoc;
 	QDF_STATUS status;
+	wlan_cm_id cm_id;
 
-	if (!cm_id) {
-		mlme_err("cmd_id is null");
+	if (!cm_id_to_remove) {
+		mlme_err("cm_id_to_remove is null");
 		return;
 	}
 
+	/*
+	 * store local value as cm_delete_req_from_list may free the
+	 * cm_id_to_remove pointer
+	 */
+	cm_id = *cm_id_to_remove;
 	/* return if zero or invalid cm_id */
-	if (!*cm_id || *cm_id == CM_ID_INVALID) {
+	if (!cm_id || cm_id == CM_ID_INVALID) {
 		mlme_debug(CM_PREFIX_FMT " Invalid cm_id",
 			   CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
-					 *cm_id));
+					 cm_id));
 		return;
 	}
 
 	psoc = wlan_vdev_get_psoc(cm_ctx->vdev);
 	if (!psoc) {
 		mlme_err(CM_PREFIX_FMT "Failed to find psoc",
-			 CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev), *cm_id));
+			 CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev), cm_id));
 		return;
 	}
 
-	status = cm_delete_req_from_list(cm_ctx, *cm_id);
+	status = cm_delete_req_from_list(cm_ctx, cm_id);
 	if (QDF_IS_STATUS_ERROR(status))
 		return;
 
-	cm_remove_cmd_from_serialization(cm_ctx, *cm_id);
+	cm_remove_cmd_from_serialization(cm_ctx, cm_id);
 }
 
 void cm_vdev_scan_cancel(struct wlan_objmgr_pdev *pdev,
@@ -1300,7 +1319,8 @@ cm_get_pcl_chan_weigtage_for_sta(struct wlan_objmgr_pdev *pdev,
 	}
 }
 
-void cm_calculate_scores(struct wlan_objmgr_pdev *pdev,
+void cm_calculate_scores(struct cnx_mgr *cm_ctx,
+			 struct wlan_objmgr_pdev *pdev,
 			 struct scan_filter *filter, qdf_list_t *list)
 {
 	struct pcl_freq_weight_list *pcl_lst = NULL;
@@ -1319,10 +1339,17 @@ void cm_calculate_scores(struct wlan_objmgr_pdev *pdev,
 }
 #else
 inline
-void cm_calculate_scores(struct wlan_objmgr_pdev *pdev,
+void cm_calculate_scores(struct cnx_mgr *cm_ctx,
+			 struct wlan_objmgr_pdev *pdev,
 			 struct scan_filter *filter, qdf_list_t *list)
 {
 	wlan_cm_calculate_bss_score(pdev, NULL, list, &filter->bssid_hint);
+
+	/*
+	 * Custom sorting if enabled
+	 */
+	if (cm_ctx && cm_ctx->cm_candidate_list_custom_sort)
+		cm_ctx->cm_candidate_list_custom_sort(cm_ctx->vdev, list);
 }
 #endif
 
@@ -1431,5 +1458,35 @@ void cm_req_history_print(struct cnx_mgr *cm_ctx)
 		cm_req_history_print_entry(idx, &history->data[idx]);
 	}
 	qdf_spin_unlock_bh(&history->cm_req_hist_lock);
+}
+#endif
+
+#ifndef CONN_MGR_ADV_FEATURE
+void cm_set_candidate_advance_filter_cb(
+		struct wlan_objmgr_vdev *vdev,
+		void (*filter_fun)(struct wlan_objmgr_vdev *vdev,
+				   struct scan_filter *filter))
+{
+	struct cnx_mgr *cm_ctx;
+
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx)
+		return;
+
+	cm_ctx->cm_candidate_advance_filter = filter_fun;
+}
+
+void cm_set_candidate_custom_sort_cb(
+		struct wlan_objmgr_vdev *vdev,
+		void (*sort_fun)(struct wlan_objmgr_vdev *vdev,
+				 qdf_list_t *list))
+{
+	struct cnx_mgr *cm_ctx;
+
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx)
+		return;
+
+	cm_ctx->cm_candidate_list_custom_sort = sort_fun;
 }
 #endif

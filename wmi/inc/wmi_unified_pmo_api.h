@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -387,4 +387,16 @@ QDF_STATUS wmi_unified_app_type1_params_in_fw_cmd(
 				struct app_type1_params *app_type1_params);
 #endif /* WLAN_FEATURE_EXTWOW_SUPPORT */
 
+#ifdef WLAN_FEATURE_IGMP_OFFLOAD
+/**
+ * wmi_unified_send_igmp_offload_cmd() - send igmp offload cmd to fw
+ * @wmi_hdl: wmi handle
+ * @pmo_igmp_req: igmp params
+ *
+ * Return: Success or failure
+ */
+QDF_STATUS
+wmi_unified_send_igmp_offload_cmd(wmi_unified_t wmi_handle,
+				  struct pmo_igmp_offload_req *pmo_igmp_req);
+#endif
 #endif /* _WMI_UNIFIED_PMO_API_H_ */

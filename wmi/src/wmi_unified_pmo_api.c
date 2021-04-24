@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -137,6 +137,19 @@ QDF_STATUS wmi_unified_send_gtk_offload_cmd(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+#ifdef WLAN_FEATURE_IGMP_OFFLOAD
+QDF_STATUS
+wmi_unified_send_igmp_offload_cmd(wmi_unified_t wmi_handle,
+				  struct pmo_igmp_offload_req *pmo_igmp_req)
+{
+	if (wmi_handle->ops->send_igmp_offload_cmd)
+		return wmi_handle->ops->send_igmp_offload_cmd(wmi_handle,
+				pmo_igmp_req);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
 
 QDF_STATUS wmi_unified_process_gtk_offload_getinfo_cmd(
 				wmi_unified_t wmi_handle,

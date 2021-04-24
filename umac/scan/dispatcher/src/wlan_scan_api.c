@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -333,6 +333,26 @@ qdf_time_t wlan_scan_get_aging_time(struct wlan_objmgr_psoc *psoc)
 		return cfg_default(CFG_SCAN_AGING_TIME) * 1000;
 
 	return scan_obj->scan_def.scan_cache_aging_time;
+}
+
+QDF_STATUS wlan_scan_set_aging_time(struct wlan_objmgr_psoc *psoc,
+				    qdf_time_t time)
+{
+	struct wlan_scan_obj *scan_obj;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj)
+		return status;
+
+	if (!cfg_in_range(CFG_SCAN_AGING_TIME, time / 1000)) {
+		status = QDF_STATUS_E_RANGE;
+		return status;
+	}
+
+	scan_obj->scan_def.scan_cache_aging_time = time;
+	status = QDF_STATUS_SUCCESS;
+	return status;
 }
 
 QDF_STATUS wlan_scan_start(struct scan_start_request *req)

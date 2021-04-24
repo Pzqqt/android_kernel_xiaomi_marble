@@ -25,6 +25,7 @@
 
 #ifdef FEATURE_CM_ENABLE
 #include "wlan_cm_public_struct.h"
+#include "wlan_ext_mlme_obj_types.h"
 
 /**
  * wlan_cm_start_connect() - connect start request
@@ -337,6 +338,14 @@ const char *wlan_cm_reason_code_to_str(enum wlan_reason_code reason);
 enum wlan_cm_active_request_type
 wlan_cm_get_active_req_type(struct wlan_objmgr_vdev *vdev);
 
+/**
+ * wlan_cm_get_ext_hdl() - Get connection manager ext context from vdev
+ * @vdev: vdev pointer
+ *
+ * Return: pointer to connection manager ext context
+ */
+cm_ext_t *wlan_cm_get_ext_hdl(struct wlan_objmgr_vdev *vdev);
+
 #ifdef WLAN_FEATURE_HOST_ROAM
 /**
  * wlan_cm_reassoc_rsp() - Connection manager reassoc response
@@ -397,6 +406,49 @@ static inline void wlan_cm_sm_history_print(struct wlan_objmgr_vdev *vdev)
 
 static inline void wlan_cm_req_history_print(struct wlan_objmgr_vdev *vdev)
 {}
+#endif
+
+#ifdef CONN_MGR_ADV_FEATURE
+/**
+ * wlan_cm_set_candidate_advance_filter_cb() - Set CM candidate advance
+ * filter cb
+ * @vdev: Objmgr vdev
+ * @filter_fun: CM candidate advance filter cb
+ *
+ * Return: void
+ */
+static inline
+void wlan_cm_set_candidate_advance_filter_cb(
+		struct wlan_objmgr_vdev *vdev,
+		void (*filter_fun)(struct wlan_objmgr_vdev *vdev,
+				   struct scan_filter *filter))
+{
+}
+
+/**
+ * wlan_cm_set_candidate_custom_sort_cb() - Set CM candidate custom sort cb
+ * @vdev: Objmgr vdev
+ * @sort_fun: CM candidate custom sort cb
+ *
+ * Return: void
+ */
+static inline
+void wlan_cm_set_candidate_custom_sort_cb(
+		struct wlan_objmgr_vdev *vdev,
+		void (*sort_fun)(struct wlan_objmgr_vdev *vdev,
+				 qdf_list_t *list))
+{
+}
+#else
+void wlan_cm_set_candidate_advance_filter_cb(
+		struct wlan_objmgr_vdev *vdev,
+		void (*filter_fun)(struct wlan_objmgr_vdev *vdev,
+				   struct scan_filter *filter));
+
+void wlan_cm_set_candidate_custom_sort_cb(
+		struct wlan_objmgr_vdev *vdev,
+		void (*sort_fun)(struct wlan_objmgr_vdev *vdev,
+				 qdf_list_t *list));
 #endif
 
 #else

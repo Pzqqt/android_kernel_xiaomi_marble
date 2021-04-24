@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -18,28 +18,6 @@
 
 #include <wlan_dfs_public_struct.h>
 #include <reg_services_public_struct.h>
-
-/* dfs regions definitions */
-/* un-initialized region */
-#define DFS_UNINIT_REGION_VAL   0
-
-/* FCC region */
-#define DFS_FCC_REGION_VAL      1
-
-/* ETSI region */
-#define DFS_ETSI_REGION_VAL     2
-
-/* MKK region */
-#define DFS_MKK_REGION_VAL      3
-
-/* China region */
-#define DFS_CN_REGION_VAL       4
-
-/* Korea region */
-#define DFS_KR_REGION_VAL       5
-
-/* Undefined region */
-#define DFS_UNDEF_REGION_VAL    6
 
 /* Channel width definitions */
 /* 20MHz channel width */
@@ -244,38 +222,8 @@ QDF_STATUS dfs_mark_leaking_chan_for_freq(struct wlan_dfs *dfs,
 #endif
 
 /**
- * dfs_prepare_random_channel() - This function picks a random channel from
- * the list of available channels.
- * @dfs: dfs handler.
- * @ch_list: channel list.
- * @ch_count: Number of channels in given list.
- * @flags: DFS_RANDOM_CH_FLAG_*
- * @ch_wd: input channel width, used same variable to return new ch width.
- * @cur_chan: current channel.
- * @dfs_region: DFS region.
- * @acs_info: acs channel range information.
- *
- * Function used to find random channel selection from a given list.
- * First this function removes channels  based on flags and then uses final
- * list to find channel based on requested bandwidth, if requested bandwidth
- * not available, it chooses next lower bandwidth and try.
- *
- * Return: channel number, else zero.
- */
-#ifdef CONFIG_CHAN_NUM_API
-uint8_t dfs_prepare_random_channel(struct wlan_dfs *dfs,
-	struct dfs_channel *ch_list,
-	uint32_t ch_count,
-	uint32_t flags,
-	uint8_t *ch_wd,
-	struct dfs_channel *cur_chan,
-	uint8_t dfs_region,
-	struct dfs_acs_info *acs_info);
-#endif
-
-/**
- * dfs_prepare_random_channel() - This function picks a random channel from
- * the list of available channels.
+ * dfs_prepare_random_channel_for_freq() - This function picks a random channel
+ * from the list of available channels.
  * @dfs: dfs handler.
  * @chan_list: channel list.
  * @ch_count: Number of channels in given list.

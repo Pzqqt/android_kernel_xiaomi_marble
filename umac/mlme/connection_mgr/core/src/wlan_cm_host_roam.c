@@ -196,7 +196,7 @@ static QDF_STATUS cm_roam_get_candidates(struct wlan_objmgr_pdev *pdev,
 
 	op_mode = wlan_vdev_mlme_get_opmode(cm_ctx->vdev);
 	if (num_bss && op_mode == QDF_STA_MODE)
-		cm_calculate_scores(pdev, filter, candidate_list);
+		cm_calculate_scores(cm_ctx, pdev, filter, candidate_list);
 
 	qdf_mem_free(filter);
 

@@ -303,6 +303,23 @@ static inline void wlan_lmac_if_register_master_list_ext_handler(
 }
 #endif
 
+#if defined(CONFIG_BAND_6GHZ) && defined(CONFIG_REG_CLIENT)
+static void wlan_lmac_if_register_6g_edge_chan_supp(
+					struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	rx_ops->reg_rx_ops.reg_set_lower_6g_edge_ch_supp =
+		tgt_reg_set_lower_6g_edge_ch_supp;
+
+	rx_ops->reg_rx_ops.reg_set_disable_upper_6g_edge_ch_supp =
+		tgt_reg_set_disable_upper_6g_edge_ch_supp;
+}
+#else
+static inline void wlan_lmac_if_register_6g_edge_chan_supp(
+					struct wlan_lmac_if_rx_ops *rx_ops)
+{
+}
+#endif
+
 static void wlan_lmac_if_umac_reg_rx_ops_register(
 	struct wlan_lmac_if_rx_ops *rx_ops)
 {
@@ -373,6 +390,8 @@ static void wlan_lmac_if_umac_reg_rx_ops_register(
 
 	rx_ops->reg_rx_ops.reg_set_ext_tpc_supported =
 		tgt_reg_set_ext_tpc_supported;
+
+	wlan_lmac_if_register_6g_edge_chan_supp(rx_ops);
 }
 
 #ifdef CONVERGED_P2P_ENABLE

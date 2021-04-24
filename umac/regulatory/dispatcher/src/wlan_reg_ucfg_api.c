@@ -286,7 +286,7 @@ QDF_STATUS ucfg_reg_set_hal_reg_cap(struct wlan_objmgr_psoc *psoc,
 qdf_export_symbol(ucfg_reg_set_hal_reg_cap);
 
 QDF_STATUS ucfg_reg_update_hal_reg_cap(struct wlan_objmgr_psoc *psoc,
-				       uint32_t wireless_modes, uint8_t phy_id)
+				       uint64_t wireless_modes, uint8_t phy_id)
 {
 	return reg_update_hal_reg_cap(psoc, wireless_modes, phy_id);
 }

@@ -561,7 +561,7 @@ static inline QDF_STATUS cm_set_fils_key(struct cnx_mgr *cm_ctx,
 }
 #endif /* WLAN_FEATURE_FILS_SK */
 
-static QDF_STATUS
+QDF_STATUS
 cm_inform_blm_connect_complete(struct wlan_objmgr_vdev *vdev,
 			       struct wlan_cm_connect_resp *resp)
 {
@@ -716,12 +716,6 @@ static void cm_set_fils_wep_key(struct cnx_mgr *cm_ctx,
 	cm_set_key(cm_ctx, false, 0, &broadcast_mac);
 }
 #else
-static inline QDF_STATUS
-cm_inform_blm_connect_complete(struct wlan_objmgr_vdev *vdev,
-			       struct wlan_cm_connect_resp *resp)
-{
-	return QDF_STATUS_SUCCESS;
-}
 
 static inline
 bool cm_is_retry_with_same_candidate(struct cnx_mgr *cm_ctx,
@@ -735,7 +729,12 @@ static inline void cm_update_advance_filter(struct wlan_objmgr_pdev *pdev,
 					    struct cnx_mgr *cm_ctx,
 					    struct scan_filter *filter,
 					    struct cm_connect_req *cm_req)
-{ }
+{
+	struct wlan_objmgr_vdev *vdev = cm_ctx->vdev;
+
+	if (cm_ctx->cm_candidate_advance_filter)
+		cm_ctx->cm_candidate_advance_filter(vdev, filter);
+}
 
 static void cm_update_security_filter(struct scan_filter *filter,
 				      struct wlan_cm_connect_req *req)
@@ -913,7 +912,7 @@ static QDF_STATUS cm_connect_get_candidates(struct wlan_objmgr_pdev *pdev,
 
 	op_mode = wlan_vdev_mlme_get_opmode(cm_ctx->vdev);
 	if (num_bss && op_mode == QDF_STA_MODE)
-		cm_calculate_scores(pdev, filter, candidate_list);
+		cm_calculate_scores(cm_ctx, pdev, filter, candidate_list);
 	qdf_mem_free(filter);
 
 	if (!candidate_list || !qdf_list_size(candidate_list)) {
@@ -964,9 +963,8 @@ QDF_STATUS cm_if_mgr_validate_candidate(struct cnx_mgr *cm_ctx,
 				    &event_data);
 }
 
-static QDF_STATUS
-cm_if_mgr_inform_connect_complete(struct wlan_objmgr_vdev *vdev,
-				  QDF_STATUS connect_status)
+QDF_STATUS cm_if_mgr_inform_connect_complete(struct wlan_objmgr_vdev *vdev,
+					     QDF_STATUS connect_status)
 {
 	struct if_mgr_event_data *connect_complete;
 
@@ -1373,6 +1371,8 @@ QDF_STATUS cm_connect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	cm_ctx->active_cm_id = *cm_id;
 	req = &cm_req->connect_req.req;
 	wlan_vdev_mlme_set_ssid(cm_ctx->vdev, req->ssid.ssid, req->ssid.length);
+	/* free vdev keys before setting crypto params */
+	wlan_crypto_free_vdev_key(cm_ctx->vdev);
 	cm_fill_vdev_crypto_params(cm_ctx, req);
 	cm_store_wep_key(cm_ctx, &req->crypto, *cm_id);
 

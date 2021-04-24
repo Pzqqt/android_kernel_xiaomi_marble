@@ -845,6 +845,50 @@ reg_modify_chan_list_for_5dot9_ghz_channels(struct wlan_objmgr_pdev *pdev,
 	}
 }
 
+#if defined(CONFIG_BAND_6GHZ) && defined(CONFIG_REG_CLIENT)
+/**
+ * reg_modify_chan_list_for_6g_edge_channels() - Modify 6 GHz edge channels
+ *
+ * @pdev: Pointer to pdev object
+ * @chan_list: Current channel list
+ *
+ * This function disables lower 6G edge channel (5935MHz) if service bit
+ * wmi_service_lower_6g_edge_ch_supp is not set. If service bit is set
+ * the channels remain enabled. It disables upper 6G edge channel (7115MHz)
+ * if the service bit wmi_service_disable_upper_6g_edge_ch_supp is set, it
+ * is enabled by default.
+ *
+ */
+static void
+reg_modify_chan_list_for_6g_edge_channels(struct wlan_objmgr_pdev *pdev,
+					  struct regulatory_channel
+					  *chan_list)
+{
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+
+	if (!reg_is_lower_6g_edge_ch_supp(psoc)) {
+		chan_list[CHAN_ENUM_5935].state = CHANNEL_STATE_DISABLE;
+		chan_list[CHAN_ENUM_5935].chan_flags |=
+						REGULATORY_CHAN_DISABLED;
+	}
+
+	if (reg_is_upper_6g_edge_ch_disabled(psoc)) {
+		chan_list[CHAN_ENUM_7115].state = CHANNEL_STATE_DISABLE;
+		chan_list[CHAN_ENUM_7115].chan_flags |=
+						REGULATORY_CHAN_DISABLED;
+	}
+}
+#else
+static inline void
+reg_modify_chan_list_for_6g_edge_channels(struct wlan_objmgr_pdev *pdev,
+					  struct regulatory_channel
+					  *chan_list)
+{
+}
+#endif
+
 #ifdef DISABLE_UNII_SHARED_BANDS
 /**
  * reg_is_reg_unii_band_1_set() - Check UNII bitmap
@@ -979,8 +1023,16 @@ static void
 reg_append_mas_chan_list_for_6g(struct wlan_regulatory_pdev_priv_obj
 				*pdev_priv_obj)
 {
-	struct regulatory_channel *master_chan_list_6g_client =
-		pdev_priv_obj->mas_chan_list_6g_client
+	struct regulatory_channel *master_chan_list_6g_client;
+
+	if (pdev_priv_obj->reg_cur_6g_ap_pwr_type >= REG_CURRENT_MAX_AP_TYPE ||
+	    pdev_priv_obj->reg_cur_6g_client_mobility_type >=
+	    REG_MAX_CLIENT_TYPE) {
+		reg_debug("invalid 6G AP or client power type");
+		return;
+	}
+
+	master_chan_list_6g_client = pdev_priv_obj->mas_chan_list_6g_client
 			[pdev_priv_obj->reg_cur_6g_ap_pwr_type]
 			[pdev_priv_obj->reg_cur_6g_client_mobility_type];
 
@@ -995,6 +1047,11 @@ reg_append_mas_chan_list_for_6g(struct wlan_regulatory_pdev_priv_obj
 				*pdev_priv_obj)
 {
 	enum reg_6g_ap_type ap_pwr_type = pdev_priv_obj->reg_cur_6g_ap_pwr_type;
+
+	if (ap_pwr_type >= REG_CURRENT_MAX_AP_TYPE) {
+		reg_debug("invalid 6G AP power type");
+		return;
+	}
 
 	qdf_mem_copy(&pdev_priv_obj->mas_chan_list[MIN_6GHZ_CHANNEL],
 		     pdev_priv_obj->mas_chan_list_6g_ap[ap_pwr_type],
@@ -1065,6 +1122,10 @@ void reg_compute_pdev_current_chan_list(struct wlan_regulatory_pdev_priv_obj
 
 	reg_modify_chan_list_for_max_chwidth(pdev_priv_obj->pdev_ptr,
 					     pdev_priv_obj->cur_chan_list);
+
+	reg_modify_chan_list_for_6g_edge_channels(pdev_priv_obj->pdev_ptr,
+						  pdev_priv_obj->
+						  cur_chan_list);
 }
 
 void reg_reset_reg_rules(struct reg_rule_info *reg_rules)
@@ -1671,10 +1732,10 @@ reg_fill_master_channels(struct cur_regulatory_info *regulat_info,
 		reg_populate_band_channels(MIN_5GHZ_CHANNEL, MAX_5GHZ_CHANNEL,
 					   reg_rule_5g, num_5g_reg_rules,
 					   min_bw_5g, mas_chan_list_2g_5g);
-		reg_populate_band_channels(MIN_49GHZ_CHANNEL,
-					   MAX_49GHZ_CHANNEL,
-					   reg_rule_5g, num_5g_reg_rules,
-					   min_bw_5g, mas_chan_list_2g_5g);
+		reg_populate_49g_band_channels(reg_rule_5g,
+					       num_5g_reg_rules,
+					       min_bw_5g,
+					       mas_chan_list_2g_5g);
 	}
 
 	for (i = 0; i < REG_CURRENT_MAX_AP_TYPE; i++) {

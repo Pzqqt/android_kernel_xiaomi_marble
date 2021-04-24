@@ -931,81 +931,6 @@ bool utils_dfs_can_ignore_radar_event(struct wlan_objmgr_pdev *pdev)
 }
 #endif
 
-#ifdef CONFIG_CHAN_NUM_API
-QDF_STATUS utils_dfs_get_vdev_random_channel(
-	struct wlan_objmgr_pdev *pdev, struct wlan_objmgr_vdev *vdev,
-	uint16_t flags, struct ch_params *ch_params, uint32_t *hw_mode,
-	uint8_t *target_chan, struct dfs_acs_info *acs_info)
-{
-	uint32_t dfs_reg;
-	uint32_t num_chan = NUM_CHANNELS;
-	struct wlan_dfs *dfs = NULL;
-	struct wlan_objmgr_psoc *psoc;
-	struct dfs_channel *chan_list = NULL;
-	struct dfs_channel cur_chan;
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-
-	*target_chan = 0;
-	psoc = wlan_pdev_get_psoc(pdev);
-	if (!psoc) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "null psoc");
-		goto random_chan_error;
-	}
-
-	dfs = wlan_pdev_get_dfs_obj(pdev);
-	if (!dfs) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "null dfs");
-		goto random_chan_error;
-	}
-
-	wlan_reg_get_dfs_region(pdev, &dfs_reg);
-	chan_list = qdf_mem_malloc(num_chan * sizeof(*chan_list));
-	if (!chan_list)
-		goto random_chan_error;
-
-	utils_dfs_get_channel_list(pdev, vdev, chan_list, &num_chan);
-	if (!num_chan) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "zero channels");
-		goto random_chan_error;
-	}
-
-	cur_chan.dfs_ch_vhtop_ch_freq_seg1 = ch_params->center_freq_seg0;
-	cur_chan.dfs_ch_vhtop_ch_freq_seg2 = ch_params->center_freq_seg1;
-
-	if (!ch_params->ch_width)
-		utils_dfs_get_max_sup_width(pdev,
-				(uint8_t *)&ch_params->ch_width);
-
-	*target_chan = dfs_prepare_random_channel(dfs, chan_list,
-		num_chan, flags, (uint8_t *)&ch_params->ch_width,
-		&cur_chan, (uint8_t)dfs_reg, acs_info);
-
-	ch_params->center_freq_seg0 = cur_chan.dfs_ch_vhtop_ch_freq_seg1;
-	ch_params->center_freq_seg1 = cur_chan.dfs_ch_vhtop_ch_freq_seg2;
-	dfs_info(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
-			"input width=%d", ch_params->ch_width);
-
-	if (*target_chan) {
-		wlan_reg_set_channel_params(pdev,
-				*target_chan, 0, ch_params);
-		utils_dfs_get_max_phy_mode(pdev, hw_mode);
-		status = QDF_STATUS_SUCCESS;
-	}
-
-	dfs_info(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
-			"ch=%d, seg0=%d, seg1=%d, width=%d",
-			*target_chan, ch_params->center_freq_seg0,
-			ch_params->center_freq_seg1, ch_params->ch_width);
-
-random_chan_error:
-	qdf_mem_free(chan_list);
-
-	return status;
-}
-
-qdf_export_symbol(utils_dfs_get_vdev_random_channel);
-#endif
-
 #ifdef CONFIG_CHAN_FREQ_API
 QDF_STATUS utils_dfs_get_vdev_random_channel_for_freq(
 	struct wlan_objmgr_pdev *pdev, struct wlan_objmgr_vdev *vdev,
@@ -1073,22 +998,6 @@ random_chan_error:
 }
 
 qdf_export_symbol(utils_dfs_get_vdev_random_channel_for_freq);
-#endif
-
-#ifdef CONFIG_CHAN_NUM_API
-QDF_STATUS utils_dfs_get_random_channel(
-	struct wlan_objmgr_pdev *pdev,
-	uint16_t flags,
-	struct ch_params *ch_params,
-	uint32_t *hw_mode,
-	uint8_t *target_chan,
-	struct dfs_acs_info *acs_info)
-{
-	return utils_dfs_get_vdev_random_channel(
-		pdev, NULL, flags, ch_params, hw_mode, target_chan,
-		acs_info);
-}
-qdf_export_symbol(utils_dfs_get_random_channel);
 #endif
 
 #ifdef CONFIG_CHAN_FREQ_API

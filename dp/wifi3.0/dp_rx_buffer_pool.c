@@ -166,9 +166,6 @@ void dp_rx_refill_buff_pool_enqueue(struct dp_soc *soc)
 				continue;
 			}
 
-			dp_ipa_handle_rx_buf_smmu_mapping(soc, nbuf,
-							  rx_desc_pool->buf_size,
-							  true);
 			DP_RX_LIST_APPEND(nbuf_head, nbuf_tail, nbuf);
 			count++;
 		}
@@ -263,20 +260,11 @@ dp_rx_buffer_pool_nbuf_map(struct dp_soc *soc,
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
-	if (!QDF_NBUF_CB_PADDR((nbuf_frag_info_t->virt_addr).nbuf)) {
+	if (!QDF_NBUF_CB_PADDR((nbuf_frag_info_t->virt_addr).nbuf))
 		ret = qdf_nbuf_map_nbytes_single(soc->osdev,
 						 (nbuf_frag_info_t->virt_addr).nbuf,
 						 QDF_DMA_FROM_DEVICE,
 						 rx_desc_pool->buf_size);
-
-		if (qdf_unlikely(QDF_IS_STATUS_ERROR(ret)))
-			return ret;
-
-		dp_ipa_handle_rx_buf_smmu_mapping(soc,
-						  (qdf_nbuf_t)((nbuf_frag_info_t->virt_addr).nbuf),
-						  rx_desc_pool->buf_size,
-						  true);
-	}
 
 	return ret;
 }
@@ -316,9 +304,6 @@ static void dp_rx_refill_buff_pool_init(struct dp_soc *soc, u8 mac_id)
 			continue;
 		}
 
-		dp_ipa_handle_rx_buf_smmu_mapping(soc, nbuf,
-						  rx_desc_pool->buf_size,
-						  true);
 		DP_RX_LIST_APPEND(buff_pool->buf_head,
 				  buff_pool->buf_tail, nbuf);
 		buff_pool->bufq_len++;
@@ -373,20 +358,25 @@ static void dp_rx_refill_buff_pool_deinit(struct dp_soc *soc, u8 mac_id)
 	struct rx_refill_buff_pool *buff_pool = &soc->rx_refill_buff_pool;
 	struct rx_desc_pool *rx_desc_pool = &soc->rx_desc_buf[mac_id];
 	qdf_nbuf_t nbuf;
+	uint32_t count = 0;
 
 	if (!buff_pool->is_initialized)
 		return;
 
+	buff_pool->in_rx_refill_lock  = true;
 	while ((nbuf = dp_rx_refill_buff_pool_dequeue_nbuf(soc))) {
-		dp_ipa_handle_rx_buf_smmu_mapping(soc, nbuf,
-						  rx_desc_pool->buf_size,
-						  false);
 		qdf_nbuf_unmap_nbytes_single(soc->osdev, nbuf,
 					     QDF_DMA_BIDIRECTIONAL,
 					     rx_desc_pool->buf_size);
 		qdf_nbuf_free(nbuf);
+		count++;
 	}
+	buff_pool->in_rx_refill_lock  = false;
 
+	dp_info("Rx refill buffers freed during deinit %u qlen: %u",
+		count, buff_pool->bufq_len);
+
+	qdf_spinlock_destroy(&buff_pool->bufq_lock);
 	buff_pool->is_initialized = false;
 }
 

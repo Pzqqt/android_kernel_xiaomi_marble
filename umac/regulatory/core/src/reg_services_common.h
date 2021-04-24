@@ -141,6 +141,17 @@ extern const struct chan_map channel_map_jp[];
 extern const struct chan_map channel_map_china[];
 extern const struct chan_map channel_map_global[];
 
+#ifdef WLAN_FEATURE_11BE
+#define ALL_SCHANS_PUNC 0x0000 /* all subchannels punctured */
+#endif
+/**
+ * get_next_lower_bandwidth() - Get next lower bandwidth
+ * @ch_width: Channel width
+ *
+ * Return: Channel width
+ */
+enum phy_ch_width get_next_lower_bandwidth(enum phy_ch_width ch_width);
+
 #ifdef CONFIG_CHAN_NUM_API
 /**
  * reg_get_chan_enum() - Get channel enum for given channel number
@@ -307,16 +318,6 @@ uint16_t reg_get_bw_value(enum phy_ch_width bw);
 void reg_set_dfs_region(struct wlan_objmgr_pdev *pdev,
 			enum dfs_reg dfs_reg);
 
-#ifdef CONFIG_CHAN_NUM_API
-/**
- * reg_chan_to_band() - Get band from channel number
- * @chan_num: channel number
- *
- * Return: band info
- */
-enum band_info reg_chan_to_band(uint8_t chan_num);
-#endif /* CONFIG_CHAN_NUM_API */
-
 /**
  * reg_program_chan_list() - Set user country code and populate the channel list
  * @pdev: Pointer to pdev
@@ -466,7 +467,7 @@ QDF_STATUS reg_set_hal_reg_cap(
  * Return: QDF_STATUS
  */
 QDF_STATUS reg_update_hal_reg_cap(struct wlan_objmgr_psoc *psoc,
-				  uint32_t wireless_modes, uint8_t phy_id);
+				  uint64_t wireless_modes, uint8_t phy_id);
 
 /**
  * reg_chan_in_range() - Check if the given channel is in pdev's channel range
@@ -779,15 +780,6 @@ qdf_freq_t reg_ch_to_freq(uint32_t ch_enum);
 
 #ifdef CONFIG_CHAN_NUM_API
 /**
- * reg_is_same_band_channels() - Check if given channel numbers have same band
- * @chan_num1: Channel number1
- * @chan_num2: Channel number2
- *
- * Return: true if both the channels has the same band.
- */
-bool reg_is_same_band_channels(uint8_t chan_num1, uint8_t chan_num2);
-
-/**
  * reg_is_channel_valid_5g_sbs() Check if the given channel is 5G SBS.
  * @curchan: current channel
  * @newchan:new channel
@@ -1008,6 +1000,32 @@ void reg_set_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
 				     qdf_freq_t sec_ch_2g_freq,
 				     struct ch_params *ch_params);
 
+/**
+ * reg_fill_channel_list() - Fills an array of ch_params (list of
+ * channels) for the given channel width and primary freq.
+ * If 320 band_center is given, ch_params corresponding to the
+ * given band_center is filled.
+ *
+ * @pdev: Pointer to pdev
+ * @freq: Center frequency of the primary channel in MHz
+ * @sec_ch_2g_freq: Secondary 2G channel frequency in MHZ
+ * @ch_width: Input channel width.
+ * @band_center: Center frequency of the 320MHZ channel.
+ * @chan_list: Pointer to struct reg_channel_list to be filled (Output).
+ * The caller is supposed to provide enough storage for the elements
+ * in the list.
+ *
+ * Return: None
+ */
+#ifdef WLAN_FEATURE_11BE
+void
+reg_fill_channel_list(struct wlan_objmgr_pdev *pdev,
+		      qdf_freq_t freq,
+		      qdf_freq_t sec_ch_2g_freq,
+		      enum phy_ch_width ch_width,
+		      qdf_freq_t band_center_320,
+		      struct reg_channel_list *chan_list);
+#endif
 /**
  * reg_get_channel_reg_power_for_freq() - Get the txpower for the given channel
  * @pdev: Pointer to pdev
@@ -1422,15 +1440,6 @@ QDF_STATUS reg_get_client_power_for_6ghz_ap(struct wlan_objmgr_pdev *pdev,
 					    qdf_freq_t chan_freq,
 					    bool *is_psd, uint16_t *tx_power,
 					    uint16_t *eirp_psd_power);
-
-/**
- * reg_decide_6g_ap_pwr_type() - Decide which power mode AP should operate in
- *
- * @pdev: pdev ptr
- *
- * Return: AP power type
- */
-enum reg_6g_ap_type reg_decide_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev);
 #else
 static inline QDF_STATUS
 reg_set_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
@@ -1515,12 +1524,6 @@ QDF_STATUS reg_get_client_power_for_6ghz_ap(struct wlan_objmgr_pdev *pdev,
 	*tx_power = 0;
 	*eirp_psd_power = 0;
 	return QDF_STATUS_E_NOSUPPORT;
-}
-
-static inline enum reg_6g_ap_type
-reg_decide_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev)
-{
-	return REG_INDOOR_AP;
 }
 #endif
 
@@ -1614,4 +1617,68 @@ bool reg_is_ext_tpc_supported(struct wlan_objmgr_psoc *psoc);
  */
 const struct bonded_channel_freq *
 reg_get_bonded_chan_entry(qdf_freq_t freq, enum phy_ch_width chwidth);
+
+/**
+ * reg_set_2g_channel_params_for_freq() - set the 2.4G bonded channel parameters
+ * @oper_freq: operating channel
+ * @ch_params: channel parameters
+ * @sec_ch_2g_freq: 2.4G secondary channel
+ *
+ * Return: void
+ */
+void reg_set_2g_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
+					uint16_t oper_freq,
+					struct ch_params *ch_params,
+					uint16_t sec_ch_2g_freq);
+
+/**
+ * reg_combine_channel_states() - Get minimum of channel state1 and state2
+ * @chan_state1: Channel state1
+ * @chan_state2: Channel state2
+ *
+ * Return: Channel state
+ */
+enum channel_state reg_combine_channel_states(enum channel_state chan_state1,
+					      enum channel_state chan_state2);
+
+#if defined(CONFIG_BAND_6GHZ) && defined(CONFIG_REG_CLIENT)
+/**
+ * reg_set_lower_6g_edge_ch_supp() - Set if lower 6ghz edge channel is
+ * supported by FW
+ *
+ * @psoc: Pointer to psoc
+ * @val: value
+ */
+QDF_STATUS reg_set_lower_6g_edge_ch_supp(struct wlan_objmgr_psoc *psoc,
+					 bool val);
+
+/**
+ * reg_set_disable_upper_6g_edge_ch_supp() - Set if upper 6ghz edge channel is
+ * disabled by FW
+ *
+ * @psoc: Pointer to psoc
+ * @val: value
+ */
+QDF_STATUS
+reg_set_disable_upper_6g_edge_ch_supp(struct wlan_objmgr_psoc *psoc,
+				      bool val);
+
+/**
+ * reg_is_lower_6g_edge_ch_supp() - Check whether 6GHz lower edge channel
+ * (5935 MHz) is supported.
+ * @psoc: pointer to psoc
+ *
+ * Return: true if edge channels are supported, else false
+ */
+bool reg_is_lower_6g_edge_ch_supp(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * reg_is_upper_6g_edge_ch_disabled() - Check whether 6GHz upper edge
+ * channel (7115 MHz) is disabled.
+ * @psoc: pointer to psoc
+ *
+ * Return: true if edge channels are supported, else false
+ */
+bool reg_is_upper_6g_edge_ch_disabled(struct wlan_objmgr_psoc *psoc);
+#endif
 #endif

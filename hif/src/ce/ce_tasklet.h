@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2015-2016,2018,2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016,2018,2020-2021 The Linux Foundation.
+ * All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,6 +25,7 @@ void deinit_tasklet_workers(struct hif_opaque_softc *scn);
 void ce_tasklet_init(struct HIF_CE_state *hif_ce_state, uint32_t mask);
 void ce_tasklet_kill(struct hif_softc *scn);
 int hif_drain_tasklets(struct hif_softc *scn);
+int hif_drain_fw_diag_ce(struct hif_softc *scn);
 QDF_STATUS ce_register_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask);
 QDF_STATUS ce_unregister_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask);
 irqreturn_t ce_dispatch_interrupt(int irq,

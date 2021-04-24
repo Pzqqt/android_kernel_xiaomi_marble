@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -137,7 +137,9 @@ ext_hdl_create_failed:
 cm_sm_create_failed:
 	mlme_vdev_sm_destroy(vdev_mlme);
 init_failed:
-	wlan_minidump_remove(vdev_mlme);
+	wlan_minidump_remove(vdev_mlme, sizeof(*vdev_mlme), psoc,
+			     WLAN_MD_OBJMGR_VDEV_MLME, "vdev_mlme");
+
 	qdf_mem_free(vdev_mlme);
 	return QDF_STATUS_E_FAILURE;
 }
@@ -160,12 +162,14 @@ static QDF_STATUS mlme_vdev_obj_destroy_handler(struct wlan_objmgr_vdev *vdev,
 
 	wlan_cm_deinit(vdev_mlme);
 	mlme_vdev_sm_destroy(vdev_mlme);
-
 	mlme_vdev_ops_ext_hdl_destroy(vdev_mlme);
-
 	wlan_objmgr_vdev_component_obj_detach(vdev, WLAN_UMAC_COMP_MLME,
 					      vdev_mlme);
-	wlan_minidump_remove(vdev_mlme);
+
+	wlan_minidump_remove(vdev_mlme, sizeof(*vdev_mlme),
+			     wlan_vdev_get_psoc(vdev),
+			     WLAN_MD_OBJMGR_VDEV_MLME, "vdev_mlme");
+
 	qdf_mem_free(vdev_mlme);
 
 	return QDF_STATUS_SUCCESS;

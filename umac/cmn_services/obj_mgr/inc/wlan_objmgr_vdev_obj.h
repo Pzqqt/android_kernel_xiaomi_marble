@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -169,6 +169,10 @@
 	/* Fils discovery on 6G SAP*/
 #define WLAN_VDEV_FEXT_FILS_DISC_6G_SAP     0x80000000
 
+/* Feature more extension flags */
+	/* VDEV is MLO*/
+#define WLAN_VDEV_FEXT2_MLO                 0x00000001
+
 /* VDEV OP flags  */
   /* if the vap destroyed by user */
 #define WLAN_VDEV_OP_DELETE_PROGRESS        0x00000001
@@ -291,6 +295,7 @@ struct wlan_channel {
  * @vdev_caps:          VDEV capabilities
  * @vdev_feat_caps:     VDEV feature caps
  * @vdev_feat_ext_caps: VDEV Extended feature caps
+ * @vdev_feat_ext2_caps: More VDEV Extended feature caps
  * @vdev_op_flags:      Operation flags
  * @mataddr[]:          MAT address
  * @macaddr[]:          VDEV self MAC address
@@ -313,6 +318,7 @@ struct wlan_objmgr_vdev_mlme {
 	uint32_t vdev_caps;
 	uint32_t vdev_feat_caps;
 	uint32_t vdev_feat_ext_caps;
+	uint32_t vdev_feat_ext2_caps;
 	uint32_t vdev_op_flags;
 	uint8_t  mataddr[QDF_MAC_ADDR_SIZE];
 	uint8_t  macaddr[QDF_MAC_ADDR_SIZE];
@@ -980,6 +986,55 @@ static inline uint8_t wlan_vdev_mlme_feat_ext_cap_get(
 }
 
 /**
+ * wlan_vdev_mlme_feat_ext2_cap_set() - set ext2 feature caps
+ * @vdev: VDEV object
+ * @cap: capabilities to be set
+ *
+ * API to set the MLME more extensive feature capabilities
+ *
+ * Return: void
+ */
+static inline void wlan_vdev_mlme_feat_ext2_cap_set(
+				struct wlan_objmgr_vdev *vdev,
+				uint32_t cap)
+{
+	vdev->vdev_mlme.vdev_feat_ext2_caps |= cap;
+}
+
+/**
+ * wlan_vdev_mlme_feat_ext2_cap_clear() - clear ext2 feature caps
+ * @vdev: VDEV object
+ * @cap: capabilities to be cleared
+ *
+ * API to clear the MLME more extensive feature capabilities
+ *
+ * Return: void
+ */
+static inline void wlan_vdev_mlme_feat_ext2_cap_clear(
+				struct wlan_objmgr_vdev *vdev,
+				uint32_t cap)
+{
+	vdev->vdev_mlme.vdev_feat_ext2_caps &= ~cap;
+}
+
+/**
+ * wlan_vdev_mlme_feat_ext2_cap_get() - get feature ext2 caps
+ * @vdev: VDEV object
+ * @cap: capabilities to be checked
+ *
+ * API to know MLME more ext feature capability is set or not
+ *
+ * Return: 1 -- if capabilities set
+ *         0 -- if capabilities clear
+ */
+static inline uint8_t wlan_vdev_mlme_feat_ext2_cap_get(
+				struct wlan_objmgr_vdev *vdev,
+				uint32_t cap)
+{
+	return (vdev->vdev_mlme.vdev_feat_ext2_caps & cap) ? 1 : 0;
+}
+
+/**
  * wlan_vdev_mlme_cap_set() - mlme caps set
  * @vdev: VDEV object
  * @cap: capabilities to be set
@@ -1184,6 +1239,25 @@ static inline uint16_t wlan_vdev_get_peer_count(struct wlan_objmgr_vdev *vdev)
 {
 	return vdev->vdev_objmgr.wlan_peer_count;
 }
+
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * wlan_vdev_mlme_is_mlo_ap() - whether it is mlo ap or not
+ * @vdev: VDEV object
+ *
+ * Return: True if it is mlo ap, otherwise false.
+ */
+static inline bool wlan_vdev_mlme_is_mlo_ap(struct wlan_objmgr_vdev *vdev)
+{
+	return (wlan_vdev_mlme_get_opmode(vdev) == QDF_SAP_MODE) &&
+	       wlan_vdev_mlme_feat_ext2_cap_get(vdev, WLAN_VDEV_FEXT2_MLO);
+}
+#else
+static inline bool wlan_vdev_mlme_is_mlo_ap(struct wlan_objmgr_vdev *vdev)
+{
+	return false;
+}
+#endif
 
 /**
  * DOC: Examples to use VDEV ref count APIs

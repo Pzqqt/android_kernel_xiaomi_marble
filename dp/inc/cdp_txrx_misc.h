@@ -818,6 +818,24 @@ cdp_request_rx_hw_stats(ol_txrx_soc_handle soc, uint8_t vdev_id)
 }
 
 /**
+ * cdp_reset_rx_hw_ext_stats(): reset rx hw ext stats
+ * @soc: soc handle
+ *
+ * Return: none
+ */
+static inline void
+cdp_reset_rx_hw_ext_stats(ol_txrx_soc_handle soc)
+{
+	if (!soc || !soc->ops || !soc->ops->misc_ops) {
+		dp_cdp_debug("Invalid Instance");
+		return;
+	}
+
+	if (soc->ops->misc_ops->reset_rx_hw_ext_stats)
+		soc->ops->misc_ops->reset_rx_hw_ext_stats(soc);
+}
+
+/**
  * cdp_vdev_inform_ll_conn() - Inform DP about the low latency connection
  * @soc: soc handle
  * @vdev_id: vdev id

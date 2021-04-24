@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -119,7 +119,7 @@ struct wlan_psoc_host_ppe_threshold {
  * @high_5ghz_chan: higher 5 GHz channels
  */
 struct wlan_psoc_host_hal_reg_cap_ext {
-	uint32_t wireless_modes;
+	uint64_t wireless_modes;
 	uint32_t low_2ghz_chan;
 	uint32_t high_2ghz_chan;
 	uint32_t low_5ghz_chan;
@@ -196,7 +196,11 @@ struct wlan_psoc_host_mac_phy_caps {
 		 supports_11a:1,
 		 supports_11n:1,
 		 supports_11ac:1,
-		 supports_11ax:1;
+		 supports_11ax:1,
+#ifdef WLAN_FEATURE_11BE
+		 supports_11be:1,
+#endif
+		 reserved:25;
 	uint32_t supported_bands;
 	uint32_t ampdu_density;
 	uint32_t max_bw_supported_2G;
@@ -247,12 +251,28 @@ struct wlan_psoc_host_hw_mode_caps {
  * @pdev_id: Pdev id
  * @phy_id: Phy id
  * @wireless_modes_ext: Extended wireless modes
+ * @eht_cap_info_2G[]: EHT capability info field of 802.11ax, WMI_HE_CAP defines
+ * @eht_supp_mcs_2G: EHT Supported MCS Set field Rx/Tx same
+ * @eht_cap_info_5G[]: EHT capability info field of 802.11ax, WMI_HE_CAP defines
+ * @eht_supp_mcs_5G: EHT Supported MCS Set field Rx/Tx same
+ * @eht_cap_phy_info_2G: 2G EHT capability phy field
+ * @eht_cap_phy_info_5G: 5G EHT capability phy field
+ * @eht_cap_info_internal: EHT PHY internal feature capability
  */
 struct wlan_psoc_host_mac_phy_caps_ext2 {
 	uint32_t hw_mode_id;
 	uint32_t pdev_id;
 	uint32_t phy_id;
-	uint32_t wireless_modes_ext;
+	uint64_t wireless_modes_ext;
+#ifdef WLAN_FEATURE_11BE
+	uint32_t eht_cap_info_2G[PSOC_HOST_MAX_MAC_SIZE];
+	uint32_t eht_supp_mcs_2G;
+	uint32_t eht_cap_info_5G[PSOC_HOST_MAX_MAC_SIZE];
+	uint32_t eht_supp_mcs_5G;
+	uint32_t eht_cap_phy_info_2G[PSOC_HOST_MAX_PHY_SIZE];
+	uint32_t eht_cap_phy_info_5G[PSOC_HOST_MAX_PHY_SIZE];
+	uint32_t eht_cap_info_internal;
+#endif
 };
 
 /*
@@ -325,6 +345,9 @@ struct wlan_psoc_host_chainmask_capabilities {
 		 supports_chan_width_80:1,
 		 supports_chan_width_160:1,
 		 supports_chan_width_80P80:1,
+#ifdef WLAN_FEATURE_11BE
+		 supports_chan_width_320:1,
+#endif
 		 supports_aSpectral:1,
 		 supports_aSpectral_160:1,
 		 supports_aDFS_160:1,

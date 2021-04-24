@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019, 2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -170,6 +170,10 @@ typedef __qdf_ipa_wdi_reg_intf_in_params_t qdf_ipa_wdi_reg_intf_in_params_t;
 	__QDF_IPA_WDI_REG_INTF_IN_PARAMS_META_DATA(in)
 #define QDF_IPA_WDI_REG_INTF_IN_PARAMS_META_DATA_MASK(in)	\
 	__QDF_IPA_WDI_REG_INTF_IN_PARAMS_META_DATA_MASK(in)
+#ifdef IPA_WDI3_TX_TWO_PIPES
+#define QDF_IPA_WDI_REG_INTF_IN_PARAMS_IS_TX1_USED(in)	\
+	__QDF_IPA_WDI_REG_INTF_IN_PARAMS_IS_TX1_USED(in)
+#endif
 
 /**
  * qdf_ipa_wdi_pipe_setup_info_t - WDI TX/Rx configuration
@@ -247,6 +251,16 @@ typedef __qdf_ipa_wdi_conn_in_params_t qdf_ipa_wdi_conn_in_params_t;
 	__QDF_IPA_WDI_CONN_IN_PARAMS_RX(pipe_in)
 #define QDF_IPA_WDI_CONN_IN_PARAMS_RX_SMMU(pipe_in)	\
 	__QDF_IPA_WDI_CONN_IN_PARAMS_RX_SMMU(pipe_in)
+#ifdef IPA_WDI3_TX_TWO_PIPES
+#define QDF_IPA_WDI_CONN_IN_PARAMS_IS_TX1_USED(pipe_in)	\
+	__QDF_IPA_WDI_CONN_IN_PARAMS_IS_TX1_USED(pipe_in)
+#define QDF_IPA_WDI_CONN_IN_PARAMS_TX_ALT_PIPE(pipe_in)	\
+	__QDF_IPA_WDI_CONN_IN_PARAMS_TX_ALT_PIPE(pipe_in)
+#define QDF_IPA_WDI_CONN_IN_PARAMS_TX_ALT_PIPE_SMMU(pipe_in)	\
+	__QDF_IPA_WDI_CONN_IN_PARAMS_TX_ALT_PIPE_SMMU(pipe_in)
+#define QDF_IPA_WDI_CONN_OUT_PARAMS_TX_UC_ALT_DB_PA(pipe_out)	\
+	__QDF_IPA_WDI_CONN_OUT_PARAMS_TX_UC_ALT_DB_PA(pipe_out)
+#endif
 
 /**
  * qdf_ipa_wdi_conn_out_params_t - information provided

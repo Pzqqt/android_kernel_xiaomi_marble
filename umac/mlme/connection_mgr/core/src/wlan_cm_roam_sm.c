@@ -71,6 +71,11 @@ bool cm_handle_fw_roaming_event(struct cnx_mgr *cm_ctx, uint16_t event,
 		cm_sm_deliver_event_sync(cm_ctx, event,
 					 data_len, data);
 		break;
+	case WLAN_CM_SM_EV_ROAM_SYNC:
+		cm_sm_transition_to(cm_ctx, WLAN_CM_SS_ROAM_SYNC);
+		cm_sm_deliver_event_sync(cm_ctx, event,
+					 data_len, data);
+		break;
 	default:
 		event_handled = false;
 		break;
@@ -310,7 +315,13 @@ bool cm_subst_roam_start_event(void *ctx, uint16_t event,
 		break;
 	case WLAN_CM_SM_EV_ROAM_ABORT:
 	case WLAN_CM_SM_EV_ROAM_INVOKE_FAIL:
+	case WLAN_CM_SM_EV_ROAM_HO_FAIL:
 		cm_sm_transition_to(cm_ctx, WLAN_CM_S_CONNECTED);
+		cm_sm_deliver_event_sync(cm_ctx, event,
+					 data_len, data);
+		break;
+	case WLAN_CM_SM_EV_ROAM_SYNC:
+		cm_sm_transition_to(cm_ctx, WLAN_CM_SS_ROAM_SYNC);
 		cm_sm_deliver_event_sync(cm_ctx, event,
 					 data_len, data);
 		break;
@@ -348,6 +359,20 @@ bool cm_subst_roam_sync_event(void *ctx, uint16_t event,
 		event_handled =
 			cm_handle_connect_disconnect_in_roam(cm_ctx, event,
 							     data_len, data);
+		break;
+	case WLAN_CM_SM_EV_ROAM_SYNC:
+		cm_fw_send_vdev_roam_event(cm_ctx, data_len, data);
+		break;
+	case WLAN_CM_SM_EV_ROAM_DONE:
+		cm_sm_transition_to(cm_ctx, WLAN_CM_S_CONNECTED);
+		cm_sm_deliver_event_sync(cm_ctx, event,
+					 data_len, data);
+		break;
+	case WLAN_CM_SM_EV_ROAM_ABORT:
+	case WLAN_CM_SM_EV_ROAM_HO_FAIL:
+		cm_sm_transition_to(cm_ctx, WLAN_CM_S_CONNECTED);
+		cm_sm_deliver_event_sync(cm_ctx, event,
+					 data_len, data);
 		break;
 	default:
 		event_handled = false;

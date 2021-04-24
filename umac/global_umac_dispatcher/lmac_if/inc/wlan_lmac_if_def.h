@@ -861,12 +861,10 @@ struct wlan_lmac_if_reg_tx_ops {
 					      void *arg);
 	QDF_STATUS (*unregister_master_handler)(struct wlan_objmgr_psoc *psoc,
 						void *arg);
-#ifdef CONFIG_BAND_6GHZ
 	QDF_STATUS (*register_master_ext_handler)(struct wlan_objmgr_psoc *psoc,
 						  void *arg);
 	QDF_STATUS (*unregister_master_ext_handler)
 				(struct wlan_objmgr_psoc *psoc, void *arg);
-#endif
 	QDF_STATUS (*set_country_code)(struct wlan_objmgr_psoc *psoc,
 						void *arg);
 	QDF_STATUS (*fill_umac_legacy_chanlist)(struct wlan_objmgr_pdev *pdev,
@@ -1251,6 +1249,14 @@ struct wlan_lmac_if_reg_rx_ops {
 					     uint8_t *bitmap);
 	QDF_STATUS (*reg_set_ext_tpc_supported)(struct wlan_objmgr_psoc *psoc,
 						bool val);
+#if defined(CONFIG_BAND_6GHZ) && defined(CONFIG_REG_CLIENT)
+	QDF_STATUS
+	(*reg_set_lower_6g_edge_ch_supp)(struct wlan_objmgr_psoc *psoc,
+					 bool val);
+	QDF_STATUS
+	(*reg_set_disable_upper_6g_edge_ch_supp)(struct wlan_objmgr_psoc *psoc,
+						 bool val);
+#endif
 };
 
 #ifdef CONVERGED_P2P_ENABLE

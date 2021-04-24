@@ -184,7 +184,7 @@ enum scan_mode_6ghz {
  * active_max_channel_time_6g - Set max time for active 6G channel scan
  * @Min: 0
  * @Max: 10000
- * @Default: 40
+ * @Default: 60
  *
  * This ini is used to set maximum time in msecs spent in active 6G channel scan
  *
@@ -197,7 +197,7 @@ enum scan_mode_6ghz {
  */
 #define CFG_ACTIVE_MAX_6G_CHANNEL_TIME CFG_INI_UINT(\
 		"active_max_channel_time_6g",\
-		0, 10000, 40,\
+		0, 10000, 60,\
 		CFG_VALUE_OR_DEFAULT, "active dwell time for 6G channels")
 
 /*
@@ -205,7 +205,7 @@ enum scan_mode_6ghz {
  * passive_max_channel_time_6g - Set max time for passive 6G channel scan
  * @Min: 0
  * @Max: 10000
- * @Default: 30
+ * @Default: 60
  *
  * This ini is used to set maximum time in msecs spent in passive 6G chan scan
  *
@@ -218,7 +218,7 @@ enum scan_mode_6ghz {
  */
 #define CFG_PASSIVE_MAX_6G_CHANNEL_TIME CFG_INI_UINT(\
 		"passive_max_channel_time_6g",\
-		0, 10000, 30,\
+		0, 10000, 60,\
 		CFG_VALUE_OR_DEFAULT, "passive dwell time for 6G channels")
 
 /*
@@ -288,7 +288,7 @@ enum scan_mode_6ghz {
  * during host scan with conneciton
  * @Min: 0
  * @Max: 4
- * @Default: 2
+ * @Default: 1
  *
  * This ini will set the algo used in dwell time optimization
  * during host scan with connection.
@@ -310,7 +310,7 @@ enum scan_mode_6ghz {
  */
 #define CFG_ADAPTIVE_SCAN_DWELL_MODE CFG_INI_UINT(\
 			"hostscan_adaptive_dwell_mode",\
-			0, 4, PLATFORM_VALUE(2, 0),\
+			0, 4, PLATFORM_VALUE(1, 0),\
 			CFG_VALUE_OR_DEFAULT,\
 			"Enable adaptive dwell mode")
 

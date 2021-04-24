@@ -458,7 +458,6 @@ QDF_STATUS cm_disconnect_complete(struct cnx_mgr *cm_ctx,
 
 	mlme_cm_disconnect_complete_ind(cm_ctx->vdev, resp);
 	mlme_cm_osif_disconnect_complete(cm_ctx->vdev, resp);
-	wlan_crypto_free_vdev_key(cm_ctx->vdev);
 	cm_if_mgr_inform_disconnect_complete(cm_ctx->vdev);
 	cm_inform_blm_disconnect_complete(cm_ctx->vdev, resp);
 

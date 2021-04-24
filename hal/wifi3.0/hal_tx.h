@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -136,6 +136,9 @@ enum hal_tx_ret_buf_manager {
 	HAL_WBM_SW1_BM_ID = 4,
 	HAL_WBM_SW2_BM_ID = 5,
 	HAL_WBM_SW3_BM_ID = 6,
+#ifdef IPA_WDI3_TX_TWO_PIPES
+	HAL_WBM_SW4_BM_ID = 7,
+#endif
 };
 
 /*---------------------------------------------------------------------------

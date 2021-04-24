@@ -868,6 +868,10 @@ QDF_STATUS (*send_gtk_offload_cmd)(wmi_unified_t wmi_handle, uint8_t vdev_id,
 					   struct pmo_gtk_req *params,
 					   bool enable_offload,
 					   uint32_t gtk_offload_opcode);
+#ifdef WLAN_FEATURE_IGMP_OFFLOAD
+QDF_STATUS (*send_igmp_offload_cmd)(wmi_unified_t wmi_handle,
+				    struct pmo_igmp_offload_req *pmo_igmp_req);
+#endif
 
 QDF_STATUS (*send_process_gtk_offload_getinfo_cmd)(wmi_unified_t wmi_handle,
 				uint8_t vdev_id,
@@ -1645,6 +1649,11 @@ QDF_STATUS (*extract_dcs_cw_int)(wmi_unified_t wmi_handle, void *evt_buf,
 
 QDF_STATUS (*extract_dcs_im_tgt_stats)(wmi_unified_t wmi_handle, void *evt_buf,
 	wmi_host_dcs_im_tgt_stats_t *wlan_stat);
+
+QDF_STATUS (*extract_dcs_awgn_info)(
+		wmi_unified_t wmi_handle,
+		void *evt_buf,
+		struct wmi_host_dcs_awgn_info *awgn_info);
 #endif
 
 QDF_STATUS (*extract_fips_event_data)(wmi_unified_t wmi_handle,

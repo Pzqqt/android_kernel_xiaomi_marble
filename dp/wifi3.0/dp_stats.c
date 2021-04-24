@@ -4998,23 +4998,30 @@ dp_print_ring_stat_from_hal(struct dp_soc *soc,  struct dp_srng *srng,
 	uint32_t headp;
 	int32_t hw_headp = -1;
 	int32_t hw_tailp = -1;
+	uint32_t ring_usage;
 	const char *ring_name;
 	struct hal_soc *hal_soc;
 
 	if (soc && srng && srng->hal_srng) {
 		hal_soc = (struct hal_soc *)soc->hal_soc;
 		ring_name = dp_srng_get_str_from_hal_ring_type(ring_type);
-
 		hal_get_sw_hptp(soc->hal_soc, srng->hal_srng, &tailp, &headp);
+		ring_usage = hal_get_ring_usage(srng->hal_srng,
+						ring_type, &headp, &tailp);
 
-		DP_PRINT_STATS("%s:SW:Head pointer = %d Tail Pointer = %d\n",
-			       ring_name, headp, tailp);
+		DP_PRINT_STATS("%s:SW: Head = %d Tail = %d Ring Usage = %u",
+			       ring_name, headp, tailp, ring_usage);
 
 		hal_get_hw_hptp(soc->hal_soc, srng->hal_srng, &hw_headp,
 				&hw_tailp, ring_type);
-
-		DP_PRINT_STATS("%s:HW:Head pointer = %d Tail Pointer = %d\n",
-			       ring_name, hw_headp, hw_tailp);
+		ring_usage = 0;
+		if (hw_headp >= 0 && tailp >= 0)
+			ring_usage =
+				hal_get_ring_usage(
+					srng->hal_srng, ring_type,
+					&hw_headp, &hw_tailp);
+		DP_PRINT_STATS("%s:HW: Head = %d Tail = %d Ring Usage = %u",
+			       ring_name, hw_headp, hw_tailp, ring_usage);
 	}
 }
 
@@ -5113,6 +5120,9 @@ dp_print_ring_stats(struct dp_pdev *pdev)
 				    RTPM_ID_DP_PRINT_RING_STATS))
 		return;
 
+	dp_print_ring_stat_from_hal(pdev->soc,
+				    &pdev->soc->wbm_idle_link_ring,
+				    WBM_IDLE_LINK);
 	dp_print_ring_stat_from_hal(pdev->soc,
 				    &pdev->soc->reo_exception_ring,
 				    REO_EXCEPTION);
@@ -5769,8 +5779,12 @@ void dp_print_peer_stats(struct dp_peer *peer)
 		       peer->stats.rx.raw.bytes);
 	DP_PRINT_STATS("Errors: MIC Errors = %d",
 		       peer->stats.rx.err.mic_err);
-	DP_PRINT_STATS("Erros: Decryption Errors = %d",
+	DP_PRINT_STATS("Errors: Decryption Errors = %d",
 		       peer->stats.rx.err.decrypt_err);
+	DP_PRINT_STATS("Errors: PN Errors = %d",
+		       peer->stats.rx.err.pn_err);
+	DP_PRINT_STATS("Errors: OOR Errors = %d",
+		       peer->stats.rx.err.oor_err);
 	DP_PRINT_STATS("Msdu's Received As Part of Ampdu = %d",
 		       peer->stats.rx.non_ampdu_cnt);
 	DP_PRINT_STATS("Msdu's Recived As Ampdu = %d",

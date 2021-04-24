@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018,2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018,2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -50,6 +50,10 @@ void htc_log_hang_credit_history(struct notifier_block *block, void *data)
 {
 }
 #endif
+void htc_latency_detection_credit_record_time(
+	enum htc_credit_exchange_type type,
+	struct hif_opaque_softc *hif_ctx);
+
 #else /* FEATURE_HTC_CREDIT_HISTORY */
 
 static inline

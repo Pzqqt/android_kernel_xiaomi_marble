@@ -307,29 +307,70 @@ int hif_ipci_bus_suspend(struct hif_softc *scn)
 {
 	int ret;
 
+	ret = hif_apps_disable_irqs_except_wake_irq(GET_HIF_OPAQUE_HDL(scn));
+	if (ret) {
+		hif_err("Failed to disable IRQs");
+		goto disable_irq_fail;
+	}
+
 	ret = hif_apps_enable_irq_wake(GET_HIF_OPAQUE_HDL(scn));
+	if (ret) {
+		hif_err("Failed to enable Wake-IRQ");
+		goto enable_wake_irq_fail;
+	}
 
-	if (!ret)
-		scn->bus_suspended = true;
+	if (QDF_IS_STATUS_ERROR(hif_try_complete_tasks(scn))) {
+		hif_err("hif_try_complete_tasks timed-out, so abort suspend");
+		ret = -EBUSY;
+		goto drain_tasks_fail;
+	}
 
+	/*
+	 * In an unlikely case, if draining becomes infinite loop,
+	 * it returns an error, shall abort the bus suspend.
+	 */
+	ret = hif_drain_fw_diag_ce(scn);
+	if (ret) {
+		hif_err("draining fw_diag_ce goes infinite, so abort suspend");
+		goto drain_tasks_fail;
+	}
+
+	scn->bus_suspended = true;
+
+	return 0;
+
+drain_tasks_fail:
+	hif_apps_disable_irq_wake(GET_HIF_OPAQUE_HDL(scn));
+
+enable_wake_irq_fail:
+	hif_apps_enable_irqs_except_wake_irq(GET_HIF_OPAQUE_HDL(scn));
+
+disable_irq_fail:
 	return ret;
 }
 
 int hif_ipci_bus_resume(struct hif_softc *scn)
 {
+	int ret = 0;
+
+	ret = hif_apps_disable_irq_wake(GET_HIF_OPAQUE_HDL(scn));
+	if (ret) {
+		hif_err("Failed to disable Wake-IRQ");
+		goto fail;
+	}
+
+	ret = hif_apps_enable_irqs_except_wake_irq(GET_HIF_OPAQUE_HDL(scn));
+	if (ret)
+		hif_err("Failed to enable IRQs");
+
 	scn->bus_suspended = false;
 
-	return hif_apps_disable_irq_wake(GET_HIF_OPAQUE_HDL(scn));
+fail:
+	return ret;
 }
 
 int hif_ipci_bus_suspend_noirq(struct hif_softc *scn)
 {
-	QDF_STATUS ret;
-
-	ret = hif_try_complete_tasks(scn);
-	if (QDF_IS_STATUS_ERROR(ret))
-		return -EBUSY;
-
 	return 0;
 }
 
@@ -785,3 +826,13 @@ void hif_allow_link_low_power_states(struct hif_opaque_softc *hif)
 {
 }
 #endif
+
+int hif_ipci_enable_grp_irqs(struct hif_softc *scn)
+{
+	return hif_apps_grp_irqs_enable(GET_HIF_OPAQUE_HDL(scn));
+}
+
+int hif_ipci_disable_grp_irqs(struct hif_softc *scn)
+{
+	return hif_apps_grp_irqs_disable(GET_HIF_OPAQUE_HDL(scn));
+}

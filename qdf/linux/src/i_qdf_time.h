@@ -50,7 +50,7 @@
 typedef unsigned long __qdf_time_t;
 typedef ktime_t  __qdf_ktime_t;
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 24)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
 typedef struct timespec64 __qdf_timespec_t;
 #else
 typedef struct timeval __qdf_timespec_t;
@@ -449,7 +449,7 @@ static inline int64_t __qdf_time_ktime_to_us(ktime_t ktime)
  *
  * Return: none
  */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 24)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
 static inline void __qdf_time_ktime_get_real_time(__qdf_timespec_t *ts)
 {
 	ktime_get_real_ts64(ts);

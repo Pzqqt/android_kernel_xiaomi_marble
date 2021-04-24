@@ -56,6 +56,16 @@
 QDF_STATUS cm_connect_start(struct cnx_mgr *cm_ctx, struct cm_connect_req *req);
 
 /**
+ * cm_if_mgr_inform_connect_complete() - inform ifmanager the connect complete
+ * @vdev: vdev for which connect cmpleted
+ * @connect_status: connect status
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_if_mgr_inform_connect_complete(struct wlan_objmgr_vdev *vdev,
+					     QDF_STATUS connect_status);
+
+/**
  * cm_handle_connect_req_in_non_init_state() - Handle connect request in non
  * init state.
  * @cm_ctx: connection manager context
@@ -516,6 +526,17 @@ void cm_store_wep_key(struct cnx_mgr *cm_ctx,
 		      struct wlan_cm_connect_crypto_info *crypto,
 		      wlan_cm_id cm_id);
 
+/**
+ * cm_inform_blm_connect_complete() - inform bsl about connect complete
+ * @vdev: vdev
+ * @resp: connect resp
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_inform_blm_connect_complete(struct wlan_objmgr_vdev *vdev,
+			       struct wlan_cm_connect_resp *resp);
+
 static inline QDF_STATUS
 cm_peer_create_on_bss_select_ind_resp(struct cnx_mgr *cm_ctx,
 				      wlan_cm_id *cm_id)
@@ -534,6 +555,13 @@ static inline void cm_store_wep_key(struct cnx_mgr *cm_ctx,
 				    struct wlan_cm_connect_crypto_info *crypto,
 				    wlan_cm_id cm_id)
 {}
+
+static inline QDF_STATUS
+cm_inform_blm_connect_complete(struct wlan_objmgr_vdev *vdev,
+			       struct wlan_cm_connect_resp *resp)
+{
+	return QDF_STATUS_SUCCESS;
+}
 
 /**
  * cm_peer_create_on_bss_select_ind_resp() - Called to create peer
@@ -673,11 +701,11 @@ void cm_flush_pending_request(struct cnx_mgr *cm_ctx, uint32_t prefix,
 /**
  * cm_remove_cmd() - Remove cmd from req list and serialization
  * @cm_ctx: connection manager context
- * @cm_id: cm id of connect/disconnect req
+ * @cm_id_to_remove: cm id of connect/disconnect/roam req
  *
  * Return: void
  */
-void cm_remove_cmd(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id);
+void cm_remove_cmd(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id_to_remove);
 
 /**
  * cm_add_req_to_list_and_indicate_osif() - Add the request to request list in
@@ -961,13 +989,15 @@ cm_update_scan_mlme_on_disconnect(struct wlan_objmgr_vdev *vdev,
 /**
  * cm_calculate_scores() - Score the candidates obtained from scan
  * manager after filtering
+ * @cm_ctx: Connection manager context
  * @pdev: Object manager pdev
  * @filter: Scan filter params
  * @list: List of candidates to be scored
  *
  * Return: void
  */
-void cm_calculate_scores(struct wlan_objmgr_pdev *pdev,
+void cm_calculate_scores(struct cnx_mgr *cm_ctx,
+			 struct wlan_objmgr_pdev *pdev,
 			 struct scan_filter *filter, qdf_list_t *list);
 
 /**
@@ -1063,4 +1093,33 @@ static inline void cm_req_history_print(struct cnx_mgr *cm_ctx)
  */
 QDF_STATUS cm_activate_cmd_req_flush_cb(struct scheduler_msg *msg);
 #endif
+
+#ifndef CONN_MGR_ADV_FEATURE
+/**
+ * cm_set_candidate_advance_filter_cb() - Set CM candidate advance
+ * filter cb
+ * @vdev: Objmgr vdev
+ * @filter_fun: CM candidate advance filter cb
+ *
+ * Return: void
+ */
+void cm_set_candidate_advance_filter_cb(
+		struct wlan_objmgr_vdev *vdev,
+		void (*filter_fun)(struct wlan_objmgr_vdev *vdev,
+				   struct scan_filter *filter));
+
+/**
+ * cm_set_candidate_custom_sort_cb() - Set CM candidate custom sort cb
+ * @vdev: Objmgr vdev
+ * @sort_fun: CM candidate custom sort cb
+ *
+ * Return: void
+ */
+void cm_set_candidate_custom_sort_cb(
+		struct wlan_objmgr_vdev *vdev,
+		void (*sort_fun)(struct wlan_objmgr_vdev *vdev,
+				 qdf_list_t *list));
+
+#endif
+
 #endif /* __WLAN_CM_MAIN_API_H__ */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -49,6 +49,7 @@ struct wlan_6ghz_rnr_global_cache {
  * @ht_cap: If dev is configured as HT capable
  * @vht_cap:If dev is configured as VHT capable
  * @he_cap: If dev is configured as HE capable
+ * @eht_cap: If dev is configured as EHT capable
  * @vht_24G_cap:If dev is configured as VHT capable for 2.4Ghz
  * @beamformee_cap:If dev is configured as BF capable
  * @bw_above_20_5ghz: BW greater than 20Mhz supprted for 5Ghz
@@ -60,6 +61,7 @@ struct psoc_phy_config {
 	uint32_t ht_cap:1,
 		 vht_cap:1,
 		 he_cap:1,
+		 eht_cap:1,
 		 vht_24G_cap:1,
 		 beamformee_cap:1,
 		 bw_above_20_5ghz:1,

@@ -51,6 +51,8 @@
 	QDF_TRACE_EXIT(QDF_MODULE_ID_TARGET_IF, "exit")
 #define target_if_err_rl(params...) \
 	QDF_TRACE_ERROR_RL(QDF_MODULE_ID_TARGET_IF, params)
+#define target_if_debug_rl(params...) \
+	QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_TARGET_IF, params)
 
 
 #define targetif_nofl_fatal(params...) \
@@ -178,6 +180,7 @@ struct target_version_info {
  * @service_ext2_param: service ready ext2 event params
  * @service_ext_param: ext service params
  * @mac_phy_cap: phy caps array
+ * @mac_phy_caps_ext2: mac phy caps ext2 params
  * @dbr_ring_cap: dbr_ring capability info
  * @reg_cap: regulatory caps array
  * @scaling_params: Spectral bin scaling parameters
@@ -207,6 +210,8 @@ struct tgt_info {
 	struct wlan_psoc_host_service_ext2_param service_ext2_param;
 	struct wlan_psoc_host_mac_phy_caps
 			mac_phy_cap[PSOC_MAX_MAC_PHY_CAP];
+	struct wlan_psoc_host_mac_phy_caps_ext2
+			mac_phy_caps_ext2[PSOC_MAX_MAC_PHY_CAP];
 	struct wlan_psoc_host_dbr_ring_caps *dbr_ring_cap;
 	struct wlan_psoc_host_spectral_scaling_params *scaling_params;
 	uint32_t num_mem_chunks;
@@ -1432,6 +1437,39 @@ static inline struct wlan_psoc_host_mac_phy_caps
 }
 
 /**
+ * target_psoc_get_mac_phy_cap_ext2_for_mode() - get mac_phy_caps_ext2
+ *                                               for a hw-mode
+ * @psoc_info:  pointer to structure target_psoc_info
+ * @mode: hw mode
+ *
+ * API to get mac_phy_cap for a specified hw-mode
+ *
+ * Return: structure pointer to wlan_psoc_host_mac_phy_caps_ext2
+ */
+
+static inline struct wlan_psoc_host_mac_phy_caps_ext2
+		*target_psoc_get_mac_phy_cap_ext2_for_mode
+		(struct target_psoc_info *psoc_info, uint8_t mode)
+{
+	uint8_t mac_phy_idx;
+	struct tgt_info *info = &psoc_info->info;
+
+	if (!psoc_info)
+		return NULL;
+
+	for (mac_phy_idx = 0;
+		mac_phy_idx < PSOC_MAX_MAC_PHY_CAP;
+			mac_phy_idx++)
+		if (info->mac_phy_caps_ext2[mac_phy_idx].hw_mode_id == mode)
+			break;
+
+	if (mac_phy_idx == PSOC_MAX_MAC_PHY_CAP)
+		return NULL;
+
+	return &info->mac_phy_caps_ext2[mac_phy_idx];
+}
+
+/**
  * target_psoc_get_mac_phy_cap() - get mac_phy_cap
  * @psoc_info:  pointer to structure target_psoc_info
  *
@@ -1460,6 +1498,38 @@ static inline struct wlan_psoc_host_mac_phy_caps *target_psoc_get_mac_phy_cap
 	}
 
 	return mac_phy_cap;
+}
+
+/**
+ * target_psoc_get_mac_phy_cap_ext2() - get mac_phy_caps_ext2
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get mac_phy_caps_ext2
+ *
+ * Return: structure pointer to wlan_psoc_host_mac_phy_caps
+ */
+static inline struct wlan_psoc_host_mac_phy_caps_ext2
+		*target_psoc_get_mac_phy_cap_ext2
+		(struct target_psoc_info *psoc_info)
+{
+	uint32_t preferred_hw_mode;
+	struct wlan_psoc_host_mac_phy_caps_ext2 *mac_phy_caps_ext2;
+
+	if (!psoc_info)
+		return NULL;
+
+	preferred_hw_mode =
+		target_psoc_get_preferred_hw_mode(psoc_info);
+
+	if (preferred_hw_mode < WMI_HOST_HW_MODE_MAX) {
+		mac_phy_caps_ext2 =
+			target_psoc_get_mac_phy_cap_ext2_for_mode
+			(psoc_info, preferred_hw_mode);
+	} else {
+		mac_phy_caps_ext2 = psoc_info->info.mac_phy_caps_ext2;
+	}
+
+	return mac_phy_caps_ext2;
 }
 
 /**
@@ -2573,4 +2643,15 @@ static inline enum QDF_GLOBAL_MODE target_psoc_get_device_mode
 
 	return psoc_info->info.device_mode;
 }
+
+/**
+ * target_if_set_reg_cc_ext_supp() - Set reg_cc_ext_supp capability
+ * in WMI_INIT_CMD based on host capability of reg_cc_ext_event.
+ *
+ * @tgt_hdl: Pointer to struct target_psoc_info.
+ * @psoc: Pointer to struct wlan_objmgr_psoc.
+ *
+ */
+void target_if_set_reg_cc_ext_supp(struct target_psoc_info *tgt_hdl,
+				   struct wlan_objmgr_psoc *psoc);
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -375,6 +375,16 @@ typedef enum {
  * @WLAN_PHYMODE_11AXG_HE80:     2GHz, HE80
  * @WLAN_PHYMODE_11AXA_HE160:    5GHz, HE160
  * @WLAN_PHYMODE_11AXA_HE80_80:  5GHz, HE80_80
+ * @WLAN_PHYMODE_11BEA_EHT20:     5GHz, EHT20
+ * @WLAN_PHYMODE_11BEG_EHT20:     2GHz, EHT20
+ * @WLAN_PHYMODE_11BEA_EHT40:     5GHz, EHT40
+ * @WLAN_PHYMODE_11BEG_EHT40PLUS: 2GHz, EHT40 (ext ch +1)
+ * @WLAN_PHYMODE_11BEG_EHT40MINUS:2GHz, EHT40 (ext ch -1)
+ * @WLAN_PHYMODE_11BEG_EHT40:     2GHz, EHT40
+ * @WLAN_PHYMODE_11BEA_EHT80:     5GHz, EHT80
+ * @WLAN_PHYMODE_11BEG_EHT80:     2GHz, EHT80
+ * @WLAN_PHYMODE_11BEA_EHT160:    5GHz, EHT160
+ * @WLAN_PHYMODE_11BEA_EHT320:    5GHz, EHT320
  * @WLAN_PHYMODE_MAX: Max phymode
  */
 enum wlan_phymode {
@@ -409,8 +419,70 @@ enum wlan_phymode {
 	WLAN_PHYMODE_11AXG_HE80         = 28,
 	WLAN_PHYMODE_11AXA_HE160        = 29,
 	WLAN_PHYMODE_11AXA_HE80_80      = 30,
+#ifdef WLAN_FEATURE_11BE
+	WLAN_PHYMODE_11BEA_EHT20        = 31,
+	WLAN_PHYMODE_11BEG_EHT20        = 32,
+	WLAN_PHYMODE_11BEA_EHT40        = 33,
+	WLAN_PHYMODE_11BEG_EHT40PLUS    = 34,
+	WLAN_PHYMODE_11BEG_EHT40MINUS   = 35,
+	WLAN_PHYMODE_11BEG_EHT40        = 36,
+	WLAN_PHYMODE_11BEA_EHT80        = 37,
+	WLAN_PHYMODE_11BEG_EHT80        = 38,
+	WLAN_PHYMODE_11BEA_EHT160       = 39,
+	WLAN_PHYMODE_11BEA_EHT320       = 40,
+#endif
 	WLAN_PHYMODE_MAX
 };
+
+#ifdef WLAN_FEATURE_11BE
+#define IS_WLAN_PHYMODE_320MHZ(_mode) ({typeof(_mode) mode = (_mode); \
+	((mode) == WLAN_PHYMODE_11BEA_EHT320); })
+
+#define IS_WLAN_PHYMODE_160MHZ(_mode) ({typeof(_mode) mode = (_mode); \
+	((mode) == WLAN_PHYMODE_11BEA_EHT160) || \
+	((mode) == WLAN_PHYMODE_11AC_VHT80_80) || \
+	((mode) == WLAN_PHYMODE_11AC_VHT160)     || \
+	((mode) == WLAN_PHYMODE_11AXA_HE80_80)  || \
+	((mode) == WLAN_PHYMODE_11AXA_HE160); })
+
+#define IS_WLAN_PHYMODE_80MHZ(_mode) ({typeof(_mode) mode = (_mode); \
+	((mode) == WLAN_PHYMODE_11BEA_EHT80) || \
+	((mode) == WLAN_PHYMODE_11AC_VHT80) || \
+	((mode) == WLAN_PHYMODE_11AC_VHT80_2G)     || \
+	((mode) == WLAN_PHYMODE_11AXA_HE80)  || \
+	((mode) == WLAN_PHYMODE_11AXG_HE80); })
+
+#define IS_WLAN_PHYMODE_40MHZ(_mode) ({typeof(_mode) mode = (_mode); \
+	((mode) == WLAN_PHYMODE_11NG_HT40) || \
+	((mode) == WLAN_PHYMODE_11NG_HT40PLUS)     || \
+	((mode) == WLAN_PHYMODE_11NG_HT40MINUS)  || \
+	((mode) == WLAN_PHYMODE_11NA_HT40)  || \
+	((mode) == WLAN_PHYMODE_11AC_VHT40)  || \
+	((mode) == WLAN_PHYMODE_11AC_VHT40_2G)  || \
+	((mode) == WLAN_PHYMODE_11AC_VHT40PLUS_2G)  || \
+	((mode) == WLAN_PHYMODE_11AC_VHT40MINUS_2G)  || \
+	((mode) == WLAN_PHYMODE_11BEA_EHT40)  || \
+	((mode) == WLAN_PHYMODE_11BEG_EHT40)  || \
+	((mode) == WLAN_PHYMODE_11BEG_EHT40PLUS)  || \
+	((mode) == WLAN_PHYMODE_11BEG_EHT40MINUS)  || \
+	((mode) == WLAN_PHYMODE_11AXA_HE40)  || \
+	((mode) == WLAN_PHYMODE_11AXG_HE40)  || \
+	((mode) == WLAN_PHYMODE_11AXG_HE40PLUS)  || \
+	((mode) == WLAN_PHYMODE_11AXG_HE40MINUS); })
+
+#define IS_WLAN_PHYMODE_EHT(_mode) ({typeof(_mode) mode = (_mode); \
+	((mode) == WLAN_PHYMODE_11BEA_EHT20) || \
+	((mode) == WLAN_PHYMODE_11BEG_EHT20)     || \
+	((mode) == WLAN_PHYMODE_11BEA_EHT40)  || \
+	((mode) == WLAN_PHYMODE_11BEG_EHT40)  || \
+	((mode) == WLAN_PHYMODE_11BEG_EHT40PLUS)  || \
+	((mode) == WLAN_PHYMODE_11BEG_EHT40MINUS)  || \
+	((mode) == WLAN_PHYMODE_11BEA_EHT80)  || \
+	((mode) == WLAN_PHYMODE_11BEG_EHT80)  || \
+	((mode) == WLAN_PHYMODE_11BEA_EHT160)  || \
+	((mode) == WLAN_PHYMODE_11BEA_EHT320); })
+
+#else
 
 #define IS_WLAN_PHYMODE_160MHZ(_mode) ({typeof(_mode) mode = (_mode); \
 	((mode) == WLAN_PHYMODE_11AC_VHT80_80) || \
@@ -437,6 +509,7 @@ enum wlan_phymode {
 	((mode) == WLAN_PHYMODE_11AXG_HE40)  || \
 	((mode) == WLAN_PHYMODE_11AXG_HE40PLUS)  || \
 	((mode) == WLAN_PHYMODE_11AXG_HE40MINUS); })
+#endif
 
 #define IS_WLAN_PHYMODE_HT(_mode) ({typeof(_mode) mode = (_mode); \
 	((mode) == WLAN_PHYMODE_11NA_HT20) || \
@@ -479,6 +552,7 @@ enum wlan_phymode {
  * @CH_WIDTH_80P80HZ: 80+80 mhz width
  * @CH_WIDTH_5MHZ: 5 mhz width
  * @CH_WIDTH_10MHZ: 10 mhz width
+ * @CH_WIDTH_320MHZ: 320 mhz width
  * @CH_WIDTH_INVALID: invalid width
  * @CH_WIDTH_MAX: max possible width
  */
@@ -490,6 +564,9 @@ enum phy_ch_width {
 	CH_WIDTH_80P80MHZ,
 	CH_WIDTH_5MHZ,
 	CH_WIDTH_10MHZ,
+#ifdef WLAN_FEATURE_11BE
+	CH_WIDTH_320MHZ,
+#endif
 	CH_WIDTH_INVALID,
 	CH_WIDTH_MAX
 };

@@ -116,4 +116,39 @@ QDF_STATUS tgt_reg_set_5dot9_ghz_supported(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS tgt_reg_set_ext_tpc_supported(struct wlan_objmgr_psoc *psoc,
 					 bool val);
 
+#if defined(CONFIG_BAND_6GHZ) && defined(CONFIG_REG_CLIENT)
+/**
+ * tgt_reg_set_lower_6g_edge_ch_supp() - Assign the value set by FW for lower
+ * 6ghz edge channel (5935 MHz) support
+ * @psoc: Pointer to psoc
+ * @val: value
+ */
+QDF_STATUS tgt_reg_set_lower_6g_edge_ch_supp(struct wlan_objmgr_psoc *psoc,
+					     bool val);
+
+/**
+ * tgt_reg_set_disable_upper_6g_edge_ch_supp() - Assign the value set by FW
+ * for upper 6G edge channel {7115MHz) disablement
+ * @psoc: Pointer to psoc
+ * @val: value
+ */
+QDF_STATUS
+tgt_reg_set_disable_upper_6g_edge_ch_supp(struct wlan_objmgr_psoc *psoc,
+					  bool val);
+#else
+static inline
+QDF_STATUS tgt_reg_set_lower_6g_edge_ch_supp(struct wlan_objmgr_psoc *psoc,
+					     bool val)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
+static inline QDF_STATUS
+tgt_reg_set_disable_upper_6g_edge_ch_supp(struct wlan_objmgr_psoc *psoc,
+					  bool val)
+
+{
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
 #endif

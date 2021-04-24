@@ -2456,6 +2456,24 @@ static QDF_STATUS send_beacon_tmpl_send_cmd_tlv(wmi_unified_t wmi_handle,
 	return 0;
 }
 
+#ifdef WLAN_FEATURE_11BE
+static inline void copy_peer_flags_tlv_11be(
+			wmi_peer_assoc_complete_cmd_fixed_param * cmd,
+			struct peer_assoc_params *param)
+{
+	if (param->bw_320)
+		cmd->peer_flags_ext |= WMI_PEER_EXT_320MHZ;
+	if (param->eht_flag)
+		cmd->peer_flags_ext |= WMI_PEER_EXT_EHT;
+}
+#else
+static inline void copy_peer_flags_tlv_11be(
+			wmi_peer_assoc_complete_cmd_fixed_param * cmd,
+			struct peer_assoc_params *param)
+{
+}
+#endif
+
 static inline void copy_peer_flags_tlv(
 			wmi_peer_assoc_complete_cmd_fixed_param * cmd,
 			struct peer_assoc_params *param)
@@ -2483,6 +2501,8 @@ static inline void copy_peer_flags_tlv(
 			cmd->peer_flags |= WMI_PEER_80MHZ;
 		if (param->bw_160)
 			cmd->peer_flags |= WMI_PEER_160MHZ;
+
+		copy_peer_flags_tlv_11be(cmd, param);
 
 		/* Typically if STBC is enabled for VHT it should be enabled
 		 * for HT as well
@@ -2559,6 +2579,81 @@ static inline void copy_peer_mac_addr_tlv(
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(param->peer_mac, &cmd->peer_macaddr);
 }
 
+#ifdef WLAN_FEATURE_11BE
+static inline void update_peer_flags_tlv_ehtinfo(
+			wmi_peer_assoc_complete_cmd_fixed_param * cmd,
+			struct peer_assoc_params *param, uint8_t *buf_ptr)
+{
+	wmi_eht_rate_set *eht_mcs;
+	int i;
+
+	cmd->peer_eht_ops = param->peer_eht_ops;
+	qdf_mem_copy(&cmd->peer_eht_cap_mac, &param->peer_eht_cap_macinfo,
+		     sizeof(param->peer_eht_cap_macinfo));
+	qdf_mem_copy(&cmd->peer_eht_cap_phy, &param->peer_eht_cap_phyinfo,
+		     sizeof(param->peer_eht_cap_phyinfo));
+
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       (param->peer_eht_mcs_count * sizeof(wmi_eht_rate_set)));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	/* Loop through the EHT rate set */
+	for (i = 0; i < param->peer_eht_mcs_count; i++) {
+		eht_mcs = (wmi_eht_rate_set *)buf_ptr;
+		WMITLV_SET_HDR(eht_mcs, WMITLV_TAG_STRUC_wmi_eht_rate_set,
+			       WMITLV_GET_STRUCT_TLVLEN(wmi_eht_rate_set));
+
+		eht_mcs->rx_mcs_set = param->peer_eht_rx_mcs_set[i];
+		eht_mcs->tx_mcs_set = param->peer_eht_tx_mcs_set[i];
+		wmi_debug("EHT idx %d RxMCSmap %x TxMCSmap %x ",
+			  i, eht_mcs->rx_mcs_set, eht_mcs->tx_mcs_set);
+		buf_ptr += sizeof(wmi_eht_rate_set);
+	}
+
+	if ((param->eht_flag) && (param->peer_eht_mcs_count > 1) &&
+	    (param->peer_eht_rx_mcs_set[WMI_HOST_EHT_TXRX_MCS_NSS_IDX_160]
+	     == WMI_HOST_EHT_INVALID_MCSNSSMAP ||
+	     param->peer_eht_tx_mcs_set[WMI_HOST_EHT_TXRX_MCS_NSS_IDX_160]
+	     == WMI_HOST_HE_INVALID_MCSNSSMAP)) {
+		wmi_debug("param->peer_eht_tx_mcs_set[160MHz]=%x",
+			  param->peer_eht_tx_mcs_set
+			  [WMI_HOST_HE_TXRX_MCS_NSS_IDX_160]);
+		wmi_debug("param->peer_eht_rx_mcs_set[160MHz]=%x",
+			  param->peer_eht_rx_mcs_set
+			  [WMI_HOST_HE_TXRX_MCS_NSS_IDX_160]);
+		wmi_debug("peer_mac="QDF_MAC_ADDR_FMT,
+			  QDF_MAC_ADDR_REF(param->peer_mac));
+	}
+
+	wmi_debug("EHT cap_mac %x %x ehtops %x  EHT phy %x  %x  %x  ",
+		  cmd->peer_eht_cap_mac[0],
+		  cmd->peer_eht_cap_mac[1], cmd->peer_eht_ops,
+		  cmd->peer_eht_cap_phy[0], cmd->peer_he_cap_phy[1],
+		  cmd->peer_eht_cap_phy[2]);
+}
+#else
+static inline void update_peer_flags_tlv_ehtinfo(
+			wmi_peer_assoc_complete_cmd_fixed_param * cmd,
+			struct peer_assoc_params *param, uint8_t *buf_ptr)
+{
+}
+#endif
+
+#ifdef WLAN_FEATURE_11BE
+static
+uint32_t wmi_eht_rate_set_len(struct peer_assoc_params *param)
+{
+	return (sizeof(wmi_he_rate_set) * param->peer_eht_mcs_count
+		+ WMI_TLV_HDR_SIZE);
+}
+#else
+static
+uint32_t wmi_eht_rate_set_len(struct peer_assoc_params *param)
+{
+	return 0;
+}
+#endif
+
 /**
  *  send_peer_assoc_cmd_tlv() - WMI peer assoc function
  *  @param wmi_handle      : handle to WMI.
@@ -2590,7 +2685,8 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 		(peer_ht_rates_align * sizeof(uint8_t)) +
 		sizeof(wmi_vht_rate_set) +
 		(sizeof(wmi_he_rate_set) * param->peer_he_mcs_count
-		+ WMI_TLV_HDR_SIZE);
+		+ WMI_TLV_HDR_SIZE)
+		+ wmi_eht_rate_set_len(param);
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf)
@@ -2726,6 +2822,8 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 		 cmd->peer_he_cap_phy[0], cmd->peer_he_cap_phy[1],
 		 cmd->peer_he_cap_phy[2],
 		 cmd->peer_bw_rxnss_override);
+
+	update_peer_flags_tlv_ehtinfo(cmd, param, buf_ptr);
 
 	wmi_mtrace(WMI_PEER_ASSOC_CMDID, cmd->vdev_id, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -7339,6 +7437,10 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 	if (tgt_res_cfg->is_go_connected_d3wow_enabled)
 		WMI_RSRC_CFG_FLAGS2_IS_GO_CONNECTED_D3WOW_ENABLED_SET(
 			resource_cfg->flags2, 1);
+
+	WMI_RSRC_CFG_HOST_SERVICE_FLAG_REG_CC_EXT_SUPPORT_SET(
+		resource_cfg->host_service_flags,
+		tgt_res_cfg->is_reg_cc_ext_event_supported);
 }
 
 /* copy_hw_mode_id_in_init_cmd() - Helper routine to copy hw_mode in init cmd
@@ -9819,6 +9921,30 @@ static inline uint32_t convert_wireless_modes_tlv(uint32_t target_wireless_mode)
 	return wireless_modes;
 }
 
+/**
+ * convert_11be_phybitmap_to_reg_flags() - Convert 11BE phybitmap to
+ * to regulatory flags.
+ * @target_phybitmap: target phybitmap.
+ * @phybitmap: host internal REGULATORY_PHYMODE set based on target
+ * phybitmap.
+ *
+ * Return: None
+ */
+
+#ifdef WLAN_FEATURE_11BE
+static void convert_11be_phybitmap_to_reg_flags(uint32_t target_phybitmap,
+						uint32_t *phybitmap)
+{
+	if (target_phybitmap & WMI_REGULATORY_PHYMODE_NO11BE)
+		*phybitmap |= REGULATORY_PHYMODE_NO11BE;
+}
+#else
+static void convert_11be_phybitmap_to_reg_flags(uint32_t target_phybitmap,
+						uint32_t *phybitmap)
+{
+}
+#endif
+
 /* convert_phybitmap_tlv() - Convert  WMI_REGULATORY_PHYBITMAP values sent by
  * target to host internal REGULATORY_PHYMODE values.
  *
@@ -9850,13 +9976,61 @@ static uint32_t convert_phybitmap_tlv(uint32_t target_phybitmap)
 	if (target_phybitmap & WMI_REGULATORY_PHYMODE_NO11AX)
 		phybitmap |= REGULATORY_PHYMODE_NO11AX;
 
+	convert_11be_phybitmap_to_reg_flags(target_phybitmap, &phybitmap);
+
 	return phybitmap;
 }
 
-static inline uint32_t convert_wireless_modes_ext_tlv(
+/**
+ * convert_11be_flags_to_modes_ext() - Convert 11BE wireless mode flag
+ * advertised by the target to wireless mode ext flags.
+ * @target_wireless_modes_ext: Target wireless mode
+ * @wireless_modes_ext: Variable to hold all the target wireless mode caps.
+ *
+ * Return: None
+ */
+#ifdef WLAN_FEATURE_11BE
+static void convert_11be_flags_to_modes_ext(uint32_t target_wireless_modes_ext,
+					    uint64_t *wireless_modes_ext)
+{
+	if (target_wireless_modes_ext & REGDMN_MODE_U32_11BEG_EHT20)
+		*wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11BEG_EHT20;
+
+	if (target_wireless_modes_ext & REGDMN_MODE_U32_11BEG_EHT40PLUS)
+		*wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11BEG_EHT40PLUS;
+
+	if (target_wireless_modes_ext & REGDMN_MODE_U32_11BEG_EHT40MINUS)
+		*wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11BEG_EHT40MINUS;
+
+	if (target_wireless_modes_ext & REGDMN_MODE_U32_11BEA_EHT20)
+		*wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11BEA_EHT20;
+
+	if (target_wireless_modes_ext & REGDMN_MODE_U32_11BEA_EHT40PLUS)
+		*wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11BEA_EHT40PLUS;
+
+	if (target_wireless_modes_ext & REGDMN_MODE_U32_11BEA_EHT40MINUS)
+		*wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11BEA_EHT40MINUS;
+
+	if (target_wireless_modes_ext & REGDMN_MODE_U32_11BEA_EHT80)
+		*wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11BEA_EHT80;
+
+	if (target_wireless_modes_ext & REGDMN_MODE_U32_11BEA_EHT160)
+		*wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11BEA_EHT160;
+
+	if (target_wireless_modes_ext & REGDMN_MODE_U32_11BEA_EHT320)
+		*wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11BEA_EHT320;
+}
+#else
+static void convert_11be_flags_to_modes_ext(uint32_t target_wireless_modes_ext,
+					    uint64_t *wireless_modes_ext)
+{
+}
+#endif
+
+static inline uint64_t convert_wireless_modes_ext_tlv(
 		uint32_t target_wireless_modes_ext)
 {
-	uint32_t wireless_modes_ext = 0;
+	uint64_t wireless_modes_ext = 0;
 
 	wmi_debug("Target wireless mode: 0x%x", target_wireless_modes_ext);
 
@@ -9886,6 +10060,9 @@ static inline uint32_t convert_wireless_modes_ext_tlv(
 
 	if (target_wireless_modes_ext & REGDMN_MODE_U32_11AXA_HE80_80)
 		wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11AXA_HE80_80;
+
+	convert_11be_flags_to_modes_ext(target_wireless_modes_ext,
+					&wireless_modes_ext);
 
 	return wireless_modes_ext;
 }
@@ -11147,6 +11324,31 @@ static QDF_STATUS extract_hw_mode_cap_service_ready_ext_tlv(
 }
 
 /**
+ * extract_mac_phy_cap_service_ready_11be_support - api to extract 11be support
+ * @param param: host mac phy capabilities
+ * @param mac_phy_caps: mac phy capabilities
+ *
+ * Return: void
+ */
+#ifdef WLAN_FEATURE_11BE
+static void
+extract_service_ready_11be_support(struct wlan_psoc_host_mac_phy_caps *param,
+				   WMI_MAC_PHY_CAPABILITIES *mac_phy_caps)
+{
+	param->supports_11be =
+			WMI_SUPPORT_11BE_GET(mac_phy_caps->supported_flags);
+
+	wmi_debug("11be support %d", param->supports_11be);
+}
+#else
+static void
+extract_service_ready_11be_support(struct wlan_psoc_host_mac_phy_caps *param,
+				   WMI_MAC_PHY_CAPABILITIES *mac_phy_caps)
+{
+}
+#endif
+
+/**
  * extract_mac_phy_cap_service_ready_ext_tlv() -
  *       extract MAC phy cap from service ready event
  * @wmi_handle: wmi handle
@@ -11222,6 +11424,8 @@ static QDF_STATUS extract_mac_phy_cap_service_ready_ext_tlv(
 	param->supports_11ax =
 			WMI_SUPPORT_11AX_GET(mac_phy_caps->supported_flags);
 
+	extract_service_ready_11be_support(param, mac_phy_caps);
+
 	param->supported_bands = mac_phy_caps->supported_bands;
 	param->ampdu_density = mac_phy_caps->ampdu_density;
 	param->max_bw_supported_2G = mac_phy_caps->max_bw_supported_2G;
@@ -11272,6 +11476,66 @@ static QDF_STATUS extract_mac_phy_cap_service_ready_ext_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * extract_mac_phy_cap_ehtcaps- api to extract eht mac phy caps
+ * @param param: host ext2 mac phy capabilities
+ * @param mac_phy_caps: ext mac phy capabilities
+ *
+ * Return: void
+ */
+#ifdef WLAN_FEATURE_11BE
+static void extract_mac_phy_cap_ehtcaps(
+	struct wlan_psoc_host_mac_phy_caps_ext2 *param,
+	WMI_MAC_PHY_CAPABILITIES_EXT *mac_phy_caps)
+{
+	uint32_t i;
+
+	param->eht_supp_mcs_2G = mac_phy_caps->eht_supp_mcs_2G;
+	param->eht_supp_mcs_5G = mac_phy_caps->eht_supp_mcs_5G;
+	param->eht_cap_info_internal = mac_phy_caps->eht_cap_info_internal;
+
+	qdf_mem_copy(&param->eht_cap_info_2G,
+		     &mac_phy_caps->eht_cap_mac_info_2G,
+		     sizeof(param->eht_cap_info_2G));
+	qdf_mem_copy(&param->eht_cap_info_5G,
+		     &mac_phy_caps->eht_cap_mac_info_5G,
+		     sizeof(param->eht_cap_info_5G));
+
+	qdf_mem_copy(&param->eht_cap_phy_info_2G,
+		     &mac_phy_caps->eht_cap_phy_info_2G,
+		     sizeof(param->eht_cap_phy_info_2G));
+	qdf_mem_copy(&param->eht_cap_phy_info_5G,
+		     &mac_phy_caps->eht_cap_phy_info_5G,
+		     sizeof(param->eht_cap_phy_info_5G));
+
+	wmi_debug("EHT mac caps: mac cap_info_2G %x %x, mac cap_info_5G %x %x, supp_mcs_2G %x, supp_mcs_5G %x, info_internal %x",
+		  mac_phy_caps->eht_cap_mac_info_2G[0],
+		  mac_phy_caps->eht_cap_mac_info_2G[1],
+		  mac_phy_caps->eht_cap_mac_info_5G[0],
+		  mac_phy_caps->eht_cap_mac_info_5G[1],
+		  mac_phy_caps->eht_supp_mcs_2G, mac_phy_caps->eht_supp_mcs_5G,
+		  mac_phy_caps->eht_cap_info_internal);
+
+	wmi_nofl_debug("EHT phy caps: ");
+
+	wmi_nofl_debug("2G: ");
+	for (i = 0; i < PSOC_HOST_MAX_PHY_SIZE; i++) {
+		wmi_nofl_debug("index %d value %d",
+			       i, param->eht_cap_phy_info_2G[i]);
+	}
+	wmi_nofl_debug("5G: ");
+	for (i = 0; i < PSOC_HOST_MAX_PHY_SIZE; i++) {
+		wmi_nofl_debug("index %d value %d",
+			       i, param->eht_cap_phy_info_5G[i]);
+	}
+}
+#else
+static void extract_mac_phy_cap_ehtcaps(
+	struct wlan_psoc_host_mac_phy_caps_ext2 *param,
+	WMI_MAC_PHY_CAPABILITIES_EXT *mac_phy_caps)
+{
+}
+#endif
 static QDF_STATUS extract_mac_phy_cap_service_ready_ext2_tlv(
 			wmi_unified_t wmi_handle,
 			uint8_t *event, uint8_t hw_mode_id, uint8_t phy_id,
@@ -11306,6 +11570,8 @@ static QDF_STATUS extract_mac_phy_cap_service_ready_ext2_tlv(
 			wmi_handle, mac_phy_caps->pdev_id);
 	param->wireless_modes_ext = convert_wireless_modes_ext_tlv(
 			mac_phy_caps->wireless_modes_ext);
+
+	extract_mac_phy_cap_ehtcaps(param, mac_phy_caps);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -15736,6 +16002,10 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_SCAN_CONFIG_PER_CHANNEL;
 	wmi_service[wmi_service_csa_beacon_template] =
 			WMI_SERVICE_CSA_BEACON_TEMPLATE;
+#ifdef WLAN_FEATURE_IGMP_OFFLOAD
+	wmi_service[wmi_service_igmp_offload_support] =
+			WMI_SERVICE_IGMP_OFFLOAD_SUPPORT;
+#endif
 #ifdef WLAN_SUPPORT_TWT
 	wmi_service[wmi_service_twt_bcast_req_support] =
 			WMI_SERVICE_BROADCAST_TWT_REQUESTER;
@@ -15762,6 +16032,16 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_EXT_TPC_REG_SUPPORT;
 	wmi_service[wmi_service_ndi_txbf_support] =
 			WMI_SERVICE_NDI_TXBF_SUPPORT;
+	wmi_service[wmi_service_reg_cc_ext_event_support] =
+			WMI_SERVICE_REG_CC_EXT_EVENT_SUPPORT;
+#if defined(CONFIG_BAND_6GHZ) && defined(CONFIG_REG_CLIENT)
+	wmi_service[wmi_service_lower_6g_edge_ch_supp] =
+			WMI_SERVICE_ENABLE_LOWER_6G_EDGE_CH_SUPP;
+	wmi_service[wmi_service_disable_upper_6g_edge_ch_supp] =
+			WMI_SERVICE_DISABLE_UPPER_6G_EDGE_CH_SUPP;
+#endif
+	wmi_service[wmi_service_dcs_awgn_int_support] =
+			WMI_SERVICE_DCS_AWGN_INT_SUPPORT;
 }
 
 /**

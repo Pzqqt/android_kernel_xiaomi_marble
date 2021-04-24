@@ -29,6 +29,8 @@
 #define WLAN_ASSOC_RSP_IES_OFFSET 6
 /* Assoc req IE offset - Capability(2) + LI(2) */
 #define WLAN_ASSOC_REQ_IES_OFFSET 4
+/* Assoc req IE offset - Capability(2) + LI(2) + current AP address(6) */
+#define WLAN_REASSOC_REQ_IES_OFFSET 10
 
 #define IEEE80211_CCMP_HEADERLEN    8
 #define IEEE80211_HT_CTRL_LEN       4
@@ -156,7 +158,7 @@
 #define WLAN_RM_CAPABILITY_IE_MAX_LEN            5
 #define WLAN_RNR_IE_MIN_LEN                      5
 #define WLAN_TPE_IE_MIN_LEN                      2
-#define WLAN_MAX_NUM_TPE_IE                      2
+#define WLAN_MAX_NUM_TPE_IE                      8
 
 /* Wide band channel switch IE length */
 #define WLAN_WIDE_BW_CHAN_SWITCH_IE_LEN          3
@@ -229,6 +231,14 @@
 #define WLAN_HE_6GHZ_CHWIDTH_40           1 /* 40MHz Oper Ch width */
 #define WLAN_HE_6GHZ_CHWIDTH_80           2 /* 80MHz Oper Ch width */
 #define WLAN_HE_6GHZ_CHWIDTH_160_80_80    3 /* 160/80+80 MHz Oper Ch width */
+
+#ifdef WLAN_FEATURE_11BE
+#define WLAN_EHT_CHWIDTH_20           0 /* 20MHz Oper Ch width */
+#define WLAN_EHT_CHWIDTH_40           1 /* 40MHz Oper Ch width */
+#define WLAN_EHT_CHWIDTH_80           2 /* 80MHz Oper Ch width */
+#define WLAN_EHT_CHWIDTH_160          3 /* 160MHz Oper Ch width */
+#define WLAN_EHT_CHWIDTH_320          4 /* 320MHz Oper Ch width */
+#endif
 
 #define WLAN_RATE_VAL              0x7f
 
@@ -459,6 +469,9 @@ enum element_ie {
  * @WLAN_EXTN_ELEMID_MUEDCA: MU-EDCA IE
  * @WLAN_EXTN_ELEMID_HE_6G_CAP: HE 6GHz Band Capabilities IE
  * @WLAN_EXTN_ELEMID_SRP:    spatial reuse parameter IE
+ * @WLAN_EXTN_ELEMID_NONINHERITANCE: Non inheritance IE
+ * @WLAN_EXTN_ELEMID_EHTCAP: EHT Capabilities IE
+ * @WLAN_EXTN_ELEMID_EHTOP: EHT Operation IE
  */
 enum extn_element_ie {
 	WLAN_EXTN_ELEMID_MAX_CHAN_SWITCH_TIME = 34,
@@ -466,8 +479,13 @@ enum extn_element_ie {
 	WLAN_EXTN_ELEMID_HEOP        = 36,
 	WLAN_EXTN_ELEMID_MUEDCA      = 38,
 	WLAN_EXTN_ELEMID_SRP         = 39,
+	WLAN_EXTN_ELEMID_NONINHERITANCE = 56,
 	WLAN_EXTN_ELEMID_HE_6G_CAP   = 59,
 	WLAN_EXTN_ELEMID_ESP         = 11,
+#ifdef WLAN_FEATURE_11BE
+	WLAN_EXTN_ELEMID_EHTCAP      = 253,
+	WLAN_EXTN_ELEMID_EHTOP       = 254,
+#endif
 };
 
 /**
@@ -860,6 +878,7 @@ enum wlan_status_code {
 #define MAX_KEK_LENGTH 64
 #define MAX_KCK_LEN 32
 #define REPLAY_CTR_LEN 8
+#define KCK_KEY_LEN 16
 
 #define WLAN_WPA_OUI 0xf25000
 #define WLAN_WPA_OUI_TYPE 0x01
@@ -1392,6 +1411,70 @@ struct wlan_ie_hecaps {
 		uint16_t tx_mcs_map;
 	} qdf_packed mcs_bw_map[WLAN_HE_MAX_MCS_MAPS];
 } qdf_packed;
+
+#ifdef WLAN_FEATURE_11BE
+#define WLAN_EHT_PHYCAP_160_SUPPORT BIT(2)
+#define WLAN_EHT_PHYCAP_320_SUPPORT BIT(3)
+#define WLAN_EHT_MACCAP_LEN 6
+#define WLAN_EHT_PHYCAP_LEN 11
+#define WLAN_EHT_MAX_MCS_MAPS 3
+/**
+ * struct wlan_ie_ehtcaps - EHT capabilities
+ * @elem_id: EHT caps IE
+ * @elem_len: EHT caps IE len
+ * @elem_id_extn: EHT caps extension id
+ * @eht_mac_cap: EHT mac capabilities
+ * @eht_phy_cap: EHT phy capabilities
+ * @phy_cap_bytes: EHT phy capability bytes
+ * @supported_ch_width_set: Supported channel width set
+ * @mcs_bw_map: MCS NSS map per bandwidth
+ * @rx_mcs_map: RX MCS map
+ * @tx_mcs_map: TX MCS map
+ */
+struct wlan_ie_ehtcaps {
+	uint8_t elem_id;
+	uint8_t elem_len;
+	uint8_t elem_id_extn;
+	uint8_t eht_mac_cap[WLAN_EHT_MACCAP_LEN];
+	union {
+		uint8_t phy_cap_bytes[WLAN_EHT_PHYCAP_LEN];
+		struct {
+			uint32_t reserved:1;
+			uint32_t supported_ch_width_set:7;
+		} qdf_packed;
+	} qdf_packed eht_phy_cap;
+	struct {
+		uint16_t rx_mcs_map;
+		uint16_t tx_mcs_map;
+	} qdf_packed mcs_bw_map[WLAN_EHT_MAX_MCS_MAPS];
+} qdf_packed;
+
+/**
+ * struct wlan_ie_ehtops - EHT operation element
+ * @elem_id: EHT caps IE
+ * @elem_len: EHT caps IE len
+ * @elem_id_extn: EHT caps extension id
+ * @basic_mcs_nss_set: Basic MCS NSS set
+ * @primary_channel: primary channel number
+ * @width: EHT BSS Channel Width
+ * @reserved: Reserved bits
+ * @chan_freq_seg0: EHT Channel Centre Frequency Segment 0
+ * @chan_freq_seg1: EHT Channel Centre Frequency Segment 1
+ * @minimum_rate: EHT Minimum Rate
+ */
+struct wlan_ie_ehtops {
+	uint8_t elem_id;
+	uint8_t elem_len;
+	uint8_t elem_id_extn;
+	uint8_t basic_mcs_nss_set[2];
+	uint8_t primary_channel;
+	uint8_t width:3,
+		reserved:5;
+	uint8_t chan_freq_seg0;
+	uint8_t chan_freq_seg1;
+	uint8_t minimum_rate;
+} qdf_packed;
+#endif
 
 /**
  * struct he_oper_6g_param: 6 Ghz params for HE

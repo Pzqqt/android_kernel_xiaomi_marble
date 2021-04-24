@@ -449,11 +449,30 @@ enum wlan_minidump_host_data {
 	WLAN_MD_MAX
 };
 
-void wlan_minidump_log(void *start_addr, size_t size,
-		       void *psoc,
+/**
+ * wlan_minidump_log() - Log memory address to be included in minidump
+ * @start_addr: Start address of the memory to be dumped
+ * @size: Size in bytes
+ * @psoc_obj: Psoc Object
+ * @type: Type of data structure
+ * @name: String to identify this entry
+ */
+void wlan_minidump_log(void *start_addr, const size_t size,
+		       void *psoc_obj,
 		       enum wlan_minidump_host_data type,
 		       const char *name);
 
-void wlan_minidump_remove(void *addr);
+/**
+ * wlan_minidump_remove() - Remove memory address from  minidump
+ * @start_addr: Start address of the memory previously added
+ * @size: Size in bytes
+ * @psoc_obj: Psoc Object
+ * @type: Type of data structure
+ * @name: String to identify this entry
+ */
+void wlan_minidump_remove(void *start_addr, const size_t size,
+			  void *psoc_obj,
+			  enum wlan_minidump_host_data type,
+			  const char *name);
 
 #endif /* _WLAN_UTILITY_H_ */

@@ -401,7 +401,7 @@ struct wlan_psoc_host_hal_reg_capabilities_ext {
 	uint32_t eeprom_reg_domain_ext;
 	uint32_t regcap1;
 	uint32_t regcap2;
-	uint32_t wireless_modes;
+	uint64_t wireless_modes;
 	uint32_t low_2ghz_chan;
 	uint32_t high_2ghz_chan;
 	uint32_t low_5ghz_chan;
@@ -416,7 +416,7 @@ struct wlan_psoc_host_hal_reg_capabilities_ext {
  */
 struct wlan_psoc_host_hal_reg_capabilities_ext2 {
 	uint32_t phy_id;
-	uint32_t wireless_modes_ext;
+	uint64_t wireless_modes_ext;
 };
 
 /**
@@ -1015,6 +1015,37 @@ struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_id_from_psoc_no_state_debug(
 		vdev_id, dbgid, __func__, __LINE__)
 #else
 struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_id_from_psoc_no_state(
+			struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			wlan_objmgr_ref_dbgid dbg_id);
+#endif
+
+/**
+ * wlan_objmgr_get_vdev_by_id_from_psoc_not_log_del() - retrieve vdev by id
+ * @psoc: PSOC object
+ * @id: vdev id
+ * @dbg_id: id of the caller
+ *
+ * API to find vdev object pointer by vdev id from psoc, ignores the
+ * state check
+ *
+ * This API increments the ref count of the vdev object internally, the
+ * caller has to invoke the wlan_objmgr_vdev_release_ref() to decrement
+ * ref count
+ *
+ * Return: vdev pointer
+ *         NULL on FAILURE
+ */
+#ifdef WLAN_OBJMGR_REF_ID_TRACE
+struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_id_from_psoc_not_log_del_debug(
+			struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			wlan_objmgr_ref_dbgid dbg_id,
+			const char *func, int line);
+
+#define wlan_objmgr_get_vdev_by_id_from_psoc_not_log_del(psoc, vdev_id, dbgid) \
+		wlan_objmgr_get_vdev_by_id_from_psoc_not_log_del_debug(psoc, \
+		vdev_id, dbgid, __func__, __LINE__)
+#else
+struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_id_from_psoc_not_log_del(
 			struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			wlan_objmgr_ref_dbgid dbg_id);
 #endif

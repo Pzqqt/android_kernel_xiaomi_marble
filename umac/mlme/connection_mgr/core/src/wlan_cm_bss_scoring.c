@@ -1884,6 +1884,7 @@ void wlan_cm_set_check_6ghz_security(struct wlan_objmgr_psoc *psoc,
 	if (!mlme_psoc_obj)
 		return;
 
+	mlme_debug("6ghz security check val %x", value);
 	mlme_psoc_obj->psoc_cfg.score_config.check_6ghz_security = value;
 }
 
@@ -1919,6 +1920,7 @@ void wlan_cm_set_6ghz_key_mgmt_mask(struct wlan_objmgr_psoc *psoc,
 	if (!mlme_psoc_obj)
 		return;
 
+	mlme_debug("key_mgmt_mask_6ghz %x", value);
 	mlme_psoc_obj->psoc_cfg.score_config.key_mgmt_mask_6ghz = value;
 }
 

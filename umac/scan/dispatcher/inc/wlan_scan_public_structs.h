@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -59,6 +59,61 @@ typedef uint32_t wlan_scan_id;
 #define MAX_PROBE_REQ_OUIS 16
 
 #define TBTT_INFO_COUNT 16
+
+/**
+ * IE Field nomenclature
+ * @MBSSID_INDICATOR_POS: Position of MaxBSSID indicator inside MBSSID tag
+ * @MIN_IE_LEN: 2bytes, which includes Tag Number and Tag length field
+ * @TAG_LEN_POS: Position of tag length field in MBSSID tag
+ * @VALID_ELEM_LEAST_LEN: Minimum fields required after tag length to call
+ * a MBSSID tag valid. (MaxBSSID Indicator + subelement ID + Subelement length
+ * atleast 1 byte of payload from subelement)
+ * @SUBELEMENT_START_POS: Starting position of 1st subelement in MBSSID tag
+ * @MAX_SUBELEM_LEN: Maximum length of a subelement
+ * @PAYLOAD_START_POS: Payload start position of a non tx bssid profile
+ * @FIXED_LENGTH: Length which includes header, timestamp, interval and
+ * capability
+ * @CAP_INFO_POS: Position of capability information in a non tx bssid profile
+ * @CAP_INFO_LEN: Length of capability information
+ * @SUBELEM_DATA_POS_FROM_MBSSID: Position of first byte of subelement payload
+ * from MBSSID Tag
+ * @ID_POS: Position of subelement ID in a non tx BSSID profile
+ * @NONTX_BSSID_CAP_TAG_LEN_POS: Position of tag length field of nontx bssid
+ * capability tag from starting of nontx bssid profile
+ * @VALID_BSS_PROF_LEAST_LEN: At least one tag should present to call it a valid
+ * non tx bssid profile and that is nothing but nontx bssid capability tag which
+ * is of 4 bytes
+ * @SPLIT_PROF_DATA_LEAST_LEN: Least possible length of second part of a split
+ * profile, which includes at least one tag, which may have tag number + tag
+ * length + atleast 1 byte of datai
+ * @BSS_INDEX_POS: Position of BSSID index field in Multiple BSSID index tag
+ * @MIN_VENDOR_TAG_LEN: Minimum length of a vendor specific tag
+ * @OUI_LEN: OUI + OUI Type + Min DATA
+ * @ELEM_ID_EXTN_POS: Position of element ID extension in an extension element
+ * @ELEM_ID_LIST_LEN_POS: Position of length field in list of element IDs
+ * @ELEM_ID_LIST_POS: Position to the start of element ID list
+ */
+#define MBSSID_INDICATOR_POS 2
+#define MIN_IE_LEN 2
+#define TAG_LEN_POS 1
+#define VALID_ELEM_LEAST_LEN 4
+#define SUBELEMENT_START_POS 3
+#define MAX_SUBELEM_LEN 252
+#define PAYLOAD_START_POS 2
+#define FIXED_LENGTH 36
+#define CAP_INFO_POS 4
+#define CAP_INFO_LEN 2
+#define SUBELEM_DATA_POS_FROM_MBSSID 5
+#define ID_POS 0
+#define NONTX_BSSID_CAP_TAG_LEN_POS 3
+#define VALID_BSS_PROF_LEAST_LEN 4
+#define SPLIT_PROF_DATA_LEAST_LEN 3
+#define BSS_INDEX_POS 2
+#define MIN_VENDOR_TAG_LEN 7
+#define OUI_LEN 5
+#define ELEM_ID_EXTN_POS 2
+#define ELEM_ID_LIST_LEN_POS 3
+#define ELEM_ID_LIST_POS 4
 
 /* forward declaration */
 struct wlan_objmgr_vdev;
@@ -127,6 +182,8 @@ struct channel_info {
  * @adaptive_11r: pointer to adaptive 11r IE
  * @single_pmk: Pointer to sae single pmk IE
  * @rsnxe: Pointer to rsnxe IE
+ * @ehtcap: pointer to ehtcap ie
+ * @ehtop: pointer to eht op ie
  */
 struct ie_list {
 	uint8_t *tim;
@@ -181,6 +238,10 @@ struct ie_list {
 	uint8_t *adaptive_11r;
 	uint8_t *single_pmk;
 	uint8_t *rsnxe;
+#ifdef WLAN_FEATURE_11BE
+	uint8_t *ehtcap;
+	uint8_t *ehtop;
+#endif
 };
 
 enum scan_entry_connection_state {
@@ -259,11 +320,57 @@ struct security_info {
  * @profile_num: profile number
  * @profile_count: total profile count
  * @trans_bssid: TX BSSID address
+ * @split_profile: Indicates if next MBSSID tag has the other part
+ *                 of the non tx profile
+ * @prof_residue: Set prof_residue to true, if the first non TX
+ *                     profile of the subsequent MBSSID IE does not contain
+ *                     nontx BSSID Capability as the 1st tag of the payload
+ *                     of nontx profile
+ * @split_prof_continue: Indicates if we are evaluating the fragmented part
+ *                      present in the subsequent MBSSID tag
+ * @skip_bssid_copy: For the 2nd fragmented part of the split profile
+ *                  skip copying bssid if BSSID index is already found
+ *                  in the previous part of split profile
  */
 struct scan_mbssid_info {
 	uint8_t profile_num;
 	uint8_t profile_count;
 	uint8_t trans_bssid[QDF_MAC_ADDR_SIZE];
+	bool split_profile;
+	bool prof_residue;
+	bool split_prof_continue;
+	bool skip_bssid_copy;
+};
+
+/**
+ * enum nontx_profile_reasoncode - Reason codes based on which the decision
+ * needs to be taken whether to continue with the on going nontx profile or
+ * move to the next one
+ * @VALID_NONTX_PROF: Continue with the on-going profile
+ * @INVALID_SPLIT_PROF: Invalid data seen in the split profile
+ * @INVALID_NONTX_PROF: Invalid data in a non split profile
+ */
+enum nontx_profile_reasoncode {
+	VALID_NONTX_PROF = 0,
+	INVALID_SPLIT_PROF = 0x1,
+	INVALID_NONTX_PROF = 0x2
+};
+
+/**
+ * struct non_inheritance_ie - Non inheritance tag information
+ * @list_len: Length of element ID list
+ * @extn_len: Length of element ID extension list
+ * @non_inherit: Flag to indicate if any noninheritance tag present
+ *              in the non tx BSSID profile
+ * @non_inh_ie_found: Flag to indicate if the noninheritance tag found
+ *                   from non tx BSSID profile present in the tx profile
+ *                   so that the copy of that IE can be skipped.
+ */
+struct non_inheritance_ie {
+	uint8_t list_len;
+	uint8_t extn_len;
+	bool non_inherit;
+	bool non_inh_ie_found;
 };
 
 /**

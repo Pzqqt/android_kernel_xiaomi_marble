@@ -22,6 +22,10 @@
 #include <qdf_lock.h>
 #include "dp_types.h"
 
+#ifdef DUMP_REO_QUEUE_INFO_IN_DDR
+#include "hal_reo.h"
+#endif
+
 #define DP_INVALID_PEER_ID 0xffff
 
 #define DP_PEER_MAX_MEC_IDX 1024	/* maximum index for MEC table */
@@ -944,4 +948,55 @@ static inline void dp_peer_mec_flush_entries(struct dp_soc *soc)
 {
 }
 #endif
+
+#ifdef DUMP_REO_QUEUE_INFO_IN_DDR
+/**
+ * dp_send_cache_flush_for_rx_tid() - Send cache flush cmd to REO per tid
+ * @soc : dp_soc handle
+ * @peer: peer
+ *
+ * This function is used to send cache flush cmd to reo and
+ * to register the callback to handle the dumping of the reo
+ * queue stas from DDR
+ *
+ * Return: none
+ */
+void dp_send_cache_flush_for_rx_tid(
+	struct dp_soc *soc, struct dp_peer *peer);
+
+/**
+ * dp_get_rx_reo_queue_info() - Handler to get rx tid info
+ * @soc : cdp_soc_t handle
+ * @vdev_id: vdev id
+ *
+ * Handler to get rx tid info from DDR after h/w cache is
+ * invalidated first using the cache flush cmd.
+ *
+ * Return: none
+ */
+void dp_get_rx_reo_queue_info(
+	struct cdp_soc_t *soc_hdl, uint8_t vdev_id);
+
+/**
+ * dp_dump_rx_reo_queue_info() - Callback function to dump reo queue stats
+ * @soc : dp_soc handle
+ * @cb_ctxt - callback context
+ * @reo_status: vdev id
+ *
+ * This is the callback function registered after sending the reo cmd
+ * to flush the h/w cache and invalidate it. In the callback the reo
+ * queue desc info is dumped from DDR.
+ *
+ * Return: none
+ */
+void dp_dump_rx_reo_queue_info(
+	struct dp_soc *soc, void *cb_ctxt, union hal_reo_status *reo_status);
+
+#else /* DUMP_REO_QUEUE_INFO_IN_DDR */
+
+static inline void dp_get_rx_reo_queue_info(
+	struct cdp_soc_t *soc_hdl, uint8_t vdev_id)
+{
+}
+#endif /* DUMP_REO_QUEUE_INFO_IN_DDR */
 #endif /* _DP_PEER_H_ */

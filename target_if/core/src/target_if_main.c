@@ -664,7 +664,9 @@ QDF_STATUS target_if_free_psoc_tgt_info(struct wlan_objmgr_psoc *psoc)
 
 	wlan_psoc_set_tgt_if_handle(psoc, NULL);
 
-	wlan_minidump_remove(tgt_psoc_info);
+	wlan_minidump_remove(tgt_psoc_info,
+			     sizeof(*tgt_psoc_info), psoc,
+			     WLAN_MD_OBJMGR_PSOC_TGT_INFO, "target_psoc_info");
 	qdf_mem_free(tgt_psoc_info);
 
 	return QDF_STATUS_SUCCESS;
@@ -841,4 +843,18 @@ target_pdev_scan_radio_is_dfs_enabled(struct wlan_objmgr_pdev *pdev,
 	target_if_err("No scan radio cap found in pdev %d", pdev_id);
 
 	return QDF_STATUS_E_INVAL;
+}
+
+void target_if_set_reg_cc_ext_supp(struct target_psoc_info *tgt_hdl,
+				   struct wlan_objmgr_psoc *psoc)
+{
+	struct tgt_info *info;
+
+	if (!tgt_hdl)
+		return;
+
+	info = (&tgt_hdl->info);
+
+	info->wlan_res_cfg.is_reg_cc_ext_event_supported =
+		target_if_reg_is_reg_cc_ext_event_host_supported(psoc);
 }
