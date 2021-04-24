@@ -82,6 +82,7 @@ static QDF_STATUS p2p_scan_start(struct p2p_roc_context *roc_ctx)
 	struct wlan_objmgr_vdev *vdev;
 	struct p2p_soc_priv_obj *p2p_soc_obj = roc_ctx->p2p_soc_obj;
 	uint32_t go_num;
+	struct wlan_objmgr_pdev *pdev;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
 			p2p_soc_obj->soc, roc_ctx->vdev_id,
@@ -105,13 +106,16 @@ static QDF_STATUS p2p_scan_start(struct p2p_roc_context *roc_ctx)
 			  P2P_ROC_DEFAULT_DURATION);
 	}
 
+	pdev = wlan_vdev_get_pdev(vdev);
 	roc_ctx->scan_id = ucfg_scan_get_scan_id(p2p_soc_obj->soc);
 	req->vdev = vdev;
 	req->scan_req.scan_id = roc_ctx->scan_id;
 	req->scan_req.scan_type = SCAN_TYPE_P2P_LISTEN;
 	req->scan_req.scan_req_id = p2p_soc_obj->scan_req_id;
 	req->scan_req.chan_list.num_chan = 1;
-	req->scan_req.chan_list.chan[0].freq = wlan_chan_to_freq(roc_ctx->chan);
+	req->scan_req.chan_list.chan[0].freq = wlan_reg_legacy_chan_to_freq(
+								pdev,
+								roc_ctx->chan);
 	req->scan_req.dwell_time_passive = roc_ctx->duration;
 	req->scan_req.dwell_time_active = 0;
 	req->scan_req.scan_priority = SCAN_PRIORITY_HIGH;
