@@ -18,6 +18,7 @@
 #include "lpass-cdc.h"
 #include "internal.h"
 #include "lpass-cdc-clk-rsc.h"
+#include <linux/qti-regmap-debugfs.h>
 
 #define DRV_NAME "lpass-cdc"
 
@@ -191,13 +192,11 @@ static int lpass_cdc_update_wcd_event(void *handle, u16 event, u32 data)
 				LPASS_CDC_MACRO_EVT_BCS_CLK_OFF, data);
 		break;
 	case WCD_LPASS_CDC_EVT_RX_PA_GAIN_UPDATE:
-		/* Update PA Gain only for lpass_cdc version 2.1 */
-		if (priv->version == LPASS_CDC_VERSION_2_1)
-			if (priv->macro_params[RX_MACRO].event_handler)
-				priv->macro_params[RX_MACRO].event_handler(
-					priv->component,
-					LPASS_CDC_MACRO_EVT_RX_PA_GAIN_UPDATE,
-					data);
+		if (priv->macro_params[RX_MACRO].event_handler)
+			priv->macro_params[RX_MACRO].event_handler(
+				priv->component,
+				LPASS_CDC_MACRO_EVT_RX_PA_GAIN_UPDATE,
+				data);
 		break;
 	case WCD_LPASS_CDC_EVT_HPHL_HD2_ENABLE:
 		if (priv->macro_params[RX_MACRO].event_handler)
@@ -799,16 +798,19 @@ static ssize_t lpass_cdc_version_read(struct snd_info_entry *entry,
 
 	switch (priv->version) {
 	case LPASS_CDC_VERSION_1_0:
-		len = snprintf(buffer, sizeof(buffer), "LPASS_CDC_1_0\n");
+		len = snprintf(buffer, sizeof(buffer), "LPASS-CDC_1_0\n");
 		break;
 	case LPASS_CDC_VERSION_1_1:
-		len = snprintf(buffer, sizeof(buffer), "LPASS_CDC_1_1\n");
+		len = snprintf(buffer, sizeof(buffer), "LPASS-CDC_1_1\n");
 		break;
 	case LPASS_CDC_VERSION_1_2:
-		len = snprintf(buffer, sizeof(buffer), "LPASS_CDC_1_2\n");
+		len = snprintf(buffer, sizeof(buffer), "LPASS-CDC_1_2\n");
 		break;
 	case LPASS_CDC_VERSION_2_1:
-		len = snprintf(buffer, sizeof(buffer), "LPASS_CDC_2_1\n");
+		len = snprintf(buffer, sizeof(buffer), "LPASS-CDC_2_1\n");
+		break;
+	case LPASS_CDC_VERSION_2_5:
+		len = snprintf(buffer, sizeof(buffer), "LPASS-CDC_2_5\n");
 		break;
 	default:
 		len = snprintf(buffer, sizeof(buffer), "VER_UNDEFINED\n");
@@ -940,7 +942,7 @@ int lpass_cdc_info_create_codec_entry(struct snd_info_entry *codec_root,
 	}
 	card = component->card;
 	priv->entry = snd_info_create_module_entry(codec_root->module,
-					     "lpass_cdc", codec_root);
+					     "lpass-cdc", codec_root);
 	if (!priv->entry) {
 		dev_dbg(component->dev, "%s: failed to create lpass_cdc entry\n",
 			__func__);
@@ -1113,6 +1115,8 @@ static int lpass_cdc_soc_codec_probe(struct snd_soc_component *component)
 		priv->version = LPASS_CDC_VERSION_2_0;
 	if ((core_id_0 == 0x02) && (core_id_1 == 0x0E))
 		priv->version = LPASS_CDC_VERSION_2_1;
+	if ((core_id_0 == 0x02) && (core_id_1 == 0x0F))
+		priv->version = LPASS_CDC_VERSION_2_5;
 
 	/* call init for supported macros */
 	for (macro_idx = START_MACRO; macro_idx < MAX_MACRO; macro_idx++) {
@@ -1283,6 +1287,9 @@ static int lpass_cdc_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "%s:regmap init failed\n", __func__);
 		return -EINVAL;
 	}
+
+	devm_regmap_qti_debugfs_register(priv->dev, priv->regmap);
+
 	priv->read_dev = __lpass_cdc_reg_read;
 	priv->write_dev = __lpass_cdc_reg_write;
 
@@ -1299,7 +1306,6 @@ static int lpass_cdc_probe(struct platform_device *pdev)
 	mutex_init(&priv->vote_lock);
 	INIT_WORK(&priv->lpass_cdc_add_child_devices_work,
 		  lpass_cdc_add_child_devices);
-	schedule_work(&priv->lpass_cdc_add_child_devices_work);
 
 	/* Register LPASS core hw vote */
 	lpass_core_hw_vote = devm_clk_get(&pdev->dev, "lpass_core_hw_vote");
@@ -1322,6 +1328,7 @@ static int lpass_cdc_probe(struct platform_device *pdev)
 		ret = 0;
 	}
 	priv->lpass_audio_hw_vote = lpass_audio_hw_vote;
+	schedule_work(&priv->lpass_cdc_add_child_devices_work);
 
 	return 0;
 }

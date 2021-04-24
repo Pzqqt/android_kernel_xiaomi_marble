@@ -61,6 +61,7 @@ static int va_tx_unmute_delay = LPASS_CDC_VA_TX_DMIC_UNMUTE_DELAY_MS;
 module_param(va_tx_unmute_delay, int, 0664);
 MODULE_PARM_DESC(va_tx_unmute_delay, "delay to unmute the tx path");
 
+static int lpass_cdc_va_macro_core_vote(void *handle, bool enable);
 enum {
 	LPASS_CDC_VA_MACRO_AIF_INVALID = 0,
 	LPASS_CDC_VA_MACRO_AIF1_CAP,
@@ -299,6 +300,7 @@ static int lpass_cdc_va_macro_event_handler(struct snd_soc_component *component,
 		break;
 	case LPASS_CDC_MACRO_EVT_PRE_SSR_UP:
 		/* enable&disable VA_CORE_CLK to reset GFMUX reg */
+		lpass_cdc_va_macro_core_vote(va_priv, true);
 		ret = lpass_cdc_clk_rsc_request_clock(va_priv->dev,
 						va_priv->default_clk_id,
 						VA_CORE_CLK, true);
@@ -310,6 +312,7 @@ static int lpass_cdc_va_macro_event_handler(struct snd_soc_component *component,
 			lpass_cdc_clk_rsc_request_clock(va_priv->dev,
 						va_priv->default_clk_id,
 						VA_CORE_CLK, false);
+		lpass_cdc_va_macro_core_vote(va_priv, false);
 		break;
 	case LPASS_CDC_MACRO_EVT_SSR_UP:
 		trace_printk("%s, enter SSR up\n", __func__);
@@ -1171,32 +1174,6 @@ static int lpass_cdc_va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		/* apply gain after decimator is enabled */
 		snd_soc_component_write(component, tx_gain_ctl_reg,
 			snd_soc_component_read(component, tx_gain_ctl_reg));
-		if (va_priv->version == LPASS_CDC_VERSION_2_0) {
-			if (snd_soc_component_read(component, adc_mux_reg)
-							& SWR_MIC) {
-				snd_soc_component_update_bits(component,
-					LPASS_CDC_TX_TOP_CSR_SWR_CTRL,
-					0x01, 0x01);
-				snd_soc_component_update_bits(component,
-					LPASS_CDC_TX_TOP_CSR_SWR_MIC0_CTL,
-					0x0E, 0x0C);
-				snd_soc_component_update_bits(component,
-					LPASS_CDC_TX_TOP_CSR_SWR_MIC1_CTL,
-					0x0E, 0x0C);
-				snd_soc_component_update_bits(component,
-					LPASS_CDC_TX_TOP_CSR_SWR_MIC2_CTL,
-					0x0E, 0x00);
-				snd_soc_component_update_bits(component,
-					LPASS_CDC_TX_TOP_CSR_SWR_MIC3_CTL,
-					0x0E, 0x00);
-				snd_soc_component_update_bits(component,
-					LPASS_CDC_TX_TOP_CSR_SWR_MIC4_CTL,
-					0x0E, 0x00);
-				snd_soc_component_update_bits(component,
-					LPASS_CDC_TX_TOP_CSR_SWR_MIC5_CTL,
-					0x0E, 0x00);
-			}
-		}
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
 		hpf_cut_off_freq =
@@ -1230,13 +1207,6 @@ static int lpass_cdc_va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		}
 		cancel_delayed_work_sync(
 				&va_priv->va_mute_dwork[decimator].dwork);
-		if (va_priv->version == LPASS_CDC_VERSION_2_0) {
-			if (snd_soc_component_read(component, adc_mux_reg)
-							& SWR_MIC)
-				snd_soc_component_update_bits(component,
-					LPASS_CDC_TX_TOP_CSR_SWR_CTRL,
-					0x01, 0x00);
-		}
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		/* Disable TX CLK */
@@ -2443,13 +2413,13 @@ static int lpass_cdc_va_macro_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "%s: register macro failed\n", __func__);
 		goto reg_macro_fail;
 	}
-	if (is_used_va_swr_gpio)
-		schedule_work(&va_priv->lpass_cdc_va_macro_add_child_devices_work);
 	pm_runtime_set_autosuspend_delay(&pdev->dev, VA_AUTO_SUSPEND_DELAY);
 	pm_runtime_use_autosuspend(&pdev->dev);
 	pm_runtime_set_suspended(&pdev->dev);
 	pm_suspend_ignore_children(&pdev->dev, true);
 	pm_runtime_enable(&pdev->dev);
+	if (is_used_va_swr_gpio)
+		schedule_work(&va_priv->lpass_cdc_va_macro_add_child_devices_work);
 	return ret;
 
 reg_macro_fail:

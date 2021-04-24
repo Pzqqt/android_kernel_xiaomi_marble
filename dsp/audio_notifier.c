@@ -111,7 +111,7 @@ static struct service_info service_data[AUDIO_NOTIFIER_MAX_SERVICES]
 };
 
 /* Master list of all audio notifier clients */
-struct list_head   client_list;
+LIST_HEAD(client_list);
 struct mutex       notifier_mutex;
 
 static int audio_notifier_get_default_service(int domain)
@@ -574,7 +574,6 @@ static int audio_notifier_subsys_init(void)
 	int i, j;
 
 	mutex_init(&notifier_mutex);
-	INIT_LIST_HEAD(&client_list);
 	for (i = 0; i < AUDIO_NOTIFIER_MAX_SERVICES; i++) {
 		for (j = 0; j < AUDIO_NOTIFIER_MAX_DOMAINS; j++) {
 			if (service_data[i][j].state <= NO_SERVICE)
@@ -627,12 +626,12 @@ static int audio_notify_probe(struct platform_device *pdev)
 
 	priv->rproc_h = rproc_get_by_phandle(rproc_phandle);
 	if (!priv->rproc_h) {
-		dev_err(&pdev->dev, "remotproc handle NULL\n");
+		dev_info_ratelimited(&pdev->dev, "remotproc handle NULL\n");
+		ret = -EPROBE_DEFER;
 		return ret;
 	}
 
 	adsp_private = pdev;
-
 
 	audio_notifier_subsys_init();
 

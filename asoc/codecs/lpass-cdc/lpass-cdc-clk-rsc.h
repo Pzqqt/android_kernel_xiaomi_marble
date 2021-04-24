@@ -1,13 +1,13 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef LPASS_CDC_CLK_RSC_H
 #define LPASS_CDC_CLK_RSC_H
 
 #include <linux/regmap.h>
-#include <dt-bindings/sound/qcom,lpass-cdc-clk-rsc.h>
+#include <bindings/qcom,lpass-cdc-clk-rsc.h>
 
 #if IS_ENABLED(CONFIG_SND_SOC_LPASS_CDC)
 int lpass_cdc_clk_rsc_mgr_init(void);

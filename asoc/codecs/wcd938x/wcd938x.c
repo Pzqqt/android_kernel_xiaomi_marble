@@ -19,7 +19,8 @@
 #include <asoc/wcdcal-hwdep.h>
 #include <asoc/msm-cdc-pinctrl.h>
 #include <asoc/msm-cdc-supply.h>
-#include <dt-bindings/sound/audio-codec-port-types.h>
+#include <bindings/audio-codec-port-types.h>
+#include <linux/qti-regmap-debugfs.h>
 
 #include "wcd938x-registers.h"
 #include "wcd938x.h"
@@ -3953,6 +3954,8 @@ static int wcd938x_soc_codec_probe(struct snd_soc_component *component)
 
 	wcd938x->component = component;
 	snd_soc_component_init_regmap(component, wcd938x->regmap);
+
+	devm_regmap_qti_debugfs_register(&wcd938x->tx_swr_dev->dev, wcd938x->regmap);
 
 	variant = (snd_soc_component_read(component,
 			WCD938X_DIGITAL_EFUSE_REG_0) & 0x1E) >> 1;

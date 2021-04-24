@@ -33,7 +33,7 @@
 #include "codecs/wsa883x/wsa883x.h"
 #include "codecs/wcd938x/wcd938x.h"
 #include "codecs/lpass-cdc/lpass-cdc.h"
-#include <dt-bindings/sound/audio-codec-port-types.h>
+#include <bindings/audio-codec-port-types.h>
 #include "codecs/lpass-cdc/lpass-cdc-wsa-macro.h"
 #include "waipio-port-config.h"
 #include "msm-audio-defs.h"
@@ -434,7 +434,6 @@ static struct snd_soc_dai_link msm_wcn_be_dai_links[] = {
 	},
 };
 
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 static struct snd_soc_dai_link ext_disp_be_dai_link[] = {
 	/* DISP PORT BACK END DAI Link */
 	{
@@ -448,7 +447,6 @@ static struct snd_soc_dai_link ext_disp_be_dai_link[] = {
 		SND_SOC_DAILINK_REG(display_port),
 	},
 };
-#endif
 
 static struct snd_soc_dai_link msm_wsa_cdc_dma_be_dai_links[] = {
 	/* WSA CDC DMA Backend DAI Links */
@@ -926,9 +924,7 @@ static struct snd_soc_dai_link msm_waipio_dai_links[
 #endif
 			ARRAY_SIZE(msm_rx_tx_cdc_dma_be_dai_links) +
 			ARRAY_SIZE(msm_va_cdc_dma_be_dai_links) +
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 			ARRAY_SIZE(ext_disp_be_dai_link) +
-#endif
 			ARRAY_SIZE(msm_common_be_dai_links) +
 			ARRAY_SIZE(msm_wcn_be_dai_links) +
 			ARRAY_SIZE(msm_mi2s_dai_links) +
@@ -1189,7 +1185,6 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 			total_links += ARRAY_SIZE(msm_tdm_dai_links);
 		}
 
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		rc = of_property_read_u32(dev->of_node,
 					   "qcom,ext-disp-audio-rx", &val);
 		if (!rc && val) {
@@ -1200,7 +1195,6 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 			       sizeof(ext_disp_be_dai_link));
 			total_links += ARRAY_SIZE(ext_disp_be_dai_link);
 		}
-#endif
 
 		rc = of_property_read_u32(dev->of_node, "qcom,wcn-bt", &val);
 		if (!rc && val) {
