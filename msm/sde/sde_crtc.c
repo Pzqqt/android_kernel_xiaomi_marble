@@ -6562,6 +6562,9 @@ static int _sde_debugfs_fence_status_show(struct seq_file *s, void *data)
 	dev = crtc->dev;
 	cstate = to_sde_crtc_state(crtc->state);
 
+	if (!sde_crtc->kickoff_in_progress)
+		goto skip_input_fence;
+
 	/* Dump input fence info */
 	seq_puts(s, "===Input fence===\n");
 	drm_atomic_crtc_for_each_plane(plane, crtc) {
@@ -6589,6 +6592,7 @@ static int _sde_debugfs_fence_status_show(struct seq_file *s, void *data)
 		}
 	}
 
+skip_input_fence:
 	/* Dump release fence info */
 	seq_puts(s, "\n");
 	seq_puts(s, "===Release fence===\n");
