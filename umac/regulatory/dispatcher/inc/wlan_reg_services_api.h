@@ -28,31 +28,6 @@
 
 #include <reg_services_public_struct.h>
 
-#ifdef CONFIG_CHAN_NUM_API
-/**
- * wlan_reg_min_24ghz_ch_num() - Get minimum 2.4GHz channel number
- *
- * Return: Minimum 2.4GHz channel number
- */
-#define WLAN_REG_MIN_24GHZ_CH_NUM wlan_reg_min_24ghz_ch_num()
-uint8_t wlan_reg_min_24ghz_ch_num(void);
-
-/**
- * wlan_reg_max_24ghz_ch_num() - Get maximum 2.4GHz channel number
- *
- * Return: Maximum 2.4GHz channel number
- */
-#define WLAN_REG_MAX_24GHZ_CH_NUM wlan_reg_max_24ghz_ch_num()
-uint8_t wlan_reg_max_24ghz_ch_num(void);
-
-/**
- * wlan_reg_min_5ghz_ch_num() - Get minimum 5GHz channel number
- *
- * Return: Minimum 5GHz channel number
- */
-#define WLAN_REG_MIN_5GHZ_CH_NUM wlan_reg_min_5ghz_ch_num()
-uint8_t wlan_reg_min_5ghz_ch_num(void);
-
 /**
  * wlan_reg_max_5ghz_ch_num() - Get maximum 5GHz channel number
  *
@@ -60,7 +35,6 @@ uint8_t wlan_reg_min_5ghz_ch_num(void);
  */
 #define WLAN_REG_MAX_5GHZ_CH_NUM wlan_reg_max_5ghz_ch_num()
 uint8_t wlan_reg_max_5ghz_ch_num(void);
-#endif /* CONFIG_CHAN_NUM_API */
 
 #ifdef CONFIG_CHAN_FREQ_API
 /**
@@ -414,20 +388,6 @@ uint8_t wlan_reg_ch_num(uint32_t ch_enum);
 #define WLAN_REG_CH_TO_FREQ(ch_enum) wlan_reg_ch_to_freq(ch_enum)
 qdf_freq_t wlan_reg_ch_to_freq(uint32_t ch_enum);
 
-#ifdef CONFIG_CHAN_NUM_API
-/**
- * wlan_reg_is_channel_valid_5g_sbs() Check if the given channel is 5G SBS.
- * @curchan: current channel
- * @newchan:new channel
- *
- * Return: true if the given channel is a valid 5G SBS
- */
-#define WLAN_REG_IS_CHANNEL_VALID_5G_SBS(curchan, newchan) \
-	wlan_reg_is_channel_valid_5g_sbs(curchan, newchan)
-bool wlan_reg_is_channel_valid_5g_sbs(uint8_t curchan, uint8_t newchan);
-#endif /* CONFIG_CHAN_NUM_API */
-
-
 /**
  * wlan_reg_read_default_country() - Read the default country for the regdomain
  * @country: pointer to the country code.
@@ -480,18 +440,6 @@ bool wlan_reg_get_fcc_constraint(struct wlan_objmgr_pdev *pdev, uint32_t freq);
 QDF_STATUS wlan_reg_read_current_country(struct wlan_objmgr_psoc *psoc,
 				   uint8_t *country);
 
-#ifdef CONFIG_CHAN_NUM_API
-/**
- * wlan_reg_is_etsi13_srd_chan () - Checks if the ch is ETSI13 srd ch or not
- * @pdev: pdev ptr
- * @chan_num: channel
- *
- * Return: true or false
- */
-bool wlan_reg_is_etsi13_srd_chan(struct wlan_objmgr_pdev *pdev,
-				 uint8_t chan_num);
-#endif /* CONFIG_CHAN_NUM_API */
-
 #ifdef CONFIG_CHAN_FREQ_API
 /**
  * wlan_reg_is_etsi13_srd_chan_for_freq () - Checks if the ch is ETSI13 srd ch
@@ -533,32 +481,6 @@ bool wlan_reg_is_etsi13_srd_chan_allowed_master_mode(struct wlan_objmgr_pdev
  */
 bool wlan_reg_is_world(uint8_t *country);
 
-#ifdef CONFIG_CHAN_NUM_API
-/**
- * wlan_reg_get_5g_bonded_channel_state() - Get 5G bonded channel state
- * @pdev: The physical dev to program country code or regdomain
- * @ch: channel number.
- * @bw: channel band width
- *
- * Return: channel state
- */
-enum channel_state wlan_reg_get_5g_bonded_channel_state(
-		struct wlan_objmgr_pdev *pdev, uint8_t ch,
-		enum phy_ch_width bw);
-
-/**
- * wlan_reg_get_2g_bonded_channel_state() - Get 2G bonded channel state
- * @pdev: The physical dev to program country code or regdomain
- * @ch: channel number.
- * @sec_ch: Secondary channel.
- * @bw: channel band width
- *
- * Return: channel state
- */
-enum channel_state wlan_reg_get_2g_bonded_channel_state(
-		struct wlan_objmgr_pdev *pdev, uint8_t ch,
-		uint8_t sec_ch, enum phy_ch_width bw);
-#endif /* CONFIG_CHAN_NUM_API */
 /**
  * wlan_reg_get_dfs_region () - Get the current dfs region
  * @dfs_reg: pointer to dfs region
@@ -567,17 +489,6 @@ enum channel_state wlan_reg_get_2g_bonded_channel_state(
  */
 QDF_STATUS wlan_reg_get_dfs_region(struct wlan_objmgr_pdev *pdev,
 			     enum dfs_reg *dfs_reg);
-
-#ifdef CONFIG_CHAN_NUM_API
-/**
- * wlan_reg_get_channel_freq() - provide the channel center freq
- * @chan_num: channel number
- *
- * Return: int
- */
-qdf_freq_t wlan_reg_get_channel_freq(struct wlan_objmgr_pdev *pdev,
-				     uint8_t chan_num);
-#endif /* CONFIG_CHAN_NUM_API */
 
 /**
  * wlan_reg_get_current_chan_list() - provide the pdev current channel list
@@ -818,41 +729,6 @@ QDF_STATUS regulatory_pdev_open(struct wlan_objmgr_pdev *pdev);
  */
 QDF_STATUS regulatory_pdev_close(struct wlan_objmgr_pdev *pdev);
 
-#ifdef CONFIG_CHAN_NUM_API
-/**
- * wlan_reg_update_nol_ch () - set nol channel
- * @pdev: pdev ptr
- * @ch_list: channel list to be returned
- * @num_ch: number of channels
- * @nol_ch: nol flag
- *
- * Return: void
- */
-void wlan_reg_update_nol_ch(struct wlan_objmgr_pdev *pdev,
-			    uint8_t *ch_list,
-			    uint8_t num_ch,
-			    bool nol_ch);
-/**
- * wlan_reg_is_passive_or_disable_ch () - Checks chan state for passive
- * and disabled
- * @pdev: pdev ptr
- * @chan: channel
- *
- * Return: true or false
- */
-bool wlan_reg_is_passive_or_disable_ch(struct wlan_objmgr_pdev *pdev,
-				       uint8_t chan);
-
-/**
- * wlan_reg_is_disable_ch () - Checks chan state for disabled
- * @pdev: pdev ptr
- * @chan: channel
- *
- * Return: true or false
- */
-bool wlan_reg_is_disable_ch(struct wlan_objmgr_pdev *pdev, uint8_t chan);
-#endif /* CONFIG_CHAN_NUM_API */
-
 /**
  * wlan_reg_freq_to_chan () - convert channel freq to channel number
  * @pdev: The physical dev to set current country for
@@ -888,17 +764,6 @@ bool wlan_reg_is_us(uint8_t *country);
  */
 bool wlan_reg_is_etsi(uint8_t *country);
 
-#ifdef CONFIG_CHAN_NUM_API
-/**
- * wlan_reg_chan_is_49ghz() - Check if the input channel number is 4.9GHz
- * @pdev: Pdev pointer
- * @chan_num: Input channel number
- *
- * Return: true if the channel is 4.9GHz else false.
- */
-bool wlan_reg_chan_is_49ghz(struct wlan_objmgr_pdev *pdev,
-		uint8_t chan_num);
-#endif /* CONFIG_CHAN_NUM_API */
 
 /**
  * wlan_reg_set_country() - Set the current regulatory country
@@ -1007,23 +872,6 @@ wlan_reg_get_tx_ops(struct wlan_objmgr_psoc *psoc);
 QDF_STATUS wlan_reg_get_curr_regdomain(struct wlan_objmgr_pdev *pdev,
 		struct cur_regdmn_info *cur_regdmn);
 
-#ifdef CONFIG_CHAN_NUM_API
-/**
- * wlan_reg_update_nol_history_ch() - Set nol-history flag for the channels in
- * the list.
- *
- * @pdev: Pdev ptr
- * @ch_list: Input channel list.
- * @num_ch: Number of channels.
- * @nol_history_ch: Nol history value.
- *
- * Return: void
- */
-void wlan_reg_update_nol_history_ch(struct wlan_objmgr_pdev *pdev,
-				    uint8_t *ch_list,
-				    uint8_t num_ch,
-				    bool nol_history_ch);
-#endif /* CONFIG_CHAN_NUM_API */
 /**
  * wlan_reg_is_regdmn_en302502_applicable() - Find if ETSI EN302_502 radar
  * pattern is applicable in the current regulatory domain.
@@ -1370,8 +1218,8 @@ bool wlan_reg_is_passive_for_freq(struct wlan_objmgr_pdev *pdev,
 				  qdf_freq_t freq);
 
 /**
- * wlan_reg_chan_to_band() - Get band from channel number
- * @chan_num: channel number
+ * wlan_reg_freq_to_band() - Get band from channel number
+ * @freq:Channel frequency in MHz
  *
  * Return: wifi band
  */

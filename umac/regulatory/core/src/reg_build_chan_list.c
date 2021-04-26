@@ -772,8 +772,9 @@ reg_modify_chan_list_for_srd_channels(struct wlan_objmgr_pdev *pdev,
 		if (chan_list[chan_enum].chan_flags & REGULATORY_CHAN_DISABLED)
 			continue;
 
-		if (reg_is_etsi13_srd_chan(pdev,
-					   chan_list[chan_enum].chan_num)) {
+		if (reg_is_etsi13_srd_chan_for_freq(
+					pdev,
+					chan_list[chan_enum].center_freq)) {
 			chan_list[chan_enum].state =
 				CHANNEL_STATE_DFS;
 			chan_list[chan_enum].chan_flags |=

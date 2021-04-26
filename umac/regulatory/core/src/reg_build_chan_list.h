@@ -121,21 +121,4 @@ QDF_STATUS
 reg_get_secondary_current_chan_list(struct wlan_objmgr_pdev *pdev,
 				    struct regulatory_channel *chan_list);
 #endif
-
-/**
- * reg_update_nol_history_ch() - Set nol-history flag for the channels in the
- * list.
- *
- * @pdev: Pdev ptr.
- * @ch_list: Input channel list.
- * @num_ch: Number of channels.
- * @nol_history_ch: NOL-History flag.
- *
- * Return: void
- */
-void reg_update_nol_history_ch(struct wlan_objmgr_pdev *pdev,
-			       uint8_t *chan_list,
-			       uint8_t num_chan,
-			       bool nol_history_chan);
-
 #endif

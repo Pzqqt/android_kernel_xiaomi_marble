@@ -1159,7 +1159,7 @@ static uint16_t dfs_get_rand_from_lst_for_freq(struct wlan_dfs *dfs,
 #endif
 
 /**
- * dfs_random_channel_sel_set_bitmap()- Set channel bit in bitmap based
+ * dfs_random_channel_sel_set_bitmap_for_freq()- Set channel bit in bitmap based
  * on given channel number
  * @dfs: Pointer to DFS structure.
  * @bitmap: bitmap

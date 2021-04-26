@@ -85,21 +85,6 @@
 extern struct dfs_to_mlme global_dfs_to_mlme;
 
 /**
- * utils_dfs_cac_valid_reset() - Cancels the dfs_cac_valid_timer timer.
- * @pdev: Pointer to DFS pdev object.
- * @prevchan_ieee: Prevchan number.
- * @prevchan_flags: Prevchan flags.
- *
- * Wrapper function for dfs_cac_valid_reset(). This function called from
- * outside of DFS component.
- */
-#ifdef CONFIG_CHAN_NUM_API
-QDF_STATUS utils_dfs_cac_valid_reset(struct wlan_objmgr_pdev *pdev,
-		uint8_t prevchan_ieee,
-		uint32_t prevchan_flags);
-#endif
-
-/**
  * utils_dfs_cac_valid_reset_for_freq() - Cancels the dfs_cac_valid_timer timer.
  * @pdev: Pointer to DFS pdev object.
  * @prevchan_freq: Prevchan frequency.
@@ -176,30 +161,12 @@ QDF_STATUS utils_dfs_start_precac_timer(struct wlan_objmgr_pdev *pdev);
 
 #ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
 /**
- * utils_dfs_precac_decide_pref_chan() - Choose preferred channel
- * @pdev: Pointer to DFS pdev object.
- * @ch_ieee: Pointer to channel number.
- * @mode: Configured PHY mode.
- *
- * Wrapper function for dfs_decide_precac_preferred_chan(). This
- * function called from outside of dfs component.
- *
- * Return: True if intermediate channel needs to configure. False otherwise.
- */
-#ifdef CONFIG_CHAN_NUM_API
-bool
-utils_dfs_precac_decide_pref_chan(struct wlan_objmgr_pdev *pdev,
-				  uint8_t *ch_ieee,
-				  enum wlan_phymode mode);
-#endif
-
-/**
- * utils_dfs_precac_decide_pref_chan() - Choose preferred channel
+ * utils_dfs_precac_decide_pref_chan_for_freq() - Choose preferred channel
  * @pdev: Pointer to DFS pdev object.
  * @ch_freq: Pointer to channel frequency.
  * @mode: Configured PHY mode.
  *
- * Wrapper function for dfs_decide_precac_preferred_chan(). This
+ * Wrapper function for dfs_decide_precac_preferred_chan_for_freq(). This
  * function called from outside of dfs component.
  *
  * Return: True if intermediate channel needs to configure. False otherwise.
@@ -582,23 +549,6 @@ static inline bool utils_is_dfs_chan_for_freq(struct wlan_objmgr_pdev *pdev,
 bool utils_is_dfs_cfreq2_ch(struct wlan_objmgr_pdev *pdev);
 
 /**
- * utils_dfs_reg_update_nol_ch() - set nol channel
- *
- * @pdev: pdev ptr
- * @ch_list: channel list to be returned
- * @num_ch: number of channels
- * @nol_ch: nol flag
- *
- * Return: void
- */
-#ifdef CONFIG_CHAN_NUM_API
-void utils_dfs_reg_update_nol_ch(struct wlan_objmgr_pdev *pdev,
-		uint8_t *ch_list,
-		uint8_t num_ch,
-		bool nol_ch);
-#endif
-
-/**
  * utils_dfs_reg_update_nol_chan_for_freq() - set nol channel
  *
  * @pdev: pdev ptr
@@ -800,22 +750,6 @@ void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
  */
 void utils_dfs_get_nol_history_chan_list(struct wlan_objmgr_pdev *pdev,
 					 void *clist, uint32_t *num_chan);
-/**
- * utils_dfs_reg_update_nol_history_ch() - set nol history channel
- *
- * @pdev: pdev ptr
- * @ch_list: channel list to be returned
- * @num_ch: number of channels
- * @nol_history_ch: nol history flag
- *
- * Return: void
- */
-#ifdef CONFIG_CHAN_NUM_API
-void utils_dfs_reg_update_nol_history_ch(struct wlan_objmgr_pdev *pdev,
-					 uint8_t *ch_list,
-					 uint8_t num_ch,
-					 bool nol_history_ch);
-#endif
 
 /**
  * utils_dfs_reg_update_nol_history_chan_for_freq() - set nol history channel

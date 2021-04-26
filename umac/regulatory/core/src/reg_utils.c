@@ -323,19 +323,6 @@ QDF_STATUS reg_get_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef CONFIG_CHAN_NUM_API
-bool reg_is_passive_or_disable_ch(struct wlan_objmgr_pdev *pdev,
-				  uint8_t chan)
-{
-	enum channel_state ch_state;
-
-	ch_state = reg_get_channel_state(pdev, chan);
-
-	return (ch_state == CHANNEL_STATE_DFS) ||
-		(ch_state == CHANNEL_STATE_DISABLE);
-}
-#endif /* CONFIG_CHAN_NUM_API */
-
 #ifdef CONFIG_CHAN_FREQ_API
 bool reg_is_passive_or_disable_for_freq(struct wlan_objmgr_pdev *pdev,
 					qdf_freq_t freq)
@@ -391,32 +378,6 @@ bool reg_is_etsi13_srd_chan_for_freq(struct wlan_objmgr_pdev *pdev,
 	return reg_is_etsi13_regdmn(pdev);
 }
 #endif /* CONFIG_CHAN_FREQ_API */
-
-#ifdef CONFIG_CHAN_NUM_API
-bool reg_is_etsi13_srd_chan(struct wlan_objmgr_pdev *pdev, uint8_t chan)
-{
-	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
-	qdf_freq_t freq = 0;
-
-	pdev_priv_obj = reg_get_pdev_obj(pdev);
-
-	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
-		reg_err("reg pdev priv obj is NULL");
-		return false;
-	}
-
-	if (!REG_IS_5GHZ_CH(chan))
-		return false;
-
-	freq = reg_legacy_chan_to_freq(pdev, chan);
-
-	if (!(freq >= REG_ETSI13_SRD_START_FREQ &&
-	      freq <= REG_ETSI13_SRD_END_FREQ))
-		return false;
-
-	return reg_is_etsi13_regdmn(pdev);
-}
-#endif /* CONFIG_CHAN_NUM_API */
 
 bool reg_is_etsi13_srd_chan_allowed_master_mode(struct wlan_objmgr_pdev *pdev)
 {
