@@ -4,13 +4,6 @@ UAPI_OUT := $(PRODUCT_OUT)/obj/vendor/qcom/opensource/audio-kernel/include
 LOCAL_PATH := $(call my-dir)
 
 ifeq ($(call is-board-platform-in-list,taro), true)
-$(shell mkdir -p $(PRODUCT_OUT)/obj/vendor;)
-$(shell mkdir -p $(PRODUCT_OUT)/obj/vendor/qcom;)
-$(shell mkdir -p $(PRODUCT_OUT)/obj/vendor/qcom/opensource;)
-$(shell mkdir -p $(PRODUCT_OUT)/obj/vendor/qcom/opensource/audio-kernel;)
-$(shell mkdir -p $(PRODUCT_OUT)/obj/vendor/qcom/opensource/audio-kernel/include;)
-$(shell mkdir -p $(UAPI_OUT)/linux;)
-$(shell mkdir -p $(UAPI_OUT)/sound;)
 $(shell rm -rf $(PRODUCT_OUT)/obj/DLKM_OBJ/vendor/qcom/opensource/audio-kernel/Module.symvers)
 endif
 
@@ -321,9 +314,6 @@ LOCAL_MODULE_DEBUG_ENABLE := true
 LOCAL_MODULE_PATH         := $(KERNEL_MODULES_OUT)
 include $(DLKM_DIR)/Build_external_kernelmodule.mk
 ###########################################################
-
-$(shell cp $(LOCAL_PATH)/include/uapi/audio/linux/* $(UAPI_OUT)/linux)
-$(shell cp $(LOCAL_PATH)/include/uapi/audio/sound/* $(UAPI_OUT)/sound)
 
 endif # DLKM check
 endif # supported target check
