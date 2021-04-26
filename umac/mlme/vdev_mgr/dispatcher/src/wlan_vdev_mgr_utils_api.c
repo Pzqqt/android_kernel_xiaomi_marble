@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -215,6 +215,12 @@ wlan_util_vdev_mlme_set_param(struct vdev_mlme_obj *vdev_mlme,
 		mlme_proto->he_ops_info.he_ops = mlme_cfg.value;
 		is_wmi_cmd = true;
 		break;
+#ifdef WLAN_FEATURE_11BE
+	case WLAN_MLME_CFG_EHT_OPS:
+		mlme_proto->eht_ops_info.eht_ops = mlme_cfg.value;
+		is_wmi_cmd = true;
+		break;
+#endif
 	case WLAN_MLME_CFG_RTS_THRESHOLD:
 		mlme_mgmt->generic.rts_threshold = mlme_cfg.value;
 		is_wmi_cmd = true;
@@ -488,6 +494,11 @@ void wlan_util_vdev_mlme_get_param(struct vdev_mlme_obj *vdev_mlme,
 	case WLAN_MLME_CFG_HE_OPS:
 		*value = mlme_proto->he_ops_info.he_ops;
 		break;
+#ifdef WLAN_FEATURE_11BE
+	case WLAN_MLME_CFG_EHT_OPS:
+		*value = mlme_proto->eht_ops_info.eht_ops;
+		break;
+#endif
 	case WLAN_MLME_CFG_RTS_THRESHOLD:
 		*value = mlme_mgmt->generic.rts_threshold;
 		break;

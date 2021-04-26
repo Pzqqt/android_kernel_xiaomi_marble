@@ -160,6 +160,16 @@ struct vdev_mlme_he_ops_info {
 	uint32_t he_ops;
 };
 
+#ifdef WLAN_FEATURE_11BE
+/**
+ * struct vdev_mlme_eht_ops_info - vdev mlme EHTOPS information
+ * @eht_ops: eht ops
+ */
+struct vdev_mlme_eht_ops_info {
+	uint32_t eht_ops;
+};
+#endif
+
 /**
  * struct vdev_mlme_he_ops_info - vdev protocol structure holding information
  * that is used in frames
@@ -178,6 +188,9 @@ struct vdev_mlme_proto {
 	struct vdev_mlme_vht_info vht_info;
 	struct vdev_mlme_ht_info ht_info;
 	struct vdev_mlme_he_ops_info he_ops_info;
+#ifdef WLAN_FEATURE_11BE
+	struct vdev_mlme_eht_ops_info eht_ops_info;
+#endif
 	struct vdev_mlme_proto_bss_color bss_color;
 };
 

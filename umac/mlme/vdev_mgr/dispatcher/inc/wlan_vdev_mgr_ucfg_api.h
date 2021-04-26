@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -108,6 +108,9 @@ enum wlan_mlme_cfg_id {
 	WLAN_MLME_CFG_RX_STREAMS,
 	WLAN_MLME_CFG_ENABLE_DISABLE_RTT_RESPONDER_ROLE,
 	WLAN_MLME_CFG_ENABLE_DISABLE_RTT_INITIATOR_ROLE,
+#ifdef WLAN_FEATURE_11BE
+	WLAN_MLME_CFG_EHT_OPS,
+#endif
 	WLAN_MLME_CFG_MAX
 };
 
