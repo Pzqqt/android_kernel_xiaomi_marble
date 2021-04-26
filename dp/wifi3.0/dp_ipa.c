@@ -1759,7 +1759,8 @@ QDF_STATUS dp_ipa_disable_autonomy(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 /* This should be configurable per H/W configuration enable status */
 #define L3_HEADER_PADDING	2
 
-#ifdef CONFIG_IPA_WDI_UNIFIED_API
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)) || \
+	defined(CONFIG_IPA_WDI_UNIFIED_API)
 
 #ifndef QCA_LL_TX_FLOW_CONTROL_V2
 static inline void dp_setup_mcc_sys_pipes(

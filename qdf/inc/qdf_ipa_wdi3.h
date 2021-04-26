@@ -27,7 +27,9 @@
 #include <qdf_ipa.h>
 #include <i_qdf_ipa_wdi3.h>
 
-#ifdef CONFIG_IPA_WDI_UNIFIED_API
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)) || \
+	defined(CONFIG_IPA_WDI_UNIFIED_API)
+
 /**
  * qdf_ipa_wdi_version_t - IPA WDI version
  */
