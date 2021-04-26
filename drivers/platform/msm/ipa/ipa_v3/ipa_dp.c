@@ -4088,10 +4088,7 @@ static int ipa3_assign_policy(struct ipa_sys_connect_params *in,
 
 	if (in->client == IPA_CLIENT_APPS_WAN_PROD) {
 		sys->policy = IPA_POLICY_INTR_MODE;
-		if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0)
-			sys->use_comm_evt_ring = false;
-		else
-			sys->use_comm_evt_ring = true;
+		sys->use_comm_evt_ring = true;
 		INIT_WORK(&sys->work, ipa3_send_nop_desc);
 		atomic_set(&sys->workqueue_flushed, 0);
 
