@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/dma-mapping.h>
@@ -8,7 +8,12 @@
 #include <linux/slab.h>
 #include <linux/device.h>
 #include <linux/module.h>
+#include <linux/version.h>
 #include <linux/mhi.h>
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+#include <linux/mhi_misc.h>
+#include <linux/pm_runtime.h>
+#endif
 #include "ipa_qmi_service.h"
 #include "ipa_common_i.h"
 #include "ipa_i.h"
@@ -64,7 +69,11 @@ static const struct mhi_device_id mhi_driver_match_table[] = {
 
 static int imp_mhi_probe_cb(struct mhi_device *, const struct mhi_device_id *);
 static void imp_mhi_remove_cb(struct mhi_device *);
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+static void imp_mhi_status_cb(struct mhi_device *, enum mhi_callback);
+#else
 static void imp_mhi_status_cb(struct mhi_device *, enum MHI_CB);
+#endif
 
 static struct mhi_driver mhi_driver = {
 	.id_table = mhi_driver_match_table,
@@ -124,8 +133,13 @@ struct imp_dev_info {
 	bool smmu_enabled;
 	struct imp_iova_addr ctrl;
 	struct imp_iova_addr data;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+	phys_addr_t chdb_base;
+	phys_addr_t erdb_base;
+#else
 	u32 chdb_base;
 	u32 erdb_base;
+#endif
 };
 
 struct imp_event_props {
@@ -510,14 +524,22 @@ struct ipa_mhi_alloc_channel_resp_msg_v01 *imp_handle_allocate_channel_req(
 
 	if (imp_ctx->dev_info.smmu_enabled) {
 		/* map CTRL */
+		#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+		__map_smmu_info(imp_ctx->md.mhi_dev->dev.parent->parent,
+		#else
 		__map_smmu_info(imp_ctx->md.mhi_dev->dev.parent,
+		#endif
 			&imp_ctx->dev_info.ctrl,
 			req->ctrl_addr_map_info_len,
 			req->ctrl_addr_map_info,
 			true);
 
 		/* map DATA */
+		#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+		__map_smmu_info(imp_ctx->md.mhi_dev->dev.parent->parent,
+		#else
 		__map_smmu_info(imp_ctx->md.mhi_dev->dev.parent,
+		#endif
 			&imp_ctx->dev_info.data,
 			req->data_addr_map_info_len,
 			req->data_addr_map_info,
@@ -573,14 +595,22 @@ struct ipa_mhi_alloc_channel_resp_msg_v01 *imp_handle_allocate_channel_req(
 fail_smmu:
 	if (imp_ctx->dev_info.smmu_enabled) {
 		/* unmap CTRL */
+		#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+		__map_smmu_info(imp_ctx->md.mhi_dev->dev.parent->parent,
+		#else
 		__map_smmu_info(imp_ctx->md.mhi_dev->dev.parent,
+		#endif
 			&imp_ctx->dev_info.ctrl,
 			req->ctrl_addr_map_info_len,
 			req->ctrl_addr_map_info,
 			false);
 
 		/* unmap DATA */
+		#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+		__map_smmu_info(imp_ctx->md.mhi_dev->dev.parent->parent,
+		#else
 		__map_smmu_info(imp_ctx->md.mhi_dev->dev.parent,
+		#endif
 			&imp_ctx->dev_info.data,
 			req->data_addr_map_info_len,
 			req->data_addr_map_info,
@@ -641,8 +671,13 @@ struct ipa_mhi_clk_vote_resp_msg_v01
 	 * executed from mhi context.
 	 */
 	if (vote) {
+		#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+		pm_runtime_get_sync(imp_ctx->md.mhi_dev->dev.parent->parent);
+		ret = mhi_device_get_sync(imp_ctx->md.mhi_dev);
+		#else
 		ret = mhi_device_get_sync(imp_ctx->md.mhi_dev,
-			MHI_VOTE_BUS | MHI_VOTE_DEVICE);
+				MHI_VOTE_BUS | MHI_VOTE_DEVICE);
+		#endif
 		if (ret) {
 			IMP_ERR("mhi_sync_get failed %d\n", ret);
 			resp->resp.result = IPA_QMI_RESULT_FAILURE_V01;
@@ -652,8 +687,13 @@ struct ipa_mhi_clk_vote_resp_msg_v01
 			return resp;
 		}
 	} else {
+	#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+		mhi_device_put(imp_ctx->md.mhi_dev);
+		pm_runtime_put(imp_ctx->md.mhi_dev->dev.parent->parent);
+	#else
 		mhi_device_put(imp_ctx->md.mhi_dev,
 			MHI_VOTE_BUS | MHI_VOTE_DEVICE);
+	#endif
 	}
 
 	mutex_lock(&imp_ctx->mutex);
@@ -700,21 +740,34 @@ static void imp_mhi_shutdown(void)
 				= &imp_ctx->qmi.alloc_ch_req;
 
 			/* unmap CTRL */
+			#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+			__map_smmu_info(imp_ctx->md.mhi_dev->dev.parent->parent,
+			#else
 			__map_smmu_info(imp_ctx->md.mhi_dev->dev.parent,
+			#endif
 				&imp_ctx->dev_info.ctrl,
 				creq->ctrl_addr_map_info_len,
 				creq->ctrl_addr_map_info,
 				false);
 
 			/* unmap DATA */
+			#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+			__map_smmu_info(imp_ctx->md.mhi_dev->dev.parent->parent,
+			#else
 			__map_smmu_info(imp_ctx->md.mhi_dev->dev.parent,
+			#endif
 				&imp_ctx->dev_info.data,
 				creq->data_addr_map_info_len,
 				creq->data_addr_map_info,
 				false);
 		}
 		if (imp_ctx->lpm_disabled) {
-			mhi_device_put(imp_ctx->md.mhi_dev, MHI_VOTE_BUS);
+		#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+			pm_runtime_put(imp_ctx->md.mhi_dev->dev.parent->parent);
+		#else
+			mhi_device_put(imp_ctx->md.mhi_dev,
+				MHI_VOTE_BUS);
+		#endif
 			imp_ctx->lpm_disabled = false;
 		}
 
@@ -759,6 +812,25 @@ static int imp_mhi_probe_cb(struct mhi_device *mhi_dev,
 			mhi_driver_match_table[0].chan);
 		return -EPERM;
 	}
+
+	/* Read the MHI CH/ER DB address from MHI Driver. */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+	ret = mhi_get_channel_db_base(mhi_dev, &imp_ctx->dev_info.chdb_base);
+	if (ret) {
+		IMP_ERR("Could not populate channel db base address\n");
+		return -EINVAL;
+	}
+
+	IMP_DBG("chdb-base=0x%x\n", imp_ctx->dev_info.chdb_base);
+
+	ret = mhi_get_event_ring_db_base(mhi_dev, &imp_ctx->dev_info.erdb_base);
+	if (ret) {
+		IMP_ERR("Could not populate event ring db base address\n");
+		return -EINVAL;
+	}
+
+	IMP_DBG("erdb-base=0x%x\n", imp_ctx->dev_info.erdb_base);
+#endif
 
 	/* vote for IPA clock. IPA clock will be devoted when MHI enters LPM */
 	IPA_ACTIVE_CLIENTS_INC_SPECIAL("IMP");
@@ -870,7 +942,11 @@ static void imp_mhi_remove_cb(struct mhi_device *mhi_dev)
 	IMP_FUNC_EXIT();
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+static void imp_mhi_status_cb(struct mhi_device *mhi_dev, enum mhi_callback mhi_cb)
+#else
 static void imp_mhi_status_cb(struct mhi_device *mhi_dev, enum MHI_CB mhi_cb)
+#endif
 {
 	IMP_DBG("%d\n", mhi_cb);
 
@@ -939,6 +1015,8 @@ static int imp_probe(struct platform_device *pdev)
 
 	IMP_DBG("smmu_enabled=%d\n", imp_ctx->dev_info.smmu_enabled);
 
+	/* Read the MHI CH/ER DB address from DT. */
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 10, 0))
 	if (of_property_read_u32(pdev->dev.of_node, "qcom,mhi-chdb-base",
 		&imp_ctx->dev_info.chdb_base)) {
 		IMP_ERR("failed to read of_node %s\n", "qcom,mhi-chdb-base");
@@ -952,6 +1030,7 @@ static int imp_probe(struct platform_device *pdev)
 		return -EINVAL;
 	}
 	IMP_DBG("erdb-base=0x%x\n", imp_ctx->dev_info.erdb_base);
+#endif
 
 	imp_ctx->state = IMP_PROBED;
 	ret = mhi_driver_register(&mhi_driver);
@@ -1062,14 +1141,22 @@ void imp_handle_modem_shutdown(void)
 				= &imp_ctx->qmi.alloc_ch_req;
 
 			/* unmap CTRL */
+			#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+			__map_smmu_info(imp_ctx->md.mhi_dev->dev.parent->parent,
+			#else
 			__map_smmu_info(imp_ctx->md.mhi_dev->dev.parent,
+			#endif
 				&imp_ctx->dev_info.ctrl,
 				creq->ctrl_addr_map_info_len,
 				creq->ctrl_addr_map_info,
 				false);
 
 			/* unmap DATA */
+			#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
+			__map_smmu_info(imp_ctx->md.mhi_dev->dev.parent->parent,
+			#else
 			__map_smmu_info(imp_ctx->md.mhi_dev->dev.parent,
+			#endif
 				&imp_ctx->dev_info.data,
 				creq->data_addr_map_info_len,
 				creq->data_addr_map_info,

@@ -74,6 +74,16 @@
 #define IPA_HOLB_TMR_VAL_4_5 31
 #define IPA_IMM_IP_PACKET_INIT_EX_CMD_NUM (IPA5_MAX_NUM_PIPES + 1)
 
+/* ULSO Constants */
+enum {
+	ENDP_INIT_ULSO_CFG_IP_ID_MIN_MAX_VAL_IDX_LINUX,
+	ENDP_INIT_ULSO_CFG_IP_ID_MIN_MAX_VAL_IDX_FREE1,
+	ENDP_INIT_ULSO_CFG_IP_ID_MIN_MAX_VAL_IDX_FREE2,
+	ENDP_INIT_ULSO_CFG_IP_ID_MIN_MAX_VAL_IDX_MAX
+};
+
+#define QMAP_HDR_LEN 8
+
 /*
  * The transport descriptor size was changed to GSI_CHAN_RE_SIZE_16B, but
  * IPA users still use sps_iovec size as FIFO element size.
@@ -2215,6 +2225,9 @@ struct ipa3_context {
 	struct ipa_mem_buffer pkt_init_ex_mem;
 	struct ipa_mem_buffer pkt_init_ex_imm[IPA_IMM_IP_PACKET_INIT_EX_CMD_NUM];
 	bool is_modem_up;
+	bool ulso_supported;
+	u16 ulso_ip_id_min;
+	u16 ulso_ip_id_max;
 };
 
 struct ipa3_plat_drv_res {
@@ -2288,6 +2301,9 @@ struct ipa3_plat_drv_res {
 	u32 ipa_wdi3_2g_holb_timeout;
 	u32 ipa_wdi3_5g_holb_timeout;
 	bool ipa_endp_delay_wa_v2;
+	bool ulso_supported;
+	u16 ulso_ip_id_min;
+	u16 ulso_ip_id_max;
 };
 
 /**
@@ -2615,6 +2631,8 @@ int ipa3_cfg_ep_holb_by_client(enum ipa_client_type client,
 				const struct ipa_ep_cfg_holb *ipa_ep_cfg);
 
 int ipa3_cfg_ep_ctrl(u32 clnt_hdl, const struct ipa_ep_cfg_ctrl *ep_ctrl);
+
+int ipa3_cfg_ep_ulso(u32 clnt_hdl, const struct ipa_ep_cfg_ulso *ep_ulso);
 
 /*
  * Header removal / addition
@@ -3253,6 +3271,8 @@ int ipa3_get_gsi_chan_info(struct gsi_chan_info *gsi_chan_info,
 int ipa3_disable_apps_wan_cons_deaggr(uint32_t agg_size, uint32_t agg_count);
 
 #if IS_ENABLED(CONFIG_IPA3_MHI_PRIME_MANAGER)
+int ipa_mpm_init(void);
+void ipa_mpm_exit(void);
 int ipa_mpm_mhip_xdci_pipe_enable(enum ipa_usb_teth_prot prot);
 int ipa_mpm_mhip_xdci_pipe_disable(enum ipa_usb_teth_prot xdci_teth_prot);
 int ipa_mpm_notify_wan_state(struct wan_ioctl_notify_wan_state *state);
@@ -3263,6 +3283,14 @@ int ipa_mpm_panic_handler(char *buf, int size);
 int ipa3_mpm_enable_adpl_over_odl(bool enable);
 int ipa3_get_mhip_gsi_stats(struct ipa_uc_dbg_ring_stats *stats);
 #else /* IS_ENABLED(CONFIG_IPA3_MHI_PRIME_MANAGER) */
+static inline int ipa_mpm_init(void)
+{
+	return 0;
+}
+static inline void ipa_mpm_exit(void)
+{
+	return;
+}
 static inline int ipa_mpm_mhip_xdci_pipe_enable(
 	enum ipa_usb_teth_prot prot)
 {

@@ -76,6 +76,11 @@ enum ipa_ap_ingress_ep_enum {
 #define IPA_WWAN_CONS_DESC_FIFO_SZ 256
 
 #define LAN_STATS_FOR_ALL_CLIENTS 0xFFFFFFFF
+#define RMNET_IPA_ULCS_FEATURE \
+	(NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM)
+#define RMNET_IPA_ULSO_FEATURE \
+	(NETIF_F_SG | NETIF_F_ALL_TSO)
+#define RMNET_IPA_ULSO_SIZE_LIMIT 64000
 
 static void rmnet_ipa_free_msg(void *buff, u32 len, u32 type);
 static void rmnet_ipa_get_stats_and_update(void);
@@ -2169,14 +2174,28 @@ static int ipa3_setup_apps_wan_prod_pipes(
 		return rc;
 	}
 
+	if (!egress_param->cs_offload_en && egress_param->ulso_en) {
+		/* cs_offload has to be enabled for ULSO */
+		IPAWANERR("ULSO enabled but cs_offload not enabled\n");
+		pipe_status->status = IPA_PIPE_SETUP_FAILURE;
+		return rc;
+	}
 	ipa_wan_ep_cfg = &rmnet_ipa3_ctx->apps_to_ipa_ep_cfg;
-	if (egress_param->cs_offload_en) {
+	if (egress_param->cs_offload_en &&
+		(dev->features & RMNET_IPA_ULCS_FEATURE)) {
 		IPAWANDBG("UL Chksum set\n");
 		ipa_wan_ep_cfg->ipa_ep_cfg.hdr.hdr_len = 8;
 		ipa_wan_ep_cfg->ipa_ep_cfg.cfg.cs_offload_en
 			= IPA_ENABLE_CS_OFFLOAD_UL;
 		ipa_wan_ep_cfg->ipa_ep_cfg.cfg.cs_metadata_hdr_offset
 			= 1;
+		if (egress_param->ulso_en &&
+			(dev->features & RMNET_IPA_ULSO_FEATURE)) {
+			IPAWANDBG("ULSO set\n");
+			ipa_wan_ep_cfg->ipa_ep_cfg.ulso.ipid_min_max_idx =
+				egress_param->ipid_min_max_idx;
+			ipa_wan_ep_cfg->ipa_ep_cfg.ulso.is_ulso_pipe = true;
+		}
 	} else {
 		ipa_wan_ep_cfg->ipa_ep_cfg.hdr.hdr_len = 4;
 		ipa_wan_ep_cfg->ipa_ep_cfg.cfg.cs_offload_en
@@ -3368,6 +3387,12 @@ static int ipa3_wwan_probe(struct platform_device *pdev)
 	if (ipa3_rmnet_res.ipa_advertise_sg_support)
 		dev->hw_features |= NETIF_F_SG;
 
+	if (ipa3_is_ulso_supported()) {
+		dev->hw_features |= NETIF_F_GSO_UDP_L4;
+		dev->hw_features |= NETIF_F_ALL_TSO;
+		dev->gso_max_size = RMNET_IPA_ULSO_SIZE_LIMIT;
+	}
+
 	if (ipa3_rmnet_res.ipa_napi_enable)
 		netif_napi_add(dev, &(rmnet_ipa3_ctx->wwan_priv->napi),
 		       ipa3_rmnet_poll, NAPI_WEIGHT);
@@ -3385,9 +3410,11 @@ static int ipa3_wwan_probe(struct platform_device *pdev)
 		goto config_err;
 	}
 
-	/* for > IPA 4.5, we set the colaescing feature flag on */
-	if (ipa3_ctx_get_type(IPA_HW_TYPE) >= IPA_HW_v4_5)
+	/* for > IPA 4.5, we set the colaescing/cs offload feature flag on */
+	if (ipa3_ctx_get_type(IPA_HW_TYPE) >= IPA_HW_v4_5) {
 		dev->hw_features |= NETIF_F_GRO_HW | NETIF_F_RXCSUM;
+		dev->hw_features |= NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
+	}
 
 	/*
 	 * for IPA 4.0 offline charge is not needed and we need to prevent

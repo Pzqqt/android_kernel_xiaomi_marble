@@ -4438,7 +4438,7 @@ static int ipa_fltrt_alloc_lcl_bdy(
 	/* Align the sizes to coop with termination word
 	 *  and H/W local table start offset alignment
 	 */
-	if (params->nhash_bdy.size) {
+	if (params->total_sz_lcl_nhash_tbls + params->num_lcl_nhash_tbls > 0) {
 		params->nhash_bdy.size = params->total_sz_lcl_nhash_tbls;
 		/* for table terminator */
 		params->nhash_bdy.size += obj->tbl_width *

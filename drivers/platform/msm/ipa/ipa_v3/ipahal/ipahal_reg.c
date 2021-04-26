@@ -162,7 +162,10 @@ static const char *ipareg_name_to_str[IPA_REG_MAX] = {
 	__stringify(IPA_NAT_UC_SHARED_CFG),
 	__stringify(IPA_CONN_TRACK_UC_EXTERNAL_CFG),
 	__stringify(IPA_CONN_TRACK_UC_LOCAL_CFG),
-	__stringify(IPA_CONN_TRACK_UC_SHARED_CFG)
+	__stringify(IPA_CONN_TRACK_UC_SHARED_CFG),
+	__stringify(IPA_ULSO_CFG_IP_ID_MIN_VALUE_n),
+	__stringify(IPA_ULSO_CFG_IP_ID_MAX_VALUE_n),
+	__stringify(IPA_ENDP_INIT_ULSO_CFG_n),
 };
 
 static void ipareg_construct_dummy(enum ipahal_reg_name reg,
@@ -4479,6 +4482,15 @@ static struct ipahal_reg_obj ipahal_reg_objs[IPA_HW_MAX][IPA_REG_MAX] = {
 	[IPA_HW_v5_0][IPA_COAL_QMAP_CFG] = {
 		ipareg_construct_coal_qmap_cfg, ipareg_parse_coal_qmap_cfg,
 		0x0000091c, 0, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_ULSO_CFG_IP_ID_MIN_VALUE_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x00000934, 0x4, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_ULSO_CFG_IP_ID_MAX_VALUE_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x00000924, 0x4, 0, 0, 0, 0},
+	[IPA_HW_v5_0][IPA_ENDP_INIT_ULSO_CFG_n] = {
+		ipareg_construct_dummy, ipareg_parse_dummy,
+		0x0000106c, 0x80, 0, 0, 0, 0},
 
 	/* IPA_DEBUG */
 	[IPA_HW_v5_0][IPA_RX_HPS_CLIENTS_MIN_DEPTH_1] = { //TODO contstruct not matching previous version

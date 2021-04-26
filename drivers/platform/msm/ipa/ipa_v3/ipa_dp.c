@@ -290,10 +290,10 @@ static int ipa3_aux_napi_poll_tx_complete(struct napi_struct *napi_tx,
 {
 	struct ipa3_sys_context *sys = container_of(napi_tx,
 		struct ipa3_sys_context, napi_tx);
+	bool napi_rescheduled = false;
 	int tx_done = 0;
 	int ret = 0;
 
-poll_tx:
 	tx_done += ipa3_napi_poll_tx_complete(sys, budget - tx_done);
 
 	/* Doorbell needed here for continuous polling */
@@ -304,11 +304,14 @@ poll_tx:
 		ret = ipa3_tx_switch_to_intr_mode(sys);
 
 		/* if we got an EOT while we marked NAPI as complete */
-		if (ret == -GSI_STATUS_PENDING_IRQ &&
-			napi_reschedule(napi_tx)) {
-			goto poll_tx;
+		if (ret == -GSI_STATUS_PENDING_IRQ) {
+			/* rescheduale will perform poll again, don't dec vote twice*/
+			napi_rescheduled = true;
+			napi_reschedule(napi_tx);
 		}
-		IPA_ACTIVE_CLIENTS_DEC_EP(sys->ep->client);
+
+		if(!napi_rescheduled)
+			IPA_ACTIVE_CLIENTS_DEC_EP_NO_BLOCK(sys->ep->client);
 	}
 	IPADBG_LOW("the number of tx completions is: %d", tx_done);
 	return min(tx_done, budget);
@@ -943,16 +946,13 @@ void __ipa3_update_curr_poll_state(enum ipa_client_type client, int state)
 			ep_idx = ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS);
 			break;
 		case IPA_CLIENT_APPS_LAN_CONS:
+		case IPA_CLIENT_APPS_WAN_PROD:
+		case IPA_CLIENT_APPS_LAN_PROD:
+		case IPA_CLIENT_APPS_WAN_LOW_LAT_CONS:
 			/* for error handling */
 			break;
-		case IPA_CLIENT_APPS_WAN_PROD:
-			ep_idx = ipa3_get_ep_mapping(IPA_CLIENT_APPS_LAN_PROD);
-			break;
-		case IPA_CLIENT_APPS_LAN_PROD:
-			ep_idx = ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_PROD);
-			break;
 		default:
-			IPAERR("unexpected client:%d\n", client);
+			IPAERR_RL("unexpected client:%d\n", client);
 			break;
 	}
 
@@ -1959,14 +1959,17 @@ int ipa3_tx_dp(enum ipa_client_type dst, struct sk_buff *skb,
 			ipa_imm_cmd_modify_ip_packet_init_ex_dest_pipe(
 				ipa3_ctx->pkt_init_ex_imm[ipa3_ctx->ipa_num_pipes].base,
 				dst_ep_idx);
-			desc[data_idx].opcode =
-				ipa3_ctx->pkt_init_ex_imm_opcode;
+			desc[data_idx].opcode = ipa3_ctx->pkt_init_ex_imm_opcode;
 			desc[data_idx].dma_address =
 				ipa3_ctx->pkt_init_ex_imm[ipa3_ctx->ipa_num_pipes].phys_base;
+		} else if (ipa3_ctx->ep[dst_ep_idx].cfg.ulso.is_ulso_pipe &&
+			skb_is_gso(skb)) {
+			desc[data_idx].opcode = ipa3_ctx->pkt_init_ex_imm_opcode;
+			desc[data_idx].dma_address =
+				ipa3_ctx->pkt_init_ex_imm[dst_ep_idx].phys_base;
 		} else {
 			desc[data_idx].opcode = ipa3_ctx->pkt_init_imm_opcode;
-			desc[data_idx].dma_address =
-				ipa3_ctx->pkt_init_imm[dst_ep_idx];
+			desc[data_idx].dma_address = ipa3_ctx->pkt_init_imm[dst_ep_idx];
 		}
 		desc[data_idx].dma_address_valid = true;
 		desc[data_idx].type = IPA_IMM_CMD_DESC;
@@ -4088,7 +4091,10 @@ static int ipa3_assign_policy(struct ipa_sys_connect_params *in,
 
 	if (in->client == IPA_CLIENT_APPS_WAN_PROD) {
 		sys->policy = IPA_POLICY_INTR_MODE;
-		sys->use_comm_evt_ring = true;
+		if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0)
+			sys->use_comm_evt_ring = false;
+		else
+			sys->use_comm_evt_ring = true;
 		INIT_WORK(&sys->work, ipa3_send_nop_desc);
 		atomic_set(&sys->workqueue_flushed, 0);
 
@@ -4752,8 +4758,8 @@ static void ipa_gsi_irq_tx_notify_cb(struct gsi_chan_xfer_notify *notify)
 				/* dummy vote to prevent NoC error */
 				if(IPA_ACTIVE_CLIENTS_INC_EP_NO_BLOCK(
 					sys->ep->client)) {
-					IPAERR("clk isn't active");
-					ipa_assert();
+					IPAERR_RL("clk off, event likely handled in NAPI contxt");
+					return;
 				}
 				/* put the producer event ring into polling mode */
 				gsi_config_channel_mode(sys->ep->gsi_chan_hdl,
