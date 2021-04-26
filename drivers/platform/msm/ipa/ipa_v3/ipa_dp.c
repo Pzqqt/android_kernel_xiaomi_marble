@@ -290,7 +290,6 @@ static int ipa3_aux_napi_poll_tx_complete(struct napi_struct *napi_tx,
 {
 	struct ipa3_sys_context *sys = container_of(napi_tx,
 		struct ipa3_sys_context, napi_tx);
-	bool napi_rescheduled = false;
 	int tx_done = 0;
 	int ret = 0;
 
@@ -307,13 +306,9 @@ poll_tx:
 		/* if we got an EOT while we marked NAPI as complete */
 		if (ret == -GSI_STATUS_PENDING_IRQ &&
 			napi_reschedule(napi_tx)) {
-			/* rescheduale will perform poll again, don't dec vote twice*/
-			napi_rescheduled = true;
 			goto poll_tx;
 		}
-
-		if(!napi_rescheduled)
-			IPA_ACTIVE_CLIENTS_DEC_EP_NO_BLOCK(sys->ep->client);
+		IPA_ACTIVE_CLIENTS_DEC_EP(sys->ep->client);
 	}
 	IPADBG_LOW("the number of tx completions is: %d", tx_done);
 	return min(tx_done, budget);
@@ -948,13 +943,16 @@ void __ipa3_update_curr_poll_state(enum ipa_client_type client, int state)
 			ep_idx = ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS);
 			break;
 		case IPA_CLIENT_APPS_LAN_CONS:
-		case IPA_CLIENT_APPS_WAN_PROD:
-		case IPA_CLIENT_APPS_LAN_PROD:
-		case IPA_CLIENT_APPS_WAN_LOW_LAT_CONS:
 			/* for error handling */
 			break;
+		case IPA_CLIENT_APPS_WAN_PROD:
+			ep_idx = ipa3_get_ep_mapping(IPA_CLIENT_APPS_LAN_PROD);
+			break;
+		case IPA_CLIENT_APPS_LAN_PROD:
+			ep_idx = ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_PROD);
+			break;
 		default:
-			IPAERR_RL("unexpected client:%d\n", client);
+			IPAERR("unexpected client:%d\n", client);
 			break;
 	}
 
