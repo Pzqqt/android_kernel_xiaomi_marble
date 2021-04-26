@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -503,37 +503,6 @@ static int wlan_hdd_open_ll_stats_debugfs(struct inode *inode,
 }
 
 /**
- * __wlan_hdd_release_ll_stats_debugfs() - Function to save private on release
- * @net_dev: net_device context used to register the debugfs file
- *
- * Return: Errno
- */
-static int __wlan_hdd_release_ll_stats_debugfs(struct net_device *net_dev)
-{
-	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(net_dev);
-	struct hdd_context *hdd_ctx;
-	int ret;
-
-	hdd_enter();
-
-	if (adapter->magic != WLAN_HDD_ADAPTER_MAGIC) {
-		hdd_err("Invalid adapter or adapter has invalid magic");
-		return -EINVAL;
-	}
-
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (ret)
-		return ret;
-
-	wlan_hdd_llstats_free_buf();
-
-	hdd_exit();
-
-	return 0;
-}
-
-/**
  * wlan_hdd_release_ll_stats_debugfs() - SSR wrapper function to save private
  *                                       on release
  * @inode: Pointer to inode structure
@@ -544,19 +513,19 @@ static int __wlan_hdd_release_ll_stats_debugfs(struct net_device *net_dev)
 static int wlan_hdd_release_ll_stats_debugfs(struct inode *inode,
 					     struct file *file)
 {
-	struct net_device *net_dev = file_inode(file)->i_private;
-	struct osif_vdev_sync *vdev_sync;
-	int errno;
+	/* Memory allocated during open_ll_stats_debugfs is static to this file
+	 * and not related to vdev/psoc, and hence it can be freed without DSC
+	 * protection during release file op.
+	 *
+	 * Since ll_stats buffer is allocated during debugfs file open
+	 * it needs to be freed in file release but, DSC vdev op-protection is
+	 * not needed for releasing the ll_stats buffer. Adding DSC protection
+	 * will lead to resource leak because DSC will reject file release
+	 * op call if it is in the middle of vdev/psoc/driver transition.
+	 */
+	wlan_hdd_llstats_free_buf();
 
-	errno = osif_vdev_sync_op_start(net_dev, &vdev_sync);
-	if (errno)
-		return errno;
-
-	errno = __wlan_hdd_release_ll_stats_debugfs(net_dev);
-
-	osif_vdev_sync_op_stop(vdev_sync);
-
-	return errno;
+	return 0;
 }
 
 static const struct file_operations fops_ll_stats_debugfs = {
