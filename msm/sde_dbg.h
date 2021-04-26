@@ -72,6 +72,9 @@ enum sde_dbg_dump_context {
 	SDE_DBG_DUMP_CLK_ENABLED_CTX,
 };
 
+/* default dump mode for eventlogs, reg-dump & debugbus-dump */
+#define SDE_DBG_DEFAULT_DUMP_MODE	SDE_DBG_DUMP_IN_MEM
+
 /*
  * Define blocks for register write logging.
  */
@@ -100,8 +103,7 @@ enum sde_dbg_dump_context {
  */
 #define SDE_REG_LOG_RSCC    33
 
-#define SDE_EVTLOG_DEFAULT_ENABLE (SDE_EVTLOG_CRITICAL | SDE_EVTLOG_IRQ | \
-		SDE_EVTLOG_EXTERNAL)
+#define SDE_EVTLOG_DEFAULT_ENABLE (SDE_EVTLOG_CRITICAL | SDE_EVTLOG_IRQ | SDE_EVTLOG_EXTERNAL)
 
 /*
  * evtlog will print this number of entries when it is called through
@@ -148,6 +150,7 @@ struct sde_dbg_evtlog {
 	u32 curr;
 	u32 next;
 	u32 enable;
+	u32 dump_mode;
 	spinlock_t spin_lock;
 	struct list_head filter_list;
 };
