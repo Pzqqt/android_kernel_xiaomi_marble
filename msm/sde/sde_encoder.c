@@ -933,12 +933,15 @@ static int _sde_encoder_atomic_check_reserve(struct drm_encoder *drm_enc,
 {
 	int ret = 0;
 	struct drm_display_mode *adj_mode = &crtc_state->adjusted_mode;
+	struct msm_sub_mode sub_mode;
 
 	if (sde_conn && msm_atomic_needs_modeset(crtc_state, conn_state)) {
 		struct msm_display_topology *topology = NULL;
 
+		sub_mode.dsc_mode = sde_connector_get_property(conn_state,
+				CONNECTOR_PROP_DSC_MODE);
 		ret = sde_connector_get_mode_info(&sde_conn->base,
-				adj_mode, &sde_conn_state->mode_info);
+				adj_mode, &sub_mode, &sde_conn_state->mode_info);
 		if (ret) {
 			SDE_ERROR_ENC(sde_enc,
 				"failed to get mode info, rc = %d\n", ret);
@@ -5432,6 +5435,7 @@ int sde_encoder_update_caps_for_cont_splash(struct drm_encoder *encoder,
 	struct sde_encoder_phys *phys_enc;
 	struct drm_bridge *bridge;
 	int ret = 0, i;
+	struct msm_sub_mode sub_mode;
 
 	if (!encoder) {
 		SDE_ERROR("invalid drm enc\n");
@@ -5497,9 +5501,11 @@ int sde_encoder_update_caps_for_cont_splash(struct drm_encoder *encoder,
 		return -EINVAL;
 	}
 
+	sub_mode.dsc_mode = splash_display->dsc_cnt ? MSM_DISPLAY_DSC_MODE_ENABLED :
+			MSM_DISPLAY_DSC_MODE_DISABLED;
 	drm_mode = &encoder->crtc->state->adjusted_mode;
 	ret = sde_connector_get_mode_info(&sde_conn->base,
-		drm_mode, &sde_conn_state->mode_info);
+		drm_mode, &sub_mode, &sde_conn_state->mode_info);
 	if (ret) {
 		SDE_ERROR_ENC(sde_enc,
 			"conn: ->get_mode_info failed. ret=%d\n", ret);
@@ -5646,4 +5652,25 @@ void sde_encoder_enable_recovery_event(struct drm_encoder *encoder)
 
 	sde_enc = to_sde_encoder_virt(encoder);
 	sde_enc->recovery_events_enabled = true;
+}
+
+bool sde_encoder_needs_dsc_disable(struct drm_encoder *drm_enc)
+{
+	struct sde_kms *sde_kms;
+	struct drm_connector *conn;
+	struct sde_connector_state *conn_state;
+
+	if (!drm_enc)
+		return false;
+
+	sde_kms = sde_encoder_get_kms(drm_enc);
+	if (!sde_kms)
+		return false;
+
+	conn = sde_encoder_get_connector(sde_kms->dev, drm_enc);
+	if (!conn || !conn->state)
+		return false;
+
+	conn_state = to_sde_connector_state(conn->state);
+	return TOPOLOGY_DSC_MODE(conn_state->old_topology_name);
 }

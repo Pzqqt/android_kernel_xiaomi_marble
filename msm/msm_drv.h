@@ -226,6 +226,7 @@ enum msm_mdp_conn_property {
 	CONNECTOR_PROP_CMD_FRAME_TRIGGER_MODE,
 	CONNECTOR_PROP_SET_PANEL_MODE,
 	CONNECTOR_PROP_AVR_STEP,
+	CONNECTOR_PROP_DSC_MODE,
 
 	/* total # of properties */
 	CONNECTOR_PROP_COUNT
@@ -308,6 +309,18 @@ enum panel_op_mode {
 };
 
 /**
+ * enum msm_display_dsc_mode - panel dsc mode
+ * @MSM_DISPLAY_DSC_MODE_NONE: No operation
+ * @MSM_DISPLAY_DSC_MODE_ENABLED: DSC is enabled
+ * @MSM_DISPLAY_DSC_MODE_DISABLED: DSC is disabled
+ */
+enum msm_display_dsc_mode {
+	MSM_DISPLAY_DSC_MODE_NONE,
+	MSM_DISPLAY_DSC_MODE_ENABLED,
+	MSM_DISPLAY_DSC_MODE_DISABLED,
+};
+
+/**
  * struct msm_display_mode - wrapper for drm_display_mode
  * @base: drm_display_mode attached to this msm_mode
  * @private_flags: integer holding private driver mode flags
@@ -317,6 +330,14 @@ struct msm_display_mode {
 	struct drm_display_mode *base;
 	u32 private_flags;
 	u32 *private;
+};
+
+/**
+ * struct msm_sub_mode - msm display sub mode
+ * @dsc_enabled: boolean used to indicate if dsc should be enabled
+ */
+struct msm_sub_mode {
+	enum msm_display_dsc_mode dsc_mode;
 };
 
 /**

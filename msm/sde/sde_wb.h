@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef __SDE_WB_H__
@@ -196,6 +196,7 @@ int sde_wb_get_info(struct drm_connector *connector,
  * sde_wb_get_mode_info - retrieve information of the mode selected
  * @connector: Pointer to drm connector structure
  * @drm_mode: Display mode set for the display
+ * @sub_mode: Additional mode info to drm display mode
  * @mode_info: Out parameter. information of the mode.
  * @display: Pointer to private display structure
  * @avail_res: Pointer with curr available resources
@@ -203,6 +204,7 @@ int sde_wb_get_info(struct drm_connector *connector,
  */
 int sde_wb_get_mode_info(struct drm_connector *connector,
 		const struct drm_display_mode *drm_mode,
+		struct msm_sub_mode *sub_mode,
 		struct msm_mode_info *mode_info,
 		void *display, const struct msm_resource_caps_info *avail_res);
 
@@ -352,6 +354,7 @@ int sde_wb_connector_set_info_blob(struct drm_connector *connector,
 static inline
 int sde_wb_get_mode_info(struct drm_connector *connector,
 		const struct drm_display_mode *drm_mode,
+		struct msm_sub_mode *sub_mode,
 		struct msm_mode_info *mode_info,
 		void *display, const struct msm_resource_caps_info *avail_res)
 {

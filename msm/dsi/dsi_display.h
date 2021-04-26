@@ -24,6 +24,12 @@
 #define DSI_CLIENT_NAME_SIZE		20
 #define MAX_CMDLINE_PARAM_LEN	 512
 #define MAX_CMD_PAYLOAD_SIZE	256
+
+#define DSI_MODE_MATCH_ACTIVE_TIMINGS (1 << 0)
+#define DSI_MODE_MATCH_PORCH_TIMINGS (1 << 1)
+#define DSI_MODE_MATCH_FULL_TIMINGS (DSI_MODE_MATCH_ACTIVE_TIMINGS | DSI_MODE_MATCH_PORCH_TIMINGS)
+#define DSI_MODE_MATCH_DSC_CONFIG (1 << 2)
+
 /*
  * DSI Validate Mode modifiers
  * @DSI_VALIDATE_FLAG_ALLOW_ADJUST:	Allow mode validation to also do fixup
@@ -436,12 +442,14 @@ int dsi_display_get_avr_step_req_fps(void *dsi_display, u32 mode_fps);
  * dsi_display_find_mode() - retrieve cached DSI mode given relevant params
  * @display:            Handle to display.
  * @cmp:                Mode to use as comparison to find original
+ * @sub_mode:           Additional mode info to drm display mode
  * @out_mode:           Output parameter, pointer to retrieved mode
  *
  * Return: error code.
  */
 int dsi_display_find_mode(struct dsi_display *display,
-		const struct dsi_display_mode *cmp,
+		struct dsi_display_mode *cmp,
+		struct msm_sub_mode *sub_mode,
 		struct dsi_display_mode **out_mode);
 /**
  * dsi_display_validate_mode() - validates if mode is supported by display

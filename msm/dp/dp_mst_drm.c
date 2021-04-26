@@ -1116,6 +1116,7 @@ int dp_mst_connector_get_info(struct drm_connector *connector,
 
 int dp_mst_connector_get_mode_info(struct drm_connector *connector,
 		const struct drm_display_mode *drm_mode,
+		struct msm_sub_mode *sub_mode,
 		struct msm_mode_info *mode_info,
 		void *display,
 		const struct msm_resource_caps_info *avail_res)
@@ -1125,7 +1126,7 @@ int dp_mst_connector_get_mode_info(struct drm_connector *connector,
 	DP_MST_DEBUG("enter:\n");
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, connector->base.id);
 
-	rc = dp_connector_get_mode_info(connector, drm_mode, mode_info,
+	rc = dp_connector_get_mode_info(connector, drm_mode, NULL, mode_info,
 			display, avail_res);
 
 	DP_MST_DEBUG("mst connector:%d get mode info. rc:%d\n",

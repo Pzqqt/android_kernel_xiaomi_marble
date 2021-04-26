@@ -936,7 +936,8 @@ void sde_encoder_dce_disable(struct sde_encoder_virt *sde_enc)
 
 	comp_type = sde_enc->mode_info.comp_info.comp_type;
 
-	if (comp_type == MSM_DISPLAY_COMPRESSION_DSC)
+	if (comp_type == MSM_DISPLAY_COMPRESSION_DSC ||
+		sde_encoder_needs_dsc_disable(&sde_enc->base))
 		_dce_dsc_disable(sde_enc);
 	else if (comp_type == MSM_DISPLAY_COMPRESSION_VDC)
 		_dce_vdc_disable(sde_enc);

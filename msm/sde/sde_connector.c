@@ -66,6 +66,11 @@ static const struct drm_prop_enum_list e_qsync_mode[] = {
 	{SDE_RM_QSYNC_CONTINUOUS_MODE,	"continuous"},
 	{SDE_RM_QSYNC_ONE_SHOT_MODE,	"one_shot"},
 };
+static const struct drm_prop_enum_list e_dsc_mode[] = {
+	{MSM_DISPLAY_DSC_MODE_NONE, "none"},
+	{MSM_DISPLAY_DSC_MODE_ENABLED, "dsc_enabled"},
+	{MSM_DISPLAY_DSC_MODE_DISABLED, "dsc_disabled"},
+};
 static const struct drm_prop_enum_list e_frame_trigger_mode[] = {
 	{FRAME_DONE_WAIT_DEFAULT, "default"},
 	{FRAME_DONE_WAIT_SERIALIZE, "serialize_frame_trigger"},
@@ -441,6 +446,7 @@ int sde_connector_set_msm_mode(struct drm_connector_state *conn_state,
 
 int sde_connector_get_mode_info(struct drm_connector *conn,
 		const struct drm_display_mode *drm_mode,
+		struct msm_sub_mode *sub_mode,
 		struct msm_mode_info *mode_info)
 {
 	struct sde_connector *sde_conn;
@@ -455,7 +461,7 @@ int sde_connector_get_mode_info(struct drm_connector *conn,
 
 	sde_connector_get_avail_res_info(conn, &avail_res);
 
-	return sde_conn->ops.get_mode_info(conn, drm_mode,
+	return sde_conn->ops.get_mode_info(conn, drm_mode, sub_mode,
 			mode_info, sde_conn->display, &avail_res);
 }
 
@@ -2631,7 +2637,7 @@ static int sde_connector_populate_mode_info(struct drm_connector *conn,
 
 		memset(&mode_info, 0, sizeof(mode_info));
 
-		rc = sde_connector_get_mode_info(&c_conn->base, mode,
+		rc = sde_connector_get_mode_info(&c_conn->base, mode, NULL,
 				&mode_info);
 		if (rc) {
 			SDE_ERROR_CONN(c_conn,
@@ -2891,6 +2897,9 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 						"avr_step", 0x0, 0, U32_MAX, 0,
 						CONNECTOR_PROP_AVR_STEP);
 		}
+
+		msm_property_install_enum(&c_conn->property_info, "dsc_mode", 0,
+			0, e_dsc_mode, ARRAY_SIZE(e_dsc_mode), 0, CONNECTOR_PROP_DSC_MODE);
 
 		if (display_info->capabilities & MSM_DISPLAY_CAP_CMD_MODE)
 			msm_property_install_enum(&c_conn->property_info,
