@@ -12,30 +12,6 @@
 
 #define TIMELINE_VAL_LENGTH		128
 
-int _dma_fence_signal_timestamp_locked(struct dma_fence *fence, ktime_t ts)
-{
-	struct dma_fence_cb *cur, *tmp;
-	struct list_head cb_list;
-
-	lockdep_assert_held(fence->lock);
-
-	if (unlikely(test_and_set_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags)))
-		return -EINVAL;
-
-	/* Stash the cb_list before replacing it with the timestamp */
-	list_replace(&fence->cb_list, &cb_list);
-
-	fence->timestamp = ts;
-	set_bit(DMA_FENCE_FLAG_TIMESTAMP_BIT, &fence->flags);
-
-	list_for_each_entry_safe(cur, tmp, &cb_list, node) {
-		INIT_LIST_HEAD(&cur->node);
-		cur->func(fence, cur);
-	}
-
-	return 0;
-}
-
 void *sde_sync_get(uint64_t fd)
 {
 	/* force signed compare, fdget accepts an int argument */
@@ -333,7 +309,7 @@ static void _sde_fence_trigger(struct sde_fence_context *ctx, bool error, ktime_
 			dma_fence_set_error(&fc->base, -EBUSY);
 		is_signaled = sde_fence_signaled(&fc->base);
 		if (is_signaled)
-			_dma_fence_signal_timestamp_locked(&fc->base, ts);
+			dma_fence_signal_timestamp_locked(&fc->base, ts);
 		spin_unlock_irqrestore(&ctx->lock, flags);
 
 		if (is_signaled) {
