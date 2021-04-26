@@ -2113,6 +2113,7 @@ target_if_consume_sscan_summary_report_gen3(
  * @p_sfft: Pointer to search fft report
  * @spectral: Pointer to spectral object
  * @sscan_detector_id: Spectral detector id extracted from Summary report
+ * @reset_delay: Time taken for warm reset in usec
  *
  * Validate and Process Search FFT Report for gen3
  *
@@ -2123,7 +2124,8 @@ target_if_process_sfft_report_gen3(
 	uint8_t *data,
 	struct spectral_search_fft_info_gen3 *p_sfft,
 	struct target_if_spectral *spectral,
-	enum spectral_detector_id sscan_detector_id)
+	enum spectral_detector_id sscan_detector_id,
+	uint32_t reset_delay)
 {
 	struct spectral_phyerr_fft_report_gen3 *p_fft_report;
 	int32_t peak_sidx = 0;
@@ -2198,6 +2200,18 @@ target_if_process_sfft_report_gen3(
 
 	/* Populate the Search FFT Info */
 	p_sfft->timestamp = p_fft_report->fft_timestamp;
+	p_sfft->last_raw_timestamp = spectral->timestamp_war.
+					last_fft_timestamp[spectral_mode];
+	p_sfft->adjusted_timestamp = target_if_spectral_get_adjusted_timestamp(
+						&spectral->timestamp_war,
+						p_sfft->timestamp,
+						reset_delay,
+						spectral_mode);
+	/* Timestamp verification */
+	target_if_spectral_verify_ts(spectral, data,
+				     p_sfft->adjusted_timestamp,
+				     p_sfft->fft_detector_id);
+
 
 	p_sfft->fft_num = get_bitfield(p_fft_report->hdr_a, 3, 2);
 
@@ -2375,7 +2389,8 @@ target_if_consume_spectral_report_gen3(
 	ret = target_if_process_sfft_report_gen3(
 					data, p_sfft,
 					spectral,
-					sscan_report_fields.sscan_detector_id);
+					sscan_report_fields.sscan_detector_id,
+					report->reset_delay);
 	if (QDF_IS_STATUS_ERROR(ret)) {
 		spectral_err_rl("Failed to process search FFT report");
 		goto fail;

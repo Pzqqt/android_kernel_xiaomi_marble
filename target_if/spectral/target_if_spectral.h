@@ -340,6 +340,8 @@ struct phyerr_info {
 /**
  * struct spectral_search_fft_info_gen3 - spectral search fft report for gen3
  * @timestamp:           Timestamp at which fft report was generated
+ * @last_raw_timestamp:  Previous FFT report's raw timestamp
+ * @adjusted_timestamp:  Adjusted timestamp to account for target reset
  * @fft_detector_id:     Which radio generated this report
  * @fft_num:             The FFT count number. Set to 0 for short FFT.
  * @fft_radar_check:     NA for spectral
@@ -357,6 +359,8 @@ struct phyerr_info {
  */
 struct spectral_search_fft_info_gen3 {
 	uint32_t timestamp;
+	uint32_t last_raw_timestamp;
+	uint32_t adjusted_timestamp;
 	uint32_t fft_detector_id;
 	uint32_t fft_num;
 	uint32_t fft_radar_check;
