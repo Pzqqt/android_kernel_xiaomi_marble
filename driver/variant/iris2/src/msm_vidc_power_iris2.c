@@ -52,13 +52,13 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 	 * Even though, most part is common now, in future it may change
 	 * between them.
 	 */
-	fw_cycles = fps * core->capabilities[MB_CYCLES_FW].value;
-	fw_vpp_cycles = fps * core->capabilities[MB_CYCLES_FW_VPP].value;
+	fw_cycles = fps * inst->capabilities->cap[MB_CYCLES_FW].value;
+	fw_vpp_cycles = fps * inst->capabilities->cap[MB_CYCLES_FW_VPP].value;
 
 	if (inst->domain == MSM_VIDC_ENCODER) {
 		vpp_cycles_per_mb = is_low_power_session(inst) ?
-			core->capabilities[MB_CYCLES_LP].value :
-			core->capabilities[MB_CYCLES_VPP].value;
+			inst->capabilities->cap[MB_CYCLES_LP].value :
+			inst->capabilities->cap[MB_CYCLES_VPP].value;
 
 		vpp_cycles = mbs_per_second * vpp_cycles_per_mb /
 			inst->capabilities->cap[PIPE].value;
@@ -90,7 +90,7 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 		vsp_cycles = div_u64(((u64)inst->capabilities->cap[BIT_RATE].value *
 					vsp_factor_num), vsp_factor_den);
 
-		base_cycles = core->capabilities[MB_CYCLES_VSP].value;
+		base_cycles = inst->capabilities->cap[MB_CYCLES_VSP].value;
 		if (inst->codec == MSM_VIDC_VP9) {
 			vsp_cycles = div_u64(vsp_cycles * 170, 100);
 		} else if (inst->capabilities->cap[ENTROPY_MODE].value ==
@@ -110,7 +110,7 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 
 	} else if (inst->domain == MSM_VIDC_DECODER) {
 		/* VPP */
-		vpp_cycles = mbs_per_second * core->capabilities[MB_CYCLES_VPP].value /
+		vpp_cycles = mbs_per_second * inst->capabilities->cap[MB_CYCLES_VPP].value /
 			inst->capabilities->cap[PIPE].value;
 		/* 21 / 20 is minimum overhead factor */
 		vpp_cycles += max(vpp_cycles / 20, fw_vpp_cycles);
@@ -119,7 +119,7 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 			vpp_cycles += div_u64(vpp_cycles * 59, 1000);
 
 		/* VSP */
-		base_cycles = core->capabilities[MB_CYCLES_VSP].value;
+		base_cycles = inst->capabilities->cap[MB_CYCLES_VSP].value;
 		vsp_cycles = fps * data_size * 8;
 
 		if (inst->codec == MSM_VIDC_VP9) {
@@ -147,8 +147,8 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 	freq = max(vpp_cycles, vsp_cycles);
 	freq = max(freq, fw_cycles);
 
-	i_vpr_p(inst, "%s: inst %pK: filled len %d required freq %llu\n",
-		__func__, inst, data_size, freq);
+	i_vpr_p(inst, "%s: filled len %d required freq %llu\n",
+		__func__, data_size, freq);
 
 	return freq;
 }
