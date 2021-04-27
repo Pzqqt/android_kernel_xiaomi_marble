@@ -14797,7 +14797,8 @@ QDF_STATUS sme_handle_sae_msg(mac_handle_t mac_handle,
 	 * is meant for roaming.
 	 */
 	opmode = wlan_get_opmode_from_vdev_id(mac->pdev, session_id);
-	if ((opmode == QDF_SAP_MODE) || !CSR_IS_ROAM_JOINED(mac, session_id)) {
+	if ((opmode == QDF_SAP_MODE) || (opmode == QDF_P2P_GO_MODE) ||
+	    !CSR_IS_ROAM_JOINED(mac, session_id)) {
 		sae_msg = qdf_mem_malloc(sizeof(*sae_msg));
 		if (!sae_msg) {
 			qdf_status = QDF_STATUS_E_NOMEM;

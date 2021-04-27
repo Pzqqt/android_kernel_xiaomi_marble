@@ -534,6 +534,7 @@ static const struct ieee80211_txrx_stypes
 	[NL80211_IFTYPE_P2P_CLIENT] = {
 		.tx = 0xffff,
 		.rx = BIT(SIR_MAC_MGMT_ACTION) |
+		      BIT(SIR_MAC_MGMT_AUTH) |
 		      BIT(SIR_MAC_MGMT_PROBE_REQ),
 	},
 	[NL80211_IFTYPE_P2P_GO] = {
