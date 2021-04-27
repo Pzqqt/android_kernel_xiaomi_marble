@@ -1392,6 +1392,34 @@ dp_tx_ring_access_end_wrapper(struct dp_soc *soc,
 }
 #endif
 
+#ifdef DP_TX_HW_DESC_HISTORY
+static inline void
+dp_tx_hw_desc_update_evt(uint8_t *hal_tx_desc_cached,
+			 hal_ring_handle_t hal_ring_hdl,
+			 struct dp_soc *soc)
+{
+	struct dp_tx_hw_desc_evt *evt;
+	uint64_t idx = 0;
+
+	idx = ++soc->tx_hw_desc_history->index;
+	if (idx == DP_TX_HW_DESC_HIST_MAX)
+		soc->tx_hw_desc_history->index = 0;
+	idx = (idx % DP_TX_HW_DESC_HIST_MAX);
+
+	evt = &soc->tx_hw_desc_history->entry[idx];
+	qdf_mem_copy(evt->tcl_desc, hal_tx_desc_cached, HAL_TX_DESC_LEN_BYTES);
+	evt->posted = qdf_get_log_timestamp();
+	hal_get_sw_hptp(soc->hal_soc, hal_ring_hdl, &evt->tp, &evt->hp);
+}
+#else
+static inline void
+dp_tx_hw_desc_update_evt(uint8_t *hal_tx_desc_cached,
+			 hal_ring_handle_t hal_ring_hdl,
+			 struct dp_soc *soc)
+{
+}
+#endif
+
 /**
  * dp_tx_hw_enqueue() - Enqueue to TCL HW for transmit
  * @soc: DP Soc Handle
@@ -1525,6 +1553,9 @@ dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	DP_STATS_INC_PKT(vdev, tx_i.processed, 1, tx_desc->length);
 	dp_tx_update_stats(soc, tx_desc->nbuf);
 	status = QDF_STATUS_SUCCESS;
+
+	dp_tx_hw_desc_update_evt((uint8_t *)hal_tx_desc_cached,
+				 hal_ring_hdl, soc);
 
 ring_access_fail:
 	dp_tx_ring_access_end_wrapper(soc, hal_ring_hdl, coalesce);

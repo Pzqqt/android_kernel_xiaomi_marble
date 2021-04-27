@@ -380,6 +380,7 @@ struct dp_rx_nbuf_frag_info {
  * @DP_RX_ERR_RING_HIST_TYPE: Datapath rx error ring history
  * @DP_RX_REINJECT_RING_HIST_TYPE: Datapath reinject ring history
  * @DP_RX_REFILL_RING_HIST_TYPE: Datapath rx refill ring history
+ * @DP_TX_HW_DESC_HIST_TYPE: Datapath TX HW descriptor history
  */
 enum dp_ctxt_type {
 	DP_PDEV_TYPE,
@@ -388,6 +389,7 @@ enum dp_ctxt_type {
 	DP_RX_REINJECT_RING_HIST_TYPE,
 	DP_FISA_RX_FT_TYPE,
 	DP_RX_REFILL_RING_HIST_TYPE,
+	DP_TX_HW_DESC_HIST_TYPE,
 };
 
 /**
@@ -1165,6 +1167,26 @@ struct rx_refill_buff_pool {
 	bool is_initialized;
 };
 
+#ifdef DP_TX_HW_DESC_HISTORY
+#define DP_TX_HW_DESC_HIST_MAX 6144
+
+struct dp_tx_hw_desc_evt {
+	uint8_t tcl_desc[HAL_TX_DESC_LEN_BYTES];
+	uint64_t posted;
+	uint32_t hp;
+	uint32_t tp;
+};
+
+/* struct dp_tx_hw_desc_history - TX HW desc hisotry
+ * @index: Index where the last entry is written
+ * @entry: history entries
+ */
+struct dp_tx_hw_desc_history {
+	uint64_t index;
+	struct dp_tx_hw_desc_evt entry[DP_TX_HW_DESC_HIST_MAX];
+};
+#endif
+
 #ifdef WLAN_FEATURE_DP_RX_RING_HISTORY
 /*
  * The logic for get current index of these history is dependent on this
@@ -1652,6 +1674,10 @@ struct dp_soc {
 		unsigned idx_bits;
 		TAILQ_HEAD(, dp_ast_entry) * bins;
 	} ast_hash;
+
+#ifdef DP_TX_HW_DESC_HISTORY
+	struct dp_tx_hw_desc_history *tx_hw_desc_history;
+#endif
 
 #ifdef WLAN_FEATURE_DP_RX_RING_HISTORY
 	struct dp_rx_history *rx_ring_history[MAX_REO_DEST_RINGS];

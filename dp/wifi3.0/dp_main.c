@@ -4481,6 +4481,41 @@ static QDF_STATUS dp_htt_ppdu_stats_attach(struct dp_pdev *pdev)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef DP_TX_HW_DESC_HISTORY
+/**
+ * dp_soc_tx_hw_desc_history_attach - Attach TX HW descriptor history
+ *
+ * @soc: DP soc handle
+ *
+ * Return: None
+ */
+static void dp_soc_tx_hw_desc_history_attach(struct dp_soc *soc)
+{
+	soc->tx_hw_desc_history = dp_context_alloc_mem(
+			soc, DP_TX_HW_DESC_HIST_TYPE,
+			sizeof(struct dp_tx_hw_desc_evt));
+	if (soc->tx_hw_desc_history)
+		soc->tx_hw_desc_history->index = 0;
+}
+
+static void dp_soc_tx_hw_desc_history_detach(struct dp_soc *soc)
+{
+	dp_context_free_mem(soc, DP_TX_HW_DESC_HIST_TYPE,
+			    soc->tx_hw_desc_history);
+}
+
+#else /* DP_TX_HW_DESC_HISTORY */
+static inline void
+dp_soc_tx_hw_desc_history_attach(struct dp_soc *soc)
+{
+}
+
+static inline void
+dp_soc_tx_hw_desc_history_detach(struct dp_soc *soc)
+{
+}
+#endif /* DP_TX_HW_DESC_HISTORY */
+
 #ifdef WLAN_FEATURE_DP_RX_RING_HISTORY
 #ifndef RX_DEFRAG_DO_NOT_REINJECT
 /**
@@ -5157,6 +5192,7 @@ static void dp_soc_detach(struct cdp_soc_t *txrx_soc)
 	dp_hw_link_desc_ring_free(soc);
 	dp_hw_link_desc_pool_banks_free(soc, WLAN_INVALID_PDEV_ID);
 	wlan_cfg_soc_detach(soc->wlan_cfg_ctx);
+	dp_soc_tx_hw_desc_history_detach(soc);
 	dp_soc_rx_history_detach(soc);
 	if (soc->mon_vdev_timer_state & MON_VDEV_TIMER_INIT) {
 		qdf_timer_free(&soc->mon_vdev_timer);
@@ -12687,6 +12723,7 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 	/* Reset wbm sg list and flags */
 	dp_rx_wbm_sg_list_reset(soc);
 
+	dp_soc_tx_hw_desc_history_attach(soc);
 	dp_soc_rx_history_attach(soc);
 	wlan_set_srng_cfg(&soc->wlan_srng_cfg);
 	soc->wlan_cfg_ctx = wlan_cfg_soc_attach(soc->ctrl_psoc);
