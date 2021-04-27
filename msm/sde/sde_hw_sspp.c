@@ -301,30 +301,37 @@ static void sde_hw_sspp_set_src_split_order(struct sde_hw_pipe *ctx,
 }
 
 static void sde_hw_sspp_setup_ubwc(struct sde_hw_pipe *ctx, struct sde_hw_blk_reg_map *c,
-		const struct sde_format *fmt, bool const_alpha_en, bool const_color_en)
+		const struct sde_format *fmt, bool const_alpha_en, bool const_color_en,
+		enum sde_sspp_multirect_index rect_mode)
 {
-	u32 alpha_en_mask = 0, color_en_mask = 0;
+	u32 alpha_en_mask = 0, color_en_mask = 0, ubwc_ctrl_off;
 
 	SDE_REG_WRITE(c, SSPP_FETCH_CONFIG,
 		SDE_FETCH_CONFIG_RESET_VALUE |
 		ctx->mdp->highest_bank_bit << 18);
 
+	if ((rect_mode == SDE_SSPP_RECT_SOLO || rect_mode == SDE_SSPP_RECT_0) ||
+			!test_bit(SDE_SSPP_UBWC_STATS, &ctx->cap->features))
+		ubwc_ctrl_off = SSPP_UBWC_STATIC_CTRL;
+	else
+		ubwc_ctrl_off = SSPP_UBWC_STATIC_CTRL_REC1;
+
 	if (IS_UBWC_40_SUPPORTED(ctx->catalog->ubwc_version)) {
-		SDE_REG_WRITE(c, SSPP_UBWC_STATIC_CTRL,
+		SDE_REG_WRITE(c, ubwc_ctrl_off,
 			SDE_FORMAT_IS_YUV(fmt) ? 0 : BIT(30));
 	} else if (IS_UBWC_30_SUPPORTED(ctx->catalog->ubwc_version)) {
 		color_en_mask = const_color_en ? BIT(30) : 0;
-		SDE_REG_WRITE(c, SSPP_UBWC_STATIC_CTRL,
+		SDE_REG_WRITE(c, ubwc_ctrl_off,
 			color_en_mask | (ctx->mdp->ubwc_swizzle) |
 			(ctx->mdp->highest_bank_bit << 4));
 	} else if (IS_UBWC_20_SUPPORTED(ctx->catalog->ubwc_version)) {
 		alpha_en_mask = const_alpha_en ? BIT(31) : 0;
-		SDE_REG_WRITE(c, SSPP_UBWC_STATIC_CTRL,
+		SDE_REG_WRITE(c, ubwc_ctrl_off,
 			alpha_en_mask | (ctx->mdp->ubwc_swizzle) |
 			(ctx->mdp->highest_bank_bit << 4));
 	} else if (IS_UBWC_10_SUPPORTED(ctx->catalog->ubwc_version)) {
 		alpha_en_mask = const_alpha_en ? BIT(31) : 0;
-		SDE_REG_WRITE(c, SSPP_UBWC_STATIC_CTRL,
+		SDE_REG_WRITE(c, ubwc_ctrl_off,
 			alpha_en_mask | (ctx->mdp->ubwc_swizzle & 0x1) |
 			BIT(8) | (ctx->mdp->highest_bank_bit << 4));
 	}
@@ -412,7 +419,7 @@ static void sde_hw_sspp_setup_format(struct sde_hw_pipe *ctx,
 			opmode |= MDSS_MDP_OP_BWC_EN;
 		src_format |= (fmt->fetch_mode & 3) << 30; /*FRAME_FORMAT */
 
-		sde_hw_sspp_setup_ubwc(ctx, c, fmt, const_alpha_en, const_color_en);
+		sde_hw_sspp_setup_ubwc(ctx, c, fmt, const_alpha_en, const_color_en, rect_mode);
 	}
 
 	opmode |= MDSS_MDP_OP_PE_OVERRIDE;
