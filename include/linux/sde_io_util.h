@@ -107,6 +107,7 @@ int msm_dss_get_io_mem(struct platform_device *pdev,
 void msm_dss_clean_io_mem(struct list_head *mem_list);
 int msm_dss_get_pmic_io_mem(struct platform_device *pdev,
 		       struct list_head *mem_list);
+int msm_dss_get_gpio_io_mem(const int gpio_pin, struct list_head *mem_list);
 int msm_dss_get_io_irq(struct platform_device *pdev,
 		       struct list_head *irq_list, u32 label);
 void msm_dss_clean_io_irq(struct list_head *irq_list);
