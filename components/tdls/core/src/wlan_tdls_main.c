@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1187,6 +1187,15 @@ void tdls_send_update_to_fw(struct tdls_vdev_priv_obj *tdls_vdev_obj,
 	tdls_info_to_fw->tdls_discovery_wake_timeout =
 		tdls_soc_obj->tdls_configs.tdls_discovery_wake_timeout;
 
+	/**
+	 * set_state_cnt should always decrement in case of sta disconnection.
+	 * If it is not, then in case where STA disconnection happens due to
+	 * SSR where tdls_update_fw_tdls_state() will return failure,
+	 * tdls count has to be decremented irrepective of success or failure
+	 */
+	if (!sta_connect_event)
+		tdls_soc_obj->set_state_info.set_state_cnt--;
+
 	status = tdls_update_fw_tdls_state(tdls_soc_obj, tdls_info_to_fw);
 	if (QDF_STATUS_SUCCESS != status)
 		goto done;
@@ -1194,8 +1203,6 @@ void tdls_send_update_to_fw(struct tdls_vdev_priv_obj *tdls_vdev_obj,
 	if (sta_connect_event) {
 		tdls_soc_obj->set_state_info.set_state_cnt++;
 		tdls_soc_obj->set_state_info.vdev_id = session_id;
-	} else {
-		tdls_soc_obj->set_state_info.set_state_cnt--;
 	}
 
 	tdls_debug("TDLS Set state cnt %d",
