@@ -2090,8 +2090,8 @@ dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				  tx_exc_metadata, msdu_info);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		dp_tx_err("Tx_hw_enqueue Fail tx_desc %pK queue %d",
-			  tx_desc, tx_q->ring_id);
+		dp_tx_err_rl("Tx_hw_enqueue Fail tx_desc %pK queue %d",
+			     tx_desc, tx_q->ring_id);
 		qdf_nbuf_unmap_nbytes_single(vdev->osdev, nbuf,
 					     QDF_DMA_TO_DEVICE,
 					     nbuf->len);
