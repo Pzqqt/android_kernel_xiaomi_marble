@@ -349,14 +349,28 @@ struct vdev_mlme_mgmt_generic {
 	bool special_vdev_mode;
 };
 
+/*
+ * struct wlan_vdev_aid_mgr – AID manager
+ * @aid_bitmap: AID bitmap array
+ * @max_aid: Max allowed AID
+ * @ref_cnt:  to share AID across VDEVs for MBSSID
+ */
+struct wlan_vdev_aid_mgr {
+	qdf_bitmap(aid_bitmap, WLAN_UMAC_MAX_AID);
+	uint16_t max_aid;
+	qdf_atomic_t ref_cnt;
+};
+
 /**
  * struct vdev_mlme_mgmt_ap - ap specific vdev mlme mgmt cfg
  * @hidden_ssid: flag to indicate whether it is hidden ssid
  * @cac_duration_ms: cac duration in millseconds
+ * @aid_mgr: AID bitmap mgr
  */
 struct vdev_mlme_mgmt_ap {
 	bool hidden_ssid;
 	uint32_t cac_duration_ms;
+	struct wlan_vdev_aid_mgr *aid_mgr;
 };
 
 /**
@@ -1100,4 +1114,47 @@ static inline uint16_t wlan_vdev_mlme_get_he_mcs_12_13_map(
 	return 0;
 }
 #endif
+
+/**
+ * wlan_vdev_mlme_set_aid_mgr() - set aid mgr
+ * @vdev: VDEV object
+ * @aid_mgr: AID mgr
+ *
+ * API to set AID mgr in VDEV MLME cmpt object
+ *
+ * Return: void
+ */
+static inline void wlan_vdev_mlme_set_aid_mgr(
+				struct wlan_objmgr_vdev *vdev,
+				struct wlan_vdev_aid_mgr *aid_mgr)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme)
+		return;
+
+	vdev_mlme->mgmt.ap.aid_mgr = aid_mgr;
+}
+
+/**
+ * wlan_vdev_mlme_get_aid_mgr() - get aid mgr
+ * @vdev: VDEV object
+ *
+ * API to get AID mgr in VDEV MLME cmpt object
+ *
+ * Return: aid_mgr
+ */
+static inline struct wlan_vdev_aid_mgr *wlan_vdev_mlme_get_aid_mgr(
+				struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme)
+		return NULL;
+
+	return vdev_mlme->mgmt.ap.aid_mgr;
+}
+
 #endif

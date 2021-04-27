@@ -17,12 +17,13 @@
 /*
  * DOC: contains MLO manager init/deinit api's
  */
-
-#include "wlan_mlo_mgr_main.h"
-#include "qdf_types.h"
 #include "wlan_cmn.h"
+#include <wlan_objmgr_cmn.h>
 #include <wlan_objmgr_global_obj.h>
 #include "wlan_mlo_mgr_cmn.h"
+#include "wlan_mlo_mgr_main.h"
+#include <wlan_mlo_mgr_ap.h>
+#include <wlan_mlo_mgr_peer.h>
 
 static void mlo_global_ctx_deinit(void)
 {
@@ -34,7 +35,9 @@ static void mlo_global_ctx_deinit(void)
 	if (qdf_list_empty(&mlo_mgr_ctx->ml_dev_list))
 		mlo_err("ML dev list is not empty");
 
+	ml_peerid_lock_destroy(mlo_mgr_ctx);
 	ml_link_lock_destroy(mlo_mgr_ctx);
+	ml_aid_lock_destroy(mlo_mgr_ctx);
 	qdf_list_destroy(&mlo_mgr_ctx->ml_dev_list);
 
 	qdf_mem_free(mlo_mgr_ctx);
@@ -60,7 +63,10 @@ static void mlo_global_ctx_init(void)
 	wlan_objmgr_set_mlo_ctx(mlo_mgr_ctx);
 
 	qdf_list_create(&mlo_mgr_ctx->ml_dev_list, WLAN_UMAC_MLO_MAX_DEV);
+	mlo_mgr_ctx->max_mlo_peer_id = MAX_MLO_PEER_ID;
+	ml_peerid_lock_create(mlo_mgr_ctx);
 	ml_link_lock_create(mlo_mgr_ctx);
+	ml_aid_lock_create(mlo_mgr_ctx);
 }
 
 QDF_STATUS wlan_mlo_mgr_init(void)
@@ -187,6 +193,34 @@ static inline struct wlan_mlo_dev_context
 	return NULL;
 }
 
+static QDF_STATUS mlo_ap_ctx_deinit(struct wlan_mlo_dev_context *ml_dev)
+{
+	wlan_mlo_vdev_aid_mgr_deinit(ml_dev);
+	qdf_mem_free(ml_dev->ap_ctx);
+	ml_dev->ap_ctx = NULL;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS mlo_ap_ctx_init(struct wlan_mlo_dev_context *ml_dev)
+{
+	struct wlan_mlo_ap *ap_ctx;
+
+	ap_ctx = qdf_mem_malloc(sizeof(*ap_ctx));
+	if (!ap_ctx) {
+		mlo_err("MLO AP ctx alloc failure");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	ml_dev->ap_ctx = ap_ctx;
+	if (wlan_mlo_vdev_aid_mgr_init(ml_dev) != QDF_STATUS_SUCCESS) {
+		mlo_ap_ctx_deinit(ml_dev);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static QDF_STATUS mlo_dev_ctx_init(struct wlan_objmgr_vdev *vdev)
 {
 	struct wlan_mlo_dev_context *ml_dev;
@@ -207,6 +241,10 @@ static QDF_STATUS mlo_dev_ctx_init(struct wlan_objmgr_vdev *vdev)
 			ml_dev->wlan_vdev_list[id] = vdev;
 			ml_dev->wlan_vdev_count++;
 			vdev->mlo_dev_ctx = ml_dev;
+
+			if (wlan_vdev_mlme_get_opmode(vdev) == QDF_SAP_MODE)
+				wlan_mlo_vdev_alloc_aid_mgr(ml_dev, vdev);
+
 			break;
 		}
 		mlo_dev_lock_release(ml_dev);
@@ -224,6 +262,7 @@ static QDF_STATUS mlo_dev_ctx_init(struct wlan_objmgr_vdev *vdev)
 	ml_dev->wlan_vdev_list[0] = vdev;
 	ml_dev->wlan_vdev_count++;
 	vdev->mlo_dev_ctx = ml_dev;
+
 	mlo_dev_lock_create(ml_dev);
 	if (wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE) {
 		ml_dev->sta_ctx = qdf_mem_malloc(sizeof(struct wlan_mlo_sta));
@@ -233,14 +272,15 @@ static QDF_STATUS mlo_dev_ctx_init(struct wlan_objmgr_vdev *vdev)
 			return QDF_STATUS_E_NOMEM;
 		}
 	} else if (wlan_vdev_mlme_get_opmode(vdev) == QDF_SAP_MODE) {
-		ml_dev->ap_ctx = qdf_mem_malloc(sizeof(struct wlan_mlo_ap));
-		if (!ml_dev->ap_ctx) {
-			mlo_err("Failed to allocate memory for ap ctx");
+		if (mlo_ap_ctx_init(ml_dev) != QDF_STATUS_SUCCESS) {
 			mlo_dev_lock_destroy(ml_dev);
 			qdf_mem_free(ml_dev);
+			mlo_err("Failed to allocate memory for ap ctx");
 			return QDF_STATUS_E_NOMEM;
 		}
 	}
+
+	mlo_dev_mlpeer_list_init(ml_dev);
 
 	ml_link_lock_acquire(g_mlo_ctx);
 	if (qdf_list_size(&g_mlo_ctx->ml_dev_list) < WLAN_UMAC_MLO_MAX_DEV)
@@ -268,6 +308,10 @@ static QDF_STATUS mlo_dev_ctx_deinit(struct wlan_objmgr_vdev *vdev)
 		mlo_dev_lock_acquire(ml_dev);
 		while (id < WLAN_UMAC_MLO_MAX_VDEVS) {
 			if (ml_dev->wlan_vdev_list[id] == vdev) {
+				if (wlan_vdev_mlme_get_opmode(vdev) ==
+								QDF_SAP_MODE)
+					wlan_mlo_vdev_free_aid_mgr(ml_dev,
+								   vdev);
 				ml_dev->wlan_vdev_list[id] = NULL;
 				ml_dev->wlan_vdev_count--;
 				vdev->mlo_dev_ctx = NULL;
@@ -277,8 +321,13 @@ static QDF_STATUS mlo_dev_ctx_deinit(struct wlan_objmgr_vdev *vdev)
 		}
 		mlo_dev_lock_release(ml_dev);
 	}
+
 	ml_link_lock_acquire(g_mlo_ctx);
 	if (!ml_dev->wlan_vdev_count) {
+		if (ml_dev->ap_ctx)
+			mlo_ap_ctx_deinit(ml_dev);
+
+		mlo_dev_mlpeer_list_deinit(ml_dev);
 		qdf_list_remove_node(&g_mlo_ctx->ml_dev_list,
 				     &ml_dev->node);
 		if (wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE) {
@@ -292,6 +341,7 @@ static QDF_STATUS mlo_dev_ctx_deinit(struct wlan_objmgr_vdev *vdev)
 		}
 		else if (wlan_vdev_mlme_get_opmode(vdev) == QDF_SAP_MODE)
 			qdf_mem_free(ml_dev->ap_ctx);
+
 		mlo_dev_lock_destroy(ml_dev);
 		qdf_mem_free(ml_dev);
 	}

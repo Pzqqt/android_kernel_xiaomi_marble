@@ -160,6 +160,17 @@ QDF_STATUS wlan_vdev_mlme_is_csa_restart(struct wlan_objmgr_vdev *vdev);
 QDF_STATUS wlan_vdev_is_going_down(struct wlan_objmgr_vdev *vdev);
 
 /**
+ * wlan_vdev_is_peer_create_allowed() - Checks whether PEER can be created
+ * @vdev: Object manager VDEV object
+ *
+ * API to check the VDEV MLME SM state to allow PEER association
+ *
+ * Return: SUCCESS: if peer create can be allowed
+ *         FAILURE: otherwise failure
+ */
+QDF_STATUS wlan_vdev_is_peer_create_allowed(struct wlan_objmgr_vdev *vdev);
+
+/**
  * wlan_vdev_is_restart_progress() - Checks VDEV restart is in progress
  * @vdev: Object manager VDEV object
  *

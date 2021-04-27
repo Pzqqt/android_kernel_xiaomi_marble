@@ -179,6 +179,231 @@ void mlo_dev_lock_release(struct wlan_mlo_dev_context *mldev)
 {
 	qdf_spin_unlock_bh(&mldev->mlo_dev_lock);
 }
+
+/**
+ * ml_aid_lock_create - Create MLO aid mutex/spinlock
+ * @mlo_ctx:  MLO manager global context
+ *
+ * Creates mutex/spinlock
+ *
+ * Return: void
+ */
+static inline
+void ml_aid_lock_create(struct mlo_mgr_context *mlo_ctx)
+{
+	qdf_spinlock_create(&mlo_ctx->aid_lock);
+}
+
+/**
+ * ml_aid_lock_destroy - Destroy ml aid mutex/spinlock
+ * @mlo_ctx:  MLO manager global context
+ *
+ * Destroy mutex/spinlock
+ *
+ * Return: void
+ */
+static inline void
+ml_aid_lock_destroy(struct mlo_mgr_context *mlo_ctx)
+{
+	qdf_spinlock_destroy(&mlo_ctx->aid_lock);
+}
+
+/**
+ * ml_aid_lock_acquire - acquire ml aid mutex/spinlock
+ * @mlo_ctx:  MLO manager global context
+ *
+ * acquire mutex/spinlock
+ *
+ * return: void
+ */
+static inline
+void ml_aid_lock_acquire(struct mlo_mgr_context *mlo_ctx)
+{
+	qdf_spin_lock_bh(&mlo_ctx->aid_lock);
+}
+
+/**
+ * ml_aid_lock_release - release MLO aid mutex/spinlock
+ * @mlo_ctx:  MLO manager global context
+ *
+ * release mutex/spinlock
+ *
+ * return: void
+ */
+static inline
+void ml_aid_lock_release(struct mlo_mgr_context *mlo_ctx)
+{
+	qdf_spin_unlock_bh(&mlo_ctx->aid_lock);
+}
+
+/**
+ * ml_peerid_lock_create - Create MLO peer mutex/spinlock
+ * @mlo_ctx:  MLO manager global context
+ *
+ * Creates mutex/spinlock
+ *
+ * Return: void
+ */
+static inline
+void ml_peerid_lock_create(struct mlo_mgr_context *mlo_ctx)
+{
+	qdf_spinlock_create(&mlo_ctx->ml_peerid_lock);
+}
+
+/**
+ * ml_peerid_lock_destroy - Destroy ml peerid mutex/spinlock
+ * @mlo_ctx:  MLO manager global context
+ *
+ * Destroy mutex/spinlock
+ *
+ * Return: void
+ */
+static inline void
+ml_peerid_lock_destroy(struct mlo_mgr_context *mlo_ctx)
+{
+	qdf_spinlock_destroy(&mlo_ctx->ml_peerid_lock);
+}
+
+/**
+ * ml_peerid_lock_acquire - acquire ml peerid mutex/spinlock
+ * @mlo_ctx:  MLO manager global context
+ *
+ * acquire mutex/spinlock
+ *
+ * return: void
+ */
+static inline
+void ml_peerid_lock_acquire(struct mlo_mgr_context *mlo_ctx)
+{
+	qdf_spin_lock_bh(&mlo_ctx->ml_peerid_lock);
+}
+
+/**
+ * ml_peerid_lock_release - release MLO peerid mutex/spinlock
+ * @mlo_ctx:  MLO manager global context
+ *
+ * release mutex/spinlock
+ *
+ * return: void
+ */
+static inline
+void ml_peerid_lock_release(struct mlo_mgr_context *mlo_ctx)
+{
+	qdf_spin_unlock_bh(&mlo_ctx->ml_peerid_lock);
+}
+
+/**
+ * mlo_peer_lock_create - Create MLO peer mutex/spinlock
+ * @mlpeer:  ML peer
+ *
+ * Creates mutex/spinlock
+ *
+ * Return: void
+ */
+static inline void
+mlo_peer_lock_create(struct wlan_mlo_peer_context *mlpeer)
+{
+	qdf_spinlock_create(&mlpeer->mlo_peer_lock);
+}
+
+/**
+ * mlo_peer_lock_destroy - Destroy MLO peer mutex/spinlock
+ * @mlpeer:  ML peer
+ *
+ * Destroy mutex/spinlock
+ *
+ * Return: void
+ */
+static inline void
+mlo_peer_lock_destroy(struct wlan_mlo_peer_context *mlpeer)
+{
+	qdf_spinlock_destroy(&mlpeer->mlo_peer_lock);
+}
+
+/**
+ * mlo_peer_lock_acquire - acquire mlo peer mutex/spinlock
+ * @mlpeer:  MLO peer context
+ *
+ * acquire mutex/spinlock
+ *
+ * return: void
+ */
+static inline
+void mlo_peer_lock_acquire(struct wlan_mlo_peer_context *mlpeer)
+{
+	qdf_spin_lock_bh(&mlpeer->mlo_peer_lock);
+}
+
+/**
+ * mlo_peer_lock_release - release MLO peer mutex/spinlock
+ * @mlpeer:  MLO peer context
+ *
+ * release mutex/spinlock
+ *
+ * return: void
+ */
+static inline
+void mlo_peer_lock_release(struct wlan_mlo_peer_context *mlpeer)
+{
+	qdf_spin_unlock_bh(&mlpeer->mlo_peer_lock);
+}
+
+/**
+ * ml_peerlist_lock_create - Create MLO peer list mutex/spinlock
+ * @ml_peerlist:  ML peer list context
+ *
+ * Creates mutex/spinlock
+ *
+ * Return: void
+ */
+static inline void
+ml_peerlist_lock_create(struct wlan_mlo_peer_list *ml_peerlist)
+{
+	qdf_spinlock_create(&ml_peerlist->peer_list_lock);
+}
+
+/**
+ * ml_peerlist_lock_destroy - Destroy MLO peer list mutex/spinlock
+ * @ml_peerlist:  ML peer list context
+ *
+ * Destroy mutex/spinlock
+ *
+ * Return: void
+ */
+static inline void
+ml_peerlist_lock_destroy(struct wlan_mlo_peer_list *ml_peerlist)
+{
+	qdf_spinlock_destroy(&ml_peerlist->peer_list_lock);
+}
+
+/**
+ * ml_peerlist_lock_acquire - acquire ML peer list mutex/spinlock
+ * @ml_peerlist:  ML peer list context
+ *
+ * acquire mutex/spinlock
+ *
+ * return: void
+ */
+static inline
+void ml_peerlist_lock_acquire(struct wlan_mlo_peer_list *ml_peerlist)
+{
+	qdf_spin_lock_bh(&ml_peerlist->peer_list_lock);
+}
+
+/**
+ * ml_peerlist_lock_release - release ML peer list mutex/spinlock
+ * @ml_peerlist:  ML peer list context
+ *
+ * release mutex/spinlock
+ *
+ * return: void
+ */
+static inline
+void ml_peerlist_lock_release(struct wlan_mlo_peer_list *ml_peerlist)
+{
+	qdf_spin_unlock_bh(&ml_peerlist->peer_list_lock);
+}
+
 #else
 static inline
 void ml_link_lock_create(struct mlo_mgr_context *mlo_ctx)
@@ -224,6 +449,102 @@ static inline void mlo_dev_lock_acquire(struct wlan_mlo_dev_context *mldev)
 static inline void mlo_dev_lock_release(struct wlan_mlo_dev_context *mldev)
 {
 	qdf_mutex_release(&mldev->mlo_dev_lock);
+}
+
+static inline
+void ml_aid_lock_create(struct mlo_mgr_context *mlo_ctx)
+{
+	qdf_mutex_create(&mlo_ctx->aid_lock);
+}
+
+static inline void
+ml_aid_lock_destroy(struct mlo_mgr_context *mlo_ctx)
+{
+	qdf_mutex_destroy(&mlo_ctx->aid_lock);
+}
+
+static inline
+void ml_aid_lock_acquire(struct mlo_mgr_context *mlo_ctx)
+{
+	qdf_mutex_acquire(&mlo_ctx->aid_lock);
+}
+
+static inline
+void ml_aid_lock_release(struct mlo_mgr_context *mlo_ctx)
+{
+	qdf_mutex_release(&mlo_ctx->aid_lock);
+}
+
+static inline
+void ml_peerid_lock_create(struct mlo_mgr_context *mlo_ctx)
+{
+	qdf_mutex_create(&mlo_ctx->ml_peerid_lock);
+}
+
+static inline void
+ml_peerid_lock_destroy(struct mlo_mgr_context *mlo_ctx)
+{
+	qdf_mutex_destroy(&mlo_ctx->ml_peerid_lock);
+}
+
+static inline
+void ml_peerid_lock_acquire(struct mlo_mgr_context *mlo_ctx)
+{
+	qdf_mutex_acquire(&mlo_ctx->ml_peerid_lock);
+}
+
+static inline
+void ml_peerid_lock_release(struct mlo_mgr_context *mlo_ctx)
+{
+	qdf_mutex_release(&mlo_ctx->ml_peerid_lock);
+}
+
+static inline void
+mlo_peer_lock_create(struct wlan_mlo_peer_context *mlpeer)
+{
+	qdf_mutex_create(&mlpeer->mlo_peer_lock);
+}
+
+static inline void
+mlo_peer_lock_destroy(struct wlan_mlo_peer_context *mlpeer)
+{
+	qdf_mutex_destroy(&mlpeer->mlo_peer_lock);
+}
+
+static inline
+void mlo_peer_lock_acquire(struct wlan_mlo_peer_context *mlpeer)
+{
+	qdf_mutex_acquire(&mlpeer->mlo_peer_lock);
+}
+
+static inline
+void mlo_peer_lock_release(struct wlan_mlo_peer_context *mlpeer)
+{
+	qdf_mutex_release(&mlpeer->mlo_peer_lock);
+}
+
+static inline void
+ml_peerlist_lock_create(struct wlan_mlo_peer_list *ml_peerlist)
+{
+	qdf_mutex_create(&ml_peerlist->peer_list_lock);
+}
+
+static inline void
+ml_peerlist_lock_destroy(struct wlan_mlo_peer_list *ml_peerlist)
+{
+	qdf_mutex_destroy(&ml_peerlist->peer_list_lock);
+}
+
+static inline
+void ml_peerlist_lock_acquire(struct wlan_mlo_peer_list *ml_peerlist)
+{
+	qdf_mutex_acquire(&ml_peerlist->peer_list_lock);
+}
+
+static inline
+void ml_peerlist_lock_release(struct wlan_mlo_peer_list *ml_peerlist)
+{
+	qdf_mutex_release(&ml_peerlist->peer_list_lock);
 }
 #endif /* WLAN_MLO_USE_SPINLOCK */
 

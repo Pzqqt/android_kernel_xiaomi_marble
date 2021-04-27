@@ -224,6 +224,22 @@ QDF_STATUS wlan_vdev_is_going_down(struct wlan_objmgr_vdev *vdev)
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS wlan_vdev_is_peer_create_allowed(struct wlan_objmgr_vdev *vdev)
+{
+	enum wlan_vdev_state state;
+	enum wlan_vdev_state substate;
+
+	state = wlan_vdev_mlme_get_state(vdev);
+	substate = wlan_vdev_mlme_get_substate(vdev);
+	if (!((state == WLAN_VDEV_S_INIT) ||
+	     (state == WLAN_VDEV_S_STOP) ||
+	     ((state == WLAN_VDEV_S_SUSPEND) &&
+	      (substate == WLAN_VDEV_SS_SUSPEND_SUSPEND_DOWN))))
+		return QDF_STATUS_SUCCESS;
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 QDF_STATUS wlan_vdev_is_restart_progress(struct wlan_objmgr_vdev *vdev)
 {
 	enum wlan_vdev_state state;

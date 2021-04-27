@@ -668,6 +668,23 @@ static inline struct wlan_objmgr_psoc *wlan_vdev_get_psoc(
 }
 
 /**
+ * wlan_vdev_get_psoc_id() - get psoc id
+ * @vdev: VDEV object
+ *
+ * API to get VDEV's psoc id
+ *
+ * Return: @psoc_id: psoc id
+ */
+static inline uint8_t wlan_vdev_get_psoc_id(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+
+	return wlan_psoc_get_id(psoc);
+}
+
+/**
  * wlan_vdev_mlme_set_opmode() - set vdev opmode
  * @vdev: VDEV object
  * @mode: VDEV op mode
