@@ -725,7 +725,7 @@ static int msm_vdec_set_conceal_color_10bit(struct msm_vidc_inst *inst,
 		return -EINVAL;
 	}
 
-	conceal_color_10bit = inst->capabilities->cap[CONCEAL_COLOR_8BIT].value;
+	conceal_color_10bit = inst->capabilities->cap[CONCEAL_COLOR_10BIT].value;
 	i_vpr_h(inst, "%s: conceal color 10bit: %#x",
 		__func__, conceal_color_10bit);
 	rc = venus_hfi_session_property(inst,
