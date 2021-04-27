@@ -1859,8 +1859,10 @@ bool wlan_cm_6ghz_allowed_for_akm(struct wlan_objmgr_psoc *psoc,
 		return false;
 
 	/* if check_6ghz_security is set validate all checks for 6Ghz */
-	if (!(rsn_caps & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED))
+	if (!(rsn_caps & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED)) {
+		mlme_debug("PMF not enabled for 6GHz AP");
 		return false;
+	}
 
 	/* for SAE we need to check H2E support */
 	if (!(QDF_HAS_PARAM(key_mgmt, WLAN_CRYPTO_KEY_MGMT_SAE) ||

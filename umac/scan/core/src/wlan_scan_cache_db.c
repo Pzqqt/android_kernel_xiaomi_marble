@@ -1045,15 +1045,31 @@ QDF_STATUS __scm_handle_bcn_probe(struct scan_bcn_probe_event *bcn)
 				qdf_mem_free(scan_node);
 				continue;
 			}
+			if ((QDF_HAS_PARAM(sec_params.ucastcipherset,
+					   WLAN_CRYPTO_CIPHER_NONE)) ||
+			    (QDF_HAS_PARAM(sec_params.ucastcipherset,
+					   WLAN_CRYPTO_CIPHER_TKIP)) ||
+			    (QDF_HAS_PARAM(sec_params.ucastcipherset,
+					   WLAN_CRYPTO_CIPHER_WEP_40)) ||
+			    (QDF_HAS_PARAM(sec_params.ucastcipherset,
+					   WLAN_CRYPTO_CIPHER_WEP_104))) {
+				scm_info("Drop frame from "QDF_MAC_ADDR_FMT
+					 ": Invalid sec type %0X for 6GHz AP",
+					 QDF_MAC_ADDR_REF(
+						 scan_entry->bssid.bytes),
+					 sec_params.ucastcipherset);
+				continue;
+			}
 			if (!wlan_cm_6ghz_allowed_for_akm(psoc,
 					sec_params.key_mgmt,
 					sec_params.rsn_caps,
 					util_scan_entry_rsnxe(scan_entry),
 					0, false)) {
 				scm_info("Drop frame from "QDF_MAC_ADDR_FMT
-					 ": Security check failed for 6GHz AP",
+					 ": Invalid AKM suite %0X for 6GHz AP",
 					 QDF_MAC_ADDR_REF(
-						scan_entry->bssid.bytes));
+						scan_entry->bssid.bytes),
+					 sec_params.key_mgmt);
 				util_scan_free_cache_entry(scan_entry);
 				qdf_mem_free(scan_node);
 				continue;
