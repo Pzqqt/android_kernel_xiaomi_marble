@@ -1660,9 +1660,10 @@ static ssize_t debugfs_esd_trigger_check(struct file *file,
 	}
 
 	if (display->esd_trigger) {
+		struct dsi_panel *panel = display->panel;
+
 		DSI_INFO("ESD attack triggered by user\n");
-		rc = dsi_panel_trigger_esd_attack(display->panel,
-						display->trusted_vm_env);
+		rc = panel->panel_ops.trigger_esd_attack(panel);
 		if (rc) {
 			DSI_ERR("Failed to trigger ESD attack\n");
 			goto error;

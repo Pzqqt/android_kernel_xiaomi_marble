@@ -209,6 +209,7 @@ struct dsi_panel_ops {
 	int (*bl_unregister)(struct dsi_panel *panel);
 	int (*parse_gpios)(struct dsi_panel *panel);
 	int (*parse_power_cfg)(struct dsi_panel *panel);
+	int (*trigger_esd_attack)(struct dsi_panel *panel);
 };
 
 struct dsi_panel {
@@ -309,8 +310,6 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 				const char *type,
 				int topology_override,
 				bool trusted_vm_env);
-
-int dsi_panel_trigger_esd_attack(struct dsi_panel *panel, bool trusted_vm_env);
 
 void dsi_panel_put(struct dsi_panel *panel);
 
