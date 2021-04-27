@@ -169,6 +169,7 @@ dp_wdi_event_sub(
 {
 	uint32_t event_index;
 	wdi_event_subscribe *wdi_sub;
+	wdi_event_subscribe *wdi_sub_itr;
 	struct dp_pdev *txrx_pdev =
 		dp_get_pdev_from_soc_pdev_id_wifi3((struct dp_soc *)soc,
 						   pdev_id);
@@ -205,6 +206,17 @@ dp_wdi_event_sub(
 		txrx_pdev->wdi_event_list[event_index] = wdi_sub;
 		return 0;
 	}
+
+	/* Check if event is already subscribed */
+	wdi_sub_itr = wdi_sub;
+	do {
+		if (wdi_sub_itr == event_cb_sub) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+				  "Duplicate wdi subscribe event detected %s", __func__);
+			return 0;
+		}
+	} while ((wdi_sub_itr = dp_wdi_event_next_sub(wdi_sub_itr)));
+
 	event_cb_sub->priv.next = wdi_sub;
 	event_cb_sub->priv.prev = NULL;
 	wdi_sub->priv.prev = event_cb_sub;
@@ -252,6 +264,10 @@ dp_wdi_event_unsub(
 	if (event_cb_sub->priv.next) {
 		event_cb_sub->priv.next->priv.prev = event_cb_sub->priv.prev;
 	}
+
+	/* Reset susbscribe event list elems */
+	event_cb_sub->priv.next = NULL;
+	event_cb_sub->priv.prev = NULL;
 
 	return 0;
 }
