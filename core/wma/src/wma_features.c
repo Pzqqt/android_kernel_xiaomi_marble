@@ -4100,9 +4100,12 @@ QDF_STATUS wma_set_tx_rx_aggr_size(uint8_t vdev_id,
 	/* bit 2 (aggr_type): TX Aggregation Type (0=A-MPDU, 1=A-MSDU) */
 	if (aggr_type == WMI_VDEV_CUSTOM_AGGR_TYPE_AMSDU)
 		cmd->enable_bitmap |= 0x04;
-	/* bit 3 (tx_aggr_size_disable):  If set tx_aggr_size is invalid */
-	if (rx_size == 0)
+	/* Set bit3(tx_aggr_size_disable) if tx_aggr_size is invalid */
+	if (tx_size == 0)
 		cmd->enable_bitmap |= (0x1 << 3);
+	/* Set bit4(rx_aggr_size_disable) if rx_aggr_size is invalid */
+	if (rx_size == 0)
+		cmd->enable_bitmap |= (0x1 << 4);
 
 	cmd->enable_bitmap |= (0x1 << 6);
 
@@ -4164,8 +4167,7 @@ QDF_STATUS wma_set_tx_rx_aggr_size_per_ac(WMA_HANDLE handle,
 		cmd->rx_aggr_size = qos_aggr->rx_aggregation_size;
 		cmd->tx_aggr_size = tx_aggr_size[queue_num];
 		/* bit 5: tx_ac_enable, if set, ac bitmap is valid. */
-		if (cmd->rx_aggr_size != 0)
-			cmd->enable_bitmap = 0x20 | queue_num;
+		cmd->enable_bitmap = 0x20 | queue_num;
 		/* bit 2 (aggr_type): TX Aggregation Type (0=A-MPDU, 1=A-MSDU) */
 		if (aggr_type == WMI_VDEV_CUSTOM_AGGR_TYPE_AMSDU)
 			cmd->enable_bitmap |= 0x04;
