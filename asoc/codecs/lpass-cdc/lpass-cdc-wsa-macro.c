@@ -963,20 +963,6 @@ static int lpass_cdc_wsa_macro_event_handler(struct snd_soc_component *component
 		}
 		break;
 	case LPASS_CDC_MACRO_EVT_PRE_SSR_UP:
-		/* enable&disable WSA_CORE_CLK to reset GFMUX reg */
-		lpass_cdc_wsa_macro_core_vote(wsa_priv, true);
-		ret = lpass_cdc_clk_rsc_request_clock(wsa_priv->dev,
-						wsa_priv->default_clk_id,
-						WSA_CORE_CLK, true);
-		if (ret < 0)
-			dev_err_ratelimited(wsa_priv->dev,
-				"%s, failed to enable clk, ret:%d\n",
-				__func__, ret);
-		else
-			lpass_cdc_clk_rsc_request_clock(wsa_priv->dev,
-						wsa_priv->default_clk_id,
-						WSA_CORE_CLK, false);
-		lpass_cdc_wsa_macro_core_vote(wsa_priv, false);
 		break;
 	case LPASS_CDC_MACRO_EVT_SSR_UP:
 		trace_printk("%s, enter SSR up\n", __func__);
