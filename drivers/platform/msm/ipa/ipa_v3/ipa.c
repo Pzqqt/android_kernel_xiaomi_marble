@@ -4676,6 +4676,17 @@ int _ipa_init_sram_v3(void)
 		ipa3_sram_set_canary(ipa_sram_mmio, IPA_MEM_PART(modem_ofst));
 	}
 
+	if (ipa_get_hw_type_internal() == IPA_HW_v5_0) {
+		ipa3_sram_set_canary(ipa_sram_mmio,
+			IPA_MEM_PART(apps_v4_flt_nhash_ofst) - 4);
+		ipa3_sram_set_canary(ipa_sram_mmio,
+			IPA_MEM_PART(apps_v4_flt_nhash_ofst));
+		ipa3_sram_set_canary(ipa_sram_mmio,
+			IPA_MEM_PART(stats_fnr_ofst) - 4);
+		ipa3_sram_set_canary(ipa_sram_mmio,
+			IPA_MEM_PART(stats_fnr_ofst));
+	}
+
 	if (ipa_get_hw_type_internal() >= IPA_HW_v5_0) {
 		ipa3_sram_set_canary(ipa_sram_mmio, IPA_MEM_PART(pdn_config_ofst));
 	} else {
@@ -6964,6 +6975,14 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 		IPAERR("fail to init stats %d\n", result);
 	else
 		IPADBG(":stats init ok\n");
+
+	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v4_5) {
+		result = ipa_init_flt_rt_stats();
+		if (result)
+			IPAERR("fail to init FnR stats %d\n", result);
+		else
+			IPADBG(":FnR stats init ok\n");
+	}
 
 	result = ipa_drop_stats_init();
 	if (result)

@@ -1804,6 +1804,7 @@ struct ipa_hw_stats {
 	struct ipa_hw_stats_teth teth;
 	struct ipa_hw_stats_flt_rt flt_rt;
 	struct ipa_hw_stats_drop drop;
+	bool teth_stats_enabled;
 };
 
 struct ipa_cne_evt {
