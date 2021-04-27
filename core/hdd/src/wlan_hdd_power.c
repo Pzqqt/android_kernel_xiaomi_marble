@@ -1674,6 +1674,7 @@ QDF_STATUS hdd_wlan_shutdown(void)
 
 	hdd_lpass_notify_stop(hdd_ctx);
 
+	qdf_set_smmu_fault_state(false);
 	hdd_info("WLAN driver shutdown complete");
 
 	return QDF_STATUS_SUCCESS;
