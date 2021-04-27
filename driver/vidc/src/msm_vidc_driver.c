@@ -4461,8 +4461,10 @@ int msm_vidc_update_buffer_count(struct msm_vidc_inst *inst, u32 port)
 			inst->buffers.input_meta.extra_count = 0;
 			inst->buffers.input_meta.actual_count = 0;
 		}
-		d_vpr_h("update input min buffer to %u\n",
-			inst->buffers.input.min_count);
+		i_vpr_h(inst, "%s: type:  INPUT, count: min %u, extra %u, actual %u\n", __func__,
+			inst->buffers.input.min_count,
+			inst->buffers.input.extra_count,
+			inst->buffers.input.actual_count);
 		break;
 	case OUTPUT_PORT:
 		if (!inst->vb2q[INPUT_PORT].streaming)
@@ -4489,8 +4491,10 @@ int msm_vidc_update_buffer_count(struct msm_vidc_inst *inst, u32 port)
 			inst->buffers.output_meta.extra_count = 0;
 			inst->buffers.output_meta.actual_count = 0;
 		}
-		d_vpr_h("update output min buffer to %u\n",
-			inst->buffers.output.min_count);
+		i_vpr_h(inst, "%s: type: OUTPUT, count: min %u, extra %u, actual %u\n", __func__,
+			inst->buffers.output.min_count,
+			inst->buffers.output.extra_count,
+			inst->buffers.output.actual_count);
 		break;
 	default:
 		d_vpr_e("%s unknown port %d\n", __func__, port);

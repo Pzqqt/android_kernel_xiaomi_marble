@@ -696,6 +696,9 @@ int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl)
 			rc = msm_vidc_update_buffer_count(inst, INPUT_PORT);
 			if (rc)
 				return rc;
+			rc = msm_vidc_update_buffer_count(inst, OUTPUT_PORT);
+			if (rc)
+				return rc;
 		}
 		if (is_meta_ctrl(ctrl->id)) {
 			if (cap_id == META_DPB_TAG_LIST) {
