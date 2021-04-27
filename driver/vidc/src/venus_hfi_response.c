@@ -649,7 +649,6 @@ static int handle_input_buffer(struct msm_vidc_inst *inst,
 		}
 	}
 
-	buf->data_offset = buffer->data_offset;
 	buf->data_size = buffer->data_size;
 	buf->attr &= ~MSM_VIDC_ATTR_QUEUED;
 	buf->attr |= MSM_VIDC_ATTR_DEQUEUED;

@@ -1843,7 +1843,7 @@ static int vb2_buffer_to_driver(struct vb2_buffer *vb2,
 	buf->index = vb2->index;
 	buf->fd = vb2->planes[0].m.fd;
 	buf->data_offset = vb2->planes[0].data_offset;
-	buf->data_size = vb2->planes[0].bytesused;
+	buf->data_size = vb2->planes[0].bytesused - vb2->planes[0].data_offset;
 	buf->buffer_size = vb2->planes[0].length;
 	buf->timestamp = vb2->timestamp;
 
@@ -3098,7 +3098,7 @@ int msm_vidc_vb2_buffer_done(struct msm_vidc_inst *inst,
 	vbuf = to_vb2_v4l2_buffer(vb2);
 	vbuf->flags = buf->flags;
 	vb2->timestamp = buf->timestamp;
-	vb2->planes[0].bytesused = buf->data_size;
+	vb2->planes[0].bytesused = buf->data_size + vb2->planes[0].data_offset;
 	vb2_buffer_done(vb2, VB2_BUF_STATE_DONE);
 
 	return 0;
