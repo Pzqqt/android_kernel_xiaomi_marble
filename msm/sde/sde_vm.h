@@ -220,7 +220,7 @@ struct sde_vm_primary {
 struct sde_vm_trusted {
 	struct sde_vm base;
 	struct sde_vm_irq_desc *irq_desc;
-	struct hh_sgl_desc *sgl_desc;
+	struct gh_sgl_desc *sgl_desc;
 };
 
 #if IS_ENABLED(CONFIG_DRM_SDE_VM)

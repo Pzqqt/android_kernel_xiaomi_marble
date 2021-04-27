@@ -6,7 +6,7 @@
 #ifndef __SDE_VM_COMMON_H__
 #define __SDE_VM_COMMON_H__
 
-#include <linux/haven/hh_rm_drv.h>
+#include <linux/gunyah/gh_rm_drv.h>
 #include "sde_vm.h"
 
 #define SDE_VM_MEM_LABEL 0x11
@@ -15,25 +15,25 @@
  * sde_vm_populate_vmid - create and populate the rm vmid desc structure with
  *			  the given vmid
  * @vmid: vmid of the destination vm
- * @return: populated hh_notify_vmid_desc structure
+ * @return: populated gh_notify_vmid_desc structure
  */
-struct hh_notify_vmid_desc *sde_vm_populate_vmid(hh_vmid_t vmid);
+struct gh_notify_vmid_desc *sde_vm_populate_vmid(gh_vmid_t vmid);
 
 /**
  * sde_vm_populate_acl - create and populate the access control list structure
  *			 for the given vm name
  * @vm_name: vm name enum published by the RM driver
- * @return: populated hh_acl_desc structure
+ * @return: populated gh_acl_desc structure
  */
-struct hh_acl_desc *sde_vm_populate_acl(enum hh_vm_names vm_name);
+struct gh_acl_desc *sde_vm_populate_acl(enum gh_vm_names vm_name);
 
 /**
  * sde_vm_populate_sgl - create and populate the scatter/gather list structure
  *			 with the given io memory list
  * @io_res: io resource list containing the io memory
- * @return: populated hh_sgl_desc structure
+ * @return: populated gh_sgl_desc structure
  */
-struct hh_sgl_desc *sde_vm_populate_sgl(struct msm_io_res *io_res);
+struct gh_sgl_desc *sde_vm_populate_sgl(struct msm_io_res *io_res);
 
 /**
  * sde_vm_populate_irq - create and populate the hw irq descriptor structure

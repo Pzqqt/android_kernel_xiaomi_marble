@@ -3,7 +3,7 @@
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/haven/hh_msgq.h>
+#include <linux/gunyah/gh_msgq.h>
 #include <linux/kthread.h>
 #include "sde_kms.h"
 #include "sde_vm.h"
@@ -37,15 +37,15 @@ static int _sde_vm_msgq_listener(void *data)
 	vm_work = &sde_vm->vm_work;
 
 	while (true) {
-		buf = kzalloc(HH_MSGQ_MAX_MSG_SIZE_BYTES, GFP_KERNEL);
+		buf = kzalloc(GH_MSGQ_MAX_MSG_SIZE_BYTES, GFP_KERNEL);
 		if (!buf)
 			return -ENOMEM;
 
-		ret = hh_msgq_recv(sde_vm->msgq_handle, buf,
-				HH_MSGQ_MAX_MSG_SIZE_BYTES, &size, 0);
+		ret = gh_msgq_recv(sde_vm->msgq_handle, buf,
+				GH_MSGQ_MAX_MSG_SIZE_BYTES, &size, 0);
 		if (ret < 0) {
 			kfree(buf);
-			SDE_ERROR("hh_msgq_recv failed, rc=%d\n", ret);
+			SDE_ERROR("gh_msgq_recv failed, rc=%d\n", ret);
 			return -EINVAL;
 		}
 
@@ -66,13 +66,13 @@ int sde_vm_msgq_send(struct sde_vm *sde_vm, void *msg, size_t msg_size)
 		return -EINVAL;
 	}
 
-	if (msg_size > HH_MSGQ_MAX_MSG_SIZE_BYTES) {
+	if (msg_size > GH_MSGQ_MAX_MSG_SIZE_BYTES) {
 		SDE_ERROR("msg size unsupported for msgq: %ld > %d\n", msg_size,
-				HH_MSGQ_MAX_MSG_SIZE_BYTES);
+				GH_MSGQ_MAX_MSG_SIZE_BYTES);
 		return -E2BIG;
 	}
 
-	return hh_msgq_send(sde_vm->msgq_handle, msg, msg_size, HH_MSGQ_TX_PUSH);
+	return gh_msgq_send(sde_vm->msgq_handle, msg, msg_size, GH_MSGQ_TX_PUSH);
 }
 
 int sde_vm_msgq_init(struct sde_vm *sde_vm)
@@ -82,9 +82,9 @@ int sde_vm_msgq_init(struct sde_vm *sde_vm)
 	struct task_struct *msgq_listener_thread = NULL;
 	int rc = 0;
 
-	msgq_handle = hh_msgq_register(HH_MSGQ_LABEL_DISPLAY);
+	msgq_handle = gh_msgq_register(GH_MSGQ_LABEL_DISPLAY);
 	if (IS_ERR(msgq_handle)) {
-		SDE_ERROR("hh_msgq_register failed, hdl=%p\n", msgq_handle);
+		SDE_ERROR("gh_msgq_register failed, hdl=%p\n", msgq_handle);
 		return -EINVAL;
 	}
 
@@ -109,7 +109,7 @@ int sde_vm_msgq_init(struct sde_vm *sde_vm)
 	return 0;
 
 kthread_create_fail:
-	hh_msgq_unregister(msgq_handle);
+	gh_msgq_unregister(msgq_handle);
 	sde_vm->msgq_handle = NULL;
 done:
 	return rc;
@@ -121,5 +121,5 @@ void sde_vm_msgq_deinit(struct sde_vm *sde_vm)
 		kthread_stop(sde_vm->msgq_listener_thread);
 
 	if (sde_vm->msgq_handle)
-		hh_msgq_unregister(sde_vm->msgq_handle);
+		gh_msgq_unregister(sde_vm->msgq_handle);
 }

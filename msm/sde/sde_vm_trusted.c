@@ -3,9 +3,9 @@
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/haven/hh_rm_drv.h>
-#include <linux/haven/hh_irq_lend.h>
-#include <linux/haven/hh_mem_notifier.h>
+#include <linux/gunyah/gh_rm_drv.h>
+#include <linux/gunyah/gh_irq_lend.h>
+#include <linux/gunyah/gh_mem_notifier.h>
 #include <linux/sort.h>
 #include <linux/bsearch.h>
 #include <linux/irq.h>
@@ -20,14 +20,14 @@
 
 static int __sgl_cmp(const void *a, const void *b)
 {
-	struct hh_sgl_entry *l = (struct hh_sgl_entry *)a;
-	struct hh_sgl_entry *r = (struct hh_sgl_entry *)b;
+	struct gh_sgl_entry *l = (struct gh_sgl_entry *)a;
+	struct gh_sgl_entry *r = (struct gh_sgl_entry *)b;
 
 	return  (l->ipa_base - r->ipa_base);
 }
 
-int _sde_vm_validate_sgl(struct hh_sgl_desc *expected,
-			 struct hh_sgl_desc *assigned)
+int _sde_vm_validate_sgl(struct gh_sgl_desc *expected,
+			 struct gh_sgl_desc *assigned)
 {
 	u32 idx;
 
@@ -42,8 +42,8 @@ int _sde_vm_validate_sgl(struct hh_sgl_desc *expected,
 			sizeof(assigned->sgl_entries[0]), __sgl_cmp, NULL);
 
 	for (idx = 0; idx < expected->n_sgl_entries; idx++) {
-		struct hh_sgl_entry *e = &expected->sgl_entries[idx];
-		struct hh_sgl_entry *a = &assigned->sgl_entries[idx];
+		struct gh_sgl_entry *e = &expected->sgl_entries[idx];
+		struct gh_sgl_entry *a = &assigned->sgl_entries[idx];
 
 		if ((e->ipa_base != a->ipa_base) || (e->size != a->size)) {
 			SDE_DEBUG("sgl mismatch: (%llu - %llu) vs (%llu - %llu)\n",
@@ -63,23 +63,23 @@ static int __irq_cmp(const void *a, const void *b)
 	return  (l->label - r->label);
 }
 
-static void sde_vm_mem_lend_notification_handler(enum hh_mem_notifier_tag tag,
+static void sde_vm_mem_lend_notification_handler(enum gh_mem_notifier_tag tag,
 					       unsigned long notif_type,
 					void *entry_data, void *notif_msg)
 {
-	struct hh_rm_notif_mem_shared_payload *payload;
+	struct gh_rm_notif_mem_shared_payload *payload;
 	struct sde_vm_trusted *sde_vm;
 
-	if (notif_type != HH_RM_NOTIF_MEM_SHARED ||
-			tag != HH_MEM_NOTIFIER_TAG_DISPLAY)
+	if (notif_type != GH_RM_NOTIF_MEM_SHARED ||
+			tag != GH_MEM_NOTIFIER_TAG_DISPLAY)
 		return;
 
 	if (!entry_data || !notif_msg)
 		return;
 
-	payload = (struct hh_rm_notif_mem_shared_payload *)notif_msg;
+	payload = (struct gh_rm_notif_mem_shared_payload *)notif_msg;
 
-	if (payload->trans_type != HH_RM_TRANS_TYPE_LEND ||
+	if (payload->trans_type != GH_RM_TRANS_TYPE_LEND ||
 	    payload->label != SDE_VM_MEM_LABEL)
 		return;
 
@@ -96,7 +96,7 @@ static void sde_vm_mem_lend_notification_handler(enum hh_mem_notifier_tag tag,
 }
 
 void sde_vm_irq_lend_notification_handler(void *req,
-		unsigned long notif_type, enum hh_irq_label label)
+		unsigned long notif_type, enum gh_irq_label label)
 {
 	SDE_INFO("IRQ LEND notification for label: %d\n", label);
 }
@@ -110,7 +110,7 @@ static int _sde_vm_release_irq(struct sde_vm *vm)
 	for (i = atomic_read(&sde_vm->base.n_irq_lent) - 1; i >= 0; i--) {
 		struct sde_vm_irq_entry *entry = &irq_desc->irq_entries[i];
 
-		rc = hh_irq_release(entry->label);
+		rc = gh_irq_release(entry->label);
 		if (rc) {
 			SDE_ERROR("failed to release IRQ label: %d rc = %d\n",
 				  entry->label, rc);
@@ -119,7 +119,7 @@ static int _sde_vm_release_irq(struct sde_vm *vm)
 
 		atomic_dec(&sde_vm->base.n_irq_lent);
 
-		rc = hh_irq_release_notify(entry->label);
+		rc = gh_irq_release_notify(entry->label);
 		if (rc) {
 			SDE_ERROR(
 				 "irq release notify failed,label: %d rc: %d\n",
@@ -142,15 +142,15 @@ static int _sde_vm_release_mem(struct sde_vm *vm)
 	if (sde_vm->base.io_mem_handle < 0)
 		return 0;
 
-	rc = hh_rm_mem_release(sde_vm->base.io_mem_handle, 0);
+	rc = gh_rm_mem_release(sde_vm->base.io_mem_handle, 0);
 	if (rc) {
-		SDE_ERROR("hh_rm_mem_release failed, rc=%d\n", rc);
+		SDE_ERROR("gh_rm_mem_release failed, rc=%d\n", rc);
 		goto done;
 	}
 
-	rc = hh_rm_mem_notify(sde_vm->base.io_mem_handle,
-			HH_RM_MEM_NOTIFY_OWNER_RELEASED,
-			HH_MEM_NOTIFIER_TAG_DISPLAY, 0);
+	rc = gh_rm_mem_notify(sde_vm->base.io_mem_handle,
+			GH_RM_MEM_NOTIFY_OWNER_RELEASED,
+			GH_MEM_NOTIFIER_TAG_DISPLAY, 0);
 	if (rc) {
 		SDE_ERROR("hyp mem notify on release failed, rc = %d\n", rc);
 		goto done;
@@ -264,7 +264,7 @@ static void  _sde_vm_deinit(struct sde_kms *kms, struct sde_vm_ops *ops)
 	sde_vm_msgq_deinit(kms->vm);
 
 	if (sde_vm->base.mem_notification_cookie)
-		hh_mem_notifier_unregister(
+		gh_mem_notifier_unregister(
 				sde_vm->base.mem_notification_cookie);
 
 	kfree(sde_vm->sgl_desc);
@@ -277,14 +277,14 @@ static void  _sde_vm_deinit(struct sde_kms *kms, struct sde_vm_ops *ops)
 
 static int _sde_vm_accept_mem(struct sde_vm *vm)
 {
-	struct hh_sgl_desc *sgl_desc;
-	struct hh_acl_desc *acl_desc;
+	struct gh_sgl_desc *sgl_desc;
+	struct gh_acl_desc *acl_desc;
 	struct sde_vm_trusted *sde_vm;
 	int rc = 0;
 
 	sde_vm = to_vm_trusted(vm);
 
-	acl_desc = sde_vm_populate_acl(HH_TRUSTED_VM);
+	acl_desc = sde_vm_populate_acl(GH_TRUSTED_VM);
 	if (IS_ERR(acl_desc)) {
 		SDE_ERROR("failed to populate acl data, rc=%ld\n",
 			   PTR_ERR(acl_desc));
@@ -292,16 +292,16 @@ static int _sde_vm_accept_mem(struct sde_vm *vm)
 		goto done;
 	}
 
-	sgl_desc = hh_rm_mem_accept(sde_vm->base.io_mem_handle,
-				    HH_RM_MEM_TYPE_IO,
-				    HH_RM_TRANS_TYPE_LEND,
-				    HH_RM_MEM_ACCEPT_VALIDATE_ACL_ATTRS|
-				    HH_RM_MEM_ACCEPT_VALIDATE_LABEL|
-				    HH_RM_MEM_ACCEPT_DONE,
+	sgl_desc = gh_rm_mem_accept(sde_vm->base.io_mem_handle,
+				    GH_RM_MEM_TYPE_IO,
+				    GH_RM_TRANS_TYPE_LEND,
+				    GH_RM_MEM_ACCEPT_VALIDATE_ACL_ATTRS|
+				    GH_RM_MEM_ACCEPT_VALIDATE_LABEL|
+				    GH_RM_MEM_ACCEPT_DONE,
 				    SDE_VM_MEM_LABEL,
 				    acl_desc, NULL, NULL, 0);
 	if (IS_ERR_OR_NULL(sgl_desc)) {
-		SDE_ERROR("hh_rm_mem_accept failed with error, rc=%ld\n",
+		SDE_ERROR("gh_rm_mem_accept failed with error, rc=%ld\n",
 			   PTR_ERR(sgl_desc));
 		rc = -EINVAL;
 
@@ -343,7 +343,7 @@ static int _sde_vm_accept_irq(struct sde_vm *vm)
 		struct sde_vm_irq_entry *irq_entry = &irq_desc->irq_entries[i];
 
 		expected_irq = irq_entry->irq;
-		accepted_irq = hh_irq_accept(irq_entry->label, -1,
+		accepted_irq = gh_irq_accept(irq_entry->label, -1,
 				IRQ_TYPE_LEVEL_HIGH);
 		if (accepted_irq < 0) {
 			SDE_ERROR("failed to accept irq for label: %d\n",
@@ -451,7 +451,7 @@ int sde_vm_trusted_init(struct sde_kms *kms)
 		goto init_fail;
 	}
 
-	cookie = hh_mem_notifier_register(HH_MEM_NOTIFIER_TAG_DISPLAY,
+	cookie = gh_mem_notifier_register(GH_MEM_NOTIFIER_TAG_DISPLAY,
 			       sde_vm_mem_lend_notification_handler, sde_vm);
 	if (!cookie) {
 		SDE_ERROR("fails to register RM mem lend notifier\n");
@@ -459,12 +459,12 @@ int sde_vm_trusted_init(struct sde_kms *kms)
 	}
 	sde_vm->base.mem_notification_cookie = cookie;
 
-	rc = hh_irq_wait_for_lend_v2(HH_IRQ_LABEL_SDE, HH_PRIMARY_VM,
+	rc = gh_irq_wait_for_lend_v2(GH_IRQ_LABEL_SDE, GH_PRIMARY_VM,
 				  sde_vm_irq_lend_notification_handler,
 				  (void *)sde_vm);
 	if (rc) {
 		SDE_ERROR("wait for irq lend on label: %d failed, rc=%d\n",
-			   HH_IRQ_LABEL_SDE, rc);
+			   GH_IRQ_LABEL_SDE, rc);
 		goto init_fail;
 	}
 
