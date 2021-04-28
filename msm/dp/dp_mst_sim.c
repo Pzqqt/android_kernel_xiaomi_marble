@@ -61,6 +61,7 @@ struct dp_sim_device {
 	u32 sim_mode;
 
 	u32 edid_seg;
+	u32 edid_seg_int;
 	u32 edid_addr;
 
 	bool skip_edid;
@@ -196,7 +197,7 @@ static int dp_sim_read_edid(struct dp_sim_device *sim_dev,
 		return 0;
 
 	if (msg->request & DP_AUX_I2C_READ) {
-		addr = (sim_dev->edid_seg << 8) + sim_dev->edid_addr;
+		addr = (sim_dev->edid_seg_int << 8) + sim_dev->edid_addr;
 		if (addr + msg->size <= sim_dev->ports[0].edid_size) {
 			memcpy(msg->buffer, &sim_dev->ports[0].edid[addr],
 					msg->size);
@@ -207,10 +208,13 @@ static int dp_sim_read_edid(struct dp_sim_device *sim_dev,
 		sim_dev->edid_addr += msg->size;
 		sim_dev->edid_addr &= 0xFF;
 	} else {
-		if (msg->address == 0x30)
+		if (msg->address == 0x30) {
 			sim_dev->edid_seg = buf[0];
-		else if (msg->address == 0x50)
-			sim_dev->edid_addr = buf[0];
+		} else if (msg->address == 0x50) {
+			sim_dev->edid_seg_int = sim_dev->edid_seg;
+			sim_dev->edid_addr = buf[0] + (sim_dev->edid_seg << 8);
+			sim_dev->edid_seg = 0;
+		}
 	}
 
 	return msg->size;
