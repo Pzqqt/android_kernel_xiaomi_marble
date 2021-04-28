@@ -5145,6 +5145,13 @@ int gsi_get_fw_version(struct gsi_fw_version *ver)
 	return 0;
 }
 
+void gsi_update_almst_empty_thrshold(unsigned long chan_hdl, unsigned short threshold)
+{
+	gsihal_write_reg_nk(GSI_EE_n_CH_k_CH_ALMST_EMPTY_THRSHOLD,
+		gsi_ctx->per.ee, chan_hdl, threshold);
+}
+EXPORT_SYMBOL(gsi_update_almst_empty_thrshold);
+
 static int msm_gsi_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;

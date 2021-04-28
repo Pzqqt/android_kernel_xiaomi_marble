@@ -2317,6 +2317,15 @@ int gsi_enable_flow_control_ee(unsigned int chan_idx, unsigned int ee,
 int gsi_query_msi_addr(unsigned long chan_hdl, phys_addr_t *addr);
 
 /**
+* gsi_update_almst_empty_thrshold - update almst_empty_thrshold
+*
+* @chan_id: channel id
+* @threshold: Threshold value for channel almost empty indication to MCS.
+*
+*/
+void gsi_update_almst_empty_thrshold(unsigned long chan_hdl, unsigned short threshold);
+
+/**
 * gsi_dump_ch_info - channel information.
 *
 * @chan_id: channel id
