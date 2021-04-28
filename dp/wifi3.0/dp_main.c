@@ -6052,6 +6052,7 @@ static QDF_STATUS dp_vdev_attach_wifi3(struct cdp_soc_t *cdp_soc,
 	uint8_t vdev_id = vdev_info->vdev_id;
 	enum wlan_op_mode op_mode = vdev_info->op_mode;
 	enum wlan_op_subtype subtype = vdev_info->subtype;
+	uint8_t vdev_stats_id = vdev_info->vdev_stats_id;
 
 	vdev_context_size =
 		soc->arch_ops.txrx_get_context_size(DP_CONTEXT_TYPE_VDEV);
@@ -6075,6 +6076,7 @@ static QDF_STATUS dp_vdev_attach_wifi3(struct cdp_soc_t *cdp_soc,
 
 	vdev->pdev = pdev;
 	vdev->vdev_id = vdev_id;
+	vdev->vdev_stats_id = vdev_stats_id;
 	vdev->opmode = op_mode;
 	vdev->subtype = subtype;
 	vdev->osdev = soc->osdev;
@@ -6332,6 +6334,60 @@ static void dp_vdev_flush_peers(struct cdp_vdev *vdev_handle, bool unmap_only)
 
 }
 
+#ifdef QCA_VDEV_STATS_HW_OFFLOAD_SUPPORT
+/*
+ * dp_txrx_alloc_vdev_stats_id()- Allocate vdev_stats_id
+ * @soc_hdl: Datapath soc handle
+ * @vdev_stats_id: Address of vdev_stats_id
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS dp_txrx_alloc_vdev_stats_id(struct cdp_soc_t *soc_hdl,
+					      uint8_t *vdev_stats_id)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	uint8_t id = 0;
+
+	if (!wlan_cfg_get_vdev_stats_hw_offload_config(soc->wlan_cfg_ctx)) {
+		*vdev_stats_id = DP_INVALID_VDEV_STATS_ID;
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	while (id < DP_MAX_VDEV_STATS_ID) {
+		if (!qdf_atomic_test_and_set_bit(id, &soc->vdev_stats_id_map)) {
+			*vdev_stats_id = id;
+			return QDF_STATUS_SUCCESS;
+		}
+		id++;
+	}
+
+	*vdev_stats_id = DP_INVALID_VDEV_STATS_ID;
+	return QDF_STATUS_E_FAILURE;
+}
+
+/*
+ * dp_txrx_reset_vdev_stats_id() - Reset vdev_stats_id in dp_soc
+ * @soc_hdl: Datapath soc handle
+ * @vdev_stats_id: vdev_stats_id to reset in dp_soc
+ *
+ * Return: none
+ */
+static void dp_txrx_reset_vdev_stats_id(struct cdp_soc_t *soc_hdl,
+					uint8_t vdev_stats_id)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+
+	if ((!wlan_cfg_get_vdev_stats_hw_offload_config(soc->wlan_cfg_ctx)) ||
+	    (vdev_stats_id >= DP_MAX_VDEV_STATS_ID))
+		return;
+
+	qdf_atomic_clear_bit(vdev_stats_id, &soc->vdev_stats_id_map);
+}
+#else
+static void dp_txrx_reset_vdev_stats_id(struct cdp_soc_t *soc,
+					uint8_t vdev_stats_id)
+{}
+#endif
 /*
  * dp_vdev_detach_wifi3() - Detach txrx vdev
  * @cdp_soc: Datapath soc handle
@@ -6395,6 +6451,8 @@ static QDF_STATUS dp_vdev_detach_wifi3(struct cdp_soc_t *cdp_soc,
 	dp_vdev_id_map_tbl_remove(soc, vdev);
 
 	dp_monitor_neighbour_peer_list_remove(pdev, vdev, peer);
+
+	dp_txrx_reset_vdev_stats_id(cdp_soc, vdev->vdev_stats_id);
 
 	dp_tx_vdev_multipass_deinit(vdev);
 
@@ -11696,6 +11754,10 @@ static struct cdp_host_stats_ops dp_ops_host_stats = {
 	.txrx_update_vdev_stats = dp_txrx_update_vdev_host_stats,
 	.txrx_get_peer_delay_stats = dp_txrx_get_peer_delay_stats,
 	.txrx_get_peer_jitter_stats = dp_txrx_get_peer_jitter_stats,
+#ifdef QCA_VDEV_STATS_HW_OFFLOAD_SUPPORT
+	.txrx_alloc_vdev_stats_id = dp_txrx_alloc_vdev_stats_id,
+	.txrx_reset_vdev_stats_id = dp_txrx_reset_vdev_stats_id,
+#endif
 	/* TODO */
 };
 
@@ -12851,6 +12913,8 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 		qdf_dma_mem_stats_read(),
 		qdf_heap_mem_stats_read(),
 		qdf_skb_total_mem_stats_read());
+
+	soc->vdev_stats_id_map = 0;
 
 	return soc;
 fail6:

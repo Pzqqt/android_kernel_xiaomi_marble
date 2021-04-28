@@ -66,12 +66,12 @@ uint8_t hal_rx_ret_buf_manager_get_li(hal_ring_desc_t ring_desc);
  * @hw_qdesc_vaddr: Virtual address of REO queue descriptor memory
  * @hw_qdesc_paddr: Physical address of REO queue descriptor memory
  * @pn_type: PN type (one of the types defined in 'enum hal_pn_type')
- *
+ * @vdev_stats_id: vdev_stats_id
  */
 void hal_reo_qdesc_setup_li(hal_soc_handle_t hal_soc_hdl,
 			    int tid, uint32_t ba_window_size,
 			    uint32_t start_seq, void *hw_qdesc_vaddr,
 			    qdf_dma_addr_t hw_qdesc_paddr,
-			    int pn_type);
+			    int pn_type, uint8_t vdev_stats_id);
 
 #endif /* _HAL_LI_API_H_ */

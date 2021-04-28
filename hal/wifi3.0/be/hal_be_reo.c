@@ -43,7 +43,7 @@ void hal_reo_qdesc_setup_be(hal_soc_handle_t hal_soc_hdl, int tid,
 			    uint32_t ba_window_size,
 			    uint32_t start_seq, void *hw_qdesc_vaddr,
 			    qdf_dma_addr_t hw_qdesc_paddr,
-			    int pn_type)
+			    int pn_type, uint8_t vdev_stats_id)
 {
 	uint32_t *reo_queue_desc = (uint32_t *)hw_qdesc_vaddr;
 	uint32_t *reo_queue_ext_desc;
@@ -146,6 +146,8 @@ void hal_reo_qdesc_setup_be(hal_soc_handle_t hal_soc_hdl, int tid,
 	 * this once the issue is resolved
 	 */
 	HAL_DESC_SET_FIELD(reo_queue_desc, RX_REO_QUEUE, SVLD, 0);
+
+	hal_update_stats_counter_index(reo_queue_desc, vdev_stats_id);
 
 	/* TODO: Check if we should set start PN for WAPI */
 

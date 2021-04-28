@@ -28,6 +28,22 @@
 #define HAL_MAX_REO2SW_RINGS 8
 #define HAL_NUM_RX_RING_PER_IX_MAP 8
 
+#ifdef QCA_VDEV_STATS_HW_OFFLOAD_SUPPORT
+static inline void hal_update_stats_counter_index(uint32_t *reo_queue_desc,
+						  uint8_t vdev_stats_id)
+{
+#ifdef RX_REO_QUEUE_STATISTICS_COUNTER_INDEX_MASK
+	HAL_DESC_SET_FIELD(reo_queue_desc, RX_REO_QUEUE,
+			   STATISTICS_COUNTER_INDEX, vdev_stats_id);
+#endif
+}
+#else
+static inline void hal_update_stats_counter_index(uint32_t *reo_queue_desc,
+						  uint8_t vdev_stats_id)
+{
+}
+#endif
+
 /* Proto-types */
 void hal_get_ba_aging_timeout_be(hal_soc_handle_t hal_soc_hdl, uint8_t ac,
 				 uint32_t *value);

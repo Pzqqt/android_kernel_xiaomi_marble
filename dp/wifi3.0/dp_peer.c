@@ -3315,7 +3315,8 @@ try_desc_alloc:
 	}
 
 	hal_reo_qdesc_setup(soc->hal_soc, tid, ba_window_size, start_seq,
-		hw_qdesc_vaddr, rx_tid->hw_qdesc_paddr, hal_pn_type);
+		hw_qdesc_vaddr, rx_tid->hw_qdesc_paddr, hal_pn_type,
+		vdev->vdev_stats_id);
 
 	qdf_mem_map_nbytes_single(soc->osdev, hw_qdesc_vaddr,
 		QDF_DMA_BIDIRECTIONAL, rx_tid->hw_qdesc_alloc_size,

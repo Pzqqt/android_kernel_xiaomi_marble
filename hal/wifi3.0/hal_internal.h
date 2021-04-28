@@ -752,7 +752,7 @@ struct hal_hw_txrx_ops {
 				    uint32_t ba_window_size,
 				    uint32_t start_seq, void *hw_qdesc_vaddr,
 				    qdf_dma_addr_t hw_qdesc_paddr,
-				    int pn_type);
+				    int pn_type, uint8_t vdev_stats_id);
 	uint32_t (*hal_gen_reo_remap_val)(enum hal_reo_remap_reg,
 					  uint8_t *ix0_map);
 
