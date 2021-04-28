@@ -7150,7 +7150,7 @@ end:
 	return is_matching;
 }
 
-static bool dsi_display_mode_match(const struct dsi_display_mode *mode1,
+bool dsi_display_mode_match(const struct dsi_display_mode *mode1,
 		struct dsi_display_mode *mode2, unsigned int match_flags)
 {
 	if (!mode1 && !mode2)

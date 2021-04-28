@@ -399,6 +399,16 @@ struct sde_connector_ops {
 	 * Returns: AVR step fps value on success
 	 */
 	int (*get_avr_step_req)(void *display, u32 mode_fps);
+
+	/**
+	 * set_submode_info - populate given sub mode blob
+	 * @connector: Pointer to drm connector structure
+	 * @info: Pointer to sde connector info structure
+	 * @display: Pointer to private display handle
+	 * @drm_mode: Pointer to drm_display_mode structure
+	 */
+	void (*set_submode_info)(struct drm_connector *conn,
+		void *info, void *display, struct drm_display_mode *drm_mode);
 };
 
 /**
@@ -1138,5 +1148,8 @@ int sde_connector_get_panel_vfp(struct drm_connector *connector,
  * @connector: Pointer to DRM connector object
  */
 int sde_connector_esd_status(struct drm_connector *connector);
+
+const char *sde_conn_get_topology_name(struct drm_connector *conn,
+		struct msm_display_topology topology);
 
 #endif /* _SDE_CONNECTOR_H_ */

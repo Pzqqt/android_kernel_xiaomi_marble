@@ -803,6 +803,67 @@ end:
 	return 0;
 }
 
+void dsi_conn_set_submode_blob_info(struct drm_connector *conn,
+		void *info, void *display, struct drm_display_mode *drm_mode)
+{
+	struct dsi_display *dsi_display = display;
+	struct dsi_display_mode partial_dsi_mode;
+	int count, i;
+	int preferred_submode_idx = -EINVAL;
+
+	if (!conn || !display || !drm_mode) {
+		DSI_ERR("Invalid params\n");
+		return;
+	}
+
+	convert_to_dsi_mode(drm_mode, &partial_dsi_mode);
+
+	mutex_lock(&dsi_display->display_lock);
+	count = dsi_display->panel->num_display_modes;
+	for (i = 0; i < count; i++) {
+		struct dsi_display_mode *dsi_mode = &dsi_display->modes[i];
+
+		u32 panel_mode_caps = 0;
+		const char *topo_name = NULL;
+
+		if (dsi_display_mode_match(&partial_dsi_mode, dsi_mode,
+				DSI_MODE_MATCH_FULL_TIMINGS)) {
+
+			sde_kms_info_add_keyint(info, "submode_idx", i);
+
+			if (dsi_mode->is_preferred)
+				preferred_submode_idx = i;
+
+			if (dsi_mode->panel_mode_caps & DSI_OP_CMD_MODE)
+				panel_mode_caps |= DRM_MODE_FLAG_CMD_MODE_PANEL;
+			if (dsi_mode->panel_mode_caps & DSI_OP_VIDEO_MODE)
+				panel_mode_caps |= DRM_MODE_FLAG_VID_MODE_PANEL;
+
+			sde_kms_info_add_keyint(info, "panel_mode_capabilities",
+				panel_mode_caps);
+
+			sde_kms_info_add_keyint(info, "dsc_mode",
+				dsi_mode->priv_info->dsc_enabled ? MSM_DISPLAY_DSC_MODE_ENABLED :
+					MSM_DISPLAY_DSC_MODE_DISABLED);
+			topo_name = sde_conn_get_topology_name(conn,
+				dsi_mode->priv_info->topology);
+			if (topo_name)
+				sde_kms_info_add_keystr(info, "topology", topo_name);
+
+			if (dsi_mode->priv_info->bit_clk_list.count > 0)
+				sde_kms_info_add_list(info, "dyn_bitclk_list",
+						dsi_mode->priv_info->bit_clk_list.rates,
+						dsi_mode->priv_info->bit_clk_list.count);
+		}
+	}
+
+	if (preferred_submode_idx >= 0)
+		sde_kms_info_add_keyint(info, "preferred_submode_idx",
+			preferred_submode_idx);
+
+	mutex_unlock(&dsi_display->display_lock);
+}
+
 enum drm_connector_status dsi_conn_detect(struct drm_connector *conn,
 		bool force,
 		void *display)

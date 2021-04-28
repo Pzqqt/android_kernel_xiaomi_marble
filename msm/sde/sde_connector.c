@@ -2512,6 +2512,29 @@ static void _sde_connector_report_panel_dead(struct sde_connector *conn,
 			conn->base.base.id, conn->encoder->base.id);
 }
 
+const char *sde_conn_get_topology_name(struct drm_connector *conn,
+		struct msm_display_topology topology)
+{
+	struct sde_kms *sde_kms;
+	int topology_idx = 0;
+
+	sde_kms = _sde_connector_get_kms(conn);
+	if (!sde_kms) {
+		SDE_ERROR("invalid kms\n");
+		return NULL;
+	}
+
+	topology_idx = (int)sde_rm_get_topology_name(&sde_kms->rm,
+				topology);
+
+	if (topology_idx >= SDE_RM_TOPOLOGY_MAX) {
+		SDE_ERROR("invalid topology\n");
+		return NULL;
+	}
+
+	return e_topology_name[topology_idx].name;
+}
+
 int sde_connector_esd_status(struct drm_connector *conn)
 {
 	struct sde_connector *sde_conn = NULL;
@@ -2617,6 +2640,7 @@ static int sde_connector_populate_mode_info(struct drm_connector *conn,
 	struct sde_connector *c_conn = NULL;
 	struct drm_display_mode *mode;
 	struct msm_mode_info mode_info;
+	const char *topo_name = NULL;
 	int rc = 0;
 
 	sde_kms = _sde_connector_get_kms(conn);
@@ -2632,8 +2656,6 @@ static int sde_connector_populate_mode_info(struct drm_connector *conn,
 	}
 
 	list_for_each_entry(mode, &conn->modes, head) {
-		int topology_idx = 0;
-		u32 panel_mode_caps = 0;
 
 		memset(&mode_info, 0, sizeof(mode_info));
 
@@ -2651,20 +2673,12 @@ static int sde_connector_populate_mode_info(struct drm_connector *conn,
 		sde_kms_info_add_keyint(info, "bit_clk_rate",
 					mode_info.clk_rate);
 
-		if (mode_info.bit_clk_count > 0)
-			sde_kms_info_add_list(info, "dyn_bitclk_list",
-					mode_info.bit_clk_rates,
-					mode_info.bit_clk_count);
-
-
-		topology_idx = (int)sde_rm_get_topology_name(&sde_kms->rm,
-					mode_info.topology);
-		if (topology_idx < SDE_RM_TOPOLOGY_MAX) {
-			sde_kms_info_add_keystr(info, "topology",
-					e_topology_name[topology_idx].name);
+		if (c_conn->ops.set_submode_info) {
+			c_conn->ops.set_submode_info(conn, info, c_conn->display, mode);
 		} else {
-			SDE_ERROR_CONN(c_conn, "invalid topology\n");
-			continue;
+			topo_name = sde_conn_get_topology_name(conn, mode_info.topology);
+			if (topo_name)
+				sde_kms_info_add_keystr(info, "topology", topo_name);
 		}
 
 		sde_kms_info_add_keyint(info, "has_cwb_crop", sde_kms->catalog->has_cwb_crop);
@@ -2676,14 +2690,6 @@ static int sde_connector_populate_mode_info(struct drm_connector *conn,
 
 		sde_kms_info_add_keyint(info, "allowed_mode_switch",
 			mode_info.allowed_mode_switches);
-
-		if (mode_info.panel_mode_caps & DSI_OP_CMD_MODE)
-			panel_mode_caps |= DRM_MODE_FLAG_CMD_MODE_PANEL;
-		if (mode_info.panel_mode_caps & DSI_OP_VIDEO_MODE)
-			panel_mode_caps |= DRM_MODE_FLAG_VID_MODE_PANEL;
-
-		sde_kms_info_add_keyint(info, "panel_mode_capabilities",
-			panel_mode_caps);
 
 		if (!mode_info.roi_caps.num_roi)
 			continue;

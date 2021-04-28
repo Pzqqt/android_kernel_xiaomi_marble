@@ -3025,6 +3025,11 @@ static int dsi_panel_parse_topology(
 		goto parse_fail;
 	}
 
+	if (priv_info->dsc_enabled)
+		topology[top_sel].comp_type = MSM_DISPLAY_COMPRESSION_DSC;
+	else if (priv_info->vdc_enabled)
+		topology[top_sel].comp_type = MSM_DISPLAY_COMPRESSION_VDC;
+
 	DSI_INFO("default topology: lm: %d comp_enc:%d intf: %d\n",
 		topology[top_sel].num_lm,
 		topology[top_sel].num_enc,

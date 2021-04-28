@@ -162,4 +162,14 @@ void dsi_conn_set_allowed_mode_switch(struct drm_connector *connector,
 int dsi_conn_set_dyn_bit_clk(struct drm_connector *connector,
 		uint64_t value);
 
+/**
+ * dsi_conn_set_submode_blob_info - populate given sub mode blob
+ * @connector: Pointer to drm connector structure
+ * @info: Pointer to sde connector info structure
+ * @display: Pointer to private display handle
+ * @drm_mode: Pointer to drm_display_mode structure
+ */
+void dsi_conn_set_submode_blob_info(struct drm_connector *conn,
+		void *info, void *display, struct drm_display_mode *drm_mode);
+
 #endif /* _DSI_DRM_H_ */

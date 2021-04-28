@@ -814,5 +814,14 @@ int dsi_display_update_dyn_bit_clk(struct dsi_display *display, struct dsi_displ
  */
 int dsi_display_restore_bit_clk(struct dsi_display *display, struct dsi_display_mode *mode);
 
+/**
+ * dsi_display_mode_match() - compares two dsi mode structures
+ * @mode1:       dsi_display_mode to be compared
+ * @mode2:       dsi_display_mode to be compared
+ * @match_flags: Values to compare
+ * Return: True if mode matches
+ */
+bool dsi_display_mode_match(const struct dsi_display_mode *mode1,
+		struct dsi_display_mode *mode2, unsigned int match_flags);
 
 #endif /* _DSI_DISPLAY_H_ */
