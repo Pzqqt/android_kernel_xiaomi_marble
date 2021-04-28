@@ -398,6 +398,8 @@ void lim_send_peer_create_resp(struct mac_context *mac, uint8_t vdev_id,
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc,
 						    vdev_id,
 						    WLAN_LEGACY_MAC_ID);
+	if (!vdev)
+		return;
 	wlan_cm_bss_peer_create_rsp(vdev, status,
 				    (struct qdf_mac_addr *)peer_mac);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);

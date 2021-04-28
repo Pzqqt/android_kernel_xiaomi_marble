@@ -3028,7 +3028,6 @@ lim_cm_create_session(struct mac_context *mac_ctx, struct cm_vdev_join_req *req)
 {
 	struct pe_session *pe_session;
 	uint8_t session_id;
-	struct wlan_objmgr_vdev *vdev;
 
 	pe_session = pe_find_session_by_bssid(mac_ctx, req->entry->bssid.bytes,
 					      &session_id);
@@ -3043,15 +3042,6 @@ lim_cm_create_session(struct mac_context *mac_ctx, struct cm_vdev_join_req *req)
 		return NULL;
 	}
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc,
-						    req->vdev_id,
-						    WLAN_MLME_CM_ID);
-	if (!vdev) {
-		pe_err("vdev_id: %d cm_id 0x%x : vdev not found", req->vdev_id,
-		       req->cm_id);
-		return NULL;
-	}
-
 	pe_session = pe_create_session(mac_ctx, req->entry->bssid.bytes,
 			&session_id,
 			mac_ctx->lim.max_sta_of_pe_session,
@@ -3061,9 +3051,6 @@ lim_cm_create_session(struct mac_context *mac_ctx, struct cm_vdev_join_req *req)
 		pe_err("vdev_id: %d cm_id 0x%x : pe_session create failed BSSID"
 		       QDF_MAC_ADDR_FMT, req->vdev_id, req->cm_id,
 		       QDF_MAC_ADDR_REF(req->entry->bssid.bytes));
-
-	pe_session->cm_id = req->cm_id;
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 
 	return pe_session;
 }
@@ -3598,10 +3585,10 @@ lim_cm_handle_join_req(struct cm_vdev_join_req *req)
 	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_JOIN_REQ_EVENT, NULL, 0, 0);
 
 	pe_session = lim_cm_create_session(mac_ctx, req);
-
 	if (!pe_session)
 		goto fail;
 
+	pe_session->cm_id = req->cm_id;
 	status = lim_fill_session_params(mac_ctx, pe_session, req);
 
 	if (QDF_IS_STATUS_ERROR(status))
