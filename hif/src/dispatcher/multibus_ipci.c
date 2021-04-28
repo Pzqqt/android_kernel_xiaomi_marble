@@ -77,8 +77,13 @@ QDF_STATUS hif_initialize_ipci_ops(struct hif_softc *hif_sc)
 		&hif_ipci_clear_stats;
 	bus_ops->hif_addr_in_boundary = &hif_dummy_addr_in_boundary;
 	bus_ops->hif_needs_bmi = &hif_ipci_needs_bmi;
+#ifdef HIF_CPU_PERF_AFFINE_MASK
+	bus_ops->hif_config_irq_affinity =
+		&hif_ipci_config_irq_affinity;
+#else
 	bus_ops->hif_config_irq_affinity =
 		&hif_dummy_config_irq_affinity;
+#endif
 	bus_ops->hif_config_irq_by_ceid = &hif_dummy_config_irq_by_ceid;
 	bus_ops->hif_log_bus_info = &hif_dummy_log_bus_info;
 	bus_ops->hif_enable_grp_irqs = hif_ipci_enable_grp_irqs;
