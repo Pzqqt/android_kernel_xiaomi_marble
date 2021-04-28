@@ -261,12 +261,6 @@ void msm_vidc_stop_streaming(struct vb2_queue *q)
 	}
 	i_vpr_h(inst, "Streamoff: %d\n", q->type);
 
-	/**
-	 * Clear q->last_buffer_dequeued flag to facilitate
-	 * userspace dqbuf on output port after last_flag FBD.
-	 */
-	vb2_clear_last_buffer_dequeued(&inst->vb2q[OUTPUT_META_PORT]);
-	vb2_clear_last_buffer_dequeued(&inst->vb2q[OUTPUT_PORT]);
 	if (q->type == INPUT_MPLANE) {
 		if (is_decode_session(inst))
 			rc = msm_vdec_streamoff_input(inst);
