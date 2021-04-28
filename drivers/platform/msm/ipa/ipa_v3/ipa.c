@@ -5673,12 +5673,14 @@ void ipa3_disable_clks(void)
 	 * issue on GSI FW side. We need to capture before
 	 * turn off the ipa clock.
 	 */
-	type = gsi_pending_irq_type();
-	if (type) {
-		IPAERR("unexpected gsi irq type: %d\n", type);
-		/* increase ipa3_active_clients for smp2p response */
-		atomic_inc(&ipa3_ctx->ipa3_active_clients.cnt);
-		ipa_assert();
+	if (!ipa3_ctx->ipa_config_is_mhi) {
+		type = gsi_pending_irq_type();
+		if (type) {
+			IPAERR("unexpected gsi irq type: %d\n", type);
+			/* increase ipa3_active_clients for smp2p response */
+			atomic_inc(&ipa3_ctx->ipa3_active_clients.cnt);
+			ipa_assert();
+		}
 	}
 
 	ipa3_ctx->ctrl->ipa3_disable_clks();
