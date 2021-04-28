@@ -495,10 +495,11 @@ struct lpass_cdc_rx_macro_priv {
 	bool reset_swr;
 	int clsh_users;
 	int rx_mclk_cnt;
+	u8 fir_total_coeff_num[FIR_PATH_MAX];
 	bool is_native_on;
 	bool is_ear_mode_on;
 	bool is_fir_filter_on;
-	bool is_fir_coeff_ready[FIR_PATH_MAX][GRP_MAX];
+	bool is_fir_coeff_written[FIR_PATH_MAX][GRP_MAX];
 	bool is_fir_capable;
 	bool dev_up;
 	bool hph_pwr_mode;
@@ -518,6 +519,7 @@ struct lpass_cdc_rx_macro_priv {
 	struct lpass_cdc_rx_macro_idle_detect_config idle_det_cfg;
 	u8 sidetone_coeff_array[IIR_MAX][BAND_MAX]
 		[LPASS_CDC_RX_MACRO_SIDETONE_IIR_COEFF_MAX * 4];
+	/* NOT designed to always reflect the actual hardware value */
 	u32 fir_coeff_array[FIR_PATH_MAX][GRP_MAX]
 		[LPASS_CDC_RX_MACRO_FIR_COEFF_MAX];
 	u32 num_fir_coeff[FIR_PATH_MAX][GRP_MAX];
@@ -3291,6 +3293,16 @@ static int lpass_cdc_rx_macro_fir_audio_mixer_get(struct snd_kcontrol *kcontrol,
 	if (!lpass_cdc_rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
 
+	if (path_idx >= FIR_PATH_MAX) {
+		dev_err(rx_priv->dev, "%s: path_idx:%d is invalid\n", __func__, path_idx);
+		return -EINVAL;
+	}
+
+	if (grp_idx >= GRP_MAX) {
+		dev_err(rx_priv->dev, "%s: grp_idx:%d is invalid\n", __func__, grp_idx);
+		return -EINVAL;
+	}
+
 	num_coeff_grp = rx_priv->num_fir_coeff[path_idx][grp_idx];
 	readArray[array_idx++] = num_coeff_grp;
 
@@ -3311,9 +3323,10 @@ static int set_fir_filter_coeff(struct snd_soc_component *component,
 {
 	int grp_idx = 0, coeff_idx = 0;
 	unsigned int ret = 0;
-	unsigned int sum_num_coeff, max_coeff_num, num_coeff_grp;
-	unsigned int path_ctl_addr, wdata0_addr, coeff_addr;
-	unsigned int fir_ctl_addr, num_coeff_addr;
+	unsigned int max_coeff_num, num_coeff_grp;
+	unsigned int path_ctl_addr = 0, wdata0_addr = 0, coeff_addr = 0;
+	unsigned int fir_ctl_addr = 0;
+	bool all_coeff_written = true;
 
 	switch (path_idx) {
 	case RX0_PATH:
@@ -3321,14 +3334,12 @@ static int set_fir_filter_coeff(struct snd_soc_component *component,
 		wdata0_addr = LPASS_CDC_RX_RX0_RX_FIR_COEFF_WDATA0;
 		coeff_addr = LPASS_CDC_RX_RX0_RX_FIR_COEFF_ADDR;
 		fir_ctl_addr = LPASS_CDC_RX_RX0_RX_FIR_CTL;
-		num_coeff_addr = LPASS_CDC_RX_RX0_RX_FIR_CFG;
 		break;
 	case RX1_PATH:
 		path_ctl_addr = LPASS_CDC_RX_RX1_RX_PATH_CTL;
 		wdata0_addr = LPASS_CDC_RX_RX1_RX_FIR_COEFF_WDATA0;
 		coeff_addr = LPASS_CDC_RX_RX1_RX_FIR_COEFF_ADDR;
 		fir_ctl_addr = LPASS_CDC_RX_RX1_RX_FIR_CTL;
-		num_coeff_addr = LPASS_CDC_RX_RX1_RX_FIR_CFG;
 		break;
 	default:
 		dev_err(rx_priv->dev,
@@ -3338,10 +3349,13 @@ static int set_fir_filter_coeff(struct snd_soc_component *component,
 	}
 
 	max_coeff_num = LPASS_CDC_RX_MACRO_FIR_COEFF_MAX;
-	sum_num_coeff = 0;
-	for (grp_idx = 0; grp_idx < GRP_MAX; grp_idx++) {
-		sum_num_coeff += rx_priv->num_fir_coeff[path_idx][grp_idx];
-	}
+
+	for (grp_idx = 0; grp_idx < GRP_MAX; grp_idx++)
+		all_coeff_written = all_coeff_written &&
+				rx_priv->is_fir_coeff_written[path_idx][grp_idx];
+
+	if (all_coeff_written)
+		goto exit;
 
 	ret = lpass_cdc_rx_macro_mclk_enable(rx_priv, 1, false);
 	if (ret < 0) {
@@ -3366,12 +3380,13 @@ static int set_fir_filter_coeff(struct snd_soc_component *component,
 
 	/* wait for data ram initialization after enabling clock  */
 	usleep_range(10, 11);
-	snd_soc_component_write(component, num_coeff_addr, sum_num_coeff);
-	dev_dbg(rx_priv->dev, "TEST: %s: sum_num_coeff:0x%x\n",
-				__func__, sum_num_coeff);
 
 	for (grp_idx = 0; grp_idx < GRP_MAX; grp_idx++) {
 		unsigned int coeff_idx_start = 0, array_idx = 0;
+
+		/* Skip if this group is written and no futher update */
+		if (rx_priv->is_fir_coeff_written[path_idx][grp_idx])
+			continue;
 
 		num_coeff_grp = rx_priv->num_fir_coeff[path_idx][grp_idx];
 		if (num_coeff_grp > max_coeff_num) {
@@ -3392,7 +3407,7 @@ static int set_fir_filter_coeff(struct snd_soc_component *component,
 
 			/* First coefficient in pair */
 			u32 value = rx_priv->fir_coeff_array[path_idx][grp_idx][array_idx++];
-			dev_dbg(rx_priv->dev, "TEST: %s: val of coeff_idx:%d, COEFF:0x%x\n",
+			dev_dbg(rx_priv->dev, "%s: val of coeff_idx:%d, COEFF:0x%x\n",
 						__func__, coeff_idx, value);
 			snd_soc_component_write(component, wdata0_addr,
 					value & 0xFF);
@@ -3405,7 +3420,7 @@ static int set_fir_filter_coeff(struct snd_soc_component *component,
 
 			/* Second coefficient in pair */
 			value = rx_priv->fir_coeff_array[path_idx][grp_idx][array_idx++];
-			dev_dbg(rx_priv->dev, "TEST: %s: val of coeff_idx:%d, COEFF:0x%x\n",
+			dev_dbg(rx_priv->dev, "%s: val of coeff_idx:%d, COEFF:0x%x\n",
 						__func__, coeff_idx, value);
 			snd_soc_component_write(component, wdata0_addr + 0x10,
 					value & 0xFF);
@@ -3428,7 +3443,7 @@ static int set_fir_filter_coeff(struct snd_soc_component *component,
 
 			/* First coefficient in pair */
 			u32 value = rx_priv->fir_coeff_array[path_idx][grp_idx][array_idx++];
-			dev_dbg(rx_priv->dev, "TEST: %s: val of coeff_idx:%d, COEFF:0x%x\n",
+			dev_dbg(rx_priv->dev, "%s: val of coeff_idx:%d, COEFF:0x%x\n",
 						__func__, coeff_idx, value);
 			snd_soc_component_write(component, wdata0_addr,
 					value & 0xFF);
@@ -3440,7 +3455,7 @@ static int set_fir_filter_coeff(struct snd_soc_component *component,
 					(value >> 24) & 0xFF);
 
 			/* Second coefficient in pair */
-			dev_dbg(rx_priv->dev, "TEST: %s: val of coeff_idx:%d, COEFF:0x%x\n",
+			dev_dbg(rx_priv->dev, "%s: val of coeff_idx:%d, COEFF:0x%x\n",
 						__func__, coeff_idx, 0x0);
 			snd_soc_component_write(component, wdata0_addr + 0x10, 0x0);
 			snd_soc_component_write(component, wdata0_addr + 0x14, 0x0);
@@ -3453,6 +3468,10 @@ static int set_fir_filter_coeff(struct snd_soc_component *component,
 			snd_soc_component_update_bits(component, fir_ctl_addr, 0x02, 0x00);
 		}
 
+		rx_priv->is_fir_coeff_written[path_idx][grp_idx] = true;
+		dev_dbg(component->dev, "%s: HIFI FIR Path:%d Group:%d coefficients"
+					" updated.\n",
+					__func__, path_idx, grp_idx);
 	}
 
 disable_FIR:
@@ -3468,9 +3487,6 @@ disable_mclk_block:
 	ret = lpass_cdc_rx_macro_mclk_enable(rx_priv, 0, false);
 
 exit:
-	for (grp_idx = 0; grp_idx < GRP_MAX; grp_idx++) {
-		rx_priv->is_fir_coeff_ready[path_idx][grp_idx] = false;
-	}
 	return ret;
 }
 
@@ -3487,7 +3503,7 @@ static int lpass_cdc_rx_macro_fir_audio_mixer_put(struct snd_kcontrol *kcontrol,
 	u32 coeff[LPASS_CDC_RX_MACRO_FIR_COEFF_ARRAY_MAX];
 
 	int ret = 0;
-	bool coeff_ready = true;
+	unsigned int stored_total_num = 0;
 	unsigned int grp_iidx = 0, coeff_idx = 0, array_idx = 0;
 	struct device *rx_dev = NULL;
 	struct lpass_cdc_rx_macro_priv *rx_priv = NULL;
@@ -3499,6 +3515,16 @@ static int lpass_cdc_rx_macro_fir_audio_mixer_put(struct snd_kcontrol *kcontrol,
 
 	if (!lpass_cdc_rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
+
+	if (path_idx >= FIR_PATH_MAX) {
+		dev_err(rx_priv->dev,"%s: path_idx:%d is invalid\n", __func__, path_idx);
+		return -EINVAL;
+	}
+
+	if (grp_idx >= GRP_MAX) {
+		dev_err(rx_priv->dev,"%s: grp_idx:%d is invalid\n", __func__, grp_idx);
+		return -EINVAL;
+	}
 
 	if (!rx_priv->hifi_fir_clk) {
 		dev_dbg(rx_priv->dev, "%s: Undefined HIFI FIR Clock.\n",
@@ -3536,34 +3562,109 @@ static int lpass_cdc_rx_macro_fir_audio_mixer_put(struct snd_kcontrol *kcontrol,
 	for (coeff_idx = 0; coeff_idx < num_coeff_grp; coeff_idx++)
 		rx_priv->fir_coeff_array[path_idx][grp_idx][coeff_idx] = coeff[array_idx++];
 
-	/*
-	 * Set all of followed groups flag to ready if one group is not full(last group)
-	 * to ensure all followed groups ready flag set even all-zero group presents
-	 * Only last group is expected to have unfilled coefficients
-	 */
-	if (num_coeff_grp < LPASS_CDC_RX_MACRO_FIR_COEFF_MAX) {
-		for (grp_iidx = grp_idx; grp_iidx < GRP_MAX; grp_iidx++) {
-			rx_priv->is_fir_coeff_ready[path_idx][grp_iidx] = true;
-			if (grp_iidx != grp_idx)
-				rx_priv->num_fir_coeff[path_idx][grp_iidx] = 0;
-		}
-	} else {
-		rx_priv->is_fir_coeff_ready[path_idx][grp_idx] = true;
-	}
+	/* Clear the written flag so this group is ready to be written */
+	rx_priv->is_fir_coeff_written[path_idx][grp_idx] = false;
 
+	stored_total_num = 0;
 	for (grp_iidx = 0; grp_iidx < GRP_MAX; grp_iidx++) {
-		coeff_ready &= rx_priv->is_fir_coeff_ready[path_idx][grp_iidx];
+		stored_total_num += rx_priv->num_fir_coeff[path_idx][grp_iidx];
 	}
 
-	if (coeff_ready) {
+	/* Only write coeffs if total num matches, otherwise delay the write */
+	if (rx_priv->fir_total_coeff_num[path_idx] == stored_total_num)
 		ret = set_fir_filter_coeff(component, rx_priv, path_idx);
-		if (ret < 0) {
-			rx_priv->num_fir_coeff[path_idx][grp_idx] = 0;
-			return ret;
-		}
+
+	return ret;
+}
+
+static int lpass_cdc_rx_macro_fir_coeff_num_get(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
+	unsigned int path_idx = ((struct soc_multi_mixer_control *)
+				kcontrol->private_value)->shift;
+	struct device *rx_dev = NULL;
+	struct lpass_cdc_rx_macro_priv *rx_priv = NULL;
+
+	if (!component) {
+		pr_err("%s: component is NULL\n", __func__);
+		return -EINVAL;
 	}
+
+	if (!lpass_cdc_rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
+		return -EINVAL;
+
+	if (path_idx >= FIR_PATH_MAX) {
+		dev_err(rx_priv->dev,"%s: path_idx:%d is invalid\n", __func__, path_idx);
+		return -EINVAL;
+	}
+
+	ucontrol->value.bytes.data[0] = rx_priv->fir_total_coeff_num[path_idx];
 
 	return 0;
+}
+
+static int lpass_cdc_rx_macro_fir_coeff_num_put(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
+	unsigned int path_idx = ((struct soc_multi_mixer_control *)
+				kcontrol->private_value)->shift;
+	u8 fir_total_coeff_num = ucontrol->value.bytes.data[0];
+	struct device *rx_dev = NULL;
+	struct lpass_cdc_rx_macro_priv *rx_priv = NULL;
+	unsigned int ret = 0;
+	unsigned int grp_idx, stored_total_num, num_coeff_addr;
+
+	if (!component) {
+		pr_err("%s: component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!lpass_cdc_rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
+		return -EINVAL;
+
+	switch (path_idx) {
+	case RX0_PATH:
+		num_coeff_addr = LPASS_CDC_RX_RX0_RX_FIR_CFG;
+		break;
+	case RX1_PATH:
+		num_coeff_addr = LPASS_CDC_RX_RX1_RX_FIR_CFG;
+		break;
+	default:
+		dev_err(rx_priv->dev,
+			"%s: inavlid FIR ID: %d\n", __func__, path_idx);
+		ret = -EINVAL;
+		goto exit;
+	}
+
+	if (fir_total_coeff_num > LPASS_CDC_RX_MACRO_FIR_COEFF_MAX * GRP_MAX) {
+		dev_err(rx_priv->dev,
+			"%s: inavlid total number of RX_FIR coefficients:%d"
+			" in path:%d\n",
+			__func__, fir_total_coeff_num, path_idx);
+		rx_priv->fir_total_coeff_num[path_idx] = 0;
+		return -EINVAL;
+	} else {
+		rx_priv->fir_total_coeff_num[path_idx] = fir_total_coeff_num;
+	}
+
+	snd_soc_component_write(component, num_coeff_addr, fir_total_coeff_num);
+	dev_dbg(component->dev, "%s: HIFI FIR Path:%d total coefficients"
+				" number updated: %d.\n",
+				__func__, path_idx, fir_total_coeff_num);
+
+	stored_total_num = 0;
+	for (grp_idx = 0; grp_idx < GRP_MAX; grp_idx++)
+		stored_total_num += rx_priv->num_fir_coeff[path_idx][grp_idx];
+
+	if (fir_total_coeff_num == stored_total_num)
+		ret = set_fir_filter_coeff(component, rx_priv, path_idx);
+
+exit:
+	return ret;
 }
 
 static const struct snd_kcontrol_new lpass_cdc_rx_macro_snd_controls[] = {
@@ -3590,6 +3691,14 @@ static const struct snd_kcontrol_new lpass_cdc_rx_macro_snd_controls[] = {
 		lpass_cdc_rx_macro_get_compander, lpass_cdc_rx_macro_set_compander),
 	SOC_SINGLE_EXT("RX_COMP2 Switch", SND_SOC_NOPM, LPASS_CDC_RX_MACRO_COMP2, 1, 0,
 		lpass_cdc_rx_macro_get_compander, lpass_cdc_rx_macro_set_compander),
+
+	SOC_SINGLE_EXT("RX0 FIR Coeff Num", SND_SOC_NOPM, RX0_PATH,
+			(LPASS_CDC_RX_MACRO_FIR_COEFF_MAX * GRP_MAX), 0,
+			lpass_cdc_rx_macro_fir_coeff_num_get, lpass_cdc_rx_macro_fir_coeff_num_put),
+
+	SOC_SINGLE_EXT("RX1 FIR Coeff Num", SND_SOC_NOPM, RX1_PATH,
+			(LPASS_CDC_RX_MACRO_FIR_COEFF_MAX * GRP_MAX), 0,
+			lpass_cdc_rx_macro_fir_coeff_num_get, lpass_cdc_rx_macro_fir_coeff_num_put),
 
 	SOC_ENUM_EXT("HPH Idle Detect", hph_idle_detect_enum,
 		lpass_cdc_rx_macro_hph_idle_detect_get, lpass_cdc_rx_macro_hph_idle_detect_put),
