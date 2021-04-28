@@ -4054,6 +4054,13 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			QMB_MASTER_SELECT_DDR,
 			{ 9 , 19, 25, 32, IPA_EE_AP, GSI_SMART_PRE_FETCH, 4},
 			IPA_TX_INSTANCE_NA },
+	[IPA_5_0][IPA_CLIENT_ODU_PROD]  = {
+			true, IPA_v5_0_GROUP_UL,
+			true,
+			IPA_DPS_HPS_SEQ_TYPE_PKT_PROCESS_NO_DEC_UCP,
+			QMB_MASTER_SELECT_DDR,
+			{ 7, 17, 8, 16, IPA_EE_AP, GSI_SMART_PRE_FETCH, 3 },
+			IPA_TX_INSTANCE_NA },
 	[IPA_5_0][IPA_CLIENT_WLAN3_PROD] = {
 			true,   IPA_v5_0_GROUP_UL,
 			false,
@@ -4229,6 +4236,13 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			IPA_DPS_HPS_SEQ_TYPE_INVALID,
 			QMB_MASTER_SELECT_DDR,
 			{ 35, 26 , 8 , 14, IPA_EE_AP, GSI_SMART_PRE_FETCH, 3},
+			IPA_TX_INSTANCE_DL },
+	[IPA_5_0][IPA_CLIENT_ODU_EMB_CONS] = {
+			true, IPA_v5_0_GROUP_DL,
+			false,
+			IPA_DPS_HPS_SEQ_TYPE_INVALID,
+			QMB_MASTER_SELECT_DDR,
+			{ 34, 8, 9, 9, IPA_EE_AP, GSI_SMART_PRE_FETCH, 4 },
 			IPA_TX_INSTANCE_DL },
 	[IPA_5_0][IPA_CLIENT_TEST_CONS] = {
 			true, IPA_v5_0_GROUP_UL,
