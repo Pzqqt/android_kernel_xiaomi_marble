@@ -130,12 +130,22 @@ void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 			    struct wma_tgt_cfg *cfg);
 
 /**
- * hdd_send_twt_enable_cmd() - Send TWT enable command to target
+ * hdd_send_twt_requestor_enable_cmd() - Send TWT requestor enable command to
+ * target
  * @hdd_ctx: HDD Context
  *
- * Return: None
+ * Return: QDF_STATUS
  */
-void hdd_send_twt_enable_cmd(struct hdd_context *hdd_ctx);
+QDF_STATUS hdd_send_twt_requestor_enable_cmd(struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_send_twt_responder_enable_cmd() - Send TWT responder enable command to
+ * target
+ * @hdd_ctx: HDD Context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hdd_send_twt_responder_enable_cmd(struct hdd_context *hdd_ctx);
 
 /**
  * hdd_send_twt_disable_cmd() - Send TWT disable command to target
@@ -235,8 +245,16 @@ static inline void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 {
 }
 
-static inline void hdd_send_twt_enable_cmd(struct hdd_context *hdd_ctx)
+static inline
+QDF_STATUS hdd_send_twt_requestor_enable_cmd(struct hdd_context *hdd_ctx)
 {
+	return QDF_STATUS_E_FAILURE;
+}
+
+static inline
+QDF_STATUS hdd_send_twt_responder_enable_cmd(struct hdd_context *hdd_ctx)
+{
+	return QDF_STATUS_E_FAILURE;
 }
 
 static inline QDF_STATUS hdd_send_twt_disable_cmd(struct hdd_context *hdd_ctx)

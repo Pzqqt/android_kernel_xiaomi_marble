@@ -96,6 +96,7 @@
 #include "ftm_time_sync_ucfg_api.h"
 #include <wlan_hdd_dcs.h>
 #include "wlan_tdls_ucfg_api.h"
+#include "wlan_mlme_twt_ucfg_api.h"
 #include "wlan_if_mgr_ucfg_api.h"
 #include "wlan_if_mgr_public_struct.h"
 #include "wlan_hdd_bootup_marker.h"
@@ -6485,6 +6486,23 @@ hdd_sap_nan_check_and_disable_unsupported_ndi(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
+#if defined(WLAN_SUPPORT_TWT) && \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(5, 3, 0))
+static void
+wlan_hdd_update_twt_responder(struct hdd_context *hdd_ctx,
+			      struct cfg80211_ap_settings *params)
+{
+	ucfg_mlme_set_twt_responder(hdd_ctx->psoc, params->twt_responder);
+	if (params->twt_responder)
+		hdd_send_twt_responder_enable_cmd(hdd_ctx);
+}
+#else
+static inline void
+wlan_hdd_update_twt_responder(struct hdd_context *hdd_ctx,
+			      struct cfg80211_ap_settings *params)
+{}
+#endif
+
 /**
  * __wlan_hdd_cfg80211_start_ap() - start soft ap mode
  * @wiphy: Pointer to wiphy structure
@@ -6781,6 +6799,12 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		}
 		adapter->session.ap.sap_config.ch_width_orig =
 						chandef->width;
+
+		/*
+		 * Enable/disable TWT responder based on
+		 * the twt_responder flag
+		 */
+		wlan_hdd_update_twt_responder(hdd_ctx, params);
 
 		hdd_place_marker(adapter, "TRY TO START", NULL);
 		status =
