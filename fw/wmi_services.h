@@ -531,6 +531,7 @@ typedef  enum  {
     WMI_SERVICE_DCS_AWGN_INT_SUPPORT = 286, /* Indicates FW supports AWGN Int */
     WMI_SERVICE_IGMP_OFFLOAD_SUPPORT = 287, /* FW supports igmp offload during APPS suspend */
     WMI_SERVICE_11AX_TDLS_SUPPORT = 288, /* Indicates FW supports 11ax TDLS. Host should enable 11ax on TDLS only when FW indicates the support. */
+    WMI_SERVICE_11BE = 289, /* Indicates FW supports 11be */
 
 
     WMI_MAX_EXT2_SERVICE

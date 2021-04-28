@@ -11216,6 +11216,7 @@ typedef struct {
 
     /** vdevid of transmitting VAP (mbssid case). Ignored for non mbssid case */
     A_UINT32 vdevid_trans;
+    A_UINT32 eht_ops;
 
 /* The TLVs follows this structure:
  *     wmi_channel chan; <-- WMI channel

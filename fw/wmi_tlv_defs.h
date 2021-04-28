@@ -1151,6 +1151,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_mlo_teardown_complete_fixed_param,
     WMITLV_TAG_STRUC_wmi_igmp_offload_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_extd_stats,
+    WMITLV_TAG_STRUC_wmi_peer_assoc_mlo_params,
 } WMITLV_TAG_ID;
 
 /*
