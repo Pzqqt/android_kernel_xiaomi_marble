@@ -1240,6 +1240,10 @@ static ssize_t ipa3_read_flt(struct file *file, char __user *ubuf, size_t count,
 			pr_err("hashable:%u rule_id:%u max_prio:%u prio:%u ",
 				entry->rule.hashable, entry->rule_id,
 				entry->rule.max_prio, entry->prio);
+			if (entry->rule.hashable)
+				pr_err("in_sys:%d ", tbl->in_sys[IPA_RULE_HASHABLE]);
+			else
+				pr_err("in_sys:%d ", tbl->in_sys[IPA_RULE_NON_HASHABLE]);
 			pr_err("enable_stats:%u counter_id:%u\n",
 				entry->rule.enable_stats,
 				entry->rule.cnt_idx);

@@ -164,6 +164,11 @@ do {\
 	(x < IPA_CLIENT_MAX && (x & 0x1) == 0)
 #define IPA_CLIENT_IS_CONS(x) \
 	(x < IPA_CLIENT_MAX && (x & 0x1) == 1)
+#define IPA_CLIENT_IS_ETH_PROD(x) \
+	((x == ipa3_get_ep_mapping(IPA_CLIENT_ETHERNET_PROD)) || \
+	 (x == ipa3_get_ep_mapping(IPA_CLIENT_ETHERNET2_PROD)) || \
+	 (x == ipa3_get_ep_mapping(IPA_CLIENT_AQC_ETHERNET_PROD)) || \
+	 (x == ipa3_get_ep_mapping(IPA_CLIENT_RTK_ETHERNET_PROD)))
 
 #define IPA_GSI_CHANNEL_STOP_SLEEP_MIN_USEC (3000)
 #define IPA_GSI_CHANNEL_STOP_SLEEP_MAX_USEC (5000)
