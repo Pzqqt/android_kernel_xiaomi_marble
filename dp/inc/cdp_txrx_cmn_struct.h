@@ -64,6 +64,12 @@
 #define OL_TXRX_INVALID_PDEV_ID 0xff
 #define OL_TXRX_INVALID_LOCAL_PEER_ID 0xffff
 #define CDP_INVALID_VDEV_ID 0xff
+
+/* Max vdev_stats_id(48) is as per the max vdevs supported by HW */
+#define CDP_MAX_VDEV_STATS_ID     0x30
+/* Invalid vdev_stats_id */
+#define CDP_INVALID_VDEV_STATS_ID 0xFF
+
 /* Options for Dump Statistics */
 #define CDP_HDD_STATS               0
 #define CDP_TXRX_PATH_STATS         1
@@ -687,6 +693,7 @@ enum wlan_op_subtype {
  * struct cdp_vdev_info - Vdev information
  * @vdev_mac_addr: mac address of the vdev
  * @vdev_id: ID of the vdev
+ * @vdev_stats_id: Stats ID of the vdev
  * @op_mode: Operation mode of the vdev
  * @subtype: subtype of the vdev
  * @mld_mac_addr: MLD mac addr of the current vdev.
@@ -694,6 +701,7 @@ enum wlan_op_subtype {
 struct cdp_vdev_info {
 	uint8_t *vdev_mac_addr;
 	uint8_t vdev_id;
+	uint8_t vdev_stats_id;
 	enum wlan_op_mode op_mode;
 	enum wlan_op_subtype subtype;
 #ifdef WLAN_FEATURE_11BE_MLO

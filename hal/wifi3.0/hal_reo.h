@@ -613,7 +613,7 @@ static inline void hal_reo_qdesc_setup(hal_soc_handle_t hal_soc_hdl, int tid,
 				       uint32_t ba_window_size,
 			 uint32_t start_seq, void *hw_qdesc_vaddr,
 			 qdf_dma_addr_t hw_qdesc_paddr,
-			 int pn_type)
+			 int pn_type, uint8_t vdev_stats_id)
 {
 	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
@@ -627,7 +627,8 @@ static inline void hal_reo_qdesc_setup(hal_soc_handle_t hal_soc_hdl, int tid,
 		hal_soc->ops->hal_reo_qdesc_setup(hal_soc_hdl, tid,
 						  ba_window_size, start_seq,
 						  hw_qdesc_vaddr,
-						  hw_qdesc_paddr, pn_type);
+						  hw_qdesc_paddr, pn_type,
+						  vdev_stats_id);
 }
 
 /**

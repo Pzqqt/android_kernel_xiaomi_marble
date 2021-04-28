@@ -164,6 +164,9 @@
 #define DP_SKIP_BAR_UPDATE_TIMEOUT 5000
 #endif
 
+#define DP_MAX_VDEV_STATS_ID        CDP_MAX_VDEV_STATS_ID
+#define DP_INVALID_VDEV_STATS_ID    CDP_INVALID_VDEV_STATS_ID
+
 enum rx_pktlog_mode {
 	DP_RX_PKTLOG_DISABLED = 0,
 	DP_RX_PKTLOG_FULL,
@@ -2264,6 +2267,8 @@ struct dp_soc {
 	/* Buffer manager ID for idle link descs */
 	uint8_t idle_link_bm_id;
 	qdf_atomic_t ref_count;
+
+	unsigned long vdev_stats_id_map;
 };
 
 #ifdef IPA_OFFLOAD
@@ -3084,6 +3089,9 @@ struct dp_vdev {
 	/* accumulative number of packets delay has accumulated */
 	qdf_atomic_t ul_pkts_accum;
 #endif /* WLAN_FEATURE_TSF_UPLINK_DELAY */
+
+	/* vdev_stats_id - ID used for stats collection by FW from HW*/
+	uint8_t vdev_stats_id;
 };
 
 enum {
