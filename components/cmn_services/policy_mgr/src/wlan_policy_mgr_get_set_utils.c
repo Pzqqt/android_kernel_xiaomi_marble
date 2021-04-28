@@ -1997,6 +1997,14 @@ QDF_STATUS policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
 			pm_ctx->dp_cbacks.hdd_disable_rx_ol_in_concurrency(false);
 	};
 
+	if ((mode == QDF_SAP_MODE || mode == QDF_P2P_GO_MODE) &&
+	    (policy_mgr_mode_specific_connection_count(psoc, PM_SAP_MODE,
+						       NULL) == 0) &&
+	    (policy_mgr_mode_specific_connection_count(psoc, PM_P2P_GO_MODE,
+						       NULL) == 0))
+		wlan_reg_set_ap_pwr_and_update_chan_list(pm_ctx->pdev,
+							 REG_INDOOR_AP);
+
 	/* Disable RPS if SAP interface has come up */
 	if (policy_mgr_mode_specific_connection_count(psoc, PM_SAP_MODE, NULL)
 		== 0) {
