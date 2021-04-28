@@ -2526,14 +2526,56 @@ exit:
 	return allow;
 }
 
+static void msm_vidc_update_input_cr(struct msm_vidc_inst *inst, u32 idx, u32 cr)
+{
+	struct msm_vidc_input_cr_data *temp, *next;
+	bool found = false;
+
+	list_for_each_entry_safe(temp, next, &inst->enc_input_crs, list) {
+		if (temp->index == idx) {
+			temp->input_cr = cr;
+			found = true;
+			break;
+		}
+	}
+	if (!found) {
+		temp = kzalloc(sizeof(*temp), GFP_KERNEL);
+		if (!temp) {
+			i_vpr_e(inst, "%s: malloc failure.\n", __func__);
+			return;
+		}
+		temp->index = idx;
+		temp->input_cr = cr;
+		list_add_tail(&temp->list, &inst->enc_input_crs);
+	}
+}
+
+static void msm_vidc_free_input_cr_list(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_input_cr_data *temp, *next;
+
+	list_for_each_entry_safe(temp, next, &inst->enc_input_crs, list) {
+		list_del(&temp->list);
+		kfree(temp);
+	}
+	INIT_LIST_HEAD(&inst->enc_input_crs);
+}
+
 static int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct msm_vidc_buffer *buf)
 {
 	struct msm_vidc_buffer *meta;
 	int rc = 0;
+	u32 cr = 0;
 
 	if (!inst || !buf || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
+	}
+
+	if (is_encode_session(inst) && is_input_buffer(buf->type)) {
+		cr = inst->capabilities->cap[ENC_IP_CR].value;
+		msm_vidc_update_input_cr(inst, buf->index, cr);
+		msm_vidc_update_cap_value(inst, ENC_IP_CR, 0, __func__);
 	}
 
 	if (is_decode_session(inst) && is_input_buffer(buf->type) &&
@@ -2572,6 +2614,9 @@ static int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct msm_vidc_buf
 		meta->attr |= MSM_VIDC_ATTR_QUEUED;
 	}
 
+	if (is_input_buffer(buf->type))
+		inst->power.buffer_counter++;
+
 	if (buf->type == MSM_VIDC_BUF_INPUT)
 		msm_vidc_debugfs_update(inst, MSM_VIDC_DEBUGFS_EVENT_ETB);
 	else if (buf->type == MSM_VIDC_BUF_OUTPUT)
@@ -2608,47 +2653,11 @@ int msm_vidc_queue_buffer_batch(struct msm_vidc_inst *inst)
 	return 0;
 }
 
-void msm_vidc_update_input_cr(struct msm_vidc_inst *inst, u32 idx, u32 cr)
-{
-	struct msm_vidc_input_cr_data *temp, *next;
-	bool found = false;
-
-	list_for_each_entry_safe(temp, next, &inst->enc_input_crs, list) {
-		if (temp->index == idx) {
-			temp->input_cr = cr;
-			found = true;
-			break;
-		}
-	}
-	if (!found) {
-		temp = kzalloc(sizeof(*temp), GFP_KERNEL);
-		if (!temp) {
-			i_vpr_e(inst, "%s: malloc failure.\n", __func__);
-			return;
-		}
-		temp->index = idx;
-		temp->input_cr = cr;
-		list_add_tail(&temp->list, &inst->enc_input_crs);
-	}
-}
-
-void msm_vidc_free_input_cr_list(struct msm_vidc_inst *inst)
-{
-	struct msm_vidc_input_cr_data *temp, *next;
-
-	list_for_each_entry_safe(temp, next, &inst->enc_input_crs, list) {
-		list_del(&temp->list);
-		kfree(temp);
-	}
-	INIT_LIST_HEAD(&inst->enc_input_crs);
-}
-
 int msm_vidc_queue_buffer_single(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 {
 	int rc = 0;
 	struct msm_vidc_buffer *buf;
 	enum msm_vidc_allow allow;
-	u32 cr = 0;
 
 	if (!inst || !vb2) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -2666,15 +2675,6 @@ int msm_vidc_queue_buffer_single(struct msm_vidc_inst *inst, struct vb2_buffer *
 	} else if (allow == MSM_VIDC_DEFER) {
 		print_vidc_buffer(VIDC_LOW, "low ", "qbuf deferred", inst, buf);
 		return 0;
-	}
-
-	if (buf->type == MSM_VIDC_BUF_INPUT) {
-		if (is_encode_session(inst)) {
-			cr = inst->capabilities->cap[ENC_IP_CR].value;
-			msm_vidc_update_input_cr(inst, vb2->index, cr);
-			msm_vidc_update_cap_value(inst, ENC_IP_CR, 0, __func__);
-		}
-		inst->power.buffer_counter++;
 	}
 
 	msm_vidc_scale_power(inst, is_input_buffer(buf->type));
