@@ -107,6 +107,8 @@ fwol_init_coex_config_in_cfg(struct wlan_objmgr_psoc *psoc,
 	coex_config->bt_sco_allow_wlan_2g_scan =
 				cfg_get(psoc, CFG_BT_SCO_ALLOW_WLAN_2G_SCAN);
 	fwol_three_way_coex_config_legacy_config_get(psoc, coex_config);
+	coex_config->ble_scan_coex_policy = cfg_get(psoc,
+						    CFG_BLE_SCAN_COEX_POLICY);
 }
 
 static void

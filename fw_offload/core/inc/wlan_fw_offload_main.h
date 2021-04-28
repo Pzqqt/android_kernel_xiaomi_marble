@@ -60,7 +60,7 @@ enum wlan_fwol_southbound_event {
 };
 
 /**
- * struct wlan_fwol_three_antenna_btc - Three antenna BTC config items
+ * struct wlan_fwol_coex_config - BTC config items
  * @btc_mode: Config BTC mode
  * @antenna_isolation: Antenna isolation
  * @max_tx_power_for_btc: Max wlan tx power in co-ex scenario
@@ -77,6 +77,8 @@ enum wlan_fwol_southbound_event {
  *                             BT SCO connection is on
  * @btc_three_way_coex_config_legacy_enable: Enable/Disable tri-radio coex
  *                             config legacy feature
+ * @ble_scan_coex_policy: BLE Scan policy, true - better BLE scan result, false
+ *                        better wlan throughput
  */
 struct wlan_fwol_coex_config {
 	uint8_t btc_mode;
@@ -97,6 +99,7 @@ struct wlan_fwol_coex_config {
 #ifdef FEATURE_COEX_CONFIG
 	bool    btc_three_way_coex_config_legacy_enable;
 #endif
+	bool ble_scan_coex_policy;
 };
 
 #define FWOL_THERMAL_LEVEL_MAX 4
