@@ -1429,6 +1429,7 @@ static ssize_t ipa3_read_stats(struct file *file, char __user *ubuf,
 		"act_clnt=%u\n"
 		"con_clnt_bmap=0x%x\n"
 		"wan_rx_empty=%u\n"
+		"wan_rx_empty_coal=%u\n"
 		"wan_repl_rx_empty=%u\n"
 		"lan_rx_empty=%u\n"
 		"lan_repl_rx_empty=%u\n"
@@ -1446,6 +1447,7 @@ static ssize_t ipa3_read_stats(struct file *file, char __user *ubuf,
 		atomic_read(&ipa3_ctx->ipa3_active_clients.cnt),
 		connect,
 		ipa3_ctx->stats.wan_rx_empty,
+		ipa3_ctx->stats.wan_rx_empty_coal,
 		ipa3_ctx->stats.wan_repl_rx_empty,
 		ipa3_ctx->stats.lan_rx_empty,
 		ipa3_ctx->stats.lan_repl_rx_empty,

@@ -8055,6 +8055,10 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	/* Initialize Page poll threshold. */
 	ipa3_ctx->page_poll_threshold = IPA_PAGE_POLL_DEFAULT_THRESHOLD;
 
+	/* Use common page pool for Def/Coal pipe. */
+	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_1)
+		ipa3_ctx->wan_common_page_pool = true;
+
 	/* assume clock is on in virtual/emulation mode */
 	if (ipa3_ctx->ipa3_hw_mode == IPA_HW_MODE_VIRTUAL ||
 	    ipa3_ctx->ipa3_hw_mode == IPA_HW_MODE_EMULATION)
