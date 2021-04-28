@@ -4647,14 +4647,14 @@ int _ipa_init_sram_v3(void)
 		IPA_MEM_PART(modem_hdr_proc_ctx_ofst));
 	if (ipa_get_hw_type_internal() >= IPA_HW_v4_5
 		&& ipa_get_hw_type_internal() < IPA_HW_v5_0) {
+		/* 4.5, 4.7, 4.9, 4.11 */
 		ipa3_sram_set_canary(ipa_sram_mmio,
 			IPA_MEM_PART(nat_tbl_ofst) - 12);
-	} else if (ipa_get_hw_type_internal() >= IPA_HW_v5_0) {
-		ipa3_sram_set_canary(ipa_sram_mmio,
-			IPA_MEM_PART(nat_tbl_ofst) - 28);
 	}
+
 	if (ipa_get_hw_type_internal() >= IPA_HW_v4_0) {
 		if (ipa_get_hw_type_internal() < IPA_HW_v4_5) {
+			/* 4.0, 4.1, 4.2 */
 			ipa3_sram_set_canary(ipa_sram_mmio,
 				IPA_MEM_PART(pdn_config_ofst) - 4);
 			ipa3_sram_set_canary(ipa_sram_mmio,
@@ -4663,12 +4663,20 @@ int _ipa_init_sram_v3(void)
 				IPA_MEM_PART(stats_quota_q6_ofst) - 4);
 			ipa3_sram_set_canary(ipa_sram_mmio,
 				IPA_MEM_PART(stats_quota_q6_ofst));
-		} else {
+		} else if (ipa_get_hw_type_internal() < IPA_HW_v5_0) {
+			/* 4.5, 4.7, 4.11 */
 			ipa3_sram_set_canary(ipa_sram_mmio,
 				IPA_MEM_PART(stats_quota_q6_ofst) - 12);
+		} else {
+			/* 5.0 and above */
+			ipa3_sram_set_canary(ipa_sram_mmio,
+				IPA_MEM_PART(stats_quota_q6_ofst) - 4);
+			ipa3_sram_set_canary(ipa_sram_mmio,
+				IPA_MEM_PART(stats_quota_q6_ofst));
 		}
 	}
 
+	/* all excluding 3.5.1, 4.0, 4.1, 4.2 */
 	if (ipa_get_hw_type_internal() <= IPA_HW_v3_5 ||
 		ipa_get_hw_type_internal() >= IPA_HW_v4_5) {
 		ipa3_sram_set_canary(ipa_sram_mmio,
@@ -4688,7 +4696,10 @@ int _ipa_init_sram_v3(void)
 	}
 
 	if (ipa_get_hw_type_internal() >= IPA_HW_v5_0) {
-		ipa3_sram_set_canary(ipa_sram_mmio, IPA_MEM_PART(pdn_config_ofst));
+		ipa3_sram_set_canary(ipa_sram_mmio,
+			IPA_MEM_PART(pdn_config_ofst - 4));
+		ipa3_sram_set_canary(ipa_sram_mmio,
+			IPA_MEM_PART(pdn_config_ofst));
 	} else {
 		ipa3_sram_set_canary(ipa_sram_mmio,
 			(ipa_get_hw_type_internal() >= IPA_HW_v3_5) ?
