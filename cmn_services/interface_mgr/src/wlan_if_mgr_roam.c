@@ -380,7 +380,6 @@ static bool if_mgr_validate_sta_bcn_intrvl(struct wlan_objmgr_vdev *vdev,
 	uint32_t beacon_interval;
 	struct wlan_channel *chan;
 	enum QDF_OPMODE curr_persona;
-	enum wlan_peer_type bss_persona;
 	uint8_t allow_mcc_go_diff_bi;
 	uint8_t conc_rule1 = 0, conc_rule2 = 0;
 	uint8_t vdev_id = wlan_vdev_get_id(vdev);
@@ -394,11 +393,11 @@ static bool if_mgr_validate_sta_bcn_intrvl(struct wlan_objmgr_vdev *vdev,
 		return false;
 
 	curr_persona = wlan_vdev_mlme_get_opmode(vdev);
-	bss_persona = wlan_peer_get_peer_type(peer);
 
 	wlan_objmgr_peer_release_ref(peer, WLAN_IF_MGR_ID);
 
-	if (curr_persona == QDF_P2P_CLIENT_MODE) {
+	if (curr_persona == QDF_STA_MODE ||
+	    curr_persona == QDF_P2P_CLIENT_MODE) {
 		ifmgr_debug("Bcn Intrvl validation not require for STA/CLIENT");
 		return false;
 	}
@@ -420,7 +419,7 @@ static bool if_mgr_validate_sta_bcn_intrvl(struct wlan_objmgr_vdev *vdev,
 	wlan_util_vdev_mlme_get_param(vdev_mlme, WLAN_MLME_CFG_BEACON_INTERVAL,
 				      &beacon_interval);
 
-	if (bss_persona == WLAN_PEER_AP &&
+	if (curr_persona == QDF_SAP_MODE &&
 	    (chan->ch_cfreq1 != bss_arg->ch_freq ||
 	     chan->ch_cfreq2 != bss_arg->ch_freq)) {
 		ifmgr_debug("*** MCC with SAP+STA sessions ****");
@@ -428,7 +427,7 @@ static bool if_mgr_validate_sta_bcn_intrvl(struct wlan_objmgr_vdev *vdev,
 		return true;
 	}
 
-	if (bss_persona == WLAN_PEER_P2P_GO &&
+	if (curr_persona == QDF_P2P_GO_MODE &&
 	    (chan->ch_cfreq1 != bss_arg->ch_freq ||
 	     chan->ch_cfreq2 != bss_arg->ch_freq) &&
 	    beacon_interval != bss_arg->bss_beacon_interval) {
@@ -684,11 +683,8 @@ bool if_mgr_is_beacon_interval_valid(struct wlan_objmgr_pdev *pdev,
 	if (!bss_arg.is_done)
 		return true;
 
-	if (bss_arg.bss_beacon_interval != candidate->beacon_interval) {
-		candidate->beacon_interval = bss_arg.bss_beacon_interval;
-		if (bss_arg.status == QDF_STATUS_SUCCESS)
-			return true;
-	}
+	if (bss_arg.is_done && QDF_IS_STATUS_SUCCESS(bss_arg.status))
+		return true;
 
 	return false;
 }
