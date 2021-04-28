@@ -552,7 +552,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		NULL, msm_vidc_set_vbr_related_properties},
 
 	{VBV_DELAY, ENC, H264|HEVC,
-		500, 2000, 500, 500,
+		100, 300, 100, 300,
 		V4L2_CID_MPEG_VIDEO_VBV_DELAY,
 		HFI_PROP_VBV_DELAY,
 		CAP_FLAG_OUTPUT_PORT,
@@ -562,9 +562,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 
 	{PEAK_BITRATE, ENC, H264|HEVC,
 		/* default peak bitrate is 10% larger than avrg bitrate */
-		1, MAX_BITRATE, 1,
-		(DEFAULT_BITRATE +
-			(DEFAULT_BITRATE / PERCENT_PEAK_BITRATE_INCREASED)),
+		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
 		V4L2_CID_MPEG_VIDEO_BITRATE_PEAK,
 		HFI_PROP_TOTAL_PEAK_BITRATE,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |

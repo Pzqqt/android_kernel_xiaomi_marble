@@ -1528,9 +1528,7 @@ int msm_vidc_adjust_peak_bitrate(void *instance, struct v4l2_ctrl *ctrl)
 		if (adjusted_value < bitrate)
 			adjusted_value = bitrate;
 	} else {
-		adjusted_value = capability->cap[BIT_RATE].value +
-			(capability->cap[BIT_RATE].value /
-			PERCENT_PEAK_BITRATE_INCREASED);
+		adjusted_value = capability->cap[BIT_RATE].value;
 	}
 
 	msm_vidc_update_cap_value(inst, PEAK_BITRATE,
