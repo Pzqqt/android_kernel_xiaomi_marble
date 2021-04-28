@@ -37,6 +37,8 @@ int msm_vidc_adjust_peak_bitrate(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_hevc_min_qp(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_hevc_max_qp(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_hevc_frame_qp(void *instance, struct v4l2_ctrl *ctrl);
+int msm_vidc_adjust_blur_type(void *instance, struct v4l2_ctrl *ctrl);
+int msm_vidc_adjust_blur_resolution(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_v4l2_properties(struct msm_vidc_inst *inst);
 int msm_vidc_adjust_session_priority(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_roi_info(void *instance, struct v4l2_ctrl *ctrl);
@@ -82,6 +84,10 @@ int msm_vidc_set_session_priority(void *instance,
 int msm_vidc_set_flip(void *instance,
 	enum msm_vidc_inst_capability_type cap_id);
 int msm_vidc_set_rotation(void *instance,
+	enum msm_vidc_inst_capability_type cap_id);
+int msm_vidc_set_blur_type(void *instance,
+	enum msm_vidc_inst_capability_type cap_id);
+int msm_vidc_set_blur_resolution(void *instance,
 	enum msm_vidc_inst_capability_type cap_id);
 int msm_vidc_set_s32(void *instance,
 	enum msm_vidc_inst_capability_type cap_id);

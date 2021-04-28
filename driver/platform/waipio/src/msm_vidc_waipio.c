@@ -134,7 +134,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		0, 0,
 		CAP_FLAG_ROOT,
 		{0},
-		{PROFILE, MIN_FRAME_QP, MAX_FRAME_QP, I_FRAME_QP, META_ROI_INFO}},
+		{PROFILE, MIN_FRAME_QP, MAX_FRAME_QP, I_FRAME_QP, META_ROI_INFO,
+			BLUR_TYPES}},
 
 	{PIX_FMTS, DEC, HEVC|HEIC,
 		MSM_VIDC_FMT_NV12,
@@ -236,7 +237,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT |
 			CAP_FLAG_INPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
 		{0},
-		{0},
+		{BLUR_TYPES},
 		NULL, msm_vidc_set_flip},
 
 	{VFLIP, ENC, CODECS_ALL,
@@ -257,7 +258,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		HFI_PROP_ROTATION,
 		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT,
 		{0},
-		{0},
+		{BLUR_TYPES},
 		NULL, msm_vidc_set_rotation},
 
 	{SUPER_FRAME, ENC, H264|HEVC,
@@ -350,7 +351,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		{LTR_COUNT, IR_RANDOM, TIME_DELTA_BASED_RC, I_FRAME_QP,
 			ENH_LAYER_COUNT, BIT_RATE, CONTENT_ADAPTIVE_CODING,
 			BITRATE_BOOST, MIN_QUALITY, VBV_DELAY, PEAK_BITRATE,
-			SLICE_MODE, META_ROI_INFO},
+			SLICE_MODE, META_ROI_INFO, BLUR_TYPES},
 		msm_vidc_adjust_bitrate_mode, msm_vidc_set_u32_enum},
 
 	{BITRATE_MODE, ENC, HEVC,
@@ -368,7 +369,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 			CONSTANT_QUALITY, ENH_LAYER_COUNT,
 			CONTENT_ADAPTIVE_CODING, BIT_RATE,
 			BITRATE_BOOST, MIN_QUALITY, VBV_DELAY,
-			PEAK_BITRATE, SLICE_MODE, META_ROI_INFO},
+			PEAK_BITRATE, SLICE_MODE, META_ROI_INFO, BLUR_TYPES},
 		msm_vidc_adjust_bitrate_mode, msm_vidc_set_u32_enum},
 
 	{LOSSLESS, ENC, HEVC|HEIC,
@@ -427,18 +428,24 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		msm_vidc_adjust_b_frame, msm_vidc_set_u32},
 
 	{BLUR_TYPES, ENC, CODECS_ALL,
-		VIDC_BLUR_NONE, VIDC_BLUR_ADAPTIVE, 1, VIDC_BLUR_NONE,
+		VIDC_BLUR_NONE, VIDC_BLUR_ADAPTIVE, 1, VIDC_BLUR_ADAPTIVE,
 		V4L2_CID_MPEG_VIDC_VIDEO_BLUR_TYPES,
 		HFI_PROP_BLUR_TYPES,
-		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT,
-		{0}, {0},
-		NULL, msm_vidc_set_u32_enum},
+		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
+		{PIX_FMTS, ROTATION, HFLIP, BITRATE_MODE,
+			CONTENT_ADAPTIVE_CODING},
+		{BLUR_RESOLUTION},
+		msm_vidc_adjust_blur_type, msm_vidc_set_blur_type},
 
 	{BLUR_RESOLUTION, ENC, CODECS_ALL,
 		0, S32_MAX, 1, 0,
 		V4L2_CID_MPEG_VIDC_VIDEO_BLUR_RESOLUTION,
 		HFI_PROP_BLUR_RESOLUTION,
-		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT},
+		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
+			CAP_FLAG_DYNAMIC_ALLOWED,
+		{BLUR_TYPES},
+		{0},
+		msm_vidc_adjust_blur_resolution, msm_vidc_set_blur_resolution},
 
 	{CSC, ENC, CODECS_ALL,
 		V4L2_MPEG_MSM_VIDC_DISABLE,
@@ -530,7 +537,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		V4L2_CID_MPEG_VIDC_CONTENT_ADAPTIVE_CODING,
 		HFI_PROP_CONTENT_ADAPTIVE_CODING,
 		CAP_FLAG_OUTPUT_PORT,
-		{BITRATE_MODE}, {0},
+		{BITRATE_MODE},
+		{BLUR_TYPES},
 		NULL, msm_vidc_set_vbr_related_properties},
 
 	{BITRATE_BOOST, ENC, H264|HEVC,
