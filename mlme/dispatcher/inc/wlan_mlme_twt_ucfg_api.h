@@ -200,6 +200,26 @@ ucfg_mlme_set_twt_bcast_responder(struct wlan_objmgr_psoc *psoc,
 				  bool val);
 
 /**
+ * ucfg_mlme_set_twt_requestor_flag() - Set twt requestor flag
+ * @psoc: pointer to psoc object
+ * @val: Value to be set to config
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_mlme_set_twt_requestor_flag(struct wlan_objmgr_psoc *psoc,
+					    bool val);
+
+/**
+ * ucfg_mlme_set_twt_responder_flag() - Set twt responder flag
+ * @psoc: pointer to psoc object
+ * @val: Value to be set to config
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_mlme_set_twt_responder_flag(struct wlan_objmgr_psoc *psoc,
+					    bool val);
+
+/**
  * ucfg_mlme_is_twt_setup_in_progress() - Get TWT setup in progress for
  * given dialog id
  * @psoc: Pointer to global PSOC object
@@ -590,6 +610,20 @@ ucfg_mlme_set_twt_bcast_responder(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_E_NOSUPPORT;
 }
 
+static inline QDF_STATUS
+ucfg_mlme_set_twt_requestor_flag(struct wlan_objmgr_psoc *psoc,
+				 bool val)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+ucfg_mlme_set_twt_responder_flag(struct wlan_objmgr_psoc *psoc,
+				 bool val)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
 static inline
 bool ucfg_mlme_is_flexible_twt_enabled(struct wlan_objmgr_psoc *psoc)
 {
@@ -670,5 +704,6 @@ ucfg_mlme_get_twt_session_state(struct wlan_objmgr_psoc *psoc,
 {
 	return WLAN_TWT_SETUP_STATE_NOT_ESTABLISHED;
 }
+
 #endif /* defined(WLAN_SUPPORT_TWT) && defined(WLAN_FEATURE_11AX) */
 #endif /* _WLAN_MLME_TWT_UCFG_API_H_ */
