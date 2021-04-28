@@ -6412,6 +6412,16 @@ static int hdd_send_coex_config_params(struct hdd_context *hdd_ctx,
 		goto err;
 	}
 
+	coex_cfg_params.config_type =
+				WMI_COEX_CONFIG_LE_SCAN_POLICY;
+	coex_cfg_params.config_arg1 = config.ble_scan_coex_policy;
+
+	status = sme_send_coex_config_cmd(&coex_cfg_params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to send coex BLE scan policy");
+		goto err;
+	}
+
 	return 0;
 err:
 	return -EINVAL;

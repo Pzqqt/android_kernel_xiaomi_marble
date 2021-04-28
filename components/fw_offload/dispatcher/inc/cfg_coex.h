@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 - 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012 - 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -282,6 +282,29 @@
 		1, \
 		"Bt Sco Allow Wlan 2G Scan")
 
+/*
+ * <ini>
+ * ble_scan_coex_policy - Ini to configure coex policy
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * 0 - Better BLE Advertiser reception performance
+ * 1 - Better WLAN performance
+ *
+ * This ini is used to control the performance of ble scan case,’0’ to place
+ * more emphasis on BLE Scan results , ‘1’ to place more emphasis on WLAN
+ * performance
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_BLE_SCAN_COEX_POLICY CFG_INI_BOOL( \
+		"ble_scan_coex_policy", \
+		0, \
+		"BLE scan Coex policy")
+
 #ifdef FEATURE_COEX_CONFIG
 /*
  * <ini>
@@ -363,5 +386,6 @@
 	COEX_MPTA_HELPER_CFG \
 	CFG(CFG_BT_SCO_ALLOW_WLAN_2G_SCAN) \
 	THREE_WAY_COEX_CONFIG_LEGACY_CFG \
-	SET_INIT_CHAIN_MODE_FOR_BTC_CFG
+	SET_INIT_CHAIN_MODE_FOR_BTC_CFG \
+	CFG(CFG_BLE_SCAN_COEX_POLICY)
 #endif
