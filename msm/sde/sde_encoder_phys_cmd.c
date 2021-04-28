@@ -409,7 +409,7 @@ static void sde_encoder_phys_cmd_cont_splash_mode_set(
 					&cmd_enc->autorefresh.cfg);
 		}
 
-		if (hw_intf->ops.reset_counter)
+		if (hw_intf && hw_intf->ops.reset_counter)
 			hw_intf->ops.reset_counter(hw_intf);
 	}
 

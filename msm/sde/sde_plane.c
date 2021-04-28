@@ -2347,7 +2347,7 @@ static void _sde_plane_get_max_downscale_limits(struct sde_plane *psde,
 {
 	bool rotated, has_predown, default_scale;
 	const struct sde_sspp_sub_blks *sblk;
-	struct sde_hw_inline_pre_downscale_cfg *pd;
+	struct sde_hw_inline_pre_downscale_cfg *pd = NULL;
 
 	rotated = pstate->rotation & DRM_MODE_ROTATE_90;
 	sblk = psde->pipe_sblk;
