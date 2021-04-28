@@ -2493,6 +2493,8 @@ static inline void copy_peer_flags_tlv_11be(
 		cmd->peer_flags_ext |= WMI_PEER_EXT_320MHZ;
 	if (param->eht_flag)
 		cmd->peer_flags_ext |= WMI_PEER_EXT_EHT;
+
+	wmi_debug("peer_flags_ext 0x%x", cmd->peer_flags_ext);
 }
 #else
 static inline void copy_peer_flags_tlv_11be(
