@@ -830,7 +830,7 @@ static int _sde_crtc_set_crtc_roi(struct drm_crtc *crtc,
 	int i = 0;
 	int rc;
 	bool is_crtc_roi_dirty;
-	bool is_any_conn_roi_dirty;
+	bool is_conn_roi_dirty;
 
 	if (!crtc || !state)
 		return -EINVAL;
@@ -840,7 +840,6 @@ static int _sde_crtc_set_crtc_roi(struct drm_crtc *crtc,
 	crtc_roi = &crtc_state->crtc_roi;
 
 	is_crtc_roi_dirty = sde_crtc_is_crtc_roi_dirty(state);
-	is_any_conn_roi_dirty = false;
 
 	for_each_new_connector_in_state(state->state, conn, conn_state, i) {
 		struct sde_connector *sde_conn;
@@ -859,11 +858,20 @@ static int _sde_crtc_set_crtc_roi(struct drm_crtc *crtc,
 		sde_conn = to_sde_connector(conn_state->connector);
 		sde_conn_state = to_sde_connector_state(conn_state);
 
-		is_any_conn_roi_dirty = is_any_conn_roi_dirty ||
-				msm_property_is_dirty(
-						&sde_conn->property_info,
+		is_conn_roi_dirty = msm_property_is_dirty(&sde_conn->property_info,
 						&sde_conn_state->property_state,
 						CONNECTOR_PROP_ROI_V1);
+
+		/*
+		 * Check against CRTC ROI and Connector ROI not being updated together.
+		 * This restriction should be relaxed when Connector ROI scaling is
+		 * supported and while in clone mode.
+		 */
+		if (!sde_encoder_in_clone_mode(sde_conn->encoder) &&
+				is_conn_roi_dirty != is_crtc_roi_dirty) {
+			SDE_ERROR("connector/crtc rois not updated together\n");
+			return -EINVAL;
+		}
 
 		if (!mode_info.roi_caps.enabled)
 			continue;
@@ -888,16 +896,6 @@ static int _sde_crtc_set_crtc_roi(struct drm_crtc *crtc,
 		SDE_EVT32_VERBOSE(DRMID(crtc), DRMID(conn),
 				conn_roi.x, conn_roi.y,
 				conn_roi.w, conn_roi.h);
-	}
-
-	/*
-	 * Check against CRTC ROI and Connector ROI not being updated together.
-	 * This restriction should be relaxed when Connector ROI scaling is
-	 * supported.
-	 */
-	if (is_any_conn_roi_dirty != is_crtc_roi_dirty) {
-		SDE_ERROR("connector/crtc rois not updated together\n");
-		return -EINVAL;
 	}
 
 	sde_kms_rect_merge_rectangles(&crtc_state->user_roi_list, crtc_roi);
