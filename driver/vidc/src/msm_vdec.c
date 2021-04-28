@@ -1329,6 +1329,8 @@ static int msm_vdec_read_input_subcr_params(struct msm_vidc_inst *inst)
 	}
 
 	inst->buffers.output.min_count = subsc_params.fw_min_count;
+	inst->buffers.output.extra_count = call_session_op(core,
+		extra_count, inst, MSM_VIDC_BUF_OUTPUT);
 	if (is_thumbnail_session(inst) && inst->codec != MSM_VIDC_VP9) {
 		if (inst->buffers.output.min_count != 1) {
 			i_vpr_e(inst, "%s: invalid min count %d in thumbnail case\n",
