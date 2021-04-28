@@ -1399,3 +1399,8 @@ bool wlan_nan_get_sap_conc_support(struct wlan_objmgr_psoc *psoc)
 	return (psoc_nan_obj->nan_caps.nan_sap_supported &&
 		ucfg_is_nan_conc_control_supported(psoc));
 }
+
+bool wlan_nan_is_beamforming_supported(struct wlan_objmgr_psoc *psoc)
+{
+	return ucfg_nan_is_beamforming_supported(psoc);
+}
