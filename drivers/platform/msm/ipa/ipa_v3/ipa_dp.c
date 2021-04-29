@@ -1614,10 +1614,15 @@ int ipa3_teardown_sys_pipe(u32 clnt_hdl)
 			return i;
 		}
 
-		result = ipa3_teardown_coal_def_pipe(i);
-		if (result) {
-			IPAERR("failed to teardown default coal pipe\n");
-			return result;
+		/* If the default channel is already torn down,
+		 * resetting only coalescing channel.
+		 */
+		if (ipa3_ctx->ep[i].valid) {
+			result = ipa3_teardown_coal_def_pipe(i);
+			if (result) {
+				IPAERR("failed to teardown default coal pipe\n");
+				return result;
+			}
 		}
 	}
 
