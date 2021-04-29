@@ -12,6 +12,8 @@
 #include "gsi.h"
 #include "gsihal.h"
 
+#define GSI_MAX_MSG_LEN 4096
+
 #define TERR(fmt, args...) \
 		pr_err("%s:%d " fmt, __func__, __LINE__, ## args)
 #define TDBG(fmt, args...) \
@@ -20,7 +22,7 @@
 		pr_err(fmt, ## args)
 
 static struct dentry *dent;
-static char dbg_buff[4096];
+static char dbg_buff[GSI_MAX_MSG_LEN];
 static void *gsi_ipc_logbuf_low;
 
 static void gsi_wq_print_dp_stats(struct work_struct *work);
@@ -584,6 +586,80 @@ static ssize_t gsi_enable_ipc_low(struct file *file,
 	return count;
 }
 
+static ssize_t gsi_read_gsi_hw_profiling_stats(struct file *file,
+	char __user *buf, size_t count, loff_t *ppos)
+{
+	struct gsi_hw_profiling_data stats;
+	int nbytes, cnt = 0;
+	u64 totalCycles = 0, util = 0;
+
+	if (gsi_ctx->per.ver < GSI_VER_2_9) {
+		nbytes = scnprintf(dbg_buff, GSI_MAX_MSG_LEN,
+			"This feature only support on GSI2.9+\n");
+		cnt += nbytes;
+		goto done;
+	}
+	if (!gsi_get_hw_profiling_stats(&stats)) {
+		totalCycles = stats.mcs_busy_cnt + stats.mcs_idle_cnt +
+			stats.bp_and_pending_cnt;
+		if (totalCycles != 0)
+			util = div_u64(
+				100 * (stats.mcs_busy_cnt + stats.bp_and_pending_cnt),
+				totalCycles);
+		else
+			util = 0;
+
+		nbytes = scnprintf(dbg_buff, GSI_MAX_MSG_LEN,
+			"bp_count=0x%llx\n"
+			"bp_and_pending_count=0x%llx\n"
+			"mcs_busy=0x%llx\n"
+			"mcs_idle=0x%llx\n"
+			"total_cycle_count=0x%llx\n"
+			"utilization_percentage=%llu%%\n",
+			stats.bp_cnt,
+			stats.bp_and_pending_cnt,
+			stats.mcs_busy_cnt,
+			stats.mcs_idle_cnt,
+			totalCycles,
+			util);
+		cnt += nbytes;
+	} else {
+		nbytes = scnprintf(dbg_buff, GSI_MAX_MSG_LEN,
+			"Fail to read GSI HW Profiling stats\n");
+		cnt += nbytes;
+	}
+done:
+	return simple_read_from_buffer(buf, count, ppos, dbg_buff, cnt);
+}
+
+static ssize_t gsi_read_gsi_fw_version(struct file *file,
+	char __user *buf, size_t count, loff_t *ppos)
+{
+	struct gsi_fw_version ver;
+	int nbytes, cnt = 0;
+
+	if (gsi_ctx->per.ver < GSI_VER_2_9) {
+		nbytes = scnprintf(dbg_buff, GSI_MAX_MSG_LEN,
+			"This feature only support on GSI2.9+\n");
+		cnt += nbytes;
+		goto done;
+	}
+	if (!gsi_get_fw_version(&ver)) {
+		nbytes = scnprintf(dbg_buff, GSI_MAX_MSG_LEN,
+			"hw=%d\nflavor=%d\nfw=%d\n",
+			ver.hw,
+			ver.flavor,
+			ver.fw);
+		cnt += nbytes;
+	} else {
+		nbytes = scnprintf(dbg_buff, GSI_MAX_MSG_LEN,
+			"Fail to read GSI FW version\n");
+		cnt += nbytes;
+	}
+done:
+	return simple_read_from_buffer(buf, count, ppos, dbg_buff, cnt);
+}
+
 static const struct file_operations gsi_ev_dump_ops = {
 	.write = gsi_dump_evt,
 };
@@ -616,10 +692,19 @@ static const struct file_operations gsi_ipc_low_ops = {
 	.write = gsi_enable_ipc_low,
 };
 
+static const struct file_operations gsi_hw_profiling_ops = {
+	.read = gsi_read_gsi_hw_profiling_stats,
+};
+
+static const struct file_operations gsi_ver_ops = {
+	.read = gsi_read_gsi_fw_version,
+};
+
 void gsi_debugfs_init(void)
 {
 	static struct dentry *dfile;
 	const mode_t write_only_mode = 0220;
+	const mode_t read_only_mode = 0440;
 
 	dent = debugfs_create_dir("gsi", 0);
 	if (IS_ERR(dent)) {
@@ -683,8 +768,22 @@ void gsi_debugfs_init(void)
 		goto fail;
 	}
 
+	dfile = debugfs_create_file("gsi_hw_profiling_stats", read_only_mode,
+				    dent, 0, &gsi_hw_profiling_ops);
+	if (!dfile || IS_ERR(dfile)) {
+		TERR("could not create gsi_hw_profiling_stats\n");
+		goto fail;
+	}
+
+	dfile = debugfs_create_file("gsi_fw_version", read_only_mode, dent, 0,
+				    &gsi_ver_ops);
+	if (!dfile || IS_ERR(dfile)) {
+		TERR("could not create gsi_fw_version\n");
+		goto fail;
+	}
+
 	return;
+
 fail:
 	debugfs_remove_recursive(dent);
 }
-
