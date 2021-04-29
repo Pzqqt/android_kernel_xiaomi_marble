@@ -5539,7 +5539,7 @@ static const struct file_operations ipa3_drv_fops = {
 
 static int ipa3_get_clks(struct device *dev)
 {
-	if (ipa3_ctx->ipa3_hw_mode != IPA_HW_MODE_NORMAL) {
+	if (!IPA_IS_REGULAR_CLK_MODE(ipa3_ctx->ipa3_hw_mode)) {
 		IPADBG("not supported in this HW mode\n");
 		ipa3_clk = NULL;
 		return 0;
@@ -5610,7 +5610,7 @@ void ipa3_enable_clks(void)
 	int idx;
 	int i;
 
-	if (ipa3_ctx->ipa3_hw_mode != IPA_HW_MODE_NORMAL) {
+	if (!IPA_IS_REGULAR_CLK_MODE(ipa3_ctx->ipa3_hw_mode)) {
 		IPAERR("not supported in this mode\n");
 		return;
 	}
@@ -5655,7 +5655,7 @@ void ipa3_disable_clks(void)
 	int i;
 	int type;
 
-	if (ipa3_ctx->ipa3_hw_mode != IPA_HW_MODE_NORMAL) {
+	if (!IPA_IS_REGULAR_CLK_MODE(ipa3_ctx->ipa3_hw_mode)) {
 		IPAERR("not supported in this mode\n");
 		return;
 	}
@@ -6077,7 +6077,7 @@ int ipa3_set_clock_plan_from_pm(int idx)
 		return 0;
 	}
 
-	if (ipa3_ctx->ipa3_hw_mode != IPA_HW_MODE_NORMAL) {
+	if (!IPA_IS_REGULAR_CLK_MODE(ipa3_ctx->ipa3_hw_mode)) {
 		IPAERR("not supported in this mode\n");
 		return 0;
 	}
@@ -6141,7 +6141,7 @@ int ipa3_set_required_perf_profile(enum ipa_voltage_level floor_voltage,
 	int i;
 	int idx;
 
-	if (ipa3_ctx->ipa3_hw_mode != IPA_HW_MODE_NORMAL) {
+	if (!IPA_IS_REGULAR_CLK_MODE(ipa3_ctx->ipa3_hw_mode)) {
 		IPAERR("not supported in this mode\n");
 		return 0;
 	}
@@ -7922,7 +7922,7 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	ipa3_ctx->ipa_endp_delay_wa = resource_p->ipa_endp_delay_wa;
 	ipa3_ctx->ipa_endp_delay_wa_v2 = resource_p->ipa_endp_delay_wa_v2;
 
-	WARN(ipa3_ctx->ipa3_hw_mode != IPA_HW_MODE_NORMAL,
+	WARN(!IPA_IS_REGULAR_CLK_MODE(ipa3_ctx->ipa3_hw_mode),
 		"Non NORMAL IPA HW mode, is this emulation platform ?");
 
 	if (resource_p->ipa_tz_unlock_reg) {
