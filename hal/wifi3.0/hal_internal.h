@@ -1077,7 +1077,7 @@ struct hal_soc {
 
 	/* srng table */
 	struct hal_hw_srng_config *hw_srng_table;
-	int32_t *hal_hw_reg_offset;
+	int32_t hal_hw_reg_offset[SRNG_REGISTER_MAX];
 	struct hal_hw_txrx_ops *ops;
 
 	/* Indicate srngs initialization */

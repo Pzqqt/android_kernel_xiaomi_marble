@@ -449,4 +449,48 @@ void hal_srng_dst_hw_init_generic(struct hal_soc *hal,
 	SRNG_DST_REG_WRITE(srng, MISC, reg_val);
 
 }
+
+/**
+ * hal_srng_hw_reg_offset_init_generic() - Initialize the HW srng reg offset
+ * @hal_soc: HAL Soc handle
+ *
+ * Return: None
+ */
+static inline void hal_srng_hw_reg_offset_init_generic(struct hal_soc *hal_soc)
+{
+	int32_t *hw_reg_offset = hal_soc->hal_hw_reg_offset;
+
+	/* dst */
+	hw_reg_offset[DST_HP] = REG_OFFSET(DST, HP);
+	hw_reg_offset[DST_TP] = REG_OFFSET(DST, TP);
+	hw_reg_offset[DST_ID] = REG_OFFSET(DST, ID);
+	hw_reg_offset[DST_MISC] = REG_OFFSET(DST, MISC);
+	hw_reg_offset[DST_HP_ADDR_LSB] = REG_OFFSET(DST, HP_ADDR_LSB);
+	hw_reg_offset[DST_HP_ADDR_MSB] = REG_OFFSET(DST, HP_ADDR_MSB);
+	hw_reg_offset[DST_MSI1_BASE_LSB] = REG_OFFSET(DST, MSI1_BASE_LSB);
+	hw_reg_offset[DST_MSI1_BASE_MSB] = REG_OFFSET(DST, MSI1_BASE_MSB);
+	hw_reg_offset[DST_MSI1_DATA] = REG_OFFSET(DST, MSI1_DATA);
+	hw_reg_offset[DST_BASE_LSB] = REG_OFFSET(DST, BASE_LSB);
+	hw_reg_offset[DST_BASE_MSB] = REG_OFFSET(DST, BASE_MSB);
+	hw_reg_offset[DST_PRODUCER_INT_SETUP] =
+					REG_OFFSET(DST, PRODUCER_INT_SETUP);
+
+	/* src */
+	hw_reg_offset[SRC_HP] = REG_OFFSET(SRC, HP);
+	hw_reg_offset[SRC_TP] = REG_OFFSET(SRC, TP);
+	hw_reg_offset[SRC_ID] = REG_OFFSET(SRC, ID);
+	hw_reg_offset[SRC_MISC] = REG_OFFSET(SRC, MISC);
+	hw_reg_offset[SRC_TP_ADDR_LSB] = REG_OFFSET(SRC, TP_ADDR_LSB);
+	hw_reg_offset[SRC_TP_ADDR_MSB] = REG_OFFSET(SRC, TP_ADDR_MSB);
+	hw_reg_offset[SRC_MSI1_BASE_LSB] = REG_OFFSET(SRC, MSI1_BASE_LSB);
+	hw_reg_offset[SRC_MSI1_BASE_MSB] = REG_OFFSET(SRC, MSI1_BASE_MSB);
+	hw_reg_offset[SRC_MSI1_DATA] = REG_OFFSET(SRC, MSI1_DATA);
+	hw_reg_offset[SRC_BASE_LSB] = REG_OFFSET(SRC, BASE_LSB);
+	hw_reg_offset[SRC_BASE_MSB] = REG_OFFSET(SRC, BASE_MSB);
+	hw_reg_offset[SRC_CONSUMER_INT_SETUP_IX0] =
+					REG_OFFSET(SRC, CONSUMER_INT_SETUP_IX0);
+	hw_reg_offset[SRC_CONSUMER_INT_SETUP_IX1] =
+					REG_OFFSET(SRC, CONSUMER_INT_SETUP_IX1);
+}
+
 #endif /* HAL_GENERIC_API_H_ */
