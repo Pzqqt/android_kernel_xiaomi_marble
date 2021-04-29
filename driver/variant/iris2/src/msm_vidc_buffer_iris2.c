@@ -443,7 +443,6 @@ static u32 msm_vidc_encoder_vpss_size_iris2(struct msm_vidc_inst* inst)
 	u32 size = 0;
 	bool ds_enable = false, is_tenbit = false;
 	u32 rotation_val = HFI_ROTATION_NONE;
-	u32 flip_val = HFI_DISABLE_FLIP;
 	u32 width, height, driver_colorfmt;
 	struct v4l2_format* f;
 
@@ -454,10 +453,6 @@ static u32 msm_vidc_encoder_vpss_size_iris2(struct msm_vidc_inst* inst)
 
 	ds_enable = is_scaling_enabled(inst);
 	msm_vidc_v4l2_to_hfi_enum(inst, ROTATION, &rotation_val);
-	if (inst->capabilities->cap[HFLIP].value)
-		flip_val |= HFI_HORIZONTAL_FLIP;
-	if (inst->capabilities->cap[VFLIP].value)
-		flip_val = HFI_VERTICAL_FLIP;
 
 	width = inst->compose.width;
 	height = inst->compose.height;
@@ -468,7 +463,7 @@ static u32 msm_vidc_encoder_vpss_size_iris2(struct msm_vidc_inst* inst)
 	is_tenbit = is_10bit_colorformat(driver_colorfmt);
 
 	HFI_BUFFER_VPSS_ENC(size, width, height, ds_enable,
-		rotation_val, flip_val, is_tenbit);
+		rotation_val, is_tenbit);
 	i_vpr_l(inst, "%s: size %d\n", __func__, size);
 	return size;
 }

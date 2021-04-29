@@ -973,7 +973,8 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 		HFI_U32 num_ref = 1; \
 		if (n_bframe) \
 			num_ref = 2; \
-		if (_total_hp_layers > 1) { \
+		if (_total_hp_layers > 1) \
+		{ \
 			if (hybrid_hp) \
 				num_ref = (_total_hp_layers + 1) >> 1; \
 			else if (codec_standard == HFI_CODEC_ENCODE_HEVC) \
@@ -986,7 +987,8 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 		} \
 		if (ltr_count) \
 			num_ref = num_ref + ltr_count; \
-		if (_total_hb_layers > 1) { \
+		if (_total_hb_layers > 1) \
+		{ \
 			if (codec_standard == HFI_CODEC_ENCODE_HEVC) \
 				num_ref = (_total_hb_layers); \
 			else if (codec_standard == HFI_CODEC_ENCODE_AVC) \
@@ -997,12 +999,14 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 
 #define SIZE_BIN_BITSTREAM_ENC(_size, rc_type, frame_width, frame_height, \
 		work_mode, lcu_size) \
-	do { \
+	do \
+	{ \
 		HFI_U32 size_aligned_width = 0, size_aligned_height = 0; \
 		HFI_U32 bitstream_size_eval = 0; \
 		size_aligned_width = HFI_ALIGN((frame_width), lcu_size); \
 		size_aligned_height = HFI_ALIGN((frame_height), lcu_size); \
-		if (work_mode == HFI_WORKMODE_2) { \
+		if (work_mode == HFI_WORKMODE_2) \
+		{ \
 			if ((rc_type == HFI_RC_CQ) || (rc_type == HFI_RC_OFF)) \
 			{ \
 				bitstream_size_eval = (((size_aligned_width) * \
@@ -1041,7 +1045,8 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 
 #define SIZE_ENC_SINGLE_PIPE(size, rc_type, bitbin_size, num_vpp_pipes, \
 			frame_width, frame_height, lcu_size) \
-	do { \
+	do \
+	{ \
 		HFI_U32 size_single_pipe_eval = 0, sao_bin_buffer_size = 0, \
 			_padded_bin_sz = 0; \
 		HFI_U32 size_aligned_width = 0, size_aligned_height = 0; \
@@ -1537,32 +1542,23 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 		HFI_BUFFER_DPB_ENC(_size, frame_width, frame_height, is_ten_bit); \
 	} while (0)
 
-#define HFI_BUFFER_VPSS_ENC(vpss_size, frame_width, frame_height, ds_enable, \
-		rot_enable, flip_enable, is_ten_bit) \
+#define HFI_BUFFER_VPSS_ENC(vpss_size, bitstream_framewidth, bitstream_frameheight, ds_enable, \
+		rotation, is_ten_bit) \
 	do \
 	{ \
-		HFI_U32 vpss_size = 0; \
+		vpss_size = 0; \
 		if (ds_enable) \
 		{ \
-			if (rot_enable) \
+			if (rotation == HFI_ROTATION_90 || rotation == HFI_ROTATION_270 ) \
 			{ \
-				HFI_BUFFER_DPB_ENC(vpss_size, frame_height, \
-					frame_width, is_ten_bit); \
-			} \
-			else if (flip_enable) \
-			{ \
-				HFI_BUFFER_DPB_ENC(vpss_size, frame_width, \
-				frame_height, is_ten_bit); \
+				HFI_BUFFER_DPB_ENC(vpss_size, bitstream_frameheight, \
+					bitstream_framewidth, is_ten_bit); \
 			} \
 			else \
 			{ \
-				vpss_size = 0; \
+				HFI_BUFFER_DPB_ENC(vpss_size, bitstream_framewidth, \
+				bitstream_frameheight, is_ten_bit); \
 			} \
-			vpss_size = vpss_size; \
-		} \
-		else \
-		{ \
-			vpss_size = vpss_size; \
 		} \
 	} while (0)
 
