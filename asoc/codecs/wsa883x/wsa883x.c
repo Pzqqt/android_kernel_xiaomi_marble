@@ -1188,7 +1188,7 @@ static void wsa883x_codec_init(struct snd_soc_component *component)
 		snd_soc_component_update_bits(component, reg_init[i].reg,
 					reg_init[i].mask, reg_init[i].val);
 
-	if (wsa883x->variant == WSA8830) {
+	if (wsa883x->variant == WSA8830 || wsa883x->variant == WSA8832) {
 		snd_soc_component_update_bits(component, WSA883X_DRE_CTL_0,
 					0x07, 0x03);
 		wsa883x->comp_offset = COMP_OFFSET3;
