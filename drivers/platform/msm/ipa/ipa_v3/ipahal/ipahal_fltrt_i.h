@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _IPAHAL_FLTRT_I_H_
@@ -53,6 +53,9 @@ enum ipa_fltrt_equations {
  */
 #define IPA3_0_RULE_MAX_PRIORITY (0)
 #define IPA3_0_RULE_MIN_PRIORITY (1023)
+
+#define IPA5_0_RULE_MAX_PRIORITY (0)
+#define IPA5_0_RULE_MIN_PRIORITY (255)
 
 /*
  * RULE ID, bit length (e.g. 10 bits).
