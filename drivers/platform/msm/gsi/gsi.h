@@ -1544,6 +1544,32 @@ enum gsi_generic_ee_cmd_return_code {
 	GSI_GEN_EE_CMD_RETURN_CODE_OUT_OF_RESOURCES = 0x7,
 };
 
+/**
+ * struct gsi_hw_profiling_data - GSI profiling data
+ * @bp_cnt: Back Pressure occurences count
+ * @bp_and_pending_cnt: Back Pressure with pending back pressure count
+ * @mcs_busy_cnt: Cycle count for MCS busy
+ * @mcs_idle_cnt: Cycle count for MCS idle
+ */
+struct gsi_hw_profiling_data {
+    u64 bp_cnt;
+    u64 bp_and_pending_cnt;
+    u64 mcs_busy_cnt;
+    u64 mcs_idle_cnt;
+};
+
+/**
+ * struct gsi_fw_version - GSI fw version data
+ * @hw: HW version
+ * @flavor: Flavor identifier
+ * @fw: FW version
+ */
+struct gsi_fw_version {
+    u32 hw;
+    u32 flavor;
+    u32 fw;
+};
+
 enum gsi_generic_ee_cmd_query_retun_val {
 	GSI_GEN_EE_CMD_RETURN_VAL_FLOW_CONTROL_PRIMARY = 0,
 	GSI_GEN_EE_CMD_RETURN_VAL_FLOW_CONTROL_SECONDARY = 1,
@@ -2298,6 +2324,24 @@ int gsi_query_msi_addr(unsigned long chan_hdl, phys_addr_t *addr);
 * @Return void
 */
 void gsi_dump_ch_info(unsigned long chan_hdl);
+
+/**
+ * gsi_get_hw_profiling_stats() - Query GSI HW profiling stats
+ * @stats:	[out] stats blob from client populated by driver
+ *
+ * Returns:	0 on success, negative on failure
+ *
+ */
+int gsi_get_hw_profiling_stats(struct gsi_hw_profiling_data *stats);
+
+/**
+ * gsi_get_fw_version() - Query GSI FW version
+ * @ver:	[out] ver blob from client populated by driver
+ *
+ * Returns:	0 on success, negative on failure
+ *
+ */
+int gsi_get_fw_version(struct gsi_fw_version *ver);
 
 int gsi_flow_control_ee(unsigned int chan_idx, unsigned int ee,
 				bool enable, bool prmy_scnd_fc, int *code);

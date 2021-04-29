@@ -43,6 +43,15 @@
 #define GSI_MSB(num) ((u32)((num & GSI_MSB_MASK) >> 32))
 #define GSI_LSB(num) ((u32)(num & GSI_LSB_MASK))
 
+#define GSI_INST_RAM_FW_VER_OFFSET			(0)
+#define GSI_INST_RAM_FW_VER_GSI_3_0_OFFSET	(64)
+#define GSI_INST_RAM_FW_VER_HW_MASK			(0xFC00)
+#define GSI_INST_RAM_FW_VER_HW_SHIFT		(10)
+#define GSI_INST_RAM_FW_VER_FLAVOR_MASK		(0x380)
+#define GSI_INST_RAM_FW_VER_FLAVOR_SHIFT	(7)
+#define GSI_INST_RAM_FW_VER_FW_MASK			(0x7f)
+#define GSI_INST_RAM_FW_VER_FW_SHIFT		(0)
+
 #ifndef CONFIG_DEBUG_FS
 void gsi_debugfs_init(void)
 {
@@ -5068,6 +5077,72 @@ static union __packed gsi_channel_scratch __gsi_update_mhi_channel_scratch(
 		gsi_ctx->per.ee, chan_hdl, scr.data.word4);
 
 	return scr;
+}
+/**
+ * gsi_get_hw_profiling_stats() - Query GSI HW profiling stats
+ * @stats:	[out] stats blob from client populated by driver
+ *
+ * Returns:	0 on success, negative on failure
+ *
+ */
+int gsi_get_hw_profiling_stats(struct gsi_hw_profiling_data *stats)
+{
+	if (stats == NULL) {
+		GSIERR("bad parms NULL stats == NULL\n");
+		return -EINVAL;
+	}
+
+	stats->bp_cnt = (u64)gsihal_read_reg(
+						GSI_GSI_MCS_PROFILING_BP_CNT_LSB) +
+						((u64)gsihal_read_reg(
+						GSI_GSI_MCS_PROFILING_BP_CNT_MSB) << 32);
+	stats->bp_and_pending_cnt = (u64)gsihal_read_reg(
+						GSI_GSI_MCS_PROFILING_BP_AND_PENDING_CNT_LSB) +
+						((u64)gsihal_read_reg(
+						GSI_GSI_MCS_PROFILING_BP_AND_PENDING_CNT_MSB) << 32);
+	stats->mcs_busy_cnt = (u64)gsihal_read_reg(
+						GSI_GSI_MCS_PROFILING_MCS_BUSY_CNT_LSB) +
+						((u64)gsihal_read_reg(
+						GSI_GSI_MCS_PROFILING_MCS_BUSY_CNT_MSB) << 32);
+	stats->mcs_idle_cnt = (u64)gsihal_read_reg(
+						GSI_GSI_MCS_PROFILING_MCS_IDLE_CNT_LSB) +
+						((u64)gsihal_read_reg(
+						GSI_GSI_MCS_PROFILING_MCS_IDLE_CNT_MSB) << 32);
+
+	return 0;
+}
+
+/**
+ * gsi_get_fw_version() - Query GSI FW version
+ * @ver:	[out] ver blob from client populated by driver
+ *
+ * Returns:	0 on success, negative on failure
+ *
+ */
+int gsi_get_fw_version(struct gsi_fw_version *ver)
+{
+	u32 raw = 0;
+
+	if (ver == NULL) {
+		GSIERR("bad parms: ver == NULL\n");
+		return -EINVAL;
+	}
+
+	if (gsi_ctx->per.ver < GSI_VER_3_0)
+		raw = gsihal_read_reg_n(GSI_GSI_INST_RAM_n,
+			GSI_INST_RAM_FW_VER_OFFSET);
+	else
+		raw = gsihal_read_reg_n(GSI_GSI_INST_RAM_n,
+			GSI_INST_RAM_FW_VER_GSI_3_0_OFFSET);
+
+	ver->hw = (raw & GSI_INST_RAM_FW_VER_HW_MASK) >>
+				GSI_INST_RAM_FW_VER_HW_SHIFT;
+	ver->flavor = (raw & GSI_INST_RAM_FW_VER_FLAVOR_MASK) >>
+					GSI_INST_RAM_FW_VER_FLAVOR_SHIFT;
+	ver->fw = (raw & GSI_INST_RAM_FW_VER_FW_MASK) >>
+				GSI_INST_RAM_FW_VER_FW_SHIFT;
+
+	return 0;
 }
 
 static int msm_gsi_probe(struct platform_device *pdev)
