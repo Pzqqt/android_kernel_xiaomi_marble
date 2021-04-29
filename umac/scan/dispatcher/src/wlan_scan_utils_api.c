@@ -26,6 +26,9 @@
 #include <../../core/src/wlan_scan_cache_db.h>
 #include <../../core/src/wlan_scan_main.h>
 #include <wlan_reg_services_api.h>
+#if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
+#include <wlan_mlme_api.h>
+#endif
 
 #define MAX_IE_LEN 1024
 #define SHORT_SSID_LEN 4
@@ -2782,3 +2785,15 @@ bool util_is_scan_completed(struct scan_event *event, bool *success)
 	return false;
 }
 
+#if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
+bool
+util_scan_entry_single_pmk(struct wlan_objmgr_psoc *psoc,
+			   struct scan_cache_entry *scan_entry)
+{
+	if (scan_entry->ie_list.single_pmk &&
+	    wlan_mlme_is_sae_single_pmk_enabled(psoc))
+		return true;
+
+	return false;
+}
+#endif

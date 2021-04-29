@@ -884,22 +884,27 @@ util_scan_entry_adaptive_11r(struct scan_cache_entry *scan_entry)
 	return scan_entry->ie_list.adaptive_11r;
 }
 
+#if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
  * util_scan_entry_single_pmk()- function to read single pmk Vendor IE
+ * @psoc: Pointer to global psoc object
  * @scan_entry: scan entry
  *
  * API, function to read sae single pmk IE
  *
  * Return: true if single_pmk ie is present or false if ie is not present
  */
+bool
+util_scan_entry_single_pmk(struct wlan_objmgr_psoc *psoc,
+			   struct scan_cache_entry *scan_entry);
+#else
 static inline bool
-util_scan_entry_single_pmk(struct scan_cache_entry *scan_entry)
+util_scan_entry_single_pmk(struct wlan_objmgr_psoc *psoc,
+			   struct scan_cache_entry *scan_entry)
 {
-	if (scan_entry->ie_list.single_pmk)
-		return true;
-
 	return false;
 }
+#endif
 
 /**
  * util_scan_get_rsn_len()- function to read rsn IE length if present
