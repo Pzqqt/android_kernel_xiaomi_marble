@@ -1799,7 +1799,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 	union iwreq_data wrqu;
 	uint8_t *we_custom_event_generic = NULL;
 	int we_event = 0;
-	int i = 0;
 	uint8_t sta_id;
 	QDF_STATUS qdf_status;
 	bool bAuthRequired = true;
@@ -2072,21 +2071,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 			hdd_medium_assess_stop_timer(pdev_id, hdd_ctx);
 
 		hdd_medium_assess_deinit();
-
-		if ((BSS_STOP_DUE_TO_MCC_SCC_SWITCH !=
-			ap_ctx->bss_stop_reason) &&
-		    (BSS_STOP_DUE_TO_VENDOR_CONFIG_CHAN !=
-			ap_ctx->bss_stop_reason)) {
-			/*
-			 * when MCC to SCC switching or vendor subcmd
-			 * setting sap config channel happens, key storage
-			 * should not be cleared due to hostapd will not
-			 * repopulate the original keys
-			 */
-			ap_ctx->group_key.keyLength = 0;
-			for (i = 0; i < CSR_MAX_NUM_KEY; i++)
-				ap_ctx->wep_key[i].keyLength = 0;
-		}
 
 		/* clear the reason code in case BSS is stopped
 		 * in another place

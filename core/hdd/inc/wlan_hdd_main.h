@@ -1075,8 +1075,6 @@ struct hdd_ap_ctx {
 	uint8_t broadcast_sta_id;
 	uint8_t privacy;
 	eCsrEncryptionType encryption_type;
-	tCsrRoamSetKey group_key;
-	tCsrRoamSetKey wep_key[CSR_MAX_NUM_KEY];
 	uint8_t wep_def_key_idx;
 	struct sap_context *sap_context;
 	struct sap_config sap_config;

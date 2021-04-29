@@ -71,8 +71,6 @@ typedef struct sSirFTPreAuthRsp {
 	QDF_STATUS status;
 	uint16_t ft_ies_length;
 	uint8_t ft_ies[MAX_FTIE_SIZE];
-	uint16_t ric_ies_length;
-	uint8_t ric_ies[MAX_FTIE_SIZE];
 } tSirFTPreAuthRsp, *tpSirFTPreAuthRsp;
 
 /*--------------------------------------------------------------------------

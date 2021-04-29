@@ -507,6 +507,7 @@ struct csr_roam_session {
 	enum csr_roaming_reason roamingReason;
 	bool fCancelRoaming;
 	uint8_t bRefAssocStartCnt;      /* Tracking assoc start indication */
+	tftSMEContext ftSmeContext;
 #endif /* ndef FEATURE_CM_ENABLE */
 #ifdef WLAN_BCN_RECV_FEATURE
 	bool is_bcn_recv_start;
@@ -527,7 +528,6 @@ struct csr_roam_session {
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	struct roam_offload_synch_ind *roam_synch_data;
 #endif
-	tftSMEContext ftSmeContext;
 	bool ch_switch_in_progress;
 	uint8_t nss;
 	bool dhcp_done;

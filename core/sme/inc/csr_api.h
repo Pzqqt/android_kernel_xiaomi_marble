@@ -996,17 +996,6 @@ struct csr_per_chain_rssi_stats_info {
 	tSirMacAddr peer_mac_addr;
 };
 
-typedef struct tagCsrRoamSetKey {
-	eCsrEncryptionType encType;
-	tAniKeyDirection keyDirection;  /* Tx, Rx or Tx-and-Rx */
-	struct qdf_mac_addr peerMac;    /* Peer MAC. ALL 1's for group key */
-	uint8_t paeRole;        /* 0 for supplicant */
-	uint8_t keyId;          /* Key index */
-	uint16_t keyLength;     /* Number of bytes containing the key in pKey */
-	uint8_t Key[CSR_MAX_KEY_LEN];
-	uint8_t keyRsc[WLAN_CRYPTO_RSC_SIZE];
-} tCsrRoamSetKey;
-
 typedef void *tScanResultHandle;
 
 typedef enum {

@@ -12434,20 +12434,7 @@ static inline void csr_qos_send_assoc_ind(struct mac_context *mac_ctx,
 	sme_qos_csr_event_ind(mac_ctx, vdev_id, SME_QOS_CSR_ASSOC_COMPLETE,
 			      assoc_info);
 }
-#else
-static inline void csr_qos_send_disconnect_ind(struct mac_context *mac_ctx,
-					       uint8_t vdev_id)
-{
-}
 
-static inline void csr_qos_send_assoc_ind(struct mac_context *mac_ctx,
-					  uint8_t vdev_id,
-					  sme_QosAssocInfo *assoc_info)
-{
-}
-#endif
-
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static void
 csr_qos_send_reassoc_ind(struct mac_context *mac_ctx,
 			 uint8_t vdev_id,
@@ -12470,6 +12457,14 @@ csr_qos_send_reassoc_ind(struct mac_context *mac_ctx,
 				      NULL);
 }
 #else
+static inline void csr_qos_send_disconnect_ind(struct mac_context *mac_ctx,
+					       uint8_t vdev_id)
+{}
+
+static inline void csr_qos_send_assoc_ind(struct mac_context *mac_ctx,
+					  uint8_t vdev_id,
+					  sme_QosAssocInfo *assoc_info)
+{}
 static inline void
 csr_qos_send_reassoc_ind(struct mac_context *mac_ctx,
 			 uint8_t vdev_id,
@@ -14113,13 +14108,11 @@ QDF_STATUS csr_setup_vdev_session(struct vdev_mlme_obj *vdev_mlme)
 	session->sessionActive = true;
 	session->sessionId = vdev_id;
 
-	/* Initialize FT related data structures only in STA mode */
-	sme_ft_open(MAC_HANDLE(mac_ctx), session->sessionId);
-
-
 	qdf_mem_copy(&session->self_mac_addr, mac_addr,
 		     sizeof(struct qdf_mac_addr));
 #ifndef FEATURE_CM_ENABLE
+	/* Initialize FT related data structures only in STA mode */
+	sme_ft_open(MAC_HANDLE(mac_ctx), session->sessionId);
 	status = qdf_mc_timer_init(&session->hTimerRoaming,
 				   QDF_TIMER_TYPE_SW,
 				   csr_roam_roaming_timer_handler,
@@ -14193,9 +14186,9 @@ void csr_cleanup_vdev_session(struct mac_context *mac, uint8_t vdev_id)
 #ifndef FEATURE_CM_ENABLE
 		csr_roam_stop_roaming_timer(mac, vdev_id);
 		csr_free_connect_bss_desc(mac, vdev_id);
-#endif
 		/* Clean up FT related data structures */
 		sme_ft_close(MAC_HANDLE(mac), vdev_id);
+#endif
 		csr_flush_roam_scan_chan_lists(mac, vdev_id);
 		csr_roam_free_connect_profile(&pSession->connectedProfile);
 		csr_roam_free_connected_info(mac, &pSession->connectedInfo);

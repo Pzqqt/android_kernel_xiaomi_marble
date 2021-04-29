@@ -529,6 +529,8 @@ QDF_STATUS csr_roam_issue_ft_preauth_req(struct mac_context *mac_ctx,
 	QDF_STATUS status;
 	struct csr_roam_session *csr_session = CSR_GET_SESSION(mac_ctx,
 				vdev_id);
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
 
 	if (!csr_session) {
 		sme_err("Session does not exist for vdev_id: %d", vdev_id);
@@ -552,9 +554,22 @@ QDF_STATUS csr_roam_issue_ft_preauth_req(struct mac_context *mac_ctx,
 		qdf_mem_free(preauth_req);
 		return QDF_STATUS_E_NOMEM;
 	}
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac_ctx->pdev, vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		qdf_mem_free(preauth_req);
+		qdf_mem_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
 
-	/* Save the SME Session ID. We need it while processing preauth resp */
-	csr_session->ftSmeContext.vdev_id = vdev_id;
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		qdf_mem_free(preauth_req);
+		qdf_mem_free(buf);
+		status = QDF_STATUS_E_FAILURE;
+		goto end;
+	}
+
 	preauth_req->messageType = eWNI_SME_FT_PRE_AUTH_REQ;
 	preauth_req->pre_auth_channel_freq = bss_desc->chan_freq;
 	preauth_req->dot11mode = dot11mode;
@@ -568,12 +583,13 @@ QDF_STATUS csr_roam_issue_ft_preauth_req(struct mac_context *mac_ctx,
 
 	if (csr_roam_is11r_assoc(mac_ctx, vdev_id) &&
 	     (mac_ctx->roam.roamSession[vdev_id].connectedProfile.AuthType !=
-	      eCSR_AUTH_TYPE_OPEN_SYSTEM)) {
+	      eCSR_AUTH_TYPE_OPEN_SYSTEM) &&
+	      mlme_priv->connect_info.ft_info.auth_ie_len) {
 		preauth_req->ft_ies_length =
-			(uint16_t) csr_session->ftSmeContext.auth_ft_ies_length;
+			mlme_priv->connect_info.ft_info.auth_ie_len;
 		qdf_mem_copy(preauth_req->ft_ies,
-				csr_session->ftSmeContext.auth_ft_ies,
-				csr_session->ftSmeContext.auth_ft_ies_length);
+			     mlme_priv->connect_info.ft_info.auth_ft_ie,
+			     mlme_priv->connect_info.ft_info.auth_ie_len);
 	} else {
 		preauth_req->ft_ies_length = 0;
 	}
@@ -584,6 +600,9 @@ QDF_STATUS csr_roam_issue_ft_preauth_req(struct mac_context *mac_ctx,
 	status = umac_send_mb_message_to_mac(preauth_req);
 	if (QDF_IS_STATUS_ERROR(status))
 		qdf_mem_free(buf);
+
+end:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 
 	return status;
 }
@@ -598,6 +617,8 @@ void csr_roam_ft_pre_auth_rsp_processor(struct mac_context *mac_ctx,
 	struct csr_roam_session *csr_session = CSR_GET_SESSION(mac_ctx,
 				vdev_id);
 	tDot11fAuthentication *p_auth = NULL;
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
 
 	if (!csr_session) {
 		sme_err("CSR session is NULL");
@@ -613,7 +634,15 @@ void csr_roam_ft_pre_auth_rsp_processor(struct mac_context *mac_ctx,
 
 	if (QDF_STATUS_SUCCESS != (QDF_STATUS) preauth_rsp->status)
 		return;
-	csr_session->ftSmeContext.FTState = eFT_AUTH_COMPLETE;
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac_ctx->pdev,
+						   preauth_rsp->vdev_id,
+						   WLAN_LEGACY_SME_ID);
+	if (!vdev)
+		return;
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv)
+		goto end;
+	mlme_priv->connect_info.ft_info.ft_state = FT_REASSOC_REQ_WAIT;
 	csr_session->ftSmeContext.psavedFTPreAuthRsp = preauth_rsp;
 	/* No need to notify qos module if this is a non 11r & ESE roam */
 	if (csr_roam_is11r_assoc(mac_ctx, preauth_rsp->vdev_id)
@@ -622,7 +651,7 @@ void csr_roam_ft_pre_auth_rsp_processor(struct mac_context *mac_ctx,
 #endif
 	   ) {
 		sme_qos_csr_event_ind(mac_ctx,
-			csr_session->ftSmeContext.vdev_id,
+			preauth_rsp->vdev_id,
 			SME_QOS_CSR_PREAUTH_SUCCESS_IND, NULL);
 	}
 	status =
@@ -632,12 +661,12 @@ void csr_roam_ft_pre_auth_rsp_processor(struct mac_context *mac_ctx,
 	if (QDF_STATUS_SUCCESS != status) {
 		sme_err("PreauthReassocInterval timer failed status %d",
 			status);
-		return;
+		goto end;
 	}
 
 	roam_info = qdf_mem_malloc(sizeof(*roam_info));
 	if (!roam_info)
-		return;
+		goto end;
 	qdf_mem_copy((void *)&csr_session->ftSmeContext.preAuthbssId,
 		(void *)preauth_rsp->preAuthbssId,
 		sizeof(struct qdf_mac_addr));
@@ -674,28 +703,23 @@ void csr_roam_ft_pre_auth_rsp_processor(struct mac_context *mac_ctx,
 	conn_Auth_type =
 		mac_ctx->roam.roamSession[vdev_id].connectedProfile.AuthType;
 
-	csr_session->ftSmeContext.addMDIE = false;
-
 	/* Done with it, init it. */
 	csr_session->ftSmeContext.psavedFTPreAuthRsp = NULL;
-
+	mlme_priv->connect_info.ft_info.add_mdie = false;
 	if (csr_roam_is11r_assoc(mac_ctx, preauth_rsp->vdev_id) &&
 			(conn_Auth_type == eCSR_AUTH_TYPE_OPEN_SYSTEM)) {
 		uint16_t ft_ies_length;
 
-		ft_ies_length = preauth_rsp->ric_ies_length;
+		ft_ies_length = mlme_priv->connect_info.ft_info.ric_ies_length;
 
-		if ((csr_session->ftSmeContext.reassoc_ft_ies) &&
-			(csr_session->ftSmeContext.reassoc_ft_ies_length)) {
-			qdf_mem_free(csr_session->ftSmeContext.reassoc_ft_ies);
-			csr_session->ftSmeContext.reassoc_ft_ies_length = 0;
-			csr_session->ftSmeContext.reassoc_ft_ies = NULL;
-		}
+		qdf_mem_zero(mlme_priv->connect_info.ft_info.reassoc_ft_ie,
+			     MAX_FTIE_SIZE);
+		mlme_priv->connect_info.ft_info.reassoc_ie_len = 0;
 		p_auth = (tDot11fAuthentication *) qdf_mem_malloc(
 						sizeof(tDot11fAuthentication));
 
 		if (!p_auth)
-			return;
+			goto end;
 
 		status = dot11f_unpack_authentication(mac_ctx,
 				preauth_rsp->ft_ies,
@@ -703,26 +727,23 @@ void csr_roam_ft_pre_auth_rsp_processor(struct mac_context *mac_ctx,
 		if (DOT11F_FAILED(status))
 			sme_err("Failed to parse an Authentication frame");
 		else if (p_auth->MobilityDomain.present)
-			csr_session->ftSmeContext.addMDIE = true;
+			mlme_priv->connect_info.ft_info.add_mdie = true;
 
 		qdf_mem_free(p_auth);
 
 		if (!ft_ies_length)
-			return;
-
-		csr_session->ftSmeContext.reassoc_ft_ies =
-			qdf_mem_malloc(ft_ies_length);
-		if (!csr_session->ftSmeContext.reassoc_ft_ies)
-			return;
+			goto end;
 
 		/* Copy the RIC IEs to reassoc IEs */
-		qdf_mem_copy(((uint8_t *) csr_session->ftSmeContext.
-					reassoc_ft_ies),
-					(uint8_t *) preauth_rsp->ric_ies,
-					preauth_rsp->ric_ies_length);
-		csr_session->ftSmeContext.reassoc_ft_ies_length = ft_ies_length;
-		csr_session->ftSmeContext.addMDIE = true;
+		qdf_mem_copy(mlme_priv->connect_info.ft_info.reassoc_ft_ie,
+			     mlme_priv->connect_info.ft_info.ric_ies,
+			     mlme_priv->connect_info.ft_info.ric_ies_length);
+		mlme_priv->connect_info.ft_info.reassoc_ie_len = ft_ies_length;
+		mlme_priv->connect_info.ft_info.add_mdie = true;
 	}
+
+end:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 }
 
 /**
