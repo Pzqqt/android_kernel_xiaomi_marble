@@ -2032,10 +2032,11 @@ wlansap_set_dfs_preferred_channel_location(mac_handle_t mac_handle)
 	 */
 	ucfg_mlme_get_pref_chan_location(mac->psoc,
 					 &dfs_preferred_channels_location);
-	sap_debug("dfs_preferred_channels_location %d",
-		  dfs_preferred_channels_location);
+	sap_debug("dfs_preferred_channels_location %d dfs region %d",
+		  dfs_preferred_channels_location, dfs_region);
 
-	if (DFS_MKK_REGION == dfs_region) {
+	if (dfs_region == DFS_MKK_REGION ||
+	    dfs_region == DFS_MKKN_REGION) {
 		mac->sap.SapDfsInfo.sap_operating_chan_preferred_location =
 			dfs_preferred_channels_location;
 		sap_debug("sapdfs:Set Preferred Operating Channel location=%d",
