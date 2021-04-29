@@ -14,6 +14,8 @@
 #define Q16_INT(q) ((q) >> 16)
 #define Q16_FRAC(q) ((((q) & 0xFFFF) * 100) >> 16)
 #define CLK_RATE_STEP 1000000
+#define CLIENT_CB_TIMEOUT msecs_to_jiffies(100)
+
 
 static int mmrm_sw_update_freq(
 	struct mmrm_sw_clk_mgr_info *sinfo, struct mmrm_sw_clk_client_tbl_entry *tbl_entry)
@@ -453,6 +455,96 @@ err_invalid_level:
 	return rc;
 }
 
+static int mmrm_sw_throttle_low_priority_client(
+	struct mmrm_sw_clk_mgr_info *sinfo, u32 *delta_cur)
+{
+	int rc = 0, c = 0;
+	bool found_client_throttle = false;
+	struct mmrm_sw_clk_client_tbl_entry *tbl_entry_throttle_client;
+	struct mmrm_client_notifier_data notifier_data;
+	struct completion timeout;
+	struct mmrm_sw_peak_current_data *peak_data = &sinfo->peak_cur_data;
+	u32 now_cur_ma, min_cur_ma;
+	long clk_min_level = MMRM_VDD_LEVEL_SVS_L1;
+
+	d_mpr_h("%s: entering\n", __func__);
+	init_completion(&timeout);
+	for (c = 0; c < sinfo->tot_clk_clients; c++) {
+		tbl_entry_throttle_client = &sinfo->clk_client_tbl[c];
+		now_cur_ma = tbl_entry_throttle_client->current_ma
+			[tbl_entry_throttle_client->vdd_level][peak_data->aggreg_level];
+		min_cur_ma = tbl_entry_throttle_client->current_ma[clk_min_level]
+						[peak_data->aggreg_level];
+
+		d_mpr_h("%s:csid(0x%x) name(%s) now_cur_ma(%llu) min_cur_ma(%llu) delta_cur(%d)\n",
+			__func__, tbl_entry_throttle_client->clk_src_id,
+			tbl_entry_throttle_client->name, now_cur_ma, min_cur_ma,
+			*delta_cur);
+
+		if (tbl_entry_throttle_client
+			&& (tbl_entry_throttle_client->pri == MMRM_CLIENT_PRIOR_LOW)
+			&& (now_cur_ma > min_cur_ma) && (now_cur_ma - min_cur_ma > *delta_cur)) {
+			found_client_throttle = true;
+			d_mpr_h("%s: Throttle client csid(0x%x) name(%s)\n", __func__,
+				tbl_entry_throttle_client->clk_src_id,
+				tbl_entry_throttle_client->name);
+			d_mpr_h("%s: now_cur_ma(%llu) - min_cur_ma(%llu) > delta_cur(%d)\n",
+				__func__, now_cur_ma, min_cur_ma, *delta_cur);
+
+			/* found client to throttle, break from here. */
+			break;
+		}
+	}
+
+	/*Client to throttle is found, Throttle this client now to minimum clock rate*/
+	if (found_client_throttle) {
+		/* Setup notifier */
+
+		notifier_data.cb_type = MMRM_CLIENT_RESOURCE_VALUE_CHANGE;
+		notifier_data.cb_data.val_chng.old_val =
+			tbl_entry_throttle_client->freq[tbl_entry_throttle_client->vdd_level];
+		notifier_data.cb_data.val_chng.new_val =
+			tbl_entry_throttle_client->freq[clk_min_level];
+		notifier_data.pvt_data = NULL;
+
+		if (tbl_entry_throttle_client->notifier_cb_fn)
+			rc = tbl_entry_throttle_client->notifier_cb_fn(&notifier_data);
+
+		if (!wait_for_completion_timeout(&timeout, CLIENT_CB_TIMEOUT))
+			d_mpr_h("Intentionally added to wait for 100ms\n", __func__);
+
+		if (rc) {
+			d_mpr_e("%s: Client failed to send SUCCESS in callback(%d)\n",
+					__func__, tbl_entry_throttle_client->clk_src_id);
+			rc = -EINVAL;
+			goto err_clk_set_fail;
+		}
+
+		rc = clk_set_rate(tbl_entry_throttle_client->clk,
+					tbl_entry_throttle_client->freq[clk_min_level]);
+		if (rc) {
+			d_mpr_e("%s: Failed to throttle the clk csid(%d)\n",
+					__func__, tbl_entry_throttle_client->clk_src_id);
+			rc = -EINVAL;
+			goto err_clk_set_fail;
+		} else {
+			*delta_cur = now_cur_ma - min_cur_ma;
+		}
+		/* Store the throttled clock rate of client */
+		tbl_entry_throttle_client->clk_rate =
+					tbl_entry_throttle_client->freq[clk_min_level];
+
+		/* Store the corner level of throttled client */
+		tbl_entry_throttle_client->vdd_level = clk_min_level;
+
+		/* Clearing the reserve flag */
+		tbl_entry_throttle_client->reserve = tbl_entry_throttle_client->reserve & 0;
+	}
+err_clk_set_fail:
+	return rc;
+}
+
+
 static int mmrm_sw_check_peak_current(struct mmrm_sw_clk_mgr_info *sinfo,
 	struct mmrm_sw_clk_client_tbl_entry *tbl_entry,
 	u32 req_level, u32 clk_val)
@@ -472,7 +564,7 @@ static int mmrm_sw_check_peak_current(struct mmrm_sw_clk_mgr_info *sinfo,
 
 	/* recalculate aggregated current with adj level */
 	if (adj_level != peak_data->aggreg_level) {
-		rc = mmrm_sw_calculate_total_current(sinfo, req_level, &peak_cur);
+		rc = mmrm_sw_calculate_total_current(sinfo, adj_level, &peak_cur);
 		if (rc) {
 			goto err_invalid_level;
 		}
@@ -498,10 +590,22 @@ static int mmrm_sw_check_peak_current(struct mmrm_sw_clk_mgr_info *sinfo,
 
 	/* peak overshoot, do not update peak data */
 	if ((signed)peak_cur + delta_cur >= peak_data->threshold) {
-		rc = -EINVAL;
-		goto err_peak_overshoot;
-	}
+		/* Find low prority client and throttle it*/
+		if (tbl_entry->pri == MMRM_CLIENT_PRIOR_HIGH) {
+			rc = mmrm_sw_throttle_low_priority_client(sinfo, &delta_cur);
+			if (rc != 0) {
+				d_mpr_e("%s: Failed to throttle the low priority client\n",
+						__func__);
+				goto err_peak_overshoot;
+			}
+		} else {
+			d_mpr_e("%s: Client csid(0x%x) name(%s) can't request throtlling\n",
+				__func__, tbl_entry->clk_src_id, tbl_entry->name);
+			rc = -EINVAL;
+			goto err_peak_overshoot;
+		}
 
+	}
 	/* update peak data */
 	peak_data->aggreg_val = peak_cur + delta_cur;
 	peak_data->aggreg_level = adj_level;

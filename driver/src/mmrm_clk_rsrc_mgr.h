@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _MMRM_CLK_RESOURCE_MGR_H_
@@ -64,7 +64,9 @@ struct mmrm_sw_clk_client_tbl_entry {
 struct mmrm_sw_peak_current_data {
 	/* peak current data in ma */
 	u32 threshold;
+	/* current in ma */
 	u32 aggreg_val;
+	/* mmcx voltage level */
 	u32 aggreg_level;
 };
 
