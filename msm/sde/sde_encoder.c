@@ -934,7 +934,7 @@ static int _sde_encoder_atomic_check_reserve(struct drm_encoder *drm_enc,
 	int ret = 0;
 	struct drm_display_mode *adj_mode = &crtc_state->adjusted_mode;
 
-	if (sde_conn && msm_atomic_needs_modeset(crtc_state)) {
+	if (sde_conn && msm_atomic_needs_modeset(crtc_state, conn_state)) {
 		struct msm_display_topology *topology = NULL;
 
 		ret = sde_connector_get_mode_info(&sde_conn->base,

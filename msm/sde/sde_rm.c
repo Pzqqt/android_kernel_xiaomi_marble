@@ -2519,7 +2519,7 @@ int sde_rm_reserve(
 
 	/* Check if this is just a page-flip */
 	if (!_sde_rm_is_display_in_cont_splash(sde_kms, enc) &&
-			!msm_atomic_needs_modeset(crtc_state))
+			!msm_atomic_needs_modeset(crtc_state, conn_state))
 		return 0;
 
 	comp_info = kzalloc(sizeof(*comp_info), GFP_KERNEL);

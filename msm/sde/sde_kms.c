@@ -3584,9 +3584,15 @@ static void _sde_kms_pm_suspend_idle_helper(struct sde_kms *sde_kms,
 	kthread_flush_worker(&priv->pp_event_worker);
 }
 
-struct msm_display_mode *sde_kms_get_msm_mode(struct drm_crtc_state *c_state)
+struct msm_display_mode *sde_kms_get_msm_mode(struct drm_connector_state *conn_state)
 {
-	return sde_crtc_get_msm_mode(c_state);
+	struct sde_connector_state *sde_conn_state;
+
+	if (!conn_state)
+		return NULL;
+
+	sde_conn_state = to_sde_connector_state(conn_state);
+	return &sde_conn_state->msm_mode;
 }
 
 static int sde_kms_pm_suspend(struct device *dev)
