@@ -32,7 +32,7 @@
 #include "target_if_cfr_adrastea.h"
 #include "wlan_reg_services_api.h"
 #else
-#include <target_if_cfr_8074v2.h>
+#include <target_if_cfr_dbr.h>
 #endif
 
 int target_if_cfr_stop_capture(struct wlan_objmgr_pdev *pdev,

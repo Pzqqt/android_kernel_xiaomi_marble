@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -16,8 +16,8 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _TARGET_IF_CFR_8072V2_H_
-#define _TARGET_IF_CFR_8072V2_H_
+#ifndef _TARGET_IF_CFR_DBR_H_
+#define _TARGET_IF_CFR_DBR_H_
 
 #define STREAMFS_MAX_SUBBUF_8S 8500
 #define STREAMFS_NUM_SUBBUF_8S 255

@@ -27,7 +27,7 @@
 #include <wlan_mlme_dispatcher.h>
 #include <init_deinit_lmac.h>
 #include <wlan_cfr_utils_api.h>
-#include <target_if_cfr_8074v2.h>
+#include <target_if_cfr_dbr.h>
 #ifdef DIRECT_BUF_RX_ENABLE
 #include <target_if_direct_buf_rx_api.h>
 #endif
@@ -40,6 +40,7 @@ int dump_lut(struct wlan_objmgr_pdev *pdev)
 	struct pdev_cfr *pdev_cfrobj;
 	struct look_up_table *lut = NULL;
 	int i = 0;
+
 	pdev_cfrobj = wlan_objmgr_pdev_get_comp_private_obj(pdev,
 							    WLAN_UMAC_COMP_CFR);
 	if (!pdev_cfrobj) {
@@ -133,11 +134,12 @@ int correlate_and_relay(struct wlan_objmgr_pdev *pdev, uint32_t cookie,
 			struct look_up_table *lut, uint8_t module_id)
 {
 	struct pdev_cfr *pdev_cfrobj;
+	int status = STATUS_ERROR;
 
 	if (module_id > 1) {
 		cfr_err("Received request with invalid mod id. Investigate!!");
 		QDF_ASSERT(0);
-		return STATUS_ERROR;
+		return status;
 	}
 
 	pdev_cfrobj = wlan_objmgr_pdev_get_comp_private_obj(pdev,
@@ -151,10 +153,10 @@ int correlate_and_relay(struct wlan_objmgr_pdev *pdev, uint32_t cookie,
 		lut->dbr_recv = true;
 	}
 
-	if ((lut->dbr_recv == true) && (lut->tx_recv == true)) {
+	if (lut->dbr_recv && lut->tx_recv) {
 		if (lut->dbr_ppdu_id == lut->tx_ppdu_id) {
 			pdev_cfrobj->release_cnt++;
-			return STATUS_STREAM_AND_RELEASE;
+			status = STATUS_STREAM_AND_RELEASE;
 		} else {
 			/*
 			 * When there is a ppdu id mismatch, discard the other
@@ -167,7 +169,8 @@ int correlate_and_relay(struct wlan_objmgr_pdev *pdev, uint32_t cookie,
 				lut->data = NULL;
 				lut->data_len = 0;
 				lut->dbr_ppdu_id = 0;
-				qdf_mem_zero(&lut->dbr_address, sizeof(lut->dbr_address));
+				qdf_mem_zero(&lut->dbr_address,
+					     sizeof(lut->dbr_address));
 			} else if (module_id == CORRELATE_DBR_MODULE_ID) {
 				cfr_debug("Received new dbr event for same cookie %u",
 					  cookie);
@@ -192,18 +195,19 @@ int correlate_and_relay(struct wlan_objmgr_pdev *pdev, uint32_t cookie,
 				dump_lut(pdev);
 				dump_dma_hdr(&lut->dma_hdr, 1);
 				cfr_err("correlation_info1: 0x%08x correlation_info2 0x%08x",
-					  lut->tx_address1, lut->tx_address2);
+					lut->tx_address1, lut->tx_address2);
 			}
-
-			return STATUS_HOLD;
+			status = STATUS_HOLD;
 		}
 	} else {
-		return STATUS_HOLD;
+		status = STATUS_HOLD;
 	}
+
+	return status;
 }
 
 bool cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
-						   struct direct_buf_rx_data *payload)
+			   struct direct_buf_rx_data *payload)
 {
 	uint8_t *data = NULL;
 	uint32_t cookie = 0;
@@ -214,6 +218,7 @@ bool cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 	struct look_up_table *lut = NULL;
 	struct csi_cfr_header *header = NULL;
 	struct wlan_lmac_if_rx_ops *rx_ops;
+	bool ret = true;
 
 	if ((!pdev) || (!payload)) {
 		cfr_err("pdev or payload is null");
@@ -272,21 +277,23 @@ bool cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 			return true;
 		}
 
-		status = rx_ops->cfr_rx_ops.cfr_info_send(pdev, &lut->header,
-			sizeof(struct csi_cfr_header),
-			lut->data, lut->data_len, &end_magic, 4);
+		status = rx_ops->cfr_rx_ops.cfr_info_send
+				(pdev, &lut->header,
+				 sizeof(struct csi_cfr_header),
+				 lut->data, lut->data_len,
+				 &end_magic, 4);
 		release_lut_entry(pdev, lut);
 		cfr_debug("Data sent to upper layers, released look up table");
-		return true;
+		ret = true;
 	} else if (status == STATUS_HOLD) {
 		cfr_debug("Tx event not received yet. Buffer is not released");
-		return false;
+		ret = false;
 	} else {
 		cfr_err("Correlation returned invalid status!!");
-		return true;
+		ret = true;
 	}
 
-	return true;
+	return ret;
 }
 
 void dump_cfr_peer_tx_event(wmi_cfr_peer_tx_event_param *event)
@@ -316,7 +323,7 @@ void dump_cfr_peer_tx_event(wmi_cfr_peer_tx_event_param *event)
 
 	cfr_debug("rtt_cfo_measurement: %d\n", event->cfo_measurement);
 
-	cfr_debug("rx_start_ts: %u \n", event->rx_start_ts);
+	cfr_debug("rx_start_ts: %u\n", event->rx_start_ts);
 
 	cfr_debug("agc_gain0: %u agc_gain1: %u agc_gain2: %u agc_gain3: %u\n"
 		  "agc_gain4: %u agc_gain5: %u agc_gain6: %u agc_gain7: %u\n",
@@ -327,14 +334,13 @@ void dump_cfr_peer_tx_event(wmi_cfr_peer_tx_event_param *event)
 }
 
 void prepare_cfr_header_txstatus(wmi_cfr_peer_tx_event_param *tx_evt_param,
-		struct csi_cfr_header *header)
+				 struct csi_cfr_header *header)
 {
 	target_if_cfr_fill_header(header, false, target_type, false);
 	header->u.meta_v4.status = 0; /* failure */
 	header->u.meta_v4.length = 0;
 	qdf_mem_copy(&header->u.meta_v4.peer_addr[0],
 		     &tx_evt_param->peer_mac_addr.bytes[0], QDF_MAC_ADDR_SIZE);
-
 }
 
 static int
@@ -382,7 +388,6 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 		return -EINVAL;
 	}
 
-
 	retval = wmi_extract_cfr_peer_tx_event_param(wmi_handle, data,
 						     &tx_evt_param);
 
@@ -411,7 +416,7 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	}
 
 	retval = wlan_objmgr_pdev_try_get_ref(pdev, WLAN_CFR_ID);
-	if (retval != QDF_STATUS_SUCCESS){
+	if (retval != QDF_STATUS_SUCCESS) {
 		cfr_err("failed to get pdev reference");
 		wlan_objmgr_psoc_release_ref(psoc, WLAN_CFR_ID);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
@@ -451,7 +456,8 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	}
 
 	buf_addr_temp = (tx_evt_param.correlation_info_2 & 0x0f);
-	buf_addr = (tx_evt_param.correlation_info_1 |((uint64_t)buf_addr_temp << 32));
+	buf_addr = (tx_evt_param.correlation_info_1 |
+		    ((uint64_t)buf_addr_temp << 32));
 
 	if (target_if_dbr_cookie_lookup(pdev, DBR_MODULE_CFR, buf_addr,
 					&cookie, 0)) {
@@ -538,7 +544,6 @@ done:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
 	return status;
-
 }
 #else
 static int
@@ -661,7 +666,7 @@ target_if_dbr_get_ring_params(struct wlan_objmgr_pdev *pdev)
 
 	dbr_tx_ops = &tx_ops->dbr_tx_ops;
 
-	if(dbr_tx_ops->direct_buf_rx_get_ring_params)
+	if (dbr_tx_ops->direct_buf_rx_get_ring_params)
 		dbr_tx_ops->direct_buf_rx_get_ring_params(pdev, param,
 							  DBR_MODULE_CFR, 0);
 	return param;
@@ -687,7 +692,7 @@ target_if_dbr_get_ring_params(struct wlan_objmgr_pdev *pdev)
 #endif
 
 QDF_STATUS cfr_8074v2_init_pdev(struct wlan_objmgr_psoc *psoc,
-			 struct wlan_objmgr_pdev *pdev)
+				struct wlan_objmgr_pdev *pdev)
 {
 	QDF_STATUS status;
 	struct pdev_cfr *pdev_cfrobj;
@@ -719,14 +724,13 @@ QDF_STATUS cfr_8074v2_init_pdev(struct wlan_objmgr_psoc *psoc,
 }
 
 QDF_STATUS cfr_8074v2_deinit_pdev(struct wlan_objmgr_psoc *psoc,
-			   struct wlan_objmgr_pdev *pdev)
+				  struct wlan_objmgr_pdev *pdev)
 {
 	QDF_STATUS status;
 
 	status = target_if_unregister_to_dbr(pdev);
-	if (QDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status)
 		cfr_err("Failed to register with dbr");
-	}
 
 	status = target_if_unregister_tx_completion_event_handler(psoc);
 	return status;
