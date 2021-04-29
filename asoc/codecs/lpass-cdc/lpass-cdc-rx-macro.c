@@ -1845,6 +1845,10 @@ static int lpass_cdc_rx_macro_config_compander(struct snd_soc_component *compone
 	u16 comp_coeff_lsb_reg = 0, comp_coeff_msb_reg = 0;
 	u16 mode = rx_priv->hph_pwr_mode;
 
+	/* AUX does not have compander */
+	if (interp_n == INTERP_AUX)
+		return 0;
+
 	comp = interp_n;
 	if (!rx_priv->comp_enabled[comp])
 		return 0;
