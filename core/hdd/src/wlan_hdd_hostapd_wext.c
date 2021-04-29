@@ -404,9 +404,14 @@ static __iw_softap_setparam(struct net_device *dev,
 						    CSA_REASON_USER_INITIATED);
 			hdd_debug("SET Channel Change to new channel= %d",
 			       set_value);
-			ret = hdd_softap_set_channel_change(dev,
-							    wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev, set_value),
-							    CH_WIDTH_MAX, false);
+			if (set_value <= wlan_reg_max_5ghz_ch_num())
+				set_value = wlan_reg_legacy_chan_to_freq(
+								hdd_ctx->pdev,
+								set_value);
+
+			ret = hdd_softap_set_channel_change(dev, set_value,
+							    CH_WIDTH_MAX,
+							    false);
 		} else {
 			hdd_err("Channel Change Failed, Device in test mode");
 			ret = -EINVAL;
