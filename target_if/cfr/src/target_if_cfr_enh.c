@@ -797,7 +797,11 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
 		goto unlock;
 	}
 
-	vdev = wlan_objmgr_pdev_get_first_vdev(pdev, WLAN_CFR_ID);
+	if (pcfr->rcc_param.vdev_id == CFR_INVALID_VDEV_ID)
+		vdev = wlan_objmgr_pdev_get_first_vdev(pdev, WLAN_CFR_ID);
+	else
+		vdev = wlan_objmgr_get_vdev_by_id_from_pdev(
+				pdev, pcfr->rcc_param.vdev_id, WLAN_CFR_ID);
 	if (qdf_unlikely(!vdev)) {
 		cfr_debug("vdev is null\n");
 		goto unlock;
