@@ -2253,9 +2253,8 @@ static int dsi_panel_parse_gpios(struct dsi_panel *panel)
 					      reset_gpio_name, 0);
 	if (!gpio_is_valid(panel->reset_config.reset_gpio) &&
 		!panel->host_config.ext_bridge_mode) {
-		rc = panel->reset_config.reset_gpio;
-		DSI_ERR("[%s] failed get reset gpio, rc=%d\n", panel->name, rc);
-		goto error;
+		DSI_DEBUG("[%s] reset gpio not set, rc=%d\n", panel->name,
+			panel->reset_config.reset_gpio);
 	}
 
 	panel->reset_config.disp_en_gpio = utils->get_named_gpio(utils->data,
