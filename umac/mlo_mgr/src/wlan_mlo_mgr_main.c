@@ -269,8 +269,15 @@ static QDF_STATUS mlo_dev_ctx_deinit(struct wlan_objmgr_vdev *vdev)
 	if (!ml_dev->wlan_vdev_count) {
 		qdf_list_remove_node(&g_mlo_mgr_ctx->ml_dev_list,
 			     &ml_dev->node);
-		if (wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE)
+		if (wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE) {
+			if (ml_dev->sta_ctx->connect_req)
+				qdf_mem_free(ml_dev->sta_ctx->connect_req);
+
+			if (ml_dev->sta_ctx->assoc_rsp.ptr)
+				qdf_mem_free(ml_dev->sta_ctx->assoc_rsp.ptr);
+
 			qdf_mem_free(ml_dev->sta_ctx);
+		}
 		else if (wlan_vdev_mlme_get_opmode(vdev) == QDF_SAP_MODE)
 			qdf_mem_free(ml_dev->ap_ctx);
 		mlo_dev_lock_destroy(ml_dev);

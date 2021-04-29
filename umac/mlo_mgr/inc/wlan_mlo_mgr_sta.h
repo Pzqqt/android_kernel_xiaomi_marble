@@ -20,6 +20,11 @@
 #ifndef _WLAN_MLO_MGR_STA_H_
 #define _WLAN_MLO_MGR_STA_H_
 
+#include <wlan_mlo_mgr_public_structs.h>
+#include <wlan_cm_ucfg_api.h>
+#include <wlan_objmgr_vdev_obj.h>
+
+#ifdef WLAN_FEATURE_11BE_MLO
 /**
  * mlo_connect - Start the connection process
  *
@@ -32,8 +37,8 @@ QDF_STATUS mlo_connect(struct wlan_objmgr_vdev *vdev,
 		       struct wlan_cm_connect_req *req);
 
 /**
- * mlo_sta_link_up_notify - Called by connection manager to notify the
- * STA link up is complete
+ * mlo_sta_link_connect_notify - Called by connection manager to notify the
+ * STA link connect is complete
  *
  * @vdev: pointer to vdev
  * @mlo_ie: MLO information element
@@ -43,7 +48,9 @@ QDF_STATUS mlo_connect(struct wlan_objmgr_vdev *vdev,
  *
  * Return: none
  */
-void mlo_sta_link_up_notify(struct wlan_objmgr_vdev *vdev, uint8_t *mlo_ie);
+void
+mlo_sta_link_connect_notify(struct wlan_objmgr_vdev *vdev,
+			    struct wlan_cm_connect_resp *rsp);
 
 /**
  * mlo_disconnect - Start the disconnection process
@@ -61,13 +68,13 @@ QDF_STATUS mlo_disconnect(struct wlan_objmgr_vdev *vdev,
 			  struct qdf_mac_addr *bssid);
 
 /**
- * mlo_sta_link_down_notify - Notifies that STA link has gone down
+ * mlo_sta_link_disconn_notify - Notifies that STA link disconnect completion
  *
  * @vdev: pointer to vdev
  *
  * Return: none
  */
-void mlo_sta_link_down_notify(struct wlan_objmgr_vdev *vdev);
+void mlo_sta_link_disconn_notify(struct wlan_objmgr_vdev *vdev);
 
 /**
  * mlo_is_mld_sta - Check if MLD associated with the vdev is a station
@@ -78,4 +85,93 @@ void mlo_sta_link_down_notify(struct wlan_objmgr_vdev *vdev);
  */
 bool mlo_is_mld_sta(struct wlan_objmgr_vdev *vdev);
 
+#ifndef WLAN_FEATURE_11BE_MLO_ADV_FEATURE
+/**
+ * ucfg_mlo_is_mld_connected - Check whether MLD is connected
+ *
+ * @vdev: pointer to vdev
+ *
+ * Return: true if mld is connected, false otherwise
+ */
+bool ucfg_mlo_is_mld_connected(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * ucfg_mlo_is_mld_disconnected - Check whether MLD is disconnected
+ *
+ * @vdev: pointer to vdev
+ *
+ * Return: true if mld is disconnected, false otherwise
+ */
+bool ucfg_mlo_is_mld_disconnected(struct wlan_objmgr_vdev *vdev);
+#endif
+
+/*
+ * ucfg_mlo_get_assoc_link_vdev - API to get assoc link vdev
+ *
+ * @mlo_dev_ctx: mlo dev ctx
+ *
+ * Return: MLD assoc link vdev
+ */
+struct wlan_objmgr_vdev *
+ucfg_mlo_get_assoc_link_vdev(struct wlan_objmgr_vdev *vdev);
+
+#else
+static inline
+QDF_STATUS mlo_connect(struct wlan_objmgr_vdev *vdev,
+		       struct wlan_cm_connect_req *req)
+{
+	return wlan_cm_start_connect(vdev, req);
+}
+
+static inline
+void mlo_sta_link_connect_notify(struct wlan_objmgr_vdev *vdev,
+				 struct wlan_cm_connect_resp *rsp)
+{ }
+
+static inline
+QDF_STATUS mlo_disconnect(struct wlan_objmgr_vdev *vdev,
+			  enum wlan_cm_source source,
+			  enum wlan_reason_code reason_code,
+			  struct qdf_mac_addr *bssid)
+{
+	QDF_STATUS status;
+
+	status = wlan_cm_disconnect(vdev, source,
+				    reason_code,
+				    bssid);
+	return status;
+}
+
+static inline
+void mlo_sta_link_disconn_notify(struct wlan_objmgr_vdev *vdev,
+				 struct wlan_cm_discon_rsp *resp)
+{ }
+
+#ifndef WLAN_FEATURE_11BE_MLO_ADV_FEATURE
+static inline
+bool ucfg_mlo_is_mld_connected(struct wlan_objmgr_vdev *vdev)
+{
+	return true;
+}
+
+static inline
+bool ucfg_mlo_is_mld_disconnected(struct wlan_objmgr_vdev *vdev)
+{
+	return true;
+}
+#endif
+
+static inline
+bool mlo_is_mld_sta(struct wlan_objmgr_vdev *vdev)
+{
+	return false;
+}
+
+static inline
+struct wlan_objmgr_vdev *
+ucfg_mlo_get_assoc_link_vdev(struct wlan_objmgr_vdev *vdev)
+{
+	return vdev;
+}
+#endif
 #endif
