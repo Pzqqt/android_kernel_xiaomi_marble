@@ -1430,6 +1430,9 @@ enum ipa3_hw_mode {
 	IPA_HW_MODE_TEST      = 4,
 };
 
+#define IPA_IS_REGULAR_CLK_MODE(hw_mode) \
+	((hw_mode == IPA_HW_MODE_NORMAL) || (hw_mode == IPA_HW_MODE_TEST))
+
 /*
  * enum ipa3_platform_type - Platform type
  * @IPA_PLAT_TYPE_MDM: MDM platform (usually 32bit single core CPU platform)
