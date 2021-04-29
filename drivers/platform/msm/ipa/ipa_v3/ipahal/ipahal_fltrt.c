@@ -650,25 +650,42 @@ static int ipa_flt_gen_hw_rule_ipav5_0(
 		rule_hdr->u.hdr.action = 0x3;
 		break;
 	default:
-		IPAHAL_ERR("Invalid Rule Action %d\n", params->rule->action);
+		IPAHAL_ERR_RL("Invalid Rule Action %d\n", params->rule->action);
 		WARN_ON_RATELIMIT_IPA(1);
 		return -EINVAL;
 	}
 
-	ipa_assert_on(params->rt_tbl_idx & ~0xFF);
+	if (params->rt_tbl_idx & ~0xFF) {
+		IPAHAL_ERR_RL("Invalid RT table idx 0x%X\n",
+			params->rt_tbl_idx);
+		WARN_ON_RATELIMIT_IPA(1);
+		return -EINVAL;
+	}
 	rule_hdr->u.hdr.rt_tbl_idx = params->rt_tbl_idx;
 	rule_hdr->u.hdr.retain_hdr = params->rule->retain_hdr ? 0x1 : 0x0;
 
-	ipa_assert_on(params->rule->pdn_idx & ~0xF);
+	if (params->rule->pdn_idx & ~0xF) {
+		IPAHAL_ERR_RL("Invalid PDN idx 0x%X\n", params->rule->pdn_idx);
+		WARN_ON_RATELIMIT_IPA(1);
+		return -EINVAL;
+	}
 	rule_hdr->u.hdr.pdn_idx = params->rule->pdn_idx;
 	rule_hdr->u.hdr.set_metadata = params->rule->set_metadata ? 0x1 : 0x0;
 	rule_hdr->u.hdr.rsvd1 = 0;
 	rule_hdr->u.hdr.rsvd2 = 0;
 
-	ipa_assert_on(params->priority & ~0xFF);
+	if (params->priority & ~0xFF) {
+		IPAHAL_ERR_RL("Invalid priority 0x%X\n", params->priority);
+		WARN_ON_RATELIMIT_IPA(1);
+		return -EINVAL;
+	}
 	rule_hdr->u.hdr.priority = params->priority;
-	ipa_assert_on(params->id & ~((1 << IPA3_0_RULE_ID_BIT_LEN) - 1));
-	ipa_assert_on(params->id == ((1 << IPA3_0_RULE_ID_BIT_LEN) - 1));
+	if ((params->id & ~((1 << IPA3_0_RULE_ID_BIT_LEN) - 1)) ||
+		(params->id == ((1 << IPA3_0_RULE_ID_BIT_LEN) - 1))) {
+		IPAHAL_ERR_RL("Invalid id 0x%X\n", params->id);
+		WARN_ON_RATELIMIT_IPA(1);
+		return -EINVAL;
+	}
 	rule_hdr->u.hdr.rule_id = params->id;
 	rule_hdr->u.hdr.stats_cnt_idx = params->cnt_idx;
 	rule_hdr->u.hdr.close_aggr_irq_mod =
