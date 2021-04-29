@@ -399,34 +399,6 @@ static int msm_venc_set_csc(struct msm_vidc_inst* inst,
 	return 0;
 }
 
-static int msm_venc_set_pipe(struct msm_vidc_inst *inst)
-{
-	int rc = 0;
-	struct msm_vidc_core *core = inst->core;
-	struct msm_vidc_inst_capability *capability = inst->capabilities;
-	u32 pipe;
-
-	rc = call_session_op(core, decide_work_route, inst);
-	if (rc) {
-		i_vpr_e(inst, "%s: decide_work_route failed\n",
-			__func__);
-		return -EINVAL;
-	}
-
-	pipe = capability->cap[PIPE].value;
-	i_vpr_h(inst, "%s: pipe: %u\n", __func__, pipe);
-	rc = venus_hfi_session_property(inst,
-			HFI_PROP_PIPE,
-			HFI_HOST_FLAGS_NONE,
-			HFI_PORT_NONE,
-			HFI_PAYLOAD_U32,
-			&pipe,
-			sizeof(u32));
-	if (rc)
-		return rc;
-	return 0;
-}
-
 static int msm_venc_set_quality_mode(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
@@ -539,10 +511,6 @@ static int msm_venc_set_internal_properties(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 	i_vpr_h(inst, "%s()\n", __func__);
-
-	rc = msm_venc_set_pipe(inst);
-	if (rc)
-		return rc;
 
 	rc = msm_venc_set_quality_mode(inst);
 	if (rc)

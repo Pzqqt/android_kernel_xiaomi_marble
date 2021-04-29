@@ -3143,3 +3143,33 @@ int msm_vidc_set_stage(void *instance,
 
 	return rc;
 }
+
+int msm_vidc_set_pipe(void *instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	u32 pipe;
+	struct msm_vidc_core *core;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+
+	if (!inst || !inst->capabilities || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+
+	rc = call_session_op(core, decide_work_route, inst);
+	if (rc) {
+		i_vpr_e(inst, "%s: decide_work_route failed\n",
+			__func__);
+		return -EINVAL;
+	}
+
+	pipe = inst->capabilities->cap[PIPE].value;
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
+			&pipe, sizeof(u32), __func__);
+	if (rc)
+		return rc;
+
+	return rc;
+}
