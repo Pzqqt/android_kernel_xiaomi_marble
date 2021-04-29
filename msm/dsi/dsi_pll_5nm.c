@@ -107,10 +107,11 @@ static inline void dsi_pll_set_phy_post_div(struct dsi_pll_resource *pll, u32
 	reg_val &= ~0x0F;
 	reg_val |= phy_post_div;
 	DSI_PLL_REG_W(pll->phy_base, PHY_CMN_CLK_CFG0, reg_val);
+	/* For slave PLL, this divider always should be set to 1 */
 	if (pll->slave) {
-		reg_val = DSI_PLL_REG_R(pll->slave->phy_base, PHY_CMN_CLK_CFG0);
+		reg_val = DSI_PLL_REG_R(pll->phy_base, PHY_CMN_CLK_CFG0);
 		reg_val &= ~0x0F;
-		reg_val |= phy_post_div;
+		reg_val |= 0x1;
 		DSI_PLL_REG_W(pll->slave->phy_base, PHY_CMN_CLK_CFG0, reg_val);
 	}
 }
