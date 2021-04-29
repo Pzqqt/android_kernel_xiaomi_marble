@@ -1413,15 +1413,54 @@ exit:
 	return 0;
 }
 
-int msm_vidc_adjust_bitrate(void *instance, struct v4l2_ctrl *ctrl)
+static bool msm_vidc_check_all_layer_bitrate_set(struct msm_vidc_inst *inst)
+{
+	bool layer_bitrate_set = true;
+	u32 cap_id = 0, i, enh_layer_count;
+	u32 layer_br_caps[6] = {L0_BR, L1_BR, L2_BR, L3_BR, L4_BR, L5_BR};
+
+	enh_layer_count = inst->capabilities->cap[ENH_LAYER_COUNT].value;
+
+	for (i = 0; i <= enh_layer_count; i++) {
+		if (i >= ARRAY_SIZE(layer_br_caps))
+			break;
+		cap_id = layer_br_caps[i];
+		if (!(inst->capabilities->cap[cap_id].flags & CAP_FLAG_CLIENT_SET)) {
+			layer_bitrate_set = false;
+			break;
+		}
+	}
+
+	return layer_bitrate_set;
+}
+
+static u32 msm_vidc_get_cumulative_bitrate(struct msm_vidc_inst *inst)
 {
 	int i;
-	struct msm_vidc_inst_capability *capability;
-	s32 adjusted_value;
+	u32 cap_id = 0;
+	u32 cumulative_br = 0;
+	s32 enh_layer_count;
+	u32 layer_br_caps[6] = {L0_BR, L1_BR, L2_BR, L3_BR, L4_BR, L5_BR};
+
+	enh_layer_count = inst->capabilities->cap[ENH_LAYER_COUNT].value;
+
+	for (i = 0; i <= enh_layer_count; i++) {
+		if (i >= ARRAY_SIZE(layer_br_caps))
+			break;
+		cap_id = layer_br_caps[i];
+		cumulative_br += inst->capabilities->cap[cap_id].value;
+	}
+
+	return cumulative_br;
+}
+
+int msm_vidc_adjust_bitrate(void *instance, struct v4l2_ctrl *ctrl)
+{
+	int i, rc = 0;
 	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
-	s32 rc_type = -1, enh_layer_count = -1;
-	u32 cap_id = 0, cumulative_bitrate = 0;
-	bool layer_bitrate_set = false;
+	struct msm_vidc_inst_capability *capability;
+	s32 adjusted_value, max_bitrate, enh_layer_count;
+	u32 cumulative_bitrate = 0, cap_id = 0, cap_value = 0;
 	u32 layer_br_caps[6] = {L0_BR, L1_BR, L2_BR, L3_BR, L4_BR, L5_BR};
 
 	if (!inst || !inst->capabilities) {
@@ -1430,72 +1469,150 @@ int msm_vidc_adjust_bitrate(void *instance, struct v4l2_ctrl *ctrl)
 	}
 	capability = inst->capabilities;
 
-	adjusted_value = ctrl ? ctrl->val :
-		capability->cap[BIT_RATE].value;
-
 	/* ignore layer bitrate when total bitrate is set */
-	if (capability->cap[BIT_RATE].flags & CAP_FLAG_CLIENT_SET)
-		goto exit;
+	if (capability->cap[BIT_RATE].flags & CAP_FLAG_CLIENT_SET) {
+		/*
+		 * For static case, ctrl is null.
+		 * For dynamic case, only BIT_RATE cap uses this adjust function.
+		 * Hence, no need to check for ctrl id to be BIT_RATE control, and not
+		 * any of layer bitrate controls.
+		 */
+		adjusted_value = ctrl ? ctrl->val : capability->cap[BIT_RATE].value;
+		msm_vidc_update_cap_value(inst, BIT_RATE, adjusted_value, __func__);
+
+		return 0;
+	}
+
+	if (inst->vb2q[OUTPUT_PORT].streaming)
+		return 0;
 
 	if (msm_vidc_get_parent_value(inst, BIT_RATE,
 		ENH_LAYER_COUNT, &enh_layer_count, __func__))
 		return -EINVAL;
 
-	if (msm_vidc_get_parent_value(inst, BIT_RATE,
-		BITRATE_MODE, &rc_type, __func__))
-		return -EINVAL;
+	max_bitrate = inst->capabilities->cap[BIT_RATE].max;
 
 	/*
 	 * ENH_LAYER_COUNT cap max is positive only if
-	 * layer encoding is enabled for static setting
+	 * layer encoding is enabled during streamon.
 	 */
 	if (capability->cap[ENH_LAYER_COUNT].max) {
-		layer_bitrate_set = true;
-		for (i = 0; i <= enh_layer_count; i++) {
-			if (i >= ARRAY_SIZE(layer_br_caps))
-				break;
-			cap_id = layer_br_caps[i];
-			if (!(capability->cap[cap_id].flags & CAP_FLAG_CLIENT_SET)) {
-				layer_bitrate_set = false;
-				break;
-			}
-			cumulative_bitrate += capability->cap[cap_id].value;
+		if (!msm_vidc_check_all_layer_bitrate_set(inst)) {
+			i_vpr_h(inst,
+				"%s: client did not set all layer bitrates\n",
+				__func__);
+			return 0;
 		}
 
-		/* layer bitrate supported only for CBR rc */
-		if (layer_bitrate_set &&
-			(rc_type == HFI_RC_CBR_CFR || rc_type == HFI_RC_CBR_VFR)) {
-			if (cumulative_bitrate > capability->cap[BIT_RATE].max)
-				cumulative_bitrate =
-					capability->cap[BIT_RATE].max;
-			adjusted_value = cumulative_bitrate;
-			i_vpr_h(inst,
-				"%s: update BIT_RATE with cumulative bitrate\n",
-				__func__);
-		}
-	} else {
-		for (i = 0; i < sizeof(layer_br_caps) / sizeof(u32); i++) {
-			if (i >= ARRAY_SIZE(layer_br_caps))
-				break;
-			cap_id = layer_br_caps[i];
-			/*
-			 * layer bitrate cannot be set
-			 * when layer encoding is disabled
-			 */
-			if (capability->cap[cap_id].flags &
-					CAP_FLAG_CLIENT_SET) {
-				i_vpr_e(inst,
-					"%s: invalid layer bitrate set\n",
-					__func__);
-				return -EINVAL;
+		cumulative_bitrate = msm_vidc_get_cumulative_bitrate(inst);
+
+		/* cap layer bitrates to max supported bitrate */
+		if (cumulative_bitrate > max_bitrate) {
+			u32 decrement_in_value = 0;
+			u32 decrement_in_percent = ((cumulative_bitrate - max_bitrate) * 100) /
+				max_bitrate;
+
+			cumulative_bitrate = 0;
+			for (i = 0; i <= enh_layer_count; i++) {
+				if (i >= ARRAY_SIZE(layer_br_caps))
+					break;
+				cap_id = layer_br_caps[i];
+				cap_value = inst->capabilities->cap[cap_id].value;
+
+				decrement_in_value = (cap_value *
+					decrement_in_percent) / 100;
+				cumulative_bitrate += (cap_value - decrement_in_value);
+
+				/*
+				 * cap value for the L*_BR is changed. Hence, update cap,
+				 * and add to FW_LIST to set new values to firmware.
+				 */
+				msm_vidc_update_cap_value(inst, cap_id,
+					(cap_value - decrement_in_value), __func__);
 			}
 		}
+
+		i_vpr_h(inst,
+			"%s: update BIT_RATE with cumulative bitrate\n",
+			__func__);
+		msm_vidc_update_cap_value(inst, BIT_RATE,
+			cumulative_bitrate, __func__);
 	}
 
-exit:
+	return rc;
+}
+
+int msm_vidc_adjust_dynamic_layer_bitrate(void *instance, struct v4l2_ctrl *ctrl)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+	struct msm_vidc_inst_capability *capability;
+	u32 cumulative_bitrate = 0;
+	u32 client_set_cap_id = INST_CAP_NONE;
+	u32 old_br = 0, new_br = 0, exceeded_br = 0;
+	s32 max_bitrate;
+
+	if (!inst || !inst->capabilities || !ctrl) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	/* ignore layer bitrate when total bitrate is set */
+	if (capability->cap[BIT_RATE].flags & CAP_FLAG_CLIENT_SET)
+		return 0;
+
+	if (!inst->vb2q[OUTPUT_PORT].streaming)
+		return 0;
+
+	/*
+	 * ENH_LAYER_COUNT cap max is positive only if
+	 * layer encoding is enabled during streamon.
+	 */
+	if (!capability->cap[ENH_LAYER_COUNT].max) {
+		i_vpr_e(inst, "%s: layers not enabled\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!msm_vidc_check_all_layer_bitrate_set(inst)) {
+		i_vpr_h(inst,
+			"%s: client did not set all layer bitrates\n",
+			__func__);
+		return 0;
+	}
+
+	client_set_cap_id = msm_vidc_get_cap_id(inst, ctrl->id);
+	if (client_set_cap_id == INST_CAP_NONE) {
+		i_vpr_e(inst, "%s: could not find cap_id for ctrl %s\n",
+			__func__, ctrl->name);
+		return -EINVAL;
+	}
+
+	cumulative_bitrate = msm_vidc_get_cumulative_bitrate(inst);
+	max_bitrate = inst->capabilities->cap[BIT_RATE].max;
+	old_br = capability->cap[client_set_cap_id].value;
+	new_br = ctrl->val;
+
+	/*
+	 * new bitrate is not supposed to cause cumulative bitrate to
+	 * exceed max supported bitrate
+	 */
+
+	if ((cumulative_bitrate - old_br + new_br) > max_bitrate) {
+		/* adjust new bitrate */
+		exceeded_br = (cumulative_bitrate - old_br + new_br) - max_bitrate;
+		new_br = ctrl->val - exceeded_br;
+	}
+	msm_vidc_update_cap_value(inst, client_set_cap_id, new_br, __func__);
+
+	/* adjust totol bitrate cap */
+	i_vpr_h(inst,
+		"%s: update BIT_RATE with cumulative bitrate\n",
+		__func__);
 	msm_vidc_update_cap_value(inst, BIT_RATE,
-		adjusted_value, __func__);
-	return 0;
+		msm_vidc_get_cumulative_bitrate(inst), __func__);
+
+	return rc;
 }
 
 int msm_vidc_adjust_peak_bitrate(void *instance, struct v4l2_ctrl *ctrl)
@@ -2403,7 +2520,6 @@ int msm_vidc_set_bitrate(void *instance,
 	u32 hfi_value = 0;
 	s32 rc_type = -1, enh_layer_count = -1;
 	u32 layer_br_caps[6] = {L0_BR, L1_BR, L2_BR, L3_BR, L4_BR, L5_BR};
-	bool layer_bitrate_set = false;
 
 	if (!inst || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -2414,44 +2530,50 @@ int msm_vidc_set_bitrate(void *instance,
 	if (inst->capabilities->cap[BIT_RATE].flags & CAP_FLAG_CLIENT_SET)
 		goto set_total_bitrate;
 
-	if (msm_vidc_get_parent_value(inst, BIT_RATE,
-		ENH_LAYER_COUNT, &enh_layer_count, __func__))
-		return -EINVAL;
+	/*
+	 * During runtime, if BIT_RATE cap CLIENT_SET flag is not set,
+	 * then this function will be called due to change in ENH_LAYER_COUNT.
+	 * In this case, client did not change bitrate, hence, no need to set
+	 * to fw.
+	 */
+	if (inst->vb2q[OUTPUT_PORT].streaming)
+		return 0;
 
 	if (msm_vidc_get_parent_value(inst, BIT_RATE,
 		BITRATE_MODE, &rc_type, __func__))
 		return -EINVAL;
 
-	if (inst->capabilities->cap[ENH_LAYER_COUNT].max &&
-		(rc_type == HFI_RC_CBR_CFR ||
-		rc_type == HFI_RC_CBR_VFR)) {
-		layer_bitrate_set = true;
+	if (rc_type != HFI_RC_CBR_CFR && rc_type != HFI_RC_CBR_VFR) {
+		i_vpr_h(inst, "%s: set total bitrate for non CBR rc type\n",
+			__func__);
+		goto set_total_bitrate;
+	}
+
+	if (msm_vidc_get_parent_value(inst, BIT_RATE,
+		ENH_LAYER_COUNT, &enh_layer_count, __func__))
+		return -EINVAL;
+
+	/*
+	 * ENH_LAYER_COUNT cap max is positive only if
+	 *    layer encoding is enabled during streamon.
+	 */
+	if (inst->capabilities->cap[ENH_LAYER_COUNT].max) {
+		if (!msm_vidc_check_all_layer_bitrate_set(inst))
+			goto set_total_bitrate;
+
+		/* set Layer Bitrate */
 		for (i = 0; i <= enh_layer_count; i++) {
 			if (i >= ARRAY_SIZE(layer_br_caps))
 				break;
 			cap_id = layer_br_caps[i];
-			if (!(inst->capabilities->cap[cap_id].flags &
-					CAP_FLAG_CLIENT_SET)) {
-				layer_bitrate_set = false;
-				break;
-			}
+			hfi_value = inst->capabilities->cap[cap_id].value;
+			rc = msm_vidc_packetize_control(inst, cap_id,
+				HFI_PAYLOAD_U32, &hfi_value,
+				sizeof(u32), __func__);
+			if (rc)
+				return rc;
 		}
-
-		if (layer_bitrate_set) {
-			/* set Layer Bitrate */
-			for (i = 0; i <= enh_layer_count; i++) {
-				if (i >= ARRAY_SIZE(layer_br_caps))
-					break;
-				cap_id = layer_br_caps[i];
-				hfi_value = inst->capabilities->cap[cap_id].value;
-				rc = msm_vidc_packetize_control(inst, cap_id,
-					HFI_PAYLOAD_U32, &hfi_value,
-					sizeof(u32), __func__);
-				if (rc)
-					return rc;
-			}
-			goto exit;
-		}
+		goto exit;
 	}
 
 set_total_bitrate:
@@ -2461,6 +2583,67 @@ set_total_bitrate:
 	if (rc)
 		return rc;
 exit:
+	return rc;
+}
+
+int msm_vidc_set_dynamic_layer_bitrate(void *instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+	u32 hfi_value = 0;
+	s32 rc_type = -1;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!inst->vb2q[OUTPUT_PORT].streaming)
+		return 0;
+
+	/* set Total Bitrate */
+	if (inst->capabilities->cap[BIT_RATE].flags & CAP_FLAG_CLIENT_SET) {
+		i_vpr_h(inst,
+			"%s: Total bitrate is set, ignore layer bitrate\n",
+			__func__);
+		return 0;
+	}
+
+	/*
+	 * ENH_LAYER_COUNT cap max is positive only if
+	 *    layer encoding is enabled during streamon.
+	 */
+	if (!inst->capabilities->cap[ENH_LAYER_COUNT].max ||
+		!msm_vidc_check_all_layer_bitrate_set(inst)) {
+		i_vpr_h(inst,
+			"%s: invalid layer bitrate, ignore setting to fw\n",
+			__func__);
+		return 0;
+	}
+
+	if (inst->hfi_rc_type == HFI_RC_CBR_CFR ||
+		rc_type == HFI_RC_CBR_VFR) {
+		/* set layer bitrate for the client set layer */
+		hfi_value = inst->capabilities->cap[cap_id].value;
+		rc = msm_vidc_packetize_control(inst, cap_id,
+			HFI_PAYLOAD_U32, &hfi_value,
+			sizeof(u32), __func__);
+		if (rc)
+			return rc;
+	} else {
+		/*
+		 * All layer bitartes set for unsupported rc type.
+		 * Hence accept layer bitrates, but set total bitrate prop
+		 * with cumulative bitrate.
+		 */
+		hfi_value = inst->capabilities->cap[BIT_RATE].value;
+		rc = msm_vidc_packetize_control(inst, BIT_RATE, HFI_PAYLOAD_U32,
+				&hfi_value, sizeof(u32), __func__);
+		if (rc)
+			return rc;
+	}
+
 	return rc;
 }
 
