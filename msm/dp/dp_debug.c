@@ -313,15 +313,23 @@ static ssize_t dp_debug_read_dpcd(struct file *file,
 	if (!dpcd)
 		goto bail;
 
-	dp_sim_read_dpcd_reg(debug->sim_bridge, dpcd,
-			debug->dpcd_size, debug->dpcd_offset);
-
-	len += snprintf(buf, buf_size, "0x%x", debug->dpcd_offset);
-
-	while (offset < debug->dpcd_size) {
-		len += snprintf(buf + len, buf_size - len, "0x%x",
-			dpcd[debug->dpcd_offset + offset++]);
+	/*
+	 * In simulation mode, this function returns the last written DPCD node.
+	 * For a real monitor plug in, it always dumps the first 16 DPCD registers.
+	 */
+	if (debug->dp_debug.sim_mode) {
+		dp_sim_read_dpcd_reg(debug->sim_bridge, dpcd, debug->dpcd_size, debug->dpcd_offset);
+	} else {
+		debug->dpcd_size = sizeof(debug->panel->dpcd);
+		debug->dpcd_offset = 0;
+		memcpy(dpcd, debug->panel->dpcd, debug->dpcd_size);
 	}
+
+	len += scnprintf(buf, buf_size, "%04x: ", debug->dpcd_offset);
+
+	while (offset < debug->dpcd_size)
+		len += scnprintf(buf + len, buf_size - len, "%02x ",
+				dpcd[debug->dpcd_offset + offset++]);
 
 	kfree(dpcd);
 
