@@ -1603,6 +1603,90 @@ int msm_vidc_adjust_hevc_frame_qp(void *instance, struct v4l2_ctrl *ctrl)
 	return rc;
 }
 
+int msm_vidc_adjust_blur_type(void *instance, struct v4l2_ctrl *ctrl)
+{
+	struct msm_vidc_inst_capability *capability;
+	s32 adjusted_value;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+	s32 rc_type = -1, rotation = -1, hflip = -1, vflip = -1, cac = -1;
+	s32 pix_fmts = -1;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	if (inst->vb2q[OUTPUT_PORT].streaming)
+		return 0;
+
+	adjusted_value = ctrl ? ctrl->val :
+		capability->cap[BLUR_TYPES].value;
+
+	if (adjusted_value == VIDC_BLUR_NONE)
+		return 0;
+
+	if (msm_vidc_get_parent_value(inst, BLUR_TYPES, BITRATE_MODE,
+		&rc_type, __func__) ||
+		msm_vidc_get_parent_value(inst, BLUR_TYPES, ROTATION,
+		&rotation, __func__) ||
+		msm_vidc_get_parent_value(inst, BLUR_TYPES,
+		CONTENT_ADAPTIVE_CODING, &cac, __func__) ||
+		msm_vidc_get_parent_value(inst, BLUR_TYPES, HFLIP,
+		&hflip, __func__) ||
+		msm_vidc_get_parent_value(inst, BLUR_TYPES, PIX_FMTS,
+		&pix_fmts, __func__))
+		return -EINVAL;
+
+	vflip = capability->cap[VFLIP].value;
+
+	if (adjusted_value == VIDC_BLUR_EXTERNAL) {
+		if (rotation || hflip || vflip || is_scaling_enabled(inst)) {
+			adjusted_value = VIDC_BLUR_NONE;
+		}
+	} else if (adjusted_value == VIDC_BLUR_ADAPTIVE) {
+		if (rotation || hflip || vflip || is_scaling_enabled(inst) ||
+			(rc_type != HFI_RC_VBR_CFR) ||
+			!cac || is_10bit_colorformat(pix_fmts)) {
+			adjusted_value = VIDC_BLUR_NONE;
+		}
+	}
+
+	msm_vidc_update_cap_value(inst, BLUR_TYPES,
+		adjusted_value, __func__);
+
+	return 0;
+}
+
+int msm_vidc_adjust_blur_resolution(void *instance, struct v4l2_ctrl *ctrl)
+{
+	struct msm_vidc_inst_capability *capability;
+	s32 adjusted_value;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+	s32 blur_type = -1;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	adjusted_value = ctrl ? ctrl->val :
+		capability->cap[BLUR_RESOLUTION].value;
+
+	if (msm_vidc_get_parent_value(inst, BLUR_RESOLUTION, BLUR_TYPES,
+		&blur_type, __func__))
+		return -EINVAL;
+
+	if (blur_type != VIDC_BLUR_EXTERNAL)
+		return 0;
+
+	msm_vidc_update_cap_value(inst, BLUR_RESOLUTION,
+		adjusted_value, __func__);
+
+	return 0;
+}
+
 int msm_vidc_adjust_session_priority(void *instance, struct v4l2_ctrl *ctrl)
 {
 	int rc = 0;
@@ -2423,8 +2507,19 @@ int msm_vidc_set_flip(void *instance,
 	if (vflip)
 		hfi_value |= HFI_VERTICAL_FLIP;
 
+	if (inst->vb2q[OUTPUT_PORT].streaming) {
+		if (hfi_value != HFI_DISABLE_FLIP) {
+			rc = msm_vidc_set_req_sync_frame(inst,
+				REQUEST_I_FRAME);
+			if (rc)
+				return rc;
+		}
+	}
+
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32_ENUM,
 		&hfi_value, sizeof(u32), __func__);
+	if (rc)
+		return rc;
 
 	return rc;
 }
@@ -2446,6 +2541,75 @@ int msm_vidc_set_rotation(void *instance,
 		return -EINVAL;
 
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
+		&hfi_value, sizeof(u32), __func__);
+	if (rc)
+		return rc;
+
+	return rc;
+}
+
+int msm_vidc_set_blur_type(void *instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+	u32 hfi_value;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (inst->vb2q[OUTPUT_PORT].streaming)
+		return 0;
+
+	rc = msm_vidc_v4l2_to_hfi_enum(inst, cap_id, &hfi_value);
+	if (rc)
+		return -EINVAL;
+
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32_ENUM,
+		&hfi_value, sizeof(u32), __func__);
+	if (rc)
+		return rc;
+
+	return rc;
+}
+
+int msm_vidc_set_blur_resolution(void *instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+	s32 blur_type = -1;
+	u32 hfi_value, blur_width, blur_height;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (msm_vidc_get_parent_value(inst, cap_id,
+		BLUR_TYPES, &blur_type, __func__))
+		return -EINVAL;
+
+	if (blur_type != VIDC_BLUR_EXTERNAL)
+		return 0;
+
+	hfi_value = inst->capabilities->cap[cap_id].value;
+
+	blur_width = (hfi_value & 0xFFFF0000) >> 16;
+	blur_height = hfi_value & 0xFFFF;
+
+	if (blur_width > inst->compose.width ||
+		blur_height > inst->compose.height) {
+		i_vpr_e(inst,
+			"%s: blur wxh: %dx%d exceeds compose wxh: %dx%d\n",
+			__func__, blur_width, blur_height,
+			inst->compose.width, inst->compose.height);
+		hfi_value = (inst->compose.width << 16) | inst->compose.height;
+	}
+
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_32_PACKED,
 		&hfi_value, sizeof(u32), __func__);
 	if (rc)
 		return rc;
