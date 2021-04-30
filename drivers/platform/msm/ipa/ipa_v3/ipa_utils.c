@@ -8882,7 +8882,7 @@ int ipa3_init_mem_partition(enum ipa_hw_type type)
 int ipa3_controller_static_bind(struct ipa3_controller *ctrl,
 		enum ipa_hw_type hw_type, u32 ipa_cfg_offset)
 {
-	if (hw_type >= IPA_HW_v5_1) {
+	if (hw_type >= IPA_HW_v5_0) {
 		ctrl->ipa_clk_rate_turbo = IPA_V5_0_CLK_RATE_TURBO;
 		ctrl->ipa_clk_rate_nominal = IPA_V5_0_CLK_RATE_NOMINAL;
 		ctrl->ipa_clk_rate_svs = IPA_V5_0_CLK_RATE_SVS;
