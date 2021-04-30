@@ -6495,6 +6495,8 @@ wlan_hdd_update_twt_responder(struct hdd_context *hdd_ctx,
 	ucfg_mlme_set_twt_responder(hdd_ctx->psoc, params->twt_responder);
 	if (params->twt_responder)
 		hdd_send_twt_responder_enable_cmd(hdd_ctx);
+	else
+		hdd_send_twt_responder_disable_cmd(hdd_ctx);
 }
 #else
 static inline void

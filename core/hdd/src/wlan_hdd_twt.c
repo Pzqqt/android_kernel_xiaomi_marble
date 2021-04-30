@@ -356,7 +356,7 @@ int hdd_test_config_twt_setup_session(struct hdd_adapter *adapter,
 						     &congestion_timeout);
 		if (congestion_timeout) {
 			ret = qdf_status_to_os_return(
-				hdd_send_twt_disable_cmd(adapter->hdd_ctx));
+			hdd_send_twt_requestor_disable_cmd(adapter->hdd_ctx));
 			if (ret) {
 				hdd_err("Failed to disable TWT");
 				return ret;
@@ -1612,7 +1612,7 @@ static int hdd_twt_setup_session(struct hdd_adapter *adapter,
 
 	if (congestion_timeout) {
 		ret = qdf_status_to_os_return(
-			hdd_send_twt_disable_cmd(adapter->hdd_ctx));
+			hdd_send_twt_requestor_disable_cmd(adapter->hdd_ctx));
 		if (ret) {
 			hdd_err("Failed to disable TWT");
 			return ret;
@@ -3677,27 +3677,69 @@ QDF_STATUS hdd_send_twt_responder_enable_cmd(struct hdd_context *hdd_ctx)
 	return status;
 }
 
-QDF_STATUS hdd_send_twt_disable_cmd(struct hdd_context *hdd_ctx)
+QDF_STATUS hdd_send_twt_requestor_disable_cmd(struct hdd_context *hdd_ctx)
 {
 	uint8_t pdev_id = hdd_ctx->pdev->pdev_objmgr.wlan_pdev_id;
 	struct twt_enable_disable_conf twt_en_dis = {0};
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
-	hdd_debug("TWT disable cmd :pdev:%d", pdev_id);
+	hdd_debug("TWT requestor disable cmd: pdev:%d", pdev_id);
 
-	/* One disable should be fine, with extended configuration
-	 * set to false, and extended arguments will be ignored by target
-	 */
+	/* Set MLME TWT flag */
+	ucfg_mlme_set_twt_requestor_flag(hdd_ctx->psoc, false);
+
+       /* One disable should be fine, with extended configuration
+	* set to false, and extended arguments will be ignored by target
+	*/
+	twt_en_dis.role = WMI_TWT_ROLE_REQUESTOR;
 	hdd_ctx->twt_state = TWT_DISABLE_REQUESTED;
 	twt_en_dis.ext_conf_present = false;
+	qdf_event_reset(&hdd_ctx->twt_disable_comp_evt);
 	wma_send_twt_disable_cmd(pdev_id, &twt_en_dis);
 
 	status = qdf_wait_single_event(&hdd_ctx->twt_disable_comp_evt,
 				       TWT_DISABLE_COMPLETE_TIMEOUT);
 
 	if (!QDF_IS_STATUS_SUCCESS(status))
-		hdd_warn("TWT Responder disable timedout");
+		goto timeout;
 
+	return status;
+
+timeout:
+	hdd_warn("TWT Requestor disable timedout");
+	return status;
+}
+
+QDF_STATUS hdd_send_twt_responder_disable_cmd(struct hdd_context *hdd_ctx)
+{
+	uint8_t pdev_id = hdd_ctx->pdev->pdev_objmgr.wlan_pdev_id;
+	struct twt_enable_disable_conf twt_en_dis = {0};
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	hdd_debug("TWT responder disable cmd: pdev:%d", pdev_id);
+
+	/* Set MLME TWT flag */
+	ucfg_mlme_set_twt_responder_flag(hdd_ctx->psoc, false);
+
+       /* One disable should be fine, with extended configuration
+	* set to false, and extended arguments will be ignored by target
+	*/
+	twt_en_dis.role = WMI_TWT_ROLE_RESPONDER;
+	hdd_ctx->twt_state = TWT_DISABLE_REQUESTED;
+	twt_en_dis.ext_conf_present = false;
+	qdf_event_reset(&hdd_ctx->twt_disable_comp_evt);
+	wma_send_twt_disable_cmd(pdev_id, &twt_en_dis);
+
+	status = qdf_wait_single_event(&hdd_ctx->twt_disable_comp_evt,
+				       TWT_DISABLE_COMPLETE_TIMEOUT);
+
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		goto timeout;
+
+	return status;
+
+timeout:
+	hdd_warn("TWT Responder disable timedout");
 	return status;
 }
 

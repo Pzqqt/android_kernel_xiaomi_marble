@@ -148,12 +148,22 @@ QDF_STATUS hdd_send_twt_requestor_enable_cmd(struct hdd_context *hdd_ctx);
 QDF_STATUS hdd_send_twt_responder_enable_cmd(struct hdd_context *hdd_ctx);
 
 /**
- * hdd_send_twt_disable_cmd() - Send TWT disable command to target
+ * hdd_send_twt_requestor_disable_cmd() - Send TWT requestor disable command
+ * to target
  * @hdd_ctx: HDD Context
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS hdd_send_twt_disable_cmd(struct hdd_context *hdd_ctx);
+QDF_STATUS hdd_send_twt_requestor_disable_cmd(struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_send_twt_responder_disable_cmd() - Send TWT responder disable command
+ * to target
+ * @hdd_ctx: HDD Context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hdd_send_twt_responder_disable_cmd(struct hdd_context *hdd_ctx);
 
 /**
  * wlan_hdd_twt_init() - Initialize TWT
@@ -248,18 +258,25 @@ static inline void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 static inline
 QDF_STATUS hdd_send_twt_requestor_enable_cmd(struct hdd_context *hdd_ctx)
 {
-	return QDF_STATUS_E_FAILURE;
+	return QDF_STATUS_E_NOSUPPORT;
 }
 
 static inline
 QDF_STATUS hdd_send_twt_responder_enable_cmd(struct hdd_context *hdd_ctx)
 {
-	return QDF_STATUS_E_FAILURE;
+	return QDF_STATUS_E_NOSUPPORT;
 }
 
-static inline QDF_STATUS hdd_send_twt_disable_cmd(struct hdd_context *hdd_ctx)
+static inline
+QDF_STATUS hdd_send_twt_requestor_disable_cmd(struct hdd_context *hdd_ctx)
 {
-	return QDF_STATUS_SUCCESS;
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline
+QDF_STATUS hdd_send_twt_responder_disable_cmd(struct hdd_context *hdd_ctx)
+{
+	return QDF_STATUS_E_NOSUPPORT;
 }
 
 static inline void wlan_hdd_twt_init(struct hdd_context *hdd_ctx)
