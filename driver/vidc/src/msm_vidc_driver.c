@@ -842,6 +842,7 @@ u32 msm_vidc_get_buffer_region(struct msm_vidc_inst *inst,
 				region = MSM_VIDC_NON_SECURE_PIXEL;
 			break;
 		case MSM_VIDC_BUF_DPB:
+		case MSM_VIDC_BUF_VPSS:
 			region = MSM_VIDC_NON_SECURE_PIXEL;
 			break;
 		case MSM_VIDC_BUF_INPUT_META:
@@ -851,7 +852,6 @@ u32 msm_vidc_get_buffer_region(struct msm_vidc_inst *inst,
 		case MSM_VIDC_BUF_NON_COMV:
 		case MSM_VIDC_BUF_LINE:
 		case MSM_VIDC_BUF_PERSIST:
-		case MSM_VIDC_BUF_VPSS:
 			region = MSM_VIDC_NON_SECURE;
 			break;
 		default:
