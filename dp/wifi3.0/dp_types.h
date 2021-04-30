@@ -3181,7 +3181,7 @@ struct dp_fisa_rx_sw_ft {
 	qdf_time_t flow_init_ts;
 	qdf_time_t last_accessed_ts;
 #ifdef WLAN_SUPPORT_RX_FISA_HIST
-	struct fisa_pkt_hist pkt_hist;
+	struct fisa_pkt_hist *pkt_hist;
 #endif
 };
 
