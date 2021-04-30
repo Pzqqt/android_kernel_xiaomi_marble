@@ -365,7 +365,8 @@ static int handle_session_error(struct msm_vidc_inst *inst,
 		break;
 	}
 
-	i_vpr_e(inst, "session error (%#x): %s\n", pkt->type, error);
+	i_vpr_e(inst, "%s: session error received %#x: %s\n",
+		__func__, pkt->type, error);
 
 	rc = msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 	return rc;
@@ -384,11 +385,6 @@ int handle_system_error(struct msm_vidc_core *core,
 static int handle_system_init(struct msm_vidc_core *core,
 	struct hfi_packet *pkt)
 {
-	if (pkt->flags & HFI_FW_FLAGS_SYSTEM_ERROR) {
-		d_vpr_e("%s: received system error\n", __func__);
-		return 0;
-	}
-
 	if (pkt->flags & HFI_FW_FLAGS_SUCCESS) {
 		d_vpr_h("%s: successful\n", __func__);
 		complete(&core->init_done);
@@ -402,12 +398,6 @@ static int handle_system_init(struct msm_vidc_core *core,
 static int handle_session_open(struct msm_vidc_inst *inst,
 	struct hfi_packet *pkt)
 {
-	if (pkt->flags & HFI_FW_FLAGS_SESSION_ERROR) {
-		i_vpr_e(inst, "%s: received session error\n", __func__);
-		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
-		return 0;
-	}
-
 	if (pkt->flags & HFI_FW_FLAGS_SUCCESS)
 		i_vpr_h(inst, "%s: successful\n", __func__);
 
@@ -417,11 +407,6 @@ static int handle_session_open(struct msm_vidc_inst *inst,
 static int handle_session_close(struct msm_vidc_inst *inst,
 	struct hfi_packet *pkt)
 {
-	if (pkt->flags & HFI_FW_FLAGS_SESSION_ERROR) {
-		i_vpr_e(inst, "%s: received session error\n", __func__);
-		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
-	}
-
 	if (pkt->flags & HFI_FW_FLAGS_SUCCESS)
 		i_vpr_h(inst, "%s: successful\n", __func__);
 
@@ -432,12 +417,6 @@ static int handle_session_close(struct msm_vidc_inst *inst,
 static int handle_session_start(struct msm_vidc_inst *inst,
 	struct hfi_packet *pkt)
 {
-	if (pkt->flags & HFI_FW_FLAGS_SESSION_ERROR) {
-		i_vpr_e(inst, "%s: received session error\n", __func__);
-		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
-		return 0;
-	}
-
 	if (pkt->flags & HFI_FW_FLAGS_SUCCESS)
 		i_vpr_h(inst, "%s: successful for port %d\n",
 			__func__, pkt->port);
@@ -448,11 +427,6 @@ static int handle_session_stop(struct msm_vidc_inst *inst,
 	struct hfi_packet *pkt)
 {
 	int signal_type = -1;
-
-	if (pkt->flags & HFI_FW_FLAGS_SESSION_ERROR) {
-		i_vpr_e(inst, "%s: received session error\n", __func__);
-		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
-	}
 
 	if (pkt->flags & HFI_FW_FLAGS_SUCCESS)
 		i_vpr_h(inst, "%s: successful for port %d\n",
@@ -491,12 +465,6 @@ static int handle_session_stop(struct msm_vidc_inst *inst,
 static int handle_session_drain(struct msm_vidc_inst *inst,
 	struct hfi_packet *pkt)
 {
-	if (pkt->flags & HFI_FW_FLAGS_SESSION_ERROR) {
-		i_vpr_e(inst, "%s: received session error\n", __func__);
-		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
-		return 0;
-	}
-
 	if (pkt->flags & HFI_FW_FLAGS_SUCCESS)
 		i_vpr_h(inst, "%s: successful\n", __func__);
 	return 0;
@@ -1053,12 +1021,6 @@ static int handle_session_buffer(struct msm_vidc_inst *inst,
 		{HFI_BUFFER_DPB,            handle_release_internal_buffer    },
 	};
 
-	if (pkt->flags & HFI_FW_FLAGS_SESSION_ERROR) {
-		i_vpr_e(inst, "%s: received session error\n", __func__);
-		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
-		return 0;
-	}
-
 	if (pkt->payload_info == HFI_PAYLOAD_NONE) {
 		i_vpr_h(inst, "%s: received hfi buffer packet without payload\n",
 			__func__);
@@ -1152,11 +1114,6 @@ static int handle_port_settings_change(struct msm_vidc_inst *inst,
 static int handle_session_subscribe_mode(struct msm_vidc_inst *inst,
 	struct hfi_packet *pkt)
 {
-	if (pkt->flags & HFI_FW_FLAGS_SESSION_ERROR) {
-		i_vpr_e(inst, "%s: received session error\n", __func__);
-		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
-	}
-
 	if (pkt->flags & HFI_FW_FLAGS_SUCCESS)
 		i_vpr_h(inst, "%s: successful\n", __func__);
 	return 0;
@@ -1165,11 +1122,6 @@ static int handle_session_subscribe_mode(struct msm_vidc_inst *inst,
 static int handle_session_delivery_mode(struct msm_vidc_inst *inst,
 	struct hfi_packet *pkt)
 {
-	if (pkt->flags & HFI_FW_FLAGS_SESSION_ERROR) {
-		i_vpr_e(inst, "%s: received session error\n", __func__);
-		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
-	}
-
 	if (pkt->flags & HFI_FW_FLAGS_SUCCESS)
 		i_vpr_h(inst, "%s: successful\n", __func__);
 	return 0;
@@ -1178,11 +1130,6 @@ static int handle_session_delivery_mode(struct msm_vidc_inst *inst,
 static int handle_session_resume(struct msm_vidc_inst *inst,
 	struct hfi_packet *pkt)
 {
-	if (pkt->flags & HFI_FW_FLAGS_SESSION_ERROR) {
-		i_vpr_e(inst, "%s: received session error\n", __func__);
-		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
-	}
-
 	if (pkt->flags & HFI_FW_FLAGS_SUCCESS)
 		i_vpr_h(inst, "%s: successful\n", __func__);
 	return 0;
@@ -1406,12 +1353,6 @@ static int handle_system_property(struct msm_vidc_core *core,
 {
 	int rc = 0;
 
-	if (pkt->flags & HFI_FW_FLAGS_SYSTEM_ERROR) {
-		d_vpr_e("%s: received system error for property type %#x\n",
-			__func__, pkt->type);
-		return handle_system_error(core, pkt);
-	}
-
 	switch (pkt->type) {
 	case HFI_PROP_IMAGE_VERSION:
 		rc = handle_image_version_property(core, pkt);
@@ -1442,16 +1383,32 @@ static int handle_system_response(struct msm_vidc_core *core,
 		pkt = start_pkt;
 		for (j = 0; j < hdr->num_packets; j++) {
 			packet = (struct hfi_packet *)pkt;
+			/* handle system error */
+			if (packet->flags & HFI_FW_FLAGS_SYSTEM_ERROR) {
+				d_vpr_e("%s: received system error %#x\n",
+					__func__, packet->type);
+				rc = handle_system_error(core, packet);
+				if (rc)
+					goto exit;
+				goto exit;
+			}
 			if (in_range(be[i], packet->type)) {
 				rc = be[i].handle(core, packet);
 				if (rc)
-					return -EINVAL;
+					goto exit;
+
+				/* skip processing anymore packets after system error */
+				if (!i) {
+					d_vpr_e("%s: skip processing anymore packets\n", __func__);
+					goto exit;
+				}
 			}
 			pkt += packet->size;
 		}
 	}
 
-	return 0;
+exit:
+	return rc;
 }
 
 static int __handle_session_response(struct msm_vidc_inst *inst,
@@ -1475,6 +1432,15 @@ static int __handle_session_response(struct msm_vidc_inst *inst,
 		pkt = start_pkt;
 		for (j = 0; j < hdr->num_packets; j++) {
 			packet = (struct hfi_packet *)pkt;
+			/* handle session error */
+			if (packet->flags & HFI_FW_FLAGS_SESSION_ERROR) {
+				i_vpr_e(inst, "%s: received session error %#x\n",
+					__func__, packet->type);
+				rc = handle_session_error(inst, packet);
+				if (rc)
+					goto exit;
+				continue;
+			}
 			if (in_range(be[i], packet->type)) {
 				dequeue |= (packet->type == HFI_CMD_BUFFER);
 				rc = be[i].handle(inst, packet);
@@ -1484,14 +1450,13 @@ static int __handle_session_response(struct msm_vidc_inst *inst,
 			pkt += packet->size;
 		}
 	}
+exit:
+	memset(&inst->hfi_frame_info, 0, sizeof(struct msm_vidc_hfi_frame_info));
 	if (dequeue) {
 		rc = handle_dequeue_buffers(inst);
 		if (rc)
-			goto exit;
+			return rc;
 	}
-
-exit:
-	memset(&inst->hfi_frame_info, 0, sizeof(struct msm_vidc_hfi_frame_info));
 
 	return rc;
 }
