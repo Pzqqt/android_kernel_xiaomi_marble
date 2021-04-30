@@ -45,6 +45,10 @@ extern "C" {
 typedef void __iomem *A_target_id_t;
 typedef void *hif_handle_t;
 
+#if defined(HIF_IPCI) && defined(FEATURE_HAL_DELAYED_REG_WRITE)
+#define HIF_WORK_DRAIN_WAIT_CNT 10
+#endif
+
 #define HIF_TYPE_AR6002   2
 #define HIF_TYPE_AR6003   3
 #define HIF_TYPE_AR6004   5
@@ -1065,6 +1069,26 @@ static inline char *rtpm_string_from_dbgid(wlan_rtpm_dbgid id)
 }
 
 /**
+ * enum hif_ep_vote_type - hif ep vote type
+ * HIF_EP_VOTE_DP_ACCESS: vote type is specific DP
+ * HIF_EP_VOTE_NONDP_ACCESS: ep vote for over all access
+ */
+enum hif_ep_vote_type {
+	HIF_EP_VOTE_DP_ACCESS,
+	HIF_EP_VOTE_NONDP_ACCESS
+};
+
+/**
+ * enum hif_ep_vote_access - hif ep vote access
+ * HIF_EP_VOTE_ACCESS_ENABLE: Enable ep voting
+ * HIF_EP_VOTE_ACCESS_DISABLE: disable ep voting
+ */
+enum hif_ep_vote_access {
+	HIF_EP_VOTE_ACCESS_ENABLE,
+	HIF_EP_VOTE_ACCESS_DISABLE
+};
+
+/**
  * enum hif_pm_link_state - hif link state
  * HIF_PM_LINK_STATE_DOWN: hif link state is down
  * HIF_PM_LINK_STATE_UP: hif link state is up
@@ -1676,6 +1700,39 @@ hif_softc_to_hif_opaque_softc(struct hif_softc *hif_handle)
 {
 	return (struct hif_opaque_softc *)hif_handle;
 }
+
+#if defined(HIF_IPCI) && defined(FEATURE_HAL_DELAYED_REG_WRITE)
+QDF_STATUS hif_try_prevent_ep_vote_access(struct hif_opaque_softc *hif_ctx);
+void hif_allow_ep_vote_access(struct hif_opaque_softc *hif_ctx);
+void hif_set_ep_vote_access(struct hif_opaque_softc *hif_ctx,
+			    uint8_t type, uint8_t access);
+uint8_t hif_get_ep_vote_access(struct hif_opaque_softc *hif_ctx,
+			       uint8_t type);
+#else
+static inline QDF_STATUS
+hif_try_prevent_ep_vote_access(struct hif_opaque_softc *hif_ctx)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void
+hif_allow_ep_vote_access(struct hif_opaque_softc *hif_ctx)
+{
+}
+
+static inline void
+hif_set_ep_vote_access(struct hif_opaque_softc *hif_ctx,
+		       uint8_t type, uint8_t access)
+{
+}
+
+static inline uint8_t
+hif_get_ep_vote_access(struct hif_opaque_softc *hif_ctx,
+		       uint8_t type)
+{
+	return HIF_EP_VOTE_ACCESS_ENABLE;
+}
+#endif
 
 #ifdef FORCE_WAKE
 /**

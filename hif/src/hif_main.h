@@ -296,6 +296,10 @@ struct hif_softc {
 #ifdef SYSTEM_PM_CHECK
 	qdf_atomic_t sys_pm_state;
 #endif
+#if defined(HIF_IPCI) && defined(FEATURE_HAL_DELAYED_REG_WRITE)
+	qdf_atomic_t dp_ep_vote_access;
+	qdf_atomic_t ep_vote_access;
+#endif
 };
 
 static inline
