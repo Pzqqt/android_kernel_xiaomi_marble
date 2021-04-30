@@ -4896,6 +4896,17 @@ bool wlan_mlme_is_local_tpe_pref(struct wlan_objmgr_psoc *psoc)
 	return mlme_obj->cfg.power.use_local_tpe;
 }
 
+bool wlan_mlme_skip_tpe(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return false;
+
+	return mlme_obj->cfg.power.skip_tpe;
+}
+
 #ifdef WLAN_FEATURE_11BE
 QDF_STATUS mlme_cfg_get_eht_caps(struct wlan_objmgr_psoc *psoc,
 				 tDot11fIEeht_cap *eht_cap)

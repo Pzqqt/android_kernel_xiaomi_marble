@@ -1899,6 +1899,7 @@ static void mlme_init_power_cfg(struct wlan_objmgr_psoc *psoc,
 	power->local_power_constraint =
 			(uint8_t)cfg_default(CFG_LOCAL_POWER_CONSTRAINT);
 	power->use_local_tpe = cfg_get(psoc, CFG_USE_LOCAL_TPE);
+	power->skip_tpe = cfg_get(psoc, CFG_SKIP_TPE_CONSIDERATION);
 }
 
 static void mlme_init_roam_scoring_cfg(struct wlan_objmgr_psoc *psoc,
