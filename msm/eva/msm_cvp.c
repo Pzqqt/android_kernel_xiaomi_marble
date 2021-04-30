@@ -427,7 +427,7 @@ static int cvp_check_clock(struct msm_cvp_inst *inst,
 				u32 avg_cycles =
 					core->dyn_clk.cycle[i].total>>3;
 				if ((avg_cycles > core->dyn_clk.hi_ctrl_lim[i])
-				    || (avg_cycles <=
+					|| (avg_cycles <=
 					 core->dyn_clk.lo_ctrl_lim[i])) {
 					rc = cvp_readjust_clock(core,
 								avg_cycles,
@@ -479,13 +479,24 @@ static int cvp_fence_proc(struct msm_cvp_inst *inst,
 	timeout = msecs_to_jiffies(CVP_MAX_WAIT_TIME);
 	rc = cvp_wait_process_message(inst, sq, &ktid, timeout,
 				(struct eva_kmd_hfi_packet *)&hdr);
-	if (get_msg_size((struct cvp_hfi_msg_session_hdr *) &hdr)
-		== sizeof(struct cvp_hfi_msg_session_hdr_ext)) {
+
+	/* Only FD support dcvs at certain FW */
+	if (hdr.size == sizeof(struct cvp_hfi_msg_session_hdr_ext)
+			+ sizeof(struct cvp_hfi_buf_type) ) {
 		struct cvp_hfi_msg_session_hdr_ext *fhdr =
 			(struct cvp_hfi_msg_session_hdr_ext *)&hdr;
-		dprintk(CVP_HFI, "busy cycle 0x%x, total 0x%x\n",
+		struct msm_cvp_core *core = inst->core;
+		dprintk(CVP_PWR, "busy cycle %d, total %d\n",
 			fhdr->busy_cycles, fhdr->total_cycles);
-		clock_check = true;
+
+		if (core &&
+			(core->dyn_clk.sum_fps[HFI_HW_FDU] ||
+			core->dyn_clk.sum_fps[HFI_HW_MPU] ||
+			core->dyn_clk.sum_fps[HFI_HW_OD] ||
+			core->dyn_clk.sum_fps[HFI_HW_ICA]))
+		{
+			clock_check = true;
+		}
 	}
 	hfi_err = hdr.error_type;
 	if (rc) {
@@ -755,6 +766,10 @@ static void aggregate_power_update(struct msm_cvp_core *core,
 	unsigned long op_fdu_max[2] = {0}, op_od_max[2] = {0};
 	unsigned long op_mpu_max[2] = {0}, op_ica_max[2] = {0};
 	unsigned long op_fw_max[2] = {0}, bw_sum[2] = {0}, op_bw_max[2] = {0};
+	core->dyn_clk.sum_fps[HFI_HW_FDU] = 0;
+	core->dyn_clk.sum_fps[HFI_HW_MPU] = 0;
+	core->dyn_clk.sum_fps[HFI_HW_OD]  = 0;
+	core->dyn_clk.sum_fps[HFI_HW_ICA] = 0;
 
 	list_for_each_entry(inst, &core->instances, list) {
 		if (inst->state == MSM_CVP_CORE_INVALID ||
