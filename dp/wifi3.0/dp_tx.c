@@ -4145,6 +4145,7 @@ dp_tx_comp_process_desc_list(struct dp_soc *soc,
 			peer = dp_peer_get_ref_by_id(soc, peer_id,
 						     DP_MOD_ID_TX_COMP);
 		}
+
 		if (qdf_likely(desc->flags & DP_TX_DESC_FLAG_SIMPLE)) {
 			struct dp_pdev *pdev = desc->pdev;
 

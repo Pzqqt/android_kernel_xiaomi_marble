@@ -653,8 +653,6 @@ int hif_configure_irq(struct hif_softc *scn)
 {
 	int ret = 0;
 
-	hif_info("E");
-
 	if (hif_is_polled_mode_enabled(GET_HIF_OPAQUE_HDL(scn))) {
 		scn->request_irq_done = false;
 		return 0;

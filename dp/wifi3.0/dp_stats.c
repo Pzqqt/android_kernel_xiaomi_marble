@@ -6505,45 +6505,123 @@ dp_print_soc_tx_stats(struct dp_soc *soc)
 }
 
 #ifdef CONFIG_BERYLLIUM
+static
+int dp_fill_rx_interrupt_ctx_stats(struct dp_intr *intr_ctx,
+				   char *buf, int buf_len)
+{	int i;
+	int pos = 0;
+
+	if (buf_len <= 0 || !buf) {
+		dp_err("incorrect buf or buf_len(%d)!", buf_len);
+		return pos;
+	}
+
+	for (i = 0; i < MAX_REO_DEST_RINGS; i++) {
+		if (intr_ctx->intr_stats.num_rx_ring_masks[i])
+			pos += qdf_scnprintf(buf + pos,
+					     buf_len - pos,
+					     "reo[%u]:%u ", i,
+					     intr_ctx->intr_stats.num_rx_ring_masks[i]);
+	}
+	return pos;
+}
+
+static
+int dp_fill_tx_interrupt_ctx_stats(struct dp_intr *intr_ctx,
+				   char *buf, int buf_len)
+{	int i;
+	int pos = 0;
+
+	if (buf_len <= 0 || !buf) {
+		dp_err("incorrect buf or buf_len(%d)!", buf_len);
+		return pos;
+	}
+
+	for (i = 0; i < MAX_TCL_DATA_RINGS; i++) {
+		if (intr_ctx->intr_stats.num_tx_ring_masks[i])
+			pos += qdf_scnprintf(buf + pos,
+					     buf_len - pos,
+					     "tx_comps[%u]:%u ", i,
+					     intr_ctx->intr_stats.num_tx_ring_masks[i]);
+	}
+	return pos;
+}
+
+#define DP_INT_CTX_STATS_STRING_LEN 512
 void dp_print_soc_interrupt_stats(struct dp_soc *soc)
 {
-	int i = 0;
+	char *buf;
+	char int_ctx_str[DP_INT_CTX_STATS_STRING_LEN] = {'\0'};
+	int i, pos, buf_len;
 	struct dp_intr_stats *intr_stats;
 
-	DP_PRINT_STATS("  INT:        Total      |    txComps    |    reo[0]    |      reo[1]      |   reo[2]     |    reo[3]     |   reo[4]     |    reo[5]    |    reo[6]    |     reo[7]      |    mon   | rx_err |  wbm |reo_sta|rxdm2hst|hst2rxdm|");
+	buf = int_ctx_str;
+	buf_len = DP_INT_CTX_STATS_STRING_LEN;
+
 	for (i = 0; i < WLAN_CFG_INT_NUM_CONTEXTS; i++) {
+		pos = 0;
+		qdf_mem_zero(int_ctx_str, sizeof(int_ctx_str));
 		intr_stats = &soc->intr_ctx[i].intr_stats;
-		DP_PRINT_STATS("%3u[%3d]: %7u/%-7u %7u/%-7u %7u/%-7u %7u/%-7u %7u/%-7u %7u/%-7u %7u/%-7u %7u/%-7u %7u/%-7u %7u/%-7u %7u %7u %7u %7u %8u %8u",
-			       i,
-			       hif_get_int_ctx_irq_num(soc->hif_handle, i),
-			       intr_stats->num_masks,
-			       intr_stats->num_near_full_masks,
-			       intr_stats->num_tx_ring_masks[0],
-			       intr_stats->num_tx_comp_ring_near_full_masks[0],
-			       intr_stats->num_rx_ring_masks[0],
-			       intr_stats->num_rx_ring_near_full_masks[0],
-			       intr_stats->num_rx_ring_masks[1],
-			       intr_stats->num_rx_ring_near_full_masks[1],
-			       intr_stats->num_rx_ring_masks[2],
-			       intr_stats->num_rx_ring_near_full_masks[2],
-			       intr_stats->num_rx_ring_masks[3],
-			       intr_stats->num_rx_ring_near_full_masks[3],
-			       intr_stats->num_rx_ring_masks[4],
-			       intr_stats->num_rx_ring_near_full_masks[4],
-			       intr_stats->num_rx_ring_masks[5],
-			       intr_stats->num_rx_ring_near_full_masks[5],
-			       intr_stats->num_rx_ring_masks[6],
-			       intr_stats->num_rx_ring_near_full_masks[6],
-			       intr_stats->num_rx_ring_masks[7],
-			       intr_stats->num_rx_ring_near_full_masks[7],
-			       intr_stats->num_rx_mon_ring_masks,
-			       intr_stats->num_rx_err_ring_masks,
-			       intr_stats->num_rx_wbm_rel_ring_masks,
-			       intr_stats->num_reo_status_ring_masks,
-			       intr_stats->num_rxdma2host_ring_masks,
-			       intr_stats->num_host2rxdma_ring_masks);
-		}
+
+		if (!intr_stats->num_masks)
+			continue;
+
+		pos += qdf_scnprintf(buf + pos,
+				     buf_len - pos,
+				     "%2u[%3d] - Total:%u ",
+				     i,
+				     hif_get_int_ctx_irq_num(soc->hif_handle,
+							     i),
+				     intr_stats->num_masks);
+
+		if (soc->intr_ctx[i].tx_ring_mask)
+			pos += dp_fill_tx_interrupt_ctx_stats(&soc->intr_ctx[i],
+							      buf + pos,
+							      buf_len - pos);
+
+		if (soc->intr_ctx[i].rx_ring_mask)
+			pos += dp_fill_rx_interrupt_ctx_stats(&soc->intr_ctx[i],
+							      buf + pos,
+							      buf_len - pos);
+		if (soc->intr_ctx[i].rx_err_ring_mask)
+			pos += qdf_scnprintf(buf + pos,
+					     buf_len - pos,
+					     "reo_err:%u ",
+					     intr_stats->num_rx_err_ring_masks);
+
+		if (soc->intr_ctx[i].rx_wbm_rel_ring_mask)
+			pos += qdf_scnprintf(buf + pos,
+					     buf_len - pos,
+					     "wbm_rx_err:%u ",
+					     intr_stats->num_rx_wbm_rel_ring_masks);
+
+		if (soc->intr_ctx[i].rxdma2host_ring_mask)
+			pos += qdf_scnprintf(buf + pos,
+					     buf_len - pos,
+					     "rxdma2_host_err:%u ",
+					     intr_stats->num_rxdma2host_ring_masks);
+
+		if (soc->intr_ctx[i].rx_near_full_grp_1_mask)
+			pos += qdf_scnprintf(buf + pos,
+					     buf_len - pos,
+					     "rx_near_full_grp_1:%u ",
+					     intr_stats->num_near_full_masks);
+
+		if (soc->intr_ctx[i].rx_near_full_grp_2_mask)
+			pos += qdf_scnprintf(buf + pos,
+					     buf_len - pos,
+					     "rx_near_full_grp_2:%u ",
+					     intr_stats->num_near_full_masks);
+		if (soc->intr_ctx[i].tx_ring_near_full_mask)
+			pos += qdf_scnprintf(buf + pos,
+					     buf_len - pos,
+					     "tx_near_full:%u ",
+					     intr_stats->num_near_full_masks);
+
+		dp_info("%s", int_ctx_str);
+	}
 }
+
 #else
 void dp_print_soc_interrupt_stats(struct dp_soc *soc)
 {

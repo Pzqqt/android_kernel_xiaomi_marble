@@ -40,6 +40,8 @@ extern "C" {
 #endif
 #include "cfg_ucfg_api.h"
 #include "qdf_dev.h"
+#include <wlan_init_cfg.h>
+
 #define ENABLE_MBOX_DUMMY_SPACE_FEATURE 1
 
 typedef void __iomem *A_target_id_t;
@@ -133,13 +135,13 @@ struct CE_state;
 #endif
 
 #ifndef HIF_MAX_GROUP
-#ifdef CONFIG_BERYLLIUM
-#define HIF_MAX_GROUP 14
-#define HIF_MAX_GRP_IRQ 23
-#else
-#define HIF_MAX_GROUP 7
-#define HIF_MAX_GRP_IRQ 16
+#define HIF_MAX_GROUP WLAN_CFG_INT_NUM_CONTEXTS
 #endif
+
+#ifdef CONFIG_BERYLLIUM
+#define HIF_MAX_GRP_IRQ 25
+#else
+#define HIF_MAX_GRP_IRQ 16
 #endif
 
 #ifndef NAPI_YIELD_BUDGET_BASED
@@ -365,11 +367,12 @@ enum hif_system_pm_state {
 };
 
 #ifdef WLAN_FEATURE_DP_EVENT_HISTORY
+#define HIF_NUM_INT_CONTEXTS		HIF_MAX_GROUP
 
 #if defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF)
 /* HIF_EVENT_HIST_MAX should always be power of 2 */
 #define HIF_EVENT_HIST_MAX		512
-#define HIF_NUM_INT_CONTEXTS		HIF_MAX_GROUP
+
 #define HIF_EVENT_HIST_ENABLE_MASK	0x3F
 
 static inline uint64_t hif_get_log_timestamp(void)
@@ -380,7 +383,6 @@ static inline uint64_t hif_get_log_timestamp(void)
 #else
 
 #define HIF_EVENT_HIST_MAX		32
-#define HIF_NUM_INT_CONTEXTS		HIF_MAX_GROUP
 /* Enable IRQ TRIGGER, NAPI SCHEDULE, SRNG ACCESS START */
 #define HIF_EVENT_HIST_ENABLE_MASK	0x19
 

@@ -105,6 +105,12 @@ cdp_dump_flow_pool_info(struct cdp_soc_t *soc)
 #define SET_PEER_REF_CNT_ONE(_peer)
 #endif
 
+QDF_COMPILE_TIME_ASSERT(max_rx_rings_check,
+			MAX_REO_DEST_RINGS == CDP_MAX_RX_RINGS);
+
+QDF_COMPILE_TIME_ASSERT(max_tx_rings_check,
+			MAX_TCL_DATA_RINGS == CDP_MAX_TX_COMP_RINGS);
+
 #define dp_init_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_DP_INIT, params)
 #define dp_init_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_DP_INIT, params)
 #define dp_init_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_DP_INIT, params)
@@ -1291,7 +1297,7 @@ uint8_t *dp_srng_get_near_full_irq_mask(struct dp_soc *soc,
 
 	switch (ring_type) {
 	case WBM2SW_RELEASE:
-		if (ring_num < 3) {
+		if (ring_num != WBM2SW_REL_ERR_RING_NUM) {
 			nf_irq_mask = &soc->wlan_cfg_ctx->
 					int_tx_ring_near_full_irq_mask[0];
 		}
@@ -1471,28 +1477,23 @@ static int dp_srng_calculate_msi_group(struct dp_soc *soc,
 				       bool nf_irq_support,
 				       int *nf_msi_grp_num)
 {
+	struct wlan_cfg_dp_soc_ctxt *cfg_ctx = soc->wlan_cfg_ctx;
 	uint8_t *grp_mask, *nf_irq_mask = NULL;
 	bool nf_irq_enabled = false;
 
 	switch (ring_type) {
 	case WBM2SW_RELEASE:
-		/* dp_tx_comp_handler - soc->tx_comp_ring */
-		if (ring_num < 3) {
+		if (ring_num == WBM2SW_REL_ERR_RING_NUM) {
+			/* dp_rx_wbm_err_process - soc->rx_rel_ring */
+			grp_mask = &cfg_ctx->int_rx_wbm_rel_ring_mask[0];
+			ring_num = 0;
+		} else { /* dp_tx_comp_handler - soc->tx_comp_ring */
 			grp_mask = &soc->wlan_cfg_ctx->int_tx_ring_mask[0];
 			nf_irq_mask = dp_srng_get_near_full_irq_mask(soc,
 								     ring_type,
 								     ring_num);
 			if (nf_irq_mask)
 				nf_irq_enabled = true;
-		/* dp_rx_wbm_err_process - soc->rx_rel_ring */
-		} else if (ring_num == 3) {
-			/* sw treats this as a separate ring type */
-			grp_mask = &soc->wlan_cfg_ctx->
-				int_rx_wbm_rel_ring_mask[0];
-			ring_num = 0;
-		} else {
-			qdf_assert(0);
-			return -QDF_STATUS_E_NOENT;
 		}
 	break;
 
@@ -1675,6 +1676,10 @@ static void dp_srng_msi_setup(struct dp_soc *soc, struct hal_srng_params
 	ring_params->msi_data = (reg_msi_grp_num % msi_data_count)
 		+ msi_data_start;
 	ring_params->flags |= HAL_SRNG_MSI_INTR;
+
+	dp_debug("ring type %u ring_num %u msi->data %u msi_addr %llx",
+		 ring_type, ring_num, ring_params->msi_data,
+		 (uint64_t)ring_params->msi_addr);
 
 configure_msi2:
 	if (!nf_irq_support) {
@@ -3189,6 +3194,9 @@ static QDF_STATUS dp_soc_interrupt_attach(struct cdp_soc_t *txrx_soc)
 				QCA_NAPI_DEF_SCALE_BIN_SHIFT);
 		}
 
+		dp_debug(" int ctx %u num_irq %u irq_id_map %u %u",
+			 i, num_irq, irq_id_map[0], irq_id_map[1]);
+
 		if (ret) {
 			dp_init_err("%pK: failed, ret = %d", soc, ret);
 
@@ -3677,15 +3685,6 @@ void dp_link_desc_ring_replenish(struct dp_soc *soc, uint32_t mac_id)
 #endif /* CONFIG_WIFI_EMULATION_WIFI_3_0 */
 
 #ifdef IPA_WDI3_TX_TWO_PIPES
-static int dp_ipa_get_tx_alt_comp_ring_num(int ring_num)
-{
-	/* IPA alternate TX comp ring for 2G is WBM2SW4 */
-	if (ring_num == IPA_TX_ALT_COMP_RING_IDX)
-		ring_num = 4;
-
-	return ring_num;
-}
-
 #ifdef DP_MEMORY_OPT
 static int dp_ipa_init_alt_tx_ring(struct dp_soc *soc)
 {
@@ -3734,11 +3733,6 @@ static void dp_ipa_hal_tx_init_alt_data_ring(struct dp_soc *soc)
 }
 
 #else /* !IPA_WDI3_TX_TWO_PIPES */
-static int dp_ipa_get_tx_alt_comp_ring_num(int ring_num)
-{
-	return ring_num;
-}
-
 static int dp_ipa_init_alt_tx_ring(struct dp_soc *soc)
 {
 	return 0;
@@ -3790,11 +3784,6 @@ static int dp_ipa_alloc_alt_tx_ring(struct dp_soc *soc)
 
 static void dp_ipa_free_alt_tx_ring(struct dp_soc *soc)
 {
-}
-
-static int dp_ipa_get_tx_alt_comp_ring_num(int ring_num)
-{
-	return ring_num;
 }
 
 static void dp_ipa_hal_tx_init_alt_data_ring(struct dp_soc *soc)
@@ -4376,31 +4365,66 @@ static inline void dp_create_ext_stats_event(struct dp_soc *soc)
 
 static void dp_deinit_tx_pair_by_index(struct dp_soc *soc, int index)
 {
-	int ring_num;
+	int tcl_ring_num, wbm_ring_num;
+
+	wlan_cfg_get_tcl_wbm_ring_num_for_index(index,
+						&tcl_ring_num,
+						&wbm_ring_num);
+
+	if (tcl_ring_num == -1 || wbm_ring_num == -1) {
+		dp_err("incorrect tcl/wbm ring num for index %u", index);
+		return;
+	}
 
 	wlan_minidump_remove(soc->tcl_data_ring[index].base_vaddr_unaligned,
 			     soc->tcl_data_ring[index].alloc_size,
 			     soc->ctrl_psoc,
 			     WLAN_MD_DP_SRNG_TCL_DATA,
 			     "tcl_data_ring");
-	dp_srng_deinit(soc, &soc->tcl_data_ring[index], TCL_DATA, index);
+	dp_info("index %u tcl %u wbm %u", index, tcl_ring_num, wbm_ring_num);
+	dp_srng_deinit(soc, &soc->tcl_data_ring[index], TCL_DATA,
+		       tcl_ring_num);
 
 	wlan_minidump_remove(soc->tx_comp_ring[index].base_vaddr_unaligned,
 			     soc->tx_comp_ring[index].alloc_size,
 			     soc->ctrl_psoc,
 			     WLAN_MD_DP_SRNG_TX_COMP,
 			     "tcl_comp_ring");
-	ring_num = dp_ipa_get_tx_alt_comp_ring_num(index);
 	dp_srng_deinit(soc, &soc->tx_comp_ring[index], WBM2SW_RELEASE,
-		       ring_num);
+		       wbm_ring_num);
 }
 
+/**
+ * dp_init_tx_ring_pair_by_index() - The function inits tcl data/wbm completion
+ * ring pair
+ * @soc: DP soc pointer
+ * @index: index of soc->tcl_data or soc->tx_comp to initialize
+ *
+ * Return: QDF_STATUS_SUCCESS on success, error code otherwise.
+ */
 static QDF_STATUS dp_init_tx_ring_pair_by_index(struct dp_soc *soc,
 						uint8_t index)
 {
-	int ring_num;
+	int tcl_ring_num, wbm_ring_num;
 
-	if (dp_srng_init(soc, &soc->tcl_data_ring[index], TCL_DATA, index, 0)) {
+	if (index >= MAX_TCL_DATA_RINGS) {
+		dp_err("unexpected index!");
+		QDF_BUG(0);
+		goto fail1;
+	}
+
+	wlan_cfg_get_tcl_wbm_ring_num_for_index(index,
+						&tcl_ring_num,
+						&wbm_ring_num);
+
+	if (tcl_ring_num == -1 || wbm_ring_num == -1) {
+		dp_err("incorrect tcl/wbm ring num for index %u", index);
+		goto fail1;
+	}
+
+	dp_info("index %u tcl %u wbm %u", index, tcl_ring_num, wbm_ring_num);
+	if (dp_srng_init(soc, &soc->tcl_data_ring[index], TCL_DATA,
+			 tcl_ring_num, 0)) {
 		dp_err("dp_srng_init failed for tcl_data_ring");
 		goto fail1;
 	}
@@ -4410,9 +4434,8 @@ static QDF_STATUS dp_init_tx_ring_pair_by_index(struct dp_soc *soc,
 			  WLAN_MD_DP_SRNG_TCL_DATA,
 			  "tcl_data_ring");
 
-	ring_num = dp_ipa_get_tx_alt_comp_ring_num(index);
 	if (dp_srng_init(soc, &soc->tx_comp_ring[index], WBM2SW_RELEASE,
-			 ring_num, 0)) {
+			 wbm_ring_num, 0)) {
 		dp_err("dp_srng_init failed for tx_comp_ring");
 		goto fail1;
 	}
@@ -4430,10 +4453,19 @@ fail1:
 
 static void dp_free_tx_ring_pair_by_index(struct dp_soc *soc, uint8_t index)
 {
+	dp_debug("index %u", index);
 	dp_srng_free(soc, &soc->tcl_data_ring[index]);
 	dp_srng_free(soc, &soc->tx_comp_ring[index]);
 }
 
+/**
+ * dp_alloc_tx_ring_pair_by_index() - The function allocs tcl data/wbm2sw
+ * ring pair for the given "index"
+ * @soc: DP soc pointer
+ * @index: index of soc->tcl_data or soc->tx_comp to initialize
+ *
+ * Return: QDF_STATUS_SUCCESS on success, error code otherwise.
+ */
 static QDF_STATUS dp_alloc_tx_ring_pair_by_index(struct dp_soc *soc,
 						 uint8_t index)
 {
@@ -4442,6 +4474,13 @@ static QDF_STATUS dp_alloc_tx_ring_pair_by_index(struct dp_soc *soc,
 	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx = soc->wlan_cfg_ctx;
 	int cached = 0;
 
+	if (index >= MAX_TCL_DATA_RINGS) {
+		dp_err("unexpected index!");
+		QDF_BUG(0);
+		goto fail1;
+	}
+
+	dp_debug("index %u", index);
 	tx_ring_size = wlan_cfg_tx_ring_size(soc_cfg_ctx);
 	dp_ipa_get_tx_ring_size(index, &tx_ring_size, soc_cfg_ctx);
 
@@ -13284,6 +13323,7 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 		dp_init_err("%pK: dp_interrupt assignment failed", soc);
 		goto fail4;
 	}
+
 	wlan_cfg_fill_interrupt_mask(soc->wlan_cfg_ctx, num_dp_msi,
 				     soc->intr_mode, is_monitor_mode);
 
@@ -14515,7 +14555,8 @@ static QDF_STATUS dp_soc_srng_init(struct dp_soc *soc)
 			  "reo_reinject_ring");
 
 	/* Rx release ring */
-	if (dp_srng_init(soc, &soc->rx_rel_ring, WBM2SW_RELEASE, 3, 0)) {
+	if (dp_srng_init(soc, &soc->rx_rel_ring, WBM2SW_RELEASE,
+			 WBM2SW_REL_ERR_RING_NUM, 0)) {
 		dp_init_err("%pK: dp_srng_init failed for rx_rel_ring", soc);
 		goto fail1;
 	}

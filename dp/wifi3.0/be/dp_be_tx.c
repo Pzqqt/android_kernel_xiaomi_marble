@@ -68,6 +68,35 @@ void dp_tx_comp_get_params_from_hal_desc_be(struct dp_soc *soc,
 }
 #endif /* DP_FEATURE_HW_COOKIE_CONVERSION */
 
+#ifdef QCA_OL_TX_MULTIQ_SUPPORT
+/*
+ * dp_tx_get_rbm_id()- Get the RBM ID for data transmission completion.
+ * @dp_soc - DP soc structure pointer
+ * @ring_id - Transmit Queue/ring_id to be used when XPS is enabled
+ *
+ * Return - RBM ID corresponding to TCL ring_id
+ */
+static inline uint8_t dp_tx_get_rbm_id_be(struct dp_soc *soc,
+					  uint8_t ring_id)
+{
+	return (ring_id ? soc->wbm_sw0_bm_id + (ring_id - 1) :
+			  HAL_WBM_SW2_BM_ID(soc->wbm_sw0_bm_id));
+}
+
+#else
+static inline uint8_t dp_tx_get_rbm_id_be(struct dp_soc *soc,
+					  uint8_t ring_id)
+{
+	uint8_t wbm_ring_id, rbm;
+
+	wbm_ring_id = wlan_cfg_get_wbm_ring_num_for_index(ring_id);
+	rbm = wbm_ring_id + soc->wbm_sw0_bm_id;
+	dp_debug("ring_id %u wbm ring num %u rbm %u",
+		 ring_id, wbm_ring_id, rbm);
+	return rbm;
+}
+#endif
+
 QDF_STATUS
 dp_tx_hw_enqueue_be(struct dp_soc *soc, struct dp_vdev *vdev,
 		    struct dp_tx_desc_s *tx_desc, uint16_t fw_metadata,
@@ -78,11 +107,11 @@ dp_tx_hw_enqueue_be(struct dp_soc *soc, struct dp_vdev *vdev,
 	uint32_t *hal_tx_desc_cached;
 	int coalesce = 0;
 	struct dp_tx_queue *tx_q = &msdu_info->tx_queue;
-	uint8_t ring_id = tx_q->ring_id & DP_TX_QUEUE_MASK;
+	uint8_t ring_id = tx_q->ring_id;
 	uint8_t tid = msdu_info->tid;
 	struct dp_vdev_be *be_vdev;
 	uint8_t cached_desc[HAL_TX_DESC_LEN_BYTES] = { 0 };
-	uint8_t bm_id = dp_tx_get_rbm_id(soc, ring_id);
+	uint8_t bm_id = dp_tx_get_rbm_id_be(soc, ring_id);
 	hal_ring_handle_t hal_ring_hdl = NULL;
 	QDF_STATUS status = QDF_STATUS_E_RESOURCES;
 

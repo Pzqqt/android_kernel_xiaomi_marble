@@ -66,6 +66,29 @@ void dp_tx_comp_get_params_from_hal_desc_li(struct dp_soc *soc,
 	}
 }
 
+#ifdef QCA_OL_TX_MULTIQ_SUPPORT
+/*
+ * dp_tx_get_rbm_id()- Get the RBM ID for data transmission completion.
+ * @dp_soc - DP soc structure pointer
+ * @ring_id - Transmit Queue/ring_id to be used when XPS is enabled
+ *
+ * Return - HAL ring handle
+ */
+static inline uint8_t dp_tx_get_rbm_id_li(struct dp_soc *soc,
+					  uint8_t ring_id)
+{
+	return (ring_id ? soc->wbm_sw0_bm_id + (ring_id - 1) :
+			  HAL_WBM_SW2_BM_ID(soc->wbm_sw0_bm_id));
+}
+
+#else
+static inline uint8_t dp_tx_get_rbm_id_li(struct dp_soc *soc,
+					  uint8_t ring_id)
+{
+	return (ring_id + soc->wbm_sw0_bm_id);
+}
+#endif
+
 QDF_STATUS
 dp_tx_hw_enqueue_li(struct dp_soc *soc, struct dp_vdev *vdev,
 		    struct dp_tx_desc_s *tx_desc, uint16_t fw_metadata,
@@ -90,7 +113,7 @@ dp_tx_hw_enqueue_li(struct dp_soc *soc, struct dp_vdev *vdev,
 			tx_exc_metadata->sec_type : vdev->sec_type);
 
 	/* Return Buffer Manager ID */
-	uint8_t bm_id = dp_tx_get_rbm_id(soc, ring_id);
+	uint8_t bm_id = dp_tx_get_rbm_id_li(soc, ring_id);
 
 	hal_ring_handle_t hal_ring_hdl = NULL;
 

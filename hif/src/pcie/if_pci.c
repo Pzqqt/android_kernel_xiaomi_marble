@@ -77,88 +77,9 @@
 #else
 #define WLAN_CFG_MAX_CE_COUNT 12
 #endif
-
-const char *dp_irqname[WLAN_CFG_MAX_PCIE_GROUPS][WLAN_CFG_INT_NUM_CONTEXTS] = {
-{
-"pci0_wlan_grp_dp_0",
-"pci0_wlan_grp_dp_1",
-"pci0_wlan_grp_dp_2",
-"pci0_wlan_grp_dp_3",
-"pci0_wlan_grp_dp_4",
-"pci0_wlan_grp_dp_5",
-"pci0_wlan_grp_dp_6",
-#ifdef CONFIG_BERYLLIUM
-"pci0_wlan_grp_dp_7",
-"pci0_wlan_grp_dp_8",
-"pci0_wlan_grp_dp_9",
-"pci0_wlan_grp_dp_10",
-#endif
-#if !defined(WLAN_MAX_PDEVS)
-"pci0_wlan_grp_dp_7",
-"pci0_wlan_grp_dp_8",
-"pci0_wlan_grp_dp_9",
-"pci0_wlan_grp_dp_10",
-#endif
-},
-{
-"pci1_wlan_grp_dp_0",
-"pci1_wlan_grp_dp_1",
-"pci1_wlan_grp_dp_2",
-"pci1_wlan_grp_dp_3",
-"pci1_wlan_grp_dp_4",
-"pci1_wlan_grp_dp_5",
-"pci1_wlan_grp_dp_6",
-#if !defined(WLAN_MAX_PDEVS)
-"pci1_wlan_grp_dp_7",
-"pci1_wlan_grp_dp_8",
-"pci1_wlan_grp_dp_9",
-"pci1_wlan_grp_dp_10",
-#endif
-}
-};
-
-const char *ce_irqname[WLAN_CFG_MAX_PCIE_GROUPS][WLAN_CFG_MAX_CE_COUNT] = {
-{
-"pci0_wlan_ce_0",
-"pci0_wlan_ce_1",
-"pci0_wlan_ce_2",
-"pci0_wlan_ce_3",
-"pci0_wlan_ce_4",
-"pci0_wlan_ce_5",
-"pci0_wlan_ce_6",
-"pci0_wlan_ce_7",
-"pci0_wlan_ce_8",
-"pci0_wlan_ce_9",
-"pci0_wlan_ce_10",
-"pci0_wlan_ce_11",
-#ifdef QCA_WIFI_QCN9224
-"pci0_wlan_ce_12",
-"pci0_wlan_ce_13",
-"pci0_wlan_ce_14",
-"pci0_wlan_ce_15",
-#endif
-},
-{
-"pci1_wlan_ce_0",
-"pci1_wlan_ce_1",
-"pci1_wlan_ce_2",
-"pci1_wlan_ce_3",
-"pci1_wlan_ce_4",
-"pci1_wlan_ce_5",
-"pci1_wlan_ce_6",
-"pci1_wlan_ce_7",
-"pci1_wlan_ce_8",
-"pci1_wlan_ce_9",
-"pci1_wlan_ce_10",
-"pci1_wlan_ce_11",
-#ifdef QCA_WIFI_QCN9224
-"pci0_wlan_ce_12",
-"pci0_wlan_ce_13",
-"pci0_wlan_ce_14",
-"pci0_wlan_ce_15",
-#endif
-}
-};
+#define DP_IRQ_NAME_LEN 25
+char dp_irqname[WLAN_CFG_MAX_PCIE_GROUPS][WLAN_CFG_INT_NUM_CONTEXTS][DP_IRQ_NAME_LEN] = {};
+char ce_irqname[WLAN_CFG_MAX_PCIE_GROUPS][WLAN_CFG_MAX_CE_COUNT][DP_IRQ_NAME_LEN] = {};
 
 #if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
 static inline int hif_get_pci_slot(struct hif_softc *scn)
@@ -2898,6 +2819,11 @@ int hif_ce_msi_configure_irq_by_ceid(struct hif_softc *scn, int ce_id)
 		goto skip;
 
 	pci_sc->ce_msi_irq_num[ce_id] = irq;
+
+	qdf_scnprintf(ce_irqname[pci_slot][ce_id],
+		      DP_IRQ_NAME_LEN, "pci%u_wlan_ce_%u",
+		      pci_slot, ce_id);
+
 	ret = pfrm_request_irq(scn->qdf_dev->dev,
 			       irq, hif_ce_interrupt_handler, IRQF_SHARED,
 			       ce_irqname[pci_slot][ce_id],
@@ -3172,6 +3098,10 @@ int hif_pci_configure_grp_irq(struct hif_softc *scn,
 
 		hif_debug("request_irq = %d for grp %d",
 			  irq, hif_ext_group->grp_id);
+
+		qdf_scnprintf(dp_irqname[pci_slot][hif_ext_group->grp_id],
+			      DP_IRQ_NAME_LEN, "pci%u_wlan_grp_dp_%u",
+			      pci_slot, hif_ext_group->grp_id);
 		ret = pfrm_request_irq(
 				scn->qdf_dev->dev, irq,
 				hif_ext_group_interrupt_handler,

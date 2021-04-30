@@ -1458,8 +1458,12 @@ static struct CE_attr host_ce_config_wlan_wcn7850[] = {
 	/* host->target HTT */
 	{ /* CE4 */ (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,
 		256, 256, 0, NULL,},
+#ifdef FEATURE_PKTLOG
 	/* target -> host PKTLOG */
 	{ /* CE5 */ CE_ATTR_FLAGS, 0, 0, 2048, 512, NULL,},
+#else
+	{ /* CE5 */ CE_ATTR_FLAGS, 0, 0, 2048, 0, NULL,},
+#endif
 	/* Target autonomous HIF_memcpy */
 	{ /* CE6 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
 	/* ce_diag, the Diagnostic Window */

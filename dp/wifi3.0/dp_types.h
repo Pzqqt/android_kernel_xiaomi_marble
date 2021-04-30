@@ -97,13 +97,8 @@
 
 #define MAX_TXDESC_POOLS 4
 #define MAX_RXDESC_POOLS 4
-#ifdef CONFIG_BERYLLIUM
-#define MAX_REO_DEST_RINGS 8
-#else
-#define MAX_REO_DEST_RINGS 4
-#endif
+
 #define EXCEPTION_DEST_RING_ID 0
-#define MAX_TCL_DATA_RINGS 4
 #define MAX_IDLE_SCATTER_BUFS 16
 #define DP_MAX_IRQ_PER_CONTEXT 12
 #define DEFAULT_HW_PEER_ID 0xffff
@@ -829,8 +824,8 @@ struct dp_intr_stats {
 	uint32_t num_tx_comp_ring_near_full_masks[MAX_TCL_DATA_RINGS];
 	uint32_t num_rx_wbm_rel_ring_near_full_masks;
 	uint32_t num_reo_status_ring_near_full_masks;
-	uint32_t num_masks;
 	uint32_t num_near_full_masks;
+	uint32_t num_masks;
 };
 
 /* per interrupt context  */
