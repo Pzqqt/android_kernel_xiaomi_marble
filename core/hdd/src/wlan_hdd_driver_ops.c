@@ -1228,6 +1228,12 @@ static int __wlan_hdd_bus_suspend(struct wow_enable_params wow_params,
 		goto resume_txrx;
 	}
 
+	if (hif_try_prevent_ep_vote_access(hif_ctx)) {
+		hdd_debug("Prevent suspend, ep work pending");
+		err = QDF_STATUS_E_BUSY;
+		goto resume_txrx;
+	}
+
 	/*
 	 * Remove bus votes at the very end, after making sure there are no
 	 * pending bus transactions from WLAN SOC for TX/RX.
