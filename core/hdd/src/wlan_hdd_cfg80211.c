@@ -6942,6 +6942,8 @@ wlan_hdd_wifi_test_config_policy[
 			.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ADD_DEL_BA_SESSION] = {
 			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_KEEP_ALIVE_FRAME_TYPE] = {
+			.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_BA_TID] = {
 			.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ADDBA_BUFF_SIZE] = {
@@ -9894,6 +9896,7 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 	uint8_t value = 0;
 	uint8_t wmm_mode = 0;
 	uint32_t cmd_id;
+	struct keep_alive_req keep_alive_req = {0};
 	struct set_wfatest_params wfa_param = {0};
 	struct hdd_station_ctx *hdd_sta_ctx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
@@ -10106,6 +10109,38 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		} else {
 			if (hdd_set_11ax_rate(adapter, 0xFF, NULL))
 				hdd_err("disable fixed rate failed");
+		}
+	}
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_KEEP_ALIVE_FRAME_TYPE;
+	if (tb[cmd_id]) {
+		cfg_val = nla_get_u8(tb[cmd_id]);
+		hdd_debug("Keep alive data type %d", cfg_val);
+		if (cfg_val == QCA_WLAN_KEEP_ALIVE_DATA) {
+			ret_val = hdd_set_grat_arp_keepalive(adapter);
+			if (ret_val) {
+				hdd_err("Keep alive data type set failed");
+				goto send_err;
+			}
+		} else {
+			if (cfg_val == QCA_WLAN_KEEP_ALIVE_MGMT)
+				keep_alive_req.packetType =
+						SIR_KEEP_ALIVE_MGMT_FRAME;
+			else
+				keep_alive_req.packetType =
+						SIR_KEEP_ALIVE_NULL_PKT;
+			ucfg_mlme_get_sta_keep_alive_period(
+						hdd_ctx->psoc,
+						&keep_alive_req.timePeriod);
+			keep_alive_req.sessionId = adapter->vdev_id;
+			status = sme_set_keep_alive(hdd_ctx->mac_handle,
+						    adapter->vdev_id,
+						    &keep_alive_req);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				hdd_err("Failed to set keepalive");
+				ret_val = qdf_status_to_os_return(status);
+				goto send_err;
+			}
 		}
 	}
 

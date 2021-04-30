@@ -241,6 +241,17 @@ void hdd_disable_host_offloads(struct hdd_adapter *adapter,
 			       enum pmo_offload_trigger trigger);
 
 /**
+ * hdd_set_grat_arp_keepalive() - Enable grat APR keepalive
+ * @adapter: the HDD adapter to configure
+ *
+ * This configures gratuitous APR keepalive based on the adapter's current
+ * connection information, specifically IPv4 address and BSSID
+ *
+ * return: zero for success, non-zero for failure
+ */
+int hdd_set_grat_arp_keepalive(struct hdd_adapter *adapter);
+
+/**
  * hdd_enable_mc_addr_filtering() - enable MC address list in FW
  * @adapter: adapter whose MC list is being set
  * @trigger: trigger reason for request

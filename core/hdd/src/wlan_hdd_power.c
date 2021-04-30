@@ -983,16 +983,7 @@ static int hdd_populate_ipv4_addr(struct hdd_adapter *adapter,
 	return 0;
 }
 
-/**
- * hdd_set_grat_arp_keepalive() - Enable grat APR keepalive
- * @adapter: the HDD adapter to configure
- *
- * This configures gratuitous APR keepalive based on the adapter's current
- * connection information, specifically IPv4 address and BSSID
- *
- * return: zero for success, non-zero for failure
- */
-static int hdd_set_grat_arp_keepalive(struct hdd_adapter *adapter)
+int hdd_set_grat_arp_keepalive(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
 	int exit_code;
