@@ -14,7 +14,6 @@
 u32 msm_vidc_input_min_count(struct msm_vidc_inst* inst)
 {
 	u32 input_min_count = 0;
-	//struct v4l2_ctrl *max_layer = NULL;
 
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -49,7 +48,7 @@ u32 msm_vidc_output_min_count(struct msm_vidc_inst *inst)
 	if (!is_decode_session(inst) && !is_encode_session(inst))
 		return 0;
 
-	if (is_thumbnail_session(inst) || is_image_session(inst))
+	if (is_thumbnail_session(inst))
 		return 1;
 
 	if (is_decode_session(inst)) {
@@ -69,14 +68,8 @@ u32 msm_vidc_output_min_count(struct msm_vidc_inst *inst)
 		}
 	} else {
 		output_min_count = MIN_ENC_OUTPUT_BUFFERS;
+		//todo: reduce heic count to 2, once HAL side cushion is added
 	}
-
-	//if (is_vpp_delay_allowed(inst)) {
-	//	output_min_count =
-	//		max(output_min_count, (u32)MAX_BSE_VPP_DELAY);
-	//	output_min_count =
-	//		max(output_min_count, (u32)(msm_vidc_vpp_delay & 0x1F));
-	//}
 
 	return output_min_count;
 }
@@ -149,9 +142,6 @@ u32 msm_vidc_output_extra_count(struct msm_vidc_inst *inst)
 			count < inst->decode_batch.size)
 			count = inst->decode_batch.size;
 
-	} else if (is_encode_session(inst)) {
-		/* add heif buffers */
-		//count = 8
 	}
 
 	return count;
@@ -189,7 +179,6 @@ u32 msm_vidc_internal_buffer_count(struct msm_vidc_inst *inst,
 			count = 0;
 		}
 	}
-	//todo: add enc support if needed
 
 	return count;
 }
