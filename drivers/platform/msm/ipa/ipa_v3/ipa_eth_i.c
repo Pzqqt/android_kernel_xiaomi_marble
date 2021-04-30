@@ -11,7 +11,11 @@
 #define IPA_ETH_RTK_MODC (128)
 
 #define IPA_ETH_AQC_MODT (32)
-#define IPA_ETH_AQC_MODC (128)
+/*
+ * MODC factors are the number of percents from ring len (i.e 10 is 10% of len)
+ */
+#define IPA_ETH_AQC_MODC_FACTOR (10)
+#define AQC_WRB_MODC_FACTOR (10)
 
 
 #define IPA_ETH_AGGR_PKT_LIMIT 1
@@ -605,14 +609,16 @@ static int ipa_eth_setup_aqc_gsi_channel(
 	gsi_evt_ring_props.intr = GSI_INTR_MSI;
 	gsi_evt_ring_props.re_size = GSI_EVT_RING_RE_SIZE_16B;
 	gsi_evt_ring_props.int_modt = IPA_ETH_AQC_MODT;
-	gsi_evt_ring_props.int_modc = IPA_ETH_AQC_MODC;
+	len = pipe->info.transfer_ring_size;
+	/* len / RE_SIZE == len in counts (convert from bytes) */
+	gsi_evt_ring_props.int_modc = len * IPA_ETH_AQC_MODC_FACTOR /
+		(100 * GSI_EVT_RING_RE_SIZE_16B);
 	gsi_evt_ring_props.exclusive = true;
 	gsi_evt_ring_props.err_cb = ipa_eth_gsi_evt_ring_err_cb;
 	gsi_evt_ring_props.user_data = NULL;
 	gsi_evt_ring_props.msi_addr =
 		bar_addr +
 		pipe->info.client_info.aqc.dest_tail_ptr_offs;
-	len = pipe->info.transfer_ring_size;
 	gsi_evt_ring_props.ring_len = len;
 	gsi_evt_ring_props.ring_base_addr =
 		(u64)pipe->info.transfer_ring_base;
@@ -668,7 +674,10 @@ static int ipa_eth_setup_aqc_gsi_channel(
 
 	/* write event scratch */
 	memset(&evt_scratch, 0, sizeof(evt_scratch));
-	/* nothing is needed for AQC event scratch */
+	if (pipe->dir == IPA_ETH_PIPE_DIR_TX)
+		/* len / RE_SIZE == len in counts (convert from bytes) */
+		evt_scratch.aqc.head_ptr_wrb_mod_threshold =
+		len * AQC_WRB_MODC_FACTOR / (100 * GSI_EVT_RING_RE_SIZE_16B);
 
 	/* write ch scratch */
 	memset(&ch_scratch, 0, sizeof(ch_scratch));

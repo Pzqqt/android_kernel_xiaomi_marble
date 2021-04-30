@@ -1195,12 +1195,14 @@ struct __packed gsi_rtk_evt_scratch {
 /**
  * gsi_aqc_evt_scratch - AQC protocol SW config area of
  * event scratch
- * @reserved1: reserve bit.
- * @reserved2: reserve bit.
+ * @head_ptr_wrb_mod_threshold: head pointer write-back moderation threshold
+ * @reserved1-3: reserve bit.
  */
 struct __packed gsi_aqc_evt_scratch {
-	uint32_t reserved1;
-	uint32_t reserved2;
+	uint8_t head_ptr_wrb_mod_threshold;
+	uint8_t reserved1;
+	uint16_t reserved2;
+	uint32_t reserved3;
 };
 
 /**
