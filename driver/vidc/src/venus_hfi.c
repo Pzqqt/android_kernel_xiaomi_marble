@@ -3134,7 +3134,7 @@ int venus_hfi_session_close(struct msm_vidc_inst *inst)
 				NULL,
 				0);
 	if (!rc)
-		__iface_cmdq_write(inst->core, inst->packet);
+		rc = __iface_cmdq_write(inst->core, inst->packet);
 
 	return rc;
 }
