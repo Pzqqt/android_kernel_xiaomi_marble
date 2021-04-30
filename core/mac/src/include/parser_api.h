@@ -35,6 +35,7 @@
 #include "lim_ft_defs.h"
 #include "lim_session.h"
 #include "wlan_mlme_main.h"
+#include <wlan_mlo_mgr_public_structs.h>
 
 #define COUNTRY_STRING_LENGTH    (3)
 #define COUNTRY_INFO_MAX_CHANNEL (84)
@@ -377,6 +378,8 @@ typedef struct sSirAssocReq {
 	tDot11fIEqcn_ie qcn_ie;
 	tDot11fIEeht_cap eht_cap;
 	bool is_sae_authenticated;
+	struct mlo_partner_info mlo_info;
+	uint8_t mld_mac[QDF_MAC_ADDR_SIZE];
 } tSirAssocReq, *tpSirAssocReq;
 
 #define FTIE_SUBELEM_R1KH_ID 1
@@ -718,6 +721,18 @@ QDF_STATUS
 populate_dot11f_capabilities(struct mac_context *mac,
 			tDot11fFfCapabilities *pDot11f,
 			struct pe_session *pe_session);
+/**
+ * populate_dot11f_max_chan_switch_time() - populate max chan switch time
+ * @mac: pointer to mac
+ * @pDot11f: pointer to tDot11fIEmax_chan_switch_time
+ * @pe_session: pe session
+ *
+ * Return: Void
+ */
+void
+populate_dot11f_max_chan_switch_time(struct mac_context *mac,
+				     tDot11fIEmax_chan_switch_time *pDot11f,
+				     struct pe_session *pe_session);
 
 /* / Populate a tDot11fIEChanSwitchAnn */
 void
@@ -1272,6 +1287,150 @@ QDF_STATUS populate_dot11f_twt_extended_caps(struct mac_context *mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * sir_convert_mlo_reassoc_req_frame2_struct() - convert mlo reassoc req from
+ *                                               frame to struct for given
+ *                                               link id
+ * @mac_ctx: Global MAC context
+ * @pFrame: mlo reassoc req frame body
+ * @nFrame: mlo reassoc req frame length
+ * @pAssocReq: pointer to REASSOC Request frame
+ * @link_id: link id
+ *
+ * Return: QDF_STATUS_SUCCESS of no error
+ */
+QDF_STATUS
+sir_convert_mlo_reassoc_req_frame2_struct(struct mac_context *mac,
+					  uint8_t *pFrame,
+					  uint32_t nFrame,
+					  tpSirAssocReq pAssocReq,
+					  uint8_t link_id);
+
+/**
+ * sir_convert_mlo_assoc_req_frame2_struct() - convert mlo assoc req from
+ *                                             frame to struct for given
+ *                                             link id
+ * @mac_ctx: Global MAC context
+ * @pFrame: mlo assoc req frame body
+ * @nFrame: mlo assoc req frame length
+ * @pAssocReq: pointer to ASSOC Request frame
+ * @link_id: link id
+ *
+ * Return: QDF_STATUS_SUCCESS of no error
+ */
+QDF_STATUS
+sir_convert_mlo_assoc_req_frame2_struct(struct mac_context *mac,
+					uint8_t *pFrame,
+					uint32_t nFrame,
+					tpSirAssocReq pAssocReq,
+					uint8_t link_id);
+
+/**
+ * populate_dot11f_assoc_rsp_mlo_ie() - populate mlo ie for assoc response
+ * @mac_ctx: Global MAC context
+ * @session: PE session
+ * @frm: assoc response frame
+ *
+ * Return: QDF_STATUS_SUCCESS of no error
+ */
+QDF_STATUS populate_dot11f_assoc_rsp_mlo_ie(struct mac_context *mac_ctx,
+					    struct pe_session *session,
+					    tpDphHashNode sta,
+					    tDot11fAssocResponse *frm);
+
+/**
+ * populate_dot11f_bcn_mlo_ie() - populate mlo ie for beacon
+ * @mac_ctx: Global MAC context
+ * @session: PE session
+ * @mlo_ie: MLO IE
+ *
+ * Return: QDF_STATUS_SUCCESS of no error
+ */
+QDF_STATUS populate_dot11f_bcn_mlo_ie(struct mac_context *mac_ctx,
+				      struct pe_session *session,
+				      tDot11fIEmlo_ie *mlo_ie);
+
+/**
+ * populate_dot11f_mlo_rnr() - populate rnr for mlo
+ * @mac_ctx: Global MAC context
+ * @session: PE session
+ * @dot11f: tDot11fIEreduced_neighbor_report to be filled
+ *
+ * Return: void
+ */
+void populate_dot11f_mlo_rnr(struct mac_context *mac_ctx,
+			     struct pe_session *pe_session,
+			     tDot11fIEreduced_neighbor_report *dot11f);
+
+/**
+ * populate_dot11f_rnr_tbtt_info_10() - populate rnr with tbtt_info length 10
+ * @mac_ctx: pointer to mac_context
+ * @pe_session: pe session
+ * @rnr_session: session to populate in rnr ie
+ * @dot11f: tDot11fIEreduced_neighbor_report to be filled
+ *
+ * Return: void
+ */
+void populate_dot11f_rnr_tbtt_info_10(struct mac_context *mac_ctx,
+				      struct pe_session *pe_session,
+				      struct pe_session *rnr_session,
+				      tDot11fIEreduced_neighbor_report *dot11f);
+
+#else
+static inline QDF_STATUS
+sir_convert_mlo_reassoc_req_frame2_struct(struct mac_context *mac,
+					  uint8_t *pFrame,
+					  uint32_t nFrame,
+					  tpSirAssocReq pAssocReq,
+					  uint8_t link_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+sir_convert_mlo_assoc_req_frame2_struct(struct mac_context *mac,
+					uint8_t *pFrame,
+					uint32_t nFrame,
+					tpSirAssocReq pAssocReq,
+					uint8_t link_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+populate_dot11f_assoc_rsp_mlo_ie(struct mac_context *mac_ctx,
+				 struct pe_session *session,
+				 tpDphHashNode sta,
+				 tDot11fAssocResponse *frm)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+populate_dot11f_bcn_mlo_ie(struct mac_context *mac_ctx,
+			   struct pe_session *session,
+			   tDot11fIEmlo_ie *mlo_ie)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void populate_dot11f_mlo_rnr(
+				struct mac_context *mac_ctx,
+				struct pe_session *pe_session,
+				tDot11fIEreduced_neighbor_report *dot11f)
+{
+}
+
+static inline void populate_dot11f_rnr_tbtt_info_10(
+			struct mac_context *mac_ctx,
+			struct pe_session *pe_session,
+			struct pe_session *rnr_session,
+			tDot11fIEreduced_neighbor_report *dot11f)
+{
+}
+#endif /* WLAN_FEATURE_11BE_MLO */
 
 #ifdef WLAN_FEATURE_11BE
 /**
