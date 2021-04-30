@@ -198,6 +198,55 @@ static QDF_STATUS dp_rx_fst_cmem_init(struct dp_rx_fst *fst)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_SUPPORT_RX_FISA_HIST
+/**
+ * dp_rx_sw_fst_hist_attach() - Initialize the pkt history per
+ *  sw ft entry
+ * @fst: pointer to rx fst info
+ *
+ * Return: None
+ */
+static void
+dp_rx_sw_fst_hist_attach(struct dp_rx_fst *fst)
+{
+	struct dp_fisa_rx_sw_ft *ft_entry;
+	int i;
+
+	ft_entry = (struct dp_fisa_rx_sw_ft *)fst->base;
+	for (i = 0; i < fst->max_entries; i++)
+		ft_entry[i].pkt_hist = qdf_mem_malloc(
+						 sizeof(*ft_entry[i].pkt_hist));
+}
+
+/**
+ * dp_rx_sw_fst_hist_detach() - De-initialize the pkt history per
+ *  sw ft entry
+ * @fst: pointer to rx fst info
+ *
+ * Return: None
+ */
+static void
+dp_rx_sw_fst_hist_detach(struct dp_rx_fst *fst)
+{
+	struct dp_fisa_rx_sw_ft *ft_entry;
+	int i;
+
+	ft_entry = (struct dp_fisa_rx_sw_ft *)fst->base;
+	for (i = 0; i < fst->max_entries; i++)
+		qdf_mem_free(ft_entry[i].pkt_hist);
+}
+#else
+static inline void
+dp_rx_sw_fst_hist_attach(struct dp_rx_fst *fst)
+{
+}
+
+static inline void
+dp_rx_sw_fst_hist_detach(struct dp_rx_fst *fst)
+{
+}
+#endif
+
 /**
  * dp_rx_fst_attach() - Initialize Rx FST and setup necessary parameters
  * @soc: SoC handle
@@ -259,6 +308,8 @@ QDF_STATUS dp_rx_fst_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 	for (i = 0; i < fst->max_entries; i++)
 		ft_entry[i].napi_id = INVALID_NAPI;
 
+	dp_rx_sw_fst_hist_attach(fst);
+
 	fst->hal_rx_fst = hal_rx_fst_attach(soc->osdev,
 					    &fst->hal_rx_fst_base_paddr,
 					    fst->max_entries,
@@ -300,6 +351,7 @@ timer_init_fail:
 	qdf_spinlock_destroy(&fst->dp_rx_fst_lock);
 	hal_rx_fst_detach(fst->hal_rx_fst, soc->osdev);
 out1:
+	dp_rx_sw_fst_hist_detach(fst);
 	dp_context_free_mem(soc, DP_FISA_RX_FT_TYPE, fst->base);
 out2:
 	qdf_mem_free(fst);
@@ -395,6 +447,7 @@ void dp_rx_fst_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 		else
 			hal_rx_fst_detach(dp_fst->hal_rx_fst, soc->osdev);
 
+		dp_rx_sw_fst_hist_detach(dp_fst);
 		dp_context_free_mem(soc, DP_FISA_RX_FT_TYPE, dp_fst->base);
 		qdf_spinlock_destroy(&dp_fst->dp_rx_fst_lock);
 		qdf_mem_free(dp_fst);

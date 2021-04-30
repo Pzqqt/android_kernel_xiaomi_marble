@@ -117,11 +117,11 @@ void dp_fisa_record_pkt(struct dp_fisa_rx_sw_ft *fisa_flow, qdf_nbuf_t nbuf,
 	uint32_t index;
 	struct fisa_pkt_hist_elem *hist_elem;
 
-	if (!rx_tlv_hdr || !fisa_flow)
+	if (!rx_tlv_hdr || !fisa_flow || !fisa_flow->pkt_hist)
 		return;
 
-	index = fisa_flow->pkt_hist.idx++ % FISA_FLOW_MAX_AGGR_COUNT;
-	hist_elem = &fisa_flow->pkt_hist.hist_elem[index];
+	index = fisa_flow->pkt_hist->idx++ % FISA_FLOW_MAX_AGGR_COUNT;
+	hist_elem = &fisa_flow->pkt_hist->hist_elem[index];
 
 	hist_elem->ts = qdf_get_log_timestamp();
 	qdf_mem_copy(&hist_elem->tlvs, rx_tlv_hdr, sizeof(hist_elem->tlvs));
@@ -647,6 +647,46 @@ static bool is_flow_idx_valid(bool flow_invalid, bool flow_timeout)
 		return false;
 }
 
+#ifdef WLAN_SUPPORT_RX_FISA_HIST
+/**
+ * dp_rx_fisa_get_pkt_hist() - Get ptr to pkt history from rx sw ft entry
+ * @ft_entry: sw ft entry
+ *
+ * Return: ptr to pkt history
+ */
+static inline struct fisa_pkt_hist *
+dp_rx_fisa_get_pkt_hist(struct dp_fisa_rx_sw_ft *ft_entry)
+{
+	return ft_entry->pkt_hist;
+}
+
+/**
+ * dp_rx_fisa_set_pkt_hist() - Set rx sw ft entry pkt history
+ * @ft_entry: sw ft entry
+ * @pkt_hist: pkt history ptr
+ *
+ * Return: None
+ */
+static inline void
+dp_rx_fisa_set_pkt_hist(struct dp_fisa_rx_sw_ft *ft_entry,
+			struct fisa_pkt_hist *pkt_hist)
+{
+	ft_entry->pkt_hist = pkt_hist;
+}
+#else
+static inline struct fisa_pkt_hist *
+dp_rx_fisa_get_pkt_hist(struct dp_fisa_rx_sw_ft *ft_entry)
+{
+	return NULL;
+}
+
+static inline void
+dp_rx_fisa_set_pkt_hist(struct dp_fisa_rx_sw_ft *ft_entry,
+			struct fisa_pkt_hist *pkt_hist)
+{
+}
+#endif
+
 /**
  * dp_fisa_rx_delete_flow() - Delete a flow from SW and HW FST, currently
  * only applicable when FST is in CMEM
@@ -663,6 +703,7 @@ dp_fisa_rx_delete_flow(struct dp_rx_fst *fisa_hdl,
 {
 	struct dp_fisa_rx_sw_ft *sw_ft_entry;
 	u8 reo_id;
+	struct fisa_pkt_hist *pkt_hist;
 
 	sw_ft_entry = &(((struct dp_fisa_rx_sw_ft *)
 				fisa_hdl->base)[hashed_flow_idx]);
@@ -673,8 +714,11 @@ dp_fisa_rx_delete_flow(struct dp_rx_fst *fisa_hdl,
 	/* Flush the flow before deletion */
 	dp_rx_fisa_flush_flow_wrap(sw_ft_entry);
 
+	pkt_hist = dp_rx_fisa_get_pkt_hist(sw_ft_entry);
+
 	memset(sw_ft_entry, 0, sizeof(*sw_ft_entry));
 
+	dp_rx_fisa_set_pkt_hist(sw_ft_entry, pkt_hist);
 	dp_rx_fisa_update_sw_ft_entry(sw_ft_entry, elem->flow_idx, elem->vdev,
 				      fisa_hdl->soc_hdl, hashed_flow_idx);
 
