@@ -2561,6 +2561,31 @@ static void msm_vidc_free_input_cr_list(struct msm_vidc_inst *inst)
 	INIT_LIST_HEAD(&inst->enc_input_crs);
 }
 
+void msm_vidc_free_capabililty_list(struct msm_vidc_inst *inst,
+	enum msm_vidc_ctrl_list_type list_type)
+{
+	struct msm_vidc_inst_cap_entry *temp = NULL, *next = NULL;
+
+	if (list_type & CHILD_LIST) {
+		list_for_each_entry_safe(temp, next, &inst->children.list, list) {
+			list_del(&temp->list);
+			kfree(temp);
+		}
+		INIT_LIST_HEAD(&inst->children.list);
+	}
+
+	temp = NULL;
+	next = NULL;
+
+	if (list_type & FW_LIST) {
+		list_for_each_entry_safe(temp, next, &inst->firmware.list, list) {
+			list_del(&temp->list);
+			kfree(temp);
+		}
+		INIT_LIST_HEAD(&inst->firmware.list);
+	}
+}
+
 static int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct msm_vidc_buffer *buf)
 {
 	struct msm_vidc_buffer *meta;
@@ -4263,6 +4288,7 @@ static void msm_vidc_close_helper(struct kref *kref)
 	else if (is_encode_session(inst))
 		msm_venc_inst_deinit(inst);
 	msm_vidc_free_input_cr_list(inst);
+	msm_vidc_free_capabililty_list(inst, CHILD_LIST | FW_LIST);
 	kfree(inst->capabilities);
 	if (inst->response_workq)
 		destroy_workqueue(inst->response_workq);

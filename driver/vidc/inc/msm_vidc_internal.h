@@ -292,6 +292,11 @@ enum msm_vidc_matrix_coefficients {
 	MSM_VIDC_MATRIX_COEFF_BT2100                         = 14,
 };
 
+enum msm_vidc_ctrl_list_type {
+	CHILD_LIST          = BIT(0),
+	FW_LIST             = BIT(1),
+};
+
 enum msm_vidc_core_capability_type {
 	CORE_CAP_NONE = 0,
 	ENC_CODECS,

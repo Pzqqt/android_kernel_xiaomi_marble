@@ -10,11 +10,6 @@
 #include "msm_vidc_inst.h"
 #include "msm_vidc_internal.h"
 
-enum msm_vidc_ctrl_list_type {
-	CHILD_LIST          = BIT(0),
-	FW_LIST             = BIT(1),
-};
-
 int msm_vidc_ctrl_init(struct msm_vidc_inst *inst);
 int msm_vidc_ctrl_deinit(struct msm_vidc_inst *inst);
 int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl);

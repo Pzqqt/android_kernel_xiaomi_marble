@@ -387,5 +387,7 @@ int msm_vidc_check_session_supported(struct msm_vidc_inst *inst);
 int msm_vidc_check_mbps_supported(struct msm_vidc_inst *inst);
 int msm_vidc_check_scaling_supported(struct msm_vidc_inst *inst);
 const char *buf_name(enum msm_vidc_buffer_type type);
+void msm_vidc_free_capabililty_list(struct msm_vidc_inst *inst,
+	enum msm_vidc_ctrl_list_type list_type);
 #endif // _MSM_VIDC_DRIVER_H_
 
