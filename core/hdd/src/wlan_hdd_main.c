@@ -2236,6 +2236,42 @@ static void hdd_extract_fw_version_info(struct hdd_context *hdd_ctx)
 #if defined(WLAN_FEATURE_11AX) && \
 	(defined(CFG80211_SBAND_IFTYPE_DATA_BACKPORT) || \
 	 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0)))
+
+#if defined(CONFIG_BAND_6GHZ) && (KERNEL_VERSION(5, 8, 0) <= LINUX_VERSION_CODE)
+static void hdd_update_wiphy_he_6ghz_capa(struct hdd_context *hdd_ctx)
+{
+	uint16_t he_6ghz_capa = 0;
+	uint8_t min_mpdu_start_spacing;
+	uint8_t max_ampdu_len_exp;
+	uint8_t max_mpdu_len;
+	uint8_t sm_pow_save;
+
+	ucfg_mlme_get_ht_mpdu_density(hdd_ctx->psoc, &min_mpdu_start_spacing);
+	he_6ghz_capa |= FIELD_PREP(IEEE80211_HE_6GHZ_CAP_MIN_MPDU_START,
+				   min_mpdu_start_spacing);
+
+	ucfg_mlme_cfg_get_vht_ampdu_len_exp(hdd_ctx->psoc, &max_ampdu_len_exp);
+	he_6ghz_capa |= FIELD_PREP(IEEE80211_HE_6GHZ_CAP_MAX_AMPDU_LEN_EXP,
+				   max_ampdu_len_exp);
+
+	ucfg_mlme_cfg_get_vht_max_mpdu_len(hdd_ctx->psoc, &max_mpdu_len);
+	he_6ghz_capa |= FIELD_PREP(IEEE80211_HE_6GHZ_CAP_MAX_MPDU_LEN,
+				   max_mpdu_len);
+
+	ucfg_mlme_cfg_get_ht_smps(hdd_ctx->psoc, &sm_pow_save);
+	he_6ghz_capa |= FIELD_PREP(IEEE80211_HE_6GHZ_CAP_SM_PS, sm_pow_save);
+
+	he_6ghz_capa |= IEEE80211_HE_6GHZ_CAP_RX_ANTPAT_CONS;
+	he_6ghz_capa |= IEEE80211_HE_6GHZ_CAP_TX_ANTPAT_CONS;
+
+	hdd_ctx->iftype_data_6g->he_6ghz_capa.capa = he_6ghz_capa;
+}
+#else
+static inline void hdd_update_wiphy_he_6ghz_capa(struct hdd_context *hdd_ctx)
+{
+}
+#endif
+
 #if defined(CONFIG_BAND_6GHZ) && (defined(CFG80211_6GHZ_BAND_SUPPORTED) || \
       (KERNEL_VERSION(5, 4, 0) <= LINUX_VERSION_CODE))
 static void
@@ -2266,6 +2302,8 @@ hdd_update_wiphy_he_caps_6ghz(struct hdd_context *hdd_ctx)
 	if (max_fw_bw >= WNI_CFG_VHT_CHANNEL_WIDTH_80_PLUS_80MHZ)
 		phy_info[0] |=
 		     IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_80PLUS80_MHZ_IN_5G;
+
+	hdd_update_wiphy_he_6ghz_capa(hdd_ctx);
 
 	band_6g->iftype_data = hdd_ctx->iftype_data_6g;
 }
