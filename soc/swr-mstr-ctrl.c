@@ -51,7 +51,6 @@
 
 #define ERR_AUTO_SUSPEND_TIMER_VAL 0x1
 
-#define SWRM_INTERRUPT_STATUS_MASK 0x1FDFD
 #define SWRM_LINK_STATUS_RETRY_CNT 100
 
 #define SWRM_ROW_48    48
@@ -3099,7 +3098,7 @@ static int swrm_clk_pause(struct swr_mstr_ctrl *swrm)
 	u32 val;
 
 	dev_dbg(swrm->dev, "%s: state: %d\n", __func__, swrm->state);
-	swr_master_write(swrm, SWRM_INTERRUPT_EN, 0x1FDFD);
+	swr_master_write(swrm, SWRM_INTERRUPT_EN, SWRM_INTERRUPT_STATUS_MASK);
 	val = swr_master_read(swrm, SWRM_MCP_CFG);
 	val |= 0x02;
 	swr_master_write(swrm, SWRM_MCP_CFG, val);
