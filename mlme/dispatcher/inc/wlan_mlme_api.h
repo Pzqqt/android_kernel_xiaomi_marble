@@ -1529,6 +1529,16 @@ wlan_mlme_cfg_set_vht_max_mpdu_len(struct wlan_objmgr_psoc *psoc,
 				   uint8_t value);
 
 /**
+ * wlan_mlme_cfg_get_ht_smps() - gets HT SM Power Save mode from cfg item
+ * @psoc: psoc context
+ * @value: data to be set
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_mlme_cfg_get_ht_smps(struct wlan_objmgr_psoc *psoc,
+				     uint8_t *value);
+
+/**
  * wlan_mlme_cfg_get_vht_chan_width() - gets vht supported channel width from
  * cfg item
  * @psoc: psoc context
