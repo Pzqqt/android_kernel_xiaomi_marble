@@ -1241,9 +1241,13 @@ static ssize_t ipa3_read_flt(struct file *file, char __user *ubuf, size_t count,
 				entry->rule.hashable, entry->rule_id,
 				entry->rule.max_prio, entry->prio);
 			if (entry->rule.hashable)
-				pr_err("in_sys:%d ", tbl->in_sys[IPA_RULE_HASHABLE]);
+				pr_err("hash in_sys_preffer:%d, force: %d ",
+					tbl->in_sys[IPA_RULE_HASHABLE],
+					tbl->force_sys[IPA_RULE_HASHABLE]);
 			else
-				pr_err("in_sys:%d ", tbl->in_sys[IPA_RULE_NON_HASHABLE]);
+				pr_err("non-hash in_sys_preffer:%d, force: %d ",
+					tbl->in_sys[IPA_RULE_NON_HASHABLE],
+					tbl->force_sys[IPA_RULE_NON_HASHABLE]);
 			pr_err("enable_stats:%u counter_id:%u\n",
 				entry->rule.enable_stats,
 				entry->rule.cnt_idx);
