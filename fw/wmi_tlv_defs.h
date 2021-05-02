@@ -1152,6 +1152,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_igmp_offload_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_extd_stats,
     WMITLV_TAG_STRUC_wmi_peer_assoc_mlo_params,
+    WMITLV_TAG_STRUC_wmi_vdev_smart_monitor_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1879,6 +1880,7 @@ typedef enum {
     OP(WMI_PDEV_GET_DPD_STATUS_EVENTID) \
     OP(WMI_MLO_SETUP_COMPLETE_EVENTID) \
     OP(WMI_MLO_TEARDOWN_COMPLETE_EVENTID) \
+    OP(WMI_VDEV_SMART_MONITOR_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -6276,6 +6278,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MLO_SETUP_COMPLETE_EVENTID);
 #define WMITLV_TABLE_WMI_MLO_TEARDOWN_COMPLETE_EVENTID(id,op,buf,len)  \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_teardown_complete_fixed_param, wmi_mlo_teardown_complete_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_MLO_TEARDOWN_COMPLETE_EVENTID);
+
+/* Send Smart Monitor related params to host */
+#define WMITLV_TABLE_WMI_VDEV_SMART_MONITOR_EVENTID(id,op,buf,len) \
+     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_smart_monitor_event_fixed_param, wmi_vdev_smart_monitor_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SMART_MONITOR_EVENTID);
 
 
 #ifdef __cplusplus

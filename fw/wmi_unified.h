@@ -1575,7 +1575,8 @@ typedef enum {
     WMI_VDEV_BCN_LATENCY_EVENTID,
     /** Disconnect request from FW */
     WMI_VDEV_DISCONNECT_EVENTID,
-
+    /** Send Smart Monitor related params to host */
+    WMI_VDEV_SMART_MONITOR_EVENTID,
 
     /* peer specific events */
     /** FW reauet to kick out the station for reasons like inactivity,lack of response ..etc */
@@ -12303,6 +12304,13 @@ typedef enum {
     /** Value of DTIM to be applied in Suspend mode
      */
     WMI_VDEV_PARAM_FORCE_DTIM_CNT,           /* 0xA8 */
+
+    /* vdev param to configure the Smart Monitor features
+     *  Bit : 0     - enable/disable Trigger frames
+     *  Bit : 1     - enable/disable QOS frames
+     *  Bit : 2-31  - reserved
+     */
+    WMI_VDEV_PARAM_SMART_MONITOR_CONFIG,     /* 0xA9  */
 
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
@@ -34097,6 +34105,16 @@ typedef struct {
  *     WMI_IPV4_ADDR  grp_ip_address[num_mcast_ipv4_addr];
  */
 } wmi_igmp_offload_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+    * WMITLV_TAG_STRUC_wmi_vdev_smart_monitor_event_fixed_param */
+    A_UINT32 tlv_header;
+    /* VDEV identifier */
+    A_UINT32 vdev_id;
+    /** Average RSSI value of Data Frames */
+    A_INT32 avg_rssi_data_dbm;
+} wmi_vdev_smart_monitor_event_fixed_param;
 
 
 
