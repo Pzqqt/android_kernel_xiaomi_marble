@@ -6464,9 +6464,15 @@ void _ipa_sram_settings_read_v3_0(void)
 	ipa3_ctx->ip6_rt_tbl_hash_lcl = false;
 	ipa3_ctx->ip6_rt_tbl_nhash_lcl = false;
 	ipa3_ctx->ip4_flt_tbl_hash_lcl = false;
-	ipa3_ctx->ip4_flt_tbl_nhash_lcl = false;
 	ipa3_ctx->ip6_flt_tbl_hash_lcl = false;
-	ipa3_ctx->ip6_flt_tbl_nhash_lcl = false;
+
+	if (ipa3_ctx->ipa_hw_type == IPA_HW_v5_0) {
+		ipa3_ctx->ip4_flt_tbl_nhash_lcl = true;
+		ipa3_ctx->ip6_flt_tbl_nhash_lcl = true;
+	} else {
+		ipa3_ctx->ip4_flt_tbl_nhash_lcl = false;
+		ipa3_ctx->ip6_flt_tbl_nhash_lcl = false;
+	}
 }
 
 /**

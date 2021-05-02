@@ -111,6 +111,33 @@ static void __ipa_reap_sys_flt_tbls(enum ipa_ip_type ip, enum ipa_rule_type rlt)
 	}
 }
 
+static void __ipa_reap_curr_sys_flt_tbls(enum ipa_ip_type ip, enum ipa_rule_type rlt)
+{
+	struct ipa3_flt_tbl *tbl;
+	struct ipa_mem_buffer buf = { 0 };
+	int i;
+
+	IPADBG_LOW("reaping current sys flt tbls ip=%d rlt=%d\n", ip, rlt);
+
+	for (i = 0; i < ipa3_ctx->ipa_num_pipes; i++) {
+		if (!ipa_is_ep_support_flt(i))
+			continue;
+
+		tbl = &ipa3_ctx->flt_tbl[i][ip];
+		if (tbl->curr_mem[rlt].phys_base && tbl->prev_mem[rlt].phys_base) {
+			IPADBG_LOW("reaping flt tbl (curr) pipe=%d phys_addr: 0x%x\n",
+				i, tbl->curr_mem[rlt].phys_base);
+			ipahal_free_dma_mem(&tbl->curr_mem[rlt]);
+
+			IPADBG_LOW("moving prev flt tbl to curr pipe=%d phys_addr: 0x%x\n",
+				i, tbl->prev_mem[rlt].phys_base);
+			tbl->curr_mem[rlt] = tbl->prev_mem[rlt];
+			tbl->prev_mem[rlt] = buf;
+			tbl->prev_mem[rlt].phys_base = 0;
+		}
+	}
+}
+
 /**
  * ipa_prep_flt_tbl_for_cmt() - preparing the flt table for commit
  *  assign priorities to the rules, calculate their sizes and calculate
@@ -219,7 +246,7 @@ static int ipa_translate_flt_tbl_to_hw_fmt(enum ipa_ip_type ip,
 			hdr_idx++;
 			continue;
 		}
-		if (tbl->in_sys[rlt]) {
+		if (tbl->in_sys[rlt] || tbl->force_sys[rlt]) {
 			/* only body (no header) */
 			tbl_mem.size = tbl->sz[rlt] -
 				ipahal_get_hw_tbl_hdr_width();
@@ -392,7 +419,7 @@ static bool ipa_flt_valid_lcl_tbl_size(enum ipa_ip_type ipt,
 	if (bdy->size <= avail)
 		return true;
 
-	IPAERR("tbl too big, needed %d avail %d ipt %d rlt %d\n",
+	IPADBG("tbl too big, needed %d avail %d ipt %d rlt %d\n",
 	       bdy->size, avail, ipt, rlt);
 	return false;
 }
@@ -492,6 +519,7 @@ int __ipa_commit_flt_v3(enum ipa_ip_type ip)
 	struct ipa3_flt_tbl *tbl;
 	u16 entries;
 	struct ipahal_imm_cmd_register_write reg_write_coal_close;
+	bool prev_tbl_forced_sys = false;
 
 	tbl_hdr_width = ipahal_get_hw_tbl_hdr_width();
 	memset(&alloc_params, 0, sizeof(alloc_params));
@@ -534,6 +562,13 @@ int __ipa_commit_flt_v3(enum ipa_ip_type ip)
 			rc = -EPERM;
 			goto prep_failed;
 		}
+		/* Check if table was forced to sys previously */
+		if (tbl->force_sys[IPA_RULE_NON_HASHABLE])
+			prev_tbl_forced_sys = true;
+
+		/* First try fitting tables in lcl memory if allowed */
+		tbl->force_sys[IPA_RULE_NON_HASHABLE] = false;
+
 		if (!tbl->in_sys[IPA_RULE_HASHABLE] &&
 			tbl->sz[IPA_RULE_HASHABLE]) {
 			alloc_params.num_lcl_hash_tbls++;
@@ -559,13 +594,62 @@ int __ipa_commit_flt_v3(enum ipa_ip_type ip)
 
 	if (!ipa_flt_valid_lcl_tbl_size(ip, IPA_RULE_HASHABLE,
 		&alloc_params.hash_bdy)) {
+		IPAERR_RL("Hash filter table for IP:%d too big to fit in lcl memory\n",
+			ip);
 		rc = -EFAULT;
 		goto fail_size_valid;
 	}
+
+	/* Check Non-Hash filter table fits in SRAM, if it is not - move all
+	   tables to DDR */
 	if (!ipa_flt_valid_lcl_tbl_size(ip, IPA_RULE_NON_HASHABLE,
 		&alloc_params.nhash_bdy)) {
-		rc = -EFAULT;
-		goto fail_size_valid;
+		IPADBG("SRAM partition is too small, place tables in DDR. IP:%d\n",
+			ip);
+
+		/* If no tables were forced to be in sys mem before, inc stats */
+		if (!prev_tbl_forced_sys)
+			ipa3_ctx->non_hash_flt_lcl_sys_switch++;
+
+		/* Reap previous generated tables before generating them again */
+		__ipa_reap_curr_sys_flt_tbls(ip, IPA_RULE_HASHABLE);
+		__ipa_reap_curr_sys_flt_tbls(ip, IPA_RULE_NON_HASHABLE);
+
+		/* Free & zero out the alloc_params before genereting them again */
+		if (alloc_params.hash_hdr.size)
+			ipahal_free_dma_mem(&alloc_params.hash_hdr);
+		ipahal_free_dma_mem(&alloc_params.nhash_hdr);
+		if (alloc_params.hash_bdy.size)
+			ipahal_free_dma_mem(&alloc_params.hash_bdy);
+		if (alloc_params.nhash_bdy.size)
+			ipahal_free_dma_mem(&alloc_params.nhash_bdy);
+
+		memset(&alloc_params, 0, sizeof(alloc_params));
+		alloc_params.ipt = ip;
+		alloc_params.tbls_num = ipa3_ctx->ep_flt_num;
+
+		for (i = 0; i < ipa3_ctx->ipa_num_pipes; i++) {
+			if (!ipa_is_ep_support_flt(i))
+				continue;
+			tbl = &ipa3_ctx->flt_tbl[i][ip];
+			tbl->force_sys[IPA_RULE_NON_HASHABLE] = true;
+
+			if (ipa_prep_flt_tbl_for_cmt(ip, tbl, i)) {
+				rc = -EPERM;
+				goto prep_failed;
+			}
+		}
+
+		/* Generate tables again with all nhash tables forced in system mem */
+		if (ipa_generate_flt_hw_tbl_img(ip, &alloc_params)) {
+			IPAERR_RL("fail to generate FLT HW TBL image. IP %d\n", ip);
+			rc = -EFAULT;
+			goto prep_failed;
+		}
+	} else {
+		/* If tables were forced to be in sys mem before, inc stats */
+		if (prev_tbl_forced_sys)
+			ipa3_ctx->non_hash_flt_lcl_sys_switch++;
 	}
 
 	/* +4: 2 for bodies (hashable and non-hashable), 1 for flushing and 1
@@ -723,7 +807,7 @@ int __ipa_commit_flt_v3(enum ipa_ip_type ip)
 		++hdr_idx;
 	}
 
-	if (lcl_nhash) {
+	if (lcl_nhash && alloc_params.num_lcl_nhash_tbls > 0) {
 		if (num_cmd >= entries) {
 			IPAERR("number of commands is out of range: IP = %d\n",
 				ip);

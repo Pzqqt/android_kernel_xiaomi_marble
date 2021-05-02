@@ -6836,6 +6836,7 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 		INIT_LIST_HEAD(&flt_tbl->head_flt_rule_list);
 		flt_tbl->in_sys[IPA_RULE_HASHABLE] =
 			!ipa3_ctx->ip4_flt_tbl_hash_lcl;
+
 		/*	For ETH client place Non-Hash FLT table in SRAM if allowed, for
 			all other EPs always place the table in DDR */
 		if (IPA_CLIENT_IS_ETH_PROD(i))
@@ -6843,6 +6844,10 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 			!ipa3_ctx->ip4_flt_tbl_nhash_lcl;
 		else
 			flt_tbl->in_sys[IPA_RULE_NON_HASHABLE] = true;
+
+		/* Init force sys to false */
+		flt_tbl->force_sys[IPA_RULE_HASHABLE] = false;
+		flt_tbl->force_sys[IPA_RULE_NON_HASHABLE] = false;
 
 		flt_tbl->rule_ids = &ipa3_ctx->flt_rule_ids[IPA_IP_v4];
 
@@ -6857,6 +6862,10 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 			!ipa3_ctx->ip6_flt_tbl_nhash_lcl;
 		else
 			flt_tbl->in_sys[IPA_RULE_NON_HASHABLE] = true;
+
+		/* Init force sys to false */
+		flt_tbl->force_sys[IPA_RULE_HASHABLE] = false;
+		flt_tbl->force_sys[IPA_RULE_NON_HASHABLE] = false;
 
 		flt_tbl->rule_ids = &ipa3_ctx->flt_rule_ids[IPA_IP_v6];
 	}

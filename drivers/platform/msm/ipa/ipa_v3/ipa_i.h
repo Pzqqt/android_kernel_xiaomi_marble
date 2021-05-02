@@ -850,6 +850,8 @@ struct ipa3_hdr_proc_ctx_tbl {
  * @curr_mem: current filter tables block in sys memory
  * @prev_mem: previous filter table block in sys memory
  * @rule_ids: common idr structure that holds the rule_id for each rule
+ * @force_sys: flag indicating if filter table is forced to be
+			located in system memory
  */
 struct ipa3_flt_tbl {
 	struct list_head head_flt_rule_list;
@@ -860,6 +862,7 @@ struct ipa3_flt_tbl {
 	struct ipa_mem_buffer prev_mem[IPA_RULE_TYPE_MAX];
 	bool sticky_rear;
 	struct idr *rule_ids;
+	bool force_sys[IPA_RULE_TYPE_MAX];
 };
 
 /**
@@ -2032,6 +2035,7 @@ struct ipa3_eth_error_stats {
  * @uc_fw_file_name: uC IPA fw file name
  * @eth_info: ethernet client mapping
  * @max_num_smmu_cb: number of smmu s1 cb supported
+ * @non_hash_flt_lcl_sys_switch: number of times non-hash flt table moved
  */
 struct ipa3_context {
 	struct ipa3_char_device_context cdev;
@@ -2245,6 +2249,7 @@ struct ipa3_context {
 	u16 ulso_ip_id_max;
 	bool use_pm_wrapper;
 	u8 page_poll_threshold;
+	u32 non_hash_flt_lcl_sys_switch;
 };
 
 struct ipa3_plat_drv_res {
