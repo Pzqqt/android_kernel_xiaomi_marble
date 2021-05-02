@@ -1378,6 +1378,7 @@ static ssize_t debugfs_dump_info_read(struct file *file,
 				      loff_t *ppos)
 {
 	struct dsi_display *display = file->private_data;
+	struct dsi_mode_info *m;
 	char *buf;
 	u32 len = 0;
 	int i;
@@ -1392,11 +1393,14 @@ static ssize_t debugfs_dump_info_read(struct file *file,
 	if (!buf)
 		return -ENOMEM;
 
+	m = &display->config.video_timing;
+
 	len += snprintf(buf + len, (SZ_4K - len), "name = %s\n", display->name);
 	len += snprintf(buf + len, (SZ_4K - len),
-			"\tResolution = %dx%d\n",
-			display->config.video_timing.h_active,
-			display->config.video_timing.v_active);
+			"\tResolution = %d(%d|%d|%d|%d)x%d(%d|%d|%d|%d)@%dfps %llu Hz\n",
+			m->h_active, m->h_back_porch, m->h_front_porch, m->h_sync_width,
+			m->h_sync_polarity, m->v_active, m->v_back_porch, m->v_front_porch,
+			m->v_sync_width, m->v_sync_polarity, m->refresh_rate, m->clk_rate_hz);
 
 	display_for_each_ctrl(i, display) {
 		len += snprintf(buf + len, (SZ_4K - len),
