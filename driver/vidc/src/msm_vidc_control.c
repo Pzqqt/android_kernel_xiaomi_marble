@@ -757,6 +757,9 @@ int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl)
 	}
 
 exit:
+	if (rc)
+		msm_vidc_free_capabililty_list(inst, CHILD_LIST | FW_LIST);
+
 	return rc;
 }
 
@@ -1817,6 +1820,9 @@ int msm_vidc_adjust_v4l2_properties(struct msm_vidc_inst *inst)
 	}
 
 exit:
+	if (rc)
+		msm_vidc_free_capabililty_list(inst, CHILD_LIST | FW_LIST);
+
 	return rc;
 }
 
@@ -2742,6 +2748,8 @@ int msm_vidc_set_v4l2_properties(struct msm_vidc_inst *inst)
 	}
 
 exit:
+	msm_vidc_free_capabililty_list(inst, FW_LIST);
+
 	return rc;
 }
 
