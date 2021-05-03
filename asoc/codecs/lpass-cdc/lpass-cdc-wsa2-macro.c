@@ -2154,7 +2154,7 @@ static int lpass_cdc_wsa2_macro_soft_clip_enable_put(struct snd_kcontrol *kcontr
 }
 
 static const struct snd_kcontrol_new lpass_cdc_wsa2_macro_snd_controls[] = {
-	SOC_ENUM_EXT("GSM mode Enable", lpass_cdc_wsa2_macro_vbat_bcl_gsm_mode_enum,
+	SOC_ENUM_EXT("WSA2_GSM mode Enable", lpass_cdc_wsa2_macro_vbat_bcl_gsm_mode_enum,
 		     lpass_cdc_wsa2_macro_vbat_bcl_gsm_mode_func_get,
 		     lpass_cdc_wsa2_macro_vbat_bcl_gsm_mode_func_put),
 	SOC_ENUM_EXT("WSA2_RX0 comp_mode", lpass_cdc_wsa2_macro_comp_mode_enum,
