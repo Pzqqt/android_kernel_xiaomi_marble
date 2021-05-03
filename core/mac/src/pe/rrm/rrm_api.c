@@ -275,6 +275,9 @@ rrm_process_link_measurement_request(struct mac_context *mac,
 					pLinkReq->MaxTxPower.maxTxPower;
 			lim_calculate_tpc(mac, pe_session, true);
 
+			LinkReport.txPower =
+			mlme_obj->reg_tpc_obj.chan_power_info[0].tx_power;
+
 			if (tx_ops->set_tpc_power)
 				tx_ops->set_tpc_power(mac->psoc,
 						      pe_session->vdev_id,
@@ -302,12 +305,12 @@ rrm_process_link_measurement_request(struct mac_context *mac,
 			rrm_send_set_max_tx_power_req(mac, LinkReport.txPower,
 						      pe_session))) {
 			pe_warn("Local: %d", pe_session->maxTxPower);
-			pe_warn("Link Request TxPwr: %d Link Report TxPwr: %d",
-				LinkReport.txPower,
-				pLinkReq->MaxTxPower.maxTxPower);
 			pe_session->maxTxPower = LinkReport.txPower;
 		}
 	}
+	pe_warn("Link Request Tx Pwr: %d Link Report Tx Pwr: %d",
+		pLinkReq->MaxTxPower.maxTxPower, LinkReport.txPower);
+
 	LinkReport.dialogToken = pLinkReq->DialogToken.token;
 	LinkReport.rxAntenna = 0;
 	LinkReport.txAntenna = 0;
