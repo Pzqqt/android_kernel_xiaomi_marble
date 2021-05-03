@@ -16194,6 +16194,11 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_dcs_awgn_int_support] =
 			WMI_SERVICE_DCS_AWGN_INT_SUPPORT;
 	wmi_populate_service_11be(wmi_service);
+
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+	wmi_service[wmi_service_big_data_support] =
+			WMI_SERVICE_BIG_DATA_SUPPORT;
+#endif
 }
 
 /**

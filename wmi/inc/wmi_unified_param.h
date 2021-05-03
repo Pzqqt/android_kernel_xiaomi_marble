@@ -5198,6 +5198,9 @@ typedef enum {
 	wmi_service_tdls_ax_support,
 #endif
 #endif
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+	wmi_service_big_data_support,
+#endif
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
