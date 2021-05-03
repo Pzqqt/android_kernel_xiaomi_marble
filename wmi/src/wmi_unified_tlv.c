@@ -469,6 +469,9 @@ static const uint32_t vdev_param_tlv[] = {
 	[wmi_vdev_param_set_he_sounding_mode] =
 			WMI_VDEV_PARAM_SET_HE_SOUNDING_MODE,
 	[wmi_vdev_param_set_heop] = WMI_VDEV_PARAM_HEOPS_0_31,
+#ifdef WLAN_FEATURE_11BE
+	[wmi_vdev_param_set_ehtop] = WMI_VDEV_PARAM_EHTOPS_0_31,
+#endif
 	[wmi_vdev_param_sensor_ap] = WMI_VDEV_PARAM_SENSOR_AP,
 	[wmi_vdev_param_dtim_enable_cts] = WMI_VDEV_PARAM_DTIM_ENABLE_CTS,
 	[wmi_vdev_param_atf_ssid_sched_policy] =
@@ -1026,6 +1029,29 @@ static inline void copy_channel_info(
 }
 
 /**
+ * vdev_start_cmd_fill_11be() - 11be information fiiling in vdev_ststart
+ * @cmd: wmi cmd
+ * @req: vdev start params
+ *
+ * Return: QDF status
+ */
+#ifdef WLAN_FEATURE_11BE
+static void
+vdev_start_cmd_fill_11be(wmi_vdev_start_request_cmd_fixed_param *cmd,
+			 struct vdev_start_params *req)
+{
+	cmd->eht_ops = req->eht_ops;
+	wmi_info("EHT ops: %x", req->eht_ops);
+}
+#else
+static void
+vdev_start_cmd_fill_11be(wmi_vdev_start_request_cmd_fixed_param *cmd,
+			 struct vdev_start_params *req)
+{
+}
+#endif
+
+/**
  * send_vdev_start_cmd_tlv() - send vdev start request to fw
  * @wmi_handle: wmi handle
  * @req: vdev start params
@@ -1113,6 +1139,8 @@ static QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 		 req->ldpc_rx_enabled, req->cac_duration_ms,
 		 req->regdomain, req->he_ops,
 		 req->disable_hw_ack);
+
+	vdev_start_cmd_fill_11be(cmd, req);
 
 	if (req->is_restart) {
 		wmi_mtrace(WMI_VDEV_RESTART_REQUEST_CMDID, cmd->vdev_id, 0);

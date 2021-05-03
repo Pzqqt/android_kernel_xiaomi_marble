@@ -252,6 +252,11 @@ target_if_vdev_mlme_id_2_wmi(uint32_t cfg_id)
 	case WLAN_MLME_CFG_HE_OPS:
 		wmi_id = wmi_vdev_param_set_heop;
 		break;
+#ifdef WLAN_FEATURE_11BE
+	case WLAN_MLME_CFG_EHT_OPS:
+		wmi_id = wmi_vdev_param_set_ehtop;
+		break;
+#endif
 	case WLAN_MLME_CFG_RTS_THRESHOLD:
 		wmi_id = wmi_vdev_param_rts_threshold;
 		break;
