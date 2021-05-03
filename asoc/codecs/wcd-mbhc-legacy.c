@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 #include <linux/module.h>
 #include <linux/init.h>
@@ -861,23 +861,28 @@ static irqreturn_t wcd_mbhc_hs_rem_irq(int irq, void *data)
 			WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_BTN_ISRC_CTL, 0);
 			mbhc->btn_press_intr = false;
 			mbhc->is_btn_press = false;
-			if (mbhc->current_plug == MBHC_PLUG_TYPE_HEADSET)
+			if (mbhc->current_plug == MBHC_PLUG_TYPE_HEADSET) {
 				wcd_mbhc_report_plug(
 					mbhc, 0, SND_JACK_HEADSET);
-			else if (mbhc->current_plug ==
+				extcon_set_state_sync(mbhc->extdev, EXTCON_JACK_MICROPHONE, 0);
+			} else if (mbhc->current_plug ==
 					MBHC_PLUG_TYPE_HEADPHONE)
 				wcd_mbhc_report_plug(
 					mbhc, 0, SND_JACK_HEADPHONE);
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-			else if (mbhc->current_plug ==
+				extcon_set_state_sync(mbhc->extdev, EXTCON_JACK_HEADPHONE, 0);
+			} else if (mbhc->current_plug ==
 					MBHC_PLUG_TYPE_GND_MIC_SWAP)
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 				wcd_mbhc_report_plug(
 					mbhc, 0, SND_JACK_UNSUPPORTED);
 #endif /* CONFIG_AUDIO_QGKI */
-			else if (mbhc->current_plug ==
-					MBHC_PLUG_TYPE_HIGH_HPH)
+				extcon_set_state_sync(mbhc->extdev, EXTCON_MECHANICAL, 0);
+			} else if (mbhc->current_plug ==
+					MBHC_PLUG_TYPE_HIGH_HPH) {
 				wcd_mbhc_report_plug(
 					mbhc, 0, SND_JACK_LINEOUT);
+				extcon_set_state_sync(mbhc->extdev, EXTCON_JACK_LINE_OUT, 0);
+			}
 		} else {
 			if (!(hphl_sch && mic_sch && hs_comp_result)) {
 				/*

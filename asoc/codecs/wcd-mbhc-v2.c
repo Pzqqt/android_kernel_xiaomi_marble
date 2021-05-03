@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 #include <linux/module.h>
 #include <linux/init.h>
@@ -26,6 +26,14 @@
 #include "wcd-mbhc-legacy.h"
 #include "wcd-mbhc-adc.h"
 #include <asoc/wcd-mbhc-v2-api.h>
+
+static const unsigned int mbhc_ext_dev_supported_table[] = {
+	EXTCON_JACK_MICROPHONE,
+	EXTCON_JACK_HEADPHONE,
+	EXTCON_JACK_LINE_OUT,
+	EXTCON_MECHANICAL,
+	EXTCON_NONE,
+};
 
 void wcd_mbhc_jack_report(struct wcd_mbhc *mbhc,
 			  struct snd_soc_jack *jack, int status, int mask)
@@ -560,6 +568,7 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 	struct snd_soc_component *component = mbhc->component;
 	bool is_pa_on = false;
 	u8 fsm_en = 0;
+	int extdev_type = 0;
 
 	WCD_MBHC_RSC_ASSERT_LOCKED(mbhc);
 
@@ -648,6 +657,16 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 					 __func__, mbhc->hph_status);
 				wcd_mbhc_jack_report(mbhc, &mbhc->headset_jack,
 					0, WCD_MBHC_JACK_MASK);
+				if (mbhc->current_plug == MBHC_PLUG_TYPE_HEADPHONE)
+					extdev_type = EXTCON_JACK_HEADPHONE;
+				else if (mbhc->current_plug == MBHC_PLUG_TYPE_HEADSET)
+					extdev_type = EXTCON_JACK_MICROPHONE;
+				else if (mbhc->current_plug == MBHC_PLUG_TYPE_HIGH_HPH)
+					extdev_type = EXTCON_JACK_LINE_OUT;
+				else if (mbhc->current_plug == MBHC_PLUG_TYPE_GND_MIC_SWAP)
+					extdev_type = EXTCON_MECHANICAL;
+
+				extcon_set_state_sync(mbhc->extdev, extdev_type, 0);
 			}
 			if (mbhc->hph_status == SND_JACK_LINEOUT) {
 
@@ -788,6 +807,7 @@ void wcd_mbhc_elec_hs_report_unplug(struct wcd_mbhc *mbhc)
 
 	pr_debug("%s: Report extension cable\n", __func__);
 	wcd_mbhc_report_plug(mbhc, 1, SND_JACK_LINEOUT);
+	extcon_set_state_sync(mbhc->extdev, EXTCON_JACK_LINE_OUT, 1);
 	/*
 	 * If PA is enabled HPHL schmitt trigger can
 	 * be unreliable, make sure to disable it
@@ -818,6 +838,7 @@ void wcd_mbhc_find_plug_and_report(struct wcd_mbhc *mbhc,
 {
 	bool anc_mic_found = false;
 	enum snd_jack_types jack_type;
+	int ret = 0;
 
 	if (mbhc->deinit_in_progress) {
 		pr_info("%s: mbhc deinit in progess: ignore report\n", __func__);
@@ -840,14 +861,20 @@ void wcd_mbhc_find_plug_and_report(struct wcd_mbhc *mbhc,
 		 * report a headphone or unsupported
 		 */
 		wcd_mbhc_report_plug(mbhc, 1, SND_JACK_HEADPHONE);
+		ret = extcon_set_state_sync(mbhc->extdev, EXTCON_JACK_HEADPHONE, 1);
 	} else if (plug_type == MBHC_PLUG_TYPE_GND_MIC_SWAP) {
-		if (mbhc->current_plug == MBHC_PLUG_TYPE_HEADPHONE)
+		if (mbhc->current_plug == MBHC_PLUG_TYPE_HEADPHONE) {
 			wcd_mbhc_report_plug(mbhc, 0, SND_JACK_HEADPHONE);
-		if (mbhc->current_plug == MBHC_PLUG_TYPE_HEADSET)
+			ret = extcon_set_state_sync(mbhc->extdev, EXTCON_JACK_HEADPHONE, 0);
+		}
+		if (mbhc->current_plug == MBHC_PLUG_TYPE_HEADSET) {
 			wcd_mbhc_report_plug(mbhc, 0, SND_JACK_HEADSET);
+			ret = extcon_set_state_sync(mbhc->extdev, EXTCON_JACK_MICROPHONE, 0);
+		}
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		wcd_mbhc_report_plug(mbhc, 1, SND_JACK_UNSUPPORTED);
 #endif /* CONFIG_AUDIO_QGKI */
+		ret = extcon_set_state_sync(mbhc->extdev, EXTCON_MECHANICAL, 1);
 	} else if (plug_type == MBHC_PLUG_TYPE_HEADSET) {
 		if (mbhc->mbhc_cfg->enable_anc_mic_detect &&
 		    mbhc->mbhc_fn->wcd_mbhc_detect_anc_plug_type)
@@ -860,10 +887,12 @@ void wcd_mbhc_find_plug_and_report(struct wcd_mbhc *mbhc,
 		 * only report the mic line
 		 */
 		wcd_mbhc_report_plug(mbhc, 1, jack_type);
+		ret = extcon_set_state_sync(mbhc->extdev, EXTCON_JACK_MICROPHONE, 1);
 	} else if (plug_type == MBHC_PLUG_TYPE_HIGH_HPH) {
 		if (mbhc->mbhc_cfg->detect_extn_cable) {
 			/* High impedance device found. Report as LINEOUT */
 			wcd_mbhc_report_plug(mbhc, 1, SND_JACK_LINEOUT);
+			ret = extcon_set_state_sync(mbhc->extdev, EXTCON_JACK_LINE_OUT, 1);
 			pr_debug("%s: setup mic trigger for further detection\n",
 				 __func__);
 
@@ -883,6 +912,7 @@ void wcd_mbhc_find_plug_and_report(struct wcd_mbhc *mbhc,
 					     true);
 		} else {
 			wcd_mbhc_report_plug(mbhc, 1, SND_JACK_LINEOUT);
+			ret = extcon_set_state_sync(mbhc->extdev, EXTCON_JACK_LINE_OUT, 1);
 		}
 	} else {
 		WARN(1, "Unexpected current plug_type %d, plug_type %d\n",
@@ -930,6 +960,7 @@ static void wcd_mbhc_swch_irq_handler(struct wcd_mbhc *mbhc)
 	bool micbias1 = false;
 	struct snd_soc_component *component = mbhc->component;
 	enum snd_jack_types jack_type;
+	int extdev_type = 0;
 
 	dev_dbg(component->dev, "%s: enter\n", __func__);
 	WCD_MBHC_RSC_LOCK(mbhc);
@@ -1017,12 +1048,16 @@ static void wcd_mbhc_swch_irq_handler(struct wcd_mbhc *mbhc)
 		switch (mbhc->current_plug) {
 		case MBHC_PLUG_TYPE_HEADPHONE:
 			jack_type = SND_JACK_HEADPHONE;
+			extdev_type = EXTCON_JACK_HEADPHONE;
 			break;
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		case MBHC_PLUG_TYPE_GND_MIC_SWAP:
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 			jack_type = SND_JACK_UNSUPPORTED;
-			break;
+#else
+			jack_type = SND_JACK_HEADPHONE;
 #endif /* CONFIG_AUDIO_QGKI */
+			extdev_type = EXTCON_MECHANICAL;
+			break;
 		case MBHC_PLUG_TYPE_HEADSET:
 			/* make sure to turn off Rbias */
 			if (mbhc->mbhc_cb->micb_internal)
@@ -1031,12 +1066,14 @@ static void wcd_mbhc_swch_irq_handler(struct wcd_mbhc *mbhc)
 			/* Pulldown micbias */
 			WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_PULLDOWN_CTRL, 1);
 			jack_type = SND_JACK_HEADSET;
+			extdev_type = EXTCON_JACK_MICROPHONE;
 			break;
 		case MBHC_PLUG_TYPE_HIGH_HPH:
 			if (mbhc->mbhc_detection_logic == WCD_DETECTION_ADC)
 			    WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_ELECT_ISRC_EN, 0);
 			mbhc->is_extn_cable = false;
 			jack_type = SND_JACK_LINEOUT;
+			extdev_type = EXTCON_JACK_LINE_OUT;
 			break;
 		default:
 			pr_info("%s: Invalid current plug: %d\n",
@@ -1046,6 +1083,7 @@ static void wcd_mbhc_swch_irq_handler(struct wcd_mbhc *mbhc)
 #else
 			jack_type = SND_JACK_HEADPHONE;
 #endif /* CONFIG_AUDIO_QGKI */
+			extdev_type = EXTCON_MECHANICAL;
 			break;
 		}
 		wcd_mbhc_hs_elec_irq(mbhc, WCD_MBHC_ELEC_HS_REM, false);
@@ -1054,6 +1092,7 @@ static void wcd_mbhc_swch_irq_handler(struct wcd_mbhc *mbhc)
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_ELECT_SCHMT_ISRC, 0);
 		mbhc->extn_cable_hph_rem = false;
 		wcd_mbhc_report_plug(mbhc, 0, jack_type);
+		extcon_set_state_sync(mbhc->extdev, extdev_type, 0);
 
 		if (mbhc->mbhc_cfg->enable_usbc_analog) {
 			WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_L_DET_EN, 0);
@@ -2010,11 +2049,26 @@ int wcd_mbhc_init(struct wcd_mbhc *mbhc, struct snd_soc_component *component,
 		       mbhc->intr_ids->hph_right_ocp);
 		goto err_hphr_ocp_irq;
 	}
+	if (!mbhc->extdev)
+		mbhc->extdev =
+			devm_extcon_dev_allocate(component->dev,
+				mbhc_ext_dev_supported_table);
+	if (IS_ERR(mbhc->extdev)) {
+		goto err_ext_dev;
+		ret = PTR_ERR(mbhc->extdev);
+	}
+	ret = devm_extcon_dev_register(component->dev, mbhc->extdev);
+	if (ret) {
+		pr_err("%s:audio registration failed\n", __func__);
+		goto err_ext_dev;
+	}
 
 	mbhc->deinit_in_progress = false;
 	pr_debug("%s: leave ret %d\n", __func__, ret);
 	return ret;
 
+err_ext_dev:
+	mbhc->mbhc_cb->free_irq(component, mbhc->intr_ids->hph_right_ocp, mbhc);
 err_hphr_ocp_irq:
 	mbhc->mbhc_cb->free_irq(component, mbhc->intr_ids->hph_left_ocp, mbhc);
 err_hphl_ocp_irq:
@@ -2045,6 +2099,9 @@ EXPORT_SYMBOL(wcd_mbhc_init);
 void wcd_mbhc_deinit(struct wcd_mbhc *mbhc)
 {
 	struct snd_soc_component *component = mbhc->component;
+
+	if (mbhc->extdev)
+		devm_extcon_dev_unregister(component->dev, mbhc->extdev);
 
 	mbhc->mbhc_cb->free_irq(component, mbhc->intr_ids->mbhc_sw_intr, mbhc);
 	mbhc->mbhc_cb->free_irq(component, mbhc->intr_ids->mbhc_btn_press_intr,
