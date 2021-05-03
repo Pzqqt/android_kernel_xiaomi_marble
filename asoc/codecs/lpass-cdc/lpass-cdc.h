@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef LPASS_CDC_H
@@ -110,6 +110,10 @@ int lpass_cdc_tx_mclk_enable(struct snd_soc_component *c, bool enable);
 int lpass_cdc_get_version(struct device *dev);
 int lpass_cdc_dmic_clk_enable(struct snd_soc_component *component,
 			   u32 dmic, u32 tx_mode, bool enable);
+
+/* RX MACRO utilities */
+int lpass_cdc_rx_set_fir_capability(struct snd_soc_component *component,
+					bool capable);
 #else
 static inline int lpass_cdc_register_res_clk(struct device *dev, rsc_clk_cb_t cb)
 {
@@ -201,6 +205,12 @@ static int lpass_cdc_dmic_clk_enable(struct snd_soc_component *component,
 	return 0;
 }
 static int lpass_cdc_tx_mclk_enable(struct snd_soc_component *c, bool enable)
+{
+	return 0;
+}
+/* RX MACRO utilities */
+static int lpass_cdc_rx_set_fir_capability(struct snd_soc_component *component,
+						bool capable)
 {
 	return 0;
 }

@@ -1370,7 +1370,9 @@ static int msm_int_wsa_init(struct snd_soc_pcm_runtime *rtd)
 
 static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime *rtd)
 {
+	int codec_variant = -1;
 	struct snd_soc_component *component = NULL;
+	struct snd_soc_component *lpass_cdc_component = NULL;
 	struct snd_soc_dapm_context *dapm = NULL;
 	struct snd_info_entry *entry = NULL;
 	struct snd_card *card = NULL;
@@ -1378,14 +1380,14 @@ static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime *rtd)
 				snd_soc_card_get_drvdata(rtd->card);
 	int ret = 0;
 
-	component = snd_soc_rtdcom_lookup(rtd, "lpass-cdc");
-	if (!component) {
+	lpass_cdc_component = snd_soc_rtdcom_lookup(rtd, "lpass-cdc");
+	if (!lpass_cdc_component) {
 		pr_err("%s: could not find component for lpass-cdc\n",
 			__func__);
 		return ret;
 	}
 
-	dapm = snd_soc_component_get_dapm(component);
+	dapm = snd_soc_component_get_dapm(lpass_cdc_component);
 
 	snd_soc_dapm_new_controls(dapm, msm_int_dapm_widgets,
 				ARRAY_SIZE(msm_int_dapm_widgets));
@@ -1405,7 +1407,7 @@ static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime *rtd)
 	snd_soc_dapm_ignore_suspend(dapm, "Analog Mic4");
 	snd_soc_dapm_ignore_suspend(dapm, "Analog Mic5");
 
-	lpass_cdc_set_port_map(component, ARRAY_SIZE(sm_port_map), sm_port_map);
+	lpass_cdc_set_port_map(lpass_cdc_component, ARRAY_SIZE(sm_port_map), sm_port_map);
 
 	card = rtd->card->snd_card;
 	if (!pdata->codec_root) {
@@ -1426,7 +1428,8 @@ static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime *rtd)
 
 	component = snd_soc_rtdcom_lookup(rtd, WCD938X_DRV_NAME);
 	if (!component) {
-		pr_err("%s component is NULL\n", __func__);
+		pr_err("%s could not find component for %s\n",
+			__func__, WCD938X_DRV_NAME);
 		return -EINVAL;
 	}
 	dapm = snd_soc_component_get_dapm(component);
@@ -1454,24 +1457,19 @@ static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime *rtd)
 		pdata->codec_root = entry;
 	}
 	wcd938x_info_create_codec_entry(pdata->codec_root, component);
-#if 0
+
 	codec_variant = wcd938x_get_codec_variant(component);
 	dev_dbg(component->dev, "%s: variant %d\n", __func__, codec_variant);
-	if (codec_variant == WCD9380)
-		ret = snd_soc_add_component_controls(component,
-					msm_int_wcd9380_snd_controls,
-					ARRAY_SIZE(msm_int_wcd9380_snd_controls));
-	else if (codec_variant == WCD9385)
-		ret = snd_soc_add_component_controls(component,
-					msm_int_wcd9385_snd_controls,
-					ARRAY_SIZE(msm_int_wcd9385_snd_controls));
+	if (codec_variant == WCD9385)
+		ret = lpass_cdc_rx_set_fir_capability(lpass_cdc_component, true);
+	else
+		ret = lpass_cdc_rx_set_fir_capability(lpass_cdc_component, false);
 
 	if (ret < 0) {
-		dev_err(component->dev, "%s: add codec specific snd controls failed: %d\n",
+		dev_err(component->dev, "%s: set fir capability failed: %d\n",
 			__func__, ret);
 		return ret;
 	}
-#endif
 done:
 	codec_reg_done = true;
 	msm_common_dai_link_init(rtd);
