@@ -77,3 +77,10 @@ tgt_mgmt_rx_reo_read_snapshot(struct wlan_objmgr_pdev *pdev,
 
 	return mgmt_rx_reo_txops->read_mgmt_rx_reo_snapshot(address, id, value);
 }
+
+QDF_STATUS
+tgt_mgmt_rx_reo_fw_consumed_event_handler(struct wlan_objmgr_psoc *psoc,
+					  struct mgmt_rx_reo_params *params)
+{
+	return QDF_STATUS_SUCCESS;
+}

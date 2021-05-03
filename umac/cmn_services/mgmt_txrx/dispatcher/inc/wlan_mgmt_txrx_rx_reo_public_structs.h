@@ -64,5 +64,17 @@ struct mgmt_rx_reo_snapshot {
 	uint32_t mgmt_rx_reo_snapshot_low;
 	uint32_t mgmt_rx_reo_snapshot_high;
 };
+
+/*
+ * struct mgmt_rx_reo_params - MGMT Rx REO parameters
+ * @pdev_id: pdev ID for which FW consumed event is received
+ * @mgmt_pkt_ctr: MGMT packet counter of the frame that is consumed
+ * @global_timestamp: Global timestamp of the frame that is consumed
+ */
+struct mgmt_rx_reo_params {
+	uint8_t  pdev_id;
+	uint16_t mgmt_pkt_ctr;
+	uint32_t global_timestamp;
+};
 #endif /* WLAN_MGMT_RX_REO_SUPPORT */
 #endif /* _WLAN_MGMT_TXRX_RX_REO_PUBLIC_STRUCTS_H */

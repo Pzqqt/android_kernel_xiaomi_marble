@@ -224,6 +224,17 @@ struct wlan_lmac_if_mgmt_rx_reo_tx_ops {
 			 enum mgmt_rx_reo_snapshot_id id,
 			 struct mgmt_rx_reo_snapshot_params *value);
 };
+
+/**
+ * struct wlan_lmac_if_mgmt_txrx_rx_ops - structure of rx function
+ * pointers for mgmt rx reo module
+ * @fw_consumed_event_handler: FW consumed event handler
+ */
+struct wlan_lmac_if_mgmt_rx_reo_rx_ops {
+	QDF_STATUS (*fw_consumed_event_handler)(
+			struct wlan_objmgr_psoc *psoc,
+			struct mgmt_rx_reo_params *params);
+};
 #endif
 
 /**
@@ -1284,6 +1295,9 @@ struct wlan_lmac_if_mgmt_txrx_rx_ops {
 			uint32_t desc_id);
 	uint32_t (*mgmt_txrx_get_free_desc_pool_count)(
 			struct wlan_objmgr_pdev *pdev);
+#ifdef WLAN_MGMT_RX_REO_SUPPORT
+	struct wlan_lmac_if_mgmt_rx_reo_rx_ops mgmt_rx_reo_rx_ops;
+#endif
 };
 
 struct wlan_lmac_if_reg_rx_ops {
