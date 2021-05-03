@@ -43,6 +43,7 @@
 #include <wlan_hdd_regulatory.h>
 #include "wlan_ipa_ucfg_api.h"
 #include "wlan_policy_mgr_ucfg.h"
+#include "wlan_mlme_twt_ucfg_api.h"
 #include <wma_types.h>
 #include "wlan_hdd_sta_info.h"
 #include "ol_defines.h"
@@ -1422,6 +1423,8 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 				   WLAN_START_ALL_NETIF_QUEUE_N_CARRIER,
 				   WLAN_CONTROL_PATH);
 	ucfg_mlme_update_oce_flags(hdd_ctx->pdev);
+	ucfg_mlme_init_twt_context(hdd_ctx->psoc, sta_mac,
+				   WLAN_ALL_SESSIONS_DIALOG_ID);
 	return qdf_status;
 }
 

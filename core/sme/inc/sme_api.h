@@ -3812,6 +3812,19 @@ QDF_STATUS sme_del_dialog_cmd(mac_handle_t mac_handle,
 			      struct wmi_twt_del_dialog_param *twt_params);
 
 /**
+ * sme_sap_del_dialog_cmd() - Register callback and send TWT del dialog
+ * command to firmware
+ * @mac_handle: MAC handle
+ * @twt_del_dialog_cb: Function callback to handle del_dialog event
+ * @twt_params: TWT del dialog parameters
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS sme_sap_del_dialog_cmd(mac_handle_t mac_handle,
+				  twt_del_dialog_cb del_dialog_cb,
+				  struct wmi_twt_del_dialog_param *twt_params);
+
+/**
  * sme_pause_dialog_cmd() - Register callback and send TWT pause dialog
  * command to firmware
  * @mac_handle: MAC handle

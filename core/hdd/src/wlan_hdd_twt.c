@@ -1849,30 +1849,117 @@ int hdd_send_twt_del_dialog_cmd(struct hdd_context *hdd_ctx,
 }
 
 /**
- * hdd_twt_terminate_session - Process TWT terminate
- * operation in the received vendor command and
- * send it to firmare
- * @adapter: adapter pointer
- * @twt_param_attr: nl attributes
- *
- * Handles QCA_WLAN_TWT_TERMINATE
+ * hdd_send_sap_twt_del_dialog_cmd() - Send SAP TWT del dialog command
+ * @hdd_ctx: HDD Context
+ * @twt_params: Pointer to del dialog cmd params structure
  *
  * Return: 0 on success, negative value on failure
  */
-static int hdd_twt_terminate_session(struct hdd_adapter *adapter,
-				     struct nlattr *twt_param_attr)
+static
+int hdd_send_sap_twt_del_dialog_cmd(struct hdd_context *hdd_ctx,
+				    struct wmi_twt_del_dialog_param *twt_params)
+{
+	QDF_STATUS status;
+	int ret = 0;
+
+	status = sme_sap_del_dialog_cmd(hdd_ctx->mac_handle,
+				    hdd_twt_del_dialog_comp_cb,
+				    twt_params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to send del dialog command");
+		ret = qdf_status_to_os_return(status);
+	}
+
+	return ret;
+}
+
+
+static int hdd_sap_twt_terminate_session(struct hdd_adapter *adapter,
+					 struct nlattr *twt_param_attr)
+{
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1];
+	struct wmi_twt_del_dialog_param params = {0};
+	QDF_STATUS status;
+	int id, id1, ret;
+	bool is_associated;
+	struct qdf_mac_addr mac_addr;
+
+	params.vdev_id = adapter->vdev_id;
+
+	ret = wlan_cfg80211_nla_parse_nested(tb,
+					     QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX,
+					     twt_param_attr,
+					     qca_wlan_vendor_twt_add_dialog_policy);
+	if (ret)
+		return ret;
+
+	id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID;
+	id1 = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAC_ADDR;
+	if (tb[id] && tb[id1]) {
+		params.dialog_id = nla_get_u8(tb[id]);
+		nla_memcpy(params.peer_macaddr, tb[id1], QDF_MAC_ADDR_SIZE);
+	} else if (!tb[id] && !tb[id1]) {
+		struct qdf_mac_addr bcast_addr = QDF_MAC_ADDR_BCAST_INIT;
+
+		params.dialog_id = TWT_ALL_SESSIONS_DIALOG_ID;
+		qdf_mem_copy(params.peer_macaddr, bcast_addr.bytes,
+			     QDF_MAC_ADDR_SIZE);
+	} else {
+		hdd_err_rl("get_params dialog_id or mac_addr is missing");
+		return -EINVAL;
+	}
+
+	if (!params.dialog_id)
+		params.dialog_id = TWT_ALL_SESSIONS_DIALOG_ID;
+
+	if (params.dialog_id != TWT_ALL_SESSIONS_DIALOG_ID &&
+	    QDF_IS_ADDR_BROADCAST(params.peer_macaddr)) {
+		hdd_err("Bcast MAC valid with dlg_id:%d but here dlg_id is:%d",
+			TWT_ALL_SESSIONS_DIALOG_ID, params.dialog_id);
+		return -EINVAL;
+	}
+
+	status = hdd_twt_check_all_twt_support(adapter->hdd_ctx->psoc,
+					       params.dialog_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_debug("All TWT sessions not supported by target");
+		return -EOPNOTSUPP;
+	}
+
+	qdf_mem_copy(mac_addr.bytes, params.peer_macaddr, QDF_MAC_ADDR_SIZE);
+
+	if (!qdf_is_macaddr_broadcast(&mac_addr)) {
+		is_associated = hdd_is_peer_associated(adapter, &mac_addr);
+		if (!is_associated) {
+			hdd_err_rl("Association doesn't exist for STA: "
+				   QDF_MAC_ADDR_FMT,
+				   QDF_MAC_ADDR_REF(mac_addr.bytes));
+			/*
+			 * Return success, since STA is not associated and
+			 * there is no TWT session.
+			 */
+			return 0;
+		}
+	}
+
+	hdd_debug("vdev_id %d dialog_id %d peer mac_addr "
+		  QDF_MAC_ADDR_FMT, params.vdev_id, params.dialog_id,
+		  QDF_MAC_ADDR_REF(params.peer_macaddr));
+
+	ret = hdd_send_sap_twt_del_dialog_cmd(adapter->hdd_ctx, &params);
+
+	return ret;
+}
+
+static int hdd_sta_twt_terminate_session(struct hdd_adapter *adapter,
+					 struct nlattr *twt_param_attr)
 {
 	struct hdd_station_ctx *hdd_sta_ctx = NULL;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1];
 	struct wmi_twt_del_dialog_param params = {0};
 	QDF_STATUS status;
-	int id;
-	int ret;
-
-	if (adapter->device_mode != QDF_STA_MODE &&
-	    adapter->device_mode != QDF_P2P_CLIENT_MODE)
-		return -EOPNOTSUPP;
+	int id, ret;
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	if (!hdd_cm_is_vdev_associated(adapter)) {
@@ -1930,13 +2017,41 @@ static int hdd_twt_terminate_session(struct hdd_adapter *adapter,
 		return -EAGAIN;
 	}
 
-	hdd_debug("twt_terminate: vdev_id %d dialog_id %d peer mac_addr "
+	hdd_debug("vdev_id %d dialog_id %d peer mac_addr "
 		  QDF_MAC_ADDR_FMT, params.vdev_id, params.dialog_id,
 		  QDF_MAC_ADDR_REF(params.peer_macaddr));
 
 	ret = hdd_send_twt_del_dialog_cmd(adapter->hdd_ctx, &params);
 
 	return ret;
+}
+
+/**
+ * hdd_twt_terminate_session - Process TWT terminate
+ * operation in the received vendor command and
+ * send it to firmare
+ * @adapter: adapter pointer
+ * @twt_param_attr: nl attributes
+ *
+ * Handles QCA_WLAN_TWT_TERMINATE
+ *
+ * Return: 0 on success, negative value on failure
+ */
+static int hdd_twt_terminate_session(struct hdd_adapter *adapter,
+				     struct nlattr *twt_param_attr)
+{
+	enum QDF_OPMODE device_mode = adapter->device_mode;
+
+	switch (device_mode) {
+	case QDF_STA_MODE:
+		return hdd_sta_twt_terminate_session(adapter, twt_param_attr);
+	case QDF_SAP_MODE:
+		return hdd_sap_twt_terminate_session(adapter, twt_param_attr);
+	default:
+		hdd_err_rl("TWT terminate is not supported on %s",
+			   qdf_opmode_str(adapter->device_mode));
+		return -EOPNOTSUPP;
+	}
 }
 
 /**
