@@ -13,6 +13,7 @@
 #include "msm_vidc_internal.h"
 #include "msm_vidc_control.h"
 #include "msm_vidc_memory.h"
+#include "msm_vidc_power.h"
 #include "msm_vidc_debug.h"
 #include "msm_vidc_power.h"
 #include "msm_vidc.h"
@@ -23,6 +24,8 @@
 #include "hfi_packet.h"
 extern struct msm_vidc_core *g_core;
 
+#define is_odd(val) ((val) % 2 == 1)
+#define in_range(val, min, max) (((min) <= (val)) && ((val) <= (max)))
 #define COUNT_BITS(a, out) {       \
 	while ((a) >= 1) {          \
 		(out) += (a) & (1); \
@@ -4665,12 +4668,119 @@ static int msm_vidc_check_mbpf_supported(struct msm_vidc_inst *inst)
 	return 0;
 }
 
+static bool msm_vidc_allow_image_encode_session(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_inst_capability *capability;
+	struct v4l2_format *fmt;
+	u32 min_width, min_height, max_width, max_height, pix_fmt, profile;
+	bool allow = false;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return false;
+	}
+	capability = inst->capabilities;
+
+	if (!is_image_encode_session(inst)) {
+		i_vpr_e(inst, "%s: not an image encode session\n", __func__);
+		return false;
+	}
+
+	pix_fmt = capability->cap[PIX_FMTS].value;
+	profile = capability->cap[PROFILE].value;
+
+	/* is input with & height is in allowed range */
+	min_width = capability->cap[FRAME_WIDTH].min;
+	max_width = capability->cap[FRAME_WIDTH].max;
+	min_height = capability->cap[FRAME_HEIGHT].min;
+	max_height = capability->cap[FRAME_HEIGHT].max;
+	fmt = &inst->fmts[INPUT_PORT];
+	if (!in_range(fmt->fmt.pix_mp.width, min_width, max_width) ||
+		!in_range(fmt->fmt.pix_mp.height, min_height, max_height)) {
+		i_vpr_e(inst, "unsupported wxh [%u x %u], allowed [%u x %u] to [%u x %u]\n",
+			fmt->fmt.pix_mp.width, fmt->fmt.pix_mp.height,
+			min_width, min_height, max_width, max_height);
+		allow = false;
+		goto exit;
+	}
+
+	/* is linear color fmt */
+	allow = is_linear_colorformat(pix_fmt);
+	if (!allow) {
+		i_vpr_e(inst, "%s: compressed fmt: %#x\n", __func__, pix_fmt);
+		goto exit;
+	}
+
+	/* is input grid aligned */
+	fmt = &inst->fmts[INPUT_PORT];
+	allow = IS_ALIGNED(fmt->fmt.pix_mp.width, HEIC_GRID_DIMENSION);
+	allow &= IS_ALIGNED(fmt->fmt.pix_mp.height, HEIC_GRID_DIMENSION);
+	if (!allow) {
+		i_vpr_e(inst, "%s: input is not grid aligned: %u x %u\n", __func__,
+			fmt->fmt.pix_mp.width, fmt->fmt.pix_mp.height);
+		goto exit;
+	}
+
+	/* is output grid dimension */
+	fmt = &inst->fmts[OUTPUT_PORT];
+	allow = fmt->fmt.pix_mp.width == HEIC_GRID_DIMENSION;
+	allow &= fmt->fmt.pix_mp.height == HEIC_GRID_DIMENSION;
+	if (!allow) {
+		i_vpr_e(inst, "%s: output is not a grid dimension: %u x %u\n", __func__,
+			fmt->fmt.pix_mp.width, fmt->fmt.pix_mp.height);
+		goto exit;
+	}
+
+	/* is bitrate mode CQ */
+	allow = capability->cap[BITRATE_MODE].value == HFI_RC_CQ;
+	if (!allow) {
+		i_vpr_e(inst, "%s: bitrate mode is not CQ: %#x\n", __func__,
+			capability->cap[BITRATE_MODE].value);
+		goto exit;
+	}
+
+	/* is all intra */
+	allow = !capability->cap[GOP_SIZE].value;
+	allow &= !capability->cap[B_FRAME].value;
+	if (!allow) {
+		i_vpr_e(inst, "%s: not all intra: gop: %u, bframe: %u\n", __func__,
+			capability->cap[GOP_SIZE].value, capability->cap[B_FRAME].value);
+		goto exit;
+	}
+
+	/* is time delta based rc disabled */
+	allow = !capability->cap[TIME_DELTA_BASED_RC].value;
+	if (!allow) {
+		i_vpr_e(inst, "%s: time delta based rc not disabled: %#x\n", __func__,
+			capability->cap[TIME_DELTA_BASED_RC].value);
+		goto exit;
+	}
+
+	/* is profile type Still Pic */
+	if (is_10bit_colorformat(pix_fmt))
+		allow = profile == V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10;
+	else
+		allow = profile == V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_STILL_PICTURE;
+	if (!allow) {
+		i_vpr_e(inst, "%s: profile not valid: %#x\n", __func__,
+			capability->cap[PROFILE].value);
+		goto exit;
+	}
+
+	return true;
+
+exit:
+	i_vpr_e(inst, "%s: current session not allowed\n", __func__);
+	return allow;
+}
+
 int msm_vidc_check_session_supported(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_inst_capability *capability;
 	struct v4l2_format *fmt;
-	u32 pix_fmt, profile;
-	bool allow = false;
+	u32 iwidth, owidth, iheight, oheight, min_width, min_height,
+		max_width, max_height, mbpf, max_mbpf;
+	bool allow = false, is_interlaced = false;
 	int rc = 0;
 
 	if (!inst || !inst->capabilities) {
@@ -4678,78 +4788,6 @@ int msm_vidc_check_session_supported(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 	capability = inst->capabilities;
-
-	/* todo: enable checks for all session type */
-	if (!is_image_session(inst))
-		return 0;
-
-	pix_fmt = capability->cap[PIX_FMTS].value;
-	profile = capability->cap[PROFILE].value;
-
-	if (is_image_encode_session(inst)) {
-		/* is linear color fmt */
-		allow = is_linear_colorformat(pix_fmt);
-		if (!allow) {
-			i_vpr_e(inst, "%s: compressed fmt: %#x\n", __func__, pix_fmt);
-			goto exit;
-		}
-
-		/* is input grid aligned */
-		fmt = &inst->fmts[INPUT_PORT];
-		allow = IS_ALIGNED(fmt->fmt.pix_mp.width, HEIC_GRID_DIMENSION);
-		allow &= IS_ALIGNED(fmt->fmt.pix_mp.height, HEIC_GRID_DIMENSION);
-		if (!allow) {
-			i_vpr_e(inst, "%s: input is not grid aligned: %u x %u\n", __func__,
-				fmt->fmt.pix_mp.width, fmt->fmt.pix_mp.height);
-			goto exit;
-		}
-
-		/* is output grid dimension */
-		fmt = &inst->fmts[OUTPUT_PORT];
-		allow = fmt->fmt.pix_mp.width == HEIC_GRID_DIMENSION;
-		allow &= fmt->fmt.pix_mp.height == HEIC_GRID_DIMENSION;
-		if (!allow) {
-			i_vpr_e(inst, "%s: output is not a grid dimension: %u x %u\n", __func__,
-				fmt->fmt.pix_mp.width, fmt->fmt.pix_mp.height);
-			goto exit;
-		}
-
-		/* is bitrate mode CQ */
-		allow = capability->cap[BITRATE_MODE].value == HFI_RC_CQ;
-		if (!allow) {
-			i_vpr_e(inst, "%s: bitrate mode is not CQ: %#x\n", __func__,
-				capability->cap[BITRATE_MODE].value);
-			goto exit;
-		}
-
-		/* is all intra */
-		allow = !capability->cap[GOP_SIZE].value;
-		allow &= !capability->cap[B_FRAME].value;
-		if (!allow) {
-			i_vpr_e(inst, "%s: not all intra: gop: %u, bframe: %u\n", __func__,
-				capability->cap[GOP_SIZE].value, capability->cap[B_FRAME].value);
-			goto exit;
-		}
-
-		/* is time delta based rc disabled */
-		allow = !capability->cap[TIME_DELTA_BASED_RC].value;
-		if (!allow) {
-			i_vpr_e(inst, "%s: time delta based rc not disabled: %#x\n", __func__,
-				capability->cap[TIME_DELTA_BASED_RC].value);
-			goto exit;
-		}
-
-		/* is profile type Still Pic */
-		if (is_10bit_colorformat(pix_fmt))
-			allow = profile == V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10;
-		else
-			allow = profile == V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_STILL_PICTURE;
-		if (!allow) {
-			i_vpr_e(inst, "%s: profile not valid: %#x\n", __func__,
-				capability->cap[PROFILE].value);
-			goto exit;
-		}
-	}
 
 	rc = msm_vidc_check_mbps_supported(inst);
 	if (rc)
@@ -4759,7 +4797,76 @@ int msm_vidc_check_session_supported(struct msm_vidc_inst *inst)
 	if (rc)
 		goto exit;
 
-	/* todo: add additional checks related to capabilities */
+	if (is_image_session(inst) && is_secure_session(inst)) {
+		i_vpr_e(inst, "%s: secure image session not supported\n", __func__);
+		goto exit;
+	}
+
+	/* check image capabilities */
+	if (is_image_encode_session(inst)) {
+		allow = msm_vidc_allow_image_encode_session(inst);
+		if (!allow)
+			goto exit;
+		return 0;
+	}
+
+	fmt = &inst->fmts[INPUT_PORT];
+	iwidth = fmt->fmt.pix_mp.width;
+	iheight = fmt->fmt.pix_mp.height;
+
+	fmt = &inst->fmts[OUTPUT_PORT];
+	owidth = fmt->fmt.pix_mp.width;
+	oheight = fmt->fmt.pix_mp.height;
+
+	if (is_secure_session(inst)) {
+		min_width = capability->cap[SECURE_FRAME_WIDTH].min;
+		max_width = capability->cap[SECURE_FRAME_WIDTH].max;
+		min_height = capability->cap[SECURE_FRAME_HEIGHT].min;
+		max_height = capability->cap[SECURE_FRAME_HEIGHT].max;
+		max_mbpf = capability->cap[SECURE_MBPF].max;
+	} else if (is_encode_session(inst) && capability->cap[LOSSLESS].value) {
+		min_width = capability->cap[LOSSLESS_FRAME_WIDTH].min;
+		max_width = capability->cap[LOSSLESS_FRAME_WIDTH].max;
+		min_height = capability->cap[LOSSLESS_FRAME_HEIGHT].min;
+		max_height = capability->cap[LOSSLESS_FRAME_HEIGHT].max;
+		max_mbpf = capability->cap[LOSSLESS_MBPF].max;
+	} else {
+		min_width = capability->cap[FRAME_WIDTH].min;
+		max_width = capability->cap[FRAME_WIDTH].max;
+		min_height = capability->cap[FRAME_HEIGHT].min;
+		max_height = capability->cap[FRAME_HEIGHT].max;
+		max_mbpf = capability->cap[MBPF].max;
+	}
+
+	/* check interlace supported resolution */
+	is_interlaced = capability->cap[CODED_FRAMES].value == CODED_FRAMES_INTERLACE;
+	if (is_interlaced && (owidth > INTERLACE_WIDTH_MAX || oheight > INTERLACE_HEIGHT_MAX ||
+		NUM_MBS_PER_FRAME(owidth, oheight) > INTERLACE_MB_PER_FRAME_MAX)) {
+		i_vpr_e(inst, "unsupported interlace wxh [%u x %u], max [%u x %u]\n",
+			owidth, oheight, INTERLACE_WIDTH_MAX, INTERLACE_HEIGHT_MAX);
+		goto exit;
+	}
+
+	/* reject odd resolution session */
+	if (is_odd(iwidth) || is_odd(iheight) || is_odd(owidth) || is_odd(oheight)) {
+		i_vpr_e(inst, "resolution is not even. input [%u x %u], output [%u x %u]\n",
+			iwidth, iheight, owidth, oheight);
+		goto exit;
+	}
+
+	/* check width and height is in supported range */
+	if (!in_range(owidth, min_width, max_width) || !in_range(oheight, min_height, max_height)) {
+		i_vpr_e(inst, "unsupported wxh [%u x %u], allowed range: [%u x %u] to [%u x %u]\n",
+			owidth, oheight, min_width, min_height, max_width, max_height);
+		goto exit;
+	}
+
+	/* check current session mbpf */
+	mbpf = msm_vidc_get_mbs_per_frame(inst);
+	if (mbpf > max_mbpf) {
+		i_vpr_e(inst, "unsupported mbpf %u, max %u\n", mbpf, max_mbpf);
+		goto exit;
+	}
 
 	return 0;
 

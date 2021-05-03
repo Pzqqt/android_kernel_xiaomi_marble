@@ -45,7 +45,7 @@ u64 msm_vidc_max_freq(struct msm_vidc_inst *inst)
 	return freq;
 }
 
-static int msm_vidc_get_mbps(struct msm_vidc_inst *inst)
+int msm_vidc_get_mbps(struct msm_vidc_inst *inst)
 {
 	int input_port_mbs, output_port_mbs;
 	int fps, operating_rate, frame_rate;

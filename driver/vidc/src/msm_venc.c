@@ -1151,14 +1151,6 @@ int msm_venc_s_fmt_output(struct msm_vidc_inst *inst, struct v4l2_format *f)
 	}
 	inst->buffers.output.size =
 		fmt->fmt.pix_mp.plane_fmt[0].sizeimage;
-
-	//rc = msm_vidc_check_session_supported(inst);
-	if (rc)
-		return rc;
-
-	//update_log_ctxt(inst->sid, inst->session_type,
-	//	mplane->pixelformat);
-
 	memcpy(f, fmt, sizeof(struct v4l2_format));
 
 	return rc;
@@ -1293,16 +1285,6 @@ static int msm_venc_s_fmt_input(struct msm_vidc_inst *inst, struct v4l2_format *
 			output_fmt->fmt.pix_mp.height,
 			output_fmt->fmt.pix_mp.plane_fmt[0].sizeimage);
 	}
-
-	//rc = msm_vidc_check_session_supported(inst);
-	if (rc)
-		return rc;
-	//update_log_ctxt(inst->sid, inst->session_type,
-	//	mplane->pixelformat);
-
-	//msm_vidc_update_dcvs(inst);
-	//msm_vidc_update_batching(inst);
-
 	memcpy(f, fmt, sizeof(struct v4l2_format));
 
 	return rc;

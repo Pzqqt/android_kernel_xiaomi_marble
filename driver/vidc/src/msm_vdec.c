@@ -1465,10 +1465,6 @@ int msm_vdec_streamon_input(struct msm_vidc_inst *inst)
 	if (rc)
 		goto error;
 
-	//msm_vidc_update_dcvs(inst);
-	//msm_vidc_update_batching(inst);
-	//msm_vidc_scale_power(inst);
-
 	rc = msm_vdec_create_input_internal_buffers(inst);
 	if (rc)
 		goto error;
@@ -2094,12 +2090,6 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 		inst->crop.left = inst->crop.top = 0;
 		inst->crop.width = f->fmt.pix_mp.width;
 		inst->crop.height = f->fmt.pix_mp.height;
-
-		//rc = msm_vidc_check_session_supported(inst);
-		if (rc)
-			goto err_invalid_fmt;
-		//update_log_ctxt(inst->sid, inst->session_type,
-		//	mplane->pixelformat);
 		i_vpr_h(inst,
 			"%s: input: codec %#x width %d height %d size %d min_count %d extra_count %d\n",
 			__func__, f->fmt.pix_mp.pixelformat, f->fmt.pix_mp.width,
@@ -2107,10 +2097,6 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 			fmt->fmt.pix_mp.plane_fmt[0].sizeimage,
 			inst->buffers.input.min_count,
 			inst->buffers.input.extra_count);
-
-		//msm_vidc_update_dcvs(inst);
-		//msm_vidc_update_batching(inst);
-
 	} else if (f->type == INPUT_META_PLANE) {
 		fmt = &inst->fmts[INPUT_META_PORT];
 		fmt->type = INPUT_META_PLANE;
@@ -2174,9 +2160,6 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 			fmt->fmt.pix_mp.plane_fmt[0].sizeimage;
 		pix_fmt = v4l2_colorformat_to_driver(f->fmt.pix_mp.pixelformat, __func__);
 		msm_vidc_update_cap_value(inst, PIX_FMTS, pix_fmt, __func__);
-		//rc = msm_vidc_check_session_supported(inst);
-		if (rc)
-			goto err_invalid_fmt;
 		i_vpr_h(inst,
 			"%s: output: format %#x width %d height %d size %d min_count %d extra_count %d\n",
 			__func__, fmt->fmt.pix_mp.pixelformat, fmt->fmt.pix_mp.width,
