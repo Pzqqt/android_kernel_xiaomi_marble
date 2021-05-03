@@ -1486,6 +1486,12 @@ static void __dsp_cvp_mem_free(struct cvp_dsp_cmd_msg *cmd)
 	inst = (struct msm_cvp_inst *)ptr_dsp2cpu(
 			dsp2cpu_cmd->session_cpu_high,
 			dsp2cpu_cmd->session_cpu_low);
+	if (!inst) {
+		dprintk(CVP_ERR, "%s Failed to get inst\n",
+			__func__);
+		cmd->ret = -1;
+		return;
+	}
 
 	frpc_node = cvp_find_fastrpc_node_with_handle(dsp2cpu_cmd->pid);
 	if (!frpc_node) {
