@@ -3236,6 +3236,19 @@ static int lpass_cdc_rx_macro_fir_filter_enable_put(struct snd_kcontrol *kcontro
 			return ret;
 		}
 
+		snd_soc_component_write(component, LPASS_CDC_RX_RX0_RX_FIR_CFG,
+					rx_priv->fir_total_coeff_num[RX0_PATH]);
+		dev_dbg(component->dev, "%s: HIFI FIR Path:%d total coefficients"
+				" number written: %d.\n",
+				__func__, RX0_PATH,
+				rx_priv->fir_total_coeff_num[RX0_PATH]);
+		snd_soc_component_write(component, LPASS_CDC_RX_RX1_RX_FIR_CFG,
+					rx_priv->fir_total_coeff_num[RX1_PATH]);
+		dev_dbg(component->dev, "%s: HIFI FIR Path:%d total coefficients"
+				" number written: %d.\n",
+				__func__, RX1_PATH,
+				rx_priv->fir_total_coeff_num[RX1_PATH]);
+
 		/* Enable HIFI_FEAT_EN bit */
 		snd_soc_component_update_bits(component, LPASS_CDC_RX_TOP_TOP_CFG1, 0x01, 0x01);
 		/* Enable FIR_CLK_EN */
@@ -3488,7 +3501,7 @@ disable_FIR:
 	clk_disable_unprepare(rx_priv->hifi_fir_clk);
 
 disable_mclk_block:
-	ret = lpass_cdc_rx_macro_mclk_enable(rx_priv, 0, false);
+	lpass_cdc_rx_macro_mclk_enable(rx_priv, 0, false);
 
 exit:
 	return ret;
@@ -3620,7 +3633,7 @@ static int lpass_cdc_rx_macro_fir_coeff_num_put(struct snd_kcontrol *kcontrol,
 	struct device *rx_dev = NULL;
 	struct lpass_cdc_rx_macro_priv *rx_priv = NULL;
 	unsigned int ret = 0;
-	unsigned int grp_idx, stored_total_num, num_coeff_addr;
+	unsigned int grp_idx, stored_total_num;
 
 	if (!component) {
 		pr_err("%s: component is NULL\n", __func__);
@@ -3629,20 +3642,6 @@ static int lpass_cdc_rx_macro_fir_coeff_num_put(struct snd_kcontrol *kcontrol,
 
 	if (!lpass_cdc_rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
-
-	switch (path_idx) {
-	case RX0_PATH:
-		num_coeff_addr = LPASS_CDC_RX_RX0_RX_FIR_CFG;
-		break;
-	case RX1_PATH:
-		num_coeff_addr = LPASS_CDC_RX_RX1_RX_FIR_CFG;
-		break;
-	default:
-		dev_err(rx_priv->dev,
-			"%s: inavlid FIR ID: %d\n", __func__, path_idx);
-		ret = -EINVAL;
-		goto exit;
-	}
 
 	if (fir_total_coeff_num > LPASS_CDC_RX_MACRO_FIR_COEFF_MAX * GRP_MAX) {
 		dev_err(rx_priv->dev,
@@ -3655,9 +3654,8 @@ static int lpass_cdc_rx_macro_fir_coeff_num_put(struct snd_kcontrol *kcontrol,
 		rx_priv->fir_total_coeff_num[path_idx] = fir_total_coeff_num;
 	}
 
-	snd_soc_component_write(component, num_coeff_addr, fir_total_coeff_num);
 	dev_dbg(component->dev, "%s: HIFI FIR Path:%d total coefficients"
-				" number updated: %d.\n",
+				" number updated in private data: %d.\n",
 				__func__, path_idx, fir_total_coeff_num);
 
 	stored_total_num = 0;
@@ -3667,7 +3665,6 @@ static int lpass_cdc_rx_macro_fir_coeff_num_put(struct snd_kcontrol *kcontrol,
 	if (fir_total_coeff_num == stored_total_num)
 		ret = set_fir_filter_coeff(component, rx_priv, path_idx);
 
-exit:
 	return ret;
 }
 

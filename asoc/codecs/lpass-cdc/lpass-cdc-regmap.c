@@ -1228,8 +1228,6 @@ static bool lpass_cdc_is_volatile_register(struct device *dev,
 	case LPASS_CDC_RX_RX1_RX_FIR_COEFF_WDATA7:
 	case LPASS_CDC_RX_RX0_RX_FIR_CTL:
 	case LPASS_CDC_RX_RX1_RX_FIR_CTL:
-	case LPASS_CDC_RX_RX0_RX_FIR_CFG:
-	case LPASS_CDC_RX_RX1_RX_FIR_CFG:
 	case LPASS_CDC_RX_RX0_RX_PATH_CTL:
 	case LPASS_CDC_RX_RX1_RX_PATH_CTL:
 		return true;
