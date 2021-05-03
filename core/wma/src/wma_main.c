@@ -5785,10 +5785,45 @@ static void wma_set_mlme_caps(struct wlan_objmgr_psoc *psoc)
 		wma_err("Failed to set sae roam support");
 }
 
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+static bool wma_is_big_data_support_enable(struct wmi_unified *wmi_handle)
+{
+	return wmi_service_enabled(wmi_handle, wmi_service_big_data_support);
+}
+#else
+static bool wma_is_big_data_support_enable(struct wmi_unified *wmi_handle)
+{
+	return false;
+}
+#endif
+
+/**
+ * wma_set_mc_cp_caps() - Populate mc cp component related capabilities
+ *			  to the mc cp component
+ *
+ * @psoc: Pointer to psoc object
+ *
+ * Return: None
+ */
+static void wma_set_mc_cp_caps(struct wlan_objmgr_psoc *psoc)
+{
+	tp_wma_handle wma;
+
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma)
+		return;
+
+	if (wma_is_big_data_support_enable(wma->wmi_handle))
+		ucfg_mc_cp_set_big_data_fw_support(psoc, true);
+	else
+		ucfg_mc_cp_set_big_data_fw_support(psoc, false);
+}
+
 static void wma_set_component_caps(struct wlan_objmgr_psoc *psoc)
 {
 	wma_set_pmo_caps(psoc);
 	wma_set_mlme_caps(psoc);
+	wma_set_mc_cp_caps(psoc);
 }
 
 #if defined(WLAN_FEATURE_GTK_OFFLOAD) && defined(WLAN_POWER_MANAGEMENT_OFFLOAD)

@@ -314,6 +314,30 @@ void static inline ucfg_mc_cp_stats_register_pmo_handler(void) { };
 QDF_STATUS ucfg_send_big_data_stats_request(struct wlan_objmgr_vdev *vdev,
 					    enum stats_req_type type,
 					    struct request_info *info);
+
+/**
+ * ucfg_mc_cp_set_big_data_fw_support() - set big data fw support
+ * @psoc: PSOC object
+ *
+ * API to set fw supports big data feature or not
+ *
+ * Return: void
+ */
+void
+ucfg_mc_cp_set_big_data_fw_support(struct wlan_objmgr_psoc *psoc,
+				   bool enable);
+
+/**
+ * ucfg_mc_cp_get_big_data_fw_support() - get big data fw support
+ * @psoc: PSOC object
+ *
+ * API to get fw supports big data feature or not
+ *
+ * Return: void
+ */
+void
+ucfg_mc_cp_get_big_data_fw_support(struct wlan_objmgr_psoc *psoc,
+				   bool *enable);
 #else
 static inline
 QDF_STATUS ucfg_send_big_data_stats_request(struct wlan_objmgr_vdev *vdev,
@@ -322,6 +346,16 @@ QDF_STATUS ucfg_send_big_data_stats_request(struct wlan_objmgr_vdev *vdev,
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+static inline void
+ucfg_mc_cp_set_big_data_fw_support(struct wlan_objmgr_psoc *psoc,
+				   bool enable)
+{}
+
+static inline void
+ucfg_mc_cp_get_big_data_fw_support(struct wlan_objmgr_psoc *psoc,
+				   bool *enable)
+{}
 #endif
 
 #else
@@ -385,6 +419,16 @@ QDF_STATUS ucfg_send_big_data_stats_request(struct wlan_objmgr_vdev *vdev,
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+static inline void
+ucfg_mc_cp_set_big_data_fw_support(struct wlan_objmgr_psoc *psoc,
+				   bool enable)
+{}
+
+static inline void
+ucfg_mc_cp_big_data_fw_support(struct wlan_objmgr_psoc *psoc,
+			       bool *enable)
+{}
 #endif /* QCA_SUPPORT_CP_STATS */
 
 #endif /* __WLAN_CP_STATS_MC_UCFG_API_H__ */
