@@ -12,6 +12,7 @@
 #include "sde_hwio.h"
 #include "sde_hw_lm.h"
 #include "sde_dbg.h"
+#include "sde_hw_util.h"
 
 /* Reserve space of 128 words for LUT dma payload set-up */
 #define REG_DMA_HEADERS_BUFFER_SZ (sizeof(u32) * 128)
@@ -82,8 +83,6 @@
 #define DEMURA_MEM_SIZE ((sizeof(struct drm_msm_dem_cfg)) + \
 		REG_DMA_HEADERS_BUFFER_SZ)
 
-#define REG_MASK(n) ((BIT(n)) - 1)
-#define REG_MASK_SHIFT(n, shift) ((REG_MASK(n)) << (shift))
 #define APPLY_MASK_AND_SHIFT(x, n, shift) ((x & (REG_MASK(n))) << (shift))
 #define REG_DMA_VIG_GAMUT_OP_MASK 0x300
 #define REG_DMA_VIG_IGC_OP_MASK 0x1001F
@@ -4919,8 +4918,8 @@ static int __reg_dmav1_setup_demurav1_cfg0_c_params(
 	}
 
 	for (i = 0; i < len; i++) {
-		temp[i * 2] = p[i] & REG_MASK(32);
-		temp[i * 2 + 1] = (p[i] & REG_MASK_SHIFT(10, 32)) >> 32;
+		temp[i * 2] = p[i] & REG_MASK_ULL(32);
+		temp[i * 2 + 1] = (p[i] & REG_MASK_SHIFT_ULL(10, 32)) >> 32;
 		DRM_DEBUG_DRIVER("0x6c: index %d value %x\n",
 				i * 2, temp[i * 2]);
 		DRM_DEBUG_DRIVER("0x6c: index %d value %x\n",
