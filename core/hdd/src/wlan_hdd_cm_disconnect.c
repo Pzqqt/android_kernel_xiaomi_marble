@@ -350,6 +350,7 @@ hdd_cm_disconnect_complete_post_user_update(struct wlan_objmgr_vdev *vdev,
 	}
 
 	__hdd_cm_disconnect_handler_post_user_update(adapter);
+	wlan_twt_concurrency_update(hdd_ctx);
 
 	return QDF_STATUS_SUCCESS;
 }

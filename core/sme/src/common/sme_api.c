@@ -2602,6 +2602,20 @@ sme_process_twt_notify_event(struct mac_context *mac,
 	if (callback)
 		callback(mac->psoc, notify_event);
 }
+
+/**
+ * sme_twt_update_beacon_template() - API to send beacon update to fw
+ * @mac: Global MAC pointer
+ *
+ * Return: None
+ */
+void sme_twt_update_beacon_template(mac_handle_t mac_handle)
+{
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+
+	csr_update_beacon(mac);
+}
+
 #else
 static void
 sme_process_twt_add_dialog_event(struct mac_context *mac,

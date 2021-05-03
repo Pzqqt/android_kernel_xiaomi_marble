@@ -103,6 +103,14 @@ enum twt_status {
 };
 
 /**
+ * struct twt_conc_arg: TWT concurrency args
+ * @ hdd_ctx: pointer to hdd context
+ */
+struct twt_conc_arg {
+	struct hdd_context *hdd_ctx;
+};
+
+/**
  * wlan_hdd_cfg80211_wifi_twt_config() - Wifi twt configuration
  * vendor command
  * @wiphy: wiphy device pointer
@@ -236,6 +244,52 @@ void hdd_send_twt_role_disable_cmd(struct hdd_context *hdd_ctx,
  */
 void hdd_send_twt_del_all_sessions_to_userspace(struct hdd_adapter *adapter);
 
+/**
+ * hdd_twt_concurrency_update_on_scc_mcc() - Send TWT disable command to fw if
+ * SCC/MCC exists in two vdevs
+ * @hdd_ctx: hdd context pointer
+ *
+ * Return: None
+ */
+void hdd_twt_concurrency_update_on_scc_mcc(struct wlan_objmgr_pdev *pdev,
+					   void *object, void *arg);
+
+/**
+ * hdd_twt_concurrency_update_on_dbs() - Send TWT enable command to fw if DBS
+ * exists in two vdevs
+ * @hdd_ctx: hdd context pointer
+ *
+ * Return: None
+ */
+void hdd_twt_concurrency_update_on_dbs(struct wlan_objmgr_pdev *pdev,
+				       void *object, void *arg);
+
+/**
+ * __hdd_twt_update_work_handler() - TWT work handler to send TWT enable/disable
+ * command to fw
+ * @hdd_ctx: HDD pointer context
+ *
+ * Return: None
+ */
+void __hdd_twt_update_work_handler(struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_twt_update_work_handler() - Wrapper function
+ * @data: data pointer
+ *
+ * Return: None
+ */
+void hdd_twt_update_work_handler(void *data);
+
+/**
+ * wlan_twt_concurrency_update() - Handles twt concurrency in case of SCC/MCC
+ * or DBS
+ * @hdd_ctx: hdd context pointer
+ *
+ * Return: None
+ */
+void wlan_twt_concurrency_update(struct hdd_context *hdd_ctx);
+
 #define FEATURE_VENDOR_SUBCMD_WIFI_CONFIG_TWT                            \
 {                                                                        \
 	.info.vendor_id = QCA_NL80211_VENDOR_ID,                         \
@@ -311,6 +365,32 @@ static inline
 void hdd_send_twt_del_all_sessions_to_userspace(struct hdd_adapter *adapter)
 {
 }
+
+static inline
+void hdd_twt_concurrency_update_on_scc_mcc(struct wlan_objmgr_pdev *pdev,
+					   void *object, void *arg)
+{
+}
+
+static inline
+void hdd_twt_concurrency_update_on_dbs(struct wlan_objmgr_pdev *pdev,
+				       void *object, void *arg)
+{
+}
+
+static inline
+void __hdd_twt_update_work_handler(struct hdd_context *hdd_ctx)
+{
+}
+
+static inline void hdd_twt_update_work_handler(void *data)
+{
+}
+
+static inline void wlan_twt_concurrency_update(struct hdd_context *hdd_ctx)
+{
+}
+
 #define FEATURE_VENDOR_SUBCMD_WIFI_CONFIG_TWT
 
 #endif

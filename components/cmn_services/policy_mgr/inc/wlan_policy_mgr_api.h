@@ -2307,6 +2307,16 @@ void policy_mgr_hw_mode_transition_cb(uint32_t old_hw_mode_index,
 		struct wlan_objmgr_psoc *context);
 
 /**
+ * policy_mgr_current_concurrency_is_scc() - To check the current
+ * concurrency combination if it is doing SCC
+ * @psoc: PSOC object information
+ * This routine is called to check if it is doing SCC
+ *
+ * Return: True - SCC, False - Otherwise
+ */
+bool policy_mgr_current_concurrency_is_scc(struct wlan_objmgr_psoc *psoc);
+
+/**
  * policy_mgr_current_concurrency_is_mcc() - To check the current
  * concurrency combination if it is doing MCC
  * @psoc: PSOC object information

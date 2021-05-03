@@ -6400,9 +6400,9 @@ populate_dot11f_timing_advert_frame(struct mac_context *mac_ctx,
 #ifdef WLAN_FEATURE_11AX
 #ifdef WLAN_SUPPORT_TWT
 static void
-populate_dot11f_broadcast_twt_he_cap(struct mac_context *mac,
-				     struct pe_session *session,
-				     tDot11fIEhe_cap *he_cap)
+populate_dot11f_twt_he_cap(struct mac_context *mac,
+			   struct pe_session *session,
+			   tDot11fIEhe_cap *he_cap)
 {
 	bool bcast_requestor =
 		mac->mlme_cfg->twt_cfg.is_bcast_requestor_enabled;
@@ -6410,6 +6410,17 @@ populate_dot11f_broadcast_twt_he_cap(struct mac_context *mac,
 		mac->mlme_cfg->twt_cfg.is_bcast_responder_enabled;
 
 	he_cap->broadcast_twt = 0;
+	if (session->opmode == QDF_STA_MODE &&
+	    !(mac->mlme_cfg->twt_cfg.req_flag)) {
+		/* Set twt_request as 0 if any SCC/MCC concurrency exist */
+		he_cap->twt_request = 0;
+		return;
+	} else if (session->opmode == QDF_SAP_MODE &&
+		   !(mac->mlme_cfg->twt_cfg.res_flag)) {
+		/** Set twt_responder as 0 if any SCC/MCC concurrency exist */
+		he_cap->twt_responder = 0;
+		return;
+	}
 
 	if (session->opmode == QDF_STA_MODE) {
 		he_cap->broadcast_twt = bcast_requestor;
@@ -6419,9 +6430,9 @@ populate_dot11f_broadcast_twt_he_cap(struct mac_context *mac,
 }
 #else
 static inline void
-populate_dot11f_broadcast_twt_he_cap(struct mac_context *mac_ctx,
-				     struct pe_session *session,
-				     tDot11fIEhe_cap *he_cap)
+populate_dot11f_twt_he_cap(struct mac_context *mac_ctx,
+			   struct pe_session *session,
+			   tDot11fIEhe_cap *he_cap)
 {
 	he_cap->broadcast_twt = 0;
 }
@@ -6469,7 +6480,7 @@ QDF_STATUS populate_dot11f_he_caps(struct mac_context *mac_ctx, struct pe_sessio
 	} else {
 		he_cap->ppet.ppe_threshold.num_ppe_th = 0;
 	}
-	populate_dot11f_broadcast_twt_he_cap(mac_ctx, session, he_cap);
+	populate_dot11f_twt_he_cap(mac_ctx, session, he_cap);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -6631,11 +6642,13 @@ QDF_STATUS populate_dot11f_twt_extended_caps(struct mac_context *mac_ctx,
 
 	if (pe_session->opmode == QDF_STA_MODE)
 		p_ext_cap->twt_requestor_support =
-			mac_ctx->mlme_cfg->he_caps.dot11_he_cap.twt_request;
+			mac_ctx->mlme_cfg->he_caps.dot11_he_cap.twt_request &&
+			mac_ctx->mlme_cfg->twt_cfg.req_flag;
 
 	if (pe_session->opmode == QDF_SAP_MODE)
 		p_ext_cap->twt_responder_support =
-			mac_ctx->mlme_cfg->he_caps.dot11_he_cap.twt_responder;
+			mac_ctx->mlme_cfg->he_caps.dot11_he_cap.twt_responder &&
+			mac_ctx->mlme_cfg->twt_cfg.res_flag;
 
 	dot11f->num_bytes = lim_compute_ext_cap_ie_length(dot11f);
 

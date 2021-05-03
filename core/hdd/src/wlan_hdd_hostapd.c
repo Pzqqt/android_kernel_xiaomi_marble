@@ -5956,6 +5956,7 @@ error:
 	wlansap_reset_sap_config_add_ie(config, eUPDATE_IE_ALL);
 
 free:
+	wlan_twt_concurrency_update(hdd_ctx);
 	if (deliver_start_evt) {
 		status = ucfg_if_mgr_deliver_event(
 					adapter->vdev,
@@ -6116,6 +6117,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 						adapter->vdev_id);
 		hdd_green_ap_start_state_mc(hdd_ctx, adapter->device_mode,
 					    false);
+		wlan_twt_concurrency_update(hdd_ctx);
 		status = ucfg_if_mgr_deliver_event(adapter->vdev,
 				WLAN_IF_MGR_EV_AP_STOP_BSS_COMPLETE,
 				NULL);

@@ -2359,12 +2359,15 @@ static inline void hdd_update_wiphy_he_6ghz_capa(struct hdd_context *hdd_ctx)
 #if defined(CONFIG_BAND_6GHZ) && (defined(CFG80211_6GHZ_BAND_SUPPORTED) || \
       (KERNEL_VERSION(5, 4, 0) <= LINUX_VERSION_CODE))
 static void
-hdd_update_wiphy_he_caps_6ghz(struct hdd_context *hdd_ctx)
+hdd_update_wiphy_he_caps_6ghz(struct hdd_context *hdd_ctx,
+			      tDot11fIEhe_cap *he_cap_cfg)
 {
 	struct ieee80211_supported_band *band_6g =
 		   hdd_ctx->wiphy->bands[HDD_NL80211_BAND_6GHZ];
 	uint8_t *phy_info =
 		    hdd_ctx->iftype_data_6g->he_cap.he_cap_elem.phy_cap_info;
+	uint8_t *mac_info_6g =
+		hdd_ctx->iftype_data_6g->he_cap.he_cap_elem.mac_cap_info;
 	uint8_t max_fw_bw = sme_get_vht_ch_width();
 
 	if (!band_6g || !phy_info) {
@@ -2387,13 +2390,20 @@ hdd_update_wiphy_he_caps_6ghz(struct hdd_context *hdd_ctx)
 		phy_info[0] |=
 		     IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_80PLUS80_MHZ_IN_5G;
 
+	if (he_cap_cfg->twt_request)
+		mac_info_6g[0] |= IEEE80211_HE_MAC_CAP0_TWT_REQ;
+
+	if (he_cap_cfg->twt_responder)
+		mac_info_6g[0] |= IEEE80211_HE_MAC_CAP0_TWT_RES;
+
 	hdd_update_wiphy_he_6ghz_capa(hdd_ctx);
 
 	band_6g->iftype_data = hdd_ctx->iftype_data_6g;
 }
 #else
 static inline void
-hdd_update_wiphy_he_caps_6ghz(struct hdd_context *hdd_ctx)
+hdd_update_wiphy_he_caps_6ghz(struct hdd_context *hdd_ctx,
+			      tDot11fIEhe_cap *he_cap_cfg)
 {
 }
 #endif
@@ -2412,6 +2422,10 @@ static void hdd_update_wiphy_he_cap(struct hdd_context *hdd_ctx)
 	uint32_t channel_bonding_mode_2g;
 	uint8_t *phy_info_2g =
 		    hdd_ctx->iftype_data_2g->he_cap.he_cap_elem.phy_cap_info;
+	uint8_t *mac_info_2g =
+		hdd_ctx->iftype_data_2g->he_cap.he_cap_elem.mac_cap_info;
+	uint8_t *mac_info_5g =
+		hdd_ctx->iftype_data_5g->he_cap.he_cap_elem.mac_cap_info;
 
 	status = ucfg_mlme_cfg_get_he_caps(hdd_ctx->psoc, &he_cap_cfg);
 
@@ -2430,6 +2444,12 @@ static void hdd_update_wiphy_he_cap(struct hdd_context *hdd_ctx)
 		if (channel_bonding_mode_2g)
 			phy_info_2g[0] |=
 			    IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_40MHZ_IN_2G;
+
+		if (he_cap_cfg.twt_request)
+			mac_info_2g[0] |= IEEE80211_HE_MAC_CAP0_TWT_REQ;
+
+		if (he_cap_cfg.twt_responder)
+			mac_info_2g[0] |= IEEE80211_HE_MAC_CAP0_TWT_RES;
 	}
 	if (band_5g) {
 		hdd_ctx->iftype_data_5g->types_mask =
@@ -2446,9 +2466,15 @@ static void hdd_update_wiphy_he_cap(struct hdd_context *hdd_ctx)
 		if (max_fw_bw >= WNI_CFG_VHT_CHANNEL_WIDTH_80_PLUS_80MHZ)
 			phy_info_5g[0] |=
 			     IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_80PLUS80_MHZ_IN_5G;
+
+		if (he_cap_cfg.twt_request)
+			mac_info_5g[0] |= IEEE80211_HE_MAC_CAP0_TWT_REQ;
+
+		if (he_cap_cfg.twt_responder)
+			mac_info_5g[0] |= IEEE80211_HE_MAC_CAP0_TWT_RES;
 	}
 
-	hdd_update_wiphy_he_caps_6ghz(hdd_ctx);
+	hdd_update_wiphy_he_caps_6ghz(hdd_ctx, &he_cap_cfg);
 }
 #else
 static void hdd_update_wiphy_he_cap(struct hdd_context *hdd_ctx)

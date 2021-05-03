@@ -516,6 +516,7 @@ hdd_cm_connect_failure_post_user_update(struct wlan_objmgr_vdev *vdev,
 				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 				     WLAN_CONTROL_PATH);
 	hdd_periodic_sta_stats_start(adapter);
+	wlan_twt_concurrency_update(hdd_ctx);
 }
 
 static void hdd_cm_connect_failure(struct wlan_objmgr_vdev *vdev,
@@ -1063,6 +1064,7 @@ hdd_cm_connect_success_post_user_update(struct wlan_objmgr_vdev *vdev,
 					   WLAN_ALL_SESSIONS_DIALOG_ID);
 	}
 	hdd_periodic_sta_stats_start(adapter);
+	wlan_twt_concurrency_update(hdd_ctx);
 }
 
 static void hdd_cm_connect_success(struct wlan_objmgr_vdev *vdev,

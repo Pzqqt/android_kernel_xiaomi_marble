@@ -3860,6 +3860,15 @@ sme_nudge_dialog_cmd(mac_handle_t mac_handle,
 QDF_STATUS
 sme_resume_dialog_cmd(mac_handle_t mac_handle,
 		      struct wmi_twt_resume_dialog_cmd_param *twt_params);
+
+/**
+ * sme_twt_update_beacon_template() - API to send beacon update to fw
+ * @mac_handle: MAC handle
+ *
+ * Return: None
+ */
+void sme_twt_update_beacon_template(mac_handle_t mac_handle);
+
 #else
 
 static inline
@@ -3873,6 +3882,12 @@ sme_test_config_twt_terminate(struct wmi_twt_del_dialog_param *params)
 {
 	return QDF_STATUS_E_FAILURE;
 }
+
+static inline
+void sme_twt_update_beacon_template(mac_handle_t mac_handle)
+{
+}
+
 #endif
 
 #ifdef WLAN_UNIT_TEST
