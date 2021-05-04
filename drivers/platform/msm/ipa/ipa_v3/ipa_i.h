@@ -209,6 +209,14 @@ enum {
 #define IPA_HDR_BIN5 5
 #define IPA_HDR_BIN_MAX 6
 
+enum hdr_tbl_storage {
+	HDR_TBL_LCL,
+	HDR_TBL_SYS,
+	HDR_TBLS_TOTAL,
+};
+
+#define IPA_HDR_TO_DDR_PATTERN 0x2DDA
+
 #define IPA_HDR_PROC_CTX_BIN0 0
 #define IPA_HDR_PROC_CTX_BIN1 1
 #define IPA_HDR_PROC_CTX_BIN_MAX 2
@@ -743,6 +751,7 @@ struct ipa3_rt_tbl {
  * @eth2_ofst: offset to start of Ethernet-II/802.3 header
  * @user_deleted: is the header deleted by the user?
  * @ipacm_installed: indicate if installed by ipacm
+ * @is_lcl: is the entry in the SRAM?
  */
 struct ipa3_hdr_entry {
 	struct list_head link;
@@ -762,6 +771,7 @@ struct ipa3_hdr_entry {
 	u16 eth2_ofst;
 	bool user_deleted;
 	bool ipacm_installed;
+	bool is_lcl;
 };
 
 /**
@@ -1969,7 +1979,6 @@ struct ipa3_eth_error_stats {
  * @aggregation_type: aggregation type used on USB client endpoint
  * @aggregation_byte_limit: aggregation byte limit used on USB client endpoint
  * @aggregation_time_limit: aggregation time limit used on USB client endpoint
- * @hdr_tbl_lcl: where hdr tbl resides 1-local, 0-system
  * @hdr_proc_ctx_tbl_lcl: where proc_ctx tbl resides true-local, false-system
  * @hdr_mem: header memory
  * @hdr_proc_ctx_mem: processing context memory
@@ -2053,7 +2062,7 @@ struct ipa3_context {
 	u32 ipa_wrapper_base;
 	u32 ipa_wrapper_size;
 	u32 ipa_cfg_offset;
-	struct ipa3_hdr_tbl hdr_tbl;
+	struct ipa3_hdr_tbl hdr_tbl[HDR_TBLS_TOTAL];
 	struct ipa3_hdr_proc_ctx_tbl hdr_proc_ctx_tbl;
 	struct ipa3_rt_tbl_set rt_tbl_set[IPA_IP_MAX];
 	struct ipa3_rt_tbl_set reap_rt_tbl_set[IPA_IP_MAX];
@@ -2079,9 +2088,8 @@ struct ipa3_context {
 	uint aggregation_type;
 	uint aggregation_byte_limit;
 	uint aggregation_time_limit;
-	bool hdr_tbl_lcl;
 	bool hdr_proc_ctx_tbl_lcl;
-	struct ipa_mem_buffer hdr_mem;
+	struct ipa_mem_buffer hdr_sys_mem;
 	struct ipa_mem_buffer hdr_proc_ctx_mem;
 	bool ip4_rt_tbl_hash_lcl;
 	bool ip4_rt_tbl_nhash_lcl;

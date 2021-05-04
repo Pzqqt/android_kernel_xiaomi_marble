@@ -111,9 +111,10 @@ static int ipa_generate_rt_hw_rule(enum ipa_ip_type ip,
 		}
 	} else if ((entry->hdr != NULL) &&
 		(entry->hdr->cookie == IPA_HDR_COOKIE)) {
-		gen_params.hdr_lcl = ipa3_ctx->hdr_tbl_lcl;
 		gen_params.hdr_type = IPAHAL_RT_RULE_HDR_RAW;
 		gen_params.hdr_ofst = entry->hdr->offset_entry->offset;
+		gen_params.hdr_ofst += entry->hdr->is_lcl ? IPA_MEM_PART(modem_hdr_size) : 0;
+		gen_params.hdr_lcl = entry->hdr->is_lcl;
 	} else {
 		gen_params.hdr_type = IPAHAL_RT_RULE_HDR_NONE;
 		gen_params.hdr_ofst = 0;

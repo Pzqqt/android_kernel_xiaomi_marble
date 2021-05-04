@@ -609,50 +609,53 @@ static ssize_t ipa3_read_hdr(struct file *file, char __user *ubuf, size_t count,
 	int nbytes = 0;
 	int i = 0;
 	struct ipa3_hdr_entry *entry;
+	enum hdr_tbl_storage hdr_tbl;
 
 	mutex_lock(&ipa3_ctx->lock);
 
-	if (ipa3_ctx->hdr_tbl_lcl)
-		pr_err("Table resides on local memory\n");
-	else
-		pr_err("Table resides on system (ddr) memory\n");
+	for (hdr_tbl = HDR_TBL_LCL; hdr_tbl < HDR_TBLS_TOTAL; hdr_tbl++) {
+		if (hdr_tbl == HDR_TBL_LCL)
+			pr_err("Table on local memory:\n");
+		else
+			pr_err("Table on system (ddr) memory:\n");
 
-	list_for_each_entry(entry, &ipa3_ctx->hdr_tbl.head_hdr_entry_list,
-			link) {
-		if (entry->cookie != IPA_HDR_COOKIE)
-			continue;
-		nbytes = scnprintf(
-			dbg_buff,
-			IPA_MAX_MSG_LEN,
-			"name:%s len=%d ref=%d partial=%d type=%s ",
-			entry->name,
-			entry->hdr_len,
-			entry->ref_cnt,
-			entry->is_partial,
-			ipa3_hdr_l2_type_name[entry->type]);
+		list_for_each_entry(entry, &ipa3_ctx->hdr_tbl[hdr_tbl].head_hdr_entry_list,
+				link) {
+			if (entry->cookie != IPA_HDR_COOKIE)
+				continue;
+			nbytes = scnprintf(
+				dbg_buff,
+				IPA_MAX_MSG_LEN,
+				"name:%s len=%d ref=%d partial=%d type=%s ",
+				entry->name,
+				entry->hdr_len,
+				entry->ref_cnt,
+				entry->is_partial,
+				ipa3_hdr_l2_type_name[entry->type]);
 
-		if (entry->is_hdr_proc_ctx) {
-			nbytes += scnprintf(
-				dbg_buff + nbytes,
-				IPA_MAX_MSG_LEN - nbytes,
-				"phys_base=0x%pa ",
-				&entry->phys_base);
-		} else {
-			nbytes += scnprintf(
-				dbg_buff + nbytes,
-				IPA_MAX_MSG_LEN - nbytes,
-				"ofst=%u ",
-				entry->offset_entry->offset >> 2);
+			if (entry->is_hdr_proc_ctx) {
+				nbytes += scnprintf(
+					dbg_buff + nbytes,
+					IPA_MAX_MSG_LEN - nbytes,
+					"phys_base=0x%pa ",
+					&entry->phys_base);
+			} else {
+				nbytes += scnprintf(
+					dbg_buff + nbytes,
+					IPA_MAX_MSG_LEN - nbytes,
+					"ofst=%u ",
+					entry->offset_entry->offset >> 2);
+			}
+			for (i = 0; i < entry->hdr_len; i++) {
+				scnprintf(dbg_buff + nbytes + i * 2,
+					  IPA_MAX_MSG_LEN - nbytes - i * 2,
+					  "%02x", entry->hdr[i]);
+			}
+			scnprintf(dbg_buff + nbytes + entry->hdr_len * 2,
+				  IPA_MAX_MSG_LEN - nbytes - entry->hdr_len * 2,
+				  "\n");
+			pr_err("%s", dbg_buff);
 		}
-		for (i = 0; i < entry->hdr_len; i++) {
-			scnprintf(dbg_buff + nbytes + i * 2,
-				  IPA_MAX_MSG_LEN - nbytes - i * 2,
-				  "%02x", entry->hdr[i]);
-		}
-		scnprintf(dbg_buff + nbytes + entry->hdr_len * 2,
-			  IPA_MAX_MSG_LEN - nbytes - entry->hdr_len * 2,
-			  "\n");
-		pr_err("%s", dbg_buff);
 	}
 	mutex_unlock(&ipa3_ctx->lock);
 
@@ -980,7 +983,7 @@ static ssize_t ipa3_read_rt(struct file *file, char __user *ubuf, size_t count,
 				pr_err("rule_idx:%d dst:%d ep:%d S:%u ",
 					i, entry->rule.dst,
 					ipa3_get_ep_mapping(entry->rule.dst),
-					!ipa3_ctx->hdr_tbl_lcl);
+					!(entry->hdr && entry->hdr->is_lcl));
 				pr_err("hdr_ofst[words]:%u attrib_mask:%08x ",
 					ofst >> 2,
 					entry->rule.attrib.attrib_mask);
