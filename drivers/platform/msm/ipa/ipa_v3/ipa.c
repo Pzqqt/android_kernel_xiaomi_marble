@@ -3516,6 +3516,7 @@ static int ipa3_setup_exception_path(void)
 	struct ipa_ioc_add_hdr *hdr;
 	struct ipa_hdr_add *hdr_entry;
 	struct ipahal_reg_route route = { 0 };
+	struct ipa3_hdr_entry *hdr_entry_internal;
 	int ret;
 
 	/* install the basic exception header */
@@ -3543,13 +3544,20 @@ static int ipa3_setup_exception_path(void)
 		goto bail;
 	}
 
+	hdr_entry_internal = ipa3_id_find(hdr_entry->hdr_hdl);
+	if (unlikely(!hdr_entry_internal)) {
+		IPAERR("fail to find internal hdr structure\n");
+		ret = -EPERM;
+		goto bail;
+	}
+
 	ipa3_ctx->excp_hdr_hdl = hdr_entry->hdr_hdl;
 
 	/* set the route register to pass exception packets to Apps */
 	route.route_def_pipe = ipa3_get_ep_mapping(IPA_CLIENT_APPS_LAN_CONS);
 	route.route_frag_def_pipe = ipa3_get_ep_mapping(
 		IPA_CLIENT_APPS_LAN_CONS);
-	route.route_def_hdr_table = !ipa3_ctx->hdr_tbl_lcl;
+	route.route_def_hdr_table = !hdr_entry_internal->is_lcl;
 	route.route_def_retain_hdr = 1;
 
 	if (ipa3_cfg_route(&route)) {
@@ -6740,9 +6748,8 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 	IPADBG("SRAM, size: 0x%x, restricted bytes: 0x%x\n",
 		ipa3_ctx->smem_sz, ipa3_ctx->smem_restricted_bytes);
 
-	IPADBG("hdr_lcl=%u ip4_rt_hash=%u ip4_rt_nonhash=%u\n",
-		ipa3_ctx->hdr_tbl_lcl, ipa3_ctx->ip4_rt_tbl_hash_lcl,
-		ipa3_ctx->ip4_rt_tbl_nhash_lcl);
+	IPADBG("ip4_rt_hash=%u ip4_rt_nonhash=%u\n",
+		ipa3_ctx->ip4_rt_tbl_hash_lcl, ipa3_ctx->ip4_rt_tbl_nhash_lcl);
 
 	IPADBG("ip6_rt_hash=%u ip6_rt_nonhash=%u\n",
 		ipa3_ctx->ip6_rt_tbl_hash_lcl, ipa3_ctx->ip6_rt_tbl_nhash_lcl);
@@ -7732,6 +7739,7 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	struct ipa3_rt_tbl_set *rset;
 	struct ipa_active_client_logging_info log_info;
 	struct cdev *cdev;
+	enum hdr_tbl_storage hdr_tbl;
 
 	IPADBG("IPA Driver initialization started\n");
 
@@ -8136,11 +8144,13 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 		goto fail_rx_pkt_wrapper_cache;
 	}
 
-	/* init the various list heads */
-	INIT_LIST_HEAD(&ipa3_ctx->hdr_tbl.head_hdr_entry_list);
-	for (i = 0; i < IPA_HDR_BIN_MAX; i++) {
-		INIT_LIST_HEAD(&ipa3_ctx->hdr_tbl.head_offset_list[i]);
-		INIT_LIST_HEAD(&ipa3_ctx->hdr_tbl.head_free_offset_list[i]);
+	/* Init the various list heads for both SRAM/DDR */
+	for (hdr_tbl = HDR_TBL_LCL; hdr_tbl < HDR_TBLS_TOTAL; hdr_tbl++) {
+		INIT_LIST_HEAD(&ipa3_ctx->hdr_tbl[hdr_tbl].head_hdr_entry_list);
+		for (i = 0; i < IPA_HDR_BIN_MAX; i++) {
+			INIT_LIST_HEAD(&ipa3_ctx->hdr_tbl[hdr_tbl].head_offset_list[i]);
+			INIT_LIST_HEAD(&ipa3_ctx->hdr_tbl[hdr_tbl].head_free_offset_list[i]);
+		}
 	}
 	INIT_LIST_HEAD(&ipa3_ctx->hdr_proc_ctx_tbl.head_proc_ctx_entry_list);
 	for (i = 0; i < IPA_HDR_PROC_CTX_BIN_MAX; i++) {

@@ -236,6 +236,7 @@ static int ipa3_setup_a7_qmap_hdr(void)
 	hdr->num_hdrs = 1;
 	hdr->commit = 1;
 	hdr_entry = &hdr->hdr[0];
+	hdr_entry->status = IPA_HDR_TO_DDR_PATTERN;
 
 	strlcpy(hdr_entry->name, IPA_A7_QMAP_HDR_NAME,
 				IPA_RESOURCE_NAME_MAX);
@@ -369,6 +370,7 @@ static int ipa3_add_qmap_hdr(uint32_t mux_id, uint32_t *hdr_hdl)
 	hdr->num_hdrs = 1;
 	hdr->commit = 1;
 	hdr_entry = &hdr->hdr[0];
+	hdr_entry->status = IPA_HDR_TO_DDR_PATTERN;
 
 	snprintf(hdr_name, IPA_RESOURCE_NAME_MAX, "%s%d",
 		 A2_MUX_HDR_NAME_V4_PREF,
