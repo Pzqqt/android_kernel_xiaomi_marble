@@ -752,7 +752,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
 			CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
-		msm_vidc_adjust_bitrate, msm_vidc_set_bitrate},
+		msm_vidc_adjust_dynamic_layer_bitrate,
+		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L1_BR, ENC, HEVC,
 		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
@@ -761,7 +762,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
 			CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
-		msm_vidc_adjust_bitrate, msm_vidc_set_bitrate},
+		msm_vidc_adjust_dynamic_layer_bitrate,
+		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L2_BR, ENC, HEVC,
 		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
@@ -770,7 +772,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
 			CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
-		msm_vidc_adjust_bitrate, msm_vidc_set_bitrate},
+		msm_vidc_adjust_dynamic_layer_bitrate,
+		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L3_BR, ENC, HEVC,
 		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
@@ -779,7 +782,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
 			CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
-		msm_vidc_adjust_bitrate, msm_vidc_set_bitrate},
+		msm_vidc_adjust_dynamic_layer_bitrate,
+		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L4_BR, ENC, HEVC,
 		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
@@ -788,7 +792,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
 			CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
-		msm_vidc_adjust_bitrate, msm_vidc_set_bitrate},
+		msm_vidc_adjust_dynamic_layer_bitrate,
+		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L5_BR, ENC, HEVC,
 		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
@@ -797,7 +802,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
 			CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
-		msm_vidc_adjust_bitrate, msm_vidc_set_bitrate},
+		msm_vidc_adjust_dynamic_layer_bitrate,
+		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L0_BR, ENC, H264,
 		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
@@ -806,7 +812,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
 			CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
-		msm_vidc_adjust_bitrate, msm_vidc_set_bitrate},
+		msm_vidc_adjust_dynamic_layer_bitrate,
+		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L1_BR, ENC, H264,
 		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
@@ -815,7 +822,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
 			CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
-		msm_vidc_adjust_bitrate, msm_vidc_set_bitrate},
+		msm_vidc_adjust_dynamic_layer_bitrate,
+		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L2_BR, ENC, H264,
 		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
@@ -824,7 +832,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
 			CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
-		msm_vidc_adjust_bitrate, msm_vidc_set_bitrate},
+		msm_vidc_adjust_dynamic_layer_bitrate,
+		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L3_BR, ENC, H264,
 		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
@@ -833,7 +842,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
 			CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
-		msm_vidc_adjust_bitrate, msm_vidc_set_bitrate},
+		msm_vidc_adjust_dynamic_layer_bitrate,
+		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L4_BR, ENC, H264,
 		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
@@ -842,7 +852,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
 			CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
-		msm_vidc_adjust_bitrate, msm_vidc_set_bitrate},
+		msm_vidc_adjust_dynamic_layer_bitrate,
+		msm_vidc_set_dynamic_layer_bitrate},
 
 	{L5_BR, ENC, H264,
 		1, MAX_BITRATE, 1, DEFAULT_BITRATE,
@@ -851,7 +862,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
 			CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
-		msm_vidc_adjust_bitrate, msm_vidc_set_bitrate},
+		msm_vidc_adjust_dynamic_layer_bitrate,
+		msm_vidc_set_dynamic_layer_bitrate},
 
 	{ENTROPY_MODE, ENC, H264,
 		V4L2_MPEG_VIDEO_H264_ENTROPY_MODE_CAVLC,
