@@ -401,8 +401,6 @@ QDF_STATUS __dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 
 	count = 0;
 
-	dp_rx_refill_buff_pool_lock(dp_soc);
-
 	while (count < num_req_buffers) {
 		/* Flag is set while pdev rx_desc_pool initialization */
 		if (qdf_unlikely(rx_desc_pool->rx_mon_dest_frag_enable))
@@ -458,8 +456,6 @@ QDF_STATUS __dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 		*desc_list = next;
 
 	}
-
-	dp_rx_refill_buff_pool_unlock(dp_soc);
 
 	dp_rx_refill_ring_record_entry(dp_soc, dp_pdev->lmac_id, rxdma_srng,
 				       num_req_buffers, count);

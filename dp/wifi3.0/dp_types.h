@@ -134,6 +134,12 @@
 #define FISA_FLOW_MAX_AGGR_COUNT        16 /* max flow aggregate count */
 #endif
 
+#ifdef WLAN_FEATURE_RX_PREALLOC_BUFFER_POOL
+#define DP_RX_REFILL_BUFF_POOL_SIZE  2048
+#define DP_RX_REFILL_BUFF_POOL_BURST 64
+#define DP_RX_REFILL_THRD_THRESHOLD  512
+#endif
+
 enum rx_pktlog_mode {
 	DP_RX_PKTLOG_DISABLED = 0,
 	DP_RX_PKTLOG_FULL,
@@ -1178,13 +1184,12 @@ struct rx_buff_pool {
 };
 
 struct rx_refill_buff_pool {
-	qdf_nbuf_t buf_head;
-	qdf_nbuf_t buf_tail;
-	qdf_spinlock_t bufq_lock;
-	uint32_t bufq_len;
-	uint32_t max_bufq_len;
-	bool in_rx_refill_lock;
 	bool is_initialized;
+	uint16_t head;
+	uint16_t tail;
+	struct dp_pdev *dp_pdev;
+	uint16_t max_bufq_len;
+	qdf_nbuf_t buf_elem[2048];
 };
 
 #ifdef DP_TX_HW_DESC_HISTORY
