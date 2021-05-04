@@ -1439,7 +1439,6 @@ static int __handle_session_response(struct msm_vidc_inst *inst,
 				rc = handle_session_error(inst, packet);
 				if (rc)
 					goto exit;
-				continue;
 			}
 			if (in_range(be[i], packet->type)) {
 				dequeue |= (packet->type == HFI_CMD_BUFFER);

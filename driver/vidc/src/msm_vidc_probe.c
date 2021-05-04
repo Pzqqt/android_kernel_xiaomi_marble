@@ -180,6 +180,11 @@ static int msm_vidc_deinitialize_core(struct msm_vidc_core *core)
 	mutex_destroy(&core->lock);
 	msm_vidc_change_core_state(core, MSM_VIDC_CORE_DEINIT, __func__);
 
+	kfree(core->response_packet);
+	kfree(core->packet);
+	core->response_packet = NULL;
+	core->packet = NULL;
+
 	if (core->batch_workq)
 		destroy_workqueue(core->batch_workq);
 
@@ -229,6 +234,22 @@ static int msm_vidc_initialize_core(struct msm_vidc_core *core)
 		goto exit;
 	}
 
+	core->packet_size = 4096;
+	core->packet = kzalloc(core->packet_size, GFP_KERNEL);
+	if (!core->packet) {
+		d_vpr_e("%s(): core packet allocation failed\n", __func__);
+		rc = -ENOMEM;
+		goto exit;
+	}
+
+	core->response_packet = kzalloc(core->packet_size, GFP_KERNEL);
+	if (!core->response_packet) {
+		d_vpr_e("%s(): core response packet allocation failed\n",
+			__func__);
+		rc = -ENOMEM;
+		goto exit;
+	}
+
 	mutex_init(&core->lock);
 	INIT_LIST_HEAD(&core->instances);
 	INIT_LIST_HEAD(&core->dangling_instances);
@@ -240,6 +261,10 @@ static int msm_vidc_initialize_core(struct msm_vidc_core *core)
 
 	return 0;
 exit:
+	kfree(core->response_packet);
+	kfree(core->packet);
+	core->response_packet = NULL;
+	core->packet = NULL;
 	if (core->batch_workq)
 		destroy_workqueue(core->batch_workq);
 	if (core->pm_workq)

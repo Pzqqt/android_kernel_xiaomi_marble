@@ -2794,21 +2794,6 @@ int venus_hfi_core_init(struct msm_vidc_core *core)
 
 	__strict_check(core);
 
-	core->packet_size = 4096;
-	core->packet = kzalloc(core->packet_size, GFP_KERNEL);
-	if (!core->packet) {
-		d_vpr_e("%s(): core packet allocation failed\n", __func__);
-		return -ENOMEM;
-	}
-
-	core->response_packet = kzalloc(core->packet_size, GFP_KERNEL);
-	if (!core->response_packet) {
-		d_vpr_e("%s(): core response packet allocation failed\n",
-			__func__);
-		kfree(core->packet);
-		return -ENOMEM;
-	}
-
 	core->handoff_done = 0;
 
 	rc = __load_fw(core);
@@ -2868,10 +2853,6 @@ int venus_hfi_core_deinit(struct msm_vidc_core *core)
 	__disable_subcaches(core);
 	__interface_queues_deinit(core);
 	__unload_fw(core);
-	kfree(core->response_packet);
-	core->response_packet = NULL;
-	kfree(core->packet);
-	core->packet = NULL;
 	return 0;
 }
 
