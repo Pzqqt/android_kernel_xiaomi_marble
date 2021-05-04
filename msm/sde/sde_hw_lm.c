@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/iopoll.h>
@@ -316,16 +316,18 @@ static int sde_hw_lm_setup_noise_layer(struct sde_hw_mixer *ctx,
 	if (!cfg)
 		return 0;
 
-	if (cfg->zposn == SDE_STAGE_BASE || cfg->zposn + 1 != cfg->zposattn ||
-		cfg->zposattn >= sblk->maxblendstages) {
-		SDE_ERROR("invalid zposn %d zposattn %d max stage %d\n",
-			cfg->zposn, cfg->zposattn, sblk->maxblendstages);
+	if (cfg->noise_blend_stage == SDE_STAGE_BASE ||
+		cfg->noise_blend_stage + 1 != cfg->attn_blend_stage ||
+		cfg->attn_blend_stage >= sblk->maxblendstages) {
+		SDE_ERROR("invalid noise_blend_stage %d attn_blend_stage %d max stage %d\n",
+			cfg->noise_blend_stage, cfg->attn_blend_stage, sblk->maxblendstages);
 		return -EINVAL;
 	}
-	stage_off = _stage_offset(ctx, cfg->zposn);
+
+	stage_off = _stage_offset(ctx, cfg->noise_blend_stage);
 	if (stage_off < 0) {
-		SDE_ERROR("invalid stage_off:%d for noise layer stage_off %d\n",
-				cfg->zposn, stage_off);
+		SDE_ERROR("invalid stage_off:%d for noise layer blend stage:%d\n",
+				stage_off, cfg->noise_blend_stage);
 		return -EINVAL;
 	}
 	val = BIT(18) | BIT(31);
@@ -336,13 +338,13 @@ static int sde_hw_lm_setup_noise_layer(struct sde_hw_mixer *ctx,
 	val = ctx->cfg.out_width | (ctx->cfg.out_height << 16);
 	SDE_REG_WRITE(c, LM_FG_COLOR_FILL_SIZE + stage_off, val);
 	val = SDE_REG_READ(c, LM_OP_MODE);
-	val = (1 << cfg->zposn) | val;
+	val = (1 << cfg->noise_blend_stage) | val;
 	SDE_REG_WRITE(c, LM_OP_MODE, val);
 
-	stage_off = _stage_offset(ctx, cfg->zposattn);
+	stage_off = _stage_offset(ctx, cfg->attn_blend_stage);
 	if (stage_off < 0) {
-		SDE_ERROR("invalid stage_off:%d for noise layer\n",
-				cfg->zposattn);
+		SDE_ERROR("invalid stage_off:%d for atten layer blend stage:%d\n",
+				stage_off, cfg->attn_blend_stage);
 		sde_hw_clear_noise_layer(ctx);
 		return -EINVAL;
 	}
@@ -353,7 +355,7 @@ static int sde_hw_lm_setup_noise_layer(struct sde_hw_mixer *ctx,
 	SDE_REG_WRITE(c, LM_BLEND0_OP + stage_off, val);
 	SDE_REG_WRITE(c, LM_BLEND0_CONST_ALPHA + stage_off, alpha);
 	val = SDE_REG_READ(c, LM_OP_MODE);
-	val = (1 << cfg->zposattn) | val;
+	val = (1 << cfg->attn_blend_stage) | val;
 	SDE_REG_WRITE(c, LM_OP_MODE, val);
 	val = ctx->cfg.out_width | (ctx->cfg.out_height << 16);
 	SDE_REG_WRITE(c, LM_FG_COLOR_FILL_SIZE + stage_off, val);
