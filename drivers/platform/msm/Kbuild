@@ -52,6 +52,9 @@ LINUXINCLUDE += -I$(DATAIPADRVTOP)/ipa
 LINUXINCLUDE += -I$(DATAIPADRVTOP)/ipa/ipa_v3
 LINUXINCLUDE += -I$(DATAIPADRVTOP)/ipa/ipa_v3/ipahal
 LINUXINCLUDE += -I$(DATAIPADRVTOP)/ipa/ipa_clients
+ifneq (,$(filter $(CONFIG_IPA_KERNEL_TESTS_MODULE),y m))
+LINUXINCLUDE += -I$(DATAIPADRVTOP)/ipa/ipa_test_module
+endif
 endif
 
 ifneq (,$(filter $(CONFIG_IPA3_REGDUMP),y m))
