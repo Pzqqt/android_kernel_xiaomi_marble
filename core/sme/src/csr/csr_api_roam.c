@@ -3914,12 +3914,14 @@ static void csr_roam_assign_default_param(struct mac_context *mac,
 	pCommand->u.roamCmd.roamProfile.negotiatedUCEncryptionType =
 		pCommand->u.roamCmd.roamProfile.EncryptionType.
 		encryptionType[0];
+#ifndef FEATURE_CM_ENABLE
 	/* In this case, the multicast encryption needs to follow the
 	 * uncast ones.
 	 */
 	pCommand->u.roamCmd.roamProfile.negotiatedMCEncryptionType =
 		pCommand->u.roamCmd.roamProfile.EncryptionType.
 		encryptionType[0];
+#endif
 }
 
 #ifndef FEATURE_CM_ENABLE
@@ -5249,6 +5251,7 @@ static void csr_roam_process_start_bss_success(struct mac_context *mac_ctx,
 						0, 0, NULL);
 		}
 	}
+
 	/*
 	 * Only tell upper layer is we start the BSS because Vista doesn't like
 	 * multiple connection indications. If we don't start the BSS ourself,
@@ -6090,18 +6093,6 @@ QDF_STATUS csr_roam_copy_profile(struct mac_context *mac,
 		qdf_mem_copy(pDstProfile->SSIDs.SSIDList,
 			pSrcProfile->SSIDs.SSIDList, size);
 	}
-	if (pSrcProfile->nWPAReqIELength) {
-		pDstProfile->pWPAReqIE =
-			qdf_mem_malloc(pSrcProfile->nWPAReqIELength);
-		if (!pDstProfile->pWPAReqIE) {
-			status = QDF_STATUS_E_NOMEM;
-			goto end;
-		}
-		pDstProfile->nWPAReqIELength =
-			pSrcProfile->nWPAReqIELength;
-		qdf_mem_copy(pDstProfile->pWPAReqIE, pSrcProfile->pWPAReqIE,
-			pSrcProfile->nWPAReqIELength);
-	}
 	if (pSrcProfile->nRSNReqIELength) {
 		pDstProfile->pRSNReqIE =
 			qdf_mem_malloc(pSrcProfile->nRSNReqIELength);
@@ -6113,6 +6104,96 @@ QDF_STATUS csr_roam_copy_profile(struct mac_context *mac,
 			pSrcProfile->nRSNReqIELength;
 		qdf_mem_copy(pDstProfile->pRSNReqIE, pSrcProfile->pRSNReqIE,
 			pSrcProfile->nRSNReqIELength);
+	}
+
+	if (pSrcProfile->ChannelInfo.freq_list) {
+		pDstProfile->ChannelInfo.freq_list =
+			qdf_mem_malloc(sizeof(uint32_t) *
+				       pSrcProfile->ChannelInfo.numOfChannels);
+		if (!pDstProfile->ChannelInfo.freq_list) {
+			pDstProfile->ChannelInfo.numOfChannels = 0;
+			status = QDF_STATUS_E_NOMEM;
+			goto end;
+		}
+		pDstProfile->ChannelInfo.numOfChannels =
+			pSrcProfile->ChannelInfo.numOfChannels;
+		qdf_mem_copy(pDstProfile->ChannelInfo.freq_list,
+			     pSrcProfile->ChannelInfo.freq_list,
+			     sizeof(uint32_t) *
+			     pSrcProfile->ChannelInfo.numOfChannels);
+	}
+	pDstProfile->AuthType = pSrcProfile->AuthType;
+	pDstProfile->EncryptionType = pSrcProfile->EncryptionType;
+	pDstProfile->negotiatedUCEncryptionType =
+		pSrcProfile->negotiatedUCEncryptionType;
+	pDstProfile->mcEncryptionType = pSrcProfile->mcEncryptionType;
+	pDstProfile->negotiatedAuthType = pSrcProfile->negotiatedAuthType;
+	pDstProfile->MFPRequired = pSrcProfile->MFPRequired;
+	pDstProfile->MFPCapable = pSrcProfile->MFPCapable;
+	pDstProfile->BSSType = pSrcProfile->BSSType;
+	pDstProfile->phyMode = pSrcProfile->phyMode;
+	pDstProfile->csrPersona = pSrcProfile->csrPersona;
+
+	pDstProfile->ch_params.ch_width = pSrcProfile->ch_params.ch_width;
+	pDstProfile->ch_params.center_freq_seg0 =
+		pSrcProfile->ch_params.center_freq_seg0;
+	pDstProfile->ch_params.center_freq_seg1 =
+		pSrcProfile->ch_params.center_freq_seg1;
+	pDstProfile->ch_params.sec_ch_offset =
+		pSrcProfile->ch_params.sec_ch_offset;
+	pDstProfile->uapsd_mask = pSrcProfile->uapsd_mask;
+	pDstProfile->beaconInterval = pSrcProfile->beaconInterval;
+	pDstProfile->privacy = pSrcProfile->privacy;
+	pDstProfile->fwdWPSPBCProbeReq = pSrcProfile->fwdWPSPBCProbeReq;
+	pDstProfile->csr80211AuthType = pSrcProfile->csr80211AuthType;
+	pDstProfile->dtimPeriod = pSrcProfile->dtimPeriod;
+	pDstProfile->ApUapsdEnable = pSrcProfile->ApUapsdEnable;
+	pDstProfile->SSIDs.SSIDList[0].ssidHidden =
+		pSrcProfile->SSIDs.SSIDList[0].ssidHidden;
+	pDstProfile->protEnabled = pSrcProfile->protEnabled;
+	pDstProfile->obssProtEnabled = pSrcProfile->obssProtEnabled;
+	pDstProfile->cfg_protection = pSrcProfile->cfg_protection;
+	pDstProfile->wps_state = pSrcProfile->wps_state;
+	pDstProfile->ieee80211d = pSrcProfile->ieee80211d;
+	pDstProfile->MFPRequired = pSrcProfile->MFPRequired;
+	pDstProfile->MFPCapable = pSrcProfile->MFPCapable;
+	pDstProfile->add_ie_params = pSrcProfile->add_ie_params;
+
+	pDstProfile->beacon_tx_rate = pSrcProfile->beacon_tx_rate;
+
+	if (pSrcProfile->supported_rates.numRates) {
+		qdf_mem_copy(pDstProfile->supported_rates.rate,
+				pSrcProfile->supported_rates.rate,
+				pSrcProfile->supported_rates.numRates);
+		pDstProfile->supported_rates.numRates =
+			pSrcProfile->supported_rates.numRates;
+	}
+	if (pSrcProfile->extended_rates.numRates) {
+		qdf_mem_copy(pDstProfile->extended_rates.rate,
+				pSrcProfile->extended_rates.rate,
+				pSrcProfile->extended_rates.numRates);
+		pDstProfile->extended_rates.numRates =
+			pSrcProfile->extended_rates.numRates;
+	}
+	pDstProfile->cac_duration_ms = pSrcProfile->cac_duration_ms;
+	pDstProfile->dfs_regdomain   = pSrcProfile->dfs_regdomain;
+	pDstProfile->chan_switch_hostapd_rate_enabled  =
+		pSrcProfile->chan_switch_hostapd_rate_enabled;
+#ifndef FEATURE_CM_ENABLE
+	pDstProfile->negotiatedMCEncryptionType =
+		pSrcProfile->negotiatedMCEncryptionType;
+	pDstProfile->MFPEnabled = pSrcProfile->MFPEnabled;
+	if (pSrcProfile->nWPAReqIELength) {
+		pDstProfile->pWPAReqIE =
+			qdf_mem_malloc(pSrcProfile->nWPAReqIELength);
+		if (!pDstProfile->pWPAReqIE) {
+			status = QDF_STATUS_E_NOMEM;
+			goto end;
+		}
+		pDstProfile->nWPAReqIELength =
+			pSrcProfile->nWPAReqIELength;
+		qdf_mem_copy(pDstProfile->pWPAReqIE, pSrcProfile->pWPAReqIE,
+			pSrcProfile->nWPAReqIELength);
 	}
 #ifdef FEATURE_WLAN_WAPI
 	if (pSrcProfile->nWAPIReqIELength) {
@@ -6127,6 +6208,9 @@ QDF_STATUS csr_roam_copy_profile(struct mac_context *mac,
 		qdf_mem_copy(pDstProfile->pWAPIReqIE, pSrcProfile->pWAPIReqIE,
 			pSrcProfile->nWAPIReqIELength);
 	}
+	if (csr_is_profile_wapi(pSrcProfile))
+		if (pDstProfile->phyMode & eCSR_DOT11_MODE_11n)
+			pDstProfile->phyMode &= ~eCSR_DOT11_MODE_11n;
 #endif /* FEATURE_WLAN_WAPI */
 	if (pSrcProfile->nAddIEScanLength && pSrcProfile->pAddIEScan) {
 		pDstProfile->pAddIEScan =
@@ -6152,100 +6236,14 @@ QDF_STATUS csr_roam_copy_profile(struct mac_context *mac,
 		qdf_mem_copy(pDstProfile->pAddIEAssoc, pSrcProfile->pAddIEAssoc,
 			pSrcProfile->nAddIEAssocLength);
 	}
-	if (pSrcProfile->ChannelInfo.freq_list) {
-		pDstProfile->ChannelInfo.freq_list =
-			qdf_mem_malloc(sizeof(uint32_t) *
-				       pSrcProfile->ChannelInfo.numOfChannels);
-		if (!pDstProfile->ChannelInfo.freq_list) {
-			pDstProfile->ChannelInfo.numOfChannels = 0;
-			status = QDF_STATUS_E_NOMEM;
-			goto end;
-		}
-		pDstProfile->ChannelInfo.numOfChannels =
-			pSrcProfile->ChannelInfo.numOfChannels;
-		qdf_mem_copy(pDstProfile->ChannelInfo.freq_list,
-			     pSrcProfile->ChannelInfo.freq_list,
-			     sizeof(uint32_t) *
-			     pSrcProfile->ChannelInfo.numOfChannels);
-	}
-	pDstProfile->AuthType = pSrcProfile->AuthType;
-	pDstProfile->akm_list = pSrcProfile->akm_list;
-	pDstProfile->EncryptionType = pSrcProfile->EncryptionType;
-	pDstProfile->mcEncryptionType = pSrcProfile->mcEncryptionType;
-	pDstProfile->negotiatedUCEncryptionType =
-		pSrcProfile->negotiatedUCEncryptionType;
-	pDstProfile->negotiatedMCEncryptionType =
-		pSrcProfile->negotiatedMCEncryptionType;
-	pDstProfile->negotiatedAuthType = pSrcProfile->negotiatedAuthType;
-	pDstProfile->MFPEnabled = pSrcProfile->MFPEnabled;
-	pDstProfile->MFPRequired = pSrcProfile->MFPRequired;
-	pDstProfile->MFPCapable = pSrcProfile->MFPCapable;
-	pDstProfile->BSSType = pSrcProfile->BSSType;
-	pDstProfile->phyMode = pSrcProfile->phyMode;
-	pDstProfile->csrPersona = pSrcProfile->csrPersona;
-
-#ifdef FEATURE_WLAN_WAPI
-	if (csr_is_profile_wapi(pSrcProfile))
-		if (pDstProfile->phyMode & eCSR_DOT11_MODE_11n)
-			pDstProfile->phyMode &= ~eCSR_DOT11_MODE_11n;
-#endif /* FEATURE_WLAN_WAPI */
-	pDstProfile->ch_params.ch_width = pSrcProfile->ch_params.ch_width;
-	pDstProfile->ch_params.center_freq_seg0 =
-		pSrcProfile->ch_params.center_freq_seg0;
-	pDstProfile->ch_params.center_freq_seg1 =
-		pSrcProfile->ch_params.center_freq_seg1;
-	pDstProfile->ch_params.sec_ch_offset =
-		pSrcProfile->ch_params.sec_ch_offset;
 	/*Save the WPS info */
 	pDstProfile->bWPSAssociation = pSrcProfile->bWPSAssociation;
 	pDstProfile->bOSENAssociation = pSrcProfile->bOSENAssociation;
-	pDstProfile->force_24ghz_in_ht20 = pSrcProfile->force_24ghz_in_ht20;
-	pDstProfile->uapsd_mask = pSrcProfile->uapsd_mask;
-	pDstProfile->beaconInterval = pSrcProfile->beaconInterval;
-	pDstProfile->privacy = pSrcProfile->privacy;
-	pDstProfile->fwdWPSPBCProbeReq = pSrcProfile->fwdWPSPBCProbeReq;
-	pDstProfile->csr80211AuthType = pSrcProfile->csr80211AuthType;
-	pDstProfile->dtimPeriod = pSrcProfile->dtimPeriod;
-	pDstProfile->ApUapsdEnable = pSrcProfile->ApUapsdEnable;
-	pDstProfile->SSIDs.SSIDList[0].ssidHidden =
-		pSrcProfile->SSIDs.SSIDList[0].ssidHidden;
-	pDstProfile->protEnabled = pSrcProfile->protEnabled;
-	pDstProfile->obssProtEnabled = pSrcProfile->obssProtEnabled;
-	pDstProfile->cfg_protection = pSrcProfile->cfg_protection;
-	pDstProfile->wps_state = pSrcProfile->wps_state;
-	pDstProfile->ieee80211d = pSrcProfile->ieee80211d;
-	qdf_mem_copy(&pDstProfile->Keys, &pSrcProfile->Keys,
-		sizeof(pDstProfile->Keys));
-	pDstProfile->MFPEnabled = pSrcProfile->MFPEnabled;
-	pDstProfile->MFPRequired = pSrcProfile->MFPRequired;
-	pDstProfile->MFPCapable = pSrcProfile->MFPCapable;
 	pDstProfile->mdid = pSrcProfile->mdid;
-	pDstProfile->add_ie_params = pSrcProfile->add_ie_params;
-
-#ifndef FEATURE_CM_ENABLE
 	update_profile_fils_info(mac, pDstProfile, pSrcProfile, vdev_id);
-#endif
-	pDstProfile->beacon_tx_rate = pSrcProfile->beacon_tx_rate;
-
-	if (pSrcProfile->supported_rates.numRates) {
-		qdf_mem_copy(pDstProfile->supported_rates.rate,
-				pSrcProfile->supported_rates.rate,
-				pSrcProfile->supported_rates.numRates);
-		pDstProfile->supported_rates.numRates =
-			pSrcProfile->supported_rates.numRates;
-	}
-	if (pSrcProfile->extended_rates.numRates) {
-		qdf_mem_copy(pDstProfile->extended_rates.rate,
-				pSrcProfile->extended_rates.rate,
-				pSrcProfile->extended_rates.numRates);
-		pDstProfile->extended_rates.numRates =
-			pSrcProfile->extended_rates.numRates;
-	}
-	pDstProfile->cac_duration_ms = pSrcProfile->cac_duration_ms;
-	pDstProfile->dfs_regdomain   = pSrcProfile->dfs_regdomain;
-	pDstProfile->chan_switch_hostapd_rate_enabled  =
-		pSrcProfile->chan_switch_hostapd_rate_enabled;
+	pDstProfile->force_24ghz_in_ht20 = pSrcProfile->force_24ghz_in_ht20;
 	pDstProfile->force_rsne_override = pSrcProfile->force_rsne_override;
+#endif
 end:
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		csr_release_profile(mac, pDstProfile);

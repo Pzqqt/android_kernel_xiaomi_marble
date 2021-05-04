@@ -527,10 +527,11 @@ tSmeCmd *csr_get_command_buffer(struct mac_context *mac);
 void csr_release_command(struct mac_context *mac, tSmeCmd *pCommand);
 void csr_release_command_buffer(struct mac_context *mac, tSmeCmd *pCommand);
 
+#ifndef FEATURE_CM_ENABLE
 #ifdef FEATURE_WLAN_WAPI
 bool csr_is_profile_wapi(struct csr_roam_profile *pProfile);
 #endif /* FEATURE_WLAN_WAPI */
-
+#endif
 /**
  * csr_get_vdev_type_nss() - gets the nss value based on vdev type
  * @dev_mode: current device operating mode.

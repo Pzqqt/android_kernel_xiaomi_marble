@@ -6355,11 +6355,8 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		struct csr_roam_profile *roam_profile =
 			hdd_roam_profile(adapter);
 
-		hdd_debug("WE_GET_11W_ENABLED = %d",
-		       roam_profile->MFPEnabled);
-
 		snprintf(extra, WE_MAX_STR_LEN,
-			 "\n BSSID %02X:%02X:%02X:%02X:%02X:%02X, Is PMF Assoc? %d"
+			 "\n BSSID %02X:%02X:%02X:%02X:%02X:%02X"
 			 "\n Number of Unprotected Disassocs %d"
 			 "\n Number of Unprotected Deauths %d",
 			 roam_profile->BSSIDs.bssid->bytes[0],
@@ -6368,7 +6365,6 @@ static int __iw_get_char_setnone(struct net_device *dev,
 			 roam_profile->BSSIDs.bssid->bytes[3],
 			 roam_profile->BSSIDs.bssid->bytes[4],
 			 roam_profile->BSSIDs.bssid->bytes[5],
-			 roam_profile->MFPEnabled,
 			 adapter->hdd_stats.hdd_pmf_stats.
 			 num_unprot_disassoc_rx,
 			 adapter->hdd_stats.hdd_pmf_stats.

@@ -17459,7 +17459,9 @@ static int hdd_change_adapter_mode(struct hdd_adapter *adapter,
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct net_device *netdev = adapter->dev;
+#ifndef FEATURE_CM_ENABLE
 	struct csr_roam_profile *roam_profile;
+#endif
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	hdd_enter();
@@ -17470,9 +17472,11 @@ static int hdd_change_adapter_mode(struct hdd_adapter *adapter,
 	memset(&adapter->session, 0, sizeof(adapter->session));
 	hdd_set_station_ops(netdev);
 
+#ifndef FEATURE_CM_ENABLE
 	roam_profile = hdd_roam_profile(adapter);
 	roam_profile->pAddIEScan = adapter->scan_info.scan_add_ie.addIEdata;
 	roam_profile->nAddIEScanLength = adapter->scan_info.scan_add_ie.length;
+#endif
 
 	hdd_exit();
 
@@ -18246,10 +18250,10 @@ static int __wlan_hdd_cfg80211_get_key(struct wiphy *wiphy,
 		   TRACE_CODE_HDD_CFG80211_GET_KEY,
 		   adapter->vdev_id, params.cipher);
 
-	params.key_len = roam_profile->Keys.KeyLength[key_index];
+	params.key_len = 0;
 	params.seq_len = 0;
 	params.seq = NULL;
-	params.key = &roam_profile->Keys.KeyMaterial[key_index][0];
+	params.key = NULL;
 	callback(cookie, &params);
 
 	hdd_exit();

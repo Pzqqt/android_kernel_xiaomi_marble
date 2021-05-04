@@ -1792,9 +1792,10 @@ lim_get_bss_dot11_mode(struct bss_description *bss_desc,
 	if (ie_struct->eht_cap.present)
 		bss_dot11_mode = MLME_DOT11_MODE_11BE;
 
-	pe_debug("bss HT %d VHT %d HE %d nw_type %d bss dot11_mode %d",
+	pe_debug("bss HT %d VHT %d HE %d EHT %d nw_type %d bss dot11_mode %d",
 		 ie_struct->HTCaps.present, ie_struct->VHTCaps.present,
-		 ie_struct->he_cap.present, bss_desc->nwType, bss_dot11_mode);
+		 ie_struct->he_cap.present, ie_struct->eht_cap.present,
+		 bss_desc->nwType, bss_dot11_mode);
 
 	return bss_dot11_mode;
 }
@@ -2327,7 +2328,8 @@ lim_verify_dot11_mode_with_crypto(struct pe_session *session)
 
 	if (!(session->dot11mode == MLME_DOT11_MODE_11N ||
 	    session->dot11mode == MLME_DOT11_MODE_11AC ||
-	    session->dot11mode == MLME_DOT11_MODE_11AX))
+	    session->dot11mode == MLME_DOT11_MODE_11AX ||
+	    session->dot11mode == MLME_DOT11_MODE_11BE))
 		return;
 
 	ucast_cipher = wlan_crypto_get_param(session->vdev,

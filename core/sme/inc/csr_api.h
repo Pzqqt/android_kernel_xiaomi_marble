@@ -601,7 +601,6 @@ struct csr_roam_profile {
 	eCsrRoamBssType BSSType;
 	tCsrAuthList AuthType;
 	enum csr_akm_type negotiatedAuthType;
-	tCsrAuthList akm_list;
 	tCsrEncryptionList EncryptionType;
 	/* This field is for output only, not for input */
 	eCsrEncryptionType negotiatedUCEncryptionType;
@@ -610,13 +609,9 @@ struct csr_roam_profile {
 	 * If caller doesn't case, put all supported encryption types in here
 	 */
 	tCsrEncryptionList mcEncryptionType;
-	/* This field is for output only, not for input */
-	eCsrEncryptionType negotiatedMCEncryptionType;
 	/* Management Frame Protection */
-	bool MFPEnabled;
 	uint8_t MFPRequired;
 	uint8_t MFPCapable;
-	tCsrKeys Keys;
 	tCsrChannelInfo ChannelInfo;
 	uint32_t op_freq;
 	struct ch_params ch_params;
@@ -628,10 +623,32 @@ struct csr_roam_profile {
 	 * During assoc resp this'd carry cnf of what ACs U-APSD got setup for
 	 */
 	uint8_t uapsd_mask;
-	uint32_t nWPAReqIELength; /* The byte count in the pWPAReqIE */
-	uint8_t *pWPAReqIE;       /* If not null,it's IE byte stream for WPA */
 	uint32_t nRSNReqIELength; /* The byte count in the pRSNReqIE */
 	uint8_t *pRSNReqIE;       /* If not null,it's IE byte stream for RSN */
+	uint8_t ieee80211d;
+	uint8_t privacy;
+	bool fwdWPSPBCProbeReq;
+	tAniAuthType csr80211AuthType;
+	uint32_t dtimPeriod;
+	bool ApUapsdEnable;
+	bool protEnabled;
+	bool obssProtEnabled;
+	bool chan_switch_hostapd_rate_enabled;
+	uint16_t cfg_protection;
+	uint8_t wps_state;
+	enum QDF_OPMODE csrPersona;
+	/* addIe params */
+	struct add_ie_params add_ie_params;
+	uint16_t beacon_tx_rate;
+	tSirMacRateSet  supported_rates;
+	tSirMacRateSet  extended_rates;
+	uint32_t cac_duration_ms;
+	uint32_t dfs_regdomain;
+#ifndef FEATURE_CM_ENABLE
+	eCsrEncryptionType negotiatedMCEncryptionType;
+	bool MFPEnabled;
+	uint32_t nWPAReqIELength; /* The byte count in the pWPAReqIE */
+	uint8_t *pWPAReqIE;       /* If not null,it's IE byte stream for WPA */
 #ifdef FEATURE_WLAN_WAPI
 	uint32_t nWAPIReqIELength;/* The byte count in the pWAPIReqIE */
 	uint8_t *pWAPIReqIE;      /* If not null,it's IE byte stream for WAPI */
@@ -649,39 +666,17 @@ struct csr_roam_profile {
 	 * which can be WSC IE and/or P2P IE
 	 */
 	uint8_t *pAddIEAssoc;
-	/* it is ignored if [0] is 0. */
-	uint8_t countryCode[REG_ALPHA2_LEN + 1];
-	/* WPS Association if true => auth and ecryption should be ignored */
-	bool bWPSAssociation;
-	bool bOSENAssociation;
-	uint8_t ieee80211d;
-	uint8_t privacy;
-	bool fwdWPSPBCProbeReq;
-	tAniAuthType csr80211AuthType;
-	uint32_t dtimPeriod;
-	bool ApUapsdEnable;
-	bool protEnabled;
-	bool obssProtEnabled;
-	bool chan_switch_hostapd_rate_enabled;
-	uint16_t cfg_protection;
-	uint8_t wps_state;
-	struct mobility_domain_info mdid;
-	enum QDF_OPMODE csrPersona;
-	/* addIe params */
-	struct add_ie_params add_ie_params;
-	uint16_t beacon_tx_rate;
-	tSirMacRateSet  supported_rates;
-	tSirMacRateSet  extended_rates;
-	struct qdf_mac_addr bssid_hint;
-	bool force_24ghz_in_ht20;
-	uint32_t cac_duration_ms;
-	uint32_t dfs_regdomain;
-#ifndef FEATURE_CM_ENABLE
 #ifdef WLAN_FEATURE_FILS_SK
 	struct wlan_fils_connection_info *fils_con_info;
 #endif
-#endif
+	/* WPS Association if true => auth and ecryption should be ignored */
+	bool bWPSAssociation;
+	bool bOSENAssociation;
+	struct mobility_domain_info mdid;
+	struct qdf_mac_addr bssid_hint;
+	bool force_24ghz_in_ht20;
 	bool force_rsne_override;
+#endif /* FEATURE_CM_ENABLE */
 };
 
 typedef struct tagCsrRoamConnectedProfile {

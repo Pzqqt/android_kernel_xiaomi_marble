@@ -1635,6 +1635,7 @@ void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter)
 	/* clear WPA/RSN/WSC IE information in the profile */
 	roam_profile = hdd_roam_profile(adapter);
 
+#ifndef FEATURE_CM_ENABLE
 	roam_profile->nWPAReqIELength = 0;
 	roam_profile->pWPAReqIE = NULL;
 	roam_profile->nRSNReqIELength = 0;
@@ -1669,10 +1670,8 @@ void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter)
 	roam_profile->MFPEnabled = false;
 	roam_profile->MFPRequired = 0;
 	roam_profile->MFPCapable = 0;
+#endif /* FEATURE_CM_ENABLE */
 
-	qdf_mem_zero(roam_profile->Keys.KeyLength, CSR_MAX_NUM_KEY);
-	qdf_mem_zero(roam_profile->Keys.KeyMaterial,
-		     sizeof(roam_profile->Keys.KeyMaterial));
 #ifdef FEATURE_WLAN_WAPI
 	adapter->wapi_info.wapi_auth_mode = WAPI_AUTH_MODE_OPEN;
 	adapter->wapi_info.wapi_mode = false;

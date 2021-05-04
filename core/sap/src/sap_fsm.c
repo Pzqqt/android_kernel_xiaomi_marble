@@ -2911,8 +2911,6 @@ sapconvert_to_csr_profile(struct sap_config *config, eCsrRoamBssType bssType,
 	profile->AuthType.numEntries = 1;
 	profile->AuthType.authType[0] = eCSR_AUTH_TYPE_OPEN_SYSTEM;
 
-	profile->akm_list = config->akm_list;
-
 	/* Always set the Encryption Type */
 	profile->EncryptionType.numEntries = 1;
 	profile->EncryptionType.encryptionType[0] =
@@ -2936,10 +2934,6 @@ sapconvert_to_csr_profile(struct sap_config *config, eCsrRoamBssType bssType,
 	} else {
 		profile->csr80211AuthType = eSIR_AUTO_SWITCH;
 	}
-
-	/* Initialize we are not going to use it */
-	profile->pWPAReqIE = NULL;
-	profile->nWPAReqIELength = 0;
 
 	if (profile->pRSNReqIE) {
 		sap_debug("pRSNReqIE already allocated.");
@@ -2991,11 +2985,6 @@ sapconvert_to_csr_profile(struct sap_config *config, eCsrRoamBssType bssType,
 	if (QDF_IS_STATUS_ERROR(qdf_status))
 		sap_err("Get ap protection mode failed using default value");
 	profile->cfg_protection = ap_prot;
-
-	/* country code */
-	if (config->countryCode[0])
-		qdf_mem_copy(profile->countryCode, config->countryCode,
-			     REG_ALPHA2_LEN + 1);
 	profile->ieee80211d = config->ieee80211d;
 	/* wps config info */
 	profile->wps_state = config->wps_state;

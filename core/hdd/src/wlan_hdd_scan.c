@@ -655,6 +655,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		}
 	}
 
+#ifndef FEATURE_CM_ENABLE
 	if ((QDF_STA_MODE == adapter->device_mode) ||
 	    (QDF_P2P_CLIENT_MODE == adapter->device_mode) ||
 	    (QDF_P2P_DEVICE_MODE == adapter->device_mode)) {
@@ -666,6 +667,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		roam_profile->nAddIEScanLength =
 			scan_info->scan_add_ie.length;
 	}
+#endif
 
 	if (QDF_P2P_CLIENT_MODE == adapter->device_mode ||
 	    QDF_P2P_DEVICE_MODE == adapter->device_mode) {
