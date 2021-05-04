@@ -94,9 +94,10 @@ enum hfi_avc_profile_type {
 };
 
 enum hfi_hevc_profile_type {
-    HFI_H265_PROFILE_MAIN               = 0,
-    HFI_H265_PROFILE_MAIN_STILL_PICTURE = 1,
-    HFI_H265_PROFILE_MAIN_10            = 2,
+	HFI_H265_PROFILE_MAIN                  = 0,
+	HFI_H265_PROFILE_MAIN_STILL_PICTURE    = 1,
+	HFI_H265_PROFILE_MAIN_10               = 2,
+	HFI_H265_PROFILE_MAIN_10_STILL_PICTURE = 3,
 };
 
 enum hfi_vp9_profile_type {

@@ -4758,7 +4758,7 @@ static bool msm_vidc_allow_image_encode_session(struct msm_vidc_inst *inst)
 
 	/* is profile type Still Pic */
 	if (is_10bit_colorformat(pix_fmt))
-		allow = profile == V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10;
+		allow = profile == V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10_STILL_PICTURE;
 	else
 		allow = profile == V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_STILL_PICTURE;
 	if (!allow) {
