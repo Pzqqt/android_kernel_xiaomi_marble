@@ -212,7 +212,7 @@ static int dp_sim_read_edid(struct dp_sim_device *sim_dev,
 			sim_dev->edid_seg = buf[0];
 		} else if (msg->address == 0x50) {
 			sim_dev->edid_seg_int = sim_dev->edid_seg;
-			sim_dev->edid_addr = buf[0] + (sim_dev->edid_seg << 8);
+			sim_dev->edid_addr = buf[0];
 			sim_dev->edid_seg = 0;
 		}
 	}
