@@ -2095,25 +2095,20 @@ sme_is_twt_teardown_failed(enum WMI_HOST_DEL_TWT_STATUS teardown_status)
 	return false;
 }
 
-/**
- * sme_process_twt_del_dialog_event() - Process twt del dialog event
- * response from firmware
- * @mac: Global MAC pointer
- * @param: pointer to wmi_twt_del_dialog_complete_event_param buffer
- *
- * Return: None
- */
 static void
-sme_process_twt_del_dialog_event(struct mac_context *mac,
-				 struct wmi_twt_del_dialog_complete_event_param *param)
+sme_process_sta_twt_del_dialog_event(
+		struct mac_context *mac,
+		struct wmi_twt_del_dialog_complete_event_param *param)
 {
 	twt_del_dialog_cb callback;
 	bool is_evt_allowed;
 	enum wlan_twt_commands active_cmd = WLAN_TWT_NONE;
 
 	is_evt_allowed = mlme_twt_is_command_in_progress(
-		mac->psoc, (struct qdf_mac_addr *)param->peer_macaddr,
-		param->dialog_id, WLAN_TWT_TERMINATE, &active_cmd);
+					mac->psoc, (struct qdf_mac_addr *)
+					param->peer_macaddr, param->dialog_id,
+					WLAN_TWT_TERMINATE, &active_cmd);
+
 	if (!is_evt_allowed &&
 	    param->dialog_id != WLAN_ALL_SESSIONS_DIALOG_ID &&
 	    param->status != WMI_HOST_DEL_TWT_STATUS_ROAMING &&
@@ -2121,6 +2116,7 @@ sme_process_twt_del_dialog_event(struct mac_context *mac,
 	    param->status != WMI_HOST_DEL_TWT_STATUS_CONCURRENCY) {
 		sme_debug("Drop TWT Del dialog event for dialog_id:%d status:%d active_cmd:%d",
 			  param->dialog_id, param->status, active_cmd);
+
 		return;
 	}
 
@@ -2130,28 +2126,67 @@ sme_process_twt_del_dialog_event(struct mac_context *mac,
 
 	if (param->status == WMI_HOST_DEL_TWT_STATUS_ROAMING ||
 	    param->status == WMI_HOST_DEL_TWT_STATUS_CONCURRENCY)
-		mlme_twt_set_wait_for_notify(
-			mac->psoc, param->vdev_id, true);
+		mlme_twt_set_wait_for_notify(mac->psoc, param->vdev_id, true);
 
 	/* Reset the active TWT command to none */
-	mlme_set_twt_command_in_progress(
-			mac->psoc, (struct qdf_mac_addr *)param->peer_macaddr,
-			param->dialog_id, WLAN_TWT_NONE);
+	mlme_set_twt_command_in_progress(mac->psoc, (struct qdf_mac_addr *)
+					 param->peer_macaddr, param->dialog_id,
+					 WLAN_TWT_NONE);
 
 	if (sme_is_twt_teardown_failed(param->status))
 		return;
 
 	ucfg_mlme_set_twt_setup_done(mac->psoc, (struct qdf_mac_addr *)
-				     param->peer_macaddr,
-				     param->dialog_id, false);
+				     param->peer_macaddr, param->dialog_id,
+				     false);
 
-	ucfg_mlme_set_twt_session_state(
-			mac->psoc, (struct qdf_mac_addr *)param->peer_macaddr,
-			param->dialog_id, WLAN_TWT_SETUP_STATE_NOT_ESTABLISHED);
+	ucfg_mlme_set_twt_session_state(mac->psoc, (struct qdf_mac_addr *)
+					param->peer_macaddr, param->dialog_id,
+					WLAN_TWT_SETUP_STATE_NOT_ESTABLISHED);
 
 	mlme_init_twt_context(mac->psoc, (struct qdf_mac_addr *)
-			      param->peer_macaddr,
-			      param->dialog_id);
+			      param->peer_macaddr, param->dialog_id);
+}
+
+/**
+ * sme_process_twt_del_dialog_event() - Process twt del dialog event
+ * response from firmware
+ * @mac: Global MAC pointer
+ * @param: pointer to wmi_twt_del_dialog_complete_event_param buffer
+ *
+ * Return: None
+ */
+static void
+sme_process_twt_del_dialog_event(
+	struct mac_context *mac,
+	struct wmi_twt_del_dialog_complete_event_param *param)
+{
+	twt_del_dialog_cb callback;
+	enum QDF_OPMODE opmode;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
+
+	opmode = wlan_get_opmode_from_vdev_id(mac->pdev, param->vdev_id);
+
+	qdf_status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		return;
+
+	switch (opmode) {
+	case QDF_SAP_MODE:
+		callback = mac->sme.twt_del_dialog_cb;
+		if (callback)
+			callback(mac->psoc, param);
+		break;
+	case QDF_STA_MODE:
+		sme_process_sta_twt_del_dialog_event(mac, param);
+		break;
+	default:
+		sme_debug("TWT Teardown is not supported on %s",
+			  qdf_opmode_str(opmode));
+	}
+
+	sme_release_global_lock(&mac->sme);
+	return;
 }
 
 /**
@@ -2350,8 +2385,9 @@ sme_process_twt_add_dialog_event(struct mac_context *mac,
 }
 
 static void
-sme_process_twt_del_dialog_event(struct mac_context *mac,
-				 struct wmi_twt_del_dialog_complete_event_param *param)
+sme_process_twt_del_dialog_event(
+		struct mac_context *mac,
+		struct wmi_twt_del_dialog_complete_event_param *param)
 {
 }
 
