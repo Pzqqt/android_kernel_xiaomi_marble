@@ -28,6 +28,7 @@ int msm_cvp_clock_voting = !1;
 bool msm_cvp_syscache_disable = !true;
 bool msm_cvp_dsp_disable = !true;
 bool msm_cvp_mmrm_enabled = true;
+bool msm_cvp_dcvs_disable = !true;
 
 #define MAX_DBG_BUF_SIZE 4096
 
@@ -258,6 +259,10 @@ struct dentry *msm_cvp_debugfs_init_drv(void)
 		goto failed_create_dir;
 	f = debugfs_create_bool("disable_cvp_syscache", 0644, dir,
 			&msm_cvp_syscache_disable);
+	if (IS_ERR_OR_NULL(f))
+		goto failed_create_dir;
+	f = debugfs_create_bool("disable_dcvs", 0644, dir,
+			&msm_cvp_dcvs_disable);
 	if (IS_ERR_OR_NULL(f))
 		goto failed_create_dir;
 
