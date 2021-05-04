@@ -2592,7 +2592,7 @@ static int os_if_process_nan_enable_req(struct wlan_objmgr_psoc *psoc,
 	return qdf_status_to_os_return(status);
 }
 
-int os_if_process_nan_req(struct wlan_objmgr_psoc *psoc,
+int os_if_process_nan_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			  const void *data, int data_len)
 {
 	uint32_t nan_subcmd;
@@ -2615,8 +2615,10 @@ int os_if_process_nan_req(struct wlan_objmgr_psoc *psoc,
 	 * sure that HW mode is not set to DBS by NAN Enable request. NAN state
 	 * machine will remain unaffected in this case.
 	 */
-	if (!NAN_CONCURRENCY_SUPPORTED(psoc))
+	if (!NAN_CONCURRENCY_SUPPORTED(psoc)) {
+		policy_mgr_check_and_stop_opportunistic_timer(psoc, vdev_id);
 		return os_if_nan_generic_req(psoc, tb);
+	}
 
 	/*
 	 * Send all requests other than Enable/Disable as type GENERIC.
