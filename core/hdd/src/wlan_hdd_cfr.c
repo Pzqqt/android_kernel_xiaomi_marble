@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -73,6 +73,9 @@ const struct nla_policy cfr_config_policy[
 };
 
 #ifdef WLAN_ENH_CFR_ENABLE
+
+#define DEFAULT_CFR_NSS 0xff
+#define DEFAULT_CFR_BW  0xf
 static QDF_STATUS
 wlan_cfg80211_cfr_set_group_config(struct wlan_objmgr_vdev *vdev,
 				   struct nlattr *tb[])
@@ -130,12 +133,14 @@ wlan_cfg80211_cfr_set_group_config(struct wlan_objmgr_vdev *vdev,
 		ucfg_cfr_set_tara_config(vdev, &params);
 	}
 
+	params.nss = DEFAULT_CFR_NSS;
 	if (tb[QCA_WLAN_VENDOR_ATTR_PEER_CFR_GROUP_NSS]) {
 		params.nss = nla_get_u32(tb[
 			QCA_WLAN_VENDOR_ATTR_PEER_CFR_GROUP_NSS]);
 		hdd_debug("nss %d", params.nss);
 	}
 
+	params.bw = DEFAULT_CFR_BW;
 	if (tb[QCA_WLAN_VENDOR_ATTR_PEER_CFR_GROUP_BW]) {
 		params.bw = nla_get_u32(tb[
 			QCA_WLAN_VENDOR_ATTR_PEER_CFR_GROUP_BW]);
@@ -146,6 +151,7 @@ wlan_cfg80211_cfr_set_group_config(struct wlan_objmgr_vdev *vdev,
 		hdd_debug("set bw nss");
 		ucfg_cfr_set_bw_nss(vdev, &params);
 	}
+
 	if (tb[QCA_WLAN_VENDOR_ATTR_PEER_CFR_GROUP_MGMT_FILTER]) {
 		params.expected_mgmt_subtype = nla_get_u32(tb[
 			QCA_WLAN_VENDOR_ATTR_PEER_CFR_GROUP_MGMT_FILTER]);
