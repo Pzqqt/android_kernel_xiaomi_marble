@@ -657,7 +657,6 @@ static int dp_rx_refill_thread_loop(void *arg)
 		qdf_get_current_pid());
 	while (!shutdown) {
 		/* This implements the execution model algorithm */
-		dp_debug("refill thread sleeping");
 		status =
 		    qdf_wait_queue_interruptible
 				(rx_thread->wait_q,
@@ -665,7 +664,6 @@ static int dp_rx_refill_thread_loop(void *arg)
 						     &rx_thread->event_flag) ||
 				 qdf_atomic_test_bit(RX_REFILL_SUSPEND_EVENT,
 						     &rx_thread->event_flag));
-		dp_debug("refill thread woken up");
 
 		if (status == -ERESTARTSYS) {
 			QDF_DEBUG_PANIC("wait_event_interruptible returned -ERESTARTSYS");
