@@ -453,6 +453,9 @@ struct sde_drm_color {
 /* Color fill outside of the rect, excluding border */
 #define SDE_DRM_DIM_LAYER_EXCLUSIVE     0x2
 
+ /* bitmask for allowed_dsc_reservation_switch property */
+#define SDE_DP_DSC_RESERVATION_SWITCH (1 << 0)
+
 /**
  * struct sde_drm_dim_layer - dim layer cfg struct
  * @flags:         Refer SDE_DRM_DIM_LAYER_CONFIG_FLAG for possible values

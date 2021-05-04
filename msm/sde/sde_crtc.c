@@ -5628,6 +5628,10 @@ static void sde_crtc_setup_capabilities_blob(struct sde_kms_info *info,
 	sde_kms_info_add_keyint(info, "skip_inline_rot_threshold",
 			catalog->skip_inline_rot_threshold);
 
+	if (catalog->allowed_dsc_reservation_switch)
+		sde_kms_info_add_keyint(info, "allowed_dsc_reservation_switch",
+			catalog->allowed_dsc_reservation_switch);
+
 	if (catalog->uidle_cfg.uidle_rev)
 		sde_kms_info_add_keyint(info, "has_uidle",
 			true);
@@ -5815,6 +5819,8 @@ static void sde_crtc_install_properties(struct drm_crtc *crtc,
 			sde_kms_info_add_keyint(info, "demura_count",
 					catalog->demura_count);
 	}
+
+	sde_kms_info_add_keyint(info, "dsc_block_count", catalog->dsc_count);
 
 	msm_property_install_blob(&sde_crtc->property_info, "capabilities",
 		DRM_MODE_PROP_IMMUTABLE, CRTC_PROP_INFO);
@@ -7135,6 +7141,11 @@ struct drm_crtc *sde_crtc_init(struct drm_device *dev, struct drm_plane *plane)
 		drm_crtc_cleanup(crtc);
 		kfree(sde_crtc);
 		return ERR_PTR(rc);
+	}
+
+	if (kms->catalog->allowed_dsc_reservation_switch && !kms->dsc_switch_support) {
+		SDE_DEBUG("dsc switch not supported\n");
+		kms->catalog->allowed_dsc_reservation_switch = 0;
 	}
 
 	/* create CRTC properties */

@@ -6447,6 +6447,16 @@ struct drm_panel *dsi_display_get_drm_panel(struct dsi_display *display)
 	return &display->panel->drm_panel;
 }
 
+bool dsi_display_has_dsc_switch_support(struct dsi_display *display)
+{
+	if (!display || !display->panel) {
+		pr_err("invalid param(s)\n");
+		return false;
+	}
+
+	return display->panel->dsc_switch_supported;
+}
+
 int dsi_display_drm_ext_bridge_init(struct dsi_display *display,
 		struct drm_encoder *encoder, struct drm_connector *connector)
 {
@@ -6846,6 +6856,7 @@ int dsi_display_get_modes(struct dsi_display *display,
 	u32 sublinks_count, mode_idx, array_idx = 0;
 	struct dsi_dyn_clk_caps *dyn_clk_caps;
 	int i, start, end, rc = -EINVAL;
+	int dsc_modes = 0, nondsc_modes = 0;
 
 	if (!display || !out_modes) {
 		DSI_ERR("Invalid params\n");
@@ -6909,6 +6920,11 @@ int dsi_display_get_modes(struct dsi_display *display,
 
 		support_cmd_mode = display_mode.panel_mode_caps & DSI_OP_CMD_MODE;
 		support_video_mode = display_mode.panel_mode_caps & DSI_OP_VIDEO_MODE;
+
+		if (display_mode.priv_info->dsc_enabled)
+			dsc_modes++;
+		else
+			nondsc_modes++;
 
 		/* Setup widebus support */
 		display_mode.priv_info->widebus_support =
@@ -6986,6 +7002,9 @@ int dsi_display_get_modes(struct dsi_display *display,
 			display->modes[start].is_preferred = true;
 		}
 	}
+
+	if (dsc_modes && nondsc_modes)
+		display->panel->dsc_switch_supported = true;
 
 exit:
 	*out_modes = display->modes;

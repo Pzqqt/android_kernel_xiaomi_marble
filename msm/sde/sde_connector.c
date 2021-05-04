@@ -411,6 +411,7 @@ static void sde_connector_get_avail_res_info(struct drm_connector *conn,
 {
 	struct sde_kms *sde_kms;
 	struct drm_encoder *drm_enc = NULL;
+	struct sde_connector *sde_conn;
 
 	sde_kms = _sde_connector_get_kms(conn);
 	if (!sde_kms) {
@@ -418,12 +419,17 @@ static void sde_connector_get_avail_res_info(struct drm_connector *conn,
 		return;
 	}
 
+	sde_conn = to_sde_connector(conn);
 	if (conn->state && conn->state->best_encoder)
 		drm_enc = conn->state->best_encoder;
 	else
 		drm_enc = conn->encoder;
 
 	sde_rm_get_resource_info(&sde_kms->rm, drm_enc, avail_res);
+	if ((sde_kms->catalog->allowed_dsc_reservation_switch &
+		SDE_DP_DSC_RESERVATION_SWITCH) &&
+		sde_conn->connector_type == DRM_MODE_CONNECTOR_DisplayPort)
+		avail_res->num_dsc = sde_kms->catalog->dsc_count;
 
 	avail_res->max_mixer_width = sde_kms->catalog->max_mixer_width;
 }

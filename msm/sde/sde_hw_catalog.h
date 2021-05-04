@@ -1500,6 +1500,7 @@ struct sde_perf_cfg {
  * @ubwc_bw_calc_version indicate how UBWC BW has to be calculated
  * @skip_inline_rot_thresh    Skip inline rotation threshold
  * @has_idle_pc        indicate if idle power collapse feature is supported
+ * @allowed_dsc_reservation_switch  intf to which dsc reservation switch is supported
  * @wakeup_with_touch  indicate early wake up display with input touch event
  * @has_hdr            HDR feature support
  * @has_hdr_plus       HDR10+ feature support
@@ -1590,6 +1591,7 @@ struct sde_mdss_cfg {
 	u32 ubwc_bw_calc_version;
 	bool skip_inline_rot_threshold;
 	bool has_idle_pc;
+	u32 allowed_dsc_reservation_switch;
 	bool wakeup_with_touch;
 	u32 vbif_qos_nlvl;
 	u32 ts_prefill_rev;

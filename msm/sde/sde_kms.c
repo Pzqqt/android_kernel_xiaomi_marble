@@ -1932,6 +1932,9 @@ static int _sde_kms_setup_displays(struct drm_device *dev,
 
 		dsc_count += info.dsc_count;
 		mixer_count += info.lm_count;
+
+		if (dsi_display_has_dsc_switch_support(display))
+			sde_kms->dsc_switch_support = true;
 	}
 
 	max_dp_mixer_count = sde_kms->catalog->mixer_count > mixer_count ?
@@ -1939,6 +1942,9 @@ static int _sde_kms_setup_displays(struct drm_device *dev,
 	max_dp_dsc_count = sde_kms->catalog->dsc_count > dsc_count ?
 				sde_kms->catalog->dsc_count - dsc_count : 0;
 
+	if (sde_kms->catalog->allowed_dsc_reservation_switch &
+			SDE_DP_DSC_RESERVATION_SWITCH)
+		max_dp_dsc_count = sde_kms->catalog->dsc_count;
 	/* dp */
 	for (i = 0; i < sde_kms->dp_display_count &&
 			priv->num_encoders < max_encoders; ++i) {

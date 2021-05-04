@@ -649,6 +649,14 @@ int dsi_dispaly_static_frame(struct dsi_display *display, bool enable);
 struct drm_panel *dsi_display_get_drm_panel(struct dsi_display *display);
 
 /**
+ * dsi_display_has_dsc_switch_support() - check if dsc switch is supported.
+ * @display:            Handle to display.
+ *
+ * Return: True of panel supports both dsc and non-dsc modes.
+ */
+bool dsi_display_has_dsc_switch_support(struct dsi_display *display);
+
+/**
  * dsi_display_enable_event() - enable interrupt based connector event
  * @connector:          Pointer to drm connector structure
  * @display:            Handle to display.

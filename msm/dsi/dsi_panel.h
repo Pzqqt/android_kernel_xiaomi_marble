@@ -228,6 +228,7 @@ struct dsi_panel {
 	struct dsi_dfps_capabilities dfps_caps;
 	struct dsi_dyn_clk_caps dyn_clk_caps;
 	struct dsi_panel_phy_props phy_props;
+	bool dsc_switch_supported;
 
 	struct dsi_display_mode *cur_mode;
 	u32 num_timing_nodes;
