@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -494,7 +494,10 @@ static inline const char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 #else
 #define WLAN_OBJMGR_BUG(val)
 #endif
+
+#ifndef WLAN_OBJMGR_RATELIMIT_THRESH
 #define WLAN_OBJMGR_RATELIMIT_THRESH 2
+#endif
 
 #ifdef WLAN_OBJMGR_REF_ID_TRACE
 #define WLAN_OBJMGR_TRACE_FUNC_SIZE 30
