@@ -525,6 +525,28 @@ void wlan_hdd_cfg80211_unlink_bss(struct hdd_adapter *adapter,
 
 void wlan_hdd_cfg80211_acs_ch_select_evt(struct hdd_adapter *adapter);
 
+#ifdef WLAN_CFR_ENABLE
+/*
+ * hdd_cfr_data_send_nl_event() - send cfr data through nl event
+ * @vdev_id: vdev id
+ * @pid: process pid to which send data event unicast way
+ * @data: pointer to the cfr data
+ * @data_len: length of data
+ *
+ * Return: void
+ */
+void hdd_cfr_data_send_nl_event(uint8_t vdev_id, uint32_t pid,
+				const void *data, uint32_t data_len);
+
+#define FEATURE_CFR_DATA_VENDOR_EVENTS                                  \
+[QCA_NL80211_VENDOR_SUBCMD_PEER_CFR_CAPTURE_CFG_INDEX] = {              \
+        .vendor_id = QCA_NL80211_VENDOR_ID,                             \
+        .subcmd = QCA_NL80211_VENDOR_SUBCMD_PEER_CFR_CAPTURE_CFG,       \
+},
+#else
+#define FEATURE_CFR_DATA_VENDOR_EVENTS
+#endif
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * hdd_send_roam_scan_ch_list_event() - roam scan ch list event to user space
