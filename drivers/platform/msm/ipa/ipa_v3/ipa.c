@@ -49,7 +49,7 @@
 #endif
 
 #define DRV_NAME "ipa"
-
+#define DELAY_BEFORE_FW_LOAD 500
 #define IPA_SUBSYSTEM_NAME "ipa_fws"
 #define IPA_UC_SUBSYSTEM_NAME "ipa_uc"
 
@@ -134,6 +134,7 @@ static void ipa3_free_pkt_init_ex(void);
 
 static void ipa3_load_ipa_fw(struct work_struct *work);
 static DECLARE_WORK(ipa3_fw_loading_work, ipa3_load_ipa_fw);
+static DECLARE_DELAYED_WORK(ipa3_fw_load_failure_handle, ipa3_load_ipa_fw);
 
 static void ipa_dec_clients_disable_clks_on_wq(struct work_struct *work);
 static DECLARE_DELAYED_WORK(ipa_dec_clients_disable_clks_on_wq_work,
@@ -7983,12 +7984,14 @@ static void ipa3_load_ipa_fw(struct work_struct *work)
 	IPADBG("Entry\n");
 
 	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
-
-	result = ipa3_attach_to_smmu();
-	if (result) {
-		IPAERR("IPA attach to smmu failed %d\n", result);
-		IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
-		return;
+	if(!ipa3_ctx->ipa_pil_load)
+	{
+		result = ipa3_attach_to_smmu();
+		if (result) {
+			IPAERR("IPA attach to smmu failed %d\n", result);
+			IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
+			return;
+		}
 	}
 
 	if (ipa3_ctx->ipa3_hw_mode != IPA_HW_MODE_EMULATION &&
@@ -8015,13 +8018,18 @@ static void ipa3_load_ipa_fw(struct work_struct *work)
 		result = ipa3_manual_load_ipa_fws();
 	}
 
-	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
 
 	if (result) {
-		IPAERR("IPA FW loading process has failed result=%d\n",
-			result);
+
+		ipa3_ctx->ipa_pil_load++;
+		IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
+		IPADBG("IPA firmware loading deffered to a work queue\n");
+		queue_delayed_work(ipa3_ctx->transport_power_mgmt_wq,
+			&ipa3_fw_load_failure_handle,
+			msecs_to_jiffies(DELAY_BEFORE_FW_LOAD));
 		return;
 	}
+	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
 	mutex_lock(&ipa3_ctx->fw_load_data.lock);
 	ipa3_ctx->fw_load_data.state = IPA_FW_LOAD_STATE_LOADED;
 	mutex_unlock(&ipa3_ctx->fw_load_data.lock);
@@ -8090,7 +8098,7 @@ static void ipa_fw_load_sm_handle_event(enum ipa_fw_load_event ev)
 		if (ipa3_ctx->fw_load_data.state == IPA_FW_LOAD_STATE_INIT) {
 			ipa3_ctx->fw_load_data.state =
 				IPA_FW_LOAD_STATE_SMMU_DONE;
-			goto out;
+			goto sched_fw_load;
 		}
 		if (ipa3_ctx->fw_load_data.state ==
 			IPA_FW_LOAD_STATE_FWFILE_READY) {
