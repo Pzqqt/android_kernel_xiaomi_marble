@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/bitops.h>
@@ -2109,6 +2109,7 @@ ret:
 
 	return result;
 }
+EXPORT_SYMBOL(ipa3_get_rt_tbl);
 
 /**
  * ipa3_put_rt_tbl() - Release the specified routing table handle

@@ -2954,6 +2954,14 @@ bool ipa3_get_lan_rx_napi(void);
 
 bool ipa3_get_qmap_pipe_enable(void);
 
+struct device *ipa3_get_pdev(void);
+int ipa3_sys_update_gsi_hdls(u32 clnt_hdl, unsigned long gsi_ch_hdl,
+	unsigned long gsi_ev_hdl);
+int ipa3_sys_setup(struct ipa_sys_connect_params *sys_in,
+			unsigned long *ipa_transport_hdl,
+			u32 *ipa_pipe_num, u32 *clnt_hdl, bool en_status);
+int ipa3_sys_teardown(u32 clnt_hdl);
+
 /* internal functions */
 
 u8 ipa3_get_hw_type_index(void);
