@@ -1389,3 +1389,17 @@ int ipa3_copy_hdr(struct ipa_ioc_copy_hdr *copy)
 
 	return result;
 }
+
+/**
+ * ipa3_get_hdr_bin_size() - Get header bin size from specified index
+ *
+ * @index:	[in] index in the bin sizes array
+ *
+ * Returns:	bin size on success, MAX_UINT32 on failure
+ */
+u32 ipa3_get_hdr_bin_size(int index)
+{
+	if (index < 0 || index >= IPA_HDR_BIN_MAX)
+		return U32_MAX;
+	return ipa_hdr_bin_sz[index];
+}
