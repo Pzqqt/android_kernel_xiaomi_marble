@@ -90,6 +90,8 @@ const char *ipa3_event_name[IPA_EVENT_MAX_NUM] = {
 	__stringify(IPA_PDN_DEFAULT_MODE_CONFIG),
 	__stringify(IPA_PDN_DEFAULT_MODE_CONFIG),
 	__stringify(IPA_MAC_FLT_EVENT),
+	__stringify(IPA_DONE_RESTORE_EVENT),
+	__stringify(IPA_SW_FLT_EVENT),
 };
 
 const char *ipa3_hdr_l2_type_name[] = {
