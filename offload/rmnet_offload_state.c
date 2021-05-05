@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -27,8 +27,9 @@ DATARMNETe05748b000->DATARMNET341393eda2);DATARMNET87b015f76f=&
 DATARMNETe05748b000->DATARMNETa9f2b2f677;if(DATARMNET87b015f76f->
 DATARMNETc2832b8f85)rmnet_map_dl_ind_deregister(DATARMNETf0d9de7e2f,&
 DATARMNET87b015f76f->DATARMNET8633ae8f1e);}static void DATARMNET345f805b34(void)
-{if(!DATARMNETe05748b000)return;DATARMNETac9c8c14b1();DATARMNETba38823a2f();
-DATARMNET560e127137();DATARMNETae70636c90();DATARMNETb98b78b8e3();kfree(
+{LIST_HEAD(DATARMNET6f9bfa17e6);if(!DATARMNETe05748b000)return;
+DATARMNETac9c8c14b1();DATARMNETba38823a2f();DATARMNET560e127137();
+DATARMNETae70636c90(&DATARMNET6f9bfa17e6);DATARMNETb98b78b8e3();kfree(
 DATARMNETe05748b000);DATARMNETe05748b000=NULL;}static int DATARMNETd68e3594a7(
 void){struct rmnet_port*DATARMNETf0d9de7e2f=DATARMNETe05748b000->
 DATARMNET403589239f;struct qmi_rmnet_ps_ind*DATARMNETbc78d7fd3c;struct 

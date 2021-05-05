@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -61,13 +61,13 @@ DATARMNET144d119066;u32 DATARMNET645e8912b8;u16 DATARMNET1ef22e4c76;bool
 DATARMNETf1b6b0a6cc;bool DATARMNET3eb91ee54d;bool DATARMNET8f59f5a745;};void 
 DATARMNET664568fcd0(void);void DATARMNET6a76048590(void);void 
 DATARMNET818b960147(void);void DATARMNETba38823a2f(void);bool 
-DATARMNET19eb0de3b2(void);void DATARMNET58a244b2fe(struct rmnet_frag_descriptor*
-DATARMNET9d1b321642,u32 DATARMNET5affe290b8);void DATARMNET19d190f2bd(struct 
-DATARMNETd812bcdbb5*DATARMNET458b70e7e5);void DATARMNET9292bebdd3(void*
-DATARMNETf0d9de7e2f);void DATARMNETb7e47d7254(void*DATARMNETf0d9de7e2f);void 
-DATARMNET95e1703026(struct rmnet_map_dl_ind_hdr*DATARMNET7c7748ef7a,struct 
-rmnet_map_control_command_header*DATARMNET8b07ee3e82);void DATARMNETc9dd320f49(
-struct rmnet_map_dl_ind_trl*DATARMNET2541770fea,struct 
-rmnet_map_control_command_header*DATARMNET8b07ee3e82);
+DATARMNET19eb0de3b2(void);void DATARMNETc70e73c8d4(struct list_head*
+DATARMNETb5730f5283);void DATARMNET19d190f2bd(struct DATARMNETd812bcdbb5*
+DATARMNET458b70e7e5,struct list_head*DATARMNET6f9bfa17e6);void 
+DATARMNET9292bebdd3(void*DATARMNETf0d9de7e2f);void DATARMNETb7e47d7254(void*
+DATARMNETf0d9de7e2f);void DATARMNET95e1703026(struct rmnet_map_dl_ind_hdr*
+DATARMNET7c7748ef7a,struct rmnet_map_control_command_header*DATARMNET8b07ee3e82)
+;void DATARMNETc9dd320f49(struct rmnet_map_dl_ind_trl*DATARMNET2541770fea,struct
+ rmnet_map_control_command_header*DATARMNET8b07ee3e82);
 #endif
 
