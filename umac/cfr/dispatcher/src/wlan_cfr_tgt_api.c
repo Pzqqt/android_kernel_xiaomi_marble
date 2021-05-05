@@ -31,13 +31,41 @@ uint32_t tgt_cfr_info_send(struct wlan_objmgr_pdev *pdev, void *head,
 			   size_t tlen)
 {
 	struct pdev_cfr *pa;
-	uint32_t status;
+	uint32_t status, total_len;
+	uint8_t *nl_data = NULL;
 
 	pa = wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_UMAC_COMP_CFR);
 
 	if (pa == NULL) {
 		cfr_err("pdev_cfr is NULL\n");
 		return -1;
+	}
+
+	/* If CFR data transport mode is NL event then send single event*/
+	if (pa->nl_cb.cfr_nl_cb) {
+		total_len = hlen + dlen + tlen;
+
+		nl_data = qdf_mem_malloc(total_len);
+		if (!nl_data) {
+			cfr_err("failed to alloc memory, len %d, vdev_id %d",
+				total_len, pa->nl_cb.vdev_id);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		if (hlen)
+			qdf_mem_copy(nl_data, head, hlen);
+
+		if (dlen)
+			qdf_mem_copy(nl_data + hlen, data, dlen);
+
+		if (tlen)
+			qdf_mem_copy(nl_data + hlen + dlen, tail, tlen);
+
+		pa->nl_cb.cfr_nl_cb(pa->nl_cb.vdev_id, pa->nl_cb.pid,
+				    (const void *)nl_data, total_len);
+		qdf_mem_free(nl_data);
+
+		return QDF_STATUS_SUCCESS;
 	}
 
 	if (head)
