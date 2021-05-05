@@ -376,7 +376,7 @@ int ipa3_smmu_map_peer_buff(u64 iova, u32 size, bool map, struct sg_table *sgt,
 	enum ipa_smmu_cb_type cb_type)
 {
 	struct iommu_domain *smmu_domain;
-	int res;
+	int res, ret = 0;
 	phys_addr_t phys;
 	unsigned long va;
 	struct scatterlist *sg;
@@ -417,7 +417,8 @@ int ipa3_smmu_map_peer_buff(u64 iova, u32 size, bool map, struct sg_table *sgt,
 				res = ipa3_iommu_map(smmu_domain, va, phys,
 					len, IOMMU_READ | IOMMU_WRITE);
 				if (res) {
-					IPAERR("Fail to map pa=%pa\n", &phys);
+					IPAERR("Fail to map pa=%pa, va 0x%X\n",
+						&phys, va);
 					return -EINVAL;
 				}
 				va += len;
@@ -437,18 +438,39 @@ int ipa3_smmu_map_peer_buff(u64 iova, u32 size, bool map, struct sg_table *sgt,
 			}
 		}
 	} else {
-		res = iommu_unmap(smmu_domain,
-		rounddown(iova, PAGE_SIZE),
-		roundup(size + iova - rounddown(iova, PAGE_SIZE),
-		PAGE_SIZE));
-		if (res != roundup(size + iova - rounddown(iova, PAGE_SIZE),
-			PAGE_SIZE)) {
-			IPAERR("Fail to unmap 0x%llx\n", iova);
-			return -EINVAL;
+		if (sgt != NULL) {
+			va = rounddown(iova, PAGE_SIZE);
+			for_each_sg(sgt->sgl, sg, sgt->nents, i)
+			{
+				page = sg_page(sg);
+				phys = page_to_phys(page);
+				len = PAGE_ALIGN(sg->offset + sg->length);
+				res = iommu_unmap(smmu_domain, va, len);
+				if (res != len) {
+					IPAERR(
+						"Fail to unmap pa=%pa, va 0x%X, res %d\n"
+						, &phys, va, res);
+					ret = -EINVAL;
+				}
+				va += len;
+				count++;
+			}
+		} else {
+			res = iommu_unmap(smmu_domain,
+				rounddown(iova, PAGE_SIZE),
+				roundup(
+				size + iova - rounddown(iova, PAGE_SIZE),
+					PAGE_SIZE));
+			if (res != roundup(
+			size + iova - rounddown(iova, PAGE_SIZE),
+				PAGE_SIZE)) {
+				IPAERR("Fail to unmap 0x%llx\n", iova);
+				return -EINVAL;
+			}
 		}
 	}
 	IPADBG("Peer buff %s 0x%llx\n", map ? "map" : "unmap", iova);
-	return 0;
+	return ret;
 }
 EXPORT_SYMBOL(ipa3_smmu_map_peer_buff);
 
@@ -1992,6 +2014,32 @@ int ipa3_clear_endpoint_delay(u32 clnt_hdl)
 	return 0;
 }
 
+static void ipa3_get_gsi_ring_stats(struct IpaHwRingStats_t *ring,
+	struct ipa3_uc_dbg_stats *ctx_stats, int idx)
+{
+	ring->ringFull = ioread32(
+		ctx_stats->uc_dbg_stats_mmio
+		+ idx * IPA3_UC_DEBUG_STATS_OFF +
+		IPA3_UC_DEBUG_STATS_RINGFULL_OFF);
+
+	ring->ringEmpty = ioread32(
+		ctx_stats->uc_dbg_stats_mmio
+		+ idx * IPA3_UC_DEBUG_STATS_OFF +
+		IPA3_UC_DEBUG_STATS_RINGEMPTY_OFF);
+	ring->ringUsageHigh = ioread32(
+		ctx_stats->uc_dbg_stats_mmio
+		+ idx * IPA3_UC_DEBUG_STATS_OFF +
+		IPA3_UC_DEBUG_STATS_RINGUSAGEHIGH_OFF);
+	ring->ringUsageLow = ioread32(
+		ctx_stats->uc_dbg_stats_mmio
+		+ idx * IPA3_UC_DEBUG_STATS_OFF +
+		IPA3_UC_DEBUG_STATS_RINGUSAGELOW_OFF);
+	ring->RingUtilCount = ioread32(
+		ctx_stats->uc_dbg_stats_mmio
+		+ idx * IPA3_UC_DEBUG_STATS_OFF +
+		IPA3_UC_DEBUG_STATS_RINGUTILCOUNT_OFF);
+}
+
 /**
  * ipa3_get_aqc_gsi_stats() - Query AQC gsi stats from uc
  * @stats:	[inout] stats blob from client populated by driver
@@ -2011,32 +2059,43 @@ int ipa3_get_aqc_gsi_stats(struct ipa_uc_dbg_ring_stats *stats)
 	}
 	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
 	for (i = 0; i < MAX_AQC_CHANNELS; i++) {
-		stats->u.ring[i].ringFull = ioread32(
-			ipa3_ctx->aqc_ctx.dbg_stats.uc_dbg_stats_mmio
-			+ i * IPA3_UC_DEBUG_STATS_OFF +
-			IPA3_UC_DEBUG_STATS_RINGFULL_OFF);
-		stats->u.ring[i].ringEmpty = ioread32(
-			ipa3_ctx->aqc_ctx.dbg_stats.uc_dbg_stats_mmio
-			+ i * IPA3_UC_DEBUG_STATS_OFF +
-			IPA3_UC_DEBUG_STATS_RINGEMPTY_OFF);
-		stats->u.ring[i].ringUsageHigh = ioread32(
-			ipa3_ctx->aqc_ctx.dbg_stats.uc_dbg_stats_mmio
-			+ i * IPA3_UC_DEBUG_STATS_OFF +
-			IPA3_UC_DEBUG_STATS_RINGUSAGEHIGH_OFF);
-		stats->u.ring[i].ringUsageLow = ioread32(
-			ipa3_ctx->aqc_ctx.dbg_stats.uc_dbg_stats_mmio
-			+ i * IPA3_UC_DEBUG_STATS_OFF +
-			IPA3_UC_DEBUG_STATS_RINGUSAGELOW_OFF);
-		stats->u.ring[i].RingUtilCount = ioread32(
-			ipa3_ctx->aqc_ctx.dbg_stats.uc_dbg_stats_mmio
-			+ i * IPA3_UC_DEBUG_STATS_OFF +
-			IPA3_UC_DEBUG_STATS_RINGUTILCOUNT_OFF);
+		ipa3_get_gsi_ring_stats(stats->u.ring + i,
+			&ipa3_ctx->aqc_ctx.dbg_stats, i);
 	}
 	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
 
 
 	return 0;
 }
+
+/**
+* ipa3_get_ntn_gsi_stats() - Query NTN gsi stats from uc
+* @stats:	[inout] stats blob from client populated by driver
+*
+* Returns:	0 on success, negative on failure
+*
+* @note Cannot be called from atomic context
+*
+*/
+int ipa3_get_ntn_gsi_stats(struct ipa_uc_dbg_ring_stats *stats)
+{
+	int i;
+
+	if (!ipa3_ctx->ntn_ctx.dbg_stats.uc_dbg_stats_mmio) {
+		IPAERR("bad parms NULL ntn_gsi_stats_mmio\n");
+		return -EINVAL;
+	}
+	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
+	for (i = 0; i < MAX_NTN_CHANNELS; i++) {
+		ipa3_get_gsi_ring_stats(stats->u.ring + i,
+			&ipa3_ctx->ntn_ctx.dbg_stats, i);
+	}
+	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
+
+
+	return 0;
+}
+
 /**
  * ipa3_get_rtk_gsi_stats() - Query RTK gsi stats from uc
  * @stats:	[inout] stats blob from client populated by driver
@@ -2057,26 +2116,8 @@ int ipa3_get_rtk_gsi_stats(struct ipa_uc_dbg_ring_stats *stats)
 	}
 	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
 	for (i = 0; i < MAX_RTK_CHANNELS; i++) {
-		stats->u.rtk[i].commStats.ringFull = ioread32(
-			ipa3_ctx->rtk_ctx.dbg_stats.uc_dbg_stats_mmio
-			+ i * IPA3_UC_DEBUG_STATS_RTK_OFF +
-			IPA3_UC_DEBUG_STATS_RINGFULL_OFF);
-		stats->u.rtk[i].commStats.ringEmpty = ioread32(
-			ipa3_ctx->rtk_ctx.dbg_stats.uc_dbg_stats_mmio
-			+ i * IPA3_UC_DEBUG_STATS_RTK_OFF +
-			IPA3_UC_DEBUG_STATS_RINGEMPTY_OFF);
-		stats->u.rtk[i].commStats.ringUsageHigh = ioread32(
-			ipa3_ctx->rtk_ctx.dbg_stats.uc_dbg_stats_mmio
-			+ i * IPA3_UC_DEBUG_STATS_RTK_OFF +
-			IPA3_UC_DEBUG_STATS_RINGUSAGEHIGH_OFF);
-		stats->u.rtk[i].commStats.ringUsageLow = ioread32(
-			ipa3_ctx->rtk_ctx.dbg_stats.uc_dbg_stats_mmio
-			+ i * IPA3_UC_DEBUG_STATS_RTK_OFF +
-			IPA3_UC_DEBUG_STATS_RINGUSAGELOW_OFF);
-		stats->u.rtk[i].commStats.RingUtilCount = ioread32(
-			ipa3_ctx->rtk_ctx.dbg_stats.uc_dbg_stats_mmio
-			+ i * IPA3_UC_DEBUG_STATS_RTK_OFF +
-			IPA3_UC_DEBUG_STATS_RINGUTILCOUNT_OFF);
+		ipa3_get_gsi_ring_stats(&stats->u.rtk[i].commStats,
+			&ipa3_ctx->rtk_ctx.dbg_stats, i);
 		stats->u.rtk[i].trCount = ioread32(
 			ipa3_ctx->rtk_ctx.dbg_stats.uc_dbg_stats_mmio
 			+ i * IPA3_UC_DEBUG_STATS_RTK_OFF +

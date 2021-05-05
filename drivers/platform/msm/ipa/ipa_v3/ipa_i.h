@@ -1741,6 +1741,13 @@ struct ipa3_rtk_ctx {
 };
 
 /**
+* struct ipa3_ntn_ctx - IPA ntn context
+*/
+struct ipa3_ntn_ctx {
+	struct ipa3_uc_dbg_stats dbg_stats;
+};
+
+/**
  * struct ipa3_transport_pm - transport power management related members
  * @transport_pm_mutex: Mutex to protect the transport_pm functionality.
  */
@@ -2210,6 +2217,7 @@ struct ipa3_context {
 	struct ipa3_mhip_ctx mhip_ctx;
 	struct ipa3_aqc_ctx aqc_ctx;
 	struct ipa3_rtk_ctx rtk_ctx;
+	struct ipa3_ntn_ctx ntn_ctx;
 	atomic_t ipa_clk_vote;
 
 	int (*client_lock_unlock[IPA_MAX_CLNT])(bool is_lock);
@@ -2829,6 +2837,7 @@ int ipa3_get_wdi3_gsi_stats(struct ipa_uc_dbg_ring_stats *stats);
 int ipa3_get_usb_gsi_stats(struct ipa_uc_dbg_ring_stats *stats);
 int ipa3_get_aqc_gsi_stats(struct ipa_uc_dbg_ring_stats *stats);
 int ipa3_get_rtk_gsi_stats(struct ipa_uc_dbg_ring_stats *stats);
+int ipa3_get_ntn_gsi_stats(struct ipa_uc_dbg_ring_stats *stats);
 int ipa3_get_wdi_stats(struct IpaHwStatsWDIInfoData_t *stats);
 u16 ipa3_get_smem_restr_bytes(void);
 int ipa3_broadcast_wdi_quota_reach_ind(uint32_t fid, uint64_t num_bytes);
