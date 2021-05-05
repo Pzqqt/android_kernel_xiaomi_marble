@@ -1235,7 +1235,7 @@ int htt_h2t_full_mon_cfg(struct htt_soc *htt_soc,
 		HTC_TX_PACKET_TAG_RUNTIME_PUT); /* tag for no FW response msg */
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, htt_msg);
-	qdf_info("config: %d", config);
+	qdf_debug("config: %d", config);
 	DP_HTT_SEND_HTC_PKT(soc, pkt, HTT_H2T_MSG_TYPE_SRING_SETUP,
 			    htt_logger_bufp);
 	return QDF_STATUS_SUCCESS;
