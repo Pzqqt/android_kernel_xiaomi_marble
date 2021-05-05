@@ -171,6 +171,7 @@ static const char *gsireg_name_to_str[GSI_REG_MAX] = {
 	__stringify(GSI_GSI_MCS_PROFILING_MCS_BUSY_CNT_MSB),
 	__stringify(GSI_GSI_MCS_PROFILING_MCS_IDLE_CNT_LSB),
 	__stringify(GSI_GSI_MCS_PROFILING_MCS_IDLE_CNT_MSB),
+	__stringify(GSI_EE_n_CH_k_CH_ALMST_EMPTY_THRSHOLD),
 };
 
 /*
@@ -1757,7 +1758,10 @@ static struct gsihal_reg_obj gsihal_reg_objs[GSI_VER_MAX][GSI_REG_MAX] = {
 	0x0001401c, 0x12000, 0x80 },
 	[GSI_VER_3_0][GSI_EE_n_GSI_CH_k_CNTXT_8] = {
 	gsireg_construct_dummy, gsireg_parse_dummy,
-	0x00014020 , 0x12000, 0x80 },
+	0x00014020, 0x12000, 0x80 },
+	[GSI_VER_3_0][GSI_EE_n_CH_k_CH_ALMST_EMPTY_THRSHOLD] = {
+	gsireg_construct_dummy, gsireg_parse_dummy,
+	0x00014028, 0x12000, 0x80 },
 	[GSI_VER_3_0][GSI_EE_n_GSI_CH_k_RE_FETCH_READ_PTR] = {
 	gsireg_construct_dummy, gsireg_parse_dummy,
 	0x00014040, 0x12000, 0x80 },
