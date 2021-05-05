@@ -57,6 +57,8 @@ struct htc_init_info {
 	void (*target_initial_wakeup_cb)(void *cb_ctx);
 	void *target_psoc;
 	uint32_t cfg_wmi_credit_cnt;
+	/* HTC Pipe Ready Timeout in msecs */
+	uint32_t htc_ready_timeout_ms;
 };
 
 /* Struct for HTC layer packet stats*/

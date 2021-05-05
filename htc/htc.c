@@ -363,6 +363,14 @@ HTC_HANDLE htc_create(void *ol_sc, struct htc_init_info *pInfo,
 		target->osdev = osdev;
 		target->con_mode = con_mode;
 
+		/* If htc_ready_timeout_ms is not configured from CFG,
+		 * assign the default timeout value here.
+		 */
+
+		if (!target->HTCInitInfo.htc_ready_timeout_ms)
+			target->HTCInitInfo.htc_ready_timeout_ms =
+							HTC_CONTROL_RX_TIMEOUT;
+
 		reset_endpoint_states(target);
 
 		INIT_HTC_PACKET_QUEUE(&target->ControlBufferTXFreeList);

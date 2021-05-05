@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -20,9 +20,6 @@
 #include "htc_internal.h"
 #include "htc_credit_history.h"
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
-
-/* HTC Control message receive timeout msec */
-#define HTC_CONTROL_RX_TIMEOUT     6000
 
 #if defined(WLAN_DEBUG) || defined(DEBUG)
 void debug_dump_bytes(uint8_t *buffer, uint16_t length, char *pDescription)
@@ -433,7 +430,6 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 				/* Requester will clear this flag */
 				target->CtrlResponseProcessing = true;
 				UNLOCK_HTC_RX(target);
-
 				qdf_event_set(&target->ctrl_response_valid);
 				break;
 #ifdef HTC_MSG_WAKEUP_FROM_SUSPEND_ID
@@ -619,7 +615,7 @@ QDF_STATUS htc_wait_recv_ctrl_message(HTC_TARGET *target)
 
 	/* Wait for BMI request/response transaction to complete */
 	if (qdf_wait_single_event(&target->ctrl_response_valid,
-				  HTC_CONTROL_RX_TIMEOUT)) {
+				  (target->HTCInitInfo.htc_ready_timeout_ms))) {
 		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 			("Failed to receive control message\n"));
 		return QDF_STATUS_E_FAILURE;
