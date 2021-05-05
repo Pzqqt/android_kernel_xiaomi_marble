@@ -2690,6 +2690,8 @@ int ipa3_put_hdr(u32 hdr_hdl);
 
 int ipa3_copy_hdr(struct ipa_ioc_copy_hdr *copy);
 
+u32 ipa3_get_hdr_bin_size(int index);
+
 /*
  * Header Processing Context
  */

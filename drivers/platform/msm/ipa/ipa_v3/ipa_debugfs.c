@@ -610,6 +610,8 @@ static ssize_t ipa3_read_hdr(struct file *file, char __user *ubuf, size_t count,
 	int i = 0;
 	struct ipa3_hdr_entry *entry;
 	enum hdr_tbl_storage hdr_tbl;
+	struct ipa_hdr_offset_entry *offset_entry;
+	unsigned int offset_count;
 
 	mutex_lock(&ipa3_ctx->lock);
 
@@ -618,6 +620,38 @@ static ssize_t ipa3_read_hdr(struct file *file, char __user *ubuf, size_t count,
 			pr_err("Table on local memory:\n");
 		else
 			pr_err("Table on system (ddr) memory:\n");
+
+		nbytes = scnprintf(dbg_buff, IPA_MAX_MSG_LEN, "Used offsets: ");
+		for (i = 0; i < IPA_HDR_BIN_MAX; i++){
+			offset_count = 0;
+			list_for_each_entry(offset_entry,
+					    &ipa3_ctx->hdr_tbl[hdr_tbl].head_offset_list[i],
+					    link)
+				offset_count++;
+			if (offset_count)
+				nbytes += scnprintf(dbg_buff + nbytes,
+						    IPA_MAX_MSG_LEN - nbytes,
+						    "%u * %u bytes, ",
+						    offset_count,
+						    ipa3_get_hdr_bin_size(i));
+		}
+		pr_err("%s", dbg_buff);
+
+		nbytes = scnprintf(dbg_buff, IPA_MAX_MSG_LEN, "Free offsets: ");
+		for (i = 0; i < IPA_HDR_BIN_MAX; i++){
+			offset_count = 0;
+			list_for_each_entry(offset_entry,
+					    &ipa3_ctx->hdr_tbl[hdr_tbl].head_free_offset_list[i],
+					    link)
+				offset_count++;
+			if (offset_count)
+				nbytes += scnprintf(dbg_buff + nbytes,
+						    IPA_MAX_MSG_LEN - nbytes,
+						    "%u * %u bytes, ",
+						    offset_count,
+						    ipa3_get_hdr_bin_size(i));
+		}
+		pr_err("%s", dbg_buff);
 
 		list_for_each_entry(entry, &ipa3_ctx->hdr_tbl[hdr_tbl].head_hdr_entry_list,
 				link) {
