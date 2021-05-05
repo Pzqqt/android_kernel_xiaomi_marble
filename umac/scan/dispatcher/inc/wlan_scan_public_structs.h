@@ -462,6 +462,38 @@ struct reduced_neighbor_report {
 #define SCAN_SECURITY_TYPE_WAPI 0x04
 #define SCAN_SECURITY_TYPE_RSN 0x08
 
+#ifdef WLAN_FEATURE_11BE_MLO
+#define MLD_MAX_LINKS 3
+
+/**
+ * struct partner_link_info: Partner link information of an ML
+ * @link_addr: BSSID of the link
+ * @freq: center frequency in MHz
+ * @cfreq2: center frequency of the secondary channel in MHz
+ * @link_id: Link id advertised by the AP
+ */
+struct partner_link_info {
+	struct qdf_mac_addr link_addr;
+	uint16_t freq;
+	uint16_t cfreq2;
+	uint8_t link_id;
+};
+
+/**
+ * struct ml_info: Multi link formation of a 11be beacon
+ * @mld_mac_addr: MLD mac address
+ * @num_links: Number of links supported by ML AP
+ * @link_info: Array containing partner links information
+ * @ml_bss_score: Multi link BSS score
+ */
+struct ml_info {
+	struct qdf_mac_addr mld_mac_addr;
+	uint8_t num_links;
+	struct partner_link_info link_info[MLD_MAX_LINKS - 1];
+	uint16_t ml_bss_score;
+};
+#endif
+
 /**
  * struct scan_cache_entry: structure containing scan entry
  * @frm_subtype: updated from beacon/probe
@@ -506,6 +538,7 @@ struct reduced_neighbor_report {
  * @ie_list: IE list pointers
  * @raw_frame: contain raw frame and the length of the raw frame
  * @pdev_id: pdev id
+ * @ml_info: Multi link information
  */
 struct scan_cache_entry {
 	uint8_t frm_subtype;
@@ -556,6 +589,9 @@ struct scan_cache_entry {
 	 * channel as regulatory apis requires pdev as argument
 	 */
 	uint8_t pdev_id;
+#ifdef WLAN_FEATURE_11BE_MLO
+	struct ml_info *ml_info;
+#endif
 };
 
 #define MAX_FAVORED_BSSID 16
