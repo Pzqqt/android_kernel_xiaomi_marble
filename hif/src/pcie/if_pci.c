@@ -3407,7 +3407,6 @@ static bool hif_is_pld_based_target(struct hif_pci_softc *sc,
 	case AR6320_DEVICE_ID:
 	case QCN7605_DEVICE_ID:
 	case WCN7850_DEVICE_ID:
-	case WCN7850_EMULATION_DEVICE_ID:
 		return true;
 	}
 	return false;

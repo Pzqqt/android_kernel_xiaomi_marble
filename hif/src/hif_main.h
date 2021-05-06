@@ -102,7 +102,6 @@
 #define QCA6750_DEVICE_ID (0x1105)
 
 /* TODO: change IDs for Hamilton */
-#define WCN7850_EMULATION_DEVICE_ID (0xfffa)
 #define WCN7850_DEVICE_ID (0x1107)
 
 #define ADRASTEA_DEVICE_ID_P2_E12 (0x7021)

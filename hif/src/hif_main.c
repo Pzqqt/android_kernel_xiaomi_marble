@@ -1531,7 +1531,6 @@ int hif_get_device_type(uint32_t device_id,
 		break;
 
 	case WCN7850_DEVICE_ID:
-	case WCN7850_EMULATION_DEVICE_ID:
 		*hif_type = HIF_TYPE_WCN7850;
 		*target_type = TARGET_TYPE_WCN7850;
 		hif_info(" *********** WCN7850 *************");
