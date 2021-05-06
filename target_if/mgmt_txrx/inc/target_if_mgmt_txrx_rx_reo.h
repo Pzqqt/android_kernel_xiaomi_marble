@@ -21,6 +21,10 @@
 
 #ifndef _TARGET_IF_MGMT_TXRX_RX_REO_H_
 #define _TARGET_IF_MGMT_TXRX_RX_REO_H_
+
+#include <qdf_types.h>
+#include <wlan_objmgr_psoc_obj.h>
+
 #ifdef WLAN_MGMT_RX_REO_SUPPORT
 /**
  * target_if_mgmt_rx_reo_register_event_handlers() - Register management

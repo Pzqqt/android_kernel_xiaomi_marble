@@ -219,6 +219,8 @@ struct wlan_target_if_dcs_rx_ops {
  * @fd_action_frame_send: function pointer to transmit FD action frame
  * @tx_drain_nbuf_op: function pointer for any umac nbuf realted ops for
  *                    pending mgmt frames cleanup
+ * @reg_ev_handler: function pointer to register event handlers
+ * @unreg_ev_handler: function pointer to unregister event handlers
  */
 struct wlan_lmac_if_mgmt_txrx_tx_ops {
 	QDF_STATUS (*mgmt_tx_send)(struct wlan_objmgr_vdev *vdev,
@@ -230,6 +232,8 @@ struct wlan_lmac_if_mgmt_txrx_tx_ops {
 					   qdf_nbuf_t nbuf);
 	void (*tx_drain_nbuf_op)(struct wlan_objmgr_pdev *pdev,
 				 qdf_nbuf_t nbuf);
+	QDF_STATUS (*reg_ev_handler)(struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*unreg_ev_handler)(struct wlan_objmgr_psoc *psoc);
 };
 
 /**
