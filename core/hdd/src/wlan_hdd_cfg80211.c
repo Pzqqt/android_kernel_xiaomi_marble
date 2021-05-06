@@ -24059,8 +24059,8 @@ __wlan_hdd_cfg80211_update_connect_params(struct wiphy *wiphy,
 		 * umac. RSO command will pick up the assoc
 		 * IEs to be sent to firmware from the umac.
 		 */
-		sme_update_session_assoc_ie(mac_handle, adapter->vdev_id,
-					    &assoc_ie);
+		ucfg_cm_update_session_assoc_ie(hdd_ctx->psoc, adapter->vdev_id,
+						&assoc_ie);
 	}
 
 	if ((changed & UPDATE_FILS_ERP_INFO) ||

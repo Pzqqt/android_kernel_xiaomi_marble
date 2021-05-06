@@ -12283,9 +12283,36 @@ QDF_STATUS csr_cm_update_fils_info(struct wlan_objmgr_vdev *vdev,
 }
 #endif
 
-QDF_STATUS cm_csr_handle_connect_req(struct wlan_objmgr_vdev *vdev,
-				     struct wlan_cm_vdev_connect_req *req,
-				     struct cm_vdev_join_req *join_req)
+#if defined(WLAN_FEATURE_HOST_ROAM) && defined(FEATURE_WLAN_ESE)
+static void csr_update_tspec_info(struct mac_context *mac_ctx,
+				  struct wlan_objmgr_vdev *vdev,
+				  tDot11fBeaconIEs *ie_struct)
+{
+	struct mlme_legacy_priv *mlme_priv;
+	tESETspecInfo *ese_tspec;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv)
+		return;
+	if (!cm_is_ese_connection(vdev, ie_struct->ESEVersion.present))
+		return;
+
+	ese_tspec = &mlme_priv->connect_info.ese_tspec_info;
+	qdf_mem_zero(ese_tspec, sizeof(tESETspecInfo));
+	ese_tspec->numTspecs = sme_qos_ese_retrieve_tspec_info(mac_ctx,
+					wlan_vdev_get_id(vdev),
+					ese_tspec->tspec);
+}
+#else
+static inline void csr_update_tspec_info(struct mac_context *mac_ctx,
+					 struct wlan_objmgr_vdev *vdev,
+					 tDot11fBeaconIEs *ie_struct) {}
+#endif
+
+QDF_STATUS cm_csr_handle_join_req(struct wlan_objmgr_vdev *vdev,
+				  struct wlan_cm_vdev_connect_req *req,
+				  struct cm_vdev_join_req *join_req,
+				  bool reassoc)
 {
 	struct mac_context *mac_ctx;
 	uint8_t vdev_id = wlan_vdev_get_id(vdev);
@@ -12325,12 +12352,20 @@ QDF_STATUS cm_csr_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 		qdf_mem_free(bss_desc);
 		return QDF_STATUS_E_FAILURE;
 	}
-	status = csr_cm_update_fils_info(vdev, bss_desc, req);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		sme_err("failed to update fils info vdev id %d", vdev_id);
-		qdf_mem_free(ie_struct);
-		qdf_mem_free(bss_desc);
-		return QDF_STATUS_E_FAILURE;
+
+	if (reassoc) {
+		csr_update_tspec_info(mac_ctx, vdev, ie_struct);
+	} else {
+		status = csr_cm_update_fils_info(vdev, bss_desc, req);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			sme_err("failed to update fils info vdev id %d",
+				vdev_id);
+			qdf_mem_free(ie_struct);
+			qdf_mem_free(bss_desc);
+			return QDF_STATUS_E_FAILURE;
+		}
+		sme_qos_csr_event_ind(mac_ctx, vdev_id,
+				      SME_QOS_CSR_JOIN_REQ, NULL);
 	}
 
 	csr_set_qos_to_cfg(mac_ctx, vdev_id,
@@ -12447,6 +12482,23 @@ static inline void csr_qos_send_assoc_ind(struct mac_context *mac_ctx,
 			      assoc_info);
 }
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+static void
+csr_qso_disconnect_complete_ind(struct mac_context *mac_ctx,
+				struct wlan_cm_connect_resp *connect_rsp)
+{
+	if (IS_ROAM_REASON_DISCONNECTION(
+		connect_rsp->roaming_info->roam_reason))
+		sme_qos_csr_event_ind(mac_ctx, connect_rsp->vdev_id,
+				      SME_QOS_CSR_DISCONNECT_ROAM_COMPLETE,
+				      NULL);
+}
+#else
+static inline void
+csr_qso_disconnect_complete_ind(struct mac_context *mac_ctx,
+				struct wlan_cm_connect_resp *connect_rsp) {}
+#endif
+
 static void
 csr_qos_send_reassoc_ind(struct mac_context *mac_ctx,
 			 uint8_t vdev_id,
@@ -12462,11 +12514,7 @@ csr_qos_send_reassoc_ind(struct mac_context *mac_ctx,
 	sme_qos_csr_event_ind(mac_ctx, vdev_id, SME_QOS_CSR_REASSOC_COMPLETE,
 			      assoc_info);
 
-	if (IS_ROAM_REASON_DISCONNECTION(
-		connect_rsp->roaming_info->roam_reason))
-		sme_qos_csr_event_ind(mac_ctx, vdev_id,
-				      SME_QOS_CSR_DISCONNECT_ROAM_COMPLETE,
-				      NULL);
+	csr_qso_disconnect_complete_ind(mac_ctx, connect_rsp);
 }
 #else
 static inline void csr_qos_send_disconnect_ind(struct mac_context *mac_ctx,
@@ -13076,7 +13124,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			break;
 
-		csr_join_req->messageType = messageType;
 		csr_join_req->length = msgLen;
 		csr_join_req->vdev_id = (uint8_t) sessionId;
 		if (pIes->SSID.present &&

@@ -255,6 +255,40 @@ end:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 }
 
+int8_t cm_get_rssi_by_bssid(struct wlan_objmgr_pdev *pdev,
+			    struct qdf_mac_addr *bssid)
+{
+	struct scan_filter *scan_filter;
+	int8_t rssi = 0;
+	qdf_list_t *list = NULL;
+	struct scan_cache_node *first_node = NULL;
+
+	scan_filter = qdf_mem_malloc(sizeof(*scan_filter));
+	if (!scan_filter)
+		return rssi;
+
+	scan_filter->num_of_bssid = 1;
+	qdf_mem_copy(scan_filter->bssid_list[0].bytes,
+		     bssid, sizeof(struct qdf_mac_addr));
+	scan_filter->ignore_auth_enc_type = true;
+	list = wlan_scan_get_result(pdev, scan_filter);
+	qdf_mem_free(scan_filter);
+
+	if (!list || (list && !qdf_list_size(list))) {
+		mlme_debug("scan list empty");
+		goto error;
+	}
+
+	qdf_list_peek_front(list, (qdf_list_node_t **) &first_node);
+	if (first_node && first_node->entry)
+		rssi = first_node->entry->rssi_raw;
+error:
+	if (list)
+		wlan_scan_purge_results(list);
+
+	return rssi;
+}
+
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 static const char *cm_diag_get_ch_width_str(uint8_t ch_width)
 {
@@ -605,40 +639,6 @@ static void cm_diag_get_auth_type(uint8_t *auth_type,
 	}
 
 	*auth_type = AUTH_OPEN;
-}
-
-int8_t cm_get_rssi_by_bssid(struct wlan_objmgr_pdev *pdev,
-			    struct qdf_mac_addr *bssid)
-{
-	struct scan_filter *scan_filter;
-	int8_t rssi = 0;
-	qdf_list_t *list = NULL;
-	struct scan_cache_node *first_node = NULL;
-
-	scan_filter = qdf_mem_malloc(sizeof(*scan_filter));
-	if (!scan_filter)
-		return rssi;
-
-	scan_filter->num_of_bssid = 1;
-	qdf_mem_copy(scan_filter->bssid_list[0].bytes,
-		     bssid, sizeof(struct qdf_mac_addr));
-	scan_filter->ignore_auth_enc_type = true;
-	list = wlan_scan_get_result(pdev, scan_filter);
-	qdf_mem_free(scan_filter);
-
-	if (!list || (list && !qdf_list_size(list))) {
-		mlme_debug("scan list empty");
-		goto error;
-	}
-
-	qdf_list_peek_front(list, (qdf_list_node_t **) &first_node);
-	if (first_node && first_node->entry)
-		rssi = first_node->entry->rssi_raw;
-error:
-	if (list)
-		wlan_scan_purge_results(list);
-
-	return rssi;
 }
 
 static void
@@ -1169,7 +1169,7 @@ cm_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 
 	cm_update_hlp_data_from_assoc_ie(vdev, req);
 
-	status = cm_csr_handle_connect_req(vdev, req, join_req);
+	status = cm_csr_handle_join_req(vdev, req, join_req, false);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		mlme_err(CM_PREFIX_FMT "fail to fill params from legacy",
 			 CM_PREFIX_REF(req->vdev_id, req->cm_id));
@@ -1205,6 +1205,101 @@ cm_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 
 	return status;
 }
+
+#ifdef WLAN_FEATURE_HOST_ROAM
+QDF_STATUS
+cm_handle_reassoc_req(struct wlan_objmgr_vdev *vdev,
+		      struct wlan_cm_vdev_reassoc_req *req)
+{
+	struct cm_vdev_join_req *join_req;
+	struct scheduler_msg msg;
+	QDF_STATUS status;
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_objmgr_psoc *psoc;
+	struct rso_config *rso_cfg;
+
+	if (!vdev || !req)
+		return QDF_STATUS_E_FAILURE;
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		mlme_err(CM_PREFIX_FMT "pdev not found",
+			 CM_PREFIX_REF(req->vdev_id, req->cm_id));
+		return QDF_STATUS_E_INVAL;
+	}
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		mlme_err(CM_PREFIX_FMT "psoc not found",
+			 CM_PREFIX_REF(req->vdev_id, req->cm_id));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg)
+		return QDF_STATUS_E_NOSUPPORT;
+
+	qdf_mem_zero(&msg, sizeof(msg));
+	join_req = qdf_mem_malloc(sizeof(*join_req));
+	if (!join_req)
+		return QDF_STATUS_E_NOMEM;
+
+	wlan_cm_set_disable_hi_rssi(pdev, req->vdev_id, true);
+	mlme_debug(CM_PREFIX_FMT "Disabling HI_RSSI, AP freq=%d, rssi=%d",
+		   CM_PREFIX_REF(req->vdev_id, req->cm_id),
+		   req->bss->entry->channel.chan_freq,
+		   req->bss->entry->rssi_raw);
+
+	if (rso_cfg->assoc_ie.ptr) {
+		join_req->assoc_ie.ptr = qdf_mem_malloc(rso_cfg->assoc_ie.len);
+		if (!join_req->assoc_ie.ptr)
+			return QDF_STATUS_E_NOMEM;
+		qdf_mem_copy(join_req->assoc_ie.ptr, rso_cfg->assoc_ie.ptr,
+			     rso_cfg->assoc_ie.len);
+		join_req->assoc_ie.len = rso_cfg->assoc_ie.len;
+	}
+
+	join_req->entry = util_scan_copy_cache_entry(req->bss->entry);
+	if (!join_req->entry) {
+		mlme_err(CM_PREFIX_FMT "Failed to copy scan entry",
+			 CM_PREFIX_REF(req->vdev_id, req->cm_id));
+		cm_free_join_req(join_req);
+		return QDF_STATUS_E_NOMEM;
+	}
+	join_req->vdev_id = req->vdev_id;
+	join_req->cm_id = req->cm_id;
+
+	status = cm_csr_handle_join_req(vdev, NULL, join_req, true);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err(CM_PREFIX_FMT "fail to fill params from legacy",
+			 CM_PREFIX_REF(req->vdev_id, req->cm_id));
+		cm_free_join_req(join_req);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	wlan_rec_conn_info(req->vdev_id, DEBUG_CONN_CONNECTING,
+			   req->bss->entry->bssid.bytes,
+			   req->bss->entry->neg_sec_info.key_mgmt,
+			   req->bss->entry->channel.chan_freq);
+
+	msg.bodyptr = join_req;
+	msg.type = CM_REASSOC_REQ;
+	msg.flush_callback = cm_flush_join_req;
+
+	status = scheduler_post_message(QDF_MODULE_ID_MLME,
+					QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_PE, &msg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err(CM_PREFIX_FMT "msg post fail",
+			 CM_PREFIX_REF(req->vdev_id, req->cm_id));
+		cm_free_join_req(join_req);
+	}
+
+	if (wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE)
+		wlan_register_txrx_packetdump(OL_TXRX_PDEV_ID);
+
+	return status;
+}
+#endif
 
 QDF_STATUS
 cm_send_bss_peer_create_req(struct wlan_objmgr_vdev *vdev,

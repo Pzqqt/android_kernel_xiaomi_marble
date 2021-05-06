@@ -1894,18 +1894,15 @@ populate_dot11f_supp_channels(struct mac_context *mac,
 {
 	uint8_t i;
 	uint8_t *p;
+	struct supported_channels supportedChannels;
 
-	if (nAssocType == LIM_REASSOC) {
-		p = (uint8_t *) pe_session->pLimReAssocReq->
-		    supportedChannels.channelList;
-		pDot11f->num_bands =
-			pe_session->pLimReAssocReq->supportedChannels.numChnl;
-	} else {
-		p = (uint8_t *)pe_session->lim_join_req->supportedChannels.
-		    channelList;
-		pDot11f->num_bands =
-			pe_session->lim_join_req->supportedChannels.numChnl;
-	}
+	wlan_add_supported_5Ghz_channels(mac->psoc, mac->pdev,
+					 supportedChannels.channelList,
+					 &supportedChannels.numChnl,
+					 false);
+	p = supportedChannels.channelList;
+	pDot11f->num_bands = supportedChannels.numChnl;
+
 	for (i = 0U; i < pDot11f->num_bands; ++i, ++p) {
 		pDot11f->bands[i][0] = *p;
 		pDot11f->bands[i][1] = 1;
@@ -2145,15 +2142,27 @@ void populate_dot11f_wmm_caps(tDot11fIEWMMCaps *pCaps)
 } /* End PopulateDot11fWmmCaps. */
 
 #ifdef FEATURE_WLAN_ESE
+#ifdef WLAN_FEATURE_HOST_ROAM
 void populate_dot11f_re_assoc_tspec(struct mac_context *mac,
 				    tDot11fReAssocRequest *pReassoc,
 				    struct pe_session *pe_session)
 {
 	uint8_t numTspecs = 0, idx;
 	tTspecInfo *pTspec = NULL;
+#ifdef FEATURE_CM_ENABLE
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(pe_session->vdev);
+	if (!mlme_priv)
+		return;
+
+	numTspecs = mlme_priv->connect_info.ese_tspec_info.numTspecs;
+	pTspec = &mlme_priv->connect_info.ese_tspec_info.tspec[0];
+#else
 
 	numTspecs = pe_session->pLimReAssocReq->eseTspecInfo.numTspecs;
 	pTspec = &pe_session->pLimReAssocReq->eseTspecInfo.tspec[0];
+#endif
 	pReassoc->num_WMMTSPEC = numTspecs;
 	if (numTspecs) {
 		for (idx = 0; idx < numTspecs; idx++) {
@@ -2164,7 +2173,7 @@ void populate_dot11f_re_assoc_tspec(struct mac_context *mac,
 		}
 	}
 }
-
+#endif
 void ese_populate_wmm_tspec(struct mac_tspec_ie *source,
 			    ese_wmm_tspec_ie *dest)
 {

@@ -942,9 +942,11 @@ void populate_dot11_tsrsie(struct mac_context *mac,
 			struct ese_tsrs_ie *pOld,
 			tDot11fIEESETrafStrmRateSet *pDot11f,
 			uint8_t rate_length);
+#ifdef WLAN_FEATURE_HOST_ROAM
 void populate_dot11f_re_assoc_tspec(struct mac_context *mac,
 				tDot11fReAssocRequest *pReassoc,
 				struct pe_session *pe_session);
+#endif
 QDF_STATUS
 sir_beacon_ie_ese_bcn_report(struct mac_context *mac,
 		uint8_t *pPayload, const uint32_t payloadLength,

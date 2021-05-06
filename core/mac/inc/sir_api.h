@@ -1029,32 +1029,27 @@ typedef struct sEsePEContext {
 
 #endif /* FEATURE_WLAN_ESE */
 
-/* / Definition for join request */
-/* / ---> MAC */
+/* Warning Do not add any new param in this struct */
 struct join_req {
-	uint16_t messageType;   /* eWNI_SME_JOIN_REQ */
-	uint16_t length;
-	uint8_t vdev_id;
-	tSirMacSSid ssId;
-	tSirRSNie rsnIE;        /* RSN IE to be sent in */
-	tSirAddie addIEScan;    /* Additional IE to be sent in */
-	/* (unicast) Probe Request at the time of join */
-
-	tSirAddie addIEAssoc;   /* Additional IE to be sent in */
-	/* (Re) Association Request */
 #ifndef FEATURE_CM_ENABLE
+	uint8_t vdev_id;
+	/* (Re) Association Request */
+	uint16_t length;
+	tSirMacSSid ssId;
 	tAniEdType UCEncryptionType;
 	enum ani_akm_type akm;
 	bool wps_registration;
 	bool isOSENConnection;
 	bool force_24ghz_in_ht20;
-#endif
-
 #ifdef FEATURE_WLAN_ESE
 	tESETspecInfo eseTspecInfo;
 #endif
-	struct supported_channels supportedChannels;
 	bool force_rsne_override;
+#endif /* FEATURE_CM_ENABLE */
+	tSirRSNie rsnIE;
+	tSirAddie addIEScan;
+	tSirAddie addIEAssoc;
+	/* Warning:::::::::::: Do not add any new param in this struct */
 	/* Pls make this as last variable in struct */
 	struct bss_description bssDescription;
 	/*

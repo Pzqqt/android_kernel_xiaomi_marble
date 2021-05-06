@@ -2851,21 +2851,6 @@ void sme_send_hlp_ie_info(mac_handle_t mac_handle, uint8_t vdev_id,
 			  uint32_t if_addr);
 
 /**
- * sme_update_session_assoc_ie() - Updates the assoc IEs to csr_roam_session
- * @mac_handle: Opaque handle to the global MAC context
- * @vdev_id: vdev id
- * @assoc_ie: assoc ie
- *
- * This API is used to copy the assoc IE sent from user space to
- * csr_roam_session
- *
- * Return: None
- */
-void sme_update_session_assoc_ie(mac_handle_t mac_handle,
-				 uint8_t vdev_id,
-				 struct element_info *assoc_ie);
-
-/**
  * sme_send_rso_connect_params() - Updates the assoc IEs to csr_roam_session
  * @mac_handle: Opaque handle to the global MAC context
  * @vdev_id: vdev id

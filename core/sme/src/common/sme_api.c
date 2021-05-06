@@ -5963,43 +5963,6 @@ QDF_STATUS sme_update_roam_rssi_diff(mac_handle_t mac_handle, uint8_t vdev_id,
 					  ROAM_RSSI_DIFF, &src_config);
 }
 
-void sme_update_session_assoc_ie(mac_handle_t mac_handle,
-				 uint8_t vdev_id,
-				 struct element_info *assoc_ie)
-{
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	struct rso_config *rso_cfg;
-	struct wlan_objmgr_vdev *vdev;
-
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, vdev_id,
-						    WLAN_MLME_CM_ID);
-	if (!vdev) {
-		mlme_err("vdev object is NULL for vdev %d", vdev_id);
-		return;
-	}
-	rso_cfg = wlan_cm_get_rso_config(vdev);
-	if (!rso_cfg)
-		goto rel_vdev_ref;
-
-	if (rso_cfg->assoc_ie.ptr) {
-		qdf_mem_free(rso_cfg->assoc_ie.ptr);
-		rso_cfg->assoc_ie.ptr = NULL;
-		rso_cfg->assoc_ie.len = 0;
-	}
-	if (!assoc_ie->len) {
-		sme_debug("Assoc IE len 0");
-		goto rel_vdev_ref;
-	}
-	rso_cfg->assoc_ie.ptr = qdf_mem_malloc(assoc_ie->len);
-	if (!rso_cfg->assoc_ie.ptr)
-		goto rel_vdev_ref;
-
-	rso_cfg->assoc_ie.len = assoc_ie->len;
-	qdf_mem_copy(rso_cfg->assoc_ie.ptr, assoc_ie->ptr, assoc_ie->len);
-rel_vdev_ref:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
-}
-
 QDF_STATUS sme_send_rso_connect_params(mac_handle_t mac_handle,
 				       uint8_t vdev_id,
 				       struct csr_roam_profile *src_profile)

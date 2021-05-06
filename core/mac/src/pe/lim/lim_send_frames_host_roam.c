@@ -266,8 +266,12 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 			else
 				rate = TSRS_11B_RATE_5_5MBPS;
 
-			if (pe_session->pLimReAssocReq->eseTspecInfo.
-			    numTspecs) {
+#ifdef FEATURE_CM_ENABLE
+			if (mlme_priv->connect_info.ese_tspec_info.numTspecs)
+#else
+			if (pe_session->pLimReAssocReq->eseTspecInfo.numTspecs)
+#endif
+			{
 				struct ese_tsrs_ie tsrs_ie;
 
 				tsrs_ie.tsid = 0;

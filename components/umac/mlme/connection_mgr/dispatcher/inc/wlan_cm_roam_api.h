@@ -599,6 +599,28 @@ bool wlan_cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
 	return cm_is_auth_type_11r(mlme_obj, vdev, mdie_present);
 }
 
+#ifdef FEATURE_WLAN_ESE
+bool
+cm_ese_open_present(struct wlan_objmgr_vdev *vdev,
+		    struct wlan_mlme_psoc_ext_obj *mlme_obj,
+		    bool ese_version_present);
+bool
+cm_is_ese_connection(struct wlan_objmgr_vdev *vdev, bool ese_version_present);
+#else
+static inline bool
+cm_ese_open_present(struct wlan_objmgr_vdev *vdev,
+		    struct wlan_mlme_psoc_ext_obj *mlme_obj,
+		    bool ese_version_present)
+{
+	return false;
+}
+static inline bool
+cm_is_ese_connection(struct wlan_objmgr_vdev *vdev, bool ese_version_present)
+{
+	return false;
+}
+#endif
+
 /**
  * cm_roam_start_init_on_connect() - init roaming
  * @pdev: pdev pointer
@@ -608,6 +630,10 @@ bool wlan_cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
  */
 void cm_roam_start_init_on_connect(struct wlan_objmgr_pdev *pdev,
 				   uint8_t vdev_id);
+
+void cm_update_session_assoc_ie(struct wlan_objmgr_psoc *psoc,
+				uint8_t vdev_id,
+				struct element_info *assoc_ie);
 #ifdef FEATURE_CM_ENABLE
 /**
  * wlan_cm_roam_invoke() - Validate and send Roam invoke req to CM
