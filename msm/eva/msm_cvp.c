@@ -292,10 +292,17 @@ static int cvp_readjust_clock(struct msm_cvp_core *core,
 	unsigned long lo_freq = 0;
 	u32 j;
 
-	dprintk(CVP_PWR,
-		"%s:%d - %d - avg_cycles %u > hi_tresh %u\n",
-		__func__, __LINE__, i, avg_cycles,
-		core->dyn_clk.hi_ctrl_lim[i]);
+	tbl = core->resources.allowed_clks_tbl;
+	tbl_size = core->resources.allowed_clks_tbl_size;
+	cvp_min_rate = tbl[0].clock_rate;
+	cvp_max_rate = tbl[tbl_size - 1].clock_rate;
+
+	if (!((avg_cycles > core->dyn_clk.hi_ctrl_lim[i] &&
+			 core->curr_freq != cvp_max_rate) ||
+			(avg_cycles <= core->dyn_clk.lo_ctrl_lim[i] &&
+			 core->curr_freq != cvp_min_rate))) {
+		return rc;
+	}
 
 	core->curr_freq = ((avg_cycles * core->dyn_clk.sum_fps[i]) << 1)/3;
 	dprintk(CVP_PWR,
@@ -305,11 +312,6 @@ static int cvp_readjust_clock(struct msm_cvp_core *core,
 		avg_cycles,
 		core->dyn_clk.sum_fps[i],
 		core->curr_freq);
-
-	tbl = core->resources.allowed_clks_tbl;
-	tbl_size = core->resources.allowed_clks_tbl_size;
-	cvp_min_rate = tbl[0].clock_rate;
-	cvp_max_rate = tbl[tbl_size - 1].clock_rate;
 
 	if (core->curr_freq > cvp_max_rate) {
 		core->curr_freq = cvp_max_rate;
@@ -426,13 +428,10 @@ static int cvp_check_clock(struct msm_cvp_inst *inst,
 				&& core->dyn_clk.hi_ctrl_lim[i] != 0) {
 				u32 avg_cycles =
 					core->dyn_clk.cycle[i].total>>3;
-				if ((avg_cycles > core->dyn_clk.hi_ctrl_lim[i])
-					|| (avg_cycles <=
-					 core->dyn_clk.lo_ctrl_lim[i])) {
-					rc = cvp_readjust_clock(core,
-								avg_cycles,
-								i);
-				}
+
+				rc = cvp_readjust_clock(core,
+							avg_cycles,
+							i);
 			}
 		}
 	}
@@ -481,8 +480,9 @@ static int cvp_fence_proc(struct msm_cvp_inst *inst,
 				(struct eva_kmd_hfi_packet *)&hdr);
 
 	/* Only FD support dcvs at certain FW */
-	if (hdr.size == sizeof(struct cvp_hfi_msg_session_hdr_ext)
-			+ sizeof(struct cvp_hfi_buf_type) ) {
+	if (!msm_cvp_dcvs_disable &&
+		(hdr.size == sizeof(struct cvp_hfi_msg_session_hdr_ext)
+			+ sizeof(struct cvp_hfi_buf_type))) {
 		struct cvp_hfi_msg_session_hdr_ext *fhdr =
 			(struct cvp_hfi_msg_session_hdr_ext *)&hdr;
 		struct msm_cvp_core *core = inst->core;
@@ -664,7 +664,8 @@ static int msm_cvp_session_process_hfi_fence(struct msm_cvp_inst *inst,
 	pkt = (struct cvp_hfi_cmd_session_hdr *)&fence_pkt->pkt_data;
 	idx = get_pkt_index((struct cvp_hal_session_cmd_pkt *)pkt);
 
-	if (idx < 0 || (pkt->size > MAX_HFI_FENCE_OFFSET * sizeof(unsigned int))) {
+	if (idx < 0 ||
+		(pkt->size > MAX_HFI_FENCE_OFFSET * sizeof(unsigned int))) {
 		dprintk(CVP_ERR, "%s incorrect packet %d %#x\n", __func__,
 				pkt->size, pkt->packet_type);
 		goto exit;
