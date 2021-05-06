@@ -492,6 +492,12 @@ int ipa3_send(struct ipa3_sys_context *sys,
 
 	spin_lock_bh(&sys->spinlock);
 
+	if (unlikely(atomic_read(&sys->ep->disconnect_in_progress))) {
+		IPAERR("Pipe disconnect in progress dropping the packet\n");
+		spin_unlock_bh(&sys->spinlock);
+		return -EFAULT;
+	}
+
 	for (i = 0; i < num_desc; i++) {
 		if (!list_empty(&sys->avail_tx_wrapper_list)) {
 			tx_pkt = list_first_entry(&sys->avail_tx_wrapper_list,
@@ -1592,6 +1598,7 @@ int ipa3_teardown_sys_pipe(u32 clnt_hdl)
 	if (IPA_CLIENT_IS_PROD(ep->client)) {
 		do {
 			spin_lock_bh(&ep->sys->spinlock);
+			atomic_set(&ep->disconnect_in_progress, 1);
 			empty = list_empty(&ep->sys->head_desc_list);
 			spin_unlock_bh(&ep->sys->spinlock);
 			if (!empty)
