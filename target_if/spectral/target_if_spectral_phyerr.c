@@ -772,6 +772,237 @@ target_if_spectral_log_SAMP_param(struct target_if_samp_msg_params *params)
 }
 #endif
 
+#ifdef OPTIMIZED_SAMP_MESSAGE
+/**
+ * target_if_populate_fft_bins_info() - Populate the start and end bin
+ * indices, on per-detector level.
+ * @spectral: Pointer to target_if spectral internal structure
+ * @smode: Spectral scan mode
+ *
+ * Populate the start and end bin indices, on per-detector level.
+ *
+ * Return: Success/Failure
+ */
+static QDF_STATUS
+target_if_populate_fft_bins_info(struct target_if_spectral *spectral,
+				 enum spectral_scan_mode smode)
+{
+	struct per_session_det_map *det_map;
+	struct per_session_dest_det_info *dest_det_info;
+	enum phy_ch_width ch_width;
+	struct sscan_detector_list *detector_list;
+	bool is_fragmentation_160;
+	uint8_t spectral_fft_size;
+	uint8_t rpt_mode;
+	uint32_t num_fft_bins;
+	uint16_t start_bin;
+	uint8_t det;
+
+	if (!spectral) {
+		spectral_err_rl("Spectral LMAC object is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	if (smode >= SPECTRAL_SCAN_MODE_MAX) {
+		spectral_err_rl("Invalid Spectral mode");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ch_width = spectral->report_info[smode].sscan_bw;
+	is_fragmentation_160 = spectral->rparams.fragmentation_160[smode];
+	spectral_fft_size = spectral->params[smode].ss_fft_size;
+	rpt_mode = spectral->params[smode].ss_rpt_mode;
+	num_fft_bins =
+		target_if_spectral_get_num_fft_bins(spectral_fft_size,
+						    rpt_mode);
+	if (num_fft_bins < 0) {
+		spectral_err_rl("Invalid number of FFT bins %d",
+				num_fft_bins);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	detector_list = &spectral->detector_list[smode][ch_width];
+
+	for (det = 0; det < detector_list->num_detectors; det++) {
+		det_map = &spectral->det_map
+				[detector_list->detectors[det]];
+		dest_det_info = &det_map->dest_det_info[0];
+		switch (det) {
+		case 0:
+			if (ch_width == CH_WIDTH_160MHZ &&
+			    is_fragmentation_160 &&
+			    spectral->report_info[smode].sscan_cfreq1 >
+			    spectral->report_info[smode].sscan_cfreq2)
+				start_bin = num_fft_bins;
+			else
+				start_bin = 0;
+			break;
+		case 1:
+			if (ch_width == CH_WIDTH_160MHZ &&
+			    is_fragmentation_160 &&
+			    spectral->report_info[smode].sscan_cfreq1 >
+			    spectral->report_info[smode].sscan_cfreq2)
+				start_bin = 0;
+			else
+				start_bin = num_fft_bins;
+			break;
+		default:
+			return QDF_STATUS_E_FAILURE;
+		}
+		dest_det_info->dest_start_bin_idx = start_bin;
+		dest_det_info->dest_end_bin_idx =
+				dest_det_info->dest_start_bin_idx +
+				num_fft_bins - 1;
+		dest_det_info->src_start_bin_idx = 0;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * target_if_update_session_info_from_report_ctx() - Update per-session
+ * information from the consume report context. This includes populating start
+ * and end bin indices, and set the start and end frequency per-detector.
+ * @spectral: Pointer to target_if spectral internal structure
+ * @fft_bin_size: Size of 1 FFT bin (in bytes)
+ * @cfreq1: Center frequency of Detector 1
+ * @cfreq2: Center frequency of Detector 2
+ * @smode: Spectral scan mode
+ *
+ * Update per-session information from the consume report context.
+ *
+ * Return: Success/Failure
+ */
+static QDF_STATUS
+target_if_update_session_info_from_report_ctx(
+				struct target_if_spectral *spectral,
+				uint8_t fft_bin_size,
+				uint32_t cfreq1, uint32_t cfreq2,
+				enum spectral_scan_mode smode)
+{
+	struct target_if_spectral_ops *p_sops;
+	struct per_session_report_info *rpt_info;
+	struct per_session_det_map *det_map;
+	struct per_session_dest_det_info *dest_det_info;
+	enum phy_ch_width ch_width;
+	struct wlan_objmgr_psoc *psoc;
+	bool is_fragmentation_160;
+	QDF_STATUS ret;
+
+	if (!spectral) {
+		spectral_err_rl("Spectral LMAC object is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	if (smode >= SPECTRAL_SCAN_MODE_MAX) {
+		spectral_err_rl("Invalid Spectral mode");
+		return QDF_STATUS_E_FAILURE;
+	}
+	if (!spectral->pdev_obj) {
+		spectral_err_rl("Spectral PDEV is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	psoc = wlan_pdev_get_psoc(spectral->pdev_obj);
+	if (!psoc) {
+		spectral_err_rl("psoc is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
+
+	rpt_info = &spectral->report_info[smode];
+	ch_width = rpt_info->sscan_bw;
+	is_fragmentation_160 = spectral->rparams.fragmentation_160[smode];
+
+	rpt_info->pri20_freq = p_sops->get_current_channel(spectral, smode);
+	rpt_info->cfreq1 = cfreq1;
+	rpt_info->cfreq2 = cfreq2;
+
+	/**
+	 * Convert cfreq1 and cfreq2 as per IEEE802.11 standards for gen3.
+	 * For gen2, we receive cfreq1/cfreq2 in line with IEEE802.11 standard
+	 * from the FW.
+	 * cfreq1: Centre frequency of the frequency span for 20/40/80 MHz BW.
+	 *         Pri80 Segment centre frequency in MHz for 80p80/160 MHz BW.
+	 * cfreq2: For 80p80, indicates segment 2 centre frequency in MHz.
+	 *         For 160MHz, indicates the center frequency of 160MHz span.
+	 *
+	 * For Agile mode, cfreq1/cfreq2 are taken as provided by user, no
+	 * conversion is done.
+	 * cfreq1: Center frequency of the span for 20/40/80/160. Frequency
+	 *         value 1 for Agile 80p80.
+	 * cfreq2: Frequency value 2 for Agile 80p80.
+	 */
+	if (spectral->spectral_gen == SPECTRAL_GEN3) {
+		ret = target_if_get_ieee80211_format_cfreq(
+			spectral, &rpt_info->cfreq1, &rpt_info->cfreq2,
+			rpt_info->pri20_freq, SPECTRAL_SCAN_MODE_NORMAL);
+		if (QDF_IS_STATUS_ERROR(ret)) {
+			spectral_err_rl("Unable to get correct cfreq1/cfreq2");
+			return QDF_STATUS_E_FAILURE;
+		}
+	}
+
+	/* For Agile mode, sscan_cfreq1 and sscan_cfreq2 are populated
+	 * during Spectral start scan
+	 */
+	if (smode == SPECTRAL_SCAN_MODE_NORMAL) {
+		rpt_info->sscan_cfreq1 = rpt_info->cfreq1;
+		rpt_info->sscan_cfreq2 = rpt_info->cfreq2;
+	}
+
+	if (ch_width == CH_WIDTH_80P80MHZ && wlan_psoc_nif_fw_ext_cap_get(
+	    psoc, WLAN_SOC_RESTRICTED_80P80_SUPPORT)) {
+		/* Restricted 80p80 */
+		struct spectral_fft_bin_markers_160_165mhz *marker;
+		struct sscan_detector_list *detector_list;
+
+		marker = &spectral->rparams.marker[smode];
+		if (!marker->is_valid)
+			return QDF_STATUS_E_FAILURE;
+
+		/**
+		 * Restricted 80p80 on Pine has only 1 detector for
+		 * normal/agile spectral scan. So, detector_list will
+		 * have only one detector
+		 */
+		detector_list = &spectral->detector_list[smode][ch_width];
+
+		det_map = &spectral->det_map[detector_list->detectors[0]];
+
+		dest_det_info = &det_map->dest_det_info[0];
+		dest_det_info->dest_start_bin_idx = marker->start_pri80;
+		dest_det_info->dest_end_bin_idx =
+					dest_det_info->dest_start_bin_idx +
+					marker->num_pri80 - 1;
+		dest_det_info->src_start_bin_idx = marker->start_pri80 *
+						   fft_bin_size;
+
+		dest_det_info = &det_map->dest_det_info[1];
+		dest_det_info->dest_start_bin_idx = marker->start_sec80;
+		dest_det_info->dest_end_bin_idx =
+					dest_det_info->dest_start_bin_idx +
+					marker->num_sec80 - 1;
+		dest_det_info->src_start_bin_idx = marker->start_sec80 *
+						   fft_bin_size;
+
+		dest_det_info = &det_map->dest_det_info[2];
+		dest_det_info->dest_start_bin_idx = marker->start_5mhz;
+		dest_det_info->dest_end_bin_idx =
+					dest_det_info->dest_start_bin_idx +
+					marker->num_5mhz - 1;
+		dest_det_info->src_start_bin_idx = marker->start_5mhz *
+						   fft_bin_size;
+	} else {
+		ret = target_if_populate_fft_bins_info(spectral, smode);
+		if (QDF_IS_STATUS_ERROR(ret)) {
+			spectral_err_rl("Error in populating fft bins info");
+			return QDF_STATUS_E_FAILURE;
+		}
+	}
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* OPTIMIZED_SAMP_MESSAGE */
+
 int
 target_if_process_phyerr_gen2(struct target_if_spectral *spectral,
 			      uint8_t *data,
@@ -2393,6 +2624,16 @@ target_if_consume_spectral_report_gen3(
 					report->reset_delay);
 	if (QDF_IS_STATUS_ERROR(ret)) {
 		spectral_err_rl("Failed to process search FFT report");
+		goto fail;
+	}
+
+	ret = target_if_update_session_info_from_report_ctx(
+						spectral,
+						p_sfft->fft_bin_size,
+						report->cfreq1, report->cfreq2,
+						spectral_mode);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		spectral_err_rl("Failed to update per-session info");
 		goto fail;
 	}
 
