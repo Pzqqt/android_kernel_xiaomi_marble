@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -56,6 +56,18 @@ QDF_STATUS wmi_extract_dcs_im_tgt_stats(
 	void *wmi_hdl,
 	void *evt_buf,
 	struct wlan_host_dcs_im_tgt_stats *wlan_stat);
+
+/*
+ * wmi_extract_dcs_awgn_info() - extract DCS AWGN interference info from event
+ * @wmi_handle: WMI handle
+ * @evt_buf: Pointer to event buffer
+ * @awgn_info: Pointer to hold AWGN interference info
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_extract_dcs_awgn_info(wmi_unified_t wmi_hdl, void *evt_buf,
+			  struct wlan_host_dcs_awgn_info *awgn_info);
 
 /**
  * wmi_send_dcs_pdev_param() - send dcs pdev param
