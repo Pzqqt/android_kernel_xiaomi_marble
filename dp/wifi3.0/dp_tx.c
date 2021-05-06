@@ -1526,7 +1526,7 @@ dp_tx_hw_desc_update_evt(uint8_t *hal_tx_desc_cached,
 	idx = ++soc->tx_hw_desc_history->index;
 	if (idx == DP_TX_HW_DESC_HIST_MAX)
 		soc->tx_hw_desc_history->index = 0;
-	idx = (idx % DP_TX_HW_DESC_HIST_MAX);
+	idx = qdf_do_div_rem(idx, DP_TX_HW_DESC_HIST_MAX);
 
 	evt = &soc->tx_hw_desc_history->entry[idx];
 	qdf_mem_copy(evt->tcl_desc, hal_tx_desc_cached, HAL_TX_DESC_LEN_BYTES);
