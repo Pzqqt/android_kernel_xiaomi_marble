@@ -2624,6 +2624,37 @@ static void lim_get_basic_rates(tSirMacRateSet *b_rates, uint32_t chan_freq)
 		wlan_populate_basic_rates(b_rates, true, true);
 }
 
+/*
+ * lim_iterate_triplets() - Iterate the country IE to validate it
+ * @country_ie: country IE to iterate through
+ *
+ * This function always returns success because connection should not be failed
+ * in the case of missing elements in the country IE
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS lim_iterate_triplets(tDot11fIECountry country_ie)
+{
+	u_int8_t i;
+
+	if (country_ie.first_triplet[0] > OP_CLASS_ID_200) {
+		if (country_ie.more_triplets[0][0] <= OP_CLASS_ID_200)
+			return QDF_STATUS_SUCCESS;
+	}
+
+	for (i = 0; i < country_ie.num_more_triplets; i++) {
+		if ((country_ie.more_triplets[i][0] > OP_CLASS_ID_200) &&
+		    (i < country_ie.num_more_triplets - 1)) {
+			if (country_ie.more_triplets[i + 1][0] <=
+			    OP_CLASS_ID_200)
+				return QDF_STATUS_SUCCESS;
+		}
+	}
+	pe_debug("No operating class triplet followed by sub-band triplet");
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static QDF_STATUS
 lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 		    struct bss_description *bss_desc)
@@ -2647,6 +2678,7 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 	struct ps_params *ps_param =
 				&ps_global_info->ps_params[session->vdev_id];
 	uint32_t join_timeout;
+	uint8_t programmed_country[REG_ALPHA2_LEN + 1];
 
 	/*
 	 * Update the capability here itself as this is used in
@@ -2717,6 +2749,41 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 	if (QDF_IS_STATUS_ERROR(status)) {
 		qdf_mem_free(ie_struct);
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (wlan_reg_is_6ghz_chan_freq(bss_desc->chan_freq)) {
+		if (!ie_struct->Country.present)
+			pe_debug("Channel is 6G but country IE not present");
+		wlan_reg_read_current_country(mac_ctx->psoc,
+					      programmed_country);
+		if (qdf_mem_cmp(ie_struct->Country.country, programmed_country,
+				REG_ALPHA2_LEN)) {
+			pe_debug("Country IE:%c%c, STA country:%c%c",
+				  ie_struct->Country.country[0],
+				  ie_struct->Country.country[1],
+				  programmed_country[0],
+				  programmed_country[1]);
+			session->same_ctry_code = false;
+			if (wlan_reg_is_us(programmed_country)) {
+				pe_err("US VLP not in place yet, connection not allowed");
+				qdf_mem_free(ie_struct);
+				return QDF_STATUS_E_NOSUPPORT;
+			}
+			if (wlan_reg_is_etsi(programmed_country)) {
+				pe_debug("STA ctry:%c%c, doesn't match with AP ctry, switch to VLP",
+					  programmed_country[0],
+					  programmed_country[1]);
+				session->ap_power_type_6g =
+							REG_VERY_LOW_POWER_AP;
+			}
+		} else {
+			session->same_ctry_code = true;
+		}
+		lim_iterate_triplets(ie_struct->Country);
+
+		if (!ie_struct->num_transmit_power_env ||
+		    !ie_struct->transmit_power_env[0].present)
+			pe_debug("TPE not present for 6G channel");
 	}
 
 	/*
@@ -4381,11 +4448,10 @@ void lim_calculate_tpc(struct mac_context *mac,
 		is_6ghz_freq = true;
 		is_psd_power = wlan_reg_is_6g_psd_power(mac->pdev);
 		if (LIM_IS_STA_ROLE(session)) {
-			if (session->lim_join_req->same_ctry_code)
+			if (session->same_ctry_code)
 				ap_power_type_6g = session->ap_power_type;
 			else
-				ap_power_type_6g =
-					session->lim_join_req->ap_power_type_6g;
+				ap_power_type_6g = session->ap_power_type_6g;
 		}
 	}
 

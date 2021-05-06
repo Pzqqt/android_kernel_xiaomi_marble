@@ -578,7 +578,9 @@ struct pe_session {
 	uint32_t dfs_regdomain;
 	/* AP power type */
 	uint8_t ap_power_type;
-
+	bool same_ctry_code;  /* If AP Country IE has same country code as */
+	/* STA programmed country */
+	uint8_t ap_power_type_6g;  /* AP power type for 6G (LPI, SP, or VLP) */
 #ifdef WLAN_FEATURE_11BE
 	bool eht_capable;
 	tDot11fIEeht_cap eht_config;
