@@ -2216,8 +2216,14 @@ QDF_STATUS wmi_unified_unregister_event(wmi_unified_t wmi_handle,
 {
 	uint32_t idx = 0;
 	uint32_t evt_id;
-	struct wmi_soc *soc = wmi_handle->soc;
+	struct wmi_soc *soc;
 
+	if (!wmi_handle) {
+		wmi_err("WMI handle is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	soc = wmi_handle->soc;
 	if (event_id >= wmi_events_max ||
 		wmi_handle->wmi_events[event_id] == WMI_EVENT_ID_INVALID) {
 		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_INFO,
@@ -2240,6 +2246,15 @@ QDF_STATUS wmi_unified_unregister_event(wmi_unified_t wmi_handle,
 		wmi_handle->event_handler[soc->max_event_idx];
 	wmi_handle->event_id[idx] =
 		wmi_handle->event_id[soc->max_event_idx];
+
+	qdf_spin_lock_bh(&soc->ctx_lock);
+
+	wmi_handle->ctx[idx].exec_ctx =
+		wmi_handle->ctx[soc->max_event_idx].exec_ctx;
+	wmi_handle->ctx[idx].buff_type =
+		wmi_handle->ctx[soc->max_event_idx].buff_type;
+
+	qdf_spin_unlock_bh(&soc->ctx_lock);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2278,6 +2293,15 @@ QDF_STATUS wmi_unified_unregister_event_handler(wmi_unified_t wmi_handle,
 		wmi_handle->event_handler[soc->max_event_idx];
 	wmi_handle->event_id[idx] =
 		wmi_handle->event_id[soc->max_event_idx];
+
+	qdf_spin_lock_bh(&soc->ctx_lock);
+
+	wmi_handle->ctx[idx].exec_ctx =
+		wmi_handle->ctx[soc->max_event_idx].exec_ctx;
+	wmi_handle->ctx[idx].buff_type =
+		wmi_handle->ctx[soc->max_event_idx].buff_type;
+
+	qdf_spin_unlock_bh(&soc->ctx_lock);
 
 	return QDF_STATUS_SUCCESS;
 }
