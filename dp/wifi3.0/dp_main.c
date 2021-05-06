@@ -5102,6 +5102,59 @@ static inline void dp_reo_desc_freelist_destroy(struct dp_soc *soc)
 	qdf_spinlock_destroy(&soc->reo_desc_freelist_lock);
 }
 
+#ifdef WLAN_DP_FEATURE_DEFERRED_REO_QDESC_DESTROY
+/*
+ * dp_reo_desc_deferred_freelist_create() - Initialize the resources used
+ *                                          for deferred reo desc list
+ * @psoc: Datapath soc handle
+ *
+ * Return: void
+ */
+static void dp_reo_desc_deferred_freelist_create(struct dp_soc *soc)
+{
+	qdf_spinlock_create(&soc->reo_desc_deferred_freelist_lock);
+	qdf_list_create(&soc->reo_desc_deferred_freelist,
+			REO_DESC_DEFERRED_FREELIST_SIZE);
+	soc->reo_desc_deferred_freelist_init = true;
+}
+
+/*
+ * dp_reo_desc_deferred_freelist_destroy() - loop the deferred free list &
+ *                                           free the leftover REO QDESCs
+ * @psoc: Datapath soc handle
+ *
+ * Return: void
+ */
+static void dp_reo_desc_deferred_freelist_destroy(struct dp_soc *soc)
+{
+	struct reo_desc_deferred_freelist_node *desc;
+
+	qdf_spin_lock_bh(&soc->reo_desc_deferred_freelist_lock);
+	soc->reo_desc_deferred_freelist_init = false;
+	while (qdf_list_remove_front(&soc->reo_desc_deferred_freelist,
+	       (qdf_list_node_t **)&desc) == QDF_STATUS_SUCCESS) {
+		qdf_mem_unmap_nbytes_single(soc->osdev,
+					    desc->hw_qdesc_paddr,
+					    QDF_DMA_BIDIRECTIONAL,
+					    desc->hw_qdesc_alloc_size);
+		qdf_mem_free(desc->hw_qdesc_vaddr_unaligned);
+		qdf_mem_free(desc);
+	}
+	qdf_spin_unlock_bh(&soc->reo_desc_deferred_freelist_lock);
+
+	qdf_list_destroy(&soc->reo_desc_deferred_freelist);
+	qdf_spinlock_destroy(&soc->reo_desc_deferred_freelist_lock);
+}
+#else
+static inline void dp_reo_desc_deferred_freelist_create(struct dp_soc *soc)
+{
+}
+
+static inline void dp_reo_desc_deferred_freelist_destroy(struct dp_soc *soc)
+{
+}
+#endif /* !WLAN_DP_FEATURE_DEFERRED_REO_QDESC_DESTROY */
+
 /*
  * dp_soc_reset_txrx_ring_map() - reset tx ring map
  * @soc: DP SOC handle
@@ -5182,6 +5235,7 @@ static void dp_soc_deinit(void *txrx_soc)
 	dp_soc_reset_txrx_ring_map(soc);
 
 	dp_reo_desc_freelist_destroy(soc);
+	dp_reo_desc_deferred_freelist_destroy(soc);
 
 	DEINIT_RX_HW_STATS_LOCK(soc);
 
@@ -13017,6 +13071,8 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 	qdf_spinlock_create(&soc->htt_stats.lock);
 	/* initialize work queue for stats processing */
 	qdf_create_work(0, &soc->htt_stats.work, htt_t2h_stats_handler, soc);
+
+	dp_reo_desc_deferred_freelist_create(soc);
 
 	dp_info("Mem stats: DMA = %u HEAP = %u SKB = %u",
 		qdf_dma_mem_stats_read(),

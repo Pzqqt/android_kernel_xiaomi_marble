@@ -834,6 +834,22 @@ struct reo_desc_list_node {
 #endif
 };
 
+#ifdef WLAN_DP_FEATURE_DEFERRED_REO_QDESC_DESTROY
+#define REO_DESC_DEFERRED_FREELIST_SIZE 256
+#define REO_DESC_DEFERRED_FREE_MS 30000
+
+struct reo_desc_deferred_freelist_node {
+	qdf_list_node_t node;
+	unsigned long free_ts;
+	void *hw_qdesc_vaddr_unaligned;
+	qdf_dma_addr_t hw_qdesc_paddr;
+	uint32_t hw_qdesc_alloc_size;
+#ifdef REO_QDESC_HISTORY
+	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
+#endif /* REO_QDESC_HISTORY */
+};
+#endif /* WLAN_DP_FEATURE_DEFERRED_REO_QDESC_DESTROY */
+
 #ifdef WLAN_FEATURE_DP_EVENT_HISTORY
 /**
  * struct reo_cmd_event_record: Elements to record for each reo command
@@ -1905,6 +1921,12 @@ struct dp_soc {
 		/** @bins: MEC table */
 		TAILQ_HEAD(, dp_mec_entry) * bins;
 	} mec_hash;
+#endif
+
+#ifdef WLAN_DP_FEATURE_DEFERRED_REO_QDESC_DESTROY
+	qdf_list_t reo_desc_deferred_freelist;
+	qdf_spinlock_t reo_desc_deferred_freelist_lock;
+	bool reo_desc_deferred_freelist_init;
 #endif
 };
 
