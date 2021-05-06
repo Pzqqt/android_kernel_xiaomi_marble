@@ -1403,12 +1403,12 @@ void dp_peer_unlink_ast_entry(struct dp_soc *soc,
 			      struct dp_peer *peer)
 {
 	if (!peer) {
-		dp_err_rl("NULL peer");
+		dp_info_rl("NULL peer");
 		return;
 	}
 
 	if (ast_entry->peer_id == HTT_INVALID_PEER) {
-		dp_err_rl("Invalid peer id in AST entry mac addr:"QDF_MAC_ADDR_FMT" type:%d",
+		dp_info_rl("Invalid peer id in AST entry mac addr:"QDF_MAC_ADDR_FMT" type:%d",
 			  QDF_MAC_ADDR_REF(ast_entry->mac_addr.raw),
 			  ast_entry->type);
 		return;
@@ -1450,12 +1450,12 @@ void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
 	struct dp_peer *peer = NULL;
 
 	if (!ast_entry) {
-		dp_err_rl("NULL AST entry");
+		dp_info_rl("NULL AST entry");
 		return;
 	}
 
 	if (ast_entry->delete_in_progress) {
-		dp_err_rl("AST entry deletion in progress mac addr:"QDF_MAC_ADDR_FMT" type:%d",
+		dp_info_rl("AST entry deletion in progress mac addr:"QDF_MAC_ADDR_FMT" type:%d",
 			  QDF_MAC_ADDR_REF(ast_entry->mac_addr.raw),
 			  ast_entry->type);
 		return;
