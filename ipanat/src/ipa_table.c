@@ -203,13 +203,19 @@ uint8_t* ipa_table_calculate_addresses(
 void ipa_table_reset(
 	ipa_table* table)
 {
+	uint32_t i,tot;
+
 	IPADBG("In\n");
 
 	IPADBG("memset %s table to 0, %pK\n", table->name, table->table_addr);
-	memset(table->table_addr, 0, table->entry_size * table->table_entries);
+	tot = table->entry_size * table->table_entries;
+	for (i = 0; i < tot; i++)
+		table->table_addr[i] = '\0';
 
 	IPADBG("memset %s expn table to 0, %pK\n", table->name, table->expn_table_addr);
-	memset(table->expn_table_addr, 0, table->entry_size * table->expn_table_entries);
+	tot = table->entry_size * table->expn_table_entries;
+	for (i = 0; i < tot; i++)
+		table->expn_table_addr[i] = '\0';
 
 	IPADBG("Out\n");
 }

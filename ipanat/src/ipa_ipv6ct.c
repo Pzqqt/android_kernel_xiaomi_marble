@@ -38,6 +38,8 @@
 #define IPA_IPV6CT_DEBUG_FILE_PATH "/sys/kernel/debug/ipa/ipv6ct"
 #define IPA_UC_ACT_DEBUG_FILE_PATH "/sys/kernel/debug/ipa/uc_act_table"
 #define IPA_IPV6CT_TABLE_NAME "IPA IPv6CT table"
+#define IPA_MAX_DMA_ENTRIES_FOR_ADD 2
+#define IPA_MAX_DMA_ENTRIES_FOR_DEL 2
 
 static int ipa_ipv6ct_create_table(ipa_ipv6ct_table* ipv6ct_table, uint16_t number_of_entries, uint8_t table_index);
 static int ipa_ipv6ct_destroy_table(ipa_ipv6ct_table* ipv6ct_table);
@@ -213,6 +215,9 @@ int ipa_ipv6ct_add_rule(uint32_t table_handle, const ipa_ipv6ct_rule* user_rule,
 	ipa_ipv6ct_table* ipv6ct_table;
 	uint16_t new_entry_index;
 	uint32_t new_entry_handle;
+	uint32_t cmd_sz = sizeof(struct ipa_ioc_nat_dma_cmd) +
+		(IPA_MAX_DMA_ENTRIES_FOR_ADD * sizeof(struct ipa_ioc_nat_dma_one));
+	char cmd_buf[cmd_sz];
 	struct ipa_ioc_nat_dma_cmd* cmd;
 
 	IPADBG("\n");
@@ -252,24 +257,16 @@ int ipa_ipv6ct_add_rule(uint32_t table_handle, const ipa_ipv6ct_rule* user_rule,
 		goto unlock;
 	}
 
-	cmd = (struct ipa_ioc_nat_dma_cmd *)calloc(1,
-		sizeof(struct ipa_ioc_nat_dma_cmd) +
-		(MAX_DMA_ENTRIES_FOR_ADD * sizeof(struct ipa_ioc_nat_dma_one)));
-	if (cmd == NULL)
-	{
-		IPAERR("unable to allocate memory for Talbe DMA command\n");
-		ret = -ENOMEM;
-		goto unlock;
-	}
+	memset(cmd_buf, 0, sizeof(cmd_buf));
+	cmd = (struct ipa_ioc_nat_dma_cmd*) cmd_buf;
 	cmd->entries = 0;
-
 	new_entry_index = ipa_ipv6ct_hash(user_rule, ipv6ct_table->table.table_entries - 1);
 
 	ret = ipa_table_add_entry(&ipv6ct_table->table, (void*)user_rule, &new_entry_index, &new_entry_handle, cmd);
 	if (ret)
 	{
 		IPAERR("failed to add a new IPV6CT entry\n");
-		goto fail_add_entry;
+		goto unlock;
 	}
 
 	ret = ipa_ipv6ct_post_dma_cmd(cmd);
@@ -278,7 +275,6 @@ int ipa_ipv6ct_add_rule(uint32_t table_handle, const ipa_ipv6ct_rule* user_rule,
 		IPAERR("unable to post dma command\n");
 		goto bail;
 	}
-	free(cmd);
 
 	if (pthread_mutex_unlock(&ipv6ct_mutex))
 	{
@@ -293,8 +289,6 @@ int ipa_ipv6ct_add_rule(uint32_t table_handle, const ipa_ipv6ct_rule* user_rule,
 
 bail:
 	ipa_table_erase_entry(&ipv6ct_table->table, new_entry_index);
-fail_add_entry:
-	free(cmd);
 unlock:
 	if (pthread_mutex_unlock(&ipv6ct_mutex))
 		IPAERR("unable to unlock the ipv6ct mutex\n");
@@ -304,9 +298,12 @@ unlock:
 int ipa_ipv6ct_del_rule(uint32_t table_handle, uint32_t rule_handle)
 {
 	ipa_ipv6ct_table* ipv6ct_table;
-	struct ipa_ioc_nat_dma_cmd* cmd;
 	ipa_table_iterator table_iterator;
 	ipa_ipv6ct_hw_entry* entry;
+	uint32_t cmd_sz = sizeof(struct ipa_ioc_nat_dma_cmd) +
+		(IPA_MAX_DMA_ENTRIES_FOR_DEL * sizeof(struct ipa_ioc_nat_dma_one));
+	char cmd_buf[cmd_sz];
+	struct ipa_ioc_nat_dma_cmd* cmd;
 	uint16_t index;
 	int ret;
 
@@ -356,15 +353,8 @@ int ipa_ipv6ct_del_rule(uint32_t table_handle, uint32_t rule_handle)
 		goto unlock;
 	}
 
-	cmd = (struct ipa_ioc_nat_dma_cmd *)calloc(1,
-		sizeof(struct ipa_ioc_nat_dma_cmd) +
-		(MAX_DMA_ENTRIES_FOR_DEL * sizeof(struct ipa_ioc_nat_dma_one)));
-	if (cmd == NULL)
-	{
-		IPAERR("unable to allocate memory for Talbe DMA command\n");
-		ret = -ENOMEM;
-		goto unlock;
-	}
+	memset(cmd_buf, 0, sizeof(cmd_buf));
+	cmd = (struct ipa_ioc_nat_dma_cmd*) cmd_buf;
 	cmd->entries = 0;
 
 	ipa_table_create_delete_command(&ipv6ct_table->table, cmd, &table_iterator);
@@ -373,7 +363,7 @@ int ipa_ipv6ct_del_rule(uint32_t table_handle, uint32_t rule_handle)
 	if (ret)
 	{
 		IPAERR("unable to post dma command\n");
-		goto fail;
+		goto unlock;
 	}
 
 	if (!ipa_table_iterator_is_head_with_tail(&table_iterator))
@@ -383,9 +373,6 @@ int ipa_ipv6ct_del_rule(uint32_t table_handle, uint32_t rule_handle)
 			((ipa_ipv6ct_hw_entry*)table_iterator.prev_entry)->protocol == IPA_IPV6CT_INVALID_PROTO_FIELD_CMP);
 		ipa_table_delete_entry(&ipv6ct_table->table, &table_iterator, is_prev_empty);
 	}
-
-fail:
-	free(cmd);
 
 unlock:
 	if (pthread_mutex_unlock(&ipv6ct_mutex))
