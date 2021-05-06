@@ -1386,36 +1386,66 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 		}
 	}
 
+	/* Use common page pool for Coal and defalt pipe if applicable. */
 	if (ep->sys->repl_hdlr == ipa3_replenish_rx_page_recycle) {
-		ep->sys->page_recycle_repl = kzalloc(
-			sizeof(*ep->sys->page_recycle_repl), GFP_KERNEL);
-		if (!ep->sys->page_recycle_repl) {
-			IPAERR("failed to alloc repl for client %d\n",
-					sys_in->client);
-			result = -ENOMEM;
-			goto fail_napi;
-		}
-		atomic_set(&ep->sys->page_recycle_repl->pending, 0);
-		ep->sys->page_recycle_repl->capacity =
-				(ep->sys->rx_pool_sz + 1) * 2;
-		INIT_LIST_HEAD(&ep->sys->page_recycle_repl->page_repl_head);
-		ep->sys->repl = kzalloc(sizeof(*ep->sys->repl), GFP_KERNEL);
-		if (!ep->sys->repl) {
-			IPAERR("failed to alloc repl for client %d\n",
-				   sys_in->client);
-			result = -ENOMEM;
-			goto fail_page_recycle_repl;
-		}
-		ep->sys->repl->capacity = (ep->sys->rx_pool_sz + 1);
+		if (!(ipa3_ctx->wan_common_page_pool &&
+			sys_in->client == IPA_CLIENT_APPS_WAN_CONS &&
+			coal_ep_id != IPA_EP_NOT_ALLOCATED &&
+			ipa3_ctx->ep[coal_ep_id].valid == 1)) {
+			ep->sys->page_recycle_repl = kzalloc(
+				sizeof(*ep->sys->page_recycle_repl), GFP_KERNEL);
+			if (!ep->sys->page_recycle_repl) {
+				IPAERR("failed to alloc repl for client %d\n",
+						sys_in->client);
+				result = -ENOMEM;
+				goto fail_napi;
+			}
+			atomic_set(&ep->sys->page_recycle_repl->pending, 0);
+			/* For common page pool double the pool size. */
+			if (ipa3_ctx->wan_common_page_pool &&
+				sys_in->client == IPA_CLIENT_APPS_WAN_COAL_CONS)
+				ep->sys->page_recycle_repl->capacity =
+						(ep->sys->rx_pool_sz + 1) *
+						IPA_GENERIC_RX_CMN_PAGE_POOL_SZ_FACTOR;
+			else
+				ep->sys->page_recycle_repl->capacity =
+						(ep->sys->rx_pool_sz + 1) *
+						IPA_GENERIC_RX_PAGE_POOL_SZ_FACTOR;
+			IPADBG("Page repl capacity for client:%d, value:%d\n",
+					   sys_in->client, ep->sys->page_recycle_repl->capacity);
+			INIT_LIST_HEAD(&ep->sys->page_recycle_repl->page_repl_head);
+			ep->sys->repl = kzalloc(sizeof(*ep->sys->repl), GFP_KERNEL);
+			if (!ep->sys->repl) {
+				IPAERR("failed to alloc repl for client %d\n",
+					   sys_in->client);
+				result = -ENOMEM;
+				goto fail_page_recycle_repl;
+			}
+			/* For common page pool triple the pool size. */
+			if (ipa3_ctx->wan_common_page_pool &&
+				sys_in->client == IPA_CLIENT_APPS_WAN_COAL_CONS)
+				ep->sys->repl->capacity = (ep->sys->rx_pool_sz + 1) *
+				IPA_GENERIC_RX_CMN_TEMP_POOL_SZ_FACTOR;
+			else
+				ep->sys->repl->capacity = (ep->sys->rx_pool_sz + 1);
+			IPADBG("Repl capacity for client:%d, value:%d\n",
+					   sys_in->client, ep->sys->repl->capacity);
+			atomic_set(&ep->sys->repl->pending, 0);
+			ep->sys->repl->cache = kcalloc(ep->sys->repl->capacity,
+					sizeof(void *), GFP_KERNEL);
+			atomic_set(&ep->sys->repl->head_idx, 0);
+			atomic_set(&ep->sys->repl->tail_idx, 0);
 
-		atomic_set(&ep->sys->repl->pending, 0);
-		ep->sys->repl->cache = kcalloc(ep->sys->repl->capacity,
-				sizeof(void *), GFP_KERNEL);
-		atomic_set(&ep->sys->repl->head_idx, 0);
-		atomic_set(&ep->sys->repl->tail_idx, 0);
-
-		ipa3_replenish_rx_page_cache(ep->sys);
-		ipa3_wq_page_repl(&ep->sys->repl_work);
+			ipa3_replenish_rx_page_cache(ep->sys);
+			ipa3_wq_page_repl(&ep->sys->repl_work);
+		} else {
+			/* Use pool same as coal pipe when common page pool is used. */
+			ep->sys->common_buff_pool = true;
+			ep->sys->common_sys = ipa3_ctx->ep[coal_ep_id].sys;
+			ep->sys->repl = ipa3_ctx->ep[coal_ep_id].sys->repl;
+			ep->sys->page_recycle_repl =
+				ipa3_ctx->ep[coal_ep_id].sys->page_recycle_repl;
+		}
 	}
 
 	if (IPA_CLIENT_IS_CONS(sys_in->client)) {
@@ -1488,10 +1518,12 @@ fail_gen3:
 	ipa3_disable_data_path(ipa_ep_idx);
 fail_repl:
 	ep->sys->repl_hdlr = ipa3_replenish_rx_cache;
-	ep->sys->repl->capacity = 0;
-	kfree(ep->sys->repl);
+	if (ep->sys->repl && !ep->sys->common_buff_pool) {
+		ep->sys->repl->capacity = 0;
+		kfree(ep->sys->repl);
+	}
 fail_page_recycle_repl:
-	if (ep->sys->page_recycle_repl) {
+	if (ep->sys->page_recycle_repl && !ep->sys->common_buff_pool) {
 		ep->sys->page_recycle_repl->capacity = 0;
 		kfree(ep->sys->page_recycle_repl);
 	}
@@ -1672,7 +1704,7 @@ int ipa3_teardown_sys_pipe(u32 clnt_hdl)
 	}
 	if (ep->sys->repl_wq)
 		flush_workqueue(ep->sys->repl_wq);
-	if (IPA_CLIENT_IS_CONS(ep->client))
+	if (IPA_CLIENT_IS_CONS(ep->client) && !ep->sys->common_buff_pool)
 		ipa3_cleanup_rx(ep->sys);
 
 	if (!ep->skip_ep_cfg && IPA_CLIENT_IS_PROD(ep->client)) {
@@ -1758,7 +1790,7 @@ static int ipa3_teardown_coal_def_pipe(u32 clnt_hdl)
 
 	if (ep->sys->repl_wq)
 		flush_workqueue(ep->sys->repl_wq);
-	if (IPA_CLIENT_IS_CONS(ep->client))
+	if (IPA_CLIENT_IS_CONS(ep->client) && !ep->sys->common_buff_pool)
 		ipa3_cleanup_rx(ep->sys);
 
 	ep->valid = 0;
@@ -2288,7 +2320,7 @@ static inline void __trigger_repl_work(struct ipa3_sys_context *sys)
 	head = atomic_read(&sys->repl->head_idx);
 	avail = (tail - head) % sys->repl->capacity;
 
-	if (avail < sys->repl->capacity / 4) {
+	if (avail < sys->repl->capacity / 2) {
 		atomic_set(&sys->repl->pending, 1);
 		queue_work(sys->repl_wq, &sys->repl_work);
 	}
@@ -2338,7 +2370,6 @@ static void ipa3_replenish_rx_page_recycle(struct ipa3_sys_context *sys)
 		return;
 	stats_i = (sys->ep->client == IPA_CLIENT_APPS_WAN_COAL_CONS) ? 0 : 1;
 
-	spin_lock_bh(&sys->spinlock);
 	rx_len_cached = sys->len;
 	curr_wq = atomic_read(&sys->repl->head_idx);
 
@@ -2359,6 +2390,7 @@ static void ipa3_replenish_rx_page_recycle(struct ipa3_sys_context *sys)
 			curr_wq = (++curr_wq == sys->repl->capacity) ?
 								 0 : curr_wq;
 		}
+		rx_pkt->sys = sys;
 
 		dma_sync_single_for_device(ipa3_ctx->pdev,
 			rx_pkt->page_data.dma_addr,
@@ -2402,19 +2434,21 @@ static void ipa3_replenish_rx_page_recycle(struct ipa3_sys_context *sys)
 		IPAERR("failed to provide buffer: %d\n", ret);
 		ipa_assert();
 	}
-	spin_unlock_bh(&sys->spinlock);
-	__trigger_repl_work(sys);
+
+	 if (sys->common_buff_pool)
+	 	__trigger_repl_work(sys->common_sys);
+	 else
+		__trigger_repl_work(sys);
 
 	if (rx_len_cached <= IPA_DEFAULT_SYS_YELLOW_WM) {
-		if (sys->ep->client == IPA_CLIENT_APPS_WAN_CONS ||
-			sys->ep->client == IPA_CLIENT_APPS_WAN_COAL_CONS)
+		if (sys->ep->client == IPA_CLIENT_APPS_WAN_CONS)
 			IPA_STATS_INC_CNT(ipa3_ctx->stats.wan_rx_empty);
+		else if (sys->ep->client == IPA_CLIENT_APPS_WAN_COAL_CONS)
+			IPA_STATS_INC_CNT(ipa3_ctx->stats.wan_rx_empty_coal);
 		else if (sys->ep->client == IPA_CLIENT_APPS_LAN_CONS)
 			IPA_STATS_INC_CNT(ipa3_ctx->stats.lan_rx_empty);
 		else
 			WARN_ON(1);
-		queue_delayed_work(sys->wq, &sys->replenish_rx_work,
-				msecs_to_jiffies(1));
 	}
 
 	return;
@@ -3964,20 +3998,6 @@ static void ipa3_rx_napi_chain(struct ipa3_sys_context *sys,
 			if (prev_skb) {
 				skb_shinfo(prev_skb)->frag_list = NULL;
 				sys->pyld_hdlr(first_skb, sys);
-				/*
-				 * For coalescing, we have 2 transfer
-				 * rings to replenish
-				 */
-				ipa_ep_idx = ipa3_get_ep_mapping(
-						IPA_CLIENT_APPS_WAN_CONS);
-				if (ipa_ep_idx ==
-					IPA_EP_NOT_ALLOCATED) {
-					IPAERR("Invalid client.\n");
-					return;
-				}
-				wan_def_sys =
-					ipa3_ctx->ep[ipa_ep_idx].sys;
-				wan_def_sys->repl_hdlr(wan_def_sys);
 			}
 		}
 	}
@@ -5573,6 +5593,7 @@ start_poll:
 	cnt += weight - remain_aggr_weight * ipa3_ctx->ipa_wan_aggr_pkt_cnt;
 	/* call repl_hdlr before napi_reschedule / napi_complete */
 	ep->sys->repl_hdlr(ep->sys);
+	wan_def_sys->repl_hdlr(wan_def_sys);
 	/* When not able to replenish enough descriptors, keep in polling
 	 * mode, wait for napi-poll and replenish again.
 	 */
