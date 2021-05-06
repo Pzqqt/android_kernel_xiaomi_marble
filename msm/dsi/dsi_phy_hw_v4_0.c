@@ -378,6 +378,9 @@ static void dsi_phy_hw_dphy_enable(struct dsi_phy_hw *phy,
 		glbl_rescode_bot_ctrl = 0x3c;
 	}
 
+	if (phy->version >= DSI_PHY_VERSION_4_3)
+		glbl_rescode_top_ctrl = less_than_1500_mhz ? 0x3d : 0x01;
+
 	split_link_enabled = cfg->split_link.enabled;
 	lanes_per_sublink = cfg->split_link.lanes_per_sublink;
 	/* de-assert digital and pll power down */
