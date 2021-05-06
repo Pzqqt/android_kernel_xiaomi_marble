@@ -705,6 +705,11 @@ struct ipa_ep_cfg_holb {
 	uint8_t scaled_time;
 };
 
+struct ipa_ep_cfg_ulso {
+	int ipid_min_max_idx;
+	bool is_ulso_pipe;
+};
+
 /*
  * This struct is a mirroring of the ipa struct
  * the test module expect to get from user-space the
@@ -725,6 +730,7 @@ struct test_ipa_ep_cfg {
 	struct ipa_ep_cfg_metadata_mask metadata_mask;
 	struct ipa_ep_cfg_metadata meta;
 	struct ipa_ep_cfg_seq seq;
+	struct ipa_ep_cfg_ulso ulso;
 };
 
 /*! @brief Struct for the IPAv3.0 UL packet status header */
