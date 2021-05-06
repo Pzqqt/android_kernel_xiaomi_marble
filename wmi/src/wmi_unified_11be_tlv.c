@@ -138,3 +138,77 @@ uint8_t *peer_create_add_mlo_params(uint8_t *buf_ptr,
 
 	return buf_ptr + sizeof(wmi_peer_create_mlo_params);
 }
+
+size_t peer_assoc_mlo_params_size(struct peer_assoc_params *req)
+{
+	size_t peer_assoc_mlo_size = sizeof(wmi_peer_assoc_mlo_params) +
+			WMI_TLV_HDR_SIZE +
+			(req->ml_links.num_links *
+			sizeof(wmi_peer_assoc_mlo_partner_link_params)) +
+			WMI_TLV_HDR_SIZE;
+
+	return peer_assoc_mlo_size;
+}
+
+uint8_t *peer_assoc_add_mlo_params(uint8_t *buf_ptr,
+				   struct peer_assoc_params *req)
+{
+	wmi_peer_assoc_mlo_params *mlo_params;
+
+	/* Add WMI peer assoc mlo params */
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       sizeof(wmi_peer_assoc_mlo_params));
+	buf_ptr += sizeof(uint32_t);
+
+	mlo_params = (wmi_peer_assoc_mlo_params *)buf_ptr;
+	WMITLV_SET_HDR(&mlo_params->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_peer_assoc_mlo_params,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_peer_assoc_mlo_params));
+
+	mlo_params->mlo_flags.mlo_flags = 0;
+	WMI_MLO_FLAGS_SET_ENABLED(mlo_params->mlo_flags.mlo_flags,
+				  req->mlo_params.mlo_enabled);
+	WMI_MLO_FLAGS_SET_ASSOC_LINK(mlo_params->mlo_flags.mlo_flags,
+				     req->mlo_params.mlo_assoc_link);
+	WMI_MLO_FLAGS_SET_PRIMARY_UMAC(mlo_params->mlo_flags.mlo_flags,
+				       req->mlo_params.mlo_primary_umac);
+	WMI_MLO_FLAGS_SET_LINK_INDEX_VALID(mlo_params->mlo_flags.mlo_flags,
+					   req->mlo_params.mlo_logical_link_index_valid);
+	WMI_MLO_FLAGS_SET_PEER_ID_VALID(mlo_params->mlo_flags.mlo_flags,
+					req->mlo_params.mlo_peer_id_valid);
+
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(req->mlo_params.mld_mac,
+				   &mlo_params->mld_macaddr);
+	mlo_params->logical_link_index = req->mlo_params.logical_link_index;
+	mlo_params->mld_peer_id = req->mlo_params.ml_peer_id;
+
+	return buf_ptr + sizeof(wmi_peer_assoc_mlo_params);
+}
+
+uint8_t *peer_assoc_add_ml_partner_links(uint8_t *buf_ptr,
+					 struct peer_assoc_params *req)
+{
+	wmi_peer_assoc_mlo_partner_link_params *ml_partner_link;
+	struct ml_partner_info *partner_info;
+	uint8_t i;
+
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       (req->ml_links.num_links *
+		       sizeof(wmi_peer_assoc_mlo_partner_link_params)));
+	buf_ptr += sizeof(uint32_t);
+
+	ml_partner_link = (wmi_peer_assoc_mlo_partner_link_params *)buf_ptr;
+	partner_info = req->ml_links.partner_info;
+	for (i = 0; i < req->ml_links.num_links; i++) {
+		WMITLV_SET_HDR(&ml_partner_link->tlv_header,
+			       WMITLV_TAG_STRUC_wmi_peer_assoc_mlo_partner_link_params,
+			       WMITLV_GET_STRUCT_TLVLEN(wmi_peer_assoc_mlo_partner_link_params));
+		ml_partner_link->vdev_id = partner_info[i].vdev_id;
+		ml_partner_link->hw_mld_link_id = partner_info[i].hw_mld_link_id;
+		ml_partner_link++;
+	}
+
+	return buf_ptr +
+	       (req->ml_links.num_links *
+		sizeof(wmi_peer_assoc_mlo_partner_link_params));
+}

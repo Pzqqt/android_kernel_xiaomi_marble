@@ -74,6 +74,31 @@ uint8_t *peer_create_add_mlo_params(uint8_t *buf_ptr,
  *  Return: size of ML params in peer create cmd
  */
 size_t peer_create_mlo_params_size(struct peer_create_params *req);
+/**
+ *  peer_assoc_mlo_params_size() - Get ML params size in peer assoc
+ *  @req: pointer to peer assoc request param
+ *
+ *  Return: size of ML params in peer assoc cmd
+ */
+size_t peer_assoc_mlo_params_size(struct peer_assoc_params *req);
+/**
+ *  peer_assoc_add_mlo_params() - Add MLO params in peer assoc cmd
+ *  @buf_ptr: pointer to peer assoc cmd buffer.
+ *  @req: pointer to peer assoc request param
+ *
+ *  Return: pointer to new offset of cmd buffer
+ */
+uint8_t *peer_assoc_add_mlo_params(uint8_t *buf_ptr,
+				   struct peer_assoc_params *req);
+/**
+ *  peer_assoc_add_ml_partner_links() - Add MLO partner links in peer assoc cmd
+ *  @buf_ptr: pointer to peer assoc cmd buffer.
+ *  @req: pointer to peer assoc request param
+ *
+ *  Return: pointer to new offset of cmd buffer
+ */
+uint8_t *peer_assoc_add_ml_partner_links(uint8_t *buf_ptr,
+					 struct peer_assoc_params *req);
 #else
 static uint8_t *vdev_create_add_mlo_params(uint8_t *buf_ptr,
 					   struct vdev_create_params *param)
@@ -117,5 +142,29 @@ static size_t peer_create_mlo_params_size(struct peer_create_params *req)
 {
 	return WMI_TLV_HDR_SIZE;
 }
+
+static size_t peer_assoc_mlo_params_size(struct peer_assoc_params *req)
+{
+	size_t peer_assoc_mlo_size =
+			WMI_TLV_HDR_SIZE +
+			WMI_TLV_HDR_SIZE;
+
+	return peer_assoc_mlo_size;
+}
+
+static uint8_t *peer_assoc_add_mlo_params(uint8_t *buf_ptr,
+					  struct peer_assoc_params *req)
+{
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, 0);
+	return buf_ptr + WMI_TLV_HDR_SIZE;
+}
+
+static uint8_t *peer_assoc_add_ml_partner_links(uint8_t *buf_ptr,
+						struct peer_assoc_params *req)
+{
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, 0);
+	return buf_ptr + WMI_TLV_HDR_SIZE;
+}
+
 #endif /*WLAN_FEATURE_11BE_MLO*/
 #endif /*_WMI_UNIFIED_11BE_TLV_H_*/
