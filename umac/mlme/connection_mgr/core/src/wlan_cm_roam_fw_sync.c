@@ -619,22 +619,38 @@ static QDF_STATUS cm_process_roam_keys(struct wlan_objmgr_vdev *vdev,
 			 */
 			if (!cm_is_auth_type_11r(mlme_obj, vdev,
 						 mdie_present) &&
-				roaming_info->pmk_len) {
-				qdf_mem_zero(pmkid_cache, sizeof(*pmkid_cache));
+			    roaming_info->pmk_len) {
+				/*
+				 * This pmksa buffer is to update the
+				 * crypto table
+				 */
+				pmksa = qdf_mem_malloc(sizeof(*pmksa));
+				if (!pmksa) {
+					status = QDF_STATUS_E_NOMEM;
+					qdf_mem_zero(pmkid_cache,
+						     sizeof(*pmkid_cache));
+					qdf_mem_free(pmkid_cache);
+					goto end;
+				}
 				wlan_cm_set_psk_pmk(pdev, vdev_id,
 						    roaming_info->pmk,
 						    roaming_info->pmk_len);
 				wlan_vdev_get_bss_peer_mac(vdev,
-							   &pmkid_cache->bssid);
-				qdf_mem_copy(pmkid_cache->pmkid,
+							   &pmksa->bssid);
+				qdf_mem_copy(pmksa->pmkid,
 					     roaming_info->pmkid, PMKID_LEN);
-				qdf_mem_copy(pmkid_cache->pmk,
+				qdf_mem_copy(pmksa->pmk,
 					     roaming_info->pmk,
 					     roaming_info->pmk_len);
-				pmkid_cache->pmk_len = roaming_info->pmk_len;
+				pmksa->pmk_len = roaming_info->pmk_len;
 
-				wlan_crypto_set_del_pmksa(vdev, pmkid_cache,
-							  true);
+				status = wlan_crypto_set_del_pmksa(vdev,
+								   pmksa,
+								   true);
+				if (QDF_IS_STATUS_ERROR(status)) {
+					qdf_mem_zero(pmksa, sizeof(*pmksa));
+					qdf_mem_free(pmksa);
+				}
 			}
 		}
 		qdf_mem_zero(pmkid_cache, sizeof(*pmkid_cache));
