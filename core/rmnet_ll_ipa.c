@@ -31,6 +31,7 @@ static void rmnet_ll_ipa_rx(void *arg, void *rx_data)
 	/* Odds are IPA does this, but just to be safe */
 	skb->dev = ll_ep->phys_dev;
 	skb->protocol = htons(ETH_P_MAP);
+	skb_record_rx_queue(skb, 1);
 
 	tmp = skb;
 	while (tmp) {

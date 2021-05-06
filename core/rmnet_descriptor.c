@@ -1528,6 +1528,7 @@ __rmnet_frag_ingress_handler(struct rmnet_frag_descriptor *frag_desc,
 	LIST_HEAD(segs);
 	u16 len, pad;
 	u8 mux_id;
+	bool skip_perf = (frag_desc->priority == 0xda1a);
 
 	qmap = rmnet_frag_header_ptr(frag_desc, 0, sizeof(*qmap), &__qmap);
 	if (!qmap)
@@ -1580,6 +1581,9 @@ __rmnet_frag_ingress_handler(struct rmnet_frag_descriptor *frag_desc,
 	if (port->data_format & RMNET_INGRESS_FORMAT_PS)
 		qmi_rmnet_work_maybe_restart(port);
 
+	if (skip_perf)
+		goto no_perf;
+
 	rcu_read_lock();
 	rmnet_perf_ingress = rcu_dereference(rmnet_perf_desc_entry);
 	if (rmnet_perf_ingress) {
@@ -1592,6 +1596,7 @@ __rmnet_frag_ingress_handler(struct rmnet_frag_descriptor *frag_desc,
 	}
 	rcu_read_unlock();
 
+no_perf:
 	list_for_each_entry_safe(frag, tmp, &segs, list) {
 		list_del_init(&frag->list);
 		rmnet_frag_deliver(frag, port);
@@ -1611,6 +1616,7 @@ void rmnet_frag_ingress_handler(struct sk_buff *skb,
 {
 	rmnet_perf_chain_hook_t rmnet_perf_opt_chain_end;
 	LIST_HEAD(desc_list);
+	bool skip_perf = (skb->priority == 0xda1a);
 
 	/* Deaggregation and freeing of HW originating
 	 * buffers is done within here
@@ -1634,6 +1640,9 @@ void rmnet_frag_ingress_handler(struct sk_buff *skb,
 		consume_skb(skb);
 		skb = skb_frag;
 	}
+
+	if (skip_perf)
+		return;
 
 	rcu_read_lock();
 	rmnet_perf_opt_chain_end = rcu_dereference(rmnet_perf_chain_end);

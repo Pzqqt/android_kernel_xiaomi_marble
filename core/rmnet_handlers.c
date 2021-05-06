@@ -297,6 +297,9 @@ rmnet_map_ingress_handler(struct sk_buff *skb,
 		return;
 	}
 
+	if (skb->priority == 0xda1a)
+		goto no_perf;
+
 	/* Pass off handling to rmnet_perf module, if present */
 	rcu_read_lock();
 	rmnet_perf_core_deaggregate = rcu_dereference(rmnet_perf_deag_entry);
@@ -307,6 +310,7 @@ rmnet_map_ingress_handler(struct sk_buff *skb,
 	}
 	rcu_read_unlock();
 
+no_perf:
 	/* Deaggregation and freeing of HW originating
 	 * buffers is done within here
 	 */
@@ -445,7 +449,8 @@ rx_handler_result_t rmnet_rx_handler(struct sk_buff **pskb)
 
 		rcu_read_lock();
 		rmnet_core_shs_switch = rcu_dereference(rmnet_shs_switch);
-		if (rmnet_core_shs_switch && !skb->cb[1]) {
+		if (rmnet_core_shs_switch && !skb->cb[1] &&
+		    skb->priority != 0xda1a) {
 			skb->cb[1] = 1;
 			rmnet_core_shs_switch(skb, &port->phy_shs_cfg);
 			rcu_read_unlock();
