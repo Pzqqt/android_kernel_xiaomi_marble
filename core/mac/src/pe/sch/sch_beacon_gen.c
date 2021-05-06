@@ -889,6 +889,7 @@ void lim_update_probe_rsp_template_ie_bitmap_beacon2(struct mac_context *mac,
 				     sizeof(beacon2->transmit_power_env[i]));
 		}
 	}
+	prb_rsp->num_transmit_power_env = num_tpe;
 
 	if (beacon2->VHTExtBssLoad.present) {
 		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap,
