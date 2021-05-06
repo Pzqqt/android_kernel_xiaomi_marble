@@ -112,3 +112,29 @@ uint8_t *vdev_start_add_ml_partner_links(uint8_t *buf_ptr,
 		(req->mlo_partner.num_links *
 		 sizeof(wmi_partner_link_params));
 }
+
+size_t peer_create_mlo_params_size(struct peer_create_params *req)
+{
+	return sizeof(wmi_peer_create_mlo_params) + WMI_TLV_HDR_SIZE;
+}
+
+uint8_t *peer_create_add_mlo_params(uint8_t *buf_ptr,
+				    struct peer_create_params *req)
+{
+	wmi_peer_create_mlo_params *mlo_params;
+
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       sizeof(wmi_peer_create_mlo_params));
+	buf_ptr += sizeof(uint32_t);
+
+	mlo_params = (wmi_peer_create_mlo_params *)buf_ptr;
+	WMITLV_SET_HDR(&mlo_params->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_peer_create_mlo_params,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_peer_create_mlo_params));
+
+	mlo_params->mlo_flags.mlo_flags = 0;
+	WMI_MLO_FLAGS_SET_ENABLED(mlo_params->mlo_flags.mlo_flags,
+				  req->mlo_enabled);
+
+	return buf_ptr + sizeof(wmi_peer_create_mlo_params);
+}

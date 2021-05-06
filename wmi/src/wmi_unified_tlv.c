@@ -1430,8 +1430,10 @@ static QDF_STATUS send_peer_create_cmd_tlv(wmi_unified_t wmi,
 {
 	wmi_peer_create_cmd_fixed_param *cmd;
 	wmi_buf_t buf;
+	uint8_t *buf_ptr;
 	int32_t len = sizeof(*cmd);
 
+	len += peer_create_mlo_params_size(param);
 	buf = wmi_buf_alloc(wmi, len);
 	if (!buf)
 		return QDF_STATUS_E_NOMEM;
@@ -1445,6 +1447,9 @@ static QDF_STATUS send_peer_create_cmd_tlv(wmi_unified_t wmi,
 	cmd->peer_type = param->peer_type;
 	cmd->vdev_id = param->vdev_id;
 
+	buf_ptr = (uint8_t *)wmi_buf_data(buf);
+	buf_ptr += sizeof(*cmd);
+	buf_ptr = peer_create_add_mlo_params(buf_ptr, param);
 	wmi_mtrace(WMI_PEER_CREATE_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi, buf, len, WMI_PEER_CREATE_CMDID)) {
 		wmi_err("Failed to send WMI_PEER_CREATE_CMDID");

@@ -794,11 +794,15 @@ struct peer_set_params {
  * @peer_addr: peer mac addr
  * @peer_type: peer type
  * @vdev_id: vdev id
+ * @mlo_enable: Indicates MLO is enabled
  */
 struct peer_create_params {
 	const uint8_t *peer_addr;
 	uint32_t peer_type;
 	uint32_t vdev_id;
+#ifdef WLAN_FEATURE_11BE_MLO
+	bool mlo_enabled;
+#endif
 };
 
 /**
