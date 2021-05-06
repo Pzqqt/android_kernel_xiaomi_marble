@@ -6616,6 +6616,7 @@ static int ipa3_panic_notifier(struct notifier_block *this,
 	unsigned long event, void *ptr)
 {
 	int res;
+	struct ipa_active_client_logging_info log_info;
 
 	ipa3_freeze_clock_vote_and_notify_modem();
 
@@ -6624,7 +6625,12 @@ static int ipa3_panic_notifier(struct notifier_block *this,
 	if (res)
 		IPAERR("uC panic handler failed %d\n", res);
 
-	if (atomic_read(&ipa3_ctx->ipa_clk_vote)) {
+	/* Make sure IPA clock voted when collecting the reg dump */
+	IPA_ACTIVE_CLIENTS_PREP_SPECIAL(log_info, "PANIC_VOTE");
+	res = ipa3_inc_client_enable_clks_no_block(&log_info);
+	if (res) {
+		IPAERR("IPA clk off not saving the IPA registers\n");
+	} else {
 		ipahal_print_all_regs(false);
 		ipa_save_registers();
 		ipa_wigig_save_regs();
