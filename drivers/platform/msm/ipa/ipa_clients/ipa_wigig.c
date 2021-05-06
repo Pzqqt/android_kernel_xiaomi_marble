@@ -268,7 +268,7 @@ static int ipa_wigig_commit_partial_hdr(
 		hdr_info->hdr_len,
 		hdr_info->hdr_type);
 
-	hdr->commit = 1;
+	hdr->commit = 0;
 	hdr->num_hdrs = 2;
 
 	snprintf(hdr->hdr[0].name, sizeof(hdr->hdr[0].name),
