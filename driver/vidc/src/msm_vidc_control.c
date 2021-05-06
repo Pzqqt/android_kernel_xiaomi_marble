@@ -1406,7 +1406,7 @@ int msm_vidc_adjust_b_frame(void *instance, struct v4l2_ctrl *ctrl)
 		goto exit;
 	}
 
-	adjusted_value = (2 << enh_layer_count) - 1;
+	adjusted_value = (1 << enh_layer_count) - 1;
 	/* Allowed Bframe values are 0, 1, 3, 7 */
 	if (adjusted_value > max_bframe_size)
 		adjusted_value = max_bframe_size;
@@ -2789,13 +2789,22 @@ int msm_vidc_set_blur_resolution(void *instance,
 	blur_width = (hfi_value & 0xFFFF0000) >> 16;
 	blur_height = hfi_value & 0xFFFF;
 
-	if (blur_width > inst->compose.width ||
-		blur_height > inst->compose.height) {
+	if (blur_width > inst->crop.width ||
+		blur_height > inst->crop.height) {
 		i_vpr_e(inst,
-			"%s: blur wxh: %dx%d exceeds compose wxh: %dx%d\n",
+			"%s: blur wxh: %dx%d exceeds crop wxh: %dx%d\n",
 			__func__, blur_width, blur_height,
-			inst->compose.width, inst->compose.height);
-		hfi_value = (inst->compose.width << 16) | inst->compose.height;
+			inst->crop.width, inst->crop.height);
+		hfi_value = 0;
+	}
+
+	if (blur_width == inst->crop.width &&
+		blur_height == inst->crop.height) {
+		i_vpr_e(inst,
+			"%s: blur wxh: %dx%d is equal to crop wxh: %dx%d\n",
+			__func__, blur_width, blur_height,
+			inst->crop.width, inst->crop.height);
+		hfi_value = 0;
 	}
 
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_32_PACKED,
