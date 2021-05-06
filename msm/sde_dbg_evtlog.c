@@ -210,7 +210,7 @@ void sde_evtlog_dump_all(struct sde_dbg_evtlog *evtlog)
 	char buf[SDE_EVTLOG_BUF_MAX];
 	bool update_last_entry = true;
 
-	if (!evtlog)
+	if (!evtlog || !(evtlog->dump_mode & SDE_DBG_DUMP_IN_LOG))
 		return;
 
 	while (sde_evtlog_dump_to_buffer(evtlog, buf, sizeof(buf),
@@ -230,6 +230,7 @@ struct sde_dbg_evtlog *sde_evtlog_init(void)
 
 	spin_lock_init(&evtlog->spin_lock);
 	evtlog->enable = SDE_EVTLOG_DEFAULT_ENABLE;
+	evtlog->dump_mode = SDE_DBG_DEFAULT_DUMP_MODE;
 
 	INIT_LIST_HEAD(&evtlog->filter_list);
 
