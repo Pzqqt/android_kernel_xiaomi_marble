@@ -17,6 +17,21 @@
 #define SDE_WB_MODE_MAX_WIDTH	5120
 #define SDE_WB_MODE_MAX_HEIGHT	5120
 
+static const struct drm_display_mode sde_custom_wb_modes[] = {
+/* 5120x2160@60Hz */
+{ DRM_MODE("5120x2160", DRM_MODE_TYPE_DRIVER, 693264, 5120, 5128,
+		5160, 5200, 0, 2160, 2208, 2216, 2222, 0,
+		DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
+
+{ DRM_MODE("2160x5120", DRM_MODE_TYPE_DRIVER, 693264, 2160, 2208,
+		2216, 2222, 0, 5120, 5128, 5160, 5200, 0,
+		DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
+
+{ DRM_MODE("5120x2560", DRM_MODE_TYPE_DRIVER, 818064, 5120, 5128,
+		5160, 5200, 0, 2560, 2608, 2616, 2622, 0,
+		DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC) },
+};
+
 /* Serialization lock for sde_wb_list */
 static DEFINE_MUTEX(sde_wb_list_lock);
 
@@ -62,6 +77,37 @@ sde_wb_connector_detect(struct drm_connector *connector,
 	return rc;
 }
 
+static int sde_wb_connector_add_custom_modes(struct drm_connector *connector,
+		u32 hdisplay, u32 vdisplay)
+{
+	int i, num_modes = 0;
+	struct drm_display_mode *mode;
+	struct drm_device *dev = connector->dev;
+
+	if (!hdisplay || !vdisplay)
+		return 0;
+
+	if (hdisplay > SDE_WB_MODE_MAX_WIDTH)
+		hdisplay = SDE_WB_MODE_MAX_WIDTH;
+	if (vdisplay > SDE_WB_MODE_MAX_HEIGHT)
+		vdisplay = SDE_WB_MODE_MAX_HEIGHT;
+
+	for (i = 0; i < ARRAY_SIZE(sde_custom_wb_modes); i++) {
+		const struct drm_display_mode *ptr = &sde_custom_wb_modes[i];
+
+		if (ptr->hdisplay > hdisplay || ptr->vdisplay > vdisplay)
+			continue;
+
+		mode = drm_mode_duplicate(dev, ptr);
+		if (mode) {
+			drm_mode_probed_add(connector, mode);
+			num_modes++;
+		}
+	}
+
+	return num_modes;
+}
+
 int sde_wb_connector_get_modes(struct drm_connector *connector, void *display,
 		const struct msm_resource_caps_info *avail_res)
 {
@@ -104,6 +150,9 @@ int sde_wb_connector_get_modes(struct drm_connector *connector, void *display,
 				wb_dev->wb_cfg->sblk->maxlinewidth_linear);
 
 		num_modes = drm_add_modes_noedid(connector, max_width,
+				SDE_WB_MODE_MAX_HEIGHT);
+
+		num_modes += sde_wb_connector_add_custom_modes(connector, max_width,
 				SDE_WB_MODE_MAX_HEIGHT);
 	}
 	mutex_unlock(&wb_dev->wb_lock);
