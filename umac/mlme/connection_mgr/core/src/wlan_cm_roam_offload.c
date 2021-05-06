@@ -4243,6 +4243,72 @@ bool cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
 	return false;
 }
 
+#ifdef FEATURE_WLAN_ESE
+static bool cm_is_open_mode(struct wlan_objmgr_vdev *vdev)
+{
+	int32_t ucast_cipher;
+
+	ucast_cipher = wlan_crypto_get_param(vdev,
+					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+	if (!ucast_cipher ||
+	    ((QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_NONE) ==
+	      ucast_cipher)))
+		return true;
+
+	return false;
+}
+
+bool
+cm_ese_open_present(struct wlan_objmgr_vdev *vdev,
+		    struct wlan_mlme_psoc_ext_obj *mlme_obj,
+		    bool ese_version_present)
+{
+	if (cm_is_open_mode(vdev) && ese_version_present &&
+	    mlme_obj->cfg.lfr.ese_enabled)
+		return true;
+
+	return false;
+}
+
+bool
+cm_is_ese_connection(struct wlan_objmgr_vdev *vdev, bool ese_version_present)
+{
+	int32_t akm;
+	int32_t auth_mode;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		mlme_err("psoc not found");
+		return false;
+	}
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return false;
+
+	if (!mlme_obj->cfg.lfr.ese_enabled)
+		return false;
+
+	akm = wlan_crypto_get_param(vdev,
+				    WLAN_CRYPTO_PARAM_KEY_MGMT);
+
+	auth_mode = wlan_crypto_get_param(vdev,
+					  WLAN_CRYPTO_PARAM_AUTH_MODE);
+
+	if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_CCKM))
+		return true;
+
+	/* A profile can not be both ESE and 11R. But an 802.11R AP
+	 * may be advertising support for ESE as well. So if we are
+	 * associating Open or explicitly ESE then we will get ESE.
+	 * If we are associating explicitly 11R only then we will get
+	 * 11R.
+	 */
+	return cm_ese_open_present(vdev, mlme_obj, ese_version_present);
+}
+#endif
+
 static void cm_roam_start_init(struct wlan_objmgr_psoc *psoc,
 			       struct wlan_objmgr_pdev *pdev,
 			       struct wlan_objmgr_vdev *vdev)
@@ -4321,6 +4387,42 @@ void cm_roam_start_init_on_connect(struct wlan_objmgr_pdev *pdev,
 		return;
 	}
 	cm_roam_start_init(psoc, pdev, vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+}
+
+void cm_update_session_assoc_ie(struct wlan_objmgr_psoc *psoc,
+				uint8_t vdev_id,
+				struct element_info *assoc_ie)
+{
+	struct rso_config *rso_cfg;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL for vdev %d", vdev_id);
+		return;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg)
+		goto rel_vdev_ref;
+
+	if (rso_cfg->assoc_ie.ptr) {
+		qdf_mem_free(rso_cfg->assoc_ie.ptr);
+		rso_cfg->assoc_ie.ptr = NULL;
+		rso_cfg->assoc_ie.len = 0;
+	}
+	if (!assoc_ie->len) {
+		sme_debug("Assoc IE len 0");
+		goto rel_vdev_ref;
+	}
+	rso_cfg->assoc_ie.ptr = qdf_mem_malloc(assoc_ie->len);
+	if (!rso_cfg->assoc_ie.ptr)
+		goto rel_vdev_ref;
+
+	rso_cfg->assoc_ie.len = assoc_ie->len;
+	qdf_mem_copy(rso_cfg->assoc_ie.ptr, assoc_ie->ptr, assoc_ie->len);
+rel_vdev_ref:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 }
 

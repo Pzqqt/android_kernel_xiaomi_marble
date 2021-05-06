@@ -1820,5 +1820,6 @@ static struct mlme_ext_ops ext_ops = {
 	.mlme_cm_ext_bss_peer_delete_req_cb = cm_send_bss_peer_delete_req,
 	.mlme_cm_ext_disconnect_complete_ind_cb = cm_disconnect_complete_ind,
 	.mlme_cm_ext_vdev_down_req_cb = cm_send_vdev_down_req,
+	.mlme_cm_ext_reassoc_req_cb = cm_handle_reassoc_req,
 #endif
 };

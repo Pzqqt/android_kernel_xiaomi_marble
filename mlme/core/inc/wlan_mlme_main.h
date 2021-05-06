@@ -322,6 +322,7 @@ struct ft_context {
  * @fils_con_info: Pointer to fils connection info from connect req
  * @cckm_ie: cck IE
  * @cckm_ie_len: cckm_ie len
+ * @ese_tspec_info: ese tspec info
  */
 struct mlme_connect_info {
 	uint8_t timing_meas_cap;
@@ -341,6 +342,9 @@ struct mlme_connect_info {
 #ifdef FEATURE_WLAN_ESE
 	uint8_t cckm_ie[DOT11F_IE_RSN_MAX_LEN];
 	uint8_t cckm_ie_len;
+#ifdef WLAN_FEATURE_HOST_ROAM
+	tESETspecInfo ese_tspec_info;
+#endif
 #endif
 };
 
