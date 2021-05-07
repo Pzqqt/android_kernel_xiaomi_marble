@@ -2135,6 +2135,15 @@ ucfg_pmo_get_sap_mode_bus_suspend(struct wlan_objmgr_psoc *psoc);
 bool
 ucfg_pmo_get_go_mode_bus_suspend(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * ucfg_pmo_get_suspend_mode - Return pmo_suspend_mode value to caller
+ * @psoc: Pointer to psoc object
+ *
+ * Return: The value of suspend_mode as stored in CFG
+ */
+enum pmo_suspend_mode
+ucfg_pmo_get_suspend_mode(struct wlan_objmgr_psoc *psoc);
+
 #ifdef SYSTEM_PM_CHECK
 /**
  * ucfg_pmo_notify_system_resume() - system resume notification to pmo
