@@ -3707,7 +3707,6 @@ static void wlan_ipa_uc_loaded_handler(struct wlan_ipa_priv *ipa_ctx)
 		ipa_info("UC already loaded");
 		return;
 	}
-	ipa_ctx->uc_loaded = true;
 
 	if (!qdf_dev) {
 		ipa_err("qdf_dev is null");
@@ -3730,7 +3729,7 @@ static void wlan_ipa_uc_loaded_handler(struct wlan_ipa_priv *ipa_ctx)
 	if (status) {
 		ipa_err("Failure to setup IPA pipes (status=%d)",
 			status);
-		return;
+		goto connect_pipe_fail;
 	}
 	/* Setup the Tx buffer SMMU mapings */
 	status = cdp_ipa_tx_buf_smmu_mapping(ipa_ctx->dp_soc,
@@ -3738,7 +3737,7 @@ static void wlan_ipa_uc_loaded_handler(struct wlan_ipa_priv *ipa_ctx)
 	if (status) {
 		ipa_err("Failure to map Tx buffers for IPA(status=%d)",
 			status);
-		return;
+		goto smmu_map_fail;
 	}
 	ipa_info("TX buffers mapped to IPA");
 	cdp_ipa_set_doorbell_paddr(ipa_ctx->dp_soc, ipa_ctx->dp_pdev_id);
@@ -3757,6 +3756,19 @@ static void wlan_ipa_uc_loaded_handler(struct wlan_ipa_priv *ipa_ctx)
 	     ipa_ctx->sta_connected)) {
 		ipa_debug("Client already connected, enable IPA/FW PIPEs");
 		wlan_ipa_uc_handle_first_con(ipa_ctx);
+	}
+
+	ipa_ctx->uc_loaded = true;
+
+	return;
+
+smmu_map_fail:
+	qdf_ipa_wdi_disconn_pipes();
+
+connect_pipe_fail:
+	if (wlan_ipa_uc_sta_is_enabled(ipa_ctx->config)) {
+		qdf_cancel_work(&ipa_ctx->mcc_work);
+		wlan_ipa_teardown_sys_pipe(ipa_ctx);
 	}
 }
 
@@ -3977,6 +3989,14 @@ QDF_STATUS wlan_ipa_uc_ol_init(struct wlan_ipa_priv *ipa_ctx,
 		goto fail_return;
 	}
 
+	for (i = 0; i < WLAN_IPA_UC_OPCODE_MAX; i++) {
+		ipa_ctx->uc_op_work[i].osdev = osdev;
+		ipa_ctx->uc_op_work[i].msg = NULL;
+		qdf_create_work(0, &ipa_ctx->uc_op_work[i].work,
+				wlan_ipa_uc_fw_op_event_handler,
+				&ipa_ctx->uc_op_work[i]);
+	}
+
 	if (true == ipa_ctx->uc_loaded) {
 		status = wlan_ipa_wdi_setup(ipa_ctx, osdev);
 		if (status) {
@@ -4001,14 +4021,6 @@ QDF_STATUS wlan_ipa_uc_ol_init(struct wlan_ipa_priv *ipa_ctx,
 
 		if (wlan_ipa_init_perf_level(ipa_ctx) != QDF_STATUS_SUCCESS)
 			ipa_err("Failed to init perf level");
-	}
-
-	for (i = 0; i < WLAN_IPA_UC_OPCODE_MAX; i++) {
-		ipa_ctx->uc_op_work[i].osdev = osdev;
-		qdf_create_work(0, &ipa_ctx->uc_op_work[i].work,
-				wlan_ipa_uc_fw_op_event_handler,
-				&ipa_ctx->uc_op_work[i]);
-		ipa_ctx->uc_op_work[i].msg = NULL;
 	}
 
 	cdp_ipa_register_op_cb(ipa_ctx->dp_soc, ipa_ctx->dp_pdev_id,
