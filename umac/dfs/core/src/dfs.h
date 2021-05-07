@@ -376,7 +376,7 @@
  * wait timer with this timeout.
  */
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
-#define HOST_DFS_STATUS_WAIT_TIMER_MS 200
+#define HOST_DFS_STATUS_WAIT_TIMER_MS 350
 #endif
 
 /*
