@@ -1750,6 +1750,7 @@ static QDF_STATUS wlan_ipa_setup_iface(struct wlan_ipa_priv *ipa_ctx,
 	if (WLAN_IPA_MAX_IFACE == ipa_ctx->num_iface) {
 		ipa_err("Max interface reached %d", WLAN_IPA_MAX_IFACE);
 		status = QDF_STATUS_E_NOMEM;
+		iface_context = NULL;
 		QDF_ASSERT(0);
 		goto end;
 	}
