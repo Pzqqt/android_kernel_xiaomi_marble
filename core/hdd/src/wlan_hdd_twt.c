@@ -885,6 +885,8 @@ uint32_t hdd_get_twt_setup_event_len(bool additional_params_present)
 	len += nla_total_size(sizeof(u8));
 	/*QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TWT_INFO_ENABLED*/
 	len += nla_total_size(sizeof(u8));
+	/*QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAC_ADDR*/
+	len += nla_total_size(QDF_MAC_ADDR_SIZE);
 
 	return len;
 }
@@ -1136,7 +1138,7 @@ hdd_twt_setup_pack_resp_nlmsg(struct sk_buff *reply_skb,
 	struct nlattr *config_attr;
 	uint64_t sp_offset_tsf;
 	enum qca_wlan_vendor_twt_status vendor_status;
-	int response_type;
+	int response_type, attr;
 	uint32_t wake_duration;
 	uint32_t wake_intvl_mantis_us, wake_intvl_mantis_tu;
 
@@ -1144,14 +1146,14 @@ hdd_twt_setup_pack_resp_nlmsg(struct sk_buff *reply_skb,
 
 	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_OPERATION,
 		       QCA_WLAN_TWT_SET)) {
-		hdd_err("TWT: Failed to put TWT operation");
+		hdd_err("Failed to put TWT operation");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	config_attr = nla_nest_start(reply_skb,
 				     QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS);
 	if (!config_attr) {
-		hdd_err("TWT: nla_nest_start error");
+		hdd_err("nla_nest_start error");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -1159,16 +1161,17 @@ hdd_twt_setup_pack_resp_nlmsg(struct sk_buff *reply_skb,
 	sp_offset_tsf = (sp_offset_tsf << 32) |
 			 event->additional_params.sp_tsf_us_lo;
 
-	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID,
-		       event->params.dialog_id)) {
-		hdd_err("TWT: Failed to put dialog_id");
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID;
+	if (nla_put_u8(reply_skb, attr, event->params.dialog_id)) {
+		hdd_err("Failed to put dialog_id");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	vendor_status = wmi_twt_add_status_to_vendor_twt_status(event->params.status);
-	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS,
-		       vendor_status)) {
-		hdd_err("TWT: Failed to put setup status");
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS;
+	vendor_status = wmi_twt_add_status_to_vendor_twt_status(
+							event->params.status);
+	if (nla_put_u8(reply_skb, attr, vendor_status)) {
+		hdd_err("Failed to put setup status");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1177,29 +1180,32 @@ hdd_twt_setup_pack_resp_nlmsg(struct sk_buff *reply_skb,
 		return QDF_STATUS_SUCCESS;
 	}
 
-	response_type = wmi_twt_add_cmd_to_vendor_twt_resp_type(event->additional_params.twt_cmd);
+	response_type = wmi_twt_add_cmd_to_vendor_twt_resp_type(
+					event->additional_params.twt_cmd);
 	if (response_type == -EINVAL) {
-		hdd_err("TWT: Invalid response type from firmware");
-		return QDF_STATUS_E_FAILURE;
-	}
-	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_RESP_TYPE,
-		       response_type)) {
-		hdd_err("TWT: Failed to put setup response type");
+		hdd_err("Invalid response type from firmware");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_TYPE,
-		       event->additional_params.announce)) {
-		hdd_err("TWT: Failed to put setup flow type");
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_RESP_TYPE;
+	if (nla_put_u8(reply_skb, attr, response_type)) {
+		hdd_err("Failed to put setup response type");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_TYPE;
+	if (nla_put_u8(reply_skb, attr, event->additional_params.announce)) {
+		hdd_err("Failed to put setup flow type");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	hdd_debug("wake_dur_us %d", event->additional_params.wake_dur_us);
 	wake_duration = (event->additional_params.wake_dur_us /
 			 TWT_WAKE_DURATION_MULTIPLICATION_FACTOR);
-	if (nla_put_u32(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_DURATION,
-			wake_duration)) {
-		hdd_err("TWT: Failed to put wake duration");
+
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_DURATION;
+	if (nla_put_u32(reply_skb, attr, wake_duration)) {
+		hdd_err("Failed to put wake duration");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1207,70 +1213,77 @@ hdd_twt_setup_pack_resp_nlmsg(struct sk_buff *reply_skb,
 	if (nla_put_u32(reply_skb,
 			QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL2_MANTISSA,
 			wake_intvl_mantis_us)) {
-		hdd_err("TWT: Failed to put wake interval mantissa in us");
+		hdd_err("Failed to put wake interval mantissa in us");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	wake_intvl_mantis_tu = (event->additional_params.wake_intvl_us /
 				 TWT_WAKE_INTVL_MULTIPLICATION_FACTOR);
-	if (nla_put_u32(reply_skb,
-			QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_MANTISSA,
-			wake_intvl_mantis_tu)) {
-		hdd_err("TWT: Failed to put wake interval mantissa in tu");
+
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_MANTISSA;
+	if (nla_put_u32(reply_skb, attr, wake_intvl_mantis_tu)) {
+		hdd_err("Failed to put wake interval mantissa in tu");
 		return QDF_STATUS_E_FAILURE;
 	}
-	hdd_debug("TWT: Send mantissa_us:%d, mantissa_tu:%d to userspace",
+	hdd_debug("Send mantissa_us:%d, mantissa_tu:%d to userspace",
 		  wake_intvl_mantis_us, wake_intvl_mantis_tu);
 
-	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_EXP,
-		       0)) {
-		hdd_err("TWT: Failed to put wake interval exp");
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_EXP;
+	if (nla_put_u8(reply_skb, attr, 0)) {
+		hdd_err("Failed to put wake interval exp");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (wlan_cfg80211_nla_put_u64(reply_skb,
-				      QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_TIME_TSF,
-				      sp_offset_tsf)) {
-		hdd_err("TWT: Failed to put sp_offset_tsf");
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_TIME_TSF;
+	if (wlan_cfg80211_nla_put_u64(reply_skb, attr, sp_offset_tsf)) {
+		hdd_err("Failed to put sp_offset_tsf");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (nla_put_u32(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_TIME,
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_TIME;
+	if (nla_put_u32(reply_skb, attr,
 			event->additional_params.sp_offset_us)) {
-		hdd_err("TWT: Failed to put sp_offset_us");
+		hdd_err("Failed to put sp_offset_us");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (event->additional_params.trig_en) {
-		if (nla_put_flag(reply_skb,
-				 QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TRIGGER)) {
-			hdd_err("TWT: Failed to put trig type");
+		attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TRIGGER;
+		if (nla_put_flag(reply_skb, attr)) {
+			hdd_err("Failed to put trig type");
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
 
 	if (event->additional_params.protection) {
-		if (nla_put_flag(reply_skb,
-				 QCA_WLAN_VENDOR_ATTR_TWT_SETUP_PROTECTION)) {
-			hdd_err("TWT: Failed to put protection flag");
+		attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_PROTECTION;
+		if (nla_put_flag(reply_skb, attr)) {
+			hdd_err("Failed to put protection flag");
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
 
 	if (event->additional_params.bcast) {
-		if (nla_put_flag(reply_skb,
-				 QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST)) {
-			hdd_err("TWT: Failed to put bcast flag");
+		attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST;
+		if (nla_put_flag(reply_skb, attr)) {
+			hdd_err("Failed to put bcast flag");
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
 
 	if (!event->additional_params.info_frame_disabled) {
-		if (nla_put_flag(reply_skb,
-				 QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TWT_INFO_ENABLED)) {
-			hdd_err("TWT: Failed to put twt info enable flag");
+		attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TWT_INFO_ENABLED;
+		if (nla_put_flag(reply_skb, attr)) {
+			hdd_err("Failed to put twt info enable flag");
 			return QDF_STATUS_E_FAILURE;
 		}
+	}
+
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAC_ADDR;
+	if (nla_put(reply_skb, attr, QDF_MAC_ADDR_SIZE,
+		    event->params.peer_macaddr)) {
+		hdd_err("Failed to put mac_addr");
+		return QDF_STATUS_E_INVAL;
 	}
 
 	nla_nest_end(reply_skb, config_attr);
@@ -1556,6 +1569,8 @@ static uint32_t hdd_get_twt_event_len(void)
 	len += nla_total_size(sizeof(u8));
 	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS */
 	len += nla_total_size(sizeof(u8));
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAC_ADDR*/
+	len += nla_total_size(QDF_MAC_ADDR_SIZE);
 
 	return len;
 }
@@ -1574,32 +1589,39 @@ hdd_twt_terminate_pack_resp_nlmsg(struct sk_buff *reply_skb,
 				  struct wmi_twt_del_dialog_complete_event_param *params)
 {
 	struct nlattr *config_attr;
-	int vendor_status;
+	int vendor_status, attr;
 
 	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_OPERATION,
 		       QCA_WLAN_TWT_TERMINATE)) {
-		hdd_err("TWT: Failed to put TWT operation");
+		hdd_err("Failed to put TWT operation");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	config_attr = nla_nest_start(reply_skb,
 				     QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS);
 	if (!config_attr) {
-		hdd_err("TWT: nla_nest_start error");
+		hdd_err("nla_nest_start error");
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID,
-		       params->dialog_id)) {
-		hdd_debug("TWT: Failed to put dialog_id");
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID;
+	if (nla_put_u8(reply_skb, attr, params->dialog_id)) {
+		hdd_debug("Failed to put dialog_id");
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS;
 	vendor_status = wmi_twt_del_status_to_vendor_twt_status(params->status);
-	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS,
-		       vendor_status)) {
-		hdd_err("TWT: Failed to put QCA_WLAN_TWT_TERMINATE");
+	if (nla_put_u8(reply_skb, attr, vendor_status)) {
+		hdd_err("Failed to put QCA_WLAN_TWT_TERMINATE");
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAC_ADDR;
+	if (nla_put(reply_skb, attr, QDF_MAC_ADDR_SIZE,
+		    params->peer_macaddr)) {
+		hdd_err("Failed to put mac_addr");
+		return QDF_STATUS_E_INVAL;
 	}
 
 	nla_nest_end(reply_skb, config_attr);
@@ -1647,11 +1669,11 @@ hdd_twt_del_dialog_comp_cb(struct wlan_objmgr_psoc *psoc,
 				QCA_NL80211_VENDOR_SUBCMD_CONFIG_TWT_INDEX,
 				GFP_KERNEL);
 	if (!twt_vendor_event) {
-		hdd_err("TWT: Del dialog skb alloc failed");
+		hdd_err("Del dialog skb alloc failed");
 		return;
 	}
 
-	hdd_debug("TWT: del dialog_id:%d, status:%d vdev_id %d peer mac_addr "
+	hdd_debug("del dialog_id:%d, status:%d vdev_id %d peer mac_addr "
 		  QDF_MAC_ADDR_FMT, params->dialog_id,
 		  params->status, params->vdev_id,
 		  QDF_MAC_ADDR_REF(params->peer_macaddr));
@@ -1832,7 +1854,7 @@ hdd_twt_nudge_pack_resp_nlmsg(struct sk_buff *reply_skb,
 		      struct wmi_twt_nudge_dialog_complete_event_param *params)
 {
 	struct nlattr *config_attr;
-	int vendor_status;
+	int vendor_status, attr;
 	uint64_t tsf_val;
 
 	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_OPERATION,
@@ -1863,12 +1885,19 @@ hdd_twt_nudge_pack_resp_nlmsg(struct sk_buff *reply_skb,
 		return QDF_STATUS_E_INVAL;
 	}
 
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS;
 	vendor_status =
 		     wmi_twt_nudge_status_to_vendor_twt_status(params->status);
-	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS,
-		       vendor_status)) {
+	if (nla_put_u8(reply_skb, attr, vendor_status)) {
 		hdd_err("Failed to put QCA_WLAN_TWT_NUDGE status");
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_NUDGE_MAC_ADDR;
+	if (nla_put(reply_skb, attr, QDF_MAC_ADDR_SIZE,
+		    params->peer_macaddr)) {
+		hdd_err("Failed to put mac_addr");
+		return QDF_STATUS_E_INVAL;
 	}
 
 	nla_nest_end(reply_skb, config_attr);
@@ -1949,32 +1978,39 @@ hdd_twt_pause_pack_resp_nlmsg(struct sk_buff *reply_skb,
 			      struct wmi_twt_pause_dialog_complete_event_param *params)
 {
 	struct nlattr *config_attr;
-	int vendor_status;
+	int vendor_status, attr;
 
 	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_OPERATION,
 		       QCA_WLAN_TWT_SUSPEND)) {
-		hdd_err("TWT: Failed to put TWT operation");
+		hdd_err("Failed to put TWT operation");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	config_attr = nla_nest_start(reply_skb,
 				     QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS);
 	if (!config_attr) {
-		hdd_err("TWT: nla_nest_start error");
+		hdd_err("nla_nest_start error");
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID,
-		       params->dialog_id)) {
-		hdd_debug("TWT: Failed to put dialog_id");
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID;
+	if (nla_put_u8(reply_skb, attr, params->dialog_id)) {
+		hdd_debug("Failed to put dialog_id");
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS;
 	vendor_status = wmi_twt_pause_status_to_vendor_twt_status(params->status);
-	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS,
-		       vendor_status)) {
-		hdd_err("TWT: Failed to put QCA_WLAN_TWT_PAUSE status");
+	if (nla_put_u8(reply_skb, attr, vendor_status)) {
+		hdd_err("Failed to put QCA_WLAN_TWT_PAUSE status");
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAC_ADDR;
+	if (nla_put(reply_skb, attr, QDF_MAC_ADDR_SIZE,
+		    params->peer_macaddr)) {
+		hdd_err("Failed to put mac_addr");
+		return QDF_STATUS_E_INVAL;
 	}
 
 	nla_nest_end(reply_skb, config_attr);
@@ -2017,7 +2053,7 @@ hdd_twt_pause_dialog_comp_cb(
 
 	wdev = adapter->dev->ieee80211_ptr;
 
-	hdd_debug("TWT: pause dialog_id:%d, status:%d vdev_id %d peer mac_addr "
+	hdd_debug("pause dialog_id:%d, status:%d vdev_id %d peer mac_addr "
 		  QDF_MAC_ADDR_FMT, params->dialog_id,
 		  params->status, params->vdev_id,
 		  QDF_MAC_ADDR_REF(params->peer_macaddr));
@@ -2030,7 +2066,7 @@ hdd_twt_pause_dialog_comp_cb(
 				QCA_NL80211_VENDOR_SUBCMD_CONFIG_TWT_INDEX,
 				GFP_KERNEL);
 	if (!twt_vendor_event) {
-		hdd_err("TWT: pause dialog alloc skb failed");
+		hdd_err("pause dialog alloc skb failed");
 		return;
 	}
 
@@ -2103,7 +2139,7 @@ static int hdd_twt_pause_session(struct hdd_adapter *adapter,
 				      twt_param_attr,
 				      qca_wlan_vendor_twt_nudge_dialog_policy);
 	if (ret) {
-		hdd_debug("TWT: command parsing failed");
+		hdd_debug("command parsing failed");
 		return ret;
 	}
 
@@ -2271,32 +2307,39 @@ hdd_twt_resume_pack_resp_nlmsg(struct sk_buff *reply_skb,
 			       struct wmi_twt_resume_dialog_complete_event_param *params)
 {
 	struct nlattr *config_attr;
-	int vendor_status;
+	int vendor_status, attr;
 
 	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_OPERATION,
 		       QCA_WLAN_TWT_RESUME)) {
-		hdd_err("TWT: Failed to put TWT operation");
+		hdd_err("Failed to put TWT operation");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	config_attr = nla_nest_start(reply_skb,
 				     QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS);
 	if (!config_attr) {
-		hdd_err("TWT: nla_nest_start error");
+		hdd_err("nla_nest_start error");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_RESUME_FLOW_ID,
 		       params->dialog_id)) {
-		hdd_debug("TWT: Failed to put dialog_id");
+		hdd_debug("Failed to put dialog_id");
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS;
 	vendor_status = wmi_twt_resume_status_to_vendor_twt_status(params->status);
-	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS,
-		       vendor_status)) {
-		hdd_err("TWT: Failed to put QCA_WLAN_TWT_RESUME status");
+	if (nla_put_u8(reply_skb, attr, vendor_status)) {
+		hdd_err("Failed to put QCA_WLAN_TWT_RESUME status");
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_RESUME_MAC_ADDR;
+	if (nla_put(reply_skb, attr, QDF_MAC_ADDR_SIZE,
+		    params->peer_macaddr)) {
+		hdd_err("Failed to put mac_addr");
+		return QDF_STATUS_E_INVAL;
 	}
 
 	nla_nest_end(reply_skb, config_attr);
