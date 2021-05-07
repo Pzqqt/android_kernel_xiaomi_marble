@@ -668,9 +668,6 @@ static bool is_rx_dest_bridge_dev(struct wlan_ipa_iface_context *iface_ctx,
 	uint8_t da_is_bcmc;
 	bool ret;
 
-	if (iface_ctx->device_mode != QDF_SAP_MODE)
-		return false;
-
 	/*
 	 * WDI 3.0 skb->cb[] info from IPA driver
 	 * skb->cb[0] = vdev_id
@@ -1048,7 +1045,8 @@ static void __wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 		/* Disable to forward Intra-BSS Rx packets when
 		 * ap_isolate=1 in hostapd.conf
 		 */
-		if (!ipa_ctx->disable_intrabss_fwd[session_id]) {
+		if (!ipa_ctx->disable_intrabss_fwd[session_id] &&
+		    iface_context->device_mode == QDF_SAP_MODE) {
 			/*
 			 * When INTRA_BSS_FWD_OFFLOAD is enabled, FW will send
 			 * all Rx packets to IPA uC, which need to be forwarded
