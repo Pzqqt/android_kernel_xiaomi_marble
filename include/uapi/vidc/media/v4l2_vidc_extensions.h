@@ -46,6 +46,9 @@
 #define V4L2_YCBCR_VIDC_FCC47_73_682         302
 
 /* end of vidc specific colorspace definitions */
+#ifndef V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10_STILL_PICTURE
+#define V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10_STILL_PICTURE    (3)
+#endif
 
 /* vendor controls start */
 #define V4L2_CID_MPEG_VIDC_BASE                 (V4L2_CTRL_CLASS_MPEG | 0x2000)

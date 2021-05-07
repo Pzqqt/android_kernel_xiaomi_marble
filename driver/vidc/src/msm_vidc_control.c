@@ -30,6 +30,12 @@ static bool is_priv_ctrl(u32 id)
 	 */
 	switch (id) {
 	/*
+	 * TODO: V4L2_CID_MPEG_VIDEO_HEVC_PROFILE is std ctrl. But
+	 * V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10_STILL_PICTURE support is not
+	 * available yet. Hence, make this as private ctrl for time being
+	 */
+	case V4L2_CID_MPEG_VIDEO_HEVC_PROFILE:
+	/*
 	 * TODO: V4L2_CID_MPEG_VIDEO_H264_HIERARCHICAL_CODING_TYPE is
 	 * std ctrl. But needs some fixes in v4l2-ctrls.c. Hence,
 	 * make this as private ctrl for time being
@@ -108,6 +114,14 @@ static const char *const mpeg_video_avc_coding_layer[] = {
 	NULL,
 };
 
+static const char *const mpeg_video_hevc_profile[] = {
+	"Main",
+	"Main Still Picture",
+	"Main 10",
+	"Main 10 Still Picture",
+	NULL,
+};
+
 static const char *const roi_map_type[] = {
 	"None",
 	"2-bit",
@@ -148,6 +162,8 @@ static const char * const * msm_vidc_get_qmenu_type(
 		return mpeg_video_blur_types;
 	case V4L2_CID_MPEG_VIDEO_H264_HIERARCHICAL_CODING_TYPE:
 		return mpeg_video_avc_coding_layer;
+	case V4L2_CID_MPEG_VIDEO_HEVC_PROFILE:
+		return mpeg_video_hevc_profile;
 	default:
 		i_vpr_e(inst, "%s: No available qmenu for ctrl %#x\n",
 			__func__, control_id);
@@ -872,9 +888,11 @@ int msm_vidc_adjust_profile(void *instance, struct v4l2_ctrl *ctrl)
 		return -EINVAL;
 
 	/* 10 bit profile for 10 bit color format */
-	if (pix_fmt == MSM_VIDC_FMT_TP10C ||
-		pix_fmt == MSM_VIDC_FMT_P010) {
-		adjusted_value = V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10;
+	if (pix_fmt == MSM_VIDC_FMT_TP10C || pix_fmt == MSM_VIDC_FMT_P010) {
+		if (is_image_session(inst))
+			adjusted_value = V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10_STILL_PICTURE;
+		else
+			adjusted_value = V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10;
 	} else {
 		/* 8 bit profile for 8 bit color format */
 		if (adjusted_value == V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10) {
