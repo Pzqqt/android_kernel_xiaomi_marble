@@ -833,6 +833,7 @@ pkt_capture_rx_data_cb(
 		}
 
 		if (rx_desc->attention.last_mpdu) {
+			rssi_comb = 0;
 			preamble_type = 0;
 			vht_sig_a_1 = 0;
 			vht_sig_a_2 = 0;
