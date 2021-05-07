@@ -413,6 +413,7 @@ typedef bool (*qdf_irqlocked_func_t)(void *);
  * @QDF_MODULE_ID_QWRAP: QWRAP module ID
  * @QDF_MODULE_ID_DBDC_REP: DBDC repeater module ID
  * @QDF_MODULE_ID_EXT_AP: Extended AP module ID
+ * @QDF_MODULE_ID_MLO: MLO Manager module ID
  * @QDF_MODULE_ID_ANY: anything
  * @QDF_MODULE_ID_MAX: Max place holder module ID
  *
@@ -563,6 +564,7 @@ typedef enum {
 	QDF_MODULE_ID_QWRAP,
 	QDF_MODULE_ID_DBDC_REP,
 	QDF_MODULE_ID_EXT_AP,
+	QDF_MODULE_ID_MLO,
 	QDF_MODULE_ID_ANY,
 	QDF_MODULE_ID_MAX,
 } QDF_MODULE_ID;
