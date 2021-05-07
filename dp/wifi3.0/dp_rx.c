@@ -217,7 +217,8 @@ dp_rx_refill_ring_record_entry(struct dp_soc *soc, uint8_t ring_num,
 	uint32_t tp;
 	uint32_t hp;
 
-	if (qdf_unlikely(!soc->rx_refill_ring_history[ring_num]))
+	if (qdf_unlikely(ring_num >= MAX_PDEV_CNT ||
+			 !soc->rx_refill_ring_history[ring_num]))
 		return;
 
 	idx = dp_history_get_next_index(&soc->rx_refill_ring_history[ring_num]->index,
@@ -460,7 +461,7 @@ QDF_STATUS __dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 
 	dp_rx_refill_buff_pool_unlock(dp_soc);
 
-	dp_rx_refill_ring_record_entry(dp_soc, mac_id, rxdma_srng,
+	dp_rx_refill_ring_record_entry(dp_soc, dp_pdev->lmac_id, rxdma_srng,
 				       num_req_buffers, count);
 
 	hal_srng_access_end(dp_soc->hal_soc, rxdma_srng);
@@ -3307,8 +3308,8 @@ dp_pdev_rx_buffers_attach(struct dp_soc *dp_soc, uint32_t mac_id,
 			desc_list = next;
 		}
 
-		dp_rx_refill_ring_record_entry(dp_soc, mac_id, rxdma_srng,
-					       nr_nbuf, nr_nbuf);
+		dp_rx_refill_ring_record_entry(dp_soc, dp_pdev->lmac_id,
+					       rxdma_srng, nr_nbuf, nr_nbuf);
 		hal_srng_access_end(dp_soc->hal_soc, rxdma_srng);
 	}
 
