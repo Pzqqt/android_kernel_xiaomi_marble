@@ -976,7 +976,6 @@ int msm_cvp_smmu_fault_handler(struct iommu_domain *domain,
 		msm_cvp_print_inst_bufs(inst);
 	}
 	core->smmu_fault_handled = true;
-	msm_cvp_noc_error_info(core);
 	mutex_unlock(&core->lock);
 	/*
 	 * Return -EINVAL to elicit the default behaviour of smmu driver.
