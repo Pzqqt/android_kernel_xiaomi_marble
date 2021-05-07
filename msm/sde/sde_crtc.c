@@ -7505,16 +7505,28 @@ static void sde_cp_crtc_apply_noise(struct drm_crtc *crtc,
 	struct sde_hw_mixer *lm;
 	int i;
 	struct sde_hw_noise_layer_cfg cfg;
+	struct sde_kms *kms;
 
 	if (!test_bit(SDE_CRTC_NOISE_LAYER, cstate->dirty))
 		return;
+
+	kms = _sde_crtc_get_kms(crtc);
+	if (!kms || !kms->catalog) {
+		SDE_ERROR("Invalid kms\n");
+		return;
+	}
 
 	cfg.flags = cstate->layer_cfg.flags;
 	cfg.alpha_noise = cstate->layer_cfg.alpha_noise;
 	cfg.attn_factor = cstate->layer_cfg.attn_factor;
 	cfg.strength = cstate->layer_cfg.strength;
-	cfg.zposn = cstate->layer_cfg.zposn;
-	cfg.zposattn = cstate->layer_cfg.zposattn;
+	if (!kms->catalog->has_base_layer) {
+		cfg.noise_blend_stage = cstate->layer_cfg.zposn + SDE_STAGE_0;
+		cfg.attn_blend_stage = cstate->layer_cfg.zposattn + SDE_STAGE_0;
+	} else {
+		cfg.noise_blend_stage = cstate->layer_cfg.zposn;
+		cfg.attn_blend_stage = cstate->layer_cfg.zposattn;
+	}
 
 	for (i = 0; i < scrtc->num_mixers; i++) {
 		lm = scrtc->mixers[i].hw_lm;
