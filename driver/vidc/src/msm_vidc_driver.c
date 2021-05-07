@@ -3058,7 +3058,7 @@ int msm_vidc_release_internal_buffers(struct msm_vidc_inst *inst,
 int msm_vidc_vb2_buffer_done(struct msm_vidc_inst *inst,
 	struct msm_vidc_buffer *buf)
 {
-	int type, port;
+	int type, port, state;
 	struct vb2_queue *q;
 	struct vb2_buffer *vb2;
 	struct vb2_v4l2_buffer *vbuf;
@@ -3095,11 +3095,21 @@ int msm_vidc_vb2_buffer_done(struct msm_vidc_inst *inst,
 		print_vidc_buffer(VIDC_ERR, "err ", "vb2 not found for", inst, buf);
 		return -EINVAL;
 	}
+	/**
+	 * v4l2 clears buffer state related flags. For driver errors
+	 * send state as error to avoid skipping V4L2_BUF_FLAG_ERROR
+	 * flag at v4l2 side.
+	 */
+	if (buf->flags & MSM_VIDC_BUF_FLAG_ERROR)
+		state = VB2_BUF_STATE_ERROR;
+	else
+		state = VB2_BUF_STATE_DONE;
+
 	vbuf = to_vb2_v4l2_buffer(vb2);
 	vbuf->flags = buf->flags;
 	vb2->timestamp = buf->timestamp;
 	vb2->planes[0].bytesused = buf->data_size + vb2->planes[0].data_offset;
-	vb2_buffer_done(vb2, VB2_BUF_STATE_DONE);
+	vb2_buffer_done(vb2, state);
 
 	return 0;
 }
