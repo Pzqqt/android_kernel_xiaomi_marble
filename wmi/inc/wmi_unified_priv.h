@@ -2591,6 +2591,7 @@ struct wmi_unified {
 	qdf_nbuf_queue_t event_queue;
 	qdf_work_t rx_event_work;
 	qdf_workqueue_t *wmi_rx_work_queue;
+	qdf_workqueue_t *wmi_rx_diag_work_queue;
 	qdf_spinlock_t diag_eventq_lock;
 	qdf_nbuf_queue_t diag_event_queue;
 	qdf_work_t rx_diag_event_work;

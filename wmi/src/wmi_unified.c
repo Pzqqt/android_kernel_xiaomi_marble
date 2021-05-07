@@ -2318,7 +2318,7 @@ wmi_process_rx_diag_event_worker_thread_ctx(struct wmi_unified *wmi_handle,
 		num_diag_events_pending = qdf_nbuf_queue_len(
 						&wmi_handle->diag_event_queue);
 
-		if (num_diag_events_pending == RX_DIAG_WQ_MAX_SIZE) {
+		if (num_diag_events_pending >= RX_DIAG_WQ_MAX_SIZE) {
 			qdf_spin_unlock_bh(&wmi_handle->diag_eventq_lock);
 			wmi_handle->wmi_rx_diag_events_dropped++;
 			wmi_debug_rl("Rx diag events dropped count: %d",
@@ -2330,7 +2330,8 @@ wmi_process_rx_diag_event_worker_thread_ctx(struct wmi_unified *wmi_handle,
 
 	qdf_nbuf_queue_add(&wmi_handle->diag_event_queue, evt_buf);
 	qdf_spin_unlock_bh(&wmi_handle->diag_eventq_lock);
-	qdf_sched_work(0, &wmi_handle->rx_diag_event_work);
+	qdf_queue_work(0, wmi_handle->wmi_rx_diag_work_queue,
+		       &wmi_handle->rx_diag_event_work);
 }
 
 void wmi_process_fw_event_worker_thread_ctx(struct wmi_unified *wmi_handle,
@@ -2992,6 +2993,13 @@ static QDF_STATUS wmi_initialize_worker_context(struct wmi_unified *wmi_handle)
 	qdf_nbuf_queue_init(&wmi_handle->event_queue);
 	qdf_create_work(0, &wmi_handle->rx_event_work,
 			wmi_rx_event_work, wmi_handle);
+
+	wmi_handle->wmi_rx_diag_work_queue =
+		qdf_alloc_unbound_workqueue("wmi_rx_diag_event_work_queue");
+	if (!wmi_handle->wmi_rx_diag_work_queue) {
+		wmi_err("failed to create wmi_rx_diag_event_work_queue");
+		return QDF_STATUS_E_RESOURCES;
+	}
 	qdf_spinlock_create(&wmi_handle->diag_eventq_lock);
 	qdf_nbuf_queue_init(&wmi_handle->diag_event_queue);
 	qdf_create_work(0, &wmi_handle->rx_diag_event_work,
@@ -3320,7 +3328,7 @@ wmi_unified_remove_work(struct wmi_unified *wmi_handle)
 	qdf_spin_unlock_bh(&wmi_handle->eventq_lock);
 
 	/* Remove diag events work */
-	qdf_flush_work(&wmi_handle->rx_diag_event_work);
+	qdf_flush_workqueue(0, wmi_handle->wmi_rx_diag_work_queue);
 	qdf_spin_lock_bh(&wmi_handle->diag_eventq_lock);
 	buf = qdf_nbuf_queue_remove(&wmi_handle->diag_event_queue);
 	while (buf) {
