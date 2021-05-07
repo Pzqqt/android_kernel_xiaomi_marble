@@ -183,20 +183,22 @@ int __ipa_commit_hdr_v3_0(void)
 
 	/* Generate structures for both SRAM and DDR header tables */
 	for (loc = HDR_TBL_LCL; loc < HDR_TBLS_TOTAL; loc++) {
-		if (ipa3_generate_hdr_hw_tbl(loc, &hdr_mem[loc])) {
-			IPAERR("fail to generate %s HDR HW TBL\n",
-			       loc == HDR_TBL_LCL ? "SRAM" : "DDR");
-			goto end;
-		}
-
 		hdr_tbl_size = (loc == HDR_TBL_LCL) ?
 			IPA_MEM_PART(apps_hdr_size) : IPA_MEM_PART(apps_hdr_size_ddr);
 
-		if (hdr_mem[loc].size > hdr_tbl_size) {
-			IPAERR("%s HDR tbl too big needed %d avail %d\n",
-			       loc == HDR_TBL_LCL ? "SRAM" : "DDR",
-			       hdr_mem[loc].size, hdr_tbl_size);
-			goto free_dma;
+		if (hdr_tbl_size) {
+			if (ipa3_generate_hdr_hw_tbl(loc, &hdr_mem[loc])) {
+				IPAERR("fail to generate %s HDR HW TBL\n",
+				       loc == HDR_TBL_LCL ? "SRAM" : "DDR");
+				goto end;
+			}
+
+			if (hdr_mem[loc].size > hdr_tbl_size) {
+				IPAERR("%s HDR tbl too big needed %d avail %d\n",
+				       loc == HDR_TBL_LCL ? "SRAM" : "DDR",
+				       hdr_mem[loc].size, hdr_tbl_size);
+				goto free_dma;
+			}
 		}
 	}
 
@@ -229,41 +231,46 @@ int __ipa_commit_hdr_v3_0(void)
 	}
 
 	/* Local (SRAM) header table configuration */
-	dma_cmd_hdr.is_read = false; /* write operation */
-	dma_cmd_hdr.skip_pipeline_clear = false;
-	dma_cmd_hdr.pipeline_clear_options = IPAHAL_HPS_CLEAR;
-	dma_cmd_hdr.system_addr = hdr_mem[HDR_TBL_LCL].phys_base;
-	dma_cmd_hdr.size = hdr_mem[HDR_TBL_LCL].size;
-	dma_cmd_hdr.local_addr =
-		ipa3_ctx->smem_restricted_bytes +
-		IPA_MEM_PART(apps_hdr_ofst);
-	hdr_cmd_pyld[HDR_TBL_LCL] = ipahal_construct_imm_cmd(IPA_IMM_CMD_DMA_SHARED_MEM,
-							     &dma_cmd_hdr, false);
-	if (!hdr_cmd_pyld[HDR_TBL_LCL]) {
-		IPAERR("fail construct dma_shared_mem cmd\n");
-		goto end;
-	}
+	if (IPA_MEM_PART(apps_hdr_size)) {
+		dma_cmd_hdr.is_read = false; /* write operation */
+		dma_cmd_hdr.skip_pipeline_clear = false;
+		dma_cmd_hdr.pipeline_clear_options = IPAHAL_HPS_CLEAR;
+		dma_cmd_hdr.system_addr = hdr_mem[HDR_TBL_LCL].phys_base;
+		dma_cmd_hdr.size = hdr_mem[HDR_TBL_LCL].size;
+		dma_cmd_hdr.local_addr =
+			ipa3_ctx->smem_restricted_bytes +
+			IPA_MEM_PART(apps_hdr_ofst);
+		hdr_cmd_pyld[HDR_TBL_LCL] = ipahal_construct_imm_cmd(IPA_IMM_CMD_DMA_SHARED_MEM,
+								     &dma_cmd_hdr, false);
+		if (!hdr_cmd_pyld[HDR_TBL_LCL]) {
+			IPAERR("fail construct dma_shared_mem cmd\n");
+			goto end;
+		}
 
-	ipa3_init_imm_cmd_desc(&desc[num_cmd], hdr_cmd_pyld[HDR_TBL_LCL]);
-	++num_cmd;
-	IPA_DUMP_BUFF(hdr_mem[HDR_TBL_LCL].base,
-		      hdr_mem[HDR_TBL_LCL].phys_base,
-		      hdr_mem[HDR_TBL_LCL].size);
+		ipa3_init_imm_cmd_desc(&desc[num_cmd], hdr_cmd_pyld[HDR_TBL_LCL]);
+		++num_cmd;
+		IPA_DUMP_BUFF(hdr_mem[HDR_TBL_LCL].base,
+			      hdr_mem[HDR_TBL_LCL].phys_base,
+			      hdr_mem[HDR_TBL_LCL].size);
+
+	}
 
 	/* System (DDR) header table configuration */
-	hdr_init_cmd.hdr_table_addr = hdr_mem[HDR_TBL_SYS].phys_base;
-	hdr_cmd_pyld[HDR_TBL_SYS] = ipahal_construct_imm_cmd(IPA_IMM_CMD_HDR_INIT_SYSTEM,
-							     &hdr_init_cmd, false);
-	if (!hdr_cmd_pyld[HDR_TBL_SYS]) {
-		IPAERR("fail construct hdr_init_system cmd\n");
-		goto free_dma;
-	}
+	if (IPA_MEM_PART(apps_hdr_size_ddr)) {
+		hdr_init_cmd.hdr_table_addr = hdr_mem[HDR_TBL_SYS].phys_base;
+		hdr_cmd_pyld[HDR_TBL_SYS] = ipahal_construct_imm_cmd(IPA_IMM_CMD_HDR_INIT_SYSTEM,
+								     &hdr_init_cmd, false);
+		if (!hdr_cmd_pyld[HDR_TBL_SYS]) {
+			IPAERR("fail construct hdr_init_system cmd\n");
+			goto free_dma;
+		}
 
-	ipa3_init_imm_cmd_desc(&desc[num_cmd], hdr_cmd_pyld[HDR_TBL_SYS]);
-	++num_cmd;
-	IPA_DUMP_BUFF(hdr_mem[HDR_TBL_SYS].base,
-		      hdr_mem[HDR_TBL_SYS].phys_base,
-		      hdr_mem[HDR_TBL_SYS].size);
+		ipa3_init_imm_cmd_desc(&desc[num_cmd], hdr_cmd_pyld[HDR_TBL_SYS]);
+		++num_cmd;
+		IPA_DUMP_BUFF(hdr_mem[HDR_TBL_SYS].base,
+			      hdr_mem[HDR_TBL_SYS].phys_base,
+			      hdr_mem[HDR_TBL_SYS].size);
+	}
 
 	/* The header memory passed to the HPC here is DDR (system),
 	   but the actual header base will be determined later for each header */
@@ -560,7 +567,9 @@ static int __ipa_add_hdr(struct ipa_hdr_add *hdr, bool user)
 	entry->cookie = IPA_HDR_COOKIE;
 	entry->ipacm_installed = user;
 	entry->is_hdr_proc_ctx = false;
-	entry->is_lcl = (entry->is_partial || (hdr->status == IPA_HDR_TO_DDR_PATTERN)) ? false : true;
+	entry->is_lcl = ((IPA_MEM_PART(apps_hdr_size_ddr) &&
+			 (entry->is_partial || (hdr->status == IPA_HDR_TO_DDR_PATTERN))) ||
+			 !IPA_MEM_PART(apps_hdr_size)) ? false : true;
 
 	if (hdr->hdr_len <= ipa_hdr_bin_sz[IPA_HDR_BIN0])
 		bin = IPA_HDR_BIN0;
