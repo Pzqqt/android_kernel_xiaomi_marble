@@ -6838,6 +6838,7 @@ int dsi_display_get_modes(struct dsi_display *display,
 	struct dsi_dyn_clk_caps *dyn_clk_caps;
 	int i, start, end, rc = -EINVAL;
 	int dsc_modes = 0, nondsc_modes = 0;
+	struct dsi_qsync_capabilities *qsync_caps;
 
 	if (!display || !out_modes) {
 		DSI_ERR("Invalid params\n");
@@ -6868,6 +6869,7 @@ int dsi_display_get_modes(struct dsi_display *display,
 		goto error;
 	}
 
+	qsync_caps = &(display->panel->qsync_caps);
 	dyn_clk_caps = &(display->panel->dyn_clk_caps);
 
 	timing_mode_count = display->panel->num_timing_nodes;
@@ -6963,12 +6965,24 @@ int dsi_display_get_modes(struct dsi_display *display,
 			memcpy(sub_mode, &display_mode, sizeof(display_mode));
 			array_idx++;
 
+			/*
+			 * Populate mode qsync min fps from panel min qsync fps dt property
+			 * in video mode & in command mode where per mode qsync min fps is
+			 * not defined.
+			 */
+			if (!sub_mode->timing.qsync_min_fps && qsync_caps->qsync_min_fps)
+				sub_mode->timing.qsync_min_fps = qsync_caps->qsync_min_fps;
+
 			if (!dfps_caps.dfps_support || !support_video_mode)
 				continue;
 
 			sub_mode->mode_idx += (array_idx - 1);
 			curr_refresh_rate = sub_mode->timing.refresh_rate;
 			sub_mode->timing.refresh_rate = dfps_caps.dfps_list[i];
+
+			/* Override with qsync min fps list in dfps usecases */
+			if (qsync_caps->qsync_min_fps && qsync_caps->qsync_min_fps_list_len)
+				sub_mode->timing.qsync_min_fps = qsync_caps->qsync_min_fps_list[i];
 
 			dsi_display_get_dfps_timing(display, sub_mode,
 					curr_refresh_rate);
@@ -7078,25 +7092,6 @@ int dsi_display_get_default_lms(void *dsi_display, u32 *num_lm)
 	mutex_unlock(&display->display_lock);
 
 	return rc;
-}
-
-int dsi_display_get_qsync_min_fps(void *display_dsi, u32 mode_fps)
-{
-	struct dsi_display *display = (struct dsi_display *)display_dsi;
-	struct dsi_panel *panel;
-	u32 i;
-
-	if (display == NULL || display->panel == NULL)
-		return -EINVAL;
-
-	panel = display->panel;
-	for (i = 0; i < panel->dfps_caps.dfps_list_len; i++) {
-		if (panel->dfps_caps.dfps_list[i] == mode_fps)
-			return panel->qsync_caps.qsync_min_fps_list[i];
-	}
-	SDE_EVT32(mode_fps);
-	DSI_DEBUG("Invalid mode_fps %d\n", mode_fps);
-	return -EINVAL;
 }
 
 int dsi_display_get_avr_step_req_fps(void *display_dsi, u32 mode_fps)
@@ -8060,11 +8055,6 @@ static int dsi_display_qsync(struct dsi_display *display, bool enable)
 {
 	int i;
 	int rc = 0;
-
-	if (!display->panel->qsync_caps.qsync_min_fps) {
-		DSI_ERR("%s:ERROR: qsync set, but no fps\n", __func__);
-		return 0;
-	}
 
 	mutex_lock(&display->display_lock);
 

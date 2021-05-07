@@ -397,7 +397,7 @@ static void sde_encoder_phys_vid_setup_timing_engine(
 	bool is_split_link = false;
 
 	if (!phys_enc || !phys_enc->sde_kms || !phys_enc->hw_ctl ||
-					!phys_enc->hw_intf) {
+			!phys_enc->hw_intf || !phys_enc->connector) {
 		SDE_ERROR("invalid encoder %d\n", !phys_enc);
 		return;
 	}
@@ -470,8 +470,7 @@ static void sde_encoder_phys_vid_setup_timing_engine(
 exit:
 	if (phys_enc->parent_ops.get_qsync_fps)
 		phys_enc->parent_ops.get_qsync_fps(
-			phys_enc->parent, &qsync_min_fps,
-			drm_mode_vrefresh(&phys_enc->cached_mode));
+			phys_enc->parent, &qsync_min_fps, phys_enc->connector->state);
 
 	/* only panels which support qsync will have a non-zero min fps */
 	if (qsync_min_fps) {

@@ -2769,6 +2769,7 @@ static int sde_connector_populate_mode_info(struct drm_connector *conn,
 				sde_kms_info_add_keystr(info, "topology", topo_name);
 		}
 
+		sde_kms_info_add_keyint(info, "qsync_min_fps", mode_info.qsync_min_fps);
 		sde_kms_info_add_keyint(info, "has_cwb_crop", sde_kms->catalog->has_cwb_crop);
 		sde_kms_info_add_keyint(info, "has_dedicated_cwb_support",
 			sde_kms->catalog->has_dedicated_cwb_support);
@@ -2986,7 +2987,8 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 			CONNECTOR_PROP_AUTOREFRESH);
 
 	if (connector_type == DRM_MODE_CONNECTOR_DSI) {
-		if (sde_kms->catalog->has_qsync && display_info->qsync_min_fps) {
+		if (sde_kms->catalog->has_qsync && dsi_display && dsi_display->panel &&
+				dsi_display->panel->qsync_caps.qsync_support) {
 			msm_property_install_enum(&c_conn->property_info,
 					"qsync_mode", 0, 0, e_qsync_mode,
 					ARRAY_SIZE(e_qsync_mode), 0,

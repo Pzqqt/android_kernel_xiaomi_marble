@@ -89,7 +89,7 @@ struct dsi_dfps_capabilities {
 };
 
 struct dsi_qsync_capabilities {
-	/* qsync disabled if qsync_min_fps = 0 */
+	bool qsync_support;
 	u32 qsync_min_fps;
 	u32 *qsync_min_fps_list;
 	int qsync_min_fps_list_len;

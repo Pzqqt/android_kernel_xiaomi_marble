@@ -413,6 +413,7 @@ struct dsi_panel_cmd_set {
  * @vdc:              VDC compression configuration.
  * @pclk_scale:       pclk scale factor, target bpp to source bpp
  * @roi_caps:         Panel ROI capabilities.
+ * @qsync_min_fps:        Qsync min fps rate
  */
 struct dsi_mode_info {
 	u32 h_active;
@@ -439,6 +440,7 @@ struct dsi_mode_info {
 	struct msm_display_vdc_info *vdc;
 	struct msm_ratio pclk_scale;
 	struct msm_roi_caps roi_caps;
+	u32 qsync_min_fps;
 };
 
 /**

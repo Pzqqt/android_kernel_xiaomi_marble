@@ -1028,10 +1028,9 @@ static int _sde_encoder_atomic_check_reserve(struct drm_encoder *drm_enc,
 	return ret;
 }
 
-static void _sde_encoder_get_qsync_fps_callback(
-		struct drm_encoder *drm_enc, u32 *qsync_fps, u32 vrr_fps)
+static void _sde_encoder_get_qsync_fps_callback(struct drm_encoder *drm_enc,
+			u32 *qsync_fps, struct drm_connector_state *conn_state)
 {
-	struct msm_display_info *disp_info;
 	struct sde_encoder_virt *sde_enc;
 	int rc = 0;
 	struct sde_connector *sde_conn;
@@ -1046,25 +1045,17 @@ static void _sde_encoder_get_qsync_fps_callback(
 	}
 
 	sde_enc = to_sde_encoder_virt(drm_enc);
-	disp_info = &sde_enc->disp_info;
-	*qsync_fps = disp_info->qsync_min_fps;
 
-	if (!disp_info->has_qsync_min_fps_list) {
-		return;
-	} else if (!sde_enc->cur_master || !(disp_info->capabilities & MSM_DISPLAY_CAP_VID_MODE)) {
+	if (!sde_enc->cur_master) {
 		SDE_ERROR("invalid qsync settings %d\n", !sde_enc->cur_master);
 		return;
 	}
 
-	/*
-	 * If "dsi-supported-qsync-min-fps-list" is defined, get
-	 * the qsync min fps corresponding to the fps in dfps list
-	 */
 	sde_conn = to_sde_connector(sde_enc->cur_master->connector);
 	if (sde_conn->ops.get_qsync_min_fps)
-		rc = sde_conn->ops.get_qsync_min_fps(sde_conn->display, vrr_fps);
+		rc = sde_conn->ops.get_qsync_min_fps(sde_conn->display, conn_state);
 
-	if (rc <= 0) {
+	if (rc < 0) {
 		SDE_ERROR("invalid qsync min fps %d\n", rc);
 		return;
 	}
@@ -1101,7 +1092,8 @@ static int _sde_encoder_avr_step_check(struct sde_connector *sde_conn,
 	if (!step)
 		return 0;
 
-	_sde_encoder_get_qsync_fps_callback(sde_conn_state->base.best_encoder, &min_fps, nom_fps);
+	_sde_encoder_get_qsync_fps_callback(sde_conn_state->base.best_encoder, &min_fps,
+		&sde_conn_state->base);
 	if (!min_fps || !nom_fps || step % nom_fps || step % min_fps || step < nom_fps ||
 			(vtotal * nom_fps) % step) {
 		SDE_ERROR("invalid avr_step rate! nom:%u min:%u step:%u vtotal:%u\n", nom_fps,

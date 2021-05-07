@@ -896,7 +896,7 @@ static int _get_tearcheck_threshold(struct sde_encoder_phys *phys_enc)
 
 		if (phys_enc->parent_ops.get_qsync_fps)
 			phys_enc->parent_ops.get_qsync_fps(
-				phys_enc->parent, &qsync_min_fps, 0);
+				phys_enc->parent, &qsync_min_fps, conn->state);
 
 		if (!qsync_min_fps || !default_fps || !yres) {
 			SDE_ERROR_CMDENC(cmd_enc,
