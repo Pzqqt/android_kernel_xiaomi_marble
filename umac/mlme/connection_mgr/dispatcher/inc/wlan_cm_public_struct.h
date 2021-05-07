@@ -256,20 +256,22 @@ struct wlan_cm_vdev_connect_req {
 
 /**
  * struct wlan_cm_roam_req - roam req from requester
+ * @forced_roaming: Roaming to be done without giving bssid, and channel.
+ * @self_reassoc: used to determine self reassoc in host roaming
  * @vdev_id: vdev id
  * @source: source of the req
  * @bssid: bssid given
  * @prev_bssid: prev AP bssid, given in case supplican want to roam to new BSSID
  * @chan_freq: channel of the AP
- * @forced_roaming: Roaming to be done without giving bssid, and channel.
  */
 struct wlan_cm_roam_req {
+	uint8_t forced_roaming:1,
+		self_reassoc:1;
 	uint8_t vdev_id;
 	enum wlan_cm_source source;
 	struct qdf_mac_addr bssid;
 	struct qdf_mac_addr prev_bssid;
 	uint32_t chan_freq;
-	bool forced_roaming;
 };
 
 /**
@@ -277,11 +279,13 @@ struct wlan_cm_roam_req {
  * vdev mgr
  * @vdev_id: vdev id
  * @cm_id: Connect manager id
+ * @self_reassoc: if self reassoc
  * @bss: scan entry for the candidate
  */
 struct wlan_cm_vdev_reassoc_req {
 	uint8_t vdev_id;
 	wlan_cm_id cm_id;
+	bool self_reassoc;
 	struct qdf_mac_addr prev_bssid;
 	struct scan_cache_node *bss;
 };

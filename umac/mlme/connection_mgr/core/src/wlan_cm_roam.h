@@ -24,6 +24,7 @@
 #define __WLAN_CM_ROAM_H__
 
 #include "wlan_cm_main.h"
+#include "wlan_cm_sm.h"
 
 #ifdef WLAN_FEATURE_HOST_ROAM
 /**
@@ -106,6 +107,41 @@ QDF_STATUS cm_host_roam_start_req(struct cnx_mgr *cm_ctx,
  */
 QDF_STATUS cm_reassoc_start(struct cnx_mgr *cm_ctx, struct cm_roam_req *req);
 
+#ifdef WLAN_POLICY_MGR_ENABLE
+/**
+ * cm_reassoc_hw_mode_change_resp() - HW mode change response
+ * @pdev: pdev pointer
+ * @vdev_id: vdev id
+ * @cm_id: reassoc ID which gave the hw mode change request
+ * @status: status of the HW mode change.
+ *
+ * Return: void
+ */
+void cm_reassoc_hw_mode_change_resp(struct wlan_objmgr_pdev *pdev,
+				    uint8_t vdev_id,
+				    wlan_cm_id cm_id, QDF_STATUS status);
+
+/**
+ * cm_handle_reassoc_hw_mode_change() - SM handling of reassoc hw mode change
+ * resp
+ * @cm_ctx: connection manager context
+ * @cm_id: Connection mgr ID assigned to this connect request.
+ * @event: HW mode success or failure event
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_handle_reassoc_hw_mode_change(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id,
+				 enum wlan_cm_sm_evt event);
+#else
+static inline QDF_STATUS
+cm_handle_reassoc_hw_mode_change(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id,
+				 enum wlan_cm_sm_evt event)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * cm_reassoc_active() - This API would be called after the reassoc
  * request gets activated in serialization.
@@ -167,6 +203,14 @@ cm_send_reassoc_start_fail(struct cnx_mgr *cm_ctx,
 			   bool sync);
 
 #else
+
+#ifdef WLAN_POLICY_MGR_ENABLE
+static inline
+void cm_reassoc_hw_mode_change_resp(struct wlan_objmgr_pdev *pdev,
+				    uint8_t vdev_id,
+				    wlan_cm_id cm_id, QDF_STATUS status) {}
+#endif
+
 static inline QDF_STATUS cm_reassoc_complete(struct cnx_mgr *cm_ctx,
 					     struct wlan_cm_connect_resp *resp)
 {

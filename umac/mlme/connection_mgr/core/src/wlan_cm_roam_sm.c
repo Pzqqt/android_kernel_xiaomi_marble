@@ -169,6 +169,8 @@ void cm_subst_preauth_entry(void *ctx)
 		QDF_BUG(0);
 
 	cm_set_substate(cm_ctx, WLAN_CM_SS_PREAUTH);
+	/* set preauth to true when we enter preauth state */
+	cm_ctx->preauth_in_progress = true;
 }
 
 void cm_subst_preauth_exit(void *ctx)
@@ -189,16 +191,11 @@ bool cm_subst_preauth_event(void *ctx, uint16_t event,
 							     data_len, data);
 		break;
 	case WLAN_CM_SM_EV_ROAM_START:
-		/* set preauth to true when we enter preauth state */
-		cm_ctx->preauth_in_progress = true;
 		cm_host_roam_start_req(cm_ctx, data);
 		break;
 	case WLAN_CM_SM_EV_START_REASSOC:
-		/* set preauth to false as soon as we move to reassoc state */
-		cm_ctx->preauth_in_progress = false;
 		cm_sm_transition_to(cm_ctx, WLAN_CM_SS_REASSOC);
-		cm_sm_deliver_event_sync(cm_ctx, WLAN_CM_SM_EV_START_REASSOC,
-					 data_len, data);
+		cm_sm_deliver_event_sync(cm_ctx, event, data_len, data);
 		break;
 	case WLAN_CM_SM_EV_REASSOC_FAILURE:
 		cm_reassoc_complete(cm_ctx, data);
@@ -219,6 +216,8 @@ void cm_subst_reassoc_entry(void *ctx)
 		QDF_BUG(0);
 
 	cm_set_substate(cm_ctx, WLAN_CM_SS_REASSOC);
+	/* set preauth to false as soon as we move to reassoc state */
+	cm_ctx->preauth_in_progress = false;
 }
 
 void cm_subst_reassoc_exit(void *ctx)
@@ -268,6 +267,15 @@ bool cm_subst_reassoc_event(void *ctx, uint16_t event,
 		break;
 	case WLAN_CM_SM_EV_REASSOC_FAILURE:
 		cm_reassoc_complete(cm_ctx, data);
+		break;
+	case WLAN_CM_SM_EV_HW_MODE_SUCCESS:
+	case WLAN_CM_SM_EV_HW_MODE_FAILURE:
+		/* check if cm id is valid for the current req */
+		if (!cm_check_cmid_match_list_head(cm_ctx, data)) {
+			event_handled = false;
+			break;
+		}
+		cm_handle_reassoc_hw_mode_change(cm_ctx, data, event);
 		break;
 	default:
 		event_handled = false;
