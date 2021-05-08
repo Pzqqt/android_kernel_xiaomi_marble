@@ -2462,11 +2462,20 @@ void policy_mgr_change_sap_channel_with_csa(struct wlan_objmgr_psoc *psoc,
 					    uint32_t ch_width, bool forced)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	struct ch_params ch_params = {0};
+	QDF_STATUS status;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid context");
 		return;
+	}
+	if (pm_ctx->hdd_cbacks.wlan_get_ap_prefer_conc_ch_params) {
+		status = pm_ctx->hdd_cbacks.wlan_get_ap_prefer_conc_ch_params(
+			psoc, vdev_id, ch_freq, &ch_params);
+		if (QDF_IS_STATUS_SUCCESS(status) &&
+		    ch_width > ch_params.ch_width)
+			ch_width = ch_params.ch_width;
 	}
 
 	if (pm_ctx->hdd_cbacks.sap_restart_chan_switch_cb) {
