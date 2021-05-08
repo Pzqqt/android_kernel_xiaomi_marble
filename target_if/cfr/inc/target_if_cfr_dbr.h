@@ -29,55 +29,40 @@
 #define TONES_IN_160MHZ 2048 /* 160 MHz isn't supported yet */
 #define TONES_INVALID   0
 
+#ifdef WLAN_CFR_DBR
 /**
- * cfr_8074v2_init_pdev() - Inits cfr pdev and registers necessary handlers.
+ * cfr_dbr_init_pdev() - Inits cfr pdev and registers necessary handlers.
  * @psoc: pointer to psoc object
  * @pdev: pointer to pdev object
  *
  * Return: Registration status for necessary handlers
  */
-QDF_STATUS cfr_8074v2_init_pdev(
-		struct wlan_objmgr_psoc *psoc,
-		struct wlan_objmgr_pdev *pdev);
+QDF_STATUS cfr_dbr_init_pdev(struct wlan_objmgr_psoc *psoc,
+			     struct wlan_objmgr_pdev *pdev);
 
 /**
- * cfr_8074v2_deinit_pdev() - De-inits corresponding pdev and handlers.
+ * cfr_dbr_deinit_pdev() - De-inits corresponding pdev and handlers.
  * @psoc: pointer to psoc object
  * @pdev: pointer to pdev object
  *
  * Return: De-registration status for necessary handlers
  */
-QDF_STATUS cfr_8074v2_deinit_pdev(
-		struct wlan_objmgr_psoc *psoc,
-		struct wlan_objmgr_pdev *pdev);
+QDF_STATUS cfr_dbr_deinit_pdev(struct wlan_objmgr_psoc *psoc,
+			       struct wlan_objmgr_pdev *pdev);
+#else
+static inline
+QDF_STATUS cfr_dbr_init_pdev(struct wlan_objmgr_psoc *psoc,
+			     struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
 
-/**
- * target_if_register_to_dbr() - Register to Direct DMA handler
- * @pdev: pointer to pdev object
- *
- * Return: Status
- */
-QDF_STATUS
-target_if_register_to_dbr(struct wlan_objmgr_pdev *pdev);
-
-/**
- * target_if_register_tx_completion_event_handler()
- * register TX completion handler
- * @pdev: pointer to pdev object
- *
- * Return: Status
- */
-QDF_STATUS
-target_if_register_tx_completion_event_handler(struct wlan_objmgr_psoc *psoc);
-
-/**
- * target_if_unregister_tx_completion_event_handler
- * unregister TX completion handler
- * @pdev: pointer to pdev object
- *
- * Return: Status
- */
-QDF_STATUS
-target_if_unregister_tx_completion_event_handler(struct wlan_objmgr_psoc *psoc);
+static inline
+QDF_STATUS cfr_dbr_deinit_pdev(struct wlan_objmgr_psoc *psoc,
+			       struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
 #endif
 

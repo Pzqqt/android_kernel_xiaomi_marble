@@ -289,6 +289,13 @@ QDF_STATUS
 cfr_wifi2_0_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 			struct wlan_objmgr_pdev *pdev)
 {
-    /* TODO:No cleanup action need for now */
+	struct pdev_cfr *pa;
+
+	pa = wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_UMAC_COMP_CFR);
+	if (!pa)
+		return QDF_STATUS_E_FAILURE;
+
+	pa->cfr_timer_enable = 0;
+
 	return QDF_STATUS_SUCCESS;
 }

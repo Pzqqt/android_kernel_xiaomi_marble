@@ -24,7 +24,6 @@
 #include <target_if.h>
 #include <wlan_lmac_if_def.h>
 #include <wlan_osif_priv.h>
-#include <wlan_mlme_dispatcher.h>
 #include <init_deinit_lmac.h>
 #include <wlan_cfr_utils_api.h>
 #include <target_if_cfr_dbr.h>
@@ -35,7 +34,13 @@
 #ifdef DIRECT_BUF_RX_ENABLE
 static u_int32_t end_magic = 0xBEAFDEAD;
 
-int dump_lut(struct wlan_objmgr_pdev *pdev)
+/**
+ * dump_lut() - dump all valid lut entries
+ * @pdev: objmgr pdev
+ *
+ * return: none
+ */
+static int dump_lut(struct wlan_objmgr_pdev *pdev)
 {
 	struct pdev_cfr *pdev_cfrobj;
 	struct look_up_table *lut = NULL;
@@ -58,7 +63,14 @@ int dump_lut(struct wlan_objmgr_pdev *pdev)
 	return 0;
 }
 
-void dump_dma_hdr(struct whal_cfir_dma_hdr *dma_hdr, int error)
+/**
+ * dump_dma_hdr() - Dump DMA header populated by uCode
+ * @dma_hdr: pointer to the DMA header
+ * @error: Indicates whether it is an error
+ *
+ * Return: none
+ */
+static void dump_dma_hdr(struct whal_cfir_dma_hdr *dma_hdr, int error)
 {
 	if (!error) {
 		cfr_debug("Tag: 0x%02x Length: %d udone: %d ctype: %d preamble: %d",
@@ -85,7 +97,13 @@ void dump_dma_hdr(struct whal_cfir_dma_hdr *dma_hdr, int error)
 	}
 }
 
-int compute_length(struct whal_cfir_dma_hdr *dma_hdr)
+/**
+ * compute_length() - Compute the number of tones based on BW
+ * @dma_hdr: DMA header from uCode
+ *
+ * Return: Computed number of tones based on BW
+ */
+static int compute_length(struct whal_cfir_dma_hdr *dma_hdr)
 {
 	uint8_t bw = dma_hdr->upload_pkt_bw;
 	uint8_t preamble = dma_hdr->preamble_type;
@@ -116,8 +134,15 @@ int compute_length(struct whal_cfir_dma_hdr *dma_hdr)
 	return TONES_INVALID;
 }
 
-int release_lut_entry(struct wlan_objmgr_pdev *pdev,
-		      struct look_up_table *lut)
+/**
+ * release_lut_entry() - Clear all params in an LUT entry
+ * @pdev: objmgr PDEV
+ * @lut: pointer to LUT
+ *
+ * Return: status
+ */
+static int release_lut_entry(struct wlan_objmgr_pdev *pdev,
+			     struct look_up_table *lut)
 {
 	lut->dbr_recv = false;
 	lut->tx_recv = false;
@@ -130,8 +155,23 @@ int release_lut_entry(struct wlan_objmgr_pdev *pdev,
 	return 0;
 }
 
-int correlate_and_relay(struct wlan_objmgr_pdev *pdev, uint32_t cookie,
-			struct look_up_table *lut, uint8_t module_id)
+/**
+ * correlate_and_relay() - Correlate TXRX and DBR events and stream CFR data to
+ * userspace
+ * @pdev: objmgr PDEV
+ * @cookie: Index into lookup table
+ * @lut: pointer to lookup table
+ * @module_id: ID of the event received
+ *  0 - DBR event
+ *  1 - TXRX event
+ *
+ * Return:
+ *  - STATUS_ERROR
+ *  - STATUS_HOLD
+ *  - STATUS_STREAM_AND_RELEASE
+ */
+static int correlate_and_relay(struct wlan_objmgr_pdev *pdev, uint32_t cookie,
+			       struct look_up_table *lut, uint8_t module_id)
 {
 	struct pdev_cfr *pdev_cfrobj;
 	int status = STATUS_ERROR;
@@ -206,8 +246,15 @@ int correlate_and_relay(struct wlan_objmgr_pdev *pdev, uint32_t cookie,
 	return status;
 }
 
-bool cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
-			   struct direct_buf_rx_data *payload)
+/**
+ * cfr_dbr_event_handler() - Process DBR event for CFR data DMA completion
+ * @pdev: PDEV object
+ * @payload: pointer to CFR data
+ *
+ * Return: status
+ */
+static bool cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
+				  struct direct_buf_rx_data *payload)
 {
 	uint8_t *data = NULL;
 	uint32_t cookie = 0;
@@ -296,11 +343,18 @@ bool cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 	return ret;
 }
 
-void dump_cfr_peer_tx_event(wmi_cfr_peer_tx_event_param *event)
+/**
+ * dump_cfr_peer_tx_event() - Dump TX completion event
+ * @event: ptr to WMI TX completion event for QOS frames sent during
+ * one-shot capture.
+ *
+ * Return: none
+ */
+static void dump_cfr_peer_tx_event(wmi_cfr_peer_tx_event_param *event)
 {
-	cfr_debug("CFR capture method: %u vdev_id: %u mac: %s",
+	cfr_debug("CFR capture method: %u vdev_id: %u mac: " QDF_MAC_ADDR_FMT,
 		  event->capture_method, event->vdev_id,
-		  ether_sprintf(&event->peer_mac_addr.bytes[0]));
+		  QDF_MAC_ADDR_REF(&event->peer_mac_addr.bytes[0]));
 
 	cfr_debug("Chan: %u bw: %u phymode: %u cfreq1: %u cfrq2: %u nss: %u",
 		  event->primary_20mhz_chan, event->bandwidth,
@@ -333,8 +387,17 @@ void dump_cfr_peer_tx_event(wmi_cfr_peer_tx_event_param *event)
 		  event->agc_gain[6], event->agc_gain[7]);
 }
 
+/**
+ * prepare_cfr_header_txstatus() - Prepare CFR metadata for TX failures
+ * @tx_evt_param: ptr to WMI TX completion event
+ * @header: pointer to metadata
+ *
+ * Return: none
+ */
+static
 void prepare_cfr_header_txstatus(wmi_cfr_peer_tx_event_param *tx_evt_param,
-				 struct csi_cfr_header *header)
+				 struct csi_cfr_header *header,
+				 uint32_t target_type)
 {
 	target_if_cfr_fill_header(header, false, target_type, false);
 	header->u.meta_v4.status = 0; /* failure */
@@ -343,11 +406,19 @@ void prepare_cfr_header_txstatus(wmi_cfr_peer_tx_event_param *tx_evt_param,
 		     &tx_evt_param->peer_mac_addr.bytes[0], QDF_MAC_ADDR_SIZE);
 }
 
+/**
+ * target_if_peer_capture_event() - WMI TX completion event for one-shot
+ * capture
+ * @sc: pointer to offload soc object
+ * @data: WMI TX completion event buffer
+ * @datalen: WMI Tx completion event buffer length
+ *
+ * Return: status
+ */
 static int
 target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 {
 	QDF_STATUS retval = 0;
-	ol_ath_soc_softc_t *scn = (ol_ath_soc_softc_t *)sc;
 	struct wmi_unified *wmi_handle;
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_pdev *pdev;
@@ -363,7 +434,7 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	struct wlan_lmac_if_rx_ops *rx_ops;
 	uint32_t target_type;
 
-	psoc = scn->psoc_obj;
+	psoc = target_if_get_psoc_from_scn_hdl(sc);
 	if (!psoc) {
 		cfr_err("psoc is null");
 		return -EINVAL;
@@ -431,25 +502,27 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 		goto done;
 	}
 
+	target_type = target_if_cfr_get_target_type(psoc);
+
 	if (tx_evt_param.status & PEER_CFR_CAPTURE_EVT_PS_STATUS_MASK) {
-		cfr_debug("CFR capture failed as peer is in powersave : %s",
-			  ether_sprintf(&tx_evt_param.peer_mac_addr.bytes[0]));
+		cfr_debug("CFR capture failed as peer is in powersave : " QDF_MAC_ADDR_FMT,
+			  QDF_MAC_ADDR_REF(&tx_evt_param.peer_mac_addr.bytes[0]));
 		status = -EINVAL;
 		goto relay_failure;
 	}
 
 	if ((tx_evt_param.status & PEER_CFR_CAPTURE_EVT_STATUS_MASK) == 0) {
-		cfr_debug("CFR capture failed for peer : %s",
-			  ether_sprintf(&tx_evt_param.peer_mac_addr.bytes[0]));
+		cfr_debug("CFR capture failed for peer : " QDF_MAC_ADDR_FMT,
+			  QDF_MAC_ADDR_REF(&tx_evt_param.peer_mac_addr.bytes[0]));
 		status = -EINVAL;
 		pdev_cfrobj->tx_peer_status_cfr_fail++;
 		goto relay_failure;
 	}
 
 	if (tx_evt_param.status & CFR_TX_EVT_STATUS_MASK) {
-		cfr_debug("TX packet returned status %d for peer: %s",
+		cfr_debug("TX packet returned status %d for peer: " QDF_MAC_ADDR_FMT,
 			  tx_evt_param.status & CFR_TX_EVT_STATUS_MASK,
-			  ether_sprintf(&tx_evt_param.peer_mac_addr.bytes[0]));
+			  QDF_MAC_ADDR_REF(&tx_evt_param.peer_mac_addr.bytes[0]));
 		status = -EINVAL;
 		pdev_cfrobj->tx_evt_status_cfr_fail++;
 		goto relay_failure;
@@ -477,7 +550,6 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	lut->tx_address2 = tx_evt_param.correlation_info_2;
 	header = &lut->header;
 
-	target_type = target_if_cfr_get_target_type(psoc);
 	target_if_cfr_fill_header(header, false, target_type, false);
 
 	header->u.meta_v4.status         = (tx_evt_param.status &
@@ -535,7 +607,7 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	goto done;
 
 relay_failure:
-	prepare_cfr_header_txstatus(&tx_evt_param, &header_error);
+	prepare_cfr_header_txstatus(&tx_evt_param, &header_error, target_type);
 	rx_ops->cfr_rx_ops.cfr_info_send(pdev, &header_error,
 					 sizeof(struct csi_cfr_header),
 					 NULL, 0, &end_magic, 4);
@@ -553,7 +625,14 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 }
 #endif
 
-QDF_STATUS
+/**
+ * target_if_register_tx_completion_event_handler()
+ * register TX completion handler
+ * @pdev: pointer to pdev object
+ *
+ * Return: Status
+ */
+static QDF_STATUS
 target_if_register_tx_completion_event_handler(struct wlan_objmgr_psoc *psoc)
 {
 	/* Register completion handler here */
@@ -580,7 +659,14 @@ target_if_register_tx_completion_event_handler(struct wlan_objmgr_psoc *psoc)
 	return ret;
 }
 
-QDF_STATUS
+/**
+ * target_if_unregister_tx_completion_event_handler
+ * unregister TX completion handler
+ * @pdev: pointer to pdev object
+ *
+ * Return: Status
+ */
+static QDF_STATUS
 target_if_unregister_tx_completion_event_handler(struct wlan_objmgr_psoc *psoc)
 {
 	/* Unregister completion handler here */
@@ -599,7 +685,13 @@ target_if_unregister_tx_completion_event_handler(struct wlan_objmgr_psoc *psoc)
 }
 
 #ifdef DIRECT_BUF_RX_ENABLE
-QDF_STATUS
+/**
+ * target_if_register_to_dbr() - Register to Direct DMA handler
+ * @pdev: pointer to pdev object
+ *
+ * Return: Status
+ */
+static QDF_STATUS
 target_if_register_to_dbr(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_psoc *psoc;
@@ -626,7 +718,13 @@ target_if_register_to_dbr(struct wlan_objmgr_pdev *pdev)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS
+/**
+ * target_if_unregister_to_dbr() - Unregister callback for DBR events
+ * @pdev: PDEV object
+ *
+ * Return: status
+ */
+static QDF_STATUS
 target_if_unregister_to_dbr(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_psoc *psoc;
@@ -649,50 +747,23 @@ target_if_unregister_to_dbr(struct wlan_objmgr_pdev *pdev)
 	return QDF_STATUS_SUCCESS;
 }
 
-struct module_ring_params*
-target_if_dbr_get_ring_params(struct wlan_objmgr_pdev *pdev)
-{
-	struct wlan_objmgr_psoc *psoc;
-	struct wlan_lmac_if_direct_buf_rx_tx_ops *dbr_tx_ops = NULL;
-	struct module_ring_params *param = {0};
-	struct wlan_lmac_if_tx_ops *tx_ops;
-
-	psoc = wlan_pdev_get_psoc(pdev);
-	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
-	if (!tx_ops) {
-		cfr_err("tx_ops is NULL");
-		return NULL;
-	}
-
-	dbr_tx_ops = &tx_ops->dbr_tx_ops;
-
-	if (dbr_tx_ops->direct_buf_rx_get_ring_params)
-		dbr_tx_ops->direct_buf_rx_get_ring_params(pdev, param,
-							  DBR_MODULE_CFR, 0);
-	return param;
-}
 #else
-QDF_STATUS
+static QDF_STATUS
 target_if_cfr_register_to_dbr(struct wlan_objmgr_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS
+static QDF_STATUS
 target_if_unregister_to_dbr(struct wlan_objmgr_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-struct module_ring_params*
-target_if_dbr_get_ring_params(struct wlan_objmgr_pdev *pdev)
-{
-	return NULL;
-}
 #endif
 
-QDF_STATUS cfr_8074v2_init_pdev(struct wlan_objmgr_psoc *psoc,
-				struct wlan_objmgr_pdev *pdev)
+QDF_STATUS cfr_dbr_init_pdev(struct wlan_objmgr_psoc *psoc,
+			     struct wlan_objmgr_pdev *pdev)
 {
 	QDF_STATUS status;
 	struct pdev_cfr *pdev_cfrobj;
@@ -723,10 +794,18 @@ QDF_STATUS cfr_8074v2_init_pdev(struct wlan_objmgr_psoc *psoc,
 	return status;
 }
 
-QDF_STATUS cfr_8074v2_deinit_pdev(struct wlan_objmgr_psoc *psoc,
-				  struct wlan_objmgr_pdev *pdev)
+QDF_STATUS cfr_dbr_deinit_pdev(struct wlan_objmgr_psoc *psoc,
+			       struct wlan_objmgr_pdev *pdev)
 {
 	QDF_STATUS status;
+	struct pdev_cfr *pdev_cfrobj;
+
+	pdev_cfrobj = wlan_objmgr_pdev_get_comp_private_obj(pdev,
+							    WLAN_UMAC_COMP_CFR);
+	if (!pdev_cfrobj)
+		return QDF_STATUS_E_NULL_VALUE;
+
+	pdev_cfrobj->cfr_timer_enable = 0;
 
 	status = target_if_unregister_to_dbr(pdev);
 	if (QDF_STATUS_SUCCESS != status)
