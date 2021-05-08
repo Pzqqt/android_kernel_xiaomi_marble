@@ -1497,7 +1497,7 @@ static void ipa3_q6_clnt_install_firewall_rules_ind_cb(
 	}
 }
 
-static void ipa3_q6_clnt_bw_vhang_ind_cb(struct qmi_handle *handle,
+static void ipa3_q6_clnt_bw_change_ind_cb(struct qmi_handle *handle,
 	struct sockaddr_qrtr *sq,
 	struct qmi_txn *txn,
 	const void *data)
@@ -1783,7 +1783,7 @@ static struct qmi_msg_handler client_handlers[] = {
 		.msg_id = QMI_IPA_BW_CHANGE_INDICATION_V01,
 		.ei = ipa_bw_change_ind_msg_v01_ei,
 		.decoded_size = IPA_BW_CHANGE_IND_MSG_V01_MAX_MSG_LEN,
-		.fn = ipa3_q6_clnt_bw_vhang_ind_cb,
+		.fn = ipa3_q6_clnt_bw_change_ind_cb,
 	},
 };
 
