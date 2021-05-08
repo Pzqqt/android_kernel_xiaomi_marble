@@ -771,6 +771,10 @@ wlan_scan_global_init(struct wlan_objmgr_psoc *psoc,
 			 cfg_get(psoc, CFG_ACTIVE_MAX_6G_CHANNEL_TIME);
 	scan_obj->scan_def.passive_dwell_6g =
 			 cfg_get(psoc, CFG_PASSIVE_MAX_6G_CHANNEL_TIME);
+	scan_obj->scan_def.active_dwell_time_6g_conc =
+			 cfg_get(psoc, CFG_ACTIVE_MAX_6G_CHANNEL_TIME_CONC);
+	scan_obj->scan_def.passive_dwell_time_6g_conc =
+			 cfg_get(psoc, CFG_PASSIVE_MAX_6G_CHANNEL_TIME_CONC);
 	scan_obj->scan_def.passive_dwell =
 			 cfg_get(psoc, CFG_PASSIVE_MAX_CHANNEL_TIME);
 	scan_obj->scan_def.max_rest_time = SCAN_MAX_REST_TIME;

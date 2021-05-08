@@ -792,6 +792,13 @@ static void scm_req_update_concurrency_params(struct wlan_objmgr_vdev *vdev,
 		scm_debug("NDP active modify dwell time 2ghz %d",
 			req->scan_req.dwell_time_active_2g);
 	}
+
+	if (sta_active) {
+		req->scan_req.dwell_time_active_6g =
+				scan_obj->scan_def.active_dwell_time_6g_conc;
+		req->scan_req.dwell_time_passive_6g =
+				scan_obj->scan_def.passive_dwell_time_6g_conc;
+	}
 }
 
 /**

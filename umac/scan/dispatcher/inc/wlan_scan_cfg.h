@@ -223,6 +223,51 @@ enum scan_mode_6ghz {
 
 /*
  * <ini>
+ * active_max_channel_time_6g_conc - Set max time for active 6G
+ * channel scan when associated to AP.
+ * @Min: 0
+ * @Max: 10000
+ * @Default: 40
+ *
+ * This ini is used to set maximum time in msecs spent in
+ * active 6G channel scan
+ *
+ * Related: None
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ACTIVE_MAX_6G_CHANNEL_TIME_CONC CFG_INI_UINT(\
+		"active_max_channel_time_6g_conc",\
+		0, 10000, 40,\
+		CFG_VALUE_OR_DEFAULT, "active conc dwell time for 6G channels")
+
+/*
+ * <ini>
+ * passive_max_channel_time_6g_conc - Set max time for passive 6G
+ * channel scan when associated to AP.
+ * @Min: 0
+ * @Max: 10000
+ * @Default: 40
+ *
+ * This ini is used to set maximum time in msecs spent in
+ * passive 6G chan scan
+ *
+ * Related: None
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_PASSIVE_MAX_6G_CHANNEL_TIME_CONC CFG_INI_UINT(\
+		"passive_max_channel_time_6g_conc",\
+		0, 10000, 40,\
+		CFG_VALUE_OR_DEFAULT,\
+		"passive conc dwell time for 6G channels")
+
+/*
+ * <ini>
  * gPassiveMaxChannelTime - Set max channel time for passive scan
  * @Min: 0
  * @Max: 10000
@@ -1346,6 +1391,8 @@ enum scan_mode_6ghz {
 	CFG(CFG_PASSIVE_MAX_CHANNEL_TIME) \
 	CFG(CFG_ACTIVE_MAX_6G_CHANNEL_TIME) \
 	CFG(CFG_PASSIVE_MAX_6G_CHANNEL_TIME) \
+	CFG(CFG_ACTIVE_MAX_6G_CHANNEL_TIME_CONC) \
+	CFG(CFG_PASSIVE_MAX_6G_CHANNEL_TIME_CONC) \
 	CFG(CFG_SCAN_NUM_PROBES) \
 	CFG(CFG_SCAN_PROBE_REPEAT_TIME) \
 	CFG(CFG_ADAPTIVE_SCAN_DWELL_MODE) \
