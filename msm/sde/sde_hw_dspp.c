@@ -14,6 +14,8 @@
 #include "sde_hw_rc.h"
 #include "sde_kms.h"
 
+#define DSPP_VALID_START_OFF 0x800
+
 static struct sde_dspp_cfg *_dspp_offset(enum sde_dspp dspp,
 		struct sde_mdss_cfg *m,
 		void __iomem *addr,
@@ -418,7 +420,8 @@ struct sde_hw_dspp *sde_hw_dspp_init(enum sde_dspp idx,
 		goto blk_init_error;
 	}
 
-	sde_dbg_reg_register_dump_range(SDE_DBG_NAME, cfg->name, c->hw.blk_off,
+	sde_dbg_reg_register_dump_range(SDE_DBG_NAME, cfg->name,
+			c->hw.blk_off + DSPP_VALID_START_OFF,
 			c->hw.blk_off + c->hw.length, c->hw.xin_id);
 
 	if ((cfg->sblk->ltm.id == SDE_DSPP_LTM) && cfg->sblk->ltm.base) {
