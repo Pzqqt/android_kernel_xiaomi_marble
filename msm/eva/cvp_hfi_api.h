@@ -30,74 +30,6 @@
 /* 16 encoder and 16 decoder sessions */
 #define CVP_MAX_SESSIONS	32
 
-#define HFI_DFS_CONFIG_CMD_SIZE	38
-#define HFI_DFS_FRAME_CMD_SIZE	16
-#define HFI_DFS_FRAME_BUFFERS_OFFSET 8
-#define HFI_DFS_BUF_NUM 4
-
-#define HFI_DMM_CONFIG_CMD_SIZE	194
-#define HFI_DMM_BASIC_CONFIG_CMD_SIZE	51
-#define HFI_DMM_FRAME_CMD_SIZE	28
-#define HFI_DMM_FRAME_BUFFERS_OFFSET 12
-#define HFI_DMM_BUF_NUM 8
-
-#define HFI_PERSIST_CMD_SIZE	11
-#define HFI_PERSIST_BUFFERS_OFFSET 7
-#define HFI_PERSIST_BUF_NUM     2
-
-#define HFI_DS_CMD_SIZE	50
-#define HFI_DS_BUFFERS_OFFSET	44
-#define HFI_DS_BUF_NUM	3
-
-#define HFI_OF_CONFIG_CMD_SIZE 34
-#define HFI_OF_FRAME_CMD_SIZE 24
-#define HFI_OF_BUFFERS_OFFSET 8
-#define HFI_OF_BUF_NUM 8
-
-#define HFI_ODT_CONFIG_CMD_SIZE 23
-#define HFI_ODT_FRAME_CMD_SIZE 33
-#define HFI_ODT_BUFFERS_OFFSET 11
-#define HFI_ODT_BUF_NUM 11
-
-#define HFI_OD_CONFIG_CMD_SIZE 24
-#define HFI_OD_FRAME_CMD_SIZE 12
-#define HFI_OD_BUFFERS_OFFSET 6
-#define HFI_OD_BUF_NUM 3
-
-#define HFI_NCC_CONFIG_CMD_SIZE 47
-#define HFI_NCC_FRAME_CMD_SIZE 22
-#define HFI_NCC_BUFFERS_OFFSET 8
-#define HFI_NCC_BUF_NUM 7
-
-#define HFI_ICA_CONFIG_CMD_SIZE 127
-#define HFI_ICA_FRAME_CMD_SIZE 14
-#define HFI_ICA_BUFFERS_OFFSET 6
-#define HFI_ICA_BUF_NUM 4
-
-#define HFI_HCD_CONFIG_CMD_SIZE 46
-#define HFI_HCD_FRAME_CMD_SIZE 18
-#define HFI_HCD_BUFFERS_OFFSET 12
-#define HFI_HCD_BUF_NUM 3
-
-#define HFI_DCM_CONFIG_CMD_SIZE 20
-#define HFI_DCM_FRAME_CMD_SIZE 19
-#define HFI_DCM_BUFFERS_OFFSET 9
-#define HFI_DCM_BUF_NUM 5
-
-#define HFI_PYS_HCD_CONFIG_CMD_SIZE 461
-#define HFI_PYS_HCD_FRAME_CMD_SIZE 66
-#define HFI_PYS_HCD_BUFFERS_OFFSET 14
-#define HFI_PYS_HCD_BUF_NUM 26
-
-#define HFI_FD_CONFIG_CMD_SIZE 28
-#define HFI_FD_FRAME_CMD_SIZE  10
-#define HFI_FD_BUFFERS_OFFSET  6
-#define HFI_FD_BUF_NUM 2
-
-#define HFI_MODEL_CMD_SIZE 9
-#define HFI_MODEL_BUFFERS_OFFSET 7
-#define HFI_MODEL_BUF_NUM 1
-
 #define HFI_VERSION_MAJOR_MASK 0xFF000000
 #define HFI_VERSION_MAJOR_SHFIT 24
 #define HFI_VERSION_MINOR_MASK 0x00FFFFE0
@@ -210,26 +142,6 @@ enum hal_command_response {
 	HAL_SESSION_REGISTER_BUFFER_DONE,
 	HAL_SESSION_UNREGISTER_BUFFER_DONE,
 	HAL_SESSION_RELEASE_RESOURCE_DONE,
-	HAL_SESSION_SGM_OF_CONFIG_CMD_DONE,
-	HAL_SESSION_DFS_CONFIG_CMD_DONE,
-	HAL_SESSION_DMM_CONFIG_CMD_DONE,
-	HAL_SESSION_DMM_PARAMS_CMD_DONE,
-	HAL_SESSION_WARP_CONFIG_CMD_DONE,
-	HAL_SESSION_WARP_DS_PARAMS_CMD_DONE,
-	HAL_SESSION_WARP_NCC_CONFIG_CMD_DONE,
-	HAL_SESSION_TME_CONFIG_CMD_DONE,
-	HAL_SESSION_ODT_CONFIG_CMD_DONE,
-	HAL_SESSION_OD_CONFIG_CMD_DONE,
-	HAL_SESSION_NCC_CONFIG_CMD_DONE,
-	HAL_SESSION_ICA_CONFIG_CMD_DONE,
-	HAL_SESSION_HCD_CONFIG_CMD_DONE,
-	HAL_SESSION_DC_CONFIG_CMD_DONE,
-	HAL_SESSION_DCM_CONFIG_CMD_DONE,
-	HAL_SESSION_PYS_HCD_CONFIG_CMD_DONE,
-	HAL_SESSION_FD_CONFIG_CMD_DONE,
-	HAL_SESSION_PERSIST_SET_DONE,
-	HAL_SESSION_PERSIST_REL_DONE,
-	HAL_SESSION_MODEL_BUF_CMD_DONE,
 	HAL_SESSION_PROPERTY_INFO,
 	HAL_SESSION_ERROR,
 	HAL_RESPONSE_UNUSED = 0x10000000,
@@ -324,8 +236,7 @@ struct cvp_hal_cmd_sys_get_property_packet {
 struct msm_cvp_hfi_defs {
 	unsigned int size;
 	unsigned int type;
-	unsigned int buf_offset;
-	unsigned int buf_num;
+	bool is_config_pkt;
 	enum hal_command_response resp;
 };
 
@@ -359,6 +270,20 @@ typedef void (*hfi_cmd_response_callback) (enum hal_command_response cmd,
 			void *data);
 typedef void (*msm_cvp_callback) (enum hal_command_response response,
 			void *callback);
+struct msm_cvp_fw {
+	int cookie;
+};
+
+int cvp_hfi_process_msg_packet(u32 device_id,
+	void *msg_hdr, struct msm_cvp_cb_info *info);
+
+enum cvp_status cvp_hfi_process_sys_init_done_prop_read(
+	struct cvp_hfi_msg_sys_init_done_packet *pkt,
+	struct cvp_hal_sys_init_done *sys_init_done);
+
+enum cvp_status hfi_process_session_init_done_prop_read(
+	struct cvp_hfi_msg_sys_session_init_done_packet *pkt,
+	struct cvp_hal_session_init_done *session_init_done);
 
 struct cvp_hfi_device *cvp_hfi_initialize(enum msm_cvp_hfi_type hfi_type,
 		u32 device_id, struct msm_cvp_platform_resources *res,
@@ -367,7 +292,6 @@ void cvp_hfi_deinitialize(enum msm_cvp_hfi_type hfi_type,
 			struct cvp_hfi_device *hdev);
 
 int get_pkt_index(struct cvp_hal_session_cmd_pkt *hdr);
-int get_signal_from_pkt_type(unsigned int type);
 int get_hfi_version(void);
 unsigned int get_msg_size(struct cvp_hfi_msg_session_hdr *hdr);
 unsigned int get_msg_session_id(void *msg);

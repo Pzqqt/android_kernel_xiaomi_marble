@@ -119,7 +119,7 @@ static void __deinit_session_queue(struct msm_cvp_inst *inst)
 		kmem_cache_free(cvp_driver->msg_cache, msg);
 	}
 	inst->session_queue.msg_count = 0;
-	inst->session_queue.state = QUEUE_STOP;
+	inst->session_queue.state = QUEUE_INVALID;
 	spin_unlock(&inst->session_queue.lock);
 
 	wake_up_all(&inst->session_queue.wq);

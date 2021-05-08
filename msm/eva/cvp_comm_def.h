@@ -18,7 +18,8 @@ enum op_mode {
 enum queue_state {
 	QUEUE_INIT,
 	QUEUE_ACTIVE = 1,
-	QUEUE_STOP = 2,
+	QUEUE_START,
+	QUEUE_STOP,
 	QUEUE_INVALID,
 };
 #endif

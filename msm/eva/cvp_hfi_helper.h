@@ -222,13 +222,6 @@ struct cvp_hfi_cmd_sys_get_property_packet {
 	u32 rg_property_data[1];
 };
 
-enum HFI_SESSION_TYPE {
-	HFI_SESSION_CV = 1,
-	HFI_SESSION_DMM,
-	HFI_SESSION_ODT,
-	HFI_SESSION_FD
-};
-
 struct cvp_hfi_cmd_sys_session_init_packet {
 	u32 size;
 	u32 packet_type;

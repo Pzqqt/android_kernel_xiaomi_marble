@@ -207,6 +207,46 @@
 #define CVP_IFACEQ_VAR_LARGE_PKT_SIZE 512
 #define CVP_IFACEQ_VAR_HUGE_PKT_SIZE  (1024*12)
 
+/* HFI packet info needed for sanity check */
+#define HFI_DFS_CONFIG_CMD_SIZE	38
+#define HFI_DFS_FRAME_CMD_SIZE	16
+
+#define HFI_DMM_CONFIG_CMD_SIZE	194
+#define HFI_DMM_BASIC_CONFIG_CMD_SIZE	51
+#define HFI_DMM_FRAME_CMD_SIZE	28
+
+#define HFI_PERSIST_CMD_SIZE	11
+
+#define HFI_DS_CMD_SIZE	50
+
+#define HFI_OF_CONFIG_CMD_SIZE 34
+#define HFI_OF_FRAME_CMD_SIZE 24
+
+#define HFI_ODT_CONFIG_CMD_SIZE 23
+#define HFI_ODT_FRAME_CMD_SIZE 33
+
+#define HFI_OD_CONFIG_CMD_SIZE 24
+#define HFI_OD_FRAME_CMD_SIZE 12
+
+#define HFI_NCC_CONFIG_CMD_SIZE 47
+#define HFI_NCC_FRAME_CMD_SIZE 22
+
+#define HFI_ICA_CONFIG_CMD_SIZE 127
+#define HFI_ICA_FRAME_CMD_SIZE 14
+
+#define HFI_HCD_CONFIG_CMD_SIZE 46
+#define HFI_HCD_FRAME_CMD_SIZE 18
+
+#define HFI_DCM_CONFIG_CMD_SIZE 20
+#define HFI_DCM_FRAME_CMD_SIZE 19
+
+#define HFI_PYS_HCD_CONFIG_CMD_SIZE 461
+#define HFI_PYS_HCD_FRAME_CMD_SIZE 66
+
+#define HFI_FD_CONFIG_CMD_SIZE 28
+#define HFI_FD_FRAME_CMD_SIZE  10
+
+
 struct cvp_hfi_cmd_session_flush_packet {
 	u32 size;
 	u32 packet_type;
@@ -247,19 +287,23 @@ struct cvp_hal_session {
 	void *device;
 };
 
-struct msm_cvp_fw {
-	int cookie;
+enum buf_map_type {
+	MAP_PERSIST = 1,
+	UNMAP_PERSIST = 2,
+	MAP_FRAME = 3,
+	MAP_INVALID,
 };
 
-int cvp_hfi_process_msg_packet(u32 device_id,
-	void *msg_hdr, struct msm_cvp_cb_info *info);
-
-enum cvp_status cvp_hfi_process_sys_init_done_prop_read(
-	struct cvp_hfi_msg_sys_init_done_packet *pkt,
-	struct cvp_hal_sys_init_done *sys_init_done);
-
-enum cvp_status hfi_process_session_init_done_prop_read(
-	struct cvp_hfi_msg_sys_session_init_done_packet *pkt,
-	struct cvp_hal_session_init_done *session_init_done);
-
+static inline enum buf_map_type cvp_find_map_type(int pkt_type)
+{
+	if (pkt_type == HFI_CMD_SESSION_CVP_SET_PERSIST_BUFFERS ||
+			pkt_type == HFI_CMD_SESSION_CVP_SET_MODEL_BUFFERS ||
+			pkt_type == HFI_CMD_SESSION_CVP_DMM_PARAMS ||
+			pkt_type == HFI_CMD_SESSION_CVP_WARP_DS_PARAMS)
+		return MAP_PERSIST;
+	else if (pkt_type == HFI_CMD_SESSION_CVP_RELEASE_PERSIST_BUFFERS)
+		return UNMAP_PERSIST;
+	else
+		return MAP_FRAME;
+}
 #endif

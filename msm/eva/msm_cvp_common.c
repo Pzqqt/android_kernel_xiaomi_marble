@@ -214,42 +214,6 @@ struct msm_cvp_inst *cvp_get_inst_validate(struct msm_cvp_core *core,
 	return s;
 }
 
-static void cvp_handle_session_cmd_done(enum hal_command_response cmd,
-	void *data)
-{
-	struct msm_cvp_cb_cmd_done *response = data;
-	struct msm_cvp_inst *inst;
-
-	if (!response) {
-		dprintk(CVP_ERR, "%s: Invalid release_buf_done response\n",
-			__func__);
-		return;
-	}
-
-	inst = cvp_get_inst(get_cvp_core(response->device_id),
-			response->session_id);
-	if (!inst) {
-		dprintk(CVP_ERR, "%s: Got response for an inactive session\n",
-			__func__);
-		return;
-	}
-
-	if (response->status)
-		dprintk(CVP_ERR, "HFI MSG error %d cmd response %d\n",
-			response->status, cmd);
-
-	dprintk(CVP_SESS, "%s: inst=%pK\n", __func__, inst);
-
-	if (IS_HAL_SESSION_CMD(cmd)) {
-		dprintk(CVP_INFO, "%s: calling completion for index = %d",
-			__func__, SESSION_MSG_INDEX(cmd));
-		complete(&inst->completions[SESSION_MSG_INDEX(cmd)]);
-	} else
-		dprintk(CVP_ERR,
-			"%s: Invalid inst cmd response: %d\n", __func__, cmd);
-	cvp_put_inst(inst);
-}
-
 static void handle_session_set_buf_done(enum hal_command_response cmd,
 	void *data)
 {
@@ -666,7 +630,7 @@ static void handle_sys_error(enum hal_command_response cmd, void *data)
 				inst->cur_cmd_type, inst->state);
 		if (inst->state != MSM_CVP_CORE_INVALID) {
 			change_cvp_inst_state(inst, MSM_CVP_CORE_INVALID);
-			if (cvp_stop_clean_fence_queue(inst))
+			if (cvp_clean_session_queues(inst))
 				dprintk(CVP_ERR, "Failed to clean fences\n");
 			for (i = 0; i < ARRAY_SIZE(inst->completions); i++)
 				complete(&inst->completions[i]);
@@ -791,28 +755,6 @@ void cvp_handle_cmd_response(enum hal_command_response cmd, void *data)
 		break;
 	case HAL_SESSION_RELEASE_BUFFER_DONE:
 		handle_session_release_buf_done(cmd, data);
-		break;
-	case HAL_SESSION_SGM_OF_CONFIG_CMD_DONE:
-	case HAL_SESSION_DFS_CONFIG_CMD_DONE:
-	case HAL_SESSION_DMM_CONFIG_CMD_DONE:
-	case HAL_SESSION_DMM_PARAMS_CMD_DONE:
-	case HAL_SESSION_WARP_CONFIG_CMD_DONE:
-	case HAL_SESSION_WARP_DS_PARAMS_CMD_DONE:
-	case HAL_SESSION_WARP_NCC_CONFIG_CMD_DONE:
-	case HAL_SESSION_PERSIST_SET_DONE:
-	case HAL_SESSION_PERSIST_REL_DONE:
-	case HAL_SESSION_TME_CONFIG_CMD_DONE:
-	case HAL_SESSION_ODT_CONFIG_CMD_DONE:
-	case HAL_SESSION_OD_CONFIG_CMD_DONE:
-	case HAL_SESSION_NCC_CONFIG_CMD_DONE:
-	case HAL_SESSION_ICA_CONFIG_CMD_DONE:
-	case HAL_SESSION_HCD_CONFIG_CMD_DONE:
-	case HAL_SESSION_DCM_CONFIG_CMD_DONE:
-	case HAL_SESSION_DC_CONFIG_CMD_DONE:
-	case HAL_SESSION_PYS_HCD_CONFIG_CMD_DONE:
-	case HAL_SESSION_FD_CONFIG_CMD_DONE:
-	case HAL_SESSION_MODEL_BUF_CMD_DONE:
-		cvp_handle_session_cmd_done(cmd, data);
 		break;
 	default:
 		dprintk(CVP_HFI, "response unhandled: %d\n", cmd);

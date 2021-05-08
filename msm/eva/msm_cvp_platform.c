@@ -18,6 +18,8 @@
 #include <linux/of_fdt.h>
 #include "msm_cvp_internal.h"
 #include "msm_cvp_debug.h"
+#include "cvp_hfi_api.h"
+#include "cvp_hfi.h"
 
 #define UBWC_CONFIG(mco, mlo, hbo, bslo, bso, rs, mc, ml, hbb, bsl, bsp) \
 {	\
@@ -132,6 +134,237 @@ static const struct of_device_id msm_cvp_dt_match[] = {
 	},
 	{},
 };
+
+const struct msm_cvp_hfi_defs cvp_hfi_defs[] = {
+	{
+		.size = HFI_DFS_CONFIG_CMD_SIZE,
+		.type = HFI_CMD_SESSION_CVP_DFS_CONFIG,
+		.is_config_pkt = true,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = HFI_DFS_FRAME_CMD_SIZE,
+		.type = HFI_CMD_SESSION_CVP_DFS_FRAME,
+		.is_config_pkt = false,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = 0xFFFFFFFF,
+		.type = HFI_CMD_SESSION_CVP_SGM_OF_CONFIG,
+		.is_config_pkt = true,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = 0xFFFFFFFF,
+		.type = HFI_CMD_SESSION_CVP_SGM_OF_FRAME,
+		.is_config_pkt = false,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = 0xFFFFFFFF,
+		.type = HFI_CMD_SESSION_CVP_WARP_NCC_CONFIG,
+		.is_config_pkt = true,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = 0xFFFFFFFF,
+		.type = HFI_CMD_SESSION_CVP_WARP_NCC_FRAME,
+		.is_config_pkt = false,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = 0xFFFFFFFF,
+		.type = HFI_CMD_SESSION_CVP_WARP_CONFIG,
+		.is_config_pkt = true,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = 0xFFFFFFFF,
+		.type = HFI_CMD_SESSION_CVP_WARP_DS_PARAMS,
+		.is_config_pkt = true,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = 0xFFFFFFFF,
+		.type = HFI_CMD_SESSION_CVP_WARP_FRAME,
+		.is_config_pkt = false,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = HFI_DMM_CONFIG_CMD_SIZE,
+		.type = HFI_CMD_SESSION_CVP_DMM_CONFIG,
+		.is_config_pkt = true,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = 0xFFFFFFFF,
+		.type = HFI_CMD_SESSION_CVP_DMM_PARAMS,
+		.is_config_pkt = true,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = HFI_DMM_FRAME_CMD_SIZE,
+		.type = HFI_CMD_SESSION_CVP_DMM_FRAME,
+		.is_config_pkt = false,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = HFI_PERSIST_CMD_SIZE,
+		.type = HFI_CMD_SESSION_CVP_SET_PERSIST_BUFFERS,
+		.is_config_pkt = true,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = 0xffffffff,
+		.type = HFI_CMD_SESSION_CVP_RELEASE_PERSIST_BUFFERS,
+		.is_config_pkt = true,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = HFI_DS_CMD_SIZE,
+		.type = HFI_CMD_SESSION_CVP_DS,
+		.is_config_pkt = false,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = HFI_OF_CONFIG_CMD_SIZE,
+		.type = HFI_CMD_SESSION_CVP_CV_TME_CONFIG,
+		.is_config_pkt = true,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = HFI_OF_FRAME_CMD_SIZE,
+		.type = HFI_CMD_SESSION_CVP_CV_TME_FRAME,
+		.is_config_pkt = false,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = HFI_ODT_CONFIG_CMD_SIZE,
+		.type = HFI_CMD_SESSION_CVP_CV_ODT_CONFIG,
+		.is_config_pkt = true,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = HFI_ODT_FRAME_CMD_SIZE,
+		.type = HFI_CMD_SESSION_CVP_CV_ODT_FRAME,
+		.is_config_pkt = false,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = HFI_OD_CONFIG_CMD_SIZE,
+		.type = HFI_CMD_SESSION_CVP_CV_OD_CONFIG,
+		.is_config_pkt = true,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = HFI_OD_FRAME_CMD_SIZE,
+		.type = HFI_CMD_SESSION_CVP_CV_OD_FRAME,
+		.is_config_pkt = false,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = HFI_NCC_CONFIG_CMD_SIZE,
+		.type = HFI_CMD_SESSION_CVP_NCC_CONFIG,
+		.is_config_pkt = true,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = HFI_NCC_FRAME_CMD_SIZE,
+		.type = HFI_CMD_SESSION_CVP_NCC_FRAME,
+		.is_config_pkt = false,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = HFI_ICA_CONFIG_CMD_SIZE,
+		.type = HFI_CMD_SESSION_CVP_ICA_CONFIG,
+		.is_config_pkt = true,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = HFI_ICA_FRAME_CMD_SIZE,
+		.type = HFI_CMD_SESSION_CVP_ICA_FRAME,
+		.is_config_pkt = false,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = HFI_HCD_CONFIG_CMD_SIZE,
+		.type = HFI_CMD_SESSION_CVP_HCD_CONFIG,
+		.is_config_pkt = true,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = HFI_HCD_FRAME_CMD_SIZE,
+		.type = HFI_CMD_SESSION_CVP_HCD_FRAME,
+		.is_config_pkt = false,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = HFI_DCM_CONFIG_CMD_SIZE,
+		.type = HFI_CMD_SESSION_CVP_DC_CONFIG,
+		.is_config_pkt = true,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = HFI_DCM_FRAME_CMD_SIZE,
+		.type = HFI_CMD_SESSION_CVP_DC_FRAME,
+		.is_config_pkt = false,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = HFI_DCM_CONFIG_CMD_SIZE,
+		.type = HFI_CMD_SESSION_CVP_DCM_CONFIG,
+		.is_config_pkt = true,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = HFI_DCM_FRAME_CMD_SIZE,
+		.type = HFI_CMD_SESSION_CVP_DCM_FRAME,
+		.is_config_pkt = false,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = HFI_PYS_HCD_CONFIG_CMD_SIZE,
+		.type = HFI_CMD_SESSION_CVP_PYS_HCD_CONFIG,
+		.is_config_pkt = true,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = HFI_PYS_HCD_FRAME_CMD_SIZE,
+		.type = HFI_CMD_SESSION_CVP_PYS_HCD_FRAME,
+		.is_config_pkt = false,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = 0xFFFFFFFF,
+		.type = HFI_CMD_SESSION_CVP_SET_MODEL_BUFFERS,
+		.is_config_pkt = true,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = 0xFFFFFFFF,
+		.type = HFI_CMD_SESSION_CVP_FD_CONFIG,
+		.is_config_pkt = true,
+		.resp = HAL_NO_RESP,
+	},
+	{
+		.size = 0xFFFFFFFF,
+		.type = HFI_CMD_SESSION_CVP_FD_FRAME,
+		.is_config_pkt = false,
+		.resp = HAL_NO_RESP,
+	},
+
+};
+
+int get_pkt_index(struct cvp_hal_session_cmd_pkt *hdr)
+{
+	int i, pkt_num = ARRAY_SIZE(cvp_hfi_defs);
+
+	for (i = 0; i < pkt_num; i++)
+		if (cvp_hfi_defs[i].type == hdr->packet_type)
+			return i;
+
+	return -EINVAL;
+}
 
 MODULE_DEVICE_TABLE(of, msm_cvp_dt_match);
 

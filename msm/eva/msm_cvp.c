@@ -47,7 +47,7 @@ static bool cvp_msg_pending(struct cvp_session_queue *sq,
 
 	mptr = NULL;
 	spin_lock(&sq->lock);
-	if (sq->state != QUEUE_ACTIVE) {
+	if (sq->state == QUEUE_INIT || sq->state == QUEUE_INVALID) {
 		/* The session is being deleted */
 		spin_unlock(&sq->lock);
 		*msg = NULL;
@@ -101,7 +101,8 @@ static int cvp_wait_process_message(struct msm_cvp_inst *inst,
 					sq->state, sq->msg_count);
 
 		if (inst->state >= MSM_CVP_CLOSE_DONE ||
-				sq->state != QUEUE_ACTIVE) {
+				(sq->state != QUEUE_ACTIVE &&
+				sq->state != QUEUE_START)) {
 			rc = -ECONNRESET;
 			goto exit;
 		}
@@ -160,9 +161,11 @@ static int msm_cvp_session_process_hfi(
 {
 	int pkt_idx, pkt_type, rc = 0;
 	struct cvp_hfi_device *hdev;
-	unsigned int offset, buf_num, signal;
+	unsigned int offset = 0, buf_num = 0, signal;
 	struct cvp_session_queue *sq;
 	struct msm_cvp_inst *s;
+	bool is_config_pkt;
+	enum buf_map_type map_type;
 
 	if (!inst || !inst->core || !in_pkt) {
 		dprintk(CVP_ERR, "%s: invalid params\n", __func__);
@@ -183,17 +186,25 @@ static int msm_cvp_session_process_hfi(
 				in_pkt->pkt_data[1]);
 		goto exit;
 	} else {
-		offset = cvp_hfi_defs[pkt_idx].buf_offset;
-		buf_num = cvp_hfi_defs[pkt_idx].buf_num;
 		signal = cvp_hfi_defs[pkt_idx].resp;
+		is_config_pkt = cvp_hfi_defs[pkt_idx].is_config_pkt;
 	}
+
 	if (signal == HAL_NO_RESP) {
 		/* Frame packets are not allowed before session starts*/
 		sq = &inst->session_queue;
 		spin_lock(&sq->lock);
-		if (sq->state != QUEUE_ACTIVE) {
+		if ((sq->state != QUEUE_START && !is_config_pkt) ||
+			(sq->state >= QUEUE_INVALID)) {
+			/*
+			 * A init packet is allowed in case of
+			 * QUEUE_ACTIVE, QUEUE_START, QUEUE_STOP
+			 * A frame packet is only allowed in case of
+			 * QUEUE_START
+			 */
 			spin_unlock(&sq->lock);
-			dprintk(CVP_ERR, "%s: invalid queue state\n", __func__);
+			dprintk(CVP_ERR, "%s: invalid queue state %d\n",
+				__func__, sq->state);
 			rc = -EINVAL;
 			goto exit;
 		}
@@ -209,12 +220,11 @@ static int msm_cvp_session_process_hfi(
 		return -EINVAL;
 	}
 	pkt_type = in_pkt->pkt_data[1];
-	if (pkt_type == HFI_CMD_SESSION_CVP_SET_PERSIST_BUFFERS ||
-		pkt_type == HFI_CMD_SESSION_CVP_SET_MODEL_BUFFERS ||
-		pkt_type == HFI_CMD_SESSION_CVP_DMM_PARAMS ||
-		pkt_type == HFI_CMD_SESSION_CVP_WARP_DS_PARAMS)
+	map_type = cvp_find_map_type(pkt_type);
+
+	if (map_type == MAP_PERSIST)
 		rc = msm_cvp_map_user_persist(inst, in_pkt, offset, buf_num);
-	else if (pkt_type == HFI_CMD_SESSION_CVP_RELEASE_PERSIST_BUFFERS)
+	else if (map_type == UNMAP_PERSIST)
 		rc = msm_cvp_mark_user_persist(inst, in_pkt, offset, buf_num);
 	else
 		rc = msm_cvp_map_frame(inst, in_pkt, offset, buf_num);
@@ -230,22 +240,10 @@ static int msm_cvp_session_process_hfi(
 		goto exit;
 	}
 
-	if (signal != HAL_NO_RESP) {
-		rc = wait_for_sess_signal_receipt(inst, signal);
-		if (rc) {
-			dprintk(CVP_ERR,
-				"%s: wait for signal failed, rc %d %d, %x %d\n",
-				__func__, rc,
-				in_pkt->pkt_data[0],
-				in_pkt->pkt_data[1],
-				signal);
-			goto exit;
-		}
-		if (pkt_type == HFI_CMD_SESSION_CVP_RELEASE_PERSIST_BUFFERS)
-			rc = msm_cvp_unmap_user_persist(inst, in_pkt,
-					offset, buf_num);
+	if (signal != HAL_NO_RESP)
+		dprintk(CVP_ERR, "%s signal %d from UMD is not HAL_NO_RESP\n",
+			__func__, signal);
 
-	}
 exit:
 	inst->cur_cmd_type = 0;
 	cvp_put_inst(inst);
@@ -261,7 +259,7 @@ static bool cvp_fence_wait(struct cvp_fence_queue *q,
 	*fence = NULL;
 	mutex_lock(&q->lock);
 	*state = q->state;
-	if (*state != QUEUE_ACTIVE) {
+	if (*state != QUEUE_START) {
 		mutex_unlock(&q->lock);
 		return true;
 	}
@@ -582,7 +580,7 @@ wait:
 
 	f = NULL;
 	wait_event_interruptible(q->wq, cvp_fence_wait(q, &f, &state));
-	if (state != QUEUE_ACTIVE)
+	if (state != QUEUE_START)
 		goto exit;
 
 	if (!f)
@@ -608,7 +606,7 @@ wait:
 
 	cvp_free_fence_data(f);
 
-	if (rc && state != QUEUE_ACTIVE)
+	if (rc && state != QUEUE_START)
 		goto exit;
 
 	goto wait;
@@ -629,7 +627,7 @@ static int msm_cvp_session_process_hfi_fence(struct msm_cvp_inst *inst,
 	struct eva_kmd_hfi_synx_packet *synx_pkt;
 	struct eva_kmd_fence_ctrl *kfc;
 	struct cvp_hfi_cmd_session_hdr *pkt;
-	unsigned int offset, buf_num, in_offset, in_buf_num;
+	unsigned int offset = 0, buf_num = 0, in_offset, in_buf_num;
 	struct msm_cvp_inst *s;
 	struct cvp_fence_command *f;
 	struct cvp_fence_queue *q;
@@ -674,9 +672,6 @@ static int msm_cvp_session_process_hfi_fence(struct msm_cvp_inst *inst,
 	if (in_offset && in_buf_num) {
 		offset = in_offset;
 		buf_num = in_buf_num;
-	} else {
-		offset = cvp_hfi_defs[idx].buf_offset;
-		buf_num = cvp_hfi_defs[idx].buf_num;
 	}
 
 	if (!is_buf_param_valid(buf_num, offset)) {
@@ -1014,6 +1009,7 @@ int msm_cvp_session_create(struct msm_cvp_inst *inst)
 {
 	int rc = 0;
 	struct synx_initialization_params params;
+	struct cvp_session_queue *sq;
 
 	if (!inst || !inst->core)
 		return -EINVAL;
@@ -1049,6 +1045,11 @@ int msm_cvp_session_create(struct msm_cvp_inst *inst)
 		rc = -EFAULT;
 	}
 
+	sq = &inst->session_queue;
+	spin_lock(&sq->lock);
+	sq->state = QUEUE_ACTIVE;
+	spin_unlock(&sq->lock);
+
 fail_init:
 	return rc;
 }
@@ -1080,7 +1081,7 @@ static int cvp_fence_thread_start(struct msm_cvp_inst *inst)
 
 	q = &inst->fence_cmd_queue;
 	mutex_lock(&q->lock);
-	q->state = QUEUE_ACTIVE;
+	q->state = QUEUE_START;
 	mutex_unlock(&q->lock);
 
 	for (i = 0; i < inst->prop.fthread_nr; ++i) {
@@ -1100,7 +1101,7 @@ static int cvp_fence_thread_start(struct msm_cvp_inst *inst)
 
 	sq = &inst->session_queue_fence;
 	spin_lock(&sq->lock);
-	sq->state = QUEUE_ACTIVE;
+	sq->state = QUEUE_START;
 	spin_unlock(&sq->lock);
 
 exit:
@@ -1151,7 +1152,7 @@ static int msm_cvp_session_start(struct msm_cvp_inst *inst,
 		spin_unlock(&sq->lock);
 		return -EINVAL;
 	}
-	sq->state = QUEUE_ACTIVE;
+	sq->state = QUEUE_START;
 	spin_unlock(&sq->lock);
 
 	return cvp_fence_thread_start(inst);
@@ -1597,9 +1598,10 @@ static void cvp_clean_fence_queue(struct msm_cvp_inst *inst, int synx_state)
 	mutex_unlock(&q->lock);
 }
 
-int cvp_stop_clean_fence_queue(struct msm_cvp_inst *inst)
+int cvp_clean_session_queues(struct msm_cvp_inst *inst)
 {
 	struct cvp_fence_queue *q;
+	struct cvp_session_queue *sq;
 	u32 count = 0, max_retries = 100;
 
 	cvp_clean_fence_queue(inst, SYNX_STATE_SIGNALED_ERROR);
@@ -1619,6 +1621,16 @@ retry:
 		return -EBUSY;
 
 	goto retry;
+
+	sq = &inst->session_queue_fence;
+	spin_lock(&sq->lock);
+	sq->state = QUEUE_INVALID;
+	spin_unlock(&sq->lock);
+
+	sq = &inst->session_queue_fence;
+	spin_lock(&sq->lock);
+	sq->state = QUEUE_INVALID;
+	spin_unlock(&sq->lock);
 }
 
 static int cvp_flush_all(struct msm_cvp_inst *inst)
@@ -1917,7 +1929,7 @@ int msm_cvp_session_init(struct msm_cvp_inst *inst)
 	inst->clk_data.ddr_bw = 1000;
 	inst->clk_data.sys_cache_bw = 1000;
 
-	inst->prop.type = HFI_SESSION_CV;
+	inst->prop.type = 1;
 	inst->prop.kernel_mask = 0xFFFFFFFF;
 	inst->prop.priority = 0;
 	inst->prop.is_secure = 0;
