@@ -20,6 +20,7 @@
 
 #include <soc/qcom/rpmh.h>
 #include <drm/drm_irq.h>
+#include "msm_drv.h"
 #include "sde_rsc_priv.h"
 #include "sde_dbg.h"
 #include "sde_trace.h"
@@ -1626,9 +1627,9 @@ static int sde_rsc_bind(struct device *dev,
 	}
 
 	sde_dbg_reg_register_base(SDE_RSC_DRV_DBG_NAME, rsc->drv_io.base,
-				rsc->drv_io.len, SDE_DBG_RSC);
+			rsc->drv_io.len, msm_get_phys_addr(pdev, "drv"), SDE_DBG_RSC);
 	sde_dbg_reg_register_base(SDE_RSC_WRAPPER_DBG_NAME, rsc->wrapper_io.base,
-				rsc->wrapper_io.len, SDE_DBG_RSC);
+			rsc->wrapper_io.len, msm_get_phys_addr(pdev, "wrapper"), SDE_DBG_RSC);
 	return 0;
 }
 
