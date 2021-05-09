@@ -622,6 +622,15 @@ static int ipa3_qmi_init_modem_send_sync_msg(void)
 		req.is_ssr_bootup = 1;
 	}
 
+	req.hw_fiter_stats_info_valid = true;
+	req.hw_filter_stats_info.hw_filter_stats_start_addr =
+		IPA_MEM_PART(stats_fnr_ofst);
+	req.hw_filter_stats_info.hw_filter_stats_size = IPA_Q6_FNR_STATS_SIZE;
+	req.hw_filter_stats_info.hw_filter_stats_start_index = IPA_Q6_FNR_START_IDX;
+	req.hw_filter_stats_info.hw_filter_stats_end_index = IPA_Q6_FNR_END_IDX;
+	IPAWANDBG("hw_flt stats: hw_filter_start_address = %u", req.hw_filter_stats_info.hw_filter_stats_start_addr);
+	IPAWANDBG("hw_flt stats: hw_filter_stats_size = %u", req.hw_filter_stats_info.hw_filter_stats_size);
+	IPAWANDBG("hw_flt stats: hw_filter_stats_start_index  = %u", req.hw_filter_stats_info.hw_filter_stats_start_index);
 	IPAWANDBG("platform_type %d\n", req.platform_type);
 	IPAWANDBG("hdr_tbl_info.modem_offset_start %d\n",
 			req.hdr_tbl_info.modem_offset_start);

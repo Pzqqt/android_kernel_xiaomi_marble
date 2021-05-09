@@ -2454,7 +2454,7 @@ static ssize_t ipa_debugfs_print_flt_rt_stats(struct file *file,
 		return -ENOMEM;
 	query->start_id = 1;
 	query->end_id = IPA_MAX_FLT_RT_CNT_INDEX;
-	query->reset = true;
+	query->reset = false;
 	query->stats_size = sizeof(struct ipa_flt_rt_stats);
 	pyld_size = IPA_MAX_FLT_RT_CNT_INDEX *
 		sizeof(struct ipa_flt_rt_stats);
