@@ -7,7 +7,7 @@ include $(CLEAR_VARS)
 ifneq ($(findstring vendor,$(LOCAL_PATH)),)
 
 ifneq ($(findstring opensource,$(LOCAL_PATH)),)
-	DISPLAY_BLD_DIR := $(shell pwd)/vendor/qcom/opensource/display-drivers
+	DISPLAY_BLD_DIR := $(TOP)/vendor/qcom/opensource/display-drivers
 endif # opensource
 
 DLKM_DIR := $(TOP)/device/qcom/common/dlkm
@@ -18,12 +18,11 @@ LOCAL_ADDITIONAL_DEPENDENCIES := $(wildcard $(LOCAL_PATH)/**/*) $(wildcard $(LOC
 ###########################################################
 # This is set once per LOCAL_PATH, not per (kernel) module
 KBUILD_OPTIONS := DISPLAY_ROOT=$(DISPLAY_BLD_DIR)
-
 KBUILD_OPTIONS += MODNAME=msm_drm
 KBUILD_OPTIONS += BOARD_PLATFORM=$(TARGET_BOARD_PLATFORM)
 KBUILD_OPTIONS += $(DISPLAY_SELECT)
 
-KBUILD_OPTIONS += KBUILD_EXTRA_SYMBOLS=$(shell pwd)/$(call intermediates-dir-for,DLKM,mmrm-module-symvers)/Module.symvers
+KBUILD_OPTIONS += KBUILD_EXTRA_SYMBOLS=$(PWD)/$(call intermediates-dir-for,DLKM,mmrm-module-symvers)/Module.symvers
 
 ###########################################################
 include $(CLEAR_VARS)
