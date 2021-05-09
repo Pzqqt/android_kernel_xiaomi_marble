@@ -5672,10 +5672,12 @@ typedef struct {
     };
 } wmi_tx_send_params;
 
+#define WMI_MLO_MGMT_TID 0xFFFFFFFF
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag (WMITLV_TAG_STRUC_wmi_mlo_tx_send_params) and len */
     A_UINT32 hw_link_id; /** Unique link id across SOCs, provided by QMI handshake.
-                           * If 0xFFFF then the frame will be queued in the MLO queue
+                           * If WMI_MLO_MGMT_TID then the frame will be queued in the MLO queue
                            * If valid hw_link_id
                            */
 } wmi_mlo_tx_send_params;
@@ -12348,7 +12350,7 @@ typedef enum {
          * For a STA mode vdev this will enable/disable triggered access
          * and enable/disable Multi User mode of operation.
          * A value of 0 in a given bit disables corresponding mode.
-         * bit | hemu mode
+         * bit | EHT mu mode
          * ---------------
          *  0  | EHT SUBFEE
          *  1  | EHT SUBFER
@@ -12404,6 +12406,8 @@ typedef enum {
          *     punctured mode for 11be systems
          */
         WMI_VDEV_PARAM_FIXED_PUNCTURE_PATTERN,                /* 0x800B */
+
+        WMI_VDEV_PARAM_EHTOPS_0_31,                           /* 0x800C */
 
     /*=== END VDEV_PARAM_PROTOTYPE SECTION ===*/
 } WMI_VDEV_PARAM;
