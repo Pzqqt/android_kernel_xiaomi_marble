@@ -101,19 +101,21 @@
 #define SDE_DBG_LOG_START "start"
 #define SDE_DBG_LOG_END "end"
 
-#define SDE_DBG_LOG_MARKER(name, marker) \
-	dev_info(sde_dbg_base.dev, "======== %s %s dump =========\n", marker, name)
+#define SDE_DBG_LOG_MARKER(name, marker, log) \
+	if (log) \
+		dev_info(sde_dbg_base.dev, "======== %s %s dump =========\n", marker, name)
 
-#define SDE_DBG_LOG_ENTRY(off, x0, x4, x8, xc) \
-	dev_info(sde_dbg_base.dev, "0x%lx : %08x %08x %08x %08x\n", off, x0, x4, x8, xc)
+#define SDE_DBG_LOG_ENTRY(off, x0, x4, x8, xc, log) \
+	if (log) \
+		dev_info(sde_dbg_base.dev, "0x%lx : %08x %08x %08x %08x\n", off, x0, x4, x8, xc)
 
-#define SDE_DBG_LOG_DUMP_ADDR(name, addr, size, off) \
-	dev_info(sde_dbg_base.dev, "%s: start_addr:0x%pK len:0x%x offset=0x%lx\n", \
-			name, addr, size, off)
+#define SDE_DBG_LOG_DUMP_ADDR(name, addr, size, off, log) \
+	if (log) \
+		dev_info(sde_dbg_base.dev, "%s: start_addr:0x%pK len:0x%x offset=0x%lx\n", \
+				name, addr, size, off)
 
 #define SDE_DBG_LOG_DEBUGBUS(name, addr, block_id, test_id, val) \
-	dev_err(sde_dbg_base.dev, "%s 0x%x %d %d 0x%x\n", \
-			name, addr, block_id, test_id, val)
+	dev_err(sde_dbg_base.dev, "%s 0x%x %d %d 0x%x\n", name, addr, block_id, test_id, val)
 
 /**
  * struct sde_dbg_reg_offset - tracking for start and end of region
@@ -465,8 +467,7 @@ static void _sde_dump_reg(const char *dump_name, u32 reg_dump_flag,
 	if (!len_bytes || !dump_mem)
 		return;
 
-	in_log = (reg_dump_flag & SDE_DBG_DUMP_IN_LOG)
-				| (reg_dump_flag & SDE_DBG_DUMP_IN_LOG_LIMITED);
+	in_log = (reg_dump_flag & (SDE_DBG_DUMP_IN_LOG | SDE_DBG_DUMP_IN_LOG_LIMITED));
 	in_mem = (reg_dump_flag & SDE_DBG_DUMP_IN_MEM);
 
 	pr_debug("%s: reg_dump_flag=%d in_log=%d in_mem=%d\n",
@@ -482,7 +483,8 @@ static void _sde_dump_reg(const char *dump_name, u32 reg_dump_flag,
 	if (in_mem && !(*dump_mem))
 		*dump_mem = devm_kzalloc(sde_dbg_base.dev, len_padded, GFP_KERNEL);
 	dump_addr = *dump_mem;
-	SDE_DBG_LOG_DUMP_ADDR(dump_name, dump_addr, len_padded, (unsigned long)(addr - base_addr));
+	SDE_DBG_LOG_DUMP_ADDR(dump_name, dump_addr, len_padded,
+					(unsigned long)(addr - base_addr), in_log);
 
 	for (i = 0; i < len_align; i++) {
 		u32 x0, x4, x8, xc;
@@ -492,8 +494,7 @@ static void _sde_dump_reg(const char *dump_name, u32 reg_dump_flag,
 		x8 = (addr + 0x8 < end_addr) ? readl_relaxed(addr + 0x8) : 0;
 		xc = (addr + 0xc < end_addr) ? readl_relaxed(addr + 0xc) : 0;
 
-		if (in_log)
-			SDE_DBG_LOG_ENTRY((unsigned long)(addr - base_addr), x0, x4, x8, xc);
+		SDE_DBG_LOG_ENTRY((unsigned long)(addr - base_addr), x0, x4, x8, xc, in_log);
 
 		if (dump_addr) {
 			dump_addr[i * 4] = x0;
@@ -586,13 +587,16 @@ static void _sde_dump_reg_by_ranges(struct sde_dbg_reg_base *dbg, u32 reg_dump_f
 	char *addr;
 	size_t len;
 	struct sde_dbg_reg_range *range_node;
+	bool in_log;
 
 	if (!dbg || !(dbg->base || dbg->cb)) {
 		pr_err("dbg base is null!\n");
 		return;
 	}
 
-	SDE_DBG_LOG_MARKER(dbg->name, SDE_DBG_LOG_START);
+	in_log = (reg_dump_flag & (SDE_DBG_DUMP_IN_LOG | SDE_DBG_DUMP_IN_LOG_LIMITED));
+	SDE_DBG_LOG_MARKER(dbg->name, SDE_DBG_LOG_START, in_log);
+
 	if (dbg->cb) {
 		dbg->cb(dbg->cb_ptr);
 	/* If there is a list to dump the registers by ranges, use the ranges */
@@ -612,8 +616,7 @@ static void _sde_dump_reg_by_ranges(struct sde_dbg_reg_base *dbg, u32 reg_dump_f
 		}
 	} else {
 		/* If there is no list to dump ranges, dump all registers */
-		dev_info(sde_dbg_base.dev, "Ranges not found, will dump full registers\n");
-		SDE_DBG_LOG_DUMP_ADDR("base", dbg->base, dbg->max_offset, 0);
+		SDE_DBG_LOG_DUMP_ADDR("base", dbg->base, dbg->max_offset, 0, in_log);
 		addr = dbg->base;
 		len = dbg->max_offset;
 		_sde_dump_reg(dbg->name, reg_dump_flag, dbg->base, addr, len, &dbg->reg_dump);
@@ -846,7 +849,7 @@ static void _sde_dbg_dump_bus_entry(struct sde_dbg_sde_debug_bus *bus,
 
 				if (!entry->analyzer && (in_log || (in_log_limited &&
 					    _is_dbg_bus_limited_valid(bus, entry->wr_addr, i, j))))
-					SDE_DBG_LOG_ENTRY(0, entry->wr_addr, i, j, status);
+					SDE_DBG_LOG_ENTRY(0, entry->wr_addr, i, j, status, true);
 
 				if (dump_addr && in_mem) {
 					*dump_addr++ = entry->wr_addr;
@@ -866,7 +869,7 @@ static void _sde_dbg_dump_bus_entry(struct sde_dbg_sde_debug_bus *bus,
 
 static void _sde_dbg_dump_sde_dbg_bus(struct sde_dbg_sde_debug_bus *bus, u32 enable_mask)
 {
-	bool in_mem;
+	bool in_mem, in_log;
 	u32 **dump_mem = NULL;
 	u32 *dump_addr = NULL;
 	int i, list_size = 0;
@@ -881,6 +884,9 @@ static void _sde_dbg_dump_sde_dbg_bus(struct sde_dbg_sde_debug_bus *bus, u32 ena
 		pr_err("unable to find mem_base for %s\n", bus->cmn.name);
 		return;
 	}
+
+	in_mem = (enable_mask & SDE_DBG_DUMP_IN_MEM);
+	in_log = (enable_mask & (SDE_DBG_DUMP_IN_LOG | SDE_DBG_DUMP_IN_LOG_LIMITED));
 
 	mem_base = reg_base->base;
 	if (!strcmp(bus->cmn.name, DBGBUS_NAME_SDE))
@@ -902,19 +908,16 @@ static void _sde_dbg_dump_sde_dbg_bus(struct sde_dbg_sde_debug_bus *bus, u32 ena
 	list_size *= sizeof(u32) * DUMP_CLMN_COUNT;
 
 	snprintf(name, sizeof(name), "%s-debugbus", bus->cmn.name);
-	SDE_DBG_LOG_MARKER(name, SDE_DBG_LOG_START);
+	SDE_DBG_LOG_MARKER(name, SDE_DBG_LOG_START, in_log);
 
-	in_mem = (enable_mask & SDE_DBG_DUMP_IN_MEM);
 	if (in_mem && (!(*dump_mem))) {
 		*dump_mem = devm_kzalloc(sde_dbg_base.dev, list_size, GFP_KERNEL);
 		bus->cmn.content_size = list_size / sizeof(u32);
 	}
 	dump_addr = *dump_mem;
-	SDE_DBG_LOG_DUMP_ADDR(bus->cmn.name, dump_addr, list_size, 0);
+	SDE_DBG_LOG_DUMP_ADDR(bus->cmn.name, dump_addr, list_size, 0, in_log);
 
 	_sde_dbg_dump_bus_entry(bus, entries, bus_size, mem_base, dump_addr, enable_mask);
-
-	SDE_DBG_LOG_MARKER(name, SDE_DBG_LOG_END);
 }
 
 static void _sde_dbg_dump_dsi_dbg_bus(struct sde_dbg_sde_debug_bus *bus, u32 enable_mask)
@@ -922,7 +925,7 @@ static void _sde_dbg_dump_dsi_dbg_bus(struct sde_dbg_sde_debug_bus *bus, u32 ena
 	struct sde_dbg_dsi_ctrl_list_entry *ctl_entry;
 	struct list_head *list;
 	int list_size = 0;
-	bool in_mem, i, dsi_count = 0;
+	bool in_mem, in_log, i, dsi_count = 0;
 	u32 **dump_mem = NULL;
 	u32 *dump_addr = NULL;
 	struct sde_debug_bus_entry *entries;
@@ -936,6 +939,9 @@ static void _sde_dbg_dump_dsi_dbg_bus(struct sde_dbg_sde_debug_bus *bus, u32 ena
 	if (!dump_mem || !entries || !bus_size || list_empty(&sde_dbg_dsi_list))
 		return;
 
+	in_mem = (enable_mask & SDE_DBG_DUMP_IN_MEM);
+	in_log = (enable_mask & (SDE_DBG_DUMP_IN_LOG | SDE_DBG_DUMP_IN_LOG_LIMITED));
+
 	list_for_each(list, &sde_dbg_dsi_list)
 		dsi_count++;
 
@@ -944,10 +950,9 @@ static void _sde_dbg_dump_dsi_dbg_bus(struct sde_dbg_sde_debug_bus *bus, u32 ena
 	list_size *= sizeof(u32) * DUMP_CLMN_COUNT * dsi_count;
 
 	snprintf(name, sizeof(name), "%s-debugbus", bus->cmn.name);
-	SDE_DBG_LOG_MARKER(name, SDE_DBG_LOG_START);
+	SDE_DBG_LOG_MARKER(name, SDE_DBG_LOG_START, in_log);
 
 	mutex_lock(&sde_dbg_dsi_mutex);
-	in_mem = (enable_mask & SDE_DBG_DUMP_IN_MEM);
 	if (in_mem && (!(*dump_mem))) {
 		*dump_mem = devm_kzalloc(sde_dbg_base.dev, list_size, GFP_KERNEL);
 		bus->cmn.content_size = list_size / sizeof(u32);
@@ -955,14 +960,12 @@ static void _sde_dbg_dump_dsi_dbg_bus(struct sde_dbg_sde_debug_bus *bus, u32 ena
 	dump_addr = *dump_mem;
 
 	list_for_each_entry(ctl_entry, &sde_dbg_dsi_list, list) {
-		SDE_DBG_LOG_DUMP_ADDR(ctl_entry->name, dump_addr, list_size / dsi_count, 0);
+		SDE_DBG_LOG_DUMP_ADDR(ctl_entry->name, dump_addr, list_size / dsi_count, 0, in_log);
 
 		_sde_dbg_dump_bus_entry(bus, entries, bus_size, ctl_entry->base,
 					dump_addr, enable_mask);
 	}
 	mutex_unlock(&sde_dbg_dsi_mutex);
-
-	SDE_DBG_LOG_MARKER(name, SDE_DBG_LOG_END);
 }
 
 /**
