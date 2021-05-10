@@ -1199,20 +1199,6 @@ static void sde_hw_ctl_update_wb_cfg(struct sde_hw_ctl *ctx,
 	SDE_REG_WRITE(c, CTL_TOP, intf_cfg);
 }
 
-static inline u32 sde_hw_ctl_read_ctl_top(struct sde_hw_ctl *ctx)
-{
-	struct sde_hw_blk_reg_map *c;
-	u32 ctl_top;
-
-	if (!ctx) {
-		pr_err("Invalid input argument\n");
-		return 0;
-	}
-	c = &ctx->hw;
-	ctl_top = SDE_REG_READ(c, CTL_TOP);
-	return ctl_top;
-}
-
 static inline u32 sde_hw_ctl_read_ctl_layers(struct sde_hw_ctl *ctx, int index)
 {
 	struct sde_hw_blk_reg_map *c;
@@ -1312,7 +1298,6 @@ static void _setup_ctl_ops(struct sde_hw_ctl_ops *ops,
 	ops->get_flush_register = sde_hw_ctl_get_flush_register;
 	ops->trigger_start = sde_hw_ctl_trigger_start;
 	ops->trigger_pending = sde_hw_ctl_trigger_pending;
-	ops->read_ctl_top = sde_hw_ctl_read_ctl_top;
 	ops->read_ctl_layers = sde_hw_ctl_read_ctl_layers;
 	ops->update_wb_cfg = sde_hw_ctl_update_wb_cfg;
 	ops->reset = sde_hw_ctl_reset_control;

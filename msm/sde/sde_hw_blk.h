@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019, 2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HW_BLK_H
@@ -41,6 +41,4 @@ int sde_hw_blk_init(struct sde_hw_blk *hw_blk, u32 type, int id,
 		struct sde_hw_blk_ops *ops);
 void sde_hw_blk_destroy(struct sde_hw_blk *hw_blk);
 
-struct sde_hw_blk *sde_hw_blk_get(struct sde_hw_blk *hw_blk, u32 type, int id);
-void sde_hw_blk_put(struct sde_hw_blk *hw_blk);
 #endif /*_SDE_HW_BLK_H */

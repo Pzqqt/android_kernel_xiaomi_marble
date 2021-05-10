@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019, 2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef __SDE_CORE_IRQ_H__
@@ -115,18 +115,6 @@ int sde_core_irq_disable_nolock(
  * @return:		non-zero if irq detected; otherwise no irq detected
  */
 u32 sde_core_irq_read(
-		struct sde_kms *sde_kms,
-		int irq_idx,
-		bool clear);
-
-/**
- * sde_core_irq_read - no lock version of sde_core_irq_read
- * @sde_kms:		SDE handle
- * @irq_idx:		irq index
- * @clear:		True to clear the irq after read
- * @return:		non-zero if irq detected; otherwise no irq detected
- */
-u32 sde_core_irq_read_nolock(
 		struct sde_kms *sde_kms,
 		int irq_idx,
 		bool clear);

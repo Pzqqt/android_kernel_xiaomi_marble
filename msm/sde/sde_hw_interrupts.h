@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019, 2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HW_INTERRUPTS_H
@@ -103,18 +103,6 @@ struct sde_hw_intr;
  */
 struct sde_hw_intr_ops {
 	/**
-	 * set_mask - Programs the given interrupt register with the
-	 *            given interrupt mask. Register value will get overwritten.
-	 * @intr:	HW interrupt handle
-	 * @reg_off:	MDSS HW register offset
-	 * @irqmask:	IRQ mask value
-	 */
-	void (*set_mask)(
-			struct sde_hw_intr *intr,
-			uint32_t reg,
-			uint32_t irqmask);
-
-	/**
 	 * irq_idx_lookup - Lookup IRQ index on the HW interrupt type
 	 *                 Used for all irq related ops
 	 * @intr:	HW interrupt handle
@@ -187,7 +175,7 @@ struct sde_hw_intr_ops {
 
 	/**
 	 * clear_interrupt_status - Clears HW interrupt status based on given
-	 *                          lookup IRQ index.
+	 *                          lookup IRQ index
 	 * @intr:	HW interrupt handle
 	 * @irq_idx:	Lookup irq index return from irq_idx_lookup
 	 */
@@ -203,17 +191,6 @@ struct sde_hw_intr_ops {
 	void (*clear_intr_status_nolock)(
 			struct sde_hw_intr *intr,
 			int irq_idx);
-
-	/**
-	 * clear_intr_status_force_mask() - clear the HW interrupts
-	 * @intr:	HW interrupt handle
-	 * @irq_idx:	Lookup irq index return from irq_idx_lookup
-	 * @irq_mask:	irq mask to clear
-	 */
-	void (*clear_intr_status_force_mask)(
-			struct sde_hw_intr *intr,
-			int irq_idx,
-			u32 irq_mask);
 
 	/**
 	 * get_interrupt_status - Gets HW interrupt status, and clear if set,
@@ -237,32 +214,6 @@ struct sde_hw_intr_ops {
 			struct sde_hw_intr *intr,
 			int irq_idx,
 			bool clear);
-
-	/**
-	 * get_intr_status_nomask - nolock version of get_interrupt_status
-	 * @intr:	HW interrupt handle
-	 * @irq_idx:	Lookup irq index return from irq_idx_lookup
-	 * @clear:	True to clear irq after read
-	 */
-	u32 (*get_intr_status_nomask)(
-			struct sde_hw_intr *intr,
-			int irq_idx,
-			bool clear);
-
-	/**
-	 * get_valid_interrupts - Gets a mask of all valid interrupt sources
-	 *                        within SDE. These are actually status bits
-	 *                        within interrupt registers that specify the
-	 *                        source of the interrupt in IRQs. For example,
-	 *                        valid interrupt sources can be MDP, DSI,
-	 *                        HDMI etc.
-	 * @intr:	HW interrupt handle
-	 * @mask:	Returning the interrupt source MASK
-	 * @return:	0 for success, otherwise failure
-	 */
-	int (*get_valid_interrupts)(
-			struct sde_hw_intr *intr,
-			uint32_t *mask);
 
 	/**
 	 * get_interrupt_sources - Gets the bitmask of the SDE interrupt

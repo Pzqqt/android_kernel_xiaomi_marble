@@ -119,18 +119,6 @@ static void sde_hw_setup_split_pipe(struct sde_hw_mdp *mdp,
 	SDE_REG_WRITE(c, SPLIT_DISPLAY_EN, cfg->en & 0x1);
 }
 
-static u32 sde_hw_get_split_flush(struct sde_hw_mdp *mdp)
-{
-	struct sde_hw_blk_reg_map *c;
-
-	if (!mdp)
-		return 0;
-
-	c = &mdp->hw;
-
-	return (SDE_REG_READ(c, SSPP_SPARE) & 0x1);
-}
-
 static void sde_hw_setup_pp_split(struct sde_hw_mdp *mdp,
 		struct split_pipe_cfg *cfg)
 {
@@ -234,39 +222,6 @@ static int sde_hw_get_clk_ctrl_status(struct sde_hw_mdp *mdp,
 	return 0;
 }
 
-static void sde_hw_get_danger_status(struct sde_hw_mdp *mdp,
-		struct sde_danger_safe_status *status)
-{
-	struct sde_hw_blk_reg_map *c;
-	u32 value;
-
-	if (!mdp || !status)
-		return;
-
-	c = &mdp->hw;
-
-	value = SDE_REG_READ(c, DANGER_STATUS);
-	status->mdp = (value >> 0) & 0x3;
-	status->sspp[SSPP_VIG0] = (value >> 4) & 0x3;
-	status->sspp[SSPP_VIG1] = (value >> 6) & 0x3;
-	status->sspp[SSPP_VIG2] = (value >> 8) & 0x3;
-	status->sspp[SSPP_VIG3] = (value >> 10) & 0x3;
-	status->sspp[SSPP_RGB0] = (value >> 12) & 0x3;
-	status->sspp[SSPP_RGB1] = (value >> 14) & 0x3;
-	status->sspp[SSPP_RGB2] = (value >> 16) & 0x3;
-	status->sspp[SSPP_RGB3] = (value >> 18) & 0x3;
-	status->sspp[SSPP_DMA0] = (value >> 20) & 0x3;
-	status->sspp[SSPP_DMA1] = (value >> 22) & 0x3;
-	status->sspp[SSPP_DMA2] = (value >> 28) & 0x3;
-	status->sspp[SSPP_DMA3] = (value >> 30) & 0x3;
-	status->sspp[SSPP_CURSOR0] = (value >> 24) & 0x3;
-	status->sspp[SSPP_CURSOR1] = (value >> 26) & 0x3;
-	status->wb[WB_0] = 0;
-	status->wb[WB_1] = 0;
-	status->wb[WB_2] = (value >> 2) & 0x3;
-	status->wb[WB_3] = 0;
-}
-
 static void _update_vsync_source(struct sde_hw_mdp *mdp,
 		struct sde_vsync_source_cfg *cfg)
 {
@@ -352,52 +307,6 @@ static void sde_hw_setup_vsync_source_v1(struct sde_hw_mdp *mdp,
 		struct sde_vsync_source_cfg *cfg)
 {
 	_update_vsync_source(mdp, cfg);
-}
-
-
-static void sde_hw_get_safe_status(struct sde_hw_mdp *mdp,
-		struct sde_danger_safe_status *status)
-{
-	struct sde_hw_blk_reg_map *c;
-	u32 value;
-
-	if (!mdp || !status)
-		return;
-
-	c = &mdp->hw;
-
-	value = SDE_REG_READ(c, SAFE_STATUS);
-	status->mdp = (value >> 0) & 0x1;
-	status->sspp[SSPP_VIG0] = (value >> 4) & 0x1;
-	status->sspp[SSPP_VIG1] = (value >> 6) & 0x1;
-	status->sspp[SSPP_VIG2] = (value >> 8) & 0x1;
-	status->sspp[SSPP_VIG3] = (value >> 10) & 0x1;
-	status->sspp[SSPP_RGB0] = (value >> 12) & 0x1;
-	status->sspp[SSPP_RGB1] = (value >> 14) & 0x1;
-	status->sspp[SSPP_RGB2] = (value >> 16) & 0x1;
-	status->sspp[SSPP_RGB3] = (value >> 18) & 0x1;
-	status->sspp[SSPP_DMA0] = (value >> 20) & 0x1;
-	status->sspp[SSPP_DMA1] = (value >> 22) & 0x1;
-	status->sspp[SSPP_DMA2] = (value >> 28) & 0x1;
-	status->sspp[SSPP_DMA3] = (value >> 30) & 0x1;
-	status->sspp[SSPP_CURSOR0] = (value >> 24) & 0x1;
-	status->sspp[SSPP_CURSOR1] = (value >> 26) & 0x1;
-	status->wb[WB_0] = 0;
-	status->wb[WB_1] = 0;
-	status->wb[WB_2] = (value >> 2) & 0x1;
-	status->wb[WB_3] = 0;
-}
-
-static void sde_hw_setup_dce(struct sde_hw_mdp *mdp, u32 dce_sel)
-{
-	struct sde_hw_blk_reg_map *c;
-
-	if (!mdp)
-		return;
-
-	c = &mdp->hw;
-
-	SDE_REG_WRITE(c, DCE_SEL, dce_sel);
 }
 
 void sde_hw_reset_ubwc(struct sde_hw_mdp *mdp, struct sde_mdss_cfg *m)
@@ -610,11 +519,7 @@ static void _setup_mdp_ops(struct sde_hw_mdp_ops *ops,
 	ops->setup_cdm_output = sde_hw_setup_cdm_output;
 	ops->setup_clk_force_ctrl = sde_hw_setup_clk_force_ctrl;
 	ops->get_clk_ctrl_status = sde_hw_get_clk_ctrl_status;
-	ops->get_danger_status = sde_hw_get_danger_status;
 	ops->set_cwb_ppb_cntl = sde_hw_program_cwb_ppb_ctrl;
-	ops->get_safe_status = sde_hw_get_safe_status;
-	ops->get_split_flush_status = sde_hw_get_split_flush;
-	ops->setup_dce = sde_hw_setup_dce;
 	ops->reset_ubwc = sde_hw_reset_ubwc;
 	ops->intf_audio_select = sde_hw_intf_audio_select;
 	ops->set_mdp_hw_events = sde_hw_mdp_events;

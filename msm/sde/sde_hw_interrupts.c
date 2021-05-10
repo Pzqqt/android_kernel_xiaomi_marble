@@ -441,18 +441,6 @@ static int sde_hw_intr_irqidx_lookup(struct sde_hw_intr *intr,
 	return -EINVAL;
 }
 
-static void sde_hw_intr_set_mask(struct sde_hw_intr *intr, uint32_t reg_off,
-		uint32_t mask)
-{
-	if (!intr)
-		return;
-
-	SDE_REG_WRITE(&intr->hw, reg_off, mask);
-
-	/* ensure register writes go through */
-	wmb();
-}
-
 static void sde_hw_intr_dispatch_irq(struct sde_hw_intr *intr,
 		void (*cbfunc)(void *, int),
 		void *arg)
@@ -656,18 +644,6 @@ static int sde_hw_intr_disable_irqs(struct sde_hw_intr *intr)
 	return 0;
 }
 
-static int sde_hw_intr_get_valid_interrupts(struct sde_hw_intr *intr,
-		uint32_t *mask)
-{
-	if (!intr || !mask)
-		return -EINVAL;
-
-	*mask = IRQ_SOURCE_MDP | IRQ_SOURCE_DSI0 | IRQ_SOURCE_DSI1
-		| IRQ_SOURCE_HDMI | IRQ_SOURCE_EDP;
-
-	return 0;
-}
-
 static int sde_hw_intr_get_interrupt_sources(struct sde_hw_intr *intr,
 		uint32_t *sources)
 {
@@ -711,32 +687,6 @@ static void sde_hw_intr_get_interrupt_statuses(struct sde_hw_intr *intr)
 	wmb();
 
 	spin_unlock_irqrestore(&intr->irq_lock, irq_flags);
-}
-
-static void sde_hw_intr_clear_intr_status_force_mask(struct sde_hw_intr *intr,
-						 int irq_idx, u32 irq_mask)
-{
-	int reg_idx;
-
-	if (!intr)
-		return;
-
-	if (irq_idx >= intr->sde_irq_map_size || irq_idx < 0) {
-		pr_err("invalid IRQ index: [%d]\n", irq_idx);
-		return;
-	}
-
-	reg_idx = intr->sde_irq_map[irq_idx].reg_idx;
-	if (reg_idx < 0 || reg_idx > intr->sde_irq_size) {
-		pr_err("invalid irq reg:%d irq:%d\n", reg_idx, irq_idx);
-		return;
-	}
-
-	SDE_REG_WRITE(&intr->hw, intr->sde_irq_tbl[reg_idx].clr_off,
-			irq_mask);
-
-	/* ensure register writes go through */
-	wmb();
 }
 
 static void sde_hw_intr_clear_intr_status_nolock(struct sde_hw_intr *intr,
@@ -849,35 +799,6 @@ static u32 sde_hw_intr_get_interrupt_status(struct sde_hw_intr *intr,
 	return intr_status;
 }
 
-static u32 sde_hw_intr_get_intr_status_nomask(struct sde_hw_intr *intr,
-		int irq_idx, bool clear)
-{
-	int reg_idx;
-	unsigned long irq_flags;
-	u32 intr_status = 0;
-
-	if (!intr)
-		return 0;
-
-	if (irq_idx >= intr->sde_irq_map_size || irq_idx < 0) {
-		pr_err("invalid IRQ index: [%d]\n", irq_idx);
-		return 0;
-	}
-
-	reg_idx = intr->sde_irq_map[irq_idx].reg_idx;
-	if (reg_idx < 0 || reg_idx > intr->sde_irq_size) {
-		pr_err("invalid irq reg:%d irq:%d\n", reg_idx, irq_idx);
-		return 0;
-	}
-
-	spin_lock_irqsave(&intr->irq_lock, irq_flags);
-	intr_status = SDE_REG_READ(&intr->hw,
-			intr->sde_irq_tbl[reg_idx].status_off);
-	spin_unlock_irqrestore(&intr->irq_lock, irq_flags);
-
-	return intr_status;
-}
-
 static int _set_sde_irq_tbl_offset_top(struct sde_intr_reg *sde_irq,
 		struct sde_intr_irq_offsets *item)
 {
@@ -957,23 +878,18 @@ static int _set_sde_irq_tbl_offset(struct sde_intr_reg *sde_irq,
 
 static void __setup_intr_ops(struct sde_hw_intr_ops *ops)
 {
-	ops->set_mask = sde_hw_intr_set_mask;
 	ops->irq_idx_lookup = sde_hw_intr_irqidx_lookup;
 	ops->enable_irq_nolock = sde_hw_intr_enable_irq_nolock;
 	ops->disable_irq_nolock = sde_hw_intr_disable_irq_nolock;
 	ops->dispatch_irqs = sde_hw_intr_dispatch_irq;
 	ops->clear_all_irqs = sde_hw_intr_clear_irqs;
 	ops->disable_all_irqs = sde_hw_intr_disable_irqs;
-	ops->get_valid_interrupts = sde_hw_intr_get_valid_interrupts;
 	ops->get_interrupt_sources = sde_hw_intr_get_interrupt_sources;
 	ops->get_interrupt_statuses = sde_hw_intr_get_interrupt_statuses;
 	ops->clear_interrupt_status = sde_hw_intr_clear_interrupt_status;
 	ops->clear_intr_status_nolock = sde_hw_intr_clear_intr_status_nolock;
-	ops->clear_intr_status_force_mask =
-				sde_hw_intr_clear_intr_status_force_mask;
 	ops->get_interrupt_status = sde_hw_intr_get_interrupt_status;
 	ops->get_intr_status_nolock = sde_hw_intr_get_intr_status_nolock;
-	ops->get_intr_status_nomask = sde_hw_intr_get_intr_status_nomask;
 }
 
 static struct sde_mdss_base_cfg *__intr_offset(struct sde_mdss_cfg *m,
