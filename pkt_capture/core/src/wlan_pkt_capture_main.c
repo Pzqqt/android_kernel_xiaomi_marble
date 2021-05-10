@@ -128,7 +128,7 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 			  u_int16_t vdev_id, uint32_t status)
 {
 	uint8_t bssid[QDF_MAC_ADDR_SIZE];
-	uint8_t tid = 0, tx_retry_cnt = 0;
+	uint8_t tid = 0;
 	struct dp_soc *psoc = soc;
 
 	switch (event) {
