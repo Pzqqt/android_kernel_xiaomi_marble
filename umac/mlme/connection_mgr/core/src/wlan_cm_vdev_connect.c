@@ -1281,6 +1281,11 @@ cm_handle_reassoc_req(struct wlan_objmgr_vdev *vdev,
 			   req->bss->entry->neg_sec_info.key_mgmt,
 			   req->bss->entry->channel.chan_freq);
 
+	/* decrement count for self reassoc */
+	if (req->self_reassoc)
+		policy_mgr_decr_session_set_pcl(psoc,
+						wlan_vdev_mlme_get_opmode(vdev),
+						req->vdev_id);
 	msg.bodyptr = join_req;
 	msg.type = CM_REASSOC_REQ;
 	msg.flush_callback = cm_flush_join_req;
