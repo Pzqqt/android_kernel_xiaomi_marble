@@ -3025,13 +3025,17 @@ static void policy_mgr_nss_update_cb(struct wlan_objmgr_psoc *psoc,
 						next_action, reason,
 						request_id);
 	} else {
-		if (reason == POLICY_MGR_UPDATE_REASON_STA_CONNECT) {
-			sme_debug("Continue connect on vdev %d request_id %x",
-				  vdev_id, request_id);
+		/* This is temp ifdef will be removed in near future */
+#ifdef FEATURE_CM_ENABLE
+		if (reason == POLICY_MGR_UPDATE_REASON_STA_CONNECT ||
+		    reason == POLICY_MGR_UPDATE_REASON_LFR2_ROAM) {
+			sme_debug("Continue connect/reassoc on vdev %d request_id %x reason %d",
+				  vdev_id, request_id, reason);
 			wlan_cm_hw_mode_change_resp(pm_ctx->pdev, vdev_id,
 						    request_id,
 						    QDF_STATUS_SUCCESS);
 		}
+#endif
 		policy_mgr_debug("No action needed right now");
 		ret = policy_mgr_set_opportunistic_update(psoc);
 		if (!QDF_IS_STATUS_SUCCESS(ret))

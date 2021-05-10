@@ -267,15 +267,13 @@ static QDF_STATUS sme_process_set_hw_mode_resp(struct mac_context *mac, uint8_t 
 		csr_csa_restart(mac, session_id);
 	}
 	/* This is temp ifdef will be removed in near future */
-#ifndef FEATURE_CM_ENABLE
-	if (reason == POLICY_MGR_UPDATE_REASON_LFR2_ROAM)
-		csr_continue_lfr2_connect(mac, session_id);
-#endif
-
-	if (reason == POLICY_MGR_UPDATE_REASON_STA_CONNECT) {
+#ifdef FEATURE_CM_ENABLE
+	if (reason == POLICY_MGR_UPDATE_REASON_STA_CONNECT ||
+	    reason == POLICY_MGR_UPDATE_REASON_LFR2_ROAM) {
 		QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
-		sme_debug("Continue connect on vdev %d", session_id);
+		sme_debug("Continue connect/reassoc on vdev %d reason %d status %d cm_id 0x%x",
+			  session_id, reason, param->status, request_id);
 		if (param->status == SET_HW_MODE_STATUS_OK ||
 		    param->status == SET_HW_MODE_STATUS_ALREADY)
 			status = QDF_STATUS_SUCCESS;
@@ -283,6 +281,10 @@ static QDF_STATUS sme_process_set_hw_mode_resp(struct mac_context *mac, uint8_t 
 		wlan_cm_hw_mode_change_resp(mac->pdev, session_id, request_id,
 					    status);
 	}
+#else
+	if (reason == POLICY_MGR_UPDATE_REASON_LFR2_ROAM)
+		csr_continue_lfr2_connect(mac, session_id);
+#endif
 
 end:
 	found = csr_nonscan_active_ll_remove_entry(mac, entry,
