@@ -2188,6 +2188,29 @@ static void target_if_spectral_check_buffer_poisoning(
 	}
 }
 
+#ifdef OPTIMIZED_SAMP_MESSAGE
+static void target_if_spectral_verify_ts(struct target_if_spectral *spectral,
+					 uint8_t *buf, uint32_t current_ts,
+					 uint8_t detector_id)
+{
+	if (!spectral) {
+		spectral_err_rl("Spectral LMAC object is null");
+		return;
+	}
+
+	if (!spectral->dbr_buff_debug)
+		return;
+
+	if (spectral->prev_tstamp[detector_id]) {
+		if (current_ts == spectral->prev_tstamp[detector_id]) {
+			spectral_err("Spectral timestamp(%u) in the current buffer(%pK) is equal to the previous timestamp, same report DMAed twice? Asserting the FW",
+				     current_ts, buf);
+			target_if_spectral_fw_hang(spectral);
+		}
+	}
+	spectral->prev_tstamp[detector_id] = current_ts;
+}
+#else
 static void target_if_spectral_verify_ts(struct target_if_spectral *spectral,
 					 uint8_t *buf, uint32_t current_ts)
 {
@@ -2208,6 +2231,7 @@ static void target_if_spectral_verify_ts(struct target_if_spectral *spectral,
 	}
 	spectral->prev_tstamp = current_ts;
 }
+#endif /* OPTIMIZED_SAMP_MESSAGE */
 #else
 static void target_if_spectral_check_buffer_poisoning(
 	struct target_if_spectral *spectral,
@@ -2216,10 +2240,18 @@ static void target_if_spectral_check_buffer_poisoning(
 {
 }
 
+#ifdef OPTIMIZED_SAMP_MESSAGE
+static void target_if_spectral_verify_ts(struct target_if_spectral *spectral,
+					 uint8_t *buf, uint32_t current_ts,
+					 uint8_t detector_id)
+{
+}
+#else
 static void target_if_spectral_verify_ts(struct target_if_spectral *spectral,
 					 uint8_t *buf, uint32_t current_ts)
 {
 }
+#endif /* OPTIMIZED_SAMP_MESSAGE */
 #endif
 
 /**

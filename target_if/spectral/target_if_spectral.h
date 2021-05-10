@@ -1225,7 +1225,11 @@ struct target_if_spectral {
 	bool dbr_ring_debug;
 	bool dbr_buff_debug;
 	bool direct_dma_support;
+#ifdef OPTIMIZED_SAMP_MESSAGE
+	uint32_t prev_tstamp[MAX_DETECTORS_PER_PDEV];
+#else
 	uint32_t prev_tstamp;
+#endif
 	struct spectral_report_params rparams;
 	struct spectral_param_min_max param_min_max;
 	struct target_if_finite_spectral_scan_params
