@@ -159,8 +159,7 @@ static void pkt_capture_tx_get_phy_info(
 {
 	uint8_t preamble = 0;
 	uint8_t preamble_type = pktcapture_hdr->preamble;
-	uint8_t mcs = 0, bw = 0;
-	uint16_t vht_flags = 0, ht_flags = 0, he_flags = 0;
+	uint8_t mcs = 0;
 
 	switch (preamble_type) {
 	case 0x0:
@@ -172,22 +171,29 @@ static void pkt_capture_tx_get_phy_info(
 						&preamble);
 		break;
 	case 0x2:
-		ht_flags = 1;
-		bw = pktcapture_hdr->bw;
+		tx_status->ht_flags = 1;
 		if (pktcapture_hdr->nss == 2)
 			mcs = 8 + pktcapture_hdr->mcs;
 		else
 			mcs = pktcapture_hdr->mcs;
 		break;
 	case 0x3:
-		vht_flags = 1;
-		bw = pktcapture_hdr->bw;
+		tx_status->vht_flags = 1;
 		mcs = pktcapture_hdr->mcs;
-
-		/* fallthrough */
+		tx_status->vht_flag_values3[0] =
+			mcs << 0x4 | (pktcapture_hdr->nss + 1);
+		tx_status->vht_flag_values2 = pktcapture_hdr->bw;
 		break;
 	case 0x4:
-		he_flags = 1;
+		tx_status->he_flags = 1;
+		tx_status->he_data1 |=
+			IEEE80211_RADIOTAP_HE_DATA1_DATA_MCS_KNOWN |
+			IEEE80211_RADIOTAP_HE_DATA1_BW_RU_ALLOC_KNOWN;
+		tx_status->he_data2 |= IEEE80211_RADIOTAP_HE_DATA2_GI_KNOWN;
+		tx_status->he_data3 |= pktcapture_hdr->mcs << 0x8;
+		tx_status->he_data5 |=
+			(pktcapture_hdr->bw | (pktcapture_hdr->sgi << 0x4));
+		tx_status->he_data6 |= pktcapture_hdr->nss;
 	default:
 		break;
 	}
@@ -198,23 +204,14 @@ static void pkt_capture_tx_get_phy_info(
 		tx_status->cck_flag = 1;
 
 	tx_status->mcs = mcs;
-	tx_status->bw = bw;
+	tx_status->bw = pktcapture_hdr->bw;
 	tx_status->nr_ant = pktcapture_hdr->nss;
+	tx_status->nss = pktcapture_hdr->nss;
 	tx_status->is_stbc = pktcapture_hdr->stbc;
 	tx_status->sgi = pktcapture_hdr->sgi;
 	tx_status->ldpc = pktcapture_hdr->ldpc;
 	tx_status->beamformed = pktcapture_hdr->beamformed;
-	tx_status->vht_flag_values3[0] = mcs << 0x4 | (pktcapture_hdr->nss + 1);
-	tx_status->ht_flags = ht_flags;
-	tx_status->vht_flags = vht_flags;
-	tx_status->he_flags = he_flags;
 	tx_status->rtap_flags |= ((preamble == 1) ? BIT(1) : 0);
-	if (bw == 0)
-		tx_status->vht_flag_values2 = 0;
-	else if (bw == 1)
-		tx_status->vht_flag_values2 = 1;
-	else if (bw == 2)
-		tx_status->vht_flag_values2 = 4;
 }
 
 #ifndef WLAN_FEATURE_PKT_CAPTURE_V2
@@ -606,24 +603,25 @@ static void pkt_capture_dp_rx_skip_tlvs(qdf_nbuf_t nbuf, uint32_t l3_padding)
 
 /**
  * pkt_capture_rx_get_phy_info() - Get phy info
+ * @context: objmgr vdev
  * @psoc: dp_soc handle
  * @rx_tlv_hdr: Pointer to struct rx_pkt_tlvs
  * @rx_status: Pointer to struct mon_rx_status
  *
  * Return: none
  */
-static void pkt_capture_rx_get_phy_info(void *psoc,
+static void pkt_capture_rx_get_phy_info(void *context, void *psoc,
 					uint8_t *rx_tlv_hdr,
 					struct mon_rx_status *rx_status)
 {
 	uint8_t preamble = 0;
 	uint8_t preamble_type;
-	uint8_t mcs = 0, nss = 0, sgi = 0, bw = 0;
+	uint16_t mcs = 0, nss = 0, sgi = 0, bw = 0;
 	uint8_t beamformed = 0;
-	uint16_t vht_flags = 0, ht_flags = 0, he_flags = 0;
 	bool is_stbc = 0, ldpc = 0;
 	struct dp_soc *soc = psoc;
 	hal_soc_handle_t hal_soc;
+	struct wlan_objmgr_vdev *vdev = context;
 
 	hal_soc = soc->hal_soc;
 	preamble_type = hal_rx_msdu_start_get_pkt_type(rx_tlv_hdr);
@@ -640,18 +638,29 @@ static void pkt_capture_rx_get_phy_info(void *psoc,
 						preamble_type,
 						mcs,
 						&preamble);
-
+		rx_status->mcs = mcs;
 		break;
 	case HAL_RX_PKT_TYPE_11N:
-		ht_flags = 1;
+		rx_status->ht_flags = 1;
 		if (nss == 2)
 			mcs = 8 + mcs;
+		rx_status->ht_mcs = mcs;
 		break;
 	case HAL_RX_PKT_TYPE_11AC:
-		vht_flags = 1;
+		rx_status->vht_flags = 1;
+		rx_status->vht_flag_values3[0] = mcs << 0x4 | nss;
+		bw = vdev->vdev_mlme.des_chan->ch_width;
+		rx_status->vht_flag_values2 = bw;
 		break;
 	case HAL_RX_PKT_TYPE_11AX:
-		he_flags = 1;
+		rx_status->he_flags = 1;
+		rx_status->he_data1 |=
+			IEEE80211_RADIOTAP_HE_DATA1_DATA_MCS_KNOWN |
+			IEEE80211_RADIOTAP_HE_DATA1_BW_RU_ALLOC_KNOWN;
+		rx_status->he_data2 |= IEEE80211_RADIOTAP_HE_DATA2_GI_KNOWN;
+		rx_status->he_data3 |= mcs << 0x8;
+		rx_status->he_data5 |= (bw | (sgi << 0x4));
+		rx_status->he_data6 |= nss;
 	default:
 		break;
 	}
@@ -661,7 +670,6 @@ static void pkt_capture_rx_get_phy_info(void *psoc,
 	else if (preamble == 1)
 		rx_status->cck_flag = 1;
 
-	rx_status->mcs = mcs;
 	rx_status->bw = bw;
 	rx_status->nr_ant = nss;
 	rx_status->nss = nss;
@@ -672,20 +680,7 @@ static void pkt_capture_rx_get_phy_info(void *psoc,
 	rx_status->ldpc = ldpc;
 	/* beamformed not available */
 	rx_status->beamformed = beamformed;
-	rx_status->vht_flag_values3[0] = mcs << 0x4 | nss;
-	rx_status->ht_flags = ht_flags;
-	rx_status->vht_flags = vht_flags;
-	rx_status->he_flags = he_flags;
 	rx_status->rtap_flags |= ((preamble == SHORT_PREAMBLE) ? BIT(1) : 0);
-	if (bw == 0)
-		rx_status->vht_flag_values2 = 0;
-	else if (bw == 1)
-		rx_status->vht_flag_values2 = 1;
-	else if (bw == 2)
-		rx_status->vht_flag_values2 = 4;
-
-	if (ht_flags)
-		rx_status->ht_mcs = mcs;
 }
 
 /**
@@ -776,7 +771,7 @@ static void pkt_capture_rx_mon_get_rx_status(void *context, void *dp_soc,
 	else
 		rx_status->cck_flag = 1;
 
-	pkt_capture_rx_get_phy_info(dp_soc, desc, rx_status);
+	pkt_capture_rx_get_phy_info(context, dp_soc, desc, rx_status);
 }
 #endif
 
