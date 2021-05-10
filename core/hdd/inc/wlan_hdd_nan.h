@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -79,4 +79,12 @@ static inline bool wlan_hdd_nan_is_supported(struct hdd_context *hdd_ctx)
 	return false;
 }
 #endif /* WLAN_FEATURE_NAN */
+
+/**
+ * hdd_nan_concurrency_update() - NAN concurrency
+ *
+ * Return: None
+ */
+void hdd_nan_concurrency_update(void);
+
 #endif /* __WLAN_HDD_NAN_H */

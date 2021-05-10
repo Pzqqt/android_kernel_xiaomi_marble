@@ -787,6 +787,7 @@ struct nan_datapath_host_event {
  * @ndp_delete_peers: LIM callback for deleting NDP peer
  * @delete_peers_by_addr: LIM callback for deleting peer by MAC address
  * @update_ndi_conn: WMA callback to update NDI's connection info
+ * @nan_concurrency_update: Callback to handle nan concurrency
  */
 struct nan_callbacks {
 	/* callback to os_if layer from umac */
@@ -811,6 +812,7 @@ struct nan_callbacks {
 	QDF_STATUS (*update_ndi_conn)(uint8_t vdev_id,
 				      struct nan_datapath_channel_info
 								    *chan_info);
+	void (*nan_concurrency_update)(void);
 };
 
 /**

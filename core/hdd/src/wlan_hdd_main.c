@@ -3705,6 +3705,8 @@ static void hdd_nan_register_callbacks(struct hdd_context *hdd_ctx)
 	cb_obj.new_peer_ind = hdd_ndp_new_peer_handler;
 	cb_obj.peer_departed_ind = hdd_ndp_peer_departed_handler;
 
+	cb_obj.nan_concurrency_update = hdd_nan_concurrency_update;
+
 	os_if_nan_register_hdd_callbacks(hdd_ctx->psoc, &cb_obj);
 }
 #else

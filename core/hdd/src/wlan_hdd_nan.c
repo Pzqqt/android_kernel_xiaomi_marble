@@ -112,3 +112,17 @@ int wlan_hdd_cfg80211_nan_ext_request(struct wiphy *wiphy,
 
 	return errno;
 }
+
+void hdd_nan_concurrency_update(void)
+{
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	int ret;
+
+	hdd_enter();
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret)
+		return;
+
+	wlan_twt_concurrency_update(hdd_ctx);
+	hdd_exit();
+}

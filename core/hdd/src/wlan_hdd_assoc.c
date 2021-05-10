@@ -87,6 +87,8 @@
 #include "wlan_hdd_bootup_marker.h"
 #include "wlan_roam_debug.h"
 
+#include "wlan_hdd_twt.h"
+
 /* These are needed to recognize WPA and RSN suite types */
 #define HDD_WPA_OUI_SIZE 4
 #define HDD_RSN_OUI_SIZE 4
@@ -4044,6 +4046,7 @@ static void hdd_roam_channel_switch_handler(struct hdd_adapter *adapter,
 		hdd_debug("set hw mode change not done");
 
 	policy_mgr_check_concurrent_intf_and_restart_sap(hdd_ctx->psoc);
+	wlan_twt_concurrency_update(hdd_ctx);
 }
 
 #ifdef WLAN_FEATURE_HOST_ROAM
