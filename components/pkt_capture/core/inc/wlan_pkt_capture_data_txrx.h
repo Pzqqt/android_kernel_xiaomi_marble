@@ -33,6 +33,12 @@
 #include <htt_internal.h>
 #endif
 
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
+#define IEEE80211_RADIOTAP_HE_DATA1_DATA_MCS_KNOWN 0x0020
+#define IEEE80211_RADIOTAP_HE_DATA1_BW_RU_ALLOC_KNOWN 0x4000
+#define IEEE80211_RADIOTAP_HE_DATA2_GI_KNOWN 0x0002
+#endif
+
 /**
  * pkt_capture_data_process_type - data pkt types to process
  * for packet capture mode
