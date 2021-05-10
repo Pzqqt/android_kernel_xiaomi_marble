@@ -2096,6 +2096,15 @@ static void ipa3_mac_flt_list_free_cb(void *buff, u32 len, u32 type)
 	kfree(buff);
 }
 
+static void ipa3_pkt_threshold_free_cb(void *buff, u32 len, u32 type)
+{
+	if (!buff) {
+		IPAERR("Null buffer\n");
+		return;
+	}
+	kfree(buff);
+}
+
 static int ipa3_send_mac_flt_list(unsigned long usr_param)
 {
 	int retval;
@@ -2127,6 +2136,71 @@ static int ipa3_send_mac_flt_list(unsigned long usr_param)
 		retval,
 		msg_meta.msg_type);
 		kfree(buff);
+		return retval;
+	}
+	return 0;
+}
+
+static int ipa3_send_pkt_threshold(unsigned long usr_param)
+{
+	int retval;
+	struct ipa_msg_meta msg_meta;
+	void *buff1, *buff2;
+
+	buff1 = kzalloc(sizeof(struct ipa_ioc_set_pkt_threshold),
+		GFP_KERNEL);
+	if (!buff1)
+		return -ENOMEM;
+
+	if (copy_from_user(buff1, (const void __user *)usr_param,
+		sizeof(struct ipa_ioc_set_pkt_threshold))) {
+		kfree(buff1);
+		return -EFAULT;
+	}
+
+	if (((struct ipa_ioc_set_pkt_threshold *)buff1)->ioctl_data_size !=
+		sizeof(struct ipa_set_pkt_threshold)) {
+		IPAERR("IPA_IOC_SET_PKT_THRESHOLD size not match(%d,%d)!\n",
+		((struct ipa_ioc_set_pkt_threshold *)buff1)->ioctl_data_size,
+		sizeof(struct ipa_set_pkt_threshold));
+		kfree(buff1);
+		return -EFAULT;
+	}
+
+	buff2 = kzalloc(sizeof(struct ipa_set_pkt_threshold),
+		GFP_KERNEL);
+	if (!buff2) {
+		IPAERR("ipa_set_pkt_threshold buff2 allocate failure\n");
+		kfree(buff1);
+		return -ENOMEM;
+	}
+
+	if (copy_from_user(buff2, u64_to_user_ptr(
+		((struct ipa_ioc_set_pkt_threshold *)buff1)->ioctl_ptr),
+		sizeof(struct ipa_set_pkt_threshold))) {
+		IPAERR("Failed to copy ipa_set_pkt_threshold\n");
+		kfree(buff1);
+		kfree(buff2);
+		return -EFAULT;
+	}
+
+
+	memset(&msg_meta, 0, sizeof(struct ipa_msg_meta));
+	msg_meta.msg_type = IPA_PKT_THRESHOLD_EVENT;
+	msg_meta.msg_len = sizeof(struct ipa_set_pkt_threshold);
+
+	IPADBG("pkt thr enable: %d, pkt_threshold: %d\n",
+		((struct ipa_set_pkt_threshold *)buff2)->pkt_threshold_enable,
+		((struct ipa_set_pkt_threshold *)buff2)->pkt_threshold);
+
+	retval = ipa3_send_msg(&msg_meta, buff2,
+		ipa3_pkt_threshold_free_cb);
+	if (retval) {
+		IPAERR("ipa3_send_msg failed: %d, msg_type %d\n",
+		retval,
+		msg_meta.msg_type);
+		kfree(buff1);
+		kfree(buff2);
 		return retval;
 	}
 	return 0;
@@ -3511,6 +3585,11 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		}
 		break;
 
+	case IPA_IOC_SET_PKT_THRESHOLD:
+		IPADBG("Got IPA_IOC_SET_PKT_THRESHOLD\n");
+		if (ipa3_send_pkt_threshold(arg))
+			retval = -EFAULT;
+		break;
 	default:
 		IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
 		return -ENOTTY;
