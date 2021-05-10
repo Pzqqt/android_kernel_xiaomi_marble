@@ -112,24 +112,24 @@ static void dump_tlvs(hal_soc_handle_t hal_soc_hdl, uint8_t *buf,
 #ifdef WLAN_SUPPORT_RX_FISA_HIST
 static
 void dp_fisa_record_pkt(struct dp_fisa_rx_sw_ft *fisa_flow, qdf_nbuf_t nbuf,
-			uint8_t *rx_tlv_hdr)
+			uint8_t *rx_tlv_hdr, uint16_t tlv_size)
 {
 	uint32_t index;
-	struct fisa_pkt_hist_elem *hist_elem;
+	uint8_t *tlv_hist_ptr;
 
-	if (!rx_tlv_hdr || !fisa_flow || !fisa_flow->pkt_hist)
+	if (!rx_tlv_hdr || !fisa_flow || !fisa_flow->pkt_hist.tlv_hist)
 		return;
 
-	index = fisa_flow->pkt_hist->idx++ % FISA_FLOW_MAX_AGGR_COUNT;
-	hist_elem = &fisa_flow->pkt_hist->hist_elem[index];
+	index = fisa_flow->pkt_hist.idx++ % FISA_FLOW_MAX_AGGR_COUNT;
 
-	hist_elem->ts = qdf_get_log_timestamp();
-	qdf_mem_copy(&hist_elem->tlvs, rx_tlv_hdr, sizeof(hist_elem->tlvs));
+	fisa_flow->pkt_hist.ts_hist[index] = qdf_get_log_timestamp();
+	tlv_hist_ptr = fisa_flow->pkt_hist.tlv_hist + (index * tlv_size);
+	qdf_mem_copy(tlv_hist_ptr, rx_tlv_hdr, tlv_size);
 }
 #else
 static
 void dp_fisa_record_pkt(struct dp_fisa_rx_sw_ft *fisa_flow, qdf_nbuf_t nbuf,
-			uint8_t *rx_tlv_hdr)
+			uint8_t *rx_tlv_hdr, uint16_t tlv_size)
 {
 }
 
@@ -556,7 +556,7 @@ dp_rx_fisa_add_ft_entry(struct dp_vdev *vdev,
 			sw_ft_entry->napi_id = reo_id;
 			sw_ft_entry->reo_dest_indication = reo_dest_indication;
 			sw_ft_entry->flow_id_toeplitz =
-				hal_rx_msdu_start_toeplitz_get(rx_tlv_hdr);
+						QDF_NBUF_CB_RX_FLOW_ID(nbuf);
 			sw_ft_entry->flow_init_ts = qdf_get_log_timestamp();
 
 			qdf_mem_copy(&sw_ft_entry->rx_flow_tuple_info,
@@ -655,12 +655,14 @@ static bool is_flow_idx_valid(bool flow_invalid, bool flow_timeout)
  * dp_rx_fisa_get_pkt_hist() - Get ptr to pkt history from rx sw ft entry
  * @ft_entry: sw ft entry
  *
- * Return: ptr to pkt history
+ * Return: None
  */
-static inline struct fisa_pkt_hist *
-dp_rx_fisa_get_pkt_hist(struct dp_fisa_rx_sw_ft *ft_entry)
+static inline void
+dp_rx_fisa_save_pkt_hist(struct dp_fisa_rx_sw_ft *ft_entry,
+			 struct fisa_pkt_hist *pkt_hist)
 {
-	return ft_entry->pkt_hist;
+	/* Structure copy by assignment */
+	*pkt_hist = ft_entry->pkt_hist;
 }
 
 /**
@@ -671,21 +673,22 @@ dp_rx_fisa_get_pkt_hist(struct dp_fisa_rx_sw_ft *ft_entry)
  * Return: None
  */
 static inline void
-dp_rx_fisa_set_pkt_hist(struct dp_fisa_rx_sw_ft *ft_entry,
-			struct fisa_pkt_hist *pkt_hist)
+dp_rx_fisa_restore_pkt_hist(struct dp_fisa_rx_sw_ft *ft_entry,
+			    struct fisa_pkt_hist *pkt_hist)
 {
-	ft_entry->pkt_hist = pkt_hist;
+	/* Structure copy by assignment */
+	ft_entry->pkt_hist = *pkt_hist;
 }
 #else
-static inline struct fisa_pkt_hist *
-dp_rx_fisa_get_pkt_hist(struct dp_fisa_rx_sw_ft *ft_entry)
+static inline void
+dp_rx_fisa_save_pkt_hist(struct dp_fisa_rx_sw_ft *ft_entry,
+			 struct fisa_pkt_hist *pkt_hist)
 {
-	return NULL;
 }
 
 static inline void
-dp_rx_fisa_set_pkt_hist(struct dp_fisa_rx_sw_ft *ft_entry,
-			struct fisa_pkt_hist *pkt_hist)
+dp_rx_fisa_restore_pkt_hist(struct dp_fisa_rx_sw_ft *ft_entry,
+			    struct fisa_pkt_hist *pkt_hist)
 {
 }
 #endif
@@ -705,8 +708,8 @@ dp_fisa_rx_delete_flow(struct dp_rx_fst *fisa_hdl,
 		       uint32_t hashed_flow_idx)
 {
 	struct dp_fisa_rx_sw_ft *sw_ft_entry;
+	struct fisa_pkt_hist pkt_hist;
 	u8 reo_id;
-	struct fisa_pkt_hist *pkt_hist;
 
 	sw_ft_entry = &(((struct dp_fisa_rx_sw_ft *)
 				fisa_hdl->base)[hashed_flow_idx]);
@@ -717,11 +720,11 @@ dp_fisa_rx_delete_flow(struct dp_rx_fst *fisa_hdl,
 	/* Flush the flow before deletion */
 	dp_rx_fisa_flush_flow_wrap(sw_ft_entry);
 
-	pkt_hist = dp_rx_fisa_get_pkt_hist(sw_ft_entry);
-
+	dp_rx_fisa_save_pkt_hist(sw_ft_entry, &pkt_hist);
+	/* Clear the sw_ft_entry */
 	memset(sw_ft_entry, 0, sizeof(*sw_ft_entry));
+	dp_rx_fisa_restore_pkt_hist(sw_ft_entry, &pkt_hist);
 
-	dp_rx_fisa_set_pkt_hist(sw_ft_entry, pkt_hist);
 	dp_rx_fisa_update_sw_ft_entry(sw_ft_entry, elem->flow_idx, elem->vdev,
 				      fisa_hdl->soc_hdl, hashed_flow_idx);
 
@@ -1777,7 +1780,8 @@ static int dp_add_nbuf_to_fisa_flow(struct dp_rx_fst *fisa_hdl,
 		qdf_assert(0);
 	}
 
-	dp_fisa_record_pkt(fisa_flow, nbuf, rx_tlv_hdr);
+	dp_fisa_record_pkt(fisa_flow, nbuf, rx_tlv_hdr,
+			   fisa_hdl->soc_hdl->rx_pkt_tlv_size);
 
 	if (fisa_flow->is_flow_udp) {
 		dp_rx_fisa_aggr_udp(fisa_hdl, fisa_flow, nbuf);

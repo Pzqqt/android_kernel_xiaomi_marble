@@ -199,50 +199,50 @@ static QDF_STATUS dp_rx_fst_cmem_init(struct dp_rx_fst *fst)
 }
 
 #ifdef WLAN_SUPPORT_RX_FISA_HIST
-/**
- * dp_rx_sw_fst_hist_attach() - Initialize the pkt history per
- *  sw ft entry
- * @fst: pointer to rx fst info
- *
- * Return: None
- */
-static void
-dp_rx_sw_fst_hist_attach(struct dp_rx_fst *fst)
+static
+QDF_STATUS dp_rx_sw_ft_hist_init(struct dp_fisa_rx_sw_ft *sw_ft,
+				 uint32_t max_entries,
+				 uint32_t rx_pkt_tlv_size)
 {
-	struct dp_fisa_rx_sw_ft *ft_entry;
 	int i;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
-	ft_entry = (struct dp_fisa_rx_sw_ft *)fst->base;
-	for (i = 0; i < fst->max_entries; i++)
-		ft_entry[i].pkt_hist = qdf_mem_malloc(
-						 sizeof(*ft_entry[i].pkt_hist));
+	for (i = 0; i < max_entries; i++) {
+		sw_ft[i].pkt_hist.tlv_hist =
+			(uint8_t *)qdf_mem_malloc(rx_pkt_tlv_size *
+						  FISA_FLOW_MAX_AGGR_COUNT);
+		if (!sw_ft[i].pkt_hist.tlv_hist) {
+			dp_err("unable to allocate tlv history");
+			qdf_status = QDF_STATUS_E_NOMEM;
+			break;
+		}
+	}
+	return qdf_status;
 }
 
-/**
- * dp_rx_sw_fst_hist_detach() - De-initialize the pkt history per
- *  sw ft entry
- * @fst: pointer to rx fst info
- *
- * Return: None
- */
-static void
-dp_rx_sw_fst_hist_detach(struct dp_rx_fst *fst)
+static void dp_rx_sw_ft_hist_deinit(struct dp_fisa_rx_sw_ft *sw_ft,
+				    uint32_t max_entries)
 {
-	struct dp_fisa_rx_sw_ft *ft_entry;
 	int i;
 
-	ft_entry = (struct dp_fisa_rx_sw_ft *)fst->base;
-	for (i = 0; i < fst->max_entries; i++)
-		qdf_mem_free(ft_entry[i].pkt_hist);
+	for (i = 0; i < max_entries; i++) {
+		if (sw_ft[i].pkt_hist.tlv_hist)
+			qdf_mem_free(sw_ft[i].pkt_hist.tlv_hist);
+	}
 }
+
 #else
-static inline void
-dp_rx_sw_fst_hist_attach(struct dp_rx_fst *fst)
+
+static
+QDF_STATUS dp_rx_sw_ft_hist_init(struct dp_fisa_rx_sw_ft *sw_ft,
+				 uint32_t max_entries,
+				 uint32_t rx_pkt_tlv_size)
 {
+	return QDF_STATUS_SUCCESS;
 }
 
-static inline void
-dp_rx_sw_fst_hist_detach(struct dp_rx_fst *fst)
+static void dp_rx_sw_ft_hist_deinit(struct dp_fisa_rx_sw_ft *sw_ft,
+				    uint32_t max_entries)
 {
 }
 #endif
@@ -302,13 +302,17 @@ QDF_STATUS dp_rx_fst_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 				DP_RX_GET_SW_FT_ENTRY_SIZE * fst->max_entries);
 
 	if (!fst->base)
-		goto out2;
+		goto free_rx_fst;
 
 	ft_entry = (struct dp_fisa_rx_sw_ft *)fst->base;
+
 	for (i = 0; i < fst->max_entries; i++)
 		ft_entry[i].napi_id = INVALID_NAPI;
 
-	dp_rx_sw_fst_hist_attach(fst);
+	status = dp_rx_sw_ft_hist_init(ft_entry, fst->max_entries,
+				       soc->rx_pkt_tlv_size);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto free_hist;
 
 	fst->hal_rx_fst = hal_rx_fst_attach(soc->osdev,
 					    &fst->hal_rx_fst_base_paddr,
@@ -319,7 +323,7 @@ QDF_STATUS dp_rx_fst_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 		QDF_TRACE(QDF_MODULE_ID_ANY, QDF_TRACE_LEVEL_ERROR,
 			  "Rx Hal fst allocation failed, #entries:%d\n",
 			  fst->max_entries);
-		goto out1;
+		goto free_hist;
 	}
 
 	qdf_spinlock_create(&fst->dp_rx_fst_lock);
@@ -350,10 +354,11 @@ QDF_STATUS dp_rx_fst_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 timer_init_fail:
 	qdf_spinlock_destroy(&fst->dp_rx_fst_lock);
 	hal_rx_fst_detach(fst->hal_rx_fst, soc->osdev);
-out1:
-	dp_rx_sw_fst_hist_detach(fst);
+free_hist:
+	dp_rx_sw_ft_hist_deinit((struct dp_fisa_rx_sw_ft *)fst->base,
+				fst->max_entries);
 	dp_context_free_mem(soc, DP_FISA_RX_FT_TYPE, fst->base);
-out2:
+free_rx_fst:
 	qdf_mem_free(fst);
 	return QDF_STATUS_E_NOMEM;
 }
@@ -447,7 +452,8 @@ void dp_rx_fst_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 		else
 			hal_rx_fst_detach(dp_fst->hal_rx_fst, soc->osdev);
 
-		dp_rx_sw_fst_hist_detach(dp_fst);
+		dp_rx_sw_ft_hist_deinit((struct dp_fisa_rx_sw_ft *)dp_fst->base,
+					dp_fst->max_entries);
 		dp_context_free_mem(soc, DP_FISA_RX_FT_TYPE, dp_fst->base);
 		qdf_spinlock_destroy(&dp_fst->dp_rx_fst_lock);
 		qdf_mem_free(dp_fst);
