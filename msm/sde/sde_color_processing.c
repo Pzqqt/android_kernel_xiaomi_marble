@@ -1176,7 +1176,7 @@ static int _sde_cp_crtc_cache_blob_property(struct drm_crtc *crtc,
 	 */
 	blob = drm_property_lookup_blob(crtc->dev, val);
 	if (!blob) {
-		DRM_ERROR("invalid blob id %lld\n", val);
+		DRM_ERROR("invalid blob id %lld feature %d\n", val, prop_node->feature);
 		return -EINVAL;
 	}
 	if (blob->length != prop_node->prop_blob_sz) {
@@ -2608,46 +2608,60 @@ void sde_cp_disable_features(struct drm_crtc *crtc)
 	struct sde_hw_mixer *hw_lm;
 	struct sde_hw_dspp *hw_dspp;
 	feature_wrapper set_feature;
-	int i = 0, ret = 0;
+	int n = 0, i = 0, ret = 0;
 	struct sde_crtc *sde_crtc = to_sde_crtc(crtc);
 	u32 num_mixers = sde_crtc->num_mixers;
+	enum sde_cp_crtc_features features[] = {
+		SDE_CP_CRTC_DSPP_DEMURA_INIT,
+		SDE_CP_CRTC_DSPP_RC_MASK
+	};
 
-	set_feature =
-		set_crtc_feature_wrappers[SDE_CP_CRTC_DSPP_DEMURA_INIT];
-	SDE_EVT32(num_mixers);
-	if (!set_feature)
-		return;
-
-	mutex_lock(&sde_crtc->crtc_cp_lock);
-	memset(&hw_cfg, 0, sizeof(hw_cfg));
-
-	for (i = 0; i < num_mixers; i++) {
-		hw_dspp = sde_crtc->mixers[i].hw_dspp;
-		if (!hw_dspp || i >= DSPP_MAX)
-			continue;
-		hw_cfg.dspp[i] = hw_dspp;
-	}
-
-	hw_cfg.payload = NULL;
-	for (i = 0; i < num_mixers && !ret; i++) {
-		hw_lm = sde_crtc->mixers[i].hw_lm;
-		hw_dspp = sde_crtc->mixers[i].hw_dspp;
-		if (!hw_lm) {
-			ret = -EINVAL;
+	for (n = 0; n < ARRAY_SIZE(features); n++) {
+		if (features[n] > ARRAY_SIZE(set_crtc_feature_wrappers)) {
+			DRM_DEBUG("invalid feature:%d\n", features[n]);
 			continue;
 		}
-		hw_cfg.ctl = sde_crtc->mixers[i].hw_ctl;
-		hw_cfg.mixer_info = hw_lm;
-		hw_cfg.displayh = num_mixers * hw_lm->cfg.out_width;
-		hw_cfg.displayv = hw_lm->cfg.out_height;
-		hw_cfg.panel_height = sde_crtc->base.state->adjusted_mode.vdisplay;
-		hw_cfg.panel_width = sde_crtc->base.state->adjusted_mode.hdisplay;
-		ret = set_feature(hw_dspp, &hw_cfg, sde_crtc);
-		if (ret)
-			break;
-		_sde_cp_dspp_flush_helper(sde_crtc, SDE_CP_CRTC_DSPP_DEMURA_INIT);
+
+		set_feature = set_crtc_feature_wrappers[features[n]];
+		if (!set_feature) {
+			DRM_DEBUG("unsupported feature:%d\n", features[n]);
+			continue;
+		}
+
+		SDE_EVT32(n, features[n], num_mixers);
+		DRM_DEBUG("Disable feature %d\n", features[n]);
+		mutex_lock(&sde_crtc->crtc_cp_lock);
+		memset(&hw_cfg, 0, sizeof(hw_cfg));
+
+		for (i = 0; i < num_mixers; i++) {
+			hw_dspp = sde_crtc->mixers[i].hw_dspp;
+			if (!hw_dspp || i >= DSPP_MAX)
+				continue;
+			hw_cfg.dspp[i] = hw_dspp;
+		}
+
+		hw_cfg.payload = NULL;
+		for (i = 0; i < num_mixers && !ret; i++) {
+			hw_lm = sde_crtc->mixers[i].hw_lm;
+			hw_dspp = sde_crtc->mixers[i].hw_dspp;
+			if (!hw_lm) {
+				ret = -EINVAL;
+				continue;
+			}
+			hw_cfg.ctl = sde_crtc->mixers[i].hw_ctl;
+			hw_cfg.mixer_info = hw_lm;
+			hw_cfg.displayh = num_mixers * hw_lm->cfg.out_width;
+			hw_cfg.displayv = hw_lm->cfg.out_height;
+			hw_cfg.panel_height = sde_crtc->base.state->adjusted_mode.vdisplay;
+			hw_cfg.panel_width = sde_crtc->base.state->adjusted_mode.hdisplay;
+			ret = set_feature(hw_dspp, &hw_cfg, sde_crtc);
+			if (ret)
+				break;
+			_sde_cp_dspp_flush_helper(sde_crtc, features[n]);
+		}
+
+		mutex_unlock(&sde_crtc->crtc_cp_lock);
 	}
-	mutex_unlock(&sde_crtc->crtc_cp_lock);
 }
 
 void sde_cp_crtc_clear(struct drm_crtc *crtc)
