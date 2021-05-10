@@ -1547,6 +1547,7 @@ cm_update_scan_db_on_connect_success(struct cnx_mgr *cm_ctx,
 	struct element_info *bcn_probe_rsp;
 	struct cm_req *cm_req;
 	int32_t rssi;
+	struct scan_cache_node *cur_candidate;
 
 	if (!cm_is_vdev_connected(cm_ctx->vdev))
 		return;
@@ -1554,7 +1555,13 @@ cm_update_scan_db_on_connect_success(struct cnx_mgr *cm_ctx,
 	cm_req = cm_get_req_by_cm_id(cm_ctx, resp->cm_id);
 	if (!cm_req)
 		return;
-	if (!cm_req->connect_req.cur_candidate)
+	/* if reassoc get from roam req else from connect req */
+	if (resp->is_reassoc)
+		cur_candidate = cm_req->roam_req.cur_candidate;
+	else
+		cur_candidate = cm_req->connect_req.cur_candidate;
+
+	if (!cur_candidate)
 		return;
 
 	/*
@@ -1564,10 +1571,9 @@ cm_update_scan_db_on_connect_success(struct cnx_mgr *cm_ctx,
 	if (resp->connect_ies.bcn_probe_rsp.ptr)
 		bcn_probe_rsp = &resp->connect_ies.bcn_probe_rsp;
 	else
-		bcn_probe_rsp =
-			&cm_req->connect_req.cur_candidate->entry->raw_frame;
+		bcn_probe_rsp = &cur_candidate->entry->raw_frame;
 
-	rssi = cm_req->connect_req.cur_candidate->entry->rssi_raw;
+	rssi = cur_candidate->entry->rssi_raw;
 
 	cm_inform_bcn_probe(cm_ctx, bcn_probe_rsp->ptr, bcn_probe_rsp->len,
 			    resp->freq, rssi, resp->cm_id);
