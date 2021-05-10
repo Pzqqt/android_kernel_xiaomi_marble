@@ -29,6 +29,7 @@
 #include "wlan_hdd_twt.h"
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_cfg.h"
+#include "wlan_hdd_hostapd.h"
 #include "sme_api.h"
 #include "wma_twt.h"
 #include "osif_sync.h"
@@ -767,15 +768,82 @@ hdd_twt_get_peer_session_params(struct hdd_context *hdd_ctx,
 }
 
 /**
- * hdd_twt_get_session_params() - Parses twt nl attrributes, obtains twt
+ * hdd_sap_twt_get_session_params() - Parses twt nl attrributes, obtains twt
  * session parameters based on dialog_id and returns to user via nl layer
  * @adapter: hdd_adapter
  * @twt_param_attr: twt nl attributes
  *
  * Return: 0 on success, negative value on failure
  */
-static int hdd_twt_get_session_params(struct hdd_adapter *adapter,
-				      struct nlattr *twt_param_attr)
+static int hdd_sap_twt_get_session_params(struct hdd_adapter *adapter,
+					  struct nlattr *twt_param_attr)
+{
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1];
+	struct wmi_host_twt_session_stats_info
+				params[TWT_PSOC_MAX_SESSIONS] = { {0} };
+	int ret, id, id1;
+	QDF_STATUS qdf_status;
+	struct qdf_mac_addr mac_addr;
+	bool is_associated;
+
+	ret = wlan_cfg80211_nla_parse_nested(
+					tb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX,
+					twt_param_attr,
+					qca_wlan_vendor_twt_add_dialog_policy);
+	if (ret)
+		return ret;
+
+	id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID;
+	id1 = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAC_ADDR;
+
+	if (tb[id] && tb[id1]) {
+		params[0].dialog_id = nla_get_u8(tb[id]);
+		nla_memcpy(params[0].peer_mac, tb[id1], QDF_MAC_ADDR_SIZE);
+	} else {
+		hdd_err_rl("TWT: get_params dialog_id or mac_addr is missing");
+		return -EINVAL;
+	}
+
+	if (QDF_IS_ADDR_BROADCAST(params[0].peer_mac) &&
+	    params[0].dialog_id != TWT_ALL_SESSIONS_DIALOG_ID) {
+		hdd_err_rl("TWT: get_params dialog_is is invalid");
+		return -EINVAL;
+	}
+
+	if (!params[0].dialog_id)
+		params[0].dialog_id = TWT_ALL_SESSIONS_DIALOG_ID;
+
+	qdf_mem_copy(mac_addr.bytes, params[0].peer_mac, QDF_MAC_ADDR_SIZE);
+
+	if (!qdf_is_macaddr_broadcast(&mac_addr)) {
+		is_associated = hdd_is_peer_associated(adapter, &mac_addr);
+		if (!is_associated) {
+			hdd_err("TWT: Association doesn't exist for STA: "
+				   QDF_MAC_ADDR_FMT,
+				   QDF_MAC_ADDR_REF(&mac_addr));
+			return -EINVAL;
+		}
+	}
+
+	hdd_debug("TWT: get_params dialog_id %d and mac_addr " QDF_MAC_ADDR_FMT,
+		  params[0].dialog_id, QDF_MAC_ADDR_REF(params[0].peer_mac));
+
+	qdf_status = hdd_twt_get_peer_session_params(adapter->hdd_ctx,
+						     &params[0]);
+
+	return qdf_status_to_os_return(qdf_status);
+}
+
+/**
+ * hdd_sta_twt_get_session_params() - Parses twt nl attrributes, obtains twt
+ * session parameters based on dialog_id and returns to user via nl layer
+ * @adapter: hdd_adapter
+ * @twt_param_attr: twt nl attributes
+ *
+ * Return: 0 on success, negative value on failure
+ */
+static int hdd_sta_twt_get_session_params(struct hdd_adapter *adapter,
+					  struct nlattr *twt_param_attr)
 {
 	struct hdd_station_ctx *hdd_sta_ctx =
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter);
@@ -784,6 +852,7 @@ static int hdd_twt_get_session_params(struct hdd_adapter *adapter,
 				params[TWT_PSOC_MAX_SESSIONS] = { {0} };
 	int ret, id;
 	QDF_STATUS qdf_status;
+	struct qdf_mac_addr bcast_addr = QDF_MAC_ADDR_BCAST_INIT;
 
 	ret = wlan_cfg80211_nla_parse_nested(tb,
 					     QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX,
@@ -812,10 +881,12 @@ static int hdd_twt_get_session_params(struct hdd_adapter *adapter,
 			     QDF_MAC_ADDR_SIZE);
 		hdd_debug("TWT: get_params peer mac_addr " QDF_MAC_ADDR_FMT,
 			  QDF_MAC_ADDR_REF(params[0].peer_mac));
+	} else {
+		qdf_mem_copy(params[0].peer_mac, &bcast_addr,
+			     QDF_MAC_ADDR_SIZE);
 	}
 
-	if ((adapter->device_mode != QDF_SAP_MODE ||
-	     params[0].dialog_id != WLAN_ALL_SESSIONS_DIALOG_ID) &&
+	if (params[0].dialog_id != WLAN_ALL_SESSIONS_DIALOG_ID &&
 	    !ucfg_mlme_is_twt_setup_done(adapter->hdd_ctx->psoc,
 					 &hdd_sta_ctx->conn_info.bssid,
 					 params[0].dialog_id)) {
@@ -826,12 +897,39 @@ static int hdd_twt_get_session_params(struct hdd_adapter *adapter,
 		return qdf_status_to_os_return(qdf_status);
 	}
 
-	hdd_debug("TWT: get_params dialog_id %d", params[0].dialog_id);
+	hdd_debug("TWT: get_params dialog_id %d and mac_addr " QDF_MAC_ADDR_FMT,
+		  params[0].dialog_id, QDF_MAC_ADDR_REF(params[0].peer_mac));
 
 	qdf_status = hdd_twt_get_peer_session_params(adapter->hdd_ctx,
 						     &params[0]);
 
 	return qdf_status_to_os_return(qdf_status);
+}
+
+/**
+ * hdd_twt_get_session_params() - Parses twt nl attrributes, obtains twt
+ * session parameters based on dialog_id and returns to user via nl layer
+ * @adapter: hdd_adapter
+ * @twt_param_attr: twt nl attributes
+ *
+ * Return: 0 on success, negative value on failure
+ */
+static int hdd_twt_get_session_params(struct hdd_adapter *adapter,
+				      struct nlattr *twt_param_attr)
+{
+	enum QDF_OPMODE device_mode = adapter->device_mode;
+
+	switch (device_mode) {
+	case QDF_STA_MODE:
+		return hdd_sta_twt_get_session_params(adapter, twt_param_attr);
+	case QDF_SAP_MODE:
+		return hdd_sap_twt_get_session_params(adapter, twt_param_attr);
+	default:
+		hdd_err_rl("TWT terminate is not supported on %s",
+			   qdf_opmode_str(adapter->device_mode));
+	}
+
+	return -EOPNOTSUPP;
 }
 
 /**
