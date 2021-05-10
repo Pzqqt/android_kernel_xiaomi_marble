@@ -532,6 +532,8 @@ int ucfg_nan_register_hdd_callbacks(struct wlan_objmgr_psoc *psoc,
 				cb_obj->os_if_nan_event_handler;
 	psoc_obj->cb_obj.ucfg_nan_request_process_cb =
 				ucfg_nan_request_process_cb;
+	psoc_obj->cb_obj.nan_concurrency_update =
+				cb_obj->nan_concurrency_update;
 
 	return 0;
 }
