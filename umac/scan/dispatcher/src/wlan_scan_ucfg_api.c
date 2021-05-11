@@ -1108,8 +1108,17 @@ ucfg_scan_init_chanlist_params(struct scan_start_request *req,
 
 		for (idx = 0, num_chans = 0;
 			(idx < NUM_CHANNELS && num_chans < max_chans); idx++)
-			if (is_chan_enabled_for_scan(&reg_chan_list[idx],
-					low_2g, high_2g, low_5g, high_5g))
+			if ((is_chan_enabled_for_scan(&reg_chan_list[idx],
+						      low_2g, high_2g,
+						      low_5g, high_5g)) &&
+			    ((req->scan_req.scan_f_2ghz &&
+			     WLAN_REG_IS_24GHZ_CH_FREQ(
+					reg_chan_list[idx].center_freq)) ||
+			     (req->scan_req.scan_f_5ghz &&
+			      (WLAN_REG_IS_5GHZ_CH_FREQ(
+					reg_chan_list[idx].center_freq) ||
+			       WLAN_REG_IS_6GHZ_CHAN_FREQ(
+					reg_chan_list[idx].center_freq)))))
 				scan_freqs[num_chans++] =
 				reg_chan_list[idx].center_freq;
 
