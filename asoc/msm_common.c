@@ -378,7 +378,7 @@ int msm_channel_map_get(struct snd_kcontrol *kcontrol,
 			(struct chmap_pdata *)kcontrol->private_data;
 	struct snd_soc_dai *codec_dai = NULL;
 	int backend_id = 0;
-	uint32_t rx_ch[MAX_PORT], tx_ch[MAX_PORT];
+	uint32_t rx_ch[MAX_PORT] = {0}, tx_ch[MAX_PORT] = {0};
 	uint32_t rx_ch_cnt = 0, tx_ch_cnt = 0;
 	uint32_t *chmap_data = NULL;
 	int ret = 0, len = 0, i = 0;
