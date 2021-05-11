@@ -1163,9 +1163,16 @@ util_scan_populate_bcn_ie_list(struct wlan_objmgr_pdev *pdev,
 				(uint8_t *)&(((struct htcap_ie *)ie)->ie);
 			break;
 		case WLAN_ELEMID_RSN:
-			if (ie->ie_len < WLAN_RSN_IE_MIN_LEN)
-				goto err;
-			scan_params->ie_list.rsn = (uint8_t *)ie;
+			/*
+			 * For security cert TC, RSNIE length can be 1 but if
+			 * beacon is dropped, old entry will remain in scan
+			 * cache and cause cert TC failure as connection with
+			 * old entry with valid RSN IE will pass.
+			 * So instead of dropping the frame, do not store the
+			 * RSN pointer so that old entry is overwritten.
+			 */
+			if (ie->ie_len >= WLAN_RSN_IE_MIN_LEN)
+				scan_params->ie_list.rsn = (uint8_t *)ie;
 			break;
 		case WLAN_ELEMID_XRATES:
 			if (ie->ie_len > WLAN_EXT_SUPPORTED_RATES_IE_MAX_LEN)
