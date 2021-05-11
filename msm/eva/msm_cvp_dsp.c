@@ -1166,6 +1166,7 @@ static void __dsp_cvp_sess_delete(struct cvp_dsp_cmd_msg *cmd)
 	int rc;
 	struct cvp_dsp2cpu_cmd_msg *dsp2cpu_cmd = &me->pending_dsp2cpu_cmd;
 	struct cvp_dsp_fastrpc_driver_entry *frpc_node = NULL;
+	struct task_struct *task = NULL;
 
 	cmd->ret = 0;
 
@@ -1187,6 +1188,11 @@ static void __dsp_cvp_sess_delete(struct cvp_dsp_cmd_msg *cmd)
 	inst = (struct msm_cvp_inst *)ptr_dsp2cpu(
 			dsp2cpu_cmd->session_cpu_high,
 			dsp2cpu_cmd->session_cpu_low);
+	if (!inst) {
+		dprintk(CVP_ERR, "%s incorrect session ID\n", __func__);
+		cmd->ret = -1;
+		goto dsp_fail_delete;
+	}
 
 	rc = msm_cvp_session_delete(inst);
 	if (rc) {
@@ -1194,6 +1200,8 @@ static void __dsp_cvp_sess_delete(struct cvp_dsp_cmd_msg *cmd)
 		cmd->ret = -1;
 		goto dsp_fail_delete;
 	}
+
+	task = inst->task;
 
 	rc = msm_cvp_close(inst);
 	if (rc) {
@@ -1205,8 +1213,8 @@ static void __dsp_cvp_sess_delete(struct cvp_dsp_cmd_msg *cmd)
 	/* unregister fastrpc driver */
 	eva_fastrpc_driver_unregister(dsp2cpu_cmd->pid, false);
 
-	if (inst->task)
-		put_task_struct(inst->task);
+	if (task)
+		put_task_struct(task);
 
 	dprintk(CVP_DSP, "%s DSP2CPU_DETELE_SESSION Done\n", __func__);
 dsp_fail_delete:

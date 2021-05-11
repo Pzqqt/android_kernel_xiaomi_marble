@@ -841,6 +841,8 @@ int msm_cvp_session_deinit_buffers(struct msm_cvp_inst *inst)
 				dprintk(CVP_ERR,
 				"%s: failed dsp deregistration fd=%d rc=%d",
 				__func__, cbuf->fd, rc);
+			msm_cvp_unmap_smem(inst, cbuf->smem, "unmap dsp");
+			msm_cvp_smem_put_dma_buf(cbuf->smem->dma_buf);
 		} else if (cbuf->ownership == DSP) {
 			rc = cvp_dsp_fastrpc_unmap(inst->process_id, cbuf);
 			if (rc)
@@ -854,9 +856,6 @@ int msm_cvp_session_deinit_buffers(struct msm_cvp_inst *inst)
 					"%s Fail to free buffer 0x%x\n",
 					__func__, rc);
 		}
-
-		msm_cvp_unmap_smem(inst, cbuf->smem, "unmap dsp");
-		msm_cvp_smem_put_dma_buf(cbuf->smem->dma_buf);
 		list_del(&cbuf->list);
 		kmem_cache_free(cvp_driver->buf_cache, cbuf);
 	}
