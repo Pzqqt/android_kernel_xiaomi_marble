@@ -63,6 +63,14 @@ bool is_skip_op_required(struct dsi_display *display)
 	return (display->is_cont_splash_enabled || display->trusted_vm_env);
 }
 
+static bool is_sim_panel(struct dsi_display *display)
+{
+	if (!display || !display->panel)
+		return false;
+
+	return display->panel->te_using_watchdog_timer;
+}
+
 static void dsi_display_mask_ctrl_error_interrupts(struct dsi_display *display,
 			u32 mask, bool enable)
 {
@@ -966,9 +974,7 @@ int dsi_display_check_status(struct drm_connector *connector, void *display,
 
 	status_mode = panel->esd_config.status_mode;
 
-	if ((status_mode == ESD_MODE_SW_SIM_SUCCESS) ||
-			(dsi_display->sw_te_using_wd) ||
-			(dsi_display->panel->te_using_watchdog_timer))
+	if ((status_mode == ESD_MODE_SW_SIM_SUCCESS) || is_sim_panel(display))
 		goto release_panel_lock;
 
 	if (status_mode == ESD_MODE_SW_SIM_FAILURE) {
@@ -1246,6 +1252,12 @@ int dsi_display_cmd_receive(void *display, const char *cmd_buf,
 	cmd.msg.flags |= MIPI_DSI_MSG_UNICAST_COMMAND;
 
 	mutex_lock(&dsi_display->display_lock);
+
+	if (is_sim_panel(display)) {
+		DSI_DEBUG("Simulation panel doesn't support read commands\n");
+		goto end;
+	}
+
 	rc = dsi_display_ctrl_get_host_init_state(dsi_display, &state);
 	if (rc || !state) {
 		DSI_ERR("[DSI] Invalid host state = %d rc = %d\n",
@@ -4122,7 +4134,7 @@ error:
 
 static bool dsi_display_validate_panel_resources(struct dsi_display *display)
 {
-	if (!display->panel->te_using_watchdog_timer) {
+	if (!is_sim_panel(display)) {
 		if (!gpio_is_valid(display->panel->reset_config.reset_gpio)) {
 			DSI_ERR("invalid reset gpio for the panel\n");
 			return false;
@@ -6631,9 +6643,7 @@ int dsi_display_get_info(struct drm_connector *connector,
 		info->capabilities |= MSM_DISPLAY_CAP_CMD_MODE;
 		if (display->panel->panel_mode_switch_enabled)
 			info->capabilities |= MSM_DISPLAY_CAP_VID_MODE;
-		info->is_te_using_watchdog_timer =
-			display->panel->te_using_watchdog_timer |
-			display->sw_te_using_wd;
+		info->is_te_using_watchdog_timer = is_sim_panel(display);
 		break;
 	default:
 		DSI_ERR("unknwown dsi panel mode %d\n",
@@ -6641,8 +6651,7 @@ int dsi_display_get_info(struct drm_connector *connector,
 		break;
 	}
 
-	if (display->panel->esd_config.esd_enabled &&
-			!display->sw_te_using_wd)
+	if (display->panel->esd_config.esd_enabled && !is_sim_panel(display))
 		info->capabilities |= MSM_DISPLAY_ESD_ENABLED;
 
 	info->te_source = display->te_source;
