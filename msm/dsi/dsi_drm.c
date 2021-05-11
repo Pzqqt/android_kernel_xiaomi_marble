@@ -574,6 +574,7 @@ int dsi_conn_get_mode_info(struct drm_connector *connector,
 	mode_info->panel_mode_caps = dsi_mode->panel_mode_caps;
 	mode_info->mdp_transfer_time_us =
 		dsi_mode->priv_info->mdp_transfer_time_us;
+	mode_info->disable_rsc_solver = dsi_mode->priv_info->disable_rsc_solver;
 
 	memcpy(&mode_info->topology, &dsi_mode->priv_info->topology,
 			sizeof(struct msm_display_topology));

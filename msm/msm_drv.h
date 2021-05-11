@@ -709,6 +709,7 @@ struct msm_display_topology {
  * @allowed_mode_switches: bit mask to indicate supported mode switch.
  * @bit_clk_rates: list of supported bit clock rates
  * @bit_clk_count: number of supported bit clock rates
+ * @disable_rsc_solver: Dynamically disable RSC solver for the timing mode due to lower bitclk rate.
  */
 struct msm_mode_info {
 	uint32_t frame_rate;
@@ -727,6 +728,7 @@ struct msm_mode_info {
 	u32 allowed_mode_switches;
 	u32 *bit_clk_rates;
 	u32 bit_clk_count;
+	bool disable_rsc_solver;
 };
 
 /**
