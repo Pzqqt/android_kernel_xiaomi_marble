@@ -49,6 +49,10 @@ tgt_pkt_capture_register_ev_handler(struct wlan_objmgr_vdev *vdev)
 	if (QDF_IS_STATUS_ERROR(status))
 		pkt_capture_err("Unable to register mgmt offload handler");
 
+	status = rx_ops->pkt_capture_register_smart_monitor_event(psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		pkt_capture_err("Unable to register smart monitor handler");
+
 	return status;
 }
 
@@ -80,6 +84,10 @@ tgt_pkt_capture_unregister_ev_handler(struct wlan_objmgr_vdev *vdev)
 	status = rx_ops->pkt_capture_unregister_ev_handlers(psoc);
 	if (QDF_IS_STATUS_ERROR(status))
 		pkt_capture_err("Unable to register mgmt offload handler");
+
+	status = rx_ops->pkt_capture_unregister_smart_monitor_event(psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		pkt_capture_err("Unable to unregister smart monitor handler");
 
 	return status;
 }

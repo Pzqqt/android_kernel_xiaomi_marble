@@ -23,6 +23,7 @@
  */
 
 #include <target_if_pkt_capture.h>
+#include <wlan_pkt_capture_tgt_api.h>
 #include <wmi_unified_api.h>
 #include <target_if.h>
 #include <init_deinit_lmac.h>
@@ -276,6 +277,121 @@ target_if_unregister_mgmt_data_offload_event(struct wlan_objmgr_psoc *psoc)
 	return status;
 }
 
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
+static int
+target_if_smart_monitor_event_handler(void *handle, uint8_t *data,
+				      uint32_t len)
+{
+	struct smu_event_params params;
+	struct wmi_unified *wmi_handle;
+	struct wlan_objmgr_psoc *psoc;
+	QDF_STATUS status;
+
+	psoc = target_if_get_psoc_from_scn_hdl(handle);
+	if (!psoc) {
+		pkt_capture_err("psoc is NULL");
+		return -EINVAL;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid WMI handle");
+		return -EINVAL;
+	}
+
+	if (!(ucfg_pkt_capture_get_pktcap_mode(psoc) &
+	      PKT_CAPTURE_MODE_MGMT_ONLY))
+		return -EINVAL;
+
+	status = wmi_unified_extract_smart_monitor_event(wmi_handle, data,
+							 &params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pkt_capture_err("Extract smart monitor event failed");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+/**
+ * target_if_register_smart_monitor_event() - Register smu event
+ * @psoc: wlan psoc object
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+target_if_register_smart_monitor_event(struct wlan_objmgr_psoc *psoc)
+{
+	wmi_unified_t wmi_handle;
+
+	if (!psoc) {
+		pkt_capture_err("psoc got NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+
+	if (!wmi_handle) {
+		pkt_capture_err("wmi_handle is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if ((ucfg_pkt_capture_get_mode(psoc) != PACKET_CAPTURE_MODE_DISABLE) &&
+	    wmi_service_enabled(wmi_handle,
+				wmi_service_packet_capture_support)) {
+		uint8_t status;
+
+		status = wmi_unified_register_event_handler(
+				wmi_handle,
+				wmi_vdev_smart_monitor_event_id,
+				target_if_smart_monitor_event_handler,
+				WMI_RX_WORK_CTX);
+		if (status) {
+			pkt_capture_err("Failed to register smart monitor handler");
+			return QDF_STATUS_E_FAILURE;
+		}
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * target_if_unregister_smart_monitor_event() - Unregister smu event
+ * @psoc: wlan psoc object
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+target_if_unregister_smart_monitor_event(struct wlan_objmgr_psoc *psoc)
+{
+	wmi_unified_t wmi_handle;
+	QDF_STATUS status;
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		pkt_capture_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_unregister_event(wmi_handle,
+					      wmi_vdev_smart_monitor_event_id);
+	if (status)
+		pkt_capture_err("unregister smart monitor event handler failed");
+
+	return status;
+}
+#else
+static QDF_STATUS
+target_if_register_smart_monitor_event(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
+target_if_unregister_smart_monitor_event(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 void
 target_if_pkt_capture_register_rx_ops(struct wlan_pkt_capture_rx_ops *rx_ops)
 {
@@ -289,6 +405,12 @@ target_if_pkt_capture_register_rx_ops(struct wlan_pkt_capture_rx_ops *rx_ops)
 
 	rx_ops->pkt_capture_unregister_ev_handlers =
 				target_if_unregister_mgmt_data_offload_event;
+
+	rx_ops->pkt_capture_register_smart_monitor_event =
+				target_if_register_smart_monitor_event;
+
+	rx_ops->pkt_capture_unregister_smart_monitor_event =
+				target_if_unregister_smart_monitor_event;
 }
 
 void
