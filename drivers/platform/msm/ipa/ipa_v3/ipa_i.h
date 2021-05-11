@@ -59,7 +59,7 @@
 #define IPA5_PIPE_REG_NUM 2
 #define IPA5_MAX_NUM_PIPES (IPA5_PIPES_NUM)
 #define IPA_SYS_DESC_FIFO_SZ 0x800
-#define IPA_SYS_TX_DATA_DESC_FIFO_SZ 0x1000
+#define IPA_SYS_TX_DATA_DESC_FIFO_SZ 0x2000
 #define IPA_COMMON_EVENT_RING_SIZE 0x7C00
 #define IPA_LAN_RX_HEADER_LENGTH (2)
 #define IPA_QMAP_HEADER_LENGTH (4)
@@ -107,7 +107,7 @@ enum {
 
 #define NAPI_WEIGHT 64
 
-#define NAPI_TX_WEIGHT 32
+#define NAPI_TX_WEIGHT 64
 
 #define IPA_WAN_AGGR_PKT_CNT 1
 
@@ -1108,6 +1108,7 @@ struct ipa3_page_repl_ctx {
  * @xmit_eot_cnt: count of pending eot for tasklet to process
  * @tasklet: tasklet for eot write_done handle (tx_complete)
  * @napi_tx: napi for eot write done handle (tx_complete) - to replace tasklet
+ * @napi_rx: napi for eot write done handle (rx_complete) - to replace tasklet
  * @in_napi_context: an atomic variable used for non-blocking locking,
  * preventing from multiple napi_sched to be called.
  * @int_modt: GSI event ring interrupt moderation timer
@@ -1151,6 +1152,7 @@ struct ipa3_sys_context {
 	bool skip_eot;
 	u32 eob_drop_cnt;
 	struct napi_struct napi_tx;
+	struct napi_struct napi_rx;
 	bool tx_poll;
 	bool napi_tx_enable;
 	atomic_t in_napi_context;
@@ -1506,6 +1508,8 @@ struct ipa3_stats {
 	u32 wan_rx_empty;
 	u32 wan_rx_empty_coal;
 	u32 wan_repl_rx_empty;
+	u32 rmnet_ll_rx_empty;
+	u32 rmnet_ll_repl_rx_empty;
 	u32 lan_rx_empty;
 	u32 lan_repl_rx_empty;
 	u32 low_lat_rx_empty;
@@ -1514,7 +1518,7 @@ struct ipa3_stats {
 	u32 flow_disable;
 	u32 tx_non_linear;
 	u32 rx_page_drop_cnt;
-	struct ipa3_page_recycle_stats page_recycle_stats[2];
+	struct ipa3_page_recycle_stats page_recycle_stats[3];
 	u64 page_recycle_cnt[2][IPA_PAGE_POLL_THRESHOLD_MAX];
 };
 
@@ -2061,10 +2065,18 @@ struct ipa3_eth_error_stats {
  * @coal_cmd_pyld: holds the coslescing close frame command payload
  * @ipa_gpi_event_rp_ddr: use DDR to access event RP for GPI channels
  * @rmnet_ctl_enable: enable pipe support fow low latency data
+ * @rmnet_ll_enable: enable pipe support fow low latency data
  * @gsi_fw_file_name: GSI IPA fw file name
  * @uc_fw_file_name: uC IPA fw file name
  * @eth_info: ethernet client mapping
  * @max_num_smmu_cb: number of smmu s1 cb supported
+ * @u64 gsi_msi_addr: MSI SPI set address APSS_GICA_SETSPI_NSR
+ * @u64 gsi_msi_clear_addr: MSI SPI clear address APSS_GICA_CLRSPI_NSR
+ * @u64 gsi_msi_ioremapped_addr: iore mapped address for debugging purpose
+ * @u32 gsi_rmnet_ctl_evt_ring_irq: IRQ number for rmnet_ctl pipe
+ * @u32 gsi_rmnet_ll_evt_ring_irq; IRQ number for rmnet_ll pipe
+ * @u32 gsi_rmnet_ctl_evt_ring_intvec: HW IRQ number for rmnet_ctl pipe
+ * @u32 gsi_rmnet_ll_evt_ring_intvec; HW IRQ number for rmnet_ll pipe
  * @non_hash_flt_lcl_sys_switch: number of times non-hash flt table moved
  */
 struct ipa3_context {
@@ -2257,6 +2269,7 @@ struct ipa3_context {
 	bool clients_registered;
 	bool ipa_gpi_event_rp_ddr;
 	bool rmnet_ctl_enable;
+	bool rmnet_ll_enable;
 	char *gsi_fw_file_name;
 	char *uc_fw_file_name;
 	struct ipa3_eth_info
@@ -2281,6 +2294,14 @@ struct ipa3_context {
 	u8 page_poll_threshold;
 	u32 non_hash_flt_lcl_sys_switch;
 	bool wan_common_page_pool;
+	u64 gsi_msi_addr;
+	u64 gsi_msi_clear_addr;
+	u64 gsi_msi_addr_io_mapped;
+	u64 gsi_msi_clear_addr_io_mapped;
+	u32 gsi_rmnet_ctl_evt_ring_intvec;
+	u32 gsi_rmnet_ctl_evt_ring_irq;
+	u32 gsi_rmnet_ll_evt_ring_intvec;
+	u32 gsi_rmnet_ll_evt_ring_irq;
 };
 
 struct ipa3_plat_drv_res {
@@ -2340,6 +2361,7 @@ struct ipa3_plat_drv_res {
 	u32 icc_clk_val[IPA_ICC_LVL_MAX][IPA_ICC_MAX];
 	bool ipa_gpi_event_rp_ddr;
 	bool rmnet_ctl_enable;
+	bool rmnet_ll_enable;
 	bool ipa_use_uc_holb_monitor;
 	u32 ipa_holb_monitor_poll_period;
 	u32 ipa_holb_monitor_max_cnt_wlan;
@@ -2358,6 +2380,12 @@ struct ipa3_plat_drv_res {
 	u16 ulso_ip_id_min;
 	u16 ulso_ip_id_max;
 	bool use_pm_wrapper;
+	u64 gsi_msi_addr;
+	u64 gsi_msi_clear_addr;
+	u32 gsi_rmnet_ctl_evt_ring_intvec;
+	u32 gsi_rmnet_ctl_evt_ring_irq;
+	u32 gsi_rmnet_ll_evt_ring_intvec;
+	u32 gsi_rmnet_ll_evt_ring_irq;
 };
 
 /**
@@ -3277,6 +3305,24 @@ int ipa3_setup_apps_low_lat_prod_pipe(bool rmnet_config,
 int ipa3_setup_apps_low_lat_cons_pipe(bool rmnet_config,
 	struct rmnet_ingress_param *ingress_param);
 int ipa3_teardown_apps_low_lat_pipes(void);
+int ipa3_rmnet_ll_init(void);
+int ipa3_register_rmnet_ll_cb(
+	void (*ipa_rmnet_ll_ready_cb)(void *user_data1),
+	void *user_data1,
+	void (*ipa_rmnet_ll_stop_cb)(void *user_data2),
+	void *user_data2,
+	void (*ipa_rmnet_ll_rx_notify_cb)(
+	void *user_data3, void *rx_data),
+	void *user_data3);
+int ipa3_unregister_rmnet_ll_cb(void);
+int ipa3_rmnet_ll_xmit(struct sk_buff *skb);
+int ipa3_setup_apps_low_lat_data_prod_pipe(
+	struct rmnet_egress_param *egress_param,
+	struct net_device *dev);
+int ipa3_setup_apps_low_lat_data_cons_pipe(
+	struct rmnet_ingress_param *ingress_param,
+	struct net_device *dev);
+int ipa3_teardown_apps_low_lat_data_pipes(void);
 const char *ipa_hw_error_str(enum ipa3_hw_errors err_type);
 int ipa_gsi_ch20_wa(void);
 int ipa3_lan_rx_poll(u32 clnt_hdl, int weight);
@@ -3308,6 +3354,7 @@ irq_handler_t ipa3_get_isr(void);
 void ipa_pc_qmp_enable(void);
 u32 ipa3_get_r_rev_version(void);
 void ipa3_notify_clients_registered(void);
+void ipa_gsi_map_unmap_gsi_msi_addr(bool map);
 #if defined(CONFIG_IPA3_REGDUMP)
 int ipa_reg_save_init(u32 value);
 void ipa_save_registers(void);

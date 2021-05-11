@@ -4597,6 +4597,14 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			{ 4, 9, 16, 24, IPA_EE_AP, GSI_SMART_PRE_FETCH, 3	},
 			IPA_TX_INSTANCE_NA },
 
+	[IPA_5_1][IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_PROD] = {
+			true, IPA_v5_0_GROUP_URLLC,
+			true,
+			IPA_DPS_HPS_SEQ_TYPE_2ND_PKT_PROCESS_PASS_NO_DEC_UCP,
+			QMB_MASTER_SELECT_DDR,
+			{ 10, 5, 10, 16, IPA_EE_AP, GSI_SMART_PRE_FETCH, 3	},
+			IPA_TX_INSTANCE_NA },
+
 	[IPA_5_1][IPA_CLIENT_Q6_WAN_PROD]         = {
 			true, IPA_v5_0_GROUP_DL,
 			true,
@@ -4620,6 +4628,14 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			QMB_MASTER_SELECT_DDR,
 			{ 15, 2, 28, 32, IPA_EE_Q6, GSI_FREE_PRE_FETCH, 3 },
 			IPA_TX_INSTANCE_NA },
+
+	[IPA_5_1][IPA_CLIENT_Q6_DL_NLO_LL_DATA_PROD] = {
+			true, IPA_v5_0_GROUP_URLLC,
+			true,
+			IPA_DPS_HPS_SEQ_TYPE_2ND_PKT_PROCESS_PASS_DEC_UCP,
+			QMB_MASTER_SELECT_DDR,
+			{ 5, 8, 28, 32, IPA_EE_Q6, GSI_SMART_PRE_FETCH, 3 },
+			IPA_TX_INSTANCE_UL },
 
 	[IPA_5_1][IPA_CLIENT_APPS_LAN_CONS] = {
 			true, IPA_v5_0_GROUP_UL,
@@ -4723,6 +4739,14 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			IPA_DPS_HPS_SEQ_TYPE_INVALID,
 			QMB_MASTER_SELECT_DDR,
 			{ 32, 10, 9, 9, IPA_EE_AP, GSI_SMART_PRE_FETCH, 3	},
+			IPA_TX_INSTANCE_DL },
+
+	[IPA_5_1][IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS] = {
+			true, IPA_v5_0_GROUP_DL,
+			false,
+			IPA_DPS_HPS_SEQ_TYPE_INVALID,
+			QMB_MASTER_SELECT_DDR,
+			{ 33, 6, 9, 9, IPA_EE_AP, GSI_SMART_PRE_FETCH, 3	},
 			IPA_TX_INSTANCE_DL },
 
 	[IPA_5_1][IPA_CLIENT_Q6_LAN_CONS]         = {
@@ -5909,6 +5933,9 @@ const char *ipa_clients_strings[IPA_CLIENT_MAX] = {
 	__stringify(IPA_CLIENT_ETHERNET2_CONS),
 	__stringify(RESERVERD_PROD_118),
 	__stringify(IPA_CLIENT_WLAN2_CONS1),
+	__stringify(IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_PROD),
+	__stringify(IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS),
+	__stringify(IPA_CLIENT_Q6_DL_NLO_LL_DATA_PROD),
 };
 EXPORT_SYMBOL(ipa_clients_strings);
 
@@ -10908,6 +10935,11 @@ int ipa3_suspend_apps_pipes(bool suspend)
 	if (res == -EAGAIN)
 		goto undo_qmap_cons;
 
+	res = _ipa_suspend_resume_pipe(IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS,
+		suspend);
+	if (res == -EAGAIN)
+		goto undo_low_lat_data_cons;
+
 	if (suspend) {
 		struct ipahal_reg_tx_wrapper tx;
 		int ep_idx;
@@ -10922,7 +10954,7 @@ int ipa3_suspend_apps_pipes(bool suspend)
 			IPADBG("COAL frame is open 0x%x\n",
 				tx.coal_slave_open_frame);
 			res = -EAGAIN;
-			goto undo_qmap_cons;
+			goto undo_low_lat_data_cons;
 		}
 
 		usleep_range(IPA_TAG_SLEEP_MIN_USEC, IPA_TAG_SLEEP_MAX_USEC);
@@ -10935,7 +10967,7 @@ int ipa3_suspend_apps_pipes(bool suspend)
 				if (res) {
 					IPADBG("suspend irq is pending 0x%x\n",
 						res);
-					goto undo_qmap_cons;
+					goto undo_low_lat_data_cons;
 				}
 			}
 		} else {
@@ -10955,6 +10987,10 @@ do_prod:
 		suspend);
 	if (res == -EAGAIN)
 		goto undo_qmap_prod;
+	res = _ipa_suspend_resume_pipe(IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_PROD,
+		suspend);
+	if (res == -EAGAIN)
+		goto undo_low_lat_data_prod;
 	res = _ipa_suspend_resume_pipe(IPA_CLIENT_APPS_WAN_PROD, suspend);
 	if (res == -EAGAIN)
 		goto undo_wan_prod;
@@ -10962,11 +10998,17 @@ do_prod:
 
 undo_wan_prod:
 	_ipa_suspend_resume_pipe(IPA_CLIENT_APPS_WAN_PROD, !suspend);
+undo_low_lat_data_prod:
+	_ipa_suspend_resume_pipe(IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_PROD,
+		!suspend);
 undo_qmap_prod:
 	_ipa_suspend_resume_pipe(IPA_CLIENT_APPS_WAN_LOW_LAT_PROD,
 		!suspend);
 undo_lan_prod:
 	_ipa_suspend_resume_pipe(IPA_CLIENT_APPS_LAN_PROD, !suspend);
+undo_low_lat_data_cons:
+	_ipa_suspend_resume_pipe(IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS,
+		!suspend);
 undo_qmap_cons:
 	_ipa_suspend_resume_pipe(IPA_CLIENT_APPS_WAN_LOW_LAT_CONS,
 		!suspend);

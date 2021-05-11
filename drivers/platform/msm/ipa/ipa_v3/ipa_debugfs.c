@@ -1467,6 +1467,8 @@ static ssize_t ipa3_read_stats(struct file *file, char __user *ubuf,
 		"wan_rx_empty=%u\n"
 		"wan_rx_empty_coal=%u\n"
 		"wan_repl_rx_empty=%u\n"
+		"rmnet_ll_rx_empty=%u\n"
+		"rmnet_ll_repl_rx_empty=%u\n"
 		"lan_rx_empty=%u\n"
 		"lan_repl_rx_empty=%u\n"
 		"flow_enable=%u\n"
@@ -1485,6 +1487,8 @@ static ssize_t ipa3_read_stats(struct file *file, char __user *ubuf,
 		ipa3_ctx->stats.wan_rx_empty,
 		ipa3_ctx->stats.wan_rx_empty_coal,
 		ipa3_ctx->stats.wan_repl_rx_empty,
+		ipa3_ctx->stats.rmnet_ll_rx_empty,
+		ipa3_ctx->stats.rmnet_ll_repl_rx_empty,
 		ipa3_ctx->stats.lan_rx_empty,
 		ipa3_ctx->stats.lan_repl_rx_empty,
 		ipa3_ctx->stats.flow_enable,

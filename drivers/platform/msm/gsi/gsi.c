@@ -1098,6 +1098,62 @@ static irqreturn_t gsi_isr(int irq, void *ctxt)
 	return IRQ_HANDLED;
 }
 
+static irqreturn_t gsi_msi_isr(int irq, void *ctxt)
+{
+	int ee = gsi_ctx->per.ee;
+	uint64_t rp;
+	struct gsi_chan_xfer_notify notify;
+	unsigned long flags;
+	unsigned long cntr;
+	bool empty;
+	struct gsi_evt_ctx *evt_ctxt;
+	void __iomem *msi_clear_add;
+	void __iomem *msi_add;
+
+	evt_ctxt = (struct gsi_evt_ctx *)(ctxt);
+
+	if (evt_ctxt->props.intf != GSI_EVT_CHTYPE_GPI_EV) {
+		GSIERR("Unexpected irq intf %d\n",
+			evt_ctxt->props.intf);
+		GSI_ASSERT();
+	}
+	/* Clear IRQ by writing irq number to the MSI clear address */
+	msi_clear_add = (void __iomem *)evt_ctxt->props.msi_clear_addr;
+	iowrite32(evt_ctxt->props.intvec, msi_clear_add);
+	/* Writing zero to MSI address as well */
+	msi_add = (void __iomem *)evt_ctxt->props.msi_addr_iore_mapped;
+	iowrite32(0, msi_add);
+	/* Clearing IEOB irq if there are any genereated for MSI channel */
+	gsihal_write_reg_nk(GSI_EE_n_CNTXT_SRC_IEOB_IRQ_CLR_k, ee,
+		gsihal_get_ch_reg_idx(evt_ctxt->id),
+		gsihal_get_ch_reg_mask(evt_ctxt->id));
+	spin_lock_irqsave(&evt_ctxt->ring.slock, flags);
+check_again:
+	cntr = 0;
+	empty = true;
+	rp = evt_ctxt->props.gsi_read_event_ring_rp(&evt_ctxt->props,
+			evt_ctxt->id, ee);
+	rp |= evt_ctxt->ring.rp & 0xFFFFFFFF00000000;
+
+	evt_ctxt->ring.rp = rp;
+	while (evt_ctxt->ring.rp_local != rp) {
+		++cntr;
+		if (evt_ctxt->props.exclusive &&
+			atomic_read(&evt_ctxt->chan[0]->poll_mode)) {
+			cntr = 0;
+			break;
+		}
+		gsi_process_evt_re(evt_ctxt, &notify, true);
+		empty = false;
+	}
+	if (!empty)
+		gsi_ring_evt_doorbell(evt_ctxt);
+	if (cntr != 0)
+		goto check_again;
+	spin_unlock_irqrestore(&evt_ctxt->ring.slock, flags);
+	return IRQ_HANDLED;
+}
+
 static uint32_t gsi_get_max_channels(enum gsi_ver ver)
 {
 	uint32_t max_ch = 0;
@@ -1894,7 +1950,7 @@ int gsi_alloc_evt_ring(struct gsi_evt_ring_props *props, unsigned long dev_hdl,
 	enum gsi_evt_ch_cmd_opcode op = GSI_EVT_ALLOCATE;
 	struct gsihal_reg_ee_n_ev_ch_cmd ev_ch_cmd;
 	struct gsi_evt_ctx *ctx;
-	int res;
+	int res = 0;
 	int ee;
 	unsigned long flags;
 
@@ -1950,6 +2006,22 @@ int gsi_alloc_evt_ring(struct gsi_evt_ring_props *props, unsigned long dev_hdl,
 	atomic_set(&ctx->chan_ref_cnt, 0);
 	ctx->num_of_chan_allocated = 0;
 	ctx->props = *props;
+
+	if (ctx->props.intf == GSI_EVT_CHTYPE_GPI_EV &&
+		ctx->props.intr == GSI_INTR_MSI) {
+		GSIERR("Registering MSI Interrupt for intvec = %d\n",
+			ctx->props.intvec);
+		res = devm_request_irq(gsi_ctx->dev, ctx->props.msi_irq,
+				gsi_msi_isr,
+				IRQF_TRIGGER_HIGH,
+				"gsi",
+				ctx);
+		if (res) {
+			GSIERR("MSI interrupt reg fails res = %d, intvec = %d\n",
+				res, ctx->props.intvec);
+			GSI_ASSERT();
+		}
+	}
 
 	mutex_lock(&gsi_ctx->mlock);
 	ee = gsi_ctx->per.ee;
@@ -2068,7 +2140,7 @@ int gsi_dealloc_evt_ring(unsigned long evt_ring_hdl)
 	struct gsihal_reg_ee_n_ev_ch_cmd ev_ch_cmd;
 	enum gsi_evt_ch_cmd_opcode op = GSI_EVT_DE_ALLOC;
 	struct gsi_evt_ctx *ctx;
-	int res;
+	int res = 0;
 
 	if (!gsi_ctx) {
 		pr_err("%s:%d gsi context not allocated\n", __func__, __LINE__);
@@ -2092,6 +2164,12 @@ int gsi_dealloc_evt_ring(unsigned long evt_ring_hdl)
 	if (ctx->state != GSI_EVT_RING_STATE_ALLOCATED) {
 		GSIERR("bad state %d\n", ctx->state);
 		return -GSI_STATUS_UNSUPPORTED_OP;
+	}
+
+	if (ctx->props.intf == GSI_EVT_CHTYPE_GPI_EV &&
+		ctx->props.intr == GSI_INTR_MSI) {
+		GSIERR("Interrupt dereg for msi_irq = %d\n", ctx->props.msi_irq);
+		devm_free_irq(gsi_ctx->dev, ctx->props.msi_irq, ctx);
 	}
 
 	mutex_lock(&gsi_ctx->mlock);
@@ -2389,6 +2467,8 @@ static void gsi_program_chan_ctx_qos(struct gsi_chan_props *props,
 				props->empty_lvl_threshold;
 			if (gsi_ctx->per.ver >= GSI_VER_2_9)
 				ch_k_qos.db_in_bytes = props->db_in_bytes;
+			if (gsi_ctx->per.ver >= GSI_VER_3_0)
+				ch_k_qos.low_latency_en = props->low_latency_en;
 		}
 	}
 	gsihal_write_reg_nk_fields(GSI_EE_n_GSI_CH_k_QOS,
@@ -4164,10 +4244,13 @@ int gsi_config_channel_mode(unsigned long chan_hdl, enum gsi_chan_mode mode)
 	if (curr == GSI_CHAN_MODE_CALLBACK &&
 			mode == GSI_CHAN_MODE_POLL) {
 		if (gsi_ctx->per.ver >= GSI_VER_3_0) {
-			__gsi_config_ieob_irq_k(gsi_ctx->per.ee,
+			/* Masking/Unmasking of intrpts is not allowed for MSI chanls */
+			if (ctx->evtr->props.intr != GSI_INTR_MSI) {
+				__gsi_config_ieob_irq_k(gsi_ctx->per.ee,
 				gsihal_get_ch_reg_idx(ctx->evtr->id),
 				gsihal_get_ch_reg_mask(ctx->evtr->id),
 				0);
+			}
 		}
 		else {
 			__gsi_config_ieob_irq(gsi_ctx->per.ee, 1 << ctx->evtr->id, 0);
@@ -4212,10 +4295,13 @@ int gsi_config_channel_mode(unsigned long chan_hdl, enum gsi_chan_mode mode)
 				atomic_set(&coal_ctx->poll_mode, mode);
 		}
 		if (gsi_ctx->per.ver >= GSI_VER_3_0) {
-			__gsi_config_ieob_irq_k(gsi_ctx->per.ee,
+			/* Masking/Unmasking of intrpts is not allowed for MSI chanls */
+			if (ctx->evtr->props.intr != GSI_INTR_MSI) {
+				__gsi_config_ieob_irq_k(gsi_ctx->per.ee,
 				gsihal_get_ch_reg_idx(ctx->evtr->id),
 				gsihal_get_ch_reg_mask(ctx->evtr->id),
 				~0);
+			}
 		}
 		else {
 			__gsi_config_ieob_irq(gsi_ctx->per.ee, 1 << ctx->evtr->id, ~0);
@@ -4564,7 +4650,7 @@ int gsi_halt_channel_ee(unsigned int chan_idx, unsigned int ee, int *code)
 	*code = gsi_ctx->scratch.word0.s.generic_ee_cmd_return_code;
 free_lock:
 	__gsi_config_glob_irq(gsi_ctx->per.ee,
-			gsihal_get_glob_irq_en_gp_int1_mask(), 0);
+		gsihal_get_glob_irq_en_gp_int1_mask(), 0);
 	mutex_unlock(&gsi_ctx->mlock);
 
 	return res;
@@ -4633,7 +4719,7 @@ int gsi_alloc_channel_ee(unsigned int chan_idx, unsigned int ee, int *code)
 	*code = gsi_ctx->scratch.word0.s.generic_ee_cmd_return_code;
 free_lock:
 	__gsi_config_glob_irq(gsi_ctx->per.ee,
-			gsihal_get_glob_irq_en_gp_int1_mask(), 0);
+		gsihal_get_glob_irq_en_gp_int1_mask(), 0);
 	mutex_unlock(&gsi_ctx->mlock);
 
 	return res;
@@ -4724,7 +4810,7 @@ int gsi_enable_flow_control_ee(unsigned int chan_idx, unsigned int ee,
 	*code = gsi_ctx->scratch.word0.s.generic_ee_cmd_return_code;
 free_lock:
 	__gsi_config_glob_irq(gsi_ctx->per.ee,
-			gsihal_get_glob_irq_en_gp_int1_mask(), 0);
+		gsihal_get_glob_irq_en_gp_int1_mask(), 0);
 	mutex_unlock(&gsi_ctx->mlock);
 
 	return res;
@@ -4810,7 +4896,7 @@ int gsi_flow_control_ee(unsigned int chan_idx, unsigned int ee,
 	res = GSI_STATUS_SUCCESS;
 free_lock:
 	__gsi_config_glob_irq(gsi_ctx->per.ee,
-			gsihal_get_glob_irq_en_gp_int1_mask(), 0);
+		gsihal_get_glob_irq_en_gp_int1_mask(), 0);
 	mutex_unlock(&gsi_ctx->mlock);
 
 	return res;
@@ -4878,7 +4964,7 @@ int gsi_query_flow_control_state_ee(unsigned int chan_idx, unsigned int ee,
 
 free_lock:
 	__gsi_config_glob_irq(gsi_ctx->per.ee,
-			gsihal_get_glob_irq_en_gp_int1_mask(), 0);
+		gsihal_get_glob_irq_en_gp_int1_mask(), 0);
 	mutex_unlock(&gsi_ctx->mlock);
 
 	return res;

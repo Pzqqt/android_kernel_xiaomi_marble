@@ -162,6 +162,13 @@ int ipa_hw_stats_init(void)
 			teth_stats_init->prod_mask[reg_idx] |= mask;
 		}
 
+		if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_1) {
+			mask = ipa_hw_stats_get_ep_bit_n_idx(
+				IPA_CLIENT_Q6_DL_NLO_LL_DATA_PROD,
+				&reg_idx);
+			teth_stats_init->prod_mask[reg_idx] |= mask;
+		}
+
 		if (ipa_hw_stats_get_ep_bit_n_idx(
 			IPA_CLIENT_Q6_WAN_PROD,
 			&reg_idx)) {
@@ -214,6 +221,53 @@ int ipa_hw_stats_init(void)
 			&reg_idx) && (ipa3_ctx->ipa_hw_type >= IPA_HW_v4_5)) {
 			ep_index = ipa3_get_ep_mapping(
 				IPA_CLIENT_Q6_DL_NLO_DATA_PROD);
+			if (ep_index == -1) {
+				IPAERR("Invalid client.\n");
+				ret = -EINVAL;
+				goto fail_free_stats_ctx;
+			}
+			mask = ipa_hw_stats_get_ep_bit_n_idx(
+				IPA_CLIENT_USB_CONS,
+				&reg_idx);
+			teth_stats_init->dst_ep_mask[ep_index][reg_idx] = mask;
+
+			if (ipa3_ctx->ipa_wdi3_over_gsi) {
+				mask = ipa_hw_stats_get_ep_bit_n_idx(
+					IPA_CLIENT_WLAN2_CONS,
+					&reg_idx);
+				teth_stats_init->dst_ep_mask[ep_index][reg_idx]
+					|= mask;
+			} else {
+				mask = ipa_hw_stats_get_ep_bit_n_idx(
+					IPA_CLIENT_WLAN1_CONS,
+					&reg_idx);
+				teth_stats_init->dst_ep_mask[ep_index][reg_idx]
+					|= mask;
+			}
+
+			mask = ipa_hw_stats_get_ep_bit_n_idx(
+				IPA_CLIENT_WIGIG1_CONS,
+				&reg_idx);
+			teth_stats_init->dst_ep_mask[ep_index][reg_idx] |= mask;
+			mask = ipa_hw_stats_get_ep_bit_n_idx(
+				IPA_CLIENT_WIGIG2_CONS,
+				&reg_idx);
+			teth_stats_init->dst_ep_mask[ep_index][reg_idx] |= mask;
+			mask = ipa_hw_stats_get_ep_bit_n_idx(
+				IPA_CLIENT_WIGIG3_CONS,
+				&reg_idx);
+			teth_stats_init->dst_ep_mask[ep_index][reg_idx] |= mask;
+			mask = ipa_hw_stats_get_ep_bit_n_idx(
+				IPA_CLIENT_WIGIG4_CONS,
+				&reg_idx);
+			teth_stats_init->dst_ep_mask[ep_index][reg_idx] |= mask;
+		}
+
+		if (ipa_hw_stats_get_ep_bit_n_idx(
+			IPA_CLIENT_Q6_DL_NLO_LL_DATA_PROD,
+			&reg_idx) && (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0)) {
+			ep_index = ipa3_get_ep_mapping(
+					IPA_CLIENT_Q6_DL_NLO_LL_DATA_PROD);
 			if (ep_index == -1) {
 				IPAERR("Invalid client.\n");
 				ret = -EINVAL;
