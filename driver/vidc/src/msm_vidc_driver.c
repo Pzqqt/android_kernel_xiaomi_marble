@@ -4756,6 +4756,14 @@ static bool msm_vidc_allow_image_encode_session(struct msm_vidc_inst *inst)
 		goto exit;
 	}
 
+	/* is frame skip mode disabled */
+	allow = !capability->cap[FRAME_SKIP_MODE].value;
+	if (!allow) {
+		i_vpr_e(inst, "%s: frame skip mode not disabled: %#x\n", __func__,
+			capability->cap[FRAME_SKIP_MODE].value);
+		goto exit;
+	}
+
 	/* is profile type Still Pic */
 	if (is_10bit_colorformat(pix_fmt))
 		allow = profile == V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10_STILL_PICTURE;
