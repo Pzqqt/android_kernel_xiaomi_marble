@@ -2111,6 +2111,10 @@ struct dp_soc {
 
 	/* SOC level feature flags */
 	struct dp_soc_features features;
+
+#ifdef WIFI_MONITOR_SUPPORT
+	struct dp_mon_soc *monitor_soc;
+#endif
 };
 
 #ifdef IPA_OFFLOAD
@@ -2769,6 +2773,9 @@ struct dp_pdev {
 
 		TAILQ_HEAD(, dp_soc_srngs_state) list;
 	} bkp_stats;
+#ifdef WIFI_MONITOR_SUPPORT
+	struct dp_mon_pdev *monitor_pdev;
+#endif
 };
 
 struct dp_peer;

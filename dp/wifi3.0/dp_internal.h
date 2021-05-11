@@ -150,6 +150,59 @@ struct htt_dbgfs_cfg {
 	(1 << HTT_PPDU_STATS_USR_COMPLTN_BA_BITMAP_256_TLV) | \
 	(1 << HTT_PPDU_STATS_USR_MPDU_ENQ_BITMAP_256_TLV))
 
+QDF_STATUS dp_mon_soc_attach(struct dp_soc *soc);
+QDF_STATUS dp_mon_soc_detach(struct dp_soc *soc);
+
+#ifdef MONITOR_MODULARIZED_ENABLE
+static inline bool dp_monitor_modularized_enable(void)
+{
+	return TRUE;
+}
+
+static inline QDF_STATUS
+dp_mon_soc_attach_wrapper(struct dp_soc *soc) { return QDF_STATUS_SUCCESS; }
+
+static inline QDF_STATUS
+dp_mon_soc_detach_wrapper(struct dp_soc *soc) { return QDF_STATUS_SUCCESS; }
+#else
+static inline bool dp_monitor_modularized_enable(void)
+{
+	return FALSE;
+}
+
+static inline QDF_STATUS dp_mon_soc_attach_wrapper(struct dp_soc *soc)
+{
+	return dp_mon_soc_attach(soc);
+}
+
+static inline QDF_STATUS dp_mon_soc_detach_wrapper(struct dp_soc *soc)
+{
+	return dp_mon_soc_detach(soc);
+}
+#endif
+
+#ifndef WIFI_MONITOR_SUPPORT
+static inline QDF_STATUS monitor_pdev_attach(struct dp_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS monitor_pdev_detach(struct dp_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS monitor_pdev_init(struct dp_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS monitor_pdev_deinit(struct dp_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 #ifdef WLAN_TX_PKT_CAPTURE_ENH
 extern uint8_t
 dp_cpu_ring_map[DP_NSS_CPU_RING_MAP_MAX][WLAN_CFG_INT_NUM_CONTEXTS_MAX];
