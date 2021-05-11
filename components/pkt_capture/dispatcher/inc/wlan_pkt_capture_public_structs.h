@@ -75,6 +75,11 @@ struct mgmt_offload_event_params {
 	uint8_t tx_retry_cnt;
 };
 
+struct smu_event_params {
+	uint32_t vdev_id;
+	int32_t rx_avg_rssi;
+};
+
 /**
  * struct pkt_capture_callbacks - callbacks to non-converged driver
  * @get_rmf_status: callback to get rmf status
@@ -105,11 +110,17 @@ struct wlan_pkt_capture_tx_ops {
  * pointers for packet capture component
  * @pkt_capture_register_ev_handlers: register mgmt offload event
  * @pkt_capture_unregister_ev_handlers: unregister mgmt offload event
+ * @pkt_capture_register_smart_monitor_event: register smu event
+ * @pkt_capture_unregister_smart_monitor_event: unregister smu event
  */
 struct wlan_pkt_capture_rx_ops {
 	QDF_STATUS (*pkt_capture_register_ev_handlers)
 					(struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*pkt_capture_unregister_ev_handlers)
+					(struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*pkt_capture_register_smart_monitor_event)
+					(struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*pkt_capture_unregister_smart_monitor_event)
 					(struct wlan_objmgr_psoc *psoc);
 };
 
