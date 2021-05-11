@@ -1867,7 +1867,6 @@ int ipa3_tx_dp(enum ipa_client_type dst, struct sk_buff *skb,
 	struct ipa3_desc *desc;
 	struct ipa3_desc _desc[3];
 	int dst_ep_idx;
-	struct ipahal_imm_cmd_pyld *cmd_pyld = NULL;
 	struct ipa3_sys_context *sys;
 	int src_ep_idx;
 	int num_frags, f;
@@ -2105,7 +2104,6 @@ int ipa3_tx_dp(enum ipa_client_type dst, struct sk_buff *skb,
 	return 0;
 
 fail_send:
-	ipahal_destroy_imm_cmd(cmd_pyld);
 fail_mem:
 	if (num_frags)
 		kfree(desc);
