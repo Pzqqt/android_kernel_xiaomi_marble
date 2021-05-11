@@ -165,22 +165,6 @@ struct cm_req {
 };
 
 /**
- * struct connect_ies - connect related ies stored in vdev, set by osif/user
- * @auth_ft_ies: auth ft ies received during preauth phase
- * @reassoc_ft_ies: reassoc ft ies received during reassoc phase
- * @cck_ie: cck ie for cck connection
- * @discon_ie: disconnect ie to be sent in disassoc/deauth req
- */
-struct connect_ies {
-	struct element_info auth_ft_ies;
-	struct element_info reassoc_ft_ies;
-#ifdef FEATURE_WLAN_ESE
-	struct element_info cck_ie;
-#endif
-	struct element_info discon_ie;
-};
-
-/**
  * enum cm_req_del_type - Context in which a request is removed from
  * connection manager request list
  * @CM_REQ_DEL_ACTIVE: Remove request from active queue
@@ -244,8 +228,6 @@ struct cm_req_history {
  * @connect_count: connect count
  * @force_rsne_override: if QCA_WLAN_VENDOR_ATTR_CONFIG_RSN_IE is set by
  * framework
- * @req_ie: request ies for connect/disconnect set by osif/user separately from
- * connect req
  * @global_cmd_id: global cmd id for getting cm id for connect/disconnect req
  * @max_connect_attempts: Max attempts to be tried for a connect req
  * @connect_timeout: Connect timeout value in milliseconds
@@ -268,7 +250,6 @@ struct cnx_mgr {
 	uint8_t disconnect_count;
 	uint8_t connect_count;
 	bool force_rsne_override;
-	struct connect_ies req_ie;
 	qdf_atomic_t global_cmd_id;
 	uint8_t max_connect_attempts;
 	uint32_t connect_timeout;
