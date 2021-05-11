@@ -173,6 +173,17 @@ do {\
 #define IPA_GSI_CHANNEL_STOP_SLEEP_MIN_USEC (3000)
 #define IPA_GSI_CHANNEL_STOP_SLEEP_MAX_USEC (5000)
 
+/**
+ * struct ipa_pkt_init_ex_hdr_ofst_set - header entry lookup parameters, if
+ * lookup was successful than the ep's pkt_init_ex offset will be set.
+ * @name: name of the header resource
+ * @ep:	[out] - the endpoint number to set the IC header offset
+ */
+struct ipa_pkt_init_ex_hdr_ofst_set {
+	char name[IPA_RESOURCE_NAME_MAX];
+	enum ipa_client_type ep;
+};
+
 enum ipa_active_client_log_type {
 	EP,
 	SIMPLE,
@@ -660,6 +671,10 @@ int ipa_cfg_ep_holb_by_client(enum ipa_client_type client,
 /*
 * Header removal / addition
 */
+int ipa3_add_hdr_hpc(struct ipa_ioc_add_hdr *hdrs);
+
+int ipa3_add_hdr_hpc_usr(struct ipa_ioc_add_hdr *hdrs, bool user_only);
+
 int ipa3_add_hdr(struct ipa_ioc_add_hdr *hdrs);
 
 int ipa3_del_hdr(struct ipa_ioc_del_hdr *hdls);
@@ -667,6 +682,8 @@ int ipa3_del_hdr(struct ipa_ioc_del_hdr *hdls);
 int ipa3_add_hdr_usr(struct ipa_ioc_add_hdr *hdrs, bool user_only);
 
 int ipa3_reset_hdr(bool user_only);
+
+int ipa3_get_hdr(struct ipa_ioc_get_hdr *lookup);
 
 /*
 * Header Processing Context
@@ -839,5 +856,9 @@ int ipa_eth_client_disconn_evt(struct ipa_ecm_msg *msg);
 
 /* ULSO mode Query */
 bool ipa3_is_ulso_supported(void);
+
+/* IPA_PACKET_INIT_EX IC to pipe API */
+int ipa_set_pkt_init_ex_hdr_ofst(
+	struct ipa_pkt_init_ex_hdr_ofst_set *lookup, bool proc_ctx);
 
 #endif /* _IPA_COMMON_I_H_ */

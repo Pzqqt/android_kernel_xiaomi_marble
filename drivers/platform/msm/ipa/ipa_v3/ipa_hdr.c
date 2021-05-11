@@ -531,8 +531,8 @@ bad_len:
 	return -EPERM;
 }
 
-
-static int __ipa_add_hdr(struct ipa_hdr_add *hdr, bool user)
+static int __ipa_add_hdr(struct ipa_hdr_add *hdr, bool user,
+	struct ipa3_hdr_entry **entry_out)
 {
 	struct ipa3_hdr_entry *entry;
 	struct ipa_hdr_offset_entry *offset = NULL;
@@ -650,6 +650,8 @@ static int __ipa_add_hdr(struct ipa_hdr_add *hdr, bool user)
 	entry->id = id;
 	hdr->hdr_hdl = id;
 	entry->ref_cnt++;
+	if (entry_out)
+		*entry_out = entry;
 
 	return 0;
 
@@ -712,6 +714,40 @@ static int __ipa3_del_hdr_proc_ctx(u32 proc_ctx_hdl,
 	ipa3_id_remove(proc_ctx_hdl);
 
 	return 0;
+}
+
+static int __ipa_add_hpc_hdr_insertion(struct ipa_hdr_add *hdr, bool user)
+{
+	struct ipa3_hdr_entry *entry = NULL;
+	struct ipa_hdr_proc_ctx_add proc_ctx;
+
+	hdr->status = IPA_HDR_TO_DDR_PATTERN;
+
+	if (__ipa_add_hdr(hdr, user, &entry))
+		goto error;
+
+	IPADBG("adding processing context for header %s\n", hdr->name);
+	proc_ctx.type = IPA_HDR_PROC_NONE;
+	proc_ctx.hdr_hdl = hdr->hdr_hdl;
+	if (__ipa_add_hdr_proc_ctx(&proc_ctx, false, user)) {
+		IPAERR("failed to add hdr proc ctx\n");
+		goto fail_add_proc_ctx;
+	}
+	entry->proc_ctx = (struct ipa3_hdr_proc_ctx_entry *)
+		ipa3_id_find(proc_ctx.proc_ctx_hdl);
+	if (!entry->proc_ctx) {
+		IPAERR_RL("ipa3_id_find failed\n");
+		goto fail_id_find;
+	}
+
+	return 0;
+
+fail_id_find:
+	__ipa3_del_hdr_proc_ctx(entry->proc_ctx->id, true, user);
+fail_add_proc_ctx:
+	__ipa3_del_hdr(hdr->hdr_hdl, user);
+error:
+	return -EPERM;
 }
 
 int __ipa3_del_hdr(u32 hdr_hdl, bool by_user)
@@ -786,6 +822,67 @@ int __ipa3_del_hdr(u32 hdr_hdl, bool by_user)
 }
 
 /**
+ * ipa3_add_hdr_hpc() - add the specified headers to SW and optionally commit them
+ * to IPA HW
+ * @hdrs:	[inout] set of headers to add
+ *
+ * Returns:	0 on success, negative on failure
+ *
+ * Note:	Should not be called from atomic context
+ */
+int ipa3_add_hdr_hpc(struct ipa_ioc_add_hdr *hdrs)
+{
+	return ipa3_add_hdr_hpc_usr(hdrs, false);
+}
+EXPORT_SYMBOL(ipa3_add_hdr_hpc);
+
+/**
+ * ipa3_add_hdr_hpc_usr() - add the specified headers to SW
+ * and optionally commit them to IPA HW
+ * @hdrs:		[inout] set of headers to add
+ * @user_only:	[in] indicate installed from user
+ *
+ * Returns:	0 on success, negative on failure
+ *
+ * Note:	Should not be called from atomic context
+ */
+int ipa3_add_hdr_hpc_usr(struct ipa_ioc_add_hdr *hdrs, bool user_only)
+{
+	int i;
+	int result = -EFAULT;
+
+	if (hdrs == NULL || hdrs->num_hdrs == 0) {
+		IPAERR_RL("bad parm\n");
+		return -EINVAL;
+	}
+
+	mutex_lock(&ipa3_ctx->lock);
+	IPADBG("adding %d headers to IPA driver internal data struct\n",
+		hdrs->num_hdrs);
+	for (i = 0; i < hdrs->num_hdrs; i++) {
+		if (__ipa_add_hpc_hdr_insertion(&hdrs->hdr[i], user_only)) {
+			IPAERR_RL("failed to add hdr hpc %d\n", i);
+			hdrs->hdr[i].status = -1;
+		}
+		else {
+			hdrs->hdr[i].status = 0;
+		}
+	}
+
+	if (hdrs->commit) {
+		IPADBG("committing all headers to IPA core");
+		if (ipa3_ctx->ctrl->ipa3_commit_hdr()) {
+			result = -EPERM;
+			goto bail;
+		}
+	}
+	result = 0;
+bail:
+	mutex_unlock(&ipa3_ctx->lock);
+	return result;
+}
+
+/**
  * ipa3_add_hdr() - add the specified headers to SW and optionally commit them
  * to IPA HW
  * @hdrs:	[inout] set of headers to add
@@ -824,7 +921,7 @@ int ipa3_add_hdr_usr(struct ipa_ioc_add_hdr *hdrs, bool user_only)
 	IPADBG("adding %d headers to IPA driver internal data struct\n",
 			hdrs->num_hdrs);
 	for (i = 0; i < hdrs->num_hdrs; i++) {
-		if (__ipa_add_hdr(&hdrs->hdr[i], user_only)) {
+		if (__ipa_add_hdr(&hdrs->hdr[i], user_only, NULL)) {
 			IPAERR_RL("failed to add hdr %d\n", i);
 			hdrs->hdr[i].status = -1;
 		} else {
@@ -1239,6 +1336,17 @@ static struct ipa3_hdr_entry *__ipa_find_hdr(const char *name)
 	return NULL;
 }
 
+static struct ipa3_hdr_proc_ctx_entry* __ipa_find_hdr_proc_ctx(const char *name)
+{
+	struct ipa3_hdr_entry *entry;
+
+	entry = __ipa_find_hdr(name);
+	if (entry && entry->proc_ctx)
+		return entry->proc_ctx;
+
+	return NULL;
+}
+
 /**
  * ipa3_get_hdr() - Lookup the specified header resource
  * @lookup:	[inout] header to lookup and its handle
@@ -1268,6 +1376,109 @@ int ipa3_get_hdr(struct ipa_ioc_get_hdr *lookup)
 	}
 	mutex_unlock(&ipa3_ctx->lock);
 
+	return result;
+}
+
+/**
+ * ipa3_get_hdr_offset() - Get the the offset of the specified header resource
+ * @name: [in] name of header to lookup
+ * @offset: [out] offset of the specified header
+ *
+ * lookup the specified header resource and return its offset if exists
+ *
+ * Returns:	0 on success, negative on failure
+ *
+ * Note: Should not be called from atomic context
+ */
+int ipa3_get_hdr_offset(char* name, u32* offset)
+{
+	struct ipa3_hdr_entry *entry;
+	int result = -1;
+	if (!name || !offset) {
+		IPAERR_RL("bad parm\n");
+		return -EINVAL;
+	}
+
+	mutex_lock(&ipa3_ctx->lock);
+	name[IPA_RESOURCE_NAME_MAX-1] = '\0';
+	entry = __ipa_find_hdr(name);
+	if (entry && entry->offset_entry) {
+		*offset = entry->offset_entry->offset;
+		result = 0;
+	}
+
+	mutex_unlock(&ipa3_ctx->lock);
+	return result;
+}
+
+/**
+ * ipa3_get_hdr_proc_ctx_hdl() - Lookup the specified hpc resource
+ * @lookup:	[inout] hpc to lookup and its handle
+ *
+ * Lookup the specified hpc resource and return handle if it exists.
+ * The hpc returned is identified by the hpc pointed by the hdr associated
+ * with lookup->name.
+ *
+ * Returns:	0 on success, negative on failure
+ *
+ * Note:	Should not be called from atomic context
+ */
+int ipa3_get_hdr_proc_ctx_hdl(struct ipa_ioc_get_hdr *lookup)
+{
+	struct ipa3_hdr_proc_ctx_entry *entry;
+	int result = -1;
+	if (lookup == NULL) {
+		IPAERR_RL("bad parm\n");
+		return -EINVAL;
+	}
+
+	mutex_lock(&ipa3_ctx->lock);
+	lookup->name[IPA_RESOURCE_NAME_MAX-1] = '\0';
+	entry = __ipa_find_hdr_proc_ctx(lookup->name);
+	if (entry) {
+		lookup->hdl = entry->id;
+		result = 0;
+	}
+
+	mutex_unlock(&ipa3_ctx->lock);
+	return result;
+}
+
+/**
+ * ipa3_get_hdr_proc_ctx_offset() - Lookup the specified hpc resource
+ * @name:	[in] hpc name to lookup
+ * @offset:	[out] offset to of hpc to return
+ *
+ * Lookup the specified hpc resource and return offset if it exists.
+ * The hpc offset returned is of the hpc identified by the hpc pointed
+ * by the hdr associated with name. The offset returned is in 32B
+ * and includes the hpc table start offset.
+ *
+ * Returns:	0 on success, negative on failure
+ *
+ * Note:	Should not be called from atomic context
+ */
+int ipa3_get_hdr_proc_ctx_offset(char* name, u32* offset)
+{
+	struct ipa3_hdr_proc_ctx_entry *entry;
+	int result = -1;
+
+	if (!name || !offset) {
+		IPAERR_RL("bad parm\n");
+		return -EINVAL;
+	}
+
+	mutex_lock(&ipa3_ctx->lock);
+	name[IPA_RESOURCE_NAME_MAX-1] = '\0';
+	entry = __ipa_find_hdr_proc_ctx(name);
+	if (entry && entry->offset_entry) {
+		/* offset is in 32 Bytes chunks */
+		*offset = (entry->offset_entry->offset +
+		ipa3_ctx->hdr_proc_ctx_tbl.start_offset) >> 5;
+		result = 0;
+	}
+
+	mutex_unlock(&ipa3_ctx->lock);
 	return result;
 }
 

@@ -2696,7 +2696,11 @@ int ipa3_del_hdr_by_user(struct ipa_ioc_del_hdr *hdls, bool by_user);
 
 int ipa3_commit_hdr(void);
 
-int ipa3_get_hdr(struct ipa_ioc_get_hdr *lookup);
+int ipa3_get_hdr_offset(char* name, u32* offset);
+
+int ipa3_get_hdr_proc_ctx_hdl(struct ipa_ioc_get_hdr *lookup);
+
+int ipa3_get_hdr_proc_ctx_offset(char* name, u32* offset);
 
 int ipa3_put_hdr(u32 hdr_hdl);
 

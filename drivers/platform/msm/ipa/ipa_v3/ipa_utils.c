@@ -5887,16 +5887,16 @@ const char *ipa_clients_strings[IPA_CLIENT_MAX] = {
 	__stringify(IPA_CLIENT_APPS_WAN_COAL_CONS),
 	__stringify(IPA_CLIENT_MHI_PRIME_TETH_PROD),
 	__stringify(IPA_CLIENT_MHI_PRIME_TETH_CONS),
-        __stringify(IPA_CLIENT_MHI_PRIME_RMNET_PROD),
-        __stringify(IPA_CLIENT_MHI_PRIME_RMNET_CONS),
+	__stringify(IPA_CLIENT_MHI_PRIME_RMNET_PROD),
+	__stringify(IPA_CLIENT_MHI_PRIME_RMNET_CONS),
 	__stringify(IPA_CLIENT_MHI_PRIME_DPL_PROD),
 	__stringify(RESERVERD_CONS_101),
 	__stringify(IPA_CLIENT_AQC_ETHERNET_PROD),
 	__stringify(IPA_CLIENT_AQC_ETHERNET_CONS),
 	__stringify(IPA_CLIENT_APPS_WAN_LOW_LAT_PROD),
 	__stringify(IPA_CLIENT_APPS_WAN_LOW_LAT_CONS),
-        __stringify(IPA_CLIENT_QDSS_PROD),
-        __stringify(IPA_CLIENT_MHI_QDSS_CONS),
+	__stringify(IPA_CLIENT_QDSS_PROD),
+	__stringify(IPA_CLIENT_MHI_QDSS_CONS),
 	__stringify(IPA_CLIENT_RTK_ETHERNET_PROD),
 	__stringify(IPA_CLIENT_RTK_ETHERNET_CONS),
 	__stringify(IPA_CLIENT_MHI_LOW_LAT_PROD),
@@ -7091,7 +7091,7 @@ enum ipa_client_type ipa3_get_client_by_pipe(int pipe_idx)
 
 	if (j == IPA_CLIENT_MAX)
 		IPADBG("Got to IPA_CLIENT_MAX (%d) while searching for (%d)\n",
-		       j, pipe_idx);
+			j, pipe_idx);
 
 	return j;
 }
@@ -7655,8 +7655,7 @@ int ipa3_cfg_ep_hdr_ext(u32 clnt_hdl,
  *
  * Note:	Should not be called from atomic context
  */
-int ipa3_cfg_ep_ulso(u32 clnt_hdl,
-		       const struct ipa_ep_cfg_ulso *ep_ulso)
+int ipa3_cfg_ep_ulso(u32 clnt_hdl, const struct ipa_ep_cfg_ulso *ep_ulso)
 {
 	struct ipa3_ep_context *ep;
 
@@ -12022,3 +12021,4 @@ bool ipa3_is_ulso_supported(void)
 
 	return ipa3_ctx->ulso_supported;
 }
+EXPORT_SYMBOL(ipa3_is_ulso_supported);

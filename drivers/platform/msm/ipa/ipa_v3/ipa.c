@@ -158,8 +158,7 @@ struct ipa3_context *ipa3_ctx = NULL;
 EXPORT_SYMBOL(ipa3_ctx);
 
 int ipa3_plat_drv_probe(struct platform_device *pdev_p);
-int ipa3_pci_drv_probe(
-	struct pci_dev            *pci_dev,
+int ipa3_pci_drv_probe(struct pci_dev *pci_dev,
 	const struct pci_device_id *ent);
 
 /**
@@ -239,7 +238,7 @@ static const struct pci_error_handlers ipa_pci_err_handler = {
 };
 
 static struct pci_driver ipa_pci_driver = {
-	.name     = ipa_pci_driver_name,
+	.name = ipa_pci_driver_name,
 	.id_table = ipa_pci_tbl,
 	.probe    = ipa3_pci_drv_probe,
 	.remove   = ipa_pci_remove,
@@ -3672,7 +3671,7 @@ static int ipa3_setup_exception_path(void)
 
 	/* install the basic exception header */
 	hdr = kzalloc(sizeof(struct ipa_ioc_add_hdr) + 1 *
-		      sizeof(struct ipa_hdr_add), GFP_KERNEL);
+		sizeof(struct ipa_hdr_add), GFP_KERNEL);
 	if (!hdr)
 		return -ENOMEM;
 
@@ -3777,7 +3776,7 @@ static int ipa3_init_smem_region(int memory_region_size,
 
 /**
  * ipa3_init_q6_smem() - Initialize Q6 general memory and
- *                      header memory regions in IPA.
+ *	header memory regions in IPA.
  *
  * Return codes:
  * 0: success
@@ -4568,7 +4567,7 @@ void ipa3_update_ssr_state(bool is_ssr)
 
 /**
  * ipa3_q6_pre_shutdown_cleanup() - A cleanup for all Q6 related configuration
- *                    in IPA HW. This is performed in case of SSR.
+ *	in IPA HW. This is performed in case of SSR.
  *
  * This is a mandatory procedure, in case one of the steps fails, the
  * AP needs to restart.
@@ -6896,9 +6895,11 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 	/* The following will retrieve and save the gsi fw version */
 	ipa_save_gsi_ver();
 
-	/* IPA version 3.0 IPAHAL initialized at pre_init as there is no SMMU.
+	/*
+	 * IPA version 3.0 IPAHAL initialized at pre_init as there is no SMMU.
 	 * In normal mode need to wait until SMMU is attached and
-         * thus initialization done here*/
+	 * thus initialization done here
+	 */
 	if (ipa3_ctx->ipa_hw_type != IPA_HW_v3_0) {
 		if (ipahal_init(ipa3_ctx->ipa_hw_type, ipa3_ctx->mmio,
 				ipa3_ctx->ipa_cfg_offset, ipa3_ctx->pdev)) {
@@ -7800,8 +7801,8 @@ static int ipa_alloc_pkt_init_ex(void)
 	cmd_mask.rt_retain_hdr = true;
 	cmd_mask.rt_pipe_dest_idx = true;
 	for (cmd.rt_pipe_dest_idx = 0;
-	      cmd.rt_pipe_dest_idx < ipa3_ctx->ipa_num_pipes;
-	      cmd.rt_pipe_dest_idx++) {
+		cmd.rt_pipe_dest_idx < ipa3_ctx->ipa_num_pipes;
+		cmd.rt_pipe_dest_idx++) {
 		result = ipahal_modify_imm_cmd(IPA_IMM_CMD_IP_PACKET_INIT_EX,
 			cmd_pyld->data, &cmd, &cmd_mask);
 		if (unlikely(result != 0)) {
@@ -7854,6 +7855,63 @@ free_imm:
 	ipahal_destroy_imm_cmd(cmd_pyld);
 	return result;
 }
+
+/**
+ * ipa_set_pkt_init_ex_hdr_ofst() - Set pkt_init_ex header offset for the ep
+ * @lookup: header and ep identifying parameters
+ *
+ * Returns 0 on success
+ */
+int ipa_set_pkt_init_ex_hdr_ofst(struct ipa_pkt_init_ex_hdr_ofst_set
+	*lookup, bool proc_ctx)
+{
+	struct ipahal_imm_cmd_pyld *cmd_pyld;
+	struct ipahal_imm_cmd_ip_packet_init_ex cmd = {0};
+	u32 offset;
+	int res = 0;
+	int dst_ep_idx;
+
+	if (!lookup)
+		return -EINVAL;
+
+	dst_ep_idx = ipa3_get_ep_mapping(lookup->ep);
+	IPADBG("dst_ep_idx=%d\n", dst_ep_idx);
+	if (-1 == dst_ep_idx) {
+		IPAERR("Client %u is not mapped\n", lookup->ep);
+		return -EINVAL;
+	}
+	if (proc_ctx) {
+		res = ipa3_get_hdr_proc_ctx_offset(lookup->name, &offset);
+	} else {
+		res = ipa3_get_hdr_offset(lookup->name ,&offset);
+	}
+	if (res != 0)
+		return res;
+
+	cmd.rt_hdr_offset = offset;
+	IPADBG("cmd.rt_hdr_offset=%d\n", cmd.rt_hdr_offset);
+	cmd.frag_disable = true;
+	cmd.nat_disable = true;
+	cmd.filter_disable = true;
+	cmd.route_disable = true;
+	cmd.hdr_removal_insertion_disable = false;
+	cmd.cs_disable = false;
+	cmd.flt_retain_hdr = true;
+	cmd.rt_retain_hdr = true;
+	cmd.rt_pipe_dest_idx = dst_ep_idx;
+	cmd.rt_proc_ctx = proc_ctx;
+	cmd_pyld = ipahal_construct_imm_cmd(IPA_IMM_CMD_IP_PACKET_INIT_EX,
+		&cmd, false);
+	if (!cmd_pyld) {
+		IPAERR("failed to construct IMM cmd\n");
+		return -ENOMEM;
+	}
+	memcpy(ipa3_ctx->pkt_init_ex_mem.base + dst_ep_idx * cmd_pyld->len,
+		cmd_pyld->data, cmd_pyld->len);
+	ipahal_destroy_imm_cmd(cmd_pyld);
+	return 0;
+}
+EXPORT_SYMBOL(ipa_set_pkt_init_ex_hdr_ofst);
 
 /*
  * SCM call to check if secure dump is allowed.
@@ -9149,9 +9207,9 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 		of_property_read_bool(pdev->dev.of_node,
 		"qcom,ipa-gpi-event-rp-ddr");
 	IPADBG(": Read GPI or GCI Event RP from DDR = %s\n",
-	       ipa_drv_res->ipa_gpi_event_rp_ddr ? "True" : "False");
+		ipa_drv_res->ipa_gpi_event_rp_ddr ? "True" : "False");
 
-	ipa_drv_res->tx_napi_enable = 
+	ipa_drv_res->tx_napi_enable =
 		of_property_read_bool(pdev->dev.of_node,
 		"qcom,tx-napi");
 	IPADBG(": Enable tx NAPI = %s\n",
@@ -9160,9 +9218,8 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 
 	ipa_drv_res->tx_poll = of_property_read_bool(pdev->dev.of_node,
 		"qcom,tx-poll");
-	IPADBG(": Enable tx polling = %s\n",
-	       ipa_drv_res->tx_poll
-	       ? "True" : "False");
+	IPADBG(": Enable tx polling = %s\n", ipa_drv_res->tx_poll
+		? "True" : "False");
 
 	ipa_drv_res->rmnet_ctl_enable =
 		of_property_read_bool(pdev->dev.of_node,
@@ -9411,16 +9468,16 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 		ipa_drv_res->emulator_intcntrlr_mem_size =
 		    resource_size(resource);
 		IPADBG(":using intctrl-base at 0x%x of size 0x%x\n",
-		       ipa_drv_res->emulator_intcntrlr_mem_base,
-		       ipa_drv_res->emulator_intcntrlr_mem_size);
+			ipa_drv_res->emulator_intcntrlr_mem_base,
+			ipa_drv_res->emulator_intcntrlr_mem_size);
 	}
 
 	ipa_drv_res->entire_ipa_block_size = 0x100000;
 	result = of_property_read_u32(pdev->dev.of_node,
-				      "qcom,entire-ipa-block-size",
-				      &ipa_drv_res->entire_ipa_block_size);
+		"qcom,entire-ipa-block-size",
+		&ipa_drv_res->entire_ipa_block_size);
 	IPADBG(": entire_ipa_block_size = %d\n",
-	       ipa_drv_res->entire_ipa_block_size);
+		ipa_drv_res->entire_ipa_block_size);
 
 	/*
 	 * We'll read register-collection-on-crash here, but log it
@@ -9437,7 +9494,7 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	    of_property_read_bool(pdev->dev.of_node,
 				  "qcom,testbus-collection-on-crash");
 	IPADBG(": doing testbus collection on crash = %u\n",
-	       ipa_drv_res->do_testbus_collection_on_crash);
+		ipa_drv_res->do_testbus_collection_on_crash);
 
 	/*
 	 * We'll read non-tn-collection-on-crash here...
@@ -9446,7 +9503,7 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	    of_property_read_bool(pdev->dev.of_node,
 				  "qcom,non-tn-collection-on-crash");
 	IPADBG(": doing non-tn collection on crash = %u\n",
-	       ipa_drv_res->do_non_tn_collection_on_crash);
+		ipa_drv_res->do_non_tn_collection_on_crash);
 
 	/*
 	 * We'll read ram-collection-on-crash here...
@@ -9464,7 +9521,7 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 		ipa_drv_res->do_register_collection_on_crash = true;
 
 	IPADBG(": doing register collection on crash = %u\n",
-	       ipa_drv_res->do_register_collection_on_crash);
+		ipa_drv_res->do_register_collection_on_crash);
 
 	result = of_property_read_u32(
 		pdev->dev.of_node,
@@ -10557,9 +10614,7 @@ void ipa_pc_qmp_enable(void)
  *            PCIe Version
  *************************************************************/
 
-int ipa3_pci_drv_probe(
-	struct pci_dev            *pci_dev,
-	const struct pci_device_id *ent)
+int ipa3_pci_drv_probe(struct pci_dev *pci_dev, const struct pci_device_id *ent)
 {
 	int result;
 	struct ipa3_plat_drv_res *ipa_drv_res;
@@ -10634,7 +10689,7 @@ int ipa3_pci_drv_probe(
 
 	result =
 		of_property_read_u32(NULL, "emulator-bar0-offset",
-				     &bar0_offset);
+			&bar0_offset);
 	if (result) {
 		IPAERR(":get resource failed for emulator-bar0-offset!\n");
 		pci_release_region(pci_dev, 0);
@@ -10643,8 +10698,8 @@ int ipa3_pci_drv_probe(
 	}
 	IPADBG(":using emulator-bar0-offset 0x%08X\n", bar0_offset);
 
-	ipa_start     = ipa_drv_res->ipa_mem_base;
-	gsi_start     = ipa_drv_res->transport_mem_base;
+	ipa_start = ipa_drv_res->ipa_mem_base;
+	gsi_start = ipa_drv_res->transport_mem_base;
 	intctrl_start = ipa_drv_res->emulator_intcntrlr_mem_base;
 
 	/*
@@ -10661,8 +10716,8 @@ int ipa3_pci_drv_probe(
 	mem_start = pci_resource_start(pci_dev, 0);
 	mem_end   = pci_resource_end(pci_dev, 0);
 
-	IPADBG("PCI START                = 0x%x\n", mem_start);
-	IPADBG("PCI END                  = 0x%x\n", mem_end);
+	IPADBG("PCI START = 0x%x\n", mem_start);
+	IPADBG("PCI END = 0x%x\n", mem_end);
 
 	ipa_drv_res->ipa_mem_base = mem_start + bar0_offset;
 
@@ -10675,20 +10730,20 @@ int ipa3_pci_drv_probe(
 	ipa_drv_res->emulator_intcntrlr_mem_base =
 	    ipa_drv_res->ipa_mem_base + (intctrl_start - ipa_start);
 
-	IPADBG("ipa_mem_base                = 0x%x\n",
-	       ipa_drv_res->ipa_mem_base);
-	IPADBG("ipa_mem_size                = 0x%x\n",
-	       ipa_drv_res->ipa_mem_size);
+	IPADBG("ipa_mem_base = 0x%x\n",
+		ipa_drv_res->ipa_mem_base);
+	IPADBG("ipa_mem_size = 0x%x\n",
+		ipa_drv_res->ipa_mem_size);
 
-	IPADBG("transport_mem_base          = 0x%x\n",
-	       ipa_drv_res->transport_mem_base);
-	IPADBG("transport_mem_size          = 0x%x\n",
-	       ipa_drv_res->transport_mem_size);
+	IPADBG("transport_mem_base = 0x%x\n",
+		ipa_drv_res->transport_mem_base);
+	IPADBG("transport_mem_size = 0x%x\n",
+		ipa_drv_res->transport_mem_size);
 
 	IPADBG("emulator_intcntrlr_mem_base = 0x%x\n",
-	       ipa_drv_res->emulator_intcntrlr_mem_base);
+		ipa_drv_res->emulator_intcntrlr_mem_base);
 	IPADBG("emulator_intcntrlr_mem_size = 0x%x\n",
-	       ipa_drv_res->emulator_intcntrlr_mem_size);
+		ipa_drv_res->emulator_intcntrlr_mem_size);
 
 	bits = (ipa_drv_res->use_64_bit_dma_mask) ? 64 : 32;
 
@@ -10734,12 +10789,12 @@ int ipa3_get_transport_info(
 {
 	if (!phys_addr_ptr || !size_ptr) {
 		IPAERR("Bad arg: phys_addr_ptr(%pK) and/or size_ptr(%pK)\n",
-		       phys_addr_ptr, size_ptr);
+			phys_addr_ptr, size_ptr);
 		return -EINVAL;
 	}
 
 	*phys_addr_ptr = ipa3_res.transport_mem_base;
-	*size_ptr      = ipa3_res.transport_mem_size;
+	*size_ptr = ipa3_res.transport_mem_size;
 
 	return 0;
 }
