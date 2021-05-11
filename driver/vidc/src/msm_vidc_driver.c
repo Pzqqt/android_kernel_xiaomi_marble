@@ -280,6 +280,7 @@ struct msm_vidc_core_state_name {
 
 static const struct msm_vidc_core_state_name core_state_name_arr[] = {
 	{MSM_VIDC_CORE_DEINIT,           "CORE_DEINIT"                },
+	{MSM_VIDC_CORE_INIT_WAIT,        "CORE_INIT_WAIT"             },
 	{MSM_VIDC_CORE_INIT,             "CORE_INIT"                  },
 };
 
@@ -3776,6 +3777,61 @@ unlock:
 	return rc;
 }
 
+static void __fatal_error(struct msm_vidc_core *core, bool fatal)
+{
+	return;
+	fatal &= core->capabilities[HW_RESPONSE_TIMEOUT].value;
+	MSM_VIDC_ERROR(fatal);
+}
+
+static void __strict_check(struct msm_vidc_core *core)
+{
+	__fatal_error(core, !mutex_is_locked(&core->lock));
+}
+
+static int msm_vidc_core_init_wait(struct msm_vidc_core *core)
+{
+	static const int interval = 40;
+	int max_tries, count = 0, rc = 0;
+
+	if (!core || !core->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	__strict_check(core);
+
+	if (core->state != MSM_VIDC_CORE_INIT_WAIT)
+		return 0;
+
+	d_vpr_h("%s(): waiting for state change\n", __func__);
+	max_tries = core->capabilities[HW_RESPONSE_TIMEOUT].value / interval;
+	/**
+	 * attempt one more time to ensure triggering init_done
+	 * timeout sequence for 1st session, incase response not
+	 * received in reverse thread.
+	 */
+	while (count < max_tries + 1) {
+		if (core->state != MSM_VIDC_CORE_INIT_WAIT)
+			break;
+
+		core_unlock(core, __func__);
+		msleep_interruptible(interval);
+		core_lock(core, __func__);
+		count++;
+	}
+	d_vpr_h("%s: state %s, interval %u, count %u, max_tries %u\n", __func__,
+		core_state_name(core->state), interval, count, max_tries);
+
+	/* treat as fatal and fail session_open */
+	if (core->state == MSM_VIDC_CORE_INIT_WAIT) {
+		d_vpr_e("%s: state change failed\n", __func__);
+		rc = -EINVAL;
+	}
+
+	return rc;
+}
+
 int msm_vidc_core_init(struct msm_vidc_core *core)
 {
 	int rc = 0;
@@ -3786,12 +3842,14 @@ int msm_vidc_core_init(struct msm_vidc_core *core)
 	}
 
 	core_lock(core, __func__);
-	if (core->state == MSM_VIDC_CORE_INIT) {
-		rc = 0;
+	rc = msm_vidc_core_init_wait(core);
+	if (rc)
 		goto unlock;
-	}
 
-	msm_vidc_change_core_state(core, MSM_VIDC_CORE_INIT, __func__);
+	if (core->state == MSM_VIDC_CORE_INIT)
+		goto unlock;
+
+	msm_vidc_change_core_state(core, MSM_VIDC_CORE_INIT_WAIT, __func__);
 	init_completion(&core->init_done);
 	core->smmu_fault_handled = false;
 	core->ssr.trigger = false;
@@ -3812,6 +3870,7 @@ int msm_vidc_core_init(struct msm_vidc_core *core)
 		d_vpr_e("%s: core init timed out\n", __func__);
 		rc = -ETIMEDOUT;
 	} else {
+		msm_vidc_change_core_state(core, MSM_VIDC_CORE_INIT, __func__);
 		d_vpr_h("%s: system init wait completed\n", __func__);
 		rc = 0;
 	}
@@ -4015,7 +4074,7 @@ void msm_vidc_ssr_handler(struct work_struct *work)
 	ssr = &core->ssr;
 
 	core_lock(core, __func__);
-	if (core->state == MSM_VIDC_CORE_INIT) {
+	if (core->state != MSM_VIDC_CORE_DEINIT) {
 		/*
 		 * In current implementation, user-initiated SSR triggers
 		 * a fatal error from hardware. However, there is no way

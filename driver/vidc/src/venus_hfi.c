@@ -189,7 +189,7 @@ static void __strict_check(struct msm_vidc_core *core)
 
 bool __core_in_valid_state(struct msm_vidc_core *core)
 {
-	return core->state == MSM_VIDC_CORE_INIT;
+	return core->state != MSM_VIDC_CORE_DEINIT;
 }
 
 bool is_sys_cache_present(struct msm_vidc_core *core)
