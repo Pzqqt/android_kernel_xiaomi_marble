@@ -1418,8 +1418,8 @@ static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime *rtd)
 		}
 		pdata->codec_root = entry;
 	}
-	lpass_cdc_info_create_codec_entry(pdata->codec_root, component);
-	lpass_cdc_register_wake_irq(component, false);
+	lpass_cdc_info_create_codec_entry(pdata->codec_root, lpass_cdc_component);
+	lpass_cdc_register_wake_irq(lpass_cdc_component, false);
 
 	if (pdata->wcd_disabled)
 		goto done;
