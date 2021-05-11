@@ -175,6 +175,8 @@ struct wlan_regulatory_psoc_priv_obj {
 /**
  * struct wlan_regulatory_pdev_priv_obj - wlan regulatory pdev private object
  * @cur_chan_list: current channel list, includes 6G channels
+ * @secondary_cur_chan_list: secondary current channel list, for concurrency
+ * situations
  * @mas_chan_list: master channel list
  * @is_6g_channel_list_populated: indicates the channel lists are populated
  * @mas_chan_list_6g_ap: master channel list for 6G AP, includes all power types
@@ -195,6 +197,9 @@ struct wlan_regulatory_psoc_priv_obj {
  */
 struct wlan_regulatory_pdev_priv_obj {
 	struct regulatory_channel cur_chan_list[NUM_CHANNELS];
+#ifdef CONFIG_REG_CLIENT
+	struct regulatory_channel secondary_cur_chan_list[NUM_CHANNELS];
+#endif
 	struct regulatory_channel mas_chan_list[NUM_CHANNELS];
 #ifdef CONFIG_BAND_6GHZ
 	bool is_6g_channel_list_populated;

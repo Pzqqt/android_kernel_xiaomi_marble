@@ -565,6 +565,19 @@ bool reg_is_range_overlap_5g(qdf_freq_t low_freq, qdf_freq_t high_freq);
  */
 bool reg_is_freq_indoor(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq);
 
+#ifdef CONFIG_REG_CLIENT
+/**
+ * reg_is_freq_indoor_in_secondary_list() - Check if the input frequency is
+ * an indoor frequency in the secondary channel list
+ * @pdev: Pointer to pdev.
+ * @freq: Channel frequency.
+ *
+ * Return: Return true if the input frequency is indoor, else false.
+ */
+bool reg_is_freq_indoor_in_secondary_list(struct wlan_objmgr_pdev *pdev,
+					  qdf_freq_t freq);
+#endif
+
 #ifdef CONFIG_BAND_6GHZ
 /**
  * reg_is_6ghz_chan_freq() - Check if the given channel frequency is 6GHz
@@ -954,6 +967,20 @@ reg_get_channel_list_with_power_for_freq(struct wlan_objmgr_pdev *pdev,
 enum channel_state reg_get_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
 						  qdf_freq_t freq);
 
+#ifdef CONFIG_REG_CLIENT
+/**
+ * reg_get_channel_state_from_secondary_list_for_freq() - Get channel state
+ * from secondary regulatory current channel list
+ * @pdev: Pointer to pdev
+ * @freq: channel center frequency.
+ *
+ * Return: channel state
+ */
+enum channel_state reg_get_channel_state_from_secondary_list_for_freq(
+						struct wlan_objmgr_pdev *pdev,
+						qdf_freq_t freq);
+#endif
+
 /**
  * reg_get_5g_bonded_channel_state_for_freq() - Get channel state for
  * 5G bonded channel using the channel frequency
@@ -1058,6 +1085,19 @@ void reg_update_nol_ch_for_freq(struct wlan_objmgr_pdev *pdev,
  */
 bool reg_is_dfs_for_freq(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq);
 
+#ifdef CONFIG_REG_CLIENT
+/**
+ * reg_is_dfs_in_secondary_list_for_freq() - Checks the channel state for DFS
+ * from the secondary channel list
+ * @pdev: pdev ptr
+ * @freq: Channel center frequency
+ *
+ * Return: true or false
+ */
+bool reg_is_dfs_in_secondary_list_for_freq(struct wlan_objmgr_pdev *pdev,
+					   qdf_freq_t freq);
+#endif
+
 /**
  * reg_chan_freq_is_49ghz() - Check if the input channel center frequency is
  * 4.9GHz
@@ -1150,6 +1190,19 @@ reg_get_5g_bonded_channel_for_freq(struct wlan_objmgr_pdev *pdev,
  * Return: True if channel state is disabled, else false
  */
 bool reg_is_disable_for_freq(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq);
+
+#ifdef CONFIG_REG_CLIENT
+/**
+ * reg_is_disable_in_secondary_list_for_freq() - Check if the given channel
+ * frequency is in disable state
+ * @pdev: Pointer to pdev
+ * @freq: Channel frequency
+ *
+ * Return: True if channel state is disabled, else false
+ */
+bool reg_is_disable_in_secondary_list_for_freq(struct wlan_objmgr_pdev *pdev,
+					       qdf_freq_t freq);
+#endif
 
 /**
  * reg_is_passive_for_freq() - Check if the given channel frequency is in
