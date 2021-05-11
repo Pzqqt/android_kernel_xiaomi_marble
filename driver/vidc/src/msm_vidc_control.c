@@ -268,7 +268,7 @@ static int msm_vidc_add_children(struct msm_vidc_inst *inst,
 }
 
 static bool is_parent_available(struct msm_vidc_inst* inst,
-	u32 cap, u32 check_parent)
+	u32 cap, u32 check_parent, const char* func)
 {
 	int i = 0;
 	u32 cap_parent;
@@ -281,6 +281,10 @@ static bool is_parent_available(struct msm_vidc_inst* inst,
 		}
 		i++;
 	}
+
+	i_vpr_e(inst,
+		"%s: missing parent %s for %s\n",
+		func, cap_name(check_parent), cap_name(cap));
 	return false;
 }
 
@@ -308,7 +312,7 @@ static int msm_vidc_get_parent_value(struct msm_vidc_inst* inst,
 {
 	int rc = 0;
 
-	if (is_parent_available(inst, cap, parent)) {
+	if (is_parent_available(inst, cap, parent, __func__)) {
 		switch (parent) {
 		case BITRATE_MODE:
 			*value = inst->hfi_rc_type;
@@ -321,9 +325,6 @@ static int msm_vidc_get_parent_value(struct msm_vidc_inst* inst,
 			break;
 		}
 	} else {
-		i_vpr_e(inst,
-			"%s: missing parent %d for cap[%d] %s, fix database\n",
-			func, parent, cap, cap_name(cap));
 		rc = -EINVAL;
 	}
 
@@ -1037,7 +1038,7 @@ int msm_vidc_adjust_ir_random(void *instance, struct v4l2_ctrl *ctrl)
 	 * BITRATE_MODE dependency is NOT common across all chipsets.
 	 * Hence, do not return error if not specified as one of the parent.
 	 */
-	if (is_parent_available(inst, IR_RANDOM, BITRATE_MODE) &&
+	if (is_parent_available(inst, IR_RANDOM, BITRATE_MODE, __func__) &&
 		inst->hfi_rc_type != HFI_RC_CBR_CFR &&
 		inst->hfi_rc_type != HFI_RC_CBR_VFR)
 		adjusted_value = 0;
@@ -1265,6 +1266,14 @@ static int msm_vidc_adjust_static_layer_count_and_type(struct msm_vidc_inst *ins
 		goto exit;
 	}
 
+	if (!inst->capabilities->cap[META_EVA_STATS].value &&
+		hb_requested && (layer_count > 1)) {
+		layer_count = 1;
+		i_vpr_h(inst,
+			"%s: cvp disable supports only one enh layer HB\n",
+			__func__);
+	}
+
 	/* decide hfi layer type */
 	if (hb_requested) {
 		inst->hfi_layer_type = HFI_HIER_B;
@@ -1316,11 +1325,11 @@ int msm_vidc_adjust_layer_count(void *instance, struct v4l2_ctrl *ctrl)
 	client_layer_count = ctrl ? ctrl->val :
 		capability->cap[ENH_LAYER_COUNT].value;
 
-	if (!is_parent_available(inst, ENH_LAYER_COUNT, BITRATE_MODE)) {
-		i_vpr_e(inst, "%s: missing parent %d in database",
-			__func__, BITRATE_MODE);
+	if (!is_parent_available(inst, ENH_LAYER_COUNT,
+		BITRATE_MODE, __func__) ||
+		!is_parent_available(inst, ENH_LAYER_COUNT,
+		META_EVA_STATS, __func__))
 		return -EINVAL;
-	}
 
 	if (!inst->vb2q[OUTPUT_PORT].streaming) {
 		rc = msm_vidc_adjust_static_layer_count_and_type(inst,
