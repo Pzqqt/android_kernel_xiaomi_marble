@@ -76,7 +76,8 @@ struct swr_haptics_dev {
 	struct snd_soc_component	*component;
 	struct regmap			*regmap;
 	struct swr_port			port;
-	struct regulator		*vdd;
+	struct regulator		*slave_vdd;
+	bool				slave_enabled;
 	u8				vmax;
 };
 
@@ -117,6 +118,44 @@ static bool swr_hap_writeable_register(struct device *dev, unsigned int reg)
 	}
 
 	return 1;
+}
+
+static int swr_haptics_slave_enable(struct swr_haptics_dev *swr_hap)
+{
+	int rc;
+
+	if (swr_hap->slave_enabled)
+		return 0;
+
+	rc = regulator_enable(swr_hap->slave_vdd);
+	if (rc < 0) {
+		dev_err(swr_hap->dev, "%s: enable swr-slave-vdd failed, rc=%d\n",
+				__func__, rc);
+		return rc;
+	}
+
+	dev_dbg(swr_hap->dev, "%s: enable swr-slave-vdd success\n", __func__);
+	swr_hap->slave_enabled = true;
+	return 0;
+}
+
+static int swr_haptics_slave_disable(struct swr_haptics_dev *swr_hap)
+{
+	int rc;
+
+	if (!swr_hap->slave_enabled)
+		return 0;
+
+	rc = regulator_disable(swr_hap->slave_vdd);
+	if (rc < 0) {
+		dev_err(swr_hap->dev, "%s: disable swr-slave-vdd failed, rc=%d\n",
+				__func__, rc);
+		return rc;
+	}
+
+	dev_dbg(swr_hap->dev, "%s: disable swr-slave-vdd success\n", __func__);
+	swr_hap->slave_enabled = false;
+	return 0;
 }
 
 struct regmap_config swr_hap_regmap_config = {
@@ -379,16 +418,16 @@ static int swr_haptics_probe(struct swr_device *sdev)
 		goto clean;
 	}
 
-	swr_hap->vdd = devm_regulator_get(swr_hap->dev, "swr-slave");
-	if (IS_ERR(swr_hap->vdd)) {
-		rc = PTR_ERR(swr_hap->vdd);
+	swr_hap->slave_vdd = devm_regulator_get(swr_hap->dev, "swr-slave");
+	if (IS_ERR(swr_hap->slave_vdd)) {
+		rc = PTR_ERR(swr_hap->slave_vdd);
 		if (rc != -EPROBE_DEFER)
 			dev_err(swr_hap->dev, "%s: get swr-slave-supply failed, rc=%d\n",
 					__func__, rc);
 		goto clean;
 	}
 
-	rc = regulator_enable(swr_hap->vdd);
+	rc = swr_haptics_slave_enable(swr_hap);
 	if (rc < 0) {
 		dev_err(swr_hap->dev, "%s: enable swr-slave-vdd failed, rc=%d\n",
 				__func__, rc);
@@ -404,7 +443,7 @@ static int swr_haptics_probe(struct swr_device *sdev)
 		dev_err(swr_hap->dev, "%s: failed to get devnum for swr-haptics, rc=%d\n",
 				__func__, rc);
 		rc = -EPROBE_DEFER;
-		goto clean;
+		goto dev_err;
 	}
 
 	sdev->dev_num = devnum;
@@ -426,7 +465,7 @@ static int swr_haptics_probe(struct swr_device *sdev)
 
 	return 0;
 dev_err:
-	regulator_disable(swr_hap->vdd);
+	swr_haptics_slave_disable(swr_hap);
 	swr_remove_device(sdev);
 clean:
 	swr_set_dev_data(sdev, NULL);
@@ -445,7 +484,7 @@ static int swr_haptics_remove(struct swr_device *sdev)
 		goto clean;
 	}
 
-	rc = regulator_disable(swr_hap->vdd);
+	rc = swr_haptics_slave_disable(swr_hap);
 	if (rc < 0) {
 		dev_err(swr_hap->dev, "%s: disable swr-slave failed, rc=%d\n",
 				__func__, rc);
@@ -460,7 +499,6 @@ clean:
 static int swr_haptics_device_up(struct swr_device *sdev)
 {
 	struct swr_haptics_dev *swr_hap;
-	int rc;
 
 	swr_hap = swr_get_dev_data(sdev);
 	if (!swr_hap) {
@@ -469,20 +507,12 @@ static int swr_haptics_device_up(struct swr_device *sdev)
 	}
 
 	/* Take SWR slave out of reset */
-	rc = regulator_enable(swr_hap->vdd);
-	if (rc < 0) {
-		dev_err(swr_hap->dev, "%s: enable swr-slave failed, rc=%d\n",
-				__func__, rc);
-		return rc;
-	}
-
-	return 0;
+	return swr_haptics_slave_enable(swr_hap);
 }
 
 static int swr_haptics_device_down(struct swr_device *sdev)
 {
 	struct swr_haptics_dev *swr_hap = swr_get_dev_data(sdev);
-	int rc;
 
 	if (!swr_hap) {
 		dev_err(&sdev->dev, "%s: no data for swr_hap\n", __func__);
@@ -490,14 +520,7 @@ static int swr_haptics_device_down(struct swr_device *sdev)
 	}
 
 	/* Put SWR slave into reset */
-	rc = regulator_disable(swr_hap->vdd);
-	if (rc < 0) {
-		dev_err(swr_hap->dev, "%s: disable swr-slave failed, rc=%d\n",
-				__func__, rc);
-		return rc;
-	}
-
-	return 0;
+	return swr_haptics_slave_disable(swr_hap);
 }
 
 static int swr_haptics_suspend(struct device *dev)
