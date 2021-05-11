@@ -1910,7 +1910,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 
 		/* DFS requirement: DO NOT transmit during CAC. */
 		if (CHANNEL_STATE_DFS !=
-		    wlan_reg_get_channel_state_for_freq(
+		    wlan_reg_get_channel_state_from_secondary_list_for_freq(
 			hdd_ctx->pdev, ap_ctx->operating_chan_freq) ||
 			ignoreCAC ||
 			(hdd_ctx->dev_dfs_cac_status ==
@@ -2707,7 +2707,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		wlan_hdd_enable_roaming(adapter,
 					RSO_SAP_CHANNEL_CHANGE);
 		if (CHANNEL_STATE_DFS !=
-		    wlan_reg_get_channel_state_for_freq(hdd_ctx->pdev,
+		    wlan_reg_get_channel_state_from_secondary_list_for_freq(
+						hdd_ctx->pdev,
 						ap_ctx->operating_chan_freq))
 			ap_ctx->dfs_cac_block_tx = false;
 
@@ -5033,7 +5034,7 @@ int wlan_hdd_disable_channels(struct hdd_context *hdd_ctx)
 		 * the channels
 		 */
 		cache_chann->channel_info[i].reg_status =
-					wlan_reg_get_channel_state_for_freq(
+			wlan_reg_get_channel_state_from_secondary_list_for_freq(
 							hdd_ctx->pdev,
 							freq);
 		cache_chann->channel_info[i].wiphy_status =
@@ -5419,8 +5420,9 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		/* reject SAP if DFS channel scan is not allowed */
 		if (!(enable_dfs_scan) &&
 		    (CHANNEL_STATE_DFS ==
-		     wlan_reg_get_channel_state_for_freq(hdd_ctx->pdev,
-							 config->chan_freq))) {
+		     wlan_reg_get_channel_state_from_secondary_list_for_freq(
+							hdd_ctx->pdev,
+							config->chan_freq))) {
 			hdd_err("No SAP start on DFS channel");
 			ret = -EOPNOTSUPP;
 			goto error;
@@ -6607,8 +6609,10 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		enum phy_ch_width sub_20_ch_width = CH_WIDTH_INVALID;
 		struct sap_config *sap_cfg = &adapter->session.ap.sap_config;
 
-		if (CHANNEL_STATE_DFS == wlan_reg_get_channel_state_for_freq(
-					hdd_ctx->pdev, freq)) {
+		if (CHANNEL_STATE_DFS ==
+		    wlan_reg_get_channel_state_from_secondary_list_for_freq(
+								hdd_ctx->pdev,
+								freq)) {
 			hdd_err("Can't start SAP-DFS (channel=%d)with sub 20 MHz ch wd",
 				freq);
 			return -EINVAL;
