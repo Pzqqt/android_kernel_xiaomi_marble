@@ -34,7 +34,7 @@
 #include <wlan_policy_mgr_api.h>
 #endif
 #include <wlan_dfs_utils_api.h>
-#include <wlan_scan_cfg.h>
+#include <cfg_scan.h>
 
 QDF_STATUS
 scm_scan_free_scan_request_mem(struct scan_start_request *req)

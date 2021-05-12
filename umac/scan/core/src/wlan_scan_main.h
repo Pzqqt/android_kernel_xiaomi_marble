@@ -30,7 +30,7 @@
 #include <wlan_scan_public_structs.h>
 #include "wlan_scan_cache_db.h"
 #include "wlan_scan_11d.h"
-#include "wlan_scan_cfg.h"
+#include "cfg_scan.h"
 
 #define scm_alert(params...) \
 	QDF_TRACE_FATAL(QDF_MODULE_ID_SCAN, params)

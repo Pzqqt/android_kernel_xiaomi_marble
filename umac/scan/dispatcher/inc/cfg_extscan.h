@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -19,8 +19,8 @@
 /**
  * DOC: This file contains centralized definitions of EXTSCAN component
  */
-#ifndef _WLAN_EXTSCAN_CONFIG_H_
-#define _WLAN_EXTSCAN_CONFIG_H_
+#ifndef _CONFIG_EXTSCAN_H_
+#define _CONFIG_EXTSCAN_H_
 
 #include "cfg_define.h"
 
