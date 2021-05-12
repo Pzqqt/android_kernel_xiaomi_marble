@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  *
  * Copyright (c) 2009 Keith Packard
  *
@@ -1427,15 +1427,18 @@ static int dp_link_adjust_levels(struct dp_link *dp_link, u8 *link_status)
 	print_hex_dump_debug("[drm-dp] Req (VxPx): ",
 		DUMP_PREFIX_NONE, 8, 2, buf, sizeof(buf), false);
 
+	DP_DEBUG("Current (VxPx): 0x%x, 0x%x\n",
+		dp_link->phy_params.v_level, dp_link->phy_params.p_level);
+
 	/**
 	 * Adjust the voltage swing and pre-emphasis level combination to within
 	 * the allowable range.
 	 */
-	if (dp_link->phy_params.v_level > DP_LINK_VOLTAGE_MAX)
-		dp_link->phy_params.v_level = DP_LINK_VOLTAGE_MAX;
+	if (dp_link->phy_params.v_level > dp_link->phy_params.max_v_level)
+		dp_link->phy_params.v_level = dp_link->phy_params.max_v_level;
 
-	if (dp_link->phy_params.p_level > DP_LINK_PRE_EMPHASIS_MAX)
-		dp_link->phy_params.p_level = DP_LINK_PRE_EMPHASIS_MAX;
+	if (dp_link->phy_params.p_level > dp_link->phy_params.max_p_level)
+		dp_link->phy_params.p_level = dp_link->phy_params.max_p_level;
 
 	if ((dp_link->phy_params.p_level > DP_LINK_PRE_EMPHASIS_LEVEL_1)
 		&& (dp_link->phy_params.v_level == DP_LINK_VOLTAGE_LEVEL_2))
@@ -1445,7 +1448,7 @@ static int dp_link_adjust_levels(struct dp_link *dp_link, u8 *link_status)
 		&& (dp_link->phy_params.v_level == DP_LINK_VOLTAGE_LEVEL_1))
 		dp_link->phy_params.p_level = DP_LINK_PRE_EMPHASIS_LEVEL_2;
 
-	DP_DEBUG("Set (VxPx): %x%x\n",
+	DP_DEBUG("Set (VxPx): 0x%x, 0x%x\n",
 		dp_link->phy_params.v_level, dp_link->phy_params.p_level);
 
 	return 0;
@@ -1619,7 +1622,7 @@ int dp_link_configure(struct drm_dp_aux *aux, struct drm_dp_link *link)
 	return 0;
 }
 
-struct dp_link *dp_link_get(struct device *dev, struct dp_aux *aux)
+struct dp_link *dp_link_get(struct device *dev, struct dp_aux *aux, u32 dp_core_revision)
 {
 	int rc = 0;
 	struct dp_link_private *link;
@@ -1641,6 +1644,13 @@ struct dp_link *dp_link_get(struct device *dev, struct dp_aux *aux)
 	link->aux   = aux;
 
 	dp_link = &link->dp_link;
+
+	if (dp_core_revision >= 0x10020003)
+		dp_link->phy_params.max_v_level = DP_LINK_VOLTAGE_LEVEL_3;
+	else
+		dp_link->phy_params.max_v_level = DP_LINK_VOLTAGE_LEVEL_2;
+
+	dp_link->phy_params.max_p_level = DP_LINK_PRE_EMPHASIS_LEVEL_3;
 
 	dp_link->process_request        = dp_link_process_request;
 	dp_link->get_test_bits_depth    = dp_link_get_test_bits_depth;

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  *
  * Copyright (c) 2008 Keith Packard
  *
@@ -55,7 +55,7 @@ enum dp_link_voltage_level {
 	DP_LINK_VOLTAGE_LEVEL_0,
 	DP_LINK_VOLTAGE_LEVEL_1,
 	DP_LINK_VOLTAGE_LEVEL_2,
-	DP_LINK_VOLTAGE_MAX = DP_LINK_VOLTAGE_LEVEL_2,
+	DP_LINK_VOLTAGE_LEVEL_3,
 };
 
 enum dp_link_preemaphasis_level {
@@ -63,7 +63,6 @@ enum dp_link_preemaphasis_level {
 	DP_LINK_PRE_EMPHASIS_LEVEL_1,
 	DP_LINK_PRE_EMPHASIS_LEVEL_2,
 	DP_LINK_PRE_EMPHASIS_LEVEL_3,
-	DP_LINK_PRE_EMPHASIS_MAX = DP_LINK_PRE_EMPHASIS_LEVEL_3,
 };
 
 struct dp_link_sink_count {
@@ -112,6 +111,8 @@ struct dp_link_phy_params {
 	u32 phy_test_pattern_sel;
 	u8 v_level;
 	u8 p_level;
+	u8 max_v_level;
+	u8 max_p_level;
 };
 
 struct dp_link_params {
@@ -232,7 +233,7 @@ static inline u32 dp_link_bit_depth_to_bpp(u32 tbd)
  *
  * return: a pointer to dp_link struct
  */
-struct dp_link *dp_link_get(struct device *dev, struct dp_aux *aux);
+struct dp_link *dp_link_get(struct device *dev, struct dp_aux *aux, u32 dp_core_revision);
 
 /**
  * dp_link_put() - releases the dp test module's resources
