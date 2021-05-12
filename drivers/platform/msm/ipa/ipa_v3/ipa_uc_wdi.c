@@ -742,14 +742,14 @@ static void ipa_release_ap_smmu_mappings(enum ipa_client_type client)
 
 	if (IPA_CLIENT_IS_CONS(client)) {
 		start = IPA_WDI_TX_RING_RES;
-		if (ipa3_ctx->ipa_wdi3_over_gsi)
+		if (ipa_get_wdi_version() == IPA_WDI_3)
 			end = IPA_WDI_TX_DB_RES;
 		else
 			end = IPA_WDI_CE_DB_RES;
 	} else {
 		start = IPA_WDI_RX_RING_RES;
 		if (ipa3_ctx->ipa_wdi2 ||
-			ipa3_ctx->ipa_wdi3_over_gsi)
+			(ipa_get_wdi_version() == IPA_WDI_3))
 			end = IPA_WDI_RX_COMP_RING_WP_RES;
 		else
 			end = IPA_WDI_RX_RING_RP_RES;
@@ -1373,19 +1373,6 @@ int ipa3_connect_gsi_wdi_pipe(struct ipa_wdi_in_params *in,
 		gsi_channel_props.ring_base_addr = va;
 		gsi_channel_props.ring_base_vaddr =  NULL;
 		gsi_channel_props.ring_len = len;
-		pa = in->smmu_enabled ? in->u.ul_smmu.rdy_ring_rp_pa :
-			in->u.ul.rdy_ring_rp_pa;
-		if (ipa_create_gsi_smmu_mapping(IPA_WDI_RX_RING_RP_RES,
-					in->smmu_enabled,
-					pa,
-					NULL,
-					4,
-					false,
-					&wifi_rx_ri_addr)) {
-			IPAERR("fail to create gsi RX rng RP\n");
-			result = -ENOMEM;
-			goto gsi_timeout;
-		}
 		len = in->smmu_enabled ?
 			in->u.ul_smmu.rdy_comp_ring_size :
 			in->u.ul.rdy_comp_ring_size;
@@ -1406,6 +1393,19 @@ int ipa3_connect_gsi_wdi_pipe(struct ipa_wdi_in_params *in,
 			goto gsi_timeout;
 		}
 		gsi_evt_ring_props.ring_base_addr = va;
+		pa = in->smmu_enabled ? in->u.ul_smmu.rdy_ring_rp_pa :
+			in->u.ul.rdy_ring_rp_pa;
+		if (ipa_create_gsi_smmu_mapping(IPA_WDI_RX_RING_RP_RES,
+				in->smmu_enabled,
+				pa,
+				NULL,
+				4,
+				false,
+				&wifi_rx_ri_addr)) {
+			IPAERR("fail to create gsi RX rng RP\n");
+			result = -ENOMEM;
+			goto gsi_timeout;
+		}
 		gsi_evt_ring_props.ring_base_vaddr = NULL;
 		gsi_evt_ring_props.ring_len = len;
 		pa = in->smmu_enabled ?
@@ -1623,7 +1623,7 @@ int ipa3_connect_wdi_pipe(struct ipa_wdi_in_params *in,
 		}
 	}
 
-	if (ipa3_ctx->ipa_wdi2_over_gsi)
+	if (IPA_WDI2_OVER_GSI())
 		return ipa3_connect_gsi_wdi_pipe(in, out);
 
 	result = ipa3_uc_state_check();
@@ -2173,7 +2173,7 @@ int ipa3_disconnect_wdi_pipe(u32 clnt_hdl)
 		return -EINVAL;
 	}
 
-	if (ipa3_ctx->ipa_wdi2_over_gsi)
+	if (IPA_WDI2_OVER_GSI())
 		return ipa3_disconnect_gsi_wdi_pipe(clnt_hdl);
 
 	result = ipa3_uc_state_check();
@@ -2354,7 +2354,7 @@ int ipa3_enable_wdi_pipe(u32 clnt_hdl)
 		return -EINVAL;
 	}
 
-	if (ipa3_ctx->ipa_wdi2_over_gsi)
+	if (IPA_WDI2_OVER_GSI())
 		return ipa3_enable_gsi_wdi_pipe(clnt_hdl);
 
 	result = ipa3_uc_state_check();
@@ -2420,7 +2420,7 @@ int ipa3_disable_wdi_pipe(u32 clnt_hdl)
 		return -EINVAL;
 	}
 
-	if (ipa3_ctx->ipa_wdi2_over_gsi)
+	if (IPA_WDI2_OVER_GSI())
 		return ipa3_disable_gsi_wdi_pipe(clnt_hdl);
 
 	result = ipa3_uc_state_check();
@@ -2604,7 +2604,7 @@ int ipa3_resume_wdi_pipe(u32 clnt_hdl)
 		return -EINVAL;
 	}
 
-	if (ipa3_ctx->ipa_wdi2_over_gsi)
+	if (IPA_WDI2_OVER_GSI())
 		return ipa3_resume_gsi_wdi_pipe(clnt_hdl);
 
 	result = ipa3_uc_state_check();
@@ -2789,7 +2789,7 @@ int ipa3_suspend_wdi_pipe(u32 clnt_hdl)
 		return -EINVAL;
 	}
 
-	if (ipa3_ctx->ipa_wdi2_over_gsi)
+	if (IPA_WDI2_OVER_GSI())
 		return ipa3_suspend_gsi_wdi_pipe(clnt_hdl);
 
 	result = ipa3_uc_state_check();

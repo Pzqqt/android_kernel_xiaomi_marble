@@ -2809,6 +2809,12 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			IPA_DPS_HPS_SEQ_TYPE_2ND_PKT_PROCESS_PASS_NO_DEC_UCP,
 			QMB_MASTER_SELECT_DDR,
 			{ 9, 12, 8, 16, IPA_EE_AP, GSI_FREE_PRE_FETCH, 2 } },
+	[IPA_4_5_AUTO][IPA_CLIENT_WLAN1_PROD]          = {
+			false, IPA_v4_5_GROUP_UL_DL,
+			true,
+			IPA_DPS_HPS_SEQ_TYPE_2ND_PKT_PROCESS_PASS_NO_DEC_UCP,
+			QMB_MASTER_SELECT_DDR,
+			{ 9, 12, 8, 16, IPA_EE_AP, GSI_FREE_PRE_FETCH, 2 } },
 	[IPA_4_5_AUTO][IPA_CLIENT_USB_PROD]            = {
 			true, IPA_v4_5_GROUP_UL_DL,
 			true,
@@ -2908,6 +2914,12 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			{ 11, 14, 8, 16, IPA_EE_AP } },
 
 	[IPA_4_5_AUTO][IPA_CLIENT_WLAN2_CONS]          = {
+			false, IPA_v4_5_GROUP_UL_DL,
+			false,
+			IPA_DPS_HPS_SEQ_TYPE_INVALID,
+			QMB_MASTER_SELECT_DDR,
+			{ 24, 18, 8, 14, IPA_EE_AP, GSI_SMART_PRE_FETCH, 3 } },
+	[IPA_4_5_AUTO][IPA_CLIENT_WLAN1_CONS]          = {
 			false, IPA_v4_5_GROUP_UL_DL,
 			false,
 			IPA_DPS_HPS_SEQ_TYPE_INVALID,
@@ -11633,6 +11645,39 @@ int emulator_load_fws(
 	IPADBG("IPA FWs (GSI FW, DPS and HPS) loaded successfully\n");
 
 	return 0;
+}
+
+/**
+ * ipa3_is_msm_device() - Is the running device a MSM or MDM
+ * Determine according to IPA version
+ *
+ * Return value: true if MSM, false if MDM
+ *
+ */
+bool ipa3_is_msm_device(void)
+{
+	switch (ipa3_ctx->ipa_hw_type){
+	case IPA_HW_v3_0:
+	case IPA_HW_v3_5:
+	case IPA_HW_v4_0:
+	case IPA_HW_v4_5:
+	case IPA_HW_v5_0:
+		return false;
+	case IPA_HW_v3_1:
+	case IPA_HW_v3_5_1:
+	case IPA_HW_v4_1:
+	case IPA_HW_v4_2:
+	case IPA_HW_v4_7:
+	case IPA_HW_v4_9:
+	case IPA_HW_v4_11:
+	case IPA_HW_v5_1:
+		return true;
+	default:
+		IPAERR("unknown HW type %d\n", ipa3_ctx->ipa_hw_type);
+		ipa_assert();
+	}
+
+	return false;
 }
 
 /**
