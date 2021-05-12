@@ -2528,8 +2528,10 @@ target_if_process_sfft_report_gen3(
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	p_sfft->fft_detector_id = get_bitfield(p_fft_report->hdr_a,
-					       2, 0);
+	p_sfft->fft_detector_id = get_bitfield(
+					p_fft_report->hdr_a,
+					FFT_REPORT_HDR_A_DETECTOR_ID_SIZE_GEN3,
+					FFT_REPORT_HDR_A_DETECTOR_ID_POS_GEN3);
 
 	/* It is expected to have same detector id for
 	 * summary and fft report
@@ -2564,43 +2566,68 @@ target_if_process_sfft_report_gen3(
 				     p_sfft->fft_detector_id);
 
 
-	p_sfft->fft_num = get_bitfield(p_fft_report->hdr_a, 3, 2);
+	p_sfft->fft_num = get_bitfield(p_fft_report->hdr_a,
+				       FFT_REPORT_HDR_A_FFT_NUM_SIZE_GEN3,
+				       FFT_REPORT_HDR_A_FFT_NUM_POS_GEN3);
 
 	switch (spectral->rparams.version) {
 	case SPECTRAL_REPORT_FORMAT_VERSION_1:
 		p_sfft->fft_radar_check = get_bitfield(p_fft_report->hdr_a,
-						       12, 5);
-		peak_sidx = get_bitfield(p_fft_report->hdr_a, 11, 17);
-		p_sfft->fft_chn_idx = get_bitfield(p_fft_report->hdr_a, 3, 28);
+				FFT_REPORT_HDR_A_RADAR_CHECK_SIZE_GEN3_V1,
+				FFT_REPORT_HDR_A_RADAR_CHECK_POS_GEN3_V1);
+		peak_sidx = get_bitfield(
+				p_fft_report->hdr_a,
+				FFT_REPORT_HDR_A_PEAK_INDEX_SIZE_GEN3_V1,
+				FFT_REPORT_HDR_A_PEAK_INDEX_POS_GEN3_V1);
+		p_sfft->fft_chn_idx = get_bitfield(p_fft_report->hdr_a,
+				FFT_REPORT_HDR_A_CHAIN_INDEX_SIZE_GEN3_V1,
+				FFT_REPORT_HDR_A_CHAIN_INDEX_POS_GEN3_V1);
 		p_sfft->fft_base_pwr_db = get_bitfield(p_fft_report->hdr_b,
-						       9, 0);
+				FFT_REPORT_HDR_B_BASE_PWR_SIZE_GEN3_V1,
+				FFT_REPORT_HDR_B_BASE_PWR_POS_GEN3_V1);
 		p_sfft->fft_total_gain_db = get_bitfield(p_fft_report->hdr_b,
-							 8, 9);
+				FFT_REPORT_HDR_B_TOTAL_GAIN_SIZE_GEN3_V1,
+				FFT_REPORT_HDR_B_TOTAL_GAIN_POS_GEN3_V1);
 		break;
 	case SPECTRAL_REPORT_FORMAT_VERSION_2:
 		p_sfft->fft_radar_check = get_bitfield(p_fft_report->hdr_a,
-						       14, 5);
-		peak_sidx = get_bitfield(p_fft_report->hdr_a, 11, 19);
-		p_sfft->fft_chn_idx = get_bitfield(p_fft_report->hdr_b, 3, 0);
+				FFT_REPORT_HDR_A_RADAR_CHECK_SIZE_GEN3_V2,
+				FFT_REPORT_HDR_A_RADAR_CHECK_POS_GEN3_V2);
+		peak_sidx = get_bitfield(
+				p_fft_report->hdr_a,
+				FFT_REPORT_HDR_A_PEAK_INDEX_SIZE_GEN3_V2,
+				FFT_REPORT_HDR_A_PEAK_INDEX_POS_GEN3_V2);
+		p_sfft->fft_chn_idx = get_bitfield(p_fft_report->hdr_b,
+				FFT_REPORT_HDR_B_CHAIN_INDEX_SIZE_GEN3_V2,
+				FFT_REPORT_HDR_B_CHAIN_INDEX_POS_GEN3_V2);
 		p_sfft->fft_base_pwr_db = get_bitfield(p_fft_report->hdr_b,
-						       9, 3);
+				FFT_REPORT_HDR_B_BASE_PWR_SIZE_GEN3_V2,
+				FFT_REPORT_HDR_B_BASE_PWR_POS_GEN3_V2);
 		p_sfft->fft_total_gain_db = get_bitfield(p_fft_report->hdr_b,
-							 8, 12);
+				FFT_REPORT_HDR_B_TOTAL_GAIN_SIZE_GEN3_V2,
+				FFT_REPORT_HDR_B_TOTAL_GAIN_POS_GEN3_V2);
 		break;
 	default:
 		qdf_assert_always(0);
 	}
 
-	p_sfft->fft_peak_sidx = unsigned_to_signed(peak_sidx, 11);
+	p_sfft->fft_peak_sidx = unsigned_to_signed(peak_sidx,
+				FFT_REPORT_HDR_A_PEAK_INDEX_SIZE_GEN3_V1);
 
 	p_sfft->fft_num_str_bins_ib = get_bitfield(p_fft_report->hdr_c,
-						   8, 0);
-	peak_mag = get_bitfield(p_fft_report->hdr_c, 10, 8);
-	p_sfft->fft_peak_mag = unsigned_to_signed(peak_mag, 10);
+				FFT_REPORT_HDR_C_NUM_STRONG_BINS_SIZE_GEN3,
+				FFT_REPORT_HDR_C_NUM_STRONG_BINS_POS_GEN3);
+	peak_mag = get_bitfield(p_fft_report->hdr_c,
+				FFT_REPORT_HDR_C_PEAK_MAGNITUDE_SIZE_GEN3,
+				FFT_REPORT_HDR_C_PEAK_MAGNITUDE_POS_GEN3);
+	p_sfft->fft_peak_mag = unsigned_to_signed(peak_mag,
+				FFT_REPORT_HDR_C_PEAK_MAGNITUDE_SIZE_GEN3);
 	p_sfft->fft_avgpwr_db = get_bitfield(p_fft_report->hdr_c,
-					     7, 18);
+				FFT_REPORT_HDR_C_AVG_PWR_SIZE_GEN3,
+				FFT_REPORT_HDR_C_AVG_PWR_POS_GEN3);
 	p_sfft->fft_relpwr_db = get_bitfield(p_fft_report->hdr_c,
-					     7, 25);
+				FFT_REPORT_HDR_C_RELATIVE_PWR_SIZE_GEN3,
+				FFT_REPORT_HDR_C_RELATIVE_PWR_POS_GEN3);
 
 	spectral_mode = target_if_get_spectral_mode(p_sfft->fft_detector_id,
 						    &spectral->rparams);
