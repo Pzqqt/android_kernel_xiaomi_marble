@@ -1655,7 +1655,7 @@ int handle_response(struct msm_vidc_core *core, void *response)
 	rc = validate_hdr_packet(core, hdr, __func__);
 	if (rc) {
 		d_vpr_e("%s: hdr pkt validation failed\n", __func__);
-		return -EINVAL;
+		return handle_system_error(core, NULL);
 	}
 
 	if (!hdr->session_id)
