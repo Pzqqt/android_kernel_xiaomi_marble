@@ -309,6 +309,24 @@ end:
 }
 
 #ifdef WLAN_FEATURE_TSF
+
+#ifdef WLAN_FEATURE_TSF_UPLINK_DELAY
+static void wma_vdev_tsf_set_mac_id(struct stsf *ptsf, uint32_t mac_id,
+				    uint32_t mac_id_valid)
+{
+	ptsf->mac_id = mac_id;
+	ptsf->mac_id_valid = mac_id_valid;
+
+	wma_nofl_debug("mac_id %d mac_id_valid %d", ptsf->mac_id,
+		       ptsf->mac_id_valid);
+}
+#else /* !WLAN_FEATURE_TSF_UPLINK_DELAY */
+static inline void wma_vdev_tsf_set_mac_id(struct stsf *ptsf, uint32_t mac_id,
+					   uint32_t mac_id_valid)
+{
+}
+#endif /* WLAN_FEATURE_TSF_UPLINK_DELAY */
+
 /**
  * wma_vdev_tsf_handler() - handle tsf event indicated by FW
  * @handle: wma context
@@ -348,6 +366,10 @@ int wma_vdev_tsf_handler(void *handle, uint8_t *data, uint32_t data_len)
 	wma_nofl_debug("g_tsf: %d %d; soc_timer: %d %d",
 		       ptsf->global_tsf_low, ptsf->global_tsf_high,
 			   ptsf->soc_timer_low, ptsf->soc_timer_high);
+
+	wma_vdev_tsf_set_mac_id(ptsf, tsf_event->mac_id,
+				tsf_event->mac_id_valid);
+
 	tsf_msg.type = eWNI_SME_TSF_EVENT;
 	tsf_msg.bodyptr = ptsf;
 	tsf_msg.bodyval = 0;
