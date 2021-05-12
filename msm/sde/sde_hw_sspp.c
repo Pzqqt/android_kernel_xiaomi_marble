@@ -693,7 +693,7 @@ static void sde_hw_sspp_setup_pe_config(struct sde_hw_pipe *ctx,
 
 	/* color 3 */
 	SDE_REG_WRITE(c, SSPP_SW_PIX_EXT_C3_LR + idx, lr_pe[3]);
-	SDE_REG_WRITE(c, SSPP_SW_PIX_EXT_C3_TB + idx, lr_pe[3]);
+	SDE_REG_WRITE(c, SSPP_SW_PIX_EXT_C3_TB + idx, tb_pe[3]);
 	SDE_REG_WRITE(c, SSPP_SW_PIX_EXT_C3_REQ_PIXELS + idx,
 			tot_req_pixels[3]);
 }
