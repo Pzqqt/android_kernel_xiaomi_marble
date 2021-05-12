@@ -32,6 +32,9 @@
 #ifdef FEATURE_WDS
 #include "dp_txrx_wds.h"
 #endif
+#ifdef WIFI_MONITOR_SUPPORT
+#include <dp_mon.h>
+#endif
 
 #ifdef WLAN_TX_PKT_CAPTURE_ENH
 #include "dp_tx_capture.h"
@@ -2271,7 +2274,8 @@ static inline struct dp_peer *dp_peer_find_add_id(struct dp_soc *soc,
 		dp_peer_find_id_to_obj_add(soc, peer, peer_id);
 		if (peer->peer_id == HTT_INVALID_PEER) {
 			peer->peer_id = peer_id;
-			dp_peer_tid_peer_id_update(peer, peer->peer_id);
+			monitor_peer_tid_peer_id_update(soc, peer,
+							peer->peer_id);
 		} else {
 			QDF_ASSERT(0);
 		}
@@ -3220,30 +3224,6 @@ static void dp_peer_setup_remaining_tids(struct dp_peer *peer) {};
 #endif
 
 /*
- * dp_peer_tx_init() – Initialize receive TID state
- * @pdev: Datapath pdev
- * @peer: Datapath peer
- *
- */
-void dp_peer_tx_init(struct dp_pdev *pdev, struct dp_peer *peer)
-{
-	dp_peer_tid_queue_init(peer);
-	dp_peer_update_80211_hdr(peer->vdev, peer);
-}
-
-/*
- * dp_peer_tx_cleanup() – Deinitialize receive TID state
- * @vdev: Datapath vdev
- * @peer: Datapath peer
- *
- */
-static inline void
-dp_peer_tx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer)
-{
-	dp_peer_tid_queue_cleanup(peer);
-}
-
-/*
  * dp_peer_rx_init() – Initialize receive TID state
  * @pdev: Datapath pdev
  * @peer: Datapath peer
@@ -3373,7 +3353,7 @@ void dp_peer_cleanup(struct dp_vdev *vdev, struct dp_peer *peer)
 	/* save vdev related member in case vdev freed */
 	vdev_opmode = vdev->opmode;
 
-	dp_peer_tx_cleanup(vdev, peer);
+	monitor_peer_tx_cleanup(vdev, peer);
 
 	if (vdev_opmode != wlan_op_mode_monitor)
 	/* cleanup the Rx reorder queues for this peer */

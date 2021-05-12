@@ -1682,21 +1682,29 @@ int wlan_cfg_get_dma_mon_buf_ring_size(struct wlan_cfg_dp_pdev_ctxt *cfg)
 	return  cfg->dma_mon_buf_ring_size;
 }
 
+qdf_export_symbol(wlan_cfg_get_dma_mon_buf_ring_size);
+
 int wlan_cfg_get_dma_mon_dest_ring_size(struct wlan_cfg_dp_pdev_ctxt *cfg)
 {
 	return  cfg->dma_mon_dest_ring_size;
 }
+
+qdf_export_symbol(wlan_cfg_get_dma_mon_dest_ring_size);
 
 int wlan_cfg_get_dma_mon_stat_ring_size(struct wlan_cfg_dp_pdev_ctxt *cfg)
 {
 	return  cfg->dma_mon_status_ring_size;
 }
 
+qdf_export_symbol(wlan_cfg_get_dma_mon_stat_ring_size);
+
 int
 wlan_cfg_get_dma_mon_desc_ring_size(struct wlan_cfg_dp_pdev_ctxt *cfg)
 {
 	return cfg->rxdma_monitor_desc_ring;
 }
+
+qdf_export_symbol(wlan_cfg_get_dma_mon_desc_ring_size);
 
 int wlan_cfg_get_rx_dma_buf_ring_size(struct wlan_cfg_dp_pdev_ctxt *cfg)
 {

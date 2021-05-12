@@ -27,6 +27,8 @@
 #include "dp_rx_mon.h"
 #include "dp_internal.h"
 #include "qdf_mem.h"   /* qdf_mem_malloc,free */
+#include "dp_htt.h"
+#include "dp_mon.h"
 
 #include "htt.h"
 

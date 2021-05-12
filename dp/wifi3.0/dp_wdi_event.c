@@ -19,6 +19,10 @@
 
 #include "dp_internal.h"
 #include "qdf_mem.h"   /* qdf_mem_malloc,free */
+#ifdef WIFI_MONITOR_SUPPORT
+#include "dp_htt.h"
+#include <dp_mon.h>
+#endif
 
 #ifdef WDI_EVENT_ENABLE
 void *dp_get_pldev(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
@@ -192,7 +196,7 @@ dp_wdi_event_sub(
 		return -EINVAL;
 	}
 
-	dp_set_pktlog_wifi3(txrx_pdev, event, true);
+	monitor_set_pktlog_wifi3(txrx_pdev, event, true);
 	event_index = event - WDI_EVENT_BASE;
 	wdi_sub = txrx_pdev->wdi_event_list[event_index];
 
@@ -254,7 +258,7 @@ dp_wdi_event_unsub(
 		return -EINVAL;
 	}
 
-	dp_set_pktlog_wifi3(txrx_pdev, event, false);
+	monitor_set_pktlog_wifi3(txrx_pdev, event, false);
 
 	if (!event_cb_sub->priv.prev) {
 		txrx_pdev->wdi_event_list[event_index] = event_cb_sub->priv.next;

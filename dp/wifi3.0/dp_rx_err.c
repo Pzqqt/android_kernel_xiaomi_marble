@@ -27,6 +27,10 @@
 #include "qdf_nbuf.h"
 #include "dp_rx_defrag.h"
 #include "dp_ipa.h"
+#ifdef WIFI_MONITOR_SUPPORT
+#include "dp_htt.h"
+#include <dp_mon.h>
+#endif
 #ifdef FEATURE_WDS
 #include "dp_txrx_wds.h"
 #endif

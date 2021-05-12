@@ -212,11 +212,194 @@ static inline QDF_STATUS monitor_config_debug_sniffer(struct dp_pdev *pdev,
 {
 	return QDF_STATUS_E_FAILURE;
 }
+
+static inline void monitor_flush_rings(struct dp_soc *soc)
+{
+}
+
+static inline QDF_STATUS monitor_htt_srng_setup(struct dp_soc *soc,
+						struct dp_pdev *pdev,
+						int mac_id,
+						int mac_for_pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void monitor_service_mon_rings(struct dp_soc *soc, uint32_t quota)
+{
+}
+
+static inline
+uint32_t monitor_process(struct dp_soc *soc, struct dp_intr *int_ctx,
+			 uint32_t mac_id, uint32_t quota)
+{
+	return 0;
+}
+
+static inline
+uint32_t monitor_drop_packets_for_mac(struct dp_pdev *pdev,
+				      uint32_t mac_id, uint32_t quota)
+{
+	return 0;
+}
+
+static inline void monitor_peer_tx_init(struct dp_pdev *pdev,
+					struct dp_peer *peer)
+{
+}
+
+static inline void monitor_peer_tx_cleanup(struct dp_vdev *vdev,
+					   struct dp_peer *peer)
+{
+}
+
+static inline
+void monitor_peer_tid_peer_id_update(struct dp_soc *soc,
+				     struct dp_peer *peer,
+				     uint16_t peer_id)
+{
+}
+
+static inline void monitor_tx_ppdu_stats_attach(struct dp_pdev *pdev)
+{
+}
+
+static inline void monitor_tx_ppdu_stats_detach(struct dp_pdev *pdev)
+{
+}
+
+static inline QDF_STATUS monitor_tx_capture_debugfs_init(struct dp_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void monitor_peer_tx_capture_filter_check(struct dp_pdev *pdev,
+							struct dp_peer *peer)
+{
+}
+
+static inline
+QDF_STATUS monitor_tx_add_to_comp_queue(struct dp_soc *soc,
+					struct dp_tx_desc_s *desc,
+					struct hal_tx_completion_status *ts,
+					struct dp_peer *peer)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
+static inline bool monitor_ppdu_stats_ind_handler(struct htt_soc *soc,
+						  uint32_t *msg_word,
+						  qdf_nbuf_t htt_t2h_msg)
+{
+	return true;
+}
+
+static inline QDF_STATUS monitor_htt_ppdu_stats_attach(struct dp_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void monitor_htt_ppdu_stats_detach(struct dp_pdev *pdev)
+{
+}
+
+static inline void monitor_print_pdev_rx_mon_stats(struct dp_pdev *pdev)
+{
+}
+
+static inline QDF_STATUS monitor_config_enh_tx_capture(struct dp_pdev *pdev,
+						       uint32_t val)
+{
+	return QDF_STATUS_E_INVAL;
+}
+
+static inline QDF_STATUS monitor_config_enh_rx_capture(struct dp_pdev *pdev,
+						       uint32_t val)
+{
+	return QDF_STATUS_E_INVAL;
+}
+
+static inline QDF_STATUS monitor_set_bpr_enable(struct dp_pdev *pdev,
+						uint32_t val)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
+static inline int monitor_set_filter_neigh_peers(struct dp_pdev *pdev, bool val)
+{
+	return 0;
+}
+
+static inline
+void monitor_set_atf_stats_enable(struct dp_pdev *pdev, bool value)
+{
+}
+
+static inline
+void monitor_set_bsscolor(struct dp_pdev *pdev, uint8_t bsscolor)
+{
+}
+
+static inline
+bool monitor_pdev_get_filter_mcast_data(struct cdp_pdev *pdev_handle)
+{
+	return false;
+}
+
+static inline
+bool monitor_pdev_get_filter_non_data(struct cdp_pdev *pdev_handle)
+{
+	return false;
+}
+
+static inline
+bool monitor_pdev_get_filter_ucast_data(struct cdp_pdev *pdev_handle)
+{
+	return false;
+}
+
+static inline
+int monitor_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event, bool enable)
+{
+	return 0;
+}
+
+static inline void monitor_pktlogmod_exit(struct dp_pdev *pdev)
+{
+}
+
+static inline
+void monitor_vdev_set_monitor_mode_buf_rings(struct dp_pdev *pdev)
+{
+}
+
+static inline
+void monitor_neighbour_peers_detach(struct dp_pdev *pdev)
+{
+}
+
+static inline QDF_STATUS monitor_filter_neighbour_peer(struct dp_pdev *pdev,
+						       uint8_t *rx_pkt_hdr)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
+static inline void monitor_print_pdev_tx_capture_stats(struct dp_pdev *pdev)
+{
+}
 #endif
 
-#ifdef WLAN_TX_PKT_CAPTURE_ENH
-extern uint8_t
-dp_cpu_ring_map[DP_NSS_CPU_RING_MAP_MAX][WLAN_CFG_INT_NUM_CONTEXTS_MAX];
+#ifndef WIFI_MONITOR_SUPPORT
+static inline QDF_STATUS monitor_drop_inv_peer_pkts(struct dp_vdev *vdev,
+						    struct ieee80211_frame *wh)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
+static inline bool dp_is_enable_reap_timer_non_pkt(struct dp_pdev *pdev)
+{
+	return false;
+}
 #endif
 
 #define DP_MAX_TIMER_EXEC_TIME_TICKS \
@@ -1134,7 +1317,6 @@ void dp_peer_ppdu_delayed_ba_init(struct dp_peer *peer);
 void dp_peer_ppdu_delayed_ba_cleanup(struct dp_peer *peer);
 
 extern void dp_peer_rx_init(struct dp_pdev *pdev, struct dp_peer *peer);
-void dp_peer_tx_init(struct dp_pdev *pdev, struct dp_peer *peer);
 void dp_peer_cleanup(struct dp_vdev *vdev, struct dp_peer *peer);
 void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer);
 extern struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
@@ -1515,15 +1697,6 @@ void
 dp_print_pdev_rx_stats(struct dp_pdev *pdev);
 
 /**
- * dp_print_pdev_rx_mon_stats(): Print Pdev level RX monitor stats
- * @pdev: DP_PDEV Handle
- *
- * Return: void
- */
-void
-dp_print_pdev_rx_mon_stats(struct dp_pdev *pdev);
-
-/**
  * dp_print_soc_tx_stats(): Print SOC level  stats
  * @soc DP_SOC Handle
  *
@@ -1772,8 +1945,6 @@ void dp_wdi_event_handler(enum WDI_EVENT event, struct dp_soc *soc,
 
 int dp_wdi_event_attach(struct dp_pdev *txrx_pdev);
 int dp_wdi_event_detach(struct dp_pdev *txrx_pdev);
-int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
-	bool enable);
 
 /**
  * dp_get_pldev() - function to get pktlog device handle
@@ -1783,7 +1954,6 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
  * Return: pktlog device handle or NULL
  */
 void *dp_get_pldev(struct cdp_soc_t *soc_hdl, uint8_t pdev_id);
-void dp_pkt_log_init(struct cdp_soc_t *soc_hdl, uint8_t pdev_id, void *scn);
 
 static inline void
 dp_hif_update_pipe_callback(struct dp_soc *dp_soc,
@@ -1803,8 +1973,6 @@ dp_hif_update_pipe_callback(struct dp_soc *dp_soc,
 	hif_update_pipe_callback(dp_soc->hif_handle,
 		DP_HTT_T2H_HP_PIPE, &hif_pipe_callbacks);
 }
-
-QDF_STATUS dp_peer_stats_notify(struct dp_pdev *pdev, struct dp_peer *peer);
 
 QDF_STATUS dp_peer_qos_stats_notify(struct dp_pdev *dp_pdev,
 				    struct cdp_rx_stats_ppdu_user *ppdu_user);
@@ -1841,20 +2009,10 @@ static inline int dp_wdi_event_detach(struct dp_pdev *txrx_pdev)
 	return 0;
 }
 
-static inline int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
-	bool enable)
-{
-	return 0;
-}
 static inline QDF_STATUS dp_h2t_cfg_stats_msg_send(struct dp_pdev *pdev,
 		uint32_t stats_type_upload_mask, uint8_t mac_id)
 {
 	return 0;
-}
-
-static inline void
-dp_pkt_log_init(struct cdp_soc_t *soc_hdl, uint8_t pdev_id, void *scn)
-{
 }
 
 static inline void
@@ -1864,11 +2022,6 @@ dp_hif_update_pipe_callback(struct dp_soc *dp_soc, void *cb_context,
 {
 }
 
-static inline QDF_STATUS dp_peer_stats_notify(struct dp_pdev *pdev,
-					      struct dp_peer *peer)
-{
-	return QDF_STATUS_SUCCESS;
-}
 
 static inline QDF_STATUS
 dp_peer_qos_stats_notify(struct dp_pdev *dp_pdev,
@@ -2073,115 +2226,6 @@ void dp_pdev_print_tid_stats(struct dp_pdev *pdev);
 #endif /* CONFIG_WIN */
 
 void dp_soc_set_txrx_ring_map(struct dp_soc *soc);
-
-#ifndef WLAN_TX_PKT_CAPTURE_ENH
-/**
- * dp_tx_ppdu_stats_attach - Initialize Tx PPDU stats and enhanced capture
- * @pdev: DP PDEV
- *
- * Return: none
- */
-static inline void dp_tx_ppdu_stats_attach(struct dp_pdev *pdev)
-{
-}
-
-/**
- * dp_tx_ppdu_stats_detach - Cleanup Tx PPDU stats and enhanced capture
- * @pdev: DP PDEV
- *
- * Return: none
- */
-static inline void dp_tx_ppdu_stats_detach(struct dp_pdev *pdev)
-{
-}
-
-/**
- * dp_tx_ppdu_stats_process - Deferred PPDU stats handler
- * @context: Opaque work context (PDEV)
- *
- * Return: none
- */
-static  inline void dp_tx_ppdu_stats_process(void *context)
-{
-}
-
-/**
- * dp_tx_add_to_comp_queue() - add completion msdu to queue
- * @soc: DP Soc handle
- * @tx_desc: software Tx descriptor
- * @ts : Tx completion status from HAL/HTT descriptor
- * @peer: DP peer
- *
- * Return: none
- */
-static inline
-QDF_STATUS dp_tx_add_to_comp_queue(struct dp_soc *soc,
-				   struct dp_tx_desc_s *desc,
-				   struct hal_tx_completion_status *ts,
-				   struct dp_peer *peer)
-{
-	return QDF_STATUS_E_FAILURE;
-}
-
-/*
- * dp_tx_capture_htt_frame_counter: increment counter for htt_frame_type
- * pdev: DP pdev handle
- * htt_frame_type: htt frame type received from fw
- *
- * return: void
- */
-static inline
-void dp_tx_capture_htt_frame_counter(struct dp_pdev *pdev,
-				     uint32_t htt_frame_type)
-{
-}
-
-/*
- * dp_tx_cature_stats: print tx capture stats
- * @pdev: DP PDEV handle
- *
- * return: void
- */
-static inline
-void dp_print_pdev_tx_capture_stats(struct dp_pdev *pdev)
-{
-}
-
-/*
- * dp_peer_tx_capture_filter_check: check filter is enable for the filter
- * and update tx_cap_enabled flag
- * @pdev: DP PDEV handle
- * @peer: DP PEER handle
- *
- * return: void
- */
-static inline
-void dp_peer_tx_capture_filter_check(struct dp_pdev *pdev,
-				     struct dp_peer *peer)
-{
-}
-
-/*
- * dp_tx_capture_debugfs_init: tx capture debugfs init
- * @pdev: DP PDEV handle
- *
- * return: QDF_STATUS
- */
-static inline
-QDF_STATUS dp_tx_capture_debugfs_init(struct dp_pdev *pdev)
-{
-	return QDF_STATUS_E_FAILURE;
-}
-#endif
-
-#ifdef FEATURE_PERPKT_INFO
-void dp_deliver_mgmt_frm(struct dp_pdev *pdev, qdf_nbuf_t nbuf);
-#else
-static inline
-void dp_deliver_mgmt_frm(struct dp_pdev *pdev, qdf_nbuf_t nbuf)
-{
-}
-#endif
 
 /**
  * dp_vdev_to_cdp_vdev() - typecast dp vdev to cdp vdev

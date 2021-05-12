@@ -27,9 +27,12 @@
 #include <cdp_txrx_hist_struct.h>
 #include "dp_hist.h"
 #endif
+#ifdef WIFI_MONITOR_SUPPORT
+#include "dp_htt.h"
+#include <dp_mon.h>
+#endif
 
 #define DP_MAX_STRING_LEN 500
-#define INVALID_FREE_BUFF 0xffffffff
 
 #define DP_HTT_HW_INTR_NAME_LEN  HTT_STATS_MAX_HW_INTR_NAME_LEN
 #define DP_HTT_HW_MODULE_NAME_LEN  HTT_STATS_MAX_HW_MODULE_NAME_LEN
@@ -4347,42 +4350,6 @@ void dp_peer_stats_update_protocol_cnt(struct cdp_soc_t *soc_hdl,
 #endif
 
 #ifdef WDI_EVENT_ENABLE
-QDF_STATUS dp_peer_stats_notify(struct dp_pdev *dp_pdev, struct dp_peer *peer)
-{
-	struct cdp_interface_peer_stats peer_stats_intf;
-	struct cdp_peer_stats *peer_stats = &peer->stats;
-
-	if (!peer->vdev)
-		return QDF_STATUS_E_FAULT;
-
-	qdf_mem_zero(&peer_stats_intf, sizeof(peer_stats_intf));
-	if (peer_stats->rx.last_snr != peer_stats->rx.snr)
-		peer_stats_intf.rssi_changed = true;
-
-	if ((peer_stats->rx.snr && peer_stats_intf.rssi_changed) ||
-	    (peer_stats->tx.tx_rate &&
-	     peer_stats->tx.tx_rate != peer_stats->tx.last_tx_rate)) {
-		qdf_mem_copy(peer_stats_intf.peer_mac, peer->mac_addr.raw,
-			     QDF_MAC_ADDR_SIZE);
-		peer_stats_intf.vdev_id = peer->vdev->vdev_id;
-		peer_stats_intf.last_peer_tx_rate = peer_stats->tx.last_tx_rate;
-		peer_stats_intf.peer_tx_rate = peer_stats->tx.tx_rate;
-		peer_stats_intf.peer_rssi = peer_stats->rx.snr;
-		peer_stats_intf.tx_packet_count = peer_stats->tx.ucast.num;
-		peer_stats_intf.rx_packet_count = peer_stats->rx.to_stack.num;
-		peer_stats_intf.tx_byte_count = peer_stats->tx.tx_success.bytes;
-		peer_stats_intf.rx_byte_count = peer_stats->rx.to_stack.bytes;
-		peer_stats_intf.per = peer_stats->tx.last_per;
-		peer_stats_intf.ack_rssi = peer_stats->tx.last_ack_rssi;
-		peer_stats_intf.free_buff = INVALID_FREE_BUFF;
-		dp_wdi_event_handler(WDI_EVENT_PEER_STATS, dp_pdev->soc,
-				     (void *)&peer_stats_intf, 0,
-				     WDI_NO_VAL, dp_pdev->pdev_id);
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
 QDF_STATUS dp_peer_qos_stats_notify(struct dp_pdev *dp_pdev,
 				    struct cdp_rx_stats_ppdu_user *ppdu_user)
 {
@@ -6305,7 +6272,7 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 				       i, pdev->stats.wdi_event[i]);
 	}
 
-	dp_print_pdev_tx_capture_stats(pdev);
+	monitor_print_pdev_tx_capture_stats(pdev);
 }
 
 void
@@ -6380,88 +6347,6 @@ dp_print_pdev_rx_stats(struct dp_pdev *pdev)
 		       pdev->stats.rx_buffer_pool.num_bufs_alloc_success);
 	DP_PRINT_STATS("\tAllocations from the pool during replenish = %llu",
 		       pdev->stats.rx_buffer_pool.num_pool_bufs_replenish);
-}
-
-void
-dp_print_pdev_rx_mon_stats(struct dp_pdev *pdev)
-{
-	struct cdp_pdev_mon_stats *rx_mon_stats;
-	uint32_t *stat_ring_ppdu_ids;
-	uint32_t *dest_ring_ppdu_ids;
-	int i, idx;
-
-	rx_mon_stats = &pdev->rx_mon_stats;
-
-	DP_PRINT_STATS("PDEV Rx Monitor Stats:\n");
-
-	DP_PRINT_STATS("status_ppdu_compl_cnt = %d",
-		       rx_mon_stats->status_ppdu_compl);
-	DP_PRINT_STATS("status_ppdu_start_cnt = %d",
-		       rx_mon_stats->status_ppdu_start);
-	DP_PRINT_STATS("status_ppdu_end_cnt = %d",
-		       rx_mon_stats->status_ppdu_end);
-	DP_PRINT_STATS("status_ppdu_start_mis_cnt = %d",
-		       rx_mon_stats->status_ppdu_start_mis);
-	DP_PRINT_STATS("status_ppdu_end_mis_cnt = %d",
-		       rx_mon_stats->status_ppdu_end_mis);
-	DP_PRINT_STATS("status_ppdu_done_cnt = %d",
-		       rx_mon_stats->status_ppdu_done);
-	DP_PRINT_STATS("dest_ppdu_done_cnt = %d",
-		       rx_mon_stats->dest_ppdu_done);
-	DP_PRINT_STATS("dest_mpdu_done_cnt = %d",
-		       rx_mon_stats->dest_mpdu_done);
-	DP_PRINT_STATS("tlv_tag_status_err_cnt = %u",
-		       rx_mon_stats->tlv_tag_status_err);
-	DP_PRINT_STATS("mon status DMA not done WAR count= %u",
-		       rx_mon_stats->status_buf_done_war);
-	DP_PRINT_STATS("dest_mpdu_drop_cnt = %d",
-		       rx_mon_stats->dest_mpdu_drop);
-	DP_PRINT_STATS("dup_mon_linkdesc_cnt = %d",
-		       rx_mon_stats->dup_mon_linkdesc_cnt);
-	DP_PRINT_STATS("dup_mon_buf_cnt = %d",
-		       rx_mon_stats->dup_mon_buf_cnt);
-	DP_PRINT_STATS("mon_rx_buf_reaped = %u",
-		       rx_mon_stats->mon_rx_bufs_reaped_dest);
-	DP_PRINT_STATS("mon_rx_buf_replenished = %u",
-		       rx_mon_stats->mon_rx_bufs_replenished_dest);
-	DP_PRINT_STATS("ppdu_id_mismatch = %u",
-		       rx_mon_stats->ppdu_id_mismatch);
-	DP_PRINT_STATS("mpdu_ppdu_id_match_cnt = %d",
-		       rx_mon_stats->ppdu_id_match);
-	DP_PRINT_STATS("ppdus dropped frm status ring = %d",
-		       rx_mon_stats->status_ppdu_drop);
-	DP_PRINT_STATS("ppdus dropped frm dest ring = %d",
-		       rx_mon_stats->dest_ppdu_drop);
-	stat_ring_ppdu_ids =
-		(uint32_t *)qdf_mem_malloc(sizeof(uint32_t) * MAX_PPDU_ID_HIST);
-	dest_ring_ppdu_ids =
-		(uint32_t *)qdf_mem_malloc(sizeof(uint32_t) * MAX_PPDU_ID_HIST);
-
-	if (!stat_ring_ppdu_ids || !dest_ring_ppdu_ids)
-		DP_PRINT_STATS("Unable to allocate ppdu id hist mem\n");
-
-	qdf_spin_lock_bh(&pdev->mon_lock);
-	idx = rx_mon_stats->ppdu_id_hist_idx;
-	qdf_mem_copy(stat_ring_ppdu_ids,
-		     rx_mon_stats->stat_ring_ppdu_id_hist,
-		     sizeof(uint32_t) * MAX_PPDU_ID_HIST);
-	qdf_mem_copy(dest_ring_ppdu_ids,
-		     rx_mon_stats->dest_ring_ppdu_id_hist,
-		     sizeof(uint32_t) * MAX_PPDU_ID_HIST);
-	qdf_spin_unlock_bh(&pdev->mon_lock);
-
-	DP_PRINT_STATS("PPDU Id history:");
-	DP_PRINT_STATS("stat_ring_ppdu_ids\t dest_ring_ppdu_ids");
-	for (i = 0; i < MAX_PPDU_ID_HIST; i++) {
-		idx = (idx + 1) & (MAX_PPDU_ID_HIST - 1);
-		DP_PRINT_STATS("%*u\t%*u", 16,
-			       rx_mon_stats->stat_ring_ppdu_id_hist[idx], 16,
-			       rx_mon_stats->dest_ring_ppdu_id_hist[idx]);
-	}
-	qdf_mem_free(stat_ring_ppdu_ids);
-	qdf_mem_free(dest_ring_ppdu_ids);
-	DP_PRINT_STATS("mon_rx_dest_stuck = %d",
-		       rx_mon_stats->mon_rx_dest_stuck);
 }
 
 void

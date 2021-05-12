@@ -44,6 +44,9 @@
 #ifdef WLAN_DP_FEATURE_SW_LATENCY_MGR
 #include <dp_swlm.h>
 #endif
+#ifdef WIFI_MONITOR_SUPPORT
+#include <dp_mon.h>
+#endif
 
 /* Flag to skip CCE classify when mesh or tid override enabled */
 #define DP_TX_SKIP_CCE_CLASSIFY \
@@ -3924,7 +3927,7 @@ dp_tx_comp_process_desc(struct dp_soc *soc,
 		dp_tx_enh_unmap(soc, desc);
 
 		if (QDF_STATUS_SUCCESS ==
-		    dp_tx_add_to_comp_queue(soc, desc, ts, peer)) {
+		    monitor_tx_add_to_comp_queue(soc, desc, ts, peer)) {
 			return;
 		}
 

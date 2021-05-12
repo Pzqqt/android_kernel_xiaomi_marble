@@ -35,6 +35,10 @@
 #endif
 #include "dp_hist.h"
 #include "dp_rx_buffer_pool.h"
+#ifdef WIFI_MONITOR_SUPPORT
+#include "dp_htt.h"
+#include <dp_mon.h>
+#endif
 
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
 
@@ -861,50 +865,6 @@ QDF_STATUS dp_rx_filter_mesh_packets(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 #ifdef FEATURE_NAC_RSSI
 /**
- * dp_rx_nac_filter(): Function to perform filtering of non-associated
- * clients
- * @pdev: DP pdev handle
- * @rx_pkt_hdr: Rx packet Header
- *
- * return: dp_vdev*
- */
-static
-struct dp_vdev *dp_rx_nac_filter(struct dp_pdev *pdev,
-		uint8_t *rx_pkt_hdr)
-{
-	struct ieee80211_frame *wh;
-	struct dp_neighbour_peer *peer = NULL;
-
-	wh = (struct ieee80211_frame *)rx_pkt_hdr;
-
-	if ((wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) != IEEE80211_FC1_DIR_TODS)
-		return NULL;
-
-	qdf_spin_lock_bh(&pdev->neighbour_peer_mutex);
-	TAILQ_FOREACH(peer, &pdev->neighbour_peers_list,
-				neighbour_peer_list_elem) {
-		if (qdf_mem_cmp(&peer->neighbour_peers_macaddr.raw[0],
-				wh->i_addr2, QDF_MAC_ADDR_SIZE) == 0) {
-			dp_rx_debug("%pK: NAC configuration matched for mac-%2x:%2x:%2x:%2x:%2x:%2x",
-				    pdev->soc,
-				    peer->neighbour_peers_macaddr.raw[0],
-				    peer->neighbour_peers_macaddr.raw[1],
-				    peer->neighbour_peers_macaddr.raw[2],
-				    peer->neighbour_peers_macaddr.raw[3],
-				    peer->neighbour_peers_macaddr.raw[4],
-				    peer->neighbour_peers_macaddr.raw[5]);
-
-				qdf_spin_unlock_bh(&pdev->neighbour_peer_mutex);
-
-			return pdev->monitor_vdev;
-		}
-	}
-	qdf_spin_unlock_bh(&pdev->neighbour_peer_mutex);
-
-	return NULL;
-}
-
-/**
  * dp_rx_process_invalid_peer(): Function to pass invalid peer list to umac
  * @soc: DP SOC handle
  * @mpdu: mpdu for which peer is invalid
@@ -948,23 +908,11 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu,
 		goto free;
 	}
 
-	if (pdev->filter_neighbour_peers) {
-		/* Next Hop scenario not yet handle */
-		vdev = dp_rx_nac_filter(pdev, rx_pkt_hdr);
-		if (vdev) {
-			dp_rx_mon_deliver(soc, pdev->pdev_id,
-					  pdev->invalid_peer_head_msdu,
-					  pdev->invalid_peer_tail_msdu);
-
-			pdev->invalid_peer_head_msdu = NULL;
-			pdev->invalid_peer_tail_msdu = NULL;
-
-			return 0;
-		}
-	}
+	if (monitor_filter_neighbour_peer(pdev, rx_pkt_hdr) ==
+	    QDF_STATUS_SUCCESS)
+		return 0;
 
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
-
 		if (qdf_mem_cmp(wh->i_addr1, vdev->mac_addr.raw,
 				QDF_MAC_ADDR_SIZE) == 0) {
 			goto out;
@@ -990,13 +938,9 @@ out:
 	 * in order to avoid HM_WDS false addition.
 	 */
 	if (pdev->soc->cdp_soc.ol_ops->rx_invalid_peer) {
-		if (!soc->hw_nac_monitor_support &&
-		    pdev->filter_neighbour_peers &&
-		    vdev->opmode == wlan_op_mode_sta) {
-			dp_rx_warn("%pK: Drop inv peer pkts with STA RA:%pm",
-				   soc, wh->i_addr1);
+		if (monitor_drop_inv_peer_pkts(vdev, wh) == QDF_STATUS_SUCCESS)
 			goto free;
-		}
+
 		pdev->soc->cdp_soc.ol_ops->rx_invalid_peer(
 				(struct cdp_ctrl_objmgr_psoc *)soc->ctrl_psoc,
 				pdev->pdev_id, &msg);
