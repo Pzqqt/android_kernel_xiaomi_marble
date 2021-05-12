@@ -7,7 +7,6 @@ ccflags-y	+= -DRMNET_TRACE_INCLUDE_LE
 endif
 
 obj-m += rmnet_core.o
-obj-m += rmnet_ctl.o
 
 #core sources
 rmnet_core-y := \
@@ -32,6 +31,9 @@ rmnet_core-y += \
 	rmnet_qmap.o \
 	rmnet_ll_qmap.o
 
+ifneq (, $(filter y, $(CONFIG_ARCH_LAHAINA) $(CONFIG_ARCH_WAIPIO)))
+obj-m += rmnet_ctl.o
 rmnet_ctl-y := \
 	rmnet_ctl_client.o \
 	rmnet_ctl_ipa.o
+endif

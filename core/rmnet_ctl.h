@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/* Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  * RMNET_CTL header
  *
@@ -29,6 +29,10 @@ struct rmnet_ctl_client_if {
 		       const void *data, unsigned int len);
 };
 
+#ifdef RMNET_LA_PLATFORM
 struct rmnet_ctl_client_if *rmnet_ctl_if(void);
+#else
+inline struct rmnet_ctl_client_if *rmnet_ctl_if(void) {return NULL;};
+#endif /* RMNET_LA_PLATFORM */
 
 #endif /* _RMNET_CTL_H_ */
