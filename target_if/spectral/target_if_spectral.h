@@ -2466,6 +2466,37 @@ QDF_STATUS
 target_if_160mhz_delivery_state_change(struct target_if_spectral *spectral,
 				       enum spectral_scan_mode smode,
 				       uint8_t detector_id);
+
+#ifdef OPTIMIZED_SAMP_MESSAGE
+/**
+ * target_if_spectral_get_num_fft_bins() - Get number of FFT bins from FFT size
+ * according to the Spectral report mode.
+ * @fft_size: FFT length
+ * @report_mode: Spectral report mode
+ *
+ * Get number of FFT bins from FFT size according to the Spectral
+ * report mode.
+ *
+ * Return: Number of FFT bins
+ */
+static inline uint32_t
+target_if_spectral_get_num_fft_bins(uint32_t fft_size,
+				    enum spectral_report_mode report_mode)
+{
+	switch (report_mode) {
+	case SPECTRAL_REPORT_MODE_0:
+	case SPECTRAL_REPORT_MODE_1:
+		return 0;
+	case SPECTRAL_REPORT_MODE_2:
+		return (1 << (fft_size - 1));
+	case SPECTRAL_REPORT_MODE_3:
+		return (1 << fft_size);
+	default:
+		return -EINVAL;
+	}
+}
+#endif /* OPTIMIZED_SAMP_MESSAGE */
+
 #ifdef DIRECT_BUF_RX_ENABLE
 /**
  * target_if_consume_sfft_report_gen3() -  Process fft report for gen3
