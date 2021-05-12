@@ -176,6 +176,27 @@ enum ipa_hw_type ipa_get_hw_type_internal(void)
 }
 
 /**
+ * ipa_is_test_prod_flt_in_sram_internal() - Return true if test prod FLT tbl is in SRAM
+ *
+ * Return value:bool
+ */
+bool ipa_is_test_prod_flt_in_sram_internal(enum ipa_ip_type ip)
+{
+	struct ipa3_flt_tbl *flt_tbl;
+	const struct ipa_gsi_ep_config *gsi_ep_info_cfg;
+
+	if (ipa3_ctx == NULL)
+		return false;
+
+	gsi_ep_info_cfg = ipa3_get_gsi_ep_info(IPA_CLIENT_TEST_PROD);
+	flt_tbl = &ipa3_ctx->flt_tbl[gsi_ep_info_cfg->ipa_ep_num][ip];
+
+	return !flt_tbl->force_sys[IPA_RULE_NON_HASHABLE] &&
+		!flt_tbl->in_sys[IPA_RULE_NON_HASHABLE];
+}
+EXPORT_SYMBOL(ipa_is_test_prod_flt_in_sram_internal);
+
+/**
  * ipa_assert() - general function for assertion
  */
 void ipa_assert(void)
@@ -6931,7 +6952,9 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 
 		/*	For ETH client place Non-Hash FLT table in SRAM if allowed, for
 			all other EPs always place the table in DDR */
-		if (IPA_CLIENT_IS_ETH_PROD(i))
+		if (IPA_CLIENT_IS_ETH_PROD(i) ||
+			((ipa3_ctx->ipa3_hw_mode == IPA_HW_MODE_TEST) &&
+			(i == ipa3_get_ep_mapping(IPA_CLIENT_TEST_PROD))))
 			flt_tbl->in_sys[IPA_RULE_NON_HASHABLE] =
 			!ipa3_ctx->ip4_flt_tbl_nhash_lcl;
 		else
@@ -6947,9 +6970,12 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 		INIT_LIST_HEAD(&flt_tbl->head_flt_rule_list);
 		flt_tbl->in_sys[IPA_RULE_HASHABLE] =
 			!ipa3_ctx->ip6_flt_tbl_hash_lcl;
+
 		/*	For ETH client place Non-Hash FLT table in SRAM if allowed, for
 			all other EPs always place the table in DDR */
-		if (IPA_CLIENT_IS_ETH_PROD(i))
+		if (IPA_CLIENT_IS_ETH_PROD(i) ||
+			((ipa3_ctx->ipa3_hw_mode == IPA_HW_MODE_TEST) &&
+			(i == ipa3_get_ep_mapping(IPA_CLIENT_TEST_PROD))))
 			flt_tbl->in_sys[IPA_RULE_NON_HASHABLE] =
 			!ipa3_ctx->ip6_flt_tbl_nhash_lcl;
 		else

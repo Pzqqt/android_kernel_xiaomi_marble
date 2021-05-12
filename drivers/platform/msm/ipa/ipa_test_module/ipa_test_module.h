@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
-* Copyright (c) 2017-2018,2020, The Linux Foundation. All rights reserved.
+* Copyright (c) 2017-2018,2020-2021, The Linux Foundation. All rights reserved.
 */
 
 #ifndef _IPA_TEST_MODULE_H_
@@ -21,6 +21,7 @@ enum {
 	IPA_TEST_IOCTL_EP_CTRL,
 	IPA_TEST_IOCTL_REG_SUSPEND_HNDL,
 	IPA_TEST_IOCTL_HOLB_CONFIG,
+	IPA_TEST_IOCTL_FLT_TBL_IN_SRAM,
 	IPA_TEST_IOCTL_NUM,
 };
 
@@ -40,6 +41,8 @@ enum {
 #define IPA_TEST_IOC_HOLB_CONFIG _IOWR(IPA_TEST_IOC_MAGIC, \
 		IPA_TEST_IOCTL_HOLB_CONFIG, \
 		struct handle_holb_config_ioctl *)
+#define IPA_TEST_IOC_IS_TEST_PROD_FLT_IN_SRAM _IO(IPA_TEST_IOC_MAGIC, \
+		IPA_TEST_IOCTL_FLT_TBL_IN_SRAM)
 
 #define IPA_TEST_CONFIG_MARKER 0x57
 #define IPA_TEST_CHANNEL_CONFIG_MARKER 0x83

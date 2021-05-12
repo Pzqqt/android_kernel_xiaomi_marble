@@ -3419,6 +3419,7 @@ int ipa3_uc_send_update_flow_control(uint32_t bitmask,
 	uint8_t  add_delete);
 
 enum ipa_hw_type ipa_get_hw_type_internal(void);
+bool ipa_is_test_prod_flt_in_sram_internal(enum ipa_ip_type ip);
 /* check if modem is up */
 bool ipa3_is_modem_up(void);
 /* set modem is up */

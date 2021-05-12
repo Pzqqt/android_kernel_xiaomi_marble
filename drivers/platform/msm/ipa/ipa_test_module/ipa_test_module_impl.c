@@ -1,6 +1,6 @@
 ﻿// SPDX-License-Identifier: GPL-2.0-only
 /*
-* Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+* Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
 */
 
 #include <linux/types.h>	/* u32 */
@@ -4547,6 +4547,9 @@ static long ipa_test_ioctl(struct file *filp,
 		break;
 	case IPA_TEST_IOC_HOLB_CONFIG:
 		retval = handle_holb_config_ioctl(arg);
+		break;
+	case IPA_TEST_IOC_IS_TEST_PROD_FLT_IN_SRAM:
+		retval = ipa_is_test_prod_flt_in_sram_internal(arg);
 		break;
 	default:
 		IPATEST_ERR("ioctl is not supported (%d)\n", cmd);
