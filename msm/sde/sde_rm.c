@@ -37,7 +37,7 @@
 #define IS_COMPATIBLE_PP_DSC(p, d) (p % 2 == d % 2)
 
 /* ~one vsync poll time for rsvp_nxt to cleared by modeset from commit thread */
-#define RM_NXT_CLEAR_POLL_TIMEOUT_US 16600
+#define RM_NXT_CLEAR_POLL_TIMEOUT_US 33000
 
 /**
  * toplogy information to be used when ctl path version does not
@@ -2570,7 +2570,7 @@ int sde_rm_reserve(
 	SDE_DEBUG("reserving hw for conn %d enc %d crtc %d test_only %d\n",
 			conn_state->connector->base.id, enc->base.id,
 			crtc_state->crtc->base.id, test_only);
-	SDE_EVT32(enc->base.id, conn_state->connector->base.id);
+	SDE_EVT32(enc->base.id, conn_state->connector->base.id, test_only);
 
 	mutex_lock(&rm->rm_lock);
 
@@ -2590,9 +2590,10 @@ int sde_rm_reserve(
 	if (test_only && rsvp_cur && rsvp_nxt) {
 		rsvp_nxt = _sde_rm_poll_get_rsvp_nxt_locked(rm, enc);
 		if (rsvp_nxt) {
-			SDE_ERROR("poll timeout cur %d nxt %d enc %d\n",
+			pr_err("poll timeout cur %d nxt %d enc %d\n",
 				rsvp_cur->seq, rsvp_nxt->seq, enc->base.id);
-			ret = -EINVAL;
+			SDE_EVT32(enc->base.id, rsvp_cur->seq, rsvp_nxt->seq, SDE_EVTLOG_ERROR);
+			ret = -EAGAIN;
 			goto end;
 		}
 	}

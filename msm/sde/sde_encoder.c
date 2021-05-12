@@ -959,9 +959,9 @@ static int _sde_encoder_atomic_check_reserve(struct drm_encoder *drm_enc,
 		ret = sde_rm_reserve(&sde_kms->rm, drm_enc, crtc_state,
 			conn_state, true);
 		if (ret) {
-			SDE_ERROR_ENC(sde_enc,
-				"RM failed to reserve resources, rc = %d\n",
-				ret);
+			if (ret != -EAGAIN)
+				SDE_ERROR_ENC(sde_enc,
+					"RM failed to reserve resources, rc = %d\n", ret);
 			return ret;
 		}
 
