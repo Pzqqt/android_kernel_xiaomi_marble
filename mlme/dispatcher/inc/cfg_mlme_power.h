@@ -169,11 +169,11 @@
 
 /*
  * <ini>
- * skip_tpe_consideration - honoring TPE IE value in tx power calculation for
+ * skip_tpe_consideration - Skip TPE IE value in tx power calculation for
  * 2G/5G bands
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * This ini is to determine if the TPE IE should be considered in the Tx power
  * calculation. If the ini is set, host will consider TPE IE in case of 6GHz
@@ -189,7 +189,7 @@
  * </ini>
  */
 #define CFG_SKIP_TPE_CONSIDERATION CFG_INI_BOOL("skip_tpe_consideration", \
-						false, \
+						true, \
 						"consider TPE IE in tx power")
 
 #define CFG_MLME_POWER_ALL \
