@@ -1623,6 +1623,8 @@ static void apps_ipa_packet_receive_notify(void *priv,
 		skb->dev = IPA_NETDEV();
 		skb->protocol = htons(ETH_P_MAP);
 
+		/* default traffic uses rx-0 queue. */
+		skb_record_rx_queue(skb, 0);
 		if (ipa3_rmnet_res.ipa_napi_enable) {
 			trace_rmnet_ipa_netif_rcv_skb3(skb, dev->stats.rx_packets);
 			result = netif_receive_skb(skb);
@@ -3605,10 +3607,10 @@ static int ipa3_wwan_probe(struct platform_device *pdev)
 	}
 
 	/* initialize wan-driver netdev */
-	dev = alloc_netdev(sizeof(struct ipa3_wwan_private),
+	dev = alloc_netdev_mqs(sizeof(struct ipa3_wwan_private),
 			   IPA_WWAN_DEV_NAME,
 			   NET_NAME_UNKNOWN,
-			   ipa3_wwan_setup);
+			   ipa3_wwan_setup, 1, 2);
 	if (!dev) {
 		IPAWANERR("no memory for netdev\n");
 		ret = -ENOMEM;
