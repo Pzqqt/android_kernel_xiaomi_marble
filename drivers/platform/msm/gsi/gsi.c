@@ -3305,6 +3305,7 @@ int gsi_stop_channel(unsigned long chan_hdl)
 	uint32_t val;
 	struct gsihal_reg_ee_n_gsi_ch_cmd ch_cmd;
 	struct gsi_chan_ctx *ctx;
+	unsigned long flags;
 
 	if (!gsi_ctx) {
 		pr_err("%s:%d gsi context not allocated\n", __func__, __LINE__);
@@ -3366,6 +3367,21 @@ int gsi_stop_channel(unsigned long chan_hdl)
 		GSIERR("chan=%lu busy try again\n", chan_hdl);
 		res = -GSI_STATUS_AGAIN;
 		goto free_lock;
+	}
+
+	/* If channel is stopped succesfully and has an event with IRQ type MSI
+		- clear IEOB */
+	if (ctx->evtr && ctx->evtr->props.intr == GSI_INTR_MSI) {
+		spin_lock_irqsave(&ctx->evtr->ring.slock, flags);
+		if (gsi_ctx->per.ver >= GSI_VER_3_0) {
+			gsihal_write_reg_nk(GSI_EE_n_CNTXT_SRC_IEOB_IRQ_CLR_k,
+				gsi_ctx->per.ee, gsihal_get_ch_reg_idx(ctx->evtr->id),
+				gsihal_get_ch_reg_mask(ctx->evtr->id));
+		} else {
+			gsihal_write_reg_n(GSI_EE_n_CNTXT_SRC_IEOB_IRQ_CLR,
+				gsi_ctx->per.ee, 1 << ctx->evtr->id);
+		}
+		spin_unlock_irqrestore(&ctx->evtr->ring.slock, flags);
 	}
 
 	res = GSI_STATUS_SUCCESS;
