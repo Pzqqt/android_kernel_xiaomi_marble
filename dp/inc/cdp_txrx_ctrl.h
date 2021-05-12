@@ -1284,4 +1284,86 @@ void cdp_txrx_peer_flush_frags(ol_txrx_soc_handle soc, uint8_t vdev_id,
 	return soc->ops->ctrl_ops->txrx_peer_flush_frags(soc, vdev_id,
 							 peer_mac);
 }
+
+#ifdef WLAN_FEATURE_TSF_UPLINK_DELAY
+/**
+ * cdp_set_delta_tsf() - wrapper function to set delta_tsf
+ * @soc: SOC TXRX handle
+ * @vdev_id: vdev id
+ * @delta_tsf: difference between TSF clock and qtimer
+ *
+ * Return: None
+ */
+static inline void cdp_set_delta_tsf(ol_txrx_soc_handle soc, uint8_t vdev_id,
+				     uint32_t delta_tsf)
+{
+	if (!soc || !soc->ops) {
+		dp_cdp_err("Invalid instance");
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_set_delta_tsf)
+		return;
+
+	soc->ops->ctrl_ops->txrx_set_delta_tsf(soc, vdev_id, delta_tsf);
+}
+
+/**
+ * cdp_set_tsf_ul_delay_report() - Enable or disable reporting uplink delay
+ * @soc: SOC TXRX handle
+ * @vdev_id: vdev id
+ * @enable: true to enable and false to disable
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS cdp_set_tsf_ul_delay_report(ol_txrx_soc_handle soc,
+						     uint8_t vdev_id,
+						     bool enable)
+{
+	if (!soc || !soc->ops) {
+		dp_cdp_err("Invalid SOC instance");
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_set_tsf_ul_delay_report)
+		return QDF_STATUS_E_FAILURE;
+
+	return soc->ops->ctrl_ops->txrx_set_tsf_ul_delay_report(soc, vdev_id,
+								enable);
+}
+
+/**
+ * cdp_get_uplink_delay() - Get uplink delay value
+ * @soc: SOC TXRX handle
+ * @vdev_id: vdev id
+ * @val: pointer to save uplink delay value
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS cdp_get_uplink_delay(ol_txrx_soc_handle soc,
+					      uint32_t vdev_id, uint32_t *val)
+{
+	if (!soc || !soc->ops) {
+		dp_cdp_err("Invalid SOC instance");
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!val) {
+		dp_cdp_err("Invalid params val");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_get_uplink_delay)
+		return QDF_STATUS_E_FAILURE;
+
+	return soc->ops->ctrl_ops->txrx_get_uplink_delay(soc, vdev_id, val);
+}
+#endif /* WLAN_FEATURE_TSF_UPLINK_DELAY */
+
 #endif /* _CDP_TXRX_CTRL_H_ */

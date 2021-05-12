@@ -3032,8 +3032,18 @@ struct dp_vdev {
 		uint8_t latency_tid;
 	} mesh_tid_latency_config;
 #endif
-};
 
+#ifdef WLAN_FEATURE_TSF_UPLINK_DELAY
+	/* Indicate if uplink delay report is enabled or not */
+	qdf_atomic_t ul_delay_report;
+	/* Delta between TQM clock and TSF clock */
+	uint32_t delta_tsf;
+	/* accumulative delay for every TX completion */
+	qdf_atomic_t ul_delay_accum;
+	/* accumulative number of packets delay has accumulated */
+	qdf_atomic_t ul_pkts_accum;
+#endif /* WLAN_FEATURE_TSF_UPLINK_DELAY */
+};
 
 enum {
 	dp_sec_mcast = 0,

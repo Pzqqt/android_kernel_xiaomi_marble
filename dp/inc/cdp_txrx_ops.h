@@ -813,6 +813,17 @@ struct cdp_ctrl_ops {
 						int8_t vdev_id);
 
 #endif
+
+#ifdef WLAN_FEATURE_TSF_UPLINK_DELAY
+	void (*txrx_set_delta_tsf)(struct cdp_soc_t *soc, uint8_t vdev_id,
+				   uint32_t delta_tsf);
+	QDF_STATUS (*txrx_set_tsf_ul_delay_report)(struct cdp_soc_t *soc,
+						   uint8_t vdev_id,
+						   bool enable);
+	QDF_STATUS (*txrx_get_uplink_delay)(struct cdp_soc_t *soc,
+					    uint8_t vdev_id,
+					    uint32_t *val);
+#endif
 };
 
 struct cdp_me_ops {

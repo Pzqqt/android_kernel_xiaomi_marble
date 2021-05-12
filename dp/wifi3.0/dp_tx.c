@@ -3991,6 +3991,138 @@ void dp_tx_update_connectivity_stats(struct dp_soc *soc,
 }
 #endif
 
+#ifdef WLAN_FEATURE_TSF_UPLINK_DELAY
+void dp_set_delta_tsf(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+		      uint32_t delta_tsf)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
+
+	if (!vdev) {
+		dp_err_rl("vdev %d does not exist", vdev_id);
+		return;
+	}
+
+	vdev->delta_tsf = delta_tsf;
+	dp_debug("vdev id %u delta_tsf %u", vdev_id, delta_tsf);
+
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
+}
+
+QDF_STATUS dp_set_tsf_ul_delay_report(struct cdp_soc_t *soc_hdl,
+				      uint8_t vdev_id, bool enable)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
+
+	if (!vdev) {
+		dp_err_rl("vdev %d does not exist", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_atomic_set(&vdev->ul_delay_report, enable);
+
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS dp_get_uplink_delay(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+			       uint32_t *val)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_vdev *vdev;
+	uint32_t delay_accum;
+	uint32_t pkts_accum;
+
+	vdev = dp_vdev_get_ref_by_id(soc, vdev_id, DP_MOD_ID_CDP);
+	if (!vdev) {
+		dp_err_rl("vdev %d does not exist", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!qdf_atomic_read(&vdev->ul_delay_report)) {
+		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Average uplink delay based on current accumulated values */
+	delay_accum = qdf_atomic_read(&vdev->ul_delay_accum);
+	pkts_accum = qdf_atomic_read(&vdev->ul_pkts_accum);
+
+	*val = delay_accum / pkts_accum;
+	dp_debug("uplink_delay %u delay_accum %u pkts_accum %u", *val,
+		 delay_accum, pkts_accum);
+
+	/* Reset accumulated values to 0 */
+	qdf_atomic_set(&vdev->ul_delay_accum, 0);
+	qdf_atomic_set(&vdev->ul_pkts_accum, 0);
+
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static void dp_tx_update_uplink_delay(struct dp_soc *soc, struct dp_vdev *vdev,
+				      struct hal_tx_completion_status *ts)
+{
+	uint32_t buffer_ts;
+	uint32_t delta_tsf;
+	uint32_t ul_delay;
+
+	/* Tx_rate_stats_info_valid is 0 and tsf is invalid then */
+	if (!ts->valid)
+		return;
+
+	if (qdf_unlikely(!vdev)) {
+		dp_info_rl("vdev is null or delete in progrss");
+		return;
+	}
+
+	if (!qdf_atomic_read(&vdev->ul_delay_report))
+		return;
+
+	delta_tsf = vdev->delta_tsf;
+
+	/* buffer_timestamp is in units of 1024 us and is [31:13] of
+	 * WBM_RELEASE_RING_4. After left shift 10 bits, it's
+	 * valid up to 29 bits.
+	 */
+	buffer_ts = ts->buffer_timestamp << 10;
+
+	ul_delay = ts->tsf - buffer_ts - delta_tsf;
+	ul_delay &= 0x1FFFFFFF; /* mask 29 BITS */
+	if (ul_delay > 0x1000000) {
+		dp_info_rl("----------------------\n"
+			   "Tx completion status:\n"
+			   "----------------------\n"
+			   "release_src = %d\n"
+			   "ppdu_id = 0x%x\n"
+			   "release_reason = %d\n"
+			   "tsf = %u (0x%x)\n"
+			   "buffer_timestamp = %u (0x%x)\n"
+			   "delta_tsf = %u (0x%x)\n",
+			   ts->release_src, ts->ppdu_id, ts->status,
+			   ts->tsf, ts->tsf, ts->buffer_timestamp,
+			   ts->buffer_timestamp, delta_tsf, delta_tsf);
+		return;
+	}
+
+	ul_delay /= 1000; /* in unit of ms */
+
+	qdf_atomic_add(ul_delay, &vdev->ul_delay_accum);
+	qdf_atomic_inc(&vdev->ul_pkts_accum);
+}
+#else /* !WLAN_FEATURE_TSF_UPLINK_DELAY */
+static inline
+void dp_tx_update_uplink_delay(struct dp_soc *soc, struct dp_vdev *vdev,
+			       struct hal_tx_completion_status *ts)
+{
+}
+#endif /* WLAN_FEATURE_TSF_UPLINK_DELAY */
+
 /**
  * dp_tx_comp_process_tx_status() - Parse and Dump Tx completion status info
  * @soc: DP soc handle
@@ -4069,6 +4201,7 @@ void dp_tx_comp_process_tx_status(struct dp_soc *soc,
 	vdev = peer->vdev;
 
 	dp_tx_update_connectivity_stats(soc, vdev, tx_desc, ts->status);
+	dp_tx_update_uplink_delay(soc, vdev, ts);
 
 	/* Update per-packet stats for mesh mode */
 	if (qdf_unlikely(vdev->mesh_vdev) &&

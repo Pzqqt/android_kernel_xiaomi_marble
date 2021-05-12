@@ -12471,6 +12471,11 @@ static struct cdp_ctrl_ops dp_ops_ctrl = {
 	.txrx_update_peer_pkt_capture_params =
 		 dp_peer_update_pkt_capture_params,
 #endif /* WLAN_TX_PKT_CAPTURE_ENH || WLAN_RX_PKT_CAPTURE_ENH */
+#ifdef WLAN_FEATURE_TSF_UPLINK_DELAY
+	.txrx_set_delta_tsf = dp_set_delta_tsf,
+	.txrx_set_tsf_ul_delay_report = dp_set_tsf_ul_delay_report,
+	.txrx_get_uplink_delay = dp_get_uplink_delay,
+#endif
 };
 
 static struct cdp_me_ops dp_ops_me = {
