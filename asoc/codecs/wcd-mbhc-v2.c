@@ -2049,20 +2049,20 @@ int wcd_mbhc_init(struct wcd_mbhc *mbhc, struct snd_soc_component *component,
 		       mbhc->intr_ids->hph_right_ocp);
 		goto err_hphr_ocp_irq;
 	}
-	if (!mbhc->extdev)
+	if (!mbhc->extdev) {
 		mbhc->extdev =
 			devm_extcon_dev_allocate(component->dev,
 				mbhc_ext_dev_supported_table);
-	if (IS_ERR(mbhc->extdev)) {
-		goto err_ext_dev;
-		ret = PTR_ERR(mbhc->extdev);
+		if (IS_ERR(mbhc->extdev)) {
+			goto err_ext_dev;
+			ret = PTR_ERR(mbhc->extdev);
+		}
+		ret = devm_extcon_dev_register(component->dev, mbhc->extdev);
+		if (ret) {
+			pr_err("%s:audio registration failed\n", __func__);
+			goto err_ext_dev;
+		}
 	}
-	ret = devm_extcon_dev_register(component->dev, mbhc->extdev);
-	if (ret) {
-		pr_err("%s:audio registration failed\n", __func__);
-		goto err_ext_dev;
-	}
-
 	mbhc->deinit_in_progress = false;
 	pr_debug("%s: leave ret %d\n", __func__, ret);
 	return ret;
@@ -2099,9 +2099,6 @@ EXPORT_SYMBOL(wcd_mbhc_init);
 void wcd_mbhc_deinit(struct wcd_mbhc *mbhc)
 {
 	struct snd_soc_component *component = mbhc->component;
-
-	if (mbhc->extdev)
-		devm_extcon_dev_unregister(component->dev, mbhc->extdev);
 
 	mbhc->mbhc_cb->free_irq(component, mbhc->intr_ids->mbhc_sw_intr, mbhc);
 	mbhc->mbhc_cb->free_irq(component, mbhc->intr_ids->mbhc_btn_press_intr,
