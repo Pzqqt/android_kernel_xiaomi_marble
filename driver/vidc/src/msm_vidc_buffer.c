@@ -11,11 +11,13 @@
 #include "msm_vidc_debug.h"
 #include "msm_vidc_internal.h"
 
+/* Generic function for all targets. Not being used for iris2 */
 u32 msm_vidc_input_min_count(struct msm_vidc_inst* inst)
 {
 	u32 input_min_count = 0;
+	u32 hb_enh_layer = 0;
 
-	if (!inst) {
+	if (!inst || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return 0;
 	}
@@ -24,6 +26,16 @@ u32 msm_vidc_input_min_count(struct msm_vidc_inst* inst)
 		input_min_count = MIN_DEC_INPUT_BUFFERS;
 	} else if (is_encode_session(inst)) {
 		input_min_count = MIN_ENC_INPUT_BUFFERS;
+		if (is_hierb_requested(inst)) {
+			hb_enh_layer =
+				inst->capabilities->cap[ENH_LAYER_COUNT].value;
+			if (inst->codec == MSM_VIDC_H264 &&
+				!inst->capabilities->cap[LAYER_ENABLE].value) {
+				hb_enh_layer = 0;
+			}
+			if (hb_enh_layer)
+				input_min_count = (1 << hb_enh_layer) + 2;
+		}
 	} else {
 		i_vpr_e(inst, "%s: invalid domain\n",
 			__func__, inst->domain);

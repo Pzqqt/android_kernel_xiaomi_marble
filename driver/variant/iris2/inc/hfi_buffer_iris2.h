@@ -969,7 +969,8 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 
 #define HFI_IRIS2_ENC_RECON_BUF_COUNT(num_recon, n_bframe, ltr_count, \
 	_total_hp_layers, _total_hb_layers, hybrid_hp, codec_standard) \
-	do { \
+	do \
+	{ \
 		HFI_U32 num_ref = 1; \
 		if (n_bframe) \
 			num_ref = 2; \
@@ -1542,24 +1543,24 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 		HFI_BUFFER_DPB_ENC(_size, frame_width, frame_height, is_ten_bit); \
 	} while (0)
 
-#define HFI_BUFFER_VPSS_ENC(vpss_size, bitstream_framewidth, bitstream_frameheight, ds_enable, \
-		rotation, is_ten_bit) \
+#define HFI_BUFFER_VPSS_ENC(vpss_size, dswidth, dsheight, ds_enable, is_ten_bit) \
 	do \
 	{ \
 		vpss_size = 0; \
 		if (ds_enable) \
 		{ \
-			if (rotation == HFI_ROTATION_90 || rotation == HFI_ROTATION_270 ) \
-			{ \
-				HFI_BUFFER_DPB_ENC(vpss_size, bitstream_frameheight, \
-					bitstream_framewidth, is_ten_bit); \
-			} \
-			else \
-			{ \
-				HFI_BUFFER_DPB_ENC(vpss_size, bitstream_framewidth, \
-				bitstream_frameheight, is_ten_bit); \
-			} \
+			HFI_BUFFER_DPB_ENC(vpss_size, dswidth, dsheight, is_ten_bit); \
 		} \
+	} while (0)
+
+#define HFI_IRIS2_ENC_MIN_INPUT_BUF_COUNT(numInput, TotalHBLayers) \
+	do                                                                \
+	{                                                                 \
+		numInput = 3;                                             \
+		if (TotalHBLayers >= 2)                                   \
+		{                                                         \
+			numInput = (1 << (TotalHBLayers - 1)) + 2;        \
+		}                                                         \
 	} while (0)
 
 #endif /* __HFI_BUFFER_IRIS2__ */
