@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -32,7 +32,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdint.h>
+#include <fcntl.h>
 #include <cstring> // for memcpy
+#include <sys/ioctl.h> //for ioctl
 #include "hton.h" // for htonl
 #include "InterfaceAbstraction.h"
 #include "Constants.h"
@@ -721,7 +723,7 @@ public:
 		return true;
 	}
 
-	bool GetThreeIPv6BypassRoutingTables(uint32_t *Hndl0, uint32_t *Hndl1, uint32_t *Hndl2)
+	virtual bool GetThreeIPv6BypassRoutingTables(uint32_t *Hndl0, uint32_t *Hndl1, uint32_t *Hndl2)
 	{
 		printf("Entering %s, %s()\n",__FUNCTION__, __FILE__);
 		const char bypass0[20] = "Bypass0";
@@ -861,6 +863,8 @@ public:
 	InterfaceAbstraction m_defaultConsumer;
 
 	static const size_t BUFF_MAX_SIZE = 1024;
+	static const uint32_t MAX_RULES_NUM = 250;
+	static const uint32_t MIN_RULES_NUM = 0;
 
 	Byte m_sendBuffer[BUFF_MAX_SIZE];	// First input file / IP packet
 	Byte m_sendBuffer2[BUFF_MAX_SIZE];	// Second input file / IP packet
@@ -8527,6 +8531,600 @@ private:
 
 };
 
+/*----------------------------------------------------------------------------------------------*/
+/* Test101: IPV4 filtering test - non hashed table SRAM <-> DDR dynamic move					*/
+/*----------------------------------------------------------------------------------------------*/
+class IpaFilteringBlockTest101 : public IpaFilteringBlockTestFixture {
+public:
+	IpaFilteringBlockTest101()
+	{
+		m_name = "IpaFilteringBlockTest101";
+		m_description =
+			"Filtering block test 101 - Non-Hashable table should start in SRAM, after adding enough rules table should move to DDR\
+			then after removing enough rules the table should return to SRAM\
+			1. Generate and commit three routing tables. \
+			Each table contains a single \"bypass\" rule (all data goes to output pipe 0, 1  and 2 (accordingly)) \
+		2. Generate and commit three filtering rules: (DST & Mask Match). \
+			All DST_IP == (127.0.0.1 & 255.0.0.255)traffic goes to routing table 0 - non hashable\
+			All DST_IP == (127.0.0.1 & 255.0.0.255)traffic goes to routing table 1 - hashable\
+			All DST_IP == (192.169.1.2 & 255.0.0.255)traffic goes to routing table 2 - don't care for this specific test";
+		m_minIPAHwType = IPA_HW_v5_0;
+		m_IpaIPType = IPA_IP_v4;
+		Register(*this);
+	}
+
+	virtual bool AddRules()
+	{
+		printf("Entering %s, %s()\n", __FUNCTION__, __FILE__);
+
+		m_routing.Reset(IPA_IP_v4); // This will issue a Reset command to the Routing as well
+		m_routing.Reset(IPA_IP_v6); // This will issue a Reset command to the Routing as well
+		m_filtering.Reset(IPA_IP_v4); // This will issue a Reset command to the Filtering as well
+		m_filtering.Reset(IPA_IP_v6); // This will issue a Reset command to the Filtering as well
+
+		const char bypass0[20] = "Bypass0";
+		const char bypass1[20] = "Bypass1";
+		const char bypass2[20] = "Bypass2";
+
+		if (!CreateThreeIPv4BypassRoutingTables(bypass0, bypass1, bypass2)) {
+			printf("CreateThreeBypassRoutingTables Failed\n");
+			return false;
+		}
+
+		printf("CreateThreeBypassRoutingTables completed successfully\n");
+		routing_table0.ip = IPA_IP_v4;
+		strlcpy(routing_table0.name, bypass0, sizeof(routing_table0.name));
+		if (!m_routing.GetRoutingTable(&routing_table0)) {
+			printf("m_routing.GetRoutingTable(&routing_table0=0x%p) Failed.\n", &routing_table0);
+			return false;
+		}
+		printf("route table %s has the handle %u\n", bypass0, routing_table0.hdl);
+
+		routing_table1.ip = IPA_IP_v4;
+		strlcpy(routing_table1.name, bypass1, sizeof(routing_table1.name));
+		if (!m_routing.GetRoutingTable(&routing_table1)) {
+			printf("m_routing.GetRoutingTable(&routing_table1=0x%p) Failed.\n", &routing_table1);
+			return false;
+		}
+		printf("route table %s has the handle %u\n", bypass1, routing_table1.hdl);
+
+		routing_table2.ip = IPA_IP_v4;
+		strlcpy(routing_table2.name, bypass2, sizeof(routing_table2.name));
+		if (!m_routing.GetRoutingTable(&routing_table2)) {
+			printf("m_routing.GetRoutingTable(&routing_table2=0x%p) Failed.\n", &routing_table2);
+			return false;
+		}
+		printf("route table %s has the handle %u\n", bypass2, routing_table2.hdl);
+
+		struct ipa_flt_rule_add flt_rule_entry;
+		FilterTable0.Init(IPA_IP_v4, IPA_CLIENT_TEST_PROD, false, 3);
+		printf("FilterTable*.Init Completed Successfully..\n");
+
+		// Configuring Filtering Rule No.0
+		FilterTable0.GeneratePresetRule(1, flt_rule_entry);
+		flt_rule_entry.at_rear = true;
+		flt_rule_entry.flt_rule_hdl = -1; // return Value
+		flt_rule_entry.status = -1; // return value
+		flt_rule_entry.rule.action = IPA_PASS_TO_ROUTING;
+		flt_rule_entry.rule.rt_tbl_hdl = routing_table0.hdl; //put here the handle corresponding to Routing Rule 1
+		flt_rule_entry.rule.attrib.attrib_mask = IPA_FLT_DST_ADDR; //
+		flt_rule_entry.rule.attrib.u.v4.dst_addr_mask = 0xFF0000FF; // Mask
+		flt_rule_entry.rule.attrib.u.v4.dst_addr = 0x7F000001; // Filter DST_IP == 127.0.0.1.
+		flt_rule_entry.rule.hashable = 0; // non hashed
+		if ((uint8_t)-1 == FilterTable0.AddRuleToTable(flt_rule_entry)) {
+			printf("%s::Error Adding Rule to Filter Table, aborting...\n", __FUNCTION__);
+			return false;
+		}
+
+		// Configuring Filtering Rule No.1 on lower priority (second in list)
+		flt_rule_entry.rule.rt_tbl_hdl = routing_table1.hdl; //put here the handle corresponding to Routing Rule 2
+		flt_rule_entry.rule.attrib.u.v4.dst_addr_mask = 0xFF0000FF; // Mask
+		flt_rule_entry.rule.attrib.u.v4.dst_addr = 0x7F000001; // Filter DST_IP == 127.0.0.1.
+		flt_rule_entry.rule.hashable = 1; // hashed
+		if ((uint8_t)-1 == FilterTable0.AddRuleToTable(flt_rule_entry)) {
+			printf("%s::Error Adding Rule to Filter Table, aborting...\n", __FUNCTION__);
+			return false;
+		}
+
+		// Configuring Filtering Rule No.2
+		flt_rule_entry.rule.rt_tbl_hdl = routing_table2.hdl; //put here the handle corresponding to Routing Rule 2
+		flt_rule_entry.rule.hashable = 0; // non hashed
+		flt_rule_entry.rule.attrib.u.v4.dst_addr = 0xC0A80102; // Filter DST_IP == 192.168.1.2.
+
+		if (
+			((uint8_t)-1 == FilterTable0.AddRuleToTable(flt_rule_entry)) ||
+			!m_filtering.AddFilteringRule(FilterTable0.GetFilteringTable())
+			) {
+			printf("%s::Error Adding Rule to Filter Table, aborting...\n", __FUNCTION__);
+			return false;
+		} else {
+			printf("flt rule hdl0=0x%x, status=0x%x\n", FilterTable0.ReadRuleFromTable(0)->flt_rule_hdl, FilterTable0.ReadRuleFromTable(0)->status);
+			printf("flt rule hdl0=0x%x, status=0x%x\n", FilterTable0.ReadRuleFromTable(1)->flt_rule_hdl, FilterTable0.ReadRuleFromTable(1)->status);
+			printf("flt rule hdl0=0x%x, status=0x%x\n", FilterTable0.ReadRuleFromTable(2)->flt_rule_hdl, FilterTable0.ReadRuleFromTable(2)->status);
+		}
+
+		printf("Leaving %s, %s()\n", __FUNCTION__, __FILE__);
+		return true;
+	}
+
+	virtual bool ModifyPackets()
+	{
+		int address;
+		if (
+			(NULL == m_sendBuffer) ||
+			(NULL == m_sendBuffer2) ||
+			(NULL == m_sendBuffer3)
+			) {
+			printf("Error : %s was called with NULL Buffers\n", __FUNCTION__);
+			return false;
+		}
+
+		address = ntohl(0x7F000001);//127.0.0.1
+		memcpy(&m_sendBuffer[IPV4_DST_ADDR_OFFSET], &address, sizeof(address));
+		address = ntohl(0x7F000001);//127.0.0.1
+		memcpy(&m_sendBuffer2[IPV4_DST_ADDR_OFFSET], &address, sizeof(address));
+		address = ntohl(0xC0A80102);//192.168.1.2
+		memcpy(&m_sendBuffer3[IPV4_DST_ADDR_OFFSET], &address, sizeof(address));
+
+		return true;
+	}
+
+	virtual bool ReceivePacketsAndCompare()
+	{
+		size_t receivedSize = 0;
+		size_t receivedSize2 = 0;
+		size_t receivedSize3 = 0;
+		bool isSuccess = true;
+
+		// Receive results
+		Byte *rxBuff1 = new Byte[0x400];
+		Byte *rxBuff2 = new Byte[0x400];
+		Byte *rxBuff3 = new Byte[0x400];
+
+		if (NULL == rxBuff1 || NULL == rxBuff2 || NULL == rxBuff3) {
+			printf("Memory allocation error.\n");
+			return false;
+		}
+
+		receivedSize = m_consumer.ReceiveData(rxBuff1, 0x400);
+		printf("Received %zu bytes on %s.\n", receivedSize, m_consumer.m_fromChannelName.c_str());
+
+		receivedSize2 = m_consumer.ReceiveData(rxBuff2, 0x400);
+		printf("Received %zu bytes on %s.\n", receivedSize2, m_consumer.m_fromChannelName.c_str());
+
+		receivedSize3 = m_defaultConsumer.ReceiveData(rxBuff3, 0x400);
+		printf("Received %zu bytes on %s.\n", receivedSize3, m_defaultConsumer.m_fromChannelName.c_str());
+
+		// Compare results
+		if (!CompareResultVsGolden(m_sendBuffer, m_sendSize, rxBuff1, receivedSize)) {
+			printf("Comparison of Buffer0 Failed!\n");
+			isSuccess = false;
+		}
+
+		size_t recievedBufferSize = receivedSize * 3;
+		size_t sentBufferSize = m_sendSize * 3;
+		char *recievedBuffer = new char[recievedBufferSize];
+		char *sentBuffer = new char[sentBufferSize];
+
+		memset(recievedBuffer, 0, recievedBufferSize);
+		memset(sentBuffer, 0, sentBufferSize);
+
+		print_packets(receivedSize, m_sendSize, recievedBufferSize - 1, sentBufferSize - 1, rxBuff1, m_sendBuffer, recievedBuffer, sentBuffer);
+		recievedBuffer[0] = '\0';
+		print_packets(receivedSize2, m_sendSize2, recievedBufferSize - 1, sentBufferSize - 1, rxBuff2, m_sendBuffer2, recievedBuffer, sentBuffer);
+		recievedBuffer[0] = '\0';
+		print_packets(receivedSize3, m_sendSize3, recievedBufferSize - 1, sentBufferSize - 1, rxBuff3, m_sendBuffer3, recievedBuffer, sentBuffer);
+
+		isSuccess &= CompareResultVsGolden(m_sendBuffer2, m_sendSize2, rxBuff2, receivedSize2);
+		isSuccess &= CompareResultVsGolden(m_sendBuffer3, m_sendSize3, rxBuff3, receivedSize3);
+
+		delete[] recievedBuffer;
+		delete[] sentBuffer;
+
+		delete[] rxBuff1;
+		delete[] rxBuff2;
+		delete[] rxBuff3;
+
+		return isSuccess;
+	}
+
+	bool SendAndVerifyPackets()
+	{
+		bool isSuccess = false;
+
+		// Send first packet
+		isSuccess = m_producer.SendData(m_sendBuffer, m_sendSize);
+		if (false == isSuccess) {
+			printf("SendData failure.\n");
+			return false;
+		}
+
+		// Send second packet
+		isSuccess = m_producer.SendData(m_sendBuffer2, m_sendSize2);
+		if (false == isSuccess) {
+			printf("SendData failure.\n");
+			return false;
+		}
+
+		// Send third packet
+		isSuccess = m_producer.SendData(m_sendBuffer3, m_sendSize3);
+		if (false == isSuccess) {
+			printf("SendData failure.\n");
+			return false;
+		}
+
+		// Receive packets from the channels and compare results
+		isSuccess = ReceivePacketsAndCompare();
+		if (false == isSuccess) {
+			printf("ReceivePacketsAndCompare failure.\n");
+			return false;
+		}
+
+		return true;
+	}
+
+	bool AddRuleToEnd()
+	{
+		struct ipa_flt_rule_add flt_rule_entry;
+		IPAFilteringTable tempFltTable;
+
+		tempFltTable.Init(m_IpaIPType, IPA_CLIENT_TEST_PROD, false, 1);
+		printf("FilterTable*.Init Completed Successfully..\n");
+
+		// Configuring Filtering Rule No.0
+		tempFltTable.GeneratePresetRule(0, flt_rule_entry);
+		flt_rule_entry.at_rear = true;
+		flt_rule_entry.flt_rule_hdl = -1; // return Value
+		flt_rule_entry.status = -1; // return value
+		flt_rule_entry.rule.action = IPA_PASS_TO_ROUTING;
+		flt_rule_entry.rule.rt_tbl_hdl = routing_table0.hdl; //put here the handle corresponding to Routing Rule 1
+		flt_rule_entry.rule.attrib.attrib_mask = IPA_FLT_DST_ADDR; //
+		flt_rule_entry.rule.attrib.u.v4.dst_addr_mask = 0xFF0000FF; // Mask
+		flt_rule_entry.rule.attrib.u.v4.dst_addr = 0x7F000001; // Filter DST_IP == 127.0.0.1.
+		flt_rule_entry.rule.hashable = 0; // non hashed
+
+		if (
+			((uint8_t)-1 == tempFltTable.AddRuleToTable(flt_rule_entry)) ||
+			!m_filtering.AddFilteringRule(tempFltTable.GetFilteringTable())
+			) {
+			printf("%s::Error Adding Rule to Filter Table, aborting...\n", __FUNCTION__);
+			return false;
+		} else {
+			printf("flt rule hdl0=0x%x, status=0x%x\n", tempFltTable.ReadRuleFromTable(0)->flt_rule_hdl, FilterTable0.ReadRuleFromTable(0)->status);
+		}
+
+		if (!FilterTable0.WriteRuleToEndOfTable(tempFltTable.ReadRuleFromTable(0))){
+			printf("%s::Error Adding Rule to Filter Table, aborting...\n", __FUNCTION__);
+			return false;
+		}
+
+		return true;
+	}
+
+	bool AddRulesUntilTableMovesToDDR()
+	{
+		int fd;
+
+		// Open ipa_test device node
+		fd = open("/dev/ipa_test", O_RDONLY);
+		if (fd < 0) {
+			printf("Failed opening %s. errno %d: %s\n", "/dev/ipa_test", errno, strerror(errno));
+			return false;
+		}
+
+		printf("%s(), fd is %d\n", __FUNCTION__, fd);
+
+		while (FilterTable0.size() < MAX_RULES_NUM &&
+			ioctl(fd, IPA_TEST_IOC_IS_TEST_PROD_FLT_IN_SRAM, m_IpaIPType)) {
+			if (!AddRuleToEnd())
+				return false;
+			printf("%s, %s() Added rule #%d sucessfully \n", __FUNCTION__, __FILE__, FilterTable0.size() - 1);
+		}
+		close(fd);
+
+		printf("Leaving %s, %s()\n", __FUNCTION__, __FILE__);
+		return true;
+	}
+
+	bool RemoveLastRule()
+	{
+		struct ipa_ioc_del_flt_rule *pDeleteRule = (struct ipa_ioc_del_flt_rule *)
+			calloc(1, sizeof(struct ipa_ioc_del_flt_rule) + sizeof(struct ipa_flt_rule_del));
+
+		pDeleteRule->commit = 1;
+		pDeleteRule->ip = m_IpaIPType;
+		pDeleteRule->num_hdls = 1;
+		pDeleteRule->hdl[0].hdl = FilterTable0.ReadRuleFromTable(FilterTable0.size()-1)->flt_rule_hdl;
+		pDeleteRule->hdl[0].status = -1;
+
+		if (!m_filtering.DeleteFilteringRule(pDeleteRule)) {
+			printf("%s::Error Deleting Rule from Filter Table, aborting...\n", __FUNCTION__);
+			return false;
+		}
+
+		return true;
+	}
+
+	bool RemoveRulesUntilTableMovesToSRAM()
+	{
+		int fd;
+
+		// Open ipa_test device node
+		fd = open("/dev/ipa_test", O_RDONLY);
+		if (fd < 0) {
+			printf("Failed opening %s. errno %d: %s\n", "/dev/ipa_test", errno, strerror(errno));
+			return false;
+		}
+
+		printf("%s(), fd is %d\n", __FUNCTION__, fd);
+		while (FilterTable0.size() > MIN_RULES_NUM &&
+			!ioctl(fd, IPA_TEST_IOC_IS_TEST_PROD_FLT_IN_SRAM, m_IpaIPType))
+			if (!RemoveLastRule())
+				return false;
+		close(fd);
+
+		printf("Leaving %s, %s()\n", __FUNCTION__, __FILE__);
+		return true;
+	}
+
+	bool Run()
+	{
+		bool res = false;
+		bool isSuccess = false;
+
+		printf("Entering %s, %s()\n", __FUNCTION__, __FILE__);
+
+		// Add the relevant filtering rules
+		res = AddRules();
+		if (false == res) {
+			printf("Failed adding filtering rules.\n");
+			return false;
+		}
+
+		// Load input data (IP packet) from file
+		res = LoadFiles(m_IpaIPType);
+		if (false == res) {
+			printf("Failed loading files.\n");
+			return false;
+		}
+
+		res = ModifyPackets();
+		if (false == res) {
+			printf("Failed to modify packets.\n");
+			return false;
+		}
+
+		/* Send packets with table in SRAM */
+		isSuccess = SendAndVerifyPackets();
+		if (!isSuccess) {
+			printf("Leaving %s, %s(), Returning %d\n", __FUNCTION__, __FILE__, isSuccess);
+			return false;
+		}
+
+		/* Add rules until table moves to DDR and send packets again */
+		isSuccess = AddRulesUntilTableMovesToDDR();
+		if (!isSuccess) {
+			printf("Leaving %s, %s(), Returning %d\n", __FUNCTION__, __FILE__, isSuccess);
+			return false;
+		}
+
+		isSuccess = SendAndVerifyPackets();
+		if (!isSuccess) {
+			printf("Leaving %s, %s(), Returning %d\n", __FUNCTION__, __FILE__, isSuccess);
+			return false;
+		}
+
+		/* Remove rules until table moves back to SRAM and send packets again */
+		isSuccess = RemoveRulesUntilTableMovesToSRAM();
+		if (!isSuccess) {
+			printf("Leaving %s, %s(), Returning %d\n", __FUNCTION__, __FILE__, isSuccess);
+			return false;
+		}
+
+		isSuccess = SendAndVerifyPackets();
+
+		printf("Leaving %s, %s(), Returning %d\n", __FUNCTION__, __FILE__, isSuccess);
+
+		return isSuccess;
+	} // Run()
+
+protected:
+	IPAFilteringTable FilterTable0;
+	struct ipa_ioc_get_rt_tbl routing_table0, routing_table1, routing_table2;
+};
+
+/*----------------------------------------------------------------------------------------------*/
+/* Test102: IPV6 filtering test - non hashed table SRAM <-> DDR dynamic move					*/
+/*----------------------------------------------------------------------------------------------*/
+class IpaFilteringBlockTest102 : public IpaFilteringBlockTest101 {
+public:
+	IpaFilteringBlockTest102()
+	{
+		m_name = "IpaFilteringBlockTest102";
+		m_description =
+			"Filtering block test 102 - Non-Hashable table should start in SRAM, after adding enough rules table should move to DDR\
+			then after removing enough rules the table should return to SRAM\
+			1. Generate and commit three routing tables. \
+			Each table contains a single \"bypass\" rule (all data goes to output pipe 0, 1  and 2 (accordingly)) \
+		2. Generate and commit three filtering rules: (DST & Mask Match). \
+			All DST_IPv6 == 0x...AA traffic goes to routing table 0 - non hashable\
+			All DST_IPv6 == 0x...AA traffic goes to routing table 1 - hashable\
+			All DST_IPv6 == 0x...CC traffic goes to routing table 2 - non hashable - don't care for this specific test";
+		m_minIPAHwType = IPA_HW_v5_0;
+		m_IpaIPType = IPA_IP_v6;
+	}
+
+	virtual bool GetThreeIPv6BypassRoutingTables(uint32_t *Hndl0, uint32_t *Hndl1, uint32_t *Hndl2)
+	{
+		printf("Entering %s, %s()\n", __FUNCTION__, __FILE__);
+		const char bypass0[20] = "Bypass0";
+		const char bypass1[20] = "Bypass1";
+		const char bypass2[20] = "Bypass2";
+
+		if (!CreateThreeIPv6BypassRoutingTables(bypass0, bypass1, bypass2)) {
+			printf("CreateThreeBypassRoutingTables Failed\n");
+			return false;
+		}
+
+		printf("CreateThreeBypassRoutingTables completed successfully\n");
+		routing_table0.ip = IPA_IP_v6;
+		strlcpy(routing_table0.name, bypass0, sizeof(routing_table0.name));
+		if (!m_routing.GetRoutingTable(&routing_table0)) {
+			printf("m_routing.GetRoutingTable(&routing_table0=0x%p) Failed.\n", &routing_table0);
+			return false;
+		}
+		routing_table1.ip = IPA_IP_v6;
+		strlcpy(routing_table1.name, bypass1, sizeof(routing_table1.name));
+		if (!m_routing.GetRoutingTable(&routing_table1)) {
+			printf("m_routing.GetRoutingTable(&routing_table1=0x%p) Failed.\n", &routing_table1);
+			return false;
+		}
+
+		routing_table2.ip = IPA_IP_v6;
+		strlcpy(routing_table2.name, bypass2, sizeof(routing_table2.name));
+		if (!m_routing.GetRoutingTable(&routing_table2)) {
+			printf("m_routing.GetRoutingTable(&routing_table2=0x%p) Failed.\n", &routing_table2);
+			return false;
+		}
+
+		*Hndl0 = routing_table0.hdl;
+		*Hndl1 = routing_table1.hdl;
+		*Hndl2 = routing_table2.hdl;
+
+		return true;
+	}
+
+	virtual bool AddRules()
+	{
+		printf("Entering %s, %s()\n", __FUNCTION__, __FILE__);
+
+		if (!GetThreeIPv6BypassRoutingTables(&Hndl0, &Hndl1, &Hndl2)) {
+			printf("failed to get three IPV6 routing tables!\n");
+			return false;
+		}
+
+		struct ipa_flt_rule_add flt_rule_entry;
+		FilterTable0.Init(IPA_IP_v6, IPA_CLIENT_TEST_PROD, false, 3);
+
+		// Configuring Filtering Rule No.0
+		FilterTable0.GeneratePresetRule(1, flt_rule_entry);
+		flt_rule_entry.at_rear = true;
+		flt_rule_entry.flt_rule_hdl = -1; // return Value
+		flt_rule_entry.status = -1; // return value
+		flt_rule_entry.rule.action = IPA_PASS_TO_ROUTING;
+		flt_rule_entry.rule.rt_tbl_hdl = Hndl0; //put here the handle corresponding to Routing Rule 0
+		flt_rule_entry.rule.attrib.attrib_mask = IPA_FLT_DST_ADDR;
+
+		flt_rule_entry.rule.attrib.u.v6.dst_addr_mask[0] = 0xFFFFFFFF;// Exact Match
+		flt_rule_entry.rule.attrib.u.v6.dst_addr_mask[1] = 0xFFFFFFFF;// Exact Match
+		flt_rule_entry.rule.attrib.u.v6.dst_addr_mask[2] = 0x00000000;// Exact Match
+		flt_rule_entry.rule.attrib.u.v6.dst_addr_mask[3] = 0x000000FF;// Exact Match
+		flt_rule_entry.rule.attrib.u.v6.dst_addr[0] = 0XFF020000; // Filter DST_IP
+		flt_rule_entry.rule.attrib.u.v6.dst_addr[1] = 0x00000000;
+		flt_rule_entry.rule.attrib.u.v6.dst_addr[2] = 0x11223344;
+		flt_rule_entry.rule.attrib.u.v6.dst_addr[3] = 0X556677AA;
+		flt_rule_entry.rule.hashable = 0; // non hashable
+
+		printf("flt_rule_entry was set successfully, preparing for insertion....\n");
+
+		if ((uint8_t)-1 == FilterTable0.AddRuleToTable(flt_rule_entry)) {
+			printf("%s::Error Adding Rule to Filter Table, aborting...\n", __FUNCTION__);
+			return false;
+		}
+
+		// Configuring Filtering Rule No.1
+		flt_rule_entry.rule.rt_tbl_hdl = Hndl1; //put here the handle corresponding to Routing Rule 1
+		flt_rule_entry.rule.attrib.u.v6.dst_addr[3] = 0X556677AA;
+		flt_rule_entry.rule.hashable = 1; // hashable
+
+		if ((uint8_t)-1 == FilterTable0.AddRuleToTable(flt_rule_entry)) {
+			printf("%s::Error Adding Rule to Filter Table, aborting...\n", __FUNCTION__);
+			return false;
+		}
+
+		// Configuring Filtering Rule No.2
+		flt_rule_entry.rule.rt_tbl_hdl = Hndl2; //put here the handle corresponding to Routing Rule 2
+		flt_rule_entry.rule.attrib.u.v6.dst_addr[3] = 0X556677CC;
+		flt_rule_entry.rule.hashable = 0; // non hashable
+
+		if (
+			((uint8_t)-1 == FilterTable0.AddRuleToTable(flt_rule_entry)) ||
+			!m_filtering.AddFilteringRule(FilterTable0.GetFilteringTable())
+			) {
+			printf("%s::Error Adding RuleTable(2) to Filtering, aborting...\n", __FUNCTION__);
+			return false;
+		} else {
+			printf("flt rule hdl0=0x%x, status=0x%x\n", FilterTable0.ReadRuleFromTable(2)->flt_rule_hdl, FilterTable0.ReadRuleFromTable(2)->status);
+		}
+		printf("Leaving %s, %s()\n", __FUNCTION__, __FILE__);
+		return true;
+	}
+
+	virtual bool ModifyPackets()
+	{
+		if (
+			(NULL == m_sendBuffer) ||
+			(NULL == m_sendBuffer2) ||
+			(NULL == m_sendBuffer3)
+			) {
+			printf("Error : %s was called with NULL Buffers\n", __FUNCTION__);
+			return false;
+		}
+		m_sendBuffer[DST_ADDR_LSB_OFFSET_IPV6] = 0xAA;
+		m_sendBuffer2[DST_ADDR_LSB_OFFSET_IPV6] = 0xAA;
+		m_sendBuffer3[DST_ADDR_LSB_OFFSET_IPV6] = 0xCC;
+		return true;
+	}// ModifyPacktes ()
+
+	bool AddRuleToEnd()
+	{
+		struct ipa_flt_rule_add flt_rule_entry;
+		IPAFilteringTable tempFltTable;
+
+		tempFltTable.Init(m_IpaIPType, IPA_CLIENT_TEST_PROD, false, 1);
+		printf("FilterTable*.Init Completed Successfully..\n");
+
+		// Configuring Filtering Rule No.0
+		tempFltTable.GeneratePresetRule(0, flt_rule_entry);
+		flt_rule_entry.at_rear = true;
+		flt_rule_entry.flt_rule_hdl = -1; // return Value
+		flt_rule_entry.status = -1; // return value
+		flt_rule_entry.rule.action = IPA_PASS_TO_ROUTING;
+		flt_rule_entry.rule.rt_tbl_hdl = Hndl0; //put here the handle corresponding to Routing Rule 0
+		flt_rule_entry.rule.attrib.attrib_mask = IPA_FLT_DST_ADDR;
+
+		flt_rule_entry.rule.attrib.u.v6.dst_addr_mask[0] = 0xFFFFFFFF;// Exact Match
+		flt_rule_entry.rule.attrib.u.v6.dst_addr_mask[1] = 0xFFFFFFFF;// Exact Match
+		flt_rule_entry.rule.attrib.u.v6.dst_addr_mask[2] = 0x00000000;// Exact Match
+		flt_rule_entry.rule.attrib.u.v6.dst_addr_mask[3] = 0x000000FF;// Exact Match
+		flt_rule_entry.rule.attrib.u.v6.dst_addr[0] = 0XFF020000; // Filter DST_IP
+		flt_rule_entry.rule.attrib.u.v6.dst_addr[1] = 0x00000000;
+		flt_rule_entry.rule.attrib.u.v6.dst_addr[2] = 0x11223344;
+		flt_rule_entry.rule.attrib.u.v6.dst_addr[3] = 0X556677AA;
+		flt_rule_entry.rule.hashable = 0; // non hashable
+
+		if (
+			((uint8_t)-1 == tempFltTable.AddRuleToTable(flt_rule_entry)) ||
+			!m_filtering.AddFilteringRule(tempFltTable.GetFilteringTable())
+			) {
+			printf("%s::Error Adding Rule to Filter Table, aborting...\n", __FUNCTION__);
+			return false;
+		} else {
+			printf("flt rule hdl0=0x%x, status=0x%x\n", tempFltTable.ReadRuleFromTable(0)->flt_rule_hdl, FilterTable0.ReadRuleFromTable(0)->status);
+		}
+
+		if (!FilterTable0.WriteRuleToEndOfTable(tempFltTable.ReadRuleFromTable(0))) {
+			printf("%s::Error Adding Rule to Filter Table, aborting...\n", __FUNCTION__);
+			return false;
+		}
+
+		return true;
+	}
+
+protected:
+	uint32_t Hndl0, Hndl1, Hndl2;
+};
+
 static class IpaFilteringBlockTest001 ipaFilteringBlockTest001;//Global Filtering Test
 static class IpaFilteringBlockTest002 ipaFilteringBlockTest002;//Global Filtering Test
 static class IpaFilteringBlockTest003 ipaFilteringBlockTest003;//Global Filtering Test
@@ -8583,3 +9181,5 @@ static class IpaFilteringBlockTest090 ipaFilteringBlockTest090; // VLAN filterin
 
 static class IpaFilteringBlockTest100 ipaFilteringBlockTest100; // Cache LRU behavior test
 
+static class IpaFilteringBlockTest101 ipaFilteringBlockTest101; // Non hashed table SRAM <->DDR dynamic move
+static class IpaFilteringBlockTest102 ipaFilteringBlockTest102; // Non hashed table SRAM <->DDR dynamic move

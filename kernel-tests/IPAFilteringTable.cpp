@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017,2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017,2020-2021 The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -130,8 +130,50 @@ const ipa_flt_rule_add * IPAFilteringTable::ReadRuleFromTable(uint8_t index)
 	return NULL;
 }
 
-// Function Not Implemented - Always returns FALSE
-bool IPAFilteringTable::WriteRuleToTable(uint8_t index,ipa_flt_rule_add flt_rule_entry) {return false;}
+bool IPAFilteringTable::WriteRuleToEndOfTable(const ipa_flt_rule_add *flt_rule_entry) {
+	ipa_ioc_add_flt_rule *prev_flt;
+
+	if (NULL == m_pFilteringTable) {
+		char message[256] = { 0 };
+		snprintf(message, sizeof(message), "Error in Function %s, m_pFilteringTable==NULL, Please call Init() prior to calling %s().", __FUNCTION__, __FUNCTION__);
+		ReportError(message);
+		return false;
+	}
+
+	prev_flt = m_pFilteringTable;
+	m_pFilteringTable = NULL;
+	m_pFilteringTable = (struct ipa_ioc_add_flt_rule *)calloc(
+		1, sizeof(struct ipa_ioc_add_flt_rule) +
+		((prev_flt->num_rules + 1) * sizeof(struct ipa_flt_rule_add)));
+
+	if (NULL == m_pFilteringTable) {
+		char message[256] = { 0 };
+		snprintf(
+			message, sizeof(message),
+			"Error in Function %s, Failed to allocate %d filter rules in Filtering Table",
+			__FUNCTION__, prev_flt->num_rules + 1);
+		ReportError(message);
+		return false;
+	}
+
+	m_pFilteringTable->commit = prev_flt->commit;
+	m_pFilteringTable->ep = prev_flt->ep;
+	m_pFilteringTable->global = prev_flt->global;
+	m_pFilteringTable->ip = prev_flt->ip;
+	m_pFilteringTable->num_rules = prev_flt->num_rules + 1;
+
+	for (int i = 0; i < prev_flt->num_rules; i++) {
+			memcpy(&(m_pFilteringTable->rules[i]), &(prev_flt->rules[i]),
+				sizeof(ipa_flt_rule_add));
+	}
+	free(prev_flt);
+
+	struct ipa_flt_rule_add *pFilteringRule = &(m_pFilteringTable->rules[nextRuleIndex]);
+	memcpy(pFilteringRule, flt_rule_entry, sizeof(ipa_flt_rule_add));
+	nextRuleIndex++;
+	return true;
+
+}
 
 //This Function Frees the Filtering Table and all it's content.
 //This Function will always return TRUE;
@@ -251,9 +293,6 @@ const ipa_flt_rule_add_v2 *IPAFilteringTable_v2::ReadRuleFromTable(uint8_t index
 		return (&(((struct ipa_flt_rule_add_v2*)m_pFilteringTable_v2->rules)[index]));
 	return NULL;
 }
-
-// Function Not Implemented - Always returns FALSE
-bool IPAFilteringTable_v2::WriteRuleToTable(uint8_t index, ipa_flt_rule_add_v2 flt_rule_entry) { return false; }
 
 //This Function Frees the Filtering Table and all it's content.
 //This Function will always return TRUE;

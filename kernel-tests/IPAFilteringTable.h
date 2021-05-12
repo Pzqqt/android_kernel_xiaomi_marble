@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017,2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017,2020-2021 The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -33,41 +33,30 @@
 #include "Constants.h"
 #include "Filtering.h"
 
-
 /*This Class Encapsulate Filtering Table and Filtering Rules.
  *It allows the user to easily manipulate rules and Tables.
  */
-class IPAFilteringTable
-{
-public:
+class IPAFilteringTable {
+    public:
 	IPAFilteringTable();
 	~IPAFilteringTable();
 
-	bool Init(ipa_ip_type ipFamily,
-			ipa_client_type pipeNo,
-			uint8_t isGlobal,
-			uint8_t numOfRulesInTable,
-			uint8_t commit = true);
+	bool Init(ipa_ip_type ipFamily, ipa_client_type pipeNo,
+		  uint8_t isGlobal, uint8_t numOfRulesInTable,
+		  uint8_t commit = true);
 
 	/*This Function Frees the Filtering Table and all it's content.
 	 *This Function will always return TRUE;
 	 */
 	void Destructor();
 
-
-	bool GeneratePresetRule(
-			uint8_t preset,
-			ipa_flt_rule_add & flt_rule_entry);
-	bool GeneratePresetRule(
-			uint8_t preset,
-			ipa_flt_rule_add_v2 &flt_rule_entry);
-	uint8_t AddRuleToTable(
-			ipa_flt_rule_add flt_rule_entry);
-	uint8_t AddRuleToTable(
-			ipa_flt_rule_add_v2 flt_rule_entry);
-	bool WriteRuleToTable(
-			uint8_t index,
-			ipa_flt_rule_add flt_rule_entry);
+	bool GeneratePresetRule(uint8_t preset,
+				ipa_flt_rule_add &flt_rule_entry);
+	bool GeneratePresetRule(uint8_t preset,
+				ipa_flt_rule_add_v2 &flt_rule_entry);
+	uint8_t AddRuleToTable(ipa_flt_rule_add flt_rule_entry);
+	uint8_t AddRuleToTable(ipa_flt_rule_add_v2 flt_rule_entry);
+	bool WriteRuleToEndOfTable(const ipa_flt_rule_add *flt_rule_entry);
 
 	/*Warning!!!
 	 *Take care when using this function.
@@ -86,7 +75,12 @@ public:
 		return m_pFilteringTable;
 	}
 
-private:
+	uint8_t size()
+	{
+		return nextRuleIndex;
+	}
+
+    private:
 	void ReportError(char *message)
 	{
 		printf("%s\n", message);
@@ -96,29 +90,22 @@ private:
 };
 
 class IPAFilteringTable_v2 {
-public:
+    public:
 	IPAFilteringTable_v2();
 	~IPAFilteringTable_v2();
 
-	bool Init(ipa_ip_type ipFamily,
-		ipa_client_type pipeNo,
-		uint8_t isGlobal,
-		uint8_t numOfRulesInTable,
-		uint8_t commit = true);
+	bool Init(ipa_ip_type ipFamily, ipa_client_type pipeNo,
+		  uint8_t isGlobal, uint8_t numOfRulesInTable,
+		  uint8_t commit = true);
 
 	/*This Function Frees the Filtering Table and all it's content.
 	 *This Function will always return TRUE;
 	 */
 	void Destructor();
 
-	bool GeneratePresetRule(
-		uint8_t preset,
-		ipa_flt_rule_add_v2 &flt_rule_entry);
-	uint8_t AddRuleToTable(
-		ipa_flt_rule_add_v2 flt_rule_entry);
-	bool WriteRuleToTable(
-		uint8_t index,
-		ipa_flt_rule_add_v2 flt_rule_entry);
+	bool GeneratePresetRule(uint8_t preset,
+				ipa_flt_rule_add_v2 &flt_rule_entry);
+	uint8_t AddRuleToTable(ipa_flt_rule_add_v2 flt_rule_entry);
 
 	/*Warning!!!
 	 *Take care when using this function.
@@ -137,7 +124,7 @@ public:
 		return m_pFilteringTable_v2;
 	}
 
-private:
+    private:
 	void ReportError(char *message)
 	{
 		printf("%s\n", message);
