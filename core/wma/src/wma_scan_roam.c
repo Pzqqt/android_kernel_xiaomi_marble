@@ -991,6 +991,9 @@ static void wma_update_phymode_on_roam(tp_wma_handle wma, uint8_t *bssid,
 	struct wlan_objmgr_pdev *pdev = NULL;
 
 	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(iface->vdev);
+	if (!vdev_mlme)
+		return;
+
 	pdev = wlan_vdev_get_pdev(vdev_mlme->vdev);
 
 	channel = wlan_reg_freq_to_chan(pdev, iface->ch_freq);
@@ -1015,8 +1018,6 @@ static void wma_update_phymode_on_roam(tp_wma_handle wma, uint8_t *bssid,
 	}
 	qdf_mem_copy(bss_chan, des_chan, sizeof(struct wlan_channel));
 
-	if (!vdev_mlme)
-		return;
 	/* Till conversion is not done in WMI we need to fill fw phy mode */
 	vdev_mlme->mgmt.generic.phy_mode = wma_host_to_fw_phymode(bss_phymode);
 
@@ -1255,9 +1256,11 @@ int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
 cleanup_label:
 	if (status != 0) {
 #ifdef FEATURE_CM_ENABLE
-		cm_fw_roam_abort_req(wma->psoc, synch_event->vdev_id);
-		cm_roam_stop_req(wma->psoc, synch_event->vdev_id,
-				 REASON_ROAM_SYNCH_FAILED);
+		if (synch_event) {
+			cm_fw_roam_abort_req(wma->psoc, synch_event->vdev_id);
+			cm_roam_stop_req(wma->psoc, synch_event->vdev_id,
+					 REASON_ROAM_SYNCH_FAILED);
+		}
 #else
 		if (roam_synch_ind_ptr)
 			wma->csr_roam_synch_cb(wma->mac_context,
