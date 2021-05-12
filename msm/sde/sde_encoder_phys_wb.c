@@ -1802,6 +1802,8 @@ static void sde_encoder_phys_wb_disable(struct sde_encoder_phys *phys_enc)
 			return;
 		}
 
+		if (phys_enc->connector)
+			sde_connector_commit_reset(phys_enc->connector, ktime_get());
 		goto exit;
 	}
 
