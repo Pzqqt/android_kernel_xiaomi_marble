@@ -8466,6 +8466,17 @@ typedef struct {
     A_UINT32 stats_clear_req_mask;
     /** identifies which peer stats to be cleared. Valid only while clearing PER_REER */
     wmi_mac_addr peer_macaddr;
+/*
+ * This TLV is (optionally) followed by other TLVs:
+ *     A_UINT32 vdev_id_bitmap[];
+ *         This array is present and non-zero length in MLO case, stats should
+ *         only be cleared for the VDEVs in vdev_id_bitmap in the bitmap when
+ *         it is present.
+ *     wmi_mac_addr mld_macaddr[];
+ *         This array is present and non-zero length in MLO case, stats should
+ *         only be cleared for the peers with the MLD MAC addresses specified
+ *         in the array.
+ */
 } wmi_clear_link_stats_cmd_fixed_param;
 
 /* Link Stats configuration params. Trigger the link layer statistics collection*/
