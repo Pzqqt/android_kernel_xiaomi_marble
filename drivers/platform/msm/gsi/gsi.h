@@ -14,6 +14,7 @@
 #include <linux/msm_gsi.h>
 #include <linux/errno.h>
 #include <linux/ipc_logging.h>
+#include <linux/iommu.h>
 
 /*
  * The following for adding code (ie. for EMULATION) not found on x86.
@@ -169,7 +170,9 @@ enum gsi_evt_ring_elem_size {
  * @int_modt:        cycles base interrupt moderation (32KHz clock)
  * @int_modc:        interrupt moderation packet counter
  * @intvec:          write data for MSI write
- * @msi_addr:        MSI address
+ * @msi_irq:         MSI irq number
+ * @msi_addr:        MSI address, APSS_GICA_SETSPI_NSR reg address
+ * @msi_clear_addr:  MSI address, APSS_GICA_CLRSPI_NSR reg address
  * @rp_update_addr:  physical address to which event read pointer should be
  *                   written on every event generation. must be set to 0 when
  *                   no update is desdired
@@ -197,7 +200,10 @@ struct gsi_evt_ring_props {
 	uint16_t int_modt;
 	uint8_t int_modc;
 	uint32_t intvec;
+	uint32_t msi_irq;
 	uint64_t msi_addr;
+	uint64_t msi_addr_iore_mapped;
+	uint64_t msi_clear_addr;
 	uint64_t rp_update_addr;
 	void *rp_update_vaddr;
 	bool exclusive;
@@ -485,6 +491,7 @@ struct gsi_chan_props {
 	uint16_t max_re_expected;
 	uint64_t ring_base_addr;
 	uint8_t db_in_bytes;
+	uint8_t low_latency_en;
 	void *ring_base_vaddr;
 	enum gsi_chan_use_db_eng use_db_eng;
 	enum gsi_max_prefetch max_prefetch;

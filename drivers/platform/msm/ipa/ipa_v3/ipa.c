@@ -6819,6 +6819,9 @@ static inline void ipa3_register_to_fmwk(void)
 	data.ipa_suspend_wdi_pipe = ipa3_suspend_wdi_pipe;
 	data.ipa_uc_reg_rdyCB = ipa3_uc_reg_rdyCB;
 	data.ipa_uc_dereg_rdyCB = ipa3_uc_dereg_rdyCB;
+	data.ipa_rmnet_ll_xmit = ipa3_rmnet_ll_xmit;
+	data.ipa_register_rmnet_ll_cb = ipa3_register_rmnet_ll_cb;
+	data.ipa_unregister_rmnet_ll_cb = ipa3_unregister_rmnet_ll_cb;
 
 	if (ipa_fmwk_register_ipa(&data)) {
 		IPAERR("couldn't register to IPA framework\n");
@@ -8099,6 +8102,19 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	ipa3_ctx->tx_poll = resource_p->tx_poll;
 	ipa3_ctx->ipa_gpi_event_rp_ddr = resource_p->ipa_gpi_event_rp_ddr;
 	ipa3_ctx->rmnet_ctl_enable = resource_p->rmnet_ctl_enable;
+	ipa3_ctx->rmnet_ll_enable = resource_p->rmnet_ll_enable;
+	ipa3_ctx->gsi_msi_addr = resource_p->gsi_msi_addr;
+	ipa3_ctx->gsi_msi_addr_io_mapped = 0;
+	ipa3_ctx->gsi_msi_clear_addr_io_mapped = 0;
+	ipa3_ctx->gsi_msi_clear_addr = resource_p->gsi_msi_clear_addr;
+	ipa3_ctx->gsi_rmnet_ctl_evt_ring_intvec =
+		resource_p->gsi_rmnet_ctl_evt_ring_intvec;
+	ipa3_ctx->gsi_rmnet_ctl_evt_ring_irq =
+		resource_p->gsi_rmnet_ctl_evt_ring_irq;
+	ipa3_ctx->gsi_rmnet_ll_evt_ring_intvec =
+		resource_p->gsi_rmnet_ll_evt_ring_intvec;
+	ipa3_ctx->gsi_rmnet_ll_evt_ring_irq =
+		resource_p->gsi_rmnet_ll_evt_ring_irq;
 	ipa3_ctx->tx_wrapper_cache_max_size = get_tx_wrapper_cache_size(
 			resource_p->tx_wrapper_cache_max_size);
 	ipa3_ctx->ipa_config_is_auto = resource_p->ipa_config_is_auto;
@@ -8596,11 +8612,21 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 		}
 	}
 
+	if (ipa3_ctx->rmnet_ll_enable) {
+		result = ipa3_rmnet_ll_init();
+		if (result) {
+			IPAERR(":ipa3_rmnet_ll_init err=%d\n", -result);
+			result = -ENODEV;
+			goto fail_rmnet_ll_init;
+		}
+	}
+
 	mutex_init(&ipa3_ctx->app_clock_vote.mutex);
 	ipa3_ctx->is_modem_up = false;
 
 	return 0;
 
+fail_rmnet_ll_init:
 fail_rmnet_ctl_init:
 	ipa3_wwan_cleanup();
 fail_wwan_init:
@@ -8918,6 +8944,10 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	u32 ipa_holb_monitor_max_cnt_usb;
 	u32 ipa_holb_monitor_max_cnt_11ad;
 	u32 ipa_wan_aggr_pkt_cnt;
+	u32 gsi_msi_addr;
+	u32 gsi_msi_clear_addr;
+	u32 gsi_rmnet_ctl_evt_ring_intvec;
+	u32 gsi_rmnet_ll_evt_ring_intvec;
 
 	/* initialize ipa3_res */
 	ipa_drv_res->ipa_wdi3_2g_holb_timeout = 0;
@@ -9227,6 +9257,70 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	IPADBG(": Enable rmnet ctl = %s\n",
 		ipa_drv_res->rmnet_ctl_enable
 		? "True" : "False");
+
+	ipa_drv_res->rmnet_ll_enable =
+		of_property_read_bool(pdev->dev.of_node,
+		"qcom,rmnet-ll-enable");
+	IPADBG(": Enable rmnet ll = %s\n",
+		ipa_drv_res->rmnet_ll_enable
+		? "True" : "False");
+
+	result = of_property_read_u32(pdev->dev.of_node,
+		"qcom,gsi-msi-addr",
+		&gsi_msi_addr);
+	IPADBG("GSI MSI addr = %lu\n", gsi_msi_addr);
+	ipa_drv_res->gsi_msi_addr = (u64)gsi_msi_addr;
+
+	result = of_property_read_u32(pdev->dev.of_node,
+		"qcom,gsi-msi-clear-addr",
+		&gsi_msi_clear_addr);
+	IPADBG("GSI MSI clear addr = %lu\n", gsi_msi_clear_addr);
+	ipa_drv_res->gsi_msi_clear_addr = (u64)gsi_msi_clear_addr;
+
+	/* Get IPA MSI IRQ number for rmnet_ctl */
+	resource = platform_get_resource_byname(pdev, IORESOURCE_IRQ,
+		"msi-irq-rmnet-ctl");
+	if (!resource) {
+		ipa_drv_res->gsi_rmnet_ctl_evt_ring_irq = 0;
+		IPAERR(":get resource failed for msi-irq-rmnet-ctl\n");
+	} else {
+		ipa_drv_res->gsi_rmnet_ctl_evt_ring_irq = resource->start;
+		IPADBG(": msi-irq-rmnet-ctl = %d\n",
+			ipa_drv_res->gsi_rmnet_ctl_evt_ring_irq);
+	}
+
+	/* Get IPA MSI IRQ number for rmnet_ll */
+	resource = platform_get_resource_byname(pdev, IORESOURCE_IRQ,
+		"msi-irq-rmnet-ll");
+	if (!resource) {
+		ipa_drv_res->gsi_rmnet_ll_evt_ring_irq = 0;
+		IPAERR(":get resource failed for msi-irq-rmnet-ll\n");
+	} else {
+		ipa_drv_res->gsi_rmnet_ll_evt_ring_irq = resource->start;
+		IPADBG(": msi-irq-rmnet-ll = %d\n",
+			ipa_drv_res->gsi_rmnet_ll_evt_ring_irq);
+	}
+
+	result = of_property_read_u32(pdev->dev.of_node,
+		"qcom,gsi-rmnet-ctl-evt-ring-intvec",
+		&gsi_rmnet_ctl_evt_ring_intvec);
+	IPADBG("gsi_rmnet_ctl_evt_ring_intvec = %u\n",
+		gsi_rmnet_ctl_evt_ring_intvec);
+	ipa_drv_res->gsi_rmnet_ctl_evt_ring_intvec =
+		gsi_rmnet_ctl_evt_ring_intvec;
+
+	result = of_property_read_u32(pdev->dev.of_node,
+		"qcom,gsi-rmnet-ll-evt-ring-intvec",
+		&gsi_rmnet_ll_evt_ring_intvec);
+	IPADBG("gsi_rmnet_ll_evt_ring_intvec = %u\n",
+		gsi_rmnet_ll_evt_ring_intvec);
+	ipa_drv_res->gsi_rmnet_ll_evt_ring_intvec =
+		gsi_rmnet_ll_evt_ring_intvec;
+
+	if (!ipa3_ctx->gsi_msi_addr_io_mapped &&
+		!ipa3_ctx->gsi_msi_clear_addr_io_mapped &&
+		(ipa3_ctx->rmnet_ll_enable || ipa3_ctx->rmnet_ctl_enable))
+			ipa_gsi_map_unmap_gsi_msi_addr(true);
 
 	result = of_property_read_string(pdev->dev.of_node,
 			"qcom,use-gsi-ipa-fw", &ipa_drv_res->gsi_fw_file_name);
@@ -10777,6 +10871,37 @@ int ipa3_pci_drv_probe(struct pci_dev *pci_dev, const struct pci_device_id *ent)
 	}
 
 	return result;
+}
+
+void ipa_gsi_map_unmap_gsi_msi_addr(bool map)
+{
+	struct ipa_smmu_cb_ctx *cb;
+	u64 rounddown_addr;
+	int res;
+	int prot = IOMMU_READ | IOMMU_WRITE | IOMMU_MMIO;
+
+	cb = ipa3_get_smmu_ctx(IPA_SMMU_CB_AP);
+	rounddown_addr = rounddown(ipa3_ctx->gsi_msi_addr, PAGE_SIZE);
+	if (map) {
+		res = ipa3_iommu_map(cb->iommu_domain,
+			rounddown_addr, rounddown_addr, PAGE_SIZE, prot);
+		if (res) {
+			IPAERR("iommu mapping failed for gsi_msi_addr\n");
+			ipa_assert();
+		}
+		ipa3_ctx->gsi_msi_clear_addr_io_mapped =
+			(u64)ioremap(ipa3_ctx->gsi_msi_clear_addr, 4);
+		ipa3_ctx->gsi_msi_addr_io_mapped =
+			(u64)ioremap(ipa3_ctx->gsi_msi_addr, 4);
+	} else {
+		iounmap((int *) ipa3_ctx->gsi_msi_clear_addr_io_mapped);
+		iounmap((int *) ipa3_ctx->gsi_msi_addr_io_mapped);
+		res = iommu_unmap(cb->iommu_domain, rounddown_addr, PAGE_SIZE);
+		ipa3_ctx->gsi_msi_clear_addr_io_mapped = 0;
+		ipa3_ctx->gsi_msi_addr_io_mapped = 0;
+		if (res)
+			IPAERR("smmu unmap for gsi_msi_addr failed %d\n", res);
+	}
 }
 
 /*

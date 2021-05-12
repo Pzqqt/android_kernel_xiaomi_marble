@@ -36,7 +36,7 @@ ipam-y += \
 
 ipam-$(CONFIG_RMNET_IPA3) += ipa_v3/rmnet_ipa.o ipa_v3/ipa_qmi_service_v01.o \
 	ipa_v3/ipa_qmi_service.o ipa_v3/rmnet_ctl_ipa.o \
-	ipa_v3/rmnet_ipa_fd_ioctl.o
+	ipa_v3/rmnet_ipa_fd_ioctl.o ipa_v3/rmnet_ll_ipa.o
 
 ipam-$(CONFIG_IPA3_MHI_PRIME_MANAGER) += ipa_v3/ipa_mpm.o
 

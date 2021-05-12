@@ -140,6 +140,7 @@ static unsigned long tag_to_pointer_wa(uint64_t tag);
 static uint64_t pointer_to_tag_wa(struct ipa3_tx_pkt_wrapper *tx_pkt);
 static void ipa3_tasklet_rx_notify(unsigned long data);
 static u32 ipa_adjust_ra_buff_base_sz(u32 aggr_byte_limit);
+static int ipa3_rmnet_ll_rx_poll(struct napi_struct *napi_rx, int budget);
 
 struct gsi_chan_xfer_notify g_lan_rx_notify[IPA_LAN_NAPI_MAX_FRAMES];
 
@@ -648,15 +649,13 @@ int ipa3_send(struct ipa3_sys_context *sys,
 
 	return 0;
 
-failure_dma_map:
-	kmem_cache_free(ipa3_ctx->tx_pkt_wrapper_cache, tx_pkt);
-
 failure:
 	ipahal_destroy_imm_cmd(tag_pyld_ret);
 	tx_pkt = tx_pkt_first;
 	for (j = 0; j < i; j++) {
 		next_pkt = list_next_entry(tx_pkt, link);
 		list_del(&tx_pkt->link);
+		sys->len--;
 
 		if (!tx_pkt->no_unmap_dma) {
 			if (desc[j].type != IPA_DATA_DESC_SKB_PAGED) {
@@ -673,6 +672,9 @@ failure:
 		kmem_cache_free(ipa3_ctx->tx_pkt_wrapper_cache, tx_pkt);
 		tx_pkt = next_pkt;
 	}
+
+failure_dma_map:
+	kmem_cache_free(ipa3_ctx->tx_pkt_wrapper_cache, tx_pkt);
 
 	spin_unlock_bh(&sys->spinlock);
 	return result;
@@ -954,6 +956,8 @@ void __ipa3_update_curr_poll_state(enum ipa_client_type client, int state)
 		case IPA_CLIENT_APPS_WAN_PROD:
 		case IPA_CLIENT_APPS_LAN_PROD:
 		case IPA_CLIENT_APPS_WAN_LOW_LAT_CONS:
+		case IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_PROD:
+		case IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS:
 			/* for error handling */
 			break;
 		default:
@@ -1126,6 +1130,11 @@ static void ipa_pm_sys_pipe_cb(void *p, enum ipa_pm_cb_event event)
 			usleep_range(SUSPEND_MIN_SLEEP_RX,
 				SUSPEND_MAX_SLEEP_RX);
 			IPA_ACTIVE_CLIENTS_DEC_SPECIAL("PIPE_SUSPEND_LOW_LAT");
+		} else if (sys->ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS) {
+			IPA_ACTIVE_CLIENTS_INC_SPECIAL("PIPE_SUSPEND_LOW_LAT_DATA");
+			usleep_range(SUSPEND_MIN_SLEEP_RX,
+				SUSPEND_MAX_SLEEP_RX);
+			IPA_ACTIVE_CLIENTS_DEC_SPECIAL("PIPE_SUSPEND_LOW_LAT_DATA");
 		} else
 			IPAERR("Unexpected event %d\n for client %d\n",
 				event, sys->ep->client);
@@ -1298,7 +1307,8 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 			NAPI_TX_WEIGHT);
 			ep->sys->napi_tx_enable = ipa3_ctx->tx_napi_enable;
 			ep->sys->tx_poll = ipa3_ctx->tx_poll;
-		} else if(sys_in->client == IPA_CLIENT_APPS_WAN_PROD) {
+		} else if(sys_in->client == IPA_CLIENT_APPS_WAN_PROD ||
+			sys_in->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_PROD) {
 			netif_tx_napi_add((struct net_device *)sys_in->priv,
 			&ep->sys->napi_tx, tx_completion_func,
 			NAPI_TX_WEIGHT);
@@ -1316,6 +1326,12 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 		}
 	}
 
+	if (sys_in->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS) {
+		netif_napi_add((struct net_device *)sys_in->priv,
+			&ep->sys->napi_rx, ipa3_rmnet_ll_rx_poll, NAPI_WEIGHT);
+		napi_enable(&ep->sys->napi_rx);
+	}
+
 	ep->client = sys_in->client;
 	ep->sys->ext_ioctl_v2 = sys_in->ext_ioctl_v2;
 	ep->sys->int_modt = sys_in->int_modt;
@@ -1327,7 +1343,7 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 	if (ipa3_assign_policy(sys_in, ep->sys)) {
 		IPAERR("failed to sys ctx for client %d\n", sys_in->client);
 		result = -ENOMEM;
-		goto fail_napi;
+		goto fail_napi_rx;
 	}
 
 	ep->valid = 1;
@@ -1455,7 +1471,9 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 	}
 
 	if (IPA_CLIENT_IS_CONS(sys_in->client)) {
-		if (IPA_CLIENT_IS_WAN_CONS(sys_in->client) &&
+		if ((IPA_CLIENT_IS_WAN_CONS(sys_in->client) ||
+			sys_in->client ==
+			IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS) &&
 			ipa3_ctx->ipa_wan_skb_page) {
 			ipa3_replenish_rx_page_recycle(ep->sys);
 		} else
@@ -1472,7 +1490,9 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 	ipa3_ctx->skip_ep_cfg_shadow[ipa_ep_idx] = ep->skip_ep_cfg;
 	if (!ep->skip_ep_cfg && IPA_CLIENT_IS_PROD(sys_in->client)) {
 		if (ipa3_ctx->modem_cfg_emb_pipe_flt &&
-			sys_in->client == IPA_CLIENT_APPS_WAN_PROD)
+			(sys_in->client == IPA_CLIENT_APPS_WAN_PROD ||
+				sys_in->client ==
+				IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_PROD))
 			IPADBG("modem cfg emb pipe flt\n");
 		else
 			ipa3_install_dflt_flt_rules(ipa_ep_idx);
@@ -1532,6 +1552,11 @@ fail_page_recycle_repl:
 	if (ep->sys->page_recycle_repl && !ep->sys->common_buff_pool) {
 		ep->sys->page_recycle_repl->capacity = 0;
 		kfree(ep->sys->page_recycle_repl);
+	}
+fail_napi_rx:
+	if (sys_in->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS) {
+		napi_disable(&ep->sys->napi_rx);
+		netif_napi_del(&ep->sys->napi_rx);
 	}
 fail_napi:
 	/* Delete NAPI TX object. */
@@ -1614,6 +1639,11 @@ int ipa3_teardown_sys_pipe(u32 clnt_hdl)
 		if (ipa3_ctx->tx_napi_enable &&
 			(ep->client != IPA_CLIENT_APPS_WAN_PROD))
 			netif_napi_del(&ep->sys->napi_tx);
+	}
+
+	if(ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS) {
+		napi_disable(&ep->sys->napi_rx);
+		netif_napi_del(&ep->sys->napi_rx);
 	}
 
 	/* channel stop might fail on timeout if IPA is busy */
@@ -1716,7 +1746,8 @@ int ipa3_teardown_sys_pipe(u32 clnt_hdl)
 
 	if (!ep->skip_ep_cfg && IPA_CLIENT_IS_PROD(ep->client)) {
 		if (ipa3_ctx->modem_cfg_emb_pipe_flt &&
-			ep->client == IPA_CLIENT_APPS_WAN_PROD)
+			(ep->client == IPA_CLIENT_APPS_WAN_PROD ||
+				ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_PROD))
 			IPADBG("modem cfg emb pipe flt\n");
 		else
 			ipa3_delete_dflt_flt_rules(clnt_hdl);
@@ -2131,6 +2162,9 @@ static void ipa3_wq_handle_rx(struct work_struct *work)
 	IPA_ACTIVE_CLIENTS_INC_EP(client_type);
 	if (ipa_net_initialized && sys->napi_obj) {
 		napi_schedule(sys->napi_obj);
+	} else if (ipa_net_initialized &&
+		sys->ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS) {
+		napi_schedule(&sys->napi_rx);
 	} else if (IPA_CLIENT_IS_LOW_LAT_CONS(sys->ep->client)) {
 		tasklet_schedule(&sys->tasklet);
 	} else
@@ -2202,6 +2236,8 @@ fail_kmem_cache_alloc:
 			IPA_STATS_INC_CNT(ipa3_ctx->stats.lan_repl_rx_empty);
 		else if (sys->ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_CONS)
 			IPA_STATS_INC_CNT(ipa3_ctx->stats.low_lat_repl_rx_empty);
+		else if (sys->ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS)
+			IPA_STATS_INC_CNT(ipa3_ctx->stats.rmnet_ll_repl_rx_empty);
 		pr_err_ratelimited("%s sys=%pK repl ring empty\n",
 				__func__, sys);
 		goto begin;
@@ -2307,6 +2343,8 @@ fail_kmem_cache_alloc:
 		if (sys->ep->client == IPA_CLIENT_APPS_WAN_CONS ||
 			sys->ep->client == IPA_CLIENT_APPS_WAN_COAL_CONS)
 			IPA_STATS_INC_CNT(ipa3_ctx->stats.wan_repl_rx_empty);
+		if (sys->ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS)
+			IPA_STATS_INC_CNT(ipa3_ctx->stats.rmnet_ll_repl_rx_empty);
 		pr_err_ratelimited("%s sys=%pK wq_repl ring empty\n",
 				__func__, sys);
 		goto begin;
@@ -2373,7 +2411,19 @@ static void ipa3_replenish_rx_page_recycle(struct ipa3_sys_context *sys)
 	/* start replenish only when buffers go lower than the threshold */
 	if (sys->rx_pool_sz - sys->len < IPA_REPL_XFER_THRESH)
 		return;
-	stats_i = (sys->ep->client == IPA_CLIENT_APPS_WAN_COAL_CONS) ? 0 : 1;
+	switch (sys->ep->client) {
+		case IPA_CLIENT_APPS_WAN_COAL_CONS:
+			stats_i = 0;
+			break;
+		case IPA_CLIENT_APPS_WAN_CONS:
+			stats_i = 1;
+			break;
+		case IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS:
+			stats_i = 2;
+			break;
+		default:
+			IPAERR_RL("Unexpected client%d\n", sys->ep->client);
+	}
 
 	rx_len_cached = sys->len;
 	curr_wq = atomic_read(&sys->repl->head_idx);
@@ -2452,6 +2502,8 @@ static void ipa3_replenish_rx_page_recycle(struct ipa3_sys_context *sys)
 			IPA_STATS_INC_CNT(ipa3_ctx->stats.wan_rx_empty_coal);
 		else if (sys->ep->client == IPA_CLIENT_APPS_LAN_CONS)
 			IPA_STATS_INC_CNT(ipa3_ctx->stats.lan_rx_empty);
+		else if (sys->ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS)
+			IPA_STATS_INC_CNT(ipa3_ctx->stats.rmnet_ll_rx_empty);
 		else
 			WARN_ON(1);
 	}
@@ -2898,6 +2950,8 @@ static void ipa3_fast_replenish_rx_cache(struct ipa3_sys_context *sys)
 			IPA_STATS_INC_CNT(ipa3_ctx->stats.lan_rx_empty);
 		else if (sys->ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_CONS)
 			IPA_STATS_INC_CNT(ipa3_ctx->stats.low_lat_rx_empty);
+		else if (sys->ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS)
+			IPA_STATS_INC_CNT(ipa3_ctx->stats.rmnet_ll_rx_empty);
 		else
 			WARN_ON_RATELIMIT_IPA(1);
 		queue_delayed_work(sys->wq, &sys->replenish_rx_work,
@@ -4137,7 +4191,8 @@ static int ipa3_assign_policy(struct ipa_sys_connect_params *in,
 		return 0;
 	}
 
-	if (in->client == IPA_CLIENT_APPS_WAN_PROD) {
+	if (in->client == IPA_CLIENT_APPS_WAN_PROD ||
+		in->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_PROD) {
 		sys->policy = IPA_POLICY_INTR_MODE;
 		if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0)
 			sys->use_comm_evt_ring = false;
@@ -4184,7 +4239,8 @@ static int ipa3_assign_policy(struct ipa_sys_connect_params *in,
 		if (in->client == IPA_CLIENT_APPS_LAN_CONS ||
 		    in->client == IPA_CLIENT_APPS_WAN_CONS ||
 		    in->client == IPA_CLIENT_APPS_WAN_COAL_CONS ||
-		    in->client == IPA_CLIENT_APPS_WAN_LOW_LAT_CONS) {
+		    in->client == IPA_CLIENT_APPS_WAN_LOW_LAT_CONS ||
+		    in->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS) {
 			sys->ep->status.status_en = true;
 			sys->policy = IPA_POLICY_INTR_POLL_MODE;
 			INIT_WORK(&sys->work, ipa3_wq_handle_rx);
@@ -4218,13 +4274,15 @@ static int ipa3_assign_policy(struct ipa_sys_connect_params *in,
 				in->ipa_ep_cfg.aggr.aggr_time_limit =
 					IPA_GENERIC_AGGR_TIME_LIMIT;
 			} else if (in->client == IPA_CLIENT_APPS_WAN_CONS ||
-				in->client == IPA_CLIENT_APPS_WAN_COAL_CONS) {
+				in->client == IPA_CLIENT_APPS_WAN_COAL_CONS ||
+				in->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS) {
 				in->ipa_ep_cfg.aggr.aggr_en = IPA_ENABLE_AGGR;
 				if (!in->ext_ioctl_v2)
 					in->ipa_ep_cfg.aggr.aggr_time_limit =
 						IPA_GENERIC_AGGR_TIME_LIMIT;
-				if (ipa3_ctx->ipa_wan_skb_page
-					&& in->napi_obj) {
+				if ((ipa3_ctx->ipa_wan_skb_page
+					&& in->napi_obj) ||
+					in->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS) {
 					INIT_WORK(&sys->repl_work,
 							ipa3_wq_page_repl);
 					sys->pyld_hdlr = ipa3_wan_rx_pyld_hdlr;
@@ -4852,11 +4910,15 @@ void __ipa_gsi_irq_rx_scedule_poll(struct ipa3_sys_context *sys)
 	 * where we would have ref counts.
 	 */
 	if ((ipa_net_initialized && sys->napi_obj) ||
-		IPA_CLIENT_IS_LOW_LAT_CONS(sys->ep->client))
+		IPA_CLIENT_IS_LOW_LAT_CONS(sys->ep->client) ||
+		(sys->ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS))
 		clk_off = IPA_ACTIVE_CLIENTS_INC_EP_NO_BLOCK(client_type);
 	if (!clk_off && ipa_net_initialized && sys->napi_obj) {
 		trace_ipa3_napi_schedule(sys->ep->client);
 		napi_schedule(sys->napi_obj);
+	} else if (!clk_off &&
+		(sys->ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS)) {
+		napi_schedule(&sys->napi_rx);
 	} else if (!clk_off &&
 		IPA_CLIENT_IS_LOW_LAT_CONS(sys->ep->client)) {
 		tasklet_schedule(&sys->tasklet);
@@ -5017,6 +5079,8 @@ static int ipa_gsi_setup_channel(struct ipa_sys_connect_params *in,
 		in->client == IPA_CLIENT_APPS_WAN_COAL_CONS ||
 		in->client == IPA_CLIENT_APPS_WAN_LOW_LAT_CONS ||
 		in->client == IPA_CLIENT_APPS_WAN_LOW_LAT_PROD ||
+		in->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS ||
+		in->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_PROD ||
 		in->client == IPA_CLIENT_APPS_WAN_PROD)
 		mem_flag = GFP_ATOMIC;
 
@@ -5098,7 +5162,25 @@ static int ipa_gsi_setup_event_ring(struct ipa3_ep_context *ep,
 	evt_rp_dma_addr = 0;
 	memset(&gsi_evt_ring_props, 0, sizeof(gsi_evt_ring_props));
 	gsi_evt_ring_props.intf = GSI_EVT_CHTYPE_GPI_EV;
-	gsi_evt_ring_props.intr = GSI_INTR_IRQ;
+	if ((ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS) &&
+		ipa3_ctx->gsi_rmnet_ll_evt_ring_irq) {
+		gsi_evt_ring_props.intr = GSI_INTR_MSI;
+		gsi_evt_ring_props.msi_addr = ipa3_ctx->gsi_msi_addr;
+		gsi_evt_ring_props.msi_clear_addr = ipa3_ctx->gsi_msi_clear_addr_io_mapped;
+		gsi_evt_ring_props.msi_addr_iore_mapped = ipa3_ctx->gsi_msi_addr_io_mapped;
+		gsi_evt_ring_props.intvec = ipa3_ctx->gsi_rmnet_ll_evt_ring_intvec;
+		gsi_evt_ring_props.msi_irq = ipa3_ctx->gsi_rmnet_ll_evt_ring_irq;
+	} else if ((ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_CONS) &&
+		ipa3_ctx->gsi_rmnet_ctl_evt_ring_irq) {
+		gsi_evt_ring_props.intr = GSI_INTR_MSI;
+		gsi_evt_ring_props.msi_addr = ipa3_ctx->gsi_msi_addr;
+		gsi_evt_ring_props.msi_clear_addr = ipa3_ctx->gsi_msi_clear_addr_io_mapped;
+		gsi_evt_ring_props.msi_addr_iore_mapped = ipa3_ctx->gsi_msi_addr_io_mapped;
+		gsi_evt_ring_props.intvec = ipa3_ctx->gsi_rmnet_ctl_evt_ring_intvec;
+		gsi_evt_ring_props.msi_irq = ipa3_ctx->gsi_rmnet_ctl_evt_ring_irq;
+	} else {
+		gsi_evt_ring_props.intr = GSI_INTR_IRQ;
+	}
 	gsi_evt_ring_props.re_size = GSI_EVT_RING_RE_SIZE_16B;
 	gsi_evt_ring_props.ring_len = ring_size;
 	gsi_evt_ring_props.ring_base_vaddr =
@@ -5131,7 +5213,9 @@ static int ipa_gsi_setup_event_ring(struct ipa3_ep_context *ep,
 		(ep->client == IPA_CLIENT_APPS_WAN_CONS) ||
 		(ep->client == IPA_CLIENT_APPS_WAN_COAL_CONS) ||
 		(ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_PROD) ||
-		(ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_CONS))) {
+		(ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_CONS) ||
+		(ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_PROD) ||
+		(ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS))) {
 		gsi_evt_ring_props.int_modt = ep->sys->int_modt;
 		gsi_evt_ring_props.int_modc = ep->sys->int_modc;
 	}
@@ -5207,7 +5291,8 @@ static int ipa_gsi_setup_transfer_ring(struct ipa3_ep_context *ep,
 	if (IPA_CLIENT_IS_PROD(ep->client)) {
 		gsi_channel_props.dir = GSI_CHAN_DIR_TO_GSI;
 		if(ep->client == IPA_CLIENT_APPS_WAN_PROD ||
-		   ep->client == IPA_CLIENT_APPS_LAN_PROD)
+		   ep->client == IPA_CLIENT_APPS_LAN_PROD ||
+		   ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_PROD)
 			gsi_channel_props.tx_poll = ipa3_ctx->tx_poll;
 		else
 			gsi_channel_props.tx_poll = false;
@@ -5258,6 +5343,10 @@ static int ipa_gsi_setup_transfer_ring(struct ipa3_ep_context *ep,
 	else
 		gsi_channel_props.low_weight = 1;
 	gsi_channel_props.db_in_bytes = 1;
+	/* Configure Low Latency Mode. */
+	if (ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_PROD ||
+		ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS)
+		gsi_channel_props.low_latency_en = 1;
 	gsi_channel_props.prefetch_mode = gsi_ep_info->prefetch_mode;
 	gsi_channel_props.empty_lvl_threshold = gsi_ep_info->prefetch_threshold;
 	gsi_channel_props.chan_user_data = user_data;
@@ -5274,7 +5363,8 @@ static int ipa_gsi_setup_transfer_ring(struct ipa3_ep_context *ep,
 
 	/* overwrite the cleanup_cb for page recycling */
 	if (ipa3_ctx->ipa_wan_skb_page &&
-		(IPA_CLIENT_IS_WAN_CONS(ep->client)))
+		(IPA_CLIENT_IS_WAN_CONS(ep->client) ||
+		(ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS)))
 		gsi_channel_props.cleanup_cb = free_rx_page;
 
 	result = gsi_alloc_channel(&gsi_channel_props, ipa3_ctx->gsi_dev_hdl,
@@ -5774,3 +5864,67 @@ start_poll:
 	IPA_ACTIVE_CLIENTS_DEC_EP_NO_BLOCK(sys->ep->client);
 }
 
+static int ipa3_rmnet_ll_rx_poll(struct napi_struct *napi_rx, int budget)
+{
+	struct ipa3_sys_context *sys = container_of(napi_rx,
+		struct ipa3_sys_context, napi_rx);
+	int remain_aggr_weight;
+	int ret;
+	int cnt = 0;
+	int num = 0;
+	struct ipa_active_client_logging_info log;
+	static struct gsi_chan_xfer_notify notify[IPA_WAN_NAPI_MAX_FRAMES];
+
+	IPA_ACTIVE_CLIENTS_PREP_SPECIAL(log, "NAPI_LL");
+
+
+	remain_aggr_weight = budget / ipa3_ctx->ipa_wan_aggr_pkt_cnt;
+	if (remain_aggr_weight > IPA_WAN_NAPI_MAX_FRAMES) {
+		IPAERR("NAPI weight is higher than expected\n");
+		IPAERR("expected %d got %d\n",
+			IPA_WAN_NAPI_MAX_FRAMES, remain_aggr_weight);
+		return -EINVAL;
+	}
+
+start_poll:
+	/*
+	 * it is guaranteed we already have clock here.
+	 * This is mainly for clock scaling.
+	 */
+	ipa_pm_activate(sys->pm_hdl);
+	while (remain_aggr_weight > 0 &&
+		atomic_read(&sys->curr_polling_state)) {
+		atomic_set(&ipa3_ctx->transport_pm.eot_activity, 1);
+		ret = ipa_poll_gsi_n_pkt(sys, notify,
+			remain_aggr_weight, &num);
+		if (ret)
+			break;
+		ipa3_rx_napi_chain(sys, notify, num);
+		remain_aggr_weight -= num;
+
+		if (sys->len == 0) {
+			if (remain_aggr_weight == 0)
+				cnt--;
+			break;
+		}
+	}
+	cnt += budget - remain_aggr_weight * ipa3_ctx->ipa_wan_aggr_pkt_cnt;
+	/* call repl_hdlr before napi_reschedule / napi_complete */
+	sys->repl_hdlr(sys);
+	/* When not able to replenish enough descriptors, keep in polling
+	 * mode, wait for napi-poll and replenish again.
+	 */
+	if (cnt < budget && (sys->len > IPA_DEFAULT_SYS_YELLOW_WM)) {
+		napi_complete(napi_rx);
+		ret = ipa3_rx_switch_to_intr_mode(sys);
+		if (ret == -GSI_STATUS_PENDING_IRQ &&
+				napi_reschedule(napi_rx))
+			goto start_poll;
+		IPA_ACTIVE_CLIENTS_DEC_EP_NO_BLOCK(sys->ep->client);
+	} else {
+		cnt = budget;
+		IPADBG_LOW("Client = %d not replenished free descripotrs\n",
+				sys->ep->client);
+	}
+	return cnt;
+}
