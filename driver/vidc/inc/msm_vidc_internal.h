@@ -468,6 +468,7 @@ enum msm_vidc_inst_capability_type {
 	META_SUBFRAME_OUTPUT,
 	META_ENC_QP_METADATA,
 	META_ROI_INFO,
+	META_DEC_QP_METADATA,
 	INST_CAP_MAX,
 };
 

@@ -1335,6 +1335,12 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		{0},
 		msm_vidc_adjust_roi_info, NULL},
 
+	{META_DEC_QP_METADATA, DEC, CODECS_ALL,
+		V4L2_MPEG_MSM_VIDC_DISABLE, V4L2_MPEG_MSM_VIDC_ENABLE,
+		1, V4L2_MPEG_MSM_VIDC_DISABLE,
+		V4L2_CID_MPEG_VIDC_METADATA_DEC_QP_METADATA,
+		HFI_PROP_DEC_QP_METADATA},
+
 	/* configure image properties */
 	{FRAME_WIDTH, ENC, HEIC, 512, 16384, 1, 16384},
 	{FRAME_HEIGHT, ENC, HEIC, 512, 16384, 1, 16384},

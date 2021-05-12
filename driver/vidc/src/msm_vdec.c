@@ -1087,6 +1087,7 @@ static int msm_vdec_subscribe_metadata(struct msm_vidc_inst *inst,
 		META_BUF_TAG,
 		META_DPB_TAG_LIST,
 		META_SUBFRAME_OUTPUT,
+		META_DEC_QP_METADATA,
 	};
 
 	if (!inst || !inst->core || !inst->capabilities) {

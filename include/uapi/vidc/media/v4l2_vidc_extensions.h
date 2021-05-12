@@ -132,6 +132,8 @@ enum v4l2_mpeg_vidc_blur_types {
 	(V4L2_CID_MPEG_VIDC_BASE + 0x2C)
 #define V4L2_CID_MPEG_VIDC_MIN_QUALITY                                       \
 	(V4L2_CID_MPEG_VIDC_BASE + 0x2D)
+#define V4L2_CID_MPEG_VIDC_METADATA_DEC_QP_METADATA                           \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x2E)
 
 /* Deprecate below controls once availble in gki and gsi bionic header */
 #ifndef V4L2_CID_MPEG_VIDEO_BASELAYER_PRIORITY_ID
@@ -258,6 +260,7 @@ enum v4l2_mpeg_vidc_metadata {
 	METADATA_BUFFER_TAG                   = 0x0300016b,
 	METADATA_SUBFRAME_OUTPUT              = 0x0300016d,
 	METADATA_ENC_QP_METADATA              = 0x0300016e,
+	METADATA_DEC_QP_METADATA              = 0x0300016f,
 	METADATA_ROI_INFO                     = 0x03000173,
 	METADATA_DPB_TAG_LIST                 = 0x03000179,
 };
