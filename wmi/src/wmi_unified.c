@@ -148,6 +148,24 @@ uint32_t g_wmi_rx_event_buf_idx = 0;
 struct wmi_event_debug wmi_rx_event_log_buffer[WMI_EVENT_DEBUG_MAX_ENTRY];
 #endif
 
+static void wmi_minidump_detach(struct wmi_unified *wmi_handle)
+{
+	struct wmi_log_buf_t *info =
+		&wmi_handle->log_info.wmi_command_tx_cmp_log_buf_info;
+	uint32_t buf_size = info->size * sizeof(struct wmi_command_cmp_debug);
+
+	qdf_minidump_remove(info->buf, buf_size, "wmi_tx_cmp");
+}
+
+static void wmi_minidump_attach(struct wmi_unified *wmi_handle)
+{
+	struct wmi_log_buf_t *info =
+		&wmi_handle->log_info.wmi_command_tx_cmp_log_buf_info;
+	uint32_t buf_size = info->size * sizeof(struct wmi_command_cmp_debug);
+
+	qdf_minidump_log(info->buf, buf_size, "wmi_tx_cmp");
+}
+
 #define WMI_COMMAND_RECORD(h, a, b) {					\
 	if (wmi_cmd_log_max_entry <=					\
 		*(h->log_info.wmi_command_log_buf_info.p_buf_tail_idx))	\
@@ -1349,6 +1367,8 @@ static void wmi_debugfs_remove(wmi_unified_t wmi_handle) { }
 void wmi_mgmt_cmd_record(wmi_unified_t wmi_handle, uint32_t cmd,
 			void *header, uint32_t vdev_id, uint32_t chanfreq) { }
 static inline void wmi_log_buffer_free(struct wmi_unified *wmi_handle) { }
+static void wmi_minidump_detach(struct wmi_unified *wmi_handle) { }
+static void wmi_minidump_attach(struct wmi_unified *wmi_handle) { }
 #endif /*WMI_INTERFACE_EVENT_LOGGING */
 qdf_export_symbol(wmi_mgmt_cmd_record);
 
@@ -3223,6 +3243,8 @@ void *wmi_unified_attach(void *scn_handle,
 
 	wmi_hang_event_notifier_register(wmi_handle);
 
+	wmi_minidump_attach(wmi_handle);
+
 	return wmi_handle;
 
 error:
@@ -3244,6 +3266,8 @@ void wmi_unified_detach(struct wmi_unified *wmi_handle)
 	wmi_buf_t buf;
 	struct wmi_soc *soc;
 	uint8_t i;
+
+	wmi_minidump_detach(wmi_handle);
 
 	wmi_hang_event_notifier_unregister();
 
