@@ -3096,7 +3096,8 @@ static void sde_encoder_virt_disable(struct drm_encoder *drm_enc)
 	sde_encoder_resource_control(drm_enc, SDE_ENC_RC_EVENT_STOP);
 
 	/* reset connector topology name property */
-	if (sde_enc->cur_master && sde_enc->cur_master->connector) {
+	if (sde_enc->cur_master && sde_enc->cur_master->connector &&
+			sde_enc->crtc->state->active_changed) {
 		ret = sde_rm_update_topology(&sde_kms->rm,
 				sde_enc->cur_master->connector->state, NULL);
 		if (ret) {
