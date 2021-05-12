@@ -902,6 +902,13 @@ endif
 endif
 endif
 
+ifeq ($(CONFIG_ARCH_WAIPIO), y)
+ifeq ($(CONFIG_IPA_OFFLOAD), y)
+CONFIG_ENABLE_SMMU_S1_TRANSLATION := y
+CONFIG_SMMU_S1_UNMAP := y
+endif
+endif
+
 ifeq ($(CONFIG_ARCH_SDX20), y)
 ifeq ($(CONFIG_QCA_WIFI_SDIO), y)
 ifeq ($(CONFIG_WCNSS_SKB_PRE_ALLOC), y)
