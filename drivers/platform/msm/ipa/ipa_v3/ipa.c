@@ -6866,6 +6866,37 @@ void ipa3_notify_clients_registered(void)
 }
 EXPORT_SYMBOL(ipa3_notify_clients_registered);
 
+void ipa_gsi_map_unmap_gsi_msi_addr(bool map)
+{
+	struct ipa_smmu_cb_ctx *cb;
+	u64 rounddown_addr;
+	int res;
+	int prot = IOMMU_READ | IOMMU_WRITE | IOMMU_MMIO;
+
+	cb = ipa3_get_smmu_ctx(IPA_SMMU_CB_AP);
+	rounddown_addr = rounddown(ipa3_ctx->gsi_msi_addr, PAGE_SIZE);
+	if (map) {
+		res = ipa3_iommu_map(cb->iommu_domain,
+			rounddown_addr, rounddown_addr, PAGE_SIZE, prot);
+		if (res) {
+			IPAERR("iommu mapping failed for gsi_msi_addr\n");
+			ipa_assert();
+		}
+		ipa3_ctx->gsi_msi_clear_addr_io_mapped =
+			(u64)ioremap(ipa3_ctx->gsi_msi_clear_addr, 4);
+		ipa3_ctx->gsi_msi_addr_io_mapped =
+			(u64)ioremap(ipa3_ctx->gsi_msi_addr, 4);
+	} else {
+		iounmap((int *) ipa3_ctx->gsi_msi_clear_addr_io_mapped);
+		iounmap((int *) ipa3_ctx->gsi_msi_addr_io_mapped);
+		res = iommu_unmap(cb->iommu_domain, rounddown_addr, PAGE_SIZE);
+		ipa3_ctx->gsi_msi_clear_addr_io_mapped = 0;
+		ipa3_ctx->gsi_msi_addr_io_mapped = 0;
+		if (res)
+			IPAERR("smmu unmap for gsi_msi_addr failed %d\n", res);
+	}
+}
+
 /**
  * ipa3_post_init() - Initialize the IPA Driver (Part II).
  * This part contains all initialization which requires interaction with
@@ -7241,6 +7272,12 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 	complete_all(&ipa3_ctx->init_completion_obj);
 
 	ipa_ut_module_init();
+
+	/* Map the MSI addresses for the GSI to access, for LL and QMAP FC pipe */
+	if (!ipa3_ctx->gsi_msi_addr_io_mapped &&
+		!ipa3_ctx->gsi_msi_clear_addr_io_mapped &&
+		(ipa3_ctx->rmnet_ll_enable || ipa3_ctx->rmnet_ctl_enable))
+			ipa_gsi_map_unmap_gsi_msi_addr(true);
 
 	pr_info("IPA driver initialization was successful.\n");
 
@@ -9343,11 +9380,6 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	ipa_drv_res->gsi_rmnet_ll_evt_ring_intvec =
 		gsi_rmnet_ll_evt_ring_intvec;
 
-	if (!ipa3_ctx->gsi_msi_addr_io_mapped &&
-		!ipa3_ctx->gsi_msi_clear_addr_io_mapped &&
-		(ipa3_ctx->rmnet_ll_enable || ipa3_ctx->rmnet_ctl_enable))
-			ipa_gsi_map_unmap_gsi_msi_addr(true);
-
 	result = of_property_read_string(pdev->dev.of_node,
 			"qcom,use-gsi-ipa-fw", &ipa_drv_res->gsi_fw_file_name);
 	if (!result)
@@ -10897,37 +10929,6 @@ int ipa3_pci_drv_probe(struct pci_dev *pci_dev, const struct pci_device_id *ent)
 	}
 
 	return result;
-}
-
-void ipa_gsi_map_unmap_gsi_msi_addr(bool map)
-{
-	struct ipa_smmu_cb_ctx *cb;
-	u64 rounddown_addr;
-	int res;
-	int prot = IOMMU_READ | IOMMU_WRITE | IOMMU_MMIO;
-
-	cb = ipa3_get_smmu_ctx(IPA_SMMU_CB_AP);
-	rounddown_addr = rounddown(ipa3_ctx->gsi_msi_addr, PAGE_SIZE);
-	if (map) {
-		res = ipa3_iommu_map(cb->iommu_domain,
-			rounddown_addr, rounddown_addr, PAGE_SIZE, prot);
-		if (res) {
-			IPAERR("iommu mapping failed for gsi_msi_addr\n");
-			ipa_assert();
-		}
-		ipa3_ctx->gsi_msi_clear_addr_io_mapped =
-			(u64)ioremap(ipa3_ctx->gsi_msi_clear_addr, 4);
-		ipa3_ctx->gsi_msi_addr_io_mapped =
-			(u64)ioremap(ipa3_ctx->gsi_msi_addr, 4);
-	} else {
-		iounmap((int *) ipa3_ctx->gsi_msi_clear_addr_io_mapped);
-		iounmap((int *) ipa3_ctx->gsi_msi_addr_io_mapped);
-		res = iommu_unmap(cb->iommu_domain, rounddown_addr, PAGE_SIZE);
-		ipa3_ctx->gsi_msi_clear_addr_io_mapped = 0;
-		ipa3_ctx->gsi_msi_addr_io_mapped = 0;
-		if (res)
-			IPAERR("smmu unmap for gsi_msi_addr failed %d\n", res);
-	}
 }
 
 /*
