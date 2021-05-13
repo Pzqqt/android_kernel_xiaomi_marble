@@ -2250,6 +2250,35 @@ wlan_mlme_set_rf_test_mode_enabled(struct wlan_objmgr_psoc *psoc, bool value);
 QDF_STATUS
 wlan_mlme_get_sta_miracast_mcc_rest_time(struct wlan_objmgr_psoc *psoc,
 					 uint32_t *value);
+
+/**
+ * wlan_mlme_get_scan_probe_unicast_ra() - Get scan probe unicast RA cfg
+ *
+ * @psoc: pointer to psoc object
+ * @value: value which needs to filled by API
+ *
+ * This API gives scan probe request with unicast RA user config
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_mlme_get_scan_probe_unicast_ra(struct wlan_objmgr_psoc *psoc,
+				    bool *value);
+
+/**
+ * wlan_mlme_set_scan_probe_unicast_ra() - Set scan probe unicast RA cfg
+ *
+ * @psoc: pointer to psoc object
+ * @value: set value
+ *
+ * This API sets scan probe request with unicast RA user config
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_mlme_set_scan_probe_unicast_ra(struct wlan_objmgr_psoc *psoc,
+				    bool value);
+
 /**
  * wlan_mlme_get_sap_mcc_chnl_avoid() - Check if SAP MCC needs to be avoided
  *

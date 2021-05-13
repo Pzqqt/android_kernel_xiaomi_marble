@@ -1576,6 +1576,7 @@ enum station_keepalive_method {
  * @single_tid:                     Set replay counter for all TID
  * @allow_tpc_from_ap:              Support for AP power constraint
  * @usr_disabled_roaming:           User config for roaming disable
+ * @usr_scan_probe_unicast_ra:      User config unicast probe req in scan
  */
 struct wlan_mlme_sta_cfg {
 	uint32_t sta_keep_alive_period;
@@ -1598,6 +1599,7 @@ struct wlan_mlme_sta_cfg {
 	bool allow_tpc_from_ap;
 	enum station_keepalive_method sta_keepalive_method;
 	bool usr_disabled_roaming;
+	bool usr_scan_probe_unicast_ra;
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 	host_event_wlan_status_payload_type event_payload;
 #endif
