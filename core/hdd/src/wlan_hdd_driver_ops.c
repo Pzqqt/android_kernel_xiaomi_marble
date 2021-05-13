@@ -278,6 +278,38 @@ hdd_hif_register_shutdown_notifier(struct hif_opaque_softc *hif_ctx)
 }
 
 /**
+
+ * hdd_hif_set_ce_max_yield_time() - Wrapper API to set CE max yield time
+ * @hif_ctx: hif context
+ * @bus_type: underlying bus type
+ * @ce_service_max_yield_time: max yield time to be set
+ *
+ * Return: None
+ */
+#if defined(CONFIG_SLUB_DEBUG_ON)
+#define CE_SNOC_MAX_YIELD_TIME_US 2000
+
+static void hdd_hif_set_ce_max_yield_time(struct hif_opaque_softc *hif_ctx,
+					  enum qdf_bus_type bus_type,
+					  uint32_t ce_service_max_yield_time)
+{
+	if (bus_type == QDF_BUS_TYPE_SNOC &&
+	    ce_service_max_yield_time < CE_SNOC_MAX_YIELD_TIME_US)
+		ce_service_max_yield_time = CE_SNOC_MAX_YIELD_TIME_US;
+
+	hif_set_ce_service_max_yield_time(hif_ctx, ce_service_max_yield_time);
+}
+
+#else
+static void hdd_hif_set_ce_max_yield_time(struct hif_opaque_softc *hif_ctx,
+					  enum qdf_bus_type bus_type,
+					  uint32_t ce_service_max_yield_time)
+{
+	hif_set_ce_service_max_yield_time(hif_ctx, ce_service_max_yield_time);
+}
+#endif
+
+/**
  * hdd_init_cds_hif_context() - API to set CDS HIF Context
  * @hif: HIF Context
  *
@@ -401,7 +433,8 @@ int hdd_hif_open(struct device *dev, void *bdev, const struct hif_bus_id *bid,
 		}
 	}
 
-	hif_set_ce_service_max_yield_time(hif_ctx,
+	hdd_hif_set_ce_max_yield_time(
+				hif_ctx, bus_type,
 				cfg_get(hdd_ctx->psoc,
 					CFG_DP_CE_SERVICE_MAX_YIELD_TIME));
 	ucfg_pmo_psoc_set_hif_handle(hdd_ctx->psoc, hif_ctx);
