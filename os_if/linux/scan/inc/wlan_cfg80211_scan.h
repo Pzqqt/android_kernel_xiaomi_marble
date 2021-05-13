@@ -153,6 +153,7 @@ struct scan_req {
  * inapplicable.
  * @dwell_time_passive_6g: 6 GHz specific passive dwell time. Ignored if zero or
  * inapplicable.
+ * @scan_probe_unicast_ra: Use BSSID in probe request frame RA.
  * @scan_f_2ghz: Scan only 2GHz channels
  * @scan_f_5ghz: Scan only 5+6GHz channels
  */
@@ -169,6 +170,7 @@ struct scan_params {
 	uint32_t dwell_time_passive;
 	uint32_t dwell_time_active_6g;
 	uint32_t dwell_time_passive_6g;
+	bool scan_probe_unicast_ra;
 	bool scan_f_2ghz;
 	bool scan_f_5ghz;
 };

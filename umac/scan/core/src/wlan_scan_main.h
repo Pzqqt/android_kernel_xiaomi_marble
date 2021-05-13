@@ -158,6 +158,9 @@ struct probe_time_dwell_time {
 /* RRM scan type indication */
 #define SCAN_FLAG_EXT_RRM_SCAN_IND 0x400
 
+/* Probe request frame with unicast RA indication */
+#define SCAN_FLAG_EXT_FORCE_UNICAST_RA  0x1000
+
 /* Passive dwell time if bt_a2dp is enabled. Time in msecs*/
 #define PASSIVE_DWELL_TIME_BT_A2DP_ENABLED 28
 
