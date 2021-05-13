@@ -435,6 +435,7 @@ void htc_destroy(HTC_HANDLE HTCHandle)
 	if (target)
 		htc_cleanup(target);
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRC, ("-htc_destroy\n"));
+	htc_credit_history_deinit();
 }
 
 /* get the low level HIF device for the caller , the caller may wish to do low

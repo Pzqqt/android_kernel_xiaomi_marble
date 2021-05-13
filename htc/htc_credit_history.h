@@ -24,24 +24,36 @@
 #ifdef FEATURE_HTC_CREDIT_HISTORY
 
 /**
- * htc_credit_history_init(): Init helper function to initialize HTC credit
- *                            history buffers and variable.
+ * htc_credit_history_init() - Init helper function
+ *
+ * The htc_credit_history_init() function, helps to initialize
+ * HTC credit history buffers and variable.
+ *
  * Return: None
  */
-
 void htc_credit_history_init(void);
+
+/**
+ * htc_credit_history_deinit() - Deinit helper function
+ *
+ * The htc_credit_history_deinit() function, helps to remove
+ * the HTC credit history buffers from minidump.
+ *
+ * Return: None
+ */
+void htc_credit_history_deinit(void);
 void htc_credit_record(enum htc_credit_exchange_type type, uint32_t tx_credit,
 			uint32_t htc_tx_queue_depth);
 #ifdef WLAN_HANG_EVENT
 /**
- * htc_log_hang_credit_history: Log the credit history into a buffer
+ * htc_log_hang_credit_history() - Log the credit history into a buffer
  * @block: Notifier block
  * @data: Private data of the block.
  *
  * HTC hang event notifier callback inovked when the recovery is triggered
  * to log the credit information to understand the reason for recovery.
  *
- * Return: none
+ * Return: None
  */
 void htc_log_hang_credit_history(struct notifier_block *block, void *data);
 #else
@@ -50,14 +62,15 @@ void htc_log_hang_credit_history(struct notifier_block *block, void *data)
 {
 }
 #endif
-void htc_latency_detection_credit_record_time(
-	enum htc_credit_exchange_type type,
-	struct hif_opaque_softc *hif_ctx);
-
 #else /* FEATURE_HTC_CREDIT_HISTORY */
 
 static inline
 void htc_credit_history_init(void)
+{
+}
+
+static inline
+void htc_credit_history_deinit(void)
 {
 }
 
