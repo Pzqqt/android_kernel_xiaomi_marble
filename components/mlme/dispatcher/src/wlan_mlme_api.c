@@ -3457,7 +3457,8 @@ mlme_update_vht_cap(struct wlan_objmgr_psoc *psoc, struct wma_tgt_vht_cap *cfg)
 	 */
 	if (vht_cap_info->ampdu_len > cfg->vht_max_mpdu)
 		vht_cap_info->ampdu_len = cfg->vht_max_mpdu;
-
+	if (vht_cap_info->ampdu_len >= 1)
+		mlme_obj->cfg.ht_caps.ht_cap_info.maximal_amsdu_size = 1;
 	value = (CFG_VHT_BASIC_MCS_SET_STADEF & VHT_MCS_1x1) |
 		vht_cap_info->basic_mcs_set;
 	if (vht_cap_info->enable2x2)
