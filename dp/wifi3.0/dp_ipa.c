@@ -195,8 +195,8 @@ static QDF_STATUS __dp_ipa_tx_buf_smmu_mapping(
 		if (!nbuf)
 			continue;
 		buf_len = qdf_nbuf_get_data_len(nbuf);
-		return __dp_ipa_handle_buf_smmu_mapping(
-				soc, nbuf, buf_len, create);
+		ret = __dp_ipa_handle_buf_smmu_mapping(soc, nbuf, buf_len,
+						       create);
 	}
 
 	return ret;
@@ -682,7 +682,6 @@ static QDF_STATUS dp_ipa_tx_alt_buf_smmu_mapping(struct dp_soc *soc,
 		buf_len = qdf_nbuf_get_data_len(nbuf);
 		ret = __dp_ipa_handle_buf_smmu_mapping(
 				soc, nbuf, buf_len, create);
-		qdf_assert_always(!ret);
 	}
 
 	return ret;
