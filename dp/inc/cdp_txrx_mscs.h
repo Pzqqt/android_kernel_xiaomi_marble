@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -31,13 +31,14 @@
  *  This function checks if there is a peer for this mac adress with MSCS
  *  enabled flag set and nbuf priority is valid from user priority bitmap.
  *
- * @param peer_mac - mac address of peer
+ * @param src_mac - source mac address of peer
+ * @param dst_mac - destination mac address of peer
  * @param nbuf - nbuf pointer
  * @return - 0 for non error case, 1 for failure
  */
 static inline int
 cdp_mscs_peer_lookup_n_get_priority(ol_txrx_soc_handle soc,
-	uint8_t *peer_mac,
+	uint8_t *src_mac, uint8_t *dst_mac,
 	qdf_nbuf_t nbuf)
 {
 	if (!soc || !soc->ops || !soc->ops->mscs_ops) {
@@ -48,7 +49,7 @@ cdp_mscs_peer_lookup_n_get_priority(ol_txrx_soc_handle soc,
 
 	if (soc->ops->mscs_ops->mscs_peer_lookup_n_get_priority)
 		return soc->ops->mscs_ops->mscs_peer_lookup_n_get_priority(soc,
-						peer_mac, nbuf);
+						src_mac, dst_mac, nbuf);
 	return 0;
 }
 #endif

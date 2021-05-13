@@ -1720,8 +1720,9 @@ struct cdp_cfr_ops {
  */
 struct cdp_mscs_ops {
 	int (*mscs_peer_lookup_n_get_priority)(struct cdp_soc_t *soc,
-			      uint8_t *peer_mac,
-				  qdf_nbuf_t nbuf);
+			uint8_t *src_mac,
+			uint8_t *dst_mac,
+			qdf_nbuf_t nbuf);
 };
 #endif
 
