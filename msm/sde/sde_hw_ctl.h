@@ -428,12 +428,11 @@ struct sde_hw_ctl_ops {
 	 * Get all the sspp staged on a layer mixer
 	 * @ctx       : ctl path ctx pointer
 	 * @lm        : layer mixer enumeration
-	 * @info      : array address to populate connected sspp index info
-	 * @info_max_cnt : maximum sspp info elements based on array size
-	 * @Return: count of sspps info  elements populated
+	 * @info      : structure to populate connected sspp index info
+	 * @Return: count of sspps info elements populated
 	 */
 	u32 (*get_staged_sspp)(struct sde_hw_ctl *ctx, enum sde_lm lm,
-		struct sde_sspp_index_info *info, u32 info_max_cnt);
+		struct sde_sspp_index_info *info);
 
 	/**
 	 * Flush the reg dma by sending last command.
