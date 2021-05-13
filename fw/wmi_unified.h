@@ -4631,9 +4631,6 @@ typedef enum {
 /* Extend 6ghz channel measure time */
 #define WMI_SCAN_FLAG_EXT_6GHZ_EXTEND_MEASURE_TIME    0x00000400
 
-/* Force unicast address in RA */
-#define WMI_SCAN_FLAG_EXT_FORCE_UNICAST_RA            0x00000800
-
 /**
  * Currently passive scan has higher priority than beacon and
  * beacon miss would happen irrespective of dwell time.
@@ -4642,6 +4639,9 @@ typedef enum {
  * For dwell time greater than beacon interval, bmiss is expected.
  */
 #define WMI_SCAN_FLAG_EXT_PASSIVE_SCAN_START_TIME_ENHANCE   0x00000800
+
+/* Force unicast address in RA */
+#define WMI_SCAN_FLAG_EXT_FORCE_UNICAST_RA            0x00001000
 
 /**
  * new 6 GHz flags per chan (short ssid or bssid) in struct
@@ -32385,7 +32385,46 @@ typedef struct {
      * The rx_ts_reset flag will be set to 1 upon every reset of rx_start_ts.
      */
     A_UINT32 rx_ts_reset;
+
+    /*
+     * MCS and Guard Interval.
+     * MCS: For legacy mode only
+     *    0: 48 Mbps
+     *    1: 24 Mbps
+     *    2: 12 Mbps
+     *    3: 6 Mbps
+     *    4: 54 Mbps
+     *    5: 36 Mbps
+     *    6: 18 Mbps
+     *    7: 9 Mbps
+     *    8: invalid entry
+     *
+     * GI: For Legacy mode only
+     *    0: 0.8 us
+     *    1: 0.4 us
+     *    2: 1.6 us
+     *    3: 3.2 us
+     *    4: invalid entry
+     *
+     * Bits 0:3        mcs
+     * Bits 4:6        gi_type
+     * Bits 7:31       reserved
+     */
+    A_UINT32 mcs_gi_info;
 } wmi_peer_cfr_capture_event_fixed_param;
+
+#define WMI_CFR_MCS_GET(mcs_gi_info) \
+        WMI_GET_BITS(mcs_gi_info, 0, 4)
+
+#define WMI_CFR_MCS_SET(mcs_gi_info, value) \
+        WMI_SET_BITS(mcs_gi_info, 0, 4, value)
+
+#define WMI_CFR_GI_TYPE_GET(mcs_gi_info) \
+        WMI_GET_BITS(mcs_gi_info, 4, 3)
+
+#define WMI_CFR_GI_TYPE_SET(mcs_gi_info, value) \
+        WMI_SET_BITS(mcs_gi_info, 4, 3, value)
+
 
 #define WMI_UNIFIED_CHAIN_PHASE_MASK 0x0000ffff
 #define WMI_UNIFIED_CHAIN_PHASE_GET(tlv, chain_idx) \
