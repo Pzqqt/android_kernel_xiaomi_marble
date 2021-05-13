@@ -174,7 +174,7 @@ void lpass_cdc_clk_rsc_enable_all_clocks(struct device *dev, bool enable)
 			if (priv->clk[i])
 				clk_prepare_enable(priv->clk[i]);
 		} else {
-			if (priv->clk[i])
+			if (priv->clk[i] && __clk_is_enabled(priv->clk[i]))
 				clk_disable_unprepare(priv->clk[i]);
 		}
 	}
