@@ -521,6 +521,10 @@ ifeq ($(CONFIG_IPA3), y)
 CONFIG_IPA_OFFLOAD := y
 endif
 
+ifeq ($(CONFIG_IPA_OFFLOAD), y)
+CONFIG_SMMU_S1_UNMAP := y
+endif
+
 #Flag to enable SMMU S1 support
 ifeq ($(CONFIG_ARCH_SDM845), y)
 ifeq ($(CONFIG_IPA_OFFLOAD), y)
