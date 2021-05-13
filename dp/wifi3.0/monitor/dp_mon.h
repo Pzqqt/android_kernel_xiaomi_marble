@@ -19,6 +19,7 @@ struct dp_mon_ops {
 	QDF_STATUS (*mon_pdev_detach)(struct dp_pdev *pdev);
 	QDF_STATUS (*mon_pdev_init)(struct dp_pdev *pdev);
 	QDF_STATUS (*mon_pdev_deinit)(struct dp_pdev *pdev);
+	QDF_STATUS (*mon_config_debug_sniffer)(struct dp_pdev *pdev, int val);
 };
 
 struct dp_mon_soc {
@@ -123,4 +124,45 @@ static inline QDF_STATUS monitor_pdev_deinit(struct dp_pdev *pdev)
 	}
 
 	return monitor_ops->mon_pdev_deinit(pdev);
+}
+
+static inline QDF_STATUS monitor_soc_cfg_init(struct dp_soc *soc)
+{
+	struct dp_mon_ops *monitor_ops;
+	struct dp_mon_soc *mon_soc = soc->monitor_soc;
+
+	/*
+	 * this API is getting call from dp_soc_init,
+	 * mon_soc will be uninitialized for WIN here
+	 * So returning QDF_STATUS_SUCCESS.
+	 * For WIN, soc cfg init is done while monitor insmod.
+	 */
+	if (!mon_soc)
+		return QDF_STATUS_SUCCESS;
+
+	monitor_ops = mon_soc->mon_ops;
+	if (!monitor_ops || !monitor_ops->mon_soc_cfg_init) {
+		qdf_err("callback not registered");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return monitor_ops->mon_soc_cfg_init(soc);
+}
+
+static inline QDF_STATUS monitor_config_debug_sniffer(struct dp_pdev *pdev,
+						      int val)
+{
+	struct dp_mon_ops *monitor_ops;
+	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
+
+	if (!mon_soc)
+		return QDF_STATUS_E_FAILURE;
+
+	monitor_ops = mon_soc->mon_ops;
+	if (!monitor_ops || !monitor_ops->mon_config_debug_sniffer) {
+		qdf_err("callback not registered");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return monitor_ops->mon_config_debug_sniffer(pdev, val);
 }

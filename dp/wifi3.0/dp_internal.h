@@ -201,6 +201,17 @@ static inline QDF_STATUS monitor_pdev_deinit(struct dp_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+static inline QDF_STATUS monitor_soc_cfg_init(struct dp_soc *soc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS monitor_config_debug_sniffer(struct dp_pdev *pdev,
+						      int val)
+{
+	return QDF_STATUS_E_FAILURE;
+}
 #endif
 
 #ifdef WLAN_TX_PKT_CAPTURE_ENH
