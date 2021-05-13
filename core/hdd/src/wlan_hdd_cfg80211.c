@@ -6976,6 +6976,8 @@ wlan_hdd_wifi_test_config_policy[
 			.type = NLA_FLAG},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_TX_SUPPDU] = {
 			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_USE_BSSID_IN_PROBE_REQ_RA] = {
+			.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_HTC_HE_SUPP] = {
 			.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_OMI_TX] = {
@@ -10236,6 +10238,20 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		ret_val = sme_update_he_om_ctrl_supp(hdd_ctx->mac_handle,
 						     adapter->vdev_id,
 						     cfg_val);
+	}
+
+	cmd_id =
+		QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_USE_BSSID_IN_PROBE_REQ_RA;
+	if (tb[cmd_id]) {
+		cfg_val = nla_get_u8(tb[cmd_id]);
+		if (cfg_val)
+			status = ucfg_mlme_set_scan_probe_unicast_ra(
+							hdd_ctx->psoc, true);
+		else
+			status = ucfg_mlme_set_scan_probe_unicast_ra(
+							hdd_ctx->psoc, false);
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			hdd_err("unable to set unicat probe ra cfg");
 	}
 
 	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_OMI_TX;

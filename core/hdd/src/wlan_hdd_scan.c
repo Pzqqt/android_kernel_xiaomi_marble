@@ -665,6 +665,12 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		/* Use default scan priority */
 		params.priority = SCAN_PRIORITY_COUNT;
 
+	status = ucfg_mlme_get_scan_probe_unicast_ra(
+						hdd_ctx->psoc,
+						&params.scan_probe_unicast_ra);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to get unicast probe req ra cfg");
+
 	status = wlan_cfg80211_scan(vdev, request, &params);
 	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_SCAN_ID);
 error:

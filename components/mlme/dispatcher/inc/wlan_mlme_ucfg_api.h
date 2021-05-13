@@ -4144,6 +4144,40 @@ ucfg_mlme_set_channel_bonding_5ghz(struct wlan_objmgr_psoc *psoc,
 				   uint32_t value);
 
 /**
+ * ucfg_mlme_get_scan_probe_unicast_ra() - Get scan probe unicast RA cfg
+ *
+ * @psoc: pointer to psoc object
+ * @value: value which needs to filled by API
+ *
+ * This API gives scan probe request with unicast RA user config
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS
+ucfg_mlme_get_scan_probe_unicast_ra(struct wlan_objmgr_psoc *psoc,
+				    bool *value)
+{
+	return wlan_mlme_get_scan_probe_unicast_ra(psoc, value);
+}
+
+/**
+ * ucfg_mlme_set_scan_probe_unicast_ra() - Set scan probe unicast RA cfg
+ *
+ * @psoc: pointer to psoc object
+ * @value: set value
+ *
+ * This API sets scan probe request with unicast RA user config
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS
+ucfg_mlme_set_scan_probe_unicast_ra(struct wlan_objmgr_psoc *psoc,
+				    bool value)
+{
+	return wlan_mlme_set_scan_probe_unicast_ra(psoc, value);
+}
+
+/**
  * ucfg_mlme_get_peer_phymode() - get phymode of peer
  * @psoc: pointer to psoc object
  * @mac:  Pointer to the mac addr of the peer
