@@ -931,10 +931,34 @@ void hif_allow_link_low_power_states(struct hif_opaque_softc *hif)
 
 int hif_ipci_enable_grp_irqs(struct hif_softc *scn)
 {
-	return hif_apps_grp_irqs_enable(GET_HIF_OPAQUE_HDL(scn));
+	struct hif_ipci_softc *ipci_scn = HIF_GET_IPCI_SOFTC(scn);
+	int status;
+
+	if (!ipci_scn->grp_irqs_disabled) {
+		hif_err("Unbalanced group IRQs Enable called");
+		qdf_assert_always(0);
+	}
+
+	status = hif_apps_grp_irqs_enable(GET_HIF_OPAQUE_HDL(scn));
+	if (!status)
+		ipci_scn->grp_irqs_disabled = false;
+
+	return status;
 }
 
 int hif_ipci_disable_grp_irqs(struct hif_softc *scn)
 {
-	return hif_apps_grp_irqs_disable(GET_HIF_OPAQUE_HDL(scn));
+	struct hif_ipci_softc *ipci_scn = HIF_GET_IPCI_SOFTC(scn);
+	int status;
+
+	if (ipci_scn->grp_irqs_disabled) {
+		hif_err("Unbalanced group IRQs disable called");
+		qdf_assert_always(0);
+	}
+
+	status = hif_apps_grp_irqs_disable(GET_HIF_OPAQUE_HDL(scn));
+	if (!status)
+		ipci_scn->grp_irqs_disabled = true;
+
+	return status;
 }

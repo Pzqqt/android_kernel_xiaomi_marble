@@ -89,6 +89,7 @@ struct hif_ipci_softc {
 	uint32_t register_window;
 	qdf_spinlock_t register_access_lock;
 	qdf_spinlock_t irq_lock;
+	bool grp_irqs_disabled;
 #ifdef FEATURE_RUNTIME_PM
 	struct hif_runtime_pm_ctx rpm_ctx;
 #endif
