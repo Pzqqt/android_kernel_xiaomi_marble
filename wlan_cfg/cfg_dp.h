@@ -1201,6 +1201,28 @@
 		CFG_INI_BOOL("delay_mon_replenish", \
 		true, "Delay Monitor Replenish")
 
+#ifdef QCA_VDEV_STATS_HW_OFFLOAD_SUPPORT
+#define WLAN_CFG_INT_VDEV_STATS_HW_OFFLOAD_TIMER_MIN 500
+#define WLAN_CFG_INT_VDEV_STATS_HW_OFFLOAD_TIMER_MAX 2000
+#define WLAN_CFG_INT_VDEV_STATS_HW_OFFLOAD_TIMER 500
+
+#define CFG_DP_VDEV_STATS_HW_OFFLOAD_CONFIG \
+		CFG_INI_BOOL("vdev_stats_hw_offload_config", \
+		false, "Offload vdev stats to HW")
+#define CFG_DP_VDEV_STATS_HW_OFFLOAD_TIMER \
+		CFG_INI_UINT("vdev_stats_hw_offload_timer", \
+		WLAN_CFG_INT_VDEV_STATS_HW_OFFLOAD_TIMER_MIN, \
+		WLAN_CFG_INT_VDEV_STATS_HW_OFFLOAD_TIMER_MAX, \
+		WLAN_CFG_INT_VDEV_STATS_HW_OFFLOAD_TIMER, \
+		CFG_VALUE_OR_DEFAULT, \
+		"vdev stats hw offload timer duration")
+#define CFG_DP_VDEV_STATS_HW_OFFLOAD \
+	CFG(CFG_DP_VDEV_STATS_HW_OFFLOAD_CONFIG) \
+	CFG(CFG_DP_VDEV_STATS_HW_OFFLOAD_TIMER)
+#else
+#define CFG_DP_VDEV_STATS_HW_OFFLOAD
+#endif
+
 /*
  * <ini>
  * ghw_cc_enable - enable HW cookie conversion by register
@@ -1540,5 +1562,6 @@
 		CFG_DP_IPA_TX_RING_CFG \
 		CFG_DP_PPE_CONFIG \
 		CFG_DP_IPA_TX_ALT_RING_CFG \
-		CFG_DP_MLO_CONFIG
+		CFG_DP_MLO_CONFIG \
+		CFG_DP_VDEV_STATS_HW_OFFLOAD
 #endif /* _CFG_DP_H_ */

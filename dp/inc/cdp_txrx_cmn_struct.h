@@ -1270,6 +1270,7 @@ enum cdp_pdev_param_type {
  * @cdp_psoc_param_en_rate_stats: set rate stats enable/disable
  * @cdp_psoc_param_en_nss_cfg: set nss cfg
  * @cdp_ipa_enabled : set ipa mode
+ * @cdp_psoc_param_vdev_stats_hw_offload: Configure HW vdev stats offload
  */
 typedef union cdp_config_param_t {
 	/* peer params */
@@ -1347,6 +1348,7 @@ typedef union cdp_config_param_t {
 
 	bool cdp_skip_bar_update;
 	bool cdp_ipa_enabled;
+	bool cdp_psoc_param_vdev_stats_hw_offload;
 } cdp_config_param_type;
 
 /**
@@ -1472,6 +1474,7 @@ enum cdp_vdev_param_type {
  * @CDP_SET_PREFERRED_HW_MODE: set preferred hw mode
  * @CDP_CFG_PEER_EXT_STATS: Peer extended stats mode.
  * @CDP_IPA_ENABLE : set IPA enable mode.
+ * @CDP_SET_VDEV_STATS_HW_OFFLOAD: HW Vdev stats enable/disable
  */
 enum cdp_psoc_param_type {
 	CDP_ENABLE_RATE_STATS,
@@ -1479,6 +1482,7 @@ enum cdp_psoc_param_type {
 	CDP_SET_PREFERRED_HW_MODE,
 	CDP_CFG_PEER_EXT_STATS,
 	CDP_IPA_ENABLE,
+	CDP_SET_VDEV_STATS_HW_OFFLOAD,
 };
 
 #define TXRX_FW_STATS_TXSTATS                     1

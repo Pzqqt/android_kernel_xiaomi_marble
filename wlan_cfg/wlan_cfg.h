@@ -244,6 +244,8 @@ struct wlan_srng_cfg {
  * @mlo_chip_rx_ring_map: map of chip_id to rx ring map
  * @mlo_chip_default_rx_ring_id: default rx_ring of chip when hash is not found
  * @lmac_peer_id_msb: value used for hash based routing
+ * @vdev_stats_hw_offload_config: HW vdev stats config
+ * @vdev_stats_hw_offload_timer: HW vdev stats timer duration
  */
 struct wlan_cfg_dp_soc_ctxt {
 	int num_int_ctxts;
@@ -396,6 +398,10 @@ struct wlan_cfg_dp_soc_ctxt {
 	uint8_t mlo_chip_rx_ring_map[WLAN_MAX_MLO_CHIPS];
 	uint8_t mlo_chip_default_rx_ring_id[WLAN_MAX_MLO_CHIPS];
 	uint8_t lmac_peer_id_msb[WLAN_MAX_MLO_CHIPS];
+#endif
+#ifdef QCA_VDEV_STATS_HW_OFFLOAD_SUPPORT
+	bool vdev_stats_hw_offload_config;
+	int vdev_stats_hw_offload_timer;
 #endif
 };
 
@@ -1947,6 +1953,24 @@ wlan_cfg_get_rx_rel_ring_id(struct wlan_cfg_dp_soc_ctxt *cfg);
 void
 wlan_cfg_set_rx_rel_ring_id(struct wlan_cfg_dp_soc_ctxt *cfg,
 			    uint8_t wbm2sw_ring_id);
+
+/**
+ * wlan_cfg_get_vdev_stats_hw_offload_config() - Get hw vdev stats offload
+ *						 config
+ * @cfg: config context
+ *
+ * Return: value of hw vdev stats config
+ */
+bool
+wlan_cfg_get_vdev_stats_hw_offload_config(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/**
+ * wlan_cfg_get_vdev_stats_hw_offload_timer()- Get hw vdev stats timer duration
+ * @cfg: config context
+ *
+ * Return: value of hw vdev stats timer duration
+ */
+int wlan_cfg_get_vdev_stats_hw_offload_timer(struct wlan_cfg_dp_soc_ctxt *cfg);
 
 #if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
 /**

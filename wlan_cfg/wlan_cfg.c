@@ -1781,6 +1781,32 @@ wlan_soc_mlo_cfg_attach(struct cdp_ctrl_objmgr_psoc *psoc,
 }
 #endif
 
+#ifdef QCA_VDEV_STATS_HW_OFFLOAD_SUPPORT
+/**
+ * wlan_soc_vdev_hw_stats_cfg_attach() - Update hw vdev stats config in dp soc
+ *  cfg context
+ * @psoc - Object manager psoc
+ * @wlan_cfg_ctx - dp soc cfg ctx
+ *
+ * Return: None
+ */
+static void
+wlan_soc_vdev_hw_stats_cfg_attach(struct cdp_ctrl_objmgr_psoc *psoc,
+				  struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx)
+{
+	wlan_cfg_ctx->vdev_stats_hw_offload_config = cfg_get(psoc,
+					CFG_DP_VDEV_STATS_HW_OFFLOAD_CONFIG);
+	wlan_cfg_ctx->vdev_stats_hw_offload_timer = cfg_get(psoc,
+					CFG_DP_VDEV_STATS_HW_OFFLOAD_TIMER);
+}
+#else
+static void
+wlan_soc_vdev_hw_stats_cfg_attach(struct cdp_ctrl_objmgr_psoc *psoc,
+				  struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx)
+{
+}
+#endif
+
 /**
  * wlan_cfg_soc_attach() - Allocate and prepare SoC configuration
  * @psoc - Object manager psoc
@@ -1971,6 +1997,7 @@ wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 	wlan_soc_hw_cc_cfg_attach(psoc, wlan_cfg_ctx);
 	wlan_soc_ppe_cfg_attach(psoc, wlan_cfg_ctx);
 	wlan_soc_mlo_cfg_attach(psoc, wlan_cfg_ctx);
+	wlan_soc_vdev_hw_stats_cfg_attach(psoc, wlan_cfg_ctx);
 #ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 	wlan_cfg_ctx->pkt_capture_mode = cfg_get(psoc, CFG_PKT_CAPTURE_MODE) &
 						 PKT_CAPTURE_MODE_DATA_ONLY;
@@ -3100,5 +3127,29 @@ wlan_cfg_mlo_lmac_peer_id_msb_get_by_chip_id(struct wlan_cfg_dp_soc_ctxt *cfg,
 					     uint8_t chip_id)
 {
 	return cfg->lmac_peer_id_msb[chip_id];
+}
+#endif
+
+#ifdef QCA_VDEV_STATS_HW_OFFLOAD_SUPPORT
+bool
+wlan_cfg_get_vdev_stats_hw_offload_config(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->vdev_stats_hw_offload_config;
+}
+
+int wlan_cfg_get_vdev_stats_hw_offload_timer(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->vdev_stats_hw_offload_timer;
+}
+#else
+bool
+wlan_cfg_get_vdev_stats_hw_offload_config(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return false;
+}
+
+int wlan_cfg_get_vdev_stats_hw_offload_timer(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return 0;
 }
 #endif
