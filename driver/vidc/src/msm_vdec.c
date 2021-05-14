@@ -528,64 +528,6 @@ static int msm_vdec_set_colorformat(struct msm_vidc_inst *inst)
 	return rc;
 }
 
-static int msm_vdec_set_stage(struct msm_vidc_inst *inst)
-{
-	int rc = 0;
-	u32 stage = 0;
-	struct msm_vidc_core *core = inst->core;
-	struct msm_vidc_inst_capability *capability = inst->capabilities;
-
-	rc = call_session_op(core, decide_work_mode, inst);
-	if (rc) {
-		i_vpr_e(inst, "%s: decide_work_mode failed %d\n",
-			__func__);
-		return -EINVAL;
-	}
-
-	stage = capability->cap[STAGE].value;
-	i_vpr_h(inst, "%s: stage: %d", __func__, stage);
-	rc = venus_hfi_session_property(inst,
-			HFI_PROP_STAGE,
-			HFI_HOST_FLAGS_NONE,
-			HFI_PORT_NONE,
-			HFI_PAYLOAD_U32,
-			&stage,
-			sizeof(u32));
-	if (rc)
-		i_vpr_e(inst, "%s: set property failed\n", __func__);
-
-	return rc;
-}
-
-static int msm_vdec_set_pipe(struct msm_vidc_inst *inst)
-{
-	int rc = 0;
-	u32 pipe;
-	struct msm_vidc_core *core = inst->core;
-	struct msm_vidc_inst_capability *capability = inst->capabilities;
-
-	rc = call_session_op(core, decide_work_route, inst);
-	if (rc) {
-		i_vpr_e(inst, "%s: decide_work_route failed\n",
-			__func__);
-		return -EINVAL;
-	}
-
-	pipe = capability->cap[PIPE].value;
-	i_vpr_h(inst, "%s: pipe: %d", __func__, pipe);
-	rc = venus_hfi_session_property(inst,
-			HFI_PROP_PIPE,
-			HFI_HOST_FLAGS_NONE,
-			HFI_PORT_NONE,
-			HFI_PAYLOAD_U32,
-			&pipe,
-			sizeof(u32));
-	if (rc)
-		i_vpr_e(inst, "%s: set property failed\n", __func__);
-
-	return rc;
-}
-
 static int msm_vdec_set_output_order(struct msm_vidc_inst *inst,
 	enum msm_vidc_port_type port)
 {
@@ -816,11 +758,11 @@ static int msm_vdec_set_output_properties(struct msm_vidc_inst *inst)
 	if (rc)
 		return rc;
 
-	rc = msm_vdec_set_stage(inst);
+	rc = msm_vidc_set_stage(inst, STAGE);
 	if (rc)
 		return rc;
 
-	rc = msm_vdec_set_pipe(inst);
+	rc = msm_vidc_set_pipe(inst, PIPE);
 	if (rc)
 		return rc;
 

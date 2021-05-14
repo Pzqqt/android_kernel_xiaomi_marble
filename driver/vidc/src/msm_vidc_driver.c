@@ -1109,6 +1109,7 @@ bool msm_vidc_allow_s_ctrl(struct msm_vidc_inst *inst, u32 id)
 			switch (id) {
 			case V4L2_CID_MPEG_VIDC_CODEC_CONFIG:
 			case V4L2_CID_MPEG_VIDC_PRIORITY:
+			case V4L2_CID_MPEG_VIDC_LOWLATENCY_REQUEST:
 				allow = true;
 				break;
 			default:
