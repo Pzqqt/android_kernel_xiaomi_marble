@@ -513,7 +513,7 @@ int ipa3_setup_apps_low_lat_data_prod_pipe(
 		apps_rmnet_ll_tx_complete_notify;
 	ipa_low_lat_data_ep_cfg->priv = dev;
 	ipa_low_lat_data_ep_cfg->desc_fifo_sz =
-		IPA_SYS_TX_DATA_DESC_FIFO_SZ;
+		IPA_SYS_TX_DATA_DESC_FIFO_SZ_8K;
 
 	ret = ipa_setup_sys_pipe(ipa_low_lat_data_ep_cfg,
 		&rmnet_ll_ipa3_ctx->apps_to_ipa3_low_lat_data_hdl);

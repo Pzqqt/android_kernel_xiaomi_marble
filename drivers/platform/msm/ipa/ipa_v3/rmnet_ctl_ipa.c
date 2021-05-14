@@ -393,7 +393,7 @@ int ipa3_setup_apps_low_lat_prod_pipe(bool rmnet_config,
 	ipa_low_lat_ep_cfg->notify =
 		apps_rmnet_ctl_tx_complete_notify;
 	ipa_low_lat_ep_cfg->desc_fifo_sz =
-		IPA_SYS_TX_DATA_DESC_FIFO_SZ;
+		IPA_SYS_TX_DATA_DESC_FIFO_SZ_8K;
 	ipa_low_lat_ep_cfg->priv = NULL;
 
 	ret = ipa_setup_sys_pipe(ipa_low_lat_ep_cfg,
