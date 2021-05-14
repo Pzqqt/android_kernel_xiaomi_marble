@@ -245,7 +245,7 @@ rrm_process_link_measurement_request(struct mac_context *mac,
 				     tDot11fLinkMeasurementRequest *pLinkReq,
 				     struct pe_session *pe_session)
 {
-	tSirMacLinkReport LinkReport;
+	tSirMacLinkReport LinkReport = {0};
 	tpSirMacMgmtHdr pHdr;
 	int8_t currentRSSI = 0;
 	struct vdev_mlme_obj *mlme_obj;
