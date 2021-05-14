@@ -2076,6 +2076,176 @@ dp_pktlog_msg_handler(struct htt_soc *soc,
 }
 #endif
 
+#ifdef QCA_VDEV_STATS_HW_OFFLOAD_SUPPORT
+/*
+ * dp_vdev_txrx_hw_stats_handler - Handle vdev stats received from FW
+ * @soc - htt soc handle
+ * @ msg_word - buffer containing stats
+ *
+ * Return: void
+ */
+static void dp_vdev_txrx_hw_stats_handler(struct htt_soc *soc,
+					  uint32_t *msg_word)
+{
+	struct dp_soc *dpsoc = (struct dp_soc *)soc->dp_soc;
+	uint8_t pdev_id;
+	uint8_t vdev_id;
+	uint8_t target_pdev_id;
+	uint16_t payload_size;
+	struct dp_pdev *pdev;
+	struct dp_vdev *vdev;
+	uint8_t *tlv_buf;
+	uint32_t *tlv_buf_temp;
+	uint32_t *tag_buf;
+	htt_tlv_tag_t tlv_type;
+	uint16_t tlv_length;
+	uint64_t pkt_count = 0;
+	uint64_t byte_count = 0;
+	uint64_t soc_drop_cnt = 0;
+	struct cdp_pkt_info tx_comp = { 0 };
+	struct cdp_pkt_info tx_failed =  { 0 };
+
+	target_pdev_id =
+		HTT_T2H_VDEVS_TXRX_STATS_PERIODIC_IND_PDEV_ID_GET(*msg_word);
+	pdev_id = dp_get_host_pdev_id_for_target_pdev_id(dpsoc,
+							 target_pdev_id);
+
+	if (pdev_id >= MAX_PDEV_CNT)
+		return;
+
+	pdev = dpsoc->pdev_list[pdev_id];
+	if (!pdev) {
+		dp_err("PDEV is NULL for pdev_id:%d", pdev_id);
+		return;
+	}
+
+	payload_size =
+	HTT_T2H_VDEVS_TXRX_STATS_PERIODIC_IND_PAYLOAD_SIZE_GET(*msg_word);
+
+	qdf_trace_hex_dump(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+			   (void *)msg_word, payload_size + 16);
+
+	/* Adjust msg_word to point to the first TLV in buffer */
+	msg_word = msg_word + 4;
+
+	/* Parse the received buffer till payload size reaches 0 */
+	while (payload_size > 0) {
+		tlv_buf = (uint8_t *)msg_word;
+		tlv_buf_temp = msg_word;
+		tlv_type = HTT_STATS_TLV_TAG_GET(*msg_word);
+		tlv_length = HTT_STATS_TLV_LENGTH_GET(*msg_word);
+
+		/* Add header size to tlv length*/
+		tlv_length += 4;
+
+		switch (tlv_type) {
+		case HTT_STATS_SOC_TXRX_STATS_COMMON_TAG:
+		{
+			tag_buf = tlv_buf_temp +
+					HTT_VDEV_STATS_GET_INDEX(SOC_DROP_CNT);
+			soc_drop_cnt = HTT_VDEV_GET_STATS_U64(tag_buf);
+			DP_STATS_UPD(dpsoc, tx.tqm_drop_no_peer, soc_drop_cnt);
+			break;
+		}
+		case HTT_STATS_VDEV_TXRX_STATS_HW_STATS_TAG:
+		{
+			tag_buf = tlv_buf_temp +
+					HTT_VDEV_STATS_GET_INDEX(VDEV_ID);
+			vdev_id = (uint8_t)(*tag_buf);
+			vdev = dp_vdev_get_ref_by_id(dpsoc, vdev_id,
+						     DP_MOD_ID_HTT);
+
+			if (!vdev)
+				goto invalid_vdev;
+
+			/* Extract received packet count from buffer */
+			tag_buf = tlv_buf_temp +
+					HTT_VDEV_STATS_GET_INDEX(RX_PKT_CNT);
+			pkt_count = HTT_VDEV_GET_STATS_U64(tag_buf);
+			DP_STATS_UPD(vdev, rx_i.reo_rcvd_pkt.num, pkt_count);
+
+			/* Extract received packet byte count from buffer */
+			tag_buf = tlv_buf_temp +
+					HTT_VDEV_STATS_GET_INDEX(RX_BYTE_CNT);
+			byte_count = HTT_VDEV_GET_STATS_U64(tag_buf);
+			DP_STATS_UPD(vdev, rx_i.reo_rcvd_pkt.bytes, byte_count);
+
+			/* Extract tx success packet count from buffer */
+			tag_buf = tlv_buf_temp +
+				HTT_VDEV_STATS_GET_INDEX(TX_SUCCESS_PKT_CNT);
+			pkt_count = HTT_VDEV_GET_STATS_U64(tag_buf);
+			tx_comp.num += pkt_count;
+
+			/* Extract tx success packet byte count from buffer */
+			tag_buf = tlv_buf_temp +
+				HTT_VDEV_STATS_GET_INDEX(TX_SUCCESS_BYTE_CNT);
+			byte_count = HTT_VDEV_GET_STATS_U64(tag_buf);
+			tx_comp.bytes += byte_count;
+
+			/* Extract tx retry packet count from buffer */
+			tag_buf = tlv_buf_temp +
+				HTT_VDEV_STATS_GET_INDEX(TX_RETRY_PKT_CNT);
+			pkt_count = HTT_VDEV_GET_STATS_U64(tag_buf);
+			tx_comp.num += pkt_count;
+			tx_failed.num += pkt_count;
+
+			/* Extract tx retry packet byte count from buffer */
+			tag_buf = tlv_buf_temp +
+				HTT_VDEV_STATS_GET_INDEX(TX_RETRY_BYTE_CNT);
+			pkt_count = HTT_VDEV_GET_STATS_U64(tag_buf);
+			tx_comp.bytes += byte_count;
+			tx_failed.bytes += byte_count;
+
+			/* Extract tx drop packet count from buffer */
+			tag_buf = tlv_buf_temp +
+				HTT_VDEV_STATS_GET_INDEX(TX_DROP_PKT_CNT);
+			pkt_count = HTT_VDEV_GET_STATS_U64(tag_buf);
+			tx_comp.num += pkt_count;
+			tx_failed.num += pkt_count;
+
+			/* Extract tx drop packet byte count from buffer */
+			tag_buf = tlv_buf_temp +
+				HTT_VDEV_STATS_GET_INDEX(TX_DROP_BYTE_CNT);
+			pkt_count = HTT_VDEV_GET_STATS_U64(tag_buf);
+			tx_comp.bytes += byte_count;
+			tx_failed.bytes += byte_count;
+
+			/* Extract tx age-out packet count from buffer */
+			tag_buf = tlv_buf_temp +
+				HTT_VDEV_STATS_GET_INDEX(TX_AGE_OUT_PKT_CNT);
+			pkt_count = HTT_VDEV_GET_STATS_U64(tag_buf);
+			tx_comp.num += pkt_count;
+			tx_failed.num += pkt_count;
+
+			/* Extract tx age-out packet byte count from buffer */
+			tag_buf = tlv_buf_temp +
+				HTT_VDEV_STATS_GET_INDEX(TX_AGE_OUT_BYTE_CNT);
+			pkt_count = HTT_VDEV_GET_STATS_U64(tag_buf);
+			tx_comp.bytes += byte_count;
+			tx_failed.bytes += byte_count;
+
+			DP_STATS_UPD(vdev, tx.comp_pkt.num, tx_comp.num);
+			DP_STATS_UPD(vdev, tx.comp_pkt.bytes, tx_comp.bytes);
+
+			DP_STATS_UPD(vdev, tx.tx_failed, tx_failed.num);
+
+			dp_vdev_unref_delete(dpsoc, vdev, DP_MOD_ID_HTT);
+			break;
+		}
+		default:
+			qdf_assert(0);
+		}
+invalid_vdev:
+		msg_word = (uint32_t *)((uint8_t *)tlv_buf + tlv_length);
+		payload_size -= tlv_length;
+	}
+}
+#else
+static void dp_vdev_txrx_hw_stats_handler(struct htt_soc *soc,
+					  uint32_t *msg_word)
+{}
+#endif
+
 /*
  * time_allow_print() - time allow print
  * @htt_ring_tt:	ringi_id array of timestamps
@@ -3052,6 +3222,11 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 		dp_rx_mlo_timestamp_ind_handler(soc->dp_soc, msg_word);
 		break;
 	}
+	case HTT_T2H_MSG_TYPE_VDEVS_TXRX_STATS_PERIODIC_IND:
+	{
+		dp_vdev_txrx_hw_stats_handler(soc, msg_word);
+		break;
+	}
 	default:
 		break;
 	};
@@ -3384,6 +3559,125 @@ QDF_STATUS dp_h2t_ext_stats_msg_send(struct dp_pdev *pdev,
 
 	return status;
 }
+
+#ifdef QCA_VDEV_STATS_HW_OFFLOAD_SUPPORT
+#define HTT_VDEV_TXRX_STATS_RESET_BITMASK_L32_MASK 0xFFFFFFFF
+#define HTT_VDEV_TXRX_STATS_RESET_BITMASK_U32_MASK 0xFFFFFFFF00000000
+#define HTT_VDEV_TXRX_STATS_RESET_BITMASK_U32_SHIFT 32
+
+QDF_STATUS dp_h2t_hw_vdev_stats_config_send(struct dp_soc *dpsoc,
+					    uint8_t pdev_id, bool enable,
+					    bool reset, uint64_t reset_bitmask)
+{
+	struct htt_soc *soc = dpsoc->htt_handle;
+	struct dp_htt_htc_pkt *pkt;
+	qdf_nbuf_t msg;
+	uint32_t *msg_word;
+	uint8_t *htt_logger_bufp;
+	QDF_STATUS status;
+	int duration;
+	uint32_t bitmask;
+	int target_pdev_id;
+
+	msg = qdf_nbuf_alloc(
+			soc->osdev,
+			HTT_MSG_BUF_SIZE(sizeof(struct htt_h2t_vdevs_txrx_stats_cfg)),
+			HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING, 4, true);
+
+	if (!msg) {
+		dp_htt_err("%pK: Fail to allocate "
+		"HTT_H2T_HW_VDEV_TXRX_STATS_CFG_MSG_SZ msg buffer", dpsoc);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	if (pdev_id != INVALID_PDEV_ID)
+		target_pdev_id = DP_SW2HW_MACID(pdev_id);
+	else
+		target_pdev_id = 0;
+
+	duration =
+	wlan_cfg_get_vdev_stats_hw_offload_timer(dpsoc->wlan_cfg_ctx);
+
+	/*
+	 * Set the length of the message.
+	 * The contribution from the HTC_HDR_ALIGNMENT_PADDING is added
+	 * separately during the below call to qdf_nbuf_push_head.
+	 * The contribution from the HTC header is added separately inside HTC.
+	 */
+	if (!qdf_nbuf_put_tail(msg,
+			       sizeof(struct htt_h2t_vdevs_txrx_stats_cfg))) {
+		dp_htt_err("%pK: Failed to expand head for HTT_HW_VDEV_STATS"
+			   , dpsoc);
+		qdf_nbuf_free(msg);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	msg_word = (uint32_t *)qdf_nbuf_data(msg);
+
+	qdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
+	htt_logger_bufp = (uint8_t *)msg_word;
+	*msg_word = 0;
+
+	HTT_H2T_MSG_TYPE_SET(*msg_word, HTT_H2T_MSG_TYPE_VDEVS_TXRX_STATS_CFG);
+	HTT_RX_VDEVS_TXRX_STATS_PDEV_ID_SET(*msg_word, target_pdev_id);
+
+	HTT_RX_VDEVS_TXRX_STATS_ENABLE_SET(*msg_word, enable);
+
+	HTT_RX_VDEVS_TXRX_STATS_PERIODIC_INTERVAL_SET(*msg_word,
+						      (duration >> 3));
+
+	HTT_RX_VDEVS_TXRX_STATS_RESET_STATS_BITS_SET(*msg_word, reset);
+
+	msg_word++;
+	*msg_word = 0;
+	bitmask = (reset_bitmask & HTT_VDEV_TXRX_STATS_RESET_BITMASK_L32_MASK);
+	*msg_word = bitmask;
+
+	msg_word++;
+	*msg_word = 0;
+	bitmask =
+		((reset_bitmask & HTT_VDEV_TXRX_STATS_RESET_BITMASK_U32_MASK) >>
+		 HTT_VDEV_TXRX_STATS_RESET_BITMASK_U32_SHIFT);
+	*msg_word = bitmask;
+
+	pkt = htt_htc_pkt_alloc(soc);
+	if (!pkt) {
+		dp_htt_err("%pK: Fail to allocate dp_htt_htc_pkt buffer",
+			   dpsoc);
+		qdf_assert(0);
+		qdf_nbuf_free(msg);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	pkt->soc_ctxt = NULL; /* not used during send-done callback */
+
+	SET_HTC_PACKET_INFO_TX(&pkt->htc_pkt,
+			       dp_htt_h2t_send_complete_free_netbuf,
+			       qdf_nbuf_data(msg), qdf_nbuf_len(msg),
+			       soc->htc_endpoint,
+			       /* tag for no FW response msg */
+			       HTC_TX_PACKET_TAG_RUNTIME_PUT);
+
+	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
+	status = DP_HTT_SEND_HTC_PKT(soc, pkt,
+				     HTT_H2T_MSG_TYPE_VDEVS_TXRX_STATS_CFG,
+				     htt_logger_bufp);
+
+	if (status != QDF_STATUS_SUCCESS) {
+		qdf_nbuf_free(msg);
+		htt_htc_pkt_free(soc, pkt);
+	}
+
+	return status;
+}
+#else
+QDF_STATUS dp_h2t_hw_vdev_stats_config_send(struct dp_soc *dpsoc,
+					    uint8_t pdev_id, bool enable,
+					    bool reset, uint64_t reset_bitmask)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * dp_h2t_3tuple_config_send(): function to contruct 3 tuple configuration
