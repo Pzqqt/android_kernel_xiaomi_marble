@@ -794,10 +794,11 @@ ol_rx_defrag(ol_txrx_pdev_handle pdev,
 			     peer->security[index].michael_key,
 			     sizeof(peer->security[index].michael_key));
 		if (!ol_rx_frag_tkip_demic(pdev, key, msdu, hdr_space)) {
-			htt_rx_desc_frame_free(htt_pdev, msdu);
+			uint64_t pn = 0;
 			ol_rx_err(pdev->ctrl_pdev,
 				  vdev->vdev_id, peer->mac_addr.raw, tid, 0,
-				  OL_RX_DEFRAG_ERR, msdu, NULL, 0);
+				  OL_RX_ERR_TKIP_MIC, msdu, &pn, 0);
+			htt_rx_desc_frame_free(htt_pdev, msdu);
 			ol_txrx_err("TKIP demic failed");
 			return;
 		}
