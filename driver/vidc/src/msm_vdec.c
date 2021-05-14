@@ -2437,6 +2437,8 @@ int msm_vdec_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 				idx++;
 			}
 		}
+		if (!array[f->index])
+			return -EINVAL;
 		f->pixelformat = v4l2_codec_from_driver(array[f->index],
 				__func__);
 		if (!f->pixelformat)
@@ -2458,6 +2460,8 @@ int msm_vdec_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 				}
 			}
 		}
+		if (!array[f->index])
+			return -EINVAL;
 		f->pixelformat = v4l2_colorformat_from_driver(array[f->index],
 				__func__);
 		if (!f->pixelformat)
