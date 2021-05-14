@@ -5141,6 +5141,66 @@ static void dp_pdev_flush_pending_vdevs(struct dp_pdev *pdev)
 }
 #endif
 
+#ifdef QCA_VDEV_STATS_HW_OFFLOAD_SUPPORT
+/**
+ * dp_vdev_stats_hw_offload_target_config() - Send HTT command to FW
+ *                                          for enable/disable of HW vdev stats
+ * @soc: Datapath soc handle
+ * @pdev_id: INVALID_PDEV_ID for all pdevs or 0,1,2 for individual pdev
+ * @enable: flag to reprsent enable/disable of hw vdev stats
+ *
+ * Return: none
+ */
+static void dp_vdev_stats_hw_offload_target_config(struct dp_soc *soc,
+						   uint8_t pdev_id,
+						   bool enable)
+{
+	/* Check SOC level config for HW offload vdev stats support */
+	if (!wlan_cfg_get_vdev_stats_hw_offload_config(soc->wlan_cfg_ctx)) {
+		dp_debug("%pK: HW vdev offload stats is disabled", soc);
+		return;
+	}
+
+	/* Send HTT command to FW for enable of stats */
+	dp_h2t_hw_vdev_stats_config_send(soc, pdev_id, enable, false, 0);
+}
+
+/**
+ * dp_vdev_stats_hw_offload_target_clear() - Clear HW vdev stats on target
+ * @soc: Datapath soc handle
+ * @pdev_id: pdev_id (0,1,2)
+ * @bitmask: bitmask with vdev_id(s) for which stats are to be cleared on HW
+ *
+ * Return: none
+ */
+static
+void dp_vdev_stats_hw_offload_target_clear(struct dp_soc *soc, uint8_t pdev_id,
+					   uint64_t vdev_id_bitmask)
+{
+	/* Check SOC level config for HW offload vdev stats support */
+	if (!wlan_cfg_get_vdev_stats_hw_offload_config(soc->wlan_cfg_ctx)) {
+		dp_debug("%pK: HW vdev offload stats is disabled", soc);
+		return;
+	}
+
+	/* Send HTT command to FW for reset of stats */
+	dp_h2t_hw_vdev_stats_config_send(soc, pdev_id, true, true,
+					 vdev_id_bitmask);
+}
+#else
+static void
+dp_vdev_stats_hw_offload_target_config(struct dp_soc *soc, uint8_t pdev_id,
+				       bool enable)
+{
+}
+
+static
+void dp_vdev_stats_hw_offload_target_clear(struct dp_soc *soc, uint8_t pdev_id,
+					   uint64_t vdev_id_bitmask)
+{
+}
+#endif /*QCA_VDEV_STATS_HW_OFFLOAD_SUPPORT */
+
 /**
  * dp_pdev_deinit() - Deinit txrx pdev
  * @txrx_pdev: Datapath PDEV handle
@@ -5862,6 +5922,9 @@ dp_soc_attach_target_wifi3(struct cdp_soc_t *cdp_soc)
 	DP_STATS_INIT(soc);
 
 	dp_runtime_init(soc);
+
+	/* Enable HW vdev offload stats if feature is supported */
+	dp_vdev_stats_hw_offload_target_config(soc, INVALID_PDEV_ID, true);
 
 	/* initialize work queue for stats processing */
 	qdf_create_work(0, &soc->htt_stats.work, htt_t2h_stats_handler, soc);
@@ -8593,6 +8656,9 @@ dp_txrx_host_stats_clr(struct dp_vdev *vdev, struct dp_soc *soc)
 			soc->cdp_soc.ol_ops->nss_stats_clr(soc->ctrl_psoc,
 							   vdev->vdev_id);
 	}
+
+	dp_vdev_stats_hw_offload_target_clear(soc, vdev->pdev->pdev_id,
+					      vdev->vdev_id);
 
 	DP_STATS_CLR(vdev->pdev);
 	DP_STATS_CLR(vdev->pdev->soc);
