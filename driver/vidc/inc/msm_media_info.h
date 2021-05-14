@@ -81,15 +81,12 @@ static inline unsigned int VIDEO_Y_STRIDE_PIX(unsigned int v4l2_fmt,
 	case V4L2_PIX_FMT_NV12:
 	case V4L2_PIX_FMT_NV21:
 	case V4L2_PIX_FMT_VIDC_NV12C:
+	case V4L2_PIX_FMT_VIDC_P010:
 		alignment = 128;
 		stride = MSM_MEDIA_ALIGN(width, alignment);
 		break;
 	case V4L2_PIX_FMT_VIDC_TP10C:
 		alignment = 192;
-		stride = MSM_MEDIA_ALIGN(width, alignment);
-		break;
-	case V4L2_PIX_FMT_VIDC_P010:
-		alignment = 256;
 		stride = MSM_MEDIA_ALIGN(width, alignment);
 		break;
 	default:
@@ -156,15 +153,12 @@ static inline unsigned int VIDEO_UV_STRIDE_PIX(unsigned int v4l2_fmt,
 	case V4L2_PIX_FMT_NV21:
 	case V4L2_PIX_FMT_NV12:
 	case V4L2_PIX_FMT_VIDC_NV12C:
+	case V4L2_PIX_FMT_VIDC_P010:
 		alignment = 128;
 		stride = MSM_MEDIA_ALIGN(width, alignment);
 		break;
 	case V4L2_PIX_FMT_VIDC_TP10C:
 		alignment = 192;
-		stride = MSM_MEDIA_ALIGN(width, alignment);
-		break;
-	case V4L2_PIX_FMT_VIDC_P010:
-		alignment = 256;
 		stride = MSM_MEDIA_ALIGN(width, alignment);
 		break;
 	default:
