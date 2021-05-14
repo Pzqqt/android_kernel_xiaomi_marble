@@ -9348,6 +9348,12 @@ dp_set_psoc_param(struct cdp_soc_t *cdp_soc,
 	case CDP_IPA_ENABLE:
 		soc->wlan_cfg_ctx->ipa_enabled = val.cdp_ipa_enabled;
 		break;
+#ifdef QCA_VDEV_STATS_HW_OFFLOAD_SUPPORT
+	case CDP_SET_VDEV_STATS_HW_OFFLOAD:
+		wlan_cfg_ctx->vdev_stats_hw_offload_config =
+				val.cdp_psoc_param_vdev_stats_hw_offload;
+		break;
+#endif
 	default:
 		break;
 	}
