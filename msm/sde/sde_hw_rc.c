@@ -631,7 +631,7 @@ static int sde_hw_rc_check_mask_cfg(
 		}
 	}
 
-	half_panel_width = hw_cfg->displayh / cfg_param_03 * 2;
+	half_panel_width = hw_cfg->panel_width / cfg_param_03 * 2;
 	for (i = 0; i < cfg_param_03; i += 2) {
 		if (cfg_param_04[i] + cfg_param_04[i+1] != half_panel_width) {
 			SDE_ERROR("invalid ratio [%d]:%d, [%d]:%d, %d\n",

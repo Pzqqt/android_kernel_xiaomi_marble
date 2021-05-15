@@ -1603,7 +1603,8 @@ static int _sde_cp_crtc_checkfeature(u32 feature,
 		hw_cfg.displayh = num_mixers *
 				sde_crtc_state->lm_roi[i].w;
 		hw_cfg.displayv = sde_crtc_state->lm_roi[i].h;
-
+		hw_cfg.panel_width = sde_crtc->base.state->adjusted_mode.hdisplay;
+		hw_cfg.panel_height = sde_crtc->base.state->adjusted_mode.vdisplay;
 		DRM_DEBUG_DRIVER("check cp feature %d on mixer %d\n",
 				feature, hw_lm->idx - LM_0);
 		ret = check_feature(hw_dspp, &hw_cfg, sde_crtc);
@@ -1862,7 +1863,8 @@ static int _sde_cp_crtc_check_pu_features(struct drm_crtc *crtc)
 			hw_cfg.displayh = hw_cfg.num_of_mixers *
 					sde_crtc_state->lm_roi[j].w;
 			hw_cfg.displayv = sde_crtc_state->lm_roi[j].h;
-
+			hw_cfg.panel_height = sde_crtc->base.state->adjusted_mode.vdisplay;
+			hw_cfg.panel_width = sde_crtc->base.state->adjusted_mode.hdisplay;
 			ret = check_pu_feature(hw_dspp, &hw_cfg, sde_crtc);
 			if (ret) {
 				DRM_ERROR("failed pu feature %d in mixer %d\n",
