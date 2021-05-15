@@ -487,14 +487,15 @@ wlan_cm_dual_sta_roam_update_connect_channels(struct wlan_objmgr_psoc *psoc,
 	uint32_t i, num_channels = 0;
 	uint32_t *channel_list;
 	bool is_ch_allowed;
-	QDF_STATUS status;
 	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct wlan_mlme_cfg *mlme_cfg;
 	struct dual_sta_policy *dual_sta_policy;
 
 	mlme_obj = mlme_get_psoc_ext_obj(psoc);
 	if (!mlme_obj)
 		return;
 	dual_sta_policy = &mlme_obj->cfg.gen.dual_sta_policy;
+	mlme_cfg = &mlme_obj->cfg;
 
 	if (!wlan_mlme_get_dual_sta_roaming_enabled(psoc))
 		return;
@@ -514,22 +515,13 @@ wlan_cm_dual_sta_roam_update_connect_channels(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 
-	channel_list = qdf_mem_malloc(NUM_CHANNELS * sizeof(uint32_t));
-	if (!channel_list)
-		return;
-
 	/*
 	 * Get Reg domain valid channels and update to the scan filter
 	 * if already 1st sta is in connected state. Don't allow channels
 	 * on which the 1st STA is connected.
 	 */
-	status = policy_mgr_get_valid_chans(psoc, channel_list,
-					    &num_channels);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		mlme_err("Error in getting valid channels");
-		qdf_mem_free(channel_list);
-		return;
-	}
+	num_channels = mlme_cfg->reg.valid_channel_list_num;
+	channel_list = mlme_cfg->reg.valid_channel_freq_list;
 
 	filter->num_of_channels = 0;
 	for (i = 0; i < num_channels; i++) {
@@ -543,7 +535,6 @@ wlan_cm_dual_sta_roam_update_connect_channels(struct wlan_objmgr_psoc *psoc,
 					channel_list[i];
 		filter->num_of_channels++;
 	}
-	qdf_mem_free(channel_list);
 }
 
 void
