@@ -266,12 +266,15 @@ int msm_vidc_vb2_buffer_done(struct msm_vidc_inst *inst,
 struct msm_vidc_buffer *msm_vidc_get_vidc_buffer(struct msm_vidc_inst *inst);
 struct msm_vidc_alloc *msm_vidc_get_alloc_buffer(struct msm_vidc_inst *inst);
 struct msm_vidc_map *msm_vidc_get_map_buffer(struct msm_vidc_inst *inst);
+struct msm_vidc_timestamp *msm_vidc_get_ts(struct msm_vidc_inst *inst);
 int msm_vidc_put_vidc_buffer(struct msm_vidc_inst *inst, struct msm_vidc_buffer *buf);
 int msm_vidc_put_alloc_buffer(struct msm_vidc_inst *inst, struct msm_vidc_alloc *alloc);
 int msm_vidc_put_map_buffer(struct msm_vidc_inst *inst, struct msm_vidc_map *map);
+int msm_vidc_put_ts(struct msm_vidc_inst *inst, struct msm_vidc_timestamp *ts);
 int msm_vidc_destroy_vidc_buffer(struct msm_vidc_inst *inst);
 int msm_vidc_destroy_alloc_buffer(struct msm_vidc_inst *inst);
 int msm_vidc_destroy_map_buffer(struct msm_vidc_inst *inst);
+int msm_vidc_destroy_ts(struct msm_vidc_inst *inst);
 int msm_vidc_remove_session(struct msm_vidc_inst *inst);
 int msm_vidc_add_session(struct msm_vidc_inst *inst);
 int msm_vidc_session_open(struct msm_vidc_inst *inst);
@@ -386,6 +389,9 @@ bool msm_vidc_allow_decode_batch(struct msm_vidc_inst *inst);
 int msm_vidc_check_session_supported(struct msm_vidc_inst *inst);
 int msm_vidc_check_mbps_supported(struct msm_vidc_inst *inst);
 int msm_vidc_check_scaling_supported(struct msm_vidc_inst *inst);
+int msm_vidc_update_timestamp(struct msm_vidc_inst *inst, u64 timestamp);
+int msm_vidc_calc_framerate(struct msm_vidc_inst *inst);
+int msm_vidc_flush_ts(struct msm_vidc_inst *inst);
 const char *buf_name(enum msm_vidc_buffer_type type);
 void msm_vidc_free_capabililty_list(struct msm_vidc_inst *inst,
 	enum msm_vidc_ctrl_list_type list_type);

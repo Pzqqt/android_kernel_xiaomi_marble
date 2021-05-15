@@ -23,6 +23,7 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 	u32 base_cycles = 0;
 	u32 fps;
 	u32 prio_val;
+	u32 ts_fps;
 
 	if (!inst || !inst->core || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -46,6 +47,10 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 
 	mbs_per_second = msm_vidc_get_inst_load(inst);
 	fps = msm_vidc_get_fps(inst);
+
+	ts_fps = msm_vidc_calc_framerate(inst);
+	if (ts_fps > fps)
+		i_vpr_l(inst, "%s: ts_rate %d set rate %d\n", __func__, ts_fps, fps);
 
 	/*
 	 * Calculate vpp, vsp, fw cycles separately for encoder and decoder.

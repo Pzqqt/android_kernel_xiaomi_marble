@@ -1365,6 +1365,8 @@ int msm_vdec_streamoff_input(struct msm_vidc_inst *inst)
 	if (rc)
 		return rc;
 
+	msm_vidc_flush_ts(inst);
+
 	return 0;
 }
 
@@ -1433,6 +1435,10 @@ int msm_vdec_streamon_input(struct msm_vidc_inst *inst)
 		return rc;
 
 	rc = msm_vidc_session_streamon(inst, INPUT_PORT);
+	if (rc)
+		goto error;
+
+	rc = msm_vidc_flush_ts(inst);
 	if (rc)
 		goto error;
 
@@ -1926,6 +1932,7 @@ int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 	}
 
 	if (cmd == V4L2_DEC_CMD_STOP) {
+		i_vpr_h(inst, "received cmd: drain\n");
 		allow = msm_vidc_allow_stop(inst);
 		if (allow == MSM_VIDC_DISALLOW)
 			return -EBUSY;
@@ -1945,6 +1952,7 @@ int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 		if (rc)
 			return rc;
 	} else if (cmd == V4L2_DEC_CMD_START) {
+		i_vpr_h(inst, "received cmd: resume\n");
 		if (!msm_vidc_allow_start(inst))
 			return -EBUSY;
 		port = (inst->state == MSM_VIDC_DRAIN_LAST_FLAG) ? INPUT_PORT : OUTPUT_PORT;

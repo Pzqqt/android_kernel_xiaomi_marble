@@ -877,6 +877,7 @@ int msm_venc_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 	}
 
 	if (cmd == V4L2_ENC_CMD_STOP) {
+		i_vpr_h(inst, "received cmd: drain\n");
 		allow = msm_vidc_allow_stop(inst);
 		if (allow == MSM_VIDC_DISALLOW)
 			return -EBUSY;
@@ -896,6 +897,7 @@ int msm_venc_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 		if (rc)
 			return rc;
 	} else if (cmd == V4L2_ENC_CMD_START) {
+		i_vpr_h(inst, "received cmd: resume\n");
 		if (!msm_vidc_allow_start(inst))
 			return -EBUSY;
 		vb2_clear_last_buffer_dequeued(&inst->vb2q[OUTPUT_META_PORT]);

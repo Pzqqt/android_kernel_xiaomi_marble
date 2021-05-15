@@ -1916,6 +1916,210 @@ int msm_vidc_memory_unmap_completely(struct msm_vidc_inst *inst,
 	return rc;
 }
 
+int msm_vidc_calc_framerate(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_timestamp *ts;
+	struct msm_vidc_timestamp *prev = NULL;
+	u32 counter = 0;
+	u64 ts_ms = 0;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	list_for_each_entry(ts, &inst->timestamps.list, sort.list) {
+		if (prev) {
+			if (ts->sort.val == prev->sort.val)
+				continue;
+
+			ts_ms += div_u64(ts->sort.val - prev->sort.val, 1000000);
+			counter++;
+		}
+		prev = ts;
+	}
+
+	return ts_ms ? (1000 * counter) / ts_ms : 0;
+}
+
+static int msm_vidc_insert_sort(struct list_head *head,
+	struct msm_vidc_sort *entry)
+{
+	struct msm_vidc_sort *first, *node;
+	struct msm_vidc_sort *prev = NULL;
+	bool is_inserted = false;
+
+	if (!head || !entry) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (list_empty(head)) {
+		list_add(&entry->list, head);
+		return 0;
+	}
+
+	first = list_first_entry(head, struct msm_vidc_sort, list);
+	if (entry->val < first->val) {
+		list_add(&entry->list, head);
+		return 0;
+	}
+
+	list_for_each_entry(node, head, list) {
+		if (prev &&
+			entry->val >= prev->val && entry->val <= node->val) {
+			list_add(&entry->list, &prev->list);
+			is_inserted = true;
+			break;
+		}
+		prev = node;
+	}
+
+	if (!is_inserted)
+		list_add(&entry->list, &prev->list);
+
+	return 0;
+}
+
+static struct msm_vidc_timestamp *msm_vidc_get_least_rank_ts(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_timestamp *ts, *final = NULL;
+	u64 least_rank = INT_MAX;
+
+	if (!inst) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return NULL;
+	}
+
+	list_for_each_entry(ts, &inst->timestamps.list, sort.list) {
+		if (ts->rank < least_rank) {
+			least_rank = ts->rank;
+			final = ts;
+		}
+	}
+
+	return final;
+}
+
+int msm_vidc_flush_ts(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_timestamp *temp, *ts = NULL;
+
+	if (!inst) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	list_for_each_entry_safe(ts, temp, &inst->timestamps.list, sort.list) {
+		i_vpr_l(inst, "%s: flushing ts: val %lld, rank %%lld\n",
+			__func__, ts->sort.val, ts->rank);
+		list_del(&ts->sort.list);
+		msm_vidc_put_ts(inst, ts);
+	}
+	inst->timestamps.count = 0;
+
+	return 0;
+}
+
+int msm_vidc_update_timestamp(struct msm_vidc_inst *inst, u64 timestamp)
+{
+	struct msm_vidc_timestamp *ts;
+	int rc = 0;
+
+	if (!inst) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	ts = msm_vidc_get_ts(inst);
+	if (!ts) {
+		i_vpr_e(inst, "%s: ts alloc failed\n", __func__);
+		return -ENOMEM;
+	}
+
+	INIT_LIST_HEAD(&ts->sort.list);
+	ts->sort.val = timestamp;
+	ts->rank = inst->timestamps.rank++;
+	rc = msm_vidc_insert_sort(&inst->timestamps.list, &ts->sort);
+	if (rc)
+		return rc;
+	inst->timestamps.count++;
+
+	/* keep sliding window of 10 ts nodes */
+	if (inst->timestamps.count > 10) {
+		ts = msm_vidc_get_least_rank_ts(inst);
+		if (!ts) {
+			i_vpr_e(inst, "%s: least rank ts is NULL\n", __func__);
+			return -EINVAL;
+		}
+		inst->timestamps.count--;
+		list_del(&ts->sort.list);
+		msm_vidc_put_ts(inst, ts);
+	}
+
+	return 0;
+}
+
+struct msm_vidc_timestamp *msm_vidc_get_ts(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_timestamp *ts = NULL;
+
+	if (!inst) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return NULL;
+	}
+
+	if (!list_empty(&inst->pool.timestamps.list)) {
+		ts = list_first_entry(&inst->pool.timestamps.list,
+			struct msm_vidc_timestamp, sort.list);
+		inst->pool.timestamps.count--;
+		list_del(&ts->sort.list);
+		memset(ts, 0, sizeof(struct msm_vidc_timestamp));
+		return ts;
+	}
+
+	ts = kzalloc(sizeof(struct msm_vidc_timestamp), GFP_KERNEL);
+	if (!ts) {
+		i_vpr_e(inst, "%s: ts failed\n", __func__);
+		return NULL;
+	}
+
+	return ts;
+}
+
+int msm_vidc_put_ts(struct msm_vidc_inst *inst, struct msm_vidc_timestamp *ts)
+{
+	if (!inst || !ts) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	inst->pool.timestamps.count++;
+	list_add_tail(&ts->sort.list, &inst->pool.timestamps.list);
+
+	return 0;
+}
+
+int msm_vidc_destroy_ts(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_timestamp *ts, *temp;
+
+	if (!inst) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	i_vpr_h(inst, "%s: pool: ts count %u\n", __func__, inst->pool.timestamps.count);
+
+	/* free all timestamps from pool */
+	list_for_each_entry_safe(ts, temp, &inst->pool.timestamps.list, sort.list) {
+		list_del(&ts->sort.list);
+		kfree(ts);
+	}
+
+	return 0;
+}
+
 struct msm_vidc_buffer *msm_vidc_get_vidc_buffer(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_buffer *buf = NULL;
@@ -3803,7 +4007,7 @@ static void __strict_check(struct msm_vidc_core *core)
 
 static int msm_vidc_core_init_wait(struct msm_vidc_core *core)
 {
-	static const int interval = 40;
+	const int interval = 40;
 	int max_tries, count = 0, rc = 0;
 
 	if (!core || !core->capabilities) {
@@ -4086,7 +4290,7 @@ void msm_vidc_ssr_handler(struct work_struct *work)
 	ssr = &core->ssr;
 
 	core_lock(core, __func__);
-	if (core->state != MSM_VIDC_CORE_DEINIT) {
+	if (core->state == MSM_VIDC_CORE_INIT) {
 		/*
 		 * In current implementation, user-initiated SSR triggers
 		 * a fatal error from hardware. However, there is no way
@@ -4280,6 +4484,7 @@ void msm_vidc_destroy_buffers(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_buffers *buffers;
 	struct msm_vidc_buffer *buf, *dummy;
+	struct msm_vidc_timestamp *ts, *dummy_ts;
 	static const enum msm_vidc_buffer_type ext_buf_types[] = {
 		MSM_VIDC_BUF_INPUT,
 		MSM_VIDC_BUF_OUTPUT,
@@ -4341,11 +4546,18 @@ void msm_vidc_destroy_buffers(struct msm_vidc_inst *inst)
 		msm_vidc_put_vidc_buffer(inst, buf);
 	}
 
+	list_for_each_entry_safe(ts, dummy_ts, &inst->timestamps.list, sort.list) {
+		i_vpr_e(inst, "%s: removing ts: val %lld, rank %%lld\n",
+			__func__, ts->sort.val, ts->rank);
+		list_del(&ts->sort.list);
+		msm_vidc_put_ts(inst, ts);
+	}
+
 	/* destroy buffers from pool */
 	msm_vidc_destroy_vidc_buffer(inst);
 	msm_vidc_destroy_alloc_buffer(inst);
 	msm_vidc_destroy_map_buffer(inst);
-
+	msm_vidc_destroy_ts(inst);
 }
 
 static void msm_vidc_close_helper(struct kref *kref)
