@@ -15788,6 +15788,13 @@ typedef struct {
      *     1 - To enable FT-IM
      */
     A_UINT32 ft_im_for_deauth;
+    /*
+     * FW can prefer doing over-the-ds fast BSS transition instead of
+     * over-the-air if associated and target AP are both capable of FT over DS.
+     *     0 - To disable FT-over-DS
+     *     1 - To enable FT-over-DS
+     */
+    A_UINT32 ft_over_ds_enable;
 } wmi_roam_11r_offload_tlv_param;
 
 /* This TLV will be filled only in case of ESE */
