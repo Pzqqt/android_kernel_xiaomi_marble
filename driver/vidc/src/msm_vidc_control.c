@@ -637,6 +637,49 @@ error:
 	return rc;
 }
 
+static int msm_vidc_update_buffer_count_if_needed(struct msm_vidc_inst* inst,
+	struct v4l2_ctrl *ctrl)
+{
+	int rc = 0;
+	bool update_input_port = false, update_output_port = false;
+
+	if (!inst || !inst->capabilities || !ctrl) {
+		d_vpr_e("%s: invalid parameters\n", __func__);
+		return -EINVAL;
+	}
+
+	switch (ctrl->id) {
+	case V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_TYPE:
+	case V4L2_CID_MPEG_VIDEO_H264_HIERARCHICAL_CODING_TYPE:
+	case V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_LAYER:
+	case V4L2_CID_MPEG_VIDEO_H264_HIERARCHICAL_CODING:
+	case V4L2_CID_MPEG_VIDEO_H264_HIERARCHICAL_CODING_LAYER:
+		update_input_port = true;
+		break;
+	case V4L2_CID_MPEG_VIDC_THUMBNAIL_MODE:
+		update_input_port = true;
+		update_output_port = true;
+		break;
+	default:
+		update_input_port = false;
+		update_output_port = false;
+		break;
+	}
+
+	if (update_input_port) {
+		rc = msm_vidc_update_buffer_count(inst, INPUT_PORT);
+		if (rc)
+			return rc;
+	}
+	if (update_output_port) {
+		rc = msm_vidc_update_buffer_count(inst, OUTPUT_PORT);
+		if (rc)
+			return rc;
+	}
+
+	return rc;
+}
+
 int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl)
 {
 	int rc = 0;
@@ -709,14 +752,6 @@ int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl)
 			if (rc)
 				return rc;
 		}
-		if (ctrl->id == V4L2_CID_MPEG_VIDC_THUMBNAIL_MODE) {
-			rc = msm_vidc_update_buffer_count(inst, INPUT_PORT);
-			if (rc)
-				return rc;
-			rc = msm_vidc_update_buffer_count(inst, OUTPUT_PORT);
-			if (rc)
-				return rc;
-		}
 		if (is_meta_ctrl(ctrl->id)) {
 			if (cap_id == META_DPB_TAG_LIST) {
 				/*
@@ -734,6 +769,10 @@ int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl)
 			if (rc)
 				return rc;
 		}
+		rc = msm_vidc_update_buffer_count_if_needed(inst, ctrl);
+		if (rc)
+			return rc;
+
 		return 0;
 	}
 

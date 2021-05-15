@@ -197,6 +197,16 @@ static inline bool is_lowlatency_session(struct msm_vidc_inst *inst)
 	return !!(inst->capabilities->cap[LOWLATENCY_MODE].value);
 }
 
+static inline bool is_hierb_requested(struct msm_vidc_inst *inst)
+{
+	return (inst->codec == MSM_VIDC_H264 &&
+			inst->capabilities->cap[LAYER_TYPE].value ==
+				V4L2_MPEG_VIDEO_H264_HIERARCHICAL_CODING_B) ||
+			(inst->codec == MSM_VIDC_HEVC &&
+			inst->capabilities->cap[LAYER_TYPE].value ==
+				V4L2_MPEG_VIDEO_HEVC_HIERARCHICAL_CODING_B);
+}
+
 static inline bool is_active_session(u64 prev, u64 curr)
 {
 	u64 ts_delta;

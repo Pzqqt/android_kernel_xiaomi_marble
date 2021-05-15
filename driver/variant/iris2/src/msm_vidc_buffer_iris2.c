@@ -454,16 +454,27 @@ static u32 msm_vidc_encoder_vpss_size_iris2(struct msm_vidc_inst* inst)
 	ds_enable = is_scaling_enabled(inst);
 	msm_vidc_v4l2_to_hfi_enum(inst, ROTATION, &rotation_val);
 
-	width = inst->compose.width;
-	height = inst->compose.height;
+	f = &inst->fmts[OUTPUT_PORT];
+	if (inst->capabilities->cap[ROTATION].value == 90 ||
+		inst->capabilities->cap[ROTATION].value == 270) {
+		/*
+		 * output width and height are rotated,
+		 * so unrotate them to use as arguments to
+		 * HFI_BUFFER_VPSS_ENC.
+		 */
+		width = f->fmt.pix_mp.height;
+		height = f->fmt.pix_mp.width;
+	} else {
+		width = f->fmt.pix_mp.width;
+		height = f->fmt.pix_mp.height;
+	}
 
 	f = &inst->fmts[INPUT_PORT];
 	driver_colorfmt = v4l2_colorformat_to_driver(
 			f->fmt.pix_mp.pixelformat, __func__);
 	is_tenbit = is_10bit_colorformat(driver_colorfmt);
 
-	HFI_BUFFER_VPSS_ENC(size, width, height, ds_enable,
-		rotation_val, is_tenbit);
+	HFI_BUFFER_VPSS_ENC(size, width, height, ds_enable, is_tenbit);
 	i_vpr_l(inst, "%s: size %d\n", __func__, size);
 	return size;
 }
@@ -539,6 +550,39 @@ exit:
 	return size;
 }
 
+static int msm_vidc_input_min_count_iris2(struct msm_vidc_inst* inst)
+{
+	u32 input_min_count = 0;
+	u32 total_hb_layer = 0;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return 0;
+	}
+
+	if (is_decode_session(inst)) {
+		input_min_count = MIN_DEC_INPUT_BUFFERS;
+	} else if (is_encode_session(inst)) {
+		total_hb_layer = is_hierb_requested(inst) ?
+			inst->capabilities->cap[ENH_LAYER_COUNT].value + 1 : 0;
+		if (inst->codec == MSM_VIDC_H264 &&
+			!inst->capabilities->cap[LAYER_ENABLE].value) {
+			total_hb_layer = 0;
+		}
+		HFI_IRIS2_ENC_MIN_INPUT_BUF_COUNT(input_min_count,
+			total_hb_layer);
+	} else {
+		i_vpr_e(inst, "%s: invalid domain\n",
+			__func__, inst->domain);
+		return 0;
+	}
+
+	if (is_thumbnail_session(inst) || is_image_session(inst))
+		input_min_count = 1;
+
+	return input_min_count;
+}
+
 static int msm_buffer_dpb_count(struct msm_vidc_inst *inst)
 {
 	int count = 0;
@@ -575,7 +619,7 @@ int msm_buffer_min_count_iris2(struct msm_vidc_inst *inst,
 	switch (buffer_type) {
 	case MSM_VIDC_BUF_INPUT:
 	case MSM_VIDC_BUF_INPUT_META:
-		count = msm_vidc_input_min_count(inst);
+		count = msm_vidc_input_min_count_iris2(inst);
 		break;
 	case MSM_VIDC_BUF_OUTPUT:
 	case MSM_VIDC_BUF_OUTPUT_META:
