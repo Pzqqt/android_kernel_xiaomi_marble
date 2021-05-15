@@ -1295,6 +1295,7 @@ static int handle_session_property(struct msm_vidc_inst *inst,
 			msm_vidc_update_cap_value(inst, ENTROPY_MODE,
 				V4L2_MPEG_VIDEO_H264_ENTROPY_MODE_CAVLC,
 				__func__);
+		break;
 	case HFI_PROP_DPB_LIST:
 		if (is_decode_session(inst) && port == OUTPUT_PORT &&
 			inst->capabilities->cap[DPB_LIST].value) {
