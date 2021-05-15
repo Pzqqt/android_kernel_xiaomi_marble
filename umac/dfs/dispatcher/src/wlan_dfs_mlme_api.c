@@ -103,16 +103,6 @@ void dfs_mlme_mark_dfs(struct wlan_objmgr_pdev *pdev,
 #endif
 
 #ifndef QCA_MCL_DFS_SUPPORT
-#ifdef CONFIG_CHAN_NUM_API
-void dfs_mlme_start_csa(struct wlan_objmgr_pdev *pdev,
-		uint8_t ieee_chan, uint16_t freq,
-		uint8_t cfreq2, uint64_t flags)
-{
-	if (global_dfs_to_mlme.mlme_start_csa)
-		global_dfs_to_mlme.mlme_start_csa(pdev, ieee_chan, freq, cfreq2,
-				flags);
-}
-#endif
 #ifdef CONFIG_CHAN_FREQ_API
 void dfs_mlme_start_csa_for_freq(struct wlan_objmgr_pdev *pdev,
 				 uint8_t ieee_chan, uint16_t freq,
@@ -124,26 +114,6 @@ void dfs_mlme_start_csa_for_freq(struct wlan_objmgr_pdev *pdev,
 }
 #endif
 #else
-#ifdef CONFIG_CHAN_NUM_API
-void dfs_mlme_start_csa(struct wlan_objmgr_pdev *pdev,
-			uint8_t ieee_chan, uint16_t freq,
-			uint8_t cfreq2, uint64_t flags)
-{
-	struct wlan_objmgr_vdev *vdev;
-
-	if (!pdev) {
-		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,  "null pdev");
-		return;
-	}
-
-	vdev = wlan_pdev_peek_active_first_vdev(pdev, WLAN_DFS_ID);
-
-	if (vdev) {
-		dfs_send_radar_ind(pdev, vdev, NULL);
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_DFS_ID);
-	}
-}
-#endif
 #ifdef CONFIG_CHAN_FREQ_API
 void dfs_mlme_start_csa_for_freq(struct wlan_objmgr_pdev *pdev,
 				 uint8_t ieee_chan, uint16_t freq,
@@ -202,28 +172,6 @@ void dfs_mlme_get_dfs_ch_nchans(struct wlan_objmgr_pdev *pdev,
 		global_dfs_to_mlme.mlme_get_dfs_ch_nchans(pdev,
 				nchans);
 }
-
-#ifdef CONFIG_CHAN_NUM_API
-QDF_STATUS dfs_mlme_get_extchan(struct wlan_objmgr_pdev *pdev,
-		uint16_t *dfs_ch_freq,
-		uint64_t *dfs_ch_flags,
-		uint16_t *dfs_ch_flagext,
-		uint8_t *dfs_ch_ieee,
-		uint8_t *dfs_ch_vhtop_ch_freq_seg1,
-		uint8_t *dfs_ch_vhtop_ch_freq_seg2)
-{
-	if (global_dfs_to_mlme.mlme_get_extchan)
-		return global_dfs_to_mlme.mlme_get_extchan(pdev,
-				dfs_ch_freq,
-				dfs_ch_flags,
-				dfs_ch_flagext,
-				dfs_ch_ieee,
-				dfs_ch_vhtop_ch_freq_seg1,
-				dfs_ch_vhtop_ch_freq_seg2);
-
-	return QDF_STATUS_E_FAILURE;
-}
-#endif
 
 #ifdef CONFIG_CHAN_FREQ_API
 QDF_STATUS dfs_mlme_get_extchan_for_freq(struct wlan_objmgr_pdev *pdev,

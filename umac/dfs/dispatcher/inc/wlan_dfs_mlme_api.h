@@ -66,22 +66,6 @@ dfs_mlme_proc_spoof_success(struct wlan_objmgr_pdev *pdev)
 #endif
 
 /**
- * dfs_mlme_start_csa() - Sends CSA in ieeeChan
- * @pdev: Pointer to DFS pdev object.
- * @ieee_chan: Channel number.
- * @freq: Channel frequency.
- * @cfreq2: HT80 cfreq2.
- * @flags: channel flags.
- */
-#ifdef CONFIG_CHAN_NUM_API
-void dfs_mlme_start_csa(struct wlan_objmgr_pdev *pdev,
-		uint8_t ieee_chan,
-		uint16_t freq,
-		uint8_t cfreq2,
-		uint64_t flags);
-#endif
-
-/**
  * dfs_mlme_start_csa_for_freq() - Sends CSA in ieeeChan
  * @pdev: Pointer to DFS pdev object.
  * @ieee_chan: Channel number.
@@ -116,27 +100,6 @@ void dfs_mlme_deliver_event_up_after_cac(struct wlan_objmgr_pdev *pdev);
  * @nchans: Pointer to save the channel number.
  */
 void dfs_mlme_get_dfs_ch_nchans(struct wlan_objmgr_pdev *pdev, int *nchans);
-
-/**
- * dfs_mlme_get_extchan() - Get extension channel.
- * @pdev: Pointer to DFS pdev object.
- * @dfs_ch_freq:                Frequency in Mhz.
- * @dfs_ch_flags:               Channel flags.
- * @dfs_ch_flagext:             Extended channel flags.
- * @dfs_ch_ieee:                IEEE channel number.
- * @dfs_ch_vhtop_ch_freq_seg1:  Channel Center frequency.
- * @dfs_ch_vhtop_ch_freq_seg2:  Channel Center frequency applicable for 80+80MHz
- *                          mode of operation.
- */
-#ifdef CONFIG_CHAN_NUM_API
-QDF_STATUS dfs_mlme_get_extchan(struct wlan_objmgr_pdev *pdev,
-		uint16_t *dfs_ch_freq,
-		uint64_t *dfs_ch_flags,
-		uint16_t *dfs_ch_flagext,
-		uint8_t *dfs_ch_ieee,
-		uint8_t *dfs_ch_vhtop_ch_freq_seg1,
-		uint8_t *dfs_ch_vhtop_ch_freq_seg2);
-#endif
 
 /**
  * dfs_mlme_get_extchan() - Get extension channel.

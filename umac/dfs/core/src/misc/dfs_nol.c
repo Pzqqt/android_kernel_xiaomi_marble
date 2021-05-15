@@ -112,62 +112,6 @@ static os_timer_func(dfs_nol_timeout)
 			      qdf_system_ticks_to_msecs(qdf_system_ticks()));
 	}
 }
-#else
-#ifdef CONFIG_CHAN_NUM_API
-static os_timer_func(dfs_nol_timeout)
-{
-	struct dfs_channel *c = NULL, lc;
-	unsigned long oldest, now;
-	struct wlan_dfs *dfs = NULL;
-	int i;
-	int nchans = 0;
-
-	c = &lc;
-
-	OS_GET_TIMER_ARG(dfs, struct wlan_dfs *);
-	dfs_mlme_get_dfs_ch_nchans(dfs->dfs_pdev_obj, &nchans);
-
-	now = oldest = qdf_system_ticks();
-	for (i = 0; i < nchans; i++) {
-		dfs_mlme_get_dfs_ch_channels(dfs->dfs_pdev_obj,
-				&(c->dfs_ch_freq),
-				&(c->dfs_ch_flags),
-				&(c->dfs_ch_flagext),
-				&(c->dfs_ch_ieee),
-				&(c->dfs_ch_vhtop_ch_freq_seg1),
-				&(c->dfs_ch_vhtop_ch_freq_seg2),
-				i);
-		if (WLAN_IS_CHAN_RADAR(dfs, c)) {
-			if (qdf_system_time_after_eq(now,
-						dfs->dfs_nol_event[i] +
-						dfs_get_nol_timeout(dfs))) {
-				c->dfs_ch_flagext &=
-					~WLAN_CHAN_DFS_RADAR_FOUND;
-				if (c->dfs_ch_flags &
-						WLAN_CHAN_DFS_RADAR) {
-					/*
-					 * NB: do this here so we get only one
-					 * msg instead of one for every channel
-					 * table entry.
-					 */
-					dfs_debug(dfs, WLAN_DEBUG_DFS,
-						"radar on channel %u (%u MHz) cleared after timeout",
-
-						c->dfs_ch_ieee,
-						c->dfs_ch_freq);
-				}
-			} else if (dfs->dfs_nol_event[i] < oldest)
-				oldest = dfs->dfs_nol_event[i];
-		}
-	}
-	if (oldest != now) {
-		/* Arrange to process next channel up for a status change. */
-		qdf_timer_mod(&dfs->dfs_nol_timer,
-				dfs_get_nol_timeout(dfs) -
-				qdf_system_ticks_to_msecs(qdf_system_ticks()));
-	}
-}
-#endif
 #endif
 
 /**
@@ -348,40 +292,6 @@ static os_timer_func(dfs_remove_from_nol)
 		utils_dfs_agile_sm_deliver_evt(dfs->dfs_pdev_obj,
 					       DFS_AGILE_SM_EV_AGILE_START);
 }
-#else
-#ifdef CONFIG_CHAN_NUM_API
-static os_timer_func(dfs_remove_from_nol)
-{
-	struct dfs_nolelem *nol_arg;
-	struct wlan_dfs *dfs;
-	uint16_t delfreq;
-	uint16_t delchwidth;
-	uint8_t chan;
-
-	OS_GET_TIMER_ARG(nol_arg, struct dfs_nolelem *);
-
-	dfs = nol_arg->nol_dfs;
-	delfreq = nol_arg->nol_freq;
-	delchwidth = nol_arg->nol_chwidth;
-
-	/* Delete the given NOL entry. */
-	DFS_NOL_DELETE_CHAN_LOCKED(dfs, delfreq, delchwidth);
-
-	/* Update the wireless stack with the new NOL. */
-	dfs_nol_update(dfs);
-
-	dfs_mlme_nol_timeout_notification(dfs->dfs_pdev_obj);
-	chan = utils_dfs_freq_to_chan(delfreq);
-	utils_dfs_deliver_event(dfs->dfs_pdev_obj, delfreq,
-				WLAN_EV_NOL_FINISHED);
-	dfs_debug(dfs, WLAN_DEBUG_DFS_NOL,
-		    "remove channel %d from nol", chan);
-	utils_dfs_unmark_precac_nol(dfs->dfs_pdev_obj, chan);
-	utils_dfs_reg_update_nol_ch(dfs->dfs_pdev_obj,
-				    &chan, 1, DFS_NOL_RESET);
-	utils_dfs_save_nol(dfs->dfs_pdev_obj);
-}
-#endif
 #endif
 
 void dfs_print_nol(struct wlan_dfs *dfs)
@@ -825,69 +735,6 @@ void dfs_clear_nolhistory(struct wlan_dfs *dfs)
 	qdf_mem_free(chan_list);
 	qdf_mem_free(nol_freq_list);
 }
-#else
-#ifdef CONFIG_CHAN_NUM_API
-void dfs_clear_nolhistory(struct wlan_dfs *dfs)
-{
-	struct dfs_channel *chan_list;
-	int nchans;
-	bool sta_opmode;
-	int i;
-	uint8_t *nol_chan_ieee_list = NULL;
-	int num_nol_history_chans;
-
-	if (!dfs->dfs_is_stadfs_enabled)
-		return;
-
-	sta_opmode = dfs_mlme_is_opmode_sta(dfs->dfs_pdev_obj);
-	if (!sta_opmode)
-		return;
-
-	nchans = dfs_get_num_chans();
-
-	if (!nchans) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "zero chans");
-		return;
-	}
-
-	chan_list = qdf_mem_malloc(nchans * sizeof(*chan_list));
-	if (!chan_list)
-		return;
-
-	utils_dfs_get_nol_history_chan_list(dfs->dfs_pdev_obj,
-					    (void *)chan_list,
-					    &num_nol_history_chans);
-
-	if (!num_nol_history_chans) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "zero chans");
-		qdf_mem_free(chan_list);
-		return;
-	}
-
-	if (num_nol_history_chans > nchans)
-		num_nol_history_chans = nchans;
-
-	nol_chan_ieee_list =
-		qdf_mem_malloc(num_nol_history_chans * sizeof(uint8_t));
-
-	if (!nol_chan_ieee_list) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "Unable to alloc memory for ieee list");
-		qdf_mem_free(chan_list);
-		return;
-	}
-
-	for (i = 0; i < num_nol_history_chans; i++)
-		nol_chan_ieee_list[i] = chan_list[i].dfs_ch_ieee;
-
-	utils_dfs_reg_update_nol_history_ch(dfs->dfs_pdev_obj,
-					    nol_chan_ieee_list,
-					    num_nol_history_chans,
-					    DFS_NOL_HISTORY_RESET);
-
-	qdf_mem_free(chan_list);
-	qdf_mem_free(nol_chan_ieee_list);
-}
-#endif
 #endif
 #endif
 
