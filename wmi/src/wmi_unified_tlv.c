@@ -10658,6 +10658,57 @@ extract_mgmt_rx_fw_consumed_tlv(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ * extract_mgmt_rx_reo_params_tlv() - extract MGMT Rx REO params from
+ * MGMT_RX_EVENT_ID
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @params: Pointer to MGMT Rx REO parameters
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_mgmt_rx_reo_params_tlv(wmi_unified_t wmi_handle,
+	void *evt_buf, struct mgmt_rx_reo_params *reo_params)
+{
+	WMI_MGMT_RX_EVENTID_param_tlvs *param_tlvs;
+	wmi_mgmt_rx_reo_params *reo_params_tlv;
+	wmi_mgmt_rx_hdr *ev_hdr;
+
+	param_tlvs = evt_buf;
+	if (!param_tlvs) {
+		wmi_err("param_tlvs is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	ev_hdr = param_tlvs->hdr;
+	if (!ev_hdr) {
+		wmi_err("Rx event is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	reo_params_tlv = param_tlvs->reo_params;
+	if (!reo_params_tlv) {
+		wmi_err("mgmt_rx_reo_params TLV is not sent by FW");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!reo_params) {
+		wmi_err("MGMT Rx REO params is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	reo_params->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
+							wmi_handle,
+							ev_hdr->pdev_id);
+	reo_params->valid = WMI_MGMT_RX_REO_PARAM_MGMT_PKT_CTR_VALID_GET(
+					reo_params_tlv->mgmt_pkt_ctr_link_info);
+	reo_params->global_timestamp = reo_params_tlv->global_timestamp;
+	reo_params->mgmt_pkt_ctr = WMI_MGMT_RX_REO_PARAM_MGMT_PKT_CTR_GET(
+					reo_params_tlv->mgmt_pkt_ctr_link_info);
+
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 
 /**
@@ -15813,6 +15864,7 @@ struct wmi_ops tlv_ops =  {
 	.extract_halphy_cal_ev_param = extract_halphy_cal_ev_param_tlv,
 #ifdef WLAN_MGMT_RX_REO_SUPPORT
 	.extract_mgmt_rx_fw_consumed = extract_mgmt_rx_fw_consumed_tlv,
+	.extract_mgmt_rx_reo_params = extract_mgmt_rx_reo_params_tlv,
 #endif
 };
 

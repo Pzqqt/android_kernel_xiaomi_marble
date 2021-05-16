@@ -222,6 +222,20 @@ target_if_mgmt_rx_reo_read_snapshot(
 }
 
 QDF_STATUS
+target_if_mgmt_rx_reo_extract_reo_params(
+	wmi_unified_t wmi_handle, void *evt_buf,
+	struct mgmt_rx_event_params *params)
+{
+	if (!params) {
+		mgmt_rx_reo_err("MGMT Rx event parameters is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return wmi_extract_mgmt_rx_reo_params(wmi_handle, evt_buf,
+					      params->reo_params);
+}
+
+QDF_STATUS
 target_if_mgmt_rx_reo_tx_ops_register(
 			struct wlan_lmac_if_mgmt_txrx_tx_ops *mgmt_txrx_tx_ops)
 {

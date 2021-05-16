@@ -1967,6 +1967,17 @@ QDF_STATUS wmi_extract_mgmt_rx_fw_consumed(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+QDF_STATUS
+wmi_extract_mgmt_rx_reo_params(wmi_unified_t wmi_handle, void *evt_buf,
+			       struct mgmt_rx_reo_params *params)
+{
+	if (wmi_handle->ops->extract_mgmt_rx_reo_params)
+		return wmi_handle->ops->extract_mgmt_rx_reo_params(
+				wmi_handle, evt_buf, params);
+
+	return QDF_STATUS_E_FAILURE;
+}
 #endif
 
 QDF_STATUS
