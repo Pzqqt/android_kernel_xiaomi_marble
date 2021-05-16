@@ -959,6 +959,8 @@ static void _sde_dbg_dump_dsi_dbg_bus(struct sde_dbg_sde_debug_bus *bus, u32 ena
 
 		_sde_dbg_dump_bus_entry(bus, entries, bus_size, ctl_entry->base,
 					dump_addr, enable_mask);
+		if (dump_addr)
+			dump_addr += list_size / (sizeof(u32) * dsi_count);
 	}
 	mutex_unlock(&sde_dbg_dsi_mutex);
 
