@@ -177,26 +177,6 @@ struct dfs_matrix_tx_leak_info {
 #endif
 
 /**
- * dfs_mark_leaking_ch() - to mark channel leaking in to nol
- * @dfs: dfs handler.
- * @ch_width: channel width
- * @temp_ch_lst_sz: the target channel list
- * @temp_ch_lst: the target channel list
- *
- * This function removes the channels from temp channel list that
- * (if selected as target channel) will cause leakage in one of
- * the NOL channels
- *
- * Return: QDF_STATUS
- */
-#ifdef CONFIG_CHAN_NUM_API
-QDF_STATUS dfs_mark_leaking_ch(struct wlan_dfs *dfs,
-		enum phy_ch_width ch_width,
-		uint8_t temp_ch_lst_sz,
-		uint8_t *temp_ch_lst);
-#endif
-
-/**
  * dfs_mark_leaking_chan_for_freq() - to mark channel leaking in to nol
  * @dfs: dfs handler.
  * @ch_width: channel width

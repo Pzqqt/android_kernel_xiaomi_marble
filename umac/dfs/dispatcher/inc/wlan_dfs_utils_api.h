@@ -600,25 +600,6 @@ QDF_STATUS utils_dfs_update_cur_chan_flags(struct wlan_objmgr_pdev *pdev,
 
 #ifdef QCA_MCL_DFS_SUPPORT
 /**
- * utils_dfs_mark_leaking_ch() - to mark channel leaking in to nol
- * @pdev: Pointer to pdev structure.
- * @ch_width: channel width
- * @temp_ch_lst_sz: the target channel list
- * @temp_ch_lst: the target channel list
- *
- * This function removes the channels from temp channel list that
- * (if selected as target channel) will cause leakage in one of
- * the NOL channels
- *
- * Return: QDF_STATUS
- */
-#ifdef CONFIG_CHAN_NUM_API
-QDF_STATUS utils_dfs_mark_leaking_ch(struct wlan_objmgr_pdev *pdev,
-	enum phy_ch_width ch_width,
-	uint8_t temp_ch_lst_sz,
-	uint8_t *temp_ch_lst);
-#endif
-/**
  * utils_dfs_mark_leaking_chan_for_freq() - to mark channel leaking in to nol
  * @pdev: Pointer to pdev structure.
  * @ch_width: channel width
@@ -650,16 +631,6 @@ QDF_STATUS utils_dfs_mark_leaking_chan_for_freq(struct wlan_objmgr_pdev *pdev,
  */
 bool utils_dfs_can_ignore_radar_event(struct wlan_objmgr_pdev *pdev);
 #else
-#ifdef CONFIG_CHAN_NUM_API
-static inline QDF_STATUS utils_dfs_mark_leaking_ch
-	(struct wlan_objmgr_pdev *pdev,
-	enum phy_ch_width ch_width,
-	uint8_t temp_ch_lst_sz,
-	uint8_t *temp_ch_lst)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 #ifdef CONFIG_CHAN_FREQ_API
 static inline QDF_STATUS utils_dfs_mark_leaking_chan_for_freq
 	(struct wlan_objmgr_pdev *pdev,
