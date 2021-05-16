@@ -29,7 +29,7 @@
 #include <linux/lsm_audit.h>
 #include <linux/module.h>
 
-uint disable_audit_log = 0;
+uint disable_audit_log = 1;
 module_param(disable_audit_log, uint, 0644);
 
 /**
