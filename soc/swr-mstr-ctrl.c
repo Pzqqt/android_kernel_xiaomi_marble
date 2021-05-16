@@ -1387,6 +1387,8 @@ static void swrm_get_device_frame_shape(struct swr_mstr_ctrl *swrm,
 		port_id_offset = (port_req->dev_num - 1) *
 					SWR_MAX_DEV_PORT_NUM +
 					port_req->slave_port_id;
+		if (port_id_offset >= SWR_MAX_MSTR_PORT_NUM)
+			return;
 		port_req->sinterval =
 				((swrm->bus_clk * 2) / port_req->ch_rate) - 1;
 		port_req->offset1 = swrm->pp[uc][port_id_offset].offset1;
@@ -1447,6 +1449,8 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 		lane_ctrl  = 0;
 		sinterval = 0xFFFF;
 		list_for_each_entry(port_req, &mport->port_req_list, list) {
+			if (!port_req->dev_num)
+				continue;
 			j++;
 			slv_id = port_req->slave_port_id;
 			/* Assumption: If different channels in the same port
