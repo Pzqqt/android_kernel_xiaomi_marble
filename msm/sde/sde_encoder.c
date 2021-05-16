@@ -2074,23 +2074,27 @@ static int _sde_encoder_rc_idle(struct drm_encoder *drm_enc,
 	struct sde_kms *sde_kms;
 	struct drm_crtc *crtc = drm_enc->crtc;
 	struct sde_crtc *sde_crtc = to_sde_crtc(crtc);
+	struct sde_connector *sde_conn;
 
 	priv = drm_enc->dev->dev_private;
 	sde_kms = to_sde_kms(priv->kms);
+	sde_conn = to_sde_connector(sde_enc->cur_master->connector);
 
 	mutex_lock(&sde_enc->rc_lock);
 
-	if (sde_enc->rc_state != SDE_ENC_RC_STATE_ON) {
+	if (sde_conn->panel_dead) {
+		SDE_DEBUG_ENC(sde_enc, "skip idle. Panel in dead state\n");
+		SDE_EVT32(DRMID(drm_enc), sw_event, sde_enc->rc_state, SDE_EVTLOG_ERROR);
+		goto end;
+	} else if (sde_enc->rc_state != SDE_ENC_RC_STATE_ON) {
 		SDE_DEBUG_ENC(sde_enc, "sw_event:%d, rc:%d !ON state\n",
 				sw_event, sde_enc->rc_state);
-		SDE_EVT32(DRMID(drm_enc), sw_event, sde_enc->rc_state,
-				SDE_EVTLOG_ERROR);
+		SDE_EVT32(DRMID(drm_enc), sw_event, sde_enc->rc_state, SDE_EVTLOG_ERROR);
 		goto end;
 	} else if (sde_crtc_frame_pending(sde_enc->crtc)) {
 		SDE_DEBUG_ENC(sde_enc, "skip idle entry");
 		SDE_EVT32(DRMID(drm_enc), sw_event, sde_enc->rc_state,
-			sde_crtc_frame_pending(sde_enc->crtc),
-			SDE_EVTLOG_ERROR);
+			sde_crtc_frame_pending(sde_enc->crtc), SDE_EVTLOG_ERROR);
 		_sde_encoder_rc_kickoff_delayed(sde_enc, sw_event);
 		goto end;
 	}

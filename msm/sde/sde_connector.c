@@ -2494,10 +2494,10 @@ static void _sde_connector_report_panel_dead(struct sde_connector *conn,
 		return;
 
 	SDE_EVT32(SDE_EVTLOG_ERROR);
+	conn->panel_dead = true;
 	sde_encoder_display_failure_notification(conn->encoder,
 		skip_pre_kickoff);
 
-	conn->panel_dead = true;
 	event.type = DRM_EVENT_PANEL_DEAD;
 	event.length = sizeof(bool);
 	msm_mode_object_event_notify(&conn->base.base,
