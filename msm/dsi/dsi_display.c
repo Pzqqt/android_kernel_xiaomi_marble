@@ -5662,7 +5662,8 @@ static int dsi_display_bind(struct device *dev,
 		goto error_host_deinit;
 	}
 
-	DSI_INFO("Successfully bind display panel '%s'\n", display->name);
+	DSI_INFO("Successfully bind display panel '%s %s'\n", display->name,
+			display->panel->te_using_watchdog_timer ? "as sim panel" : "");
 	display->drm_dev = drm;
 
 	display_for_each_ctrl(i, display) {
@@ -5900,12 +5901,13 @@ int dsi_display_dev_probe(struct platform_device *pdev)
 		/* The panel name should be same as UEFI name index */
 		panel_node = of_find_node_by_name(mdp_node, boot_disp->name);
 		if (!panel_node)
-			DSI_WARN("panel_node %s not found\n", boot_disp->name);
+			DSI_WARN("%s panel_node %s not found\n", display->display_type,
+					boot_disp->name);
 	} else {
 		panel_node = of_parse_phandle(node,
 				"qcom,dsi-default-panel", 0);
 		if (!panel_node)
-			DSI_WARN("default panel not found\n");
+			DSI_WARN("%s default panel not found\n", display->display_type);
 	}
 
 	boot_disp->node = pdev->dev.of_node;
