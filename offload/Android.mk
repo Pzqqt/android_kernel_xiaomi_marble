@@ -18,7 +18,7 @@ RMNET_CORE_PATH := vendor/qcom/opensource/$(DATARMNET_CORE_PATH)
 DLKM_DIR := $(TOP)/device/qcom/common/dlkm
 #absolute path to the build directory. Can't use $(TOP) here since
 #that resolves to ., and we pass this to Kbuild, where . is different
-RMNET_CORE_INC_DIR := $(shell pwd)/$(RMNET_CORE_PATH)
+RMNET_CORE_INC_DIR := $(abspath $(RMNET_CORE_PATH))
 
 #pass variables down to Kbuild environment
 KBUILD_OPTIONS := RMNET_CORE_INC_DIR=$(RMNET_CORE_INC_DIR)

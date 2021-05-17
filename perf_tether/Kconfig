@@ -1,0 +1,10 @@
+#
+# RMNET_PERF_TETHER driver
+#
+
+menuconfig RMNET_PERF_TETHER
+    tristate "Rmnet perf tethering support"
+    default m
+    depends on RMNET_CORE
+    ---help---
+        Offload support for the RmNet driver

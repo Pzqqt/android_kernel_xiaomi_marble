@@ -1,4 +1,4 @@
-/* Copyright (c) 2020 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -14,6 +14,7 @@
 #ifndef DATARMNETef19703014
 #define DATARMNETef19703014
 int DATARMNETe6e8431304(void);int DATARMNETdf74db7e38(void);void 
-DATARMNETfb7007f025(void);void DATARMNET371703c28d(void);
+DATARMNETfb7007f025(void);void DATARMNET371703c28d(void);void 
+DATARMNET5e4aeef593(int cpu);
 #endif
 

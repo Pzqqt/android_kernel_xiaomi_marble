@@ -1,0 +1,5 @@
+obj-m += rmnet_perf_tether.o
+#Need core headers
+ccflags-y := -I$(RMNET_CORE_INC_DIR) \
+             $(call cc-option,-Wno-misleading-indentation)
+rmnet_perf_tether-y := rmnet_perf_tether_main.o
