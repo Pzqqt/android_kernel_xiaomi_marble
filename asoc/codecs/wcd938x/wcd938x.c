@@ -2739,6 +2739,29 @@ static int wcd938x_ear_pa_gain_put(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+/* wcd938x_codec_get_dev_num - returns swr device number
+ * @component: Codec instance
+ *
+ * Return: swr device number on success or negative error
+ * code on failure.
+ */
+int wcd938x_codec_get_dev_num(struct snd_soc_component *component)
+{
+	struct wcd938x_priv *wcd938x;
+
+	if (!component)
+		return -EINVAL;
+
+	wcd938x = snd_soc_component_get_drvdata(component);
+	if (!wcd938x || !wcd938x->rx_swr_dev) {
+		pr_err("%s: wcd938x component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	return wcd938x->rx_swr_dev->dev_num;
+}
+EXPORT_SYMBOL(wcd938x_codec_get_dev_num);
+
 static int wcd938x_get_compander(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
