@@ -10709,6 +10709,62 @@ static QDF_STATUS extract_mgmt_rx_reo_params_tlv(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ * send_mgmt_rx_reo_filter_config_cmd_tlv() - Send MGMT Rx REO filter
+ * configuration command
+ * @wmi_handle: wmi handle
+ * @pdev_id: pdev ID of the radio
+ * @filter: Pointer to MGMT Rx REO filter
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS send_mgmt_rx_reo_filter_config_cmd_tlv(
+					wmi_unified_t wmi_handle,
+					uint8_t pdev_id,
+					struct mgmt_rx_reo_filter *filter)
+{
+	QDF_STATUS ret;
+	wmi_buf_t buf;
+	wmi_mgmt_rx_reo_filter_configuration_cmd_fixed_param *cmd;
+	size_t len = sizeof(*cmd);
+
+	if (!filter) {
+		wmi_err("mgmt_rx_reo_filter is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		wmi_err("wmi_buf_alloc failed");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_mgmt_rx_reo_filter_configuration_cmd_fixed_param *)
+			wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_mgmt_rx_reo_filter_configuration_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(wmi_mgmt_rx_reo_filter_configuration_cmd_fixed_param));
+
+	cmd->pdev_id = wmi_handle->ops->convert_host_pdev_id_to_target(
+						wmi_handle,
+						pdev_id);
+	cmd->filter_low = filter->low;
+	cmd->filter_high = filter->high;
+
+	wmi_mtrace(WMI_MGMT_RX_REO_FILTER_CONFIGURATION_CMDID, NO_SESSION, 0);
+	ret = wmi_unified_cmd_send(
+				wmi_handle, buf, len,
+				WMI_MGMT_RX_REO_FILTER_CONFIGURATION_CMDID);
+
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		wmi_err("Failed to send WMI command");
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
 #endif
 
 /**
@@ -15865,6 +15921,8 @@ struct wmi_ops tlv_ops =  {
 #ifdef WLAN_MGMT_RX_REO_SUPPORT
 	.extract_mgmt_rx_fw_consumed = extract_mgmt_rx_fw_consumed_tlv,
 	.extract_mgmt_rx_reo_params = extract_mgmt_rx_reo_params_tlv,
+	.send_mgmt_rx_reo_filter_config_cmd =
+		send_mgmt_rx_reo_filter_config_cmd_tlv,
 #endif
 };
 

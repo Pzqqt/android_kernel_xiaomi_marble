@@ -2646,6 +2646,11 @@ QDF_STATUS (*extract_mgmt_rx_fw_consumed)(wmi_unified_t wmi_handle,
 QDF_STATUS (*extract_mgmt_rx_reo_params)(wmi_unified_t wmi_handle,
 					 void *evt_buf,
 					 struct mgmt_rx_reo_params *params);
+
+QDF_STATUS (*send_mgmt_rx_reo_filter_config_cmd)(
+					wmi_unified_t wmi_handle,
+					uint8_t pdev_id,
+					struct mgmt_rx_reo_filter *filter);
 #endif
 };
 

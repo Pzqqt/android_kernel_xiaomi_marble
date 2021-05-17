@@ -78,5 +78,15 @@ struct mgmt_rx_reo_params {
 	uint16_t mgmt_pkt_ctr;
 	uint32_t global_timestamp;
 };
+
+/*
+ * struct mgmt_rx_reo_filter - MGMT Rx REO filter
+ * @filter_low: Least significant 32-bits of the filter
+ * @filter_high: Most significant 32-bits of the filter
+ */
+struct mgmt_rx_reo_filter {
+	uint32_t low;
+	uint32_t high;
+};
 #endif /* WLAN_MGMT_RX_REO_SUPPORT */
 #endif /* _WLAN_MGMT_TXRX_RX_REO_PUBLIC_STRUCTS_H */

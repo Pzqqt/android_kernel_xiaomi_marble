@@ -2767,6 +2767,20 @@ wmi_extract_mgmt_rx_fw_consumed(wmi_unified_t wmi_handle, void *evt_buf,
 QDF_STATUS
 wmi_extract_mgmt_rx_reo_params(wmi_unified_t wmi_handle, void *evt_buf,
 			       struct mgmt_rx_reo_params *params);
+
+/**
+ * wmi_unified_mgmt_rx_reo_filter_config_cmd() - Send MGMT Rx REO filter
+ * configuration command
+ * @wmi_handle: wmi handle
+ * @pdev_id: pdev ID of the radio
+ * @filter: Pointer to MGMT Rx REO filter
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS wmi_unified_mgmt_rx_reo_filter_config_cmd(
+					wmi_unified_t wmi_handle,
+					uint8_t pdev_id,
+					struct mgmt_rx_reo_filter *filter);
 #endif
 
 /**
