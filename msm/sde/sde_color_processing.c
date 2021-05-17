@@ -1004,6 +1004,12 @@ static struct drm_property_blob *_sde_cp_get_crtc_feature_data(u32 feature,
 	memset(hw_cfg, 0, sizeof(*hw_cfg));
 	*feature_enabled = false;
 
+	if (!property || !prop_node) {
+		DRM_ERROR("invalid feature:%d, property:%pK, prop_node:%pK\n",
+				feature, property, prop_node);
+		goto end;
+	}
+
 	if (property->flags & DRM_MODE_PROP_BLOB) {
 		blob = drm_property_lookup_blob(crtc->base.dev,
 				pstate->prop_val);
@@ -1036,7 +1042,7 @@ static struct drm_property_blob *_sde_cp_get_crtc_feature_data(u32 feature,
 	} else {
 		DRM_ERROR("property type is not supported\n");
 	}
-
+end:
 	return blob;
 }
 
