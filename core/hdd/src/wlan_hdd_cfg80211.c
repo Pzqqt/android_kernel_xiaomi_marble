@@ -15283,6 +15283,119 @@ get_usable_channel_policy[QCA_WLAN_VENDOR_ATTR_USABLE_CHANNELS_MAX + 1] = {
 };
 
 /**
+ * hdd_fill_usable_channels_data() - Fill the data requested by userspace
+ * @skb: SK buffer
+ * @tb: List of attributes
+ * @res_msg: structure of usable channel info
+ * @count: no of usable channels
+ *
+ * Get the data corresponding to the attribute list specified in tb and
+ * update the same to skb by populating the same attributes.
+ *
+ * Return: 0 on success; error number on failure
+ */
+static int
+hdd_fill_usable_channels_data(struct sk_buff *skb, struct nlattr **tb,
+			      struct get_usable_chan_res_params *res_msg,
+			      int count)
+{
+	struct nlattr *config;
+	uint8_t i = 0;
+
+	config = nla_nest_start(skb,
+				QCA_WLAN_VENDOR_ATTR_USABLE_CHANNELS_CHAN_INFO);
+	if (!config) {
+		hdd_err("nla nest start failure");
+		return -EINVAL;
+	}
+	for (i = 0; i < count ; i++) {
+		if (!res_msg[i].freq)
+			continue;
+		nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_CHAN_INFO_PRIMARY_FREQ,
+			    res_msg[i].freq);
+		nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_CHAN_INFO_SEG0_FREQ,
+			    res_msg[i].seg0_freq);
+		nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_CHAN_INFO_SEG1_FREQ,
+			    res_msg[i].seg1_freq);
+		nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_CHAN_INFO_BANDWIDTH,
+			    res_msg[i].bw);
+		nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_CHAN_INFO_IFACE_MODE_MASK,
+			    res_msg[i].iface_mode_mask);
+	}
+	nla_nest_end(skb, config);
+	return 0;
+}
+
+/**
+ * hdd_get_usable_cahnnel_len() - calculate the length required by skb
+ * @count: number of usable channels
+ *
+ * Find the required length to send usable channel data to upper layer
+ *
+ * Return: required len
+ */
+static uint32_t
+hdd_get_usable_cahnnel_len(uint32_t count)
+{
+	uint32_t len = 0;
+	struct get_usable_chan_res_params res_msg;
+
+	len = nla_total_size(sizeof(res_msg.freq)) +
+		nla_total_size(sizeof(res_msg.seg0_freq)) +
+		nla_total_size(sizeof(res_msg.seg1_freq)) +
+		nla_total_size(sizeof(res_msg.bw)) +
+		nla_total_size(sizeof(res_msg.iface_mode_mask));
+
+	return len * count;
+}
+
+/**
+ * hdd_send_usable_channel() - Send usable channels as vendor cmd reply
+ * @mac_handle: Opaque handle to the MAC context
+ * @vdev_id: vdev id
+ * @tb: List of attributes
+ *
+ * Parse the attributes list tb and  get the data corresponding to the
+ * attributes specified in tb. Send them as a vendor response.
+ *
+ * Return: 0 on success; error number on failure
+ */
+static int
+hdd_send_usable_channel(struct hdd_context *hdd_ctx,
+			struct get_usable_chan_res_params *res_msg,
+			uint32_t count,
+			struct nlattr **tb)
+{
+	struct sk_buff *skb;
+	uint32_t skb_len;
+	int status;
+
+	skb_len = hdd_get_usable_cahnnel_len(count);
+	if (!skb_len) {
+		hdd_err("No data requested");
+		return -EINVAL;
+	}
+
+	skb_len += NLMSG_HDRLEN;
+	skb = cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy, skb_len);
+	if (!skb) {
+		hdd_info("cfg80211_vendor_cmd_alloc_reply_skb failed");
+		return -ENOMEM;
+	}
+
+	status = hdd_fill_usable_channels_data(skb, tb, res_msg, count);
+	if (status)
+		goto fail;
+
+	return cfg80211_vendor_cmd_reply(skb);
+
+fail:
+	hdd_err("nla put fail");
+	kfree_skb(skb);
+	return status;
+}
+
+/**
  * __wlan_hdd_cfg80211_get_usable_channel() - get chain rssi
  * @wiphy: wiphy pointer
  * @wdev: pointer to struct wireless_dev
@@ -15347,6 +15460,12 @@ static int __wlan_hdd_cfg80211_get_usable_channel(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 	hdd_debug("usable channel count : %d", count);
+
+	status = hdd_send_usable_channel(hdd_ctx, res_msg, count, tb);
+	if (status) {
+		hdd_err("failed to send usable_channels");
+		return status;
+	}
 
 	return qdf_status_to_os_return(status);
 }
