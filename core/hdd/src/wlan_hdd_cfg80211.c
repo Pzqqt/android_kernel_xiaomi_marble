@@ -17355,12 +17355,12 @@ QDF_STATUS wlan_hdd_validate_operation_channel(struct hdd_adapter *adapter,
 	uint32_t i;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct regulatory_channel *cur_chan_list;
-	QDF_STATUS status = QDF_STATUS_E_INVAL;
+	QDF_STATUS status;
 
 	status = ucfg_mlme_get_sap_allow_all_channels(hdd_ctx->psoc, &value);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_err("Unable to fetch sap allow all channels");
-
+	status = QDF_STATUS_E_INVAL;
 	if (value) {
 		/* Validate the channel */
 		for (i = CHAN_ENUM_2412; i < NUM_CHANNELS; i++) {
