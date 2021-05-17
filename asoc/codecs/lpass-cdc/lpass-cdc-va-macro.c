@@ -41,7 +41,8 @@
 
 #define LPASS_CDC_VA_MACRO_DMIC_SAMPLE_RATE_UNDEFINED 0
 #define LPASS_CDC_VA_MACRO_MCLK_FREQ 9600000
-#define LPASS_CDC_VA_MACRO_TX_PATH_OFFSET 0x80
+#define LPASS_CDC_VA_MACRO_TX_PATH_OFFSET \
+	(LPASS_CDC_VA_TX1_TX_PATH_CTL - LPASS_CDC_VA_TX0_TX_PATH_CTL)
 #define LPASS_CDC_VA_MACRO_TX_DMIC_CLK_DIV_MASK 0x0E
 #define LPASS_CDC_VA_MACRO_TX_DMIC_CLK_DIV_SHFT 0x01
 #define LPASS_CDC_VA_MACRO_SWR_MIC_MUX_SEL_MASK 0xF
@@ -2159,17 +2160,7 @@ static void lpass_cdc_va_macro_add_child_devices(struct work_struct *work)
 					__func__, ctrl_num);
 				goto fail_pdev_add;
 			}
-		}
 
-		ret = platform_device_add(pdev);
-		if (ret) {
-			dev_err(&pdev->dev,
-				"%s: Cannot add platform device\n",
-				__func__);
-			goto fail_pdev_add;
-		}
-
-		if (va_swr_master_node) {
 			temp = krealloc(swr_ctrl_data,
 					(ctrl_num + 1) * sizeof(
 					struct lpass_cdc_va_macro_swr_ctrl_data),
@@ -2182,10 +2173,19 @@ static void lpass_cdc_va_macro_add_child_devices(struct work_struct *work)
 			swr_ctrl_data[ctrl_num].va_swr_pdev = pdev;
 			ctrl_num++;
 			dev_dbg(&pdev->dev,
-				"%s: Added soundwire ctrl device(s)\n",
+				"%s: Adding soundwire ctrl device(s)\n",
 				__func__);
 			va_priv->swr_ctrl_data = swr_ctrl_data;
 		}
+
+		ret = platform_device_add(pdev);
+		if (ret) {
+			dev_err(&pdev->dev,
+				"%s: Cannot add platform device\n",
+				__func__);
+			goto fail_pdev_add;
+		}
+
 		if (va_priv->child_count < LPASS_CDC_VA_MACRO_CHILD_DEVICES_MAX)
 			va_priv->pdev_child_devices[
 					va_priv->child_count++] = pdev;

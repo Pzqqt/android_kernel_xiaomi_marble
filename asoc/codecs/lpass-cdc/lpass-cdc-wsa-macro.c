@@ -47,9 +47,12 @@
 #define LPASS_CDC_WSA_MACRO_MUX_INP_MASK2 0x38
 #define LPASS_CDC_WSA_MACRO_MUX_CFG_OFFSET 0x8
 #define LPASS_CDC_WSA_MACRO_MUX_CFG1_OFFSET 0x4
-#define LPASS_CDC_WSA_MACRO_RX_COMP_OFFSET 0x40
-#define LPASS_CDC_WSA_MACRO_RX_SOFTCLIP_OFFSET 0x40
-#define LPASS_CDC_WSA_MACRO_RX_PATH_OFFSET 0x80
+#define LPASS_CDC_WSA_MACRO_RX_COMP_OFFSET \
+		(LPASS_CDC_WSA_COMPANDER1_CTL0 - LPASS_CDC_WSA_COMPANDER0_CTL0)
+#define LPASS_CDC_WSA_MACRO_RX_SOFTCLIP_OFFSET \
+		(LPASS_CDC_WSA_SOFTCLIP1_CRC - LPASS_CDC_WSA_SOFTCLIP0_CRC)
+#define LPASS_CDC_WSA_MACRO_RX_PATH_OFFSET \
+		(LPASS_CDC_WSA_RX1_RX_PATH_CTL - LPASS_CDC_WSA_RX0_RX_PATH_CTL)
 #define LPASS_CDC_WSA_MACRO_RX_PATH_CFG3_OFFSET 0x10
 #define LPASS_CDC_WSA_MACRO_RX_PATH_DSMDEM_OFFSET 0x4C
 #define LPASS_CDC_WSA_MACRO_FS_RATE_MASK 0x0F
@@ -2927,6 +2930,23 @@ static void lpass_cdc_wsa_macro_add_child_devices(struct work_struct *work)
 					__func__, ctrl_num);
 				goto fail_pdev_add;
 			}
+
+			temp = krealloc(swr_ctrl_data,
+					(ctrl_num + 1) * sizeof(
+					struct lpass_cdc_wsa_macro_swr_ctrl_data),
+					GFP_KERNEL);
+			if (!temp) {
+				dev_err(&pdev->dev, "out of memory\n");
+				ret = -ENOMEM;
+				goto fail_pdev_add;
+			}
+			swr_ctrl_data = temp;
+			swr_ctrl_data[ctrl_num].wsa_swr_pdev = pdev;
+			ctrl_num++;
+			dev_dbg(&pdev->dev,
+				"%s: Adding soundwire ctrl device(s)\n",
+				__func__);
+			wsa_priv->swr_ctrl_data = swr_ctrl_data;
 		}
 
 		ret = platform_device_add(pdev);
@@ -2937,24 +2957,6 @@ static void lpass_cdc_wsa_macro_add_child_devices(struct work_struct *work)
 			goto fail_pdev_add;
 		}
 
-		if (!strcmp(node->name, "wsa_swr_master")) {
-			temp = krealloc(swr_ctrl_data,
-					(ctrl_num + 1) * sizeof(
-					struct lpass_cdc_wsa_macro_swr_ctrl_data),
-					GFP_KERNEL);
-			if (!temp) {
-				dev_err(&pdev->dev, "out of memory\n");
-				ret = -ENOMEM;
-				goto err;
-			}
-			swr_ctrl_data = temp;
-			swr_ctrl_data[ctrl_num].wsa_swr_pdev = pdev;
-			ctrl_num++;
-			dev_dbg(&pdev->dev,
-				"%s: Added soundwire ctrl device(s)\n",
-				__func__);
-			wsa_priv->swr_ctrl_data = swr_ctrl_data;
-		}
 		if (wsa_priv->child_count < LPASS_CDC_WSA_MACRO_CHILD_DEVICES_MAX)
 			wsa_priv->pdev_child_devices[
 					wsa_priv->child_count++] = pdev;

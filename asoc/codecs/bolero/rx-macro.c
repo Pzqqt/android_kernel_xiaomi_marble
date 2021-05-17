@@ -2901,7 +2901,7 @@ static uint32_t get_iir_band_coeff(struct snd_soc_component *component,
 	/* Mask bits top 2 bits since they are reserved */
 	value |= ((snd_soc_component_read(component,
 				(BOLERO_CDC_RX_SIDETONE_IIR0_IIR_COEF_B2_CTL +
-				 16 * iir_idx)) & 0x3F) << 24);
+				 0x80 * iir_idx)) & 0x3F) << 24);
 
 	return value;
 }
@@ -2988,7 +2988,7 @@ static int rx_macro_iir_band_audio_mixer_put(struct snd_kcontrol *kcontrol,
 	 * Updates addr automatically for each B2 write
 	 */
 	snd_soc_component_write(component,
-		(BOLERO_CDC_RX_SIDETONE_IIR0_IIR_COEF_B1_CTL + 16 * iir_idx),
+		(BOLERO_CDC_RX_SIDETONE_IIR0_IIR_COEF_B1_CTL + 0x80 * iir_idx),
 		(band_idx * BAND_MAX * sizeof(uint32_t)) & 0x7F);
 
 	/* Store the coefficients in sidetone coeff array */
@@ -4054,17 +4054,7 @@ static void rx_macro_add_child_devices(struct work_struct *work)
 					__func__, ctrl_num);
 				goto fail_pdev_add;
 			}
-		}
 
-		ret = platform_device_add(pdev);
-		if (ret) {
-			dev_err(&pdev->dev,
-				"%s: Cannot add platform device\n",
-				__func__);
-			goto fail_pdev_add;
-		}
-
-		if (rx_swr_master_node) {
 			temp = krealloc(swr_ctrl_data,
 					(ctrl_num + 1) * sizeof(
 					struct rx_swr_ctrl_data),
@@ -4077,10 +4067,19 @@ static void rx_macro_add_child_devices(struct work_struct *work)
 			swr_ctrl_data[ctrl_num].rx_swr_pdev = pdev;
 			ctrl_num++;
 			dev_dbg(&pdev->dev,
-				"%s: Added soundwire ctrl device(s)\n",
+				"%s: Adding soundwire ctrl device(s)\n",
 				__func__);
 			rx_priv->swr_ctrl_data = swr_ctrl_data;
 		}
+
+		ret = platform_device_add(pdev);
+		if (ret) {
+			dev_err(&pdev->dev,
+				"%s: Cannot add platform device\n",
+				__func__);
+			goto fail_pdev_add;
+		}
+
 		if (rx_priv->child_count < RX_MACRO_CHILD_DEVICES_MAX)
 			rx_priv->pdev_child_devices[
 					rx_priv->child_count++] = pdev;

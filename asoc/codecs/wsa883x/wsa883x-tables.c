@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015, 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015, 2020-2021 The Linux Foundation. All rights reserved.
  */
 
 #include <linux/regmap.h>
@@ -256,7 +256,7 @@ const u8 wsa883x_reg_access[WSA883X_NUM_REGISTERS] = {
 	[WSA883X_REG(WSA883X_SPARE_1)] = RD_WR_REG,
 	[WSA883X_REG(WSA883X_SPARE_2)] = RD_WR_REG,
 	[WSA883X_REG(WSA883X_SCODE)] = RD_WR_REG,
-	[WSA883X_REG(WSA883X_OTP_REG_0)] = RD_WR_REG,
+	[WSA883X_REG(WSA883X_OTP_REG_0)] = RD_REG,
 	[WSA883X_REG(WSA883X_OTP_REG_1)] = RD_WR_REG,
 	[WSA883X_REG(WSA883X_OTP_REG_2)] = RD_WR_REG,
 	[WSA883X_REG(WSA883X_OTP_REG_3)] = RD_WR_REG,

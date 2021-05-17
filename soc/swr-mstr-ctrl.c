@@ -51,7 +51,6 @@
 
 #define ERR_AUTO_SUSPEND_TIMER_VAL 0x1
 
-#define SWRM_INTERRUPT_STATUS_MASK 0x1FDFD
 #define SWRM_LINK_STATUS_RETRY_CNT 100
 
 #define SWRM_ROW_48    48
@@ -129,6 +128,7 @@ static void swrm_unlock_sleep(struct swr_mstr_ctrl *swrm);
 static u32 swr_master_read(struct swr_mstr_ctrl *swrm, unsigned int reg_addr);
 static void swr_master_write(struct swr_mstr_ctrl *swrm, u16 reg_addr, u32 val);
 static int swrm_runtime_resume(struct device *dev);
+static void swrm_wait_for_fifo_avail(struct swr_mstr_ctrl *swrm, int swrm_rd_wr);
 
 static u8 swrm_get_clk_div(int mclk_freq, int bus_clk_freq)
 {
@@ -665,6 +665,9 @@ static int swr_master_bulk_write(struct swr_mstr_ctrl *swrm, u32 *reg_addr,
 		 * This still meets the hardware spec
 		 */
 			usleep_range(50, 55);
+			if (reg_addr[i] == SWRM_CMD_FIFO_WR_CMD)
+				swrm_wait_for_fifo_avail(swrm,
+							 SWRM_WR_CHECK_AVAIL);
 			swr_master_write(swrm, reg_addr[i], val[i]);
 		}
 		usleep_range(100, 110);
@@ -1384,6 +1387,8 @@ static void swrm_get_device_frame_shape(struct swr_mstr_ctrl *swrm,
 		port_id_offset = (port_req->dev_num - 1) *
 					SWR_MAX_DEV_PORT_NUM +
 					port_req->slave_port_id;
+		if (port_id_offset >= SWR_MAX_MSTR_PORT_NUM)
+			return;
 		port_req->sinterval =
 				((swrm->bus_clk * 2) / port_req->ch_rate) - 1;
 		port_req->offset1 = swrm->pp[uc][port_id_offset].offset1;
@@ -1444,6 +1449,8 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 		lane_ctrl  = 0;
 		sinterval = 0xFFFF;
 		list_for_each_entry(port_req, &mport->port_req_list, list) {
+			if (!port_req->dev_num)
+				continue;
 			j++;
 			slv_id = port_req->slave_port_id;
 			/* Assumption: If different channels in the same port
@@ -2843,6 +2850,7 @@ static int swrm_probe(struct platform_device *pdev)
 	mutex_init(&swrm->clklock);
 	mutex_init(&swrm->devlock);
 	mutex_init(&swrm->pm_lock);
+	mutex_init(&swrm->runtime_lock);
 	swrm->wlock_holders = 0;
 	swrm->pm_state = SWRM_PM_SLEEPABLE;
 	init_waitqueue_head(&swrm->pm_wq);
@@ -3053,6 +3061,7 @@ err_irq_fail:
 	mutex_destroy(&swrm->iolock);
 	mutex_destroy(&swrm->clklock);
 	mutex_destroy(&swrm->pm_lock);
+	mutex_destroy(&swrm->runtime_lock);
 
 err_pdata_fail:
 err_memory_fail:
@@ -3090,6 +3099,7 @@ static int swrm_remove(struct platform_device *pdev)
 	mutex_destroy(&swrm->clklock);
 	mutex_destroy(&swrm->force_down_lock);
 	mutex_destroy(&swrm->pm_lock);
+	mutex_destroy(&swrm->runtime_lock);
 	devm_kfree(&pdev->dev, swrm);
 	return 0;
 }
@@ -3099,7 +3109,7 @@ static int swrm_clk_pause(struct swr_mstr_ctrl *swrm)
 	u32 val;
 
 	dev_dbg(swrm->dev, "%s: state: %d\n", __func__, swrm->state);
-	swr_master_write(swrm, SWRM_INTERRUPT_EN, 0x1FDFD);
+	swr_master_write(swrm, SWRM_INTERRUPT_EN, SWRM_INTERRUPT_STATUS_MASK);
 	val = swr_master_read(swrm, SWRM_MCP_CFG);
 	val |= 0x02;
 	swr_master_write(swrm, SWRM_MCP_CFG, val);
@@ -3123,6 +3133,7 @@ static int swrm_runtime_resume(struct device *dev)
 		__func__, swrm->state);
 	trace_printk("%s: pm_runtime: resume, state:%d\n",
 		__func__, swrm->state);
+	mutex_lock(&swrm->runtime_lock);
 	mutex_lock(&swrm->reslock);
 
 	if (swrm_request_hw_vote(swrm, LPASS_HW_CORE, true)) {
@@ -3145,6 +3156,7 @@ static int swrm_runtime_resume(struct device *dev)
 					pr_err("%s: irq data is NULL\n",
 						__func__);
 					mutex_unlock(&swrm->reslock);
+					mutex_unlock(&swrm->runtime_lock);
 					return IRQ_NONE;
 				}
 				mutex_lock(&swrm->irq_lock);
@@ -3244,6 +3256,7 @@ exit:
 	if (swrm->req_clk_switch)
 		swrm->req_clk_switch = false;
 	mutex_unlock(&swrm->reslock);
+	mutex_unlock(&swrm->runtime_lock);
 
 	trace_printk("%s: pm_runtime: resume done, state:%d\n",
 		__func__, swrm->state);
@@ -3264,6 +3277,7 @@ static int swrm_runtime_suspend(struct device *dev)
 		__func__, swrm->state);
 	dev_dbg(dev, "%s: pm_runtime: suspend state: %d\n",
 		__func__, swrm->state);
+	mutex_lock(&swrm->runtime_lock);
 	mutex_lock(&swrm->reslock);
 	mutex_lock(&swrm->force_down_lock);
 	current_state = swrm->state;
@@ -3371,6 +3385,7 @@ exit:
 	if (!hw_core_err)
 		swrm_request_hw_vote(swrm, LPASS_HW_CORE, false);
 	mutex_unlock(&swrm->reslock);
+	mutex_unlock(&swrm->runtime_lock);
 	trace_printk("%s: pm_runtime: suspend done state: %d\n",
 		__func__, swrm->state);
 	return ret;

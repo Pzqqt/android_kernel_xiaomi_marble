@@ -842,6 +842,26 @@ int wsa883x_codec_get_dev_num(struct snd_soc_component *component)
 }
 EXPORT_SYMBOL(wsa883x_codec_get_dev_num);
 
+static int wsa883x_get_dev_num(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
+	struct wsa883x_priv *wsa883x;
+
+	if (!component)
+		return -EINVAL;
+
+	wsa883x = snd_soc_component_get_drvdata(component);
+	if (!wsa883x) {
+		pr_err("%s: wsa883x component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	ucontrol->value.integer.value[0] = wsa883x->swr_slave->dev_num;
+	return 0;
+}
+
 static int wsa883x_get_compander(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
@@ -953,6 +973,9 @@ static const struct snd_kcontrol_new wsa883x_snd_controls[] = {
 
 	SOC_SINGLE_EXT("WSA Temp", SND_SOC_NOPM, 0, UINT_MAX, 0,
 			wsa_get_temp, NULL),
+
+	SOC_SINGLE_EXT("WSA Get DevNum", SND_SOC_NOPM, 0, UINT_MAX, 0,
+	        wsa883x_get_dev_num, NULL),
 
 	SOC_ENUM_EXT("WSA MODE", wsa_dev_mode_enum,
 		     wsa_dev_mode_get, wsa_dev_mode_put),
@@ -1188,7 +1211,7 @@ static void wsa883x_codec_init(struct snd_soc_component *component)
 		snd_soc_component_update_bits(component, reg_init[i].reg,
 					reg_init[i].mask, reg_init[i].val);
 
-	if (wsa883x->variant == WSA8830) {
+	if (wsa883x->variant == WSA8830 || wsa883x->variant == WSA8832) {
 		snd_soc_component_update_bits(component, WSA883X_DRE_CTL_0,
 					0x07, 0x03);
 		wsa883x->comp_offset = COMP_OFFSET3;
@@ -1359,7 +1382,7 @@ static int wsa883x_codec_probe(struct snd_soc_component *component)
 
 	memset(w_name, 0, sizeof(w_name));
 	strlcpy(w_name, component->name_prefix, sizeof(w_name));
-	strlcat(w_name, " SWR DAC_PORT", sizeof(w_name));
+	strlcat(w_name, " SWR DAC_Port", sizeof(w_name));
 	snd_soc_dapm_ignore_suspend(dapm, w_name);
 
 	memset(w_name, 0, sizeof(w_name));
@@ -1740,6 +1763,9 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 
 	/* Get last digit from HEX format */
 	dev_index = (int)((char)(pdev->addr & 0xF));
+
+	if (of_device_is_compatible(pdev->dev.of_node, "qcom,wsa883x_2"))
+		dev_index += 2;
 
 	snprintf(buffer, sizeof(buffer), "wsa-codec.%d", dev_index);
 	wsa883x->driver->name = kstrndup(buffer, strlen(buffer), GFP_KERNEL);

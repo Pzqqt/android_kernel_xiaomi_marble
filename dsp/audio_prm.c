@@ -370,10 +370,10 @@ static int audio_prm_remove(struct gpr_device *adev)
 {
 	int ret = 0;
 
+	audio_notifier_deregister("audio_prm");
 	mutex_lock(&g_prm.lock);
 	g_prm.is_adsp_up = false;
 	g_prm.adev = NULL;
-	audio_notifier_deregister("audio_prm");
 	mutex_unlock(&g_prm.lock);
 	return ret;
 }

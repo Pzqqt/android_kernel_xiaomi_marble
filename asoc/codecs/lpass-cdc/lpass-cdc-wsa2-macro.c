@@ -47,9 +47,12 @@
 #define LPASS_CDC_WSA2_MACRO_MUX_INP_MASK2 0x38
 #define LPASS_CDC_WSA2_MACRO_MUX_CFG_OFFSET 0x8
 #define LPASS_CDC_WSA2_MACRO_MUX_CFG1_OFFSET 0x4
-#define LPASS_CDC_WSA2_MACRO_RX_COMP_OFFSET 0x40
-#define LPASS_CDC_WSA2_MACRO_RX_SOFTCLIP_OFFSET 0x40
-#define LPASS_CDC_WSA2_MACRO_RX_PATH_OFFSET 0x80
+#define LPASS_CDC_WSA2_MACRO_RX_COMP_OFFSET \
+		(LPASS_CDC_WSA2_COMPANDER1_CTL0 - LPASS_CDC_WSA2_COMPANDER0_CTL0)
+#define LPASS_CDC_WSA2_MACRO_RX_SOFTCLIP_OFFSET \
+		(LPASS_CDC_WSA2_SOFTCLIP1_CRC - LPASS_CDC_WSA2_SOFTCLIP0_CRC)
+#define LPASS_CDC_WSA2_MACRO_RX_PATH_OFFSET \
+		(LPASS_CDC_WSA2_RX1_RX_PATH_CTL - LPASS_CDC_WSA2_RX0_RX_PATH_CTL)
 #define LPASS_CDC_WSA2_MACRO_RX_PATH_CFG3_OFFSET 0x10
 #define LPASS_CDC_WSA2_MACRO_RX_PATH_DSMDEM_OFFSET 0x4C
 #define LPASS_CDC_WSA2_MACRO_FS_RATE_MASK 0x0F
@@ -743,8 +746,10 @@ static int lpass_cdc_wsa2_macro_get_channel_map(struct snd_soc_dai *dai,
 			if (++cnt == LPASS_CDC_WSA2_MACRO_MAX_DMA_CH_PER_PORT)
 				break;
 		}
-		if (mask & 0x0C)
-			mask = mask >> 0x2;
+		if (mask & 0x30)
+			mask = mask >> 0x4;
+		if (mask & 0x03)
+			mask = mask << 0x2;
 		*rx_slot = mask;
 		*rx_num = cnt;
 		break;
@@ -2149,7 +2154,7 @@ static int lpass_cdc_wsa2_macro_soft_clip_enable_put(struct snd_kcontrol *kcontr
 }
 
 static const struct snd_kcontrol_new lpass_cdc_wsa2_macro_snd_controls[] = {
-	SOC_ENUM_EXT("GSM mode Enable", lpass_cdc_wsa2_macro_vbat_bcl_gsm_mode_enum,
+	SOC_ENUM_EXT("WSA2_GSM mode Enable", lpass_cdc_wsa2_macro_vbat_bcl_gsm_mode_enum,
 		     lpass_cdc_wsa2_macro_vbat_bcl_gsm_mode_func_get,
 		     lpass_cdc_wsa2_macro_vbat_bcl_gsm_mode_func_put),
 	SOC_ENUM_EXT("WSA2_RX0 comp_mode", lpass_cdc_wsa2_macro_comp_mode_enum,
@@ -2924,6 +2929,23 @@ static void lpass_cdc_wsa2_macro_add_child_devices(struct work_struct *work)
 					__func__, ctrl_num);
 				goto fail_pdev_add;
 			}
+
+			temp = krealloc(swr_ctrl_data,
+					(ctrl_num + 1) * sizeof(
+					struct lpass_cdc_wsa2_macro_swr_ctrl_data),
+					GFP_KERNEL);
+			if (!temp) {
+				dev_err(&pdev->dev, "out of memory\n");
+				ret = -ENOMEM;
+				goto fail_pdev_add;
+			}
+			swr_ctrl_data = temp;
+			swr_ctrl_data[ctrl_num].wsa2_swr_pdev = pdev;
+			ctrl_num++;
+			dev_dbg(&pdev->dev,
+				"%s: Added soundwire ctrl device(s)\n",
+				__func__);
+			wsa2_priv->swr_ctrl_data = swr_ctrl_data;
 		}
 
 		ret = platform_device_add(pdev);
@@ -2934,24 +2956,6 @@ static void lpass_cdc_wsa2_macro_add_child_devices(struct work_struct *work)
 			goto fail_pdev_add;
 		}
 
-		if (!strcmp(node->name, "wsa2_swr_master")) {
-			temp = krealloc(swr_ctrl_data,
-					(ctrl_num + 1) * sizeof(
-					struct lpass_cdc_wsa2_macro_swr_ctrl_data),
-					GFP_KERNEL);
-			if (!temp) {
-				dev_err(&pdev->dev, "out of memory\n");
-				ret = -ENOMEM;
-				goto err;
-			}
-			swr_ctrl_data = temp;
-			swr_ctrl_data[ctrl_num].wsa2_swr_pdev = pdev;
-			ctrl_num++;
-			dev_dbg(&pdev->dev,
-				"%s: Added soundwire ctrl device(s)\n",
-				__func__);
-			wsa2_priv->swr_ctrl_data = swr_ctrl_data;
-		}
 		if (wsa2_priv->child_count < LPASS_CDC_WSA2_MACRO_CHILD_DEVICES_MAX)
 			wsa2_priv->pdev_child_devices[
 					wsa2_priv->child_count++] = pdev;
