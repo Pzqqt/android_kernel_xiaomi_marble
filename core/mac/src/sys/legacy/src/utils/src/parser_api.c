@@ -7056,15 +7056,47 @@ void wlan_add_rate_bitmap(uint8_t rate, uint16_t *rate_bitmap)
 	}
 }
 
+static bool is_ofdm_rates(uint16_t rate)
+{
+	uint16_t n = BITS_OFF(rate, WLAN_DOT11_BASIC_RATE_MASK);
+
+	switch (n) {
+	case SIR_MAC_RATE_6:
+	case SIR_MAC_RATE_9:
+	case SIR_MAC_RATE_12:
+	case SIR_MAC_RATE_18:
+	case SIR_MAC_RATE_24:
+	case SIR_MAC_RATE_36:
+	case SIR_MAC_RATE_48:
+	case SIR_MAC_RATE_54:
+		return true;
+	default:
+		break;
+	}
+
+	return false;
+}
+
 QDF_STATUS wlan_get_rate_set(struct mac_context *mac,
 			     tDot11fBeaconIEs *ie_struct,
-			     tSirMacRateSet *op_rate,
-			     tSirMacRateSet *ext_rate)
+			     struct pe_session *pe_session)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	int i;
 	uint8_t *dst_rate;
 	uint16_t rateBitmap = 0;
+	bool is_5ghz_freq;
+	tSirMacRateSet *op_rate;
+	tSirMacRateSet *ext_rate;
+
+
+	if (!pe_session) {
+		pe_err("pe session is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+	op_rate = &pe_session->rateSet;
+	ext_rate = &pe_session->extRateSet;
+	is_5ghz_freq = wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq);
 
 	qdf_mem_zero(op_rate, sizeof(tSirMacRateSet));
 	qdf_mem_zero(ext_rate, sizeof(tSirMacRateSet));
@@ -7085,7 +7117,11 @@ QDF_STATUS wlan_get_rate_set(struct mac_context *mac,
 	dst_rate = op_rate->rate;
 	if (ie_struct->SuppRates.present) {
 		for (i = 0; i < ie_struct->SuppRates.num_rates; i++) {
-			if (csr_rates_is_dot11_rate_supported(mac,
+			if (is_5ghz_freq &&
+			    !is_ofdm_rates(ie_struct->SuppRates.rates[i]))
+				continue;
+
+			if (wlan_rates_is_dot11_rate_supported(mac,
 				ie_struct->SuppRates.rates[i]) &&
 				!wlan_check_rate_bitmap(
 					ie_struct->SuppRates.rates[i],

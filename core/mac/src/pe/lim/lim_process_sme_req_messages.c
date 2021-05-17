@@ -2674,8 +2674,7 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	status = wlan_get_rate_set(mac_ctx, ie_struct, &session->rateSet,
-				   &session->extRateSet);
+	status = wlan_get_rate_set(mac_ctx, ie_struct, session);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		pe_err("Get rate failed vdev id %d", session->vdev_id);
 		lim_get_basic_rates(&session->rateSet, bss_desc->chan_freq);

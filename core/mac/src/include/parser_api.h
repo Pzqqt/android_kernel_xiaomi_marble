@@ -1367,8 +1367,7 @@ bool wlan_check_rate_bitmap(uint8_t rate, uint16_t rate_bitmap);
 
 QDF_STATUS wlan_get_rate_set(struct mac_context *mac,
 			     tDot11fBeaconIEs *ie_struct,
-			     tSirMacRateSet *op_rate,
-			     tSirMacRateSet *ext_rate);
+			     struct pe_session *pe_session);
 
 void wlan_add_rate_bitmap(uint8_t rate, uint16_t *rate_bitmap);
 
