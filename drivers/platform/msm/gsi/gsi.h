@@ -14,6 +14,7 @@
 #include <linux/msm_gsi.h>
 #include <linux/errno.h>
 #include <linux/ipc_logging.h>
+#include <linux/iommu.h>
 
 /*
  * The following for adding code (ie. for EMULATION) not found on x86.
@@ -144,6 +145,7 @@ enum gsi_evt_chtype {
 	GSI_EVT_CHTYPE_AQC_EV = 0x8,
 	GSI_EVT_CHTYPE_11AD_EV = 0x9,
 	GSI_EVT_CHTYPE_RTK_EV = 0xC,
+	GSI_EVT_CHTYPE_NTN_EV = 0xD,
 };
 
 enum gsi_evt_ring_elem_size {
@@ -168,7 +170,9 @@ enum gsi_evt_ring_elem_size {
  * @int_modt:        cycles base interrupt moderation (32KHz clock)
  * @int_modc:        interrupt moderation packet counter
  * @intvec:          write data for MSI write
- * @msi_addr:        MSI address
+ * @msi_irq:         MSI irq number
+ * @msi_addr:        MSI address, APSS_GICA_SETSPI_NSR reg address
+ * @msi_clear_addr:  MSI address, APSS_GICA_CLRSPI_NSR reg address
  * @rp_update_addr:  physical address to which event read pointer should be
  *                   written on every event generation. must be set to 0 when
  *                   no update is desdired
@@ -196,7 +200,10 @@ struct gsi_evt_ring_props {
 	uint16_t int_modt;
 	uint8_t int_modc;
 	uint32_t intvec;
+	uint32_t msi_irq;
 	uint64_t msi_addr;
+	uint64_t msi_addr_iore_mapped;
+	uint64_t msi_clear_addr;
 	uint64_t rp_update_addr;
 	void *rp_update_vaddr;
 	bool exclusive;
@@ -227,6 +234,7 @@ enum gsi_chan_prot {
 	GSI_CHAN_PROT_MHIC = 0xA,
 	GSI_CHAN_PROT_QDSS = 0xB,
 	GSI_CHAN_PROT_RTK = 0xC,
+	GSI_CHAN_PROT_NTN = 0xD,
 };
 
 enum gsi_max_prefetch {
@@ -483,6 +491,7 @@ struct gsi_chan_props {
 	uint16_t max_re_expected;
 	uint64_t ring_base_addr;
 	uint8_t db_in_bytes;
+	uint8_t low_latency_en;
 	void *ring_base_vaddr;
 	enum gsi_chan_use_db_eng use_db_eng;
 	enum gsi_max_prefetch max_prefetch;
@@ -1029,6 +1038,26 @@ union __packed gsi_wdi3_channel_scratch2_reg {
 	 uint32_t reserved2 : 23;
  };
 
+ /**
+ * gsi_ntn_channel_scratch - NTN SW config area of
+ * channel scratch
+ *
+ * @buff_addr_lsb: NTN buffer address LSB
+ * @buff_addr_msb: NTN buffer address MSB
+ * @fix_buff_size: buff size in log2
+ * @ioc_mod_threshold: the threshold for IOC moderation (TX)
+ */
+ struct __packed gsi_ntn_channel_scratch {
+	 uint32_t buff_addr_lsb;
+	 uint32_t buff_addr_msb : 8;
+	 uint32_t fix_buff_size : 4;
+	 uint32_t reserved1 : 20;
+	 uint32_t ioc_mod_threshold : 16;
+	 uint32_t reserved2 : 16;
+	 uint32_t reserved3;
+	 uint32_t reserved4;
+ };
+
 /**
  * gsi_channel_scratch - channel scratch SW config area
  *
@@ -1046,6 +1075,7 @@ union __packed gsi_channel_scratch {
 	struct __packed gsi_wdi2_channel_scratch_new wdi2_new;
 	struct __packed gsi_aqc_channel_scratch aqc;
 	struct __packed gsi_rtk_channel_scratch rtk;
+	struct __packed gsi_ntn_channel_scratch ntn;
 	struct __packed gsi_qdss_channel_scratch qdss;
 	struct __packed {
 		uint32_t word1;
@@ -1195,12 +1225,14 @@ struct __packed gsi_rtk_evt_scratch {
 /**
  * gsi_aqc_evt_scratch - AQC protocol SW config area of
  * event scratch
- * @reserved1: reserve bit.
- * @reserved2: reserve bit.
+ * @head_ptr_wrb_mod_threshold: head pointer write-back moderation threshold
+ * @reserved1-3: reserve bit.
  */
 struct __packed gsi_aqc_evt_scratch {
-	uint32_t reserved1;
-	uint32_t reserved2;
+	uint8_t head_ptr_wrb_mod_threshold;
+	uint8_t reserved1;
+	uint16_t reserved2;
+	uint32_t reserved3;
 };
 
 /**
@@ -1542,6 +1574,32 @@ enum gsi_generic_ee_cmd_return_code {
 	GSI_GEN_EE_CMD_RETURN_CODE_INCORRECT_CHANNEL_INDEX = 0x5,
 	GSI_GEN_EE_CMD_RETURN_CODE_RETRY = 0x6,
 	GSI_GEN_EE_CMD_RETURN_CODE_OUT_OF_RESOURCES = 0x7,
+};
+
+/**
+ * struct gsi_hw_profiling_data - GSI profiling data
+ * @bp_cnt: Back Pressure occurences count
+ * @bp_and_pending_cnt: Back Pressure with pending back pressure count
+ * @mcs_busy_cnt: Cycle count for MCS busy
+ * @mcs_idle_cnt: Cycle count for MCS idle
+ */
+struct gsi_hw_profiling_data {
+    u64 bp_cnt;
+    u64 bp_and_pending_cnt;
+    u64 mcs_busy_cnt;
+    u64 mcs_idle_cnt;
+};
+
+/**
+ * struct gsi_fw_version - GSI fw version data
+ * @hw: HW version
+ * @flavor: Flavor identifier
+ * @fw: FW version
+ */
+struct gsi_fw_version {
+    u32 hw;
+    u32 flavor;
+    u32 fw;
 };
 
 enum gsi_generic_ee_cmd_query_retun_val {
@@ -2210,8 +2268,17 @@ int gsi_get_refetch_reg(unsigned long chan_hdl, bool is_rp);
  *
  * @ep_id: ep index
  * @scratch_id: drop stats on which scratch register
+ * @chan_hdl: gsi channel handle
  */
-int gsi_get_drop_stats(unsigned long ep_id, int scratch_id);
+int gsi_get_drop_stats(unsigned long ep_id, int scratch_id,
+	unsigned long chan_hdl);
+
+/**
+* gsi_get_wp - get channel write pointer for stats
+*
+* @chan_hdl: gsi channel handle
+*/
+int gsi_get_wp(unsigned long chan_hdl);
 
 /**
  * gsi_wdi3_dump_register - dump wdi3 related gsi registers
@@ -2291,6 +2358,15 @@ int gsi_enable_flow_control_ee(unsigned int chan_idx, unsigned int ee,
 int gsi_query_msi_addr(unsigned long chan_hdl, phys_addr_t *addr);
 
 /**
+* gsi_update_almst_empty_thrshold - update almst_empty_thrshold
+*
+* @chan_id: channel id
+* @threshold: Threshold value for channel almost empty indication to MCS.
+*
+*/
+void gsi_update_almst_empty_thrshold(unsigned long chan_hdl, unsigned short threshold);
+
+/**
 * gsi_dump_ch_info - channel information.
 *
 * @chan_id: channel id
@@ -2298,6 +2374,24 @@ int gsi_query_msi_addr(unsigned long chan_hdl, phys_addr_t *addr);
 * @Return void
 */
 void gsi_dump_ch_info(unsigned long chan_hdl);
+
+/**
+ * gsi_get_hw_profiling_stats() - Query GSI HW profiling stats
+ * @stats:	[out] stats blob from client populated by driver
+ *
+ * Returns:	0 on success, negative on failure
+ *
+ */
+int gsi_get_hw_profiling_stats(struct gsi_hw_profiling_data *stats);
+
+/**
+ * gsi_get_fw_version() - Query GSI FW version
+ * @ver:	[out] ver blob from client populated by driver
+ *
+ * Returns:	0 on success, negative on failure
+ *
+ */
+int gsi_get_fw_version(struct gsi_fw_version *ver);
 
 int gsi_flow_control_ee(unsigned int chan_idx, unsigned int ee,
 				bool enable, bool prmy_scnd_fc, int *code);

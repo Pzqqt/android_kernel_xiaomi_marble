@@ -180,7 +180,11 @@ static int ipa3_mhi_get_ch_poll_cfg(enum ipa_client_type client,
 		if (IPA_CLIENT_IS_PROD(client))
 			return 7;
 		else
-			return (ring_size/2)/8;
+			/* IPA5.0 use almst empty register */
+			if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0)
+				return (ring_size/2);
+			else
+				return (ring_size/2)/8;
 		break;
 	default:
 		return ch_ctx_host->pollcfg;
@@ -350,8 +354,14 @@ static int ipa_mhi_start_gsi_channel(enum ipa_client_type client,
 		ch_scratch1.mhi_v2.mhi_host_wp_addr_hi =
 			(ch_scratch.mhi.mhi_host_wp_addr & 0x1FF00000000ll) >>
 			32;
-		ch_scratch1.mhi_v2.polling_configuration =
-			ch_scratch.mhi.polling_configuration;
+		if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0 &&
+			client == IPA_CLIENT_MHI_CONS) {
+			gsi_update_almst_empty_thrshold(ep->gsi_chan_hdl,
+				ch_scratch.mhi.polling_configuration);
+		} else {
+			ch_scratch1.mhi_v2.polling_configuration =
+				ch_scratch.mhi.polling_configuration;
+		}
 		ch_scratch1.mhi_v2.assert_bit40 = ch_scratch.mhi.assert_bit40;
 		ch_scratch1.mhi_v2.burst_mode_enabled =
 			ch_scratch.mhi.burst_mode_enabled;

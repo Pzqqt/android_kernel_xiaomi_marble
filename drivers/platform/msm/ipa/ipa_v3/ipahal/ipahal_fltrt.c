@@ -13,6 +13,8 @@
 #include "ipahal_i.h"
 #include "ipa_common_i.h"
 
+/* SRAM OFFSET for empty table */
+#define IPA_EMPTY_SRAM_OFFSET (0x1000)
 #define IPA_MAC_FLT_BITS (IPA_FLT_MAC_DST_ADDR_ETHER_II | \
 		IPA_FLT_MAC_SRC_ADDR_ETHER_II | IPA_FLT_MAC_DST_ADDR_802_3 | \
 		IPA_FLT_MAC_SRC_ADDR_802_3 | IPA_FLT_MAC_DST_ADDR_802_1Q | \
@@ -648,25 +650,42 @@ static int ipa_flt_gen_hw_rule_ipav5_0(
 		rule_hdr->u.hdr.action = 0x3;
 		break;
 	default:
-		IPAHAL_ERR("Invalid Rule Action %d\n", params->rule->action);
+		IPAHAL_ERR_RL("Invalid Rule Action %d\n", params->rule->action);
 		WARN_ON_RATELIMIT_IPA(1);
 		return -EINVAL;
 	}
 
-	ipa_assert_on(params->rt_tbl_idx & ~0xFF);
+	if (params->rt_tbl_idx & ~0xFF) {
+		IPAHAL_ERR_RL("Invalid RT table idx 0x%X\n",
+			params->rt_tbl_idx);
+		WARN_ON_RATELIMIT_IPA(1);
+		return -EINVAL;
+	}
 	rule_hdr->u.hdr.rt_tbl_idx = params->rt_tbl_idx;
 	rule_hdr->u.hdr.retain_hdr = params->rule->retain_hdr ? 0x1 : 0x0;
 
-	ipa_assert_on(params->rule->pdn_idx & ~0xF);
+	if (params->rule->pdn_idx & ~0xF) {
+		IPAHAL_ERR_RL("Invalid PDN idx 0x%X\n", params->rule->pdn_idx);
+		WARN_ON_RATELIMIT_IPA(1);
+		return -EINVAL;
+	}
 	rule_hdr->u.hdr.pdn_idx = params->rule->pdn_idx;
 	rule_hdr->u.hdr.set_metadata = params->rule->set_metadata ? 0x1 : 0x0;
 	rule_hdr->u.hdr.rsvd1 = 0;
 	rule_hdr->u.hdr.rsvd2 = 0;
 
-	ipa_assert_on(params->priority & ~0xFF);
+	if (params->priority & ~0xFF) {
+		IPAHAL_ERR_RL("Invalid priority 0x%X\n", params->priority);
+		WARN_ON_RATELIMIT_IPA(1);
+		return -EINVAL;
+	}
 	rule_hdr->u.hdr.priority = params->priority;
-	ipa_assert_on(params->id & ~((1 << IPA3_0_RULE_ID_BIT_LEN) - 1));
-	ipa_assert_on(params->id == ((1 << IPA3_0_RULE_ID_BIT_LEN) - 1));
+	if ((params->id & ~((1 << IPA3_0_RULE_ID_BIT_LEN) - 1)) ||
+		(params->id == ((1 << IPA3_0_RULE_ID_BIT_LEN) - 1))) {
+		IPAHAL_ERR_RL("Invalid id 0x%X\n", params->id);
+		WARN_ON_RATELIMIT_IPA(1);
+		return -EINVAL;
+	}
 	rule_hdr->u.hdr.rule_id = params->id;
 	rule_hdr->u.hdr.stats_cnt_idx = params->cnt_idx;
 	rule_hdr->u.hdr.close_aggr_irq_mod =
@@ -970,8 +989,8 @@ static struct ipahal_fltrt_obj ipahal_fltrt_objs[IPA_HW_MAX] = {
 			IPA3_0_HW_RULE_START_ALIGNMENT,
 			IPA3_0_HW_TBL_HDR_WIDTH,
 			IPA3_0_HW_TBL_ADDR_MASK,
-			IPA3_0_RULE_MAX_PRIORITY,
-			IPA3_0_RULE_MIN_PRIORITY,
+			IPA5_0_RULE_MAX_PRIORITY,
+			IPA5_0_RULE_MIN_PRIORITY,
 			IPA3_0_LOW_RULE_ID,
 			IPA3_0_RULE_ID_BIT_LEN,
 			IPA3_0_HW_RULE_BUF_SIZE,
@@ -4235,9 +4254,9 @@ int ipahal_rt_generate_empty_img(u32 tbls_num, u32 hash_hdr_size,
 		IPAHAL_ERR("fail to alloc DMA buff of size %d\n", mem->size);
 		return -ENOMEM;
 	}
-
-	addr = obj->create_tbl_addr(true,
-		ipahal_ctx->empty_fltrt_tbl.phys_base);
+	/* fetch empty tbl from SRAM */
+	addr = obj->create_tbl_addr(false,
+		IPA_EMPTY_SRAM_OFFSET);
 	for (i = 0; i < tbls_num; i++)
 		obj->write_val_to_hdr(addr,
 			mem->base + i * obj->tbl_hdr_width);
@@ -4324,8 +4343,9 @@ int ipahal_flt_generate_empty_img(u32 tbls_num, u32 hash_hdr_size,
 		obj->write_val_to_hdr(flt_bitmap, mem->base);
 	}
 
-	addr = obj->create_tbl_addr(true,
-		ipahal_ctx->empty_fltrt_tbl.phys_base);
+	/* fetch empty tbl from SRAM */
+	addr = obj->create_tbl_addr(false,
+		IPA_EMPTY_SRAM_OFFSET);
 
 	if (ep_bitmap) {
 		for (i = 1; i <= tbls_num; i++)
@@ -4390,8 +4410,8 @@ alloc:
 		}
 	}
 
-	addr = obj->create_tbl_addr(true,
-		ipahal_ctx->empty_fltrt_tbl.phys_base);
+	addr = obj->create_tbl_addr(false,
+		IPA_EMPTY_SRAM_OFFSET);
 	for (i = 0; i < params->tbls_num; i++) {
 		obj->write_val_to_hdr(addr,
 			params->nhash_hdr.base + i * obj->tbl_hdr_width);

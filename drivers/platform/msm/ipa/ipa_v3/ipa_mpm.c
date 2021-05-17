@@ -1116,6 +1116,7 @@ static int ipa_mpm_connect_mhip_gsi_pipe(enum ipa_client_type mhip_client,
 	gsi_params.chan_params.ring_base_vaddr = NULL;
 	gsi_params.chan_params.use_db_eng = GSI_CHAN_DIRECT_MODE;
 	gsi_params.chan_params.max_prefetch = GSI_ONE_PREFETCH_SEG;
+	gsi_params.chan_params.db_in_bytes = 1;
 	gsi_params.chan_params.low_weight = 1;
 	gsi_params.chan_params.xfer_cb = NULL;
 	gsi_params.chan_params.err_cb = ipa_mpm_gsi_chan_err_cb;

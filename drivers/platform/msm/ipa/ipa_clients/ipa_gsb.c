@@ -209,7 +209,7 @@ static void ipa_gsb_debugfs_init(void)
 	const mode_t read_only_mode = 00444;
 
 	dent = debugfs_create_dir("ipa_gsb", NULL);
-	if (IS_ERR(dent)) {
+	if (!dent) {
 		IPA_GSB_ERR("fail to create folder ipa_gsb\n");
 		return;
 	}
@@ -282,7 +282,7 @@ static int ipa_gsb_commit_partial_hdr(struct ipa_gsb_iface_info *iface_info)
 	if (!hdr)
 		return -ENOMEM;
 
-	hdr->commit = 1;
+	hdr->commit = 0;
 	hdr->num_hdrs = 2;
 
 	snprintf(hdr->hdr[0].name, sizeof(hdr->hdr[0].name),

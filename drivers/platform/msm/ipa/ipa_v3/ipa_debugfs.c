@@ -90,6 +90,8 @@ const char *ipa3_event_name[IPA_EVENT_MAX_NUM] = {
 	__stringify(IPA_PDN_DEFAULT_MODE_CONFIG),
 	__stringify(IPA_PDN_DEFAULT_MODE_CONFIG),
 	__stringify(IPA_MAC_FLT_EVENT),
+	__stringify(IPA_DONE_RESTORE_EVENT),
+	__stringify(IPA_SW_FLT_EVENT),
 };
 
 const char *ipa3_hdr_l2_type_name[] = {
@@ -609,50 +611,87 @@ static ssize_t ipa3_read_hdr(struct file *file, char __user *ubuf, size_t count,
 	int nbytes = 0;
 	int i = 0;
 	struct ipa3_hdr_entry *entry;
+	enum hdr_tbl_storage hdr_tbl;
+	struct ipa_hdr_offset_entry *offset_entry;
+	unsigned int offset_count;
 
 	mutex_lock(&ipa3_ctx->lock);
 
-	if (ipa3_ctx->hdr_tbl_lcl)
-		pr_err("Table resides on local memory\n");
-	else
-		pr_err("Table resides on system (ddr) memory\n");
+	for (hdr_tbl = HDR_TBL_LCL; hdr_tbl < HDR_TBLS_TOTAL; hdr_tbl++) {
+		if (hdr_tbl == HDR_TBL_LCL)
+			pr_err("Table on local memory:\n");
+		else
+			pr_err("Table on system (ddr) memory:\n");
 
-	list_for_each_entry(entry, &ipa3_ctx->hdr_tbl.head_hdr_entry_list,
-			link) {
-		if (entry->cookie != IPA_HDR_COOKIE)
-			continue;
-		nbytes = scnprintf(
-			dbg_buff,
-			IPA_MAX_MSG_LEN,
-			"name:%s len=%d ref=%d partial=%d type=%s ",
-			entry->name,
-			entry->hdr_len,
-			entry->ref_cnt,
-			entry->is_partial,
-			ipa3_hdr_l2_type_name[entry->type]);
-
-		if (entry->is_hdr_proc_ctx) {
-			nbytes += scnprintf(
-				dbg_buff + nbytes,
-				IPA_MAX_MSG_LEN - nbytes,
-				"phys_base=0x%pa ",
-				&entry->phys_base);
-		} else {
-			nbytes += scnprintf(
-				dbg_buff + nbytes,
-				IPA_MAX_MSG_LEN - nbytes,
-				"ofst=%u ",
-				entry->offset_entry->offset >> 2);
+		nbytes = scnprintf(dbg_buff, IPA_MAX_MSG_LEN, "Used offsets: ");
+		for (i = 0; i < IPA_HDR_BIN_MAX; i++){
+			offset_count = 0;
+			list_for_each_entry(offset_entry,
+					    &ipa3_ctx->hdr_tbl[hdr_tbl].head_offset_list[i],
+					    link)
+				offset_count++;
+			if (offset_count)
+				nbytes += scnprintf(dbg_buff + nbytes,
+						    IPA_MAX_MSG_LEN - nbytes,
+						    "%u * %u bytes, ",
+						    offset_count,
+						    ipa3_get_hdr_bin_size(i));
 		}
-		for (i = 0; i < entry->hdr_len; i++) {
-			scnprintf(dbg_buff + nbytes + i * 2,
-				  IPA_MAX_MSG_LEN - nbytes - i * 2,
-				  "%02x", entry->hdr[i]);
-		}
-		scnprintf(dbg_buff + nbytes + entry->hdr_len * 2,
-			  IPA_MAX_MSG_LEN - nbytes - entry->hdr_len * 2,
-			  "\n");
 		pr_err("%s", dbg_buff);
+
+		nbytes = scnprintf(dbg_buff, IPA_MAX_MSG_LEN, "Free offsets: ");
+		for (i = 0; i < IPA_HDR_BIN_MAX; i++){
+			offset_count = 0;
+			list_for_each_entry(offset_entry,
+					    &ipa3_ctx->hdr_tbl[hdr_tbl].head_free_offset_list[i],
+					    link)
+				offset_count++;
+			if (offset_count)
+				nbytes += scnprintf(dbg_buff + nbytes,
+						    IPA_MAX_MSG_LEN - nbytes,
+						    "%u * %u bytes, ",
+						    offset_count,
+						    ipa3_get_hdr_bin_size(i));
+		}
+		pr_err("%s", dbg_buff);
+
+		list_for_each_entry(entry, &ipa3_ctx->hdr_tbl[hdr_tbl].head_hdr_entry_list,
+				link) {
+			if (entry->cookie != IPA_HDR_COOKIE)
+				continue;
+			nbytes = scnprintf(
+				dbg_buff,
+				IPA_MAX_MSG_LEN,
+				"name:%s len=%d ref=%d partial=%d type=%s ",
+				entry->name,
+				entry->hdr_len,
+				entry->ref_cnt,
+				entry->is_partial,
+				ipa3_hdr_l2_type_name[entry->type]);
+
+			if (entry->is_hdr_proc_ctx) {
+				nbytes += scnprintf(
+					dbg_buff + nbytes,
+					IPA_MAX_MSG_LEN - nbytes,
+					"phys_base=0x%pa ",
+					&entry->phys_base);
+			} else {
+				nbytes += scnprintf(
+					dbg_buff + nbytes,
+					IPA_MAX_MSG_LEN - nbytes,
+					"ofst=%u ",
+					entry->offset_entry->offset >> 2);
+			}
+			for (i = 0; i < entry->hdr_len; i++) {
+				scnprintf(dbg_buff + nbytes + i * 2,
+					  IPA_MAX_MSG_LEN - nbytes - i * 2,
+					  "%02x", entry->hdr[i]);
+			}
+			scnprintf(dbg_buff + nbytes + entry->hdr_len * 2,
+				  IPA_MAX_MSG_LEN - nbytes - entry->hdr_len * 2,
+				  "\n");
+			pr_err("%s", dbg_buff);
+		}
 	}
 	mutex_unlock(&ipa3_ctx->lock);
 
@@ -980,7 +1019,7 @@ static ssize_t ipa3_read_rt(struct file *file, char __user *ubuf, size_t count,
 				pr_err("rule_idx:%d dst:%d ep:%d S:%u ",
 					i, entry->rule.dst,
 					ipa3_get_ep_mapping(entry->rule.dst),
-					!ipa3_ctx->hdr_tbl_lcl);
+					!(entry->hdr && entry->hdr->is_lcl));
 				pr_err("hdr_ofst[words]:%u attrib_mask:%08x ",
 					ofst >> 2,
 					entry->rule.attrib.attrib_mask);
@@ -1240,6 +1279,14 @@ static ssize_t ipa3_read_flt(struct file *file, char __user *ubuf, size_t count,
 			pr_err("hashable:%u rule_id:%u max_prio:%u prio:%u ",
 				entry->rule.hashable, entry->rule_id,
 				entry->rule.max_prio, entry->prio);
+			if (entry->rule.hashable)
+				pr_err("hash in_sys_preffer:%d, force: %d ",
+					tbl->in_sys[IPA_RULE_HASHABLE],
+					tbl->force_sys[IPA_RULE_HASHABLE]);
+			else
+				pr_err("non-hash in_sys_preffer:%d, force: %d ",
+					tbl->in_sys[IPA_RULE_NON_HASHABLE],
+					tbl->force_sys[IPA_RULE_NON_HASHABLE]);
 			pr_err("enable_stats:%u counter_id:%u\n",
 				entry->rule.enable_stats,
 				entry->rule.cnt_idx);
@@ -1418,11 +1465,14 @@ static ssize_t ipa3_read_stats(struct file *file, char __user *ubuf,
 		"act_clnt=%u\n"
 		"con_clnt_bmap=0x%x\n"
 		"wan_rx_empty=%u\n"
+		"wan_rx_empty_coal=%u\n"
 		"wan_repl_rx_empty=%u\n"
+		"rmnet_ll_rx_empty=%u\n"
+		"rmnet_ll_repl_rx_empty=%u\n"
 		"lan_rx_empty=%u\n"
 		"lan_repl_rx_empty=%u\n"
 		"flow_enable=%u\n"
-		"flow_disable=%u\n",
+		"flow_disable=%u\n"
 		"rx_page_drop_cnt=%u\n",
 		ipa3_ctx->stats.tx_sw_pkts,
 		ipa3_ctx->stats.tx_hw_pkts,
@@ -1435,12 +1485,16 @@ static ssize_t ipa3_read_stats(struct file *file, char __user *ubuf,
 		atomic_read(&ipa3_ctx->ipa3_active_clients.cnt),
 		connect,
 		ipa3_ctx->stats.wan_rx_empty,
+		ipa3_ctx->stats.wan_rx_empty_coal,
 		ipa3_ctx->stats.wan_repl_rx_empty,
+		ipa3_ctx->stats.rmnet_ll_rx_empty,
+		ipa3_ctx->stats.rmnet_ll_repl_rx_empty,
 		ipa3_ctx->stats.lan_rx_empty,
 		ipa3_ctx->stats.lan_repl_rx_empty,
 		ipa3_ctx->stats.flow_enable,
 		ipa3_ctx->stats.flow_disable,
-		ipa3_ctx->stats.rx_page_drop_cnt);
+		ipa3_ctx->stats.rx_page_drop_cnt
+		);
 	cnt += nbytes;
 
 	for (i = 0; i < IPAHAL_PKT_STATUS_EXCEPTION_MAX; i++) {
@@ -1476,23 +1530,37 @@ static ssize_t ipa3_read_odlstats(struct file *file, char __user *ubuf,
 	return simple_read_from_buffer(ubuf, count, ppos, dbg_buff, cnt);
 }
 
+
 static ssize_t ipa3_read_page_recycle_stats(struct file *file,
 		char __user *ubuf, size_t count, loff_t *ppos)
 {
 	int nbytes;
-	int cnt = 0;
+	int cnt = 0, i = 0, k = 0;
 
 	nbytes = scnprintf(dbg_buff, IPA_MAX_MSG_LEN,
 			"COAL : Total number of packets replenished =%llu\n"
+			"COAL : Number of page recycled packets  =%llu\n"
 			"COAL : Number of tmp alloc packets  =%llu\n"
 			"DEF  : Total number of packets replenished =%llu\n"
+			"DEF  : Number of page recycled packets =%llu\n"
 			"DEF  : Number of tmp alloc packets  =%llu\n",
 			ipa3_ctx->stats.page_recycle_stats[0].total_replenished,
+			ipa3_ctx->stats.page_recycle_stats[0].page_recycled,
 			ipa3_ctx->stats.page_recycle_stats[0].tmp_alloc,
 			ipa3_ctx->stats.page_recycle_stats[1].total_replenished,
+			ipa3_ctx->stats.page_recycle_stats[1].page_recycled,
 			ipa3_ctx->stats.page_recycle_stats[1].tmp_alloc);
 
 	cnt += nbytes;
+
+	for (k = 0; k < 2; k++) {
+		for (i = 0; i < ipa3_ctx->page_poll_threshold; i++) {
+			nbytes = scnprintf(dbg_buff + cnt, IPA_MAX_MSG_LEN,
+				"COMMON  : Page replenish efficiency[%d][%d]  =%llu\n",
+				k, i, ipa3_ctx->stats.page_recycle_cnt[k][i]);
+			cnt += nbytes;
+		}
+	}
 
 	return simple_read_from_buffer(ubuf, count, ppos, dbg_buff, cnt);
 }
@@ -2856,6 +2924,40 @@ static ssize_t ipa3_enable_ipc_low(struct file *file,
 	return count;
 }
 
+static ssize_t ipa3_read_page_poll_threshold(struct file *file,
+	char __user *buf, size_t count, loff_t *ppos) {
+
+	int nbytes;
+	nbytes = scnprintf(dbg_buff, IPA_MAX_MSG_LEN,
+				"Page Poll Threshold = %d\n",
+				ipa3_ctx->page_poll_threshold);
+	return simple_read_from_buffer(buf, count, ppos, dbg_buff, nbytes);
+
+}
+static ssize_t ipa3_write_page_poll_threshold(struct file *file,
+	const char __user *buf, size_t count, loff_t *ppos) {
+
+	int ret;
+	u8 page_poll_threshold =0;
+
+	if (count >= sizeof(dbg_buff))
+		return -EFAULT;
+
+	ret = kstrtou8_from_user(buf, count, 0, &page_poll_threshold);
+	if(ret)
+		return ret;
+
+	if(page_poll_threshold != 0 &&
+		page_poll_threshold <= IPA_PAGE_POLL_THRESHOLD_MAX)
+		ipa3_ctx->page_poll_threshold = page_poll_threshold;
+	else
+		IPAERR("Invalid value \n");
+
+	IPADBG("Updated page poll threshold = %d", ipa3_ctx->page_poll_threshold);
+
+	return count;
+}
+
 static const struct ipa3_debugfs_file debugfs_files[] = {
 	{
 		"gen_reg", IPA_READ_ONLY_MODE, NULL, {
@@ -3032,6 +3134,11 @@ static const struct ipa3_debugfs_file debugfs_files[] = {
 	}, {
 		"app_clk_vote_cnt", IPA_READ_ONLY_MODE, NULL, {
 			.read = ipa3_read_app_clk_vote,
+		}
+	}, {
+		"page_poll_threshold", IPA_READ_WRITE_MODE, NULL, {
+			.read = ipa3_read_page_poll_threshold,
+			.write = ipa3_write_page_poll_threshold,
 		}
 	},
 };
@@ -3216,9 +3323,16 @@ static ssize_t ipa3_eth_read_perf_status(struct file *file,
 	switch (client->client_type) {
 	case IPA_ETH_CLIENT_AQC107:
 	case IPA_ETH_CLIENT_AQC113:
-		ret = ipa3_get_aqc_gsi_stats(&stats);
-		tx_ep = IPA_CLIENT_AQC_ETHERNET_CONS;
-		rx_ep = IPA_CLIENT_AQC_ETHERNET_PROD;
+	case IPA_ETH_CLIENT_NTN:
+		if (client->client_type == IPA_ETH_CLIENT_NTN) {
+			ret = ipa3_get_ntn_gsi_stats(&stats);
+			tx_ep = IPA_CLIENT_ETHERNET_CONS;
+			rx_ep = IPA_CLIENT_ETHERNET_PROD;
+		} else {
+			ret = ipa3_get_aqc_gsi_stats(&stats);
+			tx_ep = IPA_CLIENT_AQC_ETHERNET_CONS;
+			rx_ep = IPA_CLIENT_AQC_ETHERNET_PROD;
+		}
 		if (!ret) {
 			nbytes = scnprintf(dbg_buff, IPA_MAX_MSG_LEN,
 			"%s_ringFull=%u\n"
@@ -3258,7 +3372,9 @@ static ssize_t ipa3_eth_read_perf_status(struct file *file,
 		} else {
 			nbytes = scnprintf(dbg_buff,
 				IPA_MAX_MSG_LEN,
-				"Fail to read AQC GSI stats\n");
+				"Fail to read [%s][%s] GSI stats\n",
+				ipa_clients_strings[rx_ep],
+				ipa_clients_strings[tx_ep]);
 			cnt += nbytes;
 		}
 		break;
@@ -3329,7 +3445,7 @@ static ssize_t ipa3_eth_read_perf_status(struct file *file,
 			cnt += nbytes;
 		} else {
 			nbytes = scnprintf(dbg_buff, IPA_MAX_MSG_LEN,
-				"Fail to read AQC GSI stats\n");
+				"Fail to read RTK GSI stats\n");
 			cnt += nbytes;
 		}
 		break;
@@ -3350,6 +3466,7 @@ static ssize_t ipa3_eth_read_err_status(struct file *file,
 	int tx_ep, rx_ep;
 	struct ipa3_eth_error_stats tx_stats;
 	struct ipa3_eth_error_stats rx_stats;
+	int scratch_num;
 
 	memset(&tx_stats, 0, sizeof(struct ipa3_eth_error_stats));
 	memset(&rx_stats, 0, sizeof(struct ipa3_eth_error_stats));
@@ -3368,42 +3485,45 @@ static ssize_t ipa3_eth_read_err_status(struct file *file,
 	case IPA_ETH_CLIENT_AQC113:
 		tx_ep = IPA_CLIENT_AQC_ETHERNET_CONS;
 		rx_ep = IPA_CLIENT_AQC_ETHERNET_PROD;
-		break;
+		scratch_num = 7;
 	case IPA_ETH_CLIENT_RTK8111K:
 	case IPA_ETH_CLIENT_RTK8125B:
 		tx_ep = IPA_CLIENT_RTK_ETHERNET_CONS;
 		rx_ep = IPA_CLIENT_RTK_ETHERNET_PROD;
-		ipa3_eth_get_status(tx_ep, 5, &tx_stats);
-		ipa3_eth_get_status(rx_ep, 5, &rx_stats);
+		scratch_num = 5;
 		break;
+	case IPA_ETH_CLIENT_NTN:
+		tx_ep = IPA_CLIENT_ETHERNET_CONS;
+		rx_ep = IPA_CLIENT_ETHERNET_PROD;
+		scratch_num = 6;
 	default:
 		IPAERR("Not supported\n");
 		return 0;
 	}
+	ipa3_eth_get_status(tx_ep, scratch_num, &tx_stats);
+	ipa3_eth_get_status(rx_ep, scratch_num, &rx_stats);
+
 	nbytes = scnprintf(dbg_buff, IPA_MAX_MSG_LEN,
 		"%s_RP=0x%x\n"
 		"%s_WP=0x%x\n"
-		"%s_SCRATCH5=0x%x\n",
+		"%s_err:%u (scratch %d)\n",
 		ipa_clients_strings[tx_ep],
 		tx_stats.rp,
 		ipa_clients_strings[tx_ep],
 		tx_stats.wp,
 		ipa_clients_strings[tx_ep],
-		tx_stats.err);
+		tx_stats.err, scratch_num);
 	cnt += nbytes;
 	nbytes = scnprintf(dbg_buff + cnt, IPA_MAX_MSG_LEN - cnt,
 		"%s_RP=0x%x\n"
 		"%s_WP=0x%x\n"
-		"%s_SCRATCH5=0x%x\n"
-		"%s_err:%u\n",
+		"%s_err:%u (scratch %d)\n",
 		ipa_clients_strings[rx_ep],
 		rx_stats.rp,
 		ipa_clients_strings[rx_ep],
 		rx_stats.wp,
 		ipa_clients_strings[rx_ep],
-		rx_stats.err,
-		ipa_clients_strings[rx_ep],
-		rx_stats.err & 0xff);
+		rx_stats.err, scratch_num);
 	cnt += nbytes;
 done:
 	return simple_read_from_buffer(ubuf, count, ppos, dbg_buff, cnt);
