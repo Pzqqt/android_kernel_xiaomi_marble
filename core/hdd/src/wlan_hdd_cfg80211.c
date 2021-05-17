@@ -15282,6 +15282,7 @@ get_usable_channel_policy[QCA_WLAN_VENDOR_ATTR_USABLE_CHANNELS_MAX + 1] = {
 	},
 };
 
+#ifdef WLAN_FEATURE_GET_USABLE_CHAN_LIST
 /**
  * hdd_fill_usable_channels_data() - Fill the data requested by userspace
  * @skb: SK buffer
@@ -15487,6 +15488,7 @@ err:
 		return ret;
 	return qdf_status_to_os_return(status);
 }
+#endif
 
 /**
  * __wlan_hdd_cfg80211_get_chain_rssi() - get chain rssi
@@ -15576,6 +15578,7 @@ static int __wlan_hdd_cfg80211_get_chain_rssi(struct wiphy *wiphy,
 	return retval;
 }
 
+#ifdef WLAN_FEATURE_GET_USABLE_CHAN_LIST
 /**
  * wlan_hdd_cfg80211_get_usable_channel() - get chain rssi
  * @wiphy: wiphy pointer
@@ -15604,6 +15607,16 @@ static int wlan_hdd_cfg80211_get_usable_channel(struct wiphy *wiphy,
 
 	return errno;
 }
+#else
+static int wlan_hdd_cfg80211_get_usable_channel(struct wiphy *wiphy,
+						struct wireless_dev *wdev,
+						const void *data,
+						int data_len)
+{
+	hdd_debug("get usable channel feature not supported");
+	return -EPERM;
+}
+#endif
 
 /**
  * wlan_hdd_cfg80211_get_chain_rssi() - get chain rssi
