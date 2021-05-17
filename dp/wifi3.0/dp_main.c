@@ -3138,6 +3138,7 @@ static QDF_STATUS dp_soc_interrupt_attach(struct cdp_soc_t *txrx_soc)
 
 	int i = 0;
 	int num_irq = 0;
+	int rx_err_ring_intr_ctxt_id = HIF_MAX_GROUP;
 
 	qdf_mem_set(&soc->mon_intr_id_lmac_map,
 		    sizeof(soc->mon_intr_id_lmac_map), DP_MON_INVALID_LMAC_ID);
@@ -3225,9 +3226,15 @@ static QDF_STATUS dp_soc_interrupt_attach(struct cdp_soc_t *txrx_soc)
 
 		hif_event_history_init(soc->hif_handle, i);
 		soc->intr_ctx[i].lro_ctx = qdf_lro_init();
+
+		if (rx_err_ring_mask)
+			rx_err_ring_intr_ctxt_id = i;
 	}
 
 	hif_configure_ext_group_interrupts(soc->hif_handle);
+	if (rx_err_ring_intr_ctxt_id != HIF_MAX_GROUP)
+		hif_config_irq_clear_cpu_affinity(soc->hif_handle,
+						  rx_err_ring_intr_ctxt_id, 0);
 
 	return QDF_STATUS_SUCCESS;
 }

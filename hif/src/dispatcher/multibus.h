@@ -93,6 +93,8 @@ struct hif_bus_ops {
 	bool (*hif_needs_bmi)(struct hif_softc *hif_sc);
 	void (*hif_config_irq_affinity)(struct hif_softc *hif_sc);
 	int (*hif_config_irq_by_ceid)(struct hif_softc *hif_sc, int ce_id);
+	void (*hif_config_irq_clear_cpu_affinity)(struct hif_softc *hif_sc,
+						  int intr_ctxt_id, int cpu);
 	bool (*hif_log_bus_info)(struct hif_softc *scn, uint8_t *data,
 				 unsigned int *offset);
 	int (*hif_enable_grp_irqs)(struct hif_softc *scn);

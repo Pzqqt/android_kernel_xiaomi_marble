@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -168,6 +168,15 @@ void qdf_cpumask_set_cpu(unsigned int cpu, qdf_cpu_mask *dstp);
  * Return: None
  */
 void qdf_cpumask_setall(qdf_cpu_mask *dstp);
+
+/**
+ * qdf_cpumask_clear_cpu() - clear a cpu in a cpumask
+ * @cpu: cpu number
+ * @dstp: cpumask pointer
+ *
+ * Return: None
+ */
+void qdf_cpumask_clear_cpu(unsigned int cpu, qdf_cpu_mask *dstp);
 
 /**
  * qdf_cpumask_empty - Check if cpu_mask is empty

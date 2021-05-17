@@ -411,6 +411,19 @@ int hif_dummy_config_irq_by_ceid(struct hif_softc *scn, int ce_id)
 }
 
 /**
+ * hif_config_irq_clear_affinity() - dummy call
+ * @scn: HIF handle
+ * @intr_ctxt_id: interrupt group index
+ * @cpu: CPU core to clear
+ *
+ * Return: None
+ */
+void hif_dummy_config_irq_clear_cpu_affinity(struct hif_softc *scn,
+					     int intr_ctxt_id, int cpu)
+{
+}
+
+/**
  * hif_dummy_log_bus_info - dummy call
  * @scn: hif context
  * @data: hang event data buffer

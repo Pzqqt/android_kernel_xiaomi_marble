@@ -636,6 +636,43 @@ void hif_ipci_config_irq_affinity(struct hif_softc *scn)
 }
 #endif /* #ifdef HIF_CPU_PERF_AFFINE_MASK */
 
+#ifdef HIF_CPU_CLEAR_AFFINITY
+void hif_ipci_config_irq_clear_cpu_affinity(struct hif_softc *scn,
+					    int intr_ctxt_id, int cpu)
+{
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+	struct hif_exec_context *hif_ext_group;
+	int i, ret;
+
+	if (intr_ctxt_id < hif_state->hif_num_extgroup) {
+		hif_ext_group = hif_state->hif_ext_group[intr_ctxt_id];
+		for (i = 0; i < hif_ext_group->numirq; i++) {
+			qdf_cpumask_setall(&hif_ext_group->new_cpu_mask[i]);
+			qdf_cpumask_clear_cpu(cpu,
+					      &hif_ext_group->new_cpu_mask[i]);
+			qdf_dev_modify_irq_status(hif_ext_group->os_irq[i],
+						  IRQ_NO_BALANCING, 0);
+			ret = qdf_dev_set_irq_affinity(hif_ext_group->os_irq[i],
+						       (struct qdf_cpu_mask *)
+						       &hif_ext_group->
+						       new_cpu_mask[i]);
+			qdf_dev_modify_irq_status(hif_ext_group->os_irq[i],
+						  0, IRQ_NO_BALANCING);
+			if (ret)
+				hif_err("Set affinity %*pbl fails for IRQ %d ",
+					qdf_cpumask_pr_args(&hif_ext_group->
+							    new_cpu_mask[i]),
+					hif_ext_group->os_irq[i]);
+			else
+				hif_debug("Set affinity %*pbl for IRQ: %d",
+					  qdf_cpumask_pr_args(&hif_ext_group->
+							      new_cpu_mask[i]),
+					  hif_ext_group->os_irq[0]);
+		}
+	}
+}
+#endif
+
 int hif_ipci_configure_grp_irq(struct hif_softc *scn,
 			       struct hif_exec_context *hif_ext_group)
 {
