@@ -737,19 +737,39 @@ static inline uint16_t reg_max_6ghz_chan_freq(void)
 #endif /* CONFIG_BAND_6GHZ */
 
 /**
- * reg_get_band_channel_list() - Get the channel list and number of channels
+ * reg_get_band_channel_list() - Caller function to
+ * reg_get_band_from_cur_chan_list with primary current channel list
  * @pdev: pdev ptr
  * @band_mask: Input bitmap with band set
  * @channel_list: Pointer to Channel List
  *
- * Get the given channel list and number of channels from the current channel
- * list based on input band bitmap.
+ * Caller function to reg_get_band_from_cur_chan_listto get the primary channel
+ * list and number of channels (for non-beaconing entities).
  *
  * Return: Number of channels, else 0 to indicate error
  */
 uint16_t reg_get_band_channel_list(struct wlan_objmgr_pdev *pdev,
 				   uint8_t band_mask,
 				   struct regulatory_channel *channel_list);
+
+#ifdef CONFIG_REG_CLIENT
+/**
+ * reg_get_secondary_band_channel_list() - Caller function to
+ * reg_get_band_from_cur_chan_list with secondary current channel list
+ * @pdev: pdev ptr
+ * @band_mask: Input bitmap with band set
+ * @channel_list: Pointer to Channel List
+ *
+ * Caller function to reg_get_band_from_cur_chan_list to get the secondary
+ * channel list and number of channels (for beaconing entities).
+ *
+ * Return: Number of channels, else 0 to indicate error
+ */
+uint16_t reg_get_secondary_band_channel_list(struct wlan_objmgr_pdev *pdev,
+					     uint8_t band_mask,
+					     struct regulatory_channel
+					     *channel_list);
+#endif
 
 /**
  * reg_chan_band_to_freq - Return channel frequency based on the channel number

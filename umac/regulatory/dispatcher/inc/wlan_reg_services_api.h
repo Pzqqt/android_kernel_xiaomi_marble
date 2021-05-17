@@ -341,6 +341,26 @@ wlan_reg_get_band_channel_list(struct wlan_objmgr_pdev *pdev,
 			       uint8_t band_mask,
 			       struct regulatory_channel *channel_list);
 
+#ifdef CONFIG_REG_CLIENT
+/**
+ * wlan_reg_get_secondary_band_channel_list() - Get secondary channel list for
+ * SAP based on the band_mask
+ * @pdev: pdev ptr
+ * @band_mask: Input bitmap with band set
+ * @channel_list: Pointer to Channel List
+ *
+ * Get the given channel list and number of channels from the secondary current
+ * channel list based on input band bitmap.
+ *
+ * Return: Number of channels, else 0 to indicate error
+ */
+uint16_t
+wlan_reg_get_secondary_band_channel_list(struct wlan_objmgr_pdev *pdev,
+					 uint8_t band_mask,
+					 struct regulatory_channel
+					 *channel_list);
+#endif
+
 /**
  * wlan_reg_chan_band_to_freq - Return channel frequency based on the channel
  * number and band.
