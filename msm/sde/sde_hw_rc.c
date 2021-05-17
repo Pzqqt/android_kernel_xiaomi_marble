@@ -3,6 +3,7 @@
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
+#define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
 #include <drm/msm_drm_pp.h>
 #include "sde_kms.h"
 #include "sde_reg_dma.h"
@@ -383,8 +384,6 @@ static int _sde_hw_rc_get_param_rb(
 	SDE_DEBUG("x1:%u y1:%u x2:%u y2:%u\n", x1, y1, x2, y2);
 	SDE_DEBUG("cfg_param_01:%u cfg_param_02:%u half_panel_x:%u",
 			cfg_param_01, cfg_param_02, half_panel_x);
-	SDE_DEBUG("param_r:0x%08X param_b:0x%08X\n",
-			*param_r, *param_b);
 
 	if (x1 < 0 || x2 < 0 || y1 < 0 || y2 < 0 || half_panel_x < 0 ||
 			x1 >= x2 || y1 >= y2) {
@@ -412,6 +411,10 @@ static int _sde_hw_rc_get_param_rb(
 			*param_b |= RC_PARAM_B1B2;
 	}
 
+	SDE_DEBUG("param_r:0x%08X param_b:0x%08X\n", *param_r, *param_b);
+	SDE_EVT32(rc_roi->x, rc_roi->y, rc_roi->w, rc_roi->h);
+	SDE_EVT32(x1, y1, x2, y2, cfg_param_01, cfg_param_02, half_panel_x);
+
 	return rc;
 }
 
@@ -420,12 +423,15 @@ static int _sde_hw_rc_program_enable_bits(
 		struct drm_msm_rc_mask_cfg *rc_mask_cfg,
 		enum rc_param_a param_a,
 		enum rc_param_b param_b,
+		enum rc_param_r param_r,
 		int merge_mode,
 		struct sde_rect *rc_roi)
 {
 	int rc = 0;
 	u32 val = 0, param_c = 0, rc_merge_mode = 0, ystart = 0;
 	u64 flags = 0;
+	bool r1_valid = false, r2_valid = false;
+	bool pu_in_r1 = false, pu_in_r2 = false;
 	bool r1_enable = false, r2_enable = false;
 
 	if (!hw_dspp || !rc_mask_cfg || !rc_roi) {
@@ -441,30 +447,26 @@ static int _sde_hw_rc_program_enable_bits(
 	}
 
 	flags = rc_mask_cfg->flags;
-	r1_enable = ((flags & SDE_HW_RC_DISABLE_R1) == SDE_HW_RC_DISABLE_R1) ?
-			false : true;
-	r2_enable = ((flags & SDE_HW_RC_DISABLE_R2) == SDE_HW_RC_DISABLE_R2) ?
-			false : true;
+	r1_valid = ((flags & SDE_HW_RC_DISABLE_R1) != SDE_HW_RC_DISABLE_R1);
+	r2_valid = ((flags & SDE_HW_RC_DISABLE_R2) != SDE_HW_RC_DISABLE_R2);
+	pu_in_r1 = (param_r == RC_PARAM_R1 || param_r == RC_PARAM_R1R2);
+	pu_in_r2 = (param_r == RC_PARAM_R2 || param_r == RC_PARAM_R1R2);
+	r1_enable = (r1_valid && pu_in_r1);
+	r2_enable = (r2_valid && pu_in_r2);
 
-	if (r1_enable) {
+	if (r1_enable)
 		val |= BIT(0);
-		SDE_DEBUG("enable R1\n");
-	} else {
-		SDE_DEBUG("disable R1\n");
-	}
 
-	if (r2_enable) {
+	if (r2_enable)
 		val |= BIT(4);
-		SDE_DEBUG("enable R2\n");
-	} else {
-		SDE_DEBUG("disable R2\n");
-	}
 
 	/*corner case for partial update in R2 region*/
-	if (!r1_enable && r2_enable) {
+	if (!r1_enable && r2_enable)
 		ystart = rc_roi->y;
-		SDE_DEBUG("set partial update ystart:%u\n", ystart);
-	}
+
+	SDE_DEBUG("flags:%x, R1 valid:%d, R2 valid:%d, PU in R1:%d, PU in R2:%d, Y_START:%d\n",
+			flags, r1_valid, r2_valid, pu_in_r1, pu_in_r2, ystart);
+	SDE_EVT32(flags, r1_valid, r2_valid, pu_in_r1, pu_in_r2, ystart);
 
 	val |= param_c;
 	_sde_hw_rc_reg_write(hw_dspp, SDE_HW_RC_REG1, val);
@@ -500,7 +502,7 @@ static int _sde_hw_rc_program_roi(
 
 	param_a = rc_mask_cfg->cfg_param_03;
 	rc = _sde_hw_rc_program_enable_bits(hw_dspp, rc_mask_cfg,
-			param_a, param_b, merge_mode, rc_roi);
+			param_a, param_b, param_r, merge_mode, rc_roi);
 	if (rc) {
 		SDE_ERROR("failed to program enable bits, rc:%d\n", rc);
 		return rc;
@@ -595,10 +597,8 @@ static int sde_hw_rc_check_mask_cfg(
 	cfg_param_06 = rc_mask_cfg->cfg_param_06;
 	cfg_param_07 = rc_mask_cfg->cfg_param_07;
 	cfg_param_08 = rc_mask_cfg->cfg_param_08;
-	r1_enable = ((flags & SDE_HW_RC_DISABLE_R1) == SDE_HW_RC_DISABLE_R1) ?
-			false : true;
-	r2_enable = ((flags & SDE_HW_RC_DISABLE_R2) == SDE_HW_RC_DISABLE_R2) ?
-			false : true;
+	r1_enable = ((flags & SDE_HW_RC_DISABLE_R1) != SDE_HW_RC_DISABLE_R1);
+	r2_enable = ((flags & SDE_HW_RC_DISABLE_R2) != SDE_HW_RC_DISABLE_R2);
 
 	if (cfg_param_07 > hw_dspp->cap->sblk->rc.mem_total_size) {
 		SDE_ERROR("invalid cfg_param_07:%d\n", cfg_param_07);
@@ -722,7 +722,7 @@ int sde_hw_rc_check_mask(struct sde_hw_dspp *hw_dspp, void *cfg)
 	}
 
 	if ((hw_cfg->len == 0 && hw_cfg->payload == NULL)) {
-		SDE_DEBUG("rc feature disabled, skip mask checks\n");
+		SDE_DEBUG("RC feature disabled, skip mask checks\n");
 		return 0;
 	}
 
@@ -753,6 +753,7 @@ int sde_hw_rc_check_pu_roi(struct sde_hw_dspp *hw_dspp, void *cfg)
 	int rc = 0;
 	struct sde_hw_cp_cfg *hw_cfg = cfg;
 	struct msm_roi_list *roi_list;
+	struct msm_roi_list empty_roi_list;
 	struct sde_rect rc_roi, merged_roi;
 	struct drm_msm_rc_mask_cfg *rc_mask_cfg;
 	bool mask_programmed = false;
@@ -771,8 +772,8 @@ int sde_hw_rc_check_pu_roi(struct sde_hw_dspp *hw_dspp, void *cfg)
 
 	roi_list = hw_cfg->payload;
 	if (!roi_list) {
-		SDE_DEBUG("empty list of roi\n");
-		return 0;
+		SDE_DEBUG("full frame update\n");
+		roi_list = &empty_roi_list;
 	}
 
 	rc_mask_cfg = RC_STATE(hw_dspp).last_rc_mask_cfg;
@@ -812,6 +813,7 @@ int sde_hw_rc_setup_pu_roi(struct sde_hw_dspp *hw_dspp, void *cfg)
 	int rc = 0;
 	struct sde_hw_cp_cfg *hw_cfg = cfg;
 	struct msm_roi_list *roi_list;
+	struct msm_roi_list empty_roi_list;
 	struct sde_rect rc_roi, merged_roi;
 	struct drm_msm_rc_mask_cfg *rc_mask_cfg;
 	enum rc_param_r param_r = RC_PARAM_R0;
@@ -832,8 +834,8 @@ int sde_hw_rc_setup_pu_roi(struct sde_hw_dspp *hw_dspp, void *cfg)
 
 	roi_list = hw_cfg->payload;
 	if (!roi_list) {
-		SDE_DEBUG("empty list of roi\n");
-		return 0;
+		SDE_DEBUG("full frame update\n");
+		roi_list = &empty_roi_list;
 	}
 
 	rc_mask_cfg = RC_STATE(hw_dspp).last_rc_mask_cfg;
@@ -867,7 +869,7 @@ int sde_hw_rc_setup_pu_roi(struct sde_hw_dspp *hw_dspp, void *cfg)
 
 	param_a = rc_mask_cfg->cfg_param_03;
 	rc = _sde_hw_rc_program_enable_bits(hw_dspp, rc_mask_cfg,
-			param_a, param_b, merge_mode, &rc_roi);
+			param_a, param_b, param_r, merge_mode, &rc_roi);
 	if (rc) {
 		SDE_ERROR("failed to program enable bits, rc:%d\n", rc);
 		return rc;
@@ -896,8 +898,7 @@ int sde_hw_rc_setup_mask(struct sde_hw_dspp *hw_dspp, void *cfg)
 	}
 
 	if ((hw_cfg->len == 0 && hw_cfg->payload == NULL)) {
-		SDE_DEBUG("rc feature disabled\n");
-
+		SDE_DEBUG("RC feature disabled\n");
 		_sde_hw_rc_reg_write(hw_dspp, SDE_HW_RC_REG1, 0);
 
 		memset(RC_STATE(hw_dspp).last_rc_mask_cfg, 0,
@@ -969,7 +970,7 @@ int sde_hw_rc_setup_data_dma(struct sde_hw_dspp *hw_dspp, void *cfg)
 	}
 
 	if ((hw_cfg->len == 0 && hw_cfg->payload == NULL)) {
-		SDE_DEBUG("rc feature disabled, skip data programming\n");
+		SDE_DEBUG("RC feature disabled, skip data programming\n");
 		return 0;
 	}
 
