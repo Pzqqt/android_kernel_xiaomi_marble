@@ -94,7 +94,7 @@ dp_rx_mon_handle_status_buf_done(struct dp_pdev *pdev,
 	rx_buf_cookie = HAL_RX_BUF_COOKIE_GET(ring_entry);
 	rx_desc = dp_rx_cookie_2_va_mon_status(soc, rx_buf_cookie);
 
-	qdf_assert(rx_desc);
+	qdf_assert_always(rx_desc);
 
 	status_nbuf = rx_desc->nbuf;
 
@@ -1977,7 +1977,7 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 			rx_desc = dp_rx_cookie_2_va_mon_status(soc,
 				rx_buf_cookie);
 
-			qdf_assert(rx_desc);
+			qdf_assert_always(rx_desc);
 
 			status_nbuf = rx_desc->nbuf;
 
@@ -2500,7 +2500,7 @@ dp_mon_status_srng_drop_for_mac(struct dp_pdev *pdev, uint32_t mac_id,
 			rx_desc = dp_rx_cookie_2_va_mon_status(soc,
 							       rx_buf_cookie);
 
-			qdf_assert(rx_desc);
+			qdf_assert_always(rx_desc);
 
 			status_nbuf = rx_desc->nbuf;
 
