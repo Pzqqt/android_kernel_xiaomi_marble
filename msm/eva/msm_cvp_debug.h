@@ -64,6 +64,7 @@ extern int msm_cvp_clock_voting;
 extern bool msm_cvp_syscache_disable;
 extern bool msm_cvp_dsp_disable;
 extern bool msm_cvp_mmrm_enabled;
+extern bool msm_cvp_dcvs_disable;
 
 #define dprintk(__level, __fmt, arg...)	\
 	do { \

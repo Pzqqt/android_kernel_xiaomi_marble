@@ -61,6 +61,14 @@ enum cvp_core_state {
  * Do not change the enum values unless
  * you know what you are doing
  */
+
+enum hw_block {
+	CVP_FDU = 0x0001,
+	CVP_ICA,
+	CVP_MPU,
+	CVP_OD
+};
+
 enum instance_state {
 	MSM_CVP_CORE_UNINIT_DONE = 0x0001,
 	MSM_CVP_CORE_INIT,
@@ -295,6 +303,7 @@ struct msm_cvp_inst {
 	struct msm_cvp_core *core;
 	enum session_type session_type;
 	u32 process_id;
+	struct task_struct *task;
 	struct cvp_session_queue session_queue;
 	struct cvp_session_queue session_queue_fence;
 	struct cvp_session_event event_handler;
