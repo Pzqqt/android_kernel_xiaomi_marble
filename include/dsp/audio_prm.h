@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -207,6 +207,64 @@ typedef struct prm_cmd_request_hw_core_t
 #define PARAM_ID_RSC_HW_CORE 0x08001032
 
 #define HW_RSC_ID_AUDIO_HW_CLK 0x0800102C
+
+#define MAX_EARPA_REG 2
+#define MAX_EARPA_CDC_DUTY_CYC_OPERATION 2
+
+typedef struct audio_hw_codec_op_info_t {
+	uint32_t hw_codec_op_id;
+	uint32_t hw_codec_op_value;
+} audio_hw_codec_op_info_t;
+
+typedef struct audio_hw_codec_reg_op_info_t {
+	uint32_t hw_codec_reg_id;
+	uint32_t hw_codec_reg_addr_msw;
+	uint32_t hw_codec_reg_addr_lsw;
+	uint32_t num_ops;
+	audio_hw_codec_op_info_t hw_codec_op[MAX_EARPA_REG];
+} audio_hw_codec_reg_op_info_t;
+
+typedef struct audio_hw_codec_reg_info_t {
+	uint32_t num_reg_info_t;
+	audio_hw_codec_reg_op_info_t hw_codec_reg[MAX_EARPA_REG];
+} audio_hw_codec_reg_info_t;
+
+typedef struct prm_cmd_request_cdc_duty_cycling_t {
+	apm_cmd_header_t payload_header;
+	apm_module_param_data_t module_payload_0;
+	audio_hw_codec_reg_info_t   hw_codec_reg_info_t;
+} prm_cmd_request_cdc_duty_cycling_t;
+
+/* earpa_register config */
+#define DIG_MUTE_ENABLE 0x34
+#define DIG_MUTE_DISABLE 0x24
+
+struct lpass_swr_ear_pa_dep_cfg_t {
+	uint32_t ear_pa_enable_pkd_reg_addr;
+	uint32_t ear_pa_disable_pkd_reg_addr;
+} __packed;
+
+struct lpass_swr_ear_pa_reg_cfg_t {
+	uint32_t lpass_cdc_rx0_rx_path_ctl_phy_addr;
+	uint32_t lpass_wr_fifo_reg_phy_addr;
+} __packed;
+
+struct prm_earpa_hw_intf_config {
+	struct lpass_swr_ear_pa_reg_cfg_t ear_pa_hw_reg_cfg;
+	struct lpass_swr_ear_pa_dep_cfg_t ear_pa_pkd_cfg;
+	uint32_t ear_pa_pkd_reg_addr;
+	const char  *backend_used;
+} __packed;
+
+#define PARAM_ID_RSC_HW_CODEC_REG_INFO 0x0800131B
+
+#define HW_CODEC_DIG_REG_ID_MUTE_CTRL 0x1
+#define HW_CODEC_OP_DIG_MUTE_ENABLE 0x1
+#define HW_CODEC_OP_DIG_MUTE_DISABLE 0x2
+
+#define HW_CODEC_ANALOG_REG_ID_CMD_FIFO_WRITE 0x2
+#define HW_CODEC_OP_ANA_PGA_ENABLE 0x3
+#define HW_CODEC_OP_ANA_PGA_DISABLE 0x4
 
 /* Supported OSR clock values */
 #define OSR_CLOCK_12_P288_MHZ	0xBB8000
@@ -522,5 +580,7 @@ typedef struct prm_cmd_request_hw_core_t
 
 int audio_prm_set_lpass_clk_cfg(struct clk_cfg *cfg, uint8_t enable);
 int audio_prm_set_lpass_hw_core_req(struct clk_cfg *cfg, uint32_t hw_core_id, uint8_t enable);
+int audio_prm_set_cdc_earpa_duty_cycling_req(struct prm_earpa_hw_intf_config *earpa_config,
+									uint32_t enable);
 
 #endif
