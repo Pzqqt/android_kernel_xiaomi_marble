@@ -1426,6 +1426,8 @@ struct dp_swlm_stats {
  *			      ending the coalescing.
  * @tcl.coalesce_end_time: End timestamp for current coalescing session
  * @tcl.bytes_coalesced: Num bytes coalesced in the current session
+ * @tcl.tx_pkt_thresh: Threshold for TX packet count, to begin TCL register
+ *		       write coalescing
  */
 struct dp_swlm_params {
 	struct {
@@ -1439,6 +1441,7 @@ struct dp_swlm_params {
 		uint32_t tx_thresh_multiplier;
 		uint64_t coalesce_end_time;
 		uint32_t bytes_coalesced;
+		uint32_t tx_pkt_thresh;
 	} tcl;
 };
 
