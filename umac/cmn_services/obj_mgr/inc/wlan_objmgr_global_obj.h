@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -537,5 +537,21 @@ typedef void (*wlan_objmgr_psoc_handler)(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS wlan_objmgr_iterate_psoc_list(
 		wlan_objmgr_psoc_handler handler,
 		void *arg, wlan_objmgr_ref_dbgid dbg_id);
+
+/**
+ * wlan_objmgr_get_mlo_ctx() - Get MLO context from global umac object
+ *
+ * This API is used to get MLO context object from the global umac object
+ *
+ * Return: Pointer to the mlo context
+ */
+#ifdef WLAN_FEATURE_11BE_MLO
+struct mlo_mgr_context *wlan_objmgr_get_mlo_ctx(void);
+#else
+static inline struct mlo_mgr_context *wlan_objmgr_get_mlo_ctx(void)
+{
+	return NULL;
+}
+#endif /* WLAN_FEATURE_11BE_MLO */
 
 #endif /* _WLAN_OBJMGR_GLOBAL_OBJ_H_*/

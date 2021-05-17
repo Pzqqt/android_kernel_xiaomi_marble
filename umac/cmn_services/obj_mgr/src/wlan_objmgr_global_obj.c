@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -863,3 +863,9 @@ QDF_STATUS wlan_objmgr_iterate_psoc_list(
 
 qdf_export_symbol(wlan_objmgr_iterate_psoc_list);
 
+#ifdef WLAN_FEATURE_11BE_MLO
+struct mlo_mgr_context *wlan_objmgr_get_mlo_ctx(void)
+{
+	return g_umac_glb_obj->mlo_ctx;
+}
+#endif
