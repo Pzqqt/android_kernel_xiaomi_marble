@@ -550,7 +550,7 @@ populate_dot11f_country(struct mac_context *mac,
 	uint8_t code[REG_ALPHA2_LEN + 1];
 	uint8_t cur_triplet_num_chans = 0;
 	int chan_enum, chan_num, chan_spacing = 0;
-	struct regulatory_channel *cur_chan_list;
+	struct regulatory_channel *sec_cur_chan_list;
 	struct regulatory_channel *cur_chan, *start, *prev;
 	enum reg_wifi_band rf_band = REG_BAND_UNKNOWN;
 	uint8_t buffer_triplets[81][3];
@@ -558,8 +558,9 @@ populate_dot11f_country(struct mac_context *mac,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	bool six_gig_started = false;
 
-	cur_chan_list = qdf_mem_malloc(NUM_CHANNELS * sizeof(*cur_chan_list));
-	if (!cur_chan_list)
+	sec_cur_chan_list = qdf_mem_malloc(NUM_CHANNELS *
+					   sizeof(*sec_cur_chan_list));
+	if (!sec_cur_chan_list)
 		return QDF_STATUS_E_NOMEM;
 
 	lim_get_rf_band_new(mac, &rf_band, pe_session);
@@ -577,8 +578,9 @@ populate_dot11f_country(struct mac_context *mac,
 		goto out;
 	}
 
-	chan_num = wlan_reg_get_band_channel_list(mac->pdev, BIT(rf_band),
-						  cur_chan_list);
+	chan_num = wlan_reg_get_secondary_band_channel_list(mac->pdev,
+							    BIT(rf_band),
+							    sec_cur_chan_list);
 	if (!chan_num) {
 		pe_err("failed to get cur_chan list");
 		status = QDF_STATUS_E_FAILURE;
@@ -594,7 +596,7 @@ populate_dot11f_country(struct mac_context *mac,
 	start = NULL;
 	prev = NULL;
 	for (chan_enum = 0; chan_enum < chan_num; chan_enum++) {
-		cur_chan = &cur_chan_list[chan_enum];
+		cur_chan = &sec_cur_chan_list[chan_enum];
 
 		if (cur_chan->chan_flags & REGULATORY_CHAN_DISABLED)
 			continue;
@@ -679,7 +681,7 @@ populate_dot11f_country(struct mac_context *mac,
 	ctry_ie->present = 1;
 
 out:
-	qdf_mem_free(cur_chan_list);
+	qdf_mem_free(sec_cur_chan_list);
 	return status;
 } /* End populate_dot11f_country. */
 

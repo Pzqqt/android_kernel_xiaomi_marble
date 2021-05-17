@@ -4740,7 +4740,7 @@ void lim_calculate_tpc(struct mac_context *mac,
 	uint8_t tpe_power;
 	bool skip_tpe = false;
 
-	if (!session->lim_join_req) {
+	if (LIM_IS_STA_ROLE(session) && !session->lim_join_req) {
 		pe_err("Join Request is NULL");
 		return;
 	}
