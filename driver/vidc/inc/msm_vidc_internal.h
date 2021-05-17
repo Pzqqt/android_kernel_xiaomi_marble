@@ -828,7 +828,7 @@ struct msm_vidc_timestamp {
 struct msm_vidc_timestamps {
 	struct list_head       list;
 	u32                    count;
-	u32                    rank;
+	u64                    rank;
 };
 
 struct msm_vidc_pool {

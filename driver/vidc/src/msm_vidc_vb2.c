@@ -266,22 +266,23 @@ void msm_vidc_stop_streaming(struct vb2_queue *q)
 			rc = msm_vdec_streamoff_input(inst);
 		else if (is_encode_session(inst))
 			rc = msm_venc_streamoff_input(inst);
-		else
-			goto error;
 	} else if (q->type == OUTPUT_MPLANE) {
 		if (is_decode_session(inst))
 			rc = msm_vdec_streamoff_output(inst);
 		else if (is_encode_session(inst))
 			rc = msm_venc_streamoff_output(inst);
-		else
-			goto error;
 	} else {
 		i_vpr_e(inst, "%s: invalid type %d\n", q->type);
 		goto error;
 	}
+	if (rc)
+		goto error;
 
-	if (!rc)
-		i_vpr_h(inst, "Streamoff: %d successful\n", q->type);
+	/* Input port streamoff - flush timestamps list*/
+	if (q->type == INPUT_MPLANE)
+		msm_vidc_flush_ts(inst);
+
+	i_vpr_h(inst, "Streamoff: %d successful\n", q->type);
 	return;
 
 error:

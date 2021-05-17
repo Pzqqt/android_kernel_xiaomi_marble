@@ -40,6 +40,8 @@ extern struct msm_vidc_core *g_core;
 #define SSR_ADDR_ID 0xFFFFFFFF00000000
 #define SSR_ADDR_SHIFT 32
 
+#define FPS_WINDOW 10
+
 struct msm_vidc_cap_name {
 	enum msm_vidc_inst_capability_type cap;
 	char *name;
@@ -2017,6 +2019,7 @@ int msm_vidc_flush_ts(struct msm_vidc_inst *inst)
 		msm_vidc_put_ts(inst, ts);
 	}
 	inst->timestamps.count = 0;
+	inst->timestamps.rank = 0;
 
 	return 0;
 }
@@ -2046,7 +2049,7 @@ int msm_vidc_update_timestamp(struct msm_vidc_inst *inst, u64 timestamp)
 	inst->timestamps.count++;
 
 	/* keep sliding window of 10 ts nodes */
-	if (inst->timestamps.count > 10) {
+	if (inst->timestamps.count > FPS_WINDOW) {
 		ts = msm_vidc_get_least_rank_ts(inst);
 		if (!ts) {
 			i_vpr_e(inst, "%s: least rank ts is NULL\n", __func__);
@@ -4547,7 +4550,7 @@ void msm_vidc_destroy_buffers(struct msm_vidc_inst *inst)
 	}
 
 	list_for_each_entry_safe(ts, dummy_ts, &inst->timestamps.list, sort.list) {
-		i_vpr_e(inst, "%s: removing ts: val %lld, rank %%lld\n",
+		i_vpr_e(inst, "%s: removing ts: val %lld, rank %lld\n",
 			__func__, ts->sort.val, ts->rank);
 		list_del(&ts->sort.list);
 		msm_vidc_put_ts(inst, ts);

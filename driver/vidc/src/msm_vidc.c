@@ -799,24 +799,6 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	msm_vidc_update_debug_str(inst);
 
 	i_vpr_h(inst, "Opening video instance: %d\n", session_type);
-
-	inst->response_workq = create_singlethread_workqueue("response_workq");
-	if (!inst->response_workq) {
-		i_vpr_e(inst, "%s: create input_psc_workq failed\n", __func__);
-		goto error;
-	}
-
-	inst->capabilities = kzalloc(
-		sizeof(struct msm_vidc_inst_capability), GFP_KERNEL);
-	if (!inst->capabilities) {
-		i_vpr_e(inst,
-			"%s: inst capability allocation failed\n", __func__);
-		goto error;
-	}
-
-	INIT_DELAYED_WORK(&inst->response_work,
-			handle_session_response_work_handler);
-
 	INIT_LIST_HEAD(&inst->response_works);
 	INIT_LIST_HEAD(&inst->pool.buffers.list);
 	INIT_LIST_HEAD(&inst->pool.mappings.list);
@@ -862,6 +844,21 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	INIT_LIST_HEAD(&inst->enc_input_crs);
 	for (i = 0; i < MAX_SIGNAL; i++)
 		init_completion(&inst->completions[i]);
+
+	inst->response_workq = create_singlethread_workqueue("response_workq");
+	if (!inst->response_workq) {
+		i_vpr_e(inst, "%s: create input_psc_workq failed\n", __func__);
+		goto error;
+	}
+
+	INIT_DELAYED_WORK(&inst->response_work, handle_session_response_work_handler);
+
+	inst->capabilities = kzalloc(sizeof(struct msm_vidc_inst_capability), GFP_KERNEL);
+	if (!inst->capabilities) {
+		i_vpr_e(inst,
+			"%s: inst capability allocation failed\n", __func__);
+		goto error;
+	}
 
 	if (is_decode_session(inst))
 		rc = msm_vdec_inst_init(inst);

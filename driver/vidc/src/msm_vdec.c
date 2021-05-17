@@ -1365,8 +1365,6 @@ int msm_vdec_streamoff_input(struct msm_vidc_inst *inst)
 	if (rc)
 		return rc;
 
-	msm_vidc_flush_ts(inst);
-
 	return 0;
 }
 

@@ -1281,7 +1281,7 @@ static int handle_session_property(struct msm_vidc_inst *inst,
 				__func__, pkt->port, pkt->type);
 			break;
 		}
-		i_vpr_e(inst, "received prop_no_output attached input\n");
+		i_vpr_h(inst, "received no_output property\n");
 		inst->hfi_frame_info.no_output = 1;
 		break;
 	case HFI_PROP_WORST_COMPRESSION_RATIO:
