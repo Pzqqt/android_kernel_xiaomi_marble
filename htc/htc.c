@@ -154,8 +154,11 @@ static void htc_cleanup(HTC_TARGET *target)
 	HTC_PACKET_QUEUE *pkt_queue;
 	qdf_nbuf_t netbuf;
 
-	while (htc_dec_return_runtime_cnt((void *)target) >= 0)
+	while (htc_dec_return_runtime_cnt((void *)target) >= 0) {
 		hif_pm_runtime_put(target->hif_dev, RTPM_ID_HTC);
+		hif_pm_runtime_update_stats(target->hif_dev, RTPM_ID_HTC,
+					    HIF_PM_HTC_STATS_PUT_HTC_CLEANUP);
+	}
 
 	if (target->hif_dev) {
 		hif_detach_htc(target->hif_dev);
@@ -1181,8 +1184,9 @@ int htc_pm_runtime_put(HTC_HANDLE htc_handle)
 {
 	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(htc_handle);
 
-	return hif_pm_runtime_put(target->hif_dev,
-				  RTPM_ID_HTC);
+	hif_pm_runtime_update_stats(target->hif_dev, RTPM_ID_HTC,
+				    HIF_PM_HTC_STATS_PUT_HTT_RESPONSE);
+	return hif_pm_runtime_put(target->hif_dev, RTPM_ID_HTC);
 }
 #endif
 

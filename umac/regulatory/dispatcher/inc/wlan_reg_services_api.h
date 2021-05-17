@@ -833,6 +833,14 @@ qdf_freq_t wlan_reg_legacy_chan_to_freq(struct wlan_objmgr_pdev *pdev,
  */
 bool wlan_reg_is_us(uint8_t *country);
 
+/**
+ * wlan_reg_is_etsi() - reg is a country in EU
+ * @country: The country information
+ *
+ * Return: true or false
+ */
+bool wlan_reg_is_etsi(uint8_t *country);
+
 #ifdef CONFIG_CHAN_NUM_API
 /**
  * wlan_reg_chan_is_49ghz() - Check if the input channel number is 4.9GHz
@@ -1651,6 +1659,19 @@ wlan_reg_get_client_power_for_6ghz_ap(struct wlan_objmgr_pdev *pdev,
  */
 enum reg_6g_ap_type
 wlan_reg_decide_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * wlan_reg_set_ap_pwr_and_update_chan_list() - Set the AP power mode and
+ * recompute the current channel list
+ *
+ * @pdev: pdev ptr
+ * @ap_pwr_type: the AP power type to update to
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_reg_set_ap_pwr_and_update_chan_list(struct wlan_objmgr_pdev *pdev,
+					 enum reg_6g_ap_type ap_pwr_type);
 #else
 static inline QDF_STATUS
 wlan_reg_get_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
@@ -1729,11 +1750,17 @@ wlan_reg_get_client_power_for_6ghz_ap(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_E_NOSUPPORT;
 }
 
-static inline
-enum reg_6g_ap_type
+static inline enum reg_6g_ap_type
 wlan_reg_decide_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev)
 {
 	return REG_INDOOR_AP;
+}
+
+static inline QDF_STATUS
+wlan_reg_set_ap_pwr_and_update_chan_list(struct wlan_objmgr_pdev *pdev,
+					 enum reg_6g_ap_type ap_pwr_type)
+{
+	return QDF_STATUS_E_NOSUPPORT;
 }
 #endif
 

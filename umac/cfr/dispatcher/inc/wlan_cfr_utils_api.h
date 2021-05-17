@@ -247,7 +247,10 @@ struct cfr_metadata_version_5 {
 
 #endif
 
-struct csi_cfr_header {
+#define  CFR_META_DATA_LEN \
+	(sizeof(struct csi_cfr_header) - sizeof(struct cfr_header_cmn))
+
+struct cfr_header_cmn {
 	u_int32_t   start_magic_num;
 	u_int32_t   vendorid;
 	u_int8_t    cfr_metadata_version;
@@ -255,7 +258,10 @@ struct csi_cfr_header {
 	u_int8_t    chip_type;
 	u_int8_t    pltform_type;
 	u_int32_t   cfr_metadata_len;
+} __attribute__ ((__packed__));
 
+struct csi_cfr_header {
+	struct cfr_header_cmn cmn;
 	union {
 		struct cfr_metadata_version_1 meta_v1;
 		struct cfr_metadata_version_2 meta_v2;

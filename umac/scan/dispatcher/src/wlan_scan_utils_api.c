@@ -26,6 +26,9 @@
 #include <../../core/src/wlan_scan_cache_db.h>
 #include <../../core/src/wlan_scan_main.h>
 #include <wlan_reg_services_api.h>
+#if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
+#include <wlan_mlme_api.h>
+#endif
 
 #define MAX_IE_LEN 1024
 #define SHORT_SSID_LEN 4
@@ -1875,6 +1878,37 @@ static bool util_is_noninh_ie(uint8_t elem_id,
 
 	return false;
 }
+
+/*
+ * util_scan_find_noninheritance_ie() - find noninheritance information element
+ * This block of code is to identify if there is any non-inheritance element
+ * present as part of the nontransmitted BSSID profile.
+ * @elem_id: element id
+ * @ies: pointer consisting of IEs
+ * @len: IE length
+ *
+ * Return: NULL if the element ID is not found or if IE pointer is NULL else
+ * pointer to the first byte of the requested element
+ */
+static uint8_t
+*util_scan_find_noninheritance_ie(uint8_t elem_id, uint8_t *ies,
+				  int32_t len)
+{
+	if (!ies)
+		return NULL;
+
+	while (len >= MIN_IE_LEN && len >= ies[TAG_LEN_POS] + MIN_IE_LEN) {
+		if ((ies[ID_POS] == elem_id) &&
+		    (ies[ELEM_ID_EXTN_POS] ==
+		     WLAN_EXTN_ELEMID_NONINHERITANCE)) {
+			return ies;
+		}
+		len -= ies[TAG_LEN_POS] + MIN_IE_LEN;
+		ies += ies[TAG_LEN_POS] + MIN_IE_LEN;
+	}
+
+	return NULL;
+}
 #endif
 
 /*
@@ -1920,11 +1954,10 @@ static void util_gen_new_bssid(uint8_t *bssid, uint8_t max_bssid,
 }
 
 /*
- * util_scan_noninheritance() - This block of code is to identify if
- * there is any non-inheritance element present as part of the nontransmitted
- * BSSID profile. If it is found then Host need not inherit those list of
- * element IDs and list of element ID extensions from the transmitted BSSID
- * profile.
+ * util_parse_noninheritance_list() - This block of code will be executed only
+ * if there is a valid non inheritance IE present in the nontx profile.
+ * Host need not inherit those list of element IDs and list of element ID
+ * extensions from the transmitted BSSID profile.
  * Since non-inheritance element is an element ID extension, it should
  * be part of extension element. So first we need to find if there are
  * any extension element present in the nontransmitted BSSID profile.
@@ -1953,15 +1986,14 @@ static void util_gen_new_bssid(uint8_t *bssid, uint8_t max_bssid,
  * @non_inheritance_ie: Non inheritance IE information
  */
 
-static void util_scan_noninheritance(uint8_t *extn_elem,
-				     uint8_t **elem_list,
-				     uint8_t **extn_elem_list,
-				     struct non_inheritance_ie *ninh)
+static void util_parse_noninheritance_list(uint8_t *extn_elem,
+					   uint8_t **elem_list,
+					   uint8_t **extn_elem_list,
+					   struct non_inheritance_ie *ninh)
 {
 	int8_t extn_rem_len = 0;
 
-	if ((extn_elem[ELEM_ID_EXTN_POS] == WLAN_EXTN_ELEMID_NONINHERITANCE) &&
-	    (extn_elem[ELEM_ID_LIST_LEN_POS] < extn_elem[TAG_LEN_POS])) {
+	if (extn_elem[ELEM_ID_LIST_LEN_POS] < extn_elem[TAG_LEN_POS]) {
 		/*
 		 * extn_rem_len represents the number of bytes after
 		 * the length subfield of list of Element IDs.
@@ -2070,12 +2102,12 @@ static uint32_t util_gen_new_ie(uint8_t *ie, uint32_t ielen,
 		}
 	}
 
-	extn_elem = util_scan_find_ie(WLAN_ELEMID_EXTN_ELEM,
-				      sub_copy, subie_len);
+	extn_elem = util_scan_find_noninheritance_ie(WLAN_ELEMID_EXTN_ELEM,
+						     sub_copy, subie_len);
 
 	if (extn_elem && extn_elem[TAG_LEN_POS]) {
-		util_scan_noninheritance(extn_elem, &elem_list,
-					 &extn_elem_list, &ninh);
+		util_parse_noninheritance_list(extn_elem, &elem_list,
+					       &extn_elem_list, &ninh);
 	}
 
 	/* go through IEs in ie (skip SSID) and subelement,
@@ -2619,7 +2651,7 @@ static QDF_STATUS util_scan_parse_mbssid(struct wlan_objmgr_pdev *pdev,
 						     sizeof(mbssid_info));
 				}
 				qdf_mem_free(new_frame);
-				scm_err("failed to generate a scan entry");
+				scm_err_rl("failed to generate a scan entry");
 				break;
 			}
 			/* scan entry makes its own copy so free the frame*/
@@ -2753,3 +2785,15 @@ bool util_is_scan_completed(struct scan_event *event, bool *success)
 	return false;
 }
 
+#if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
+bool
+util_scan_entry_single_pmk(struct wlan_objmgr_psoc *psoc,
+			   struct scan_cache_entry *scan_entry)
+{
+	if (scan_entry->ie_list.single_pmk &&
+	    wlan_mlme_is_sae_single_pmk_enabled(psoc))
+		return true;
+
+	return false;
+}
+#endif

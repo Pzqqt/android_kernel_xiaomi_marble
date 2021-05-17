@@ -42,6 +42,15 @@ dp_rx_da_learn(struct dp_soc *soc,
 
 void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status);
 #ifdef FEATURE_WDS
+#ifdef FEATURE_MCL_REPEATER
+static inline bool dp_tx_da_search_override(struct dp_vdev *vdev)
+{
+	if (vdev->mec_enabled)
+		return true;
+
+	return false;
+}
+#else
 static inline bool dp_tx_da_search_override(struct dp_vdev *vdev)
 {
 	struct dp_soc *soc = vdev->pdev->soc;
@@ -58,7 +67,8 @@ static inline bool dp_tx_da_search_override(struct dp_vdev *vdev)
 
 	return false;
 }
-#endif
+#endif /* FEATURE_MCL_REPEATER */
+#endif /* FEATURE_WDS */
 #ifdef WDS_VENDOR_EXTENSION
 QDF_STATUS
 dp_txrx_peer_wds_tx_policy_update(struct cdp_soc_t *cdp_soc,  uint8_t vdev_id,

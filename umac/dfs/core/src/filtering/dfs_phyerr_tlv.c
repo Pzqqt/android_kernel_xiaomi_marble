@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -496,63 +496,6 @@ static int dfs_tlv_calc_freq_info(struct wlan_dfs *dfs,
 	/* Return ev_chan_centre in MHz. */
 	return chan_centre;
 }
-#else
-#ifdef CONFIG_CHAN_NUM_API
-static int dfs_tlv_calc_freq_info(struct wlan_dfs *dfs,
-		struct rx_radar_status *rs)
-{
-	uint32_t chan_centre;
-	uint32_t chan_width;
-	int chan_offset;
-
-	/* For now, just handle up to VHT80 correctly. */
-	if (!dfs->dfs_curchan) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs_curchan is null");
-		return 0;
-		/*
-		 * For now, the only 11ac channel with freq1/freq2 setup is
-		 * VHT80. Should have a flag macro to check this!
-		 */
-	} else if (WLAN_IS_CHAN_11AC_VHT80(dfs->dfs_curchan)) {
-		/*
-		 * 11AC, so cfreq1/cfreq2 are setup.
-		 * If it's 80+80 this won't work - need to use seg
-		 * appropriately!
-		 */
-		chan_centre = dfs_mlme_ieee2mhz(dfs->dfs_pdev_obj,
-				dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg1,
-				dfs->dfs_curchan->dfs_ch_flags);
-	} else {
-		/*
-		 * HT20/HT40.
-		 * This is hard-coded - it should be 5 or 10 for half/quarter
-		 * appropriately.
-		 */
-		chan_width = 20;
-
-		/* Grab default channel centre. */
-		chan_centre = dfs_chan2freq(dfs->dfs_curchan);
-
-		/* Calculate offset based on HT40U/HT40D and VHT40U/VHT40D. */
-		if (WLAN_IS_CHAN_11N_HT40PLUS(dfs->dfs_curchan) ||
-			dfs->dfs_curchan->dfs_ch_flags &
-			WLAN_CHAN_VHT40PLUS)
-			chan_offset = chan_width;
-		else if (WLAN_IS_CHAN_11N_HT40MINUS(dfs->dfs_curchan) ||
-			dfs->dfs_curchan->dfs_ch_flags &
-			WLAN_CHAN_VHT40MINUS)
-			chan_offset = -chan_width;
-		else
-			chan_offset = 0;
-
-		/* Calculate new _real_ channel centre. */
-		chan_centre += (chan_offset / 2);
-	}
-
-	/* Return ev_chan_centre in MHz. */
-	return chan_centre;
-}
-#endif
 #endif
 
 

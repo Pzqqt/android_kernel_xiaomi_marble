@@ -400,7 +400,10 @@ void dfs_print_nol(struct wlan_dfs *dfs)
 	while (nol) {
 		diff_ms = qdf_do_div(qdf_get_monotonic_boottime() -
 				     nol->nol_start_us, 1000);
-		diff_ms = (nol->nol_timeout_ms - diff_ms);
+		if (nol->nol_timeout_ms > diff_ms)
+			diff_ms = (nol->nol_timeout_ms - diff_ms);
+		else
+			diff_ms = 0;
 		remaining_sec = diff_ms / 1000; /* Convert to seconds */
 		dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS,
 			"nol:%d channel=%d MHz width=%d MHz time left=%u seconds nol start_us=%llu",
@@ -737,36 +740,6 @@ void dfs_nol_timer_cleanup(struct wlan_dfs *dfs)
 		}
 	}
 }
-#else
-#ifdef CONFIG_CHAN_NUM_API
-void dfs_nol_timer_cleanup(struct wlan_dfs *dfs)
-{
-	struct dfs_nolelem *nol;
-	uint8_t nol_chan;
-
-	while (true) {
-		WLAN_DFSNOL_LOCK(dfs);
-
-		nol = dfs->dfs_nol;
-		if (nol) {
-			dfs->dfs_nol = nol->nol_next;
-			dfs->dfs_nol_count--;
-			nol_chan = utils_dfs_freq_to_chan(nol->nol_freq);
-			WLAN_DFSNOL_UNLOCK(dfs);
-			utils_dfs_reg_update_nol_ch(dfs->dfs_pdev_obj,
-						    &nol_chan,
-						    1,
-						    DFS_NOL_RESET);
-
-			qdf_timer_free(&nol->nol_timer);
-			qdf_mem_free(nol);
-		} else {
-			WLAN_DFSNOL_UNLOCK(dfs);
-			break;
-		}
-	}
-}
-#endif
 #endif
 
 void dfs_nol_workqueue_cleanup(struct wlan_dfs *dfs)
@@ -948,37 +921,4 @@ void dfs_remove_spoof_channel_from_nol(struct wlan_dfs *dfs)
 	utils_dfs_reg_update_nol_chan_for_freq(dfs->dfs_pdev_obj,
 					     freq_list, nchans, DFS_NOL_RESET);
 }
-#else
-#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST) && \
-	defined(CONFIG_CHAN_NUM_API)
-void dfs_remove_spoof_channel_from_nol(struct wlan_dfs *dfs)
-{
-	struct dfs_nolelem *nol;
-	uint8_t channels[NUM_CHANNELS_160MHZ];
-	int i, nchans = 0;
-
-	nchans = dfs_get_bonding_channels(dfs,
-					  &dfs->dfs_radar_found_chan,
-					  SEG_ID_PRIMARY,
-					  DETECTOR_ID_0,
-					  channels);
-
-	WLAN_DFSNOL_LOCK(dfs);
-	for (i = 0; i < nchans && i < NUM_CHANNELS_160MHZ; i++) {
-		nol = dfs->dfs_nol;
-		while (nol) {
-			if (nol->nol_freq == (uint16_t)utils_dfs_chan_to_freq(
-				    channels[i])) {
-				OS_SET_TIMER(&nol->nol_timer, 0);
-				break;
-			}
-			nol = nol->nol_next;
-		}
-	}
-	WLAN_DFSNOL_UNLOCK(dfs);
-
-	utils_dfs_reg_update_nol_ch(dfs->dfs_pdev_obj,
-				    channels, nchans, DFS_NOL_RESET);
-}
-#endif
 #endif

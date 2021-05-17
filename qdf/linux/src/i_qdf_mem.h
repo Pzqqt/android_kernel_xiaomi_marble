@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -494,6 +494,36 @@ void *__qdf_mem_malloc(qdf_size_t size, const char *func, uint32_t line);
  * Return: None
  */
 void __qdf_mem_free(void *ptr);
+
+#ifdef QCA_WIFI_MODULE_PARAMS_FROM_INI
+/**
+ * __qdf_untracked_mem_malloc() - allocates non-QDF memory
+ * @size: Number of bytes of memory to allocate.
+ *
+ * @func: Function name of the call site
+ * @line: line number of the call site
+ *
+ * This function will dynamically allocate the specified number of bytes of
+ * memory. Memory allocated is not tracked by qdf memory debug framework.
+ *
+ * Return:
+ * Upon successful allocation, returns a non-NULL pointer to the allocated
+ * memory.  If this function is unable to allocate the amount of memory
+ * specified (for any reason) it returns NULL.
+ */
+void *__qdf_untracked_mem_malloc(qdf_size_t size, const char *func,
+				 uint32_t line);
+
+/**
+ * __qdf_untracked_mem_free() - free non-QDF memory
+ * @ptr: Pointer to the starting address of the memory to be freed.
+ *
+ * This function will free the memory pointed to by 'ptr'.
+ * Return: None
+ */
+
+void __qdf_untracked_mem_free(void *ptr);
+#endif
 
 /**
  * __qdf_mem_free_consistent() - free consistent qdf memory

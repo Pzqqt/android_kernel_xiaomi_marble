@@ -119,6 +119,8 @@
 
 #define REO_CMD_EVENT_HIST_MAX 64
 
+#define DP_MAX_SRNGS 64
+
 /* 2G PHYB */
 #define PHYB_2G_LMAC_ID 2
 #define PHYB_2G_TARGET_PDEV_ID 2
@@ -377,12 +379,15 @@ struct dp_rx_nbuf_frag_info {
  * @DP_RX_RING_HIST_TYPE: Datapath rx ring history
  * @DP_RX_ERR_RING_HIST_TYPE: Datapath rx error ring history
  * @DP_RX_REINJECT_RING_HIST_TYPE: Datapath reinject ring history
+ * @DP_RX_REFILL_RING_HIST_TYPE: Datapath rx refill ring history
  */
 enum dp_ctxt_type {
 	DP_PDEV_TYPE,
 	DP_RX_RING_HIST_TYPE,
 	DP_RX_ERR_RING_HIST_TYPE,
 	DP_RX_REINJECT_RING_HIST_TYPE,
+	DP_FISA_RX_FT_TYPE,
+	DP_RX_REFILL_RING_HIST_TYPE,
 };
 
 /**
@@ -820,6 +825,9 @@ struct reo_desc_list_node {
 	struct dp_rx_tid rx_tid;
 	bool resend_update_reo_cmd;
 	uint32_t pending_ext_desc_size;
+#ifdef REO_QDESC_HISTORY
+	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
+#endif
 };
 
 #ifdef WLAN_FEATURE_DP_EVENT_HISTORY
@@ -1007,6 +1015,10 @@ struct dp_soc_stats {
 			uint32_t reo_err_oor_eapol_drop;
 			/* Non Eapol packet drop count due to peer not authorized  */
 			uint32_t peer_unauth_rx_pkt_drop;
+			/* count of start sequence (ssn) updates */
+			uint32_t ssn_update_count;
+			/* count of bar handling fail */
+			uint32_t bar_handle_fail_count;
 		} err;
 
 		/* packet count per core - per ring */
@@ -1153,6 +1165,7 @@ struct rx_refill_buff_pool {
 	bool is_initialized;
 };
 
+#ifdef WLAN_FEATURE_DP_RX_RING_HISTORY
 /*
  * The logic for get current index of these history is dependent on this
  * value being power of 2.
@@ -1160,6 +1173,7 @@ struct rx_refill_buff_pool {
 #define DP_RX_HIST_MAX 2048
 #define DP_RX_ERR_HIST_MAX 2048
 #define DP_RX_REINJECT_HIST_MAX 1024
+#define DP_RX_REFILL_HIST_MAX 2048
 
 QDF_COMPILE_TIME_ASSERT(rx_history_size,
 			(DP_RX_HIST_MAX &
@@ -1170,6 +1184,10 @@ QDF_COMPILE_TIME_ASSERT(rx_err_history_size,
 QDF_COMPILE_TIME_ASSERT(rx_reinject_history_size,
 			(DP_RX_REINJECT_HIST_MAX &
 			 (DP_RX_REINJECT_HIST_MAX - 1)) == 0);
+QDF_COMPILE_TIME_ASSERT(rx_refill_history_size,
+			(DP_RX_REFILL_HIST_MAX &
+			(DP_RX_REFILL_HIST_MAX - 1)) == 0);
+
 
 /**
  * struct dp_buf_info_record - ring buffer info
@@ -1178,6 +1196,22 @@ QDF_COMPILE_TIME_ASSERT(rx_reinject_history_size,
  */
 struct dp_buf_info_record {
 	struct hal_buf_info hbi;
+	uint64_t timestamp;
+};
+
+/**
+ * struct dp_refill_info_record - ring refill buffer info
+ * @hp: HP value after refill
+ * @tp: cached tail value during refill
+ * @num_req: number of buffers requested to refill
+ * @num_refill: number of buffers refilled to ring
+ * @timestamp: timestamp when this entry was recorded
+ */
+struct dp_refill_info_record {
+	uint32_t hp;
+	uint32_t tp;
+	uint32_t num_req;
+	uint32_t num_refill;
 	uint64_t timestamp;
 };
 
@@ -1207,6 +1241,17 @@ struct dp_rx_reinject_history {
 	qdf_atomic_t index;
 	struct dp_buf_info_record entry[DP_RX_REINJECT_HIST_MAX];
 };
+
+/* struct dp_rx_refill_history - rx buf refill hisotry
+ * @index: Index where the last entry is written
+ * @entry: history entries
+ */
+struct dp_rx_refill_history {
+	qdf_atomic_t index;
+	struct dp_refill_info_record entry[DP_RX_REFILL_HIST_MAX];
+};
+
+#endif
 
 /* structure to record recent operation related variable */
 struct dp_last_op_info {
@@ -1335,6 +1380,29 @@ struct dp_swlm {
 		is_init:1;
 	struct dp_swlm_stats stats;
 	struct dp_swlm_params params;
+};
+#endif
+
+#ifdef IPA_OFFLOAD
+/* IPA uC datapath offload Wlan Tx resources */
+struct ipa_dp_tx_rsc {
+	/* Resource info to be passed to IPA */
+	qdf_dma_addr_t ipa_tcl_ring_base_paddr;
+	void *ipa_tcl_ring_base_vaddr;
+	uint32_t ipa_tcl_ring_size;
+	qdf_dma_addr_t ipa_tcl_hp_paddr;
+	uint32_t alloc_tx_buf_cnt;
+
+	qdf_dma_addr_t ipa_wbm_ring_base_paddr;
+	void *ipa_wbm_ring_base_vaddr;
+	uint32_t ipa_wbm_ring_size;
+	qdf_dma_addr_t ipa_wbm_tp_paddr;
+	/* WBM2SW HP shadow paddr */
+	qdf_dma_addr_t ipa_wbm_hp_shadow_paddr;
+
+	/* TX buffers populated into the WBM ring */
+	void **tx_buf_pool_vaddr_unaligned;
+	qdf_dma_addr_t *tx_buf_pool_paddr_unaligned;
 };
 #endif
 
@@ -1584,9 +1652,13 @@ struct dp_soc {
 		unsigned idx_bits;
 		TAILQ_HEAD(, dp_ast_entry) * bins;
 	} ast_hash;
+
+#ifdef WLAN_FEATURE_DP_RX_RING_HISTORY
 	struct dp_rx_history *rx_ring_history[MAX_REO_DEST_RINGS];
+	struct dp_rx_refill_history *rx_refill_ring_history[MAX_PDEV_CNT];
 	struct dp_rx_err_history *rx_err_ring_history;
 	struct dp_rx_reinject_history *rx_reinject_ring_history;
+#endif
 
 	qdf_spinlock_t ast_lock;
 	/*Timer for AST entry ageout maintainance */
@@ -1614,26 +1686,11 @@ struct dp_soc {
 
 	void *external_txrx_handle; /* External data path handle */
 #ifdef IPA_OFFLOAD
-	/* IPA uC datapath offload Wlan Tx resources */
-	struct {
-		/* Resource info to be passed to IPA */
-		qdf_dma_addr_t ipa_tcl_ring_base_paddr;
-		void *ipa_tcl_ring_base_vaddr;
-		uint32_t ipa_tcl_ring_size;
-		qdf_dma_addr_t ipa_tcl_hp_paddr;
-		uint32_t alloc_tx_buf_cnt;
-
-		qdf_dma_addr_t ipa_wbm_ring_base_paddr;
-		void *ipa_wbm_ring_base_vaddr;
-		uint32_t ipa_wbm_ring_size;
-		qdf_dma_addr_t ipa_wbm_tp_paddr;
-		/* WBM2SW HP shadow paddr */
-		qdf_dma_addr_t ipa_wbm_hp_shadow_paddr;
-
-		/* TX buffers populated into the WBM ring */
-		void **tx_buf_pool_vaddr_unaligned;
-		qdf_dma_addr_t *tx_buf_pool_paddr_unaligned;
-	} ipa_uc_tx_rsc;
+	struct ipa_dp_tx_rsc ipa_uc_tx_rsc;
+#ifdef IPA_WDI3_TX_TWO_PIPES
+	/* Resources for the alternative IPA TX pipe */
+	struct ipa_dp_tx_rsc ipa_uc_tx_rsc_alt;
+#endif
 
 	/* IPA uC datapath offload Wlan Rx resources */
 	struct {
@@ -1799,6 +1856,16 @@ struct dp_ipa_resources {
 	qdf_dma_addr_t rx_ready_doorbell_paddr;
 
 	bool is_db_ddr_mapped;
+
+#ifdef IPA_WDI3_TX_TWO_PIPES
+	qdf_shared_mem_t tx_alt_ring;
+	uint32_t tx_alt_ring_num_alloc_buffer;
+	qdf_shared_mem_t tx_alt_comp_ring;
+
+	/* IPA UC doorbell registers paddr */
+	qdf_dma_addr_t tx_alt_comp_doorbell_paddr;
+	uint32_t *tx_alt_comp_doorbell_vaddr;
+#endif
 };
 #endif
 
@@ -2011,6 +2078,22 @@ struct pdev_htt_stats_dbgfs_cfg {
 	void (*htt_stats_dbgfs_msg_process)(void *data, A_INT32 len);
 };
 #endif /* HTT_STATS_DEBUGFS_SUPPORT */
+
+struct dp_srng_ring_state {
+	enum hal_ring_type ring_type;
+	uint32_t sw_head;
+	uint32_t sw_tail;
+	uint32_t hw_head;
+	uint32_t hw_tail;
+
+};
+
+struct dp_soc_srngs_state {
+	uint32_t seq_num;
+	uint32_t max_ring_id;
+	struct dp_srng_ring_state ring_state[DP_MAX_SRNGS];
+	TAILQ_ENTRY(dp_soc_srngs_state) list_elem;
+};
 
 /* PDEV level structure for data path */
 struct dp_pdev {
@@ -2402,6 +2485,14 @@ struct dp_pdev {
 #endif
 	/* Flag to inidicate monitor rings are initialized */
 	uint8_t pdev_mon_init;
+	struct {
+		qdf_work_t work;
+		qdf_workqueue_t *work_queue;
+		uint32_t seq_num;
+		qdf_spinlock_t list_lock;
+
+		TAILQ_HEAD(, dp_soc_srngs_state) list;
+	} bkp_stats;
 };
 
 struct dp_peer;

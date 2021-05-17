@@ -1046,6 +1046,7 @@ enum cdp_peer_param_type {
  * @CDP_MONITOR_FREQUENCY: monitor frequency
  * @CDP_CONFIG_BSS_COLOR: configure bss color
  * @CDP_SET_ATF_STATS_ENABLE: set ATF stats flag
+ * @CDP_CONFIG_SPECIAL_VAP: Configure Special vap
  */
 enum cdp_pdev_param_type {
 	CDP_CONFIG_DEBUG_SNIFFER,
@@ -1076,6 +1077,7 @@ enum cdp_pdev_param_type {
 	CDP_MONITOR_FREQUENCY,
 	CDP_CONFIG_BSS_COLOR,
 	CDP_SET_ATF_STATS_ENABLE,
+	CDP_CONFIG_SPECIAL_VAP,
 };
 
 /*
@@ -1137,6 +1139,7 @@ enum cdp_pdev_param_type {
  * @cdp_pdev_param_fltr_none: filter no data
  * @cdp_pdev_param_monitor_chan: monitor channel
  * @cdp_pdev_param_atf_stats_enable: ATF stats enable
+ * @cdp_pdev_param_config_special_vap: Configure Special vap
  *
  * @cdp_psoc_param_en_rate_stats: set rate stats enable/disable
  * @cdp_psoc_param_en_nss_cfg: set nss cfg
@@ -1207,6 +1210,7 @@ typedef union cdp_config_param_t {
 	uint32_t cdp_pdev_param_en_perpkt_txstats;
 	uint32_t cdp_pdev_param_tx_pending;
 	bool cdp_pdev_param_atf_stats_enable;
+	bool cdp_pdev_param_config_special_vap;
 
 	/* psoc params */
 	bool cdp_psoc_param_en_rate_stats;

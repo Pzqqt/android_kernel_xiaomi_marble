@@ -72,7 +72,11 @@
  */
 #define CPU_WARM_RESET_WAR
 #define WLAN_CFG_MAX_PCIE_GROUPS 2
+#ifdef QCA_WIFI_QCN9224
+#define WLAN_CFG_MAX_CE_COUNT 16
+#else
 #define WLAN_CFG_MAX_CE_COUNT 12
+#endif
 
 const char *dp_irqname[WLAN_CFG_MAX_PCIE_GROUPS][WLAN_CFG_INT_NUM_CONTEXTS] = {
 {
@@ -121,6 +125,12 @@ const char *ce_irqname[WLAN_CFG_MAX_PCIE_GROUPS][WLAN_CFG_MAX_CE_COUNT] = {
 "pci0_wlan_ce_9",
 "pci0_wlan_ce_10",
 "pci0_wlan_ce_11",
+#ifdef QCA_WIFI_QCN9224
+"pci0_wlan_ce_12",
+"pci0_wlan_ce_13",
+"pci0_wlan_ce_14",
+"pci0_wlan_ce_15",
+#endif
 },
 {
 "pci1_wlan_ce_0",
@@ -135,6 +145,12 @@ const char *ce_irqname[WLAN_CFG_MAX_PCIE_GROUPS][WLAN_CFG_MAX_CE_COUNT] = {
 "pci1_wlan_ce_9",
 "pci1_wlan_ce_10",
 "pci1_wlan_ce_11",
+#ifdef QCA_WIFI_QCN9224
+"pci0_wlan_ce_12",
+"pci0_wlan_ce_13",
+"pci0_wlan_ce_14",
+"pci0_wlan_ce_15",
+#endif
 }
 };
 
@@ -160,6 +176,7 @@ static inline int hif_get_pci_slot(struct hif_softc *scn)
 
 	switch (target_type) {
 	case TARGET_TYPE_QCN9000:
+	case TARGET_TYPE_QCN9224:
 		/* of_node stored in qdf_dev points to the mhi node */
 		mhi_node = scn->qdf_dev->dev->of_node;
 		/*
@@ -3375,6 +3392,7 @@ static bool hif_is_pld_based_target(struct hif_pci_softc *sc,
 	switch (device_id) {
 	case QCA6290_DEVICE_ID:
 	case QCN9000_DEVICE_ID:
+	case QCN9224_DEVICE_ID:
 	case QCA6290_EMULATION_DEVICE_ID:
 	case QCA6390_DEVICE_ID:
 	case QCA6490_DEVICE_ID:
@@ -3505,7 +3523,8 @@ again:
 	/*
 	 * Disable unlzay interrupt registration for QCN9000
 	 */
-	if (target_type == TARGET_TYPE_QCN9000)
+	if (target_type == TARGET_TYPE_QCN9000 ||
+	    target_type == TARGET_TYPE_QCN9224)
 		ol_sc->irq_unlazy_disable = 1;
 
 	if (ce_srng_based(ol_sc)) {

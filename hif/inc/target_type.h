@@ -75,6 +75,10 @@ extern "C" {
 #define TARGET_TYPE_WCN7850 31
 #endif
 
+#ifndef TARGET_TYPE_QCN9224
+#define TARGET_TYPE_QCN9224      32
+#endif
+
 #ifdef __cplusplus
 }
 #endif

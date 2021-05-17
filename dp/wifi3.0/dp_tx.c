@@ -2090,8 +2090,8 @@ dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				  tx_exc_metadata, msdu_info);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		dp_tx_err("Tx_hw_enqueue Fail tx_desc %pK queue %d",
-			  tx_desc, tx_q->ring_id);
+		dp_tx_err_rl("Tx_hw_enqueue Fail tx_desc %pK queue %d",
+			     tx_desc, tx_q->ring_id);
 		qdf_nbuf_unmap_nbytes_single(vdev->osdev, nbuf,
 					     QDF_DMA_TO_DEVICE,
 					     nbuf->len);
@@ -3268,6 +3268,47 @@ qdf_nbuf_t dp_tx_send_vdev_id_check(struct cdp_soc_t *soc_hdl,
 	return dp_tx_send(soc_hdl, vdev_id, nbuf);
 }
 
+#ifdef UMAC_SUPPORT_PROXY_ARP
+/**
+ * dp_tx_proxy_arp() - Tx proxy arp handler
+ * @vdev: datapath vdev handle
+ * @buf: sk buffer
+ *
+ * Return: status
+ */
+static inline
+int dp_tx_proxy_arp(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
+{
+	if (vdev->osif_proxy_arp)
+		return vdev->osif_proxy_arp(vdev->osif_vdev, nbuf);
+
+	/*
+	 * when UMAC_SUPPORT_PROXY_ARP is defined, we expect
+	 * osif_proxy_arp has a valid function pointer assigned
+	 * to it
+	 */
+	dp_tx_err("valid function pointer for osif_proxy_arp is expected!!\n");
+
+	return QDF_STATUS_NOT_INITIALIZED;
+}
+#else
+/**
+ * dp_tx_proxy_arp() - Tx proxy arp handler
+ * @vdev: datapath vdev handle
+ * @buf: sk buffer
+ *
+ * This function always return 0 when UMAC_SUPPORT_PROXY_ARP
+ * is not defined.
+ *
+ * Return: status
+ */
+static inline
+int dp_tx_proxy_arp(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * dp_tx_reinject_handler() - Tx Reinject Handler
  * @soc: datapath soc handle
@@ -3355,8 +3396,8 @@ void dp_tx_reinject_handler(struct dp_soc *soc,
 				  ((is_mcast && peer->wds_ecm.wds_tx_mcast_4addr) ||
 				   (is_ucast && peer->wds_ecm.wds_tx_ucast_4addr))))) {
 #else
-			((peer->bss_peer && vdev->osif_proxy_arp &&
-			  !(vdev->osif_proxy_arp(vdev->osif_vdev, nbuf))))) {
+			(peer->bss_peer &&
+			 (dp_tx_proxy_arp(vdev, nbuf) == QDF_STATUS_SUCCESS))) {
 #endif
 				peer_id = DP_INVALID_PEER;
 

@@ -1156,12 +1156,21 @@ static QDF_STATUS cm_get_valid_candidate(struct cnx_mgr *cm_ctx,
 					 struct wlan_cm_connect_resp *resp,
 					 bool *same_candidate_used)
 {
+	struct wlan_objmgr_psoc *psoc;
 	struct scan_cache_node *scan_node = NULL;
 	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
 	struct scan_cache_node *new_candidate = NULL, *prev_candidate;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint8_t vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
 	bool use_same_candidate = false;
+	int32_t akm;
+
+	psoc = wlan_vdev_get_psoc(cm_ctx->vdev);
+	if (!psoc) {
+		mlme_err(CM_PREFIX_FMT "Failed to find psoc",
+			 CM_PREFIX_REF(vdev_id, cm_req->cm_id));
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	prev_candidate = cm_req->connect_req.cur_candidate;
 	if (cm_req->connect_req.connect_attempts >=
@@ -1228,13 +1237,15 @@ try_same_candidate:
 	cm_req->connect_req.cur_candidate = new_candidate;
 
 flush_single_pmk:
+	akm = wlan_crypto_get_param(cm_ctx->vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
 	/*
 	 * If connection fails with Single PMK bssid (prev candidate),
 	 * clear the pmk entry. Flush only in case if we are not trying again
 	 * with same candidate again.
 	 */
 	if (prev_candidate && !use_same_candidate &&
-	    util_scan_entry_single_pmk(prev_candidate->entry))
+	    util_scan_entry_single_pmk(psoc, prev_candidate->entry) &&
+	    QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_SAE))
 		cm_delete_pmksa_for_single_pmk_bssid(cm_ctx,
 						&prev_candidate->entry->bssid);
 

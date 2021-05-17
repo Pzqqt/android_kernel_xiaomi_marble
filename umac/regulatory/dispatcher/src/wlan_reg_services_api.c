@@ -552,6 +552,11 @@ bool wlan_reg_is_us(uint8_t *country)
 	return reg_is_us_alpha2(country);
 }
 
+bool wlan_reg_is_etsi(uint8_t *country)
+{
+	return reg_is_etsi_alpha2(country);
+}
+
 void wlan_reg_register_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 					    void *cbk, void *arg)
 {
@@ -1274,6 +1279,13 @@ enum reg_6g_ap_type
 wlan_reg_decide_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev)
 {
 	return reg_decide_6g_ap_pwr_type(pdev);
+}
+
+QDF_STATUS
+wlan_reg_set_ap_pwr_and_update_chan_list(struct wlan_objmgr_pdev *pdev,
+					 enum reg_6g_ap_type ap_pwr_type)
+{
+	return reg_set_ap_pwr_and_update_chan_list(pdev, ap_pwr_type);
 }
 #endif /* CONFIG_BAND_6GHZ */
 

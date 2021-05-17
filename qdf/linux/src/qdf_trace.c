@@ -25,8 +25,10 @@
 /* Include Files */
 #include "qdf_str.h"
 #include <qdf_trace.h>
+#include <qdf_parse.h>
 #include <qdf_module.h>
 #include <qdf_util.h>
+#include <qdf_mem.h>
 
 /* macro to map qdf trace levels into the bitmask */
 #define QDF_TRACE_LEVEL_TO_MODULE_BITMASK(_level) ((1 << (_level)))
@@ -103,6 +105,28 @@ static struct s_qdf_dp_trace_data g_qdf_dp_trace_data;
 static tp_qdf_dp_trace_cb qdf_dp_trace_cb_table[QDF_DP_TRACE_MAX + 1];
 #endif
 
+#ifdef QCA_WIFI_MODULE_PARAMS_FROM_INI
+#define QDF_PARAM_STR_LENGTH 40
+
+enum qdf_num_module_param {
+	MEM_DEBUG_DISABLED,
+	QDF_DBG_MASK,
+	PREALLOC_DISABLED,
+	QDF_LOG_DUMP_AT_KERNEL_ENABLE,
+	QDF_DBG_ARR,
+	QDF_LOG_FLUSH_TIMER_PERIOD,
+	QDF_PARAM_MAX,
+};
+
+static char qdf_module_param[QDF_PARAM_MAX][QDF_PARAM_STR_LENGTH] = {
+	"mem_debug_disabled",
+	"qdf_dbg_mask",
+	"prealloc_disabled",
+	"qdf_log_dump_at_kernel_enable",
+	"qdf_dbg_arr",
+	"qdf_log_flush_timer_period",
+};
+#endif
 /**
  * qdf_snprintf() - wrapper function to snprintf
  * @str_buffer: string Buffer
@@ -3802,6 +3826,63 @@ void qdf_shared_print_ctrl_init(void)
 			"LOG_SHARED_OBJ");
 }
 qdf_export_symbol(qdf_shared_print_ctrl_init);
+#endif
+
+#ifdef QCA_WIFI_MODULE_PARAMS_FROM_INI
+QDF_STATUS qdf_module_param_handler(void *context, const char *str_param,
+				    const char *str_value)
+{
+	QDF_STATUS status;
+	uint16_t param = 0;
+
+	while (param < QDF_PARAM_MAX) {
+		if (qdf_str_eq(qdf_module_param[param], str_param)) {
+			switch (param) {
+			case MEM_DEBUG_DISABLED:
+			status = qdf_mem_debug_disabled_config_set(str_value);
+				break;
+			case QDF_DBG_MASK:
+			status = qdf_int32_parse(str_value, &qdf_dbg_mask);
+				break;
+			case PREALLOC_DISABLED:
+			status = qdf_prealloc_disabled_config_set(str_value);
+				break;
+			case QDF_LOG_DUMP_AT_KERNEL_ENABLE:
+			status = qdf_bool_parse(str_value,
+						&qdf_log_dump_at_kernel_enable);
+				break;
+			case QDF_DBG_ARR:
+			qdf_dbg_arr[0] = (char *)str_value;
+				break;
+			case QDF_LOG_FLUSH_TIMER_PERIOD:
+			status = qdf_uint32_parse(str_value,
+						  &qdf_log_flush_timer_period);
+				break;
+			default:
+				break;
+			}
+			if (QDF_IS_STATUS_SUCCESS(status))
+				return QDF_STATUS_SUCCESS;
+		}
+		param++;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+void qdf_initialize_module_param_from_ini(void)
+{
+	QDF_STATUS status;
+	char *path = QDF_WIFI_MODULE_PARAMS_FILE;
+
+	status = qdf_ini_parse(path, NULL, qdf_module_param_handler, NULL);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		QDF_TRACE_ERROR(QDF_MODULE_ID_QDF,
+				"Failed to parse *.ini file @ %s; status:%d",
+				path, status);
+		return;
+	}
+}
 #endif
 
 QDF_STATUS qdf_print_set_category_verbose(unsigned int idx,

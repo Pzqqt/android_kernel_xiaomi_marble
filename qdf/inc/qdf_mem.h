@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -94,6 +94,14 @@ void qdf_mem_init(void);
  */
 void qdf_mem_exit(void);
 
+#ifdef QCA_WIFI_MODULE_PARAMS_FROM_INI
+#define qdf_untracked_mem_malloc(size) \
+	__qdf_untracked_mem_malloc(size, __func__, __LINE__)
+
+#define qdf_untracked_mem_free(ptr) \
+	__qdf_untracked_mem_free(ptr)
+#endif
+
 #define QDF_MEM_FUNC_NAME_SIZE 48
 
 #ifdef MEMORY_DEBUG
@@ -103,6 +111,18 @@ void qdf_mem_exit(void);
  * Return: value of mem_debug_disabled qdf module argument
  */
 bool qdf_mem_debug_config_get(void);
+
+#ifdef QCA_WIFI_MODULE_PARAMS_FROM_INI
+/**
+ * qdf_mem_debug_disabled_set() - Set mem_debug_disabled
+ * @str_value: value of the module param
+ *
+ * This function will set qdf module param mem_debug_disabled
+ *
+ * Return: QDF_STATUS_SUCCESS on Success
+ */
+QDF_STATUS qdf_mem_debug_disabled_config_set(const char *str_value);
+#endif
 
 /**
  * qdf_mem_malloc_debug() - debug version of QDF memory allocation API
@@ -245,6 +265,12 @@ static inline bool qdf_mem_debug_config_get(void)
 	return false;
 }
 
+static inline
+QDF_STATUS qdf_mem_debug_disabled_config_set(const char *str_value)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * qdf_mem_malloc() - allocation QDF memory
  * @size: Number of bytes of memory to allocate.
@@ -303,6 +329,26 @@ void qdf_mem_multi_pages_free(qdf_device_t osdev,
 			      qdf_dma_context_t memctxt, bool cacheable);
 
 #endif /* MEMORY_DEBUG */
+
+/**
+ * qdf_prealloc_disabled_config_get() - Get the user configuration of
+ *                                      prealloc_disabled
+ *
+ * Return: value of prealloc_disabled qdf module argument
+ */
+bool qdf_prealloc_disabled_config_get(void);
+
+#ifdef QCA_WIFI_MODULE_PARAMS_FROM_INI
+/**
+ * qdf_prealloc_disabled_config_set() - Set prealloc_disabled
+ * @str_value: value of the module param
+ *
+ * This function will set qdf module param prealloc_disabled
+ *
+ * Return: QDF_STATUS_SUCCESS on Success
+ */
+QDF_STATUS qdf_prealloc_disabled_config_set(const char *str_value);
+#endif
 
 /**
  * qdf_mem_multi_pages_zero() - zero out each page memory

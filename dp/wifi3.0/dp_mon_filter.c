@@ -1181,12 +1181,15 @@ QDF_STATUS dp_mon_filter_update(struct dp_pdev *pdev)
 	} else {
 		/*
 		 * For WIN case the monitor buffer ring is used and it does need
-		 * reset when monitor mode gets disabled.
+		 * reset when monitor mode gets enabled/disabled.
 		 */
 		if (soc->wlan_cfg_ctx->rxdma1_enable) {
-			status = dp_mon_ht2_rx_ring_cfg(soc, pdev,
+			if (pdev->monitor_configured || mon_mode_set ||
+			    pdev->neighbour_peers_added) {
+				status = dp_mon_ht2_rx_ring_cfg(soc, pdev,
 							mon_srng_type,
 							&filter.tlv_filter);
+			}
 		}
 	}
 

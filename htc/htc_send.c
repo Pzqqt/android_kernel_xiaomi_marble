@@ -863,12 +863,18 @@ static QDF_STATUS htc_issue_packets(HTC_TARGET *target,
 		 *   do the runtime put here.
 		 * otherwise runtime put will be done when the fw response comes
 		 */
-		if (pPacket->PktInfo.AsTx.Tag == HTC_TX_PACKET_TAG_RUNTIME_PUT)
+		if (pPacket->PktInfo.AsTx.Tag == HTC_TX_PACKET_TAG_RUNTIME_PUT) {
 			rt_put = true;
-		else if (pPacket->PktInfo.AsTx.Tag ==
+			hif_pm_runtime_update_stats(
+					target->hif_dev, RTPM_ID_HTC,
+					HIF_PM_HTC_STATS_GET_HTT_NO_RESPONSE);
+		} else if (pPacket->PktInfo.AsTx.Tag ==
 			 HTC_TX_PACKET_TAG_RTPM_PUT_RC) {
 			rt_put_in_resp = true;
 			htc_inc_runtime_cnt(target);
+			hif_pm_runtime_update_stats(
+					target->hif_dev, RTPM_ID_HTC,
+					HIF_PM_HTC_STATS_GET_HTT_RESPONSE);
 		}
 
 #if DEBUG_BUNDLE
@@ -962,6 +968,9 @@ static QDF_STATUS htc_issue_packets(HTC_TARGET *target,
 		if (rt_put) {
 			hif_pm_runtime_put(target->hif_dev,
 					   RTPM_ID_HTC);
+			hif_pm_runtime_update_stats(
+					target->hif_dev, RTPM_ID_HTC,
+					HIF_PM_HTC_STATS_PUT_HTT_NO_RESPONSE);
 			rt_put = false;
 		}
 	}
@@ -1694,9 +1703,13 @@ static enum HTC_SEND_QUEUE_RESULT htc_try_send(HTC_TARGET *target,
 			rtpm_dbgid =
 				htc_send_pkts_rtpm_dbgid_get(
 					pEndpoint->service_id);
-			for (i = HTC_PACKET_QUEUE_DEPTH(&sendQueue); i > 0; i--)
+			for (i = HTC_PACKET_QUEUE_DEPTH(&sendQueue); i > 0; i--) {
 				hif_pm_runtime_put(target->hif_dev,
 						   rtpm_dbgid);
+				hif_pm_runtime_update_stats(
+					target->hif_dev, rtpm_dbgid,
+					HIF_PM_HTC_STATS_PUT_HTT_ERROR);
+			}
 
 			if (!pEndpoint->async_update) {
 				LOCK_HTC_TX(target);

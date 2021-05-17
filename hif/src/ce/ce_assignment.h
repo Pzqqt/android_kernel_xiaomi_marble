@@ -1419,4 +1419,79 @@ static struct CE_pipe_config target_ce_config_wlan_wcn7850[] = {
 	{ /* CE8 */ 8, PIPEDIR_INOUT, 32, 16384, CE_ATTR_FLAGS, 0,},
 	/* CE 9, 10, 11 belong to CoreBsp & MHI driver */
 };
+
+#ifdef QCA_WIFI_QCN9224
+#define QCN_9224_CE_COUNT 16
+static struct CE_attr host_ce_config_wlan_qcn9224[] = {
+	/* host->target HTC control and raw streams */
+	{/*CE0*/ (CE_ATTR_FLAGS), 0, 16, 2048, 0, NULL,},
+	/* target->host HTT + HTC control */
+	{/*CE1*/ (CE_ATTR_FLAGS), 0, 0,  2048,
+		512, NULL,},
+	/* target->host WMI */
+	{/*CE2*/ (CE_ATTR_FLAGS), 0, 0,  2048,
+		128, NULL,},
+	/* host->target WMI (mac0) */
+	{/*CE3*/ (CE_ATTR_FLAGS), 0, 32, 2048, 0, NULL,},
+	/* host->target HTT */
+	{/*CE4*/ (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,
+		CE_HTT_H2T_MSG_SRC_NENTRIES, 256, 0, NULL,},
+	/* target -> host PKTLOG */
+#ifdef REMOVE_PKT_LOG
+	{ /* CE5 */ 0, 0, 0, 0, 0, NULL,},
+#else
+	{/*CE5*/ (CE_ATTR_FLAGS), 0, 0, 2048,
+		PKTLOG_DST_ENTRIES, NULL,},
+#endif
+	/* Target autonomous HIF_memcpy */
+	{/*CE6*/ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
+	/* host->target WMI (mac1) */
+	{/*CE7*/ CE_ATTR_FLAGS, 0, 32, 2048, 0, NULL,},
+	/* Reserved for target (Generic HiF memcpy */
+	{/*CE8*/ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
+	/* CE 9, 10, 11 belong to CoreBsp & MHI driver */
+	{/*CE9*/ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
+	{/*CE10*/ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
+	{/*CE11*/ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
+	/* Target CV prefetch */
+	{/*CE12*/ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
+	/* Target CV prefetch */
+	{/*CE13*/ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
+	/* target->host WMI logging, Direc-DMA */
+	{/*CE14*/ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
+	/* Reserved for customer use */
+	{/*CE15*/ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
+};
+
+static struct CE_pipe_config target_ce_config_wlan_qcn9224[] = {
+	/* host->target HTC control and raw streams */
+	{ /* CE0 */ 0, PIPEDIR_OUT, 32, 2048, CE_ATTR_FLAGS, 0,},
+	/* target->host HTT */
+	{ /* CE1 */ 1, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
+	/* target->host WMI */
+	{ /* CE2 */ 2, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
+	/* host->target WMI */
+	{ /* CE3 */ 3, PIPEDIR_OUT, 32, 2048, CE_ATTR_FLAGS, 0,},
+	/* host->target HTT */
+	{ /* CE4 */ 4, PIPEDIR_OUT, 256, 256,
+		(CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,},
+	/* Target -> host PKTLOG */
+	{ /* CE5 */ 5, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
+	/* Reserved for target autonomous HIF_memcpy */
+	{ /* CE6 */ 6, PIPEDIR_INOUT, 32, 16384, CE_ATTR_FLAGS, 0,},
+	/* host->target WMI */
+	{ /* CE7 */ 7, PIPEDIR_OUT, 32, 2048, CE_ATTR_FLAGS, 0,},
+	/* Reserved for target */
+	{ /* CE8 */ 8, PIPEDIR_INOUT, 32, 16384, CE_ATTR_FLAGS, 0,},
+	/* CE 9, 10, 11 belong to CoreBsp & MHI driver */
+	/* CV prefetch */
+	{ /* CE12 */ 12, PIPEDIR_OUT, 32, 2048, 8192, 0,},
+	/* CV prefetch */
+	{ /* CE13 */ 13, PIPEDIR_OUT, 32, 2048, 8192, 0,},
+	/* target->host WMI logging + DirectDMA events */
+	{ /* CE14 */ 14, PIPEDIR_IN, 32, 2048, CE_ATTR_FLAGS, 0,},
+	/*CE 15 - Reserved for customer use */
+};
+#endif
+
 #endif /* __HIF_PCI_INTERNAL_H__ */

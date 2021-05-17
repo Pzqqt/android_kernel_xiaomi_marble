@@ -70,6 +70,7 @@ typedef void *hif_handle_t;
 #define HIF_TYPE_QCA5018 24
 #define HIF_TYPE_QCN6122 25
 #define HIF_TYPE_WCN7850 26
+#define HIF_TYPE_QCN9224 27
 
 #define DMA_COHERENT_MASK_DEFAULT   37
 
@@ -120,7 +121,11 @@ enum hif_ic_irq {
 };
 
 struct CE_state;
+#ifdef QCA_WIFI_QCN9224
+#define CE_COUNT_MAX 16
+#else
 #define CE_COUNT_MAX 12
+#endif
 #define HIF_MAX_GRP_IRQ 16
 
 #ifndef HIF_MAX_GROUP
@@ -1069,6 +1074,28 @@ enum hif_pm_link_state {
 	HIF_PM_LINK_STATE_UP
 };
 
+/**
+ * enum hif_pm_htc_stats - hif runtime PM stats for HTC layer
+ * HIF_PM_HTC_STATS_GET_HTT_RESPONSE: PM stats for RTPM GET for HTT packets
+				      with response
+ * HIF_PM_HTC_STATS_GET_HTT_NO_RESPONSE: PM stats for RTPM GET for HTT packets
+					 with no response
+ * HIF_PM_HTC_STATS_PUT_HTT_RESPONSE: PM stats for RTPM PUT for HTT packets
+				      with response
+ * HIF_PM_HTC_STATS_PUT_HTT_NO_RESPONSE: PM stats for RTPM PUT for HTT packets
+					 with no response
+ * HIF_PM_HTC_STATS_PUT_HTT_ERROR: PM stats for RTPM PUT for failed HTT packets
+ * HIF_PM_HTC_STATS_PUT_HTC_CLEANUP: PM stats for RTPM PUT during HTC cleanup
+ */
+enum hif_pm_htc_stats {
+	HIF_PM_HTC_STATS_GET_HTT_RESPONSE,
+	HIF_PM_HTC_STATS_GET_HTT_NO_RESPONSE,
+	HIF_PM_HTC_STATS_PUT_HTT_RESPONSE,
+	HIF_PM_HTC_STATS_PUT_HTT_NO_RESPONSE,
+	HIF_PM_HTC_STATS_PUT_HTT_ERROR,
+	HIF_PM_HTC_STATS_PUT_HTC_CLEANUP,
+};
+
 #ifdef FEATURE_RUNTIME_PM
 struct hif_pm_runtime_lock;
 
@@ -1106,6 +1133,9 @@ void hif_pm_runtime_mark_dp_rx_busy(struct hif_opaque_softc *hif_ctx);
 int hif_pm_runtime_is_dp_rx_busy(struct hif_opaque_softc *hif_ctx);
 qdf_time_t hif_pm_runtime_get_dp_rx_busy_mark(struct hif_opaque_softc *hif_ctx);
 int hif_pm_runtime_sync_resume(struct hif_opaque_softc *hif_ctx);
+void hif_pm_runtime_update_stats(struct hif_opaque_softc *hif_ctx,
+				 wlan_rtpm_dbgid rtpm_dbgid,
+				 enum hif_pm_htc_stats stats);
 
 /**
  * hif_pm_set_link_state() - set link state during RTPM
@@ -1200,6 +1230,11 @@ static inline
 void hif_pm_set_link_state(struct hif_opaque_softc *hif_handle, uint8_t val)
 {}
 
+static inline
+void hif_pm_runtime_update_stats(struct hif_opaque_softc *hif_ctx,
+				 wlan_rtpm_dbgid rtpm_dbgid,
+				 enum hif_pm_htc_stats stats)
+{}
 #endif
 
 void hif_enable_power_management(struct hif_opaque_softc *hif_ctx,

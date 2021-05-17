@@ -4435,7 +4435,8 @@ target_if_is_aspectral_prohibited_by_adfs(struct wlan_objmgr_psoc *psoc,
 {
 	bool *is_aspectral_prohibited = arg;
 	struct wlan_objmgr_pdev *cur_pdev = object;
-	bool is_agile_dfs_enabled_cur_pdev = false;
+	bool is_agile_precac_enabled_cur_pdev = false;
+	bool is_agile_rcac_enabled_cur_pdev = false;
 	QDF_STATUS status;
 
 	qdf_assert_always(is_aspectral_prohibited);
@@ -4447,15 +4448,27 @@ target_if_is_aspectral_prohibited_by_adfs(struct wlan_objmgr_psoc *psoc,
 
 	status = ucfg_dfs_get_agile_precac_enable
 				(cur_pdev,
-				 &is_agile_dfs_enabled_cur_pdev);
+				 &is_agile_precac_enabled_cur_pdev);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		spectral_err("Get agile precac failed, prohibiting aSpectral");
 		*is_aspectral_prohibited = true;
 		return;
 	}
 
-	if (is_agile_dfs_enabled_cur_pdev) {
-		spectral_err("aDFS is in progress on one of the pdevs");
+	status = ucfg_dfs_get_rcac_enable(cur_pdev,
+					  &is_agile_rcac_enabled_cur_pdev);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		spectral_err("Get agile RCAC failed, prohibiting aSpectral");
+		*is_aspectral_prohibited = true;
+		return;
+	}
+
+	if (is_agile_precac_enabled_cur_pdev) {
+		spectral_err("aDFS preCAC is in progress on one of the pdevs");
+		*is_aspectral_prohibited = true;
+	} else if (is_agile_rcac_enabled_cur_pdev) {
+		spectral_err("aDFS RCAC is in progress on one of the pdevs");
 		*is_aspectral_prohibited = true;
 	}
 }
@@ -4833,11 +4846,16 @@ target_if_start_spectral_scan(struct wlan_objmgr_pdev *pdev,
 		op_ch_width = ch_width[SPECTRAL_SCAN_MODE_NORMAL];
 		agile_ch_width = ch_width[SPECTRAL_SCAN_MODE_AGILE];
 
-		if (!spectral->params[smode].ss_frequency.cfreq1 ||
-		    (agile_ch_width == CH_WIDTH_80P80MHZ &&
-		    !spectral->params[smode].ss_frequency.cfreq2)) {
+		if (!spectral->params[smode].ss_frequency.cfreq1) {
 			*err = SPECTRAL_SCAN_ERR_PARAM_NOT_INITIALIZED;
 			qdf_spin_unlock(&spectral->spectral_lock);
+			spectral_err("Agile Spectral cfreq1 is 0");
+			return QDF_STATUS_E_FAILURE;
+		} else if (agile_ch_width == CH_WIDTH_80P80MHZ &&
+			   !spectral->params[smode].ss_frequency.cfreq2) {
+			*err = SPECTRAL_SCAN_ERR_PARAM_NOT_INITIALIZED;
+			qdf_spin_unlock(&spectral->spectral_lock);
+			spectral_err("Agile Spectral cfreq2 is 0");
 			return QDF_STATUS_E_FAILURE;
 		}
 

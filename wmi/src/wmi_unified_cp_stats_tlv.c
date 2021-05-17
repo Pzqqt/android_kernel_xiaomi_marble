@@ -29,6 +29,21 @@ get_stats_req_twt_dialog_id(struct infra_cp_stats_cmd_info *req)
 	return req->dialog_id;
 }
 
+static enum WMI_HOST_GET_STATS_TWT_STATUS
+wmi_get_converted_twt_get_stats_status(WMI_GET_STATS_TWT_STATUS_T tgt_status)
+{
+	switch (tgt_status) {
+	case WMI_GET_STATS_TWT_STATUS_OK:
+		return WMI_HOST_GET_STATS_TWT_STATUS_OK;
+	case WMI_GET_STATS_TWT_STATUS_DIALOG_ID_NOT_EXIST:
+		return WMI_HOST_GET_STATS_TWT_STATUS_DIALOG_ID_NOT_EXIST;
+	case WMI_GET_STATS_TWT_STATUS_INVALID_PARAM:
+		return WMI_HOST_GET_STATS_TWT_STATUS_INVALID_PARAM;
+	default:
+		return WMI_HOST_GET_STATS_TWT_STATUS_UNKNOWN_ERROR;
+	}
+}
+
 static inline
 void wmi_extract_ctrl_path_twt_stats_tlv(void *tag_buf,
 					 struct twt_infra_cp_stats_event *param)
@@ -37,7 +52,7 @@ void wmi_extract_ctrl_path_twt_stats_tlv(void *tag_buf,
 			(wmi_ctrl_path_twt_stats_struct *)tag_buf;
 
 	param->dialog_id = wmi_stats_buf->dialog_id;
-	param->status = wmi_stats_buf->status;
+	param->status = wmi_get_converted_twt_get_stats_status(wmi_stats_buf->status);
 	param->num_sp_cycles = wmi_stats_buf->num_sp_cycles;
 	param->avg_sp_dur_us = wmi_stats_buf->avg_sp_dur_us;
 	param->min_sp_dur_us = wmi_stats_buf->min_sp_dur_us;
@@ -135,8 +150,10 @@ QDF_STATUS wmi_stats_handler(void *buff, int32_t len,
 	uint8_t *tag_start_ptr;
 
 	param_buf = (WMI_CTRL_PATH_STATS_EVENTID_param_tlvs *)buff;
-	if (!param_buf)
+	if (!param_buf) {
+		wmi_err_rl("param_buf is NULL");
 		return QDF_STATUS_E_FAILURE;
+	}
 	ev = (wmi_ctrl_path_stats_event_fixed_param *)param_buf->fixed_param;
 
 	curr_tlv_tag = WMITLV_GET_TLVTAG(ev->tlv_header);
@@ -684,6 +701,9 @@ extract_pdev_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf, uint32_t index,
 
 	param_buf = (WMI_UPDATE_STATS_EVENTID_param_tlvs *) evt_buf;
 	ev_param = (wmi_stats_event_fixed_param *) param_buf->fixed_param;
+	pdev_stats->pdev_id =
+	     wmi_handle->ops->convert_pdev_id_target_to_host(wmi_handle,
+							     ev_param->pdev_id);
 
 	data = param_buf->data;
 

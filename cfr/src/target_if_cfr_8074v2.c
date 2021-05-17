@@ -329,16 +329,9 @@ void dump_cfr_peer_tx_event(wmi_cfr_peer_tx_event_param *event)
 void prepare_cfr_header_txstatus(wmi_cfr_peer_tx_event_param *tx_evt_param,
 		struct csi_cfr_header *header)
 {
-	header->start_magic_num        = 0xDEADBEAF;
-	header->vendorid               = 0x8cfdf0;
-	header->cfr_metadata_version   = CFR_META_VERSION_4;
-	header->cfr_data_version       = CFR_DATA_VERSION_1;
-	header->chip_type              = CFR_CAPTURE_RADIO_HKV2;
-	header->pltform_type           = CFR_PLATFORM_TYPE_ARM;
-	header->cfr_metadata_len       = sizeof(struct cfr_metadata_version_4);
-	header->u.meta_v4.status       = 0; /* failure */
-	header->u.meta_v4.length       = 0;
-
+	target_if_cfr_fill_header(header, false, target_type, false);
+	header->u.meta_v4.status = 0; /* failure */
+	header->u.meta_v4.length = 0;
 	qdf_mem_copy(&header->u.meta_v4.peer_addr[0],
 		     &tx_evt_param->peer_mac_addr.bytes[0], QDF_MAC_ADDR_SIZE);
 
@@ -362,6 +355,7 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	qdf_dma_addr_t buf_addr = 0, buf_addr_temp = 0;
 	int status;
 	struct wlan_lmac_if_rx_ops *rx_ops;
+	uint32_t target_type;
 
 	psoc = scn->psoc_obj;
 	if (!psoc) {
@@ -477,30 +471,27 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	lut->tx_address2 = tx_evt_param.correlation_info_2;
 	header = &lut->header;
 
-	header->start_magic_num        = 0xDEADBEAF;
-	header->vendorid               = 0x8cfdf0;
-	header->cfr_metadata_version   = CFR_META_VERSION_4;
-	header->cfr_data_version       = CFR_DATA_VERSION_1;
-	header->chip_type              = CFR_CAPTURE_RADIO_HKV2;
-	header->pltform_type           = CFR_PLATFORM_TYPE_ARM;
-	header->cfr_metadata_len       = sizeof(struct cfr_metadata_version_4);
-	header->u.meta_v4.status       = (tx_evt_param.status &
-					  PEER_CFR_CAPTURE_EVT_STATUS_MASK)?1:0;
-	header->u.meta_v4.capture_bw   = tx_evt_param.bandwidth;
-	header->u.meta_v4.phy_mode     = tx_evt_param.phy_mode;
-	header->u.meta_v4.prim20_chan  = tx_evt_param.primary_20mhz_chan;
-	header->u.meta_v4.center_freq1 = tx_evt_param.band_center_freq1;
-	header->u.meta_v4.center_freq2 = tx_evt_param.band_center_freq2;
+	target_type = target_if_cfr_get_target_type(psoc);
+	target_if_cfr_fill_header(header, false, target_type, false);
+
+	header->u.meta_v4.status         = (tx_evt_param.status &
+					    PEER_CFR_CAPTURE_EVT_STATUS_MASK) ?
+					    1 : 0;
+	header->u.meta_v4.capture_bw     = tx_evt_param.bandwidth;
+	header->u.meta_v4.phy_mode       = tx_evt_param.phy_mode;
+	header->u.meta_v4.prim20_chan    = tx_evt_param.primary_20mhz_chan;
+	header->u.meta_v4.center_freq1   = tx_evt_param.band_center_freq1;
+	header->u.meta_v4.center_freq2   = tx_evt_param.band_center_freq2;
 	/* Currently CFR data is captured on ACK of a Qos NULL frame.
 	 * For 20 MHz, ACK is Legacy and for 40/80/160, ACK is DUP Legacy.
 	 */
-	header->u.meta_v4.capture_mode = tx_evt_param.bandwidth ?
-					 CFR_DUP_LEGACY_ACK : CFR_LEGACY_ACK;
-	header->u.meta_v4.capture_type = tx_evt_param.capture_method;
-	header->u.meta_v4.num_rx_chain = wlan_vdev_mlme_get_rxchainmask(vdev);
-	header->u.meta_v4.sts_count    = tx_evt_param.spatial_streams;
-	header->u.meta_v4.timestamp    = tx_evt_param.timestamp_us;
-	header->u.meta_v4.rx_start_ts  = tx_evt_param.rx_start_ts;
+	header->u.meta_v4.capture_mode   = tx_evt_param.bandwidth ?
+					   CFR_DUP_LEGACY_ACK : CFR_LEGACY_ACK;
+	header->u.meta_v4.capture_type   = tx_evt_param.capture_method;
+	header->u.meta_v4.num_rx_chain   = wlan_vdev_mlme_get_rxchainmask(vdev);
+	header->u.meta_v4.sts_count      = tx_evt_param.spatial_streams;
+	header->u.meta_v4.timestamp      = tx_evt_param.timestamp_us;
+	header->u.meta_v4.rx_start_ts    = tx_evt_param.rx_start_ts;
 	header->u.meta_v4.rtt_cfo_measurement = tx_evt_param.cfo_measurement;
 
 	qdf_mem_copy(&header->u.meta_v4.agc_gain[0],

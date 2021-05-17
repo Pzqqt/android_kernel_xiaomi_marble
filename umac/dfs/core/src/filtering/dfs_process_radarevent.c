@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013, 2016-2021 The Linux Foundation. All rights reserved.
  * Copyright (c) 2002-2010, Atheros Communications Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -651,15 +651,6 @@ static void dfs_print_radar_found_freq(struct wlan_dfs *dfs)
 		  "bangradar on 2nd segment cfreq = %u",
 		  dfs->dfs_precac_secondary_freq_mhz);
 }
-#else
-#ifdef CONFIG_CHAN_NUM_API
-static void dfs_print_radar_found_freq(struct wlan_dfs *dfs)
-{
-	dfs_debug(dfs, WLAN_DEBUG_DFS,
-		  "bangradar on 2nd segment cfreq = %u",
-		  dfs->dfs_precac_secondary_freq);
-}
-#endif
 #endif
 
 /**

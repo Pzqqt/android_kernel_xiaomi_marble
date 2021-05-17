@@ -2009,10 +2009,13 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 				if (reap_status == DP_MON_STATUS_NO_DMA)
 					continue;
 				else if (reap_status == DP_MON_STATUS_REPLENISH) {
-					qdf_nbuf_unmap_nbytes_single(
+					if (!rx_desc->unmapped) {
+						qdf_nbuf_unmap_nbytes_single(
 							soc->osdev, status_nbuf,
 							QDF_DMA_FROM_DEVICE,
 							rx_desc_pool->buf_size);
+						rx_desc->unmapped = 1;
+					}
 					qdf_nbuf_free(status_nbuf);
 					goto buf_replenish;
 				}
@@ -2020,9 +2023,12 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 			qdf_nbuf_set_pktlen(status_nbuf,
 					    RX_MON_STATUS_BUF_SIZE);
 
-			qdf_nbuf_unmap_nbytes_single(soc->osdev, status_nbuf,
-						     QDF_DMA_FROM_DEVICE,
-						     rx_desc_pool->buf_size);
+			if (!rx_desc->unmapped) {
+				qdf_nbuf_unmap_nbytes_single(soc->osdev, status_nbuf,
+							     QDF_DMA_FROM_DEVICE,
+							     rx_desc_pool->buf_size);
+				rx_desc->unmapped = 1;
+			}
 
 			/* Put the status_nbuf to queue */
 			qdf_nbuf_queue_add(&pdev->rx_status_q, status_nbuf);
@@ -2083,6 +2089,7 @@ buf_replenish:
 
 		rx_desc->nbuf = status_nbuf;
 		rx_desc->in_use = 1;
+		rx_desc->unmapped = 0;
 
 		hal_rxdma_buff_addr_info_set(rxdma_mon_status_ring_entry,
 			paddr, rx_desc->cookie, HAL_RX_BUF_RBM_SW3_BM);
@@ -2398,6 +2405,7 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 
 		(*desc_list)->rx_desc.nbuf = rx_netbuf;
 		(*desc_list)->rx_desc.in_use = 1;
+		(*desc_list)->rx_desc.unmapped = 0;
 		count++;
 
 		hal_rxdma_buff_addr_info_set(rxdma_ring_entry, paddr,

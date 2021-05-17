@@ -250,6 +250,18 @@ const char *hif_ipci_get_irq_name(int irq_no);
  */
 int hif_ipci_enable_grp_irqs(struct hif_softc *scn);
 
+#ifdef HIF_CPU_PERF_AFFINE_MASK
+/** hif_ipci_config_irq_affinity() - set the irq affinity
+ * @scn: hif context
+ *
+ * set irq affinity hint for wlan irqs to gold cores only for
+ * defconfig builds.
+ *
+ * return: none
+ */
+void hif_ipci_config_irq_affinity(struct hif_softc *scn);
+#endif
+
 /**
  * hif_ipci_disable_grp_irqs(): disable grp IRQs
  * @scn: struct hif_softc

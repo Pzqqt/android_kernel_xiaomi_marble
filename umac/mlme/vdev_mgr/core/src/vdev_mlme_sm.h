@@ -631,7 +631,7 @@ static inline QDF_STATUS mlme_vdev_dfs_cac_wait_notify(
  */
 static inline void mlme_vdev_up_notify_mlo_mgr(struct vdev_mlme_obj *vdev_mlme)
 {
-	mlo_handle_link_up(vdev_mlme->vdev);
+	/* Add call to mlo_handle_link_up(vdev_mlme->vdev) once it is ready */
 }
 #else
 static inline void mlme_vdev_up_notify_mlo_mgr(struct vdev_mlme_obj *vdev_mlme)

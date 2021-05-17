@@ -110,7 +110,8 @@ void dp_rx_buffer_pool_nbuf_free(struct dp_soc *soc, qdf_nbuf_t nbuf, u8 mac_id)
 	buff_pool = &soc->rx_buff_pool[mac_id];
 
 	if (qdf_likely(qdf_nbuf_queue_head_qlen(&buff_pool->emerg_nbuf_q) >=
-		       DP_RX_BUFFER_POOL_SIZE))
+		       DP_RX_BUFFER_POOL_SIZE) ||
+	    !buff_pool->is_initialized)
 		return qdf_nbuf_free(nbuf);
 
 	qdf_nbuf_reset(nbuf, RX_BUFFER_RESERVATION,

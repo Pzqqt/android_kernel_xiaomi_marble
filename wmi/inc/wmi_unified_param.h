@@ -4012,6 +4012,7 @@ typedef struct {
  * @fcsBad:
  * @noBeacons:
  * @mib_int_count:
+ * @pdev_id: pdev id
  */
 typedef struct {
 	int32_t chan_nf;
@@ -4028,6 +4029,7 @@ typedef struct {
 	uint32_t	fcsBad;
 	uint32_t	noBeacons;
 	uint32_t	mib_int_count;
+	uint32_t pdev_id;
 } wmi_host_pdev_stats;
 
 /**
@@ -4613,6 +4615,7 @@ typedef enum {
 	wmi_peer_create_conf_event_id,
 	wmi_pdev_cp_fwstats_eventid,
 	wmi_vdev_send_big_data_p2_eventid,
+	wmi_pdev_get_dpd_status_event_id,
 	wmi_events_max,
 } wmi_conv_event_id;
 
@@ -6077,8 +6080,9 @@ typedef enum {
 	WMI_HOST_TP_SCALE_50	= 1,	/* 50% of max (-3 dBm) */
 	WMI_HOST_TP_SCALE_25	= 2,	/* 25% of max (-6 dBm) */
 	WMI_HOST_TP_SCALE_12	= 3,	/* 12% of max (-9 dBm) */
-	WMI_HOST_TP_SCALE_MIN	= 4,	/* min, but still on   */
-	WMI_HOST_TP_SCALE_SIZE   = 5,	/* max num of enum	*/
+	WMI_HOST_TP_SCALE_6	= 4,	/* 6% of max (-12 dBm) */
+	WMI_HOST_TP_SCALE_MIN	= 5,	/* min, but still on   */
+	WMI_HOST_TP_SCALE_SIZE  = 6,	/* max num of enum	*/
 } WMI_HOST_TP_SCALE;
 enum {
 	WMI_HOST_RATEPWR_TABLE_OPS_SET,
@@ -7919,5 +7923,22 @@ enum wmi_host_tbtt_offset_cmd_type {
 struct wmi_raw_event_buffer {
 	void *evt_raw_buf;
 	void *evt_processed_buf;
+};
+
+/* dpd_status fron WMI_PDEV_GET_DPD_STATUS_EVENTID */
+enum wmi_host_dpd_status {
+	WMI_HOST_DPD_STATUS_FAIL = 0,
+	WMI_HOST_DPD_STATUS_PASS = 1,
+	WMI_HOST_DPD_STATUS_INVALID = 2,
+};
+
+/**
+ * struct wmi_host_pdev_get_dpd_status_event
+ * @pdev_id: pdev id
+ * @dpd_status: dpd status from FW - FAIL/PASS/INVALID
+ */
+struct wmi_host_pdev_get_dpd_status_event {
+	uint32_t pdev_id;
+	enum wmi_host_dpd_status dpd_status;
 };
 #endif /* _WMI_UNIFIED_PARAM_H_ */
