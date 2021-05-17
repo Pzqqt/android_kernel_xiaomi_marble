@@ -1654,6 +1654,7 @@ static int hdd_get_peer_stats(struct hdd_adapter *adapter,
 					 stainfo->sta_mac.bytes, peer_stats);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("cdp_host_get_peer_stats failed");
+		qdf_mem_free(peer_stats);
 		return -EINVAL;
 	}
 

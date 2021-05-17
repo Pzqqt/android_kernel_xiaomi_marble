@@ -1937,4 +1937,28 @@ static policy_mgr_next_action_three_connection_table_type
 	[PM_P2P_GO_SAP_SBS_5_1x1] = {PM_DBS_UPGRADE, PM_NOP},
 };
 
+/**
+ * next_action_two_connection_table_v2 - table which provides next
+ * action while a new connection is coming up, with one
+ * connection already in the system.
+ */
+static policy_mgr_next_action_two_connection_table_type
+	pm_next_action_two_connection_dbs_2x2_table_v2 = {
+	[PM_STA_24_1x1]     = {PM_NOP, PM_DBS},
+	[PM_STA_24_2x2]     = {PM_NOP, PM_DBS},
+	[PM_STA_5_1x1]      = {PM_DBS, PM_NOP},
+	[PM_STA_5_2x2]      = {PM_DBS, PM_NOP},
+	[PM_P2P_CLI_24_1x1] = {PM_NOP, PM_DBS},
+	[PM_P2P_CLI_24_2x2] = {PM_NOP, PM_DBS},
+	[PM_P2P_CLI_5_1x1]  = {PM_DBS, PM_NOP},
+	[PM_P2P_CLI_5_2x2]  = {PM_DBS, PM_NOP},
+	[PM_P2P_GO_24_1x1]  = {PM_NOP, PM_DBS},
+	[PM_P2P_GO_24_2x2]  = {PM_NOP, PM_DBS},
+	[PM_P2P_GO_5_1x1]   = {PM_DBS, PM_NOP},
+	[PM_P2P_GO_5_2x2]   = {PM_DBS, PM_NOP},
+	[PM_SAP_24_1x1]     = {PM_NOP, PM_DBS},
+	[PM_SAP_24_2x2]     = {PM_NOP, PM_DBS},
+	[PM_SAP_5_1x1]      = {PM_DBS, PM_NOP},
+	[PM_SAP_5_2x2]      = {PM_DBS, PM_NOP},
+};
 #endif

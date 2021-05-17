@@ -738,6 +738,27 @@ void hdd_program_country_code(struct hdd_context *hdd_ctx)
 }
 #endif
 
+void hdd_reg_wait_for_country_change(struct hdd_context *hdd_ctx)
+{
+	qdf_mutex_acquire(&hdd_ctx->regulatory_status_lock);
+	if (hdd_ctx->is_regulatory_update_in_progress) {
+		qdf_mutex_release(&hdd_ctx->regulatory_status_lock);
+		hdd_debug("waiting for channel list to update");
+		qdf_wait_for_event_completion(&hdd_ctx->regulatory_update_event,
+					      CHANNEL_LIST_UPDATE_TIMEOUT);
+		/* In case of set country failure in FW, response never comes
+		 * so wait the full timeout, then set in_progress to false.
+		 * If the response comes back, in_progress will already be set
+		 * to false anyways.
+		 */
+		qdf_mutex_acquire(&hdd_ctx->regulatory_status_lock);
+		hdd_ctx->is_regulatory_update_in_progress = false;
+		qdf_mutex_release(&hdd_ctx->regulatory_status_lock);
+	} else {
+		qdf_mutex_release(&hdd_ctx->regulatory_status_lock);
+	}
+}
+
 int hdd_reg_set_country(struct hdd_context *hdd_ctx, char *country_code)
 {
 	QDF_STATUS status;
@@ -1431,7 +1452,11 @@ static void hdd_country_change_update_sta(struct hdd_context *hdd_ctx)
 	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter,
 					   dbgid) {
 		oper_freq = hdd_get_adapter_home_channel(adapter);
-		freq_changed = wlan_reg_is_disable_for_freq(pdev, oper_freq);
+		if (oper_freq)
+			freq_changed = wlan_reg_is_disable_for_freq(pdev,
+								    oper_freq);
+		else
+			freq_changed = false;
 
 		switch (adapter->device_mode) {
 		case QDF_P2P_CLIENT_MODE:

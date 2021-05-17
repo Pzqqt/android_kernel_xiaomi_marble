@@ -295,8 +295,10 @@ release_ref:
 
 bool wlan_cm_roaming_in_progress(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 {
+#ifndef FEATURE_CM_ENABLE
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 	QDF_STATUS status;
+#endif
 	bool roaming_in_progress = false;
 	struct wlan_objmgr_vdev *vdev;
 
@@ -307,6 +309,10 @@ bool wlan_cm_roaming_in_progress(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 		return roaming_in_progress;
 	}
 
+	/* this is temp change will be removed in near future */
+#ifdef FEATURE_CM_ENABLE
+	roaming_in_progress = wlan_cm_is_vdev_roaming(vdev);
+#else
 	status = cm_roam_acquire_lock(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
 		goto release_ref;
@@ -318,8 +324,9 @@ bool wlan_cm_roaming_in_progress(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 		roaming_in_progress = true;
 
 	cm_roam_release_lock(vdev);
-
 release_ref:
+#endif
+
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 
 	return roaming_in_progress;
@@ -428,6 +435,28 @@ wlan_cm_dual_sta_is_freq_allowed(struct wlan_objmgr_psoc *psoc,
 	uint8_t vdev_id_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	enum reg_wifi_band band;
 	uint32_t count, connected_sta_freq;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct dual_sta_policy *dual_sta_policy;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
+
+	/*
+	 * Check if primary iface is configured. If yes,
+	 * then allow further STA connection to all
+	 * available bands/channels irrespective of first
+	 * STA connection band, which allow driver to
+	 * connect with the best available AP present in
+	 * environment, so that user can switch to second
+	 * connection and mark it as primary.
+	 */
+	dual_sta_policy = &mlme_obj->cfg.gen.dual_sta_policy;
+	if (dual_sta_policy->primary_vdev_id != WLAN_UMAC_VDEV_ID_MAX) {
+		mlme_debug("primary iface is configured, vdev_id: %d",
+			   dual_sta_policy->primary_vdev_id);
+		return true;
+	}
 
 	/*
 	 * Check if already there is 1 STA connected. If this API is
@@ -459,9 +488,31 @@ wlan_cm_dual_sta_roam_update_connect_channels(struct wlan_objmgr_psoc *psoc,
 	uint32_t *channel_list;
 	bool is_ch_allowed;
 	QDF_STATUS status;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct dual_sta_policy *dual_sta_policy;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return;
+	dual_sta_policy = &mlme_obj->cfg.gen.dual_sta_policy;
 
 	if (!wlan_mlme_get_dual_sta_roaming_enabled(psoc))
 		return;
+
+	/*
+	 * Check if primary iface is configured. If yes,
+	 * then allow further STA connection to all
+	 * available bands/channels irrespective of first
+	 * STA connection band, which allow driver to
+	 * connect with the best available AP present in
+	 * environment, so that user can switch to second
+	 * connection and mark it as primary.
+	 */
+	if (dual_sta_policy->primary_vdev_id != WLAN_UMAC_VDEV_ID_MAX) {
+		mlme_debug("primary iface is configured, vdev_id: %d",
+			   dual_sta_policy->primary_vdev_id);
+		return;
+	}
 
 	channel_list = qdf_mem_malloc(NUM_CHANNELS * sizeof(uint32_t));
 	if (!channel_list)
@@ -755,6 +806,9 @@ QDF_STATUS wlan_cm_roam_cfg_get_value(struct wlan_objmgr_psoc *psoc,
 		break;
 	case IS_SINGLE_PMK:
 		dst_config->bool_value = rso_cfg->is_single_pmk;
+		break;
+	case LOST_LINK_RSSI:
+		dst_config->int_value = rso_cfg->lost_link_rssi;
 		break;
 	default:
 		mlme_err("Invalid roam config requested:%d", roam_cfg_type);
@@ -1128,6 +1182,9 @@ wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		break;
 	case IS_SINGLE_PMK:
 		rso_cfg->is_single_pmk = src_config->bool_value;
+		break;
+	case LOST_LINK_RSSI:
+		rso_cfg->lost_link_rssi = src_config->int_value;
 		break;
 	default:
 		mlme_err("Invalid roam config requested:%d", roam_cfg_type);

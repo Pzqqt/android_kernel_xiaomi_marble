@@ -534,6 +534,7 @@ static const struct ieee80211_txrx_stypes
 	[NL80211_IFTYPE_P2P_CLIENT] = {
 		.tx = 0xffff,
 		.rx = BIT(SIR_MAC_MGMT_ACTION) |
+		      BIT(SIR_MAC_MGMT_AUTH) |
 		      BIT(SIR_MAC_MGMT_PROBE_REQ),
 	},
 	[NL80211_IFTYPE_P2P_GO] = {
@@ -1124,6 +1125,9 @@ hdd_convert_hang_reason(enum qdf_hang_reason reason)
 		break;
 	case QCA_HANG_BUS_FAILURE:
 		ret_val = QCA_WLAN_HANG_BUS_FAILURE;
+		break;
+	case QDF_TASKLET_CREDIT_LATENCY_DETECT:
+		ret_val = QCA_WLAN_HANG_TASKLET_CREDIT_LATENCY_DETECT;
 		break;
 	case QDF_REASON_UNSPECIFIED:
 	default:
@@ -3047,23 +3051,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		qdf_event_reset(&adapter->acs_complete_event);
 	}
 
-	qdf_mutex_acquire(&hdd_ctx->regulatory_status_lock);
-	if (hdd_ctx->is_regulatory_update_in_progress) {
-		qdf_mutex_release(&hdd_ctx->regulatory_status_lock);
-		hdd_debug("waiting for channel list to update");
-		qdf_wait_for_event_completion(&hdd_ctx->regulatory_update_event,
-					      CHANNEL_LIST_UPDATE_TIMEOUT);
-		/* In case of set country failure in FW, response never comes
-		 * so wait the full timeout, then set in_progress to false.
-		 * If the response comes back, in_progress will already be set
-		 * to false anyways.
-		 */
-		qdf_mutex_acquire(&hdd_ctx->regulatory_status_lock);
-		hdd_ctx->is_regulatory_update_in_progress = false;
-		qdf_mutex_release(&hdd_ctx->regulatory_status_lock);
-	} else {
-		qdf_mutex_release(&hdd_ctx->regulatory_status_lock);
-	}
+	hdd_reg_wait_for_country_change(hdd_ctx);
 
 	ret = wlan_cfg80211_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_ACS_MAX, data,
 					 data_len,
@@ -6993,6 +6981,8 @@ const struct nla_policy wlan_hdd_wifi_config_policy[
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_CHANNEL_WIDTH] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_DYNAMIC_BW] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_NSS] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_OPTIMIZED_POWER_MANAGEMENT] = {
+		.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_UDP_QOS_UPGRADE] = {
 		.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_NUM_TX_CHAINS] = {.type = NLA_U8 },
@@ -7001,7 +6991,8 @@ const struct nla_policy wlan_hdd_wifi_config_policy[
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANI_LEVEL] = {.type = NLA_S32 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_NSS] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_NSS] = {.type = NLA_U8 },
-
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_CONCURRENT_STA_PRIMARY] = {
+							.type = NLA_U8 },
 };
 
 static const struct nla_policy
@@ -7623,8 +7614,8 @@ static int hdd_config_mpdu_aggregation(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 
 	if (!rx_attr) {
-		hdd_err("Missing attribute for RX");
-		return -EINVAL;
+		hdd_debug("Missing attribute for RX");
+		return 0;
 	}
 
 	rx_size = nla_get_u8(rx_attr);
@@ -7651,8 +7642,8 @@ static int hdd_config_msdu_aggregation(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 
 	if (!rx_attr) {
-		hdd_err("Missing attribute for RX");
-		return -EINVAL;
+		hdd_debug("Missing attribute for RX");
+		return 0;
 	}
 
 	rx_size = nla_get_u8(rx_attr);
@@ -8623,6 +8614,116 @@ static int hdd_config_disable_fils(struct hdd_adapter *adapter,
 	return qdf_status_to_os_return(status);
 }
 
+static int hdd_set_primary_interface(struct hdd_adapter *adapter,
+				     const struct nlattr *attr)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	bool is_set_primary_iface;
+	QDF_STATUS status;
+	uint8_t primary_vdev_id, dual_sta_policy;
+	int set_value;
+	uint32_t count;
+	bool enable_mcc_adaptive_sch = false;
+
+	/* ignore unless in STA mode */
+	if (adapter->device_mode != QDF_STA_MODE)
+		return 0;
+
+	is_set_primary_iface = nla_get_u8(attr);
+
+	primary_vdev_id =
+		is_set_primary_iface ? adapter->vdev_id : WLAN_UMAC_VDEV_ID_MAX;
+
+	status = ucfg_mlme_set_primary_interface(hdd_ctx->psoc,
+						 primary_vdev_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("could not set primary interface, %d", status);
+		return -EINVAL;
+	}
+
+	count = policy_mgr_mode_specific_connection_count(hdd_ctx->psoc,
+							  PM_STA_MODE, NULL);
+
+	if (count != 2) {
+		hdd_debug("STA + STA concurrency not present, count:%d", count);
+		return -EINVAL;
+	}
+
+	/* if dual sta roaming enabled and both sta in DBS then no need
+	 * to enable roaming on primary as both STA's have roaming enabled.
+	 * if dual sta roaming enabled and both sta in MCC then need to enable
+	 * roaming on primary vdev.
+	 * if dual sta roaming NOT enabled then need to enable roaming on
+	 * primary vdev for dual STA concurrency in MCC or DBS.
+	 */
+	if ((is_set_primary_iface &&
+	     ucfg_mlme_get_dual_sta_roaming_enabled(hdd_ctx->psoc) &&
+	     policy_mgr_current_concurrency_is_mcc(hdd_ctx->psoc)) ||
+	    (is_set_primary_iface &&
+	     !ucfg_mlme_get_dual_sta_roaming_enabled(hdd_ctx->psoc))){
+		hdd_debug("Enable roaming on requested interface: %d",
+			  adapter->vdev_id);
+		wlan_cm_roam_state_change(hdd_ctx->pdev, adapter->vdev_id,
+					  WLAN_ROAM_RSO_ENABLED,
+					  REASON_ROAM_SET_PRIMARY);
+	}
+
+	/*
+	 * send duty cycle percentage to FW only if STA + STA
+	 * concurrency is in MCC.
+	 */
+	if (!policy_mgr_current_concurrency_is_mcc(hdd_ctx->psoc)) {
+		hdd_debug("STA + STA concurrency not in MCC");
+		return -EINVAL;
+	}
+
+	status = ucfg_mlme_get_dual_sta_policy(hdd_ctx->psoc, &dual_sta_policy);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("could not get dual sta policy, %d", status);
+		return -EINVAL;
+	}
+
+	hdd_debug("is_set_primary_iface: %d, primary vdev id: %d, dual_sta_policy:%d",
+		  is_set_primary_iface, primary_vdev_id, dual_sta_policy);
+
+	if (is_set_primary_iface && dual_sta_policy ==
+	    QCA_WLAN_CONCURRENT_STA_POLICY_PREFER_PRIMARY) {
+		hdd_debug("Disable mcc_adaptive_scheduler");
+		ucfg_policy_mgr_get_mcc_adaptive_sch(hdd_ctx->psoc,
+						     &enable_mcc_adaptive_sch);
+		if (enable_mcc_adaptive_sch) {
+			ucfg_policy_mgr_set_dynamic_mcc_adaptive_sch(
+							hdd_ctx->psoc, false);
+			if (QDF_IS_STATUS_ERROR(sme_set_mas(false))) {
+				hdd_err("Fail to disable mcc adaptive sched.");
+					return -EINVAL;
+			}
+		}
+		/* Configure mcc duty cycle percentage */
+		set_value =
+		   ucfg_mlme_get_mcc_duty_cycle_percentage(hdd_ctx->pdev);
+		if (set_value < 0) {
+			hdd_err("Invalid mcc duty cycle");
+			return -EINVAL;
+		}
+		wlan_hdd_send_mcc_vdev_quota(adapter, set_value);
+	} else {
+		hdd_debug("Enable mcc_adaptive_scheduler");
+		ucfg_policy_mgr_get_mcc_adaptive_sch(hdd_ctx->psoc,
+						     &enable_mcc_adaptive_sch);
+		if (enable_mcc_adaptive_sch) {
+			ucfg_policy_mgr_set_dynamic_mcc_adaptive_sch(
+							hdd_ctx->psoc, true);
+			if (QDF_STATUS_SUCCESS != sme_set_mas(true)) {
+				hdd_err("Fail to enable mcc_adaptive_sched.");
+				return -EAGAIN;
+			}
+		}
+	}
+
+	return 0;
+}
+
 static int hdd_config_rsn_ie(struct hdd_adapter *adapter,
 			     const struct nlattr *attr)
 {
@@ -8976,6 +9077,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_power},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_UDP_QOS_UPGRADE,
 	 hdd_config_udp_qos_upgrade_threshold},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_CONCURRENT_STA_PRIMARY,
+	 hdd_set_primary_interface},
 };
 
 #ifdef WLAN_FEATURE_ELNA
@@ -9870,6 +9973,40 @@ static void hdd_disable_runtime_pm_for_user(struct hdd_context *hdd_ctx)
 	qdf_runtime_pm_prevent_suspend(&ctx->user);
 }
 
+static int hdd_test_config_6ghz_security_test_mode(struct hdd_context *hdd_ctx,
+						   struct nlattr *attr)
+
+{
+	uint8_t cfg_val;
+	bool rf_test_mode = false;
+	QDF_STATUS status;
+
+	status = ucfg_mlme_is_rf_test_mode_enabled(hdd_ctx->psoc,
+						   &rf_test_mode);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("Get rf test mode failed");
+		return -EINVAL;
+	}
+	if (rf_test_mode) {
+		hdd_err("rf test mode is enabled, ignore setting");
+		return 0;
+	}
+
+	cfg_val = nla_get_u8(attr);
+	hdd_debug("safe mode setting %d", cfg_val);
+	if (cfg_val) {
+		wlan_cm_set_check_6ghz_security(hdd_ctx->psoc, false);
+		wlan_cm_set_6ghz_key_mgmt_mask(hdd_ctx->psoc,
+					       DEFAULT_KEYMGMT_6G_MASK);
+	} else {
+		wlan_cm_set_check_6ghz_security(hdd_ctx->psoc, true);
+		wlan_cm_set_6ghz_key_mgmt_mask(hdd_ctx->psoc,
+					       ALLOWED_KEYMGMT_6G_MASK);
+	}
+
+	return 0;
+}
+
 /**
  * __wlan_hdd_cfg80211_set_wifi_test_config() - Wifi test configuration
  * vendor command
@@ -9905,7 +10042,6 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 	uint8_t value = 0;
 	uint8_t wmm_mode = 0;
 	uint32_t cmd_id;
-	bool rf_test_mode = false;
 	struct set_wfatest_params wfa_param = {0};
 	struct hdd_station_ctx *hdd_sta_ctx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
@@ -10470,30 +10606,12 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 
 	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_6GHZ_SECURITY_TEST_MODE;
 	if (tb[cmd_id]) {
-		status = ucfg_mlme_is_rf_test_mode_enabled(hdd_ctx->psoc,
-							   &rf_test_mode);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			hdd_err("Get rf test mode failed");
-			ret_val = -EINVAL;
+		ret_val = hdd_test_config_6ghz_security_test_mode(hdd_ctx,
+								  tb[cmd_id]);
+		if (ret_val)
 			goto send_err;
-		}
-		if (rf_test_mode) {
-			hdd_err("rf test mode is enabled, ignore setting");
-			ret_val = 0;
-			goto send_err;
-		}
-		cfg_val = nla_get_u8(tb[cmd_id]);
-		hdd_debug("safe mode setting %d", cfg_val);
-		if (cfg_val) {
-			wlan_cm_set_check_6ghz_security(hdd_ctx->psoc, false);
-			wlan_cm_set_6ghz_key_mgmt_mask(hdd_ctx->psoc,
-						       DEFAULT_KEYMGMT_6G_MASK);
-		} else {
-			wlan_cm_set_check_6ghz_security(hdd_ctx->psoc, true);
-			wlan_cm_set_6ghz_key_mgmt_mask(hdd_ctx->psoc,
-						       ALLOWED_KEYMGMT_6G_MASK);
-		}
 	}
+
 	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_OCI_OVERRIDE;
 	if (tb[cmd_id]) {
 		struct nlattr *tb2[QCA_WLAN_VENDOR_ATTR_OCI_OVERRIDE_MAX + 1];
@@ -12253,8 +12371,8 @@ QCA_WLAN_VENDOR_ATTR_STA_CONNECT_ROAM_POLICY_MAX + 1] = {
  */
 static int
 __wlan_hdd_cfg80211_sta_roam_policy(struct wiphy *wiphy,
-		struct wireless_dev *wdev,
-		const void *data, int data_len)
+				    struct wireless_dev *wdev,
+				    const void *data, int data_len)
 {
 	struct net_device *dev = wdev->netdev;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
@@ -12327,9 +12445,10 @@ __wlan_hdd_cfg80211_sta_roam_policy(struct wiphy *wiphy,
  * in Scanning.
  * Return: 0 on success; errno on failure
  */
-static int wlan_hdd_cfg80211_sta_roam_policy(struct wiphy *wiphy,
-		struct wireless_dev *wdev,
-		const void *data, int data_len)
+static int
+wlan_hdd_cfg80211_sta_roam_policy(struct wiphy *wiphy,
+				  struct wireless_dev *wdev, const void *data,
+				  int data_len)
 {
 	int errno;
 	struct osif_vdev_sync *vdev_sync;
@@ -12340,6 +12459,100 @@ static int wlan_hdd_cfg80211_sta_roam_policy(struct wiphy *wiphy,
 
 	errno = __wlan_hdd_cfg80211_sta_roam_policy(wiphy, wdev,
 						    data, data_len);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
+}
+
+const struct nla_policy
+wlan_hdd_set_dual_sta_policy[
+QCA_WLAN_VENDOR_ATTR_CONCURRENT_STA_POLICY_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_CONCURRENT_STA_POLICY_CONFIG] = {.type = NLA_U8 },
+};
+
+/**
+ * __wlan_hdd_cfg80211_dual_sta_policy() - Wrapper to configure the concurrent
+ * session policies
+ * @wiphy:    wiphy structure pointer
+ * @wdev:     Wireless device structure pointer
+ * @data:     Pointer to the data received
+ * @data_len: Length of @data
+ *
+ * Configure the concurrent session policies when multiple STA ifaces are
+ * (getting) active.
+ * Return: 0 on success; errno on failure
+ */
+static int __wlan_hdd_cfg80211_dual_sta_policy(struct wiphy *wiphy,
+					       struct wireless_dev *wdev,
+					       const void *data, int data_len)
+{
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
+	struct nlattr *tb[
+		QCA_WLAN_VENDOR_ATTR_CONCURRENT_STA_POLICY_MAX + 1];
+	QDF_STATUS status;
+	uint8_t dual_sta_config =
+		QCA_WLAN_CONCURRENT_STA_POLICY_UNBIASED;
+
+	if (wlan_hdd_validate_context(hdd_ctx)) {
+		hdd_err("Invalid hdd context");
+		return -EINVAL;
+	}
+
+	if (wlan_cfg80211_nla_parse(tb,
+			       QCA_WLAN_VENDOR_ATTR_CONCURRENT_STA_POLICY_MAX,
+			       data, data_len,
+			       wlan_hdd_set_dual_sta_policy)) {
+		hdd_err("nla_parse failed");
+		return -EINVAL;
+	}
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_CONCURRENT_STA_POLICY_CONFIG]) {
+		hdd_err("sta policy config attribute not present");
+		return -EINVAL;
+	}
+
+	dual_sta_config = nla_get_u8(
+			tb[QCA_WLAN_VENDOR_ATTR_CONCURRENT_STA_POLICY_CONFIG]);
+	hdd_debug("Concurrent STA policy : %d", dual_sta_config);
+
+	if (dual_sta_config > QCA_WLAN_CONCURRENT_STA_POLICY_UNBIASED)
+		return -EINVAL;
+
+	status = ucfg_mlme_set_dual_sta_policy(hdd_ctx->psoc, dual_sta_config);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("failed to set MLME dual sta config");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+/**
+ * wlan_hdd_cfg80211_dual_sta_policy() - Wrapper to configure the concurrent
+ * session policies
+ * @wiphy:    wiphy structure pointer
+ * @wdev:     Wireless device structure pointer
+ * @data:     Pointer to the data received
+ * @data_len: Length of @data
+ *
+ * Configure the concurrent session policies when multiple STA ifaces are
+ * (getting) active.
+ * Return: 0 on success; errno on failure
+ */
+static int wlan_hdd_cfg80211_dual_sta_policy(struct wiphy *wiphy,
+					     struct wireless_dev *wdev,
+					     const void *data, int data_len)
+{
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(wdev->netdev, &vdev_sync);
+	if (errno)
+		return errno;
+
+	errno = __wlan_hdd_cfg80211_dual_sta_policy(wiphy, wdev, data,
+						    data_len);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -15773,6 +15986,19 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 			wlan_hdd_set_sta_roam_config_policy,
 			QCA_WLAN_VENDOR_ATTR_STA_CONNECT_ROAM_POLICY_MAX)
 	},
+
+	{
+		.info.vendor_id = QCA_NL80211_VENDOR_ID,
+		.info.subcmd =
+			QCA_NL80211_VENDOR_SUBCMD_CONCURRENT_MULTI_STA_POLICY,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+			WIPHY_VENDOR_CMD_NEED_NETDEV,
+		.doit = wlan_hdd_cfg80211_dual_sta_policy,
+		vendor_command_policy(
+			wlan_hdd_set_dual_sta_policy,
+			QCA_WLAN_VENDOR_ATTR_CONCURRENT_STA_POLICY_MAX)
+	},
+
 #ifdef FEATURE_WLAN_CH_AVOID
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
@@ -20752,23 +20978,7 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 	if (policy_mgr_is_sta_mon_concurrency(hdd_ctx->psoc))
 		return -EINVAL;
 
-	qdf_mutex_acquire(&hdd_ctx->regulatory_status_lock);
-	if (hdd_ctx->is_regulatory_update_in_progress) {
-		qdf_mutex_release(&hdd_ctx->regulatory_status_lock);
-		hdd_debug("waiting for channel list to update");
-		qdf_wait_for_event_completion(&hdd_ctx->regulatory_update_event,
-					      CHANNEL_LIST_UPDATE_TIMEOUT);
-		/* In case of set country failure in FW, response never comes
-		 * so wait the full timeout, then set in_progress to false.
-		 * If the response comes back, in_progress will already be set
-		 * to false anyways.
-		 */
-		qdf_mutex_acquire(&hdd_ctx->regulatory_status_lock);
-		hdd_ctx->is_regulatory_update_in_progress = false;
-		qdf_mutex_release(&hdd_ctx->regulatory_status_lock);
-	} else {
-		qdf_mutex_release(&hdd_ctx->regulatory_status_lock);
-	}
+	hdd_reg_wait_for_country_change(hdd_ctx);
 
 	if (req->bssid)
 		bssid = req->bssid;

@@ -3399,6 +3399,9 @@ void hdd_reset_tcp_adv_win_scale(struct hdd_context *hdd_ctx)
 	enum wlan_tp_level next_level = WLAN_SVC_TP_NONE;
 	struct wlan_rx_tp_data rx_tp_data = {0};
 
+	if (!hdd_ctx->config->enable_tcp_adv_win_scale)
+		return;
+
 	rx_tp_data.rx_tp_flags |= TCP_ADV_WIN_SCL;
 	rx_tp_data.level = next_level;
 	hdd_ctx->cur_rx_level = WLAN_SVC_TP_NONE;
@@ -3413,6 +3416,7 @@ void hdd_reset_tcp_adv_win_scale(struct hdd_context *hdd_ctx)
  *
  * Return: True if vote level is high
  */
+#ifdef RX_PERFORMANCE
 bool hdd_is_current_high_throughput(struct hdd_context *hdd_ctx)
 {
 	if (hdd_ctx->cur_vote_level < PLD_BUS_WIDTH_MEDIUM)
@@ -3420,6 +3424,7 @@ bool hdd_is_current_high_throughput(struct hdd_context *hdd_ctx)
 	else
 		return true;
 }
+#endif
 #endif
 
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL

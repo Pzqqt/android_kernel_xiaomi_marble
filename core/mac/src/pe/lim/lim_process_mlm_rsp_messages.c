@@ -443,8 +443,15 @@ void lim_pmf_comeback_timer_callback(void *context)
 		return;
 	}
 
-	pe_info("comeback later timer expired. sending MLM ASSOC req for vdev %d",
-		session->vdev_id);
+	if (session->limMlmState != eLIM_MLM_WT_ASSOC_RSP_STATE) {
+		pe_debug("Don't send assoc req, timer expire when limMlmState %d vdev id %d",
+			 session->limMlmState, session->vdev_id);
+		return;
+	}
+
+	pe_info("comeback later timer expired. sending MLM ASSOC req for vdev %d, session limMlmState %d, info lim_mlm_state %d",
+		session->vdev_id, session->limMlmState, info->lim_mlm_state);
+
 	/* set MLM state such that ASSOC REQ packet will be sent out */
 	session->limPrevMlmState = info->lim_prev_mlm_state;
 	session->limMlmState = info->lim_mlm_state;

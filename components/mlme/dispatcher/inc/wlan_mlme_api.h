@@ -271,6 +271,26 @@ QDF_STATUS wlan_mlme_set_band_capability(struct wlan_objmgr_psoc *psoc,
 					 uint32_t band_capability);
 
 /**
+ * wlan_mlme_set_dual_sta_policy() - Set the dual sta config
+ * @psoc: pointer to psoc object
+ * @dual_sta_config: Value to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_set_dual_sta_policy(struct wlan_objmgr_psoc *psoc,
+					 uint8_t dual_sta_config);
+
+/**
+ * wlan_mlme_get_dual_sta_policy() - Get the dual sta policy
+ * @psoc: pointer to psoc object
+ * @dual_sta_config: Value to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_dual_sta_policy(struct wlan_objmgr_psoc *psoc,
+					 uint8_t *dual_sta_config);
+
+/**
  * wlan_mlme_get_prevent_link_down() - Get the prevent link down config
  * @psoc: pointer to psoc object
  * @prevent_link_down: Pointer to the variable from caller
@@ -938,6 +958,21 @@ QDF_STATUS mlme_update_tgt_he_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
 					  struct wma_tgt_cfg *cfg);
 #endif
 
+#ifdef WLAN_FEATURE_11BE
+/**
+ * mlme_update_tgt_eht_caps_in_cfg() - Update tgt eht cap in mlme component
+ *
+ * @psoc: pointer to psoc object
+ * @cfg: pointer to config params from target
+ *
+ * This api to be used by callers to update EHT caps in mlme.
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+QDF_STATUS mlme_update_tgt_eht_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
+					  struct wma_tgt_cfg *cfg);
+#endif
+
 /**
  * wlan_mlme_is_ap_prot_enabled() - check if sap protection is enabled
  * @psoc: pointer to psoc object
@@ -1027,6 +1062,41 @@ QDF_STATUS wlan_mlme_get_fils_enabled_info(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS wlan_mlme_set_fils_enabled_info(struct wlan_objmgr_psoc *psoc,
 					   bool value);
+
+/**
+ * wlan_mlme_set_primary_interface() - Set the primary iface id for driver
+ * @psoc: pointer to psoc object
+ * @value: value that needs to be set from the caller
+ *
+ * When a vdev is set as primary then based on the dual sta policy
+ * "qca_wlan_concurrent_sta_policy_config" mcc preference and roaming has
+ * to be enabled on the primary vdev
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_set_primary_interface(struct wlan_objmgr_psoc *psoc,
+					   uint8_t value);
+
+/**
+ * wlan_mlme_set_default_primary_iface() - Set the default primary iface id
+ * for driver
+ * @psoc: pointer to psoc object
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_set_default_primary_iface(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_mlme_get_mcc_duty_cycle_percentage() - Get primary STA iface duty
+ * cycle percentage
+ * @psoc: pointer to psoc object
+ * @value: value that needs to be set from the caller
+ *
+ * API to get the MCC duty cycle for primary and secondary STA's
+ *
+ * Return: primary iface quota on success
+ */
+int wlan_mlme_get_mcc_duty_cycle_percentage(struct wlan_objmgr_pdev *pdev);
 
 /**
  * wlan_mlme_get_tl_delayed_trgr_frm_int() - Get delay interval(in ms)
@@ -2450,6 +2520,15 @@ wlan_mlme_update_sae_single_pmk(struct wlan_objmgr_vdev *vdev,
 void
 wlan_mlme_get_sae_single_pmk_info(struct wlan_objmgr_vdev *vdev,
 				  struct wlan_mlme_sae_single_pmk *pmksa);
+
+/**
+ * wlan_mlme_is_sae_single_pmk_enabled() - Get is SAE single pmk feature enabled
+ * @psoc: Pointer to Global psoc
+ *
+ * Return: True if SAE single PMK is enabled
+ */
+bool wlan_mlme_is_sae_single_pmk_enabled(struct wlan_objmgr_psoc *psoc);
+
 /**
  * wlan_mlme_clear_sae_single_pmk_info - API to clear mlme_pmkid_info ap caps
  * @vdev: vdev object
@@ -2464,6 +2543,12 @@ static inline void
 wlan_mlme_set_sae_single_pmk_bss_cap(struct wlan_objmgr_psoc *psoc,
 				     uint8_t vdev_id, bool val)
 {
+}
+
+static inline
+bool wlan_mlme_is_sae_single_pmk_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
 }
 
 static inline void
@@ -3114,4 +3199,14 @@ bool wlan_mlme_is_local_tpe_pref(struct wlan_objmgr_psoc *psoc);
  */
 bool
 wlan_mlme_is_data_stall_recovery_fw_supported(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * mlme_cfg_get_eht_caps() - Get the EHT capability info
+ * @psoc: pointer to psoc object
+ * @eht_cap: Caps that needs to be filled.
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS mlme_cfg_get_eht_caps(struct wlan_objmgr_psoc *psoc,
+				 tDot11fIEeht_cap *eht_cap);
 #endif /* _WLAN_MLME_API_H_ */

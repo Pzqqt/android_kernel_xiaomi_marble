@@ -502,11 +502,17 @@ QDF_STATUS policy_mgr_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	/* Initialize non-DBS pcl table pointer to particular table*/
 	policy_mgr_init_non_dbs_pcl(psoc);
 
-	if (policy_mgr_is_hw_dbs_2x2_capable(psoc) ||
-	    policy_mgr_is_hw_dbs_required_for_band(psoc,
-						   HW_MODE_MAC_BAND_2G)) {
-		next_action_two_connection_table =
-		&pm_next_action_two_connection_dbs_2x2_table;
+	if (policy_mgr_is_hw_dbs_2x2_capable(psoc)) {
+		if (policy_mgr_is_hw_dbs_required_for_band(psoc,
+							HW_MODE_MAC_BAND_2G)) {
+			next_action_two_connection_table =
+				&pm_next_action_two_connection_dbs_2x2_table;
+			policy_mgr_debug("using hst/hsp policy manager table");
+		} else {
+			next_action_two_connection_table =
+			      &pm_next_action_two_connection_dbs_2x2_table_v2;
+			policy_mgr_debug("using hmt policy manager table");
+		}
 	} else if (policy_mgr_is_2x2_1x1_dbs_capable(psoc)) {
 		next_action_two_connection_table =
 		&pm_next_action_two_connection_dbs_2x2_5g_1x1_2g_table;

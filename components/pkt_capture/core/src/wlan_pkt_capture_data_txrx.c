@@ -735,12 +735,16 @@ static void pkt_capture_rx_mon_get_rx_status(void *psoc, void *desc,
 					     struct mon_rx_status *rx_status)
 {
 	uint8_t *rx_tlv_hdr = desc;
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)desc;
+	struct rx_msdu_start *msdu_start =
+					&pkt_tlvs->msdu_start_tlv.rx_msdu_start;
 
 	rx_status->rtap_flags |= pkt_capture_get_rx_rtap_flags(rx_tlv_hdr);
 	rx_status->chan_freq = hal_rx_msdu_start_get_freq(rx_tlv_hdr) >> 16;
 	rx_status->chan_num = cds_freq_to_chan(rx_status->chan_freq);
 	rx_status->ant_signal_db = hal_rx_msdu_start_get_rssi(rx_tlv_hdr);
 	rx_status->rssi_comb = hal_rx_msdu_start_get_rssi(rx_tlv_hdr);
+	rx_status->tsft = msdu_start->ppdu_start_timestamp;
 
 	if (rx_status->chan_freq > CHANNEL_FREQ_5150)
 		rx_status->ofdm_flag = 1;
@@ -941,8 +945,6 @@ pkt_capture_rx_data_cb(
 
 		/* need to update this to fill rx_status*/
 		pkt_capture_rx_mon_get_rx_status(psoc, rx_tlv_hdr, &rx_status);
-		/* timestamp not available */
-		rx_status.tsft = qdf_nbuf_get_timestamp(msdu);
 		rx_status.chan_noise_floor = NORMALIZED_TO_NOISE_FLOOR;
 		rx_status.tx_status = status;
 		rx_status.tx_retry_cnt = tx_retry_cnt;

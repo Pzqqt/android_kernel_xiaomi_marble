@@ -704,15 +704,18 @@ QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
 
 		/* SBS and DBS have dual MAC. Upto 2 MACs are considered. */
 		if ((hw_config_type == WMI_HW_MODE_DBS) ||
-			(hw_config_type == WMI_HW_MODE_SBS_PASSIVE) ||
-			(hw_config_type == WMI_HW_MODE_SBS)) {
+		    (hw_config_type == WMI_HW_MODE_SBS_PASSIVE) ||
+		    (hw_config_type == WMI_HW_MODE_SBS) ||
+		    (hw_config_type == WMI_HW_MODE_DBS_OR_SBS)) {
 			/* Update for MAC1 */
 			tmp = &info->mac_phy_cap[j++];
 			policy_mgr_get_hw_mode_params(tmp, &mac1_ss_bw_info);
-			if (hw_config_type == WMI_HW_MODE_DBS)
+			if (hw_config_type == WMI_HW_MODE_DBS ||
+			    hw_config_type == WMI_HW_MODE_DBS_OR_SBS)
 				dbs_mode = HW_MODE_DBS;
 			if ((hw_config_type == WMI_HW_MODE_SBS_PASSIVE) ||
-				(hw_config_type == WMI_HW_MODE_SBS))
+			    (hw_config_type == WMI_HW_MODE_SBS) ||
+			    (hw_config_type == WMI_HW_MODE_DBS_OR_SBS))
 				sbs_mode = HW_MODE_SBS;
 		}
 
@@ -1064,6 +1067,29 @@ bool policy_mgr_is_hw_dbs_capable(struct wlan_objmgr_psoc *psoc)
 
 	if (!policy_mgr_find_if_hwlist_has_dbs(psoc)) {
 		policymgr_nofl_debug("HW mode list has no DBS");
+		return false;
+	}
+
+	return true;
+}
+
+bool policy_mgr_is_pcl_weightage_required(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct dual_sta_policy *dual_sta_policy;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return true;
+
+	dual_sta_policy = &mlme_obj->cfg.gen.dual_sta_policy;
+
+	if (dual_sta_policy->concurrent_sta_policy  ==
+		QCA_WLAN_CONCURRENT_STA_POLICY_PREFER_PRIMARY &&
+		dual_sta_policy->primary_vdev_id != WLAN_UMAC_VDEV_ID_MAX) {
+		policy_mgr_debug("dual_sta_policy : %d, primary_vdev_id:%d",
+			dual_sta_policy->concurrent_sta_policy,
+			dual_sta_policy->primary_vdev_id);
 		return false;
 	}
 
@@ -1573,6 +1599,42 @@ void policy_mgr_set_dual_mac_fw_mode_config(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_err("sme_soc_set_dual_mac_config failed %d", status);
 }
 
+bool policy_mgr_is_scc_with_this_vdev_id(struct wlan_objmgr_psoc *psoc,
+					 uint8_t vdev_id)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint32_t i, ch_freq;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return false;
+	}
+
+	/* Get the channel freq for a given vdev_id */
+	status = policy_mgr_get_chan_by_session_id(psoc, vdev_id,
+						   &ch_freq);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		policy_mgr_err("Failed to get channel for vdev:%d", vdev_id);
+		return false;
+	}
+
+	/* Compare given vdev_id freq against other vdev_id's */
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	for (i = 0; i < MAX_NUMBER_OF_CONC_CONNECTIONS; i++) {
+		if ((pm_conc_connection_list[i].vdev_id != vdev_id) &&
+		    (pm_conc_connection_list[i].in_use) &&
+		    (pm_conc_connection_list[i].freq == ch_freq)) {
+			qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+			return true;
+		}
+	}
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+	return false;
+}
+
 bool policy_mgr_current_concurrency_is_mcc(struct wlan_objmgr_psoc *psoc)
 {
 	uint32_t num_connections = 0;
@@ -1934,6 +1996,14 @@ QDF_STATUS policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
 		if (pm_ctx->dp_cbacks.hdd_disable_rx_ol_in_concurrency)
 			pm_ctx->dp_cbacks.hdd_disable_rx_ol_in_concurrency(false);
 	};
+
+	if ((mode == QDF_SAP_MODE || mode == QDF_P2P_GO_MODE) &&
+	    (policy_mgr_mode_specific_connection_count(psoc, PM_SAP_MODE,
+						       NULL) == 0) &&
+	    (policy_mgr_mode_specific_connection_count(psoc, PM_P2P_GO_MODE,
+						       NULL) == 0))
+		wlan_reg_set_ap_pwr_and_update_chan_list(pm_ctx->pdev,
+							 REG_INDOOR_AP);
 
 	/* Disable RPS if SAP interface has come up */
 	if (policy_mgr_mode_specific_connection_count(psoc, PM_SAP_MODE, NULL)
@@ -2423,6 +2493,57 @@ static bool policy_mgr_is_6g_channel_allowed(
 
 	return true;
 }
+
+#ifdef WLAN_FEATURE_11BE_MLO
+bool policy_mgr_is_mlo_sap_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
+					       bool is_new_vdev_mlo)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint32_t conn_index;
+	bool ret = false;
+	uint32_t mlo_sap_count = 0;
+	uint32_t non_mlo_sap_count = 0;
+	struct wlan_objmgr_vdev *vdev;
+	uint32_t vdev_id;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return ret;
+	}
+
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
+		 conn_index++) {
+		if (pm_conc_connection_list[conn_index].in_use) {
+			vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
+					psoc, vdev_id, WLAN_POLICY_MGR_ID);
+			if (!vdev) {
+				policy_mgr_err("vdev for vdev_id:%d is NULL",
+					       vdev_id);
+				qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+				return ret;
+			}
+			if (wlan_vdev_mlme_is_mlo_sap(vdev))
+				mlo_sap_count++;
+			else
+				non_mlo_sap_count++;
+			wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
+		}
+	}
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+	if (is_new_vdev_mlo)
+		mlo_sap_count++;
+	else
+		non_mlo_sap_count++;
+
+	if (!mlo_sap_count || !non_mlo_sap_count)
+		ret = true;
+
+	return ret;
+}
+#endif
 
 bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 				       enum policy_mgr_con_mode mode,
@@ -3690,6 +3811,38 @@ QDF_STATUS policy_mgr_is_chan_ok_for_dnbs(struct wlan_objmgr_psoc *psoc,
 	}
 
 	return QDF_STATUS_SUCCESS;
+}
+
+void policy_mgr_get_hw_dbs_max_bw(struct wlan_objmgr_psoc *psoc,
+				  struct dbs_bw *bw_dbs)
+{
+	uint32_t dbs, sbs, i, param;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+
+	for (i = 0; i < pm_ctx->num_dbs_hw_modes; i++) {
+		param = pm_ctx->hw_mode.hw_mode_list[i];
+		dbs = POLICY_MGR_HW_MODE_DBS_MODE_GET(param);
+		sbs = POLICY_MGR_HW_MODE_SBS_MODE_GET(param);
+
+		if (!dbs && !sbs)
+			bw_dbs->mac0_bw =
+				POLICY_MGR_HW_MODE_MAC0_BANDWIDTH_GET(param);
+
+		if (dbs) {
+			bw_dbs->mac0_bw =
+				POLICY_MGR_HW_MODE_MAC0_BANDWIDTH_GET(param);
+			bw_dbs->mac1_bw =
+				POLICY_MGR_HW_MODE_MAC1_BANDWIDTH_GET(param);
+		} else {
+			continue;
+		}
+	}
 }
 
 uint32_t policy_mgr_get_hw_dbs_nss(struct wlan_objmgr_psoc *psoc,

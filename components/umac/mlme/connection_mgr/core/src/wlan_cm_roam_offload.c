@@ -920,10 +920,13 @@ static void cm_update_score_params(struct wlan_objmgr_psoc *psoc,
 	struct weight_cfg *weight_config;
 	struct psoc_mlme_obj *mlme_psoc_obj;
 	struct scoring_cfg *score_config;
+	struct dual_sta_policy *dual_sta_policy;
 
 	mlme_psoc_obj = wlan_psoc_mlme_get_cmpt_obj(psoc);
 	if (!mlme_psoc_obj)
 		return;
+
+	dual_sta_policy = &mlme_obj->cfg.gen.dual_sta_policy;
 
 	score_config = &mlme_psoc_obj->psoc_cfg.score_config;
 	roam_score_params = &mlme_obj->cfg.roam_scoring;
@@ -944,8 +947,14 @@ static void cm_update_score_params(struct wlan_objmgr_psoc *psoc,
 		weight_config->channel_congestion_weightage;
 	req_score_params->beamforming_weightage =
 		weight_config->beamforming_cap_weightage;
-	req_score_params->pcl_weightage =
-		weight_config->pcl_weightage;
+
+	/*
+	 * Don’t consider pcl weightage for STA connection,
+	 * if primary interface is configured.
+	 */
+	if (policy_mgr_is_pcl_weightage_required(psoc))
+		req_score_params->pcl_weightage = weight_config->pcl_weightage;
+
 	req_score_params->oce_wan_weightage = weight_config->oce_wan_weightage;
 	req_score_params->oce_ap_tx_pwr_weightage =
 		weight_config->oce_ap_tx_pwr_weightage;
@@ -3099,8 +3108,17 @@ cm_roam_switch_to_deinit(struct wlan_objmgr_pdev *pdev,
 	mlme_set_roam_state(psoc, vdev_id, WLAN_ROAM_DEINIT);
 	mlme_clear_operations_bitmap(psoc, vdev_id);
 
-	if (reason != REASON_SUPPLICANT_INIT_ROAMING)
+	/* In case of roaming getting disabled due to
+	 * REASON_ROAM_SET_PRIMARY reason, don't enable roaming on
+	 * the other vdev as that is taken care by the caller once roaming
+	 * on this "vdev_id" is disabled.
+	 */
+	if (reason != REASON_SUPPLICANT_INIT_ROAMING &&
+	    reason != REASON_ROAM_SET_PRIMARY) {
+	    mlme_debug("enable roaming on connected sta vdev_id:%d, reason:%d",
+		       vdev_id, reason);
 		wlan_cm_enable_roaming_on_connected_sta(pdev, vdev_id);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -3122,10 +3140,22 @@ cm_roam_switch_to_init(struct wlan_objmgr_pdev *pdev,
 {
 	enum roam_offload_state cur_state;
 	uint8_t temp_vdev_id, roam_enabled_vdev_id;
-	uint32_t roaming_bitmap;
+	uint32_t roaming_bitmap, count;
 	bool dual_sta_roam_active, usr_disabled_roaming;
 	QDF_STATUS status;
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct dual_sta_policy *dual_sta_policy;
+	bool is_vdev_primary = false;
+
+	if (!psoc)
+		return QDF_STATUS_E_FAILURE;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
+
+	dual_sta_policy = &mlme_obj->cfg.gen.dual_sta_policy;
 
 	cm_roam_roam_invoke_in_progress(psoc, vdev_id, false);
 
@@ -3142,8 +3172,18 @@ cm_roam_switch_to_init(struct wlan_objmgr_pdev *pdev,
 			return QDF_STATUS_E_FAILURE;
 		}
 
-		if (dual_sta_roam_active)
+		/*
+		 * Enable roaming on other interface only if STA + STA
+		 * concurrency is in DBS.
+		 */
+		count = policy_mgr_mode_specific_connection_count(psoc,
+								  PM_STA_MODE,
+								  NULL);
+		if (dual_sta_roam_active && (count == 2 &&
+		    !policy_mgr_current_concurrency_is_mcc(psoc))) {
+			mlme_info("STA + STA concurrency is in DBS");
 			break;
+		}
 		/*
 		 * Disable roaming on the enabled sta if supplicant wants to
 		 * enable roaming on this vdev id
@@ -3159,13 +3199,24 @@ cm_roam_switch_to_init(struct wlan_objmgr_pdev *pdev,
 			 * vdev id if it is not an explicit enable from
 			 * supplicant.
 			 */
-			if (reason != REASON_SUPPLICANT_INIT_ROAMING) {
+			mlme_debug("Interface vdev_id: %d, roaming enabled on vdev_id: %d, primary vdev_id:%d, reason:%d",
+				   vdev_id, temp_vdev_id,
+				   dual_sta_policy->primary_vdev_id, reason);
+
+			if (vdev_id == dual_sta_policy->primary_vdev_id)
+				is_vdev_primary = true;
+
+			if (is_vdev_primary ||
+			    reason == REASON_SUPPLICANT_INIT_ROAMING) {
+				cm_roam_state_change(pdev, temp_vdev_id,
+						     WLAN_ROAM_DEINIT,
+						     is_vdev_primary ?
+					     REASON_ROAM_SET_PRIMARY : reason);
+			} else {
 				mlme_info("CM_RSO: Roam module already initialized on vdev:[%d]",
 					  temp_vdev_id);
 				return QDF_STATUS_E_FAILURE;
 			}
-			cm_roam_state_change(pdev, temp_vdev_id,
-					     WLAN_ROAM_DEINIT, reason);
 		}
 		break;
 
@@ -4032,10 +4083,13 @@ cm_store_sae_single_pmk_to_global_cache(struct wlan_objmgr_psoc *psoc,
 	struct cm_roam_values_copy src_cfg;
 	struct qdf_mac_addr bssid;
 	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+	int32_t akm;
 
+	akm = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
 	wlan_cm_roam_cfg_get_value(psoc, vdev_id,
 				   IS_SINGLE_PMK, &src_cfg);
-	if (!src_cfg.bool_value)
+	if (!src_cfg.bool_value ||
+	    !QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_SAE))
 		return;
 	/*
 	 * Mark the AP as single PMK capable in Crypto Table

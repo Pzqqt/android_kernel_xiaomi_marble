@@ -123,7 +123,8 @@ void __hdd_cm_disconnect_handler_pre_user_update(struct hdd_adapter *adapter)
 				  adapter->device_mode,
 				  adapter->vdev_id,
 				  WLAN_IPA_STA_DISCONNECT,
-				  sta_ctx->conn_info.bssid.bytes);
+				  sta_ctx->conn_info.bssid.bytes,
+				  false);
 
 	hdd_periodic_sta_stats_stop(adapter);
 	wlan_hdd_auto_shutdown_enable(hdd_ctx, true);
@@ -296,9 +297,18 @@ hdd_cm_disconnect_complete_pre_user_update(struct wlan_objmgr_vdev *vdev,
 					   struct wlan_cm_discon_rsp *rsp)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx,
-					wlan_vdev_get_id(vdev));
+	struct hdd_adapter *adapter;
 
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, wlan_vdev_get_id(vdev));
+	if (!adapter) {
+		hdd_err("adapter is NULL for vdev %d", wlan_vdev_get_id(vdev));
+		return QDF_STATUS_E_INVAL;
+	}
 	hdd_napi_serialize(0);
 	hdd_disable_and_flush_mc_addr_list(adapter, pmo_peer_disconnect);
 	__hdd_cm_disconnect_handler_pre_user_update(adapter);
@@ -320,9 +330,18 @@ hdd_cm_disconnect_complete_post_user_update(struct wlan_objmgr_vdev *vdev,
 					    struct wlan_cm_discon_rsp *rsp)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx,
-					wlan_vdev_get_id(vdev));
+	struct hdd_adapter *adapter;
 
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, wlan_vdev_get_id(vdev));
+	if (!adapter) {
+		hdd_err("adapter is NULL for vdev %d", wlan_vdev_get_id(vdev));
+		return QDF_STATUS_E_INVAL;
+	}
 	if (adapter->device_mode == QDF_STA_MODE) {
 	/* Inform FTM TIME SYNC about the disconnection with the AP */
 		hdd_ftm_time_sync_sta_state_notify(
@@ -355,8 +374,18 @@ QDF_STATUS hdd_cm_netif_queue_control(struct wlan_objmgr_vdev *vdev,
 				      enum netif_reason_type reason)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx,
-					wlan_vdev_get_id(vdev));
+	struct hdd_adapter *adapter;
+
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, wlan_vdev_get_id(vdev));
+	if (!adapter) {
+		hdd_err("adapter is NULL for vdev %d", wlan_vdev_get_id(vdev));
+		return QDF_STATUS_E_INVAL;
+	}
 
 	wlan_hdd_netif_queue_control(adapter, action, reason);
 
@@ -365,7 +394,18 @@ QDF_STATUS hdd_cm_netif_queue_control(struct wlan_objmgr_vdev *vdev,
 
 QDF_STATUS hdd_cm_napi_serialize_control(bool action)
 {
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	hdd_napi_serialize(action);
+
+	/* reinit scan reject parms for napi off (roam abort/ho fail) */
+	if (!action)
+		hdd_init_scan_reject_params(hdd_ctx);
 
 	return QDF_STATUS_SUCCESS;
 }

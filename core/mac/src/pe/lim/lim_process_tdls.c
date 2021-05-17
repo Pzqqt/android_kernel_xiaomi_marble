@@ -1006,9 +1006,15 @@ lim_tdls_populate_dot11f_he_caps(struct mac_context *mac,
 		*((uint16_t *)pDot11f->tx_he_mcs_map_80_80) =
 			uHECapInfo.he_cap.tx_he_mcs_map_80_80;
 	}
-	lim_log_he_cap(mac, pDot11f);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+static void lim_tdls_check_and_force_he_ldpc_cap(struct pe_session *pe_session,
+						 tDphHashNode *sta)
+{
+	if (pe_session && sta->he_config.present)
+		lim_check_and_force_he_ldpc_cap(pe_session, &sta->he_config);
 }
 
 static void lim_tdls_update_node_he_caps(struct mac_context *mac,
@@ -1030,6 +1036,8 @@ static void lim_tdls_update_node_he_caps(struct mac_context *mac,
 
 	if (pe_session && sta->he_config.present)
 		lim_tdls_set_he_chan_width(&sta->he_config, pe_session);
+
+	lim_log_he_cap(mac, &sta->he_config);
 }
 
 #else
@@ -1074,6 +1082,12 @@ static void lim_tdls_update_node_he_caps(struct mac_context *mac,
 					 struct pe_session *pe_session)
 {
 }
+
+static void lim_tdls_check_and_force_he_ldpc_cap(struct pe_session *pe_session,
+						 tDphHashNode *sta)
+{
+}
+
 #endif
 
 /*
@@ -2852,6 +2866,8 @@ static void lim_tdls_update_hash_node_info(struct mac_context *mac,
 					    add_sta_req->supported_rates_length,
 					    add_sta_req->ht_cap.mcsset,
 					    pe_session, pVhtCaps);
+
+	lim_tdls_check_and_force_he_ldpc_cap(pe_session, sta);
 
 	/*  TDLS Dummy AddSTA does not have right capability , is it OK ??
 	 */

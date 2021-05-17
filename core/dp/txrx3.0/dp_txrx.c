@@ -192,20 +192,23 @@ int dp_rx_tm_get_pending(ol_txrx_soc_handle soc)
 
 #ifdef DP_MEM_PRE_ALLOC
 
+/* Max entries in FISA Flow table */
+#define FISA_RX_FT_SIZE 128
+
 /* Num elements in REO ring */
 #define REO_DST_RING_SIZE 1024
 
 /* Num elements in TCL Data ring */
-#define TCL_DATA_RING_SIZE 3072
+#define TCL_DATA_RING_SIZE 5120
 
 /* Num elements in WBM2SW ring */
-#define WBM2SW_RELEASE_RING_SIZE 4096
+#define WBM2SW_RELEASE_RING_SIZE 8192
 
 /* Num elements in WBM Idle Link */
 #define WBM_IDLE_LINK_RING_SIZE (32 * 1024)
 
 /* Num TX desc in TX desc pool */
-#define DP_TX_DESC_POOL_SIZE 4096
+#define DP_TX_DESC_POOL_SIZE 6144
 
 /**
  * struct dp_consistent_prealloc - element representing DP pre-alloc memory
@@ -269,32 +272,45 @@ struct dp_consistent_prealloc_unaligned {
  * @ctxt_type: DP context type
  * @size: size of pre-alloc memory
  * @in_use: check if element is being used
+ * @is_critical: critical prealloc failure would cause prealloc_init to fail
  * @addr: address of memory allocated
  */
 struct dp_prealloc_context {
 	enum dp_ctxt_type ctxt_type;
 	uint32_t size;
 	bool in_use;
+	bool is_critical;
 	void *addr;
 };
 
 static struct dp_prealloc_context g_dp_context_allocs[] = {
-	{DP_PDEV_TYPE, (sizeof(struct dp_pdev)), false,  NULL},
+	{DP_PDEV_TYPE, (sizeof(struct dp_pdev)), false,  true, NULL},
 #ifdef WLAN_FEATURE_DP_RX_RING_HISTORY
 	/* 4 Rx ring history */
-	{DP_RX_RING_HIST_TYPE, sizeof(struct dp_rx_history), false, NULL},
-	{DP_RX_RING_HIST_TYPE, sizeof(struct dp_rx_history), false, NULL},
-	{DP_RX_RING_HIST_TYPE, sizeof(struct dp_rx_history), false, NULL},
-	{DP_RX_RING_HIST_TYPE, sizeof(struct dp_rx_history), false, NULL},
+	{DP_RX_RING_HIST_TYPE, sizeof(struct dp_rx_history), false, false,
+	 NULL},
+	{DP_RX_RING_HIST_TYPE, sizeof(struct dp_rx_history), false, false,
+	 NULL},
+	{DP_RX_RING_HIST_TYPE, sizeof(struct dp_rx_history), false, false,
+	 NULL},
+	{DP_RX_RING_HIST_TYPE, sizeof(struct dp_rx_history), false, false,
+	 NULL},
 	/* 1 Rx error ring history */
 	{DP_RX_ERR_RING_HIST_TYPE, sizeof(struct dp_rx_err_history),
-	 false, NULL},
+	 false, false, NULL},
 #ifndef RX_DEFRAG_DO_NOT_REINJECT
 	/* 1 Rx reinject ring history */
 	{DP_RX_REINJECT_RING_HIST_TYPE, sizeof(struct dp_rx_reinject_history),
-	 false, NULL},
+	 false, false, NULL},
 #endif	/* RX_DEFRAG_DO_NOT_REINJECT */
+	/* 1 Rx refill ring history */
+	{DP_RX_REFILL_RING_HIST_TYPE, sizeof(struct dp_rx_refill_history),
+	false, false, NULL},
 #endif	/* WLAN_FEATURE_DP_RX_RING_HISTORY */
+#ifdef WLAN_SUPPORT_RX_FISA
+	{DP_FISA_RX_FT_TYPE, sizeof(struct dp_fisa_rx_sw_ft) * FISA_RX_FT_SIZE,
+	 false, true, NULL},
+#endif
 };
 
 static struct  dp_consistent_prealloc g_dp_consistent_allocs[] = {
@@ -489,7 +505,7 @@ void dp_prealloc_deinit(void)
 
 	for (i = 0; i < QDF_ARRAY_SIZE(g_dp_context_allocs); i++) {
 		cp = &g_dp_context_allocs[i];
-		if (qdf_unlikely(up->in_use))
+		if (qdf_unlikely(cp->in_use))
 			dp_warn("i %d: context in use while free", i);
 
 		if (cp->addr) {
@@ -518,7 +534,7 @@ QDF_STATUS dp_prealloc_init(void)
 		cp = &g_dp_context_allocs[i];
 		cp->addr = qdf_mem_malloc(cp->size);
 
-		if (qdf_unlikely(!cp->addr)) {
+		if (qdf_unlikely(!cp->addr) && cp->is_critical) {
 			dp_warn("i %d: unable to preallocate %d bytes memory!",
 				i, cp->size);
 			break;
@@ -619,7 +635,8 @@ void *dp_prealloc_get_context_memory(uint32_t ctxt_type)
 	for (i = 0; i < QDF_ARRAY_SIZE(g_dp_context_allocs); i++) {
 		cp = &g_dp_context_allocs[i];
 
-		if ((ctxt_type == cp->ctxt_type) && !cp->in_use) {
+		if ((ctxt_type == cp->ctxt_type) && !cp->in_use &&
+		    cp->addr) {
 			cp->in_use = true;
 			return cp->addr;
 		}
@@ -632,6 +649,9 @@ QDF_STATUS dp_prealloc_put_context_memory(uint32_t ctxt_type, void *vaddr)
 {
 	int i;
 	struct dp_prealloc_context *cp;
+
+	if (!vaddr)
+		return QDF_STATUS_E_FAILURE;
 
 	for (i = 0; i < QDF_ARRAY_SIZE(g_dp_context_allocs); i++) {
 		cp = &g_dp_context_allocs[i];

@@ -242,6 +242,7 @@ typedef struct tLimPreAuthTable {
  * @he_capable:     802.11ax HE capability
  * @owe_ie:         Pointer to OWE IE
  * @owe_ie_len:     Length of OWE IE
+ * @eht_capable:     802.11be EHT capability
  */
 struct lim_sta_context {
 	tLimMlmStates mlmState;
@@ -267,6 +268,9 @@ struct lim_sta_context {
 	bool force_1x1;
 	uint8_t *owe_ie;
 	uint32_t owe_ie_len;
+#ifdef WLAN_FEATURE_11BE
+	bool eht_capable;
+#endif
 };
 
 /* Structure definition to hold deferred messages queue parameters */

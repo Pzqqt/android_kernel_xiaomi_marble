@@ -492,6 +492,19 @@ bool policy_mgr_is_chnl_in_diff_band(struct wlan_objmgr_psoc *psoc,
 				     uint32_t ch_freq);
 
 /**
+ * policy_mgr_is_pcl_weightage_required() - to check that PCL weightage req or
+ * not
+ * @psoc: pointer to psoc
+ *
+ * This API will check that whether PCL weightage need to consider in best
+ * candidate selection or not. If some APs are in PCL list, those AP will get
+ * additional weightage.
+ *
+ * Return: true if pcl weightage is not required
+ */
+bool policy_mgr_is_pcl_weightage_required(struct wlan_objmgr_psoc *psoc);
+
+/**
  * policy_mgr_check_for_session_conc() - Check if concurrency is
  * allowed for a session
  * @psoc: PSOC object information
@@ -1620,6 +1633,20 @@ void policy_mgr_set_dual_mac_scan_config(struct wlan_objmgr_psoc *psoc,
  */
 void policy_mgr_set_dual_mac_fw_mode_config(struct wlan_objmgr_psoc *psoc,
 		uint8_t dbs, uint8_t dfs);
+
+/**
+ * policy_mgr_is_scc_with_this_vdev_id() - Check if this vdev_id has SCC with
+ * other vdev_id's
+ * @psoc: PSOC object information
+ * @vdev_id: vdev_id
+ *
+ * This function checks if the given vdev_id has SCC with any other vdev's
+ * or not.
+ *
+ * Return: true if SCC exists, false otherwise
+ */
+bool policy_mgr_is_scc_with_this_vdev_id(struct wlan_objmgr_psoc *psoc,
+					 uint8_t vdev_id);
 
 /**
  * policy_mgr_soc_set_dual_mac_cfg_cb() - Callback for set dual mac config
@@ -3611,4 +3638,15 @@ bool policy_mgr_is_sta_mon_concurrency(struct wlan_objmgr_psoc *psoc);
  *
  */
 QDF_STATUS policy_mgr_check_mon_concurrency(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * policy_mgr_get_hw_max_dbs_bw() - Computes DBS BW
+ * @psoc: PSOC object information
+ * @dbs_bw: BW info of both MAC0 and MAC1
+ * This function computes BW info of both MAC0 and MAC1
+ *
+ * Return: void
+ */
+void policy_mgr_get_hw_dbs_max_bw(struct wlan_objmgr_psoc *psoc,
+				  struct dbs_bw *bw_dbs);
 #endif /* __WLAN_POLICY_MGR_API_H */

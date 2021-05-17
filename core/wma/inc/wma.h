@@ -915,6 +915,7 @@ struct wma_wlm_stats_data {
  * @ito_repeat_count: Indicates ito repeated count
  * @wma_fw_time_sync_timer: timer used for firmware time sync
  * * @fw_therm_throt_support: FW Supports thermal throttling?
+ * @eht_cap: 802.11be capabilities
  *
  * This structure is the global wma context.  It contains global wma
  * module parameters and handles of other modules.
@@ -1050,6 +1051,9 @@ typedef struct {
 	qdf_mc_timer_t wma_fw_time_sync_timer;
 	bool fw_therm_throt_support;
 	bool enable_tx_compl_tsf64;
+#ifdef WLAN_FEATURE_11BE
+	struct eht_capability eht_cap;
+#endif
 } t_wma_handle, *tp_wma_handle;
 
 /**

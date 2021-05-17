@@ -538,6 +538,7 @@ struct pe_session {
 	uint8_t bss_color_changing;
 #endif
 #endif
+
 	struct deauth_retry_params deauth_retry;
 	bool enable_bcast_probe_rsp;
 	uint8_t ht_client_cnt;
@@ -577,6 +578,12 @@ struct pe_session {
 	uint32_t dfs_regdomain;
 	/* AP power type */
 	uint8_t ap_power_type;
+
+#ifdef WLAN_FEATURE_11BE
+	bool eht_capable;
+	tDot11fIEeht_cap eht_config;
+	tDot11fIEeht_op eht_op;
+#endif /* WLAN_FEATURE_11BE */
 };
 
 /*-------------------------------------------------------------------------

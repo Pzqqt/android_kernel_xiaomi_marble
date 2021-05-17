@@ -1263,6 +1263,18 @@ static void mlme_init_twt_cfg(struct wlan_objmgr_psoc *psoc,
 	twt_cfg->is_bcast_responder_enabled = CFG_TWT_GET_BCAST_RES(bcast_conf);
 }
 
+#ifdef WLAN_FEATURE_11BE
+static void mlme_init_eht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
+				     struct wlan_mlme_cfg *mlme_cfg)
+{
+}
+#else
+static void mlme_init_eht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
+				     struct wlan_mlme_cfg *mlme_cfg)
+{
+}
+#endif
+
 #ifdef WLAN_FEATURE_SAE
 static bool is_sae_sap_enabled(struct wlan_objmgr_psoc *psoc)
 {
@@ -2301,7 +2313,8 @@ static void mlme_init_reg_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_reg *reg)
 {
 	reg->self_gen_frm_pwr = cfg_get(psoc, CFG_SELF_GEN_FRM_PWR);
-	reg->etsi_srd_chan_in_master_mode = ETSI_SRD_CHAN_IN_MASTER_MODE;
+	reg->etsi_srd_chan_in_master_mode =
+			cfg_get(psoc, CFG_ETSI_SRD_CHAN_IN_MASTER_MODE);
 	reg->fcc_5dot9_ghz_chan_in_master_mode =
 			cfg_get(psoc, CFG_FCC_5DOT9_GHZ_CHAN_IN_MASTER_MODE);
 	reg->restart_beaconing_on_ch_avoid =
@@ -2450,6 +2463,19 @@ mlme_init_iot_cfg(struct wlan_objmgr_psoc *psoc,
 	mlme_iot_parse_aggr_info(psoc, iot);
 }
 
+/**
+ * mlme_init_primary_iface - Initialize primary iface
+ *
+ * @gen: Generic CFG config items
+ *
+ * Return: None
+ */
+static void
+mlme_init_primary_iface(struct wlan_mlme_generic *gen)
+{
+	gen->dual_sta_policy.primary_vdev_id = WLAN_UMAC_VDEV_ID_MAX;
+}
+
 QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_mlme_psoc_ext_obj *mlme_obj;
@@ -2479,6 +2505,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_nss_chains(psoc, &mlme_cfg->nss_chains_ini_cfg);
 	mlme_init_twt_cfg(psoc, &mlme_cfg->twt_cfg);
 	mlme_init_he_cap_in_cfg(psoc, mlme_cfg);
+	mlme_init_eht_cap_in_cfg(psoc, mlme_cfg);
 	mlme_init_obss_ht40_cfg(psoc, &mlme_cfg->obss_ht40);
 	mlme_init_product_details_cfg(&mlme_cfg->product_details);
 	mlme_init_powersave_params(psoc, &mlme_cfg->ps_params);
@@ -2503,6 +2530,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_roam_score_config(psoc, mlme_cfg);
 	mlme_init_ratemask_cfg(psoc, &mlme_cfg->ratemask_cfg);
 	mlme_init_iot_cfg(psoc, &mlme_cfg->iot);
+	mlme_init_primary_iface(&mlme_cfg->gen);
 
 	return status;
 }

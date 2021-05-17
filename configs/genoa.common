@@ -1,6 +1,7 @@
 # Protocol specific features
 
 #features not required for GENOA IOT, compilation errors are there.
+CONFIG_TX_AGGREGATION_SIZE_ENABLE := y
 CONFIG_SUPPORT_11AX := y
 CONFIG_160MHZ_SUPPORT := y
 CONFIG_FEATURE_STATS_EXT := n

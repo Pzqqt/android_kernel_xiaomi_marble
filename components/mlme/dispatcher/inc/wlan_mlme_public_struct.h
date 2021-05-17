@@ -219,6 +219,8 @@ struct mlme_edca_ac_vo {
  * MLME_DOT11_MODE_11AC_ONLY: vdev just supports 11AC mode
  * MLME_DOT11_MODE_11AX: vdev supports 11AX mode, and modes above it
  * MLME_DOT11_MODE_11AX_ONLY: vdev just supports 11AX mode
+ * MLME_DOT11_MODE_11BE: vdev supports 11BE mode, and modes above it
+ * MLME_DOT11_MODE_11BE_ONLY: vdev just supports 11BE mode
  */
 enum mlme_dot11_mode {
 	MLME_DOT11_MODE_ALL,
@@ -231,7 +233,9 @@ enum mlme_dot11_mode {
 	MLME_DOT11_MODE_11AC,
 	MLME_DOT11_MODE_11AC_ONLY,
 	MLME_DOT11_MODE_11AX,
-	MLME_DOT11_MODE_11AX_ONLY
+	MLME_DOT11_MODE_11AX_ONLY,
+	MLME_DOT11_MODE_11BE,
+	MLME_DOT11_MODE_11BE_ONLY
 };
 
 /**
@@ -246,6 +250,7 @@ enum mlme_vdev_dot11_mode {
 	MLME_VDEV_DOT11_MODE_11N,
 	MLME_VDEV_DOT11_MODE_11AC,
 	MLME_VDEV_DOT11_MODE_11AX,
+	MLME_VDEV_DOT11_MODE_11BE,
 };
 
 /**
@@ -1055,6 +1060,17 @@ struct wlan_mlme_he_caps {
 };
 #endif
 
+#ifdef WLAN_FEATURE_11BE
+/**
+ * struct wlan_mlme_eht_caps - EHT Capabilities related config items
+ */
+struct wlan_mlme_eht_caps {
+	tDot11fIEeht_cap dot11_eht_cap;
+	tDot11fIEeht_cap eht_cap_orig;
+	/* Add members to store INI configuration corresponding to 11be */
+};
+#endif
+
 /**
  * struct wlan_mlme_chain_cfg - Chain info related structure
  * @max_tx_chains_2g: max tx chains supported in 2.4ghz band
@@ -1260,6 +1276,18 @@ struct wlan_mlme_ratemask {
 	uint32_t higher32_2;
 };
 
+/**
+ * struct dual_sta_policy - Concurrent STA policy configuration
+ * @concurrent_sta_policy: Possible values are defined in enum
+ * qca_wlan_concurrent_sta_policy_config
+ * @primary_vdev_id: specified iface is the primary STA iface, say 0 means
+ * vdev 0 is acting as primary interface
+ */
+struct dual_sta_policy {
+	uint8_t concurrent_sta_policy;
+	uint8_t primary_vdev_id;
+};
+
 /* struct wlan_mlme_generic - Generic CFG config items
  *
  * @band_capability: HW Band Capability - Both or 2.4G only or 5G only
@@ -1308,6 +1336,7 @@ struct wlan_mlme_ratemask {
  * @monitor_mode_concurrency: Monitor mode concurrency supported
  * @ocv_support: FW supports OCV or not
  * @wds_mode: wds mode supported
+ * @dual_sta_policy_cfg: Dual STA policies configuration
  */
 struct wlan_mlme_generic {
 	uint32_t band_capability;
@@ -1353,6 +1382,7 @@ struct wlan_mlme_generic {
 	enum monitor_mode_concurrency monitor_mode_concurrency;
 	bool ocv_support;
 	enum wlan_wds_mode wds_mode;
+	struct dual_sta_policy dual_sta_policy;
 };
 
 /*
@@ -2490,6 +2520,9 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_ht_caps ht_caps;
 #ifdef WLAN_FEATURE_11AX
 	struct wlan_mlme_he_caps he_caps;
+#endif
+#ifdef WLAN_FEATURE_11BE
+	struct wlan_mlme_eht_caps eht_caps;
 #endif
 	struct wlan_mlme_lfr_cfg lfr;
 	struct wlan_mlme_obss_ht40 obss_ht40;

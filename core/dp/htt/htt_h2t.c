@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1017,6 +1017,7 @@ int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 	struct htt_htc_pkt *pkt;
 	qdf_nbuf_t msg;
 	uint32_t *msg_word;
+	unsigned int tx_count = 0;
 
 	pkt = htt_htc_pkt_alloc(pdev);
 	if (!pkt)
@@ -1062,8 +1063,8 @@ int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 
 	msg_word++;
 	*msg_word = 0;
-	HTT_WDI_IPA_CFG_TX_COMP_RING_SIZE_SET(*msg_word,
-		(unsigned int)ol_cfg_ipa_uc_tx_max_buf_cnt(pdev->ctrl_pdev));
+	tx_count = qdf_get_pwr2(ol_cfg_ipa_uc_tx_max_buf_cnt(pdev->ctrl_pdev));
+	HTT_WDI_IPA_CFG_TX_COMP_RING_SIZE_SET(*msg_word, tx_count);
 
 	msg_word++;
 	*msg_word = 0;

@@ -196,12 +196,74 @@ static inline void cm_disconnect_diag_event(struct wlan_objmgr_vdev *vdev,
 {}
 #endif
 
+/**
+ * cm_clear_pmkid_on_ap_off() - clear pmkid cache when ap off
+ * @psoc: psoc ptr
+ * @pdev: pdev ptr
+ * @vdev: vdev ptr
+ * @req: disconnect req
+ *
+ * In AP side power off/on case, AP security has been cleanup.
+ * The STA side might still cache PMK ID in driver and it will always use
+ * PMK cache to connect to AP and get continuously connect failure in SAE
+ * security. This function is to detect AP off based on FW reported BMISS
+ * event. Meanwhile judge FW reported last RSSI > roaming Low rssi
+ * and not less than 20db of host cached RSSI to avoid some false
+ * alarm such as normal DUT roll in/out roaming.
+ *
+ * Return: void
+ */
+static void cm_clear_pmkid_on_ap_off(struct wlan_objmgr_psoc *psoc,
+				     struct wlan_objmgr_pdev *pdev,
+				     struct wlan_objmgr_vdev *vdev,
+				     struct wlan_cm_disconnect_req *req)
+{
+	int8_t cache_rssi = 0;
+	int32_t bmiss_rssi;
+	uint8_t lookup_threshold = 0;
+	struct wlan_crypto_pmksa *pmksa;
+	int32_t akm;
+	struct cm_roam_values_copy temp;
+
+	if (req->reason_code != REASON_BEACON_MISSED)
+		return;
+
+	akm = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
+	if (!QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_SAE))
+		return;
+
+	cache_rssi = cm_get_rssi_by_bssid(pdev, &req->bssid);
+	wlan_cm_roam_cfg_get_value(psoc, req->vdev_id,
+				   NEIGHBOUR_LOOKUP_THRESHOLD, &temp);
+	lookup_threshold = temp.uint_value;
+
+	wlan_cm_roam_cfg_get_value(psoc, req->vdev_id,
+				   LOST_LINK_RSSI, &temp);
+	bmiss_rssi = temp.int_value;
+
+	if (!bmiss_rssi || !lookup_threshold || !cache_rssi)
+		return;
+	mlme_nofl_debug("sta bmiss on rssi %d scan rssi %d th %d", bmiss_rssi,
+			cache_rssi, lookup_threshold);
+	if (bmiss_rssi > (lookup_threshold * (-1))) {
+		if (bmiss_rssi + AP_OFF_RSSI_OFFSET > cache_rssi) {
+			pmksa = qdf_mem_malloc(sizeof(*pmksa));
+			if (!pmksa)
+				return;
+			qdf_copy_macaddr(&pmksa->bssid, &req->bssid);
+			wlan_crypto_set_del_pmksa(vdev, pmksa, false);
+			qdf_mem_free(pmksa);
+		}
+	}
+}
+
 QDF_STATUS
 cm_disconnect_complete_ind(struct wlan_objmgr_vdev *vdev,
 			   struct wlan_cm_discon_rsp *rsp)
 {
 	uint8_t vdev_id;
 	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
 	enum QDF_OPMODE op_mode;
 
 	if (!vdev || !rsp) {
@@ -212,12 +274,19 @@ cm_disconnect_complete_ind(struct wlan_objmgr_vdev *vdev,
 
 	vdev_id = wlan_vdev_get_id(vdev);
 	op_mode = wlan_vdev_mlme_get_opmode(vdev);
-	psoc = wlan_vdev_get_psoc(vdev);
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		mlme_err(CM_PREFIX_FMT "pdev not found",
+			 CM_PREFIX_REF(vdev_id, rsp->req.cm_id));
+		return QDF_STATUS_E_INVAL;
+	}
+	psoc = wlan_pdev_get_psoc(pdev);
 	if (!psoc) {
 		mlme_err(CM_PREFIX_FMT "psoc not found",
 			 CM_PREFIX_REF(vdev_id, rsp->req.cm_id));
 		return QDF_STATUS_E_INVAL;
 	}
+	cm_clear_pmkid_on_ap_off(psoc, pdev, vdev, &rsp->req.req);
 	cm_disconnect_diag_event(vdev, rsp);
 	wlan_tdls_notify_sta_disconnect(vdev_id, false, false, vdev);
 	policy_mgr_decr_session_set_pcl(psoc, op_mode, vdev_id);

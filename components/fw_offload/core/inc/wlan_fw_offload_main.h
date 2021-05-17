@@ -206,6 +206,7 @@ struct wlan_fwol_neighbor_report_cfg {
  * @tsf_irq_host_gpio_pin: TSF GPIO Pin config
  * @tsf_sync_host_gpio_pin: TSF Sync GPIO Pin config
  * @tsf_ptp_options: TSF Plus feature options config
+ * @tsf_sync_enable: TSF sync feature enable/disable
  * @sae_enable: SAE feature enable config
  * @gcmp_enable: GCMP feature enable config
  * @enable_tx_sch_delay: Enable TX SCH delay value config
@@ -248,6 +249,7 @@ struct wlan_fwol_cfg {
 	uint32_t tsf_gpio_pin;
 #ifdef WLAN_FEATURE_TSF_PLUS
 	uint32_t tsf_ptp_options;
+	bool tsf_sync_enable;
 #ifdef WLAN_FEATURE_TSF_PLUS_EXT_GPIO_IRQ
 	uint32_t tsf_irq_host_gpio_pin;
 #endif

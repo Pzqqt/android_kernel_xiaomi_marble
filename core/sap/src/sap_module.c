@@ -1220,7 +1220,11 @@ wlansap_get_csa_chanwidth_from_phymode(struct sap_context *sap_context,
 		    sap_context->csr_roamProfile.phyMode ==
 		    eCSR_DOT11_MODE_11ax ||
 		    sap_context->csr_roamProfile.phyMode ==
-		    eCSR_DOT11_MODE_11ax_ONLY) {
+		    eCSR_DOT11_MODE_11ax_ONLY ||
+		    CSR_IS_DOT11_PHY_MODE_11BE(
+			sap_context->csr_roamProfile.phyMode) ||
+		    CSR_IS_DOT11_PHY_MODE_11BE_ONLY(
+			sap_context->csr_roamProfile.phyMode)) {
 			max_fw_bw = sme_get_vht_ch_width();
 			if (max_fw_bw >= WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ)
 				ch_width = CH_WIDTH_160MHZ;
@@ -2028,10 +2032,11 @@ wlansap_set_dfs_preferred_channel_location(mac_handle_t mac_handle)
 	 */
 	ucfg_mlme_get_pref_chan_location(mac->psoc,
 					 &dfs_preferred_channels_location);
-	sap_debug("dfs_preferred_channels_location %d",
-		  dfs_preferred_channels_location);
+	sap_debug("dfs_preferred_channels_location %d dfs region %d",
+		  dfs_preferred_channels_location, dfs_region);
 
-	if (DFS_MKK_REGION == dfs_region) {
+	if (dfs_region == DFS_MKK_REGION ||
+	    dfs_region == DFS_MKKN_REGION) {
 		mac->sap.SapDfsInfo.sap_operating_chan_preferred_location =
 			dfs_preferred_channels_location;
 		sap_debug("sapdfs:Set Preferred Operating Channel location=%d",

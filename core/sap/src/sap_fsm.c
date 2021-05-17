@@ -281,9 +281,11 @@ static uint8_t sap_random_channel_sel(struct sap_context *sap_ctx)
 static bool
 sap_is_channel_bonding_etsi_weather_channel(struct sap_context *sap_ctx)
 {
-	if (IS_CH_BONDING_WITH_WEATHER_CH(wlan_freq_to_chan(
-					  sap_ctx->chan_freq)) &&
-	    (sap_ctx->ch_params.ch_width != CH_WIDTH_20MHZ))
+	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(sap_ctx->vdev);
+
+	if (IS_CH_BONDING_WITH_WEATHER_CH(wlan_reg_freq_to_chan(pdev,
+								sap_ctx->chan_freq)) &&
+	    sap_ctx->ch_params.ch_width != CH_WIDTH_20MHZ)
 		return true;
 
 	return false;
@@ -648,7 +650,7 @@ sap_dfs_is_channel_in_nol_list(struct sap_context *sap_context,
 					&sap_context->ch_params, freq_list);
 	else
 		num_ch_freq = sap_get_bonding_channels(
-					sap_context, sap_context->chan_freq,
+					sap_context, channel_freq,
 					freq_list, MAX_BONDED_CHANNELS,
 					chan_bondState);
 
@@ -774,6 +776,26 @@ uint32_t sap_select_default_oper_chan(struct mac_context *mac_ctx,
 	return default_freq;
 }
 
+static bool is_mcc_preferred(struct sap_context *sap_context,
+			     uint32_t con_ch_freq)
+{
+	/*
+	 * If SAP ACS channel list is 1-11 and STA is on non-preferred
+	 * channel i.e. 12, 13, 14 then MCC is unavoidable. This is because
+	 * if SAP is started on 12,13,14 some clients may not be able to
+	 * join dependending on their regulatory country.
+	 */
+	if ((con_ch_freq >= 2467) && (con_ch_freq <= 2484) &&
+	    (sap_context->acs_cfg->start_ch_freq >= 2412 &&
+	     sap_context->acs_cfg->end_ch_freq <= 2462)) {
+		sap_debug("conc ch freq %d & sap acs ch list is 1-11, prefer mcc",
+			  con_ch_freq);
+		return true;
+	}
+
+	return false;
+}
+
 QDF_STATUS
 sap_validate_chan(struct sap_context *sap_context,
 		  bool pre_start_bss,
@@ -863,9 +885,12 @@ sap_validate_chan(struct sap_context *sap_context,
 					mac_ctx->pdev, &ch_params,
 					con_ch_freq) ||
 			    sta_sap_scc_on_dfs_chan)) {
+				if (is_mcc_preferred(sap_context, con_ch_freq))
+					goto validation_done;
+
 				sap_debug("Override ch freq %d to %d due to CC Intf",
 					  sap_context->chan_freq,
-					con_ch_freq);
+					  con_ch_freq);
 				sap_context->chan_freq = con_ch_freq;
 				sap_context->ch_params.ch_width =
 				    wlan_sap_get_concurrent_bw(mac_ctx->pdev,
@@ -1924,12 +1949,10 @@ static QDF_STATUS sap_cac_start_notify(mac_handle_t mac_handle)
 	uint8_t intf = 0;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
-	qdf_freq_t ch_freq;
 
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
 		struct sap_context *sap_context =
 			mac->sap.sapCtxList[intf].sap_context;
-		struct csr_roam_profile *profile;
 
 		if (((QDF_SAP_MODE == mac->sap.sapCtxList[intf].sapPersona)
 		    ||
@@ -1937,10 +1960,9 @@ static QDF_STATUS sap_cac_start_notify(mac_handle_t mac_handle)
 		    && mac->sap.sapCtxList[intf].sap_context &&
 		    (false == sap_context->isCacStartNotified)) {
 			/* Don't start CAC for non-dfs channel, its violation */
-			profile = &sap_context->csr_roamProfile;
-			ch_freq = profile->op_freq;
-			if (!wlan_reg_is_dfs_for_freq(mac->pdev,
-						      ch_freq))
+			if (!sap_operating_on_dfs(
+					mac,
+					mac->sap.sapCtxList[intf].sap_context))
 				continue;
 			sap_debug("sapdfs: Signaling eSAP_DFS_CAC_START to HDD for sapctx[%pK]",
 				  sap_context);
@@ -2006,7 +2028,6 @@ static QDF_STATUS sap_cac_end_notify(mac_handle_t mac_handle,
 	uint8_t intf;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
-	uint32_t freq;
 
 	/*
 	 * eSAP_DFS_CHANNEL_CAC_END:
@@ -2017,7 +2038,6 @@ static QDF_STATUS sap_cac_end_notify(mac_handle_t mac_handle,
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
 		struct sap_context *sap_context =
 			mac->sap.sapCtxList[intf].sap_context;
-		struct csr_roam_profile *profile;
 
 		if (((QDF_SAP_MODE == mac->sap.sapCtxList[intf].sapPersona)
 		    ||
@@ -2027,12 +2047,9 @@ static QDF_STATUS sap_cac_end_notify(mac_handle_t mac_handle,
 		    sap_is_dfs_cac_wait_state(sap_context)) {
 			sap_context = mac->sap.sapCtxList[intf].sap_context;
 			/* Don't check CAC for non-dfs channel */
-			profile = &sap_context->csr_roamProfile;
-			freq = profile->op_freq;
-			if (CHANNEL_STATE_DFS !=
-			    wlan_reg_get_5g_bonded_channel_state_for_freq(mac->pdev,
-									  freq,
-									  profile->ch_params.ch_width))
+			if (!sap_operating_on_dfs(
+					mac,
+					mac->sap.sapCtxList[intf].sap_context))
 				continue;
 
 			/* If this is an end notification of a pre cac, the

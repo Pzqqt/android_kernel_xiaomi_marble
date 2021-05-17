@@ -1411,7 +1411,8 @@ QDF_STATUS lim_populate_own_rate_set(struct mac_context *mac_ctx,
 				     uint8_t basic_only,
 				     struct pe_session *session_entry,
 				     struct sDot11fIEVHTCaps *vht_caps,
-				     struct sDot11fIEhe_cap *he_caps)
+				     struct sDot11fIEhe_cap *he_caps,
+				     struct sDot11fIEeht_cap *eht_caps)
 {
 	tSirMacRateSet temp_rate_set;
 	tSirMacRateSet temp_rate_set2;
@@ -1531,6 +1532,8 @@ QDF_STATUS lim_populate_own_rate_set(struct mac_context *mac_ctx,
 				 session_entry->nss, NULL);
 	lim_populate_he_mcs_set(mac_ctx, rates, he_caps,
 			session_entry, session_entry->nss);
+	lim_populate_eht_mcs_set(mac_ctx, rates, eht_caps,
+				 session_entry, session_entry->nss);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1595,6 +1598,7 @@ QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
 				      struct pe_session *pe_session,
 				      tDot11fIEVHTCaps *pVHTCaps,
 				      tDot11fIEhe_cap *he_caps,
+				      tDot11fIEeht_cap *eht_caps,
 				      struct sDphHashNode *sta_ds,
 				      struct bss_description *bss_desc)
 {
@@ -1749,6 +1753,8 @@ QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
 
 	lim_populate_he_mcs_set(mac, pRates, peer_he_caps,
 			pe_session, pe_session->nss);
+	lim_populate_eht_mcs_set(mac, pRates, eht_caps,
+				 pe_session, pe_session->nss);
 
 	if (IS_DOT11_MODE_HE(pe_session->dot11mode) && he_caps) {
 		lim_calculate_he_nss(pRates, pe_session);
@@ -1781,6 +1787,8 @@ QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
  * @supported_mcs_set: pointer to supported rate set
  * @session_entry: pointer to pe session entry
  * @vht_caps: pointer to vht capabilities
+ * @he_caps: pointer to he capabilities
+ * @eht_caps: pointer to eht capabilities
  *
  * This is called at the time of Association Request
  * processing on AP and while adding peer's context
@@ -1807,7 +1815,8 @@ QDF_STATUS lim_populate_matching_rate_set(struct mac_context *mac_ctx,
 					  uint8_t *supported_mcs_set,
 					  struct pe_session *session_entry,
 					  tDot11fIEVHTCaps *vht_caps,
-					  tDot11fIEhe_cap *he_caps)
+					  tDot11fIEhe_cap *he_caps,
+					  tDot11fIEeht_cap *eht_caps)
 {
 	tSirMacRateSet temp_rate_set;
 	tSirMacRateSet temp_rate_set2;
@@ -1991,6 +2000,8 @@ QDF_STATUS lim_populate_matching_rate_set(struct mac_context *mac_ctx,
 				 session_entry, session_entry->nss, sta_ds);
 	lim_populate_he_mcs_set(mac_ctx, &sta_ds->supportedRates, he_caps,
 				session_entry, session_entry->nss);
+	lim_populate_eht_mcs_set(mac_ctx, &sta_ds->supportedRates, eht_caps,
+				 session_entry, session_entry->nss);
 	/*
 	 * Set the erpEnabled bit if the phy is in G mode and at least
 	 * one A rate is supported
@@ -2117,6 +2128,20 @@ static void lim_add_tdls_sta_he_config(tpAddStaParams add_sta_params,
 }
 #endif /* WLAN_FEATURE_11AX */
 #endif /* FEATURE_WLAN_TDLS */
+
+#ifdef WLAN_FEATURE_11BE
+static bool lim_is_add_sta_params_eht_capable(tpAddStaParams add_sta_params)
+{
+	return add_sta_params->eht_capable;
+}
+
+#else
+static bool lim_is_add_sta_params_eht_capable(tpAddStaParams add_sta_params)
+{
+	return false;
+}
+
+#endif
 
 /**
  * lim_add_sta()- called to add an STA context at hardware
@@ -2256,6 +2281,9 @@ lim_add_sta(struct mac_context *mac_ctx,
 	lim_update_sta_he_capable(mac_ctx, add_sta_params, sta_ds,
 				  session_entry);
 
+	lim_update_sta_eht_capable(mac_ctx, add_sta_params, sta_ds,
+				   session_entry);
+
 	add_sta_params->maxAmpduDensity = sta_ds->htAMpduDensity;
 	add_sta_params->maxAmpduSize = sta_ds->htMaxRxAMpduFactor;
 	add_sta_params->fShortGI20Mhz = sta_ds->htShortGI20Mhz;
@@ -2380,6 +2408,9 @@ lim_add_sta(struct mac_context *mac_ctx,
 		lim_add_he_cap(mac_ctx, session_entry,
 			       add_sta_params, assoc_req);
 
+		lim_add_eht_cap(mac_ctx, session_entry, add_sta_params,
+				assoc_req);
+
 	}
 
 #ifdef FEATURE_WLAN_TDLS
@@ -2457,7 +2488,8 @@ lim_add_sta(struct mac_context *mac_ctx,
 	add_sta_params->nwType = session_entry->nwType;
 
 	if (!(add_sta_params->htCapable || add_sta_params->vhtCapable ||
-	    lim_is_add_sta_params_he_capable(add_sta_params))) {
+	    lim_is_add_sta_params_he_capable(add_sta_params) ||
+	    lim_is_add_sta_params_eht_capable(add_sta_params))) {
 		nw_type_11b = 1;
 		for (i = 0; i < SIR_NUM_11A_RATES; i++) {
 			if (sirIsArate(sta_ds->supportedRates.llaRates[i] &
@@ -2737,7 +2769,7 @@ lim_add_sta_self(struct mac_context *mac, uint8_t updateSta,
 
 	lim_populate_own_rate_set(mac, &pAddStaParams->supportedRates,
 				  NULL, false,
-				  pe_session, NULL, NULL);
+				  pe_session, NULL, NULL, NULL);
 	if (IS_DOT11_MODE_HT(selfStaDot11Mode)) {
 		pAddStaParams->htCapable = true;
 
@@ -2801,6 +2833,9 @@ lim_add_sta_self(struct mac_context *mac, uint8_t updateSta,
 
 	if (IS_DOT11_MODE_HE(selfStaDot11Mode))
 		lim_add_self_he_cap(pAddStaParams, pe_session);
+
+	if (IS_DOT11_MODE_EHT(selfStaDot11Mode))
+		lim_add_self_eht_cap(pAddStaParams, pe_session);
 
 	if (lim_is_fils_connection(pe_session))
 		pAddStaParams->no_ptk_4_way = true;
@@ -3506,6 +3541,13 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 		lim_add_bss_he_cap(pAddBssParams, pAssocRsp);
 		lim_add_bss_he_cfg(pAddBssParams, pe_session);
 	}
+
+	if (lim_is_session_eht_capable(pe_session) &&
+	    (pAssocRsp->eht_cap.present)) {
+		lim_add_bss_eht_cap(pAddBssParams, pAssocRsp);
+		lim_add_bss_eht_cfg(pAddBssParams, pe_session);
+	}
+
 	if (pAssocRsp->bss_max_idle_period.present) {
 		pAddBssParams->bss_max_idle_period =
 			pAssocRsp->bss_max_idle_period.max_idle_period;
@@ -3514,6 +3556,7 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 	} else {
 		pAddBssParams->bss_max_idle_period = 0;
 	}
+
 	/*
 	 * Populate the STA-related parameters here
 	 * Note that the STA here refers to the AP
@@ -3612,6 +3655,15 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 			lim_update_he_stbc_capable(&pAddBssParams->staContext);
 			lim_update_he_mcs_12_13(&pAddBssParams->staContext,
 						sta);
+		}
+
+		if (lim_is_session_eht_capable(pe_session) &&
+		    (pAssocRsp->eht_cap.present ||
+		     pBeaconStruct->eht_cap.present)) {
+			lim_intersect_ap_eht_caps(pe_session,
+						  pAddBssParams,
+						  pBeaconStruct,
+						  pAssocRsp);
 		}
 
 		/*
@@ -3719,6 +3771,14 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 			lim_update_he_6ghz_band_caps(mac,
 						&pAssocRsp->he_6ghz_band_cap,
 						&pAddBssParams->staContext);
+		}
+		if (lim_is_session_eht_capable(pe_session) &&
+		    (pAssocRsp->eht_cap.present ||
+		     pBeaconStruct->eht_cap.present)) {
+			lim_intersect_ap_eht_caps(pe_session,
+						  pAddBssParams,
+						  pBeaconStruct,
+						  pAssocRsp);
 		}
 	}
 	pAddBssParams->staContext.smesessionId =
@@ -3928,6 +3988,12 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac,
 		lim_add_bss_he_cfg(pAddBssParams, pe_session);
 	}
 
+	if (lim_is_session_eht_capable(pe_session) &&
+	    pBeaconStruct->eht_cap.present) {
+		lim_update_bss_eht_capable(mac, pAddBssParams);
+		lim_add_bss_eht_cfg(pAddBssParams, pe_session);
+	}
+
 	/*
 	 * Populate the STA-related parameters here
 	 * Note that the STA here refers to the AP
@@ -3978,6 +4044,11 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac,
 			pBeaconStruct->he_cap.present)
 			lim_intersect_ap_he_caps(pe_session, pAddBssParams,
 					      pBeaconStruct, NULL);
+
+		if (lim_is_session_eht_capable(pe_session) &&
+		    pBeaconStruct->eht_cap.present)
+			lim_intersect_ap_eht_caps(pe_session, pAddBssParams,
+						  pBeaconStruct, NULL);
 
 		if (pBeaconStruct->HTCaps.supportedChannelWidthSet &&
 		    chan_width_support) {
@@ -4064,7 +4135,8 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac,
 			pBeaconStruct->HTCaps.supportedMCSSet,
 			false, pe_session,
 			&pBeaconStruct->VHTCaps,
-			&pBeaconStruct->he_cap, NULL,
+			&pBeaconStruct->he_cap,
+			&pBeaconStruct->eht_cap, NULL,
 			bssDescription);
 
 	pAddBssParams->staContext.encryptType = pe_session->encryptType;

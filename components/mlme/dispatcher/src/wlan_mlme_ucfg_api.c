@@ -816,6 +816,11 @@ ucfg_mlme_get_roam_bmiss_final_bcnt(struct wlan_objmgr_psoc *psoc,
 	return wlan_mlme_get_roam_bmiss_final_bcnt(psoc, val);
 }
 
+bool ucfg_mlme_get_dual_sta_roaming_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_mlme_get_dual_sta_roaming_enabled(psoc);
+}
+
 QDF_STATUS
 ucfg_mlme_get_roam_bmiss_first_bcnt(struct wlan_objmgr_psoc *psoc,
 				    uint8_t *val)
@@ -1298,7 +1303,7 @@ ucfg_mlme_get_etsi_srd_chan_in_master_mode(struct wlan_objmgr_psoc *psoc,
 
 	mlme_obj = mlme_get_psoc_ext_obj(psoc);
 	if (!mlme_obj) {
-		*value = ETSI_SRD_CHAN_IN_MASTER_MODE;
+		*value = cfg_default(CFG_ETSI_SRD_CHAN_IN_MASTER_MODE);
 		mlme_legacy_err("Failed to get MLME Obj");
 		return QDF_STATUS_E_INVAL;
 	}

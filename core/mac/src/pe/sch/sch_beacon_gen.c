@@ -495,6 +495,12 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 					&bcn_2->bss_color_change);
 	}
 
+	if (lim_is_session_eht_capable(session)) {
+		pe_debug("Populate EHT IEs");
+		populate_dot11f_eht_caps(mac_ctx, session, &bcn_2->eht_cap);
+		populate_dot11f_eht_operation(mac_ctx, session, &bcn_2->eht_op);
+	}
+
 	populate_dot11f_ext_cap(mac_ctx, is_vht_enabled, &bcn_2->ExtCap,
 				session);
 
@@ -577,6 +583,7 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 		 * should be populated already.
 		 */
 		lim_strip_he_ies_from_add_ies(mac_ctx, session);
+		lim_strip_eht_ies_from_add_ies(mac_ctx, session);
 
 		addn_ielen = session->add_ie_params.probeRespBCNDataLen;
 		addn_ie = qdf_mem_malloc(addn_ielen);
@@ -934,6 +941,22 @@ void lim_update_probe_rsp_template_ie_bitmap_beacon2(struct mac_context *mac,
 		qdf_mem_copy((void *)&prb_rsp->he_6ghz_band_cap,
 			     (void *)&beacon2->he_6ghz_band_cap,
 			     sizeof(beacon2->he_6ghz_band_cap));
+	}
+
+	if (beacon2->eht_cap.present) {
+		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap,
+					DOT11F_EID_EHT_CAP);
+		qdf_mem_copy((void *)&prb_rsp->eht_cap,
+			     (void *)&beacon2->eht_cap,
+			     sizeof(beacon2->eht_cap));
+	}
+
+	if (beacon2->eht_op.present) {
+		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap,
+					DOT11F_EID_EHT_OP);
+		qdf_mem_copy((void *)&prb_rsp->eht_op,
+			     (void *)&beacon2->eht_op,
+			     sizeof(beacon2->eht_op));
 	}
 
 }

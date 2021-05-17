@@ -1708,6 +1708,7 @@ static void hdd_pmkid_clear_on_ap_off(struct hdd_adapter *adapter)
 	uint8_t lookup_threshold = 0;
 	struct wlan_crypto_pmksa *pmksa;
 
+	/* this is handled by cm_clear_pmkid_on_ap_off for conenction manager */
 	if (sta_ctx->conn_info.auth_type != eCSR_AUTH_TYPE_SAE)
 		return;
 	hdd_get_rssi_snr_by_bssid(adapter, sta_ctx->conn_info.bssid.bytes,
@@ -1846,6 +1847,8 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 						disconnect_ies.ptr,
 						disconnect_ies.len);
 	}
+
+	/* this is handled by cm_clear_pmkid_on_ap_off for conenction manager */
 	if (adapter->device_mode == QDF_STA_MODE &&
 	    roam_status == eCSR_ROAM_LOSTLINK &&
 	    reason_code == REASON_BEACON_MISSED)
@@ -2732,7 +2735,9 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 					  adapter->device_mode,
 					  adapter->vdev_id,
 					  WLAN_IPA_STA_CONNECT,
-					  roam_info->bssid.bytes);
+					  roam_info->bssid.bytes,
+					  WLAN_REG_IS_24GHZ_CH_FREQ(
+						sta_ctx->conn_info.chan_freq));
 
 		if (adapter->device_mode == QDF_STA_MODE)
 			cdp_reset_rx_hw_ext_stats(soc);
@@ -2831,7 +2836,9 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 				(u8 *) (roam_info->pbFrames +
 					roam_info->nBeaconLength +
 					roam_info->nAssocReqLength);
-			if (assoc_rsp) {
+			if (assoc_rsp &&
+			    roam_info->nAssocRspLength >
+			    ASSOC_RSP_IES_OFFSET) {
 				/*
 				 * assoc_rsp needs to point to the IEs
 				 */
@@ -2850,7 +2857,9 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			assoc_req = (u8 *) (roam_info->pbFrames +
 					      roam_info->nBeaconLength);
 			if (assoc_req) {
-				if (!ft_carrier_on) {
+				if (!ft_carrier_on &&
+				    roam_info->nAssocReqLength >
+				    ASSOC_REQ_IES_OFFSET) {
 					/*
 					 * assoc_req needs to point to
 					 * the IEs
@@ -3169,7 +3178,9 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 					/* Association Request */
 					assoc_req = (u8 *)(roam_info->pbFrames +
 						      roam_info->nBeaconLength);
-					if (assoc_req) {
+					if (assoc_req &&
+					    roam_info->nAssocReqLength >
+					    ASSOC_REQ_IES_OFFSET) {
 						/*
 						 * assoc_req needs to point to
 						 * the IEs
@@ -3188,7 +3199,9 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 					    (u8 *)(roam_info->pbFrames +
 						   roam_info->nBeaconLength +
 						   roam_info->nAssocReqLength);
-					if (assoc_rsp) {
+					if (assoc_rsp &&
+					    roam_info->nAssocRspLength >
+					    ASSOC_RSP_IES_OFFSET) {
 						/*
 						 * assoc_rsp needs to point to
 						 * the IEs

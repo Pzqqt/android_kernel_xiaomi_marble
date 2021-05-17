@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -28,8 +28,44 @@
 #include <net/netlink.h>
 #include <net/cfg80211.h>
 #include <qca_vendor.h>
+#include "wlan_hdd_main.h"
 
 #ifdef WLAN_FEATURE_MEDIUM_ASSESS
+#include "wlan_cp_stats_mc_defs.h"
+
+#define MEDIUM_ASSESS_NUM 31
+
+/**
+ * struct hdd_medium_assess_config: configuration from framework
+ * @interval: the update period to framework. An integral multiple of 1 second,
+ *	      less or equal to 30 seconds
+ * @threshold: threshold for congestion percentage of pdev
+ */
+struct hdd_medium_assess_config {
+	uint8_t interval;
+	uint8_t threshold;
+};
+
+/**
+ * struct hdd_medium_assess_info: the medium assess info for pdev
+ * @pdev_id: pdev id
+ * @vdev_id: vdev id
+ * @config: config info from user
+ * @index: the data's index
+ * @data: the raw info from fw
+ * @count: the times of timer triggered
+ */
+struct hdd_medium_assess_info {
+	uint8_t pdev_id;
+	uint8_t vdev_id;
+	struct hdd_medium_assess_config config;
+
+	int32_t index;
+	struct medium_assess_data data[MEDIUM_ASSESS_NUM];
+
+	uint32_t count;
+};
+
 /* QCA_NL80211_VENDOR_SUBCMD_MEDIUM_ASSESS */
 extern const struct nla_policy
 hdd_medium_assess_policy[QCA_WLAN_VENDOR_ATTR_MEDIUM_ASSESS_MAX + 1];
@@ -65,8 +101,43 @@ int hdd_cfg80211_medium_assess(struct wiphy *wiphy,
 	.vendor_id = QCA_NL80211_VENDOR_ID,                \
 	.subcmd = QCA_NL80211_VENDOR_SUBCMD_MEDIUM_ASSESS, \
 },
+
+/**
+ * hdd_medium_assess_init() - medium assess init timer
+ *
+ * Return: none
+ */
+void hdd_medium_assess_init(void);
+
+/**
+ * hdd_cfg80211_medium_deinit() - medium assess deinit timer
+ *
+ * Return: none
+ */
+void hdd_medium_assess_deinit(void);
+
+/**
+ * hdd_medium_assess_stop_timer() - medium assess reset and stop timer
+ * @pdev_id: pdev id
+ * @hdd_ctx: hdd context
+ *
+ * Return: none
+ */
+void hdd_medium_assess_stop_timer(uint8_t pdev_id, struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_medium_assess_ssr_enable_flag() - medium assess set ssr enable flag
+ *
+ * Return: none
+ */
+void hdd_medium_assess_ssr_enable_flag(void);
 #else
 #define FEATURE_MEDIUM_ASSESS_VENDOR_COMMANDS
 #define FEATURE_MEDIUM_ASSESS_VENDOR_EVENTS
+static inline void hdd_medium_assess_init(void) {}
+static inline void hdd_medium_assess_deinit(void) {}
+static inline void hdd_medium_assess_stop_timer(uint8_t pdev_id,
+						struct hdd_context *hdd_ctx) {}
+static inline void hdd_medium_assess_ssr_enable_flag(void) {}
 #endif
 #endif /* end #if !defined(__WLAN_HDD_MEDIUM_ASSESS_H) */

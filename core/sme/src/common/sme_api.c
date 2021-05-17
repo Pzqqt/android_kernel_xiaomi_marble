@@ -2268,6 +2268,20 @@ sme_process_twt_notify_event(struct mac_context *mac,
 }
 #endif
 
+static void sme_link_lost_ind(struct mac_context *mac,
+				    struct sir_lost_link_info *ind)
+{
+	struct cm_roam_values_copy src_cfg;
+
+	if (ind) {
+		src_cfg.int_value = ind->rssi;
+		wlan_cm_roam_cfg_set_value(mac->psoc, ind->vdev_id,
+					   LOST_LINK_RSSI, &src_cfg);
+	}
+	if (mac->sme.lost_link_info_cb)
+		mac->sme.lost_link_info_cb(mac->hdd_handle, ind);
+}
+
 QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -2525,9 +2539,7 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 		}
 		break;
 	case eWNI_SME_LOST_LINK_INFO_IND:
-		if (mac->sme.lost_link_info_cb)
-			mac->sme.lost_link_info_cb(mac->hdd_handle,
-				(struct sir_lost_link_info *)pMsg->bodyptr);
+		sme_link_lost_ind(mac, pMsg->bodyptr);
 		qdf_mem_free(pMsg->bodyptr);
 		break;
 	case eWNI_SME_RSO_CMD_STATUS_IND:
@@ -10774,6 +10786,29 @@ int sme_update_tx_bfee_nsts(mac_handle_t mac_handle, uint8_t session_id,
 
 	return sme_update_he_tx_bfee_nsts(mac_handle, session_id, nsts_set_val);
 }
+
+#ifdef WLAN_FEATURE_11BE
+void sme_update_tgt_eht_cap(mac_handle_t mac_handle,
+			    struct wma_tgt_cfg *cfg,
+			    tDot11fIEeht_cap *eht_cap_ini)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+
+	qdf_mem_copy(&mac_ctx->eht_cap_2g,
+		     &cfg->eht_cap_2g,
+		     sizeof(tDot11fIEeht_cap));
+
+	qdf_mem_copy(&mac_ctx->eht_cap_5g,
+		     &cfg->eht_cap_5g,
+		     sizeof(tDot11fIEeht_cap));
+}
+
+void sme_update_eht_cap_nss(mac_handle_t mac_handle, uint8_t session_id,
+			    uint8_t nss)
+{
+}
+#endif
+
 #ifdef WLAN_FEATURE_11AX
 void sme_update_tgt_he_cap(mac_handle_t mac_handle,
 			   struct wma_tgt_cfg *cfg,
@@ -14762,7 +14797,8 @@ QDF_STATUS sme_handle_sae_msg(mac_handle_t mac_handle,
 	 * is meant for roaming.
 	 */
 	opmode = wlan_get_opmode_from_vdev_id(mac->pdev, session_id);
-	if ((opmode == QDF_SAP_MODE) || !CSR_IS_ROAM_JOINED(mac, session_id)) {
+	if ((opmode == QDF_SAP_MODE) || (opmode == QDF_P2P_GO_MODE) ||
+	    !CSR_IS_ROAM_JOINED(mac, session_id)) {
 		sae_msg = qdf_mem_malloc(sizeof(*sae_msg));
 		if (!sae_msg) {
 			qdf_status = QDF_STATUS_E_NOMEM;
@@ -15069,6 +15105,44 @@ void sme_reset_he_caps(mac_handle_t mac_handle, uint8_t vdev_id)
 }
 #endif
 
+#ifdef WLAN_FEATURE_11BE
+void sme_set_eht_testbed_def(mac_handle_t mac_handle, uint8_t vdev_id)
+{
+}
+
+void sme_reset_eht_caps(mac_handle_t mac_handle, uint8_t vdev_id)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	struct csr_roam_session *session;
+	QDF_STATUS status;
+
+	session = CSR_GET_SESSION(mac_ctx, vdev_id);
+
+	if (!session) {
+		sme_err("No session for id %d", vdev_id);
+		return;
+	}
+	sme_debug("reset EHT caps");
+	mac_ctx->mlme_cfg->eht_caps.dot11_eht_cap =
+		mac_ctx->mlme_cfg->eht_caps.dot11_eht_cap;
+	csr_update_session_eht_cap(mac_ctx, session);
+
+	wlan_cm_reset_check_6ghz_security(mac_ctx->psoc);
+	status = ucfg_mlme_set_enable_bcast_probe_rsp(mac_ctx->psoc, true);
+	if (QDF_IS_STATUS_ERROR(status))
+		sme_err("Failed not set enable bcast probe resp info, %d",
+			status);
+
+	status = wma_cli_set_command(vdev_id,
+				     WMI_VDEV_PARAM_ENABLE_BCAST_PROBE_RESPONSE,
+				     1, VDEV_CMD);
+	if (QDF_IS_STATUS_ERROR(status))
+		sme_err("Failed to set enable bcast probe resp in FW, %d",
+			status);
+	mac_ctx->is_usr_cfg_pmf_wep = PMF_CORRECT_KEY;
+}
+#endif
+
 uint8_t sme_get_mcs_idx(uint16_t raw_rate, enum tx_rate_info rate_flags,
 			bool is_he_mcs_12_13_supported,
 			uint8_t *nss, uint8_t *dcm,
@@ -15154,9 +15228,15 @@ void sme_update_score_config(mac_handle_t mac_handle, eCsrPhyMode phy_mode,
 
 	config.vdev_nss_24g = vdev_ini_cfg.rx_nss[NSS_CHAINS_BAND_2GHZ];
 	config.vdev_nss_5g = vdev_ini_cfg.rx_nss[NSS_CHAINS_BAND_5GHZ];
-
+#ifdef WLAN_FEATURE_11BE
 	if (phy_mode == eCSR_DOT11_MODE_AUTO ||
-	    phy_mode == eCSR_DOT11_MODE_11ax ||
+	    CSR_IS_DOT11_PHY_MODE_11BE(phy_mode) ||
+	    CSR_IS_DOT11_PHY_MODE_11BE_ONLY(phy_mode)) {
+		config.eht_cap = 1;
+		config.he_cap = 1;
+	}
+#endif
+	if (phy_mode == eCSR_DOT11_MODE_11ax ||
 	    phy_mode == eCSR_DOT11_MODE_11ax_ONLY)
 		config.he_cap = 1;
 
@@ -15168,6 +15248,11 @@ void sme_update_score_config(mac_handle_t mac_handle, eCsrPhyMode phy_mode,
 	if (config.vht_cap || phy_mode == eCSR_DOT11_MODE_11n ||
 	    phy_mode == eCSR_DOT11_MODE_11n_ONLY)
 		config.ht_cap = 1;
+
+#ifdef WLAN_FEATURE_11BE
+	if (!IS_FEATURE_SUPPORTED_BY_FW(DOT11BE))
+		config.eht_cap = 0;
+#endif
 
 	if (!IS_FEATURE_SUPPORTED_BY_FW(DOT11AX))
 		config.he_cap = 0;

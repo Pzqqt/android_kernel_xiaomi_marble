@@ -78,6 +78,9 @@ struct parsed_ies {
 #ifdef WLAN_FEATURE_11AX
 	tDot11fIEhe_op he_operation;
 #endif
+#ifdef WLAN_FEATURE_11BE
+	tDot11fIEeht_op eht_operation;
+#endif
 };
 
 /* STA state node */
@@ -183,6 +186,11 @@ typedef struct sDphHashNode {
 	tDot11fIEhe_cap he_config;
 	uint16_t he_mcs_12_13_map;
 #endif
+
+#ifdef WLAN_FEATURE_11BE
+	tDot11fIEeht_cap eht_config;
+#endif
+
 	/* Peer operation class, extracted from ASSOC request frame*/
 	tDot11fIESuppOperatingClasses supp_operating_classes;
 	/*

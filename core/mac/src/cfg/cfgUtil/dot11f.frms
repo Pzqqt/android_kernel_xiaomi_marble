@@ -4008,6 +4008,8 @@ FRAME ReAssocResponse                     // 7.2.3.7
     OPTIE  bss_color_change;
     OPTIE  mu_edca_param_set;
     OPTIE  MBO_IE;
+    OPTIE  eht_cap;
+    OPTIE  eht_op;
 } // End frame ReAssocResponse.
 
 FRAME ProbeRequest                        // 7.2.3.8

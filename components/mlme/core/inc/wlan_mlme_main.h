@@ -33,19 +33,6 @@
 
 #define MAC_MAX_ADD_IE_LENGTH       2048
 
-/* The ini etsi13_srd_chan_in_master_mode is to enable/disable ETSI SRD
- * channels in master mode PCL and ACS functionality. It is now deprecated.
- * So, defining a new macro ETSI_SRD_CHAN_IN_MASTER_MODE with default value.
- *
- * Bit map for enabling the SRD mode in various modes are as follows:-
- * BIT 0:- Enable/Disable SRD channels for SAP.
- * BIT 1:- Enable/Disable SRD channels for P2P-GO.
- * BIT 2:- Enable/Disable SRD channels for NAN.
- * Rest of the bits are currently reserved for future SRD channel support for
- * other vdevs.
- */
-#define ETSI_SRD_CHAN_IN_MASTER_MODE (6)
-
 /*
  * Following time is used to program WOW_TIMER_PATTERN to FW so that FW will
  * wake host up to do graceful disconnect in case PEER remains un-authorized
@@ -270,11 +257,53 @@ struct mscs_req_info {
 };
 #endif
 
+#ifdef WLAN_FEATURE_HOST_ROAM
+/**
+ * enum ft_ie_state - ft state
+ * @FT_START_READY: Start before and after 11r assoc
+ * @FT_AUTH_REQ_READY: When we have recvd the 1st or nth auth req
+ * @FT_REASSOC_REQ_WAIT: waiting for reassoc
+ * @FT_SET_KEY_WAIT: waiting for key
+ */
+enum ft_ie_state {
+	FT_START_READY,
+	FT_AUTH_REQ_READY,
+	FT_REASSOC_REQ_WAIT,
+	FT_SET_KEY_WAIT,
+};
+#endif
+
+/**
+ * struct ft_context - ft related information
+ * @r0kh_id_len: rokh id len
+ * @r0kh_id: rokh id
+ * @auth_ft_ie: auth ft ies received during preauth phase
+ * @auth_ie_len: auth ie lengt
+ * @reassoc_ft_ie: reassoc ft ies received during reassoc phas
+ * @reassoc_ie_len: reassoc ie length
+ * ric_ies: ric ie
+ * ric_ies_length: ric ie len
+ * @set_ft_preauth_state: preauth state
+ * @ft_state: ft state
+ * @add_mdie: add mdie in assoc req
+ */
 struct ft_context {
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	uint32_t r0kh_id_len;
 	uint8_t r0kh_id[ROAM_R0KH_ID_MAX_LEN];
 #endif
+#ifdef WLAN_FEATURE_HOST_ROAM
+	uint8_t auth_ft_ie[MAX_FTIE_SIZE];
+	uint16_t auth_ie_len;
+	uint8_t reassoc_ft_ie[MAX_FTIE_SIZE];
+	uint16_t reassoc_ie_len;
+	uint8_t ric_ies[MAX_FTIE_SIZE];
+	uint16_t ric_ies_length;
+	bool set_ft_preauth_state;
+	enum ft_ie_state ft_state;
+	bool add_mdie;
+#endif
+
 };
 
 /**
@@ -357,6 +386,7 @@ struct wait_for_key_timer {
  * @rso_cfg: per vdev RSO config to be sent to FW
  * @connect_info: mlme connect information
  * @wait_key_timer: wait key timer
+ * @eht_config: Eht capability configuration
  */
 struct mlme_legacy_priv {
 	bool chan_switch_in_progress;
@@ -394,6 +424,9 @@ struct mlme_legacy_priv {
 #endif
 	struct mlme_connect_info connect_info;
 	struct wait_for_key_timer wait_key_timer;
+#ifdef WLAN_FEATURE_11BE
+	tDot11fIEeht_cap eht_config;
+#endif
 };
 
 /**

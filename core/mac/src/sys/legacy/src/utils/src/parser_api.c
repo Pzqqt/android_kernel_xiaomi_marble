@@ -3135,6 +3135,14 @@ sir_convert_assoc_req_frame2_struct(struct mac_context *mac,
 			     sizeof(tDot11fIEhe_6ghz_band_cap));
 		pe_debug("Received Assoc Req with HE Band Capability IE");
 	}
+	if (ar->eht_cap.present) {
+		qdf_mem_copy(&pAssocReq->eht_cap, &ar->eht_cap,
+			     sizeof(tDot11fIEeht_cap));
+		pe_debug("Received Assoc Req with EHT Capability IE");
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+				   &pAssocReq->eht_cap,
+				   sizeof(tDot11fIEeht_cap));
+	}
 	qdf_mem_free(ar);
 	return QDF_STATUS_SUCCESS;
 
@@ -3156,7 +3164,6 @@ QDF_STATUS dot11f_parse_assoc_response(struct mac_context *mac_ctx,
 				   p_buf, n_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
-
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -3649,6 +3656,11 @@ sir_convert_assoc_resp_frame2_struct(struct mac_context *mac,
 				pAssocRsp->he_op.default_pe,
 				pAssocRsp->he_op.partial_bss_col,
 				pAssocRsp->he_op.bss_col_disabled);
+	}
+
+	if (ar->eht_cap.present) {
+		qdf_mem_copy(&pAssocRsp->eht_cap, &ar->eht_cap,
+			     sizeof(tDot11fIEeht_cap));
 	}
 
 	if (ar->he_6ghz_band_cap.present) {
@@ -6589,6 +6601,39 @@ populate_dot11f_he_bss_color_change(struct mac_context *mac_ctx,
 #endif /* WLAN_FEATURE_11AX_BSS_COLOR */
 #endif /* WLAN_FEATURE_11AX */
 
+#ifdef WLAN_FEATURE_11BE
+QDF_STATUS populate_dot11f_eht_caps(struct mac_context *mac_ctx,
+				    struct pe_session *session,
+				    tDot11fIEeht_cap *eht_cap)
+{
+	eht_cap->present = 1;
+
+	if (!session) {
+		qdf_mem_copy(eht_cap,
+			     &mac_ctx->mlme_cfg->eht_caps.dot11_eht_cap,
+			     sizeof(tDot11fIEeht_cap));
+		return QDF_STATUS_SUCCESS;
+	}
+
+	/** TODO: String items needs attention. **/
+	qdf_mem_copy(eht_cap, &session->eht_config, sizeof(*eht_cap));
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS populate_dot11f_eht_operation(struct mac_context *mac_ctx,
+					 struct pe_session *session,
+					 tDot11fIEeht_op *eht_op)
+{
+	qdf_mem_copy(eht_op, &session->eht_op, sizeof(*eht_op));
+
+	eht_op->present = 1;
+	lim_log_eht_op(mac_ctx, eht_op, session);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_FEATURE_11BE */
+
 #if defined(WLAN_FEATURE_11AX) && defined(WLAN_SUPPORT_TWT)
 QDF_STATUS populate_dot11f_twt_extended_caps(struct mac_context *mac_ctx,
 					     struct pe_session *pe_session,
@@ -6628,15 +6673,18 @@ QDF_STATUS populate_dot11f_twt_extended_caps(struct mac_context *mac_ctx,
  * Return: None
  */
 static void
-wlan_fill_single_pmk_ap_cap_from_scan_entry(struct bss_description *bss_desc,
+wlan_fill_single_pmk_ap_cap_from_scan_entry(struct mac_context *mac_ctx,
+					    struct bss_description *bss_desc,
 					    struct scan_cache_entry *scan_entry)
 {
-	bss_desc->is_single_pmk = util_scan_entry_single_pmk(scan_entry);
+	bss_desc->is_single_pmk =
+		util_scan_entry_single_pmk(mac_ctx->psoc, scan_entry) &&
+		mac_ctx->mlme_cfg->lfr.sae_single_pmk_feature_enabled;
 }
-
 #else
 static inline void
-wlan_fill_single_pmk_ap_cap_from_scan_entry(struct bss_description *bss_desc,
+wlan_fill_single_pmk_ap_cap_from_scan_entry(struct mac_context *mac_ctx,
+					    struct bss_description *bss_desc,
 					    struct scan_cache_entry *scan_entry)
 {
 }
@@ -7217,7 +7265,8 @@ wlan_fill_bss_desc_from_scan_entry(struct mac_context *mac_ctx,
 	bss_desc->mbo_oce_enabled_ap =
 			util_scan_entry_mbo_oce(scan_entry) ? true : false;
 
-	wlan_fill_single_pmk_ap_cap_from_scan_entry(bss_desc, scan_entry);
+	wlan_fill_single_pmk_ap_cap_from_scan_entry(mac_ctx, bss_desc,
+						    scan_entry);
 
 	qdf_mem_copy(&bss_desc->mbssid_info, &scan_entry->mbssid_info,
 		     sizeof(struct scan_mbssid_info));

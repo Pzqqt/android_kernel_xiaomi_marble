@@ -1267,7 +1267,8 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 				      adapter->device_mode,
 				      adapter->vdev_id,
 				      WLAN_IPA_CLIENT_DISCONNECT,
-				      mac_addr->bytes) != QDF_STATUS_SUCCESS)
+				      mac_addr->bytes,
+				      false) != QDF_STATUS_SUCCESS)
 			hdd_debug("WLAN_CLIENT_DISCONNECT event failed");
 	}
 
@@ -1485,8 +1486,8 @@ QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *adapter)
 				      adapter->device_mode,
 				      adapter->vdev_id,
 				      WLAN_IPA_AP_DISCONNECT,
-				      adapter->dev->dev_addr) !=
-		    QDF_STATUS_SUCCESS)
+				      adapter->dev->dev_addr,
+				      false) != QDF_STATUS_SUCCESS)
 			hdd_err("WLAN_AP_DISCONNECT event failed");
 	}
 

@@ -6489,6 +6489,8 @@ static int __iw_get_char_setnone(struct net_device *dev,
 				snprintf(extra, WE_MAX_STR_LEN,
 					 "11AX_HE_160");
 			break;
+		default:
+			break;
 		}
 
 		wrqu->data.length = strlen(extra) + 1;

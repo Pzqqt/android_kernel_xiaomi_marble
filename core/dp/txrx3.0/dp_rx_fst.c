@@ -24,6 +24,7 @@
 #include "dp_htt.h"
 #include "dp_internal.h"
 #include "hif.h"
+#include "dp_txrx.h"
 
 /* Timeout in milliseconds to wait for CMEM FST HTT response */
 #define DP_RX_FST_CMEM_RESP_TIMEOUT 2000
@@ -248,8 +249,8 @@ QDF_STATUS dp_rx_fst_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 	dp_err("FST setup params FT size %d, hash_mask 0x%x, skid_length %d",
 	       fst->max_entries, fst->hash_mask, fst->max_skid_length);
 
-	fst->base = (uint8_t *)qdf_mem_malloc(DP_RX_GET_SW_FT_ENTRY_SIZE *
-					       fst->max_entries);
+	fst->base = (uint8_t *)dp_context_alloc_mem(soc, DP_FISA_RX_FT_TYPE,
+				DP_RX_GET_SW_FT_ENTRY_SIZE * fst->max_entries);
 
 	if (!fst->base)
 		goto out2;
@@ -299,7 +300,7 @@ timer_init_fail:
 	qdf_spinlock_destroy(&fst->dp_rx_fst_lock);
 	hal_rx_fst_detach(fst->hal_rx_fst, soc->osdev);
 out1:
-	qdf_mem_free(fst->base);
+	dp_context_free_mem(soc, DP_FISA_RX_FT_TYPE, fst->base);
 out2:
 	qdf_mem_free(fst);
 	return QDF_STATUS_E_NOMEM;
@@ -394,7 +395,7 @@ void dp_rx_fst_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 		else
 			hal_rx_fst_detach(dp_fst->hal_rx_fst, soc->osdev);
 
-		qdf_mem_free(dp_fst->base);
+		dp_context_free_mem(soc, DP_FISA_RX_FT_TYPE, dp_fst->base);
 		qdf_spinlock_destroy(&dp_fst->dp_rx_fst_lock);
 		qdf_mem_free(dp_fst);
 	}

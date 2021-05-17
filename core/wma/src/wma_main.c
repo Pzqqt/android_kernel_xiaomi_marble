@@ -108,6 +108,7 @@
 #include "target_if_psoc_timer_tx_ops.h"
 #include <ftm_time_sync_ucfg_api.h>
 #include "wlan_ipa_ucfg_api.h"
+#include "wma_eht.h"
 
 #ifdef DIRECT_BUF_RX_ENABLE
 #include <target_if_direct_buf_rx_api.h>
@@ -4658,6 +4659,7 @@ static inline void wma_update_target_services(struct wmi_unified *wmi_handle,
 	}
 
 	wma_he_update_tgt_services(wmi_handle, cfg);
+	wma_eht_update_tgt_services(wmi_handle, cfg);
 
 	cfg->get_peer_info_enabled =
 		wmi_service_enabled(wmi_handle,
@@ -5494,6 +5496,7 @@ static int wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	wma_update_target_ext_vht_cap(tgt_hdl, &tgt_cfg.vht_cap);
 
 	wma_update_target_ext_he_cap(tgt_hdl, &tgt_cfg);
+	wma_update_target_ext_eht_cap(tgt_hdl, &tgt_cfg);
 
 	tgt_cfg.target_fw_version = target_if_get_fw_version(tgt_hdl);
 	if (service_ext_param)
@@ -6516,14 +6519,17 @@ static QDF_STATUS wma_update_hw_mode_list(t_wma_handle *wma_handle,
 		/* SBS and DBS have dual MAC. Upto 2 MACs are considered. */
 		if ((hw_config_type == WMI_HW_MODE_DBS) ||
 		    (hw_config_type == WMI_HW_MODE_SBS_PASSIVE) ||
-		    (hw_config_type == WMI_HW_MODE_SBS)) {
+		    (hw_config_type == WMI_HW_MODE_SBS) ||
+		    (hw_config_type == WMI_HW_MODE_DBS_OR_SBS)) {
 			/* Update for MAC1 */
 			tmp = &mac_phy_cap[j++];
 			wma_get_hw_mode_params(tmp, &mac1_ss_bw_info);
-			if (hw_config_type == WMI_HW_MODE_DBS)
+			if (hw_config_type == WMI_HW_MODE_DBS ||
+			    hw_config_type == WMI_HW_MODE_DBS_OR_SBS)
 				dbs_mode = HW_MODE_DBS;
 			if ((hw_config_type == WMI_HW_MODE_SBS_PASSIVE) ||
-			    (hw_config_type == WMI_HW_MODE_SBS))
+			    (hw_config_type == WMI_HW_MODE_SBS) ||
+			    (hw_config_type == WMI_HW_MODE_DBS_OR_SBS))
 				sbs_mode = HW_MODE_SBS;
 			if (QDF_STATUS_SUCCESS !=
 			wma_update_supported_bands(tmp->supported_bands,

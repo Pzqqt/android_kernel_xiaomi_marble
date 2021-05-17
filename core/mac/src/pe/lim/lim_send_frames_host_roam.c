@@ -81,7 +81,6 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 	uint8_t vdev_id = 0;
 	bool vht_enabled = false;
 	tpSirMacMgmtHdr mac_hdr;
-	tftSMEContext *ft_sme_context;
 	struct mlme_legacy_priv *mlme_priv;
 
 	if (!pe_session)
@@ -281,13 +280,12 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 #endif
 	}
 
-	ft_sme_context = &mac_ctx->roam.roamSession[vdev_id].ftSmeContext;
 	if (pe_session->htCapability &&
 	    mac_ctx->lim.htCapabilityPresentInBeacon) {
 		populate_dot11f_ht_caps(mac_ctx, pe_session, &frm->HTCaps);
 	}
 	if (pe_session->pLimReAssocReq->bssDescription.mdiePresent &&
-	    (ft_sme_context->addMDIE == true)
+	    (mlme_priv->connect_info.ft_info.add_mdie)
 #if defined FEATURE_WLAN_ESE
 	    && !pe_session->isESEconnection
 #endif
@@ -323,6 +321,11 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 					    &frm->he_6ghz_band_cap);
 	}
 
+	if (lim_is_session_eht_capable(pe_session)) {
+		pe_debug("Populate EHT IEs");
+		populate_dot11f_eht_caps(mac_ctx, pe_session, &frm->eht_cap);
+	}
+
 	status = dot11f_get_packed_re_assoc_request_size(mac_ctx, frm,
 			&payload);
 	if (DOT11F_FAILED(status)) {
@@ -336,10 +339,10 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 	bytes = payload + sizeof(tSirMacMgmtHdr) + add_ie_len;
 
 	pe_debug("FT IE Reassoc Req %d",
-		ft_sme_context->reassoc_ft_ies_length);
+		 mlme_priv->connect_info.ft_info.reassoc_ie_len);
 
 	if (pe_session->is11Rconnection)
-		ft_ies_length = ft_sme_context->reassoc_ft_ies_length;
+		ft_ies_length = mlme_priv->connect_info.ft_info.reassoc_ie_len;
 
 	qdf_status = cds_packet_alloc((uint16_t) bytes + ft_ies_length,
 				 (void **)&frame, (void **)&packet);
@@ -387,6 +390,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 		payload += add_ie_len;
 	}
 
+#ifdef FEATURE_CM_ENABLE
 	pe_session->assoc_req = qdf_mem_malloc(payload);
 	if (pe_session->assoc_req) {
 		/*
@@ -397,15 +401,19 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 			     frame + sizeof(tSirMacMgmtHdr), payload);
 		pe_session->assocReqLen = payload;
 	}
+#endif
 
-	if (pe_session->is11Rconnection && ft_sme_context->reassoc_ft_ies) {
+	if (pe_session->is11Rconnection &&
+	    mlme_priv->connect_info.ft_info.reassoc_ie_len) {
 		int i = 0;
 
 		body = frame + bytes;
 		for (i = 0; i < ft_ies_length; i++) {
-			*body = ft_sme_context->reassoc_ft_ies[i];
+			*body =
+			   mlme_priv->connect_info.ft_info.reassoc_ft_ie[i];
 			body++;
 		}
+		payload += ft_ies_length;
 	}
 	pe_debug("Re-assoc Req Frame is:");
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
@@ -420,6 +428,18 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 		 pe_session->opmode == QDF_P2P_GO_MODE)
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
+#ifdef FEATURE_CM_ENABLE
+	pe_session->assoc_req = qdf_mem_malloc(payload);
+	if (pe_session->assoc_req) {
+		/*
+		 * Store the Assoc request. This is sent to csr/hdd in
+		 * join cnf response.
+		 */
+		qdf_mem_copy(pe_session->assoc_req,
+			     frame + sizeof(tSirMacMgmtHdr), payload);
+		pe_session->assocReqLen = payload;
+	}
+#else
 	if (pe_session->assoc_req) {
 		qdf_mem_free(pe_session->assoc_req);
 		pe_session->assoc_req = NULL;
@@ -435,14 +455,15 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 			 * join cnf response.
 			 */
 			qdf_mem_copy(pe_session->assoc_req,
-				     ft_sme_context->reassoc_ft_ies,
-				     ft_ies_length);
+				mlme_priv->connect_info.ft_info.reassoc_ft_ie,
+				ft_ies_length);
 			pe_session->assocReqLen = ft_ies_length;
 		}
 	} else {
 		pe_debug("FT IEs not present");
 		pe_session->assocReqLen = 0;
 	}
+#endif
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 pe_session->peSessionId, mac_hdr->fc.subType));
@@ -700,6 +721,11 @@ void lim_send_reassoc_req_mgmt_frame(struct mac_context *mac,
 					&frm->he_cap);
 		populate_dot11f_he_6ghz_cap(mac, pe_session,
 					    &frm->he_6ghz_band_cap);
+	}
+
+	if (lim_is_session_eht_capable(pe_session)) {
+		pe_debug("Populate EHT IEs");
+		populate_dot11f_eht_caps(mac, pe_session, &frm->eht_cap);
 	}
 
 	nStatus =

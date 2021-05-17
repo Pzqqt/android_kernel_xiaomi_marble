@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1356,7 +1356,8 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 	}
 
 	/* Allocate TX COMP Ring */
-	tx_comp_ring_size = uc_tx_buf_cnt * sizeof(target_paddr_t);
+	tx_comp_ring_size = qdf_get_pwr2(uc_tx_buf_cnt)
+			    * sizeof(target_paddr_t);
 	pdev->ipa_uc_tx_rsc.tx_comp_ring =
 		qdf_mem_shared_mem_alloc(pdev->osdev,
 					 tx_comp_ring_size);

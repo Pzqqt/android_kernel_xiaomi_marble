@@ -971,8 +971,12 @@ static void wma_update_phymode_on_roam(tp_wma_handle wma, uint8_t *bssid,
 	struct wlan_channel *bss_chan;
 	struct vdev_mlme_obj *vdev_mlme;
 	uint8_t channel;
+	struct wlan_objmgr_pdev *pdev = NULL;
 
-	channel = wlan_freq_to_chan(iface->ch_freq);
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(iface->vdev);
+	pdev = wlan_vdev_get_pdev(vdev_mlme->vdev);
+
+	channel = wlan_reg_freq_to_chan(pdev, iface->ch_freq);
 	if (chan)
 		bss_phymode =
 			wma_fw_to_host_phymode(WMI_GET_CHANNEL_MODE(chan));
@@ -980,7 +984,6 @@ static void wma_update_phymode_on_roam(tp_wma_handle wma, uint8_t *bssid,
 		wma_get_phy_mode_cb(iface->ch_freq,
 				    iface->chan_width, &bss_phymode);
 
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(iface->vdev);
 	/* Update vdev mlme channel info after roaming */
 	des_chan = wlan_vdev_mlme_get_des_chan(iface->vdev);
 	bss_chan = wlan_vdev_mlme_get_bss_chan(iface->vdev);

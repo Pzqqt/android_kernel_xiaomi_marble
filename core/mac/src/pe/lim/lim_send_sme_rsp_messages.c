@@ -739,6 +739,20 @@ static inline void lim_add_he_info(struct parsed_ies *parsed_ies,
 }
 #endif
 
+#ifdef WLAN_FEATURE_11BE
+static void lim_add_eht_info(struct parsed_ies *parsed_ies,
+			     struct join_rsp *sme_join_rsp)
+{
+	if (parsed_ies->eht_operation.present)
+		sme_join_rsp->eht_operation = parsed_ies->eht_operation;
+}
+#else
+static inline void lim_add_eht_info(struct parsed_ies *parsed_ies,
+				    struct join_rsp *sme_join_rsp)
+{
+}
+#endif
+
 /**
  * lim_add_bss_info() - copy data from session entry to join rsp
  * @sta_ds: Station dph entry
@@ -762,6 +776,7 @@ static void lim_add_bss_info(tpDphHashNode sta_ds,
 	if (parsed_ies->vht_operation.present)
 		sme_join_rsp->vht_operation = parsed_ies->vht_operation;
 	lim_add_he_info(parsed_ies, sme_join_rsp);
+	lim_add_eht_info(parsed_ies, sme_join_rsp);
 }
 
 #ifdef WLAN_FEATURE_FILS_SK

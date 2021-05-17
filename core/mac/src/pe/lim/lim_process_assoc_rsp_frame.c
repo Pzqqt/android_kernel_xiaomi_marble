@@ -137,6 +137,7 @@ void lim_update_assoc_sta_datas(struct mac_context *mac_ctx,
 	bool qos_mode;
 	tDot11fIEVHTCaps *vht_caps = NULL;
 	tDot11fIEhe_cap *he_cap = NULL;
+	tDot11fIEeht_cap *eht_cap = NULL;
 	struct bss_description *bss_desc = NULL;
 
 	lim_get_phy_mode(mac_ctx, &phy_mode, session_entry);
@@ -190,8 +191,14 @@ void lim_update_assoc_sta_datas(struct mac_context *mac_ctx,
 	lim_update_stads_he_caps(mac_ctx, sta_ds, assoc_rsp,
 				 session_entry, beacon);
 
+	lim_update_stads_eht_caps(mac_ctx, sta_ds, assoc_rsp,
+				  session_entry, beacon);
+
 	if (lim_is_sta_he_capable(sta_ds))
 		he_cap = &assoc_rsp->he_cap;
+
+	if (lim_is_sta_eht_capable(sta_ds))
+		eht_cap = &assoc_rsp->eht_cap;
 
 	if (session_entry->lim_join_req)
 		bss_desc = &session_entry->lim_join_req->bssDescription;
@@ -199,8 +206,8 @@ void lim_update_assoc_sta_datas(struct mac_context *mac_ctx,
 	if (lim_populate_peer_rate_set(mac_ctx, &sta_ds->supportedRates,
 				assoc_rsp->HTCaps.supportedMCSSet,
 				false, session_entry,
-				vht_caps, he_cap, sta_ds,
-				bss_desc) !=
+				vht_caps, he_cap, eht_cap,
+				sta_ds, bss_desc) !=
 				QDF_STATUS_SUCCESS) {
 		pe_err("could not get rateset and extended rate set");
 		return;
@@ -534,6 +541,20 @@ static void lim_process_he_info(tpSirProbeRespBeacon beacon,
 #else
 static inline void lim_process_he_info(tpSirProbeRespBeacon beacon,
 				       tpDphHashNode sta_ds)
+{
+}
+#endif
+
+#ifdef WLAN_FEATURE_11BE
+static void lim_process_eht_info(tpSirProbeRespBeacon beacon,
+				 tpDphHashNode sta_ds)
+{
+	if (beacon->eht_op.present)
+		sta_ds->parsed_ies.eht_operation = beacon->eht_op;
+}
+#else
+static inline void lim_process_eht_info(tpSirProbeRespBeacon beacon,
+					tpDphHashNode sta_ds)
 {
 }
 #endif
@@ -1138,6 +1159,8 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 		sta_ds->parsed_ies.vht_operation = beacon->VHTOperation;
 
 	lim_process_he_info(beacon, sta_ds);
+
+	lim_process_eht_info(beacon, sta_ds);
 
 	if (mac_ctx->lim.gLimProtectionControl !=
 	    MLME_FORCE_POLICY_PROTECTION_DISABLE)

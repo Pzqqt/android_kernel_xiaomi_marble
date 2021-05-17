@@ -3149,6 +3149,7 @@ uint8_t sme_qos_ese_retrieve_tspec_info(struct mac_context *mac_ctx,
 
 #endif
 
+#ifdef WLAN_FEATURE_HOST_ROAM
 static
 QDF_STATUS sme_qos_create_tspec_ricie(struct mac_context *mac,
 				      struct sme_qos_wmmtspecinfo *tspec_info,
@@ -3262,6 +3263,8 @@ QDF_STATUS sme_qos_create_tspec_ricie(struct mac_context *mac,
 	qdf_mem_free(ric_ie);
 	return status;
 }
+#endif
+
 /**
  * sme_qos_process_ft_reassoc_req_ev()- processes reassoc request
  *
@@ -5067,6 +5070,7 @@ static QDF_STATUS sme_qos_process_join_req_ev(struct mac_context *mac, uint8_t
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_HOST_ROAM
 /**
  * sme_qos_process_preauth_success_ind() - process preauth success indication
  * @mac_ctx: global MAC context
@@ -5092,6 +5096,8 @@ static QDF_STATUS sme_qos_process_preauth_success_ind(struct mac_context *mac_ct
 	uint8_t *ric_ie;
 	uint8_t tspec_mask_status = 0;
 	uint8_t tspec_pending_status = 0;
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  FL("invoked on SME session %d"), sessionid);
@@ -5131,11 +5137,14 @@ static QDF_STATUS sme_qos_process_preauth_success_ind(struct mac_context *mac_ct
 	if (!csr_roam_is11r_assoc(mac_ctx, sessionid))
 		return status;
 
-	/* Data is accessed from saved PreAuth Rsp */
-	if (!sme_session->ftSmeContext.psavedFTPreAuthRsp) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  FL("psavedFTPreAuthRsp is NULL"));
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac_ctx->pdev, sessionid,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev)
 		return QDF_STATUS_E_INVAL;
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		status = QDF_STATUS_E_FAILURE;
+		goto end;
 	}
 
 	/*
@@ -5144,9 +5153,11 @@ static QDF_STATUS sme_qos_process_preauth_success_ind(struct mac_context *mac_ct
 	 * length of the whole RIC IEs. Filling of TSPEC info should start
 	 * from this length
 	 */
-	ric_ie = sme_session->ftSmeContext.psavedFTPreAuthRsp->ric_ies;
-	ric_offset =
-		sme_session->ftSmeContext.psavedFTPreAuthRsp->ric_ies_length;
+	qdf_mem_zero(mlme_priv->connect_info.ft_info.ric_ies, MAX_FTIE_SIZE);
+	mlme_priv->connect_info.ft_info.ric_ies_length = 0;
+
+	ric_ie = mlme_priv->connect_info.ft_info.ric_ies;
+	ric_offset = mlme_priv->connect_info.ft_info.ric_ies_length;
 
 	/*
 	 * Now we have to process the currentTspeInfo inside this session and
@@ -5186,16 +5197,25 @@ static QDF_STATUS sme_qos_process_preauth_success_ind(struct mac_context *mac_ct
 			}
 add_next_ric:
 			ric_offset += ric_ielen;
-			sme_session->ftSmeContext.psavedFTPreAuthRsp->
-				ric_ies_length += ric_ielen;
+			mlme_priv->connect_info.ft_info.ric_ies_length = ric_ielen;
 			tspec_mask_status >>= 1;
 			tspec_pending_status >>= 1;
 			tspec_idx++;
 		} while (tspec_mask_status);
 	}
+end:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+
 	return status;
 }
-
+#else
+static inline
+QDF_STATUS sme_qos_process_preauth_success_ind(struct mac_context *mac_ctx,
+				uint8_t sessionid, void *event_info)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 /*
  * sme_qos_process_add_ts_failure_rsp() - Function to process the
  *  Addts request failure response came from PE

@@ -1362,9 +1362,9 @@ static uint32_t set_second_connection_operating_channel(
 {
 	uint8_t operating_channel;
 
-	operating_channel = wlan_freq_to_chan(
-				policy_mgr_get_mcc_operating_channel(
-				hdd_ctx->psoc, vdev_id));
+	operating_channel = wlan_reg_freq_to_chan(hdd_ctx->pdev,
+						  policy_mgr_get_mcc_operating_channel(
+						  hdd_ctx->psoc, vdev_id));
 
 	if (operating_channel == 0) {
 		hdd_err("Second adapter operating channel is invalid");
@@ -1445,8 +1445,7 @@ int wlan_hdd_set_mcc_p2p_quota(struct hdd_adapter *adapter,
 		set_value = set_second_connection_operating_channel(
 			hdd_ctx, set_value, adapter->vdev_id);
 
-
-		ret = wlan_hdd_send_p2p_quota(adapter, set_value);
+		ret = wlan_hdd_send_mcc_vdev_quota(adapter, set_value);
 	} else {
 		hdd_info("MCC is not active. Exit w/o setting latency");
 	}

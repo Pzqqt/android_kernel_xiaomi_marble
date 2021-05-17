@@ -694,6 +694,34 @@ fail:
 	return qdf_status;
 }
 
+static int hdd_is_twt_command_allowed(struct hdd_adapter *adapter)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_station_ctx *hdd_sta_ctx;
+
+	if (adapter->device_mode != QDF_STA_MODE &&
+	    adapter->device_mode != QDF_P2P_CLIENT_MODE)
+		return -EOPNOTSUPP;
+
+	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	if (!hdd_cm_is_vdev_associated(adapter)) {
+		hdd_err_rl("Invalid state, vdev %d mode %d state %d",
+			   adapter->vdev_id, adapter->device_mode,
+			   hdd_sta_ctx->conn_info.conn_state);
+		return -EAGAIN;
+	}
+
+	if (hdd_is_roaming_in_progress(hdd_ctx))
+		return -EBUSY;
+
+	if (ucfg_scan_get_pdev_status(hdd_ctx->pdev)) {
+		hdd_err_rl("Scan in progress");
+		return -EBUSY;
+	}
+
+	return 0;
+}
+
 /**
  * hdd_send_inactive_session_reply  -  Send session state as inactive for
  * dialog ID for which setup is not done.
@@ -889,6 +917,12 @@ wmi_twt_resume_status_to_vendor_twt_status(enum WMI_HOST_RESUME_TWT_STATUS statu
 		return QCA_WLAN_VENDOR_TWT_STATUS_NO_ACK;
 	case WMI_HOST_RESUME_TWT_STATUS_UNKNOWN_ERROR:
 		return QCA_WLAN_VENDOR_TWT_STATUS_UNKNOWN_ERROR;
+	case WMI_HOST_RESUME_TWT_STATUS_CHAN_SW_IN_PROGRESS:
+		return QCA_WLAN_VENDOR_TWT_STATUS_CHANNEL_SWITCH_IN_PROGRESS;
+	case WMI_HOST_RESUME_TWT_STATUS_ROAM_IN_PROGRESS:
+		return QCA_WLAN_VENDOR_TWT_STATUS_ROAMING_IN_PROGRESS;
+	case WMI_HOST_RESUME_TWT_STATUS_SCAN_IN_PROGRESS:
+		return QCA_WLAN_VENDOR_TWT_STATUS_SCAN_IN_PROGRESS;
 	default:
 		return QCA_WLAN_VENDOR_TWT_STATUS_UNKNOWN_ERROR;
 	}
@@ -922,6 +956,10 @@ wmi_twt_pause_status_to_vendor_twt_status(enum WMI_HOST_PAUSE_TWT_STATUS status)
 		return QCA_WLAN_VENDOR_TWT_STATUS_NO_ACK;
 	case WMI_HOST_PAUSE_TWT_STATUS_UNKNOWN_ERROR:
 		return QCA_WLAN_VENDOR_TWT_STATUS_UNKNOWN_ERROR;
+	case WMI_HOST_PAUSE_TWT_STATUS_CHAN_SW_IN_PROGRESS:
+		return QCA_WLAN_VENDOR_TWT_STATUS_CHANNEL_SWITCH_IN_PROGRESS;
+	case WMI_HOST_PAUSE_TWT_STATUS_ROAM_IN_PROGRESS:
+		return QCA_WLAN_VENDOR_TWT_STATUS_ROAMING_IN_PROGRESS;
 	default:
 		return QCA_WLAN_VENDOR_TWT_STATUS_UNKNOWN_ERROR;
 	}
@@ -953,6 +991,8 @@ wmi_twt_nudge_status_to_vendor_twt_status(enum WMI_HOST_NUDGE_TWT_STATUS status)
 		return QCA_WLAN_VENDOR_TWT_STATUS_NO_ACK;
 	case WMI_HOST_NUDGE_TWT_STATUS_UNKNOWN_ERROR:
 		return QCA_WLAN_VENDOR_TWT_STATUS_UNKNOWN_ERROR;
+	case WMI_HOST_NUDGE_TWT_STATUS_CHAN_SW_IN_PROGRESS:
+		return QCA_WLAN_VENDOR_TWT_STATUS_CHANNEL_SWITCH_IN_PROGRESS;
 	default:
 		return QCA_WLAN_VENDOR_TWT_STATUS_UNKNOWN_ERROR;
 	}
@@ -1015,6 +1055,10 @@ int wmi_twt_del_status_to_vendor_twt_status(enum WMI_HOST_DEL_TWT_STATUS status)
 		return QCA_WLAN_VENDOR_TWT_STATUS_ROAM_INITIATED_TERMINATE;
 	case WMI_HOST_DEL_TWT_STATUS_CONCURRENCY:
 		return QCA_WLAN_VENDOR_TWT_STATUS_SCC_MCC_CONCURRENCY_TERMINATE;
+	case WMI_HOST_DEL_TWT_STATUS_CHAN_SW_IN_PROGRESS:
+		return QCA_WLAN_VENDOR_TWT_STATUS_CHANNEL_SWITCH_IN_PROGRESS;
+	case WMI_HOST_DEL_TWT_STATUS_SCAN_IN_PROGRESS:
+		return QCA_WLAN_VENDOR_TWT_STATUS_SCAN_IN_PROGRESS;
 	default:
 		return QCA_WLAN_VENDOR_TWT_STATUS_UNKNOWN_ERROR;
 	}
@@ -1056,6 +1100,12 @@ wmi_twt_add_status_to_vendor_twt_status(enum WMI_HOST_ADD_TWT_STATUS status)
 		return QCA_WLAN_VENDOR_TWT_STATUS_PARAMS_NOT_IN_RANGE;
 	case WMI_HOST_ADD_TWT_STATUS_AP_IE_VALIDATION_FAILED:
 		return QCA_WLAN_VENDOR_TWT_STATUS_IE_INVALID;
+	case WMI_HOST_ADD_TWT_STATUS_ROAM_IN_PROGRESS:
+		return QCA_WLAN_VENDOR_TWT_STATUS_ROAMING_IN_PROGRESS;
+	case WMI_HOST_ADD_TWT_STATUS_CHAN_SW_IN_PROGRESS:
+		return QCA_WLAN_VENDOR_TWT_STATUS_CHANNEL_SWITCH_IN_PROGRESS;
+	case WMI_HOST_ADD_TWT_STATUS_SCAN_IN_PROGRESS:
+		return QCA_WLAN_VENDOR_TWT_STATUS_SCAN_IN_PROGRESS;
 	default:
 		return QCA_WLAN_VENDOR_TWT_STATUS_UNKNOWN_ERROR;
 	}
@@ -1372,6 +1422,13 @@ int hdd_send_twt_add_dialog_cmd(struct hdd_context *hdd_ctx,
 	return ret;
 }
 
+static bool hdd_twt_setup_conc_allowed(struct hdd_context *hdd_ctx,
+				       uint8_t vdev_id)
+{
+	return policy_mgr_current_concurrency_is_mcc(hdd_ctx->psoc) ||
+	       policy_mgr_is_scc_with_this_vdev_id(hdd_ctx->psoc, vdev_id);
+}
+
 /**
  * hdd_twt_setup_session() - Process TWT setup operation in the
  * received vendor command and send it to firmare
@@ -1395,27 +1452,21 @@ static int hdd_twt_setup_session(struct hdd_adapter *adapter,
 				 struct nlattr *twt_param_attr)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	struct hdd_station_ctx *hdd_sta_ctx = NULL;
+	struct hdd_station_ctx *hdd_sta_ctx =
+			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct wmi_twt_add_dialog_param params = {0};
 	struct nlattr *tb2[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1];
 	uint32_t congestion_timeout = 0;
 	int ret = 0;
 
-	if (adapter->device_mode != QDF_STA_MODE &&
-	    adapter->device_mode != QDF_P2P_CLIENT_MODE) {
-		return -EOPNOTSUPP;
-	}
+	ret = hdd_is_twt_command_allowed(adapter);
+	if (ret)
+		return ret;
 
-	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (!hdd_cm_is_vdev_associated(adapter)) {
-		hdd_err_rl("Invalid state, vdev %d mode %d state %d",
-			   adapter->vdev_id, adapter->device_mode,
-			   hdd_sta_ctx->conn_info.conn_state);
+	if (hdd_twt_setup_conc_allowed(hdd_ctx, adapter->vdev_id)) {
+		hdd_err_rl("TWT setup reject: SCC or MCC concurrency exists");
 		return -EAGAIN;
 	}
-
-	if (hdd_is_roaming_in_progress(hdd_ctx))
-		return -EBUSY;
 
 	qdf_mem_copy(params.peer_macaddr,
 		     hdd_sta_ctx->conn_info.bssid.bytes,
@@ -1691,6 +1742,7 @@ static int hdd_twt_terminate_session(struct hdd_adapter *adapter,
 				     struct nlattr *twt_param_attr)
 {
 	struct hdd_station_ctx *hdd_sta_ctx = NULL;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1];
 	struct wmi_twt_del_dialog_param params = {0};
 	QDF_STATUS status;
@@ -1698,20 +1750,28 @@ static int hdd_twt_terminate_session(struct hdd_adapter *adapter,
 	int ret;
 
 	if (adapter->device_mode != QDF_STA_MODE &&
-	    adapter->device_mode != QDF_P2P_CLIENT_MODE) {
+	    adapter->device_mode != QDF_P2P_CLIENT_MODE)
 		return -EOPNOTSUPP;
-	}
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	if (!hdd_cm_is_vdev_associated(adapter)) {
 		hdd_err_rl("Invalid state, vdev %d mode %d state %d",
 			   adapter->vdev_id, adapter->device_mode,
 			   hdd_sta_ctx->conn_info.conn_state);
+
 		/*
-		 * Return success, since STA is not associated and
-		 * there is no TWT session.
+		 * Return success, since STA is not associated and there is
+		 * no TWT session.
 		 */
 		return 0;
+	}
+
+	if (hdd_is_roaming_in_progress(hdd_ctx))
+		return -EBUSY;
+
+	if (ucfg_scan_get_pdev_status(hdd_ctx->pdev)) {
+		hdd_err_rl("Scan in progress");
+		return -EBUSY;
 	}
 
 	qdf_mem_copy(params.peer_macaddr,
@@ -2022,25 +2082,17 @@ int hdd_send_twt_pause_dialog_cmd(struct hdd_context *hdd_ctx,
 static int hdd_twt_pause_session(struct hdd_adapter *adapter,
 				 struct nlattr *twt_param_attr)
 {
-	struct hdd_station_ctx *hdd_sta_ctx;
+	struct hdd_station_ctx *hdd_sta_ctx =
+		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1];
 	struct wmi_twt_pause_dialog_cmd_param params = {0};
 	QDF_STATUS status;
 	int id;
 	int ret;
 
-	if (adapter->device_mode != QDF_STA_MODE &&
-	    adapter->device_mode != QDF_P2P_CLIENT_MODE) {
-		return -EOPNOTSUPP;
-	}
-
-	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (!hdd_cm_is_vdev_associated(adapter)) {
-		hdd_err_rl("Invalid state, vdev %d mode %d state %d",
-			   adapter->vdev_id, adapter->device_mode,
-			   hdd_sta_ctx->conn_info.conn_state);
-		return -EAGAIN;
-	}
+	ret = hdd_is_twt_command_allowed(adapter);
+	if (ret)
+		return ret;
 
 	qdf_mem_copy(params.peer_macaddr, hdd_sta_ctx->conn_info.bssid.bytes,
 		     QDF_MAC_ADDR_SIZE);
@@ -2120,26 +2172,17 @@ int hdd_send_twt_nudge_dialog_cmd(struct hdd_context *hdd_ctx,
 static int hdd_twt_nudge_session(struct hdd_adapter *adapter,
 				 struct nlattr *twt_param_attr)
 {
-	struct hdd_station_ctx *hdd_sta_ctx;
+	struct hdd_station_ctx *hdd_sta_ctx =
+			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TWT_NUDGE_MAX + 1];
 	struct wmi_twt_nudge_dialog_cmd_param params = {0};
 	QDF_STATUS status;
-	int id;
-	int ret;
+	int id, ret;
 	bool is_nudge_tgt_cap_enabled;
 
-	if (adapter->device_mode != QDF_STA_MODE &&
-	    adapter->device_mode != QDF_P2P_CLIENT_MODE) {
-		return -EOPNOTSUPP;
-	}
-
-	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (!hdd_cm_is_vdev_associated(adapter)) {
-		hdd_err_rl("Invalid state, vdev %d mode %d state %d",
-			   adapter->vdev_id, adapter->device_mode,
-			   hdd_sta_ctx->conn_info.conn_state);
-		return -EAGAIN;
-	}
+	ret = hdd_is_twt_command_allowed(adapter);
+	if (ret)
+		return ret;
 
 	ucfg_mlme_get_twt_nudge_tgt_cap(adapter->hdd_ctx->psoc,
 					&is_nudge_tgt_cap_enabled);
@@ -2497,25 +2540,18 @@ static int hdd_twt_get_capabilities(struct hdd_adapter *adapter,
 static int hdd_twt_resume_session(struct hdd_adapter *adapter,
 				  struct nlattr *twt_param_attr)
 {
-	struct hdd_station_ctx *hdd_sta_ctx;
+	struct hdd_station_ctx *hdd_sta_ctx =
+			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TWT_RESUME_MAX + 1];
 	struct wmi_twt_resume_dialog_cmd_param params = {0};
 	QDF_STATUS status;
 	int id, id2;
 	int ret;
 
-	if (adapter->device_mode != QDF_STA_MODE &&
-	    adapter->device_mode != QDF_P2P_CLIENT_MODE) {
-		return -EOPNOTSUPP;
-	}
+	ret = hdd_is_twt_command_allowed(adapter);
+	if (ret)
+		return ret;
 
-	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (!hdd_cm_is_vdev_associated(adapter)) {
-		hdd_err_rl("Invalid state, vdev %d mode %d state %d",
-			   adapter->vdev_id, adapter->device_mode,
-			   hdd_sta_ctx->conn_info.conn_state);
-		return -EAGAIN;
-	}
 	qdf_mem_copy(params.peer_macaddr, hdd_sta_ctx->conn_info.bssid.bytes,
 		     QDF_MAC_ADDR_SIZE);
 	params.vdev_id = adapter->vdev_id;
@@ -2599,6 +2635,21 @@ static uint32_t get_session_wake_duration(struct hdd_context *hdd_ctx,
 	return 0;
 }
 
+static int
+wmi_twt_get_stats_status_to_vendor_twt_status(enum WMI_HOST_GET_STATS_TWT_STATUS status)
+{
+	switch (status) {
+	case WMI_HOST_GET_STATS_TWT_STATUS_OK:
+		return QCA_WLAN_VENDOR_TWT_STATUS_OK;
+	case WMI_HOST_GET_STATS_TWT_STATUS_DIALOG_ID_NOT_EXIST:
+		return QCA_WLAN_VENDOR_TWT_STATUS_SESSION_NOT_EXIST;
+	case WMI_HOST_GET_STATS_TWT_STATUS_INVALID_PARAM:
+		return QCA_WLAN_VENDOR_TWT_STATUS_INVALID_PARAM;
+	default:
+		return QCA_WLAN_VENDOR_TWT_STATUS_UNKNOWN_ERROR;
+	}
+}
+
 /**
  * hdd_twt_pack_get_stats_resp_nlmsg()- Packs and sends twt get stats response
  * hdd_ctx: pointer to the hdd context
@@ -2616,6 +2667,7 @@ hdd_twt_pack_get_stats_resp_nlmsg(struct hdd_context *hdd_ctx,
 {
 	struct nlattr *config_attr, *nla_params;
 	int i, attr;
+	int vendor_status;
 	uint32_t duration;
 
 	config_attr = nla_nest_start(reply_skb,
@@ -2709,6 +2761,12 @@ hdd_twt_pack_get_stats_resp_nlmsg(struct hdd_context *hdd_ctx,
 			return QDF_STATUS_E_INVAL;
 		}
 
+		attr = QCA_WLAN_VENDOR_ATTR_TWT_STATS_STATUS;
+		vendor_status = wmi_twt_get_stats_status_to_vendor_twt_status(params[i].status);
+		if (nla_put_u32(reply_skb, attr, vendor_status)) {
+			hdd_err("get_params failed to put status");
+			return QDF_STATUS_E_INVAL;
+		}
 		nla_nest_end(reply_skb, nla_params);
 	}
 	nla_nest_end(reply_skb, config_attr);

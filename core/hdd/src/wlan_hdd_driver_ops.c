@@ -1405,13 +1405,6 @@ int wlan_hdd_bus_resume(enum qdf_suspend_type type)
 	param.policy_info.flag = BBM_APPS_RESUME;
 	hdd_bbm_apply_independent_policy(hdd_ctx, &param);
 
-	qdf_status = ucfg_pmo_core_txrx_resume(hdd_ctx->psoc);
-	status = qdf_status_to_os_return(qdf_status);
-	if (status) {
-		hdd_err("Failed to resume TXRX");
-		goto out;
-	}
-
 	status = hif_bus_resume(hif_ctx);
 	if (status) {
 		hdd_err("Failed hif bus resume");
@@ -1425,6 +1418,13 @@ int wlan_hdd_bus_resume(enum qdf_suspend_type type)
 	status = qdf_status_to_os_return(qdf_status);
 	if (status) {
 		hdd_err("Failed pmo bus resume");
+		goto out;
+	}
+
+	qdf_status = ucfg_pmo_core_txrx_resume(hdd_ctx->psoc);
+	status = qdf_status_to_os_return(qdf_status);
+	if (status) {
+		hdd_err("Failed to resume TXRX");
 		goto out;
 	}
 

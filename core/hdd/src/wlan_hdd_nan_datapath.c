@@ -253,7 +253,7 @@ static int hdd_ndi_start_bss(struct hdd_adapter *adapter,
 	roam_profile->SSIDs.numOfSSIDs = 1;
 	roam_profile->SSIDs.SSIDList->SSID.length = 0;
 
-	roam_profile->phyMode = eCSR_DOT11_MODE_11ac;
+	roam_profile->phyMode = eCSR_DOT11_MODE_AUTO;
 	roam_profile->BSSType = eCSR_BSS_TYPE_NDI;
 	roam_profile->BSSIDs.numOfBSSIDs = 1;
 	qdf_mem_copy((void *)(roam_profile->BSSIDs.bssid),

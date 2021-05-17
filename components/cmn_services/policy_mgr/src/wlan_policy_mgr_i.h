@@ -725,4 +725,28 @@ bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 				       enum policy_mgr_con_mode mode,
 				       uint32_t ch_freq,
 				       enum hw_mode_bandwidth bw);
+
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * policy_mgr_is_mlo_sap_concurrency_allowed() - Check for mlo sap allowed
+ *                                               concurrency combination
+ * @psoc: PSOC object information
+ *
+ * When a new connection is about to come up check if current
+ * concurrency combination including the new connection is
+ * allowed or not. Currently no concurrency support for mlo sap
+ *
+ * Return: True if concurrency is supported, otherwise false.
+ */
+bool policy_mgr_is_mlo_sap_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
+					       bool is_new_vdev_mlo);
+#else
+
+static inline bool policy_mgr_is_mlo_sap_concurrency_allowed(
+			struct wlan_objmgr_psoc *psoc,
+			bool is_new_vdev_mlo)
+{
+	return true;
+}
+#endif
 #endif

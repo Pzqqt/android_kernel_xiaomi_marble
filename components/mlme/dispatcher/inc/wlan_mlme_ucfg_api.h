@@ -256,6 +256,35 @@ QDF_STATUS ucfg_mlme_set_band_capability(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * ucfg_mlme_set_dual_sta_policy() - Configures the Concurrent STA policy
+ * value
+ * @psoc: pointer to psoc object
+ * @dual_sta_config: Concurrent STA policy configuration value
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_set_dual_sta_policy(struct wlan_objmgr_psoc *psoc,
+					 uint8_t dual_sta_config)
+{
+	return wlan_mlme_set_dual_sta_policy(psoc, dual_sta_config);
+}
+
+/**
+ * ucfg_mlme_get_dual_sta_policy() - Get the Concurrent STA policy value
+ * @psoc: pointer to psoc object
+ * @dual_sta_config: Pointer to the variable from caller
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_dual_sta_policy(struct wlan_objmgr_psoc *psoc,
+					 uint8_t *dual_sta_config)
+{
+	return wlan_mlme_get_dual_sta_policy(psoc, dual_sta_config);
+}
+
+/**
  * ucfg_mlme_get_prevent_link_down() - Get the prevent link down config
  * @psoc: pointer to psoc object
  * @prevent_link_down: Pointer to the variable from caller
@@ -1170,6 +1199,15 @@ ucfg_mlme_get_roam_bmiss_final_bcnt(struct wlan_objmgr_psoc *psoc,
 				    uint8_t *val);
 
 /**
+ * ucfg_mlme_get_dual_sta_roaming_enabled() - Get dual sta roaming enable flag
+ * @psoc: pointer to psoc object
+ *
+ * Return: true if dual sta roaming allowed in fw
+ */
+bool
+ucfg_mlme_get_dual_sta_roaming_enabled(struct wlan_objmgr_psoc *psoc);
+
+/**
  * ucfg_mlme_get_roam_bmiss_first_bcnt() - Get roam bmiss final count
  * @psoc: pointer to psoc object
  * @val:  Pointer to the value which will be filled for the caller
@@ -1944,6 +1982,47 @@ QDF_STATUS ucfg_mlme_set_fils_enabled_info(struct wlan_objmgr_psoc *psoc,
 					   bool value)
 {
 	return wlan_mlme_set_fils_enabled_info(psoc, value);
+}
+
+/**
+ * ucfg_mlme_set_primary_interface() - Set primary STA iface id
+ *
+ * @psoc: pointer to psoc object
+ * @value: value that needs to be set from the caller
+ *
+ * When a vdev is set as primary then based on the dual sta policy
+ * "qca_wlan_concurrent_sta_policy_config" mcc preference and roaming has
+ * to be enabled on the primary vdev
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+static inline
+QDF_STATUS ucfg_mlme_set_primary_interface(struct wlan_objmgr_psoc *psoc,
+					   uint8_t value)
+{
+	return wlan_mlme_set_primary_interface(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_mcc_duty_cycle_percentage() - Get primary STA iface MCC
+ * duty-cycle
+ *
+ * @psoc: pointer to psoc object
+ * @value: value that needs to be set from the caller
+ *
+ * primary and secondary STA iface MCC duty-cycle value in below format
+ * ******************************************************
+ * |bit 31-24 | bit 23-16 | bits 15-8   |bits 7-0   |
+ * | Unused   | Quota for | chan. # for |chan. # for|
+ * |          | 1st chan  | 1st chan.   |2nd chan.  |
+ * *****************************************************
+ *
+ * Return: primary iface MCC duty-cycle value
+ */
+static inline
+int ucfg_mlme_get_mcc_duty_cycle_percentage(struct wlan_objmgr_pdev *pdev)
+{
+	return wlan_mlme_get_mcc_duty_cycle_percentage(pdev);
 }
 
 /**
@@ -3274,6 +3353,26 @@ QDF_STATUS ucfg_mlme_cfg_get_enable_ul_ofdm(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
+#ifdef WLAN_FEATURE_11BE
+/**
+ * ucfg_mlme_update_tgt_eht_cap() - Update tgt EHT cap in mlme component
+ *
+ * @psoc: pointer to psoc object
+ * @cfg: pointer to config params from target
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers to update
+ * EHT caps in mlme.
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+static inline QDF_STATUS
+ucfg_mlme_update_tgt_eht_cap(struct wlan_objmgr_psoc *psoc,
+			     struct wma_tgt_cfg *cfg)
+{
+	return mlme_update_tgt_eht_caps_in_cfg(psoc, cfg);
+}
+#endif
+
 /**
  * ucfg_mlme_get_80211e_is_enabled() - Enable 802.11e feature
  * @psoc: pointer to psoc object
@@ -4123,4 +4222,17 @@ ucfg_mlme_is_sta_mon_conc_supported(struct wlan_objmgr_psoc *psoc)
 	return wlan_mlme_is_sta_mon_conc_supported(psoc);
 }
 
+/**
+ * ucfg_mlme_cfg_get_eht_caps() - Get the EHT capability info
+ * @psoc: pointer to psoc object
+ * @eht_cap: Caps that needs to be filled.
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_cfg_get_eht_caps(struct wlan_objmgr_psoc *psoc,
+				      tDot11fIEeht_cap *eht_cap)
+{
+	return mlme_cfg_get_eht_caps(psoc, eht_cap);
+}
 #endif /* _WLAN_MLME_UCFG_API_H_ */

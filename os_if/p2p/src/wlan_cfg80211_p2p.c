@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -342,6 +342,7 @@ int wlan_cfg80211_roc(struct wlan_objmgr_vdev *vdev,
 	uint8_t vdev_id;
 	bool ok;
 	int ret;
+	struct wlan_objmgr_pdev *pdev = NULL;
 
 	if (!vdev) {
 		osif_err("invalid vdev object");
@@ -355,12 +356,14 @@ int wlan_cfg80211_roc(struct wlan_objmgr_vdev *vdev,
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	vdev_id = wlan_vdev_get_id(vdev);
+	pdev = wlan_vdev_get_pdev(vdev);
+
 	if (!psoc) {
 		osif_err("psoc handle is NULL");
 		return -EINVAL;
 	}
 
-	roc_req.chan = (uint32_t)wlan_freq_to_chan(chan->center_freq);
+	roc_req.chan = (uint32_t)wlan_reg_freq_to_chan(pdev, chan->center_freq);
 	roc_req.duration = duration;
 	roc_req.vdev_id = (uint32_t)vdev_id;
 
@@ -410,14 +413,16 @@ int wlan_cfg80211_mgmt_tx(struct wlan_objmgr_vdev *vdev,
 	struct wlan_objmgr_psoc *psoc;
 	uint8_t vdev_id;
 	uint32_t channel = 0;
-
+	struct wlan_objmgr_pdev *pdev = NULL;
 	if (!vdev) {
 		osif_err("invalid vdev object");
 		return -EINVAL;
 	}
 
+	pdev = wlan_vdev_get_pdev(vdev);
 	if (chan)
-		channel = (uint32_t)wlan_freq_to_chan(chan->center_freq);
+		channel = (uint32_t)wlan_reg_freq_to_chan(pdev,
+							  chan->center_freq);
 	else
 		osif_debug("NULL chan, set channel to 0");
 

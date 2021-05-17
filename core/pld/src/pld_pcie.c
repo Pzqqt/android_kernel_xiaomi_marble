@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -864,7 +864,7 @@ int pld_pcie_get_platform_cap(struct device *dev, struct pld_platform_cap *cap)
  */
 int pld_pcie_get_soc_info(struct device *dev, struct pld_soc_info *info)
 {
-	int ret = 0;
+	int ret = 0, i;
 	struct cnss_soc_info cnss_info = {0};
 
 	if (!info)
@@ -891,6 +891,10 @@ int pld_pcie_get_soc_info(struct device *dev, struct pld_soc_info *info)
 		cnss_info.device_version.major_version;
 	info->device_version.minor_version =
 		cnss_info.device_version.minor_version;
+	for (i = 0; i < PLD_MAX_DEV_MEM_NUM; i++) {
+		info->dev_mem_info[i].start = cnss_info.dev_mem_info[i].start;
+		info->dev_mem_info[i].size = cnss_info.dev_mem_info[i].size;
+	}
 
 	return 0;
 }

@@ -1538,38 +1538,6 @@ static QDF_STATUS p2p_disable_tx_timer(struct tx_action_context *tx_ctx)
 }
 
 /**
- * is_rmf_mgmt_action_frame() - check RMF action frame by category
- * @action_category: action frame actegory
- *
- * This function check the frame is robust mgmt action frame or not
- *
- * Return: true - if category is robust mgmt type
- */
-static bool is_rmf_mgmt_action_frame(uint8_t action_category)
-{
-	switch (action_category) {
-	case ACTION_CATEGORY_SPECTRUM_MGMT:
-	case ACTION_CATEGORY_QOS:
-	case ACTION_CATEGORY_DLS:
-	case ACTION_CATEGORY_BACK:
-	case ACTION_CATEGORY_RRM:
-	case ACTION_FAST_BSS_TRNST:
-	case ACTION_CATEGORY_SA_QUERY:
-	case ACTION_CATEGORY_PROTECTED_DUAL_OF_PUBLIC_ACTION:
-	case ACTION_CATEGORY_WNM:
-	case ACTION_CATEGORY_MESH_ACTION:
-	case ACTION_CATEGORY_MULTIHOP_ACTION:
-	case ACTION_CATEGORY_DMG:
-	case ACTION_CATEGORY_FST:
-	case ACTION_CATEGORY_VENDOR_SPECIFIC_PROTECTED:
-		return true;
-	default:
-		break;
-	}
-	return false;
-}
-
-/**
  * p2p_populate_rmf_field() - populate unicast rmf frame
  * @tx_ctx: tx_action_context
  * @size: input size of frame, and output new size
@@ -1612,7 +1580,7 @@ static QDF_STATUS p2p_populate_rmf_field(struct tx_action_context *tx_ctx,
 	 * to get the actual action category we need to ignore the MSB.
 	 */
 	action_category = action_hdr->action_category & 0x7f;
-	if (!is_rmf_mgmt_action_frame(action_category)) {
+	if (!wlan_mgmt_is_rmf_mgmt_action_frame(action_category)) {
 		p2p_debug("non rmf act frame 0x%x category %x",
 			  tx_ctx->frame_info.sub_type,
 			  action_hdr->action_category);
