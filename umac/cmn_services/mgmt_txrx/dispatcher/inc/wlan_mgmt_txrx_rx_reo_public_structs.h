@@ -21,11 +21,26 @@
 
 #ifndef _WLAN_MGMT_TXRX_RX_REO_PUBLIC_STRUCTS_H
 #define _WLAN_MGMT_TXRX_RX_REO_PUBLIC_STRUCTS_H
-
 #ifdef WLAN_MGMT_RX_REO_SUPPORT
+/*
+ * enum mgmt_rx_reo_snapshot_id - Represents the management rx-reorder
+ * snapshot identifier.
+ * @MGMT_RX_REO_SNAPSHOT_MAC_HW: MAC HW snapshot
+ * @MGMT_RX_REO_SNAPSHOT_FW_CONSUMED: FW consumed snapshot
+ * @MGMT_RX_REO_SNAPSHOT_FW_FORWADED: FW forwarded snapshot
+ * @MGMT_RX_REO_SNAPSHOT_MAX: Max number of snapshots
+ * @MGMT_RX_REO_SNAPSHOT_INVALID: Invalid snapshot
+ */
+enum mgmt_rx_reo_snapshot_id {
+	MGMT_RX_REO_SNAPSHOT_MAC_HW = 0,
+	MGMT_RX_REO_SNAPSHOT_FW_CONSUMED,
+	MGMT_RX_REO_SNAPSHOT_FW_FORWADED,
+	MGMT_RX_REO_SNAPSHOT_MAX,
+	MGMT_RX_REO_SNAPSHOT_INVALID,
+};
 
 /*
- * struct mgmt_rx_reo_snapshot_simplified - Represents the simplified version of
+ * struct mgmt_rx_reo_snapshot_params - Represents the simplified version of
  * Management Rx Frame snapshot for Host use. Note that this is different from
  * the structure shared between the Host and FW/HW
  * @valid: Whether this snapshot is valid
@@ -34,11 +49,20 @@
  * @global_timestamp: Global timestamp.This is taken from a clock which is
  * common across all the HW links
  */
-struct mgmt_rx_reo_snapshot_simplified {
+struct mgmt_rx_reo_snapshot_params {
 	bool valid;
 	uint16_t mgmt_pkt_ctr;
 	uint32_t global_timestamp;
 };
 
+/*
+ * struct mgmt_rx_reo_snapshot - Represents the management rx-reorder snapshot
+ * @mgmt_rx_reo_snapshot_low: Lower 32 bits of the reo snapshot
+ * @mgmt_rx_reo_snapshot_high: Higher 32 bits of the reo snapshot
+ */
+struct mgmt_rx_reo_snapshot {
+	uint32_t mgmt_rx_reo_snapshot_low;
+	uint32_t mgmt_rx_reo_snapshot_high;
+};
 #endif /* WLAN_MGMT_RX_REO_SUPPORT */
 #endif /* _WLAN_MGMT_TXRX_RX_REO_PUBLIC_STRUCTS_H */

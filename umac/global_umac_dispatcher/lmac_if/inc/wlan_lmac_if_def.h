@@ -53,6 +53,7 @@
 #ifdef WLAN_IOT_SIM_SUPPORT
 #include <wlan_iot_sim_public_structs.h>
 #endif
+#include <wlan_mgmt_txrx_rx_reo_public_structs.h>
 
 /* Number of dev type: Direct attach and Offload */
 #define MAX_DEV_TYPE 2
@@ -211,6 +212,20 @@ struct wlan_target_if_dcs_rx_ops {
 };
 #endif
 
+#ifdef WLAN_MGMT_RX_REO_SUPPORT
+/**
+ * struct wlan_lmac_if_mgmt_txrx_tx_ops - structure of tx function
+ * pointers for mgmt rx reo
+ * @read_mgmt_rx_reo_snapshot: Read rx-reorder snapshots
+ */
+struct wlan_lmac_if_mgmt_rx_reo_tx_ops {
+	QDF_STATUS (*read_mgmt_rx_reo_snapshot)
+			(struct mgmt_rx_reo_snapshot *address,
+			 enum mgmt_rx_reo_snapshot_id id,
+			 struct mgmt_rx_reo_snapshot_params *value);
+};
+#endif
+
 /**
  * struct wlan_lmac_if_mgmt_txrx_tx_ops - structure of tx function
  *                  pointers for mgmt txrx component
@@ -221,6 +236,7 @@ struct wlan_target_if_dcs_rx_ops {
  *                    pending mgmt frames cleanup
  * @reg_ev_handler: function pointer to register event handlers
  * @unreg_ev_handler: function pointer to unregister event handlers
+ * @mgmt_rx_reo_tx_ops: management rx-reorder txops
  */
 struct wlan_lmac_if_mgmt_txrx_tx_ops {
 	QDF_STATUS (*mgmt_tx_send)(struct wlan_objmgr_vdev *vdev,
@@ -234,6 +250,9 @@ struct wlan_lmac_if_mgmt_txrx_tx_ops {
 				 qdf_nbuf_t nbuf);
 	QDF_STATUS (*reg_ev_handler)(struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*unreg_ev_handler)(struct wlan_objmgr_psoc *psoc);
+#ifdef WLAN_MGMT_RX_REO_SUPPORT
+	struct wlan_lmac_if_mgmt_rx_reo_tx_ops mgmt_rx_reo_tx_ops;
+#endif
 };
 
 /**

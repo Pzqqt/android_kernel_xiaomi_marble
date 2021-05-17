@@ -77,6 +77,7 @@ QDF_STATUS
 target_if_mgmt_txrx_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
 {
 	struct wlan_lmac_if_mgmt_txrx_tx_ops *mgmt_txrx_tx_ops;
+	QDF_STATUS status;
 
 	if (!tx_ops) {
 		mgmt_txrx_err("txops is NULL");
@@ -88,6 +89,12 @@ target_if_mgmt_txrx_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
 		target_if_mgmt_txrx_register_event_handler;
 	mgmt_txrx_tx_ops->unreg_ev_handler =
 		target_if_mgmt_txrx_unregister_event_handler;
+
+	status = target_if_mgmt_rx_reo_tx_ops_register(mgmt_txrx_tx_ops);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mgmt_txrx_err("Failed to register mgmt Rx REO tx ops");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
