@@ -1084,6 +1084,23 @@ wlan_reg_disable_chan_coex(struct wlan_objmgr_pdev *pdev,
 }
 #endif
 
+#ifdef WLAN_FEATURE_GET_USABLE_CHAN_LIST
+/**
+ * wlan_reg_get_usable_channel() - Get usable channels
+ * @pdev: Pointer to pdev
+ * @req_msg: Request msg
+ * @res_msg: Response msg
+ * @count: no of usable channels
+ *
+ * Return: qdf status
+ */
+QDF_STATUS
+wlan_reg_get_usable_channel(struct wlan_objmgr_pdev *pdev,
+			    struct get_usable_chan_req_params req_msg,
+			    struct get_usable_chan_res_params *res_msg,
+			    uint32_t *count);
+#endif
+
 #ifdef CONFIG_CHAN_FREQ_API
 /**
  * wlan_reg_is_same_band_freqs() - Check if two channel frequencies
