@@ -967,7 +967,8 @@ int dsi_display_check_status(struct drm_connector *connector, void *display,
 	status_mode = panel->esd_config.status_mode;
 
 	if ((status_mode == ESD_MODE_SW_SIM_SUCCESS) ||
-			(dsi_display->sw_te_using_wd))
+			(dsi_display->sw_te_using_wd) ||
+			(dsi_display->panel->te_using_watchdog_timer))
 		goto release_panel_lock;
 
 	if (status_mode == ESD_MODE_SW_SIM_FAILURE) {
