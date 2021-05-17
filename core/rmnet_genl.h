@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/* Copyright (c) 2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2019, 2021 The Linux Foundation. All rights reserved.
  *
  * RMNET Data Generic Netlink
  *
@@ -30,6 +30,7 @@ enum {
 	RMNET_CORE_GENL_CMD_UNSPEC,
 	RMNET_CORE_GENL_CMD_PID_BPS_REQ,
 	RMNET_CORE_GENL_CMD_PID_BOOST_REQ,
+	RMNET_CORE_GENL_CMD_TETHER_INFO_REQ,
 	__RMNET_CORE_GENL_CMD_MAX,
 };
 
@@ -39,6 +40,7 @@ enum {
 	RMNET_CORE_GENL_ATTR_INT,
 	RMNET_CORE_GENL_ATTR_PID_BPS,
 	RMNET_CORE_GENL_ATTR_PID_BOOST,
+	RMNET_CORE_GENL_ATTR_TETHER_INFO,
 	__RMNET_CORE_GENL_ATTR_MAX,
 };
 
@@ -78,12 +80,21 @@ struct rmnet_core_pid_boost_req {
 	u8 valid;
 };
 
+/* Tether Info Request Structure */
+struct rmnet_core_tether_info_req {
+	uint8_t tether_filters_en;
+	uint8_t valid;
+};
+
 /* Function Prototypes */
 int rmnet_core_genl_pid_bps_req_hdlr(struct sk_buff *skb_2,
 				     struct genl_info *info);
 
 int rmnet_core_genl_pid_boost_req_hdlr(struct sk_buff *skb_2,
 				       struct genl_info *info);
+
+int rmnet_core_genl_tether_info_req_hdlr(struct sk_buff *skb_2,
+					 struct genl_info *info);
 
 /* Called by vnd select queue */
 void rmnet_update_pid_and_check_boost(pid_t pid, unsigned int len,

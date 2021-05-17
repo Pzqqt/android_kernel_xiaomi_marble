@@ -37,6 +37,10 @@ typedef void (*rmnet_perf_desc_hook_t)(struct rmnet_frag_descriptor *frag_desc,
 				       struct rmnet_port *port);
 typedef void (*rmnet_perf_chain_hook_t)(void);
 
+typedef void (*rmnet_perf_tether_ingress_hook_t)(struct tcphdr *tp, struct sk_buff *skb);
+rmnet_perf_tether_ingress_hook_t rmnet_perf_tether_ingress_hook __rcu __read_mostly;
+EXPORT_SYMBOL(rmnet_perf_tether_ingress_hook);
+
 struct rmnet_frag_descriptor *
 rmnet_get_frag_descriptor(struct rmnet_port *port)
 {
@@ -731,6 +735,7 @@ static void rmnet_frag_gso_stamp(struct sk_buff *skb,
 static void rmnet_frag_partial_csum(struct sk_buff *skb,
 				    struct rmnet_frag_descriptor *frag_desc)
 {
+	rmnet_perf_tether_ingress_hook_t rmnet_perf_tether_ingress;
 	struct iphdr *iph = (struct iphdr *)skb->data;
 	__sum16 pseudo;
 	u16 pkt_len = skb->len - frag_desc->ip_len;
@@ -757,6 +762,10 @@ static void rmnet_frag_partial_csum(struct sk_buff *skb,
 
 		tp->check = pseudo;
 		skb->csum_offset = offsetof(struct tcphdr, check);
+
+		rmnet_perf_tether_ingress = rcu_dereference(rmnet_perf_tether_ingress_hook);
+		if (rmnet_perf_tether_ingress)
+			rmnet_perf_tether_ingress(tp, skb);
 	} else {
 		struct udphdr *up = (struct udphdr *)
 				    ((u8 *)iph + frag_desc->ip_len);
