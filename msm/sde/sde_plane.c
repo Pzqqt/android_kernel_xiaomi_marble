@@ -311,7 +311,7 @@ static void _sde_plane_set_qos_lut(struct drm_plane *plane,
 	psde->pipe_qos_cfg.danger_lut = perf->danger_lut[index];
 	psde->pipe_qos_cfg.safe_lut = perf->safe_lut[index];
 
-	creq_lut_index += (fps_index * SDE_QOS_LUT_USAGE_MAX);
+	creq_lut_index += (fps_index * SDE_QOS_LUT_USAGE_MAX * SDE_CREQ_LUT_TYPE_MAX);
 	psde->pipe_qos_cfg.creq_lut = perf->creq_lut[creq_lut_index];
 
 	trace_sde_perf_set_qos_luts(psde->pipe - SSPP_VIG0,
