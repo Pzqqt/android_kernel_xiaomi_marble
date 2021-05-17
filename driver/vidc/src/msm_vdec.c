@@ -1911,6 +1911,18 @@ int msm_vdec_qbuf(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 			return rc;
 	}
 
+	if (vb2->type == OUTPUT_META_PLANE) {
+		if (inst->capabilities->cap[META_DPB_TAG_LIST].value) {
+			/*
+			 * vb2 is not allowing client to pass data in output meta plane.
+			 * adjust the bytesused as client will send buffer tag metadata
+			 * in output meta plane if DPB_TAG_LIST metadata enabled.
+			 */
+			if (!vb2->planes[0].bytesused)
+				vb2->planes[0].bytesused = 1024;
+		}
+	}
+
 	/* batch decoder output & meta buffer only */
 	if (inst->decode_batch.enable && vb2->type == OUTPUT_MPLANE)
 		rc = msm_vdec_qbuf_batch(inst, vb2);
