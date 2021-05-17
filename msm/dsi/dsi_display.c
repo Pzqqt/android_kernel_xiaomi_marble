@@ -717,7 +717,6 @@ static void dsi_display_set_cmd_tx_ctrl_flags(struct dsi_display *display,
 		 * 1) queue_cmd_waits is set by connector and
 		 *	- commands are not sent using DSI FIFO memory
 		 *	- commands are not sent in non-embedded mode
-		 *	- not a video mode panel
 		 *	- no explicit msg post_wait_ms is specified
 		 *	- not a read command
 		 * 2) if async override msg flag is present
@@ -725,7 +724,6 @@ static void dsi_display_set_cmd_tx_ctrl_flags(struct dsi_display *display,
 		if (display->queue_cmd_waits)
 			if (!(flags & DSI_CTRL_CMD_FIFO_STORE) &&
 					!(flags & DSI_CTRL_CMD_NON_EMBEDDED_MODE) &&
-					!(display->panel->panel_mode == DSI_OP_VIDEO_MODE) &&
 					(cmd->post_wait_ms == 0) &&
 					!(cmd->ctrl_flags & DSI_CTRL_CMD_READ))
 				flags |= DSI_CTRL_CMD_ASYNC_WAIT;
