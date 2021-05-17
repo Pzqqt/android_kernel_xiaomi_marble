@@ -278,6 +278,8 @@ static QDF_STATUS dp_rx_tm_thread_enqueue(struct dp_rx_thread *rx_thread,
 		qdf_nbuf_set_next(head_ptr, NULL);
 		qdf_nbuf_queue_head_enqueue_tail(&rx_thread->nbuf_queue,
 						 head_ptr);
+		/* count aggregated RX frame into enqueued stats */
+		nbuf_queued += qdf_nbuf_get_gso_segs(head_ptr);
 		head_ptr = next_ptr_list;
 	}
 
@@ -418,6 +420,8 @@ static int dp_rx_thread_process_nbufq(struct dp_rx_thread *rx_thread)
 	while (nbuf_list) {
 		num_list_elements =
 			QDF_NBUF_CB_RX_NUM_ELEMENTS_IN_LIST(nbuf_list);
+		/* count aggregated RX frame into stats */
+		num_list_elements += qdf_nbuf_get_gso_segs(nbuf_list);
 		rx_thread->stats.nbuf_dequeued += num_list_elements;
 
 		vdev_id = QDF_NBUF_CB_RX_VDEV_ID(nbuf_list);
