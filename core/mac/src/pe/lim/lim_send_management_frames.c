@@ -5017,6 +5017,59 @@ returnAfterError:
 	return status_code;
 }
 
+static bool
+lim_is_self_and_peer_ocv_capable(struct mac_context *mac,
+				 uint8_t *peer,
+				 struct pe_session *pe_session)
+{
+	uint16_t self_rsn_cap, aid;
+	tpDphHashNode sta_ds;
+
+	self_rsn_cap = wlan_crypto_get_param(pe_session->vdev,
+					     WLAN_CRYPTO_PARAM_RSN_CAP);
+	if (!(self_rsn_cap & WLAN_CRYPTO_RSN_CAP_OCV_SUPPORTED))
+		return false;
+
+	sta_ds = dph_lookup_hash_entry(mac, peer, &aid,
+				       &pe_session->dph.dphHashTable);
+
+	if (sta_ds && sta_ds->ocv_enabled)
+		return true;
+
+	return false;
+}
+
+static void
+lim_fill_oci_params(struct mac_context *mac, struct pe_session *session,
+		    tDot11fIEoci *oci)
+{
+	uint8_t ch_offset;
+	uint8_t prim_ch_num = wlan_reg_freq_to_chan(mac->pdev,
+						    session->curr_op_freq);
+	if (session->ch_width == CH_WIDTH_80MHZ) {
+		ch_offset = BW80;
+	} else {
+		switch (session->htSecondaryChannelOffset) {
+		case PHY_DOUBLE_CHANNEL_HIGH_PRIMARY:
+			ch_offset = BW40_HIGH_PRIMARY;
+			break;
+		case PHY_DOUBLE_CHANNEL_LOW_PRIMARY:
+			ch_offset = BW40_LOW_PRIMARY;
+			break;
+		default:
+			ch_offset = BW20;
+			break;
+		}
+	}
+	oci->op_class = lim_op_class_from_bandwidth(mac,
+						    session->curr_op_freq,
+						    session->ch_width,
+						    ch_offset);
+	oci->prim_ch_num = prim_ch_num;
+	oci->freq_seg_1_ch_num = session->ch_center_freq_seg1;
+	oci->present = 1;
+}
+
 /**
  * \brief Send SA query request action frame to peer
  *
@@ -5058,6 +5111,9 @@ QDF_STATUS lim_send_sa_query_request_frame(struct mac_context *mac, uint8_t *tra
 	frm.Action.action = SA_QUERY_REQUEST;
 	/* 11w SA Query Request transId */
 	qdf_mem_copy(&frm.TransactionId.transId[0], &transId[0], 2);
+
+	if (lim_is_self_and_peer_ocv_capable(mac, peer, pe_session))
+		lim_fill_oci_params(mac, pe_session, &frm.oci);
 
 	nStatus = dot11f_get_packed_sa_query_req_size(mac, &frm, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
@@ -5143,59 +5199,6 @@ returnAfterError:
 	cds_packet_free((void *)pPacket);
 	return nSirStatus;
 } /* End lim_send_sa_query_request_frame */
-
-static bool
-lim_is_self_and_peer_ocv_capable(struct mac_context *mac,
-				 uint8_t *peer,
-				 struct pe_session *pe_session)
-{
-	uint16_t self_rsn_cap, aid;
-	tpDphHashNode sta_ds;
-
-	self_rsn_cap = wlan_crypto_get_param(pe_session->vdev,
-					     WLAN_CRYPTO_PARAM_RSN_CAP);
-	if (!(self_rsn_cap & WLAN_CRYPTO_RSN_CAP_OCV_SUPPORTED))
-		return false;
-
-	sta_ds = dph_lookup_hash_entry(mac, peer, &aid,
-				       &pe_session->dph.dphHashTable);
-
-	if (sta_ds && sta_ds->ocv_enabled)
-		return true;
-
-	return false;
-}
-
-static void
-lim_fill_oci_params(struct mac_context *mac, struct pe_session *session,
-		    tDot11fIEoci *oci)
-{
-	uint8_t ch_offset;
-	uint8_t prim_ch_num = wlan_reg_freq_to_chan(mac->pdev,
-						    session->curr_op_freq);
-	if (session->ch_width == CH_WIDTH_80MHZ) {
-		ch_offset = BW80;
-	} else {
-		switch (session->htSecondaryChannelOffset) {
-		case PHY_DOUBLE_CHANNEL_HIGH_PRIMARY:
-			ch_offset = BW40_HIGH_PRIMARY;
-			break;
-		case PHY_DOUBLE_CHANNEL_LOW_PRIMARY:
-			ch_offset = BW40_LOW_PRIMARY;
-			break;
-		default:
-			ch_offset = BW20;
-			break;
-		}
-	}
-	oci->op_class = lim_op_class_from_bandwidth(mac,
-						    session->curr_op_freq,
-						    session->ch_width,
-						    ch_offset);
-	oci->prim_ch_num = prim_ch_num;
-	oci->freq_seg_1_ch_num = session->ch_center_freq_seg1;
-	oci->present = 1;
-}
 
 /**
  * \brief Send SA query response action frame to peer
