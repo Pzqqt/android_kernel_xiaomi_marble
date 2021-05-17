@@ -270,12 +270,13 @@ typedef enum {
 #define WIFI_TDLS_EXTERNAL_CONTROL_SUPPORT	BIT(1)
 #define WIIF_TDLS_OFFCHANNEL_SUPPORT		BIT(2)
 
-#define CFG_NON_AGG_RETRY_MAX                  (31)
-#define CFG_AGG_RETRY_MAX                      (31)
+#define CFG_NON_AGG_RETRY_MAX                  (64)
+#define CFG_AGG_RETRY_MAX                      (64)
 #define CFG_CTRL_RETRY_MAX                     (31)
 #define CFG_PROPAGATION_DELAY_MAX              (63)
 #define CFG_PROPAGATION_DELAY_BASE             (64)
 #define CFG_AGG_RETRY_MIN                      (5)
+#define CFG_NON_AGG_RETRY_MIN                  (5)
 
 #define CFG_NO_SUPPORT_UL_MUMIMO		(0)
 #define CFG_FULL_BW_SUPPORT_UL_MUMIMO		(1)

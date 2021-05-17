@@ -16255,6 +16255,21 @@ QDF_STATUS sme_register_bcn_recv_pause_ind_cb(mac_handle_t mac_handle,
 }
 #endif
 
+QDF_STATUS sme_set_vdev_sw_retry(uint8_t vdev_id, uint8_t sw_retry_count,
+				 wmi_vdev_custom_sw_retry_type_t sw_retry_type)
+{
+	QDF_STATUS status;
+
+	status = wma_set_vdev_sw_retry_th(vdev_id, sw_retry_count,
+					  sw_retry_type);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("Failed to set retry count for vdev: %d", vdev_id);
+		return status;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS sme_set_disconnect_ies(mac_handle_t mac_handle, uint8_t vdev_id,
 				  uint8_t *ie_data, uint16_t ie_len)
 {

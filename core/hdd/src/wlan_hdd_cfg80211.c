@@ -8267,34 +8267,34 @@ static int hdd_config_non_agg_retry(struct hdd_adapter *adapter,
 				    const struct nlattr *attr)
 {
 	uint8_t retry;
-	int param_id;
 
 	retry = nla_get_u8(attr);
-	retry = retry > CFG_NON_AGG_RETRY_MAX ?
-		CFG_NON_AGG_RETRY_MAX : retry;
-	param_id = WMI_PDEV_PARAM_NON_AGG_SW_RETRY_TH;
 
-	return wma_cli_set_command(adapter->vdev_id, param_id,
-				   retry, PDEV_CMD);
+	/* Value less than CFG_AGG_RETRY_MIN has side effect to t-put */
+	retry = (retry > CFG_NON_AGG_RETRY_MAX) ? CFG_NON_AGG_RETRY_MAX :
+		((retry < CFG_NON_AGG_RETRY_MIN) ? CFG_NON_AGG_RETRY_MIN :
+		  retry);
+	hdd_debug("sending Non-Agg Retry Th: %d", retry);
+
+	return sme_set_vdev_sw_retry(adapter->vdev_id, retry,
+				     WMI_VDEV_CUSTOM_SW_RETRY_TYPE_NONAGGR);
 }
 
 static int hdd_config_agg_retry(struct hdd_adapter *adapter,
 				const struct nlattr *attr)
 {
 	uint8_t retry;
-	int param_id;
 
 	retry = nla_get_u8(attr);
-	retry = retry > CFG_AGG_RETRY_MAX ?
-		CFG_AGG_RETRY_MAX : retry;
 
 	/* Value less than CFG_AGG_RETRY_MIN has side effect to t-put */
-	retry = ((retry > 0) && (retry < CFG_AGG_RETRY_MIN)) ?
-		CFG_AGG_RETRY_MIN : retry;
-	param_id = WMI_PDEV_PARAM_AGG_SW_RETRY_TH;
+	retry = (retry > CFG_AGG_RETRY_MAX) ? CFG_AGG_RETRY_MAX :
+		((retry < CFG_AGG_RETRY_MIN) ? CFG_AGG_RETRY_MIN :
+		  retry);
+	hdd_debug("sending Agg Retry Th: %d", retry);
 
-	return wma_cli_set_command(adapter->vdev_id, param_id,
-				   retry, PDEV_CMD);
+	return sme_set_vdev_sw_retry(adapter->vdev_id, retry,
+				     WMI_VDEV_CUSTOM_SW_RETRY_TYPE_AGGR);
 }
 
 static int hdd_config_mgmt_retry(struct hdd_adapter *adapter,

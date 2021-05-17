@@ -4237,6 +4237,35 @@ static QDF_STATUS wma_set_sw_retry_by_qos(
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS wma_set_vdev_sw_retry_th(uint8_t vdev_id, uint8_t sw_retry_count,
+				    wmi_vdev_custom_sw_retry_type_t retry_type)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tp_wma_handle wma_handle;
+	uint32_t queue_num;
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle)
+		return QDF_STATUS_E_FAILURE;
+
+
+	for (queue_num = 0; queue_num < WMI_AC_MAX; queue_num++) {
+		if (sw_retry_count == 0)
+			continue;
+
+		status = wma_set_sw_retry_by_qos(wma_handle,
+						 vdev_id,
+						 retry_type,
+						 queue_num,
+						 sw_retry_count);
+
+		if (QDF_IS_STATUS_ERROR(status))
+			return status;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS wma_set_sw_retry_threshold_per_ac(WMA_HANDLE handle,
 					     uint8_t vdev_id,
 					     struct wlan_mlme_qos *qos_aggr)
