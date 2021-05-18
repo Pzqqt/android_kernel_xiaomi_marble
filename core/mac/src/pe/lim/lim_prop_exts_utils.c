@@ -398,9 +398,9 @@ void lim_update_ch_width_for_p2p_client(struct mac_context *mac,
 	struct ch_params ch_params = {0};
 
 	/*
-	 * Some IOT AP's/P2P-GO's (e.g. make: Intel and model: Intel(R)
-	 * Wireless-AC 9560160MHz as P2P GO), send beacon with 20mhz and assoc
-	 * resp with 80mhz and after assoc resp, next beacon also has 80mhz.
+	 * Some IOT AP's/P2P-GO's (e.g. make: Wireless-AC 9560160MHz as P2P GO),
+	 * send beacon with 20mhz and assoc resp with 80mhz and
+	 * after assoc resp, next beacon also has 80mhz.
 	 * Connection is expected to happen in better possible
 	 * bandwidth(80MHz in this case).
 	 * Start the vdev with max supported ch_width in order to support this.
