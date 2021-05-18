@@ -167,6 +167,7 @@ void cm_fw_ho_fail_req(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS cm_fw_roam_invoke_fail(struct wlan_objmgr_psoc *psoc,
 				  uint8_t vdev_id);
+
 #ifdef WLAN_FEATURE_FIPS
 /**
  * cm_roam_pmkid_req_ind() - Function to handle
@@ -186,12 +187,59 @@ cm_roam_pmkid_req_ind(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* WLAN_FEATURE_FIPS */
-#else /*WLAN_FEATURE_ROAM_OFFLOAD */
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+/**
+ * cm_free_roam_synch_frame_ind() - Free the bcn_probe_rsp, reassoc_req,
+ * reassoc_rsp received as part of the ROAM_SYNC_FRAME event
+ *
+ * @vdev - vdev obj mgr ptr
+ *
+ * This API is used to free the buffer allocated during the ROAM_SYNC_FRAME
+ * event
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_free_roam_synch_frame_ind(struct rso_config *rso_cfg);
+
+/**
+ * cm_roam_sync_event_handler() - CM handler for roam sync event
+ *
+ * @psoc - psoc objmgr ptr
+ * @event - event ptr
+ * @len - event buff length
+ * @vdev_id - vdev id
+ *
+ * This API is used to handle the buffer allocated during the ROAM_SYNC_EVENT
+ * event
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_roam_sync_event_handler(struct wlan_objmgr_psoc *psoc,
+				      uint8_t *event,
+				      uint32_t len,
+				      uint8_t vdev_id);
+
+/**
+ * cm_roam_sync_frame_event_handler() - CM handler for roam sync frame event
+ *
+ * @psoc - psoc objmgr ptr
+ * @frame_ind - ptr to roam sync frame struct
+ *
+ * This API is used to handle the buffer allocated during the ROAM_SYNC_FRAME
+ * event
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_roam_sync_frame_event_handler(struct wlan_objmgr_psoc *psoc,
+				 struct roam_synch_frame_ind *frame_ind);
+#endif /* ROAM_TARGET_IF_CONVERGENCE */
+#else /* WLAN_FEATURE_ROAM_OFFLOAD */
 static inline
 QDF_STATUS cm_fw_roam_invoke_fail(struct wlan_objmgr_psoc *psoc,
 				  uint8_t vdev_id)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
-#endif /*WLAN_FEATURE_ROAM_OFFLOAD */
+#endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 #endif /* _WLAN_CM_ROAM_I_H_ */

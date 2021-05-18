@@ -628,16 +628,6 @@ struct wma_version_info {
 	u_int32_t revision;
 };
 
-struct roam_synch_frame_ind {
-	uint32_t bcn_probe_rsp_len;
-	uint8_t *bcn_probe_rsp;
-	uint8_t is_beacon;
-	uint32_t reassoc_req_len;
-	uint8_t *reassoc_req;
-	uint32_t reassoc_rsp_len;
-	uint8_t *reassoc_rsp;
-};
-
 /* Max number of invalid peer entries */
 #define INVALID_PEER_MAX_NUM 5
 

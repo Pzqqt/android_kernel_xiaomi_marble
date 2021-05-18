@@ -3322,6 +3322,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 #endif /* WLAN_FEATURE_STATS_EXT */
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
+#ifndef ROAM_TARGET_IF_CONVERGENCE
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   wmi_roam_synch_event_id,
 					   wma_roam_synch_event_handler,
@@ -3330,7 +3331,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 				   wmi_roam_synch_frame_event_id,
 				   wma_roam_synch_frame_event_handler,
 				   WMA_RX_SERIALIZER_CTX);
-
+#endif /* ROAM_TARGET_IF_CONVERGENCE */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   wmi_roam_auth_offload_event_id,
 					   wma_roam_auth_offload_event_handler,

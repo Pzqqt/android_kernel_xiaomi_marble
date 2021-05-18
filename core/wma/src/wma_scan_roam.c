@@ -1178,6 +1178,7 @@ cleanup_label:
 	return status;
 }
 
+#ifndef ROAM_TARGET_IF_CONVERGENCE
 int wma_roam_synch_frame_event_handler(void *handle, uint8_t *event,
 					uint32_t len)
 {
@@ -1357,6 +1358,7 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 
 	return 0;
 }
+#endif /* ROAM_TARGET_IF_CONVERGENCE */
 
 int wma_roam_auth_offload_event_handler(WMA_HANDLE handle, uint8_t *event,
 					uint32_t len)
