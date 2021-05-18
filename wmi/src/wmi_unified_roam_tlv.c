@@ -1661,6 +1661,176 @@ extract_roam_msg_info_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+/**
+ * extract_roam_sync_event_tlv() - Extract the roam sync event
+ * from the wmi_roam_synch_event_id
+ * @wmi_handle: wmi handle
+ * @evt_buf:    Pointer to the event buffer
+ * @len:        Data length
+ * @vdev_id:    Vdev Id
+ */
+static QDF_STATUS
+extract_roam_sync_event_tlv(wmi_unified_t wmi_handle, void *evt_buf,
+			    uint32_t len,
+			    uint8_t *vdev_id)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	wmi_roam_synch_event_fixed_param *synch_event = NULL;
+	WMI_ROAM_SYNCH_EVENTID_param_tlvs *param_buf = NULL;
+
+	if (!evt_buf) {
+		wmi_debug("Empty roam_sync_event param buf");
+		status = QDF_STATUS_E_FAILURE;
+		goto end;
+	}
+
+	param_buf = (WMI_ROAM_SYNCH_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		wmi_debug("received null buf from target");
+		status = QDF_STATUS_E_FAILURE;
+		goto end;
+	}
+
+	synch_event = param_buf->fixed_param;
+	if (!synch_event) {
+		wmi_debug("received null event data from target");
+		status = QDF_STATUS_E_FAILURE;
+		goto end;
+	}
+
+	if (synch_event->vdev_id >= WLAN_MAX_VDEVS) {
+		wmi_err("received invalid vdev_id %d",
+			synch_event->vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*vdev_id = synch_event->vdev_id;
+
+end:
+	return status;
+}
+
+/**
+ * extract_roam_sync_frame_event_tlv() - Extract the roam sync frame event
+ * from the wmi_roam_synch_event_id
+ * @wmi_handle: wmi handle
+ * @event:    Pointer to the event buffer
+ * @len:        Data length
+ * @roam_synch_frame_ind_ptr: wmi sync frame event ptr
+ */
+static QDF_STATUS
+extract_roam_sync_frame_event_tlv(wmi_unified_t wmi_handle, void *event,
+				  uint32_t len,
+				  struct roam_synch_frame_ind *frame_ptr)
+{
+	WMI_ROAM_SYNCH_FRAME_EVENTID_param_tlvs *param_buf = NULL;
+	struct roam_synch_frame_ind *roam_sync_frame_ind;
+	wmi_roam_synch_frame_event_fixed_param *synch_frame_event;
+
+	if (!event) {
+		wmi_err("Event param null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	param_buf = (WMI_ROAM_SYNCH_FRAME_EVENTID_param_tlvs *)event;
+	if (!param_buf) {
+		wmi_err("received null buf from target");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	synch_frame_event = param_buf->fixed_param;
+
+	if (!synch_frame_event) {
+		wmi_err("received null event data from target");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (synch_frame_event->vdev_id >= WLAN_MAX_VDEVS) {
+		wmi_err("received invalid vdev_id %d",
+			synch_frame_event->vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (synch_frame_event->bcn_probe_rsp_len >
+	    param_buf->num_bcn_probe_rsp_frame ||
+	    synch_frame_event->reassoc_req_len >
+	    param_buf->num_reassoc_req_frame ||
+	    synch_frame_event->reassoc_rsp_len >
+	    param_buf->num_reassoc_rsp_frame) {
+		wmi_err("fixed/actual len err: bcn:%d/%d req:%d/%d rsp:%d/%d",
+			synch_frame_event->bcn_probe_rsp_len,
+			param_buf->num_bcn_probe_rsp_frame,
+			synch_frame_event->reassoc_req_len,
+			param_buf->num_reassoc_req_frame,
+			synch_frame_event->reassoc_rsp_len,
+			param_buf->num_reassoc_rsp_frame);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	roam_sync_frame_ind = frame_ptr;
+	roam_sync_frame_ind->vdev_id = synch_frame_event->vdev_id;
+
+	if (synch_frame_event->bcn_probe_rsp_len) {
+		roam_sync_frame_ind->bcn_probe_rsp_len =
+			synch_frame_event->bcn_probe_rsp_len;
+
+		roam_sync_frame_ind->is_beacon =
+			synch_frame_event->is_beacon;
+
+		if (roam_sync_frame_ind->bcn_probe_rsp)
+			qdf_mem_free(roam_sync_frame_ind->bcn_probe_rsp);
+
+		roam_sync_frame_ind->bcn_probe_rsp =
+			qdf_mem_malloc(roam_sync_frame_ind->bcn_probe_rsp_len);
+		if (!roam_sync_frame_ind->bcn_probe_rsp) {
+			QDF_ASSERT(roam_sync_frame_ind->bcn_probe_rsp);
+			return QDF_STATUS_E_NOMEM;
+		}
+		qdf_mem_copy(roam_sync_frame_ind->bcn_probe_rsp,
+			     param_buf->bcn_probe_rsp_frame,
+			     roam_sync_frame_ind->bcn_probe_rsp_len);
+	}
+
+	if (synch_frame_event->reassoc_req_len) {
+		roam_sync_frame_ind->reassoc_req_len =
+				synch_frame_event->reassoc_req_len;
+
+		if (roam_sync_frame_ind->reassoc_req)
+			qdf_mem_free(roam_sync_frame_ind->reassoc_req);
+		roam_sync_frame_ind->reassoc_req =
+			qdf_mem_malloc(roam_sync_frame_ind->reassoc_req_len);
+		if (!roam_sync_frame_ind->reassoc_req) {
+			QDF_ASSERT(roam_sync_frame_ind->reassoc_req);
+			return QDF_STATUS_E_NOMEM;
+		}
+		qdf_mem_copy(roam_sync_frame_ind->reassoc_req,
+			     param_buf->reassoc_req_frame,
+			     roam_sync_frame_ind->reassoc_req_len);
+	}
+
+	if (synch_frame_event->reassoc_rsp_len) {
+		roam_sync_frame_ind->reassoc_rsp_len =
+				synch_frame_event->reassoc_rsp_len;
+
+		if (roam_sync_frame_ind->reassoc_rsp)
+			qdf_mem_free(roam_sync_frame_ind->reassoc_rsp);
+
+		roam_sync_frame_ind->reassoc_rsp =
+			qdf_mem_malloc(roam_sync_frame_ind->reassoc_rsp_len);
+		if (!roam_sync_frame_ind->reassoc_rsp) {
+			QDF_ASSERT(roam_sync_frame_ind->reassoc_rsp);
+			return QDF_STATUS_E_NOMEM;
+		}
+		qdf_mem_copy(roam_sync_frame_ind->reassoc_rsp,
+			     param_buf->reassoc_rsp_frame,
+			     roam_sync_frame_ind->reassoc_rsp_len);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* ROAM_TARGET_IF_CONVERGENCE */
+
 void wmi_roam_offload_attach_tlv(wmi_unified_t wmi_handle)
 {
 	struct wmi_ops *ops = wmi_handle->ops;
@@ -1669,7 +1839,10 @@ void wmi_roam_offload_attach_tlv(wmi_unified_t wmi_handle)
 				extract_roam_btm_response_stats_tlv;
 	ops->extract_roam_initial_info = extract_roam_initial_info_tlv;
 	ops->extract_roam_msg_info = extract_roam_msg_info_tlv;
-
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+	ops->extract_roam_sync_event = extract_roam_sync_event_tlv;
+	ops->extract_roam_sync_frame_event = extract_roam_sync_frame_event_tlv;
+#endif /* ROAM_TARGET_IF_CONVERGENCE */
 	ops->send_set_ric_req_cmd = send_set_ric_req_cmd_tlv;
 	ops->send_process_roam_synch_complete_cmd =
 			send_process_roam_synch_complete_cmd_tlv;
@@ -1699,6 +1872,22 @@ extract_roam_msg_info_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
+
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+static inline QDF_STATUS
+extract_roam_sync_event(wmi_unified_t wmi_handle, void *evt_buf,
+			struct roam_msg_info *dst, uint8_t idx)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+extract_roam_sync_frame_event(wmi_unified_t wmi_handle, void *evt_buf,
+			      struct roam_msg_info *dst, uint8_t idx)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif /* ROAM_TARGET_IF_CONVERGENCE */
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
 #define ROAM_OFFLOAD_PMK_EXT_BYTES 16

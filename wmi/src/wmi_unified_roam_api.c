@@ -337,4 +337,33 @@ QDF_STATUS wmi_unified_set_roam_triggers(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+QDF_STATUS wmi_extract_roam_sync_event(wmi_unified_t wmi_handle, void *evt_buf,
+				       uint32_t len,
+				       uint8_t *vdev_id)
+{
+	if (wmi_handle->ops->extract_roam_sync_event)
+		return wmi_handle->ops->extract_roam_sync_event(wmi_handle,
+								evt_buf,
+								len,
+								vdev_id);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+wmi_extract_roam_sync_frame_event(wmi_unified_t wmi_handle, void *event,
+				  uint32_t len,
+				  struct roam_synch_frame_ind *frame_ptr)
+{
+	if (wmi_handle->ops->extract_roam_sync_frame_event)
+		return wmi_handle->ops->extract_roam_sync_frame_event(wmi_handle,
+								      event,
+								      len,
+								      frame_ptr);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif /* ROAM_TARGET_IF_CONVERGENCE */
 #endif

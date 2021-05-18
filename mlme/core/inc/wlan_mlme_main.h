@@ -82,11 +82,13 @@ struct pwr_channel_info {
  * struct wlan_mlme_psoc_ext_obj -MLME ext psoc priv object
  * @cfg:     cfg items
  * @rso_tx_ops: Roam Tx ops to send roam offload commands to firmware
+ * @rso_rx_ops: Roam Rx ops to receive roam offload events from firmware
  * @wfa_testcmd: WFA config tx ops to send to FW
  */
 struct wlan_mlme_psoc_ext_obj {
 	struct wlan_mlme_cfg cfg;
 	struct wlan_cm_roam_tx_ops rso_tx_ops;
+	struct wlan_cm_roam_rx_ops rso_rx_ops;
 	struct wlan_mlme_wfa_cmd wfa_testcmd;
 };
 

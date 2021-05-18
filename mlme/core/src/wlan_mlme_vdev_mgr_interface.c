@@ -34,6 +34,7 @@
 #include <../../core/src/wlan_cm_vdev_api.h>
 #include "csr_api.h"
 #include <cm_utf.h>
+#include "target_if_cm_roam_event.h"
 
 static struct vdev_mlme_ops sta_mlme_ops;
 static struct vdev_mlme_ops ap_mlme_ops;
@@ -1487,6 +1488,11 @@ QDF_STATUS psoc_mlme_ext_hdl_create(struct psoc_mlme_obj *psoc_mlme)
 
 	target_if_wfatestcmd_register_tx_ops(
 			&psoc_mlme->ext_psoc_ptr->wfa_testcmd.tx_ops);
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+	target_if_roam_offload_register_events(psoc_mlme->psoc);
+#endif /* ROAM_TARGET_IF_CONVERGENCE */
+	target_if_cm_roam_register_rx_ops(
+			&psoc_mlme->ext_psoc_ptr->rso_rx_ops);
 
 	return QDF_STATUS_SUCCESS;
 }

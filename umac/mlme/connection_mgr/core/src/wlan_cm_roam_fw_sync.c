@@ -1110,3 +1110,33 @@ rel_ref:
 	return status;
 }
 #endif /* WLAN_FEATURE_FIPS */
+
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+QDF_STATUS cm_free_roam_synch_frame_ind(struct rso_config *rso_cfg)
+{
+	struct roam_synch_frame_ind *frame_ind;
+
+	if (!rso_cfg)
+		return QDF_STATUS_E_FAILURE;
+
+	frame_ind = &rso_cfg->roam_sync_frame_ind;
+
+	if (frame_ind->bcn_probe_rsp) {
+		qdf_mem_free(frame_ind->bcn_probe_rsp);
+		frame_ind->bcn_probe_rsp_len = 0;
+		frame_ind->bcn_probe_rsp = NULL;
+	}
+	if (frame_ind->reassoc_req) {
+		qdf_mem_free(frame_ind->reassoc_req);
+		frame_ind->reassoc_req_len = 0;
+		frame_ind->reassoc_req = NULL;
+	}
+	if (frame_ind->reassoc_rsp) {
+		qdf_mem_free(frame_ind->reassoc_rsp);
+		frame_ind->reassoc_rsp_len = 0;
+		frame_ind->reassoc_rsp = NULL;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* ROAM_TARGET_IF_CONVERGENCE */
