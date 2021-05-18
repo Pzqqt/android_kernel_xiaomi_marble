@@ -2407,6 +2407,7 @@ exit:
 	while (sde_crtc->frame_data.cnt--)
 		_sde_crtc_put_frame_data_buffer(
 				sde_crtc->frame_data.buf[sde_crtc->frame_data.cnt]);
+	sde_crtc->frame_data.cnt = 0;
 }
 
 static void _sde_crtc_frame_data_notify(struct drm_crtc *crtc,
@@ -2448,7 +2449,7 @@ void sde_crtc_get_frame_data(struct drm_crtc *crtc)
 	if (frame_data->cnt) {
 		struct msm_gem_object *msm_gem;
 
-		msm_gem = to_msm_bo(frame_data->buf[frame_data->cnt]->gem);
+		msm_gem = to_msm_bo(frame_data->buf[frame_data->idx]->gem);
 		data = (struct sde_drm_frame_data_packet *)
 				(((u8 *)msm_gem->vaddr) + msm_gem->offset);
 	} else {
