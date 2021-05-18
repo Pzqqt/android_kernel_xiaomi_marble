@@ -1304,15 +1304,5 @@ QDF_STATUS ucfg_nan_disable_ind_to_userspace(struct wlan_objmgr_psoc *psoc)
 
 bool ucfg_is_nan_allowed_on_freq(struct wlan_objmgr_pdev *pdev, uint32_t freq)
 {
-	bool nan_allowed = false;
-
-	/* Check for SRD channels only */
-	if (!wlan_reg_is_etsi13_srd_chan_for_freq(pdev, freq))
-		return true;
-
-	wlan_mlme_get_srd_master_mode_for_vdev(wlan_pdev_get_psoc(pdev),
-					       QDF_NAN_DISC_MODE,
-					       &nan_allowed);
-
-	return nan_allowed;
+	return wlan_is_nan_allowed_on_freq(pdev, freq);
 }

@@ -215,6 +215,18 @@ QDF_STATUS nan_disable_cleanup(struct wlan_objmgr_psoc *psoc);
  * Return: True if beamforming is supported, false if not.
  */
 bool wlan_nan_is_beamforming_supported(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_is_nan_allowed_on_freq() - Check if NAN is allowed on given freq
+ * @pdev: pdev context
+ * @freq: Frequency to be checked
+ *
+ * Check if NAN/NDP can be enabled on given frequency.
+ *
+ * Return: True if NAN is allowed on the given frequency
+ */
+bool wlan_is_nan_allowed_on_freq(struct wlan_objmgr_pdev *pdev, uint32_t freq);
+
 #else /* WLAN_FEATURE_NAN */
 static inline QDF_STATUS nan_init(void)
 {
@@ -263,6 +275,12 @@ QDF_STATUS nan_disable_cleanup(struct wlan_objmgr_psoc *psoc)
 
 static inline
 bool wlan_nan_is_beamforming_supported(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
+static inline
+bool wlan_is_nan_allowed_on_freq(struct wlan_objmgr_pdev *pdev, uint32_t freq)
 {
 	return false;
 }
