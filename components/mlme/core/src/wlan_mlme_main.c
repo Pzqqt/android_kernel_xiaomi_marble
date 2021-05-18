@@ -2332,6 +2332,9 @@ static void mlme_init_reg_cfg(struct wlan_objmgr_psoc *psoc,
 	reg->retain_nol_across_regdmn_update =
 		cfg_get(psoc, CFG_RETAIN_NOL_ACROSS_REG_DOMAIN);
 
+	reg->enable_nan_on_indoor_channels =
+		cfg_get(psoc, CFG_INDOOR_CHANNEL_SUPPORT_FOR_NAN);
+
 	mlme_init_acs_avoid_freq_list(psoc, reg);
 }
 
