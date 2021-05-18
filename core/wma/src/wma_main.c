@@ -6962,50 +6962,6 @@ int wma_rx_ready_event(void *handle, uint8_t *cmd_param_info,
 }
 
 /**
- * wma_setneedshutdown() - setting wma needshutdown flag
- *
- * Return: none
- */
-void wma_setneedshutdown(void)
-{
-	tp_wma_handle wma_handle;
-
-	wma_debug("Enter");
-
-	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-
-	if (!wma_handle) {
-		QDF_ASSERT(0);
-		return;
-	}
-
-	wma_handle->needShutdown = true;
-	wma_debug("Exit");
-}
-
-/**
- * wma_needshutdown() - Is wma needs shutdown?
- *
- * Return: returns true/false
- */
-bool wma_needshutdown(void)
-{
-	tp_wma_handle wma_handle;
-
-	wma_debug("Enter");
-
-	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-
-	if (!wma_handle) {
-		QDF_ASSERT(0);
-		return false;
-	}
-
-	wma_debug("Exit");
-	return wma_handle->needShutdown;
-}
-
-/**
  * wma_wait_for_ready_event() - wait for wma ready event
  * @handle: wma handle
  *

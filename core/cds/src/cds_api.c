@@ -665,24 +665,18 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	/* Initialize bug reporting structure */
 	cds_init_log_completion();
 
-	status = qdf_event_create(&gp_cds_context->wma_complete_event);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		cds_alert("Unable to init wma_complete_event");
-		return status;
-	}
-
 	hdd_ctx = gp_cds_context->hdd_context;
 	if (!hdd_ctx || !hdd_ctx->config) {
 		cds_err("Hdd Context is Null");
 
 		status = QDF_STATUS_E_FAILURE;
-		goto err_wma_complete_event;
+		return status;
 	}
 
 	status = dispatcher_enable();
 	if (QDF_IS_STATUS_ERROR(status)) {
 		cds_err("Failed to enable dispatcher; status:%d", status);
-		goto err_wma_complete_event;
+		return status;
 	}
 
 	/* Now Open the CDS Scheduler */
@@ -902,9 +896,6 @@ err_sched_close:
 err_dispatcher_disable:
 	if (QDF_IS_STATUS_ERROR(dispatcher_disable()))
 		QDF_DEBUG_PANIC("Failed to disable dispatcher");
-
-err_wma_complete_event:
-	qdf_event_destroy(&gp_cds_context->wma_complete_event);
 
 	return status;
 } /* cds_open() */
@@ -1220,26 +1211,10 @@ err_mac_stop:
 	mac_stop(gp_cds_context->mac_context);
 
 err_wma_stop:
-	qdf_event_reset(&gp_cds_context->wma_complete_event);
 	qdf_status = wma_stop();
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		cds_err("Failed to stop wma");
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-		wma_setneedshutdown();
-	} else {
-		qdf_status =
-			qdf_wait_for_event_completion(
-					&gp_cds_context->wma_complete_event,
-					CDS_WMA_TIMEOUT);
-		if (qdf_status != QDF_STATUS_SUCCESS) {
-			if (qdf_status == QDF_STATUS_E_TIMEOUT) {
-				cds_alert("Timeout occurred before WMA_stop complete");
-			} else {
-				cds_alert("WMA_stop reporting other error");
-			}
-			QDF_ASSERT(0);
-			wma_setneedshutdown();
-		}
 	}
 
 	return QDF_STATUS_E_FAILURE;
@@ -1273,7 +1248,6 @@ QDF_STATUS cds_disable(struct wlan_objmgr_psoc *psoc)
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		cds_err("Failed to stop wma");
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-		wma_setneedshutdown();
 	}
 
 	handle = cds_get_context(QDF_MODULE_ID_PE);
@@ -1405,25 +1379,16 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc)
 	ucfg_pmo_psoc_update_dp_handle(psoc, NULL);
 	wlan_psoc_set_dp_handle(psoc, NULL);
 
-	if (true == wma_needshutdown()) {
-		cds_err("Failed to shutdown wma");
-	} else {
-		qdf_status = wma_close();
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			cds_err("Failed to close wma");
-			QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-		}
+
+	qdf_status = wma_close();
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		cds_err("Failed to close wma");
+		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
 
 	qdf_status = wma_wmi_service_close();
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		cds_err("Failed to close wma_wmi_service");
-		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-	}
-
-	qdf_status = qdf_event_destroy(&gp_cds_context->wma_complete_event);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		cds_err("failed to destroy wma_complete_event");
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
 

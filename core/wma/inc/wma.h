@@ -826,7 +826,6 @@ struct wma_wlm_stats_data {
  * @last_umac_data_ota_timestamp: timestamp when OTA of last umac data
  *   was done
  * @last_umac_data_nbuf: cache nbuf ptr for the last umac data buf
- * @needShutdown: is shutdown needed or not
  * @tgt_cfg_update_cb: configuration update callback
  * @reg_cap: regulatory capablities
  * @scan_id: scan id
@@ -949,7 +948,6 @@ typedef struct {
 	wma_tx_ota_comp_callback umac_data_ota_ack_cb;
 	unsigned long last_umac_data_ota_timestamp;
 	qdf_nbuf_t last_umac_data_nbuf;
-	bool needShutdown;
 	wma_tgt_cfg_cb tgt_cfg_update_cb;
 	HAL_REG_CAPABILITIES reg_cap;
 	uint32_t scan_id;

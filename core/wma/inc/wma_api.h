@@ -129,10 +129,6 @@ int  wma_rx_service_ready_event(void *handle, uint8_t *ev, uint32_t len);
 
 int wma_rx_service_ready_ext_event(void *handle, uint8_t *ev, uint32_t len);
 
-void wma_setneedshutdown(void);
-
-bool wma_needshutdown(void);
-
 QDF_STATUS wma_wait_for_ready_event(WMA_HANDLE handle);
 
 int wma_cli_get_command(int vdev_id, int param_id, int vpdev);
