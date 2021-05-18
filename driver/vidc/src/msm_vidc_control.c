@@ -11,6 +11,7 @@
 #include "msm_vidc_internal.h"
 #include "msm_vidc_driver.h"
 #include "msm_venc.h"
+#include "msm_vidc_platform.h"
 
 #define CAP_TO_8BIT_QP(a) {          \
 	if ((a) < 0)                 \
@@ -2875,6 +2876,125 @@ int msm_vidc_set_blur_resolution(void *instance,
 
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_32_PACKED,
 		&hfi_value, sizeof(u32), __func__);
+	if (rc)
+		return rc;
+
+	return rc;
+}
+
+static msm_venc_set_csc_coeff(struct msm_vidc_inst *inst,
+	const char *prop_name, u32 hfi_id, void *payload,
+	u32 payload_size, u32 row_count, u32 column_count)
+{
+	int rc = 0;
+
+	i_vpr_h(inst,
+		"set cap: name: %24s, hard coded %dx%d matrix array\n",
+		prop_name, row_count, column_count);
+	rc = venus_hfi_session_property(inst,
+		hfi_id,
+		HFI_HOST_FLAGS_NONE,
+		HFI_PORT_BITSTREAM,
+		HFI_PAYLOAD_S32_ARRAY,
+		payload,
+		payload_size);
+	if (rc) {
+		i_vpr_e(inst,
+			"%s: failed to set %s to fw\n",
+			__func__, prop_name);
+	}
+
+	return rc;
+}
+int msm_vidc_set_csc_custom_matrix(void *instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	int i;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+	struct msm_vidc_core *core;
+	struct msm_vidc_csc_coeff *csc_coeff;
+	s32 matrix_payload[MAX_MATRIX_COEFFS + 2];
+	s32 csc_bias_payload[MAX_BIAS_COEFFS + 2];
+	s32 csc_limit_payload[MAX_LIMIT_COEFFS + 2];
+
+	if (!inst || !inst->capabilities || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+	if (!core->platform) {
+		d_vpr_e("%s: invalid core platform\n", __func__);
+		return -EINVAL;
+	}
+	csc_coeff = &core->platform->data.csc_data;
+
+	if (!inst->capabilities->cap[cap_id].value ||
+		!inst->capabilities->cap[CSC].value) {
+		i_vpr_h(inst,
+			"%s: ignored as custom martix %u, csc %u\n",
+			__func__, inst->capabilities->cap[cap_id].value,
+			inst->capabilities->cap[CSC].value);
+		return 0;
+	}
+
+	/*
+	 * first 2 u32's of payload in each case are for
+	 * row and column count, next remaining u32's are
+	 * for the actual payload values.
+	 */
+
+	/* set custom matrix */
+	matrix_payload[0] = 3;
+	matrix_payload[1] = 3;
+
+	for(i = 0; i < MAX_MATRIX_COEFFS; i++) {
+		if ((i + 2) >= ARRAY_SIZE(matrix_payload))
+			break;
+		matrix_payload[i + 2] =
+			csc_coeff->vpe_csc_custom_matrix_coeff[i];
+	}
+
+	rc = msm_venc_set_csc_coeff(inst, "CSC_CUSTOM_MATRIX",
+		HFI_PROP_CSC_MATRIX, &matrix_payload[0],
+		ARRAY_SIZE(matrix_payload) * sizeof(s32),
+		matrix_payload[0], matrix_payload[1]);
+	if (rc)
+		return rc;
+
+	/* set csc bias */
+	csc_bias_payload[0] = 1;
+	csc_bias_payload[1] = 3;
+
+	for(i = 0; i < MAX_BIAS_COEFFS; i++) {
+		if ((i + 2) >= ARRAY_SIZE(csc_bias_payload))
+			break;
+		csc_bias_payload[i + 2] =
+			csc_coeff->vpe_csc_custom_bias_coeff[i];
+	}
+
+	rc = msm_venc_set_csc_coeff(inst, "CSC_BIAS",
+		HFI_PROP_CSC_BIAS, &csc_bias_payload[0],
+		ARRAY_SIZE(csc_bias_payload) * sizeof(s32),
+		csc_bias_payload[0], csc_bias_payload[1]);
+	if (rc)
+		return rc;
+
+	/* set csc limit */
+	csc_limit_payload[0] = 1;
+	csc_limit_payload[1] = 6;
+
+	for(i = 0; i < MAX_LIMIT_COEFFS; i++) {
+		if ((i + 2) >= ARRAY_SIZE(csc_limit_payload))
+			break;
+		csc_limit_payload[i + 2] =
+			csc_coeff->vpe_csc_custom_limit_coeff[i];
+	}
+
+	rc = msm_venc_set_csc_coeff(inst, "CSC_LIMIT",
+		HFI_PROP_CSC_LIMIT, &csc_limit_payload[0],
+		ARRAY_SIZE(csc_limit_payload) * sizeof(s32),
+		csc_limit_payload[0], csc_limit_payload[1]);
 	if (rc)
 		return rc;
 

@@ -364,7 +364,7 @@ static bool msm_venc_csc_required(struct msm_vidc_inst* inst)
 
 	/* video hardware supports conversion to REC709 CSC only */
 	if (in_fmt->fmt.pix_mp.colorspace != out_fmt->fmt.pix_mp.colorspace &&
-	    out_fmt->fmt.pix_mp.colorspace == V4L2_COLORSPACE_REC709)
+		out_fmt->fmt.pix_mp.colorspace == V4L2_COLORSPACE_REC709)
 		return true;
 
 	return false;
@@ -977,11 +977,11 @@ int msm_venc_streamon_output(struct msm_vidc_inst *inst)
 	if (rc)
 		goto error;
 
-	rc = msm_vidc_set_v4l2_properties(inst);
+	rc = msm_venc_set_output_properties(inst);
 	if (rc)
 		goto error;
 
-	rc = msm_venc_set_output_properties(inst);
+	rc = msm_vidc_set_v4l2_properties(inst);
 	if (rc)
 		goto error;
 
