@@ -91,6 +91,7 @@ const char *ipa_hw_type_name[] = {
 	"4.5",
 	"4.9",
 	"5.0",
+	"5.1",
 	"MAX"
 };
 
@@ -199,10 +200,15 @@ int chooserMode() {
 	const char* res;
 	int result = 0;
 	char input_str[4];
+	char* temp;
 
 	printf("Welcome to the ip_accelerator\nChoose an option:\n");
 	printf("1) Run tests\n2) Run suites\n3) Exit\nChoose an option: ");
-	res = fgets(input_str, sizeof(input_str), stdin);
+	temp = fgets(input_str, sizeof(input_str), stdin);
+	if (!temp) {
+		printf("Error: fgets returned nullptr !!");
+		return -1;
+	}
 	type = atoi(input_str);
 	switch((enum ipa_test_type)type) {
 	case TEST:
@@ -210,7 +216,11 @@ int chooserMode() {
 		showTests();
 		printf("Choose which test you wish to run: \n");
 		fflush(stdin);
-		res = fgets(input_str, sizeof(input_str), stdin);
+		temp = fgets(input_str, sizeof(input_str), stdin);
+		if (!temp) {
+			printf("Error: fgets returned nullptr !!");
+			return -1;
+		}
 		test_num = atoi(input_str);
 		if ( test_num > testmanager->m_testList.size()) {
 			printf("Invalid test number. Try again\n");
@@ -231,7 +241,11 @@ int chooserMode() {
 		showSuits();
 		printf("Choose which suite you wish to run: \n");
 		fflush(stdin);
-		res = fgets(input_str, sizeof(input_str), stdin);
+		temp = fgets(input_str, sizeof(input_str), stdin);
+		if (!temp) {
+			printf("Error: fgets returned nullptr !!");
+			return -1;
+		}
 		suite_num = atoi(input_str);
 		if (suite_num < 0 || suite_num > MAX_SUITES) {
 			printf("Invalid test number. Try again\n");

@@ -145,7 +145,7 @@ static int MapMemory(
 	if (ipa_dev_dir_path_len >= IPA_RESOURCE_NAME_MAX)
 	{
 		IPAERR("Unable to copy a string with size %d to buffer with size %d\n",
-			   ipa_dev_dir_path_len, IPA_RESOURCE_NAME_MAX);
+			   (int)ipa_dev_dir_path_len, IPA_RESOURCE_NAME_MAX);
 		ret = -EINVAL;
 		goto bail;
 	}
