@@ -298,9 +298,9 @@ QDF_STATUS cm_fw_roam_abort_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 	struct wlan_objmgr_pdev *pdev;
 	struct wlan_objmgr_vdev *vdev;
 	struct cnx_mgr *cm_ctx;
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct cm_roam_req *roam_req = NULL;
-	wlan_cm_id cm_id;
+	wlan_cm_id cm_id = CM_ID_INVALID;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
 						    WLAN_MLME_SB_ID);
@@ -309,33 +309,25 @@ QDF_STATUS cm_fw_roam_abort_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	cm_ctx = cm_get_cm_ctx(vdev);
-	if (!cm_ctx) {
-		status = QDF_STATUS_E_FAILURE;
-		goto rel_ref;
-	}
-	roam_req = cm_get_first_roam_command(vdev);
-	if (!roam_req) {
-		mlme_err("Failed to find roam req from list");
-		cm_id = CM_ID_INVALID;
-		status = QDF_STATUS_E_FAILURE;
-		goto end;
-	}
-
-	cm_id = roam_req->cm_id;
 	pdev = wlan_vdev_get_pdev(vdev);
 	if (!pdev) {
 		mlme_err("Failed to find pdev for vdev id %d",
-			 roam_req->req.vdev_id);
-		status = QDF_STATUS_E_FAILURE;
-		goto end;
+			 vdev_id);
+		goto rel_ref;
 	}
 
-	status = wlan_cm_roam_state_change(pdev,
-					   roam_req->req.vdev_id,
-					   WLAN_ROAM_RSO_ENABLED,
+	cm_ctx = cm_get_cm_ctx(vdev);
+	if (!cm_ctx)
+		goto rel_ref;
+
+	roam_req = cm_get_first_roam_command(vdev);
+	if (roam_req)
+		cm_id = roam_req->cm_id;
+
+	/* continue even if no roam command is found */
+	status = wlan_cm_roam_state_change(pdev, vdev_id, WLAN_ROAM_RSO_ENABLED,
 					   REASON_ROAM_ABORT);
-end:
+
 	cm_abort_fw_roam(cm_ctx, cm_id);
 rel_ref:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_SB_ID);

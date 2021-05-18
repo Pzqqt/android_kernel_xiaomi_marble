@@ -944,7 +944,7 @@ static QDF_STATUS cm_handle_ho_fail(struct scheduler_msg *msg)
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_pdev *pdev;
 	struct cnx_mgr *cm_ctx;
-	wlan_cm_id cm_id;
+	wlan_cm_id cm_id = CM_ID_INVALID;
 	struct reject_ap_info ap_info;
 	struct cm_roam_req *roam_req = NULL;
 
@@ -975,13 +975,11 @@ static QDF_STATUS cm_handle_ho_fail(struct scheduler_msg *msg)
 	}
 
 	roam_req = cm_get_first_roam_command(vdev);
-	if (!roam_req) {
-		mlme_err("Failed to find roam req from list");
-		status = QDF_STATUS_E_FAILURE;
-		goto error;
+	if (roam_req) {
+		mlme_debug("Roam req found, get cm id to remove it, before disconnect");
+		cm_id = roam_req->cm_id;
 	}
 
-	cm_id = roam_req->cm_id;
 	cm_sm_deliver_event(vdev, WLAN_CM_SM_EV_ROAM_HO_FAIL,
 			    sizeof(wlan_cm_id), &cm_id);
 
