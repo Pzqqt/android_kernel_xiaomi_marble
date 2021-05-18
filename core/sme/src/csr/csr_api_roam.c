@@ -8993,7 +8993,6 @@ csr_roam_diag_set_ctx_rsp(struct mac_context *mac_ctx,
 			  struct csr_roam_session *session,
 			  struct set_context_rsp *pRsp)
 {
-	int32_t ucast_cipher;
 	WLAN_HOST_DIAG_EVENT_DEF(setKeyEvent,
 				 host_event_wlan_security_payload_type);
 	struct wlan_objmgr_vdev *vdev;
@@ -9003,11 +9002,7 @@ csr_roam_diag_set_ctx_rsp(struct mac_context *mac_ctx,
 						    WLAN_LEGACY_SME_ID);
 	if (!vdev)
 		return;
-	ucast_cipher = wlan_crypto_get_param(vdev,
-					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
-	if (!ucast_cipher ||
-	    ((QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_NONE) ==
-	      ucast_cipher))) {
+	if (cm_is_open_mode(vdev)) {
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 		return;
 	}
@@ -12533,39 +12528,6 @@ csr_qos_send_reassoc_ind(struct mac_context *mac_ctx,
 {}
 #endif
 
-#ifdef FEATURE_WLAN_ESE
-static void
-csr_fill_ese_params(struct mac_context *mac_ctx,
-		    struct wlan_objmgr_vdev *vdev,
-		    tDot11fBeaconIEs *bcn_ies)
-{
-	int32_t ucast_cipher;
-	int32_t akm;
-	uint8_t vdev_id = wlan_vdev_get_id(vdev);
-
-	ucast_cipher = wlan_crypto_get_param(vdev,
-					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
-	akm = wlan_crypto_get_param(vdev,
-				    WLAN_CRYPTO_PARAM_KEY_MGMT);
-
-	if (mac_ctx->mlme_cfg->lfr.ese_enabled &&
-	    (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_CCKM) ||
-	     (bcn_ies->ESEVersion.present && (!ucast_cipher ||
-	       QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_NONE) ==
-	       ucast_cipher))))
-		wlan_cm_set_ese_assoc(mac_ctx->pdev, vdev_id, true);
-	else
-		wlan_cm_set_ese_assoc(mac_ctx->pdev, vdev_id, false);
-}
-#else
-static inline void
-csr_fill_ese_params(struct mac_context *mac_ctx,
-		    struct wlan_objmgr_vdev *vdev,
-		    tDot11fBeaconIEs *bcn_ies)
-{
-}
-#endif
-
 static void csr_fill_connected_profile(struct mac_context *mac_ctx,
 				       struct csr_roam_session *session,
 				       struct wlan_objmgr_vdev *vdev,
@@ -12583,6 +12545,7 @@ static void csr_fill_connected_profile(struct mac_context *mac_ctx,
 	tDot11fBeaconIEs *bcn_ies;
 	sme_QosAssocInfo assoc_info;
 	struct cm_roam_values_copy src_cfg;
+	bool is_ese = false;
 
 	conn_profile = &session->connectedProfile;
 	qdf_mem_zero(conn_profile, sizeof(tCsrRoamConnectedProfile));
@@ -12640,7 +12603,9 @@ static void csr_fill_connected_profile(struct mac_context *mac_ctx,
 
 	assoc_info.bss_desc = bss_desc;
 	if (rsp->connect_rsp.is_reassoc) {
-		csr_fill_ese_params(mac_ctx, vdev, bcn_ies);
+		if (cm_is_ese_connection(vdev, bcn_ies->ESEVersion.present))
+			is_ese = true;
+		wlan_cm_set_ese_assoc(mac_ctx->pdev, vdev_id, is_ese);
 		wlan_cm_roam_cfg_get_value(mac_ctx->psoc, vdev_id, UAPSD_MASK,
 					   &src_cfg);
 		assoc_info.uapsd_mask = src_cfg.uint_value;
@@ -12744,7 +12709,7 @@ cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
 {
 	struct mac_context *mac_ctx;
 	uint8_t vdev_id = wlan_vdev_get_id(vdev);
-	int32_t ucast_cipher, count;
+	int32_t count;
 	struct set_context_rsp install_key_rsp;
 	int32_t rsn_cap, set_value;
 	struct wlan_mlme_psoc_ext_obj *mlme_obj;
@@ -12824,10 +12789,7 @@ cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
 	 * For open mode authentication, send dummy install key response to
 	 * send OBSS scan and QOS event.
 	 */
-	ucast_cipher = wlan_crypto_get_param(vdev,
-					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
-	if (!rsp->is_wps_connection && (!ucast_cipher ||
-	    (ucast_cipher & (1 << WLAN_CRYPTO_CIPHER_NONE)) == ucast_cipher)) {
+	if (!rsp->is_wps_connection && cm_is_open_mode(vdev)) {
 		install_key_rsp.length = sizeof(install_key_rsp);
 		install_key_rsp.status_code = eSIR_SME_SUCCESS;
 		install_key_rsp.sessionId = vdev_id;

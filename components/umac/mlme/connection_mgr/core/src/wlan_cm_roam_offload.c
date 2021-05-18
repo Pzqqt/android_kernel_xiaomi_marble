@@ -2125,7 +2125,6 @@ cm_update_btm_offload_config(struct wlan_objmgr_psoc *psoc,
 	uint8_t bssid[QDF_MAC_ADDR_SIZE];
 	struct cm_roam_values_copy temp;
 	bool is_hs_20_ap, is_pmf_enabled, is_open_connection = false;
-	int32_t cipher;
 	uint8_t vdev_id;
 	uint32_t mbo_oce_enabled_ap;
 
@@ -2165,8 +2164,7 @@ cm_update_btm_offload_config(struct wlan_objmgr_psoc *psoc,
 
 	wlan_objmgr_peer_release_ref(peer, WLAN_MLME_CM_ID);
 
-	cipher = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_UCAST_CIPHER);
-	if (!cipher || QDF_HAS_PARAM(cipher, WLAN_CRYPTO_CIPHER_NONE))
+	if (cm_is_open_mode(vdev))
 		is_open_connection = true;
 
 	wlan_cm_roam_cfg_get_value(psoc, vdev_id, MBO_OCE_ENABLED_AP, &temp);
@@ -4218,16 +4216,12 @@ bool cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
 			 struct wlan_objmgr_vdev *vdev,
 			 bool mdie_present)
 {
-	int32_t akm, ucast_cipher;
+	int32_t akm;
 
 	akm = wlan_crypto_get_param(vdev,
 				    WLAN_CRYPTO_PARAM_KEY_MGMT);
-	ucast_cipher = wlan_crypto_get_param(vdev,
-					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
 
-	if (!ucast_cipher ||
-	    ((QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_NONE) ==
-	      ucast_cipher))) {
+	if (cm_is_open_mode(vdev)) {
 		if (mdie_present && mlme_obj->cfg.lfr.enable_ftopen)
 			return true;
 	} else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA384) ||
@@ -4243,8 +4237,7 @@ bool cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
 	return false;
 }
 
-#ifdef FEATURE_WLAN_ESE
-static bool cm_is_open_mode(struct wlan_objmgr_vdev *vdev)
+bool cm_is_open_mode(struct wlan_objmgr_vdev *vdev)
 {
 	int32_t ucast_cipher;
 
@@ -4258,6 +4251,7 @@ static bool cm_is_open_mode(struct wlan_objmgr_vdev *vdev)
 	return false;
 }
 
+#ifdef FEATURE_WLAN_ESE
 bool
 cm_ese_open_present(struct wlan_objmgr_vdev *vdev,
 		    struct wlan_mlme_psoc_ext_obj *mlme_obj,
@@ -4274,7 +4268,6 @@ bool
 cm_is_ese_connection(struct wlan_objmgr_vdev *vdev, bool ese_version_present)
 {
 	int32_t akm;
-	int32_t auth_mode;
 	struct wlan_mlme_psoc_ext_obj *mlme_obj;
 	struct wlan_objmgr_psoc *psoc;
 
@@ -4293,13 +4286,11 @@ cm_is_ese_connection(struct wlan_objmgr_vdev *vdev, bool ese_version_present)
 	akm = wlan_crypto_get_param(vdev,
 				    WLAN_CRYPTO_PARAM_KEY_MGMT);
 
-	auth_mode = wlan_crypto_get_param(vdev,
-					  WLAN_CRYPTO_PARAM_AUTH_MODE);
-
 	if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_CCKM))
 		return true;
 
-	/* A profile can not be both ESE and 11R. But an 802.11R AP
+	/*
+	 * A profile can not be both ESE and 11R. But an 802.11R AP
 	 * may be advertising support for ESE as well. So if we are
 	 * associating Open or explicitly ESE then we will get ESE.
 	 * If we are associating explicitly 11R only then we will get

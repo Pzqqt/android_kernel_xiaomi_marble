@@ -226,7 +226,6 @@ void lim_perform_ft_pre_auth(struct mac_context *mac, QDF_STATUS status,
 			     uint32_t *data, struct pe_session *pe_session)
 {
 	tSirMacAuthFrameBody authFrame;
-	int32_t ucast_cipher;
 	bool is_open = false;
 
 	if (!pe_session) {
@@ -234,11 +233,7 @@ void lim_perform_ft_pre_auth(struct mac_context *mac, QDF_STATUS status,
 		return;
 	}
 
-	ucast_cipher = wlan_crypto_get_param(pe_session->vdev,
-					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
-	if (!ucast_cipher ||
-	    ((QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_NONE) ==
-	      ucast_cipher)))
+	if (cm_is_open_mode(pe_session->vdev))
 		is_open = true;
 
 	if (pe_session->is11Rconnection &&
