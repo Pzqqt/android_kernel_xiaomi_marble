@@ -161,6 +161,7 @@ rmnet_map_control_command_header*DATARMNETb87c07b92a;struct DATARMNETb0eda9d28e*
 DATARMNETcd32395e82;struct rmnet_map_header*DATARMNETf937c77d8f;
 DATARMNET543491eb0f=alloc_skb((0xeb7+1158-0x132d),GFP_ATOMIC);if(!
 DATARMNET543491eb0f)goto DATARMNETaabe3a05f8;skb_put(DATARMNET543491eb0f,
+(0xeb7+1158-0x132d));memset(DATARMNET543491eb0f->data,(0xd2d+202-0xdf7),
 (0xeb7+1158-0x132d));DATARMNETf937c77d8f=(struct rmnet_map_header*)
 DATARMNET543491eb0f->data;DATARMNETf937c77d8f->cd_bit=(0xd26+209-0xdf6);
 DATARMNETf937c77d8f->pkt_len=htons(DATARMNETfc6d4bac8a);DATARMNETb87c07b92a=(
