@@ -338,4 +338,11 @@ enum qca_wlan_802_11_mode hdd_convert_dot11mode_from_phymode(int phymode);
  */
 void hdd_stop_sap_due_to_invalid_channel(struct work_struct *work);
 
+/**
+ * hdd_is_any_sta_connecting() - check if any sta is connecting
+ * @hdd_ctx: hdd context
+ *
+ * Return: true if any sta is connecting
+ */
+bool hdd_is_any_sta_connecting(struct hdd_context *hdd_ctx);
 #endif /* end #if !defined(WLAN_HDD_HOSTAPD_H) */

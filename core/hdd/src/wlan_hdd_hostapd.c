@@ -2974,13 +2974,7 @@ static int hdd_softap_unpack_ie(mac_handle_t mac_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * hdd_is_any_sta_connecting() - check if any sta is connecting
- * @hdd_ctx: hdd context
- *
- * Return: true if any sta is connecting
- */
-static bool hdd_is_any_sta_connecting(struct hdd_context *hdd_ctx)
+bool hdd_is_any_sta_connecting(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter = NULL, *next_adapter = NULL;
 	struct hdd_station_ctx *sta_ctx;
