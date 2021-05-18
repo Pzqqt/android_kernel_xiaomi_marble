@@ -5752,7 +5752,10 @@ static bool wlan_fill_survey_result(struct survey_info *survey, int opfreq,
 
 	survey->channel = channels;
 	survey->noise = chan_info->noise_floor;
-	survey->filled = SURVEY_INFO_NOISE_DBM;
+	survey->filled = 0;
+
+	if (chan_info->noise_floor)
+		survey->filled |= SURVEY_INFO_NOISE_DBM;
 
 	if (opfreq == chan_info->freq)
 		survey->filled |= SURVEY_INFO_IN_USE;
@@ -5783,7 +5786,10 @@ static bool wlan_fill_survey_result(struct survey_info *survey, int opfreq,
 
 	survey->channel = channels;
 	survey->noise = chan_info->noise_floor;
-	survey->filled = SURVEY_INFO_NOISE_DBM;
+	survey->filled = 0;
+
+	if (chan_info->noise_floor)
+		survey->filled |= SURVEY_INFO_NOISE_DBM;
 
 	if (opfreq == chan_info->freq)
 		survey->filled |= SURVEY_INFO_IN_USE;
