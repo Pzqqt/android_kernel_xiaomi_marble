@@ -474,6 +474,11 @@ QDF_STATUS ucfg_dfs_get_rcac_enable(struct wlan_objmgr_pdev *pdev,
 {
 	struct wlan_dfs *dfs;
 
+	if (!tgt_dfs_is_pdev_5ghz(pdev)) {
+		*rcac_en = false;
+		return QDF_STATUS_SUCCESS;
+	}
+
 	dfs = wlan_pdev_get_dfs_obj(pdev);
 	if (!dfs) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "null dfs");
