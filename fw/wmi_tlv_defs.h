@@ -1153,6 +1153,9 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_pdev_extd_stats,
     WMITLV_TAG_STRUC_wmi_peer_assoc_mlo_params,
     WMITLV_TAG_STRUC_wmi_vdev_smart_monitor_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_mgmt_rx_reo_params,
+    WMITLV_TAG_STRUC_wmi_mgmt_rx_fw_consumed_hdr,
+    WMITLV_TAG_STRUC_wmi_mgmt_rx_reo_filter_configuration_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1615,6 +1618,7 @@ typedef enum {
     OP(WMI_MLO_READY_CMDID) \
     OP(WMI_MLO_TEARDOWN_CMDID) \
     OP(WMI_VDEV_IGMP_OFFLOAD_CMDID) \
+    OP(WMI_MGMT_RX_REO_FILTER_CONFIGURATION_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1881,6 +1885,7 @@ typedef enum {
     OP(WMI_MLO_SETUP_COMPLETE_EVENTID) \
     OP(WMI_MLO_TEARDOWN_COMPLETE_EVENTID) \
     OP(WMI_VDEV_SMART_MONITOR_EVENTID) \
+    OP(WMI_MGMT_RX_FW_CONSUMED_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -4658,6 +4663,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MLO_TEARDOWN_CMDID);
     WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_FIXED_STRUC, WMI_IPV4_ADDR, mc_ipv4_list, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_IGMP_OFFLOAD_CMDID);
 
+/* WMI CMD to receive the management filter criteria from the host for Rx REO */
+#define WMITLV_TABLE_WMI_MGMT_RX_REO_FILTER_CONFIGURATION_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mgmt_rx_reo_filter_configuration_cmd_fixed_param, wmi_mgmt_rx_reo_filter_configuration_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_MGMT_RX_REO_FILTER_CONFIGURATION_CMDID);
+
 
 /************************** TLV definitions of WMI events *******************************/
 
@@ -4900,8 +4910,14 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PEER_STA_KICKOUT_EVENTID);
 #define WMITLV_TABLE_WMI_MGMT_RX_EVENTID(id,op,buf,len)                                                                                                 \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mgmt_rx_hdr, wmi_mgmt_rx_hdr, hdr, WMITLV_SIZE_FIX)   \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, bufp, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_rssi_ctl_ext, rssi_ctl_ext, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_rssi_ctl_ext, rssi_ctl_ext, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mgmt_rx_reo_params, wmi_mgmt_rx_reo_params, reo_params, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_MGMT_RX_EVENTID);
+
+/* Management Rx FW Consumed Event */
+#define WMITLV_TABLE_WMI_MGMT_RX_FW_CONSUMED_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mgmt_rx_fw_consumed_hdr, wmi_mgmt_rx_fw_consumed_hdr, hdr, WMITLV_SIZE_FIX)
+    WMITLV_CREATE_PARAM_STRUC(WMI_MGMT_RX_FW_CONSUMED_EVENTID);
 
 /* TBTT offset Event */
 #define WMITLV_TABLE_WMI_TBTTOFFSET_UPDATE_EVENTID(id,op,buf,len)                                                         \

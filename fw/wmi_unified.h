@@ -678,6 +678,8 @@ typedef enum {
     WMI_FD_TMPL_CMDID,
     /** Transmit QoS null Frame over wmi interface */
     WMI_QOS_NULL_FRAME_TX_SEND_CMDID,
+    /** WMI CMD to receive the management filter criteria from the host for RX REO */
+    WMI_MGMT_RX_REO_FILTER_CONFIGURATION_CMDID,
 
     /** commands to directly control ba negotiation directly from host. only used in test mode */
 
@@ -1685,6 +1687,9 @@ typedef enum {
 
     /** Event for QoS null frame TX completion  */
     WMI_QOS_NULL_FRAME_TX_COMPLETION_EVENTID,
+
+    /** WMI event for Firmware Consumed/Dropped Rx management frames indication */
+    WMI_MGMT_RX_FW_CONSUMED_EVENTID,
 
 
     /* ADDBA Related WMI Events*/
@@ -5058,6 +5063,79 @@ typedef struct {
 
 #define MAX_ANTENNA_EIGHT 8
 
+
+/** Helper macro for params GET/SET of MGMT_RX_FW_CONSUMED_EVENTID */
+#define WMI_MGMT_RX_FW_CONSUMED_PARAM_PEER_ID_GET(peer_info_subtype) WMI_GET_BITS(peer_info_subtype, 0, 16)
+#define WMI_MGMT_RX_FW_CONSUMED_PARAM_PEER_ID_SET(peer_info_subtype, value) WMI_SET_BITS(peer_info_subtype, 0, 16, value)
+
+#define WMI_MGMT_RX_FW_CONSUMED_PARAM_IEEE_LINK_ID_GET(peer_info_subtype) WMI_GET_BITS(peer_info_subtype, 16, 3)
+#define WMI_MGMT_RX_FW_CONSUMED_PARAM_IEEE_LINK_ID_SET(peer_info_subtype, value) WMI_SET_BITS(peer_info_subtype, 16, 3, value)
+
+#define WMI_MGMT_RX_FW_CONSUMED_PARAM_SUBTYPE_GET(peer_info_subtype) WMI_GET_BITS(peer_info_subtype, 28, 4)
+#define WMI_MGMT_RX_FW_CONSUMED_PARAM_SUBTYPE_SET(peer_info_subtype, value) WMI_SET_BITS(peer_info_subtype, 28, 4, value)
+
+#define WMI_MGMT_RX_FW_CONSUMED_PARAM_MGMT_PKT_CTR_VALID_GET(mgmt_pkt_ctr_info) WMI_GET_BITS(mgmt_pkt_ctr_info, 15, 1)
+#define WMI_MGMT_RX_FW_CONSUMED_PARAM_MGMT_PKT_CTR_VALID_SET(mgmt_pkt_ctr_info, value) WMI_SET_BITS(mgmt_pkt_ctr_info, 15, 1, value)
+
+#define WMI_MGMT_RX_FW_CONSUMED_PARAM_MGMT_PKT_CTR_GET(mgmt_pkt_ctr_info) WMI_GET_BITS(mgmt_pkt_ctr_info, 16, 16)
+#define WMI_MGMT_RX_FW_CONSUMED_PARAM_MGMT_PKT_CTR_SET(mgmt_pkt_ctr_info, value) WMI_SET_BITS(mgmt_pkt_ctr_info, 16, 16, value)
+
+typedef struct {
+    A_UINT32 tlv_header; /* WMITLV_TAG_STRUCT_wmi_mgmt_rx_fw_consumed_hdr */
+    A_UINT32 rx_tsf_l32; /* h/w assigned timestamp of the rx frame in micro sec */
+    A_UINT32 rx_tsf_u32 ;/* h/w assigned timestamp of the rx frame in micro sec */
+    A_UINT32 pdev_id; /* pdev_id for identifying the MAC the rx mgmt frame was received by */
+    /**
+     * peer_info_subtype
+     *
+     * [15:0]:  ml_peer_id, ML peer_id unique across chips
+     * [18:16]: ieee_link_id, protocol link id on which the rx frame is received
+     * [27:19]: reserved
+     * [31:28]: subtype, subtype of the received MGMT frame
+     */
+    A_UINT32 peer_info_subtype;
+    A_UINT32 chan_freq; /* frequency in MHz of the channel on which this frame was received */
+    /* Timestamp (in micro sec) of the last fw consumed/dropped mgmt. frame, same across chips */
+    A_UINT32 global_timestamp;
+    /**
+     * mgmt_pkt_ctr_info
+     *
+     * [14:0]:  reserved
+     * [15]:    mgmt_pkt_ctr_valid
+     * [31:16]: mgmt_pkt_ctr, Sequence number of the last fw consumed mgmt frame
+     */
+    A_UINT32 mgmt_pkt_ctr_info;
+} wmi_mgmt_rx_fw_consumed_hdr;
+
+/** Helper macro for param GET/SET of mgmt_rx_reo_params */
+#define WMI_MGMT_RX_REO_PARAM_IEEE_LINK_ID_GET(mgmt_pkt_ctr_link_info) WMI_GET_BITS(mgmt_pkt_ctr_link_info, 12, 3)
+#define WMI_MGMT_RX_REO_PARAM_IEEE_LINK_ID_SET(mgmt_pkt_ctr_link_info, value) WMI_SET_BITS(mgmt_pkt_ctr_link_info, 12, 3, value)
+
+#define WMI_MGMT_RX_REO_PARAM_MGMT_PKT_CTR_VALID_GET(mgmt_pkt_ctr_link_info) WMI_GET_BITS(mgmt_pkt_ctr_link_info, 15, 1)
+#define WMI_MGMT_RX_REO_PARAM_MGMT_PKT_CTR_VALID_SET(mgmt_pkt_ctr_link_info, value) WMI_SET_BITS(mgmt_pkt_ctr_link_info, 15, 1, value)
+
+#define WMI_MGMT_RX_REO_PARAM_MGMT_PKT_CTR_GET(mgmt_pkt_ctr_link_info) WMI_GET_BITS(mgmt_pkt_ctr_link_info, 16, 16)
+#define WMI_MGMT_RX_REO_PARAM_MGMT_PKT_CTR_SET(mgmt_pkt_ctr_link_info, value) WMI_SET_BITS(mgmt_pkt_ctr_link_info, 16, 16, value)
+
+/** Data structure of the TLV to add in RX EVENTID for providing REO params
+ *  like global_timestamp and mgmt_pkt_ctr
+ */
+typedef struct {
+    A_UINT32 tlv_header; /*TLV WMITLV_TAG_STRUC_wmi_mgmt_rx_reo_params*/
+    /* Timestamp (in micro sec) of the last fw forwarded mgmt. frame, same across chips */
+    A_UINT32 global_timestamp;
+    /**
+     * mgmt_pkt_ctr_link_info
+     *
+     * [11:0]:  reserved
+     * [14:12]: ieee_link_id, protocol link id on which the rx frame is received
+     * [15]:    mgmt_pkt_ctr_valid
+     * [31:16]: mgmt_pkt_ctr, Sequence number of the last fw forwarded mgmt frame
+     */
+
+    A_UINT32 mgmt_pkt_ctr_link_info;
+} wmi_mgmt_rx_reo_params;
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mgmt_rx_hdr */
     /** channel on which this frame is received (channel number) */
@@ -5112,7 +5190,29 @@ typedef struct {
 /* This TLV is optionally followed by array of struct:
  *  wmi_rssi_ctl_ext rssi_ctl_ext;
  */
+/*
+ * This TLV is followed by struct:
+ * wmi_mgmt_rx_reo_params reo_params;// MGMT rx REO params
+ */
 } wmi_mgmt_rx_hdr;
+
+/* WMI CMD to receive the management filter criteria from the host */
+typedef struct {
+    A_UINT32 tlv_header; /* WMITLV_TAG_STRUC_wmi_mgmt_reo_filter_cmd_fixed_param */
+    A_UINT32 pdev_id; /* pdev_id for identifying the MAC */
+    /* filter:
+     * Each bit represents the possible combination of frame type (2 bits)
+     * and subtype (4 bits)
+     * There would be 64 such combinations as per the 802.11 standard
+     * For Exp : We have beacon frame, we will take the type and subtype
+     *           of this frame and concatenate the bits, it will give 6 bits
+     *           number. We need to go to that bit position in the below
+     *           2 filter_low and filter_high bitmap and set the bit.
+     */
+    A_UINT32 filter_low;
+    A_UINT32 filter_high;
+} wmi_mgmt_rx_reo_filter_configuration_cmd_fixed_param;
+
 
 typedef enum {
     PKT_CAPTURE_MODE_DISABLE = 0,
@@ -28602,6 +28702,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_MLO_READY_CMDID);
         WMI_RETURN_STRING(WMI_MLO_TEARDOWN_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_IGMP_OFFLOAD_CMDID);
+        WMI_RETURN_STRING(WMI_MGMT_RX_REO_FILTER_CONFIGURATION_CMDID);
     }
 
     return "Invalid WMI cmd";
