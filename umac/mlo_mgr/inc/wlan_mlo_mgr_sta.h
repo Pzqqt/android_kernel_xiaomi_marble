@@ -57,7 +57,7 @@ mlo_sta_link_connect_notify(struct wlan_objmgr_vdev *vdev,
  *
  * @vdev: pointer to vdev
  * @source: source of the request (can be connect or disconnect request)
- * @reason: reason for disconnect
+ * @reason_code: reason for disconnect
  * @bssid: BSSID
  *
  * Return: QDF_STATUS
@@ -68,13 +68,30 @@ QDF_STATUS mlo_disconnect(struct wlan_objmgr_vdev *vdev,
 			  struct qdf_mac_addr *bssid);
 
 /**
+ * mlo_sync_disconnect - Start the sync disconnection process
+ *
+ * @vdev: pointer to vdev
+ * @source: source of the request (can be connect or disconnect request)
+ * @reason_code: reason for disconnect
+ * @bssid: BSSID
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlo_sync_disconnect(struct wlan_objmgr_vdev *vdev,
+			       enum wlan_cm_source source,
+			       enum wlan_reason_code reason_code,
+			       struct qdf_mac_addr *bssid);
+
+/**
  * mlo_sta_link_disconn_notify - Notifies that STA link disconnect completion
  *
  * @vdev: pointer to vdev
+ * @resp: disconnect resp
  *
  * Return: none
  */
-void mlo_sta_link_disconn_notify(struct wlan_objmgr_vdev *vdev);
+void mlo_sta_link_disconn_notify(struct wlan_objmgr_vdev *vdev,
+				 struct wlan_cm_discon_rsp *resp);
 
 /**
  * mlo_is_mld_sta - Check if MLD associated with the vdev is a station
@@ -115,6 +132,78 @@ bool ucfg_mlo_is_mld_disconnected(struct wlan_objmgr_vdev *vdev);
 struct wlan_objmgr_vdev *
 ucfg_mlo_get_assoc_link_vdev(struct wlan_objmgr_vdev *vdev);
 
+/*
+ * API to have operation on ml vdevs
+ */
+typedef void (*mlo_vdev_op_handler)(struct wlan_objmgr_vdev *vdev,
+				    void *arg);
+
+#ifndef WLAN_FEATURE_11BE_MLO_ADV_FEATURE
+/*
+ * mlo_iterate_connected_vdev_list: Iterate on connected ML links
+ *
+ * @vdev: vdev object
+ * @handler: the handler will be called for each object in ML list
+ * @arg: argumet to be passed to handler
+ *
+ * Return: none
+ */
+void mlo_iterate_connected_vdev_list(struct wlan_objmgr_vdev *vdev,
+				     mlo_vdev_op_handler handler,
+				     void *arg);
+
+/*
+ * mlo_update_connect_req_links: update connect req links index
+ *
+ * @vdev: vdev object
+ * @value: set/clear the bit
+ *
+ * Return: none
+ */
+void
+mlo_update_connect_req_links(struct wlan_objmgr_vdev *vdev, uint8_t value);
+
+/*
+ * mlo_clear_connect_req_links: clear connect req links bitmap
+ *
+ * @vdev: vdev object
+ *
+ * Return: none
+ */
+void mlo_clear_connect_req_links_bmap(struct wlan_objmgr_vdev *vdev);
+
+/*
+ * mlo_update_connected_links: update connected links index
+ *
+ * @vdev: vdev object
+ * @value: set/clear the bit
+ *
+ * Return: none
+ */
+void
+mlo_update_connected_links(struct wlan_objmgr_vdev *vdev, uint8_t value);
+
+/*
+ * mlo_clear_connected_links: clear connected links bitmap
+ *
+ * @vdev: vdev object
+ *
+ * Return: none
+ */
+void mlo_clear_connected_links_bmap(struct wlan_objmgr_vdev *vdev);
+
+/*
+ * mlo_get_ml_vdev_by_mac: get ml vdev from mac
+ *
+ * @vdev: vdev object
+ * @macaddr: mac of vdev to be returned
+ *
+ * Return: vdev object if found else NULL
+ */
+struct wlan_objmgr_vdev *
+mlo_get_ml_vdev_by_mac(struct wlan_objmgr_vdev *vdev,
+		       struct qdf_mac_addr *macaddr);
+#endif
 #else
 static inline
 QDF_STATUS mlo_connect(struct wlan_objmgr_vdev *vdev,
@@ -140,6 +229,16 @@ QDF_STATUS mlo_disconnect(struct wlan_objmgr_vdev *vdev,
 				    reason_code,
 				    bssid);
 	return status;
+}
+
+static inline
+QDF_STATUS mlo_sync_disconnect(struct wlan_objmgr_vdev *vdev,
+			       enum wlan_cm_source source,
+			       enum wlan_reason_code reason_code,
+			       struct qdf_mac_addr *bssid)
+{
+	return wlan_cm_disconnect_sync(vdev, CM_OSIF_DISCONNECT,
+				       reason_code);
 }
 
 static inline
@@ -170,6 +269,29 @@ bool mlo_is_mld_sta(struct wlan_objmgr_vdev *vdev)
 static inline
 struct wlan_objmgr_vdev *
 ucfg_mlo_get_assoc_link_vdev(struct wlan_objmgr_vdev *vdev)
+{
+	return vdev;
+}
+
+static inline void
+mlo_update_connect_req_links(struct wlan_objmgr_vdev *vdev, uint8_t value)
+{ }
+
+static inline void
+mlo_update_connected_links(struct wlan_objmgr_vdev *vdev, uint8_t value)
+{ }
+
+static inline void
+mlo_clear_connect_req_links_bmap(struct wlan_objmgr_vdev *vdev)
+{ }
+
+static inline void
+mlo_clear_connected_links_bmap(struct wlan_objmgr_vdev *vdev)
+{ }
+
+static inline struct wlan_objmgr_vdev *
+mlo_get_ml_vdev_by_mac(struct wlan_objmgr_vdev *vdev,
+		       struct qdf_mac_addr *macaddr)
 {
 	return vdev;
 }
