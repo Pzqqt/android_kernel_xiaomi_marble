@@ -49,6 +49,20 @@ struct tasklet_work {
 
 
 /**
+ * ce_tasklet_schedule() - schedule CE tasklet
+ * @tasklet_entry: ce tasklet entry
+ *
+ * Return: None
+ */
+static inline void ce_tasklet_schedule(struct ce_tasklet_entry *tasklet_entry)
+{
+	if (tasklet_entry->hi_tasklet_ce)
+		tasklet_hi_schedule(&tasklet_entry->intr_tq);
+	else
+		tasklet_schedule(&tasklet_entry->intr_tq);
+}
+
+/**
  * reschedule_ce_tasklet_work_handler() - reschedule work
  * @work: struct work_struct
  *
@@ -75,7 +89,7 @@ static void reschedule_ce_tasklet_work_handler(struct work_struct *work)
 		return;
 	}
 	if (hif_ce_state->tasklets[ce_work->id].inited)
-		tasklet_schedule(&hif_ce_state->tasklets[ce_work->id].intr_tq);
+		ce_tasklet_schedule(&hif_ce_state->tasklets[ce_work->id]);
 }
 
 static struct tasklet_work tasklet_workers[CE_ID_MAX];
@@ -120,17 +134,6 @@ void deinit_tasklet_workers(struct hif_opaque_softc *scn)
 
 	for (id = 0; id < CE_ID_MAX; id++)
 		qdf_cancel_work(&tasklet_workers[id].reg_work);
-}
-
-/**
- * ce_schedule_tasklet() - schedule ce tasklet
- * @tasklet_entry: struct ce_tasklet_entry
- *
- * Return: N/A
- */
-static inline void ce_schedule_tasklet(struct ce_tasklet_entry *tasklet_entry)
-{
-	tasklet_schedule(&tasklet_entry->intr_tq);
 }
 
 #ifdef CE_TASKLET_DEBUG_ENABLE
@@ -421,7 +424,7 @@ static void ce_tasklet(unsigned long data)
 			return;
 		}
 
-		ce_schedule_tasklet(tasklet_entry);
+		ce_tasklet_schedule(tasklet_entry);
 		hif_latency_detect_tasklet_sched(scn, tasklet_entry);
 		return;
 	}
@@ -448,12 +451,20 @@ static void ce_tasklet(unsigned long data)
 void ce_tasklet_init(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 {
 	int i;
+	struct CE_attr *attr;
 
 	for (i = 0; i < CE_COUNT_MAX; i++) {
 		if (mask & (1 << i)) {
 			hif_ce_state->tasklets[i].ce_id = i;
 			hif_ce_state->tasklets[i].inited = true;
 			hif_ce_state->tasklets[i].hif_ce_state = hif_ce_state;
+
+			attr = &hif_ce_state->host_ce_config[i];
+			if (attr->flags & CE_ATTR_HI_TASKLET)
+				hif_ce_state->tasklets[i].hi_tasklet_ce = true;
+			else
+				hif_ce_state->tasklets[i].hi_tasklet_ce = false;
+
 			tasklet_init(&hif_ce_state->tasklets[i].intr_tq,
 				ce_tasklet,
 				(unsigned long)&hif_ce_state->tasklets[i]);
@@ -649,7 +660,7 @@ static inline bool hif_tasklet_schedule(struct hif_opaque_softc *hif_ctx,
 	 * in whunt, tasklet may run before finished hif_tasklet_schedule.
 	 */
 	hif_latency_detect_tasklet_sched(scn, tasklet_entry);
-	tasklet_schedule(&tasklet_entry->intr_tq);
+	ce_tasklet_schedule(tasklet_entry);
 
 	if (scn->ce_latency_stats)
 		hif_record_tasklet_sched_entry_ts(scn, tasklet_entry->ce_id);
