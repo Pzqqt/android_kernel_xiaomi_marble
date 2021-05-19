@@ -29723,6 +29723,7 @@ typedef enum _WMI_ADD_TWT_STATUS_T {
     WMI_ADD_TWT_STATUS_ROAM_IN_PROGRESS,    /* Roaming in progress */
     WMI_ADD_TWT_STATUS_CHAN_SW_IN_PROGRESS, /* Channel switch in progress */
     WMI_ADD_TWT_STATUS_SCAN_IN_PROGRESS,    /* Scan in progress */
+    WMI_ADD_TWT_STATUS_DIALOG_ID_BUSY,      /* FW is in the process of handling this dialog */
 } WMI_ADD_TWT_STATUS_T;
 
 typedef struct {
