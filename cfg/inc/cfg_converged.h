@@ -28,6 +28,7 @@
 #include "cfg_dp.h"
 #include "cfg_hif.h"
 #include <cfg_extscan.h>
+#include <include/cfg_cmn_mlme.h>
 #ifdef WLAN_SUPPORT_GREEN_AP
 #include "cfg_green_ap_params.h"
 #else
@@ -60,7 +61,8 @@
 		CFG_DCS_ALL \
 		CFG_CFR_ALL \
 		CFG_MLME_SCORE_ALL \
-		CFG_WLAN_CM_UTF_PARAM
+		CFG_WLAN_CM_UTF_PARAM \
+		CFG_CMN_MLME_ALL
 
 #endif /* __CFG_CONVERGED_H */
 

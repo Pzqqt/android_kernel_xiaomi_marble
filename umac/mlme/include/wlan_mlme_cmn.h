@@ -743,4 +743,12 @@ typedef struct mlme_cm_ops *(*osif_cm_get_global_ops_cb)(void);
  */
 void mlme_set_osif_cm_cb(osif_cm_get_global_ops_cb cm_osif_ops);
 
+/**
+ * mlme_max_chan_switch_is_set() - Get if max chan switch IE is enabled
+ * @vdev: Object manager vdev pointer
+ *
+ * Return: True if max chan switch is enabled else false
+ */
+bool mlme_max_chan_switch_is_set(struct wlan_objmgr_vdev *vdev);
+
 #endif

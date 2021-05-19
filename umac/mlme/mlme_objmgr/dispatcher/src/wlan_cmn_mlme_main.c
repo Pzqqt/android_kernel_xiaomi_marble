@@ -26,6 +26,7 @@
 #include <wlan_psoc_mlme_main.h>
 #include <wlan_pdev_mlme_main.h>
 #include <wlan_vdev_mlme_main.h>
+#include <wlan_psoc_mlme_api.h>
 
 struct mlme_ext_ops *glbl_ops;
 mlme_get_global_ops_cb glbl_ops_cb;
@@ -553,4 +554,22 @@ void mlme_set_osif_cm_cb(osif_cm_get_global_ops_cb osif_cm_ops)
 void mlme_set_ops_register_cb(mlme_get_global_ops_cb ops_cb)
 {
 	glbl_ops_cb = ops_cb;
+}
+
+bool mlme_max_chan_switch_is_set(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_objmgr_psoc *psoc = wlan_vdev_get_psoc(vdev);
+	struct psoc_mlme_obj *mlme_psoc_obj;
+	struct psoc_phy_config *phy_config;
+
+	if (!psoc)
+		return false;
+
+	mlme_psoc_obj = wlan_psoc_mlme_get_cmpt_obj(psoc);
+	if (!mlme_psoc_obj)
+		return false;
+
+	phy_config = &mlme_psoc_obj->psoc_cfg.phy_config;
+
+	return phy_config->max_chan_switch_ie;
 }

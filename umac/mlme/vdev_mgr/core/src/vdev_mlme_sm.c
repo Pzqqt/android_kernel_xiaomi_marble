@@ -24,6 +24,7 @@
 #include "include/wlan_vdev_mlme.h"
 #include "vdev_mlme_sm.h"
 #include <wlan_utility.h>
+#include <include/wlan_mlme_cmn.h>
 
 /**
  * mlme_vdev_set_state() - set mlme state
@@ -1357,8 +1358,9 @@ static bool mlme_vdev_subst_suspend_csa_restart_event(void *ctx,
 		status = true;
 		break;
 	case WLAN_VDEV_SM_EV_CSA_COMPLETE:
-		if (mlme_vdev_is_newchan_no_cac(vdev_mlme) ==
-						QDF_STATUS_SUCCESS) {
+		if ((mlme_vdev_is_newchan_no_cac(vdev_mlme) ==
+		    QDF_STATUS_SUCCESS) ||
+		    mlme_max_chan_switch_is_set(vdev_mlme->vdev)) {
 			mlme_vdev_sm_transition_to(vdev_mlme,
 						   WLAN_VDEV_S_START);
 			mlme_vdev_sm_deliver_event(vdev_mlme,
