@@ -333,6 +333,8 @@ static int dsi_ctrl_debugfs_init(struct dsi_ctrl *dsi_ctrl,
 
 	dsi_ctrl->debugfs_root = dir;
 
+	return rc;
+
 error_remove_dir:
 	debugfs_remove(dir);
 error:
@@ -341,7 +343,10 @@ error:
 
 static int dsi_ctrl_debugfs_deinit(struct dsi_ctrl *dsi_ctrl)
 {
-	debugfs_remove(dsi_ctrl->debugfs_root);
+	if (dsi_ctrl->debugfs_root) {
+		debugfs_remove(dsi_ctrl->debugfs_root);
+		dsi_ctrl->debugfs_root = NULL;
+	}
 	return 0;
 }
 #else

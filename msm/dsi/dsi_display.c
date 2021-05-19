@@ -2097,7 +2097,10 @@ error:
 
 static int dsi_display_debugfs_deinit(struct dsi_display *display)
 {
-	debugfs_remove_recursive(display->root);
+	if (display->root) {
+		debugfs_remove_recursive(display->root);
+		display->root = NULL;
+	}
 
 	return 0;
 }
