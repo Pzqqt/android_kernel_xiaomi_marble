@@ -35,6 +35,8 @@
 #define DEFAULT_PANEL_PREFILL_LINES	25
 #define HIGH_REFRESH_RATE_THRESHOLD_TIME_US	500
 #define MIN_PREFILL_LINES      40
+#define RSCC_MODE_THRESHOLD_TIME_US 40
+#define DCS_COMMAND_THRESHOLD_TIME_US 40
 
 static void dsi_dce_prepare_pps_header(char *buf, u32 pps_delay_ms)
 {
@@ -3961,11 +3963,22 @@ void dsi_panel_calc_dsi_transfer_time(struct dsi_host_common_cfg *config,
 
 	timing->min_dsi_clk_hz = min_bitclk_hz;
 
-	min_threshold_us = mult_frac(frame_time_us,
-			jitter_numer, (jitter_denom * 100));
+	/*
+	 * Apart from prefill line time, we need to take into account RSCC mode threshold time. In
+	 * cases where RSC is disabled, as jitter is no longer considered we need to make sure we
+	 * have enough time for DCS command transfer. As of now, the RSC threshold time and DCS
+	 * threshold time are configured to 40us.
+	 */
+	if (mode->priv_info->disable_rsc_solver) {
+		min_threshold_us = DCS_COMMAND_THRESHOLD_TIME_US;
+	} else {
+		min_threshold_us = mult_frac(frame_time_us, jitter_numer, (jitter_denom * 100));
+		min_threshold_us += RSCC_MODE_THRESHOLD_TIME_US;
+	}
+
 	/*
 	 * Increase the prefill_lines proportionately as recommended
-	 * 35lines for 60fps, 52 for 90fps, 70lines for 120fps.
+	 * 40lines for 60fps, 60 for 90fps, 120lines for 120fps, and so on.
 	 */
 	prefill_lines = mult_frac(MIN_PREFILL_LINES,
 			timing->refresh_rate, 60);
@@ -3973,11 +3986,7 @@ void dsi_panel_calc_dsi_transfer_time(struct dsi_host_common_cfg *config,
 	prefill_time_us = mult_frac(frame_time_us, prefill_lines,
 			(timing->v_active));
 
-	/*
-	 * Threshold is sum of panel jitter time, prefill line time
-	 * plus 64usec buffer time.
-	 */
-	min_threshold_us = min_threshold_us + 64 + prefill_time_us;
+	min_threshold_us = min_threshold_us + prefill_time_us;
 
 	DSI_DEBUG("min threshold time=%d\n", min_threshold_us);
 
@@ -3995,7 +4004,8 @@ void dsi_panel_calc_dsi_transfer_time(struct dsi_host_common_cfg *config,
 		timing->dsi_transfer_time_us =
 			mode->priv_info->mdp_transfer_time_us;
 	} else {
-		if (min_threshold_us > frame_threshold_us)
+		if ((min_threshold_us > frame_threshold_us) ||
+				(mode->priv_info->disable_rsc_solver))
 			frame_threshold_us = min_threshold_us;
 
 		timing->dsi_transfer_time_us = frame_time_us -
