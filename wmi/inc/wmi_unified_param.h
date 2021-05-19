@@ -5412,6 +5412,7 @@ struct wmi_host_fw_abi_ver {
  * @carrier_vow_optmization: configure vow-optimization for carrier-usecase
  * @is_sap_connected_d3wow_enabled: is sap d3wow with connected client supported
  * @is_go_connected_d3wow_enabled: is go d3wow with connected client supported
+ * @dynamic_pcie_gen_speed_change: is dynamic pcie gen speed change enabled
  */
 typedef struct {
 	uint32_t num_vdevs;
@@ -5521,6 +5522,7 @@ typedef struct {
 	uint32_t is_sap_connected_d3wow_enabled;
 	uint32_t is_go_connected_d3wow_enabled;
 	bool sae_eapol_offload;
+	bool dynamic_pcie_gen_speed_change;
 } target_resource_config;
 
 /**

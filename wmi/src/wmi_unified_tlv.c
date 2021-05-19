@@ -7571,6 +7571,11 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 		tgt_res_cfg->is_reg_cc_ext_event_supported);
 
 	wmi_set_nan_channel_support(resource_cfg);
+
+	wmi_info("Enable dynamic PCIe gen speed: %d",
+		 tgt_res_cfg->dynamic_pcie_gen_speed_change);
+
+	WMI_RSRC_CFG_FLAGS2_IS_DYNAMIC_PCIE_GEN_SPEED_SWITCH_ENABLED_SET(resource_cfg->flags2, tgt_res_cfg->dynamic_pcie_gen_speed_change);
 }
 
 /* copy_hw_mode_id_in_init_cmd() - Helper routine to copy hw_mode in init cmd
