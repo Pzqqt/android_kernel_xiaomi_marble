@@ -518,7 +518,6 @@ int msm_vidc_decide_work_mode_iris2(struct msm_vidc_inst* inst)
 	struct v4l2_format* inp_f;
 	u32 width, height;
 	bool res_ok = false;
-	bool lowlatency = false;
 
 	if (!inst || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -552,13 +551,10 @@ int msm_vidc_decide_work_mode_iris2(struct msm_vidc_inst* inst)
 		if (res_ok &&
 			(inst->capabilities->cap[LOWLATENCY_MODE].value)) {
 			work_mode = MSM_VIDC_STAGE_1;
-			/* For WORK_MODE_1, set Low Latency mode by default */
-			lowlatency = true;
 		}
 		if (inst->capabilities->cap[LOSSLESS].value) {
 			/*TODO Set 2 stage in case of ALL INTRA */
 			work_mode = MSM_VIDC_STAGE_2;
-			lowlatency = false;
 		}
 	}
 	else {
@@ -568,12 +564,8 @@ int msm_vidc_decide_work_mode_iris2(struct msm_vidc_inst* inst)
 
 exit:
 	i_vpr_h(inst, "Configuring work mode = %u low latency = %u",
-		work_mode, lowlatency);
+		work_mode, inst->capabilities->cap[LOWLATENCY_MODE].value);
 	msm_vidc_update_cap_value(inst, STAGE, work_mode, __func__);
-
-	/* TODO If Encode then Set Low Latency (Enable/Disable)
-	 * and Update internal cap struct
-	*/
 
 	return 0;
 }
