@@ -57,7 +57,7 @@ void venus_hfi_work_handler(struct work_struct *work);
 void venus_hfi_pm_work_handler(struct work_struct *work);
 irqreturn_t venus_hfi_isr(int irq, void *data);
 
-void __write_register(struct msm_vidc_core *core,
+int __write_register(struct msm_vidc_core *core,
 		u32 reg, u32 value);
 int __read_register(struct msm_vidc_core *core, u32 reg);
 int __iface_cmdq_write(struct msm_vidc_core *core,

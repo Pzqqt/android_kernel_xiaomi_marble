@@ -175,16 +175,21 @@ static void __dump_packet(u8 *packet, const char *function, void *qinfo)
 	}
 }
 
-static void __fatal_error(struct msm_vidc_core *core, bool fatal)
+static void __fatal_error(bool fatal)
 {
-	return;
-	fatal &= core->capabilities[HW_RESPONSE_TIMEOUT].value;
-	MSM_VIDC_ERROR(fatal);
+	WARN_ON(fatal);
 }
 
-static void __strict_check(struct msm_vidc_core *core)
+static int __strict_check(struct msm_vidc_core *core, const char *function)
 {
-	__fatal_error(core, !mutex_is_locked(&core->lock));
+	bool fatal = !mutex_is_locked(&core->lock);
+
+	__fatal_error(fatal);
+
+	if (fatal)
+		d_vpr_e("%s: strict check failed\n", function);
+
+	return fatal ? -EINVAL : 0;
 }
 
 bool __core_in_valid_state(struct msm_vidc_core *core)
@@ -202,11 +207,14 @@ static bool __valdiate_session(struct msm_vidc_core *core,
 {
 	bool valid = false;
 	struct msm_vidc_inst *temp;
+	int rc = 0;
 
 	if (!core || !inst)
 		return false;
 
-	__strict_check(core);
+	rc = __strict_check(core, __func__);
+	if (rc)
+		return false;
 
 	list_for_each_entry(temp, &core->instances, list) {
 		if (temp == inst) {
@@ -220,23 +228,25 @@ static bool __valdiate_session(struct msm_vidc_core *core,
 	return valid;
 }
 
-void __write_register(struct msm_vidc_core *core,
+int __write_register(struct msm_vidc_core *core,
 		u32 reg, u32 value)
 {
 	u32 hwiosymaddr = reg;
 	u8 *base_addr;
+	int rc = 0;
 
 	if (!core) {
 		d_vpr_e("%s: invalid params\n", __func__);
-		return;
+		return -EINVAL;
 	}
 
-	__strict_check(core);
+	rc = __strict_check(core, __func__);
+	if (rc)
+		return rc;
 
 	if (!core->power_enabled) {
 		d_vpr_e("HFI Write register failed : Power is OFF\n");
-		__fatal_error(core, true);
-		return;
+		return -EINVAL;
 	}
 
 	base_addr = core->register_base_addr;
@@ -249,6 +259,8 @@ void __write_register(struct msm_vidc_core *core,
 	 * Memory barrier to make sure value is written into the register.
 	 */
 	wmb();
+
+	return rc;
 }
 
 /*
@@ -256,24 +268,26 @@ void __write_register(struct msm_vidc_core *core,
  * only bits 0 & 4 will be updated with corresponding bits from value. To update
  * entire register with value, set mask = 0xFFFFFFFF.
  */
-void __write_register_masked(struct msm_vidc_core *core,
+static int __write_register_masked(struct msm_vidc_core *core,
 		u32 reg, u32 value, u32 mask)
 {
 	u32 prev_val, new_val;
 	u8 *base_addr;
+	int rc = 0;
 
 	if (!core) {
 		d_vpr_e("%s: invalid params\n", __func__);
-		return;
+		return -EINVAL;
 	}
 
-	__strict_check(core);
+	rc = __strict_check(core, __func__);
+	if (rc)
+		return rc;
 
 	if (!core->power_enabled) {
 		d_vpr_e("%s: register write failed, power is off\n",
 			__func__);
-		__fatal_error(core, true);
-		return;
+		return -EINVAL;
 	}
 
 	base_addr = core->register_base_addr;
@@ -294,6 +308,8 @@ void __write_register_masked(struct msm_vidc_core *core,
 	 * Memory barrier to make sure value is written into the register.
 	 */
 	wmb();
+
+	return rc;
 }
 
 int __read_register(struct msm_vidc_core *core, u32 reg)
@@ -306,11 +322,8 @@ int __read_register(struct msm_vidc_core *core, u32 reg)
 		return -EINVAL;
 	}
 
-	__strict_check(core);
-
 	if (!core->power_enabled) {
 		d_vpr_e("HFI Read register failed : Power is OFF\n");
-		__fatal_error(core, true);
 		return -EINVAL;
 	}
 
@@ -401,7 +414,7 @@ static int __acquire_regulator(struct msm_vidc_core *core,
 		if (!regulator_is_enabled(rinfo->regulator)) {
 			d_vpr_e("%s: Regulator is not enabled %s\n",
 				__func__, rinfo->name);
-			__fatal_error(core, true);
+			__fatal_error(true);
 		}
 	}
 
@@ -436,7 +449,7 @@ static int __hand_off_regulator(struct msm_vidc_core *core,
 		if (!regulator_is_enabled(rinfo->regulator)) {
 			d_vpr_e("%s: Regulator is not enabled %s\n",
 				__func__, rinfo->name);
-			__fatal_error(core, true);
+			__fatal_error(true);
 		}
 	}
 
@@ -467,22 +480,26 @@ err_reg_handoff_failed:
 	return rc;
 }
 
-static void __set_registers(struct msm_vidc_core *core)
+static int __set_registers(struct msm_vidc_core *core)
 {
 	struct reg_set *reg_set;
-	int i;
+	int i, rc = 0;
 
 	if (!core || !core->dt) {
 		d_vpr_e("core resources null, cannot set registers\n");
-		return;
+		return -EINVAL;
 	}
 
 	reg_set = &core->dt->reg_set;
 	for (i = 0; i < reg_set->count; i++) {
-		__write_register_masked(core, reg_set->reg_tbl[i].reg,
+		rc = __write_register_masked(core, reg_set->reg_tbl[i].reg,
 				reg_set->reg_tbl[i].value,
 				reg_set->reg_tbl[i].mask);
+		if (rc)
+			return rc;
 	}
+
+	return rc;
 }
 
 static int __vote_bandwidth(struct bus_info *bus,
@@ -864,7 +881,7 @@ static int __iface_cmdq_write_relaxed(struct msm_vidc_core *core,
 {
 	struct msm_vidc_iface_q_info *q_info;
 	//struct vidc_hal_cmd_pkt_hdr *cmd_packet;
-	int result = -E2BIG;
+	int rc = -E2BIG;
 
 	if (!core || !pkt) {
 		d_vpr_e("%s: invalid params %pK %pK\n",
@@ -872,11 +889,13 @@ static int __iface_cmdq_write_relaxed(struct msm_vidc_core *core,
 		return -EINVAL;
 	}
 
-	__strict_check(core);
+	rc = __strict_check(core, __func__);
+	if (rc)
+		return rc;
 
 	if (!__core_in_valid_state(core)) {
 		d_vpr_e("%s: fw not in init state\n", __func__);
-		result = -EINVAL;
+		rc = -EINVAL;
 		goto err_q_null;
 	}
 
@@ -891,7 +910,7 @@ static int __iface_cmdq_write_relaxed(struct msm_vidc_core *core,
 
 	if (!q_info->q_array.align_virtual_addr) {
 		d_vpr_e("cannot write to shared CMD Q's\n");
-		result = -ENODATA;
+		rc = -ENODATA;
 		goto err_q_null;
 	}
 
@@ -902,14 +921,14 @@ static int __iface_cmdq_write_relaxed(struct msm_vidc_core *core,
 
 	if (!__write_queue(q_info, (u8 *)pkt, requires_interrupt)) {
 		__schedule_power_collapse_work(core);
-		result = 0;
+		rc = 0;
 	} else {
 		d_vpr_e("__iface_cmdq_write: queue full\n");
 	}
 
 err_q_write:
 err_q_null:
-	return result;
+	return rc;
 }
 
 int __iface_cmdq_write(struct msm_vidc_core *core,
@@ -946,8 +965,6 @@ int __iface_msgq_read(struct msm_vidc_core *core, void *pkt)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-
-	__strict_check(core);
 
 	if (!__core_in_valid_state(core)) {
 		d_vpr_e("%s: fw not in init state\n", __func__);
@@ -988,8 +1005,6 @@ int __iface_dbgq_read(struct msm_vidc_core *core, void *pkt)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
-
-	__strict_check(core);
 
 	q_info = &core->iface_queues[VIDC_IFACEQ_DBGQ_IDX];
 	if (!q_info->q_array.align_virtual_addr) {
@@ -1840,7 +1855,7 @@ static int __disable_regulator(struct regulator_info *rinfo,
 disable_regulator_failed:
 
 	/* Bring attention to this issue */
-	__fatal_error(core, true);
+	__fatal_error(true);
 	return rc;
 }
 
@@ -2010,7 +2025,7 @@ static int __enable_subcaches(struct msm_vidc_core *core)
 		if (rc) {
 			d_vpr_e("Failed to activate %s: %d\n",
 				sinfo->name, rc);
-			__fatal_error(core, true);
+			__fatal_error(true);
 			goto err_activate_fail;
 		}
 		sinfo->isactive = true;
@@ -2209,6 +2224,10 @@ static int __suspend(struct msm_vidc_core *core)
 		return 0;
 	}
 
+	rc = __strict_check(core, __func__);
+	if (rc)
+		return rc;
+
 	d_vpr_h("Entering suspend\n");
 
 	rc = __tzbsp_set_video_state(TZBSP_VIDEO_STATE_SUSPEND);
@@ -2240,6 +2259,10 @@ static int __resume(struct msm_vidc_core *core)
 		d_vpr_e("%s: core not in valid state\n", __func__);
 		return -EINVAL;
 	}
+
+	rc = __strict_check(core, __func__);
+	if (rc)
+		return rc;
 
 	d_vpr_h("Resuming from power collapse\n");
 	rc = __venus_power_on(core);
@@ -2698,6 +2721,7 @@ void venus_hfi_work_handler(struct work_struct *work)
 	num_responses = __response_handler(core);
 
 err_no_work:
+
 	if (!call_venus_op(core, watchdog, core, core->intr_status))
 		enable_irq(core->dt->irq);
 }
@@ -2792,7 +2816,9 @@ int venus_hfi_core_init(struct msm_vidc_core *core)
 	}
 	d_vpr_h("%s(): core %pK\n", __func__, core);
 
-	__strict_check(core);
+	rc = __strict_check(core, __func__);
+	if (rc)
+		return rc;
 
 	core->handoff_done = 0;
 
@@ -2840,12 +2866,17 @@ error:
 
 int venus_hfi_core_deinit(struct msm_vidc_core *core)
 {
+	int rc = 0;
+
 	if (!core) {
 		d_vpr_h("%s(): invalid params\n", __func__);
 		return -EINVAL;
 	}
 	d_vpr_h("%s(): core %pK\n", __func__, core);
-	__strict_check(core);
+	rc = __strict_check(core, __func__);
+	if (rc)
+		return rc;
+
 	if (core->state == MSM_VIDC_CORE_DEINIT)
 		return 0;
 	__resume(core);
@@ -2917,6 +2948,7 @@ int venus_hfi_trigger_ssr(struct msm_vidc_core *core, u32 type,
 		return -EINVAL;
 	}
 
+	core_lock(core, __func__);
 	payload[0] = client_id << 4 | type;
 	payload[1] = addr;
 
@@ -2924,7 +2956,7 @@ int venus_hfi_trigger_ssr(struct msm_vidc_core *core, u32 type,
 			   0 /*session_id*/,
 			   core->header_id++);
 	if (rc)
-		goto err_ssr_pkt;
+		goto unlock;
 
 	/* HFI_CMD_SSR */
 	rc = hfi_create_packet(core->packet, core->packet_size,
@@ -2936,16 +2968,17 @@ int venus_hfi_trigger_ssr(struct msm_vidc_core *core, u32 type,
 				   core->packet_id++,
 				   &payload, sizeof(u64));
 	if (rc)
-		goto err_ssr_pkt;
+		goto unlock;
 
 	rc = __iface_cmdq_write(core, core->packet);
 	if (rc)
-		return rc;
+		goto unlock;
 
-	return 0;
+unlock:
+	core_unlock(core, __func__);
+	if (rc)
+		d_vpr_e("%s(): failed\n", __func__);
 
-err_ssr_pkt:
-	d_vpr_e("%s: create packet failed\n", __func__);
 	return rc;
 }
 
@@ -2987,7 +3020,7 @@ int venus_hfi_session_open(struct msm_vidc_inst *inst)
 
 unlock:
 	core_unlock(core, __func__);
-	return 0;
+	return rc;
 }
 
 int venus_hfi_session_set_codec(struct msm_vidc_inst *inst)
@@ -3087,11 +3120,12 @@ int venus_hfi_session_close(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 	core = inst->core;
+	core_lock(core, __func__);
 
-	__strict_check(core);
-
-	if (!__valdiate_session(core, inst, __func__))
-		return -EINVAL;
+	if (!__valdiate_session(core, inst, __func__)) {
+		rc = -EINVAL;
+		goto unlock;
+	}
 
 	rc = hfi_packet_session_command(inst,
 				HFI_CMD_CLOSE,
@@ -3103,9 +3137,15 @@ int venus_hfi_session_close(struct msm_vidc_inst *inst)
 				HFI_PAYLOAD_NONE,
 				NULL,
 				0);
-	if (!rc)
-		rc = __iface_cmdq_write(inst->core, inst->packet);
+	if (rc)
+		goto unlock;
 
+	rc = __iface_cmdq_write(inst->core, inst->packet);
+	if (rc)
+		goto unlock;
+
+unlock:
+	core_unlock(core, __func__);
 	return rc;
 }
 

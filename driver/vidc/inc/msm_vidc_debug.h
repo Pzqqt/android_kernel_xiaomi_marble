@@ -115,11 +115,6 @@ enum vidc_msg_prio {
 		} \
 	} while (0)
 
-#define MSM_VIDC_ERROR(value)					\
-	do {	if (value)					\
-			d_vpr_e("BugOn");		\
-	} while (0)
-
 enum msm_vidc_debugfs_event {
 	MSM_VIDC_DEBUGFS_EVENT_ETB,
 	MSM_VIDC_DEBUGFS_EVENT_EBD,
