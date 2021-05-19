@@ -822,8 +822,9 @@ enum country_src {
  *      and therefore can't be created in the normal ways, use the
  *      %NL80211_CMD_START_P2P_DEVICE and %NL80211_CMD_STOP_P2P_DEVICE
  *      commands to create and destroy one
- * @NL80211_IF_TYPE_OCB: Outside Context of a BSS
+ * @IF_TYPE_OCB: Outside Context of a BSS
  *      This mode corresponds to the MIB variable dot11OCBActivated=true
+ * @IF_TYPE_NAN: NAN mode
  * @IFTYPE_MAX: highest interface type number currently defined
  * @NUM_IFTYPES: number of defined interface types
  *
@@ -844,6 +845,7 @@ enum iftype {
 	IFTYPE_P2P_GO,
 	IFTYPE_P2P_DEVICE,
 	IFTYPE_OCB,
+	IFTYPE_NAN,
 
 	/* keep last */
 	NUM_IFTYPES,
@@ -866,6 +868,7 @@ enum usable_channels_filter {
  * seg0_freq : seg0 freq
  * seg1_freq: seg1 freq
  * bw : bandwidth
+ * state: channel state
  * iface_mode_mask: interface mode mask
  **/
 struct get_usable_chan_res_params {
@@ -874,6 +877,7 @@ struct get_usable_chan_res_params {
 	uint32_t seg1_freq;
 	uint32_t bw;
 	uint32_t iface_mode_mask;
+	enum channel_state state;
 };
 
 /**
