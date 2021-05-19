@@ -31,6 +31,7 @@
 #include <wlan_ocb_tgt_api.h>
 #include <wlan_lmac_if_def.h>
 #include "wlan_ocb_main.h"
+#include "reg_services_public_struct.h"
 
 /**
  * wlan_ocb_get_tx_ops() - get target interface tx operations
@@ -258,7 +259,7 @@ QDF_STATUS ucfg_ocb_set_channel_config(struct wlan_objmgr_vdev *vdev,
 
 	for (i = 0; i < config->channel_count; i++) {
 		if (wlan_reg_freq_to_band(config->channels[i].chan_freq)
-				== BAND_2G)
+				== REG_BAND_2G)
 			config->channels[i].ch_mode = MODE_11G;
 		else
 			config->channels[i].ch_mode = MODE_11A;
