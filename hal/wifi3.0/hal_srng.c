@@ -1468,6 +1468,7 @@ void hal_get_meminfo(hal_soc_handle_t hal_soc_hdl, struct hal_mem_info *mem)
 	mem->shadow_wrptr_mem_paddr = (void *)hal->shadow_wrptr_mem_paddr;
 	hif_read_phy_mem_base((void *)hal->hif_handle,
 			      (qdf_dma_addr_t *)&mem->dev_base_paddr);
+	mem->lmac_srng_start_id = HAL_SRNG_LMAC1_ID_START;
 	return;
 }
 qdf_export_symbol(hal_get_meminfo);

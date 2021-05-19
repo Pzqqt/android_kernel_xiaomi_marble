@@ -951,6 +951,8 @@ struct hal_mem_info {
 	void *shadow_wrptr_mem_vaddr;
 	/* Shared physical memory for ring pointer updates from host to FW */
 	void *shadow_wrptr_mem_paddr;
+	/* lmac srng start id */
+	uint8_t lmac_srng_start_id;
 };
 
 /* SRNG parameters to be passed to hal_srng_setup */
