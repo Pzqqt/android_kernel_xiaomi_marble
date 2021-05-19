@@ -1066,6 +1066,8 @@ QDF_STATUS wlan_crypto_setkey(struct wlan_objmgr_vdev *vdev,
 	qdf_mem_copy(key->keyval, req_key->keydata, sizeof(key->keyval));
 	key->valid = 1;
 	if ((IS_MGMT_CIPHER(req_key->type))) {
+		uint32_t mgmt_cipher = 0;
+
 		if (HAS_CIPHER_CAP(crypto_params,
 					WLAN_CRYPTO_CAP_PMF_OFFLOAD) ||
 					is_bigtk(req_key->keyix)) {
@@ -1074,7 +1076,8 @@ QDF_STATUS wlan_crypto_setkey(struct wlan_objmgr_vdev *vdev,
 						key, macaddr, req_key->type);
 			}
 		}
-		wlan_crypto_set_mgmtcipher(crypto_params, req_key->type);
+		QDF_SET_PARAM(mgmt_cipher, req_key->type);
+		wlan_crypto_set_mgmtcipher(crypto_params, mgmt_cipher);
 		status = wlan_crypto_set_igtk_key(key);
 		return status;
 	} else if (IS_FILS_CIPHER(req_key->type)) {
