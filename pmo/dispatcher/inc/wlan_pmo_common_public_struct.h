@@ -416,6 +416,7 @@ struct pmo_psoc_cfg {
 	bool is_mod_dtim_on_sys_suspend_enabled;
 	bool is_bus_suspend_enabled_in_sap_mode;
 	bool is_bus_suspend_enabled_in_go_mode;
+	bool is_dynamic_pcie_gen_speed_change_enabled;
 #ifdef WLAN_ENABLE_GPIO_WAKEUP
 	bool enable_gpio_wakeup;
 	uint32_t gpio_wakeup_pin;
