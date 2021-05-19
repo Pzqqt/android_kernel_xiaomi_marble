@@ -1342,16 +1342,19 @@ static void get_htc_send_packets(HTC_TARGET *target,
 			}
 		}
 
+		ret = hif_system_pm_state_check(target->hif_dev);
+		if (ret) {
+			if (do_pm_get)
+				hif_pm_runtime_put(target->hif_dev, rtpm_dbgid);
+			break;
+		}
+
 		pPacket = htc_packet_dequeue(tx_queue);
 		if (!pPacket) {
 			if (do_pm_get)
 				hif_pm_runtime_put(target->hif_dev, rtpm_dbgid);
 			break;
 		}
-
-		ret = hif_system_pm_state_check(target->hif_dev);
-		if (ret)
-			break;
 
 		AR_DEBUG_PRINTF(ATH_DEBUG_SEND,
 				(" Got packet:%pK , New Queue Depth: %d\n",
