@@ -102,6 +102,9 @@
 #include "wlan_hdd_bootup_marker.h"
 #include "wlan_hdd_medium_assess.h"
 #include "wlan_hdd_scan.h"
+#ifdef WLAN_FEATURE_11BE_MLO
+#include <wlan_mlo_mgr_ap.h>
+#endif
 
 #define ACS_SCAN_EXPIRY_TIMEOUT_S 4
 
@@ -5198,6 +5201,69 @@ static void wlan_hdd_set_sap_mcc_chnl_avoid(struct hdd_context *hdd_ctx)
 }
 #endif
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * wlan_hdd_mlo_update() - handle mlo scenario for start bss
+ * @hdd_ctx: Pointer to hdd context
+ * @config: Pointer to sap config
+ * @adapter: Pointer to hostapd adapter
+ * @beacon: Pointer to beacon
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS wlan_hdd_mlo_update(struct hdd_context *hdd_ctx,
+				      struct sap_config *config,
+				      struct hdd_adapter *adapter,
+				      struct hdd_beacon_data *beacon)
+{
+	uint8_t link_id = 0;
+	uint8_t num_link = 0;
+
+	if (config->SapHw_mode == eCSR_DOT11_MODE_11be ||
+	    config->SapHw_mode == eCSR_DOT11_MODE_11be_ONLY) {
+		wlan_hdd_get_mlo_link_id(beacon, &link_id, &num_link);
+		hdd_debug("MLO SAP vdev id %d, link id %d total link %d",
+			  adapter->vdev_id, link_id, num_link);
+		if (!num_link)
+			return QDF_STATUS_E_INVAL;
+		if (!mlo_ap_vdev_attach(adapter->vdev, link_id, num_link))
+			return QDF_STATUS_E_INVAL;
+	}
+
+	if (!policy_mgr_is_mlo_sap_concurrency_allowed(
+		hdd_ctx->psoc, wlan_vdev_mlme_is_mlo_ap(adapter->vdev))) {
+		hdd_err("MLO SAP concurrency check fails");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wlan_hdd_mlo_reset() - reset mlo configuration if start bss fails
+ * @adapter: Pointer to hostapd adapter
+ *
+ * Return: void
+ */
+static void wlan_hdd_mlo_reset(struct hdd_adapter *adapter)
+{
+	if (wlan_vdev_mlme_is_mlo_ap(adapter->vdev))
+		mlo_ap_vdev_detach(adapter->vdev);
+}
+#else
+static QDF_STATUS wlan_hdd_mlo_update(struct hdd_context *hdd_ctx,
+				      struct sap_config *config,
+				      struct hdd_adapter *adapter,
+				      struct hdd_beacon_data *beacon)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static void wlan_hdd_mlo_reset(struct hdd_adapter *adapter)
+{
+}
+#endif
+
 /**
  * wlan_hdd_cfg80211_start_bss() - start bss
  * @adapter: Pointer to hostapd adapter
@@ -5729,6 +5795,11 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	if (!cds_is_sub_20_mhz_enabled())
 		wlan_hdd_set_sap_hwmode(adapter);
 
+	if (QDF_IS_STATUS_ERROR(wlan_hdd_mlo_update(hdd_ctx, config,
+						    adapter, beacon))) {
+		ret = -EINVAL;
+		goto error;
+	}
 	status = ucfg_mlme_get_vht_for_24ghz(hdd_ctx->psoc, &bval);
 	if (QDF_IS_STATUS_ERROR(qdf_status))
 		hdd_err("Failed to get vht_for_24ghz");
@@ -5944,6 +6015,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	goto free;
 
 error:
+	wlan_hdd_mlo_reset(adapter);
 	/* Revert the indoor to passive marking if START BSS fails */
 	if (indoor_chnl_marking && adapter->device_mode == QDF_SAP_MODE) {
 		hdd_update_indoor_channel(hdd_ctx, false);

@@ -80,6 +80,17 @@ void wlan_hdd_check_11be_support(struct hdd_beacon_data *beacon,
  */
 void hdd_update_wiphy_eht_cap(struct hdd_context *hdd_ctx,
 			      struct wma_tgt_cfg *cfg);
+
+/**
+ * wlan_hdd_get_mlo_link_id() - get link id and number of links
+ * @beacon: beacon IE buffer
+ * @link_id: link id to return
+ * @num_link: total links
+ *
+ * Return: None
+ */
+void wlan_hdd_get_mlo_link_id(struct hdd_beacon_data *beacon,
+			      uint8_t *link_id, uint8_t *num_link);
 #else
 static inline
 void hdd_update_tgt_eht_cap(struct hdd_context *hdd_ctx,

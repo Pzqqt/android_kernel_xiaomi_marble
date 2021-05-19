@@ -3681,4 +3681,29 @@ QDF_STATUS policy_mgr_check_mon_concurrency(struct wlan_objmgr_psoc *psoc);
  */
 void policy_mgr_get_hw_dbs_max_bw(struct wlan_objmgr_psoc *psoc,
 				  struct dbs_bw *bw_dbs);
+
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * policy_mgr_is_mlo_sap_concurrency_allowed() - Check for mlo sap allowed
+ *                                               concurrency combination
+ * @psoc: PSOC object information
+ * @is_new_vdev_mlo: Is new vdev a mlo device or not
+ *
+ * When a new connection is about to come up check if current
+ * concurrency combination including the new connection is
+ * allowed or not. Currently no concurrency support for mlo sap
+ *
+ * Return: True if concurrency is supported, otherwise false.
+ */
+bool policy_mgr_is_mlo_sap_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
+					       bool is_new_vdev_mlo);
+#else
+
+static inline bool policy_mgr_is_mlo_sap_concurrency_allowed(
+			struct wlan_objmgr_psoc *psoc,
+			bool is_new_vdev_mlo)
+{
+	return true;
+}
+#endif
 #endif /* __WLAN_POLICY_MGR_API_H */

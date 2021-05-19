@@ -4951,6 +4951,9 @@ struct he_capability {
 #define EHT_OP_OUI_TYPE "\xfe"
 #define EHT_OP_OUI_SIZE 1
 
+#define MLO_IE_OUI_TYPE "\x5e"
+#define MLO_IE_OUI_SIZE 1
+
 /**
  * struct eht_capability - to store 11be EHT capabilities
  * @phy_cap: EHT PHY capabilities
