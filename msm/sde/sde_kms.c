@@ -2954,9 +2954,10 @@ static int _sde_kms_update_planes_for_cont_splash(struct sde_kms *sde_kms,
 	struct sde_splash_mem *splash;
 	struct sde_splash_mem *demura;
 	struct sde_plane_state *pstate;
-	enum sde_sspp plane_id;
+	struct sde_sspp_index_info *pipe_info;
+	enum sde_sspp pipe_id;
 	bool is_virtual;
-	int i, j;
+	int i;
 
 	if (!sde_kms || !splash_display || !crtc) {
 		SDE_ERROR("invalid input args\n");
@@ -2964,18 +2965,17 @@ static int _sde_kms_update_planes_for_cont_splash(struct sde_kms *sde_kms,
 	}
 
 	priv = sde_kms->dev->dev_private;
+	pipe_info = &splash_display->pipe_info;
+	splash = splash_display->splash;
+	demura = splash_display->demura;
+
 	for (i = 0; i < priv->num_planes; i++) {
 		plane = priv->planes[i];
-		plane_id = sde_plane_pipe(plane);
+		pipe_id = sde_plane_pipe(plane);
 		is_virtual = is_sde_plane_virtual(plane);
-		splash = splash_display->splash;
-		demura = splash_display->demura;
 
-		for (j = 0; j < splash_display->pipe_cnt; j++) {
-			if ((plane_id != splash_display->pipes[j].sspp) ||
-					(splash_display->pipes[j].is_virtual
-					 != is_virtual))
-				continue;
+		if ((is_virtual && test_bit(pipe_id, pipe_info->virt_pipes)) ||
+				(!is_virtual && test_bit(pipe_id, pipe_info->pipes))) {
 
 			if (splash && sde_plane_validate_src_addr(plane,
 						splash->splash_buf_base,
@@ -2984,7 +2984,8 @@ static int _sde_kms_update_planes_for_cont_splash(struct sde_kms *sde_kms,
 						plane, demura->splash_buf_base,
 						demura->splash_buf_size)) {
 					SDE_ERROR("invalid adr on pipe:%d crtc:%d\n",
-							plane_id, DRMID(crtc));
+							pipe_id, DRMID(crtc));
+					continue;
 				}
 			}
 
@@ -2993,7 +2994,7 @@ static int _sde_kms_update_planes_for_cont_splash(struct sde_kms *sde_kms,
 			pstate = to_sde_plane_state(plane->state);
 			pstate->cont_splash_populated = true;
 			SDE_DEBUG("set crtc:%d for plane:%d rect:%d\n",
-					DRMID(crtc), plane_id, is_virtual);
+					DRMID(crtc), DRMID(plane), is_virtual);
 		}
 	}
 

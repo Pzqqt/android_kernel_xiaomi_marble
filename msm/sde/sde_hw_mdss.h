@@ -639,13 +639,18 @@ struct sde_splash_mem {
 };
 
 /**
- * struct sde_sspp_index_info - Struct containing sspp identifier info
- * @sspp:	Enum value indicates sspp id
- * @is_virtual: Boolean to identify if virtual or base
+ * struct sde_sspp_index_info - Struct informing which pipes are staged on
+ * particular display
+ * @pipes:      bitmap, bit index is true if rect_0 of that pipe is staged,
+ *              else is false
+ * @virt_pipes: bitmap, bit index is true if rect_1 of that pipe is staged,
+ *              else set to false
+ * @bordercolor: True if border color is enabled
  */
 struct sde_sspp_index_info {
-	enum sde_sspp sspp;
-	bool is_virtual;
+	DECLARE_BITMAP(pipes, SSPP_MAX);
+	DECLARE_BITMAP(virt_pipes, SSPP_MAX);
+	bool bordercolor;
 };
 
 /**
@@ -664,7 +669,6 @@ struct sde_sspp_index_info {
  * @lm_cnt:	Stores the active number of MDSS "LM" blks for the current mode
  * @dsc_cnt:	Stores the active number of MDSS "dsc" blks for the current mode
  * @vdc_cnt:	Stores the valid MDSS VDC block ids for the current mode
- * @pipe_cnt:	Stores the active number of "sspp" blks connected
  */
 struct sde_splash_display {
 	bool cont_splash_enabled;
@@ -675,12 +679,11 @@ struct sde_splash_display {
 	u8 lm_ids[MAX_DATA_PATH_PER_DSIPLAY];
 	u8 dsc_ids[MAX_DATA_PATH_PER_DSIPLAY];
 	u8 vdc_ids[MAX_DATA_PATH_PER_DSIPLAY];
-	struct sde_sspp_index_info pipes[SSPP_MAX];
+	struct sde_sspp_index_info pipe_info;
 	u8 ctl_cnt;
 	u8 lm_cnt;
 	u8 dsc_cnt;
 	u8 vdc_cnt;
-	u8 pipe_cnt;
 };
 
 enum sde_handoff_type {

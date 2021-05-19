@@ -2537,7 +2537,7 @@ static int _sde_plane_validate_shared_crtc(struct sde_plane *psde,
 {
 	struct sde_kms *sde_kms;
 	struct sde_splash_display *splash_display;
-	int i, j;
+	int i;
 
 	sde_kms = _sde_plane_get_kms(&psde->base);
 
@@ -2548,19 +2548,16 @@ static int _sde_plane_validate_shared_crtc(struct sde_plane *psde,
 		splash_display = &sde_kms->splash_data.splash_display[i];
 
 		if (splash_display && splash_display->cont_splash_enabled &&
-			splash_display->encoder &&
-			state->crtc != splash_display->encoder->crtc) {
+				splash_display->encoder &&
+				state->crtc != splash_display->encoder->crtc) {
+			struct sde_sspp_index_info *pipe_info = &splash_display->pipe_info;
 
-			for (j = 0; j < MAX_DATA_PATH_PER_DSIPLAY; j++) {
-
-				if (splash_display->pipes[j].sspp ==
-						psde->pipe) {
-					SDE_ERROR_PLANE(psde,
-					"pipe:%d used in cont-splash on crtc:%d\n",
-					psde->pipe,
-					splash_display->encoder->crtc->base.id);
-					return -EINVAL;
-				}
+			if (test_bit(psde->pipe, pipe_info->pipes)  ||
+					test_bit(psde->pipe, pipe_info->virt_pipes)) {
+				SDE_ERROR_PLANE(psde, "pipe:%d used in cont-splash on crtc:%d\n",
+						psde->pipe,
+						splash_display->encoder->crtc->base.id);
+				return -EINVAL;
 			}
 		}
 	}
