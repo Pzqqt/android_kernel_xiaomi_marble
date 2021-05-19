@@ -129,6 +129,23 @@ QDF_STATUS wlan_reg_get_secondary_current_chan_list(
 }
 #endif
 
+#if defined(CONFIG_AFC_SUPPORT) && defined(CONFIG_BAND_6GHZ)
+QDF_STATUS wlan_reg_get_6g_ap_master_chan_list(struct wlan_objmgr_pdev *pdev,
+					       enum reg_6g_ap_type ap_pwr_type,
+					       struct regulatory_channel *chan_list)
+{
+	return  reg_get_6g_ap_master_chan_list(pdev, ap_pwr_type, chan_list);
+}
+
+qdf_export_symbol(wlan_reg_get_6g_ap_master_chan_list);
+
+QDF_STATUS wlan_reg_get_6g_afc_chan_list(struct wlan_objmgr_pdev *pdev,
+					 struct regulatory_channel *chan_list)
+{
+	return reg_get_6g_afc_chan_list(pdev, chan_list);
+}
+#endif
+
 /**
  * wlan_reg_get_bw_value() - give bandwidth value
  * bw: bandwidth enum

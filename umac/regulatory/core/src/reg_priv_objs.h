@@ -188,6 +188,7 @@ struct wlan_regulatory_psoc_priv_obj {
  * @mas_chan_list_6g_ap: master channel list for 6G AP, includes all power types
  * @mas_chan_list_6g_client: master channel list for 6G client, includes
  *	all power types
+ * @afc_chan_list : afc chan list for 6Ghz
  * @band_capability: bitmap of bands enabled, using enum reg_wifi_band as the
  *	bit position value
  * @reg_6g_superid: 6Ghz super domain id
@@ -212,6 +213,7 @@ struct wlan_regulatory_pdev_priv_obj {
 	bool is_6g_channel_list_populated;
 	struct regulatory_channel mas_chan_list_6g_ap[REG_CURRENT_MAX_AP_TYPE][NUM_6GHZ_CHANNELS];
 	struct regulatory_channel mas_chan_list_6g_client[REG_CURRENT_MAX_AP_TYPE][REG_MAX_CLIENT_TYPE][NUM_6GHZ_CHANNELS];
+	struct regulatory_channel afc_chan_list[NUM_6GHZ_CHANNELS];
 #endif
 #ifdef DISABLE_CHANNEL_LIST
 	struct regulatory_channel cache_disable_chan_list[NUM_CHANNELS];
