@@ -527,6 +527,27 @@
 
 /*
  * <ini>
+ * enable_dynamic_pcie_gen_speed_switch - enable dynamic PCIe gen speed change
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable dynamic PCIe gen speed change
+ *
+ * 0: Dynamic PCIe gen speed change is not enabled
+ * 1: Dynamic PCIe gen speed change is enabled
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_DYNAMIC_PCIE_GEN_SPEED_SWITCH CFG_INI_BOOL( \
+		"enable_dynamic_pcie_gen_speed_switch", \
+		0, \
+		"This ini is used to enable dynamic PCIe gen speed change")
+
+/*
+ * <ini>
  * igmp_version_support - Configure igmp version
  * @Min: 0x00000000
  * @Max: 0x7
@@ -591,7 +612,8 @@
 	CFG(CFG_PMO_MOD_DTIM_ON_SYS_SUSPEND) \
 	CFG(CFG_ENABLE_BUS_SUSPEND_IN_SAP_MODE) \
 	CFG(CFG_ENABLE_BUS_SUSPEND_IN_GO_MODE)\
-	CFG(CFG_IGMP_VERSION_SUPPORT) \
-	CFG(CFG_DISCONNECT_SAP_TDLS_IN_WOW)
+	CFG(CFG_DISCONNECT_SAP_TDLS_IN_WOW) \
+	CFG(CFG_ENABLE_DYNAMIC_PCIE_GEN_SPEED_SWITCH) \
+	CFG(CFG_IGMP_VERSION_SUPPORT)
 
 #endif /* WLAN_PMO_COMMON_CFG_H__ */
