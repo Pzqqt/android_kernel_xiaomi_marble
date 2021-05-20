@@ -84,3 +84,22 @@ tgt_mgmt_rx_reo_fw_consumed_event_handler(struct wlan_objmgr_psoc *psoc,
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS tgt_mgmt_rx_reo_filter_config(struct wlan_objmgr_pdev *pdev,
+					 struct mgmt_rx_reo_filter *filter)
+{
+	struct wlan_lmac_if_mgmt_rx_reo_tx_ops *mgmt_rx_reo_txops;
+
+	mgmt_rx_reo_txops = wlan_pdev_get_mgmt_rx_reo_txops(pdev);
+	if (!mgmt_rx_reo_txops) {
+		mgmt_rx_reo_err("MGMT Rx REO txops is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!mgmt_rx_reo_txops->mgmt_rx_reo_filter_config) {
+		mgmt_rx_reo_err("mgmt_rx_reo_filter_config is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	return mgmt_rx_reo_txops->mgmt_rx_reo_filter_config(pdev, filter);
+}

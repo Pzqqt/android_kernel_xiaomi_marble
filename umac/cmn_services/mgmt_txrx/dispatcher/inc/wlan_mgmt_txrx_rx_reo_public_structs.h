@@ -88,5 +88,24 @@ struct mgmt_rx_reo_filter {
 	uint32_t low;
 	uint32_t high;
 };
+
+/*
+ * struct mgmt_rx_reo_pdev_info - Pdev information required by the Management
+ * Rx REO module
+ * @host_or_fw_consumed_snapshot: Snapshot of latest frame consumed by Host/FW
+ * @mac_hw_snapshot: Pointer to the snapshot of latest frame seen at the MAC HW
+ * @fw_consumed_snapshot: Pointer to the snapshot of latest frame consumed
+ * by the FW
+ * @fw_forwarded_snapshot: Pointer to the snapshot of latest frame forwarded
+ * to the Host by FW
+ * @filter: MGMT Rx REO filter
+ */
+struct mgmt_rx_reo_pdev_info {
+	struct mgmt_rx_reo_snapshot_params host_or_fw_consumed_snapshot;
+	struct mgmt_rx_reo_snapshot *mac_hw_snapshot;
+	struct mgmt_rx_reo_snapshot *fw_consumed_snapshot;
+	struct mgmt_rx_reo_snapshot *fw_forwarded_snapshot;
+	struct mgmt_rx_reo_filter filter;
+};
 #endif /* WLAN_MGMT_RX_REO_SUPPORT */
 #endif /* _WLAN_MGMT_TXRX_RX_REO_PUBLIC_STRUCTS_H */

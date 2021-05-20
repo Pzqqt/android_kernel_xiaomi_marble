@@ -24,6 +24,8 @@
 #include <target_if.h>
 #include <wlan_mgmt_txrx_rx_reo_public_structs.h>
 #include <target_if_mgmt_txrx_rx_reo.h>
+#include <wlan_lmac_if_api.h>
+#include <init_deinit_lmac.h>
 
 /**
  * target_if_mgmt_rx_reo_fw_consumed_event_handler() - WMI event handler to
@@ -221,6 +223,37 @@ target_if_mgmt_rx_reo_read_snapshot(
 	return status;
 }
 
+/**
+ * target_if_mgmt_rx_reo_filter_config() - Configure MGMT Rx REO filter
+ * @pdev: Pointer to pdev objmgr
+ * @filter: Pointer to MGMT Rx REO filter
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS
+target_if_mgmt_rx_reo_filter_config(
+	struct wlan_objmgr_pdev *pdev,
+	struct mgmt_rx_reo_filter *filter)
+{
+	QDF_STATUS status;
+	struct wmi_unified *wmi_handle;
+	uint8_t pdev_id;
+
+	wmi_handle = lmac_get_pdev_wmi_handle(pdev);
+	if (!wmi_handle) {
+		mgmt_rx_reo_err("Invalid WMI handle");
+		return QDF_STATUS_E_INVAL;
+	}
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+
+	status = wmi_unified_mgmt_rx_reo_filter_config_cmd(wmi_handle, pdev_id,
+							   filter);
+	if (QDF_IS_STATUS_ERROR(status))
+		mgmt_rx_reo_err("Unable to send MGMT Rx REO Filter config cmd");
+
+	return status;
+}
+
 QDF_STATUS
 target_if_mgmt_rx_reo_extract_reo_params(
 	wmi_unified_t wmi_handle, void *evt_buf,
@@ -248,6 +281,8 @@ target_if_mgmt_rx_reo_tx_ops_register(
 	mgmt_rx_reo_tx_ops = &mgmt_txrx_tx_ops->mgmt_rx_reo_tx_ops;
 	mgmt_rx_reo_tx_ops->read_mgmt_rx_reo_snapshot =
 				target_if_mgmt_rx_reo_read_snapshot;
+	mgmt_rx_reo_tx_ops->mgmt_rx_reo_filter_config =
+					target_if_mgmt_rx_reo_filter_config;
 
 	return QDF_STATUS_SUCCESS;
 }

@@ -47,7 +47,7 @@ tgt_mgmt_rx_reo_read_snapshot(struct wlan_objmgr_pdev *pdev,
 /**
  * tgt_mgmt_rx_reo_fw_consumed_event_handler() - MGMT Rx REO FW consumed
  * event handler
- * @psoc: Pointer to psoc object
+ * @psoc: Pointer to psoc objmgr
  * @params: Pointer to MGMT Rx REO parameters
  *
  * Return: QDF_STATUS of operation
@@ -55,5 +55,15 @@ tgt_mgmt_rx_reo_read_snapshot(struct wlan_objmgr_pdev *pdev,
 QDF_STATUS
 tgt_mgmt_rx_reo_fw_consumed_event_handler(struct wlan_objmgr_psoc *psoc,
 					  struct mgmt_rx_reo_params *params);
+
+/**
+ * tgt_mgmt_rx_reo_filter_config() - Configure MGMT Rx REO filter
+ * @pdev: Pointer to pdev object
+ * @filter: Pointer to MGMT Rx REO filter
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS tgt_mgmt_rx_reo_filter_config(struct wlan_objmgr_pdev *pdev,
+					 struct mgmt_rx_reo_filter *filter);
 #endif /* WLAN_MGMT_RX_REO_SUPPORT */
 #endif /* _WLAN_MGMT_TXRX_RX_REO_TGT_API_H */
