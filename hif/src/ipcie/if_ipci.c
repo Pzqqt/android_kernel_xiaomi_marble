@@ -882,6 +882,9 @@ int hif_prevent_link_low_power_states(struct hif_opaque_softc *hif)
 	struct hif_ipci_softc *ipci_scn = HIF_GET_IPCI_SOFTC(scn);
 	uint32_t timeout = 0;
 
+	if (pld_is_pci_ep_awake(scn->qdf_dev->dev) == -ENOTSUPP)
+		return 0;
+
 	while (pld_is_pci_ep_awake(scn->qdf_dev->dev) &&
 	       timeout <= EP_WAKE_RESET_DELAY_TIMEOUT_US) {
 		qdf_sleep_us(EP_WAKE_RESET_DELAY_US);
