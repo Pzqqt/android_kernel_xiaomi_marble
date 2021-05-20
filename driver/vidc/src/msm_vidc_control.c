@@ -936,12 +936,10 @@ int msm_vidc_adjust_profile(void *instance, struct v4l2_ctrl *ctrl)
 			adjusted_value = V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10;
 	} else {
 		/* 8 bit profile for 8 bit color format */
-		if (adjusted_value == V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10) {
-			if (is_image_session(inst))
-				adjusted_value = V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_STILL_PICTURE;
-			else
-				adjusted_value = V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN;
-		}
+		if (is_image_session(inst))
+			adjusted_value = V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_STILL_PICTURE;
+		else
+			adjusted_value = V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN;
 	}
 
 	msm_vidc_update_cap_value(inst, PROFILE,
