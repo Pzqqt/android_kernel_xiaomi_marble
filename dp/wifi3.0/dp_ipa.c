@@ -202,6 +202,28 @@ static QDF_STATUS __dp_ipa_tx_buf_smmu_mapping(
 	return ret;
 }
 
+#ifndef QCA_OL_DP_SRNG_LOCK_LESS_ACCESS
+static void dp_ipa_set_reo_ctx_mapping_lock_required(struct dp_soc *soc,
+						     bool lock_required)
+{
+	hal_ring_handle_t hal_ring_hdl;
+	int ring;
+
+	for (ring = 0; ring < MAX_REO_DEST_RINGS; ring++) {
+		hal_ring_hdl = soc->reo_dest_ring[ring].hal_srng;
+		hal_srng_lock(hal_ring_hdl);
+		soc->ipa_reo_ctx_lock_required[ring] = lock_required;
+		hal_srng_unlock(hal_ring_hdl);
+	}
+}
+#else
+static void dp_ipa_set_reo_ctx_mapping_lock_required(struct dp_soc *soc,
+						     bool lock_required)
+{
+}
+
+#endif
+
 #ifdef RX_DESC_MULTI_PAGE_ALLOC
 static QDF_STATUS dp_ipa_handle_rx_buf_pool_smmu_mapping(struct dp_soc *soc,
 							 struct dp_pdev *pdev,
@@ -225,7 +247,9 @@ static QDF_STATUS dp_ipa_handle_rx_buf_pool_smmu_mapping(struct dp_soc *soc,
 	pdev_id = pdev->pdev_id;
 	rx_pool = &soc->rx_desc_buf[pdev_id];
 
+	dp_ipa_set_reo_ctx_mapping_lock_required(soc, true);
 	qdf_spin_lock_bh(&rx_pool->lock);
+	dp_ipa_rx_buf_smmu_mapping_lock(soc);
 	num_desc = rx_pool->pool_size;
 	num_desc_per_page = rx_pool->desc_pages.num_element_per_page;
 	for (i = 0; i < num_desc; i++) {
@@ -255,7 +279,9 @@ static QDF_STATUS dp_ipa_handle_rx_buf_pool_smmu_mapping(struct dp_soc *soc,
 		ret = __dp_ipa_handle_buf_smmu_mapping(
 				soc, nbuf, rx_pool->buf_size, create);
 	}
+	dp_ipa_rx_buf_smmu_mapping_unlock(soc);
 	qdf_spin_unlock_bh(&rx_pool->lock);
+	dp_ipa_set_reo_ctx_mapping_lock_required(soc, false);
 
 	return ret;
 }
@@ -278,7 +304,9 @@ static QDF_STATUS dp_ipa_handle_rx_buf_pool_smmu_mapping(struct dp_soc *soc,
 	pdev_id = pdev->pdev_id;
 	rx_pool = &soc->rx_desc_buf[pdev_id];
 
+	dp_ipa_set_reo_ctx_mapping_lock_required(soc, true);
 	qdf_spin_lock_bh(&rx_pool->lock);
+	dp_ipa_rx_buf_smmu_mapping_lock(soc);
 	for (i = 0; i < rx_pool->pool_size; i++) {
 		if ((!(rx_pool->array[i].rx_desc.in_use)) ||
 		    rx_pool->array[i].rx_desc.unmapped)
@@ -302,7 +330,9 @@ static QDF_STATUS dp_ipa_handle_rx_buf_pool_smmu_mapping(struct dp_soc *soc,
 		__dp_ipa_handle_buf_smmu_mapping(soc, nbuf,
 						 rx_pool->buf_size, create);
 	}
+	dp_ipa_rx_buf_smmu_mapping_unlock(soc);
 	qdf_spin_unlock_bh(&rx_pool->lock);
+	dp_ipa_set_reo_ctx_mapping_lock_required(soc, false);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2107,6 +2137,9 @@ QDF_STATUS dp_ipa_setup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	soc->ipa_first_tx_db_access = true;
 	qdf_mem_free(pipe_in);
 
+	qdf_spinlock_create(&soc->ipa_rx_buf_map_lock);
+	soc->ipa_rx_buf_map_lock_initialized = true;
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -2323,6 +2356,9 @@ QDF_STATUS dp_ipa_setup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 
 	soc->ipa_first_tx_db_access = true;
 
+	qdf_spinlock_create(&soc->ipa_rx_buf_map_lock);
+	soc->ipa_rx_buf_map_lock_initialized = true;
+
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: Tx: %s=%pK, %s=%d, %s=%pK, %s=%pK, %s=%d, %s=%pK, %s=%d, %s=%pK",
 		  __func__,
@@ -2456,6 +2492,11 @@ QDF_STATUS dp_ipa_cleanup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 		dp_err("ipa_wdi_disconn_pipes: IPA pipe cleanup failed: ret=%d",
 		       ret);
 		status = QDF_STATUS_E_FAILURE;
+	}
+
+	if (soc->ipa_rx_buf_map_lock_initialized) {
+		qdf_spinlock_destroy(&soc->ipa_rx_buf_map_lock);
+		soc->ipa_rx_buf_map_lock_initialized = false;
 	}
 
 	pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);

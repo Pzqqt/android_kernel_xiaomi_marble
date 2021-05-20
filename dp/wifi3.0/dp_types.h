@@ -1798,6 +1798,9 @@ struct dp_soc {
 
 	qdf_atomic_t ipa_pipes_enabled;
 	bool ipa_first_tx_db_access;
+	qdf_spinlock_t ipa_rx_buf_map_lock;
+	bool ipa_rx_buf_map_lock_initialized;
+	uint8_t ipa_reo_ctx_lock_required[MAX_REO_DEST_RINGS];
 #endif
 
 #ifdef WLAN_FEATURE_STATS_EXT

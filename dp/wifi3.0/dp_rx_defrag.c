@@ -1971,6 +1971,7 @@ uint32_t dp_rx_frag_handle(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 	if (rx_desc->unmapped)
 		return rx_bufs_used;
 
+	dp_ipa_rx_buf_smmu_mapping_lock(soc);
 	dp_ipa_handle_rx_buf_smmu_mapping(soc, rx_desc->nbuf,
 					  rx_desc_pool->buf_size,
 					  false);
@@ -1978,6 +1979,7 @@ uint32_t dp_rx_frag_handle(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 				     QDF_DMA_FROM_DEVICE,
 				     rx_desc_pool->buf_size);
 	rx_desc->unmapped = 1;
+	dp_ipa_rx_buf_smmu_mapping_unlock(soc);
 
 	rx_desc->rx_buf_start = qdf_nbuf_data(msdu);
 
