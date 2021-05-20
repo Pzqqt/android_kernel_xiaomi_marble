@@ -664,7 +664,7 @@ static void ipa3_del_dflt_wan_rt_tables(void)
 			rt_rule->ip = ip_type;
 			rt_rule_entry->hdl =
 				rmnet_ipa3_ctx->dflt_wan_rt_hdl[ip_type][i];
-			IPAWANERR("Deleting Route hdl:(0x%x) with ip type: %d\n",
+			IPAWANDBG("Deleting Route hdl:(0x%x) with ip type: %d\n",
 				rt_rule_entry->hdl, ip_type);
 			if (ipa3_del_rt_rule(rt_rule) ||
 					(rt_rule_entry->status)) {
@@ -702,7 +702,7 @@ static void ipa3_del_low_lat_rt_rule(void)
 			rt_rule->ip = ip_type;
 			rt_rule_entry->hdl =
 				rmnet_ipa3_ctx->low_lat_rt_hdl[ip_type][i];
-			IPAWANERR("Deleting Route hdl:(0x%x) with ip type: %d\n",
+			IPAWANDBG("Deleting Route hdl:(0x%x) with ip type: %d\n",
 				rt_rule_entry->hdl, ip_type);
 			if (ipa3_del_rt_rule(rt_rule) ||
 					(rt_rule_entry->status)) {
@@ -2813,13 +2813,6 @@ static int ipa3_wwan_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 				&ext_ioctl_data,
 				sizeof(struct rmnet_ioctl_extended_s)))
 				rc = -EFAULT;
-			if (copy_from_user(&ext_ioctl_data,
-				(u8 *)ifr->ifr_ifru.ifru_data,
-				sizeof(struct rmnet_ioctl_extended_s))) {
-				IPAWANERR("copy extended ioctl data failed\n");
-				rc = -EFAULT;
-			break;
-			}
 			IPAWANDBG("RMNET_IOCTL_GET_EPID_LL return %d\n",
 					ext_ioctl_data.u.data);
 			break;
@@ -2849,13 +2842,6 @@ static int ipa3_wwan_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 				&ext_ioctl_data,
 				sizeof(struct rmnet_ioctl_extended_s)))
 				rc = -EFAULT;
-			if (copy_from_user(&ext_ioctl_data,
-				(u8 *)ifr->ifr_ifru.ifru_data,
-				sizeof(struct rmnet_ioctl_extended_s))) {
-				IPAWANERR("copy extended ioctl data failed\n");
-				rc = -EFAULT;
-				break;
-			}
 			IPAWANDBG("RMNET_IOCTL_GET_EP_PAIR_LL c: %d p: %d\n",
 			ext_ioctl_data.u.ipa_ep_pair.consumer_pipe_num,
 			ext_ioctl_data.u.ipa_ep_pair.producer_pipe_num);

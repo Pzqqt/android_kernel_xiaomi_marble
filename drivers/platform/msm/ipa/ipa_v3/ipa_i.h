@@ -1523,7 +1523,7 @@ struct ipa3_stats {
 	u32 tx_non_linear;
 	u32 rx_page_drop_cnt;
 	struct ipa3_page_recycle_stats page_recycle_stats[3];
-	u64 page_recycle_cnt[2][IPA_PAGE_POLL_THRESHOLD_MAX];
+	u64 page_recycle_cnt[3][IPA_PAGE_POLL_THRESHOLD_MAX];
 };
 
 /* offset for each stats */
