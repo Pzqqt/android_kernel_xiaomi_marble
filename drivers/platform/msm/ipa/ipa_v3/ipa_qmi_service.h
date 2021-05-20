@@ -220,6 +220,9 @@ extern struct qmi_elem_info ipa_add_offload_connection_resp_msg_v01_ei[];
 extern struct qmi_elem_info ipa_remove_offload_connection_req_msg_v01_ei[];
 extern struct qmi_elem_info ipa_remove_offload_connection_resp_msg_v01_ei[];
 extern struct qmi_elem_info ipa_bw_change_ind_msg_v01_ei[];
+extern struct qmi_elem_info ipa_move_nat_req_msg_v01_ei[];
+extern struct qmi_elem_info ipa_move_nat_resp_msg_v01_ei[];
+extern struct qmi_elem_info ipa_move_nat_table_complt_ind_msg_v01_ei[];
 
 /**
  * struct ipa3_rmnet_context - IPA rmnet context
@@ -359,6 +362,9 @@ int ipa3_qmi_send_endp_desc_indication(
 
 int ipa3_qmi_send_mhi_cleanup_request(struct ipa_mhi_cleanup_req_msg_v01 *req);
 
+/* sending nat table move result indication to modem */
+int rmnet_ipa3_notify_nat_move_res(bool success);
+
 void ipa3_qmi_init(void);
 
 void ipa3_qmi_cleanup(void);
@@ -378,7 +384,7 @@ static inline int ipa3_qmi_service_init(uint32_t wan_platform_type)
 
 static inline void ipa3_qmi_service_exit(void) { }
 
-/* sending filter-install-request to modem*/
+/* sending filter-install-request to modem */
 static inline int ipa3_qmi_filter_request_send(
 	struct ipa_install_fltr_rule_req_msg_v01 *req)
 {
@@ -519,6 +525,11 @@ static inline int ipa3_qmi_send_mhi_cleanup_request(
 	struct ipa_mhi_cleanup_req_msg_v01 *req)
 {
 	return -EPERM;
+}
+
+static int rmnet_ipa3_notify_nat_move_res(bool success)
+{
+	return -EPERM
 }
 
 static inline int ipa3_wwan_set_modem_perf_profile(
