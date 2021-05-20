@@ -691,6 +691,7 @@ int pld_get_mhi_state(struct device *dev)
 	case PLD_BUS_TYPE_SNOC:
 	case PLD_BUS_TYPE_SDIO:
 	case PLD_BUS_TYPE_USB:
+		ret = PLD_MHI_STATE_L0;
 		break;
 	case PLD_BUS_TYPE_IPCI:
 		ret = pld_ipci_mhi_state(dev);
@@ -1391,6 +1392,7 @@ int pld_is_pci_ep_awake(struct device *dev)
 	case PLD_BUS_TYPE_SNOC:
 	case PLD_BUS_TYPE_SDIO:
 	case PLD_BUS_TYPE_USB:
+		ret = -ENOTSUPP;
 		break;
 	case PLD_BUS_TYPE_IPCI:
 		ret = pld_ipci_is_pci_ep_awake(dev);
