@@ -1293,6 +1293,28 @@ int wma_vdev_tsf_handler(void *handle, uint8_t *data, uint32_t data_len);
 QDF_STATUS wma_capture_tsf(tp_wma_handle wma_handle, uint32_t vdev_id);
 QDF_STATUS wma_reset_tsf_gpio(tp_wma_handle wma_handle, uint32_t vdev_id);
 QDF_STATUS wma_set_tsf_gpio_pin(WMA_HANDLE handle, uint32_t pin);
+
+#ifdef WLAN_FEATURE_TSF_UPLINK_DELAY
+/**
+ * wma_set_tsf_auto_report() - Set TSF auto report in firmware
+ * @wma_handle: wma handle
+ * @vdev_id: vdev id
+ * @param_id: enum GEN_PARAM
+ * @ena: true for enable, and false for disable
+ *
+ * Return: QDF_STATUS_SUCCESS for success, otherwise for failure
+ */
+QDF_STATUS wma_set_tsf_auto_report(WMA_HANDLE handle, uint32_t vdev_id,
+				   uint32_t param_id, bool ena);
+#else /* !WLAN_FEATURE_TSF_UPLINK_DELAY */
+static inline QDF_STATUS wma_set_tsf_auto_report(WMA_HANDLE handle,
+						 uint32_t vdev_id,
+						 uint32_t param_id, bool ena)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+#endif /* WLAN_FEATURE_TSF_UPLINK_DELAY */
+
 #else
 static inline QDF_STATUS wma_capture_tsf(tp_wma_handle wma_handle,
 					uint32_t vdev_id)

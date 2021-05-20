@@ -1035,7 +1035,13 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 			ret = wma_reset_tsf_gpio(wma, privcmd->param_value);
 			break;
 		default:
-			wma_err("Invalid param id 0x%x", privcmd->param_id);
+			ret = wma_set_tsf_auto_report(wma,
+						      privcmd->param_vdev_id,
+						      privcmd->param_id,
+						      privcmd->param_value);
+			if (ret == QDF_STATUS_E_FAILURE)
+				wma_err("Invalid param id 0x%x",
+					privcmd->param_id);
 			break;
 		}
 		break;

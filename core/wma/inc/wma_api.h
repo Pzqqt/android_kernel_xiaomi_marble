@@ -50,6 +50,8 @@ typedef void *WMA_HANDLE;
  * @GEN_VDEV_PARAM_RX_AMPDU: Set rx ampdu size
  * @GEN_VDEV_PARAM_TX_AMSDU: Set tx amsdu size
  * @GEN_VDEV_PARAM_RX_AMSDU: Set rx amsdu size
+ * @GEN_PARAM_TSF_AUTO_REPORT_ENABLE: Enable auto report of clock delta change
+ * @GEN_PARAM_TSF_AUTO_REPORT_DISABLE: Disable auto report of clock delta change
  */
 enum GEN_PARAM {
 	GEN_VDEV_PARAM_AMPDU = 0x1,
@@ -62,6 +64,8 @@ enum GEN_PARAM {
 	GEN_VDEV_PARAM_RX_AMPDU,
 	GEN_VDEV_PARAM_TX_AMSDU,
 	GEN_VDEV_PARAM_RX_AMSDU,
+	GEN_PARAM_TSF_AUTO_REPORT_ENABLE,
+	GEN_PARAM_TSF_AUTO_REPORT_DISABLE,
 };
 
 /**
