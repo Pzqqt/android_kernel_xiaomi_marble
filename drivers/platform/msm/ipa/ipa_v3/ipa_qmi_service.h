@@ -375,6 +375,8 @@ int ipa3_wwan_init(void);
 
 void ipa3_wwan_cleanup(void);
 
+void ipa3_disable_move_nat_resp(void);
+
 #else /* IS_ENABLED(CONFIG_RMNET_IPA3) */
 
 static inline int ipa3_qmi_service_init(uint32_t wan_platform_type)
@@ -563,6 +565,11 @@ static inline void ipa3_qmi_init(void)
 }
 
 static inline void ipa3_qmi_cleanup(void)
+{
+
+}
+
+static void ipa3_disable_move_nat_resp(void)
 {
 
 }

@@ -2958,6 +2958,71 @@ static ssize_t ipa3_write_page_poll_threshold(struct file *file,
 	return count;
 }
 
+static void ipa3_nat_move_free_cb(void *buff, u32 len, u32 type)
+{
+	kfree(buff);
+}
+
+static ssize_t ipa3_write_nat_table_move(struct file *file,
+	const char __user *buf, size_t count, loff_t *ppos)
+{
+	u32 direction;
+	unsigned long missing;
+	char *sptr, *token;
+	struct ipa_move_nat_req_msg_v01 *req_data;
+	struct ipa_msg_meta msg_meta;
+
+	if (count >= sizeof(dbg_buff))
+		return -EFAULT;
+
+	missing = copy_from_user(dbg_buff, buf, count);
+	if (missing)
+		return -EFAULT;
+
+	dbg_buff[count] = '\0';
+
+	sptr = dbg_buff;
+
+	token = strsep(&sptr, " ");
+	if (!token)
+		return -EINVAL;
+	if (kstrtou32(token, 0, &direction))
+		return -EINVAL;
+
+	if (direction) {
+		pr_err("moving to DDR\n");
+		direction = QMI_IPA_MOVE_NAT_TO_DDR_V01;
+	} else {
+		pr_err("moving to SRAM\n");
+		direction = QMI_IPA_MOVE_NAT_TO_SRAM_V01;
+	}
+
+	req_data = kzalloc(sizeof(struct ipa_move_nat_req_msg_v01),
+		GFP_KERNEL);
+	if (!req_data) {
+		pr_err("allocation failed\n");
+		return EFAULT;
+	}
+
+	memset(&msg_meta, 0, sizeof(struct ipa_msg_meta));
+	msg_meta.msg_type = IPA_MOVE_NAT_TABLE;
+	msg_meta.msg_len = sizeof(struct ipa_move_nat_req_msg_v01);
+
+	req_data->nat_move_direction = direction;
+
+	ipa3_disable_move_nat_resp();
+	pr_err("disabled QMI\n");
+	/* make sure QMI is disabled before message sent to IPACM */
+	wmb();
+	if (ipa_send_msg(&msg_meta, req_data, ipa3_nat_move_free_cb)) {
+		pr_err("ipa_send_msg failed\nn");
+	}
+	pr_err("message sent\n");
+
+	return count;
+}
+
+
 static const struct ipa3_debugfs_file debugfs_files[] = {
 	{
 		"gen_reg", IPA_READ_ONLY_MODE, NULL, {
@@ -3139,6 +3204,10 @@ static const struct ipa3_debugfs_file debugfs_files[] = {
 		"page_poll_threshold", IPA_READ_WRITE_MODE, NULL, {
 			.read = ipa3_read_page_poll_threshold,
 			.write = ipa3_write_page_poll_threshold,
+		}
+	}, {
+		"move_nat_table_to_ddr", IPA_WRITE_ONLY_MODE, NULL,{
+			.write = ipa3_write_nat_table_move,
 		}
 	},
 };
