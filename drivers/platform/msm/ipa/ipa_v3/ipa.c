@@ -3872,7 +3872,7 @@ static void ipa3_q6_pipe_flow_control(bool delay)
 			IPADBG("pipe setting V2 flow control\n");
 			/* Configurig primary flow control on Q6 pipes*/
 			result = gsi_flow_control_ee(
-					gsi_ep_cfg->ipa_gsi_chan_num,
+					gsi_ep_cfg->ipa_gsi_chan_num, ep_idx,
 					gsi_ep_cfg->ee, delay, false, &code);
 			if (result == GSI_STATUS_SUCCESS) {
 				IPADBG("sussess gsi ch %d with code %d\n",

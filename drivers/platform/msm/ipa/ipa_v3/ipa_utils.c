@@ -6887,6 +6887,37 @@ int ipa3_get_ep_mapping(enum ipa_client_type client)
 }
 
 /**
+ * ipa3_get_ep_mapping_from_gsi() - provide endpoint mapping
+ * @ch_id: GSI Virt CH id
+ *
+ * Return value: endpoint mapping
+ */
+int ipa3_get_ep_mapping_from_gsi(int ch_id)
+{
+	int ipa_ep_idx = IPA_EP_NOT_ALLOCATED;
+	u8 hw_idx;
+	int i = 0;
+
+	hw_idx = ipa3_ctx->hw_type_index;
+
+	if (ch_id >= GSI_CHAN_MAX || ch_id < 0) {
+		IPAERR_RL("Bad ch_id number! ch_id =%d\n", ch_id);
+		return IPA_EP_NOT_ALLOCATED;
+	}
+
+	for (i = 0; i < IPA_CLIENT_MAX; i++) {
+		if (ipa3_ep_mapping[hw_idx][i].valid &&
+			ipa3_ep_mapping[hw_idx][i].ipa_gsi_ep_info.ipa_gsi_chan_num
+			== ch_id) {
+			ipa_ep_idx = ipa3_ep_mapping[hw_idx][i].ipa_gsi_ep_info.ipa_ep_num;
+			break;
+		}
+	}
+
+	return ipa_ep_idx;
+}
+
+/**
  * ipa3_get_gsi_ep_info() - provide gsi ep information
  * @client: IPA client value
  *
@@ -7776,7 +7807,7 @@ int ipa3_cfg_ep_ctrl(u32 clnt_hdl, const struct ipa_ep_cfg_ctrl *ep_ctrl)
 		else
 			primary_secondry = false;
 
-		result = gsi_flow_control_ee(ep->gsi_chan_hdl, 0,
+		result = gsi_flow_control_ee(ep->gsi_chan_hdl, clnt_hdl, 0,
 				ep_ctrl->ipa_ep_delay, primary_secondry, &code);
 		if (result == GSI_STATUS_SUCCESS) {
 			IPADBG("flow control sussess gsi ch %d with code %d\n",

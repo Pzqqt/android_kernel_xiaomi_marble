@@ -1166,8 +1166,8 @@ int ipa3_remove_secondary_flow_ctrl(int gsi_chan_hdl)
 	result = gsi_query_flow_control_state_ee(gsi_chan_hdl, 0, 1, &code);
 	if (result == GSI_STATUS_SUCCESS) {
 		code = 0;
-		result = gsi_flow_control_ee(gsi_chan_hdl, 0, false, true,
-							&code);
+		result = gsi_flow_control_ee(gsi_chan_hdl,
+			ipa3_get_ep_mapping_from_gsi(gsi_chan_hdl), 0, false, true, &code);
 		if (result == GSI_STATUS_SUCCESS) {
 			IPADBG("flow control sussess ch %d code %d\n",
 					gsi_chan_hdl, code);

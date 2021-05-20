@@ -2974,6 +2974,7 @@ int ipa3_add_interrupt_handler(enum ipa_irq_type interrupt,
  * Miscellaneous
  */
 int ipa3_get_ep_mapping(enum ipa_client_type client);
+int ipa3_get_ep_mapping_from_gsi(int ch_id);
 
 bool ipa3_is_ready(void);
 
