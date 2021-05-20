@@ -24,6 +24,7 @@
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_objmgr_vdev_obj.h>
+#include <wlan_reg_services_api.h>
 #include <qdf_lock.h>
 #include <wlan_spectral_public_structs.h>
 #include <reg_services_public_struct.h>
@@ -2530,6 +2531,55 @@ target_if_spectral_get_num_fft_bins(uint32_t fft_size,
 	default:
 		return -EINVAL;
 	}
+}
+#endif /* OPTIMIZED_SAMP_MESSAGE */
+
+#ifdef OPTIMIZED_SAMP_MESSAGE
+/**
+ * target_if_get_detector_chwidth() - Get per-detector bandwidth
+ * based on channel width and fragmentation.
+ * @ch_width: Spectral scan channel width
+ * @fragmentation_160: Target type has fragmentation or not
+ *
+ * Get per-detector BW.
+ *
+ * Return: detector BW
+ */
+static inline
+enum phy_ch_width target_if_get_detector_chwidth(enum phy_ch_width ch_width,
+						 bool fragmentation_160)
+{
+	return ((ch_width == CH_WIDTH_160MHZ && fragmentation_160) ?
+		CH_WIDTH_80MHZ : ((ch_width == CH_WIDTH_80P80MHZ) ?
+		CH_WIDTH_80MHZ : ch_width));
+}
+
+/**
+ * target_if_spectral_set_start_end_freq() - Set start and end frequencies for
+ * a given center frequency
+ * @cfreq: Center frequency for which start and end freq need to be set
+ * @ch_width: Spectral scan Channel width
+ * @fragmentation_160: Target type has fragmentation or not
+ * @start_end_freq: Array containing start and end frequency of detector
+ *
+ * Set the start and end frequencies for given center frequency in destination
+ * detector info struct
+ *
+ * Return: void
+ */
+static inline
+void target_if_spectral_set_start_end_freq(uint32_t cfreq,
+					   enum phy_ch_width ch_width,
+					   bool fragmentation_160,
+					   uint32_t *start_end_freq)
+{
+	enum phy_ch_width det_ch_width;
+
+	det_ch_width = target_if_get_detector_chwidth(ch_width,
+						      fragmentation_160);
+
+	start_end_freq[0] = cfreq - (wlan_reg_get_bw_value(det_ch_width) >> 1);
+	start_end_freq[1] = cfreq + (wlan_reg_get_bw_value(det_ch_width) >> 1);
 }
 #endif /* OPTIMIZED_SAMP_MESSAGE */
 

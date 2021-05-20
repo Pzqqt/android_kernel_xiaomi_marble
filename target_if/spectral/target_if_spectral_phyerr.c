@@ -862,6 +862,89 @@ target_if_get_ieee80211_format_cfreq(struct target_if_spectral *spectral,
 }
 
 /**
+ * target_if_populate_det_start_end_freqs() - Populate the start and end
+ * frequencies, on per-detector level.
+ * @spectral: Pointer to target_if spectral internal structure
+ * @smode: Spectral scan mode
+ *
+ * Populate the start and end frequencies, on per-detector level.
+ *
+ * Return: Success/Failure
+ */
+static QDF_STATUS
+target_if_populate_det_start_end_freqs(struct target_if_spectral *spectral,
+				       enum spectral_scan_mode smode)
+{
+	struct per_session_report_info *rpt_info;
+	struct per_session_det_map *det_map;
+	struct per_session_dest_det_info *dest_det_info;
+	enum phy_ch_width ch_width;
+	struct sscan_detector_list *detector_list;
+	bool is_fragmentation_160;
+	uint8_t det;
+	uint32_t cfreq;
+	uint32_t start_end_freq_arr[2];
+
+	if (!spectral) {
+		spectral_err_rl("Spectral LMAC object is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	if (smode >= SPECTRAL_SCAN_MODE_MAX) {
+		spectral_err_rl("Invalid Spectral mode");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ch_width = spectral->report_info[smode].sscan_bw;
+	is_fragmentation_160 = spectral->rparams.fragmentation_160[smode];
+
+	rpt_info = &spectral->report_info[smode];
+	detector_list = &spectral->detector_list[smode][ch_width];
+
+	for (det = 0; det < detector_list->num_detectors; det++) {
+		det_map = &spectral->det_map
+				[detector_list->detectors[det]];
+		dest_det_info = &det_map->dest_det_info[0];
+
+		switch (det) {
+		case 0:
+			if (ch_width == CH_WIDTH_160MHZ &&
+			    !is_fragmentation_160 &&
+			    smode == SPECTRAL_SCAN_MODE_NORMAL)
+				cfreq = rpt_info->sscan_cfreq2;
+			else
+				cfreq = rpt_info->sscan_cfreq1;
+			break;
+		case 1:
+			if (ch_width == CH_WIDTH_160MHZ &&
+			    is_fragmentation_160 &&
+			    rpt_info->sscan_cfreq1 >
+			    rpt_info->sscan_cfreq2) {
+				cfreq = rpt_info->sscan_cfreq1 -
+					FREQ_OFFSET_80MHZ;
+			} else {
+				if (ch_width == CH_WIDTH_160MHZ)
+					cfreq = rpt_info->sscan_cfreq1
+						+ FREQ_OFFSET_80MHZ;
+				else
+					cfreq = rpt_info->sscan_cfreq2;
+			}
+			break;
+		default:
+			return QDF_STATUS_E_FAILURE;
+		}
+		/* Set start and end frequencies */
+		target_if_spectral_set_start_end_freq(cfreq,
+						      ch_width,
+						      is_fragmentation_160,
+						      start_end_freq_arr);
+		dest_det_info->start_freq = start_end_freq_arr[0];
+		dest_det_info->end_freq = start_end_freq_arr[1];
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * target_if_populate_fft_bins_info() - Populate the start and end bin
  * indices, on per-detector level.
  * @spectral: Pointer to target_if spectral internal structure
@@ -974,6 +1057,7 @@ target_if_update_session_info_from_report_ctx(
 	enum phy_ch_width ch_width;
 	struct wlan_objmgr_psoc *psoc;
 	bool is_fragmentation_160;
+	uint32_t start_end_freq_arr[2];
 	QDF_STATUS ret;
 
 	if (!spectral) {
@@ -1064,6 +1148,14 @@ target_if_update_session_info_from_report_ctx(
 					marker->num_pri80 - 1;
 		dest_det_info->src_start_bin_idx = marker->start_pri80 *
 						   fft_bin_size;
+		/* Set start and end frequencies */
+		target_if_spectral_set_start_end_freq(rpt_info->sscan_cfreq1,
+						      ch_width,
+						      is_fragmentation_160,
+						      start_end_freq_arr);
+		dest_det_info->start_freq = start_end_freq_arr[0];
+		dest_det_info->end_freq = start_end_freq_arr[1];
+
 
 		dest_det_info = &det_map->dest_det_info[1];
 		dest_det_info->dest_start_bin_idx = marker->start_sec80;
@@ -1072,6 +1164,13 @@ target_if_update_session_info_from_report_ctx(
 					marker->num_sec80 - 1;
 		dest_det_info->src_start_bin_idx = marker->start_sec80 *
 						   fft_bin_size;
+		/* Set start and end frequencies */
+		target_if_spectral_set_start_end_freq(rpt_info->sscan_cfreq2,
+						      ch_width,
+						      is_fragmentation_160,
+						      start_end_freq_arr);
+		dest_det_info->start_freq = start_end_freq_arr[0];
+		dest_det_info->end_freq = start_end_freq_arr[1];
 
 		dest_det_info = &det_map->dest_det_info[2];
 		dest_det_info->dest_start_bin_idx = marker->start_5mhz;
@@ -1080,10 +1179,23 @@ target_if_update_session_info_from_report_ctx(
 					marker->num_5mhz - 1;
 		dest_det_info->src_start_bin_idx = marker->start_5mhz *
 						   fft_bin_size;
+		/* Set start and end frequencies */
+		dest_det_info->start_freq =
+				min(det_map->dest_det_info[0].end_freq,
+				    det_map->dest_det_info[1].end_freq);
+		dest_det_info->end_freq =
+				max(det_map->dest_det_info[0].start_freq,
+				    det_map->dest_det_info[1].start_freq);
 	} else {
 		ret = target_if_populate_fft_bins_info(spectral, smode);
 		if (QDF_IS_STATUS_ERROR(ret)) {
 			spectral_err_rl("Error in populating fft bins info");
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		ret = target_if_populate_det_start_end_freqs(spectral, smode);
+		if (QDF_IS_STATUS_ERROR(ret)) {
+			spectral_err_rl("Failed to populate start/end freqs");
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
