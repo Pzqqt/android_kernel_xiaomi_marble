@@ -25,7 +25,7 @@
 #define TO_S15D16(_x_)	((_x_) << 7)
 
 #define SDE_WB_MAX_LINEWIDTH(fmt, wb_cfg) \
-	(SDE_FORMAT_IS_UBWC(fmt) ? wb_cfg->sblk->maxlinewidth : \
+	((SDE_FORMAT_IS_UBWC(fmt) || SDE_FORMAT_IS_YUV(fmt)) ? wb_cfg->sblk->maxlinewidth : \
 	wb_cfg->sblk->maxlinewidth_linear)
 
 static const u32 cwb_irq_tbl[PINGPONG_MAX] = {SDE_NONE, INTR_IDX_PP1_OVFL,
