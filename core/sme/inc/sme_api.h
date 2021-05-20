@@ -594,9 +594,18 @@ sme_get_roam_scan_ch(mac_handle_t mac_handle,
 void sme_get_pmk_info(mac_handle_t mac_handle, uint8_t session_id,
 		      struct wlan_crypto_pmksa *pmk_cache);
 
-QDF_STATUS sme_roam_set_psk_pmk(mac_handle_t mac_handle, uint8_t sessionId,
-				uint8_t *psk_pmk, size_t pmk_len,
-				bool update_to_fw);
+/**
+ * sme_roam_set_psk_pmk  - Set the PMK to vdev cache
+ * @mac_handle: Opaque Mac handle
+ * @pmksa:   Pointer to pmksa cache
+ * @vdev_id: Vdev id
+ * @update_to_fw: Send RSO update config command to firmware to update
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_roam_set_psk_pmk(mac_handle_t mac_handle,
+				struct wlan_crypto_pmksa *pmksa,
+				uint8_t vdev_id, bool update_to_fw);
 
 /**
  * sme_set_pmk_cache_ft() - a wrapper function to request CSR to save MDID
@@ -630,9 +639,9 @@ sme_set_roam_scan_ch_event_cb(mac_handle_t mac_handle,
 }
 
 static inline
-QDF_STATUS sme_roam_set_psk_pmk(mac_handle_t mac_handle, uint8_t sessionId,
-				uint8_t *psk_pmk, size_t pmk_len,
-				bool update_to_fw)
+QDF_STATUS sme_roam_set_psk_pmk(mac_handle_t mac_handle,
+				struct wlan_crypto_pmksa *pmksa,
+				uint8_t vdev_id, bool update_to_fw)
 {
 	return QDF_STATUS_SUCCESS;
 }

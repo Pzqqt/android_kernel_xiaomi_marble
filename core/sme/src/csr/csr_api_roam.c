@@ -5661,11 +5661,42 @@ void csr_get_pmk_info(struct mac_context *mac_ctx, uint8_t session_id,
 			    &pmk_cache->pmk_len);
 }
 
-QDF_STATUS csr_roam_set_psk_pmk(struct mac_context *mac, uint8_t vdev_id,
-				uint8_t *psk_pmk, size_t pmk_len,
-				bool update_to_fw)
+QDF_STATUS csr_roam_set_psk_pmk(struct mac_context *mac,
+				struct wlan_crypto_pmksa *pmksa,
+				uint8_t vdev_id, bool update_to_fw)
 {
-	wlan_cm_set_psk_pmk(mac->pdev, vdev_id, psk_pmk, pmk_len);
+	struct wlan_objmgr_vdev *vdev;
+	struct qdf_mac_addr connected_bssid = {0};
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("vdev is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	wlan_mlme_get_bssid_vdev_id(mac->pdev, vdev_id, &connected_bssid);
+
+	/*
+	 * If the set_pmksa is received from the userspace in
+	 * connected state and if the connected BSSID is not
+	 * same as the PMKSA entry bssid, then reject this
+	 * global cache updation.
+	 *
+	 * Also for FILS connection, the set_pmksa will not have
+	 * the BSSID. So avoid this check for FILS connection.
+	 */
+	if (wlan_vdev_mlme_get_state(vdev) == WLAN_VDEV_S_UP &&
+	    !pmksa->ssid_len &&
+	    !qdf_is_macaddr_equal(&connected_bssid, &pmksa->bssid)) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		sme_debug("Set pmksa received for non-connected bss");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+
+	wlan_cm_set_psk_pmk(mac->pdev, vdev_id, pmksa->pmk, pmksa->pmk_len);
 	if (update_to_fw)
 		wlan_roam_update_cfg(mac->psoc, vdev_id,
 				     REASON_ROAM_PSK_PMK_CHANGED);
@@ -5692,7 +5723,9 @@ QDF_STATUS csr_set_pmk_cache_ft(struct mac_context *mac, uint32_t session_id,
 	}
 
 	akm = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
+
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+
 	if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_CCKM)) {
 		sme_debug("PMK update is not required for ESE");
 		return QDF_STATUS_SUCCESS;

@@ -6277,10 +6277,12 @@ static int __wlan_hdd_cfg80211_keymgmt_set_key(struct wiphy *wiphy,
 					       struct wireless_dev *wdev,
 					       const void *data, int data_len)
 {
-	uint8_t local_pmk[ROAM_SCAN_PSK_SIZE];
 	struct net_device *dev = wdev->netdev;
 	struct hdd_adapter *hdd_adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
+	struct hdd_station_ctx *sta_ctx =
+			WLAN_HDD_GET_STATION_CTX_PTR(hdd_adapter);
+	struct wlan_crypto_pmksa pmksa;
 	int status;
 	mac_handle_t mac_handle;
 
@@ -6308,11 +6310,15 @@ static int __wlan_hdd_cfg80211_keymgmt_set_key(struct wiphy *wiphy,
 		return status;
 
 	mac_handle = hdd_ctx->mac_handle;
-	qdf_mem_zero(&local_pmk, ROAM_SCAN_PSK_SIZE);
-	qdf_mem_copy(local_pmk, data, data_len);
-	sme_roam_set_psk_pmk(mac_handle, hdd_adapter->vdev_id,
-			     local_pmk, data_len, true);
-	qdf_mem_zero(&local_pmk, ROAM_SCAN_PSK_SIZE);
+	qdf_mem_zero(&pmksa, sizeof(pmksa));
+	pmksa.pmk_len = data_len;
+	qdf_mem_copy(pmksa.pmk, data, data_len);
+
+	qdf_mem_copy(&pmksa.bssid, &sta_ctx->conn_info.bssid,
+		     QDF_MAC_ADDR_SIZE);
+
+	sme_roam_set_psk_pmk(mac_handle, &pmksa, hdd_adapter->vdev_id, true);
+	qdf_mem_zero(&pmksa, sizeof(pmksa));
 	return 0;
 }
 
@@ -19740,8 +19746,7 @@ static QDF_STATUS wlan_hdd_set_pmksa_cache(struct hdd_adapter *adapter,
 	}
 
 	if (result == QDF_STATUS_SUCCESS && pmk_cache->pmk_len) {
-		sme_roam_set_psk_pmk(mac_handle, adapter->vdev_id,
-				     pmk_cache->pmk, pmk_cache->pmk_len,
+		sme_roam_set_psk_pmk(mac_handle, pmksa, adapter->vdev_id,
 				     false);
 		sme_set_pmk_cache_ft(mac_handle, adapter->vdev_id, pmk_cache);
 	}
