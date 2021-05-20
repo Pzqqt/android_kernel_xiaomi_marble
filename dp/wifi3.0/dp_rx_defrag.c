@@ -1328,16 +1328,16 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	dp_ipa_handle_rx_buf_smmu_mapping(soc, head,
+					  rx_desc_pool->buf_size,
+					  true);
+
 	/*
 	 * As part of rx frag handler bufffer was unmapped and rx desc
 	 * unmapped is set to 1. So again for defrag reinject frame reset
 	 * it back to 0.
 	 */
 	rx_desc->unmapped = 0;
-
-	dp_ipa_handle_rx_buf_smmu_mapping(soc, head,
-					  rx_desc_pool->buf_size,
-					  true);
 
 	paddr = qdf_nbuf_get_frag_paddr(head, 0);
 

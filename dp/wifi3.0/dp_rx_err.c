@@ -2654,6 +2654,7 @@ dp_wbm_int_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	struct hal_buf_info buf_info;
 	uint32_t rx_bufs_used = 0, msdu_cnt, i;
 	uint32_t rx_link_buf_info[HAL_RX_BUFFINFO_NUM_DWORDS];
+	struct rx_desc_pool *rx_desc_pool;
 
 	msdu = 0;
 
@@ -2681,10 +2682,23 @@ dp_wbm_int_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 							soc,
 							msdu_list.sw_cookie[i]);
 				qdf_assert_always(rx_desc);
+				rx_desc_pool =
+					&soc->rx_desc_buf[rx_desc->pool_id];
 				msdu = rx_desc->nbuf;
 
-				qdf_nbuf_unmap_single(soc->osdev, msdu,
-						      QDF_DMA_FROM_DEVICE);
+				dp_ipa_rx_buf_smmu_mapping_lock(soc);
+				dp_ipa_handle_rx_buf_smmu_mapping(
+						soc, msdu,
+						rx_desc_pool->buf_size,
+						false);
+
+				qdf_nbuf_unmap_nbytes_single(
+							soc->osdev,
+							msdu,
+							QDF_DMA_FROM_DEVICE,
+							rx_desc_pool->buf_size);
+				rx_desc->unmapped = 1;
+				dp_ipa_rx_buf_smmu_mapping_unlock(soc);
 
 				dp_rx_buffer_pool_nbuf_free(soc, msdu,
 							    rx_desc->pool_id);
