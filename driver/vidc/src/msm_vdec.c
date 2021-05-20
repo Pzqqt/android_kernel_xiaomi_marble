@@ -1801,7 +1801,7 @@ static int msm_vdec_release_nonref_buffers(struct msm_vidc_inst *inst)
 	list_for_each_entry(rel_buf, &inst->buffers.release.list, list) {
 		/* fw needs RO flag for FTB release buffer */
 		rel_buf->attr |= MSM_VIDC_ATTR_READ_ONLY;
-		print_vidc_buffer(VIDC_HIGH, "high", "release buf", inst, rel_buf);
+		print_vidc_buffer(VIDC_LOW, "low ", "release buf", inst, rel_buf);
 		rc = venus_hfi_release_buffer(inst, rel_buf);
 		if (rc)
 			return rc;
@@ -1814,36 +1814,13 @@ int msm_vdec_handle_release_buffer(struct msm_vidc_inst *inst,
 	struct msm_vidc_buffer *buf)
 {
 	int rc = 0;
-	struct msm_vidc_map *map;
-	bool found;
 
 	if (!inst || !buf) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 
-	print_vidc_buffer(VIDC_HIGH, "high", "release done", inst, buf);
-
-	found = false;
-	list_for_each_entry(map, &inst->mappings.output.list, list) {
-		if (map->device_addr == buf->device_addr) {
-			found = true;
-			break;
-		}
-	}
-	if (found) {
-		/*
-		 * finally remove mappings if no one using it.
-		 * refcount will be more than 1 if anyone using it.
-		 */
-		if (map->refcount == 1) {
-			rc = msm_vidc_put_delayed_unmap(inst, map);
-			if (rc)
-				print_vidc_buffer(VIDC_ERR, "err ",
-					"delayed unmap failed", inst, buf);
-		}
-	}
-
+	print_vidc_buffer(VIDC_LOW, "low ", "release done", inst, buf);
 	/* delete the buffer from release list */
 	list_del(&buf->list);
 	msm_vidc_put_vidc_buffer(inst, buf);
@@ -1888,7 +1865,7 @@ static bool is_valid_removable_buffer(struct msm_vidc_inst *inst,
 static int msm_vidc_unmap_excessive_mappings(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
-	struct msm_vidc_map *map;
+	struct msm_vidc_map *map, *temp;
 	u32 refcount_one_bufs_count = 0;
 
 	if (!inst) {
@@ -1911,12 +1888,12 @@ static int msm_vidc_unmap_excessive_mappings(struct msm_vidc_inst *inst)
 		return 0;
 
 	/* unmap these buffers as they are stale entries */
-	list_for_each_entry(map, &inst->mappings.output.list, list) {
+	list_for_each_entry_safe(map, temp, &inst->mappings.output.list, list) {
 		if (is_valid_removable_buffer(inst, map)) {
-			d_vpr_h(
+			i_vpr_l(inst,
 				"%s: type %11s, device_addr %#x, refcount %d, region %d\n",
-				__func__, buf_name(map->type), map->device_addr, map->refcount,
-				map->region);
+				__func__, buf_name(map->type), map->device_addr,
+				map->refcount, map->region);
 			rc = msm_vidc_put_delayed_unmap(inst, map);
 			if (rc)
 				return rc;
@@ -1940,10 +1917,6 @@ int msm_vdec_qbuf(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 			if (rc)
 				return rc;
 		}
-
-		rc = msm_vidc_unmap_excessive_mappings(inst);
-		if (rc)
-			return rc;
 	}
 
 	if (vb2->type == OUTPUT_META_PLANE) {
@@ -1963,6 +1936,14 @@ int msm_vdec_qbuf(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 		rc = msm_vdec_qbuf_batch(inst, vb2);
 	else
 		rc = msm_vidc_queue_buffer_single(inst, vb2);
+	if (rc)
+		return rc;
+
+	if (vb2->type == OUTPUT_MPLANE) {
+		rc = msm_vidc_unmap_excessive_mappings(inst);
+		if (rc)
+			return rc;
+	}
 
 	return rc;
 }

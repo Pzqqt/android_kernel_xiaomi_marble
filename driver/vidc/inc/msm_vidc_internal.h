@@ -43,7 +43,7 @@
 #define MAX_CAP_CHILDREN         16
 #define DEFAULT_BITSTREM_ALIGNMENT  16
 #define H265_BITSTREM_ALIGNMENT     32
-#define DEFAULT_MAX_HOST_BUF_COUNT  64
+#define DEFAULT_MAX_HOST_BUF_COUNT  128
 #define DEFAULT_MAX_HOST_BURST_BUF_COUNT 256
 #define BIT_DEPTH_8 (8 << 16 | 8)
 #define BIT_DEPTH_10 (10 << 16 | 10)
@@ -127,15 +127,15 @@
  * which might have many output buffers.
  */
 #define MAX_MAPPED_OUTPUT_COUNT 64
+#define MAX_DPB_COUNT 32
  /*
-  * max dpb count = 16
+  * max dpb count in firmware = 16
   * each dpb: 4 words - <base_address, addr_offset, data_offset>
   * dpb list array size = 16 * 4
   * dpb payload size = 16 * 4 * 4
   */
-#define MAX_DPB_COUNT 64
-#define MAX_DPB_LIST_ARRAY_SIZE (MAX_DPB_COUNT * 4)
-#define MAX_DPB_LIST_PAYLOAD_SIZE (MAX_DPB_COUNT * 4 * 4)
+#define MAX_DPB_LIST_ARRAY_SIZE (16 * 4)
+#define MAX_DPB_LIST_PAYLOAD_SIZE (16 * 4 * 4)
 
 enum msm_vidc_domain_type {
 	MSM_VIDC_ENCODER           = BIT(0),
