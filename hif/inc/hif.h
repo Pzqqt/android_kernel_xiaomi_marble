@@ -1110,6 +1110,14 @@ enum hif_pm_link_state {
 					 with no response
  * HIF_PM_HTC_STATS_PUT_HTT_ERROR: PM stats for RTPM PUT for failed HTT packets
  * HIF_PM_HTC_STATS_PUT_HTC_CLEANUP: PM stats for RTPM PUT during HTC cleanup
+ * HIF_PM_HTC_STATS_GET_HTC_KICK_QUEUES: PM stats for RTPM GET done during
+ *                                       htc_kick_queues()
+ * HIF_PM_HTC_STATS_PUT_HTC_KICK_QUEUES: PM stats for RTPM PUT done during
+ *                                       htc_kick_queues()
+ * HIF_PM_HTC_STATS_GET_HTT_FETCH_PKTS: PM stats for RTPM GET while fetching
+ *                                      HTT packets from endpoint TX queue
+ * HIF_PM_HTC_STATS_PUT_HTT_FETCH_PKTS: PM stats for RTPM PUT while fetching
+ *                                      HTT packets from endpoint TX queue
  */
 enum hif_pm_htc_stats {
 	HIF_PM_HTC_STATS_GET_HTT_RESPONSE,
@@ -1118,6 +1126,10 @@ enum hif_pm_htc_stats {
 	HIF_PM_HTC_STATS_PUT_HTT_NO_RESPONSE,
 	HIF_PM_HTC_STATS_PUT_HTT_ERROR,
 	HIF_PM_HTC_STATS_PUT_HTC_CLEANUP,
+	HIF_PM_HTC_STATS_GET_HTC_KICK_QUEUES,
+	HIF_PM_HTC_STATS_PUT_HTC_KICK_QUEUES,
+	HIF_PM_HTC_STATS_GET_HTT_FETCH_PKTS,
+	HIF_PM_HTC_STATS_PUT_HTT_FETCH_PKTS,
 };
 
 #ifdef FEATURE_RUNTIME_PM

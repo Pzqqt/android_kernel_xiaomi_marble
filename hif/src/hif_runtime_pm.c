@@ -1854,6 +1854,18 @@ void hif_pm_runtime_update_stats(struct hif_opaque_softc *hif_ctx,
 	case HIF_PM_HTC_STATS_PUT_HTC_CLEANUP:
 		rpm_ctx->pm_stats.pm_stats_htc.rtpm_put_htc_cleanup++;
 		break;
+	case HIF_PM_HTC_STATS_GET_HTC_KICK_QUEUES:
+		rpm_ctx->pm_stats.pm_stats_htc.rtpm_get_htc_kick_queues++;
+		break;
+	case HIF_PM_HTC_STATS_PUT_HTC_KICK_QUEUES:
+		rpm_ctx->pm_stats.pm_stats_htc.rtpm_put_htc_kick_queues++;
+		break;
+	case HIF_PM_HTC_STATS_GET_HTT_FETCH_PKTS:
+		rpm_ctx->pm_stats.pm_stats_htc.rtpm_get_htt_fetch_pkts++;
+		break;
+	case HIF_PM_HTC_STATS_PUT_HTT_FETCH_PKTS:
+		rpm_ctx->pm_stats.pm_stats_htc.rtpm_put_htt_fetch_pkts++;
+		break;
 	default:
 		break;
 	}
