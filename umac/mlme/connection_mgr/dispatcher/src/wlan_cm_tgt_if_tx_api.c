@@ -171,6 +171,11 @@ QDF_STATUS wlan_cm_tgt_send_roam_offload_init(struct wlan_objmgr_psoc *psoc,
 	if (!vdev)
 		return QDF_STATUS_E_INVAL;
 
+	if (wlan_vdev_mlme_get_opmode(vdev) != QDF_STA_MODE) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	roam_tx_ops = wlan_cm_roam_get_tx_ops_from_vdev(vdev);
 	if (!roam_tx_ops || !roam_tx_ops->send_roam_offload_init_req) {
 		mlme_err("CM_RSO: vdev%d send_roam_offload_init_req is NULL",
