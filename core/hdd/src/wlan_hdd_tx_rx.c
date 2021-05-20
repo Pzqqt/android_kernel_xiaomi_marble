@@ -2203,6 +2203,33 @@ void hdd_set_fisa_disallowed_for_vdev(ol_txrx_soc_handle soc, uint8_t vdev_id,
 
 #ifdef WLAN_FEATURE_DYNAMIC_RX_AGGREGATION
 /**
+ * hdd_is_chain_list_non_empty_for_clsact_qdisc() - Check if chain_list in
+ *  ingress block is non-empty for a clsact qdisc.
+ * @qdisc: pointer to clsact qdisc
+ *
+ * Return: true if chain_list is not empty else false
+ */
+static bool
+hdd_is_chain_list_non_empty_for_clsact_qdisc(struct Qdisc *qdisc)
+{
+	const struct Qdisc_class_ops *cops;
+	struct tcf_block *ingress_block;
+
+	cops = qdisc->ops->cl_ops;
+	if (qdf_unlikely(!cops || !cops->tcf_block))
+		return false;
+
+	ingress_block = cops->tcf_block(qdisc, TC_H_MIN_INGRESS, NULL);
+	if (qdf_unlikely(!ingress_block))
+		return false;
+
+	if (list_empty(&ingress_block->chain_list))
+		return false;
+	else
+		return true;
+}
+
+/**
  * hdd_rx_check_qdisc_for_adapter() - Check if any ingress qdisc is configured
  *  for given adapter
  * @adapter: pointer to HDD adapter context
@@ -2219,39 +2246,34 @@ hdd_rx_check_qdisc_for_adapter(struct hdd_adapter *adapter, uint8_t rx_ctx_id)
 	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct netdev_queue *ingress_q;
 	struct Qdisc *ingress_qdisc;
-	bool is_qdisc_ingress = false;
 
 	if (qdf_unlikely(!soc))
 		return;
 
-	/*
-	 * This additional ingress_queue NULL check is to avoid
-	 * doing RCU lock/unlock in the common scenario where
-	 * ingress_queue is not configured by default
-	 */
-	if (qdf_likely(!adapter->dev->ingress_queue))
+	if (!adapter->dev->ingress_queue)
 		goto reset_wl;
 
 	rcu_read_lock();
-	ingress_q = rcu_dereference(adapter->dev->ingress_queue);
 
+	ingress_q = rcu_dereference(adapter->dev->ingress_queue);
 	if (qdf_unlikely(!ingress_q))
 		goto reset;
 
 	ingress_qdisc = rcu_dereference(ingress_q->qdisc);
-	if (!ingress_qdisc)
+	if (qdf_unlikely(!ingress_qdisc))
 		goto reset;
 
-	is_qdisc_ingress = qdf_str_eq(ingress_qdisc->ops->id, "ingress");
-	if (!is_qdisc_ingress)
+	if (!(qdf_str_eq(ingress_qdisc->ops->id, "ingress") ||
+	      (qdf_str_eq(ingress_qdisc->ops->id, "clsact") &&
+	       hdd_is_chain_list_non_empty_for_clsact_qdisc(ingress_qdisc))))
 		goto reset;
 
 	rcu_read_unlock();
 
-	if (adapter->gro_disallowed[rx_ctx_id])
+	if (qdf_likely(adapter->gro_disallowed[rx_ctx_id]))
 		return;
 
-	hdd_debug("ingress qdisc configured disable GRO");
+	hdd_debug("ingress qdisc/filter configured disable GRO");
 	adapter->gro_disallowed[rx_ctx_id] = 1;
 	hdd_set_fisa_disallowed_for_vdev(soc, adapter->vdev_id, rx_ctx_id, 1);
 
@@ -2261,8 +2283,8 @@ reset:
 	rcu_read_unlock();
 
 reset_wl:
-	if (adapter->gro_disallowed[rx_ctx_id]) {
-		hdd_debug("ingress qdisc removed enable GRO");
+	if (qdf_unlikely(adapter->gro_disallowed[rx_ctx_id])) {
+		hdd_debug("ingress qdisc/filter removed enable GRO");
 		hdd_set_fisa_disallowed_for_vdev(soc, adapter->vdev_id,
 						 rx_ctx_id, 0);
 		adapter->gro_disallowed[rx_ctx_id] = 0;
