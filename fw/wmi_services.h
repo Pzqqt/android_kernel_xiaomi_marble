@@ -533,6 +533,7 @@ typedef  enum  {
     WMI_SERVICE_11AX_TDLS_SUPPORT = 288, /* Indicates FW supports 11ax TDLS. Host should enable 11ax on TDLS only when FW indicates the support. */
     WMI_SERVICE_11BE = 289, /* Indicates FW supports 11be */
     WMI_SERVICE_BIG_DATA_SUPPORT = 290, /* Indicates FW supports Big Data feature */
+    WMI_SERVICE_EAPOL_OVER_NWIFI = 291, /* Indicates FW supports sending eapol frames in native wifi mode even when the vdev is brought up in raw ethernet mode */
 
 
     WMI_MAX_EXT2_SERVICE
