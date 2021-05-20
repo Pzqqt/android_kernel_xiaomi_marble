@@ -1049,6 +1049,18 @@ struct per_session_report_info {
 };
 
 /**
+ * struct sscan_detector_list - Spectral scan Detector list, for given Spectral
+ * scan mode and operating BW
+ * @detectors: List of detectors
+ * @num_detectors: Number of detectors for given spectral scan mode, BW
+ *                 and target type
+ */
+struct sscan_detector_list {
+	uint8_t detectors[SPECTRAL_DETECTOR_ID_MAX];
+	uint8_t num_detectors;
+};
+
+/**
  * struct target_if_spectral - main spectral structure
  * @pdev: Pointer to pdev
  * @spectral_ops: Target if internal Spectral low level operations table
@@ -1143,6 +1155,8 @@ struct per_session_report_info {
  * @rparams: Parameters related to Spectral report structure
  * @param_min_max: Spectral parameter's minimum and maximum values
  * @finite_scan: Parameters for finite Spectral scan
+ * @detector_list: Detector list for a given Spectral scan mode and channel
+ * width, based on the target type.
  * @det_map: Map of per-session detector information keyed by the Spectral HW
  * detector id.
  * @report_info: Per session info to be filled at report level in SAMP message
@@ -1267,6 +1281,8 @@ struct target_if_spectral {
 	struct spectral_param_min_max param_min_max;
 	struct target_if_finite_spectral_scan_params
 					finite_scan[SPECTRAL_SCAN_MODE_MAX];
+	struct sscan_detector_list
+			detector_list[SPECTRAL_SCAN_MODE_MAX][CH_WIDTH_MAX];
 	struct per_session_det_map det_map[MAX_DETECTORS_PER_PDEV];
 	struct per_session_report_info report_info[SPECTRAL_SCAN_MODE_MAX];
 };

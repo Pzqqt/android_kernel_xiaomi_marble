@@ -2659,6 +2659,76 @@ target_if_spectral_timestamp_war_init(struct spectral_timestamp_war *twar)
 	twar->target_reset_count = 0;
 }
 
+#ifdef OPTIMIZED_SAMP_MESSAGE
+/**
+ * target_if_spectral_detector_list_init() - Initialize Spectral detector list
+ * based on target type
+ * @spectral: Pointer to Spectral target_if
+ *
+ * Function to initialize Spectral detector list for possible combinations of
+ * Spectral scan mode and channel width, based on target type.
+ *
+ * Return: Success/Failure
+ */
+static QDF_STATUS
+target_if_spectral_detector_list_init(struct target_if_spectral *spectral)
+{
+	struct sscan_detector_list *det_list;
+	enum spectral_scan_mode smode;
+	enum phy_ch_width ch_width;
+
+	if (!spectral) {
+		spectral_err_rl("Spectral LMAC object is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	/**
+	 * We assume there are 2 detectors. The Detector ID coming first will
+	 * always be pri80 detector, and second detector for sec80.
+	 */
+	ch_width = CH_WIDTH_20MHZ;
+	for (; ch_width <= CH_WIDTH_80P80MHZ; ch_width++) {
+		/* Normal spectral scan */
+		smode = SPECTRAL_SCAN_MODE_NORMAL;
+		det_list = &spectral->detector_list[smode][ch_width];
+		det_list->num_detectors = 1;
+
+		det_list->detectors[0] = SPECTRAL_DETECTOR_ID_0;
+		if (is_ch_width_160_or_80p80(ch_width) &&
+		    spectral->rparams.fragmentation_160[smode]) {
+			det_list->num_detectors += 1;
+			det_list->detectors[1] = SPECTRAL_DETECTOR_ID_1;
+		}
+
+		/* Agile spectral scan */
+		smode = SPECTRAL_SCAN_MODE_AGILE;
+		det_list = &spectral->detector_list[smode][ch_width];
+		det_list->num_detectors = 1;
+
+		if (spectral->rparams.fragmentation_160[smode]) {
+			/**
+			 * Skip to next iteration if 160/80p80 MHz for Agile
+			 * scan. Only 20/40/80 MHz is supported on platforms
+			 * with fragmentation, as only 1 detector is available.
+			 */
+			if (is_ch_width_160_or_80p80(ch_width))
+				continue;
+			det_list->detectors[0] = SPECTRAL_DETECTOR_ID_2;
+		} else {
+			det_list->detectors[0] = SPECTRAL_DETECTOR_ID_1;
+		}
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+
+static QDF_STATUS
+target_if_spectral_detector_list_init(struct target_if_spectral *spectral)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* OPTIMIZED_SAMP_MESSAGE */
+
 /**
  * target_if_pdev_spectral_init() - Initialize target_if Spectral
  * functionality for the given pdev
@@ -2846,6 +2916,8 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 		if (spectral->spectral_gen == SPECTRAL_GEN3)
 			init_160mhz_delivery_state_machine(spectral);
 	}
+
+	target_if_spectral_detector_list_init(spectral);
 
 	return spectral;
 
