@@ -983,6 +983,14 @@ endif
 endif
 endif
 
+ifeq ($(CONFIG_CNSS_QCA6490), y)
+ifeq ($(CONFIG_IPA_OFFLOAD), y)
+ifneq ($(CONFIG_SLUB_DEBUG_ON), y)
+CONFIG_HIF_CPU_CLEAR_AFFINITY := y
+endif
+endif
+endif
+
 #Enable Signed firmware support for split binary format
 CONFIG_QCA_SIGNED_SPLIT_BINARY_SUPPORT := n
 
