@@ -15411,40 +15411,52 @@ static int __wlan_hdd_cfg80211_get_usable_channel(struct wiphy *wiphy,
 {
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct get_usable_chan_req_params req_msg = {0};
-	struct get_usable_chan_res_params res_msg[NUM_CHANNELS];
+	struct get_usable_chan_res_params *res_msg;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_USABLE_CHANNELS_MAX + 1];
-	int retval;
-	uint32_t count;
+	int ret = 0;
+	uint32_t count = 0;
 	QDF_STATUS status;
 
-	retval = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != retval)
-		return retval;
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	res_msg = qdf_mem_malloc(NUM_CHANNELS *
+				 sizeof(*res_msg));
+
+	if (!res_msg) {
+		hdd_err("res_msg invalid");
+		return -EINVAL;
+	}
 
 	if (wlan_cfg80211_nla_parse(
 				tb, QCA_WLAN_VENDOR_ATTR_USABLE_CHANNELS_MAX,
 				data, data_len, get_usable_channel_policy)) {
 		hdd_err("Invalid ATTR");
-		return -EINVAL;
+		ret = -EINVAL;
+		goto err;
 	}
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_USABLE_CHANNELS_BAND_MASK]) {
 		hdd_err("band mask not present");
-		return -EINVAL;
+		ret = -EINVAL;
+		goto err;
 	}
 	req_msg.band_mask =
 		nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_USABLE_CHANNELS_BAND_MASK]);
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_USABLE_CHANNELS_IFACE_MODE_MASK]) {
 		hdd_err("iface mode mask not present");
-		return -EINVAL;
+		ret = -EINVAL;
+		goto err;
 	}
 	req_msg.iface_mode_mask = nla_get_u32(
 		tb[QCA_WLAN_VENDOR_ATTR_USABLE_CHANNELS_IFACE_MODE_MASK]);
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_USABLE_CHANNELS_FILTER_MASK]) {
 		hdd_err("usable channels filter mask not present");
-		return -EINVAL;
+		ret = -EINVAL;
+		goto err;
 	}
 	req_msg.filter_mask =
 	   nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_USABLE_CHANNELS_FILTER_MASK]);
@@ -15457,16 +15469,22 @@ static int __wlan_hdd_cfg80211_get_usable_channel(struct wiphy *wiphy,
 					     res_msg, &count);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("get usable channel failed %d", status);
-		return -EINVAL;
+		ret = -EINVAL;
+		goto err;
 	}
 	hdd_debug("usable channel count : %d", count);
 
-	status = hdd_send_usable_channel(hdd_ctx, res_msg, count, tb);
-	if (status) {
+	ret = hdd_send_usable_channel(hdd_ctx, res_msg, count, tb);
+	if (ret) {
 		hdd_err("failed to send usable_channels");
-		return status;
+		ret = -EINVAL;
+		goto err;
 	}
 
+err:
+	qdf_mem_free(res_msg);
+	if (ret)
+		return ret;
 	return qdf_status_to_os_return(status);
 }
 
