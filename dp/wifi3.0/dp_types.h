@@ -3112,6 +3112,16 @@ struct dp_peer_ast_params {
 	uint8_t flowQ;
 };
 
+#ifdef WLAN_SUPPORT_SCS
+/* SCS procedures macros */
+/* SCS Procedures - SCS parameters
+ * obtained from SCS request are stored
+ * in a peer based database for traffic
+ * classification.
+ */
+#define IEEE80211_SCS_MAX_NO_OF_ELEM 10
+#endif
+
 #ifdef WLAN_SUPPORT_MSCS
 /*MSCS Procedure based macros */
 #define IEEE80211_MSCS_MAX_ELEM_SIZE    5
@@ -3289,6 +3299,11 @@ struct dp_peer {
 
 	uint8_t peer_state;
 	qdf_spinlock_t peer_state_lock;
+#ifdef WLAN_SUPPORT_SCS
+	struct cdp_scs_params scs[IEEE80211_SCS_MAX_NO_OF_ELEM];
+	bool scs_is_active;
+	uint8_t no_of_scs_sessions;
+#endif
 #ifdef WLAN_SUPPORT_MSCS
 	struct dp_peer_mscs_parameter mscs_ipv4_parameter, mscs_ipv6_parameter;
 	bool mscs_active;

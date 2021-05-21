@@ -96,6 +96,76 @@ cdp_update_filter_neighbour_peers(ol_txrx_soc_handle soc,
 }
 #endif /* ATH_SUPPORT_NAC || ATH_SUPPORT_NAC_RSSI*/
 
+#ifdef WLAN_SUPPORT_SCS
+/**
+ * @brief enable/disable the SCS feature.
+ * @details
+ * This defines interface function to enable/disable the SCS
+ * procedure based data parameters so that the data path layer
+ * can access it.
+ * @param soc - the pointer to soc object
+ * @param vdev_id - id of the pointer to vdev
+ * @param macaddr - the address of neighbour peer
+ * @param is_active - Bit to indicate SCS active/inactive
+ */
+static inline QDF_STATUS
+cdp_enable_scs_params(ol_txrx_soc_handle soc,
+		      struct qdf_mac_addr *macaddr,
+		      uint8_t vdev_id,
+		      bool is_active)
+{
+	if (!soc || !soc->ops) {
+		dp_cdp_debug("Invalid Instance:");
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_enable_scs_params)
+		return QDF_STATUS_E_FAILURE;
+	return soc->ops->ctrl_ops->txrx_enable_scs_params
+		(soc, macaddr, vdev_id, is_active);
+}
+
+/**
+ * @brief cdp_record_scs_params() - record the SCS data
+ * and send it to the data path
+ *
+ * @param soc - the pointer to soc object
+ * @param vdev_id - id of the pointer to vdev
+ * @param macaddr - the address of neighbour peer
+ * @param scs_params - Structure having SCS params
+ * obtained from handshake
+ * @param entry_ctr - Index # of the entry in the
+ * node database having a non-zero SCSID
+ * @param scs_sessions - Number of SCS sessions
+ *
+ * @details
+ * Interface function to record the SCS procedure
+ * based data parameters so that the data path layer can access it.
+ * @return - QDF_STATUS
+ */
+static inline QDF_STATUS
+cdp_record_scs_params(ol_txrx_soc_handle soc,
+		      struct qdf_mac_addr *macaddr, uint8_t vdev_id,
+		      struct cdp_scs_params *scs_params,
+		      uint8_t entry_ctr, uint8_t scs_sessions)
+{
+	if (!soc || !soc->ops) {
+		dp_cdp_debug("Invalid Instance:");
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_record_scs_params)
+		return QDF_STATUS_E_FAILURE;
+	return soc->ops->ctrl_ops->txrx_record_scs_params
+		(soc, macaddr, vdev_id, scs_params,
+		 entry_ctr, scs_sessions);
+}
+#endif
+
 #ifdef WLAN_SUPPORT_MSCS
 /**
  * @brief record the MSCS data and send it to the Data path

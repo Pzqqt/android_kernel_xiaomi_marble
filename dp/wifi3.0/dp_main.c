@@ -7518,6 +7518,140 @@ fail0:
 }
 #endif /* ATH_SUPPORT_NAC_RSSI || ATH_SUPPORT_NAC */
 
+#ifdef WLAN_SUPPORT_SCS
+/*
+ * dp_enable_scs_params - Enable/Disable SCS procedures
+ * @soc - Datapath soc handle
+ * @peer_mac - STA Mac address
+ * @vdev_id - ID of the vdev handle
+ * @active - Flag to set SCS active/inactive
+ * return type - QDF_STATUS - Success/Invalid
+ */
+static QDF_STATUS
+dp_enable_scs_params(struct cdp_soc_t *soc_hdl, struct qdf_mac_addr
+		     *peer_mac,
+		     uint8_t vdev_id,
+		     bool is_active)
+{
+	struct dp_peer *peer;
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
+	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
+
+	peer = dp_peer_find_hash_find(soc, peer_mac->bytes, 0, vdev_id,
+				      DP_MOD_ID_CDP);
+
+	if (!peer) {
+		dp_err("Peer is NULL!");
+		goto fail;
+	}
+
+	peer->scs_is_active = is_active;
+	status = QDF_STATUS_SUCCESS;
+
+fail:
+	if (peer)
+		dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
+	return status;
+}
+
+/*
+ * @brief dp_copy_scs_params - SCS Parameters sent by STA
+ * is copied from the cdp layer to the dp layer
+ * These parameters are then used by the peer
+ * for traffic classification.
+ *
+ * @param peer - peer struct
+ * @param scs_params - cdp layer params
+ * @idx - SCS_entry index obtained from the
+ * node database with a given SCSID
+ * @return void
+ */
+void
+dp_copy_scs_params(struct dp_peer *peer,
+		   struct cdp_scs_params *scs_params,
+		   uint8_t idx)
+{
+	uint8_t tidx = 0;
+	uint8_t tclas_elem;
+
+	peer->scs[idx].scsid = scs_params->scsid;
+	peer->scs[idx].access_priority =
+		scs_params->access_priority;
+	peer->scs[idx].tclas_elements =
+		scs_params->tclas_elements;
+	peer->scs[idx].tclas_process =
+		scs_params->tclas_process;
+
+	tclas_elem = peer->scs[idx].tclas_elements;
+
+	while (tidx < tclas_elem) {
+		qdf_mem_copy(&peer->scs[idx].tclas[tidx],
+			     &scs_params->tclas[tidx],
+			     sizeof(struct cdp_tclas_tuple));
+		tidx++;
+	}
+}
+
+/*
+ * @brief dp_record_scs_params() - Copying the SCS params to a
+ * peer based database.
+ *
+ * @soc - Datapath soc handle
+ * @peer_mac - STA Mac address
+ * @vdev_id - ID of the vdev handle
+ * @scs_params - Structure having SCS parameters obtained
+ * from handshake
+ * @idx - SCS_entry index obtained from the
+ * node database with a given SCSID
+ * @scs_sessions - Total # of SCS sessions active
+ *
+ * @details
+ * SCS parameters sent by the STA in
+ * the SCS Request to the AP. The AP makes a note of these
+ * parameters while sending the MSDUs to the STA, to
+ * send the downlink traffic with correct User priority.
+ *
+ * return type - QDF_STATUS - Success/Invalid
+ */
+static QDF_STATUS
+dp_record_scs_params(struct cdp_soc_t *soc_hdl, struct qdf_mac_addr
+		     *peer_mac,
+		     uint8_t vdev_id,
+		     struct cdp_scs_params *scs_params,
+		     uint8_t idx,
+		     uint8_t scs_sessions)
+{
+	struct dp_peer *peer;
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
+	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
+
+	peer = dp_peer_find_hash_find(soc, peer_mac->bytes, 0, vdev_id,
+				      DP_MOD_ID_CDP);
+
+	if (!peer) {
+		dp_err("Peer is NULL!");
+		goto fail;
+	}
+
+	if (idx >= IEEE80211_SCS_MAX_NO_OF_ELEM)
+		goto fail;
+
+	/* SCS procedure for the peer is activated
+	 * as soon as we get this information from
+	 * the control path, unless explicitly disabled.
+	 */
+	peer->scs_is_active = 1;
+	dp_copy_scs_params(peer, scs_params, idx);
+	status = QDF_STATUS_SUCCESS;
+	peer->no_of_scs_sessions = scs_sessions;
+
+fail:
+	if (peer)
+		dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
+	return status;
+}
+#endif
+
 #ifdef WLAN_SUPPORT_MSCS
 /*
  * dp_record_mscs_params - MSCS parameters sent by the STA in
@@ -12266,6 +12400,10 @@ static struct cdp_ctrl_ops dp_ops_ctrl = {
 #endif
 #ifdef WLAN_SUPPORT_MSCS
 	.txrx_record_mscs_params = dp_record_mscs_params,
+#endif
+#ifdef WLAN_SUPPORT_SCS
+	.txrx_enable_scs_params = dp_enable_scs_params,
+	.txrx_record_scs_params = dp_record_scs_params,
 #endif
 	.set_key = dp_set_michael_key,
 	.txrx_get_vdev_param = dp_get_vdev_param,

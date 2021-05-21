@@ -719,6 +719,24 @@ struct cdp_ctrl_ops {
 						   uint8_t *rssi);
 #endif
 
+#ifdef WLAN_SUPPORT_SCS
+	QDF_STATUS
+		(*txrx_enable_scs_params) (
+			   struct cdp_soc_t *soc, struct qdf_mac_addr
+			   *macaddr,
+			   uint8_t vdev_id,
+			   bool is_active);
+
+	QDF_STATUS
+		(*txrx_record_scs_params) (
+			   struct cdp_soc_t *soc, struct qdf_mac_addr
+			   *macaddr,
+			   uint8_t vdev_id,
+			   struct cdp_scs_params *scs_params,
+			   uint8_t entry_ctr,
+			   uint8_t scs_sessions);
+#endif
+
 #ifdef WLAN_SUPPORT_MSCS
 	QDF_STATUS
 		(*txrx_record_mscs_params) (
