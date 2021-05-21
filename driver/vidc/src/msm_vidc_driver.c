@@ -4942,10 +4942,9 @@ static int msm_vidc_check_mbpf_supported(struct msm_vidc_inst *inst)
 		if (instance->state == MSM_VIDC_ERROR)
 			continue;
 
-		/* ignore thumbnail, image, and non realtime sessions */
+		/* ignore thumbnail and image sessions */
 		if (is_thumbnail_session(instance) ||
-			is_image_session(instance) ||
-			!is_realtime_session(instance))
+			is_image_session(instance))
 			continue;
 
 		mbpf += msm_vidc_get_mbs_per_frame(instance);
