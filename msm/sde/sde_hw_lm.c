@@ -422,13 +422,18 @@ struct sde_hw_mixer *sde_hw_lm_init(enum sde_lm idx,
 	/* Assign ops */
 	c->idx = idx;
 	c->cap = cfg;
-	_setup_mixer_ops(m, &c->ops, c->cap->features);
 
 	rc = sde_hw_blk_init(&c->base, SDE_HW_BLK_LM, idx, &sde_hw_ops);
 	if (rc) {
 		SDE_ERROR("failed to init hw blk %d\n", rc);
 		goto blk_init_error;
 	}
+
+	/* Dummy mixers should not setup ops and not be added to dump range */
+	if (cfg->dummy_mixer)
+		return c;
+
+	_setup_mixer_ops(m, &c->ops, c->cap->features);
 
 	sde_dbg_reg_register_dump_range(SDE_DBG_NAME, cfg->name, c->hw.blk_off,
 			c->hw.blk_off + c->hw.length, c->hw.xin_id);

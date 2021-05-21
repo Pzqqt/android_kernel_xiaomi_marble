@@ -2175,8 +2175,7 @@ void sde_hw_mixer_set_preference(struct sde_mdss_cfg *sde_cfg, u32 num_lm,
 	}
 }
 
-static int sde_mixer_parse_dt(struct device_node *np,
-						struct sde_mdss_cfg *sde_cfg)
+static int sde_mixer_parse_dt(struct device_node *np, struct sde_mdss_cfg *sde_cfg)
 {
 	int rc = 0, i, j;
 	u32 off_count, blend_off_count, max_blendstages, lm_pair_mask;
@@ -2290,6 +2289,7 @@ static int sde_mixer_parse_dt(struct device_node *np,
 			if (mixer->base == dummy_mixer_base) {
 				mixer->base = 0x0;
 				mixer->len = 0;
+				mixer->dummy_mixer = true;
 			}
 		}
 
