@@ -4641,6 +4641,12 @@ roam_control_policy[QCA_ATTR_ROAM_CONTROL_MAX + 1] = {
 	[QCA_ATTR_ROAM_CONTROL_SCAN_SCHEME] = {.type = NLA_U32},
 	[QCA_ATTR_ROAM_CONTROL_CONNECTED_RSSI_THRESHOLD] = {.type = NLA_U32},
 	[QCA_ATTR_ROAM_CONTROL_CANDIDATE_RSSI_THRESHOLD] = {.type = NLA_U32},
+	[QCA_ATTR_ROAM_CONTROL_CANDIDATE_RSSI_THRESHOLD_2P4GHZ] = {
+			.type = NLA_U32},
+	[QCA_ATTR_ROAM_CONTROL_CANDIDATE_RSSI_THRESHOLD_5GHZ] = {
+			.type = NLA_U32},
+	[QCA_ATTR_ROAM_CONTROL_CANDIDATE_RSSI_THRESHOLD_6GHZ] = {
+			.type = NLA_U32},
 	[QCA_ATTR_ROAM_CONTROL_USER_REASON] = {.type = NLA_U32},
 	[QCA_ATTR_ROAM_CONTROL_SCAN_SCHEME_TRIGGERS] = {.type = NLA_U32},
 };
@@ -5178,7 +5184,25 @@ hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
 
 	attr = tb2[QCA_ATTR_ROAM_CONTROL_CANDIDATE_RSSI_THRESHOLD];
 	if (attr)
-		param.candidate_rssi_threshold = nla_get_u32(attr);
+		param.candidate_rssi_threshold_2g = nla_get_u32(attr);
+
+	attr = tb2[QCA_ATTR_ROAM_CONTROL_CANDIDATE_RSSI_THRESHOLD_2P4GHZ];
+	if (attr)
+		param.candidate_rssi_threshold_2g = nla_get_u32(attr);
+
+	attr = tb2[QCA_ATTR_ROAM_CONTROL_CANDIDATE_RSSI_THRESHOLD_5GHZ];
+	if (attr)
+		param.candidate_rssi_threshold_5g = nla_get_u32(attr);
+	else
+		param.candidate_rssi_threshold_5g =
+					param.candidate_rssi_threshold_2g;
+
+	attr = tb2[QCA_ATTR_ROAM_CONTROL_CANDIDATE_RSSI_THRESHOLD_6GHZ];
+	if (attr)
+		param.candidate_rssi_threshold_6g = nla_get_u32(attr);
+	else
+		param.candidate_rssi_threshold_6g =
+					param.candidate_rssi_threshold_2g;
 
 	attr = tb2[QCA_ATTR_ROAM_CONTROL_USER_REASON];
 	if (attr)
