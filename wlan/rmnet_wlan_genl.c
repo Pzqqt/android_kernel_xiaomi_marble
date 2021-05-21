@@ -13,6 +13,7 @@
 #include <linux/netdevice.h>
 #include "rmnet_wlan_genl.h"
 #include "rmnet_wlan.h"
+#include "rmnet_wlan_connection.h"
 static struct nla_policy DATARMNET19c5fce390[DATARMNETf6bbad94a5+
 (0xd26+209-0xdf6)]={[DATARMNET8c062d7709]=NLA_POLICY_EXACT_LEN(sizeof(struct 
 DATARMNETb89ecedefc)),};static struct nla_policy DATARMNET0381a65e93[
@@ -110,7 +111,7 @@ GENL_SET_ERR_MSG(DATARMNET54338da2ff,
 "\x4d\x75\x73\x74\x20\x73\x70\x65\x63\x69\x66\x79\x20\x46\x57\x44\x20\x64\x65\x76\x69\x63\x65\x20\x61\x6e\x64\x20\x61\x64\x64\x72\x65\x73\x73"
 );return-EINVAL;}DATARMNETef7cdd7b6b=DATARMNET54338da2ff->attrs[
 DATARMNETea4b56dc2b];DATARMNETd7f4d7c495=nla_data(DATARMNETef7cdd7b6b);if(strchr
-(DATARMNETd7f4d7c495,((char)(0x1076+2199-0x18d3)))){if(in6_pton(
+(DATARMNETd7f4d7c495,((char)(0x144b+4507-0x25ac)))){if(in6_pton(
 DATARMNETd7f4d7c495,nla_len(DATARMNETef7cdd7b6b),DATARMNET2d4b4cfc9e.
 DATARMNET5700daac01.s6_addr,-(0xd26+209-0xdf6),NULL)!=(0xd26+209-0xdf6)){
 GENL_SET_ERR_MSG(DATARMNET54338da2ff,
@@ -137,7 +138,7 @@ GENL_SET_ERR_MSG(DATARMNET54338da2ff,
 "\x4d\x75\x73\x74\x20\x73\x70\x65\x63\x69\x66\x79\x20\x46\x57\x44\x20\x64\x65\x76\x69\x63\x65\x20\x61\x6e\x64\x20\x61\x64\x64\x72\x65\x73\x73"
 );return-EINVAL;}DATARMNETef7cdd7b6b=DATARMNET54338da2ff->attrs[
 DATARMNETea4b56dc2b];DATARMNETd7f4d7c495=nla_data(DATARMNETef7cdd7b6b);if(strchr
-(DATARMNETd7f4d7c495,((char)(0x1424+3597-0x21f7)))){if(in6_pton(
+(DATARMNETd7f4d7c495,((char)(0x2a4+5778-0x18fc)))){if(in6_pton(
 DATARMNETd7f4d7c495,nla_len(DATARMNETef7cdd7b6b),DATARMNET2d4b4cfc9e.
 DATARMNET5700daac01.s6_addr,-(0xd26+209-0xdf6),NULL)!=(0xd26+209-0xdf6)){
 GENL_SET_ERR_MSG(DATARMNET54338da2ff,
@@ -184,17 +185,24 @@ DATARMNET58eca5265b(DATARMNET6d50a30ec2,DATARMNETa6aec23397),DATARMNET58eca5265b
 DATARMNET61e8f41aae={.name=DATARMNET040266f460,.version=DATARMNET7c442b83bb,.
 maxattr=DATARMNETebcc30fe04,.policy=DATARMNET0381a65e93,.ops=DATARMNETf9df19988d
 ,.n_ops=ARRAY_SIZE(DATARMNETf9df19988d),};static int __init DATARMNET7eb0fa5c8f(
-void){int DATARMNET61c2303133;pr_info(
+void){int DATARMNET61c2303133=(0xd2d+202-0xdf7);pr_info(
 "\x25\x73\x28\x29\x3a\x20\x72\x6d\x6e\x65\x74\x5f\x77\x6c\x61\x6e\x20\x69\x6e\x69\x74\x69\x61\x6c\x69\x7a\x69\x6e\x67" "\n"
 ,__func__);DATARMNET61c2303133=genl_register_family(&DATARMNET61e8f41aae);if(
 DATARMNET61c2303133){pr_err(
 "\x25\x73\x28\x29\x3a\x20\x72\x65\x67\x69\x73\x74\x65\x72\x69\x6e\x67\x20\x66\x61\x6d\x69\x6c\x79\x20\x66\x61\x69\x6c\x65\x64\x3a\x20\x25\x69" "\n"
-,__func__,DATARMNET61c2303133);genl_unregister_family(&DATARMNET61e8f41aae);
-return DATARMNET61c2303133;}return(0xd2d+202-0xdf7);}static void __exit 
+,__func__,DATARMNET61c2303133);goto DATARMNET27d4697979;}DATARMNET61c2303133=
+DATARMNET9f106ed933();if(DATARMNET61c2303133){pr_err(
+"\x25\x73\x28\x29\x3a\x20\x63\x6f\x6e\x6e\x65\x63\x74\x69\x6f\x6e\x20\x6d\x61\x6e\x61\x67\x65\x6d\x65\x6e\x74\x20\x69\x6e\x69\x74\x20\x66\x61\x69\x6c\x65\x64\x3a\x20\x25\x69" "\n"
+,__func__,DATARMNET61c2303133);goto DATARMNETb042feb7e2;}return(0xd2d+202-0xdf7)
+;DATARMNETb042feb7e2:genl_unregister_family(&DATARMNET61e8f41aae);
+DATARMNET27d4697979:return DATARMNET61c2303133;}static void __exit 
 DATARMNET7a381832d5(void){int DATARMNET61c2303133;pr_info(
 "\x25\x73\x28\x29\x3a\x20\x72\x6d\x6e\x65\x74\x5f\x77\x6c\x61\x6e\x20\x65\x78\x69\x74\x69\x6e\x67" "\n"
-,__func__);DATARMNETfae36afa03();DATARMNET61c2303133=genl_unregister_family(&
-DATARMNET61e8f41aae);if(DATARMNET61c2303133)pr_err(
+,__func__);DATARMNET61c2303133=DATARMNETf56cbaa2b1();if(DATARMNET61c2303133)
+pr_err(
+"\x25\x73\x28\x29\x3a\x20\x63\x6f\x6e\x6e\x65\x63\x74\x69\x6f\x6e\x20\x6d\x61\x6e\x61\x67\x65\x6d\x65\x6e\x74\x20\x64\x65\x2d\x69\x6e\x69\x74\x20\x66\x61\x69\x6c\x65\x64\x3a\x20\x25\x69" "\n"
+,__func__,DATARMNET61c2303133);DATARMNETfae36afa03();DATARMNET61c2303133=
+genl_unregister_family(&DATARMNET61e8f41aae);if(DATARMNET61c2303133)pr_err(
 "\x25\x73\x28\x29\x3a\x20\x75\x6e\x72\x65\x67\x69\x73\x74\x65\x72\x20\x66\x61\x6d\x69\x6c\x79\x20\x66\x61\x69\x6c\x65\x64\x3a\x20\x25\x69" "\n"
 ,__func__,DATARMNET61c2303133);}MODULE_LICENSE("\x47\x50\x4c\x20\x76\x32");
 module_init(DATARMNET7eb0fa5c8f);module_exit(DATARMNET7a381832d5);

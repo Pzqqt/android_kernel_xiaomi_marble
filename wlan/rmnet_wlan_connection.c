@@ -101,9 +101,7 @@ notifier_block*DATARMNET272c159b3c,unsigned long DATARMNET7f045a1e6e,void*data){
 struct net_device*DATARMNET00dcb79bc4=netdev_notifier_info_to_dev(data);if(!
 DATARMNET00dcb79bc4||strncmp(DATARMNET00dcb79bc4->name,
 "\x72\x5f\x72\x6d\x6e\x65\x74\x5f\x64\x61\x74\x61",(0xd19+238-0xdfb)))return 
-NOTIFY_DONE;if(!strncmp(DATARMNET00dcb79bc4->name,
-"\x72\x5f\x72\x6d\x6e\x65\x74\x5f\x64\x61\x74\x61\x30",(0xd12+245-0xdfa)))return
- NOTIFY_DONE;switch(DATARMNET7f045a1e6e){case NETDEV_UNREGISTER:
+NOTIFY_DONE;switch(DATARMNET7f045a1e6e){case NETDEV_UNREGISTER:
 netdev_rx_handler_unregister(DATARMNET00dcb79bc4);DATARMNETbc6bd11f47(
 DATARMNET00dcb79bc4);break;case NETDEV_REGISTER:if(netdev_rx_handler_register(
 DATARMNET00dcb79bc4,DATARMNET68fe094884,NULL))pr_err(
