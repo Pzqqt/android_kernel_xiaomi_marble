@@ -455,7 +455,7 @@ int ipahal_nat_is_entry_zeroed(enum ipahal_nat_type nat_type, void *entry,
 		"requested NAT type %d is invalid\n", nat_type))
 		return -EINVAL;
 
-	IPAHAL_DBG("Determine whether the entry is zeroed for NAT type=%s\n",
+	IPAHAL_DBG_LOW("Determine whether the entry is zeroed for NAT type=%s\n",
 		ipahal_nat_type_str(nat_type));
 
 	nat_ptr =
@@ -463,7 +463,7 @@ int ipahal_nat_is_entry_zeroed(enum ipahal_nat_type nat_type, void *entry,
 
 	*entry_zeroed = nat_ptr->is_entry_zeroed(entry);
 
-	IPAHAL_DBG("The entry is %szeroed\n", (*entry_zeroed) ? "" : "not ");
+	IPAHAL_DBG_LOW("The entry is %szeroed\n", (*entry_zeroed) ? "" : "not ");
 
 	return 0;
 }
