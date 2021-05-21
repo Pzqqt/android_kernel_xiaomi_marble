@@ -1056,18 +1056,7 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 		if ((size_aligned_width * size_aligned_height) > \
 			(3840 * 2160)) \
 		{ \
-			if (num_vpp_pipes == 4) \
-			{ \
-				size_single_pipe_eval = bitbin_size / 4; \
-			} \
-			else if (num_vpp_pipes == 2) \
-			{ \
-				size_single_pipe_eval = bitbin_size / 2; \
-			} \
-			else if (num_vpp_pipes == 1) \
-			{ \
-				size_single_pipe_eval = bitbin_size; \
-			} \
+			size_single_pipe_eval = (bitbin_size / num_vpp_pipes); \
 		} \
 		else if (num_vpp_pipes > 2) \
 		{ \
@@ -1112,11 +1101,19 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 			total_bitbin_buffers = 1; \
 			bitbin_size = bitstream_size; \
 		} \
-		SIZE_ENC_SINGLE_PIPE(size_single_pipe, rc_type, bitbin_size, \
-			num_vpp_pipes, frame_width, frame_height, lcu_size); \
-		bitbin_size = size_single_pipe * num_vpp_pipes; \
-		_size = HFI_ALIGN(bitbin_size, VENUS_DMA_ALIGNMENT) * \
-				total_bitbin_buffers + 512; \
+		if (total_bitbin_buffers > 0) \
+		{ \
+			SIZE_ENC_SINGLE_PIPE(size_single_pipe, rc_type, bitbin_size, \
+				num_vpp_pipes, frame_width, frame_height, lcu_size); \
+			bitbin_size = size_single_pipe * num_vpp_pipes; \
+			_size = HFI_ALIGN(bitbin_size, VENUS_DMA_ALIGNMENT) * \
+					total_bitbin_buffers + 512; \
+		} \
+		else \
+		/* Avoid 512 Bytes allocation in case of 1Pipe HEVC Direct Mode*/\
+		{ \
+			_size = 0; \
+		} \
 	} while (0)
 
 #define HFI_BUFFER_BIN_H264E(_size, rc_type, frame_width, frame_height, \
@@ -1254,27 +1251,6 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 #define SIZE_LINE_BUF_SDE(frame_width_coded) HFI_ALIGN((256 + \
 		(16 * ((frame_width_coded) >> 4))), VENUS_DMA_ALIGNMENT)
 
-#define SIZE_SE_STATS_BUF(_size, frame_width_coded, frame_height_coded, \
-			num_lcu_in_frame) \
-	do \
-	{ \
-		if (((frame_width_coded) * (frame_height_coded)) > \
-			(4096 * 2160)) \
-		{ \
-			_size = 0; \
-		} \
-		else if (((frame_width_coded) * (frame_height_coded)) > \
-			(1920 * 1088)) \
-		{ \
-			_size = (40 * 4 * num_lcu_in_frame + 256 + 256); \
-		} \
-		else \
-		{ \
-			_size = (1024 * num_lcu_in_frame + 256 + 256); \
-		} \
-		_size = HFI_ALIGN(se_stats_buf_size, VENUS_DMA_ALIGNMENT) * 2; \
-	} while (0)
-
 #define SIZE_BSE_SLICE_CMD_BUF ((((8192 << 2) + 7) & (~7)) * 6)
 #define SIZE_BSE_REG_BUF ((((512 << 3) + 7) & (~7)) * 4)
 #define SIZE_VPP_REG_BUF ((((HFI_VENUS_VPPSG_MAX_REGISTERS << 3) +\
@@ -1403,8 +1379,7 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 		HFI_U32 width_in_lcus = 0, height_in_lcus = 0, \
 		frame_width_coded = 0, frame_height_coded = 0, \
 		num_lcu_in_frame = 0, num_lcumb = 0; \
-		HFI_U32	frame_rc_buf_size = 0, \
-			se_stats_buf_size = 0; \
+		HFI_U32	frame_rc_buf_size = 0; \
 		width_in_lcus = ((frame_width) + (lcu_size)-1) / (lcu_size); \
 		height_in_lcus = ((frame_height) + (lcu_size)-1) / (lcu_size); \
 		num_lcu_in_frame = width_in_lcus * height_in_lcus; \
@@ -1414,15 +1389,12 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 		((frame_width_coded + lcu_size * 8) / lcu_size); \
 		SIZE_FRAME_RC_BUF_SIZE(frame_rc_buf_size, standard, \
 		frame_height_coded, num_vpp_pipes_enc); \
-		SIZE_SE_STATS_BUF(se_stats_buf_size, frame_width_coded, \
-		frame_height_coded, num_lcu_in_frame); \
 		_size = SIZE_ENC_SLICE_INFO_BUF(num_lcu_in_frame) + \
 			   SIZE_SLICE_CMD_BUFFER + \
 			   SIZE_SPS_PPS_SLICE_HDR + \
 			   frame_rc_buf_size + \
 			   ENC_BITCNT_BUF_SIZE(num_lcu_in_frame) + \
 			   ENC_BITMAP_BUF_SIZE(num_lcu_in_frame) + \
-			   se_stats_buf_size + \
 			   SIZE_BSE_SLICE_CMD_BUF + \
 			   SIZE_BSE_REG_BUF + \
 			   SIZE_VPP_REG_BUF + \
