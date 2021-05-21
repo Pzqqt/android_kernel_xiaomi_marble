@@ -1855,7 +1855,7 @@ static bool is_valid_removable_buffer(struct msm_vidc_inst *inst,
 	struct msm_vidc_map *map)
 {
 	bool found = false;
-	struct msm_vidc_buffer *ro_buf;
+	struct msm_vidc_buffer *buf;
 
 	if (!inst || !map) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1865,8 +1865,15 @@ static bool is_valid_removable_buffer(struct msm_vidc_inst *inst,
 	if (map->refcount != 1)
 		return false;
 
-	list_for_each_entry(ro_buf, &inst->buffers.read_only.list, list) {
-		if (map->device_addr == ro_buf->device_addr) {
+	list_for_each_entry(buf, &inst->buffers.read_only.list, list) {
+		if (map->device_addr == buf->device_addr) {
+			found = true;
+			break;
+		}
+	}
+
+	list_for_each_entry(buf, &inst->buffers.release.list, list) {
+		if (map->device_addr == buf->device_addr) {
 			found = true;
 			break;
 		}
@@ -1891,9 +1898,9 @@ static int msm_vidc_unmap_excessive_mappings(struct msm_vidc_inst *inst)
 
 	/*
 	 * count entries from map list which are not present in
-	 * read_only buffers list and whose refcount is 1.
-	 * these are excess mappings present due to delayed
-	 * unmap feature.
+	 * read_only buffers list, not present in release list
+	 * and whose refcount is 1.these are excess mappings
+	 * present due to delayed unmap feature.
 	 */
 	list_for_each_entry(map, &inst->mappings.output.list, list) {
 		if (is_valid_removable_buffer(inst, map))
@@ -1910,7 +1917,9 @@ static int msm_vidc_unmap_excessive_mappings(struct msm_vidc_inst *inst)
 				"%s: type %11s, device_addr %#x, refcount %d, region %d\n",
 				__func__, buf_name(map->type), map->device_addr, map->refcount,
 				map->region);
-			msm_vidc_memory_unmap(inst->core, map);
+			rc = msm_vidc_put_delayed_unmap(inst, map);
+			if (rc)
+				return rc;
 		}
 	}
 	return rc;
