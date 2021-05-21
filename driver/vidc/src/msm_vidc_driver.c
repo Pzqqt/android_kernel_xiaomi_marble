@@ -5148,7 +5148,8 @@ int msm_vidc_check_session_supported(struct msm_vidc_inst *inst)
 	}
 
 	/* reject odd resolution session */
-	if (is_odd(iwidth) || is_odd(iheight) || is_odd(owidth) || is_odd(oheight)) {
+	if (is_encode_session(inst) &&
+		(is_odd(iwidth) || is_odd(iheight) || is_odd(owidth) || is_odd(oheight))) {
 		i_vpr_e(inst, "resolution is not even. input [%u x %u], output [%u x %u]\n",
 			iwidth, iheight, owidth, oheight);
 		goto exit;
