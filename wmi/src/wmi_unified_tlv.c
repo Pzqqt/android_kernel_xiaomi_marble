@@ -2857,7 +2857,7 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 			 QDF_MAC_ADDR_REF(param->peer_mac));
 	}
 
-	pr_err("vdev_id %d associd %d peer_flags %x rate_caps %x "
+	wmi_debug("vdev_id %d associd %d peer_flags %x rate_caps %x "
 		 "peer_caps %x listen_intval %d ht_caps %x max_mpdu %d "
 		 "nss %d phymode %d peer_mpdu_density %d "
 		 "cmd->peer_vht_caps %x "
