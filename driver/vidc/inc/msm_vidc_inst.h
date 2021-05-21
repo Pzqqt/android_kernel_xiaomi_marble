@@ -153,5 +153,6 @@ struct msm_vidc_inst {
 	bool                               vb2q_init;
 	u32                                max_input_data_size;
 	u32                                dpb_list_payload[MAX_DPB_LIST_ARRAY_SIZE];
+	u32                                max_map_output_count;
 };
 #endif // _MSM_VIDC_INST_H_

@@ -1625,6 +1625,44 @@ static int msm_vdec_subscribe_output_port_settings_change(struct msm_vidc_inst *
 	return rc;
 }
 
+static int msm_vdec_update_max_map_output_count(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+	struct v4l2_format *f;
+	u32 width, height, count;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	f = &inst->fmts[OUTPUT_PORT];
+	width = f->fmt.pix_mp.width;
+	height = f->fmt.pix_mp.height;
+
+	/*
+	 * adjust max map output count based on resolution
+	 * to enhance performance.
+	 * For 8K session: count = 20
+	 * For 4K session: count = 32
+	 * For 1080p session: count = 48
+	 * For all remaining sessions: count = 64
+	 */
+	if (res_is_greater_than(width, height, 4096, 2160))
+		count = 20;
+	else if (res_is_greater_than(width, height, 1920, 1080))
+		count = 32;
+	else if (res_is_greater_than(width, height, 1280, 720))
+		count = 48;
+	else
+		count = 64;
+
+	inst->max_map_output_count = count;
+	i_vpr_h(inst, "%s: count: %d\n", __func__, inst->max_map_output_count);
+
+	return rc;
+}
+
 int msm_vdec_streamon_output(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
@@ -1641,6 +1679,10 @@ int msm_vdec_streamon_output(struct msm_vidc_inst *inst)
 			__func__);
 		return -EINVAL;
 	}
+
+	rc = msm_vdec_update_max_map_output_count(inst);
+	if (rc)
+		return rc;
 
 	rc = msm_vdec_set_output_properties(inst);
 	if (rc)
@@ -1884,7 +1926,7 @@ static int msm_vidc_unmap_excessive_mappings(struct msm_vidc_inst *inst)
 			refcount_one_bufs_count++;
 	}
 
-	if (refcount_one_bufs_count <= MAX_MAPPED_OUTPUT_COUNT)
+	if (refcount_one_bufs_count <= inst->max_map_output_count)
 		return 0;
 
 	/* unmap these buffers as they are stale entries */
@@ -2528,6 +2570,7 @@ int msm_vdec_inst_init(struct msm_vidc_inst *inst)
 			inst->buffers.output.min_count +
 			inst->buffers.output.extra_count;
 	inst->buffers.output.size = f->fmt.pix_mp.plane_fmt[0].sizeimage;
+	inst->max_map_output_count = MAX_MAP_OUTPUT_COUNT;
 
 	f = &inst->fmts[OUTPUT_META_PORT];
 	f->type = OUTPUT_META_PLANE;

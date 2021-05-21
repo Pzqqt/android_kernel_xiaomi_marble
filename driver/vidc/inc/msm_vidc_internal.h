@@ -43,7 +43,7 @@
 #define MAX_CAP_CHILDREN         16
 #define DEFAULT_BITSTREM_ALIGNMENT  16
 #define H265_BITSTREM_ALIGNMENT     32
-#define DEFAULT_MAX_HOST_BUF_COUNT  128
+#define DEFAULT_MAX_HOST_BUF_COUNT  64
 #define DEFAULT_MAX_HOST_BURST_BUF_COUNT 256
 #define BIT_DEPTH_8 (8 << 16 | 8)
 #define BIT_DEPTH_10 (10 << 16 | 10)
@@ -119,14 +119,8 @@
 #define HW_RESPONSE_TIMEOUT_VALUE     (1000)
 #define SW_PC_DELAY_VALUE             (HW_RESPONSE_TIMEOUT_VALUE + 500)
 #define FW_UNLOAD_DELAY_VALUE         (SW_PC_DELAY_VALUE + 1500)
-/*
- * MAX_MAPPED_OUTPUT_COUNT: maximum mappings which can
- * be present in output map list with refcount 1. These
- * mappings exist due to delayed unmap feature. Current
- * threshold is kept as 50 to handle vpp usecases
- * which might have many output buffers.
- */
-#define MAX_MAPPED_OUTPUT_COUNT 64
+
+#define MAX_MAP_OUTPUT_COUNT 64
 #define MAX_DPB_COUNT 32
  /*
   * max dpb count in firmware = 16
