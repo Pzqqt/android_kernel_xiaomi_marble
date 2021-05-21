@@ -3734,8 +3734,7 @@ int hif_force_wake_request(struct hif_opaque_softc *hif_handle)
 		hif_info("state-change event races, ignore");
 
 	HIF_STATS_INC(pci_scn, mhi_force_wake_success, 1);
-	hif_write32_mb(scn, scn->mem +
-		       PCIE_PCIE_LOCAL_REG_PCIE_SOC_WAKE_PCIE_LOCAL_REG, 1);
+	hif_write32_mb(scn, scn->mem + PCIE_REG_WAKE_UMAC_OFFSET, 1);
 	HIF_STATS_INC(pci_scn, soc_force_wake_register_write_success, 1);
 	/*
 	 * do not reset the timeout
@@ -3777,8 +3776,7 @@ int hif_force_wake_release(struct hif_opaque_softc *hif_handle)
 	}
 
 	HIF_STATS_INC(pci_scn, mhi_force_wake_release_success, 1);
-	hif_write32_mb(scn, scn->mem +
-		       PCIE_PCIE_LOCAL_REG_PCIE_SOC_WAKE_PCIE_LOCAL_REG, 0);
+	hif_write32_mb(scn, scn->mem + PCIE_REG_WAKE_UMAC_OFFSET, 0);
 	HIF_STATS_INC(pci_scn, soc_force_wake_release_success, 1);
 	return 0;
 }

@@ -143,29 +143,56 @@ bool hif_target_access_allowed(struct hif_softc *scn)
 #include "qdf_lock.h"
 #include "qdf_util.h"
 
+/**
+ * hif_reg_write_result_check() - check register writing result
+ * @sc: hif pcie context
+ * @offset: register offset to read
+ * @exp_val: the expected value of register
+ *
+ * Return: none
+ */
+static inline void hif_reg_write_result_check(struct hif_pci_softc *sc,
+					      uint32_t offset,
+					      uint32_t exp_val)
+{
+	uint32_t value;
+
+	value = qdf_ioread32(sc->mem + offset);
+	if (exp_val != value) {
+		hif_err("Reg write failed. write val 0x%x read val 0x%x offset 0x%x",
+			exp_val,
+			value,
+			offset);
+	}
+}
+
 #ifdef PCIE_REG_WINDOW_LOCAL_NO_CACHE
 /**
- * hif_select_window(): Update the register window
+ * hif_select_window_confirm(): Update the register window
  * @sc: HIF pci handle
  * @offset: reg offset to read from or write to
  *
  * Calculate the window using the offset provided and update
  * the window reg value accordingly for windowed read/write reg
  * access.
- *
+ * Read back to make sure the window is written to the register.
  * Return: None
  */
-static inline void hif_select_window(struct hif_pci_softc *sc, uint32_t offset)
+static inline
+void hif_select_window_confirm(struct hif_pci_softc *sc, uint32_t offset)
 {
 	uint32_t window = (offset >> WINDOW_SHIFT) & WINDOW_VALUE_MASK;
 
 	qdf_iowrite32(sc->mem + WINDOW_REG_ADDRESS,
 		      WINDOW_ENABLE_BIT | window);
 	sc->register_window = window;
+	hif_reg_write_result_check(sc, WINDOW_REG_ADDRESS,
+				   WINDOW_ENABLE_BIT | window);
 }
 #else /* PCIE_REG_WINDOW_LOCAL_NO_CACHE */
 
-static inline void hif_select_window(struct hif_pci_softc *sc, uint32_t offset)
+static inline
+void hif_select_window_confirm(struct hif_pci_softc *sc, uint32_t offset)
 {
 	uint32_t window = (offset >> WINDOW_SHIFT) & WINDOW_VALUE_MASK;
 
@@ -173,6 +200,8 @@ static inline void hif_select_window(struct hif_pci_softc *sc, uint32_t offset)
 		qdf_iowrite32(sc->mem + WINDOW_REG_ADDRESS,
 			      WINDOW_ENABLE_BIT | window);
 		sc->register_window = window;
+		hif_reg_write_result_check(sc, WINDOW_REG_ADDRESS,
+					   WINDOW_ENABLE_BIT | window);
 	}
 }
 #endif /* PCIE_REG_WINDOW_LOCAL_NO_CACHE */
@@ -239,7 +268,7 @@ static inline void hif_write32_mb_reg_window(void *scn,
 		qdf_iowrite32(addr, value);
 	} else {
 		hif_lock_reg_access(sc, &flags);
-		hif_select_window(sc, offset);
+		hif_select_window_confirm(sc, offset);
 		qdf_iowrite32(sc->mem + WINDOW_START +
 			  (offset & WINDOW_RANGE_MASK), value);
 		hif_unlock_reg_access(sc, &flags);
@@ -258,7 +287,7 @@ static inline uint32_t hif_read32_mb_reg_window(void *scn, void __iomem *addr)
 		return qdf_ioread32(addr);
 	}
 	hif_lock_reg_access(sc, &flags);
-	hif_select_window(sc, offset);
+	hif_select_window_confirm(sc, offset);
 	ret = qdf_ioread32(sc->mem + WINDOW_START +
 		       (offset & WINDOW_RANGE_MASK));
 	hif_unlock_reg_access(sc, &flags);

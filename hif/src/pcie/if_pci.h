@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -31,10 +31,11 @@
 #include "ce_main.h"
 
 #ifdef FORCE_WAKE
-/* Register to wake the UMAC from power collapse */
-#define PCIE_SOC_PCIE_REG_PCIE_SCRATCH_0_SOC_PCIE_REG (0x01E04000 + 0x40)
+/* Register offset to wake the UMAC from power collapse */
+#define PCIE_REG_WAKE_UMAC_OFFSET 0x3004
 /* Register used for handshake mechanism to validate UMAC is awake */
-#define PCIE_PCIE_LOCAL_REG_PCIE_SOC_WAKE_PCIE_LOCAL_REG (0x01E00000 + 0x3004)
+#define PCIE_SOC_PCIE_REG_PCIE_SCRATCH_0_SOC_PCIE_REG (0x01E04000 + 0x40)
+
 /* Timeout duration to validate UMAC wake status */
 #ifdef HAL_CONFIG_SLUB_DEBUG_ON
 #define FORCE_WAKE_DELAY_TIMEOUT_MS 500
