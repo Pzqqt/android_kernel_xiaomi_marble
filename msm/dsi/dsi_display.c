@@ -4147,10 +4147,8 @@ static bool dsi_display_validate_panel_resources(struct dsi_display *display)
 			DSI_ERR("invalid reset gpio for the panel\n");
 			return false;
 		}
-	} else {
-		display->panel->power_info.count = 0;
-		DSI_DEBUG("no dir set and no request for gpios in sim panel\n");
 	}
+
 	return true;
 }
 
@@ -4195,8 +4193,10 @@ static int dsi_display_res_init(struct dsi_display *display)
 
 	display->panel->te_using_watchdog_timer |= display->sw_te_using_wd;
 
-	if (!dsi_display_validate_panel_resources(display))
-		goto error_ctrl_put;
+	if (!dsi_display_validate_panel_resources(display)) {
+		rc = -EINVAL;
+		goto error_panel_put;
+	}
 
 	display_for_each_ctrl(i, display) {
 		struct msm_dsi_phy *phy = display->ctrl[i].phy;
@@ -4223,13 +4223,13 @@ static int dsi_display_res_init(struct dsi_display *display)
 	rc = dsi_display_parse_lane_map(display);
 	if (rc) {
 		DSI_ERR("Lane map not found, rc=%d\n", rc);
-		goto error_ctrl_put;
+		goto error_panel_put;
 	}
 
 	rc = dsi_display_clocks_init(display);
 	if (rc) {
 		DSI_ERR("Failed to parse clock data, rc=%d\n", rc);
-		goto error_ctrl_put;
+		goto error_panel_put;
 	}
 
 	/**
@@ -4245,6 +4245,8 @@ static int dsi_display_res_init(struct dsi_display *display)
 	}
 
 	return 0;
+error_panel_put:
+	dsi_panel_put(display->panel);
 error_ctrl_put:
 	for (i = i - 1; i >= 0; i--) {
 		ctrl = &display->ctrl[i];
