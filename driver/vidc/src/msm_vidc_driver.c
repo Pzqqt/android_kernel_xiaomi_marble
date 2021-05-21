@@ -340,6 +340,23 @@ void print_vb2_buffer(const char *str, struct msm_vidc_inst *inst,
 	}
 }
 
+static void __fatal_error(bool fatal)
+{
+	WARN_ON(fatal);
+}
+
+static int __strict_check(struct msm_vidc_core *core, const char *function)
+{
+	bool fatal = !mutex_is_locked(&core->lock);
+
+	__fatal_error(fatal);
+
+	if (fatal)
+		d_vpr_e("%s: strict check failed\n", function);
+
+	return fatal ? -EINVAL : 0;
+}
+
 enum msm_vidc_buffer_type v4l2_type_to_driver(u32 type, const char *func)
 {
 	enum msm_vidc_buffer_type buffer_type = 0;
@@ -3996,18 +4013,6 @@ unlock:
 	return rc;
 }
 
-static void __fatal_error(struct msm_vidc_core *core, bool fatal)
-{
-	return;
-	fatal &= core->capabilities[HW_RESPONSE_TIMEOUT].value;
-	MSM_VIDC_ERROR(fatal);
-}
-
-static void __strict_check(struct msm_vidc_core *core)
-{
-	__fatal_error(core, !mutex_is_locked(&core->lock));
-}
-
 static int msm_vidc_core_init_wait(struct msm_vidc_core *core)
 {
 	const int interval = 40;
@@ -4018,7 +4023,9 @@ static int msm_vidc_core_init_wait(struct msm_vidc_core *core)
 		return -EINVAL;
 	}
 
-	__strict_check(core);
+	rc = __strict_check(core, __func__);
+	if (rc)
+		return rc;
 
 	if (core->state != MSM_VIDC_CORE_INIT_WAIT)
 		return 0;

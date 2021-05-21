@@ -478,7 +478,7 @@ static int msm_vidc_probe(struct platform_device *pdev)
 	}
 
 	/* How did we end up here? */
-	MSM_VIDC_ERROR(1);
+	WARN_ON(1);
 	return -EINVAL;
 }
 
