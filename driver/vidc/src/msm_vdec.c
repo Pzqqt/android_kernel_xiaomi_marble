@@ -2287,15 +2287,6 @@ int msm_vdec_s_param(struct msm_vidc_inst *inst,
 	input_rate = (u64)USEC_PER_SEC;
 	do_div(input_rate, us_per_frame);
 
-	/* Check max allowed rate */
-	if (input_rate > max_rate) {
-		i_vpr_e(inst,
-			"%s: Unsupported rate %llu, max_fps %u, type: %u\n",
-			__func__, input_rate, max_rate, s_parm->type);
-		rc = -ENOTSUPP;
-		goto exit;
-	}
-
 set_default:
 	q16_rate = (u32)input_rate << 16;
 	i_vpr_h(inst, "%s: %s value %d\n",
