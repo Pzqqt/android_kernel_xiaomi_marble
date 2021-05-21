@@ -1531,8 +1531,6 @@ static int ipa_mpm_vote_unvote_pcie_clk(enum ipa_mpm_clk_vote_type vote,
 	if (vote == CLK_ON) {
 		#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
 		pm_runtime_get_sync(ipa_mpm_ctx->mhi_parent_dev);
-		result = mhi_device_get_sync(
-			ipa_mpm_ctx->md[probe_id].mhi_dev);
 		#else
 		result = mhi_device_get_sync(
 			ipa_mpm_ctx->md[probe_id].mhi_dev,
@@ -1559,7 +1557,6 @@ static int ipa_mpm_vote_unvote_pcie_clk(enum ipa_mpm_clk_vote_type vote,
 			return 0;
 		}
 		#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
-		mhi_device_put(ipa_mpm_ctx->md[probe_id].mhi_dev);
 		pm_runtime_put(ipa_mpm_ctx->mhi_parent_dev);
 		#else
 		mhi_device_put(ipa_mpm_ctx->md[probe_id].mhi_dev,
