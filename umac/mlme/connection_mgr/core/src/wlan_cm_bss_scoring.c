@@ -1384,6 +1384,125 @@ cm_get_band_score(uint32_t freq, struct scoring_cfg *score_config)
 				       band_index);
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+static int8_t cm_get_partner_link_rssi(struct scan_cache_entry *entry,
+				       uint8_t link_idx)
+{
+	/* TODO: Get RSSI from partner bracon/derive from ML IE*/
+	return entry->rssi_raw;
+}
+
+static uint8_t cm_get_parter_link_index(struct scan_cache_entry *entry)
+{
+	/* TODO: Return best partner link index from entry->ml_info
+	 *                         or
+	 *  take decision to calculate score for all possible combinations.
+	 *  example: if the entry is a 2G beacon of 3-link AP then calculate
+	 *           scores for 2G+5G & 2G+6G ML
+	 */
+	return 0;
+}
+
+static int8_t cm_get_joint_rssi(struct scan_cache_entry *entry,
+				struct weight_cfg *weight_config,
+				uint8_t link_idx)
+{
+	int8_t low_band_rssi;
+	int8_t high_band_rssi;
+	uint8_t alpha = weight_config->joint_rssi_alpha;
+
+	if (entry->channel.chan_freq <
+				entry->ml_info->link_info[link_idx].freq) {
+		low_band_rssi = entry->rssi_raw;
+		high_band_rssi = cm_get_partner_link_rssi(entry, link_idx);
+	} else {
+		low_band_rssi = cm_get_partner_link_rssi(entry, link_idx);
+		high_band_rssi = entry->rssi_raw;
+	}
+
+	if (((alpha < 50) && (weight_config->low_band_rssi_boost)) ||
+	    ((alpha > 50) && (!weight_config->low_band_rssi_boost)))
+		alpha = 100 - alpha;
+
+	return ((low_band_rssi * alpha) +
+		(high_band_rssi * (100 - alpha))) / 100;
+}
+
+static int cm_calculate_eht_score(struct scan_cache_entry *entry,
+				  struct scoring_cfg *score_config,
+				  struct psoc_phy_config *phy_config)
+{
+	uint32_t eht_caps_score;
+	uint32_t mlo_score;
+	uint32_t joint_rssi_score = 0;
+	/* TODO: calculate joint OCE/ESP score using ML_IE/Partner beacon */
+	uint32_t joint_esp_score = 0;
+	uint32_t joint_oce_score = 0;
+	uint32_t wlm_indication_score = 0;
+	uint32_t mlsr_score = 0;
+	uint32_t emlsr_score = 0;
+	uint8_t prorated_pcnt;
+	int8_t joint_rssi;
+	struct weight_cfg *weight_config;
+	uint8_t partner_link_idx = cm_get_parter_link_index(entry);
+
+	if (!phy_config->eht_cap || !entry->ie_list.ehtcap)
+		return 0;
+
+	/* TODO: get partner entry and return ml_score for that if it is
+	 *       non-zero
+	 */
+
+	weight_config = &score_config->weight_config;
+
+	joint_rssi = cm_get_joint_rssi(entry, weight_config, partner_link_idx);
+
+	joint_rssi_score = cm_calculate_rssi_score(
+					&score_config->rssi_score, joint_rssi,
+					weight_config->rssi_weightage);
+
+	prorated_pcnt = cm_roam_calculate_prorated_pcnt_by_rssi(
+				&score_config->rssi_score, joint_rssi,
+				weight_config->rssi_weightage);
+
+	eht_caps_score = prorated_pcnt * weight_config->eht_caps_weightage;
+	mlo_score = prorated_pcnt * weight_config->mlo_weightage;
+
+	 mlme_nofl_debug("EHT Scores: eht_caps_score:%d mlo_score:%d joint_rssi_score:%d joint_esp_score:%d joint_oce_score:%d wlm_indication_score:%d mlsr_score:%d emlsr_score:%d",
+			 eht_caps_score, mlo_score, joint_rssi_score,
+			 joint_esp_score, joint_oce_score, wlm_indication_score,
+			 mlsr_score, emlsr_score);
+
+	entry->ml_info->ml_bss_score = eht_caps_score + mlo_score +
+				      joint_rssi_score + joint_esp_score +
+				      joint_oce_score + wlm_indication_score +
+				      mlsr_score + emlsr_score;
+
+	return entry->ml_info->ml_bss_score;
+}
+
+static int32_t
+cm_calculate_raw_rssi_score(struct rssi_config_score *score_param,
+			    int32_t rssi, uint8_t rssi_weightage)
+{
+	return 0;
+}
+#else
+static int cm_calculate_eht_score(struct scan_cache_entry *entry,
+				  struct scoring_cfg *score_config,
+				  struct psoc_phy_config *phy_config)
+{
+	return 0;
+}
+
+static int32_t
+cm_calculate_raw_rssi_score(struct rssi_config_score *score_param,
+			    int32_t rssi, uint8_t rssi_weightage)
+{
+	return cm_calculate_rssi_score(score_param, rssi, rssi_weightage);
+}
+#endif
+
 static int cm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 				  struct scan_cache_entry *entry,
 				  int pcl_chan_weight,
@@ -1420,6 +1539,7 @@ static int cm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 	uint32_t sta_nss;
 	struct psoc_mlme_obj *mlme_psoc_obj;
 	struct psoc_phy_config *phy_config;
+	uint32_t eht_score;
 
 	mlme_psoc_obj = wlan_psoc_mlme_get_cmpt_obj(psoc);
 	if (!mlme_psoc_obj)
@@ -1444,9 +1564,9 @@ static int cm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 		entry->bss_score = score;
 		return score;
 	}
-	rssi_score = cm_calculate_rssi_score(&score_config->rssi_score,
-					     entry->rssi_raw,
-					     weight_config->rssi_weightage);
+	rssi_score = cm_calculate_raw_rssi_score(&score_config->rssi_score,
+						 entry->rssi_raw,
+						 weight_config->rssi_weightage);
 	score += rssi_score;
 
 	pcl_score = cm_calculate_pcl_score(psoc, pcl_chan_weight,
@@ -1569,6 +1689,10 @@ static int cm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 					   prorated_pcnt, sta_nss);
 	score += nss_score;
 
+	eht_score = cm_calculate_eht_score(entry, score_config, phy_config);
+
+	score += eht_score;
+
 	mlme_nofl_debug("Candidate("QDF_MAC_ADDR_FMT" freq %d): rssi %d HT %d VHT %d HE %d su bfer %d phy %d  air time frac %d qbss %d cong_pct %d NSS %d ap_tx_pwr_dbm %d oce_subnet_id_present %d sae_pk_cap_present %d prorated_pcnt %d",
 			QDF_MAC_ADDR_REF(entry->bssid.bytes),
 			entry->channel.chan_freq,
@@ -1580,12 +1704,12 @@ static int cm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 			ap_tx_pwr_dbm, oce_subnet_id_present,
 			sae_pk_cap_present, prorated_pcnt);
 
-	mlme_nofl_debug("Scores: rssi %d pcl %d ht %d vht %d he %d bfee %d bw %d band %d congestion %d nss %d oce wan %d oce ap tx pwr %d subnet %d sae_pk %d TOTAL %d",
+	mlme_nofl_debug("Scores: rssi %d pcl %d ht %d vht %d he %d bfee %d bw %d band %d congestion %d nss %d oce wan %d oce ap tx pwr %d subnet %d sae_pk %d eht %d TOTAL %d",
 			rssi_score, pcl_score, ht_score,
 			vht_score, he_score, beamformee_score, bandwidth_score,
 			band_score, congestion_score, nss_score, oce_wan_score,
 			oce_ap_tx_pwr_score, oce_subnet_id_score,
-			sae_pk_score, score);
+			sae_pk_score, eht_score, score);
 
 	entry->bss_score = score;
 
