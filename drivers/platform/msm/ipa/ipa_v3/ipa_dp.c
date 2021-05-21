@@ -1343,7 +1343,7 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 	if (ipa3_assign_policy(sys_in, ep->sys)) {
 		IPAERR("failed to sys ctx for client %d\n", sys_in->client);
 		result = -ENOMEM;
-		goto fail_napi_rx;
+		goto fail_napi;
 	}
 
 	ep->valid = 1;
@@ -1553,12 +1553,11 @@ fail_page_recycle_repl:
 		ep->sys->page_recycle_repl->capacity = 0;
 		kfree(ep->sys->page_recycle_repl);
 	}
-fail_napi_rx:
+fail_napi:
 	if (sys_in->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS) {
 		napi_disable(&ep->sys->napi_rx);
 		netif_napi_del(&ep->sys->napi_rx);
 	}
-fail_napi:
 	/* Delete NAPI TX object. */
 	if (ipa3_ctx->tx_napi_enable &&
 		(IPA_CLIENT_IS_PROD(sys_in->client)))
