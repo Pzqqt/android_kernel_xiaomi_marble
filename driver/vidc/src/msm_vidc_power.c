@@ -47,8 +47,8 @@ u64 msm_vidc_max_freq(struct msm_vidc_inst *inst)
 
 int msm_vidc_get_mbps(struct msm_vidc_inst *inst)
 {
-	int input_port_mbs, output_port_mbs;
-	int fps, operating_rate, frame_rate;
+	u32 input_port_mbs, output_port_mbs;
+	u32 fps, operating_rate, frame_rate;
 	struct v4l2_format *f;
 
 	f = &inst->fmts[INPUT_PORT];
@@ -65,7 +65,7 @@ int msm_vidc_get_mbps(struct msm_vidc_inst *inst)
 	fps = max(operating_rate, frame_rate);
 
 	/* In case of fps < 1 we assume 1 */
-	fps = max(fps >> 16, 1);
+	fps = max(fps >> 16, (u32)1);
 
 	return max(input_port_mbs, output_port_mbs) * fps;
 }
