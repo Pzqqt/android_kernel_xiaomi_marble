@@ -16354,8 +16354,13 @@ typedef struct {
     /** consider roam trigger if connected AP rssi is worse than trigger_rssi_threshold */
     A_INT32 trigger_rssi_threshold;      /* Units in dbm*/
     /*
-     * Consider AP as roam candidate only if AP rssi is better than
+     * Consider 2.4GHz AP as roam candidate only if AP rssi is better than
      * cand_ap_min_rssi_threshold
+     * If valid (non-zero) cand_ap_min_rssi_threshold_5g and
+     * cand_ap_min_rssi_threshold_6g values are provided,
+     * then cand_ap_min_rssi_threshold should only be applied to 2.4 GHz APs.
+     * But if cand_ap_min_rssi_threshold_5g and cand_ap_min_rssi_threshold_6g
+     * are zeros, then cand_ap_min_rssi_threshold should be applied to all APs.
      */
     A_INT32 cand_ap_min_rssi_threshold; /* Units in dbm */
     /* Roam score delta in %.
@@ -16370,6 +16375,16 @@ typedef struct {
        Ex: Reason code in the BTM response frame
        Valid values are 0 - 255 */
     A_UINT32 reason_code;
+    /*
+     * Consider 5GHz AP as roam candidate only if AP rssi is better than
+     * cand_ap_min_rssi_threshold_5g
+     */
+    A_INT32 cand_ap_min_rssi_threshold_5g; /* Units in dbm */
+    /*
+     * Consider 6GHz AP as roam candidate only if AP rssi is better than
+     * cand_ap_min_rssi_threshold_6g
+     */
+    A_INT32 cand_ap_min_rssi_threshold_6g; /* Units in dbm */
 } wmi_configure_roam_trigger_parameters;
 
 /**
