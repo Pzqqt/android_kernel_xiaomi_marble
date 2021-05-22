@@ -3795,7 +3795,7 @@ static void ltm_vlutv1_disable(struct sde_hw_dspp *ctx)
 		/* disable VLUT/INIT/ROI */
 		opmode &= REG_DMA_LTM_VLUT_DISABLE_OP_MASK;
 	else
-		opmode = 0;
+		opmode &= LTM_CONFIG_MERGE_MODE_ONLY;
 	SDE_REG_WRITE(&ctx->hw, offset, opmode);
 }
 
