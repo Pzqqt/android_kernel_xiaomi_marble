@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -256,8 +256,16 @@ void ipa_nat_dump_ipv4_table(uint32_t tbl_hdl);
 int ipa_nat_vote_clock(
 	enum ipa_app_clock_vote_type vote_type );
 
+/**
+ * ipa_nat_switch_to() - While in HYBRID mode only, used for switching
+ * from SRAM to DDR or the reverse.
+ * @nmi: memory type to switch to
+ * @hold_state: Will the new memory type get locked in (ie. no more
+ *              oscilation between the memory types)
+ */
 int ipa_nat_switch_to(
-	enum ipa3_nat_mem_in nmi );
+	enum ipa3_nat_mem_in nmi,
+	bool                 hold_state );
 
 #endif
 
