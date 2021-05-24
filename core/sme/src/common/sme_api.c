@@ -772,6 +772,59 @@ static void sme_register_debug_callback(void)
 }
 #endif /* WLAN_FEATURE_MEMDUMP_ENABLE */
 
+#ifdef WLAN_POWER_DEBUG
+static void sme_power_debug_stats_cb(struct mac_context *mac,
+				     struct power_stats_response *response)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		if (mac->sme.power_stats_resp_callback)
+			mac->sme.power_stats_resp_callback(
+					response,
+					mac->sme.power_debug_stats_context);
+		else
+			sme_err("Null hdd cb");
+		mac->sme.power_stats_resp_callback = NULL;
+		mac->sme.power_debug_stats_context = NULL;
+		sme_release_global_lock(&mac->sme);
+	}
+}
+
+static void sme_register_power_debug_stats_cb(struct mac_context *mac)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	status = sme_acquire_global_lock(&mac->sme);
+
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		mac->sme.sme_power_debug_stats_callback =
+						sme_power_debug_stats_cb;
+		sme_release_global_lock(&mac->sme);
+	}
+}
+
+static void sme_unregister_power_debug_stats_cb(struct mac_context *mac)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		mac->sme.sme_power_debug_stats_callback = NULL;
+		sme_release_global_lock(&mac->sme);
+	}
+}
+#else
+static inline void sme_register_power_debug_stats_cb(struct mac_context *mac)
+{
+}
+
+static inline void sme_unregister_power_debug_stats_cb(struct mac_context *mac)
+{
+}
+#endif
+
 /* Global APIs */
 
 /**
@@ -828,6 +881,7 @@ QDF_STATUS sme_open(mac_handle_t mac_handle)
 	}
 	sme_trace_init(mac);
 	sme_register_debug_callback();
+	sme_register_power_debug_stats_cb(mac);
 
 	return status;
 }
@@ -3076,6 +3130,8 @@ QDF_STATUS sme_close(mac_handle_t mac_handle)
 
 	if (!mac)
 		return QDF_STATUS_E_FAILURE;
+
+	sme_unregister_power_debug_stats_cb(mac);
 
 	status = csr_close(mac);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {

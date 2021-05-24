@@ -389,6 +389,9 @@ struct sme_context {
 	void *power_debug_stats_context;
 	void (*power_stats_resp_callback)(struct power_stats_response *rsp,
 						void *callback_context);
+	void (*sme_power_debug_stats_callback)(
+					struct mac_context *mac,
+					struct power_stats_response *response);
 #endif
 #ifdef WLAN_FEATURE_BEACON_RECEPTION_STATS
 	void *beacon_stats_context;
