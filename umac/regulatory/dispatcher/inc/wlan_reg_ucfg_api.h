@@ -331,12 +331,15 @@ QDF_STATUS ucfg_reg_unregister_afc_req_rx_callback(struct wlan_objmgr_pdev *pdev
  * opclass + channel ranges. This is partial because in the AFC request there
  * are a few more parameters: Longitude, Latitude a few other information
  * @pdev: Pointer to PDEV object.
+ * @afc_req: Address of AFC request pointer.
+ * @req_id: AFC request ID.
  *
  * Return: QDF_STATUS_E_INVAL if unable to set and QDF_STATUS_SUCCESS is set.
  */
-QDF_STATUS
-ucfg_reg_get_partial_afc_req_info(struct wlan_objmgr_pdev *pdev,
-				  struct wlan_afc_host_partial_request **afc_req);
+QDF_STATUS ucfg_reg_get_partial_afc_req_info(
+		struct wlan_objmgr_pdev *pdev,
+		struct wlan_afc_host_partial_request **afc_req,
+		uint64_t req_id);
 #endif
 
 /**

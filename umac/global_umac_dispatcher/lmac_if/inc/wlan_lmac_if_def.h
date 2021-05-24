@@ -903,6 +903,9 @@ struct wlan_lmac_if_ftm_rx_ops {
  * @send_ctl_info: call-back function to send CTL info to firmware
  * @set_tpc_power: send transmit power control info to firmware
  * @send_afc_ind: send AFC indication info to firmware.
+ * @register_afc_event_handler: pointer to register afc event handler
+ * @unregister_afc_event_handler: pointer to unregister afc event handler
+ * @trigger_acs_for_afc: pointer to trigger acs for afc
  */
 struct wlan_lmac_if_reg_tx_ops {
 	QDF_STATUS (*register_master_handler)(struct wlan_objmgr_psoc *psoc,
@@ -947,6 +950,11 @@ struct wlan_lmac_if_reg_tx_ops {
 	QDF_STATUS (*send_afc_ind)(struct wlan_objmgr_psoc *psoc,
 				   uint8_t pdev_id,
 				   struct reg_afc_resp_rx_ind_info *param);
+	QDF_STATUS (*register_afc_event_handler)(struct wlan_objmgr_psoc *psoc,
+						 void *arg);
+	QDF_STATUS (*unregister_afc_event_handler)
+				(struct wlan_objmgr_psoc *psoc, void *arg);
+	QDF_STATUS (*trigger_acs_for_afc)(struct wlan_objmgr_pdev *pdev);
 #endif
 };
 
@@ -1315,6 +1323,9 @@ struct wlan_lmac_if_reg_rx_ops {
 #ifdef CONFIG_BAND_6GHZ
 	QDF_STATUS (*master_list_ext_handler)(struct cur_regulatory_info
 					      *reg_info);
+#ifdef CONFIG_AFC_SUPPORT
+	QDF_STATUS (*afc_event_handler)(struct afc_regulatory_info *afc_info);
+#endif
 #endif
 	QDF_STATUS (*reg_11d_new_cc_handler)(struct wlan_objmgr_psoc *psoc,
 			struct reg_11d_new_country *reg_11d_new_cc);

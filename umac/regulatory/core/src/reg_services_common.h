@@ -1258,6 +1258,7 @@ QDF_STATUS reg_afc_start(struct wlan_objmgr_pdev *pdev, uint64_t req_id);
  * reg_get_partial_afc_req_info() - Get the AFC partial request information
  * @pdev: Pointer to pdev
  * @afc_req: Address of AFC request pointer
+ * @req_id: AFC request ID.
  *
  * NOTE:- The memory for AFC request is allocated by the function must be
  *        freed by the caller.
@@ -1265,7 +1266,8 @@ QDF_STATUS reg_afc_start(struct wlan_objmgr_pdev *pdev, uint64_t req_id);
  */
 QDF_STATUS
 reg_get_partial_afc_req_info(struct wlan_objmgr_pdev *pdev,
-			     struct wlan_afc_host_partial_request **afc_req);
+			     struct wlan_afc_host_partial_request **afc_req,
+			     uint64_t req_id);
 
 /**
  * reg_print_partial_afc_req_info() - Print the AFC partial request
@@ -1425,6 +1427,34 @@ QDF_STATUS reg_get_client_power_for_6ghz_ap(struct wlan_objmgr_pdev *pdev,
  */
 QDF_STATUS reg_set_ap_pwr_and_update_chan_list(struct wlan_objmgr_pdev *pdev,
 					       enum reg_6g_ap_type ap_pwr_type);
+
+/**
+ * reg_get_6g_chan_psd_eirp_power() - For a given frequency, get the max PSD
+ * from the mas_chan_list
+ * @freq: Channel frequency
+ * @mas_chan_list: Pointer to mas_chan_list
+ * @reg_psd: Pointer to reg_psd
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+reg_get_6g_chan_psd_eirp_power(qdf_freq_t freq,
+			       struct regulatory_channel *mas_chan_list,
+			       uint16_t *reg_psd);
+
+/**
+ * reg_find_txpower_from_6g_list() - For a given frequency, get the max EIRP
+ * from the mas_chan_list
+ * @freq: Channel frequency
+ * @mas_chan_list: Pointer to mas_chan_list
+ * @reg_eirp: Pointer to reg_eirp
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+reg_find_txpower_from_6g_list(qdf_freq_t freq,
+			      struct regulatory_channel *chan_list,
+			      uint16_t *reg_eirp);
 #else
 static inline QDF_STATUS
 reg_set_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
@@ -1515,6 +1545,24 @@ static inline
 QDF_STATUS reg_set_ap_pwr_and_update_chan_list(struct wlan_objmgr_pdev *pdev,
 					       enum reg_6g_ap_type ap_pwr_type)
 {
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+reg_get_6g_chan_psd_eirp_power(qdf_freq_t freq,
+			       struct regulatory_channel *mas_chan_list,
+			       uint16_t *eirp_psd_power)
+{
+	*eirp_psd_power = 0;
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+reg_find_txpower_from_6g_list(qdf_freq_t freq,
+			      struct regulatory_channel *chan_list,
+			      uint16_t *reg_eirp)
+{
+	*reg_eirp = 0;
 	return QDF_STATUS_E_NOSUPPORT;
 }
 #endif

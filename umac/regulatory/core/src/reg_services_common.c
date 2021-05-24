@@ -5648,7 +5648,7 @@ QDF_STATUS reg_get_unspecified_ap_usable(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS
+QDF_STATUS
 reg_find_txpower_from_6g_list(qdf_freq_t freq,
 			      struct regulatory_channel *chan_list,
 			      uint16_t *txpower)
@@ -5694,7 +5694,7 @@ bool reg_is_6g_psd_power(struct wlan_objmgr_pdev *pdev)
 	return false;
 }
 
-static QDF_STATUS
+QDF_STATUS
 reg_get_6g_chan_psd_eirp_power(qdf_freq_t freq,
 			       struct regulatory_channel *mas_chan_list,
 			       uint16_t *eirp_psd_power)
