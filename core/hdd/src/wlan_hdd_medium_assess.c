@@ -251,6 +251,22 @@ static int get_congestion_report_len(void)
 }
 
 /**
+ * hdd_congestion_reset_data() - reset/invalid the previous data
+ * @vdev_id: vdev id
+ *
+ * Return: None
+ */
+static void hdd_congestion_reset_data(uint8_t pdev_id)
+{
+	struct hdd_medium_assess_info *mdata;
+	uint8_t i;
+
+	mdata = &medium_assess_info[pdev_id];
+	for (i = 0; i < MEDIUM_ASSESS_NUM; i++)
+		mdata->data[i].part1_valid = 0;
+}
+
+/**
  * hdd_congestion_notification_cb() - congestion notification callback function
  * @vdev_id: vdev id
  * @congestion: congestion percentage
@@ -347,7 +363,11 @@ static void hdd_congestion_notification_report(uint8_t vdev_id,
 
 void hdd_medium_assess_ssr_enable_flag(void)
 {
+	uint8_t i;
+
 	ssr_flag = 1;
+	for (i = 0; i < WLAN_UMAC_MAX_RP_PID; i++)
+		hdd_congestion_reset_data(i);
 }
 
 void hdd_medium_assess_stop_timer(uint8_t pdev_id, struct hdd_context *hdd_ctx)
@@ -363,6 +383,7 @@ void hdd_medium_assess_stop_timer(uint8_t pdev_id, struct hdd_context *hdd_ctx)
 	medium_assess_info[pdev_id].config.interval = 0;
 	medium_assess_info[pdev_id].index = 0;
 	medium_assess_info[pdev_id].count = 0;
+	hdd_congestion_reset_data(pdev_id);
 
 	for (i = 0; i < WLAN_UMAC_MAX_RP_PID; i++)
 		interval += medium_assess_info[i].config.interval;
@@ -445,6 +466,7 @@ static int hdd_medium_assess_congestion_report(struct hdd_context *hdd_ctx,
 		medium_assess_info[pdev_id].config.interval = interval;
 		medium_assess_info[pdev_id].index = 0;
 		medium_assess_info[pdev_id].count = 0;
+		hdd_congestion_reset_data(pdev_id);
 		hdd_debug("medium assess enable: pdev_id %d, vdev_id: %d",
 			  pdev_id, vdev_id);
 
@@ -565,6 +587,7 @@ hdd_congestion_notification_calculation(struct hdd_medium_assess_info *info)
 	uint32_t rx_clear_count_delta, tx_frame_count_delta;
 	uint32_t cycle_count_delta;
 	uint32_t congestion = 0;
+	uint64_t diff;
 
 	h_index = info->index - 1;
 	if (h_index < 0)
@@ -612,9 +635,10 @@ hdd_congestion_notification_calculation(struct hdd_medium_assess_info *info)
 		cycle_count_delta += h_data->cycle_count;
 	}
 
+	diff = (rx_clear_count_delta - tx_frame_count_delta) * 100;
 	if (cycle_count_delta)
-		congestion = (rx_clear_count_delta - tx_frame_count_delta)
-			     * 100 / cycle_count_delta;
+		congestion = qdf_do_div(diff, cycle_count_delta);
+
 	if (congestion > 100)
 		congestion = 100;
 
