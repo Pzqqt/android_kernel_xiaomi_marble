@@ -1839,8 +1839,8 @@ static void sde_encoder_phys_cmd_trigger_start(
 	cmd_enc->wr_ptr_wait_success = false;
 }
 
-static void sde_encoder_phys_cmd_setup_vsync_source(
-		struct sde_encoder_phys *phys_enc, u32 vsync_source)
+static void sde_encoder_phys_cmd_setup_vsync_source(struct sde_encoder_phys *phys_enc,
+		u32 vsync_source, struct msm_display_info *disp_info)
 {
 	struct sde_encoder_virt *sde_enc;
 
@@ -1851,7 +1851,7 @@ static void sde_encoder_phys_cmd_setup_vsync_source(
 	if (!sde_enc)
 		return;
 
-	if (sde_enc->disp_info.is_te_using_watchdog_timer &&
+	if (disp_info->is_te_using_watchdog_timer &&
 			phys_enc->hw_intf->ops.setup_vsync_source) {
 		vsync_source = SDE_VSYNC_SOURCE_WD_TIMER_0;
 		phys_enc->hw_intf->ops.setup_vsync_source(phys_enc->hw_intf,
