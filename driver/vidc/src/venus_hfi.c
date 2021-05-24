@@ -745,7 +745,7 @@ static int __write_queue(struct msm_vidc_iface_q_info *qinfo, u8 *packet,
 	mb();
 	queue->qhdr_write_idx = new_write_idx;
 	if (rx_req_is_set)
-		*rx_req_is_set = queue->qhdr_rx_req == 1;
+		*rx_req_is_set = true;
 	/*
 	 * Memory barrier to make sure write index is updated before an
 	 * interrupt is raised on venus.
@@ -853,10 +853,7 @@ static int __read_queue(struct msm_vidc_iface_q_info *qinfo, u8 *packet,
 		rc = -ENODATA;
 	}
 
-	if (new_read_idx != write_idx)
-		queue->qhdr_rx_req = 0;
-	else
-		queue->qhdr_rx_req = receive_request;
+	queue->qhdr_rx_req = receive_request;
 
 	queue->qhdr_read_idx = new_read_idx;
 	/*
