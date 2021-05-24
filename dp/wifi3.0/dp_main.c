@@ -4541,7 +4541,7 @@ static void dp_soc_tx_hw_desc_history_attach(struct dp_soc *soc)
 {
 	soc->tx_hw_desc_history = dp_context_alloc_mem(
 			soc, DP_TX_HW_DESC_HIST_TYPE,
-			sizeof(struct dp_tx_hw_desc_evt));
+			sizeof(*soc->tx_hw_desc_history));
 	if (soc->tx_hw_desc_history)
 		soc->tx_hw_desc_history->index = 0;
 }

@@ -1523,6 +1523,9 @@ dp_tx_hw_desc_update_evt(uint8_t *hal_tx_desc_cached,
 	struct dp_tx_hw_desc_evt *evt;
 	uint64_t idx = 0;
 
+	if (!soc->tx_hw_desc_history)
+		return;
+
 	idx = ++soc->tx_hw_desc_history->index;
 	if (idx == DP_TX_HW_DESC_HIST_MAX)
 		soc->tx_hw_desc_history->index = 0;
