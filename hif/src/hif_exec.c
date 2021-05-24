@@ -835,6 +835,21 @@ QDF_STATUS hif_configure_ext_group_interrupts(struct hif_opaque_softc *hif_ctx)
 
 qdf_export_symbol(hif_configure_ext_group_interrupts);
 
+void hif_deconfigure_ext_group_interrupts(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	if (!scn || !scn->ext_grp_irq_configured) {
+		hif_err("scn(%pk) is NULL or grp irq not configured", scn);
+		return;
+	}
+
+	hif_grp_irq_deconfigure(scn);
+	scn->ext_grp_irq_configured = false;
+}
+
+qdf_export_symbol(hif_deconfigure_ext_group_interrupts);
+
 #ifdef WLAN_SUSPEND_RESUME_TEST
 /**
  * hif_check_and_trigger_ut_resume() - check if unit-test command was used to

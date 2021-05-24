@@ -1495,6 +1495,14 @@ int32_t hif_get_int_ctx_irq_num(struct hif_opaque_softc *softc,
 QDF_STATUS hif_configure_ext_group_interrupts(struct hif_opaque_softc *hif_ctx);
 
 /**
+ * hif_deconfigure_ext_group_interrupts() - Deconfigure ext group intrrupts
+ * @hif_ctx: hif opaque context
+ *
+ * Return: None
+ */
+void hif_deconfigure_ext_group_interrupts(struct hif_opaque_softc *hif_ctx);
+
+/**
  * hif_register_ext_group() - API to register external group
  * interrupt handler.
  * @hif_ctx : HIF Context

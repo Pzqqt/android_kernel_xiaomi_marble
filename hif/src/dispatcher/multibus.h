@@ -65,6 +65,7 @@ struct hif_bus_ops {
 	void (*hif_irq_enable)(struct hif_softc *hif_sc, int ce_id);
 	int (*hif_grp_irq_configure)(struct hif_softc *hif_sc,
 				     struct hif_exec_context *exec);
+	void (*hif_grp_irq_deconfigure)(struct hif_softc *hif_sc);
 	int (*hif_dump_registers)(struct hif_softc *hif_sc);
 	void (*hif_dump_target_memory)(struct hif_softc *hif_sc,
 				       void *ramdump_base,
@@ -234,6 +235,7 @@ static inline int hif_sdio_get_context_size(void)
 
 int hif_grp_irq_configure(struct hif_softc *hif_sc,
 			  struct hif_exec_context *hif_exec);
+void hif_grp_irq_deconfigure(struct hif_softc *hif_sc);
 #ifdef HIF_USB
 QDF_STATUS hif_initialize_usb_ops(struct hif_bus_ops *bus_ops);
 int hif_usb_get_context_size(void);

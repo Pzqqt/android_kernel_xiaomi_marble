@@ -263,6 +263,16 @@ int hif_dummy_grp_irq_configure(struct hif_softc *hif_sc,
 }
 
 /**
+ * hif_dummy_grp_irq_deconfigure - dummy call
+ * hif_sc: hif context
+ *
+ * Return: none
+ */
+void hif_dummy_grp_irq_deconfigure(struct hif_softc *hif_sc)
+{
+}
+
+/**
  * hif_dummy_dump_registers - dummy call
  * hif_sc: hif context
  *

@@ -44,6 +44,7 @@ void hif_dummy_grp_irq_enable(struct hif_softc *hif_sc, uint32_t grp_id);
 void hif_dummy_grp_irq_disable(struct hif_softc *hif_sc, uint32_t grp_id);
 int hif_dummy_grp_irq_configure(struct hif_softc *hif_sc,
 				struct hif_exec_context *exec);
+void hif_dummy_grp_irq_deconfigure(struct hif_softc *hif_sc);
 int hif_dummy_dump_registers(struct hif_softc *hif_sc);
 void hif_dummy_dump_target_memory(struct hif_softc *hif_sc, void *ramdump_base,
 				  uint32_t address, uint32_t size);

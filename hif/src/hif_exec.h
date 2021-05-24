@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -153,6 +153,7 @@ void hif_exec_destroy(struct hif_exec_context *ctx);
 
 int hif_grp_irq_configure(struct hif_softc *scn,
 			  struct hif_exec_context *hif_exec);
+void hif_grp_irq_deconfigure(struct hif_softc *scn);
 irqreturn_t hif_ext_group_interrupt_handler(int irq, void *context);
 
 struct hif_exec_context *hif_exec_get_ctx(struct hif_opaque_softc *hif,
