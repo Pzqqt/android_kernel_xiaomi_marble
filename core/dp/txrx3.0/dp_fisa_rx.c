@@ -828,6 +828,7 @@ static void dp_fisa_rx_fst_update(struct dp_rx_fst *fisa_hdl,
 				     rx_flow_tuple_info,
 				     sizeof(struct cdp_rx_flow_tuple_info));
 
+			sw_ft_entry->flow_init_ts = qdf_get_log_timestamp();
 			sw_ft_entry->is_flow_tcp = elem->is_tcp_flow;
 			sw_ft_entry->is_flow_udp = elem->is_udp_flow;
 
@@ -1654,6 +1655,8 @@ static int dp_add_nbuf_to_fisa_flow(struct dp_rx_fst *fisa_hdl,
 	 * the one configured.
 	 */
 	if (qdf_unlikely(fisa_flow->napi_id != napi_id)) {
+		dp_err("REO id mismatch flow: %pK napi_id: %u nbuf: %pK reo_id: %u",
+		       fisa_flow, fisa_flow->napi_id, nbuf, napi_id);
 		QDF_BUG(0);
 		DP_STATS_INC(fisa_hdl, reo_mismatch, 1);
 		return FISA_AGGR_NOT_ELIGIBLE;
