@@ -11099,6 +11099,22 @@ static QDF_STATUS extract_rf_characterization_entries_tlv(wmi_unified_t wmi_hand
 }
 #endif
 
+#ifdef WLAN_FEATURE_11BE
+static void
+extract_11be_chainmask(struct wlan_psoc_host_chainmask_capabilities *cap,
+		       WMI_MAC_PHY_CHAINMASK_CAPABILITY *chainmask_caps)
+{
+	cap->supports_chan_width_320 =
+		WMI_SUPPORT_CHAN_WIDTH_320_GET(chainmask_caps->supported_flags);
+}
+#else
+static void
+extract_11be_chainmask(struct wlan_psoc_host_chainmask_capabilities *cap,
+		       WMI_MAC_PHY_CHAINMASK_CAPABILITY *chainmask_caps)
+{
+}
+#endif /* WLAN_FEATURE_11BE */
+
 /**
  * extract_chainmask_tables_tlv() - extract chain mask tables from event
  * @wmi_handle: wmi handle
@@ -11202,6 +11218,9 @@ static QDF_STATUS extract_chainmask_tables_tlv(wmi_unified_t wmi_handle,
 
 			chainmask_table[i].cap_list[j].supports_aDFS_160 =
 				WMI_SUPPORT_ADFS_160_GET(chainmask_caps->supported_flags);
+
+			extract_11be_chainmask(&chainmask_table[i].cap_list[j],
+					       chainmask_caps);
 
 			wmi_nofl_debug("supported_flags: 0x%08x  chainmasks: 0x%08x",
 				       chainmask_caps->supported_flags,
