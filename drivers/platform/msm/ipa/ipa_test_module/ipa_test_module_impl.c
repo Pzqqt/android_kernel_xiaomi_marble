@@ -4518,6 +4518,22 @@ static int handle_holb_config_ioctl(unsigned long ioctl_arg)
 	return ipa3_cfg_ep_holb(clnt_hdl, &holb_cfg);
 }
 
+static int ipa_test_get_mem_part(unsigned long ioctl_arg)
+{
+	unsigned long result;
+
+	// Let's check that mirrored structure is of the same siz as the original
+	BUILD_BUG_ON(sizeof(struct ipa_test_mem_partition) != sizeof(struct ipa3_mem_partition));
+
+	result = copy_to_user((u8 *)ioctl_arg,
+		ipa3_ctx->ctrl->mem_partition, sizeof(struct ipa3_mem_partition));
+
+	if (result != 0)
+		return -EACCES;
+
+	return 0;
+}
+
 static long ipa_test_ioctl(struct file *filp,
 	unsigned int cmd, unsigned long arg)
 {
@@ -4550,6 +4566,8 @@ static long ipa_test_ioctl(struct file *filp,
 		break;
 	case IPA_TEST_IOC_IS_TEST_PROD_FLT_IN_SRAM:
 		retval = ipa_is_test_prod_flt_in_sram_internal(arg);
+	case IPA_TEST_IOC_GET_MEM_PART:
+		retval = ipa_test_get_mem_part(arg);
 		break;
 	default:
 		IPATEST_ERR("ioctl is not supported (%d)\n", cmd);

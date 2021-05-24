@@ -22,6 +22,7 @@ enum {
 	IPA_TEST_IOCTL_REG_SUSPEND_HNDL,
 	IPA_TEST_IOCTL_HOLB_CONFIG,
 	IPA_TEST_IOCTL_FLT_TBL_IN_SRAM,
+	IPA_TEST_IOCTL_GET_MEM_PART,
 	IPA_TEST_IOCTL_NUM,
 };
 
@@ -43,6 +44,9 @@ enum {
 		struct handle_holb_config_ioctl *)
 #define IPA_TEST_IOC_IS_TEST_PROD_FLT_IN_SRAM _IO(IPA_TEST_IOC_MAGIC, \
 		IPA_TEST_IOCTL_FLT_TBL_IN_SRAM)
+#define IPA_TEST_IOC_GET_MEM_PART _IOWR(IPA_TEST_IOC_MAGIC, \
+		IPA_TEST_IOCTL_GET_MEM_PART, \
+		struct ipa_test_mem_partition *)
 
 #define IPA_TEST_CONFIG_MARKER 0x57
 #define IPA_TEST_CHANNEL_CONFIG_MARKER 0x83
@@ -100,5 +104,105 @@ struct ipa_test_holb_config
 	enum ipa_client_type client;
 	unsigned tmr_val;
 	unsigned short en;
+};
+
+struct ipa_test_mem_partition {
+	unsigned ofst_start;
+	unsigned v4_flt_hash_ofst;
+	unsigned v4_flt_hash_size;
+	unsigned v4_flt_hash_size_ddr;
+	unsigned v4_flt_nhash_ofst;
+	unsigned v4_flt_nhash_size;
+	unsigned v4_flt_nhash_size_ddr;
+	unsigned v6_flt_hash_ofst;
+	unsigned v6_flt_hash_size;
+	unsigned v6_flt_hash_size_ddr;
+	unsigned v6_flt_nhash_ofst;
+	unsigned v6_flt_nhash_size;
+	unsigned v6_flt_nhash_size_ddr;
+	unsigned v4_rt_num_index;
+	unsigned v4_modem_rt_index_lo;
+	unsigned v4_modem_rt_index_hi;
+	unsigned v4_apps_rt_index_lo;
+	unsigned v4_apps_rt_index_hi;
+	unsigned v4_rt_hash_ofst;
+	unsigned v4_rt_hash_size;
+	unsigned v4_rt_hash_size_ddr;
+	unsigned v4_rt_nhash_ofst;
+	unsigned v4_rt_nhash_size;
+	unsigned v4_rt_nhash_size_ddr;
+	unsigned v6_rt_num_index;
+	unsigned v6_modem_rt_index_lo;
+	unsigned v6_modem_rt_index_hi;
+	unsigned v6_apps_rt_index_lo;
+	unsigned v6_apps_rt_index_hi;
+	unsigned v6_rt_hash_ofst;
+	unsigned v6_rt_hash_size;
+	unsigned v6_rt_hash_size_ddr;
+	unsigned v6_rt_nhash_ofst;
+	unsigned v6_rt_nhash_size;
+	unsigned v6_rt_nhash_size_ddr;
+	unsigned modem_hdr_ofst;
+	unsigned modem_hdr_size;
+	unsigned apps_hdr_ofst;
+	unsigned apps_hdr_size;
+	unsigned apps_hdr_size_ddr;
+	unsigned modem_hdr_proc_ctx_ofst;
+	unsigned modem_hdr_proc_ctx_size;
+	unsigned apps_hdr_proc_ctx_ofst;
+	unsigned apps_hdr_proc_ctx_size;
+	unsigned apps_hdr_proc_ctx_size_ddr;
+	unsigned nat_tbl_ofst;
+	unsigned nat_tbl_size;
+	unsigned modem_comp_decomp_ofst;
+	unsigned modem_comp_decomp_size;
+	unsigned modem_ofst;
+	unsigned modem_size;
+	unsigned apps_v4_flt_hash_ofst;
+	unsigned apps_v4_flt_hash_size;
+	unsigned apps_v4_flt_nhash_ofst;
+	unsigned apps_v4_flt_nhash_size;
+	unsigned apps_v6_flt_hash_ofst;
+	unsigned apps_v6_flt_hash_size;
+	unsigned apps_v6_flt_nhash_ofst;
+	unsigned apps_v6_flt_nhash_size;
+	unsigned uc_info_ofst;
+	unsigned uc_info_size;
+	unsigned end_ofst;
+	unsigned apps_v4_rt_hash_ofst;
+	unsigned apps_v4_rt_hash_size;
+	unsigned apps_v4_rt_nhash_ofst;
+	unsigned apps_v4_rt_nhash_size;
+	unsigned apps_v6_rt_hash_ofst;
+	unsigned apps_v6_rt_hash_size;
+	unsigned apps_v6_rt_nhash_ofst;
+	unsigned apps_v6_rt_nhash_size;
+	unsigned uc_descriptor_ram_ofst;
+	unsigned uc_descriptor_ram_size;
+	unsigned pdn_config_ofst;
+	unsigned pdn_config_size;
+	unsigned stats_quota_q6_ofst;
+	unsigned stats_quota_q6_size;
+	unsigned stats_quota_ap_ofst;
+	unsigned stats_quota_ap_size;
+	unsigned stats_tethering_ofst;
+	unsigned stats_tethering_size;
+	unsigned stats_fnr_ofst;
+	unsigned stats_fnr_size;
+	unsigned uc_ofst;
+	unsigned uc_size;
+
+	/* Irrelevant starting IPA4.5 */
+	unsigned stats_flt_v4_ofst;
+	unsigned stats_flt_v4_size;
+	unsigned stats_flt_v6_ofst;
+	unsigned stats_flt_v6_size;
+	unsigned stats_rt_v4_ofst;
+	unsigned stats_rt_v4_size;
+	unsigned stats_rt_v6_ofst;
+	unsigned stats_rt_v6_size;
+
+	unsigned stats_drop_ofst;
+	unsigned stats_drop_size;
 };
 #endif /* _IPA_TEST_MODULE_H_ */
