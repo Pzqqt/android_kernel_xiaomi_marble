@@ -918,7 +918,8 @@ static int ipa3_send_pdn_config_msg(unsigned long usr_param)
 	buff = pdn_info;
 
 	msg_meta.msg_type = pdn_info->pdn_cfg_type;
-
+	/* null terminate the string */
+	pdn_info->dev_name[IPA_RESOURCE_NAME_MAX - 1] = '\0';
 	if ((pdn_info->pdn_cfg_type < IPA_PDN_DEFAULT_MODE_CONFIG) ||
 			(pdn_info->pdn_cfg_type >= IPA_PDN_CONFIG_EVENT_MAX)) {
 		IPAERR_RL("invalid pdn_cfg_type =%d", pdn_info->pdn_cfg_type);
