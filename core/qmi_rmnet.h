@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -29,7 +29,8 @@ struct qmi_rmnet_ps_ind {
 
 #ifdef CONFIG_QTI_QMI_RMNET
 void qmi_rmnet_qmi_exit(void *qmi_pt, void *port);
-void qmi_rmnet_change_link(struct net_device *dev, void *port, void *tcm_pt);
+int qmi_rmnet_change_link(struct net_device *dev, void *port, void *tcm_pt,
+			  int attr_len);
 void qmi_rmnet_enable_all_flows(struct net_device *dev);
 bool qmi_rmnet_all_flows_enabled(struct net_device *dev);
 #else
@@ -37,9 +38,11 @@ static inline void qmi_rmnet_qmi_exit(void *qmi_pt, void *port)
 {
 }
 
-static inline void
-qmi_rmnet_change_link(struct net_device *dev, void *port, void *tcm_pt)
+static inline int
+qmi_rmnet_change_link(struct net_device *dev, void *port, void *tcm_pt,
+		      int attr_len)
 {
+	return 0;
 }
 
 static inline void
@@ -59,6 +62,8 @@ void *qmi_rmnet_qos_init(struct net_device *real_dev,
 			 struct net_device *vnd_dev, u8 mux_id);
 void qmi_rmnet_qos_exit_pre(void *qos);
 void qmi_rmnet_qos_exit_post(void);
+bool qmi_rmnet_flow_is_low_latency(struct net_device *dev,
+				   struct sk_buff *skb);
 void qmi_rmnet_burst_fc_check(struct net_device *dev,
 			      int ip_type, u32 mark, unsigned int len);
 int qmi_rmnet_get_queue(struct net_device *dev, struct sk_buff *skb);
@@ -76,6 +81,12 @@ static inline void qmi_rmnet_qos_exit_pre(void *qos)
 
 static inline void qmi_rmnet_qos_exit_post(void)
 {
+}
+
+static inline bool qmi_rmnet_flow_is_low_latency(struct net_device *dev,
+						 struct sk_buff *skb)
+{
+	return false;
 }
 
 static inline void

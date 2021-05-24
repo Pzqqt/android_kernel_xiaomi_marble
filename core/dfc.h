@@ -321,6 +321,34 @@ TRACE_EVENT(dfc_watchdog,
 		__entry->mux_id, __entry->bearer_id, __entry->event)
 );
 
+TRACE_EVENT(dfc_ll_switch,
+
+	TP_PROTO(const char *cmd, u8 type, u8 num_bearer, void *bearers),
+
+	TP_ARGS(cmd, type, num_bearer, bearers),
+
+	TP_STRUCT__entry(
+		__string(cmd_str, cmd)
+		__field(u8, type)
+		__field(u8, num_bearer)
+		__dynamic_array(u8, bearers, num_bearer)
+	),
+
+	TP_fast_assign(
+		__assign_str(cmd_str, cmd)
+		__entry->type = type;
+		__entry->num_bearer = num_bearer;
+		memcpy(__get_dynamic_array(bearers), bearers, num_bearer);
+	),
+
+	TP_printk("%s type=%u num_bearer=%u bearers={%s}",
+		__get_str(cmd_str),
+		__entry->type,
+		__entry->num_bearer,
+		__print_array(__get_dynamic_array(bearers),
+			      __entry->num_bearer, 1))
+);
+
 #endif /* _TRACE_DFC_H */
 
 /* This part must be outside protection */

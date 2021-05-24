@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -271,7 +271,8 @@ int rmnet_map_process_next_hdr_packet(struct sk_buff *skb,
 				      struct sk_buff_head *list,
 				      u16 len);
 int rmnet_map_tx_agg_skip(struct sk_buff *skb, int offset);
-void rmnet_map_tx_aggregate(struct sk_buff *skb, struct rmnet_port *port);
+void rmnet_map_tx_aggregate(struct sk_buff *skb, struct rmnet_port *port,
+			    bool low_latency);
 void rmnet_map_tx_aggregate_init(struct rmnet_port *port);
 void rmnet_map_tx_aggregate_exit(struct rmnet_port *port);
 void rmnet_map_update_ul_agg_config(struct rmnet_port *port, u16 size,
@@ -291,7 +292,9 @@ int rmnet_map_dl_ind_register(struct rmnet_port *port,
 int rmnet_map_dl_ind_deregister(struct rmnet_port *port,
 				struct rmnet_map_dl_ind *dl_ind);
 void rmnet_map_cmd_exit(struct rmnet_port *port);
-void rmnet_map_send_agg_skb(struct rmnet_port *port, unsigned long flags);
+void rmnet_map_tx_qmap_cmd(struct sk_buff *qmap_skb, u8 ch, bool flush);
+void rmnet_map_send_agg_skb(struct rmnet_aggregation_state *state,
+			    unsigned long flags);
 int rmnet_map_add_tso_header(struct sk_buff *skb, struct rmnet_port *port,
 			      struct net_device *orig_dev);
 #endif /* _RMNET_MAP_H_ */

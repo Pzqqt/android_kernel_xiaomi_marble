@@ -32,6 +32,7 @@
 #define NLMSG_CLIENT_DELETE 5
 #define NLMSG_SCALE_FACTOR 6
 #define NLMSG_WQ_FREQUENCY 7
+#define NLMSG_CHANNEL_SWITCH 8
 
 #define FLAG_DFC_MASK 0x000F
 #define FLAG_POWERSAVE_MASK 0x0010
@@ -313,6 +314,8 @@ static void qmi_rmnet_bearer_clean(struct qos_info *qos)
 	if (qos->removed_bearer) {
 		qos->removed_bearer->watchdog_quit = true;
 		del_timer_sync(&qos->removed_bearer->watchdog);
+		qos->removed_bearer->ch_switch.timer_quit = true;
+		del_timer_sync(&qos->removed_bearer->ch_switch.guard_timer);
 		kfree(qos->removed_bearer);
 		qos->removed_bearer = NULL;
 	}
@@ -339,6 +342,8 @@ static struct rmnet_bearer_map *__qmi_rmnet_bearer_get(
 		bearer->ack_mq_idx = INVALID_MQ;
 		bearer->qos = qos_info;
 		timer_setup(&bearer->watchdog, qmi_rmnet_watchdog_fn, 0);
+		timer_setup(&bearer->ch_switch.guard_timer,
+			    rmnet_ll_guard_fn, 0);
 		list_add(&bearer->list, &qos_info->bearer_head);
 	}
 
@@ -360,6 +365,7 @@ static void __qmi_rmnet_bearer_put(struct net_device *dev,
 				continue;
 
 			mq->bearer = NULL;
+			mq->is_ll_ch = false;
 			if (reset) {
 				qmi_rmnet_reset_txq(dev, i);
 				qmi_rmnet_flow_control(dev, i, 1);
@@ -392,6 +398,7 @@ static void __qmi_rmnet_update_mq(struct net_device *dev,
 	mq = &qos_info->mq[itm->mq_idx];
 	if (!mq->bearer) {
 		mq->bearer = bearer;
+		mq->is_ll_ch = bearer->ch_switch.current_ch;
 
 		if (dfc_mode == DFC_MODE_SA) {
 			bearer->mq_idx = itm->mq_idx;
@@ -704,23 +711,25 @@ qmi_rmnet_delete_client(void *port, struct qmi_info *qmi, struct tcmsg *tcm)
 	__qmi_rmnet_delete_client(port, qmi, idx);
 }
 
-void qmi_rmnet_change_link(struct net_device *dev, void *port, void *tcm_pt)
+int qmi_rmnet_change_link(struct net_device *dev, void *port, void *tcm_pt,
+			  int attr_len)
 {
 	struct qmi_info *qmi = (struct qmi_info *)rmnet_get_qmi_pt(port);
 	struct tcmsg *tcm = (struct tcmsg *)tcm_pt;
 	void *wda_data = NULL;
+	int rc = 0;
 
 	switch (tcm->tcm_family) {
 	case NLMSG_FLOW_ACTIVATE:
 		if (!qmi || !DFC_SUPPORTED_MODE(dfc_mode) ||
 		    !qmi_rmnet_has_dfc_client(qmi))
-			return;
+			return rc;
 
 		qmi_rmnet_add_flow(dev, tcm, qmi);
 		break;
 	case NLMSG_FLOW_DEACTIVATE:
 		if (!qmi || !DFC_SUPPORTED_MODE(dfc_mode))
-			return;
+			return rc;
 
 		qmi_rmnet_del_flow(dev, tcm, qmi);
 		break;
@@ -730,7 +739,7 @@ void qmi_rmnet_change_link(struct net_device *dev, void *port, void *tcm_pt)
 
 		if (!DFC_SUPPORTED_MODE(dfc_mode) &&
 		    !(tcm->tcm_ifindex & FLAG_POWERSAVE_MASK))
-			return;
+			return rc;
 
 		if (qmi_rmnet_setup_client(port, qmi, tcm) < 0) {
 			/* retrieve qmi again as it could have been changed */
@@ -741,14 +750,18 @@ void qmi_rmnet_change_link(struct net_device *dev, void *port, void *tcm_pt)
 				rmnet_reset_qmi_pt(port);
 				kfree(qmi);
 			}
-		} else if (tcm->tcm_ifindex & FLAG_POWERSAVE_MASK) {
+
+			return rc;
+		}
+
+		if (tcm->tcm_ifindex & FLAG_POWERSAVE_MASK) {
 			qmi_rmnet_work_init(port);
 			rmnet_set_powersave_format(port);
 		}
 		break;
 	case NLMSG_CLIENT_DELETE:
 		if (!qmi)
-			return;
+			return rc;
 		if (tcm->tcm_handle == 0) { /* instance 0 */
 			rmnet_clear_powersave_format(port);
 			if (qmi->wda_client)
@@ -762,16 +775,25 @@ void qmi_rmnet_change_link(struct net_device *dev, void *port, void *tcm_pt)
 		break;
 	case NLMSG_SCALE_FACTOR:
 		if (!tcm->tcm_ifindex)
-			return;
+			return rc;
 		qmi_rmnet_scale_factor = tcm->tcm_ifindex;
 		break;
 	case NLMSG_WQ_FREQUENCY:
 		rmnet_wq_frequency = tcm->tcm_ifindex;
 		break;
+	case NLMSG_CHANNEL_SWITCH:
+		if (!qmi || !DFC_SUPPORTED_MODE(dfc_mode) ||
+		    !qmi_rmnet_has_dfc_client(qmi))
+			return rc;
+
+		rc = rmnet_ll_switch(dev, tcm, attr_len);
+		break;
 	default:
 		pr_debug("%s(): No handler\n", __func__);
 		break;
 	}
+
+	return rc;
 }
 EXPORT_SYMBOL(qmi_rmnet_change_link);
 
@@ -869,6 +891,22 @@ bool qmi_rmnet_all_flows_enabled(struct net_device *dev)
 EXPORT_SYMBOL(qmi_rmnet_all_flows_enabled);
 
 #ifdef CONFIG_QTI_QMI_DFC
+bool qmi_rmnet_flow_is_low_latency(struct net_device *dev,
+				   struct sk_buff *skb)
+{
+	struct qos_info *qos = rmnet_get_qos_pt(dev);
+	int txq = skb->queue_mapping;
+
+	if (txq > ACK_MQ_OFFSET)
+		txq -= ACK_MQ_OFFSET;
+
+	if (unlikely(!qos || txq >= MAX_MQ_NUM))
+		return false;
+
+	return qos->mq[txq].is_ll_ch;
+}
+EXPORT_SYMBOL(qmi_rmnet_flow_is_low_latency);
+
 void qmi_rmnet_burst_fc_check(struct net_device *dev,
 			      int ip_type, u32 mark, unsigned int len)
 {
@@ -1019,6 +1057,8 @@ void qmi_rmnet_qos_exit_pre(void *qos)
 	list_for_each_entry(bearer, &qosi->bearer_head, list) {
 		bearer->watchdog_quit = true;
 		del_timer_sync(&bearer->watchdog);
+		bearer->ch_switch.timer_quit = true;
+		del_timer_sync(&bearer->ch_switch.guard_timer);
 	}
 
 	list_add(&qosi->list, &qos_cleanup_list);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -912,7 +912,7 @@ dfc_send_ack(struct net_device *dev, u8 bearer_id, u16 seq, u8 mux_id, u8 type)
 	trace_dfc_qmap_cmd(mux_id, bearer_id, seq, type, qos->tran_num);
 	qos->tran_num++;
 
-	rmnet_map_tx_qmap_cmd(skb);
+	rmnet_map_tx_qmap_cmd(skb, RMNET_CH_DEFAULT, true);
 }
 
 int dfc_bearer_flow_ctl(struct net_device *dev,

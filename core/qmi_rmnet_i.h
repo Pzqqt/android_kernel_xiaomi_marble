@@ -17,6 +17,8 @@
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
 #include <linux/timer.h>
+#include <uapi/linux/rtnetlink.h>
+#include <linux/soc/qcom/qmi.h>
 
 #define MAX_MQ_NUM 16
 #define MAX_CLIENT_NUM 2
@@ -38,6 +40,34 @@ extern int dfc_mode;
 extern int dfc_qmap;
 
 struct qos_info;
+
+enum {
+	RMNET_CH_DEFAULT,
+	RMNET_CH_LL,
+	RMNET_CH_MAX,
+	RMNET_CH_CTL = 0xFF
+};
+
+enum rmnet_ch_switch_state {
+	CH_SWITCH_NONE,
+	CH_SWITCH_STARTED,
+	CH_SWITCH_ACKED,
+	CH_SWITCH_FAILED_RETRY
+};
+
+struct rmnet_ch_switch {
+	u8 current_ch;
+	u8 switch_to_ch;
+	u8 retry_left;
+	u8 status_code;
+	enum rmnet_ch_switch_state state;
+	__be32 switch_txid;
+	u32 flags;
+	bool timer_quit;
+	struct timer_list guard_timer;
+	u32 nl_pid;
+	u32 nl_seq;
+};
 
 struct rmnet_bearer_map {
 	struct list_head list;
@@ -62,6 +92,7 @@ struct rmnet_bearer_map {
 	bool watchdog_started;
 	bool watchdog_quit;
 	u32 watchdog_expire_cnt;
+	struct rmnet_ch_switch ch_switch;
 };
 
 struct rmnet_flow_map {
@@ -81,6 +112,7 @@ struct svc_info {
 
 struct mq_map {
 	struct rmnet_bearer_map *bearer;
+	bool is_ll_ch;
 };
 
 struct qos_info {
@@ -169,6 +201,9 @@ void qmi_rmnet_watchdog_add(struct rmnet_bearer_map *bearer);
 
 void qmi_rmnet_watchdog_remove(struct rmnet_bearer_map *bearer);
 
+int rmnet_ll_switch(struct net_device *dev, struct tcmsg *tcm, int attrlen);
+
+void rmnet_ll_guard_fn(struct timer_list *t);
 #else
 static inline struct rmnet_flow_map *
 qmi_rmnet_get_flow_map(struct qos_info *qos_info,
@@ -215,6 +250,12 @@ static inline void dfc_qmap_client_exit(void *dfc_data)
 
 static inline void qmi_rmnet_watchdog_remove(struct rmnet_bearer_map *bearer)
 {
+}
+
+static int rmnet_ll_switch(struct net_device *dev,
+			   struct tcmsg *tcm, int attrlen)
+{
+	return -EINVAL;
 }
 #endif
 

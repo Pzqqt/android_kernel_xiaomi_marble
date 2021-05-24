@@ -23,6 +23,7 @@
 #include "rmnet_private.h"
 #include "rmnet_map.h"
 #include "rmnet_descriptor.h"
+#include "rmnet_ll.h"
 #include "rmnet_genl.h"
 #include "rmnet_qmi.h"
 #include "qmi_rmnet.h"
@@ -387,6 +388,7 @@ static int rmnet_changelink(struct net_device *dev, struct nlattr *tb[],
 	struct rmnet_endpoint *ep;
 	struct rmnet_port *port;
 	u16 mux_id;
+	int rc = 0;
 
 	real_dev = __dev_get_by_index(dev_net(dev),
 				      nla_get_u32(tb[IFLA_LINK]));
@@ -417,10 +419,11 @@ static int rmnet_changelink(struct net_device *dev, struct nlattr *tb[],
 	}
 
 	if (data[IFLA_RMNET_DFC_QOS]) {
+		struct nlattr *qos = data[IFLA_RMNET_DFC_QOS];
 		struct tcmsg *tcm;
 
-		tcm = nla_data(data[IFLA_RMNET_DFC_QOS]);
-		qmi_rmnet_change_link(dev, port, tcm);
+		tcm = nla_data(qos);
+		rc = qmi_rmnet_change_link(dev, port, tcm, nla_len(qos));
 	}
 
 	if (data[IFLA_RMNET_UL_AGG_PARAMS]) {
@@ -433,7 +436,7 @@ static int rmnet_changelink(struct net_device *dev, struct nlattr *tb[],
 					       agg_params->agg_time);
 	}
 
-	return 0;
+	return rc;
 }
 
 static size_t rmnet_get_size(const struct net_device *dev)
@@ -770,6 +773,13 @@ static int __init rmnet_init(void)
 		return rc;
 	}
 
+	rc = rmnet_ll_init();
+	if (rc != 0) {
+		unregister_netdevice_notifier(&rmnet_dev_notifier);
+		rtnl_link_unregister(&rmnet_link_ops);
+		return rc;
+	}
+
 	rmnet_core_genl_init();
 
 	try_module_get(THIS_MODULE);
@@ -780,6 +790,7 @@ static void __exit rmnet_exit(void)
 {
 	unregister_netdevice_notifier(&rmnet_dev_notifier);
 	rtnl_link_unregister(&rmnet_link_ops);
+	rmnet_ll_exit();
 	rmnet_core_genl_deinit();
 
 	module_put(THIS_MODULE);

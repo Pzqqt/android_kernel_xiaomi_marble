@@ -38,6 +38,7 @@ struct rmnet_frag_descriptor {
 	struct net_device *dev;
 	u32 len;
 	u32 hash;
+	u32 priority;
 	__be32 tcp_seq;
 	__be16 ip_id;
 	__be16 tcp_flags;
@@ -85,7 +86,7 @@ int rmnet_frag_flow_command(struct rmnet_frag_descriptor *frag_desc,
 
 /* Ingress data handlers */
 void rmnet_frag_deaggregate(struct sk_buff *skb, struct rmnet_port *port,
-			    struct list_head *list);
+			    struct list_head *list, u32 priority);
 void rmnet_frag_deliver(struct rmnet_frag_descriptor *frag_desc,
 			struct rmnet_port *port);
 int rmnet_frag_process_next_hdr_packet(struct rmnet_frag_descriptor *frag_desc,

@@ -26,6 +26,7 @@
 #include "rmnet_map.h"
 #include "rmnet_vnd.h"
 #include "rmnet_genl.h"
+#include "rmnet_ll.h"
 
 #include "qmi_rmnet.h"
 #include "rmnet_qmi.h"
@@ -74,6 +75,7 @@ static netdev_tx_t rmnet_vnd_start_xmit(struct sk_buff *skb,
 	u32 mark;
 	unsigned int len;
 	rmnet_perf_tether_egress_hook_t rmnet_perf_tether_egress;
+	bool low_latency;
 
 	priv = netdev_priv(dev);
 	if (priv->real_dev) {
@@ -86,7 +88,8 @@ static netdev_tx_t rmnet_vnd_start_xmit(struct sk_buff *skb,
 		if (rmnet_perf_tether_egress) {
 			rmnet_perf_tether_egress(skb);
 		}
-		rmnet_egress_handler(skb);
+		low_latency = qmi_rmnet_flow_is_low_latency(dev, skb);
+		rmnet_egress_handler(skb, low_latency);
 		qmi_rmnet_burst_fc_check(dev, ip_type, mark, len);
 		qmi_rmnet_work_maybe_restart(rmnet_get_rmnet_port(dev));
 	} else {
@@ -288,15 +291,35 @@ static const char rmnet_port_gstrings_stats[][ETH_GSTRING_LEN] = {
 	"UL agg alloc",
 };
 
+static const char rmnet_ll_gstrings_stats[][ETH_GSTRING_LEN] = {
+	"LL TX queues",
+	"LL TX queue errors",
+	"LL TX completions",
+	"LL TX completion errors",
+	"LL RX queues",
+	"LL RX queue errors",
+	"LL RX status errors",
+	"LL RX empty transfers",
+	"LL RX OOM errors",
+	"LL RX packets",
+	"LL RX temp buffer allocations",
+};
+
 static void rmnet_get_strings(struct net_device *dev, u32 stringset, u8 *buf)
 {
+	size_t off = 0;
+
 	switch (stringset) {
 	case ETH_SS_STATS:
 		memcpy(buf, &rmnet_gstrings_stats,
 		       sizeof(rmnet_gstrings_stats));
-		memcpy(buf + sizeof(rmnet_gstrings_stats),
+		off += sizeof(rmnet_gstrings_stats);
+		memcpy(buf + off,
 		       &rmnet_port_gstrings_stats,
 		       sizeof(rmnet_port_gstrings_stats));
+		off += sizeof(rmnet_port_gstrings_stats);
+		memcpy(buf + off, &rmnet_ll_gstrings_stats,
+		       sizeof(rmnet_ll_gstrings_stats));
 		break;
 	}
 }
@@ -306,7 +329,8 @@ static int rmnet_get_sset_count(struct net_device *dev, int sset)
 	switch (sset) {
 	case ETH_SS_STATS:
 		return ARRAY_SIZE(rmnet_gstrings_stats) +
-		       ARRAY_SIZE(rmnet_port_gstrings_stats);
+		       ARRAY_SIZE(rmnet_port_gstrings_stats) +
+		       ARRAY_SIZE(rmnet_ll_gstrings_stats);
 	default:
 		return -EOPNOTSUPP;
 	}
@@ -318,7 +342,9 @@ static void rmnet_get_ethtool_stats(struct net_device *dev,
 	struct rmnet_priv *priv = netdev_priv(dev);
 	struct rmnet_priv_stats *st = &priv->stats;
 	struct rmnet_port_priv_stats *stp;
+	struct rmnet_ll_stats *llp;
 	struct rmnet_port *port;
+	size_t off = 0;
 
 	port = rmnet_get_port(priv->real_dev);
 
@@ -326,10 +352,15 @@ static void rmnet_get_ethtool_stats(struct net_device *dev,
 		return;
 
 	stp = &port->stats;
+	llp = rmnet_ll_get_stats();
 
 	memcpy(data, st, ARRAY_SIZE(rmnet_gstrings_stats) * sizeof(u64));
-	memcpy(data + ARRAY_SIZE(rmnet_gstrings_stats), stp,
+	off += ARRAY_SIZE(rmnet_gstrings_stats);
+	memcpy(data + off, stp,
 	       ARRAY_SIZE(rmnet_port_gstrings_stats) * sizeof(u64));
+	off += ARRAY_SIZE(rmnet_port_gstrings_stats);
+	memcpy(data + off, llp,
+	       ARRAY_SIZE(rmnet_ll_gstrings_stats) * sizeof(u64));
 }
 
 static int rmnet_stats_reset(struct net_device *dev)
