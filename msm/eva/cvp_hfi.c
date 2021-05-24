@@ -4032,8 +4032,6 @@ err_tzbsp_suspend:
 static void power_off_iris2(struct iris_hfi_device *device)
 {
 	u32 lpi_status, reg_status = 0, count = 0, max_count = 1000;
-	u32 pc_ready, wfi_status, sbm_ln0_low;
-	u32 main_sbm_ln0_low, main_sbm_ln1_high;
 
 	if (!device->power_enabled || !device->res->sw_power_collapsible)
 		return;
@@ -4060,18 +4058,24 @@ static void power_off_iris2(struct iris_hfi_device *device)
 		"Noc: lpi_status %x noc_status %x (count %d)\n",
 		lpi_status, reg_status, count);
 	if (count == max_count) {
+		u32 pc_ready, wfi_status, sbm_ln0_low;
+		/*u32 main_sbm_ln0_low, main_sbm_ln1_high;  */
+
 		wfi_status = __read_register(device, CVP_WRAPPER_CPU_STATUS);
 		pc_ready = __read_register(device, CVP_CTRL_STATUS);
 		sbm_ln0_low =
 			__read_register(device, CVP_NOC_SBM_SENSELN0_LOW);
+		/*temp commented till dependency ready*/
+		/*
 		main_sbm_ln0_low = __read_register(device,
 				CVP_NOC_MAIN_SIDEBANDMANAGER_SENSELN0_LOW);
 		main_sbm_ln1_high = __read_register(device,
 				CVP_NOC_MAIN_SIDEBANDMANAGER_SENSELN1_HIGH);
+		*/
 		dprintk(CVP_WARN,
-			"NOC not in qaccept status %x %x %x %x %x %x %x\n",
+			"NOC not in qaccept status %x %x %x %x %x\n",
 			reg_status, lpi_status, wfi_status, pc_ready,
-			sbm_ln0_low, main_sbm_ln0_low, main_sbm_ln1_high);
+			sbm_ln0_low);
 	}
 
 	/* HPG 6.1.2 Step 3, debug bridge to low power BYPASSED */
