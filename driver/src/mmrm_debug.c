@@ -8,6 +8,7 @@
 #include "mmrm_debug.h"
 
 int msm_mmrm_debug = MMRM_ERR | MMRM_WARN | MMRM_PRINTK;
+u8 msm_mmrm_allow_multiple_register = 0;
 
 #define MAX_DBG_BUF_SIZE 4096
 
@@ -59,6 +60,7 @@ struct dentry *msm_mmrm_debugfs_init(void)
 
 	/* add other params here */
 	debugfs_create_u32("debug_level", 0644, dir, &msm_mmrm_debug);
+	debugfs_create_u8("allow_multiple_register", 0644, dir, &msm_mmrm_allow_multiple_register);
 
 	d_mpr_h("%s: exiting\n", __func__);
 	return dir;

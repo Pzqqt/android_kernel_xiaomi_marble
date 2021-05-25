@@ -58,6 +58,7 @@ struct mmrm_sw_clk_client_tbl_entry {
 	u64 clk_rate;
 	u32 vdd_level;
 	bool reserve;
+	u32 ref_count;
 };
 
 struct mmrm_sw_peak_current_data {

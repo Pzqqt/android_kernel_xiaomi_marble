@@ -28,6 +28,7 @@ enum mmrm_msg_prio {
 };
 
 extern int msm_mmrm_debug;
+extern u8 msm_mmrm_allow_multiple_register;
 
 #define dprintk(__level, __fmt, ...) \
 	do { \
