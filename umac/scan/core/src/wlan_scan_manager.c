@@ -1368,6 +1368,8 @@ scm_pno_event_handler(struct wlan_objmgr_vdev *vdev,
 		qdf_wake_lock_timeout_acquire(
 			&scan_psoc_obj->pno_cfg.pno_wake_lock,
 			SCAN_PNO_SCAN_COMPLETE_WAKE_LOCK_TIMEOUT);
+		qdf_runtime_pm_allow_suspend(
+			&scan_psoc_obj->pno_cfg.pno_runtime_pm_lock);
 		scan_vdev_obj->pno_match_evt_received = false;
 		break;
 	case SCAN_EVENT_TYPE_NLO_MATCH:
@@ -1375,6 +1377,8 @@ scm_pno_event_handler(struct wlan_objmgr_vdev *vdev,
 		qdf_wake_lock_timeout_acquire(
 			&scan_psoc_obj->pno_cfg.pno_wake_lock,
 			SCAN_PNO_MATCH_WAKE_LOCK_TIMEOUT);
+		qdf_runtime_pm_prevent_suspend(
+			&scan_psoc_obj->pno_cfg.pno_runtime_pm_lock);
 		return QDF_STATUS_SUCCESS;
 	default:
 		return QDF_STATUS_E_INVAL;

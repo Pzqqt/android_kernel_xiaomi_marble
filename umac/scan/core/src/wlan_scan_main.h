@@ -251,6 +251,7 @@ struct scan_vdev_obj {
  * @max_sched_scan_plan_iterations: PNO scan number of iterations
  * @scan_backoff_multiplier: Scan banckoff multiplier
  * @pno_wake_lock: pno wake lock
+ * @pno_runtime_pm_lock: pno runtime pm lock
  * @pno_cb: callback to call on PNO completion
  * @mawc_params: Configuration parameters for NLO MAWC.
  * @user_config_sched_scan_plan: if enabled set user confing sched scan plan
@@ -270,6 +271,7 @@ struct pno_def_config {
 	uint32_t max_sched_scan_plan_iterations;
 	uint8_t scan_backoff_multiplier;
 	qdf_wake_lock_t pno_wake_lock;
+	qdf_runtime_lock_t pno_runtime_pm_lock;
 	struct cb_handler pno_cb;
 	struct nlo_mawc_params mawc_params;
 	bool user_config_sched_scan_plan;
