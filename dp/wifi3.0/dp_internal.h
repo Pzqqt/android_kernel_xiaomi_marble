@@ -192,6 +192,28 @@ static inline QDF_STATUS monitor_pdev_detach(struct dp_pdev *pdev)
 	return QDF_STATUS_SUCCESS;
 }
 
+static inline QDF_STATUS monitor_vdev_attach(struct dp_vdev *vdev)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
+static inline QDF_STATUS monitor_vdev_detach(struct dp_vdev *vdev)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
+static inline QDF_STATUS monitor_peer_attach(struct dp_soc *soc,
+					     struct dp_peer *peer)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
+static inline QDF_STATUS monitor_peer_detach(struct dp_soc *soc,
+					     struct dp_peer *peer)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
 static inline QDF_STATUS monitor_pdev_init(struct dp_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
@@ -387,6 +409,48 @@ static inline QDF_STATUS monitor_filter_neighbour_peer(struct dp_pdev *pdev,
 static inline void monitor_print_pdev_tx_capture_stats(struct dp_pdev *pdev)
 {
 }
+
+static inline
+void monitor_reap_timer_init(struct dp_soc *soc)
+{
+}
+
+static inline
+void monitor_reap_timer_deinit(struct dp_soc *soc)
+{
+}
+
+static inline
+void monitor_reap_timer_start(struct dp_soc *soc)
+{
+}
+
+static inline
+bool monitor_reap_timer_stop(struct dp_soc *soc)
+{
+	return false;
+}
+
+static inline
+void monitor_vdev_timer_init(struct dp_soc *soc)
+{
+}
+
+static inline
+void monitor_vdev_timer_deinit(struct dp_soc *soc)
+{
+}
+
+static inline
+void monitor_vdev_timer_start(struct dp_soc *soc)
+{
+}
+
+static inline
+bool monitor_vdev_timer_stop(struct dp_soc *soc)
+{
+	return false;
+}
 #endif
 
 #ifndef WIFI_MONITOR_SUPPORT
@@ -399,6 +463,24 @@ static inline QDF_STATUS monitor_drop_inv_peer_pkts(struct dp_vdev *vdev,
 static inline bool dp_is_enable_reap_timer_non_pkt(struct dp_pdev *pdev)
 {
 	return false;
+}
+
+static inline void monitor_vdev_register_osif(struct dp_vdev *vdev,
+					      struct ol_txrx_ops *txrx_ops)
+{
+}
+
+static inline bool monitor_is_vdev_timer_running(struct dp_soc *soc)
+{
+	return false;
+}
+
+static inline void monitor_vdev_delete(struct dp_soc *soc, struct dp_vdev *vdev)
+{
+}
+
+static inline void dp_peer_ppdu_delayed_ba_init(struct dp_peer *peer)
+{
 }
 #endif
 
@@ -1300,13 +1382,6 @@ void dp_peer_find_id_to_obj_remove(struct dp_soc *soc,
 				   uint16_t peer_id);
 void dp_vdev_unref_delete(struct dp_soc *soc, struct dp_vdev *vdev,
 			  enum dp_mod_id mod_id);
-/*
- * dp_peer_ppdu_delayed_ba_init() Initialize ppdu in peer
- * @peer: Datapath peer
- *
- * return: void
- */
-void dp_peer_ppdu_delayed_ba_init(struct dp_peer *peer);
 
 /*
  * dp_peer_ppdu_delayed_ba_cleanup() free ppdu allocated in peer

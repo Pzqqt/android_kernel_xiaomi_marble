@@ -25,6 +25,8 @@
 #include "qdf_trace.h"
 #include "qdf_nbuf.h"
 #include "hal_api_mon.h"
+#include "dp_htt.h"
+#include "dp_mon.h"
 #include "dp_rx_mon.h"
 #include "wlan_cfg.h"
 #include "dp_internal.h"
@@ -1489,11 +1491,13 @@ QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 	struct cdp_mon_status *rs = &pdev->rx_mon_recv_status;
 	qdf_nbuf_t mon_skb, skb_next;
 	qdf_nbuf_t mon_mpdu = NULL;
+	struct dp_vdev *vdev;
 
 	if (!pdev || (!pdev->monitor_vdev && !pdev->mcopy_mode &&
 		      !pdev->rx_pktlog_cbf))
 		goto mon_deliver_fail;
 
+	vdev = pdev->monitor_vdev;
 	/* restitch mon MPDU for delivery via monitor interface */
 	mon_mpdu = dp_rx_mon_restitch_mpdu(soc, mac_id, head_msdu,
 					   tail_msdu, rs);
@@ -1513,7 +1517,7 @@ QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 		return dp_send_mgmt_packet_to_stack(soc, mon_mpdu, pdev);
 
 	if (mon_mpdu && pdev->monitor_vdev && pdev->monitor_vdev->osif_vdev &&
-	    pdev->monitor_vdev->osif_rx_mon) {
+	    vdev->monitor_vdev->osif_rx_mon) {
 		pdev->ppdu_info.rx_status.ppdu_id =
 			pdev->ppdu_info.com_info.ppdu_id;
 		pdev->ppdu_info.rx_status.device_id = soc->device_id;
@@ -1532,7 +1536,7 @@ QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 		}
 
 		dp_rx_mon_update_pf_tag_to_buf_headroom(soc, mon_mpdu);
-		pdev->monitor_vdev->osif_rx_mon(pdev->monitor_vdev->osif_vdev,
+		vdev->monitor_vdev->osif_rx_mon(pdev->monitor_vdev->osif_vdev,
 						mon_mpdu,
 						&pdev->ppdu_info.rx_status);
 	} else {
@@ -1575,13 +1579,19 @@ QDF_STATUS dp_rx_mon_deliver_non_std(struct dp_soc *soc,
 	struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 	ol_txrx_rx_mon_fp osif_rx_mon;
 	qdf_nbuf_t dummy_msdu;
+	struct dp_vdev *vdev;
 
 	/* Sanity checking */
-	if (!pdev || !pdev->monitor_vdev || !pdev->monitor_vdev->osif_rx_mon)
+	if (!pdev || !pdev->monitor_vdev)
+		goto mon_deliver_non_std_fail;
+
+	vdev = pdev->monitor_vdev;
+
+	if (!vdev->monitor_vdev->osif_rx_mon)
 		goto mon_deliver_non_std_fail;
 
 	/* Generate a dummy skb_buff */
-	osif_rx_mon = pdev->monitor_vdev->osif_rx_mon;
+	osif_rx_mon = vdev->monitor_vdev->osif_rx_mon;
 	dummy_msdu = qdf_nbuf_alloc(soc->osdev, MAX_MONITOR_HEADER,
 				    MAX_MONITOR_HEADER, 4, FALSE);
 	if (!dummy_msdu)

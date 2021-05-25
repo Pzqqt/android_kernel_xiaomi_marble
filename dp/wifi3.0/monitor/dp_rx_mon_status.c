@@ -1092,6 +1092,7 @@ dp_rx_handle_smart_mesh_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 			      qdf_nbuf_t nbuf)
 {
 	uint8_t size = 0;
+	struct dp_vdev *vdev;
 
 	if (!pdev->monitor_vdev) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -1099,6 +1100,9 @@ dp_rx_handle_smart_mesh_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 			  __func__, __LINE__);
 		return 1;
 	}
+
+	vdev = pdev->monitor_vdev;
+
 	if (!ppdu_info->msdu_info.first_msdu_payload) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "[%s]:[%d] First msdu payload not present",
@@ -1127,7 +1131,7 @@ dp_rx_handle_smart_mesh_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 		return 1;
 	}
 
-	pdev->monitor_vdev->osif_rx_mon(pdev->monitor_vdev->osif_vdev,
+	vdev->monitor_vdev->osif_rx_mon(pdev->monitor_vdev->osif_vdev,
 					nbuf, NULL);
 	pdev->ppdu_info.rx_status.monitor_direct_used = 0;
 	return 0;

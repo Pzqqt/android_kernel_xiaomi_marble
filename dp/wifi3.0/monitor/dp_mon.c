@@ -58,8 +58,12 @@ QDF_STATUS dp_srng_init(struct dp_soc *soc, struct dp_srng *srng,
 void dp_srng_deinit(struct dp_soc *soc, struct dp_srng *srng,
 		    int ring_type, int ring_num);
 
-QDF_STATUS dp_vdev_set_monitor_mode_rings(struct dp_pdev *pdev,
-					  uint8_t delayed_replenish);
+enum timer_yield_status
+dp_should_timer_irq_yield(struct dp_soc *soc, uint32_t work_done,
+			  uint64_t start_time);
+
+static QDF_STATUS dp_vdev_set_monitor_mode_rings(struct dp_pdev *pdev,
+						 uint8_t delayed_replenish);
 
 #ifndef WLAN_TX_PKT_CAPTURE_ENH
 static inline void
@@ -1017,11 +1021,12 @@ dp_peer_copy_delay_stats(struct dp_peer *peer,
 {
 	struct dp_pdev *pdev;
 	struct dp_vdev *vdev;
+	struct dp_mon_peer *mon_peer = peer->monitor_peer;
 
-	if (peer->last_delayed_ba) {
+	if (mon_peer->last_delayed_ba) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "BA not yet recv for prev delayed ppdu[%d] - cur ppdu[%d]",
-			  peer->last_delayed_ba_ppduid, cur_ppdu_id);
+			  mon_peer->last_delayed_ba_ppduid, cur_ppdu_id);
 		vdev = peer->vdev;
 		if (vdev) {
 			pdev = vdev->pdev;
@@ -1029,30 +1034,32 @@ dp_peer_copy_delay_stats(struct dp_peer *peer,
 		}
 	}
 
-	peer->delayed_ba_ppdu_stats.ltf_size = ppdu->ltf_size;
-	peer->delayed_ba_ppdu_stats.stbc = ppdu->stbc;
-	peer->delayed_ba_ppdu_stats.he_re = ppdu->he_re;
-	peer->delayed_ba_ppdu_stats.txbf = ppdu->txbf;
-	peer->delayed_ba_ppdu_stats.bw = ppdu->bw;
-	peer->delayed_ba_ppdu_stats.nss = ppdu->nss;
-	peer->delayed_ba_ppdu_stats.gi = ppdu->gi;
-	peer->delayed_ba_ppdu_stats.dcm = ppdu->dcm;
-	peer->delayed_ba_ppdu_stats.ldpc = ppdu->ldpc;
-	peer->delayed_ba_ppdu_stats.dcm = ppdu->dcm;
-	peer->delayed_ba_ppdu_stats.mpdu_tried_ucast = ppdu->mpdu_tried_ucast;
-	peer->delayed_ba_ppdu_stats.mpdu_tried_mcast = ppdu->mpdu_tried_mcast;
-	peer->delayed_ba_ppdu_stats.frame_ctrl = ppdu->frame_ctrl;
-	peer->delayed_ba_ppdu_stats.qos_ctrl = ppdu->qos_ctrl;
-	peer->delayed_ba_ppdu_stats.dcm = ppdu->dcm;
+	mon_peer->delayed_ba_ppdu_stats.ltf_size = ppdu->ltf_size;
+	mon_peer->delayed_ba_ppdu_stats.stbc = ppdu->stbc;
+	mon_peer->delayed_ba_ppdu_stats.he_re = ppdu->he_re;
+	mon_peer->delayed_ba_ppdu_stats.txbf = ppdu->txbf;
+	mon_peer->delayed_ba_ppdu_stats.bw = ppdu->bw;
+	mon_peer->delayed_ba_ppdu_stats.nss = ppdu->nss;
+	mon_peer->delayed_ba_ppdu_stats.gi = ppdu->gi;
+	mon_peer->delayed_ba_ppdu_stats.dcm = ppdu->dcm;
+	mon_peer->delayed_ba_ppdu_stats.ldpc = ppdu->ldpc;
+	mon_peer->delayed_ba_ppdu_stats.dcm = ppdu->dcm;
+	mon_peer->delayed_ba_ppdu_stats.mpdu_tried_ucast =
+					ppdu->mpdu_tried_ucast;
+	mon_peer->delayed_ba_ppdu_stats.mpdu_tried_mcast =
+					ppdu->mpdu_tried_mcast;
+	mon_peer->delayed_ba_ppdu_stats.frame_ctrl = ppdu->frame_ctrl;
+	mon_peer->delayed_ba_ppdu_stats.qos_ctrl = ppdu->qos_ctrl;
+	mon_peer->delayed_ba_ppdu_stats.dcm = ppdu->dcm;
 
-	peer->delayed_ba_ppdu_stats.ru_start = ppdu->ru_start;
-	peer->delayed_ba_ppdu_stats.ru_tones = ppdu->ru_tones;
-	peer->delayed_ba_ppdu_stats.is_mcast = ppdu->is_mcast;
+	mon_peer->delayed_ba_ppdu_stats.ru_start = ppdu->ru_start;
+	mon_peer->delayed_ba_ppdu_stats.ru_tones = ppdu->ru_tones;
+	mon_peer->delayed_ba_ppdu_stats.is_mcast = ppdu->is_mcast;
 
-	peer->delayed_ba_ppdu_stats.user_pos = ppdu->user_pos;
-	peer->delayed_ba_ppdu_stats.mu_group_id = ppdu->mu_group_id;
+	mon_peer->delayed_ba_ppdu_stats.user_pos = ppdu->user_pos;
+	mon_peer->delayed_ba_ppdu_stats.mu_group_id = ppdu->mu_group_id;
 
-	peer->last_delayed_ba = true;
+	mon_peer->last_delayed_ba = true;
 
 	ppdu->debug_copied = true;
 }
@@ -1074,30 +1081,34 @@ static void
 dp_peer_copy_stats_to_bar(struct dp_peer *peer,
 			  struct cdp_tx_completion_ppdu_user *ppdu)
 {
-	ppdu->ltf_size = peer->delayed_ba_ppdu_stats.ltf_size;
-	ppdu->stbc = peer->delayed_ba_ppdu_stats.stbc;
-	ppdu->he_re = peer->delayed_ba_ppdu_stats.he_re;
-	ppdu->txbf = peer->delayed_ba_ppdu_stats.txbf;
-	ppdu->bw = peer->delayed_ba_ppdu_stats.bw;
-	ppdu->nss = peer->delayed_ba_ppdu_stats.nss;
-	ppdu->gi = peer->delayed_ba_ppdu_stats.gi;
-	ppdu->dcm = peer->delayed_ba_ppdu_stats.dcm;
-	ppdu->ldpc = peer->delayed_ba_ppdu_stats.ldpc;
-	ppdu->dcm = peer->delayed_ba_ppdu_stats.dcm;
-	ppdu->mpdu_tried_ucast = peer->delayed_ba_ppdu_stats.mpdu_tried_ucast;
-	ppdu->mpdu_tried_mcast = peer->delayed_ba_ppdu_stats.mpdu_tried_mcast;
-	ppdu->frame_ctrl = peer->delayed_ba_ppdu_stats.frame_ctrl;
-	ppdu->qos_ctrl = peer->delayed_ba_ppdu_stats.qos_ctrl;
-	ppdu->dcm = peer->delayed_ba_ppdu_stats.dcm;
+	struct dp_mon_peer *mon_peer = peer->monitor_peer;
 
-	ppdu->ru_start = peer->delayed_ba_ppdu_stats.ru_start;
-	ppdu->ru_tones = peer->delayed_ba_ppdu_stats.ru_tones;
-	ppdu->is_mcast = peer->delayed_ba_ppdu_stats.is_mcast;
+	ppdu->ltf_size = mon_peer->delayed_ba_ppdu_stats.ltf_size;
+	ppdu->stbc = mon_peer->delayed_ba_ppdu_stats.stbc;
+	ppdu->he_re = mon_peer->delayed_ba_ppdu_stats.he_re;
+	ppdu->txbf = mon_peer->delayed_ba_ppdu_stats.txbf;
+	ppdu->bw = mon_peer->delayed_ba_ppdu_stats.bw;
+	ppdu->nss = mon_peer->delayed_ba_ppdu_stats.nss;
+	ppdu->gi = mon_peer->delayed_ba_ppdu_stats.gi;
+	ppdu->dcm = mon_peer->delayed_ba_ppdu_stats.dcm;
+	ppdu->ldpc = mon_peer->delayed_ba_ppdu_stats.ldpc;
+	ppdu->dcm = mon_peer->delayed_ba_ppdu_stats.dcm;
+	ppdu->mpdu_tried_ucast =
+			mon_peer->delayed_ba_ppdu_stats.mpdu_tried_ucast;
+	ppdu->mpdu_tried_mcast =
+			mon_peer->delayed_ba_ppdu_stats.mpdu_tried_mcast;
+	ppdu->frame_ctrl = mon_peer->delayed_ba_ppdu_stats.frame_ctrl;
+	ppdu->qos_ctrl = mon_peer->delayed_ba_ppdu_stats.qos_ctrl;
+	ppdu->dcm = mon_peer->delayed_ba_ppdu_stats.dcm;
 
-	ppdu->user_pos = peer->delayed_ba_ppdu_stats.user_pos;
-	ppdu->mu_group_id = peer->delayed_ba_ppdu_stats.mu_group_id;
+	ppdu->ru_start = mon_peer->delayed_ba_ppdu_stats.ru_start;
+	ppdu->ru_tones = mon_peer->delayed_ba_ppdu_stats.ru_tones;
+	ppdu->is_mcast = mon_peer->delayed_ba_ppdu_stats.is_mcast;
 
-	peer->last_delayed_ba = false;
+	ppdu->user_pos = mon_peer->delayed_ba_ppdu_stats.user_pos;
+	ppdu->mu_group_id = mon_peer->delayed_ba_ppdu_stats.mu_group_id;
+
+	mon_peer->last_delayed_ba = false;
 
 	ppdu->debug_copied = true;
 }
@@ -2272,7 +2283,7 @@ dp_process_ppdu_stats_sch_cmd_status_tlv(struct dp_pdev *pdev,
 			if (!peer)
 				continue;
 
-			delay_ppdu = &peer->delayed_ba_ppdu_stats;
+			delay_ppdu = &peer->monitor_peer->delayed_ba_ppdu_stats;
 			start_tsf = ppdu_desc->ppdu_start_timestamp;
 			end_tsf = ppdu_desc->ppdu_end_timestamp;
 			/**
@@ -2282,12 +2293,13 @@ dp_process_ppdu_stats_sch_cmd_status_tlv(struct dp_pdev *pdev,
 				dp_peer_copy_delay_stats(peer,
 							 &ppdu_desc->user[i],
 							 ppdu_id);
-				peer->last_delayed_ba_ppduid = ppdu_id;
+				peer->monitor_peer->last_delayed_ba_ppduid =
+									ppdu_id;
 				delay_ppdu->ppdu_start_timestamp = start_tsf;
 				delay_ppdu->ppdu_end_timestamp = end_tsf;
 			}
 			ppdu_desc->user[i].peer_last_delayed_ba =
-				peer->last_delayed_ba;
+				peer->monitor_peer->last_delayed_ba;
 
 			dp_peer_unref_delete(peer, DP_MOD_ID_TX_PPDU_STATS);
 
@@ -2334,20 +2346,20 @@ dp_process_ppdu_stats_sch_cmd_status_tlv(struct dp_pdev *pdev,
 				continue;
 			}
 
-			delay_ppdu = &peer->delayed_ba_ppdu_stats;
+			delay_ppdu = &peer->monitor_peer->delayed_ba_ppdu_stats;
 			start_tsf = delay_ppdu->ppdu_start_timestamp;
 			end_tsf = delay_ppdu->ppdu_end_timestamp;
 
-			if (peer->last_delayed_ba) {
+			if (peer->monitor_peer->last_delayed_ba) {
 				dp_peer_copy_stats_to_bar(peer,
 							  &ppdu_desc->user[i]);
 				ppdu_desc->ppdu_id =
-					peer->last_delayed_ba_ppduid;
+					peer->monitor_peer->last_delayed_ba_ppduid;
 				ppdu_desc->ppdu_start_timestamp = start_tsf;
 				ppdu_desc->ppdu_end_timestamp = end_tsf;
 			}
 			ppdu_desc->user[i].peer_last_delayed_ba =
-				peer->last_delayed_ba;
+				peer->monitor_peer->last_delayed_ba;
 			dp_peer_unref_delete(peer, DP_MOD_ID_TX_PPDU_STATS);
 		}
 	}
@@ -3572,8 +3584,10 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 	int max_mac_rings = wlan_cfg_get_num_mac_rings
 					(pdev->wlan_cfg_ctx);
 	uint8_t mac_id = 0;
+	struct dp_mon_soc *mon_soc;
 
 	soc = pdev->soc;
+	mon_soc = soc->monitor_soc;
 	dp_is_hw_dbs_enable(soc, &max_mac_rings);
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
@@ -3603,9 +3617,9 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 					return 0;
 				}
 
-				if (soc->reap_timer_init &&
+				if (mon_soc->reap_timer_init &&
 				    (!dp_is_enable_reap_timer_non_pkt(pdev)))
-					qdf_timer_mod(&soc->mon_reap_timer,
+					qdf_timer_mod(&mon_soc->mon_reap_timer,
 						      DP_INTR_POLL_TIMER_MS);
 			}
 			break;
@@ -3634,9 +3648,9 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 					return 0;
 				}
 
-				if (soc->reap_timer_init &&
+				if (mon_soc->reap_timer_init &&
 				    (!dp_is_enable_reap_timer_non_pkt(pdev)))
-					qdf_timer_mod(&soc->mon_reap_timer,
+					qdf_timer_mod(&mon_soc->mon_reap_timer,
 						      DP_INTR_POLL_TIMER_MS);
 			}
 			break;
@@ -3682,9 +3696,9 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 					return 0;
 				}
 
-				if (soc->reap_timer_init &&
+				if (mon_soc->reap_timer_init &&
 				    !dp_is_enable_reap_timer_non_pkt(pdev))
-					qdf_timer_mod(&soc->mon_reap_timer,
+					qdf_timer_mod(&mon_soc->mon_reap_timer,
 						      DP_INTR_POLL_TIMER_MS);
 			}
 			break;
@@ -3720,9 +3734,9 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 					return 0;
 				}
 
-				if (soc->reap_timer_init &&
+				if (mon_soc->reap_timer_init &&
 				    (!dp_is_enable_reap_timer_non_pkt(pdev)))
-					qdf_timer_stop(&soc->mon_reap_timer);
+					qdf_timer_stop(&mon_soc->mon_reap_timer);
 			}
 			break;
 		case WDI_EVENT_LITE_T2H:
@@ -3781,6 +3795,7 @@ static void dp_pktlogmod_exit(struct dp_pdev *pdev)
 {
 	struct dp_soc *soc = pdev->soc;
 	struct hif_opaque_softc *scn = soc->hif_handle;
+	struct dp_mon_soc *mon_soc = soc->monitor_soc;
 
 	if (!scn) {
 		dp_err("Invalid hif(scn) handle");
@@ -3789,8 +3804,9 @@ static void dp_pktlogmod_exit(struct dp_pdev *pdev)
 
 	/* stop mon_reap_timer if it has been started */
 	if (pdev->rx_pktlog_mode != DP_RX_PKTLOG_DISABLED &&
-	    soc->reap_timer_init && (!dp_is_enable_reap_timer_non_pkt(pdev)))
-		qdf_timer_sync_cancel(&soc->mon_reap_timer);
+	    mon_soc->reap_timer_init &&
+	    (!dp_is_enable_reap_timer_non_pkt(pdev)))
+		qdf_timer_sync_cancel(&mon_soc->mon_reap_timer);
 
 	pktlogmod_exit(scn);
 	pdev->pkt_log_init = false;
@@ -4183,6 +4199,7 @@ dp_enable_mon_reap_timer(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
 	struct dp_pdev *pdev = NULL;
+	struct dp_mon_soc *mon_soc = soc->monitor_soc;
 
 	pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
 	if (!pdev) {
@@ -4196,16 +4213,16 @@ dp_enable_mon_reap_timer(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 		return;
 	}
 
-	if (!soc->reap_timer_init) {
+	if (!mon_soc->reap_timer_init) {
 		dp_err("reap timer not init");
 		return;
 	}
 
 	if (enable)
-		qdf_timer_mod(&soc->mon_reap_timer,
+		qdf_timer_mod(&mon_soc->mon_reap_timer,
 			      DP_INTR_POLL_TIMER_MS);
 	else
-		qdf_timer_sync_cancel(&soc->mon_reap_timer);
+		qdf_timer_sync_cancel(&mon_soc->mon_reap_timer);
 }
 #endif
 
@@ -4488,8 +4505,8 @@ dp_peer_update_pkt_capture_params(ol_txrx_soc_handle soc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS dp_vdev_set_monitor_mode_rings(struct dp_pdev *pdev,
-					  uint8_t delayed_replenish)
+static QDF_STATUS dp_vdev_set_monitor_mode_rings(struct dp_pdev *pdev,
+						 uint8_t delayed_replenish)
 {
 	struct wlan_cfg_dp_pdev_ctxt *pdev_cfg_ctx;
 	uint32_t mac_id;
@@ -4562,6 +4579,168 @@ QDF_STATUS dp_vdev_set_monitor_mode_rings(struct dp_pdev *pdev,
 
 fail0:
 	return QDF_STATUS_E_FAILURE;
+}
+
+/* dp_mon_vdev_timer()- timer poll for interrupts
+ *
+ * @arg: SoC Handle
+ *
+ * Return:
+ *
+ */
+static void dp_mon_vdev_timer(void *arg)
+{
+	struct dp_soc *soc = (struct dp_soc *)arg;
+	struct dp_pdev *pdev = soc->pdev_list[0];
+	enum timer_yield_status yield = DP_TIMER_NO_YIELD;
+	uint32_t work_done  = 0, total_work_done = 0;
+	int budget = 0xffff;
+	uint32_t remaining_quota = budget;
+	uint64_t start_time;
+	uint32_t lmac_id = DP_MON_INVALID_LMAC_ID;
+	uint32_t lmac_iter;
+	int max_mac_rings = wlan_cfg_get_num_mac_rings(pdev->wlan_cfg_ctx);
+	struct dp_mon_soc *mon_soc = soc->monitor_soc;
+
+	if (!qdf_atomic_read(&soc->cmn_init_done))
+		return;
+
+	if (pdev->mon_chan_band != REG_BAND_UNKNOWN)
+		lmac_id = pdev->ch_band_lmac_id_mapping[pdev->mon_chan_band];
+
+	start_time = qdf_get_log_timestamp();
+	dp_is_hw_dbs_enable(soc, &max_mac_rings);
+
+	while (yield == DP_TIMER_NO_YIELD) {
+		for (lmac_iter = 0; lmac_iter < max_mac_rings; lmac_iter++) {
+			if (lmac_iter == lmac_id)
+				work_done = monitor_process(soc, NULL,
+							    lmac_iter,
+							    remaining_quota);
+			else
+				work_done =
+					monitor_drop_packets_for_mac(pdev,
+								     lmac_iter,
+								     remaining_quota);
+			if (work_done) {
+				budget -=  work_done;
+				if (budget <= 0) {
+					yield = DP_TIMER_WORK_EXHAUST;
+					goto budget_done;
+				}
+				remaining_quota = budget;
+				total_work_done += work_done;
+			}
+		}
+
+		yield = dp_should_timer_irq_yield(soc, total_work_done,
+						  start_time);
+		total_work_done = 0;
+	}
+
+budget_done:
+	if (yield == DP_TIMER_WORK_EXHAUST ||
+	    yield == DP_TIMER_TIME_EXHAUST)
+		qdf_timer_mod(&mon_soc->mon_vdev_timer, 1);
+	else
+		qdf_timer_mod(&mon_soc->mon_vdev_timer, DP_INTR_POLL_TIMER_MS);
+}
+
+/* MCL specific functions */
+#if defined(DP_CON_MON)
+/*
+ * dp_mon_reap_timer_handler()- timer to reap monitor rings
+ * reqd as we are not getting ppdu end interrupts
+ * @arg: SoC Handle
+ *
+ * Return:
+ *
+ */
+static void dp_mon_reap_timer_handler(void *arg)
+{
+	struct dp_soc *soc = (struct dp_soc *)arg;
+	struct dp_mon_soc *mon_soc = soc->monitor_soc;
+
+	dp_service_mon_rings(soc, QCA_NAPI_BUDGET);
+	qdf_timer_mod(&mon_soc->mon_reap_timer, DP_INTR_POLL_TIMER_MS);
+}
+#endif
+
+#ifdef QCA_HOST2FW_RXBUF_RING
+static void dp_mon_reap_timer_init(struct dp_soc *soc)
+{
+	struct dp_mon_soc *mon_soc = soc->monitor_soc;
+
+	qdf_timer_init(soc->osdev, &mon_soc->mon_reap_timer,
+		       dp_mon_reap_timer_handler, (void *)soc,
+		       QDF_TIMER_TYPE_WAKE_APPS);
+	mon_soc->reap_timer_init = 1;
+}
+#else
+static void dp_mon_reap_timer_init(struct dp_soc *soc)
+{
+}
+#endif
+
+static void dp_mon_reap_timer_deinit(struct dp_mon_soc *mon_soc)
+{
+	if (mon_soc->reap_timer_init) {
+		qdf_timer_free(&mon_soc->mon_reap_timer);
+		mon_soc->reap_timer_init = 0;
+	}
+}
+
+static void dp_mon_reap_timer_start(struct dp_mon_soc *mon_soc)
+{
+	if (mon_soc->reap_timer_init)
+		qdf_timer_mod(&mon_soc->mon_reap_timer, DP_INTR_POLL_TIMER_MS);
+}
+
+static bool dp_mon_reap_timer_stop(struct dp_mon_soc *mon_soc)
+{
+	if (mon_soc->reap_timer_init) {
+		qdf_timer_sync_cancel(&mon_soc->mon_reap_timer);
+		return true;
+	}
+
+	return false;
+}
+
+static void dp_mon_vdev_timer_init(struct dp_soc *soc)
+{
+	struct dp_mon_soc *mon_soc = soc->monitor_soc;
+
+	qdf_timer_init(soc->osdev, &mon_soc->mon_vdev_timer,
+		       dp_mon_vdev_timer, (void *)soc,
+		       QDF_TIMER_TYPE_WAKE_APPS);
+	mon_soc->mon_vdev_timer_state |= MON_VDEV_TIMER_INIT;
+}
+
+static void dp_mon_vdev_timer_deinit(struct dp_mon_soc *mon_soc)
+{
+	if (mon_soc->mon_vdev_timer_state & MON_VDEV_TIMER_INIT) {
+		qdf_timer_free(&mon_soc->mon_vdev_timer);
+		mon_soc->mon_vdev_timer_state = 0;
+	}
+}
+
+static void dp_mon_vdev_timer_start(struct dp_mon_soc *mon_soc)
+{
+	if (mon_soc->mon_vdev_timer_state & MON_VDEV_TIMER_INIT) {
+		qdf_timer_mod(&mon_soc->mon_vdev_timer, DP_INTR_POLL_TIMER_MS);
+		mon_soc->mon_vdev_timer_state |= MON_VDEV_TIMER_RUNNING;
+	}
+}
+
+static bool dp_mon_vdev_timer_stop(struct dp_mon_soc *mon_soc)
+{
+	if (mon_soc->mon_vdev_timer_state & MON_VDEV_TIMER_RUNNING) {
+		qdf_timer_sync_cancel(&mon_soc->mon_vdev_timer);
+		mon_soc->mon_vdev_timer_state &= ~MON_VDEV_TIMER_RUNNING;
+		return true;
+	}
+
+	return false;
 }
 
 QDF_STATUS dp_mon_soc_cfg_init(struct dp_soc *soc)
@@ -4746,12 +4925,67 @@ QDF_STATUS dp_mon_pdev_deinit(struct dp_pdev *pdev)
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS dp_mon_vdev_attach(struct dp_vdev *vdev)
+{
+	struct dp_mon_vdev *mon_vdev;
+	struct dp_pdev *pdev = vdev->pdev;
+
+	mon_vdev = (struct dp_mon_vdev *)qdf_mem_malloc(sizeof(*mon_vdev));
+	if (!mon_vdev) {
+		mon_init_err("%pK: Monitor vdev allocation failed", vdev);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	vdev->monitor_vdev = mon_vdev;
+	dp_vdev_set_monitor_mode_buf_rings(pdev);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS dp_mon_vdev_detach(struct dp_vdev *vdev)
+{
+	struct dp_mon_vdev *mon_vdev = vdev->monitor_vdev;
+
+	qdf_mem_free(mon_vdev);
+	vdev->monitor_vdev = NULL;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS dp_mon_peer_attach(struct dp_peer *peer)
+{
+	struct dp_mon_peer *mon_peer;
+
+	mon_peer = (struct dp_mon_peer *)qdf_mem_malloc(sizeof(*mon_peer));
+	if (!mon_peer) {
+		mon_init_err("%pK: MONITOR peer allocation failed", peer);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	peer->monitor_peer = mon_peer;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS dp_mon_peer_detach(struct dp_peer *peer)
+{
+	struct dp_mon_peer *mon_peer = peer->monitor_peer;
+
+	qdf_mem_free(mon_peer);
+	peer->monitor_peer = NULL;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static struct dp_mon_ops monitor_ops = {
 	.mon_soc_cfg_init = dp_mon_soc_cfg_init,
 	.mon_pdev_attach = dp_mon_pdev_attach,
 	.mon_pdev_detach = dp_mon_pdev_detach,
 	.mon_pdev_init = dp_mon_pdev_init,
 	.mon_pdev_deinit = dp_mon_pdev_deinit,
+	.mon_vdev_attach = dp_mon_vdev_attach,
+	.mon_vdev_detach = dp_mon_vdev_detach,
+	.mon_peer_attach = dp_mon_peer_attach,
+	.mon_peer_detach = dp_mon_peer_detach,
 	.mon_config_debug_sniffer = dp_config_debug_sniffer,
 	.mon_flush_rings = dp_flush_monitor_rings,
 #if !defined(DISABLE_MON_CONFIG)
@@ -4812,6 +5046,14 @@ static struct dp_mon_ops monitor_ops = {
 #ifdef FEATURE_NAC_RSSI
 	.mon_filter_neighbour_peer = dp_filter_neighbour_peer,
 #endif
+	.mon_vdev_timer_init = dp_mon_vdev_timer_init,
+	.mon_vdev_timer_start = dp_mon_vdev_timer_start,
+	.mon_vdev_timer_stop = dp_mon_vdev_timer_stop,
+	.mon_vdev_timer_deinit = dp_mon_vdev_timer_deinit,
+	.mon_reap_timer_init = dp_mon_reap_timer_init,
+	.mon_reap_timer_start = dp_mon_reap_timer_start,
+	.mon_reap_timer_stop = dp_mon_reap_timer_stop,
+	.mon_reap_timer_deinit = dp_mon_reap_timer_deinit,
 };
 
 static struct cdp_mon_ops dp_ops_mon = {

@@ -454,20 +454,6 @@ struct htt_stats_context {
 	uint32_t msg_len;
 };
 
-int
-dp_htt_get_ppdu_sniffer_ampdu_tlv_bitmap(uint32_t bitmap);
-
-/**
- * dp_ppdu_desc_user_stats_update(): Function to update TX user stats
- * @pdev: DP pdev handle
- * @ppdu_info: per PPDU TLV descriptor
- *
- * return: void
- */
-void
-dp_ppdu_desc_user_stats_update(struct dp_pdev *pdev,
-			       struct ppdu_info *ppdu_info);
-
 /**
  * dp_htt_rx_flow_fst_setup(): Send HTT Rx FST setup message to FW
  * @pdev: DP pdev handle

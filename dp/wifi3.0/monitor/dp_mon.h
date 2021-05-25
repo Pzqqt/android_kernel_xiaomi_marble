@@ -13,13 +13,26 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#define DP_INTR_POLL_TIMER_MS	5
+
+#define MON_VDEV_TIMER_INIT 0x1
+#define MON_VDEV_TIMER_RUNNING 0x2
+
+/* Budget to reap monitor status ring */
+#define DP_MON_REAP_BUDGET 1024
+
 #define mon_rx_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_DP_RX, params)
+
 struct dp_mon_ops {
 	QDF_STATUS (*mon_soc_cfg_init)(struct dp_soc *soc);
 	QDF_STATUS (*mon_pdev_attach)(struct dp_pdev *pdev);
 	QDF_STATUS (*mon_pdev_detach)(struct dp_pdev *pdev);
 	QDF_STATUS (*mon_pdev_init)(struct dp_pdev *pdev);
 	QDF_STATUS (*mon_pdev_deinit)(struct dp_pdev *pdev);
+	QDF_STATUS (*mon_vdev_attach)(struct dp_vdev *vdev);
+	QDF_STATUS (*mon_vdev_detach)(struct dp_vdev *vdev);
+	QDF_STATUS (*mon_peer_attach)(struct dp_peer *peer);
+	QDF_STATUS (*mon_peer_detach)(struct dp_peer *peer);
 	QDF_STATUS (*mon_config_debug_sniffer)(struct dp_pdev *pdev, int val);
 	void (*mon_flush_rings)(struct dp_soc *soc);
 #if !defined(DISABLE_MON_CONFIG)
@@ -100,11 +113,26 @@ struct dp_mon_ops {
 	QDF_STATUS (*mon_filter_neighbour_peer)(struct dp_pdev *pdev,
 						uint8_t *rx_pkt_hdr);
 #endif
+	void (*mon_vdev_timer_init)(struct dp_soc *soc);
+	void (*mon_vdev_timer_start)(struct dp_mon_soc *mon_soc);
+	bool (*mon_vdev_timer_stop)(struct dp_mon_soc *mon_soc);
+	void (*mon_vdev_timer_deinit)(struct dp_mon_soc *mon_soc);
+	void (*mon_reap_timer_init)(struct dp_soc *soc);
+	void (*mon_reap_timer_start)(struct dp_mon_soc *mon_soc);
+	bool (*mon_reap_timer_stop)(struct dp_mon_soc *mon_soc);
+	void (*mon_reap_timer_deinit)(struct dp_mon_soc *mon_soc);
 };
 
 struct dp_mon_soc {
 	/* Holds all monitor related fields extracted from dp_soc */
 	/* Holds pointer to monitor ops */
+
+	/*interrupt timer*/
+	qdf_timer_t mon_reap_timer;
+	uint8_t reap_timer_init;
+
+	qdf_timer_t mon_vdev_timer;
+	uint8_t mon_vdev_timer_state;
 
 	struct dp_mon_ops *mon_ops;
 };
@@ -113,9 +141,20 @@ struct  dp_mon_pdev {
 };
 
 struct  dp_mon_vdev {
+	/* callback to hand rx monitor 802.11 MPDU to the OS shim */
+	ol_txrx_rx_mon_fp osif_rx_mon;
 };
 
 struct dp_mon_peer {
+	struct dp_peer_tx_capture tx_capture;
+#ifdef FEATURE_PERPKT_INFO
+	/* delayed ba ppdu stats handling */
+	struct cdp_delayed_tx_completion_ppdu_user delayed_ba_ppdu_stats;
+	/* delayed ba flag */
+	bool last_delayed_ba;
+	/* delayed ba ppdu id */
+	uint32_t last_delayed_ba_ppduid;
+#endif
 };
 
 #ifdef FEATURE_PERPKT_INFO
@@ -227,6 +266,19 @@ extern uint8_t
 dp_cpu_ring_map[DP_NSS_CPU_RING_MAP_MAX][WLAN_CFG_INT_NUM_CONTEXTS_MAX];
 #endif
 
+int
+dp_htt_get_ppdu_sniffer_ampdu_tlv_bitmap(uint32_t bitmap);
+/**
+ * dp_ppdu_desc_user_stats_update(): Function to update TX user stats
+ * @pdev: DP pdev handle
+ * @ppdu_info: per PPDU TLV descriptor
+ *
+ * return: void
+ */
+void
+dp_ppdu_desc_user_stats_update(struct dp_pdev *pdev,
+			       struct ppdu_info *ppdu_info);
+
 #ifdef WDI_EVENT_ENABLE
 void dp_pkt_log_init(struct cdp_soc_t *soc_hdl, uint8_t pdev_id, void *scn);
 #else
@@ -324,6 +376,58 @@ static inline QDF_STATUS monitor_drop_inv_peer_pkts(struct dp_vdev *vdev,
 }
 #endif
 
+#ifdef FEATURE_PERPKT_INFO
+/*
+ * dp_peer_ppdu_delayed_ba_init() Initialize ppdu in peer
+ * @peer: Datapath peer
+ *
+ * return: void
+ */
+static inline void dp_peer_ppdu_delayed_ba_init(struct dp_peer *peer)
+{
+	struct dp_mon_peer *mon_peer = peer->monitor_peer;
+
+	if (!mon_peer)
+		return;
+
+	qdf_mem_zero(&mon_peer->delayed_ba_ppdu_stats,
+		     sizeof(struct cdp_delayed_tx_completion_ppdu_user));
+	mon_peer->last_delayed_ba = false;
+	mon_peer->last_delayed_ba_ppduid = 0;
+}
+#else
+/*
+ * dp_peer_ppdu_delayed_ba_init() Initialize ppdu in peer
+ * @peer: Datapath peer
+ *
+ * return: void
+ */
+static inline void dp_peer_ppdu_delayed_ba_init(struct dp_peer *peer)
+{
+}
+#endif
+
+static inline void monitor_vdev_register_osif(struct dp_vdev *vdev,
+					      struct ol_txrx_ops *txrx_ops)
+{
+	if (!vdev->monitor_vdev)
+		return;
+
+	vdev->monitor_vdev->osif_rx_mon = txrx_ops->rx.mon;
+}
+
+static inline bool monitor_is_vdev_timer_running(struct dp_soc *soc)
+{
+	struct dp_mon_soc *mon_soc;
+
+	if (!soc || !soc->monitor_soc)
+		return false;
+
+	mon_soc = soc->monitor_soc;
+
+	return mon_soc->mon_vdev_timer_state & MON_VDEV_TIMER_RUNNING;
+}
+
 static inline QDF_STATUS monitor_pdev_attach(struct dp_pdev *pdev)
 {
 	struct dp_mon_ops *monitor_ops;
@@ -366,6 +470,76 @@ static inline QDF_STATUS monitor_pdev_detach(struct dp_pdev *pdev)
 	}
 
 	return monitor_ops->mon_pdev_detach(pdev);
+}
+
+static inline QDF_STATUS monitor_vdev_attach(struct dp_vdev *vdev)
+{
+	struct dp_mon_ops *monitor_ops;
+	struct dp_mon_soc *mon_soc = vdev->pdev->soc->monitor_soc;
+
+	if (!mon_soc)
+		return QDF_STATUS_E_FAILURE;
+
+	monitor_ops = mon_soc->mon_ops;
+	if (!monitor_ops || !monitor_ops->mon_vdev_attach) {
+		qdf_err("callback not registered");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return monitor_ops->mon_vdev_attach(vdev);
+}
+
+static inline QDF_STATUS monitor_vdev_detach(struct dp_vdev *vdev)
+{
+	struct dp_mon_ops *monitor_ops;
+	struct dp_mon_soc *mon_soc = vdev->pdev->soc->monitor_soc;
+
+	if (!mon_soc)
+		return QDF_STATUS_E_FAILURE;
+
+	monitor_ops = mon_soc->mon_ops;
+	if (!monitor_ops || !monitor_ops->mon_vdev_detach) {
+		qdf_err("callback not registered");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return monitor_ops->mon_vdev_detach(vdev);
+}
+
+static inline QDF_STATUS monitor_peer_attach(struct dp_soc *soc,
+					     struct dp_peer *peer)
+{
+	struct dp_mon_ops *monitor_ops;
+	struct dp_mon_soc *mon_soc = soc->monitor_soc;
+
+	if (!mon_soc)
+		return QDF_STATUS_E_FAILURE;
+
+	monitor_ops = mon_soc->mon_ops;
+	if (!monitor_ops || !monitor_ops->mon_peer_attach) {
+		qdf_print("callback not registered");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return monitor_ops->mon_peer_attach(peer);
+}
+
+static inline QDF_STATUS monitor_peer_detach(struct dp_soc *soc,
+					     struct dp_peer *peer)
+{
+	struct dp_mon_ops *monitor_ops;
+	struct dp_mon_soc *mon_soc = soc->monitor_soc;
+
+	if (!mon_soc)
+		return QDF_STATUS_E_FAILURE;
+
+	monitor_ops = mon_soc->mon_ops;
+	if (!monitor_ops || !monitor_ops->mon_peer_detach) {
+		qdf_print("callback not registered");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return monitor_ops->mon_peer_detach(peer);
 }
 
 static inline QDF_STATUS monitor_pdev_init(struct dp_pdev *pdev)
@@ -1221,3 +1395,177 @@ static inline QDF_STATUS monitor_filter_neighbour_peer(struct dp_pdev *pdev,
 	return monitor_ops->mon_filter_neighbour_peer(pdev, rx_pkt_hdr);
 }
 #endif
+
+static inline
+void monitor_reap_timer_init(struct dp_soc *soc)
+{
+	struct dp_mon_ops *monitor_ops;
+	struct dp_mon_soc *mon_soc = soc->monitor_soc;
+
+	if (!mon_soc) {
+		qdf_err("monitor soc is NULL");
+		return;
+	}
+
+	monitor_ops = mon_soc->mon_ops;
+	if (!monitor_ops || !monitor_ops->mon_reap_timer_init) {
+		qdf_err("callback not registered");
+		return;
+	}
+
+	monitor_ops->mon_reap_timer_init(soc);
+}
+
+static inline
+void monitor_reap_timer_deinit(struct dp_soc *soc)
+{
+	struct dp_mon_ops *monitor_ops;
+	struct dp_mon_soc *mon_soc = soc->monitor_soc;
+
+	if (!mon_soc) {
+		qdf_err("monitor soc is NULL");
+		return;
+	}
+
+	monitor_ops = mon_soc->mon_ops;
+	if (!monitor_ops || !monitor_ops->mon_reap_timer_deinit) {
+		qdf_err("callback not registered");
+		return;
+	}
+
+	monitor_ops->mon_reap_timer_deinit(mon_soc);
+}
+
+static inline
+void monitor_reap_timer_start(struct dp_soc *soc)
+{
+	struct dp_mon_ops *monitor_ops;
+	struct dp_mon_soc *mon_soc = soc->monitor_soc;
+
+	if (!mon_soc) {
+		qdf_err("monitor soc is NULL");
+		return;
+	}
+
+	monitor_ops = mon_soc->mon_ops;
+	if (!monitor_ops || !monitor_ops->mon_reap_timer_start) {
+		qdf_err("callback not registered");
+		return;
+	}
+
+	monitor_ops->mon_reap_timer_start(mon_soc);
+}
+
+static inline
+bool monitor_reap_timer_stop(struct dp_soc *soc)
+{
+	struct dp_mon_ops *monitor_ops;
+	struct dp_mon_soc *mon_soc = soc->monitor_soc;
+
+	if (!mon_soc) {
+		qdf_err("monitor soc is NULL");
+		return false;
+	}
+
+	monitor_ops = mon_soc->mon_ops;
+	if (!monitor_ops || !monitor_ops->mon_reap_timer_stop) {
+		qdf_err("callback not registered");
+		return false;
+	}
+
+	monitor_ops->mon_reap_timer_stop(mon_soc);
+}
+
+static inline
+void monitor_vdev_timer_init(struct dp_soc *soc)
+{
+	struct dp_mon_ops *monitor_ops;
+	struct dp_mon_soc *mon_soc = soc->monitor_soc;
+
+	if (!mon_soc) {
+		qdf_err("monitor soc is NULL");
+		return;
+	}
+
+	monitor_ops = mon_soc->mon_ops;
+	if (!monitor_ops || !monitor_ops->mon_vdev_timer_init) {
+		qdf_err("callback not registered");
+		return;
+	}
+
+	monitor_ops->mon_vdev_timer_init(soc);
+}
+
+static inline
+void monitor_vdev_timer_deinit(struct dp_soc *soc)
+{
+	struct dp_mon_ops *monitor_ops;
+	struct dp_mon_soc *mon_soc = soc->monitor_soc;
+
+	if (!mon_soc) {
+		qdf_err("monitor soc is NULL");
+		return;
+	}
+
+	monitor_ops = mon_soc->mon_ops;
+	if (!monitor_ops || !monitor_ops->mon_vdev_timer_deinit) {
+		qdf_err("callback not registered");
+		return;
+	}
+
+	monitor_ops->mon_vdev_timer_deinit(mon_soc);
+}
+
+static inline
+void monitor_vdev_timer_start(struct dp_soc *soc)
+{
+	struct dp_mon_ops *monitor_ops;
+	struct dp_mon_soc *mon_soc = soc->monitor_soc;
+
+	if (!mon_soc) {
+		qdf_err("monitor soc is NULL");
+		return;
+	}
+
+	monitor_ops = mon_soc->mon_ops;
+	if (!monitor_ops || !monitor_ops->mon_vdev_timer_start) {
+		qdf_err("callback not registered");
+		return;
+	}
+
+	monitor_ops->mon_vdev_timer_start(mon_soc);
+}
+
+static inline
+bool monitor_vdev_timer_stop(struct dp_soc *soc)
+{
+	struct dp_mon_ops *monitor_ops;
+	struct dp_mon_soc *mon_soc = soc->monitor_soc;
+
+	if (!mon_soc) {
+		qdf_err("monitor soc is NULL");
+		return false;
+	}
+
+	monitor_ops = mon_soc->mon_ops;
+	if (!monitor_ops || !monitor_ops->mon_vdev_timer_stop) {
+		qdf_err("callback not registered");
+		return false;
+	}
+
+	return monitor_ops->mon_vdev_timer_stop(mon_soc);
+}
+
+static inline void monitor_vdev_delete(struct dp_soc *soc, struct dp_vdev *vdev)
+{
+	if (soc->intr_mode == DP_INTR_POLL) {
+		qdf_timer_sync_cancel(&soc->int_timer);
+		monitor_flush_rings(soc);
+	} else if (soc->intr_mode == DP_INTR_MSI) {
+		if (monitor_vdev_timer_stop(soc))
+			monitor_flush_rings(soc);
+	}
+
+	monitor_vdev_detach(vdev);
+}
+

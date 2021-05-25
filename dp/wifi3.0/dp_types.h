@@ -1917,16 +1917,11 @@ struct dp_soc {
 	bool pending_ageout;
 	uint32_t max_ast_ageout_count;
 
-	/*interrupt timer*/
-	qdf_timer_t mon_reap_timer;
-	uint8_t reap_timer_init;
 	qdf_timer_t lmac_reap_timer;
 	uint8_t lmac_timer_init;
 	qdf_timer_t int_timer;
 	uint8_t intr_mode;
 	uint8_t lmac_polled_mode;
-	qdf_timer_t mon_vdev_timer;
-	uint8_t mon_vdev_timer_state;
 
 	qdf_list_t reo_desc_freelist;
 	qdf_spinlock_t reo_desc_freelist_lock;
@@ -2902,9 +2897,6 @@ struct dp_vdev {
 	/* proxy arp function */
 	ol_txrx_proxy_arp_fp osif_proxy_arp;
 
-	/* callback to hand rx monitor 802.11 MPDU to the OS shim */
-	ol_txrx_rx_mon_fp osif_rx_mon;
-
 	ol_txrx_mcast_me_fp me_convert;
 
 	/* completion function used by this vdev*/
@@ -3039,6 +3031,9 @@ struct dp_vdev {
 		uint32_t burst_size;
 		uint8_t latency_tid;
 	} mesh_tid_latency_config;
+#endif
+#ifdef WIFI_MONITOR_SUPPORT
+	struct dp_mon_vdev *monitor_vdev;
 #endif
 
 #ifdef WLAN_FEATURE_TSF_UPLINK_DELAY
@@ -3225,8 +3220,6 @@ struct dp_peer {
 
 	/* TID structures */
 	struct dp_rx_tid rx_tid[DP_MAX_TIDS];
-	struct dp_peer_tx_capture tx_capture;
-
 
 	/* TBD: No transmit TID state required? */
 
@@ -3303,14 +3296,6 @@ struct dp_peer {
 	qdf_atomic_t flush_in_progress;
 	struct dp_peer_cached_bufq bufq_info;
 #endif
-#ifdef FEATURE_PERPKT_INFO
-	/* delayed ba ppdu stats handling */
-	struct cdp_delayed_tx_completion_ppdu_user delayed_ba_ppdu_stats;
-	/* delayed ba flag */
-	bool last_delayed_ba;
-	/* delayed ba ppdu id */
-	uint32_t last_delayed_ba_ppduid;
-#endif
 #ifdef QCA_PEER_MULTIQ_SUPPORT
 	struct dp_peer_ast_params peer_ast_flowq_idx[DP_PEER_AST_FLOWQ_MAX];
 #endif
@@ -3336,6 +3321,9 @@ struct dp_peer {
 #endif
 #ifdef WLAN_SUPPORT_MESH_LATENCY
 	struct dp_peer_mesh_latency_parameter mesh_latency_params[DP_MAX_TIDS];
+#endif
+#ifdef WIFI_MONITOR_SUPPORT
+	struct dp_mon_peer *monitor_peer;
 #endif
 };
 
