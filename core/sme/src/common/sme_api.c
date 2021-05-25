@@ -75,6 +75,7 @@
 #include <../../core/src/wlan_cm_vdev_api.h>
 #include <wlan_mlme_twt_api.h>
 #include "wlan_cm_roam_ucfg_api.h"
+#include <cm_utf.h>
 
 static QDF_STATUS init_sme_cmd_list(struct mac_context *mac);
 
@@ -4651,6 +4652,7 @@ struct wlan_objmgr_vdev
 		return NULL;
 	}
 
+	cm_utf_attach(vdev);
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
 			 TRACE_CODE_SME_RX_HDD_OPEN_SESSION,
 			 wlan_vdev_get_id(vdev), 0));
@@ -4732,6 +4734,8 @@ QDF_STATUS sme_vdev_delete(mac_handle_t mac_handle,
 			     status);
 		return status;
 	}
+
+	cm_utf_detach(vdev);
 
 	del_self_peer = qdf_mem_malloc(sizeof(*del_self_peer));
 	if (!del_self_peer)

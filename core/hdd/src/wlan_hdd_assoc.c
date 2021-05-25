@@ -83,6 +83,7 @@
 #include "wlan_cm_public_struct.h"
 #include "osif_cm_util.h"
 #include "wlan_hdd_cm_api.h"
+#include "cm_utf.h"
 
 #include "wlan_hdd_bootup_marker.h"
 #include "wlan_roam_debug.h"
@@ -2443,9 +2444,15 @@ struct osif_cm_ops osif_ops = {
 
 QDF_STATUS hdd_cm_register_cb(void)
 {
+	QDF_STATUS status;
 	osif_cm_set_legacy_cb(&osif_ops);
 
-	return osif_cm_register_cb();
+	status = osif_cm_register_cb();
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	/* Overwrite with UTF cb if UTF enabled */
+	return cm_utf_register_os_if_cb();
 }
 
 void hdd_cm_unregister_cb(void)

@@ -33,6 +33,7 @@
 #include "target_if_wfa_testcmd.h"
 #include <../../core/src/wlan_cm_vdev_api.h>
 #include "csr_api.h"
+#include <cm_utf.h>
 
 static struct vdev_mlme_ops sta_mlme_ops;
 static struct vdev_mlme_ops ap_mlme_ops;
@@ -65,6 +66,9 @@ static struct mlme_ext_ops *mlme_get_global_ops(void)
 QDF_STATUS mlme_register_mlme_ext_ops(void)
 {
 	mlme_set_ops_register_cb(mlme_get_global_ops);
+
+	/* Overwrite with UTF cb if UTF enabled */
+	cm_utf_set_mlme_ops(mlme_get_global_ops());
 	return QDF_STATUS_SUCCESS;
 }
 
