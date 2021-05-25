@@ -2622,11 +2622,13 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 		goto release_lock;
 	}
 	switch (pMsg->type) {
+#ifndef FEATURE_CM_ENABLE
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	case eWNI_SME_HO_FAIL_IND:
 		csr_process_ho_fail_ind(mac, pMsg->bodyptr);
 		qdf_mem_free(pMsg->bodyptr);
 		break;
+#endif
 #endif
 	case eWNI_SME_ADDTS_RSP:
 	case eWNI_SME_DELTS_RSP:

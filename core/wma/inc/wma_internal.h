@@ -174,9 +174,9 @@ QDF_STATUS wma_set_ppsconfig(uint8_t vdev_id, uint16_t pps_param,
 #ifndef FEATURE_CM_ENABLE
 void wma_process_roam_invoke(WMA_HANDLE handle,
 				struct roam_invoke_req *roaminvoke);
-#endif
 void wma_process_roam_synch_fail(WMA_HANDLE handle,
 				 struct roam_offload_synch_fail *synch_fail);
+#endif
 
 int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 					uint32_t len);

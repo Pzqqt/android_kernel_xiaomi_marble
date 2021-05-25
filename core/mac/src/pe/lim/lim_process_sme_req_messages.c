@@ -6808,6 +6808,7 @@ static inline void lim_send_roam_set_pcl(struct mac_context *mac_ctx,
 }
 #endif
 
+#ifndef FEATURE_CM_ENABLE
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * lim_process_roam_invoke() - process the Roam Invoke req
@@ -6839,6 +6840,7 @@ static void lim_process_roam_invoke(struct mac_context *mac_ctx,
 {
 	qdf_mem_free(msg_buf);
 }
+#endif
 #endif
 
 static void lim_handle_update_ssid_hidden(struct mac_context *mac_ctx,
@@ -7851,10 +7853,12 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 		lim_send_roam_set_pcl(mac, (struct set_pcl_req *)msg_buf);
 		bufConsumed = false;
 		break;
+#ifndef FEATURE_CM_ENABLE
 	case eWNI_SME_ROAM_INVOKE:
 		lim_process_roam_invoke(mac, msg_buf);
 		bufConsumed = false;
 		break;
+#endif
 	case eWNI_SME_CHNG_MCC_BEACON_INTERVAL:
 		/* Update the beaconInterval */
 		__lim_process_sme_change_bi(mac, msg_buf);

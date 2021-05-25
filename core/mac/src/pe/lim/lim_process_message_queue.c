@@ -1760,7 +1760,9 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 #endif  /* FEATURE_WLAN_ESE */
 	case eWNI_SME_REGISTER_MGMT_FRAME_CB:
 	case eWNI_SME_EXT_CHANGE_CHANNEL:
+#ifndef FEATURE_CM_ENABLE
 	case eWNI_SME_ROAM_INVOKE:
+#endif
 		/* fall through */
 	case eWNI_SME_ROAM_SEND_SET_PCL_REQ:
 	case eWNI_SME_SET_ADDBA_ACCEPT:

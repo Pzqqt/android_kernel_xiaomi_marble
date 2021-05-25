@@ -937,6 +937,22 @@ error:
 	return status;
 }
 
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+static void cm_ho_fail_diag_event(void)
+{
+	WLAN_HOST_DIAG_EVENT_DEF(roam_connection,
+				 host_event_wlan_status_payload_type);
+	qdf_mem_zero(&roam_connection,
+		     sizeof(host_event_wlan_status_payload_type));
+
+	roam_connection.eventId = DIAG_WLAN_STATUS_DISCONNECT;
+	roam_connection.reason = DIAG_REASON_ROAM_HO_FAIL;
+	WLAN_HOST_DIAG_EVENT_REPORT(&roam_connection, EVENT_WLAN_STATUS_V2);
+}
+#else
+static inline void cm_ho_fail_diag_event(void) {}
+#endif
+
 static QDF_STATUS cm_handle_ho_fail(struct scheduler_msg *msg)
 {
 	QDF_STATUS status;
@@ -947,6 +963,8 @@ static QDF_STATUS cm_handle_ho_fail(struct scheduler_msg *msg)
 	wlan_cm_id cm_id = CM_ID_INVALID;
 	struct reject_ap_info ap_info;
 	struct cm_roam_req *roam_req = NULL;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct wlan_objmgr_psoc *psoc;
 
 	if (!msg || !msg->bodyptr)
 		return QDF_STATUS_E_FAILURE;
@@ -965,6 +983,19 @@ static QDF_STATUS cm_handle_ho_fail(struct scheduler_msg *msg)
 	if (!pdev) {
 		mlme_err("pdev object is NULL");
 		status = QDF_STATUS_E_NULL_VALUE;
+		goto error;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		mlme_err("psoc object is NULL");
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto error;
+	}
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to mlme psoc obj");
+		status = QDF_STATUS_E_FAILURE;
 		goto error;
 	}
 
@@ -989,6 +1020,7 @@ static QDF_STATUS cm_handle_ho_fail(struct scheduler_msg *msg)
 	ap_info.source = ADDED_BY_DRIVER;
 	wlan_blm_add_bssid_to_reject_list(pdev, &ap_info);
 
+	cm_ho_fail_diag_event();
 	wlan_roam_debug_log(ind->vdev_id,
 			    DEBUG_ROAM_SYNCH_FAIL,
 			    DEBUG_INVALID_PEER_ID, NULL, NULL, 0, 0);
@@ -997,6 +1029,11 @@ static QDF_STATUS cm_handle_ho_fail(struct scheduler_msg *msg)
 			       CM_MLME_DISCONNECT,
 			       REASON_FW_TRIGGERED_ROAM_FAILURE,
 			       NULL);
+
+	if (mlme_obj->cfg.gen.fatal_event_trigger)
+		cds_flush_logs(WLAN_LOG_TYPE_FATAL,
+			       WLAN_LOG_INDICATOR_HOST_DRIVER,
+			       WLAN_LOG_REASON_ROAM_HO_FAILURE, false, false);
 
 	if (QDF_IS_STATUS_ERROR(status))
 		cm_remove_cmd(cm_ctx, &cm_id);

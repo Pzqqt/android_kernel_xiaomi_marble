@@ -4891,7 +4891,6 @@ void csr_update_scan_entry_associnfo(struct mac_context *mac_ctx,
 	if (QDF_IS_STATUS_ERROR(status))
 		sme_debug("Failed to update the MLME info in scan entry");
 }
-#endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static void csr_roam_synch_clean_up(struct mac_context *mac, uint8_t session_id)
@@ -4923,7 +4922,6 @@ static void csr_roam_synch_clean_up(struct mac_context *mac, uint8_t session_id)
 }
 #endif
 
-#ifndef FEATURE_CM_ENABLE
 #if defined(WLAN_FEATURE_FILS_SK)
 /**
  * csr_update_fils_seq_number() - Copy FILS sequence number to roam info
@@ -6268,9 +6266,6 @@ QDF_STATUS csr_roam_issue_connect(struct mac_context *mac, uint32_t sessionId,
 		sme_err(" fail to get command buffer");
 		status = QDF_STATUS_E_RESOURCES;
 	} else {
-		if (fClearScan)
-			csr_scan_abort_mac_scan(mac, sessionId, INVAL_SCAN_ID);
-
 		pCommand->u.roamCmd.fReleaseProfile = false;
 		if (!pProfile) {
 			/* We can roam now
@@ -7443,7 +7438,7 @@ csr_roam_save_connected_information(struct mac_context *mac,
 	return status;
 }
 
-
+#ifndef FEATURE_CM_ENABLE
 bool is_disconnect_pending(struct mac_context *pmac, uint8_t vdev_id)
 {
 	tListElem *entry = NULL;
@@ -7468,7 +7463,6 @@ bool is_disconnect_pending(struct mac_context *pmac, uint8_t vdev_id)
 	return disconnect_cmd_exist;
 }
 
-#ifndef FEATURE_CM_ENABLE
 #if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 static void
 csr_clear_other_bss_sae_single_pmk_entry(struct mac_context *mac,
@@ -15173,6 +15167,7 @@ QDF_STATUS csr_queue_sme_command(struct mac_context *mac_ctx, tSmeCmd *sme_cmd,
 		goto error;
 	}
 
+#ifndef FEATURE_CM_ENABLE
 	if (CSR_IS_WAIT_FOR_KEY(mac_ctx, sme_cmd->vdev_id)) {
 		if (!CSR_IS_DISCONNECT_COMMAND(sme_cmd)) {
 			sme_err("Can't process cmd(%d), waiting for key",
@@ -15180,7 +15175,7 @@ QDF_STATUS csr_queue_sme_command(struct mac_context *mac_ctx, tSmeCmd *sme_cmd,
 			goto error;
 		}
 	}
-
+#endif
 	qdf_mem_zero(&cmd, sizeof(struct wlan_serialization_command));
 	status = csr_set_serialization_params_to_cmd(mac_ctx, sme_cmd,
 					&cmd, high_priority);
@@ -15621,6 +15616,8 @@ QDF_STATUS csr_sta_continue_csa(struct mac_context *mac_ctx, uint8_t vdev_id)
 	return status;
 }
 
+#ifndef FEATURE_CM_ENABLE
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 /**
  * csr_roaming_report_diag_event() - Diag events for LFR3
@@ -15635,7 +15632,7 @@ QDF_STATUS csr_sta_continue_csa(struct mac_context *mac_ctx, uint8_t vdev_id)
  *
  * Return: None
  */
-void csr_roaming_report_diag_event(struct mac_context *mac_ctx,
+static void csr_roaming_report_diag_event(struct mac_context *mac_ctx,
 		struct roam_offload_synch_ind *roam_synch_ind_ptr,
 		enum diagwlan_status_eventreason reason)
 {
@@ -15667,7 +15664,6 @@ void csr_roaming_report_diag_event(struct mac_context *mac_ctx,
 }
 #endif
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 void csr_process_ho_fail_ind(struct mac_context *mac_ctx, void *msg_buf)
 {
 	struct handoff_failure_ind *pSmeHOFailInd = msg_buf;
@@ -15688,15 +15684,13 @@ void csr_process_ho_fail_ind(struct mac_context *mac_ctx, void *msg_buf)
 	ap_info.source = ADDED_BY_DRIVER;
 	wlan_blm_add_bssid_to_reject_list(mac_ctx->pdev, &ap_info);
 
-	/* This is temp ifdef will be removed in near future */
-#ifndef FEATURE_CM_ENABLE
 	/* Roaming is supported only on Infra STA Mode. */
 	if (!csr_roam_is_sta_mode(mac_ctx, sessionId)) {
 		sme_err("LFR3:HO Fail cannot be handled for session %d",
 			sessionId);
 		return;
 	}
-#endif
+
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc, sessionId,
 						    WLAN_LEGACY_SME_ID);
 	if (!vdev) {
@@ -15713,29 +15707,19 @@ void csr_process_ho_fail_ind(struct mac_context *mac_ctx, void *msg_buf)
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 
 	mac_ctx->sme.set_connection_info_cb(false);
-	/* This is temp ifdef will be removed in near future */
-#ifndef FEATURE_CM_ENABLE
+
 	csr_roam_roaming_offload_timer_action(mac_ctx, 0, sessionId,
 			ROAMING_OFFLOAD_TIMER_STOP);
 	csr_roam_call_callback(mac_ctx, sessionId, NULL, 0,
 			eCSR_ROAM_NAPI_OFF, eCSR_ROAM_RESULT_FAILURE);
-#endif
 	csr_roam_synch_clean_up(mac_ctx, sessionId);
+#ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 	csr_roaming_report_diag_event(mac_ctx, NULL,
 			DIAG_REASON_ROAM_HO_FAIL);
-	/* This is temp ifdef will be removed in near future */
-#ifdef FEATURE_CM_ENABLE
-	sme_release_global_lock(&mac_ctx->sme);
-	/* do not call cm disconnect while holding Sme lock */
-	cm_disconnect(mac_ctx->psoc, sessionId,
-		      CM_MLME_DISCONNECT,
-		      REASON_FW_TRIGGERED_ROAM_FAILURE, NULL);
-	sme_acquire_global_lock(&mac_ctx->sme);
-#else
+#endif
 	csr_roam_disconnect(mac_ctx, sessionId,
 			eCSR_DISCONNECT_REASON_ROAM_HO_FAIL,
 			REASON_FW_TRIGGERED_ROAM_FAILURE);
-#endif
 	if (mac_ctx->mlme_cfg->gen.fatal_event_trigger)
 		cds_flush_logs(WLAN_LOG_TYPE_FATAL,
 				WLAN_LOG_INDICATOR_HOST_DRIVER,
@@ -15743,6 +15727,7 @@ void csr_process_ho_fail_ind(struct mac_context *mac_ctx, void *msg_buf)
 				false, false);
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
+#endif
 
 /**
  * csr_update_op_class_array() - update op class for each band
@@ -15979,11 +15964,13 @@ void csr_process_set_hw_mode(struct mac_context *mac, tSmeCmd *command)
 		goto fail;
 
 	action = command->u.set_hw_mode_cmd.action;
+
+#ifndef FEATURE_CM_ENABLE
 	/* For hidden SSID case, if there is any scan command pending
 	 * it needs to be cleared before issuing set HW mode
 	 */
 	if (command->u.set_hw_mode_cmd.reason ==
-		POLICY_MGR_UPDATE_REASON_HIDDEN_STA) {
+	    POLICY_MGR_UPDATE_REASON_HIDDEN_STA) {
 		sme_err("clear any pending scan command");
 		status = csr_scan_abort_mac_scan(mac,
 			command->u.set_hw_mode_cmd.session_id, INVAL_SCAN_ID);
@@ -15992,7 +15979,7 @@ void csr_process_set_hw_mode(struct mac_context *mac, tSmeCmd *command)
 			goto fail;
 		}
 	}
-
+#endif
 	status = policy_mgr_validate_dbs_switch(mac->psoc, action);
 
 	if (QDF_IS_STATUS_ERROR(status)) {

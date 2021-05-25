@@ -534,7 +534,6 @@ free_frame_buf:
 		roaminvoke->frame_buf = NULL;
 	}
 }
-#endif
 
 /**
  * wma_process_roam_synch_fail() -roam synch failure handle
@@ -560,6 +559,7 @@ void wma_process_roam_synch_fail(WMA_HANDLE handle,
 			    DEBUG_ROAM_SYNCH_FAIL,
 			    DEBUG_INVALID_PEER_ID, NULL, NULL, 0, 0);
 }
+#endif
 
 /**
  * wma_free_roam_synch_frame_ind() - Free the bcn_probe_rsp, reassoc_req,

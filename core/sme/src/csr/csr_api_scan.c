@@ -1351,6 +1351,7 @@ static void csr_save_tx_power_to_cfg(struct mac_context *mac,
 	qdf_mem_free(p_buf);
 }
 
+#ifndef FEATURE_CM_ENABLE
 QDF_STATUS csr_scan_abort_mac_scan(struct mac_context *mac_ctx,
 				   uint32_t vdev_id,
 				   uint32_t scan_id)
@@ -1397,7 +1398,6 @@ QDF_STATUS csr_scan_abort_mac_scan(struct mac_context *mac_ctx,
 	return status;
 }
 
-#ifndef FEATURE_CM_ENABLE
 bool csr_roam_is_valid_channel(struct mac_context *mac, uint32_t ch_freq)
 {
 	bool fValid = false;

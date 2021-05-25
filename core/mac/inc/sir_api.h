@@ -2581,6 +2581,7 @@ typedef struct {
 } tSirStatsExtEvent, *tpSirStatsExtEvent;
 #endif
 
+#ifndef FEATURE_CM_ENABLE
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 struct handoff_failure_ind {
 	uint8_t vdev_id;
@@ -2590,7 +2591,7 @@ struct handoff_failure_ind {
 struct roam_offload_synch_fail {
 	uint8_t session_id;
 };
-
+#endif
 #endif
 
 /**

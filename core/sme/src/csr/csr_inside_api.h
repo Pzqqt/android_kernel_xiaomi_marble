@@ -125,8 +125,6 @@ struct scan_result_list {
 					(pCommand)->u.roamCmd.roamReason) || \
 					(eCsrForcedDisassocMICFailure == \
 					(pCommand)->u.roamCmd.roamReason)))
-#else
-#define CSR_IS_DISCONNECT_COMMAND(pCommand) false
 #endif
 
 enum csr_roam_state csr_roam_state_change(struct mac_context *mac,
@@ -162,7 +160,6 @@ csr_scan_append_bss_description(struct mac_context *mac,
 QDF_STATUS csr_scan_for_ssid(struct mac_context *mac, uint32_t sessionId,
 			     struct csr_roam_profile *pProfile, uint32_t roamId,
 			     bool notify);
-#endif
 /**
  * csr_scan_abort_mac_scan() - Generic API to abort scan request
  * @mac: pointer to pmac
@@ -175,6 +172,7 @@ QDF_STATUS csr_scan_for_ssid(struct mac_context *mac, uint32_t sessionId,
  */
 QDF_STATUS csr_scan_abort_mac_scan(struct mac_context *mac, uint32_t vdev_id,
 				   uint32_t scan_id);
+#endif
 
 void csr_free_scan_result_entry(struct mac_context *mac, struct tag_csrscan_result
 				*pResult);
@@ -886,9 +884,9 @@ csr_get_fst_bssdescr_ptr(tScanResultHandle result_handle);
 struct bss_description*
 csr_get_bssdescr_from_scan_handle(tScanResultHandle result_handle,
 				  struct bss_description *bss_descr);
-#endif
 bool is_disconnect_pending(struct mac_context *mac_ctx,
 				   uint8_t sessionid);
+#endif
 
 QDF_STATUS
 csr_roam_prepare_bss_config_from_profile(struct mac_context *mac_ctx,
