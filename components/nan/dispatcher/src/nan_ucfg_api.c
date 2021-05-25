@@ -398,7 +398,7 @@ QDF_STATUS ucfg_nan_req_processor(struct wlan_objmgr_vdev *vdev,
 	struct scheduler_msg msg = {0};
 	int err;
 	struct nan_psoc_priv_obj *psoc_obj = NULL;
-	struct osif_request *request;
+	struct osif_request *request = NULL;
 	static const struct osif_request_params params = {
 		.priv_size = 0,
 		.timeout_ms = WLAN_WAIT_TIME_NDP_END,
@@ -423,6 +423,12 @@ QDF_STATUS ucfg_nan_req_processor(struct wlan_objmgr_vdev *vdev,
 			nan_err("nan psoc priv object is NULL");
 			return QDF_STATUS_E_INVAL;
 		}
+		request = osif_request_alloc(&params);
+		if (!request) {
+			nan_err("Request allocation failure");
+			return QDF_STATUS_E_NOMEM;
+		}
+		psoc_obj->ndp_request_ctx = osif_request_cookie(request);
 		break;
 	case NDP_END_ALL:
 		len = sizeof(struct nan_datapath_end_all_ndps);
@@ -433,8 +439,10 @@ QDF_STATUS ucfg_nan_req_processor(struct wlan_objmgr_vdev *vdev,
 	}
 
 	msg.bodyptr = qdf_mem_malloc(len);
-	if (!msg.bodyptr)
-		return QDF_STATUS_E_NOMEM;
+	if (!msg.bodyptr) {
+		status = QDF_STATUS_E_NOMEM;
+		goto fail;
+	}
 
 	qdf_mem_copy(msg.bodyptr, in_req, len);
 	msg.type = req_type;
@@ -446,23 +454,10 @@ QDF_STATUS ucfg_nan_req_processor(struct wlan_objmgr_vdev *vdev,
 	if (QDF_IS_STATUS_ERROR(status)) {
 		nan_err("failed to post msg to NAN component, status: %d",
 			status);
-		qdf_mem_free(msg.bodyptr);
-		return status;
+		goto fail;
 	}
 
 	if (req_type == NDP_END_REQ) {
-		/* Wait for NDP_END indication */
-		if (!psoc_obj) {
-			nan_err("nan psoc priv object is NULL");
-			return QDF_STATUS_E_INVAL;
-		}
-		request = osif_request_alloc(&params);
-		if (!request) {
-			nan_err("Request allocation failure");
-			return QDF_STATUS_E_NOMEM;
-		}
-		psoc_obj->ndp_request_ctx = osif_request_cookie(request);
-
 		nan_debug("Wait for NDP END indication");
 		err = osif_request_wait_for_response(request);
 		if (err)
@@ -472,6 +467,14 @@ QDF_STATUS ucfg_nan_req_processor(struct wlan_objmgr_vdev *vdev,
 	}
 
 	return QDF_STATUS_SUCCESS;
+
+fail:
+	qdf_mem_free(msg.bodyptr);
+	if (req_type == NDP_END_REQ) {
+		osif_request_put(request);
+		psoc_obj->ndp_request_ctx = NULL;
+	}
+	return status;
 }
 
 void ucfg_nan_datapath_event_handler(struct wlan_objmgr_psoc *psoc,
