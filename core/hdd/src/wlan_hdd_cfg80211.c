@@ -25504,11 +25504,12 @@ static int __wlan_hdd_cfg80211_set_bitrate_mask(struct wiphy *wiphy,
 	enum nl80211_band band;
 	int errno;
 	struct hdd_adapter *adapter = netdev_priv(dev);
-	uint8_t connected_band, nss, i;
+	uint8_t nss, i;
 	int bit_rate = -1;
 	uint8_t rate_index;
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	uint8_t vdev_id;
+	bool is_bitmask_configured = false;
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam() ||
 	    QDF_GLOBAL_MONITOR_MODE == hdd_get_conparam()) {
@@ -25526,82 +25527,94 @@ static int __wlan_hdd_cfg80211_set_bitrate_mask(struct wiphy *wiphy,
 
 	vdev_id = adapter->vdev_id;
 
-	connected_band = hdd_conn_get_connected_band(adapter);
-
-	switch (connected_band) {
-	case BAND_2G:
-		band = NL80211_BAND_2GHZ;
-		break;
-	case BAND_5G:
-		band = NL80211_BAND_5GHZ;
-		break;
-	case BAND_ALL:
-	default:
-		hdd_debug("Invalid value of :%d", connected_band);
-		return -EINVAL;
-	}
-
-	/* Support configuring only one bitrate */
-	if (!hdd_check_bitmask_for_single_rate(band, mask)) {
-		hdd_err_rl("Multiple bitrate set not supported");
-		return -EINVAL;
-	}
-
-	if (!hweight32(mask->control[band].legacy)) {
-		hdd_err_rl("Legacy bit rate setting not supported");
-		return -EINVAL;
-	}
-
-	for (i = 0; i < QDF_ARRAY_SIZE(mask->control[band].ht_mcs); i++) {
-		if (qdf_get_hweight8(mask->control[band].ht_mcs[i]) == 1) {
-			nss = i;
-			rate_index = (ffs(mask->control[band].ht_mcs[i]) - 1);
-			bit_rate = hdd_assemble_rate_code(WMI_RATE_PREAMBLE_HT,
-							  nss, rate_index);
-			goto configure_fw;
+	for (band = NL80211_BAND_2GHZ; band <= NL80211_BAND_5GHZ; band++) {
+		/* Support configuring only one bitrate */
+		if (!hdd_check_bitmask_for_single_rate(band, mask)) {
+			hdd_err_rl("Multiple bitrate set not supported for band %u",
+				   band);
+			errno = -EINVAL;
+			continue;
 		}
-	}
 
-	for (i = 0; i < QDF_ARRAY_SIZE(mask->control[band].vht_mcs); i++) {
-		if (qdf_get_hweight16(mask->control[band].vht_mcs[i]) == 1) {
-			nss = i;
-			rate_index = (ffs(mask->control[band].vht_mcs[i]) - 1);
-			bit_rate = hdd_assemble_rate_code(WMI_RATE_PREAMBLE_VHT,
-							  nss, rate_index);
-			break;
+		if (!hweight32(mask->control[band].legacy)) {
+			hdd_err_rl("Legacy bit rate setting not supported for band %u",
+				   band);
+			errno = -EINVAL;
+			continue;
 		}
-	}
+
+		for (i = 0;
+			i < QDF_ARRAY_SIZE(mask->control[band].ht_mcs); i++) {
+			if (qdf_get_hweight8(mask->control[band].ht_mcs[i])
+									== 1) {
+				nss = i;
+				rate_index =
+				      (ffs(mask->control[band].ht_mcs[i]) - 1);
+				bit_rate = hdd_assemble_rate_code(
+						WMI_RATE_PREAMBLE_HT,
+						nss, rate_index);
+				goto configure_fw;
+			}
+		}
+
+		for (i = 0;
+			i < QDF_ARRAY_SIZE(mask->control[band].vht_mcs); i++) {
+			if (qdf_get_hweight16(mask->control[band].vht_mcs[i])
+									== 1) {
+				nss = i;
+				rate_index =
+				     (ffs(mask->control[band].vht_mcs[i]) - 1);
+				bit_rate = hdd_assemble_rate_code(
+						WMI_RATE_PREAMBLE_VHT,
+						nss, rate_index);
+				break;
+			}
+		}
 
 configure_fw:
 
-	if (bit_rate == -1)
-		return -EINVAL;
+		if (bit_rate == -1) {
+			errno = -EINVAL;
+			continue;
+		}
 
-	hdd_debug("WMI_VDEV_PARAM_FIXED_RATE val %d", bit_rate);
+		hdd_debug("WMI_VDEV_PARAM_FIXED_RATE val %d", bit_rate);
 
-	errno = wma_cli_set_command(adapter->vdev_id, WMI_VDEV_PARAM_FIXED_RATE,
-				    bit_rate, VDEV_CMD);
+		errno = wma_cli_set_command(adapter->vdev_id,
+					    WMI_VDEV_PARAM_FIXED_RATE,
+					    bit_rate, VDEV_CMD);
 
-	if (errno) {
-		hdd_err_rl("Failed to set firmware, errno %d", errno);
-		return errno;
+		if (errno) {
+			hdd_err_rl("Failed to set firmware, errno %d", errno);
+			continue;
+		}
+
+		if (mask->control[band].gi) {
+			if (mask->control[band].gi & HDD_AUTO_RATE_SGI)
+				errno = sme_set_auto_rate_he_sgi(
+							hdd_ctx->mac_handle,
+							adapter->vdev_id,
+							mask->control[band].gi);
+			else
+				errno = sme_update_ht_config(
+					hdd_ctx->mac_handle,
+					adapter->vdev_id,
+					WNI_CFG_HT_CAP_INFO_SHORT_GI_20MHZ,
+					mask->control[band].gi);
+
+			if (errno) {
+				hdd_err("cfg set failed, value %d status %d",
+					mask->control[band].gi, errno);
+				continue;
+			}
+		}
+		is_bitmask_configured = true;
 	}
 
-	if (mask->control[band].gi & HDD_AUTO_RATE_SGI)
-		errno = sme_set_auto_rate_he_sgi(hdd_ctx->mac_handle,
-						 adapter->vdev_id,
-						 mask->control[band].gi);
+	if (is_bitmask_configured)
+		return 0;
 	else
-		errno = sme_update_ht_config(hdd_ctx->mac_handle,
-					     adapter->vdev_id,
-					     WNI_CFG_HT_CAP_INFO_SHORT_GI_20MHZ,
-					     mask->control[band].gi);
-
-	if (errno)
-		hdd_err("cfg set failed, value %d status %d",
-			mask->control[band].gi, errno);
-
-	return errno;
+		return errno;
 }
 
 static int wlan_hdd_cfg80211_set_bitrate_mask(struct wiphy *wiphy,
