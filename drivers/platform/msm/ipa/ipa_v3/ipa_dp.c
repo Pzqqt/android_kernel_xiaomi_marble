@@ -952,16 +952,7 @@ void __ipa3_update_curr_poll_state(enum ipa_client_type client, int state)
 		case IPA_CLIENT_APPS_WAN_CONS:
 			ep_idx = ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS);
 			break;
-		case IPA_CLIENT_APPS_LAN_CONS:
-		case IPA_CLIENT_APPS_WAN_PROD:
-		case IPA_CLIENT_APPS_LAN_PROD:
-		case IPA_CLIENT_APPS_WAN_LOW_LAT_CONS:
-		case IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_PROD:
-		case IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS:
-			/* for error handling */
-			break;
 		default:
-			IPAERR_RL("unexpected client:%d\n", client);
 			break;
 	}
 
