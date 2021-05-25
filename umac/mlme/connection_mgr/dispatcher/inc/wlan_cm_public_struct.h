@@ -23,7 +23,6 @@
 #ifndef __WLAN_CM_PUBLIC_STRUCT_H__
 #define __WLAN_CM_PUBLIC_STRUCT_H__
 
-#ifdef FEATURE_CM_ENABLE
 #include <wlan_scan_public_structs.h>
 #include "wlan_crypto_global_def.h"
 #include "qdf_status.h"
@@ -571,7 +570,5 @@ enum wlan_cm_active_request_type {
 	CM_DISCONNECT_ACTIVE,
 	CM_ROAM_ACTIVE,
 };
-
-#endif /* FEATURE_CM_ENABLE */
 
 #endif /* __WLAN_CM_PUBLIC_STRUCT_H__ */

@@ -23,7 +23,6 @@
 #ifndef __WLAN_CM_API_H
 #define __WLAN_CM_API_H
 
-#ifdef FEATURE_CM_ENABLE
 #include "wlan_cm_public_struct.h"
 #include "wlan_ext_mlme_obj_types.h"
 
@@ -449,17 +448,5 @@ void wlan_cm_set_candidate_custom_sort_cb(
 		struct wlan_objmgr_vdev *vdev,
 		void (*sort_fun)(struct wlan_objmgr_vdev *vdev,
 				 qdf_list_t *list));
-#endif
-
-#else
-
-#ifdef WLAN_POLICY_MGR_ENABLE
-static inline void
-wlan_cm_hw_mode_change_resp(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
-			    uint32_t cm_id, QDF_STATUS status)
-{
-}
-#endif /* ifdef POLICY_MGR_ENABLE */
-
 #endif
 #endif /* __WLAN_CM_UCFG_API_H */

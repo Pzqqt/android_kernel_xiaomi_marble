@@ -30,7 +30,6 @@
 struct mlme_ext_ops *glbl_ops;
 mlme_get_global_ops_cb glbl_ops_cb;
 
-#ifdef FEATURE_CM_ENABLE
 struct mlme_cm_ops *glbl_cm_ops;
 osif_cm_get_global_ops_cb glbl_cm_ops_cb;
 
@@ -45,15 +44,6 @@ static void mlme_cm_ops_deinit(void)
 	if (glbl_cm_ops_cb)
 		glbl_cm_ops = NULL;
 }
-#else
-static inline void mlme_cm_ops_init(void)
-{
-}
-
-static inline void mlme_cm_ops_deinit(void)
-{
-}
-#endif
 
 QDF_STATUS wlan_cmn_mlme_init(void)
 {
@@ -246,7 +236,6 @@ QDF_STATUS mlme_vdev_ops_ext_hdl_multivdev_restart_resp(
 	return ret;
 }
 
-#ifdef FEATURE_CM_ENABLE
 QDF_STATUS mlme_cm_ext_hdl_create(struct wlan_objmgr_vdev *vdev,
 				  cm_ext_t **ext_cm_ptr)
 {
@@ -558,7 +547,6 @@ void mlme_set_osif_cm_cb(osif_cm_get_global_ops_cb osif_cm_ops)
 {
 	glbl_cm_ops_cb = osif_cm_ops;
 }
-#endif
 
 void mlme_set_ops_register_cb(mlme_get_global_ops_cb ops_cb)
 {

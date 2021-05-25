@@ -25,8 +25,6 @@
 
 #include "include/wlan_vdev_mlme.h"
 #include <qdf_event.h>
-
-#ifdef FEATURE_CM_ENABLE
 #include <wlan_cm_public_struct.h>
 
 /* Max candidate/attempts to be tried to connect */
@@ -298,18 +296,4 @@ QDF_STATUS wlan_cm_init(struct vdev_mlme_obj *vdev_mlme);
  *         FAILURE, if deletion fails
  */
 QDF_STATUS wlan_cm_deinit(struct vdev_mlme_obj *vdev_mlme);
-#else
-
-static inline QDF_STATUS wlan_cm_init(struct vdev_mlme_obj *vdev_mlme)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline QDF_STATUS wlan_cm_deinit(struct vdev_mlme_obj *vdev_mlme)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-#endif /* FEATURE_CM_ENABLE */
-
 #endif /* __WLAN_CM_MAIN_H__ */

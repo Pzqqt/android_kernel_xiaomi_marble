@@ -160,7 +160,6 @@ osif_cm_mac_to_qca_reason(enum wlan_reason_code internal_reason)
 	return reason;
 }
 
-#ifdef FEATURE_CM_ENABLE
 static struct osif_cm_ops *osif_cm_legacy_ops;
 
 void osif_cm_reset_id_and_src_no_lock(struct vdev_osif_priv *osif_priv)
@@ -634,4 +633,3 @@ void osif_cm_reset_legacy_cb(void)
 {
 	osif_cm_legacy_ops = NULL;
 }
-#endif

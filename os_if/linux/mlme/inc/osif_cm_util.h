@@ -68,7 +68,6 @@ osif_cm_qca_reason_to_str(enum qca_disconnect_reason_codes reason);
 enum qca_disconnect_reason_codes
 osif_cm_mac_to_qca_reason(enum wlan_reason_code internal_reason);
 
-#ifdef FEATURE_CM_ENABLE
 /**
  * osif_cm_register_cb() - API to register connection manager
  * callbacks.
@@ -439,22 +438,5 @@ void osif_cm_set_legacy_cb(struct osif_cm_ops *osif_legacy_ops);
  * Return: void
  */
 void osif_cm_reset_legacy_cb(void);
-
-#else
-static inline QDF_STATUS osif_cm_osif_priv_init(struct wlan_objmgr_vdev *vdev)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline QDF_STATUS osif_cm_osif_priv_deinit(struct wlan_objmgr_vdev *vdev)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline QDF_STATUS osif_cm_register_cb(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 #endif /* __OSIF_CM_UTIL_H */

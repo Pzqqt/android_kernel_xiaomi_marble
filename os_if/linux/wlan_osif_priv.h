@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017,2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017,2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -41,7 +41,6 @@ struct pdev_osif_priv {
 	struct qdf_net_if *nif;
 };
 
-#ifdef FEATURE_CM_ENABLE
 /**
  * struct osif_cm_info - osif connection manager info
  * @last_source: Last command request source
@@ -55,7 +54,6 @@ struct osif_cm_info {
 	struct qdf_spinlock cmd_id_lock;
 	void *ext_priv;
 };
-#endif
 
 /**
  * struct vdev_osif_priv - OS private structure of vdev
@@ -68,9 +66,7 @@ struct vdev_osif_priv {
 	struct wireless_dev *wdev;
 	void *legacy_osif_priv;
 	struct osif_tdls_vdev *osif_tdls;
-#ifdef FEATURE_CM_ENABLE
 	struct osif_cm_info cm_info;
-#endif
 };
 
 #endif
