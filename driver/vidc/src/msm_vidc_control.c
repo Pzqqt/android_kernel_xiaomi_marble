@@ -1316,14 +1316,6 @@ static int msm_vidc_adjust_static_layer_count_and_type(struct msm_vidc_inst *ins
 		goto exit;
 	}
 
-	if (!inst->capabilities->cap[META_EVA_STATS].value &&
-		hb_requested && (layer_count > 1)) {
-		layer_count = 1;
-		i_vpr_h(inst,
-			"%s: cvp disable supports only one enh layer HB\n",
-			__func__);
-	}
-
 	/* decide hfi layer type */
 	if (hb_requested) {
 		inst->hfi_layer_type = HFI_HIER_B;
@@ -1376,9 +1368,7 @@ int msm_vidc_adjust_layer_count(void *instance, struct v4l2_ctrl *ctrl)
 		capability->cap[ENH_LAYER_COUNT].value;
 
 	if (!is_parent_available(inst, ENH_LAYER_COUNT,
-		BITRATE_MODE, __func__) ||
-		!is_parent_available(inst, ENH_LAYER_COUNT,
-		META_EVA_STATS, __func__))
+		BITRATE_MODE, __func__))
 		return -EINVAL;
 
 	if (!inst->vb2q[OUTPUT_PORT].streaming) {
@@ -1404,17 +1394,12 @@ exit:
 	return rc;
 }
 
-/*
- * 1. GOP calibration is only done for HP layer encoding type.
- * 2. Dynamic GOP size should not exceed static GOP size
- * 3. For HB case, or when layer encoding is not enabled,
- *    client set GOP size is directly set to FW.
- */
 int msm_vidc_adjust_gop_size(void *instance, struct v4l2_ctrl *ctrl)
 {
 	struct msm_vidc_inst_capability *capability;
 	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
 	s32 adjusted_value, enh_layer_count = -1;
+	u32 min_gop_size, num_subgops;
 
 	if (!inst || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1431,25 +1416,19 @@ int msm_vidc_adjust_gop_size(void *instance, struct v4l2_ctrl *ctrl)
 	if (!enh_layer_count)
 		goto exit;
 
-	/* calibrate GOP size */
-	if (inst->hfi_layer_type == HFI_HIER_P_SLIDING_WINDOW ||
-		inst->hfi_layer_type == HFI_HIER_P_HYBRID_LTR) {
-		/*
-		 * Layer encoding needs GOP size to be multiple of subgop size
-		 * And subgop size is 2 ^ number of enhancement layers.
-		 */
-		u32 min_gop_size;
-		u32 num_subgops;
+	/*
+	 * Layer encoding needs GOP size to be multiple of subgop size
+	 * And subgop size is 2 ^ number of enhancement layers.
+	*/
 
-		/* v4l2 layer count is the number of enhancement layers */
-		min_gop_size = 1 << enh_layer_count;
-		num_subgops = (adjusted_value + (min_gop_size >> 1)) /
-				min_gop_size;
-		if (num_subgops)
-			adjusted_value = num_subgops * min_gop_size;
-		else
-			adjusted_value = min_gop_size;
-	}
+	/* v4l2 layer count is the number of enhancement layers */
+	min_gop_size = 1 << enh_layer_count;
+	num_subgops = (adjusted_value + (min_gop_size >> 1)) /
+			min_gop_size;
+	if (num_subgops)
+		adjusted_value = num_subgops * min_gop_size;
+	else
+		adjusted_value = min_gop_size;
 
 exit:
 	msm_vidc_update_cap_value(inst, GOP_SIZE, adjusted_value, __func__);

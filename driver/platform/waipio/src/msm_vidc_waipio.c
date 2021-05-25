@@ -736,7 +736,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		HFI_PROP_LAYER_COUNT,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
 			CAP_FLAG_DYNAMIC_ALLOWED,
-		{BITRATE_MODE, META_EVA_STATS},
+		{BITRATE_MODE},
 		{GOP_SIZE, B_FRAME, BIT_RATE},
 		msm_vidc_adjust_layer_count, msm_vidc_set_layer_count_and_type},
 
@@ -746,7 +746,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		HFI_PROP_LAYER_COUNT,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_INPUT_PORT |
 			CAP_FLAG_DYNAMIC_ALLOWED,
-		{BITRATE_MODE, META_EVA_STATS},
+		{BITRATE_MODE},
 		{GOP_SIZE, B_FRAME, BIT_RATE},
 		msm_vidc_adjust_layer_count, msm_vidc_set_layer_count_and_type},
 
@@ -1307,10 +1307,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		V4L2_MPEG_MSM_VIDC_DISABLE, V4L2_MPEG_MSM_VIDC_ENABLE,
 		1, V4L2_MPEG_MSM_VIDC_DISABLE,
 		V4L2_CID_MPEG_VIDC_METADATA_EVA_STATS,
-		HFI_PROP_EVA_STAT_INFO,
-		CAP_FLAG_ROOT,
-		{0},
-		{ENH_LAYER_COUNT}},
+		HFI_PROP_EVA_STAT_INFO},
 
 	{META_BUF_TAG, DEC | ENC, CODECS_ALL,
 		V4L2_MPEG_MSM_VIDC_DISABLE, V4L2_MPEG_MSM_VIDC_ENABLE,
