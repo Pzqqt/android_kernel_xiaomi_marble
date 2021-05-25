@@ -6325,19 +6325,20 @@ static int __iw_get_char_setnone(struct net_device *dev,
 #endif
 	case WE_GET_11W_INFO:
 	{
-		struct csr_roam_profile *roam_profile =
-			hdd_roam_profile(adapter);
+		struct qdf_mac_addr connected_bssid;
 
+		wlan_mlme_get_bssid_vdev_id(hdd_ctx->pdev, adapter->vdev_id,
+					    &connected_bssid);
 		snprintf(extra, WE_MAX_STR_LEN,
 			 "\n BSSID %02X:%02X:%02X:%02X:%02X:%02X"
 			 "\n Number of Unprotected Disassocs %d"
 			 "\n Number of Unprotected Deauths %d",
-			 roam_profile->BSSIDs.bssid->bytes[0],
-			 roam_profile->BSSIDs.bssid->bytes[1],
-			 roam_profile->BSSIDs.bssid->bytes[2],
-			 roam_profile->BSSIDs.bssid->bytes[3],
-			 roam_profile->BSSIDs.bssid->bytes[4],
-			 roam_profile->BSSIDs.bssid->bytes[5],
+			 connected_bssid.bytes[0],
+			 connected_bssid.bytes[1],
+			 connected_bssid.bytes[2],
+			 connected_bssid.bytes[3],
+			 connected_bssid.bytes[4],
+			 connected_bssid.bytes[5],
 			 adapter->hdd_stats.hdd_pmf_stats.
 			 num_unprot_disassoc_rx,
 			 adapter->hdd_stats.hdd_pmf_stats.

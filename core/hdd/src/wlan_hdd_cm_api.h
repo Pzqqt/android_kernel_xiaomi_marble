@@ -270,4 +270,12 @@ bool hdd_cm_is_disconnected(struct hdd_adapter *adapter);
  */
 bool hdd_cm_is_disconnecting(struct hdd_adapter *adapter);
 
+/**
+ * hdd_cm_is_vdev_roaming() - Function to check roaming in progress
+ * @adapter: pointer to the adapter structure
+ *
+ * Return: true if roaming, false otherwise
+ */
+bool hdd_cm_is_vdev_roaming(struct hdd_adapter *adapter);
+
 #endif

@@ -189,6 +189,7 @@ void __hdd_cm_disconnect_handler_post_user_update(struct hdd_adapter *adapter)
 
 	adapter->hdd_stats.tx_rx_stats.cont_txtimeout_cnt = 0;
 
+#ifndef FEATURE_CM_ENABLE
 	/*
 	 * Reset hdd_reassoc_scenario to false here. After roaming in
 	 * 802.1x or WPA3 security, EAPOL is handled at supplicant and
@@ -196,7 +197,7 @@ void __hdd_cm_disconnect_handler_post_user_update(struct hdd_adapter *adapter)
 	 * happens before EAP/EAPOL at supplicant is complete.
 	 */
 	sta_ctx->ft_carrier_on = false;
-	sta_ctx->hdd_reassoc_scenario = false;
+#endif
 
 	hdd_nud_reset_tracking(adapter);
 	hdd_reset_limit_off_chan(adapter);

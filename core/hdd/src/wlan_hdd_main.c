@@ -7291,7 +7291,6 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct hdd_station_ctx *sta_ctx;
 	struct sap_context *sap_ctx;
-	struct csr_roam_profile *roam_profile;
 	union iwreq_data wrqu;
 	tSirUpdateIE update_ie;
 	unsigned long rc;
@@ -7346,8 +7345,6 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 #endif
 		    ) {
 			INIT_COMPLETION(adapter->disconnect_comp_var);
-
-			roam_profile = hdd_roam_profile(adapter);
 			if (cds_is_driver_recovering())
 				reason = REASON_DEVICE_RECOVERY;
 
@@ -18822,9 +18819,7 @@ int hdd_get_rssi_snr_by_bssid(struct hdd_adapter *adapter, const uint8_t *bssid,
 {
 	QDF_STATUS status;
 	mac_handle_t mac_handle;
-	struct csr_roam_profile *roam_profile;
 
-	roam_profile = hdd_roam_profile(adapter);
 	mac_handle = hdd_adapter_get_mac_handle(adapter);
 	status = sme_get_rssi_snr_by_bssid(mac_handle, bssid, rssi, snr);
 	if (QDF_STATUS_SUCCESS != status) {

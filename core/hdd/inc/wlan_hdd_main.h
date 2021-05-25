@@ -870,33 +870,26 @@ struct hdd_mon_set_ch_info {
 /**
  * struct hdd_station_ctx -- STA-specific information
  * @roam_profile: current roaming profile
- * @security_ie: WPA or RSN IE used by the @roam_profile
- * @assoc_additional_ie: association additional IE used by the @roam_profile
- * @wpa_versions: bitmap of supported WPA versions
- * @auth_key_mgmt: bitmap of supported auth key mgmt protocols
- * @requested_bssid: Specific BSSID to which to connect
  * @conn_info: current connection information
- * @roam_info: current roaming information
- * @ft_carrier_on: is carrier on
- * @hdd_reassoc_scenario: is station in the middle of reassociation?
- * @sta_debug_state: STA context debug variable
- * @broadcast_sta_id: STA ID assigned for broadcast frames
+ * @cache_conn_info: prev connection info
+ * @reg_phymode: reg phymode
  * @ch_info: monitor mode channel information
  * @ap_supports_immediate_power_save: Does the current AP allow our STA
  *    to immediately go into power save?
  */
 struct hdd_station_ctx {
-	struct csr_roam_profile roam_profile;
+#ifndef FEATURE_CM_ENABLE
 	uint8_t security_ie[WLAN_MAX_IE_LEN];
 	tSirAddie assoc_additional_ie;
 	enum nl80211_wpa_versions wpa_versions;
 	enum hdd_auth_key_mgmt auth_key_mgmt;
 	struct qdf_mac_addr requested_bssid;
+	bool ft_carrier_on;
+#endif
+	uint32_t reg_phymode;
+	struct csr_roam_profile roam_profile;
 	struct hdd_connection_info conn_info;
 	struct hdd_connection_info cache_conn_info;
-	bool ft_carrier_on;
-	bool hdd_reassoc_scenario;
-	int sta_debug_state;
 	struct hdd_mon_set_ch_info ch_info;
 	bool ap_supports_immediate_power_save;
 };
@@ -3997,6 +3990,7 @@ struct csr_roam_profile *hdd_roam_profile(struct hdd_adapter *adapter)
 	return &sta_ctx->roam_profile;
 }
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * hdd_security_ie() - Get adapter's security IE
  * @adapter: The adapter being queried
@@ -4044,6 +4038,7 @@ tSirAddie *hdd_assoc_additional_ie(struct hdd_adapter *adapter)
 
 	return &sta_ctx->assoc_additional_ie;
 }
+#endif
 
 /**
  * hdd_is_roaming_in_progress() - check if roaming is in progress

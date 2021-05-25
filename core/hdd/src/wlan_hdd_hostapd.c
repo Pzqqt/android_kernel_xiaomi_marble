@@ -3988,18 +3988,7 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if ((adapter->device_mode == QDF_STA_MODE) ||
-	    (adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
-		struct csr_roam_profile *roam_profile;
-		struct hdd_station_ctx *sta_ctx =
-			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-
-		roam_profile = hdd_roam_profile(adapter);
-		num_ch = roam_profile->ChannelInfo.numOfChannels = 1;
-		sta_ctx->conn_info.chan_freq = chandef->chan->center_freq;
-		roam_profile->ChannelInfo.freq_list =
-			&sta_ctx->conn_info.chan_freq;
-	} else if (adapter->device_mode == QDF_SAP_MODE ||
+	if (adapter->device_mode == QDF_SAP_MODE ||
 		   adapter->device_mode == QDF_P2P_GO_MODE) {
 		sap_config = &((WLAN_HDD_GET_AP_CTX_PTR(adapter))->sap_config);
 		sap_config->chan_freq = chandef->chan->center_freq;

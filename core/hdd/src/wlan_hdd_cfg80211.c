@@ -18191,6 +18191,8 @@ static int __wlan_hdd_cfg80211_get_key(struct wiphy *wiphy,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	struct csr_roam_profile *roam_profile;
 	struct key_params params;
+	eCsrEncryptionType enc_type;
+	struct hdd_station_ctx *sta_ctx;
 
 	hdd_enter();
 
@@ -18219,16 +18221,24 @@ static int __wlan_hdd_cfg80211_get_key(struct wiphy *wiphy,
 
 		roam_profile =
 			wlan_sap_get_roam_profile(ap_ctx->sap_context);
-	} else {
+		if (!roam_profile) {
+			hdd_err("Get roam profile failed!");
+			return -EINVAL;
+		}
+		enc_type = roam_profile->EncryptionType.encryptionType[0];
+	} else if (adapter->device_mode == QDF_NDI_MODE) {
 		roam_profile = hdd_roam_profile(adapter);
+		if (!roam_profile) {
+			hdd_err("Get roam profile failed!");
+			return -EINVAL;
+		}
+		enc_type = roam_profile->EncryptionType.encryptionType[0];
+	} else {
+		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+		enc_type = sta_ctx->conn_info.uc_encrypt_type;
 	}
 
-	if (!roam_profile) {
-		hdd_err("Get roam profile failed!");
-		return -EINVAL;
-	}
-
-	switch (roam_profile->EncryptionType.encryptionType[0]) {
+	switch (enc_type) {
 	case eCSR_ENCRYPT_TYPE_NONE:
 		params.cipher = IW_AUTH_CIPHER_NONE;
 		break;
@@ -19252,6 +19262,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 						    REG_PHYMODE_MAX,
 						    oper_freq);
 		roam_profile->phyMode = csr_convert_from_reg_phy_mode(phy_mode);
+		sta_ctx->reg_phymode = roam_profile->phyMode;
 
 		sme_config = qdf_mem_malloc(sizeof(*sme_config));
 		if (!sme_config) {
@@ -24037,7 +24048,9 @@ __wlan_hdd_cfg80211_update_connect_params(struct wiphy *wiphy,
 					  struct cfg80211_connect_params *req,
 					  uint32_t changed)
 {
+#ifndef FEATURE_CM_ENABLE
 	struct csr_roam_profile *roam_profile;
+#endif
 	int ret;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
@@ -24055,10 +24068,10 @@ __wlan_hdd_cfg80211_update_connect_params(struct wiphy *wiphy,
 		return -EINVAL;
 
 	mac_handle = hdd_ctx->mac_handle;
-	roam_profile = hdd_roam_profile(adapter);
 
 	if (changed & UPDATE_ASSOC_IE) {
 #ifndef FEATURE_CM_ENABLE
+		roam_profile = hdd_roam_profile(adapter);
 		/*
 		 * Validate the elements of the IE and copy it to
 		 * roam_profile in adapter
@@ -24096,8 +24109,7 @@ __wlan_hdd_cfg80211_update_connect_params(struct wiphy *wiphy,
 
 	if (changed) {
 		status = sme_send_rso_connect_params(mac_handle,
-						     adapter->vdev_id,
-						     roam_profile);
+						     adapter->vdev_id);
 		if (QDF_IS_STATUS_ERROR(status))
 			hdd_err("Update connect params to fw failed %d",
 				status);

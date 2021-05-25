@@ -2854,7 +2854,6 @@ void sme_send_hlp_ie_info(mac_handle_t mac_handle, uint8_t vdev_id,
  * sme_send_rso_connect_params() - Updates the assoc IEs to csr_roam_session
  * @mac_handle: Opaque handle to the global MAC context
  * @vdev_id: vdev id
- * @src_profile: CSR Roam profile
  *
  * When the user space updates the assoc IEs or FILS auth type or FILS ERP info,
  * host driver needs to send these updated parameters to firmware via
@@ -2863,8 +2862,7 @@ void sme_send_hlp_ie_info(mac_handle_t mac_handle, uint8_t vdev_id,
  * Return: None
  */
 QDF_STATUS sme_send_rso_connect_params(mac_handle_t mac_handle,
-				       uint8_t vdev_id,
-				       struct csr_roam_profile *src_profile);
+				       uint8_t vdev_id);
 
 #if defined(WLAN_FEATURE_FILS_SK)
 #ifndef FEATURE_CM_ENABLE

@@ -142,6 +142,28 @@ bool hdd_cm_is_disconnecting(struct hdd_adapter *adapter)
 	return is_vdev_disconnecting;
 }
 
+bool hdd_cm_is_vdev_roaming(struct hdd_adapter *adapter)
+{
+	struct wlan_objmgr_vdev *vdev;
+	bool is_vdev_roaming;
+	enum QDF_OPMODE opmode;
+
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_CM_ID);
+	if (!vdev)
+		return false;
+
+	opmode = wlan_vdev_mlme_get_opmode(vdev);
+	if (opmode != QDF_STA_MODE && opmode != QDF_P2P_CLIENT_MODE) {
+		hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_CM_ID);
+		return false;
+	}
+	is_vdev_roaming = ucfg_cm_is_vdev_roaming(vdev);
+
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_CM_ID);
+
+	return is_vdev_roaming;
+}
+
 #else
 bool hdd_cm_is_vdev_associated(struct hdd_adapter *adapter)
 {
@@ -170,6 +192,13 @@ bool hdd_cm_is_disconnecting(struct hdd_adapter *adapter)
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	return sta_ctx->conn_info.conn_state == eConnectionState_Disconnecting;
+}
+
+bool hdd_cm_is_vdev_roaming(struct hdd_adapter *adapter)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	return sme_roaming_in_progress(hdd_ctx->mac_handle, adapter->vdev_id);
 }
 #endif
 
@@ -776,6 +805,7 @@ hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
 	mac_handle_t mac_handle;
 	bool is_roam = rsp->is_reassoc;
 	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
+	uint32_t phymode;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -801,6 +831,9 @@ hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
 	hdd_cm_rec_connect_info(adapter, rsp);
 
 	hdd_cm_save_connect_info(adapter, rsp);
+	phymode = wlan_reg_get_max_phymode(hdd_ctx->pdev, REG_PHYMODE_MAX,
+					   rsp->freq);
+	sta_ctx->reg_phymode = csr_convert_from_reg_phy_mode(phymode);
 
 	if (hdd_add_beacon_filter(adapter) != 0)
 		hdd_err("add beacon fileter failed");

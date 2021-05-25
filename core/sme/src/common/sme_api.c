@@ -6292,19 +6292,13 @@ QDF_STATUS sme_update_roam_rssi_diff(mac_handle_t mac_handle, uint8_t vdev_id,
 }
 
 QDF_STATUS sme_send_rso_connect_params(mac_handle_t mac_handle,
-				       uint8_t vdev_id,
-				       struct csr_roam_profile *src_profile)
+				       uint8_t vdev_id)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (vdev_id >= WLAN_MAX_VDEVS) {
 		sme_err("Invalid sme vdev id: %d", vdev_id);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	if (!src_profile) {
-		sme_err("src roam profile NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 

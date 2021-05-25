@@ -1456,7 +1456,6 @@ static void hdd_country_change_update_sta(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter = NULL, *next_adapter = NULL;
 	struct hdd_station_ctx *sta_ctx = NULL;
-	struct csr_roam_profile *roam_profile = NULL;
 	struct wlan_objmgr_pdev *pdev = NULL;
 	uint32_t new_phy_mode;
 	bool freq_changed, phy_changed;
@@ -1483,13 +1482,12 @@ static void hdd_country_change_update_sta(struct hdd_context *hdd_ctx)
 			 */
 		case QDF_STA_MODE:
 			sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-			roam_profile = &sta_ctx->roam_profile;
 			new_phy_mode = wlan_reg_get_max_phymode(pdev,
 								REG_PHYMODE_MAX,
 								oper_freq);
 			csr_phy_mode =
 				csr_convert_from_reg_phy_mode(new_phy_mode);
-			phy_changed = (roam_profile->phyMode != csr_phy_mode);
+			phy_changed = (sta_ctx->reg_phymode != csr_phy_mode);
 
 			if (phy_changed || freq_changed) {
 			/* This is temp ifdef will be removed in near future */
@@ -1504,7 +1502,7 @@ static void hdd_country_change_update_sta(struct hdd_context *hdd_ctx)
 					eCSR_DISCONNECT_REASON_UNSPECIFIED,
 					REASON_UNSPEC_FAILURE);
 #endif
-				roam_profile->phyMode = csr_phy_mode;
+				sta_ctx->reg_phymode = csr_phy_mode;
 			}
 			break;
 		default:
