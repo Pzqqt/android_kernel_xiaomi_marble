@@ -1297,6 +1297,52 @@ struct target_if_psoc_spectral {
 	struct spectral_wmi_ops wmi_ops;
 };
 
+#ifdef OPTIMIZED_SAMP_MESSAGE
+/**
+ * struct target_if_samp_msg_params - Spectral Analysis Messaging Protocol
+ * data format
+ * @hw_detector_id: Spectral HW detector ID
+ * @rssi: Spectral RSSI
+ * @lower_rssi: RSSI of lower band
+ * @upper_rssi: RSSI of upper band
+ * @chain_ctl_rssi: RSSI for control channel, for all antennas
+ * @chain_ext_rssi: RSSI for extension channel, for all antennas
+ * @last_raw_timestamp: Previous FFT report's raw timestamp.
+ * @raw_timestamp: FFT timestamp reported by HW on primary segment.
+ * @timestamp: timestamp
+ * @reset_delay: Time gap between the last spectral report before reset and the
+ *               end of reset.
+ * @max_mag: maximum magnitude
+ * @max_index: index of max magnitude
+ * @noise_floor: current noise floor
+ * @pri80ind: Indication from hardware that the sample was received on the
+ *            primary 80 MHz segment. If this is set when smode =
+ *            SPECTRAL_SCAN_MODE_AGILE, it indicates that Spectral was carried
+ *            out on pri80 instead of the Agile frequency due to a channel
+ *            switch - Software may choose to ignore the sample in this case.
+ * @bin_pwr_data: Contains FFT magnitudes
+ */
+struct target_if_samp_msg_params {
+	uint8_t hw_detector_id;
+	int8_t rssi;
+	int8_t lower_rssi;
+	int8_t upper_rssi;
+	int8_t chain_ctl_rssi[HOST_MAX_ANTENNA];
+	int8_t chain_ext_rssi[HOST_MAX_ANTENNA];
+	uint32_t last_raw_timestamp;
+	uint32_t raw_timestamp;
+	uint32_t timestamp;
+	uint32_t reset_delay;
+	uint16_t max_mag;
+	uint16_t max_index;
+	int16_t noise_floor;
+	uint8_t agc_total_gain;
+	uint8_t gainchange;
+	uint8_t pri80ind;
+	uint8_t *bin_pwr_data;
+};
+
+#else
 /**
  * struct target_if_samp_msg_params - Spectral Analysis Messaging Protocol
  * data format
@@ -1421,6 +1467,7 @@ struct target_if_samp_msg_params {
 	uint32_t reset_delay;
 	uint32_t target_reset_count;
 };
+#endif
 
 /**
  * struct target_if_spectral_agile_mode_cap - Structure to hold agile
