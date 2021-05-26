@@ -1214,6 +1214,121 @@ target_if_update_session_info_from_report_ctx(
 #endif /* OPTIMIZED_SAMP_MESSAGE */
 
 #ifdef OPTIMIZED_SAMP_MESSAGE
+/**
+ * target_if_spectral_populate_samp_params_gen2() - Populate the SAMP params
+ * for gen2. SAMP params are to be used for populating SAMP msg.
+ * @spectral: Pointer to spectral object
+ * @phyerr_info: Pointer to processed phyerr info
+ * @params: Pointer to Spectral SAMP message fields to be populated
+ *
+ * Populate the SAMP params for gen2, which will be used to populate SAMP msg.
+ *
+ * Return: Success/Failure
+ */
+static QDF_STATUS
+target_if_spectral_populate_samp_params_gen2(
+			struct target_if_spectral *spectral,
+			struct spectral_process_phyerr_info_gen2 *phyerr_info,
+			struct target_if_samp_msg_params *params)
+{
+	uint8_t chn_idx_highest_enabled;
+	uint8_t chn_idx_lowest_enabled;
+	int8_t control_rssi;
+	int8_t extension_rssi;
+	struct target_if_spectral_rfqual_info *p_rfqual;
+	struct spectral_search_fft_info_gen2 *p_sfft;
+	struct spectral_phyerr_fft_gen2 *pfft;
+	struct target_if_spectral_acs_stats *acs_stats;
+	enum phy_ch_width ch_width;
+	enum spectral_scan_mode smode = SPECTRAL_SCAN_MODE_NORMAL;
+
+	if (!spectral) {
+		spectral_err_rl("Spectral LMAC object is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	if (!phyerr_info) {
+		spectral_err_rl("Pointer to phyerr info is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	if (!params) {
+		spectral_err_rl("SAMP msg params structure is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	ch_width = spectral->report_info[smode].sscan_bw;
+	acs_stats = phyerr_info->acs_stats;
+	pfft = phyerr_info->pfft;
+	p_sfft = phyerr_info->p_sfft;
+	p_rfqual = phyerr_info->p_rfqual;
+
+	params->hw_detector_id = phyerr_info->seg_id;
+	params->rssi = p_rfqual->rssi_comb;
+	if (spectral->is_sec80_rssi_war_required && phyerr_info->seg_id == 1)
+		params->rssi = target_if_get_combrssi_sec80_seg_gen2(spectral,
+								     p_sfft);
+
+	chn_idx_highest_enabled =
+		   ((spectral->params[smode].ss_chn_mask & 0x8) ? 3 :
+		    (spectral->params[smode].ss_chn_mask & 0x4) ? 2 :
+		    (spectral->params[smode].ss_chn_mask & 0x2) ? 1 : 0);
+	chn_idx_lowest_enabled =
+		   ((spectral->params[smode].ss_chn_mask & 0x1) ? 0 :
+		    (spectral->params[smode].ss_chn_mask & 0x2) ? 1 :
+		    (spectral->params[smode].ss_chn_mask & 0x4) ? 2 : 3);
+	control_rssi =
+		p_rfqual->pc_rssi_info[chn_idx_highest_enabled].rssi_pri20;
+	extension_rssi =
+		p_rfqual->pc_rssi_info[chn_idx_highest_enabled].rssi_sec20;
+
+	if (spectral->upper_is_control)
+		params->upper_rssi = control_rssi;
+	else
+		params->upper_rssi = extension_rssi;
+
+	if (spectral->lower_is_control)
+		params->lower_rssi = control_rssi;
+	else
+		params->lower_rssi = extension_rssi;
+
+	if (spectral->sc_spectral_noise_pwr_cal) {
+		int idx;
+
+		for (idx = 0; idx < HOST_MAX_ANTENNA; idx++) {
+			params->chain_ctl_rssi[idx] =
+				p_rfqual->pc_rssi_info[idx].rssi_pri20;
+			params->chain_ext_rssi[idx] =
+				p_rfqual->pc_rssi_info[idx].rssi_sec20;
+		}
+	}
+	params->timestamp = (phyerr_info->tsf64 & SPECTRAL_TSMASK);
+	params->max_mag = p_sfft->peak_mag;
+	params->max_index = p_sfft->peak_inx;
+
+	/*
+	 * For VHT80_80/VHT160, the noise floor for primary
+	 * 80MHz segment is populated with the lowest enabled
+	 * antenna chain and the noise floor for secondary 80MHz segment
+	 * is populated with the highest enabled antenna chain.
+	 * For modes upto VHT80, the noise floor is populated with the
+	 * one corresponding to the highest enabled antenna chain.
+	 */
+	if (is_ch_width_160_or_80p80(ch_width) && phyerr_info->seg_id == 0)
+		params->noise_floor =
+				p_rfqual->noise_floor[chn_idx_lowest_enabled];
+	else
+		params->noise_floor =
+				p_rfqual->noise_floor[chn_idx_highest_enabled];
+
+	acs_stats->ctrl_nf = params->noise_floor;
+	acs_stats->ext_nf = params->noise_floor;
+	acs_stats->nfc_ctl_rssi = control_rssi;
+	acs_stats->nfc_ext_rssi = extension_rssi;
+
+	params->bin_pwr_data = (uint8_t *)pfft;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 int
 target_if_process_phyerr_gen2(struct target_if_spectral *spectral,
 			      uint8_t *data,

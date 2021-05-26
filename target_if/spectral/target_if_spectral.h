@@ -274,6 +274,26 @@ typedef uint32_t SPECTRAL_SEGID_INFO;
 struct spectral_phyerr_fft_gen2 {
 	uint8_t buf[0];
 };
+
+/**
+ * struct spectral_process_phyerr_info_gen2 - Processed phyerr info structures
+ * needed to fill SAMP params for gen2
+ * @p_rfqual: Pointer to RF quality info
+ * @p_sfft: Pointer to Search fft report info
+ * @pfft: Pointer to FFT info in Phyerr event
+ * @acs_stats: Pointer to ACS stats struct
+ * @tsf64: 64 bit TSF value
+ * @seg_d : Segment ID
+ */
+struct spectral_process_phyerr_info_gen2 {
+	struct target_if_spectral_rfqual_info *p_rfqual;
+	struct spectral_search_fft_info_gen2 *p_sfft;
+	struct spectral_phyerr_fft_gen2 *pfft;
+	struct target_if_spectral_acs_stats *acs_stats;
+	uint64_t tsf64;
+	uint8_t seg_id;
+};
+
 /* END of spectral GEN II HW specific details */
 
 /* START of spectral GEN III HW specific details */
