@@ -42,6 +42,7 @@ static bool workqueues_stopped;
 static bool ipa3_modem_init_cmplt;
 static bool first_time_handshake;
 static bool send_qmi_init_q6;
+static bool nat_move_qmi_disabled;
 struct mutex ipa3_qmi_lock;
 struct ipa_msg_desc {
 	uint16_t msg_id;
@@ -422,6 +423,11 @@ static void ipa3_qmi_msg_free_cb(void *buff, u32 len, u32 type)
 	kfree(buff);
 }
 
+void ipa3_disable_move_nat_resp(void)
+{
+	nat_move_qmi_disabled = true;
+}
+
 static void ipa3_handle_move_nat_req(struct qmi_handle *qmi_handle,
 	struct sockaddr_qrtr *sq,
 	struct qmi_txn *txn,
@@ -454,6 +460,14 @@ static void ipa3_handle_move_nat_req(struct qmi_handle *qmi_handle,
 	msg_meta.msg_len = sizeof(struct ipa_move_nat_req_msg_v01);
 
 	req_data->nat_move_direction = move_req->nat_move_direction;
+
+	nat_move_qmi_disabled = false;
+	/*
+	 * make sure QMI is enabled before message sent to IPACM.
+	 * real QMI coming from modem takes us out of debug mode and re enables
+	 * the QMI indication send
+	 */
+	wmb();
 
 	rc = ipa_send_msg(&msg_meta, req_data, ipa3_qmi_msg_free_cb);
 	if (rc) {
@@ -1560,6 +1574,13 @@ int rmnet_ipa3_notify_nat_move_res(bool failure)
 
 	IPAWANDBG("send nat table move indication to modem (%d)\n",
 		failure);
+
+	if (nat_move_qmi_disabled) {
+		IPAWANDBG(
+			"not sending nat table move indication, nat_move_qmi_disabled is true"
+		);
+		return 0;
+	}
 	memset(&ind, 0, sizeof(struct
 		ipa_move_nat_table_complt_ind_msg_v01));
 	if (!failure)
