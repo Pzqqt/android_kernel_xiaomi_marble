@@ -2776,6 +2776,92 @@ target_if_process_sfft_report_gen3(
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * target_if_spectral_populate_samp_params_gen3() - Populate the SAMP params
+ * for gen3. SAMP params are to be used for populating SAMP msg.
+ * @spectral: Pointer to spectral object
+ * @p_sfft: Fields extracted from FFT report
+ * @sscan_fields: Fields extracted from Summary report
+ * @report: Pointer to spectral report
+ * @params: Pointer to Spectral SAMP message fields to be populated
+ *
+ * Populate the SAMP params for gen3, which will be used to populate SAMP msg.
+ *
+ * Return: Success/Failure
+ */
+static QDF_STATUS
+target_if_spectral_populate_samp_params_gen3(
+		struct target_if_spectral *spectral,
+		struct spectral_search_fft_info_gen3 *p_sfft,
+		struct sscan_report_fields_gen3 *sscan_fields,
+		struct spectral_report *report,
+		struct target_if_samp_msg_params *params)
+{
+	enum spectral_scan_mode spectral_mode;
+	uint8_t chn_idx_lowest_enabled;
+	struct wlan_objmgr_vdev *vdev;
+	uint8_t vdev_rxchainmask;
+
+	if (!p_sfft) {
+		spectral_err_rl("Invalid pointer to Search FFT report info");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	if (!spectral) {
+		spectral_err_rl("Spectral LMAC object is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	if (!sscan_fields) {
+		spectral_err_rl("Invalid pointer to Summary report fields");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	if (!report) {
+		spectral_err_rl("Spectral report is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	if (!params) {
+		spectral_err_rl("SAMP msg params structure is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	/* RSSI is in 1/2 dBm steps, Covert it to dBm scale */
+	params->rssi = (sscan_fields->inband_pwr_db) >> 1;
+
+	params->hw_detector_id = p_sfft->fft_detector_id;
+	params->raw_timestamp = p_sfft->timestamp;
+	params->last_raw_timestamp = p_sfft->last_raw_timestamp;
+	params->timestamp = p_sfft->adjusted_timestamp;
+	params->reset_delay = report->reset_delay;
+
+	params->max_mag = p_sfft->fft_peak_mag;
+
+	spectral_mode = target_if_get_spectral_mode(params->hw_detector_id,
+						    &spectral->rparams);
+	vdev = target_if_spectral_get_vdev(spectral, spectral_mode);
+	if (!vdev) {
+		spectral_debug("First vdev is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	vdev_rxchainmask = wlan_vdev_mlme_get_rxchainmask(vdev);
+	QDF_ASSERT(vdev_rxchainmask != 0);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_SPECTRAL_ID);
+
+	chn_idx_lowest_enabled =
+		target_if_spectral_get_lowest_chn_idx(vdev_rxchainmask);
+	if (chn_idx_lowest_enabled >= DBR_MAX_CHAINS) {
+		spectral_err("Invalid chain index, detector id = %u",
+			     params->hw_detector_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+	params->noise_floor = report->noisefloor[chn_idx_lowest_enabled];
+	params->agc_total_gain = sscan_fields->sscan_agc_total_gain;
+	params->gainchange = sscan_fields->sscan_gainchange;
+	params->pri80ind = sscan_fields->sscan_pri80;
+
+	params->bin_pwr_data = p_sfft->bin_pwr_data;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 int
 target_if_consume_spectral_report_gen3(
 	 struct target_if_spectral *spectral,
@@ -2916,6 +3002,15 @@ target_if_consume_spectral_report_gen3(
 						  p_sfft->fft_bin_count,
 						  spectral_mode);
 
+	/* Populate SAMP params */
+	ret = target_if_spectral_populate_samp_params_gen3(
+							spectral, p_sfft,
+							&sscan_report_fields,
+							report, &params);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		spectral_err_rl("Failed to populate SAMP params");
+		goto fail;
+	}
 	/* Fill SAMP message */
 	ret = target_if_spectral_fill_samp_msg(spectral, &params);
 	if (QDF_IS_STATUS_ERROR(ret)) {
