@@ -1487,6 +1487,11 @@ enum msm_vidc_allow msm_vidc_allow_input_psc(struct msm_vidc_inst *inst)
 		i_vpr_h(inst, "%s: defer input psc, inst state %s\n",
 				__func__, state_name(inst->state));
 		allow = MSM_VIDC_DEFER;
+	} else if (inst->state == MSM_VIDC_OPEN ||
+		inst->state == MSM_VIDC_START_OUTPUT) {
+		i_vpr_h(inst, "%s: discard input psc, inst state %s\n",
+				__func__, state_name(inst->state));
+		allow = MSM_VIDC_DISCARD;
 	} else {
 		i_vpr_e(inst, "%s: input psc in wrong state %s\n",
 				__func__, state_name(inst->state));

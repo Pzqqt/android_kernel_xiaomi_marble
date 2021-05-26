@@ -1517,6 +1517,9 @@ void handle_session_response_work_handler(struct work_struct *work)
 			} else if (allow == MSM_VIDC_DEFER) {
 				/* continue to next entry processing */
 				continue;
+			} else if (allow == MSM_VIDC_DISCARD) {
+				/* discard current entry processing */
+				break;
 			} else if (allow == MSM_VIDC_ALLOW) {
 				rc = handle_session_response_work(inst, resp_work);
 				if (!rc)
