@@ -872,13 +872,12 @@ static void ce_srng_status_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 
 	hif_debug("ce_id: %d", ce_id);
 
-	ce_srng_msi_ring_params_setup(scn, ce_id, &ring_params);
-
 	ring_params.ring_base_paddr = status_ring->base_addr_CE_space;
 	ring_params.ring_base_vaddr = status_ring->base_addr_owner_space;
 	ring_params.num_entries = status_ring->nentries;
 
 	if (!(CE_ATTR_DISABLE_INTR & attr->flags)) {
+		ce_srng_msi_ring_params_setup(scn, ce_id, &ring_params);
 		ce_status_ring_config_int_threshold(scn, &ring_params);
 	}
 
