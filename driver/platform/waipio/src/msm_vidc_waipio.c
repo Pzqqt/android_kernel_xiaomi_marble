@@ -569,7 +569,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		NULL, msm_vidc_set_vbr_related_properties},
 
 	{VBV_DELAY, ENC, H264|HEVC,
-		100, 300, 100, 300,
+		200, 300, 100, 300,
 		V4L2_CID_MPEG_VIDEO_VBV_DELAY,
 		HFI_PROP_VBV_DELAY,
 		CAP_FLAG_OUTPUT_PORT,
