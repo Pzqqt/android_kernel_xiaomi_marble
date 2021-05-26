@@ -23,7 +23,7 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 	u32 base_cycles = 0;
 	u32 fps;
 	u32 prio_val;
-	u32 ts_fps;
+	u32 buf_timetamps_fps, mbpf;
 
 	if (!inst || !inst->core || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -45,12 +45,16 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 		return core->dt->allowed_clks_tbl[prio_val-1].clock_rate;
 	}
 
-	mbs_per_second = msm_vidc_get_inst_load(inst);
+	mbpf = msm_vidc_get_mbs_per_frame(inst);
 	fps = msm_vidc_get_fps(inst);
 
-	ts_fps = msm_vidc_calc_framerate(inst);
-	if (ts_fps > fps)
-		i_vpr_l(inst, "%s: ts_rate %d set rate %d\n", __func__, ts_fps, fps);
+	buf_timetamps_fps = msm_vidc_calc_framerate(inst);
+
+	/* use buffer detected fps instead of client set value */
+	if (fps < buf_timetamps_fps)
+		fps = buf_timetamps_fps;
+
+	mbs_per_second = mbpf * fps;
 
 	/*
 	 * Calculate vpp, vsp, fw cycles separately for encoder and decoder.
@@ -152,8 +156,8 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 	freq = max(vpp_cycles, vsp_cycles);
 	freq = max(freq, fw_cycles);
 
-	i_vpr_p(inst, "%s: filled len %d required freq %llu\n",
-		__func__, data_size, freq);
+	i_vpr_p(inst, "%s: filled len %d, required freq %llu, fps %u, mbpf %u\n",
+		__func__, data_size, freq, fps, mbpf);
 
 	return freq;
 }

@@ -47,27 +47,12 @@ u64 msm_vidc_max_freq(struct msm_vidc_inst *inst)
 
 int msm_vidc_get_mbps(struct msm_vidc_inst *inst)
 {
-	u32 input_port_mbs, output_port_mbs;
-	u32 fps, operating_rate, frame_rate;
-	struct v4l2_format *f;
+	u32 mbpf, fps;
 
-	f = &inst->fmts[INPUT_PORT];
-	input_port_mbs = NUM_MBS_PER_FRAME(f->fmt.pix_mp.width,
-		f->fmt.pix_mp.height);
+	mbpf = msm_vidc_get_mbs_per_frame(inst);
+	fps = msm_vidc_get_fps(inst);
 
-	f = &inst->fmts[OUTPUT_PORT];
-	output_port_mbs = NUM_MBS_PER_FRAME(f->fmt.pix_mp.width,
-		f->fmt.pix_mp.height);
-
-	frame_rate = inst->capabilities->cap[FRAME_RATE].value;
-	operating_rate = inst->capabilities->cap[OPERATING_RATE].value;
-
-	fps = max(operating_rate, frame_rate);
-
-	/* In case of fps < 1 we assume 1 */
-	fps = max(fps >> 16, (u32)1);
-
-	return max(input_port_mbs, output_port_mbs) * fps;
+	return mbpf * fps;
 }
 
 int msm_vidc_get_inst_load(struct msm_vidc_inst *inst)
@@ -196,7 +181,7 @@ int msm_vidc_scale_buses(struct msm_vidc_inst *inst)
 	struct vidc_bus_vote_data *vote_data;
 	struct v4l2_format *out_f;
 	struct v4l2_format *inp_f;
-	int codec = 0, frame_rate;
+	int codec = 0, frame_rate, buf_ts_fps;
 
 	if (!inst || !inst->core || !inst->capabilities) {
 		d_vpr_e("%s: invalid params: %pK\n", __func__, inst);
@@ -242,6 +227,12 @@ int msm_vidc_scale_buses(struct msm_vidc_inst *inst)
 	vote_data->lcu_size = (codec == V4L2_PIX_FMT_HEVC ||
 			codec == V4L2_PIX_FMT_VP9) ? 32 : 16;
 	vote_data->fps = msm_vidc_get_fps(inst);
+	buf_ts_fps = msm_vidc_calc_framerate(inst);
+	if (buf_ts_fps > vote_data->fps) {
+		i_vpr_l(inst, "%s: bitstream: fps %d, client rate %u\n", __func__,
+			buf_ts_fps, vote_data->fps);
+		vote_data->fps = buf_ts_fps;
+	}
 
 	if (inst->domain == MSM_VIDC_ENCODER) {
 		vote_data->domain = MSM_VIDC_ENCODER;
