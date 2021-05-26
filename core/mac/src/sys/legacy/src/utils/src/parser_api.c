@@ -2521,7 +2521,7 @@ void sir_copy_caps_info(struct mac_context *mac_ctx, tDot11fFfCapabilities caps,
 	pProbeResp->capabilityInfo.cfPollReq = caps.cfPollReq;
 	pProbeResp->capabilityInfo.privacy = caps.privacy;
 	pProbeResp->capabilityInfo.shortPreamble = caps.shortPreamble;
-	pProbeResp->capabilityInfo.pbcc = caps.pbcc;
+	pProbeResp->capabilityInfo.criticalUpdateFlag = caps.criticalUpdateFlag;
 	pProbeResp->capabilityInfo.channelAgility =	caps.channelAgility;
 	pProbeResp->capabilityInfo.spectrumMgt = caps.spectrumMgt;
 	pProbeResp->capabilityInfo.qos = caps.qos;
@@ -2969,7 +2969,8 @@ sir_convert_assoc_req_frame2_struct(struct mac_context *mac,
 	pAssocReq->capabilityInfo.privacy = ar->Capabilities.privacy;
 	pAssocReq->capabilityInfo.shortPreamble =
 		ar->Capabilities.shortPreamble;
-	pAssocReq->capabilityInfo.pbcc = ar->Capabilities.pbcc;
+	pAssocReq->capabilityInfo.criticalUpdateFlag =
+		ar->Capabilities.criticalUpdateFlag;
 	pAssocReq->capabilityInfo.channelAgility =
 		ar->Capabilities.channelAgility;
 	pAssocReq->capabilityInfo.spectrumMgt = ar->Capabilities.spectrumMgt;
@@ -3414,7 +3415,8 @@ sir_convert_assoc_resp_frame2_struct(struct mac_context *mac,
 	pAssocRsp->capabilityInfo.privacy = ar->Capabilities.privacy;
 	pAssocRsp->capabilityInfo.shortPreamble =
 		ar->Capabilities.shortPreamble;
-	pAssocRsp->capabilityInfo.pbcc = ar->Capabilities.pbcc;
+	pAssocRsp->capabilityInfo.criticalUpdateFlag =
+		ar->Capabilities.criticalUpdateFlag;
 	pAssocRsp->capabilityInfo.channelAgility =
 		ar->Capabilities.channelAgility;
 	pAssocRsp->capabilityInfo.spectrumMgt = ar->Capabilities.spectrumMgt;
@@ -3711,7 +3713,8 @@ sir_convert_reassoc_req_frame2_struct(struct mac_context *mac,
 	pAssocReq->capabilityInfo.cfPollReq = ar->Capabilities.cfPollReq;
 	pAssocReq->capabilityInfo.privacy = ar->Capabilities.privacy;
 	pAssocReq->capabilityInfo.shortPreamble = ar->Capabilities.shortPreamble;
-	pAssocReq->capabilityInfo.pbcc = ar->Capabilities.pbcc;
+	pAssocReq->capabilityInfo.criticalUpdateFlag =
+		ar->Capabilities.criticalUpdateFlag;
 	pAssocReq->capabilityInfo.channelAgility =
 		ar->Capabilities.channelAgility;
 	pAssocReq->capabilityInfo.spectrumMgt = ar->Capabilities.spectrumMgt;
@@ -4504,7 +4507,8 @@ sir_convert_beacon_frame2_struct(struct mac_context *mac,
 	pBeaconStruct->capabilityInfo.privacy = pBeacon->Capabilities.privacy;
 	pBeaconStruct->capabilityInfo.shortPreamble =
 		pBeacon->Capabilities.shortPreamble;
-	pBeaconStruct->capabilityInfo.pbcc = pBeacon->Capabilities.pbcc;
+	pBeaconStruct->capabilityInfo.criticalUpdateFlag =
+		pBeacon->Capabilities.criticalUpdateFlag;
 	pBeaconStruct->capabilityInfo.channelAgility =
 		pBeacon->Capabilities.channelAgility;
 	pBeaconStruct->capabilityInfo.spectrumMgt =

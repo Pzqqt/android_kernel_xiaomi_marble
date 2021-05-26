@@ -8897,8 +8897,8 @@ QDF_STATUS lim_get_capability_info(struct mac_context *mac, uint16_t *pcap,
 		pcap_info->shortPreamble =
 			mac->mlme_cfg->ht_caps.short_preamble;
 
-	/* PBCC bit */
-	pcap_info->pbcc = 0;
+	/* criticalUpdateFlag bit */
+	pcap_info->criticalUpdateFlag = 0;
 
 	/* Channel agility bit */
 	pcap_info->channelAgility = 0;

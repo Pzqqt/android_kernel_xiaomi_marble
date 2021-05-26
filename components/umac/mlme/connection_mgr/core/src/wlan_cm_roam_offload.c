@@ -390,7 +390,7 @@ cm_roam_scan_offload_fill_lfr3_config(struct wlan_objmgr_vdev *vdev,
 	if (mlme_obj->cfg.ht_caps.short_preamble)
 		self_caps.shortPreamble = 1;
 
-	self_caps.pbcc = 0;
+	self_caps.criticalUpdateFlag = 0;
 	self_caps.channelAgility = 0;
 
 	if (mlme_obj->cfg.feature_flags.enable_short_slot_time_11g)
