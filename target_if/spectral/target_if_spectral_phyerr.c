@@ -1213,6 +1213,252 @@ target_if_update_session_info_from_report_ctx(
 }
 #endif /* OPTIMIZED_SAMP_MESSAGE */
 
+#ifdef OPTIMIZED_SAMP_MESSAGE
+int
+target_if_process_phyerr_gen2(struct target_if_spectral *spectral,
+			      uint8_t *data,
+			      uint32_t datalen,
+			      struct target_if_spectral_rfqual_info *p_rfqual,
+			      struct target_if_spectral_chan_info *p_chaninfo,
+			      uint64_t tsf64,
+			      struct target_if_spectral_acs_stats *acs_stats)
+{
+	/*
+	 * XXX : The classifier do not use all the members of the SAMP
+	 *       message data format.
+	 *       The classifier only depends upon the following parameters
+	 *
+	 *          1. Frequency
+	 *          2. Spectral RSSI
+	 *          3. Bin Power Count
+	 *          4. Bin Power values
+	 *          5. Spectral Timestamp
+	 *          6. MAC Address
+	 *
+	 *       This function prepares the params structure and populates it
+	 *       with relevant values, this is in turn passed to
+	 *       spectral_fill_samp_msg()
+	 *       to prepare fully formatted Spectral SAMP message
+	 *
+	 *       XXX : Need to verify
+	 *          1. Order of FFT bin values
+	 *
+	 */
+
+	struct target_if_samp_msg_params params;
+	struct spectral_search_fft_info_gen2 search_fft_info;
+	struct spectral_search_fft_info_gen2 *p_sfft = &search_fft_info;
+	struct spectral_search_fft_info_gen2 search_fft_info_sec80;
+	struct spectral_search_fft_info_gen2 *p_sfft_sec80 =
+		&search_fft_info_sec80;
+	uint32_t segid_skiplen;
+	struct spectral_phyerr_tlv_gen2 *ptlv;
+	struct spectral_phyerr_tlv_gen2 *ptlv_sec80;
+	struct spectral_phyerr_fft_gen2 *pfft;
+	struct spectral_phyerr_fft_gen2 *pfft_sec80;
+	struct spectral_process_phyerr_info_gen2 process_phyerr_fields;
+	struct spectral_process_phyerr_info_gen2 *phyerr_info =
+						&process_phyerr_fields;
+	uint8_t segid;
+	uint8_t segid_sec80;
+	enum phy_ch_width ch_width;
+	QDF_STATUS ret;
+
+	if (!spectral) {
+		spectral_err_rl("Spectral LMAC object is null");
+		goto fail;
+	}
+	if (!data) {
+		spectral_err_rl("Phyerror event buffer is null");
+		goto fail;
+	}
+	if (!p_rfqual) {
+		spectral_err_rl("RF quality information is null");
+		goto fail;
+	}
+	if (!p_chaninfo) {
+		spectral_err_rl("Channel information is null");
+		goto fail;
+	}
+	if (!acs_stats) {
+		spectral_err_rl("ACS stats pointer is null");
+		goto fail;
+	}
+
+	ch_width = spectral->report_info[SPECTRAL_SCAN_MODE_NORMAL].sscan_bw;
+	ptlv = (struct spectral_phyerr_tlv_gen2 *)data;
+
+	if (spectral->is_160_format)
+		segid_skiplen = sizeof(SPECTRAL_SEGID_INFO);
+
+	pfft = (struct spectral_phyerr_fft_gen2 *)(
+			data +
+			sizeof(struct spectral_phyerr_tlv_gen2) +
+			sizeof(struct spectral_phyerr_hdr_gen2) +
+			segid_skiplen);
+
+	/*
+	 * XXX Extend SPECTRAL_DPRINTK() to use spectral_debug_level,
+	 * and use this facility inside spectral_dump_phyerr_data()
+	 * and supporting functions.
+	 */
+	if (spectral_debug_level & (DEBUG_SPECTRAL2 | DEBUG_SPECTRAL4))
+		target_if_spectral_dump_phyerr_data_gen2(
+					data, datalen,
+					spectral->is_160_format);
+
+	if (ptlv->signature != SPECTRAL_PHYERR_SIGNATURE_GEN2) {
+		/*
+		 * EV# 118023: We tentatively disable the below print
+		 * and provide stats instead.
+		 */
+		spectral->diag_stats.spectral_mismatch++;
+		goto fail;
+	}
+
+	qdf_mem_zero(&params, sizeof(params));
+
+	if (ptlv->tag == TLV_TAG_SEARCH_FFT_REPORT_GEN2) {
+		if (spectral->is_160_format) {
+			segid = *((SPECTRAL_SEGID_INFO *)(
+				  (uint8_t *)ptlv +
+				  sizeof(struct spectral_phyerr_tlv_gen2) +
+				  sizeof(struct spectral_phyerr_hdr_gen2)));
+
+			if (segid != 0) {
+				struct spectral_diag_stats *p_diag_stats =
+					&spectral->diag_stats;
+				p_diag_stats->spectral_vhtseg1id_mismatch++;
+				goto fail;
+			}
+		}
+
+		target_if_process_sfft_report_gen2(ptlv, ptlv->length,
+						   p_sfft);
+
+		ret = target_if_update_session_info_from_report_ctx(
+						spectral, FFT_BIN_SIZE_1BYTE,
+						p_chaninfo->center_freq1,
+						p_chaninfo->center_freq2,
+						SPECTRAL_SCAN_MODE_NORMAL);
+		if (QDF_IS_STATUS_ERROR(ret)) {
+			spectral_err_rl("Failed to update per-session info");
+			goto fail;
+		}
+
+		phyerr_info->p_rfqual = p_rfqual;
+		phyerr_info->p_sfft = p_sfft;
+		phyerr_info->pfft = pfft;
+		phyerr_info->acs_stats = acs_stats;
+		phyerr_info->tsf64 = tsf64;
+		phyerr_info->seg_id = segid;
+
+		ret = target_if_spectral_populate_samp_params_gen2(spectral,
+								   phyerr_info,
+								   &params);
+		if (QDF_IS_STATUS_ERROR(ret)) {
+			spectral_err_rl("Failed to populate SAMP params");
+			goto fail;
+		}
+
+		ret = target_if_spectral_fill_samp_msg(spectral, &params);
+		if (QDF_IS_STATUS_ERROR(ret)) {
+			spectral_err_rl("Failed to fill the SAMP msg");
+			goto fail;
+		}
+
+		if (spectral->is_160_format &&
+		    is_ch_width_160_or_80p80(ch_width)) {
+			/*
+			 * We expect to see one more Search FFT report, and it
+			 * should be equal in size to the current one.
+			 */
+			if (datalen < (
+				2 * (sizeof(struct spectral_phyerr_tlv_gen2) +
+				     ptlv->length))) {
+				struct spectral_diag_stats *p_diag_stats =
+					&spectral->diag_stats;
+				p_diag_stats->spectral_sec80_sfft_insufflen++;
+				goto fail;
+			}
+
+			ptlv_sec80 = (struct spectral_phyerr_tlv_gen2 *)(
+				      data +
+				      sizeof(struct spectral_phyerr_tlv_gen2) +
+				      ptlv->length);
+
+			if (ptlv_sec80->signature !=
+			    SPECTRAL_PHYERR_SIGNATURE_GEN2) {
+				spectral->diag_stats.spectral_mismatch++;
+				goto fail;
+			}
+
+			if (ptlv_sec80->tag != TLV_TAG_SEARCH_FFT_REPORT_GEN2) {
+				spectral->diag_stats.spectral_no_sec80_sfft++;
+				goto fail;
+			}
+
+			segid_sec80 = *((SPECTRAL_SEGID_INFO *)(
+				(uint8_t *)ptlv_sec80 +
+				sizeof(struct spectral_phyerr_tlv_gen2) +
+				sizeof(struct spectral_phyerr_hdr_gen2)));
+
+			if (segid_sec80 != 1) {
+				struct spectral_diag_stats *p_diag_stats =
+					&spectral->diag_stats;
+				p_diag_stats->spectral_vhtseg2id_mismatch++;
+				goto fail;
+			}
+
+			target_if_process_sfft_report_gen2(ptlv_sec80,
+							   ptlv_sec80->length,
+							   p_sfft_sec80);
+
+			pfft_sec80 = (struct spectral_phyerr_fft_gen2 *)(
+				((uint8_t *)ptlv_sec80) +
+				sizeof(struct spectral_phyerr_tlv_gen2) +
+				sizeof(struct spectral_phyerr_hdr_gen2) +
+				segid_skiplen);
+
+			qdf_mem_zero(&params, sizeof(params));
+
+			phyerr_info->p_rfqual = p_rfqual;
+			phyerr_info->p_sfft = p_sfft_sec80;
+			phyerr_info->pfft = pfft_sec80;
+			phyerr_info->acs_stats = acs_stats;
+			phyerr_info->tsf64 = tsf64;
+			phyerr_info->seg_id = segid_sec80;
+
+			ret = target_if_spectral_populate_samp_params_gen2(
+							spectral, phyerr_info,
+							&params);
+			if (QDF_IS_STATUS_ERROR(ret)) {
+				spectral_err_rl("Failed to populate SAMP params");
+				goto fail;
+			}
+			ret = target_if_spectral_fill_samp_msg(spectral,
+							       &params);
+			if (QDF_IS_STATUS_ERROR(ret)) {
+				spectral_err_rl("Failed to fill the SAMP msg");
+				goto fail;
+			}
+		}
+	}
+
+	if (spectral_debug_level & DEBUG_SPECTRAL4)
+		spectral_debug_level = DEBUG_SPECTRAL;
+
+	return 0;
+
+fail:
+	if (spectral_debug_level & DEBUG_SPECTRAL4)
+		spectral_debug_level = DEBUG_SPECTRAL;
+
+	spectral_err_rl("Error while processing Spectral report");
+	return -EPERM;
+}
+
+#else
 int
 target_if_process_phyerr_gen2(struct target_if_spectral *spectral,
 			      uint8_t *data,
@@ -1536,6 +1782,7 @@ target_if_process_phyerr_gen2(struct target_if_spectral *spectral,
 
 	return 0;
 }
+#endif /* OPTIMIZED_SAMP_MESSAGE */
 
 int
 target_if_spectral_dump_hdr_gen2(struct spectral_phyerr_hdr_gen2 *phdr)
