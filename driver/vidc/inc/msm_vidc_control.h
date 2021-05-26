@@ -34,6 +34,7 @@ int msm_vidc_adjust_hevc_max_qp(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_hevc_frame_qp(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_blur_type(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_blur_resolution(void *instance, struct v4l2_ctrl *ctrl);
+int msm_vidc_adjust_lowlatency_mode(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_v4l2_properties(struct msm_vidc_inst *inst);
 int msm_vidc_adjust_session_priority(void *instance, struct v4l2_ctrl *ctrl);
 int msm_vidc_adjust_roi_info(void *instance, struct v4l2_ctrl *ctrl);

@@ -537,7 +537,6 @@ int msm_vidc_decide_work_mode_iris2(struct msm_vidc_inst* inst)
 {
 	u32 work_mode;
 	struct v4l2_format* out_f;
-	struct v4l2_format* inp_f;
 	u32 width, height;
 	bool res_ok = false;
 
@@ -548,7 +547,6 @@ int msm_vidc_decide_work_mode_iris2(struct msm_vidc_inst* inst)
 
 	work_mode = MSM_VIDC_STAGE_2;
 	out_f = &inst->fmts[OUTPUT_PORT];
-	inp_f = &inst->fmts[INPUT_PORT];
 
 	if (is_image_decode_session(inst))
 		work_mode = MSM_VIDC_STAGE_1;
@@ -567,8 +565,8 @@ int msm_vidc_decide_work_mode_iris2(struct msm_vidc_inst* inst)
 			work_mode = MSM_VIDC_STAGE_1;
 		}
 	} else if (is_encode_session(inst)) {
-		height = inp_f->fmt.pix_mp.height;
-		width = inp_f->fmt.pix_mp.width;
+		height = inst->crop.height;
+		width = inst->crop.width;
 		res_ok = !res_is_greater_than(width, height, 4096, 2160);
 		if (res_ok &&
 			(inst->capabilities->cap[LOWLATENCY_MODE].value)) {
