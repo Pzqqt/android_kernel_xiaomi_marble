@@ -1350,7 +1350,7 @@ QDF_STATUS pmo_core_psoc_send_host_wakeup_ind_to_fw(
 	hif_ctx = pmo_core_psoc_get_hif_handle(psoc);
 	hif_set_ep_vote_access(hif_ctx,
 			       HIF_EP_VOTE_NONDP_ACCESS,
-			       HIF_EP_VOTE_ACCESS_ENABLE);
+			       HIF_EP_VOTE_INTERMEDIATE_ACCESS);
 
 	qdf_event_reset(&psoc_ctx->wow.target_resume);
 
@@ -1378,6 +1378,9 @@ QDF_STATUS pmo_core_psoc_send_host_wakeup_ind_to_fw(
 		pmo_debug("Host wakeup received");
 		pmo_tgt_update_target_suspend_flag(psoc, false);
 		pmo_tgt_update_target_suspend_acked_flag(psoc, false);
+		hif_set_ep_vote_access(hif_ctx,
+				       HIF_EP_VOTE_NONDP_ACCESS,
+				       HIF_EP_VOTE_ACCESS_ENABLE);
 		hif_set_ep_vote_access(hif_ctx,
 				       HIF_EP_VOTE_DP_ACCESS,
 				       HIF_EP_VOTE_ACCESS_ENABLE);
