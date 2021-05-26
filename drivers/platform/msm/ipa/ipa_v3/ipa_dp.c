@@ -2567,7 +2567,7 @@ static void ipa3_replenish_wlan_rx_cache(struct ipa3_sys_context *sys)
 			 IPA_WLAN_COMM_RX_POOL_HIGH) {
 		ipa3_replenish_rx_cache(sys);
 		ipa3_ctx->wc_memb.wlan_comm_total_cnt +=
-			(sys->rx_pool_sz - rx_len_cached);
+			(sys->len - rx_len_cached);
 	}
 
 	return;

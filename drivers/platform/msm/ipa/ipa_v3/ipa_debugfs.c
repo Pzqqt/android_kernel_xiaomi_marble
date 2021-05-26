@@ -1669,6 +1669,16 @@ static ssize_t ipa3_read_wstats(struct file *file, char __user *ubuf,
 			FRMT_STR1, "Tx Pkts Dropped:",
 			ep->wstats.tx_pkts_dropped);
 		cnt += nbytes;
+		if (ep->sys) {
+			nbytes = scnprintf(dbg_buff + cnt, IPA_MAX_MSG_LEN - cnt,
+				FRMT_STR1, "sys len:",
+				ep->sys->len);
+			cnt += nbytes;
+			nbytes = scnprintf(dbg_buff + cnt, IPA_MAX_MSG_LEN - cnt,
+				FRMT_STR1, "rx_pool_sz:",
+				ep->sys->rx_pool_sz);
+			cnt += nbytes;
+		}
 
 nxt_clnt_cons:
 			switch (client) {
