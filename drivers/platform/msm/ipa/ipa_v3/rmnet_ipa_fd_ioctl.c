@@ -586,6 +586,14 @@ static long ipa3_wan_ioctl(struct file *filp,
 			break;
 		}
 		break;
+	case WAN_IOC_NOTIFY_NAT_MOVE_RES:
+		IPAWANDBG_LOW("got WAN_IOC_NOTIFY_NAT_MOVE_RES :>>>\n");
+		if (rmnet_ipa3_notify_nat_move_res(arg)) {
+			IPAWANERR("WAN_IOC_NOTIFY_NAT_MOVE_RES failed\n");
+			retval = -EFAULT;
+			break;
+		}
+		break;
 
 	case WAN_IOC_GET_WAN_MTU:
 		IPAWANDBG_LOW("got WAN_IOC_GET_WAN_MTU :>>>\n");

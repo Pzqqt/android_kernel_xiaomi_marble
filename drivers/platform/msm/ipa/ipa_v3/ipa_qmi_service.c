@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -415,6 +415,67 @@ static void ipa3_handle_mhi_vote_req(struct qmi_handle *qmi_handle,
 		IPAWANERR("QMI_IPA_MHI_CLK_VOTE_RESP_V01 failed\n");
 	else
 		IPAWANDBG("Finished senting QMI_IPA_MHI_CLK_VOTE_RESP_V01\n");
+}
+
+static void ipa3_qmi_msg_free_cb(void *buff, u32 len, u32 type)
+{
+	kfree(buff);
+}
+
+static void ipa3_handle_move_nat_req(struct qmi_handle *qmi_handle,
+	struct sockaddr_qrtr *sq,
+	struct qmi_txn *txn,
+	const void *decoded_msg)
+{
+	struct ipa_move_nat_req_msg_v01 *move_req, *req_data;
+	struct ipa_move_nat_resp_msg_v01 resp;
+	struct ipa_msg_meta msg_meta;
+	int rc;
+
+	move_req = (struct ipa_move_nat_req_msg_v01 *)decoded_msg;
+	IPAWANDBG("Received IPA_MOVE_NAT_REQ_MSG_V01(%s)\n",
+		move_req->nat_move_direction == QMI_IPA_MOVE_NAT_TO_DDR_V01 ?
+	"TO_DDR" : "TO_SRAM");
+
+	memset(&resp, 0, sizeof(resp));
+	resp.resp.result = IPA_QMI_RESULT_SUCCESS_V01;
+
+	req_data = kzalloc(sizeof(struct ipa_move_nat_req_msg_v01),
+		GFP_KERNEL);
+	if (!req_data) {
+		IPAWANERR("allocation failed\n");
+		resp.resp.result = IPA_QMI_RESULT_FAILURE_V01;
+		resp.resp.error = IPA_QMI_ERR_NO_MEMORY_V01;
+		goto send_resp;
+	}
+
+	memset(&msg_meta, 0, sizeof(struct ipa_msg_meta));
+	msg_meta.msg_type = IPA_MOVE_NAT_TABLE;
+	msg_meta.msg_len = sizeof(struct ipa_move_nat_req_msg_v01);
+
+	req_data->nat_move_direction = move_req->nat_move_direction;
+
+	rc = ipa_send_msg(&msg_meta, req_data, ipa3_qmi_msg_free_cb);
+	if (rc) {
+		IPAWANERR("ipa_send_msg failed: %d, notify Q6\n", rc);
+		resp.resp.result = IPA_QMI_RESULT_FAILURE_V01;
+	}
+send_resp:
+	IPAWANDBG("qmi_snd_rsp: result %d, err %d\n",
+		resp.resp.result, resp.resp.error);
+
+	rc = qmi_send_response(qmi_handle, sq, txn,
+		QMI_IPA_MOVE_NAT_RESP_V01,
+		IPA_MOVE_NAT_RESP_MSG_V01_MAX_MSG_LEN,
+		ipa_move_nat_resp_msg_v01_ei,
+		&resp);
+
+	if (rc < 0)
+		IPAWANERR("QMI_IPA_MOVE_NAT_RESP_V01 failed\n");
+	else
+		IPAWANDBG(
+			"Finished sending QMI_IPA_MOVE_NAT_RESP_V01, res %d\n"
+		, resp.resp.result);
 }
 
 static void ipa3_a5_svc_disconnect_cb(struct qmi_handle *qmi,
@@ -1491,6 +1552,42 @@ int ipa3_qmi_filter_notify_send(
 		resp.resp.error, "ipa_fltr_installed_notif_resp");
 }
 
+/*sending nat table move result indication to modem */
+int rmnet_ipa3_notify_nat_move_res(bool failure)
+{
+	int rc;
+	struct ipa_move_nat_table_complt_ind_msg_v01 ind;
+
+	IPAWANDBG("send nat table move indication to modem (%d)\n",
+		failure);
+	memset(&ind, 0, sizeof(struct
+		ipa_move_nat_table_complt_ind_msg_v01));
+	if (!failure)
+		ind.nat_table_move_status.result =
+		IPA_QMI_RESULT_SUCCESS_V01;
+	else
+		ind.nat_table_move_status.result =
+		IPA_QMI_RESULT_FAILURE_V01;
+
+	if (unlikely(!ipa3_svc_handle)) {
+		IPAWANERR("Invalid svc handle.Ignore sending ind.\n");
+		return -EFAULT;
+	}
+
+	rc = qmi_send_indication(ipa3_svc_handle,
+		&ipa3_qmi_ctx->client_sq,
+		QMI_IPA_MOVE_NAT_COMPLETE_IND_V01,
+		QMI_IPA_NAT_TABLE_MOVE_COMPLETE_IND_MAX_MSG_LEN_V01,
+		ipa_move_nat_table_complt_ind_msg_v01_ei,
+		&ind);
+	if (rc)
+		IPAWANERR("qmi indication not succesfull %d\n", rc);
+	else
+		IPAWANDBG("qmi indication sent succesfully\n");
+
+	return rc;
+}
+
 static void ipa3_q6_clnt_quota_reached_ind_cb(struct qmi_handle *handle,
 	struct sockaddr_qrtr *sq,
 	struct qmi_txn *txn,
@@ -1801,6 +1898,13 @@ static struct qmi_msg_handler server_handlers[] = {
 		.ei = ipa_mhi_clk_vote_req_msg_v01_ei,
 		.decoded_size = sizeof(struct ipa_mhi_clk_vote_req_msg_v01),
 		.fn = ipa3_handle_mhi_vote_req,
+	},
+	{
+		.type = QMI_REQUEST,
+		.msg_id = QMI_IPA_MOVE_NAT_REQ_V01,
+		.ei = ipa_move_nat_req_msg_v01_ei,
+		.decoded_size = sizeof(struct ipa_move_nat_req_msg_v01),
+		.fn = ipa3_handle_move_nat_req,
 	},
 
 };
