@@ -883,8 +883,10 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	msm_vidc_scale_power(inst, true);
 
 	rc = msm_vidc_session_open(inst);
-	if (rc)
+	if (rc) {
+		msm_vidc_core_deinit(core, true);
 		goto error;
+	}
 
 	inst->debugfs_root =
 		msm_vidc_debugfs_init_inst(inst, core->debugfs_root);

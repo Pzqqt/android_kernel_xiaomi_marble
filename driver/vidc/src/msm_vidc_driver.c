@@ -4032,7 +4032,7 @@ int msm_vidc_core_deinit(struct msm_vidc_core *core, bool force)
 	/* unlink all sessions from core, if any */
 	list_for_each_entry_safe(inst, dummy, &core->instances, list) {
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
-		list_del(&inst->list);
+		list_del_init(&inst->list);
 	}
 	msm_vidc_change_core_state(core, MSM_VIDC_CORE_DEINIT, __func__);
 

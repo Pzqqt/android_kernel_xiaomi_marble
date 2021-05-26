@@ -911,7 +911,8 @@ static int __iface_cmdq_write_relaxed(struct msm_vidc_core *core,
 		goto err_q_null;
 	}
 
-	if (__resume(core)) {
+	rc = __resume(core);
+	if (rc) {
 		d_vpr_e("%s: Power on failed\n", __func__);
 		goto err_q_write;
 	}
@@ -1092,14 +1093,18 @@ static int __sys_set_debug(struct msm_vidc_core *core, u32 debug)
 
 	rc = hfi_packet_sys_debug_config(core, core->packet,
 			core->packet_size, debug);
-	if (rc) {
-		d_vpr_e("Debug mode setting to FW failed\n");
-		return -ENOTEMPTY;
-	}
+	if (rc)
+		goto exit;
 
-	if (__iface_cmdq_write(core, core->packet))
-		return -ENOTEMPTY;
-	return 0;
+	rc = __iface_cmdq_write(core, core->packet);
+	if (rc)
+		goto exit;
+
+exit:
+	if (rc)
+		d_vpr_e("Debug mode setting to FW failed\n");
+
+	return rc;
 }
 /*
 static int __sys_set_coverage(struct msm_vidc_core *core,
@@ -1529,7 +1534,7 @@ failed_to_reset:
 
 static int __prepare_enable_clks(struct msm_vidc_core *core)
 {
-	struct clock_info *cl = NULL, *cl_fail = NULL;
+	struct clock_info *cl = NULL;
 	int rc = 0, c = 0;
 
 	if (!core) {
@@ -1555,7 +1560,6 @@ static int __prepare_enable_clks(struct msm_vidc_core *core)
 		rc = clk_prepare_enable(cl->clk);
 		if (rc) {
 			d_vpr_e("Failed to enable clocks\n");
-			cl_fail = cl;
 			goto fail_clk_enable;
 		}
 
@@ -2697,7 +2701,7 @@ irqreturn_t venus_hfi_isr(int irq, void *data)
 void venus_hfi_work_handler(struct work_struct *work)
 {
 	struct msm_vidc_core *core;
-	int num_responses = 0;
+	int num_responses = 0, rc = 0;
 
 	d_vpr_l("%s()\n", __func__);
 	core = container_of(work, struct msm_vidc_core, device_work);
@@ -2707,7 +2711,8 @@ void venus_hfi_work_handler(struct work_struct *work)
 	}
 
 	core_lock(core, __func__);
-	if (__resume(core)) {
+	rc = __resume(core);
+	if (rc) {
 		d_vpr_e("%s: Power on failed\n", __func__);
 		core_unlock(core, __func__);
 		goto err_no_work;
@@ -2718,7 +2723,6 @@ void venus_hfi_work_handler(struct work_struct *work)
 	num_responses = __response_handler(core);
 
 err_no_work:
-
 	if (!call_venus_op(core, watchdog, core, core->intr_status))
 		enable_irq(core->dt->irq);
 }
@@ -2886,6 +2890,8 @@ int venus_hfi_core_deinit(struct msm_vidc_core *core)
 
 int venus_hfi_noc_error_info(struct msm_vidc_core *core)
 {
+	int rc = 0;
+
 	if (!core || !core->capabilities) {
 		d_vpr_e("%s: Invalid parameters: %pK\n",
 			__func__, core);
@@ -2900,7 +2906,8 @@ int venus_hfi_noc_error_info(struct msm_vidc_core *core)
 		goto unlock;
 
 	/* resume venus before accessing noc registers */
-	if (__resume(core)) {
+	rc = __resume(core);
+	if (rc) {
 		d_vpr_e("%s: Power on failed\n", __func__);
 		goto unlock;
 	}
@@ -2909,7 +2916,7 @@ int venus_hfi_noc_error_info(struct msm_vidc_core *core)
 
 unlock:
 	core_unlock(core, __func__);
-	return 0;
+	return rc;
 }
 
 int venus_hfi_suspend(struct msm_vidc_core *core)
@@ -3533,12 +3540,15 @@ int venus_hfi_scale_clocks(struct msm_vidc_inst* inst, u64 freq)
 	core = inst->core;
 
 	core_lock(core, __func__);
-	if (__resume(core)) {
-		i_vpr_e(inst, "Resume from power collapse failed\n");
-		rc = -EINVAL;
+	rc = __resume(core);
+	if (rc) {
+		i_vpr_e(inst, "%s: Resume from power collapse failed\n", __func__);
 		goto exit;
 	}
 	rc = __set_clocks(core, freq);
+	if (rc)
+		goto exit;
+
 exit:
 	core_unlock(core, __func__);
 
@@ -3557,7 +3567,16 @@ int venus_hfi_scale_buses(struct msm_vidc_inst *inst, u64 bw_ddr, u64 bw_llcc)
 	core = inst->core;
 
 	core_lock(core, __func__);
+	rc = __resume(core);
+	if (rc) {
+		i_vpr_e(inst, "%s: Resume from power collapse failed\n", __func__);
+		goto exit;
+	}
 	rc = __vote_buses(core, bw_ddr, bw_llcc);
+	if (rc)
+		goto exit;
+
+exit:
 	core_unlock(core, __func__);
 
 	return rc;
