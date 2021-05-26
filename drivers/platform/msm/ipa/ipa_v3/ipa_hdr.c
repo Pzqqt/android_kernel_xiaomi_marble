@@ -68,6 +68,13 @@ static int ipa3_hdr_proc_ctx_to_hw_format(struct ipa_mem_buffer *mem,
 	int ep;
 	struct ipa_ep_cfg *cfg_ptr;
 	struct ipa_l2tp_header_remove_procparams *l2p_hdr_rm_ptr;
+	u32 hdr_lcl_addr;
+
+	hdr_lcl_addr = ipa3_ctx->ipa_wrapper_base +
+		ipa3_ctx->ctrl->ipa_reg_base_ofst +
+		ipahal_get_reg_n_ofst(IPA_SW_AREA_RAM_DIRECT_ACCESS_n,
+			ipa3_ctx->smem_restricted_bytes / 4) +
+		IPA_MEM_PART(apps_hdr_ofst);
 
 	list_for_each_entry(entry,
 			&ipa3_ctx->hdr_proc_ctx_tbl.head_proc_ctx_entry_list,
@@ -97,7 +104,7 @@ static int ipa3_hdr_proc_ctx_to_hw_format(struct ipa_mem_buffer *mem,
 				entry->hdr->hdr_len,
 				entry->hdr->is_hdr_proc_ctx,
 				entry->hdr->phys_base,
-				(entry->hdr->is_lcl) ? IPA_MEM_PART(apps_hdr_ofst) : hdr_sys_addr,
+				(entry->hdr->is_lcl) ? hdr_lcl_addr : hdr_sys_addr,
 				entry->hdr->offset_entry,
 				&entry->l2tp_params,
 				&entry->generic_params,
