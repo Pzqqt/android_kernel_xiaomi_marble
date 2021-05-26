@@ -774,6 +774,10 @@ static int msm_vdec_set_output_properties(struct msm_vidc_inst *inst)
 	if (rc)
 		return rc;
 
+	rc = msm_vidc_set_session_priority(inst, PRIORITY);
+	if (rc)
+		return rc;
+
 	return rc;
 }
 
