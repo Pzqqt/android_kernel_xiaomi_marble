@@ -454,6 +454,19 @@ bool monitor_vdev_timer_stop(struct dp_soc *soc)
 #endif
 
 #ifndef WIFI_MONITOR_SUPPORT
+#define MON_BUF_MIN_ENTRIES 64
+static inline struct qdf_mem_multi_page_t*
+monitor_get_link_desc_pages(struct dp_soc *soc, uint32_t mac_id)
+{
+	return NULL;
+}
+
+static inline uint32_t *
+monitor_get_total_link_descs(struct dp_soc *soc, uint32_t mac_id)
+{
+	return NULL;
+}
+
 static inline QDF_STATUS monitor_drop_inv_peer_pkts(struct dp_vdev *vdev,
 						    struct ieee80211_frame *wh)
 {
@@ -481,6 +494,97 @@ static inline void monitor_vdev_delete(struct dp_soc *soc, struct dp_vdev *vdev)
 
 static inline void dp_peer_ppdu_delayed_ba_init(struct dp_peer *peer)
 {
+}
+
+static inline void monitor_neighbour_peer_add_ast(struct dp_pdev *pdev,
+						  struct dp_peer *ta_peer,
+						  uint8_t *mac_addr,
+						  qdf_nbuf_t nbuf,
+						  uint32_t flags)
+{
+}
+
+static inline void
+monitor_set_chan_band(struct dp_pdev *pdev, enum reg_wifi_band chan_band)
+{
+}
+
+static inline void
+monitor_set_chan_freq(struct dp_pdev *pdev, qdf_freq_t chan_freq)
+{
+}
+
+static inline void monitor_set_chan_num(struct dp_pdev *pdev, int chan_num)
+{
+}
+
+static inline bool monitor_is_enable_mcopy_mode(struct dp_pdev *pdev)
+{
+	return false;
+}
+
+static inline
+void monitor_neighbour_peer_list_remove(struct dp_pdev *pdev,
+					struct dp_vdev *vdev,
+					struct dp_neighbour_peer *peer)
+{
+}
+
+static inline bool monitor_is_chan_band_known(struct dp_pdev *pdev)
+{
+	return false;
+}
+
+static inline enum reg_wifi_band
+monitor_get_chan_band(struct dp_pdev *pdev)
+{
+	return 0;
+}
+
+static inline void monitor_get_mpdu_status(struct dp_pdev *pdev,
+					   struct dp_soc *soc,
+					   uint8_t *rx_tlv_hdr)
+{
+}
+
+static inline void monitor_print_tx_stats(struct dp_pdev *pdev)
+{
+}
+
+static inline
+QDF_STATUS monitor_mcopy_check_deliver(struct dp_pdev *pdev,
+				       uint16_t peer_id, uint32_t ppdu_id,
+				       uint8_t first_msdu)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline bool monitor_is_enable_tx_sniffer(struct dp_pdev *pdev)
+{
+	return false;
+}
+
+static inline struct dp_vdev*
+monitor_get_monitor_vdev_from_pdev(struct dp_pdev *pdev)
+{
+	return NULL;
+}
+
+static inline QDF_STATUS monitor_check_com_info_ppdu_id(struct dp_pdev *pdev,
+							void *rx_desc)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
+static inline struct mon_rx_status*
+monitor_get_rx_status_addr(struct dp_pdev *pdev)
+{
+	return NULL;
+}
+
+static inline bool monitor_is_enable_enhanced_stats(struct dp_pdev *pdev)
+{
+	return false;
 }
 #endif
 
@@ -2021,15 +2125,6 @@ void dp_wdi_event_handler(enum WDI_EVENT event, struct dp_soc *soc,
 int dp_wdi_event_attach(struct dp_pdev *txrx_pdev);
 int dp_wdi_event_detach(struct dp_pdev *txrx_pdev);
 
-/**
- * dp_get_pldev() - function to get pktlog device handle
- * @soc_hdl: datapath soc handle
- * @pdev_id: physical device id
- *
- * Return: pktlog device handle or NULL
- */
-void *dp_get_pldev(struct cdp_soc_t *soc_hdl, uint8_t pdev_id);
-
 static inline void
 dp_hif_update_pipe_callback(struct dp_soc *dp_soc,
 			    void *cb_context,
@@ -2641,18 +2736,6 @@ static inline uint32_t dp_history_get_next_index(qdf_atomic_t *curr_idx,
  * Return: None
  */
 void dp_rx_skip_tlvs(struct dp_soc *soc, qdf_nbuf_t nbuf, uint32_t l3_padding);
-
-/**
- * dp_soc_is_full_mon_enable () - Return if full monitor mode is enabled
- * @soc: DP soc handle
- *
- * Return: Full monitor mode status
- */
-static inline bool dp_soc_is_full_mon_enable(struct dp_pdev *pdev)
-{
-	return (pdev->soc->full_mon_mode && pdev->monitor_configured) ?
-			true : false;
-}
 
 #ifndef FEATURE_WDS
 static inline void

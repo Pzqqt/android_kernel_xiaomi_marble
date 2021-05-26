@@ -155,9 +155,9 @@ enum dp_mon_filter_action {
 #ifdef FEATURE_PERPKT_INFO
 /**
  * dp_mon_filter_setup_enhanced_stats() - Setup the enhanced stats filter
- * @pdev: DP pdev handle
+ * @mon_pdev: Monitor DP pdev handle
  */
-void dp_mon_filter_setup_enhanced_stats(struct dp_pdev *pdev);
+void dp_mon_filter_setup_enhanced_stats(struct dp_mon_pdev *mon_pdev);
 
 /***
  * dp_mon_filter_reset_enhanced_stats() - Reset the enhanced stats filter
@@ -187,9 +187,9 @@ void dp_mon_filter_setup_smart_monitor(struct dp_pdev *pdev);
 
 /**
  * dp_mon_filter_reset_smart_monitor() - Reset the smart monitor mode filter
- * @pdev: DP pdev handle
+ * @mon_pdev: monitor pdev handle
  */
-void dp_mon_filter_reset_smart_monitor(struct dp_pdev *pdev);
+void dp_mon_filter_reset_smart_monitor(struct dp_mon_pdev *mon_pdev);
 #endif /* ATH_SUPPORT_NAC_RSSI || ATH_SUPPORT_NAC */
 
 #ifdef  WLAN_RX_PKT_CAPTURE_ENH
@@ -240,9 +240,9 @@ void dp_mon_filter_setup_rx_pkt_log_lite(struct dp_pdev *pdev);
 
 /**
  * dp_mon_filter_reset_rx_pkt_log_lite() - Reset the Rx pktlog lite mode filter
- * @pdev: DP pdev handle
+ * @mon_pdev: Monitor pdev handle
  */
-void dp_mon_filter_reset_rx_pkt_log_lite(struct dp_pdev *pdev);
+void dp_mon_filter_reset_rx_pkt_log_lite(struct dp_mon_pdev *mon_pdev);
 
 /**
  * dp_mon_filter_setup_rx_pkt_log_cbf() - Setup the Rx pktlog cbf mode filter
@@ -270,14 +270,14 @@ QDF_STATUS dp_mon_filter_update(struct dp_pdev *pdev);
 /**
  * dp_mon_filter_dealloc() - Deallocate the filter objects to be stored in
  * the radio object.
- * @pdev: DP pdev handle
+ * @mon_pdev: monitor pdev handle
  */
-void dp_mon_filter_dealloc(struct dp_pdev *pdev);
+void dp_mon_filter_dealloc(struct dp_mon_pdev *mon_pdev);
 
 /**
  * dp_mon_filter_alloc() - Allocate the filter objects to be stored in
  * the radio object.
- * @pdev: DP pdev handle
+ * @mon_pdev: monitor pdev handle
  */
-struct dp_mon_filter  **dp_mon_filter_alloc(struct dp_pdev *pdev);
+struct dp_mon_filter  **dp_mon_filter_alloc(struct dp_mon_pdev *mon_pdev);
 #endif /* #ifndef _DP_MON_FILTER_H_ */

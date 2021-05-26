@@ -29,15 +29,11 @@
 #include <hal_reo.h>
 #include <cdp_txrx_handle.h>
 #include <wlan_cfg.h>
-#ifdef FEATURE_WDS
-#include "dp_txrx_wds.h"
-#endif
 #ifdef WIFI_MONITOR_SUPPORT
 #include <dp_mon.h>
 #endif
-
-#ifdef WLAN_TX_PKT_CAPTURE_ENH
-#include "dp_tx_capture.h"
+#ifdef FEATURE_WDS
+#include "dp_txrx_wds.h"
 #endif
 
 #ifdef QCA_PEER_EXT_STATS

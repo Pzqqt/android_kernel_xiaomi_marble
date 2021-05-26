@@ -28,16 +28,15 @@
 #include "if_meta_hdr.h"
 #endif
 #include "dp_internal.h"
-#include "dp_rx_mon.h"
 #include "dp_ipa.h"
-#ifdef FEATURE_WDS
-#include "dp_txrx_wds.h"
-#endif
 #include "dp_hist.h"
 #include "dp_rx_buffer_pool.h"
 #ifdef WIFI_MONITOR_SUPPORT
 #include "dp_htt.h"
 #include <dp_mon.h>
+#endif
+#ifdef FEATURE_WDS
+#include "dp_txrx_wds.h"
 #endif
 
 #ifndef QCA_HOST_MODE_WIFI_DISABLED

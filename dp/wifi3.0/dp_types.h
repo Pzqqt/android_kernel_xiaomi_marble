@@ -55,9 +55,6 @@
 #include <pktlog.h>
 #endif
 
-#ifdef WLAN_TX_PKT_CAPTURE_ENH
-#include "dp_tx_capture.h"
-#endif
 //#include "dp_tx.h"
 
 #define REPT_MU_MIMO 1
@@ -1710,17 +1707,6 @@ struct dp_soc {
 	/* total link descriptors for regular RX and TX */
 	uint32_t total_link_descs;
 
-	/* monitor link descriptor pages */
-	struct qdf_mem_multi_page_t mon_link_desc_pages[MAX_NUM_LMAC_HW];
-
-	/* total link descriptors for monitor mode for each radio */
-	uint32_t total_mon_link_descs[MAX_NUM_LMAC_HW];
-
-	/* Monitor Link descriptor memory banks */
-	struct link_desc_bank
-		mon_link_desc_banks[MAX_NUM_LMAC_HW][MAX_MON_LINK_DESC_BANKS];
-	uint32_t num_mon_link_desc_banks[MAX_NUM_LMAC_HW];
-
 	/* Link descriptor Idle list for HW internal use (SRNG mode) */
 	struct dp_srng wbm_idle_link_ring;
 
@@ -1969,8 +1955,6 @@ struct dp_soc {
 	bool is_last_stats_ctx_init;
 #endif /* WLAN_FEATURE_STATS_EXT */
 
-	/* Smart monitor capability for HKv2 */
-	uint8_t hw_nac_monitor_support;
 	/* Flag to indicate if HTT v2 is enabled*/
 	bool is_peer_map_unmap_v2;
 	/* Per peer per Tid ba window size support */
@@ -2023,8 +2007,6 @@ struct dp_soc {
 	} skip_fisa_param;
 #endif
 #endif /* WLAN_SUPPORT_RX_FLOW_TAG || WLAN_SUPPORT_RX_FISA */
-	/* Full monitor mode support */
-	bool full_mon_mode;
 	/* SG supported for msdu continued packets from wbm release ring */
 	bool wbm_release_desc_rx_sg_support;
 	bool peer_map_attach_success;
@@ -2291,13 +2273,6 @@ struct rx_protocol_tag_stats {
 
 #endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
 
-#ifndef WLAN_TX_PKT_CAPTURE_ENH
-struct dp_pdev_tx_capture {
-};
-
-struct dp_peer_tx_capture {
-};
-#endif
 #ifdef WLAN_RX_PKT_CAPTURE_ENH
 /* Template data to be set for Enhanced RX Monitor packets */
 #define RX_MON_CAP_ENH_TRAILER 0xdeadc0dedeadda7a
@@ -2388,9 +2363,6 @@ struct dp_pdev {
 	/* TXRX SOC handle */
 	struct dp_soc *soc;
 
-	/* Stuck count on monitor destination ring MPDU process */
-	uint32_t mon_dest_ring_stuck_cnt;
-
 	bool pdev_deinit;
 
 	/* pdev status down or up required to handle dynamic hw
@@ -2433,42 +2405,9 @@ struct dp_pdev {
 	/* PDEV transmit lock */
 	qdf_spinlock_t tx_lock;
 
-#ifndef REMOVE_PKT_LOG
-	bool pkt_log_init;
-	/* Pktlog pdev */
-	struct pktlog_dev_t *pl_dev;
-#endif /* #ifndef REMOVE_PKT_LOG */
-
-	/* Monitor mode interface and status storage */
-	struct dp_vdev *monitor_vdev;
-
-	/* Monitor mode operation channel */
-	int mon_chan_num;
-
-	/* Monitor mode operation frequency */
-	qdf_freq_t mon_chan_freq;
-
-	/* Monitor mode band */
-	enum reg_wifi_band mon_chan_band;
-
-	/* monitor mode lock */
-	qdf_spinlock_t mon_lock;
-
 	/*tx_mutex for me*/
 	DP_MUTEX_TYPE tx_mutex;
 
-	/* monitor */
-	bool monitor_configured;
-
-	/* Smart Mesh */
-	bool filter_neighbour_peers;
-
-	/*flag to indicate neighbour_peers_list not empty */
-	bool neighbour_peers_added;
-	/* smart mesh mutex */
-	qdf_spinlock_t neighbour_peer_mutex;
-	/* Neighnour peer list */
-	TAILQ_HEAD(, dp_neighbour_peer) neighbour_peers_list;
 	/* msdu chain head & tail */
 	qdf_nbuf_t invalid_peer_head_msdu;
 	qdf_nbuf_t invalid_peer_tail_msdu;
@@ -2481,19 +2420,6 @@ struct dp_pdev {
 
 	/* Global RX decap mode for the device */
 	enum htt_pkt_type rx_decap_mode;
-
-	/* Enhanced Stats is enabled */
-	bool enhanced_stats_en;
-
-	/* advance filter mode and type*/
-	uint8_t mon_filter_mode;
-	uint16_t fp_mgmt_filter;
-	uint16_t fp_ctrl_filter;
-	uint16_t fp_data_filter;
-	uint16_t mo_mgmt_filter;
-	uint16_t mo_ctrl_filter;
-	uint16_t mo_data_filter;
-	uint16_t md_data_filter;
 
 	qdf_atomic_t num_tx_outstanding;
 	int32_t tx_descs_max;
@@ -2511,8 +2437,6 @@ struct dp_pdev {
 	/* dscp_tid_map_*/
 	uint8_t dscp_tid_map[DP_MAX_TID_MAPS][DSCP_TID_MAP_MAX];
 
-	struct hal_rx_ppdu_info ppdu_info;
-
 	/* operating channel */
 	struct {
 		uint8_t num;
@@ -2520,32 +2444,6 @@ struct dp_pdev {
 		uint16_t freq;
 	} operating_channel;
 
-	qdf_nbuf_queue_t rx_status_q;
-	uint32_t mon_ppdu_status;
-	struct cdp_mon_status rx_mon_recv_status;
-	/* monitor mode status/destination ring PPDU and MPDU count */
-	struct cdp_pdev_mon_stats rx_mon_stats;
-	/* to track duplicate link descriptor indications by HW for a WAR */
-	uint64_t mon_last_linkdesc_paddr;
-	/* to track duplicate buffer indications by HW for a WAR */
-	uint32_t mon_last_buf_cookie;
-	/* 128 bytes mpdu header queue per user for ppdu */
-	qdf_nbuf_queue_t mpdu_q[MAX_MU_USERS];
-	/* is this a mpdu header TLV and not msdu header TLV */
-	bool is_mpdu_hdr[MAX_MU_USERS];
-	/* per user 128 bytes msdu header list for MPDU */
-	struct msdu_list msdu_list[MAX_MU_USERS];
-	/* RX enhanced capture mode */
-	uint8_t rx_enh_capture_mode;
-	/* Rx per peer enhanced capture mode */
-	bool rx_enh_capture_peer;
-	struct dp_vdev *rx_enh_monitor_vdev;
-	/* RX enhanced capture trailer enable/disable flag */
-	bool is_rx_enh_capture_trailer_enabled;
-#ifdef WLAN_RX_PKT_CAPTURE_ENH
-	/* RX per MPDU/PPDU information */
-	struct cdp_rx_indication_mpdu mpdu_ind;
-#endif
 	/* pool addr for mcast enhance buff */
 	struct {
 		int size;
@@ -2575,69 +2473,21 @@ struct dp_pdev {
 	/* map this pdev to a particular Reo Destination ring */
 	enum cdp_host_reo_dest_ring reo_dest;
 
-	/* Packet log mode */
-	uint8_t rx_pktlog_mode;
-	/* Enable pktlog logging cbf */
-	bool rx_pktlog_cbf;
-
 	/* WDI event handlers */
 	struct wdi_event_subscribe_t **wdi_event_list;
 
 	/* ppdu_id of last received HTT TX stats */
 	uint32_t last_ppdu_id;
-	struct {
-		uint8_t last_user;
-		qdf_nbuf_t buf;
-	} tx_ppdu_info;
-
-	bool tx_sniffer_enable;
-	/* mirror copy mode */
-	enum m_copy_mode mcopy_mode;
 	bool cfr_rcc_mode;
-	bool enable_reap_timer_non_pkt;
-	bool bpr_enable;
 
 	/* enable time latency check for tx completion */
 	bool latency_capture_enable;
 
 	/* enable calculation of delay stats*/
 	bool delay_stats_flag;
-	struct {
-		uint32_t tx_ppdu_id;
-		uint16_t tx_peer_id;
-		uint32_t rx_ppdu_id;
-	} m_copy_id;
-
-	/* To check if PPDU Tx stats are enabled for Pktlog */
-	bool pktlog_ppdu_stats;
-
 	void *dp_txrx_handle; /* Advanced data path handle */
-
-#ifdef ATH_SUPPORT_NAC_RSSI
-	bool nac_rssi_filtering;
-#endif
-
-	/* ppdu_stats lock for queue concurrency between cores*/
-	qdf_spinlock_t ppdu_stats_lock;
-
-	/* list of ppdu tlvs */
-	TAILQ_HEAD(, ppdu_info) ppdu_info_list;
-	TAILQ_HEAD(, ppdu_info) sched_comp_ppdu_list;
-
-	uint32_t sched_comp_list_depth;
-	uint16_t delivered_sched_cmdid;
-	uint16_t last_sched_cmdid;
-	uint32_t tlv_count;
-	uint32_t list_depth;
 	uint32_t ppdu_id;
 	bool first_nbuf;
-	struct {
-		qdf_nbuf_t last_nbuf; /*Ptr to mgmt last buf */
-		uint8_t *mgmt_buf; /* Ptr to mgmt. payload in HTT ppdu stats */
-		uint32_t mgmt_buf_len; /* Len of mgmt. payload in ppdu stats */
-		uint32_t ppdu_id;
-	} mgmtctrl_frm_info;
-
 	/* Current noise-floor reading for the pdev channel */
 	int16_t chan_noise_floor;
 
@@ -2652,8 +2502,6 @@ struct dp_pdev {
 	 * with same MAC address across 2 radios
 	 */
 	uint8_t is_primary;
-	/* Context of cal client timer */
-	struct cdp_cal_client *cal_client_ctx;
 	struct cdp_tx_sojourn_stats sojourn_stats;
 	qdf_nbuf_t sojourn_buf;
 
@@ -2662,11 +2510,6 @@ struct dp_pdev {
 
 	union dp_rx_desc_list_elem_t *free_list_head;
 	union dp_rx_desc_list_elem_t *free_list_tail;
-	/* Pdev level flag to check peer based pktlog enabled or
-	 * disabled
-	 */
-	uint8_t dp_peer_based_pktlog;
-
 	/* Cached peer_id from htt_peer_details_tlv */
 	uint16_t fw_stats_peer_id;
 
@@ -2705,12 +2548,6 @@ struct dp_pdev {
 #endif /* WLAN_SUPPORT_RX_TAG_STATISTICS */
 #endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
 
-	/* tx packet capture enhancement */
-	enum cdp_tx_enh_capture_mode tx_capture_enabled;
-	struct dp_pdev_tx_capture tx_capture;
-
-	uint32_t *ppdu_tlv_buf; /* Buffer to hold HTT ppdu stats TLVs*/
-
 #ifdef WLAN_SUPPORT_RX_FLOW_TAG
 	/**
 	 * Pointer to DP Flow FST at SOC level if
@@ -2728,38 +2565,13 @@ struct dp_pdev {
 	data_stall_detect_cb data_stall_detect_callback;
 #endif /* WLAN_SUPPORT_DATA_STALL */
 
-	struct dp_mon_filter **filter;	/* Monitor Filter pointer */
-
-#ifdef QCA_SUPPORT_FULL_MON
-	/* List to maintain all MPDUs for a PPDU in monitor mode */
-	TAILQ_HEAD(, dp_mon_mpdu) mon_mpdu_q;
-
-	/* TODO: define per-user mpdu list
-	 * struct dp_mon_mpdu_list mpdu_list[MAX_MU_USERS];
-	 */
-	struct hal_rx_mon_desc_info *mon_desc;
-#endif
-	qdf_nbuf_t mcopy_status_nbuf;
-
 	/* flag to indicate whether LRO hash command has been sent to FW */
 	uint8_t is_lro_hash_configured;
 
-	/* Flag to hold on to monitor destination ring */
-	bool hold_mon_dest_ring;
-
-#ifdef WLAN_ATF_ENABLE
-	/* ATF stats enable */
-	bool dp_atf_stats_enable;
-#endif
-
-	/* Maintains first status buffer's paddr of a PPDU */
-	uint64_t status_buf_addr;
 #ifdef HTT_STATS_DEBUGFS_SUPPORT
 	/* HTT stats debugfs params */
 	struct pdev_htt_stats_dbgfs_cfg *dbgfs_cfg;
 #endif
-	/* Flag to inidicate monitor rings are initialized */
-	uint8_t pdev_mon_init;
 	struct {
 		qdf_work_t work;
 		qdf_workqueue_t *work_queue;
@@ -3560,4 +3372,17 @@ void dp_rx_refill_buff_pool_enqueue(struct dp_soc *soc);
 #else
 static inline void dp_rx_refill_buff_pool_enqueue(struct dp_soc *soc) {}
 #endif
+QDF_STATUS dp_srng_alloc(struct dp_soc *soc, struct dp_srng *srng,
+			 int ring_type, uint32_t num_entries,
+			 bool cached);
+void dp_srng_free(struct dp_soc *soc, struct dp_srng *srng);
+QDF_STATUS dp_srng_init(struct dp_soc *soc, struct dp_srng *srng,
+			int ring_type, int ring_num, int mac_id);
+void dp_srng_deinit(struct dp_soc *soc, struct dp_srng *srng,
+		    int ring_type, int ring_num);
+
+enum timer_yield_status
+dp_should_timer_irq_yield(struct dp_soc *soc, uint32_t work_done,
+			  uint64_t start_time);
+
 #endif /* _DP_TYPES_H_ */

@@ -31,8 +31,10 @@
 #include "if_meta_hdr.h"
 #endif
 #include "dp_internal.h"
-#include "dp_rx_mon.h"
 #include "dp_ipa.h"
+#ifdef WIFI_MONITOR_SUPPORT
+#include <dp_mon.h>
+#endif
 #ifdef FEATURE_WDS
 #include "dp_txrx_wds.h"
 #endif

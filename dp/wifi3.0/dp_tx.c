@@ -34,9 +34,6 @@
 #endif
 #include "enet.h"
 #include "dp_internal.h"
-#ifdef FEATURE_WDS
-#include "dp_txrx_wds.h"
-#endif
 #ifdef ATH_SUPPORT_IQUE
 #include "dp_txrx_me.h"
 #endif
@@ -46,6 +43,9 @@
 #endif
 #ifdef WIFI_MONITOR_SUPPORT
 #include <dp_mon.h>
+#endif
+#ifdef FEATURE_WDS
+#include "dp_txrx_wds.h"
 #endif
 
 /* Flag to skip CCE classify when mesh or tid override enabled */
@@ -1994,7 +1994,7 @@ dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		HTT_TX_TCL_METADATA_VALID_HTT_SET(htt_tcl_metadata, 1);
 
 	dp_tx_desc_update_fast_comp_flag(soc, tx_desc,
-					 !pdev->enhanced_stats_en);
+					 !monitor_is_enable_enhanced_stats(pdev));
 
 	dp_tx_update_mesh_flags(soc, vdev, tx_desc);
 
@@ -3837,7 +3837,7 @@ static inline void dp_tx_sojourn_stats_process(struct dp_pdev *pdev,
 	uint64_t delta_ms;
 	struct cdp_tx_sojourn_stats *sojourn_stats;
 
-	if (qdf_unlikely(pdev->enhanced_stats_en == 0))
+	if (qdf_unlikely(!monitor_is_enable_enhanced_stats(pdev)))
 		return;
 
 	if (qdf_unlikely(tid == HTT_INVALID_TID ||

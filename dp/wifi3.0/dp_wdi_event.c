@@ -25,16 +25,6 @@
 #endif
 
 #ifdef WDI_EVENT_ENABLE
-void *dp_get_pldev(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
-{
-	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
-	struct dp_pdev *pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
-
-	if (!pdev)
-		return NULL;
-
-	return pdev->pl_dev;
-}
 /*
  * dp_wdi_event_next_sub() - Return handle for Next WDI event
  * @wdi_sub: WDI Event handle

@@ -152,7 +152,6 @@ dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
 	struct dp_ast_entry *ast;
 	uint32_t flags = DP_AST_FLAGS_HM;
 	uint32_t ret = 0;
-	struct dp_neighbour_peer *neighbour_peer = NULL;
 	struct dp_pdev *pdev = ta_peer->vdev->pdev;
 	uint8_t wds_src_mac[QDF_MAC_ADDR_SIZE];
 
@@ -230,32 +229,9 @@ dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
 			 * smart monitor is enabled and send add_ast command
 			 * to FW.
 			 */
-			if (pdev->neighbour_peers_added) {
-				qdf_mem_copy(wds_src_mac,
-					     (qdf_nbuf_data(nbuf) +
-					      QDF_MAC_ADDR_SIZE),
-					     QDF_MAC_ADDR_SIZE);
-
-				qdf_spin_lock_bh(&pdev->neighbour_peer_mutex);
-				TAILQ_FOREACH(neighbour_peer,
-					      &pdev->neighbour_peers_list,
-					      neighbour_peer_list_elem) {
-					if (!qdf_mem_cmp(&neighbour_peer->neighbour_peers_macaddr,
-							 wds_src_mac,
-							 QDF_MAC_ADDR_SIZE)) {
-						ret = dp_peer_add_ast(soc,
-								      ta_peer,
-								      wds_src_mac,
-								      CDP_TXRX_AST_TYPE_WDS,
-								      flags);
-						QDF_TRACE(QDF_MODULE_ID_DP,
-							  QDF_TRACE_LEVEL_INFO,
-							  "sa valid and nac roamed to wds");
-						break;
-					}
-				}
-				qdf_spin_unlock_bh(&pdev->neighbour_peer_mutex);
-			}
+			monitor_neighbour_peer_add_ast(pdev, ta_peer,
+						       wds_src_mac, nbuf,
+						       flags);
 			return;
 		}
 	}

@@ -24,6 +24,9 @@
 #include "dp_internal.h"
 #include "dp_tx.h"
 #include "enet.h"
+#ifdef WIFI_MONITOR_SUPPORT
+#include "dp_mon.h"
+#endif
 #include "dp_txrx_wds.h"
 
 /* Generic AST entry aging timer value */
@@ -1176,7 +1179,8 @@ dp_get_completion_indication_for_stack(struct dp_soc *soc,
 	uint8_t last_msdu = ts->last_msdu;
 	uint32_t txcap_hdr_size = sizeof(struct tx_capture_hdr);
 
-	if (qdf_unlikely(!pdev->tx_sniffer_enable && !pdev->mcopy_mode &&
+	if (qdf_unlikely(!monitor_is_enable_tx_sniffer(pdev) &&
+			 !monitor_is_enable_mcopy_mode(pdev) &&
 			 !pdev->latency_capture_enable))
 		return QDF_STATUS_E_NOSUPPORT;
 
@@ -1186,24 +1190,13 @@ dp_get_completion_indication_for_stack(struct dp_soc *soc,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (pdev->mcopy_mode) {
-		/* If mcopy is enabled and mcopy_mode is M_COPY deliver 1st MSDU
-		 * per PPDU. If mcopy_mode is M_COPY_EXTENDED deliver 1st MSDU
-		 * for each MPDU
-		 */
-		if (pdev->mcopy_mode == M_COPY) {
-			if ((pdev->m_copy_id.tx_ppdu_id == ppdu_id) &&
-			    (pdev->m_copy_id.tx_peer_id == peer_id)) {
-				return QDF_STATUS_E_INVAL;
-			}
-		}
-
-		if (!first_msdu)
-			return QDF_STATUS_E_INVAL;
-
-		pdev->m_copy_id.tx_ppdu_id = ppdu_id;
-		pdev->m_copy_id.tx_peer_id = peer_id;
-	}
+	/* If mcopy is enabled and mcopy_mode is M_COPY deliver 1st MSDU
+	 * per PPDU. If mcopy_mode is M_COPY_EXTENDED deliver 1st MSDU
+	 * for each MPDU
+	 */
+	if (monitor_mcopy_check_deliver(pdev, peer_id, ppdu_id, first_msdu) !=
+	    QDF_STATUS_SUCCESS)
+		return QDF_STATUS_E_INVAL;
 
 	if (qdf_unlikely(qdf_nbuf_headroom(netbuf) < txcap_hdr_size)) {
 		netbuf = qdf_nbuf_realloc_headroom(netbuf, txcap_hdr_size);

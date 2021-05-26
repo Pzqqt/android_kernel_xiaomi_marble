@@ -914,9 +914,8 @@ dp_rx_chain_msdus(struct dp_soc *soc, qdf_nbuf_t nbuf,
 
 		dp_pdev->invalid_peer_head_msdu = NULL;
 		dp_pdev->invalid_peer_tail_msdu = NULL;
-		hal_rx_mon_hw_desc_get_mpdu_status(soc->hal_soc, rx_tlv_hdr,
-				&(dp_pdev->ppdu_info.rx_status));
 
+		monitor_get_mpdu_status(dp_pdev, soc, rx_tlv_hdr);
 	}
 
 	if (dp_pdev->ppdu_id == hal_rx_attn_phy_ppdu_id_get(soc->hal_soc,

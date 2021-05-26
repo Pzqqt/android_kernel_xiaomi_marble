@@ -21,7 +21,6 @@
 #include "dp_internal.h"
 #include "htt_stats.h"
 #include "htt_ppdu_stats.h"
-#include "dp_htt.h"
 
 #ifdef QCA_PEER_EXT_STATS
 #include <cdp_txrx_hist_struct.h>
@@ -170,10 +169,6 @@ const char *intfrm_delay_bucket[CDP_DELAY_BUCKET_MAX + 1] = {
 	"41 to 45 ms", "46 to 50 ms",
 	"51 to 55 ms", "56 to 60 ms", "60+ ms"
 };
-#endif
-
-#ifdef WLAN_TX_PKT_CAPTURE_ENH
-#include "dp_tx_capture.h"
 #endif
 
 #define TID_COUNTER_STATS 1	/* Success/drop stats type */
@@ -6250,13 +6245,9 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 	}
 	DP_PRINT_STATS("BA not received for delayed_ba: %d",
 		       pdev->stats.cdp_delayed_ba_not_recev);
-	DP_PRINT_STATS("ppdu info schedule completion list depth: %d",
-		       pdev->sched_comp_list_depth);
-	DP_PRINT_STATS("cur sched cmdid: %d", pdev->last_sched_cmdid);
-	DP_PRINT_STATS("delivered sched cmdid: %d",
-		       pdev->delivered_sched_cmdid);
-	DP_PRINT_STATS("ppdu info list depth: %d",
-		       pdev->list_depth);
+
+	monitor_print_tx_stats(pdev);
+
 	DP_PRINT_STATS("tx_ppdu_proc: %llu",
 		       pdev->stats.tx_ppdu_proc);
 	DP_PRINT_STATS("ack ba comes twice: %llu",
