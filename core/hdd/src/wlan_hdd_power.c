@@ -3103,15 +3103,15 @@ int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev,
 
 	if (pause_setting < WOW_INTERFACE_PAUSE_DEFAULT ||
 	    pause_setting >= WOW_INTERFACE_PAUSE_COUNT) {
-		hdd_err("Invalid interface pause %d (expected range [0, 2])",
-			pause_setting);
+		hdd_err_rl("Invalid interface pause %d (expected range [0, 2])",
+			   pause_setting);
 		return -EINVAL;
 	}
 
 	if (resume_setting < WOW_RESUME_TRIGGER_DEFAULT ||
 	    resume_setting >= WOW_RESUME_TRIGGER_COUNT) {
-		hdd_err("Invalid resume trigger %d (expected range [0, 2])",
-			resume_setting);
+		hdd_err_rl("Invalid resume trigger %d (expected range [0, 2])",
+			   resume_setting);
 		return -EINVAL;
 	}
 
