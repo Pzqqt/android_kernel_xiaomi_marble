@@ -65,12 +65,13 @@ QDF_STATUS cm_disconnect_start_ind(struct wlan_objmgr_vdev *vdev,
 	}
 
 	user_disconnect = req->source == CM_OSIF_DISCONNECT ? true : false;
-	wlan_p2p_cleanup_roc_by_vdev(vdev);
-	wlan_tdls_notify_sta_disconnect(req->vdev_id, false, user_disconnect,
-					vdev);
-	if (user_disconnect)
+	if (user_disconnect) {
+		wlan_p2p_cleanup_roc_by_vdev(vdev);
+		wlan_tdls_notify_sta_disconnect(req->vdev_id, false,
+						user_disconnect, vdev);
 		cm_roam_state_change(pdev, req->vdev_id, WLAN_ROAM_RSO_STOPPED,
 				     REASON_DRIVER_DISABLED);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
