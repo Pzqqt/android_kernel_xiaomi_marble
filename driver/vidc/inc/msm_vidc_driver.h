@@ -301,7 +301,7 @@ int msm_vidc_change_core_state(struct msm_vidc_core *core,
 	enum msm_vidc_core_state request_state, const char *func);
 int msm_vidc_core_init(struct msm_vidc_core *core);
 int msm_vidc_core_deinit(struct msm_vidc_core *core, bool force);
-int msm_vidc_core_timeout(struct msm_vidc_core *core);
+int msm_vidc_inst_timeout(struct msm_vidc_inst *inst);
 int msm_vidc_print_buffer_info(struct msm_vidc_inst *inst);
 int msm_vidc_print_inst_info(struct msm_vidc_inst *inst);
 void msm_vidc_print_core_info(struct msm_vidc_core *core);

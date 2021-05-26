@@ -2952,7 +2952,6 @@ int venus_hfi_trigger_ssr(struct msm_vidc_core *core, u32 type,
 		return -EINVAL;
 	}
 
-	core_lock(core, __func__);
 	payload[0] = client_id << 4 | type;
 	payload[1] = addr;
 
@@ -2960,7 +2959,7 @@ int venus_hfi_trigger_ssr(struct msm_vidc_core *core, u32 type,
 			   0 /*session_id*/,
 			   core->header_id++);
 	if (rc)
-		goto unlock;
+		goto exit;
 
 	/* HFI_CMD_SSR */
 	rc = hfi_create_packet(core->packet, core->packet_size,
@@ -2972,14 +2971,13 @@ int venus_hfi_trigger_ssr(struct msm_vidc_core *core, u32 type,
 				   core->packet_id++,
 				   &payload, sizeof(u64));
 	if (rc)
-		goto unlock;
+		goto exit;
 
 	rc = __iface_cmdq_write(core, core->packet);
 	if (rc)
-		goto unlock;
+		goto exit;
 
-unlock:
-	core_unlock(core, __func__);
+exit:
 	if (rc)
 		d_vpr_e("%s(): failed\n", __func__);
 
