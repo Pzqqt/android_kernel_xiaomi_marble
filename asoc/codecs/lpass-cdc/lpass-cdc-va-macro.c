@@ -228,10 +228,18 @@ static int lpass_cdc_va_macro_mclk_enable(
 
 	mutex_lock(&va_priv->mclk_lock);
 	if (mclk_enable) {
+		ret = lpass_cdc_va_macro_core_vote(va_priv, true);
+		if (ret < 0) {
+			dev_err(va_priv->dev,
+				"%s: va request core vote failed\n",
+				__func__);
+			goto exit;
+		}
 		ret = lpass_cdc_clk_rsc_request_clock(va_priv->dev,
 						   va_priv->default_clk_id,
 						   va_priv->clk_id,
 						   true);
+		lpass_cdc_va_macro_core_vote(va_priv, false);
 		if (ret < 0) {
 			dev_err(va_priv->dev,
 				"%s: va request clock en failed\n",
@@ -257,10 +265,18 @@ static int lpass_cdc_va_macro_mclk_enable(
 		va_priv->va_mclk_users--;
 		lpass_cdc_clk_rsc_fs_gen_request(va_priv->dev,
 					  false);
+		ret = lpass_cdc_va_macro_core_vote(va_priv, true);
+		if (ret < 0) {
+			dev_err(va_priv->dev,
+				"%s: va request core vote failed\n",
+				__func__);
+			goto exit;
+		}
 		lpass_cdc_clk_rsc_request_clock(va_priv->dev,
 					va_priv->default_clk_id,
 					va_priv->clk_id,
 					false);
+		lpass_cdc_va_macro_core_vote(va_priv, false);
 	}
 exit:
 	mutex_unlock(&va_priv->mclk_lock);
@@ -302,7 +318,13 @@ static int lpass_cdc_va_macro_event_handler(struct snd_soc_component *component,
 		break;
 	case LPASS_CDC_MACRO_EVT_PRE_SSR_UP:
 		/* enable&disable VA_CORE_CLK to reset GFMUX reg */
-		lpass_cdc_va_macro_core_vote(va_priv, true);
+		ret = lpass_cdc_va_macro_core_vote(va_priv, true);
+		if (ret < 0) {
+			dev_err(va_priv->dev,
+				"%s: va request core vote failed\n",
+				__func__);
+			break;
+		}
 		ret = lpass_cdc_clk_rsc_request_clock(va_priv->dev,
 						va_priv->default_clk_id,
 						VA_CORE_CLK, true);
@@ -399,10 +421,18 @@ static int lpass_cdc_va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		if (va_priv->default_clk_id != VA_CORE_CLK) {
+			ret = lpass_cdc_va_macro_core_vote(va_priv, true);
+			if (ret < 0) {
+				dev_err(va_priv->dev,
+					"%s: va request core vote failed\n",
+					__func__);
+				break;
+			}
 			ret = lpass_cdc_clk_rsc_request_clock(va_priv->dev,
 					va_priv->default_clk_id,
 					VA_CORE_CLK,
 					true);
+			lpass_cdc_va_macro_core_vote(va_priv, false);
 			if (ret) {
 				dev_dbg(component->dev,
 					"%s: request clock VA_CLK enable failed\n",
@@ -437,10 +467,18 @@ static int lpass_cdc_va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
 					__func__);
 				break;
 			}
+			ret = lpass_cdc_va_macro_core_vote(va_priv, true);
+			if (ret < 0) {
+				dev_err(va_priv->dev,
+					"%s: va request core vote failed\n",
+					__func__);
+				break;
+			}
 			ret = lpass_cdc_clk_rsc_request_clock(va_priv->dev,
 					va_priv->default_clk_id,
 					VA_CORE_CLK,
 					false);
+			lpass_cdc_va_macro_core_vote(va_priv, false);
 			if (ret) {
 				dev_dbg(component->dev,
 					"%s: request clock VA_CLK disable failed\n",
