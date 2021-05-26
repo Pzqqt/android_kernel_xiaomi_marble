@@ -644,7 +644,7 @@ static int msm_vidc_update_buffer_count_if_needed(struct msm_vidc_inst* inst,
 	int rc = 0;
 	bool update_input_port = false, update_output_port = false;
 
-	if (!inst || !inst->capabilities || !ctrl) {
+	if (!inst || !ctrl) {
 		d_vpr_e("%s: invalid parameters\n", __func__);
 		return -EINVAL;
 	}
@@ -658,6 +658,7 @@ static int msm_vidc_update_buffer_count_if_needed(struct msm_vidc_inst* inst,
 		update_input_port = true;
 		break;
 	case V4L2_CID_MPEG_VIDC_THUMBNAIL_MODE:
+	case V4L2_CID_MPEG_VIDC_PRIORITY:
 		update_input_port = true;
 		update_output_port = true;
 		break;
@@ -752,6 +753,17 @@ int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl)
 			rc = msm_vidc_adjust_session_priority(inst, ctrl);
 			if (rc)
 				return rc;
+
+			/**
+			 * This is the last static s_ctrl from client(commit point). So update
+			 * input & output counts to reflect final buffer counts based on dcvs
+			 * & decoder_batching enable/disable. So client is expected to query
+			 * for final counts after setting priority control.
+			 */
+			if (is_decode_session(inst))
+				inst->decode_batch.enable = msm_vidc_allow_decode_batch(inst);
+
+			msm_vidc_allow_dcvs(inst);
 		}
 		if (is_meta_ctrl(ctrl->id)) {
 			if (cap_id == META_DPB_TAG_LIST) {
