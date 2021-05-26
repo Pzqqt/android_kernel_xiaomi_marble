@@ -1081,10 +1081,12 @@ enum hif_ep_vote_type {
 /**
  * enum hif_ep_vote_access - hif ep vote access
  * HIF_EP_VOTE_ACCESS_ENABLE: Enable ep voting
+ * HIF_EP_VOTE_INTERMEDIATE_ACCESS: allow during transistion
  * HIF_EP_VOTE_ACCESS_DISABLE: disable ep voting
  */
 enum hif_ep_vote_access {
 	HIF_EP_VOTE_ACCESS_ENABLE,
+	HIF_EP_VOTE_INTERMEDIATE_ACCESS,
 	HIF_EP_VOTE_ACCESS_DISABLE
 };
 

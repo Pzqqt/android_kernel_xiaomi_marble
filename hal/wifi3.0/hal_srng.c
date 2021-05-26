@@ -1283,13 +1283,18 @@ void hal_delayed_reg_write(struct hal_soc *hal_soc,
 			   void __iomem *addr,
 			   uint32_t value)
 {
+	uint8_t vote_access;
+
 	switch (srng->ring_type) {
 	case CE_SRC:
 	case CE_DST:
 	case CE_DST_STATUS:
-		if (hif_get_ep_vote_access(hal_soc->hif_handle,
-					   HIF_EP_VOTE_NONDP_ACCESS) ==
-					   HIF_EP_VOTE_ACCESS_DISABLE) {
+		vote_access = hif_get_ep_vote_access(hal_soc->hif_handle,
+						     HIF_EP_VOTE_NONDP_ACCESS);
+		if ((vote_access == HIF_EP_VOTE_ACCESS_DISABLE) ||
+		    (vote_access == HIF_EP_VOTE_INTERMEDIATE_ACCESS &&
+		     PLD_MHI_STATE_L0 ==
+		     pld_get_mhi_state(hal_soc->qdf_dev->dev))) {
 			hal_write_address_32_mb(hal_soc, addr, value, false);
 			qdf_atomic_inc(&hal_soc->stats.wstats.direct);
 			srng->wstats.direct++;
