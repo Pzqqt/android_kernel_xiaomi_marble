@@ -1731,6 +1731,10 @@ int msm_venc_inst_init(struct msm_vidc_inst *inst)
 	i_vpr_h(inst, "%s()\n", __func__);
 
 	core = inst->core;
+
+	if (core->capabilities[DCVS].value)
+		inst->power.dcvs_mode = true;
+
 	f = &inst->fmts[OUTPUT_PORT];
 	f->type = OUTPUT_MPLANE;
 	f->fmt.pix_mp.width = DEFAULT_WIDTH;

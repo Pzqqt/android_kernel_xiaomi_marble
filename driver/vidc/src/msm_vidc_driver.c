@@ -2712,6 +2712,12 @@ void msm_vidc_allow_dcvs(struct msm_vidc_inst *inst)
 		goto exit;
 	}
 
+	allow = !is_lowlatency_session(inst);
+	if (!allow) {
+		i_vpr_h(inst, "%s: lowlatency session\n", __func__);
+		goto exit;
+	}
+
 exit:
 	i_vpr_h(inst, "%s: dcvs: %s\n", __func__, allow ? "enabled" : "disabled");
 
@@ -2721,14 +2727,17 @@ exit:
 
 bool msm_vidc_allow_decode_batch(struct msm_vidc_inst *inst)
 {
+	struct msm_vidc_inst_capability *capability;
 	struct msm_vidc_core *core;
 	bool allow = false;
+	u32 value = 0;
 
-	if (!inst || !inst->core) {
+	if (!inst || !inst->core || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return false;
 	}
 	core = inst->core;
+	capability = inst->capabilities;
 
 	allow = inst->decode_batch.enable;
 	if (!allow) {
@@ -2775,6 +2784,22 @@ bool msm_vidc_allow_decode_batch(struct msm_vidc_inst *inst)
 	allow = !is_lowlatency_session(inst);
 	if (!allow) {
 		i_vpr_h(inst, "%s: lowlatency session\n", __func__);
+		goto exit;
+	}
+
+	value = msm_vidc_get_fps(inst);
+	allow = value < capability->cap[BATCH_FPS].value;
+	if (!allow) {
+		i_vpr_h(inst, "%s: unsupported fps %u, max %u\n", __func__,
+			value, capability->cap[BATCH_FPS].value);
+		goto exit;
+	}
+
+	value = msm_vidc_get_mbs_per_frame(inst);
+	allow = value < capability->cap[BATCH_MBPF].value;
+	if (!allow) {
+		i_vpr_h(inst, "%s: unsupported mbpf %u, max %u\n", __func__,
+			value, capability->cap[BATCH_MBPF].value);
 		goto exit;
 	}
 
@@ -4090,7 +4115,7 @@ int msm_vidc_core_init(struct msm_vidc_core *core)
 {
 	int rc = 0;
 
-	if (!core || !core->platform) {
+	if (!core || !core->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}

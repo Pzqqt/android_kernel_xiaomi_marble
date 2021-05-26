@@ -117,8 +117,9 @@ u32 msm_vidc_input_extra_count(struct msm_vidc_inst *inst)
 			}
 		}
 	} else if (is_encode_session(inst)) {
-		/* add dcvs buffers */
-		count = DCVS_ENC_EXTRA_INPUT_BUFFERS;
+		/* add dcvs buffers, if platform supports dcvs */
+		if (core->capabilities[DCVS].value)
+			count = DCVS_ENC_EXTRA_INPUT_BUFFERS;
 	}
 
 	return count;
@@ -143,8 +144,9 @@ u32 msm_vidc_output_extra_count(struct msm_vidc_inst *inst)
 		return 0;
 
 	if (is_decode_session(inst)) {
-		/* add dcvs buffers */
-		count = DCVS_DEC_EXTRA_OUTPUT_BUFFERS;
+		/* add dcvs buffers, if platform supports dcvs */
+		if (core->capabilities[DCVS].value)
+			count = DCVS_DEC_EXTRA_OUTPUT_BUFFERS;
 		/*
 		 * if decode batching enabled, ensure minimum batch size
 		 * count of extra output buffers added on output port
