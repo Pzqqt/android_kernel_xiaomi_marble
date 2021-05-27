@@ -1342,7 +1342,7 @@ static void _sde_encoder_update_vsync_source(struct sde_encoder_virt *sde_enc,
 			phys = sde_enc->phys_encs[i];
 
 			if (phys && phys->ops.setup_vsync_source)
-				phys->ops.setup_vsync_source(phys, vsync_source);
+				phys->ops.setup_vsync_source(phys, vsync_source, disp_info);
 		}
 	}
 }

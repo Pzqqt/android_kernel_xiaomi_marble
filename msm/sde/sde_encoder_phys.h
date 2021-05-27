@@ -183,7 +183,8 @@ struct sde_encoder_phys_ops {
 	int (*get_line_count)(struct sde_encoder_phys *phys);
 	bool (*wait_dma_trigger)(struct sde_encoder_phys *phys);
 	int (*wait_for_active)(struct sde_encoder_phys *phys);
-	void (*setup_vsync_source)(struct sde_encoder_phys *phys, u32 vsync_source);
+	void (*setup_vsync_source)(struct sde_encoder_phys *phys, u32 vsync_source,
+			struct msm_display_info *disp_info);
 	u32 (*get_underrun_line_count)(struct sde_encoder_phys *phys);
 };
 
