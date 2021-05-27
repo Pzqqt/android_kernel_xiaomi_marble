@@ -2045,6 +2045,14 @@ int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 		/* print final buffer counts & size details */
 		msm_vidc_print_buffer_info(inst);
 
+		rc = msm_vidc_set_stage(inst, STAGE);
+		if (rc)
+			return rc;
+
+		rc = msm_vidc_set_pipe(inst, PIPE);
+		if (rc)
+			return rc;
+
 		rc = venus_hfi_session_command(inst,
 				HFI_CMD_RESUME,
 				port,
