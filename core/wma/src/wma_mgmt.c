@@ -3719,7 +3719,6 @@ QDF_STATUS wma_de_register_mgmt_frm_client(void)
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * wma_register_roaming_callbacks() - Register roaming callbacks
- * @csr_roam_synch_cb: CSR roam synch callback routine pointer
  * @csr_roam_auth_event_handle_cb: CSR callback routine pointer
  * @pe_roam_synch_cb: PE roam synch callback routine pointer
  *
@@ -3729,9 +3728,6 @@ QDF_STATUS wma_de_register_mgmt_frm_client(void)
  * Return: Success or Failure Status
  */
 QDF_STATUS wma_register_roaming_callbacks(
-#ifndef FEATURE_CM_ENABLE
-	csr_roam_synch_fn_t csr_roam_synch_cb,
-#endif
 	QDF_STATUS (*csr_roam_auth_event_handle_cb)(struct mac_context *mac,
 						    uint8_t vdev_id,
 						    struct qdf_mac_addr bssid),
@@ -3748,9 +3744,6 @@ QDF_STATUS wma_register_roaming_callbacks(
 	if (!wma)
 		return QDF_STATUS_E_FAILURE;
 
-#ifndef FEATURE_CM_ENABLE
-	wma->csr_roam_synch_cb = csr_roam_synch_cb;
-#endif
 	wma->csr_roam_auth_event_handle_cb = csr_roam_auth_event_handle_cb;
 	wma->pe_roam_synch_cb = pe_roam_synch_cb;
 	wma->pe_disconnect_cb = pe_disconnect_cb;

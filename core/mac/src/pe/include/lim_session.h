@@ -142,9 +142,7 @@ struct obss_detection_cfg {
 struct pe_session {
 	/* To check session table is in use or free */
 	uint8_t available;
-#ifdef FEATURE_CM_ENABLE
 	wlan_cm_id cm_id;
-#endif
 	uint16_t peSessionId;
 	union {
 		uint8_t smeSessionId;

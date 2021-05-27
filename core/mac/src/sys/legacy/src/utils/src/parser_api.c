@@ -2153,7 +2153,6 @@ void populate_dot11f_re_assoc_tspec(struct mac_context *mac,
 {
 	uint8_t numTspecs = 0, idx;
 	tTspecInfo *pTspec = NULL;
-#ifdef FEATURE_CM_ENABLE
 	struct mlme_legacy_priv *mlme_priv;
 
 	mlme_priv = wlan_vdev_mlme_get_ext_hdl(pe_session->vdev);
@@ -2162,11 +2161,6 @@ void populate_dot11f_re_assoc_tspec(struct mac_context *mac,
 
 	numTspecs = mlme_priv->connect_info.ese_tspec_info.numTspecs;
 	pTspec = &mlme_priv->connect_info.ese_tspec_info.tspec[0];
-#else
-
-	numTspecs = pe_session->pLimReAssocReq->eseTspecInfo.numTspecs;
-	pTspec = &pe_session->pLimReAssocReq->eseTspecInfo.tspec[0];
-#endif
 	pReassoc->num_WMMTSPEC = numTspecs;
 	if (numTspecs) {
 		for (idx = 0; idx < numTspecs; idx++) {

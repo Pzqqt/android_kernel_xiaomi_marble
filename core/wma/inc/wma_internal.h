@@ -171,13 +171,6 @@ QDF_STATUS wma_set_ppsconfig(uint8_t vdev_id, uint16_t pps_param,
  */
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-#ifndef FEATURE_CM_ENABLE
-void wma_process_roam_invoke(WMA_HANDLE handle,
-				struct roam_invoke_req *roaminvoke);
-void wma_process_roam_synch_fail(WMA_HANDLE handle,
-				 struct roam_offload_synch_fail *synch_fail);
-#endif
-
 int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 					uint32_t len);
 
@@ -557,12 +550,6 @@ void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id);
 
 int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 			    uint32_t len);
-
-#ifndef FEATURE_CM_ENABLE
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-void wma_process_roam_synch_complete(WMA_HANDLE handle, uint8_t vdev_id);
-#endif
-#endif
 
 /*
  * wma_dev_if.c functions declarations

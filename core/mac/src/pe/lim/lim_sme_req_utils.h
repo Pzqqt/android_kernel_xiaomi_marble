@@ -51,21 +51,6 @@ bool lim_is_sme_start_bss_req_valid(struct mac_context *mac_ctx,
 uint8_t lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(struct mac_context *,
 							    tpSirRSNie, struct pe_session *);
 
-#ifndef FEATURE_CM_ENABLE
-/**
- * lim_is_sme_join_req_valid() - Verify join request message is valid
- * @mac: Pointer to Global MAC structure
- * @pJoinReq: Pointer to received SME_JOIN_REQ message
- *
- * This function is called by lim_process_sme_req_messages() upon
- * receiving SME_JOIN_REQ message from application.
- *
- * Return: true  when received SME_JOIN_REQ is formatted correctly
- *         false otherwise
- */
-uint8_t lim_is_sme_join_req_valid(struct mac_context *mac,
-				  struct join_req *pJoinReq);
-#endif
 /**
  * lim_is_sme_disassoc_req_valid() - Validate disassoc req message
  * @mac: Pointer to Global MAC structure

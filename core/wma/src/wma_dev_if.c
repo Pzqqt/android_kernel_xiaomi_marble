@@ -2221,7 +2221,6 @@ void wma_send_vdev_down(tp_wma_handle wma, struct del_bss_resp *resp)
 				      sizeof(*resp), resp);
 }
 
-#ifdef FEATURE_CM_ENABLE
 /**
  * wma_send_vdev_down_req() - handle vdev down req
  * @wma: wma handle
@@ -2248,17 +2247,6 @@ static void wma_send_vdev_down_req(tp_wma_handle wma,
 				      WLAN_VDEV_SM_EV_MLME_DOWN_REQ,
 				      sizeof(*resp), resp);
 }
-#else
-static void wma_send_vdev_down_req(tp_wma_handle wma,
-				   struct del_bss_resp *resp)
-{
-	struct wma_txrx_node *iface = &wma->interfaces[resp->vdev_id];
-
-	wlan_vdev_mlme_sm_deliver_evt(iface->vdev,
-				      WLAN_VDEV_SM_EV_MLME_DOWN_REQ,
-				      sizeof(*resp), resp);
-}
-#endif
 
 static QDF_STATUS
 wma_delete_peer_on_vdev_stop(tp_wma_handle wma, uint8_t vdev_id)
@@ -2332,7 +2320,6 @@ free_params:
 	return status;
 }
 
-#ifdef FEATURE_CM_ENABLE
 QDF_STATUS
 cm_send_bss_peer_delete_req(struct wlan_objmgr_vdev *vdev)
 {
@@ -2394,39 +2381,7 @@ __wma_handle_vdev_stop_rsp(struct vdev_stop_response *resp_event)
 
 	return wma_delete_peer_on_vdev_stop(wma, resp_event->vdev_id);
 }
-#else
-QDF_STATUS
-__wma_handle_vdev_stop_rsp(struct vdev_stop_response *resp_event)
-{
-	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
-	struct wma_txrx_node *iface;
 
-	if (!wma)
-		return QDF_STATUS_E_INVAL;
-
-	/* Ignore stop_response in Monitor mode */
-	if (cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE)
-		return  QDF_STATUS_SUCCESS;
-
-	iface = &wma->interfaces[resp_event->vdev_id];
-
-	/* vdev in stopped state, no more waiting for key */
-	iface->is_waiting_for_key = false;
-
-	/*
-	 * Reset the rmfEnabled as there might be MGMT action frames
-	 * sent on this vdev before the next session is established.
-	 */
-	if (iface->rmfEnabled) {
-		iface->rmfEnabled = 0;
-		wma_debug("Reset rmfEnabled for vdev %d",
-			 resp_event->vdev_id);
-	}
-
-	return wma_delete_peer_on_vdev_stop(wma, resp_event->vdev_id);
-}
-
-#endif
 /**
  * wma_handle_vdev_stop_rsp() - handle vdev stop resp
  * @wma: wma handle

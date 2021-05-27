@@ -1750,9 +1750,6 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 #if defined FEATURE_WLAN_ESE
 	case eWNI_SME_ESE_ADJACENT_AP_REPORT:
 #endif
-#ifndef FEATURE_CM_ENABLE
-	case eWNI_SME_FT_PRE_AUTH_REQ:
-#endif
 	case eWNI_SME_FT_AGGR_QOS_REQ:
 	case eWNI_SME_REGISTER_MGMT_FRAME_REQ:
 #ifdef FEATURE_WLAN_ESE
@@ -1760,9 +1757,6 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 #endif  /* FEATURE_WLAN_ESE */
 	case eWNI_SME_REGISTER_MGMT_FRAME_CB:
 	case eWNI_SME_EXT_CHANGE_CHANNEL:
-#ifndef FEATURE_CM_ENABLE
-	case eWNI_SME_ROAM_INVOKE:
-#endif
 		/* fall through */
 	case eWNI_SME_ROAM_SEND_SET_PCL_REQ:
 	case eWNI_SME_SET_ADDBA_ACCEPT:
@@ -2100,7 +2094,6 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 		break;
 	case SIR_LIM_PROCESS_DEFERRED_QUEUE:
 		break;
-#ifdef FEATURE_CM_ENABLE
 	case CM_BSS_PEER_CREATE_REQ:
 		cm_process_peer_create(msg);
 		break;
@@ -2116,7 +2109,6 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 	case CM_PREAUTH_REQ:
 		cm_process_preauth_req(msg);
 		break;
-#endif
 	default:
 		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;

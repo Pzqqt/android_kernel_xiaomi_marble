@@ -220,11 +220,6 @@ enum wmamsgtype {
 
 	WMA_ROAM_PRE_AUTH_STATUS = SIR_HAL_ROAM_PRE_AUTH_STATUS_IND,
 
-#ifndef FEATURE_CM_ENABLE
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	WMA_ROAM_OFFLOAD_SYNCH_FAIL = SIR_HAL_ROAM_OFFLOAD_SYNCH_FAIL,
-#endif
-#endif
 	WMA_8023_MULTICAST_LIST_REQ = SIR_HAL_8023_MULTICAST_LIST_REQ,
 
 #ifdef WLAN_FEATURE_PACKET_FILTERING
@@ -726,9 +721,6 @@ QDF_STATUS wma_register_mgmt_frm_client(void);
 QDF_STATUS wma_de_register_mgmt_frm_client(void);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS wma_register_roaming_callbacks(
-#ifndef FEATURE_CM_ENABLE
-		csr_roam_synch_fn_t csr_roam_synch_cb,
-#endif
 		QDF_STATUS (*csr_roam_auth_event_handle_cb)(
 			struct mac_context *mac,
 			uint8_t vdev_id,
@@ -741,9 +733,6 @@ QDF_STATUS wma_register_roaming_callbacks(
 			uint16_t reason_code));
 #else
 static inline QDF_STATUS wma_register_roaming_callbacks(
-#ifndef FEATURE_CM_ENABLE
-		csr_roam_synch_fn_t csr_roam_synch_cb,
-#endif
 		QDF_STATUS (*csr_roam_auth_event_handle_cb)(
 			struct mac_context *mac,
 			uint8_t vdev_id,
