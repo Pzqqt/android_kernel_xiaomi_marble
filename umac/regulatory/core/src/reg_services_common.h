@@ -1513,6 +1513,18 @@ QDF_STATUS reg_get_client_power_for_6ghz_ap(struct wlan_objmgr_pdev *pdev,
 					    qdf_freq_t chan_freq,
 					    bool *is_psd, uint16_t *tx_power,
 					    uint16_t *eirp_psd_power);
+
+/**
+ * reg_set_ap_pwr_and_update_chan_list() - Set the AP power mode and recompute
+ * the current channel list
+ *
+ * @pdev: pdev ptr
+ * @ap_pwr_type: the AP power type to update to
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS reg_set_ap_pwr_and_update_chan_list(struct wlan_objmgr_pdev *pdev,
+					       enum reg_6g_ap_type ap_pwr_type);
 #else
 static inline QDF_STATUS
 reg_set_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
@@ -1596,6 +1608,13 @@ QDF_STATUS reg_get_client_power_for_6ghz_ap(struct wlan_objmgr_pdev *pdev,
 	*is_psd = false;
 	*tx_power = 0;
 	*eirp_psd_power = 0;
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline
+QDF_STATUS reg_set_ap_pwr_and_update_chan_list(struct wlan_objmgr_pdev *pdev,
+					       enum reg_6g_ap_type ap_pwr_type)
+{
 	return QDF_STATUS_E_NOSUPPORT;
 }
 #endif
