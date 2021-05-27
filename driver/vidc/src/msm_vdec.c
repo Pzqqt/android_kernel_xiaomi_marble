@@ -1684,6 +1684,10 @@ int msm_vdec_streamon_output(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
+	rc = msm_vidc_check_session_supported(inst);
+	if (rc)
+		return rc;
+
 	rc = msm_vdec_update_max_map_output_count(inst);
 	if (rc)
 		return rc;
