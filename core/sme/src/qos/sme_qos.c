@@ -7600,11 +7600,6 @@ static QDF_STATUS sme_qos_request_reassoc(struct mac_context *mac,
 	struct sme_qos_sessioninfo *pSession;
 	struct sme_qos_acinfo *pACInfo;
 	QDF_STATUS status;
-#ifndef FEATURE_CM_ENABLE
-	struct csr_roam_session *session;
-	struct csr_roam_profile *roam_profile;
-	bool roam_offload_enable = true;
-#endif
 	struct qdf_mac_addr bssid;
 	qdf_freq_t ch_freq;
 
@@ -7620,26 +7615,8 @@ static QDF_STATUS sme_qos_request_reassoc(struct mac_context *mac,
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
 	wlan_mlme_get_bssid_vdev_id(mac->pdev, sessionId, &bssid);
 	ch_freq = wlan_get_operation_chan_freq_vdev_id(mac->pdev, sessionId);
-#ifdef FEATURE_CM_ENABLE
 	status = wlan_cm_roam_invoke(mac->pdev, sessionId, &bssid, ch_freq,
 				     CM_ROAMING_HOST);
-#else
-	status = ucfg_mlme_get_roaming_offload(mac->psoc, &roam_offload_enable);
-	if (QDF_IS_STATUS_ERROR(status))
-		return status;
-	if (roam_offload_enable) {
-		session = CSR_GET_SESSION(mac, sessionId);
-		roam_profile = session->pCurRoamProfile;
-	status = sme_fast_reassoc(MAC_HANDLE(mac), roam_profile,
-				  bssid.bytes,
-				  ch_freq,
-				  sessionId,
-				  bssid.bytes);
-	} else {
-		status = csr_reassoc(mac, sessionId, pModFields,
-				     &pSession->roamID, fForce);
-	}
-#endif
 
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/* Update the state to Handoff so subsequent requests are

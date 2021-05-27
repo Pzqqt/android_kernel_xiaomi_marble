@@ -580,20 +580,11 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 		goto rrm_send_scan_results_done;
 	}
 
-	/* This is temp ifdef will be removed in near future */
-#ifdef FEATURE_CM_ENABLE
 	if (!cm_is_vdevid_connected(mac_ctx->pdev, session_id)) {
 		sme_err("Invaild session");
 		status = QDF_STATUS_E_FAILURE;
 		goto rrm_send_scan_results_done;
 	}
-#else
-	if (!csr_is_conn_state_connected_infra(mac_ctx, session_id)) {
-		sme_err("Invaild session");
-		status = QDF_STATUS_E_FAILURE;
-		goto rrm_send_scan_results_done;
-	}
-#endif
 
 	while (scan_results) {
 		/*

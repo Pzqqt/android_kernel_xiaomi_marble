@@ -428,7 +428,6 @@ QDF_STATUS wlan_cm_tgt_send_roam_disable_config(struct wlan_objmgr_psoc *psoc,
 	return status;
 }
 
-#ifdef FEATURE_CM_ENABLE
 QDF_STATUS
 wlan_cm_tgt_send_roam_invoke_req(struct wlan_objmgr_psoc *psoc,
 				 struct roam_invoke_req *roam_invoke_req)
@@ -494,4 +493,3 @@ wlan_cm_tgt_send_roam_sync_complete_cmd(struct wlan_objmgr_psoc *psoc,
 
 	return status;
 }
-#endif

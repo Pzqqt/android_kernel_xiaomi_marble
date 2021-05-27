@@ -132,7 +132,6 @@ ucfg_cm_update_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
-#ifdef FEATURE_CM_ENABLE
 /**
  * ucfg_wlan_cm_roam_invoke() - Invokes Roam request
  * @pdev: Pointer to pdev
@@ -161,7 +160,6 @@ ucfg_cm_update_fils_config(struct wlan_objmgr_psoc *psoc,
 {
 	return QDF_STATUS_SUCCESS;
 }
-#endif
 #endif
 
 #endif /* _WLAN_CM_ROAM_UCFG_API_H_ */

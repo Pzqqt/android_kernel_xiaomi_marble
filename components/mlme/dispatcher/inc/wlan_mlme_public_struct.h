@@ -264,28 +264,6 @@ struct wlan_mlme_dot11_mode {
 	uint32_t vdev_type_dot11_mode;
 };
 
-#ifndef FEATURE_CM_ENABLE
-/**
- * enum roam_invoke_source_entity - Source of invoking roam invoke command.
- * @USERSPACE_INITIATED: Userspace (supplicant)
- * @CONNECTION_MGR_INITIATED: connection mgr initiated.
- */
-enum roam_invoke_source_entity {
-	USERSPACE_INITIATED,
-	CONNECTION_MGR_INITIATED,
-};
-
-/**
- * struct mlme_roam_after_data_stall - roam invoke entity params
- * @roam_invoke_in_progress: is roaming already in progress.
- * @source: source of the roam invoke command.
- */
-struct mlme_roam_after_data_stall {
-	bool roam_invoke_in_progress;
-	enum roam_invoke_source_entity source;
-};
-#endif
-
 /**
  * struct mlme_edca_ac_vi - cwmin, cwmax and  aifs value for edca_ac_vi
  *

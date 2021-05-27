@@ -31,7 +31,7 @@
 #include "wlan_objmgr_vdev_obj.h"
 #include "connection_mgr/core/src/wlan_cm_main.h"
 #include "wlan_cm_roam_public_struct.h"
-#ifdef FEATURE_CM_ENABLE
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * cm_add_fw_roam_dummy_ser_cb() - Add dummy blocking command
@@ -194,5 +194,4 @@ QDF_STATUS cm_fw_roam_invoke_fail(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_E_NOSUPPORT;
 }
 #endif /*WLAN_FEATURE_ROAM_OFFLOAD */
-#endif /* FEATURE_CM_ENABLE */
 #endif /* _WLAN_CM_ROAM_I_H_ */

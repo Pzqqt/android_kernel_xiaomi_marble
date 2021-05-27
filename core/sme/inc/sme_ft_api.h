@@ -21,38 +21,6 @@
 
 #ifdef WLAN_FEATURE_HOST_ROAM
 
-#ifndef FEATURE_CM_ENABLE
-/* FT neighbor roam callback user context */
-typedef struct sFTRoamCallbackUsrCtx {
-	struct mac_context *mac;
-	uint8_t sessionId;
-} tFTRoamCallbackUsrCtx, *tpFTRoamCallbackUsrCtx;
-
-typedef struct sFTSMEContext {
-	/* Saved pFTPreAuthRsp */
-	tpSirFTPreAuthRsp psavedFTPreAuthRsp;
-	/* Time to trigger reassoc once pre-auth is successful */
-	qdf_mc_timer_t preAuthReassocIntvlTimer;
-	tSirMacAddr preAuthbssId;       /* BSSID to preauth to */
-	/* User context for the timer callback */
-	tpFTRoamCallbackUsrCtx pUsrCtx;
-} tftSMEContext, *tpftSMEContext;
-
-
-/*--------------------------------------------------------------------------
-  Prototype functions
-  ------------------------------------------------------------------------*/
-void sme_ft_open(mac_handle_t mac_handle, uint8_t sessionId);
-void sme_ft_close(mac_handle_t mac_handle, uint8_t sessionId);
-void sme_get_ft_pre_auth_response(mac_handle_t mac_handle, uint8_t sessionId,
-				  uint8_t *ft_ies, uint32_t ft_ies_ip_len,
-				  uint16_t *ft_ies_length);
-void sme_get_rici_es(mac_handle_t mac_handle, uint8_t sessionId,
-		     uint8_t *ric_ies,
-		     uint32_t ric_ies_ip_len, uint32_t *ric_ies_length);
-void sme_preauth_reassoc_intvl_timer_callback(void *context);
-#endif /* FEATURE_CM_ENABLE */
-
 void sme_ft_reset(mac_handle_t mac_handle, uint8_t sessionId);
 
 /**
@@ -94,21 +62,6 @@ void sme_set_ft_pre_auth_state(mac_handle_t mac_handle, uint8_t sessionId,
 bool sme_get_ft_pre_auth_state(mac_handle_t mac_handle, uint8_t sessionId);
 
 #else /* WLAN_FEATURE_HOST_ROAM */
-
-#ifndef FEATURE_CM_ENABLE
-static inline void sme_ft_open(mac_handle_t mac_handle, uint8_t sessionId) {}
-static inline void sme_ft_close(mac_handle_t mac_handle, uint8_t sessionId) {}
-static inline  void sme_get_ft_pre_auth_response(mac_handle_t mac_handle,
-						 uint8_t sessionId,
-						 uint8_t *ft_ies,
-						 uint32_t ft_ies_ip_len,
-						 uint16_t *ft_ies_length) {}
-static inline void sme_get_rici_es(mac_handle_t mac_handle, uint8_t sessionId,
-				   uint8_t *ric_ies,
-				   uint32_t ric_ies_ip_len,
-				   uint32_t *ric_ies_length) {}
-static inline void sme_preauth_reassoc_intvl_timer_callback(void *context) {}
-#endif
 
 static inline void sme_ft_reset(mac_handle_t mac_handle, uint8_t sessionId) {}
 static inline
