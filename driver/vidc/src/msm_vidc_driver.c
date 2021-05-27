@@ -3715,7 +3715,7 @@ int msm_vidc_session_streamoff(struct msm_vidc_inst *inst,
 		i_vpr_e(inst, "%s: session stop timed out for port: %d\n",
 				__func__, port);
 		rc = -ETIMEDOUT;
-		msm_vidc_core_timeout(inst->core);
+		msm_vidc_inst_timeout(inst);
 	} else {
 		rc = 0;
 	}
@@ -3778,7 +3778,7 @@ int msm_vidc_session_close(struct msm_vidc_inst *inst)
 	if (!rc) {
 		i_vpr_e(inst, "%s: session close timed out\n", __func__);
 		rc = -ETIMEDOUT;
-		msm_vidc_core_timeout(inst->core);
+		msm_vidc_inst_timeout(inst);
 	} else {
 		rc = 0;
 		i_vpr_h(inst, "%s: close successful\n", __func__);
@@ -4033,7 +4033,7 @@ error:
 	return rc;
 }
 
-int msm_vidc_core_deinit(struct msm_vidc_core *core, bool force)
+int msm_vidc_core_deinit_locked(struct msm_vidc_core *core, bool force)
 {
 	int rc = 0;
 	struct msm_vidc_inst *inst, *dummy;
@@ -4043,14 +4043,26 @@ int msm_vidc_core_deinit(struct msm_vidc_core *core, bool force)
 		return -EINVAL;
 	}
 
-	core_lock(core, __func__);
-	d_vpr_h("%s(): force %u\n", __func__, force);
-	if (core->state == MSM_VIDC_CORE_DEINIT)
-		goto unlock;
+	rc = __strict_check(core, __func__);
+	if (rc) {
+		d_vpr_e("%s(): core was not locked\n", __func__);
+		return rc;
+	}
 
-	if (!force)
-		if (!list_empty(&core->instances))
-			goto unlock;
+	if (core->state == MSM_VIDC_CORE_DEINIT)
+		return 0;
+
+	if (force) {
+		d_vpr_e("%s(): force deinit core\n", __func__);
+	} else {
+		/* in normal case, deinit core only if no session present */
+		if (!list_empty(&core->instances)) {
+			d_vpr_h("%s(): skip deinit\n", __func__);
+			return 0;
+		} else {
+			d_vpr_h("%s(): deinit core\n", __func__);
+		}
+	}
 
 	venus_hfi_core_deinit(core);
 
@@ -4061,8 +4073,21 @@ int msm_vidc_core_deinit(struct msm_vidc_core *core, bool force)
 	}
 	msm_vidc_change_core_state(core, MSM_VIDC_CORE_DEINIT, __func__);
 
-unlock:
+	return rc;
+}
+
+int msm_vidc_core_deinit(struct msm_vidc_core *core, bool force)
+{
+	int rc = 0;
+	if (!core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	core_lock(core, __func__);
+	rc = msm_vidc_core_deinit_locked(core, force);
 	core_unlock(core, __func__);
+
 	return rc;
 }
 
@@ -4147,6 +4172,7 @@ int msm_vidc_core_init(struct msm_vidc_core *core)
 	core_lock(core, __func__);
 	if (!rc) {
 		d_vpr_e("%s: core init timed out\n", __func__);
+		msm_vidc_core_deinit_locked(core, true);
 		rc = -ETIMEDOUT;
 	} else {
 		msm_vidc_change_core_state(core, MSM_VIDC_CORE_INIT, __func__);
@@ -4156,14 +4182,49 @@ int msm_vidc_core_init(struct msm_vidc_core *core)
 
 unlock:
 	core_unlock(core, __func__);
-	if (rc)
-		msm_vidc_core_deinit(core, true);
 	return rc;
 }
 
-int msm_vidc_core_timeout(struct msm_vidc_core *core)
+int msm_vidc_inst_timeout(struct msm_vidc_inst *inst)
 {
-	return msm_vidc_core_deinit(core, true);
+	int rc = 0;
+	struct msm_vidc_core *core;
+	struct msm_vidc_inst *instance;
+	bool found;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+
+	core_lock(core, __func__);
+	/*
+	 * All sessions will be removed from core list in core deinit,
+	 * do not deinit core from a session which is not present in
+	 * core list.
+	 */
+	found = false;
+	list_for_each_entry(instance, &core->instances, list) {
+		if (instance == inst) {
+			found = true;
+			break;
+		}
+	}
+	if (!found) {
+		i_vpr_e(inst,
+			"%s: session not available in core list\n", __func__);
+		rc = -EINVAL;
+		goto unlock;
+	}
+
+	/* call core deinit for a valid instance timeout case */
+	msm_vidc_core_deinit_locked(core, true);
+
+unlock:
+	core_unlock(core, __func__);
+
+	return rc;
 }
 
 int msm_vidc_print_buffer_info(struct msm_vidc_inst *inst)
