@@ -230,7 +230,6 @@ QDF_STATUS ucfg_cm_set_cckm_ie(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 
 #endif
 
-#ifdef FEATURE_CM_ENABLE
 #ifdef WLAN_FEATURE_FILS_SK
 QDF_STATUS
 ucfg_cm_update_fils_config(struct wlan_objmgr_psoc *psoc,
@@ -261,5 +260,3 @@ ucfg_wlan_cm_roam_invoke(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 {
 	return wlan_cm_roam_invoke(pdev, vdev_id, bssid, ch_freq, source);
 }
-
-#endif

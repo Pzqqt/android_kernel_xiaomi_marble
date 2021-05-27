@@ -40,7 +40,6 @@
 #include "cds_utils.h"
 #include "wlan_roam_debug.h"
 #include "wlan_mlme_twt_api.h"
-#ifdef FEATURE_CM_ENABLE
 #include "connection_mgr/core/src/wlan_cm_roam.h"
 #include "connection_mgr/core/src/wlan_cm_main.h"
 #include "connection_mgr/core/src/wlan_cm_sm.h"
@@ -1111,5 +1110,3 @@ rel_ref:
 	return status;
 }
 #endif /* WLAN_FEATURE_FIPS */
-
-#endif // FEATURE_CM_ENABLE

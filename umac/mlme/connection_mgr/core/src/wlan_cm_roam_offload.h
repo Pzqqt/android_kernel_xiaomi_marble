@@ -109,7 +109,6 @@ cm_roam_fill_rssi_change_params(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
  */
 void cm_dump_freq_list(struct rso_chan_info *chan_info);
 
-#ifdef FEATURE_CM_ENABLE
 /**
  * cm_start_roam_invoke() - Validate and send Roam invoke req to CM
  * @pdev: Pdev pointer
@@ -126,7 +125,6 @@ cm_start_roam_invoke(struct wlan_objmgr_psoc *psoc,
 		     struct qdf_mac_addr *bssid,
 		     uint32_t chan_freq,
 		     enum wlan_cm_source source);
-#endif
 #endif
 
 #ifdef FEATURE_WLAN_ESE

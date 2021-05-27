@@ -89,47 +89,6 @@ QDF_STATUS
 wlan_roam_update_cfg(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		     uint8_t reason);
 
-#ifndef FEATURE_CM_ENABLE
-/**
- * wlan_cm_roam_cmd_allowed() - check roam cmd is allowed or not
- * @psoc: pointer to psoc object
- * @vdev_id: vdev id
- * @rso_command: roam scan offload command
- * @reason: reason to roam
- *
- * This function gets called to check roam cmd is allowed or not
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS
-wlan_cm_roam_cmd_allowed(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
-			 uint8_t rso_command, uint8_t reason);
-
-/**
- * wlan_cm_roam_neighbor_proceed_with_handoff_req() - invoke host handover to
- * new AP
- * @vdev_id: vdev id
- *
- * This function gets called to invoke host handover to new AP
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS
-wlan_cm_roam_neighbor_proceed_with_handoff_req(uint8_t vdev_id);
-
-/**
- * wlan_cm_roam_scan_offload_rsp() - send roam scan offload response message
- * @vdev_id: vdev id
- * @reason: reason to roam
- *
- * This function gets called to send roam scan offload response message
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS
-wlan_cm_roam_scan_offload_rsp(uint8_t vdev_id, uint8_t reason);
-#endif
-
 /**
  * wlan_cm_send_beacon_miss() - initiate beacon miss
  * @vdev_id: vdev id
@@ -523,21 +482,6 @@ struct wlan_fils_connection_info *wlan_cm_get_fils_connection_info(
 		struct wlan_objmgr_psoc *psoc,
 		uint8_t vdev_id);
 
-#ifndef FEATURE_CM_ENABLE
-/**
- * wlan_cm_update_mlme_fils_connection_info  - Update FILS connection info
- * to mlme vdev private object
- * @psoc: Pointer to psoc object
- * @src_fils_info: Current profile FILS connection information
- * @vdev_id: vdev_id
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS wlan_cm_update_mlme_fils_connection_info(
-		struct wlan_objmgr_psoc *psoc,
-		struct wlan_fils_connection_info *src_fils_info,
-		uint8_t vdev_id);
-#else
 /**
  * wlan_cm_update_mlme_fils_info  - Update FILS connection info
  * to mlme vdev private object
@@ -549,7 +493,7 @@ QDF_STATUS wlan_cm_update_mlme_fils_connection_info(
 QDF_STATUS
 wlan_cm_update_mlme_fils_info(struct wlan_objmgr_vdev *vdev,
 			      struct wlan_fils_con_info *src_fils_info);
-#endif
+
 /**
  * wlan_cm_update_fils_ft - Update the FILS FT derived to mlme
  * @psoc: Psoc pointer
@@ -637,7 +581,6 @@ void cm_update_session_assoc_ie(struct wlan_objmgr_psoc *psoc,
 				uint8_t vdev_id,
 				struct element_info *assoc_ie);
 
-#ifdef FEATURE_CM_ENABLE
 /**
  * wlan_cm_roam_invoke() - Validate and send Roam invoke req to CM
  * @pdev: Pdev pointer
@@ -730,7 +673,6 @@ static inline QDF_STATUS wlan_cm_host_roam_start(struct scheduler_msg *msg)
 
 	return QDF_STATUS_SUCCESS;
 }
-#endif
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
