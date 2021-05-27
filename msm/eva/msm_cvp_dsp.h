@@ -73,7 +73,7 @@ enum CVP_DSP_COMMAND {
 	CVP_DSP_MAX_CMD = 21,
 };
 
-enum eva_dsp_debug_level {
+enum eva_dsp_debug_bits {
 	EVA_PORT_INFO_ON = 0,
 	EVA_PORT_DEBUG_ON = 1,
 	EVA_QDI_INFO_ON = 2,
@@ -123,7 +123,7 @@ struct cvp_dsp_cmd_msg {
 	uint32_t buff_offset;
 	uint32_t buff_fd_size;
 
-	uint32_t eva_dsp_debug_level;
+	uint32_t eva_dsp_debug_mask;
 
 	/* Create Session */
 	uint32_t session_cpu_low;
@@ -176,9 +176,16 @@ struct cvp_dsp_fastrpc_driver_entry {
 };
 
 struct cvp_dsp_apps {
-	struct mutex lock;
+	/*
+	 * tx_lock for sending CPU2DSP cmds or msgs
+	 * and dsp state change
+	 */
+	struct mutex tx_lock;
+	/* rx_lock for receiving DSP2CPU cmds or msgs */
+	struct mutex rx_lock;
 	struct rpmsg_device *chan;
 	uint32_t state;
+	uint32_t debug_mask;
 	bool hyp_assigned;
 	uint64_t addr;
 	uint32_t size;
@@ -255,6 +262,8 @@ int cvp_dsp_deregister_buffer(uint32_t session_id, uint32_t buff_fd,
 int cvp_dsp_fastrpc_unmap(uint32_t process_id, struct cvp_internal_buf *buf);
 
 int cvp_dsp_del_sess(uint32_t process_id, struct msm_cvp_inst *inst);
+
+void cvp_dsp_send_debug_mask(void);
 
 #endif // MSM_CVP_DSP_H
 
