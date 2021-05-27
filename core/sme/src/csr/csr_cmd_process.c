@@ -91,21 +91,6 @@ QDF_STATUS csr_msg_processor(struct mac_context *mac_ctx, void *msg_buf)
 			sme_err("Message 0x%04X is not handled by CSR state is %d session Id %d",
 				sme_rsp->messageType, cur_state,
 				vdev_id);
-
-#ifndef FEATURE_CM_ENABLE
-			if (eWNI_SME_FT_PRE_AUTH_RSP ==
-					sme_rsp->messageType) {
-				sme_err("Dequeue eSmeCommandRoam command with reason eCsrPerformPreauth");
-				csr_dequeue_roam_command(mac_ctx,
-					eCsrPerformPreauth, vdev_id);
-			} else if (eWNI_SME_REASSOC_RSP ==
-					sme_rsp->messageType) {
-				sme_err("Dequeue eSmeCommandRoam command with reason eCsrSmeIssuedFTReassoc");
-				csr_dequeue_roam_command(mac_ctx,
-					eCsrSmeIssuedFTReassoc,
-					vdev_id);
-			}
-#endif
 		}
 		break;
 	} /* switch */

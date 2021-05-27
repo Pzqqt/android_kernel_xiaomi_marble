@@ -193,58 +193,6 @@ tSirResultCodes csr_get_de_auth_rsp_status_code(struct deauth_rsp *pSmeRsp);
 uint32_t csr_get_frag_thresh(struct mac_context *mac_ctx);
 uint32_t csr_get_rts_thresh(struct mac_context *mac_ctx);
 
-#ifndef FEATURE_CM_ENABLE
-uint8_t csr_construct_rsn_ie(struct mac_context *mac, uint32_t sessionId,
-			     struct csr_roam_profile *pProfile,
-			     struct bss_description *pSirBssDesc,
-			     tDot11fBeaconIEs *pIes, tCsrRSNIe *pRSNIe);
-
-uint8_t csr_construct_wpa_ie(struct mac_context *mac, uint8_t session_id,
-			     struct csr_roam_profile *pProfile,
-			     struct bss_description *pSirBssDesc,
-			     tDot11fBeaconIEs *pIes, tCsrWpaIe *pWpaIe);
-#ifdef FEATURE_WLAN_WAPI
-bool csr_is_profile_wapi(struct csr_roam_profile *pProfile);
-#endif /* FEATURE_WLAN_WAPI */
-/*
- * If a WPAIE exists in the profile, just use it.
- * Or else construct one from the BSS Caller allocated memory for pWpaIe and
- * guarrantee it can contain a max length WPA IE
- */
-uint8_t csr_retrieve_wpa_ie(struct mac_context *mac, uint8_t session_id,
-			    struct csr_roam_profile *pProfile,
-			    struct bss_description *pSirBssDesc,
-			    tDot11fBeaconIEs *pIes, tCsrWpaIe *pWpaIe);
-bool csr_is_ssid_equal(struct mac_context *mac,
-		       struct bss_description *pSirBssDesc1,
-		       struct bss_description *pSirBssDesc2,
-		       tDot11fBeaconIEs *pIes2);
-
-/* Null ssid means match */
-bool csr_is_ssid_in_list(tSirMacSSid *pSsid, tCsrSSIDs *pSsidList);
-bool csr_is_profile_wpa(struct csr_roam_profile *pProfile);
-bool csr_is_profile_rsn(struct csr_roam_profile *pProfile);
-/*
- * If a RSNIE exists in the profile, just use it. Or
- * else construct one from the BSS Caller allocated memory for pWpaIe and
- * guarantee it can contain a max length WPA IE
- */
-uint8_t csr_retrieve_rsn_ie(struct mac_context *mac, uint32_t sessionId,
-			    struct csr_roam_profile *pProfile,
-			    struct bss_description *pSirBssDesc,
-			    tDot11fBeaconIEs *pIes, tCsrRSNIe *pRsnIe);
-#ifdef FEATURE_WLAN_WAPI
-/*
- * If a WAPI IE exists in the profile, just use it.
- * Or else construct one from the BSS. Caller allocated memory for pWapiIe and
- * guarrantee it can contain a max length WAPI IE
- */
-uint8_t csr_retrieve_wapi_ie(struct mac_context *mac, uint32_t sessionId,
-			     struct csr_roam_profile *pProfile,
-			     struct bss_description *pSirBssDesc,
-			     tDot11fBeaconIEs *pIes, tCsrWapiIe *pWapiIe);
-#endif /* FEATURE_WLAN_WAPI */
-#endif /* FEATURE_CM_ENABLE */
 bool csr_rates_is_dot11_rate11b_supported_rate(uint8_t dot11Rate);
 bool csr_rates_is_dot11_rate11a_supported_rate(uint8_t dot11Rate);
 tAniEdType csr_translate_encrypt_type_to_ed_type(
@@ -271,21 +219,6 @@ QDF_STATUS csr_get_phy_mode_from_bss(struct mac_context *mac,
 		struct bss_description *pBSSDescription,
 		eCsrPhyMode *pPhyMode, tDot11fBeaconIEs *pIes);
 
-#ifndef FEATURE_CM_ENABLE
-/*
- * fForce -- force reassoc regardless of whether there is any change.
- * The reason is that for UAPSD-bypass, the code underneath this call determine
- * whether to allow UAPSD. The information in pModProfileFields reflects what
- * the user wants. There may be discrepency in it. UAPSD-bypass logic should
- * decide if it needs to reassoc
- */
-QDF_STATUS csr_reassoc(struct mac_context *mac, uint32_t sessionId,
-		tCsrRoamModifyProfileFields *pModProfileFields,
-		uint32_t *pRoamId, bool fForce);
-#ifdef FEATURE_WLAN_ESE
-bool csr_is_profile_ese(struct csr_roam_profile *pProfile);
-#endif
-#endif
 /**
  * csr_is_auth_type_ese() - Checks whether Auth type is ESE or not
  * @AuthType: Authentication type
