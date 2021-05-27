@@ -3312,6 +3312,10 @@ static void sde_encoder_underrun_callback(struct drm_encoder *drm_enc,
 	trace_sde_encoder_underrun(DRMID(drm_enc),
 		atomic_read(&phy_enc->underrun_cnt));
 
+	if (phy_enc->sde_kms &&
+			phy_enc->sde_kms->catalog->uidle_cfg.debugfs_perf)
+		sde_encoder_perf_uidle_status(phy_enc->sde_kms, sde_enc->crtc);
+
 	SDE_DBG_CTRL("stop_ftrace");
 	SDE_DBG_CTRL("panic_underrun");
 

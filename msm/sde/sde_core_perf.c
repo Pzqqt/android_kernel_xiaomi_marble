@@ -655,11 +655,14 @@ void sde_core_perf_crtc_update_uidle(struct drm_crtc *crtc,
 				uidle_crtc_status = UIDLE_STATE_FAL1_FAL10;
 			else if (fps <= kms->perf.catalog->uidle_cfg.max_fal1_fps)
 				uidle_crtc_status = UIDLE_STATE_FAL1_ONLY;
+			else
+				uidle_crtc_status = UIDLE_STATE_DISABLE;
 
-			if (uidle_crtc_status == UIDLE_STATE_DISABLE)
-				break;
-			else if (uidle_crtc_status < uidle_status)
+			if (uidle_crtc_status < uidle_status)
 				uidle_status = uidle_crtc_status;
+
+			if (uidle_status == UIDLE_STATE_DISABLE)
+				break;
 		}
 	}
 
