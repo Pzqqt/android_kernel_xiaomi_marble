@@ -5109,17 +5109,6 @@ static bool msm_vidc_allow_image_encode_session(struct msm_vidc_inst *inst)
 		goto exit;
 	}
 
-	/* is profile type Still Pic */
-	if (is_10bit_colorformat(pix_fmt))
-		allow = profile == V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_10_STILL_PICTURE;
-	else
-		allow = profile == V4L2_MPEG_VIDEO_HEVC_PROFILE_MAIN_STILL_PICTURE;
-	if (!allow) {
-		i_vpr_e(inst, "%s: profile not valid: %#x\n", __func__,
-			capability->cap[PROFILE].value);
-		goto exit;
-	}
-
 	return true;
 
 exit:
