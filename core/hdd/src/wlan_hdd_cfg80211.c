@@ -5058,6 +5058,7 @@ hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
 	struct nlattr *tb2[QCA_ATTR_ROAM_CONTROL_MAX + 1], *attr;
 	uint32_t value;
 	struct wlan_cm_roam_vendor_btm_params param = {0};
+	bool is_wtc_param_updated = false;
 
 	hdd_enter();
 	/* The command must carry PARAM_ROAM_CONTROL_CONFIG */
@@ -5175,44 +5176,61 @@ hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
 	}
 
 	attr = tb2[QCA_ATTR_ROAM_CONTROL_SCAN_SCHEME];
-	if (attr)
+	if (attr) {
 		param.scan_freq_scheme = nla_get_u32(attr);
+		is_wtc_param_updated = true;
+	}
 
 	attr = tb2[QCA_ATTR_ROAM_CONTROL_CONNECTED_RSSI_THRESHOLD];
-	if (attr)
+	if (attr) {
 		param.connected_rssi_threshold = nla_get_u32(attr);
+		is_wtc_param_updated = true;
+	}
 
 	attr = tb2[QCA_ATTR_ROAM_CONTROL_CANDIDATE_RSSI_THRESHOLD];
-	if (attr)
+	if (attr) {
 		param.candidate_rssi_threshold_2g = nla_get_u32(attr);
+		is_wtc_param_updated = true;
+	}
 
 	attr = tb2[QCA_ATTR_ROAM_CONTROL_CANDIDATE_RSSI_THRESHOLD_2P4GHZ];
-	if (attr)
+	if (attr) {
 		param.candidate_rssi_threshold_2g = nla_get_u32(attr);
+		is_wtc_param_updated = true;
+	}
 
 	attr = tb2[QCA_ATTR_ROAM_CONTROL_CANDIDATE_RSSI_THRESHOLD_5GHZ];
-	if (attr)
+	if (attr) {
 		param.candidate_rssi_threshold_5g = nla_get_u32(attr);
-	else
+		is_wtc_param_updated = true;
+	} else {
 		param.candidate_rssi_threshold_5g =
 					param.candidate_rssi_threshold_2g;
+	}
 
 	attr = tb2[QCA_ATTR_ROAM_CONTROL_CANDIDATE_RSSI_THRESHOLD_6GHZ];
-	if (attr)
+	if (attr) {
 		param.candidate_rssi_threshold_6g = nla_get_u32(attr);
-	else
+		is_wtc_param_updated = true;
+	} else {
 		param.candidate_rssi_threshold_6g =
 					param.candidate_rssi_threshold_2g;
+	}
 
 	attr = tb2[QCA_ATTR_ROAM_CONTROL_USER_REASON];
-	if (attr)
+	if (attr) {
 		param.user_roam_reason = nla_get_u32(attr);
-	 else
+		is_wtc_param_updated = true;
+	} else {
 		param.user_roam_reason = DISABLE_VENDOR_BTM_CONFIG;
+	}
 
-	wlan_cm_roam_set_vendor_btm_params(hdd_ctx->psoc, vdev_id, &param);
-	/* Sends RSO update */
-	sme_send_vendor_btm_params(hdd_ctx->mac_handle, vdev_id);
+	if (is_wtc_param_updated) {
+		wlan_cm_roam_set_vendor_btm_params(hdd_ctx->psoc, vdev_id,
+						   &param);
+		/* Sends RSO update */
+		sme_send_vendor_btm_params(hdd_ctx->mac_handle, vdev_id);
+	}
 
 	return qdf_status_to_os_return(status);
 }
