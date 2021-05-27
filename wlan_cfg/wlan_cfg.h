@@ -196,6 +196,8 @@ struct wlan_srng_cfg {
  * @is_swlm_enabled: flag to enable/disable SWLM
  * @tx_per_pkt_vdev_id_check: Enable tx perpkt vdev id check
  * @wow_check_rx_pending_enable: Enable RX frame pending check in WoW
+ * @ipa_tx_ring_size: IPA tx ring size
+ * @ipa_tx_comp_ring_size: IPA tx completion ring size
  */
 struct wlan_cfg_dp_soc_ctxt {
 	int num_int_ctxts;
@@ -317,6 +319,10 @@ struct wlan_cfg_dp_soc_ctxt {
 	uint8_t radio1_rx_default_reo;
 	uint8_t radio2_rx_default_reo;
 	bool wow_check_rx_pending_enable;
+#ifdef IPA_OFFLOAD
+	uint32_t ipa_tx_ring_size;
+	uint32_t ipa_tx_comp_ring_size;
+#endif
 };
 
 /**
@@ -1524,6 +1530,36 @@ bool wlan_cfg_is_swlm_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
  * Return: force use 64 BA flag
  */
 bool wlan_cfg_is_dp_force_rx_64_ba(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+#ifdef IPA_OFFLOAD
+/*
+ * wlan_cfg_ipa_tx_ring_size - Get Tx DMA ring size (TCL Data Ring)
+ * @wlan_cfg_soc_ctx: dp cfg context
+ *
+ * Return: IPA Tx Ring Size
+ */
+uint32_t wlan_cfg_ipa_tx_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_ipa_tx_comp_ring_size - Get Tx completion ring size (WBM Ring)
+ * @wlan_cfg_soc_ctx: dp cfg context
+ *
+ * Return: IPA Tx Completion ring size
+ */
+uint32_t wlan_cfg_ipa_tx_comp_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+#else
+static inline
+uint32_t wlan_cfg_ipa_tx_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return 0;
+}
+
+static inline
+uint32_t wlan_cfg_ipa_tx_comp_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return 0;
+}
+#endif
 #endif
 
 /**
