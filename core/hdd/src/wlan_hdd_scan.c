@@ -310,20 +310,6 @@ void hdd_init_scan_reject_params(struct hdd_context *hdd_ctx)
 	}
 }
 
-#ifndef FEATURE_CM_ENABLE
-void hdd_reset_scan_reject_params(struct hdd_context *hdd_ctx,
-				  eRoamCmdStatus roam_status,
-				  eCsrRoamResult roam_result)
-{
-	if ((roam_status == eCSR_ROAM_ASSOCIATION_FAILURE) ||
-	    (roam_status == eCSR_ROAM_CANCELLED) ||
-	    (roam_result == eCSR_ROAM_RESULT_ASSOCIATED)) {
-		hdd_debug("Reset scan reject params");
-		hdd_init_scan_reject_params(hdd_ctx);
-	}
-}
-#endif
-
 /*
  * wlan_hdd_update_scan_ies() - API to update the scan IEs of scan request
  * with already stored default scan IEs
@@ -654,20 +640,6 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 			}
 		}
 	}
-
-#ifndef FEATURE_CM_ENABLE
-	if ((QDF_STA_MODE == adapter->device_mode) ||
-	    (QDF_P2P_CLIENT_MODE == adapter->device_mode) ||
-	    (QDF_P2P_DEVICE_MODE == adapter->device_mode)) {
-		struct csr_roam_profile *roam_profile =
-			hdd_roam_profile(adapter);
-
-		roam_profile->pAddIEScan =
-			scan_info->scan_add_ie.addIEdata;
-		roam_profile->nAddIEScanLength =
-			scan_info->scan_add_ie.length;
-	}
-#endif
 
 	if (QDF_P2P_CLIENT_MODE == adapter->device_mode ||
 	    QDF_P2P_DEVICE_MODE == adapter->device_mode) {

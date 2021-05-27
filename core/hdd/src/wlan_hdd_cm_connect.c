@@ -48,7 +48,6 @@
 #include "wlan_roam_debug.h"
 #include <wlan_hdd_regulatory.h>
 
-#ifdef FEATURE_CM_ENABLE
 bool hdd_cm_is_vdev_associated(struct hdd_adapter *adapter)
 {
 	struct wlan_objmgr_vdev *vdev;
@@ -165,44 +164,6 @@ bool hdd_cm_is_vdev_roaming(struct hdd_adapter *adapter)
 	return is_vdev_roaming;
 }
 
-#else
-bool hdd_cm_is_vdev_associated(struct hdd_adapter *adapter)
-{
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-
-	return (sta_ctx->conn_info.conn_state == eConnectionState_Associated ||
-		sta_ctx->conn_info.conn_state == eConnectionState_NdiConnected);
-}
-
-bool hdd_cm_is_connecting(struct hdd_adapter *adapter)
-{
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-
-	return sta_ctx->conn_info.conn_state == eConnectionState_Connecting;
-}
-
-bool hdd_cm_is_disconnected(struct hdd_adapter *adapter)
-{
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-
-	return sta_ctx->conn_info.conn_state == eConnectionState_NotConnected;
-}
-
-bool hdd_cm_is_disconnecting(struct hdd_adapter *adapter)
-{
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-
-	return sta_ctx->conn_info.conn_state == eConnectionState_Disconnecting;
-}
-
-bool hdd_cm_is_vdev_roaming(struct hdd_adapter *adapter)
-{
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-
-	return sme_roaming_in_progress(hdd_ctx->mac_handle, adapter->vdev_id);
-}
-#endif
-
 void hdd_cm_set_peer_authenticate(struct hdd_adapter *adapter,
 				  struct qdf_mac_addr *bssid,
 				  bool is_auth_required)
@@ -308,8 +269,6 @@ void hdd_cm_save_connect_status(struct hdd_adapter *adapter,
 {
 	adapter->connect_req_status = reason_code;
 }
-
-#ifdef FEATURE_CM_ENABLE
 
 #ifdef FEATURE_WLAN_WAPI
 static bool hdd_cm_is_wapi_sta(enum csr_akm_type auth_type)
@@ -645,6 +604,13 @@ static bool hdd_is_ese_assoc(enum csr_akm_type auth_type,
 	return false;
 }
 #endif
+
+static const uint8_t acm_mask_bit[WLAN_MAX_AC] = {
+	0x4,                    /* SME_AC_BK */
+	0x8,                    /* SME_AC_BE */
+	0x2,                    /* SME_AC_VI */
+	0x1                     /* SME_AC_VO */
+};
 
 static void hdd_wmm_cm_connect(struct wlan_objmgr_vdev *vdev,
 			       struct hdd_adapter *adapter,
@@ -1517,4 +1483,3 @@ QDF_STATUS hdd_cm_cckm_preauth_complete(struct wlan_objmgr_vdev *vdev,
 }
 #endif /* FEATURE_WLAN_ESE */
 #endif /* WLAN_FEATURE_PREAUTH_ENABLE */
-#endif

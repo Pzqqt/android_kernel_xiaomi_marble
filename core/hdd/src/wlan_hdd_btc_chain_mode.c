@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -99,13 +99,8 @@ wlan_hdd_btc_chain_mode_handler(struct wlan_objmgr_vdev *vdev)
 	switch (adapter->device_mode) {
 	case QDF_STA_MODE:
 	case QDF_P2P_CLIENT_MODE:
-		/* This is temp ifdef will be removed in near future */
-#ifdef FEATURE_CM_ENABLE
 		wlan_hdd_cm_issue_disconnect(adapter,
 					     REASON_PREV_AUTH_NOT_VALID, false);
-#else
-		wlan_hdd_disconnect(adapter, 0, REASON_PREV_AUTH_NOT_VALID);
-#endif
 		break;
 	case QDF_SAP_MODE:
 	case QDF_P2P_GO_MODE:
