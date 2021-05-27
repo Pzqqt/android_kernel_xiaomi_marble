@@ -48,6 +48,11 @@
 /* Max buffer in invalid peer SG list*/
 #define DP_MAX_INVALID_BUFFERS 10
 
+/* Max regular Rx packet routing error */
+#define DP_MAX_REG_RX_ROUTING_ERRS_THRESHOLD 20
+#define DP_MAX_REG_RX_ROUTING_ERRS_IN_TIMEOUT 10
+#define DP_RX_ERR_ROUTE_TIMEOUT_US (5 * 1000 * 1000) /* micro seconds */
+
 #ifdef FEATURE_MEC
 bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 			    struct dp_peer *peer,
@@ -913,10 +918,11 @@ dp_rx_bar_frame_handle(struct dp_soc *soc,
 next:
 	dp_rx_link_desc_return(soc, ring_desc,
 			       HAL_BM_ACTION_PUT_IN_IDLE_LIST);
+	dp_rx_buffer_pool_nbuf_free(soc, rx_desc->nbuf,
+				    rx_desc->pool_id);
 	dp_rx_add_to_free_desc_list(&pdev->free_list_head,
 				    &pdev->free_list_tail,
 				    rx_desc);
-	qdf_nbuf_free(nbuf);
 }
 
 #endif /* QCA_HOST_MODE_WIFI_DISABLED */
@@ -1669,6 +1675,119 @@ dp_rx_err_ring_record_entry(struct dp_soc *soc, uint64_t paddr,
 }
 #endif
 
+#ifdef HANDLE_RX_REROUTE_ERR
+static int dp_rx_err_handle_msdu_buf(struct dp_soc *soc,
+				     hal_ring_desc_t ring_desc)
+{
+	int lmac_id = DP_INVALID_LMAC_ID;
+	struct dp_rx_desc *rx_desc;
+	struct hal_buf_info hbi;
+	struct dp_pdev *pdev;
+
+	hal_rx_reo_buf_paddr_get(soc->hal_soc, ring_desc, &hbi);
+
+	rx_desc = dp_rx_cookie_2_va_rxdma_buf(soc, hbi.sw_cookie);
+
+	/* sanity */
+	if (!rx_desc) {
+		DP_STATS_INC(soc, rx.err.reo_err_msdu_buf_invalid_cookie, 1);
+		goto assert_return;
+	}
+
+	if (!rx_desc->nbuf)
+		goto assert_return;
+
+	dp_rx_err_ring_record_entry(soc, hbi.paddr,
+				    hbi.sw_cookie,
+				    hal_rx_ret_buf_manager_get(soc->hal_soc,
+							       ring_desc));
+	if (hbi.paddr != qdf_nbuf_get_frag_paddr(rx_desc->nbuf, 0)) {
+		DP_STATS_INC(soc, rx.err.nbuf_sanity_fail, 1);
+		rx_desc->in_err_state = 1;
+		goto assert_return;
+	}
+
+	/* After this point the rx_desc and nbuf are valid */
+	dp_ipa_rx_buf_smmu_mapping_lock(soc);
+	qdf_assert_always(rx_desc->unmapped);
+	dp_ipa_handle_rx_buf_smmu_mapping(soc,
+					  rx_desc->nbuf,
+					  RX_DATA_BUFFER_SIZE,
+					  false);
+	qdf_nbuf_unmap_nbytes_single(soc->osdev,
+				     rx_desc->nbuf,
+				     QDF_DMA_FROM_DEVICE,
+				     RX_DATA_BUFFER_SIZE);
+	rx_desc->unmapped = 1;
+	dp_ipa_rx_buf_smmu_mapping_unlock(soc);
+	dp_rx_buffer_pool_nbuf_free(soc, rx_desc->nbuf,
+				    rx_desc->pool_id);
+
+	pdev = dp_get_pdev_for_lmac_id(soc, rx_desc->pool_id);
+	lmac_id = rx_desc->pool_id;
+	dp_rx_add_to_free_desc_list(&pdev->free_list_head,
+				    &pdev->free_list_tail,
+				    rx_desc);
+	return lmac_id;
+
+assert_return:
+	qdf_assert(0);
+	return lmac_id;
+}
+
+static int dp_rx_err_exception(struct dp_soc *soc, hal_ring_desc_t ring_desc)
+{
+	int ret;
+	uint64_t cur_time_stamp;
+
+	DP_STATS_INC(soc, rx.err.reo_err_msdu_buf_rcved, 1);
+
+	/* Recover if overall error count exceeds threshold */
+	if (soc->stats.rx.err.reo_err_msdu_buf_rcved >
+	    DP_MAX_REG_RX_ROUTING_ERRS_THRESHOLD) {
+		dp_err("pkt threshold breached! reo_err_msdu_buf_rcved %u first err pkt time_stamp %llu",
+		       soc->stats.rx.err.reo_err_msdu_buf_rcved,
+		       soc->rx_route_err_start_pkt_ts);
+		qdf_trigger_self_recovery(NULL, QDF_RX_REG_PKT_ROUTE_ERR);
+	}
+
+	cur_time_stamp = qdf_get_log_timestamp_usecs();
+	if (!soc->rx_route_err_start_pkt_ts)
+		soc->rx_route_err_start_pkt_ts = cur_time_stamp;
+
+	/* Recover if threshold number of packets received in threshold time */
+	if ((cur_time_stamp - soc->rx_route_err_start_pkt_ts) >
+						DP_RX_ERR_ROUTE_TIMEOUT_US) {
+		soc->rx_route_err_start_pkt_ts = cur_time_stamp;
+
+		if (soc->rx_route_err_in_window >
+		    DP_MAX_REG_RX_ROUTING_ERRS_IN_TIMEOUT) {
+			qdf_trigger_self_recovery(NULL,
+						  QDF_RX_REG_PKT_ROUTE_ERR);
+			dp_err("rate threshold breached! reo_err_msdu_buf_rcved %u first err pkt time_stamp %llu",
+			       soc->stats.rx.err.reo_err_msdu_buf_rcved,
+			       soc->rx_route_err_start_pkt_ts);
+		} else {
+			soc->rx_route_err_in_window = 1;
+		}
+	} else {
+		soc->rx_route_err_in_window++;
+	}
+
+	ret = dp_rx_err_handle_msdu_buf(soc, ring_desc);
+
+	return ret;
+}
+#else /* HANDLE_RX_REROUTE_ERR */
+
+static int dp_rx_err_exception(struct dp_soc *soc, hal_ring_desc_t ring_desc)
+{
+	qdf_assert_always(0);
+
+	return DP_INVALID_LMAC_ID;
+}
+#endif /* HANDLE_RX_REROUTE_ERR */
+
 uint32_t
 dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 		  hal_ring_handle_t hal_ring_hdl, uint32_t quota)
@@ -1732,9 +1851,17 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 			goto next_entry;
 
 		/*
-		 * For REO error ring, expect only MSDU LINK DESC
+		 * For REO error ring, only MSDU LINK DESC is expected.
+		 * Handle HAL_RX_REO_MSDU_BUF_ADDR_TYPE exception case.
 		 */
-		qdf_assert_always(buf_type == HAL_RX_REO_MSDU_LINK_DESC_TYPE);
+		if (qdf_unlikely(buf_type != HAL_RX_REO_MSDU_LINK_DESC_TYPE)) {
+			int lmac_id;
+
+			lmac_id = dp_rx_err_exception(soc, ring_desc);
+			if (lmac_id >= 0)
+				rx_bufs_reaped[lmac_id] += 1;
+			goto next_entry;
+		}
 
 		hal_rx_buf_cookie_rbm_get(hal_soc, (uint32_t *)ring_desc,
 					  &hbi);

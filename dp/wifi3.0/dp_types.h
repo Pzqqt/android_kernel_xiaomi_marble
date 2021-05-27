@@ -1023,6 +1023,10 @@ struct dp_soc_stats {
 			uint32_t rx_2k_jump_to_stack;
 			/* RX 2k jump msdu dropped count */
 			uint32_t rx_2k_jump_drop;
+			/* REO ERR msdu buffer received */
+			uint32_t reo_err_msdu_buf_rcved;
+			/* REO ERR msdu buffer with invalid coookie received */
+			uint32_t reo_err_msdu_buf_invalid_cookie;
 			/* REO OOR msdu drop count */
 			uint32_t reo_err_oor_drop;
 			/* REO OOR msdu indicated to stack count */
@@ -1800,6 +1804,12 @@ struct dp_soc {
 
 	/* SoC level data path statistics */
 	struct dp_soc_stats stats;
+
+	/* timestamp to keep track of msdu buffers received on reo err ring */
+	uint64_t rx_route_err_start_pkt_ts;
+
+	/* Num RX Route err in a given window to keep track of rate of errors */
+	uint32_t rx_route_err_in_window;
 
 	/* Enable processing of Tx completion status words */
 	bool process_tx_status;

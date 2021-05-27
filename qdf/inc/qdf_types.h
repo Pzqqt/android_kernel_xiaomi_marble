@@ -1393,6 +1393,7 @@ enum qdf_suspend_type {
  * @QDF_SUSPEND_NO_CREDIT: host lack of credit after suspend
  * @QCA_HANG_BUS_FAILURE: Bus failure
  * @QDF_TASKLET_CREDIT_LATENCY_DETECT: tasklet or credit latency happened
+ * @QDF_RX_REG_PKT_ROUTE_ERR: MSDU buf errors exceed thresh in REO err path
  */
 enum qdf_hang_reason {
 	QDF_REASON_UNSPECIFIED,
@@ -1420,6 +1421,7 @@ enum qdf_hang_reason {
 	QDF_SUSPEND_NO_CREDIT,
 	QCA_HANG_BUS_FAILURE,
 	QDF_TASKLET_CREDIT_LATENCY_DETECT,
+	QDF_RX_REG_PKT_ROUTE_ERR,
 };
 
 /**
