@@ -169,7 +169,6 @@
 #include "wlan_hdd_bootup_marker.h"
 #include "wlan_hdd_cm_api.h"
 #include "wlan_roam_debug.h"
-
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
 
@@ -15283,6 +15282,32 @@ get_usable_channel_policy[QCA_WLAN_VENDOR_ATTR_USABLE_CHANNELS_MAX + 1] = {
 };
 
 #ifdef WLAN_FEATURE_GET_USABLE_CHAN_LIST
+static enum nl80211_chan_width
+hdd_convert_phy_bw_to_nl_bw(enum phy_ch_width bw)
+{
+	switch (bw) {
+	case CH_WIDTH_20MHZ:
+		return NL80211_CHAN_WIDTH_20;
+	case CH_WIDTH_40MHZ:
+		return NL80211_CHAN_WIDTH_40;
+	case CH_WIDTH_160MHZ:
+		return NL80211_CHAN_WIDTH_160;
+	case CH_WIDTH_80MHZ:
+		return NL80211_CHAN_WIDTH_80;
+	case CH_WIDTH_80P80MHZ:
+		return NL80211_CHAN_WIDTH_80P80;
+	case CH_WIDTH_5MHZ:
+		return NL80211_CHAN_WIDTH_5;
+	case CH_WIDTH_10MHZ:
+		return NL80211_CHAN_WIDTH_10;
+	case CH_WIDTH_INVALID:
+	case CH_WIDTH_MAX:
+		return NL80211_CHAN_WIDTH_20;
+	}
+
+	return NL80211_CHAN_WIDTH_20;
+}
+
 /**
  * hdd_fill_usable_channels_data() - Fill the data requested by userspace
  * @skb: SK buffer
@@ -15300,8 +15325,8 @@ hdd_fill_usable_channels_data(struct sk_buff *skb, struct nlattr **tb,
 			      struct get_usable_chan_res_params *res_msg,
 			      int count)
 {
-	struct nlattr *config;
-	uint8_t i = 0;
+	struct nlattr *config, *chan_params;
+	uint8_t i, bw, j = 0;
 
 	config = nla_nest_start(skb,
 				QCA_WLAN_VENDOR_ATTR_USABLE_CHANNELS_CHAN_INFO);
@@ -15312,16 +15337,31 @@ hdd_fill_usable_channels_data(struct sk_buff *skb, struct nlattr **tb,
 	for (i = 0; i < count ; i++) {
 		if (!res_msg[i].freq)
 			continue;
-		nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_CHAN_INFO_PRIMARY_FREQ,
-			    res_msg[i].freq);
-		nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_CHAN_INFO_SEG0_FREQ,
-			    res_msg[i].seg0_freq);
-		nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_CHAN_INFO_SEG1_FREQ,
-			    res_msg[i].seg1_freq);
-		nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_CHAN_INFO_BANDWIDTH,
-			    res_msg[i].bw);
-		nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_CHAN_INFO_IFACE_MODE_MASK,
-			    res_msg[i].iface_mode_mask);
+		chan_params = nla_nest_start(skb, j);
+		if (!chan_params)
+			return -EINVAL;
+		j++;
+		bw = hdd_convert_phy_bw_to_nl_bw(res_msg[i].bw);
+		hdd_debug("populating chan_params freq %d bw %d iface mode %d, seg0 %d",
+			  res_msg[i].freq, bw, res_msg[i].iface_mode_mask,
+			  res_msg[i].seg0_freq);
+		if (nla_put_u32(skb,
+				QCA_WLAN_VENDOR_ATTR_CHAN_INFO_PRIMARY_FREQ,
+				res_msg[i].freq) ||
+		    nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_CHAN_INFO_SEG0_FREQ,
+				res_msg[i].seg0_freq) ||
+		    nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_CHAN_INFO_SEG1_FREQ,
+				res_msg[i].seg1_freq) ||
+		    nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_CHAN_INFO_BANDWIDTH,
+				bw) ||
+		    nla_put_u32(skb,
+				QCA_WLAN_VENDOR_ATTR_CHAN_INFO_IFACE_MODE_MASK,
+				res_msg[i].iface_mode_mask)) {
+			hdd_err("nla put failre");
+			return -EINVAL;
+		}
+
+		nla_nest_end(skb, chan_params);
 	}
 	nla_nest_end(skb, config);
 	return 0;
@@ -15397,6 +15437,43 @@ fail:
 }
 
 /**
+ * hdd_get_all_band_mask() - get supported nl80211 bands
+ *
+ * Return: supported band mask
+ */
+static uint32_t
+hdd_get_all_band_mask(void)
+{
+	uint32_t band_mask = 0;
+
+	band_mask = (1 << NL80211_BAND_2GHZ) |
+			(1 << NL80211_BAND_5GHZ) |
+			(1 << NL80211_BAND_6GHZ);
+
+	return band_mask;
+}
+
+/**
+ * hdd_get_all_iface_mode_mask() - get supported nl80211 iface mode
+ *
+ * Return: supported iface mode mask
+ */
+static uint32_t
+hdd_get_all_iface_mode_mask(void)
+{
+	uint32_t mode_mask = 0;
+
+	mode_mask = (1 << NL80211_IFTYPE_STATION) |
+			(1 << NL80211_IFTYPE_AP) |
+			(1 << NL80211_IFTYPE_P2P_GO) |
+			(1 << NL80211_IFTYPE_P2P_CLIENT) |
+			(1 << NL80211_IFTYPE_P2P_DEVICE) |
+			(1 << NL80211_IFTYPE_NAN);
+
+	return mode_mask;
+}
+
+/**
  * __wlan_hdd_cfg80211_get_usable_channel() - get chain rssi
  * @wiphy: wiphy pointer
  * @wdev: pointer to struct wireless_dev
@@ -15440,27 +15517,31 @@ static int __wlan_hdd_cfg80211_get_usable_channel(struct wiphy *wiphy,
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_USABLE_CHANNELS_BAND_MASK]) {
 		hdd_err("band mask not present");
-		ret = -EINVAL;
-		goto err;
-	}
-	req_msg.band_mask =
+		req_msg.band_mask = hdd_get_all_band_mask();
+	} else {
+		req_msg.band_mask =
 		nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_USABLE_CHANNELS_BAND_MASK]);
-
+		if (!req_msg.band_mask)
+			req_msg.band_mask = hdd_get_all_band_mask();
+	}
 	if (!tb[QCA_WLAN_VENDOR_ATTR_USABLE_CHANNELS_IFACE_MODE_MASK]) {
 		hdd_err("iface mode mask not present");
-		ret = -EINVAL;
-		goto err;
-	}
-	req_msg.iface_mode_mask = nla_get_u32(
+		req_msg.iface_mode_mask = hdd_get_all_iface_mode_mask();
+	} else {
+		req_msg.iface_mode_mask = nla_get_u32(
 		tb[QCA_WLAN_VENDOR_ATTR_USABLE_CHANNELS_IFACE_MODE_MASK]);
+		if (!req_msg.iface_mode_mask)
+			req_msg.iface_mode_mask = hdd_get_all_iface_mode_mask();
+	}
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_USABLE_CHANNELS_FILTER_MASK]) {
 		hdd_err("usable channels filter mask not present");
-		ret = -EINVAL;
-		goto err;
+		req_msg.filter_mask = 0;
+	} else {
+		req_msg.filter_mask =
+			nla_get_u32(
+			tb[QCA_WLAN_VENDOR_ATTR_USABLE_CHANNELS_FILTER_MASK]);
 	}
-	req_msg.filter_mask =
-	   nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_USABLE_CHANNELS_FILTER_MASK]);
 
 	hdd_debug("get usable channel list for band %d mode %d filter %d",
 		  req_msg.band_mask, req_msg.iface_mode_mask,
