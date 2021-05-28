@@ -389,12 +389,9 @@ static QDF_STATUS vdev_mgr_up_param_update(
 	param->vdev_id = wlan_vdev_get_id(vdev);
 	param->assoc_id = mlme_obj->proto.sta.assoc_id;
 	mbss = &mlme_obj->mgmt.mbss_11ax;
-	if (mbss->profile_idx) {
-		param->profile_idx = mbss->profile_idx;
-		param->profile_num = mbss->profile_num;
-		qdf_mem_copy(param->trans_bssid, mbss->trans_bssid,
-			     QDF_MAC_ADDR_SIZE);
-	}
+	param->profile_idx = mbss->profile_idx;
+	param->profile_num = mbss->profile_num;
+	qdf_mem_copy(param->trans_bssid, mbss->trans_bssid, QDF_MAC_ADDR_SIZE);
 
 	return QDF_STATUS_SUCCESS;
 }
