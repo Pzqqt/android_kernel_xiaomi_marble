@@ -481,10 +481,10 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		V4L2_MPEG_MSM_VIDC_DISABLE, V4L2_MPEG_MSM_VIDC_ENABLE,
 		1, V4L2_MPEG_MSM_VIDC_DISABLE,
 		V4L2_CID_MPEG_VIDC_LOWLATENCY_REQUEST,
-		HFI_PROP_STAGE,
-		CAP_FLAG_DYNAMIC_ALLOWED,
+		HFI_PROP_SEQ_CHANGE_AT_SYNC_FRAME,
+		CAP_FLAG_INPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
 		{0}, {0},
-		NULL, msm_vidc_set_stage},
+		NULL, msm_vidc_set_seq_change_at_sync_frame},
 
 	{LTR_COUNT, ENC, H264|HEVC,
 		0, 2, 1, 0,

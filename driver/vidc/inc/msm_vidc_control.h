@@ -95,6 +95,8 @@ int msm_vidc_set_csc_custom_matrix(void *instance,
 	enum msm_vidc_inst_capability_type cap_id);
 int msm_vidc_set_session_priority(void* instance,
 	enum msm_vidc_inst_capability_type cap_id);
+int msm_vidc_set_seq_change_at_sync_frame(void* instance,
+	enum msm_vidc_inst_capability_type cap_id);
 int msm_vidc_set_s32(void *instance,
 	enum msm_vidc_inst_capability_type cap_id);
 int msm_vidc_set_q16(void *instance,

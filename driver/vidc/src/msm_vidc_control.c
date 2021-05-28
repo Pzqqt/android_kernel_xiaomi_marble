@@ -3351,3 +3351,24 @@ int msm_vidc_set_pipe(void *instance,
 
 	return rc;
 }
+
+int msm_vidc_set_seq_change_at_sync_frame(void* instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	u32 payload;
+	struct msm_vidc_inst* inst = (struct msm_vidc_inst*)instance;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	payload = inst->capabilities->cap[LOWLATENCY_MODE].value;
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
+		&payload, sizeof(u32), __func__);
+	if (rc)
+		return rc;
+
+	return rc;
+}

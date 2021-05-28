@@ -778,6 +778,10 @@ static int msm_vdec_set_output_properties(struct msm_vidc_inst *inst)
 	if (rc)
 		return rc;
 
+	rc = msm_vidc_set_seq_change_at_sync_frame(inst, LOWLATENCY_MODE);
+	if (rc)
+		return rc;
+
 	return rc;
 }
 
