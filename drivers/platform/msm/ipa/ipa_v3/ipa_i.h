@@ -61,6 +61,7 @@
 #define IPA_SYS_DESC_FIFO_SZ 0x800
 #define IPA_SYS_TX_DATA_DESC_FIFO_SZ 0x1000
 #define IPA_SYS_TX_DATA_DESC_FIFO_SZ_8K 0x2000
+#define IPA_SYS_TPUT_EP_DESC_FIFO_SZ 0x10
 #define IPA_COMMON_EVENT_RING_SIZE 0x7C00
 #define IPA_LAN_RX_HEADER_LENGTH (2)
 #define IPA_QMAP_HEADER_LENGTH (4)
@@ -2306,6 +2307,7 @@ struct ipa3_context {
 	u32 gsi_rmnet_ctl_evt_ring_irq;
 	u32 gsi_rmnet_ll_evt_ring_intvec;
 	u32 gsi_rmnet_ll_evt_ring_irq;
+	bool use_tput_est_ep;
 };
 
 struct ipa3_plat_drv_res {
@@ -2390,6 +2392,7 @@ struct ipa3_plat_drv_res {
 	u32 gsi_rmnet_ctl_evt_ring_irq;
 	u32 gsi_rmnet_ll_evt_ring_intvec;
 	u32 gsi_rmnet_ll_evt_ring_irq;
+	bool use_tput_est_ep;
 };
 
 /**
@@ -2858,6 +2861,8 @@ void ipa3_free_skb(struct ipa_rx_data *data);
 /*
  * System pipes
  */
+int ipa3_setup_tput_pipe(void);
+
 int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl);
 
 int ipa3_teardown_sys_pipe(u32 clnt_hdl);
