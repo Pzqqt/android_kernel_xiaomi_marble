@@ -1316,6 +1316,14 @@ static int msm_vidc_adjust_static_layer_count_and_type(struct msm_vidc_inst *ins
 		goto exit;
 	}
 
+	if (!inst->capabilities->cap[META_EVA_STATS].value &&
+		hb_requested && (layer_count > 1)) {
+		layer_count = 1;
+		i_vpr_h(inst,
+			"%s: cvp disable supports only one enh layer HB\n",
+			__func__);
+	}
+
 	/* decide hfi layer type */
 	if (hb_requested) {
 		inst->hfi_layer_type = HFI_HIER_B;
@@ -1368,7 +1376,9 @@ int msm_vidc_adjust_layer_count(void *instance, struct v4l2_ctrl *ctrl)
 		capability->cap[ENH_LAYER_COUNT].value;
 
 	if (!is_parent_available(inst, ENH_LAYER_COUNT,
-		BITRATE_MODE, __func__))
+		BITRATE_MODE, __func__) ||
+		!is_parent_available(inst, ENH_LAYER_COUNT,
+		META_EVA_STATS, __func__))
 		return -EINVAL;
 
 	if (!inst->vb2q[OUTPUT_PORT].streaming) {
@@ -1419,7 +1429,7 @@ int msm_vidc_adjust_gop_size(void *instance, struct v4l2_ctrl *ctrl)
 	/*
 	 * Layer encoding needs GOP size to be multiple of subgop size
 	 * And subgop size is 2 ^ number of enhancement layers.
-	*/
+	 */
 
 	/* v4l2 layer count is the number of enhancement layers */
 	min_gop_size = 1 << enh_layer_count;
