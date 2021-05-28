@@ -1253,8 +1253,14 @@ wlansap_get_csa_chanwidth_from_phymode(struct sap_context *sap_context,
 {
 	uint32_t max_fw_bw;
 	enum phy_ch_width ch_width, concurrent_bw = 0;
-	struct mac_context *mac = sap_get_mac_context();
+	struct mac_context *mac;
 	struct ch_params ch_params = {0};
+
+	mac = sap_get_mac_context();
+	if (!mac) {
+		sap_err("Invalid MAC context");
+		return CH_WIDTH_20MHZ;
+	}
 
 	if (WLAN_REG_IS_24GHZ_CH_FREQ(chan_freq)) {
 		/*
