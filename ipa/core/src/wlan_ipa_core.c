@@ -4003,6 +4003,13 @@ QDF_STATUS wlan_ipa_uc_ol_init(struct wlan_ipa_priv *ipa_ctx,
 			ipa_err("Failure to setup IPA pipes (status=%d)",
 				status);
 			status = QDF_STATUS_E_FAILURE;
+
+			if (wlan_ipa_uc_sta_is_enabled(ipa_ctx->config)) {
+				qdf_cancel_work(&ipa_ctx->mcc_work);
+				wlan_ipa_teardown_sys_pipe(ipa_ctx);
+			}
+			ipa_ctx->uc_loaded = false;
+
 			goto fail_return;
 		}
 
