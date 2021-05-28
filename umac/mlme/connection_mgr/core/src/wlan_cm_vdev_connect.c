@@ -1335,18 +1335,20 @@ cm_connect_complete_ind(struct wlan_objmgr_vdev *vdev,
 		wlan_cm_roam_state_change(pdev, vdev_id, WLAN_ROAM_INIT,
 					  REASON_CONNECT);
 	cm_csr_connect_done_ind(vdev, rsp);
-	if (QDF_IS_STATUS_SUCCESS(rsp->connect_status))
-		cm_process_connect_complete(psoc, pdev, vdev, rsp);
+
 	cm_connect_info(vdev, QDF_IS_STATUS_SUCCESS(rsp->connect_status) ?
 			true : false, &rsp->bssid, &rsp->ssid,
 			rsp->freq);
 
-	if (QDF_IS_STATUS_SUCCESS(rsp->connect_status))
+	if (QDF_IS_STATUS_SUCCESS(rsp->connect_status)) {
+		cm_process_connect_complete(psoc, pdev, vdev, rsp);
 		policy_mgr_incr_active_session(psoc, op_mode, vdev_id);
-	wlan_tdls_notify_sta_connect(vdev_id,
-				     mlme_get_tdls_chan_switch_prohibited(vdev),
-				     mlme_get_tdls_prohibited(vdev), vdev);
-	wlan_p2p_status_connect(vdev);
+		wlan_tdls_notify_sta_connect(vdev_id,
+					     mlme_get_tdls_chan_switch_prohibited(vdev),
+					     mlme_get_tdls_prohibited(vdev),
+					     vdev);
+		wlan_p2p_status_connect(vdev);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
