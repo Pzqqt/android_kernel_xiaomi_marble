@@ -913,6 +913,40 @@ static QDF_STATUS scm_add_update_entry(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef CONFIG_REG_CLIENT
+/**
+ * scm_is_bss_allowed_for_country() - Check if bss is allowed to start for a
+ * specific country and power mode (VLP?LPI/SP) for 6GHz.
+ * @psoc: psoc ptr
+ * @scan_entry: ptr to scan entry
+ *
+ * Return: True if allowed, False if not.
+ */
+static bool scm_is_bss_allowed_for_country(struct wlan_objmgr_psoc *psoc,
+					   struct scan_cache_entry *scan_entry)
+{
+	struct wlan_country_ie *cc_ie;
+	uint8_t programmed_country[REG_ALPHA2_LEN + 1];
+
+	if (wlan_reg_is_6ghz_chan_freq(scan_entry->channel.chan_freq)) {
+		cc_ie = util_scan_entry_country(scan_entry);
+		wlan_reg_read_current_country(psoc, programmed_country);
+		if (cc_ie && qdf_mem_cmp(cc_ie->cc, programmed_country,
+					 REG_ALPHA2_LEN)) {
+			if (wlan_reg_is_us(programmed_country))
+				return false;
+		}
+	}
+	return true;
+}
+#else
+static bool scm_is_bss_allowed_for_country(struct wlan_objmgr_psoc *psoc,
+					   struct scan_cache_entry *scan_entry)
+{
+	return true;
+}
+#endif
+
 QDF_STATUS __scm_handle_bcn_probe(struct scan_bcn_probe_event *bcn)
 {
 	struct wlan_objmgr_psoc *psoc;
@@ -1077,6 +1111,15 @@ QDF_STATUS __scm_handle_bcn_probe(struct scan_bcn_probe_event *bcn)
 		}
 		if (scan_obj->cb.update_beacon)
 			scan_obj->cb.update_beacon(pdev, scan_entry);
+
+		if (!scm_is_bss_allowed_for_country(psoc, scan_entry)) {
+			scm_info("Drop frame from "QDF_MAC_ADDR_FMT
+				 ": AP in VLP mode not supported for US",
+				 QDF_MAC_ADDR_REF(scan_entry->bssid.bytes));
+			util_scan_free_cache_entry(scan_entry);
+			qdf_mem_free(scan_node);
+			continue;
+		}
 
 		status = scm_add_update_entry(psoc, pdev, scan_entry);
 		if (QDF_IS_STATUS_ERROR(status)) {
