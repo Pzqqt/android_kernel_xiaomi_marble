@@ -45,6 +45,10 @@
 #include <cdp_txrx_host_stats.h>
 #include <osif_cm_util.h>
 
+#ifdef WLAN_FEATURE_TSF_UPLINK_DELAY
+#include <cdp_txrx_ctrl.h>
+#endif
+
 /*
  * define short names for the global vendor params
  * used by __wlan_hdd_cfg80211_get_station_cmd()
@@ -2053,6 +2057,52 @@ fail:
 	return -EINVAL;
 }
 
+#ifdef WLAN_FEATURE_TSF_UPLINK_DELAY
+static uint32_t hdd_get_uplink_delay_len(struct hdd_adapter *adapter)
+{
+	if (adapter->device_mode != QDF_STA_MODE)
+		return 0;
+
+	return nla_total_size(sizeof(uint32_t));
+}
+
+static QDF_STATUS hdd_add_uplink_delay(struct hdd_adapter *adapter,
+				       struct sk_buff *skb)
+{
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	QDF_STATUS status;
+	uint32_t ul_delay;
+
+	if (adapter->device_mode != QDF_STA_MODE)
+		return QDF_STATUS_SUCCESS;
+
+	if (qdf_atomic_read(&adapter->tsf_auto_report)) {
+		status = cdp_get_uplink_delay(soc, adapter->vdev_id, &ul_delay);
+		if (QDF_IS_STATUS_ERROR(status))
+			ul_delay = 0;
+	} else {
+		ul_delay = 0;
+	}
+
+	if (nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_UPLINK_DELAY,
+			ul_delay))
+		return QDF_STATUS_E_FAILURE;
+
+	return QDF_STATUS_SUCCESS;
+}
+#else /* !WLAN_FEATURE_TSF_UPLINK_DELAY */
+static inline uint32_t hdd_get_uplink_delay_len(struct hdd_adapter *adapter)
+{
+	return 0;
+}
+
+static inline QDF_STATUS hdd_add_uplink_delay(struct hdd_adapter *adapter,
+					      struct sk_buff *skb)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_FEATURE_TSF_UPLINK_DELAY */
+
 /**
  * hdd_get_connected_station_info_ex() - get connected peer's info
  * @hdd_ctx: hdd context
@@ -2247,6 +2297,8 @@ static int hdd_get_station_info_ex(struct hdd_context *hdd_ctx,
 	connect_fail_rsn_len = hdd_get_connect_fail_reason_code_len(adapter);
 	nl_buf_len += connect_fail_rsn_len;
 
+	nl_buf_len += hdd_get_uplink_delay_len(adapter);
+
 	if (!nl_buf_len) {
 		hdd_err_rl("Failed to get bcn pmf stats");
 		return -EINVAL;
@@ -2278,6 +2330,12 @@ static int hdd_get_station_info_ex(struct hdd_context *hdd_ctx,
 			kfree_skb(skb);
 			return -EINVAL;
 		}
+	}
+
+	if (QDF_IS_STATUS_ERROR(hdd_add_uplink_delay(adapter, skb))) {
+		hdd_err_rl("hdd_add_uplink_delay fail");
+		kfree_skb(skb);
+		return -EINVAL;
 	}
 
 	ret = cfg80211_vendor_cmd_reply(skb);
