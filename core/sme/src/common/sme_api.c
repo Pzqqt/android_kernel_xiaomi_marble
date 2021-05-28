@@ -15095,29 +15095,21 @@ int16_t sme_get_oper_chan_freq(struct wlan_objmgr_vdev *vdev)
 
 enum phy_ch_width sme_get_oper_ch_width(struct wlan_objmgr_vdev *vdev)
 {
-	uint8_t vdev_id;
-	struct mac_context *mac_ctx;
-	mac_handle_t mac_handle;
 	struct wlan_channel *des_chan;
 
 	if (!vdev) {
 		sme_err("Invalid vdev id is passed");
 		return CH_WIDTH_INVALID;
 	}
-	vdev_id = wlan_vdev_get_id(vdev);
+
 	des_chan = wlan_vdev_mlme_get_des_chan(vdev);
-	if (!des_chan)
+	if (!des_chan) {
+		sme_debug("NULL des_chan");
 		return CH_WIDTH_INVALID;
+	}
 
-	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
-	if (!mac_handle)
-		return CH_WIDTH_INVALID;
+	return des_chan->ch_width;
 
-	mac_ctx = MAC_CONTEXT(mac_handle);
-	if (csr_is_conn_state_connected(mac_ctx, vdev_id))
-		return des_chan->ch_width;
-
-	return CH_WIDTH_INVALID;
 }
 
 int sme_get_sec20chan_freq_mhz(struct wlan_objmgr_vdev *vdev,
