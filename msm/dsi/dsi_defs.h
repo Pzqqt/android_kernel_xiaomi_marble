@@ -626,6 +626,7 @@ struct dyn_clk_list {
  * @roi_caps:		  Panel ROI capabilities
  * @widebus_support       48 bit wide data bus is supported by hw
  * @allowed_mode_switch: BIT mask to mark allowed mode switches
+ * @disable_rsc_solver: Dynamically disable RSC solver for the timing mode.
  */
 struct dsi_display_mode_priv_info {
 	struct dsi_panel_cmd_set cmd_sets[DSI_CMD_SET_MAX];
@@ -651,6 +652,7 @@ struct dsi_display_mode_priv_info {
 	struct msm_roi_caps roi_caps;
 	bool widebus_support;
 	u32 allowed_mode_switch;
+	bool disable_rsc_solver;
 };
 
 /**

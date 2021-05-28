@@ -798,6 +798,8 @@ static int dsi_panel_parse_timing(struct dsi_mode_info *mode,
 	else
 		display_mode->priv_info->mdp_transfer_time_us = 0;
 
+	priv_info->disable_rsc_solver = utils->read_bool(utils->data, "qcom,disable-rsc-solver");
+
 	rc = utils->read_u32(utils->data,
 				"qcom,mdss-dsi-panel-framerate",
 				&mode->refresh_rate);
