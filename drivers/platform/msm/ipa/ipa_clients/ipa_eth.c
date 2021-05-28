@@ -682,6 +682,7 @@ static int ipa_eth_client_disconn_pipes_internal(struct ipa_eth_client *client)
 {
 	int rc;
 	struct ipa_eth_client_pipe_info *pipe;
+	struct ipa_ep_cfg_holb holb;
 
 	/* validate user input */
 	if (!client) {
@@ -702,6 +703,21 @@ static int ipa_eth_client_disconn_pipes_internal(struct ipa_eth_client *client)
 		client->client_type, client->inst_id,
 		client->traffic_type);
 	mutex_lock(&ipa_eth_ctx->lock);
+
+	/* set holb on tx pipes first */
+	list_for_each_entry(pipe, &client->pipe_list,
+		link) {
+		if (pipe->dir == IPA_ETH_PIPE_DIR_TX)
+		{
+			IPA_ETH_DBG("Set holb on pipe = %d, pipe->dir = %d \n",
+				ipa_get_ep_mapping(ipa_eth_get_ipa_client_type_from_pipe(pipe)),
+				pipe->dir);
+			holb.en = 1;
+			holb.tmr_val = 0;
+			ipa3_cfg_ep_holb(ipa_get_ep_mapping(ipa_eth_get_ipa_client_type_from_pipe(pipe)), &holb);
+		}
+	}
+
 	list_for_each_entry(pipe, &client->pipe_list,
 		link) {
 		rc = ipa_eth_client_disconnect_pipe(pipe);
