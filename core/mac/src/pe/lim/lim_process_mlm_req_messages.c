@@ -121,7 +121,8 @@ static void lim_process_sae_auth_timeout(struct mac_context *mac_ctx)
 		 * SAE authentication is not completed. Restore from
 		 * auth state.
 		 */
-		if (session->opmode == QDF_STA_MODE)
+		if ((session->opmode == QDF_STA_MODE) ||
+		    (session->opmode == QDF_P2P_CLIENT_MODE))
 			lim_restore_from_auth_state(mac_ctx,
 				eSIR_SME_AUTH_TIMEOUT_RESULT_CODE,
 				proto_status_code, session);

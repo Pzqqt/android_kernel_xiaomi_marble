@@ -337,7 +337,9 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 	 * from policy manager.
 	 */
 	if ((adapter->device_mode == QDF_STA_MODE ||
-	     adapter->device_mode == QDF_SAP_MODE) &&
+	     adapter->device_mode == QDF_SAP_MODE ||
+	     adapter->device_mode == QDF_P2P_CLIENT_MODE ||
+	     adapter->device_mode == QDF_P2P_GO_MODE) &&
 	    (type == SIR_MAC_MGMT_FRAME &&
 	    sub_type == SIR_MAC_MGMT_AUTH)) {
 		qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_SME,

@@ -5762,7 +5762,8 @@ lim_handle_sae_auth_retry(struct mac_context *mac_ctx, uint8_t vdev_id,
 		       vdev_id);
 		return;
 	}
-	if (session->opmode != QDF_STA_MODE)
+	if ((session->opmode != QDF_STA_MODE) &&
+	    (session->opmode != QDF_P2P_CLIENT_MODE))
 		return;
 
 	if (session->limMlmState == eLIM_MLM_WT_SAE_AUTH_STATE)
