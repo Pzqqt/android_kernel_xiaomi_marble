@@ -872,10 +872,10 @@ enum usable_channels_filter {
  * iface_mode_mask: interface mode mask
  **/
 struct get_usable_chan_res_params {
-	uint32_t freq;
+	qdf_freq_t freq;
 	uint32_t seg0_freq;
 	uint32_t seg1_freq;
-	uint32_t bw;
+	enum phy_ch_width bw;
 	uint32_t iface_mode_mask;
 	enum channel_state state;
 };
