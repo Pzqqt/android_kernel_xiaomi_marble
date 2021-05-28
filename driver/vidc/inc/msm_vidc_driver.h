@@ -135,12 +135,21 @@ static inline bool is_meta_enabled(struct msm_vidc_inst *inst, unsigned int type
 	return enabled;
 }
 
-static inline bool is_linear_colorformat(enum msm_vidc_colorformat_type colorformat)
+static inline bool is_linear_yuv_colorformat(enum msm_vidc_colorformat_type colorformat)
 {
 	return colorformat == MSM_VIDC_FMT_NV12 ||
 		colorformat == MSM_VIDC_FMT_NV21 ||
-		colorformat == MSM_VIDC_FMT_P010 ||
-		colorformat == MSM_VIDC_FMT_RGBA8888;
+		colorformat == MSM_VIDC_FMT_P010;
+}
+
+static inline bool is_linear_rgba_colorformat(enum msm_vidc_colorformat_type colorformat)
+{
+	return colorformat == MSM_VIDC_FMT_RGBA8888;
+}
+
+static inline bool is_linear_colorformat(enum msm_vidc_colorformat_type colorformat)
+{
+	return is_linear_yuv_colorformat(colorformat) || is_linear_rgba_colorformat(colorformat);
 }
 
 static inline bool is_ubwc_colorformat(enum msm_vidc_colorformat_type colorformat)
@@ -397,7 +406,7 @@ int msm_vidc_update_debug_str(struct msm_vidc_inst *inst);
 void msm_vidc_allow_dcvs(struct msm_vidc_inst *inst);
 bool msm_vidc_allow_decode_batch(struct msm_vidc_inst *inst);
 int msm_vidc_check_session_supported(struct msm_vidc_inst *inst);
-int msm_vidc_check_mbps_supported(struct msm_vidc_inst *inst);
+int msm_vidc_check_core_mbps(struct msm_vidc_inst *inst);
 int msm_vidc_check_scaling_supported(struct msm_vidc_inst *inst);
 int msm_vidc_update_timestamp(struct msm_vidc_inst *inst, u64 timestamp);
 int msm_vidc_calc_framerate(struct msm_vidc_inst *inst);

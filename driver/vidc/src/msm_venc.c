@@ -1575,7 +1575,7 @@ set_default:
 		inst->vb2q[INPUT_PORT].streaming) ||
 		(s_parm->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE &&
 		inst->vb2q[OUTPUT_PORT].streaming)) {
-		if (msm_vidc_check_mbps_supported(inst)) {
+		if (msm_vidc_check_core_mbps(inst)) {
 			i_vpr_e(inst,
 				"%s: Unsupported load with rate %d, setting default rate %d\n",
 				__func__, input_rate, default_rate);

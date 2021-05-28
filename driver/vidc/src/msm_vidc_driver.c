@@ -5006,7 +5006,49 @@ int msm_vidc_update_debug_str(struct msm_vidc_inst *inst)
 	return 0;
 }
 
-int msm_vidc_check_mbps_supported(struct msm_vidc_inst *inst)
+static int msm_vidc_print_insts_info(struct msm_vidc_core *core)
+{
+	struct msm_vidc_inst *inst;
+	u32 height, width, fps, orate;
+	struct msm_vidc_inst_capability *capability;
+	struct v4l2_format *out_f;
+	struct v4l2_format *inp_f;
+	char prop[64];
+
+	d_vpr_e("Print all running instances\n");
+	d_vpr_e("%6s | %6s | %5s | %5s | %5s\n", "width", "height", "fps", "orate", "prop");
+
+	core_lock(core, __func__);
+	list_for_each_entry(inst, &core->instances, list) {
+		out_f = &inst->fmts[OUTPUT_PORT];
+		inp_f = &inst->fmts[INPUT_PORT];
+		capability = inst->capabilities;
+		memset(&prop, 0, sizeof(prop));
+
+		width = max(out_f->fmt.pix_mp.width, inp_f->fmt.pix_mp.width);
+		height = max(out_f->fmt.pix_mp.height, inp_f->fmt.pix_mp.height);
+		fps = capability->cap[FRAME_RATE].value >> 16;
+		orate = capability->cap[OPERATING_RATE].value >> 16;
+
+		if (is_realtime_session(inst))
+			strlcat(prop, "RT ", sizeof(prop));
+		else
+			strlcat(prop, "NRT", sizeof(prop));
+
+		if (is_thumbnail_session(inst))
+			strlcat(prop, "+THUMB", sizeof(prop));
+
+		if (is_image_session(inst))
+			strlcat(prop, "+IMAGE", sizeof(prop));
+
+		i_vpr_e(inst, "%6u | %6u | %5u | %5u | %5s\n", width, height, fps, orate, prop);
+	}
+	core_unlock(core, __func__);
+
+	return 0;
+}
+
+int msm_vidc_check_core_mbps(struct msm_vidc_inst *inst)
 {
 	u32 mbps = 0;
 	struct msm_vidc_core *core;
@@ -5035,17 +5077,17 @@ int msm_vidc_check_mbps_supported(struct msm_vidc_inst *inst)
 	core_unlock(core, __func__);
 
 	if (mbps > core->capabilities[MAX_MBPS].value) {
-		/* todo: print running instances */
-		//msm_vidc_print_running_insts(inst->core);
+		i_vpr_e(inst, "%s: Hardware overloaded. needed %u, max %u", __func__,
+			mbps, core->capabilities[MAX_MBPS].value);
 		return -ENOMEM;
 	}
 
 	return 0;
 }
 
-static int msm_vidc_check_mbpf_supported(struct msm_vidc_inst *inst)
+static int msm_vidc_check_core_mbpf(struct msm_vidc_inst *inst)
 {
-	u32 mbpf = 0;
+	u32 video_mbpf = 0, image_mbpf = 0;
 	struct msm_vidc_core *core;
 	struct msm_vidc_inst *instance;
 
@@ -5061,18 +5103,55 @@ static int msm_vidc_check_mbpf_supported(struct msm_vidc_inst *inst)
 		if (instance->state == MSM_VIDC_ERROR)
 			continue;
 
-		/* ignore thumbnail and image sessions */
-		if (is_thumbnail_session(instance) ||
-			is_image_session(instance))
+		/* ignore thumbnail session */
+		if (is_thumbnail_session(instance))
 			continue;
 
-		mbpf += msm_vidc_get_mbs_per_frame(instance);
+		if (is_image_session(instance))
+			image_mbpf += msm_vidc_get_mbs_per_frame(instance);
+		else
+			video_mbpf += msm_vidc_get_mbs_per_frame(instance);
 	}
 	core_unlock(core, __func__);
 
-	if (mbpf > core->capabilities[MAX_MBPF].value) {
-		/* todo: print running instances */
-		//msm_vidc_print_running_insts(inst->core);
+	if (video_mbpf > core->capabilities[MAX_MBPF].value) {
+		i_vpr_e(inst, "%s: video overloaded. needed %u, max %u", __func__,
+			video_mbpf, core->capabilities[MAX_MBPF].value);
+		return -ENOMEM;
+	}
+
+	if (image_mbpf > core->capabilities[MAX_IMAGE_MBPF].value) {
+		i_vpr_e(inst, "%s: image overloaded. needed %u, max %u", __func__,
+			image_mbpf, core->capabilities[MAX_IMAGE_MBPF].value);
+		return -ENOMEM;
+	}
+
+	return 0;
+}
+
+static int msm_vidc_check_inst_mbpf(struct msm_vidc_inst *inst)
+{
+	u32 mbpf = 0, max_mbpf = 0;
+	struct msm_vidc_inst_capability *capability;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	if (is_secure_session(inst))
+		max_mbpf = capability->cap[SECURE_MBPF].max;
+	else if (is_encode_session(inst) && capability->cap[LOSSLESS].value)
+		max_mbpf = capability->cap[LOSSLESS_MBPF].max;
+	else
+		max_mbpf = capability->cap[MBPF].max;
+
+	/* check current session mbpf */
+	mbpf = msm_vidc_get_mbs_per_frame(inst);
+	if (mbpf > max_mbpf) {
+		i_vpr_e(inst, "%s: session overloaded. needed %u, max %u", __func__,
+			mbpf, max_mbpf);
 		return -ENOMEM;
 	}
 
@@ -5115,8 +5194,8 @@ static bool msm_vidc_allow_image_encode_session(struct msm_vidc_inst *inst)
 		goto exit;
 	}
 
-	/* is linear color fmt */
-	allow = is_linear_colorformat(pix_fmt);
+	/* is linear yuv color fmt */
+	allow = is_linear_yuv_colorformat(pix_fmt);
 	if (!allow) {
 		i_vpr_e(inst, "%s: compressed fmt: %#x\n", __func__, pix_fmt);
 		goto exit;
@@ -5175,10 +5254,10 @@ static bool msm_vidc_allow_image_encode_session(struct msm_vidc_inst *inst)
 		goto exit;
 	}
 
-	return true;
-
 exit:
-	i_vpr_e(inst, "%s: current session not allowed\n", __func__);
+	if (!allow)
+		i_vpr_e(inst, "%s: current session not allowed\n", __func__);
+
 	return allow;
 }
 
@@ -5187,7 +5266,7 @@ int msm_vidc_check_session_supported(struct msm_vidc_inst *inst)
 	struct msm_vidc_inst_capability *capability;
 	struct v4l2_format *fmt;
 	u32 iwidth, owidth, iheight, oheight, min_width, min_height,
-		max_width, max_height, mbpf, max_mbpf;
+		max_width, max_height;
 	bool allow = false, is_interlaced = false;
 	int rc = 0;
 
@@ -5197,26 +5276,23 @@ int msm_vidc_check_session_supported(struct msm_vidc_inst *inst)
 	}
 	capability = inst->capabilities;
 
-	rc = msm_vidc_check_mbps_supported(inst);
-	if (rc)
-		goto exit;
-
-	rc = msm_vidc_check_mbpf_supported(inst);
-	if (rc)
-		goto exit;
-
 	if (is_image_session(inst) && is_secure_session(inst)) {
 		i_vpr_e(inst, "%s: secure image session not supported\n", __func__);
+		rc = -EINVAL;
 		goto exit;
 	}
 
-	/* check image capabilities */
-	if (is_image_encode_session(inst)) {
-		allow = msm_vidc_allow_image_encode_session(inst);
-		if (!allow)
-			goto exit;
-		return 0;
-	}
+	rc = msm_vidc_check_core_mbps(inst);
+	if (rc)
+		goto exit;
+
+	rc = msm_vidc_check_core_mbpf(inst);
+	if (rc)
+		goto exit;
+
+	rc = msm_vidc_check_inst_mbpf(inst);
+	if (rc)
+		goto exit;
 
 	fmt = &inst->fmts[INPUT_PORT];
 	iwidth = fmt->fmt.pix_mp.width;
@@ -5231,57 +5307,72 @@ int msm_vidc_check_session_supported(struct msm_vidc_inst *inst)
 		max_width = capability->cap[SECURE_FRAME_WIDTH].max;
 		min_height = capability->cap[SECURE_FRAME_HEIGHT].min;
 		max_height = capability->cap[SECURE_FRAME_HEIGHT].max;
-		max_mbpf = capability->cap[SECURE_MBPF].max;
 	} else if (is_encode_session(inst) && capability->cap[LOSSLESS].value) {
 		min_width = capability->cap[LOSSLESS_FRAME_WIDTH].min;
 		max_width = capability->cap[LOSSLESS_FRAME_WIDTH].max;
 		min_height = capability->cap[LOSSLESS_FRAME_HEIGHT].min;
 		max_height = capability->cap[LOSSLESS_FRAME_HEIGHT].max;
-		max_mbpf = capability->cap[LOSSLESS_MBPF].max;
 	} else {
 		min_width = capability->cap[FRAME_WIDTH].min;
 		max_width = capability->cap[FRAME_WIDTH].max;
 		min_height = capability->cap[FRAME_HEIGHT].min;
 		max_height = capability->cap[FRAME_HEIGHT].max;
-		max_mbpf = capability->cap[MBPF].max;
+	}
+
+	/* reject odd resolution session */
+	if (is_encode_session(inst) &&
+		(is_odd(iwidth) || is_odd(iheight) || is_odd(owidth) || is_odd(oheight))) {
+		i_vpr_e(inst, "%s: resolution is not even. input [%u x %u], output [%u x %u]\n",
+			__func__, iwidth, iheight, owidth, oheight);
+		rc = -EINVAL;
+		goto exit;
+	}
+
+	/* check input width and height is in supported range */
+	if (!in_range(iwidth, min_width, max_width) || !in_range(iheight, min_height, max_height)) {
+		i_vpr_e(inst,
+			"%s: unsupported input wxh [%u x %u], allowed range: [%u x %u] to [%u x %u]\n",
+			__func__, iwidth, iheight, min_width, min_height, max_width, max_height);
+		rc = -EINVAL;
+		goto exit;
+	}
+
+	/* check output width and height is in supported range */
+	if (!in_range(owidth, min_width, max_width) || !in_range(oheight, min_height, max_height)) {
+		i_vpr_e(inst,
+			"%s: unsupported output wxh [%u x %u], allowed range: [%u x %u] to [%u x %u]\n",
+			__func__, owidth, oheight, min_width, min_height, max_width, max_height);
+		rc = -EINVAL;
+		goto exit;
+	}
+
+	/* check image capabilities */
+	if (is_image_encode_session(inst)) {
+		allow = msm_vidc_allow_image_encode_session(inst);
+		if (!allow) {
+			rc = -EINVAL;
+			goto exit;
+		}
+		return 0;
 	}
 
 	/* check interlace supported resolution */
 	is_interlaced = capability->cap[CODED_FRAMES].value == CODED_FRAMES_INTERLACE;
 	if (is_interlaced && (owidth > INTERLACE_WIDTH_MAX || oheight > INTERLACE_HEIGHT_MAX ||
 		NUM_MBS_PER_FRAME(owidth, oheight) > INTERLACE_MB_PER_FRAME_MAX)) {
-		i_vpr_e(inst, "unsupported interlace wxh [%u x %u], max [%u x %u]\n",
-			owidth, oheight, INTERLACE_WIDTH_MAX, INTERLACE_HEIGHT_MAX);
+		i_vpr_e(inst, "%s: unsupported interlace wxh [%u x %u], max [%u x %u]\n",
+			__func__, owidth, oheight, INTERLACE_WIDTH_MAX, INTERLACE_HEIGHT_MAX);
+		rc = -EINVAL;
 		goto exit;
 	}
-
-	/* reject odd resolution session */
-	if (is_encode_session(inst) &&
-		(is_odd(iwidth) || is_odd(iheight) || is_odd(owidth) || is_odd(oheight))) {
-		i_vpr_e(inst, "resolution is not even. input [%u x %u], output [%u x %u]\n",
-			iwidth, iheight, owidth, oheight);
-		goto exit;
-	}
-
-	/* check width and height is in supported range */
-	if (!in_range(owidth, min_width, max_width) || !in_range(oheight, min_height, max_height)) {
-		i_vpr_e(inst, "unsupported wxh [%u x %u], allowed range: [%u x %u] to [%u x %u]\n",
-			owidth, oheight, min_width, min_height, max_width, max_height);
-		goto exit;
-	}
-
-	/* check current session mbpf */
-	mbpf = msm_vidc_get_mbs_per_frame(inst);
-	if (mbpf > max_mbpf) {
-		i_vpr_e(inst, "unsupported mbpf %u, max %u\n", mbpf, max_mbpf);
-		goto exit;
-	}
-
-	return 0;
 
 exit:
-	i_vpr_e(inst, "%s: current session not supported\n", __func__);
-	return -EINVAL;
+	if (rc) {
+		i_vpr_e(inst, "%s: current session not supported\n", __func__);
+		msm_vidc_print_insts_info(inst->core);
+	}
+
+	return rc;
 }
 
 int msm_vidc_check_scaling_supported(struct msm_vidc_inst *inst)

@@ -1920,7 +1920,7 @@ int msm_vidc_adjust_session_priority(void *instance, struct v4l2_ctrl *ctrl)
 	 * among NRT sessions. They are constraint RT or low priority RT.
 	 */
 	if (adjusted_value == 0 && rate_by_client) {
-		rc = msm_vidc_check_mbps_supported(inst);
+		rc = msm_vidc_check_core_mbps(inst);
 		if (rc) {
 			d_vpr_e("%s: priority 0 not feasible due to resource\n", __func__);
 			return rc;
