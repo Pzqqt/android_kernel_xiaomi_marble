@@ -21,8 +21,10 @@
 #include "msm_vidc.h"
 
 #define MSM_VIDC_DRV_NAME "msm_vidc_driver"
+#define MSM_VIDC_BUS_NAME "platform:msm_vidc_bus"
+
 /* kernel/msm-4.19 */
-#define MSM_VIDC_VERSION     ((0 << 16) + (4 << 8) + 19)
+#define MSM_VIDC_VERSION     ((5 << 16) + (10 << 8) + 0)
 
 #define MAX_EVENTS 30
 
@@ -105,14 +107,8 @@ int msm_vidc_querycap(void *instance, struct v4l2_capability *cap)
 	}
 
 	strlcpy(cap->driver, MSM_VIDC_DRV_NAME, sizeof(cap->driver));
-	cap->bus_info[0] = 0;
+	strlcpy(cap->bus_info, MSM_VIDC_BUS_NAME, sizeof(cap->bus_info));
 	cap->version = MSM_VIDC_VERSION;
-	cap->device_caps = V4L2_CAP_VIDEO_CAPTURE_MPLANE |
-		V4L2_CAP_VIDEO_OUTPUT_MPLANE |
-		V4L2_CAP_META_CAPTURE |
-		V4L2_CAP_META_OUTPUT |
-		V4L2_CAP_STREAMING;
-	cap->capabilities = cap->device_caps | V4L2_CAP_DEVICE_CAPS;
 
 	memset(cap->reserved, 0, sizeof(cap->reserved));
 
