@@ -1659,6 +1659,7 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s %d : HAL Monitor Destination Ring access Failed -- %pK",
 			__func__, __LINE__, mon_dst_srng);
+		qdf_spin_unlock_bh(&pdev->mon_lock);
 		return;
 	}
 
