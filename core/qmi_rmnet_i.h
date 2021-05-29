@@ -17,7 +17,6 @@
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
 #include <linux/timer.h>
-#include <linux/pm_wakeup.h>
 #include <uapi/linux/rtnetlink.h>
 #include <linux/soc/qcom/qmi.h>
 
@@ -141,8 +140,6 @@ struct qmi_info {
 	bool dl_msg_active;
 	bool ps_ignore_grant;
 	int ps_ext;
-	bool wakelock_active;
-	struct wakeup_source *ws;
 };
 
 enum data_ep_type_enum_v01 {
