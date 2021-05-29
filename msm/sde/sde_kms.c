@@ -4583,6 +4583,38 @@ power_error:
 	return rc;
 }
 
+int _sde_kms_get_tvm_inclusion_mem(struct sde_mdss_cfg *catalog, struct list_head *mem_list)
+{
+	struct list_head temp_head;
+	struct msm_io_mem_entry *io_mem;
+	int rc, i = 0;
+
+	INIT_LIST_HEAD(&temp_head);
+
+	for (i = 0; i < catalog->tvm_reg_count; i++) {
+		struct resource *res = &catalog->tvm_reg[i];
+
+		io_mem = kzalloc(sizeof(struct msm_io_mem_entry), GFP_KERNEL);
+		if (!io_mem) {
+			rc = -ENOMEM;
+			goto parse_fail;
+		}
+
+		io_mem->base = res->start;
+		io_mem->size = resource_size(res);
+
+		list_add(&io_mem->list, &temp_head);
+	}
+
+	list_splice(&temp_head, mem_list);
+
+	return 0;
+parse_fail:
+	msm_dss_clean_io_mem(&temp_head);
+
+	return rc;
+}
+
 int sde_kms_get_io_resources(struct sde_kms *sde_kms, struct msm_io_res *io_res)
 {
 	struct platform_device *pdev = to_platform_device(sde_kms->dev->dev);
@@ -4603,6 +4635,12 @@ int sde_kms_get_io_resources(struct sde_kms *sde_kms, struct msm_io_res *io_res)
 	rc = msm_dss_get_io_irq(pdev, &io_res->irq, GH_IRQ_LABEL_SDE);
 	if (rc) {
 		SDE_ERROR("failed to get io irq for KMS");
+		return rc;
+	}
+
+	rc = _sde_kms_get_tvm_inclusion_mem(sde_kms->catalog, &io_res->mem);
+	if (rc) {
+		SDE_ERROR("failed to get tvm inclusion mem ranges");
 		return rc;
 	}
 

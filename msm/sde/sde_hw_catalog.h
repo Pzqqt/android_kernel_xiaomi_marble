@@ -19,6 +19,7 @@
  * based on current design
  */
 #define MAX_BLOCKS    12
+#define MAX_REG_SIZE_ENTRIES 14
 
 #define SDE_HW_VER(MAJOR, MINOR, STEP) ((u32)((MAJOR & 0xF) << 28)    |\
 		((MINOR & 0xFFF) << 16)  |\
@@ -1472,6 +1473,10 @@ struct sde_perf_cfg {
  *			the trusted VM. false, otherwise.
  * @max_trusted_vm_displays	maximum number of concurrent trusted
  *				vm displays supported.
+ * @tvm_reg_count		number of sub-driver register ranges that need to be included
+ *						for trusted vm for accepting the resources
+ * @tvm_reg				array of sub-driver register ranges entries that need to be
+ *						included
  * @max_sspp_linewidth max source pipe line width support.
  * @vig_sspp_linewidth max vig source pipe line width support.
  * @scaling_linewidth max vig source pipe linewidth for scaling usecases
@@ -1561,6 +1566,8 @@ struct sde_mdss_cfg {
 	u32 hwversion;
 	bool trusted_vm_env;
 	u32 max_trusted_vm_displays;
+	u32 tvm_reg_count;
+	struct resource tvm_reg[MAX_REG_SIZE_ENTRIES];
 
 	u32 max_sspp_linewidth;
 	u32 vig_sspp_linewidth;

@@ -1598,6 +1598,28 @@ static void sde_rsc_deinit(struct platform_device *pdev,
 }
 
 /**
+ * sde_rsc_get_io_resources - collect register ranges for the device to
+ *                            perform access control on TUI transition
+ * @io_res:	io resource list
+ * @data:	payload data provided during msm_register_vm_event
+ * Returns:	zero on success
+ */
+static int sde_rsc_get_io_resources(struct msm_io_res *io_res, void *data)
+{
+	int rc = 0;
+	struct sde_rsc_priv *rsc = (struct sde_rsc_priv *)data;
+	struct platform_device *pdev = to_platform_device(rsc->dev);
+
+	rc = msm_dss_get_io_mem(pdev, &io_res->mem);
+	if (rc) {
+		pr_err("failed to get rsc io mem, rc = %d\n", rc);
+		return rc;
+	}
+
+	return 0;
+}
+
+/**
  * sde_rsc_bind - bind rsc device with controlling device
  * @dev:        Pointer to base of platform device
  * @master:     Pointer to container of drm device
@@ -1611,6 +1633,9 @@ static int sde_rsc_bind(struct device *dev,
 	struct sde_rsc_priv *rsc;
 	struct drm_device *drm;
 	struct platform_device *pdev = to_platform_device(dev);
+	struct msm_vm_ops vm_event_ops = {
+		.vm_get_io_resources = sde_rsc_get_io_resources,
+	};
 
 	if (!dev || !pdev || !master) {
 		pr_err("invalid param(s), dev %pK, pdev %pK, master %pK\n",
@@ -1630,6 +1655,9 @@ static int sde_rsc_bind(struct device *dev,
 			rsc->drv_io.len, msm_get_phys_addr(pdev, "drv"), SDE_DBG_RSC);
 	sde_dbg_reg_register_base(SDE_RSC_WRAPPER_DBG_NAME, rsc->wrapper_io.base,
 			rsc->wrapper_io.len, msm_get_phys_addr(pdev, "wrapper"), SDE_DBG_RSC);
+
+	msm_register_vm_event(master, dev, &vm_event_ops, (void *)rsc);
+
 	return 0;
 }
 
@@ -1655,6 +1683,8 @@ static void sde_rsc_unbind(struct device *dev,
 		pr_err("invalid display rsc\n");
 		return;
 	}
+
+	msm_unregister_vm_event(master, dev);
 }
 
 static const struct component_ops sde_rsc_comp_ops = {
