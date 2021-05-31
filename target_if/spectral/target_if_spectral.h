@@ -2082,6 +2082,38 @@ is_ch_width_160_or_80p80(enum phy_ch_width ch_width)
 }
 
 /**
+ * free_samp_msg_skb() - Free SAMP message skb
+ * @spectral: Pointer to Spectral
+ * @smode: Spectral Scan mode
+ *
+ * Free SAMP message skb, if error in report processing
+ *
+ * Return: void
+ */
+static inline void
+free_samp_msg_skb(struct target_if_spectral *spectral,
+		  enum spectral_scan_mode smode)
+{
+	enum spectral_msg_type smsg_type;
+	QDF_STATUS ret;
+
+	if (smode >= SPECTRAL_SCAN_MODE_MAX) {
+		spectral_err_rl("Invalid Spectral mode %d", smode);
+		return;
+	}
+
+	if (is_ch_width_160_or_80p80(spectral->ch_width[smode])) {
+		ret = target_if_get_spectral_msg_type(smode, &smsg_type);
+		if (QDF_IS_STATUS_ERROR(ret)) {
+			spectral_err("Failed to get spectral message type");
+			return;
+		}
+		spectral->nl_cb.free_sbuff(spectral->pdev_obj,
+					   smsg_type);
+	}
+}
+
+/**
  * init_160mhz_delivery_state_machine() - Initialize 160MHz Spectral
  *                                        state machine
  * @spectral: Pointer to Spectral
@@ -2113,26 +2145,16 @@ static inline void
 reset_160mhz_delivery_state_machine(struct target_if_spectral *spectral,
 				    enum spectral_scan_mode smode)
 {
-	enum spectral_msg_type smsg_type;
-	QDF_STATUS ret;
-
 	if (smode >= SPECTRAL_SCAN_MODE_MAX) {
 		spectral_err_rl("Invalid Spectral mode %d", smode);
 		return;
 	}
 
+	free_samp_msg_skb(spectral, smode);
+
 	if (is_ch_width_160_or_80p80(spectral->ch_width[smode])) {
 		spectral->state_160mhz_delivery[smode] =
 			SPECTRAL_REPORT_WAIT_PRIMARY80;
-
-		ret = target_if_get_spectral_msg_type(smode, &smsg_type);
-		if (QDF_IS_STATUS_ERROR(ret)) {
-			spectral_err("Failed to get spectral message type");
-			return;
-		}
-
-		spectral->nl_cb.free_sbuff(spectral->pdev_obj,
-					   smsg_type);
 	}
 }
 

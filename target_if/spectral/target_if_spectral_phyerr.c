@@ -1570,6 +1570,7 @@ fail:
 		spectral_debug_level = DEBUG_SPECTRAL;
 
 	spectral_err_rl("Error while processing Spectral report");
+	free_samp_msg_skb(spectral, SPECTRAL_SCAN_MODE_NORMAL);
 	return -EPERM;
 }
 
