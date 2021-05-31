@@ -2142,21 +2142,20 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 	lim_delete_tdls_peers(mac_ctx, session_entry);
 
 	lim_ch_switch = &session_entry->gLimChannelSwitch;
-	session_entry->gLimChannelSwitch.switchMode =
-		csa_params->switch_mode;
+	lim_ch_switch->switchMode = csa_params->switch_mode;
 	/* timer already started by firmware, switch immediately */
-	session_entry->gLimChannelSwitch.switchCount = 0;
-	session_entry->gLimChannelSwitch.primaryChannel =
+	lim_ch_switch->switchCount = 0;
+	lim_ch_switch->primaryChannel =
 		csa_params->channel;
-	session_entry->gLimChannelSwitch.sw_target_freq =
+	lim_ch_switch->sw_target_freq =
 		csa_params->csa_chan_freq;
-	session_entry->gLimChannelSwitch.state =
+	lim_ch_switch->state =
 		eLIM_CHANNEL_SWITCH_PRIMARY_ONLY;
-	session_entry->gLimChannelSwitch.ch_width = CH_WIDTH_20MHZ;
+	lim_ch_switch->ch_width = CH_WIDTH_20MHZ;
 	lim_ch_switch->sec_ch_offset =
 		session_entry->htSecondaryChannelOffset;
-	session_entry->gLimChannelSwitch.ch_center_freq_seg0 = 0;
-	session_entry->gLimChannelSwitch.ch_center_freq_seg1 = 0;
+	lim_ch_switch->ch_center_freq_seg0 = 0;
+	lim_ch_switch->ch_center_freq_seg1 = 0;
 	chnl_switch_info =
 		&session_entry->gLimWiderBWChannelSwitch;
 
@@ -2177,7 +2176,39 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 
 	session_entry->htSupportedChannelWidthSet = false;
 	wlan_reg_read_current_country(mac_ctx->psoc, country_code);
-	if (channel_bonding_mode &&
+	if (!csa_params->ies_present_flag) {
+		/* no ies, means triggered by host */
+		pe_debug("new freq: %u, width: %d", csa_params->csa_chan_freq,
+			 csa_params->new_ch_width);
+		ch_params.ch_width = csa_params->new_ch_width;
+		wlan_reg_set_channel_params_for_freq(mac_ctx->pdev,
+						     csa_params->csa_chan_freq,
+						     0, &ch_params);
+		pe_debug("idea width: %d, chn_seg0 %u chn_seg1 %u freq_seg0 %u freq_seg1 %u",
+			 ch_params.ch_width, ch_params.center_freq_seg0,
+			 ch_params.center_freq_seg1, ch_params.mhz_freq_seg0,
+			 ch_params.mhz_freq_seg1);
+
+		lim_ch_switch->sec_ch_offset = ch_params.sec_ch_offset;
+		lim_ch_switch->ch_width = ch_params.ch_width;
+		lim_ch_switch->ch_center_freq_seg0 = ch_params.center_freq_seg0;
+		lim_ch_switch->ch_center_freq_seg1 = ch_params.center_freq_seg1;
+
+		if (ch_params.ch_width == CH_WIDTH_20MHZ) {
+			lim_ch_switch->state = eLIM_CHANNEL_SWITCH_PRIMARY_ONLY;
+			session_entry->htSupportedChannelWidthSet = false;
+		} else {
+			chnl_switch_info->newChanWidth =
+				lim_ch_switch->ch_width;
+			chnl_switch_info->newCenterChanFreq0 =
+				lim_ch_switch->ch_center_freq_seg0;
+			chnl_switch_info->newCenterChanFreq1 =
+				lim_ch_switch->ch_center_freq_seg1;
+			lim_ch_switch->state =
+				eLIM_CHANNEL_SWITCH_PRIMARY_AND_SECONDARY;
+			session_entry->htSupportedChannelWidthSet = true;
+		}
+	} else if (channel_bonding_mode &&
 	    ((session_entry->vhtCapability && session_entry->htCapability) ||
 	      lim_is_session_he_capable(session_entry))) {
 		if ((csa_params->ies_present_flag & lim_wbw_ie_present) &&
@@ -2216,7 +2247,7 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 			if (chan_space >= 160 && fw_vht_ch_wd <
 					WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ)
 				chan_space = 80;
-			session_entry->gLimChannelSwitch.state =
+			lim_ch_switch->state =
 				eLIM_CHANNEL_SWITCH_PRIMARY_AND_SECONDARY;
 			if (chan_space == 160) {
 				chnl_switch_info->newChanWidth =
@@ -2256,7 +2287,6 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 				ch_params.center_freq_seg1;
 			lim_ch_switch->sec_ch_offset =
 				ch_params.sec_ch_offset;
-
 		} else {
 			lim_ch_switch->state =
 				eLIM_CHANNEL_SWITCH_PRIMARY_AND_SECONDARY;
@@ -2272,11 +2302,11 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 			chnl_switch_info->newCenterChanFreq1 = 0;
 			session_entry->htSupportedChannelWidthSet = true;
 		}
-		session_entry->gLimChannelSwitch.ch_center_freq_seg0 =
+		lim_ch_switch->ch_center_freq_seg0 =
 			chnl_switch_info->newCenterChanFreq0;
-		session_entry->gLimChannelSwitch.ch_center_freq_seg1 =
+		lim_ch_switch->ch_center_freq_seg1 =
 			chnl_switch_info->newCenterChanFreq1;
-		session_entry->gLimChannelSwitch.ch_width =
+		lim_ch_switch->ch_width =
 			chnl_switch_info->newChanWidth;
 
 	} else if (channel_bonding_mode && session_entry->htCapability) {
@@ -2332,16 +2362,15 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 		}
 	}
 	pe_debug("new ch %d freq %d width: %d freq0 %d freq1 %d ht width %d",
-		 session_entry->gLimChannelSwitch.primaryChannel,
-		 session_entry->gLimChannelSwitch.sw_target_freq,
-		 session_entry->gLimChannelSwitch.ch_width,
-		 session_entry->gLimChannelSwitch.ch_center_freq_seg0,
-		 session_entry->gLimChannelSwitch.ch_center_freq_seg1,
-		 session_entry->gLimChannelSwitch.sec_ch_offset);
+		 lim_ch_switch->primaryChannel,
+		 lim_ch_switch->sw_target_freq,
+		 lim_ch_switch->ch_width,
+		 lim_ch_switch->ch_center_freq_seg0,
+		 lim_ch_switch->ch_center_freq_seg1,
+		 lim_ch_switch->sec_ch_offset);
 
 	if (session_entry->curr_op_freq == csa_params->csa_chan_freq &&
-	    session_entry->ch_width ==
-			session_entry->gLimChannelSwitch.ch_width) {
+	    session_entry->ch_width == lim_ch_switch->ch_width) {
 		pe_debug("Ignore CSA, no change in ch and bw");
 		goto err;
 	}
