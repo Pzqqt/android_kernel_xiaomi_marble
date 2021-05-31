@@ -5731,20 +5731,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	if (!cds_is_sub_20_mhz_enabled())
 		wlan_hdd_set_sap_hwmode(adapter);
 
-#ifdef WLAN_FEATURE_11BE_MLO
-	if (config->SapHw_mode == eCSR_DOT11_MODE_11be ||
-	    config->SapHw_mode == eCSR_DOT11_MODE_11be_ONLY) {
-		wlan_vdev_mlme_set_mlo_flag(adapter->vdev);
-		mlo_sap_update_with_config(); //TD
-	}
-
-	if (!policy_mgr_is_mlo_sap_concurrency_allowed(
-		hdd_ctx->psoc, wlan_vdev_mlme_is_mlo_sap(adapter->vdev))) {
-		hdd_err("MLO SAP concurrency check fails");
-		ret = -EINVAL;
-		goto error;
-	}
-#endif
 	status = ucfg_mlme_get_vht_for_24ghz(hdd_ctx->psoc, &bval);
 	if (QDF_IS_STATUS_ERROR(qdf_status))
 		hdd_err("Failed to get vht_for_24ghz");
