@@ -73,6 +73,12 @@ static inline is_scaling_enabled(struct msm_vidc_inst *inst)
 		inst->crop.height != inst->compose.height;
 }
 
+static inline is_rotation_90_or_270(struct msm_vidc_inst *inst)
+{
+	return inst->capabilities->cap[ROTATION].value == 90 ||
+		inst->capabilities->cap[ROTATION].value == 270;
+}
+
 static inline is_internal_buffer(enum msm_vidc_buffer_type buffer_type)
 {
 	return buffer_type == MSM_VIDC_BUF_BIN ||

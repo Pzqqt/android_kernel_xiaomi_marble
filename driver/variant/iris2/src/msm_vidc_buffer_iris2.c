@@ -455,8 +455,7 @@ static u32 msm_vidc_encoder_vpss_size_iris2(struct msm_vidc_inst* inst)
 	msm_vidc_v4l2_to_hfi_enum(inst, ROTATION, &rotation_val);
 
 	f = &inst->fmts[OUTPUT_PORT];
-	if (inst->capabilities->cap[ROTATION].value == 90 ||
-		inst->capabilities->cap[ROTATION].value == 270) {
+	if (is_rotation_90_or_270(inst)) {
 		/*
 		 * output width and height are rotated,
 		 * so unrotate them to use as arguments to

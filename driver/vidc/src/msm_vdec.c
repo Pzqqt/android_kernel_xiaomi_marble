@@ -1397,10 +1397,6 @@ int msm_vdec_streamon_input(struct msm_vidc_inst *inst)
 	if (rc)
 		goto error;
 
-	rc = msm_vidc_check_scaling_supported(inst);
-	if (rc)
-		goto error;
-
 	rc = msm_vdec_set_input_properties(inst);
 	if (rc)
 		goto error;

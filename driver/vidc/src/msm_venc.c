@@ -247,8 +247,7 @@ static int msm_venc_set_crop_offsets(struct msm_vidc_inst *inst,
 
 	width = inst->compose.width;
 	height = inst->compose.height;
-	if (inst->capabilities->cap[ROTATION].value == 90 ||
-		inst->capabilities->cap[ROTATION].value == 270) {
+	if (is_rotation_90_or_270(inst)) {
 		width = inst->compose.height;
 		height = inst->compose.width;
 	}
@@ -1051,8 +1050,7 @@ int msm_venc_s_fmt_output(struct msm_vidc_inst *inst, struct v4l2_format *f)
 	/* use rotated width height if rotation is enabled */
 	width = inst->compose.width;
 	height = inst->compose.height;
-	if (inst->capabilities->cap[ROTATION].value == 90 ||
-		inst->capabilities->cap[ROTATION].value == 270) {
+	if (is_rotation_90_or_270(inst)) {
 		width = inst->compose.height;
 		height = inst->compose.width;
 	}
@@ -1424,10 +1422,7 @@ int msm_venc_s_selection(struct msm_vidc_inst* inst, struct v4l2_selection* s)
 		inst->compose.width = s->r.width;
 		inst->compose.height= s->r.height;
 
-		if (inst->crop.left != inst->compose.left ||
-			inst->crop.top != inst->compose.top ||
-			inst->crop.width != inst->compose.width ||
-			inst->crop.height != inst->compose.height) {
+		if (is_scaling_enabled(inst)) {
 			i_vpr_h(inst,
 				"%s: scaling enabled, crop: l %d t %d w %d h %d compose: l %d t %d w %d h %d\n",
 				__func__, inst->crop.left, inst->crop.top,

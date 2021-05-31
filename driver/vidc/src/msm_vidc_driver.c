@@ -67,8 +67,7 @@ static const struct msm_vidc_cap_name cap_name_arr[] = {
 	{POWER_SAVE_MBPS,                "POWER_SAVE_MBPS"            },
 	{FRAME_RATE,                     "FRAME_RATE"                 },
 	{OPERATING_RATE,                 "OPERATING_RATE"             },
-	{SCALE_X,                        "SCALE_X"                    },
-	{SCALE_Y,                        "SCALE_Y"                    },
+	{SCALE_FACTOR,                   "SCALE_FACTOR"               },
 	{MB_CYCLES_VSP,                  "MB_CYCLES_VSP"              },
 	{MB_CYCLES_VPP,                  "MB_CYCLES_VPP"              },
 	{MB_CYCLES_LP,                   "MB_CYCLES_LP"               },
@@ -5377,7 +5376,9 @@ exit:
 
 int msm_vidc_check_scaling_supported(struct msm_vidc_inst *inst)
 {
-	if (!inst) {
+	u32 iwidth, owidth, iheight, oheight, ds_factor;
+
+	if (!inst || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
@@ -5387,7 +5388,32 @@ int msm_vidc_check_scaling_supported(struct msm_vidc_inst *inst)
 		return 0;
 	}
 
-	/* todo: add scaling check for encode session */
+	if (!is_scaling_enabled(inst)) {
+		i_vpr_h(inst, "%s: Scaling not enabled. skip scaling check\n", __func__);
+		return 0;
+	}
+
+	iwidth = inst->crop.width;
+	iheight = inst->crop.height;
+	owidth = inst->compose.width;
+	oheight = inst->compose.height;
+	ds_factor = inst->capabilities->cap[SCALE_FACTOR].value;
+
+	/* upscaling: encoder doesnot support upscaling */
+	if (owidth > iwidth || oheight > iheight) {
+		i_vpr_e(inst, "%s: upscale not supported: input [%u x %u], output [%u x %u]\n",
+			__func__, iwidth, iheight, owidth, oheight);
+		return -EINVAL;
+	}
+
+	/* downscaling: only supported upto 1/8 of width & 1/8 of height */
+	if (iwidth > owidth * ds_factor || iheight > oheight * ds_factor) {
+		i_vpr_e(inst,
+			"%s: unsupported ratio: input [%u x %u], output [%u x %u], ratio %u\n",
+			__func__, iwidth, iheight, owidth, oheight, ds_factor);
+		return -EINVAL;
+	}
+
 	return 0;
 }
 
