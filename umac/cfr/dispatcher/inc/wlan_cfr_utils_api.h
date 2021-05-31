@@ -53,10 +53,11 @@
 #define NUM_CHAN_CAPTURE_REASON 6
 #if defined(QCA_WIFI_QCA6750) || defined(QCA_WIFI_QCA6490)
 #define MAX_TA_RA_ENTRIES 4
+#define MAX_RESET_CFG_ENTRY 0xF
 #else
 #define MAX_TA_RA_ENTRIES 16
-#endif
 #define MAX_RESET_CFG_ENTRY 0xFFFF
+#endif
 #define CFR_INVALID_VDEV_ID 0xff
 #define DEFAULT_SRNGID_CFR 0
 #endif
