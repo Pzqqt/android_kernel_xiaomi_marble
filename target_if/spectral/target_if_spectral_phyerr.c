@@ -997,13 +997,17 @@ target_if_populate_fft_bins_info(struct target_if_spectral *spectral,
 		det_map = &spectral->det_map
 				[detector_list->detectors[det]];
 		dest_det_info = &det_map->dest_det_info[0];
+		dest_det_info->lb_extrabins_num = spectral->lb_edge_extrabins;
+		dest_det_info->rb_extrabins_num = spectral->rb_edge_extrabins;
 		switch (det) {
 		case 0:
 			if (ch_width == CH_WIDTH_160MHZ &&
 			    is_fragmentation_160 &&
 			    spectral->report_info[smode].sscan_cfreq1 >
 			    spectral->report_info[smode].sscan_cfreq2)
-				start_bin = num_fft_bins;
+				start_bin = num_fft_bins +
+					dest_det_info->lb_extrabins_num +
+					dest_det_info->rb_extrabins_num;
 			else
 				start_bin = 0;
 			break;
@@ -1014,15 +1018,21 @@ target_if_populate_fft_bins_info(struct target_if_spectral *spectral,
 			    spectral->report_info[smode].sscan_cfreq2)
 				start_bin = 0;
 			else
-				start_bin = num_fft_bins;
+				start_bin = num_fft_bins +
+					dest_det_info->lb_extrabins_num +
+					dest_det_info->rb_extrabins_num;
 			break;
 		default:
 			return QDF_STATUS_E_FAILURE;
 		}
-		dest_det_info->dest_start_bin_idx = start_bin;
+		dest_det_info->dest_start_bin_idx = start_bin +
+					dest_det_info->lb_extrabins_num;
 		dest_det_info->dest_end_bin_idx =
-				dest_det_info->dest_start_bin_idx +
-				num_fft_bins - 1;
+					dest_det_info->dest_start_bin_idx +
+					num_fft_bins - 1;
+		dest_det_info->lb_extrabins_start_idx = start_bin;
+		dest_det_info->rb_extrabins_start_idx = 1 +
+					dest_det_info->dest_end_bin_idx;
 		dest_det_info->src_start_bin_idx = 0;
 	}
 

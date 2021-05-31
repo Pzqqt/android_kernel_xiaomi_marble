@@ -86,12 +86,15 @@ target_if_spectral_fill_samp_msg(struct target_if_spectral *spectral,
 		struct samp_detector_info *detector_info;
 		uint8_t dest_detector_id;
 		uint8_t span_id;
+		struct samp_edge_extra_bin_info *lb_edge_bins;
+		struct samp_edge_extra_bin_info *rb_edge_bins;
 		uint8_t *bin_pwr_data;
 		uint32_t *binptr_32;
 		uint16_t *binptr_16;
 		uint16_t pwr_16;
 		size_t pwr_count;
 		uint16_t idx;
+		uint16_t start_bin_index;
 
 		swar = &spectral->len_adj_swar;
 
@@ -102,11 +105,20 @@ target_if_spectral_fill_samp_msg(struct target_if_spectral *spectral,
 
 		dest_detector_id = map_det_info->det_id;
 		detector_info = &span_info->detector_info[dest_detector_id];
+		lb_edge_bins = &detector_info->left_edge_bins;
+		rb_edge_bins = &detector_info->right_edge_bins;
 
 		detector_info->start_frequency = map_det_info->start_freq;
 		detector_info->end_frequency = map_det_info->end_freq;
 		detector_info->start_bin_idx = map_det_info->dest_start_bin_idx;
 		detector_info->end_bin_idx = map_det_info->dest_end_bin_idx;
+		lb_edge_bins->start_bin_idx =
+					map_det_info->lb_extrabins_start_idx;
+		lb_edge_bins->num_bins = map_det_info->lb_extrabins_num;
+		rb_edge_bins->start_bin_idx =
+					map_det_info->rb_extrabins_start_idx;
+		rb_edge_bins->num_bins = map_det_info->rb_extrabins_num;
+		start_bin_index = lb_edge_bins->start_bin_idx;
 
 		detector_info->rssi = params->rssi;
 
@@ -118,6 +130,7 @@ target_if_spectral_fill_samp_msg(struct target_if_spectral *spectral,
 				timestamp_war_offset[spectral_mode];
 
 		detector_info->max_magnitude = params->max_mag;
+		detector_info->max_index = params->max_index;
 
 		detector_info->noise_floor = params->noise_floor;
 		detector_info->agc_total_gain = params->agc_total_gain;
@@ -130,7 +143,9 @@ target_if_spectral_fill_samp_msg(struct target_if_spectral *spectral,
 		bin_pwr_data = &params->bin_pwr_data
 					[map_det_info->src_start_bin_idx];
 		pwr_count = detector_info->end_bin_idx -
-			    detector_info->start_bin_idx + 1;
+			    detector_info->start_bin_idx +
+			    lb_edge_bins->num_bins +
+			    rb_edge_bins->num_bins + 1;
 		spec_samp_msg->bin_pwr_count += pwr_count;
 		/*
 		 * To check whether FFT bin values exceed 8 bits, we add a
@@ -149,8 +164,7 @@ target_if_spectral_fill_samp_msg(struct target_if_spectral *spectral,
 				pwr_16 = *((uint16_t *)binptr_32++);
 				if (qdf_unlikely(pwr_16 > MAX_FFTBIN_VALUE))
 					pwr_16 = MAX_FFTBIN_VALUE;
-				spec_samp_msg->bin_pwr
-					[detector_info->start_bin_idx + idx]
+				spec_samp_msg->bin_pwr[start_bin_index + idx]
 							= pwr_16;
 			}
 		} else if (swar->fftbin_size_war ==
@@ -160,13 +174,11 @@ target_if_spectral_fill_samp_msg(struct target_if_spectral *spectral,
 				pwr_16 = *(binptr_16++);
 				if (qdf_unlikely(pwr_16 > MAX_FFTBIN_VALUE))
 					pwr_16 = MAX_FFTBIN_VALUE;
-				spec_samp_msg->bin_pwr
-					[detector_info->start_bin_idx + idx]
+				spec_samp_msg->bin_pwr[start_bin_index + idx]
 							= pwr_16;
 			}
 		} else {
-			qdf_mem_copy(&spec_samp_msg->bin_pwr
-				     [detector_info->start_bin_idx],
+			qdf_mem_copy(&spec_samp_msg->bin_pwr[start_bin_index],
 				     bin_pwr_data, pwr_count);
 		}
 	}
@@ -193,6 +205,14 @@ target_if_spectral_fill_samp_msg(struct target_if_spectral *spectral,
 		spec_samp_msg->sscan_bw = rpt_info->sscan_bw;
 		spec_samp_msg->fft_width = FFT_BIN_SIZE_1BYTE;
 		spec_samp_msg->num_freq_spans = rpt_info->num_spans;
+		spec_samp_msg->spectral_upper_rssi = params->upper_rssi;
+		spec_samp_msg->spectral_lower_rssi = params->lower_rssi;
+		qdf_mem_copy(spec_samp_msg->spectral_chain_ctl_rssi,
+			     params->chain_ctl_rssi,
+			     sizeof(params->chain_ctl_rssi));
+		qdf_mem_copy(spec_samp_msg->spectral_chain_ext_rssi,
+			     params->chain_ext_rssi,
+			     sizeof(params->chain_ext_rssi));
 
 		if (spectral->send_phy_data(spectral->pdev_obj,
 					    msg_type) == 0)
