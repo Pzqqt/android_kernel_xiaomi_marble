@@ -107,6 +107,8 @@ struct regdomain   {
 };
 
 #if defined(CONFIG_BAND_6GHZ) && defined(COMPILE_REGDB_6G)
+#define REG_MAX_PSD (0x7F) /* 127=63.5 dBm/MHz */
+
 /**
  * struct sub_6g_regdomain
  * @min_bw: Minimum bandwidth in MHz
@@ -168,6 +170,7 @@ struct reg_domain_pair {
  * @ETSI2_6G_03: Super domain ETSI2_6G_03 for UK
  * @APL1_6G_04: Super domain APL1_6G_04 for Korea
  * @FCC1_6G_05: Super domain FCC1_6G_05 for Chile
+ * @APL2_6G_06: Super domain APL2_6G_06 for Guatemala
  */
 enum reg_super_domain_6g {
 	FCC1_6G_01 = 0x01,
@@ -175,6 +178,7 @@ enum reg_super_domain_6g {
 	ETSI2_6G_03 = 0x03,
 	APL1_6G_04 = 0x04,
 	FCC1_6G_05 = 0x05,
+	APL2_6G_06 = 0x06,
 };
 
 #if defined(COMPILE_REGDB_6G)
