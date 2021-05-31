@@ -1249,6 +1249,19 @@ UMAC_INTERFACE_MGR_OBJS := $(UMAC_INTERFACE_MGR_CMN_DIR)/src/wlan_if_mgr_main.o 
 
 $(call add-wlan-objs,umac_ifmgr,$(UMAC_INTERFACE_MGR_OBJS))
 
+###### UMAC MLO_MGR ########
+UMAC_MLO_MGR_CMN_DIR :=	$(WLAN_COMMON_ROOT)/umac/mlo_mgr
+
+UMAC_MLO_MGR_INC := -I$(WLAN_COMMON_INC)/umac/mlo_mgr/inc
+
+ifeq ($(CONFIG_WLAN_FEATURE_11BE_MLO), y)
+UMAC_MLO_MGR_OBJS := $(UMAC_MLO_MGR_CMN_DIR)/src/wlan_mlo_mgr_main.o \
+			  $(UMAC_MLO_MGR_CMN_DIR)/src/wlan_if_mgr_cmn.o \
+			  $(UMAC_MLO_MGR_CMN_DIR)/src/wlan_if_mgr_sta.o \
+			  $(UMAC_MLO_MGR_CMN_DIR)/src/wlan_if_mgr_ap.o
+
+$(call add-wlan-objs,umac_ifmgr,$(UMAC_INTERFACE_MGR_OBJS))
+endif
 ########## POWER MANAGEMENT OFFLOADS (PMO) ##########
 PMO_DIR :=	components/pmo
 PMO_INC :=	-I$(WLAN_ROOT)/$(PMO_DIR)/core/inc \
@@ -2719,6 +2732,7 @@ INCS +=		$(UMAC_TARGET_GPIO_INC)
 INCS +=		$(UMAC_DBR_INC)
 INCS +=		$(UMAC_CRYPTO_INC)
 INCS +=		$(UMAC_INTERFACE_MGR_INC)
+INCS +=		$(UMAC_MLO_MGR_INC)
 INCS +=		$(COEX_OS_IF_INC)
 INCS +=		$(COEX_TGT_INC)
 INCS +=		$(COEX_DISPATCHER_INC)
@@ -3481,6 +3495,7 @@ cppflags-$(CONFIG_MAX_ALLOC_PAGE_SIZE) += -DMAX_ALLOC_PAGE_SIZE
 cppflags-$(CONFIG_DELIVERY_TO_STACK_STATUS_CHECK) += -DDELIVERY_TO_STACK_STATUS_CHECK
 cppflags-$(CONFIG_WLAN_TRACE_HIDE_MAC_ADDRESS) += -DWLAN_TRACE_HIDE_MAC_ADDRESS
 cppflags-$(CONFIG_WLAN_FEATURE_11BE) += -DWLAN_FEATURE_11BE
+cppflags-$(CONFIG_WLAN_FEATURE_11BE_MLO) += -DWLAN_FEATURE_11BE_MLO
 
 cppflags-$(CONFIG_LITHIUM) += -DFIX_TXDMA_LIMITATION
 cppflags-$(CONFIG_LITHIUM) += -DFEATURE_AST
