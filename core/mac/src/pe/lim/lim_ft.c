@@ -199,7 +199,6 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 	if (ft_session->vhtCapability &&
 	    ft_session->vhtCapabilityPresentInBeacon) {
 		pAddBssParams->vhtCapable = pBeaconStruct->VHTCaps.present;
-		if (pBeaconStruct->VHTOperation.chanWidth && chan_width_support)
 		vht_caps = &pBeaconStruct->VHTCaps;
 		lim_update_vhtcaps_assoc_resp(mac, pAddBssParams,
 					      vht_caps, ft_session);
@@ -208,8 +207,6 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 		pe_debug("VHT caps are present in vendor specific IE");
 		pAddBssParams->vhtCapable =
 			pBeaconStruct->vendor_vht_ie.VHTCaps.present;
-		if (pBeaconStruct->vendor_vht_ie.VHTOperation.chanWidth &&
-		    chan_width_support)
 		vht_caps = &pBeaconStruct->vendor_vht_ie.VHTCaps;
 		lim_update_vhtcaps_assoc_resp(mac, pAddBssParams,
 					      vht_caps, ft_session);
