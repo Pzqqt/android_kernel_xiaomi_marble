@@ -1894,6 +1894,7 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 		lim_handle_delete_bss_rsp(mac_ctx, msg->bodyptr);
 		break;
 	case WMA_CSA_OFFLOAD_EVENT:
+	case eWNI_SME_CSA_REQ:
 		lim_handle_csa_offload_msg(mac_ctx, msg);
 		break;
 	case WMA_SET_BSSKEY_RSP:

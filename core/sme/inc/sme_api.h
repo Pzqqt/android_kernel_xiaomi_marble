@@ -4491,4 +4491,17 @@ static inline uint32_t sme_get_eht_ch_width(void)
 }
 #endif /* WLAN_FEATURE_11BE */
 
+/**
+ * sme_switch_channel() - Request to switch channel
+ * @mac_handle: Opaque handle to the MAC context
+ * @bssid: current connected bssid
+ * @chan_freq: new channel frequency
+ * @chan_width: new channel width
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_switch_channel(mac_handle_t mac_handle,
+			      struct qdf_mac_addr *bssid,
+			      qdf_freq_t chan_freq,
+			      enum phy_ch_width chan_width);
 #endif /* #if !defined( __SME_API_H ) */

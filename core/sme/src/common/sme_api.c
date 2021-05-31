@@ -16535,3 +16535,46 @@ enum csr_cfgdot11mode sme_phy_mode_to_dot11mode(enum wlan_phymode phy_mode)
 	return csr_phy_mode_to_dot11mode(phy_mode);
 }
 
+QDF_STATUS sme_switch_channel(mac_handle_t mac_handle,
+			      struct qdf_mac_addr *bssid,
+			      qdf_freq_t chan_freq,
+			      enum phy_ch_width chan_width)
+{
+	struct scheduler_msg msg = {0};
+	struct csa_offload_params *csa_offload_event;
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+
+	csa_offload_event = qdf_mem_malloc(sizeof(*csa_offload_event));
+	if (!csa_offload_event)
+		return QDF_STATUS_E_NOMEM;
+
+	qdf_mem_copy(csa_offload_event->bssId, bssid->bytes,
+		     QDF_MAC_ADDR_SIZE);
+	csa_offload_event->csa_chan_freq = (uint32_t)chan_freq;
+	csa_offload_event->new_ch_width = (uint8_t)chan_width;
+	csa_offload_event->channel =
+		wlan_reg_freq_to_chan(mac_ctx->pdev,
+				      csa_offload_event->csa_chan_freq);
+	csa_offload_event->switch_mode = 1;
+
+	sme_debug("bssid " QDF_MAC_ADDR_FMT " freq %u width %u",
+		  QDF_MAC_ADDR_REF(csa_offload_event->bssId),
+		  csa_offload_event->csa_chan_freq,
+		  csa_offload_event->new_ch_width);
+
+	msg.type = eWNI_SME_CSA_REQ;
+	msg.reserved = 0;
+	msg.bodyptr = csa_offload_event;
+
+	if (QDF_STATUS_SUCCESS != scheduler_post_message(QDF_MODULE_ID_SME,
+							 QDF_MODULE_ID_PE,
+							 QDF_MODULE_ID_PE,
+							 &msg)) {
+		qdf_mem_free(csa_offload_event);
+		sme_err("Not able to post WMA_CSA_OFFLOAD_EVENT to PE");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
