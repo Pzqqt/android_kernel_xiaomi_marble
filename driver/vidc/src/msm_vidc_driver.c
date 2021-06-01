@@ -2938,18 +2938,18 @@ static int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct msm_vidc_buf
 	return 0;
 }
 
-int msm_vidc_queue_buffer_batch(struct msm_vidc_inst *inst)
+int msm_vidc_queue_deferred_buffers(struct msm_vidc_inst *inst, enum msm_vidc_buffer_type buf_type)
 {
 	struct msm_vidc_buffers *buffers;
 	struct msm_vidc_buffer *buf;
 	int rc = 0;
 
-	if (!inst) {
+	if (!inst || !buf_type) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 
-	buffers = msm_vidc_get_buffers(inst, MSM_VIDC_BUF_OUTPUT, __func__);
+	buffers = msm_vidc_get_buffers(inst, buf_type, __func__);
 	if (!buffers)
 		return -EINVAL;
 
@@ -4488,7 +4488,7 @@ void msm_vidc_batch_handler(struct work_struct *work)
 	}
 
 	i_vpr_h(inst, "%s: queue pending batch buffers\n", __func__);
-	rc = msm_vidc_queue_buffer_batch(inst);
+	rc = msm_vidc_queue_deferred_buffers(inst, MSM_VIDC_BUF_OUTPUT);
 	if (rc) {
 		i_vpr_e(inst, "%s: batch qbufs failed\n", __func__);
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);

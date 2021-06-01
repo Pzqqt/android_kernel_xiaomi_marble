@@ -1783,7 +1783,7 @@ static int msm_vdec_qbuf_batch(struct msm_vidc_inst *inst,
 		cancel_batch_work(inst);
 	}
 
-	rc = msm_vidc_queue_buffer_batch(inst);
+	rc = msm_vidc_queue_deferred_buffers(inst, MSM_VIDC_BUF_OUTPUT);
 	if (rc)
 		return rc;
 
