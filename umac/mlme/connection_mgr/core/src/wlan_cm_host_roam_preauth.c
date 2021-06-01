@@ -26,6 +26,7 @@
 #include "wlan_cm_roam_api.h"
 #include "wlan_cm_roam_public_struct.h"
 #include "wlan_cm_public_struct.h"
+#include "wlan_mlme_vdev_mgr_interface.h"
 #include "connection_mgr/core/src/wlan_cm_roam.h"
 #include "connection_mgr/core/src/wlan_cm_sm.h"
 #include "connection_mgr/core/src/wlan_cm_main_api.h"
@@ -261,10 +262,85 @@ cm_send_preauth_start_fail(struct cnx_mgr *cm_ctx,
 	return status;
 }
 
+static void cm_flush_invalid_preauth_ap(struct cnx_mgr *cm_ctx,
+					struct cm_roam_req *roam_req)
+{
+	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
+	qdf_list_t *candidate_list;
+	struct scan_cache_node *scan_node = NULL;
+	struct qdf_mac_addr connected_bssid;
+	bool is_valid;
+	uint8_t vdev_id = roam_req->req.vdev_id;
+	struct wlan_objmgr_psoc *psoc;
+	uint8_t enable_mcc_mode = false;
+	qdf_freq_t conc_freq, bss_freq;
+
+	/*
+	 * Only When entering first time (ie cur_candidate is NULL),
+	 * flush invalid APs from the list and if list is not NULL.
+	 */
+	if (roam_req->cur_candidate || !roam_req->candidate_list)
+		return;
+
+	psoc = wlan_vdev_get_psoc(cm_ctx->vdev);
+	if (!psoc)
+		return;
+
+	wlan_mlme_get_mcc_feature(psoc, &enable_mcc_mode);
+
+	wlan_vdev_get_bss_peer_mac(cm_ctx->vdev, &connected_bssid);
+
+	candidate_list = roam_req->candidate_list;
+
+	qdf_list_peek_front(candidate_list, &cur_node);
+
+	while (cur_node) {
+		is_valid = true;
+		qdf_list_peek_next(candidate_list, cur_node, &next_node);
+		scan_node = qdf_container_of(cur_node, struct scan_cache_node,
+					     node);
+		bss_freq = scan_node->entry->channel.chan_freq;
+		if (qdf_is_macaddr_equal(&connected_bssid,
+					 &scan_node->entry->bssid)) {
+			mlme_debug(CM_PREFIX_FMT "Remove connected AP" QDF_MAC_ADDR_FMT " from list",
+				   CM_PREFIX_REF(vdev_id, roam_req->cm_id),
+				   QDF_MAC_ADDR_REF(connected_bssid.bytes));
+			is_valid = false;
+		}
+
+		/*
+		 * Continue if MCC is disabled in INI and if AP
+		 * will create MCC
+		 */
+		if (policy_mgr_concurrent_open_sessions_running(psoc) &&
+		    !enable_mcc_mode) {
+			conc_freq = wlan_get_conc_freq();
+			if (conc_freq && (conc_freq != bss_freq)) {
+				mlme_info(CM_PREFIX_FMT "Remove AP " QDF_MAC_ADDR_FMT ", MCC not supported. freq %d conc_freq %d",
+					  CM_PREFIX_REF(vdev_id, roam_req->cm_id),
+					  QDF_MAC_ADDR_REF(connected_bssid.bytes),
+					  bss_freq, conc_freq);
+				is_valid = false;
+			}
+		}
+
+		if (!is_valid) {
+			qdf_list_remove_node(candidate_list, cur_node);
+			util_scan_free_cache_entry(scan_node->entry);
+			qdf_mem_free(scan_node);
+		}
+
+		cur_node = next_node;
+		next_node = NULL;
+	}
+}
+
 QDF_STATUS cm_host_roam_preauth_start(struct cnx_mgr *cm_ctx,
 				      struct cm_req *cm_req)
 {
 	QDF_STATUS status;
+
+	cm_flush_invalid_preauth_ap(cm_ctx, &cm_req->roam_req);
 
 	status = cm_get_valid_preauth_candidate(&cm_req->roam_req);
 	if (QDF_IS_STATUS_ERROR(status))

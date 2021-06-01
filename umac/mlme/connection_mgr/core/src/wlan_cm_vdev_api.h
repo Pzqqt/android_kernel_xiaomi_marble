@@ -516,6 +516,14 @@ QDF_STATUS cm_send_vdev_down_req(struct wlan_objmgr_vdev *vdev);
 void cm_free_join_req(struct cm_vdev_join_req *join_req);
 
 /**
+ * cm_flush_join_req() - Process join req flush
+ * @msg: scheduler message
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_flush_join_req(struct scheduler_msg *msg);
+
+/**
  * cm_process_join_req() - Process vdev join req
  * @msg: scheduler message
  *
@@ -559,6 +567,17 @@ cm_handle_reassoc_req(struct wlan_objmgr_vdev *vdev,
 		      struct wlan_cm_vdev_reassoc_req *req);
 
 /**
+ * cm_handle_roam_start() - roam start indication
+ * @vdev: VDEV object
+ * @req: Connection manager roam request
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_handle_roam_start(struct wlan_objmgr_vdev *vdev,
+		     struct wlan_cm_roam_req *req);
+
+/**
  * cm_csr_preauth_done() - Process preauth done from csr part
  * @vdev: vdev object pointer
  *
@@ -579,6 +598,12 @@ static inline QDF_STATUS cm_process_reassoc_req(struct scheduler_msg *msg)
 static inline QDF_STATUS
 cm_handle_reassoc_req(struct wlan_objmgr_vdev *vdev,
 		      struct wlan_cm_vdev_reassoc_req *req)
+{
+	return QDF_STATUS_SUCCESS;
+}
+static inline QDF_STATUS
+cm_handle_roam_start(struct wlan_objmgr_vdev *vdev,
+		     struct wlan_cm_roam_req *req)
 {
 	return QDF_STATUS_SUCCESS;
 }

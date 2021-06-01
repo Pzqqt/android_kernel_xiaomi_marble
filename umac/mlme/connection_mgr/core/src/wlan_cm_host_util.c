@@ -17,11 +17,20 @@
 /**
  * DOC: wlan_cm_host_util.c
  *
- * Implements Host roam (LFR2) utils for connection manager
+ * Implements Host roam (LFR2) reassoc specific legacy code for
+ * connection manager
  */
 
-#include "wlan_cm_roam_api.h"
+#include "wlan_cm_vdev_api.h"
+#include "wlan_scan_api.h"
+#include "wlan_scan_utils_api.h"
+#include "wlan_policy_mgr_api.h"
+#include "wlan_roam_debug.h"
+#include "wni_api.h"
+#include "wlan_logging_sock_svc.h"
 #include "connection_mgr/core/src/wlan_cm_roam.h"
+
+#define ROAM_AP_AGE_LIMIT_MS                     10000
 
 /*
  * cm_copy_ssids_from_rso_config_params() - copy SSID from rso_config_params
@@ -118,5 +127,123 @@ QDF_STATUS cm_update_advance_roam_scan_filter(
 	else if (rso_cfg->rsn_cap & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED)
 		filter->pmf_cap = WLAN_PMF_CAPABLE;
 
+	/* Dont Consider AP older than ROAM_AP_AGE_LIMIT_MS */
+	filter->age_threshold = ROAM_AP_AGE_LIMIT_MS;
+
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS
+cm_handle_reassoc_req(struct wlan_objmgr_vdev *vdev,
+		      struct wlan_cm_vdev_reassoc_req *req)
+{
+	struct cm_vdev_join_req *join_req;
+	struct scheduler_msg msg;
+	QDF_STATUS status;
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_objmgr_psoc *psoc;
+	struct rso_config *rso_cfg;
+
+	if (!vdev || !req)
+		return QDF_STATUS_E_FAILURE;
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		mlme_err(CM_PREFIX_FMT "pdev not found",
+			 CM_PREFIX_REF(req->vdev_id, req->cm_id));
+		return QDF_STATUS_E_INVAL;
+	}
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		mlme_err(CM_PREFIX_FMT "psoc not found",
+			 CM_PREFIX_REF(req->vdev_id, req->cm_id));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg)
+		return QDF_STATUS_E_NOSUPPORT;
+
+	qdf_mem_zero(&msg, sizeof(msg));
+	join_req = qdf_mem_malloc(sizeof(*join_req));
+	if (!join_req)
+		return QDF_STATUS_E_NOMEM;
+
+	wlan_cm_set_disable_hi_rssi(pdev, req->vdev_id, true);
+	mlme_debug(CM_PREFIX_FMT "Disabling HI_RSSI, AP freq=%d, rssi=%d",
+		   CM_PREFIX_REF(req->vdev_id, req->cm_id),
+		   req->bss->entry->channel.chan_freq,
+		   req->bss->entry->rssi_raw);
+
+	if (rso_cfg->assoc_ie.ptr) {
+		join_req->assoc_ie.ptr = qdf_mem_malloc(rso_cfg->assoc_ie.len);
+		if (!join_req->assoc_ie.ptr)
+			return QDF_STATUS_E_NOMEM;
+		qdf_mem_copy(join_req->assoc_ie.ptr, rso_cfg->assoc_ie.ptr,
+			     rso_cfg->assoc_ie.len);
+		join_req->assoc_ie.len = rso_cfg->assoc_ie.len;
+	}
+
+	join_req->entry = util_scan_copy_cache_entry(req->bss->entry);
+	if (!join_req->entry) {
+		mlme_err(CM_PREFIX_FMT "Failed to copy scan entry",
+			 CM_PREFIX_REF(req->vdev_id, req->cm_id));
+		cm_free_join_req(join_req);
+		return QDF_STATUS_E_NOMEM;
+	}
+	join_req->vdev_id = req->vdev_id;
+	join_req->cm_id = req->cm_id;
+
+	status = cm_csr_handle_join_req(vdev, NULL, join_req, true);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err(CM_PREFIX_FMT "fail to fill params from legacy",
+			 CM_PREFIX_REF(req->vdev_id, req->cm_id));
+		cm_free_join_req(join_req);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	wlan_rec_conn_info(req->vdev_id, DEBUG_CONN_CONNECTING,
+			   req->bss->entry->bssid.bytes,
+			   req->bss->entry->neg_sec_info.key_mgmt,
+			   req->bss->entry->channel.chan_freq);
+
+	/* decrement count for self reassoc */
+	if (req->self_reassoc)
+		policy_mgr_decr_session_set_pcl(psoc,
+						wlan_vdev_mlme_get_opmode(vdev),
+						req->vdev_id);
+	msg.bodyptr = join_req;
+	msg.type = CM_REASSOC_REQ;
+	msg.flush_callback = cm_flush_join_req;
+
+	status = scheduler_post_message(QDF_MODULE_ID_MLME,
+					QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_PE, &msg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err(CM_PREFIX_FMT "msg post fail",
+			 CM_PREFIX_REF(req->vdev_id, req->cm_id));
+		cm_free_join_req(join_req);
+	}
+
+	if (wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE)
+		wlan_register_txrx_packetdump(OL_TXRX_PDEV_ID);
+
+	return status;
+}
+
+QDF_STATUS cm_handle_roam_start(struct wlan_objmgr_vdev *vdev,
+				struct wlan_cm_roam_req *req)
+{
+	if (!vdev || !req) {
+		mlme_err("vdev or req is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (req->source == CM_ROAMING_HOST)
+		cm_roam_state_change(wlan_vdev_get_pdev(vdev),
+				     wlan_vdev_get_id(vdev),
+				     WLAN_ROAM_RSO_STOPPED,
+				     REASON_OS_REQUESTED_ROAMING_NOW);
+	return QDF_STATUS_SUCCESS;
+}
+
