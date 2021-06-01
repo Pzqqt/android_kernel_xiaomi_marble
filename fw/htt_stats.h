@@ -5633,6 +5633,12 @@ typedef struct {
      * 0-disabled, 1-enabled
      */
     A_UINT32 dyn_cca_status;
+    /* RXDEAF Register value
+     * rxdesense_thresh_sw - VREG Register
+     * rxdesense_thresh_hw - PHY Register
+     */
+    A_UINT32 rxdesense_thresh_sw;
+    A_UINT32 rxdesense_thresh_hw;
 } htt_phy_reset_stats_tlv;
 
 typedef struct {
