@@ -448,6 +448,10 @@ typedef enum {
     WMI_PDEV_ENABLE_DURATION_BASED_TX_MODE_SELECTION_CMDID,
     /* Get DPD status from HALPHY */
     WMI_PDEV_GET_DPD_STATUS_CMDID,
+    /* Set bios sar table */
+    WMI_PDEV_SET_BIOS_SAR_TABLE_CMDID,
+    /* Set bios geo table */
+    WMI_PDEV_SET_BIOS_GEO_TABLE_CMDID,
 
     /* VDEV (virtual device) specific commands */
     /** vdev create */
@@ -25501,6 +25505,66 @@ typedef struct {
 } wmi_pdev_set_ctl_table_cmd_fixed_param;
 
 typedef struct {
+    A_UINT32    tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_set_bios_sar_cmd_fixed_param */
+    A_UINT32    pdev_id;    /* pdev_id for identifying the MAC, See macros starting with WMI_PDEV_ID_ for values. */
+    A_UINT32    sar_len;
+    /*  sar power array are stored in TLV, which follow this structure;
+     *  sar_len is the number of valid bytes in the sar power array;
+     *  sar power array contains 22 elements.
+     *  Each element stores the maximum SAR power on certain band.
+     *  Its type is A_UINT8 and its unit is 0.25 dBm.
+     *      sar_power[0] for chain0 2g
+     *      sar_power[1] for chain0 5g unii-1
+     *      ...
+     *      sar_power[4] for chain0 5g unii-4
+     *      sar_power[5] for chain0 6g unii-5
+     *      ...
+     *      sar_power[10] for chain0 6g unii-10
+     *      sar_power[11] for chain1 2g
+     *      ...
+     *      sar_power[21] for chain1 6g unii-10
+     */
+
+    A_UINT32    dbs_backoff_len;
+    /*  dbs_backoff follow sar array, its type is A_UINT8;
+     *  dbs_backoff[0] ~ dbs_backoff[5], these six elements are based on
+     *  maximum SAR power, and make some offset adjustment in DBS mode.
+     *  Their unit is 0.25 dB.
+     *      dbs_backoff[0] for chain 0 2G
+     *      dbs_backoff[1] for chain 0 5G
+     *      dbs_backoff[2] for chain 0 6G
+     *      dbs_backoff[3] for chain 1 2G
+     *      dbs_backoff[4] for chain 1 5G
+     *      dbs_backoff[5] for chain 1 6G
+     */
+} wmi_pdev_set_bios_sar_table_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32    tlv_header; /*  TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_set_bios_sar_cmd_fixed_param */
+    A_UINT32    pdev_id;    /*   pdev_id for identifying the MAC, See macros starting with WMI_PDEV_ID_ for values. */
+    A_UINT32    geo_len;
+    /* geo offset array is in TLV, followed this structure:
+     * A_UINT8 Geo_offset[];
+     * Geo_offset array has 18 elements. The meaning of each element is to
+     * adjust offset based on maximum SAR power according to different regions.
+     * Its unit is 0.25 dB.
+     *     Geo_offset[0] chain 0 FCC_Offset on 2G
+     *     Geo_offset[1] chain 0 FCC_Offset on 5G
+     *     Geo_offset[2] chain 0 FCC_Offset on 6G
+     *     Geo_offset[3] chain 0 CE_Offset on 2G
+     *     Geo_offset[4] chain 0 CE_Offset on 5G
+     *     Geo_offset[5] chain 0 CE_Offset on 6G
+     *     Geo_offset[6] chain 0 ROW_Offset on 2G
+     *     Geo_offset[7] chain 0 ROW_Offset on 5G
+     *     Geo_offset[8] chain 0 ROW_Offset on 6G
+     *     Geo_offset[9] chain 1 FCC_Offset on 2G
+     *     ...
+     *     Geo_offset[17] chain 1 ROW_Offset on 6G
+     *  In actual use, FW will subtract an offset value according to the region;
+     */
+} wmi_pdev_set_bios_geo_table_cmd_fixed_param;
+
+typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_set_mimogain_table_cmd_fixed_param */
     union {
         A_UINT32 mac_id; /* OBSOLETE - will be removed once all refs are gone */
@@ -28729,6 +28793,8 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_MLO_TEARDOWN_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_IGMP_OFFLOAD_CMDID);
         WMI_RETURN_STRING(WMI_MGMT_RX_REO_FILTER_CONFIGURATION_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_SET_BIOS_SAR_TABLE_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_SET_BIOS_GEO_TABLE_CMDID);
     }
 
     return "Invalid WMI cmd";

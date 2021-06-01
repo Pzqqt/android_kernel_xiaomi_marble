@@ -1159,6 +1159,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_peer_create_mlo_params,
     WMITLV_TAG_STRUC_wmi_vdev_start_mlo_params,
     WMITLV_TAG_STRUC_wmi_vdev_create_mlo_params,
+    WMITLV_TAG_STRUC_wmi_pdev_set_bios_sar_table_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_set_bios_geo_table_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1622,6 +1624,8 @@ typedef enum {
     OP(WMI_MLO_TEARDOWN_CMDID) \
     OP(WMI_VDEV_IGMP_OFFLOAD_CMDID) \
     OP(WMI_MGMT_RX_REO_FILTER_CONFIGURATION_CMDID) \
+    OP(WMI_PDEV_SET_BIOS_SAR_TABLE_CMDID) \
+    OP(WMI_PDEV_SET_BIOS_GEO_TABLE_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -3956,6 +3960,19 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_ANTENNA_SWITCH_TABLE_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_set_ctl_table_cmd_fixed_param, wmi_pdev_set_ctl_table_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, ctl_info, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_CTL_TABLE_CMDID);
+
+/* Set bios sar table */
+#define WMITLV_TABLE_WMI_PDEV_SET_BIOS_SAR_TABLE_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_set_bios_sar_table_cmd_fixed_param, wmi_pdev_set_bios_sar_table_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, sar_power, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, dbs_backoff, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_BIOS_SAR_TABLE_CMDID);
+
+/* Set bios geo table */
+#define WMITLV_TABLE_WMI_PDEV_SET_BIOS_GEO_TABLE_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_set_bios_geo_table_cmd_fixed_param, wmi_pdev_set_bios_geo_table_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, geo_offset, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_BIOS_GEO_TABLE_CMDID);
 
 /* Override the array gain table */
 #define WMITLV_TABLE_WMI_PDEV_SET_MIMOGAIN_TABLE_CMDID(id,op,buf,len) \
