@@ -3492,4 +3492,5 @@ bool ipa_is_test_prod_flt_in_sram_internal(enum ipa_ip_type ip);
 bool ipa3_is_modem_up(void);
 /* set modem is up */
 void ipa3_set_modem_up(bool is_up);
+int ipa3_qmi_reg_dereg_for_bw(bool bw_reg_dereg);
 #endif /* _IPA3_I_H_ */
