@@ -1156,6 +1156,9 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_mgmt_rx_reo_params,
     WMITLV_TAG_STRUC_wmi_mgmt_rx_fw_consumed_hdr,
     WMITLV_TAG_STRUC_wmi_mgmt_rx_reo_filter_configuration_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_peer_create_mlo_params,
+    WMITLV_TAG_STRUC_wmi_vdev_start_mlo_params,
+    WMITLV_TAG_STRUC_wmi_vdev_create_mlo_params,
 } WMITLV_TAG_ID;
 
 /*
