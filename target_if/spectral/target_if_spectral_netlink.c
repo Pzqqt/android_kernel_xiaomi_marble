@@ -27,6 +27,8 @@
 #include <wlan_osif_priv.h>
 #include <reg_services_public_struct.h>
 
+extern int spectral_debug_level;
+
 #ifdef OPTIMIZED_SAMP_MESSAGE
 QDF_STATUS
 target_if_spectral_fill_samp_msg(struct target_if_spectral *spectral,
@@ -213,6 +215,9 @@ target_if_spectral_fill_samp_msg(struct target_if_spectral *spectral,
 		qdf_mem_copy(spec_samp_msg->spectral_chain_ext_rssi,
 			     params->chain_ext_rssi,
 			     sizeof(params->chain_ext_rssi));
+
+		if (spectral_debug_level & DEBUG_SPECTRAL4)
+			target_if_dbg_print_samp_msg(spec_samp_msg);
 
 		if (spectral->send_phy_data(spectral->pdev_obj,
 					    msg_type) == 0)

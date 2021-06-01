@@ -195,6 +195,51 @@ QDF_STATUS target_if_spectral_fw_hang(struct target_if_spectral *spectral)
 		GET_WMI_HDL_FROM_PDEV(spectral->pdev_obj), &param);
 }
 
+#ifdef OPTIMIZED_SAMP_MESSAGE
+void
+target_if_dbg_print_samp_msg(struct spectral_samp_msg *ss_msg)
+{
+	int span, det;
+	struct samp_detector_info *det_info;
+	struct samp_freq_span_info *span_info;
+
+	spectral_dbg_line();
+	spectral_debug("Spectral Message");
+	spectral_dbg_line();
+	spectral_debug("Signature        :   0x%x", ss_msg->signature);
+	spectral_debug("Freq             :   %u", ss_msg->pri20_freq);
+	spectral_debug("sscan width      :   %d", ss_msg->sscan_bw);
+	spectral_debug("sscan cfreq1     :   %u", ss_msg->sscan_cfreq1);
+	spectral_debug("sscan cfreq2     :   %u", ss_msg->sscan_cfreq2);
+	spectral_debug("bin power count  :   %d", ss_msg->bin_pwr_count);
+	spectral_debug("Number of spans  :   %d", ss_msg->num_freq_spans);
+	spectral_dbg_line();
+	for (span = 0; span < ss_msg->num_freq_spans; span++) {
+		span_info = &ss_msg->freq_span_info[span];
+		spectral_debug("-------- Span ID : %d --------", span);
+		spectral_debug("Number of detectors  :  %d",
+			       span_info->num_detectors);
+		spectral_dbg_line();
+		for (det = 0; det < span_info->num_detectors; det++) {
+			det_info = &span_info->detector_info[det];
+			spectral_debug("------ Detector ID : %d ------", det);
+			spectral_dbg_line();
+			spectral_debug("RSSI            : %d", det_info->rssi);
+			spectral_debug("Timestamp       : %u",
+				       det_info->timestamp);
+			spectral_debug("Start bin index : %d",
+				       det_info->start_bin_idx);
+			spectral_debug("End bin index   : %d",
+				       det_info->end_bin_idx);
+			spectral_debug("Start frequency : %d",
+				       det_info->start_frequency);
+			spectral_debug("End frequency   : %d",
+				       det_info->end_frequency);
+			spectral_dbg_line();
+		}
+	}
+}
+#else
 void
 target_if_dbg_print_samp_param(struct target_if_samp_msg_params *p)
 {
@@ -261,6 +306,7 @@ target_if_dbg_print_samp_msg(struct spectral_samp_msg *ss_msg)
 			       pi->interf[i].interf_max_freq);
 	}
 }
+#endif /* OPTIMIZED_SAMP_MESSAGE */
 
 uint32_t
 target_if_get_offset_swar_sec80(uint32_t channel_width)
@@ -750,6 +796,7 @@ target_if_dump_sfft_report_gen2(struct spectral_phyerr_tlv_gen2 *ptlv,
 	return 0;
 }
 
+#ifndef OPTIMIZED_SAMP_MESSAGE
 #ifdef SPECTRAL_DEBUG_SAMP_MSG
 /**
  * target_if_spectral_log_SAMP_param() - Log SAMP parameters
@@ -771,6 +818,7 @@ target_if_spectral_log_SAMP_param(struct target_if_samp_msg_params *params)
 {
 }
 #endif
+#endif /* OPTIMIZED_SAMP_MESSAGE */
 
 #ifdef OPTIMIZED_SAMP_MESSAGE
 /**
@@ -3846,6 +3894,7 @@ int target_if_spectral_process_report_gen3(
 	struct direct_buf_rx_data *payload = buf;
 	struct target_if_spectral *spectral;
 	struct spectral_report report;
+	int samp_msg_index;
 
 	spectral = get_target_if_spectral_handle_from_pdev(pdev);
 	if (!spectral) {
@@ -3874,9 +3923,13 @@ int target_if_spectral_process_report_gen3(
 					   1024);
 	}
 
+	samp_msg_index = spectral->spectral_sent_msg;
+
 	ret = target_if_consume_spectral_report_gen3(spectral, &report);
 
-	if (spectral_debug_level & DEBUG_SPECTRAL4)
+	/* Reset debug level when SAMP msg is sent successfully or on error */
+	if ((spectral_debug_level & DEBUG_SPECTRAL4) &&
+	    (ret != 0 || spectral->spectral_sent_msg == samp_msg_index + 1))
 		spectral_debug_level = DEBUG_SPECTRAL;
 
 	return ret;
