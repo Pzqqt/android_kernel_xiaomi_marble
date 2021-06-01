@@ -452,6 +452,8 @@ typedef enum {
     WMI_PDEV_SET_BIOS_SAR_TABLE_CMDID,
     /* Set bios geo table */
     WMI_PDEV_SET_BIOS_GEO_TABLE_CMDID,
+    /* Get Calibration status from HALPHY */
+    WMI_PDEV_GET_HALPHY_CAL_STATUS_CMDID,
 
     /* VDEV (virtual device) specific commands */
     /** vdev create */
@@ -1511,6 +1513,9 @@ typedef enum {
 
     /* Event to get DPD status from HALPHY */
     WMI_PDEV_GET_DPD_STATUS_EVENTID,
+
+    /* Event to get Calibration status from HALPHY */
+    WMI_PDEV_GET_HALPHY_CAL_STATUS_EVENTID,
 
 
     /* VDEV specific events */
@@ -28795,6 +28800,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_MGMT_RX_REO_FILTER_CONFIGURATION_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_SET_BIOS_SAR_TABLE_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_SET_BIOS_GEO_TABLE_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_GET_HALPHY_CAL_STATUS_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -31209,6 +31215,74 @@ typedef struct {
     A_UINT32 pdev_id;        /* PDEV Id set by the command */
     A_UINT32 dpd_status;    /* DPD status obtained from HALPHY, refer to WMI_DPD_STATUS */
 } wmi_pdev_get_dpd_status_evt_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_get_halphy_cal_status_cmd_fixed_param */
+    A_UINT32 pdev_id;       /* PDEV ID set by the command */
+} wmi_pdev_get_halphy_cal_status_cmd_fixed_param;
+
+/* WMI_HALPHY_CAL_LIST:
+ *
+ * Below is the list of HALPHY online CAL currently enabled in
+ * WIN chipsets
+ */
+typedef enum {
+    WMI_HALPHY_CAL_ADC = 0,
+    WMI_HALPHY_CAL_BWFILTER,
+    WMI_HALPHY_CAL_PDET_AND_PAL,
+    WMI_HALPHY_CAL_RXDCO,
+    WMI_HALPHY_CAL_COMB_TXLO_TXIQ_RXIQ,
+    WMI_HALPHY_CAL_IBF,
+    WMI_HALPHY_CAL_PA_DROOP,
+    WMI_HALPHY_CAL_DAC,
+    WMI_HALPHY_CAL_ANI,
+    WMI_HALPHY_CAL_NOISE_FLOOR,
+
+    WMI_HALPHY_CAL_MAX_CAL_LIST
+} WMI_HALPHY_CAL_LIST;
+
+/* WMI_HALPHY_CAL_VALID_BITMAP_STATUS
+ *
+ * In WMI wmi_pdev_get_halphy_cal_status_evt_fixed_param
+ * (halphy_cal_valid_bmap member), below enum list must be used
+ * to get which calibration status indication is sent by FW to HOST.
+ * Only if that particular bit it set, corresponding bit of the
+ * halphy_cal_status variable will be valid.
+ */
+typedef enum {
+    WMI_HALPHY_CAL_ADC_BMAP                 = (1 << WMI_HALPHY_CAL_ADC),
+    WMI_HALPHY_CAL_BWFILTER_BMAP            = (1 << WMI_HALPHY_CAL_BWFILTER),
+    WMI_HALPHY_CAL_PDET_AND_PAL_BMAP        = (1 << WMI_HALPHY_CAL_PDET_AND_PAL),
+    WMI_HALPHY_CAL_RXDCO_BMAP               = (1 << WMI_HALPHY_CAL_RXDCO),
+    WMI_HALPHY_CAL_COMB_TXLO_TXIQ_RXIQ_BMAP = (1 << WMI_HALPHY_CAL_COMB_TXLO_TXIQ_RXIQ),
+    WMI_HALPHY_CAL_IBF_BMAP                 = (1 << WMI_HALPHY_CAL_IBF),
+    WMI_HALPHY_CAL_PA_DROOP_BMAP            = (1 << WMI_HALPHY_CAL_PA_DROOP),
+    WMI_HALPHY_CAL_DAC_BMAP                 = (1 << WMI_HALPHY_CAL_DAC),
+    WMI_HALPHY_CAL_ANI_BMAP                 = (1 << WMI_HALPHY_CAL_ANI),
+    WMI_HALPHY_CAL_NOISE_FLOOR_BMAP         = (1 << WMI_HALPHY_CAL_NOISE_FLOOR),
+} WMI_HALPHY_CAL_VALID_BITMAP_STATUS;
+
+typedef struct {
+    A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_get_halphy_cal_status_evt_fixed_param  */
+    A_UINT32 pdev_id;       /* PDEV Id set by the command */
+
+    /*
+     * Calibration valid bitmap from HALPHY, refer to
+     * WMI_HALPHY_CAL_VALID_BITMAP_STATUS.
+     * Only if this particular bit it set, corresponding bit of the
+     * halphy_cal_status variable will be valid.
+     */
+    A_UINT32 halphy_cal_valid_bmap;
+
+    /* Calibration result status bitmap from HALPHY.
+     * The WMI_HALPHY_CAL_VALID_BITMAP_STATUS enum identifies which bit
+     * in the bitmap corresponds to which cal type.
+     * Each valid bit uses the following settings:
+     *     1 - SUCCESS
+     *     0 - FAILURE
+    */
+    A_UINT32 halphy_cal_status;
+} wmi_pdev_get_halphy_cal_status_evt_fixed_param;
 
 /* below structures are related to Motion Detection. */
 typedef struct {

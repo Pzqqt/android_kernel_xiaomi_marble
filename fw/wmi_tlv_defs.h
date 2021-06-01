@@ -1161,6 +1161,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_vdev_create_mlo_params,
     WMITLV_TAG_STRUC_wmi_pdev_set_bios_sar_table_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_set_bios_geo_table_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_get_halphy_cal_status_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_get_halphy_cal_status_evt_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1626,6 +1628,7 @@ typedef enum {
     OP(WMI_MGMT_RX_REO_FILTER_CONFIGURATION_CMDID) \
     OP(WMI_PDEV_SET_BIOS_SAR_TABLE_CMDID) \
     OP(WMI_PDEV_SET_BIOS_GEO_TABLE_CMDID) \
+    OP(WMI_PDEV_GET_HALPHY_CAL_STATUS_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1893,6 +1896,7 @@ typedef enum {
     OP(WMI_MLO_TEARDOWN_COMPLETE_EVENTID) \
     OP(WMI_VDEV_SMART_MONITOR_EVENTID) \
     OP(WMI_MGMT_RX_FW_CONSUMED_EVENTID) \
+    OP(WMI_PDEV_GET_HALPHY_CAL_STATUS_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -4661,6 +4665,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MLO_LINK_SET_ACTIVE_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_get_dpd_status_cmd_fixed_param, wmi_pdev_get_dpd_status_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_GET_DPD_STATUS_CMDID);
 
+/* Request Calibration Status */
+#define WMITLV_TABLE_WMI_PDEV_GET_HALPHY_CAL_STATUS_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_get_halphy_cal_status_cmd_fixed_param, wmi_pdev_get_halphy_cal_status_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_GET_HALPHY_CAL_STATUS_CMDID);
+
 /** WMI cmd used to indicate hw_links part of MLO */
 #define WMITLV_TABLE_WMI_MLO_SETUP_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mlo_setup_cmd_fixed_param, wmi_mlo_setup_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
@@ -6323,6 +6332,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MLO_TEARDOWN_COMPLETE_EVENTID);
 #define WMITLV_TABLE_WMI_VDEV_SMART_MONITOR_EVENTID(id,op,buf,len) \
      WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_smart_monitor_event_fixed_param, wmi_vdev_smart_monitor_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SMART_MONITOR_EVENTID);
+
+/* Get Calibration status Event */
+#define WMITLV_TABLE_WMI_PDEV_GET_HALPHY_CAL_STATUS_EVENTID(id,op,buf,len)  \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_get_halphy_cal_status_evt_fixed_param, wmi_pdev_get_halphy_cal_status_evt_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_GET_HALPHY_CAL_STATUS_EVENTID);
 
 
 #ifdef __cplusplus
