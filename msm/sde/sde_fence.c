@@ -155,7 +155,7 @@ static bool sde_fence_signaled(struct dma_fence *fence)
 	struct sde_fence *f = to_sde_fence(fence);
 	bool status;
 
-	status = (int)((fence->seqno - f->ctx->done_count) <= 0);
+	status = ((int)(fence->seqno - f->ctx->done_count) <= 0);
 	SDE_DEBUG("status:%d fence seq:%llu and timeline:%u\n",
 			status, fence->seqno, f->ctx->done_count);
 	return status;
