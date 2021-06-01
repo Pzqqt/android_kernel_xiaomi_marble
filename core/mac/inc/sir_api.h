@@ -1032,9 +1032,9 @@ typedef struct sEsePEContext {
 /* Warning Do not add any new param in this struct */
 struct join_req {
 #ifndef FEATURE_CM_ENABLE
-	uint8_t vdev_id;
-	/* (Re) Association Request */
+	uint16_t messageType;   /* eWNI_SME_JOIN_REQ */
 	uint16_t length;
+	uint8_t vdev_id;
 	tSirMacSSid ssId;
 	tAniEdType UCEncryptionType;
 	enum ani_akm_type akm;

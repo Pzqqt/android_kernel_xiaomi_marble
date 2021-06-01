@@ -680,17 +680,6 @@ bool cm_is_rsn_or_8021x_sha256_auth_type(struct wlan_objmgr_vdev *vdev);
 QDF_STATUS wlan_cm_host_roam_start(struct scheduler_msg *msg);
 
 /**
- * cm_handle_roam_start() - roam start indication
- * @vdev: VDEV object
- * @req: Connection manager roam request
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS
-cm_handle_roam_start(struct wlan_objmgr_vdev *vdev,
-		     struct wlan_cm_roam_req *req);
-
-/**
  * cm_mlme_roam_preauth_fail() - roam preauth fail
  * @vdev: VDEV object
  * @req: Connection manager roam request

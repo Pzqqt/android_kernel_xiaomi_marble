@@ -13120,6 +13120,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			break;
 
+		csr_join_req->messageType = messageType;
 		csr_join_req->length = msgLen;
 		csr_join_req->vdev_id = (uint8_t) sessionId;
 		if (pIes->SSID.present &&

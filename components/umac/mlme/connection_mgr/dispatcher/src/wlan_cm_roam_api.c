@@ -1221,7 +1221,7 @@ static void cm_rso_chan_to_freq_list(struct wlan_objmgr_pdev *pdev,
 }
 
 #if defined(FEATURE_CM_ENABLE) && defined(WLAN_FEATURE_HOST_ROAM)
-static QDF_STATUS wlan_cm_init_reassoc_timer(struct rso_config *rso_cfg)
+static QDF_STATUS cm_init_reassoc_timer(struct rso_config *rso_cfg)
 {
 	QDF_STATUS status;
 
@@ -1234,7 +1234,7 @@ static QDF_STATUS wlan_cm_init_reassoc_timer(struct rso_config *rso_cfg)
 	return status;
 }
 
-static void wlan_cm_deinit_reassoc_timer(struct rso_config *rso_cfg)
+static void cm_deinit_reassoc_timer(struct rso_config *rso_cfg)
 {
 	/* check if the timer is running */
 	if (QDF_TIMER_STATE_RUNNING ==
@@ -1243,6 +1243,12 @@ static void wlan_cm_deinit_reassoc_timer(struct rso_config *rso_cfg)
 
 	qdf_mc_timer_destroy(&rso_cfg->reassoc_timer);
 }
+#else
+static inline QDF_STATUS cm_init_reassoc_timer(struct rso_config *rso_cfg)
+{
+	return QDF_STATUS_SUCCESS;
+}
+static inline void cm_deinit_reassoc_timer(struct rso_config *rso_cfg) {}
 #endif
 
 QDF_STATUS wlan_cm_rso_config_init(struct wlan_objmgr_vdev *vdev,
@@ -1267,12 +1273,11 @@ QDF_STATUS wlan_cm_rso_config_init(struct wlan_objmgr_vdev *vdev,
 	if (!mlme_obj)
 		return QDF_STATUS_E_INVAL;
 
-#ifdef FEATURE_CM_ENABLE
-#ifdef WLAN_FEATURE_HOST_ROAM
-	status = wlan_cm_init_reassoc_timer(rso_cfg);
+	status = cm_init_reassoc_timer(rso_cfg);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
-#endif
+
+#ifdef FEATURE_CM_ENABLE
 	qdf_mutex_create(&rso_cfg->cm_rso_lock);
 #endif
 	cfg_params = &rso_cfg->cfg_param;
@@ -1381,11 +1386,8 @@ void wlan_cm_rso_config_deinit(struct wlan_objmgr_vdev *vdev,
 
 #ifdef FEATURE_CM_ENABLE
 	qdf_mutex_destroy(&rso_cfg->cm_rso_lock);
-#ifdef WLAN_FEATURE_HOST_ROAM
-	wlan_cm_deinit_reassoc_timer(rso_cfg);
 #endif
-#endif
-
+	cm_deinit_reassoc_timer(rso_cfg);
 }
 
 #ifdef FEATURE_CM_ENABLE
@@ -1501,22 +1503,6 @@ QDF_STATUS wlan_cm_host_roam_start(struct scheduler_msg *msg)
 	req = msg->bodyptr;
 	return wlan_cm_roam_invoke(req->pdev, req->vdev_id, &bssid, 0,
 				   CM_ROAMING_FW);
-}
-
-QDF_STATUS cm_handle_roam_start(struct wlan_objmgr_vdev *vdev,
-				struct wlan_cm_roam_req *req)
-{
-	if (!vdev || !req) {
-		mlme_err("vdev or req is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	if (req->source == CM_ROAMING_HOST)
-		cm_roam_state_change(wlan_vdev_get_pdev(vdev),
-				     wlan_vdev_get_id(vdev),
-				     WLAN_ROAM_RSO_STOPPED,
-				     REASON_OS_REQUESTED_ROAMING_NOW);
-	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS cm_mlme_roam_preauth_fail(struct wlan_objmgr_vdev *vdev,
