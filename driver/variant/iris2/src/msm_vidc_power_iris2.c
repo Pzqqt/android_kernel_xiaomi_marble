@@ -50,9 +50,14 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 
 	buf_timetamps_fps = msm_vidc_calc_framerate(inst);
 
-	/* use buffer detected fps instead of client set value */
-	if (fps < buf_timetamps_fps)
+	/*
+	 * when buffer detected fps is more than client set value by 10%,
+	 * utilize buffer detected fps to scale clock.
+	 */
+	if (div_u64(fps * 11, 10) < buf_timetamps_fps) {
 		fps = buf_timetamps_fps;
+		inst->priority_level = MSM_VIDC_PRIORITY_LOW;
+	}
 
 	mbs_per_second = mbpf * fps;
 
