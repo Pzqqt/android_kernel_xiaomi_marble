@@ -12545,6 +12545,12 @@ typedef enum {
 
         WMI_VDEV_PARAM_EHTOPS_0_31,                           /* 0x800C */
 
+        /*
+         * 0 - eht 11be puncturing disable,
+         * 1 - eht 11be puncturing enable
+         */
+        WMI_VDEV_PARAM_SET_EHT_PUNCTURING_MODE,               /* 0x800D */
+
     /*=== END VDEV_PARAM_PROTOTYPE SECTION ===*/
 } WMI_VDEV_PARAM;
 
