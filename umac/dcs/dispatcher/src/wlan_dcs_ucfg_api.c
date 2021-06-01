@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -58,6 +58,22 @@ ucfg_dcs_register_user_cb(struct wlan_objmgr_psoc *psoc,
 
 	dcs_pdev_priv->requestor_vdev_id = vdev_id;
 	dcs_pdev_priv->user_cb = cb;
+}
+
+QDF_STATUS ucfg_dcs_register_awgn_cb(struct wlan_objmgr_psoc *psoc,
+				     dcs_switch_chan_cb cb)
+{
+	struct dcs_psoc_priv_obj *dcs_psoc_priv;
+
+	dcs_psoc_priv =
+		wlan_objmgr_psoc_get_comp_private_obj(psoc, WLAN_UMAC_COMP_DCS);
+	if (!dcs_psoc_priv) {
+		dcs_err("dcs psoc private object is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	dcs_psoc_priv->switch_chan_cb = cb;
+	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS

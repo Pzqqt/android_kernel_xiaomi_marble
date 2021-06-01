@@ -210,7 +210,7 @@ struct wlan_target_if_dcs_tx_ops {
  */
 struct wlan_target_if_dcs_rx_ops {
 	QDF_STATUS (*process_dcs_event)(struct wlan_objmgr_psoc *psoc,
-					struct dcs_stats_event *event);
+					struct wlan_host_dcs_event *event);
 };
 #endif
 

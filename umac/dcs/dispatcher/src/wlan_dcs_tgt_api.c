@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -24,7 +24,7 @@
 #include "../../core/src/wlan_dcs.h"
 
 QDF_STATUS tgt_dcs_process_event(struct wlan_objmgr_psoc *psoc,
-				 struct dcs_stats_event *event)
+				 struct wlan_host_dcs_event *event)
 {
 	return wlan_dcs_process(psoc, event);
 }

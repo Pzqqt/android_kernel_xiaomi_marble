@@ -22,6 +22,20 @@
 #define _WLAN_DCS_PUBLIC_STRUCTS_H_
 
 /**
+ * enum wlan_host_dcs_type - types of DCS interference events
+ * @WLAN_HOST_DCS_NONE: invalid type
+ * @WLAN_HOST_DCS_CWIM: continuous wave interference
+ * @WLAN_HOST_DCS_WLANIM: wlan interference stats
+ * @WLAN_HOST_DCS_AWGNIM: additive white Gaussian noise (awgn) interference
+ */
+enum wlan_host_dcs_type {
+	WLAN_HOST_DCS_NONE   = 0,      /* 0x0 */
+	WLAN_HOST_DCS_CWIM   = BIT(0), /* 0x1 */
+	WLAN_HOST_DCS_WLANIM = BIT(1), /* 0x2 */
+	WLAN_HOST_DCS_AWGNIM = BIT(2), /* 0x4 */
+};
+
+/**
  * struct wlan_host_dcs_interference_param - dcs interference parameters
  * @interference_type: type of DCS interference
  * @uint32_t pdev_id: pdev id
@@ -118,5 +132,17 @@ struct wlan_host_dcs_awgn_info {
 	qdf_freq_t center_freq0;
 	qdf_freq_t center_freq1;
 	uint32_t chan_bw_intf_bitmap;
+};
+
+/**
+ * struct wlan_host_dcs_event - define dcs event
+ * @wlan_stat: wlan interference target statistics
+ * @dcs_param: dcs event param
+ * @awgn_info: awgn info
+ */
+struct wlan_host_dcs_event {
+	struct wlan_host_dcs_im_tgt_stats wlan_stat;
+	struct wlan_host_dcs_interference_param dcs_param;
+	struct wlan_host_dcs_awgn_info awgn_info;
 };
 #endif

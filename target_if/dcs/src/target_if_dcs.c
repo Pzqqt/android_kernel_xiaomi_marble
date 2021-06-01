@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -41,7 +41,7 @@ static int target_if_dcs_interference_event_handler(ol_scn_t scn,
 						    uint32_t datalen)
 {
 	QDF_STATUS status;
-	struct dcs_stats_event ev;
+	struct wlan_host_dcs_event ev;
 	struct wlan_objmgr_psoc *psoc;
 	struct wmi_unified *wmi_handle;
 	struct wlan_target_if_dcs_rx_ops *rx_ops;
@@ -70,14 +70,22 @@ static int target_if_dcs_interference_event_handler(ol_scn_t scn,
 
 	if (wmi_extract_dcs_interference_type(wmi_handle, data,
 					      &ev.dcs_param) !=
-						QDF_STATUS_SUCCESS) {
+	    QDF_STATUS_SUCCESS) {
 		target_if_err("Unable to extract dcs interference type");
 		return -EINVAL;
 	}
 
-	if (wmi_extract_dcs_im_tgt_stats(wmi_handle, data, &ev.wlan_stat) !=
-							QDF_STATUS_SUCCESS) {
+	if (ev.dcs_param.interference_type == WLAN_HOST_DCS_WLANIM &&
+	    wmi_extract_dcs_im_tgt_stats(wmi_handle, data, &ev.wlan_stat) !=
+	    QDF_STATUS_SUCCESS) {
 		target_if_err("Unable to extract WLAN IM stats");
+		return -EINVAL;
+	}
+
+	if (ev.dcs_param.interference_type == WLAN_HOST_DCS_AWGNIM &&
+	    wmi_extract_dcs_awgn_info(wmi_handle, data, &ev.awgn_info) !=
+	    QDF_STATUS_SUCCESS) {
+		target_if_err("Unable to extract AWGN info");
 		return -EINVAL;
 	}
 

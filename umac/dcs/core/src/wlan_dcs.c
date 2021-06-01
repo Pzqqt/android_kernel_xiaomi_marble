@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +25,11 @@
 
 #include <target_if_dcs.h>
 #include "wlan_dcs.h"
+#include <wlan_objmgr_psoc_obj_i.h>
+#include "wlan_utility.h"
+#ifdef WLAN_POLICY_MGR_ENABLE
+#include "wlan_policy_mgr_api.h"
+#endif
 
 struct dcs_pdev_priv_obj *
 wlan_dcs_get_pdev_private_obj(struct wlan_objmgr_psoc *psoc, uint32_t pdev_id)
@@ -593,7 +598,7 @@ void wlan_dcs_disable_timer_fn(void *dcs_timer_args)
  */
 static void wlan_dcs_frequency_control(struct wlan_objmgr_psoc *psoc,
 				       struct dcs_pdev_priv_obj *dcs_pdev_priv,
-				       struct dcs_stats_event *event)
+				       struct wlan_host_dcs_event *event)
 {
 	struct dcs_psoc_priv_obj *dcs_psoc_priv;
 	struct pdev_dcs_freq_ctrl_params *dcs_freq_ctrl_params;
@@ -667,8 +672,659 @@ static void wlan_dcs_frequency_control(struct wlan_objmgr_psoc *psoc,
 	}
 }
 
+/**
+ * wlan_dcs_switch_chan() - switch channel for vdev
+ * @vdev: vdev ptr
+ * @tgt_freq: target frequency
+ * @tgt_width: target channel width
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+wlan_dcs_switch_chan(struct wlan_objmgr_vdev *vdev, qdf_freq_t tgt_freq,
+		     enum phy_ch_width tgt_width)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct dcs_psoc_priv_obj *dcs_psoc_priv;
+	dcs_switch_chan_cb switch_chan_cb;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc)
+		return QDF_STATUS_E_INVAL;
+
+	dcs_psoc_priv = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+					WLAN_UMAC_COMP_DCS);
+	if (!dcs_psoc_priv)
+		return QDF_STATUS_E_INVAL;
+
+	switch_chan_cb = dcs_psoc_priv->switch_chan_cb;
+	if (!switch_chan_cb)
+		return QDF_STATUS_E_NOSUPPORT;
+
+	return switch_chan_cb(vdev, tgt_freq, tgt_width);
+}
+
+#ifdef WLAN_POLICY_MGR_ENABLE
+/**
+ * wlan_dcs_get_pcl_for_sap() - get preferred channel list for SAP
+ * @vdev: vdev ptr
+ * @freq_list: Pointer to PCL
+ * @freq_list_sz: Max size of PCL
+ *
+ * Return: number of channels in PCL
+ */
+static uint32_t wlan_dcs_get_pcl_for_sap(struct wlan_objmgr_vdev *vdev,
+					 qdf_freq_t *freq_list,
+					 uint32_t freq_list_sz)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
+	struct policy_mgr_pcl_list *pcl;
+	qdf_freq_t freq;
+	enum channel_state state;
+	QDF_STATUS status;
+	int i, j;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc)
+		return 0;
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev)
+		return 0;
+
+	pcl = qdf_mem_malloc(sizeof(*pcl));
+	if (!pcl)
+		return 0;
+
+	status = policy_mgr_get_pcl_for_vdev_id(psoc,
+						PM_SAP_MODE,
+						pcl->pcl_list, &pcl->pcl_len,
+						pcl->weight_list,
+						QDF_ARRAY_SIZE(pcl->weight_list),
+						wlan_vdev_get_id(vdev));
+	if (QDF_IS_STATUS_ERROR(status) || !pcl->pcl_len) {
+		qdf_mem_free(pcl);
+		return 0;
+	}
+
+	for (i = 0, j = 0; i < pcl->pcl_len && i < freq_list_sz; i++) {
+		freq = (qdf_freq_t)pcl->pcl_list[i];
+		state = wlan_reg_get_channel_state_for_freq(pdev, freq);
+		if (state != CHANNEL_STATE_ENABLE)
+			continue;
+
+		freq_list[j++] = freq;
+	}
+
+	qdf_mem_free(pcl);
+	return j;
+}
+#else
+static uint32_t wlan_dcs_get_pcl_for_sap(struct wlan_objmgr_vdev *vdev,
+					 qdf_freq_t *freq_list,
+					 uint32_t freq_list_sz)
+{
+	struct wlan_objmgr_pdev *pdev;
+	struct regulatory_channel *cur_chan_list;
+	qdf_freq_t freq;
+	enum channel_state state;
+	int i, j;
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev)
+		return 0;
+
+	cur_chan_list = qdf_mem_malloc(NUM_CHANNELS *
+			sizeof(struct regulatory_channel));
+	if (!cur_chan_list)
+		return 0;
+
+	if (wlan_reg_get_current_chan_list(pdev, cur_chan_list) !=
+					   QDF_STATUS_SUCCESS) {
+		qdf_mem_free(cur_chan_list);
+		return 0;
+	}
+
+	for (i = 0, j = 0; i < NUM_CHANNELS && i < freq_list_sz; i++) {
+		freq = cur_chan_list[i].center_freq;
+		state = wlan_reg_get_channel_state_for_freq(pdev, freq);
+		if (state != CHANNEL_STATE_ENABLE)
+			continue;
+
+		freq_list[j++] = freq;
+	}
+
+	qdf_mem_free(cur_chan_list);
+	return j;
+}
+#endif
+
+/**
+ * wlan_dcs_awgn_get_intf_for_seg() - get interference for specified segment
+ * @awgn_info: awgn info pointer
+ * @segment: segment index in channel band
+ *
+ * This function extracts the information from awgn event and check interference
+ * within the specified segment.
+ *
+ * Return: true if interference is found within the segment, false otherwise.
+ */
+static bool
+wlan_dcs_awgn_get_intf_for_seg(struct wlan_host_dcs_awgn_info *awgn_info,
+			       uint32_t segment)
+{
+	uint32_t seg_mask;
+
+	switch (segment) {
+	case WLAN_DCS_SEG_PRI20:
+		seg_mask = WLAN_DCS_SEG_PRI20_MASK;
+		break;
+	case WLAN_DCS_SEG_SEC20:
+		seg_mask = WLAN_DCS_SEG_SEC20_MASK;
+		break;
+	case WLAN_DCS_SEG_SEC40:
+		seg_mask = WLAN_DCS_SEG_SEC40_MASK;
+		break;
+	case WLAN_DCS_SEG_SEC80:
+		seg_mask = WLAN_DCS_SEG_SEC80_MASK;
+		break;
+	case WLAN_DCS_SEG_SEC160:
+		seg_mask = WLAN_DCS_SEG_SEC160_MASK;
+		break;
+	default:
+		seg_mask = 0xFFFFFFFF;
+		break;
+	}
+
+	return (awgn_info->chan_bw_intf_bitmap & seg_mask);
+}
+
+/**
+ * wlan_dcs_get_max_seg_idx() - get max segment index for channel width
+ * @width: channel width
+ *
+ * Return: max segment index(enum wlan_dcs_chan_seg) for the channel width.
+ */
+static enum wlan_dcs_chan_seg wlan_dcs_get_max_seg_idx(enum phy_ch_width width)
+{
+	switch (width) {
+	case CH_WIDTH_160MHZ: /* fallthrough */
+	case CH_WIDTH_80P80MHZ:
+		return WLAN_DCS_SEG_SEC80;
+	case CH_WIDTH_80MHZ:
+		return WLAN_DCS_SEG_SEC40;
+	case CH_WIDTH_40MHZ:
+		return WLAN_DCS_SEG_SEC20;
+	case CH_WIDTH_20MHZ:
+		return WLAN_DCS_SEG_PRI20;
+	default:
+		dcs_err("Invalid ch width %d", width);
+		return WLAN_DCS_SEG_INVALID;
+	}
+}
+
+/**
+ * wlan_dcs_get_chan_width_for_seg() - get channel width for specified segment
+ * @seg_idx: segment index
+ *
+ * Return: channel width for segment index
+ */
+static enum phy_ch_width
+wlan_dcs_get_chan_width_for_seg(enum wlan_dcs_chan_seg seg_idx)
+{
+	switch (seg_idx) {
+	case WLAN_DCS_SEG_SEC80:
+		return CH_WIDTH_160MHZ;
+	case WLAN_DCS_SEG_SEC40:
+		return CH_WIDTH_80MHZ;
+	case WLAN_DCS_SEG_SEC20:
+		return CH_WIDTH_40MHZ;
+	case WLAN_DCS_SEG_PRI20:
+		return CH_WIDTH_20MHZ;
+	default:
+		dcs_err("Invalid seg idx %d", seg_idx);
+		return CH_WIDTH_INVALID;
+	}
+}
+
+/**
+ * wlan_dcs_get_max_no_intf_bw() - get max no interference band width
+ * @awgn_info: pointer to awgn info
+ * @width: pointer to channel width
+ *
+ * This function trys to get max no interference band width according to
+ * awgn event.
+ *
+ * Return: true if valid no interference band width is found, false otherwise.
+ */
+static bool
+wlan_dcs_get_max_no_intf_bw(struct wlan_host_dcs_awgn_info *awgn_info,
+			    enum phy_ch_width *width)
+{
+	enum wlan_dcs_chan_seg seg_idx, max_seg_idx;
+
+	max_seg_idx = wlan_dcs_get_max_seg_idx(awgn_info->channel_width);
+	if (max_seg_idx == WLAN_DCS_SEG_INVALID)
+		return false;
+
+	seg_idx = WLAN_DCS_SEG_PRI20;
+	while (seg_idx <= max_seg_idx) {
+		if (wlan_dcs_awgn_get_intf_for_seg(awgn_info, seg_idx)) {
+			dcs_debug("Intf found for seg idx %d", seg_idx);
+			break;
+		}
+		seg_idx++;
+	}
+
+	/* scroll back to the last no-intf idx */
+	seg_idx--;
+
+	if (seg_idx == WLAN_DCS_SEG_INVALID) {
+		/* If pri20 contains interference, do full channel change */
+		dcs_debug("Primary 20MHz Channel interference detected");
+		return false;
+	}
+
+	*width = wlan_dcs_get_chan_width_for_seg(seg_idx);
+	if (*width == CH_WIDTH_160MHZ &&
+	    awgn_info->channel_width == CH_WIDTH_80P80MHZ)
+		*width = CH_WIDTH_80P80MHZ;
+
+	dcs_debug("Found the max no intf width %d", *width);
+	return (*width != CH_WIDTH_INVALID);
+}
+
+/**
+ * wlan_dcs_get_available_chan_for_bw() - get available channel for specified
+ *  band width
+ * @pdev: pdev ptr
+ * @awgn_info: pointer to awgn info
+ * @bw: channel width
+ * @freq_list: List of preferred channels
+ * @freq_num: Number of channels in the PCL
+ * @random: request for random channel
+ *
+ * Return: the selected channel frequency, 0 if no available chan is found.
+ */
+static qdf_freq_t
+wlan_dcs_get_available_chan_for_bw(struct wlan_objmgr_pdev *pdev,
+				   struct wlan_host_dcs_awgn_info *awgn_info,
+				   enum phy_ch_width bw, qdf_freq_t *freq_list,
+				   uint32_t freq_num, bool random)
+{
+	int i, j = 0;
+	uint32_t random_chan_idx;
+	qdf_freq_t freq, selected_freq = 0;
+	const struct bonded_channel_freq *bonded_chan_ptr = NULL;
+	enum channel_state state;
+	uint16_t chan_cfreq;
+	bool is_safe = true;
+
+	if (!freq_list || !freq_num)
+		return selected_freq;
+
+	for (i = 0; i < freq_num; i++) {
+		if (j && !random) {
+			selected_freq = freq_list[0];
+			dcs_debug("get the first available freq %u for bw %u",
+				  selected_freq, bw);
+			break;
+		}
+
+		freq = freq_list[i];
+		if (!WLAN_REG_IS_SAME_BAND_FREQS(freq, awgn_info->center_freq))
+			continue;
+
+		/**
+		 * DFS channel may need CAC during restart, which costs time
+		 * and may cause failure.
+		 */
+		if (wlan_reg_is_dfs_for_freq(pdev, freq)) {
+			dcs_debug("skip dfs freq %u", freq);
+			continue;
+		}
+
+		if (bonded_chan_ptr &&
+		    freq >= bonded_chan_ptr->start_freq &&
+		    freq <= bonded_chan_ptr->end_freq) {
+			if (is_safe) {
+				dcs_debug("add freq directly [%d] = %u",
+					  j, freq);
+				freq_list[j++] = freq;
+			}
+			continue;
+		}
+
+		state = wlan_reg_get_5g_bonded_channel_and_state_for_freq(
+				pdev, freq, bw, &bonded_chan_ptr);
+		if (state != CHANNEL_STATE_ENABLE)
+			continue;
+
+		/* no bonding channel for 20MHz */
+		if (bw == CH_WIDTH_20MHZ) {
+			if (WLAN_DCS_IS_FREQ_IN_WIDTH(awgn_info->center_freq,
+						      awgn_info->center_freq0,
+						      awgn_info->center_freq1,
+						      awgn_info->channel_width,
+						      freq))
+				continue;
+
+			dcs_debug("add freq[%d] = %u", j, freq);
+			freq_list[j++] = freq;
+			continue;
+		}
+
+		is_safe = true;
+		chan_cfreq =  bonded_chan_ptr->start_freq;
+		while (chan_cfreq <= bonded_chan_ptr->end_freq) {
+			if (WLAN_DCS_IS_FREQ_IN_WIDTH(awgn_info->center_freq,
+						      awgn_info->center_freq0,
+						      awgn_info->center_freq1,
+						      awgn_info->channel_width,
+						      chan_cfreq)) {
+				is_safe = false;
+				break;
+			}
+			chan_cfreq = chan_cfreq + 20;
+		}
+		if (is_safe) {
+			dcs_debug("add freq[%d] = %u", j, freq);
+			freq_list[j++] = freq;
+		}
+	}
+
+	if (j && random) {
+		qdf_get_random_bytes(&random_chan_idx, sizeof(random_chan_idx));
+		random_chan_idx = random_chan_idx % j;
+		selected_freq = freq_list[random_chan_idx];
+		dcs_debug("get freq[%d] = %u for bw %u",
+			  random_chan_idx, selected_freq, bw);
+	}
+
+	return selected_freq;
+}
+
+/**
+ * wlan_dcs_sap_get_available_chan() - get available channel for sap
+ * @vdev: vdev ptr
+ * @awgn_info: pointer to awgn info
+ * @tgt_freq: frequency of the selected channel
+ * @tgt_width: band width of the selected channel
+ * @random: request for random channel
+ *
+ * This function trys to get no-interference chan with max possible bandwidth
+ * from pcl for sap according to awgn info.
+ *
+ * Return: true if available channel is found, false otherwise.
+ */
+static bool
+wlan_dcs_sap_select_chan(struct wlan_objmgr_vdev *vdev,
+			 struct wlan_host_dcs_awgn_info *awgn_info,
+			 qdf_freq_t *tgt_freq, enum phy_ch_width *tgt_width,
+			 bool random)
+{
+	int32_t tmp_width;
+	qdf_freq_t tmp_freq = 0;
+	struct wlan_objmgr_pdev *pdev;
+	qdf_freq_t *freq_list;
+	uint32_t freq_num;
+
+	freq_list = qdf_mem_malloc(sizeof(*freq_list) * NUM_CHANNELS);
+	if (!freq_list)
+		return false;
+
+	freq_num = wlan_dcs_get_pcl_for_sap(vdev, freq_list, NUM_CHANNELS);
+	if (!freq_num) {
+		qdf_mem_free(freq_list);
+		return false;
+	}
+
+	tmp_width = awgn_info->channel_width;
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		qdf_mem_free(freq_list);
+		return false;
+	}
+
+	while (tmp_width >= CH_WIDTH_20MHZ) {
+		tmp_freq = wlan_dcs_get_available_chan_for_bw(pdev, awgn_info,
+							      tmp_width,
+							      freq_list,
+							      freq_num,
+							      random);
+		if (tmp_freq)
+			break;
+		tmp_width--;
+	}
+
+	if (tmp_freq) {
+		*tgt_width = tmp_width;
+		*tgt_freq = tmp_freq;
+		dcs_debug("new_width: %d new_freq %u", tmp_width, tmp_freq);
+
+		qdf_mem_free(freq_list);
+		return true;
+	}
+
+	qdf_mem_free(freq_list);
+	return false;
+}
+
+/**
+ * wlan_dcs_is_awgnim_valid() - validate awgn info
+ * @awgn_info: pointer to awgn info
+ *
+ * Return: true if valid, false otherwise.
+ */
+static inline bool
+wlan_dcs_is_awgnim_valid(struct wlan_host_dcs_awgn_info *awgn_info)
+{
+	return (awgn_info &&
+		awgn_info->center_freq && awgn_info->chan_bw_intf_bitmap &&
+		awgn_info->channel_width != CH_WIDTH_INVALID &&
+		WLAN_REG_IS_6GHZ_CHAN_FREQ(awgn_info->center_freq));
+}
+
+/**
+ * wlan_dcs_vdev_get_op_chan_info() - get operating channel info for vdev
+ * @vdev: pointer to vdev object
+ * @cfreq: Center frequency of primary channel
+ * @cfreq0: Center frequency of segment 1
+ * @cfreq1: Center frequency of segment 2
+ * @ch_width: Channel width, enum phy_ch_width
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+wlan_dcs_vdev_get_op_chan_info(struct wlan_objmgr_vdev *vdev,
+			       qdf_freq_t *cfreq, qdf_freq_t *cfreq0,
+			       qdf_freq_t *cfreq1, enum phy_ch_width *ch_width)
+{
+	struct wlan_channel *chan;
+
+	if (!vdev)
+		return QDF_STATUS_E_INVAL;
+
+	*cfreq = 0;
+	*cfreq0 = 0;
+	*cfreq1 = 0;
+	*ch_width = 0;
+
+	if (wlan_vdev_mlme_is_active(vdev) != QDF_STATUS_SUCCESS)
+		return QDF_STATUS_E_INVAL;
+
+	chan = wlan_vdev_get_active_channel(vdev);
+	if (!chan)
+		return QDF_STATUS_E_INVAL;
+
+	*cfreq = chan->ch_freq;
+	*cfreq0 = chan->ch_cfreq1;
+	*cfreq1 = chan->ch_cfreq2;
+	*ch_width = chan->ch_width;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wlan_dcs_process_awgn_sta() - process AWGN event for STA
+ * @pdev: pointer to pdev object
+ * @object: vdev object
+ * @arg: Arguments to the handler
+ *
+ * Return: void
+ */
+static void wlan_dcs_process_awgn_sta(struct wlan_objmgr_pdev *pdev,
+				      void *object, void *arg)
+{
+	struct wlan_objmgr_vdev *vdev = object;
+	struct wlan_host_dcs_awgn_info *awgn_info = arg;
+	enum phy_ch_width ch_width;
+	enum phy_ch_width tgt_width = CH_WIDTH_INVALID;
+	qdf_freq_t op_freq, cfreq0, cfreq1;
+	qdf_freq_t tgt_freq = 0;
+	QDF_STATUS status;
+	uint8_t vdev_id;
+	bool found;
+
+	if (!vdev || !pdev)
+		return;
+
+	if (wlan_vdev_mlme_get_opmode(vdev) != QDF_STA_MODE)
+		return;
+
+	vdev_id = wlan_vdev_get_id(vdev);
+	status = wlan_dcs_vdev_get_op_chan_info(vdev, &op_freq, &cfreq0,
+						&cfreq1, &ch_width);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+
+	if (awgn_info->center_freq != op_freq) {
+		dcs_debug("STA-%d: freq not match", vdev_id);
+		return;
+	}
+
+	found = wlan_dcs_get_max_no_intf_bw(awgn_info, &tgt_width);
+	if (found) {
+		if (ch_width <= tgt_width) {
+			dcs_debug("STA-%d: freq and bw are unchanged", vdev_id);
+			return;
+		}
+
+		tgt_freq = op_freq;
+	}
+
+	/* If no width is found, means to disconnect */
+	dcs_debug("STA-%d: target freq %u width %u",
+		  vdev_id, tgt_freq, tgt_width);
+	wlan_dcs_switch_chan(vdev, tgt_freq, tgt_width);
+}
+
+/**
+ * wlan_dcs_process_awgn_sap() - process AWGN event for SAP
+ * @pdev: pointer to pdev object
+ * @object: vdev object
+ * @arg: Arguments to the handler
+ *
+ * Return: void
+ */
+static void wlan_dcs_process_awgn_sap(struct wlan_objmgr_pdev *pdev,
+				      void *object, void *arg)
+{
+	struct wlan_objmgr_vdev *vdev = object;
+	struct wlan_host_dcs_awgn_info *awgn_info = arg;
+	enum phy_ch_width ch_width;
+	enum phy_ch_width tgt_width = CH_WIDTH_INVALID;
+	qdf_freq_t op_freq, cfreq0, cfreq1;
+	qdf_freq_t tgt_freq = 0;
+	QDF_STATUS status;
+	uint8_t vdev_id;
+	bool found;
+
+	if (!vdev || !pdev)
+		return;
+
+	if (wlan_vdev_mlme_get_opmode(vdev) != QDF_SAP_MODE)
+		return;
+
+	vdev_id = wlan_vdev_get_id(vdev);
+	status = wlan_dcs_vdev_get_op_chan_info(vdev, &op_freq, &cfreq0, &cfreq1, &ch_width);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+
+	if (awgn_info->center_freq != op_freq) {
+		dcs_debug("SAP-%d: freq not match rpt:%u - op:%u",
+			  vdev_id, awgn_info->center_freq, op_freq);
+		return;
+	}
+
+	found = wlan_dcs_get_max_no_intf_bw(awgn_info, &tgt_width);
+	if (found) {
+		if (ch_width <= tgt_width) {
+			dcs_debug("SAP-%d: both freq and bw are unchanged",
+				  vdev_id);
+			return;
+		}
+
+		tgt_freq = op_freq;
+	} else {
+		wlan_dcs_sap_select_chan(vdev, awgn_info, &tgt_freq,
+					 &tgt_width, true);
+	}
+
+	/* If no chan is selected, means to stop sap */
+	dcs_debug("SAP-%d: target freq %u width %u",
+		  vdev_id, tgt_freq, tgt_width);
+	wlan_dcs_switch_chan(vdev, tgt_freq, tgt_width);
+}
+
+/**
+ * wlan_dcs_awgnim_process() - process awgn IM
+ * @psoc: psoc ptr
+ * @pdev_id: pdev id
+ * @awgn_info: pointer to awgn info
+ *
+ * This function triggers channel change for all STAs and SAPs, according
+ * to AWGN info.
+ *
+ * Return: None.
+ */
+static void
+wlan_dcs_awgn_process(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
+		      struct wlan_host_dcs_awgn_info *awgn_info)
+{
+	struct wlan_objmgr_pdev *pdev;
+
+	if (!wlan_dcs_is_awgnim_valid(awgn_info)) {
+		dcs_err("Invalid awgnim event");
+		return;
+	}
+
+	pdev = wlan_objmgr_get_pdev_by_id(psoc, pdev_id, WLAN_DCS_ID);
+	if (!pdev) {
+		dcs_err("Invalid pdev id %d", pdev_id);
+		return;
+	}
+
+	dcs_debug("pdev id %u width %u freq %u freq0 %u fre1 %u bitmap 0x%x",
+		  pdev_id, awgn_info->channel_width, awgn_info->center_freq,
+		  awgn_info->center_freq0, awgn_info->center_freq1,
+		  awgn_info->chan_bw_intf_bitmap);
+
+	wlan_objmgr_pdev_iterate_obj_list(pdev, WLAN_VDEV_OP,
+					  wlan_dcs_process_awgn_sta,
+					  awgn_info, 0, WLAN_DCS_ID);
+
+	wlan_objmgr_pdev_iterate_obj_list(pdev, WLAN_VDEV_OP,
+					  wlan_dcs_process_awgn_sap,
+					  awgn_info, 0, WLAN_DCS_ID);
+
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_DCS_ID);
+}
+
 QDF_STATUS
-wlan_dcs_process(struct wlan_objmgr_psoc *psoc, struct dcs_stats_event *event)
+wlan_dcs_process(struct wlan_objmgr_psoc *psoc,
+		 struct wlan_host_dcs_event *event)
 {
 	struct dcs_pdev_priv_obj *dcs_pdev_priv;
 	bool start_dcs_cbk_handler = false;
@@ -692,14 +1348,15 @@ wlan_dcs_process(struct wlan_objmgr_psoc *psoc, struct dcs_stats_event *event)
 			  event->dcs_param.interference_type,
 			  event->dcs_param.pdev_id);
 
-	if (!dcs_pdev_priv->dcs_host_params.dcs_enable)
-		return QDF_STATUS_SUCCESS;
-
 	switch (event->dcs_param.interference_type) {
-	case CAP_DCS_CWIM:
+	case WLAN_HOST_DCS_CWIM:
 		break;
-	case CAP_DCS_WLANIM:
-		if (dcs_pdev_priv->dcs_host_params.dcs_enable & CAP_DCS_WLANIM)
+	case WLAN_HOST_DCS_WLANIM:
+		if (!dcs_pdev_priv->dcs_host_params.dcs_enable)
+			break;
+
+		if (dcs_pdev_priv->dcs_host_params.dcs_enable &
+		    WLAN_HOST_DCS_WLANIM)
 			start_dcs_cbk_handler =
 				wlan_dcs_wlan_interference_process(
 							&event->wlan_stat,
@@ -715,6 +1372,11 @@ wlan_dcs_process(struct wlan_objmgr_psoc *psoc, struct dcs_stats_event *event)
 			wlan_dcs_frequency_control(psoc,
 						   dcs_pdev_priv,
 						   event);
+		break;
+	case WLAN_HOST_DCS_AWGNIM:
+		/* Skip frequency control for AWGNIM */
+		wlan_dcs_awgn_process(psoc, event->dcs_param.pdev_id,
+				      &event->awgn_info);
 		break;
 	default:
 		dcs_err("unidentified interference type reported");
