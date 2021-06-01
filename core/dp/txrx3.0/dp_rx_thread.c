@@ -276,10 +276,10 @@ static QDF_STATUS dp_rx_tm_thread_enqueue(struct dp_rx_thread *rx_thread,
 		num_elements_in_nbuf--;
 		next_ptr_list = head_ptr->next;
 		qdf_nbuf_set_next(head_ptr, NULL);
-		qdf_nbuf_queue_head_enqueue_tail(&rx_thread->nbuf_queue,
-						 head_ptr);
 		/* count aggregated RX frame into enqueued stats */
 		nbuf_queued += qdf_nbuf_get_gso_segs(head_ptr);
+		qdf_nbuf_queue_head_enqueue_tail(&rx_thread->nbuf_queue,
+						 head_ptr);
 		head_ptr = next_ptr_list;
 	}
 
