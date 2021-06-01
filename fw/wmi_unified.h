@@ -30724,6 +30724,19 @@ typedef struct {
     A_UINT32 btm_bss_termination_timeout;
     /* BTM MBO assoc retry timeout value in milli seconds */
     A_UINT32 btm_mbo_assoc_retry_timeout;
+    union {
+        /*
+         * If a definition of these vendor-specific files has been provided,
+         * use the vendor-specific names for these fields as an alias for
+         */
+        #ifdef WMI_ROAM_TRIGGER_REASON_VENDOR_SPECIFIC2
+        WMI_ROAM_TRIGGER_REASON_VENDOR_SPECIFIC2;
+        #endif
+        struct {
+            /* opaque space reservation for vendor-specific fields */
+            A_UINT32 vendor_specific2[3];
+        };
+    };
 } wmi_roam_trigger_reason;
 
 typedef struct {
