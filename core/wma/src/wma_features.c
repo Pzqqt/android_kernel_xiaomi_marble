@@ -1556,6 +1556,8 @@ static const uint8_t *wma_wow_wake_reason_str(A_INT32 wake_reason)
 		return "GENERIC_WAKE";
 	case WOW_REASON_TWT:
 		return "TWT Event";
+	case WOW_REASON_DCS_INT_DET:
+		return "DCS_INT_DET";
 	default:
 		return "unknown";
 	}
