@@ -1,4 +1,4 @@
-ifneq ($(TARGET_PRODUCT),qssi)
+ifneq ($(TARGET_BOARD_PLATFORM),qssi)
 GSI_DLKM_PLATFORMS_LIST := taro
 
 ifeq ($(call is-board-platform-in-list, $(GSI_DLKM_PLATFORMS_LIST)),true)
