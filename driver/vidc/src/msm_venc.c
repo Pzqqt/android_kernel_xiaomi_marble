@@ -1090,6 +1090,9 @@ int msm_venc_s_fmt_output(struct msm_vidc_inst *inst, struct v4l2_format *f)
 		fmt->fmt.pix_mp.plane_fmt[0].sizeimage;
 	memcpy(f, fmt, sizeof(struct v4l2_format));
 
+	/* reset metadata buffer size with updated resolution*/
+	msm_vidc_update_meta_port_settings(inst);
+
 	return rc;
 }
 
@@ -1224,6 +1227,9 @@ static int msm_venc_s_fmt_input(struct msm_vidc_inst *inst, struct v4l2_format *
 	}
 	memcpy(f, fmt, sizeof(struct v4l2_format));
 
+	/* reset metadata buffer size with updated resolution*/
+	msm_vidc_update_meta_port_settings(inst);
+
 	return rc;
 }
 
@@ -1244,7 +1250,7 @@ static int msm_venc_s_fmt_input_meta(struct msm_vidc_inst *inst, struct v4l2_for
 	fmt->fmt.meta.dataformat = V4L2_META_FMT_VIDC;
 	if (is_input_meta_enabled(inst)) {
 		fmt->fmt.meta.buffersize = call_session_op(core,
-			buffer_size, inst, MSM_VIDC_BUF_OUTPUT_META);
+			buffer_size, inst, MSM_VIDC_BUF_INPUT_META);
 		inst->buffers.input_meta.min_count =
 				inst->buffers.input.min_count;
 		inst->buffers.input_meta.extra_count =
