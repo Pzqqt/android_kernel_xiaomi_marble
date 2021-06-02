@@ -652,6 +652,12 @@ int msm_vidc_enum_frameintervals(void *instance, struct v4l2_frmivalenum *fival)
 				__func__, inst, fival);
 		return -EINVAL;
 	}
+
+	if (is_decode_session(inst)) {
+		i_vpr_e(inst, "%s: not supported by decoder\n", __func__);
+		return -ENOTTY;
+	}
+
 	core = inst->core;
 
 	if (!inst->capabilities || !core->capabilities) {
