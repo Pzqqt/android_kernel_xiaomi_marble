@@ -144,8 +144,8 @@ enum msm_vidc_codec_type {
 };
 
 enum priority_level {
-	MSM_VIDC_PRIORITY_LOW,
-	MSM_VIDC_PRIORITY_HIGH,
+	MSM_VIDC_PRIORITY_HIGH     = 0,
+	MSM_VIDC_PRIORITY_LOW      = 1,
 };
 
 enum msm_vidc_colorformat_type {
