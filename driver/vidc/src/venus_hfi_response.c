@@ -883,13 +883,13 @@ static int handle_output_metadata_buffer(struct msm_vidc_inst *inst,
 	return rc;
 }
 
-static int handle_dequeue_buffers(struct msm_vidc_inst* inst)
+static int handle_dequeue_buffers(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 	int i;
-	struct msm_vidc_buffers* buffers;
-	struct msm_vidc_buffer* buf;
-	struct msm_vidc_buffer* dummy;
+	struct msm_vidc_buffers *buffers;
+	struct msm_vidc_buffer *buf;
+	struct msm_vidc_buffer *dummy;
 	static const enum msm_vidc_buffer_type buffer_type[] = {
 		MSM_VIDC_BUF_INPUT_META,
 		MSM_VIDC_BUF_INPUT,
@@ -1503,7 +1503,7 @@ void handle_session_response_work_handler(struct work_struct *work)
 		return;
 	}
 
-	mutex_lock(&inst->lock);
+	inst_lock(inst, __func__);
 	list_for_each_entry_safe(resp_work, dummy, &inst->response_works, list) {
 		switch (resp_work->type) {
 		case RESP_WORK_INPUT_PSC:
@@ -1556,7 +1556,7 @@ void handle_session_response_work_handler(struct work_struct *work)
 		kfree(resp_work->data);
 		kfree(resp_work);
 	}
-	mutex_unlock(&inst->lock);
+	inst_unlock(inst, __func__);
 
 	put_inst(inst);
 }
@@ -1603,7 +1603,7 @@ static int handle_session_response(struct msm_vidc_core *core,
 		return -EINVAL;
 	}
 
-	mutex_lock(&inst->lock);
+	inst_lock(inst, __func__);
 	/* search for special pkt */
 	pkt = (u8 *)((u8 *)hdr + sizeof(struct hfi_header));
 	for (i = 0; i < hdr->num_packets; i++) {
@@ -1644,7 +1644,7 @@ static int handle_session_response(struct msm_vidc_core *core,
 		goto exit;
 
 exit:
-	mutex_unlock(&inst->lock);
+	inst_unlock(inst, __func__);
 	put_inst(inst);
 	return rc;
 }
