@@ -151,6 +151,7 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 {
 	int rc = 0;
 	struct msm_vidc_inst *inst;
+	enum msm_vidc_buffer_type buf_type;
 
 	if (!q || !q->drv_priv) {
 		d_vpr_e("%s: invalid input, q = %pK\n", q);
@@ -225,6 +226,15 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 
 	/* print final buffer counts & size details */
 	msm_vidc_print_buffer_info(inst);
+
+	buf_type = v4l2_type_to_driver(q->type, __func__);
+	if (!buf_type)
+		goto error;
+
+	/* queue pending buffers */
+	rc = msm_vidc_queue_deferred_buffers(inst, buf_type);
+	if (rc)
+		goto error;
 
 	i_vpr_h(inst, "Streamon: %d successful\n", q->type);
 
