@@ -267,10 +267,10 @@ int msm_vidc_g_fmt(void *instance, struct v4l2_format *f)
 }
 EXPORT_SYMBOL(msm_vidc_g_fmt);
 
-int msm_vidc_s_selection(void* instance, struct v4l2_selection* s)
+int msm_vidc_s_selection(void *instance, struct v4l2_selection *s)
 {
 	int rc = 0;
-	struct msm_vidc_inst* inst = instance;
+	struct msm_vidc_inst *inst = instance;
 
 	if (!inst || !s) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -286,10 +286,10 @@ int msm_vidc_s_selection(void* instance, struct v4l2_selection* s)
 }
 EXPORT_SYMBOL(msm_vidc_s_selection);
 
-int msm_vidc_g_selection(void* instance, struct v4l2_selection* s)
+int msm_vidc_g_selection(void *instance, struct v4l2_selection *s)
 {
 	int rc = 0;
-	struct msm_vidc_inst* inst = instance;
+	struct msm_vidc_inst *inst = instance;
 
 	if (!inst || !s) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -402,28 +402,25 @@ int msm_vidc_reqbufs(void *instance, struct v4l2_requestbuffers *b)
 		return -EINVAL;
 	}
 
-	mutex_lock(&inst->lock);
-
 	if (!msm_vidc_allow_reqbufs(inst, b->type)) {
 		rc = -EBUSY;
-		goto unlock;
+		goto exit;
 	}
 
 	port = v4l2_type_to_driver_port(inst, b->type, __func__);
 	if (port < 0) {
 		rc = -EINVAL;
-		goto unlock;
+		goto exit;
 	}
 
 	rc = vb2_reqbufs(&inst->vb2q[port], b);
 	if (rc) {
 		i_vpr_e(inst, "%s: vb2_reqbufs(%d) failed, %d\n",
 			__func__, b->type, rc);
-		goto unlock;
+		goto exit;
 	}
 
-unlock:
-	mutex_unlock(&inst->lock);
+exit:
 	return rc;
 }
 EXPORT_SYMBOL(msm_vidc_reqbufs);
@@ -440,27 +437,23 @@ int msm_vidc_qbuf(void *instance, struct media_device *mdev,
 		return -EINVAL;
 	}
 
-	mutex_lock(&inst->lock);
-
 	if (is_session_error(inst)) {
 		rc = -EBUSY;
-		goto unlock;
+		goto exit;
 	}
 
 	q = msm_vidc_get_vb2q(inst, b->type, __func__);
 	if (!q) {
 		rc = -EINVAL;
-		goto unlock;
+		goto exit;
 	}
-
 	inst->last_qbuf_time_ns = ktime_get_ns();
 
 	rc = vb2_qbuf(q, mdev, b);
 	if (rc)
 		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
 
-unlock:
-	mutex_unlock(&inst->lock);
+exit:
 	return rc;
 }
 EXPORT_SYMBOL(msm_vidc_qbuf);
@@ -476,24 +469,21 @@ int msm_vidc_dqbuf(void *instance, struct v4l2_buffer *b)
 		return -EINVAL;
 	}
 
-	mutex_lock(&inst->lock);
-
 	q = msm_vidc_get_vb2q(inst, b->type, __func__);
 	if (!q) {
 		rc = -EINVAL;
-		goto unlock;
+		goto exit;
 	}
 
 	rc = vb2_dqbuf(q, b, true);
 	if (rc == -EAGAIN) {
-		goto unlock;
+		goto exit;
 	} else if (rc) {
 		i_vpr_l(inst, "%s: failed with %d\n", __func__, rc);
-		goto unlock;
+		goto exit;
 	}
 
-unlock:
-	mutex_unlock(&inst->lock);
+exit:
 	return rc;
 }
 EXPORT_SYMBOL(msm_vidc_dqbuf);
@@ -509,20 +499,18 @@ int msm_vidc_streamon(void *instance, enum v4l2_buf_type type)
 		return -EINVAL;
 	}
 
-	mutex_lock(&inst->lock);
-
 	if (!msm_vidc_allow_streamon(inst, type)) {
 		rc = -EBUSY;
-		goto unlock;
+		goto exit;
 	}
 	rc = msm_vidc_state_change_streamon(inst, type);
 	if (rc)
-		goto unlock;
+		goto exit;
 
 	port = v4l2_type_to_driver_port(inst, type, __func__);
 	if (port < 0) {
 		rc = -EINVAL;
-		goto unlock;
+		goto exit;
 	}
 
 	rc = vb2_streamon(&inst->vb2q[port], type);
@@ -530,11 +518,10 @@ int msm_vidc_streamon(void *instance, enum v4l2_buf_type type)
 		i_vpr_e(inst, "%s: vb2_streamon(%d) failed, %d\n",
 			__func__, type, rc);
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
-		goto unlock;
+		goto exit;
 	}
 
-unlock:
-	mutex_unlock(&inst->lock);
+exit:
 	return rc;
 }
 EXPORT_SYMBOL(msm_vidc_streamon);
@@ -550,20 +537,18 @@ int msm_vidc_streamoff(void *instance, enum v4l2_buf_type type)
 		return -EINVAL;
 	}
 
-	mutex_lock(&inst->lock);
-
 	if (!msm_vidc_allow_streamoff(inst, type)) {
 		rc = -EBUSY;
-		goto unlock;
+		goto exit;
 	}
 	rc = msm_vidc_state_change_streamoff(inst, type);
 	if (rc)
-		goto unlock;
+		goto exit;
 
 	port = v4l2_type_to_driver_port(inst, type, __func__);
 	if (port < 0) {
 		rc = -EINVAL;
-		goto unlock;
+		goto exit;
 	}
 
 	rc = vb2_streamoff(&inst->vb2q[port], type);
@@ -571,11 +556,10 @@ int msm_vidc_streamoff(void *instance, enum v4l2_buf_type type)
 		i_vpr_e(inst, "%s: vb2_streamoff(%d) failed, %d\n",
 			__func__, type, rc);
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
-		goto unlock;
+		goto exit;
 	}
 
-unlock:
-	mutex_unlock(&inst->lock);
+exit:
 	return rc;
 }
 EXPORT_SYMBOL(msm_vidc_streamoff);
@@ -915,11 +899,11 @@ int msm_vidc_close(void *instance)
 	core = inst->core;
 
 	i_vpr_h(inst, "%s()\n", __func__);
-	mutex_lock(&inst->lock);
+	inst_lock(inst, __func__);
 	msm_vidc_session_close(inst);
 	msm_vidc_remove_session(inst);
 	msm_vidc_destroy_buffers(inst);
-	mutex_unlock(&inst->lock);
+	inst_unlock(inst, __func__);
 	msm_vidc_show_stats(inst);
 	put_inst(inst);
 	msm_vidc_schedule_core_deinit(core);

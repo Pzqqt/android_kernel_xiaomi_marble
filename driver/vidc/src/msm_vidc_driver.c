@@ -3711,7 +3711,7 @@ int msm_vidc_session_streamoff(struct msm_vidc_inst *inst,
 	core = inst->core;
 	i_vpr_h(inst, "%s: wait on port: %d for time: %d ms\n",
 		__func__, port, core->capabilities[HW_RESPONSE_TIMEOUT].value);
-	mutex_unlock(&inst->lock);
+	inst_unlock(inst, __func__);
 	rc = wait_for_completion_timeout(
 			&inst->completions[signal_type],
 			msecs_to_jiffies(
@@ -3724,7 +3724,7 @@ int msm_vidc_session_streamoff(struct msm_vidc_inst *inst,
 	} else {
 		rc = 0;
 	}
-	mutex_lock(&inst->lock);
+	inst_lock(inst, __func__);
 
 	if(rc)
 		goto error;
@@ -3775,7 +3775,7 @@ int msm_vidc_session_close(struct msm_vidc_inst *inst)
 	core = inst->core;
 	i_vpr_h(inst, "%s: wait on close for time: %d ms\n",
 		__func__, core->capabilities[HW_RESPONSE_TIMEOUT].value);
-	mutex_unlock(&inst->lock);
+	inst_unlock(inst, __func__);
 	rc = wait_for_completion_timeout(
 			&inst->completions[SIGNAL_CMD_CLOSE],
 			msecs_to_jiffies(
@@ -3788,7 +3788,7 @@ int msm_vidc_session_close(struct msm_vidc_inst *inst)
 		rc = 0;
 		i_vpr_h(inst, "%s: close successful\n", __func__);
 	}
-	mutex_lock(&inst->lock);
+	inst_lock(inst, __func__);
 
 	msm_vidc_remove_session(inst);
 
@@ -4499,7 +4499,7 @@ exit:
 	put_inst(inst);
 }
 
-int msm_vidc_flush_buffers(struct msm_vidc_inst* inst,
+int msm_vidc_flush_buffers(struct msm_vidc_inst *inst,
 		enum msm_vidc_buffer_type type)
 {
 	int rc = 0;
@@ -4766,7 +4766,7 @@ void put_inst(struct msm_vidc_inst *inst)
 	kref_put(&inst->kref, msm_vidc_close_helper);
 }
 
-bool core_lock_check(struct msm_vidc_core *core, const char* func)
+bool core_lock_check(struct msm_vidc_core *core, const char *func)
 {
 	return mutex_is_locked(&core->lock);
 }
@@ -4781,7 +4781,7 @@ void core_unlock(struct msm_vidc_core *core, const char *function)
 	mutex_unlock(&core->lock);
 }
 
-bool inst_lock_check(struct msm_vidc_inst *inst, const char* func)
+bool inst_lock_check(struct msm_vidc_inst *inst, const char *func)
 {
 	return mutex_is_locked(&inst->lock);
 }
