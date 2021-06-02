@@ -5783,15 +5783,16 @@ typedef struct {
                  */
                 preamble_type: 5,
 
-                /* Data:1 Mgmt:0
-                 */
+                /* Data:1 Mgmt:0 */
                 frame_type: 1,
 
-                /* Capture CFR when bit is set
-                 */
+                /* Capture CFR when bit is set */
                 cfr_capture: 1,
 
-                reserved1_31_22: 10;
+                /* Enables Beamforming when bit is set */
+                en_beamforming: 1,
+
+                reserved1_31_23: 9;
         };
         A_UINT32 tx_param_dword1;
     };
