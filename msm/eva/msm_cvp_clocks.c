@@ -8,6 +8,34 @@
 #include "msm_cvp_debug.h"
 #include "msm_cvp_clocks.h"
 
+int msm_cvp_mmrm_notifier_cb(
+	struct mmrm_client_notifier_data *notifier_data)
+{
+	if (!notifier_data) {
+		dprintk(CVP_WARN, "%s Invalid notifier data: %pK\n",
+			__func__, notifier_data);
+		return -EINVAL;
+	}
+
+	if (notifier_data->cb_type == MMRM_CLIENT_RESOURCE_VALUE_CHANGE) {
+		struct iris_hfi_device *dev = notifier_data->pvt_data;
+
+		dprintk(CVP_PWR,
+			"%s: Clock %s throttled from %ld to %ld \n",
+			__func__, dev->mmrm_desc.client_info.desc.name,
+			notifier_data->cb_data.val_chng.old_val,
+			notifier_data->cb_data.val_chng.new_val);
+
+		/*TODO: if need further handling to notify eva client */
+	} else {
+		dprintk(CVP_WARN, "%s Invalid cb type: %d\n",
+			__func__, notifier_data->cb_type);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 int msm_cvp_set_clocks(struct msm_cvp_core *core)
 {
 	struct cvp_hfi_device *hdev;
@@ -28,16 +56,19 @@ int msm_cvp_mmrm_register(struct iris_hfi_device *device)
 {
 	int rc = 0;
 	struct clock_info *cl = NULL;
-	char *name = (char *)device->mmrm_desc.client_info.desc.name;
+	char *name;
 
 	if (!device) {
 		dprintk(CVP_ERR, "%s invalid device\n", __func__);
 		return -EINVAL;
 	}
 
+	name = (char *)device->mmrm_desc.client_info.desc.name;
 	device->mmrm_cvp=NULL;
 	device->mmrm_desc.client_type=MMRM_CLIENT_CLOCK;
 	device->mmrm_desc.priority=MMRM_CLIENT_PRIOR_LOW;
+	device->mmrm_desc.pvt_data = device;
+	device->mmrm_desc.notifier_callback_fn = msm_cvp_mmrm_notifier_cb;
 	device->mmrm_desc.client_info.desc.client_domain=MMRM_CLIENT_DOMAIN_CVP;
 
 	iris_hfi_for_each_clock(device, cl) {
