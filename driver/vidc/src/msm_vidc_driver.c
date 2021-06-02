@@ -3432,6 +3432,12 @@ int msm_vidc_event_queue_deinit(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
+	/* do not deinit, if not already inited */
+	if (!inst->event_handler.vdev) {
+		i_vpr_e(inst, "%s: already not inited\n", __func__);
+		return 0;
+	}
+
 	v4l2_fh_del(&inst->event_handler);
 	v4l2_fh_exit(&inst->event_handler);
 
