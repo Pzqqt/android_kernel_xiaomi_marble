@@ -1050,7 +1050,7 @@ static void dp_ipa_set_pipe_db(struct dp_ipa_resources *res,
 static void dp_ipa_setup_iface_session_id(qdf_ipa_wdi_reg_intf_in_params_t *in,
 					  uint8_t session_id)
 {
-	QDF_IPA_WDI_REG_INTF_IN_PARAMS_META_DATA(&in) = htonl(session_id << 16);
+	QDF_IPA_WDI_REG_INTF_IN_PARAMS_META_DATA(in) = htonl(session_id << 16);
 }
 
 static inline void dp_ipa_tx_comp_ring_init_hp(struct dp_soc *soc,
