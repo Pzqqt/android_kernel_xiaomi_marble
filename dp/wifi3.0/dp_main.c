@@ -11331,6 +11331,10 @@ static QDF_STATUS dp_soc_set_param(struct cdp_soc_t  *soc_hdl,
 			soc->fst_in_cmem = !!value;
 		dp_info("FW supports CMEM FSE %u", value);
 		break;
+	case DP_SOC_PARAM_MAX_AST_AGEOUT:
+		soc->max_ast_ageout_count = value;
+		dp_info("Max ast ageout count %u", soc->max_ast_ageout_count);
+		break;
 	default:
 		dp_info("not handled param %d ", param);
 		break;
@@ -12917,6 +12921,7 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 	wlan_cfg_set_rx_hash(soc->wlan_cfg_ctx,
 			     cfg_get(soc->ctrl_psoc, CFG_DP_RX_HASH));
 	soc->cce_disable = false;
+	soc->max_ast_ageout_count = MAX_AST_AGEOUT_COUNT;
 
 	qdf_mem_zero(&soc->vdev_id_map, sizeof(soc->vdev_id_map));
 	qdf_spinlock_create(&soc->vdev_map_lock);
