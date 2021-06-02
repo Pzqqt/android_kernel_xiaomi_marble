@@ -382,6 +382,7 @@ u32 msm_vidc_encoder_input_meta_size(struct msm_vidc_inst *inst)
 		f = &inst->fmts[INPUT_PORT];
 		size += ROI_METADATA_SIZE(f->fmt.pix_mp.width,
 			f->fmt.pix_mp.height, lcu_size);
+		size = ALIGN(size, SZ_4K);
 	}
 	return size;
 }
