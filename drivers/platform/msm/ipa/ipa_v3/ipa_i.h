@@ -2333,6 +2333,7 @@ struct ipa3_context {
 	struct ipa_ioc_eogre_info eogre_cache;
 	bool eogre_enabled;
 	bool is_device_crashed;
+	bool ulso_wa;
 };
 
 struct ipa3_plat_drv_res {
@@ -2418,6 +2419,7 @@ struct ipa3_plat_drv_res {
 	u32 gsi_rmnet_ll_evt_ring_intvec;
 	u32 gsi_rmnet_ll_evt_ring_irq;
 	bool use_tput_est_ep;
+	bool ulso_wa;
 };
 
 /**

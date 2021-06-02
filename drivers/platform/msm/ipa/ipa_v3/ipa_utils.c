@@ -547,15 +547,15 @@ static const struct rsrc_min_max ipa3_rsrc_src_grp_config
 	[IPA_5_1] = {
 		/* UL  DL  unused  unused  URLLC UC_RX_Q N/A */
 		[IPA_v5_0_RSRC_GRP_TYPE_SRC_PKT_CONTEXTS] = {
-		{3, 9}, {4, 10}, {0, 0}, {0, 0}, {1, 63}, {0, 63}, {0, 0},  },
+		{7, 12}, {0, 0}, {0, 0}, {0, 0}, {1, 63}, {0, 63}, {0, 0},  },
 		[IPA_v5_0_RSRC_GRP_TYPE_SRC_DESCRIPTOR_LISTS] = {
-		{9, 9}, {12, 12}, {0, 0}, {0, 0}, {10, 10}, {0, 0}, {0, 0},  },
+		{21, 21}, {0, 0}, {0, 0}, {0, 0}, {10, 10}, {0, 0}, {0, 0},  },
 		[IPA_v5_0_RSRC_GRP_TYPE_SRC_DESCRIPTOR_BUFF] = {
-		{9, 9}, {24, 24}, {0, 0}, {0, 0}, {20, 20}, {0, 0}, {0, 0},  },
+		{33, 33}, {0, 0}, {0, 0}, {0, 0}, {20, 20}, {0, 0}, {0, 0},  },
 		[IPA_v5_0_RSRC_GRP_TYPE_SRC_HPS_DMARS] = {
-		{0, 63}, {0, 63}, {0, 63}, {0, 63}, {1, 63}, {0, 63}, {0, 0},  },
+		{0, 63}, {0, 0}, {0, 63}, {0, 63}, {1, 63}, {0, 63}, {0, 0},  },
 		[IPA_v5_0_RSRC_GRP_TYPE_SRC_ACK_ENTRIES] = {
-		{22, 22}, {16, 16}, {0, 0}, {0, 0}, {16, 16}, {0, 0}, {0, 0},  },
+		{38, 38}, {0, 0}, {0, 0}, {0, 0}, {16, 16}, {0, 0}, {0, 0},  },
 	},
 
 	[IPA_5_1_APQ] = {
@@ -4657,7 +4657,7 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			IPA_TX_INSTANCE_NA },
 
 	[IPA_5_1][IPA_CLIENT_Q6_WAN_PROD]         = {
-			true, IPA_v5_0_GROUP_DL,
+			true, IPA_v5_0_GROUP_UL,
 			true,
 			IPA_DPS_HPS_SEQ_TYPE_2ND_PKT_PROCESS_PASS_DEC_UCP,
 			QMB_MASTER_SELECT_DDR,
@@ -4673,7 +4673,7 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			IPA_TX_INSTANCE_NA },
 
 	[IPA_5_1][IPA_CLIENT_Q6_DL_NLO_DATA_PROD] = {
-			true, IPA_v5_0_GROUP_DL,
+			true, IPA_v5_0_GROUP_UL,
 			true,
 			IPA_DPS_HPS_SEQ_TYPE_2ND_PKT_PROCESS_PASS_DEC_UCP,
 			QMB_MASTER_SELECT_DDR,
@@ -4697,7 +4697,7 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			IPA_TX_INSTANCE_UL },
 
 	[IPA_5_1][IPA_CLIENT_APPS_WAN_COAL_CONS] = {
-			true, IPA_v5_0_GROUP_DL,
+			true, IPA_v5_0_GROUP_UL,
 			false,
 			IPA_DPS_HPS_SEQ_TYPE_INVALID,
 			QMB_MASTER_SELECT_DDR,
@@ -4705,7 +4705,7 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			IPA_TX_INSTANCE_DL },
 
 	[IPA_5_1][IPA_CLIENT_APPS_WAN_CONS] = {
-			true, IPA_v5_0_GROUP_DL,
+			true, IPA_v5_0_GROUP_UL,
 			false,
 			IPA_DPS_HPS_SEQ_TYPE_INVALID,
 			QMB_MASTER_SELECT_DDR,
@@ -4713,7 +4713,7 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			IPA_TX_INSTANCE_DL },
 
 	[IPA_5_1][IPA_CLIENT_USB_DPL_CONS] = {
-			true, IPA_v5_0_GROUP_DL,
+			true, IPA_v5_0_GROUP_UL,
 			false,
 			IPA_DPS_HPS_SEQ_TYPE_INVALID,
 			QMB_MASTER_SELECT_DDR,
@@ -4721,7 +4721,7 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			IPA_TX_INSTANCE_DL },
 
 	[IPA_5_1][IPA_CLIENT_ODL_DPL_CONS] = {
-			true, IPA_v5_0_GROUP_DL,
+			true, IPA_v5_0_GROUP_UL,
 			false,
 			IPA_DPS_HPS_SEQ_TYPE_INVALID,
 			QMB_MASTER_SELECT_DDR,
@@ -4729,7 +4729,7 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			IPA_TX_INSTANCE_DL },
 
 	[IPA_5_1][IPA_CLIENT_WIGIG1_CONS] = {
-			true, IPA_v5_0_GROUP_DL,
+			true, IPA_v5_0_GROUP_UL,
 			false,
 			IPA_DPS_HPS_SEQ_TYPE_INVALID,
 			QMB_MASTER_SELECT_DDR,
@@ -4737,7 +4737,7 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			IPA_TX_INSTANCE_DL },
 
 	[IPA_5_1][IPA_CLIENT_WLAN1_CONS] = {
-			true, IPA_v5_0_GROUP_DL,
+			true, IPA_v5_0_GROUP_UL,
 			false,
 			IPA_DPS_HPS_SEQ_TYPE_INVALID,
 			QMB_MASTER_SELECT_DDR,
@@ -4745,7 +4745,7 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			IPA_TX_INSTANCE_DL },
 
 	[IPA_5_1][IPA_CLIENT_WLAN2_CONS] = {
-			true, IPA_v5_0_GROUP_DL,
+			true, IPA_v5_0_GROUP_UL,
 			false,
 			IPA_DPS_HPS_SEQ_TYPE_INVALID,
 			QMB_MASTER_SELECT_DDR,
@@ -4753,7 +4753,7 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			IPA_TX_INSTANCE_DL },
 
 	[IPA_5_1][IPA_CLIENT_USB_CONS] = {
-			true, IPA_v5_0_GROUP_DL,
+			true, IPA_v5_0_GROUP_UL,
 			false,
 			IPA_DPS_HPS_SEQ_TYPE_INVALID,
 			QMB_MASTER_SELECT_DDR,
@@ -4761,7 +4761,7 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			IPA_TX_INSTANCE_DL },
 
 	[IPA_5_1][IPA_CLIENT_WIGIG2_CONS] = {
-			true, IPA_v5_0_GROUP_DL,
+			true, IPA_v5_0_GROUP_UL,
 			false,
 			IPA_DPS_HPS_SEQ_TYPE_INVALID,
 			QMB_MASTER_SELECT_DDR,
@@ -4769,7 +4769,7 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			IPA_TX_INSTANCE_DL },
 
 	[IPA_5_1][IPA_CLIENT_WIGIG3_CONS] = {
-			true, IPA_v5_0_GROUP_DL,
+			true, IPA_v5_0_GROUP_UL,
 			false,
 			IPA_DPS_HPS_SEQ_TYPE_INVALID,
 			QMB_MASTER_SELECT_DDR,
@@ -4777,7 +4777,7 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			IPA_TX_INSTANCE_DL },
 
 	[IPA_5_1][IPA_CLIENT_WIGIG4_CONS] = {
-			true, IPA_v5_0_GROUP_DL,
+			true, IPA_v5_0_GROUP_UL,
 			false,
 			IPA_DPS_HPS_SEQ_TYPE_INVALID,
 			QMB_MASTER_SELECT_DDR,
@@ -4785,7 +4785,7 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			IPA_TX_INSTANCE_DL },
 
 	[IPA_5_1][IPA_CLIENT_APPS_WAN_LOW_LAT_CONS] = {
-			true, IPA_v5_0_GROUP_DL,
+			true, IPA_v5_0_GROUP_UL,
 			false,
 			IPA_DPS_HPS_SEQ_TYPE_INVALID,
 			QMB_MASTER_SELECT_DDR,
@@ -4801,7 +4801,7 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			IPA_TX_INSTANCE_DL },
 
 	[IPA_5_1][IPA_CLIENT_Q6_LAN_CONS]         = {
-			true, IPA_v5_0_GROUP_DL,
+			true, IPA_v5_0_GROUP_UL,
 			false,
 			IPA_DPS_HPS_SEQ_TYPE_INVALID,
 			QMB_MASTER_SELECT_DDR,
@@ -9508,8 +9508,12 @@ int ipa3_tag_process(struct ipa3_desc desc[],
 	u32 retry_cnt = 0;
 	struct ipahal_reg_valmask valmask;
 	struct ipahal_imm_cmd_register_write reg_write_coal_close;
+	struct ipahal_imm_cmd_register_read dummy_reg_read;
 	int req_num_tag_desc = REQUIRED_TAG_PROCESS_DESCRIPTORS;
+	struct ipa_mem_buffer cmd;
+	u32 offset = 0;
 
+	memset(&cmd, 0, sizeof(struct ipa_mem_buffer));
 	/**
 	 * We use a descriptor for closing coalsceing endpoint
 	 * by immediate command. So, REQUIRED_TAG_PROCESS_DESCRIPTORS
@@ -9553,11 +9557,13 @@ int ipa3_tag_process(struct ipa3_desc desc[],
 
 	/* IC to close the coal frame before HPS Clear if coal is enabled */
 	if (ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS) != -1) {
-		u32 offset = 0;
-
 		ep_idx = ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS);
 		reg_write_coal_close.skip_pipeline_clear = false;
-		reg_write_coal_close.pipeline_clear_options = IPAHAL_HPS_CLEAR;
+		if (ipa3_ctx->ulso_wa) {
+			reg_write_coal_close.pipeline_clear_options = IPAHAL_SRC_GRP_CLEAR;
+		} else {
+			reg_write_coal_close.pipeline_clear_options = IPAHAL_HPS_CLEAR;
+		}
 		if (ipa3_ctx->ipa_hw_type < IPA_HW_v5_0)
 			offset = ipahal_get_reg_ofst(
 				IPA_AGGR_FORCE_CLOSE);
@@ -9575,6 +9581,34 @@ int ipa3_tag_process(struct ipa3_desc desc[],
 			IPAERR("failed to construct coal close IC\n");
 			res = -ENOMEM;
 			goto fail_free_tag_desc;
+		}
+		ipa3_init_imm_cmd_desc(&tag_desc[desc_idx], cmd_pyld);
+		tag_desc[desc_idx].callback = ipa3_tag_destroy_imm;
+		tag_desc[desc_idx].user1 = cmd_pyld;
+		++desc_idx;
+	}
+	if (ipa3_ctx->ulso_wa) {
+		/* dummary regsiter read IC with HPS clear*/
+		cmd.size = 4;
+		cmd.base = dma_alloc_coherent(ipa3_ctx->pdev, cmd.size,
+			&cmd.phys_base, GFP_KERNEL);
+		if (cmd.base == NULL) {
+			res = -ENOMEM;
+			goto fail_free_desc;
+		}
+		offset = ipahal_get_reg_n_ofst(IPA_STAT_QUOTA_BASE_n,
+			ipa3_ctx->ee);
+		dummy_reg_read.skip_pipeline_clear = false;
+		dummy_reg_read.pipeline_clear_options = IPAHAL_HPS_CLEAR;
+		dummy_reg_read.offset = offset;
+		dummy_reg_read.sys_addr = cmd.phys_base;
+		cmd_pyld = ipahal_construct_imm_cmd(
+			IPA_IMM_CMD_REGISTER_READ,
+			&dummy_reg_read, false);
+		if (!cmd_pyld) {
+			IPAERR("failed to construct DUMMY READ IC\n");
+			res = -ENOMEM;
+			goto fail_free_desc;
 		}
 		ipa3_init_imm_cmd_desc(&tag_desc[desc_idx], cmd_pyld);
 		tag_desc[desc_idx].callback = ipa3_tag_destroy_imm;
@@ -9722,6 +9756,10 @@ fail_free_desc:
 		if (tag_desc[i].callback)
 			tag_desc[i].callback(tag_desc[i].user1,
 				tag_desc[i].user2);
+	if (cmd.base) {
+		dma_free_coherent(ipa3_ctx->uc_pdev, cmd.size,
+			cmd.base, cmd.phys_base);
+	}
 fail_free_tag_desc:
 	kfree(tag_desc);
 	return res;
@@ -12306,8 +12344,8 @@ int ipa3_check_eogre(
 	int ret = 0;
 
 	if (eogre_info == NULL || send2uC == NULL || send2ipacm == NULL) {
-		IPAERR("NULL ptr: eogre_info(%p) and/or "
-			   "send2uC(%p) and/or send2ipacm(%p)\n",
+		IPAERR("NULL ptr: eogre_info(%pK) and/or "
+			   "send2uC(%pK) and/or send2ipacm(%pK)\n",
 			   eogre_info, send2uC, send2ipacm);
 		ret = -EIO;
 		goto done;

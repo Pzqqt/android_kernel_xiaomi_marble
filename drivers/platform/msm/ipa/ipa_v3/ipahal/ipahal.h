@@ -24,6 +24,7 @@ enum ipahal_imm_cmd_name {
 	IPA_IMM_CMD_HDR_INIT_LOCAL,
 	IPA_IMM_CMD_HDR_INIT_SYSTEM,
 	IPA_IMM_CMD_REGISTER_WRITE,
+	IPA_IMM_CMD_REGISTER_READ,
 	IPA_IMM_CMD_NAT_DMA,
 	IPA_IMM_CMD_IP_PACKET_INIT,
 	IPA_IMM_CMD_DMA_SHARED_MEM,
@@ -306,6 +307,22 @@ struct ipahal_imm_cmd_register_write {
 	u32 offset;
 	u32 value;
 	u32 value_mask;
+	bool skip_pipeline_clear;
+	enum ipahal_pipeline_clear_option pipeline_clear_options;
+};
+
+/*
+ * struct ipahal_imm_cmd_register_read - REGISTER_READ cmd payload
+ * Read value from register. Allows reg changes to be synced with data packet
+ *  and other immediate commands. Can be used to access the sram
+ * @offset: offset from IPA base address - Lower 16bit of the IPA reg addr
+ * @sys_addr: Address in system memory for storing register value
+ * @skip_pipeline_clear: if to skip pipeline clear waiting (don't wait)
+ * @pipeline_clear_option: options for pipeline clear waiting
+ */
+struct ipahal_imm_cmd_register_read {
+	u32 offset;
+	u32 sys_addr;
 	bool skip_pipeline_clear;
 	enum ipahal_pipeline_clear_option pipeline_clear_options;
 };

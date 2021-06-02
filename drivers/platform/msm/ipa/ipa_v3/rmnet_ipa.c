@@ -2031,6 +2031,11 @@ static int ipa3_setup_apps_wan_cons_pipes(
 			ingress_param->agg_pkt_limit;
 		ipa_wan_ep_cfg->ipa_ep_cfg.aggr.aggr_time_limit =
 			ingress_param->agg_time_limit;
+		if (ipa3_ctx->ulso_wa &&
+			ingress_param->ingress_ep_type == RMNET_INGRESS_COALS) {
+			/* WAR: overriding the time limit of coalescing to 0*/
+			ipa_wan_ep_cfg->ipa_ep_cfg.aggr.aggr_time_limit = 0;
+		}
 	}
 
 	if (ingress_param->cs_offload_en) {

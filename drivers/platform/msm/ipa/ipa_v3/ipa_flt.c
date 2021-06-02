@@ -670,7 +670,8 @@ int __ipa_commit_flt_v3(enum ipa_ip_type ip)
 	}
 
 	/* IC to close the coal frame before HPS Clear if coal is enabled */
-	if (ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS) != -1) {
+	if (ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS) != -1
+		&& !ipa3_ctx->ulso_wa) {
 		u32 offset = 0;
 
 		i = ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS);
