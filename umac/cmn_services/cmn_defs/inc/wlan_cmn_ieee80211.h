@@ -470,6 +470,7 @@ enum element_ie {
  * @WLAN_EXTN_ELEMID_HE_6G_CAP: HE 6GHz Band Capabilities IE
  * @WLAN_EXTN_ELEMID_SRP:    spatial reuse parameter IE
  * @WLAN_EXTN_ELEMID_NONINHERITANCE: Non inheritance IE
+ * @WLAN_EXTN_ELEMID_MULTI_LINK: Multi link IE
  * @WLAN_EXTN_ELEMID_EHTCAP: EHT Capabilities IE
  * @WLAN_EXTN_ELEMID_EHTOP: EHT Operation IE
  */
@@ -482,6 +483,9 @@ enum extn_element_ie {
 	WLAN_EXTN_ELEMID_NONINHERITANCE = 56,
 	WLAN_EXTN_ELEMID_HE_6G_CAP   = 59,
 	WLAN_EXTN_ELEMID_ESP         = 11,
+#ifdef WLAN_FEATURE_11BE_MLO
+	WLAN_EXTN_ELEMID_MULTI_LINK  = 252,
+#endif
 #ifdef WLAN_FEATURE_11BE
 	WLAN_EXTN_ELEMID_EHTCAP      = 253,
 	WLAN_EXTN_ELEMID_EHTOP       = 254,

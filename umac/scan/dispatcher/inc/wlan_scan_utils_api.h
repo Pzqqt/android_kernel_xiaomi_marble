@@ -615,6 +615,18 @@ util_scan_entry_copy_ie_data(struct scan_cache_entry *scan_entry,
 	return QDF_STATUS_E_NOMEM;
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+static inline void util_scan_free_ml_info(struct scan_cache_entry *scan_entry)
+{
+	if (scan_entry->ml_info)
+		qdf_mem_free(scan_entry->ml_info);
+}
+#else
+static inline void util_scan_free_ml_info(struct scan_cache_entry *scan_entry)
+{
+}
+#endif
+
 /**
  * util_scan_free_cache_entry() - function to free scan
  * cache entry
@@ -633,6 +645,8 @@ util_scan_free_cache_entry(struct scan_cache_entry *scan_entry)
 		qdf_mem_free(scan_entry->alt_wcn_ie.ptr);
 	if (scan_entry->raw_frame.ptr)
 		qdf_mem_free(scan_entry->raw_frame.ptr);
+
+	util_scan_free_ml_info(scan_entry);
 	qdf_mem_free(scan_entry);
 }
 

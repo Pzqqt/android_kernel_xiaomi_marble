@@ -729,6 +729,58 @@ util_scan_is_hidden_ssid(struct ie_ssid *ssid)
 	return true;
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+static void
+util_scan_update_rnr_mld(struct rnr_bss_info *rnr,
+			 struct neighbor_ap_info_field *ap_info, uint8_t *data)
+{
+	uint8_t tbtt_info_length;
+	bool mld_info_present = false;
+
+	tbtt_info_length = ap_info->tbtt_header.tbtt_info_length;
+	if (tbtt_info_length >=
+		TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM_20MHZ_PSD_MLD_PARAM)
+		tbtt_info_length =
+		   TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM_20MHZ_PSD_MLD_PARAM;
+
+	switch (tbtt_info_length) {
+	case TBTT_NEIGHBOR_AP_MLD_PARAM:
+		rnr->channel_number = ap_info->channel_number;
+		rnr->operating_class = ap_info->operting_class;
+		qdf_mem_copy(&rnr->mld_info, &data[1],
+			     sizeof(struct rnr_mld_info));
+		mld_info_present = true;
+		break;
+	case TBTT_NEIGHBOR_AP_BSSID_MLD_PARAM:
+		rnr->channel_number = ap_info->channel_number;
+		rnr->operating_class = ap_info->operting_class;
+		qdf_mem_copy(&rnr->bssid, &data[1], QDF_MAC_ADDR_SIZE);
+		qdf_mem_copy(&rnr->mld_info, &data[1 + QDF_MAC_ADDR_SIZE],
+			     sizeof(struct rnr_mld_info));
+		mld_info_present = true;
+		break;
+	case TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM_20MHZ_PSD_MLD_PARAM:
+		rnr->channel_number = ap_info->channel_number;
+		rnr->operating_class = ap_info->operting_class;
+		qdf_mem_copy(&rnr->bssid, &data[1], QDF_MAC_ADDR_SIZE);
+		qdf_mem_copy(&rnr->short_ssid, &data[7], SHORT_SSID_LEN);
+		rnr->bss_params = data[11];
+		rnr->psd_20mhz = data[12];
+		qdf_mem_copy(&rnr->mld_info, &data[13],
+			     sizeof(struct rnr_mld_info));
+		mld_info_present = true;
+		break;
+	};
+}
+#else
+static void
+util_scan_update_rnr_mld(struct rnr_bss_info *rnr,
+			 struct neighbor_ap_info_field *ap_info, uint8_t *data)
+{
+	scm_debug("Wrong fieldtype");
+}
+#endif
+
 static QDF_STATUS
 util_scan_update_rnr(struct rnr_bss_info *rnr,
 		     struct neighbor_ap_info_field *ap_info,
@@ -806,7 +858,7 @@ util_scan_update_rnr(struct rnr_bss_info *rnr,
 		break;
 
 	default:
-		scm_debug("Wrong fieldtype");
+		util_scan_update_rnr_mld(rnr, ap_info, data);
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -852,6 +904,25 @@ util_scan_parse_rnr_ie(struct scan_cache_entry *scan_entry,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef WLAN_FEATURE_11BE_MLO
+static void util_scan_parse_eht_ie(struct scan_cache_entry *scan_params,
+				   struct extn_ie_header *extn_ie)
+{
+	switch (extn_ie->ie_extn_id) {
+	case WLAN_EXTN_ELEMID_MULTI_LINK:
+		scan_params->ie_list.multi_link = (uint8_t *)extn_ie;
+		break;
+	default:
+		break;
+	}
+}
+#else
+static void util_scan_parse_eht_ie(struct scan_cache_entry *scan_params,
+				   struct extn_ie_header *extn_ie)
+{
+}
+#endif
 
 static QDF_STATUS
 util_scan_parse_extn_ie(struct scan_cache_entry *scan_params,
@@ -902,6 +973,8 @@ util_scan_parse_extn_ie(struct scan_cache_entry *scan_params,
 	default:
 		break;
 	}
+	util_scan_parse_eht_ie(scan_params, extn_ie);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1679,6 +1752,119 @@ static void util_scan_set_security(struct scan_cache_entry *scan_params)
 		scan_params->security_type |= SCAN_SECURITY_TYPE_WEP;
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * Multi link IE field offsets
+ *  ------------------------------------------------------------------------
+ * | EID(1) | Len (1) | EID_EXT (1) | ML_CONTROL (2) | CMN_INFO (var) | ... |
+ *  ------------------------------------------------------------------------
+ */
+#define ML_CONTROL_OFFSET 3
+#define ML_CMN_INFO_OFFSET ML_CONTROL_OFFSET + 2
+
+#define CMN_INFO_MLD_ADDR_PRESENT_BIT     BIT(0)
+#define CMN_INFO_LINK_ID_PRESENT_BIT      BIT(1)
+#define LINK_INFO_MAC_ADDR_PRESENT_BIT    BIT(5)
+
+static uint8_t util_get_link_info_offset(uint8_t *ml_ie)
+{
+	uint8_t offset = ML_CMN_INFO_OFFSET;
+	uint8_t ml_ie_len = ml_ie[1];
+	uint16_t multi_link_ctrl = *(uint16_t *)(ml_ie + ML_CONTROL_OFFSET);
+
+	offset += (BIT(0) & multi_link_ctrl) * 6 +
+		  (BIT(1) & multi_link_ctrl) * 1 +
+		  (BIT(2) & multi_link_ctrl) * 1 +
+		  (BIT(3) & multi_link_ctrl) * 2 +
+		  (BIT(4) & multi_link_ctrl) * 2 +
+		  (BIT(5) & multi_link_ctrl) * 2;
+
+	if (offset < ml_ie_len)
+		return offset;
+
+	return 0;
+}
+
+static void util_get_partner_link_info(struct scan_cache_entry *scan_entry)
+{
+	uint8_t *ml_ie = scan_entry->ie_list.multi_link;
+	uint8_t offset = util_get_link_info_offset(ml_ie);
+	uint16_t sta_ctrl;
+
+	if (!offset) {
+		scm_err("Per STA profile is not present in the ML_IE ");
+		return;
+	}
+	/* TODO: loop through all the STA info fields */
+
+	/* Sub element ID 0 represents Per-STA Profile */
+	if (ml_ie[offset] == 0) {
+		/* Skip sub element ID and length fields */
+		offset += 2;
+		sta_ctrl = *(uint16_t *)(ml_ie + offset);
+		/* Skip STA control field */
+		offset += 2;
+
+		scan_entry->ml_info->link_info[1].link_id =
+						ml_ie[offset] & 0xF;
+		if (sta_ctrl & LINK_INFO_MAC_ADDR_PRESENT_BIT) {
+			qdf_mem_copy(
+				&scan_entry->ml_info->link_info[1].link_addr,
+				ml_ie + offset, 6);
+			scm_debug("Found partner info in ML IE");
+			return;
+		}
+	}
+
+	qdf_mem_copy(&scan_entry->ml_info->link_info[1].link_addr,
+		     &scan_entry->rnr.bss_info[0].bssid, 6);
+
+	scan_entry->ml_info->link_info[1].link_id =
+				scan_entry->rnr.bss_info[0].mld_info.link_id;
+}
+
+static void util_scan_update_ml_info(struct scan_cache_entry *scan_entry)
+{
+	uint8_t *ml_ie = scan_entry->ie_list.multi_link;
+	uint16_t multi_link_ctrl = *(uint16_t *)(ml_ie + ML_CONTROL_OFFSET);
+	uint8_t offset;
+
+	if (!scan_entry->ie_list.multi_link)
+		return;
+
+	scan_entry->ml_info = qdf_mem_malloc_atomic(
+					sizeof(*scan_entry->ml_info));
+	/* TODO: update ml_info based on ML IE */
+
+	offset = ML_CMN_INFO_OFFSET;
+	/* TODO: Add proper parsing based on presense bitmap */
+	if (multi_link_ctrl & CMN_INFO_MLD_ADDR_PRESENT_BIT) {
+		qdf_mem_copy(&scan_entry->ml_info->mld_mac_addr,
+			     ml_ie + offset, 6);
+		offset += 6;
+	}
+
+	/* TODO: Decode it from ML IE */
+	scan_entry->ml_info->num_links = 2;
+
+	/**
+	 * Copy Link ID & MAC address of the scan cache entry as first entry
+	 * in the partner info list
+	 */
+	if (multi_link_ctrl & CMN_INFO_LINK_ID_PRESENT_BIT)
+		scan_entry->ml_info->link_info[0].link_id = ml_ie[offset];
+
+	qdf_mem_copy(&scan_entry->ml_info->link_info[0].link_addr,
+		     &scan_entry->mac_addr, 6);
+
+	util_get_partner_link_info(scan_entry);
+}
+#else
+static void util_scan_update_ml_info(struct scan_cache_entry *scan_entry)
+{
+}
+#endif
+
 static QDF_STATUS
 util_scan_gen_scan_entry(struct wlan_objmgr_pdev *pdev,
 			 uint8_t *frame, qdf_size_t frame_len,
@@ -1853,6 +2039,8 @@ util_scan_gen_scan_entry(struct wlan_objmgr_pdev *pdev,
 		qdf_mem_free(scan_entry);
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	util_scan_update_ml_info(scan_entry);
 
 	scan_node->entry = scan_entry;
 	qdf_list_insert_front(scan_list, &scan_node->node);
