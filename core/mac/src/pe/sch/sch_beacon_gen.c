@@ -304,8 +304,7 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 	populate_dot11f_supp_rates(mac_ctx, POPULATE_DOT11F_RATES_OPERATIONAL,
 				   &bcn_1->SuppRates, session);
 	populate_dot11f_ds_params(mac_ctx, &bcn_1->DSParams,
-				  wlan_reg_freq_to_chan(
-				  mac_ctx->pdev, session->curr_op_freq));
+				  session->curr_op_freq);
 
 	offset = sizeof(tAniBeaconStruct);
 	ptr = session->pSchBeaconFrameBegin + offset;

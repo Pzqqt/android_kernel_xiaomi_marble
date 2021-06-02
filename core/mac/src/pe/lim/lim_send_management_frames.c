@@ -268,7 +268,8 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 	 * RRM is enabled. It should be ok even if we add it into probe req when
 	 * RRM is not enabled.
 	 */
-	populate_dot11f_ds_params(mac_ctx, &pr->DSParams, channel);
+	populate_dot11f_ds_params(mac_ctx, &pr->DSParams,
+				  chan_freq);
 	/* Call RRM module to get the tx power for management used. */
 	txPower = (uint8_t) rrm_get_mgmt_tx_power(mac_ctx, pesession);
 	populate_dot11f_wfatpc(mac_ctx, &pr->WFATPC, txPower, 0);
@@ -657,8 +658,7 @@ lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 
 	populate_dot11f_ds_params(
 		mac_ctx, &frm->DSParams,
-		wlan_reg_freq_to_chan(mac_ctx->pdev,
-				      pe_session->curr_op_freq));
+		pe_session->curr_op_freq);
 
 	if (LIM_IS_AP_ROLE(pe_session)) {
 		if (pe_session->wps_state != SAP_WPS_DISABLED)

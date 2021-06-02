@@ -689,7 +689,7 @@ out:
  * populate_dot11f_ds_params() - To populate DS IE params
  * mac_ctx: Pointer to global mac context
  * dot11f_param: pointer to DS params IE
- * channel: channel number
+ * freq: freq
  *
  * This routine will populate DS param in management frame like
  * beacon, probe response, and etc.
@@ -698,11 +698,13 @@ out:
  */
 QDF_STATUS
 populate_dot11f_ds_params(struct mac_context *mac_ctx,
-			  tDot11fIEDSParams *dot11f_param, uint8_t channel)
+			  tDot11fIEDSParams *dot11f_param, qdf_freq_t freq)
 {
-	if (IS_24G_CH(channel)) {
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(freq)) {
 		/* .11b/g mode PHY => Include the DS Parameter Set IE: */
-		dot11f_param->curr_channel = channel;
+		dot11f_param->curr_channel = wlan_reg_freq_to_chan(
+								mac_ctx->pdev,
+								freq);
 		dot11f_param->present = 1;
 	}
 
