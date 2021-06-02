@@ -2249,15 +2249,18 @@ int msm_vidc_set_min_qp(void *instance,
 	}
 	capability = inst->capabilities;
 
-	min_qp_enable =
-		capability->cap[MIN_FRAME_QP].flags & CAP_FLAG_CLIENT_SET;
+	if (capability->cap[MIN_FRAME_QP].flags & CAP_FLAG_CLIENT_SET)
+		min_qp_enable = 1;
 
-	i_qp_enable = min_qp_enable ||
-		capability->cap[I_FRAME_MIN_QP].flags & CAP_FLAG_CLIENT_SET;
-	p_qp_enable = min_qp_enable ||
-		capability->cap[P_FRAME_MIN_QP].flags & CAP_FLAG_CLIENT_SET;
-	b_qp_enable = min_qp_enable ||
-		capability->cap[B_FRAME_MIN_QP].flags & CAP_FLAG_CLIENT_SET;
+	if (min_qp_enable ||
+		(capability->cap[I_FRAME_MIN_QP].flags & CAP_FLAG_CLIENT_SET))
+		i_qp_enable = 1;
+	if (min_qp_enable ||
+		(capability->cap[P_FRAME_MIN_QP].flags & CAP_FLAG_CLIENT_SET))
+		p_qp_enable = 1;
+	if (min_qp_enable ||
+		(capability->cap[B_FRAME_MIN_QP].flags & CAP_FLAG_CLIENT_SET))
+		b_qp_enable = 1;
 
 	client_qp_enable = i_qp_enable | p_qp_enable << 1 | b_qp_enable << 2;
 	if (!client_qp_enable) {
@@ -2311,15 +2314,18 @@ int msm_vidc_set_max_qp(void *instance,
 	}
 	capability = inst->capabilities;
 
-	max_qp_enable =
-		capability->cap[MAX_FRAME_QP].flags & CAP_FLAG_CLIENT_SET;
+	if (capability->cap[MAX_FRAME_QP].flags & CAP_FLAG_CLIENT_SET)
+		max_qp_enable = 1;
 
-	i_qp_enable = max_qp_enable ||
-		capability->cap[I_FRAME_MAX_QP].flags & CAP_FLAG_CLIENT_SET;
-	p_qp_enable = max_qp_enable ||
-		capability->cap[P_FRAME_MAX_QP].flags & CAP_FLAG_CLIENT_SET;
-	b_qp_enable = max_qp_enable ||
-		capability->cap[B_FRAME_MAX_QP].flags & CAP_FLAG_CLIENT_SET;
+	if (max_qp_enable ||
+		(capability->cap[I_FRAME_MAX_QP].flags & CAP_FLAG_CLIENT_SET))
+		i_qp_enable = 1;
+	if (max_qp_enable ||
+		(capability->cap[P_FRAME_MAX_QP].flags & CAP_FLAG_CLIENT_SET))
+		p_qp_enable = 1;
+	if (max_qp_enable ||
+		(capability->cap[B_FRAME_MAX_QP].flags & CAP_FLAG_CLIENT_SET))
+		b_qp_enable = 1;
 
 	client_qp_enable = i_qp_enable | p_qp_enable << 1 | b_qp_enable << 2;
 	if (!client_qp_enable) {
@@ -2383,12 +2389,12 @@ int msm_vidc_set_frame_qp(void *instance,
 		i_qp_enable = p_qp_enable = b_qp_enable = 1;
 	} else {
 		/* Set only if client has set for NON rc off case */
-		i_qp_enable =
-			capab->cap[I_FRAME_QP].flags & CAP_FLAG_CLIENT_SET;
-		p_qp_enable =
-			capab->cap[P_FRAME_QP].flags & CAP_FLAG_CLIENT_SET;
-		b_qp_enable =
-			capab->cap[B_FRAME_QP].flags & CAP_FLAG_CLIENT_SET;
+		if (capab->cap[I_FRAME_QP].flags & CAP_FLAG_CLIENT_SET)
+			i_qp_enable = 1;
+		if (capab->cap[P_FRAME_QP].flags & CAP_FLAG_CLIENT_SET)
+			p_qp_enable = 1;
+		if (capab->cap[B_FRAME_QP].flags & CAP_FLAG_CLIENT_SET)
+			b_qp_enable = 1;
 	}
 
 	client_qp_enable = i_qp_enable | p_qp_enable << 1 | b_qp_enable << 2;
@@ -3024,6 +3030,35 @@ int msm_vidc_set_csc_custom_matrix(void *instance,
 		HFI_PROP_CSC_LIMIT, &csc_limit_payload[0],
 		ARRAY_SIZE(csc_limit_payload) * sizeof(s32),
 		csc_limit_payload[0], csc_limit_payload[1]);
+	if (rc)
+		return rc;
+
+	return rc;
+}
+
+/*
+ * TODO: currently fw does not accept HFI_LEVEL_NONE.
+ * Use this function for encoder level setting once
+ * fw issue is fixed.
+ */
+int msm_vidc_set_level(void *instance,
+	enum msm_vidc_inst_capability_type cap_id)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
+	u32 hfi_value = 0;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	hfi_value = inst->capabilities->cap[cap_id].value;
+	if (!(inst->capabilities->cap[cap_id].flags & CAP_FLAG_CLIENT_SET))
+		hfi_value = HFI_LEVEL_NONE;
+
+	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32_ENUM,
+		&hfi_value, sizeof(u32), __func__);
 	if (rc)
 		return rc;
 
