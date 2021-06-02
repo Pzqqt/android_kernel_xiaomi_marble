@@ -4098,6 +4098,20 @@ static inline qdf_ktime_t qdf_nbuf_net_timedelta(qdf_ktime_t t)
 }
 #endif /* ENHANCED_OS_ABSTRACTION */
 
+#ifdef NBUF_MEMORY_DEBUG
+/**
+ * qdf_set_smmu_fault_state() - Set smmu fault sate
+ * @smmu_fault_state: state of the wlan smmy
+ *
+ * Return: void
+ */
+void qdf_set_smmu_fault_state(bool smmu_fault_state);
+#else
+static inline void qdf_set_smmu_fault_state(bool smmu_fault_state)
+{
+}
+#endif
+
 #ifdef CONFIG_NBUF_AP_PLATFORM
 #include <i_qdf_nbuf_api_w.h>
 #else
