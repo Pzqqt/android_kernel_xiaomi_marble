@@ -262,6 +262,7 @@ int msm_vidc_memory_alloc(struct msm_vidc_core *core, struct msm_vidc_alloc *mem
 		if (rc) {
 			d_vpr_e("%s: BIN dmabuf %pK LEND failed, rc %d heap %s\n",
 				__func__, mem->dmabuf, rc, heap_name);
+			goto error;
 		}
 	}
 
