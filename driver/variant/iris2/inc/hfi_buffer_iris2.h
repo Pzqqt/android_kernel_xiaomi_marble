@@ -751,6 +751,9 @@ typedef HFI_U32 HFI_BOOL;
 #define HFI_IRIS2_VP9D_COMV_SIZE \
 	((((8192 + 63) >> 6) * ((4320 + 63) >> 6) * 8 * 8 * 2 * 8))
 
+#define SIZE_VP9D_QP(frame_width, frame_height) \
+	SIZE_H264D_QP(frame_width, frame_height)
+
 #define HFI_IRIS2_VP9D_LB_SIZE(_size, frame_width, frame_height, num_vpp_pipes)\
 	do \
 	{ \
@@ -769,6 +772,8 @@ typedef HFI_U32 HFI_BOOL;
 		HFI_ALIGN(SIZE_VP9D_LB_PE_TOP_DATA(frame_width, frame_height), \
 		VENUS_DMA_ALIGNMENT) + \
 		HFI_ALIGN(SIZE_VP9D_LB_FE_TOP_DATA(frame_width, frame_height), \
+		VENUS_DMA_ALIGNMENT) + \
+		HFI_ALIGN(SIZE_VP9D_QP(frame_width, frame_height), \
 		VENUS_DMA_ALIGNMENT); \
 	} while (0)
 
