@@ -8478,6 +8478,16 @@ int ipa3_cfg_ep_metadata(u32 clnt_hdl, const struct ipa_ep_cfg_metadata *ep_md)
 	/* copy over EP cfg */
 	ipa3_ctx->ep[clnt_hdl].cfg.meta = *ep_md;
 
+	if (ipa3_ctx->eogre_enabled &&
+		ipa3_ctx->ep[clnt_hdl].client == IPA_CLIENT_ETHERNET_PROD) {
+		/* reconfigure ep metadata reg to override mux-id */
+		ipa3_ctx->ep[clnt_hdl].cfg.hdr.hdr_ofst_metadata_valid = 0;
+		ipa3_ctx->ep[clnt_hdl].cfg.hdr.hdr_ofst_metadata = 0;
+		ipa3_ctx->ep[clnt_hdl].cfg.hdr.hdr_metadata_reg_valid = 1;
+		ipahal_write_reg_n_fields(IPA_ENDP_INIT_HDR_n, clnt_hdl,
+			&ipa3_ctx->ep[clnt_hdl].cfg.hdr);
+	}
+
 	IPA_ACTIVE_CLIENTS_INC_EP(ipa3_get_client_mapping(clnt_hdl));
 
 	ep_md_reg_wrt = *ep_md;
@@ -12155,3 +12165,159 @@ bool ipa3_is_ulso_supported(void)
 	return ipa3_ctx->ulso_supported;
 }
 EXPORT_SYMBOL(ipa3_is_ulso_supported);
+
+static void ipa3_eogre_info_free_cb(
+	void *buff,
+	u32   len,
+	u32   type)
+{
+	if (buff) {
+		kfree(buff);
+	}
+}
+
+/**
+ * ipa3_check_eogre() - Check if the eogre is worthy of sending to
+ *                      recipients who would use the data.
+ *
+ * Returns: 0 on success, negative on failure
+ */
+int ipa3_check_eogre(
+	struct ipa_ioc_eogre_info *eogre_info,
+	bool                      *send2uC,
+	bool                      *send2ipacm )
+{
+	struct ipa_ioc_eogre_info null_eogre;
+
+	bool cache_is_null, eogre_is_null, same;
+
+	int ret = 0;
+
+	if (eogre_info == NULL || send2uC == NULL || send2ipacm == NULL) {
+		IPAERR("NULL ptr: eogre_info(%p) and/or "
+			   "send2uC(%p) and/or send2ipacm(%p)\n",
+			   eogre_info, send2uC, send2ipacm);
+		ret = -EIO;
+		goto done;
+	}
+
+	memset(&null_eogre, 0, sizeof(null_eogre));
+
+	cache_is_null =
+		!memcmp(
+			&ipa3_ctx->eogre_cache,
+			&null_eogre,
+			sizeof(null_eogre));
+
+	eogre_is_null =
+		!memcmp(
+			eogre_info,
+			&null_eogre,
+			sizeof(null_eogre));
+
+	*send2uC = *send2ipacm = false;
+
+	if (cache_is_null) {
+
+		if (eogre_is_null) {
+			IPAERR(
+				"Attempting to disable EoGRE. EoGRE is "
+				"already disabled. No work needs to be done.\n");
+			ret = -EIO;
+			goto done;
+		}
+
+		*send2uC = *send2ipacm = true;
+
+	} else { /* (!cache_is_null) */
+
+		if (!eogre_is_null) {
+			IPAERR(
+				"EoGRE is already enabled for iptype(%d). "
+				"No work needs to be done.\n",
+				ipa3_ctx->eogre_cache.ipgre_info.iptype);
+			ret = -EIO;
+			goto done;
+		}
+
+		same = !memcmp(
+			&ipa3_ctx->eogre_cache.map_info,
+			&eogre_info->map_info,
+			sizeof(struct IpaDscpVlanPcpMap_t));
+
+		*send2uC = !same;
+
+		same = !memcmp(
+			&ipa3_ctx->eogre_cache.ipgre_info,
+			&eogre_info->ipgre_info,
+			sizeof(struct ipa_ipgre_info));
+
+		*send2ipacm = !same;
+	}
+
+	ipa3_ctx->eogre_cache = *eogre_info;
+
+	IPADBG("send2uC(%u) send2ipacm(%u)\n",
+		   *send2uC, *send2ipacm);
+
+done:
+	return ret;
+}
+
+/**
+ * ipa3_send_eogre_info() - Notify ipacm of incoming eogre event
+ *
+ * Returns:	0 on success, negative on failure
+ *
+ * Note: Should not be called from atomic context
+ */
+int ipa3_send_eogre_info(
+	enum ipa_eogre_event       etype,
+	struct ipa_ioc_eogre_info *info )
+{
+	struct ipa_msg_meta    msg_meta;
+	struct ipa_ipgre_info *eogre_info;
+
+	int                    res = 0;
+
+	if (!info) {
+		IPAERR("Bad arg: info is NULL\n");
+		res = -EIO;
+		goto done;
+	}
+
+	/*
+	 * Prep and send msg to ipacm
+	 */
+	memset(&msg_meta, 0, sizeof(struct ipa_msg_meta));
+
+	eogre_info = kzalloc(
+		sizeof(struct ipa_ipgre_info), GFP_KERNEL);
+
+	if (!eogre_info) {
+		IPAERR("eogre_info memory allocation failed !\n");
+		res = -ENOMEM;
+		goto done;
+	}
+
+	memcpy(eogre_info,
+		   &(info->ipgre_info),
+		   sizeof(struct ipa_ipgre_info));
+
+	msg_meta.msg_type = etype;
+	msg_meta.msg_len  = sizeof(struct ipa_ipgre_info);
+
+	/*
+	 * Post event to ipacm
+	 */
+	res = ipa3_send_msg(&msg_meta, eogre_info, ipa3_eogre_info_free_cb);
+
+	if (res) {
+		IPAERR_RL("ipa3_send_msg failed: %d\n", res);
+		kfree(eogre_info);
+		goto done;
+	}
+
+done:
+	return res;
+}

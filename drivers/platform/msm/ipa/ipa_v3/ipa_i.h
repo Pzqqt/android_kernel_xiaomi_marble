@@ -498,6 +498,12 @@ enum {
 #define IPA_IOC_APP_CLOCK_VOTE32 _IOWR(IPA_IOC_MAGIC, \
 				IPA_IOCTL_APP_CLOCK_VOTE, \
 				compat_uptr_t)
+#define IPA_IOC_ADD_EoGRE_MAPPING32 _IOWR(IPA_IOC_MAGIC, \
+				IPA_IOCTL_ADD_EoGRE_MAPPING, \
+				compat_uptr_t)
+#define IPA_IOC_DEL_EoGRE_MAPPING32 _IOWR(IPA_IOC_MAGIC, \
+				IPA_IOCTL_DEL_EoGRE_MAPPING, \
+				compat_uptr_t)
 #endif /* #ifdef CONFIG_COMPAT */
 
 #define IPA_TZ_UNLOCK_ATTRIBUTE 0x0C0311
@@ -836,6 +842,7 @@ struct ipa3_hdr_proc_ctx_entry {
 	u32 cookie;
 	enum ipa_hdr_proc_type type;
 	struct ipa_l2tp_hdr_proc_ctx_params l2tp_params;
+	struct ipa_eogre_hdr_proc_ctx_params eogre_params;
 	struct ipa_eth_II_to_eth_II_ex_procparams generic_params;
 	struct ipa3_hdr_proc_ctx_offset_entry *offset_entry;
 	struct ipa3_hdr_entry *hdr;
@@ -2308,6 +2315,8 @@ struct ipa3_context {
 	u32 gsi_rmnet_ll_evt_ring_intvec;
 	u32 gsi_rmnet_ll_evt_ring_irq;
 	bool use_tput_est_ep;
+	struct ipa_ioc_eogre_info eogre_cache;
+	bool eogre_enabled;
 };
 
 struct ipa3_plat_drv_res {
@@ -3495,4 +3504,27 @@ bool ipa3_is_modem_up(void);
 /* set modem is up */
 void ipa3_set_modem_up(bool is_up);
 int ipa3_qmi_reg_dereg_for_bw(bool bw_reg_dereg);
+
+/*
+ * To check if the eogre is worthy of sending to recipients who would
+ * use the data.
+ */
+int ipa3_check_eogre(
+	struct ipa_ioc_eogre_info *eogre_info,
+	bool                      *send2uC,
+	bool                      *send2ipacm );
+
+/*
+ * To send map information to uC
+ */
+int ipa3_add_dscp_vlan_pcp_map(
+	struct IpaDscpVlanPcpMap_t *map );
+
+/*
+ * To send enable/disable information to ipacm
+ */
+int ipa3_send_eogre_info(
+	enum ipa_eogre_event etype,
+	struct ipa_ioc_eogre_info *info );
+
 #endif /* _IPA3_I_H_ */
