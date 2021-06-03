@@ -30,8 +30,6 @@
 #include "wlan_logging_sock_svc.h"
 #include "connection_mgr/core/src/wlan_cm_roam.h"
 
-#define ROAM_AP_AGE_LIMIT_MS                     10000
-
 /*
  * cm_copy_ssids_from_rso_config_params() - copy SSID from rso_config_params
  * to scan filter
@@ -126,9 +124,6 @@ QDF_STATUS cm_update_advance_roam_scan_filter(
 		filter->pmf_cap = WLAN_PMF_REQUIRED;
 	else if (rso_cfg->rsn_cap & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED)
 		filter->pmf_cap = WLAN_PMF_CAPABLE;
-
-	/* Dont Consider AP older than ROAM_AP_AGE_LIMIT_MS */
-	filter->age_threshold = ROAM_AP_AGE_LIMIT_MS;
 
 	return QDF_STATUS_SUCCESS;
 }

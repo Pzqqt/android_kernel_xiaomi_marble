@@ -12534,6 +12534,34 @@ csr_qos_send_reassoc_ind(struct mac_context *mac_ctx,
 {}
 #endif
 
+static void
+csr_update_beacon_in_connect_rsp(struct scan_cache_entry *entry,
+				 struct wlan_connect_rsp_ies *connect_ies)
+{
+	if (!entry)
+		return;
+
+	/* no need to update if already present */
+	if (connect_ies->bcn_probe_rsp.ptr)
+		return;
+
+	/*
+	 * In case connection to MBSSID: Non Tx BSS OR host reassoc,
+	 * vdev/peer manager doesn't send unicast probe req so fill the
+	 * beacon in connect resp IEs here.
+	 */
+	connect_ies->bcn_probe_rsp.len =
+				util_scan_entry_frame_len(entry);
+	connect_ies->bcn_probe_rsp.ptr =
+		qdf_mem_malloc(connect_ies->bcn_probe_rsp.len);
+	if (!connect_ies->bcn_probe_rsp.ptr)
+		return;
+
+	qdf_mem_copy(connect_ies->bcn_probe_rsp.ptr,
+		     util_scan_entry_frame_ptr(entry),
+		     connect_ies->bcn_probe_rsp.len);
+}
+
 static void csr_fill_connected_profile(struct mac_context *mac_ctx,
 				       struct csr_roam_session *session,
 				       struct wlan_objmgr_vdev *vdev,
@@ -12595,6 +12623,9 @@ static void csr_fill_connected_profile(struct mac_context *mac_ctx,
 
 	if (!bss_desc->beaconInterval)
 		sme_err("ERROR: Beacon interval is ZERO");
+
+	csr_update_beacon_in_connect_rsp(cur_node->entry,
+					 &rsp->connect_rsp.connect_ies);
 
 	if (bss_desc->mdiePresent) {
 		src_cfg.bool_value = true;

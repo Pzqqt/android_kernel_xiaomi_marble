@@ -553,9 +553,11 @@ static void hdd_cm_save_bss_info(struct hdd_adapter *adapter,
 
 	qdf_mem_zero(&hdd_sta_ctx->conn_info.hs20vendor_ie,
 		     sizeof(hdd_sta_ctx->conn_info.hs20vendor_ie));
-	sme_get_hs20vendor_ie(mac_handle, rsp->connect_ies.bcn_probe_rsp.ptr,
-			      rsp->connect_ies.bcn_probe_rsp.len,
-			      &hdd_sta_ctx->conn_info.hs20vendor_ie);
+	if (rsp->connect_ies.bcn_probe_rsp.ptr)
+		sme_get_hs20vendor_ie(mac_handle,
+				      rsp->connect_ies.bcn_probe_rsp.ptr,
+				      rsp->connect_ies.bcn_probe_rsp.len,
+				      &hdd_sta_ctx->conn_info.hs20vendor_ie);
 
 	status = sme_unpack_assoc_rsp(mac_handle,
 				      rsp->connect_ies.assoc_rsp.ptr,
@@ -755,6 +757,15 @@ static void hdd_cm_save_connect_info(struct hdd_adapter *adapter,
 				sme_phy_mode_to_dot11mode(des_chan->ch_phymode);
 
 	sta_ctx->conn_info.ch_width = des_chan->ch_width;
+	if (!rsp->connect_ies.bcn_probe_rsp.ptr ||
+	    (rsp->connect_ies.bcn_probe_rsp.len <
+	     (sizeof(struct wlan_frame_hdr) +
+	      offsetof(struct wlan_bcn_frame, ie)))) {
+		hdd_err("beacon len is invalid %d",
+			rsp->connect_ies.bcn_probe_rsp.len);
+		qdf_mem_free(bcn_ie);
+		return;
+	}
 
 	ie_len = (rsp->connect_ies.bcn_probe_rsp.len -
 			sizeof(struct wlan_frame_hdr) -
@@ -841,16 +852,18 @@ hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
 
 	adapter->wapi_info.is_wapi_sta = hdd_cm_is_wapi_sta(
 						sta_ctx->conn_info.auth_type);
-
-	ie_len = (rsp->connect_ies.bcn_probe_rsp.len -
-			sizeof(struct wlan_frame_hdr) -
-			offsetof(struct wlan_bcn_frame, ie));
-
-	ie_field  = (uint8_t *)(rsp->connect_ies.bcn_probe_rsp.ptr +
-				sizeof(struct wlan_frame_hdr) +
+	if (adapter->device_mode == QDF_STA_MODE &&
+	    rsp->connect_ies.bcn_probe_rsp.ptr &&
+	    (rsp->connect_ies.bcn_probe_rsp.len >
+	     (sizeof(struct wlan_frame_hdr) +
+	      offsetof(struct wlan_bcn_frame, ie)))) {
+		ie_len = (rsp->connect_ies.bcn_probe_rsp.len -
+				sizeof(struct wlan_frame_hdr) -
 				offsetof(struct wlan_bcn_frame, ie));
 
-	if (adapter->device_mode == QDF_STA_MODE) {
+		ie_field  = (uint8_t *)(rsp->connect_ies.bcn_probe_rsp.ptr +
+				sizeof(struct wlan_frame_hdr) +
+				offsetof(struct wlan_bcn_frame, ie));
 		sta_ctx->ap_supports_immediate_power_save =
 				wlan_hdd_is_ap_supports_immediate_power_save(
 				     ie_field, ie_len);
