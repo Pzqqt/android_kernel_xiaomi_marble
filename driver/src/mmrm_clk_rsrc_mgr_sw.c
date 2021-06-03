@@ -188,6 +188,14 @@ static struct mmrm_client *mmrm_sw_clk_client_register(
 
 	/* entry already registered */
 	if (tbl_entry->client) {
+		if (msm_mmrm_allow_multiple_register) {
+			tbl_entry->ref_count++;
+			d_mpr_h("%s: client csid(%d) already registered ref:%d\n",
+				__func__, tbl_entry->clk_src_id, tbl_entry->ref_count);
+			clk_client = tbl_entry->client;
+			goto exit_found;
+		}
+
 		d_mpr_e("%s: client csid(%d) already registered\n",
 			__func__, tbl_entry->clk_src_id);
 		rc = -EINVAL;
@@ -205,6 +213,7 @@ static struct mmrm_client *mmrm_sw_clk_client_register(
 
 	clk_client->client_uid = c;
 	clk_client->client_type = MMRM_CLIENT_CLOCK;
+	tbl_entry->ref_count = 1;
 
 	/* copy the entries provided by client */
 	tbl_entry->client = clk_client;
@@ -239,15 +248,20 @@ static struct mmrm_client *mmrm_sw_clk_client_register(
 		goto err_fail_update_entry;
 	}
 
+exit_found:
 	mutex_unlock(&sw_clk_mgr->lock);
 
 	d_mpr_h("%s: exiting with success\n", __func__);
 	return clk_client;
 
 err_fail_update_entry:
+	kfree(clk_client);
+
 err_fail_alloc_clk_client:
-err_already_registered:
+	memset(tbl_entry, 0x0, sizeof(struct mmrm_sw_clk_client_tbl_entry));
+
 err_nofree_entry:
+err_already_registered:
 	mutex_unlock(&sw_clk_mgr->lock);
 
 	d_mpr_h("%s: error exit\n", __func__);
@@ -280,12 +294,16 @@ static int mmrm_sw_clk_client_deregister(struct mmrm_clk_mgr *sw_clk_mgr,
 	mutex_lock(&sw_clk_mgr->lock);
 
 	tbl_entry = &sinfo->clk_client_tbl[client->client_uid];
-	kfree(tbl_entry->client);
-	tbl_entry->client = NULL;
-	tbl_entry->clk = NULL;
-	tbl_entry->pri = 0x0;
-	tbl_entry->pvt_data = NULL;
-	tbl_entry->notifier_cb_fn = NULL;
+	if (tbl_entry->ref_count > 0) {
+		tbl_entry->ref_count--;
+	}
+
+	if (tbl_entry->ref_count == 0) {
+
+		kfree(tbl_entry->client);
+
+		memset(tbl_entry, 0x0, sizeof(struct mmrm_sw_clk_client_tbl_entry));
+	}
 
 	mutex_unlock(&sw_clk_mgr->lock);
 
@@ -319,7 +337,7 @@ static int mmrm_sw_get_req_level(
 
 	/* voltage corner is below svsl1 */
 	if (voltage_corner < mmrm_sw_vdd_corner[MMRM_VDD_LEVEL_SVS_L1]) {
-		d_mpr_w("%s: csid(%d): lower voltage corner(%d)\n",
+		d_mpr_h("%s: csid(%d): lower voltage corner(%d)\n",
 			__func__,
 			tbl_entry->clk_src_id,
 			voltage_corner);
