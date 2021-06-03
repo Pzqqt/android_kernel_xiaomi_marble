@@ -4498,7 +4498,7 @@ csr_roam_trigger_reassociate(struct mac_context *mac_ctx, tSmeCmd *cmd,
 					eCsrRoamReasonStaCapabilityChanged;
 			csr_roam_call_callback(mac_ctx, session_ptr->sessionId,
 					roam_info, 0, eCSR_ROAM_ROAMING_START,
-					eCSR_ROAM_RESULT_NONE);
+					eCSR_ROAM_RESULT_NOT_ASSOCIATED);
 			session_ptr->roamingReason = eCsrReassocRoaming;
 			roam_info->bss_desc = session_ptr->pConnectBssDesc;
 			roam_info->pProfile = &cmd->u.roamCmd.roamProfile;
