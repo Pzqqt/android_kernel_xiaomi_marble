@@ -136,9 +136,7 @@ struct msm_vidc_inst {
 	struct delayed_work                response_work;
 	struct workqueue_struct           *response_workq;
 	struct list_head                   response_works; /* list of struct response_work */
-	struct list_head                   input_ts;
 	struct list_head                   enc_input_crs;
-	struct list_head                   decode_bitrate_data;
 	bool                               once_per_session_set;
 	bool                               ipsc_properties_set;
 	bool                               opsc_properties_set;

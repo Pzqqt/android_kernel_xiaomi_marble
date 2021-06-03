@@ -64,9 +64,6 @@ int msm_vidc_get_inst_load(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 
-	if (inst->state == MSM_VIDC_ERROR)
-		goto exit;
-
 	/*
 	 * NRT sessions - clock scaling is based on OPP table.
 	 *              - No load based rejection.
@@ -77,7 +74,6 @@ int msm_vidc_get_inst_load(struct msm_vidc_inst *inst)
 	else
 		load = msm_vidc_get_mbps(inst);
 
-exit:
 	return load;
 }
 

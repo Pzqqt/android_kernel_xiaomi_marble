@@ -1082,7 +1082,7 @@ int msm_vidc_change_inst_state(struct msm_vidc_inst *inst,
 		return -EINVAL;
 	}
 
-	if (inst->state == MSM_VIDC_ERROR) {
+	if (is_session_error(inst)) {
 		i_vpr_h(inst,
 			"%s: inst is in bad state, can not change state to %s\n",
 			func, state_name(request_state));
@@ -1427,10 +1427,6 @@ enum msm_vidc_allow msm_vidc_allow_qbuf(struct msm_vidc_inst *inst, u32 type)
 
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
-		return MSM_VIDC_DISALLOW;
-	}
-	if (inst->state == MSM_VIDC_ERROR) {
-		i_vpr_e(inst, "%s: inst in error state\n", __func__);
 		return MSM_VIDC_DISALLOW;
 	}
 
@@ -4619,6 +4615,7 @@ void msm_vidc_destroy_buffers(struct msm_vidc_inst *inst)
 	struct msm_vidc_buffers *buffers;
 	struct msm_vidc_buffer *buf, *dummy;
 	struct msm_vidc_timestamp *ts, *dummy_ts;
+	struct response_work *work, *dummy_work = NULL;
 	static const enum msm_vidc_buffer_type ext_buf_types[] = {
 		MSM_VIDC_BUF_INPUT,
 		MSM_VIDC_BUF_OUTPUT,
@@ -4685,6 +4682,12 @@ void msm_vidc_destroy_buffers(struct msm_vidc_inst *inst)
 			__func__, ts->sort.val, ts->rank);
 		list_del(&ts->sort.list);
 		msm_vidc_put_ts(inst, ts);
+	}
+
+	list_for_each_entry_safe(work, dummy_work, &inst->response_works, list) {
+		list_del(&work->list);
+		kfree(work->data);
+		kfree(work);
 	}
 
 	/* destroy buffers from pool */
@@ -5068,7 +5071,7 @@ int msm_vidc_check_core_mbps(struct msm_vidc_inst *inst)
 	core_lock(core, __func__);
 	list_for_each_entry(instance, &core->instances, list) {
 		/* ignore invalid/error session */
-		if (instance->state == MSM_VIDC_ERROR)
+		if (is_session_error(instance))
 			continue;
 
 		/* ignore thumbnail, image, and non realtime sessions */
@@ -5105,7 +5108,7 @@ static int msm_vidc_check_core_mbpf(struct msm_vidc_inst *inst)
 	core_lock(core, __func__);
 	list_for_each_entry(instance, &core->instances, list) {
 		/* ignore invalid/error session */
-		if (instance->state == MSM_VIDC_ERROR)
+		if (is_session_error(instance))
 			continue;
 
 		/* ignore thumbnail session */

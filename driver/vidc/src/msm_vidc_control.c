@@ -703,12 +703,6 @@ int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl)
 		return -EINVAL;
 	}
 
-	if (inst->state == MSM_VIDC_ERROR) {
-		i_vpr_e(inst, "%s: set ctrl not allowed in error state\n");
-		/* (error name TBD); */
-		return -EINVAL;
-	}
-
 	capability = inst->capabilities;
 
 	i_vpr_h(inst, "%s: state %d, name %s, id 0x%x value %d\n",

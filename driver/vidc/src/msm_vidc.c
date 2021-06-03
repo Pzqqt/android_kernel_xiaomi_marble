@@ -71,7 +71,7 @@ int msm_vidc_poll(void *instance, struct file *filp,
 		d_vpr_e("%s: invalid params\n", __func__);
 		return POLLERR;
 	}
-	if (inst->state == MSM_VIDC_ERROR) {
+	if (is_session_error(inst)) {
 		i_vpr_e(inst, "%s: inst in error state\n", __func__);
 		return POLLERR;
 	}
@@ -435,11 +435,6 @@ int msm_vidc_qbuf(void *instance, struct media_device *mdev,
 	if (!inst || !inst->core || !b || !valid_v4l2_buffer(b, inst)) {
 		d_vpr_e("%s: invalid params %pK %pK\n", __func__, inst, b);
 		return -EINVAL;
-	}
-
-	if (is_session_error(inst)) {
-		rc = -EBUSY;
-		goto exit;
 	}
 
 	q = msm_vidc_get_vb2q(inst, b->type, __func__);
