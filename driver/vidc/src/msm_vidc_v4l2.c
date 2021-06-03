@@ -118,11 +118,17 @@ int msm_v4l2_s_fmt(struct file *filp, void *fh,
 	}
 
 	inst_lock(inst, __func__);
+	if (is_session_error(inst)) {
+		i_vpr_e(inst, "%s: inst in error state\n", __func__);
+		rc = -EBUSY;
+		goto unlock;
+	}
 	rc = msm_vidc_s_fmt((void *)inst, f);
 	if (rc)
 		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
-	inst_unlock(inst, __func__);
 
+unlock:
+	inst_unlock(inst, __func__);
 	put_inst(inst);
 
 	return rc;
@@ -164,11 +170,17 @@ int msm_v4l2_s_selection(struct file *filp, void *fh,
 	}
 
 	inst_lock(inst, __func__);
+	if (is_session_error(inst)) {
+		i_vpr_e(inst, "%s: inst in error state\n", __func__);
+		rc = -EBUSY;
+		goto unlock;
+	}
 	rc = msm_vidc_s_selection((void *)inst, s);
 	if (rc)
 		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
-	inst_unlock(inst, __func__);
 
+unlock:
+	inst_unlock(inst, __func__);
 	put_inst(inst);
 
 	return rc;
@@ -210,11 +222,17 @@ int msm_v4l2_s_parm(struct file *filp, void *fh,
 	}
 
 	inst_lock(inst, __func__);
+	if (is_session_error(inst)) {
+		i_vpr_e(inst, "%s: inst in error state\n", __func__);
+		rc = -EBUSY;
+		goto unlock;
+	}
 	rc = msm_vidc_s_param((void *)inst, a);
 	if (rc)
 		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
-	inst_unlock(inst, __func__);
 
+unlock:
+	inst_unlock(inst, __func__);
 	put_inst(inst);
 
 	return rc;
@@ -256,11 +274,17 @@ int msm_v4l2_s_ctrl(struct file *filp, void *fh,
 	}
 
 	inst_lock(inst, __func__);
+	if (is_session_error(inst)) {
+		i_vpr_e(inst, "%s: inst in error state\n", __func__);
+		rc = -EBUSY;
+		goto unlock;
+	}
 	rc = msm_vidc_s_ctrl((void *)inst, a);
 	if (rc)
 		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
-	inst_unlock(inst, __func__);
 
+unlock:
+	inst_unlock(inst, __func__);
 	put_inst(inst);
 
 	return rc;
@@ -326,11 +350,17 @@ int msm_v4l2_qbuf(struct file *filp, void *fh,
 	}
 
 	inst_lock(inst, __func__);
+	if (is_session_error(inst)) {
+		i_vpr_e(inst, "%s: inst in error state\n", __func__);
+		rc = -EBUSY;
+		goto unlock;
+	}
 	rc = msm_vidc_qbuf(inst, vdev->v4l2_dev->mdev, b);
 	if (rc)
 		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
-	inst_unlock(inst, __func__);
 
+unlock:
+	inst_unlock(inst, __func__);
 	put_inst(inst);
 
 	return rc;
@@ -370,11 +400,17 @@ int msm_v4l2_streamon(struct file *filp, void *fh,
 	}
 
 	inst_lock(inst, __func__);
+	if (is_session_error(inst)) {
+		i_vpr_e(inst, "%s: inst in error state\n", __func__);
+		rc = -EBUSY;
+		goto unlock;
+	}
 	rc = msm_vidc_streamon((void *)inst, i);
 	if (rc)
 		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
-	inst_unlock(inst, __func__);
 
+unlock:
+	inst_unlock(inst, __func__);
 	put_inst(inst);
 
 	return rc;
@@ -417,11 +453,17 @@ int msm_v4l2_subscribe_event(struct v4l2_fh *fh,
 	}
 
 	inst_lock(inst, __func__);
+	if (is_session_error(inst)) {
+		i_vpr_e(inst, "%s: inst in error state\n", __func__);
+		rc = -EBUSY;
+		goto unlock;
+	}
 	rc = msm_vidc_subscribe_event((void *)inst, sub);
 	if (rc)
 		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
-	inst_unlock(inst, __func__);
 
+unlock:
+	inst_unlock(inst, __func__);
 	put_inst(inst);
 
 	return rc;
@@ -464,11 +506,17 @@ int msm_v4l2_decoder_cmd(struct file *filp, void *fh,
 	}
 
 	inst_lock(inst, __func__);
+	if (is_session_error(inst)) {
+		i_vpr_e(inst, "%s: inst in error state\n", __func__);
+		rc = -EBUSY;
+		goto unlock;
+	}
 	rc = msm_vidc_cmd((void *)inst, (union msm_v4l2_cmd *)dec);
 	if (rc)
 		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
-	inst_unlock(inst, __func__);
 
+unlock:
+	inst_unlock(inst, __func__);
 	put_inst(inst);
 
 	return rc;
@@ -487,11 +535,17 @@ int msm_v4l2_encoder_cmd(struct file *filp, void *fh,
 	}
 
 	inst_lock(inst, __func__);
+	if (is_session_error(inst)) {
+		i_vpr_e(inst, "%s: inst in error state\n", __func__);
+		rc = -EBUSY;
+		goto unlock;
+	}
 	rc = msm_vidc_cmd((void *)inst, (union msm_v4l2_cmd *)enc);
 	if (rc)
 		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
-	inst_unlock(inst, __func__);
 
+unlock:
+	inst_unlock(inst, __func__);
 	put_inst(inst);
 
 	return rc;
