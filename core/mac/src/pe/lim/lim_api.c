@@ -728,6 +728,19 @@ static QDF_STATUS lim_unregister_sap_bcn_callback(struct mac_context *mac_ctx)
 	return status;
 }
 
+static void lim_register_policy_mgr_callback(struct wlan_objmgr_psoc *psoc)
+{
+	struct policy_mgr_conc_cbacks conc_cbacks;
+
+	qdf_mem_zero(&conc_cbacks, sizeof(conc_cbacks));
+	conc_cbacks.connection_info_update = lim_send_conc_params_update;
+
+	if (QDF_STATUS_SUCCESS != policy_mgr_register_conc_cb(psoc,
+							      &conc_cbacks)) {
+		pe_err("failed to register policy manager callbacks");
+	}
+}
+
 static int pe_hang_event_notifier_call(struct notifier_block *block,
 				       unsigned long state,
 				       void *data)
@@ -841,6 +854,8 @@ QDF_STATUS pe_open(struct mac_context *mac, struct cds_config_info *cds_cfg)
 	lim_nan_register_callbacks(mac);
 	p2p_register_callbacks(mac);
 	lim_register_sap_bcn_callback(mac);
+	if (mac->mlme_cfg->edca_params.enable_edca_params)
+		lim_register_policy_mgr_callback(mac->psoc);
 
 	if (!QDF_IS_STATUS_SUCCESS(
 	    cds_shutdown_notifier_register(pe_shutdown_notifier_cb, mac))) {

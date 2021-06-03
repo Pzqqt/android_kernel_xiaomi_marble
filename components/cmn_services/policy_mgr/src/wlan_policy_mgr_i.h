@@ -294,6 +294,8 @@ struct policy_mgr_cfg {
  * interaction with Policy Manager
  * @cdp_cbacks: callbacks to be registered by SME for
  * interaction with Policy Manager
+ * @conc_cbacks: callbacks to be registered by lim for
+ * interaction with Policy Manager
  * @sap_mandatory_channels: The user preferred master list on
  *                        which SAP can be brought up. This
  *                        mandatory channel freq list would be as per
@@ -340,6 +342,7 @@ struct policy_mgr_psoc_priv_obj {
 	struct policy_mgr_tdls_cbacks tdls_cbacks;
 	struct policy_mgr_cdp_cbacks cdp_cbacks;
 	struct policy_mgr_dp_cbacks dp_cbacks;
+	struct policy_mgr_conc_cbacks conc_cbacks;
 	uint32_t sap_mandatory_channels[NUM_CHANNELS];
 	uint32_t sap_mandatory_channels_len;
 	bool do_sap_unsafe_ch_check;

@@ -230,6 +230,10 @@ void lim_update_assoc_sta_datas(struct mac_context *mac_ctx,
 		if (assoc_rsp->edcaPresent) {
 			QDF_STATUS status;
 
+			qdf_mem_copy(&sta_ds->qos.peer_edca_params,
+				     &assoc_rsp->edca,
+				     sizeof(assoc_rsp->edca));
+
 			status =
 				sch_beacon_edca_process(mac_ctx,
 					&assoc_rsp->edca, session_entry);
@@ -249,6 +253,10 @@ void lim_update_assoc_sta_datas(struct mac_context *mac_ctx,
 	sta_ds->wsmEnabled = 0;
 	if (session_entry->limWmeEnabled && assoc_rsp->wmeEdcaPresent) {
 		QDF_STATUS status;
+
+		qdf_mem_copy(&sta_ds->qos.peer_edca_params,
+			     &assoc_rsp->edca,
+			     sizeof(assoc_rsp->edca));
 
 		status = sch_beacon_edca_process(mac_ctx, &assoc_rsp->edca,
 				session_entry);

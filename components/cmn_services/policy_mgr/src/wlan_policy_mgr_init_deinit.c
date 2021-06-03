@@ -613,6 +613,22 @@ QDF_STATUS policy_mgr_psoc_disable(struct wlan_objmgr_psoc *psoc)
 	return status;
 }
 
+QDF_STATUS policy_mgr_register_conc_cb(struct wlan_objmgr_psoc *psoc,
+				struct policy_mgr_conc_cbacks *conc_cbacks)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	pm_ctx->conc_cbacks.connection_info_update =
+					conc_cbacks->connection_info_update;
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS policy_mgr_register_sme_cb(struct wlan_objmgr_psoc *psoc,
 		struct policy_mgr_sme_cbacks *sme_cbacks)
 {

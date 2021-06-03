@@ -2681,4 +2681,14 @@ void lim_process_tpe_ie_from_beacon(struct mac_context *mac,
 				    struct pe_session *session,
 				    struct bss_description *bss_desc,
 				    bool *has_tpe_updated);
+
+/**
+ * lim_send_conc_params_update() - Function to check and update params based on
+ *                                  STA/SAP concurrency.such as EDCA params
+ *                                  and RTS profile. If updated, it will also
+ *                                  also send the updated parameters to FW.
+ *
+ * Return: void
+ */
+void lim_send_conc_params_update(void);
 #endif /* __LIM_UTILS_H */

@@ -383,6 +383,9 @@ sch_bcn_process_sta(struct mac_context *mac_ctx,
 	    (bcn->edcaPresent && session->limQosEnabled)) {
 		if (bcn->edcaParams.qosInfo.count !=
 		    session->gLimEdcaParamSetCount) {
+			qdf_mem_copy(&sta->qos.peer_edca_params,
+				     &bcn->edcaParams,
+				     sizeof(bcn->edcaParams));
 			status = sch_beacon_edca_process(mac_ctx,
 							 &bcn->edcaParams,
 							 session);
@@ -395,6 +398,7 @@ sch_bcn_process_sta(struct mac_context *mac_ctx,
 				lim_send_edca_params(mac_ctx,
 					session->gLimEdcaParamsActive,
 					session->vdev_id, false);
+				sch_qos_concurrency_update();
 			} else {
 				pe_err("Self Entry missing in Hash Table");
 			}

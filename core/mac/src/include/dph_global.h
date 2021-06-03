@@ -53,6 +53,8 @@ typedef struct sDphQosParams {
 	uint8_t addtsPresent;
 	tSirAddtsReqInfo addts;
 	tSirMacQosCapabilityStaIE capability;
+	/*AP EDCA params, extracted from assoc resp*/
+	tSirMacEdcaParamSetIE peer_edca_params;
 } tDphQosParams;
 
 /**

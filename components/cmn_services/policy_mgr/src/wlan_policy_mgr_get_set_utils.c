@@ -2229,6 +2229,9 @@ QDF_STATUS policy_mgr_decr_connection_count(struct wlan_objmgr_psoc *psoc,
 		sizeof(*pm_conc_connection_list));
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
+	if (pm_ctx->conc_cbacks.connection_info_update)
+		pm_ctx->conc_cbacks.connection_info_update();
+
 	return QDF_STATUS_SUCCESS;
 }
 

@@ -46,6 +46,7 @@
 #include "wlan_hdd_power.h"
 #include "wlan_hdd_napi.h"
 #include "wlan_roam_debug.h"
+#include "wma_api.h"
 
 void hdd_handle_disassociation_event(struct hdd_adapter *adapter,
 				     struct qdf_mac_addr *peer_macaddr)
@@ -175,6 +176,13 @@ void __hdd_cm_disconnect_handler_post_user_update(struct hdd_adapter *adapter)
 
 	/* Clear saved connection information in HDD */
 	hdd_conn_remove_connect_info(sta_ctx);
+
+	/* Setting the RTS profile to original value */
+	if (sme_cli_set_command(adapter->vdev_id, WMI_VDEV_PARAM_ENABLE_RTSCTS,
+				cfg_get(hdd_ctx->psoc,
+					CFG_ENABLE_FW_RTS_PROFILE),
+				VDEV_CMD))
+		hdd_debug("Failed to set RTS_PROFILE");
 
 	hdd_init_scan_reject_params(hdd_ctx);
 	ucfg_pmo_flush_gtk_offload_req(adapter->vdev);
