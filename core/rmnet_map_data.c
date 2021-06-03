@@ -1641,6 +1641,10 @@ void rmnet_map_tx_qmap_cmd(struct sk_buff *qmap_skb, u8 ch, bool flush)
 		ch = RMNET_DEFAULT_AGG_STATE;
 
 	port = rmnet_get_port(qmap_skb->dev);
+	if (!port) {
+		kfree_skb(qmap_skb);
+		return;
+	}
 	state = &port->agg_state[ch];
 
 	if (!flush)
