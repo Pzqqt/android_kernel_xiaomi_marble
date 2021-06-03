@@ -29,6 +29,9 @@
 #include "connection_mgr/core/src/wlan_cm_main.h"
 #include "connection_mgr/core/src/wlan_cm_main_api.h"
 #include <wlan_cm_roam_api.h>
+#ifdef WLAN_FEATURE_11BE_MLO
+#include "wlan_mlo_mgr_public_structs.h"
+#endif
 
 /**
  * struct cm_vdev_join_req - connect req from legacy CM to vdev manager
@@ -44,6 +47,7 @@
  * @assoc_ie: assoc ie to be used in assoc req
  * @scan_ie: Default scan ie to be used in the uncast probe req
  * @entry: scan entry for the candidate
+ * @partner_info: Partner link information for an ML connection
  */
 struct cm_vdev_join_req {
 	uint8_t vdev_id;
@@ -55,6 +59,9 @@ struct cm_vdev_join_req {
 	struct element_info assoc_ie;
 	struct element_info scan_ie;
 	struct scan_cache_entry *entry;
+#ifdef WLAN_FEATURE_11BE_MLO
+	struct mlo_partner_info partner_info;
+#endif
 };
 
 /**
