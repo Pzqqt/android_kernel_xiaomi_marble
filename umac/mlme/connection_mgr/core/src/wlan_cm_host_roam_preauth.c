@@ -74,6 +74,11 @@ static QDF_STATUS cm_get_valid_preauth_candidate(struct cm_roam_req *cm_req)
 
 	cm_req->num_preauth_retry++;
 
+	mlme_debug(CM_PREFIX_FMT "Try preauth attempt no. %d for bssid:" QDF_MAC_ADDR_FMT,
+		   CM_PREFIX_REF(vdev_id, cm_req->cm_id),
+		   cm_req->num_preauth_retry,
+		   QDF_MAC_ADDR_REF(cm_req->cur_candidate->entry->bssid.bytes));
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -653,6 +658,10 @@ void cm_preauth_done_resp(struct cnx_mgr *cm_ctx, struct wlan_preauth_rsp *rsp)
 		cm_req = cm_get_req_by_cm_id(cm_ctx, cm_id);
 		if (!cm_req)
 			return;
+		mlme_info(CM_PREFIX_FMT "Preauth attempt no. %d failed for bssid:" QDF_MAC_ADDR_FMT,
+			  CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev), cm_id),
+			  cm_req->roam_req.num_preauth_retry,
+			  QDF_MAC_ADDR_REF(rsp->pre_auth_bssid.bytes));
 
 		/* retry again with same or new candidate */
 		status = cm_host_roam_preauth_start(cm_ctx, cm_req);
@@ -681,6 +690,7 @@ static void cm_remove_preauth_cmd_from_serialization(struct cnx_mgr *cm_ctx,
 	struct wlan_serialization_queued_cmd_info cmd_info;
 
 	qdf_mem_zero(&cmd_info, sizeof(cmd_info));
+	cmd_info.vdev = cm_ctx->vdev;
 	cmd_info.cmd_id = cm_id;
 	cmd_info.req_type = WLAN_SER_CANCEL_NON_SCAN_CMD;
 	cmd_info.cmd_type = WLAN_SER_CMD_PERFORM_PRE_AUTH;
@@ -714,6 +724,10 @@ static QDF_STATUS cm_preauth_rsp(struct wlan_objmgr_vdev *vdev,
 	}
 	rsp->cm_id = cm_id;
 
+	mlme_debug(CM_PREFIX_FMT "preauth resp status %d bssid:" QDF_MAC_ADDR_FMT,
+		   CM_PREFIX_REF(wlan_vdev_get_id(vdev), cm_id),
+		   rsp->status, QDF_MAC_ADDR_REF(rsp->pre_auth_bssid.bytes));
+
 	cm_remove_preauth_cmd_from_serialization(cm_ctx, cm_id);
 
 	status = cm_sm_deliver_event(vdev, WLAN_CM_SM_EV_PREAUTH_RESP,
@@ -739,7 +753,8 @@ QDF_STATUS cm_handle_preauth_rsp(struct scheduler_msg *msg)
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(rsp->psoc, rsp->vdev_id,
 						    WLAN_MLME_CM_ID);
 	if (!vdev) {
-		mlme_err("vdev_id: %d : vdev not found", rsp->vdev_id);
+		mlme_err("vdev_id: %d : vdev not found, status %d",
+			 rsp->vdev_id, rsp->status);
 		status = QDF_STATUS_E_INVAL;
 		goto end;
 	}
