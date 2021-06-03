@@ -248,21 +248,23 @@ int msm_vidc_g_fmt(void *instance, struct v4l2_format *f)
 		return -EINVAL;
 	}
 
-	if (inst->domain == MSM_VIDC_DECODER)
+	if (is_decode_session(inst))
 		rc = msm_vdec_g_fmt(inst, f);
-	if (inst->domain == MSM_VIDC_ENCODER)
+	if (is_encode_session(inst))
 		rc = msm_venc_g_fmt(inst, f);
 	if (rc)
 		return rc;
 
 	if (f->type == INPUT_MPLANE || f->type == OUTPUT_MPLANE)
-		i_vpr_h(inst,
-			"%s: type %d format %#x width %d height %d size %d\n",
-			__func__, f->type, f->fmt.pix_mp.pixelformat, f->fmt.pix_mp.width,
-			f->fmt.pix_mp.height, f->fmt.pix_mp.plane_fmt[0].sizeimage);
+		i_vpr_h(inst, "%s: type %s format %s width %d height %d size %d\n",
+			__func__, v4l2_type_name(f->type),
+			v4l2_pixelfmt_name(f->fmt.pix_mp.pixelformat),
+			f->fmt.pix_mp.width, f->fmt.pix_mp.height,
+			f->fmt.pix_mp.plane_fmt[0].sizeimage);
 	else if (f->type == INPUT_META_PLANE || f->type == OUTPUT_META_PLANE)
-		i_vpr_h(inst, "%s: meta type %d size %d\n",
-			__func__, f->type, f->fmt.meta.buffersize);
+		i_vpr_h(inst, "%s: type %s size %d\n",
+			__func__, v4l2_type_name(f->type), f->fmt.meta.buffersize);
+
 	return 0;
 }
 EXPORT_SYMBOL(msm_vidc_g_fmt);

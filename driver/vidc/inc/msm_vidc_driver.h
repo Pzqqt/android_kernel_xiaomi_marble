@@ -247,6 +247,8 @@ static inline bool is_secure_region(enum msm_vidc_buffer_region region)
 }
 
 const char *cap_name(enum msm_vidc_inst_capability_type cap);
+const char *v4l2_pixelfmt_name(u32 pixelfmt);
+const char *v4l2_type_name(u32 port);
 void print_vidc_buffer(u32 tag, const char *tag_str, const char *str, struct msm_vidc_inst *inst,
 		struct msm_vidc_buffer *vbuf);
 void print_vb2_buffer(const char *str, struct msm_vidc_inst *inst,

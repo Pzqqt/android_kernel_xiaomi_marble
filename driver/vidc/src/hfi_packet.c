@@ -646,11 +646,10 @@ int hfi_packet_sys_debug_config(struct msm_vidc_core *core,
 	if (rc)
 		goto err_debug;
 
-	d_vpr_h("Debug packet created\n");
-	return rc;
-
 err_debug:
-	d_vpr_e("%s: create packet failed\n", __func__);
+	if (rc)
+		d_vpr_e("%s: create packet failed\n", __func__);
+
 	return rc;
 }
 

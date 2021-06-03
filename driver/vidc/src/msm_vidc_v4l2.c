@@ -74,9 +74,10 @@ int msm_v4l2_querycap(struct file *filp, void *fh,
 	inst_lock(inst, __func__);
 	rc = msm_vidc_querycap((void *)inst, cap);
 	if (rc)
-		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
-	inst_unlock(inst, __func__);
+		goto unlock;
 
+unlock:
+	inst_unlock(inst, __func__);
 	put_inst(inst);
 
 	return rc;
@@ -97,9 +98,10 @@ int msm_v4l2_enum_fmt(struct file *filp, void *fh,
 	inst_lock(inst, __func__);
 	rc = msm_vidc_enum_fmt((void *)inst, f);
 	if (rc)
-		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
-	inst_unlock(inst, __func__);
+		goto unlock;
 
+unlock:
+	inst_unlock(inst, __func__);
 	put_inst(inst);
 
 	return rc;
@@ -125,7 +127,7 @@ int msm_v4l2_s_fmt(struct file *filp, void *fh,
 	}
 	rc = msm_vidc_s_fmt((void *)inst, f);
 	if (rc)
-		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
+		goto unlock;
 
 unlock:
 	inst_unlock(inst, __func__);
@@ -149,9 +151,10 @@ int msm_v4l2_g_fmt(struct file *filp, void *fh,
 	inst_lock(inst, __func__);
 	rc = msm_vidc_g_fmt((void *)inst, f);
 	if (rc)
-		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
-	inst_unlock(inst, __func__);
+		goto unlock;
 
+unlock:
+	inst_unlock(inst, __func__);
 	put_inst(inst);
 
 	return rc;
@@ -177,7 +180,7 @@ int msm_v4l2_s_selection(struct file *filp, void *fh,
 	}
 	rc = msm_vidc_s_selection((void *)inst, s);
 	if (rc)
-		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
+		goto unlock;
 
 unlock:
 	inst_unlock(inst, __func__);
@@ -201,9 +204,10 @@ int msm_v4l2_g_selection(struct file *filp, void *fh,
 	inst_lock(inst, __func__);
 	rc = msm_vidc_g_selection((void *)inst, s);
 	if (rc)
-		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
-	inst_unlock(inst, __func__);
+		goto unlock;
 
+unlock:
+	inst_unlock(inst, __func__);
 	put_inst(inst);
 
 	return rc;
@@ -229,7 +233,7 @@ int msm_v4l2_s_parm(struct file *filp, void *fh,
 	}
 	rc = msm_vidc_s_param((void *)inst, a);
 	if (rc)
-		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
+		goto unlock;
 
 unlock:
 	inst_unlock(inst, __func__);
@@ -253,9 +257,10 @@ int msm_v4l2_g_parm(struct file *filp, void *fh,
 	inst_lock(inst, __func__);
 	rc = msm_vidc_g_param((void *)inst, a);
 	if (rc)
-		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
-	inst_unlock(inst, __func__);
+		goto unlock;
 
+unlock:
+	inst_unlock(inst, __func__);
 	put_inst(inst);
 
 	return rc;
@@ -281,7 +286,7 @@ int msm_v4l2_s_ctrl(struct file *filp, void *fh,
 	}
 	rc = msm_vidc_s_ctrl((void *)inst, a);
 	if (rc)
-		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
+		goto unlock;
 
 unlock:
 	inst_unlock(inst, __func__);
@@ -305,9 +310,10 @@ int msm_v4l2_g_ctrl(struct file *filp, void *fh,
 	inst_lock(inst, __func__);
 	rc = msm_vidc_g_ctrl((void *)inst, a);
 	if (rc)
-		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
-	inst_unlock(inst, __func__);
+		goto unlock;
 
+unlock:
+	inst_unlock(inst, __func__);
 	put_inst(inst);
 
 	return rc;
@@ -328,9 +334,10 @@ int msm_v4l2_reqbufs(struct file *filp, void *fh,
 	inst_lock(inst, __func__);
 	rc = msm_vidc_reqbufs((void *)inst, b);
 	if (rc)
-		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
-	inst_unlock(inst, __func__);
+		goto unlock;
 
+unlock:
+	inst_unlock(inst, __func__);
 	put_inst(inst);
 
 	return rc;
@@ -357,7 +364,7 @@ int msm_v4l2_qbuf(struct file *filp, void *fh,
 	}
 	rc = msm_vidc_qbuf(inst, vdev->v4l2_dev->mdev, b);
 	if (rc)
-		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
+		goto unlock;
 
 unlock:
 	inst_unlock(inst, __func__);
@@ -380,8 +387,11 @@ int msm_v4l2_dqbuf(struct file *filp, void *fh,
 
 	inst_lock(inst, __func__);
 	rc = msm_vidc_dqbuf(inst, b);
-	inst_unlock(inst, __func__);
+	if (rc)
+		goto unlock;
 
+unlock:
+	inst_unlock(inst, __func__);
 	put_inst(inst);
 
 	return rc;
@@ -407,7 +417,7 @@ int msm_v4l2_streamon(struct file *filp, void *fh,
 	}
 	rc = msm_vidc_streamon((void *)inst, i);
 	if (rc)
-		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
+		goto unlock;
 
 unlock:
 	inst_unlock(inst, __func__);
@@ -431,9 +441,10 @@ int msm_v4l2_streamoff(struct file *filp, void *fh,
 	inst_lock(inst, __func__);
 	rc = msm_vidc_streamoff((void *)inst, i);
 	if (rc)
-		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
-	inst_unlock(inst, __func__);
+		goto unlock;
 
+unlock:
+	inst_unlock(inst, __func__);
 	put_inst(inst);
 
 	return rc;
@@ -460,7 +471,7 @@ int msm_v4l2_subscribe_event(struct v4l2_fh *fh,
 	}
 	rc = msm_vidc_subscribe_event((void *)inst, sub);
 	if (rc)
-		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
+		goto unlock;
 
 unlock:
 	inst_unlock(inst, __func__);
@@ -485,9 +496,10 @@ int msm_v4l2_unsubscribe_event(struct v4l2_fh *fh,
 	inst_lock(inst, __func__);
 	rc = msm_vidc_unsubscribe_event((void *)inst, sub);
 	if (rc)
-		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
-	inst_unlock(inst, __func__);
+		goto unlock;
 
+unlock:
+	inst_unlock(inst, __func__);
 	put_inst(inst);
 
 	return rc;
@@ -513,7 +525,7 @@ int msm_v4l2_decoder_cmd(struct file *filp, void *fh,
 	}
 	rc = msm_vidc_cmd((void *)inst, (union msm_v4l2_cmd *)dec);
 	if (rc)
-		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
+		goto unlock;
 
 unlock:
 	inst_unlock(inst, __func__);
@@ -542,7 +554,7 @@ int msm_v4l2_encoder_cmd(struct file *filp, void *fh,
 	}
 	rc = msm_vidc_cmd((void *)inst, (union msm_v4l2_cmd *)enc);
 	if (rc)
-		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
+		goto unlock;
 
 unlock:
 	inst_unlock(inst, __func__);
@@ -566,9 +578,10 @@ int msm_v4l2_enum_framesizes(struct file *filp, void *fh,
 	inst_lock(inst, __func__);
 	rc = msm_vidc_enum_framesizes((void *)inst, fsize);
 	if (rc)
-		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
-	inst_unlock(inst, __func__);
+		goto unlock;
 
+unlock:
+	inst_unlock(inst, __func__);
 	put_inst(inst);
 
 	return rc;
@@ -589,9 +602,10 @@ int msm_v4l2_enum_frameintervals(struct file *filp, void *fh,
 	inst_lock(inst, __func__);
 	rc = msm_vidc_enum_frameintervals((void *)inst, fival);
 	if (rc)
-		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
-	inst_unlock(inst, __func__);
+		goto unlock;
 
+unlock:
+	inst_unlock(inst, __func__);
 	put_inst(inst);
 
 	return rc;
@@ -612,9 +626,10 @@ int msm_v4l2_queryctrl(struct file *filp, void *fh,
 	inst_lock(inst, __func__);
 	rc = msm_vidc_query_ctrl((void *)inst, ctrl);
 	if (rc)
-		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
-	inst_unlock(inst, __func__);
+		goto unlock;
 
+unlock:
+	inst_unlock(inst, __func__);
 	put_inst(inst);
 
 	return rc;
@@ -635,9 +650,10 @@ int msm_v4l2_querymenu(struct file *filp, void *fh,
 	inst_lock(inst, __func__);
 	rc = msm_vidc_query_menu((void *)inst, qmenu);
 	if (rc)
-		i_vpr_e(inst, "%s: failed with %d\n", __func__, rc);
-	inst_unlock(inst, __func__);
+		goto unlock;
 
+unlock:
+	inst_unlock(inst, __func__);
 	put_inst(inst);
 
 	return rc;

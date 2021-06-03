@@ -250,8 +250,7 @@ int __write_register(struct msm_vidc_core *core,
 	}
 
 	base_addr = core->register_base_addr;
-	d_vpr_l("Base addr: %pK, writing to: %#x, Value: %#x...\n",
-		base_addr, hwiosymaddr, value);
+	d_vpr_l("regwrite(%pK + %#x) = %#x\n", base_addr, hwiosymaddr, value);
 	base_addr += hwiosymaddr;
 	writel_relaxed(value, base_addr);
 
@@ -335,8 +334,7 @@ int __read_register(struct msm_vidc_core *core, u32 reg)
 	 * register.
 	 */
 	rmb();
-	d_vpr_l("Base addr: %pK, read from: %#x, value: %#x...\n",
-		base_addr, reg, rc);
+	d_vpr_l("regread(%pK + %#x) = %#x\n", base_addr, reg, rc);
 
 	return rc;
 }

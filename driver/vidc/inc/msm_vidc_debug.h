@@ -81,6 +81,9 @@ enum vidc_msg_prio {
 #define i_vpr_t(inst, __fmt, ...) dprintk_inst(VIDC_PKT,  "pkt ", inst, __fmt, ##__VA_ARGS__)
 #define i_vpr_b(inst, __fmt, ...) dprintk_inst(VIDC_BUS,  "bus ", inst, __fmt, ##__VA_ARGS__)
 
+#define i_vpr_hp(inst, __fmt, ...) \
+	dprintk_inst(VIDC_HIGH | VIDC_PERF, "high", inst, __fmt, ##__VA_ARGS__)
+
 #define dprintk_core(__level, __level_str, __fmt, ...) \
 	do { \
 		if (msm_vidc_debug & __level) { \

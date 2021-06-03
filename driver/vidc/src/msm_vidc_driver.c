@@ -302,6 +302,41 @@ exit:
 	return name;
 }
 
+const char *v4l2_type_name(u32 port)
+{
+	switch (port) {
+	case INPUT_MPLANE:      return "INPUT";
+	case OUTPUT_MPLANE:     return "OUTPUT";
+	case INPUT_META_PLANE:  return "INPUT_META";
+	case OUTPUT_META_PLANE: return "OUTPUT_META";
+	}
+
+	return "UNKNOWN";
+}
+
+const char *v4l2_pixelfmt_name(u32 pixfmt)
+{
+	switch (pixfmt) {
+	/* raw port: color format */
+	case V4L2_PIX_FMT_NV12:         return "NV12";
+	case V4L2_PIX_FMT_NV21:         return "NV21";
+	case V4L2_PIX_FMT_VIDC_NV12C:   return "NV12C";
+	case V4L2_PIX_FMT_VIDC_P010:    return "P010";
+	case V4L2_PIX_FMT_VIDC_TP10C:   return "TP10C";
+	case V4L2_PIX_FMT_RGBA32:       return "RGBA";
+	case V4L2_PIX_FMT_VIDC_ARGB32C: return "RGBAC";
+	/* bitstream port: codec type */
+	case V4L2_PIX_FMT_H264:         return "AVC";
+	case V4L2_PIX_FMT_HEVC:         return "HEVC";
+	case V4L2_PIX_FMT_HEIC:         return "HEIC";
+	case V4L2_PIX_FMT_VP9:          return "VP9";
+	/* meta port */
+	case V4L2_META_FMT_VIDC:        return "META";
+	}
+
+	return "UNKNOWN";
+}
+
 void print_vidc_buffer(u32 tag, const char *tag_str, const char *str, struct msm_vidc_inst *inst,
 		struct msm_vidc_buffer *vbuf)
 {
@@ -2719,7 +2754,7 @@ void msm_vidc_allow_dcvs(struct msm_vidc_inst *inst)
 	}
 
 exit:
-	i_vpr_h(inst, "%s: dcvs: %s\n", __func__, allow ? "enabled" : "disabled");
+	i_vpr_hp(inst, "%s: dcvs: %s\n", __func__, allow ? "enabled" : "disabled");
 
 	inst->power.dcvs_flags = 0;
 	inst->power.dcvs_mode = allow;
@@ -2804,7 +2839,7 @@ bool msm_vidc_allow_decode_batch(struct msm_vidc_inst *inst)
 	}
 
 exit:
-	i_vpr_h(inst, "%s: batching: %s\n", __func__, allow ? "enabled" : "disabled");
+	i_vpr_hp(inst, "%s: batching: %s\n", __func__, allow ? "enabled" : "disabled");
 
 	return allow;
 }
