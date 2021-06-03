@@ -16177,6 +16177,168 @@ static int wlan_hdd_cfg80211_extscan_get_valid_channels(
 	return errno;
 }
 
+#ifdef FEATURE_RADAR_HISTORY
+static uint32_t get_radar_history_evt_len(uint32_t count)
+{
+	uint32_t data_len = NLMSG_HDRLEN;
+
+	data_len +=
+	/* nested attribute hdr QCA_WLAN_VENDOR_ATTR_RADAR_HISTORY_ENTRIES */
+		nla_total_size(count *
+			       (nla_total_size(
+				     /* channel frequency */
+				     nla_total_size(sizeof(uint32_t)) +
+				     /* timestamp */
+				     nla_total_size(sizeof(uint64_t)) +
+				     /* radar detected flag */
+				     nla_total_size(0))));
+
+	return data_len;
+}
+
+/**
+ * __wlan_hdd_cfg80211_radar_history () - Get radar history
+ * @wiphy: Pointer to wireless phy
+ * @wdev: Pointer to wireless device
+ * @data: Pointer to data
+ * @data_len: Data length
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int
+__wlan_hdd_cfg80211_get_radar_history(struct wiphy *wiphy,
+				      struct wireless_dev
+				      *wdev, const void *data,
+				      int data_len)
+{
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
+	QDF_STATUS status;
+	struct sk_buff *reply_skb = NULL;
+	int ret, len;
+	struct dfs_radar_history *radar_history = NULL;
+	uint32_t hist_count = 0;
+	int idx;
+	struct nlattr *ch_array, *ch_element;
+
+	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) {
+		hdd_err("Command not allowed in FTM mode");
+		return -EPERM;
+	}
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret)
+		return -EINVAL;
+
+	status = wlansap_query_radar_history(hdd_ctx->mac_handle,
+					     &radar_history, &hist_count);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		return -EINVAL;
+
+	len = get_radar_history_evt_len(hist_count);
+	reply_skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, len);
+	if (!reply_skb) {
+		ret = -ENOMEM;
+		goto err;
+	}
+
+	ch_array = nla_nest_start(
+			reply_skb, QCA_WLAN_VENDOR_ATTR_RADAR_HISTORY_ENTRIES);
+	if (!ch_array) {
+		ret = -ENOMEM;
+		goto err;
+	}
+
+	for (idx = 0; idx < hist_count; idx++) {
+		ch_element = nla_nest_start(reply_skb, idx);
+		if (!ch_element) {
+			ret = -ENOMEM;
+			goto err;
+		}
+
+		if (nla_put_u32(reply_skb,
+				QCA_WLAN_VENDOR_ATTR_RADAR_HISTORY_FREQ,
+				radar_history[idx].ch_freq)) {
+			ret = -ENOMEM;
+			goto err;
+		}
+
+		if (wlan_cfg80211_nla_put_u64(
+			reply_skb,
+			QCA_WLAN_VENDOR_ATTR_RADAR_HISTORY_TIMESTAMP,
+			radar_history[idx].time)) {
+			ret = -ENOMEM;
+			goto err;
+		}
+
+		if (radar_history[idx].radar_found &&
+		    nla_put_flag(
+			reply_skb,
+			QCA_WLAN_VENDOR_ATTR_RADAR_HISTORY_DETECTED)) {
+			ret = -ENOMEM;
+			goto err;
+		}
+
+		nla_nest_end(reply_skb, ch_element);
+	}
+	nla_nest_end(reply_skb, ch_array);
+	qdf_mem_free(radar_history);
+
+	ret = cfg80211_vendor_cmd_reply(reply_skb);
+	hdd_debug("get radar history count %d, ret %d", hist_count, ret);
+
+	return ret;
+err:
+	qdf_mem_free(radar_history);
+	if (reply_skb)
+		kfree_skb(reply_skb);
+	hdd_debug("get radar history error %d", ret);
+
+	return ret;
+}
+
+/**
+ * wlan_hdd_cfg80211_get_radar_history() - get radar history
+ * @wiphy: wiphy pointer
+ * @wdev: pointer to struct wireless_dev
+ * @data: pointer to incoming NL vendor data
+ * @data_len: length of @data
+ *
+ * Return: 0 on success; error number otherwise.
+ */
+static int wlan_hdd_cfg80211_get_radar_history(struct wiphy *wiphy,
+					       struct wireless_dev *wdev,
+					       const void *data,
+					       int data_len)
+{
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(wdev->netdev, &vdev_sync);
+	if (errno)
+		return errno;
+
+	errno = __wlan_hdd_cfg80211_get_radar_history(wiphy, wdev,
+						      data, data_len);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
+}
+
+#define FEATURE_RADAR_HISTORY_VENDOR_COMMANDS				\
+{									\
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,			\
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_GET_RADAR_HISTORY,	\
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				\
+		WIPHY_VENDOR_CMD_NEED_NETDEV |				\
+		WIPHY_VENDOR_CMD_NEED_RUNNING,				\
+	.doit = wlan_hdd_cfg80211_get_radar_history,			\
+	vendor_command_policy(VENDOR_CMD_RAW_DATA, 0)			\
+},
+#else
+#define FEATURE_RADAR_HISTORY_VENDOR_COMMANDS
+#endif
+
 const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
@@ -16634,6 +16796,7 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 	FEATURE_WMM_COMMANDS
 	FEATURE_GPIO_CFG_VENDOR_COMMANDS
 	FEATURE_MEDIUM_ASSESS_VENDOR_COMMANDS
+	FEATURE_RADAR_HISTORY_VENDOR_COMMANDS
 };
 
 struct hdd_context *hdd_cfg80211_wiphy_alloc(void)
