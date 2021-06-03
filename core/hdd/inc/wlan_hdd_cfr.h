@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -26,7 +26,9 @@
 
 #ifdef WLAN_CFR_ENABLE
 
-#define HDD_INVALID_GROUP_ID 16
+#include "wlan_cfr_utils_api.h"
+
+#define HDD_INVALID_GROUP_ID MAX_TA_RA_ENTRIES
 #define LEGACY_CFR_VERSION 1
 #define ENHANCED_CFR_VERSION 2
 
