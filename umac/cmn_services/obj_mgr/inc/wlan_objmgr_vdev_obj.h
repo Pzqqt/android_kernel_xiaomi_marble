@@ -252,6 +252,7 @@
  * @legacy_osif:    Legacy os_if private member
  * @macaddr[]:      MAC address
  * @mataddr[]:      MAT address
+ * @mldaddr[]:      MLD address
  */
 struct wlan_vdev_create_params {
 	enum QDF_OPMODE opmode;
@@ -260,6 +261,7 @@ struct wlan_vdev_create_params {
 	void *legacy_osif;
 	uint8_t macaddr[QDF_MAC_ADDR_SIZE];
 	uint8_t mataddr[QDF_MAC_ADDR_SIZE];
+	uint8_t mldaddr[QDF_MAC_ADDR_SIZE];
 };
 
 /**
@@ -304,15 +306,7 @@ struct wlan_channel {
  * @vdev_op_flags:      Operation flags
  * @mataddr[]:          MAT address
  * @macaddr[]:          VDEV self MAC address
- * @ssid[]:             SSID
- * @ssid_len:           SSID length
- * @nss:                Num. Spatial streams
- * @tx_chainmask:       Tx Chainmask
- * @rx_chainmask:       Rx Chainmask
- * @tx_power:           Tx power
- * @max_rate:           MAX rate
- * @tx_mgmt_rate:       TX Mgmt. Rate
- * @per_band_mgmt_rate: Per-band TX Mgmt. Rate
+ * @mldaddr[]:          MLD address
  */
 struct wlan_objmgr_vdev_mlme {
 	enum QDF_OPMODE vdev_opmode;
@@ -327,6 +321,7 @@ struct wlan_objmgr_vdev_mlme {
 	uint32_t vdev_op_flags;
 	uint8_t  mataddr[QDF_MAC_ADDR_SIZE];
 	uint8_t  macaddr[QDF_MAC_ADDR_SIZE];
+	uint8_t  mldaddr[QDF_MAC_ADDR_SIZE];
 };
 
 /**
@@ -753,6 +748,41 @@ static inline void wlan_vdev_mlme_set_mataddr(struct wlan_objmgr_vdev *vdev,
 {
 	/* This API is invoked with lock acquired, do not add log prints */
 	WLAN_ADDR_COPY(vdev->vdev_mlme.mataddr, mataddr);
+}
+
+/**
+ * wlan_vdev_mlme_get_mldaddr() - get vdev mldaddr
+ * @vdev: VDEV object
+ *
+ * API to get MLD address from vdev object
+ *
+ * Caller need to acquire lock with wlan_vdev_obj_lock()
+ *
+ * Return:
+ * @macaddr: MAC address
+ */
+static inline uint8_t *wlan_vdev_mlme_get_mldaddr(struct wlan_objmgr_vdev *vdev)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	return vdev->vdev_mlme.mldaddr;
+}
+
+/**
+ * wlan_vdev_mlme_set_mldaddr() - set vdev mldaddr
+ * @vdev: VDEV object
+ * @mldaddr: MLD address
+ *
+ * API to set MLD addr in vdev object
+ *
+ * Caller need to acquire lock with wlan_vdev_obj_lock()
+ *
+ * Return: void
+ */
+static inline void wlan_vdev_mlme_set_mldaddr(struct wlan_objmgr_vdev *vdev,
+					uint8_t *mldaddr)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	WLAN_ADDR_COPY(vdev->vdev_mlme.mldaddr, mldaddr);
 }
 
 /**

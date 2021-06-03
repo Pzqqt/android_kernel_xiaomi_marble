@@ -44,11 +44,16 @@ struct mlo_setup_info {
 
 /*
  * struct mlo_mgr_context - MLO manager context
+ * @ml_dev_list_lock: ML device list lock
  * @context: Array of MLO device context
  * @info: MLO setup info
  */
 struct mlo_mgr_context {
+#ifdef WLAN_MLO_USE_SPINLOCK
 	qdf_spinlock_t ml_dev_list_lock;
+#else
+	qdf_mutex_t ml_dev_list_lock;
+#endif
 	qdf_list_t ml_dev_list;
 	struct mlo_setup_info info;
 };
@@ -116,7 +121,7 @@ struct wlan_mlo_dev_context {
 	uint16_t wlan_vdev_count;
 	struct wlan_mlo_peer_list mlo_peer;
 	uint16_t wlan_max_mlo_peer_count;
-#ifdef WLAN_USE_SPINLOCK
+#ifdef WLAN_MLO_USE_SPINLOCK
 	qdf_spinlock_t mlo_dev_lock;
 #else
 	qdf_mutex_t mlo_dev_lock;

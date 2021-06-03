@@ -281,6 +281,7 @@ typedef void (*wlan_objmgr_peer_status_handler)(
  * @WLAN_OSIF_TDLS_ID:          TDLS operations in OS IF
  * @WLAN_OSIF_CM_ID:            Connection manager osif reference id
  * @WLAN_TXRX_STREAMS_ID:       Preferred TX & RX streams operations
+ * @WLAN_MLO_MGR_ID:            MLO manager reference id
  * @WLAN_REF_ID_MAX:            Max id used to generate ref count tracking array
  */
  /* New value added to the enum must also be reflected in function
@@ -378,6 +379,7 @@ typedef enum {
 	WLAN_OSIF_TDLS_ID     = 87,
 	WLAN_OSIF_CM_ID       = 88,
 	WLAN_TXRX_STREAMS_ID  = 89,
+	WLAN_MLO_MGR_ID = 90,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 

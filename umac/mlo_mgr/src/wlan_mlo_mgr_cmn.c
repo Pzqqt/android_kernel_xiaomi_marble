@@ -17,4 +17,16 @@
 /*
  * DOC: contains MLO manager ap related functionality
  */
+#include "wlan_mlo_mgr_cmn.h"
 
+void mlo_get_link_information(struct qdf_mac_addr *mld_addr,
+			      struct mlo_link_info *info)
+{
+/* Pass the partner link information*/
+}
+
+void is_mlo_all_links_up(struct wlan_mlo_dev_context *mldev)
+{
+/* Loop through all the vdev's part of the ML device*/
+/* STA: Loop through all the associated vdev status. */
+}
