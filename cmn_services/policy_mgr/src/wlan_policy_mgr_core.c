@@ -632,6 +632,9 @@ void policy_mgr_update_conc_list(struct wlan_objmgr_psoc *psoc,
 		if (pm_ctx->dp_cbacks.hdd_ipa_set_mcc_mode_cb)
 			pm_ctx->dp_cbacks.hdd_ipa_set_mcc_mode_cb(mcc_mode);
 	}
+
+	if (pm_ctx->conc_cbacks.connection_info_update)
+		pm_ctx->conc_cbacks.connection_info_update();
 }
 
 /**

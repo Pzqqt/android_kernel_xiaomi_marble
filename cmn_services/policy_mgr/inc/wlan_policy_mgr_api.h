@@ -1491,6 +1491,18 @@ struct policy_mgr_hdd_cbacks {
 			struct ch_params *ch_params);
 };
 
+/**
+ * struct policy_mgr_conc_cbacks - lim Callbacks to be invoked
+ * from policy manager
+ * @connection_info_update: check and update params based on STA/SAP
+ *                          concurrency.such as EDCA params and RTS threshold.
+ *                          If updated, it will also send the updated parameters
+ *                          to FW.
+ */
+
+struct policy_mgr_conc_cbacks {
+	void (*connection_info_update)(void);
+};
 
 /**
  * struct policy_mgr_tdls_cbacks - TDLS Callbacks to be invoked
@@ -2365,6 +2377,21 @@ QDF_STATUS policy_mgr_register_sme_cb(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS policy_mgr_register_hdd_cb(struct wlan_objmgr_psoc *psoc,
 		struct policy_mgr_hdd_cbacks *hdd_cbacks);
+
+/**
+ * policy_mgr_register_conc_cb() - register Lim callbacks
+ * @psoc: PSOC object information
+ * @hdd_cbacks: function pointers from lim
+ *
+ * API, allows Lim to register callbacks to be invoked by policy
+ * mgr
+ *
+ * Return: SUCCESS,
+ *         Failure (if registration fails)
+ */
+
+QDF_STATUS policy_mgr_register_conc_cb(struct wlan_objmgr_psoc *psoc,
+				struct policy_mgr_conc_cbacks *conc_cbacks);
 
 /**
  * policy_mgr_deregister_hdd_cb() - Deregister HDD callbacks
