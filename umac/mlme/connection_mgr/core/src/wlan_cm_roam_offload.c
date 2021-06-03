@@ -960,12 +960,13 @@ static void cm_update_score_params(struct wlan_objmgr_psoc *psoc,
 	req_score_params->sae_pk_ap_weightage =
 		weight_config->sae_pk_ap_weightage;
 
+	/* TODO: update scoring params corresponding to ML scoring */
 	req_score_params->bw_index_score =
-		score_config->bandwidth_weight_per_index;
+		score_config->bandwidth_weight_per_index[0];
 	req_score_params->band_index_score =
 		score_config->band_weight_per_index;
 	req_score_params->nss_index_score =
-		score_config->nss_weight_per_index;
+		score_config->nss_weight_per_index[0];
 
 	req_score_params->vendor_roam_score_algorithm =
 			score_config->vendor_roam_score_algorithm;
