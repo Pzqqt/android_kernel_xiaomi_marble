@@ -12634,42 +12634,6 @@ purge_list:
 
 }
 
-
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-QDF_STATUS cm_csr_roam_sync_rsp(struct wlan_objmgr_vdev *vdev,
-				struct cm_vdev_join_rsp *rsp)
-{
-	struct mac_context *mac_ctx;
-	uint8_t vdev_id = wlan_vdev_get_id(vdev);
-	struct csr_roam_session *session;
-
-	/*
-	 * This API is to update legacy struct and should be removed once
-	 * CSR is cleaned up fully. No new params should be added to CSR, use
-	 * vdev/pdev/psoc instead
-	 */
-	if (QDF_IS_STATUS_ERROR(rsp->connect_rsp.connect_status))
-		return QDF_STATUS_SUCCESS;
-
-	/* handle below only in case of success */
-	mac_ctx = cds_get_context(QDF_MODULE_ID_SME);
-	if (!mac_ctx)
-		return QDF_STATUS_E_INVAL;
-
-	session = CSR_GET_SESSION(mac_ctx, vdev_id);
-	if (!session || !CSR_IS_SESSION_VALID(mac_ctx, vdev_id)) {
-		sme_err("session not found for vdev_id %d", vdev_id);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	session->nss = rsp->nss;
-	csr_fill_connected_info(mac_ctx, session, rsp);
-	csr_fill_connected_profile(mac_ctx, session, vdev, rsp);
-
-	return QDF_STATUS_SUCCESS;
-}
-#endif
-
 QDF_STATUS cm_csr_connect_rsp(struct wlan_objmgr_vdev *vdev,
 			      struct cm_vdev_join_rsp *rsp)
 {
@@ -12697,12 +12661,14 @@ QDF_STATUS cm_csr_connect_rsp(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
+	if (!rsp->connect_rsp.is_reassoc) {
+		if (rsp->uapsd_mask)
+			sme_ps_start_uapsd(MAC_HANDLE(mac_ctx), vdev_id);
+		src_config.uint_value = rsp->uapsd_mask;
+		wlan_cm_roam_cfg_set_value(mac_ctx->psoc, vdev_id, UAPSD_MASK,
+					   &src_config);
+	}
 	session->nss = rsp->nss;
-	if (rsp->uapsd_mask)
-		sme_ps_start_uapsd(MAC_HANDLE(mac_ctx), vdev_id);
-	src_config.uint_value = rsp->uapsd_mask;
-	wlan_cm_roam_cfg_set_value(mac_ctx->psoc, vdev_id, UAPSD_MASK,
-				   &src_config);
 	csr_fill_connected_info(mac_ctx, session, rsp);
 	csr_fill_connected_profile(mac_ctx, session, vdev, rsp);
 
