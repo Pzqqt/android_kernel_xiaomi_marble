@@ -746,7 +746,7 @@ cm_fw_roam_sync_propagation(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	cm_update_scan_db_on_roam_success(vdev, connect_rsp,
 					  roam_synch_data, cm_id);
 
-	cm_csr_roam_sync_rsp(vdev, rsp);
+	cm_csr_connect_rsp(vdev, rsp);
 	cm_process_roam_keys(vdev, rsp, cm_id);
 
 	mlme_cm_osif_connect_complete(vdev, connect_rsp);

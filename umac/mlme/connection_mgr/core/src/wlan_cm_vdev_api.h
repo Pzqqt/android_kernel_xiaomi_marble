@@ -346,22 +346,6 @@ QDF_STATUS
 cm_send_bss_peer_create_req(struct wlan_objmgr_vdev *vdev,
 			    struct qdf_mac_addr *peer_mac);
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-/**
- * cm_csr_roam_sync_rsp() - Connection manager ext roam sync resp indication
- * @vdev: VDEV object
- * @rsp: Connection vdev response
- *
- * This API is to update legacy struct and should be removed once
- * CSR is cleaned up fully. No new params should be added to CSR, use
- * vdev/pdev/psoc instead.
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS cm_csr_roam_sync_rsp(struct wlan_objmgr_vdev *vdev,
-				struct cm_vdev_join_rsp *rsp);
-#endif
-
 /**
  * cm_csr_connect_rsp() - Connection manager ext connect resp indication
  * @vdev: VDEV object
