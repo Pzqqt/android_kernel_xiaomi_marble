@@ -6924,10 +6924,6 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 		hdd_nud_init_tracking(adapter);
 		hdd_mic_init_work(adapter);
 
-		/* This is temp ifdef will be removed in near future */
-#ifndef FEATURE_CM_ENABLE
-		qdf_mutex_create(&adapter->disconnection_status_lock);
-#endif
 		hdd_periodic_sta_stats_mutex_create(adapter);
 
 		break;
@@ -7029,6 +7025,11 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 	qdf_event_create(&adapter->peer_cleanup_done);
 	hdd_sta_info_init(&adapter->sta_info_list);
 	hdd_sta_info_init(&adapter->cache_sta_info_list);
+
+	/* This is temp ifdef will be removed in near future */
+#ifndef FEATURE_CM_ENABLE
+	qdf_mutex_create(&adapter->disconnection_status_lock);
+#endif
 
 	for (i = 0; i < NET_DEV_HOLD_ID_MAX; i++)
 		qdf_atomic_init(
