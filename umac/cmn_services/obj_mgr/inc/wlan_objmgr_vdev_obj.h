@@ -229,6 +229,9 @@
 /* Invalid VDEV identifier */
 #define WLAN_INVALID_VDEV_ID 255
 
+/* Invalid VDEV link id*/
+#define WLAN_INVALID_LINK_ID 255
+
 /**
  * struct wlan_vdev_create_params - Create params, HDD/OSIF passes this
  *				    structure While creating VDEV
@@ -293,6 +296,7 @@ struct wlan_channel {
  * @mataddr[]:          MAT address
  * @macaddr[]:          VDEV self MAC address
  * @mldaddr[]:          MLD address
+ * @link_id:            link id for mlo connection
  */
 struct wlan_objmgr_vdev_mlme {
 	enum QDF_OPMODE vdev_opmode;
@@ -308,6 +312,9 @@ struct wlan_objmgr_vdev_mlme {
 	uint8_t  mataddr[QDF_MAC_ADDR_SIZE];
 	uint8_t  macaddr[QDF_MAC_ADDR_SIZE];
 	uint8_t  mldaddr[QDF_MAC_ADDR_SIZE];
+#ifdef WLAN_FEATURE_11BE_MLO
+	uint8_t  mlo_link_id;
+#endif
 };
 
 /**
@@ -801,6 +808,18 @@ static inline uint8_t wlan_vdev_get_id(struct wlan_objmgr_vdev *vdev)
 {
 	return vdev->vdev_objmgr.vdev_id;
 }
+
+#ifdef WLAN_FEATURE_11BE_MLO
+static inline uint8_t wlan_vdev_get_link_id(struct wlan_objmgr_vdev *vdev)
+{
+	return vdev->vdev_mlme.mlo_link_id;
+}
+#else
+static inline uint8_t wlan_vdev_get_link_id(struct wlan_objmgr_vdev *vdev)
+{
+	return WLAN_INVALID_LINK_ID;
+}
+#endif
 
 /**
  * wlan_vdev_get_hw_macaddr() - get hw macaddr
