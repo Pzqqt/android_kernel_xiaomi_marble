@@ -167,11 +167,11 @@ static int cvp_dsp_rpmsg_probe(struct rpmsg_device *rpdev)
 		return -EINVAL;
 	}
 
-	mutex_lock(&me->lock);
+	mutex_lock(&me->tx_lock);
 	me->chan = rpdev;
 	me->state = DSP_PROBED;
 	complete(&me->completions[CPU2DSP_MAX_CMD]);
-	mutex_unlock(&me->lock);
+	mutex_unlock(&me->tx_lock);
 
 	return ret;
 }
@@ -182,12 +182,12 @@ static void cvp_dsp_rpmsg_remove(struct rpmsg_device *rpdev)
 
 	dprintk(CVP_WARN, "%s: CDSP SSR triggered\n", __func__);
 
-	mutex_lock(&me->lock);
+	mutex_lock(&me->tx_lock);
 	cvp_hyp_assign_from_dsp();
 
 	me->chan = NULL;
 	me->state = DSP_UNINIT;
-	mutex_unlock(&me->lock);
+	mutex_unlock(&me->tx_lock);
 	/* kernel driver needs clean all dsp sessions */
 
 }
@@ -248,7 +248,7 @@ int cvp_dsp_suspend(uint32_t session_flag)
 
 	cmd.type = CPU2DSP_SUSPEND;
 
-	mutex_lock(&me->lock);
+	mutex_lock(&me->tx_lock);
 	if (me->state != DSP_READY)
 		goto exit;
 
@@ -269,10 +269,10 @@ retry:
 
 	if (rsp.ret == CPU2DSP_EFATAL) {
 		if (!retried) {
-			mutex_unlock(&me->lock);
+			mutex_unlock(&me->tx_lock);
 			retried = true;
 			rc = cvp_reinit_dsp();
-			mutex_lock(&me->lock);
+			mutex_lock(&me->tx_lock);
 			if (rc)
 				goto fatal_exit;
 			else
@@ -290,7 +290,7 @@ fatal_exit:
 	cvp_hyp_assign_from_dsp();
 	rc = -ENOTSUPP;
 exit:
-	mutex_unlock(&me->lock);
+	mutex_unlock(&me->tx_lock);
 	return rc;
 }
 
@@ -324,7 +324,7 @@ int cvp_dsp_shutdown(uint32_t session_flag)
 
 	cmd.type = CPU2DSP_SHUTDOWN;
 
-	mutex_lock(&me->lock);
+	mutex_lock(&me->tx_lock);
 	if (me->state == DSP_INVALID)
 		goto exit;
 
@@ -341,7 +341,7 @@ int cvp_dsp_shutdown(uint32_t session_flag)
 	rc = cvp_hyp_assign_from_dsp();
 
 exit:
-	mutex_unlock(&me->lock);
+	mutex_unlock(&me->tx_lock);
 	return rc;
 }
 
@@ -372,7 +372,7 @@ int cvp_dsp_register_buffer(uint32_t session_id, uint32_t buff_fd,
 	dprintk(CVP_DSP, "%s: buff_size=0x%x session_id=0x%x\n",
 		__func__, cmd.buff_size, cmd.session_id);
 
-	mutex_lock(&me->lock);
+	mutex_lock(&me->tx_lock);
 retry:
 	rc = cvp_dsp_send_cmd_sync(&cmd, sizeof(struct cvp_dsp_cmd_msg), &rsp);
 	if (rc) {
@@ -391,10 +391,10 @@ retry:
 
 	if (rsp.ret == CPU2DSP_EFATAL) {
 		if (!retried) {
-			mutex_unlock(&me->lock);
+			mutex_unlock(&me->tx_lock);
 			retried = true;
 			rc = cvp_reinit_dsp();
-			mutex_lock(&me->lock);
+			mutex_lock(&me->tx_lock);
 			if (rc)
 				goto fatal_exit;
 			else
@@ -411,7 +411,7 @@ fatal_exit:
 	cvp_hyp_assign_from_dsp();
 	rc = -ENOTSUPP;
 exit:
-	mutex_unlock(&me->lock);
+	mutex_unlock(&me->tx_lock);
 	return rc;
 }
 
@@ -442,7 +442,7 @@ int cvp_dsp_deregister_buffer(uint32_t session_id, uint32_t buff_fd,
 	dprintk(CVP_DSP, "%s: buff_size=0x%x session_id=0x%x\n",
 		__func__, cmd.buff_size, cmd.session_id);
 
-	mutex_lock(&me->lock);
+	mutex_lock(&me->tx_lock);
 retry:
 	rc = cvp_dsp_send_cmd_sync(&cmd, sizeof(struct cvp_dsp_cmd_msg), &rsp);
 	if (rc) {
@@ -461,10 +461,10 @@ retry:
 
 	if (rsp.ret == CPU2DSP_EFATAL) {
 		if (!retried) {
-			mutex_unlock(&me->lock);
+			mutex_unlock(&me->tx_lock);
 			retried = true;
 			rc = cvp_reinit_dsp();
-			mutex_lock(&me->lock);
+			mutex_lock(&me->tx_lock);
 			if (rc)
 				goto fatal_exit;
 			else
@@ -481,7 +481,7 @@ fatal_exit:
 	cvp_hyp_assign_from_dsp();
 	rc = -ENOTSUPP;
 exit:
-	mutex_unlock(&me->lock);
+	mutex_unlock(&me->tx_lock);
 	return rc;
 }
 
@@ -590,7 +590,7 @@ static int __reinit_dsp(void)
 		return rc;
 
 	/* Resend HFI queue */
-	mutex_lock(&me->lock);
+	mutex_lock(&me->tx_lock);
 	if (!device->dsp_iface_q_table.align_virtual_addr) {
 		dprintk(CVP_ERR, "%s: DSP HFI queue released\n", __func__);
 		rc = -EINVAL;
@@ -625,7 +625,7 @@ static int __reinit_dsp(void)
 		rc = -ENODEV;
 	}
 exit:
-	mutex_unlock(&me->lock);
+	mutex_unlock(&me->tx_lock);
 	return rc;
 }
 
@@ -636,10 +636,10 @@ static int cvp_reinit_dsp(void)
 
 	rc = __reinit_dsp();
 	if (rc)	{
-		mutex_lock(&me->lock);
+		mutex_lock(&me->tx_lock);
 		me->state = DSP_INVALID;
 		cvp_hyp_assign_from_dsp();
-		mutex_unlock(&me->lock);
+		mutex_unlock(&me->tx_lock);
 	}
 	return rc;
 }
@@ -929,6 +929,27 @@ static void eva_fastrpc_driver_unregister(uint32_t handle, bool force_exit)
 	}
 }
 
+void cvp_dsp_send_debug_mask(void)
+{
+	struct cvp_dsp_cmd_msg cmd;
+	struct cvp_dsp_apps *me = &gfa_cv;
+	struct cvp_dsp_rsp_msg rsp;
+	int rc;
+
+	cmd.type = CPU2DSP_SET_DEBUG_LEVEL;
+	cmd.eva_dsp_debug_mask = me->debug_mask;
+
+	dprintk(CVP_DSP,
+		"%s: debug mask 0x%x\n",
+		__func__, cmd.eva_dsp_debug_mask);
+
+	rc = cvp_dsp_send_cmd_sync(&cmd, sizeof(struct cvp_dsp_cmd_msg), &rsp);
+	if (rc)
+		dprintk(CVP_ERR,
+			"%s: cvp_dsp_send_cmd failed rc = %d\n",
+			__func__, rc);
+}
+
 void cvp_dsp_send_hfi_queue(void)
 {
 	struct msm_cvp_core *core;
@@ -953,13 +974,11 @@ void cvp_dsp_send_hfi_queue(void)
 	dprintk(CVP_DSP, "Entering %s\n", __func__);
 
 	mutex_lock(&device->lock);
-	mutex_lock(&me->lock);
+	mutex_lock(&me->tx_lock);
 
 	if (!device->dsp_iface_q_table.align_virtual_addr) {
 		dprintk(CVP_ERR, "%s: DSP HFI queue released\n", __func__);
-		mutex_unlock(&me->lock);
-		mutex_unlock(&device->lock);
-		return;
+		goto exit;
 	}
 
 	addr = (uint64_t)device->dsp_iface_q_table.mem_data.dma_handle;
@@ -1009,20 +1028,20 @@ void cvp_dsp_send_hfi_queue(void)
 	} else if (rsp.ret == CPU2DSP_EINVALSTATE) {
 		dprintk(CVP_ERR, "%s dsp invalid state %d\n",
 				__func__, rsp.dsp_state);
-		mutex_unlock(&me->lock);
+		mutex_unlock(&me->tx_lock);
 		if (cvp_reinit_dsp()) {
 			dprintk(CVP_ERR, "%s reinit dsp fail\n", __func__);
 			mutex_unlock(&device->lock);
 			return;
 		}
-		mutex_lock(&me->lock);
+		mutex_lock(&me->tx_lock);
 	}
 
 	dprintk(CVP_DSP, "%s: dsp initialized\n", __func__);
 	me->state = DSP_READY;
 
 exit:
-	mutex_unlock(&me->lock);
+	mutex_unlock(&me->tx_lock);
 	mutex_unlock(&device->lock);
 }
 /* 32 or 64 bit CPU Side Ptr <-> 2 32 bit DSP Pointers. Dirty Fix. */
@@ -1599,7 +1618,7 @@ wait_dsp:
 	if (rc == -ERESTARTSYS) {
 		dprintk(CVP_WARN, "%s received interrupt signal\n", __func__);
 	} else {
-		mutex_lock(&me->lock);
+		mutex_lock(&me->rx_lock);
 		switch (me->pending_dsp2cpu_cmd.type) {
 		case DSP2CPU_POWERON:
 		{
@@ -1608,19 +1627,19 @@ wait_dsp:
 				break;
 			}
 
-			mutex_unlock(&me->lock);
+			mutex_lock(&me->tx_lock);
 			old_state = me->state;
 			me->state = DSP_READY;
 			rc = call_hfi_op(hdev, resume, hdev->hfi_device_data);
 			if (rc) {
 				dprintk(CVP_WARN, "%s Failed to resume cvp\n",
 						__func__);
-				mutex_lock(&me->lock);
 				me->state = old_state;
+				mutex_unlock(&me->tx_lock);
 				cmd.ret = 1;
 				break;
 			}
-			mutex_lock(&me->lock);
+			mutex_unlock(&me->tx_lock);
 			cmd.ret = 0;
 			break;
 		}
@@ -1678,7 +1697,7 @@ wait_dsp:
 			break;
 		}
 		me->pending_dsp2cpu_cmd.type = CVP_INVALID_RPMSG_TYPE;
-		mutex_unlock(&me->lock);
+		mutex_unlock(&me->rx_lock);
 	}
 	/* Responds to DSP */
 	rc = cvp_dsp_send_cmd(&cmd, sizeof(struct cvp_dsp_cmd_msg));
@@ -1700,7 +1719,8 @@ int cvp_dsp_device_init(void)
 	int rc;
 	int i;
 
-	mutex_init(&me->lock);
+	mutex_init(&me->tx_lock);
+	mutex_init(&me->rx_lock);
 	me->state = DSP_INVALID;
 	me->hyp_assigned = false;
 
@@ -1739,15 +1759,16 @@ void cvp_dsp_device_exit(void)
 	struct cvp_dsp_apps *me = &gfa_cv;
 	int i;
 
-	mutex_lock(&me->lock);
+	mutex_lock(&me->tx_lock);
 	me->state = DSP_INVALID;
-	mutex_unlock(&me->lock);
+	mutex_unlock(&me->tx_lock);
 
 	DEINIT_MSM_CVP_LIST(&me->fastrpc_driver_list);
 
 	for (i = 0; i <= CPU2DSP_MAX_CMD; i++)
 		complete_all(&me->completions[i]);
 
-	mutex_destroy(&me->lock);
+	mutex_destroy(&me->tx_lock);
+	mutex_destroy(&me->rx_lock);
 	unregister_rpmsg_driver(&cvp_dsp_rpmsg_client);
 }
