@@ -267,8 +267,13 @@ static QDF_STATUS cm_host_roam_start(struct cnx_mgr *cm_ctx,
 	req = &cm_req->roam_req.req;
 
 	wlan_vdev_get_bss_peer_mac(cm_ctx->vdev, &connected_bssid);
-	if (qdf_is_macaddr_equal(&req->bssid, &connected_bssid))
+	if (qdf_is_macaddr_equal(&req->bssid, &connected_bssid)) {
+		mlme_info(CM_PREFIX_FMT "Self reassoc with" QDF_MAC_ADDR_FMT,
+			  CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
+					cm_req->cm_id),
+			  QDF_MAC_ADDR_REF(req->bssid.bytes));
 		req->self_reassoc = true;
+	}
 
 	/* if self reassoc continue with reassoc and skip preauth */
 	if (req->self_reassoc)
@@ -429,6 +434,15 @@ cm_resume_reassoc_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	req->cm_id = *cm_id;
 	req->self_reassoc = cm_req->roam_req.req.self_reassoc;
 	req->bss = cm_req->roam_req.cur_candidate;
+
+	mlme_nofl_info(CM_PREFIX_FMT "Reassoc to %.*s " QDF_MAC_ADDR_FMT " rssi: %d freq: %d source %d",
+		       CM_PREFIX_REF(req->vdev_id, req->cm_id),
+		       req->bss->entry->ssid.length,
+		       req->bss->entry->ssid.ssid,
+		       QDF_MAC_ADDR_REF(req->bss->entry->bssid.bytes),
+		       req->bss->entry->rssi_raw,
+		       req->bss->entry->channel.chan_freq,
+		       cm_req->roam_req.req.source);
 
 	status = mlme_cm_reassoc_req(cm_ctx->vdev, req);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -778,6 +792,7 @@ cm_check_for_reassoc_hw_mode_change(struct cnx_mgr *cm_ctx,
 {
 	qdf_freq_t candidate_freq;
 	struct wlan_objmgr_psoc *psoc;
+	QDF_STATUS status;
 
 	psoc = wlan_vdev_get_psoc(cm_ctx->vdev);
 	if (!psoc)
@@ -791,10 +806,14 @@ cm_check_for_reassoc_hw_mode_change(struct cnx_mgr *cm_ctx,
 		return QDF_STATUS_E_ALREADY;
 
 	candidate_freq = cm_req->cur_candidate->entry->channel.chan_freq;
-	return policy_mgr_handle_conc_multiport(psoc, cm_req->req.vdev_id,
-					candidate_freq,
-					POLICY_MGR_UPDATE_REASON_LFR2_ROAM,
-					cm_req->cm_id);
+	status = policy_mgr_handle_conc_multiport(
+			psoc, cm_req->req.vdev_id,
+			candidate_freq, POLICY_MGR_UPDATE_REASON_LFR2_ROAM,
+			cm_req->cm_id);
+	if (status == QDF_STATUS_E_NOSUPPORT)
+		status = QDF_STATUS_E_ALREADY;
+
+	return status;
 }
 #else
 static inline QDF_STATUS
