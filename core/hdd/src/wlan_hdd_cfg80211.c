@@ -5226,8 +5226,7 @@ hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
 	}
 
 	if (is_wtc_param_updated) {
-		wlan_cm_roam_set_vendor_btm_params(hdd_ctx->psoc, vdev_id,
-						   &param);
+		wlan_cm_roam_set_vendor_btm_params(hdd_ctx->psoc, &param);
 		/* Sends RSO update */
 		sme_send_vendor_btm_params(hdd_ctx->mac_handle, vdev_id);
 	}
