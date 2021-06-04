@@ -700,11 +700,11 @@ static const struct rsrc_min_max ipa3_rsrc_dst_grp_config
 		{0, 0x3f}, {0, 0x3f}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0},  },
 	},
 	[IPA_5_0_MHI] = {
-		/* UL  DL  unused  unused unused  UC_RX_Q DRBIP N/A */
+		/* UL DL IPADMA QDSS unused unused CV2X */
 		[IPA_v5_0_RSRC_GRP_TYPE_DST_DATA_SECTORS] = {
 		{6, 6}, {5, 5}, {2, 2}, {2, 2}, {0, 0}, {0, 0}, {30, 39},  },
 		[IPA_v5_0_RSRC_GRP_TYPE_DST_DPS_DMARS] = {
-		{0, 3}, {0, 3}, {1, 2}, {0, 0}, {0, 0}, {0, 0}, {0, 0},  },
+		{0, 3}, {0, 3}, {1, 2}, {1, 1}, {0, 0}, {0, 0}, {0, 0},  },
 	},
 
 	[IPA_5_1] = {
