@@ -1380,7 +1380,8 @@ cm_fetch_ch_lst_from_occupied_lst(struct wlan_objmgr_vdev *vdev,
 			band = BAND_UNKNOWN;
 	}
 
-	for (i = 0; i < occupied_channels->num_chan; i++) {
+	for (i = 0; i < occupied_channels->num_chan &&
+	     occupied_channels->num_chan < CFG_VALID_CHANNEL_LIST_LEN; i++) {
 		if (cm_is_dfs_unsafe_extra_band_chan(vdev, mlme_obj,
 				occupied_channels->freq_list[i], band))
 			continue;

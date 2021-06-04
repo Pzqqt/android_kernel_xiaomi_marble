@@ -915,7 +915,7 @@ cm_append_pref_chan_list(struct rso_chan_info *chan_info, qdf_freq_t *freq_list,
 
 		if (j < num_chan)
 			continue;
-		if (num_chan == ROAM_MAX_CHANNELS)
+		if (num_chan == CFG_VALID_CHANNEL_LIST_LEN)
 			break;
 		freq_list[num_chan++] = chan_info->freq_list[i];
 	}
@@ -1633,6 +1633,9 @@ static void cm_add_to_occupied_channels(qdf_freq_t ch_freq,
 	if (wlan_is_channel_present_in_list(occupied_ch_lst,
 					    num_occupied_ch, ch_freq))
 		return;
+
+	if (num_occupied_ch >= CFG_VALID_CHANNEL_LIST_LEN)
+		num_occupied_ch = CFG_VALID_CHANNEL_LIST_LEN - 1;
 
 	status = cm_add_to_freq_list_front(occupied_ch_lst,
 					   num_occupied_ch, ch_freq);
