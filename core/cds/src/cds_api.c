@@ -645,7 +645,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	QDF_STATUS status;
 	struct cds_config_info *cds_cfg;
 	qdf_device_t qdf_ctx;
-	struct htc_init_info htcInfo;
+	struct htc_init_info htcInfo = { 0 };
 	struct ol_context *ol_ctx;
 	struct hif_opaque_softc *scn;
 	void *HTCHandle;
