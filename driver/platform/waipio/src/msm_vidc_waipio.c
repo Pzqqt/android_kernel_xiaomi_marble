@@ -1430,8 +1430,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		HFI_PROP_DEC_QP_METADATA},
 
 	/* configure image properties */
-	{FRAME_WIDTH, ENC, HEIC, 512, 16384, 1, 16384},
-	{FRAME_HEIGHT, ENC, HEIC, 512, 16384, 1, 16384},
+	{FRAME_WIDTH, ENC, HEIC, 128, 16384, 1, 16384},
+	{FRAME_HEIGHT, ENC, HEIC, 128, 16384, 1, 16384},
 	{MIN_BUFFERS_INPUT, ENC|DEC, HEIC, 0, 64, 1, 1,
 		V4L2_CID_MIN_BUFFERS_FOR_OUTPUT},
 	{MBPF, DEC, HEIC, 64, 262144,  1, 262144 }, /* ((8192x8192)/256) */

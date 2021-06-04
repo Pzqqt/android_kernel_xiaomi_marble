@@ -536,7 +536,7 @@ static int __boot_firmware_iris2(struct msm_vidc_core *vidc_core)
 int msm_vidc_decide_work_mode_iris2(struct msm_vidc_inst* inst)
 {
 	u32 work_mode;
-	struct v4l2_format* out_f;
+	struct v4l2_format *inp_f;
 	u32 width, height;
 	bool res_ok = false;
 
@@ -546,7 +546,7 @@ int msm_vidc_decide_work_mode_iris2(struct msm_vidc_inst* inst)
 	}
 
 	work_mode = MSM_VIDC_STAGE_2;
-	out_f = &inst->fmts[OUTPUT_PORT];
+	inp_f = &inst->fmts[INPUT_PORT];
 
 	if (is_image_decode_session(inst))
 		work_mode = MSM_VIDC_STAGE_1;
@@ -555,9 +555,9 @@ int msm_vidc_decide_work_mode_iris2(struct msm_vidc_inst* inst)
 		goto exit;
 
 	if (is_decode_session(inst)) {
-		height = out_f->fmt.pix_mp.height;
-		width = out_f->fmt.pix_mp.width;
-		res_ok = res_is_less_than_or_equal_to(width, height, 1280, 720);
+		height = inp_f->fmt.pix_mp.height;
+		width = inp_f->fmt.pix_mp.width;
+		res_ok = res_is_less_than(width, height, 1280, 720);
 		if (inst->capabilities->cap[CODED_FRAMES].value ==
 				CODED_FRAMES_INTERLACE ||
 			inst->capabilities->cap[LOWLATENCY_MODE].value ||
@@ -572,19 +572,20 @@ int msm_vidc_decide_work_mode_iris2(struct msm_vidc_inst* inst)
 			(inst->capabilities->cap[LOWLATENCY_MODE].value)) {
 			work_mode = MSM_VIDC_STAGE_1;
 		}
-		if (inst->capabilities->cap[LOSSLESS].value) {
-			/*TODO Set 2 stage in case of ALL INTRA */
+		if (inst->capabilities->cap[LOSSLESS].value)
 			work_mode = MSM_VIDC_STAGE_2;
-		}
-	}
-	else {
+
+		if (!inst->capabilities->cap[GOP_SIZE].value)
+			work_mode = MSM_VIDC_STAGE_2;
+	} else {
 		i_vpr_e(inst, "%s: invalid session type\n", __func__);
 		return -EINVAL;
 	}
 
 exit:
-	i_vpr_h(inst, "Configuring work mode = %u low latency = %u",
-		work_mode, inst->capabilities->cap[LOWLATENCY_MODE].value);
+	i_vpr_h(inst, "Configuring work mode = %u low latency = %u, gop size = %u\n",
+		work_mode, inst->capabilities->cap[LOWLATENCY_MODE].value,
+		inst->capabilities->cap[GOP_SIZE].value);
 	msm_vidc_update_cap_value(inst, STAGE, work_mode, __func__);
 
 	return 0;
