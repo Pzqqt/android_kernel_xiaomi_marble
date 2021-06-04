@@ -172,6 +172,7 @@ struct lpass_cdc_va_macro_priv {
 	bool clk_div_switch;
 	int dec_mode[LPASS_CDC_VA_MACRO_NUM_DECIMATORS];
 	int pcm_rate[LPASS_CDC_VA_MACRO_NUM_DECIMATORS];
+	bool wcd_dmic_enabled;
 };
 
 static bool lpass_cdc_va_macro_get_data(struct snd_soc_component *component,
@@ -977,7 +978,7 @@ static int lpass_cdc_va_macro_put_dec_enum(struct snd_kcontrol *kcontrol,
 	}
 	if (strnstr(widget->name, "SMIC", strlen(widget->name))) {
 		if (val != 0) {
-			if (val < 5) {
+			if (!va_priv->wcd_dmic_enabled) {
 				snd_soc_component_update_bits(component,
 							mic_sel_reg,
 							1 << 7, 0x0 << 7);
@@ -1039,6 +1040,7 @@ static int lpass_cdc_va_macro_lpi_put(struct snd_kcontrol *kcontrol,
 
 	return 0;
 }
+
 
 static int lpass_cdc_va_macro_tx_mixer_get(struct snd_kcontrol *kcontrol,
 			     struct snd_ctl_elem_value *ucontrol)
@@ -2336,6 +2338,7 @@ static int lpass_cdc_va_macro_probe(struct platform_device *pdev)
 	const char *micb_current_str = "qcom,va-vdd-micb-current";
 	int ret = 0;
 	const char *dmic_sample_rate = "qcom,va-dmic-sample-rate";
+	const char *wcd_dmic_enabled = "qcom,wcd-dmic-enabled";
 	u32 default_clk_id = 0;
 	struct clk *lpass_audio_hw_vote = NULL;
 	u32 is_used_va_swr_gpio = 0;
@@ -2355,6 +2358,10 @@ static int lpass_cdc_va_macro_probe(struct platform_device *pdev)
 		return ret;
 	}
 
+	if (of_find_property(pdev->dev.of_node, wcd_dmic_enabled, NULL))
+		va_priv->wcd_dmic_enabled = true;
+	else
+		va_priv->wcd_dmic_enabled = false;
 	ret = of_property_read_u32(pdev->dev.of_node, dmic_sample_rate,
 				   &sample_rate);
 	if (ret) {
