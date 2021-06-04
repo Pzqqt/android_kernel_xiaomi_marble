@@ -1410,7 +1410,7 @@ A_COMPILE_TIME_ASSERT(check_mgmt_rx_reo_snapshot_8byte_size_quantum,
         (((sizeof(mgmt_rx_reo_snapshot) % sizeof(A_UINT64) == 0x0))));
 
 A_COMPILE_TIME_ASSERT(verify_mgmt_rx_reo_snapshot_low_offset,
-    (A_OFFSETOF(mgmt_rx_reo_snapshot, mgmt_rx_reo_snapshot_low) % sizeof(A_UINT64) == 0))
+    (A_OFFSETOF(mgmt_rx_reo_snapshot, mgmt_rx_reo_snapshot_low) % sizeof(A_UINT64) == 0));
 
 typedef struct {
     /* TLV tag and len; tag equals MLO_SHMEM_TLV_STRUCT_MLO_GLB_RX_REO_PER_LINK_SNAPSHOT_INFO */
@@ -1425,7 +1425,7 @@ A_COMPILE_TIME_ASSERT(check_mlo_glb_rx_reo_per_link_snapshot_info_8byte_size_qua
         (((sizeof(mlo_glb_rx_reo_per_link_snapshot_info) % sizeof(A_UINT64) == 0x0))));
 
 A_COMPILE_TIME_ASSERT(verify_mlo_glb_rx_reo_per_link_snapshot_fw_consumed_offset,
-    (A_OFFSETOF(mlo_glb_rx_reo_per_link_snapshot_info, fw_consumed) % sizeof(A_UINT64) == 0))
+    (A_OFFSETOF(mlo_glb_rx_reo_per_link_snapshot_info, fw_consumed) % sizeof(A_UINT64) == 0));
 
 /** Helper macro for params GET/SET of mlo_glb_rx_reo_snapshot_info */
 #define MLO_SHMEM_GLB_RX_REO_SNAPSHOT_PARAM_NO_OF_LINKS_GET(link_info) MLO_SHMEM_GET_BITS(link_info, 0, 4)
@@ -1491,10 +1491,10 @@ A_COMPILE_TIME_ASSERT(check_mlo_glb_link_8byte_size_quantum,
         (((sizeof(mlo_glb_link) % sizeof(A_UINT64) == 0x0))));
 
 A_COMPILE_TIME_ASSERT(verify_mlo_glb_link_boot_timestamp_low_offset,
-    (A_OFFSETOF(mlo_glb_link, boot_timestamp_low_us) % sizeof(A_UINT64) == 0))
+    (A_OFFSETOF(mlo_glb_link, boot_timestamp_low_us) % sizeof(A_UINT64) == 0));
 
 A_COMPILE_TIME_ASSERT(verify_mlo_glb_link_health_check_timestamp_low_offset,
-    (A_OFFSETOF(mlo_glb_link, health_check_timestamp_low_us) % sizeof(A_UINT64) == 0))
+    (A_OFFSETOF(mlo_glb_link, health_check_timestamp_low_us) % sizeof(A_UINT64) == 0));
 
 
 /** Helper macro for params GET/SET of mlo_glb_link_info */
@@ -1523,7 +1523,7 @@ typedef struct {
  */
 } mlo_glb_link_info;
 
-A_COMPILE_TIME_ASSERT(check_mlo_glb_link_8byte_size_quantum,
+A_COMPILE_TIME_ASSERT(check_mlo_glb_link_info_8byte_size_quantum,
         (((sizeof(mlo_glb_link_info) % sizeof(A_UINT64) == 0x0))));
 
 /** Helper macro for params GET/SET of mlo_glb_h_shmem */
