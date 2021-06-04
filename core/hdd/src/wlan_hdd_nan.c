@@ -88,6 +88,11 @@ static int __wlan_hdd_cfg80211_nan_ext_request(struct wiphy *wiphy,
 		return -EPERM;
 	}
 
+	if (hdd_is_connection_in_progress(NULL, NULL)) {
+		hdd_err("Connection refused: conn in progress");
+		return -EAGAIN;
+	}
+
 	return os_if_process_nan_req(hdd_ctx->psoc, adapter->vdev_id,
 				     data, data_len);
 }
