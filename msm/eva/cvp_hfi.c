@@ -2653,6 +2653,7 @@ static void **get_session_id(struct msm_cvp_cb_info *info)
 	case HAL_SESSION_UNREGISTER_BUFFER_DONE:
 	case HAL_SESSION_PROPERTY_INFO:
 	case HAL_SESSION_EVENT_CHANGE:
+	case HAL_SESSION_DUMP_NOTIFY:
 		session_id = &info->response.cmd.session_id;
 		break;
 	case HAL_SESSION_ERROR:

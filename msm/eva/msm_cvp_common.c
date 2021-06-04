@@ -463,6 +463,34 @@ static void handle_event_change(enum hal_command_response cmd, void *data)
 	dprintk(CVP_WARN, "%s is not supported on CVP!\n", __func__);
 }
 
+static void handle_session_dump_notify(enum hal_command_response cmd,
+	void *data)
+{
+	struct msm_cvp_cb_cmd_done *response = data;
+	struct msm_cvp_inst *inst;
+	unsigned long flags = 0;
+
+	if (!response) {
+		dprintk(CVP_ERR,
+			"Failed to get valid response during dump notify\n");
+		return;
+	}
+
+	inst = cvp_get_inst(get_cvp_core(response->device_id),
+			response->session_id);
+	if (!inst) {
+		dprintk(CVP_WARN, "%s:Got a response for an inactive session\n",
+				__func__);
+		return;
+	}
+	spin_lock_irqsave(&inst->event_handler.lock, flags);
+	inst->event_handler.event = CVP_DUMP_EVENT;
+	spin_unlock_irqrestore(&inst->event_handler.lock, flags);
+	wake_up_all(&inst->event_handler.wq);
+	dprintk(CVP_ERR,"Event_handler woken up\n");
+	cvp_put_inst(inst);
+}
+
 static void handle_release_res_done(enum hal_command_response cmd, void *data)
 {
 	struct msm_cvp_cb_cmd_done *response = data;
@@ -755,6 +783,9 @@ void cvp_handle_cmd_response(enum hal_command_response cmd, void *data)
 		break;
 	case HAL_SESSION_RELEASE_BUFFER_DONE:
 		handle_session_release_buf_done(cmd, data);
+		break;
+        case HAL_SESSION_DUMP_NOTIFY:
+		handle_session_dump_notify(cmd, data);
 		break;
 	default:
 		dprintk(CVP_HFI, "response unhandled: %d\n", cmd);

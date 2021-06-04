@@ -1302,6 +1302,7 @@ static int msm_cvp_get_sysprop(struct msm_cvp_inst *inst,
 	struct eva_kmd_sys_properties *props = &arg->data.sys_properties;
 	struct cvp_hfi_device *hdev;
 	struct iris_hfi_device *hfi;
+	struct cvp_session_prop *session_prop;
 	int i, rc = 0;
 
 	if (!inst || !inst->core || !inst->core->device) {
@@ -1312,11 +1313,31 @@ static int msm_cvp_get_sysprop(struct msm_cvp_inst *inst,
 	hdev = inst->core->device;
 	hfi = hdev->hfi_device_data;
 
+	if (props->prop_num > MAX_KMD_PROP_NUM_PER_PACKET) {
+		dprintk(CVP_ERR, "Too many properties %d to get\n",
+			props->prop_num);
+		return -E2BIG;
+	}
+
+	session_prop = &inst->prop;
+
 	for (i = 0; i < props->prop_num; i++) {
 		switch (props->prop_data[i].prop_type) {
 		case EVA_KMD_PROP_HFI_VERSION:
 		{
 			props->prop_data[i].data = hfi->version;
+			break;
+		}
+		case EVA_KMD_PROP_SESSION_DUMPOFFSET:
+		{
+			props->prop_data[i].data =
+				session_prop->dump_offset;
+			break;
+		}
+		case EVA_KMD_PROP_SESSION_DUMPSIZE:
+		{
+			props->prop_data[i].data =
+				session_prop->dump_size;
 			break;
 		}
 		case EVA_KMD_PROP_PWR_FDU:
@@ -1448,6 +1469,12 @@ static int msm_cvp_set_sysprop(struct msm_cvp_inst *inst,
 			break;
 		case EVA_KMD_PROP_PWR_FPS_ICA:
 			session_prop->fps[HFI_HW_ICA] = prop_array[i].data;
+			break;
+		case EVA_KMD_PROP_SESSION_DUMPOFFSET:
+			session_prop->dump_offset = prop_array[i].data;
+			break;
+		case EVA_KMD_PROP_SESSION_DUMPSIZE:
+			session_prop->dump_size = prop_array[i].data;
 			break;
 		default:
 			dprintk(CVP_ERR,

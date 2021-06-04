@@ -329,6 +329,16 @@ struct cvp_hfi_msg_session_hdr {
 	u32 stream_idx;
 } __packed;
 
+struct cvp_hfi_dumpmsg_session_hdr {
+	u32 size;
+	u32 packet_type;
+	u32 session_id;
+	u32 error_type;
+	struct cvp_hfi_client client_data;
+	u32 dump_offset;
+	u32 dump_size;
+} __packed;
+
 #define HFI_MAX_HW_ACTIVATIONS_PER_FRAME (6)
 #define HFI_MAX_HW_THREADS (4)
 
