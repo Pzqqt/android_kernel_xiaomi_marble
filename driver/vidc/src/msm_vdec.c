@@ -1437,8 +1437,7 @@ static int schedule_batch_work(struct msm_vidc_inst *inst)
 		return -EINVAL;
 	}
 	core = inst->core;
-	cancel_delayed_work(&inst->decode_batch.work);
-	queue_delayed_work(core->batch_workq, &inst->decode_batch.work,
+	mod_delayed_work(core->batch_workq, &inst->decode_batch.work,
 		msecs_to_jiffies(core->capabilities[DECODE_BATCH_TIMEOUT].value));
 
 	return 0;
