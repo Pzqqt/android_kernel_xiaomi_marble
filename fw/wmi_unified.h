@@ -11357,6 +11357,7 @@ typedef struct {
     /** vdevid of transmitting VAP (mbssid case). Ignored for non mbssid case */
     A_UINT32 vdevid_trans;
     A_UINT32 eht_ops;
+    A_UINT32 puncture_20mhz_bitmap; /* each bit indicates one 20 MHz BW punctured */
 
 /* The TLVs follows this structure:
  *     wmi_channel chan; <-- WMI channel
@@ -29199,6 +29200,7 @@ typedef struct {
      * defined by WMI_MULTIPLE_VDEV_RESTART_FLAG_xxx
      */
     A_UINT32 flags;
+    A_UINT32 puncture_20mhz_bitmap; /* each bit indicates one 20 MHz BW punctured */
 
     /* The TLVs follows this structure:
      * A_UINT32 vdev_ids[]; <--- Array of VDEV ids.
@@ -32608,6 +32610,190 @@ typedef struct {
   #define WMI_HECAP_MAC_HTVHTTRIGRX_GET WMI_HECAP_MAC_HTVHTTRIGRX_GET_D2
   #define WMI_HECAP_MAC_HTVHTTRIGRX_SET WMI_HECAP_MAC_HTVHTTRIGRX_SET_D2
 #endif /* SUPPORT_11AX_D3 */
+
+
+/****** 11BE EHT PHY Capabilities Information field ******/
+
+/* Bit 0: reserved */
+
+/* Bit 1: support for 320Mhz in 6ghz */
+#define WMI_EHTCAP_PHY_320MHZIN6GHZ_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[0], 1, 1)
+#define WMI_EHTCAP_PHY_320MHZIN6GHZ_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[0], 1, 1, value)
+
+/* Bit 2: support for 242-tone RU in BW wider than 20Mhz */
+#define WMI_EHTCAP_PHY_242TONERUBWLT20MHZ_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[0], 2, 1)
+#define WMI_EHTCAP_PHY_242TONERUBWLT20MHZ_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[0], 2, 1, value)
+
+/* Bit 3: NDP with 4x EHT-LTF and 3.2us GI */
+#define WMI_EHTCAP_PHY_NDP4XEHTLTFAND320NSGI_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[0], 3, 1)
+#define WMI_EHTCAP_PHY_NDP4XEHTLTFAND320NSGI_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[0], 3, 1, value)
+
+/* Bit 4: partial bandwidth UL MU-MIMO */
+#define WMI_EHTCAP_PHY_PARTIALBWULMU_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[0], 4, 1)
+#define WMI_EHTCAP_PHY_PARTIALBWULMU_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[0], 4, 1, value)
+
+/* Bit 5: SU beamformer */
+#define WMI_EHTCAP_PHY_SUBFMR_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[0], 5, 1)
+#define WMI_EHTCAP_PHY_SUBFMR_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[0], 5, 1, value)
+
+/* Bit 6: SU beamformee */
+#define WMI_EHTCAP_PHY_SUBFME_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[0], 6, 1)
+#define WMI_EHTCAP_PHY_SUBFME_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[0], 6, 1, value)
+
+/* Bit 7-9: beamformee SS (<=80Mhz) */
+#define WMI_EHTCAP_PHY_BFMESSLT80MHZ_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[0], 7, 3)
+#define WMI_EHTCAP_PHY_BFMESSLT80MHZ_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[0], 7, 3, value)
+
+/* Bit 10-12: beamformee SS (=160Mhz) */
+#define WMI_EHTCAP_PHY_BFMESS160MHZ_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[0], 10, 3)
+#define WMI_EHTCAP_PHY_BFMESS160MHZ_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[0], 10, 3, value)
+
+/* Bit 13-15: beamformee SS (=320Mhz) */
+#define WMI_EHTCAP_PHY_BFMESS320MHZ_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[0], 13, 3)
+#define WMI_EHTCAP_PHY_BFMESS320MHZ_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[0], 13, 3, value)
+
+/* Bit 16-18: number of sounding dimensions (<=80Mhz) */
+#define WMI_EHTCAP_PHY_NUMSOUNDLT80MHZ_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[0], 16, 3)
+#define WMI_EHTCAP_PHY_NUMSOUNDLT80MHZ_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[0], 16, 3, value)
+
+/* Bit 19-21: number of sounding dimensions (=160Mhz) */
+#define WMI_EHTCAP_PHY_NUMSOUND160MHZ_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[0], 19, 3)
+#define WMI_EHTCAP_PHY_NUMSOUND160MHZ_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[0], 19, 3, value)
+
+/* Bit 22-24: number of sounding dimensions (=320Mhz) */
+#define WMI_EHTCAP_PHY_NUMSOUND320MHZ_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[0], 22, 3)
+#define WMI_EHTCAP_PHY_NUMSOUND320MHZ_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[0], 22, 3, value)
+
+/* Bit 25: ng = 16 SU feedback */
+#define WMI_EHTCAP_PHY_NG16SUFB_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[0], 25, 1)
+#define WMI_EHTCAP_PHY_NG16SUFB_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[0], 25, 1, value)
+
+/* Bit 26: ng = 16 MU feedback */
+#define WMI_EHTCAP_PHY_NG16MUFB_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[0], 26, 1)
+#define WMI_EHTCAP_PHY_NG16MUFB_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[0], 26, 1, value)
+
+/* Bit 27: codebook size {4,2} SU feedback */
+#define WMI_EHTCAP_PHY_CODBK42SUFB_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[0], 27, 1)
+#define WMI_EHTCAP_PHY_CODBK42SUFB_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[0], 27, 1, value)
+
+/* Bit 28: codebook size {7,5} MU feedback */
+#define WMI_EHTCAP_PHY_CODBK75MUFB_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[0], 28, 1)
+#define WMI_EHTCAP_PHY_CODBK75MUFB_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[0], 28, 1, value)
+
+/* Bit 29: triggered SU beamforming feedback */
+#define WMI_EHTCAP_PHY_TRIGSUBFFB_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[0], 29, 1)
+#define WMI_EHTCAP_PHY_TRIGSUBFFB_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[0], 29, 1, value)
+
+/* Bit 30: triggered MU beamforming partial BW feedback */
+#define WMI_EHTCAP_PHY_TRIGMUBFPARTBWFB_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[0], 30, 1)
+#define WMI_EHTCAP_PHY_TRIGMUBFPARTBWFB_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[0], 30, 1, value)
+
+/* Bit 31: triggered CQI feedback */
+#define WMI_EHTCAP_PHY_TRIGCQIFB_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[0], 31, 1)
+#define WMI_EHTCAP_PHY_TRIGCQIFB_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[0], 31, 1, value)
+
+/* Bit 32: partial bandwidth DL MU-MIMO */
+#define WMI_EHTCAP_PHY_PARTBWDLMUMIMO_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[1], 0, 1)
+#define WMI_EHTCAP_PHY_PARTBWDLMUMIMO_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[1], 0, 1, value)
+
+/* Bit 33: PSR-based SR support */
+#define WMI_EHTCAP_PHY_PSRSR_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[1], 1, 1)
+#define WMI_EHTCAP_PHY_PSRSR_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[1], 1, 1, value)
+
+/* Bit 34: power boost factor support */
+#define WMI_EHTCAP_PHY_PWRBSTFACTOR_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[1], 2, 1)
+#define WMI_EHTCAP_PHY_PWRBSTFACTOR_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[1], 2, 1, value)
+
+/* Bit 35: EHT MU PPDU with 4xEHT-LTF and 0.8us GI */
+#define WMI_EHTCAP_PHY_4XEHTLTFAND800NSGI_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[1], 3, 1)
+#define WMI_EHTCAP_PHY_4XEHTLTFAND800NSGI_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[1], 3, 1, value)
+
+/* Bit 36-39: max NC */
+#define WMI_EHTCAP_PHY_MAXNC_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[1], 4, 4)
+#define WMI_EHTCAP_PHY_MAXNC_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[1], 4, 4, value)
+
+/* Bit 40: non-triggered CQI feedback */
+#define WMI_EHTCAP_PHY_NONTRIGCQIFB_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[1], 8, 1)
+#define WMI_EHTCAP_PHY_NONTRIGCQIFB_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[1], 8, 1, value)
+
+/* Bit 41: Tx 1024-QAM and 4096-QAM < 242-tone RU support */
+#define WMI_EHTCAP_PHY_TX1024AND4096QAMLS242TONERU_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[1], 9, 1)
+#define WMI_EHTCAP_PHY_TX1024AND4096QAMLS242TONERU_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[1], 9, 1, value)
+
+/* Bit 42: Rx 1024-QAM and 4096-QAM < 242-tone RU support */
+#define WMI_EHTCAP_PHY_RX1024AND4096QAMLS242TONERU_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[1], 10, 1)
+#define WMI_EHTCAP_PHY_RX1024AND4096QAMLS242TONERU_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[1], 10, 1, value)
+
+/* Bit 43: PPE thresholds present */
+#define WMI_EHTCAP_PHY_PPETHRESPRESENT_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[1], 11, 1)
+#define WMI_EHTCAP_PHY_PPETHRESPRESENT_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[1], 11, 1, value)
+
+/* Bit 44-45: common nominal packet padding */
+#define WMI_EHTCAP_PHY_CMNNOMPKTPAD_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[1], 12, 2)
+#define WMI_EHTCAP_PHY_CMNNOMPKTPAD_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[1], 12, 2, value)
+
+/* Bit 46-50: max number of supported EHT-LTFs */
+#define WMI_EHTCAP_PHY_MAXNUMEHTLTF_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[1], 14, 5)
+#define WMI_EHTCAP_PHY_MAXNUMEHTLTF_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[1], 14, 5, value)
+
+/* Bit 51-54: support of MCS 15 */
+#define WMI_EHTCAP_PHY_SUPMCS15_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[1], 19, 4)
+#define WMI_EHTCAP_PHY_SUPMCS15_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[1], 19, 4, value)
+
+/* Bit 55: support of EHT DUP in 6ghz */
+#define WMI_EHTCAP_PHY_EHTDUPIN6GHZ_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[1], 23, 1)
+#define WMI_EHTCAP_PHY_EHTDUPIN6GHZ_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[1], 23, 1, value)
+
+/* Bit 56: support for 20Mhz operating STA receiving NDP with wider bandwidth */
+#define WMI_EHTCAP_PHY_20MHZOPSTARXNDPWIDERBW_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[1], 24, 1)
+#define WMI_EHTCAP_PHY_20MHZOPSTARXNDPWIDERBW_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[1], 24, 1, value)
+
+/* Bit 57: non-OFDMA UL MU-MIMO (bw <= 80Mhz) */
+#define WMI_EHTCAP_PHY_NONOFDMAULMUMIMOLT80MHZ_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[1], 25, 1)
+#define WMI_EHTCAP_PHY_NONOFDMAULMUMIMOLT80MHZ_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[1], 25, 1, value)
+
+/* Bit 58: non-OFDMA UL MU-MIMO (bw = 160Mhz) */
+#define WMI_EHTCAP_PHY_NONOFDMAULMUMIMO160MHZ_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[1], 26, 1)
+#define WMI_EHTCAP_PHY_NONOFDMAULMUMIMO160MHZ_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[1], 26, 1, value)
+
+/* Bit 59: non-OFDMA UL MU-MIMO (bw = 320Mhz) */
+#define WMI_EHTCAP_PHY_NONOFDMAULMUMIMO320MHZ_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[1], 27, 1)
+#define WMI_EHTCAP_PHY_NONOFDMAULMUMIMO320MHZ_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[1], 27, 1, value)
+
+/* Bit 60: MU beamformer (bw <= 80Mhz) */
+#define WMI_EHTCAP_PHY_MUBFMRLT80MHZ_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[1], 28, 1)
+#define WMI_EHTCAP_PHY_MUBFMRLT80MHZ_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[1], 28, 1, value)
+
+/* Bit 61: MU beamformer (bw = 160Mhz) */
+#define WMI_EHTCAP_PHY_MUBFMR160MHZ_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[1], 29, 1)
+#define WMI_EHTCAP_PHY_MUBFMR160MHZ_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[1], 29, 1, value)
+
+/* Bit 62: MU beamformer (bw = 320Mhz) */
+#define WMI_EHTCAP_PHY_MUBFMR320MHZ_GET(eht_cap_phy) WMI_GET_BITS(eht_cap_phy[1], 30, 1)
+#define WMI_EHTCAP_PHY_MUBFMR320MHZ_SET(eht_cap_phy, value) WMI_SET_BITS(eht_cap_phy[1], 30, 1, value)
+
+/* Bit 63: reserved */
+
+/****** End of 11BE EHT PHY Capabilities Information field ******/
+
+/****** 11BE EHT MAC Capabilities Information field ******/
+
+/* Bit 0: NSEP priority access supported */
+#define WMI_EHTCAP_MAC_NSEPPRIACCESS_GET(eht_cap_mac) WMI_GET_BITS(eht_cap_mac[0], 0, 1)
+#define WMI_EHTCAP_MAC_NSEPPRIACCESS_SET(eht_cap_mac, value) WMI_SET_BITS(eht_cap_mac[0], 0, 1, value)
+
+/* Bit 1: EHT OM control support */
+#define WMI_EHTCAP_MAC_EHTOMCTRL_GET(eht_cap_mac) WMI_GET_BITS(eht_cap_mac[0], 1, 1)
+#define WMI_EHTCAP_MAC_EHTOMCTRL_SET(eht_cap_mac, value) WMI_SET_BITS(eht_cap_mac[0], 1, 1, value)
+
+/* Bit 2: triggered TXOP support */
+#define WMI_EHTCAP_MAC_TRIGTXOP_GET(eht_cap_mac) WMI_GET_BITS(eht_cap_mac[0], 2, 1)
+#define WMI_EHTCAP_MAC_TRIGTXOP_SET(eht_cap_mac, value) WMI_SET_BITS(eht_cap_mac[0], 2, 1, value)
+
+/* Bit 3-15: reserved */
+
+/****** End of 11BE EHT MAC Capabilities Information field ******/
+
 
 typedef struct {
     /** TLV tag and len; tag equals
