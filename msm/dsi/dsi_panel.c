@@ -1657,6 +1657,21 @@ static int dsi_panel_parse_cmd_host_config(struct dsi_cmd_engine_cfg *cfg,
 		goto error;
 	}
 
+	cfg->mdp_idle_ctrl_en =
+		utils->read_bool(utils->data, "qcom,mdss-dsi-mdp-idle-ctrl-en");
+
+	if (cfg->mdp_idle_ctrl_en) {
+		val = 0;
+		rc = utils->read_u32(utils->data, "qcom,mdss-dsi-mdp-idle-ctrl-len", &val);
+		if (rc) {
+			DSI_DEBUG("[%s] mdp idle ctrl len is not defined\n", name);
+			cfg->mdp_idle_ctrl_len = 0;
+			cfg->mdp_idle_ctrl_en = false;
+			rc = 0;
+		} else {
+			cfg->mdp_idle_ctrl_len = val;
+		}
+	}
 error:
 	return rc;
 }

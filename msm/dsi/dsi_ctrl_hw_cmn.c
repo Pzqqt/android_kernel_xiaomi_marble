@@ -737,14 +737,22 @@ void dsi_ctrl_hw_cmn_cmd_engine_setup(struct dsi_ctrl_hw *ctrl,
 	reg |= cmd_mode_format_map[common_cfg->dst_format];
 	DSI_W32(ctrl, DSI_COMMAND_MODE_MDP_CTRL, reg);
 
-	reg = DSI_R32(ctrl, DSI_COMMAND_MODE_MDP_CTRL2);
-	reg |= BIT(16);
-	DSI_W32(ctrl, DSI_COMMAND_MODE_MDP_CTRL2, reg);
+	if (!cfg->mdp_idle_ctrl_en) {
+		reg = DSI_R32(ctrl, DSI_COMMAND_MODE_MDP_CTRL2);
+		reg |= BIT(16);
+		DSI_W32(ctrl, DSI_COMMAND_MODE_MDP_CTRL2, reg);
+	}
 
 	reg = cfg->wr_mem_start & 0xFF;
 	reg |= (cfg->wr_mem_continue & 0xFF) << 8;
 	reg |= (cfg->insert_dcs_command ? BIT(16) : 0);
 	DSI_W32(ctrl, DSI_COMMAND_MODE_MDP_DCS_CMD_CTRL, reg);
+
+	if (cfg->mdp_idle_ctrl_en) {
+		reg = cfg->mdp_idle_ctrl_len & 0x3FF;
+		reg |= BIT(12);
+		DSI_W32(ctrl, DSI_COMMAND_MODE_MDP_IDLE_CTRL, reg);
+	}
 
 	DSI_CTRL_HW_DBG(ctrl, "Cmd engine setup done\n");
 }

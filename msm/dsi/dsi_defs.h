@@ -559,12 +559,17 @@ struct dsi_video_engine_cfg {
  * @wr_mem_continue:               DCS command for write_memory_continue.
  * @insert_dcs_command:            Insert DCS command as first byte of payload
  *                                 of the pixel data.
+ * @mdp_idle_ctrl_en:		Enable idle insertion between command mode mdp packets.
+ * @mdp_idle_ctrl_len:		No. of dsi pclk cycles of idle time to insert between
+ *				   command mode mdp packets.
  */
 struct dsi_cmd_engine_cfg {
 	u32 max_cmd_packets_interleave;
 	u32 wr_mem_start;
 	u32 wr_mem_continue;
 	bool insert_dcs_command;
+	bool mdp_idle_ctrl_en;
+	u32 mdp_idle_ctrl_len;
 };
 
 /**
