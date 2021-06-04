@@ -179,6 +179,7 @@ struct dfs_to_mlme {
 	QDF_STATUS
 	    (*mlme_precac_chan_change_csa_for_freq)(struct wlan_objmgr_pdev *,
 						    uint16_t des_chan_freq,
+						    uint16_t des_cfreq2,
 						    enum wlan_phymode des_mode);
 #endif
 #ifdef CONFIG_CHAN_NUM_API
