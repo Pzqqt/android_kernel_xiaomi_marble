@@ -40,6 +40,7 @@ INCS += -I$(obj)/$(DEPTH)/component_dev/dp/inc
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/mlme/connection_mgr/dispatcher/inc
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/thermal/dispatcher/inc
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/mlme/connection_mgr/utf/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/mlo_mgr/inc
 
 ifeq ($(WLAN_CONV_CRYPTO_SUPPORTED), 1)
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/crypto/inc
