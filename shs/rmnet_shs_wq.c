@@ -657,7 +657,8 @@ DATARMNET64bb8a8f57>DATARMNET7a815512d3&&time>DATARMNET270b564b55)ret=true;
 return ret;}void DATARMNET39391a8bc5(u8 DATARMNETcd94e0d3c7){struct 
 DATARMNET63d7680df2*node_p=NULL;ktime_t DATARMNETf48008e7b6;unsigned long 
 ht_flags;struct DATARMNET6c78e47d24*DATARMNETd2a694d52a=NULL;struct list_head*
-DATARMNET7b34b7b5be=NULL,*next=NULL;rcu_read_lock();list_for_each_safe(
+DATARMNET7b34b7b5be=NULL,*next=NULL;rcu_read_lock();local_bh_disable();
+spin_lock_irqsave(&DATARMNET3764d083f0,ht_flags);list_for_each_safe(
 DATARMNET7b34b7b5be,next,&DATARMNET9825511866){DATARMNETd2a694d52a=list_entry(
 DATARMNET7b34b7b5be,struct DATARMNET6c78e47d24,DATARMNET6de26f0feb);if(
 DATARMNETd2a694d52a->DATARMNET63b1a086d5==NULL)continue;node_p=
@@ -665,10 +666,9 @@ DATARMNETd2a694d52a->DATARMNET63b1a086d5;DATARMNETf48008e7b6=DATARMNET36cfa76181
 (DATARMNETd2a694d52a->DATARMNET42ceaf5cc2);if((DATARMNET1154e4fac6(
 DATARMNETf48008e7b6,DATARMNETecc0627c70.DATARMNET64bb8a8f57)&&((node_p->
 DATARMNET85c698ec34&&!rcu_dereference(rmnet_shs_switch))||!node_p->
-DATARMNET85c698ec34))||DATARMNETcd94e0d3c7){local_bh_disable();
-trace_rmnet_shs_wq_low(DATARMNET394831f22a,DATARMNET5e2c5adaae,node_p->hash,
-DATARMNETf48008e7b6,(0x16e8+787-0xc0c),(0x16e8+787-0xc0c),node_p,
-DATARMNETd2a694d52a);spin_lock_irqsave(&DATARMNET3764d083f0,ht_flags);
+DATARMNET85c698ec34))||DATARMNETcd94e0d3c7){trace_rmnet_shs_wq_low(
+DATARMNET394831f22a,DATARMNET5e2c5adaae,node_p->hash,DATARMNETf48008e7b6,
+(0x16e8+787-0xc0c),(0x16e8+787-0xc0c),node_p,DATARMNETd2a694d52a);
 DATARMNET23c7ddd780(node_p,DATARMNET5b5927fd7e);DATARMNET3669e7b703(
 DATARMNETd2a694d52a->DATARMNET7c894c2f8f);if(node_p){DATARMNETde8ee16f92(node_p)
 ;hash_del_rcu(&node_p->list);kfree(node_p);}rm_err(
@@ -680,8 +680,8 @@ DATARMNET253a9fc708);DATARMNETb4a6870b3b(DATARMNETd2a694d52a);if(
 DATARMNETd2a694d52a->DATARMNET0bfc2b2c85==(0xd2d+202-0xdf7)||DATARMNETcd94e0d3c7
 ){DATARMNET2fe780019f(DATARMNETd2a694d52a);kfree(DATARMNETd2a694d52a);}else{
 DATARMNETa6e92c3315(DATARMNETd2a694d52a);}DATARMNETecc0627c70.
-DATARMNET64bb8a8f57--;spin_unlock_irqrestore(&DATARMNET3764d083f0,ht_flags);
-local_bh_enable();}}rcu_read_unlock();}void DATARMNETe69c918dc8(struct 
+DATARMNET64bb8a8f57--;}}spin_unlock_irqrestore(&DATARMNET3764d083f0,ht_flags);
+local_bh_enable();rcu_read_unlock();}void DATARMNETe69c918dc8(struct 
 DATARMNET9b44b71ee9*ep){struct rps_map*map;u8 len=(0xd2d+202-0xdf7);if(!ep||!ep
 ->ep){DATARMNET68d84e7b98[DATARMNETb8fe2c0e64]++;return;}rcu_read_lock();if(!ep
 ->ep){pr_info(
