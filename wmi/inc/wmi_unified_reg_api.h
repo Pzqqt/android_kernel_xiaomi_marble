@@ -54,6 +54,22 @@ QDF_STATUS wmi_extract_reg_chan_list_ext_update_event(wmi_unified_t wmi_handle,
 					uint8_t *evt_buf,
 					struct cur_regulatory_info *reg_info,
 					uint32_t len);
+
+#ifdef CONFIG_AFC_SUPPORT
+/**
+ * wmi_extract_afc_event() - function to read the contents of the AFC event
+ * @wmi_handle: wmi handle
+ * @evt_buf: event buffer
+ * @afc_info: AFC regulatory info
+ * @len: length of buffer
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+QDF_STATUS wmi_extract_afc_event(wmi_unified_t wmi_handle,
+				 uint8_t *evt_buf,
+				 struct afc_regulatory_info *afc_info,
+				 uint32_t len);
+#endif
 #endif
 
 /*

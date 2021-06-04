@@ -12861,6 +12861,267 @@ static QDF_STATUS extract_reg_chan_list_ext_update_event_tlv(
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef CONFIG_AFC_SUPPORT
+/**
+ * copy_afc_chan_eirp_info() - Copy the channel EIRP object from
+ * chan_eirp_power_info_hdr to the internal buffer chan_eirp_info. Since the
+ * cfi and eirp is continuously filled in chan_eirp_power_info_hdr, there is
+ * an index pointer required to store the current index of
+ * chan_eirp_power_info_hdr, to fill into the chan_eirp_info object.
+ * @chan_eirp_info: pointer to chan_eirp_info
+ * @num_chans: Number of channels
+ * @chan_eirp_power_info_hdr: Pointer to chan_eirp_power_info_hdr
+ * @index: Pointer to index
+ *
+ * Return: void
+ */
+static void
+copy_afc_chan_eirp_info(struct chan_eirp_obj *chan_eirp_info,
+			uint8_t num_chans,
+			wmi_afc_chan_eirp_power_info *chan_eirp_power_info_hdr,
+			uint8_t *index)
+{
+	uint8_t chan_idx;
+
+	for (chan_idx = 0; chan_idx < num_chans; chan_idx++, (*index)++) {
+		chan_eirp_info[chan_idx].cfi =
+				chan_eirp_power_info_hdr[*index].channel_cfi;
+		chan_eirp_info[chan_idx].eirp_power =
+				chan_eirp_power_info_hdr[*index].eirp_pwr;
+	}
+}
+
+/**
+ * copy_afc_chan_obj_info() - Copy the channel object from channel_info_hdr to
+ * to the internal buffer afc_chan_info.
+ * @afc_chan_info: pointer to afc_chan_info
+ * @num_chan_objs: Number of channel objects
+ * @channel_info_hdr: Pointer to channel_info_hdr
+ * @chan_eirp_power_info_hdr: Pointer to chan_eirp_power_info_hdr
+ *
+ * Return: void
+ */
+static void
+copy_afc_chan_obj_info(struct afc_chan_obj *afc_chan_info,
+		       uint8_t num_chan_objs,
+		       wmi_6g_afc_channel_info *channel_info_hdr,
+		       wmi_afc_chan_eirp_power_info *chan_eirp_power_info_hdr)
+{
+	uint8_t count;
+	uint8_t src_pwr_index = 0;
+
+	for (count = 0; count < num_chan_objs; count++) {
+		afc_chan_info[count].global_opclass =
+			channel_info_hdr[count].global_operating_class;
+		afc_chan_info[count].num_chans =
+					channel_info_hdr[count].num_channels;
+
+		if (afc_chan_info[count].num_chans > 0) {
+			struct chan_eirp_obj *chan_eirp_info;
+
+			chan_eirp_info =
+				qdf_mem_malloc(afc_chan_info[count].num_chans *
+					       sizeof(*chan_eirp_info));
+
+			if (!chan_eirp_info)
+				return;
+
+			copy_afc_chan_eirp_info(chan_eirp_info,
+						afc_chan_info[count].num_chans,
+						chan_eirp_power_info_hdr,
+						&src_pwr_index);
+			afc_chan_info[count].chan_eirp_info = chan_eirp_info;
+		} else {
+			wmi_err("Number of channels is zero in object idx %d",
+				count);
+		}
+	}
+}
+
+static void copy_afc_freq_obj_info(struct afc_freq_obj *afc_freq_info,
+				   uint8_t num_freq_objs,
+				   wmi_6g_afc_frequency_info *freq_info_hdr)
+{
+	uint8_t count;
+
+	for (count = 0; count < num_freq_objs; count++) {
+		afc_freq_info[count].low_freq =
+		WMI_REG_RULE_START_FREQ_GET(freq_info_hdr[count].freq_info);
+		afc_freq_info[count].high_freq =
+		WMI_REG_RULE_END_FREQ_GET(freq_info_hdr[count].freq_info);
+		afc_freq_info[count].max_psd =
+					freq_info_hdr[count].psd_power_info;
+	}
+}
+
+/**
+ * copy_afc_event_fixed_hdr_power_info() - Copy the fixed header portion of
+ * the power event info from the WMI AFC event buffer to the internal buffer
+ * power_info.
+ * @power_info: pointer to power_info
+ * @afc_power_event_hdr: pointer to afc_power_event_hdr
+ *
+ * Return: void
+ */
+static void
+copy_afc_event_fixed_hdr_power_info(
+		struct reg_fw_afc_power_event *power_info,
+		wmi_afc_power_event_param *afc_power_event_hdr)
+{
+	power_info->fw_status_code = afc_power_event_hdr->fw_status_code;
+	power_info->resp_id = afc_power_event_hdr->resp_id;
+	power_info->serv_resp_code = afc_power_event_hdr->afc_serv_resp_code;
+	power_info->afc_wfa_version =
+	WMI_AFC_WFA_MINOR_VERSION_GET(afc_power_event_hdr->afc_wfa_version);
+	power_info->afc_wfa_version |=
+	WMI_AFC_WFA_MAJOR_VERSION_GET(afc_power_event_hdr->afc_wfa_version);
+
+	power_info->avail_exp_time_d =
+	WMI_AVAIL_EXPIRY_TIME_DAY_GET(afc_power_event_hdr->avail_exp_time_d);
+	power_info->avail_exp_time_d |=
+	WMI_AVAIL_EXPIRY_TIME_MONTH_GET(afc_power_event_hdr->avail_exp_time_d);
+	power_info->avail_exp_time_d |=
+	WMI_AVAIL_EXPIRY_TIME_YEAR_GET(afc_power_event_hdr->avail_exp_time_d);
+
+	power_info->avail_exp_time_t =
+	WMI_AVAIL_EXPIRY_TIME_SEC_GET(afc_power_event_hdr->avail_exp_time_t);
+	power_info->avail_exp_time_t |=
+	WMI_AVAIL_EXPIRY_TIME_MINUTE_GET(afc_power_event_hdr->avail_exp_time_t);
+	power_info->avail_exp_time_t |=
+	WMI_AVAIL_EXPIRY_TIME_HOUR_GET(afc_power_event_hdr->avail_exp_time_t);
+}
+
+/**
+ * copy_power_event() - Copy the power event parameters from the AFC event
+ * buffer to the power_info within the afc_info.
+ * @afc_info: pointer to afc_info
+ * @param_buf: pointer to param_buf
+ *
+ * Return: void
+ */
+static void copy_power_event(struct afc_regulatory_info *afc_info,
+			     WMI_AFC_EVENTID_param_tlvs *param_buf)
+{
+	struct reg_fw_afc_power_event *power_info;
+	wmi_afc_power_event_param *afc_power_event_hdr;
+	struct afc_freq_obj *afc_freq_info;
+
+	power_info = qdf_mem_malloc(sizeof(*power_info));
+
+	if (!power_info)
+		return;
+
+	afc_power_event_hdr = param_buf->afc_power_event_param;
+	copy_afc_event_fixed_hdr_power_info(power_info, afc_power_event_hdr);
+	afc_info->power_info = power_info;
+
+	power_info->num_freq_objs = param_buf->num_freq_info_array;
+	if (power_info->num_freq_objs > 0) {
+		wmi_6g_afc_frequency_info *freq_info_hdr;
+
+		freq_info_hdr = param_buf->freq_info_array;
+		afc_freq_info = qdf_mem_malloc(power_info->num_freq_objs *
+					       sizeof(*afc_freq_info));
+
+		if (!afc_freq_info)
+			return;
+
+		copy_afc_freq_obj_info(afc_freq_info, power_info->num_freq_objs,
+				       freq_info_hdr);
+		power_info->afc_freq_info = afc_freq_info;
+	} else {
+		wmi_err("Number of frequency objects is zero");
+	}
+
+	power_info->num_chan_objs = param_buf->num_channel_info_array;
+	if (power_info->num_chan_objs > 0) {
+		struct afc_chan_obj *afc_chan_info;
+		wmi_6g_afc_channel_info *channel_info_hdr;
+
+		channel_info_hdr = param_buf->channel_info_array;
+		afc_chan_info = qdf_mem_malloc(power_info->num_chan_objs *
+					       sizeof(*afc_chan_info));
+
+		copy_afc_chan_obj_info(afc_chan_info,
+				       power_info->num_chan_objs,
+				       channel_info_hdr,
+				       param_buf->chan_eirp_power_info_array);
+		power_info->afc_chan_info = afc_chan_info;
+	} else {
+		wmi_err("Number of channel objects is zero");
+	}
+}
+
+static void copy_expiry_event(struct afc_regulatory_info *afc_info,
+			      WMI_AFC_EVENTID_param_tlvs *param_buf)
+{
+	struct reg_afc_expiry_event *expiry_info;
+
+	expiry_info = qdf_mem_malloc(sizeof(*expiry_info));
+
+	if (!expiry_info)
+		return;
+
+	expiry_info->request_id =
+				param_buf->expiry_event_param->request_id;
+	expiry_info->event_subtype =
+				param_buf->expiry_event_param->event_subtype;
+	afc_info->expiry_info = expiry_info;
+}
+
+/**
+ * copy_afc_event_common_info() - Copy the phy_id and event_type parameters
+ * in the AFC event. 'Common' indicates that these parameters are common for
+ * WMI_AFC_EVENT_POWER_INFO and WMI_AFC_EVENT_TIMER_EXPIRY.
+ * @wmi_handle: wmi handle
+ * @afc_info: pointer to afc_info
+ * @event_fixed_hdr: pointer to event_fixed_hdr
+ *
+ * Return: void
+ */
+static void
+copy_afc_event_common_info(wmi_unified_t wmi_handle,
+			   struct afc_regulatory_info *afc_info,
+			   wmi_afc_event_fixed_param *event_fixed_hdr)
+{
+	afc_info->phy_id = wmi_handle->ops->convert_phy_id_target_to_host(
+				wmi_handle, event_fixed_hdr->phy_id);
+	afc_info->event_type = event_fixed_hdr->event_type;
+}
+
+static QDF_STATUS extract_afc_event_tlv(wmi_unified_t wmi_handle,
+					uint8_t *evt_buf,
+					struct afc_regulatory_info *afc_info,
+					uint32_t len)
+{
+	WMI_AFC_EVENTID_param_tlvs *param_buf;
+	wmi_afc_event_fixed_param *event_fixed_hdr;
+
+	param_buf = (WMI_AFC_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		wmi_err("Invalid AFC event buf");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	event_fixed_hdr = param_buf->fixed_param;
+	copy_afc_event_common_info(wmi_handle, afc_info, event_fixed_hdr);
+
+	switch (afc_info->event_type) {
+	case WMI_AFC_EVENT_POWER_INFO:
+		copy_power_event(afc_info, param_buf);
+		break;
+	case WMI_AFC_EVENT_TIMER_EXPIRY:
+		copy_expiry_event(afc_info, param_buf);
+		return QDF_STATUS_SUCCESS;
+	default:
+		wmi_err("Invalid event type");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 #endif
 
 static QDF_STATUS extract_reg_chan_list_update_event_tlv(
@@ -15871,6 +16132,9 @@ struct wmi_ops tlv_ops =  {
 #ifdef CONFIG_BAND_6GHZ
 	.extract_reg_chan_list_ext_update_event =
 		extract_reg_chan_list_ext_update_event_tlv,
+#ifdef CONFIG_AFC_SUPPORT
+	.extract_afc_event = extract_afc_event_tlv,
+#endif
 #endif
 #ifdef WLAN_SUPPORT_RF_CHARACTERIZATION
 	.extract_num_rf_characterization_entries =
@@ -16242,6 +16506,9 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_reg_chan_list_cc_event_id] = WMI_REG_CHAN_LIST_CC_EVENTID;
 	event_ids[wmi_reg_chan_list_cc_ext_event_id] =
 					WMI_REG_CHAN_LIST_CC_EXT_EVENTID;
+#ifdef CONFIG_AFC_SUPPORT
+	event_ids[wmi_afc_event_id] = WMI_AFC_EVENTID,
+#endif
 	event_ids[wmi_inst_rssi_stats_event_id] = WMI_INST_RSSI_STATS_EVENTID;
 	event_ids[wmi_pdev_tpc_config_event_id] = WMI_PDEV_TPC_CONFIG_EVENTID;
 	event_ids[wmi_peer_sta_ps_statechg_event_id] =
