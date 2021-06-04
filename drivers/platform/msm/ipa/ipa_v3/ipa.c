@@ -2314,6 +2314,8 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	struct ipa_ioc_nat_dma_cmd *table_dma_cmd;
 	struct ipa_ioc_get_vlan_mode vlan_mode;
 	struct ipa_ioc_wigig_fst_switch fst_switch;
+	struct ipa_ioc_eogre_info eogre_info;
+	bool send2uC, send2ipacm;
 	size_t sz;
 	int pre_entry;
 	int hdl;
@@ -3618,6 +3620,66 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		if (ipa3_send_pkt_threshold(arg))
 			retval = -EFAULT;
 		break;
+
+	case IPA_IOC_ADD_EoGRE_MAPPING:
+		if (copy_from_user(
+				&eogre_info,
+				(const void __user *) arg,
+				sizeof(struct ipa_ioc_eogre_info))) {
+			IPAERR_RL("copy_from_user fails\n");
+			retval = -EFAULT;
+			break;
+		}
+
+		retval = ipa3_check_eogre(&eogre_info, &send2uC, &send2ipacm);
+
+		if (retval == 0 && send2uC == true) {
+			/*
+			 * Send map to uC...
+			 */
+			retval = ipa3_add_dscp_vlan_pcp_map(
+				&eogre_info.map_info);
+		}
+
+		if (retval == 0 && send2ipacm == true) {
+			/*
+			 * Send ip addrs to ipacm...
+			 */
+			retval = ipa3_send_eogre_info(IPA_EoGRE_UP_EVENT, &eogre_info);
+		}
+
+		if (retval == 0) {
+			ipa3_ctx->eogre_enabled = true;
+		}
+
+		break;
+
+	case IPA_IOC_DEL_EoGRE_MAPPING:
+		memset(&eogre_info, 0, sizeof(eogre_info));
+
+		retval = ipa3_check_eogre(&eogre_info, &send2uC, &send2ipacm);
+
+		if (retval == 0 && send2uC == true) {
+			/*
+			 * Send map clear to uC...
+			 */
+			retval = ipa3_add_dscp_vlan_pcp_map(
+				&eogre_info.map_info);
+		}
+
+		if (retval == 0 && send2ipacm == true) {
+			/*
+			 * Send null ip addrs to ipacm...
+			 */
+			retval = ipa3_send_eogre_info(IPA_EoGRE_DOWN_EVENT, &eogre_info);
+		}
+
+		if (retval == 0) {
+			ipa3_ctx->eogre_enabled = false;
+		}
+
+		break;
+
 	default:
 		IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
 		return -ENOTTY;
@@ -5701,6 +5763,12 @@ long compat_ipa3_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		break;
 	case IPA_IOC_APP_CLOCK_VOTE32:
 		cmd = IPA_IOC_APP_CLOCK_VOTE;
+		break;
+	case IPA_IOC_ADD_EoGRE_MAPPING32:
+		cmd = IPA_IOC_ADD_EoGRE_MAPPING;
+		break;
+	case IPA_IOC_DEL_EoGRE_MAPPING32:
+		cmd = IPA_IOC_DEL_EoGRE_MAPPING;
 		break;
 	case IPA_IOC_COMMIT_HDR:
 	case IPA_IOC_RESET_HDR:

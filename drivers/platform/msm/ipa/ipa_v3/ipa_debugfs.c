@@ -92,6 +92,8 @@ const char *ipa3_event_name[IPA_EVENT_MAX_NUM] = {
 	__stringify(IPA_MAC_FLT_EVENT),
 	__stringify(IPA_DONE_RESTORE_EVENT),
 	__stringify(IPA_SW_FLT_EVENT),
+	__stringify(IPA_EoGRE_UP_EVENT),
+	__stringify(IPA_EoGRE_DOWN_EVENT),
 };
 
 const char *ipa3_hdr_l2_type_name[] = {
@@ -112,6 +114,9 @@ const char *ipa3_hdr_proc_type_name[] = {
 	__stringify(IPA_HDR_PROC_ETHII_TO_ETHII_EX),
 	__stringify(IPA_HDR_PROC_L2TP_UDP_HEADER_ADD),
 	__stringify(IPA_HDR_PROC_L2TP_UDP_HEADER_REMOVE),
+	__stringify(IPA_HDR_PROC_SET_DSCP),
+	__stringify(IPA_HDR_PROC_EoGRE_HEADER_ADD),
+	__stringify(IPA_HDR_PROC_EoGRE_HEADER_REMOVE),
 };
 
 static struct dentry *dent;

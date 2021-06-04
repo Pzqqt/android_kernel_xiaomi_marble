@@ -879,16 +879,18 @@ union ipa_pkt_status_hw_v5_0 {
 /* Headers and processing context H/W structures and definitions */
 
 /* uCP command numbers */
-#define IPA_HDR_UCP_802_3_TO_802_3		6
-#define IPA_HDR_UCP_802_3_TO_ETHII		7
-#define IPA_HDR_UCP_ETHII_TO_802_3		8
-#define IPA_HDR_UCP_ETHII_TO_ETHII		9
-#define IPA_HDR_UCP_L2TP_HEADER_ADD		10
-#define IPA_HDR_UCP_L2TP_HEADER_REMOVE		11
-#define IPA_HDR_UCP_L2TP_UDP_HEADER_ADD		12
-#define IPA_HDR_UCP_L2TP_UDP_HEADER_REMOVE	13
-#define IPA_HDR_UCP_ETHII_TO_ETHII_EX		14
-#define IPA_HDR_UCP_SET_DSCP			16
+#define IPA_HDR_UCP_802_3_TO_802_3          6
+#define IPA_HDR_UCP_802_3_TO_ETHII          7
+#define IPA_HDR_UCP_ETHII_TO_802_3          8
+#define IPA_HDR_UCP_ETHII_TO_ETHII          9
+#define IPA_HDR_UCP_L2TP_HEADER_ADD        10
+#define IPA_HDR_UCP_L2TP_HEADER_REMOVE     11
+#define IPA_HDR_UCP_L2TP_UDP_HEADER_ADD    12
+#define IPA_HDR_UCP_L2TP_UDP_HEADER_REMOVE 13
+#define IPA_HDR_UCP_ETHII_TO_ETHII_EX      14
+#define IPA_HDR_UCP_SET_DSCP               16
+#define IPA_HDR_UCP_EoGRE_HEADER_ADD       17
+#define IPA_HDR_UCP_EoGRE_HEADER_REMOVE    18
 
 /* Processing context TLV type */
 #define IPA_PROC_CTX_TLV_TYPE_END 0
@@ -1034,6 +1036,54 @@ struct ipa_hw_hdr_proc_ctx_add_hdr_cmd_seq_ex {
  */
 struct ipa_hw_hdr_proc_ctx_remove_l2tp_udp_hdr_cmd_seq {
 	struct ipa_hw_hdr_proc_ctx_l2tp_remove_hdr l2tp_params;
+	struct ipa_hw_hdr_proc_ctx_tlv end;
+};
+
+/**
+ * struct ipa_hw_hdr_proc_ctx_eogre_add_hdr -
+ * HW structure of IPA processing context - add eogre header tlv
+ * @tlv: IPA processing context TLV
+ * @eogre_params: eogre parameters
+ */
+struct ipa_hw_hdr_proc_ctx_eogre_add_hdr {
+	struct ipa_hw_hdr_proc_ctx_tlv tlv;
+	struct ipa_eogre_header_add_procparams eogre_params;
+};
+
+/**
+ * struct ipa_hw_hdr_proc_ctx_eogre_remove_hdr -
+ * HW structure of IPA processing context - remove eogre header tlv
+ * @tlv: IPA processing context TLV
+ * @eogre_params: eogre parameters
+ */
+struct ipa_hw_hdr_proc_ctx_eogre_remove_hdr {
+	struct ipa_hw_hdr_proc_ctx_tlv tlv;
+	struct ipa_eogre_header_remove_procparams eogre_params;
+};
+
+/**
+ * struct ipa_hw_hdr_proc_ctx_add_eogre_hdr_cmd_seq -
+ * IPA processing context header - process command sequence
+ * @hdr_add: add header command
+ * @eogre_params: eogre params for header addition
+ * @end: tlv end command (cmd.type must be 0)
+ */
+struct ipa_hw_hdr_proc_ctx_add_eogre_hdr_cmd_seq {
+	struct ipa_hw_hdr_proc_ctx_hdr_add hdr_add;
+	struct ipa_hw_hdr_proc_ctx_eogre_add_hdr eogre_params;
+	struct ipa_hw_hdr_proc_ctx_tlv end;
+};
+
+/**
+ * struct ipa_hw_hdr_proc_ctx_remove_eogre_hdr_cmd_seq -
+ * IPA processing context header - process command sequence
+ * @hdr_add: add header command
+ * @eogre_params: eogre params for header removal
+ * @end: tlv end command (cmd.type must be 0)
+ */
+struct ipa_hw_hdr_proc_ctx_remove_eogre_hdr_cmd_seq {
+	struct ipa_hw_hdr_proc_ctx_hdr_add hdr_add;
+	struct ipa_hw_hdr_proc_ctx_eogre_remove_hdr eogre_params;
 	struct ipa_hw_hdr_proc_ctx_tlv end;
 };
 

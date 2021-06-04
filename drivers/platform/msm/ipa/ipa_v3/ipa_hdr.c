@@ -107,6 +107,7 @@ static int ipa3_hdr_proc_ctx_to_hw_format(struct ipa_mem_buffer *mem,
 				(entry->hdr->is_lcl) ? hdr_lcl_addr : hdr_sys_addr,
 				entry->hdr->offset_entry,
 				&entry->l2tp_params,
+				&entry->eogre_params,
 				&entry->generic_params,
 				ipa3_ctx->use_64_bit_dma_mask);
 		if (ret)
@@ -448,6 +449,7 @@ static int __ipa_add_hdr_proc_ctx(struct ipa_hdr_proc_ctx_add *proc_ctx,
 	entry->type = proc_ctx->type;
 	entry->hdr = hdr_entry;
 	entry->l2tp_params = proc_ctx->l2tp_params;
+	entry->eogre_params = proc_ctx->eogre_params;
 	entry->generic_params = proc_ctx->generic_params;
 	if (add_ref_hdr)
 		hdr_entry->ref_cnt++;
