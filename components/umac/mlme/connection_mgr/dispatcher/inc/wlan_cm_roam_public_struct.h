@@ -1440,7 +1440,6 @@ struct wlan_roam_scan_period_params {
 	uint32_t full_scan_period;
 };
 
-#define ROAM_MAX_CHANNELS 80
 /**
  * wlan_roam_scan_channel_list  - Roam Scan channel list related
  * parameters
@@ -1452,7 +1451,7 @@ struct wlan_roam_scan_period_params {
 struct wlan_roam_scan_channel_list {
 	uint32_t vdev_id;
 	uint8_t chan_count;
-	uint32_t chan_freq_list[ROAM_MAX_CHANNELS];
+	uint32_t chan_freq_list[CFG_VALID_CHANNEL_LIST_LEN];
 	uint8_t chan_cache_type;
 };
 

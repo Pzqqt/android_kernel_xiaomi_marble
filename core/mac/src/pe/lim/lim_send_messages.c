@@ -509,7 +509,7 @@ QDF_STATUS lim_send_ht40_obss_scanind(struct mac_context *mac_ctx,
 	/* Extract 24G channel list */
 	channel24gnum = 0;
 	for (count = 0; count < channelnum &&
-		(channel24gnum < ROAM_MAX_CHANNELS); count++) {
+		(channel24gnum < CFG_VALID_CHANNEL_LIST_LEN); count++) {
 		chan_freq =
 			mac_ctx->mlme_cfg->reg.valid_channel_freq_list[count];
 		if (wlan_reg_is_24ghz_ch_freq(chan_freq)) {
