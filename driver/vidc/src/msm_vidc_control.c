@@ -1901,7 +1901,7 @@ int msm_vidc_adjust_session_priority(void *instance, struct v4l2_ctrl *ctrl)
 {
 	int rc = 0;
 	int adjusted_value;
-	bool rate_by_client = false;
+	bool rate_by_client;
 	struct msm_vidc_inst_capability *capability;
 	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
 
@@ -1914,8 +1914,13 @@ int msm_vidc_adjust_session_priority(void *instance, struct v4l2_ctrl *ctrl)
 		capability->cap[PRIORITY].value;
 
 	if (capability->cap[FRAME_RATE].flags & CAP_FLAG_CLIENT_SET ||
-		capability->cap[OPERATING_RATE].flags & CAP_FLAG_CLIENT_SET)
+		capability->cap[OPERATING_RATE].flags & CAP_FLAG_CLIENT_SET) {
 		rate_by_client = true;
+		inst->priority_level = MSM_VIDC_PRIORITY_HIGH;
+	} else {
+		rate_by_client = false;
+		inst->priority_level = MSM_VIDC_PRIORITY_LOW;
+	}
 
 	/*
 	 * For RT, check for resource feasability if rate is set by client.
@@ -1930,13 +1935,9 @@ int msm_vidc_adjust_session_priority(void *instance, struct v4l2_ctrl *ctrl)
 			return rc;
 		}
 	}
-	if (adjusted_value == 0 && !rate_by_client) {
-		adjusted_value = 1;
-		inst->priority_level = MSM_VIDC_PRIORITY_LOW;
-	}
 
-	if (adjusted_value > 0 && rate_by_client)
-		inst->priority_level = MSM_VIDC_PRIORITY_HIGH;
+	if (adjusted_value == 0 && !rate_by_client)
+		adjusted_value = 1;
 
 	msm_vidc_update_cap_value(inst, PRIORITY, adjusted_value, __func__);
 
@@ -2767,6 +2768,8 @@ int msm_vidc_set_session_priority(void *instance,
 		&hfi_value, sizeof(u32), __func__);
 	if (rc)
 		return rc;
+
+	inst->firmware_priority = hfi_value;
 
 	return rc;
 }

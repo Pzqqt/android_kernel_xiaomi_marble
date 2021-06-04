@@ -1981,6 +1981,10 @@ int msm_vdec_qbuf(struct msm_vidc_inst *inst, struct vb2_buffer *vb2)
 		}
 	}
 
+	if (inst->firmware_priority != (inst->priority_level +
+					inst->capabilities->cap[PRIORITY].value * 2))
+		msm_vidc_set_session_priority(inst, PRIORITY);
+
 	/* batch decoder output & meta buffer only */
 	if (inst->decode_batch.enable && vb2->type == OUTPUT_MPLANE)
 		rc = msm_vdec_qbuf_batch(inst, vb2);
@@ -2369,8 +2373,7 @@ set_default:
 		}
 	}
 
-	if (!is_realtime_session(inst))
-		inst->priority_level = MSM_VIDC_PRIORITY_HIGH;
+	inst->priority_level = MSM_VIDC_PRIORITY_HIGH;
 
 	if (is_frame_rate)
 		capability->cap[FRAME_RATE].flags |= CAP_FLAG_CLIENT_SET;
@@ -2598,6 +2601,8 @@ int msm_vdec_inst_init(struct msm_vidc_inst *inst)
 	inst->buffers.output_meta.extra_count = 0;
 	inst->buffers.output_meta.actual_count = 0;
 	inst->buffers.output_meta.size = 0;
+
+	inst->priority_level = MSM_VIDC_PRIORITY_LOW;
 
 	rc = msm_vdec_codec_change(inst,
 			inst->fmts[INPUT_PORT].fmt.pix_mp.pixelformat);
