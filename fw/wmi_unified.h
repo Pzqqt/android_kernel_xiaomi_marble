@@ -27724,6 +27724,12 @@ typedef struct {
 #define WMI_SUPPORT_ADFS_160_GET(flags) WMI_GET_BITS(flags, 7, 1)
 #define WMI_SUPPORT_ADFS_160_SET(flags, value) WMI_SET_BITS(flags, 7, 1, value)
 
+#define WMI_SUPPORT_CHAN_WIDTH_320_GET(flags) WMI_GET_BITS(flags, 8, 1)
+#define WMI_SUPPORT_CHAN_WIDTH_320_SET(flags, value) WMI_SET_BITS(flags, 8, 1, value)
+
+#define WMI_SUPPORT_ADFS_320_GET(flags) WMI_GET_BITS(flags, 9, 1)
+#define WMI_SUPPORT_ADFS_320_SET(flags, value) WMI_SET_BITS(flags, 9, 1, value)
+
 #define WMI_SUPPORT_CHAIN_MASK_2G_GET(flags) WMI_GET_BITS(flags, 27, 1)
 #define WMI_SUPPORT_CHAIN_MASK_2G_SET(flags, value) WMI_SET_BITS(flags, 27, 1, value)
 
@@ -27753,7 +27759,9 @@ typedef struct {
                      supports_agile_spectral:1,
                      supports_agile_spectral_160:1,
                      supports_aDFS_160:1,
-                     reserved:19, /* bits 26:8 */
+                     supports_chan_width_320:1,
+                     supports_aDFS_320:1,
+                     reserved:17, /* bits 26:10 */
                      chain_mask_2G:1,
                      chain_mask_5G:1,
                      chain_mask_tx:1,
