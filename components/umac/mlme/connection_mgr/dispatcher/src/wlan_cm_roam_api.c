@@ -1716,6 +1716,9 @@ void wlan_cm_init_occupied_ch_freq_list(struct wlan_objmgr_pdev *pdev,
 
 	dual_sta_roam_active =
 			wlan_mlme_get_dual_sta_roaming_enabled(psoc);
+	dual_sta_roam_active = dual_sta_roam_active &&
+			       policy_mgr_mode_specific_connection_count
+				(psoc, PM_STA_MODE, NULL) >= 2;
 
 	qdf_list_peek_front(list, &cur_lst);
 	while (cur_lst) {
