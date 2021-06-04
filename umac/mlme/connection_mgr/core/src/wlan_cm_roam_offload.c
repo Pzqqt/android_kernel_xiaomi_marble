@@ -3106,6 +3106,7 @@ cm_roam_switch_to_deinit(struct wlan_objmgr_pdev *pdev,
 
 	mlme_set_roam_state(psoc, vdev_id, WLAN_ROAM_DEINIT);
 	mlme_clear_operations_bitmap(psoc, vdev_id);
+	wlan_cm_roam_activate_pcl_per_vdev(psoc, vdev_id, false);
 
 	/* In case of roaming getting disabled due to
 	 * REASON_ROAM_SET_PRIMARY reason, don't enable roaming on
