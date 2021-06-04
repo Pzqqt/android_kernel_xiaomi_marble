@@ -1315,6 +1315,7 @@ static void _sde_encoder_update_vsync_source(struct sde_encoder_virt *sde_enc,
 			struct msm_display_info *disp_info)
 {
 	struct sde_encoder_phys *phys;
+	struct sde_connector *sde_conn;
 	int i;
 	u32 vsync_source;
 
@@ -1329,8 +1330,10 @@ static void _sde_encoder_update_vsync_source(struct sde_encoder_virt *sde_enc,
 		return;
 	}
 
+	sde_conn = to_sde_connector(sde_enc->cur_master->connector);
+
 	if (sde_encoder_check_curr_mode(&sde_enc->base, MSM_DISPLAY_CMD_MODE)) {
-		if (disp_info->is_te_using_watchdog_timer)
+		if (disp_info->is_te_using_watchdog_timer || sde_conn->panel_dead)
 			vsync_source = SDE_VSYNC_SOURCE_WD_TIMER_4 + sde_enc->te_source;
 		else
 			vsync_source = sde_enc->te_source;
