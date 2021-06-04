@@ -1521,7 +1521,10 @@ static int _sde_encoder_phys_cmd_handle_wr_ptr_timeout(
 
 	SDE_EVT32(DRMID(phys_enc->parent), switch_te, SDE_EVTLOG_FUNC_ENTRY);
 
-	if (switch_te) {
+	if (sde_connector_esd_status(phys_enc->connector)) {
+		/* watchdog TE already set on esd status check failure */
+		ret = _sde_encoder_phys_cmd_wait_for_wr_ptr(phys_enc);
+	} else if (switch_te) {
 		SDE_DEBUG_CMDENC(cmd_enc,
 				"wr_ptr_irq wait failed, retry with WD TE\n");
 
@@ -1850,6 +1853,7 @@ static void sde_encoder_phys_cmd_setup_vsync_source(struct sde_encoder_phys *phy
 		u32 vsync_source, struct msm_display_info *disp_info)
 {
 	struct sde_encoder_virt *sde_enc;
+	struct sde_connector *sde_conn;
 
 	if (!phys_enc || !phys_enc->hw_intf)
 		return;
@@ -1858,7 +1862,9 @@ static void sde_encoder_phys_cmd_setup_vsync_source(struct sde_encoder_phys *phy
 	if (!sde_enc)
 		return;
 
-	if (disp_info->is_te_using_watchdog_timer &&
+	sde_conn = to_sde_connector(phys_enc->connector);
+
+	if ((disp_info->is_te_using_watchdog_timer || sde_conn->panel_dead) &&
 			phys_enc->hw_intf->ops.setup_vsync_source) {
 		vsync_source = SDE_VSYNC_SOURCE_WD_TIMER_0;
 		phys_enc->hw_intf->ops.setup_vsync_source(phys_enc->hw_intf,
