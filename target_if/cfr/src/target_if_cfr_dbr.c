@@ -379,6 +379,10 @@ static void dump_cfr_peer_tx_event(wmi_cfr_peer_tx_event_param *event)
 
 	cfr_debug("rx_start_ts: %u\n", event->rx_start_ts);
 
+	cfr_debug("mcs_rate: %u\n", event->mcs_rate);
+
+	cfr_debug("gi_type: %u\n", event->gi_type);
+
 	cfr_debug("agc_gain0: %u agc_gain1: %u agc_gain2: %u agc_gain3: %u\n"
 		  "agc_gain4: %u agc_gain5: %u agc_gain6: %u agc_gain7: %u\n",
 		  event->agc_gain[0], event->agc_gain[1],
@@ -571,6 +575,8 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	header->u.meta_dbr.timestamp     = tx_evt_param.timestamp_us;
 	header->u.meta_dbr.rx_start_ts   = tx_evt_param.rx_start_ts;
 	header->u.meta_dbr.rtt_cfo_measurement = tx_evt_param.cfo_measurement;
+	header->u.meta_dbr.mcs_rate      = tx_evt_param.mcs_rate;
+	header->u.meta_dbr.gi_type       = tx_evt_param.gi_type;
 
 	qdf_mem_copy(&header->u.meta_dbr.agc_gain[0],
 		     &tx_evt_param.agc_gain[0],

@@ -399,7 +399,7 @@ static void dump_metadata(struct csi_cfr_header *header, uint32_t cookie)
 			  meta->chain_phase[chain_id]);
 	}
 
-	if (header->cmn.cfr_metadata_version == CFR_META_VERSION_5) {
+	if (header->cmn.cfr_metadata_version >= CFR_META_VERSION_5) {
 		cfr_debug("rtt_cfo_measurement = %d\n",
 			  meta->rtt_cfo_measurement);
 		cfr_debug("rx_start_ts = %u\n", meta->rx_start_ts);
@@ -409,6 +409,9 @@ static void dump_metadata(struct csi_cfr_header *header, uint32_t cookie)
 				  chain_id,
 				  meta->agc_gain[chain_id]);
 		}
+
+		cfr_debug("mcs_rate = %u\n", meta->mcs_rate);
+		cfr_debug("gi_type = %u\n", meta->gi_type);
 	}
 }
 
@@ -846,6 +849,15 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
 	meta->agc_gain[5] = get_gain_db(get_u16_msb(cfr_info->agc_gain_info2));
 	meta->agc_gain[6] = get_gain_db(get_u16_lsb(cfr_info->agc_gain_info3));
 	meta->agc_gain[7] = get_gain_db(get_u16_msb(cfr_info->agc_gain_info3));
+
+	meta->mcs_rate = cfr_info->mcs_rate;
+	meta->gi_type = cfr_info->gi_type;
+	meta->sig_info.ltf_size = cdp_rx_ppdu->u.ltf_size;
+	meta->sig_info.stbc = cdp_rx_ppdu->u.stbc;
+	meta->sig_info.sgi = (cdp_rx_ppdu->u.gi == CDP_SGI_0_4_US) ? 1 : 0;
+	meta->sig_info.dcm = cdp_rx_ppdu->u.dcm;
+	meta->sig_info.coding = cdp_rx_ppdu->u.ldpc;
+	meta->sig_info.beamformed = cdp_rx_ppdu->beamformed;
 
 	if (meta->num_mu_users > pcfr->max_mu_users)
 		meta->num_mu_users = pcfr->max_mu_users;
@@ -1408,6 +1420,8 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 		     HOST_MAX_CHAINS * sizeof(tx_evt_param.agc_gain[0]));
 	header->u.meta_enh.rtt_cfo_measurement = tx_evt_param.cfo_measurement;
 	header->u.meta_enh.rx_start_ts = tx_evt_param.rx_start_ts;
+	header->u.meta_enh.mcs_rate    = tx_evt_param.mcs_rate;
+	header->u.meta_enh.gi_type     = tx_evt_param.gi_type;
 
 	status = correlate_and_relay_enh(pdev, cookie, lut,
 					 CORRELATE_TX_EV_MODULE_ID);
