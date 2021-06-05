@@ -1075,6 +1075,20 @@ bool res_is_greater_than(u32 width, u32 height,
 		return false;
 }
 
+bool res_is_less_than(u32 width, u32 height,
+	u32 ref_width, u32 ref_height)
+{
+	u32 num_mbs = NUM_MBS_PER_FRAME(height, width);
+	u32 max_side = max(ref_width, ref_height);
+
+	if (num_mbs < NUM_MBS_PER_FRAME(ref_height, ref_width) &&
+		width < max_side &&
+		height < max_side)
+		return true;
+	else
+		return false;
+}
+
 bool res_is_less_than_or_equal_to(u32 width, u32 height,
 	u32 ref_width, u32 ref_height)
 {
@@ -1844,16 +1858,17 @@ int msm_vidc_get_control(struct msm_vidc_inst *inst, struct v4l2_ctrl *ctrl)
 
 int msm_vidc_get_mbs_per_frame(struct msm_vidc_inst *inst)
 {
-	int height, width;
-	struct v4l2_format *out_f;
+	int height = 0, width = 0;
 	struct v4l2_format *inp_f;
 
-	out_f = &inst->fmts[OUTPUT_PORT];
-	inp_f = &inst->fmts[INPUT_PORT];
-	height = max(out_f->fmt.pix_mp.height,
-			inp_f->fmt.pix_mp.height);
-	width = max(out_f->fmt.pix_mp.width,
-			inp_f->fmt.pix_mp.width);
+	if (is_decode_session(inst)) {
+		inp_f = &inst->fmts[INPUT_PORT];
+		width = inp_f->fmt.pix_mp.width;
+		height = inp_f->fmt.pix_mp.height;
+	} else if (is_encode_session(inst)) {
+		width = inst->crop.width;
+		height = inst->crop.height;
+	}
 
 	return NUM_MBS_PER_FRAME(height, width);
 }
@@ -5307,8 +5322,7 @@ exit:
 int msm_vidc_check_session_supported(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_inst_capability *capability;
-	struct v4l2_format *fmt;
-	u32 iwidth, owidth, iheight, oheight, min_width, min_height,
+	u32 width = 0, height = 0, min_width, min_height,
 		max_width, max_height;
 	bool allow = false, is_interlaced = false;
 	int rc = 0;
@@ -5337,13 +5351,13 @@ int msm_vidc_check_session_supported(struct msm_vidc_inst *inst)
 	if (rc)
 		goto exit;
 
-	fmt = &inst->fmts[INPUT_PORT];
-	iwidth = fmt->fmt.pix_mp.width;
-	iheight = fmt->fmt.pix_mp.height;
-
-	fmt = &inst->fmts[OUTPUT_PORT];
-	owidth = fmt->fmt.pix_mp.width;
-	oheight = fmt->fmt.pix_mp.height;
+	if (is_decode_session(inst)) {
+		width = inst->fmts[INPUT_PORT].fmt.pix_mp.width;
+		height = inst->fmts[INPUT_PORT].fmt.pix_mp.height;
+	} else if (is_encode_session(inst)) {
+		width = inst->crop.width;
+		height = inst->crop.height;
+	}
 
 	if (is_secure_session(inst)) {
 		min_width = capability->cap[SECURE_FRAME_WIDTH].min;
@@ -5364,29 +5378,40 @@ int msm_vidc_check_session_supported(struct msm_vidc_inst *inst)
 
 	/* reject odd resolution session */
 	if (is_encode_session(inst) &&
-		(is_odd(iwidth) || is_odd(iheight) || is_odd(owidth) || is_odd(oheight))) {
-		i_vpr_e(inst, "%s: resolution is not even. input [%u x %u], output [%u x %u]\n",
-			__func__, iwidth, iheight, owidth, oheight);
+		(is_odd(width) || is_odd(height) ||
+		is_odd(inst->compose.width) ||
+		is_odd(inst->compose.height))) {
+		i_vpr_e(inst, "%s: resolution is not even. wxh [%u x %u], compose [%u x %u]\n",
+			__func__, width, height, inst->compose.width,
+			inst->compose.height);
 		rc = -EINVAL;
 		goto exit;
 	}
 
-	/* check input width and height is in supported range */
-	if (!in_range(iwidth, min_width, max_width) || !in_range(iheight, min_height, max_height)) {
-		i_vpr_e(inst,
-			"%s: unsupported input wxh [%u x %u], allowed range: [%u x %u] to [%u x %u]\n",
-			__func__, iwidth, iheight, min_width, min_height, max_width, max_height);
-		rc = -EINVAL;
-		goto exit;
+	/* check decoder input width and height is in supported range */
+	if (is_decode_session(inst)) {
+		if (!in_range(width, min_width, max_width) ||
+			!in_range(height, min_height, max_height)) {
+			i_vpr_e(inst,
+				"%s: unsupported input wxh [%u x %u], allowed range: [%u x %u] to [%u x %u]\n",
+				__func__, width, height, min_width,
+				min_height, max_width, max_height);
+			rc = -EINVAL;
+			goto exit;
+		}
 	}
 
-	/* check output width and height is in supported range */
-	if (!in_range(owidth, min_width, max_width) || !in_range(oheight, min_height, max_height)) {
-		i_vpr_e(inst,
-			"%s: unsupported output wxh [%u x %u], allowed range: [%u x %u] to [%u x %u]\n",
-			__func__, owidth, oheight, min_width, min_height, max_width, max_height);
-		rc = -EINVAL;
-		goto exit;
+	/* check encoder crop width and height is in supported range */
+	if (is_encode_session(inst)) {
+		if (!in_range(width, min_width, max_width) ||
+			!in_range(height, min_height, max_height)) {
+			i_vpr_e(inst,
+				"%s: unsupported wxh [%u x %u], allowed range: [%u x %u] to [%u x %u]\n",
+				__func__, width, height, min_width,
+				min_height, max_width, max_height);
+			rc = -EINVAL;
+			goto exit;
+		}
 	}
 
 	/* check image capabilities */
@@ -5401,10 +5426,10 @@ int msm_vidc_check_session_supported(struct msm_vidc_inst *inst)
 
 	/* check interlace supported resolution */
 	is_interlaced = capability->cap[CODED_FRAMES].value == CODED_FRAMES_INTERLACE;
-	if (is_interlaced && (owidth > INTERLACE_WIDTH_MAX || oheight > INTERLACE_HEIGHT_MAX ||
-		NUM_MBS_PER_FRAME(owidth, oheight) > INTERLACE_MB_PER_FRAME_MAX)) {
+	if (is_interlaced && (width > INTERLACE_WIDTH_MAX || height > INTERLACE_HEIGHT_MAX ||
+		NUM_MBS_PER_FRAME(width, height) > INTERLACE_MB_PER_FRAME_MAX)) {
 		i_vpr_e(inst, "%s: unsupported interlace wxh [%u x %u], max [%u x %u]\n",
-			__func__, owidth, oheight, INTERLACE_WIDTH_MAX, INTERLACE_HEIGHT_MAX);
+			__func__, width, height, INTERLACE_WIDTH_MAX, INTERLACE_HEIGHT_MAX);
 		rc = -EINVAL;
 		goto exit;
 	}
