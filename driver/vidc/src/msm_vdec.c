@@ -86,8 +86,9 @@ static int msm_vdec_codec_change(struct msm_vidc_inst *inst, u32 v4l2_codec)
 	if (inst->codec && inst->fmts[INPUT_PORT].fmt.pix_mp.pixelformat == v4l2_codec)
 		return 0;
 
-	i_vpr_h(inst, "%s: codec changed from %#x to %#x\n",
-		__func__, inst->fmts[INPUT_PORT].fmt.pix_mp.pixelformat, v4l2_codec);
+	i_vpr_h(inst, "%s: codec changed from %s to %s\n",
+		__func__, v4l2_pixelfmt_name(inst->fmts[INPUT_PORT].fmt.pix_mp.pixelformat),
+		v4l2_pixelfmt_name(v4l2_codec));
 
 	inst->codec = v4l2_codec_to_driver(v4l2_codec, __func__);
 	rc = msm_vidc_update_debug_str(inst);
@@ -2093,10 +2094,6 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 	if (f->type == INPUT_MPLANE) {
 		if (inst->fmts[INPUT_PORT].fmt.pix_mp.pixelformat !=
 			f->fmt.pix_mp.pixelformat) {
-			i_vpr_h(inst,
-				"%s: codec changed from %#x to %#x\n", __func__,
-				inst->fmts[INPUT_PORT].fmt.pix_mp.pixelformat,
-				f->fmt.pix_mp.pixelformat);
 			rc = msm_vdec_codec_change(inst, f->fmt.pix_mp.pixelformat);
 			if (rc)
 				goto err_invalid_fmt;
@@ -2132,9 +2129,9 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 		inst->crop.width = f->fmt.pix_mp.width;
 		inst->crop.height = f->fmt.pix_mp.height;
 		i_vpr_h(inst,
-			"%s: input: codec %#x width %d height %d size %d min_count %d extra_count %d\n",
-			__func__, f->fmt.pix_mp.pixelformat, f->fmt.pix_mp.width,
-			f->fmt.pix_mp.height,
+			"%s: type: INPUT, codec %s width %d height %d size %u min_count %d extra_count %d\n",
+			__func__, v4l2_pixelfmt_name(f->fmt.pix_mp.pixelformat),
+			f->fmt.pix_mp.width, f->fmt.pix_mp.height,
 			fmt->fmt.pix_mp.plane_fmt[0].sizeimage,
 			inst->buffers.input.min_count,
 			inst->buffers.input.extra_count);
@@ -2160,7 +2157,7 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 			inst->buffers.input_meta.size = 0;
 		}
 		i_vpr_h(inst,
-			"%s: input meta: size %d min_count %d extra_count %d\n",
+			"%s: type: INPUT_META, size %u min_count %d extra_count %d\n",
 			__func__, fmt->fmt.meta.buffersize,
 			inst->buffers.input_meta.min_count,
 			inst->buffers.input_meta.extra_count);
@@ -2202,9 +2199,9 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 		pix_fmt = v4l2_colorformat_to_driver(f->fmt.pix_mp.pixelformat, __func__);
 		msm_vidc_update_cap_value(inst, PIX_FMTS, pix_fmt, __func__);
 		i_vpr_h(inst,
-			"%s: output: format %#x width %d height %d size %d min_count %d extra_count %d\n",
-			__func__, fmt->fmt.pix_mp.pixelformat, fmt->fmt.pix_mp.width,
-			fmt->fmt.pix_mp.height,
+			"%s: type: OUTPUT, format %s width %d height %d size %u min_count %d extra_count %d\n",
+			__func__, v4l2_pixelfmt_name(fmt->fmt.pix_mp.pixelformat),
+			fmt->fmt.pix_mp.width, fmt->fmt.pix_mp.height,
 			fmt->fmt.pix_mp.plane_fmt[0].sizeimage,
 			inst->buffers.output.min_count,
 			inst->buffers.output.extra_count);
@@ -2230,7 +2227,7 @@ int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 			inst->buffers.output_meta.size = 0;
 		}
 		i_vpr_h(inst,
-			"%s: output meta: size %d min_count %d extra_count %d\n",
+			"%s: type: OUTPUT_META, size %u min_count %d extra_count %d\n",
 			__func__, fmt->fmt.meta.buffersize,
 			inst->buffers.output_meta.min_count,
 			inst->buffers.output_meta.extra_count);
@@ -2295,8 +2292,8 @@ int msm_vdec_g_selection(struct msm_vidc_inst* inst, struct v4l2_selection* s)
 		s->r.height = inst->crop.height;
 		break;
 	}
-	i_vpr_h(inst, "%s: type %d target %d, r [%d, %d, %d, %d]\n",
-		__func__, s->type, s->target, s->r.top, s->r.left,
+	i_vpr_h(inst, "%s: target %d, r [%d, %d, %d, %d]\n",
+		__func__, s->target, s->r.top, s->r.left,
 		s->r.width, s->r.height);
 	return 0;
 }
@@ -2508,9 +2505,8 @@ int msm_vdec_enum_fmt(struct msm_vidc_inst *inst, struct v4l2_fmtdesc *f)
 	}
 	memset(f->reserved, 0, sizeof(f->reserved));
 
-	i_vpr_h(inst, "%s: index %d, %s : %#x, flags %#x, driver colorfmt %#x\n",
-		__func__, f->index, f->description, f->pixelformat, f->flags,
-		v4l2_colorformat_to_driver(f->pixelformat, __func__));
+	i_vpr_h(inst, "%s: index %d, %s: %s, flags %#x\n",
+		__func__, f->index, f->description, v4l2_pixelfmt_name(f->pixelformat), f->flags);
 	return rc;
 }
 
@@ -2606,6 +2602,8 @@ int msm_vdec_inst_init(struct msm_vidc_inst *inst)
 
 	rc = msm_vdec_codec_change(inst,
 			inst->fmts[INPUT_PORT].fmt.pix_mp.pixelformat);
+	if (rc)
+		return rc;
 
 	return rc;
 }
@@ -2621,6 +2619,8 @@ int msm_vdec_inst_deinit(struct msm_vidc_inst *inst)
 	/* cancel pending batch work */
 	cancel_batch_work(inst);
 	rc = msm_vidc_ctrl_deinit(inst);
+	if (rc)
+		return rc;
 
 	return rc;
 }

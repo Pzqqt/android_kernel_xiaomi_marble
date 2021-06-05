@@ -542,7 +542,7 @@ int msm_vidc_ctrl_init(struct msm_vidc_inst *inst)
 			rc = -EINVAL;
 			goto error;
 		}
-		i_vpr_h(inst,
+		i_vpr_l(inst,
 			"%s: cap[%d] %24s, value %d min %d max %d step_or_mask %#x flags %#x v4l2_id %#x hfi_id %#x\n",
 			__func__, idx, cap_name(idx),
 			capability->cap[idx].value,
@@ -728,13 +728,6 @@ int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl)
 				rc = msm_venc_s_fmt_output(inst, output_fmt);
 				if (rc)
 					return rc;
-
-				i_vpr_h(inst,
-					"%s: type %d: format %#x width %d height %d size %d\n",
-					__func__, output_fmt->type, output_fmt->fmt.pix_mp.pixelformat,
-					output_fmt->fmt.pix_mp.width,
-					output_fmt->fmt.pix_mp.height,
-					output_fmt->fmt.pix_mp.plane_fmt[0].sizeimage);
 			}
 		}
 

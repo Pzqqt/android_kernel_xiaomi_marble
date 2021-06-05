@@ -515,7 +515,7 @@ int msm_vidc_scale_power(struct msm_vidc_inst *inst, bool scale_buses)
 			i_vpr_e(inst, "failed to scale bus\n");
 	}
 
-	i_vpr_h(inst,
+	i_vpr_hp(inst,
 		"power: inst: clk %lld ddr %d llcc %d dcvs flags %#x, core: clk %lld ddr %lld llcc %lld\n",
 		inst->power.curr_freq, inst->power.ddr_bw,
 		inst->power.sys_cache_bw, inst->power.dcvs_flags,
@@ -569,7 +569,7 @@ void msm_vidc_power_data_reset(struct msm_vidc_inst *inst)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return;
 	}
-	i_vpr_h(inst, "%s\n", __func__);
+	i_vpr_hp(inst, "%s\n", __func__);
 
 	msm_vidc_dcvs_data_reset(inst);
 

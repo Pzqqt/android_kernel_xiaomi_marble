@@ -142,8 +142,8 @@ int msm_vidc_queue_setup(struct vb2_queue *q,
 	}
 
 	i_vpr_h(inst,
-		"queue_setup: type %d num_buffers %d sizes[0] %d\n",
-		q->type, *num_buffers, sizes[0]);
+		"queue_setup: type %s num_buffers %d sizes[0] %d\n",
+		v4l2_type_name(q->type), *num_buffers, sizes[0]);
 	return rc;
 }
 
@@ -163,8 +163,8 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 		return -EINVAL;
 	}
 	if (q->type == INPUT_META_PLANE || q->type == OUTPUT_META_PLANE) {
-		i_vpr_h(inst, "%s: nothing to start on meta port %d\n",
-			__func__, q->type);
+		i_vpr_h(inst, "%s: nothing to start on %s\n",
+			__func__, v4l2_type_name(q->type));
 		return 0;
 	}
 	if (!is_decode_session(inst) && !is_encode_session(inst)) {
@@ -172,7 +172,7 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 			__func__, inst->domain);
 		return -EINVAL;
 	}
-	i_vpr_h(inst, "Streamon: %d\n", q->type);
+	i_vpr_h(inst, "Streamon: %s\n", v4l2_type_name(q->type));
 
 	if (!inst->once_per_session_set) {
 		inst->once_per_session_set = true;
@@ -236,12 +236,12 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 	if (rc)
 		goto error;
 
-	i_vpr_h(inst, "Streamon: %d successful\n", q->type);
+	i_vpr_h(inst, "Streamon: %s successful\n", v4l2_type_name(q->type));
 
 	return rc;
 
 error:
-	i_vpr_h(inst, "Streamon: %d failed\n", q->type);
+	i_vpr_h(inst, "Streamon: %s failed\n", v4l2_type_name(q->type));
 	return -EINVAL;
 }
 
@@ -260,8 +260,8 @@ void msm_vidc_stop_streaming(struct vb2_queue *q)
 		return;
 	}
 	if (q->type == INPUT_META_PLANE || q->type == OUTPUT_META_PLANE) {
-		i_vpr_h(inst, "%s: nothing to stop on meta port %d\n",
-			__func__, q->type);
+		i_vpr_h(inst, "%s: nothing to stop on %s\n",
+			__func__, v4l2_type_name(q->type));
 		return;
 	}
 	if (!is_decode_session(inst) && !is_encode_session(inst)) {
@@ -269,7 +269,7 @@ void msm_vidc_stop_streaming(struct vb2_queue *q)
 			__func__, inst->domain);
 		return;
 	}
-	i_vpr_h(inst, "Streamoff: %d\n", q->type);
+	i_vpr_h(inst, "Streamoff: %s\n", v4l2_type_name(q->type));
 
 	if (q->type == INPUT_MPLANE) {
 		if (is_decode_session(inst))
@@ -292,11 +292,11 @@ void msm_vidc_stop_streaming(struct vb2_queue *q)
 	if (q->type == INPUT_MPLANE)
 		msm_vidc_flush_ts(inst);
 
-	i_vpr_h(inst, "Streamoff: %d successful\n", q->type);
+	i_vpr_h(inst, "Streamoff: %s successful\n", v4l2_type_name(q->type));
 	return;
 
 error:
-	i_vpr_e(inst, "Streamoff: %d failed\n", q->type);
+	i_vpr_e(inst, "Streamoff: %s failed\n", v4l2_type_name(q->type));
 	return;
 }
 

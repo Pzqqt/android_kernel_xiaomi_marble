@@ -262,7 +262,7 @@ static int __power_off_iris2(struct msm_vidc_core *vidc_core)
 			 __read_register(core,
 				AON_WRAPPER_MVP_NOC_LPI_STATUS);
 		reg_status = lpi_status & BIT(0);
-		d_vpr_h("Noc: lpi_status %d noc_status %d (count %d)\n",
+		d_vpr_l("Noc: lpi_status %d noc_status %d (count %d)\n",
 			lpi_status, reg_status, count);
 		usleep_range(50, 100);
 		count++;
@@ -282,7 +282,7 @@ static int __power_off_iris2(struct msm_vidc_core *vidc_core)
 		lpi_status = __read_register(core,
 				 WRAPPER_DEBUG_BRIDGE_LPI_STATUS_IRIS2);
 		reg_status = lpi_status & 0x7;
-		d_vpr_h("DBLP Set : lpi_status %d reg_status %d (count %d)\n",
+		d_vpr_l("DBLP Set : lpi_status %d reg_status %d (count %d)\n",
 			lpi_status, reg_status, count);
 		usleep_range(50, 100);
 		count++;
@@ -300,7 +300,7 @@ static int __power_off_iris2(struct msm_vidc_core *vidc_core)
 	while (lpi_status && count < max_count) {
 		lpi_status = __read_register(core,
 				 WRAPPER_DEBUG_BRIDGE_LPI_STATUS_IRIS2);
-		d_vpr_h("DBLP Release: lpi_status %d(count %d)\n",
+		d_vpr_l("DBLP Release: lpi_status %d(count %d)\n",
 			lpi_status, count);
 		usleep_range(50, 100);
 		count++;
