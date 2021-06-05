@@ -222,7 +222,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		1, V4L2_MPEG_MSM_VIDC_DISABLE,
 		V4L2_CID_MPEG_VIDC_SECURE,
 		HFI_PROP_SECURE,
-		CAP_FLAG_ROOT,
+		CAP_FLAG_NONE,
 		{0},
 		{0},
 		NULL, msm_vidc_set_u32},

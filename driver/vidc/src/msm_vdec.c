@@ -557,27 +557,6 @@ static int msm_vdec_set_output_order(struct msm_vidc_inst *inst,
 	return rc;
 }
 
-static int msm_vdec_set_secure_mode(struct msm_vidc_inst *inst,
-	enum msm_vidc_port_type port)
-{
-	int rc = 0;
-	u32 secure_mode;
-
-	secure_mode = inst->capabilities->cap[SECURE_MODE].value;
-	i_vpr_h(inst, "%s: secure mode: %d", __func__, secure_mode);
-	rc = venus_hfi_session_property(inst,
-			HFI_PROP_SECURE,
-			HFI_HOST_FLAGS_NONE,
-			HFI_PORT_NONE,
-			HFI_PAYLOAD_U32,
-			&secure_mode,
-			sizeof(u32));
-	if (rc)
-		i_vpr_e(inst, "%s: set property failed\n", __func__);
-
-	return rc;
-}
-
 static int msm_vdec_set_rap_frame(struct msm_vidc_inst *inst,
 	enum msm_vidc_port_type port)
 {
@@ -715,10 +694,6 @@ static int msm_vdec_set_input_properties(struct msm_vidc_inst *inst)
 	}
 
 	rc = msm_vdec_set_output_order(inst, INPUT_PORT);
-	if (rc)
-		return rc;
-
-	rc = msm_vdec_set_secure_mode(inst, INPUT_PORT);
 	if (rc)
 		return rc;
 
