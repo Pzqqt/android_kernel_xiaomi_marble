@@ -4930,9 +4930,10 @@ wait_again:
 			wait_due_pending++;
 			goto wait_again;
 		}
-		res = -GSI_STATUS_TIMED_OUT;
-		GSI_ASSERT();
-		goto free_lock;
+		GSIERR("GSI_EE_n_CNTXT_GLOB_IRQ_EN_OFFS = 0x%x\n",
+			gsihal_read_reg_n(GSI_EE_n_CNTXT_GLOB_IRQ_EN, gsi_ctx->per.ee));
+		GSIERR("GSI_EE_n_CNTXT_GLOB_IRQ_STTS_OFFS IRQ type = 0x%x\n",
+			gsihal_read_reg_n(GSI_EE_n_CNTXT_GLOB_IRQ_STTS, gsi_ctx->per.ee));
 	}
 
 	gsi_ctx->scratch.word0.val = gsihal_read_reg_n(GSI_EE_n_CNTXT_SCRATCH_0,
