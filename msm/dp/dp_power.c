@@ -213,20 +213,22 @@ static int dp_power_clk_init(struct dp_power_private *power, bool enable)
 
 		power->pixel_parent = clk_get(dev, "pixel_parent");
 		if (IS_ERR(power->pixel_parent)) {
-			DP_DEBUG("Unable to get DP pixel RCG parent: %ld\n",
+			DP_ERR("Unable to get DP pixel RCG parent: %d\n",
 					PTR_ERR(power->pixel_parent));
 			rc = PTR_ERR(power->pixel_parent);
 			power->pixel_parent = NULL;
 			goto err_pixel_parent;
 		}
 
-		power->pixel1_clk_rcg = clk_get(dev, "pixel1_clk_rcg");
-		if (IS_ERR(power->pixel1_clk_rcg)) {
-			DP_DEBUG("Unable to get DP pixel1 clk RCG: %ld\n",
-					PTR_ERR(power->pixel1_clk_rcg));
-			rc = PTR_ERR(power->pixel1_clk_rcg);
-			power->pixel1_clk_rcg = NULL;
-			goto err_pixel1_clk_rcg;
+		if (power->parser->has_mst) {
+			power->pixel1_clk_rcg = clk_get(dev, "pixel1_clk_rcg");
+			if (IS_ERR(power->pixel1_clk_rcg)) {
+				DP_ERR("Unable to get DP pixel1 clk RCG: %d\n",
+						PTR_ERR(power->pixel1_clk_rcg));
+				rc = PTR_ERR(power->pixel1_clk_rcg);
+				power->pixel1_clk_rcg = NULL;
+				goto err_pixel1_clk_rcg;
+			}
 		}
 	} else {
 		if (power->pixel1_clk_rcg)
