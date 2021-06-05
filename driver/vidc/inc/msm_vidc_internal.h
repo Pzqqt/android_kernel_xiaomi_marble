@@ -463,6 +463,7 @@ enum msm_vidc_inst_capability_type {
 	META_ENC_QP_METADATA,
 	META_ROI_INFO,
 	META_DEC_QP_METADATA,
+	COMPLEXITY,
 	INST_CAP_MAX,
 };
 
