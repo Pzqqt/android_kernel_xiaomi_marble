@@ -1467,7 +1467,7 @@ static ssize_t sde_recovery_regdump_read(struct file *file, char __user *ubuf,
 
 	if (!rbuf->dump_done && !rbuf->cur_blk) {
 		if (!rbuf->buf)
-			rbuf->buf = kzalloc(DUMP_BUF_SIZE, GFP_KERNEL);
+			rbuf->buf = kvzalloc(DUMP_BUF_SIZE, GFP_KERNEL);
 		if (!rbuf->buf) {
 			len =  -ENOMEM;
 			goto err;
@@ -2292,7 +2292,7 @@ static void sde_dbg_dsi_ctrl_destroy(void)
  */
 void sde_dbg_destroy(void)
 {
-	kfree(sde_dbg_base.regbuf.buf);
+	kvfree(sde_dbg_base.regbuf.buf);
 	memset(&sde_dbg_base.regbuf, 0, sizeof(sde_dbg_base.regbuf));
 	_sde_dbg_debugfs_destroy();
 	sde_dbg_base_evtlog = NULL;
