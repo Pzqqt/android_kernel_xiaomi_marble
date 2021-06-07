@@ -3535,10 +3535,6 @@ cppflags-y += -DSYSTEM_PM_CHECK
 cppflags-y += -DDISABLE_EAPOL_INTRABSS_FWD
 endif
 
-ifeq ($(CONFIG_TX_AGGREGATION_SIZE_ENABLE), y)
-cppflags-y += -DTX_AGGREGATION_SIZE_ENABLE
-endif
-
 # Enable Low latency optimisation mode
 cppflags-$(CONFIG_WLAN_FEATURE_LL_MODE) += -DWLAN_FEATURE_LL_MODE
 
