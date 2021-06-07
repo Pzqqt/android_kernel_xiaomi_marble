@@ -1143,8 +1143,6 @@ struct dp_soc_stats {
 			uint32_t dup_refill_link_desc;
 			/* Incorrect msdu continuation bit in MSDU desc */
 			uint32_t msdu_continuation_err;
-			/* Non Eapol packet drop count due to peer not authorized  */
-			uint32_t peer_unauth_rx_pkt_drop;
 			/* count of start sequence (ssn) updates */
 			uint32_t ssn_update_count;
 			/* count of bar handling fail */
@@ -2590,6 +2588,9 @@ struct dp_pdev {
 	 */
 	bool is_pdev_down;
 
+	/* Enhanced Stats is enabled */
+	bool enhanced_stats_en;
+
 	/* Second ring used to replenish rx buffers */
 	struct dp_srng rx_refill_buf_ring2;
 
@@ -2638,9 +2639,6 @@ struct dp_pdev {
 
 	/* Global RX decap mode for the device */
 	enum htt_pkt_type rx_decap_mode;
-
-	/* Enhanced Stats is enabled */
-	bool enhanced_stats_en;
 
 	qdf_atomic_t num_tx_outstanding;
 	int32_t tx_descs_max;

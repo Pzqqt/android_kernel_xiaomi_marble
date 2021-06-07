@@ -1232,6 +1232,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	struct hal_rx_msdu_metadata msdu_metadata;
 	uint16_t sa_idx = 0;
 	bool is_eapol;
+	bool enh_flag;
 
 	qdf_nbuf_set_rx_chfrag_start(nbuf,
 				hal_rx_msdu_end_first_msdu_get(soc->hal_soc,
@@ -1332,6 +1333,8 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 		qdf_nbuf_pull_head(nbuf, (msdu_metadata.l3_hdr_pad +
 				   soc->rx_pkt_tlv_size));
 
+	DP_STATS_INC_PKT(vdev, rx_i.null_q_desc_pkt, 1, qdf_nbuf_len(nbuf));
+
 	dp_vdev_peer_stats_update_protocol_cnt(vdev, nbuf, NULL, 0, 1);
 
 	if (hal_rx_msdu_end_sa_is_valid_get(soc->hal_soc, rx_tlv_hdr)) {
@@ -1373,6 +1376,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 
 	if (!dp_wds_rx_policy_check(rx_tlv_hdr, vdev, peer)) {
 		dp_err_rl("mcast Policy Check Drop pkt");
+		DP_STATS_INC(peer, rx.policy_check_drop, 1);
 		goto drop_nbuf;
 	}
 	/* WDS Source Port Learning */
@@ -1425,10 +1429,10 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 		qdf_nbuf_set_next(nbuf, NULL);
 		dp_rx_deliver_raw(vdev, nbuf, peer);
 	} else {
+		enh_flag = vdev->pdev->enhanced_stats_en;
 		qdf_nbuf_set_next(nbuf, NULL);
-		DP_STATS_INC_PKT(peer, rx.to_stack, 1,
-				 qdf_nbuf_len(nbuf));
-
+		DP_PEER_TO_STACK_INCC_PKT(peer, 1, qdf_nbuf_len(nbuf),
+					  enh_flag);
 		/*
 		 * Update the protocol tag in SKB based on
 		 * CCE metadata
@@ -1445,12 +1449,12 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 				 soc->hal_soc, rx_tlv_hdr) &&
 				 (vdev->rx_decap_type ==
 				  htt_cmn_pkt_type_ethernet))) {
-			DP_STATS_INC_PKT(peer, rx.multicast, 1,
-					 qdf_nbuf_len(nbuf));
+			DP_PEER_MC_INCC_PKT(peer, 1, qdf_nbuf_len(nbuf),
+					    enh_flag);
 
 			if (QDF_IS_ADDR_BROADCAST(eh->ether_dhost))
-				DP_STATS_INC_PKT(peer, rx.bcast, 1,
-						 qdf_nbuf_len(nbuf));
+				DP_PEER_BC_INCC_PKT(peer, 1, qdf_nbuf_len(nbuf),
+						    enh_flag);
 		}
 
 		qdf_nbuf_set_exc_frame(nbuf, 1);
@@ -1844,6 +1848,9 @@ dp_rx_err_route_hdl(struct dp_soc *soc, qdf_nbuf_t nbuf,
 			(qdf_ether_header_t *)qdf_nbuf_data(nbuf);
 		if (qdf_mem_cmp(eh->ether_dhost, &vdev->mac_addr.raw[0],
 				QDF_MAC_ADDR_SIZE) == 0) {
+			DP_STATS_INC_PKT(vdev, rx_i.routed_eapol_pkt, 1,
+					 qdf_nbuf_len(nbuf));
+
 			/*
 			 * Update the protocol tag in SKB based on
 			 * CCE metadata.
@@ -1854,7 +1861,8 @@ dp_rx_err_route_hdl(struct dp_soc *soc, qdf_nbuf_t nbuf,
 			/* Update the flow tag in SKB based on FSE metadata */
 			dp_rx_update_flow_tag(soc, vdev, nbuf, rx_tlv_hdr,
 					      true);
-			DP_STATS_INC(peer, rx.to_stack.num, 1);
+			DP_PEER_TO_STACK_INCC_PKT(peer, 1, qdf_nbuf_len(nbuf),
+						  vdev->pdev->enhanced_stats_en);
 			qdf_nbuf_set_exc_frame(nbuf, 1);
 			qdf_nbuf_set_next(nbuf, NULL);
 
@@ -2725,6 +2733,11 @@ done:
 				/* TODO */
 				/* Add per error code accounting */
 				case HAL_REO_ERR_REGULAR_FRAME_2K_JUMP:
+					if (peer)
+						DP_STATS_INC(peer,
+							     rx.err.jump_2k_err,
+							     1);
+
 					pool_id = wbm_err_info.pool_id;
 
 					if (hal_rx_msdu_end_first_msdu_get(soc->hal_soc,
@@ -2809,6 +2822,11 @@ done:
 				case HAL_RXDMA_ERR_UNENCRYPTED:
 
 				case HAL_RXDMA_ERR_WIFI_PARSE:
+					if (peer)
+						DP_STATS_INC(peer,
+							     rx.err.rxdma_wifi_parse_err,
+							     1);
+
 					pool_id = wbm_err_info.pool_id;
 					dp_rx_process_rxdma_err(soc, nbuf,
 								rx_tlv_hdr,

@@ -1342,6 +1342,8 @@ struct cdp_tx_stats {
  * @fcserr: rx MIC check failed (CCMP)
  * @pn_err: pn check failed
  * @oor_err: Rx OOR errors
+ * @jump_2k_err: 2k jump errors
+ * @rxdma_wifi_parse_err: rxdma wifi parse errors
  * @wme_ac_type[WME_AC_MAX]: Wireless Multimedia type Count
  * @reception_type[MAX_RECEPTION_TYPES]: Reception type os packets
  * @mcs_count[MAX_MCS]: mcs count
@@ -1387,6 +1389,8 @@ struct cdp_tx_stats {
  * @snr: SNR of received signal
  * @last_snr: Previous snr
  * @multipass_rx_pkt_drop: Dropped multipass rx pkt
+ * @peer_unauth_rx_pkt_drop: Unauth rx packet drops
+ * @policy_check_drop: policy check drops
  * @rx_mpdu_cnt: rx mpdu count per MCS rate
  * @nss_info: NSS 1,2, ...8
  * @mcs_info: MCS index
@@ -1427,6 +1431,8 @@ struct cdp_rx_stats {
 		uint32_t fcserr;
 		uint32_t pn_err;
 		uint32_t oor_err;
+		uint32_t jump_2k_err;
+		uint32_t rxdma_wifi_parse_err;
 	} err;
 
 	uint32_t wme_ac_type[WME_AC_MAX];
@@ -1471,6 +1477,8 @@ struct cdp_rx_stats {
 	uint8_t snr;
 	uint8_t last_snr;
 	uint32_t multipass_rx_pkt_drop;
+	uint32_t peer_unauth_rx_pkt_drop;
+	uint32_t policy_check_drop;
 	uint32_t rx_mpdu_cnt[MAX_MCS];
 	uint32_t nss_info:4,
 		 mcs_info:4,
@@ -1591,14 +1599,27 @@ struct cdp_tx_ingress_stats {
 	struct cdp_tso_stats tso_stats;
 };
 
+/* struct cdp_rx_ingress_stats - rx ingress stats
+ * @reo_rcvd_pkt: packets received at REO block
+ * @ null_q_desc_pkt: null queue desc pkt count
+ * @ routed_eapol_pkt: routed eapol pkt count
+ */
+struct cdp_rx_ingress_stats {
+	struct cdp_pkt_info reo_rcvd_pkt;
+	struct cdp_pkt_info null_q_desc_pkt;
+	struct cdp_pkt_info routed_eapol_pkt;
+};
+
 /* struct cdp_vdev_stats - vdev stats structure
  * @tx_i: ingress tx stats
+ * @rx_i: ingress rx stats
  * @tx: cdp tx stats
  * @rx: cdp rx stats
  * @tso_stats: tso stats
  */
 struct cdp_vdev_stats {
 	struct cdp_tx_ingress_stats tx_i;
+	struct cdp_rx_ingress_stats rx_i;
 	struct cdp_tx_stats tx;
 	struct cdp_rx_stats rx;
 	struct cdp_tso_stats tso_stats;
@@ -2229,6 +2250,7 @@ struct cdp_soc_stats {
  * @tcp_udp_csum_err: tcp/udp checksum errors
  * @buf_freelist: buffers added back in freelist
  * @tx_i: Tx Ingress stats
+ * @rx_i: Rx Ingress stats
  * @tx:CDP Tx Stats
  * @rx: CDP Rx Stats
  * @tx_comp_histogram: Number of Tx completions per interrupt
@@ -2285,6 +2307,7 @@ struct cdp_pdev_stats {
 
 	uint32_t buf_freelist;
 	struct cdp_tx_ingress_stats tx_i;
+	struct cdp_rx_ingress_stats rx_i;
 	struct cdp_tx_stats tx;
 	struct cdp_rx_stats rx;
 	struct cdp_hist_tx_comp tx_comp_histogram;

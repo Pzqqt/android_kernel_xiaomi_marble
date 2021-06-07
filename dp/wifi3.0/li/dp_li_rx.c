@@ -771,6 +771,7 @@ done:
 
 		if (!dp_wds_rx_policy_check(rx_tlv_hdr, vdev, peer)) {
 			dp_rx_err("%pK: Policy Check Drop pkt", soc);
+			DP_STATS_INC(peer, rx.policy_check_drop, 1);
 			tid_stats->fail_cnt[POLICY_CHECK_DROP]++;
 			/* Drop & free packet */
 			qdf_nbuf_free(nbuf);
@@ -800,9 +801,8 @@ done:
 					qdf_nbuf_is_ipv4_wapi_pkt(nbuf);
 
 			if (!is_eapol) {
-				DP_STATS_INC(soc,
-					     rx.err.peer_unauth_rx_pkt_drop,
-					     1);
+				DP_STATS_INC(peer,
+					     rx.peer_unauth_rx_pkt_drop, 1);
 				qdf_nbuf_free(nbuf);
 				nbuf = next;
 				continue;
