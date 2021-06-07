@@ -2439,6 +2439,18 @@ static int hdd_change_sta_state_authenticated(struct hdd_adapter *adapter,
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	mac_addr = hddstactx->conn_info.bssid.bytes;
+
+	if (ucfg_ipa_is_enabled() && !hddstactx->conn_info.is_authenticated &&
+	    adapter->device_mode == QDF_STA_MODE &&
+	    hddstactx->conn_info.auth_type != eCSR_AUTH_TYPE_NONE &&
+	    hddstactx->conn_info.auth_type != eCSR_AUTH_TYPE_OPEN_SYSTEM &&
+	    hddstactx->conn_info.auth_type != eCSR_AUTH_TYPE_SHARED_KEY)
+		ucfg_ipa_wlan_evt(adapter->hdd_ctx->pdev, adapter->dev,
+				  adapter->device_mode, adapter->vdev_id,
+				  WLAN_IPA_STA_CONNECT, mac_addr,
+				  WLAN_REG_IS_24GHZ_CH_FREQ(
+					hddstactx->conn_info.chan_freq));
+
 	hdd_cm_set_peer_authenticate(adapter, &hddstactx->conn_info.bssid,
 				     false);
 
