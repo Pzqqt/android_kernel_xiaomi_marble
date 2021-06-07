@@ -828,11 +828,6 @@ struct msm_vidc_timestamps {
 	u64                    rank;
 };
 
-struct msm_vidc_pool {
-	struct list_head       list;
-	u32                    count;
-};
-
 enum msm_vidc_allow {
 	MSM_VIDC_DISALLOW = 0,
 	MSM_VIDC_ALLOW,
