@@ -40,10 +40,11 @@
  * Return: QDF_STATUS
  */
 QDF_STATUS
-tgt_mgmt_rx_reo_read_snapshot(struct wlan_objmgr_pdev *pdev,
-			      struct mgmt_rx_reo_snapshot *address,
-			      enum mgmt_rx_reo_snapshot_id id,
-			      struct mgmt_rx_reo_snapshot_params *value);
+tgt_mgmt_rx_reo_read_snapshot(
+			struct wlan_objmgr_pdev *pdev,
+			struct mgmt_rx_reo_snapshot *address,
+			enum mgmt_rx_reo_shared_snapshot_id id,
+			struct mgmt_rx_reo_snapshot_params *value);
 /**
  * tgt_mgmt_rx_reo_fw_consumed_event_handler() - MGMT Rx REO FW consumed
  * event handler
@@ -65,5 +66,21 @@ tgt_mgmt_rx_reo_fw_consumed_event_handler(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS tgt_mgmt_rx_reo_filter_config(struct wlan_objmgr_pdev *pdev,
 					 struct mgmt_rx_reo_filter *filter);
+
+/**
+ * tgt_mgmt_rx_reo_get_snapshot_address() - Get management rx-reorder
+ * snapshot address(virtual address) in host memory
+ * @pdev: Pointer to pdev object
+ * @id: Snapshot ID
+ * @snapshot_address: Pointer to snapshot address where the address
+ * needs to be written
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+tgt_mgmt_rx_reo_get_snapshot_address(
+			struct wlan_objmgr_pdev *pdev,
+			enum mgmt_rx_reo_shared_snapshot_id id,
+			struct mgmt_rx_reo_snapshot **address);
 #endif /* WLAN_MGMT_RX_REO_SUPPORT */
 #endif /* _WLAN_MGMT_TXRX_RX_REO_TGT_API_H */

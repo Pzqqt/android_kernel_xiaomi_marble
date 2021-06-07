@@ -143,7 +143,7 @@ target_if_mgmt_rx_reo_unregister_event_handlers(struct wlan_objmgr_psoc *psoc)
 static QDF_STATUS
 target_if_mgmt_rx_reo_read_snapshot(
 			struct mgmt_rx_reo_snapshot *snapshot_address,
-			enum mgmt_rx_reo_snapshot_id id,
+			enum mgmt_rx_reo_shared_snapshot_id id,
 			struct mgmt_rx_reo_snapshot_params *snapshot_value)
 {
 	bool snapshot_valid;
@@ -166,9 +166,9 @@ target_if_mgmt_rx_reo_read_snapshot(
 	}
 
 	switch (id) {
-	case MGMT_RX_REO_SNAPSHOT_MAC_HW:
-	case MGMT_RX_REO_SNAPSHOT_FW_CONSUMED:
-	case MGMT_RX_REO_SNAPSHOT_FW_FORWADED:
+	case MGMT_RX_REO_SHARED_SNAPSHOT_MAC_HW:
+	case MGMT_RX_REO_SHARED_SNAPSHOT_FW_CONSUMED:
+	case MGMT_RX_REO_SHARED_SNAPSHOT_FW_FORWADED:
 		retry_count = 0;
 		for (; retry_count < MGMT_RX_REO_SNAPSHOT_READ_RETRY_LIMIT;
 		     retry_count++) {
@@ -221,6 +221,42 @@ target_if_mgmt_rx_reo_read_snapshot(
 	}
 
 	return status;
+}
+
+/**
+ * target_if_mgmt_rx_reo_get_snapshot_address() - Get management rx-reorder
+ * snapshot address(virtual address) in host memory
+ * @pdev: Pointer to pdev object
+ * @id: Snapshot ID
+ * @snapshot_address: Pointer to snapshot address where the address needs
+ * to be written
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+target_if_mgmt_rx_reo_get_snapshot_address(
+			struct wlan_objmgr_pdev *pdev,
+			enum mgmt_rx_reo_shared_snapshot_id id,
+			struct mgmt_rx_reo_snapshot **snapshot_address)
+{
+	if (!pdev) {
+		mgmt_rx_reo_err("pdev is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (id >= MGMT_RX_REO_SHARED_SNAPSHOT_MAX) {
+		mgmt_rx_reo_err("Mgmt RX REO snapshot id invalid %d", id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!snapshot_address) {
+		mgmt_rx_reo_err("Ref to mgmt RX REO snapshot address is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	/* Get address here */
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -281,6 +317,8 @@ target_if_mgmt_rx_reo_tx_ops_register(
 	mgmt_rx_reo_tx_ops = &mgmt_txrx_tx_ops->mgmt_rx_reo_tx_ops;
 	mgmt_rx_reo_tx_ops->read_mgmt_rx_reo_snapshot =
 				target_if_mgmt_rx_reo_read_snapshot;
+	mgmt_rx_reo_tx_ops->get_mgmt_rx_reo_snapshot_address =
+				target_if_mgmt_rx_reo_get_snapshot_address;
 	mgmt_rx_reo_tx_ops->mgmt_rx_reo_filter_config =
 					target_if_mgmt_rx_reo_filter_config;
 

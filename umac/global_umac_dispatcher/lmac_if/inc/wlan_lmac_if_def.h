@@ -217,13 +217,18 @@ struct wlan_target_if_dcs_rx_ops {
  * struct wlan_lmac_if_mgmt_txrx_tx_ops - structure of tx function
  * pointers for mgmt rx reo
  * @read_mgmt_rx_reo_snapshot: Read rx-reorder snapshots
+ * @get_mgmt_rx_reo_snapshot_address: Get rx-reorder snapshot address
  * @mgmt_rx_reo_filter_config:  Configure MGMT Rx REO filter
  */
 struct wlan_lmac_if_mgmt_rx_reo_tx_ops {
 	QDF_STATUS (*read_mgmt_rx_reo_snapshot)
 			(struct mgmt_rx_reo_snapshot *address,
-			 enum mgmt_rx_reo_snapshot_id id,
+			 enum mgmt_rx_reo_shared_snapshot_id id,
 			 struct mgmt_rx_reo_snapshot_params *value);
+	QDF_STATUS (*get_mgmt_rx_reo_snapshot_address)
+			(struct wlan_objmgr_pdev *pdev,
+			 enum mgmt_rx_reo_shared_snapshot_id id,
+			 struct mgmt_rx_reo_snapshot **address);
 	QDF_STATUS (*mgmt_rx_reo_filter_config)(
 					struct wlan_objmgr_pdev *pdev,
 					struct mgmt_rx_reo_filter *filter);

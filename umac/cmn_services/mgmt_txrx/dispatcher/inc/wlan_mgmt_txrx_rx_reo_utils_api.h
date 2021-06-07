@@ -27,6 +27,8 @@
 
 #include <wlan_mgmt_txrx_utils_api.h>
 
+struct mgmt_txrx_priv_pdev_context;
+
 #ifdef WLAN_MGMT_RX_REO_SUPPORT
 #define mgmt_rx_reo_alert mgmt_txrx_alert
 #define mgmt_rx_reo_err mgmt_txrx_err
@@ -34,5 +36,71 @@
 #define mgmt_rx_reo_notice mgmt_txrx_notice
 #define mgmt_rx_reo_info mgmt_txrx_info
 #define mgmt_rx_reo_debug mgmt_txrx_debug
-#endif /* WLAN_MGMT_RX_REO_SUPPORT*/
+
+/**
+ * wlan_mgmt_rx_reo_pdev_obj_create_notification() - pdev create handler for
+ * management rx-reorder module
+ * @pdev: pointer to pdev object
+ *
+ * This function gets called from object manager when pdev is being created and
+ * creates management rx-reorder pdev context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_mgmt_rx_reo_pdev_obj_create_notification(
+			struct wlan_objmgr_pdev *pdev,
+			struct mgmt_txrx_priv_pdev_context *mgmt_txrx_pdev_ctx);
+
+/**
+ * wlan_mgmt_rx_reo_pdev_obj_destroy_notification() - pdev destroy handler for
+ * management rx-reorder feature
+ * @pdev: pointer to pdev object
+ *
+ * This function gets called from object manager when pdev is being destroyed
+ * and destroys management rx-reorder pdev context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_mgmt_rx_reo_pdev_obj_destroy_notification(
+			struct wlan_objmgr_pdev *pdev,
+			struct mgmt_txrx_priv_pdev_context *mgmt_txrx_pdev_ctx);
+#else
+/**
+ * wlan_mgmt_rx_reo_pdev_obj_create_notification() - pdev create handler for
+ * management rx-reorder feature
+ * @pdev: pointer to pdev object
+ *
+ * This function gets called from object manager when pdev is being created and
+ * creates management rx-reorder pdev context
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS
+wlan_mgmt_rx_reo_pdev_obj_create_notification(
+			struct wlan_objmgr_pdev *pdev,
+			struct mgmt_txrx_priv_pdev_context *mgmt_txrx_pdev_ctx)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wlan_mgmt_rx_reo_pdev_obj_destroy_notification() - pdev destroy handler for
+ * management rx-reorder feature
+ * @pdev: pointer to pdev object
+ *
+ * This function gets called from object manager when pdev is being destroyed
+ * and destroys management rx-reorder pdev context
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS
+wlan_mgmt_rx_reo_pdev_obj_destroy_notification(
+			struct wlan_objmgr_pdev *pdev,
+			struct mgmt_txrx_priv_pdev_context *mgmt_txrx_pdev_ctx)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_MGMT_RX_REO_SUPPORT */
 #endif /* _WLAN_MGMT_TXRX_RX_REO_UTILS_API_H_ */
