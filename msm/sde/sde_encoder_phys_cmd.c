@@ -1769,9 +1769,8 @@ static void _sde_encoder_autorefresh_disable_seq2(
 
 	while (autorefresh_status & BIT(7)) {
 		if (!trial) {
-			SDE_ERROR_CMDENC(cmd_enc,
-			  "autofresh status:0x%x intf:%d\n", autorefresh_status,
-			  phys_enc->intf_idx - INTF_0);
+			pr_err("enc:%d autofresh status:0x%x intf:%d\n", DRMID(phys_enc->parent),
+					autorefresh_status, phys_enc->intf_idx - INTF_0);
 
 			_sde_encoder_phys_cmd_config_autorefresh(phys_enc, 0);
 		}
@@ -1790,9 +1789,8 @@ static void _sde_encoder_autorefresh_disable_seq2(
 		autorefresh_status = hw_mdp->ops.get_autorefresh_status(hw_mdp,
 					phys_enc->intf_idx);
 		hw_intf->ops.check_and_reset_tearcheck(hw_intf, &tear_status);
-		SDE_ERROR_CMDENC(cmd_enc,
-			"autofresh status:0x%x intf:%d tear_read:0x%x tear_write:0x%x\n",
-			autorefresh_status, phys_enc->intf_idx - INTF_0,
+		pr_err("enc:%d autofresh status:0x%x intf:%d tear_read:0x%x tear_write:0x%x\n",
+			DRMID(phys_enc->parent), autorefresh_status, phys_enc->intf_idx - INTF_0,
 			tear_status.read_count, tear_status.write_count);
 		SDE_EVT32(DRMID(phys_enc->parent), phys_enc->intf_idx - INTF_0,
 			autorefresh_status, tear_status.read_count,
