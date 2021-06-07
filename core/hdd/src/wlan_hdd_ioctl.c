@@ -2340,7 +2340,7 @@ static int hdd_enable_unit_test_commands(struct hdd_adapter *adapter,
 					 struct hdd_context *hdd_ctx)
 {
 	enum pld_bus_type bus_type = pld_get_bus_type(hdd_ctx->parent_dev);
-	u32 arg[2];
+	u32 arg[3];
 	QDF_STATUS status;
 
 	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE ||
@@ -2354,7 +2354,7 @@ static int hdd_enable_unit_test_commands(struct hdd_adapter *adapter,
 
 	if (bus_type == PLD_BUS_TYPE_PCIE) {
 		arg[0] = 360;
-		arg[1] = 3;
+		arg[1] = 1;
 
 		status = sme_send_unit_test_cmd(adapter->vdev_id,
 						WLAN_MODULE_TX,
@@ -2369,6 +2369,17 @@ static int hdd_enable_unit_test_commands(struct hdd_adapter *adapter,
 		status = sme_send_unit_test_cmd(adapter->vdev_id,
 						WLAN_MODULE_TX,
 						2,
+						arg);
+		if (status != QDF_STATUS_SUCCESS)
+			return qdf_status_to_os_return(status);
+
+		arg[0] = 84;
+		arg[1] = 1;
+		arg[2] = 1;
+
+		status = sme_send_unit_test_cmd(adapter->vdev_id,
+						WLAN_MODULE_TX,
+						3,
 						arg);
 		if (status != QDF_STATUS_SUCCESS)
 			return qdf_status_to_os_return(status);
@@ -2450,6 +2461,16 @@ static int hdd_disable_unit_test_commands(struct hdd_adapter *adapter,
 			return qdf_status_to_os_return(status);
 
 		arg[0] = 44;
+		arg[1] = 0;
+
+		status = sme_send_unit_test_cmd(adapter->vdev_id,
+						WLAN_MODULE_RX,
+						2,
+						arg);
+		if (status != QDF_STATUS_SUCCESS)
+			return qdf_status_to_os_return(status);
+
+		arg[0] = 84;
 		arg[1] = 0;
 
 		status = sme_send_unit_test_cmd(adapter->vdev_id,
