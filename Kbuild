@@ -1260,15 +1260,15 @@ $(call add-wlan-objs,umac_ifmgr,$(UMAC_INTERFACE_MGR_OBJS))
 ###### UMAC MLO_MGR ########
 UMAC_MLO_MGR_CMN_DIR :=	$(WLAN_COMMON_ROOT)/umac/mlo_mgr
 
-UMAC_MLO_MGR_INC := -I$(WLAN_COMMON_INC)/umac/mlo_mgr/inc
+UMAC_MLO_MGR_INC := -I$(WLAN_COMMON_INC)/umac/mlo_mgr/inc \
 
 ifeq ($(CONFIG_WLAN_FEATURE_11BE_MLO), y)
 UMAC_MLO_MGR_OBJS := $(UMAC_MLO_MGR_CMN_DIR)/src/wlan_mlo_mgr_main.o \
-			  $(UMAC_MLO_MGR_CMN_DIR)/src/wlan_if_mgr_cmn.o \
-			  $(UMAC_MLO_MGR_CMN_DIR)/src/wlan_if_mgr_sta.o \
-			  $(UMAC_MLO_MGR_CMN_DIR)/src/wlan_if_mgr_ap.o
+			  $(UMAC_MLO_MGR_CMN_DIR)/src/wlan_mlo_mgr_cmn.o \
+			  $(UMAC_MLO_MGR_CMN_DIR)/src/wlan_mlo_mgr_sta.o \
+			  $(UMAC_MLO_MGR_CMN_DIR)/src/wlan_mlo_mgr_ap.o
 
-$(call add-wlan-objs,umac_ifmgr,$(UMAC_INTERFACE_MGR_OBJS))
+$(call add-wlan-objs,umac_ifmgr,$(UMAC_MLO_MGR_OBJS))
 endif
 ########## POWER MANAGEMENT OFFLOADS (PMO) ##########
 PMO_DIR :=	components/pmo
