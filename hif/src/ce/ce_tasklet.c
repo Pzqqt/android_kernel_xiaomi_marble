@@ -426,17 +426,24 @@ static void ce_tasklet(unsigned long data)
 
 		ce_tasklet_schedule(tasklet_entry);
 		hif_latency_detect_tasklet_sched(scn, tasklet_entry);
+
+		if (scn->ce_latency_stats) {
+			ce_tasklet_update_bucket(hif_ce_state,
+						 tasklet_entry->ce_id);
+			hif_record_tasklet_sched_entry_ts(scn,
+							  tasklet_entry->ce_id);
+		}
 		return;
 	}
-
-	if (scn->target_status != TARGET_STATUS_RESET)
-		hif_irq_enable(scn, tasklet_entry->ce_id);
 
 	hif_record_ce_desc_event(scn, tasklet_entry->ce_id, HIF_CE_TASKLET_EXIT,
 				NULL, NULL, -1, 0);
 
 	if (scn->ce_latency_stats)
 		ce_tasklet_update_bucket(hif_ce_state, tasklet_entry->ce_id);
+
+	if (scn->target_status != TARGET_STATUS_RESET)
+		hif_irq_enable(scn, tasklet_entry->ce_id);
 
 	qdf_atomic_dec(&scn->active_tasklet_cnt);
 }
