@@ -117,6 +117,7 @@ const EID_OPERATING_MODE             =  199;
 const EID_WIDER_BW_CHANNEL_SWITCH_ANN=  194;
 const EID_TRANSMIT_POWER_ENVELOPE    = 195;
 const EID_CHANNEL_SWITCH_WRAPPER     = 196;
+const EID_RNR_IE                     = 201;
 const EID_VENDOR_SPECIFIC            = 221;
 const EID_FILS_INDICATION            = 240;
 const EID_FRAGMENT_IE                = 242;
@@ -2478,6 +2479,119 @@ IE ChannelSwitchWrapper (EID_CHANNEL_SWITCH_WRAPPER)
     OPTIE IE  WiderBWChanSwitchAnn;
     OPTIE IE  transmit_power_env;
 }
+
+IE reduced_neighbor_report (EID_RNR_IE)
+{
+    // TBTT Information Header
+    {
+	tbtt_type:              2;
+	filtered_neighbor_ap:   1;
+	reserved:               1;
+	tbtt_info_count:        4;
+	tbtt_info_len:          8;
+    }
+    op_class, 1;
+    channel_num, 1;
+    // TBTT information field
+    UNION tbtt_info (DISCRIMINATOR tbtt_info_len)
+    {
+	tbtt_info_1 (tbtt_info_len IS 1)
+	{
+		tbtt_offset, 1;
+	}
+	tbtt_info_2 (tbtt_info_len IS 2)
+	{
+		tbtt_offset, 1;
+		bss_params, 1;
+	}
+	tbtt_info_4 (tbtt_info_len IS 4)
+	{
+		tbtt_offset, 1;
+		{
+		     mld_id:                    8;
+		     link_id:                   4;
+		     bss_param_change_cnt:      8;
+		     reserved:                  12;
+		}
+	}
+	tbtt_info_5 (tbtt_info_len IS 5)
+	{
+		tbtt_offset, 1;
+		short_ssid, 4;
+	}
+	tbtt_info_6 (tbtt_info_len IS 6)
+	{
+		tbtt_offset, 1;
+		short_ssid, 4;
+		bss_params, 1;
+	}
+	tbtt_info_7 (tbtt_info_len IS 7)
+	{
+		tbtt_offset, 1;
+		bssid[6];
+	}
+	tbtt_info_8 (tbtt_info_len IS 8)
+	{
+		tbtt_offset, 1;
+		bssid[6];
+		bss_params, 1;
+	}
+	tbtt_info_9 (tbtt_info_len IS 9)
+	{
+		tbtt_offset, 1;
+		bssid[6];
+		bss_params, 1;
+		psd_20mhz, 1;
+	}
+	tbtt_info_10 (tbtt_info_len IS 10)
+	{
+		tbtt_offset, 1;
+		bssid[6];
+		{
+		     mld_id:                    8;
+		     link_id:                   4;
+		     bss_param_change_cnt:      8;
+		     reserved:                  12;
+		}
+	}
+	tbtt_info_11 (tbtt_info_len IS 11)
+	{
+		tbtt_offset, 1;
+		bssid[6];
+		short_ssid, 4;
+	}
+	tbtt_info_12 (tbtt_info_len IS 12)
+	{
+		tbtt_offset, 1;
+		bssid[6];
+		short_ssid, 4;
+		bss_params, 1;
+	}
+	tbtt_info_13 (tbtt_info_len IS 13)
+	{
+		tbtt_offset, 1;
+		bssid[6];
+		short_ssid, 4;
+		bss_params, 1;
+		psd_20mhz, 1;
+	}
+	tbtt_info_16 (tbtt_info_len IS 16)
+	{
+		tbtt_offset, 1;
+		bssid[6];
+		short_ssid, 4;
+		bss_params, 1;
+		psd_20mhz, 1;
+		{
+		     mld_id:                    8;
+		     link_id:                   4;
+		     bss_param_change_cnt:      8;
+		     reserved:                  12;
+		}
+	}
+    };
+}
+
 IE ExtCap (EID_EXT_CAP)
 {
     bytes[1..15];
@@ -3835,6 +3949,7 @@ FRAME Beacon                              // C.f. Sec. 7.2.3.1
     OPTIE  QComVendorIE;
     OPTIE  MBO_IE;
     OPTIE  qcn_ie;
+    OPTIE  reduced_neighbor_report;
 } // End frame Beacon.
 
 // Ok, here's  the story on  Beacon1 & Beacon2.   We presumably beacon  a lot
@@ -3937,6 +4052,7 @@ FRAME Beacon2
     OPTIE  QComVendorIE;
     OPTIE  ESEVersion;
     OPTIE  qcn_ie;
+    OPTIE  reduced_neighbor_report;
 }
 
 // This frame is just Beacon with its Fixed Fields stripped out.  It's handy
@@ -4015,6 +4131,7 @@ FRAME BeaconIEs
     OPTIE  QComVendorIE;
     OPTIE  MBO_IE;
     OPTIE  qcn_ie;
+    OPTIE  reduced_neighbor_report;
 } // End frame BeaconIEs.
 
 FRAME Disassociation                      // 7.3.3.3
@@ -4124,6 +4241,7 @@ FRAME AssocResponse                       // 7.2.3.5
     OPTIE  vendor_vht_ie;
     OPTIE  qcn_ie;
     OPTIE  MBO_IE;
+    OPTIE  reduced_neighbor_report;
 } // End frame AssocResponse.
 
 FRAME ReAssocRequest                      // 7.2.3.6
@@ -4217,6 +4335,7 @@ FRAME ReAssocResponse                     // 7.2.3.7
     OPTIE  P2PAssocRes;
     OPTIE  vendor_vht_ie;
     OPTIE  MBO_IE;
+    OPTIE  reduced_neighbor_report;
 } // End frame ReAssocResponse.
 
 FRAME ProbeRequest                        // 7.2.3.8
@@ -4309,6 +4428,7 @@ FRAME ProbeResponse                       // 7.2.3.9
     OPTIE  QComVendorIE;
     OPTIE  MBO_IE;
     OPTIE  qcn_ie;
+    OPTIE  reduced_neighbor_report;
 } // End frame ProbeResponse.
 
 FRAME Authentication                      // 7.2.3.10
