@@ -758,13 +758,7 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 	/* Channel selection is auto or configured */
 	sap_ctx->chan_freq = config->chan_freq;
 	sap_ctx->dfs_mode = config->acs_dfs_mode;
-	sap_ctx->ch_params.ch_width = config->ch_params.ch_width;
-	sap_ctx->ch_params.center_freq_seg0 =
-		config->ch_params.center_freq_seg0;
-	sap_ctx->ch_params.center_freq_seg1 =
-		config->ch_params.center_freq_seg1;
-	sap_ctx->ch_params.sec_ch_offset =
-		config->ch_params.sec_ch_offset;
+	sap_ctx->ch_params = config->ch_params;
 	sap_ctx->ch_width_orig = config->ch_width_orig;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	sap_ctx->cc_switch_mode = config->cc_switch_mode;
