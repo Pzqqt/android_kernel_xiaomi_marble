@@ -985,9 +985,7 @@ static bool hdd_cm_is_roam_auth_required(struct hdd_station_ctx *sta_ctx,
 	if (!rsp->roaming_info)
 		return false;
 
-	if (rsp->roaming_info->auth_status == ROAM_AUTH_STATUS_AUTHENTICATED ||
-	    sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_SAE ||
-	    sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_OWE)
+	if (rsp->roaming_info->auth_status == ROAM_AUTH_STATUS_AUTHENTICATED)
 		return false;
 
 	return true;

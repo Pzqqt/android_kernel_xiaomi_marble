@@ -655,10 +655,11 @@ static QDF_STATUS cm_process_roam_keys(struct wlan_objmgr_vdev *vdev,
 		}
 		qdf_mem_zero(pmkid_cache, sizeof(*pmkid_cache));
 		qdf_mem_free(pmkid_cache);
-	} else {
+	}
+
+	if (roaming_info->auth_status != ROAM_AUTH_STATUS_AUTHENTICATED)
 		cm_update_wait_for_key_timer(vdev, vdev_id,
 					     WAIT_FOR_KEY_TIMEOUT_PERIOD);
-	}
 end:
 	return status;
 }
