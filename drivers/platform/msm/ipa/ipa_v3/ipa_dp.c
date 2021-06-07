@@ -1019,6 +1019,7 @@ static int ipa3_rx_switch_to_intr_mode(struct ipa3_sys_context *sys)
  */
 static void ipa3_handle_rx(struct ipa3_sys_context *sys)
 {
+	enum ipa_client_type client_type;
 	int inactive_cycles;
 	int cnt;
 	int ret;
@@ -1052,7 +1053,12 @@ start_poll:
 	if (ret == -GSI_STATUS_PENDING_IRQ)
 		goto start_poll;
 
-	IPA_ACTIVE_CLIENTS_DEC_EP(sys->ep->client);
+	if (IPA_CLIENT_IS_WAN_CONS(sys->ep->client))
+		client_type = IPA_CLIENT_APPS_WAN_COAL_CONS;
+	else
+		client_type = sys->ep->client;
+
+	IPA_ACTIVE_CLIENTS_DEC_EP(client_type);
 }
 
 static void ipa3_switch_to_intr_rx_work_func(struct work_struct *work)
