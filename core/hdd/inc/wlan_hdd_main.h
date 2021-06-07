@@ -1860,6 +1860,7 @@ struct hdd_adapter_ops_history {
  * @bbm_ctx: bus bandwidth manager context
  * @is_dual_mac_cfg_updated: indicate whether dual mac cfg has been updated
  * @twt_en_dis_work: work to send twt enable/disable cmd on MCC/SCC concurrency
+ * @dump_in_progress: Stores value of dump in progress
  */
 struct hdd_context {
 	struct wlan_objmgr_psoc *psoc;
@@ -2216,6 +2217,7 @@ struct hdd_context {
 	qdf_work_t twt_en_dis_work;
 #endif
 	bool is_wifi3_0_target;
+	bool dump_in_progress;
 };
 
 /**
