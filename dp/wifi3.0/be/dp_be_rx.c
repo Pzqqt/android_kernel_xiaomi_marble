@@ -152,6 +152,7 @@ uint32_t dp_rx_process_be(struct dp_intr *int_ctx,
 	uint32_t rx_bufs_reaped[MAX_PDEV_CNT];
 	uint8_t mac_id = 0;
 	struct dp_pdev *rx_pdev;
+	bool enh_flag;
 	struct dp_srng *dp_rxdma_srng;
 	struct rx_desc_pool *rx_desc_pool;
 	struct dp_soc *soc = int_ctx->soc;
@@ -578,6 +579,8 @@ done:
 				 soc->wlan_cfg_ctx)))
 			qdf_nbuf_set_timestamp(nbuf);
 
+		enh_flag = rx_pdev->enhanced_stats_en;
+
 		tid_stats =
 		&rx_pdev->stats.tid_stats.tid_rx_stats[reo_ring_num][tid];
 
@@ -683,6 +686,7 @@ done:
 
 		if (!dp_wds_rx_policy_check(rx_tlv_hdr, vdev, peer)) {
 			dp_rx_err("%pK: Policy Check Drop pkt", soc);
+			DP_STATS_INC(peer, rx.policy_check_drop, 1);
 			tid_stats->fail_cnt[POLICY_CHECK_DROP]++;
 			/* Drop & free packet */
 			qdf_nbuf_free(nbuf);
@@ -712,9 +716,8 @@ done:
 					qdf_nbuf_is_ipv4_wapi_pkt(nbuf);
 
 			if (!is_eapol) {
-				DP_STATS_INC(soc,
-					     rx.err.peer_unauth_rx_pkt_drop,
-					     1);
+				DP_STATS_INC(peer,
+					     rx.peer_unauth_rx_pkt_drop, 1);
 				qdf_nbuf_free(nbuf);
 				nbuf = next;
 				continue;
@@ -775,8 +778,8 @@ done:
 		DP_RX_LIST_APPEND(deliver_list_head,
 				  deliver_list_tail,
 				  nbuf);
-		DP_STATS_INC_PKT(peer, rx.to_stack, 1,
-				 QDF_NBUF_CB_RX_PKT_LEN(nbuf));
+		DP_PEER_TO_STACK_INCC_PKT(peer, 1, QDF_NBUF_CB_RX_PKT_LEN(nbuf),
+					  enh_flag);
 		if (qdf_unlikely(peer->in_twt))
 			DP_STATS_INC_PKT(peer, rx.to_stack_twt, 1,
 					 QDF_NBUF_CB_RX_PKT_LEN(nbuf));

@@ -8228,6 +8228,8 @@ void dp_aggregate_vdev_stats(struct dp_vdev *vdev,
 
 	soc = vdev->pdev->soc;
 
+	dp_update_vdev_ingress_stats(vdev);
+
 	qdf_mem_copy(vdev_stats, &vdev->stats, sizeof(vdev->stats));
 
 	dp_vdev_iterate_peer(vdev, dp_update_vdev_stats, vdev_stats,
@@ -8323,12 +8325,31 @@ static QDF_STATUS dp_vdev_getstats(struct cdp_vdev *vdev_handle,
 			    vdev_stats->tx_i.mcast_en.dropped_send_fail +
 			    vdev_stats->tx.nawds_mcast_drop;
 
-	stats->rx_packets = vdev_stats->rx.unicast.num +
-		vdev_stats->rx.multicast.num +
-		vdev_stats->rx.bcast.num;
-	stats->rx_bytes = vdev_stats->rx.unicast.bytes +
-		vdev_stats->rx.multicast.bytes +
-		vdev_stats->rx.bcast.bytes;
+	if (!wlan_cfg_get_vdev_stats_hw_offload_config(soc->wlan_cfg_ctx)) {
+		stats->rx_packets = vdev_stats->rx.to_stack.num;
+		stats->rx_bytes = vdev_stats->rx.to_stack.bytes;
+	} else {
+		stats->rx_packets = vdev_stats->rx_i.reo_rcvd_pkt.num +
+				    vdev_stats->rx_i.null_q_desc_pkt.num +
+				    vdev_stats->rx_i.routed_eapol_pkt.num;
+		stats->rx_bytes = vdev_stats->rx_i.reo_rcvd_pkt.bytes +
+				  vdev_stats->rx_i.null_q_desc_pkt.bytes +
+				  vdev_stats->rx_i.routed_eapol_pkt.bytes;
+	}
+
+	stats->rx_errors = vdev_stats->rx.err.mic_err +
+			   vdev_stats->rx.err.decrypt_err +
+			   vdev_stats->rx.err.fcserr +
+			   vdev_stats->rx.err.pn_err +
+			   vdev_stats->rx.err.oor_err +
+			   vdev_stats->rx.err.jump_2k_err +
+			   vdev_stats->rx.err.rxdma_wifi_parse_err;
+
+	stats->rx_dropped = vdev_stats->rx.mec_drop.num +
+			    vdev_stats->rx.multipass_rx_pkt_drop +
+			    vdev_stats->rx.peer_unauth_rx_pkt_drop +
+			    vdev_stats->rx.policy_check_drop +
+			    vdev_stats->rx.nawds_mcast_drop;
 
 	qdf_mem_free(vdev_stats);
 
@@ -8361,16 +8382,27 @@ static void dp_pdev_getstats(struct cdp_pdev *pdev_handle,
 			    pdev->stats.tx.nawds_mcast_drop +
 			    pdev->stats.tso_stats.dropped_host.num;
 
-	stats->rx_packets = pdev->stats.rx.unicast.num +
-		pdev->stats.rx.multicast.num +
-		pdev->stats.rx.bcast.num;
-	stats->rx_bytes = pdev->stats.rx.unicast.bytes +
-		pdev->stats.rx.multicast.bytes +
-		pdev->stats.rx.bcast.bytes;
+	if (!wlan_cfg_get_vdev_stats_hw_offload_config(pdev->soc->wlan_cfg_ctx)) {
+		stats->rx_packets = pdev->stats.rx.to_stack.num;
+		stats->rx_bytes = pdev->stats.rx.to_stack.bytes;
+	} else {
+		stats->rx_packets = pdev->stats.rx_i.reo_rcvd_pkt.num +
+				    pdev->stats.rx_i.null_q_desc_pkt.num +
+				    pdev->stats.rx_i.routed_eapol_pkt.num;
+		stats->rx_bytes = pdev->stats.rx_i.reo_rcvd_pkt.bytes +
+				  pdev->stats.rx_i.null_q_desc_pkt.bytes +
+				  pdev->stats.rx_i.routed_eapol_pkt.bytes;
+	}
+
 	stats->rx_errors = pdev->stats.err.ip_csum_err +
 		pdev->stats.err.tcp_udp_csum_err +
 		pdev->stats.rx.err.mic_err +
 		pdev->stats.rx.err.decrypt_err +
+		pdev->stats.rx.err.fcserr +
+		pdev->stats.rx.err.pn_err +
+		pdev->stats.rx.err.oor_err +
+		pdev->stats.rx.err.jump_2k_err +
+		pdev->stats.rx.err.rxdma_wifi_parse_err +
 		pdev->stats.err.rxdma_error +
 		pdev->stats.err.reo_error;
 	stats->rx_dropped = pdev->stats.dropped.msdu_not_done +
@@ -8378,7 +8410,12 @@ static void dp_pdev_getstats(struct cdp_pdev *pdev_handle,
 		pdev->stats.dropped.mesh_filter +
 		pdev->stats.dropped.wifi_parse +
 		pdev->stats.dropped.mon_rx_drop +
-		pdev->stats.dropped.mon_radiotap_update_err;
+		pdev->stats.dropped.mon_radiotap_update_err +
+		pdev->stats.rx.mec_drop.num +
+		pdev->stats.rx.multipass_rx_pkt_drop +
+		pdev->stats.rx.peer_unauth_rx_pkt_drop +
+		pdev->stats.rx.policy_check_drop +
+		pdev->stats.rx.nawds_mcast_drop;
 }
 
 /**

@@ -5826,6 +5826,10 @@ void dp_print_peer_stats(struct dp_peer *peer)
 		       peer->stats.rx.err.pn_err);
 	DP_PRINT_STATS("Errors: OOR Errors = %d",
 		       peer->stats.rx.err.oor_err);
+	DP_PRINT_STATS("Errors: 2k Jump Errors = %d",
+		       peer->stats.rx.err.jump_2k_err);
+	DP_PRINT_STATS("Errors: RXDMA Wifi Parse Errors = %d",
+		       peer->stats.rx.err.rxdma_wifi_parse_err);
 	DP_PRINT_STATS("Msdu's Received As Part of Ampdu = %d",
 		       peer->stats.rx.non_ampdu_cnt);
 	DP_PRINT_STATS("Msdu's Recived As Ampdu = %d",
@@ -5910,6 +5914,10 @@ void dp_print_peer_stats(struct dp_peer *peer)
 		       peer->stats.rx.rx_data_rate);
 	DP_PRINT_STATS("Multipass Rx Packet Drop = %d",
 		       peer->stats.rx.multipass_rx_pkt_drop);
+	DP_PRINT_STATS("Peer Unauth Rx Packet Drop = %d",
+		       peer->stats.rx.peer_unauth_rx_pkt_drop);
+	DP_PRINT_STATS("Policy Check Rx Packet Drop = %d",
+		       peer->stats.rx.policy_check_drop);
 
 	dp_peer_print_rx_delay_stats(pdev, peer);
 }
@@ -6383,6 +6391,10 @@ dp_print_pdev_rx_stats(struct dp_pdev *pdev)
 		       pdev->stats.rx.mec_drop.num);
 	DP_PRINT_STATS("	Bytes = %llu",
 		       pdev->stats.rx.mec_drop.bytes);
+	DP_PRINT_STATS("	peer_unauth_drop = %u",
+		       pdev->stats.rx.peer_unauth_rx_pkt_drop);
+	DP_PRINT_STATS("	policy_check_drop = %u",
+		       pdev->stats.rx.policy_check_drop);
 	DP_PRINT_STATS("Sent To Stack:");
 	DP_PRINT_STATS("	Packets = %u",
 		       pdev->stats.rx.to_stack.num);
@@ -6609,8 +6621,6 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 		       soc->stats.rx.err.defrag_peer_uninit);
 	DP_PRINT_STATS("Pkts delivered no peer = %d",
 		       soc->stats.rx.err.pkt_delivered_no_peer);
-	DP_PRINT_STATS("Pkts drop due to no peer auth :%d",
-		       soc->stats.rx.err.peer_unauth_rx_pkt_drop);
 	DP_PRINT_STATS("Invalid Pdev = %d",
 		       soc->stats.rx.err.invalid_pdev);
 	DP_PRINT_STATS("Invalid Peer = %d",

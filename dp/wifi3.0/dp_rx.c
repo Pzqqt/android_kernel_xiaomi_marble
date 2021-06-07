@@ -1595,7 +1595,8 @@ dp_rx_validate_rx_callbacks(struct dp_soc *soc,
 		} else {
 			num_nbuf = dp_rx_drop_nbuf_list(vdev->pdev,
 							nbuf_head);
-			DP_STATS_DEC(peer, rx.to_stack.num, num_nbuf);
+			DP_PEER_TO_STACK_DECC(peer, num_nbuf,
+					      vdev->pdev->enhanced_stats_en);
 		}
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1686,6 +1687,7 @@ void dp_rx_msdu_stats_update(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	bool is_ampdu, is_not_amsdu;
 	uint32_t sgi, mcs, tid, nss, bw, reception_type, pkt_type;
 	struct dp_vdev *vdev = peer->vdev;
+	bool enh_flag;
 	qdf_ether_header_t *eh;
 	uint16_t msdu_len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
 
@@ -1702,10 +1704,11 @@ void dp_rx_msdu_stats_update(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	if (qdf_unlikely(qdf_nbuf_is_da_mcbc(nbuf) &&
 			 (vdev->rx_decap_type == htt_cmn_pkt_type_ethernet))) {
 		eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
-		DP_STATS_INC_PKT(peer, rx.multicast, 1, msdu_len);
+		enh_flag = vdev->pdev->enhanced_stats_en;
+		DP_PEER_MC_INCC_PKT(peer, 1, msdu_len, enh_flag);
 		tid_stats->mcast_msdu_cnt++;
 		if (QDF_IS_ADDR_BROADCAST(eh->ether_dhost)) {
-			DP_STATS_INC_PKT(peer, rx.bcast, 1, msdu_len);
+			DP_PEER_BC_INCC_PKT(peer, 1, msdu_len, enh_flag);
 			tid_stats->bcast_msdu_cnt++;
 		}
 	}
