@@ -376,6 +376,7 @@ int wlan_hdd_cm_connect(struct wiphy *wiphy,
 	struct osif_connect_params params;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	struct hdd_context *hdd_ctx;
+	struct hdd_station_ctx *hdd_sta_ctx;
 
 	hdd_enter();
 
@@ -400,6 +401,7 @@ int wlan_hdd_cm_connect(struct wiphy *wiphy,
 	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (status)
@@ -414,6 +416,16 @@ int wlan_hdd_cm_connect(struct wiphy *wiphy,
 		return -EINVAL;
 
 	ucfg_pmo_flush_gtk_offload_req(vdev);
+	qdf_mem_zero(&hdd_sta_ctx->conn_info.conn_flag,
+		     sizeof(hdd_sta_ctx->conn_info.conn_flag));
+
+	/*
+	 * Reset the ptk, gtk status flags to avoid using old/previous
+	 * connection status.
+	 */
+	hdd_sta_ctx->conn_info.gtk_installed = false;
+	hdd_sta_ctx->conn_info.ptk_installed = false;
+	adapter->last_disconnect_reason = 0;
 
 	qdf_runtime_pm_prevent_suspend(&hdd_ctx->runtime_context.connect);
 	hdd_prevent_suspend_timeout(HDD_WAKELOCK_CONNECT_COMPLETE,

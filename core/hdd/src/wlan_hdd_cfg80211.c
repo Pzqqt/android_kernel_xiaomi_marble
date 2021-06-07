@@ -21609,7 +21609,6 @@ static int wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 
 	return errno;
 }
-#endif
 
 /**
  * hdd_ieee80211_reason_code_to_str() - return string conversion of reason code
@@ -21760,8 +21759,6 @@ wlan_hdd_cfg80211_indicate_disconnect(struct hdd_adapter *adapter,
 			      disconnect_ies_len, GFP_KERNEL);
 }
 #endif
-
-#ifndef FEATURE_CM_ENABLE
 
 int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason,
 			enum wlan_reason_code mac_reason)

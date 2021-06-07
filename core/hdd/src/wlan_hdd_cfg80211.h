@@ -619,6 +619,7 @@ int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx,
 				  struct wiphy *wiphy,
 				  enum band_info new_band);
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * wlan_hdd_cfg80211_indicate_disconnect() - Indicate disconnnect to userspace
  * @adapter: Pointer to adapter
@@ -639,6 +640,7 @@ wlan_hdd_cfg80211_indicate_disconnect(struct hdd_adapter *adapter,
 				      enum wlan_reason_code reason,
 				      uint8_t *disconnect_ies,
 				      uint16_t disconnect_ies_len);
+#endif
 
 /**
  * wlan_hdd_change_hw_mode_for_given_chnl() - change HW mode for given channel
