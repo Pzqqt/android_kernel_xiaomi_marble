@@ -32,6 +32,7 @@
 #define DEFAULT_FPS       30
 #define MINIMUM_FPS       1
 #define MAXIMUM_FPS       960
+#define MAXIMUM_VP9_FPS   60
 #define SINGLE_INPUT_BUFFER   1
 #define SINGLE_OUTPUT_BUFFER  1
 #define MAX_NUM_INPUT_BUFFERS    VIDEO_MAX_FRAME // same as VB2_MAX_FRAME

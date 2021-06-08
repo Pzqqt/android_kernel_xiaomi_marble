@@ -1924,8 +1924,24 @@ int msm_vidc_adjust_session_priority(void *instance, struct v4l2_ctrl *ctrl)
 	if (adjusted_value == 0 && rate_by_client) {
 		rc = msm_vidc_check_core_mbps(inst);
 		if (rc) {
-			d_vpr_e("%s: priority 0 not feasible due to resource\n", __func__);
-			return rc;
+			i_vpr_e(inst, "%s: unsupported load\n", __func__);
+			goto exit;
+		}
+		rc = capability->cap[FRAME_RATE].value > capability->cap[FRAME_RATE].max;
+		if (rc) {
+			i_vpr_e(inst, "%s: unsupported FRAME_RATE %u, max %u\n", __func__,
+				capability->cap[FRAME_RATE].value >> 16,
+				capability->cap[FRAME_RATE].max >> 16);
+			rc = -ENOMEM;
+			goto exit;
+		}
+		rc = capability->cap[OPERATING_RATE].value > capability->cap[OPERATING_RATE].max;
+		if (rc) {
+			i_vpr_e(inst, "%s: unsupported OPERATING_RATE %u, max %u\n", __func__,
+				capability->cap[OPERATING_RATE].value >> 16,
+				capability->cap[OPERATING_RATE].max >> 16);
+			rc = -ENOMEM;
+			goto exit;
 		}
 	}
 
@@ -1934,6 +1950,7 @@ int msm_vidc_adjust_session_priority(void *instance, struct v4l2_ctrl *ctrl)
 
 	msm_vidc_update_cap_value(inst, PRIORITY, adjusted_value, __func__);
 
+exit:
 	return rc;
 }
 

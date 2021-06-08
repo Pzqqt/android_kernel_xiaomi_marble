@@ -107,11 +107,13 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 	 */
 
 	{FRAME_WIDTH, DEC, CODECS_ALL, 96, 8192, 1, 1920},
+	{FRAME_WIDTH, DEC, VP9, 96, 4096, 1, 1920},
 	{FRAME_WIDTH, ENC, CODECS_ALL, 128, 8192, 1, 1920},
 	{LOSSLESS_FRAME_WIDTH, ENC, H264|HEVC, 128, 4096, 1, 1920},
 	{SECURE_FRAME_WIDTH, DEC, H264|HEVC|VP9, 96, 4096, 1, 1920},
 	{SECURE_FRAME_WIDTH, ENC, H264|HEVC, 128, 4096, 1, 1920},
 	{FRAME_HEIGHT, DEC, CODECS_ALL, 96, 8192, 1, 1080},
+	{FRAME_HEIGHT, DEC, VP9, 96, 4096, 1, 1080},
 	{FRAME_HEIGHT, ENC, CODECS_ALL, 128, 8192, 1, 1080},
 	{LOSSLESS_FRAME_HEIGHT, ENC, H264|HEVC, 128, 4096, 1, 1080},
 	{SECURE_FRAME_HEIGHT, DEC, H264|HEVC|VP9, 96, 4096, 1, 1080},
@@ -175,6 +177,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 	{MBPF, ENC, CODECS_ALL, 64, 138240, 1, 138240},
 	{MBPF, DEC, CODECS_ALL, 36, 138240, 1, 138240},
 	/* (4096 * 2304) / 256 */
+	{MBPF, DEC, VP9, 36, 36864, 1, 36864},
+	/* (4096 * 2304) / 256 */
 	{LOSSLESS_MBPF, ENC, H264|HEVC, 64, 36864, 1, 36864},
 	/* Batch Mode Decode */
 	/* TODO: update with new values based on updated voltage corner */
@@ -186,6 +190,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 	{MBPS, ENC, CODECS_ALL, 64, 3916800, 1, 3916800},
 	/* ((1920 * 1088) / 256) * 960 fps */
 	{MBPS, DEC, CODECS_ALL, 64, 7833600, 1, 7833600},
+	/* ((4096 * 2304) / 256) * 60 */
+	{MBPS, DEC, VP9, 36, 2211840, 1, 2211840},
 	/* ((4096 * 2304) / 256) * 60 fps */
 	{POWER_SAVE_MBPS, ENC, CODECS_ALL, 0, 2211840, 1, 2211840},
 
@@ -202,8 +208,17 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		(MINIMUM_FPS << 16), (MAXIMUM_FPS << 16),
 		1, (DEFAULT_FPS << 16)},
 
+	{FRAME_RATE, DEC, VP9,
+		(MINIMUM_FPS << 16), (MAXIMUM_VP9_FPS << 16),
+		1, (DEFAULT_FPS << 16)},
+
 	{OPERATING_RATE, ENC|DEC, CODECS_ALL,
-		1, INT_MAX, 1, (DEFAULT_FPS << 16)},
+		(MINIMUM_FPS << 16), (MAXIMUM_FPS << 16),
+		1, (DEFAULT_FPS << 16)},
+
+	{OPERATING_RATE, DEC, VP9,
+		(MINIMUM_FPS << 16), (MAXIMUM_VP9_FPS << 16),
+		1, (DEFAULT_FPS << 16)},
 
 	{SCALE_FACTOR, ENC, H264|HEVC, 1, 8, 1, 8},
 
