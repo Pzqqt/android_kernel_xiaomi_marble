@@ -189,8 +189,8 @@ static ssize_t adsp_ssr_store(struct kobject *kobj,
 
 	dev_err(&pdev->dev, "requesting for ADSP restart\n");
 
-	/* subsystem_restart_dev has worker queue to handle */
-	rproc_report_crash(adsp_dev, RPROC_FATAL_ERROR);
+	rproc_shutdown(adsp_dev);
+	adsp_loader_do(adsp_private);
 
 	dev_dbg(&pdev->dev, "%s :: ADSP restarted\n", __func__);
 	return count;
