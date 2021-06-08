@@ -738,8 +738,11 @@ pmo_core_enable_wow_in_fw(struct wlan_objmgr_psoc *psoc,
 	struct pmo_wow_cmd_params param = {0};
 	struct pmo_psoc_cfg *psoc_cfg = &psoc_ctx->psoc_cfg;
 	QDF_STATUS status;
+	void *hif_ctx;
 
 	pmo_enter();
+
+	hif_ctx = pmo_core_psoc_get_hif_handle(psoc);
 	qdf_event_reset(&psoc_ctx->wow.target_suspend);
 	pmo_core_set_wow_nack(psoc_ctx, false);
 	host_credits = pmo_tgt_psoc_get_host_credits(psoc);
@@ -806,6 +809,8 @@ pmo_core_enable_wow_in_fw(struct wlan_objmgr_psoc *psoc,
 		}
 	} else {
 		pmo_info("Prevent link down, non-drv wow is enabled");
+		if (hif_ctx)
+			hif_print_runtime_pm_prevent_list(hif_ctx);
 	}
 
 	if (type == QDF_SYSTEM_SUSPEND) {
