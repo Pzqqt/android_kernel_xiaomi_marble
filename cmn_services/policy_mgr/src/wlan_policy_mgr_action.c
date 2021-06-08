@@ -36,6 +36,7 @@
 #include "wlan_mlme_api.h"
 #include "sap_api.h"
 #include "wlan_mlme_api.h"
+#include "wlan_mlme_ucfg_api.h"
 
 enum policy_mgr_conc_next_action (*policy_mgr_get_current_pref_hw_mode_ptr)
 	(struct wlan_objmgr_psoc *psoc);
@@ -2210,6 +2211,23 @@ static QDF_STATUS policy_mgr_check_6ghz_sap_conc(
 	return QDF_STATUS_SUCCESS;
 }
 
+bool policy_mgr_sap_allowed_on_indoor_freq(struct wlan_objmgr_psoc *psoc,
+					   struct wlan_objmgr_pdev *pdev,
+					   uint32_t sap_ch_freq)
+{
+	bool include_indoor_channel = 0;
+
+	ucfg_mlme_get_indoor_channel_support(psoc, &include_indoor_channel);
+
+	if (!include_indoor_channel &&
+	    wlan_reg_is_freq_indoor(pdev, sap_ch_freq)) {
+		policy_mgr_debug("No more operation on indoor channel");
+		return false;
+	}
+
+	return true;
+}
+
 QDF_STATUS policy_mgr_valid_sap_conc_channel_check(
 	struct wlan_objmgr_psoc *psoc, uint32_t *con_ch_freq,
 	uint32_t sap_ch_freq, uint8_t sap_vdev_id,
@@ -2315,11 +2333,13 @@ QDF_STATUS policy_mgr_valid_sap_conc_channel_check(
 					return QDF_STATUS_E_FAILURE;
 				}
 			} else {
-				if (!(policy_mgr_sta_sap_scc_on_lte_coex_chan
+				if ((!(policy_mgr_sta_sap_scc_on_lte_coex_chan
 				    (psoc)) && !(policy_mgr_is_safe_channel
-				    (psoc, ch_freq))) {
-					policy_mgr_warn("Can't have concurrency due to unsafe channel %d",
-							ch_freq);
+				    (psoc, ch_freq))) ||
+				    !policy_mgr_sap_allowed_on_indoor_freq(psoc,
+						pm_ctx->pdev, sap_ch_freq)) {
+					policy_mgr_warn("Can't have concurrency due to unsafe/indoor channel:%d, sap_ch_freq:%d",
+							ch_freq, sap_ch_freq);
 					return QDF_STATUS_E_FAILURE;
 				}
 			}
