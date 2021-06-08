@@ -809,8 +809,10 @@ pmo_core_enable_wow_in_fw(struct wlan_objmgr_psoc *psoc,
 		}
 	} else {
 		pmo_info("Prevent link down, non-drv wow is enabled");
-		if (hif_ctx)
+		if (hif_ctx) {
 			hif_print_runtime_pm_prevent_list(hif_ctx);
+			htc_log_link_user_votes();
+		}
 	}
 
 	if (type == QDF_SYSTEM_SUSPEND) {
