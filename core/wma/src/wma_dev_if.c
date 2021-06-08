@@ -4865,7 +4865,7 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 				wmi_service_enabled(wma->wmi_handle,
 					wmi_service_sap_connected_d3_wow));
 		if (!is_bus_suspend_allowed_in_sap_mode) {
-			htc_vote_link_up(htc_handle);
+			htc_vote_link_up(htc_handle, HTC_LINK_VOTE_SAP_USER_ID);
 			wmi_info("sap d0 wow");
 		} else {
 			wmi_info("sap d3 wow");
@@ -4882,7 +4882,7 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 				wmi_service_enabled(wma->wmi_handle,
 					wmi_service_go_connected_d3_wow));
 		if (!is_bus_suspend_allowed_in_go_mode) {
-			htc_vote_link_up(htc_handle);
+			htc_vote_link_up(htc_handle, HTC_LINK_VOTE_GO_USER_ID);
 			wmi_info("p2p go d0 wow");
 		} else {
 			wmi_info("p2p go d3 wow");
@@ -4895,11 +4895,11 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 	/* handle wow for nan with 1 or more peer in same way */
 	if (BSS_OPERATIONAL_MODE_NDI == oper_mode) {
 		wma_debug("disable runtime pm and vote for link up");
-		htc_vote_link_up(htc_handle);
+		htc_vote_link_up(htc_handle, HTC_LINK_VOTE_NDP_USER_ID);
 		wma_sap_prevent_runtime_pm(wma);
 	} else if (wma_add_sta_allow_sta_mode_vote_link(oper_mode)) {
 		wma_debug("vote for link up");
-		htc_vote_link_up(htc_handle);
+		htc_vote_link_up(htc_handle, HTC_LINK_VOTE_STA_USER_ID);
 	}
 }
 
@@ -4961,7 +4961,8 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 				wmi_service_enabled(wma->wmi_handle,
 					wmi_service_sap_connected_d3_wow));
 		if (!is_bus_suspend_allowed_in_sap_mode) {
-			htc_vote_link_down(htc_handle);
+			htc_vote_link_down(htc_handle,
+					   HTC_LINK_VOTE_SAP_USER_ID);
 			wmi_info("sap d0 wow");
 		} else {
 			wmi_info("sap d3 wow");
@@ -4977,7 +4978,8 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 				wmi_service_enabled(wma->wmi_handle,
 					wmi_service_go_connected_d3_wow));
 		if (!is_bus_suspend_allowed_in_go_mode) {
-			htc_vote_link_down(htc_handle);
+			htc_vote_link_down(htc_handle,
+					   HTC_LINK_VOTE_GO_USER_ID);
 			wmi_info("p2p go d0 wow");
 		} else {
 			wmi_info("p2p go d3 wow");
@@ -4989,11 +4991,11 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 
 	if (BSS_OPERATIONAL_MODE_NDI == oper_mode) {
 		wma_debug("allow runtime pm and vote for link down");
-		htc_vote_link_down(htc_handle);
+		htc_vote_link_down(htc_handle, HTC_LINK_VOTE_NDP_USER_ID);
 		wma_sap_allow_runtime_pm(wma);
 	} else if (wma_add_sta_allow_sta_mode_vote_link(oper_mode)) {
 		wma_debug("vote for link down");
-		htc_vote_link_down(htc_handle);
+		htc_vote_link_down(htc_handle, HTC_LINK_VOTE_STA_USER_ID);
 	}
 }
 
