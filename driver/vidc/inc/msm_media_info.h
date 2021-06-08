@@ -409,8 +409,10 @@ static inline unsigned int VIDEO_RGB_SCANLINES(unsigned int v4l2_fmt,
 
 	switch (v4l2_fmt) {
 	case V4L2_PIX_FMT_VIDC_ARGB32C:
-	case V4L2_PIX_FMT_RGBA32:
 		alignment = 16;
+		break;
+	case V4L2_PIX_FMT_RGBA32:
+		alignment = 32;
 		break;
 	default:
 		goto invalid_input;
