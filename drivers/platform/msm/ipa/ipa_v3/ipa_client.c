@@ -18,7 +18,8 @@
 #define IPA_HOLB_TMR_EN 0x1
 #define IPA_HOLB_TMR_DIS 0x0
 #define IPA_POLL_AGGR_STATE_RETRIES_NUM 3
-#define IPA_POLL_AGGR_STATE_SLEEP_MSEC 1
+#define IPA_POLL_AGGR_STATE_SLEEP_USEC_MIN 1010
+#define IPA_POLL_AGGR_STATE_SLEEP_USEC_MAX 1050
 
 #define IPA_PKT_FLUSH_TO_US 100
 
@@ -187,9 +188,10 @@ int ipa3_reset_gsi_channel(u32 clnt_hdl)
 
 	/*
 	 * Reset channel
-	 * If the reset called after stop, need to wait 1ms
+	 * If the reset called after stop, need to wait for about 1010us to 1050us
 	 */
-	msleep(IPA_POLL_AGGR_STATE_SLEEP_MSEC);
+	usleep_range(IPA_POLL_AGGR_STATE_SLEEP_USEC_MIN,
+		IPA_POLL_AGGR_STATE_SLEEP_USEC_MAX);
 	gsi_res = gsi_reset_channel(ep->gsi_chan_hdl);
 	if (gsi_res != GSI_STATUS_SUCCESS) {
 		IPAERR("Error resetting channel: %d\n", gsi_res);
