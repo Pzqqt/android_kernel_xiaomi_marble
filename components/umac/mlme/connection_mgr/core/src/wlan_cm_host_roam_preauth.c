@@ -74,7 +74,7 @@ static QDF_STATUS cm_get_valid_preauth_candidate(struct cm_roam_req *cm_req)
 
 	cm_req->num_preauth_retry++;
 
-	mlme_debug(CM_PREFIX_FMT "Try preauth attempt no. %d for bssid:" QDF_MAC_ADDR_FMT,
+	mlme_debug(CM_PREFIX_FMT "Try preauth attempt no. %d for " QDF_MAC_ADDR_FMT,
 		   CM_PREFIX_REF(vdev_id, cm_req->cm_id),
 		   cm_req->num_preauth_retry,
 		   QDF_MAC_ADDR_REF(cm_req->cur_candidate->entry->bssid.bytes));
@@ -307,7 +307,7 @@ static void cm_flush_invalid_preauth_ap(struct cnx_mgr *cm_ctx,
 		bss_freq = scan_node->entry->channel.chan_freq;
 		if (qdf_is_macaddr_equal(&connected_bssid,
 					 &scan_node->entry->bssid)) {
-			mlme_debug(CM_PREFIX_FMT "Remove connected AP" QDF_MAC_ADDR_FMT " from list",
+			mlme_debug(CM_PREFIX_FMT "Remove connected AP " QDF_MAC_ADDR_FMT " from list",
 				   CM_PREFIX_REF(vdev_id, roam_req->cm_id),
 				   QDF_MAC_ADDR_REF(connected_bssid.bytes));
 			is_valid = false;
@@ -658,7 +658,7 @@ void cm_preauth_done_resp(struct cnx_mgr *cm_ctx, struct wlan_preauth_rsp *rsp)
 		cm_req = cm_get_req_by_cm_id(cm_ctx, cm_id);
 		if (!cm_req)
 			return;
-		mlme_info(CM_PREFIX_FMT "Preauth attempt no. %d failed for bssid:" QDF_MAC_ADDR_FMT,
+		mlme_info(CM_PREFIX_FMT "Preauth attempt no. %d failed for " QDF_MAC_ADDR_FMT,
 			  CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev), cm_id),
 			  cm_req->roam_req.num_preauth_retry,
 			  QDF_MAC_ADDR_REF(rsp->pre_auth_bssid.bytes));
@@ -724,7 +724,7 @@ static QDF_STATUS cm_preauth_rsp(struct wlan_objmgr_vdev *vdev,
 	}
 	rsp->cm_id = cm_id;
 
-	mlme_debug(CM_PREFIX_FMT "preauth resp status %d bssid:" QDF_MAC_ADDR_FMT,
+	mlme_debug(CM_PREFIX_FMT "preauth resp status %d for " QDF_MAC_ADDR_FMT,
 		   CM_PREFIX_REF(wlan_vdev_get_id(vdev), cm_id),
 		   rsp->status, QDF_MAC_ADDR_REF(rsp->pre_auth_bssid.bytes));
 
