@@ -3580,6 +3580,11 @@ IE vendor_vht_ie (EID_VENDOR_SPECIFIC) OUI (0x00, 0x90, 0x4c, 0x04)
    OPTIE IE VHTOperation;
 }
 
+IE non_inheritance (EID_EXTN_ID_ELEMENT) OUI (0x38)
+{
+    data[0..255];
+}
+
 IE mlo_capabilities (0)
 {
     {
@@ -3670,6 +3675,7 @@ IE sta_profile (0)
   OPTIE IE eht_cap;
   OPTIE IE eht_op;
   OPTIE IE max_chan_switch_time;
+  OPTIE IE non_inheritance;
 }
 
 IE mlo_ie (EID_EXTN_ID_ELEMENT) OUI (0x5e)
