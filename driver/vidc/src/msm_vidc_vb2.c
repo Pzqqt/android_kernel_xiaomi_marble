@@ -180,6 +180,10 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 		if (rc)
 			return rc;
 
+		rc = msm_vidc_session_set_secure_mode(inst);
+		if (rc)
+			return rc;
+
 		if (is_encode_session(inst)) {
 			rc = msm_vidc_alloc_and_queue_session_internal_buffers(inst,
 				MSM_VIDC_BUF_ARP);

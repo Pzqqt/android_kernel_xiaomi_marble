@@ -3687,6 +3687,22 @@ int msm_vidc_session_set_codec(struct msm_vidc_inst *inst)
 	return 0;
 }
 
+int msm_vidc_session_set_secure_mode(struct msm_vidc_inst *inst)
+{
+	int rc = 0;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	rc = venus_hfi_session_set_secure_mode(inst);
+	if (rc)
+		return rc;
+
+	return 0;
+}
+
 int msm_vidc_session_set_default_header(struct msm_vidc_inst *inst)
 {
 	int rc = 0;
