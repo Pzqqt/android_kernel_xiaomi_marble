@@ -166,7 +166,7 @@ target_if_vote_for_link_down(struct wlan_objmgr_psoc *psoc,
 	}
 
 	if (psoc_wakelock->is_link_up) {
-		htc_vote_link_down(htc_handle);
+		htc_vote_link_down(htc_handle, HTC_LINK_VOTE_SAP_DFS_USER_ID);
 		qdf_runtime_pm_allow_suspend(&psoc_wakelock->prevent_runtime_lock);
 		psoc_wakelock->is_link_up = false;
 	}
@@ -185,7 +185,7 @@ target_if_vote_for_link_up(struct wlan_objmgr_psoc *psoc,
 	}
 
 	if (!psoc_wakelock->is_link_up) {
-		htc_vote_link_up(htc_handle);
+		htc_vote_link_up(htc_handle, HTC_LINK_VOTE_SAP_DFS_USER_ID);
 		qdf_runtime_pm_prevent_suspend(&psoc_wakelock->prevent_runtime_lock);
 		psoc_wakelock->is_link_up = true;
 	}

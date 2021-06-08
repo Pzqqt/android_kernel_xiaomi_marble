@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -38,4 +38,6 @@
 	QDF_TRACE(QDF_MODULE_ID_HTC, QDF_TRACE_LEVEL_INFO, ## args)
 #define HTC_TRACE(args ...) \
 	QDF_TRACE(QDF_MODULE_ID_HTC, QDF_TRACE_LEVEL_DEBUG, ## args)
+#define HTC_NOFL_INFO(args...) \
+	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_HTC, ## args)
 #endif /*HTC_DEBUG_H_ */
