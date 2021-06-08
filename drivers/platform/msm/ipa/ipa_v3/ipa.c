@@ -2313,6 +2313,65 @@ static int ipa3_send_sw_flt_list(unsigned long usr_param)
 	return 0;
 }
 
+static int ipa3_send_ippt_sw_flt_list(unsigned long usr_param)
+{
+	int retval;
+	struct ipa_msg_meta msg_meta;
+	struct ipa_ioc_sw_flt_list_type sw_flt_list;
+	void *buff;
+
+	if (copy_from_user(&sw_flt_list, (const void __user *)usr_param,
+		sizeof(struct ipa_ioc_sw_flt_list_type))) {
+		IPAERR("Copy ipa_ioc_sw_flt_list_type failure\n");
+		return -EFAULT;
+	}
+
+	/* Expect ipa_ippt_sw_flt_list_type struct*/
+	if (sw_flt_list.ioctl_data_size !=
+		sizeof(struct ipa_ippt_sw_flt_list_type)) {
+		IPAERR("IPA_IOC_SET_IPPT_SW_FLT size not match(%d,%d)!\n",
+		sw_flt_list.ioctl_data_size,
+		sizeof(struct ipa_ippt_sw_flt_list_type));
+		return -EFAULT;
+	}
+
+	buff = kzalloc(sizeof(struct ipa_ippt_sw_flt_list_type),
+				GFP_KERNEL);
+	if (!buff) {
+		IPAERR("ipa_ippt_sw_flt_list_type mem-allocate failure\n");
+		return -ENOMEM;
+	}
+
+	if (copy_from_user(buff, u64_to_user_ptr(sw_flt_list.ioctl_ptr),
+		sizeof(struct ipa_ippt_sw_flt_list_type))) {
+		IPAERR("Failed to copy ipa_ippt_sw_flt_list_type\n");
+		kfree(buff);
+		return -EFAULT;
+	}
+	memset(&msg_meta, 0, sizeof(struct ipa_msg_meta));
+	msg_meta.msg_type = IPA_IPPT_SW_FLT_EVENT;
+	msg_meta.msg_len = sizeof(struct ipa_ippt_sw_flt_list_type);
+
+	IPADBG("Num of ipv4: %d, ipv4 enable: %d \n",
+		((struct ipa_ippt_sw_flt_list_type *)buff)->num_of_ipv4,
+		((struct ipa_ippt_sw_flt_list_type *)buff)->ipv4_enable);
+
+	IPADBG("Num of ports: %d, port enable: %d\n",
+		((struct ipa_ippt_sw_flt_list_type *)buff)->num_of_port,
+		((struct ipa_ippt_sw_flt_list_type *)buff)->port_enable);
+
+	retval = ipa3_send_msg(&msg_meta, buff,
+		ipa3_mac_flt_list_free_cb);
+	if (retval) {
+		IPAERR("ipa3_send_msg failed: %d, msg_type %d\n",
+		retval,
+		msg_meta.msg_type);
+		kfree(buff);
+		return retval;
+	}
+	return 0;
+}
+
 static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
 	int retval = 0;
@@ -3563,6 +3622,14 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	case IPA_IOC_SET_SW_FLT:
 		IPADBG("Got IPA_IOC_SET_SW_FLT\n");
 		if (ipa3_send_sw_flt_list(arg)) {
+			retval = -EFAULT;
+			break;
+		}
+		break;
+
+	case IPA_IOC_SET_IPPT_SW_FLT:
+		IPADBG("Got IPA_IOC_SET_IPPT_SW_FLT\n");
+		if (ipa3_send_ippt_sw_flt_list(arg)) {
 			retval = -EFAULT;
 			break;
 		}
