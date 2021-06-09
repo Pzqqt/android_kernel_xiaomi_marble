@@ -1578,15 +1578,28 @@ wma_get_trigger_detail_str(struct wmi_roam_trigger_info *roam_info, char *buf)
 		buf_left -= buf_cons;
 		return;
 	case WMI_ROAM_TRIGGER_REASON_WTC_BTM:
-		buf_cons =
-		  qdf_snprint(temp, buf_left, "Roaming Mode: %d, Trigger Reason: %d, Sub code:%d, wtc mode:%d, wtc scan mode:%d, wtc rssi th:%d, wtc candi rssi th:%d",
-			      roam_info->wtc_btm_trig_data.roaming_mode,
-			      roam_info->wtc_btm_trig_data.vsie_trigger_reason,
-			      roam_info->wtc_btm_trig_data.sub_code,
-			      roam_info->wtc_btm_trig_data.wtc_mode,
-			      roam_info->wtc_btm_trig_data.wtc_scan_mode,
-			      roam_info->wtc_btm_trig_data.wtc_rssi_th,
-			      roam_info->wtc_btm_trig_data.wtc_candi_rssi_th);
+		if (roam_info->wtc_btm_trig_data.wtc_candi_rssi_ext_present) {
+			buf_cons = qdf_snprint(temp, buf_left, "Roaming Mode: %d, Trigger Reason: %d, Sub code:%d, wtc mode:%d, wtc scan mode:%d, wtc rssi th:%d, wtc candi rssi th_2g:%d, wtc_candi_rssi_th_5g:%d, wtc_candi_rssi_th_6g:%d",
+			     roam_info->wtc_btm_trig_data.roaming_mode,
+			     roam_info->wtc_btm_trig_data.vsie_trigger_reason,
+			     roam_info->wtc_btm_trig_data.sub_code,
+			     roam_info->wtc_btm_trig_data.wtc_mode,
+			     roam_info->wtc_btm_trig_data.wtc_scan_mode,
+			     roam_info->wtc_btm_trig_data.wtc_rssi_th,
+			     roam_info->wtc_btm_trig_data.wtc_candi_rssi_th,
+			     roam_info->wtc_btm_trig_data.wtc_candi_rssi_th_5g,
+			     roam_info->wtc_btm_trig_data.wtc_candi_rssi_th_6g);
+		} else {
+			buf_cons = qdf_snprint(temp, buf_left, "Roaming Mode: %d, Trigger Reason: %d, Sub code:%d, wtc mode:%d, wtc scan mode:%d, wtc rssi th:%d, wtc candi rssi th:%d",
+			       roam_info->wtc_btm_trig_data.roaming_mode,
+			       roam_info->wtc_btm_trig_data.vsie_trigger_reason,
+			       roam_info->wtc_btm_trig_data.sub_code,
+			       roam_info->wtc_btm_trig_data.wtc_mode,
+			       roam_info->wtc_btm_trig_data.wtc_scan_mode,
+			       roam_info->wtc_btm_trig_data.wtc_rssi_th,
+			       roam_info->wtc_btm_trig_data.wtc_candi_rssi_th);
+		}
+
 		temp += buf_cons;
 		buf_left -= buf_cons;
 		return;

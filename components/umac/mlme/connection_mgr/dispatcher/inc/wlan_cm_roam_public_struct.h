@@ -1747,11 +1747,13 @@ struct wlan_cm_roam_rx_ops {
  * trigger partial frequency scans.
  * ROAM_SCAN_FREQ_SCHEME_FULL_SCAN: Indicates the firmware to
  * trigger full frequency scans.
+ * ROAM_SCAN_FREQ_SCHEME_NONE: Invalid scan mode
  */
 enum roam_scan_freq_scheme {
 	ROAM_SCAN_FREQ_SCHEME_NO_SCAN = 0,
 	ROAM_SCAN_FREQ_SCHEME_PARTIAL_SCAN = 1,
 	ROAM_SCAN_FREQ_SCHEME_FULL_SCAN = 2,
+	ROAM_SCAN_FREQ_SCHEME_NONE = 3,
 };
 
 /**
