@@ -3026,11 +3026,6 @@ int msm_vidc_set_csc_custom_matrix(void *instance,
 	return rc;
 }
 
-/*
- * TODO: currently fw does not accept HFI_LEVEL_NONE.
- * Use this function for encoder level setting once
- * fw issue is fixed.
- */
 int msm_vidc_set_level(void *instance,
 	enum msm_vidc_inst_capability_type cap_id)
 {

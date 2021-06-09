@@ -1020,7 +1020,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT | CAP_FLAG_MENU,
 		{0},
 		{0},
-		NULL, msm_vidc_set_u32_enum},
+		NULL, msm_vidc_set_level},
 
 	{LEVEL, DEC, HEVC|HEIC,
 		V4L2_MPEG_VIDEO_HEVC_LEVEL_1,
@@ -1066,7 +1066,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT | CAP_FLAG_MENU,
 		{0},
 		{0},
-		NULL, msm_vidc_set_u32_enum},
+		NULL, msm_vidc_set_level},
 
 	/* TODO: Bring the VP9 Level upstream GKI change, and level cap here:
 	 *	go/videogki
