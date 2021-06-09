@@ -11764,6 +11764,7 @@ static void hdd_init_channel_avoidance(struct hdd_context *hdd_ctx)
 {
 	uint16_t unsafe_channel_count;
 	int index;
+	qdf_freq_t *unsafe_freq_list;
 
 	pld_get_wlan_unsafe_channel(hdd_ctx->parent_dev,
 				    hdd_ctx->unsafe_channel_list,
@@ -11776,16 +11777,25 @@ static void hdd_init_channel_avoidance(struct hdd_context *hdd_ctx)
 	unsafe_channel_count = QDF_MIN((uint16_t)hdd_ctx->unsafe_channel_count,
 				       (uint16_t)NUM_CHANNELS);
 
+	unsafe_freq_list = qdf_mem_malloc(
+			unsafe_channel_count * sizeof(*unsafe_freq_list));
+
+	if (!unsafe_freq_list)
+		return;
+
 	for (index = 0; index < unsafe_channel_count; index++) {
 		hdd_debug("channel frequency %d is not safe",
 			  hdd_ctx->unsafe_channel_list[index]);
-
+		unsafe_freq_list[index] =
+			(qdf_freq_t)hdd_ctx->unsafe_channel_list[index];
 	}
 
 	ucfg_policy_mgr_init_chan_avoidance(
 		hdd_ctx->psoc,
-		(qdf_freq_t *)hdd_ctx->unsafe_channel_list,
-		hdd_ctx->unsafe_channel_count);
+		unsafe_freq_list,
+		unsafe_channel_count);
+
+	qdf_mem_free(unsafe_freq_list);
 }
 
 static void hdd_lte_coex_restart_sap(struct hdd_adapter *adapter,
