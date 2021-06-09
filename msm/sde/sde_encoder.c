@@ -1995,9 +1995,6 @@ static int _sde_encoder_rc_pre_modeset(struct drm_encoder *drm_enc,
 {
 	int ret = 0;
 
-	/* cancel delayed off work, if any */
-	_sde_encoder_rc_cancel_delayed(sde_enc, sw_event);
-
 	mutex_lock(&sde_enc->rc_lock);
 
 	if (sde_enc->rc_state == SDE_ENC_RC_STATE_OFF) {
@@ -2509,6 +2506,9 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 		SDE_ERROR_ENC(sde_enc, "could not get connector state");
 		return;
 	}
+
+	/* cancel delayed off work, if any */
+	kthread_cancel_delayed_work_sync(&sde_enc->delayed_off_work);
 
 	/* release resources before seamless mode change */
 	msm_mode = &c_state->msm_mode;
