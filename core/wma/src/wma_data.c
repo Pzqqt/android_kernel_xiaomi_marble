@@ -2501,14 +2501,14 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		if (tx_frm_ota_comp_cb) {
 			if (wma_handle->umac_data_ota_ack_cb) {
 				/*
-				 * If last data frame was sent more than 5 secs
+				 * If last data frame was sent more than 2 secs
 				 * ago and still we didn't receive ack/nack from
 				 * fw then allow Tx of this data frame
 				 */
 				if (curr_timestamp >=
 				    wma_handle->last_umac_data_ota_timestamp +
-				    500) {
-					wma_err("No Tx Ack for last data frame for more than 5 secs, allow Tx of current data frame");
+				    200) {
+					wma_err("No Tx Ack for last data frame for more than 2 secs, allow Tx of current data frame");
 				} else {
 					wma_err("Already one Data pending for Ack, reject Tx of data frame");
 					cds_packet_free((void *)tx_frame);
