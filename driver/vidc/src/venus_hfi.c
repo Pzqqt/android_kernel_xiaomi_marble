@@ -3,9 +3,6 @@
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/clk.h>
-#include <linux/regulator/consumer.h>
-#include <linux/clk-provider.h>
 #include <linux/iommu.h>
 #include <linux/qcom_scm.h>
 #include <linux/soc/qcom/smem.h>
@@ -21,7 +18,6 @@
 #include "venus_hfi.h"
 #include "msm_vidc_core.h"
 #include "msm_vidc_power.h"
-#include "msm_vidc_dt.h"
 #include "msm_vidc_platform.h"
 #include "msm_vidc_memory.h"
 #include "msm_vidc_driver.h"
@@ -267,7 +263,7 @@ int __write_register(struct msm_vidc_core *core,
  * only bits 0 & 4 will be updated with corresponding bits from value. To update
  * entire register with value, set mask = 0xFFFFFFFF.
  */
-static int __write_register_masked(struct msm_vidc_core *core,
+int __write_register_masked(struct msm_vidc_core *core,
 		u32 reg, u32 value, u32 mask)
 {
 	u32 prev_val, new_val;
@@ -373,10 +369,15 @@ static void __cancel_power_collapse_work(struct msm_vidc_core *core)
 	cancel_delayed_work(&core->pm_work);
 }
 
-static int __acquire_regulator(struct msm_vidc_core *core,
+int __acquire_regulator(struct msm_vidc_core *core,
 	struct regulator_info *rinfo)
 {
 	int rc = 0;
+
+	if (!core || !rinfo) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
 
 	if (rinfo->has_hw_power_collapse) {
 		if (!rinfo->regulator) {
@@ -387,6 +388,7 @@ static int __acquire_regulator(struct msm_vidc_core *core,
 
 		if (regulator_get_mode(rinfo->regulator) ==
 				REGULATOR_MODE_NORMAL) {
+			core->handoff_done = false;
 			d_vpr_h("Skip acquire regulator %s\n", rinfo->name);
 			goto exit;
 		}
@@ -403,7 +405,7 @@ static int __acquire_regulator(struct msm_vidc_core *core,
 				rinfo->name);
 			goto exit;
 		} else {
-
+			core->handoff_done = false;
 			d_vpr_h("Acquired regulator control from HW: %s\n",
 					rinfo->name);
 
@@ -417,6 +419,17 @@ static int __acquire_regulator(struct msm_vidc_core *core,
 	}
 
 exit:
+	return rc;
+}
+
+static int __acquire_regulators(struct msm_vidc_core *core)
+{
+	int rc = 0;
+	struct regulator_info *rinfo;
+
+	venus_hfi_for_each_regulator(core, rinfo)
+		__acquire_regulator(core, rinfo);
+
 	return rc;
 }
 
@@ -434,12 +447,11 @@ static int __hand_off_regulator(struct msm_vidc_core *core,
 		rc = regulator_set_mode(rinfo->regulator,
 				REGULATOR_MODE_FAST);
 		if (rc) {
-			core->handoff_done = 0;
 			d_vpr_e("Failed to hand off regulator control: %s\n",
 				rinfo->name);
 			return rc;
 		} else {
-			core->handoff_done = 1;
+			core->handoff_done = true;
 			d_vpr_h("Hand off regulator control to HW: %s\n",
 					rinfo->name);
 		}
@@ -478,7 +490,7 @@ err_reg_handoff_failed:
 	return rc;
 }
 
-static int __set_registers(struct msm_vidc_core *core)
+int __set_registers(struct msm_vidc_core *core)
 {
 	struct reg_set *reg_set;
 	int i, rc = 0;
@@ -524,6 +536,11 @@ int __unvote_buses(struct msm_vidc_core *core)
 	int rc = 0;
 	struct bus_info *bus = NULL;
 
+	if (!core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
 	core->power.bw_ddr = 0;
 	core->power.bw_llcc = 0;
 
@@ -537,13 +554,18 @@ err_unknown_device:
 	return rc;
 }
 
-static int __vote_buses(struct msm_vidc_core *core,
+int __vote_buses(struct msm_vidc_core *core,
 		unsigned long bw_ddr, unsigned long bw_llcc)
 {
 	int rc = 0;
 	struct bus_info *bus = NULL;
 	unsigned long bw_kbps = 0, bw_prev = 0;
 	enum vidc_bus_type type;
+
+	if (!core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
 
 	venus_hfi_for_each_bus(core, bus) {
 		if (bus && bus->path) {
@@ -599,17 +621,19 @@ static int __tzbsp_set_video_state(enum tzbsp_video_state state)
 	return 0;
 }
 
-static int __set_clk_rate(struct msm_vidc_core *core,
+int __set_clk_rate(struct msm_vidc_core *core,
 		struct clock_info *cl, u64 rate)
 {
 	int rc = 0;
-	// struct clk *clk = cl->clk;
 	struct mmrm_client_data client_data;
-	struct mmrm_client *client = cl->mmrm_client;
+	struct mmrm_client *client;
 
 	/* not registered */
-	if (!client)
+	if (!core || !cl || !cl->mmrm_client) {
+		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
+	}
+	client = cl->mmrm_client;
 
 	/* bail early if requested clk rate is not changed */
 	if (rate == cl->prev)
@@ -644,11 +668,16 @@ static int __set_clocks(struct msm_vidc_core *core, u32 freq)
 	return 0;
 }
 
-static int __scale_clocks(struct msm_vidc_core *core)
+int __scale_clocks(struct msm_vidc_core *core)
 {
 	int rc = 0;
 	struct allowed_clock_rates_table *allowed_clks_tbl;
 	u32 freq = 0;
+
+	if (!core || !core->dt) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
 
 	allowed_clks_tbl = core->dt->allowed_clks_tbl;
 	freq = core->power.clk_freq ? core->power.clk_freq :
@@ -1128,16 +1157,23 @@ static int __sys_set_power_control(struct msm_vidc_core *core, bool enable)
 {
 	int rc = 0;
 
-	if (!core->handoff_done)
+	if (!core->handoff_done) {
+		d_vpr_e("%s: skipping as power control hanfoff was not done\n",
+			__func__);
 		return rc;
+	}
 
-	rc = hfi_packet_sys_intraframe_powercollapse(core, core->packet, core->packet_size, enable);
+	rc = hfi_packet_sys_intraframe_powercollapse(core,
+		core->packet, core->packet_size, enable);
 	if (rc)
 		return rc;
 
 	rc = __iface_cmdq_write(core, core->packet);
 	if (rc)
 		return rc;
+
+	core->hw_power_control = true;
+	d_vpr_h("%s: set hardware power control successful\n", __func__);
 
 	return rc;
 }
@@ -1530,7 +1566,7 @@ failed_to_reset:
 	return rc;
 }
 
-static int __prepare_enable_clks(struct msm_vidc_core *core)
+int __prepare_enable_clks(struct msm_vidc_core *core)
 {
 	struct clock_info *cl = NULL;
 	int rc = 0, c = 0;
@@ -1837,8 +1873,6 @@ static int __disable_regulator(struct regulator_info *rinfo,
 		goto disable_regulator_failed;
 	}
 
-	core->handoff_done = 0;
-
 	if (!regulator_is_enabled(rinfo->regulator))
 		d_vpr_e("%s: regulator %s already disabled\n",
 			__func__, rinfo->name);
@@ -1858,23 +1892,15 @@ disable_regulator_failed:
 	return rc;
 }
 
-static int __enable_hw_power_collapse(struct msm_vidc_core *core)
-{
-	int rc = 0;
-
-	rc = __hand_off_regulators(core);
-	if (rc)
-		d_vpr_e("%s: Failed to enable HW power collapse %d\n",
-			__func__, rc);
-
-	return rc;
-}
-
-static int __enable_regulators(struct msm_vidc_core *core)
+int __enable_regulators(struct msm_vidc_core *core)
 {
 	int rc = 0, c = 0;
 	struct regulator_info *rinfo;
 
+	if (!core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
 	d_vpr_h("Enabling regulators\n");
 
 	venus_hfi_for_each_regulator(core, rinfo) {
@@ -2153,61 +2179,16 @@ static int __venus_power_on(struct msm_vidc_core *core)
 {
 	int rc = 0;
 
-	if (core->power_enabled) {
-		d_vpr_e("%s: Skip power on, core already enabled.\n", __func__);
+	if (core->power_enabled)
 		return 0;
-	}
 
+	rc = call_venus_op(core, power_on, core);
+	if (rc) {
+		d_vpr_e("Failed to power on, err: %d\n", rc);
+		return rc;
+	}
 	core->power_enabled = true;
-	/* Vote for all hardware resources */
-	rc = __vote_buses(core, INT_MAX, INT_MAX);
-	if (rc) {
-		d_vpr_e("Failed to vote buses, err: %d\n", rc);
-		goto fail_vote_buses;
-	}
 
-	rc = __enable_regulators(core);
-	if (rc) {
-		d_vpr_e("Failed to enable GDSC, err = %d\n", rc);
-		goto fail_enable_gdsc;
-	}
-
-	rc = call_venus_op(core, reset_ahb2axi_bridge, core);
-	if (rc) {
-		d_vpr_e("Failed to reset ahb2axi: %d\n", rc);
-		goto fail_enable_clks;
-	}
-
-	rc = __prepare_enable_clks(core);
-	if (rc) {
-		d_vpr_e("Failed to enable clocks: %d\n", rc);
-		goto fail_enable_clks;
-	}
-
-	rc = __scale_clocks(core);
-	if (rc) {
-		d_vpr_e("Failed to scale clocks, performance might be affected\n");
-		rc = 0;
-	}
-
-	/*
-	 * Re-program all of the registers that get reset as a result of
-	 * regulator_disable() and _enable()
-	 */
-	__set_registers(core);
-
-	call_venus_op(core, interrupt_init, core);
-	core->intr_status = 0;
-	enable_irq(core->dt->irq);
-
-	return rc;
-
-fail_enable_clks:
-	__disable_regulators(core);
-fail_enable_gdsc:
-	__unvote_buses(core);
-fail_vote_buses:
-	core->power_enabled = false;
 	return rc;
 }
 
@@ -2237,7 +2218,7 @@ static int __suspend(struct msm_vidc_core *core)
 
 	__disable_subcaches(core);
 
-	call_venus_op(core, power_off, core);
+	__venus_power_off(core);
 	d_vpr_h("Venus power off\n");
 	return rc;
 
@@ -2264,6 +2245,9 @@ static int __resume(struct msm_vidc_core *core)
 		return rc;
 
 	d_vpr_h("Resuming from power collapse\n");
+	core->handoff_done = false;
+	core->hw_power_control = false;
+
 	rc = __venus_power_on(core);
 	if (rc) {
 		d_vpr_e("Failed to power on venus\n");
@@ -2283,8 +2267,7 @@ static int __resume(struct msm_vidc_core *core)
 	 * (s/w triggered) to fast (HW triggered) unless the h/w vote is
 	 * present.
 	 */
-	if (__enable_hw_power_collapse(core))
-		d_vpr_e("Failed to enabled inter-frame PC\n");
+	__hand_off_regulators(core);
 
 	call_venus_op(core, setup_ucregion_memmap, core);
 
@@ -2304,7 +2287,12 @@ static int __resume(struct msm_vidc_core *core)
 	}
 	__set_subcaches(core);
 
-	__sys_set_power_control(core, true);
+	rc = __sys_set_power_control(core, true);
+	if (rc) {
+		d_vpr_e("%s: set power control failed\n", __func__);
+		__acquire_regulators(core);
+		rc = 0;
+	}
 
 	d_vpr_h("Resumed from power collapse\n");
 exit:
@@ -2315,7 +2303,7 @@ exit:
 err_reset_core:
 	__tzbsp_set_video_state(TZBSP_VIDEO_STATE_SUSPEND);
 err_set_video_state:
-	call_venus_op(core, power_off, core);
+	__venus_power_off(core);
 err_venus_power_on:
 	d_vpr_e("Failed to resume from power collapse\n");
 	return rc;
@@ -2588,6 +2576,10 @@ int __load_fw(struct msm_vidc_core *core)
 {
 	int rc = 0;
 
+	d_vpr_h("%s\n", __func__);
+	core->handoff_done = false;
+	core->hw_power_control = false;
+
 	rc = __init_resources(core);
 	if (rc) {
 		d_vpr_e("%s: Failed to init resources: %d\n", __func__, rc);
@@ -2624,7 +2616,7 @@ int __load_fw(struct msm_vidc_core *core)
 	* (s/w triggered) to fast (HW triggered) unless the h/w vote is
 	* present.
 	*/
-	__enable_hw_power_collapse(core);
+	__hand_off_regulators(core);
 
 	return rc;
 fail_protect_mem:
@@ -2632,7 +2624,7 @@ fail_protect_mem:
 		qcom_scm_pas_shutdown(core->dt->fw_cookie);
 	core->dt->fw_cookie = 0;
 fail_load_fw:
-	call_venus_op(core, power_off, core);
+	__venus_power_off(core);
 fail_venus_power_on:
 	__deinit_resources(core);
 fail_init_res:
@@ -2736,6 +2728,7 @@ void venus_hfi_pm_work_handler(struct work_struct *work)
 		return;
 	}
 
+	d_vpr_h("%s: try power collapse\n", __func__);
 	/*
 	 * It is ok to check this variable outside the lock since
 	 * it is being updated in this context only
@@ -2819,8 +2812,6 @@ int venus_hfi_core_init(struct msm_vidc_core *core)
 	if (rc)
 		return rc;
 
-	core->handoff_done = 0;
-
 	rc = __load_fw(core);
 	if (rc)
 		goto error;
@@ -2853,7 +2844,12 @@ int venus_hfi_core_init(struct msm_vidc_core *core)
 	if (rc)
 		goto error;
 
-	__sys_set_power_control(core, true);
+	rc = __sys_set_power_control(core, true);
+	if (rc) {
+		d_vpr_e("%s: set power control failed\n", __func__);
+		__acquire_regulators(core);
+		rc = 0;
+	}
 
 	d_vpr_h("%s(): successful\n", __func__);
 	return 0;

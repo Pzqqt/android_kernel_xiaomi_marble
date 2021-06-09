@@ -3,8 +3,6 @@
  * Copyright (c) 2020-2021,, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/interrupt.h>
-
 #include "msm_vidc_iris2.h"
 #include "msm_vidc_buffer_iris2.h"
 #include "msm_vidc_power_iris2.h"
@@ -20,7 +18,8 @@
 
 #define VIDEO_ARCH_LX 1
 
-#define VBIF_BASE_OFFS_IRIS2                   0x00080000
+#define VCODEC_BASE_OFFS_IRIS2                 0x00000000
+#define AON_MVP_NOC_RESET                      0x0001F000
 #define CPU_BASE_OFFS_IRIS2                    0x000A0000
 #define AON_BASE_OFFS			               0x000E0000
 #define CPU_CS_BASE_OFFS_IRIS2		           (CPU_BASE_OFFS_IRIS2)
@@ -65,6 +64,9 @@
 /* UC_REGION_ADDR */
 #define CPU_CS_SCIBARG2_IRIS2		(CPU_CS_BASE_OFFS_IRIS2 + 0x68)
 
+#define CPU_CS_AHB_BRIDGE_SYNC_RESET            (CPU_CS_BASE_OFFS_IRIS2 + 0x160)
+#define CPU_CS_AHB_BRIDGE_SYNC_RESET_STATUS     (CPU_CS_BASE_OFFS_IRIS2 + 0x164)
+
 /* FAL10 Feature Control */
 #define CPU_CS_X2RPMh_IRIS2		(CPU_CS_BASE_OFFS_IRIS2 + 0x168)
 #define CPU_CS_X2RPMh_MASK0_BMSK_IRIS2	0x1
@@ -76,6 +78,14 @@
 
 #define CPU_IC_SOFTINT_IRIS2		(CPU_IC_BASE_OFFS_IRIS2 + 0x150)
 #define CPU_IC_SOFTINT_H2A_SHFT_IRIS2	0x0
+
+/*
+ * --------------------------------------------------------------------------
+ * MODULE: AON_MVP_NOC_RESET_REGISTERS
+ * --------------------------------------------------------------------------
+ */
+#define AON_WRAPPER_MVP_NOC_RESET_REQ   (AON_MVP_NOC_RESET + 0x000)
+#define AON_WRAPPER_MVP_NOC_RESET_ACK   (AON_MVP_NOC_RESET + 0x004)
 
 /*
  * --------------------------------------------------------------------------
@@ -97,6 +107,8 @@
 
 #define WRAPPER_DEBUG_BRIDGE_LPI_CONTROL_IRIS2	(WRAPPER_BASE_OFFS_IRIS2 + 0x54)
 #define WRAPPER_DEBUG_BRIDGE_LPI_STATUS_IRIS2	(WRAPPER_BASE_OFFS_IRIS2 + 0x58)
+#define WRAPPER_CORE_CLOCK_CONFIG_IRIS2		(WRAPPER_BASE_OFFS_IRIS2 + 0x88)
+
 /*
  * --------------------------------------------------------------------------
  * MODULE: tz_wrapper
@@ -133,6 +145,13 @@
 
 /*
  * --------------------------------------------------------------------------
+ * MODULE: VCODEC_SS registers
+ * --------------------------------------------------------------------------
+ */
+#define VCODEC_SS_IDLE_STATUSn           (VCODEC_BASE_OFFS_IRIS2 + 0x70)
+
+/*
+ * --------------------------------------------------------------------------
  * MODULE: vcodec noc error log registers (iris2)
  * --------------------------------------------------------------------------
  */
@@ -150,6 +169,190 @@
 #define VCODEC_NOC_ERL_MAIN_ERRLOG2_HIGH		0x00011234
 #define VCODEC_NOC_ERL_MAIN_ERRLOG3_LOW			0x00011238
 #define VCODEC_NOC_ERL_MAIN_ERRLOG3_HIGH		0x0001123C
+
+
+static int __disable_unprepare_clock_iris2(struct msm_vidc_core *core,
+		const char *clk_name)
+{
+	int rc = 0;
+	struct clock_info *cl;
+	bool found;
+
+	if (!core || !clk_name) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	found = false;
+	venus_hfi_for_each_clock(core, cl) {
+		if (!cl->clk) {
+			d_vpr_e("%s: invalid clock %s\n", __func__, cl->name);
+			return -EINVAL;
+		}
+		if (strcmp(cl->name, clk_name))
+			continue;
+		found = true;
+
+		clk_disable_unprepare(cl->clk);
+		cl->prev = 0;
+		d_vpr_h("%s: clock %s disable unprepared\n", __func__, cl->name);
+		break;
+	}
+	if (!found) {
+		d_vpr_e("%s: clock %s not found\n", __func__, clk_name);
+		return -EINVAL;
+	}
+
+	return rc;
+}
+
+static int __prepare_enable_clock_iris2(struct msm_vidc_core *core,
+		const char *clk_name)
+{
+	int rc = 0;
+	struct clock_info *cl;
+	bool found;
+
+	if (!core || !clk_name) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	found = false;
+	venus_hfi_for_each_clock(core, cl) {
+		if (!cl->clk) {
+			d_vpr_e("%s: invalid clock\n", __func__);
+			return -EINVAL;
+		}
+		if (strcmp(cl->name, clk_name))
+			continue;
+		found = true;
+		/*
+		 * For the clocks we control, set the rate prior to preparing
+		 * them.  Since we don't really have a load at this point, scale
+		 * it to the lowest frequency possible
+		 */
+		if (cl->has_scaling)
+			__set_clk_rate(core, cl, clk_round_rate(cl->clk, 0));
+
+		rc = clk_prepare_enable(cl->clk);
+		if (rc) {
+			d_vpr_e("%s: failed to enable clock %s\n",
+				__func__, cl->name);
+			return rc;
+		}
+		if (!__clk_is_enabled(cl->clk)) {
+			d_vpr_e("%s: clock %s not enabled\n",
+				__func__, cl->name);
+			clk_disable_unprepare(cl->clk);
+			return -EINVAL;
+		}
+		d_vpr_h("%s: clock %s prepare enabled\n", __func__, cl->name);
+		break;
+	}
+	if (!found) {
+		d_vpr_e("%s: clock %s not found\n", __func__, clk_name);
+		return -EINVAL;
+	}
+
+	return rc;
+}
+
+static int __disable_regulator_iris2(struct msm_vidc_core *core,
+		const char *reg_name)
+{
+	int rc = 0;
+	struct regulator_info *rinfo;
+	bool found;
+
+	if (!core || !reg_name) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	found = false;
+	venus_hfi_for_each_regulator(core, rinfo) {
+		if (!rinfo->regulator) {
+			d_vpr_e("%s: invalid regulator %s\n",
+				__func__, rinfo->name);
+			return -EINVAL;
+		}
+		if (strcmp(rinfo->name, reg_name))
+			continue;
+		found = true;
+
+		rc = __acquire_regulator(core, rinfo);
+		if (rc) {
+			d_vpr_e("%s: failed to acquire %s, rc = %d\n",
+				rinfo->name, rc);
+			/* Bring attention to this issue */
+			WARN_ON(true);
+			return rc;
+		}
+		core->handoff_done = false;
+
+		rc = regulator_disable(rinfo->regulator);
+		if (rc) {
+			d_vpr_e("%s: failed to disable %s, rc = %d\n",
+				rinfo->name, rc);
+			return rc;
+		}
+		d_vpr_h("%s: disabled regulator %s\n", __func__, rinfo->name);
+		break;
+	}
+	if (!found) {
+		d_vpr_e("%s: regulator %s not found\n", __func__, reg_name);
+		return -EINVAL;
+	}
+
+	return rc;
+}
+
+static int __enable_regulator_iris2(struct msm_vidc_core *core,
+		const char *reg_name)
+{
+	int rc = 0;
+	struct regulator_info *rinfo;
+	bool found;
+
+	if (!core || !reg_name) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	found = false;
+	venus_hfi_for_each_regulator(core, rinfo) {
+		if (!rinfo->regulator) {
+			d_vpr_e("%s: invalid regulator %s\n",
+				__func__, rinfo->name);
+			return -EINVAL;
+		}
+		if (strcmp(rinfo->name, reg_name))
+			continue;
+		found = true;
+
+		rc = regulator_enable(rinfo->regulator);
+		if (rc) {
+			d_vpr_e("%s: failed to enable %s, rc = %d\n",
+				__func__, rinfo->name, rc);
+			return rc;
+		}
+		if (!regulator_is_enabled(rinfo->regulator)) {
+			d_vpr_e("%s: regulator %s not enabled\n",
+				__func__, rinfo->name);
+			regulator_disable(rinfo->regulator);
+			return -EINVAL;
+		}
+		d_vpr_h("%s: enabled regulator %s\n", __func__, rinfo->name);
+		break;
+	}
+	if (!found) {
+		d_vpr_e("%s: regulator %s not found\n", __func__, reg_name);
+		return -EINVAL;
+	}
+
+	return rc;
+}
 
 static int __interrupt_init_iris2(struct msm_vidc_core *vidc_core)
 {
@@ -226,13 +429,213 @@ static int __setup_ucregion_memory_map_iris2(struct msm_vidc_core *vidc_core)
 	return 0;
 }
 
-static int __power_off_iris2(struct msm_vidc_core *vidc_core)
+static int __power_off_iris2_hardware(struct msm_vidc_core *core)
 {
-	u32 lpi_status, reg_status = 0, count = 0, max_count = 10;
-	struct msm_vidc_core *core = vidc_core;
+	int rc = 0, i;
+	u32 value = 0, count = 0;
+	const u32 max_count = 10;
+
+	if (core->hw_power_control) {
+		d_vpr_h("%s: hardware power control enabled\n", __func__);
+		goto disable_power;
+	}
+
+	/*
+	 * check to make sure core clock branch enabled else
+	 * we cannot read vcodec top idle register
+	 */
+	value = __read_register(core, WRAPPER_CORE_CLOCK_CONFIG_IRIS2);
+	if (value) {
+		d_vpr_h(
+			"%s: core clock config not enabled, enabling it to read vcodec registers\n",
+			__func__);
+		rc = __write_register(core, WRAPPER_CORE_CLOCK_CONFIG_IRIS2, 0);
+		if (rc)
+			return rc;
+	}
+
+	/*
+	 * add MNoC idle check before collapsing MVS0 per HPG update
+	 * poll for NoC DMA idle -> HPG 6.1.1
+	 */
+	for (i = 0; i < core->capabilities[NUM_VPP_PIPE].value; i++) {
+		count = 0;
+		do {
+			value = __read_register(core,
+				VCODEC_SS_IDLE_STATUSn + 4*i);
+			if (value & 0x400000)
+				break;
+			else
+				usleep_range(1000, 2000);
+			count++;
+		} while (count < max_count);
+
+		if (count == max_count)
+			d_vpr_e(
+				"%s: VCODEC_SS_IDLE_STATUSn (%d) is not idle (%#x)\n",
+				__func__, i, value);
+	}
+
+	/* Apply partial reset on MSF interface and wait for ACK */
+	rc = __write_register(core, AON_WRAPPER_MVP_NOC_RESET_REQ, 0x3);
+	if (rc)
+		return rc;
+	count = 0;
+	do {
+		value = __read_register(core, AON_WRAPPER_MVP_NOC_RESET_ACK);
+		if ((value & 0x3) == 0x3)
+			break;
+		else
+			usleep_range(100, 200);
+		count++;
+	} while (count < max_count);
+	if (count == max_count)
+		d_vpr_e("%s: AON_WRAPPER_MVP_NOC_RESET assert failed\n",
+			__func__);
+
+	/* De-assert partial reset on MSF interface and wait for ACK */
+	rc = __write_register(core, AON_WRAPPER_MVP_NOC_RESET_REQ, 0x0);
+	if (rc)
+		return rc;
+	count = 0;
+	do {
+		value = __read_register(core, AON_WRAPPER_MVP_NOC_RESET_ACK);
+		if ((value & 0x3) == 0x0)
+			break;
+		else
+			usleep_range(100, 200);
+		count++;
+	} while (count < max_count);
+	if (count == max_count)
+		d_vpr_e("%s: AON_WRAPPER_MVP_NOC_RESET de-assert failed\n",
+			__func__);
+
+	/*
+	 * Reset both sides of 2 ahb2ahb_bridges (TZ and non-TZ)
+	 * do we need to check status register here?
+	 */
+	rc = __write_register(core, CPU_CS_AHB_BRIDGE_SYNC_RESET, 0x3);
+	if (rc)
+		return rc;
+	rc = __write_register(core, CPU_CS_AHB_BRIDGE_SYNC_RESET, 0x2);
+	if (rc)
+		return rc;
+	rc = __write_register(core, CPU_CS_AHB_BRIDGE_SYNC_RESET, 0x0);
+	if (rc)
+		return rc;
+
+disable_power:
+	/* power down process */
+	rc = __disable_regulator_iris2(core, "vcodec");
+	if (rc) {
+		d_vpr_e("%s: disable regulator vcodec failed\n", __func__);
+		rc = 0;
+	}
+	rc = __disable_unprepare_clock_iris2(core, "vcodec_clk");
+	if (rc) {
+		d_vpr_e("%s: disable unprepare vcodec_clk failed\n", __func__);
+		rc = 0;
+	}
+
+	return rc;
+}
+
+static int __power_off_iris2_controller(struct msm_vidc_core *core)
+{
+	int rc = 0;
+	u32 value = 0, count = 0;
+	const u32 max_count = 10;
+
+	/*
+	 * mask fal10_veto QLPAC error since fal10_veto can go 1
+	 * when pwwait == 0 and clamped to 0 -> HPG 6.1.2
+	 */
+	rc = __write_register(core, CPU_CS_X2RPMh_IRIS2, 0x3);
+	if (rc)
+		return rc;
+
+	/* set MNoC to low power, set PD_NOC_QREQ (bit 0) */
+	rc = __write_register_masked(core, AON_WRAPPER_MVP_NOC_LPI_CONTROL,
+			0x1, BIT(0));
+	if (rc)
+		return rc;
+	count = 0;
+	do {
+		value = __read_register(core, AON_WRAPPER_MVP_NOC_LPI_STATUS);
+		if ((value & 0x1) == 0x1)
+			break;
+		else
+			usleep_range(100, 200);
+		count++;
+	} while (count < max_count);
+	if (count == max_count)
+		d_vpr_e("%s: AON_WRAPPER_MVP_NOC_LPI_CONTROL failed\n",
+			__func__);
+
+	/* Set Debug bridge Low power */
+	rc = __write_register(core, WRAPPER_DEBUG_BRIDGE_LPI_CONTROL_IRIS2, 0x7);
+	if (rc)
+		return rc;
+	count = 0;
+	do {
+		value = __read_register(core,
+			WRAPPER_DEBUG_BRIDGE_LPI_STATUS_IRIS2);
+		if ((value & 0x7) == 0x7)
+			break;
+		else
+			usleep_range(100, 200);
+		count++;
+	} while (count < max_count);
+	if (count == max_count)
+		d_vpr_e("%s: debug bridge low power failed\n", __func__);
+
+	/* Debug bridge LPI release */
+	rc = __write_register(core, WRAPPER_DEBUG_BRIDGE_LPI_CONTROL_IRIS2, 0x0);
+	if (rc)
+		return rc;
+
+	count = 0;
+	do {
+		value = __read_register(core,
+			WRAPPER_DEBUG_BRIDGE_LPI_STATUS_IRIS2);
+		if (value == 0x0)
+			break;
+		else
+			usleep_range(100, 200);
+		count++;
+	} while (count < max_count);
+	if (count == max_count)
+		d_vpr_e("%s: debug bridge release failed\n", __func__);
+
+	/* power down process */
+	rc = __disable_regulator_iris2(core, "iris-ctl");
+	if (rc) {
+		d_vpr_e("%s: disable regulator iris-ctl failed\n", __func__);
+		rc = 0;
+	}
+
+	/* Disable GCC_VIDEO_AXI0_CLK clock */
+	rc = __disable_unprepare_clock_iris2(core, "gcc_video_axi0");
+	if (rc) {
+		d_vpr_e("%s: disable unprepare gcc_video_axi0 failed\n", __func__);
+		rc = 0;
+	}
+
+	/* Turn off MVP MVS0C core clock */
+	rc = __disable_unprepare_clock_iris2(core, "core_clk");
+	if (rc) {
+		d_vpr_e("%s: disable unprepare core_clk failed\n", __func__);
+		rc = 0;
+	}
+
+	return rc;
+}
+
+static int __power_off_iris2(struct msm_vidc_core *core)
+{
 	int rc = 0;
 
-	if (!core) {
+	if (!core || !core->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
@@ -240,86 +643,127 @@ static int __power_off_iris2(struct msm_vidc_core *vidc_core)
 	if (!core->power_enabled)
 		return 0;
 
+	if (__power_off_iris2_hardware(core))
+		d_vpr_e("%s: failed to power off hardware\n", __func__);
+
+	if (__power_off_iris2_controller(core))
+		d_vpr_e("%s: failed to power off controller\n", __func__);
+
+	if (__unvote_buses(core))
+		d_vpr_e("%s: failed to unvote buses\n", __func__);
+
 	if (!(core->intr_status & WRAPPER_INTR_STATUS_A2HWD_BMSK_IRIS2))
 		disable_irq_nosync(core->dt->irq);
 	core->intr_status = 0;
 
-	/* HPG 6.1.2 Step 1  */
-	rc = __write_register(core, CPU_CS_X2RPMh_IRIS2, 0x3);
-	if (rc)
-		return rc;
-
-	/* HPG 6.1.2 Step 2, noc to low power */
-	//if (core->res->vpu_ver == VPU_VERSION_IRIS2_1)
-	//	goto skip_aon_mvp_noc;
-
-	rc = __write_register(core, AON_WRAPPER_MVP_NOC_LPI_CONTROL, 0x1);
-	if (rc)
-		return rc;
-
-	while (!reg_status && count < max_count) {
-		lpi_status =
-			 __read_register(core,
-				AON_WRAPPER_MVP_NOC_LPI_STATUS);
-		reg_status = lpi_status & BIT(0);
-		d_vpr_l("Noc: lpi_status %d noc_status %d (count %d)\n",
-			lpi_status, reg_status, count);
-		usleep_range(50, 100);
-		count++;
-	}
-	if (count == max_count)
-		d_vpr_e("NOC not in qaccept status %d\n", reg_status);
-
-//skip_aon_mvp_noc:
-	/* HPG 6.1.2 Step 3, debug bridge to low power */
-	rc = __write_register(core, WRAPPER_DEBUG_BRIDGE_LPI_CONTROL_IRIS2, 0x7);
-	if (rc)
-		return rc;
-
-	reg_status = 0;
-	count = 0;
-	while ((reg_status != 0x7) && count < max_count) {
-		lpi_status = __read_register(core,
-				 WRAPPER_DEBUG_BRIDGE_LPI_STATUS_IRIS2);
-		reg_status = lpi_status & 0x7;
-		d_vpr_l("DBLP Set : lpi_status %d reg_status %d (count %d)\n",
-			lpi_status, reg_status, count);
-		usleep_range(50, 100);
-		count++;
-	}
-	if (count == max_count)
-		d_vpr_e("DBLP Set: status %d\n", reg_status);
-
-	/* HPG 6.1.2 Step 4, debug bridge to lpi release */
-	rc = __write_register(core, WRAPPER_DEBUG_BRIDGE_LPI_CONTROL_IRIS2, 0x0);
-	if (rc)
-		return rc;
-
-	lpi_status = 0x1;
-	count = 0;
-	while (lpi_status && count < max_count) {
-		lpi_status = __read_register(core,
-				 WRAPPER_DEBUG_BRIDGE_LPI_STATUS_IRIS2);
-		d_vpr_l("DBLP Release: lpi_status %d(count %d)\n",
-			lpi_status, count);
-		usleep_range(50, 100);
-		count++;
-	}
-	if (count == max_count)
-		d_vpr_e("DBLP Release: lpi_status %d\n", lpi_status);
-
-	/* HPG 6.1.2 Step 6 */
-	__disable_unprepare_clks(core);
-
-	/* HPG 6.1.2 Step 5 */
-	if (__disable_regulators(core))
-		d_vpr_e("%s: Failed to disable regulators\n", __func__);
-
-	if (__unvote_buses(core))
-		d_vpr_e("%s: Failed to unvote for buses\n", __func__);
 	core->power_enabled = false;
 
+	return rc;
+}
+
+static int __power_on_iris2_controller(struct msm_vidc_core *core)
+{
+	int rc = 0;
+
+	rc = __enable_regulator_iris2(core, "iris-ctl");
+	if (rc)
+		goto fail_regulator;
+
+	rc = call_venus_op(core, reset_ahb2axi_bridge, core);
+	if (rc)
+		goto fail_reset_ahb2axi;
+
+	rc = __prepare_enable_clock_iris2(core, "gcc_video_axi0");
+	if (rc)
+		goto fail_clk_axi;
+
+	rc = __prepare_enable_clock_iris2(core, "core_clk");
+	if (rc)
+		goto fail_clk_controller;
+
 	return 0;
+
+fail_clk_controller:
+	__disable_unprepare_clock_iris2(core, "gcc_video_axi0");
+fail_clk_axi:
+fail_reset_ahb2axi:
+	__disable_regulator_iris2(core, "iris-ctl");
+fail_regulator:
+	return rc;
+}
+
+static int __power_on_iris2_hardware(struct msm_vidc_core *core)
+{
+	int rc = 0;
+
+	rc = __enable_regulator_iris2(core, "vcodec");
+	if (rc)
+		goto fail_regulator;
+
+	rc = __prepare_enable_clock_iris2(core, "vcodec_clk");
+	if (rc)
+		goto fail_clk_controller;
+
+	return 0;
+
+fail_clk_controller:
+	__disable_regulator_iris2(core, "vcodec");
+fail_regulator:
+	return rc;
+}
+
+static int __power_on_iris2(struct msm_vidc_core *core)
+{
+	int rc = 0;
+
+	if (core->power_enabled)
+		return 0;
+
+	/* Vote for all hardware resources */
+	rc = __vote_buses(core, INT_MAX, INT_MAX);
+	if (rc) {
+		d_vpr_e("%s: failed to vote buses, rc %d\n", __func__, rc);
+		goto fail_vote_buses;
+	}
+
+	rc = __power_on_iris2_controller(core);
+	if (rc) {
+		d_vpr_e("%s: failed to power on iris2 controller\n", __func__);
+		goto fail_power_on_controller;
+	}
+
+	rc = __power_on_iris2_hardware(core);
+	if (rc) {
+		d_vpr_e("%s: failed to power on iris2 hardware\n", __func__);
+		goto fail_power_on_hardware;
+	}
+	/* video controller and hardware powered on successfully */
+	core->power_enabled = true;
+
+	rc = __scale_clocks(core);
+	if (rc) {
+		d_vpr_e("%s: failed to scale clocks\n", __func__);
+		rc = 0;
+	}
+	/*
+	 * Re-program all of the registers that get reset as a result of
+	 * regulator_disable() and _enable()
+	 */
+	__set_registers(core);
+
+	call_venus_op(core, interrupt_init, core);
+	core->intr_status = 0;
+	enable_irq(core->dt->irq);
+
+	return rc;
+
+fail_power_on_hardware:
+	__power_off_iris2_controller(core);
+fail_power_on_controller:
+	__unvote_buses(core);
+fail_vote_buses:
+	core->power_enabled = false;
+	return rc;
 }
 
 static int __prepare_pc_iris2(struct msm_vidc_core *vidc_core)
@@ -684,6 +1128,7 @@ static struct msm_vidc_venus_ops iris2_ops = {
 	.setup_ucregion_memmap = __setup_ucregion_memory_map_iris2,
 	.clock_config_on_enable = NULL,
 	.reset_ahb2axi_bridge = __reset_ahb2axi_bridge,
+	.power_on = __power_on_iris2,
 	.power_off = __power_off_iris2,
 	.prepare_pc = __prepare_pc_iris2,
 	.watchdog = __watchdog_iris2,
