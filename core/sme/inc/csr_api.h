@@ -354,7 +354,6 @@ typedef enum {
 	eCSR_ROAM_CHANNEL_COMPLETE_IND = 47,
 	eCSR_ROAM_CAC_COMPLETE_IND = 48,
 	eCSR_ROAM_SAE_COMPUTE = 49,
-	eCSR_ROAM_FIPS_PMK_REQUEST = 50,
 } eRoamCmdStatus;
 
 /* comment inside indicates what roaming callback gets */

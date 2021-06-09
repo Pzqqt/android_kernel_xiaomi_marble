@@ -1832,6 +1832,16 @@ struct cm_hw_mode_trans_ind {
 	struct policy_mgr_vdev_mac_map vdev_mac_map[MAX_VDEV_SUPPORTED];
 };
 
+/*
+ * struct roam_pmkid_req_event - Pmkid event with entries destination structure
+ * @num_entries: total entries sent over the event
+ * @ap_bssid: bssid list
+ */
+struct roam_pmkid_req_event {
+	uint32_t num_entries;
+	struct qdf_mac_addr ap_bssid[];
+};
+
 struct roam_offload_synch_ind {
 	uint16_t beaconProbeRespOffset;
 	uint16_t beaconProbeRespLength;

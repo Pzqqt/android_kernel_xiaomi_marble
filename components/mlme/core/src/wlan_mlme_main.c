@@ -91,6 +91,7 @@ struct wlan_mlme_nss_chains *mlme_get_ini_vdev_config(
 	return &mlme_priv->ini_cfg;
 }
 
+#ifndef FEATURE_CM_ENABLE
 struct mlme_roam_after_data_stall *
 mlme_get_roam_invoke_params(struct wlan_objmgr_vdev *vdev)
 {
@@ -126,6 +127,7 @@ bool mlme_is_roam_invoke_in_progress(struct wlan_objmgr_psoc *psoc,
 
 	return vdev_roam_params->roam_invoke_in_progress;
 }
+#endif
 
 uint8_t *mlme_get_dynamic_oce_flags(struct wlan_objmgr_vdev *vdev)
 {

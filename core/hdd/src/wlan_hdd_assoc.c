@@ -4396,12 +4396,6 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 		if (roam_info)
 			wlan_hdd_sae_callback(adapter, roam_info);
 		break;
-	case eCSR_ROAM_FIPS_PMK_REQUEST:
-		/* notify the supplicant of a new candidate */
-		qdf_ret_status = wlan_hdd_cfg80211_pmksa_candidate_notify(
-					adapter, roam_info, 1, false);
-		break;
-
 	default:
 		break;
 	}

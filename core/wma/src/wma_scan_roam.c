@@ -4884,8 +4884,8 @@ int wma_roam_pmkid_request_event_handler(void *handle, uint8_t *event,
 	}
 	dst_list->num_entries = num_entries;
 
-	status = wma->csr_roam_pmkid_req_cb(roam_pmkid_req_ev->vdev_id,
-					    dst_list);
+	status = cm_roam_pmkid_req_ind(wma->psoc, roam_pmkid_req_ev->vdev_id,
+				       dst_list);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		wma_err("Pmkid request failed");
 		qdf_mem_free(dst_list);

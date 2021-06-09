@@ -592,20 +592,6 @@ typedef QDF_STATUS
 		     uint8_t session_id, uint8_t reason,
 		     enum wlan_cm_rso_control_requestor requestor);
 
-/**
- * typedef csr_roam_pmkid_req_fn_t - pmkid generation fallback event pointer
- * @vdev_id: Vdev id
- * @bss_list: candidate AP bssid list
- *
- * This type is for callbacks registered with CSR to handle roam event from
- * firmware for pmkid generation fallback
- *
- * Return: Success or Failure.
- */
-typedef QDF_STATUS
-(*csr_roam_pmkid_req_fn_t)(uint8_t vdev_id,
-			   struct roam_pmkid_req_event *bss_list);
-
 /* / Definition for indicating all modules ready on STA */
 struct sme_ready_req {
 	uint16_t messageType;   /* eWNI_SME_SYS_READY_IND */
@@ -625,7 +611,6 @@ struct sme_ready_req {
 					uint8_t *deauth_disassoc_frame,
 					uint16_t deauth_disassoc_frame_len,
 					uint16_t reason_code);
-	csr_roam_pmkid_req_fn_t csr_roam_pmkid_req_cb;
 };
 
 /**

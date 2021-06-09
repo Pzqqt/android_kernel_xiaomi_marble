@@ -19171,7 +19171,6 @@ wlan_hdd_cfg80211_update_bss_db(struct hdd_adapter *adapter,
 	}
 	return bss;
 }
-#endif
 
 /**
  * wlan_hdd_cfg80211_pmksa_candidate_notify() - notify a new PMSKA candidate
@@ -19208,7 +19207,6 @@ int wlan_hdd_cfg80211_pmksa_candidate_notify(struct hdd_adapter *adapter,
 	return 0;
 }
 
-#ifndef FEATURE_CM_ENABLE
 #ifdef FEATURE_WLAN_LFR_METRICS
 /**
  * wlan_hdd_cfg80211_roam_metrics_preauth() - roam metrics preauth

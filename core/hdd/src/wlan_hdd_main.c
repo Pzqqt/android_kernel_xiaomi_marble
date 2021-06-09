@@ -18446,10 +18446,7 @@ bool hdd_is_roaming_in_progress(struct hdd_context *hdd_ctx)
 					   dbgid) {
 		vdev_id = adapter->vdev_id;
 		if (adapter->device_mode == QDF_STA_MODE &&
-		    (MLME_IS_ROAM_SYNCH_IN_PROGRESS(hdd_ctx->psoc, vdev_id) ||
-		     MLME_IS_ROAMING_IN_PROG(hdd_ctx->psoc, vdev_id) ||
-		     mlme_is_roam_invoke_in_progress(hdd_ctx->psoc,
-						      vdev_id))) {
+		    sme_roaming_in_progress(hdd_ctx->mac_handle, vdev_id)) {
 			hdd_debug("Roaming is in progress on:vdev_id:%d",
 				  adapter->vdev_id);
 			hdd_adapter_dev_put_debug(adapter, dbgid);

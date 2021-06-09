@@ -336,10 +336,10 @@ wlan_hdd_wifi_test_config_policy[
 			      QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_MAX) \
 },
 
+#ifndef FEATURE_CM_ENABLE
 int wlan_hdd_cfg80211_pmksa_candidate_notify(struct hdd_adapter *adapter,
 					struct csr_roam_info *roam_info,
 					int index, bool preauth);
-#ifndef FEATURE_CM_ENABLE
 #ifdef FEATURE_WLAN_LFR_METRICS
 QDF_STATUS
 wlan_hdd_cfg80211_roam_metrics_preauth(struct hdd_adapter *adapter,
