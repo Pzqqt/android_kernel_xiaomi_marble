@@ -61,6 +61,19 @@ struct wlan_op_mode_peer_count {
 uint32_t wlan_chan_to_freq(uint8_t chan);
 
 /**
+  * wlan_get_320_center_freq() - find center frequencies for 320Mhz channel
+  * @freq: Primary frequency
+  * @center_freq1: possible 1st center frequency
+  * @center_freq2: possible 2nd center frequency
+  *
+  * return: void
+  **/
+void
+wlan_get_320_center_freq(qdf_freq_t freq,
+			 qdf_freq_t *center_freq1,
+			 qdf_freq_t *center_freq2);
+
+/**
  * wlan_freq_to_chan() - converts frequency to channel
  * @freq: frequency
  *
