@@ -322,8 +322,12 @@ static void sde_encoder_phys_wb_setup_fb(struct sde_encoder_phys *phys_enc,
 	struct sde_hw_wb_cdp_cfg *cdp_cfg;
 	const struct msm_format *format;
 	struct sde_crtc_state *cstate;
+	const struct drm_display_mode *mode;
 	struct sde_rect pu_roi = {0,};
-	int ret;
+	int i, ret;
+	u32 out_width, out_height, data_pt;
+	bool ds_in_use = false;
+	u32 ds_srcw = 0, ds_srch = 0, ds_outw = 0, ds_outh = 0;
 	struct msm_gem_address_space *aspace;
 	u32 fb_mode;
 
@@ -334,6 +338,7 @@ static void sde_encoder_phys_wb_setup_fb(struct sde_encoder_phys *phys_enc,
 	}
 
 	cstate = to_sde_crtc_state(wb_enc->crtc->state);
+	mode = &wb_enc->crtc->state->mode;
 
 	hw_wb = wb_enc->hw_wb;
 	wb_cfg = &wb_enc->wb_cfg;
@@ -397,6 +402,30 @@ static void sde_encoder_phys_wb_setup_fb(struct sde_encoder_phys *phys_enc,
 		wb_cfg->crop.x = wb_cfg->roi.x;
 		wb_cfg->crop.y = wb_cfg->roi.y;
 
+		data_pt = sde_crtc_get_property(cstate, CRTC_PROP_CAPTURE_OUTPUT);
+
+		/* compute cumulative ds output dimensions if in use */
+		for (i = 0; i < cstate->num_ds; i++) {
+			if (cstate->ds_cfg[i].scl3_cfg.enable) {
+				ds_in_use = true;
+				ds_outw += cstate->ds_cfg[i].scl3_cfg.dst_width;
+				ds_outh = cstate->ds_cfg[i].scl3_cfg.dst_height;
+				ds_srcw +=  cstate->ds_cfg[i].lm_width;
+				ds_srch =  cstate->ds_cfg[i].lm_height;
+			}
+		}
+
+		if (ds_in_use && data_pt == CAPTURE_DSPP_OUT) {
+			out_width = ds_outw;
+			out_height = ds_outh;
+		} else if (ds_in_use) {
+			out_width = ds_srcw;
+			out_height = ds_srch;
+		} else {
+			out_width = mode->hdisplay;
+			out_height = mode->vdisplay;
+		}
+
 		if (cstate->user_roi_list.num_rects) {
 			sde_kms_rect_merge_rectangles(&cstate->user_roi_list, &pu_roi);
 
@@ -406,11 +435,17 @@ static void sde_encoder_phys_wb_setup_fb(struct sde_encoder_phys *phys_enc,
 				wb_cfg->crop.y = wb_cfg->crop.y - pu_roi.y;
 				hw_wb->ops.setup_crop(hw_wb, wb_cfg, true);
 			}
-		} else if ((wb_cfg->roi.w != wb_cfg->dest.width) ||
-				(wb_cfg->roi.h != wb_cfg->dest.height)) {
+		} else if ((wb_cfg->roi.w != out_width) ||
+				(wb_cfg->roi.h != out_height)) {
 			hw_wb->ops.setup_crop(hw_wb, wb_cfg, true);
 		} else {
 			hw_wb->ops.setup_crop(hw_wb, wb_cfg, false);
+		}
+
+		/* If output buffer is less than source size, align roi at top left corner */
+		if (wb_cfg->dest.width < out_width || wb_cfg->dest.height < out_height) {
+			wb_cfg->roi.x = 0;
+			wb_cfg->roi.y = 0;
 		}
 	}
 
@@ -737,11 +772,22 @@ static int _sde_enc_phys_wb_validate_cwb(struct sde_encoder_phys *phys_enc,
 		return -EINVAL;
 	}
 
-	if (((wb_roi.x + wb_roi.w) > fb->width) ||
-			((wb_roi.y + wb_roi.h) > fb->height)) {
-		SDE_ERROR("invalid wb roi[%d,%d,%d,%d] fb[%dx%d]\n",
-				wb_roi.x, wb_roi.y, wb_roi.w, wb_roi.h,
-				fb->width, fb->height);
+	/*
+	 * If output size is equal to input size ensure wb_roi with x and y offset
+	 * will be within buffer. If output size is smaller, only width and height are taken
+	 * into consideration as output region will begin at top left corner */
+
+	if ((fb->width == out_width && fb->height == out_height) &&
+			(((wb_roi.x + wb_roi.w) > fb->width) ||((wb_roi.y + wb_roi.h) > fb->height))) {
+		SDE_ERROR("invalid wb roi[%d,%d,%d,%d] fb[%dx%d] out[%dx%d]\n",
+				wb_roi.x, wb_roi.y, wb_roi.w, wb_roi.h, fb->width, fb->height,
+				out_width, out_height);
+		return -EINVAL;
+	} else if ((fb->width < out_width || fb->height < out_height) &&
+			((wb_roi.w > fb->width || wb_roi.h > fb->height))) {
+		SDE_ERROR("invalid wb roi[%d,%d,%d,%d] fb[%dx%d] out[%dx%d]\n",
+				wb_roi.x, wb_roi.y, wb_roi.w, wb_roi.h, fb->width, fb->height,
+				out_width, out_height);
 		return -EINVAL;
 	}
 
