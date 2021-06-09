@@ -712,6 +712,7 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 	bool ap_constraint_change = false, tpe_change = false;
 	int8_t regMax = 0, maxTxPower = 0;
 	QDF_STATUS status;
+	bool skip_tpe = false;
 
 	qdf_mem_zero(&beaconParams, sizeof(tUpdateBeaconParams));
 	beaconParams.paramChangeBitmap = 0;
@@ -743,6 +744,9 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 		return;
 	}
 
+	if (!wlan_reg_is_6ghz_chan_freq(bcn->chan_freq))
+		skip_tpe = wlan_mlme_skip_tpe(mac_ctx->psoc);
+
 	if (wlan_reg_is_ext_tpc_supported(mac_ctx->psoc)) {
 		tx_ops = wlan_reg_get_tx_ops(mac_ctx->psoc);
 
@@ -767,7 +771,8 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 			ap_constraint_change = true;
 		}
 
-		if (ap_constraint_change || tpe_change) {
+		if ((ap_constraint_change && local_constraint) ||
+		    (tpe_change && !skip_tpe)) {
 			lim_calculate_tpc(mac_ctx, session, false);
 
 			if (tx_ops->set_tpc_power)
