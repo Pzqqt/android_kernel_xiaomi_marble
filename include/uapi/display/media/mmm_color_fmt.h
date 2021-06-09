@@ -466,7 +466,7 @@ enum mmm_color_fmts {
 	 * . . . . . . . . . . . . . . . .              |
 	 * . . . . . . . . . . . . . . . .              V
 	 *
-	 * RGB_Stride = align(Width * 4, 128)
+	 * RGB_Stride = align(Width * 4, 256)
 	 * RGB_Scanlines = align(Height, 32)
 	 * RGB_Plane_size = align(RGB_Stride * RGB_Scanlines, 4096)
 	 *
@@ -1167,7 +1167,7 @@ static inline unsigned int MMM_COLOR_FMT_RGB_STRIDE(unsigned int color_fmt,
 
 	switch (color_fmt) {
 	case MMM_COLOR_FMT_RGBA8888:
-		alignment = 128;
+		alignment = 256;
 		break;
 	case MMM_COLOR_FMT_RGB565_UBWC:
 		alignment = 256;
