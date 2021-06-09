@@ -327,29 +327,6 @@ CFG_INI_UINT("gAllowMCCGODiffBI", 0, 4, 4, CFG_VALUE_OR_DEFAULT, \
 	     "Allow GO in MCC mode to accept different BI than STA's")
 
 /*
- * <ini>
- * gEnableOverLapCh - Enables Overlap Channel. If set, allow overlapping
- *                    channels to be selected for the SoftAP
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to set Overlap Channel
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: External
- *
- * </ini>
- */
-
-#define CFG_ENABLE_OVERLAP_CH \
-CFG_INI_UINT("gEnableOverLapCh", 0, 1, 0, CFG_VALUE_OR_DEFAULT, \
-	     "Overlap channels are allowed for SAP when flag is set")
-
-/*
  *
  * <ini>
  * gDualMacFeatureDisable - Disable Dual MAC feature.
@@ -603,7 +580,6 @@ CFG_INI_UINT("g_pcl_band_priority", 0, 1, 0, CFG_VALUE_OR_DEFAULT, \
 		CFG(CFG_ENABLE_CONC_RULE2) \
 		CFG(CFG_ENABLE_MCC_ADAPTIVE_SCH_ENABLED_NAME)\
 		CFG(CFG_ENABLE_STA_CONNECTION_IN_5GHZ)\
-		CFG(CFG_ENABLE_OVERLAP_CH)\
 		CFG(CFG_DUAL_MAC_FEATURE_DISABLE)\
 		CFG(CFG_STA_SAP_SCC_ON_DFS_CHAN)\
 		CFG(CFG_FORCE_1X1_FEATURE)\
