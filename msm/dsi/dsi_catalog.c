@@ -30,6 +30,7 @@ static void dsi_catalog_cmn_init(struct dsi_ctrl_hw *ctrl,
 	ctrl->ops.reset_cmd_fifo         = dsi_ctrl_hw_cmn_reset_cmd_fifo;
 	ctrl->ops.trigger_command_dma    = dsi_ctrl_hw_cmn_trigger_command_dma;
 	ctrl->ops.get_interrupt_status   = dsi_ctrl_hw_cmn_get_interrupt_status;
+	ctrl->ops.poll_dma_status        = dsi_ctrl_hw_cmn_poll_dma_status;
 	ctrl->ops.get_error_status       = dsi_ctrl_hw_cmn_get_error_status;
 	ctrl->ops.clear_error_status     = dsi_ctrl_hw_cmn_clear_error_status;
 	ctrl->ops.clear_interrupt_status =

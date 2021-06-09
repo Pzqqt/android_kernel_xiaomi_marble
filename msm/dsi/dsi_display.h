@@ -188,8 +188,7 @@ struct dsi_display_ext_bridge {
  * @te_source         vsync source pin information
  * @clk_gating_config Clocks for which clock gating needs to be enabled
  * @queue_cmd_waits   Indicates if wait for dma commands done has to be queued.
- * @dma_cmd_workq:	Pointer to the workqueue of DMA command transfer done
- *				wait sequence.
+ * @post_cmd_tx_workq: Pointer to the workqueue of post command transfer work.
  * @is_active:        status of the display
  * @trusted_vm_env:   Set to true, it the executing VM is Trusted VM.
  *                    Set to false, otherwise.
@@ -287,7 +286,7 @@ struct dsi_display {
 	u32 te_source;
 	u32 clk_gating_config;
 	bool queue_cmd_waits;
-	struct workqueue_struct *dma_cmd_workq;
+	struct workqueue_struct *post_cmd_tx_workq;
 
 	/* panel id of the display */
 	u64 panel_id;
