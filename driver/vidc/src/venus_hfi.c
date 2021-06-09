@@ -1178,11 +1178,11 @@ static int __power_collapse(struct msm_vidc_core *core, bool force)
 		return -EINVAL;
 	}
 
+	__flush_debug_queue(core, core->packet, core->packet_size);
+
 	rc = call_venus_op(core, prepare_pc, core);
 	if (rc)
 		goto skip_power_off;
-
-	__flush_debug_queue(core, core->packet, core->packet_size);
 
 	rc = __suspend(core);
 	if (rc)
@@ -2647,9 +2647,6 @@ void __unload_fw(struct msm_vidc_core *core)
 		return;
 
 	cancel_delayed_work(&core->pm_work);
-	if (core->state != MSM_VIDC_CORE_DEINIT)
-		flush_workqueue(core->pm_workq);
-
 	rc = qcom_scm_pas_shutdown(core->dt->fw_cookie);
 	if (rc)
 		d_vpr_e("Firmware unload failed rc=%d\n", rc);
@@ -2744,11 +2741,17 @@ void venus_hfi_pm_work_handler(struct work_struct *work)
 		d_vpr_e("Failed to PC for %d times\n",
 				core->skip_pc_count);
 		core->skip_pc_count = 0;
-		//__process_fatal_error(core);
+		msm_vidc_core_deinit(core, true);
 		return;
 	}
 
 	core_lock(core, __func__);
+	/* core already deinited - skip power collapse */
+	if (core->state == MSM_VIDC_CORE_DEINIT) {
+		d_vpr_e("%s: core is already de-inited\n", __func__);
+		goto unlock;
+	}
+
 	rc = __power_collapse(core, false);
 	switch (rc) {
 	case 0:
@@ -2772,6 +2775,7 @@ void venus_hfi_pm_work_handler(struct work_struct *work)
 		d_vpr_e("%s: power collapse failed\n", __func__);
 		break;
 	}
+unlock:
 	core_unlock(core, __func__);
 }
 
