@@ -63,6 +63,11 @@
 
 #define IPA_SUSPEND_BUSY_TIMEOUT (msecs_to_jiffies(10))
 
+#define DEFAULT_MPM_RING_SIZE_UL 6
+#define DEFAULT_MPM_RING_SIZE_DL 16
+#define DEFAULT_MPM_TETH_AGGR_SIZE 24
+#define DEFAULT_MPM_UC_THRESH_SIZE 4
+
 /*
  * The following for adding code (ie. for EMULATION) not found on x86.
  */
@@ -8294,6 +8299,12 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	ipa3_ctx->ulso_ip_id_max = resource_p->ulso_ip_id_max;
 	ipa3_ctx->use_pm_wrapper = resource_p->use_pm_wrapper;
 	ipa3_ctx->use_tput_est_ep = resource_p->use_tput_est_ep;
+	ipa3_ctx->mpm_ring_size_ul_cache = DEFAULT_MPM_RING_SIZE_UL;
+	ipa3_ctx->mpm_ring_size_ul = DEFAULT_MPM_RING_SIZE_UL;
+	ipa3_ctx->mpm_ring_size_dl_cache = DEFAULT_MPM_RING_SIZE_DL;
+	ipa3_ctx->mpm_ring_size_dl = DEFAULT_MPM_RING_SIZE_DL;
+	ipa3_ctx->mpm_teth_aggr_size = DEFAULT_MPM_TETH_AGGR_SIZE;
+	ipa3_ctx->mpm_uc_thresh = DEFAULT_MPM_UC_THRESH_SIZE;
 
 	if (resource_p->gsi_fw_file_name) {
 		ipa3_ctx->gsi_fw_file_name =
