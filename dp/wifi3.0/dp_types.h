@@ -104,6 +104,8 @@
 #define DP_MAX_IRQ_PER_CONTEXT 12
 #define DEFAULT_HW_PEER_ID 0xffff
 
+#define MAX_AST_AGEOUT_COUNT 128
+
 #define WBM_INT_ERROR_ALL 0
 #define WBM_INT_ERROR_REO_NULL_BUFFER 1
 #define WBM_INT_ERROR_REO_NULL_LINK_DESC 2
@@ -1831,6 +1833,8 @@ struct dp_soc {
 
 	/*Timer counter for WDS AST entry ageout*/
 	uint8_t wds_ast_aging_timer_cnt;
+	bool pending_ageout;
+	uint32_t max_ast_ageout_count;
 
 	/*interrupt timer*/
 	qdf_timer_t mon_reap_timer;

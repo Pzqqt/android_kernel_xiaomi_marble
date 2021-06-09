@@ -54,6 +54,11 @@ struct reo_qdesc_event {
 };
 #endif
 
+struct ast_del_ctxt {
+	bool age;
+	int del_count;
+};
+
 typedef void dp_peer_iter_func(struct dp_soc *soc, struct dp_peer *peer,
 			       void *arg);
 void dp_peer_unref_delete(struct dp_peer *peer, enum dp_mod_id id);

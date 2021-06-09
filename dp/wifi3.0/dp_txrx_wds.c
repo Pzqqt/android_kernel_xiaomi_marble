@@ -44,6 +44,12 @@ static void
 dp_peer_age_ast_entries(struct dp_soc *soc, struct dp_peer *peer, void *arg)
 {
 	struct dp_ast_entry *ase, *temp_ase;
+	struct ast_del_ctxt *del_ctxt = (struct ast_del_ctxt *)arg;
+
+	if ((del_ctxt->del_count >= soc->max_ast_ageout_count) &&
+	    !del_ctxt->age) {
+		return;
+	}
 
 	DP_PEER_ITERATE_ASE_LIST(peer, ase, temp_ase) {
 		/*
@@ -54,12 +60,21 @@ dp_peer_age_ast_entries(struct dp_soc *soc, struct dp_peer *peer, void *arg)
 			continue;
 
 		if (ase->is_active) {
-			ase->is_active = FALSE;
+			if (del_ctxt->age)
+				ase->is_active = FALSE;
+
 			continue;
 		}
 
-		DP_STATS_INC(soc, ast.aged_out, 1);
-		dp_peer_del_ast(soc, ase);
+		if (del_ctxt->del_count < soc->max_ast_ageout_count) {
+			DP_STATS_INC(soc, ast.aged_out, 1);
+			dp_peer_del_ast(soc, ase);
+			del_ctxt->del_count++;
+		} else {
+			soc->pending_ageout = true;
+			if (!del_ctxt->age)
+				break;
+		}
 	}
 }
 
@@ -97,17 +112,23 @@ dp_peer_age_mec_entries(struct dp_soc *soc)
 static void dp_ast_aging_timer_fn(void *soc_hdl)
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
+	struct ast_del_ctxt del_ctxt = {0};
+
 
 	if (soc->wds_ast_aging_timer_cnt++ >= DP_WDS_AST_AGING_TIMER_CNT) {
+		del_ctxt.age = true;
 		soc->wds_ast_aging_timer_cnt = 0;
+	}
+
+	if (soc->pending_ageout || del_ctxt.age) {
+		soc->pending_ageout = false;
 
 		/* AST list access lock */
 		qdf_spin_lock_bh(&soc->ast_lock);
 
-		dp_soc_iterate_peer(soc, dp_peer_age_ast_entries, NULL,
-				DP_MOD_ID_AST);
+		dp_soc_iterate_peer(soc, dp_peer_age_ast_entries, &del_ctxt,
+				    DP_MOD_ID_AST);
 		qdf_spin_unlock_bh(&soc->ast_lock);
-
 	}
 
 	/*
@@ -132,6 +153,7 @@ static void dp_ast_aging_timer_fn(void *soc_hdl)
 void dp_soc_wds_attach(struct dp_soc *soc)
 {
 	soc->wds_ast_aging_timer_cnt = 0;
+	soc->pending_ageout = false;
 	qdf_timer_init(soc->osdev, &soc->ast_aging_timer,
 		       dp_ast_aging_timer_fn, (void *)soc,
 		       QDF_TIMER_TYPE_WAKE_APPS);
