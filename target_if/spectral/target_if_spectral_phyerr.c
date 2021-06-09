@@ -774,6 +774,94 @@ target_if_spectral_log_SAMP_param(struct target_if_samp_msg_params *params)
 
 #ifdef OPTIMIZED_SAMP_MESSAGE
 /**
+ * target_if_get_ieee80211_format_cfreq() - Calculate correct cfreq1/
+ * cfreq2. The frequency values should be in-line with IEEE 802.11
+ * @spectral: Pointer to target_if spectral internal structure
+ * @cfreq1: Center frequency of Detector 1
+ * @cfreq2: Center frequency of Detector 2
+ * @pri20_freq: Primary 20MHz frequency
+ * @smode: Spectral scan mode
+ *
+ * API to get correct cfreq1/cfreq2 values as per IEEE 802.11 standard
+ *
+ * Return: Success/Failure
+ */
+static QDF_STATUS
+target_if_get_ieee80211_format_cfreq(struct target_if_spectral *spectral,
+				     uint32_t *cfreq1, uint32_t *cfreq2,
+				     uint32_t pri20_freq,
+				     enum spectral_scan_mode smode)
+{
+	uint32_t pri_det_freq, sec_det_freq;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_vdev *vdev;
+	const struct bonded_channel_freq *bonded_chan_ptr = NULL;
+	enum channel_state state;
+	enum phy_ch_width ch_width;
+
+	if (!spectral) {
+		spectral_err_rl("Spectral LMAC object is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	if (!spectral->pdev_obj) {
+		spectral_err_rl("Spectral PDEV is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	psoc = wlan_pdev_get_psoc(spectral->pdev_obj);
+	if (!psoc) {
+		spectral_err_rl("psoc is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	pri_det_freq = *cfreq1;
+	sec_det_freq = *cfreq2;
+	ch_width = spectral->ch_width[smode];
+
+	/* Adjust cfreq1 and cfreq2 as per IEEE802.11 standards */
+	if (ch_width == CH_WIDTH_160MHZ &&
+	    spectral->rparams.fragmentation_160[smode]) {
+		*cfreq1 = pri_det_freq;
+		*cfreq2 = (pri_det_freq + sec_det_freq) >> 1;
+	} else if (!spectral->rparams.fragmentation_160[smode] &&
+		   is_ch_width_160_or_80p80(ch_width)) {
+		if (ch_width == CH_WIDTH_80P80MHZ &&
+		    wlan_psoc_nif_fw_ext_cap_get(
+		    psoc, WLAN_SOC_RESTRICTED_80P80_SUPPORT)) {
+			vdev = target_if_spectral_get_vdev(spectral, smode);
+			if (!vdev) {
+				spectral_err_rl("vdev is NULL");
+				return QDF_STATUS_E_FAILURE;
+			}
+			*cfreq2 = target_if_vdev_get_chan_freq_seg2(vdev);
+			wlan_objmgr_vdev_release_ref(vdev, WLAN_SPECTRAL_ID);
+		}
+		if (ch_width == CH_WIDTH_160MHZ)
+			*cfreq2 = pri_det_freq;
+
+		state = wlan_reg_get_5g_bonded_channel_and_state_for_freq
+			(spectral->pdev_obj, pri20_freq, CH_WIDTH_80MHZ,
+			 &bonded_chan_ptr);
+		if (state == CHANNEL_STATE_DISABLE ||
+		    state == CHANNEL_STATE_INVALID) {
+			spectral_err_rl("Channel state is disable or invalid");
+			return QDF_STATUS_E_FAILURE;
+		}
+		if (!bonded_chan_ptr) {
+			spectral_err_rl("Bonded channel is not found");
+			return QDF_STATUS_E_FAILURE;
+		}
+		*cfreq1 = (bonded_chan_ptr->start_freq +
+			   bonded_chan_ptr->end_freq) >> 1;
+	} else {
+		*cfreq1 = pri_det_freq;
+		*cfreq2 = sec_det_freq;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * target_if_populate_fft_bins_info() - Populate the start and end bin
  * indices, on per-detector level.
  * @spectral: Pointer to target_if spectral internal structure
