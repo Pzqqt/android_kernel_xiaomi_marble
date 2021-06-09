@@ -532,7 +532,7 @@ static inline QDF_STATUS cdp_txrx_get_peer_param(ol_txrx_soc_handle soc,
 #ifdef QCA_MULTIPASS_SUPPORT
 static inline void
 cdp_peer_set_vlan_id(ol_txrx_soc_handle soc, uint8_t vdev_id,
-		     uint8_t *peer_mac, uint8_t vlan_id)
+		     uint8_t *peer_mac, uint16_t vlan_id)
 {
 	if (!soc || !soc->ops) {
 		dp_cdp_debug("Invalid Instance:");
