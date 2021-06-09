@@ -454,6 +454,8 @@ typedef enum {
     WMI_PDEV_SET_BIOS_GEO_TABLE_CMDID,
     /* Get Calibration status from HALPHY */
     WMI_PDEV_GET_HALPHY_CAL_STATUS_CMDID,
+    /* Set HALPHY CAL bitmap */
+    WMI_PDEV_SET_HALPHY_CAL_BMAP_CMDID,
 
     /* VDEV (virtual device) specific commands */
     /** vdev create */
@@ -1516,6 +1518,9 @@ typedef enum {
 
     /* Event to get Calibration status from HALPHY */
     WMI_PDEV_GET_HALPHY_CAL_STATUS_EVENTID,
+
+    /* Event to set halphy cal bitmap */
+    WMI_PDEV_SET_HALPHY_CAL_BMAP_EVENTID,
 
 
     /* VDEV specific events */
@@ -28817,6 +28822,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PDEV_SET_BIOS_SAR_TABLE_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_SET_BIOS_GEO_TABLE_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_GET_HALPHY_CAL_STATUS_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_SET_HALPHY_CAL_BMAP_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -31313,6 +31319,39 @@ typedef struct {
     */
     A_UINT32 halphy_cal_status;
 } wmi_pdev_get_halphy_cal_status_evt_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_set_halphy_cal_bmap_cmd_fixed_param */
+    A_UINT32 pdev_id;       /* PDEV ID set by the command */
+
+    /*
+     * Calibration valid bitmap from HOST, refer to
+     * WMI_HALPHY_CAL_VALID_BITMAP_STATUS.
+     * Based on the bitmap value, HALPHY will set corresponding mask values
+     * to each of the online calibrations
+     */
+    A_UINT32 online_halphy_cals_bmap;
+
+    /* Calibration enable/disable support for home/scan channel
+     *     0 - home channel
+     *     1 - scan channel
+     *     2 - both home and scan channel
+     */
+    A_UINT32 home_scan_channel;
+} wmi_pdev_set_halphy_cal_bmap_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_set_halphy_cal_bmap_evt_fixed_param */
+    A_UINT32 pdev_id;       /* PDEV Id set by the command */
+
+    /* Status indication for calibration
+     *     0 - SUCCESS
+     *     1 - FAIL
+     * This WMI command will by sent from HOST dynamically but only one
+     * at a time. So no need of cookie/request handshake.
+     */
+    A_UINT32 status;
+} wmi_pdev_set_halphy_cal_bmap_evt_fixed_param;
 
 /* below structures are related to Motion Detection. */
 typedef struct {
