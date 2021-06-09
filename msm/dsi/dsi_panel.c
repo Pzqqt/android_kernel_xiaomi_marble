@@ -193,52 +193,63 @@ static int dsi_panel_gpio_release(struct dsi_panel *panel)
 	return rc;
 }
 
-int dsi_panel_trigger_esd_attack(struct dsi_panel *panel, bool trusted_vm_env)
+static int dsi_panel_trigger_esd_attack_sub(int reset_gpio)
 {
-	if (!panel) {
-		DSI_ERR("Invalid panel param\n");
+	if (!gpio_is_valid(reset_gpio)) {
+		DSI_INFO("failed to pull down the reset gpio\n");
 		return -EINVAL;
 	}
 
-	/* toggle reset-gpio by writing directly to register in trusted-vm */
-	if (trusted_vm_env) {
-		struct dsi_tlmm_gpio *gpio = NULL;
-		void __iomem *io;
-		u32 offset = 0x4;
-		int i;
-
-		for (i = 0; i < panel->tlmm_gpio_count; i++)
-			if (!strcmp(panel->tlmm_gpio[i].name, "reset-gpio"))
-				gpio = &panel->tlmm_gpio[i];
-
-		if (!gpio) {
-			DSI_ERR("reset gpio not found\n");
-			return -EINVAL;
-		}
-
-		io = ioremap(gpio->addr, gpio->size);
-		writel_relaxed(0, io + offset);
-		iounmap(io);
-
-	} else {
-		struct dsi_panel_reset_config *r_config = &panel->reset_config;
-
-		if (!r_config) {
-			DSI_ERR("Invalid panel reset configuration\n");
-			return -EINVAL;
-		}
-
-		if (!gpio_is_valid(r_config->reset_gpio)) {
-			DSI_ERR("failed to pull down gpio\n");
-			return -EINVAL;
-		}
-		gpio_set_value(r_config->reset_gpio, 0);
-	}
+	gpio_set_value(reset_gpio, 0);
 
 	SDE_EVT32(SDE_EVTLOG_FUNC_CASE1);
 	DSI_INFO("GPIO pulled low to simulate ESD\n");
 
 	return 0;
+}
+
+static int dsi_panel_vm_trigger_esd_attack(struct dsi_panel *panel)
+{
+	struct dsi_parser_utils *utils = &panel->utils;
+	int reset_gpio;
+	int rc = 0;
+
+	reset_gpio = utils->get_named_gpio(utils->data,
+			"qcom,platform-reset-gpio", 0);
+	if (!gpio_is_valid(reset_gpio)) {
+		DSI_ERR("[%s] reset gpio not provided\n", panel->name);
+		return -EINVAL;
+	}
+
+	rc = gpio_request(reset_gpio, "reset_gpio");
+	if (rc) {
+		DSI_ERR("request for reset_gpio failed, rc=%d\n", rc);
+		return rc;
+	}
+
+	rc = dsi_panel_trigger_esd_attack_sub(reset_gpio);
+
+	gpio_free(reset_gpio);
+
+	return rc;
+}
+
+static int dsi_panel_trigger_esd_attack(struct dsi_panel *panel)
+{
+	struct dsi_panel_reset_config *r_config;
+
+	if (!panel) {
+		DSI_ERR("Invalid panel param\n");
+		return -EINVAL;
+	}
+
+	r_config = &panel->reset_config;
+	if (!r_config) {
+		DSI_ERR("Invalid panel reset configuration\n");
+		return -EINVAL;
+	}
+
+	return dsi_panel_trigger_esd_attack_sub(r_config->reset_gpio);
 }
 
 static int dsi_panel_reset(struct dsi_panel *panel)
@@ -2208,34 +2219,21 @@ error:
 int dsi_panel_get_io_resources(struct dsi_panel *panel,
 		struct msm_io_res *io_res)
 {
-	struct list_head temp_head;
-	struct msm_io_mem_entry *io_mem, *pos, *tmp;
+	struct dsi_parser_utils *utils = &panel->utils;
 	struct list_head *mem_list = &io_res->mem;
-	int i, rc = 0;
+	int reset_gpio;
+	int rc = 0;
 
-	INIT_LIST_HEAD(&temp_head);
-
-	for (i = 0; i < panel->tlmm_gpio_count; i++) {
-		io_mem = kzalloc(sizeof(*io_mem), GFP_KERNEL);
-		if (!io_mem) {
-			rc = -ENOMEM;
-			goto parse_fail;
+	reset_gpio = utils->get_named_gpio(utils->data,
+					      "qcom,platform-reset-gpio", 0);
+	if (gpio_is_valid(reset_gpio)) {
+		rc = msm_dss_get_gpio_io_mem(reset_gpio, mem_list);
+		if (rc) {
+			DSI_ERR("[%s] failed to retrieve the reset gpio address\n", panel->name);
+			goto end;
 		}
-
-		io_mem->base = panel->tlmm_gpio[i].addr;
-		io_mem->size = panel->tlmm_gpio[i].size;
-
-		list_add(&io_mem->list, &temp_head);
 	}
 
-	list_splice(&temp_head, mem_list);
-	goto end;
-
-parse_fail:
-	list_for_each_entry_safe(pos, tmp, &temp_head, list) {
-		list_del(&pos->list);
-		kfree(pos);
-	}
 end:
 	return rc;
 }
@@ -2322,54 +2320,6 @@ static int dsi_panel_parse_gpios(struct dsi_panel *panel)
 
 error:
 	return rc;
-}
-
-static int dsi_panel_parse_tlmm_gpio(struct dsi_panel *panel)
-{
-	struct dsi_parser_utils *utils = &panel->utils;
-	u32 base, size, pin;
-	int pin_count, address_count, name_count, i;
-
-	address_count = utils->count_u32_elems(utils->data,
-				"qcom,dsi-panel-gpio-address");
-	if (address_count != 2) {
-		DSI_DEBUG("panel gpio address not defined\n");
-		return 0;
-	}
-
-	utils->read_u32_index(utils->data,
-			"qcom,dsi-panel-gpio-address", 0, &base);
-	utils->read_u32_index(utils->data,
-			"qcom,dsi-panel-gpio-address", 1, &size);
-
-	pin_count = utils->count_u32_elems(utils->data,
-				"qcom,dsi-panel-gpio-pins");
-	name_count = utils->count_strings(utils->data,
-				"qcom,dsi-panel-gpio-names");
-	if ((pin_count < 0) || (name_count < 0) || (pin_count != name_count)) {
-		DSI_ERR("invalid gpio pins/names\n");
-		return -EINVAL;
-	}
-
-	panel->tlmm_gpio = kcalloc(pin_count,
-				sizeof(struct dsi_tlmm_gpio), GFP_KERNEL);
-	if (!panel->tlmm_gpio)
-		return -ENOMEM;
-
-	panel->tlmm_gpio_count = pin_count;
-	for (i = 0; i < pin_count; i++) {
-		utils->read_u32_index(utils->data,
-				"qcom,dsi-panel-gpio-pins", i, &pin);
-		panel->tlmm_gpio[i].num = pin;
-		panel->tlmm_gpio[i].addr = base + (pin * size);
-		panel->tlmm_gpio[i].size = size;
-
-		utils->read_string_index(utils->data,
-				"qcom,dsi-panel-gpio-names", i,
-				&(panel->tlmm_gpio[i].name));
-	}
-
-	return 0;
 }
 
 static int dsi_panel_parse_bl_pwm_config(struct dsi_panel *panel)
@@ -3487,6 +3437,7 @@ static void dsi_panel_setup_vm_ops(struct dsi_panel *panel, bool trusted_vm_env)
 		panel->panel_ops.bl_unregister = dsi_panel_vm_stub;
 		panel->panel_ops.parse_gpios = dsi_panel_vm_stub;
 		panel->panel_ops.parse_power_cfg = dsi_panel_vm_stub;
+		panel->panel_ops.trigger_esd_attack = dsi_panel_vm_trigger_esd_attack;
 	} else {
 		panel->panel_ops.pinctrl_init = dsi_panel_pinctrl_init;
 		panel->panel_ops.gpio_request = dsi_panel_gpio_request;
@@ -3496,6 +3447,7 @@ static void dsi_panel_setup_vm_ops(struct dsi_panel *panel, bool trusted_vm_env)
 		panel->panel_ops.bl_unregister = dsi_panel_bl_unregister;
 		panel->panel_ops.parse_gpios = dsi_panel_parse_gpios;
 		panel->panel_ops.parse_power_cfg = dsi_panel_parse_power_cfg;
+		panel->panel_ops.trigger_esd_attack = dsi_panel_trigger_esd_attack;
 	}
 }
 
@@ -3577,12 +3529,6 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 	rc = panel->panel_ops.parse_gpios(panel);
 	if (rc) {
 		DSI_ERR("failed to parse panel gpios, rc=%d\n", rc);
-		goto error;
-	}
-
-	rc = dsi_panel_parse_tlmm_gpio(panel);
-	if (rc) {
-		DSI_ERR("failed to parse panel tlmm gpios, rc=%d\n", rc);
 		goto error;
 	}
 
@@ -3741,7 +3687,6 @@ int dsi_panel_drv_deinit(struct dsi_panel *panel)
 	if (rc)
 		DSI_ERR("[%s] failed to put regs, rc=%d\n", panel->name, rc);
 
-	kfree(panel->tlmm_gpio);
 	panel->host = NULL;
 	memset(&panel->mipi_device, 0x0, sizeof(panel->mipi_device));
 

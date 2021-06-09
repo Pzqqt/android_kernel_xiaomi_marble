@@ -1660,9 +1660,10 @@ static ssize_t debugfs_esd_trigger_check(struct file *file,
 	}
 
 	if (display->esd_trigger) {
+		struct dsi_panel *panel = display->panel;
+
 		DSI_INFO("ESD attack triggered by user\n");
-		rc = dsi_panel_trigger_esd_attack(display->panel,
-						display->trusted_vm_env);
+		rc = panel->panel_ops.trigger_esd_attack(panel);
 		if (rc) {
 			DSI_ERR("Failed to trigger ESD attack\n");
 			goto error;
@@ -5442,22 +5443,49 @@ static int dsi_display_get_io_resources(struct msm_io_res *io_res, void *data)
 {
 	int rc = 0;
 	struct dsi_display *display;
+	struct platform_device *pdev;
+	int te_gpio, avdd_gpio;
 
 	if (!data)
 		return -EINVAL;
 
+	display = (struct dsi_display *)data;
+
+	pdev = display->pdev;
+	if (!pdev)
+		return -EINVAL;
+
 	rc = dsi_ctrl_get_io_resources(io_res);
 	if (rc)
-		goto end;
+		return rc;
 
 	rc = dsi_phy_get_io_resources(io_res);
 	if (rc)
-		goto end;
+		return rc;
 
-	display = (struct dsi_display *)data;
 	rc = dsi_panel_get_io_resources(display->panel, io_res);
+	if (rc)
+		return rc;
 
-end:
+	te_gpio = of_get_named_gpio(pdev->dev.of_node, "qcom,platform-te-gpio", 0);
+	if (gpio_is_valid(te_gpio)) {
+		rc = msm_dss_get_gpio_io_mem(te_gpio, &io_res->mem);
+		if (rc) {
+			DSI_ERR("[%s] failed to retrieve the te gpio address\n",
+					display->panel->name);
+			return rc;
+		}
+	}
+
+	avdd_gpio = of_get_named_gpio(pdev->dev.of_node,
+			"qcom,avdd-regulator-gpio", 0);
+	if (gpio_is_valid(avdd_gpio)) {
+		rc = msm_dss_get_gpio_io_mem(avdd_gpio, &io_res->mem);
+		if (rc)
+			DSI_ERR("[%s] failed to retrieve the avdd gpio address\n",
+					display->panel->name);
+	}
+
 	return rc;
 }
 

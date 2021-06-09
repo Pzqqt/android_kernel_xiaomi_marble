@@ -210,6 +210,7 @@ enum sde_prop {
 	BASE_LAYER,
 	TRUSTED_VM_ENV,
 	MAX_TRUSTED_VM_DISPLAYS,
+	TVM_INCLUDE_REG,
 	SDE_PROP_MAX,
 };
 
@@ -598,6 +599,7 @@ static struct sde_prop_type sde_prop[] = {
 	{TRUSTED_VM_ENV, "qcom,sde-trusted-vm-env", false, PROP_TYPE_BOOL},
 	{MAX_TRUSTED_VM_DISPLAYS, "qcom,sde-max-trusted-vm-displays", false,
 			PROP_TYPE_U32},
+	{TVM_INCLUDE_REG, "qcom,tvm-include-reg", false, PROP_TYPE_U32_ARRAY},
 };
 
 static struct sde_prop_type sde_perf_prop[] = {
@@ -3965,6 +3967,16 @@ static void _sde_top_parse_dt_helper(struct sde_mdss_cfg *cfg,
 			 0);
 	cfg->max_trusted_vm_displays = PROP_VALUE_ACCESS(props->values,
 			MAX_TRUSTED_VM_DISPLAYS, 0);
+	if (props->exists[TVM_INCLUDE_REG]) {
+		cfg->tvm_reg_count = props->counts[TVM_INCLUDE_REG] / 2;
+		for (i = 0; i < cfg->tvm_reg_count; i++) {
+			cfg->tvm_reg[i].start = PROP_VALUE_ACCESS(props->values,
+				TVM_INCLUDE_REG, i * 2);
+			cfg->tvm_reg[i].end = cfg->tvm_reg[i].start +
+				PROP_VALUE_ACCESS(props->values, TVM_INCLUDE_REG,
+						i * 2 + 1);
+		}
+	}
 }
 
 static int sde_top_parse_dt(struct device_node *np, struct sde_mdss_cfg *cfg)

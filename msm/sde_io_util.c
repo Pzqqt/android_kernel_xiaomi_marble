@@ -8,6 +8,7 @@
 #include <linux/io.h>
 #include <linux/regulator/consumer.h>
 #include <linux/soc/qcom/spmi-pmic-arb.h>
+#include <linux/pinctrl/qcom-pinctrl.h>
 #include <linux/delay.h>
 #include <linux/sde_io_util.h>
 #include <linux/sde_vm_event.h>
@@ -132,6 +133,40 @@ void msm_dss_iounmap(struct dss_io_data *io_data)
 	io_data->len = 0;
 } /* msm_dss_iounmap */
 EXPORT_SYMBOL(msm_dss_iounmap);
+
+int msm_dss_get_gpio_io_mem(const int gpio_pin, struct list_head *mem_list)
+{
+	struct msm_io_mem_entry *io_mem;
+	struct resource res;
+	bool gpio_pin_status = false;
+	int rc = 0;
+
+	if (!gpio_is_valid(gpio_pin))
+		return -EINVAL;
+
+	io_mem = kzalloc(sizeof(struct msm_io_mem_entry), GFP_KERNEL);
+	if (!io_mem)
+		return -ENOMEM;
+
+	gpio_pin_status = msm_gpio_get_pin_address(gpio_pin, &res);
+	if (!gpio_pin_status) {
+		rc = -ENODEV;
+		goto parse_fail;
+	}
+
+	io_mem->base = res.start;
+	io_mem->size = resource_size(&res);
+
+	list_add(&io_mem->list, mem_list);
+
+	return 0;
+
+parse_fail:
+	kfree(io_mem);
+
+	return rc;
+}
+EXPORT_SYMBOL(msm_dss_get_gpio_io_mem);
 
 int msm_dss_get_pmic_io_mem(struct platform_device *pdev,
 		struct list_head *mem_list)
