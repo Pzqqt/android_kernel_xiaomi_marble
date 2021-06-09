@@ -86,22 +86,6 @@ policy_mgr_get_allow_mcc_go_diff_bi(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS
-policy_mgr_get_enable_overlap_chnl(struct wlan_objmgr_psoc *psoc,
-				   uint8_t *enable_overlap_chnl)
-{
-	struct policy_mgr_psoc_priv_obj *pm_ctx;
-
-	pm_ctx = policy_mgr_get_context(psoc);
-	if (!pm_ctx) {
-		policy_mgr_err("pm_ctx is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-	*enable_overlap_chnl = pm_ctx->cfg.enable_overlap_chnl;
-
-	return QDF_STATUS_SUCCESS;
-}
-
 QDF_STATUS policy_mgr_set_dual_mac_feature(struct wlan_objmgr_psoc *psoc,
 					   uint8_t dual_mac_feature)
 {

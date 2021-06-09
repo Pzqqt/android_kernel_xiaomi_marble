@@ -4640,18 +4640,10 @@ QDF_STATUS wlan_hdd_config_acs(struct hdd_context *hdd_ctx,
 	struct sap_config *sap_config;
 	struct hdd_config *ini_config;
 	mac_handle_t mac_handle;
-	uint8_t is_overlap_enable = 0;
-	QDF_STATUS status;
 
 	mac_handle = hdd_ctx->mac_handle;
 	sap_config = &adapter->session.ap.sap_config;
 	ini_config = hdd_ctx->config;
-
-	status = ucfg_policy_mgr_get_enable_overlap_chnl(hdd_ctx->psoc,
-							 &is_overlap_enable);
-	if (status != QDF_STATUS_SUCCESS)
-		hdd_err("can't get overlap channel INI value, using default");
-	sap_config->enOverLapCh = !!is_overlap_enable;
 
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 	hdd_debug("HDD_ACS_SKIP_STATUS = %d", hdd_ctx->skip_acs_scan_status);
@@ -5308,7 +5300,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	uint16_t prev_rsn_length = 0;
 	enum dfs_mode mode;
 	bool ignore_cac = 0;
-	uint8_t is_overlap_enable = 0;
 	uint8_t beacon_fixed_len, indoor_chnl_marking = 0;
 	bool sap_force_11n_for_11ac = 0;
 	bool go_force_11n_for_11ac = 0;
@@ -5424,13 +5415,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 
 	config->beacon_int = mgmt_frame->u.beacon.beacon_int;
 	config->dfs_cac_offload = hdd_ctx->dfs_cac_offload;
-
-	status = ucfg_policy_mgr_get_enable_overlap_chnl(hdd_ctx->psoc,
-							 &is_overlap_enable);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		hdd_err("can't get overlap channel INI value, using default");
-	config->enOverLapCh = is_overlap_enable;
-
 	config->dtim_period = beacon->dtim_period;
 
 	if (config->acs_cfg.acs_mode == true) {

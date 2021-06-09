@@ -235,7 +235,6 @@ extern enum policy_mgr_conc_next_action
  * @conc_rule1: concurrency rule1
  * @conc_rule2: concurrency rule2
  * @allow_mcc_go_diff_bi: Allow GO and STA diff beacon interval in MCC
- * @enable_overlap_chnl: Enable overlap channels for SAP's channel selection
  * @dual_mac_feature: To enable/disable dual mac features
  * @is_force_1x1_enable: Is 1x1 forced for connection
  * @sta_sap_scc_on_dfs_chnl: STA-SAP SCC on DFS channel
@@ -259,7 +258,6 @@ struct policy_mgr_cfg {
 	uint8_t conc_rule2;
 	bool enable_mcc_adaptive_sch;
 	uint8_t allow_mcc_go_diff_bi;
-	uint8_t enable_overlap_chnl;
 	uint8_t dual_mac_feature;
 	enum force_1x1_type is_force_1x1_enable;
 	uint8_t sta_sap_scc_on_dfs_chnl;
