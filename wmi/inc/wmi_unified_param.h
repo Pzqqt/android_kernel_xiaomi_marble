@@ -7536,6 +7536,10 @@ struct wmi_roam_deauth_trigger_data {
  * @wtc_scan_mode: WTC scan mode
  * @wtc_rssi_th: Connected AP threshold
  * @wtc_candi_rssi_th: Candidate AP threshold
+ * @wtc_candi_rssi_ext_present: Flag to notify that whether fw sends rssi
+ * threshold for 5g & 6g AP to host or not
+ * @wtc_candi_rssi_th_5g: 5g candidate AP rssi threshold
+ * @wtc_candi_rssi_th_6g: 6g candidate AP rssi threshold
  */
 struct wmi_roam_wtc_btm_trigger_data {
 	uint32_t roaming_mode;
@@ -7545,6 +7549,9 @@ struct wmi_roam_wtc_btm_trigger_data {
 	uint32_t wtc_scan_mode;
 	uint32_t wtc_rssi_th;
 	uint32_t wtc_candi_rssi_th;
+	uint32_t wtc_candi_rssi_ext_present;
+	uint32_t wtc_candi_rssi_th_5g;
+	uint32_t wtc_candi_rssi_th_6g;
 };
 
 /**
