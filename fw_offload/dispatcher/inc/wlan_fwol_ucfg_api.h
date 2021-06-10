@@ -657,6 +657,18 @@ QDF_STATUS ucfg_fwol_send_dscp_up_map_to_fw(
 }
 #endif
 
+#ifdef WLAN_FEATURE_MDNS_OFFLOAD
+/**
+ * ucfg_fwol_set_mdns_config() - set mdns config
+ * @psoc: pointer to psoc object
+ * @mdns_info: mdns config info pointer
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+QDF_STATUS ucfg_fwol_set_mdns_config(struct wlan_objmgr_psoc *psoc,
+				     struct mdns_config_info *mdns_info);
+#endif /* WLAN_FEATURE_MDNS_OFFLOAD */
+
 /**
  * ucfg_fwol_configure_global_params - API to configure global params
  * @psoc: pointer to psoc object
