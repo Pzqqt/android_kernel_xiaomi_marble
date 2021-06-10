@@ -439,7 +439,7 @@ void ucfg_cfr_capture_data(struct wlan_objmgr_psoc *psoc, uint32_t vdev_id,
 	 * find data pointer from mem index and start address of memory.
 	 */
 	payload = vaddr + mem_index;
-	payload_len = hdr->u.meta_v1.length;
+	payload_len = hdr->u.meta_leg.length;
 
 	/* Write data into streamfs */
 	tgt_cfr_info_send(pdev, hdr, sizeof(struct csi_cfr_header),

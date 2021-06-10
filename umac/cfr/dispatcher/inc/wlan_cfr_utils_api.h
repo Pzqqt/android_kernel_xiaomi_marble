@@ -138,7 +138,8 @@ enum cfr_capture_type {
 	CFR_TYPE_METHOD_MAX,
 };
 
-struct cfr_metadata_version_1 {
+/* ensure to add new members at the end of the structure only */
+struct leg_cfr_metadata {
 	u_int8_t    peer_addr[QDF_MAC_ADDR_SIZE];
 	u_int8_t    status;
 	u_int8_t    capture_bw;
@@ -157,26 +158,8 @@ struct cfr_metadata_version_1 {
 
 #define HOST_MAX_CHAINS 8
 
-struct cfr_metadata_version_2 {
-	u_int8_t    peer_addr[QDF_MAC_ADDR_SIZE];
-	u_int8_t    status;
-	u_int8_t    capture_bw;
-	u_int8_t    channel_bw;
-	u_int8_t    phy_mode;
-	u_int16_t   prim20_chan;
-	u_int16_t   center_freq1;
-	u_int16_t   center_freq2;
-	u_int8_t    capture_mode;
-	u_int8_t    capture_type;
-	u_int8_t    sts_count;
-	u_int8_t    num_rx_chain;
-	u_int32_t   timestamp;
-	u_int32_t   length;
-	u_int32_t   chain_rssi[HOST_MAX_CHAINS];
-	u_int16_t   chain_phase[HOST_MAX_CHAINS];
-} __attribute__ ((__packed__));
-
-struct cfr_metadata_version_4 {
+/* ensure to add new members at the end of the structure only */
+struct dbr_cfr_metadata {
 	u_int8_t    peer_addr[QDF_MAC_ADDR_SIZE];
 	u_int8_t    status;
 	u_int8_t    capture_bw;
@@ -199,31 +182,8 @@ struct cfr_metadata_version_4 {
 } __attribute__ ((__packed__));
 
 #ifdef WLAN_ENH_CFR_ENABLE
-struct cfr_metadata_version_3 {
-	u_int8_t    status;
-	u_int8_t    capture_bw;
-	u_int8_t    channel_bw;
-	u_int8_t    phy_mode;
-	u_int16_t   prim20_chan;
-	u_int16_t   center_freq1;
-	u_int16_t   center_freq2;
-	u_int8_t    capture_mode; /* ack_capture_mode */
-	u_int8_t    capture_type; /* cfr_capture_type */
-	u_int8_t    sts_count;
-	u_int8_t    num_rx_chain;
-	u_int64_t   timestamp;
-	u_int32_t   length;
-	u_int8_t    is_mu_ppdu;
-	u_int8_t    num_mu_users;
-	union {
-		u_int8_t    su_peer_addr[QDF_MAC_ADDR_SIZE];
-		u_int8_t    mu_peer_addr[MAX_CFR_MU_USERS][QDF_MAC_ADDR_SIZE];
-	} peer_addr;
-	u_int32_t   chain_rssi[HOST_MAX_CHAINS];
-	u_int16_t   chain_phase[HOST_MAX_CHAINS];
-} __attribute__ ((__packed__));
-
-struct cfr_metadata_version_5 {
+/* ensure to add new members at the end of the structure only */
+struct enh_cfr_metadata {
 	u_int8_t    status;
 	u_int8_t    capture_bw;
 	u_int8_t    channel_bw;
@@ -249,7 +209,6 @@ struct cfr_metadata_version_5 {
 	u_int8_t    agc_gain[HOST_MAX_CHAINS];
 	u_int32_t   rx_start_ts;
 } __attribute__ ((__packed__));
-
 #endif
 
 #define  CFR_META_DATA_LEN \
@@ -268,14 +227,10 @@ struct cfr_header_cmn {
 struct csi_cfr_header {
 	struct cfr_header_cmn cmn;
 	union {
-		struct cfr_metadata_version_1 meta_v1;
-		struct cfr_metadata_version_2 meta_v2;
+		struct leg_cfr_metadata meta_leg;
+		struct dbr_cfr_metadata meta_dbr;
 #ifdef WLAN_ENH_CFR_ENABLE
-		struct cfr_metadata_version_3 meta_v3;
-#endif
-		struct cfr_metadata_version_4 meta_v4;
-#ifdef WLAN_ENH_CFR_ENABLE
-		struct cfr_metadata_version_5 meta_v5;
+		struct enh_cfr_metadata meta_enh;
 #endif
 	} u;
 } __attribute__ ((__packed__));
