@@ -1370,6 +1370,8 @@ static void mlme_init_obss_ht40_cfg(struct wlan_objmgr_psoc *psoc,
 		(bool)cfg_default(CFG_OBSS_DETECTION_OFFLOAD);
 	obss_ht40->obss_color_collision_offload_enabled =
 		(bool)cfg_default(CFG_OBSS_COLOR_COLLISION_OFFLOAD);
+	obss_ht40->bss_color_collision_det_sta =
+		cfg_get(psoc, CFG_BSS_CLR_COLLISION_DETCN_STA);
 }
 
 static void mlme_init_threshold_cfg(struct wlan_objmgr_psoc *psoc,

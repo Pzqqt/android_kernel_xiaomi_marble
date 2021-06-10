@@ -1504,6 +1504,7 @@ struct wlan_mlme_cfg_twt {
  * @is_override_ht20_40_24g: use channel bonding in 2.4 GHz
  * @obss_detection_offload_enabled:       Enable OBSS detection offload
  * @obss_color_collision_offload_enabled: Enable obss color collision
+ * @bss_color_collision_det_sta: STA BSS color collision detection offload
  */
 struct wlan_mlme_obss_ht40 {
 	uint32_t active_dwelltime;
@@ -1516,6 +1517,7 @@ struct wlan_mlme_obss_ht40 {
 	bool is_override_ht20_40_24g;
 	bool obss_detection_offload_enabled;
 	bool obss_color_collision_offload_enabled;
+	bool bss_color_collision_det_sta;
 };
 
 /**

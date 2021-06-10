@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -243,6 +243,27 @@
 		0, \
 		"Enable obss color collision offload")
 
+/*
+ * <ini>
+ * bss_color_collision_det_sta - Enables BSS color collision detection in STA
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini used to enable or disable the BSS color collision detection in
+ * STA mode if obss_color_collision_offload is enabled.
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_BSS_CLR_COLLISION_DETCN_STA CFG_INI_BOOL( \
+		"bss_color_collision_det_sta", \
+		0, \
+		"BSS color collision detection in STA")
+
 #define CFG_OBSS_HT40_ALL \
 	CFG(CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME) \
 	CFG(CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME) \
@@ -253,6 +274,7 @@
 	CFG(CFG_OBSS_HT40_WIDTH_CH_TRANSITION_DELAY) \
 	CFG(CFG_OBSS_HT40_OVERRIDE_HT40_20_24GHZ) \
 	CFG(CFG_OBSS_DETECTION_OFFLOAD) \
+	CFG(CFG_BSS_CLR_COLLISION_DETCN_STA) \
 	CFG(CFG_OBSS_COLOR_COLLISION_OFFLOAD)
 
 #endif /* CFG_MLME_OBSS_HT40_H__ */
