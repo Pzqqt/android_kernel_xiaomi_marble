@@ -67,11 +67,13 @@
 
 enum cfrmetaversion {
 	CFR_META_VERSION_NONE,
-	CFR_META_VERSION_1,
-	CFR_META_VERSION_2,
-	CFR_META_VERSION_3,
-	CFR_META_VERSION_4,
-	CFR_META_VERSION_5,
+	CFR_META_VERSION_1, /* initial version for leg_cfr_metadata */
+	CFR_META_VERSION_2, /* initial version for dbr_cfr_metadata */
+	CFR_META_VERSION_3, /* initial version for enh_cfr_metadata */
+	CFR_META_VERSION_4, /* agc gain, cfo, rx_start_ts in dbr_cfr_metadata */
+	CFR_META_VERSION_5, /* agc gain, cfo, rx_start_ts in enh_cfr_metadata */
+	CFR_META_VERSION_6, /* mcs, gi_type in dbr_cfr_metadata */
+	CFR_META_VERSION_7, /* mcs, gi_type, sig_info in enh_cfr_metadata */
 	CFR_META_VERSION_MAX = 0xFF,
 };
 
@@ -179,9 +181,21 @@ struct dbr_cfr_metadata {
 	u_int32_t   rtt_cfo_measurement;
 	u_int8_t    agc_gain[HOST_MAX_CHAINS];
 	u_int32_t   rx_start_ts;
+	u_int16_t   mcs_rate;
+	u_int16_t   gi_type;
 } __attribute__ ((__packed__));
 
 #ifdef WLAN_ENH_CFR_ENABLE
+struct cfr_su_sig_info {
+	u_int8_t coding;
+	u_int8_t stbc;
+	u_int8_t beamformed;
+	u_int8_t dcm;
+	u_int8_t ltf_size;
+	u_int8_t sgi;
+	u_int16_t reserved;
+} __attribute__ ((__packed__));
+
 /* ensure to add new members at the end of the structure only */
 struct enh_cfr_metadata {
 	u_int8_t    status;
@@ -208,6 +222,9 @@ struct enh_cfr_metadata {
 	u_int32_t   rtt_cfo_measurement;
 	u_int8_t    agc_gain[HOST_MAX_CHAINS];
 	u_int32_t   rx_start_ts;
+	u_int16_t   mcs_rate;
+	u_int16_t   gi_type;
+	struct cfr_su_sig_info sig_info;
 } __attribute__ ((__packed__));
 #endif
 
