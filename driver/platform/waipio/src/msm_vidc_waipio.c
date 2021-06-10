@@ -251,7 +251,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT |
 			CAP_FLAG_INPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
 		{0},
-		{BLUR_TYPES},
+		{0},
 		NULL, msm_vidc_set_flip},
 
 	{VFLIP, ENC, CODECS_ALL,
@@ -272,7 +272,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		HFI_PROP_ROTATION,
 		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT,
 		{0},
-		{BLUR_TYPES},
+		{0},
 		NULL, msm_vidc_set_rotation},
 
 	{SUPER_FRAME, ENC, H264|HEVC,
@@ -448,8 +448,7 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		V4L2_CID_MPEG_VIDC_VIDEO_BLUR_TYPES,
 		HFI_PROP_BLUR_TYPES,
 		CAP_FLAG_OUTPUT_PORT | CAP_FLAG_DYNAMIC_ALLOWED,
-		{PIX_FMTS, ROTATION, HFLIP, BITRATE_MODE,
-			CONTENT_ADAPTIVE_CODING},
+		{PIX_FMTS, BITRATE_MODE, CONTENT_ADAPTIVE_CODING},
 		{BLUR_RESOLUTION},
 		msm_vidc_adjust_blur_type, msm_vidc_set_blur_type},
 

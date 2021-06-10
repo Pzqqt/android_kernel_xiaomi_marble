@@ -1520,11 +1520,11 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 		HFI_BUFFER_DPB_ENC(_size, frame_width, frame_height, is_ten_bit); \
 	} while (0)
 
-#define HFI_BUFFER_VPSS_ENC(vpss_size, dswidth, dsheight, ds_enable, is_ten_bit) \
+#define HFI_BUFFER_VPSS_ENC(vpss_size, dswidth, dsheight, ds_enable, blur, is_ten_bit) \
 	do \
 	{ \
 		vpss_size = 0; \
-		if (ds_enable) \
+		if (ds_enable || blur) \
 		{ \
 			HFI_BUFFER_DPB_ENC(vpss_size, dswidth, dsheight, is_ten_bit); \
 		} \
