@@ -1043,6 +1043,35 @@ QDF_STATUS ucfg_fwol_send_dscp_up_map_to_fw(struct wlan_objmgr_vdev *vdev,
 }
 #endif /* WLAN_SEND_DSCP_UP_MAP_TO_FW */
 
+#ifdef WLAN_FEATURE_MDNS_OFFLOAD
+QDF_STATUS ucfg_fwol_set_mdns_config(struct wlan_objmgr_psoc *psoc,
+				     struct mdns_config_info *mdns_info)
+{
+	QDF_STATUS status;
+	struct wlan_fwol_psoc_obj *fwol_obj;
+	struct wlan_fwol_tx_ops *tx_ops;
+
+	if (!psoc) {
+		fwol_err("NULL pointer for psoc");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL Obj");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	tx_ops = &fwol_obj->tx_ops;
+	if (tx_ops->set_mdns_config)
+		status = tx_ops->set_mdns_config(psoc, mdns_info);
+	else
+		status = QDF_STATUS_E_IO;
+
+	return status;
+}
+#endif /* WLAN_FEATURE_MDNS_OFFLOAD */
+
 QDF_STATUS ucfg_fwol_configure_global_params(struct wlan_objmgr_psoc *psoc,
 					     struct wlan_objmgr_pdev *pdev)
 {

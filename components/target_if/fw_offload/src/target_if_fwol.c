@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -373,8 +373,49 @@ target_if_fwol_unregister_thermal_throttle_handler(
 }
 #endif
 
-QDF_STATUS target_if_fwol_register_event_handler(struct wlan_objmgr_psoc *psoc,
-						 void *arg)
+#ifdef WLAN_FEATURE_MDNS_OFFLOAD
+/**
+ * target_if_fwol_set_mdns_config() - Set mdns Config to FW
+ * @psoc: pointer to PSOC object
+ * @offload_info: pointer to mdns config info
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+static QDF_STATUS
+target_if_fwol_set_mdns_config(struct wlan_objmgr_psoc *psoc,
+			       struct mdns_config_info *mdns_info)
+{
+	QDF_STATUS status;
+	wmi_unified_t wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi_handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_send_set_mdns_config_cmd(wmi_handle,
+						      mdns_info);
+	if (QDF_IS_STATUS_ERROR(status))
+		target_if_err("Failed to set mDNS Config %d", status);
+
+	return status;
+}
+
+static void
+target_if_fwol_register_mdns_tx_ops(struct wlan_fwol_tx_ops *tx_ops)
+{
+	tx_ops->set_mdns_config = target_if_fwol_set_mdns_config;
+}
+#else
+static void
+target_if_fwol_register_mdns_tx_ops(struct wlan_fwol_tx_ops *tx_ops)
+{
+}
+#endif /* WLAN_FEATURE_MDNS_OFFLOAD */
+
+QDF_STATUS
+target_if_fwol_register_event_handler(struct wlan_objmgr_psoc *psoc,
+				      void *arg)
 {
 	target_if_fwol_register_elna_event_handler(psoc, arg);
 	target_if_fwol_register_thermal_throttle_handler(psoc);
@@ -396,6 +437,7 @@ QDF_STATUS target_if_fwol_register_tx_ops(struct wlan_fwol_tx_ops *tx_ops)
 {
 	target_if_fwol_register_elna_tx_ops(tx_ops);
 	target_if_fwol_register_dscp_up_tx_ops(tx_ops);
+	target_if_fwol_register_mdns_tx_ops(tx_ops);
 
 	tx_ops->reg_evt_handler = target_if_fwol_register_event_handler;
 	tx_ops->unreg_evt_handler = target_if_fwol_unregister_event_handler;

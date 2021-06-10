@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -22,7 +22,6 @@
 
 #include "wlan_cfg80211.h"
 #include "wlan_osif_request_manager.h"
-#include "wlan_fwol_public_structs.h"
 #include "wlan_fwol_ucfg_api.h"
 #include "os_if_fwol.h"
 
@@ -145,3 +144,57 @@ int os_if_fwol_send_dscp_up_map_to_fw(struct wlan_objmgr_vdev *vdev,
 	return qdf_status_to_os_return(status);
 }
 #endif
+
+#ifdef WLAN_FEATURE_MDNS_OFFLOAD
+int os_if_fwol_enable_mdns_offload(struct wlan_objmgr_psoc *psoc,
+				   struct mdns_config_info *mdns_info)
+{
+	int ret = 0;
+	QDF_STATUS status;
+
+	if (!psoc) {
+		osif_err("Null pointer for psoc");
+		return -EINVAL;
+	}
+
+	if (!mdns_info) {
+		osif_err("Invalid mDNS config");
+		return -EINVAL;
+	}
+
+	status = ucfg_fwol_set_mdns_config(psoc, mdns_info);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		osif_err("Failed to set mDNS Config");
+		ret = qdf_status_to_os_return(status);
+	}
+
+	return ret;
+}
+
+int os_if_fwol_disable_mdns_offload(struct wlan_objmgr_psoc *psoc)
+{
+	struct mdns_config_info *mdns_info = NULL;
+	int ret = 0;
+	QDF_STATUS status;
+
+	if (!psoc) {
+		osif_err("Null pointer for psoc");
+		return -EINVAL;
+	}
+
+	mdns_info = qdf_mem_malloc(sizeof(*mdns_info));
+	if (!mdns_info) {
+		ret = -ENOMEM;
+		goto out;
+	}
+
+	mdns_info->enable = false;
+	status = ucfg_fwol_set_mdns_config(psoc, mdns_info);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		osif_err("Failed to set mDNS Config");
+	ret = qdf_status_to_os_return(status);
+out:
+	qdf_mem_free(mdns_info);
+	return ret;
+}
+#endif /* WLAN_FEATURE_MDNS_OFFLOAD */
