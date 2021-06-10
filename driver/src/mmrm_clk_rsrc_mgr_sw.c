@@ -250,7 +250,6 @@ static struct mmrm_client *mmrm_sw_clk_client_register(
 
 exit_found:
 	mutex_unlock(&sw_clk_mgr->lock);
-
 	d_mpr_h("%s: exiting with success\n", __func__);
 	return clk_client;
 
@@ -258,8 +257,11 @@ err_fail_update_entry:
 	kfree(clk_client);
 
 err_fail_alloc_clk_client:
-	memset(tbl_entry, 0x0, sizeof(struct mmrm_sw_clk_client_tbl_entry));
-
+	tbl_entry->client = NULL;
+	tbl_entry->clk = NULL;
+	tbl_entry->pri = 0x0;
+	tbl_entry->pvt_data = NULL;
+	tbl_entry->notifier_cb_fn = NULL;
 err_nofree_entry:
 err_already_registered:
 	mutex_unlock(&sw_clk_mgr->lock);
@@ -302,7 +304,11 @@ static int mmrm_sw_clk_client_deregister(struct mmrm_clk_mgr *sw_clk_mgr,
 
 		kfree(tbl_entry->client);
 
-		memset(tbl_entry, 0x0, sizeof(struct mmrm_sw_clk_client_tbl_entry));
+		tbl_entry->client = NULL;
+		tbl_entry->clk = NULL;
+		tbl_entry->pri = 0x0;
+		tbl_entry->pvt_data = NULL;
+		tbl_entry->notifier_cb_fn = NULL;
 	}
 
 	mutex_unlock(&sw_clk_mgr->lock);
