@@ -1860,6 +1860,12 @@ int ipa_drop_stats_init(void)
 		&reg_idx);
 	pipe_bitmask[reg_idx] |= mask;
 
+	/* Always enable drop stats for ODL DPL Pipe. */
+	mask = ipa_hw_stats_get_ep_bit_n_idx(
+		IPA_CLIENT_ODL_DPL_CONS,
+		&reg_idx);
+	pipe_bitmask[reg_idx] |= mask;
+
 	/* Currently we have option to enable drop stats using debugfs.
 	 * To enable drop stats for a different pipe, first user needs
 	 * to query drop stats to get the current stats and enable.
