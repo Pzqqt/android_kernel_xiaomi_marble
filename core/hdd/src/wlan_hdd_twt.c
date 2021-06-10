@@ -38,8 +38,8 @@
 #include <wlan_cp_stats_mc_ucfg_api.h>
 #include <wlan_mlme_twt_ucfg_api.h>
 
-#define TWT_DISABLE_COMPLETE_TIMEOUT 4000
-#define TWT_ENABLE_COMPLETE_TIMEOUT  4000
+#define TWT_DISABLE_COMPLETE_TIMEOUT 1000
+#define TWT_ENABLE_COMPLETE_TIMEOUT  1000
 
 #define TWT_FLOW_TYPE_ANNOUNCED 0
 #define TWT_FLOW_TYPE_UNANNOUNCED 1
@@ -4035,7 +4035,6 @@ void hdd_twt_update_work_handler(void *data)
 
 void wlan_twt_concurrency_update(struct hdd_context *hdd_ctx)
 {
-	qdf_flush_work(&hdd_ctx->twt_en_dis_work);
 	qdf_sched_work(0, &hdd_ctx->twt_en_dis_work);
 }
 
