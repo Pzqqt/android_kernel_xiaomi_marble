@@ -368,6 +368,16 @@ void hal_rx_get_rtt_info_9000(void *rx_tlv, void *ppdu_info_hdl)
 	HAL_RX_GET(rx_tlv,
 		   PHYRX_PKT_END_4_RX_PKT_END_DETAILS,
 		   PHY_TIMESTAMP_2_UPPER_32);
+
+	ppdu_info->cfr_info.mcs_rate =
+	HAL_RX_GET(rx_tlv,
+		   PHYRX_PKT_END_8_RX_PKT_END_DETAILS_RX_LOCATION_INFO_DETAILS,
+		   RTT_MCS_RATE);
+
+	ppdu_info->cfr_info.gi_type =
+	HAL_RX_GET(rx_tlv,
+		   PHYRX_PKT_END_8_RX_PKT_END_DETAILS_RX_LOCATION_INFO_DETAILS,
+		   RTT_GI_TYPE);
 }
 #endif
 /**
