@@ -25,6 +25,7 @@ struct msm_vidc_venus_ops {
 	int (*raise_interrupt)(struct msm_vidc_core *core);
 	int (*clear_interrupt)(struct msm_vidc_core *core);
 	int (*prepare_pc)(struct msm_vidc_core *core);
+	int (*power_on)(struct msm_vidc_core *core);
 	int (*power_off)(struct msm_vidc_core *core);
 	int (*watchdog)(struct msm_vidc_core *core, u32 intr_status);
 	int (*noc_error_info)(struct msm_vidc_core *core);
@@ -110,7 +111,8 @@ struct msm_vidc_core {
 	u32                                    header_id;
 	u32                                    packet_id;
 	struct completion                      init_done;
-	u32                                    handoff_done;
+	bool                                   handoff_done;
+	bool                                   hw_power_control;
 };
 
 #endif // _MSM_VIDC_CORE_H_

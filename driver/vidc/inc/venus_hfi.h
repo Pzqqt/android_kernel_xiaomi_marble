@@ -7,7 +7,11 @@
 #define _VENUS_HFI_H_
 
 #include <linux/irqreturn.h>
+#include <linux/clk.h>
+#include <linux/regulator/consumer.h>
+#include <linux/clk-provider.h>
 
+#include "msm_vidc_dt.h"
 #include "msm_vidc_internal.h"
 #include "msm_vidc_inst.h"
 #include "msm_vidc_core.h"
@@ -58,6 +62,8 @@ void venus_hfi_work_handler(struct work_struct *work);
 void venus_hfi_pm_work_handler(struct work_struct *work);
 irqreturn_t venus_hfi_isr(int irq, void *data);
 
+int __write_register_masked(struct msm_vidc_core *core,
+		u32 reg, u32 value, u32 mask);
 int __write_register(struct msm_vidc_core *core,
 		u32 reg, u32 value);
 int __read_register(struct msm_vidc_core *core, u32 reg);
@@ -65,16 +71,27 @@ int __iface_cmdq_write(struct msm_vidc_core *core,
 	void *pkt);
 int __iface_msgq_read(struct msm_vidc_core *core, void *pkt);
 int __iface_dbgq_read(struct msm_vidc_core *core, void *pkt);
+int __scale_clocks(struct msm_vidc_core *core);
+int __set_clk_rate(struct msm_vidc_core *core,
+	struct clock_info *cl, u64 rate);
 void __disable_unprepare_clks(struct msm_vidc_core *core);
+int __prepare_enable_clks(struct msm_vidc_core *core);
 int __disable_regulators(struct msm_vidc_core *core);
+int __enable_regulators(struct msm_vidc_core *core);
+int __acquire_regulator(struct msm_vidc_core *core,
+	struct regulator_info *rinfo);
 int __unvote_buses(struct msm_vidc_core *core);
+int __vote_buses(struct msm_vidc_core *core, unsigned long bw_ddr,
+	unsigned long bw_llcc);
 int __prepare_pc(struct msm_vidc_core *core);
+int __set_registers(struct msm_vidc_core *core);
 
 int __reset_ahb2axi_bridge(struct msm_vidc_core *core);
 int __clock_config_on_enable(struct msm_vidc_core *core);
 int __interrupt_init(struct msm_vidc_core *core);
 int __setup_ucregion_memmap(struct msm_vidc_core *core);
 int __raise_interrupt(struct msm_vidc_core *core);
+int __power_on(struct msm_vidc_core *core);
 int __power_off(struct msm_vidc_core *core);
 bool __core_in_valid_state(struct msm_vidc_core *core);
 int __load_fw(struct msm_vidc_core *core);
