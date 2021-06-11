@@ -1781,7 +1781,7 @@ int msm_vidc_adjust_blur_type(void *instance, struct v4l2_ctrl *ctrl)
 	struct msm_vidc_inst_capability *capability;
 	s32 adjusted_value;
 	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
-	s32 rc_type = -1, rotation = -1, hflip = -1, vflip = -1, cac = -1;
+	s32 rc_type = -1, cac = -1;
 	s32 pix_fmts = -1;
 
 	if (!inst || !inst->capabilities) {
@@ -1801,25 +1801,18 @@ int msm_vidc_adjust_blur_type(void *instance, struct v4l2_ctrl *ctrl)
 
 	if (msm_vidc_get_parent_value(inst, BLUR_TYPES, BITRATE_MODE,
 		&rc_type, __func__) ||
-		msm_vidc_get_parent_value(inst, BLUR_TYPES, ROTATION,
-		&rotation, __func__) ||
 		msm_vidc_get_parent_value(inst, BLUR_TYPES,
 		CONTENT_ADAPTIVE_CODING, &cac, __func__) ||
-		msm_vidc_get_parent_value(inst, BLUR_TYPES, HFLIP,
-		&hflip, __func__) ||
 		msm_vidc_get_parent_value(inst, BLUR_TYPES, PIX_FMTS,
 		&pix_fmts, __func__))
 		return -EINVAL;
 
-	vflip = capability->cap[VFLIP].value;
-
 	if (adjusted_value == VIDC_BLUR_EXTERNAL) {
-		if (rotation || hflip || vflip || is_scaling_enabled(inst)) {
+		if (is_scaling_enabled(inst)) {
 			adjusted_value = VIDC_BLUR_NONE;
 		}
 	} else if (adjusted_value == VIDC_BLUR_ADAPTIVE) {
-		if (rotation || hflip || vflip || is_scaling_enabled(inst) ||
-			(rc_type != HFI_RC_VBR_CFR) ||
+		if (is_scaling_enabled(inst) || (rc_type != HFI_RC_VBR_CFR) ||
 			!cac || is_10bit_colorformat(pix_fmts)) {
 			adjusted_value = VIDC_BLUR_NONE;
 		}

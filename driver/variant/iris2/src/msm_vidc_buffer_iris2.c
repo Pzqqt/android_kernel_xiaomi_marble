@@ -441,7 +441,7 @@ static u32 msm_vidc_encoder_arp_size_iris2(struct msm_vidc_inst *inst)
 static u32 msm_vidc_encoder_vpss_size_iris2(struct msm_vidc_inst* inst)
 {
 	u32 size = 0;
-	bool ds_enable = false, is_tenbit = false;
+	bool ds_enable = false, is_tenbit = false, blur = false;
 	u32 rotation_val = HFI_ROTATION_NONE;
 	u32 width, height, driver_colorfmt;
 	struct v4l2_format* f;
@@ -472,8 +472,10 @@ static u32 msm_vidc_encoder_vpss_size_iris2(struct msm_vidc_inst* inst)
 	driver_colorfmt = v4l2_colorformat_to_driver(
 			f->fmt.pix_mp.pixelformat, __func__);
 	is_tenbit = is_10bit_colorformat(driver_colorfmt);
+	if (inst->capabilities->cap[BLUR_TYPES].value != VIDC_BLUR_NONE)
+		blur = true;
 
-	HFI_BUFFER_VPSS_ENC(size, width, height, ds_enable, is_tenbit);
+	HFI_BUFFER_VPSS_ENC(size, width, height, ds_enable, blur, is_tenbit);
 	i_vpr_l(inst, "%s: size %d\n", __func__, size);
 	return size;
 }
