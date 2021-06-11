@@ -537,6 +537,7 @@ typedef  enum  {
     WMI_SERVICE_AMPDU_TX_BUF_SIZE_256_SUPPORT = 292, /* Indicates FW supports MAX 256 MPDUs in A-MPDU instead of 64 */
     WMI_SERVICE_HALPHY_CAL_STATUS = 293, /* Indicates FW supports sending online HALPHY Calibration status to host */
     WMI_SERVICE_HALPHY_CAL_ENABLE_DISABLE_SUPPORT = 294, /* Indicates Calibraton enable/disable support by FW */
+    WMI_SERVICE_AFC_SUPPORT = 295, /* Indicates FW supports AFC_CMD,AFC_EVENT */
 
 
     WMI_MAX_EXT2_SERVICE

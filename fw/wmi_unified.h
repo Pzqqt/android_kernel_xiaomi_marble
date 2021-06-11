@@ -1294,6 +1294,7 @@ typedef enum {
     WMI_11D_SCAN_START_CMDID,
     WMI_11D_SCAN_STOP_CMDID,
     WMI_SET_INIT_COUNTRY_CMDID,
+    WMI_AFC_CMDID,
 
     /**
      * Nan Data commands
@@ -2059,6 +2060,7 @@ typedef enum {
     WMI_REG_CHAN_LIST_CC_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_REGULATORY),
     WMI_11D_NEW_COUNTRY_EVENTID,
     WMI_REG_CHAN_LIST_CC_EXT_EVENTID,
+    WMI_AFC_EVENTID,
 
     /** Events for TWT(Target Wake Time) of STA and AP  */
     WMI_TWT_ENABLE_COMPLETE_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_TWT),
@@ -28823,6 +28825,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PDEV_SET_BIOS_GEO_TABLE_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_GET_HALPHY_CAL_STATUS_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_SET_HALPHY_CAL_BMAP_CMDID);
+        WMI_RETURN_STRING(WMI_AFC_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -28859,6 +28862,58 @@ typedef struct {
         A_UINT32 domain_code;  /* Domain code */
     } country_code;
 } wmi_set_init_country_cmd_fixed_param;
+
+typedef enum {
+    /**
+     * serv_resp_format_type will indicate the format in which afc_serv data
+     * is written into host/target shared memory
+     * This type can be expanded in future as per requirements.
+     */
+    AFC_SERV_RESP_FORMAT_JSON = 0,
+} WMI_AFC_SERV_RESP_FORMAT_TYPE;
+
+typedef enum {
+    /**
+     * wmi_afc_cmd_type will indicate type of AFC command sent to FW.
+     * Once AFC server writes data at TZ memory location SERV_RESP_READY
+     * type command is sent to FW.
+     * This type can be expanded in future as per requirements.
+     */
+    WMI_AFC_CMD_SERV_RESP_READY = 1,
+} WMI_AFC_CMD_TYPE;
+
+/** Host indicating AFC info availability to FW */
+typedef struct {
+     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_afc_cmd_fixed_param */
+     A_UINT32 pdev_id;
+     A_UINT32 cmd_type; /* refer WMI_AFC_CMD_TYPE */
+     A_UINT32 serv_resp_format; /* refer WMI_AFC_SERV_RESP_FORMAT_TYPE */
+} wmi_afc_cmd_fixed_param;
+
+/** Host indicates AFC info availability to FW using WMI_AFC_CMD
+ * This AFC info is written by AFC application/ server in host/target
+ * shared memory reserved during bootup.
+ * The structure is placeholder, indicating way afc_serv_resp is written in FW.
+ * This structure will not be attach as input to WMI command.
+ * This structure will be common to both host and FW.
+ * The structure of this WMI AFC info is as follows.
+ */
+typedef struct {
+    A_UINT32 tlv_header;   /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_afc_serv_resp_struct */
+    A_UINT32 status;       /* validity flag to be updated by TZ/ PF stub layer,
+                            * to indicate if payload is valid or not.
+                            * status = 1 will indicate payload is valid. */
+    A_UINT32 time_to_live; /* Total time for which this AFC info is valid in seconds */
+    A_UINT32 length;       /* length of the payload, in bytes */
+    /* The structure above is followed by array of char which will have JSON string
+     * A_CHAR bufp[];    AFC payload (JSON string)
+     */
+    /*
+     * In future if we need to add new variable, or new format of information,
+     * this structure should be optionally followed by new TLV,
+     * which will be written in same contiguous memory location.
+     */
+} wmi_afc_serv_resp_struct;
 
 /* Freq units in MHz */
 #define WMI_REG_RULE_START_FREQ_GET(freq_info)                     WMI_GET_BITS(freq_info, 0, 16)
@@ -29038,6 +29093,205 @@ typedef struct {
  * client SP x4, client LPI x4, client vlp x4).
  */
 } wmi_reg_chan_list_cc_event_ext_fixed_param;
+
+/* WFA AFC Version */
+#define WMI_AFC_WFA_MINOR_VERSION_GET(afc_wfa_version)             WMI_GET_BITS(afc_wfa_version, 0, 16)
+#define WMI_AFC_WFA_MINOR_VERSION_SET(afc_wfa_version, value)      WMI_SET_BITS(afc_wfa_version, 0, 16, value)
+#define WMI_AFC_WFA_MAJOR_VERSION_GET(afc_wfa_version)             WMI_GET_BITS(afc_wfa_version, 16, 16)
+#define WMI_AFC_WFA_MAJOR_VERSION_SET(afc_wfa_version, value)      WMI_SET_BITS(afc_wfa_version, 16, 16, value)
+
+/* avail_exp_time_d time is expected as YYYY-MM-DD */
+#define WMI_AVAIL_EXPIRY_TIME_DAY_GET(avail_exp_time_d)             WMI_GET_BITS(avail_exp_time_d, 0, 8)
+#define WMI_AVAIL_EXPIRY_TIME_DAY_SET(avail_exp_time_d, value)      WMI_SET_BITS(avail_exp_time_d, 0, 8, value)
+#define WMI_AVAIL_EXPIRY_TIME_MONTH_GET(avail_exp_time_d)           WMI_GET_BITS(avail_exp_time_d, 8, 8)
+#define WMI_AVAIL_EXPIRY_TIME_MONTH_SET(avail_exp_time_d, value)    WMI_SET_BITS(avail_exp_time_d, 8, 8, value)
+#define WMI_AVAIL_EXPIRY_TIME_YEAR_GET(avail_exp_time_d)            WMI_GET_BITS(avail_exp_time_d, 16, 16)
+#define WMI_AVAIL_EXPIRY_TIME_YEAR_SET(avail_exp_time_d, value)     WMI_SET_BITS(avail_exp_time_d, 16, 16, value)
+
+/* avail_exp_time_t time is expected as HH-MM-SS */
+#define WMI_AVAIL_EXPIRY_TIME_SEC_GET(avail_exp_time_t)             WMI_GET_BITS(avail_exp_time_t, 0, 8)
+#define WMI_AVAIL_EXPIRY_TIME_SEC_SET(avail_exp_time_t, value)      WMI_SET_BITS(avail_exp_time_t, 0, 8, value)
+#define WMI_AVAIL_EXPIRY_TIME_MINUTE_GET(avail_exp_time_t)          WMI_GET_BITS(avail_exp_time_t, 8, 8)
+#define WMI_AVAIL_EXPIRY_TIME_MINUTE_SET(avail_exp_time_t, value)   WMI_SET_BITS(avail_exp_time_t, 8, 8, value)
+#define WMI_AVAIL_EXPIRY_TIME_HOUR_GET(avail_exp_time_t)            WMI_GET_BITS(avail_exp_time_t, 16, 8)
+#define WMI_AVAIL_EXPIRY_TIME_HOUR_SET(avail_exp_time_t, value)     WMI_SET_BITS(avail_exp_time_t, 16, 8, value)
+
+typedef enum {
+    /**
+     * The following event type is mutually exclusive.
+     * afc_event_type will indicate type of AFC event sent from FW to host.
+     * 1. For sending Power Info WMI_AFC_EVENT_POWER_INFO event is used.
+     * 2. For sending AFC expiry use WMI_AFC_EVENT_TIMER_EXPIRY
+     * This type can be expanded in future as per requirements.
+     */
+    WMI_AFC_EVENT_POWER_INFO   = 1,
+    WMI_AFC_EVENT_TIMER_EXPIRY = 2,
+} WMI_AFC_EVENT_TYPE;
+
+typedef enum {
+    /**
+     * The following afc_expiry_event_subtype is mutually exclusive
+     * and is a part of expiry event.
+     * 1. At boot up AFC expiry will contain AFC start.
+     * 2. If AFC timer expires AFC_RENEW status code will be sent to host
+     *    with expiry event.
+     * 3. If AFC server is not responding to FW in specified time, FW will
+     *    indicate host to switch to LPI.
+     */
+    WMI_AFC_EXPIRY_EVENT_START         = 1,
+    WMI_AFC_EXPIRY_EVENT_RENEW         = 2,
+    WMI_AFC_EXPIRY_EVENT_SWITCH_TO_LPI = 3,
+} WMI_AFC_EXPIRY_EVENT_SUBTYPE;
+
+typedef enum {
+    /**
+     * The following fw_status_code is mutually exclusive
+     * and is used in power event.
+     * 0. AFC power event is success.
+     * 1. If Host does not indicate AFC indication cmd within certain time
+     *    of AFC expiry FW_AFC_POWER_EVENT_RESP_NOT_RECEIVED will be used.
+     * 2. If FW is not able to parse afc_info, parsing_failure will be
+     *    indicated using WMI_FW_AFC_POWER_EVENT_RESP_NOT_RECEIVED.
+     * 3. If due to some local reason AFC event is failed, AFC event failure
+     *    is indicated using WMI_FW_AFC_POWER_EVENT_FAILURE.
+     */
+    WMI_FW_AFC_POWER_EVENT_SUCCESS              = 0,
+    WMI_FW_AFC_POWER_EVENT_RESP_NOT_RECEIVED    = 1,
+    WMI_FW_AFC_POWER_EVENT_RESP_PARSING_FAILURE = 2,
+    WMI_FW_AFC_POWER_EVENT_FAILURE              = 3,
+} WMI_FW_AFC_POWER_EVENT_STATUS_CODE;
+
+typedef enum {
+    /**
+     * The following afc_server_resp_code is mutually exclusive.
+     * This response code will be indicated to AFC server.
+     * These codes are defined in WIFI spec doc for AFC as follows
+     * -1: General Failure
+     * 0:  Success
+     * 100 - 199: General errors related to the protocol
+     * 300 - 399: Error events specific to message exchange for the
+     *            Available Spectrum Inquiry
+     */
+    WMI_AFC_SERV_RESP_GENERAL_FAILURE        = -1,
+    WMI_AFC_SERV_RESP_SUCCESS                = 0,
+    WMI_AFC_SERV_RESP_VERSION_NOT_SUPPORTED  = 100,
+    WMI_AFC_SERV_RESP_DEVICE_UNALLOWED       = 101,
+    WMI_AFC_SERV_RESP_MISSING_PARAM          = 102,
+    WMI_AFC_SERV_RESP_INVALID_VALUE          = 103,
+    WMI_AFC_SERV_RESP_UNEXPECTED_PARAM       = 106,
+    WMI_AFC_SERV_RESP_UNSUPPORTED_SPECTRUM   = 300,
+} WMI_AFC_SERV_RESP_CODE;
+
+typedef struct {
+    /** TLV tag and len;
+     *  tag equals WMITLV_TAG_STRUC_wmi_afc_event_fixed_param */
+    A_UINT32 tlv_header;
+    A_UINT32 phy_id;
+    A_UINT32 event_type; /* refer to WMI_AFC_EVENT_TYPE */
+
+    /** This TLV is (optionally) followed by TLV and TLV arrays containing
+     *  different afc_event:
+     *  1.  wmi_afc_expiry_event_param expiry_evt;
+     *      This TLV contains afc_expiry_event_param of fixed size.
+     *  2.  wmi_reg_afc_power_event_param afc_power_event;
+     *      This TLV contains afc_power_info_param of fixed size.
+     *  3.  wmi_6g_afc_frequency_info freq_info[]
+     *      This TLV array contains zero or more TLVs of freq_info,
+     *      which contain freq range and PSD.
+     *  4.  wmi_6g_afc_channel_info channel_info[]
+     *      This TLV array contains zero or more TLVs of global_operating
+     *      class and number of channel
+     *      in each global operating class
+     *  5.  wmi_afc_chan_eirp_power_info chan_eirp_power_info[]
+     *      This TLV array contains zero or more TLVs of channel CFI and
+     *      EIRP power values for each of the total number of channels
+     *      per global operating class.
+     */
+} wmi_afc_event_fixed_param;
+
+typedef struct {
+    /** TLV tag and len;
+     *  tag equals WMITLV_TAG_STRUC_wmi_afc_expiry_event_param.
+     */
+    A_UINT32 tlv_header;
+    A_UINT32 request_id; /* AFC unique Request ID for AFC expiry event, This is Nonce generated by FW for freshness */
+    A_UINT32 event_subtype; /* refer to WMI_AFC_EXPIRY_EVENT_SUBTYPE */
+} wmi_afc_expiry_event_param;
+
+typedef struct {
+    /** TLV tag and len;
+      *tag equals WMITLV_TAG_STRUC_wmi_afc_power_event_param */
+    A_UINT32 tlv_header;
+    A_UINT32 fw_status_code;     /* refer WMI_FW_AFC_POWER_EVENT_STATUS_CODE */
+    A_UINT32 resp_id;            /* AFC unique response ID, in case of fw_status_code as WMI_FW_AFC_POWER_EVENT_RESP_PARSING_FAILURE resp id may be invalid. */
+    A_INT32  afc_serv_resp_code; /* refer WMI_AFC_SERV_RESP_CODE, This field and following all fields are valid if fw_status_code is a success. */
+    A_UINT32 afc_wfa_version;    /* bits 15:0  -- minor version
+                                  * bits 31:16 -- major version
+                                  * WMI_AFC_WFA_MINOR_VERSION_GET &
+                                  * WMI_AFC_WFA_MAJOR_VERSION_GET
+                                  */
+    A_UINT32 avail_exp_time_d;   /* avail_exp_time_d and avail_exp_time_t are
+                                  * in UTC
+                                  * Availability expiry time date format:
+                                  * YYYY-MM-DD,
+                                  * bits 7:0 -DD - Day (expected values 1-31)
+                                  * bits 15:8 -MM - Month (expected values 1-12)
+                                  * bits 31:16 -YYYY - Year
+                                  */
+    A_UINT32 avail_exp_time_t;   /* Availability expiry time format HH-MM-SS
+                                  * bits 7:0 -SS - Time in Sec (expected values 0-59)
+                                  * bits 15:8 -MM - Minute (expected values 0-59)
+                                  * bits 23:16 -HH - Hour (expected values 0-23)
+                                  * bits 31:24 -reserved
+                                  */
+} wmi_afc_power_event_param;
+
+typedef struct {
+    /** TLV tag and len;
+     * tag equals WMITLV_TAG_STRUC_wmi_6g_afc_frequency_info */
+    A_UINT32  tlv_header;
+    A_UINT32  freq_info;     /* bits 15:0  = u16 start_freq,
+                              * bits 31:16 = u16 end_freq
+                              * (both in MHz units)
+                              * use MACRO as WMI_REG_RULE_START_FREQ_GET &
+                              * WMI_REG_RULE_START_FREQ_SET
+                              */
+    A_INT32   psd_power_info; /* Maximum PSD in dBm/MHz */
+} wmi_6g_afc_frequency_info;
+
+typedef struct {
+    /** TLV tag and len;
+     * tag equals WMITLV_TAG_STRUC_wmi_6g_afc_channel_info  */
+    A_UINT32  tlv_header;
+    A_UINT32  global_operating_class;
+    A_UINT32  num_channels; /* num of valid channels for above global operating class */
+    /* This TLV will be followed by array of
+     * num_channels times wmi_afc_chan_eirp_power_info
+     * wmi_afc_chan_eirp_power_info power_info[]
+     * EIRP power array has chunks of elements corresponding to each channel
+     * in the channel array.
+     * i.e. the EIRP power array will contain
+     * (suppose N1 and N2 are number of valid channels from channel_info[0]
+     * and channel_info[1] respectively)
+     * eirp_power[0] power for channel 0 from channel_info[0]
+     * eirp_power[1] power for channel 1 from channel_info[0]
+     * ...
+     * eirp_power[N1-1] power for channel N1-1 from channel_info[0]
+     * eirp_power[N1] power for channel 0 from channel_info[1]
+     * eirp_power[N1+1] power for channel 1 from channel_info[1]
+     * ...
+     * eirp_power[N1+N2-1] power for channel N2-1 channel_info[1]
+     * ...
+     */
+} wmi_6g_afc_channel_info;
+
+typedef struct {
+    /** TLV tag and len;
+     * tag equals WMITLV_TAG_STRUC_wmi_afc_chan_eirp_power_info */
+    A_UINT32 tlv_header ;
+    A_UINT32 channel_cfi; /* channel center frequency indices */
+    A_UINT32 eirp_pwr;    /* maximum permissible EIRP available for above CFI in dBm */
+} wmi_afc_chan_eirp_power_info;
 
 typedef struct {
     A_UINT32  tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_11d_scan_start_cmd_fixed_param */
