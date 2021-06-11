@@ -134,6 +134,9 @@ enum v4l2_mpeg_vidc_blur_types {
 	(V4L2_CID_MPEG_VIDC_BASE + 0x2D)
 #define V4L2_CID_MPEG_VIDC_METADATA_DEC_QP_METADATA                           \
 	(V4L2_CID_MPEG_VIDC_BASE + 0x2E)
+/* Encoder Complexity control */
+#define V4L2_CID_MPEG_VIDC_VENC_COMPLEXITY                                   \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x2F)
 
 /* Deprecate below controls once availble in gki and gsi bionic header */
 #ifndef V4L2_CID_MPEG_VIDEO_BASELAYER_PRIORITY_ID
