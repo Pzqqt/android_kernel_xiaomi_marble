@@ -3762,19 +3762,32 @@ static void power_off_iris2(struct iris_hfi_device *device)
 		lpi_status, reg_status, count);
 	if (count == max_count) {
 		u32 pc_ready, wfi_status, sbm_ln0_low;
-		/*u32 main_sbm_ln0_low, main_sbm_ln1_high;  */
+		u32 main_sbm_ln0_low, main_sbm_ln1_high;
+		u32 cpu_cs_x2rpmh;
 
 		wfi_status = __read_register(device, CVP_WRAPPER_CPU_STATUS);
 		pc_ready = __read_register(device, CVP_CTRL_STATUS);
 		sbm_ln0_low =
 			__read_register(device, CVP_NOC_SBM_SENSELN0_LOW);
-		/*temp commented till dependency ready*/
-		/*
+
+		cpu_cs_x2rpmh = __read_register(device,
+			CVP_CPU_CS_X2RPMh);
+
+		__write_register(device, CVP_CPU_CS_X2RPMh,
+			(cpu_cs_x2rpmh | CVP_CPU_CS_X2RPMh_SWOVERRIDE_BMSK));
+		cpu_cs_x2rpmh = __read_register(device,
+			CVP_CPU_CS_X2RPMh);
+		dprintk(CVP_PWR, "cpu_cs_x2rpmh (%#x)\n",
+			cpu_cs_x2rpmh);
+
 		main_sbm_ln0_low = __read_register(device,
 				CVP_NOC_MAIN_SIDEBANDMANAGER_SENSELN0_LOW);
 		main_sbm_ln1_high = __read_register(device,
 				CVP_NOC_MAIN_SIDEBANDMANAGER_SENSELN1_HIGH);
-		*/
+
+		__write_register(device, CVP_CPU_CS_X2RPMh,
+			(cpu_cs_x2rpmh & (~CVP_CPU_CS_X2RPMh_SWOVERRIDE_BMSK)));
+
 		dprintk(CVP_WARN,
 			"NOC not in qaccept status %x %x %x %x %x\n",
 			reg_status, lpi_status, wfi_status, pc_ready,
