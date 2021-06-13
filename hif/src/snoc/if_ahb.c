@@ -520,6 +520,7 @@ void hif_ahb_disable_bus(struct hif_softc *scn)
 		/* Should not be executed on 8074 platform */
 		if ((tgt_info->target_type != TARGET_TYPE_QCA8074) &&
 		    (tgt_info->target_type != TARGET_TYPE_QCA8074V2) &&
+		    (tgt_info->target_type != TARGET_TYPE_QCA9574) &&
 		    (tgt_info->target_type != TARGET_TYPE_QCA5018) &&
 		    (tgt_info->target_type != TARGET_TYPE_QCN6122) &&
 		    (tgt_info->target_type != TARGET_TYPE_QCA6018)) {
@@ -665,6 +666,7 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 
 	if ((tgt_info->target_type != TARGET_TYPE_QCA8074) &&
 			(tgt_info->target_type != TARGET_TYPE_QCA8074V2) &&
+			(tgt_info->target_type != TARGET_TYPE_QCA9574) &&
 			(tgt_info->target_type != TARGET_TYPE_QCA5018) &&
 			(tgt_info->target_type != TARGET_TYPE_QCN6122) &&
 			(tgt_info->target_type != TARGET_TYPE_QCA6018)) {
@@ -685,6 +687,7 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 err_target_sync:
 	if ((tgt_info->target_type != TARGET_TYPE_QCA8074) &&
 	    (tgt_info->target_type != TARGET_TYPE_QCA8074V2) &&
+	    (tgt_info->target_type != TARGET_TYPE_QCA9574) &&
 	    (tgt_info->target_type != TARGET_TYPE_QCN6122) &&
 	    (tgt_info->target_type != TARGET_TYPE_QCA5018) &&
 	    (tgt_info->target_type != TARGET_TYPE_QCA6018)) {
@@ -797,6 +800,7 @@ void hif_ahb_irq_enable(struct hif_softc *scn, int ce_id)
 			hif_write32_mb(scn, mem + reg_offset, regval);
 			if (tgt_info->target_type == TARGET_TYPE_QCA8074 ||
 			    tgt_info->target_type == TARGET_TYPE_QCA8074V2 ||
+			    tgt_info->target_type == TARGET_TYPE_QCA9574 ||
 			    tgt_info->target_type == TARGET_TYPE_QCA5018 ||
 			    tgt_info->target_type == TARGET_TYPE_QCA6018) {
 				/* Enable destination ring interrupts for
@@ -849,6 +853,7 @@ void hif_ahb_irq_disable(struct hif_softc *scn, int ce_id)
 			hif_write32_mb(scn, mem + reg_offset, regval);
 			if (tgt_info->target_type == TARGET_TYPE_QCA8074 ||
 			    tgt_info->target_type == TARGET_TYPE_QCA8074V2 ||
+			    tgt_info->target_type == TARGET_TYPE_QCA9574 ||
 			    tgt_info->target_type == TARGET_TYPE_QCA5018 ||
 			    tgt_info->target_type == TARGET_TYPE_QCA6018) {
 				/* Disable destination ring interrupts for

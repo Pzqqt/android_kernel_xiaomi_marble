@@ -79,6 +79,11 @@ extern "C" {
 #define TARGET_TYPE_QCN9224      32
 #endif
 
+/* Alder */
+#ifndef TARGET_TYPE_QCA9574
+#define TARGET_TYPE_QCA9574      33
+#endif
+
 #ifdef __cplusplus
 }
 #endif

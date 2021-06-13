@@ -29,7 +29,8 @@ void hal_qca6290_attach(struct hal_soc *hal);
 #ifdef QCA_WIFI_QCA8074
 void hal_qca8074_attach(struct hal_soc *hal);
 #endif
-#if defined(QCA_WIFI_QCA8074V2) || defined(QCA_WIFI_QCA6018)
+#if defined(QCA_WIFI_QCA8074V2) || defined(QCA_WIFI_QCA6018) || \
+	defined(QCA_WIFI_QCA9574)
 void hal_qca8074v2_attach(struct hal_soc *hal);
 #endif
 #ifdef QCA_WIFI_QCA6390
@@ -413,6 +414,12 @@ static void hal_target_based_configure(struct hal_soc *hal)
 
 #if defined(QCA_WIFI_QCA6018)
 	case TARGET_TYPE_QCA6018:
+		hal_qca8074v2_attach(hal);
+	break;
+#endif
+
+#if defined(QCA_WIFI_QCA9574)
+	case TARGET_TYPE_QCA9574:
 		hal_qca8074v2_attach(hal);
 	break;
 #endif

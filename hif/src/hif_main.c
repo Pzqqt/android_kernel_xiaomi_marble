@@ -40,7 +40,7 @@
 #include "hif_debug.h"
 #include "mp_dev.h"
 #if defined(QCA_WIFI_QCA8074) || defined(QCA_WIFI_QCA6018) || \
-	defined(QCA_WIFI_QCA5018)
+	defined(QCA_WIFI_QCA5018) || defined(QCA_WIFI_QCA9574)
 #include "hal_api.h"
 #endif
 #include "hif_napi.h"
@@ -1008,7 +1008,8 @@ static inline int hif_get_num_active_grp_tasklets(struct hif_softc *scn)
 	defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
 	defined(QCA_WIFI_QCN9000) || defined(QCA_WIFI_QCA6490) || \
 	defined(QCA_WIFI_QCA6750) || defined(QCA_WIFI_QCA5018) || \
-	defined(QCA_WIFI_WCN7850) || defined(QCA_WIFI_QCN9224))
+	defined(QCA_WIFI_WCN7850) || defined(QCA_WIFI_QCN9224) || \
+	defined(QCA_WIFI_QCA9574))
 /**
  * hif_get_num_pending_work() - get the number of entries in
  *		the workqueue pending to be completed.
@@ -1113,7 +1114,8 @@ uint8_t hif_get_ep_vote_access(struct hif_opaque_softc *hif_ctx,
 	defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
 	defined(QCA_WIFI_QCN9000) || defined(QCA_WIFI_QCA6490) || \
 	defined(QCA_WIFI_QCA6750) || defined(QCA_WIFI_QCA5018) || \
-	defined(QCA_WIFI_WCN7850) || defined(QCA_WIFI_QCN9224))
+	defined(QCA_WIFI_WCN7850) || defined(QCA_WIFI_QCN9224) || \
+	defined(QCA_WIFI_QCA9574))
 static QDF_STATUS hif_hal_attach(struct hif_softc *scn)
 {
 	if (ce_srng_based(scn)) {
@@ -1558,6 +1560,12 @@ int hif_get_device_type(uint32_t device_id,
 		*hif_type = HIF_TYPE_QCA5018;
 		*target_type = TARGET_TYPE_QCA5018;
 		hif_info(" *********** qca5018 *************");
+		break;
+
+	case QCA9574_DEVICE_ID:
+		*hif_type = HIF_TYPE_QCA9574;
+		*target_type = TARGET_TYPE_QCA9574;
+		hif_info(" *********** QCA9574 *************");
 		break;
 
 	default:
