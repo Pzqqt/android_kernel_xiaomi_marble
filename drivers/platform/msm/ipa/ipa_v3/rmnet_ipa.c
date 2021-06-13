@@ -5522,6 +5522,10 @@ void ipa3_broadcast_quota_reach_ind(u32 mux_id,
 	if (upstream_type == IPA_UPSTEAM_MAX) {
 		IPAWANERR(" Wrong upstreamIface type %d\n", upstream_type);
 		return;
+	} else if (upstream_type == IPA_UPSTEAM_WLAN) {
+		/* TODO: Fix this case when adding quota on WLAN Backhaul*/
+		IPAWANERR_RL("Quota indication is not supported for WLAN\n");
+		return;
 	} else if (upstream_type == IPA_UPSTEAM_MODEM) {
 		index = ipa3_find_mux_channel_index(mux_id);
 		if (index == MAX_NUM_OF_MUX_CHANNEL) {
