@@ -492,6 +492,9 @@
  *	to get DFS radar history from the driver to userspace. The driver
  *	returns QCA_WLAN_VENDOR_ATTR_RADAR_HISTORY_ENTRIES attribute with an
  *	array of nested entries.
+ * @QCA_NL80211_VENDOR_SUBCMD_MDNS_OFFLOAD: Userspace can use this command to
+ *	enable/disable mDNS offload to the firmware. The attributes used with
+ *	this command are defined in enum qca_wlan_vendor_attr_mdns_offload.
  */
 
 enum qca_nl80211_vendor_subcmds {
@@ -727,6 +730,7 @@ enum qca_nl80211_vendor_subcmds {
 	QCA_NL80211_VENDOR_SUBCMD_CONCURRENT_MULTI_STA_POLICY = 197,
 	QCA_NL80211_VENDOR_SUBCMD_USABLE_CHANNELS = 198,
 	QCA_NL80211_VENDOR_SUBCMD_GET_RADAR_HISTORY = 199,
+	QCA_NL80211_VENDOR_SUBCMD_MDNS_OFFLOAD = 200,
 };
 
 enum qca_wlan_vendor_tos {
@@ -4891,7 +4895,7 @@ enum qca_wlan_vendor_attr_offloaded_packets {
 		QCA_WLAN_VENDOR_ATTR_OFFLOADED_PACKETS_AFTER_LAST - 1,
 };
 
-#endif
+#endif /* WLAN_FEATURE_OFFLOAD_PACKETS  */
 
 /**
  * enum qca_wlan_rssi_monitoring_control - rssi control commands
@@ -11295,6 +11299,61 @@ enum qca_wlan_vendor_attr_radar_history {
 	QCA_WLAN_VENDOR_ATTR_RADAR_HISTORY_LAST,
 	QCA_WLAN_VENDOR_ATTR_RADAR_HISTORY_MAX =
 	QCA_WLAN_VENDOR_ATTR_RADAR_HISTORY_LAST - 1,
+};
+
+/**
+ * enum qca_wlan_vendor_attr_mdns_offload - Attributes used by
+ * %QCA_NL80211_VENDOR_SUBCMD_MDNS_OFFLOAD vendor command.
+ *
+ * @QCA_WLAN_VENDOR_ATTR_MDNS_OFFLOAD_ENABLE: Required (flag)
+ * Enable mDNS offload. This attribute is mandatory to enable
+ * mDNS offload feature. If this attribute is not present, mDNS offload
+ * is disabled.
+ *
+ * @QCA_WLAN_VENDOR_ATTR_MDNS_OFFLOAD_TABLE: Nested attribute containing
+ * one or more %QCA_WLAN_VENDOR_ATTR_MDNS_OFFLOAD_ENTRY attributes. This
+ * attribute is mandatory when enabling the feature, and not required when
+ * disabling the feature.
+ *
+ * @QCA_WLAN_VENDOR_ATTR_MDNS_OFFLOAD_ENTRY: Nested attribute containing
+ * the following attributes:
+ *	%QCA_WLAN_VENDOR_ATTR_MDNS_OFFLOAD_FQDN
+ *	%QCA_WLAN_VENDOR_ATTR_MDNS_OFFLOAD_ANSWER_RESOURCE_RECORDS_COUNT
+ *	%QCA_WLAN_VENDOR_ATTR_MDNS_OFFLOAD_ANSWER_PAYLOAD
+ *
+ * @QCA_WLAN_VENDOR_ATTR_MDNS_OFFLOAD_FQDN: Required Null terminated string
+ * attribute. It consists of a hostname and ".local" as the domain name.
+ * The character set is limited to UTF-8 encoding. The maximum allowed size
+ * is 64 bytes. It is used to compare the domain the in the "QU" query.
+ * Only 1 FQDN is supported per vdev.
+ * For example: myphone.local
+ *
+ * @QCA_WLAN_VENDOR_ATTR_MDNS_OFFLOAD_ANSWER_RESOURCE_RECORDS_COUNT: Required
+ * u16 attribute. It specifies the total number of resource records present
+ * in the answer section of the answer payload. This attribute is needed by the
+ * firmware to populate the mDNS response frame for mNDS queries without having
+ * to parse the answer payload.
+ *
+ * @QCA_WLAN_VENDOR_ATTR_MDNS_OFFLOAD_ANSWER_PAYLOAD: Required Binary blob
+ * attribute sent by the mdnsResponder from userspace. It contains resource
+ * records of various types (Eg: A, AAAA, PTR, TXT) and service list. This
+ * payload is passed down to firmware and is transmitted in response to
+ * mDNS queries.
+ * The maximum size of the answer payload supported is 1500 bytes.
+ */
+enum qca_wlan_vendor_attr_mdns_offload {
+	QCA_WLAN_VENDOR_ATTR_MDNS_OFFLOAD_INVALID = 0,
+	QCA_WLAN_VENDOR_ATTR_MDNS_OFFLOAD_ENABLE = 1,
+	QCA_WLAN_VENDOR_ATTR_MDNS_OFFLOAD_TABLE = 2,
+	QCA_WLAN_VENDOR_ATTR_MDNS_OFFLOAD_ENTRY = 3,
+	QCA_WLAN_VENDOR_ATTR_MDNS_OFFLOAD_FQDN = 4,
+	QCA_WLAN_VENDOR_ATTR_MDNS_OFFLOAD_ANSWER_RESOURCE_RECORDS_COUNT = 5,
+	QCA_WLAN_VENDOR_ATTR_MDNS_OFFLOAD_ANSWER_PAYLOAD = 6,
+
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_MDNS_OFFLOAD_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_MDNS_OFFLOAD_MAX =
+	QCA_WLAN_VENDOR_ATTR_MDNS_OFFLOAD_AFTER_LAST - 1,
 };
 
 #endif
