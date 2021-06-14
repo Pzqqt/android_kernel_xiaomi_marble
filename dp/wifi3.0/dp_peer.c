@@ -35,7 +35,7 @@
 #ifdef FEATURE_WDS
 #include "dp_txrx_wds.h"
 #endif
-
+#include <qdf_module.h>
 #ifdef QCA_PEER_EXT_STATS
 #include "dp_hist.h"
 #endif
@@ -1398,6 +1398,8 @@ add_ast_entry:
 	return QDF_STATUS_E_FAILURE;
 }
 
+qdf_export_symbol(dp_peer_add_ast);
+
 /*
  * dp_peer_free_ast_entry() - Free up the ast entry memory
  * @soc: SoC handle
@@ -1994,6 +1996,8 @@ struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
 	qdf_spin_unlock_bh(&soc->peer_hash_lock);
 	return NULL; /* failure */
 }
+
+qdf_export_symbol(dp_peer_find_hash_find);
 
 /*
  * dp_peer_find_hash_remove() - remove peer from peer_hash_table

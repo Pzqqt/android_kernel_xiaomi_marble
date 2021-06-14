@@ -21,7 +21,6 @@
 #include "dp_internal.h"
 #include "htt_stats.h"
 #include "htt_ppdu_stats.h"
-
 #ifdef QCA_PEER_EXT_STATS
 #include <cdp_txrx_hist_struct.h>
 #include "dp_hist.h"
@@ -4341,35 +4340,6 @@ void dp_peer_stats_update_protocol_cnt(struct cdp_soc_t *soc_hdl,
 						       is_egress, is_rx);
 
 	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_GENERIC_STATS);
-}
-#endif
-
-#ifdef WDI_EVENT_ENABLE
-QDF_STATUS dp_peer_qos_stats_notify(struct dp_pdev *dp_pdev,
-				    struct cdp_rx_stats_ppdu_user *ppdu_user)
-{
-	struct cdp_interface_peer_qos_stats qos_stats_intf;
-
-	if (ppdu_user->peer_id == HTT_INVALID_PEER) {
-		dp_err("Invalid peer id");
-		return QDF_STATUS_E_FAILURE;
-	}
-	qdf_mem_zero(&qos_stats_intf, sizeof(qos_stats_intf));
-
-	qdf_mem_copy(qos_stats_intf.peer_mac, ppdu_user->mac_addr,
-		     QDF_MAC_ADDR_SIZE);
-	qos_stats_intf.frame_control = ppdu_user->frame_control;
-	qos_stats_intf.frame_control_info_valid =
-			ppdu_user->frame_control_info_valid;
-	qos_stats_intf.qos_control = ppdu_user->qos_control;
-	qos_stats_intf.qos_control_info_valid =
-			ppdu_user->qos_control_info_valid;
-	qos_stats_intf.vdev_id = ppdu_user->vdev_id;
-	dp_wdi_event_handler(WDI_EVENT_PEER_QOS_STATS, dp_pdev->soc,
-			     (void *)&qos_stats_intf, 0,
-			     WDI_NO_VAL, dp_pdev->pdev_id);
-
-	return QDF_STATUS_SUCCESS;
 }
 #endif
 

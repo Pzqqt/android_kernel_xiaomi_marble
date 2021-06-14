@@ -255,6 +255,8 @@ done:
 
 }
 
+qdf_export_symbol(dp_rx_link_desc_return_by_addr);
+
 /**
  * dp_rx_link_desc_return() - Return a MPDU link descriptor to HW
  *				(WBM), following error handling

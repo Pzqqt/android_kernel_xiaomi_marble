@@ -18,6 +18,9 @@
 
 #include "dp_rx_buffer_pool.h"
 #include "dp_ipa.h"
+#ifdef WLAN_FEATURE_RX_PREALLOC_BUFFER_POOL
+#include "dp_rx_mon.h"
+#endif
 
 #ifndef DP_RX_BUFFER_POOL_SIZE
 #define DP_RX_BUFFER_POOL_SIZE 128

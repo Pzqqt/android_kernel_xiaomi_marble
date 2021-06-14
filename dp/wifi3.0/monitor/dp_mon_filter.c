@@ -29,10 +29,12 @@
  *	Monitor Filter mode to string
  */
 static int8_t *dp_mon_filter_mode_type_to_str[DP_MON_FILTER_MAX_MODE] = {
-#ifdef FEATURE_PERPKT_INFO
+#ifdef QCA_ENHANCED_STATS_SUPPORT
 	"DP MON FILTER ENHACHED STATS MODE",
+#endif /* QCA_ENHANCED_STATS_SUPPORT */
+#ifdef QCA_MCOPY_SUPPORT
 	"DP MON FILTER MCOPY MODE",
-#endif /* FEATURE_PERPKT_INFO */
+#endif /* QCA_MCOPY_SUPPORT */
 #if defined(ATH_SUPPORT_NAC_RSSI) || defined(ATH_SUPPORT_NAC)
 	"DP MON FILTER SMART MONITOR MODE",
 #endif /* ATH_SUPPORT_NAC_RSSI || ATH_SUPPORT_NAC */
@@ -48,7 +50,7 @@ static int8_t *dp_mon_filter_mode_type_to_str[DP_MON_FILTER_MAX_MODE] = {
 
 /**
  * dp_mon_filter_show_filter() - Show the set filters
- * @pdev: DP pdev handle
+ * @mon_pdev: Monitor pdev handle
  * @mode: The filter modes
  * @tlv_filter: tlv filter
  */
@@ -310,6 +312,7 @@ static void dp_mon_filter_ht2_setup(struct dp_soc *soc, struct dp_pdev *pdev,
 	dp_mon_filter_show_filter(mon_pdev, 0, filter);
 }
 
+#ifdef QCA_MONITOR_PKT_SUPPORT
 /**
  * dp_mon_filter_reset_mon_srng()
  * @soc: DP SoC handle
@@ -328,8 +331,9 @@ dp_mon_filter_reset_mon_srng(struct dp_soc *soc, struct dp_pdev *pdev,
 				  soc);
 	}
 }
+#endif
 
-#if defined(FEATURE_PERPKT_INFO) || defined(ATH_SUPPORT_NAC_RSSI) \
+#if defined(QCA_MCOPY_SUPPORT) || defined(ATH_SUPPORT_NAC_RSSI) \
 	|| defined(ATH_SUPPORT_NAC) || defined(WLAN_RX_PKT_CAPTURE_ENH)
 /**
  * dp_mon_filter_check_co_exist() - Check the co-existing of the
@@ -414,6 +418,8 @@ static QDF_STATUS dp_mon_filter_check_co_exist(struct dp_pdev *pdev)
 #else
 static QDF_STATUS dp_mon_filter_check_co_exist(struct dp_pdev *pdev)
 {
+	struct dp_mon_pdev *mon_pdev = pdev->monitor_pdev;
+
 	/*
 	 * Check if the Rx packet log lite or full can co-exist with
 	 * the enable modes.
@@ -430,9 +436,10 @@ static QDF_STATUS dp_mon_filter_check_co_exist(struct dp_pdev *pdev)
 }
 #endif
 
+#ifdef QCA_MONITOR_PKT_SUPPORT
 /**
  * dp_mon_filter_set_mon_cmn() - Setp the common mon filters
- * @pdev: DP pdev handle
+ * @mon_pdev: Monitor pdev handle
  * @filter: DP mon filter
  *
  * Return: QDF_STATUS
@@ -466,10 +473,11 @@ static void dp_mon_filter_set_mon_cmn(struct dp_mon_pdev *mon_pdev,
 	filter->tlv_filter.mo_data_filter = mon_pdev->mo_data_filter;
 	filter->tlv_filter.offset_valid = false;
 }
+#endif
 
 /**
  * dp_mon_filter_set_status_cmn() - Setp the common status filters
- * @pdev: DP pdev handle
+ * @mon_pdev: Monitor pdev handle
  * @filter: Dp mon filters
  *
  * Return: QDF_STATUS
@@ -535,6 +543,7 @@ static void dp_mon_filter_set_status_cbf(struct dp_pdev *pdev,
 	filter->tlv_filter.enable_mo = 0;
 }
 
+#ifdef QCA_MONITOR_PKT_SUPPORT
 /**
  * dp_mon_filter_set_cbf_cmn() - Set the common cbf mode filters
  * @pdev: DP pdev handle
@@ -562,11 +571,12 @@ static void dp_mon_filter_set_cbf_cmn(struct dp_pdev *pdev,
 	filter->tlv_filter.offset_valid = false;
 	filter->tlv_filter.enable_mo = 0;
 }
+#endif
 
-#ifdef FEATURE_PERPKT_INFO
+#ifdef QCA_ENHANCED_STATS_SUPPORT
 /**
  * dp_mon_filter_setup_enhanced_stats() - Setup the enhanced stats filter
- * @mon_pdev: Monitor DP pdev handle
+ * @mon_pdev: Monitor pdev handle
  */
 void dp_mon_filter_setup_enhanced_stats(struct dp_mon_pdev *mon_pdev)
 {
@@ -590,24 +600,58 @@ void dp_mon_filter_setup_enhanced_stats(struct dp_mon_pdev *mon_pdev)
 
 /**
  * dp_mon_filter_reset_enhanced_stats() - Reset the enhanced stats filter
- * @pdev: DP pdev handle
+ * @mon_pdev: Monitor pdev handle
  */
-void dp_mon_filter_reset_enhanced_stats(struct dp_pdev *pdev)
+void dp_mon_filter_reset_enhanced_stats(struct dp_mon_pdev *mon_pdev)
 {
 	struct dp_mon_filter filter = {0};
 	enum dp_mon_filter_mode mode = DP_MON_FILTER_ENHACHED_STATS_MODE;
 	enum dp_mon_filter_srng_type srng_type =
 				DP_MON_FILTER_SRNG_TYPE_RXDMA_MONITOR_STATUS;
-	struct dp_mon_pdev *mon_pdev;
 
-	if (!pdev) {
+	if (!mon_pdev) {
 		dp_mon_filter_err("pdev Context is null");
 		return;
 	}
 
-	mon_pdev = pdev->monitor_pdev;
 	mon_pdev->filter[mode][srng_type] = filter;
 }
+#endif /* QCA_ENHANCED_STATS_SUPPORT */
+
+#ifdef QCA_MCOPY_SUPPORT
+#ifdef QCA_MONITOR_PKT_SUPPORT
+static void
+dp_mon_filter_set_reset_mcopy_mon_buf(struct dp_pdev *pdev,
+				      struct dp_mon_filter *pfilter)
+{
+	struct dp_soc *soc = pdev->soc;
+	struct dp_mon_pdev *mon_pdev = pdev->monitor_pdev;
+	enum dp_mon_filter_mode mode = DP_MON_FILTER_MCOPY_MODE;
+	enum dp_mon_filter_srng_type srng_type;
+
+	srng_type = ((soc->wlan_cfg_ctx->rxdma1_enable) ?
+			DP_MON_FILTER_SRNG_TYPE_RXDMA_MON_BUF :
+			DP_MON_FILTER_SRNG_TYPE_RXDMA_BUF);
+
+	/* Set the filter */
+	if (pfilter->valid) {
+		dp_mon_filter_set_mon_cmn(mon_pdev, pfilter);
+
+		pfilter->tlv_filter.fp_data_filter = 0;
+		pfilter->tlv_filter.mo_data_filter = 0;
+
+		dp_mon_filter_show_filter(mon_pdev, mode, pfilter);
+		mon_pdev->filter[mode][srng_type] = *pfilter;
+	} else /* Reset the filter */
+		mon_pdev->filter[mode][srng_type] = *pfilter;
+}
+#else
+static void
+dp_mon_filter_set_reset_mcopy_mon_buf(struct dp_pdev *pdev,
+				      struct dp_mon_filter *pfilter)
+{
+}
+#endif
 
 /**
  * dp_mon_filter_setup_mcopy_mode() - Setup the m_copy mode filter
@@ -640,17 +684,7 @@ void dp_mon_filter_setup_mcopy_mode(struct dp_pdev *pdev)
 	}
 	/* Enabled the filter */
 	filter.valid = true;
-	dp_mon_filter_set_mon_cmn(mon_pdev, &filter);
-
-	filter.tlv_filter.fp_data_filter = 0;
-	filter.tlv_filter.mo_data_filter = 0;
-
-	dp_mon_filter_show_filter(mon_pdev, mode, &filter);
-
-	srng_type = ((soc->wlan_cfg_ctx->rxdma1_enable) ?
-			DP_MON_FILTER_SRNG_TYPE_RXDMA_MON_BUF :
-			DP_MON_FILTER_SRNG_TYPE_RXDMA_BUF);
-	mon_pdev->filter[mode][srng_type] = filter;
+	dp_mon_filter_set_reset_mcopy_mon_buf(pdev, &filter);
 
 	/* Clear the filter as the same filter will be used to set the
 	 * monitor status ring
@@ -696,15 +730,12 @@ void dp_mon_filter_reset_mcopy_mode(struct dp_pdev *pdev)
 	}
 
 	mon_pdev = pdev->monitor_pdev;
-	srng_type = ((soc->wlan_cfg_ctx->rxdma1_enable) ?
-			DP_MON_FILTER_SRNG_TYPE_RXDMA_MON_BUF :
-			DP_MON_FILTER_SRNG_TYPE_RXDMA_BUF);
-	mon_pdev->filter[mode][srng_type] = filter;
+	dp_mon_filter_set_reset_mcopy_mon_buf(pdev, &filter);
 
 	srng_type = DP_MON_FILTER_SRNG_TYPE_RXDMA_MONITOR_STATUS;
 	mon_pdev->filter[mode][srng_type] = filter;
 }
-#endif /* FEATURE_PERPKT_INFO */
+#endif /* QCA_MCOPY_SUPPORT */
 
 #if defined(ATH_SUPPORT_NAC_RSSI) || defined(ATH_SUPPORT_NAC)
 /**
@@ -754,22 +785,62 @@ void dp_mon_filter_setup_smart_monitor(struct dp_pdev *pdev)
  * dp_mon_filter_reset_smart_monitor() - Reset the smart monitor mode filter
  * @pdev: DP pdev handle
  */
-void dp_mon_filter_reset_smart_monitor(struct dp_mon_pdev *mon_pdev)
+void dp_mon_filter_reset_smart_monitor(struct dp_pdev *pdev)
 {
 	struct dp_mon_filter filter = {0};
 	enum dp_mon_filter_mode mode = DP_MON_FILTER_SMART_MONITOR_MODE;
 	enum dp_mon_filter_srng_type srng_type =
 				DP_MON_FILTER_SRNG_TYPE_RXDMA_MONITOR_STATUS;
+	struct dp_mon_pdev *mon_pdev;
 
-	if (!mon_pdev) {
+	if (!pdev) {
 		dp_mon_filter_err("monitor pdev Context is null");
 		return;
 	}
+	mon_pdev = pdev->monitor_pdev;
 	mon_pdev->filter[mode][srng_type] = filter;
 }
 #endif /* ATH_SUPPORT_NAC_RSSI || ATH_SUPPORT_NAC */
 
 #ifdef WLAN_RX_PKT_CAPTURE_ENH
+#ifdef QCA_MONITOR_PKT_SUPPORT
+static void
+dp_mon_filter_set_reset_rx_enh_capture_mon_buf(struct dp_pdev *pdev,
+					       struct dp_mon_filter *pfilter)
+{
+	struct dp_soc *soc = pdev->soc;
+	struct dp_mon_pdev *mon_pdev = pdev->monitor_pdev;
+	enum dp_mon_filter_mode mode = DP_MON_FILTER_RX_CAPTURE_MODE;
+	enum dp_mon_filter_srng_type srng_type;
+
+	srng_type = ((soc->wlan_cfg_ctx->rxdma1_enable) ?
+			DP_MON_FILTER_SRNG_TYPE_RXDMA_MON_BUF :
+			DP_MON_FILTER_SRNG_TYPE_RXDMA_BUF);
+
+	/* Set the filter */
+	if (pfilter->valid) {
+		dp_mon_filter_set_mon_cmn(mon_pdev, pfilter);
+
+		pfilter->tlv_filter.fp_mgmt_filter = 0;
+		pfilter->tlv_filter.fp_ctrl_filter = 0;
+		pfilter->tlv_filter.fp_data_filter = 0;
+		pfilter->tlv_filter.mo_mgmt_filter = 0;
+		pfilter->tlv_filter.mo_ctrl_filter = 0;
+		pfilter->tlv_filter.mo_data_filter = 0;
+
+		dp_mon_filter_show_filter(mon_pdev, mode, pfilter);
+		pdev->monitor_pdev->filter[mode][srng_type] = *pfilter;
+	} else /* Reset the filter */
+		pdev->monitor_pdev->filter[mode][srng_type] = *pfilter;
+}
+#else
+static void
+dp_mon_filter_set_reset_rx_enh_capture_mon_buf(struct dp_pdev *pdev,
+					       struct dp_mon_filter *pfilter)
+{
+}
+#endif
+
 /**
  * dp_mon_filter_setup_rx_enh_capture() - Setup the Rx capture mode filters
  * @pdev: DP pdev handle
@@ -798,21 +869,7 @@ void dp_mon_filter_setup_rx_enh_capture(struct dp_pdev *pdev)
 
 	/* Enabled the filter */
 	filter.valid = true;
-	dp_mon_filter_set_mon_cmn(mon_pdev, &filter);
-
-	filter.tlv_filter.fp_mgmt_filter = 0;
-	filter.tlv_filter.fp_ctrl_filter = 0;
-	filter.tlv_filter.fp_data_filter = 0;
-	filter.tlv_filter.mo_mgmt_filter = 0;
-	filter.tlv_filter.mo_ctrl_filter = 0;
-	filter.tlv_filter.mo_data_filter = 0;
-
-	dp_mon_filter_show_filter(mon_pdev, mode, &filter);
-
-	srng_type = ((soc->wlan_cfg_ctx->rxdma1_enable) ?
-			DP_MON_FILTER_SRNG_TYPE_RXDMA_MON_BUF :
-			DP_MON_FILTER_SRNG_TYPE_RXDMA_BUF);
-	mon_pdev->filter[mode][srng_type] = filter;
+	dp_mon_filter_set_reset_rx_enh_capture_mon_buf(pdev, &filter);
 
 	/* Clear the filter as the same filter will be used to set the
 	 * monitor status ring
@@ -873,15 +930,41 @@ void dp_mon_filter_reset_rx_enh_capture(struct dp_pdev *pdev)
 	}
 
 	mon_pdev = pdev->monitor_pdev;
-	srng_type = ((soc->wlan_cfg_ctx->rxdma1_enable) ?
-			DP_MON_FILTER_SRNG_TYPE_RXDMA_MON_BUF :
-			DP_MON_FILTER_SRNG_TYPE_RXDMA_BUF);
-	mon_pdev->filter[mode][srng_type] = filter;
+	dp_mon_filter_set_reset_rx_enh_capture_mon_buf(pdev, &filter);
 
 	srng_type = DP_MON_FILTER_SRNG_TYPE_RXDMA_MONITOR_STATUS;
 	mon_pdev->filter[mode][srng_type] = filter;
 }
 #endif /* WLAN_RX_PKT_CAPTURE_ENH */
+
+#ifdef QCA_MONITOR_PKT_SUPPORT
+static void dp_mon_filter_set_reset_mon_buf(struct dp_pdev *pdev,
+					    struct dp_mon_filter *pfilter)
+{
+	struct dp_soc *soc = pdev->soc;
+	struct dp_mon_pdev *mon_pdev = pdev->monitor_pdev;
+	enum dp_mon_filter_mode mode = DP_MON_FILTER_MONITOR_MODE;
+	enum dp_mon_filter_srng_type srng_type;
+
+	srng_type = ((soc->wlan_cfg_ctx->rxdma1_enable) ?
+			DP_MON_FILTER_SRNG_TYPE_RXDMA_MON_BUF :
+			DP_MON_FILTER_SRNG_TYPE_RXDMA_BUF);
+
+	/* set the filter */
+	if (pfilter->valid) {
+		dp_mon_filter_set_mon_cmn(mon_pdev, pfilter);
+
+		dp_mon_filter_show_filter(mon_pdev, mode, pfilter);
+		mon_pdev->filter[mode][srng_type] = *pfilter;
+	} else /* reset the filter */
+		mon_pdev->filter[mode][srng_type] = *pfilter;
+}
+#else
+static void dp_mon_filter_set_reset_mon_buf(struct dp_pdev *pdev,
+					    struct dp_mon_filter *pfilter)
+{
+}
+#endif
 
 /**
  * dp_mon_filter_setup_mon_mode() - Setup the Rx monitor mode filter
@@ -909,13 +992,7 @@ void dp_mon_filter_setup_mon_mode(struct dp_pdev *pdev)
 
 	mon_pdev = pdev->monitor_pdev;
 	filter.valid = true;
-	dp_mon_filter_set_mon_cmn(mon_pdev, &filter);
-	dp_mon_filter_show_filter(mon_pdev, mode, &filter);
-
-	srng_type = ((soc->wlan_cfg_ctx->rxdma1_enable) ?
-			DP_MON_FILTER_SRNG_TYPE_RXDMA_MON_BUF :
-			DP_MON_FILTER_SRNG_TYPE_RXDMA_BUF);
-	mon_pdev->filter[mode][srng_type] = filter;
+	dp_mon_filter_set_reset_mon_buf(pdev, &filter);
 
 	/* Clear the filter as the same filter will be used to set the
 	 * monitor status ring
@@ -957,10 +1034,7 @@ void dp_mon_filter_reset_mon_mode(struct dp_pdev *pdev)
 	}
 
 	mon_pdev = pdev->monitor_pdev;
-	srng_type = ((soc->wlan_cfg_ctx->rxdma1_enable) ?
-			DP_MON_FILTER_SRNG_TYPE_RXDMA_MON_BUF :
-			DP_MON_FILTER_SRNG_TYPE_RXDMA_BUF);
-	mon_pdev->filter[mode][srng_type] = filter;
+	dp_mon_filter_set_reset_mon_buf(pdev, &filter);
 
 	srng_type = DP_MON_FILTER_SRNG_TYPE_RXDMA_MONITOR_STATUS;
 	mon_pdev->filter[mode][srng_type] = filter;
@@ -1049,22 +1123,55 @@ void dp_mon_filter_setup_rx_pkt_log_lite(struct dp_pdev *pdev)
 
 /**
  * dp_mon_filter_reset_rx_pkt_log_lite() - Reset the Rx pktlog lite mode filter
- * @mon_pdev: Monitor pdev handle
+ * @pdev: DP pdev handle
  */
-void dp_mon_filter_reset_rx_pkt_log_lite(struct dp_mon_pdev *mon_pdev)
+void dp_mon_filter_reset_rx_pkt_log_lite(struct dp_pdev *pdev)
 {
 	struct dp_mon_filter filter = {0};
 	enum dp_mon_filter_mode mode = DP_MON_FILTER_PKT_LOG_LITE_MODE;
 	enum dp_mon_filter_srng_type srng_type =
 				DP_MON_FILTER_SRNG_TYPE_RXDMA_MONITOR_STATUS;
+	struct dp_mon_pdev *mon_pdev;
 
-	if (!mon_pdev) {
-		dp_mon_filter_err("monitor pdev Context is null");
+	if (!pdev) {
+		dp_mon_filter_err("dp pdev Context is null");
 		return;
 	}
 
+	mon_pdev = pdev->monitor_pdev;
 	mon_pdev->filter[mode][srng_type] = filter;
 }
+
+#ifdef QCA_MONITOR_PKT_SUPPORT
+static void
+dp_mon_filter_set_reset_rx_pkt_log_cbf_mon_buf(struct dp_pdev *pdev,
+					       struct dp_mon_filter *pfilter)
+{
+	struct dp_soc *soc = pdev->soc;
+	struct dp_mon_pdev *mon_pdev = pdev->monitor_pdev;
+	enum dp_mon_filter_mode mode = DP_MON_FILTER_PKT_LOG_CBF_MODE;
+	enum dp_mon_filter_srng_type srng_type;
+
+	srng_type = ((soc->wlan_cfg_ctx->rxdma1_enable) ?
+			DP_MON_FILTER_SRNG_TYPE_RXDMA_MON_BUF :
+			DP_MON_FILTER_SRNG_TYPE_RXDMA_BUF);
+
+	/*set the filter */
+	if (pfilter->valid) {
+		dp_mon_filter_set_cbf_cmn(pdev, pfilter);
+
+		dp_mon_filter_show_filter(mon_pdev, mode, pfilter);
+		mon_pdev->filter[mode][srng_type] = *pfilter;
+	} else /* reset the filter */
+		mon_pdev->filter[mode][srng_type] = *pfilter;
+}
+#else
+static void
+dp_mon_filter_set_reset_rx_pkt_log_cbf_mon_buf(struct dp_pdev *pdev,
+					       struct dp_mon_filter *pfilter)
+{
+}
+#endif
 
 /**
  * dp_mon_filter_setup_rx_pkt_log_cbf() - Setup the Rx pktlog CBF mode filter
@@ -1077,13 +1184,14 @@ void dp_mon_filter_setup_rx_pkt_log_cbf(struct dp_pdev *pdev)
 	enum dp_mon_filter_mode mode = DP_MON_FILTER_PKT_LOG_CBF_MODE;
 	enum dp_mon_filter_srng_type srng_type =
 				DP_MON_FILTER_SRNG_TYPE_RXDMA_MONITOR_STATUS;
-	struct dp_mon_pdev *mon_pdev = pdev->monitor_pdev;
+	struct dp_mon_pdev *mon_pdev;
 
 	if (!pdev) {
 		dp_mon_filter_err("pdev Context is null");
 		return;
 	}
 
+	mon_pdev = pdev->monitor_pdev;
 	soc = pdev->soc;
 	if (!soc) {
 		dp_mon_filter_err("Soc Context is null");
@@ -1102,13 +1210,7 @@ void dp_mon_filter_setup_rx_pkt_log_cbf(struct dp_pdev *pdev)
 	qdf_mem_zero(&(filter), sizeof(struct dp_mon_filter));
 
 	filter.valid = true;
-	dp_mon_filter_set_cbf_cmn(pdev, &filter);
-	dp_mon_filter_show_filter(mon_pdev, mode, &filter);
-
-	srng_type = ((soc->wlan_cfg_ctx->rxdma1_enable) ?
-			DP_MON_FILTER_SRNG_TYPE_RXDMA_MON_BUF :
-			DP_MON_FILTER_SRNG_TYPE_RXDMA_BUF);
-	mon_pdev->filter[mode][srng_type] = filter;
+	dp_mon_filter_set_reset_rx_pkt_log_cbf_mon_buf(pdev, &filter);
 }
 
 /**
@@ -1122,7 +1224,7 @@ void dp_mon_filter_reset_rx_pktlog_cbf(struct dp_pdev *pdev)
 	enum dp_mon_filter_mode mode = DP_MON_FILTER_PKT_LOG_CBF_MODE;
 	enum dp_mon_filter_srng_type srng_type =
 				DP_MON_FILTER_SRNG_TYPE_RXDMA_BUF;
-	struct dp_mon_pdev *mon_pdev = pdev->monitor_pdev;
+	struct dp_mon_pdev *mon_pdev;
 
 	if (!pdev) {
 		QDF_TRACE(QDF_MODULE_ID_MON_FILTER, QDF_TRACE_LEVEL_ERROR,
@@ -1130,6 +1232,7 @@ void dp_mon_filter_reset_rx_pktlog_cbf(struct dp_pdev *pdev)
 		return;
 	}
 
+	mon_pdev = pdev->monitor_pdev;
 	soc = pdev->soc;
 	if (!soc) {
 		QDF_TRACE(QDF_MODULE_ID_MON_FILTER, QDF_TRACE_LEVEL_ERROR,
@@ -1137,10 +1240,7 @@ void dp_mon_filter_reset_rx_pktlog_cbf(struct dp_pdev *pdev)
 		return;
 	}
 
-	srng_type = ((soc->wlan_cfg_ctx->rxdma1_enable) ?
-			DP_MON_FILTER_SRNG_TYPE_RXDMA_MON_BUF :
-			DP_MON_FILTER_SRNG_TYPE_RXDMA_BUF);
-	mon_pdev->filter[mode][srng_type] = filter;
+	dp_mon_filter_set_reset_rx_pkt_log_cbf_mon_buf(pdev, &filter);
 
 	srng_type = DP_MON_FILTER_SRNG_TYPE_RXDMA_MONITOR_STATUS;
 	mon_pdev->filter[mode][srng_type] = filter;
@@ -1173,6 +1273,68 @@ static inline bool dp_mon_should_reset_buf_ring_filter(struct dp_pdev *pdev)
 }
 #endif
 
+#ifdef QCA_MONITOR_PKT_SUPPORT
+static QDF_STATUS dp_mon_filter_mon_buf_update(struct dp_pdev *pdev,
+					       struct dp_mon_filter *pfilter,
+					       bool *pmon_mode_set)
+{
+	struct dp_soc *soc = pdev->soc;
+	struct dp_mon_pdev *mon_pdev = pdev->monitor_pdev;
+	enum dp_mon_filter_srng_type srng_type;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	srng_type = ((soc->wlan_cfg_ctx->rxdma1_enable) ?
+			DP_MON_FILTER_SRNG_TYPE_RXDMA_MON_BUF :
+			DP_MON_FILTER_SRNG_TYPE_RXDMA_BUF);
+
+	dp_mon_filter_ht2_setup(soc, pdev, srng_type, pfilter);
+
+	*pmon_mode_set = pfilter->valid;
+	if (dp_mon_should_reset_buf_ring_filter(pdev) || *pmon_mode_set) {
+		status = dp_mon_ht2_rx_ring_cfg(soc, pdev,
+						srng_type,
+						&pfilter->tlv_filter);
+	} else {
+		/*
+		 * For WIN case the monitor buffer ring is used and it does need
+		 * reset when monitor mode gets enabled/disabled.
+		 */
+		if (soc->wlan_cfg_ctx->rxdma1_enable) {
+			if (mon_pdev->monitor_configured || *pmon_mode_set) {
+				status = dp_mon_ht2_rx_ring_cfg(soc, pdev,
+								srng_type,
+								&pfilter->tlv_filter);
+			}
+		}
+	}
+
+	return status;
+}
+
+static void dp_mon_filter_mon_buf_reset(struct dp_pdev *pdev)
+{
+	struct dp_soc *soc = pdev->soc;
+	enum dp_mon_filter_srng_type srng_type;
+
+	srng_type = ((soc->wlan_cfg_ctx->rxdma1_enable) ?
+			DP_MON_FILTER_SRNG_TYPE_RXDMA_MON_BUF :
+			DP_MON_FILTER_SRNG_TYPE_RXDMA_BUF);
+
+	dp_mon_filter_reset_mon_srng(soc, pdev, srng_type);
+}
+#else
+static QDF_STATUS dp_mon_filter_mon_buf_update(struct dp_pdev *pdev,
+					       struct dp_mon_filter *pfilter,
+					       bool *pmon_mode_set)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static void dp_mon_filter_mon_buf_reset(struct dp_pdev *pdev)
+{
+}
+#endif
+
 /**
  * dp_mon_filter_update() - Setup the monitor filter setting for a srng
  * type
@@ -1185,8 +1347,6 @@ QDF_STATUS dp_mon_filter_update(struct dp_pdev *pdev)
 	struct dp_soc *soc;
 	bool mon_mode_set = false;
 	struct dp_mon_filter filter = {0};
-	enum dp_mon_filter_srng_type mon_srng_type =
-		DP_MON_FILTER_SRNG_TYPE_RXDMA_MON_BUF;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct dp_mon_pdev *mon_pdev;
 
@@ -1209,33 +1369,8 @@ QDF_STATUS dp_mon_filter_update(struct dp_pdev *pdev)
 	/*
 	 * Setup the filters for the monitor destination ring.
 	 */
-	if (!soc->wlan_cfg_ctx->rxdma1_enable)
-		mon_srng_type = DP_MON_FILTER_SRNG_TYPE_RXDMA_BUF;
-
-	/*
-	 * Setup the filters for the monitor mode.
-	 */
-	qdf_mem_zero(&(filter), sizeof(filter));
-	dp_mon_filter_ht2_setup(soc, pdev, mon_srng_type, &filter);
-
-	mon_mode_set = filter.valid;
-	if (dp_mon_should_reset_buf_ring_filter(pdev) || mon_mode_set) {
-		status = dp_mon_ht2_rx_ring_cfg(soc, pdev,
-						mon_srng_type,
-						&filter.tlv_filter);
-	} else {
-		/*
-		 * For WIN case the monitor buffer ring is used and it does need
-		 * reset when monitor mode gets enabled/disabled.
-		 */
-		if (soc->wlan_cfg_ctx->rxdma1_enable) {
-			if (mon_pdev->monitor_configured || mon_mode_set) {
-				status = dp_mon_ht2_rx_ring_cfg(soc, pdev,
-							mon_srng_type,
-							&filter.tlv_filter);
-			}
-		}
-	}
+	status = dp_mon_filter_mon_buf_update(pdev, &filter,
+					      &mon_mode_set);
 
 	if (status != QDF_STATUS_SUCCESS) {
 		dp_mon_filter_err("%pK: Monitor destination ring filter setting failed",
@@ -1258,14 +1393,14 @@ QDF_STATUS dp_mon_filter_update(struct dp_pdev *pdev)
 	 * are not enabled.
 	 */
 	if (!filter.valid && mon_mode_set)
-		dp_mon_filter_reset_mon_srng(soc, pdev, mon_srng_type);
+		dp_mon_filter_mon_buf_reset(pdev);
 
 	if (dp_mon_ht2_rx_ring_cfg(soc, pdev,
 				   DP_MON_FILTER_SRNG_TYPE_RXDMA_MONITOR_STATUS,
 				   &filter.tlv_filter) != QDF_STATUS_SUCCESS) {
 		dp_mon_filter_err("%pK: Monitor status ring filter setting failed",
 				  soc);
-		dp_mon_filter_reset_mon_srng(soc, pdev, mon_srng_type);
+		dp_mon_filter_mon_buf_reset(pdev);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1316,7 +1451,7 @@ void dp_mon_filter_dealloc(struct dp_mon_pdev *mon_pdev)
 /**
  * dp_mon_filter_alloc() - Allocate the filter objects to be stored in
  * the radio object.
- * @mon_pdev: DP pdev handle
+ * @mon_pdev: Monitor pdev handle
  */
 struct dp_mon_filter **dp_mon_filter_alloc(struct dp_mon_pdev *mon_pdev)
 {

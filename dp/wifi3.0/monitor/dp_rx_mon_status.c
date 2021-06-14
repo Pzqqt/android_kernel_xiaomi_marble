@@ -180,7 +180,7 @@ dp_send_ack_frame_to_stack(struct dp_soc *soc,
 }
 #endif
 
-#ifdef FEATURE_PERPKT_INFO
+#ifdef QCA_ENHANCED_STATS_SUPPORT
 static inline void
 dp_rx_populate_rx_rssi_chain(struct hal_rx_ppdu_info *ppdu_info,
 			     struct cdp_rx_indication_ppdu *cdp_rx_ppdu)
@@ -540,7 +540,8 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
 				   struct cdp_rx_indication_ppdu *cdp_rx_ppdu)
 {
 }
-#endif
+#endif/* QCA_ENHANCED_STATS_SUPPORT */
+
 /**
  * dp_rx_stats_update() - Update per-peer statistics
  * @soc: Datapath SOC handle
@@ -549,7 +550,7 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
  *
  * Return: None
  */
-#ifdef FEATURE_PERPKT_INFO
+#ifdef QCA_ENHANCED_STATS_SUPPORT
 static inline void dp_rx_rate_stats_update(struct dp_peer *peer,
 					   struct cdp_rx_indication_ppdu *ppdu,
 					   uint32_t user)
@@ -812,7 +813,7 @@ static void dp_rx_stats_update(struct dp_pdev *pdev,
 		dp_peer_unref_delete(peer, DP_MOD_ID_RX_PPDU_STATS);
 	}
 }
-#endif
+#endif/* QCA_ENHANCED_STATS_SUPPORT */
 
 /**
  * dp_rx_handle_mcopy_mode() - Allocate and deliver first MSDU payload
@@ -826,7 +827,7 @@ static void dp_rx_stats_update(struct dp_pdev *pdev,
  * Return: QDF_STATUS_SUCCESS - If nbuf to be freed by caller
  *         QDF_STATUS_E_ALREADY - If nbuf not to be freed by caller
  */
-#ifdef FEATURE_PERPKT_INFO
+#ifdef QCA_MCOPY_SUPPORT
 static inline QDF_STATUS
 dp_rx_handle_mcopy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 			struct hal_rx_ppdu_info *ppdu_info, qdf_nbuf_t nbuf,
@@ -882,7 +883,7 @@ dp_rx_handle_mcopy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 {
 	return QDF_STATUS_SUCCESS;
 }
-#endif
+#endif /* QCA_MCOPY_SUPPORT */
 
 /**
  * dp_rx_mcopy_handle_last_mpdu() - cache and delive last MPDU header in a
@@ -894,7 +895,7 @@ dp_rx_handle_mcopy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
  *
  * Return: void
  */
-#ifdef FEATURE_PERPKT_INFO
+#ifdef QCA_MCOPY_SUPPORT
 static inline void
 dp_rx_mcopy_handle_last_mpdu(struct dp_soc *soc, struct dp_pdev *pdev,
 			     struct hal_rx_ppdu_info *ppdu_info,
@@ -967,7 +968,7 @@ dp_rx_mcopy_handle_last_mpdu(struct dp_soc *soc, struct dp_pdev *pdev,
 			     qdf_nbuf_t status_nbuf)
 {
 }
-#endif
+#endif /* QCA_MCOPY_SUPPORT */
 
 /**
  * dp_rx_mcopy_process_ppdu_info() - update mcopy ppdu info
@@ -976,7 +977,7 @@ dp_rx_mcopy_handle_last_mpdu(struct dp_soc *soc, struct dp_pdev *pdev,
  *
  * Return: void
  */
-#ifdef FEATURE_PERPKT_INFO
+#ifdef QCA_MCOPY_SUPPORT
 static inline void
 dp_rx_mcopy_process_ppdu_info(struct dp_pdev *pdev,
 			      struct hal_rx_ppdu_info *ppdu_info,
@@ -1022,9 +1023,9 @@ dp_rx_mcopy_process_ppdu_info(struct dp_pdev *pdev,
 			      uint32_t tlv_status)
 {
 }
-#endif
+#endif /* QCA_MCOPY_SUPPORT */
 
-#ifdef FEATURE_PERPKT_INFO
+#ifdef QCA_MCOPY_SUPPORT
 static inline void
 dp_rx_process_mcopy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 			 struct hal_rx_ppdu_info *ppdu_info,
@@ -1085,7 +1086,7 @@ dp_rx_process_mcopy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 			 qdf_nbuf_t status_nbuf)
 {
 }
-#endif
+#endif /* QCA_MCOPY_SUPPORT */
 
 /**
  * dp_rx_handle_smart_mesh_mode() - Deliver header for smart mesh
@@ -1492,7 +1493,7 @@ dp_cfr_rcc_mode_status(struct dp_pdev *pdev)
 *
 * Return: none
 */
-#ifdef FEATURE_PERPKT_INFO
+#ifdef QCA_ENHANCED_STATS_SUPPORT
 static inline void
 dp_rx_handle_ppdu_stats(struct dp_soc *soc, struct dp_pdev *pdev,
 			struct hal_rx_ppdu_info *ppdu_info)
@@ -1591,7 +1592,7 @@ dp_rx_handle_ppdu_stats(struct dp_soc *soc, struct dp_pdev *pdev,
 			struct hal_rx_ppdu_info *ppdu_info)
 {
 }
-#endif
+#endif/* QCA_ENHANCED_STATS_SUPPORT */
 
 /**
 * dp_rx_process_peer_based_pktlog() - Process Rx pktlog if peer based

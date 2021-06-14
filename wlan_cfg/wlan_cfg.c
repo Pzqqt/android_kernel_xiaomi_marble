@@ -29,7 +29,7 @@
 #include "cfg_ucfg_api.h"
 #include "hal_api.h"
 #include "dp_types.h"
-
+#include <qdf_module.h>
 
 /*
  * The max allowed size for tx comp ring is 8191.
@@ -1277,6 +1277,8 @@ void wlan_cfg_set_mon_delayed_replenish_entries(
 	cfg->delayed_replenish_entries = val;
 }
 
+qdf_export_symbol(wlan_cfg_set_mon_delayed_replenish_entries);
+
 int wlan_cfg_get_mon_delayed_replenish_entries(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->delayed_replenish_entries;
@@ -1312,6 +1314,8 @@ int wlan_cfg_get_max_ast_idx(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->max_ast_idx;
 }
+
+qdf_export_symbol(wlan_cfg_get_max_ast_idx);
 
 void wlan_cfg_set_tx_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
 		int context, int mask)
@@ -1410,6 +1414,8 @@ int wlan_cfg_get_hw_mac_idx(struct wlan_cfg_dp_soc_ctxt *cfg, int pdev_idx)
 	return cfg->hw_macid[pdev_idx];
 }
 
+qdf_export_symbol(wlan_cfg_get_hw_mac_idx);
+
 int wlan_cfg_get_target_pdev_id(struct wlan_cfg_dp_soc_ctxt *cfg,
 				int hw_macid)
 {
@@ -1437,6 +1443,8 @@ int wlan_cfg_get_pdev_idx(struct wlan_cfg_dp_soc_ctxt *cfg, int hw_macid)
 	qdf_assert_always(hw_macid < MAX_NUM_LMAC_HW);
 	return cfg->hw_macid_pdev_id_map[hw_macid];
 }
+
+qdf_export_symbol(wlan_cfg_get_pdev_idx);
 
 void wlan_cfg_set_ce_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
 		int context, int mask)
@@ -1548,6 +1556,8 @@ int wlan_cfg_per_pdev_lmac_ring(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->per_pdev_lmac_ring;
 }
+
+qdf_export_symbol(wlan_cfg_per_pdev_lmac_ring);
 
 #ifdef DP_MEMORY_OPT
 int wlan_cfg_num_tcl_data_rings(struct wlan_cfg_dp_soc_ctxt *cfg)
@@ -1715,6 +1725,8 @@ int wlan_cfg_get_num_mac_rings(struct wlan_cfg_dp_pdev_ctxt *cfg)
 {
 	return  cfg->num_mac_rings;
 }
+
+qdf_export_symbol(wlan_cfg_get_num_mac_rings);
 
 bool wlan_cfg_is_gro_enabled(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
@@ -1919,6 +1931,8 @@ wlan_cfg_get_dp_soc_rx_sw_desc_weight(struct wlan_cfg_dp_soc_ctxt *cfg)
 	return cfg->rx_sw_desc_weight;
 }
 
+qdf_export_symbol(wlan_cfg_get_dp_soc_rx_sw_desc_weight);
+
 int
 wlan_cfg_get_dp_soc_rx_sw_desc_num(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
@@ -2014,6 +2028,8 @@ bool wlan_cfg_is_rx_flow_tag_enabled(struct wlan_cfg_dp_soc_ctxt *cfg)
 	return cfg->is_rx_flow_tag_enabled;
 }
 
+qdf_export_symbol(wlan_cfg_is_rx_flow_tag_enabled);
+
 #ifdef WLAN_SUPPORT_RX_FISA
 bool wlan_cfg_is_rx_fisa_enabled(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
@@ -2067,6 +2083,8 @@ wlan_cfg_is_rx_mon_protocol_flow_tag_enabled(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->is_rx_mon_protocol_flow_tag_enabled;
 }
+
+qdf_export_symbol(wlan_cfg_is_rx_mon_protocol_flow_tag_enabled);
 
 void
 wlan_cfg_set_tx_per_pkt_vdev_id_check(struct wlan_cfg_dp_soc_ctxt *cfg,
@@ -2170,6 +2188,8 @@ wlan_cfg_is_delay_mon_replenish(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->delay_mon_replenish;
 }
+
+qdf_export_symbol(wlan_cfg_is_delay_mon_replenish);
 
 void wlan_cfg_dp_soc_ctx_dump(struct wlan_cfg_dp_soc_ctxt *cfg)
 {

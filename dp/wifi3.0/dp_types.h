@@ -2476,8 +2476,6 @@ struct dp_pdev {
 	/* WDI event handlers */
 	struct wdi_event_subscribe_t **wdi_event_list;
 
-	/* ppdu_id of last received HTT TX stats */
-	uint32_t last_ppdu_id;
 	bool cfr_rcc_mode;
 
 	/* enable time latency check for tx completion */

@@ -473,6 +473,8 @@ free_descs:
 	return QDF_STATUS_SUCCESS;
 }
 
+qdf_export_symbol(__dp_rx_buffers_replenish);
+
 /*
  * dp_rx_deliver_raw() - process RAW mode pkts and hand over the
  *				pkts to RAW mode simulation to
@@ -2352,6 +2354,8 @@ dp_pdev_rx_buffers_attach(struct dp_soc *dp_soc, uint32_t mac_id,
 	return QDF_STATUS_SUCCESS;
 }
 
+qdf_export_symbol(dp_pdev_rx_buffers_attach);
+
 /**
  * dp_rx_enable_mon_dest_frag() - Enable frag processing for
  *              monitor destination ring via frag.
@@ -2384,6 +2388,8 @@ void dp_rx_enable_mon_dest_frag(struct rx_desc_pool *rx_desc_pool,
 		dp_alert("Feature DP_RX_MON_MEM_FRAG for mon_dest is disabled");
 }
 #endif
+
+qdf_export_symbol(dp_rx_enable_mon_dest_frag);
 
 /*
  * dp_rx_pdev_desc_pool_alloc() -  allocate memory for software rx descriptor

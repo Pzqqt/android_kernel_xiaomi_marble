@@ -20,6 +20,11 @@
 #ifndef _DP_TXRX_WDS_H_
 #define _DP_TXRX_WDS_H_
 
+#ifdef WIFI_MONITOR_SUPPORT
+#include "dp_htt.h"
+#include "dp_mon.h"
+#endif
+
 /* host managed flag */
 #define DP_AST_FLAGS_HM 0x0020
 

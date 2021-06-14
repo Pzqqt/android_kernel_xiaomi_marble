@@ -533,8 +533,6 @@ static inline void dp_tx_hal_ring_access_end_reap(struct dp_soc *soc,
 }
 #endif
 
-void  dp_iterate_update_peer_list(struct cdp_pdev *pdev_hdl);
-
 #ifdef ATH_TX_PRI_OVERRIDE
 #define DP_TX_TID_OVERRIDE(_msdu_info, _nbuf) \
 	((_msdu_info)->tid = qdf_nbuf_get_priority(_nbuf))
@@ -634,16 +632,6 @@ void dp_send_completion_to_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
 			    uint16_t peer_id, uint32_t ppdu_id,
 			    qdf_nbuf_t netbuf)
 {
-}
-#endif
-
-#ifndef WLAN_TX_PKT_CAPTURE_ENH
-static inline
-QDF_STATUS dp_peer_set_tx_capture_enabled(struct dp_pdev *pdev,
-					  struct dp_peer *peer_handle,
-					  uint8_t value, uint8_t *peer_mac)
-{
-	return QDF_STATUS_SUCCESS;
 }
 #endif
 

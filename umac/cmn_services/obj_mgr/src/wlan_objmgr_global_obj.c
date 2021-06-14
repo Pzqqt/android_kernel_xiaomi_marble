@@ -29,6 +29,8 @@
 /* Global object, it is declared globally */
 struct wlan_objmgr_global *g_umac_glb_obj;
 
+qdf_export_symbol(g_umac_glb_obj);
+
 /*
 ** APIs to Create/Delete Global object APIs
 */

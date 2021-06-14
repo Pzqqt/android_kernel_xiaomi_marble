@@ -182,6 +182,8 @@ static inline QDF_STATUS dp_mon_soc_detach_wrapper(struct dp_soc *soc)
 #endif
 
 #ifndef WIFI_MONITOR_SUPPORT
+#define MON_BUF_MIN_ENTRIES 64
+
 static inline QDF_STATUS monitor_pdev_attach(struct dp_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
@@ -205,7 +207,7 @@ static inline QDF_STATUS monitor_vdev_detach(struct dp_vdev *vdev)
 static inline QDF_STATUS monitor_peer_attach(struct dp_soc *soc,
 					     struct dp_peer *peer)
 {
-	return QDF_STATUS_E_FAILURE;
+	return QDF_STATUS_SUCCESS;
 }
 
 static inline QDF_STATUS monitor_peer_detach(struct dp_soc *soc,
@@ -451,10 +453,7 @@ bool monitor_vdev_timer_stop(struct dp_soc *soc)
 {
 	return false;
 }
-#endif
 
-#ifndef WIFI_MONITOR_SUPPORT
-#define MON_BUF_MIN_ENTRIES 64
 static inline struct qdf_mem_multi_page_t*
 monitor_get_link_desc_pages(struct dp_soc *soc, uint32_t mac_id)
 {
@@ -486,6 +485,11 @@ static inline void monitor_vdev_register_osif(struct dp_vdev *vdev,
 static inline bool monitor_is_vdev_timer_running(struct dp_soc *soc)
 {
 	return false;
+}
+
+static inline
+void monitor_pdev_set_mon_vdev(struct dp_vdev *vdev)
+{
 }
 
 static inline void monitor_vdev_delete(struct dp_soc *soc, struct dp_vdev *vdev)
@@ -577,7 +581,7 @@ static inline QDF_STATUS monitor_check_com_info_ppdu_id(struct dp_pdev *pdev,
 }
 
 static inline struct mon_rx_status*
-monitor_get_rx_status_addr(struct dp_pdev *pdev)
+monitor_get_rx_status(struct dp_pdev *pdev)
 {
 	return NULL;
 }
@@ -2143,9 +2147,6 @@ dp_hif_update_pipe_callback(struct dp_soc *dp_soc,
 	hif_update_pipe_callback(dp_soc->hif_handle,
 		DP_HTT_T2H_HP_PIPE, &hif_pipe_callbacks);
 }
-
-QDF_STATUS dp_peer_qos_stats_notify(struct dp_pdev *dp_pdev,
-				    struct cdp_rx_stats_ppdu_user *ppdu_user);
 #else
 static inline int dp_wdi_event_unsub(struct cdp_soc_t *soc, uint8_t pdev_id,
 				     wdi_event_subscribe *event_cb_sub_handle,
@@ -2190,14 +2191,6 @@ dp_hif_update_pipe_callback(struct dp_soc *dp_soc, void *cb_context,
 			    QDF_STATUS (*callback)(void *, qdf_nbuf_t, uint8_t),
 			    uint8_t pipe_id)
 {
-}
-
-
-static inline QDF_STATUS
-dp_peer_qos_stats_notify(struct dp_pdev *dp_pdev,
-			 struct cdp_rx_stats_ppdu_user *ppdu_user)
-{
-	return QDF_STATUS_SUCCESS;
 }
 #endif /* CONFIG_WIN */
 

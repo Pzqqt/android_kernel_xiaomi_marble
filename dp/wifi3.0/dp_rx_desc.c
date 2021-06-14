@@ -19,6 +19,7 @@
 #include "dp_types.h"
 #include "dp_rx.h"
 #include "dp_ipa.h"
+#include <qdf_module.h>
 
 #ifdef RX_DESC_MULTI_PAGE_ALLOC
 A_COMPILE_TIME_ASSERT(cookie_size_check,
@@ -42,6 +43,8 @@ QDF_STATUS dp_rx_desc_pool_is_allocated(struct rx_desc_pool *rx_desc_pool)
 	}
 	return QDF_STATUS_SUCCESS;
 }
+
+qdf_export_symbol(dp_rx_desc_pool_is_allocated);
 
 /*
  * dp_rx_desc_pool_alloc() - Allocate a memory pool for software rx
@@ -88,6 +91,8 @@ free_rx_desc_pool:
 
 	return QDF_STATUS_E_FAULT;
 }
+
+qdf_export_symbol(dp_rx_desc_pool_alloc);
 
 QDF_STATUS dp_rx_desc_pool_init_generic(struct dp_soc *soc,
 				  struct rx_desc_pool *rx_desc_pool,
@@ -155,6 +160,8 @@ void dp_rx_desc_pool_init(struct dp_soc *soc, uint32_t pool_id,
 
 	qdf_spin_unlock_bh(&rx_desc_pool->lock);
 }
+
+qdf_export_symbol(dp_rx_desc_pool_init);
 
 union dp_rx_desc_list_elem_t *dp_rx_desc_find(uint16_t page_id, uint16_t offset,
 					      struct rx_desc_pool *rx_desc_pool)
@@ -253,6 +260,8 @@ void dp_rx_desc_nbuf_free(struct dp_soc *soc,
 				rx_desc_pool->buf_size);
 }
 
+qdf_export_symbol(dp_rx_desc_nbuf_free);
+
 void dp_rx_desc_pool_free(struct dp_soc *soc,
 			  struct rx_desc_pool *rx_desc_pool)
 {
@@ -262,6 +271,8 @@ void dp_rx_desc_pool_free(struct dp_soc *soc,
 	dp_desc_multi_pages_mem_free(soc, rx_desc_pool->desc_type,
 				     &rx_desc_pool->desc_pages, 0, true);
 }
+
+qdf_export_symbol(dp_rx_desc_pool_free);
 
 void dp_rx_desc_pool_deinit(struct dp_soc *soc,
 			    struct rx_desc_pool *rx_desc_pool,
@@ -280,6 +291,8 @@ void dp_rx_desc_pool_deinit(struct dp_soc *soc,
 	qdf_spin_unlock_bh(&rx_desc_pool->lock);
 	qdf_spinlock_destroy(&rx_desc_pool->lock);
 }
+
+qdf_export_symbol(dp_rx_desc_pool_deinit);
 #else
 /*
  * dp_rx_desc_pool_is_allocated() - check if memory is allocated for the
@@ -298,6 +311,8 @@ QDF_STATUS dp_rx_desc_pool_is_allocated(struct rx_desc_pool *rx_desc_pool)
 	}
 	return QDF_STATUS_SUCCESS;
 }
+
+qdf_export_symbol(dp_rx_desc_pool_is_allocated);
 
 /*
  * dp_rx_desc_pool_alloc() - Allocate a memory pool for software rx
@@ -325,6 +340,8 @@ QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc,
 	}
 	return QDF_STATUS_SUCCESS;
 }
+
+qdf_export_symbol(dp_rx_desc_pool_alloc);
 
 QDF_STATUS dp_rx_desc_pool_init_generic(struct dp_soc *soc,
 				  struct rx_desc_pool *rx_desc_pool,
@@ -378,6 +395,8 @@ void dp_rx_desc_pool_init(struct dp_soc *soc, uint32_t pool_id,
 
 	qdf_spin_unlock_bh(&rx_desc_pool->lock);
 }
+
+qdf_export_symbol(dp_rx_desc_pool_init);
 
 void dp_rx_desc_nbuf_and_pool_free(struct dp_soc *soc, uint32_t pool_id,
 				   struct rx_desc_pool *rx_desc_pool)
@@ -437,6 +456,8 @@ void dp_rx_desc_nbuf_free(struct dp_soc *soc,
 	qdf_spin_unlock_bh(&rx_desc_pool->lock);
 }
 
+qdf_export_symbol(dp_rx_desc_nbuf_free);
+
 /**
  * dp_rx_desc_frag_free() - Free desc frag buffer
  *
@@ -470,6 +491,8 @@ void dp_rx_desc_frag_free(struct dp_soc *soc,
 	}
 	qdf_spin_unlock_bh(&rx_desc_pool->lock);
 }
+
+qdf_export_symbol(dp_rx_desc_frag_free);
 #endif
 
 void dp_rx_desc_pool_free(struct dp_soc *soc,
@@ -477,6 +500,8 @@ void dp_rx_desc_pool_free(struct dp_soc *soc,
 {
 	qdf_mem_free(rx_desc_pool->array);
 }
+
+qdf_export_symbol(dp_rx_desc_pool_free);
 
 void dp_rx_desc_pool_deinit(struct dp_soc *soc,
 			    struct rx_desc_pool *rx_desc_pool,
@@ -495,6 +520,8 @@ void dp_rx_desc_pool_deinit(struct dp_soc *soc,
 	qdf_spin_unlock_bh(&rx_desc_pool->lock);
 	qdf_spinlock_destroy(&rx_desc_pool->lock);
 }
+
+qdf_export_symbol(dp_rx_desc_pool_deinit);
 
 #endif /* RX_DESC_MULTI_PAGE_ALLOC */
 
@@ -543,6 +570,8 @@ uint16_t dp_rx_get_free_desc_list(struct dp_soc *soc, uint32_t pool_id,
 	return count;
 }
 
+qdf_export_symbol(dp_rx_get_free_desc_list);
+
 /*
  * dp_rx_add_desc_list_to_free_list() - append unused desc_list back to
  *					freelist.
@@ -575,3 +604,5 @@ void dp_rx_add_desc_list_to_free_list(struct dp_soc *soc,
 
 	qdf_spin_unlock_bh(&rx_desc_pool->lock);
 }
+
+qdf_export_symbol(dp_rx_add_desc_list_to_free_list);

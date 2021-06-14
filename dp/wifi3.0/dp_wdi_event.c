@@ -23,6 +23,7 @@
 #include "dp_htt.h"
 #include <dp_mon.h>
 #endif
+#include <qdf_module.h>
 
 #ifdef WDI_EVENT_ENABLE
 /*
@@ -145,6 +146,7 @@ dp_wdi_event_handler(
 			peer_id, status);
 }
 
+qdf_export_symbol(dp_wdi_event_handler);
 
 /*
  * dp_wdi_event_sub() - Subscribe WDI event

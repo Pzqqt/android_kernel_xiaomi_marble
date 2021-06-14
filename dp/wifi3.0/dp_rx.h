@@ -633,7 +633,6 @@ QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc,
 void dp_rx_desc_pool_init(struct dp_soc *soc, uint32_t pool_id,
 			  uint32_t pool_size,
 			  struct rx_desc_pool *rx_desc_pool);
-void dp_rx_pdev_mon_buf_buffers_free(struct dp_pdev *pdev, uint32_t mac_id);
 
 void dp_rx_add_desc_list_to_free_list(struct dp_soc *soc,
 				union dp_rx_desc_list_elem_t **local_desc_list,
@@ -1314,25 +1313,6 @@ dp_rx_update_flow_tag(struct dp_soc *soc, struct dp_vdev *vdev,
 {
 }
 #endif /* WLAN_SUPPORT_RX_FLOW_TAG */
-
-#if !defined(WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG) &&\
-	!defined(WLAN_SUPPORT_RX_FLOW_TAG)
-/**
- * dp_rx_mon_update_protocol_flow_tag() - Performs necessary checks for monitor
- *                                       mode and then tags appropriate packets
- * @soc: core txrx main context
- * @vdev: pdev on which packet is received
- * @msdu: QDF packet buffer on which the protocol tag should be set
- * @rx_desc: base address where the RX TLVs start
- * Return: void
- */
-static inline
-void dp_rx_mon_update_protocol_flow_tag(struct dp_soc *soc,
-					struct dp_pdev *dp_pdev,
-					qdf_nbuf_t msdu, void *rx_desc)
-{
-}
-#endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG || WLAN_SUPPORT_RX_FLOW_TAG */
 
 /*
  * dp_rx_buffers_replenish() - replenish rxdma ring with rx nbufs
