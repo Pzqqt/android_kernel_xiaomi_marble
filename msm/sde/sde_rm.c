@@ -2546,12 +2546,14 @@ int sde_rm_reserve(
 	 * Poll for rsvp_nxt clear, allow the check_only commit if rsvp_nxt
 	 * gets cleared and bailout if it does not get cleared before timeout.
 	 */
-	if (test_only && rsvp_cur && rsvp_nxt) {
+	if (test_only && rsvp_nxt) {
 		rsvp_nxt = _sde_rm_poll_get_rsvp_nxt_locked(rm, enc);
 		if (rsvp_nxt) {
 			pr_err("poll timeout cur %d nxt %d enc %d\n",
-				rsvp_cur->seq, rsvp_nxt->seq, enc->base.id);
-			SDE_EVT32(enc->base.id, rsvp_cur->seq, rsvp_nxt->seq, SDE_EVTLOG_ERROR);
+				(rsvp_cur) ? rsvp_cur->seq : -1,
+				rsvp_nxt->seq, enc->base.id);
+			SDE_EVT32(enc->base.id, (rsvp_cur) ? rsvp_cur->seq : -1,
+					rsvp_nxt->seq, SDE_EVTLOG_ERROR);
 			ret = -EAGAIN;
 			goto end;
 		}
