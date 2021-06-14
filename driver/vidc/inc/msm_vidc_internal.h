@@ -65,6 +65,8 @@
 #define MIN_HEVC_SLICE_WIDTH                384
 #define MIN_AVC_SLICE_WIDTH                 192
 #define MIN_SLICE_HEIGHT                    128
+#define MAX_BITRATE_BOOST                    25
+#define MAX_SUPPORTED_MIN_QUALITY            70
 
 #define DCVS_WINDOW 16
 /* Superframe can have maximum of 32 frames */

@@ -212,7 +212,7 @@ static inline bool is_lowlatency_session(struct msm_vidc_inst *inst)
 	return !!(inst->capabilities->cap[LOWLATENCY_MODE].value);
 }
 
-static inline bool is_hierb_requested(struct msm_vidc_inst *inst)
+static inline bool is_hierb_type_requested(struct msm_vidc_inst *inst)
 {
 	return (inst->codec == MSM_VIDC_H264 &&
 			inst->capabilities->cap[LAYER_TYPE].value ==
