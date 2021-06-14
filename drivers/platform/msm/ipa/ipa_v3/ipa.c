@@ -190,6 +190,9 @@ bool ipa_is_test_prod_flt_in_sram_internal(enum ipa_ip_type ip)
 		return false;
 
 	gsi_ep_info_cfg = ipa3_get_gsi_ep_info(IPA_CLIENT_TEST_PROD);
+	if(gsi_ep_info_cfg == NULL)
+		return false;
+
 	flt_tbl = &ipa3_ctx->flt_tbl[gsi_ep_info_cfg->ipa_ep_num][ip];
 
 	return !flt_tbl->force_sys[IPA_RULE_NON_HASHABLE] &&
