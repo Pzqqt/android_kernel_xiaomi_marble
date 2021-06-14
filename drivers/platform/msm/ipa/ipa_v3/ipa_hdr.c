@@ -742,17 +742,10 @@ static int __ipa_add_hpc_hdr_insertion(struct ipa_hdr_add *hdr, bool user)
 		IPAERR("failed to add hdr proc ctx\n");
 		goto fail_add_proc_ctx;
 	}
-	entry->proc_ctx = (struct ipa3_hdr_proc_ctx_entry *)
-		ipa3_id_find(proc_ctx.proc_ctx_hdl);
-	if (!entry->proc_ctx) {
-		IPAERR_RL("ipa3_id_find failed\n");
-		goto fail_id_find;
-	}
+	entry->proc_ctx = (struct ipa3_hdr_proc_ctx_entry *)ipa3_id_find(proc_ctx.proc_ctx_hdl);
 
 	return 0;
 
-fail_id_find:
-	__ipa3_del_hdr_proc_ctx(entry->proc_ctx->id, true, user);
 fail_add_proc_ctx:
 	__ipa3_del_hdr(hdr->hdr_hdl, user);
 error:
