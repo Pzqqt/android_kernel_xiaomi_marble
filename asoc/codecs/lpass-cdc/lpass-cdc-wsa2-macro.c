@@ -193,6 +193,18 @@ struct lpass_cdc_wsa2_macro_swr_ctrl_data {
 	struct platform_device *wsa2_swr_pdev;
 };
 
+#define LPASS_CDC_WSA2_MACRO_SET_VOLUME_TLV(xname, xreg, xmin, xmax, tlv_array) \
+{	.iface  = SNDRV_CTL_ELEM_IFACE_MIXER, .name = (xname), \
+	.access = SNDRV_CTL_ELEM_ACCESS_TLV_READ | \
+		SNDRV_CTL_ELEM_ACCESS_READWRITE, \
+	.tlv.p  = (tlv_array), \
+	.info = snd_soc_info_volsw, .get = snd_soc_get_volsw,\
+	.put = lpass_cdc_wsa2_macro_set_digital_volume, \
+	.private_value = (unsigned long)&(struct soc_mixer_control) \
+	{.reg = xreg, .rreg = xreg,  \
+	.min = xmin, .max = xmax, .platform_max = xmax, \
+	.sign_bit = 7,} }
+
 struct lpass_cdc_wsa2_macro_swr_ctrl_platform_data {
 	void *handle; /* holds codec private data */
 	int (*read)(void *handle, int reg);
@@ -273,9 +285,11 @@ struct lpass_cdc_wsa2_macro_priv {
 	u16 default_clk_id;
 	u32 pcm_rate_vi;
 	int wsa2_digital_mute_status[LPASS_CDC_WSA2_MACRO_RX_MAX];
+	u8 original_gain;
 	struct thermal_cooling_device *tcdev;
 	uint32_t thermal_cur_state;
 	uint32_t thermal_max_state;
+	struct work_struct lpass_cdc_wsa2_macro_cooling_work;
 };
 
 static struct snd_soc_dai_driver lpass_cdc_wsa2_macro_dai[];
@@ -1890,6 +1904,44 @@ static int lpass_cdc_wsa2_macro_set_rx_mute_status(struct snd_kcontrol *kcontrol
 	return ret;
 }
 
+static int lpass_cdc_wsa2_macro_set_digital_volume(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
+	struct device *wsa2_dev = NULL;
+	struct lpass_cdc_wsa2_macro_priv *wsa2_priv = NULL;
+	struct soc_mixer_control *mc =
+			(struct soc_mixer_control *)kcontrol->private_value;
+	u8 gain = 0;
+	int ret = 0;
+
+	if (!lpass_cdc_wsa2_macro_get_data(component, &wsa2_dev, &wsa2_priv, __func__))
+		return -EINVAL;
+
+	if (!wsa2_priv) {
+		pr_err("%s: priv is null for macro!\n",
+			__func__);
+		return -EINVAL;
+	}
+
+	ret = snd_soc_put_volsw(kcontrol, ucontrol);
+
+	wsa2_priv->original_gain = (u8)snd_soc_component_read(wsa2_priv->component,
+						mc->reg);
+
+	if (wsa2_priv->thermal_cur_state > 0) {
+		gain = (u8)(wsa2_priv->original_gain - wsa2_priv->thermal_cur_state);
+		snd_soc_component_update_bits(wsa2_priv->component,
+			mc->reg, 0xFF, gain);
+		dev_dbg(wsa2_priv->dev,
+			"%s: Current thermal state: %d, adjusted gain: %x\n",
+			__func__, wsa2_priv->thermal_cur_state, gain);
+	}
+
+	return ret;
+}
+
 static int lpass_cdc_wsa2_macro_get_compander(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
@@ -2157,12 +2209,12 @@ static const struct snd_kcontrol_new lpass_cdc_wsa2_macro_snd_controls[] = {
 			LPASS_CDC_WSA2_MACRO_SOFTCLIP1, 1, 0,
 			lpass_cdc_wsa2_macro_soft_clip_enable_get,
 			lpass_cdc_wsa2_macro_soft_clip_enable_put),
-	SOC_SINGLE_S8_TLV("WSA2_RX0 Digital Volume",
-			  LPASS_CDC_WSA2_RX0_RX_VOL_CTL,
-			  -84, 40, digital_gain),
-	SOC_SINGLE_S8_TLV("WSA2_RX1 Digital Volume",
-			  LPASS_CDC_WSA2_RX1_RX_VOL_CTL,
-			  -84, 40, digital_gain),
+	LPASS_CDC_WSA2_MACRO_SET_VOLUME_TLV("WSA2_RX0 Digital Volume",
+					   LPASS_CDC_WSA2_RX0_RX_VOL_CTL,
+					   -84, 40, digital_gain),
+	LPASS_CDC_WSA2_MACRO_SET_VOLUME_TLV("WSA2_RX1 Digital Volume",
+					   LPASS_CDC_WSA2_RX1_RX_VOL_CTL,
+					   -84, 40, digital_gain),
 	SOC_SINGLE_EXT("WSA2_RX0 Digital Mute", SND_SOC_NOPM, LPASS_CDC_WSA2_MACRO_RX0, 1,
 			0, lpass_cdc_wsa2_macro_get_rx_mute_status,
 			lpass_cdc_wsa2_macro_set_rx_mute_status),
@@ -2745,7 +2797,6 @@ static int lpass_cdc_wsa2_macro_set_cur_state(
 					unsigned long state)
 {
 	struct lpass_cdc_wsa2_macro_priv *wsa2_priv = cdev->devdata;
-	u8 gain = 0;
 
 	if (!wsa2_priv) {
 		pr_err("%s: cdev->devdata is NULL\n", __func__);
@@ -2757,15 +2808,11 @@ static int lpass_cdc_wsa2_macro_set_cur_state(
 	else
 		wsa2_priv->thermal_cur_state = wsa2_priv->thermal_max_state;
 
-	gain = (u8)(gain - wsa2_priv->thermal_cur_state);
 	dev_dbg(wsa2_priv->dev,
-		"%s: requested state:%d, actual state: %d, gain: %#x\n",
-		__func__, state, wsa2_priv->thermal_cur_state, gain);
+		"%s: requested state:%d, actual state: %d\n",
+		__func__, state, wsa2_priv->thermal_cur_state);
 
-	snd_soc_component_update_bits(wsa2_priv->component,
-		LPASS_CDC_WSA2_RX0_RX_VOL_CTL, 0xFF, gain);
-	snd_soc_component_update_bits(wsa2_priv->component,
-		LPASS_CDC_WSA2_RX1_RX_VOL_CTL, 0xFF, gain);
+	schedule_work(&wsa2_priv->lpass_cdc_wsa2_macro_cooling_work);
 
 	return 0;
 }
@@ -2957,6 +3004,55 @@ err:
 	return;
 }
 
+static void lpass_cdc_wsa2_macro_cooling_adjust_gain(struct work_struct *work)
+{
+	struct lpass_cdc_wsa2_macro_priv *wsa2_priv;
+	struct snd_soc_dapm_context *dapm;
+	u8 gain = 0;
+	u32 ctl_reg;
+
+	wsa2_priv = container_of(work, struct lpass_cdc_wsa2_macro_priv,
+			     lpass_cdc_wsa2_macro_cooling_work);
+	if (!wsa2_priv) {
+		pr_err("%s: priv is null for macro!\n",
+			__func__);
+		return;
+	}
+	if (!wsa2_priv->dev || !wsa2_priv->dev->of_node) {
+		dev_err(wsa2_priv->dev,
+			"%s: DT node for wsa2_priv does not exist\n", __func__);
+		return;
+	}
+
+	dapm = snd_soc_component_get_dapm(wsa2_priv->component);
+
+	/* Only adjust the volume when WSA2 clock is enabled */
+	ctl_reg = snd_soc_component_read(wsa2_priv->component,
+			LPASS_CDC_WSA2_RX0_RX_PATH_CTL);
+	if (ctl_reg & 0x20) {
+		gain = (u8)(wsa2_priv->original_gain - wsa2_priv->thermal_cur_state);
+		snd_soc_component_update_bits(wsa2_priv->component,
+			LPASS_CDC_WSA2_RX0_RX_VOL_CTL, 0xFF, gain);
+		dev_dbg(wsa2_priv->dev,
+			"%s: RX0 current thermal state: %d, adjusted gain: %#x\n",
+			__func__, wsa2_priv->thermal_cur_state, gain);
+	}
+
+	/* Only adjust the volume when WSA2 clock is enabled */
+	ctl_reg = snd_soc_component_read(wsa2_priv->component,
+			LPASS_CDC_WSA2_RX1_RX_PATH_CTL);
+	if (ctl_reg & 0x20) {
+		gain = (u8)(wsa2_priv->original_gain - wsa2_priv->thermal_cur_state);
+		snd_soc_component_update_bits(wsa2_priv->component,
+			LPASS_CDC_WSA2_RX1_RX_VOL_CTL, 0xFF, gain);
+		dev_dbg(wsa2_priv->dev,
+			"%s: RX1 current thermal state: %d, adjusted gain: %#x\n",
+			__func__, wsa2_priv->thermal_cur_state, gain);
+	}
+
+	return;
+}
+
 static void lpass_cdc_wsa2_macro_init_ops(struct macro_ops *ops,
 			       char __iomem *wsa2_io_base)
 {
@@ -3038,6 +3134,8 @@ static int lpass_cdc_wsa2_macro_probe(struct platform_device *pdev)
 	wsa2_priv->reset_swr = true;
 	INIT_WORK(&wsa2_priv->lpass_cdc_wsa2_macro_add_child_devices_work,
 		  lpass_cdc_wsa2_macro_add_child_devices);
+	INIT_WORK(&wsa2_priv->lpass_cdc_wsa2_macro_cooling_work,
+		  lpass_cdc_wsa2_macro_cooling_adjust_gain);
 	wsa2_priv->swr_plat_data.handle = (void *) wsa2_priv;
 	wsa2_priv->swr_plat_data.read = NULL;
 	wsa2_priv->swr_plat_data.write = NULL;
