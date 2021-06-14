@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -86,5 +86,20 @@ wmi_unified_send_dscp_tip_map_cmd(struct wmi_unified *wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* WLAN_SEND_DSCP_UP_MAP_TO_FW */
+
+#ifdef WLAN_FEATURE_MDNS_OFFLOAD
+/**
+ * wmi_unified_send_set_mdns_config_cmd() - Send WMI set mDNS config cmd
+ * @wmi_handle: wmi handle
+ * @mdns_info: mdns config info
+ *
+ * Send WMI set mDNS config command to firmware.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wmi_unified_send_set_mdns_config_cmd(struct wmi_unified *wmi_handle,
+				     struct mdns_config_info *mdns_info);
+#endif /* WLAN_FEATURE_MDNS_OFFLOAD */
 
 #endif /* _WMI_UNIFIED_FWOL_API_H_ */

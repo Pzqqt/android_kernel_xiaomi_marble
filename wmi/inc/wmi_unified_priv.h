@@ -2488,6 +2488,11 @@ QDF_STATUS (*send_dscp_tid_map_cmd)(wmi_unified_t wmi_handle,
 				     uint32_t *dscp_to_tid_map);
 #endif
 
+#ifdef WLAN_FEATURE_MDNS_OFFLOAD
+QDF_STATUS (*send_set_mdns_config_cmd)(wmi_unified_t wmi_handle,
+				       struct mdns_config_info *mdns_info);
+#endif /* WLAN_FEATURE_MDNS_OFFLOAD */
+
 QDF_STATUS (*send_pdev_get_pn_cmd)(wmi_unified_t wmi_handle,
 				   struct peer_request_pn_param *pn_params);
 QDF_STATUS (*extract_get_pn_data)(wmi_unified_t wmi_handle,
