@@ -3166,12 +3166,14 @@ static long ipa3_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	case IPA_IOC_RM_ADD_DEPENDENCY:
 		/* IPA RM is deprecate because IPA PM is used */
 		IPAERR("using obselete command: IPA_IOC_RM_ADD_DEPENDENCY");
-		return -EINVAL;
+		retval = -EINVAL;
+		break;
 
 	case IPA_IOC_RM_DEL_DEPENDENCY:
 		/* IPA RM is deprecate because IPA PM is used */
 		IPAERR("using obselete command: IPA_IOC_RM_DEL_DEPENDENCY");
-		return -EINVAL;
+		retval = -EINVAL;
+		break;
 
 	case IPA_IOC_GENERATE_FLT_EQ:
 		{
