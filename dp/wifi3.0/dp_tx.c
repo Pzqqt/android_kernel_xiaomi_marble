@@ -4421,7 +4421,7 @@ more_data:
 	dp_srng_dst_inv_cached_descs(soc, hal_ring_hdl, num_avail_for_reap);
 
 	/* Find head descriptor from completion ring */
-	while (qdf_likely(num_avail_for_reap)) {
+	while (qdf_likely(num_avail_for_reap--)) {
 
 		tx_comp_hal_desc =  dp_srng_dst_get_next(soc, hal_ring_hdl);
 		if (qdf_unlikely(!tx_comp_hal_desc))
