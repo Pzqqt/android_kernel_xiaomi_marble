@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -266,6 +266,28 @@ void ucfg_pkt_capture_record_channel(struct wlan_objmgr_vdev *vdev);
 int
 ucfg_pkt_capture_register_wma_callbacks(struct wlan_objmgr_psoc *psoc,
 					struct pkt_capture_callbacks *cb_obj);
+
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
+/**
+ * ucfg_pkt_capture_send_config - send packet capture config
+ * @vdev: pointer to vdev object
+ * @config: packet capture config
+ *
+ * Return: None
+ */
+QDF_STATUS ucfg_pkt_capture_send_config
+				(struct wlan_objmgr_vdev *vdev,
+				 enum pkt_capture_trigger_qos_config config);
+#else
+static inline
+QDF_STATUS ucfg_pkt_capture_send_config
+				(struct wlan_objmgr_vdev *vdev,
+				 enum pkt_capture_trigger_qos_config config)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+#endif
 #else
 static inline
 QDF_STATUS ucfg_pkt_capture_init(void)
@@ -394,6 +416,14 @@ ucfg_pkt_capture_tx_completion_process(
 static inline void
 ucfg_pkt_capture_record_channel(struct wlan_objmgr_vdev *vdev)
 {
+}
+
+static inline
+QDF_STATUS ucfg_pkt_capture_send_config
+				(struct wlan_objmgr_vdev *vdev,
+				 enum pkt_capture_trigger_qos_config config)
+{
+	return QDF_STATUS_SUCCESS;
 }
 #endif /* WLAN_FEATURE_PKT_CAPTURE */
 #endif /* _WLAN_PKT_CAPTURE_UCFG_API_H_ */

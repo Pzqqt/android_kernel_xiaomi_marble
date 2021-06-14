@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -52,4 +52,17 @@ tgt_pkt_capture_unregister_ev_handler(struct wlan_objmgr_vdev *vdev);
 QDF_STATUS
 tgt_pkt_capture_send_mode(struct wlan_objmgr_vdev *vdev,
 			  enum pkt_capture_mode mode);
+
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
+/**
+ * tgt_pkt_capture_send_config() - send packet capture config to firmware
+ * @vdev: pointer to vdev object
+ * @config: packet capture config
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+tgt_pkt_capture_send_config(struct wlan_objmgr_vdev *vdev,
+			    enum pkt_capture_trigger_qos_config config);
+#endif
 #endif /* _WLAN_PKT_CAPTURE_TGT_API_H */
