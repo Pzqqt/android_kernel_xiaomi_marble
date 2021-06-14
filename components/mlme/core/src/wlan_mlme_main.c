@@ -1816,6 +1816,7 @@ static void mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_POST_INACTIVITY_ROAM_SCAN_PERIOD);
 	lfr->fw_akm_bitmap = 0;
 	lfr->enable_ft_im_roaming = cfg_get(psoc, CFG_FT_IM_ROAMING);
+	lfr->enable_ft_over_ds = !ENABLE_FT_OVER_DS;
 
 	mlme_init_roam_offload_cfg(psoc, lfr);
 	mlme_init_ese_cfg(psoc, lfr);

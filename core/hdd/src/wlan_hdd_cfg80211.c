@@ -6899,6 +6899,7 @@ const struct nla_policy wlan_hdd_wifi_config_policy[
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_NSS] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_CONCURRENT_STA_PRIMARY] = {
 							.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_FT_OVER_DS] = {.type = NLA_U8 },
 };
 
 static const struct nla_policy
@@ -7339,6 +7340,35 @@ static int hdd_set_roam_reason_vsie_status(struct hdd_adapter *adapter,
 	return -ENOTSUPP;
 }
 #endif
+
+static int hdd_set_ft_over_ds(struct hdd_adapter *adapter,
+			      const struct nlattr *attr)
+{
+	uint8_t ft_over_ds_enable;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct hdd_context *hdd_ctx = NULL;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx failure");
+		return -EINVAL;
+	}
+
+	ft_over_ds_enable = nla_get_u8(attr);
+
+	if (ft_over_ds_enable != 0 && ft_over_ds_enable != 1) {
+		hdd_err_rl("Invalid ft_over_ds_enable: %d", ft_over_ds_enable);
+		return -EINVAL;
+	}
+
+	status = ucfg_mlme_set_ft_over_ds(hdd_ctx->psoc, ft_over_ds_enable);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("set ft_over_ds failed");
+		return -EINVAL;
+	}
+
+	return status;
+}
 
 static int hdd_config_ldpc(struct hdd_adapter *adapter,
 			   const struct nlattr *attr)
@@ -8869,6 +8899,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_udp_qos_upgrade_threshold},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_CONCURRENT_STA_PRIMARY,
 	 hdd_set_primary_interface},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_FT_OVER_DS,
+	 hdd_set_ft_over_ds},
 };
 
 #ifdef WLAN_FEATURE_ELNA

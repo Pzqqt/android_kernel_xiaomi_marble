@@ -485,6 +485,8 @@ cm_roam_scan_offload_fill_lfr3_config(struct wlan_objmgr_vdev *vdev,
 	wlan_cm_get_psk_pmk(pdev, vdev_id,
 			    rso_config->rso_11r_info.psk_pmk,
 			    &rso_config->rso_11r_info.pmk_len);
+	rso_config->rso_11r_info.enable_ft_over_ds =
+		mlme_obj->cfg.lfr.enable_ft_over_ds;
 
 	cm_update_rso_adaptive_11r(&rso_config->rso_11r_info, rso_cfg);
 	cm_update_rso_ese_info(rso_cfg, rso_config);

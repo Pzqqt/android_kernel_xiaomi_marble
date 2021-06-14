@@ -2327,6 +2327,8 @@ wmi_fill_rso_tlvs(wmi_unified_t wmi_handle, uint8_t *buf,
 				src_11r_info->is_adaptive_11r;
 			roam_offload_11r->ft_im_for_deauth =
 				src_11r_info->enable_ft_im_roaming;
+			roam_offload_11r->ft_over_ds_enable =
+				src_11r_info->enable_ft_over_ds;
 
 			if (akm == WMI_AUTH_OPEN) {
 				/*

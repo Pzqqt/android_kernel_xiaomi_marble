@@ -1905,6 +1905,7 @@ struct wlan_mlme_lfr_cfg {
 	bool sae_single_pmk_feature_enabled;
 #endif
 	struct rso_config_params rso_user_config;
+	bool enable_ft_over_ds;
 };
 
 /**
