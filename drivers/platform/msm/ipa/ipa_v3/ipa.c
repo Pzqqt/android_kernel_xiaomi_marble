@@ -8778,8 +8778,7 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 		goto fail_wwan_init;
 	}
 
-	if (ipa3_ctx->rmnet_ctl_enable &&
-		ipa3_ctx->platform_type != IPA_PLAT_TYPE_APQ) {
+	if (ipa3_ctx->rmnet_ctl_enable) {
 		result = ipa3_rmnet_ctl_init();
 		if (result) {
 			IPAERR(":ipa3_rmnet_ctl_init err=%d\n", -result);
@@ -9159,6 +9158,8 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	ipa_drv_res->max_num_smmu_cb = IPA_SMMU_CB_MAX;
 	ipa_drv_res->ipa_endp_delay_wa_v2 = false;
 	ipa_drv_res->use_tput_est_ep = false;
+	ipa_drv_res->rmnet_ctl_enable = 0;
+	ipa_drv_res->rmnet_ll_enable = 0;
 
 	/* Get IPA HW Version */
 	result = of_property_read_u32(pdev->dev.of_node, "qcom,ipa-hw-ver",
@@ -9428,19 +9429,21 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	IPADBG(": Enable tx polling = %s\n", ipa_drv_res->tx_poll
 		? "True" : "False");
 
-	ipa_drv_res->rmnet_ctl_enable =
-		of_property_read_bool(pdev->dev.of_node,
-		"qcom,rmnet-ctl-enable");
-	IPADBG(": Enable rmnet ctl = %s\n",
-		ipa_drv_res->rmnet_ctl_enable
-		? "True" : "False");
+	if (ipa_drv_res->platform_type != IPA_PLAT_TYPE_APQ) {
+		ipa_drv_res->rmnet_ctl_enable =
+			of_property_read_bool(pdev->dev.of_node,
+			"qcom,rmnet-ctl-enable");
+		IPADBG(": Enable rmnet ctl = %s\n",
+			ipa_drv_res->rmnet_ctl_enable
+			? "True" : "False");
 
-	ipa_drv_res->rmnet_ll_enable =
-		of_property_read_bool(pdev->dev.of_node,
-		"qcom,rmnet-ll-enable");
-	IPADBG(": Enable rmnet ll = %s\n",
-		ipa_drv_res->rmnet_ll_enable
-		? "True" : "False");
+		ipa_drv_res->rmnet_ll_enable =
+			of_property_read_bool(pdev->dev.of_node,
+			"qcom,rmnet-ll-enable");
+		IPADBG(": Enable rmnet ll = %s\n",
+			ipa_drv_res->rmnet_ll_enable
+			? "True" : "False");
+	}
 
 	result = of_property_read_u32(pdev->dev.of_node,
 		"qcom,gsi-msi-addr",
