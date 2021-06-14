@@ -1449,7 +1449,7 @@ static int _sde_encoder_phys_cmd_wait_for_wr_ptr(
 		if (ctl && ctl->ops.get_start_state)
 			frame_pending = ctl->ops.get_start_state(ctl);
 
-		ret = frame_pending ? ret : 0;
+		ret = (frame_pending || sde_connector_esd_status(phys_enc->connector)) ? ret : 0;
 
 		/*
 		 * There can be few cases of ESD where CTL_START is cleared but
@@ -1521,8 +1521,7 @@ static int _sde_encoder_phys_cmd_handle_wr_ptr_timeout(
 
 	SDE_EVT32(DRMID(phys_enc->parent), switch_te, SDE_EVTLOG_FUNC_ENTRY);
 
-	if (sde_connector_esd_status(phys_enc->connector)) {
-		/* watchdog TE already set on esd status check failure */
+	if (sde_connector_panel_dead(phys_enc->connector)) {
 		ret = _sde_encoder_phys_cmd_wait_for_wr_ptr(phys_enc);
 	} else if (switch_te) {
 		SDE_DEBUG_CMDENC(cmd_enc,
