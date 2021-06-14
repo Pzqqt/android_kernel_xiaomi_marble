@@ -2846,10 +2846,17 @@ static void lim_handle_mon_switch_channel_rsp(struct pe_session *session,
 		return;
 
 	if (QDF_IS_STATUS_ERROR(status)) {
-		pe_err("Set channel failed for monitor mode");
-		wlan_vdev_mlme_sm_deliver_evt(session->vdev,
-					      WLAN_VDEV_SM_EV_START_REQ_FAIL,
-					      0, NULL);
+		enum wlan_vdev_sm_evt event = WLAN_VDEV_SM_EV_START_REQ_FAIL;
+
+		pe_err("Set channel failed for monitor mode vdev substate %d",
+			wlan_vdev_mlme_get_substate(session->vdev));
+
+		if (QDF_IS_STATUS_SUCCESS(
+		    wlan_vdev_is_restart_progress(session->vdev)))
+			event = WLAN_VDEV_SM_EV_RESTART_REQ_FAIL;
+
+		wlan_vdev_mlme_sm_deliver_evt(session->vdev, event, 0, NULL);
+
 		return;
 	}
 
