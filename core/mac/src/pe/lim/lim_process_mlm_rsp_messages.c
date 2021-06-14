@@ -2310,7 +2310,8 @@ void lim_handle_add_bss_rsp(struct mac_context *mac_ctx,
 			}
 			tx_ops = wlan_reg_get_tx_ops(mac_ctx->psoc);
 
-			lim_calculate_tpc(mac_ctx, session_entry, false);
+			lim_calculate_tpc(mac_ctx, session_entry, false, 0,
+					  false);
 
 			if (tx_ops->set_tpc_power)
 				tx_ops->set_tpc_power(mac_ctx->psoc,
@@ -2793,7 +2794,7 @@ static void lim_process_switch_channel_join_req(
 			goto error;
 		}
 
-		lim_calculate_tpc(mac_ctx, session_entry, false);
+		lim_calculate_tpc(mac_ctx, session_entry, false, 0, false);
 
 		if (tx_ops->set_tpc_power)
 			tx_ops->set_tpc_power(mac_ctx->psoc,

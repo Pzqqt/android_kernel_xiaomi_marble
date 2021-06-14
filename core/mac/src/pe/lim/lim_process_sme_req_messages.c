@@ -2638,6 +2638,8 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 				&ps_global_info->ps_params[session->vdev_id];
 	uint32_t join_timeout;
 	uint8_t programmed_country[REG_ALPHA2_LEN + 1];
+	enum reg_6g_ap_type power_type_6g;
+	bool ctry_code_match;
 
 	/*
 	 * Update the capability here itself as this is used in
@@ -2714,29 +2716,17 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 			pe_debug("Channel is 6G but country IE not present");
 		wlan_reg_read_current_country(mac_ctx->psoc,
 					      programmed_country);
-		if (qdf_mem_cmp(ie_struct->Country.country, programmed_country,
-				REG_ALPHA2_LEN)) {
-			pe_debug("Country IE:%c%c, STA country:%c%c",
-				  ie_struct->Country.country[0],
-				  ie_struct->Country.country[1],
-				  programmed_country[0],
-				  programmed_country[1]);
-			session->same_ctry_code = false;
-			if (wlan_reg_is_us(programmed_country)) {
-				pe_err("US VLP not in place yet, connection not allowed");
-				qdf_mem_free(ie_struct);
-				return QDF_STATUS_E_NOSUPPORT;
-			}
-			if (wlan_reg_is_etsi(programmed_country)) {
-				pe_debug("STA ctry:%c%c, doesn't match with AP ctry, switch to VLP",
-					  programmed_country[0],
-					  programmed_country[1]);
-				session->ap_power_type_6g =
-							REG_VERY_LOW_POWER_AP;
-			}
-		} else {
-			session->same_ctry_code = true;
+		status = wlan_reg_get_6g_power_type_for_ctry(
+					ie_struct->Country.country,
+					programmed_country, &power_type_6g,
+					&ctry_code_match);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			qdf_mem_free(ie_struct);
+			return QDF_STATUS_E_NOSUPPORT;
 		}
+		session->ap_power_type_6g = power_type_6g;
+		session->same_ctry_code = ctry_code_match;
+
 		lim_iterate_triplets(ie_struct->Country);
 
 		if (!ie_struct->num_transmit_power_env ||
@@ -4663,7 +4653,9 @@ uint8_t lim_get_max_tx_power(struct mac_context *mac,
 
 void lim_calculate_tpc(struct mac_context *mac,
 		       struct pe_session *session,
-		       bool is_pwr_constraint_absolute)
+		       bool is_pwr_constraint_absolute,
+		       uint8_t ap_pwr_type,
+		       bool ctry_code_match)
 {
 	bool is_psd_power = false;
 	bool is_tpe_present = false, is_6ghz_freq = false;
@@ -4677,11 +4669,6 @@ void lim_calculate_tpc(struct mac_context *mac,
 	struct vdev_mlme_obj *mlme_obj;
 	uint8_t tpe_power;
 	bool skip_tpe = false;
-
-	if (LIM_IS_STA_ROLE(session) && !session->lim_join_req) {
-		pe_err("Join Request is NULL");
-		return;
-	}
 
 	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(session->vdev);
 	if (!mlme_obj) {
@@ -4708,11 +4695,17 @@ void lim_calculate_tpc(struct mac_context *mac,
 	} else {
 		is_6ghz_freq = true;
 		is_psd_power = wlan_reg_is_6g_psd_power(mac->pdev);
+		/* Power mode calculation for 6G*/
+		ap_power_type_6g = session->ap_power_type;
 		if (LIM_IS_STA_ROLE(session)) {
-			if (session->same_ctry_code)
-				ap_power_type_6g = session->ap_power_type;
-			else
-				ap_power_type_6g = session->ap_power_type_6g;
+			if (!session->lim_join_req) {
+				if (!ctry_code_match)
+					ap_power_type_6g = ap_pwr_type;
+			} else {
+				if (!session->same_ctry_code)
+					ap_power_type_6g =
+						session->ap_power_type_6g;
+			}
 		}
 	}
 
