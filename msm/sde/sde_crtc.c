@@ -1796,6 +1796,11 @@ static void _sde_crtc_blend_setup(struct drm_crtc *crtc,
 		return;
 	}
 
+	if (test_bit(SDE_CRTC_DIRTY_DIM_LAYERS, &sde_crtc->revalidate_mask)) {
+		set_bit(SDE_CRTC_DIRTY_DIM_LAYERS, sde_crtc_state->dirty);
+		clear_bit(SDE_CRTC_DIRTY_DIM_LAYERS, &sde_crtc->revalidate_mask);
+	}
+
 	for (i = 0; i < sde_crtc->num_mixers; i++) {
 		if (!mixer[i].hw_lm) {
 			SDE_ERROR("invalid lm or ctl assigned to mixer\n");
@@ -4245,6 +4250,7 @@ void sde_crtc_reset_sw_state(struct drm_crtc *crtc)
 {
 	struct sde_crtc_state *cstate = to_sde_crtc_state(crtc->state);
 	struct drm_plane *plane;
+	struct sde_crtc *sde_crtc = to_sde_crtc(crtc);
 
 	/* mark planes, mixers, and other blocks dirty for next update */
 	drm_atomic_crtc_for_each_plane(plane, crtc)
@@ -4254,7 +4260,7 @@ void sde_crtc_reset_sw_state(struct drm_crtc *crtc)
 	sde_crtc_clear_cached_mixer_cfg(crtc);
 
 	/* mark other properties which need to be dirty for next update */
-	set_bit(SDE_CRTC_DIRTY_DIM_LAYERS, cstate->dirty);
+	set_bit(SDE_CRTC_DIRTY_DIM_LAYERS, &sde_crtc->revalidate_mask);
 	if (cstate->num_ds_enabled)
 		set_bit(SDE_CRTC_DIRTY_DEST_SCALER, cstate->dirty);
 }
