@@ -2793,6 +2793,15 @@ wlan_mlme_get_roaming_offload(struct wlan_objmgr_psoc *psoc,
 #endif
 
 /**
+ * wlan_mlme_set_ft_over_ds() - Update ft_over_ds
+ * @psoc: pointer to psoc object
+ * @ft_over_ds_enable: value of ft_over_ds
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_mlme_set_ft_over_ds(struct wlan_objmgr_psoc *psoc,
+				    uint8_t ft_over_ds_enable);
+/**
  * wlan_mlme_get_dfs_chan_ageout_time() - Get the DFS Channel ageout time
  * @psoc: pointer to psoc object
  * @dfs_chan_ageout_time: output pointer to hold configured value of DFS

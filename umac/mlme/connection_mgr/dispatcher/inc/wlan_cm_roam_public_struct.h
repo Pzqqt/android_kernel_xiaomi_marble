@@ -406,6 +406,7 @@ struct rso_roam_policy_params {
 };
 
 #define DEFAULT_RSSI_DB_GAP     30  /* every 30 dbm for one category */
+#define ENABLE_FT_OVER_DS      1   /* enable ft_over_ds */
 
 /**
  * struct rso_params - global RSO params
@@ -1241,6 +1242,7 @@ struct wlan_rso_11i_params {
  * @rokh_id_length: r0kh id length
  * @rokh_id: r0kh id
  * @mdid: mobility domain info
+ * @enable_ft_over_ds: Flag to enable/disable FT-over-DS
  */
 struct wlan_rso_11r_params {
 	bool is_11r_assoc;
@@ -1251,6 +1253,7 @@ struct wlan_rso_11r_params {
 	uint32_t r0kh_id_length;
 	uint8_t r0kh_id[WMI_ROAM_R0KH_ID_MAX_LEN];
 	struct mobility_domain_info mdid;
+	bool enable_ft_over_ds;
 };
 
 /**

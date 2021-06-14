@@ -4392,6 +4392,20 @@ wlan_mlme_get_idle_roam_band(struct wlan_objmgr_psoc *psoc, uint32_t *val)
 #endif
 
 QDF_STATUS
+wlan_mlme_set_ft_over_ds(struct wlan_objmgr_psoc *psoc,
+			 uint8_t ft_over_ds_enable)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
+
+	mlme_obj->cfg.lfr.enable_ft_over_ds = ft_over_ds_enable;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
 wlan_mlme_get_dfs_chan_ageout_time(struct wlan_objmgr_psoc *psoc,
 				   uint8_t *dfs_chan_ageout_time)
 {
