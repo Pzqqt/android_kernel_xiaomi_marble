@@ -383,9 +383,18 @@ QDF_STATUS
 QDF_STATUS
 (*extract_roam_msg_info)(wmi_unified_t wmi_handle, void *evt_buf,
 			 struct roam_msg_info *dst, uint8_t idx);
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+QDF_STATUS
+(*extract_roam_sync_event)(wmi_unified_t wmi_handle, void *evt_buf,
+			   uint32_t len,
+			   uint8_t *vdev_id);
 
+QDF_STATUS
+(*extract_roam_sync_frame_event)(wmi_unified_t wmi_handle, void *event,
+				 uint32_t len,
+				 struct roam_synch_frame_ind *frame_ptr);
+#endif /* ROAM_TARGET_IF_CONVERGENCE */
 #endif
-
 QDF_STATUS (*send_vdev_create_cmd)(wmi_unified_t wmi_handle,
 				 uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				 struct vdev_create_params *param);
