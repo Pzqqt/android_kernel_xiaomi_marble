@@ -16839,6 +16839,7 @@ typedef enum event_type_e {
     WOW_DFS_CAC_COMPLETE_EVENT,           /* 32 +  8 */
     WOW_VDEV_DISCONNECT_EVENT,            /* 32 +  9 */
     WOW_TWT_EVENT,                        /* 32 + 10 */
+    WOW_DCS_INTERFERENCE_DET,             /* 32 + 11 */
 } WOW_WAKE_EVENT_TYPE;
 
 typedef enum wake_reason_e {
@@ -16913,6 +16914,7 @@ typedef enum wake_reason_e {
     WOW_REASON_ERR_PKT_TRIGGERED_WAKEUP,
     WOW_REASON_TWT,
     WOW_REASON_FATAL_EVENT_WAKE,
+    WOW_REASON_DCS_INT_DET,
 
     /* add new WOW_REASON_ defs before this line */
     WOW_REASON_MAX,
