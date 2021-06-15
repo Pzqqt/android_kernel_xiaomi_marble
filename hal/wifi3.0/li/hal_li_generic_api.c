@@ -1596,6 +1596,7 @@ void hal_hw_txrx_default_ops_attach_li(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_rx_tlv_sgi_get = hal_rx_tlv_sgi_get_li;
 	hal_soc->ops->hal_rx_tlv_rate_mcs_get = hal_rx_tlv_rate_mcs_get_li;
 	hal_soc->ops->hal_rx_tlv_get_pkt_type = hal_rx_tlv_get_pkt_type_li;
+	hal_soc->ops->hal_rx_tlv_get_pn_num = hal_rx_tlv_get_pn_num_li;
 	hal_soc->ops->hal_rx_tlv_mic_err_get = hal_rx_tlv_mic_err_get_li;
 	hal_soc->ops->hal_rx_tlv_decrypt_err_get =
 			hal_rx_tlv_decrypt_err_get_li;
