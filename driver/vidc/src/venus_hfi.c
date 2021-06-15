@@ -2356,16 +2356,14 @@ static int __interface_queues_init(struct msm_vidc_core *core)
 	struct msm_vidc_alloc alloc;
 	struct msm_vidc_map map;
 	int offset = 0;
-	u32 q_size;
 	u32 i;
 
 	d_vpr_h("%s()\n", __func__);
-	q_size = SHARED_QSIZE - ALIGNED_SFR_SIZE - ALIGNED_QDSS_SIZE;
 
 	memset(&alloc, 0, sizeof(alloc));
 	alloc.type       = MSM_VIDC_BUF_QUEUE;
 	alloc.region     = MSM_VIDC_NON_SECURE;
-	alloc.size       = q_size;
+	alloc.size       = TOTAL_QSIZE;
 	alloc.secure     = false;
 	alloc.map_kernel = true;
 	rc = msm_vidc_memory_alloc(core, &alloc);
@@ -2879,8 +2877,15 @@ int venus_hfi_core_deinit(struct msm_vidc_core *core)
 	__resume(core);
 	__flush_debug_queue(core, core->packet, core->packet_size);
 	__disable_subcaches(core);
-	__interface_queues_deinit(core);
 	__unload_fw(core);
+	/**
+	 * coredump need to be called after firmware unload, coredump also
+	 * copying queues memory. So need to be called before queues deinit.
+	 */
+	if (msm_vidc_fw_dump)
+		fw_coredump(core);
+	__interface_queues_deinit(core);
+
 	return 0;
 }
 

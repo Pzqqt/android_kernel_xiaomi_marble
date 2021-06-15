@@ -375,15 +375,23 @@ static int handle_session_error(struct msm_vidc_inst *inst,
 	return rc;
 }
 
-static void fw_coredump(struct platform_device *pdev)
+void fw_coredump(struct msm_vidc_core *core)
 {
 	int rc = 0;
+	struct platform_device *pdev;
 	struct device_node *node = NULL;
 	struct resource res = {0};
 	phys_addr_t mem_phys = 0;
 	size_t res_size = 0;
 	void *mem_va = NULL;
-	void *data = NULL;
+	char *data = NULL;
+	u64 total_size;
+
+	if (!core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return;
+	}
+	pdev = core->pdev;
 
 	node = of_parse_phandle(pdev->dev.of_node, "memory-region", 0);
 	if (!node) {
@@ -407,16 +415,22 @@ static void fw_coredump(struct platform_device *pdev)
 		d_vpr_e("%s: unable to remap firmware memory\n", __func__);
 		return;
 	}
+	total_size = res_size + TOTAL_QSIZE;
 
-	data = vmalloc(res_size);
+	data = vmalloc(total_size);
 	if (!data) {
 		memunmap(mem_va);
 		return;
 	}
 
+	/* copy firmware dump */
 	memcpy(data, mem_va, res_size);
 	memunmap(mem_va);
-	dev_coredumpv(&pdev->dev, data, res_size, GFP_KERNEL);
+
+	/* copy queues(cmd, msg, dbg) dump(along with headers) */
+	memcpy(data + res_size, (char *)core->iface_q_table.align_virtual_addr, TOTAL_QSIZE);
+
+	dev_coredumpv(&pdev->dev, data, total_size, GFP_KERNEL);
 }
 
 int handle_system_error(struct msm_vidc_core *core,
@@ -427,8 +441,6 @@ int handle_system_error(struct msm_vidc_core *core,
 	print_sfr_message(core);
 	venus_hfi_noc_error_info(core);
 	msm_vidc_core_deinit(core, true);
-	if (msm_vidc_fw_dump)
-		fw_coredump(core->pdev);
 
 	return 0;
 }

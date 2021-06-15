@@ -21,5 +21,6 @@ int handle_session_response_work(struct msm_vidc_inst *inst,
 	struct response_work *work);
 int handle_system_error(struct msm_vidc_core *core,
 	struct hfi_packet *pkt);
+void fw_coredump(struct msm_vidc_core *core);
 
 #endif // __VENUS_HFI_RESPONSE_H__
