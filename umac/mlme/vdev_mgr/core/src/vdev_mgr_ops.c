@@ -66,6 +66,9 @@ static QDF_STATUS vdev_mgr_create_param_update(
 	param->mbssid_flags = mbss->mbssid_flags;
 	param->vdevid_trans = mbss->vdevid_trans;
 	param->special_vdev_mode = mlme_obj->mgmt.generic.special_vdev_mode;
+#ifdef WLAN_FEATURE_11BE_MLO
+	WLAN_ADDR_COPY(param->mlo_mac, wlan_vdev_mlme_get_mldaddr(vdev));
+#endif
 
 	return QDF_STATUS_SUCCESS;
 }
