@@ -64,5 +64,24 @@ tgt_pkt_capture_send_mode(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS
 tgt_pkt_capture_send_config(struct wlan_objmgr_vdev *vdev,
 			    enum pkt_capture_trigger_qos_config config);
+
+/**
+ * tgt_pkt_capture_smu_event() - Receive smart monitor event from firmware
+ * @psoc: pointer to psoc
+ * @param: smart monitor event params
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+tgt_pkt_capture_smu_event(struct wlan_objmgr_psoc *psoc,
+			  struct smu_event_params *param);
+#else
+static inline QDF_STATUS
+tgt_pkt_capture_smu_event(struct wlan_objmgr_psoc *psoc,
+			  struct smu_event_params *param)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif
+
 #endif /* _WLAN_PKT_CAPTURE_TGT_API_H */
