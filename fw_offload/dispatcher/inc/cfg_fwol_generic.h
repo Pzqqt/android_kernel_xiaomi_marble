@@ -794,7 +794,7 @@
 		"g_enable_ilp", \
 		0, \
 		3, \
-		2, \
+		1, \
 		CFG_VALUE_OR_DEFAULT, \
 		"ILP configuration")
 
