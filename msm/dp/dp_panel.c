@@ -15,15 +15,12 @@
 #define DP_PANEL_DEFAULT_BPP 24
 #define DP_MAX_DS_PORT_COUNT 1
 
+#define DSC_TGT_BPP 8
 #define DPRX_FEATURE_ENUMERATION_LIST 0x2210
 #define DPRX_EXTENDED_DPCD_FIELD 0x2200
 #define VSC_SDP_EXTENSION_FOR_COLORIMETRY_SUPPORTED BIT(3)
 #define VSC_EXT_VESA_SDP_SUPPORTED BIT(4)
 #define VSC_EXT_VESA_SDP_CHAINING_SUPPORTED BIT(5)
-
-#define DP_COMPRESSION_RATIO_2_TO_1 2
-#define DP_COMPRESSION_RATIO_3_TO_1 3
-#define DP_COMPRESSION_RATIO_NONE 1
 
 enum dp_panel_hdr_pixel_encoding {
 	RGB,
@@ -1120,8 +1117,9 @@ static void dp_panel_calc_tu_parameters(struct dp_panel *dp_panel,
 	in.fec_en = dp_panel->fec_en;
 	in.num_of_dsc_slices = pinfo->comp_info.dsc_info.slice_per_pkt;
 
-	if (pinfo->comp_info.comp_ratio)
-		in.compress_ratio = pinfo->comp_info.comp_ratio * 100;
+	if (pinfo->comp_info.enabled)
+		in.compress_ratio = mult_frac(100, pinfo->comp_info.src_bpp,
+				pinfo->comp_info.tgt_bpp);
 
 	_dp_panel_calc_tu(&in, tu_table);
 }
@@ -1175,19 +1173,18 @@ static void dp_panel_config_tr_unit(struct dp_panel *dp_panel)
 	catalog->update_transfer_unit(catalog);
 }
 
-static void dp_panel_get_dto_params(u8 comp_ratio, u32 *num, u32 *denom,
-		u32 org_bpp)
+static void dp_panel_get_dto_params(u32 src_bpp, u32 tgt_bpp, u32 *num, u32 *denom)
 {
-	if ((comp_ratio == 2) && (org_bpp == 24)) {
+	if ((tgt_bpp == 12) && (src_bpp == 24)) {
 		*num = 1;
 		*denom = 2;
-	} else if ((comp_ratio == 2) && (org_bpp == 30)) {
+	} else if ((tgt_bpp == 15) && (src_bpp == 30)) {
 		*num = 5;
 		*denom = 8;
-	} else if ((comp_ratio == 3) && (org_bpp == 24)) {
+	} else if ((tgt_bpp == 8) && ((src_bpp == 24) || (src_bpp == 30))) {
 		*num = 1;
 		*denom = 3;
-	} else if ((comp_ratio == 3) && (org_bpp == 30)) {
+	} else if ((tgt_bpp == 10) && (src_bpp == 30)) {
 		*num = 5;
 		*denom = 12;
 	} else {
@@ -1237,17 +1234,16 @@ static void dp_panel_dsc_prepare_pps_packet(struct dp_panel *dp_panel)
 	}
 }
 
-static void _dp_panel_dsc_get_num_extra_pclk(struct msm_display_dsc_info *dsc,
-				u8 ratio)
+static void _dp_panel_dsc_get_num_extra_pclk(struct msm_compression_info *comp_info)
 {
 	unsigned int dto_n = 0, dto_d = 0, remainder;
 	int ack_required, last_few_ack_required, accum_ack;
 	int last_few_pclk, last_few_pclk_required;
+	struct msm_display_dsc_info *dsc = &comp_info->dsc_info;
 	int start, temp, line_width = dsc->config.pic_width/2;
 	s64 temp1_fp, temp2_fp;
 
-	dp_panel_get_dto_params(ratio, &dto_n, &dto_d,
-			dsc->config.bits_per_component * 3);
+	dp_panel_get_dto_params(comp_info->src_bpp, comp_info->tgt_bpp, &dto_n, &dto_d);
 
 	ack_required = dsc->pclk_per_line;
 
@@ -1325,8 +1321,7 @@ static void _dp_panel_dsc_bw_overhead_calc(struct dp_panel *dp_panel,
 }
 
 static void dp_panel_dsc_pclk_param_calc(struct dp_panel *dp_panel,
-		struct msm_display_dsc_info *dsc,
-		u8 ratio,
+		struct msm_compression_info *comp_info,
 		struct dp_display_mode *dp_mode)
 {
 	int comp_ratio = 100, intf_width;
@@ -1335,6 +1330,7 @@ static void dp_panel_dsc_pclk_param_calc(struct dp_panel *dp_panel,
 	s64 numerator_fp, denominator_fp;
 	s64 dsc_byte_count_fp;
 	u32 dsc_byte_count, temp1, temp2;
+	struct msm_display_dsc_info *dsc = &comp_info->dsc_info;
 
 	intf_width = dp_mode->timing.h_active;
 	if (!dsc || !dsc->config.slice_width || !dsc->slice_per_pkt ||
@@ -1345,8 +1341,7 @@ static void dp_panel_dsc_pclk_param_calc(struct dp_panel *dp_panel,
 	slice_per_intf = DIV_ROUND_UP(intf_width,
 			dsc->config.slice_width);
 
-	if (ratio)
-		comp_ratio = ratio * 100;
+	comp_ratio = mult_frac(100, comp_info->src_bpp, comp_info->tgt_bpp);
 
 	temp1_fp = drm_fixp_from_fraction(comp_ratio, 100);
 	temp2_fp = drm_fixp_from_fraction(slice_per_pkt * 8, 1);
@@ -1367,7 +1362,7 @@ static void dp_panel_dsc_pclk_param_calc(struct dp_panel *dp_panel,
 	temp2_fp = drm_fixp_mul(dsc_byte_count_fp, temp1_fp);
 	dsc->pclk_per_line = fixp2int_ceil(temp2_fp);
 
-	_dp_panel_dsc_get_num_extra_pclk(dsc, ratio);
+	_dp_panel_dsc_get_num_extra_pclk(comp_info);
 	dsc->pclk_per_line--;
 
 	_dp_panel_dsc_bw_overhead_calc(dp_panel, dsc, dp_mode, dsc_byte_count);
@@ -1570,13 +1565,16 @@ static int dp_panel_dsc_prepare_basic_params(
 
 	comp_info->dsc_info.config.bits_per_component =
 		(dp_mode->timing.bpp / 3);
-	comp_info->dsc_info.config.bits_per_pixel =
-		comp_info->dsc_info.config.bits_per_component << 4;
+	comp_info->dsc_info.config.bits_per_pixel = DSC_TGT_BPP << 4;
 	comp_info->dsc_info.config.slice_count =
 		DIV_ROUND_UP(dp_mode->timing.h_active, slice_width);
 
 	comp_info->comp_type = MSM_DISPLAY_COMPRESSION_DSC;
-	comp_info->comp_ratio = DP_COMPRESSION_RATIO_3_TO_1;
+	comp_info->tgt_bpp = DSC_TGT_BPP;
+	comp_info->src_bpp = dp_mode->timing.bpp;
+	comp_info->comp_ratio = dp_mode->timing.bpp / DSC_TGT_BPP;
+	comp_info->enabled = true;
+
 	return 0;
 }
 
@@ -1941,7 +1939,7 @@ static u32 dp_panel_get_supported_bpp(struct dp_panel *dp_panel,
 			else if (bpp == 24 && !(dp_panel->sink_dsc_caps.color_depth & DP_DSC_8_BPC))
 				continue;
 
-			mode_bitrate = mult_frac(mode_pclk_khz, bpp, 3);
+			mode_bitrate = mode_pclk_khz * DSC_TGT_BPP;
 		} else {
 			mode_bitrate = mode_pclk_khz * bpp;
 		}
@@ -2205,33 +2203,18 @@ end:
 
 static u32 _dp_panel_calc_be_in_lane(struct dp_panel *dp_panel)
 {
-	struct dp_panel_info *pinfo;
 	struct msm_compression_info *comp_info;
-	u32 dsc_htot_byte_cnt, mod_result;
-	u32 numerator, denominator;
-	s64 temp_fp;
+	u32 htotal, mod_result;
 	u32 be_in_lane = 10;
 
-	pinfo = &dp_panel->pinfo;
-	comp_info = &pinfo->comp_info;
+	comp_info = &dp_panel->pinfo.comp_info;
 
 	if (!dp_panel->mst_state)
 		return be_in_lane;
 
-	if (pinfo->comp_info.comp_ratio == DP_COMPRESSION_RATIO_2_TO_1)
-		denominator = 16; /* 2 * bits-in-byte */
-	else if (pinfo->comp_info.comp_ratio == DP_COMPRESSION_RATIO_3_TO_1)
-		denominator = 24; /* 3 * bits-in-byte */
-	else
-		denominator = 8;
+	htotal = comp_info->dsc_info.bytes_per_pkt * comp_info->dsc_info.pkt_per_line;
 
-	numerator = (pinfo->h_active + pinfo->h_back_porch +
-				pinfo->h_front_porch + pinfo->h_sync_width) *
-				pinfo->bpp;
-	temp_fp = drm_fixp_from_fraction(numerator, denominator);
-	dsc_htot_byte_cnt = drm_fixp2int_ceil(temp_fp);
-
-	mod_result = dsc_htot_byte_cnt % 12;
+	mod_result = htotal % 12;
 	if (mod_result == 0)
 		be_in_lane = 8;
 	else if (mod_result <= 3)
@@ -2283,8 +2266,8 @@ static void dp_panel_config_dsc(struct dp_panel *dp_panel, bool enable)
 		dsc->dsc_en = true;
 		dsc->dto_en = true;
 		dsc->continuous_pps = dp_panel->dsc_continuous_pps;
-		dp_panel_get_dto_params(comp_info->comp_ratio, &dsc->dto_n,
-				&dsc->dto_d, pinfo->bpp);
+		dp_panel_get_dto_params(comp_info->src_bpp, comp_info->tgt_bpp, &dsc->dto_n,
+				&dsc->dto_d);
 	} else {
 		dsc->dsc_en = false;
 		dsc->dto_en = false;
@@ -3000,15 +2983,15 @@ static void dp_panel_convert_to_dp_mode(struct dp_panel *dp_panel,
 	if (!dp_mode->timing.bpp)
 		dp_mode->timing.bpp = default_bpp;
 
-	dp_mode->timing.bpp = dp_panel_get_mode_bpp(dp_panel,
-			dp_mode->timing.bpp, dp_mode->timing.pixel_clk_khz);
-
 	dp_mode->timing.widebus_en = dp_panel->widebus_en;
 	dp_mode->timing.dsc_overhead_fp = 0;
 
 	comp_info = &dp_mode->timing.comp_info;
-	comp_info->comp_ratio = DP_COMPRESSION_RATIO_NONE;
+	comp_info->src_bpp = default_bpp;
+	comp_info->tgt_bpp = default_bpp;
 	comp_info->comp_type = MSM_DISPLAY_COMPRESSION_NONE;
+	comp_info->comp_ratio = 1;
+	comp_info->enabled = false;
 
 	/* As YUV was not supported now, so set the default format to RGB */
 	dp_mode->output_format = DP_OUTPUT_FORMAT_RGB;
@@ -3024,6 +3007,9 @@ static void dp_panel_convert_to_dp_mode(struct dp_panel *dp_panel,
 		dp_mode->output_format = DP_OUTPUT_FORMAT_YCBCR420;
 		DP_DEBUG("YCBCR420 was not supported");
 	}
+
+	dp_mode->timing.bpp = dp_panel_get_mode_bpp(dp_panel,
+			dp_mode->timing.bpp, dp_mode->timing.pixel_clk_khz);
 
 	if (dp_panel->dsc_en && dsc_cap) {
 		if (dp_panel_dsc_prepare_basic_params(comp_info,
@@ -3045,10 +3031,7 @@ static void dp_panel_convert_to_dp_mode(struct dp_panel *dp_panel,
 			return;
 		}
 
-		dp_panel_dsc_pclk_param_calc(dp_panel,
-				&comp_info->dsc_info,
-				comp_info->comp_ratio,
-				dp_mode);
+		dp_panel_dsc_pclk_param_calc(dp_panel, comp_info, dp_mode);
 	}
 	dp_mode->fec_overhead_fp = dp_panel->fec_overhead_fp;
 }

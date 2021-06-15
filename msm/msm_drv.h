@@ -681,17 +681,22 @@ struct msm_display_vdc_info {
 
 /**
  * struct msm_compression_info - defined panel compression
+ * @enabled:          enabled/disabled
  * @comp_type:        type of compression supported
  * @comp_ratio:       compression ratio
+ * @src_bpp:          bits per pixel before compression
+ * @tgt_bpp:          bits per pixel after compression
  * @dsc_info:         dsc configuration if the compression
  *                    supported is DSC
  * @vdc_info:         vdc configuration if the compression
  *                    supported is VDC
  */
 struct msm_compression_info {
+	bool enabled;
 	enum msm_display_compression_type comp_type;
 	u32 comp_ratio;
-
+	u32 src_bpp;
+	u32 tgt_bpp;
 	union{
 		struct msm_display_dsc_info dsc_info;
 		struct msm_display_vdc_info vdc_info;

@@ -1384,7 +1384,7 @@ static void dp_display_update_dsc_resources(struct dp_display_private *dp,
 
 	if (enable) {
 		if (panel->pinfo.comp_info.comp_type == MSM_DISPLAY_COMPRESSION_DSC &&
-				(panel->pinfo.comp_info.comp_ratio > 1)) {
+				(panel->pinfo.comp_info.enabled)) {
 			rc = msm_get_dsc_count(priv, panel->pinfo.h_active,
 					&dsc_blk_cnt);
 			if (rc) {
@@ -2719,7 +2719,7 @@ static int dp_display_validate_link_clock(struct dp_display_private *dp,
 	bool dsc_en;
 	int rate;
 
-	dsc_en = (dp_mode.timing.comp_info.comp_ratio > 1) ? true : false;
+	dsc_en = dp_mode.timing.comp_info.enabled;
 	mode_bpp = dsc_en ?
 		DSC_BPP(dp_mode.timing.comp_info.dsc_info.config)
 		: dp_mode.timing.bpp;
