@@ -653,6 +653,7 @@ struct pe_session {
 	tDot11fIEeht_op eht_op;
 #ifdef WLAN_FEATURE_11BE_MLO
 	struct mlo_link_ie_info mlo_link_info;
+	struct mlo_partner_info ml_partner_info;
 #endif
 #endif /* WLAN_FEATURE_11BE */
 };

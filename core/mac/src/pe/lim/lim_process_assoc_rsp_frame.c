@@ -741,6 +741,34 @@ lim_update_iot_aggr_sz(struct mac_context *mac_ctx, uint8_t *ie_ptr,
 		pe_err("Failed to set iot amsdu size: %d", ret);
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+static void lim_update_ml_partner_info(struct pe_session *session_entry,
+				       tpSirAssocRsp assoc_rsp)
+{
+	int i;
+	tDot11fIEmlo_ie ie;
+	struct mlo_partner_info partner_info;
+
+	if (!assoc_rsp || !session_entry)
+		return;
+
+	ie = assoc_rsp->mlo_ie.mlo_ie;
+	partner_info = session_entry->ml_partner_info;
+
+	partner_info.num_partner_links = mlo_ie.num_sta_profile;
+	pe_err("copying partner info from join req to join rsp, num_partner_links %d",
+	       partner_info.num_partner_links);
+
+	for (i = 0; i < partner_info.num_partner_links; i++) {
+		partner_info.partner_link_info[i].link_id =
+			ie.sta_profile[i].link_id;
+		qdf_mem_copy(&partner_info.partner_link_info[i].link_addr,
+			     ie.sta_profile[i].sta_mac_addr.info.sta_mac_addr,
+			     QDF_MAC_ADDR_SIZE);
+	}
+}
+#endif
+
 /**
  * lim_process_assoc_rsp_frame() - Processes assoc response
  * @mac_ctx: Pointer to Global MAC structure
@@ -790,7 +818,8 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 		return;
 	}
 
-	if (lim_is_roam_synch_in_progress(mac_ctx->psoc, session_entry)) {
+	if (lim_is_roam_synch_in_progress(mac_ctx->psoc, session_entry) ||
+	    wlan_vdev_mlme_is_mlo_link_vdev(session_entry->vdev)) {
 		hdr = (tpSirMacMgmtHdr)rx_pkt_info;
 		frame_len = reassoc_frame_len - SIR_MAC_HDR_LEN_3A;
 		rssi = 0;
@@ -876,7 +905,8 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 		return;
 	}
 	/* Get pointer to Re/Association Response frame body */
-	if (lim_is_roam_synch_in_progress(mac_ctx->psoc, session_entry))
+	if (lim_is_roam_synch_in_progress(mac_ctx->psoc, session_entry) ||
+	    wlan_vdev_mlme_is_mlo_link_vdev(session_entry->vdev))
 		body =  rx_pkt_info + SIR_MAC_HDR_LEN_3A;
 	else
 		body = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
@@ -916,7 +946,9 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 			session_entry->assocRspLen = frame_len;
 		}
 	}
-
+#ifdef WLAN_FEATURE_11BE_MLO
+	lim_update_ml_partner_info(session_entry, assoc_rsp);
+#endif
 	lim_update_ric_data(mac_ctx, session_entry, assoc_rsp);
 
 	lim_set_r0kh(assoc_rsp, session_entry);
@@ -1257,6 +1289,13 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 			beacon,
 			&session_entry->lim_join_req->bssDescription, true,
 			 session_entry)) {
+#ifdef WLAN_FEATURE_11BE_MLO
+		if (wlan_vdev_mlme_is_mlo_link_vdev(session_entry->vdev)) {
+			pe_err("sending assoc cnf for MLO link vdev");
+			lim_post_sme_message(mac_ctx, LIM_MLM_ASSOC_CNF,
+					     (uint32_t *)&assoc_cnf);
+		}
+#endif
 		clean_up_ft_sha384(assoc_rsp, sha384_akm);
 		qdf_mem_free(assoc_rsp);
 		qdf_mem_free(beacon);

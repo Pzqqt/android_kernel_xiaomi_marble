@@ -44,6 +44,8 @@
 #include "wlan_pkt_capture_ucfg_api.h"
 #include "wlan_lmac_if_def.h"
 #include <lim_mlo.h>
+#include "wlan_mlo_mgr_sta.h"
+#include "../../../../qca-wifi-host-cmn/umac/mlo_mgr/inc/utils_mlo.h"
 
 #define MAX_SUPPORTED_PEERS_WEP 16
 
@@ -2164,6 +2166,12 @@ void lim_process_sta_add_bss_rsp_pre_assoc(struct mac_context *mac_ctx,
 		MTRACE(mac_trace(mac_ctx, TRACE_CODE_SME_STATE,
 			session_entry->peSessionId,
 			session_entry->limSmeState));
+#ifdef WLAN_FEATURE_11BE_MLO
+		if (wlan_vdev_mlme_is_mlo_link_vdev(session_entry->vdev)) {
+			pe_err("vdev is an MLO link, skip Auth");
+			return;
+		}
+#endif
 		lim_post_mlm_message(mac_ctx, LIM_MLM_AUTH_REQ,
 			(uint32_t *) pMlmAuthReq);
 		return;
@@ -2715,6 +2723,63 @@ static void lim_process_switch_channel_join_req(
 	/* Apply previously set configuration at HW */
 	lim_apply_configuration(mac_ctx, session_entry);
 
+/* WLAN_FEATURE_11BE_MLO flag will be removed
+ * once the MLO testing is complete
+ */
+#ifdef WLAN_FEATURE_11BE_MLO
+	if (wlan_vdev_mlme_is_mlo_link_vdev(session_entry->vdev)) {
+		struct element_info *assoc_rsp = NULL;
+		struct qdf_mac_addr sta_link_addr;
+
+		mlo_get_assoc_rsp(session_entry->vdev, &assoc_rsp);
+		if (!assoc_rsp)
+			goto error;
+
+		if (!session_entry->ml_partner_info.num_partner_links) {
+			pe_debug("MLO: num_partner_links is 0");
+			goto error;
+		}
+		/* Todo: update the sta addr by matching link id */
+		qdf_mem_copy(&sta_link_addr, session_entry->self_mac_addr,
+			     QDF_MAC_ADDR_SIZE);
+
+		pe_debug("MLO: assoc rsp len %d ", assoc_rsp.len);
+
+		if (assoc_rsp.len) {
+			struct element_info link_assoc_rsp;
+			tLimMlmJoinCnf mlm_join_cnf;
+
+			mlm_join_cnf.resultCode = eSIR_SME_SUCCESS;
+			mlm_join_cnf.protStatusCode = STATUS_SUCCESS;
+			/* Update PE sessionId */
+			mlm_join_cnf.sessionId = session_entry->peSessionId;
+			lim_post_sme_message(mac_ctx, LIM_MLM_JOIN_CNF,
+					     (uint32_t *)&mlm_join_cnf);
+
+			session_entry->limSmeState = eLIM_SME_WT_ASSOC_STATE;
+			assoc_rsp.len += SIR_MAC_HDR_LEN_3A;
+			pe_debug("MLO:assoc rsp len + hdr %d ", assoc_rsp.len);
+
+			link_assoc_rsp.ptr = qdf_mem_malloc(assoc_rsp.len);
+			if (link_assoc_rsp.ptr) {
+				link_assoc_rsp.len = assoc_rsp.len;
+			session_entry->limMlmState = eLIM_MLM_WT_ASSOC_RSP_STATE;
+			pe_debug("MLO: Generate and process assoc rsp for link vdev");
+
+			if (QDF_IS_STATUS_SUCCESS(util_gen_link_assoc_rsp(assoc_rsp.ptr,
+									  assoc_rsp.len,
+									  sta_link_addr,
+									  link_assoc_rsp.ptr)))
+				lim_process_assoc_rsp_frame(mac_ctx,
+							    link_assoc_rsp.ptr,
+							    link_assoc_rsp.len,
+							    LIM_ASSOC,
+							    session_entry);
+			}
+		}
+		return;
+	}
+#endif
 	/*
 	* If deauth_before_connection is enabled, Send Deauth first to AP if
 	* last disconnection was caused by HB failure.
