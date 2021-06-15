@@ -646,8 +646,6 @@ int dsi_ctrl_set_power_state(struct dsi_ctrl *dsi_ctrl,
  * dsi_ctrl_set_cmd_engine_state() - set command engine state
  * @dsi_ctrl:            DSI Controller handle.
  * @state:               Engine state.
- * @skip_op:             Boolean to indicate few operations can be skipped.
- *                       Set during the cont-splash or trusted-vm enable case.
  *
  * Command engine state can be modified only when DSI controller power state is
  * set to DSI_CTRL_POWER_LINK_CLK_ON.
@@ -655,7 +653,7 @@ int dsi_ctrl_set_power_state(struct dsi_ctrl *dsi_ctrl,
  * Return: error code.
  */
 int dsi_ctrl_set_cmd_engine_state(struct dsi_ctrl *dsi_ctrl,
-				  enum dsi_engine_state state, bool skip_op);
+				  enum dsi_engine_state state);
 
 /**
  * dsi_ctrl_validate_host_state() - validate DSI ctrl host state
