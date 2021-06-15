@@ -84,6 +84,9 @@
 #define IPA_Q6_FNR_IDX_CNT (52)
 #define IPA_Q6_FNR_END_IDX (IPA_Q6_FNR_START_IDX+IPA_Q6_FNR_IDX_CNT-1)
 #define IPA_Q6_FNR_STATS_SIZE (IPA_Q6_FNR_IDX_CNT * 16)
+#define IPA_MPM_MAX_RING_LEN 64
+#define IPA_MAX_TETH_AGGR_BYTE_LIMIT 24
+#define IPA_MPM_MAX_UC_THRESH 4
 
 /* ULSO Constants */
 enum {
@@ -2051,6 +2054,12 @@ struct ipa3_eth_error_stats {
  * @uc_wigig_ctx: WIGIG specific fields for uC interface
  * @ipa_num_pipes: The number of pipes used by IPA HW
  * @skip_uc_pipe_reset: Indicates whether pipe reset via uC needs to be avoided
+ * @mpm_ring_size_dl_cache: To cache the dl ring size configured previously
+ * @mpm_ring_size_dl: MHIP all DL pipe's ring size
+ * @mpm_ring_size_ul_cache: To cache the ul ring size configured previously
+ * @mpm_ring_size_ul: MHIP all UL pipe's ring size
+ * @mpm_teth_aggr_size: MHIP teth aggregation byte size
+ * @mpm_uc_thresh: uc threshold for enabling uc flow control
  * @ipa_client_apps_wan_cons_agg_gro: RMNET_IOCTL_INGRESS_FORMAT_AGG_DATA
  * @apply_rg10_wa: Indicates whether to use register group 10 workaround
  * @gsi_ch20_wa: Indicates whether to apply GSI physical channel 20 workaround
@@ -2208,6 +2217,12 @@ struct ipa3_context {
 	u32 wan_rx_ring_size;
 	u32 lan_rx_ring_size;
 	bool skip_uc_pipe_reset;
+	int mpm_ring_size_dl;
+	int mpm_ring_size_dl_cache;
+	int mpm_ring_size_ul_cache;
+	int mpm_ring_size_ul;
+	int mpm_teth_aggr_size;
+	int mpm_uc_thresh;
 	unsigned long gsi_dev_hdl;
 	u32 ee;
 	bool apply_rg10_wa;
