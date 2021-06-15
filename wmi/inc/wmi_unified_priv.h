@@ -2455,6 +2455,13 @@ QDF_STATUS (*extract_vdev_mgmt_offload_event)(
 				struct mgmt_offload_event_params *params);
 #endif /* WLAN_FEATURE_PKT_CAPTURE */
 
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
+QDF_STATUS (*extract_smart_monitor_event)(
+				void *handle,
+				void *event_buf,
+				struct smu_event_params *params);
+#endif /* WLAN_FEATURE_PKT_CAPTURE_V2 */
+
 QDF_STATUS (*multisoc_tbtt_sync_cmd)(wmi_unified_t wmi_handle,
 				     struct rnr_tbtt_multisoc_sync_param *param);
 

@@ -4139,6 +4139,20 @@ wmi_unified_extract_vdev_mgmt_offload_event(wmi_unified_t wmi, void *evt_buf,
 				struct mgmt_offload_event_params *params);
 #endif
 
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
+/**
+ * wmi_unified_extract_smart_monitor_event() - Extract smu event params
+ * @wmi: WMI handle
+ * @evt_buf: Event buffer
+ * @params: Smart monitor event params
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wmi_unified_extract_smart_monitor_event(wmi_unified_t wmi, void *evt_buf,
+					struct smu_event_params *params);
+#endif
+
 #ifdef FEATURE_WLAN_TIME_SYNC_FTM
 /**
  * wmi_unified_send_wlan_time_sync_ftm_trigger() - send ftm timesync trigger cmd
