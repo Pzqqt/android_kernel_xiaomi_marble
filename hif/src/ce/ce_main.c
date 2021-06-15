@@ -121,6 +121,12 @@ static struct ce_int_assignment ce_int_context[NUM_CE_CONTEXT] = {
 	  CE_INTERRUPT_IDX(9),
 	  CE_INTERRUPT_IDX(10),
 	  CE_INTERRUPT_IDX(11),
+#ifdef QCA_WIFI_QCN9224
+	  CE_INTERRUPT_IDX(12),
+	  CE_INTERRUPT_IDX(13),
+	  CE_INTERRUPT_IDX(14),
+	  CE_INTERRUPT_IDX(15),
+#endif
 	} },
 	/* Interrupt assignment for 1 MSI combination */
 	{{ CE_INTERRUPT_IDX(0),
@@ -135,6 +141,12 @@ static struct ce_int_assignment ce_int_context[NUM_CE_CONTEXT] = {
 	  CE_INTERRUPT_IDX(0),
 	  CE_INTERRUPT_IDX(0),
 	  CE_INTERRUPT_IDX(0),
+#ifdef QCA_WIFI_QCN9224
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+#endif
 	} },
 	/* Interrupt assignment for 2 MSI combination */
 	{{ CE_INTERRUPT_IDX(0),
@@ -149,6 +161,12 @@ static struct ce_int_assignment ce_int_context[NUM_CE_CONTEXT] = {
 	  CE_INTERRUPT_IDX(0),
 	  CE_INTERRUPT_IDX(0),
 	  CE_INTERRUPT_IDX(0),
+#ifdef QCA_WIFI_QCN9224
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+#endif
 	} },
 	/* Interrupt assignment for 3 MSI combination */
 	{{ CE_INTERRUPT_IDX(0),
@@ -163,6 +181,12 @@ static struct ce_int_assignment ce_int_context[NUM_CE_CONTEXT] = {
 	  CE_INTERRUPT_IDX(0),
 	  CE_INTERRUPT_IDX(0),
 	  CE_INTERRUPT_IDX(0),
+#ifdef QCA_WIFI_QCN9224
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+#endif
 	} },
 	/* Interrupt assignment for 4 MSI combination */
 	{{ CE_INTERRUPT_IDX(0),
@@ -176,7 +200,13 @@ static struct ce_int_assignment ce_int_context[NUM_CE_CONTEXT] = {
 	  CE_INTERRUPT_IDX(0),
 	  CE_INTERRUPT_IDX(0),
 	  CE_INTERRUPT_IDX(0),
-	  CE_INTERRUPT_IDX(0)
+	  CE_INTERRUPT_IDX(0),
+#ifdef QCA_WIFI_QCN9224
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+#endif
 	} },
 	/* Interrupt assignment for 5 MSI combination */
 	{{ CE_INTERRUPT_IDX(0),
@@ -190,7 +220,13 @@ static struct ce_int_assignment ce_int_context[NUM_CE_CONTEXT] = {
 	  CE_INTERRUPT_IDX(0),
 	  CE_INTERRUPT_IDX(0),
 	  CE_INTERRUPT_IDX(0),
-	  CE_INTERRUPT_IDX(0)
+	  CE_INTERRUPT_IDX(0),
+#ifdef QCA_WIFI_QCN9224
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+#endif
 	} },
 	/* Interrupt assignment for 6 MSI combination */
 	{{ CE_INTERRUPT_IDX(0),
@@ -204,7 +240,13 @@ static struct ce_int_assignment ce_int_context[NUM_CE_CONTEXT] = {
 	  CE_INTERRUPT_IDX(0),
 	  CE_INTERRUPT_IDX(0),
 	  CE_INTERRUPT_IDX(0),
-	  CE_INTERRUPT_IDX(0)
+	  CE_INTERRUPT_IDX(0),
+#ifdef QCA_WIFI_QCN9224
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+#endif
 	} },
 	/* Interrupt assignment for 7 MSI combination */
 	{{ CE_INTERRUPT_IDX(0),
@@ -218,7 +260,13 @@ static struct ce_int_assignment ce_int_context[NUM_CE_CONTEXT] = {
 	  CE_INTERRUPT_IDX(0),
 	  CE_INTERRUPT_IDX(0),
 	  CE_INTERRUPT_IDX(0),
-	  CE_INTERRUPT_IDX(0)
+	  CE_INTERRUPT_IDX(0),
+#ifdef QCA_WIFI_QCN9224
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+#endif
 	} },
 	/* Interrupt assignment for 8 MSI combination */
 	{{ CE_INTERRUPT_IDX(0),
@@ -232,7 +280,13 @@ static struct ce_int_assignment ce_int_context[NUM_CE_CONTEXT] = {
 	  CE_INTERRUPT_IDX(0),
 	  CE_INTERRUPT_IDX(0),
 	  CE_INTERRUPT_IDX(0),
-	  CE_INTERRUPT_IDX(0)
+	  CE_INTERRUPT_IDX(0),
+#ifdef QCA_WIFI_QCN9224
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+#endif
 	} },
 	/* Interrupt assignment for 9 MSI combination */
 	{{ CE_INTERRUPT_IDX(0),
@@ -246,7 +300,13 @@ static struct ce_int_assignment ce_int_context[NUM_CE_CONTEXT] = {
 	  CE_INTERRUPT_IDX(8),
 	  CE_INTERRUPT_IDX(0),
 	  CE_INTERRUPT_IDX(0),
-	  CE_INTERRUPT_IDX(0)
+	  CE_INTERRUPT_IDX(0),
+#ifdef QCA_WIFI_QCN9224
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+#endif
 	} },
 	/* Interrupt assignment for 10 MSI combination */
 	{{ CE_INTERRUPT_IDX(0),
@@ -260,7 +320,13 @@ static struct ce_int_assignment ce_int_context[NUM_CE_CONTEXT] = {
 	  CE_INTERRUPT_IDX(8),
 	  CE_INTERRUPT_IDX(9),
 	  CE_INTERRUPT_IDX(0),
-	  CE_INTERRUPT_IDX(0)
+	  CE_INTERRUPT_IDX(0),
+#ifdef QCA_WIFI_QCN9224
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+#endif
 	} },
 	/* Interrupt assignment for 11 MSI combination */
 	{{ CE_INTERRUPT_IDX(0),
@@ -274,7 +340,13 @@ static struct ce_int_assignment ce_int_context[NUM_CE_CONTEXT] = {
 	  CE_INTERRUPT_IDX(8),
 	  CE_INTERRUPT_IDX(9),
 	  CE_INTERRUPT_IDX(10),
-	  CE_INTERRUPT_IDX(0)
+	  CE_INTERRUPT_IDX(0),
+#ifdef QCA_WIFI_QCN9224
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+#endif
 	} },
 	/* Interrupt assignment for 12 MSI combination */
 	{{ CE_INTERRUPT_IDX(0),
@@ -288,8 +360,88 @@ static struct ce_int_assignment ce_int_context[NUM_CE_CONTEXT] = {
 	  CE_INTERRUPT_IDX(8),
 	  CE_INTERRUPT_IDX(9),
 	  CE_INTERRUPT_IDX(10),
-	  CE_INTERRUPT_IDX(11)
+	  CE_INTERRUPT_IDX(11),
+#ifdef QCA_WIFI_QCN9224
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+#endif
 	} },
+#ifdef QCA_WIFI_QCN9224
+	/* Interrupt assignment for 13 MSI combination */
+	{{ CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(1),
+	  CE_INTERRUPT_IDX(2),
+	  CE_INTERRUPT_IDX(3),
+	  CE_INTERRUPT_IDX(4),
+	  CE_INTERRUPT_IDX(5),
+	  CE_INTERRUPT_IDX(6),
+	  CE_INTERRUPT_IDX(7),
+	  CE_INTERRUPT_IDX(8),
+	  CE_INTERRUPT_IDX(9),
+	  CE_INTERRUPT_IDX(10),
+	  CE_INTERRUPT_IDX(11),
+	  CE_INTERRUPT_IDX(12),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	} },
+	/* Interrupt assignment for 14 MSI combination */
+	{{ CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(1),
+	  CE_INTERRUPT_IDX(2),
+	  CE_INTERRUPT_IDX(3),
+	  CE_INTERRUPT_IDX(4),
+	  CE_INTERRUPT_IDX(5),
+	  CE_INTERRUPT_IDX(6),
+	  CE_INTERRUPT_IDX(7),
+	  CE_INTERRUPT_IDX(8),
+	  CE_INTERRUPT_IDX(9),
+	  CE_INTERRUPT_IDX(10),
+	  CE_INTERRUPT_IDX(11),
+	  CE_INTERRUPT_IDX(12),
+	  CE_INTERRUPT_IDX(13),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	} },
+	/* Interrupt assignment for 15 MSI combination */
+	{{ CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(1),
+	  CE_INTERRUPT_IDX(2),
+	  CE_INTERRUPT_IDX(3),
+	  CE_INTERRUPT_IDX(4),
+	  CE_INTERRUPT_IDX(5),
+	  CE_INTERRUPT_IDX(6),
+	  CE_INTERRUPT_IDX(7),
+	  CE_INTERRUPT_IDX(8),
+	  CE_INTERRUPT_IDX(9),
+	  CE_INTERRUPT_IDX(10),
+	  CE_INTERRUPT_IDX(11),
+	  CE_INTERRUPT_IDX(12),
+	  CE_INTERRUPT_IDX(13),
+	  CE_INTERRUPT_IDX(14),
+	  CE_INTERRUPT_IDX(0),
+	} },
+	/* Interrupt assignment for 16 MSI combination */
+	{{ CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(1),
+	  CE_INTERRUPT_IDX(2),
+	  CE_INTERRUPT_IDX(3),
+	  CE_INTERRUPT_IDX(4),
+	  CE_INTERRUPT_IDX(5),
+	  CE_INTERRUPT_IDX(6),
+	  CE_INTERRUPT_IDX(7),
+	  CE_INTERRUPT_IDX(8),
+	  CE_INTERRUPT_IDX(9),
+	  CE_INTERRUPT_IDX(10),
+	  CE_INTERRUPT_IDX(11),
+	  CE_INTERRUPT_IDX(12),
+	  CE_INTERRUPT_IDX(13),
+	  CE_INTERRUPT_IDX(14),
+	  CE_INTERRUPT_IDX(15),
+	} },
+#endif
 };
 
 

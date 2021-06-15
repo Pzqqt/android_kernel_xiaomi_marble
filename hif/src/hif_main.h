@@ -142,7 +142,11 @@
 #define HIF_GET_SOFTC(scn) ((struct hif_softc *)scn)
 #define GET_HIF_OPAQUE_HDL(scn) ((struct hif_opaque_softc *)scn)
 
+#ifdef QCA_WIFI_QCN9224
+#define NUM_CE_AVAILABLE 16
+#else
 #define NUM_CE_AVAILABLE 12
+#endif
 /* Add 1 here to store default configuration in index 0 */
 #define NUM_CE_CONTEXT (NUM_CE_AVAILABLE + 1)
 
