@@ -7129,8 +7129,8 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		else
 			vdev_id = adapter->vdev_id;
 
-		if (adapter->vdev_id >= WLAN_MAX_VDEVS) {
-			hdd_err_rl("Invalid vdev id");
+		if (vdev_id >= WLAN_MAX_VDEVS) {
+			hdd_err_rl("Invalid vdev id %d", vdev_id);
 			return -EINVAL;
 		}
 

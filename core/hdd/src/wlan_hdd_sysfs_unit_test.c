@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -41,6 +41,7 @@ static ssize_t __hdd_sysfs_unit_test_target_store(
 	char *sptr, *token;
 	uint32_t apps_args[WMA_MAX_NUM_ARGS];
 	int module_id, args_num, ret, i;
+	uint8_t vdev_id = 0;
 	QDF_STATUS status;
 
 	if (hdd_validate_adapter(adapter))
@@ -105,7 +106,12 @@ static ssize_t __hdd_sysfs_unit_test_target_store(
 			return -EINVAL;
 	}
 
-	status = sme_send_unit_test_cmd(adapter->vdev_id,
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam())
+		vdev_id = 0;
+	else
+		vdev_id = adapter->vdev_id;
+
+	status = sme_send_unit_test_cmd(vdev_id,
 					module_id,
 					args_num,
 					&apps_args[0]);
