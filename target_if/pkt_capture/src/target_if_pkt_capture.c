@@ -310,6 +310,7 @@ target_if_smart_monitor_event_handler(void *handle, uint8_t *data,
 		return -EINVAL;
 	}
 
+	tgt_pkt_capture_smu_event(psoc, &params);
 	return 0;
 }
 

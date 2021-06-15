@@ -160,4 +160,35 @@ tgt_pkt_capture_send_config(struct wlan_objmgr_vdev *vdev,
 
 	return status;
 }
+
+QDF_STATUS
+tgt_pkt_capture_smu_event(struct wlan_objmgr_psoc *psoc,
+			  struct smu_event_params *param)
+{
+	struct pkt_capture_vdev_priv *vdev_priv;
+	struct wlan_objmgr_vdev *vdev;
+	uint8_t vdev_id;
+
+	vdev_id = param->vdev_id;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_PKT_CAPTURE_ID);
+	if (!vdev) {
+		pkt_capture_err("failed to get vdev");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	vdev_priv = pkt_capture_vdev_get_priv(vdev);
+	if (!vdev_priv) {
+		pkt_capture_err("vdev priv is NULL");
+		pkt_capture_vdev_put_ref(vdev);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	vdev_priv->rx_avg_rssi = param->rx_avg_rssi;
+
+	pkt_capture_vdev_put_ref(vdev);
+
+	return QDF_STATUS_SUCCESS;
+}
 #endif
