@@ -1217,11 +1217,10 @@ static void reg_append_6g_reg_rules_in_pdev(
 			struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
 {
 	struct reg_rule_info *pdev_reg_rules;
-	enum reg_6g_ap_type cur_pwr_type;
+	enum reg_6g_ap_type cur_pwr_type = REG_INDOOR_AP;
 	uint8_t num_reg_rules;
 
 	pdev_reg_rules = &pdev_priv_obj->reg_rules;
-	cur_pwr_type = pdev_priv_obj->reg_cur_6g_ap_pwr_type;
 
 	num_reg_rules = pdev_reg_rules->num_of_reg_rules;
 	pdev_reg_rules->num_of_reg_rules +=
