@@ -13205,14 +13205,10 @@ static int __wlan_hdd_cfg80211_setband(struct wiphy *wiphy,
 static QDF_STATUS wlan_hdd_validate_acs_channel(struct hdd_adapter *adapter,
 						uint32_t chan_freq, int chan_bw)
 {
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	uint8_t channel;
-
 	if (QDF_STATUS_SUCCESS !=
 	    wlan_hdd_validate_operation_channel(adapter, chan_freq))
 		return QDF_STATUS_E_FAILURE;
 
-	channel = (uint8_t)wlan_reg_freq_to_chan(hdd_ctx->pdev, chan_freq);
 	if ((wlansap_is_channel_in_nol_list(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
 				chan_freq,
 				PHY_SINGLE_CHANNEL_CENTERED))) {
@@ -13222,8 +13218,8 @@ static QDF_STATUS wlan_hdd_validate_acs_channel(struct hdd_adapter *adapter,
 
 	if ((wlansap_is_channel_leaking_in_nol(
 				WLAN_HDD_GET_SAP_CTX_PTR(adapter),
-				channel, chan_bw))) {
-		hdd_info("channel %d is leaking in nol", channel);
+				chan_freq, chan_bw))) {
+		hdd_info("channel freq %d is leaking in nol", chan_freq);
 		return -EINVAL;
 	}
 

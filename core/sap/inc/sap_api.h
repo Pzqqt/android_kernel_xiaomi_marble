@@ -797,13 +797,13 @@ bool wlansap_is_channel_in_nol_list(struct sap_context *sap_ctx,
  * wlansap_is_channel_leaking_in_nol() - This API checks if channel is leaking
  * in nol list
  * @sap_ctx: SAP context pointer
- * @channel: channel
+ * @chan_freq: channel frequency
  * @chan_bw: channel bandwidth
  *
  * Return: True/False
  */
 bool wlansap_is_channel_leaking_in_nol(struct sap_context *sap_ctx,
-				       uint8_t channel,
+				       uint16_t chan_freq,
 				       uint8_t chan_bw);
 
 /**
