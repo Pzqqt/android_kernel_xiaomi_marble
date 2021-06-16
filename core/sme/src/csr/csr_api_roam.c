@@ -6323,6 +6323,31 @@ QDF_STATUS csr_roam_issue_connect(struct mac_context *mac, uint32_t sessionId,
 }
 
 #ifdef FEATURE_CM_ENABLE
+static void csr_flush_pending_start_bss_cmd(struct mac_context *mac_ctx,
+					     uint8_t vdev_id)
+{
+	struct wlan_serialization_queued_cmd_info cmd = {0};
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc, vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("vdev not found for id %d", vdev_id);
+		return;
+	}
+
+	/* Flush any pending vdev start command */
+	cmd.vdev = vdev;
+	cmd.cmd_type = WLAN_SER_CMD_VDEV_START_BSS;
+	cmd.req_type = WLAN_SER_CANCEL_VDEV_NON_SCAN_CMD_TYPE;
+	cmd.requestor = WLAN_UMAC_COMP_MLME;
+	cmd.queue_type = WLAN_SERIALIZATION_PENDING_QUEUE;
+
+	wlan_serialization_cancel_request(&cmd);
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+}
+
 QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t vdev_id,
 		struct csr_roam_profile *profile,
 		uint32_t *pRoamId)
@@ -6330,8 +6355,6 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t vdev_id,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint32_t roam_id = 0;
 	struct csr_roam_session *session = CSR_GET_SESSION(mac, vdev_id);
-	struct wlan_serialization_queued_cmd_info cmd = {0};
-	struct wlan_objmgr_vdev *vdev;
 
 	if (!session) {
 		sme_err("session does not exist for given sessionId: %d",
@@ -6344,28 +6367,12 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t vdev_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, vdev_id,
-						    WLAN_LEGACY_SME_ID);
-	if (!vdev) {
-		sme_err("vdev not found for id %d", vdev_id);
-		return QDF_STATUS_E_FAILURE;
-	}
-
 	sme_debug("Persona %d authtype %d  encryType %d mc_encType %d",
 		  profile->csrPersona, profile->AuthType.authType[0],
 		  profile->EncryptionType.encryptionType[0],
 		  profile->mcEncryptionType.encryptionType[0]);
 
-	/* Flush any pending vdev start command */
-	cmd.vdev = vdev;
-	cmd.cmd_type = WLAN_SER_CMD_VDEV_START_BSS;
-	cmd.req_type = WLAN_SER_CANCEL_VDEV_NON_SCAN_CMD_TYPE;
-	cmd.requestor = WLAN_UMAC_COMP_MLME;
-	cmd.queue_type = WLAN_SERIALIZATION_PENDING_QUEUE;
-
-	wlan_serialization_cancel_request(&cmd);
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-
+	csr_flush_pending_start_bss_cmd(mac, vdev_id);
 	roam_id = GET_NEXT_ROAM_ID(&mac->roam);
 	if (pRoamId)
 		*pRoamId = roam_id;
@@ -7305,6 +7312,7 @@ QDF_STATUS csr_roam_disconnect(struct mac_context *mac_ctx, uint32_t session_id,
 			  status);
 	}
 #else
+	csr_flush_pending_start_bss_cmd(mac_ctx, session_id);
 	if (CSR_IS_CONN_NDI(&session->connectedProfile))
 		status = csr_roam_issue_disassociate_cmd(mac_ctx, session_id,
 							 reason, mac_reason);
