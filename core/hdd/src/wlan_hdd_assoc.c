@@ -2160,7 +2160,8 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 		return qdf_status;
 	}
 
-	hdd_cm_set_peer_authenticate(adapter, bssid, is_auth_required);
+	hdd_cm_set_peer_authenticate(adapter, &txrx_desc.peer_addr,
+				     is_auth_required);
 
 	return qdf_status;
 }
