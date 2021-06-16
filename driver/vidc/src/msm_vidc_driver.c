@@ -1222,6 +1222,11 @@ bool msm_vidc_allow_s_ctrl(struct msm_vidc_inst *inst, u32 id)
 			case V4L2_CID_HFLIP:
 			case V4L2_CID_VFLIP:
 			case V4L2_CID_MPEG_VIDEO_HEVC_I_FRAME_QP:
+			case V4L2_CID_MPEG_VIDEO_HEVC_P_FRAME_QP:
+			case V4L2_CID_MPEG_VIDEO_HEVC_B_FRAME_QP:
+			case V4L2_CID_MPEG_VIDEO_H264_I_FRAME_QP:
+			case V4L2_CID_MPEG_VIDEO_H264_P_FRAME_QP:
+			case V4L2_CID_MPEG_VIDEO_H264_B_FRAME_QP:
 			case V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_LAYER:
 			case V4L2_CID_MPEG_VIDEO_H264_HIERARCHICAL_CODING_LAYER:
 			case V4L2_CID_MPEG_VIDEO_HEVC_HIER_CODING_L0_BR:
@@ -1255,7 +1260,7 @@ bool msm_vidc_allow_s_ctrl(struct msm_vidc_inst *inst, u32 id)
 
 exit:
 	if (!allow)
-		i_vpr_e(inst, "%s: id %d not allowed in state %s\n",
+		i_vpr_e(inst, "%s: id %#x not allowed in state %s\n",
 			__func__, id, state_name(inst->state));
 	return allow;
 }
