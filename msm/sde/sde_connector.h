@@ -743,6 +743,21 @@ static inline enum sde_rm_topology_name sde_connector_get_old_topology_name(
 }
 
 /**
+ * sde_connector_panel_dead - check if panel is dead
+ * @conn: pointer to drm connector
+ * Returns: bool indicating whether or not panel is dead based on connector
+ */
+static inline bool sde_connector_panel_dead(struct drm_connector *conn)
+{
+	struct sde_connector *sde_conn = to_sde_connector(conn);
+
+	if (!sde_conn)
+		return true;
+
+	return sde_conn->panel_dead;
+}
+
+/**
  * sde_connector_set_old_topology_name - helper to cache value of previous
  *	mode's topology
  * @connector: pointer to drm connector state
