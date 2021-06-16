@@ -305,12 +305,13 @@ bool utils_dfs_is_cac_required(struct wlan_objmgr_pdev *pdev,
 	return dfs_is_cac_required(dfs,
 				   &cur_channel,
 				   &prev_channel,
-				   continue_current_cac);
+				   continue_current_cac, true);
 }
 
 bool
 utils_dfs_is_cac_required_on_dfs_curchan(struct wlan_objmgr_pdev *pdev,
-					 bool *continue_current_cac)
+					 bool *continue_current_cac,
+					 bool is_vap_restart)
 {
 	struct wlan_dfs *dfs;
 
@@ -321,7 +322,8 @@ utils_dfs_is_cac_required_on_dfs_curchan(struct wlan_objmgr_pdev *pdev,
 	return dfs_is_cac_required(dfs,
 				   dfs->dfs_curchan,
 				   dfs->dfs_prevchan,
-				   continue_current_cac);
+				   continue_current_cac,
+				   is_vap_restart);
 }
 
 QDF_STATUS utils_dfs_stacac_stop(struct wlan_objmgr_pdev *pdev)

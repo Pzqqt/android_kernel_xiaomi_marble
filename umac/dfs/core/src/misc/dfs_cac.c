@@ -402,9 +402,15 @@ dfs_is_new_chan_subset_of_old_chan(struct wlan_dfs *dfs,
 bool dfs_is_cac_required(struct wlan_dfs *dfs,
 			 struct dfs_channel *cur_chan,
 			 struct dfs_channel *prev_chan,
-			 bool *continue_current_cac)
+			 bool *continue_current_cac,
+			 bool is_vap_restart)
 {
 	struct dfs_channel *cac_started_chan = &dfs->dfs_cac_started_chan;
+
+	if (!WLAN_IS_PRIMARY_OR_SECONDARY_CHAN_DFS(cur_chan)) {
+		dfs_debug(dfs, WLAN_DEBUG_DFS, "Skip CAC on non-DFS channel");
+		return false;
+	}
 
 	if (dfs->dfs_ignore_dfs || dfs->dfs_cac_valid || dfs->dfs_ignore_cac) {
 		dfs_debug(dfs, WLAN_DEBUG_DFS,
@@ -453,6 +459,19 @@ bool dfs_is_cac_required(struct wlan_dfs *dfs,
 			dfs_cancel_cac_timer(dfs);
 		}
 	} else { /* CAC timer is not running. */
+		/* If channel change happens via VAP DOWN/UP on subset channels,
+		 * (eg: from 52 HT80 to 64 HT80) CAC done information
+		 * (of 52 HT80) based on subset logic
+		 * (as 52 and 64 HT80 are subsets of each other)
+		 * is not expected to be preserved as VAP has come up
+		 * from DOWN state. Hence do not skip CAC on 64 HT80.
+		 * is_vap_restart flag is used as an identifer to indicate if
+		 * vap has come up from a DOWN state or UP state (vap restart).
+		 */
+		if (!is_vap_restart) {
+			dfs_debug(dfs, WLAN_DEBUG_DFS, "CAC is needed");
+			return true;
+		}
 		if (dfs_is_new_chan_subset_of_old_chan(dfs,
 						       cur_chan,
 						       prev_chan)) {

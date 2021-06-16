@@ -2157,13 +2157,16 @@ void dfs_stacac_stop(struct wlan_dfs *dfs);
  * @continue_current_cac: If AP can start CAC then this variable indicates
  * whether to continue with the current CAC or restart the CAC. This variable
  * is valid only if this function returns true.
+ * @is_vap_restart: Flag to indicate if vap is restarted/started.
+ * True: VAP restart. False: VAP start
  *
  * Return: true if AP requires CAC or can continue current CAC, else false.
  */
 bool dfs_is_cac_required(struct wlan_dfs *dfs,
 			 struct dfs_channel *cur_chan,
 			 struct dfs_channel *prev_chan,
-			 bool *continue_current_cac);
+			 bool *continue_current_cac,
+			 bool is_vap_restart);
 
 /**
  * dfs_cac_stop() - Clear the AP CAC timer.
@@ -2245,7 +2248,8 @@ static inline
 bool dfs_is_cac_required(struct wlan_dfs *dfs,
 			 struct dfs_channel *cur_chan,
 			 struct dfs_channel *prev_chan,
-			 bool *continue_current_cac)
+			 bool *continue_current_cac,
+			 bool is_vap_restart)
 {
 	return false;
 }

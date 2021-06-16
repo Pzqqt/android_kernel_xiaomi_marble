@@ -857,6 +857,8 @@ bool utils_dfs_is_cac_required(struct wlan_objmgr_pdev *pdev,
  * @continue_current_cac: If AP can start CAC then this variable indicates
  * whether to continue with the current CAC or restart the CAC. This variable
  * is valid only if this function returns true.
+ * @is_vap_restart: Flag to indicate if vap is restarted/started.
+ * True: VAP restart. False: VAP start
  *
  * This API checks if the dfs_curchan is a subset of the dfs_prevchan.
  * dfs_curchan and dfs_prevchan are updated after start response by
@@ -866,7 +868,8 @@ bool utils_dfs_is_cac_required(struct wlan_objmgr_pdev *pdev,
  */
 bool
 utils_dfs_is_cac_required_on_dfs_curchan(struct wlan_objmgr_pdev *pdev,
-					 bool *continue_current_cac);
+					 bool *continue_current_cac,
+					 bool is_vap_restart);
 
 /** utils_dfs_is_precac_done() - Check if precac has been done in chosen channel
  * @pdev: Pointer to DFS pdev object.
