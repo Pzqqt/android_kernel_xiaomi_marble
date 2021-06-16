@@ -423,11 +423,10 @@ static int msm_vidc_adjust_dynamic_property(struct msm_vidc_inst *inst,
 	 * adjustment is allowed for its children.
 	 */
 	if (!(capability->cap[cap_id].flags & CAP_FLAG_DYNAMIC_ALLOWED)) {
-		i_vpr_e(inst,
+		i_vpr_h(inst,
 			"%s: dynamic setting of cap[%d] %s is not allowed\n",
 			__func__, cap_id, cap_name(cap_id));
-		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
-		return -EINVAL;
+		return 0;
 	}
 
 	/*
@@ -1445,9 +1444,6 @@ int msm_vidc_adjust_b_frame(void *instance, struct v4l2_ctrl *ctrl)
 	}
 	capability = inst->capabilities;
 
-	if (inst->vb2q[OUTPUT_PORT].streaming)
-		return 0;
-
 	adjusted_value = ctrl ? ctrl->val : capability->cap[B_FRAME].value;
 
 	if (msm_vidc_get_parent_value(inst, B_FRAME,
@@ -1782,16 +1778,13 @@ int msm_vidc_adjust_blur_type(void *instance, struct v4l2_ctrl *ctrl)
 	s32 adjusted_value;
 	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
 	s32 rc_type = -1, cac = -1;
-	s32 pix_fmts = -1;
+	s32 pix_fmts = -1, min_quality = -1;
 
 	if (!inst || !inst->capabilities) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 	capability = inst->capabilities;
-
-	if (inst->vb2q[OUTPUT_PORT].streaming)
-		return 0;
 
 	adjusted_value = ctrl ? ctrl->val :
 		capability->cap[BLUR_TYPES].value;
@@ -1804,15 +1797,18 @@ int msm_vidc_adjust_blur_type(void *instance, struct v4l2_ctrl *ctrl)
 		msm_vidc_get_parent_value(inst, BLUR_TYPES,
 		CONTENT_ADAPTIVE_CODING, &cac, __func__) ||
 		msm_vidc_get_parent_value(inst, BLUR_TYPES, PIX_FMTS,
-		&pix_fmts, __func__))
+		&pix_fmts, __func__) ||
+		msm_vidc_get_parent_value(inst, BLUR_TYPES, MIN_QUALITY,
+		&min_quality, __func__))
 		return -EINVAL;
 
 	if (adjusted_value == VIDC_BLUR_EXTERNAL) {
-		if (is_scaling_enabled(inst)) {
+		if (is_scaling_enabled(inst) || min_quality) {
 			adjusted_value = VIDC_BLUR_NONE;
 		}
 	} else if (adjusted_value == VIDC_BLUR_ADAPTIVE) {
-		if (is_scaling_enabled(inst) || (rc_type != HFI_RC_VBR_CFR) ||
+		if (is_scaling_enabled(inst) || min_quality ||
+			(rc_type != HFI_RC_VBR_CFR) ||
 			!cac || is_10bit_colorformat(pix_fmts)) {
 			adjusted_value = VIDC_BLUR_NONE;
 		}
@@ -1848,6 +1844,210 @@ int msm_vidc_adjust_blur_resolution(void *instance, struct v4l2_ctrl *ctrl)
 		return 0;
 
 	msm_vidc_update_cap_value(inst, BLUR_RESOLUTION,
+		adjusted_value, __func__);
+
+	return 0;
+}
+
+int msm_vidc_adjust_cac(void *instance, struct v4l2_ctrl *ctrl)
+{
+	struct msm_vidc_inst_capability *capability;
+	s32 adjusted_value;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+	s32 min_quality = -1, rc_type = -1;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	adjusted_value = ctrl ? ctrl->val :
+		capability->cap[CONTENT_ADAPTIVE_CODING].value;
+
+	if (inst->vb2q[OUTPUT_PORT].streaming)
+		return 0;
+
+	if (msm_vidc_get_parent_value(inst, CONTENT_ADAPTIVE_CODING,
+		MIN_QUALITY, &min_quality, __func__) ||
+		msm_vidc_get_parent_value(inst, CONTENT_ADAPTIVE_CODING,
+		BITRATE_MODE, &rc_type, __func__))
+		return -EINVAL;
+
+	/*
+	 * CAC is supported only for VBR rc type.
+	 * Hence, do not adjust or set to firmware for non VBR rc's
+	 */
+	if (rc_type != HFI_RC_VBR_CFR) {
+		adjusted_value = 0;
+		goto adjust;
+	}
+
+	if (min_quality) {
+		adjusted_value = 1;
+		goto adjust;
+	}
+
+adjust:
+	msm_vidc_update_cap_value(inst, CONTENT_ADAPTIVE_CODING,
+		adjusted_value, __func__);
+
+	return 0;
+}
+
+int msm_vidc_adjust_bitrate_boost(void *instance, struct v4l2_ctrl *ctrl)
+{
+	struct msm_vidc_inst_capability *capability;
+	s32 adjusted_value;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+	s32 min_quality = -1, rc_type = -1;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	adjusted_value = ctrl ? ctrl->val :
+		capability->cap[BITRATE_BOOST].value;
+
+	if (inst->vb2q[OUTPUT_PORT].streaming)
+		return 0;
+
+	if (msm_vidc_get_parent_value(inst, BITRATE_BOOST,
+		MIN_QUALITY, &min_quality, __func__) ||
+		msm_vidc_get_parent_value(inst, BITRATE_BOOST,
+		BITRATE_MODE, &rc_type, __func__))
+		return -EINVAL;
+
+	/*
+	 * Bitrate Boost are supported only for VBR rc type.
+	 * Hence, do not adjust or set to firmware for non VBR rc's
+	 */
+	if (rc_type != HFI_RC_VBR_CFR) {
+		adjusted_value = 0;
+		goto adjust;
+	}
+
+	if (min_quality) {
+		adjusted_value = MAX_BITRATE_BOOST;
+		goto adjust;
+	}
+
+adjust:
+	msm_vidc_update_cap_value(inst, BITRATE_BOOST,
+		adjusted_value, __func__);
+
+	return 0;
+}
+
+int msm_vidc_adjust_min_quality(void *instance, struct v4l2_ctrl *ctrl)
+{
+	struct msm_vidc_inst_capability *capability;
+	s32 adjusted_value;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+	s32 roi_enable = -1, rc_type = -1, enh_layer_count = -1, pix_fmts = -1;
+	u32 width, height, frame_rate;
+	struct v4l2_format *f;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	adjusted_value = ctrl ? ctrl->val : capability->cap[MIN_QUALITY].value;
+
+	/*
+	 * Although MIN_QUALITY is static, one of its parents,
+	 * ENH_LAYER_COUNT is dynamic cap. Hence, dynamic call
+	 * may be made for MIN_QUALITY via ENH_LAYER_COUNT.
+	 * Therefore, below streaming check is required to avoid
+	 * runtime modification of MIN_QUALITY.
+	 */
+	if (inst->vb2q[OUTPUT_PORT].streaming)
+		return 0;
+
+	if (msm_vidc_get_parent_value(inst, MIN_QUALITY,
+		BITRATE_MODE, &rc_type, __func__) ||
+		msm_vidc_get_parent_value(inst, MIN_QUALITY,
+		META_ROI_INFO, &roi_enable, __func__) ||
+		msm_vidc_get_parent_value(inst, MIN_QUALITY,
+		ENH_LAYER_COUNT, &enh_layer_count, __func__))
+		return -EINVAL;
+
+	/*
+	 * Min Quality is supported only for VBR rc type.
+	 * Hence, do not adjust or set to firmware for non VBR rc's
+	 */
+	if (rc_type != HFI_RC_VBR_CFR) {
+		adjusted_value = 0;
+		goto update_and_exit;
+	}
+
+	frame_rate = inst->capabilities->cap[FRAME_RATE].value >> 16;
+	f = &inst->fmts[OUTPUT_PORT];
+	width = f->fmt.pix_mp.width;
+	height = f->fmt.pix_mp.height;
+
+	/*
+	 * VBR Min Quality not supported for:
+	 * - HEVC 10bit
+	 * - ROI support
+	 * - HP encoding
+	 * - External Blur
+	 * - Resolution beyond 1080P
+	 * (It will fall back to CQCAC 25% or 0% (CAC) or CQCAC-OFF)
+	 */
+	if (inst->codec == MSM_VIDC_HEVC) {
+		if (msm_vidc_get_parent_value(inst, MIN_QUALITY,
+			PIX_FMTS, &pix_fmts, __func__))
+			return -EINVAL;
+
+		if (is_10bit_colorformat(pix_fmts)) {
+			i_vpr_h(inst,
+				"%s: min quality is supported only for 8 bit\n",
+				__func__);
+			adjusted_value = 0;
+			goto update_and_exit;
+		}
+	}
+
+	if (res_is_greater_than(width, height, 1920, 1080)) {
+		i_vpr_h(inst, "%s: unsupported res, wxh %ux%u\n",
+			__func__, width, height);
+		adjusted_value = 0;
+		goto update_and_exit;
+	}
+
+	if (frame_rate > 60) {
+		i_vpr_h(inst, "%s: unsupported fps %u\n",
+			__func__, frame_rate);
+		adjusted_value = 0;
+		goto update_and_exit;
+	}
+
+	if (roi_enable) {
+		i_vpr_h(inst,
+			"%s: min quality not supported with roi metadata\n",
+			__func__);
+		adjusted_value = 0;
+		goto update_and_exit;
+	}
+
+	if (enh_layer_count && inst->hfi_layer_type != HFI_HIER_B) {
+		i_vpr_h(inst,
+			"%s: min quality not supported for HP encoding\n",
+			__func__);
+		adjusted_value = 0;
+		goto update_and_exit;
+	}
+
+	/* Above conditions are met. Hence enable min quality */
+	adjusted_value = MAX_SUPPORTED_MIN_QUALITY;
+
+update_and_exit:
+	msm_vidc_update_cap_value(inst, MIN_QUALITY,
 		adjusted_value, __func__);
 
 	return 0;
@@ -2832,33 +3032,6 @@ int msm_vidc_set_rotation(void *instance,
 		return -EINVAL;
 
 	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
-		&hfi_value, sizeof(u32), __func__);
-	if (rc)
-		return rc;
-
-	return rc;
-}
-
-int msm_vidc_set_blur_type(void *instance,
-	enum msm_vidc_inst_capability_type cap_id)
-{
-	int rc = 0;
-	struct msm_vidc_inst *inst = (struct msm_vidc_inst *)instance;
-	u32 hfi_value;
-
-	if (!inst || !inst->capabilities) {
-		d_vpr_e("%s: invalid params\n", __func__);
-		return -EINVAL;
-	}
-
-	if (inst->vb2q[OUTPUT_PORT].streaming)
-		return 0;
-
-	rc = msm_vidc_v4l2_to_hfi_enum(inst, cap_id, &hfi_value);
-	if (rc)
-		return -EINVAL;
-
-	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32_ENUM,
 		&hfi_value, sizeof(u32), __func__);
 	if (rc)
 		return rc;

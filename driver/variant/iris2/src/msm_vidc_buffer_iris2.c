@@ -564,7 +564,7 @@ static int msm_vidc_input_min_count_iris2(struct msm_vidc_inst* inst)
 	if (is_decode_session(inst)) {
 		input_min_count = MIN_DEC_INPUT_BUFFERS;
 	} else if (is_encode_session(inst)) {
-		total_hb_layer = is_hierb_requested(inst) ?
+		total_hb_layer = is_hierb_type_requested(inst) ?
 			inst->capabilities->cap[ENH_LAYER_COUNT].value + 1 : 0;
 		if (inst->codec == MSM_VIDC_H264 &&
 			!inst->capabilities->cap[LAYER_ENABLE].value) {

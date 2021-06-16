@@ -26,7 +26,7 @@ u32 msm_vidc_input_min_count(struct msm_vidc_inst* inst)
 		input_min_count = MIN_DEC_INPUT_BUFFERS;
 	} else if (is_encode_session(inst)) {
 		input_min_count = MIN_ENC_INPUT_BUFFERS;
-		if (is_hierb_requested(inst)) {
+		if (is_hierb_type_requested(inst)) {
 			hb_enh_layer =
 				inst->capabilities->cap[ENH_LAYER_COUNT].value;
 			if (inst->codec == MSM_VIDC_H264 &&
