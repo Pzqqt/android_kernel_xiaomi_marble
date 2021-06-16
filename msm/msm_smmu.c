@@ -22,6 +22,7 @@
 #include <linux/qcom-dma-mapping.h>
 #include <linux/msm_dma_iommu_mapping.h>
 #include <linux/dma-mapping.h>
+#include <linux/qcom-iommu-util.h>
 
 #include <soc/qcom/secure_buffer.h>
 
@@ -82,9 +83,9 @@ static int msm_smmu_attach(struct msm_mmu *mmu, const char * const *names,
 		dev_dbg(client->dev, "iommu domain ops restored\n");
 	}
 
-	rc = iommu_attach_device(client->domain, client->dev);
+	rc = qcom_iommu_sid_switch(client->dev, SID_ACQUIRE);
 	if (rc) {
-		dev_err(client->dev, "iommu attach dev failed (%d)\n", rc);
+		dev_err(client->dev, "iommu sid switch failed (%d)\n", rc);
 		return rc;
 	}
 
@@ -100,6 +101,7 @@ static void msm_smmu_detach(struct msm_mmu *mmu, const char * const *names,
 {
 	struct msm_smmu *smmu = to_msm_smmu(mmu);
 	struct msm_smmu_client *client = msm_smmu_to_client(smmu);
+	int rc;
 
 	if (!client) {
 		pr_err("undefined smmu client\n");
@@ -111,7 +113,9 @@ static void msm_smmu_detach(struct msm_mmu *mmu, const char * const *names,
 
 	pm_runtime_get_sync(mmu->dev);
 	msm_dma_unmap_all_for_dev(client->dev);
-	iommu_detach_device(client->domain, client->dev);
+	rc = qcom_iommu_sid_switch(client->dev, SID_RELEASE);
+	if (rc)
+		DRM_ERROR("iommu sid switch failed (%d)\n", rc);
 
 	client->dma_ops = get_dma_ops(client->dev);
 	if (client->dma_ops) {
