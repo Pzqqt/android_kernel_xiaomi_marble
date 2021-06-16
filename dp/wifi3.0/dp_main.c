@@ -7042,8 +7042,6 @@ static int dp_update_filter_neighbour_peers(struct cdp_soc_t *soc_hdl,
 			QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 			pdev->neighbour_peers_added = true;
-			if (!wlan_cfg_is_delay_mon_replenish(soc->wlan_cfg_ctx))
-				dp_vdev_set_monitor_mode_rings(pdev, true);
 
 			dp_mon_filter_setup_smart_monitor(pdev);
 			status = dp_mon_filter_update(pdev);
