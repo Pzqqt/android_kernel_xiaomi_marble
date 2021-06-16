@@ -7199,6 +7199,9 @@ int dsi_display_find_mode(struct dsi_display *display,
 			break;
 		}
 	}
+
+	cmp->priv_info = NULL;
+
 	mutex_unlock(&display->display_lock);
 
 	if (!*out_mode) {
