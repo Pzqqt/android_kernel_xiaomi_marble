@@ -66,7 +66,7 @@ enum vidc_msg_prio {
 
 #define dprintk_inst(__level, __level_str, inst, __fmt, ...) \
 	do { \
-		if (inst && (msm_vidc_debug & __level)) { \
+		if (inst && (msm_vidc_debug & (__level))) { \
 			pr_info(VIDC_DBG_TAG_INST __fmt, \
 				__level_str, \
 				inst->debug_str, \
@@ -87,7 +87,7 @@ enum vidc_msg_prio {
 
 #define dprintk_core(__level, __level_str, __fmt, ...) \
 	do { \
-		if (msm_vidc_debug & __level) { \
+		if (msm_vidc_debug & (__level)) { \
 			pr_info(VIDC_DBG_TAG_CORE __fmt, \
 				__level_str, \
 				DEFAULT_SID, \
