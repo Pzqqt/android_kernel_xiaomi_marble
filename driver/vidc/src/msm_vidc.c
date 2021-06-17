@@ -433,6 +433,7 @@ int msm_vidc_qbuf(void *instance, struct media_device *mdev,
 	int rc = 0;
 	struct msm_vidc_inst *inst = instance;
 	struct vb2_queue *q;
+	u64 timestamp_us = 0;
 
 	if (!inst || !inst->core || !b || !valid_v4l2_buffer(b, inst)) {
 		d_vpr_e("%s: invalid params %pK %pK\n", __func__, inst, b);
@@ -443,6 +444,12 @@ int msm_vidc_qbuf(void *instance, struct media_device *mdev,
 	if (!q) {
 		rc = -EINVAL;
 		goto exit;
+	}
+
+	if (is_encode_session(inst) && b->type == INPUT_MPLANE) {
+		timestamp_us = (u64)((b->timestamp.tv_sec * USEC_PER_SEC) +
+			b->timestamp.tv_usec);
+		msm_vidc_set_auto_framerate(inst, timestamp_us);
 	}
 	inst->last_qbuf_time_ns = ktime_get_ns();
 
@@ -775,6 +782,7 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	inst->request = false;
 	inst->ipsc_properties_set = false;
 	inst->opsc_properties_set = false;
+	inst->auto_framerate = DEFAULT_FPS << 16;
 	kref_init(&inst->kref);
 	mutex_init(&inst->lock);
 	msm_vidc_update_debug_str(inst);

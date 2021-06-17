@@ -223,7 +223,7 @@ int msm_vidc_scale_buses(struct msm_vidc_inst *inst)
 	vote_data->lcu_size = (codec == V4L2_PIX_FMT_HEVC ||
 			codec == V4L2_PIX_FMT_VP9) ? 32 : 16;
 	vote_data->fps = msm_vidc_get_fps(inst);
-	buf_ts_fps = msm_vidc_calc_framerate(inst);
+	buf_ts_fps = msm_vidc_calc_window_avg_framerate(inst);
 	if (buf_ts_fps > vote_data->fps) {
 		i_vpr_l(inst, "%s: bitstream: fps %d, client rate %u\n", __func__,
 			buf_ts_fps, vote_data->fps);

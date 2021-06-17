@@ -423,7 +423,8 @@ int msm_vidc_check_session_supported(struct msm_vidc_inst *inst);
 int msm_vidc_check_core_mbps(struct msm_vidc_inst *inst);
 int msm_vidc_check_scaling_supported(struct msm_vidc_inst *inst);
 int msm_vidc_update_timestamp(struct msm_vidc_inst *inst, u64 timestamp);
-int msm_vidc_calc_framerate(struct msm_vidc_inst *inst);
+int msm_vidc_set_auto_framerate(struct msm_vidc_inst *inst, u64 timestamp);
+int msm_vidc_calc_window_avg_framerate(struct msm_vidc_inst *inst);
 int msm_vidc_flush_ts(struct msm_vidc_inst *inst);
 const char *buf_name(enum msm_vidc_buffer_type type);
 void msm_vidc_free_capabililty_list(struct msm_vidc_inst *inst,

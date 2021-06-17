@@ -48,7 +48,7 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 	mbpf = msm_vidc_get_mbs_per_frame(inst);
 	fps = msm_vidc_get_fps(inst);
 
-	buf_timetamps_fps = msm_vidc_calc_framerate(inst);
+	buf_timetamps_fps = msm_vidc_calc_window_avg_framerate(inst);
 
 	/*
 	 * when buffer detected fps is more than client set value by 10%,
