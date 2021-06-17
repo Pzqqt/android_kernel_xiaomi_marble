@@ -122,6 +122,7 @@ hdd_world_regrules_67_68_6A_6C = {
 	}
 };
 
+#define OSIF_PSOC_SYNC_OP_WAIT_TIME 500
 /**
  * hdd_get_world_regrules() - get the appropriate world regrules
  * @reg: regulatory data
@@ -1686,8 +1687,16 @@ static void hdd_country_change_work_handle(void *arg)
 		return;
 
 	errno = osif_psoc_sync_op_start(wiphy_dev(hdd_ctx->wiphy), &psoc_sync);
-	if (errno)
+
+	if (errno == -EAGAIN) {
+		qdf_sleep(OSIF_PSOC_SYNC_OP_WAIT_TIME);
+		hdd_debug("rescheduling country change work");
+		qdf_sched_work(0, &hdd_ctx->country_change_work);
 		return;
+	} else if (errno) {
+		hdd_err("can not handle country change %d", errno);
+		return;
+	}
 
 	__hdd_country_change_work_handle(hdd_ctx);
 
