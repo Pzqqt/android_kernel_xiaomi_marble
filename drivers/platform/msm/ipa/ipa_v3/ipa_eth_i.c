@@ -763,14 +763,16 @@ static int ipa_eth_setup_ntn_gsi_channel(
 	gsi_evt_ring_props.re_size = GSI_EVT_RING_RE_SIZE_16B;
 	gsi_evt_ring_props.intr = GSI_INTR_MSI;
 	gsi_evt_ring_props.int_modt = IPA_ETH_NTN_MODT;
-	gsi_evt_ring_props.int_modc = IPA_ETH_NTN_MODC;
+	/* len / RE_SIZE == len in counts (convert from bytes) */
+	len = pipe->info.transfer_ring_size;
+	gsi_evt_ring_props.int_modc = len * IPA_ETH_AQC_MODC_FACTOR /
+		(100 * GSI_EVT_RING_RE_SIZE_16B);
 	gsi_evt_ring_props.exclusive = true;
 	gsi_evt_ring_props.err_cb = ipa_eth_gsi_evt_ring_err_cb;
 	gsi_evt_ring_props.user_data = NULL;
 	gsi_evt_ring_props.msi_addr =
 		bar_addr +
 		pipe->info.client_info.ntn.tail_ptr_offs;
-	len = pipe->info.transfer_ring_size;
 	gsi_evt_ring_props.ring_len = len;
 	gsi_evt_ring_props.ring_base_addr =
 		(u64)pipe->info.transfer_ring_base;
