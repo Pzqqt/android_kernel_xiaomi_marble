@@ -35,6 +35,7 @@
 #ifdef WLAN_SUPPORT_TWT
 #include <wlan_mlme_twt_public_struct.h>
 #endif
+#include <wlan_mlme_api.h>
 
 #ifdef WLAN_SUPPORT_TWT
 
@@ -46,6 +47,7 @@
  * @input_dialog_id: input dialog id
  * @dest_param: Pointer to copy twt session parameters when a peer with
  * given dialog id is found
+ * @num_twt_session: Pointer holding total number of valid twt session
  *
  * Return: Success if stats are copied for a peer with given dialog,
  * else failure
@@ -54,11 +56,11 @@ static QDF_STATUS
 ucfg_twt_get_peer_session_param_by_dlg_id(struct peer_mc_cp_stats *mc_stats,
 					  uint32_t input_dialog_id,
 					  struct wmi_host_twt_session_stats_info
-					  *dest_param)
+					  *dest_param, int *num_twt_session)
 {
 	struct wmi_host_twt_session_stats_info *src_param;
 	uint32_t event_type;
-	int i, num_session = 0;
+	int i = 0;
 	QDF_STATUS qdf_status = QDF_STATUS_E_INVAL;
 
 	if (!mc_stats || !dest_param)
@@ -75,11 +77,11 @@ ucfg_twt_get_peer_session_param_by_dlg_id(struct peer_mc_cp_stats *mc_stats,
 
 		if ((event_type == HOST_TWT_SESSION_SETUP) ||
 		    (event_type == HOST_TWT_SESSION_UPDATE)) {
-			qdf_mem_copy(&dest_param[num_session], src_param,
+			qdf_mem_copy(&dest_param[*num_twt_session], src_param,
 				     sizeof(*src_param));
 			qdf_status = QDF_STATUS_SUCCESS;
-			num_session += 1;
-			if (num_session >= TWT_PEER_MAX_SESSIONS)
+			*num_twt_session += 1;
+			if (*num_twt_session >= TWT_PEER_MAX_SESSIONS)
 				break;
 		}
 	}
@@ -95,9 +97,9 @@ ucfg_twt_get_peer_session_param_by_dlg_id(struct peer_mc_cp_stats *mc_stats,
  * @dialog_id: dialog id of peer for which twt session params to be retrieved
  * @params: pointer to store peer twt session parameters
  *
- * Return: Retuns QDF_STATUS_SUCCESS upon success, else qdf error values
+ * Return: total number of valid twt session
  */
-static QDF_STATUS
+static int
 ucfg_twt_get_single_peer_session_params(struct wlan_objmgr_psoc *psoc_obj,
 					uint8_t *mac_addr, uint32_t dialog_id,
 					struct wmi_host_twt_session_stats_info
@@ -107,27 +109,30 @@ ucfg_twt_get_single_peer_session_params(struct wlan_objmgr_psoc *psoc_obj,
 	struct peer_cp_stats *peer_cp_stats_priv;
 	struct peer_mc_cp_stats *peer_mc_stats;
 	QDF_STATUS qdf_status = QDF_STATUS_E_INVAL;
+	int num_twt_session = 0;
 
 	if (!psoc_obj || !params)
-		return qdf_status;
+		return num_twt_session;
 
 	peer = wlan_objmgr_get_peer_by_mac(psoc_obj, mac_addr,
 					   WLAN_CP_STATS_ID);
 	if (!peer)
-		return qdf_status;
+		return num_twt_session;
 
 	peer_cp_stats_priv = wlan_cp_stats_get_peer_stats_obj(peer);
 	if (!peer_cp_stats_priv) {
 		wlan_objmgr_peer_release_ref(peer, WLAN_CP_STATS_ID);
-		return qdf_status;
+		return num_twt_session;
 	}
 
 	wlan_cp_stats_peer_obj_lock(peer_cp_stats_priv);
 	peer_mc_stats = peer_cp_stats_priv->peer_stats;
 
-	qdf_status = ucfg_twt_get_peer_session_param_by_dlg_id(peer_mc_stats,
-							       dialog_id,
-							       params);
+	qdf_status = ucfg_twt_get_peer_session_param_by_dlg_id(
+							peer_mc_stats,
+							dialog_id,
+							params,
+							&num_twt_session);
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		qdf_err("No TWT session for " QDF_MAC_ADDR_FMT " dialog_id %d",
 			QDF_MAC_ADDR_REF(mac_addr), dialog_id);
@@ -136,7 +141,7 @@ ucfg_twt_get_single_peer_session_params(struct wlan_objmgr_psoc *psoc_obj,
 	wlan_cp_stats_peer_obj_unlock(peer_cp_stats_priv);
 	wlan_objmgr_peer_release_ref(peer, WLAN_CP_STATS_ID);
 
-	return qdf_status;
+	return num_twt_session;
 }
 
 /**
@@ -144,7 +149,7 @@ ucfg_twt_get_single_peer_session_params(struct wlan_objmgr_psoc *psoc_obj,
  * a peer if twt session is valid
  * @mc_cp_stats: pointer to peer specific stats
  * @param: Pointer to copy twt session parameters
- * @num_twt_sessions: Pointer holding total number of valid twt sessions
+ * @num_twt_sessions Pointer holding total number of valid twt sessions
  *
  * Return: QDF_STATUS success if valid twt session parameters are obtained
  * else other qdf error values
@@ -152,7 +157,7 @@ ucfg_twt_get_single_peer_session_params(struct wlan_objmgr_psoc *psoc_obj,
 static QDF_STATUS
 ucfg_twt_get_peer_session_param(struct peer_mc_cp_stats *mc_cp_stats,
 				struct wmi_host_twt_session_stats_info *params,
-				int *num_twt_sessions)
+				int *num_twt_session)
 {
 	struct wmi_host_twt_session_stats_info *twt_params;
 	QDF_STATUS qdf_status = QDF_STATUS_E_INVAL;
@@ -169,12 +174,10 @@ ucfg_twt_get_peer_session_param(struct peer_mc_cp_stats *mc_cp_stats,
 		/* Check twt session is established */
 		if ((event_type == HOST_TWT_SESSION_SETUP) ||
 		    (event_type == HOST_TWT_SESSION_UPDATE)) {
-			qdf_mem_copy(&params[*num_twt_sessions], twt_params,
+			qdf_mem_copy(&params[*num_twt_session], twt_params,
 				     sizeof(*twt_params));
 			qdf_status = QDF_STATUS_SUCCESS;
-			*num_twt_sessions += 1;
-			if (*num_twt_sessions >= TWT_PSOC_MAX_SESSIONS)
-				break;
+			*num_twt_session += 1;
 		}
 	}
 	return qdf_status;
@@ -184,96 +187,108 @@ ucfg_twt_get_peer_session_param(struct peer_mc_cp_stats *mc_cp_stats,
  * ucfg_twt_get_all_peer_session_params()- Retrieves twt session parameters
  * of all peers with valid twt session
  * @psoc_obj: psoc object
+ * @vdvev_id: vdev_id
  * @params: array of pointer to store peer twt session parameters
  *
- * Return: Retuns QDF_STATUS_SUCCESS upon success, else qdf error values
+ * Return: total number of valid twt sessions
  */
-static QDF_STATUS
+static int
 ucfg_twt_get_all_peer_session_params(struct wlan_objmgr_psoc *psoc_obj,
+				     uint8_t vdev_id,
 				     struct wmi_host_twt_session_stats_info
 				     *params)
 {
-	struct wlan_objmgr_psoc_objmgr *psoc_objmgr;
-	struct wlan_objmgr_peer *peer_obj;
-	struct wlan_peer_list *peer_list;
-	struct peer_cp_stats *cp_stats_peer_obj;
+	qdf_list_t *peer_list;
+	struct wlan_objmgr_peer *peer, *peer_next;
+	struct wlan_objmgr_vdev *vdev;
+	struct peer_cp_stats *cp_stats_peer_obj, *peer_cp_stat_prv;
 	struct peer_mc_cp_stats *mc_cp_stats;
-	struct peer_cp_stats *peer_cp_stat_prv;
-	QDF_STATUS qdf_status = QDF_STATUS_E_INVAL;
-	qdf_list_t *obj_list;
-	int i, num_sessions = 0;
+	int num_twt_session = 0;
+	enum QDF_OPMODE opmode;
+	int sap_max_peer;
 
-	if (!psoc_obj || !params)
-		return qdf_status;
-
-	/* psoc obj lock should be taken before peer list lock */
-	wlan_psoc_obj_lock(psoc_obj);
-	psoc_objmgr = &psoc_obj->soc_objmgr;
-	/* List is empty, return */
-	if (!psoc_objmgr->wlan_peer_count) {
-		wlan_psoc_obj_unlock(psoc_obj);
-		return qdf_status;
+	if (!psoc_obj) {
+		cp_stats_err("psoc is NULL");
+		return num_twt_session;
 	}
 
-	peer_list = &psoc_objmgr->peer_list;
-	qdf_spin_lock_bh(&peer_list->peer_list_lock);
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc_obj, vdev_id,
+						    WLAN_CP_STATS_ID);
 
-	/* Iterate through peer_list to find a peer with valid twt sessions */
-	for (i = 0; i < WLAN_PEER_HASHSIZE; i++) {
-		obj_list = &peer_list->peer_hash[i];
-		peer_obj = wlan_psoc_peer_list_peek_head(obj_list);
-		while (peer_obj) {
-			cp_stats_peer_obj =
-				wlan_objmgr_peer_get_comp_private_obj
-					(peer_obj, WLAN_UMAC_COMP_CP_STATS);
+	if (!vdev) {
+		cp_stats_err("vdev is NULL, vdev_id: %d", vdev_id);
+		return num_twt_session;
+	}
 
-			mc_cp_stats = NULL;
-			if (cp_stats_peer_obj)
-				mc_cp_stats = cp_stats_peer_obj->peer_stats;
+	wlan_mlme_get_sap_max_peers(psoc_obj, &sap_max_peer);
+	opmode = wlan_vdev_mlme_get_opmode(vdev);
 
-			peer_cp_stat_prv =
-				wlan_cp_stats_get_peer_stats_obj(peer_obj);
+	peer_list = &vdev->vdev_objmgr.wlan_peer_list;
+	if (!peer_list) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_CP_STATS_ID);
+		cp_stats_err("Peer list for vdev obj is NULL");
+		return num_twt_session;
+	}
 
-			if (peer_cp_stat_prv && mc_cp_stats) {
-				wlan_cp_stats_peer_obj_lock(peer_cp_stat_prv);
-				ucfg_twt_get_peer_session_param(mc_cp_stats,
-								params,
-								&num_sessions);
-				wlan_cp_stats_peer_obj_unlock(peer_cp_stat_prv);
-			}
+	peer = wlan_vdev_peer_list_peek_active_head(vdev, peer_list,
+						    WLAN_CP_STATS_ID);
 
-			if (num_sessions >= TWT_PSOC_MAX_SESSIONS)
-				goto done;
-			/* Get next peer */
-			peer_obj = wlan_peer_get_next_peer_of_psoc(obj_list,
-								   peer_obj);
+	while (peer) {
+		cp_stats_peer_obj = wlan_objmgr_peer_get_comp_private_obj(
+						peer, WLAN_UMAC_COMP_CP_STATS);
+
+		mc_cp_stats = NULL;
+		if (cp_stats_peer_obj)
+			mc_cp_stats = cp_stats_peer_obj->peer_stats;
+
+		peer_cp_stat_prv =
+			wlan_cp_stats_get_peer_stats_obj(peer);
+
+		if (peer_cp_stat_prv && mc_cp_stats) {
+			wlan_cp_stats_peer_obj_lock(peer_cp_stat_prv);
+			ucfg_twt_get_peer_session_param(mc_cp_stats,
+							params,
+							&num_twt_session);
+			wlan_cp_stats_peer_obj_unlock(peer_cp_stat_prv);
 		}
+
+		if (opmode == QDF_STA_MODE &&
+		    num_twt_session >= TWT_PEER_MAX_SESSIONS)
+			goto done;
+
+		if (opmode == QDF_SAP_MODE &&
+		    num_twt_session >= (sap_max_peer * TWT_PEER_MAX_SESSIONS))
+			goto done;
+
+		peer_next = wlan_peer_get_next_active_peer_of_vdev(
+							vdev, peer_list, peer,
+							WLAN_CP_STATS_ID);
+		peer = peer_next;
 	}
 
 done:
-	/* If atleast one peer with valid twt session is found return success */
-	if (num_sessions)
-		qdf_status = QDF_STATUS_SUCCESS;
-	else
-		qdf_err("Unable to find a peer with twt session established");
+	if (!num_twt_session)
+		cp_stats_err("Unable to find a peer with twt session established");
 
-	qdf_spin_unlock_bh(&peer_list->peer_list_lock);
-	wlan_psoc_obj_unlock(psoc_obj);
-	return qdf_status;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_CP_STATS_ID);
+	return num_twt_session;
 }
 
-QDF_STATUS
+int
 ucfg_twt_get_peer_session_params(struct wlan_objmgr_psoc *psoc_obj,
 				 struct wmi_host_twt_session_stats_info *params)
 {
 	uint8_t *mac_addr;
 	uint32_t dialog_id;
+	uint8_t vdev_id;
+	int num_twt_session = 0;
 
 	if (!psoc_obj || !params)
-		return QDF_STATUS_E_INVAL;
+		return num_twt_session;
 
 	mac_addr = params[0].peer_mac;
 	dialog_id = params[0].dialog_id;
+	vdev_id = params[0].vdev_id;
 
 	/*
 	 * Currently for STA case, twt_get_params nl is sending only dialog_id
@@ -284,14 +299,18 @@ ucfg_twt_get_peer_session_params(struct wlan_objmgr_psoc *psoc_obj,
 	 * ucfg_twt_get_peer_session_params.
 	 */
 	if (!QDF_IS_ADDR_BROADCAST(mac_addr))
-		return ucfg_twt_get_single_peer_session_params(psoc_obj,
-							       mac_addr,
-							       dialog_id,
-							       params);
+		num_twt_session = ucfg_twt_get_single_peer_session_params(
+								psoc_obj,
+								mac_addr,
+								dialog_id,
+								params);
 	else
-		return ucfg_twt_get_all_peer_session_params(psoc_obj, params);
+		num_twt_session = ucfg_twt_get_all_peer_session_params(
+								psoc_obj,
+								vdev_id,
+								params);
 
-	return QDF_STATUS_E_INVAL;
+	return num_twt_session;
 }
 #endif /* WLAN_SUPPORT_TWT */
 
