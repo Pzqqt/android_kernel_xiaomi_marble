@@ -1325,6 +1325,23 @@ static void lim_join_req_update_ht_vht_caps(struct mac_context *mac,
 	session->vht_config = vht_config;
 	ht_caps.caps = vdev_mlme->proto.ht_info.ht_caps;
 	session->ht_config = ht_caps.ht_caps;
+
+	if (session->opmode == QDF_STA_MODE) {
+		pe_debug("AP capability shortGI20MHz %d shortGI40MHz %d ini capability short_gi_20_mhz %d short_gi_40_mhz %d",
+			bcn_ie->HTCaps.shortGI20MHz,
+			bcn_ie->HTCaps.shortGI40MHz,
+			session->ht_config.short_gi_20_mhz,
+			session->ht_config.short_gi_40_mhz);
+
+		if (session->ht_config.short_gi_20_mhz)
+			session->ht_config.short_gi_20_mhz =
+						bcn_ie->HTCaps.shortGI20MHz;
+
+		if (session->ht_config.short_gi_40_mhz)
+			session->ht_config.short_gi_40_mhz =
+						bcn_ie->HTCaps.shortGI40MHz;
+	}
+
 	pe_debug("HT capability 0x%x VHT capability 0x%x",
 		 ht_caps.caps, vht_config.caps);
 }
