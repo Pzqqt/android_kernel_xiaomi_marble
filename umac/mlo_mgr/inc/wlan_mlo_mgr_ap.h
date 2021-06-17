@@ -67,7 +67,7 @@ void mlo_ap_get_vdev_list(struct wlan_objmgr_vdev *vdev,
 void mlo_ap_link_sync_wait_notify(struct wlan_objmgr_vdev *vdev);
 
 /**
- * mlo_ap_link_start_rsp_notify - Notifies that the link is completed
+ * mlo_ap_link_start_rsp_notify - Notify that the link start is completed
  *
  * @vdev: pointer to vdev
  *

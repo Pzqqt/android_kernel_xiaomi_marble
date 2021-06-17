@@ -227,7 +227,7 @@ static QDF_STATUS mlo_dev_ctx_init(struct wlan_objmgr_vdev *vdev)
 	} else if (wlan_vdev_mlme_get_opmode(vdev) == QDF_SAP_MODE) {
 		ml_dev->ap_ctx = qdf_mem_malloc(sizeof(struct wlan_mlo_ap));
 		if (!ml_dev->ap_ctx)
-			return QDF_STATUS_E_NOMEM;
+			mlo_debug("Failed to allocate memory for ap ctx");
 	}
 
 	ml_link_lock_acquire(g_mlo_ctx);
@@ -284,10 +284,13 @@ QDF_STATUS wlan_mlo_mgr_vdev_created_notification(struct wlan_objmgr_vdev *vdev,
 						  void *arg_list)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct qdf_mac_addr *mld_addr;
 
-	if (!wlan_vdev_mlme_get_mldaddr(vdev))
+	mld_addr = (struct qdf_mac_addr *)wlan_vdev_mlme_get_mldaddr(vdev);
+	if (qdf_is_macaddr_zero(mld_addr)) {
 		/* It's not a ML interface*/
 		return QDF_STATUS_SUCCESS;
+	}
 	status = mlo_dev_ctx_init(vdev);
 
 	return status;
@@ -297,10 +300,13 @@ QDF_STATUS wlan_mlo_mgr_vdev_destroyed_notification(struct wlan_objmgr_vdev *vde
 						    void *arg_list)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct qdf_mac_addr *mld_addr;
 
-	if (!wlan_vdev_mlme_get_mldaddr(vdev))
+	mld_addr = (struct qdf_mac_addr *)wlan_vdev_mlme_get_mldaddr(vdev);
+	if (qdf_is_macaddr_zero(mld_addr)) {
 		/* It's not a ML interface*/
 		return QDF_STATUS_SUCCESS;
+	}
 
 	status = mlo_dev_ctx_deinit(vdev);
 

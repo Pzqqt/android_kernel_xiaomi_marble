@@ -21,8 +21,8 @@
 #define _WLAN_MLO_MGR_PEER_H_
 
 /**
- * mlo_peer_create - Initiatiate peer create on second link by posting
- * message to LIM
+ * mlo_peer_create - Initiatiate peer create on secondary link(s)
+ * by posting a message
  *
  * @vdev: pointer to vdev
  * @peer: pointer to peer context
@@ -34,11 +34,12 @@
  * Return: none
  */
 void mlo_peer_create(struct wlan_objmgr_vdev *vdev,
-		     struct wlan_objmgr_peer *peer, uint8_t *mlo_ie,
-		     uint8_t aid);
+			       struct wlan_objmgr_peer *peer, uint8_t *mlo_ie,
+			       uint8_t aid);
 
 /**
- * mlo_peer_attach - Update the MLO peer context with the new link information
+ * mlo_peer_attach - Attaches the peer by updating the MLO peer context with
+ * the new link information
  *
  * @vdev: pointer to vdev
  * @peer: pointer to peer context
@@ -49,7 +50,8 @@ void mlo_peer_attach(struct wlan_objmgr_vdev *vdev,
 		     struct wlan_objmgr_peer *peer);
 
 /**
- * mlo_peer_setup_failed_notify - Notify MLO manageer to delete partner peers
+ * mlo_peer_setup_failed_notify - Notify MLO manager that peer setup has failed
+ * and to cleanup by deleting the partner peers
  *
  * @vdev: pointer to vdev
  *
@@ -60,7 +62,8 @@ void mlo_peer_attach(struct wlan_objmgr_vdev *vdev,
 void mlo_peer_setup_failed_notify(struct wlan_objmgr_vdev *vdev);
 
 /**
- * mlo_peer_disconnect_notify - Delete partner peers
+ * mlo_peer_disconnect_notify - Notify MLO manager that peer has disconnected
+ * and to clean up by deleting partner peers
  *
  * @vdev: pointer to vdev
  *
@@ -69,7 +72,8 @@ void mlo_peer_setup_failed_notify(struct wlan_objmgr_vdev *vdev);
 void mlo_peer_disconnect_notify(struct wlan_objmgr_peer *peer);
 
 /**
- * wlan_peer_delete_complete - Unlink the peer object
+ * wlan_peer_delete_complete - Notify MLO manager that peer delete is completed
+ * and to clean up by unlinking the peer object
  *
  * @peer: pointer to peer context
  *
