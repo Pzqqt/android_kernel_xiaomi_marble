@@ -543,6 +543,15 @@ bool csr_is_profile_wapi(struct csr_roam_profile *pProfile);
 void csr_get_vdev_type_nss(enum QDF_OPMODE dev_mode, uint8_t *nss_2g,
 			   uint8_t *nss_5g);
 
+/**
+ * csr_send_set_ie  - Send Set IE request to lim
+ * @type: Vdev type
+ * @sub_type: Vdev sub type
+ * @vdev_id: Vdev id
+ *
+ * Return: None
+ */
+void csr_send_set_ie(uint8_t type, uint8_t sub_type, uint8_t vdev_id);
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 
 /* Security */

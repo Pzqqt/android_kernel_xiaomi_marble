@@ -9163,6 +9163,10 @@ static void lim_process_set_ie_req(struct mac_context *mac_ctx, uint32_t *msg_bu
 {
 	struct send_extcap_ie *msg;
 	QDF_STATUS status;
+	tDot11fIEExtCap extra_ext_cap = {0};
+	struct pe_session *pe_session;
+	uint8_t *add_ie = NULL;
+	uint16_t add_ie_len, vdev_id;
 
 	if (!msg_buf) {
 		pe_err("Buffer is Pointing to NULL");
@@ -9170,10 +9174,42 @@ static void lim_process_set_ie_req(struct mac_context *mac_ctx, uint32_t *msg_bu
 	}
 
 	msg = (struct send_extcap_ie *)msg_buf;
-	status = lim_send_ext_cap_ie(mac_ctx, msg->session_id, NULL, false);
-	if (QDF_STATUS_SUCCESS != status)
-		pe_err("Unable to send ExtCap to FW");
+	vdev_id = msg->session_id;
 
+	pe_session = pe_find_session_by_vdev_id(mac_ctx, vdev_id);
+	if (pe_session) {
+		add_ie_len = pe_session->lim_join_req->addIEAssoc.length;
+		if (!add_ie_len)
+			goto send_ie;
+
+		add_ie = qdf_mem_malloc(add_ie_len);
+		if (!add_ie)
+			goto send_ie;
+
+		qdf_mem_copy(add_ie,
+			     pe_session->lim_join_req->addIEAssoc.addIEdata,
+			     add_ie_len);
+
+		status = lim_strip_extcap_update_struct(mac_ctx, add_ie,
+							&add_ie_len,
+							&extra_ext_cap);
+		if (QDF_IS_STATUS_SUCCESS(status)) {
+			struct s_ext_cap *p_ext_cap =
+				(struct s_ext_cap *)extra_ext_cap.bytes;
+			if (p_ext_cap->interworking_service)
+				p_ext_cap->qos_map = 1;
+
+			extra_ext_cap.num_bytes =
+				lim_compute_ext_cap_ie_length(&extra_ext_cap);
+		}
+		qdf_mem_free(add_ie);
+	}
+
+send_ie:
+	status = lim_send_ext_cap_ie(mac_ctx, msg->session_id, &extra_ext_cap,
+				     true);
+	if (QDF_IS_STATUS_ERROR(status))
+		pe_err("Unable to send ExtCap to FW");
 }
 
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR

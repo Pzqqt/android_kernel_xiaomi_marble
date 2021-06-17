@@ -13978,8 +13978,8 @@ static void csr_store_oce_cfg_flags_in_vdev(struct mac_context *mac,
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 }
 
-static void csr_send_set_ie(uint8_t type, uint8_t sub_type,
-			    uint8_t vdev_id)
+void csr_send_set_ie(uint8_t type, uint8_t sub_type,
+		     uint8_t vdev_id)
 {
 	struct send_extcap_ie *msg;
 	QDF_STATUS status;
