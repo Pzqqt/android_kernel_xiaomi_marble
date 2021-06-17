@@ -1981,15 +1981,15 @@ static void os_if_ndp_iface_create_rsp_handler(struct wlan_objmgr_psoc *psoc,
 	osif_debug("transaction id: %u status code: %u Reason: %u",
 		   create_transaction_id, create_status, create_reason);
 
-	cfg80211_vendor_event(vendor_event, GFP_KERNEL);
-
 	if (!create_fail) {
 		/* update txrx queues and register self sta */
 		cb_obj.drv_ndi_create_rsp_handler(wlan_vdev_get_id(vdev),
 						  ndi_rsp);
+		cfg80211_vendor_event(vendor_event, GFP_KERNEL);
 	} else {
 		osif_err("NDI interface creation failed with reason %d",
 			 create_reason);
+		cfg80211_vendor_event(vendor_event, GFP_KERNEL);
 		goto close_ndi;
 	}
 
