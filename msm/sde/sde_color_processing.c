@@ -4843,7 +4843,6 @@ void sde_cp_duplicate_state_info(struct drm_crtc_state *drm_old_state,
 				struct drm_crtc_state *drm_state)
 {
 	struct sde_crtc_state *old_state, *curr_state;
-	u32 len, i;
 
 	if (!drm_old_state || !drm_state)
 		return;
@@ -4853,28 +4852,11 @@ void sde_cp_duplicate_state_info(struct drm_crtc_state *drm_old_state,
 	if (!old_state || !curr_state)
 		return;
 
-	SDE_EVT32(SDE_EVTLOG_FUNC_ENTRY);
-	for (i = 0; i < ARRAY_SIZE(old_state->cp_range_payload); i++) {
-		/* heap address copied from old state should be cleared, each state should have
-		 * its own heap allocation.
-		*/
-		curr_state->cp_range_payload[i].addr = 0;
-		curr_state->cp_range_payload[i].len = 0;
-		if (!old_state->cp_range_payload[i].addr || !old_state->cp_range_payload[i].len)
-			continue;
-
-		len = old_state->cp_range_payload[i].len;
-		curr_state->cp_range_payload[i].addr = (u64)kmalloc(len, GFP_KERNEL);
-		if (!curr_state->cp_range_payload[i].addr) {
-			SDE_EVT32(curr_state->cp_range_payload[i].addr);
-			continue;
-		}
-		memcpy((u8 *)curr_state->cp_range_payload[i].addr,
-			(u8 *)old_state->cp_range_payload[i].addr, len);
-		curr_state->cp_range_payload[i].len = len;
-		SDE_EVT32(curr_state->cp_range_payload[i].addr,
-			  curr_state->cp_range_payload[i].len);
-	}
+	SDE_EVT32(curr_state, old_state);
+	memset(curr_state->cp_dirty_list, 0, sizeof(curr_state->cp_dirty_list));
+	memset(curr_state->cp_prop_values, 0, sizeof(curr_state->cp_prop_values));
+	memset(curr_state->cp_range_payload, 0, sizeof(curr_state->cp_range_payload));
+	curr_state->cp_prop_cnt = 0;
 }
 
 void sde_cp_set_skip_blend_plane_info(struct drm_crtc *drm_crtc,
