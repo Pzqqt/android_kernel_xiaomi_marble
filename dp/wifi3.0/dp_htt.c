@@ -2507,6 +2507,10 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 
 	/* Ack time stamp is same as end time stamp*/
 	ppdu_desc->ack_timestamp = ppdu_desc->ppdu_end_timestamp;
+
+	tag_buf = start_tag_buf + HTT_GET_STATS_CMN_INDEX(BSSCOLOR_OBSS_PSR);
+	ppdu_desc->bss_color =
+		HTT_PPDU_STATS_COMMON_TLV_BSS_COLOR_ID_GET(*tag_buf);
 }
 
 /*
@@ -4101,9 +4105,6 @@ static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
 					     tsf_l32, max_users);
 		if (!ppdu_info)
 			return NULL;
-
-		ppdu_info->ppdu_desc->bss_color =
-			pdev->rx_mon_recv_status.bsscolor;
 
 		ppdu_info->ppdu_id = ppdu_id;
 		ppdu_info->tlv_bitmap |= (1 << tlv_type);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -133,6 +133,7 @@ void htt_htc_pkt_pool_free(struct htt_soc *soc);
 #define HTT_PPDU_STATS_COMMON_TLV_TXFRM_DELTA_TIME_US_OFFSET 12
 #define HTT_PPDU_STATS_COMMON_TLV_RESV_NUM_UL_BEAM_OFFSET 13
 #define HTT_PPDU_STATS_COMMON_TLV_START_TSTMP_U32_US_OFFSET 14
+#define HTT_PPDU_STATS_COMMON_TLV_BSSCOLOR_OBSS_PSR_OFFSET 15
 
 /* get index for field in htt_ppdu_stats_common_tlv */
 #define HTT_GET_STATS_CMN_INDEX(index) \
