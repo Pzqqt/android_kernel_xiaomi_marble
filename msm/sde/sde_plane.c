@@ -1215,7 +1215,7 @@ static void sde_color_process_plane_setup(struct drm_plane *plane)
 				PLANE_PROP_VIG_GAMUT);
 		hw_cfg.last_feature = 0;
 		hw_cfg.ctl = ctl;
-		hw_cfg.len = sizeof(struct drm_msm_3d_gamut);
+		hw_cfg.len = size;
 		hw_cfg.payload = vig_gamut;
 		psde->pipe_hw->ops.setup_vig_gamut(psde->pipe_hw, &hw_cfg);
 	}
@@ -1228,7 +1228,7 @@ static void sde_color_process_plane_setup(struct drm_plane *plane)
 				PLANE_PROP_VIG_IGC);
 		hw_cfg.last_feature = 0;
 		hw_cfg.ctl = ctl;
-		hw_cfg.len = sizeof(struct drm_msm_igc_lut);
+		hw_cfg.len = size;
 		hw_cfg.payload = igc;
 		psde->pipe_hw->ops.setup_vig_igc(psde->pipe_hw, &hw_cfg);
 	}
@@ -1241,7 +1241,7 @@ static void sde_color_process_plane_setup(struct drm_plane *plane)
 				PLANE_PROP_DMA_IGC);
 		hw_cfg.last_feature = 0;
 		hw_cfg.ctl = ctl;
-		hw_cfg.len = sizeof(struct drm_msm_igc_lut);
+		hw_cfg.len = size;
 		hw_cfg.payload = igc;
 		psde->pipe_hw->ops.setup_dma_igc(psde->pipe_hw, &hw_cfg,
 				pstate->multirect_index);
@@ -1255,7 +1255,7 @@ static void sde_color_process_plane_setup(struct drm_plane *plane)
 				PLANE_PROP_DMA_GC);
 		hw_cfg.last_feature = 0;
 		hw_cfg.ctl = ctl;
-		hw_cfg.len = sizeof(struct drm_msm_pgc_lut);
+		hw_cfg.len = size;
 		hw_cfg.payload = gc;
 		psde->pipe_hw->ops.setup_dma_gc(psde->pipe_hw, &hw_cfg,
 				pstate->multirect_index);
