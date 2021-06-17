@@ -1668,12 +1668,14 @@ static int handle_session_response(struct msm_vidc_core *core,
 				type = RESP_WORK_OUTPUT_PSC;
 			}
 		} else if (packet->type == HFI_CMD_BUFFER &&
-			packet->port == HFI_PORT_RAW) {
+			vidc_port_from_hfi(inst, packet->port) ==
+				OUTPUT_PORT) {
 			if (check_last_flag(inst, packet)) {
 				offload = true;
 				type = RESP_WORK_LAST_FLAG;
 			}
 		}
+
 		if (offload)
 			break;
 
