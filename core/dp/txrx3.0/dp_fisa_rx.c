@@ -1658,6 +1658,7 @@ static int dp_add_nbuf_to_fisa_flow(struct dp_rx_fst *fisa_hdl,
 	uint32_t hal_aggr_count;
 	uint8_t napi_id = QDF_NBUF_CB_RX_CTX_ID(nbuf);
 	uint8_t reo_id = fisa_flow->napi_id;
+	uint32_t fse_metadata;
 
 	dump_tlvs(hal_soc_hdl, rx_tlv_hdr, QDF_TRACE_LEVEL_INFO_HIGH);
 	dp_fisa_debug("nbuf: %pK nbuf->next:%pK nbuf->data:%pK len %d data_len %d",
@@ -1668,10 +1669,16 @@ static int dp_add_nbuf_to_fisa_flow(struct dp_rx_fst *fisa_hdl,
 	 * the one configured.
 	 */
 	if (qdf_unlikely(fisa_flow->napi_id != napi_id)) {
+		fse_metadata =
+			hal_rx_msdu_fse_metadata_get(hal_soc_hdl, rx_tlv_hdr);
+		if (fisa_hdl->del_flow_count &&
+		    fse_metadata != fisa_flow->metadata)
+			return FISA_AGGR_NOT_ELIGIBLE;
+
 		dp_err("REO id mismatch flow: %pK napi_id: %u nbuf: %pK reo_id: %u",
 		       fisa_flow, fisa_flow->napi_id, nbuf, napi_id);
-		QDF_BUG(0);
 		DP_STATS_INC(fisa_hdl, reo_mismatch, 1);
+		QDF_BUG(0);
 		return FISA_AGGR_NOT_ELIGIBLE;
 	}
 
