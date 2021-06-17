@@ -1217,6 +1217,7 @@ typedef enum sHalBitVal         /* For Bit operations */
  * @addba_extn_present: ADDBA extension present flag
  * @amsdu_support: amsdu in ampdu support
  * @is_wep: protected bit in fc
+ * @calc_buff_size: Calculated buf size from peer and self capabilities
  *
  * This function is called when ADDBA request is successful. ADDBA response is
  * setup by calling addba_response_setup API and frame is then sent out OTA.
@@ -1227,7 +1228,8 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 					 tSirMacAddr peer_mac, uint16_t tid,
 					 struct pe_session *session,
 					 uint8_t addba_extn_present,
-					 uint8_t amsdu_support, uint8_t is_wep);
+					 uint8_t amsdu_support, uint8_t is_wep,
+					 uint16_t calc_buff_size);
 
 /**
  * lim_send_delba_action_frame() - Send delba to peer
