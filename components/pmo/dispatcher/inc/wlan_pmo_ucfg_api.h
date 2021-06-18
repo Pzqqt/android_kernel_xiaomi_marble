@@ -1274,6 +1274,16 @@ bool ucfg_pmo_get_moddtim_user_active(struct wlan_objmgr_vdev *vdev);
  * Return: moddtim user value
  */
 uint32_t ucfg_pmo_get_moddtim_user(struct wlan_objmgr_vdev *vdev);
+
+/*
+ * ucfg_pmo_get_disconnect_sap_tdls_in_wow: get if disconnect sap/p2p_go
+ * or tdls in wow
+ * @psoc: objmgr psoc
+ *
+ * Return: true in case support else false
+ */
+bool
+ucfg_pmo_get_disconnect_sap_tdls_in_wow(struct wlan_objmgr_psoc *psoc);
 #else /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 static inline QDF_STATUS
 ucfg_pmo_psoc_open(struct wlan_objmgr_psoc *psoc)
@@ -1975,6 +1985,12 @@ static inline uint32_t
 ucfg_pmo_get_moddtim_user(struct wlan_objmgr_vdev *vdev)
 {
 	return 0;
+}
+
+static inline bool
+ucfg_pmo_get_disconnect_sap_tdls_in_wow(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
 }
 #endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 

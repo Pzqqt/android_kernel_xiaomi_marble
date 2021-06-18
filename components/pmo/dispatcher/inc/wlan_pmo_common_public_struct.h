@@ -348,6 +348,7 @@ enum pmo_gpio_wakeup_mode {
  * @gpio_wakeup_mode: gpio wakeup mode
  * @igmp_version_support: igmp version support
  * @igmp_offload_enable: enable/disable igmp offload feature to fw
+ * @disconnect_sap_tdls_in_wow: sap/p2p_go disconnect or teardown tdls link
  */
 struct pmo_psoc_cfg {
 	bool ptrn_match_enable_all_vdev;
@@ -424,6 +425,7 @@ struct pmo_psoc_cfg {
 	uint32_t igmp_version_support;
 	bool igmp_offload_enable;
 #endif
+	bool disconnect_sap_tdls_in_wow;
 };
 
 /**

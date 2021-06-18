@@ -19295,16 +19295,6 @@ QDF_STATUS hdd_softap_deauth_current_sta(struct hdd_adapter *adapter,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * hdd_softap_deauth_all_sta() - Deauth all sta in the sta list
- * @hdd_ctx: pointer to hdd context
- * @adapter: pointer to adapter structure
- * @hapd_state: pointer to hostapd state structure
- * @param: pointer to del sta params
- *
- * Return: QDF_STATUS on success, corresponding QDF failure status on failure
- */
-static
 QDF_STATUS hdd_softap_deauth_all_sta(struct hdd_adapter *adapter,
 				     struct hdd_hostapd_state *hapd_state,
 				     struct csr_del_sta_params *param)
