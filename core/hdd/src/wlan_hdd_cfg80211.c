@@ -4862,6 +4862,11 @@ hdd_send_roam_triggers_to_sme(struct hdd_context *hdd_ctx,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	triggers.vdev_id = vdev_id;
+	triggers.trigger_bitmap =
+	    wlan_hdd_convert_control_roam_trigger_bitmap(roam_trigger_bitmap);
+	hdd_debug("trigger bitmap: 0x%x converted trigger_bitmap: 0x%x",
+		  roam_trigger_bitmap, triggers.trigger_bitmap);
 	/*
 	 * In standalone STA, if this vendor command is received between
 	 * ROAM_START and roam synch indication, it is better to reject
@@ -4874,15 +4879,12 @@ hdd_send_roam_triggers_to_sme(struct hdd_context *hdd_ctx,
 	 * vdev.
 	 */
 	if (hdd_is_roaming_in_progress(hdd_ctx)) {
+		mlme_set_roam_trigger_bitmap(hdd_ctx->psoc, adapter->vdev_id,
+					     triggers.trigger_bitmap);
 		hdd_err("Reject set roam trigger as roaming is in progress");
-		return QDF_STATUS_E_FAILURE;
-	}
 
-	triggers.vdev_id = vdev_id;
-	triggers.trigger_bitmap =
-	    wlan_hdd_convert_control_roam_trigger_bitmap(roam_trigger_bitmap);
-	hdd_debug("trigger bitmap: 0x%x converted trigger_bitmap: 0x%x",
-		  roam_trigger_bitmap, triggers.trigger_bitmap);
+		return QDF_STATUS_E_BUSY;
+	}
 
 	/*
 	 * roam trigger bitmap is > 0 - Roam triggers are set.
