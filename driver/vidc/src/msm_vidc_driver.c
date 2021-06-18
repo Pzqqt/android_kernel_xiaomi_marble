@@ -2008,7 +2008,7 @@ int msm_vidc_memory_unmap_completely(struct msm_vidc_inst *inst,
 		if (rc)
 			break;
 		if (!map->refcount) {
-			msm_vidc_memory_put_dmabuf(map->dmabuf);
+			msm_vidc_memory_put_dmabuf(inst, map->dmabuf);
 			list_del(&map->list);
 			msm_memory_free(inst, MSM_MEM_POOL_MAP, map);
 			break;
@@ -2266,7 +2266,7 @@ int msm_vidc_put_delayed_unmap(struct msm_vidc_inst *inst, struct msm_vidc_map *
 		i_vpr_e(inst, "%s: unmap failed\n", __func__);
 
 	if (!map->refcount) {
-		msm_vidc_memory_put_dmabuf(map->dmabuf);
+		msm_vidc_memory_put_dmabuf(inst, map->dmabuf);
 		list_del(&map->list);
 		msm_memory_free(inst, MSM_MEM_POOL_MAP, map);
 	}
@@ -2334,7 +2334,7 @@ int msm_vidc_unmap_driver_buf(struct msm_vidc_inst *inst,
 
 	/* finally delete if refcount is zero */
 	if (!map->refcount) {
-		msm_vidc_memory_put_dmabuf(map->dmabuf);
+		msm_vidc_memory_put_dmabuf(inst, map->dmabuf);
 		list_del(&map->list);
 		msm_memory_free(inst, MSM_MEM_POOL_MAP, map);
 	}
@@ -2378,7 +2378,7 @@ int msm_vidc_map_driver_buf(struct msm_vidc_inst *inst,
 		}
 		INIT_LIST_HEAD(&map->list);
 		map->type = buf->type;
-		map->dmabuf = msm_vidc_memory_get_dmabuf(buf->fd);
+		map->dmabuf = msm_vidc_memory_get_dmabuf(inst, buf->fd);
 		if (!map->dmabuf)
 			return -EINVAL;
 		map->region = msm_vidc_get_buffer_region(inst, buf->type, __func__);
@@ -2386,7 +2386,7 @@ int msm_vidc_map_driver_buf(struct msm_vidc_inst *inst,
 		if (is_decode_session(inst) && is_output_buffer(buf->type)) {
 			rc = msm_vidc_get_delayed_unmap(inst, map);
 			if (rc) {
-				msm_vidc_memory_put_dmabuf(map->dmabuf);
+				msm_vidc_memory_put_dmabuf(inst, map->dmabuf);
 				msm_memory_free(inst, MSM_MEM_POOL_MAP, map);
 				return rc;
 			}
@@ -2414,7 +2414,7 @@ int msm_vidc_put_driver_buf(struct msm_vidc_inst *inst,
 
 	msm_vidc_unmap_driver_buf(inst, buf);
 
-	msm_vidc_memory_put_dmabuf(buf->dmabuf);
+	msm_vidc_memory_put_dmabuf(inst, buf->dmabuf);
 
 	/* delete the buffer from buffers->list */
 	list_del(&buf->list);
@@ -2456,7 +2456,7 @@ struct msm_vidc_buffer *msm_vidc_get_driver_buf(struct msm_vidc_inst *inst,
 	if (rc)
 		goto error;
 
-	buf->dmabuf = msm_vidc_memory_get_dmabuf(buf->fd);
+	buf->dmabuf = msm_vidc_memory_get_dmabuf(inst, buf->fd);
 	if (!buf->dmabuf)
 		goto error;
 
@@ -2470,7 +2470,7 @@ struct msm_vidc_buffer *msm_vidc_get_driver_buf(struct msm_vidc_inst *inst,
 	return buf;
 
 error:
-	msm_vidc_memory_put_dmabuf(buf->dmabuf);
+	msm_vidc_memory_put_dmabuf(inst, buf->dmabuf);
 	list_del(&buf->list);
 	msm_memory_free(inst, MSM_MEM_POOL_BUFFER, buf);
 	return NULL;
@@ -4545,6 +4545,7 @@ void msm_vidc_destroy_buffers(struct msm_vidc_inst *inst)
 	struct msm_vidc_buffers *buffers;
 	struct msm_vidc_buffer *buf, *dummy;
 	struct msm_vidc_timestamp *ts, *dummy_ts;
+	struct msm_memory_dmabuf *dbuf, *dummy_dbuf;
 	struct response_work *work, *dummy_work = NULL;
 	static const enum msm_vidc_buffer_type ext_buf_types[] = {
 		MSM_VIDC_BUF_INPUT,
@@ -4612,6 +4613,12 @@ void msm_vidc_destroy_buffers(struct msm_vidc_inst *inst)
 			__func__, ts->sort.val, ts->rank);
 		list_del(&ts->sort.list);
 		msm_memory_free(inst, MSM_MEM_POOL_TIMESTAMP, ts);
+	}
+
+	list_for_each_entry_safe(dbuf, dummy_dbuf, &inst->dmabuf_tracker, list) {
+		i_vpr_e(inst, "%s: removing dma_buf %#x, refcount %u\n",
+			__func__, dbuf->dmabuf, dbuf->refcount);
+		msm_vidc_memory_put_dmabuf_completely(inst, dbuf);
 	}
 
 	list_for_each_entry_safe(work, dummy_work, &inst->response_works, list) {

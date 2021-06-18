@@ -60,28 +60,116 @@ exit:
 	return NULL;
 }
 
-struct dma_buf *msm_vidc_memory_get_dmabuf(int fd)
+struct dma_buf *msm_vidc_memory_get_dmabuf(struct msm_vidc_inst *inst, int fd)
 {
-	struct dma_buf *dmabuf;
+	struct msm_memory_dmabuf *buf = NULL;
+	struct dma_buf *dmabuf = NULL;
+	bool found = false;
 
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return NULL;
+	}
+
+	/* get local dmabuf ref for tracking */
 	dmabuf = dma_buf_get(fd);
 	if (IS_ERR_OR_NULL(dmabuf)) {
 		d_vpr_e("Failed to get dmabuf for %d, error %ld\n",
 				fd, PTR_ERR(dmabuf));
-		dmabuf = NULL;
+		return NULL;
 	}
+
+	/* track dmabuf - inc refcount if already present */
+	list_for_each_entry(buf, &inst->dmabuf_tracker, list) {
+		if (buf->dmabuf == dmabuf) {
+			buf->refcount++;
+			found = true;
+			break;
+		}
+	}
+	if (found) {
+		/* put local dmabuf ref */
+		dma_buf_put(dmabuf);
+		return dmabuf;
+	}
+
+	/* get tracker instance from pool */
+	buf = msm_memory_alloc(inst, MSM_MEM_POOL_DMABUF);
+	if (!buf) {
+		i_vpr_e(inst, "%s: dmabuf alloc failed\n", __func__);
+		dma_buf_put(dmabuf);
+		return NULL;
+	}
+	/* hold dmabuf strong ref in tracker */
+	buf->dmabuf = dmabuf;
+	buf->refcount = 1;
+	INIT_LIST_HEAD(&buf->list);
+
+	/* add new dmabuf entry to tracker */
+	list_add_tail(&buf->list, &inst->dmabuf_tracker);
 
 	return dmabuf;
 }
 
-void msm_vidc_memory_put_dmabuf(void *dmabuf)
+void msm_vidc_memory_put_dmabuf(struct msm_vidc_inst *inst, struct dma_buf *dmabuf)
 {
-	if (!dmabuf) {
-		d_vpr_e("%s: NULL dmabuf\n", __func__);
+	struct msm_memory_dmabuf *buf = NULL;
+	bool found = false;
+
+	if (!inst || !dmabuf) {
+		d_vpr_e("%s: invalid params\n", __func__);
 		return;
 	}
 
-	dma_buf_put((struct dma_buf *)dmabuf);
+	/* track dmabuf - dec refcount if already present */
+	list_for_each_entry(buf, &inst->dmabuf_tracker, list) {
+		if (buf->dmabuf == dmabuf) {
+			buf->refcount--;
+			found = true;
+			break;
+		}
+	}
+	if (!found) {
+		i_vpr_e(inst, "%s: invalid dmabuf %#x\n", __func__, dmabuf);
+		return;
+	}
+
+	/* non-zero refcount - do nothing */
+	if (buf->refcount)
+		return;
+
+	/* remove dmabuf entry from tracker */
+	list_del(&buf->list);
+
+	/* release dmabuf strong ref from tracker */
+	dma_buf_put(buf->dmabuf);
+
+	/* put tracker instance back to pool */
+	msm_memory_free(inst, MSM_MEM_POOL_DMABUF, buf);
+}
+
+void msm_vidc_memory_put_dmabuf_completely(struct msm_vidc_inst *inst,
+	struct msm_memory_dmabuf *buf)
+{
+	if (!inst || !buf) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return;
+	}
+
+	while (buf->refcount) {
+		buf->refcount--;
+		if (!buf->refcount) {
+			/* remove dmabuf entry from tracker */
+			list_del(&buf->list);
+
+			/* release dmabuf strong ref from tracker */
+			dma_buf_put(buf->dmabuf);
+
+			/* put tracker instance back to pool */
+			msm_memory_free(inst, MSM_MEM_POOL_DMABUF, buf);
+			break;
+		}
+	}
 }
 
 int msm_vidc_memory_map(struct msm_vidc_core *core, struct msm_vidc_map *map)
@@ -446,6 +534,7 @@ static struct msm_vidc_type_size_name buftype_size_name_arr[] = {
 	{MSM_MEM_POOL_MAP,        sizeof(struct msm_vidc_map),        "MSM_MEM_POOL_MAP"        },
 	{MSM_MEM_POOL_ALLOC,      sizeof(struct msm_vidc_alloc),      "MSM_MEM_POOL_ALLOC"      },
 	{MSM_MEM_POOL_TIMESTAMP,  sizeof(struct msm_vidc_timestamp),  "MSM_MEM_POOL_TIMESTAMP"  },
+	{MSM_MEM_POOL_DMABUF,     sizeof(struct msm_memory_dmabuf),   "MSM_MEM_POOL_DMABUF"     },
 };
 
 int msm_memory_pools_init(struct msm_vidc_inst *inst)

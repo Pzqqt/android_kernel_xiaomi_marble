@@ -11,11 +11,18 @@
 struct msm_vidc_core;
 struct msm_vidc_inst;
 
+struct msm_memory_dmabuf {
+	struct list_head       list;
+	struct dma_buf        *dmabuf;
+	u32                    refcount;
+};
+
 enum msm_memory_pool_type {
 	MSM_MEM_POOL_BUFFER  = 0,
 	MSM_MEM_POOL_MAP,
 	MSM_MEM_POOL_ALLOC,
 	MSM_MEM_POOL_TIMESTAMP,
+	MSM_MEM_POOL_DMABUF,
 	MSM_MEM_POOL_MAX,
 };
 
@@ -40,8 +47,12 @@ int msm_vidc_memory_map(struct msm_vidc_core *core,
 	struct msm_vidc_map *map);
 int msm_vidc_memory_unmap(struct msm_vidc_core *core,
 	struct msm_vidc_map *map);
-struct dma_buf *msm_vidc_memory_get_dmabuf(int fd);
-void msm_vidc_memory_put_dmabuf(void *dmabuf);
+struct dma_buf *msm_vidc_memory_get_dmabuf(struct msm_vidc_inst *inst,
+	int fd);
+void msm_vidc_memory_put_dmabuf(struct msm_vidc_inst *inst,
+	struct dma_buf *dmabuf);
+void msm_vidc_memory_put_dmabuf_completely(struct msm_vidc_inst *inst,
+	struct msm_memory_dmabuf *buf);
 int msm_memory_pools_init(struct msm_vidc_inst *inst);
 void msm_memory_pools_deinit(struct msm_vidc_inst *inst);
 void *msm_memory_alloc(struct msm_vidc_inst *inst,

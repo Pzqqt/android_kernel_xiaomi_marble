@@ -131,6 +131,7 @@ struct msm_vidc_inst {
 	struct workqueue_struct           *response_workq;
 	struct list_head                   response_works; /* list of struct response_work */
 	struct list_head                   enc_input_crs;
+	struct list_head                   dmabuf_tracker; /* list of struct msm_memory_dmabuf */
 	bool                               once_per_session_set;
 	bool                               ipsc_properties_set;
 	bool                               opsc_properties_set;
