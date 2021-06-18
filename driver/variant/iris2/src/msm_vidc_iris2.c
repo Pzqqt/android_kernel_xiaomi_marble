@@ -862,7 +862,6 @@ static int __watchdog_iris2(struct msm_vidc_core *vidc_core, u32 intr_status)
 
 static int __noc_error_info_iris2(struct msm_vidc_core *vidc_core)
 {
-	u32 val = 0;
 	struct msm_vidc_core *core = vidc_core;
 
 	if (!core) {
@@ -870,6 +869,14 @@ static int __noc_error_info_iris2(struct msm_vidc_core *vidc_core)
 		return -EINVAL;
 	}
 
+	/*
+	 * we are not supposed to access vcodec subsystem registers
+	 * unless vcodec core clock WRAPPER_CORE_CLOCK_CONFIG_IRIS2 is enabled.
+	 * core clock might have been disabled by video firmware as part of
+	 * inter frame power collapse (power plane control feature).
+	 */
+
+	/*
 	val = __read_register(core, VCODEC_NOC_ERL_MAIN_SWID_LOW);
 	d_vpr_e("VCODEC_NOC_ERL_MAIN_SWID_LOW:     %#x\n", val);
 	val = __read_register(core, VCODEC_NOC_ERL_MAIN_SWID_HIGH);
@@ -896,6 +903,7 @@ static int __noc_error_info_iris2(struct msm_vidc_core *vidc_core)
 	d_vpr_e("VCODEC_NOC_ERL_MAIN_ERRLOG3_LOW:     %#x\n", val);
 	val = __read_register(core, VCODEC_NOC_ERL_MAIN_ERRLOG3_HIGH);
 	d_vpr_e("VCODEC_NOC_ERL_MAIN_ERRLOG3_HIGH:     %#x\n", val);
+	*/
 
 	return 0;
 }
