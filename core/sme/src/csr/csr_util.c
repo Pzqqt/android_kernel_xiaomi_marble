@@ -961,8 +961,9 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 			    cc_switch_mode ==
 			    QDF_MCC_TO_SCC_WITH_PREFERRED_BAND)
 				intf_ch_freq = 0;
-		} else if (cc_switch_mode ==
-			   QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL) {
+		} else if (policy_mgr_is_hw_dbs_capable(mac_ctx->psoc) &&
+			   cc_switch_mode ==
+				QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL) {
 			status = policy_mgr_get_sap_mandatory_channel(
 					mac_ctx->psoc, sap_ch_freq,
 					&intf_ch_freq);
