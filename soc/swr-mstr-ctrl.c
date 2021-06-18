@@ -2248,6 +2248,7 @@ handle_irq:
 	if (intr_sts_masked) {
 		dev_dbg(swrm->dev, "%s: new interrupt received 0x%x\n",
 			__func__, intr_sts_masked);
+		trace_printk("%s, new interrupt received\n", __func__);
 		goto handle_irq;
 	}
 
