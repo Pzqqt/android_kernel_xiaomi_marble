@@ -34,8 +34,11 @@ typedef uint32_t wlan_cm_id;
 /* Diconnect active timeout */
 #define DISCONNECT_TIMEOUT   STOP_RESPONSE_TIMER + DELETE_RESPONSE_TIMER + 1000
 
-/* Diconnect command wait timeout */
-#define CM_DISCONNECT_CMD_TIMEOUT DISCONNECT_TIMEOUT + 2000
+/*
+ * Disconnect command wait timeout VDEV timeouts + 5 sec buff for current active
+ * command to complete
+ */
+#define CM_DISCONNECT_CMD_TIMEOUT DISCONNECT_TIMEOUT + 5000
 
 /**
  * struct wlan_cm_wep_key_params - store wep key info

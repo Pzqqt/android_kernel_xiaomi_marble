@@ -31,7 +31,11 @@
 
 /* Max candidate/attempts to be tried to connect */
 #define CM_MAX_CONNECT_ATTEMPTS 5
-#define CM_MAX_CONNECT_TIMEOUT 10000
+/*
+ * Default connect timeout to consider 3 sec join timeout + 5 sec auth timeout +
+ * 2 sec assoc timeout + 5 sec buffer for vdev related timeouts.
+ */
+#define CM_MAX_CONNECT_TIMEOUT 15000
 
 /*
  * Default max retry attempts to be tried for a candidate.
