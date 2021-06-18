@@ -314,6 +314,172 @@ int msm_vidc_memory_free(struct msm_vidc_core *core, struct msm_vidc_alloc *mem)
 
 	return rc;
 };
+
+void *msm_memory_alloc(struct msm_vidc_inst *inst, enum msm_memory_pool_type type)
+{
+	struct msm_memory_alloc_header *hdr;
+	struct msm_memory_pool *pool;
+
+	if (!inst || type < 0 || type >= MSM_MEM_POOL_MAX) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return NULL;
+	}
+	pool = &inst->pool[type];
+
+	if (!list_empty(&pool->free_pool)) {
+		/* get 1st node from free pool */
+		hdr = list_first_entry(&pool->free_pool,
+			struct msm_memory_alloc_header, list);
+		list_del_init(&hdr->list);
+
+		/* reset existing data */
+		memset((char *)hdr->buf, 0, pool->size);
+
+		/* add to busy pool */
+		list_add_tail(&hdr->list, &pool->busy_pool);
+
+		return hdr->buf;
+	}
+
+	hdr = kzalloc(pool->size + sizeof(struct msm_memory_alloc_header), GFP_KERNEL);
+	if (!hdr) {
+		i_vpr_e(inst, "%s: buffer allocation failed\n", __func__);
+		return NULL;
+	}
+	INIT_LIST_HEAD(&hdr->list);
+	hdr->buf = (void *)(hdr + 1);
+	list_add_tail(&hdr->list, &pool->busy_pool);
+
+	return hdr->buf;
+}
+
+void msm_memory_free(struct msm_vidc_inst *inst, enum msm_memory_pool_type type,
+	void *vidc_buf)
+{
+	struct msm_memory_alloc_header *hdr;
+	struct msm_memory_pool *pool;
+	bool found = false;
+
+	if (!inst || !vidc_buf || type < 0 || type >= MSM_MEM_POOL_MAX) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return;
+	}
+	pool = &inst->pool[type];
+
+	/* sanitize buffer addr */
+	list_for_each_entry(hdr, &pool->busy_pool, list) {
+		if (hdr->buf == vidc_buf) {
+			found = true;
+			break;
+		}
+	}
+	if (!found) {
+		i_vpr_e(inst, "%s: invalid buf addr %#x\n", __func__, vidc_buf);
+		return;
+	}
+
+	/* remove from busy pool */
+	list_del_init(&hdr->list);
+
+	/* add to free pool */
+	list_add_tail(&hdr->list, &pool->free_pool);
+}
+
+static void msm_vidc_destroy_pool_buffers(struct msm_vidc_inst *inst,
+	enum msm_memory_pool_type type)
+{
+	struct msm_memory_alloc_header *hdr, *dummy;
+	struct msm_memory_pool *pool;
+	u32 fcount = 0, bcount = 0;
+
+	if (!inst || type < 0 || type >= MSM_MEM_POOL_MAX) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return;
+	}
+	pool = &inst->pool[type];
+
+	/* detect memleak: busy pool is expected to be empty here */
+	if (!list_empty(&pool->busy_pool))
+		i_vpr_e(inst, "%s: destroy request on active buffer. type %s\n",
+			__func__, pool->name);
+
+	/* destroy all free buffers */
+	list_for_each_entry_safe(hdr, dummy, &pool->free_pool, list) {
+		list_del(&hdr->list);
+		kfree(hdr);
+		fcount++;
+	}
+
+	/* destroy all busy buffers */
+	list_for_each_entry_safe(hdr, dummy, &pool->busy_pool, list) {
+		list_del(&hdr->list);
+		kfree(hdr);
+		bcount++;
+	}
+
+	i_vpr_h(inst, "%s: type: %23s, count: free %2u, busy %2u\n",
+		__func__, pool->name, fcount, bcount);
+}
+
+void msm_memory_pools_deinit(struct msm_vidc_inst *inst)
+{
+	u32 i = 0;
+
+	if (!inst) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return;
+	}
+
+	/* destroy all buffers from all pool types */
+	for (i = 0; i < MSM_MEM_POOL_MAX; i++)
+		msm_vidc_destroy_pool_buffers(inst, i);
+}
+
+struct msm_vidc_type_size_name {
+	enum msm_memory_pool_type type;
+	u32                       size;
+	char                     *name;
+};
+
+static struct msm_vidc_type_size_name buftype_size_name_arr[] = {
+	{MSM_MEM_POOL_BUFFER,     sizeof(struct msm_vidc_buffer),     "MSM_MEM_POOL_BUFFER"     },
+	{MSM_MEM_POOL_MAP,        sizeof(struct msm_vidc_map),        "MSM_MEM_POOL_MAP"        },
+	{MSM_MEM_POOL_ALLOC,      sizeof(struct msm_vidc_alloc),      "MSM_MEM_POOL_ALLOC"      },
+	{MSM_MEM_POOL_TIMESTAMP,  sizeof(struct msm_vidc_timestamp),  "MSM_MEM_POOL_TIMESTAMP"  },
+};
+
+int msm_memory_pools_init(struct msm_vidc_inst *inst)
+{
+	u32 i;
+
+	if (!inst) {
+		d_vpr_e("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (ARRAY_SIZE(buftype_size_name_arr) != MSM_MEM_POOL_MAX) {
+		i_vpr_e(inst, "%s: num elements mismatch %u %u\n", __func__,
+			ARRAY_SIZE(buftype_size_name_arr), MSM_MEM_POOL_MAX);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < MSM_MEM_POOL_MAX; i++) {
+		if (i != buftype_size_name_arr[i].type) {
+			i_vpr_e(inst, "%s: type mismatch %u %u\n", __func__,
+				i, buftype_size_name_arr[i].type);
+			return -EINVAL;
+		}
+
+		inst->pool[i].type = buftype_size_name_arr[i].type;
+		inst->pool[i].size = buftype_size_name_arr[i].size;
+		inst->pool[i].name = buftype_size_name_arr[i].name;
+		INIT_LIST_HEAD(&inst->pool[i].free_pool);
+		INIT_LIST_HEAD(&inst->pool[i].busy_pool);
+	}
+
+	return 0;
+}
+
 /*
 int msm_memory_cache_operations(struct msm_vidc_inst *inst,
 	struct dma_buf *dbuf, enum smem_cache_ops cache_op,

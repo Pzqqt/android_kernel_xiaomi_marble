@@ -12,6 +12,7 @@
 #include "msm_vidc_driver.h"
 #include "msm_vdec.h"
 #include "msm_vidc_control.h"
+#include "msm_vidc_memory.h"
 
 #define in_range(range, val) (((range.begin) < (val)) && ((range.end) > (val)))
 
@@ -593,7 +594,7 @@ static int handle_read_only_buffer(struct msm_vidc_inst *inst,
 	 *          if present, do nothing
 	 */
 	if (!found) {
-		ro_buf = msm_vidc_get_vidc_buffer(inst);
+		ro_buf = msm_memory_alloc(inst, MSM_MEM_POOL_BUFFER);
 		if (!ro_buf) {
 			i_vpr_e(inst, "%s: buffer alloc failed\n", __func__);
 			return -ENOMEM;
@@ -644,7 +645,7 @@ static int handle_non_read_only_buffer(struct msm_vidc_inst *inst,
 	if (found) {
 		print_vidc_buffer(VIDC_LOW, "low ", "ro buf deleted", inst, ro_buf);
 		list_del(&ro_buf->list);
-		msm_vidc_put_vidc_buffer(inst, ro_buf);
+		msm_memory_free(inst, MSM_MEM_POOL_BUFFER, ro_buf);
 	}
 
 	return 0;

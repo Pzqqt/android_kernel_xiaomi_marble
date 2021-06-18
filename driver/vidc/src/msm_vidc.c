@@ -17,6 +17,7 @@
 #include "msm_vidc_debug.h"
 #include "msm_vidc_control.h"
 #include "msm_vidc_power.h"
+#include "msm_vidc_memory.h"
 #include "venus_hfi_response.h"
 
 #define MSM_VIDC_DRV_NAME "msm_vidc_driver"
@@ -778,13 +779,15 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	kref_init(&inst->kref);
 	mutex_init(&inst->lock);
 	msm_vidc_update_debug_str(inst);
-
 	i_vpr_h(inst, "Opening video instance: %d\n", session_type);
+
+	rc = msm_memory_pools_init(inst);
+	if (rc) {
+		i_vpr_e(inst, "%s: failed to init pool buffers\n", __func__);
+		kfree(inst);
+		return NULL;
+	}
 	INIT_LIST_HEAD(&inst->response_works);
-	INIT_LIST_HEAD(&inst->pool.buffers.list);
-	INIT_LIST_HEAD(&inst->pool.mappings.list);
-	INIT_LIST_HEAD(&inst->pool.allocations.list);
-	INIT_LIST_HEAD(&inst->pool.timestamps.list);
 	INIT_LIST_HEAD(&inst->timestamps.list);
 	INIT_LIST_HEAD(&inst->buffers.input.list);
 	INIT_LIST_HEAD(&inst->buffers.input_meta.list);
