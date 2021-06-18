@@ -35,7 +35,7 @@
  * Default connect timeout to consider 3 sec join timeout + 5 sec auth timeout +
  * 2 sec assoc timeout + 5 sec buffer for vdev related timeouts.
  */
-#define CM_MAX_CONNECT_TIMEOUT 15000
+#define CM_MAX_PER_CANDIDATE_CONNECT_TIMEOUT 15000
 
 /*
  * Default max retry attempts to be tried for a candidate.
@@ -111,6 +111,7 @@ struct cm_state_sm {
  * @cur_candidate: current candidate
  * @cur_candidate_retries: attempts for current candidate
  * @connect_attempts: number of connect attempts tried
+ * @connect_active_time: timestamp when connect became active
  */
 struct cm_connect_req {
 	wlan_cm_id cm_id;
@@ -120,6 +121,7 @@ struct cm_connect_req {
 	struct scan_cache_node *cur_candidate;
 	uint8_t cur_candidate_retries;
 	uint8_t connect_attempts;
+	qdf_time_t connect_active_time;
 };
 
 /**
