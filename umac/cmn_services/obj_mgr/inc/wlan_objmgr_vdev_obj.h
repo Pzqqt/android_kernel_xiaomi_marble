@@ -67,8 +67,6 @@
 #define WLAN_VDEV_F_NOBRIDGE             0x00000800
 	/* STATUS: update beacon wme */
 #define WLAN_VDEV_F_WMEUPDATE            0x00001000
-	/* CONF: 4 addr allowed */
-#define WLAN_VDEV_F_WDS                  0x00002000
 	/* CONF: enable U-APSD */
 #define WLAN_VDEV_F_UAPSD                0x00004000
 	/* STATUS: sleeping */
@@ -85,8 +83,6 @@
 #define WLAN_VDEV_F_PUREB                0x00100000
 	/* disable HT rates */
 #define WLAN_VDEV_F_HTRATES              0x00200000
-	/* Extender AP */
-#define WLAN_VDEV_F_AP                   0x00400000
 	/* CONF: deliver rx frames with 802.11 header */
 #define WLAN_VDEV_F_DELIVER_80211        0x00800000
 	/* CONF: os sends down tx frames with 802.11 header */
@@ -159,16 +155,6 @@
 #define WLAN_VDEV_FEXT_SON_INFO_UPDATE      0x01000000
 	/* CONF: A-MSDU supported */
 #define WLAN_VDEV_FEXT_AMSDU                0x02000000
-	/* VDEV is PSTA*/
-#define WLAN_VDEV_FEXT_PSTA                 0x04000000
-	/* VDEV is MPSTA*/
-#define WLAN_VDEV_FEXT_MPSTA                0x08000000
-	/* VDEV is WRAP*/
-#define WLAN_VDEV_FEXT_WRAP                 0x10000000
-	/* VDEV has MAT enabled*/
-#define WLAN_VDEV_FEXT_MAT                  0x20000000
-	/* VDEV is wired PSTA*/
-#define WLAN_VDEV_FEXT_WIRED_PSTA           0x40000000
 	/* Fils discovery on 6G SAP*/
 #define WLAN_VDEV_FEXT_FILS_DISC_6G_SAP     0x80000000
 

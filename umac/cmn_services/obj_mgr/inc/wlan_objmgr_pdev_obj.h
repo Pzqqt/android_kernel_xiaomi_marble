@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -79,8 +79,6 @@
 #define WLAN_PDEV_F_STRICT_PSCAN_EN         0x02000000
   /* dupie (ANA,pre ANA ) */
 /*#define WLAN_PDEV_F_DUPIE                 0x00200000*/
- /* QWRAP enable flag */
-#define WLAN_PDEV_F_WRAP_EN                 0x04000000
 /* Chan concurrency enabled */
 #define WLAN_PDEV_F_CHAN_CONCURRENCY        0x08000000
 /* Multivdev restart enabled */
