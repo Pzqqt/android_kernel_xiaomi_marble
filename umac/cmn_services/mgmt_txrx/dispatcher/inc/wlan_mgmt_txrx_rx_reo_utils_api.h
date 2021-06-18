@@ -66,6 +66,16 @@ QDF_STATUS
 wlan_mgmt_rx_reo_pdev_obj_destroy_notification(
 			struct wlan_objmgr_pdev *pdev,
 			struct mgmt_txrx_priv_pdev_context *mgmt_txrx_pdev_ctx);
+
+/**
+ * wlan_mgmt_rx_reo_get_priv_object() - Get the pdev private object of
+ * MGMT Rx REO module
+ * @pdev: pointer to pdev object
+ * Return: Pointer to pdev private object of MGMT Rx REO module on success,
+ * else NULL
+ */
+struct mgmt_rx_reo_pdev_info *
+wlan_mgmt_rx_reo_get_priv_object(struct wlan_objmgr_pdev *pdev);
 #else
 /**
  * wlan_mgmt_rx_reo_pdev_obj_create_notification() - pdev create handler for

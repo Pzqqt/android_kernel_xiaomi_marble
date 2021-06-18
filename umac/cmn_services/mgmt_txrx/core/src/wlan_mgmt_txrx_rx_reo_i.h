@@ -28,6 +28,8 @@
 #include <qdf_nbuf.h>
 #include <wlan_mgmt_txrx_rx_reo_utils_api.h>
 #include <wlan_mgmt_txrx_rx_reo_public_structs.h>
+#include <wlan_objmgr_pdev_obj.h>
+#include <wlan_objmgr_psoc_obj.h>
 
 /**
  * struct mgmt_rx_reo_list – Linked list used to reorder the management frames
@@ -44,6 +46,24 @@ struct mgmt_rx_reo_list {
 	qdf_spinlock_t list_lock;
 	uint32_t num_entries;
 	qdf_timer_t ageout_timer;
+};
+
+/**
+ * TODO: Dummy macro for Maximum MLO links on the system
+ * This is added only as a place holder for the time being.
+ * Remove this once the actual one is implemented.
+ */
+#define MGMT_RX_REO_MAX_LINKS (16)
+/*
+ * struct mgmt_rx_reo_wait_count - Wait count for a mgmt frame
+ * @per_link_count: Array of wait counts for all MLO links. Each array entry
+ * holds the number of frames this mgmt frame should wait for on that
+ * particular link.
+ * @total_count: Sum of entries in @per_link_count
+ */
+struct mgmt_rx_reo_wait_count {
+	unsigned int per_link_count[MGMT_RX_REO_MAX_LINKS];
+	unsigned int total_count;
 };
 
 /**
