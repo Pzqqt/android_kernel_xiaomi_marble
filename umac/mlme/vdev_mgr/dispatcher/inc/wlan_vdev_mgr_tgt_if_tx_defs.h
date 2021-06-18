@@ -183,6 +183,15 @@ struct tbttoffset_params {
 	uint32_t vdev_tbtt_qtime_hi;
 };
 
+/* Follow bitmap for sending the CSA switch count event */
+#define WLAN_CSA_EVENT_BMAP_VALID_MASK 0X80000000
+/* Send only when the switch count becomes zero, added for backward
+ * compatibility same can also be achieved by setting bitmap to 0X80000001.
+ */
+#define WLAN_CSA_EVENT_BMAP_SWITCH_COUNT_ZERO    0
+/* Send CSA switch count event for every update to switch count */
+#define WLAN_CSA_EVENT_BMAP_ALL                  0XFFFFFFFF
+
 /**
  * struct beacon_tmpl_params - beacon template cmd parameter
  * @vdev_id: vdev id
@@ -198,6 +207,9 @@ struct tbttoffset_params {
  *     ema_beacon_profile_periodicity, ema_beacon_tmpl_idx,
  *     ema_first_tmpl and ema_last_tmpl in the order of low
  *     to high
+ * @csa_event_bitmap: Specify when to send the CSA switch count status from FW
+ *     to host. Example: if CSA switch count event is needed to be sent when the
+ *     switch count is 0, 1, 4, and 5, set the bitmap to (0X80000033)
  * @enable_bigtk: enable bigtk or not
  * @frm: beacon template parameter
  */
@@ -212,6 +224,7 @@ struct beacon_tmpl_params {
 	uint32_t esp_ie_offset;
 	uint32_t mu_edca_ie_offset;
 	uint32_t ema_params;
+	uint32_t csa_event_bitmap;
 	bool enable_bigtk;
 	uint8_t *frm;
 };

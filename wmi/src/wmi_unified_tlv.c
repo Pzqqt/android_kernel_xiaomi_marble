@@ -2471,6 +2471,7 @@ static QDF_STATUS send_beacon_tmpl_send_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->mu_edca_ie_offset = param->mu_edca_ie_offset;
 	cmd->ema_params = param->ema_params;
 	cmd->buf_len = param->tmpl_len;
+	cmd->csa_event_bitmap = param->csa_event_bitmap;
 
 	WMI_BEACON_PROTECTION_EN_SET(cmd->feature_enable_bitmap,
 				     param->enable_bigtk);
