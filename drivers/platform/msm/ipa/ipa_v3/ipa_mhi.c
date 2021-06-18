@@ -303,6 +303,7 @@ static int ipa_mhi_start_gsi_channel(enum ipa_client_type client,
 		ch_props.use_db_eng = GSI_CHAN_DB_MODE;
 
 	ch_props.db_in_bytes = 1;
+	ch_props.low_latency_en = 0;
 	ch_props.max_prefetch = GSI_ONE_PREFETCH_SEG;
 	ch_props.low_weight = 1;
 	ch_props.prefetch_mode = ep_cfg->prefetch_mode;

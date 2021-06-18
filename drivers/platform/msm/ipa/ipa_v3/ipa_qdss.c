@@ -127,6 +127,8 @@ int ipa3_conn_qdss_pipes(struct ipa_qdss_conn_in_params *in,
 	gsi_channel_props.ring_len = in->desc_fifo_size;
 	gsi_channel_props.ring_base_addr =
 			in->desc_fifo_base_addr;
+	gsi_channel_props.db_in_bytes = 1;
+	gsi_channel_props.low_latency_en = 0;
 	result = gsi_alloc_channel(&gsi_channel_props, ipa3_ctx->gsi_dev_hdl,
 				&ep_rx->gsi_chan_hdl);
 	if (result != GSI_STATUS_SUCCESS) {
