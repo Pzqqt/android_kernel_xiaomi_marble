@@ -363,9 +363,6 @@ static int msm_vidc_adjust_hevc_qp(struct msm_vidc_inst *inst,
 		CAP_TO_8BIT_QP(capability->cap[I_FRAME_MAX_QP].value);
 		CAP_TO_8BIT_QP(capability->cap[P_FRAME_MAX_QP].value);
 		CAP_TO_8BIT_QP(capability->cap[B_FRAME_MAX_QP].value);
-	} else if (cap_id == I_FRAME_QP) {
-		CAP_TO_8BIT_QP(capability->cap[P_FRAME_QP].value);
-		CAP_TO_8BIT_QP(capability->cap[B_FRAME_QP].value);
 	}
 
 exit:
@@ -1751,7 +1748,7 @@ int msm_vidc_adjust_hevc_max_qp(void *instance, struct v4l2_ctrl *ctrl)
 	return rc;
 }
 
-int msm_vidc_adjust_hevc_frame_qp(void *instance, struct v4l2_ctrl *ctrl)
+int msm_vidc_adjust_hevc_i_frame_qp(void *instance, struct v4l2_ctrl *ctrl)
 {
 	int rc = 0;
 	struct msm_vidc_inst_capability *capability;
@@ -1768,6 +1765,54 @@ int msm_vidc_adjust_hevc_frame_qp(void *instance, struct v4l2_ctrl *ctrl)
 			ctrl->val, __func__);
 
 	rc = msm_vidc_adjust_hevc_qp(inst, I_FRAME_QP);
+	if (rc)
+		return rc;
+
+	return rc;
+}
+
+int msm_vidc_adjust_hevc_p_frame_qp(void *instance, struct v4l2_ctrl *ctrl)
+{
+	int rc = 0;
+	struct msm_vidc_inst_capability *capability;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	if (ctrl)
+		msm_vidc_update_cap_value(inst, P_FRAME_QP,
+			ctrl->val, __func__);
+
+	rc = msm_vidc_adjust_hevc_qp(inst, P_FRAME_QP);
+	if (rc)
+		return rc;
+
+	return rc;
+}
+
+int msm_vidc_adjust_hevc_b_frame_qp(void *instance, struct v4l2_ctrl *ctrl)
+{
+	int rc = 0;
+	struct msm_vidc_inst_capability *capability;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	if (ctrl)
+		msm_vidc_update_cap_value(inst, B_FRAME_QP,
+			ctrl->val, __func__);
+
+	rc = msm_vidc_adjust_hevc_qp(inst, B_FRAME_QP);
+	if (rc)
+		return rc;
 
 	return rc;
 }
@@ -2578,9 +2623,18 @@ int msm_vidc_set_frame_qp(void *instance,
 	}
 	capab = inst->capabilities;
 
-	if (msm_vidc_get_parent_value(inst, I_FRAME_QP,
+	if (msm_vidc_get_parent_value(inst, cap_id,
 		BITRATE_MODE, &rc_type, __func__))
 		return -EINVAL;
+
+	if (inst->vb2q[OUTPUT_PORT].streaming) {
+		if (rc_type != HFI_RC_OFF) {
+			i_vpr_h(inst,
+				"%s: dynamic qp not allowed for rc type %d\n",
+				__func__, rc_type);
+			return 0;
+		}
+	}
 
 	if (rc_type == HFI_RC_OFF) {
 		/* Mandatorily set for rc off case */
