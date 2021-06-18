@@ -33224,33 +33224,35 @@ typedef struct {
      *    5: 36 Mbps
      *    6: 18 Mbps
      *    7: 9 Mbps
-     *    8: invalid entry
+     *    8-254: reserved
+     *    255:   invalid entry
      *
      * GI: For Legacy mode only
      *    0: 0.8 us
      *    1: 0.4 us
      *    2: 1.6 us
      *    3: 3.2 us
-     *    4: invalid entry
+     *    4-254: reserved
+     *    255:   invalid entry
      *
-     * Bits 0:3        mcs
-     * Bits 4:6        gi_type
-     * Bits 7:31       reserved
+     * Bits 0:7        mcs
+     * Bits 8:15       gi_type
+     * Bits 16:31      reserved
      */
     A_UINT32 mcs_gi_info;
 } wmi_peer_cfr_capture_event_fixed_param;
 
 #define WMI_CFR_MCS_GET(mcs_gi_info) \
-        WMI_GET_BITS(mcs_gi_info, 0, 4)
+        WMI_GET_BITS(mcs_gi_info, 0, 8)
 
 #define WMI_CFR_MCS_SET(mcs_gi_info, value) \
-        WMI_SET_BITS(mcs_gi_info, 0, 4, value)
+        WMI_SET_BITS(mcs_gi_info, 0, 8, value)
 
 #define WMI_CFR_GI_TYPE_GET(mcs_gi_info) \
-        WMI_GET_BITS(mcs_gi_info, 4, 3)
+        WMI_GET_BITS(mcs_gi_info, 8, 8)
 
 #define WMI_CFR_GI_TYPE_SET(mcs_gi_info, value) \
-        WMI_SET_BITS(mcs_gi_info, 4, 3, value)
+        WMI_SET_BITS(mcs_gi_info, 8, 8, value)
 
 
 #define WMI_UNIFIED_CHAIN_PHASE_MASK 0x0000ffff
