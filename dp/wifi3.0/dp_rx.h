@@ -1118,6 +1118,32 @@ bool dp_rx_intrabss_fwd(struct dp_soc *soc,
 			struct hal_rx_msdu_metadata msdu_metadata);
 
 #ifdef DISABLE_EAPOL_INTRABSS_FWD
+#ifdef WLAN_FEATURE_11BE_MLO
+static inline bool dp_nbuf_dst_addr_is_mld_addr(struct dp_vdev *vdev,
+						qdf_nbuf_t nbuf)
+{
+	struct qdf_mac_addr *self_mld_mac_addr =
+				(struct qdf_mac_addr *)vdev->mld_mac_addr.raw;
+	return qdf_is_macaddr_equal(self_mld_mac_addr,
+				    (struct qdf_mac_addr *)qdf_nbuf_data(nbuf) +
+				    QDF_NBUF_DEST_MAC_OFFSET);
+}
+#else
+static inline bool dp_nbuf_dst_addr_is_mld_addr(struct dp_vdev *vdev,
+						qdf_nbuf_t nbuf)
+{
+	return false;
+}
+#endif
+
+static inline bool dp_nbuf_dst_addr_is_self_addr(struct dp_vdev *vdev,
+						 qdf_nbuf_t nbuf)
+{
+	return qdf_is_macaddr_equal((struct qdf_mac_addr *)vdev->mac_addr.raw,
+				    (struct qdf_mac_addr *)qdf_nbuf_data(nbuf) +
+				    QDF_NBUF_DEST_MAC_OFFSET);
+}
+
 /*
  * dp_rx_intrabss_eapol_drop_check() - API For EAPOL
  *  pkt with DA not equal to vdev mac addr, fwd is not allowed.
@@ -1134,10 +1160,8 @@ bool dp_rx_intrabss_eapol_drop_check(struct dp_soc *soc,
 				     uint8_t *rx_tlv_hdr, qdf_nbuf_t nbuf)
 {
 	if (qdf_unlikely(qdf_nbuf_is_ipv4_eapol_pkt(nbuf) &&
-			 qdf_mem_cmp(qdf_nbuf_data(nbuf) +
-				     QDF_NBUF_DEST_MAC_OFFSET,
-				     ta_peer->vdev->mac_addr.raw,
-				     QDF_MAC_ADDR_SIZE))) {
+			 !(dp_nbuf_dst_addr_is_self_addr(ta_peer->vdev, nbuf) ||
+			   dp_nbuf_dst_addr_is_mld_addr(ta_peer->vdev, nbuf)))) {
 		qdf_nbuf_free(nbuf);
 		DP_STATS_INC(soc, rx.err.intrabss_eapol_drop, 1);
 		return true;

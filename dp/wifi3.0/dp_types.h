@@ -2796,6 +2796,11 @@ struct dp_vdev {
 	/* MAC address */
 	union dp_align_mac_addr mac_addr;
 
+#ifdef WLAN_FEATURE_11BE_MLO
+	/* MLO MAC address corresponding to vdev */
+	union dp_align_mac_addr mld_mac_addr;
+#endif
+
 	/* node in the pdev's list of vdevs */
 	TAILQ_ENTRY(dp_vdev) vdev_list_elem;
 

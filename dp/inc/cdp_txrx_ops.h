@@ -118,9 +118,8 @@ struct cdp_cmn_ops {
 	int (*txrx_pdev_attach_target)(ol_txrx_soc_handle soc, uint8_t pdev_id);
 
 	QDF_STATUS (*txrx_vdev_attach)
-		(struct cdp_soc_t *soc, uint8_t pdev_id, uint8_t *mac,
-		 uint8_t vdev_id, enum wlan_op_mode op_mode,
-		 enum wlan_op_subtype subtype);
+		(struct cdp_soc_t *soc, uint8_t pdev_id,
+		 struct cdp_vdev_info *vdev_info);
 
 	QDF_STATUS
 	(*txrx_vdev_detach)(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,

@@ -5892,22 +5892,33 @@ static inline void dp_vdev_register_rx_eapol(struct dp_vdev *vdev,
 }
 #endif
 
+#ifdef WLAN_FEATURE_11BE_MLO
+static inline void dp_vdev_save_mld_addr(struct dp_vdev *vdev,
+					 struct cdp_vdev_info *vdev_info)
+{
+	if (vdev_info->mld_mac_addr)
+		qdf_mem_copy(&vdev->mld_mac_addr.raw[0],
+			     vdev_info->mld_mac_addr, QDF_MAC_ADDR_SIZE);
+}
+#else
+static inline void dp_vdev_save_mld_addr(struct dp_vdev *vdev,
+					 struct cdp_vdev_info *vdev_info)
+{
+
+}
+#endif
+
 /*
 * dp_vdev_attach_wifi3() - attach txrx vdev
 * @txrx_pdev: Datapath PDEV handle
-* @vdev_mac_addr: MAC address of the virtual interface
-* @vdev_id: VDEV Id
-* @wlan_op_mode: VDEV operating mode
-* @subtype: VDEV operating subtype
+* @pdev_id: PDEV ID for vdev creation
+* @vdev_info: parameters used for vdev creation
 *
 * Return: status
 */
 static QDF_STATUS dp_vdev_attach_wifi3(struct cdp_soc_t *cdp_soc,
 				       uint8_t pdev_id,
-				       uint8_t *vdev_mac_addr,
-				       uint8_t vdev_id,
-				       enum wlan_op_mode op_mode,
-				       enum wlan_op_subtype subtype)
+				       struct cdp_vdev_info *vdev_info)
 {
 	int i = 0;
 	qdf_size_t vdev_context_size;
@@ -5916,6 +5927,10 @@ static QDF_STATUS dp_vdev_attach_wifi3(struct cdp_soc_t *cdp_soc,
 		dp_get_pdev_from_soc_pdev_id_wifi3((struct dp_soc *)soc,
 						   pdev_id);
 	struct dp_vdev *vdev;
+	uint8_t *vdev_mac_addr = vdev_info->vdev_mac_addr;
+	uint8_t vdev_id = vdev_info->vdev_id;
+	enum wlan_op_mode op_mode = vdev_info->op_mode;
+	enum wlan_op_subtype subtype = vdev_info->subtype;
 
 	vdev_context_size =
 		soc->arch_ops.txrx_get_context_size(DP_CONTEXT_TYPE_VDEV);
@@ -5968,8 +5983,9 @@ static QDF_STATUS dp_vdev_attach_wifi3(struct cdp_soc_t *cdp_soc,
 #endif
 	vdev->lmac_id = pdev->lmac_id;
 
-	qdf_mem_copy(
-		&vdev->mac_addr.raw[0], vdev_mac_addr, QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(&vdev->mac_addr.raw[0], vdev_mac_addr, QDF_MAC_ADDR_SIZE);
+
+	dp_vdev_save_mld_addr(vdev, vdev_info);
 
 	/* TODO: Initialize default HTT meta data that will be used in
 	 * TCL descriptors for packets transmitted from this VDEV

@@ -639,6 +639,61 @@ struct cdp_tx_exception_metadata {
 #endif
 };
 
+/**
+ * wlan_op_mode - Virtual device operation mode
+ * @wlan_op_mode_unknown: Unknown mode
+ * @wlan_op_mode_ap: AP mode
+ * @wlan_op_mode_ibss: IBSS mode
+ * @wlan_op_mode_sta: STA (client) mode
+ * @wlan_op_mode_monitor: Monitor mode
+ * @wlan_op_mode_ocb: OCB mode
+ * @wlan_op_mode_ndi: NDI mode
+ */
+enum wlan_op_mode {
+	wlan_op_mode_unknown,
+	wlan_op_mode_ap,
+	wlan_op_mode_ibss,
+	wlan_op_mode_sta,
+	wlan_op_mode_monitor,
+	wlan_op_mode_ocb,
+	wlan_op_mode_ndi,
+};
+
+/**
+ * enum wlan_op_subtype - Virtual device subtype
+ * @wlan_op_subtype_none: Subtype not applicable
+ * @wlan_op_subtype_p2p_device: P2P device
+ * @wlan_op_subtye_p2p_cli: P2P Client
+ * @wlan_op_subtype_p2p_go: P2P GO
+ *
+ * This enum lists the subtypes of a particular virtual
+ * device.
+ */
+enum wlan_op_subtype {
+	wlan_op_subtype_none,
+	wlan_op_subtype_p2p_device,
+	wlan_op_subtype_p2p_cli,
+	wlan_op_subtype_p2p_go,
+};
+
+/**
+ * struct cdp_vdev_info - Vdev information
+ * @vdev_mac_addr: mac address of the vdev
+ * @vdev_id: ID of the vdev
+ * @op_mode: Operation mode of the vdev
+ * @subtype: subtype of the vdev
+ * @mld_mac_addr: MLD mac addr of the current vdev.
+ */
+struct cdp_vdev_info {
+	uint8_t *vdev_mac_addr;
+	uint8_t vdev_id;
+	enum wlan_op_mode op_mode;
+	enum wlan_op_subtype subtype;
+#ifdef WLAN_FEATURE_11BE_MLO
+	uint8_t *mld_mac_addr;
+#endif
+};
+
 typedef struct cdp_soc_t *ol_txrx_soc_handle;
 
 /**
@@ -725,42 +780,6 @@ typedef struct ol_osif_vdev_t *ol_osif_vdev_handle;
 struct ol_osif_peer_t;
 typedef struct ol_osif_peer_t *ol_osif_peer_handle;
 #endif
-
-/**
- * wlan_op_mode - Virtual device operation mode
- * @wlan_op_mode_unknown: Unknown mode
- * @wlan_op_mode_ap: AP mode
- * @wlan_op_mode_ibss: IBSS mode
- * @wlan_op_mode_sta: STA (client) mode
- * @wlan_op_mode_monitor: Monitor mode
- * @wlan_op_mode_ocb: OCB mode
- */
-enum wlan_op_mode {
-	wlan_op_mode_unknown,
-	wlan_op_mode_ap,
-	wlan_op_mode_ibss,
-	wlan_op_mode_sta,
-	wlan_op_mode_monitor,
-	wlan_op_mode_ocb,
-	wlan_op_mode_ndi,
-};
-
-/**
- * enum wlan_op_subtype - Virtual device subtype
- * @wlan_op_subtype_none: Subtype not applicable
- * @wlan_op_subtype_p2p_device: P2P device
- * @wlan_op_subtye_p2p_cli: P2P Client
- * @wlan_op_subtype_p2p_go: P2P GO
- *
- * This enum lists the subtypes of a particular virtual
- * device.
- */
-enum wlan_op_subtype {
-	wlan_op_subtype_none,
-	wlan_op_subtype_p2p_device,
-	wlan_op_subtype_p2p_cli,
-	wlan_op_subtype_p2p_go,
-};
 
 /**
  * connectivity_stats_pkt_status - data pkt type

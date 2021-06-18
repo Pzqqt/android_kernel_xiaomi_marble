@@ -146,8 +146,7 @@ cdp_soc_attach_target(ol_txrx_soc_handle soc)
 
 static inline QDF_STATUS
 cdp_vdev_attach(ol_txrx_soc_handle soc, uint8_t pdev_id,
-		uint8_t *vdev_mac_addr, uint8_t vdev_id,
-		enum wlan_op_mode op_mode, enum wlan_op_subtype subtype)
+		struct cdp_vdev_info *vdev_info)
 {
 	if (!soc || !soc->ops) {
 		dp_cdp_debug("Invalid Instance:");
@@ -159,9 +158,7 @@ cdp_vdev_attach(ol_txrx_soc_handle soc, uint8_t pdev_id,
 	    !soc->ops->cmn_drv_ops->txrx_vdev_attach)
 		return QDF_STATUS_E_FAILURE;
 
-	return soc->ops->cmn_drv_ops->txrx_vdev_attach(soc, pdev_id,
-						       vdev_mac_addr, vdev_id,
-						       op_mode, subtype);
+	return soc->ops->cmn_drv_ops->txrx_vdev_attach(soc, pdev_id, vdev_info);
 }
 
 #ifdef DP_FLOW_CTL
