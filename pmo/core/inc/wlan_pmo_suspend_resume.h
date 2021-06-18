@@ -395,6 +395,125 @@ pmo_core_enable_igmp_offload(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+/**
+ * pmo_core_vdev_get_moddtim_user_enabled() - Get vdev if mod dtim set
+ * by user
+ * @vdev: objmgr vdev handle
+ *
+ * Return: mod dtim set by user or not
+ */
+static inline
+bool pmo_core_vdev_get_moddtim_user_enabled(struct wlan_objmgr_vdev *vdev)
+{
+	bool value;
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	value = vdev_ctx->dyn_modulated_dtim_enabled;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+
+	return value;
+}
+
+/**
+ * pmo_core_vdev_set_moddtim_user_enabled() - vdev moddtim user enable setting
+ * @vdev: objmgr vdev handle
+ * @value: vdev moddtim user enable or not
+ *
+ * Return: None
+ */
+static inline
+void pmo_core_vdev_set_moddtim_user_enabled(struct wlan_objmgr_vdev *vdev,
+					    bool value)
+{
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	vdev_ctx->dyn_modulated_dtim_enabled = value;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+}
+
+/**
+ * pmo_core_vdev_get_moddtim_user_active() - Get vdev if moddtim user is
+ * sent to fw
+ * @vdev: objmgr vdev handle
+ *
+ * Return: moddtim user is sent to fw or not
+ */
+static inline
+bool pmo_core_vdev_get_moddtim_user_active(struct wlan_objmgr_vdev *vdev)
+{
+	bool retval;
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	retval = vdev_ctx->is_dyn_modulated_dtim_activated;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+
+	return retval;
+}
+
+/**
+ * pmo_core_vdev_set_moddtim_user_active() - vdev moddtim user active setting
+ * @vdev: objmgr vdev handle
+ * @value: vdev moddtim user active or not
+ *
+ * Return: None
+ */
+static inline
+void pmo_core_vdev_set_moddtim_user_active(struct wlan_objmgr_vdev *vdev,
+					   bool value)
+{
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	vdev_ctx->is_dyn_modulated_dtim_activated = value;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+}
+
+/**
+ * pmo_core_vdev_get_moddtim_user() - Get vdev moddtim set by user
+ * @vdev: objmgr vdev handle
+ *
+ * Return: moddtim value set by user
+ */
+static inline
+uint32_t pmo_core_vdev_get_moddtim_user(struct wlan_objmgr_vdev *vdev)
+{
+	uint32_t value;
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	value = vdev_ctx->dyn_modulated_dtim;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+
+	return value;
+}
+
+/**
+ * pmo_core_vdev_set_moddtim_user() - vdev moddtim user value setting
+ * @vdev: objmgr vdev handle
+ * @value: vdev moddtim value set by user
+ *
+ * Return: None
+ */
+static inline
+void pmo_core_vdev_set_moddtim_user(struct wlan_objmgr_vdev *vdev,
+				    uint32_t value)
+{
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+	vdev_ctx->dyn_modulated_dtim = value;
+	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+}
 #endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 
 #endif /* end  of _WLAN_PMO_SUSPEND_RESUME_H_ */

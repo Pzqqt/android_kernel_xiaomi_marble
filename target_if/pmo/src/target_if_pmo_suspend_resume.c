@@ -68,6 +68,9 @@ QDF_STATUS target_if_pmo_send_vdev_update_param_req(
 	case pmo_vdev_param_forced_dtim_count:
 		param_id = WMI_VDEV_PARAM_FORCE_DTIM_CNT;
 		break;
+	case pmo_vdev_param_moddtim:
+		param_id = WMI_VDEV_PARAM_MODDTIM_CNT;
+		break;
 	default:
 		target_if_err("invalid vdev param id %d", param_id);
 		return QDF_STATUS_E_INVAL;
