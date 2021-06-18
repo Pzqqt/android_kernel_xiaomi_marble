@@ -2265,6 +2265,9 @@ wma_delete_peer_on_vdev_stop(tp_wma_handle wma, uint8_t vdev_id)
 	struct wma_txrx_node *iface;
 	QDF_STATUS status;
 	struct qdf_mac_addr bssid;
+#ifdef WLAN_FEATURE_11BE_MLO
+	struct wlan_objmgr_peer *peer = NULL;
+#endif
 
 	iface = &wma->interfaces[vdev_id];
 	status = wlan_vdev_get_bss_peer_mac(iface->vdev, &bssid);
@@ -2279,6 +2282,13 @@ wma_delete_peer_on_vdev_stop(tp_wma_handle wma, uint8_t vdev_id)
 			vdev_id);
 		return QDF_STATUS_E_INVAL;
 	}
+
+#ifdef WLAN_FEATURE_11BE_MLO
+	peer = wlan_objmgr_get_peer_by_mac(wma.psoc, &bssid.bytes,
+					   WLAN_LEGACY_WMA_ID);
+	if (peer)
+		wlan_mlo_link_peer_delete(peer);
+#endif
 
 	vdev_stop_resp = qdf_mem_malloc(sizeof(*vdev_stop_resp));
 	if (!vdev_stop_resp)

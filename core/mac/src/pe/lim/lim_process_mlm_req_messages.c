@@ -392,17 +392,53 @@ failure:
 }
 
 void lim_send_peer_create_resp(struct mac_context *mac, uint8_t vdev_id,
-			       QDF_STATUS status, uint8_t *peer_mac)
+			       QDF_STATUS qdf_status, uint8_t *peer_mac)
 {
 	struct wlan_objmgr_vdev *vdev;
+#ifdef WLAN_FEATURE_11BE_MLO
+	struct wlan_objmgr_peer *link_peer;
+	uint8_t link_id;
+	struct mlo_partner_info partner_info;
+#endif
+	QDF_STATUS status;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc,
 						    vdev_id,
 						    WLAN_LEGACY_MAC_ID);
 	if (!vdev)
 		return;
-	wlan_cm_bss_peer_create_rsp(vdev, status,
-				    (struct qdf_mac_addr *)peer_mac);
+	status = wlan_cm_bss_peer_create_rsp(vdev, qdf_status,
+					     (struct qdf_mac_addr *)peer_mac);
+
+#ifdef WLAN_FEATURE_11BE_MLO
+	link_id = vdev->vdev_mlme.mlo_link_id;
+	/* currently only 2 link MLO supported */
+	partner_info.num_partner_links = 1;
+	qdf_mem_copy(partner_info.partner_link_info[0].link_addr.bytes,
+		     vdev->vdev_mlme.macaddr,
+		     QDF_MAC_ADDR_SIZE);
+	partner_info.partner_link_info[0].link_id = link_id;
+
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		/* Get the bss peer obj */
+		link_peer = wlan_objmgr_get_peer_by_mac(mac->psoc, peer_mac,
+							WLAN_LEGACY_MAC_ID);
+		if (!link_peer) {
+			pe_err("Link peer is NULL");
+			goto end;
+		}
+
+		status = wlan_mlo_peer_create(vdev, link_peer,
+					      &partner_info,
+					      NULL,
+					      0);
+
+		if (QDF_IS_STATUS_ERROR(status))
+			pe_err("Peer creation failed");
+	}
+end:
+	wlan_objmgr_peer_release_ref(link_peer, WLAN_LEGACY_MAC_ID);
+#endif
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 }
 
