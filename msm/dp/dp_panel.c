@@ -1795,7 +1795,8 @@ static u32 dp_panel_get_supported_bpp(struct dp_panel *dp_panel,
 	struct dp_panel_private *panel;
 	const u32 max_supported_bpp = 30;
 	u32 min_supported_bpp = 18;
-	u32 bpp = 0, data_rate_khz = 0;
+	u32 bpp = 0, link_bitrate = 0, mode_bitrate;
+	s64 rate_fp = 0;
 
 	panel = container_of(dp_panel, struct dp_panel_private, dp_panel);
 
@@ -1806,25 +1807,27 @@ static u32 dp_panel_get_supported_bpp(struct dp_panel *dp_panel,
 
 	link_params = &panel->link->link_params;
 
-	data_rate_khz = link_params->lane_count *
-		drm_dp_bw_code_to_link_rate(link_params->bw_code) * 8;
+	rate_fp = drm_int2fixp(drm_dp_bw_code_to_link_rate(link_params->bw_code) *
+			link_params->lane_count *  8);
+
+	if (dp_panel->fec_en)
+		rate_fp = drm_fixp_div(rate_fp, dp_panel->fec_overhead_fp);
+
+	link_bitrate = drm_fixp2int(rate_fp);
 
 	for (; bpp > min_supported_bpp; bpp -= 6) {
 		if (dp_panel->dsc_en) {
-			if (bpp == 36 && !(dp_panel->sink_dsc_caps.color_depth
-					& DP_DSC_12_BPC))
+			if (bpp == 30 && !(dp_panel->sink_dsc_caps.color_depth & DP_DSC_10_BPC))
 				continue;
-			else if (bpp == 30 &&
-					!(dp_panel->sink_dsc_caps.color_depth &
-					DP_DSC_10_BPC))
+			else if (bpp == 24 && !(dp_panel->sink_dsc_caps.color_depth & DP_DSC_8_BPC))
 				continue;
-			else if (bpp == 24 &&
-					!(dp_panel->sink_dsc_caps.color_depth &
-					DP_DSC_8_BPC))
-				continue;
+
+			mode_bitrate = mult_frac(mode_pclk_khz, bpp, 3);
+		} else {
+			mode_bitrate = mode_pclk_khz * bpp;
 		}
 
-		if (mode_pclk_khz * bpp <= data_rate_khz)
+		if (mode_bitrate <= link_bitrate)
 			break;
 	}
 
