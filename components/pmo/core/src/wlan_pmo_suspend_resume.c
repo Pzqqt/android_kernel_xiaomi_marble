@@ -40,6 +40,7 @@
 #include "cfg_mlme_sap.h"
 #include "cfg_ucfg_api.h"
 #include "cdp_txrx_bus.h"
+#include "wlan_pmo_ucfg_api.h"
 
 /**
  * pmo_core_get_vdev_dtim_period() - Get vdev dtim period
@@ -1799,8 +1800,9 @@ QDF_STATUS pmo_core_config_forced_dtim(struct wlan_objmgr_vdev *vdev,
 	return status;
 }
 
-QDF_STATUS pmo_core_config_modulated_dtim(struct wlan_objmgr_vdev *vdev,
-					  uint32_t mod_dtim)
+static QDF_STATUS
+pmo_core_config_non_li_offload_modulated_dtim(struct wlan_objmgr_vdev *vdev,
+					      uint32_t mod_dtim)
 {
 	struct pmo_vdev_priv_obj *vdev_ctx;
 	struct pmo_psoc_cfg *psoc_cfg;
@@ -1888,6 +1890,74 @@ QDF_STATUS pmo_core_config_modulated_dtim(struct wlan_objmgr_vdev *vdev,
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
 out:
 	pmo_exit();
+	return status;
+}
+
+static QDF_STATUS
+pmo_core_config_li_offload_modulated_dtim(struct wlan_objmgr_vdev *vdev,
+					  uint32_t mod_dtim)
+{
+	struct pmo_vdev_priv_obj *vdev_ctx;
+	struct pmo_psoc_cfg *psoc_cfg;
+	QDF_STATUS status;
+	uint8_t vdev_id;
+
+	pmo_enter();
+
+	status = pmo_vdev_get_ref(vdev);
+	if (status != QDF_STATUS_SUCCESS)
+		goto out;
+
+	vdev_id = pmo_vdev_get_id(vdev);
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+	psoc_cfg = &vdev_ctx->pmo_psoc_ctx->psoc_cfg;
+
+	if (mod_dtim > psoc_cfg->sta_max_li_mod_dtim)
+		mod_dtim = psoc_cfg->sta_max_li_mod_dtim;
+	pmo_core_vdev_set_moddtim_user(vdev, mod_dtim);
+	pmo_core_vdev_set_moddtim_user_enabled(vdev, true);
+
+	if (!ucfg_pmo_is_vdev_connected(vdev)) {
+		pmo_core_vdev_set_moddtim_user_active(vdev, false);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
+		goto out;
+	}
+
+	status = pmo_tgt_vdev_update_param_req(vdev,
+					       pmo_vdev_param_moddtim,
+					       mod_dtim);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		pmo_debug("Set modulated dtim for vdev id %d",
+			  vdev_id);
+		pmo_core_vdev_set_moddtim_user_active(vdev, true);
+	} else {
+		pmo_err("Failed to Set modulated dtim for vdev id %d",
+			vdev_id);
+	}
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_PMO_ID);
+out:
+	pmo_exit();
+	return status;
+}
+
+QDF_STATUS pmo_core_config_modulated_dtim(struct wlan_objmgr_vdev *vdev,
+					  uint32_t mod_dtim)
+{
+	struct pmo_vdev_priv_obj *vdev_ctx;
+	struct pmo_psoc_priv_obj *psoc_ctx;
+	QDF_STATUS status;
+
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+	psoc_ctx = vdev_ctx->pmo_psoc_ctx;
+
+	if (psoc_ctx->caps.li_offload)
+		status = pmo_core_config_li_offload_modulated_dtim(vdev,
+								mod_dtim);
+	else
+		status = pmo_core_config_non_li_offload_modulated_dtim(vdev,
+								mod_dtim);
+
 	return status;
 }
 

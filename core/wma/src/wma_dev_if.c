@@ -4520,6 +4520,9 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 				  WMA_VHT_PPS_DELIM_CRC_FAIL, 1);
 	if (wmi_service_enabled(wma->wmi_handle,
 				wmi_service_listen_interval_offload_support)) {
+		struct wlan_objmgr_vdev *vdev;
+		uint32_t moddtim;
+
 		wma_debug("listen interval offload enabled, setting params");
 		status = wma_vdev_set_param(wma->wmi_handle,
 					    params->smesessionId,
@@ -4537,15 +4540,37 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 			wma_err("can't set DYNDTIM_CNT for session: %d",
 				params->smesessionId);
 		}
-		status  = wma_vdev_set_param(wma->wmi_handle,
-					     params->smesessionId,
-					     WMI_VDEV_PARAM_MODDTIM_CNT,
-					     wma->staModDtim);
-		if (status != QDF_STATUS_SUCCESS) {
-			wma_err("can't set DTIM_CNT for session: %d",
-				params->smesessionId);
-		}
 
+		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(wma->psoc,
+							params->smesessionId,
+							WLAN_LEGACY_WMA_ID);
+		if (!vdev || !ucfg_pmo_get_moddtim_user_enable(vdev)) {
+			moddtim = wma->staModDtim;
+			status = wma_vdev_set_param(wma->wmi_handle,
+						    params->smesessionId,
+						    WMI_VDEV_PARAM_MODDTIM_CNT,
+						    moddtim);
+			if (status != QDF_STATUS_SUCCESS) {
+				wma_err("can't set DTIM_CNT for session: %d",
+					params->smesessionId);
+			}
+
+			if (vdev)
+				wlan_objmgr_vdev_release_ref(vdev,
+							WLAN_LEGACY_WMA_ID);
+		} else if (vdev && ucfg_pmo_get_moddtim_user_enable(vdev) &&
+			   !ucfg_pmo_get_moddtim_user_active(vdev)) {
+			moddtim = ucfg_pmo_get_moddtim_user(vdev);
+			status = wma_vdev_set_param(wma->wmi_handle,
+						    params->smesessionId,
+						    WMI_VDEV_PARAM_MODDTIM_CNT,
+						    moddtim);
+			if (status != QDF_STATUS_SUCCESS) {
+				wma_err("can't set DTIM_CNT for session: %d",
+					params->smesessionId);
+			}
+			wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
+		}
 	} else {
 		wma_debug("listen interval offload is not set");
 	}
@@ -4704,6 +4729,20 @@ static void wma_delete_sta_req_sta_mode(tp_wma_handle wma,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct wma_txrx_node *iface;
+
+	if (wmi_service_enabled(wma->wmi_handle,
+		wmi_service_listen_interval_offload_support)) {
+		struct wlan_objmgr_vdev *vdev;
+
+		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(wma->psoc,
+							params->smesessionId,
+							WLAN_LEGACY_WMA_ID);
+		if (vdev) {
+			if (ucfg_pmo_get_moddtim_user_enable(vdev))
+				ucfg_pmo_set_moddtim_user_enable(vdev, false);
+			wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
+		}
+	}
 
 	iface = &wma->interfaces[params->smesessionId];
 	iface->uapsd_cached_val = 0;
