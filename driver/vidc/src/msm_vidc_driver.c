@@ -40,8 +40,6 @@ extern struct msm_vidc_core *g_core;
 #define SSR_ADDR_ID 0xFFFFFFFF00000000
 #define SSR_ADDR_SHIFT 32
 
-#define FPS_WINDOW 10
-
 struct msm_vidc_cap_name {
 	enum msm_vidc_inst_capability_type cap;
 	char *name;
@@ -2019,7 +2017,67 @@ int msm_vidc_memory_unmap_completely(struct msm_vidc_inst *inst,
 	return rc;
 }
 
-int msm_vidc_calc_framerate(struct msm_vidc_inst *inst)
+int msm_vidc_set_auto_framerate(struct msm_vidc_inst *inst, u64 timestamp)
+{
+	struct msm_vidc_core *core;
+	struct msm_vidc_timestamp *ts;
+	struct msm_vidc_timestamp *prev = NULL;
+	u32 counter = 0, prev_fr = 0, curr_fr = 0;
+	u64 ts_ms = 0;
+	int rc = 0;
+
+	if (!inst || !inst->core || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	core = inst->core;
+	if (!core->capabilities[ENC_AUTO_FRAMERATE].value ||
+			is_image_session(inst) || msm_vidc_is_super_buffer(inst))
+		goto exit;
+
+	rc = msm_vidc_update_timestamp(inst, timestamp);
+	if (rc)
+		goto exit;
+
+	list_for_each_entry(ts, &inst->timestamps.list, sort.list) {
+		if (prev) {
+			ts_ms = div_u64(ts->sort.val - prev->sort.val, 1000);
+			prev_fr = curr_fr;
+			curr_fr = ts_ms ? div_u64(MSEC_PER_SEC, ts_ms) << 16 :
+					inst->auto_framerate;
+			if (curr_fr > inst->capabilities->cap[FRAME_RATE].max)
+				curr_fr = inst->capabilities->cap[FRAME_RATE].max;
+		}
+		prev = ts;
+		counter++;
+	}
+
+	if (counter < ENC_FPS_WINDOW)
+		goto exit;
+
+	/* if framerate changed and stable for 2 frames, set to firmware */
+	if (curr_fr == prev_fr && curr_fr != inst->auto_framerate) {
+		i_vpr_l(inst, "%s: updated fps to %u\n", __func__, curr_fr >> 16);
+		rc = venus_hfi_session_property(inst,
+				HFI_PROP_FRAME_RATE,
+				HFI_HOST_FLAGS_NONE,
+				HFI_PORT_BITSTREAM,
+				HFI_PAYLOAD_Q16,
+				&curr_fr,
+				sizeof(u32));
+		if (rc) {
+			i_vpr_e(inst, "%s: set auto frame rate failed\n",
+				__func__);
+			goto exit;
+		}
+		inst->auto_framerate = curr_fr;
+	}
+exit:
+	return rc;
+}
+
+int msm_vidc_calc_window_avg_framerate(struct msm_vidc_inst *inst)
 {
 	struct msm_vidc_timestamp *ts;
 	struct msm_vidc_timestamp *prev = NULL;
@@ -2129,6 +2187,7 @@ int msm_vidc_update_timestamp(struct msm_vidc_inst *inst, u64 timestamp)
 {
 	struct msm_vidc_timestamp *ts;
 	int rc = 0;
+	u32 window_size = 0;
 
 	if (!inst) {
 		d_vpr_e("%s: Invalid params\n", __func__);
@@ -2149,8 +2208,13 @@ int msm_vidc_update_timestamp(struct msm_vidc_inst *inst, u64 timestamp)
 		return rc;
 	inst->timestamps.count++;
 
-	/* keep sliding window of 10 ts nodes */
-	if (inst->timestamps.count > FPS_WINDOW) {
+	if (is_encode_session(inst))
+		window_size = ENC_FPS_WINDOW;
+	else
+		window_size = DEC_FPS_WINDOW;
+
+	/* keep sliding window */
+	if (inst->timestamps.count > window_size) {
 		ts = msm_vidc_get_least_rank_ts(inst);
 		if (!ts) {
 			i_vpr_e(inst, "%s: least rank ts is NULL\n", __func__);

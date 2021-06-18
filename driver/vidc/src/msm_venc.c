@@ -1604,6 +1604,7 @@ set_default:
 				"%s: failed to set frame rate to fw\n", __func__);
 			goto exit;
 		}
+		inst->auto_framerate = q16_rate;
 	}
 
 	return 0;

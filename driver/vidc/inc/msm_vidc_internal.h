@@ -69,6 +69,8 @@
 #define MAX_SUPPORTED_MIN_QUALITY            70
 
 #define DCVS_WINDOW 16
+#define ENC_FPS_WINDOW 3
+#define DEC_FPS_WINDOW 10
 /* Superframe can have maximum of 32 frames */
 #define VIDC_SUPERFRAME_MAX 32
 #define COLOR_RANGE_UNSPECIFIED (-1)
@@ -327,6 +329,7 @@ enum msm_vidc_core_capability_type {
 	AV_SYNC_WINDOW_SIZE,
 	CLK_FREQ_THRESHOLD,
 	NON_FATAL_FAULTS,
+	ENC_AUTO_FRAMERATE,
 	CORE_CAP_MAX,
 };
 

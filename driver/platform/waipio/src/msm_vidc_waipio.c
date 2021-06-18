@@ -93,6 +93,7 @@ static struct msm_platform_core_capability core_data_waipio[] = {
 	{DECODE_BATCH_TIMEOUT, 200},
 	{AV_SYNC_WINDOW_SIZE, 40},
 	{NON_FATAL_FAULTS, 1},
+	{ENC_AUTO_FRAMERATE, 1},
 };
 
 static struct msm_platform_inst_capability instance_data_waipio[] = {
