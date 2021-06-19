@@ -54,4 +54,5 @@ void mlo_sta_link_down_notify(struct wlan_objmgr_vdev *vdev)
 
 bool mlo_is_mld_sta(struct wlan_objmgr_vdev *vdev)
 {
+	return false;
 }
