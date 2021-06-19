@@ -2502,6 +2502,83 @@ dp_offload_ind_handler(struct htt_soc *soc, uint32_t *msg_word)
 }
 #endif
 
+#ifdef WLAN_FEATURE_11BE_MLO
+static void dp_htt_mlo_peer_map_handler(struct htt_soc *soc,
+					uint32_t *msg_word)
+{
+	uint8_t mac_addr_deswizzle_buf[QDF_MAC_ADDR_SIZE];
+	uint8_t *mlo_peer_mac_addr;
+	uint16_t mlo_peer_id;
+	uint8_t num_links;
+	struct dp_mlo_flow_override_info mlo_flow_info[DP_MLO_FLOW_INFO_MAX];
+
+	mlo_peer_id = HTT_RX_MLO_PEER_MAP_MLO_PEER_ID_GET(*msg_word);
+	num_links =
+		HTT_RX_MLO_PEER_MAP_NUM_LOGICAL_LINKS_GET(*msg_word);
+	mlo_peer_mac_addr =
+	htt_t2h_mac_addr_deswizzle((u_int8_t *)(msg_word + 1),
+				   &mac_addr_deswizzle_buf[0]);
+
+	mlo_flow_info[0].ast_idx =
+		HTT_RX_MLO_PEER_MAP_PRIMARY_AST_INDEX_GET(*(msg_word + 3));
+	mlo_flow_info[0].ast_idx_valid =
+		HTT_RX_MLO_PEER_MAP_AST_INDEX_VALID_FLAG_GET(*(msg_word + 3));
+	mlo_flow_info[0].chip_id =
+		HTT_RX_MLO_PEER_MAP_CHIP_ID_AST_INDEX_GET(*(msg_word + 3));
+	mlo_flow_info[0].tidmask =
+		HTT_RX_MLO_PEER_MAP_TIDMASK_AST_INDEX_GET(*(msg_word + 3));
+	mlo_flow_info[0].cache_set_num =
+	HTT_RX_MLO_PEER_MAP_CACHE_SET_NUM_AST_INDEX_GET(*(msg_word + 3));
+
+	mlo_flow_info[1].ast_idx =
+		HTT_RX_MLO_PEER_MAP_PRIMARY_AST_INDEX_GET(*(msg_word + 3));
+	mlo_flow_info[1].ast_idx_valid =
+		HTT_RX_MLO_PEER_MAP_AST_INDEX_VALID_FLAG_GET(*(msg_word + 3));
+	mlo_flow_info[1].chip_id =
+		HTT_RX_MLO_PEER_MAP_CHIP_ID_AST_INDEX_GET(*(msg_word + 3));
+	mlo_flow_info[1].tidmask =
+		HTT_RX_MLO_PEER_MAP_TIDMASK_AST_INDEX_GET(*(msg_word + 3));
+	mlo_flow_info[1].cache_set_num =
+	HTT_RX_MLO_PEER_MAP_CACHE_SET_NUM_AST_INDEX_GET(*(msg_word + 3));
+
+	mlo_flow_info[2].ast_idx =
+		HTT_RX_MLO_PEER_MAP_PRIMARY_AST_INDEX_GET(*(msg_word + 3));
+	mlo_flow_info[2].ast_idx_valid =
+		HTT_RX_MLO_PEER_MAP_AST_INDEX_VALID_FLAG_GET(*(msg_word + 3));
+	mlo_flow_info[2].chip_id =
+		HTT_RX_MLO_PEER_MAP_CHIP_ID_AST_INDEX_GET(*(msg_word + 3));
+	mlo_flow_info[2].tidmask =
+		HTT_RX_MLO_PEER_MAP_TIDMASK_AST_INDEX_GET(*(msg_word + 3));
+	mlo_flow_info[2].cache_set_num =
+	HTT_RX_MLO_PEER_MAP_CACHE_SET_NUM_AST_INDEX_GET(*(msg_word + 3));
+
+	dp_rx_mlo_peer_map_handler(soc->dp_soc, mlo_peer_id,
+				   mlo_peer_mac_addr,
+				   mlo_flow_info);
+}
+
+static void dp_htt_mlo_peer_unmap_handler(struct htt_soc *soc,
+					  uint32_t *msg_word)
+{
+	uint16_t mlo_peer_id;
+
+	mlo_peer_id = HTT_RX_MLO_PEER_UNMAP_MLO_PEER_ID_GET(*msg_word);
+	dp_rx_mlo_peer_unmap_handler(soc->dp_soc, mlo_peer_id);
+}
+#else
+static void dp_htt_mlo_peer_map_handler(struct htt_soc *soc,
+					uint32_t *msg_word)
+{
+	qdf_assert_always(0);
+}
+
+static void dp_htt_mlo_peer_unmap_handler(struct htt_soc *soc,
+					 uint32_t *msg_word)
+{
+	qdf_assert_always(0);
+}
+#endif
+
 /*
  * dp_htt_t2h_msg_handler() - Generic Target to host Msg/event handler
  * @context:	Opaque context (HTT SOC handle)
@@ -2867,6 +2944,45 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 			dp_offload_ind_handler(soc, msg_word);
 			break;
 		}
+	case HTT_T2H_MSG_TYPE_PEER_MAP_V3:
+	{
+		u_int8_t mac_addr_deswizzle_buf[QDF_MAC_ADDR_SIZE];
+		u_int8_t *peer_mac_addr;
+		u_int16_t peer_id;
+		u_int16_t hw_peer_id;
+		u_int8_t vdev_id;
+		uint8_t is_wds;
+		u_int16_t ast_hash = 0;
+
+		peer_id = HTT_RX_PEER_MAP_V3_SW_PEER_ID_GET(*msg_word);
+		vdev_id = HTT_RX_PEER_MAP_V3_VDEV_ID_GET(*msg_word);
+		peer_mac_addr =
+		htt_t2h_mac_addr_deswizzle((u_int8_t *)(msg_word + 1),
+					   &mac_addr_deswizzle_buf[0]);
+		hw_peer_id = HTT_RX_PEER_MAP_V3_HW_PEER_ID_GET(*(msg_word + 3));
+		ast_hash = HTT_RX_PEER_MAP_V3_CACHE_SET_NUM_GET(*(msg_word + 3));
+		is_wds = HTT_RX_PEER_MAP_V3_NEXT_HOP_GET(*(msg_word + 4));
+
+		dp_htt_info("HTT_T2H_MSG_TYPE_PEER_MAP_V3 msg for peer id %d vdev id %d n",
+			    peer_id, vdev_id);
+
+		dp_rx_peer_map_handler(soc->dp_soc, peer_id,
+				       hw_peer_id, vdev_id,
+				       peer_mac_addr, ast_hash,
+				       is_wds);
+
+		break;
+	}
+	case HTT_T2H_MSG_TYPE_MLO_RX_PEER_MAP:
+	{
+		dp_htt_mlo_peer_map_handler(soc, msg_word);
+		break;
+	}
+	case HTT_T2H_MSG_TYPE_MLO_RX_PEER_UNMAP:
+	{
+		dp_htt_mlo_peer_unmap_handler(soc, msg_word);
+		break;
+	}
 	default:
 		break;
 	};

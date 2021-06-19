@@ -2601,6 +2601,80 @@ static inline struct dp_peer *dp_peer_find_add_id(struct dp_soc *soc,
 	return NULL;
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+#ifdef DP_USE_REDUCED_PEER_ID_FIELD_WIDTH
+static inline uint16_t dp_gen_ml_peer_id(struct dp_soc *soc,
+					 uint16_t peer_id)
+{
+	return ((peer_id & soc->peer_id_mask) | (1 << soc->peer_id_shift));
+}
+#else
+static inline uint16_t dp_gen_ml_peer_id(struct dp_soc *soc,
+					 uint16_t peer_id)
+{
+	return (peer_id | (1 << HTT_RX_PEER_META_DATA_V1_ML_PEER_VALID_S));
+}
+#endif
+
+QDF_STATUS
+dp_rx_mlo_peer_map_handler(struct dp_soc *soc, uint16_t peer_id,
+			   uint8_t *peer_mac_addr,
+			   struct dp_mlo_flow_override_info *mlo_flow_info)
+{
+	struct dp_peer *peer = NULL;
+	uint16_t hw_peer_id = mlo_flow_info[0].ast_idx;
+	uint16_t ast_hash = mlo_flow_info[0].cache_set_num;
+	uint8_t vdev_id = DP_VDEV_ALL;
+	uint8_t is_wds = 0;
+	uint16_t ml_peer_id = dp_gen_ml_peer_id(soc, peer_id);
+	enum cdp_txrx_ast_entry_type type = CDP_TXRX_AST_TYPE_STATIC;
+	QDF_STATUS err = QDF_STATUS_SUCCESS;
+
+	dp_info("mlo_peer_map_event (soc:%pK): peer_id %d ml_peer_id %d, peer_mac "QDF_MAC_ADDR_FMT,
+		soc, peer_id, ml_peer_id,
+		QDF_MAC_ADDR_REF(peer_mac_addr));
+
+	peer = dp_peer_find_add_id(soc, peer_mac_addr, ml_peer_id,
+				   hw_peer_id, vdev_id);
+
+	if (peer) {
+		if (wlan_op_mode_sta == peer->vdev->opmode &&
+		    qdf_mem_cmp(peer->mac_addr.raw,
+				peer->vdev->mld_mac_addr.raw,
+				QDF_MAC_ADDR_SIZE) != 0) {
+			dp_peer_info("%pK: STA vdev bss_peer!!!!", soc);
+			peer->bss_peer = 1;
+		}
+
+		if (peer->vdev->opmode == wlan_op_mode_sta) {
+			peer->vdev->bss_ast_hash = ast_hash;
+			peer->vdev->bss_ast_idx = hw_peer_id;
+		}
+
+		/* Add ast entry incase self ast entry is
+		 * deleted due to DP CP sync issue
+		 *
+		 * self_ast_entry is modified in peer create
+		 * and peer unmap path which cannot run in
+		 * parllel with peer map, no lock need before
+		 * referring it
+		 */
+		if (!peer->self_ast_entry) {
+			dp_info("Add self ast from map "QDF_MAC_ADDR_FMT,
+				QDF_MAC_ADDR_REF(peer_mac_addr));
+			dp_peer_add_ast(soc, peer,
+					peer_mac_addr,
+					type, 0);
+		}
+	}
+
+	err = dp_peer_map_ast(soc, peer, peer_mac_addr, hw_peer_id,
+			      vdev_id, ast_hash, is_wds);
+
+	return err;
+}
+#endif
+
 /**
  * dp_rx_peer_map_handler() - handle peer map event from firmware
  * @soc_handle - genereic soc handle
@@ -2785,6 +2859,23 @@ dp_rx_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id,
 	 */
 	dp_peer_unref_delete(peer, DP_MOD_ID_CONFIG);
 }
+
+#ifdef WLAN_FEATURE_11BE_MLO
+void dp_rx_mlo_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id)
+{
+	uint16_t ml_peer_id = dp_gen_ml_peer_id(soc, peer_id);
+	uint8_t mac_addr[QDF_MAC_ADDR_SIZE] = {0};
+	uint8_t vdev_id = DP_VDEV_ALL;
+	uint8_t is_wds = 0;
+
+	dp_info("MLO peer_unmap_event (soc:%pK) peer_id %d",
+		soc, peer_id);
+
+	dp_rx_peer_unmap_handler(soc, ml_peer_id, vdev_id,
+				 mac_addr, is_wds,
+				 DP_PEER_WDS_COUNT_INVALID);
+}
+#endif
 
 #ifndef AST_OFFLOAD_ENABLE
 void

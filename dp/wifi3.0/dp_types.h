@@ -3075,6 +3075,24 @@ struct dp_peer_ast_params {
 #define IEEE80211_SCS_MAX_NO_OF_ELEM 10
 #endif
 
+#define DP_MLO_FLOW_INFO_MAX	3
+
+/**
+ * struct dp_mlo_flow_override_info - Flow override info
+ * @ast_idx: Primary TCL AST Index
+ * @ast_idx_valid: Is AST index valid
+ * @chip_id: CHIP ID
+ * @tidmask: tidmask
+ * @cache_set_num: Cache set number
+ */
+struct dp_mlo_flow_override_info {
+	uint16_t ast_idx;
+	uint8_t ast_idx_valid;
+	uint8_t chip_id;
+	uint8_t tidmask;
+	uint8_t cache_set_num;
+};
+
 #ifdef WLAN_SUPPORT_MSCS
 /*MSCS Procedure based macros */
 #define IEEE80211_MSCS_MAX_ELEM_SIZE    5

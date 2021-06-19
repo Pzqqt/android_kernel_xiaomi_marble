@@ -569,6 +569,35 @@ QDF_STATUS dp_rx_peer_map_handler(struct dp_soc *soc, uint16_t peer_id,
 void dp_rx_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id,
 			      uint8_t vdev_id, uint8_t *peer_mac_addr,
 			      uint8_t is_wds, uint32_t free_wds_count);
+
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * dp_rx_mlo_peer_map_handler() - handle MLO peer map event from firmware
+ * @soc_handle - genereic soc handle
+ * @peer_id - ML peer_id from firmware
+ * @peer_mac_addr - mac address of the peer
+ * @mlo_ast_flow_info: MLO AST flow info
+ *
+ * associate the ML peer_id that firmware provided with peer entry
+ * and update the ast table in the host with the hw_peer_id.
+ *
+ * Return: QDF_STATUS code
+ */
+QDF_STATUS
+dp_rx_mlo_peer_map_handler(struct dp_soc *soc, uint16_t peer_id,
+			   uint8_t *peer_mac_addr,
+			   struct dp_mlo_flow_override_info *mlo_flow_info);
+
+/**
+ * dp_rx_mlo_peer_unmap_handler() - handle MLO peer unmap event from firmware
+ * @soc_handle - genereic soc handle
+ * @peeri_id - peer_id from firmware
+ *
+ * Return: none
+ */
+void dp_rx_mlo_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id);
+#endif
+
 void dp_rx_sec_ind_handler(struct dp_soc *soc, uint16_t peer_id,
 			   enum cdp_sec_type sec_type, int is_unicast,
 			   u_int32_t *michael_key, u_int32_t *rx_pn);
