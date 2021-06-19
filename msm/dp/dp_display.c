@@ -816,16 +816,20 @@ static bool dp_display_send_hpd_event(struct dp_display_private *dp)
 	char name[HPD_STRING_SIZE], status[HPD_STRING_SIZE],
 		bpp[HPD_STRING_SIZE], pattern[HPD_STRING_SIZE];
 	char *envp[5];
+	struct dp_display *display;
 	int rc = 0;
 
 	connector = dp->dp_display.base_connector;
+	display = &dp->dp_display;
 
 	if (!connector) {
 		DP_ERR("connector not set\n");
 		return false;
 	}
 
-	connector->status = connector->funcs->detect(connector, false);
+	connector->status = display->is_sst_connected ? connector_status_connected :
+			connector_status_disconnected;
+
 	if (dp->cached_connector_status == connector->status) {
 		DP_DEBUG("connector status (%d) unchanged, skipping uevent\n",
 				dp->cached_connector_status);

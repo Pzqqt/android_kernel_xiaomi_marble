@@ -61,6 +61,19 @@ struct sde_connector_ops {
 			void *display);
 
 	/**
+	 * detect_ctx - determine if connector is connected
+	 * @connector: Pointer to drm connector structure
+	 * @ctx: Pointer to drm modeset acquire context structure
+	 * @force: Force detect setting from drm framework
+	 * @display: Pointer to private display handle
+	 * Returns: Connector 'is connected' status
+	 */
+	int (*detect_ctx)(struct drm_connector *connector,
+			struct drm_modeset_acquire_ctx *ctx,
+			bool force,
+			void *display);
+
+	/**
 	 * get_modes - add drm modes via drm_mode_probed_add()
 	 * @connector: Pointer to drm connector structure
 	 * @display: Pointer to private display handle

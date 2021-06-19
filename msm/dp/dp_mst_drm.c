@@ -889,42 +889,33 @@ void dp_mst_drm_bridge_deinit(void *display)
 
 /* DP MST Connector OPs */
 
-static enum drm_connector_status
-dp_mst_connector_detect(struct drm_connector *connector, bool force,
+static int
+dp_mst_connector_detect(struct drm_connector *connector,
+		struct drm_modeset_acquire_ctx *ctx,
+		bool force,
 		void *display)
 {
 	struct sde_connector *c_conn = to_sde_connector(connector);
 	struct dp_display *dp_display = c_conn->display;
 	struct dp_mst_private *mst = dp_display->dp_mst_prv_info;
 	struct dp_panel *dp_panel;
-	struct drm_modeset_acquire_ctx ctx;
 	enum drm_connector_status status;
 
 	DP_MST_DEBUG("enter:\n");
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
-
-	if (!c_conn->drv_panel || !c_conn->mst_port) {
-		DP_DEBUG("conn %d is invalid\n");
-		return connector_status_disconnected;
-	}
 
 	dp_panel = c_conn->drv_panel;
 
 	if (dp_panel->mst_hide)
 		return connector_status_disconnected;
 
-	drm_modeset_acquire_init(&ctx, 0);
-
 	status = mst->mst_fw_cbs->detect_port_ctx(connector,
-			&ctx, &mst->mst_mgr, c_conn->mst_port);
+			ctx, &mst->mst_mgr, c_conn->mst_port);
 
 	DP_MST_INFO("conn:%d status:%d\n", connector->base.id, status);
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, connector->base.id, status);
 
-	drm_modeset_drop_locks(&ctx);
-	drm_modeset_acquire_fini(&ctx);
-
-	return status;
+	return (int)status;
 }
 
 void dp_mst_clear_edid_cache(void *dp_display) {
@@ -1084,34 +1075,6 @@ enum drm_mode_status dp_mst_connector_mode_valid(
 	}
 
 	return dp_display->validate_mode(dp_display, dp_panel, mode, avail_res);
-}
-
-int dp_mst_connector_get_info(struct drm_connector *connector,
-		struct msm_display_info *info,
-		void *display)
-{
-	int rc;
-	enum drm_connector_status status = connector_status_unknown;
-
-	DP_MST_DEBUG("enter:\n");
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, connector->base.id);
-
-	rc = dp_connector_get_info(connector, info, display);
-
-	if (!rc) {
-		status = dp_mst_connector_detect(connector, false, display);
-
-		if (status == connector_status_connected)
-			info->is_connected = true;
-		else
-			info->is_connected = false;
-	}
-
-	DP_MST_INFO("mst connector:%d status:%d, rc:%d\n",
-			connector->base.id, status, rc);
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, connector->base.id);
-
-	return rc;
 }
 
 int dp_mst_connector_get_mode_info(struct drm_connector *connector,
@@ -1399,10 +1362,10 @@ dp_mst_add_connector(struct drm_dp_mst_topology_mgr *mgr,
 {
 	static const struct sde_connector_ops dp_mst_connector_ops = {
 		.post_init  = dp_mst_connector_post_init,
-		.detect     = dp_mst_connector_detect,
+		.detect_ctx = dp_mst_connector_detect,
 		.get_modes  = dp_mst_connector_get_modes,
 		.mode_valid = dp_mst_connector_mode_valid,
-		.get_info   = dp_mst_connector_get_info,
+		.get_info   = dp_connector_get_info,
 		.get_mode_info  = dp_mst_connector_get_mode_info,
 		.atomic_best_encoder = dp_mst_atomic_best_encoder,
 		.atomic_check = dp_mst_connector_atomic_check,
@@ -1477,8 +1440,10 @@ dp_mst_add_connector(struct drm_dp_mst_topology_mgr *mgr,
 	return connector;
 }
 
-static enum drm_connector_status
-dp_mst_fixed_connector_detect(struct drm_connector *connector, bool force,
+static int
+dp_mst_fixed_connector_detect(struct drm_connector *connector, 
+			struct drm_modeset_acquire_ctx *ctx,
+			bool force,
 			void *display)
 {
 	struct dp_display *dp_display = display;
@@ -1492,10 +1457,10 @@ dp_mst_fixed_connector_detect(struct drm_connector *connector, bool force,
 		if (!mst->mst_bridge[i].fixed_port_added)
 			break;
 
-		return dp_mst_connector_detect(connector, force, display);
+		return dp_mst_connector_detect(connector, ctx, force, display);
 	}
 
-	return connector_status_disconnected;
+	return (int)connector_status_disconnected;
 }
 
 static struct drm_encoder *
@@ -1672,10 +1637,10 @@ dp_mst_drm_fixed_connector_init(struct dp_display *dp_display,
 {
 	static const struct sde_connector_ops dp_mst_connector_ops = {
 		.post_init  = dp_mst_connector_post_init,
-		.detect     = dp_mst_fixed_connector_detect,
+		.detect_ctx = dp_mst_fixed_connector_detect,
 		.get_modes  = dp_mst_connector_get_modes,
 		.mode_valid = dp_mst_connector_mode_valid,
-		.get_info   = dp_mst_connector_get_info,
+		.get_info   = dp_connector_get_info,
 		.get_mode_info  = dp_mst_connector_get_mode_info,
 		.atomic_best_encoder = dp_mst_fixed_atomic_best_encoder,
 		.atomic_check = dp_mst_connector_atomic_check,
