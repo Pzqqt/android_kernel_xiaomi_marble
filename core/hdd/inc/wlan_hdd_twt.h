@@ -111,6 +111,22 @@ struct twt_conc_arg {
 };
 
 /**
+ * twt_ack_info_priv - twt ack private info
+ * @vdev_id: vdev id
+ * @peer_macaddr: peer mac address
+ * @dialog_id: dialog id
+ * @twt_cmd_ack: twt ack command
+ * @status: twt command status
+ */
+struct twt_ack_info_priv {
+	uint32_t vdev_id;
+	struct qdf_mac_addr peer_macaddr;
+	uint32_t dialog_id;
+	uint32_t twt_cmd_ack;
+	uint32_t status;
+};
+
+/**
  * wlan_hdd_cfg80211_wifi_twt_config() - Wifi twt configuration
  * vendor command
  * @wiphy: wiphy device pointer

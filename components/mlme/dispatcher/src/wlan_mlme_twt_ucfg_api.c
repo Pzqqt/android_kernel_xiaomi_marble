@@ -118,6 +118,18 @@ ucfg_mlme_set_twt_responder_flag(struct wlan_objmgr_psoc *psoc, bool val)
 }
 
 QDF_STATUS
+ucfg_mlme_reset_twt_init_context(struct wlan_objmgr_psoc *psoc,
+				 struct qdf_mac_addr *peer_macaddr,
+				 uint8_t dialog_id)
+{
+	mlme_set_twt_command_in_progress(psoc, peer_macaddr, dialog_id,
+					 WLAN_TWT_NONE);
+	mlme_init_twt_context(psoc, peer_macaddr, dialog_id);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
 ucfg_mlme_get_twt_congestion_timeout(struct wlan_objmgr_psoc *psoc,
 				     uint32_t *val)
 {

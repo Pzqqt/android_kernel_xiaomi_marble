@@ -215,6 +215,16 @@ void (*twt_resume_dialog_cb)(struct wlan_objmgr_psoc *psoc,
 typedef
 void (*twt_notify_cb)(struct wlan_objmgr_psoc *psoc,
 		      struct wmi_twt_notify_event_param *params);
+
+/**
+ * typedef twt_ack_comp_cb - TWT ack callback signature.
+ * @params: TWT ack complete event parameters.
+ * @context: TWT context
+ */
+typedef
+void (*twt_ack_comp_cb)(struct wmi_twt_ack_complete_event_param *params,
+			void *context);
+
 /**
  * struct twt_callbacks - TWT response callback pointers
  * @twt_enable_cb: TWT enable completion callback
@@ -225,6 +235,7 @@ void (*twt_notify_cb)(struct wlan_objmgr_psoc *psoc,
  * @twt_resume_dialog_cb: TWT resume dialog completion callback
  * @twt_notify_cb: TWT notify event callback
  * @twt_nudge_dialog_cb: TWT nudge dialog completion callback
+ * @twt_ack_comp_cb: TWT ack completion callback
  */
 struct twt_callbacks {
 	void (*twt_enable_cb)(hdd_handle_t hdd_handle,
@@ -243,6 +254,8 @@ struct twt_callbacks {
 			      struct wmi_twt_notify_event_param *params);
 	void (*twt_nudge_dialog_cb)(struct wlan_objmgr_psoc *psoc,
 		    struct wmi_twt_nudge_dialog_complete_event_param *params);
+	void (*twt_ack_comp_cb)(struct wmi_twt_ack_complete_event_param *params,
+				void *context);
 };
 #endif
 
@@ -459,6 +472,8 @@ struct sme_context {
 	twt_nudge_dialog_cb twt_nudge_dialog_cb;
 	twt_resume_dialog_cb twt_resume_dialog_cb;
 	twt_notify_cb twt_notify_cb;
+	twt_ack_comp_cb twt_ack_comp_cb;
+	void *twt_ack_context_cb;
 #endif
 #ifdef FEATURE_WLAN_APF
 	apf_get_offload_cb apf_get_offload_cb;

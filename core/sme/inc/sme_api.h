@@ -3638,12 +3638,14 @@ QDF_STATUS sme_register_twt_callbacks(mac_handle_t mac_handle,
  * @mac_handle: MAC handle
  * @twt_add_dialog_cb: Function callback to handle add_dialog event
  * @twt_params: TWT add dialog parameters
+ * @context: TWT context
  *
  * Return: QDF Status
  */
 QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
 			      twt_add_dialog_cb twt_add_dialog_cb,
-			      struct wmi_twt_add_dialog_param *twt_params);
+			      struct wmi_twt_add_dialog_param *twt_params,
+			      void *context);
 
 /**
  * sme_del_dialog_cmd() - Register callback and send TWT del dialog
@@ -3651,12 +3653,14 @@ QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
  * @mac_handle: MAC handle
  * @twt_del_dialog_cb: Function callback to handle del_dialog event
  * @twt_params: TWT del dialog parameters
+ * @context: TWT context
  *
  * Return: QDF Status
  */
 QDF_STATUS sme_del_dialog_cmd(mac_handle_t mac_handle,
 			      twt_del_dialog_cb del_dialog_cb,
-			      struct wmi_twt_del_dialog_param *twt_params);
+			      struct wmi_twt_del_dialog_param *twt_params,
+			      void *context);
 
 /**
  * sme_sap_del_dialog_cmd() - Register callback and send TWT del dialog
@@ -3676,39 +3680,45 @@ QDF_STATUS sme_sap_del_dialog_cmd(mac_handle_t mac_handle,
  * command to firmware
  * @mac_handle: MAC handle
  * @twt_params: TWT pause dialog parameters
+ * @context: TWT context
  *
  * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error codes
  * on failure
  */
 QDF_STATUS
 sme_pause_dialog_cmd(mac_handle_t mac_handle,
-		     struct wmi_twt_pause_dialog_cmd_param *twt_params);
+		     struct wmi_twt_pause_dialog_cmd_param *twt_params,
+		     void *context);
 
 /**
  * sme_nudge_dialog_cmd() - Register callback and send TWT nudge dialog
  * command to firmware
  * @mac_handle: MAC handle
  * @twt_params: TWT nudge dialog parameters
+ * @context: TWT context
  *
  * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error codes
  * on failure
  */
 QDF_STATUS
 sme_nudge_dialog_cmd(mac_handle_t mac_handle,
-		     struct wmi_twt_nudge_dialog_cmd_param *twt_params);
+		     struct wmi_twt_nudge_dialog_cmd_param *twt_params,
+		     void *context);
 
 /**
  * sme_resume_dialog_cmd() - Register callback and send TWT resume dialog
  * command to firmware
  * @mac_handle: MAC handle
  * @twt_params: TWT resume dialog parameters
+ * @context: TWT context
  *
  * Return: QDF_STATUS_SUCCESS on Success, other QDF_STATUS error codes
  * on failure
  */
 QDF_STATUS
 sme_resume_dialog_cmd(mac_handle_t mac_handle,
-		      struct wmi_twt_resume_dialog_cmd_param *twt_params);
+		      struct wmi_twt_resume_dialog_cmd_param *twt_params,
+		      void *context);
 
 /**
  * sme_twt_update_beacon_template() - API to send beacon update to fw

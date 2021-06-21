@@ -41,6 +41,7 @@
 
 #define TWT_DISABLE_COMPLETE_TIMEOUT 1000
 #define TWT_ENABLE_COMPLETE_TIMEOUT  1000
+#define TWT_ACK_COMPLETE_TIMEOUT 1000
 
 #define TWT_FLOW_TYPE_ANNOUNCED 0
 #define TWT_FLOW_TYPE_UNANNOUNCED 1
@@ -1541,6 +1542,93 @@ hdd_twt_handle_renego_failure(struct hdd_adapter *adapter,
 }
 
 /**
+ * hdd_twt_ack_comp_cb() - TWT ack complete event callback
+ * @params: TWT parameters
+ * @context: Context
+ *
+ * Return: None
+ */
+static void
+hdd_twt_ack_comp_cb(struct wmi_twt_ack_complete_event_param *params,
+		    void *context)
+{
+	struct osif_request *request = NULL;
+	struct twt_ack_info_priv *status_priv;
+
+	request = osif_request_get(context);
+	if (!request) {
+		hdd_err("obsolete request");
+		return;
+	}
+
+	status_priv = osif_request_priv(request);
+	if (!status_priv) {
+		hdd_err("obsolete status_priv");
+		return;
+	}
+
+	if (status_priv->twt_cmd_ack == params->twt_cmd_ack) {
+		status_priv->vdev_id = params->vdev_id;
+		qdf_copy_macaddr(&status_priv->peer_macaddr,
+				 &params->peer_macaddr);
+		status_priv->dialog_id = params->dialog_id;
+		status_priv->status = params->status;
+		osif_request_complete(request);
+	} else {
+		hdd_err("Invalid ack for twt command");
+	}
+
+	osif_request_put(request);
+}
+
+/**
+ * hdd_twt_ack_wait_response: TWT wait for ack event if it's supported
+ * @hdd_ctx: HDD context
+ * @request: OSIF request cookie
+ * @twt_cmd: TWT command for which ack event come
+ *
+ * Return: None
+ */
+static QDF_STATUS
+hdd_twt_ack_wait_response(struct hdd_context *hdd_ctx,
+			  struct osif_request *request, int twt_cmd)
+{
+	struct target_psoc_info *tgt_hdl;
+	struct twt_ack_info_priv *ack_priv;
+	int ret = 0;
+	bool twt_ack_cap;
+
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(hdd_ctx->psoc);
+	if (!tgt_hdl) {
+		hdd_err("tgt_hdl is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	target_psoc_get_twt_ack_cap(tgt_hdl, &twt_ack_cap);
+
+	if (!twt_ack_cap) {
+		hdd_err("TWT ack bit is not supported. No need to wait");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	ack_priv = osif_request_priv(request);
+	ack_priv->twt_cmd_ack = twt_cmd;
+
+	ret = osif_request_wait_for_response(request);
+	if (ret) {
+		hdd_err("TWT setup response timed out");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ack_priv = osif_request_priv(request);
+	hdd_debug("TWT ack info: vdev_id %d dialog_id %d twt_cmd %d status %d peer_macaddr "
+		  QDF_MAC_ADDR_FMT, ack_priv->vdev_id, ack_priv->dialog_id,
+		  ack_priv->twt_cmd_ack, ack_priv->status,
+		  QDF_MAC_ADDR_REF(ack_priv->peer_macaddr.bytes));
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * hdd_twt_add_dialog_comp_cb() - HDD callback for twt add dialog
  * complete event
  * @psoc: Pointer to global psoc
@@ -1585,26 +1673,48 @@ static
 int hdd_send_twt_add_dialog_cmd(struct hdd_context *hdd_ctx,
 				struct wmi_twt_add_dialog_param *twt_params)
 {
-	struct target_psoc_info *tgt_hdl;
 	QDF_STATUS status;
-	int ret;
-	bool twt_ack_cap;
+	int ret = 0, twt_cmd;
+	struct osif_request *request;
+	struct twt_ack_info_priv *ack_priv;
+	void *context;
+	static const struct osif_request_params params = {
+				.priv_size = sizeof(*ack_priv),
+				.timeout_ms = TWT_ACK_COMPLETE_TIMEOUT,
+	};
 
-	status = sme_add_dialog_cmd(hdd_ctx->mac_handle,
-				    hdd_twt_add_dialog_comp_cb,
-				    twt_params);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		hdd_err("Failed to send add dialog command");
+	hdd_enter();
 
-	tgt_hdl = wlan_psoc_get_tgt_if_handle(hdd_ctx->psoc);
-	if (!tgt_hdl) {
-		hdd_err("tgt_hdl is NULL");
+	request = osif_request_alloc(&params);
+	if (!request) {
+		hdd_err("Request allocation failure");
 		return -EINVAL;
 	}
 
-	target_psoc_get_twt_ack_cap(tgt_hdl, &twt_ack_cap);
+	context = osif_request_cookie(request);
+
+	status = sme_add_dialog_cmd(hdd_ctx->mac_handle,
+				    hdd_twt_add_dialog_comp_cb,
+				    twt_params, context);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to send add dialog command");
+		ret = qdf_status_to_os_return(status);
+		goto cleanup;
+	}
+
+	twt_cmd = WMI_HOST_TWT_ADD_DIALOG_CMDID;
+
+	status = hdd_twt_ack_wait_response(hdd_ctx, request, twt_cmd);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		ret = qdf_status_to_os_return(status);
+		goto cleanup;
+	}
 
 	ret = qdf_status_to_os_return(status);
+cleanup:
+	osif_request_put(request);
+	hdd_exit();
 
 	return ret;
 }
@@ -1916,27 +2026,49 @@ static
 int hdd_send_twt_del_dialog_cmd(struct hdd_context *hdd_ctx,
 				struct wmi_twt_del_dialog_param *twt_params)
 {
-	struct target_psoc_info *tgt_hdl;
 	QDF_STATUS status;
-	int ret = 0;
-	bool twt_ack_cap;
+	int ret = 0, twt_cmd;
+	struct osif_request *request;
+	struct twt_ack_info_priv *ack_priv;
+	void *context;
+	static const struct osif_request_params params = {
+				.priv_size = sizeof(*ack_priv),
+				.timeout_ms = TWT_ACK_COMPLETE_TIMEOUT,
+	};
+
+	hdd_enter();
+
+	request = osif_request_alloc(&params);
+	if (!request) {
+		hdd_err("Request allocation failure");
+		return -EINVAL;
+	}
+
+	context = osif_request_cookie(request);
 
 	status = sme_del_dialog_cmd(hdd_ctx->mac_handle,
 				    hdd_twt_del_dialog_comp_cb,
-				    twt_params);
+				    twt_params, context);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to send del dialog command");
 		ret = qdf_status_to_os_return(status);
+		goto cleanup;
 	}
 
-	tgt_hdl = wlan_psoc_get_tgt_if_handle(hdd_ctx->psoc);
-	if (!tgt_hdl) {
-		hdd_err("tgt_hdl is NULL");
-		return -EINVAL;
+	twt_cmd = WMI_HOST_TWT_DEL_DIALOG_CMDID;
+
+	status = hdd_twt_ack_wait_response(hdd_ctx, request, twt_cmd);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		ret = qdf_status_to_os_return(status);
+		goto cleanup;
 	}
 
-	target_psoc_get_twt_ack_cap(tgt_hdl, &twt_ack_cap);
+	ret = qdf_status_to_os_return(status);
+cleanup:
+	osif_request_put(request);
+	hdd_exit();
 
 	return ret;
 }
@@ -2405,25 +2537,47 @@ static
 int hdd_send_twt_pause_dialog_cmd(struct hdd_context *hdd_ctx,
 				  struct wmi_twt_pause_dialog_cmd_param *twt_params)
 {
-	struct target_psoc_info *tgt_hdl;
 	QDF_STATUS status;
-	int ret = 0;
-	bool twt_ack_cap;
+	int ret = 0, twt_cmd;
+	struct osif_request *request;
+	struct twt_ack_info_priv *ack_priv;
+	void *context;
+	static const struct osif_request_params params = {
+				.priv_size = sizeof(*ack_priv),
+				.timeout_ms = TWT_ACK_COMPLETE_TIMEOUT,
+	};
 
-	status = sme_pause_dialog_cmd(hdd_ctx->mac_handle,
-				      twt_params);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("Failed to send pause dialog command");
-		ret = qdf_status_to_os_return(status);
-	}
+	hdd_enter();
 
-	tgt_hdl = wlan_psoc_get_tgt_if_handle(hdd_ctx->psoc);
-	if (!tgt_hdl) {
-		hdd_err("tgt_hdl is NULL");
+	request = osif_request_alloc(&params);
+	if (!request) {
+		hdd_err("Request allocation failure");
 		return -EINVAL;
 	}
 
-	target_psoc_get_twt_ack_cap(tgt_hdl, &twt_ack_cap);
+	context = osif_request_cookie(request);
+
+	status = sme_pause_dialog_cmd(hdd_ctx->mac_handle,
+				      twt_params, context);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to send pause dialog command");
+		ret = qdf_status_to_os_return(status);
+		goto cleanup;
+	}
+
+	twt_cmd = WMI_HOST_TWT_PAUSE_DIALOG_CMDID;
+
+	status = hdd_twt_ack_wait_response(hdd_ctx, request, twt_cmd);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		ret = qdf_status_to_os_return(status);
+		goto cleanup;
+	}
+
+	ret = qdf_status_to_os_return(status);
+cleanup:
+	osif_request_put(request);
+	hdd_exit();
 
 	return ret;
 }
@@ -2509,23 +2663,48 @@ static
 int hdd_send_twt_nudge_dialog_cmd(struct hdd_context *hdd_ctx,
 			struct wmi_twt_nudge_dialog_cmd_param *twt_params)
 {
-	struct target_psoc_info *tgt_hdl;
 	QDF_STATUS status;
-	bool twt_ack_cap;
+	int twt_cmd, ret = 0;
+	struct osif_request *request;
+	struct twt_ack_info_priv *ack_priv;
+	void *context;
+	static const struct osif_request_params params = {
+				.priv_size = sizeof(*ack_priv),
+				.timeout_ms = TWT_ACK_COMPLETE_TIMEOUT,
+	};
 
-	status = sme_nudge_dialog_cmd(hdd_ctx->mac_handle, twt_params);
-	if (QDF_IS_STATUS_ERROR(status))
-		hdd_err("Failed to send nudge dialog command");
+	hdd_enter();
 
-	tgt_hdl = wlan_psoc_get_tgt_if_handle(hdd_ctx->psoc);
-	if (!tgt_hdl) {
-		hdd_err("tgt_hdl is NULL");
+	request = osif_request_alloc(&params);
+	if (!request) {
+		hdd_err("Request allocation failure");
 		return -EINVAL;
 	}
 
-	target_psoc_get_twt_ack_cap(tgt_hdl, &twt_ack_cap);
+	context = osif_request_cookie(request);
 
-	return qdf_status_to_os_return(status);
+	status = sme_nudge_dialog_cmd(hdd_ctx->mac_handle, twt_params, context);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to send nudge dialog command");
+		ret = qdf_status_to_os_return(status);
+		goto cleanup;
+	}
+
+	twt_cmd = WMI_HOST_TWT_NUDGE_DIALOG_CMDID;
+
+	status = hdd_twt_ack_wait_response(hdd_ctx, request, twt_cmd);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		ret = qdf_status_to_os_return(status);
+		goto cleanup;
+	}
+
+	ret = qdf_status_to_os_return(status);
+cleanup:
+	osif_request_put(request);
+	hdd_exit();
+
+	return ret;
 }
 
 /**
@@ -2751,25 +2930,47 @@ static int
 hdd_send_twt_resume_dialog_cmd(struct hdd_context *hdd_ctx,
 			       struct wmi_twt_resume_dialog_cmd_param *twt_params)
 {
-	struct target_psoc_info *tgt_hdl;
 	QDF_STATUS status;
-	int ret = 0;
-	bool twt_ack_cap;
+	int ret = 0, twt_cmd;
+	struct osif_request *request;
+	struct twt_ack_info_priv *ack_priv;
+	void *context;
+	static const struct osif_request_params params = {
+				.priv_size = sizeof(*ack_priv),
+				.timeout_ms = TWT_ACK_COMPLETE_TIMEOUT,
+	};
 
-	status = sme_resume_dialog_cmd(hdd_ctx->mac_handle,
-				       twt_params);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("Failed to send resume dialog command");
-		ret = qdf_status_to_os_return(status);
-	}
+	hdd_enter();
 
-	tgt_hdl = wlan_psoc_get_tgt_if_handle(hdd_ctx->psoc);
-	if (!tgt_hdl) {
-		hdd_err("tgt_hdl is NULL");
+	request = osif_request_alloc(&params);
+	if (!request) {
+		hdd_err("Request allocation failure");
 		return -EINVAL;
 	}
 
-	target_psoc_get_twt_ack_cap(tgt_hdl, &twt_ack_cap);
+	context = osif_request_cookie(request);
+
+	status = sme_resume_dialog_cmd(hdd_ctx->mac_handle,
+				       twt_params, context);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to send resume dialog command");
+		ret = qdf_status_to_os_return(status);
+		goto cleanup;
+	}
+
+	twt_cmd = WMI_HOST_TWT_RESUME_DIALOG_CMDID;
+
+	status = hdd_twt_ack_wait_response(hdd_ctx, request, twt_cmd);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		ret = qdf_status_to_os_return(status);
+		goto cleanup;
+	}
+
+	ret = qdf_status_to_os_return(status);
+cleanup:
+	osif_request_put(request);
+	hdd_exit();
 
 	return ret;
 }
@@ -4136,6 +4337,7 @@ void wlan_hdd_twt_init(struct hdd_context *hdd_ctx)
 	twt_cb.twt_resume_dialog_cb = hdd_twt_resume_dialog_comp_cb;
 	twt_cb.twt_notify_cb = hdd_twt_notify_cb;
 	twt_cb.twt_nudge_dialog_cb = hdd_twt_nudge_dialog_comp_cb;
+	twt_cb.twt_ack_comp_cb = hdd_twt_ack_comp_cb;
 
 	status = sme_register_twt_callbacks(hdd_ctx->mac_handle, &twt_cb);
 	if (QDF_IS_STATUS_ERROR(status)) {

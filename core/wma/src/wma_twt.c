@@ -551,6 +551,46 @@ int wma_twt_resume_dialog_complete_event_handler(void *handle, uint8_t *event,
 	return status;
 }
 
+static
+int wma_twt_ack_complete_event_handler(void *handle, uint8_t *event,
+				       uint32_t len)
+{
+	struct wmi_twt_ack_complete_event_param *param;
+	tp_wma_handle wma_handle = handle;
+	wmi_unified_t wmi_handle;
+	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
+	QDF_STATUS status;
+
+	if (!mac)
+		return -EINVAL;
+
+	if (wma_validate_handle(wma_handle))
+		return -EINVAL;
+
+	wmi_handle = wma_handle->wmi_handle;
+	if (wmi_validate_handle(wmi_handle))
+		return -EINVAL;
+
+	param = qdf_mem_malloc(sizeof(*param));
+	if (!param)
+		return -ENOMEM;
+
+	status = wmi_extract_twt_ack_comp_event(wmi_handle, event,
+						param);
+
+	wma_debug("TWT: Received TWT ack comp event, status:%d", status);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		goto exit;
+
+	if (mac->sme.twt_ack_comp_cb)
+		mac->sme.twt_ack_comp_cb(param, mac->sme.twt_ack_context_cb);
+
+exit:
+	qdf_mem_free(param);
+	return qdf_status_to_os_return(status);
+}
+
 /**
  * wma_update_bcast_twt_support() - update bcost twt support
  * @wh: wma handle
@@ -608,31 +648,36 @@ void wma_register_twt_events(tp_wma_handle wma_handle)
 				(wma_handle->wmi_handle,
 				 wmi_twt_add_dialog_complete_event_id,
 				 wma_twt_add_dialog_complete_event_handler,
-				 WMA_RX_SERIALIZER_CTX);
+				 WMA_RX_WORK_CTX);
 	wmi_unified_register_event_handler
 				(wma_handle->wmi_handle,
 				 wmi_twt_del_dialog_complete_event_id,
 				 wma_twt_del_dialog_complete_event_handler,
-				 WMA_RX_SERIALIZER_CTX);
+				 WMA_RX_WORK_CTX);
 
 	wmi_unified_register_event_handler
 				(wma_handle->wmi_handle,
 				 wmi_twt_pause_dialog_complete_event_id,
 				 wma_twt_pause_dialog_complete_event_handler,
-				 WMA_RX_SERIALIZER_CTX);
+				 WMA_RX_WORK_CTX);
 	wmi_unified_register_event_handler
 				(wma_handle->wmi_handle,
 				 wmi_twt_resume_dialog_complete_event_id,
 				 wma_twt_resume_dialog_complete_event_handler,
-				 WMA_RX_SERIALIZER_CTX);
+				 WMA_RX_WORK_CTX);
 	wmi_unified_register_event_handler
 				(wma_handle->wmi_handle,
 				 wmi_twt_nudge_dialog_complete_event_id,
 				 wma_twt_nudge_dialog_complete_event_handler,
-				 WMA_RX_SERIALIZER_CTX);
+				 WMA_RX_WORK_CTX);
 	wmi_unified_register_event_handler
 				(wma_handle->wmi_handle,
 				 wmi_twt_notify_event_id,
 				 wma_twt_notify_event_handler,
 				 WMA_RX_SERIALIZER_CTX);
+	wmi_unified_register_event_handler
+				(wma_handle->wmi_handle,
+				 wmi_twt_ack_complete_event_id,
+				 wma_twt_ack_complete_event_handler,
+				 WMA_RX_WORK_CTX);
 }
