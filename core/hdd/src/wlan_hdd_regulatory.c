@@ -1615,6 +1615,11 @@ static void hdd_country_change_update_sap(struct hdd_context *hdd_ctx)
 						     adapter->vdev_id);
 			break;
 		case QDF_SAP_MODE:
+			if (!test_bit(SOFTAP_INIT_DONE,
+				      &adapter->event_flags)) {
+				hdd_info("AP is not started yet");
+				break;
+			}
 			sap_config = &adapter->session.ap.sap_config;
 			reg_phy_mode = csr_convert_to_reg_phy_mode(
 						sap_config->sap_orig_hw_mode,
