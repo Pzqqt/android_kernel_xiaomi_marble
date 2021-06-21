@@ -2550,7 +2550,7 @@ qdf_nbuf_t dp_tx_extract_mesh_meta_data(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
  */
 static bool dp_check_exc_metadata(struct cdp_tx_exception_metadata *tx_exc)
 {
-	bool invalid_tid = (tx_exc->tid > DP_MAX_TIDS && tx_exc->tid !=
+	bool invalid_tid = (tx_exc->tid >= DP_MAX_TIDS && tx_exc->tid !=
 			    HTT_INVALID_TID);
 	bool invalid_encap_type =
 			(tx_exc->tx_encap_type > htt_cmn_pkt_num_types &&
