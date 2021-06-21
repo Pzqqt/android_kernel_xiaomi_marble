@@ -15522,9 +15522,9 @@ hdd_get_all_band_mask(void)
 {
 	uint32_t band_mask = 0;
 
-	band_mask = (1 << NL80211_BAND_2GHZ) |
-			(1 << NL80211_BAND_5GHZ) |
-			(1 << NL80211_BAND_6GHZ);
+	band_mask = (1 << REG_BAND_2G) |
+			(1 << REG_BAND_5G) |
+			(1 << REG_BAND_6G);
 
 	return band_mask;
 }
@@ -15547,6 +15547,30 @@ hdd_get_all_iface_mode_mask(void)
 			(1 << NL80211_IFTYPE_NAN);
 
 	return mode_mask;
+}
+
+/**
+ * hdd_convert_nl80211_to_reg_band_mask() - convert n80211 band to reg band
+ * @band: nl80211 band
+ *
+ * Return: reg band value
+ */
+
+static uint32_t
+hdd_convert_nl80211_to_reg_band_mask(enum nl80211_band band)
+{
+	uint32_t reg_band = 0;
+
+	if (band & 1 << NL80211_BAND_2GHZ)
+		reg_band |= 1 << REG_BAND_2G;
+	if (band & 1 << NL80211_BAND_5GHZ)
+		reg_band |= 1 << REG_BAND_5G;
+	if (band & 1 << NL80211_BAND_6GHZ)
+		reg_band |= 1 << REG_BAND_6G;
+	if (band & 1 << NL80211_BAND_60GHZ)
+		hdd_err("band: %d not supported", NL80211_BAND_60GHZ);
+
+	return reg_band;
 }
 
 /**
@@ -15599,6 +15623,9 @@ static int __wlan_hdd_cfg80211_get_usable_channel(struct wiphy *wiphy,
 		nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_USABLE_CHANNELS_BAND_MASK]);
 		if (!req_msg.band_mask)
 			req_msg.band_mask = hdd_get_all_band_mask();
+		else
+			req_msg.band_mask =
+			hdd_convert_nl80211_to_reg_band_mask(req_msg.band_mask);
 	}
 	if (!tb[QCA_WLAN_VENDOR_ATTR_USABLE_CHANNELS_IFACE_MODE_MASK]) {
 		hdd_err("iface mode mask not present");
