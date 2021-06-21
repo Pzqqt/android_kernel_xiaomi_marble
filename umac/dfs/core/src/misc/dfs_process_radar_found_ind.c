@@ -772,6 +772,13 @@ int dfs_second_segment_radar_disable(struct wlan_dfs *dfs)
 	return 0;
 }
 
+#ifdef WLAN_DFS_FULL_OFFLOAD
+void dfs_inc_num_radar(struct wlan_dfs *dfs)
+{
+	dfs->wlan_dfs_stats.num_radar_detects++;
+}
+#endif /* WLAN_DFS_FULL_OFFLOAD */
+
 #if defined(WLAN_DFS_TRUE_160MHZ_SUPPORT) && defined(WLAN_DFS_FULL_OFFLOAD)
 void dfs_translate_radar_params(struct wlan_dfs *dfs,
 				struct radar_found_info *radar_found)

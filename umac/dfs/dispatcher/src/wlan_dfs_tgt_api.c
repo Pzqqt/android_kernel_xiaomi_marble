@@ -548,6 +548,7 @@ QDF_STATUS tgt_dfs_process_radar_ind(struct wlan_objmgr_pdev *pdev,
 
 	dfs_translate_radar_params(dfs, radar_found);
 	status = dfs_process_radar_ind(dfs, radar_found);
+	dfs_inc_num_radar(dfs);
 
 	return status;
 }

@@ -317,6 +317,21 @@ int
 dfs_get_nol_subchannel_marking(struct wlan_dfs *dfs,
 			       bool *nol_subchannel_marking);
 
+#ifdef WLAN_DFS_FULL_OFFLOAD
+/**
+ * dfs_inc_num_radar - Increment radar detect stats for FO.
+ *
+ * @dfs: Pointer to the wlan_dfs object.
+ *
+ * Return: void.
+ */
+void dfs_inc_num_radar(struct wlan_dfs *dfs);
+#else
+static inline void dfs_inc_num_radar(struct wlan_dfs *dfs)
+{
+}
+#endif
+
 #if defined(WLAN_DFS_TRUE_160MHZ_SUPPORT) && defined(WLAN_DFS_FULL_OFFLOAD)
 #define DFS_80P80MHZ_SECOND_SEG_OFFSET 85
 /**
