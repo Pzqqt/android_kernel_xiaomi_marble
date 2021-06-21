@@ -1595,4 +1595,17 @@ reg_process_ch_avoid_ext_event(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+#ifdef CONFIG_AFC_SUPPORT
+/**
+ * reg_send_afc_cmd() - Send AFC cmd to the FW
+ * @pdev: pdev ptr
+ * @afc_ind_obj: Pointer to hold AFC indication
+ *
+ * Return: QDF_STATUS_SUCCESS if the WMI command is sent or QDF_STATUS_E_FAILURE
+ * otherwise
+ */
+QDF_STATUS reg_send_afc_cmd(struct wlan_objmgr_pdev *pdev,
+			    struct reg_afc_resp_rx_ind_info *afc_ind_obj);
+#endif
 #endif

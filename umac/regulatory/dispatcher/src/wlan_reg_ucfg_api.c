@@ -361,3 +361,12 @@ ucfg_reg_get_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
 
 qdf_export_symbol(ucfg_reg_get_cur_6g_ap_pwr_type);
 #endif
+
+#ifdef CONFIG_AFC_SUPPORT
+QDF_STATUS
+ucfg_reg_send_afc_resp_rx_ind(struct wlan_objmgr_pdev *pdev,
+			      struct reg_afc_resp_rx_ind_info *afc_ind_obj)
+{
+	return reg_send_afc_cmd(pdev, afc_ind_obj);
+}
+#endif

@@ -463,4 +463,19 @@ ucfg_reg_set_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_E_NOSUPPORT;
 }
 #endif
+
+#ifdef CONFIG_AFC_SUPPORT
+/**
+ * ucfg_reg_send_afc_resp_rx_ind() - Send AFC response received indication to
+ * the FW.
+ * @pdev: pdev ptr
+ * @afc_ind_obj: Pointer to hold AFC indication
+ *
+ * Return: QDF_STATUS_SUCCESS if the WMI command is sent or QDF_STATUS_E_FAILURE
+ * otherwise
+ */
+QDF_STATUS
+ucfg_reg_send_afc_resp_rx_ind(struct wlan_objmgr_pdev *pdev,
+			      struct reg_afc_resp_rx_ind_info *afc_ind_obj);
+#endif
 #endif

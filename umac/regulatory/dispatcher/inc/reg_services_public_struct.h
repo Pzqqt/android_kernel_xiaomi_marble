@@ -1496,4 +1496,32 @@ struct chan_5g_center_freq {
 
 #endif
 
+#ifdef CONFIG_AFC_SUPPORT
+/* enum reg_afc_cmd_type - Type of AFC command sent to FW
+ * @REG_AFC_CMD_SERV_RESP_READY : Server response is ready
+ */
+enum reg_afc_cmd_type {
+	REG_AFC_CMD_SERV_RESP_READY = 1,
+};
+
+/* enum reg_afc_serv_resp_format - Indicate the format in which afc_serv_format
+ * is written in FW memory
+ * @REG_AFC_SERV_RESP_FORMAT_JSON - Server response in JSON format
+ * @REG_AFC_SERV_RESP_FORMAT_BINARY - Server response in BINARY format
+ */
+enum reg_afc_serv_resp_format {
+	REG_AFC_SERV_RESP_FORMAT_JSON = 0,
+	REG_AFC_SERV_RESP_FORMAT_BINARY = 1,
+};
+
+/**
+ * struct reg_afc_resp_rx_ind_info - regulatory AFC indication info
+ * @cmd_type: Type of AFC command send to FW
+ * @serv_resp_format: AFC server response format
+ */
+struct reg_afc_resp_rx_ind_info {
+	enum reg_afc_cmd_type cmd_type;
+	enum reg_afc_serv_resp_format serv_resp_format;
+};
+#endif
 #endif

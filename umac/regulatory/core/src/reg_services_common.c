@@ -5376,3 +5376,25 @@ reg_process_ch_avoid_ext_event(struct wlan_objmgr_psoc *psoc,
 	return status;
 }
 #endif
+
+#ifdef CONFIG_AFC_SUPPORT
+QDF_STATUS reg_send_afc_cmd(struct wlan_objmgr_pdev *pdev,
+			    struct reg_afc_resp_rx_ind_info *afc_ind_obj)
+{
+	uint8_t pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_reg_tx_ops *tx_ops;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		reg_err("psoc is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	tx_ops = reg_get_psoc_tx_ops(psoc);
+	if (tx_ops->send_afc_ind)
+		return tx_ops->send_afc_ind(psoc, pdev_id, afc_ind_obj);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
