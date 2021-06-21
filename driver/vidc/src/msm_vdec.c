@@ -2090,6 +2090,56 @@ int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 	return 0;
 }
 
+int msm_vdec_try_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
+{
+	int rc = 0;
+	struct msm_vidc_core *core;
+	struct v4l2_pix_format_mplane *pixmp = &f->fmt.pix_mp;
+	u32 pix_fmt;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+
+	memset(pixmp->reserved, 0, sizeof(pixmp->reserved));
+	if (f->type == INPUT_MPLANE) {
+		pix_fmt = v4l2_codec_to_driver(f->fmt.pix_mp.pixelformat, __func__);
+		if (!pix_fmt) {
+			i_vpr_h(inst, "%s: unsupported codec, set default params\n", __func__);
+			f->fmt.pix_mp.width = DEFAULT_WIDTH;
+			f->fmt.pix_mp.height = DEFAULT_HEIGHT;
+			f->fmt.pix_mp.pixelformat = V4L2_PIX_FMT_H264;
+			pix_fmt = v4l2_codec_to_driver(f->fmt.pix_mp.pixelformat, __func__);
+		}
+	} else if (f->type == OUTPUT_MPLANE) {
+		if (inst->vb2q[INPUT_PORT].streaming) {
+			f->fmt.pix_mp.height = inst->fmts[INPUT_PORT].fmt.pix_mp.height;
+			f->fmt.pix_mp.width = inst->fmts[INPUT_PORT].fmt.pix_mp.width;
+		}
+		pix_fmt = v4l2_colorformat_to_driver(f->fmt.pix_mp.pixelformat, __func__);
+		if (!pix_fmt) {
+			i_vpr_h(inst, "%s: unsupported format, set default params\n", __func__);
+			f->fmt.pix_mp.pixelformat = V4L2_PIX_FMT_VIDC_NV12C;
+			f->fmt.pix_mp.width = VIDEO_Y_STRIDE_PIX(f->fmt.pix_mp.pixelformat,
+								 DEFAULT_WIDTH);
+			f->fmt.pix_mp.height = VIDEO_Y_SCANLINES(f->fmt.pix_mp.pixelformat,
+								 DEFAULT_HEIGHT);
+			pix_fmt = v4l2_colorformat_to_driver(f->fmt.pix_mp.pixelformat, __func__);
+		}
+	} else {
+		i_vpr_e(inst, "%s: invalid type %d\n", __func__, f->type);
+		return -EINVAL;
+	}
+
+	if (pixmp->field == V4L2_FIELD_ANY)
+		pixmp->field = V4L2_FIELD_NONE;
+
+	pixmp->num_planes = 1;
+	return rc;
+}
+
 int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f)
 {
 	int rc = 0;

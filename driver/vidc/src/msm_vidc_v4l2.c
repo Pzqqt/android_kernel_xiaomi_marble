@@ -107,6 +107,34 @@ unlock:
 	return rc;
 }
 
+int msm_v4l2_try_fmt(struct file *filp, void *fh, struct v4l2_format *f)
+{
+	struct msm_vidc_inst *inst = get_vidc_inst(filp, fh);
+	int rc = 0;
+
+	inst = get_inst_ref(g_core, inst);
+	if (!inst) {
+		d_vpr_e("%s: invalid instance\n", __func__);
+		return -EINVAL;
+	}
+
+	inst_lock(inst, __func__);
+	if (is_session_error(inst)) {
+		i_vpr_e(inst, "%s: inst in error state\n", __func__);
+		rc = -EBUSY;
+		goto unlock;
+	}
+	rc = msm_vidc_try_fmt((void *)inst, f);
+	if (rc)
+		goto unlock;
+
+unlock:
+	inst_unlock(inst, __func__);
+	put_inst(inst);
+
+	return rc;
+}
+
 int msm_v4l2_s_fmt(struct file *filp, void *fh,
 					struct v4l2_format *f)
 {
