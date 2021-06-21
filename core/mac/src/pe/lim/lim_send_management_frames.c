@@ -3200,6 +3200,7 @@ QDF_STATUS lim_send_deauth_cnf(struct mac_context *mac_ctx)
 	tLimMlmDeauthCnf deauth_cnf;
 	struct pe_session *session_entry;
 	QDF_STATUS qdf_status;
+	uint32_t i;
 
 	deauth_req = mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDeauthReq;
 	if (deauth_req) {
@@ -3218,6 +3219,22 @@ QDF_STATUS lim_send_deauth_cnf(struct mac_context *mac_ctx)
 		}
 		if (qdf_is_macaddr_broadcast(&deauth_req->peer_macaddr) &&
 		    mac_ctx->mlme_cfg->sap_cfg.is_sap_bcast_deauth_enabled) {
+			if (wlan_vdev_mlme_is_mlo_ap(session_entry->vdev)) {
+				for (i = 1;
+				     i < session_entry->dph.dphHashTable.size;
+				     i++) {
+					sta_ds = dph_get_hash_entry(
+					    mac_ctx, i,
+					    &session_entry->dph.dphHashTable);
+					if (!sta_ds)
+						continue;
+					if (lim_is_mlo_conn(session_entry,
+							    sta_ds))
+						lim_mlo_notify_peer_disconn(
+								session_entry,
+								sta_ds);
+				}
+			}
 			qdf_status = lim_del_sta_all(mac_ctx, session_entry);
 			qdf_mem_free(deauth_req);
 			mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDeauthReq =
@@ -3235,6 +3252,8 @@ QDF_STATUS lim_send_deauth_cnf(struct mac_context *mac_ctx)
 			deauth_cnf.resultCode = eSIR_SME_INVALID_PARAMETERS;
 			goto end;
 		}
+
+		lim_mlo_notify_peer_disconn(session_entry, sta_ds);
 
 		/* / Receive path cleanup with dummy packet */
 		lim_ft_cleanup_pre_auth_info(mac_ctx, session_entry);
@@ -3340,6 +3359,9 @@ QDF_STATUS lim_send_disassoc_cnf(struct mac_context *mac_ctx)
 			disassoc_cnf.resultCode = eSIR_SME_INVALID_PARAMETERS;
 			goto end;
 		}
+
+		lim_mlo_notify_peer_disconn(pe_session, sta_ds);
+
 		/* Receive path cleanup with dummy packet */
 		if (QDF_STATUS_SUCCESS !=
 		    lim_cleanup_rx_path(mac_ctx, sta_ds, pe_session, true)) {

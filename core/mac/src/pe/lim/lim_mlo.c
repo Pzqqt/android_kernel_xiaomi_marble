@@ -542,3 +542,34 @@ void lim_mlo_ap_sta_assoc_fail(struct wlan_objmgr_peer *peer)
 			       STATUS_UNSPECIFIED_FAILURE,
 			       pe_session);
 }
+
+void lim_mlo_delete_link_peer(struct pe_session *pe_session,
+			      tpDphHashNode sta_ds)
+{
+	struct wlan_objmgr_peer *peer;
+	struct mac_context *mac;
+
+	mac = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac) {
+		pe_err("mac ctx is null");
+		return;
+	}
+	if (!pe_session) {
+		pe_err("pe session is null");
+		return;
+	}
+	if (!sta_ds) {
+		pe_err("sta ds is null");
+		return;
+	}
+	if (!lim_is_mlo_conn(pe_session, sta_ds))
+		return;
+
+	peer = wlan_objmgr_get_peer_by_mac(mac->psoc,
+					   sta_ds->staAddr,
+					   WLAN_LEGACY_MAC_ID);
+
+	wlan_mlo_link_peer_delete(peer);
+
+	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_MAC_ID);
+}

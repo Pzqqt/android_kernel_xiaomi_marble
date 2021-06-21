@@ -1804,7 +1804,16 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tSirMacAddr sa,
 		       peer_idx, QDF_MAC_ADDR_REF(sa));
 
 		/* Release AID */
-		lim_release_peer_idx(mac_ctx, peer_idx, session);
+		if (lim_is_mlo_conn(session, sta_ds)) {
+			if (lim_is_mlo_recv_assoc(sta_ds))
+				lim_release_mlo_conn_idx(mac_ctx, peer_idx,
+							 session, true);
+			else
+				lim_release_mlo_conn_idx(mac_ctx, peer_idx,
+							 session, false);
+		} else {
+			lim_release_peer_idx(mac_ctx, peer_idx, session);
+		}
 
 		lim_reject_association(mac_ctx, sa, sub_type, true,
 				       auth_type, peer_idx, false,
@@ -2199,6 +2208,7 @@ bool lim_send_assoc_ind_to_sme(struct mac_context *mac_ctx,
 		pe_err("mlo partner PeerIdx not avaialble. Reject associaton");
 		lim_send_sme_max_assoc_exceeded_ntf(mac_ctx, sa,
 						    session->smeSessionId);
+		return false;
 	}
 
 	/* Add an entry to hash table maintained by DPH module */
@@ -2212,18 +2222,24 @@ bool lim_send_assoc_ind_to_sme(struct mac_context *mac_ctx,
 			   QDF_MAC_ADDR_FMT, peer_idx, QDF_MAC_ADDR_REF(sa));
 
 		/* Release AID */
-		lim_release_peer_idx(mac_ctx, peer_idx, session);
+		if (assoc_req->eht_cap.present &&
+		    IS_DOT11_MODE_EHT(session->dot11mode))
+			lim_release_mlo_conn_idx(mac_ctx, peer_idx, session,
+						 true);
+		else
+			lim_release_peer_idx(mac_ctx, peer_idx, session);
 
 		lim_reject_association(mac_ctx, sa, sub_type,
 				       true, auth_type, peer_idx, false,
 				       STATUS_UNSPECIFIED_FAILURE,
 			session);
 		return false;
-	} else if (!peer_idx) {
+	} else if (!sta_ds) {
 		pe_err("mlo partner peer couldn't add hash entry at DPH for aid: %d MacAddr:"
 		       QDF_MAC_ADDR_FMT, peer_idx, QDF_MAC_ADDR_REF(sa));
 		lim_send_sme_max_assoc_exceeded_ntf(mac_ctx, sa,
 						    session->smeSessionId);
+		return false;
 	}
 
 	/*only mlo partner peer get valid aid before proc assoc req*/
@@ -3179,8 +3195,13 @@ QDF_STATUS lim_send_mlm_assoc_ind(struct mac_context *mac_ctx,
 
 		assoc_ind = qdf_mem_malloc(temp);
 		if (!assoc_ind) {
-			lim_release_peer_idx(mac_ctx, sta_ds->assocId,
-					     session_entry);
+			if (lim_is_mlo_conn(session_entry, sta_ds))
+				lim_release_mlo_conn_idx(mac_ctx,
+							 sta_ds->assocId,
+							 session_entry, false);
+			else
+				lim_release_peer_idx(mac_ctx, sta_ds->assocId,
+						     session_entry);
 			return QDF_STATUS_E_INVAL;
 		}
 		if (!lim_fill_lim_assoc_ind_params(assoc_ind, mac_ctx,

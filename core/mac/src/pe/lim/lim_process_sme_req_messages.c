@@ -5184,6 +5184,8 @@ void __lim_process_sme_disassoc_cnf(struct mac_context *mac, uint32_t *msg_buf)
 			return;
 		}
 
+		lim_mlo_notify_peer_disconn(pe_session, sta);
+
 		/* Delete FT session if there exists one */
 		lim_ft_cleanup_pre_auth_info(mac, pe_session);
 		lim_cleanup_rx_path(mac, sta, pe_session, true);
@@ -5448,7 +5450,13 @@ void lim_delete_all_peers(struct pe_session *session)
 		if (QDF_STATUS_SUCCESS == status) {
 			lim_delete_dph_hash_entry(mac_ctx, sta_ds->staAddr,
 						  sta_ds->assocId, session);
-			lim_release_peer_idx(mac_ctx, sta_ds->assocId, session);
+			if (lim_is_mlo_conn(session, sta_ds))
+				lim_release_mlo_conn_idx(mac_ctx,
+							 sta_ds->assocId,
+							 session, false);
+			else
+				lim_release_peer_idx(mac_ctx, sta_ds->assocId,
+						     session);
 		} else {
 			pe_err("lim_del_sta failed with Status: %d", status);
 			QDF_ASSERT(0);

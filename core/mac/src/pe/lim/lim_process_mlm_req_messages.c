@@ -44,6 +44,7 @@
 #include "wlan_pmo_ucfg_api.h"
 #include "wlan_objmgr_vdev_obj.h"
 #include <wlan_cm_api.h>
+#include <lim_mlo.h>
 
 static void lim_process_mlm_auth_req(struct mac_context *, uint32_t *);
 static void lim_process_mlm_assoc_req(struct mac_context *, uint32_t *);
@@ -1095,6 +1096,7 @@ lim_process_mlm_disassoc_req_ntf(struct mac_context *mac_ctx,
 		if (LIM_IS_STA_ROLE(session))
 			wma_tx_abort(session->smeSessionId);
 	} else {
+		lim_mlo_notify_peer_disconn(session, stads);
 		/* Disassoc frame is not sent OTA */
 		send_disassoc_frame = 1;
 		/* Receive path cleanup with dummy packet */

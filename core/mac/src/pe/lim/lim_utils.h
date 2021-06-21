@@ -242,12 +242,15 @@ uint16_t lim_assign_mlo_conn_idx(struct mac_context *mac,
  * @mac: mac context
  * @peer_idx: given aid
  * @pe_session: session entry
+ * @free_aid: trigger mlo mgr to free AID or not. It only can be
+ *            true before mlo peer is created. Once mlo peer is
+ *            created, AID is freed in mlo peer context.
  *
  * Return: Void
  */
 void
 lim_release_mlo_conn_idx(struct mac_context *mac, uint16_t peer_idx,
-			 struct pe_session *pe_session);
+			 struct pe_session *pe_session, bool free_aid);
 #else
 static inline uint16_t lim_assign_mlo_conn_idx(struct mac_context *mac,
 					       struct pe_session *pe_session,
@@ -258,7 +261,7 @@ static inline uint16_t lim_assign_mlo_conn_idx(struct mac_context *mac,
 
 static inline void
 lim_release_mlo_conn_idx(struct mac_context *mac, uint16_t peer_idx,
-			 struct pe_session *pe_session)
+			 struct pe_session *pe_session, bool free_aid)
 {
 }
 #endif

@@ -58,6 +58,7 @@
 
 #include <cdp_txrx_cfg.h>
 #include <cdp_txrx_cmn.h>
+#include <lim_mlo.h>
 
 #ifdef FEATURE_WLAN_TDLS
 #define IS_TDLS_PEER(type)  ((type) == STA_ENTRY_TDLS_PEER)
@@ -358,6 +359,8 @@ QDF_STATUS lim_del_sta_all(struct mac_context *mac,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct vdev_mlme_obj *mlme_obj;
+	uint32_t i;
+	tpDphHashNode sta_ds;
 
 	if (!LIM_IS_AP_ROLE(pe_session))
 		return QDF_STATUS_E_INVAL;
@@ -368,6 +371,17 @@ QDF_STATUS lim_del_sta_all(struct mac_context *mac,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if (wlan_vdev_mlme_is_mlo_ap(pe_session->vdev)) {
+		for (i = 1; i < pe_session->dph.dphHashTable.size; i++) {
+			sta_ds = dph_get_hash_entry(
+					mac, i,
+					&pe_session->dph.dphHashTable);
+			if (!sta_ds)
+				continue;
+			if (lim_is_mlo_conn(pe_session, sta_ds))
+				lim_mlo_delete_link_peer(pe_session, sta_ds);
+		}
+	}
 	status = vdev_mgr_peer_delete_all_send(mlme_obj);
 	if (status != QDF_STATUS_SUCCESS) {
 		pe_err("failed status = %d", status);
@@ -2668,6 +2682,11 @@ lim_del_sta(struct mac_context *mac,
 		pDelStaParams->respReqd = 1;
 	}
 
+	/* notify mlo peer to detach reference of the
+	 * link peer before post WMA_DELETE_STA_REQ, which will free
+	 * wlan_objmgr_peer of the link peer
+	 */
+	lim_mlo_delete_link_peer(pe_session, sta);
 	/* Update PE session ID */
 	pDelStaParams->sessionId = pe_session->peSessionId;
 	pDelStaParams->smesessionId = pe_session->smeSessionId;
@@ -4237,9 +4256,14 @@ void lim_prepare_and_send_del_all_sta_cnf(struct mac_context *mac,
 					    &pe_session->dph.dphHashTable);
 		if (!sta_ds)
 			continue;
+
 		lim_delete_dph_hash_entry(mac, sta_ds->staAddr,
 					  sta_ds->assocId, pe_session);
-		lim_release_peer_idx(mac, sta_ds->assocId, pe_session);
+		if (lim_is_mlo_conn(pe_session, sta_ds))
+			lim_release_mlo_conn_idx(mac, sta_ds->assocId,
+						 pe_session, false);
+		else
+			lim_release_peer_idx(mac, sta_ds->assocId, pe_session);
 	}
 
 	qdf_set_macaddr_broadcast(&mlm_deauth.peer_macaddr);
@@ -4272,18 +4296,29 @@ lim_prepare_and_send_del_sta_cnf(struct mac_context *mac, tpDphHashNode sta,
 	uint16_t staDsAssocId = 0;
 	struct qdf_mac_addr sta_dsaddr;
 	struct lim_sta_context mlmStaContext;
+	bool mlo_conn = false;
+	bool mlo_recv_assoc_frm = false;
 
 	if (!sta) {
 		pe_err("sta is NULL");
 		return;
 	}
+
 	staDsAssocId = sta->assocId;
 	qdf_mem_copy((uint8_t *) sta_dsaddr.bytes,
 		     sta->staAddr, QDF_MAC_ADDR_SIZE);
 
 	mlmStaContext = sta->mlmStaContext;
-	if (LIM_IS_AP_ROLE(pe_session))
-		lim_release_peer_idx(mac, sta->assocId, pe_session);
+	mlo_conn = lim_is_mlo_conn(pe_session, sta);
+	mlo_recv_assoc_frm = lim_is_mlo_recv_assoc(sta);
+
+	if (LIM_IS_AP_ROLE(pe_session)) {
+		if (mlo_conn)
+			lim_release_mlo_conn_idx(mac, sta->assocId,
+						 pe_session, false);
+		else
+			lim_release_peer_idx(mac, sta->assocId, pe_session);
+	}
 
 	lim_delete_dph_hash_entry(mac, sta->staAddr, sta->assocId,
 				  pe_session);
@@ -4294,6 +4329,9 @@ lim_prepare_and_send_del_sta_cnf(struct mac_context *mac, tpDphHashNode sta,
 				 pe_session->peSessionId,
 				 pe_session->limMlmState));
 	}
+	if (mlo_conn && !mlo_recv_assoc_frm)
+		return;
+
 	lim_send_del_sta_cnf(mac, sta_dsaddr, staDsAssocId, mlmStaContext,
 			     status_code, pe_session);
 }

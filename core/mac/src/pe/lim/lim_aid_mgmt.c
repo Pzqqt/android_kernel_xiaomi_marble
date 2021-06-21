@@ -329,10 +329,11 @@ lim_release_peer_idx(struct mac_context *mac, uint16_t peer_idx,
 #ifdef WLAN_FEATURE_11BE_MLO
 void
 lim_release_mlo_conn_idx(struct mac_context *mac, uint16_t peer_idx,
-			 struct pe_session *session)
+			 struct pe_session *session, bool free_aid)
 {
 	session->gLimNumOfCurrentSTAs--;
-	if (wlan_mlo_get_mlpeer_by_aid(session->vdev->mlo_dev_ctx, peer_idx))
+	if (free_aid &&
+	    wlan_mlo_get_mlpeer_by_aid(session->vdev->mlo_dev_ctx, peer_idx))
 		mlo_free_aid(session->vdev, peer_idx);
 }
 #endif

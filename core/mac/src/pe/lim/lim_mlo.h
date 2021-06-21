@@ -203,6 +203,17 @@ bool lim_mlo_partner_auth_type(struct pe_session *session,
  * Return: void
  */
 void lim_mlo_ap_sta_assoc_fail(struct wlan_objmgr_peer *peer);
+
+/**
+ * lim_mlo_delete_link_peer() - notify mlo mgr peer obj is deleted
+ * @pe_session: pe session
+ * @sta_ds: Pointer to internal STA Datastructure
+ *
+ * Return: void
+ */
+void lim_mlo_delete_link_peer(struct pe_session *pe_session,
+			      tpDphHashNode sta_ds);
+
 #else
 
 static inline void lim_mlo_notify_peer_disconn(struct pe_session *pe_session,
@@ -248,6 +259,11 @@ static inline void lim_ap_mlo_sta_peer_ind(struct mac_context *mac,
 					   struct pe_session *pe_session,
 					   tpDphHashNode sta,
 					   bool add_sta_rsp_status)
+{
+}
+
+static inline void lim_mlo_delete_link_peer(struct pe_session *pe_session,
+					    tpDphHashNode sta_ds)
 {
 }
 #endif
