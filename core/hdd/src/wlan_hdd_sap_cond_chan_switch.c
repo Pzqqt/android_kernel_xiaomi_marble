@@ -283,6 +283,9 @@ static int __wlan_hdd_request_pre_cac(struct hdd_context *hdd_ctx,
 		}
 	}
 
+	sap_clear_global_dfs_param(mac_handle,
+				   WLAN_HDD_GET_SAP_CTX_PTR(pre_cac_adapter));
+
 	/*
 	 * This interface is internally created by the driver. So, no interface
 	 * up comes for this interface from user space and hence starting

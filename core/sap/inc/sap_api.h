@@ -1473,6 +1473,17 @@ void sap_get_cac_dur_dfs_region(struct sap_context *sap_ctx,
 				uint32_t *cac_duration_ms,
 				uint32_t *dfs_region);
 
+/**
+ * sap_clear_global_dfs_param() - Reset global dfs param of sap ctx
+ * @mac_handle: pointer to mac handle
+ * @sap_ctx: sap context
+ *
+ * This API resets global dfs param of sap ctx.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sap_clear_global_dfs_param(mac_handle_t mac_handle,
+				      struct sap_context *sap_ctx);
 
 /**
  * sap_dfs_set_current_channel() - Set current channel params in dfs component
