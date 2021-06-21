@@ -26,13 +26,11 @@
 
 #if defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
 	defined(QCA_WIFI_QCA6490) || defined(QCA_WIFI_QCA6750)
-
 #define ADDBA_TXAGGR_SIZE 256
 #else
 #define ADDBA_TXAGGR_SIZE 64
 #endif
 
-#ifdef TX_AGGREGATION_SIZE_ENABLE
 /*
  * <ini>
  * gTxAggregationSize - Gives an option to configure Tx aggregation size
@@ -171,16 +169,6 @@
 			0, \
 			CFG_VALUE_OR_DEFAULT, \
 			"Tx Aggregation size value for VO")
-
-#define CFG_QOS_TX_AGGREGATION \
-	CFG(CFG_TX_AGGREGATION_SIZE) \
-	CFG(CFG_TX_AGGREGATION_SIZEBE) \
-	CFG(CFG_TX_AGGREGATION_SIZEBK) \
-	CFG(CFG_TX_AGGREGATION_SIZEVI) \
-	CFG(CFG_TX_AGGREGATION_SIZEVO)
-#else
-#define CFG_QOS_TX_AGGREGATION
-#endif
 
 /*
  * <ini>
@@ -582,8 +570,12 @@
 		"Used to configure OUI based tx aggr size for msdu/mpdu")
 
 #define CFG_QOS_ALL \
-	CFG_QOS_TX_AGGREGATION \
 	CFG(CFG_SAP_MAX_INACTIVITY_OVERRIDE) \
+	CFG(CFG_TX_AGGREGATION_SIZE) \
+	CFG(CFG_TX_AGGREGATION_SIZEBE) \
+	CFG(CFG_TX_AGGREGATION_SIZEBK) \
+	CFG(CFG_TX_AGGREGATION_SIZEVI) \
+	CFG(CFG_TX_AGGREGATION_SIZEVO) \
 	CFG(CFG_RX_AGGREGATION_SIZE) \
 	CFG(CFG_TX_AGGR_SW_RETRY_BE) \
 	CFG(CFG_TX_AGGR_SW_RETRY_BK) \
