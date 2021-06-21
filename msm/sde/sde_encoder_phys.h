@@ -134,6 +134,7 @@ struct sde_encoder_virt_ops {
  * @setup_vsync_source:		Configure vsync source selection for cmd mode.
  * @get_underrun_line_count:	Obtain and log current internal vertical line
  *                              count and underrun line count
+ * @add_to_minidump:		Add this phys_enc data to minidumps
  */
 
 struct sde_encoder_phys_ops {
@@ -186,6 +187,7 @@ struct sde_encoder_phys_ops {
 	void (*setup_vsync_source)(struct sde_encoder_phys *phys, u32 vsync_source,
 			struct msm_display_info *disp_info);
 	u32 (*get_underrun_line_count)(struct sde_encoder_phys *phys);
+	void (*add_to_minidump)(struct sde_encoder_phys *phys);
 };
 
 /**
