@@ -182,11 +182,9 @@ static int sde_hdcp_2x_get_next_message(struct sde_hdcp_2x_ctrl *hdcp,
 	case SKE_SEND_EKS:
 		if (!hdcp->repeater_flag)
 			return SKE_SEND_TYPE_ID;
-		break;
 	case SKE_SEND_TYPE_ID:
 		if (!hdcp->repeater_flag)
 			return SKE_SEND_TYPE_ID;
-		break;
 	case REP_STREAM_READY:
 	case REP_SEND_ACK:
 		if (!hdcp->repeater_flag)
