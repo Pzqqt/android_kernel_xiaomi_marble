@@ -43,12 +43,6 @@ void pkt_capture_mon(struct pkt_capture_cb_context *cb_ctx, qdf_nbuf_t msdu,
 	type = (wh)->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 	sub_type = (wh)->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
 
-	if ((type == QDF_IEEE80211_FC0_TYPE_DATA) &&
-	    (sub_type == QDF_IEEE80211_FC0_SUBTYPE_QOS_NULL)) {
-		qdf_nbuf_free(msdu);
-		return;
-	}
-
 	if ((type == IEEE80211_FC0_TYPE_MGT) &&
 	    (sub_type == MGMT_SUBTYPE_AUTH)) {
 		uint8_t chan = wlan_reg_freq_to_chan(pdev, ch_freq);
