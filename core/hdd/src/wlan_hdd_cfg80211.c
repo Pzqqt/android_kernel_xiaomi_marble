@@ -7432,7 +7432,6 @@ static int hdd_config_access_policy(struct hdd_adapter *adapter,
 	return qdf_status_to_os_return(status);
 }
 
-#ifdef TX_AGGREGATION_SIZE_ENABLE
 static int hdd_config_mpdu_aggregation(struct hdd_adapter *adapter,
 				       struct nlattr *tb[])
 {
@@ -7510,63 +7509,6 @@ static int hdd_config_msdu_aggregation(struct hdd_adapter *adapter,
 
 	return qdf_status_to_os_return(status);
 }
-#else
-static int hdd_config_mpdu_aggregation(struct hdd_adapter *adapter,
-				       struct nlattr *tb[])
-{
-	struct nlattr *rx_attr =
-		tb[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MPDU_AGGREGATION];
-	uint8_t rx_size;
-	QDF_STATUS status;
-
-	if (!rx_attr) {
-		hdd_debug("Missing attribute for RX");
-		return 0;
-	}
-
-	rx_size = nla_get_u8(rx_attr);
-	if (!cfg_in_range(CFG_RX_AGGREGATION_SIZE, rx_size)) {
-		hdd_err("RX %d MPDU aggr size not in range",
-			rx_size);
-		return -EINVAL;
-	}
-
-	status = wma_set_tx_rx_aggr_size(adapter->vdev_id,
-					 0,
-					 rx_size,
-					 WMI_VDEV_CUSTOM_AGGR_TYPE_AMPDU);
-
-	return qdf_status_to_os_return(status);
-}
-
-static int hdd_config_msdu_aggregation(struct hdd_adapter *adapter,
-				       struct nlattr *tb[])
-{
-	struct nlattr *rx_attr =
-		tb[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MSDU_AGGREGATION];
-	uint8_t rx_size;
-	QDF_STATUS status;
-
-	if (!rx_attr) {
-		hdd_debug("Missing attribute for RX");
-		return 0;
-	}
-
-	rx_size = nla_get_u8(rx_attr);
-	if (!cfg_in_range(CFG_RX_AGGREGATION_SIZE, rx_size)) {
-		hdd_err("RX %d MPDU aggr size not in range",
-			rx_size);
-		return -EINVAL;
-	}
-
-	status = wma_set_tx_rx_aggr_size(adapter->vdev_id,
-					 0,
-					 rx_size,
-					 WMI_VDEV_CUSTOM_AGGR_TYPE_AMSDU);
-
-	return qdf_status_to_os_return(status);
-}
-#endif
 
 static QDF_STATUS
 hdd_populate_vdev_chains(struct wlan_mlme_nss_chains *nss_chains_cfg,
