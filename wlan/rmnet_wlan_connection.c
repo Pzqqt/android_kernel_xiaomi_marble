@@ -15,6 +15,7 @@
 #include <linux/hrtimer.h>
 #include <net/ip.h>
 #include <net/ipv6.h>
+#include <net/netfilter/nf_conntrack.h>
 #include "rmnet_wlan.h"
 #include "rmnet_wlan_connection.h"
 #define DATARMNET5da8c68c19 (2000000000)
@@ -47,8 +48,11 @@ rx_handler_result_t DATARMNET68fe094884(struct sk_buff**DATARMNET89946cec52){
 struct DATARMNET0ca9d8ead7 DATARMNETa76763310b={};struct DATARMNET4f49486833*
 DATARMNET63b1a086d5;struct sk_buff*DATARMNET543491eb0f=*DATARMNET89946cec52;
 unsigned long DATARMNETfb0677cc3c;if(!DATARMNET543491eb0f||DATARMNET543491eb0f->
-pkt_type==PACKET_LOOPBACK)goto DATARMNETbf4095f79e;if(DATARMNET543491eb0f->
-protocol==htons(ETH_P_IP)){struct iphdr*DATARMNET86f1f2cdc9,DATARMNETbf6548198e;
+pkt_type==PACKET_LOOPBACK)goto DATARMNETbf4095f79e;if(DATARMNET543491eb0f->dev&&
+strncmp(DATARMNET543491eb0f->dev->name,
+"\x72\x5f\x72\x6d\x6e\x65\x74\x5f\x64\x61\x74\x61\x30",IFNAMSIZ))nf_ct_set(
+DATARMNET543491eb0f,NULL,IP_CT_UNTRACKED);if(DATARMNET543491eb0f->protocol==
+htons(ETH_P_IP)){struct iphdr*DATARMNET86f1f2cdc9,DATARMNETbf6548198e;
 DATARMNET86f1f2cdc9=skb_header_pointer(DATARMNET543491eb0f,(0xd2d+202-0xdf7),
 sizeof(*DATARMNET86f1f2cdc9),&DATARMNETbf6548198e);if(!DATARMNET86f1f2cdc9)goto 
 DATARMNETbf4095f79e;if(DATARMNET86f1f2cdc9->protocol==IPPROTO_TCP)goto 
