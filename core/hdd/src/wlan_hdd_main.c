@@ -8625,6 +8625,9 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 		 * Action frame registered in one adapter which will
 		 * applicable to all interfaces
 		 */
+		if (hdd_set_fw_params(adapter))
+			hdd_err("Failed to set adapter FW params after SSR!");
+
 		wlan_hdd_cfg80211_register_frames(adapter);
 		hdd_create_adapter_sysfs_files(adapter);
 		hdd_adapter_dev_put_debug(adapter, dbgid);
