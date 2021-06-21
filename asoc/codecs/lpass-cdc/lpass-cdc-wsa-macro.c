@@ -288,7 +288,8 @@ struct lpass_cdc_wsa_macro_priv {
 	u16 default_clk_id;
 	u32 pcm_rate_vi;
 	int wsa_digital_mute_status[LPASS_CDC_WSA_MACRO_RX_MAX];
-	u8 original_gain;
+	u8 rx0_origin_gain;
+	u8 rx1_origin_gain;
 	struct thermal_cooling_device *tcdev;
 	uint32_t thermal_cur_state;
 	uint32_t thermal_max_state;
@@ -1528,7 +1529,13 @@ static int lpass_cdc_wsa_macro_enable_interpolator(struct snd_soc_dapm_widget *w
 {
 	struct snd_soc_component *component =
 			snd_soc_dapm_to_component(w->dapm);
+	struct device *wsa_dev = NULL;
+	struct lpass_cdc_wsa_macro_priv *wsa_priv = NULL;
+	u8 gain = 0;
 	u16 reg = 0;
+
+	if (!lpass_cdc_wsa_macro_get_data(component, &wsa_dev, &wsa_priv, __func__))
+		return -EINVAL;
 
 	dev_dbg(component->dev, "%s %d %s\n", __func__, event, w->name);
 
@@ -1548,6 +1555,34 @@ static int lpass_cdc_wsa_macro_enable_interpolator(struct snd_soc_dapm_widget *w
 		lpass_cdc_wsa_macro_enable_prim_interpolator(component, reg, event);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
+		if (!strcmp(w->name, "WSA_RX INT0 INTERP")) {
+			gain = (u8)(wsa_priv->rx0_origin_gain -
+					wsa_priv->thermal_cur_state);
+			if (snd_soc_component_read(wsa_priv->component,
+					 LPASS_CDC_WSA_RX0_RX_VOL_CTL) != gain) {
+				snd_soc_component_update_bits(wsa_priv->component,
+					LPASS_CDC_WSA_RX0_RX_VOL_CTL, 0xFF, gain);
+				dev_dbg(wsa_priv->dev,
+					"%s: RX0 current thermal state: %d, "
+					"adjusted gain: %#x\n",
+					__func__, wsa_priv->thermal_cur_state, gain);
+			}
+		}
+
+		if (!strcmp(w->name, "WSA_RX INT1 INTERP")) {
+			gain = (u8)(wsa_priv->rx1_origin_gain -
+					wsa_priv->thermal_cur_state);
+			if (snd_soc_component_read(wsa_priv->component,
+					 LPASS_CDC_WSA_RX1_RX_VOL_CTL) != gain) {
+				snd_soc_component_update_bits(wsa_priv->component,
+					LPASS_CDC_WSA_RX1_RX_VOL_CTL, 0xFF, gain);
+				dev_dbg(wsa_priv->dev,
+					"%s: RX1 current thermal state: %d, "
+					"adjusted gain: %#x\n",
+					__func__, wsa_priv->thermal_cur_state, gain);
+			}
+		}
+
 		lpass_cdc_wsa_macro_config_compander(component, w->shift, event);
 		lpass_cdc_wsa_macro_config_softclip(component, w->shift, event);
 		break;
@@ -1930,11 +1965,27 @@ static int lpass_cdc_wsa_macro_set_digital_volume(struct snd_kcontrol *kcontrol,
 
 	ret = snd_soc_put_volsw(kcontrol, ucontrol);
 
-	wsa_priv->original_gain = (u8)snd_soc_component_read(wsa_priv->component,
-						mc->reg);
+	if (mc->reg == LPASS_CDC_WSA_RX0_RX_VOL_CTL) {
+		wsa_priv->rx0_origin_gain =
+			(u8)snd_soc_component_read(wsa_priv->component,
+							mc->reg);
+		gain = (u8)(wsa_priv->rx0_origin_gain -
+				wsa_priv->thermal_cur_state);
+	} else if (mc->reg == LPASS_CDC_WSA_RX1_RX_VOL_CTL) {
+		wsa_priv->rx1_origin_gain =
+			(u8)snd_soc_component_read(wsa_priv->component,
+							mc->reg);
+		gain = (u8)(wsa_priv->rx1_origin_gain -
+				wsa_priv->thermal_cur_state);
+	} else {
+		dev_err(wsa_priv->dev,
+			"%s: Incorrect RX Path selected\n", __func__);
+		return -EINVAL;
+	}
 
-	if (wsa_priv->thermal_cur_state > 0) {
-		gain = (u8)(wsa_priv->original_gain - wsa_priv->thermal_cur_state);
+	/* only adjust gain if thermal state is positive */
+	if (wsa_priv->dapm_mclk_enable &&
+	    wsa_priv->thermal_cur_state > 0) {
 		snd_soc_component_update_bits(wsa_priv->component,
 			mc->reg, 0xFF, gain);
 		dev_dbg(wsa_priv->dev,
@@ -3010,9 +3061,7 @@ err:
 static void lpass_cdc_wsa_macro_cooling_adjust_gain(struct work_struct *work)
 {
 	struct lpass_cdc_wsa_macro_priv *wsa_priv;
-	struct snd_soc_dapm_context *dapm;
 	u8 gain = 0;
-	u32 ctl_reg;
 
 	wsa_priv = container_of(work, struct lpass_cdc_wsa_macro_priv,
 			     lpass_cdc_wsa_macro_cooling_work);
@@ -3027,29 +3076,24 @@ static void lpass_cdc_wsa_macro_cooling_adjust_gain(struct work_struct *work)
 		return;
 	}
 
-	dapm = snd_soc_component_get_dapm(wsa_priv->component);
-
 	/* Only adjust the volume when WSA clock is enabled */
-	ctl_reg = snd_soc_component_read(wsa_priv->component,
-			LPASS_CDC_WSA_RX0_RX_PATH_CTL);
-	if (ctl_reg & 0x20) {
-		gain = (u8)(wsa_priv->original_gain - wsa_priv->thermal_cur_state);
+	if (wsa_priv->dapm_mclk_enable) {
+		gain = (u8)(wsa_priv->rx0_origin_gain -
+				wsa_priv->thermal_cur_state);
 		snd_soc_component_update_bits(wsa_priv->component,
 			LPASS_CDC_WSA_RX0_RX_VOL_CTL, 0xFF, gain);
 		dev_dbg(wsa_priv->dev,
-			"%s: RX0 current thermal state: %d, adjusted gain: %#x\n",
+			"%s: RX0 current thermal state: %d, "
+			"adjusted gain: %#x\n",
 			__func__, wsa_priv->thermal_cur_state, gain);
-	}
 
-	/* Only adjust the volume when WSA clock is enabled */
-	ctl_reg = snd_soc_component_read(wsa_priv->component,
-			LPASS_CDC_WSA_RX1_RX_PATH_CTL);
-	if (ctl_reg & 0x20) {
-		gain = (u8)(wsa_priv->original_gain - wsa_priv->thermal_cur_state);
+		gain = (u8)(wsa_priv->rx1_origin_gain -
+				wsa_priv->thermal_cur_state);
 		snd_soc_component_update_bits(wsa_priv->component,
 			LPASS_CDC_WSA_RX1_RX_VOL_CTL, 0xFF, gain);
 		dev_dbg(wsa_priv->dev,
-			"%s: RX1 current thermal state: %d, adjusted gain: %#x\n",
+			"%s: RX1 current thermal state: %d, "
+			"adjusted gain: %#x\n",
 			__func__, wsa_priv->thermal_cur_state, gain);
 	}
 
