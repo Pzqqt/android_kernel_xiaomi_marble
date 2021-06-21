@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -76,8 +76,8 @@ static inline char *string_from_rsp_bit(enum wlan_vdev_mgr_tgt_if_rsp_bit bit)
 #define DELETE_RESPONSE_TIMER          (4000 + PMO_RESUME_TIMEOUT)
 #define PEER_DELETE_ALL_RESPONSE_TIMER (6000 + PMO_RESUME_TIMEOUT)
 #else
-#define START_RESPONSE_TIMER           6000
-#define STOP_RESPONSE_TIMER            4000
+#define START_RESPONSE_TIMER           8000
+#define STOP_RESPONSE_TIMER            6000
 #define DELETE_RESPONSE_TIMER          4000
 #define PEER_DELETE_ALL_RESPONSE_TIMER 6000
 #endif
