@@ -1584,13 +1584,16 @@ static void populate_dot11f_qcn_ie_he_params(struct mac_context *mac,
 #endif /* WLAN_FEATURE_11AX */
 
 void populate_dot11f_bss_max_idle(struct mac_context *mac,
+				  struct pe_session *session,
 				  tDot11fIEbss_max_idle_period *max_idle_ie)
 {
 	max_idle_ie->present = 0;
-	if (mac->mlme_cfg->sta.bss_max_idle_period) {
+	if (lim_is_session_he_capable(session) &&
+	    mac->mlme_cfg->sta.bss_max_idle_period) {
 		max_idle_ie->present = 1;
 		max_idle_ie->max_idle_period =
 			mac->mlme_cfg->sta.bss_max_idle_period;
+		max_idle_ie->prot_keep_alive_reqd = session->limRmfEnabled;
 	}
 }
 

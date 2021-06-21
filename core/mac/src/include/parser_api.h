@@ -1157,6 +1157,7 @@ void populate_dot11f_qcn_ie(struct mac_context *mac,
 			    uint8_t attr_id);
 
 void populate_dot11f_bss_max_idle(struct mac_context *mac,
+				  struct pe_session *session,
 				  tDot11fIEbss_max_idle_period *max_idle_ie);
 
 #ifdef WLAN_FEATURE_FILS_SK
