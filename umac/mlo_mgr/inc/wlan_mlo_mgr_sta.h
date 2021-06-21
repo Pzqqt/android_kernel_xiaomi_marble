@@ -215,6 +215,17 @@ mlo_get_ml_vdev_by_mac(struct wlan_objmgr_vdev *vdev,
 qdf_freq_t
 mlo_get_chan_freq_by_bssid(struct wlan_objmgr_pdev *pdev,
 			   struct qdf_mac_addr *bssid);
+
+/**
+ * mlo_get_assoc_rsp - Get Assoc response from mlo manager
+ *
+ * @vdev: vdev obj mgr
+ * @assoc_rsp_frame: association response frame ptr
+ *
+ * Return: none
+ */
+void mlo_get_assoc_rsp(struct wlan_objmgr_vdev *vdev,
+		       struct element_info **assoc_rsp_frame);
 #else
 static inline
 QDF_STATUS mlo_connect(struct wlan_objmgr_vdev *vdev,
@@ -312,6 +323,12 @@ mlo_get_chan_freq_by_bssid(struct wlan_objmgr_pdev *pdev,
 			   struct qdf_mac_addr *bssid)
 {
 	return 0;
+}
+
+static inline void
+mlo_get_assoc_rsp(struct wlan_objmgr_vdev *vdev,
+		  struct element_info **assoc_rsp_frame)
+{
 }
 #endif
 #endif

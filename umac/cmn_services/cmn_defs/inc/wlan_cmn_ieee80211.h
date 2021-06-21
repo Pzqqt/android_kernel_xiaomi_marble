@@ -31,6 +31,8 @@
 #define WLAN_ASSOC_REQ_IES_OFFSET 4
 /* Assoc req IE offset - Capability(2) + LI(2) + current AP address(6) */
 #define WLAN_REASSOC_REQ_IES_OFFSET 10
+/* Length (in bytes) of MAC header in 3 address format */
+#define WLAN_MAC_HDR_LEN_3A 24
 
 #define IEEE80211_CCMP_HEADERLEN    8
 #define IEEE80211_HT_CTRL_LEN       4

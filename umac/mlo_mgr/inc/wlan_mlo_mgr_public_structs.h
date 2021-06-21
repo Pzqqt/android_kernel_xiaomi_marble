@@ -40,6 +40,23 @@
 struct mlo_mlme_ext_ops;
 struct vdev_mlme_obj;
 
+/* Max LINK PEER support */
+#define MAX_MLO_LINK_PEERS WLAN_UMAC_MLO_MAX_VDEVS
+
+#define MAX_MLO_PEER_ID 2048
+#define MLO_INVALID_PEER_ID 0xFFFF
+
+/* IE nomenclature */
+#define ID_POS 0
+#define TAG_LEN_POS 1
+#define MIN_IE_LEN 2
+#define MULTI_LINK_CTRL_1 3
+#define MULTI_LINK_CTRL_2 4
+#define STA_CTRL_1 2
+#define STA_CTRL_2 3
+#define STA_PROFILE_SUB_ELEM_ID 0
+#define PER_STA_PROF_MAC_ADDR_START 4
+
 /*
  * struct mlo_setup_info
  * To store the MLO setup related information
