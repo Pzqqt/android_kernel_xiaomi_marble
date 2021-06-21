@@ -550,7 +550,7 @@ static int __ipa_add_hdr(struct ipa_hdr_add *hdr, bool user,
 	int id;
 	int mem_size;
 
-	if (hdr->hdr_len == 0 || hdr->hdr_len > IPA_HDR_MAX_SIZE) {
+	if (hdr->hdr_len > IPA_HDR_MAX_SIZE) {
 		IPAERR_RL("bad param\n");
 		goto error;
 	}

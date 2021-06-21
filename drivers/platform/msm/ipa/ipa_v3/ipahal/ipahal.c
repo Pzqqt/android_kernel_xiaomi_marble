@@ -2092,7 +2092,7 @@ void ipahal_cp_hdr_to_hw_buff(void *base, u32 offset, u8 *const hdr,
 	IPAHAL_DBG_LOW("Entry\n");
 	IPAHAL_DBG("base %pK, offset %d, hdr %pK, hdr_len %d\n", base,
 			offset, hdr, hdr_len);
-	if (!base || !hdr_len || !hdr) {
+	if (!base || !hdr) {
 		IPAHAL_ERR("failed on validating params\n");
 		return;
 	}
@@ -2133,7 +2133,6 @@ int ipahal_cp_proc_ctx_to_hw_buff(enum ipa_hdr_proc_type type,
 			hdr_base_addr, offset_entry, is_64);
 
 	if (!base ||
-		!hdr_len ||
 		(is_hdr_proc_ctx && !phys_base) ||
 		(!is_hdr_proc_ctx && !offset_entry) ||
 		(!is_hdr_proc_ctx && !hdr_base_addr)) {

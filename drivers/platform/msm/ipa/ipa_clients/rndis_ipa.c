@@ -257,34 +257,6 @@ struct rndis_pkt_hdr {
 	__le32  zeroes[7];
 } __packed__;
 
-/**
- * qmap_hdr -
- * @next_hdr: 1 - there is a qmap extension header, 0 - opposite
- * @cd: 0 - data, 1 - command
- * @packet_len: length excluding qmap header
- * @ext_next_hdr: always zero
- * @hdr_type: type of extension header
- * @additional_hdr_size: distance between end of qmap header to start of ip
- * 		header
- * @zero_checksum: 0 - compute checksum, 1 - zero checksum
- * @ip_id_cfg: 0 - running ip id per segment, 1 - constant ip id
- * @segment_size: maximum segment size for the segmentation operation
- */
-struct qmap_hdr {
-    u16 pad: 6;
-    u16 next_hdr: 1;
-    u16 cd: 1;
-    u16 mux_id: 8;
-    u16 packet_len_with_pad: 16;
-    u16 ext_next_hdr: 1;
-    u16 hdr_type: 7;
-    u16 additional_hdr_size: 5;
-    u16 reserved: 1;
-    u16 zero_checksum: 1;
-    u16 ip_id_cfg: 1;
-    u16 segment_size: 16;
-} __packed;
-
 static int rndis_ipa_open(struct net_device *net);
 static void rndis_ipa_packet_receive_notify
 	(void *private, enum ipa_dp_evt_type evt, unsigned long data);
@@ -302,7 +274,6 @@ static int rndis_ipa_stop(struct net_device *net);
 static void rndis_ipa_enable_data_path(struct rndis_ipa_dev *rndis_ipa_ctx);
 static struct sk_buff *rndis_encapsulate_skb(struct sk_buff *skb,
 	struct rndis_ipa_dev *rndis_ipa_ctx);
-static struct sk_buff* qmap_encapsulate_skb(struct sk_buff *skb);
 static void rndis_ipa_xmit_error(struct sk_buff *skb);
 static void rndis_ipa_xmit_error_aftercare_wq(struct work_struct *work);
 static void rndis_ipa_prepare_header_insertion
@@ -312,7 +283,6 @@ static void rndis_ipa_prepare_header_insertion
 static int rndis_ipa_hdrs_cfg(struct rndis_ipa_dev *rndis_ipa_ctx,
 	const void *dst_mac, const void *src_mac);
 static int rndis_ipa_hdrs_hpc_cfg(struct rndis_ipa_dev *rndis_ipa_ctx);
-static int rndis_ipa_hdrs_hpc_destroy(struct rndis_ipa_dev *rndis_ipa_ctx);
 static int rndis_ipa_hdrs_destroy(struct rndis_ipa_dev *rndis_ipa_ctx);
 static struct net_device_stats *rndis_ipa_get_stats(struct net_device *net);
 static int rndis_ipa_register_properties(char *netdev_name, bool is_vlan_mode);
@@ -763,7 +733,7 @@ fail_register_netdev:
 	rndis_ipa_deregister_properties(net->name);
 fail_register_tx:
 	if (rndis_ipa_ctx->is_ulso_mode)
-		rndis_ipa_hdrs_hpc_destroy(rndis_ipa_ctx);
+		ipa_hdrs_hpc_destroy(rndis_ipa_ctx->rndis_hdr_hdl);
 fail_add_hdrs_hpc:
 	rndis_ipa_hdrs_destroy(rndis_ipa_ctx);
 fail_hdrs_cfg:
@@ -1098,14 +1068,14 @@ static netdev_tx_t rndis_ipa_start_xmit(struct sk_buff *skb,
 		if (ntohs(skb->protocol) == ETH_P_IP) {
 			iph = ip_hdr(skb);
 			if (IPV4_IS_TCP(iph) || IPV4_IS_UDP(iph)) {
-				skb = qmap_encapsulate_skb(skb);
+				skb = qmap_encapsulate_skb(skb, &qmap_template_hdr);
 				skb_shinfo(skb)->gso_size =
 					net->mtu - IPV4_DELTA;
 			}
 		} else if (ntohs(skb->protocol) == ETH_P_IPV6) {
 			iph = ip_hdr(skb);
 			if (IPV6_IS_TCP(iph) || IPV6_IS_UDP(iph)) {
-				skb = qmap_encapsulate_skb(skb);
+				skb = qmap_encapsulate_skb(skb, &qmap_template_hdr);
 				skb_shinfo(skb)->gso_size =
 					net->mtu - IPV6_DELTA;
 			}
@@ -1538,11 +1508,11 @@ void rndis_ipa_cleanup(void *private)
 	RNDIS_IPA_DEBUG("deregister Tx/Rx properties was successful\n");
 
 	if (rndis_ipa_ctx->is_ulso_mode) {
-		ret = rndis_ipa_hdrs_hpc_destroy(rndis_ipa_ctx);
+		ret = ipa_hdrs_hpc_destroy(rndis_ipa_ctx->rndis_hdr_hdl);
 		if (ret)
-			RNDIS_IPA_ERROR("rndis_ipa_hdrs_hpc_destroy failed\n");
+			RNDIS_IPA_ERROR("ipa_hdrs_hpc_destroy failed\n");
 		else
-			RNDIS_IPA_DEBUG("rndis_ipa_hdrs_hpc_destroy success\n");
+			RNDIS_IPA_DEBUG("ipa_hdrs_hpc_destroy success\n");
 	}
 
 	ret = rndis_ipa_hdrs_destroy(rndis_ipa_ctx);
@@ -1769,36 +1739,6 @@ static int rndis_ipa_hdrs_hpc_cfg(struct rndis_ipa_dev *rndis_ipa_ctx)
 fail_add_hdr:
 	kfree(hdrs);
 fail_mem:
-	return result;
-}
-
-/**
- * rndis_ipa_hdrs_hpc_destroy() - remove the IPA headers hpc configuration done
- * for the driver data path bridging.
- * @rndis_ipa_ctx: the driver context
- *
- * Revert the work done on rndis_ipa_hdrs_hpc_cfg()
- */
-static int rndis_ipa_hdrs_hpc_destroy(struct rndis_ipa_dev *rndis_ipa_ctx)
-{
-	struct ipa_ioc_del_hdr *del_hdr;
-	struct ipa_hdr_del *rndis_hdr;
-	int result;
-
-	del_hdr = kzalloc(sizeof(*del_hdr) + sizeof(*rndis_hdr), GFP_KERNEL);
-	if (!del_hdr)
-		return -ENOMEM;
-
-	del_hdr->commit = 1;
-	del_hdr->num_hdls = 1;
-	rndis_hdr = &del_hdr->hdl[0];
-	rndis_hdr->hdl = rndis_ipa_ctx->rndis_hdr_hdl;
-
-	result = ipa3_del_hdr(del_hdr);
-	if (result || rndis_hdr->status)
-		RNDIS_IPA_ERROR("ipa3_del_hdr failed\n");
-	kfree(del_hdr);
-
 	return result;
 }
 
@@ -2112,43 +2052,6 @@ static struct sk_buff *rndis_encapsulate_skb(struct sk_buff *skb,
 	memcpy(rndis_hdr, &rndis_template_hdr, sizeof(*rndis_hdr));
 	rndis_hdr->msg_len +=  payload_byte_len;
 	rndis_hdr->data_len +=  payload_byte_len;
-
-	return skb;
-}
-
-/**
- * qmap_encapsulate_skb() - encapsulate the given Ethernet skb with
- *  a QMAP header
- * @skb: packet to be encapsulated with the QMAP header
- *
- * Shall use a template header for QMAP and update it with the given
- * skb values.
- * Ethernet 2 header should already be encapsulated in the packet.
- */
-static struct sk_buff* qmap_encapsulate_skb(struct sk_buff *skb)
-{
-	struct qmap_hdr *qh_ptr;
-	struct qmap_hdr qh = qmap_template_hdr;
-
-	/* if there is no room in this skb, allocate a new one */
-	if (unlikely(skb_headroom(skb) < sizeof(qmap_template_hdr))) {
-		struct sk_buff *new_skb = skb_copy_expand(skb,
-			sizeof(qmap_template_hdr), 0, GFP_ATOMIC);
-
-		if (!new_skb) {
-			RNDIS_IPA_ERROR("no memory for skb expand\n");
-			return skb;
-		}
-		RNDIS_IPA_DEBUG("skb expanded. old %pK new %pK\n",
-			skb, new_skb);
-		dev_kfree_skb_any(skb);
-		skb = new_skb;
-	}
-
-	/* make room at the head of the SKB to put the QMAP header */
-	qh_ptr = (struct qmap_hdr *)skb_push(skb, sizeof(qh));
-	qh.packet_len_with_pad = htons(skb->len);
-	memcpy(qh_ptr, &qh, sizeof(*qh_ptr));
 
 	return skb;
 }

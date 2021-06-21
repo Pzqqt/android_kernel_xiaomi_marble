@@ -12178,6 +12178,78 @@ bool ipa3_is_ulso_supported(void)
 }
 EXPORT_SYMBOL(ipa3_is_ulso_supported);
 
+
+
+/**
+ * ipa_hdrs_hpc_destroy() - remove the IPA headers hpc
+ * configuration done for the driver data path.
+ *  @hdr_hdl: the hpc handle
+ *
+ *  Remove the header addition hpc associated with hdr_hdl.
+ *
+ *  Return value: 0 on success, kernel error code otherwise
+ */
+int ipa_hdrs_hpc_destroy(u32 hdr_hdl)
+{
+	struct ipa_ioc_del_hdr *del_wrapper;
+	struct ipa_hdr_del *hdr_del;
+	int result;
+
+	del_wrapper = kzalloc(sizeof(*del_wrapper) + sizeof(*hdr_del), GFP_KERNEL);
+	if (!del_wrapper)
+		return -ENOMEM;
+
+	del_wrapper->commit = 1;
+	del_wrapper->num_hdls = 1;
+	hdr_del = &del_wrapper->hdl[0];
+	hdr_del->hdl = hdr_hdl;
+
+	result = ipa3_del_hdr(del_wrapper);
+	if (result || hdr_del->status)
+		IPAERR("ipa3_del_hdr failed\n");
+	kfree(del_wrapper);
+
+    return result;
+}
+EXPORT_SYMBOL(ipa_hdrs_hpc_destroy);
+
+/**
+ * qmap_encapsulate_skb() - encapsulate a given skb with a QMAP
+ * header
+ * @skb: the packet that will be encapsulated with QMAP header
+ *
+ * Return value: sk_buff encapsulated by a qmap header on
+ * success, Null otherwise.
+ */
+struct sk_buff* qmap_encapsulate_skb(struct sk_buff *skb, const struct qmap_hdr *qh)
+{
+	struct qmap_hdr *qh_ptr;
+
+	if (unlikely(!qh))
+		return NULL;
+
+	/* if there is no room in this skb, allocate a new one */
+	if (unlikely(skb_headroom(skb) < sizeof(*qh))) {
+		struct sk_buff *new_skb = skb_copy_expand(skb, sizeof(*qh), 0, GFP_ATOMIC);
+
+		if (!new_skb) {
+			IPAERR("no memory for skb expand\n");
+			return skb;
+		}
+		IPADBG("skb expanded. old %pK new %pK\n", skb, new_skb);
+		dev_kfree_skb_any(skb);
+		skb = new_skb;
+	}
+
+	/* make room at the head of the SKB to put the QMAP header */
+	qh_ptr = (struct qmap_hdr *)skb_push(skb, sizeof(*qh));
+	*qh_ptr = *qh;
+	qh_ptr->packet_len_with_pad = htons(skb->len);
+
+	return skb;
+}
+EXPORT_SYMBOL(qmap_encapsulate_skb);
+
 static void ipa3_eogre_info_free_cb(
 	void *buff,
 	u32   len,
