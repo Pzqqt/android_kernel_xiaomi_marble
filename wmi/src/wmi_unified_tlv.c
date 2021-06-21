@@ -16321,6 +16321,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_big_data_support] =
 			WMI_SERVICE_BIG_DATA_SUPPORT;
 #endif
+	wmi_service[wmi_service_ampdu_tx_buf_size_256_support] =
+			WMI_SERVICE_AMPDU_TX_BUF_SIZE_256_SUPPORT;
 }
 
 /**
