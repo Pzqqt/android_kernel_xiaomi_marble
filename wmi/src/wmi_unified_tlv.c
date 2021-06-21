@@ -1075,7 +1075,8 @@ static QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 	uint8_t *buf_ptr;
 
 	len = sizeof(*cmd) + sizeof(wmi_channel) + WMI_TLV_HDR_SIZE;
-	len += vdev_start_mlo_params_size(req);
+	if (!req->is_restart)
+		len += vdev_start_mlo_params_size(req);
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf)
 		return QDF_STATUS_E_NOMEM;
@@ -1134,11 +1135,13 @@ static QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
 		       cmd->num_noa_descriptors *
 		       sizeof(wmi_p2p_noa_descriptor));
-	buf_ptr += WMI_TLV_HDR_SIZE +
-		   (cmd->num_noa_descriptors * sizeof(wmi_p2p_noa_descriptor));
+	if (!req->is_restart) {
+		buf_ptr += WMI_TLV_HDR_SIZE +
+			   (cmd->num_noa_descriptors * sizeof(wmi_p2p_noa_descriptor));
 
-	buf_ptr = vdev_start_add_mlo_params(buf_ptr, req);
-	buf_ptr = vdev_start_add_ml_partner_links(buf_ptr, req);
+		buf_ptr = vdev_start_add_mlo_params(buf_ptr, req);
+		buf_ptr = vdev_start_add_ml_partner_links(buf_ptr, req);
+	}
 	wmi_info("vdev_id %d freq %d chanmode %d ch_info: 0x%x is_dfs %d "
 		 "beacon interval %d dtim %d center_chan %d center_freq2 %d "
 		 "reg_info_1: 0x%x reg_info_2: 0x%x, req->max_txpow: 0x%x "
