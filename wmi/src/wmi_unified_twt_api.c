@@ -298,3 +298,15 @@ QDF_STATUS wmi_extract_twt_cap_service_ready_ext2(
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+QDF_STATUS wmi_extract_twt_ack_comp_event(
+		wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct wmi_twt_ack_complete_event_param *params)
+{
+	if (wmi_handle->ops->extract_twt_ack_comp_event)
+		return wmi_handle->ops->extract_twt_ack_comp_event(
+				wmi_handle, evt_buf, params);
+
+	return QDF_STATUS_E_FAILURE;
+}

@@ -161,6 +161,22 @@ struct wmi_twt_disable_complete_event {
 	uint32_t pdev_id;
 };
 
+/**
+ * wmi_twt_ack_complete_event_param:
+ * @vdev_id: vdev id
+ * @peer_macaddr: peer mac address
+ * @dialog_id: dialog id
+ * @twt_cmd_ack: ack event to the corresponding twt command
+ * @status: twt command status
+ */
+struct wmi_twt_ack_complete_event_param {
+	uint32_t vdev_id;
+	struct qdf_mac_addr peer_macaddr;
+	uint32_t dialog_id;
+	uint32_t twt_cmd_ack;
+	uint32_t status;
+};
+
 /* TWT event types
  *  refer to wmi_unified.h enum wmi_twt_session_stats_type
  */
@@ -762,4 +778,21 @@ struct wmi_twt_btwt_remove_sta_complete_event_param {
 };
 #endif
 
+/**
+ * enum WMI_HOST_TWT_CMD_FOR_ACK_EVENT - Ack event for different TWT command
+ * WMI_HOST_TWT_ADD_DIALOG_CMDID: Ack event for add dialog command
+ * WMI_HOST_TWT_DEL_DIALOG_CMDID: Ack event for delete dialog command
+ * WMI_HOST_TWT_PAUSE_DIALOG_CMDID: Ack event for pause command
+ * WMI_HOST_TWT_RESUME_DIALOG_CMDID: Ack event for resume command
+ * WMI_HOST_TWT_NUDGE_DIALOG_CMDID: Ack event for nudge command
+ * WMI_HOST_TWT_UNKNOWN_CMDID: Ack event for unknown TWT command
+ */
+enum WMI_HOST_TWT_CMD_FOR_ACK_EVENT {
+	WMI_HOST_TWT_ADD_DIALOG_CMDID = 0,
+	WMI_HOST_TWT_DEL_DIALOG_CMDID,
+	WMI_HOST_TWT_PAUSE_DIALOG_CMDID,
+	WMI_HOST_TWT_RESUME_DIALOG_CMDID,
+	WMI_HOST_TWT_NUDGE_DIALOG_CMDID,
+	WMI_HOST_TWT_UNKNOWN_CMDID,
+};
 #endif /* _WMI_UNIFIED_TWT_PARAM_H_ */

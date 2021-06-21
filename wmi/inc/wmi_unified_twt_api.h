@@ -341,4 +341,18 @@ QDF_STATUS wmi_extract_twt_cap_service_ready_ext2(
 			uint8_t *evt_buf,
 			struct wmi_twt_cap_bitmap_params *params);
 
+/**
+ * wmi_extract_twt_ack_comp_event() - Extract WMI event params for TWT ack event
+ *
+ * @wmi_handle: wmi handle
+ * @evt_buf: Pointer event buffer
+ * @params: Parameters to extract
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_twt_ack_comp_event(
+			wmi_unified_t wmi_handle,
+			uint8_t *evt_buf,
+			struct wmi_twt_ack_complete_event_param *param);
+
 #endif /* _WMI_UNIFIED_TWT_API_H_ */
