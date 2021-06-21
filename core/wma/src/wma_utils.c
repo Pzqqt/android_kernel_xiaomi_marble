@@ -2008,7 +2008,6 @@ post_stats:
 		WMA_LINK_LAYER_STATS_RESULTS_RSP,
 		link_stats_results,
 		mac->sme.ll_stats_context);
-	wma_unified_radio_tx_mem_free(handle);
 
 	return 0;
 }
@@ -2314,7 +2313,6 @@ link_radio_stats_cb:
 				     WMA_LINK_LAYER_STATS_RESULTS_RSP,
 				     link_stats_results,
 				     mac->sme.ll_stats_context);
-	wma_unified_radio_tx_mem_free(handle);
 
 	return 0;
 }
