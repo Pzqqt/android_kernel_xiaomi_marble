@@ -222,11 +222,14 @@ static struct log_msg gplog_msg[MAX_LOGMSG_COUNT];
 
 static inline QDF_STATUS allocate_log_msg_buffer(void)
 {
+	qdf_minidump_log(gplog_msg, sizeof(gplog_msg), "wlan_logs");
 	return QDF_STATUS_SUCCESS;
 }
 
 static inline void free_log_msg_buffer(void)
-{ }
+{
+	qdf_minidump_remove(gplog_msg, sizeof(gplog_msg), "wlan_logs");
+}
 #endif
 
 /* Need to call this with spin_lock acquired */

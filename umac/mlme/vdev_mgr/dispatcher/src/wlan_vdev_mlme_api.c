@@ -297,3 +297,16 @@ QDF_STATUS wlan_vdev_mlme_is_init_state(struct wlan_objmgr_vdev *vdev)
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+QDF_STATUS wlan_vdev_is_up_active_state(struct wlan_objmgr_vdev *vdev)
+{
+	enum wlan_vdev_state state;
+	enum wlan_vdev_state substate;
+
+	state = wlan_vdev_mlme_get_state(vdev);
+	substate = wlan_vdev_mlme_get_substate(vdev);
+	if (state == WLAN_VDEV_S_UP && substate == WLAN_VDEV_SS_UP_ACTIVE)
+		return QDF_STATUS_SUCCESS;
+
+	return QDF_STATUS_E_FAILURE;
+}

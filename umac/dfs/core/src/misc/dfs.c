@@ -142,28 +142,6 @@ static os_timer_func(dfs_testtimer_task)
 				    dfs->dfs_curchan->dfs_ch_mhz_freq_seg2,
 				    dfs->dfs_curchan->dfs_ch_flags);
 }
-#else
-#ifdef CONFIG_CHAN_NUM_API
-static os_timer_func(dfs_testtimer_task)
-{
-	struct wlan_dfs *dfs = NULL;
-
-	OS_GET_TIMER_ARG(dfs, struct wlan_dfs *);
-	dfs->wlan_dfstest = 0;
-
-	/*
-	 * Flip the channel back to the original channel.
-	 * Make sure this is done properly with a CSA.
-	 */
-	dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS, "go back to channel %d",
-		  dfs->wlan_dfstest_ieeechan);
-	dfs_mlme_start_csa(dfs->dfs_pdev_obj,
-			dfs->wlan_dfstest_ieeechan,
-			dfs->dfs_curchan->dfs_ch_freq,
-			dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2,
-			dfs->dfs_curchan->dfs_ch_flags);
-}
-#endif
 #endif
 
 int dfs_get_debug_info(struct wlan_dfs *dfs, void *data)

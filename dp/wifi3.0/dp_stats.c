@@ -5990,6 +5990,8 @@ void dp_txrx_path_stats(struct dp_soc *soc)
 			       pdev->stats.rx.intra_bss.fail.bytes);
 		DP_PRINT_STATS("intra-bss no mdns fwds %u msdus",
 			       pdev->stats.rx.intra_bss.mdns_no_fwd);
+		DP_PRINT_STATS("intra-bss EAPOL drops: %u",
+			       soc->stats.rx.err.intrabss_eapol_drop);
 
 		DP_PRINT_STATS("raw packets %u msdus ( %llu bytes),",
 			       pdev->stats.rx.raw.num,
@@ -6022,8 +6024,6 @@ void dp_txrx_path_stats(struct dp_soc *soc)
 			       pdev->soc->stats.rx.err.reo_err_oor_to_stack);
 		DP_PRINT_STATS("REO err oor msdu drop: %u",
 			       pdev->soc->stats.rx.err.reo_err_oor_drop);
-		DP_PRINT_STATS("REO err oor eapol drop: %u",
-			       pdev->soc->stats.rx.err.reo_err_oor_eapol_drop);
 		DP_PRINT_STATS("Rx err msdu rejected: %d",
 			       soc->stats.rx.err.rejected);
 		DP_PRINT_STATS("Rx raw frame dropped: %d",
@@ -6614,9 +6614,6 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 
 	DP_PRINT_STATS("REO err oor msdu drop: %d",
 		       soc->stats.rx.err.reo_err_oor_drop);
-
-	DP_PRINT_STATS("REO err oor eapol drop: %d",
-		       soc->stats.rx.err.reo_err_oor_eapol_drop);
 
 	DP_PRINT_STATS("Rx err msdu rejected: %d",
 		       soc->stats.rx.err.rejected);

@@ -425,7 +425,6 @@ QDF_STATUS cfr_streamfs_write(struct pdev_cfr *pa, const void *write_data,
 			      size_t write_len)
 {
 	if (pa->chan_ptr) {
-
 	/* write to channel buffer */
 		qdf_streamfs_write(pa->chan_ptr, (const void *)write_data,
 				   write_len);
@@ -458,6 +457,14 @@ QDF_STATUS cfr_stop_indication(struct wlan_objmgr_vdev *vdev)
 	if (!pa) {
 		cfr_err("pdev_cfr is NULL\n");
 		return QDF_STATUS_E_INVAL;
+	}
+
+	if (pa->nl_cb.cfr_nl_cb) {
+		pa->nl_cb.cfr_nl_cb(pa->nl_cb.vdev_id, pa->nl_cb.pid,
+				    (const void *)CFR_STOP_STR,
+				    sizeof(CFR_STOP_STR));
+
+		return QDF_STATUS_SUCCESS;
 	}
 
 	status = cfr_streamfs_write(pa, (const void *)CFR_STOP_STR,

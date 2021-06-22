@@ -289,6 +289,41 @@ osif_cm_disable_netif_queue(struct wlan_objmgr_vdev *vdev)
 				       WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 				       WLAN_CONTROL_PATH);
 }
+
+/**
+ * osif_cm_roam_sync_cb() - Roam sync callback
+ * @vdev: vdev pointer
+ *
+ * This callback indicates os_if that roam sync ind received
+ * so that os_if can stop all the activity on this connection
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+osif_cm_roam_sync_cb(struct wlan_objmgr_vdev *vdev)
+{
+	osif_cm_napi_serialize(true);
+	return osif_cm_netif_queue_ind(vdev,
+				       WLAN_STOP_ALL_NETIF_QUEUE,
+				       WLAN_CONTROL_PATH);
+}
+
+/**
+ * @osif_pmksa_candidate_notify_cb: Roam pmksa candidate notify callback
+ * @vdev: vdev pointer
+ * @bssid: bssid
+ * @index: index
+ * @preauth: preauth flag
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+osif_pmksa_candidate_notify_cb(struct wlan_objmgr_vdev *vdev,
+			       struct qdf_mac_addr *bssid,
+			       int index, bool preauth)
+{
+	return osif_pmksa_candidate_notify(vdev, bssid, index, preauth);
+}
 #else
 static inline QDF_STATUS
 osif_cm_disable_netif_queue(struct wlan_objmgr_vdev *vdev)
@@ -350,25 +385,6 @@ osif_cm_roam_abort_cb(struct wlan_objmgr_vdev *vdev)
 }
 
 /**
- * osif_cm_roam_sync_cb() - Roam sync callback
- * @vdev: vdev pointer
- *
- * This callback indicates os_if that roam sync ind received
- * so that os_if can stop all the activity on this connection
- *
- * Return: QDF_STATUS
- */
-
-static QDF_STATUS
-osif_cm_roam_sync_cb(struct wlan_objmgr_vdev *vdev)
-{
-	osif_cm_napi_serialize(true);
-	return osif_cm_netif_queue_ind(vdev,
-				       WLAN_STOP_ALL_NETIF_QUEUE,
-				       WLAN_CONTROL_PATH);
-}
-
-/**
  * osif_cm_roam_cmpl_cb() - Roam sync complete callback
  * @vdev: vdev pointer
  * @rsp: connect rsp
@@ -386,17 +402,83 @@ osif_cm_roam_cmpl_cb(struct wlan_objmgr_vdev *vdev)
 }
 #endif
 
+#ifdef WLAN_FEATURE_PREAUTH_ENABLE
+/**
+ * osif_cm_ft_preauth_cmpl_cb() - Roam ft preauth complete callback
+ * @vdev: vdev pointer
+ * @rsp: preauth response
+ *
+ * This callback indicates os_if that roam ft preauth is complete
+ * so that os_if can send fast transition event
+ *
+ * Return: QDF_STATUS
+ */
+
+static QDF_STATUS
+osif_cm_ft_preauth_cmpl_cb(struct wlan_objmgr_vdev *vdev,
+			   struct wlan_preauth_rsp *rsp)
+{
+	osif_cm_ft_preauth_complete_cb cb = NULL;
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if (osif_cm_legacy_ops)
+		cb = osif_cm_legacy_ops->ft_preauth_complete_cb;
+	if (cb)
+		ret = cb(vdev, rsp);
+
+	return ret;
+}
+
+#ifdef FEATURE_WLAN_ESE
+/**
+ * osif_cm_cckm_preauth_cmpl_cb() - Roam cckm preauth complete callback
+ * @vdev: vdev pointer
+ * @rsp: preauth response
+ *
+ * This callback indicates os_if that roam cckm preauth is complete
+ * so that os_if can send cckm preauth indication to the supplicant
+ * via wireless custom event.
+ *
+ * Return: QDF_STATUS
+ */
+
+static QDF_STATUS
+osif_cm_cckm_preauth_cmpl_cb(struct wlan_objmgr_vdev *vdev,
+			     struct wlan_preauth_rsp *rsp)
+{
+	osif_cm_cckm_preauth_complete_cb cb = NULL;
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if (osif_cm_legacy_ops)
+		cb = osif_cm_legacy_ops->cckm_preauth_complete_cb;
+	if (cb)
+		ret = cb(vdev, rsp);
+
+	return ret;
+}
+#endif
+#endif
+
 static struct mlme_cm_ops cm_ops = {
 	.mlme_cm_connect_complete_cb = osif_cm_connect_complete_cb,
 	.mlme_cm_failed_candidate_cb = osif_cm_failed_candidate_cb,
 	.mlme_cm_update_id_and_src_cb = osif_cm_update_id_and_src_cb,
 	.mlme_cm_disconnect_complete_cb = osif_cm_disconnect_complete_cb,
 	.mlme_cm_disconnect_start_cb = osif_cm_disconnect_start_cb,
+#ifdef CONN_MGR_ADV_FEATURE
+	.mlme_cm_roam_sync_cb = osif_cm_roam_sync_cb,
+	.mlme_cm_pmksa_candidate_notify_cb = osif_pmksa_candidate_notify_cb,
+#endif
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	.mlme_cm_roam_start_cb = osif_cm_roam_start_cb,
 	.mlme_cm_roam_abort_cb = osif_cm_roam_abort_cb,
-	.mlme_cm_roam_sync_cb = osif_cm_roam_sync_cb,
 	.mlme_cm_roam_cmpl_cb = osif_cm_roam_cmpl_cb,
+#endif
+#ifdef WLAN_FEATURE_PREAUTH_ENABLE
+	.mlme_cm_ft_preauth_cmpl_cb = osif_cm_ft_preauth_cmpl_cb,
+#ifdef FEATURE_WLAN_ESE
+	.mlme_cm_cckm_preauth_cmpl_cb = osif_cm_cckm_preauth_cmpl_cb,
+#endif
 #endif
 };
 

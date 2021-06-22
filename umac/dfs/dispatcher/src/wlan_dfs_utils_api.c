@@ -104,21 +104,6 @@ QDF_STATUS utils_dfs_reset_precaclists(struct wlan_objmgr_pdev *pdev)
 }
 qdf_export_symbol(utils_dfs_reset_precaclists);
 
-#ifdef CONFIG_CHAN_NUM_API
-void utils_dfs_unmark_precac_nol(struct wlan_objmgr_pdev *pdev, uint8_t chan)
-{
-	struct wlan_dfs *dfs;
-
-	dfs = wlan_pdev_get_dfs_obj(pdev);
-	if (!dfs)
-		return;
-
-	dfs_unmark_precac_nol(dfs, chan);
-}
-
-qdf_export_symbol(utils_dfs_unmark_precac_nol);
-#endif
-
 #ifdef CONFIG_CHAN_FREQ_API
 void utils_dfs_unmark_precac_nol_for_freq(struct wlan_objmgr_pdev *pdev,
 					  uint16_t chan_freq)
@@ -284,19 +269,6 @@ static void dfs_fill_chan_info(struct dfs_channel *chan,
 	chan->dfs_ch_mhz_freq_seg1 = wlan_chan->ch_cfreq1;
 	chan->dfs_ch_mhz_freq_seg2 = wlan_chan->ch_cfreq2;
 }
-#else
-#ifdef CONFIG_CHAN_NUM_API
-static void dfs_fill_chan_info(struct dfs_channel *chan,
-			       struct wlan_channel *wlan_chan)
-{
-	chan->dfs_ch_freq = wlan_chan->ch_freq;
-	chan->dfs_ch_flags = wlan_chan->ch_flags;
-	chan->dfs_ch_flagext = wlan_chan->ch_flagext;
-	chan->dfs_ch_ieee = wlan_chan->ch_ieee;
-	chan->dfs_ch_vhtop_ch_freq_seg1 = wlan_chan->ch_freq_seg1;
-	chan->dfs_ch_vhtop_ch_freq_seg2 = wlan_chan->ch_freq_seg2;
-}
-#endif
 #endif
 
 bool utils_dfs_is_precac_done(struct wlan_objmgr_pdev *pdev,
@@ -786,74 +758,7 @@ static void utils_dfs_get_channel_list(struct wlan_objmgr_pdev *pdev,
 
 	qdf_mem_free(tmp_chan_list);
 }
-#else /* NUM_API */
-#ifdef CONFIG_CHAN_NUM_API
-static void utils_dfs_get_channel_list(struct wlan_objmgr_pdev *pdev,
-				       struct wlan_objmgr_vdev *vdev,
-				       struct dfs_channel *chan_list,
-				       uint32_t *num_chan)
-{
-	struct dfs_channel *tmp_chan_list = NULL;
-	struct wlan_dfs *dfs;
-	bool is_curchan_5g;
-	bool is_curchan_24g;
-	bool is_curchan_49g;
-	uint32_t chan_num;
-	uint32_t center_freq;
-	uint16_t flagext;
-	int i, j = 0;
-
-	dfs = wlan_pdev_get_dfs_obj(pdev);
-	if (!dfs) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "null dfs");
-		return;
-	}
-
-	tmp_chan_list = qdf_mem_malloc(*num_chan * sizeof(*tmp_chan_list));
-	if (!tmp_chan_list)
-		return;
-
-	utils_dfs_get_chan_list(pdev, (void *)tmp_chan_list, num_chan);
-
-	chan_num = dfs->dfs_curchan->dfs_ch_ieee;
-	center_freq = dfs->dfs_curchan->dfs_ch_freq;
-	is_curchan_5g = WLAN_REG_IS_5GHZ_CH_FREQ(center_freq);
-	is_curchan_24g = WLAN_REG_IS_24GHZ_CH_FREQ(center_freq);
-	is_curchan_49g = WLAN_REG_IS_49GHZ_FREQ(center_freq);
-
-	for (i = 0; i < *num_chan; i++) {
-		chan_num = tmp_chan_list[i].dfs_ch_ieee;
-		center_freq = tmp_chan_list[i].dfs_ch_freq;
-		flagext = tmp_chan_list[i].dfs_ch_flagext;
-
-		if (!dfs_mlme_check_allowed_prim_chanlist(pdev, chan_num))
-			continue;
-
-		if ((is_curchan_5g) && WLAN_REG_IS_5GHZ_CH_FREQ(center_freq)) {
-			chan_list[j].dfs_ch_ieee = chan_num;
-			chan_list[j].dfs_ch_freq = center_freq;
-			chan_list[j].dfs_ch_flagext = flagext;
-			j++;
-		} else if ((is_curchan_24g) &&
-				WLAN_REG_IS_24GHZ_CH_FREQ(center_freq)) {
-			chan_list[j].dfs_ch_ieee = chan_num;
-			chan_list[j].dfs_ch_freq = center_freq;
-			j++;
-		} else if ((is_curchan_49g) &&
-				WLAN_REG_IS_49GHZ_FREQ(center_freq)) {
-			chan_list[j].dfs_ch_ieee = chan_num;
-			chan_list[j].dfs_ch_freq = center_freq;
-			j++;
-		}
-	}
-
-	*num_chan = j;
-
-	qdf_mem_free(tmp_chan_list);
-}
 #endif
-#endif
-
 #else
 void utils_dfs_get_nol_history_chan_list(struct wlan_objmgr_pdev *pdev,
 					 void *clist, uint32_t *num_chan)

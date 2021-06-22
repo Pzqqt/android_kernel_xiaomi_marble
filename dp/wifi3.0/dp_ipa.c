@@ -21,6 +21,7 @@
 #include <qdf_lock.h>
 #include <hal_hw_headers.h>
 #include <hal_api.h>
+#include <hal_reo.h>
 #include <hif.h>
 #include <htt.h>
 #include <wdi_event.h>
@@ -195,12 +196,34 @@ static QDF_STATUS __dp_ipa_tx_buf_smmu_mapping(
 		if (!nbuf)
 			continue;
 		buf_len = qdf_nbuf_get_data_len(nbuf);
-		return __dp_ipa_handle_buf_smmu_mapping(
-				soc, nbuf, buf_len, create);
+		ret = __dp_ipa_handle_buf_smmu_mapping(soc, nbuf, buf_len,
+						       create);
 	}
 
 	return ret;
 }
+
+#ifndef QCA_OL_DP_SRNG_LOCK_LESS_ACCESS
+static void dp_ipa_set_reo_ctx_mapping_lock_required(struct dp_soc *soc,
+						     bool lock_required)
+{
+	hal_ring_handle_t hal_ring_hdl;
+	int ring;
+
+	for (ring = 0; ring < MAX_REO_DEST_RINGS; ring++) {
+		hal_ring_hdl = soc->reo_dest_ring[ring].hal_srng;
+		hal_srng_lock(hal_ring_hdl);
+		soc->ipa_reo_ctx_lock_required[ring] = lock_required;
+		hal_srng_unlock(hal_ring_hdl);
+	}
+}
+#else
+static void dp_ipa_set_reo_ctx_mapping_lock_required(struct dp_soc *soc,
+						     bool lock_required)
+{
+}
+
+#endif
 
 #ifdef RX_DESC_MULTI_PAGE_ALLOC
 static QDF_STATUS dp_ipa_handle_rx_buf_pool_smmu_mapping(struct dp_soc *soc,
@@ -225,7 +248,9 @@ static QDF_STATUS dp_ipa_handle_rx_buf_pool_smmu_mapping(struct dp_soc *soc,
 	pdev_id = pdev->pdev_id;
 	rx_pool = &soc->rx_desc_buf[pdev_id];
 
+	dp_ipa_set_reo_ctx_mapping_lock_required(soc, true);
 	qdf_spin_lock_bh(&rx_pool->lock);
+	dp_ipa_rx_buf_smmu_mapping_lock(soc);
 	num_desc = rx_pool->pool_size;
 	num_desc_per_page = rx_pool->desc_pages.num_element_per_page;
 	for (i = 0; i < num_desc; i++) {
@@ -255,7 +280,9 @@ static QDF_STATUS dp_ipa_handle_rx_buf_pool_smmu_mapping(struct dp_soc *soc,
 		ret = __dp_ipa_handle_buf_smmu_mapping(
 				soc, nbuf, rx_pool->buf_size, create);
 	}
+	dp_ipa_rx_buf_smmu_mapping_unlock(soc);
 	qdf_spin_unlock_bh(&rx_pool->lock);
+	dp_ipa_set_reo_ctx_mapping_lock_required(soc, false);
 
 	return ret;
 }
@@ -278,7 +305,9 @@ static QDF_STATUS dp_ipa_handle_rx_buf_pool_smmu_mapping(struct dp_soc *soc,
 	pdev_id = pdev->pdev_id;
 	rx_pool = &soc->rx_desc_buf[pdev_id];
 
+	dp_ipa_set_reo_ctx_mapping_lock_required(soc, true);
 	qdf_spin_lock_bh(&rx_pool->lock);
+	dp_ipa_rx_buf_smmu_mapping_lock(soc);
 	for (i = 0; i < rx_pool->pool_size; i++) {
 		if ((!(rx_pool->array[i].rx_desc.in_use)) ||
 		    rx_pool->array[i].rx_desc.unmapped)
@@ -302,7 +331,9 @@ static QDF_STATUS dp_ipa_handle_rx_buf_pool_smmu_mapping(struct dp_soc *soc,
 		__dp_ipa_handle_buf_smmu_mapping(soc, nbuf,
 						 rx_pool->buf_size, create);
 	}
+	dp_ipa_rx_buf_smmu_mapping_unlock(soc);
 	qdf_spin_unlock_bh(&rx_pool->lock);
+	dp_ipa_set_reo_ctx_mapping_lock_required(soc, false);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -376,8 +407,7 @@ static int dp_ipa_tx_alt_pool_attach(struct dp_soc *soc)
 	struct hal_srng *wbm_srng = (struct hal_srng *)
 			soc->tx_comp_ring[IPA_TX_ALT_COMP_RING_IDX].hal_srng;
 	struct hal_srng_params srng_params;
-	uint32_t paddr_lo;
-	uint32_t paddr_hi;
+	uint32_t wbm_sw0_bm_id = soc->wbm_sw0_bm_id;
 	void *ring_entry;
 	int num_entries;
 	qdf_nbuf_t nbuf;
@@ -448,11 +478,9 @@ static int dp_ipa_tx_alt_pool_attach(struct dp_soc *soc)
 		qdf_mem_dp_tx_skb_cnt_inc();
 		qdf_mem_dp_tx_skb_inc(qdf_nbuf_get_end_offset(nbuf));
 
-		paddr_lo = ((uint64_t)buffer_paddr & 0x00000000ffffffff);
-		paddr_hi = ((uint64_t)buffer_paddr & 0x0000001f00000000) >> 32;
-		HAL_RXDMA_PADDR_LO_SET(ring_entry, paddr_lo);
-		HAL_RXDMA_PADDR_HI_SET(ring_entry, paddr_hi);
-		HAL_RXDMA_MANAGER_SET(ring_entry, HAL_WBM_SW4_BM_ID);
+		hal_rxdma_buff_addr_info_set(soc->hal_soc, ring_entry,
+					     buffer_paddr, 0,
+					     HAL_WBM_SW4_BM_ID(wbm_sw0_bm_id));
 
 		soc->ipa_uc_tx_rsc_alt.tx_buf_pool_vaddr_unaligned[
 			tx_buffer_count] = (void *)nbuf;
@@ -682,7 +710,6 @@ static QDF_STATUS dp_ipa_tx_alt_buf_smmu_mapping(struct dp_soc *soc,
 		buf_len = qdf_nbuf_get_data_len(nbuf);
 		ret = __dp_ipa_handle_buf_smmu_mapping(
 				soc, nbuf, buf_len, create);
-		qdf_assert_always(!ret);
 	}
 
 	return ret;
@@ -734,7 +761,8 @@ static void dp_ipa_wdi_tx_alt_pipe_params(struct dp_soc *soc,
 	HAL_TX_DESC_SET_TLV_HDR(desc_addr, HAL_TX_TCL_DATA_TAG, desc_size);
 	tcl_desc_ptr = (struct tcl_data_cmd *)
 		(QDF_IPA_WDI_SETUP_INFO_DESC_FORMAT_TEMPLATE(tx) + 1);
-	tcl_desc_ptr->buf_addr_info.return_buffer_manager = HAL_WBM_SW4_BM_ID;
+	tcl_desc_ptr->buf_addr_info.return_buffer_manager =
+				HAL_WBM_SW4_BM_ID(soc->wbm_sw0_bm_id);
 	tcl_desc_ptr->addrx_en = 1;	/* Address X search enable in ASE */
 	tcl_desc_ptr->addry_en = 1;	/* Address X search enable in ASE */
 	tcl_desc_ptr->encap_type = HAL_TX_ENCAP_TYPE_ETHERNET;
@@ -785,7 +813,8 @@ dp_ipa_wdi_tx_alt_pipe_smmu_params(struct dp_soc *soc,
 	HAL_TX_DESC_SET_TLV_HDR(desc_addr, HAL_TX_TCL_DATA_TAG, desc_size);
 	tcl_desc_ptr = (struct tcl_data_cmd *)
 		(QDF_IPA_WDI_SETUP_INFO_SMMU_DESC_FORMAT_TEMPLATE(tx_smmu) + 1);
-	tcl_desc_ptr->buf_addr_info.return_buffer_manager = HAL_WBM_SW4_BM_ID;
+	tcl_desc_ptr->buf_addr_info.return_buffer_manager =
+					HAL_WBM_SW4_BM_ID(soc->wbm_sw0_bm_id);
 	tcl_desc_ptr->addrx_en = 1;	/* Address X search enable in ASE */
 	tcl_desc_ptr->addry_en = 1;	/* Address Y search enable in ASE */
 	tcl_desc_ptr->encap_type = HAL_TX_ENCAP_TYPE_ETHERNET;
@@ -1021,7 +1050,7 @@ static void dp_ipa_set_pipe_db(struct dp_ipa_resources *res,
 static void dp_ipa_setup_iface_session_id(qdf_ipa_wdi_reg_intf_in_params_t *in,
 					  uint8_t session_id)
 {
-	QDF_IPA_WDI_REG_INTF_IN_PARAMS_META_DATA(&in) = htonl(session_id << 16);
+	QDF_IPA_WDI_REG_INTF_IN_PARAMS_META_DATA(in) = htonl(session_id << 16);
 }
 
 static inline void dp_ipa_tx_comp_ring_init_hp(struct dp_soc *soc,
@@ -1163,8 +1192,6 @@ static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 	struct hal_srng *wbm_srng = (struct hal_srng *)
 			soc->tx_comp_ring[IPA_TX_COMP_RING_IDX].hal_srng;
 	struct hal_srng_params srng_params;
-	uint32_t paddr_lo;
-	uint32_t paddr_hi;
 	void *ring_entry;
 	int num_entries;
 	qdf_nbuf_t nbuf;
@@ -1233,12 +1260,14 @@ static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 		qdf_mem_dp_tx_skb_cnt_inc();
 		qdf_mem_dp_tx_skb_inc(qdf_nbuf_get_end_offset(nbuf));
 
-		paddr_lo = ((uint64_t)buffer_paddr & 0x00000000ffffffff);
-		paddr_hi = ((uint64_t)buffer_paddr & 0x0000001f00000000) >> 32;
-		HAL_RXDMA_PADDR_LO_SET(ring_entry, paddr_lo);
-		HAL_RXDMA_PADDR_HI_SET(ring_entry, paddr_hi);
-		HAL_RXDMA_MANAGER_SET(ring_entry, (IPA_TCL_DATA_RING_IDX +
-				      HAL_WBM_SW0_BM_ID));
+		/*
+		 * TODO - WCN7850 code can directly call the be handler
+		 * instead of hal soc ops.
+		 */
+		hal_rxdma_buff_addr_info_set(soc->hal_soc, ring_entry,
+					     buffer_paddr, 0,
+					     (IPA_TCL_DATA_RING_IDX +
+					      soc->wbm_sw0_bm_id));
 
 		soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned[tx_buffer_count]
 			= (void *)nbuf;
@@ -1332,6 +1361,7 @@ int dp_ipa_ring_resource_setup(struct dp_soc *soc,
 	qdf_dma_addr_t hp_addr;
 	unsigned long addr_offset, dev_base_paddr;
 	uint32_t ix0;
+	uint8_t ix0_map[8];
 
 	if (!wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx))
 		return QDF_STATUS_SUCCESS;
@@ -1456,14 +1486,17 @@ int dp_ipa_ring_resource_setup(struct dp_soc *soc,
 	 * Set DEST_RING_MAPPING_4 to SW2 as default value for
 	 * DESTINATION_RING_CTRL_IX_0.
 	 */
-	ix0 = HAL_REO_REMAP_IX0(REO_REMAP_TCL, 0) |
-	      HAL_REO_REMAP_IX0(REO_REMAP_SW1, 1) |
-	      HAL_REO_REMAP_IX0(REO_REMAP_SW2, 2) |
-	      HAL_REO_REMAP_IX0(REO_REMAP_SW3, 3) |
-	      HAL_REO_REMAP_IX0(REO_REMAP_SW2, 4) |
-	      HAL_REO_REMAP_IX0(REO_REMAP_RELEASE, 5) |
-	      HAL_REO_REMAP_IX0(REO_REMAP_FW, 6) |
-	      HAL_REO_REMAP_IX0(REO_REMAP_FW, 7);
+	ix0_map[0] = REO_REMAP_TCL;
+	ix0_map[1] = REO_REMAP_SW1;
+	ix0_map[2] = REO_REMAP_SW2;
+	ix0_map[3] = REO_REMAP_SW3;
+	ix0_map[4] = REO_REMAP_SW2;
+	ix0_map[5] = REO_REMAP_RELEASE;
+	ix0_map[6] = REO_REMAP_FW;
+	ix0_map[7] = REO_REMAP_FW;
+
+	ix0 = hal_gen_reo_remap_val(soc->hal_soc, HAL_REO_REMAP_REG_IX0,
+				    ix0_map);
 
 	hal_reo_read_write_ctrl_ix(soc->hal_soc, false, &ix0, NULL, NULL, NULL);
 
@@ -1667,6 +1700,7 @@ QDF_STATUS dp_ipa_enable_autonomy(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
 	uint32_t ix0;
 	uint32_t ix2;
+	uint8_t ix_map[8];
 
 	if (!pdev) {
 		dp_err("Invalid instance");
@@ -1680,24 +1714,30 @@ QDF_STATUS dp_ipa_enable_autonomy(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 		return QDF_STATUS_E_AGAIN;
 
 	/* Call HAL API to remap REO rings to REO2IPA ring */
-	ix0 = HAL_REO_REMAP_IX0(REO_REMAP_TCL, 0) |
-	      HAL_REO_REMAP_IX0(REO_REMAP_SW4, 1) |
-	      HAL_REO_REMAP_IX0(REO_REMAP_SW1, 2) |
-	      HAL_REO_REMAP_IX0(REO_REMAP_SW4, 3) |
-	      HAL_REO_REMAP_IX0(REO_REMAP_SW4, 4) |
-	      HAL_REO_REMAP_IX0(REO_REMAP_RELEASE, 5) |
-	      HAL_REO_REMAP_IX0(REO_REMAP_FW, 6) |
-	      HAL_REO_REMAP_IX0(REO_REMAP_FW, 7);
+	ix_map[0] = REO_REMAP_TCL;
+	ix_map[1] = REO_REMAP_SW4;
+	ix_map[2] = REO_REMAP_SW1;
+	ix_map[3] = REO_REMAP_SW4;
+	ix_map[4] = REO_REMAP_SW4;
+	ix_map[5] = REO_REMAP_RELEASE;
+	ix_map[6] = REO_REMAP_FW;
+	ix_map[7] = REO_REMAP_FW;
+
+	ix0 = hal_gen_reo_remap_val(soc->hal_soc, HAL_REO_REMAP_REG_IX0,
+				    ix_map);
 
 	if (wlan_cfg_is_rx_hash_enabled(soc->wlan_cfg_ctx)) {
-		ix2 = HAL_REO_REMAP_IX2(REO_REMAP_SW4, 16) |
-		      HAL_REO_REMAP_IX2(REO_REMAP_SW4, 17) |
-		      HAL_REO_REMAP_IX2(REO_REMAP_SW4, 18) |
-		      HAL_REO_REMAP_IX2(REO_REMAP_SW4, 19) |
-		      HAL_REO_REMAP_IX2(REO_REMAP_SW4, 20) |
-		      HAL_REO_REMAP_IX2(REO_REMAP_SW4, 21) |
-		      HAL_REO_REMAP_IX2(REO_REMAP_SW4, 22) |
-		      HAL_REO_REMAP_IX2(REO_REMAP_SW4, 23);
+		ix_map[0] = REO_REMAP_SW4;
+		ix_map[1] = REO_REMAP_SW4;
+		ix_map[2] = REO_REMAP_SW4;
+		ix_map[3] = REO_REMAP_SW4;
+		ix_map[4] = REO_REMAP_SW4;
+		ix_map[5] = REO_REMAP_SW4;
+		ix_map[6] = REO_REMAP_SW4;
+		ix_map[7] = REO_REMAP_SW4;
+
+		ix2 = hal_gen_reo_remap_val(soc->hal_soc, HAL_REO_REMAP_REG_IX2,
+					    ix_map);
 
 		hal_reo_read_write_ctrl_ix(soc->hal_soc, false, &ix0, NULL,
 					   &ix2, &ix2);
@@ -1716,6 +1756,7 @@ QDF_STATUS dp_ipa_disable_autonomy(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
 	struct dp_pdev *pdev =
 		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+	uint8_t ix0_map[8];
 	uint32_t ix0;
 	uint32_t ix2;
 	uint32_t ix3;
@@ -1731,15 +1772,18 @@ QDF_STATUS dp_ipa_disable_autonomy(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 	if (!hif_is_target_ready(HIF_GET_SOFTC(soc->hif_handle)))
 		return QDF_STATUS_E_AGAIN;
 
+	ix0_map[0] = REO_REMAP_TCL;
+	ix0_map[1] = REO_REMAP_SW1;
+	ix0_map[2] = REO_REMAP_SW2;
+	ix0_map[3] = REO_REMAP_SW3;
+	ix0_map[4] = REO_REMAP_SW2;
+	ix0_map[5] = REO_REMAP_RELEASE;
+	ix0_map[6] = REO_REMAP_FW;
+	ix0_map[7] = REO_REMAP_FW;
+
 	/* Call HAL API to remap REO rings to REO2IPA ring */
-	ix0 = HAL_REO_REMAP_IX0(REO_REMAP_TCL, 0) |
-	      HAL_REO_REMAP_IX0(REO_REMAP_SW1, 1) |
-	      HAL_REO_REMAP_IX0(REO_REMAP_SW2, 2) |
-	      HAL_REO_REMAP_IX0(REO_REMAP_SW3, 3) |
-	      HAL_REO_REMAP_IX0(REO_REMAP_SW2, 4) |
-	      HAL_REO_REMAP_IX0(REO_REMAP_RELEASE, 5) |
-	      HAL_REO_REMAP_IX0(REO_REMAP_FW, 6) |
-	      HAL_REO_REMAP_IX0(REO_REMAP_FW, 7);
+	ix0 = hal_gen_reo_remap_val(soc->hal_soc, HAL_REO_REMAP_REG_IX0,
+				    ix0_map);
 
 	if (wlan_cfg_is_rx_hash_enabled(soc->wlan_cfg_ctx)) {
 		dp_reo_remap_config(soc, &ix2, &ix3);
@@ -1759,7 +1803,8 @@ QDF_STATUS dp_ipa_disable_autonomy(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 /* This should be configurable per H/W configuration enable status */
 #define L3_HEADER_PADDING	2
 
-#ifdef CONFIG_IPA_WDI_UNIFIED_API
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)) || \
+	defined(CONFIG_IPA_WDI_UNIFIED_API)
 
 #ifndef QCA_LL_TX_FLOW_CONTROL_V2
 static inline void dp_setup_mcc_sys_pipes(
@@ -1829,14 +1874,20 @@ static void dp_ipa_wdi_tx_params(struct dp_soc *soc,
 	desc_addr =
 		(uint8_t *)QDF_IPA_WDI_SETUP_INFO_DESC_FORMAT_TEMPLATE(tx);
 	desc_size = sizeof(struct tcl_data_cmd);
+#ifndef DP_BE_WAR
+	/* TODO - WCN7850 does not have these fields */
 	HAL_TX_DESC_SET_TLV_HDR(desc_addr, HAL_TX_TCL_DATA_TAG, desc_size);
+#endif
 	tcl_desc_ptr = (struct tcl_data_cmd *)
 		(QDF_IPA_WDI_SETUP_INFO_DESC_FORMAT_TEMPLATE(tx) + 1);
 	tcl_desc_ptr->buf_addr_info.return_buffer_manager =
-		HAL_RX_BUF_RBM_SW2_BM;
+		HAL_RX_BUF_RBM_SW2_BM(soc->wbm_sw0_bm_id);
+#ifndef DP_BE_WAR
+	/* TODO - WCN7850 does not have these fields */
 	tcl_desc_ptr->addrx_en = 1;	/* Address X search enable in ASE */
 	tcl_desc_ptr->encap_type = HAL_TX_ENCAP_TYPE_ETHERNET;
 	tcl_desc_ptr->packet_offset = 2;	/* padding for alignment */
+#endif
 }
 
 static void dp_ipa_wdi_rx_params(struct dp_soc *soc,
@@ -1876,7 +1927,7 @@ static void dp_ipa_wdi_rx_params(struct dp_soc *soc,
 	QDF_IPA_WDI_SETUP_INFO_IS_EVT_RN_DB_PCIE_ADDR(rx) = false;
 
 	QDF_IPA_WDI_SETUP_INFO_PKT_OFFSET(rx) =
-		RX_PKT_TLVS_LEN + L3_HEADER_PADDING;
+		soc->rx_pkt_tlv_size + L3_HEADER_PADDING;
 }
 
 static void
@@ -1926,14 +1977,20 @@ dp_ipa_wdi_tx_smmu_params(struct dp_soc *soc,
 	desc_addr = (uint8_t *)QDF_IPA_WDI_SETUP_INFO_SMMU_DESC_FORMAT_TEMPLATE(
 			tx_smmu);
 	desc_size = sizeof(struct tcl_data_cmd);
+#ifndef DP_BE_WAR
+	/* TODO - WCN7850 does not have these fields */
 	HAL_TX_DESC_SET_TLV_HDR(desc_addr, HAL_TX_TCL_DATA_TAG, desc_size);
+#endif
 	tcl_desc_ptr = (struct tcl_data_cmd *)
 		(QDF_IPA_WDI_SETUP_INFO_SMMU_DESC_FORMAT_TEMPLATE(tx_smmu) + 1);
 	tcl_desc_ptr->buf_addr_info.return_buffer_manager =
-		HAL_RX_BUF_RBM_SW2_BM;
+		HAL_RX_BUF_RBM_SW2_BM(soc->wbm_sw0_bm_id);
+#ifndef DP_BE_WAR
+	/* TODO - WCN7850 does not have these fields */
 	tcl_desc_ptr->addrx_en = 1;	/* Address X search enable in ASE */
 	tcl_desc_ptr->encap_type = HAL_TX_ENCAP_TYPE_ETHERNET;
 	tcl_desc_ptr->packet_offset = 2;	/* padding for alignment */
+#endif
 }
 
 static void
@@ -1973,7 +2030,7 @@ dp_ipa_wdi_rx_smmu_params(struct dp_soc *soc,
 	QDF_IPA_WDI_SETUP_INFO_SMMU_IS_EVT_RN_DB_PCIE_ADDR(rx_smmu) = false;
 
 	QDF_IPA_WDI_SETUP_INFO_SMMU_PKT_OFFSET(rx_smmu) =
-		RX_PKT_TLVS_LEN + L3_HEADER_PADDING;
+		soc->rx_pkt_tlv_size + L3_HEADER_PADDING;
 }
 
 QDF_STATUS dp_ipa_setup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
@@ -2106,6 +2163,9 @@ QDF_STATUS dp_ipa_setup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 
 	soc->ipa_first_tx_db_access = true;
 	qdf_mem_free(pipe_in);
+
+	qdf_spinlock_create(&soc->ipa_rx_buf_map_lock);
+	soc->ipa_rx_buf_map_lock_initialized = true;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2293,7 +2353,7 @@ QDF_STATUS dp_ipa_setup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	/* FW Head Pointer Address */
 	QDF_IPA_WDI_SETUP_INFO_EVENT_RING_DOORBELL_PA(rx) =
 				soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_hp_paddr;
-	QDF_IPA_WDI_SETUP_INFO_PKT_OFFSET(rx) = RX_PKT_TLVS_LEN +
+	QDF_IPA_WDI_SETUP_INFO_PKT_OFFSET(rx) = soc->rx_pkt_tlv_size +
 						L3_HEADER_PADDING;
 	QDF_IPA_WDI_CONN_IN_PARAMS_NOTIFY(&pipe_in) = ipa_w2i_cb;
 	QDF_IPA_WDI_CONN_IN_PARAMS_PRIV(&pipe_in) = ipa_priv;
@@ -2322,6 +2382,9 @@ QDF_STATUS dp_ipa_setup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 		QDF_IPA_WDI_CONN_OUT_PARAMS_RX_UC_DB_PA(&pipe_out);
 
 	soc->ipa_first_tx_db_access = true;
+
+	qdf_spinlock_create(&soc->ipa_rx_buf_map_lock);
+	soc->ipa_rx_buf_map_lock_initialized = true;
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: Tx: %s=%pK, %s=%d, %s=%pK, %s=%pK, %s=%d, %s=%pK, %s=%d, %s=%pK",
@@ -2456,6 +2519,11 @@ QDF_STATUS dp_ipa_cleanup(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 		dp_err("ipa_wdi_disconn_pipes: IPA pipe cleanup failed: ret=%d",
 		       ret);
 		status = QDF_STATUS_E_FAILURE;
+	}
+
+	if (soc->ipa_rx_buf_map_lock_initialized) {
+		qdf_spinlock_destroy(&soc->ipa_rx_buf_map_lock);
+		soc->ipa_rx_buf_map_lock_initialized = false;
 	}
 
 	pdev = dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
@@ -2774,12 +2842,13 @@ static qdf_nbuf_t dp_ipa_frag_nbuf_linearize(struct dp_soc *soc,
 		/* first head nbuf */
 		if (is_nbuf_head) {
 			qdf_mem_copy(dst_nbuf_data, src_nbuf_data,
-				     RX_PKT_TLVS_LEN);
+				     soc->rx_pkt_tlv_size);
 			/* leave extra 2 bytes L3_HEADER_PADDING */
-			dst_nbuf_data += (RX_PKT_TLVS_LEN + L3_HEADER_PADDING);
-			src_nbuf_data += RX_PKT_TLVS_LEN;
+			dst_nbuf_data += (soc->rx_pkt_tlv_size +
+					  L3_HEADER_PADDING);
+			src_nbuf_data += soc->rx_pkt_tlv_size;
 			copy_len = qdf_nbuf_headlen(temp_nbuf) -
-						RX_PKT_TLVS_LEN;
+						soc->rx_pkt_tlv_size;
 			temp_nbuf = qdf_nbuf_get_ext_list(temp_nbuf);
 			is_nbuf_head = false;
 		} else {

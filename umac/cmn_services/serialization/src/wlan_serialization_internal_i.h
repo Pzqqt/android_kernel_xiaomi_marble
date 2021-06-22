@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -118,19 +118,6 @@ enum wlan_serialization_cmd_status
 wlan_serialization_dequeue_cmd(struct wlan_serialization_command *cmd,
 			       enum ser_queue_reason ser_reason,
 			       uint8_t active_cmd);
-
-/**
- * wlan_serialization_generic_timer_cb() - timer callback when timer fire
- * @arg: argument that timer passes to this callback
- *
- * All the timers in serialization module calls this callback when they fire,
- * and this API in turn calls command specific timeout callback and remove
- * timed-out command from active queue and move any pending command to active
- * queue of same cmd_type.
- *
- * Return: none
- */
-void wlan_serialization_generic_timer_cb(void *arg);
 
 /**
  * wlan_serialization_find_and_start_timer() - to find and start the timer

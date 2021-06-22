@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -387,6 +387,21 @@ void host_log_acs_best_chan(uint16_t chan, uint16_t weight)
 
 	WLAN_HOST_DIAG_EVENT_REPORT(&acs_best_chan,
 				    EVENT_WLAN_ACS_BEST_CHANNEL);
+}
+
+void host_log_device_status(uint16_t status_code)
+{
+	WLAN_HOST_DIAG_EVENT_DEF(driver_status,
+				 host_event_wlan_bringup_status_payload_type);
+
+	driver_status.wlan_status = status_code;
+
+	/* driver version not used yet, fill properly if need later */
+	qdf_mem_zero(driver_status.driver_version,
+		     sizeof(driver_status.driver_version));
+
+	WLAN_HOST_DIAG_EVENT_REPORT(&driver_status,
+				    EVENT_WLAN_BRINGUP_STATUS);
 }
 
 #endif

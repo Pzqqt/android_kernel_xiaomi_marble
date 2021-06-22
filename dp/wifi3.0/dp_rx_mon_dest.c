@@ -60,7 +60,8 @@ dp_tx_capture_get_user_id(struct dp_pdev *dp_pdev, void *rx_desc_tlv)
 	if (dp_pdev->tx_capture_enabled
 	    != CDP_TX_ENH_CAPTURE_DISABLED)
 		dp_pdev->ppdu_info.rx_info.user_id =
-			HAL_RX_HW_DESC_MPDU_USER_ID(rx_desc_tlv);
+			hal_rx_hw_desc_mpdu_user_id(dp_pdev->soc->hal_soc,
+						    rx_desc_tlv);
 }
 #else
 static inline void
@@ -198,7 +199,8 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 	last = NULL;
 
-	hal_rx_reo_ent_buf_paddr_get(rxdma_dst_ring_desc, &buf_info, &msdu_cnt);
+	hal_rx_reo_ent_buf_paddr_get(soc->hal_soc, rxdma_dst_ring_desc,
+				     &buf_info, &msdu_cnt);
 
 	rs = &dp_pdev->rx_mon_recv_status;
 	rs->cdp_rs_rxdma_err = false;
@@ -383,7 +385,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 					     total_frag_len, frag_len,
 				      msdu_list.msdu_info[i].msdu_flags);
 
-			rx_pkt_offset = SIZE_OF_MONITOR_TLV;
+			rx_pkt_offset = soc->rx_mon_pkt_tlv_size;
 
 			rx_buf_size = rx_pkt_offset + l2_hdr_offset
 					+ frag_len;
@@ -414,9 +416,9 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 					     msdu_list.msdu_info[i].msdu_len,
 					     frag_len);
 
-			if (dp_rx_mon_add_msdu_to_list(head_msdu, msdu, &last,
-						       rx_desc_tlv, frag_len,
-						       l2_hdr_offset)
+			if (dp_rx_mon_add_msdu_to_list(soc, head_msdu, msdu,
+						       &last, rx_desc_tlv,
+						       frag_len, l2_hdr_offset)
 					!= QDF_STATUS_SUCCESS) {
 				dp_rx_mon_add_msdu_to_list_failure_handler(rx_desc_tlv,
 						dp_pdev, &last, head_msdu,
@@ -436,10 +438,12 @@ next_msdu:
 		 * Store the current link buffer into to the local
 		 * structure to be  used for release purpose.
 		 */
-		hal_rxdma_buff_addr_info_set(rx_link_buf_info, buf_info.paddr,
+		hal_rxdma_buff_addr_info_set(soc->hal_soc, rx_link_buf_info,
+					     buf_info.paddr,
 					     buf_info.sw_cookie, buf_info.rbm);
 
-		hal_rx_mon_next_link_desc_get(rx_msdu_link_desc, &buf_info);
+		hal_rx_mon_next_link_desc_get(soc->hal_soc, rx_msdu_link_desc,
+					      &buf_info);
 		if (dp_rx_monitor_link_desc_return(dp_pdev,
 						   (hal_buff_addrinfo_t)
 						   rx_link_buf_info,
@@ -450,7 +454,7 @@ next_msdu:
 	} while (buf_info.paddr && msdu_cnt);
 
 	dp_rx_mon_init_tail_msdu(head_msdu, msdu, last, tail_msdu);
-	dp_rx_mon_remove_raw_frame_fcs_len(head_msdu, tail_msdu);
+	dp_rx_mon_remove_raw_frame_fcs_len(soc, head_msdu, tail_msdu);
 
 	return rx_bufs_used;
 }
@@ -462,7 +466,7 @@ void dp_rx_msdus_set_payload(struct dp_soc *soc, qdf_nbuf_t msdu)
 	uint32_t rx_pkt_offset, l2_hdr_offset;
 
 	data = qdf_nbuf_data(msdu);
-	rx_pkt_offset = SIZE_OF_MONITOR_TLV;
+	rx_pkt_offset = soc->rx_mon_pkt_tlv_size;
 	l2_hdr_offset = hal_rx_msdu_end_l3_hdr_padding_get(soc->hal_soc, data);
 	qdf_nbuf_pull_head(msdu, rx_pkt_offset + l2_hdr_offset);
 }
@@ -544,6 +548,7 @@ qdf_nbuf_t dp_rx_mon_frag_restitch_mpdu_from_msdus(struct dp_soc *soc,
 	struct hal_rx_mon_dest_buf_info buf_info;
 	uint32_t pad_byte_pholder = 0;
 	qdf_nbuf_t msdu_curr;
+	uint16_t rx_mon_tlv_size = soc->rx_mon_pkt_tlv_size;
 
 	if (qdf_unlikely(!dp_pdev)) {
 		dp_rx_mon_dest_debug("%pK: pdev is null for mac_id = %d", soc, mac_id);
@@ -554,9 +559,9 @@ qdf_nbuf_t dp_rx_mon_frag_restitch_mpdu_from_msdus(struct dp_soc *soc,
 	if (!head_msdu || !tail_msdu)
 		goto mpdu_stitch_fail;
 
-	rx_desc = qdf_nbuf_get_frag_addr(head_msdu, 0) - SIZE_OF_MONITOR_TLV;
+	rx_desc = qdf_nbuf_get_frag_addr(head_msdu, 0) - rx_mon_tlv_size;
 
-	if (HAL_RX_DESC_GET_MPDU_LENGTH_ERR(rx_desc)) {
+	if (hal_rx_tlv_mpdu_len_err_get(soc->hal_soc, rx_desc)) {
 		/* It looks like there is some issue on MPDU len err */
 		/* Need further investigate if drop the packet */
 		DP_STATS_INC(dp_pdev, dropped.mon_rx_drop, 1);
@@ -565,15 +570,16 @@ qdf_nbuf_t dp_rx_mon_frag_restitch_mpdu_from_msdus(struct dp_soc *soc,
 
 	/* Look for FCS error */
 	num_frags = qdf_nbuf_get_nr_frags(tail_msdu);
-	rx_desc =
-		qdf_nbuf_get_frag_addr(tail_msdu,
-				       num_frags - 1) - SIZE_OF_MONITOR_TLV;
-	rx_status->cdp_rs_fcs_err = HAL_RX_DESC_GET_MPDU_FCS_ERR(rx_desc);
-	dp_pdev->ppdu_info.rx_status.rs_fcs_err =
-		HAL_RX_DESC_GET_MPDU_FCS_ERR(rx_desc);
+	rx_desc = qdf_nbuf_get_frag_addr(tail_msdu, num_frags - 1) -
+				rx_mon_tlv_size;
+	rx_status->cdp_rs_fcs_err = hal_rx_tlv_mpdu_fcs_err_get(soc->hal_soc,
+								rx_desc);
+	dp_pdev->ppdu_info.rx_status.rs_fcs_err = rx_status->cdp_rs_fcs_err;
 
-	rx_desc = qdf_nbuf_get_frag_addr(head_msdu, 0) - SIZE_OF_MONITOR_TLV;
-	hal_rx_mon_dest_get_buffer_info_from_tlv(rx_desc, &buf_info);
+	rx_desc = qdf_nbuf_get_frag_addr(head_msdu, 0) - rx_mon_tlv_size;
+	hal_rx_priv_info_get_from_tlv(soc->hal_soc, rx_desc,
+				      (uint8_t *)&buf_info,
+				      sizeof(buf_info));
 
 	/* Easy case - The MSDU status indicates that this is a non-decapped
 	 * packet in RAW mode.
@@ -590,7 +596,7 @@ qdf_nbuf_t dp_rx_mon_frag_restitch_mpdu_from_msdus(struct dp_soc *soc,
 	 * on the decap type and the corresponding number of raw bytes to copy
 	 * status header
 	 */
-	hdr_desc = HAL_RX_DESC_GET_80211_HDR(rx_desc);
+	hdr_desc = hal_rx_desc_get_80211_hdr(soc->hal_soc, rx_desc);
 
 	dp_rx_mon_dest_debug("%pK: decap format not raw", soc);
 
@@ -671,7 +677,7 @@ qdf_nbuf_t dp_rx_mon_frag_restitch_mpdu_from_msdus(struct dp_soc *soc,
 	 *  ------------------------------------------------------------
 	 */
 	pad_byte_pholder =
-		(RX_MONITOR_BUFFER_SIZE - RX_PKT_TLVS_LEN) - frag_size;
+		(RX_MONITOR_BUFFER_SIZE - soc->rx_pkt_tlv_size) - frag_size;
 	/* Construct destination address
 	 *  --------------------------------------------------------------
 	 * | RX_PKT_TLV | L2_HDR_PAD   |   Decap HDR   |      Payload     |
@@ -768,7 +774,7 @@ qdf_nbuf_t dp_rx_mon_frag_restitch_mpdu_from_msdus(struct dp_soc *soc,
 		 */
 			frag_addr =
 				qdf_nbuf_get_frag_addr(msdu_curr, frags_iter);
-			rx_desc = frag_addr - SIZE_OF_MONITOR_TLV;
+			rx_desc = frag_addr - rx_mon_tlv_size;
 
 			/*
 			 * Update protocol and flow tag for MSDU
@@ -779,8 +785,9 @@ qdf_nbuf_t dp_rx_mon_frag_restitch_mpdu_from_msdus(struct dp_soc *soc,
 							   msdu_curr, rx_desc);
 
 			/* Read buffer info from stored data in tlvs */
-			hal_rx_mon_dest_get_buffer_info_from_tlv(rx_desc,
-								 &buf_info);
+			hal_rx_priv_info_get_from_tlv(soc->hal_soc, rx_desc,
+						      (uint8_t *)&buf_info,
+						      sizeof(buf_info));
 
 			frag_size = qdf_nbuf_get_frag_size_by_idx(msdu_curr,
 								  frags_iter);
@@ -797,7 +804,8 @@ qdf_nbuf_t dp_rx_mon_frag_restitch_mpdu_from_msdus(struct dp_soc *soc,
 			 * to accommodate amsdu pad byte
 			 */
 			pad_byte_pholder =
-				(RX_MONITOR_BUFFER_SIZE - RX_PKT_TLVS_LEN) - frag_size;
+				(RX_MONITOR_BUFFER_SIZE - soc->rx_pkt_tlv_size)
+				- frag_size;
 			/*
 			 * We will come here only only three condition:
 			 * 1. Msdu with single Buffer
@@ -822,7 +830,8 @@ qdf_nbuf_t dp_rx_mon_frag_restitch_mpdu_from_msdus(struct dp_soc *soc,
 			if (buf_info.first_buffer) {
 				/* Src addr from where llc header needs to be copied */
 				rx_src_desc =
-					HAL_RX_DESC_GET_80211_HDR(rx_desc);
+					hal_rx_desc_get_80211_hdr(soc->hal_soc,
+								  rx_desc);
 
 				/* Size of buffer with llc header */
 				frag_size = frag_size -
@@ -944,7 +953,7 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 
 	rx_desc = qdf_nbuf_data(msdu_orig);
 
-	if (HAL_RX_DESC_GET_MPDU_LENGTH_ERR(rx_desc)) {
+	if (hal_rx_tlv_mpdu_len_err_get(soc->hal_soc, rx_desc)) {
 		/* It looks like there is some issue on MPDU len err */
 		/* Need further investigate if drop the packet */
 		DP_STATS_INC(dp_pdev, dropped.mon_rx_drop, 1);
@@ -953,16 +962,16 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 
 	rx_desc = qdf_nbuf_data(last_msdu);
 
-	rx_status->cdp_rs_fcs_err = HAL_RX_DESC_GET_MPDU_FCS_ERR(rx_desc);
-	dp_pdev->ppdu_info.rx_status.rs_fcs_err =
-		HAL_RX_DESC_GET_MPDU_FCS_ERR(rx_desc);
+	rx_status->cdp_rs_fcs_err = hal_rx_tlv_mpdu_fcs_err_get(soc->hal_soc,
+								rx_desc);
+	dp_pdev->ppdu_info.rx_status.rs_fcs_err = rx_status->cdp_rs_fcs_err;
 
 	/* Fill out the rx_status from the PPDU start and end fields */
 	/*   HAL_RX_GET_PPDU_STATUS(soc, mac_id, rx_status); */
 
 	rx_desc = qdf_nbuf_data(head_msdu);
 
-	decap_format = HAL_RX_DESC_GET_DECAP_FORMAT(rx_desc);
+	decap_format = hal_rx_tlv_decap_format_get(soc->hal_soc, rx_desc);
 
 	/* Easy case - The MSDU status indicates that this is a non-decapped
 	 * packet in RAW mode.
@@ -1030,7 +1039,7 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 	 */
 	rx_desc = qdf_nbuf_data(head_msdu);
 
-	hdr_desc = HAL_RX_DESC_GET_80211_HDR(rx_desc);
+	hdr_desc = hal_rx_desc_get_80211_hdr(soc->hal_soc, rx_desc);
 
 	dp_rx_mon_dest_debug("%pK: decap format not raw", soc);
 
@@ -1123,7 +1132,8 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 		} else {
 			/* Reload the hdr ptr only on non-first MSDUs */
 			rx_desc = qdf_nbuf_data(msdu_orig);
-			hdr_desc = HAL_RX_DESC_GET_80211_HDR(rx_desc);
+			hdr_desc = hal_rx_desc_get_80211_hdr(soc->hal_soc,
+							     rx_desc);
 		}
 
 		/* Copy this buffers MSDU related status into the prev buffer */
@@ -1426,7 +1436,7 @@ static QDF_STATUS dp_rx_mon_process_dest_pktlog(struct dp_soc *soc,
 						uint32_t mac_id,
 						qdf_nbuf_t mpdu)
 {
-	uint32_t event, msdu_timestamp;
+	uint32_t event, msdu_timestamp = 0;
 	struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 	void *data;
 	struct ieee80211_frame *wh;
@@ -1840,7 +1850,7 @@ dp_rx_pdev_mon_buf_desc_pool_init(struct dp_pdev *pdev, uint32_t mac_id)
 	rx_desc_pool_size = wlan_cfg_get_dp_soc_rx_sw_desc_weight(soc_cfg_ctx) *
 		num_entries;
 
-	rx_desc_pool->owner = HAL_RX_BUF_RBM_SW3_BM;
+	rx_desc_pool->owner = HAL_RX_BUF_RBM_SW3_BM(soc->wbm_sw0_bm_id);
 	rx_desc_pool->buf_size = RX_MONITOR_BUFFER_SIZE;
 	rx_desc_pool->buf_alignment = RX_MONITOR_BUFFER_ALIGNMENT;
 	/* Enable frag processing if feature is enabled */
@@ -2124,7 +2134,7 @@ dp_mon_dest_srng_drop_for_mac(struct dp_pdev *pdev, uint32_t mac_id)
 	uint32_t rx_bufs_used = 0;
 	void *rx_msdu_link_desc;
 	uint32_t msdu_count = 0;
-	uint16 num_msdus;
+	uint16_t num_msdus;
 	struct hal_buf_info buf_info;
 	struct hal_rx_msdu_list msdu_list;
 	qdf_nbuf_t nbuf;
@@ -2157,7 +2167,7 @@ dp_mon_dest_srng_drop_for_mac(struct dp_pdev *pdev, uint32_t mac_id)
 		hal_srng_dst_peek(hal_soc, mon_dst_srng)) &&
 		reap_cnt < MON_DROP_REAP_LIMIT) {
 
-		hal_rx_reo_ent_buf_paddr_get(rxdma_dst_ring_desc,
+		hal_rx_reo_ent_buf_paddr_get(hal_soc, rxdma_dst_ring_desc,
 					     &buf_info, &msdu_count);
 
 		do {
@@ -2217,12 +2227,14 @@ dp_mon_dest_srng_drop_for_mac(struct dp_pdev *pdev, uint32_t mac_id)
 			 * Store the current link buffer into to the local
 			 * structure to be  used for release purpose.
 			 */
-			hal_rxdma_buff_addr_info_set(rx_link_buf_info,
+			hal_rxdma_buff_addr_info_set(soc->hal_soc,
+						     rx_link_buf_info,
 						     buf_info.paddr,
 						     buf_info.sw_cookie,
 						     buf_info.rbm);
 
-			hal_rx_mon_next_link_desc_get(rx_msdu_link_desc,
+			hal_rx_mon_next_link_desc_get(soc->hal_soc,
+						      rx_msdu_link_desc,
 						      &buf_info);
 			if (dp_rx_monitor_link_desc_return(pdev,
 							   (hal_buff_addrinfo_t)

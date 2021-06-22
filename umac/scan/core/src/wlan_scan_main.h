@@ -30,7 +30,7 @@
 #include <wlan_scan_public_structs.h>
 #include "wlan_scan_cache_db.h"
 #include "wlan_scan_11d.h"
-#include "wlan_scan_cfg.h"
+#include "cfg_scan.h"
 
 #define scm_alert(params...) \
 	QDF_TRACE_FATAL(QDF_MODULE_ID_SCAN, params)
@@ -304,6 +304,8 @@ struct extscan_def_config {
  * @active_dwell_2g: default active dwell time for 2G channels, if it's not zero
  * @active_dwell_6g: default active dwell time for 6G channels
  * @passive_dwell_6g: default passive dwell time for 6G channels
+ * @active_dwell_time_6g_conc: default concurrent active dwell time for 6G
+ * @passive_dwell_time_6g_conc: default concurrent passive dwell time for 6G
  * @passive_dwell:default passive dwell time
  * @max_rest_time: default max rest time
  * @sta_miracast_mcc_rest_time: max rest time for miracast and mcc
@@ -391,6 +393,8 @@ struct scan_default_params {
 	uint32_t active_dwell_2g;
 	uint32_t active_dwell_6g;
 	uint32_t passive_dwell_6g;
+	uint32_t active_dwell_time_6g_conc;
+	uint32_t passive_dwell_time_6g_conc;
 	uint32_t passive_dwell;
 	uint32_t max_rest_time;
 	uint32_t sta_miracast_mcc_rest_time;
@@ -508,6 +512,7 @@ struct scan_cb {
  * @miracast_enabled: miracast enabled
  * @disable_timeout: command timeout disabled
  * @drop_bcn_on_chan_mismatch: drop bcn if channel mismatch
+ * @obss_scan_offload: if obss scan offload is enabled
  * @drop_bcn_on_invalid_freq: drop bcn if freq is invalid in IEs (DS/HT/HE)
  * @scan_start_request_buff: buffer used to pass
  *      scan config to event handlers
@@ -541,6 +546,7 @@ struct wlan_scan_obj {
 	bool disable_timeout;
 	bool drop_bcn_on_chan_mismatch;
 	bool drop_bcn_on_invalid_freq;
+	bool obss_scan_offload;
 	struct scan_start_request scan_start_request_buff;
 #ifdef FEATURE_6G_SCAN_CHAN_SORT_ALGO
 	struct channel_list_db rnr_channel_db;

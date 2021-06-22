@@ -71,6 +71,7 @@ QDF_STATUS hif_initialize_ipci_ops(struct hif_softc *hif_sc)
 	bus_ops->hif_disable_power_management =
 		&hif_ipci_disable_power_management;
 	bus_ops->hif_grp_irq_configure = &hif_ipci_configure_grp_irq;
+	bus_ops->hif_grp_irq_deconfigure = &hif_ipci_deconfigure_grp_irq;
 	bus_ops->hif_display_stats =
 		&hif_ipci_display_stats;
 	bus_ops->hif_clear_stats =

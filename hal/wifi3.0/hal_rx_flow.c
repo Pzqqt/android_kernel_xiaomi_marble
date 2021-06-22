@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -209,15 +209,15 @@ qdf_export_symbol(hal_rx_flow_get_cmem_fse_timestamp);
  *
  * Return: Success/Failure
  */
-inline QDF_STATUS
+QDF_STATUS
 hal_rx_flow_delete_entry(struct hal_rx_fst *fst, void *hal_rx_fse)
 {
 	uint8_t *fse = (uint8_t *)hal_rx_fse;
 
-	if (!HAL_GET_FLD(fse, RX_FLOW_SEARCH_ENTRY_9, VALID))
+	if (!HAL_GET_FLD(fse, HAL_RX_FLOW_SEARCH_ENTRY, VALID))
 		return QDF_STATUS_E_NOENT;
 
-	HAL_CLR_FLD(fse, RX_FLOW_SEARCH_ENTRY_9, VALID);
+	HAL_CLR_FLD(fse, HAL_RX_FLOW_SEARCH_ENTRY, VALID);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -288,49 +288,49 @@ QDF_STATUS hal_rx_flow_get_tuple_info(void *hal_fse,
 	if (!hal_fse || !tuple_info)
 		return QDF_STATUS_E_INVAL;
 
-	if (!HAL_GET_FLD(hal_fse, RX_FLOW_SEARCH_ENTRY_9, VALID))
+	if (!HAL_GET_FLD(hal_fse, HAL_RX_FLOW_SEARCH_ENTRY, VALID))
 		return QDF_STATUS_E_NOENT;
 
 	tuple_info->src_ip_127_96 =
 				qdf_ntohl(HAL_GET_FLD(hal_fse,
-						      RX_FLOW_SEARCH_ENTRY_0,
+						      HAL_RX_FLOW_SEARCH_ENTRY,
 						      SRC_IP_127_96));
 	tuple_info->src_ip_95_64 =
 				qdf_ntohl(HAL_GET_FLD(hal_fse,
-						      RX_FLOW_SEARCH_ENTRY_1,
+						      HAL_RX_FLOW_SEARCH_ENTRY,
 						      SRC_IP_95_64));
 	tuple_info->src_ip_63_32 =
 				qdf_ntohl(HAL_GET_FLD(hal_fse,
-						      RX_FLOW_SEARCH_ENTRY_2,
+						      HAL_RX_FLOW_SEARCH_ENTRY,
 						      SRC_IP_63_32));
 	tuple_info->src_ip_31_0 =
 				qdf_ntohl(HAL_GET_FLD(hal_fse,
-						      RX_FLOW_SEARCH_ENTRY_3,
+						      HAL_RX_FLOW_SEARCH_ENTRY,
 						      SRC_IP_31_0));
 	tuple_info->dest_ip_127_96 =
 				qdf_ntohl(HAL_GET_FLD(hal_fse,
-						      RX_FLOW_SEARCH_ENTRY_4,
+						      HAL_RX_FLOW_SEARCH_ENTRY,
 						      DEST_IP_127_96));
 	tuple_info->dest_ip_95_64 =
 				qdf_ntohl(HAL_GET_FLD(hal_fse,
-						      RX_FLOW_SEARCH_ENTRY_5,
+						      HAL_RX_FLOW_SEARCH_ENTRY,
 						      DEST_IP_95_64));
 	tuple_info->dest_ip_63_32 =
 				qdf_ntohl(HAL_GET_FLD(hal_fse,
-						      RX_FLOW_SEARCH_ENTRY_6,
+						      HAL_RX_FLOW_SEARCH_ENTRY,
 						      DEST_IP_63_32));
 	tuple_info->dest_ip_31_0 =
 			qdf_ntohl(HAL_GET_FLD(hal_fse,
-					      RX_FLOW_SEARCH_ENTRY_7,
+					      HAL_RX_FLOW_SEARCH_ENTRY,
 					      DEST_IP_31_0));
 	tuple_info->dest_port = HAL_GET_FLD(hal_fse,
-					    RX_FLOW_SEARCH_ENTRY_8,
+					    HAL_RX_FLOW_SEARCH_ENTRY,
 					    DEST_PORT);
 	tuple_info->src_port = HAL_GET_FLD(hal_fse,
-					   RX_FLOW_SEARCH_ENTRY_8,
+					   HAL_RX_FLOW_SEARCH_ENTRY,
 					   SRC_PORT);
 	tuple_info->l4_protocol = HAL_GET_FLD(hal_fse,
-					      RX_FLOW_SEARCH_ENTRY_9,
+					      HAL_RX_FLOW_SEARCH_ENTRY,
 					      L4_PROTOCOL);
 
 	return QDF_STATUS_SUCCESS;

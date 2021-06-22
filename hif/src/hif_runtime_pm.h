@@ -56,6 +56,10 @@ struct hif_pm_runtime_htc_stats {
 	uint32_t rtpm_put_htt_no_resp;
 	uint32_t rtpm_put_htt_error;
 	uint32_t rtpm_put_htc_cleanup;
+	uint32_t rtpm_get_htc_kick_queues;
+	uint32_t rtpm_put_htc_kick_queues;
+	uint32_t rtpm_get_htt_fetch_pkts;
+	uint32_t rtpm_put_htt_fetch_pkts;
 };
 
 /* Debugging stats for Runtime PM */

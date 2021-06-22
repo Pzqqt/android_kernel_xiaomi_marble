@@ -1510,8 +1510,10 @@ static void *target_if_dbr_vaddr_lookup(
 		return dbr_buf_pool[cookie].vaddr +
 				dbr_buf_pool[cookie].offset;
 	}
+	direct_buf_rx_debug("Invalid paddr, cookie %d, pool paddr %pK, paddr %pK",
+			    cookie, (void *)dbr_buf_pool[cookie].paddr,
+			    (void *)paddr);
 
-	direct_buf_rx_debug("Incorrect paddr found on cookie slot");
 	return NULL;
 }
 
@@ -1624,7 +1626,9 @@ static QDF_STATUS target_if_get_dbr_data(struct wlan_objmgr_pdev *pdev,
 	dbr_data->vaddr = target_if_dbr_vaddr_lookup(mod_param, paddr, *cookie);
 
 	if (!dbr_data->vaddr) {
-		direct_buf_rx_err("dbr vaddr lookup failed, vaddr NULL");
+		direct_buf_rx_debug("dbr vaddr lookup failed, cookie %d, hi %x, lo %x",
+				    *cookie, dbr_rsp->dbr_entries[idx].paddr_hi,
+				    dbr_rsp->dbr_entries[idx].paddr_lo);
 		return QDF_STATUS_E_FAILURE;
 	}
 

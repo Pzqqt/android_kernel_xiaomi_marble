@@ -498,7 +498,7 @@ static void wifi_pos_pdev_iterator(struct wlan_objmgr_psoc *psoc,
 	wifi_pos_ch = &chan_list->chan_info[chan_list->num_channels];
 
 	ch_info = (struct channel_power *)qdf_mem_malloc(
-			sizeof(*ch_info) * MAX_CHANNELS);
+			sizeof(*ch_info) * NUM_CHANNELS);
 	if (!ch_info) {
 		wifi_pos_err("ch_info is null");
 		return;
@@ -509,6 +509,12 @@ static void wifi_pos_pdev_iterator(struct wlan_objmgr_psoc *psoc,
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		wifi_pos_err("Failed to get valid channel list");
+		qdf_mem_free(ch_info);
+		return;
+	}
+
+	if ((chan_list->num_channels + num_channels) > NUM_CHANNELS) {
+		wifi_pos_err("Invalid number of channels");
 		qdf_mem_free(ch_info);
 		return;
 	}

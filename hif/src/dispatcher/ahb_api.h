@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018,2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018,2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -50,6 +50,7 @@ int hif_ahb_configure_irq(struct hif_pci_softc *sc);
 int hif_ahb_configure_irq_by_ceid(struct hif_softc *sc, int ce_id);
 int hif_ahb_configure_grp_irq(struct hif_softc *scn,
 			      struct hif_exec_context *hif_ext_grp);
+void hif_ahb_deconfigure_grp_irq(struct hif_softc *scn);
 bool hif_ahb_needs_bmi(struct hif_softc *scn);
 void hif_ahb_display_stats(struct hif_softc *scn);
 void hif_ahb_clear_stats(struct hif_softc *scn);

@@ -798,6 +798,8 @@ QDF_STATUS (*send_pno_stop_cmd)(wmi_unified_t wmi_handle, uint8_t vdev_id);
 QDF_STATUS (*send_pno_start_cmd)(wmi_unified_t wmi_handle,
 		   struct pno_scan_req_params *pno);
 
+QDF_STATUS (*send_obss_disable_cmd)(wmi_unified_t wmi_handle, uint8_t vdev_id);
+
 QDF_STATUS (*send_nlo_mawc_cmd)(wmi_unified_t wmi_handle,
 		struct nlo_mawc_params *params);
 
@@ -2589,6 +2591,7 @@ struct wmi_unified {
 	qdf_nbuf_queue_t event_queue;
 	qdf_work_t rx_event_work;
 	qdf_workqueue_t *wmi_rx_work_queue;
+	qdf_workqueue_t *wmi_rx_diag_work_queue;
 	qdf_spinlock_t diag_eventq_lock;
 	qdf_nbuf_queue_t diag_event_queue;
 	qdf_work_t rx_diag_event_work;

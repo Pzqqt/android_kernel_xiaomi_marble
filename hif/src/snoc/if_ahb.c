@@ -358,11 +358,13 @@ int hif_ahb_configure_grp_irq(struct hif_softc *scn,
 		hif_ext_group->os_irq[j] = irq;
 	}
 
-	qdf_spin_lock_irqsave(&hif_ext_group->irq_lock);
-
 	for (j = 0; j < hif_ext_group->numirq; j++) {
 		irq = hif_ext_group->os_irq[j];
+
+		qdf_spin_lock_irqsave(&hif_ext_group->irq_lock);
 		qdf_dev_set_irq_status_flags(irq, QDF_IRQ_DISABLE_UNLAZY);
+		qdf_spin_unlock_irqrestore(&hif_ext_group->irq_lock);
+
 		ret = pfrm_request_irq(scn->qdf_dev->dev,
 				       irq, hif_ext_group_interrupt_handler,
 				       IRQF_TRIGGER_RISING,
@@ -374,13 +376,11 @@ int hif_ahb_configure_grp_irq(struct hif_softc *scn,
 			goto end;
 		}
 	}
-	qdf_spin_unlock_irqrestore(&hif_ext_group->irq_lock);
 
 	qdf_spin_lock_irqsave(&hif_ext_group->irq_lock);
 	hif_ext_group->irq_requested = true;
-
-end:
 	qdf_spin_unlock_irqrestore(&hif_ext_group->irq_lock);
+end:
 	return ret;
 }
 

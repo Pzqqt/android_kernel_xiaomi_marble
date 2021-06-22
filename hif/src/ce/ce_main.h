@@ -147,6 +147,7 @@ struct ce_tasklet_entry {
 	struct tasklet_struct intr_tq;
 	enum ce_id_type ce_id;
 	bool inited;
+	bool hi_tasklet_ce;
 	void *hif_ce_state;
 };
 

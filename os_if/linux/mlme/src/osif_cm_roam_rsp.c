@@ -386,7 +386,6 @@ void osif_indicate_reassoc_results(struct wlan_objmgr_vdev *vdev,
 	struct cfg80211_bss *bss;
 	struct ieee80211_channel *chan;
 	struct wlan_objmgr_psoc *psoc;
-	bool roam_offload = false;
 
 	if (QDF_IS_STATUS_ERROR(rsp->connect_status))
 		return;
@@ -395,8 +394,6 @@ void osif_indicate_reassoc_results(struct wlan_objmgr_vdev *vdev,
 	if (!psoc)
 		return;
 
-	ucfg_mlme_is_roam_scan_offload_enabled(psoc, &roam_offload);
-
 	chan = ieee80211_get_channel(osif_priv->wdev->wiphy,
 				     rsp->freq);
 	bss = wlan_cfg80211_get_bss(osif_priv->wdev->wiphy, chan,
@@ -404,7 +401,7 @@ void osif_indicate_reassoc_results(struct wlan_objmgr_vdev *vdev,
 				    rsp->ssid.length);
 	if (!bss)
 		osif_warn("not able to find bss");
-	if (!roam_offload || rsp->is_ft)
+	if (rsp->is_ft)
 		osif_cm_get_assoc_req_ie_data(&rsp->connect_ies.assoc_req,
 					      &req_len, &req_ie);
 	else
@@ -418,4 +415,32 @@ void osif_indicate_reassoc_results(struct wlan_objmgr_vdev *vdev,
 
 	osif_update_fils_hlp_data(dev, vdev, rsp);
 }
-#endif
+
+QDF_STATUS
+osif_pmksa_candidate_notify(struct wlan_objmgr_vdev *vdev,
+			    struct qdf_mac_addr *bssid,
+			    int index, bool preauth)
+{
+	struct vdev_osif_priv *osif_priv = wlan_vdev_get_ospriv(vdev);
+	struct wireless_dev *wdev;
+
+	if (!osif_priv) {
+		osif_err("Invalid vdev osif priv");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wdev = osif_priv->wdev;
+	if (!wdev) {
+		osif_err("wdev is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	osif_debug("is going to notify supplicant of:");
+	osif_info(QDF_MAC_ADDR_FMT, QDF_MAC_ADDR_REF(bssid->bytes));
+
+	cfg80211_pmksa_candidate_notify(wdev->netdev, index,
+					bssid->bytes,
+					preauth, GFP_KERNEL);
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* CONN_MGR_ADV_FEATURE */

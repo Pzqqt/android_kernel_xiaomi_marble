@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -233,6 +233,16 @@ void host_log_acs_chan_spect_weight(uint16_t chan, uint16_t weight,
  */
 void host_log_acs_best_chan(uint16_t chan, uint16_t weight);
 
+/**
+ * host_log_device_status() - device status indication
+ * @status_code: status code from enum wlan_bringup_status
+ *
+ * Indicates device status
+ *
+ * Return: None
+ */
+void host_log_device_status(uint16_t status_code);
+
 #else
 static inline void qdf_wow_wakeup_host_event(uint8_t wow_wakeup_cause)
 {
@@ -262,6 +272,10 @@ static inline void host_log_acs_chan_spect_weight(uint16_t chan,
 }
 
 static inline void host_log_acs_best_chan(uint16_t chan, uint32_t weight)
+{
+}
+
+static inline void host_log_device_status(uint16_t status_code)
 {
 }
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */

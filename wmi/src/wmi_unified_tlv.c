@@ -469,6 +469,9 @@ static const uint32_t vdev_param_tlv[] = {
 	[wmi_vdev_param_set_he_sounding_mode] =
 			WMI_VDEV_PARAM_SET_HE_SOUNDING_MODE,
 	[wmi_vdev_param_set_heop] = WMI_VDEV_PARAM_HEOPS_0_31,
+#ifdef WLAN_FEATURE_11BE
+	[wmi_vdev_param_set_ehtop] = WMI_VDEV_PARAM_EHTOPS_0_31,
+#endif
 	[wmi_vdev_param_sensor_ap] = WMI_VDEV_PARAM_SENSOR_AP,
 	[wmi_vdev_param_dtim_enable_cts] = WMI_VDEV_PARAM_DTIM_ENABLE_CTS,
 	[wmi_vdev_param_atf_ssid_sched_policy] =
@@ -1026,6 +1029,29 @@ static inline void copy_channel_info(
 }
 
 /**
+ * vdev_start_cmd_fill_11be() - 11be information fiiling in vdev_ststart
+ * @cmd: wmi cmd
+ * @req: vdev start params
+ *
+ * Return: QDF status
+ */
+#ifdef WLAN_FEATURE_11BE
+static void
+vdev_start_cmd_fill_11be(wmi_vdev_start_request_cmd_fixed_param *cmd,
+			 struct vdev_start_params *req)
+{
+	cmd->eht_ops = req->eht_ops;
+	wmi_info("EHT ops: %x", req->eht_ops);
+}
+#else
+static void
+vdev_start_cmd_fill_11be(wmi_vdev_start_request_cmd_fixed_param *cmd,
+			 struct vdev_start_params *req)
+{
+}
+#endif
+
+/**
  * send_vdev_start_cmd_tlv() - send vdev start request to fw
  * @wmi_handle: wmi handle
  * @req: vdev start params
@@ -1113,6 +1139,8 @@ static QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 		 req->ldpc_rx_enabled, req->cac_duration_ms,
 		 req->regdomain, req->he_ops,
 		 req->disable_hw_ack);
+
+	vdev_start_cmd_fill_11be(cmd, req);
 
 	if (req->is_restart) {
 		wmi_mtrace(WMI_VDEV_RESTART_REQUEST_CMDID, cmd->vdev_id, 0);
@@ -2641,14 +2669,39 @@ static inline void update_peer_flags_tlv_ehtinfo(
 
 #ifdef WLAN_FEATURE_11BE
 static
-uint32_t wmi_eht_rate_set_len(struct peer_assoc_params *param)
+uint32_t wmi_eht_peer_assoc_params_len(struct peer_assoc_params *param)
 {
-	return (sizeof(wmi_he_rate_set) * param->peer_eht_mcs_count
-		+ WMI_TLV_HDR_SIZE);
+	return (sizeof(wmi_peer_assoc_mlo_params) + WMI_TLV_HDR_SIZE) +
+			(sizeof(wmi_he_rate_set) * param->peer_eht_mcs_count
+			 + WMI_TLV_HDR_SIZE);
+}
+
+static void wmi_populate_service_11be(uint32_t *wmi_service)
+{
+	wmi_service[wmi_service_11be] = WMI_SERVICE_11BE;
+}
+
+static uint32_t wmi_update_peer_assoc_mlo_params(uint8_t *buf_ptr)
+{
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       sizeof(wmi_peer_assoc_mlo_params));
+	WMITLV_SET_HDR(buf_ptr + WMI_TLV_HDR_SIZE,
+		       WMITLV_TAG_STRUC_wmi_peer_assoc_mlo_params,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_peer_assoc_mlo_params));
+	return WMI_TLV_HDR_SIZE + sizeof(wmi_peer_assoc_mlo_params);
 }
 #else
 static
-uint32_t wmi_eht_rate_set_len(struct peer_assoc_params *param)
+uint32_t wmi_eht_peer_assoc_params_len(struct peer_assoc_params *param)
+{
+	return 0;
+}
+
+static void wmi_populate_service_11be(uint32_t *wmi_service)
+{
+}
+
+static uint32_t wmi_update_peer_assoc_mlo_params(uint8_t *buf_ptr)
 {
 	return 0;
 }
@@ -2686,7 +2739,7 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 		sizeof(wmi_vht_rate_set) +
 		(sizeof(wmi_he_rate_set) * param->peer_he_mcs_count
 		+ WMI_TLV_HDR_SIZE)
-		+ wmi_eht_rate_set_len(param);
+		+ wmi_eht_peer_assoc_params_len(param);
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf)
@@ -2822,6 +2875,8 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 		 cmd->peer_he_cap_phy[0], cmd->peer_he_cap_phy[1],
 		 cmd->peer_he_cap_phy[2],
 		 cmd->peer_bw_rxnss_override);
+
+	buf_ptr += wmi_update_peer_assoc_mlo_params(buf_ptr);
 
 	update_peer_flags_tlv_ehtinfo(cmd, param, buf_ptr);
 
@@ -4848,6 +4903,44 @@ static QDF_STATUS send_pno_stop_cmd_tlv(wmi_unified_t wmi_handle, uint8_t vdev_i
 	}
 
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_obss_disable_cmd_tlv() - disable obss scan request
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ *
+ * This function request FW to disable ongoing obss scan operation.
+ *
+ * Return: QDF status
+ */
+static QDF_STATUS send_obss_disable_cmd_tlv(wmi_unified_t wmi_handle,
+					    uint8_t vdev_id)
+{
+	QDF_STATUS status;
+	wmi_buf_t buf;
+	wmi_obss_scan_disable_cmd_fixed_param *cmd;
+	int len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	wmi_debug("cmd %x vdev_id %d", WMI_OBSS_SCAN_DISABLE_CMDID, vdev_id);
+
+	cmd = (wmi_obss_scan_disable_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_obss_scan_disable_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+			wmi_obss_scan_disable_cmd_fixed_param));
+
+	cmd->vdev_id = vdev_id;
+	status = wmi_unified_cmd_send(wmi_handle, buf, len,
+				      WMI_OBSS_SCAN_DISABLE_CMDID);
+	if (QDF_IS_STATUS_ERROR(status))
+		wmi_buf_free(buf);
+
+	return status;
 }
 
 /**
@@ -7209,6 +7302,19 @@ static void wmi_copy_twt_resource_config(wmi_resource_config *resource_cfg,
 }
 #endif
 
+#ifdef WLAN_FEATURE_NAN
+static void wmi_set_nan_channel_support(wmi_resource_config *resource_cfg)
+{
+	WMI_RSRC_CFG_HOST_SERVICE_FLAG_NAN_CHANNEL_SUPPORT_SET(
+		resource_cfg->host_service_flags, 1);
+}
+#else
+static inline
+void wmi_set_nan_channel_support(wmi_resource_config *resource_cfg)
+{
+}
+#endif
+
 static
 void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 				target_resource_config *tgt_res_cfg)
@@ -7440,9 +7546,15 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 		WMI_RSRC_CFG_FLAGS2_IS_GO_CONNECTED_D3WOW_ENABLED_SET(
 			resource_cfg->flags2, 1);
 
+	if (tgt_res_cfg->sae_eapol_offload)
+		WMI_RSRC_CFG_HOST_SERVICE_FLAG_SAE_EAPOL_OFFLOAD_SUPPORT_SET(
+			resource_cfg->host_service_flags, 1);
+
 	WMI_RSRC_CFG_HOST_SERVICE_FLAG_REG_CC_EXT_SUPPORT_SET(
 		resource_cfg->host_service_flags,
 		tgt_res_cfg->is_reg_cc_ext_event_supported);
+
+	wmi_set_nan_channel_support(resource_cfg);
 }
 
 /* copy_hw_mode_id_in_init_cmd() - Helper routine to copy hw_mode in init cmd
@@ -10987,6 +11099,22 @@ static QDF_STATUS extract_rf_characterization_entries_tlv(wmi_unified_t wmi_hand
 }
 #endif
 
+#ifdef WLAN_FEATURE_11BE
+static void
+extract_11be_chainmask(struct wlan_psoc_host_chainmask_capabilities *cap,
+		       WMI_MAC_PHY_CHAINMASK_CAPABILITY *chainmask_caps)
+{
+	cap->supports_chan_width_320 =
+		WMI_SUPPORT_CHAN_WIDTH_320_GET(chainmask_caps->supported_flags);
+}
+#else
+static void
+extract_11be_chainmask(struct wlan_psoc_host_chainmask_capabilities *cap,
+		       WMI_MAC_PHY_CHAINMASK_CAPABILITY *chainmask_caps)
+{
+}
+#endif /* WLAN_FEATURE_11BE */
+
 /**
  * extract_chainmask_tables_tlv() - extract chain mask tables from event
  * @wmi_handle: wmi handle
@@ -11090,6 +11218,9 @@ static QDF_STATUS extract_chainmask_tables_tlv(wmi_unified_t wmi_handle,
 
 			chainmask_table[i].cap_list[j].supports_aDFS_160 =
 				WMI_SUPPORT_ADFS_160_GET(chainmask_caps->supported_flags);
+
+			extract_11be_chainmask(&chainmask_table[i].cap_list[j],
+					       chainmask_caps);
 
 			wmi_nofl_debug("supported_flags: 0x%08x  chainmasks: 0x%08x",
 				       chainmask_caps->supported_flags,
@@ -14978,6 +15109,7 @@ struct wmi_ops tlv_ops =  {
 #endif
 	.send_pno_stop_cmd = send_pno_stop_cmd_tlv,
 	.send_pno_start_cmd = send_pno_start_cmd_tlv,
+	.send_obss_disable_cmd = send_obss_disable_cmd_tlv,
 	.send_nlo_mawc_cmd = send_nlo_mawc_cmd_tlv,
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 	.send_process_ll_stats_clear_cmd = send_process_ll_stats_clear_cmd_tlv,
@@ -16042,6 +16174,12 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_igmp_offload_support] =
 			WMI_SERVICE_IGMP_OFFLOAD_SUPPORT;
 #endif
+#ifdef WLAN_FEATURE_11AX
+#ifdef FEATURE_WLAN_TDLS
+	wmi_service[wmi_service_tdls_ax_support] =
+			WMI_SERVICE_11AX_TDLS_SUPPORT;
+#endif
+#endif
 #ifdef WLAN_SUPPORT_TWT
 	wmi_service[wmi_service_twt_bcast_req_support] =
 			WMI_SERVICE_BROADCAST_TWT_REQUESTER;
@@ -16056,6 +16194,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 #endif
 	wmi_service[wmi_service_spectral_scan_disabled] =
 			WMI_SERVICE_SPECTRAL_SCAN_DISABLED;
+	wmi_service[wmi_service_sae_eapol_offload_support] =
+			WMI_SERVICE_SAE_EAPOL_OFFLOAD_SUPPORT;
 	wmi_populate_service_get_sta_in_ll_stats_req(wmi_service);
 
 	wmi_service[wmi_service_wapi_concurrency_supported] =
@@ -16078,6 +16218,12 @@ static void populate_tlv_service(uint32_t *wmi_service)
 #endif
 	wmi_service[wmi_service_dcs_awgn_int_support] =
 			WMI_SERVICE_DCS_AWGN_INT_SUPPORT;
+	wmi_populate_service_11be(wmi_service);
+
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+	wmi_service[wmi_service_big_data_support] =
+			WMI_SERVICE_BIG_DATA_SUPPORT;
+#endif
 }
 
 /**

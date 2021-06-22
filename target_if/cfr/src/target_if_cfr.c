@@ -32,7 +32,7 @@
 #include "target_if_cfr_adrastea.h"
 #include "wlan_reg_services_api.h"
 #else
-#include <target_if_cfr_8074v2.h>
+#include <target_if_cfr_dbr.h>
 #endif
 
 int target_if_cfr_stop_capture(struct wlan_objmgr_pdev *pdev,
@@ -431,7 +431,7 @@ target_if_cfr_init_pdev(struct wlan_objmgr_psoc *psoc,
 
 	if (target_type == TARGET_TYPE_QCA8074V2) {
 		pa->is_cfr_capable = cfr_sc->is_cfr_capable;
-		return cfr_8074v2_init_pdev(psoc, pdev);
+		return cfr_dbr_init_pdev(psoc, pdev);
 	} else if ((target_type == TARGET_TYPE_IPQ4019) ||
 		   (target_type == TARGET_TYPE_QCA9984) ||
 		   (target_type == TARGET_TYPE_QCA9888)) {
@@ -463,7 +463,7 @@ target_if_cfr_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 	target_type = target_if_cfr_get_target_type(psoc);
 
 	if (target_type == TARGET_TYPE_QCA8074V2) {
-		return cfr_8074v2_deinit_pdev(psoc, pdev);
+		return cfr_dbr_deinit_pdev(psoc, pdev);
 	} else if ((target_type == TARGET_TYPE_IPQ4019) ||
 		   (target_type == TARGET_TYPE_QCA9984) ||
 		   (target_type == TARGET_TYPE_QCA9888)) {
@@ -480,7 +480,7 @@ target_if_cfr_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 #endif
 
 #ifdef WLAN_ENH_CFR_ENABLE
-#ifdef QCA_WIFI_QCA6490
+#if defined(QCA_WIFI_QCA6490) || defined(QCA_WIFI_WCN7850)
 static uint8_t target_if_cfr_get_mac_id(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_vdev *vdev;

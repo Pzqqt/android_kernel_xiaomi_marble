@@ -98,8 +98,29 @@ reg_process_master_chan_list_ext(struct cur_regulatory_info *reg_info);
  */
 QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info *reg_info);
 
+/**
+ * reg_get_current_chan_list() - provide the pdev current channel list
+ * @pdev: pdev pointer
+ * @chan_list: channel list pointer
+ *
+ * Return: QDF_STATUS
+ */
 QDF_STATUS reg_get_current_chan_list(struct wlan_objmgr_pdev *pdev,
 				     struct regulatory_channel *chan_list);
+
+#ifdef CONFIG_REG_CLIENT
+/**
+ * reg_get_secondary_current_chan_list() - provide the pdev secondary current
+ * channel list
+ * @pdev: pdev pointer
+ * @chan_list: channel list pointer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+reg_get_secondary_current_chan_list(struct wlan_objmgr_pdev *pdev,
+				    struct regulatory_channel *chan_list);
+#endif
 
 /**
  * reg_update_nol_history_ch() - Set nol-history flag for the channels in the

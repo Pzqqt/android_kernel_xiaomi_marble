@@ -36,6 +36,7 @@
 #define IEEE80211_FC0_TYPE_MASK             0x0c
 #define IEEE80211_FC0_SUBTYPE_MASK          0xf0
 #define IEEE80211_FC0_TYPE_MGT              0x00
+#define IEEE80211_FC0_TYPE_CTL              0x04
 
 /* for TYPE_MGT */
 #define IEEE80211_FC0_SUBTYPE_ASSOC_REQ     0x00

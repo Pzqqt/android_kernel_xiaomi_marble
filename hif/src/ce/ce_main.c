@@ -103,6 +103,195 @@ static void hif_target_access_log_dump(void)
 }
 #endif
 
+/*
+ * This structure contains the interrupt index for each Copy engine
+ * for various number of MSIs available in the system.
+ */
+static struct ce_int_assignment ce_int_context[NUM_CE_CONTEXT] = {
+	/* Default configuration */
+	{{ CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(1),
+	  CE_INTERRUPT_IDX(2),
+	  CE_INTERRUPT_IDX(3),
+	  CE_INTERRUPT_IDX(4),
+	  CE_INTERRUPT_IDX(5),
+	  CE_INTERRUPT_IDX(6),
+	  CE_INTERRUPT_IDX(7),
+	  CE_INTERRUPT_IDX(8),
+	  CE_INTERRUPT_IDX(9),
+	  CE_INTERRUPT_IDX(10),
+	  CE_INTERRUPT_IDX(11),
+	} },
+	/* Interrupt assignment for 1 MSI combination */
+	{{ CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	} },
+	/* Interrupt assignment for 2 MSI combination */
+	{{ CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(1),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(1),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(1),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	} },
+	/* Interrupt assignment for 3 MSI combination */
+	{{ CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(1),
+	  CE_INTERRUPT_IDX(2),
+	  CE_INTERRUPT_IDX(1),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(1),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	} },
+	/* Interrupt assignment for 4 MSI combination */
+	{{ CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(1),
+	  CE_INTERRUPT_IDX(2),
+	  CE_INTERRUPT_IDX(3),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(1),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0)
+	} },
+	/* Interrupt assignment for 5 MSI combination */
+	{{ CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(1),
+	  CE_INTERRUPT_IDX(2),
+	  CE_INTERRUPT_IDX(3),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(4),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0)
+	} },
+	/* Interrupt assignment for 6 MSI combination */
+	{{ CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(1),
+	  CE_INTERRUPT_IDX(2),
+	  CE_INTERRUPT_IDX(3),
+	  CE_INTERRUPT_IDX(4),
+	  CE_INTERRUPT_IDX(5),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0)
+	} },
+	/* Interrupt assignment for 7 MSI combination */
+	{{ CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(1),
+	  CE_INTERRUPT_IDX(2),
+	  CE_INTERRUPT_IDX(3),
+	  CE_INTERRUPT_IDX(4),
+	  CE_INTERRUPT_IDX(5),
+	  CE_INTERRUPT_IDX(6),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0)
+	} },
+	/* Interrupt assignment for 8 MSI combination */
+	{{ CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(1),
+	  CE_INTERRUPT_IDX(2),
+	  CE_INTERRUPT_IDX(3),
+	  CE_INTERRUPT_IDX(4),
+	  CE_INTERRUPT_IDX(5),
+	  CE_INTERRUPT_IDX(6),
+	  CE_INTERRUPT_IDX(7),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0)
+	} },
+	/* Interrupt assignment for 9 MSI combination */
+	{{ CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(1),
+	  CE_INTERRUPT_IDX(2),
+	  CE_INTERRUPT_IDX(3),
+	  CE_INTERRUPT_IDX(4),
+	  CE_INTERRUPT_IDX(5),
+	  CE_INTERRUPT_IDX(6),
+	  CE_INTERRUPT_IDX(7),
+	  CE_INTERRUPT_IDX(8),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0)
+	} },
+	/* Interrupt assignment for 10 MSI combination */
+	{{ CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(1),
+	  CE_INTERRUPT_IDX(2),
+	  CE_INTERRUPT_IDX(3),
+	  CE_INTERRUPT_IDX(4),
+	  CE_INTERRUPT_IDX(5),
+	  CE_INTERRUPT_IDX(6),
+	  CE_INTERRUPT_IDX(7),
+	  CE_INTERRUPT_IDX(8),
+	  CE_INTERRUPT_IDX(9),
+	  CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(0)
+	} },
+	/* Interrupt assignment for 11 MSI combination */
+	{{ CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(1),
+	  CE_INTERRUPT_IDX(2),
+	  CE_INTERRUPT_IDX(3),
+	  CE_INTERRUPT_IDX(4),
+	  CE_INTERRUPT_IDX(5),
+	  CE_INTERRUPT_IDX(6),
+	  CE_INTERRUPT_IDX(7),
+	  CE_INTERRUPT_IDX(8),
+	  CE_INTERRUPT_IDX(9),
+	  CE_INTERRUPT_IDX(10),
+	  CE_INTERRUPT_IDX(0)
+	} },
+	/* Interrupt assignment for 12 MSI combination */
+	{{ CE_INTERRUPT_IDX(0),
+	  CE_INTERRUPT_IDX(1),
+	  CE_INTERRUPT_IDX(2),
+	  CE_INTERRUPT_IDX(3),
+	  CE_INTERRUPT_IDX(4),
+	  CE_INTERRUPT_IDX(5),
+	  CE_INTERRUPT_IDX(6),
+	  CE_INTERRUPT_IDX(7),
+	  CE_INTERRUPT_IDX(8),
+	  CE_INTERRUPT_IDX(9),
+	  CE_INTERRUPT_IDX(10),
+	  CE_INTERRUPT_IDX(11)
+	} },
+};
+
 
 void hif_trigger_dump(struct hif_opaque_softc *hif_ctx,
 		      uint8_t cmd_id, bool start)
@@ -2330,7 +2519,7 @@ void hif_send_complete_check(struct hif_opaque_softc *hif_ctx, uint8_t pipe,
 									 1))
 			return;
 	}
-#if ATH_11AC_TXCOMPACT
+#ifdef ATH_11AC_TXCOMPACT
 	ce_per_engine_servicereap(scn, pipe);
 #else
 	ce_per_engine_service(scn, pipe);
@@ -3376,11 +3565,20 @@ void hif_ce_prepare_config(struct hif_softc *scn)
 	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+	int ret;
+	int msi_data_count = 0;
+	int msi_data_start = 0;
+	int msi_irq_start = 0;
 
 	hif_ce_service_init();
 	hif_state->ce_services = ce_services_attach(scn);
 
+	ret = pld_get_user_msi_assignment(scn->qdf_dev->dev, "CE",
+					  &msi_data_count, &msi_data_start,
+					  &msi_irq_start);
+
 	scn->ce_count = HOST_CE_COUNT;
+	scn->int_assignment = &ce_int_context[msi_data_count];
 	/* if epping is enabled we need to use the epping configuration. */
 	if (QDF_IS_EPPING_ENABLED(mode)) {
 		hif_ce_prepare_epping_config(scn, hif_state);

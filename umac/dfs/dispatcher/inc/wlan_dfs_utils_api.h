@@ -141,17 +141,6 @@ bool utils_dfs_is_freq_in_nol(struct wlan_objmgr_pdev *pdev, uint32_t freq);
 QDF_STATUS utils_dfs_reset_precaclists(struct wlan_objmgr_pdev *pdev);
 
 /**
- * utils_dfs_unmark_precac_nol() - Clears precac channel marked as NOL.
- * @pdev: Pointer to DFS pdev object.
- * @chan: channel to be unmarked as NOL.
- *
- * Return void.
- */
-#ifdef CONFIG_CHAN_NUM_API
-void utils_dfs_unmark_precac_nol(struct wlan_objmgr_pdev *pdev, uint8_t chan);
-#endif
-
-/**
  * utils_dfs_unmark_precac_nol_for_freq() - Clears precac channel marked as NOL.
  * @pdev: Pointer to DFS pdev object.
  * @chan_freq: channel freq to be unmarked as NOL.

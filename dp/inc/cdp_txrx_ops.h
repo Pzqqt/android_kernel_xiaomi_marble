@@ -33,7 +33,8 @@
 #include <wdi_event_api.h>
 
 #ifdef IPA_OFFLOAD
-#ifdef CONFIG_IPA_WDI_UNIFIED_API
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)) || \
+	defined(CONFIG_IPA_WDI_UNIFIED_API)
 #include <qdf_ipa_wdi3.h>
 #else
 #include <qdf_ipa.h>
@@ -1374,6 +1375,8 @@ struct cdp_peer_ops {
 					 uint8_t *peer_mac, bool val);
 	void (*set_peer_as_tdls_peer)(struct cdp_soc_t *soc, uint8_t vdev_id,
 				      uint8_t *peer_mac, bool val);
+	void (*peer_flush_frags)(struct cdp_soc_t *soc_hdl,
+				 uint8_t vdev_id, uint8_t *peer_mac);
 };
 
 /**
@@ -1586,7 +1589,9 @@ struct cdp_ipa_ops {
 					  uint8_t pdev_id);
 	QDF_STATUS (*ipa_disable_autonomy)(struct cdp_soc_t *soc_hdl,
 					   uint8_t pdev_id);
-#ifdef CONFIG_IPA_WDI_UNIFIED_API
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)) || \
+	defined(CONFIG_IPA_WDI_UNIFIED_API)
 	QDF_STATUS (*ipa_setup)(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 				void *ipa_i2w_cb, void *ipa_w2i_cb,
 				void *ipa_wdi_meter_notifier_cb,
@@ -1715,8 +1720,9 @@ struct cdp_cfr_ops {
  */
 struct cdp_mscs_ops {
 	int (*mscs_peer_lookup_n_get_priority)(struct cdp_soc_t *soc,
-			      uint8_t *peer_mac,
-				  qdf_nbuf_t nbuf);
+			uint8_t *src_mac,
+			uint8_t *dst_mac,
+			qdf_nbuf_t nbuf);
 };
 #endif
 

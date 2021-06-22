@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -38,6 +38,7 @@
 
 /* SW headers */
 #include "hal_api.h"
+#include "hal_rx_hw_defines.h"
 
 /*---------------------------------------------------------------------------
   Preprocessor definitions and constants
@@ -77,8 +78,43 @@
 #define HAL_GET_TLV(desc)	(((struct tlv_32_hdr *) desc)->tlv_tag)
 
 #define HAL_OFFSET_DW(_block, _field) (HAL_OFFSET(_block, _field) >> 2)
+#define HAL_OFFSET_QW(_block, _field) (HAL_OFFSET(_block, _field) >> 3)
 /* dword offsets in REO cmd TLV */
 #define CMD_HEADER_DW_OFFSET	0
+
+/* TODO: See if the following definition is available in HW headers */
+#define HAL_REO_OWNED 4
+#define HAL_REO_QUEUE_DESC 8
+
+/* TODO: Using associated link desc counter 1 for Rx. Check with FW on
+ * how these counters are assigned
+ */
+#define HAL_RX_LINK_DESC_CNTR 1
+/* TODO: Following definition should be from HW headers */
+#define HAL_DESC_REO_OWNED 4
+
+#ifndef TID_TO_WME_AC
+/**
+ * enum hal_wme_access_category: Access category enums
+ * @WME_AC_BE: best effort
+ * @WME_AC_BK: background
+ * @WME_AC_VI: video
+ * @WME_AC_VO: voice
+ */
+enum hal_wme_access_category {
+	WME_AC_BE,
+	WME_AC_BK,
+	WME_AC_VI,
+	WME_AC_VO
+};
+
+#define TID_TO_WME_AC(_tid) ( \
+	(((_tid) == 0) || ((_tid) == 3)) ? WME_AC_BE : \
+	(((_tid) == 1) || ((_tid) == 2)) ? WME_AC_BK : \
+	(((_tid) == 4) || ((_tid) == 5)) ? WME_AC_VI : \
+	WME_AC_VO)
+#endif
+#define HAL_NON_QOS_TID 16
 
 /**
  * enum reo_unblock_cache_type: Enum for unblock type in REO unblock command
@@ -120,25 +156,6 @@ enum reo_cmd_exec_status {
 	HAL_REO_CMD_FAILED = 2,
 	HAL_REO_CMD_RESOURCE_BLOCKED = 3,
 	HAL_REO_CMD_DRAIN = 0xff
-};
-
-/**
- * enum hal_reo_cmd_type: Enum for REO command type
- * @CMD_GET_QUEUE_STATS: Get REO queue status/stats
- * @CMD_FLUSH_QUEUE: Flush all frames in REO queue
- * @CMD_FLUSH_CACHE: Flush descriptor entries in the cache
- * @CMD_UNBLOCK_CACHE: Unblock a descriptor’s address that was blocked
- *	earlier with a ‘REO_FLUSH_CACHE’ command
- * @CMD_FLUSH_TIMEOUT_LIST: Flush buffers/descriptors from timeout list
- * @CMD_UPDATE_RX_REO_QUEUE: Update REO queue settings
- */
-enum hal_reo_cmd_type {
-	CMD_GET_QUEUE_STATS	= 0,
-	CMD_FLUSH_QUEUE		= 1,
-	CMD_FLUSH_CACHE		= 2,
-	CMD_UNBLOCK_CACHE	= 3,
-	CMD_FLUSH_TIMEOUT_LIST	= 4,
-	CMD_UPDATE_RX_REO_QUEUE = 5
 };
 
 /**
@@ -490,57 +507,212 @@ union hal_reo_status {
 	struct hal_reo_update_rx_queue_status rx_queue_status;
 };
 
-/* Prototypes */
+#ifdef HAL_DISABLE_NON_BA_2K_JUMP_ERROR
+static inline uint32_t hal_update_non_ba_win_size(int tid,
+						  uint32_t ba_window_size)
+{
+	return ba_window_size;
+}
+#else
+static inline uint32_t hal_update_non_ba_win_size(int tid,
+						  uint32_t ba_window_size)
+{
+	if ((ba_window_size == 1) && (tid != HAL_NON_QOS_TID))
+		ba_window_size++;
+
+	return ba_window_size;
+}
+#endif
+
+#define BLOCK_RES_MASK		0xF
+static inline uint8_t hal_find_one_bit(uint8_t x)
+{
+	uint8_t y = (x & (~x + 1)) & BLOCK_RES_MASK;
+	uint8_t pos;
+
+	for (pos = 0; y; y >>= 1)
+		pos++;
+
+	return pos-1;
+}
+
+static inline uint8_t hal_find_zero_bit(uint8_t x)
+{
+	uint8_t y = (~x & (x+1)) & BLOCK_RES_MASK;
+	uint8_t pos;
+
+	for (pos = 0; y; y >>= 1)
+		pos++;
+
+	return pos-1;
+}
+
 /* REO command ring routines */
-void hal_reo_cmd_set_descr_addr(uint32_t *reo_desc,
-				enum hal_reo_cmd_type type,
-				uint32_t paddr_lo,
-				uint8_t paddr_hi);
-int hal_reo_cmd_queue_stats(hal_ring_handle_t hal_ring_hdl,
-			    hal_soc_handle_t hal_soc_hdl,
-			    struct hal_reo_cmd_params *cmd);
-int hal_reo_cmd_flush_queue(hal_ring_handle_t hal_ring_hdl,
-			    hal_soc_handle_t hal_soc_hdl,
-			    struct hal_reo_cmd_params *cmd);
-int hal_reo_cmd_flush_cache(hal_ring_handle_t hal_ring_hdl,
-			    hal_soc_handle_t hal_soc_hdl,
-			    struct hal_reo_cmd_params *cmd);
-int hal_reo_cmd_unblock_cache(hal_ring_handle_t hal_ring_hdl,
-			      hal_soc_handle_t hal_soc_hdl,
-			      struct hal_reo_cmd_params *cmd);
-int hal_reo_cmd_flush_timeout_list(hal_ring_handle_t hal_ring_hdl,
-				   hal_soc_handle_t hal_soc_hdl,
-				   struct hal_reo_cmd_params *cmd);
-int hal_reo_cmd_update_rx_queue(hal_ring_handle_t hal_ring_hdl,
-				hal_soc_handle_t hal_soc_hdl,
-				struct hal_reo_cmd_params *cmd);
 
-/* REO status ring routines */
-void hal_reo_queue_stats_status(uint32_t *reo_desc,
-				struct hal_reo_queue_status *st,
-				hal_soc_handle_t hal_soc_hdl);
-void hal_reo_flush_queue_status(uint32_t *reo_desc,
-				struct hal_reo_flush_queue_status *st,
-				hal_soc_handle_t hal_soc_hdl);
-void hal_reo_flush_cache_status(uint32_t *reo_desc,
-				struct hal_reo_flush_cache_status *st,
-				hal_soc_handle_t hal_soc_hdl);
-void hal_reo_unblock_cache_status(uint32_t *reo_desc,
-				  hal_soc_handle_t hal_soc_hdl,
-				  struct hal_reo_unblk_cache_status *st);
-void hal_reo_flush_timeout_list_status(
-			   uint32_t *reo_desc,
-			   struct hal_reo_flush_timeout_list_status *st,
-			   hal_soc_handle_t hal_soc_hdl);
-void hal_reo_desc_thres_reached_status(
-				uint32_t *reo_desc,
-				struct hal_reo_desc_thres_reached_status *st,
-				hal_soc_handle_t hal_soc_hdl);
-void hal_reo_rx_update_queue_status(uint32_t *reo_desc,
-				    struct hal_reo_update_rx_queue_status *st,
-				    hal_soc_handle_t hal_soc_hdl);
+/**
+ * hal_uniform_desc_hdr_setup - setup reo_queue_ext descritpro
+ * @owner - owner info
+ * @buffer_type - buffer type
+ */
+static inline void
+hal_uniform_desc_hdr_setup(uint32_t *desc, uint32_t owner, uint32_t buffer_type)
+{
+	HAL_DESC_SET_FIELD(desc, HAL_UNIFORM_DESCRIPTOR_HEADER, OWNER,
+			   owner);
+	HAL_DESC_SET_FIELD(desc, HAL_UNIFORM_DESCRIPTOR_HEADER, BUFFER_TYPE,
+			   buffer_type);
+}
 
+/**
+ * hal_reo_send_cmd() - Send reo cmd using the params provided.
+ * @hal_soc_hdl: HAL soc handle
+ * @hal_soc_hdl: srng handle
+ * @cmd: cmd ID
+ * @cmd_params: command params
+ *
+ * Return: cmd number
+ */
+static inline int
+hal_reo_send_cmd(hal_soc_handle_t hal_soc_hdl,
+		 hal_ring_handle_t  hal_ring_hdl,
+		 enum hal_reo_cmd_type cmd,
+		 struct hal_reo_cmd_params *cmd_params)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (!hal_soc || !hal_soc->ops) {
+		hal_err("hal handle is NULL");
+		QDF_BUG(0);
+		return -EINVAL;
+	}
+
+	if (hal_soc->ops->hal_reo_send_cmd)
+		return hal_soc->ops->hal_reo_send_cmd(hal_soc_hdl, hal_ring_hdl,
+						      cmd, cmd_params);
+
+	return -EINVAL;
+}
+
+static inline QDF_STATUS
+hal_reo_status_update(hal_soc_handle_t hal_soc_hdl,
+		      hal_ring_desc_t reo_desc, void *st_handle,
+		      uint32_t tlv, int *num_ref)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (hal_soc->ops->hal_reo_send_cmd)
+		return hal_soc->ops->hal_reo_status_update(hal_soc_hdl,
+							   reo_desc,
+							   st_handle,
+							   tlv, num_ref);
+	return QDF_STATUS_E_FAILURE;
+}
+
+/* REO Status ring routines */
+static inline void hal_reo_qdesc_setup(hal_soc_handle_t hal_soc_hdl, int tid,
+				       uint32_t ba_window_size,
+			 uint32_t start_seq, void *hw_qdesc_vaddr,
+			 qdf_dma_addr_t hw_qdesc_paddr,
+			 int pn_type)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (!hal_soc || !hal_soc->ops) {
+		hal_err("hal handle is NULL");
+		QDF_BUG(0);
+		return;
+	}
+
+	if (hal_soc->ops->hal_reo_qdesc_setup)
+		hal_soc->ops->hal_reo_qdesc_setup(hal_soc_hdl, tid,
+						  ba_window_size, start_seq,
+						  hw_qdesc_vaddr,
+						  hw_qdesc_paddr, pn_type);
+}
+
+/**
+ * hal_get_ba_aging_timeout - Retrieve BA aging timeout
+ *
+ * @hal_soc: Opaque HAL SOC handle
+ * @ac: Access category
+ * @value: timeout duration in millisec
+ */
+static inline void hal_get_ba_aging_timeout(hal_soc_handle_t hal_soc_hdl,
+					    uint8_t ac,
+					    uint32_t *value)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	hal_soc->ops->hal_get_ba_aging_timeout(hal_soc_hdl, ac, value);
+}
+
+/**
+ * hal_set_aging_timeout - Set BA aging timeout
+ *
+ * @hal_soc: Opaque HAL SOC handle
+ * @ac: Access category in millisec
+ * @value: timeout duration value
+ */
+static inline void hal_set_ba_aging_timeout(hal_soc_handle_t hal_soc_hdl,
+					    uint8_t ac,
+					    uint32_t value)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	hal_soc->ops->hal_set_ba_aging_timeout(hal_soc_hdl, ac, value);
+}
+
+/**
+ * hal_get_reo_reg_base_offset() - Get REO register base offset
+ * @hal_soc_hdl: HAL soc handle
+ *
+ * Return: REO register base
+ */
+static inline uint32_t hal_get_reo_reg_base_offset(hal_soc_handle_t hal_soc_hdl)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	return hal_soc->ops->hal_get_reo_reg_base_offset();
+}
+
+static inline uint32_t
+hal_gen_reo_remap_val(hal_soc_handle_t hal_soc_hdl,
+		      enum hal_reo_remap_reg remap_reg,
+		      uint8_t *ix0_map)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (!hal_soc || !hal_soc->ops) {
+		hal_err("hal handle is NULL");
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (hal_soc->ops->hal_gen_reo_remap_val)
+		return hal_soc->ops->hal_gen_reo_remap_val(remap_reg, ix0_map);
+
+	return 0;
+}
+
+static inline uint8_t
+hal_get_tlv_hdr_size(hal_soc_handle_t hal_soc_hdl)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (hal_soc->ops->hal_get_tlv_hdr_size)
+		return hal_soc->ops->hal_get_tlv_hdr_size();
+
+	return 0;
+}
+/* Function Proto-types */
+
+/**
+ * hal_reo_init_cmd_ring() - Initialize descriptors of REO command SRNG
+ * with command number
+ * @hal_soc: Handle to HAL SoC structure
+ * @hal_ring: Handle to HAL SRNG structure
+ * Return: none
+ */
 void hal_reo_init_cmd_ring(hal_soc_handle_t hal_soc_hdl,
 			   hal_ring_handle_t hal_ring_hdl);
-
 #endif /* _HAL_REO_H */

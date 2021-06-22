@@ -4931,6 +4931,9 @@ typedef enum {
 	wmi_vdev_param_nan_config_features,
 	wmi_vdev_param_enable_disable_rtt_responder_role,
 	wmi_vdev_param_enable_disable_rtt_initiator_role,
+#ifdef WLAN_FEATURE_11BE
+	wmi_vdev_param_set_ehtop,
+#endif
 } wmi_conv_vdev_param_id;
 
 /**
@@ -5187,6 +5190,18 @@ typedef enum {
 #ifdef WLAN_FEATURE_IGMP_OFFLOAD
 	wmi_service_igmp_offload_support,
 #endif
+#ifdef WLAN_FEATURE_11BE
+	wmi_service_11be,
+#endif
+#ifdef WLAN_FEATURE_11AX
+#ifdef FEATURE_WLAN_TDLS
+	wmi_service_tdls_ax_support,
+#endif
+#endif
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+	wmi_service_big_data_support,
+#endif
+	wmi_service_sae_eapol_offload_support,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
@@ -5443,6 +5458,7 @@ typedef struct {
 	bool carrier_vow_optimization;
 	uint32_t is_sap_connected_d3wow_enabled;
 	uint32_t is_go_connected_d3wow_enabled;
+	bool sae_eapol_offload;
 } target_resource_config;
 
 /**
@@ -5700,6 +5716,9 @@ typedef enum {
 	WMI_HOST_RATE_PREAMBLE_HT,
 	WMI_HOST_RATE_PREAMBLE_VHT,
 	WMI_HOST_RATE_PREAMBLE_HE,
+#ifdef WLAN_FEATURE_11BE
+	WMI_HOST_RATE_PREAMBLE_EHT,
+#endif
 } WMI_HOST_RATE_PREAMBLE;
 
 #define WMI_HOST_FIXED_RATE_NONE	(0xff)

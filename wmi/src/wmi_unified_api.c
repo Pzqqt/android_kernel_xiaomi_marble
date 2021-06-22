@@ -727,6 +727,16 @@ QDF_STATUS wmi_unified_pno_stop_cmd(wmi_unified_t wmi_handle, uint8_t vdev_id)
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS wmi_unified_obss_disable_cmd(wmi_unified_t wmi_handle,
+					uint8_t vdev_id)
+{
+	if (wmi_handle->ops->send_obss_disable_cmd)
+		return wmi_handle->ops->send_obss_disable_cmd(wmi_handle,
+							      vdev_id);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 #ifdef FEATURE_WLAN_SCAN_PNO
 QDF_STATUS wmi_unified_pno_start_cmd(wmi_unified_t wmi_handle,
 				     struct pno_scan_req_params *pno)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -357,6 +357,20 @@ target_if_pno_stop(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
+static QDF_STATUS
+target_if_obss_scan_disable(struct wlan_objmgr_psoc *psoc,
+			    uint8_t vdev_id)
+{
+	struct wmi_unified *wmi_handle;
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid WMI handle");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return wmi_unified_obss_disable_cmd(wmi_handle, vdev_id);
+}
 
 QDF_STATUS
 target_if_scan_register_event_handler(struct wlan_objmgr_psoc *psoc, void *arg)
@@ -453,6 +467,7 @@ target_if_scan_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
 	scan->scan_cancel = target_if_scan_cancel;
 	scan->pno_start = target_if_pno_start;
 	scan->pno_stop = target_if_pno_stop;
+	scan->obss_disable = target_if_obss_scan_disable;
 	scan->scan_reg_ev_handler = target_if_scan_register_event_handler;
 	scan->scan_unreg_ev_handler = target_if_scan_unregister_event_handler;
 

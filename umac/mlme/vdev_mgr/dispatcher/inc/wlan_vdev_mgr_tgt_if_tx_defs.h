@@ -454,6 +454,7 @@ struct vdev_scan_nac_rssi_params {
  * @cac_duration_ms: cac duration in milliseconds
  * @regdomain: Regulatory domain
  * @he_ops: HE ops
+ * @eht_ops: EHT ops
  * @channel_param: Channel params required by target.
  * @bcn_tx_rate_code: Beacon tx rate code.
  * @ldpc_rx_enabled: Enable/Disable LDPC RX for this vdev
@@ -475,6 +476,9 @@ struct vdev_start_params {
 	uint32_t cac_duration_ms;
 	uint32_t regdomain;
 	uint32_t he_ops;
+#ifdef WLAN_FEATURE_11BE
+	uint32_t eht_ops;
+#endif
 	struct mlme_channel_param channel;
 	enum mlme_bcn_tx_rate_code bcn_tx_rate_code;
 	bool ldpc_rx_enabled;

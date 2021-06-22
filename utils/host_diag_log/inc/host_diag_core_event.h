@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -192,6 +192,10 @@ enum mgmt_dot11_mode {
 	DOT11_MODE_AUTO = 0x09,
 	DOT11_MODE_11AX = 0x0a,
 	DOT11_MODE_11AX_ONLY = 0x0b,
+#ifdef WLAN_FEATURE_11BE
+	DOT11_MODE_11BE = 0x0c,
+	DOT11_MODE_11BE_ONLY = 0x0d,
+#endif
 	DOT11_MODE_MAX = 0xff,
 };
 
@@ -231,6 +235,35 @@ enum mgmt_bss_type {
 	BTAMP_PERSONA = 0x0d,
 	AHDEMO_PERSONA = 0x0e,
 	MAX_PERSONA = 0xff,
+};
+
+/**
+ * enum wlan_bringup_status: driver/device status
+ *
+ * @WLAN_STATUS_DISABLED: WLAN Disabled
+ * @WLAN_STATUS_ENABLED: WLAN Enabled
+ * @WLAN_STATUS_RESET_FAIL: Reset Fail
+ * @WLAN_STATUS_RESET_SUCCESS: Reset Success
+ * @WLAN_STATUS_DEVICE_REMOVED: Device Removed
+ * @WLAN_STATUS_DEVICE_INSERTED: Devide Inserted
+ * @WLAN_STATUS_DRIVER_UNLOADED: Driver Unloaded
+ * @WLAN_STATUS_DRIVER_LOADED: Driver Loaded
+ * @WLAN_STATUS_BUS_EXCEPTION: bus/link exception
+ * @WLAN_STATUS_DEVICE_TEMPERATURE_HIGH: chip temperature high
+ */
+enum wlan_bringup_status {
+	WLAN_STATUS_DISABLED = 0,
+	WLAN_STATUS_ENABLED = 1,
+	WLAN_STATUS_RESET_FAIL = 2,
+	WLAN_STATUS_RESET_SUCCESS = 3,
+	WLAN_STATUS_DEVICE_REMOVED = 4,
+	WLAN_STATUS_DEVICE_INSERTED = 5,
+	WLAN_STATUS_DRIVER_UNLOADED = 6,
+	WLAN_STATUS_DRIVER_LOADED = 7,
+	WLAN_STATUS_BUS_EXCEPTION = 8,
+	WLAN_STATUS_DEVICE_TEMPERATURE_HIGH = 9,
+
+	WLAN_STATUS_MAX = 0xffff,
 };
 
 /*-------------------------------------------------------------------------
@@ -425,9 +458,18 @@ typedef struct {
 /*-------------------------------------------------------------------------
    Event ID: EVENT_WLAN_BRINGUP_STATUS
    ------------------------------------------------------------------------*/
+/**
+ * struct host_event_wlan_bringup_status_payload_type - Structure holding the
+ * device/driver status info
+ *
+ * @wlan_status: status code as defined by enum wlan_bringup_status
+ * @driver_version: version of WLAN driver
+ *
+ * This structure will hold WLAN device basic status and driver version
+ */
 typedef struct {
-	uint16_t wlanStatus;
-	char driverVersion[10];
+	uint16_t wlan_status;
+	char driver_version[10];
 } host_event_wlan_bringup_status_payload_type;
 
 /*-------------------------------------------------------------------------

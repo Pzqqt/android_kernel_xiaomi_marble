@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -134,6 +134,34 @@ QDF_STATUS tgt_scan_pno_stop(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+QDF_STATUS tgt_scan_obss_disable(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_lmac_if_scan_tx_ops *scan_ops;
+	struct wlan_objmgr_psoc *psoc;
+	uint8_t vdev_id;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+
+	if (!psoc) {
+		scm_err("NULL PSOC");
+		return QDF_STATUS_E_FAILURE;
+	}
+	scan_ops = wlan_psoc_get_scan_txops(psoc);
+	if (!scan_ops) {
+		scm_err("NULL scan_ops");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	vdev_id = wlan_vdev_get_id(vdev);
+
+	/* invoke wmi_unified_obss_disable_cmd() */
+	QDF_ASSERT(scan_ops->obss_disable);
+	if (scan_ops->obss_disable)
+		return scan_ops->obss_disable(psoc, vdev_id);
+
+	return QDF_STATUS_SUCCESS;
+}
 
 QDF_STATUS
 tgt_scan_start(struct scan_start_request *req)

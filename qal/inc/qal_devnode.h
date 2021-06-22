@@ -37,17 +37,6 @@ typedef __qdf_devnode_t qdf_devnode_t;
 #ifdef ENHANCED_OS_ABSTRACTION
 
 /**
- * qal_devnode_fetch_pci_domain_id() - This function will try to obtain the
- * host bridge domain number
- * @node: device tree node
- * @domain_id: pointer to domain number
- *
- * Return: QDF_STATUS_SUCCESS if domain_id is in the range, error code otherwise
- */
-QDF_STATUS
-qal_devnode_fetch_pci_domain_id(qdf_devnode_t devnode, int *domain_id);
-
-/**
  * qal_devnode_read_u32_array() - Find and read an array of 32 bit integers
  * from a property.
  * @devnode: device node from which the property value is to be read.
@@ -72,11 +61,6 @@ QDF_STATUS
 qal_devnode_read_u32(const qdf_devnode_t devnode,
 		     const char *pname, uint32_t *u32_val);
 #else
-static inline QDF_STATUS
-qal_devnode_fetch_pci_domain_id(qdf_devnode_t devnode, int *domain_id)
-{
-	return __qal_devnode_fetch_pci_domain_id(devnode, domain_id);
-}
 
 static inline QDF_STATUS
 qal_devnode_read_u32_array(const qdf_devnode_t devnode,

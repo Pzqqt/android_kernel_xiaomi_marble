@@ -421,11 +421,26 @@ static inline void dp_wds_ext_peer_init(struct dp_peer *peer)
 }
 #endif /* QCA_SUPPORT_WDS_EXTENDED */
 
+#ifdef QCA_HOST2FW_RXBUF_RING
+static inline
+struct dp_srng *dp_get_rxdma_ring(struct dp_pdev *pdev, int lmac_id)
+{
+	return &pdev->rx_mac_buf_ring[lmac_id];
+}
+#else
+static inline
+struct dp_srng *dp_get_rxdma_ring(struct dp_pdev *pdev, int lmac_id)
+{
+	return &pdev->soc->rx_refill_buf_ring[lmac_id];
+}
+#endif
+
 /**
  * The lmac ID for a particular channel band is fixed.
  * 2.4GHz band uses lmac_id = 1
  * 5GHz/6GHz band uses lmac_id=0
  */
+#define DP_INVALID_LMAC_ID	(-1)
 #define DP_MON_INVALID_LMAC_ID	(-1)
 #define DP_MON_2G_LMAC_ID	1
 #define DP_MON_5G_LMAC_ID	0
@@ -1835,9 +1850,19 @@ void dp_peer_stats_update_protocol_cnt(struct cdp_soc_t *soc,
 				       bool is_egress,
 				       bool is_rx);
 
+void dp_vdev_peer_stats_update_protocol_cnt_tx(struct dp_vdev *vdev_hdl,
+					       qdf_nbuf_t nbuf);
+
 #else
 #define dp_vdev_peer_stats_update_protocol_cnt(vdev, nbuf, peer, \
 					       is_egress, is_rx)
+
+static inline
+void dp_vdev_peer_stats_update_protocol_cnt_tx(struct dp_vdev *vdev_hdl,
+					       qdf_nbuf_t nbuf)
+{
+}
+
 #endif
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
@@ -2430,7 +2455,7 @@ static inline uint32_t dp_history_get_next_index(qdf_atomic_t *curr_idx,
  *
  * Return: None
  */
-void dp_rx_skip_tlvs(qdf_nbuf_t nbuf, uint32_t l3_padding);
+void dp_rx_skip_tlvs(struct dp_soc *soc, qdf_nbuf_t nbuf, uint32_t l3_padding);
 
 /**
  * dp_soc_is_full_mon_enable () - Return if full monitor mode is enabled
@@ -2752,4 +2777,16 @@ void dp_pdev_bkp_stats_detach(struct dp_pdev *pdev);
  */
 
 QDF_STATUS dp_pdev_bkp_stats_attach(struct dp_pdev *pdev);
+
+/**
+ * dp_peer_flush_frags() - Flush all fragments for a particular
+ *  peer
+ * @soc_hdl - data path soc handle
+ * @vdev_id - vdev id
+ * @peer_addr - peer mac address
+ *
+ * Return: None
+ */
+void dp_peer_flush_frags(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+			 uint8_t *peer_mac);
 #endif /* #ifndef _DP_INTERNAL_H_ */

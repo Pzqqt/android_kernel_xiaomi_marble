@@ -196,6 +196,8 @@ struct wlan_srng_cfg {
  * @is_swlm_enabled: flag to enable/disable SWLM
  * @tx_per_pkt_vdev_id_check: Enable tx perpkt vdev id check
  * @wow_check_rx_pending_enable: Enable RX frame pending check in WoW
+ * @ipa_tx_ring_size: IPA tx ring size
+ * @ipa_tx_comp_ring_size: IPA tx completion ring size
  */
 struct wlan_cfg_dp_soc_ctxt {
 	int num_int_ctxts;
@@ -225,17 +227,17 @@ struct wlan_cfg_dp_soc_ctxt {
 	int tx_ring_size;
 	int tx_comp_ring_size;
 	int tx_comp_ring_size_nss;
-	int int_tx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
-	int int_rx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
-	int int_rx_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
-	int int_host2rxdma_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
-	int int_rxdma2host_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
-	int int_ce_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
-	int int_rx_err_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
-	int int_rx_wbm_rel_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
-	int int_reo_status_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
-	int int_rxdma2host_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
-	int int_host2rxdma_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	uint8_t int_tx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	uint8_t int_rx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	uint8_t int_rx_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	uint8_t int_host2rxdma_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	uint8_t int_rxdma2host_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	uint8_t int_ce_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	uint8_t int_rx_err_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	uint8_t int_rx_wbm_rel_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	uint8_t int_reo_status_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	uint8_t int_rxdma2host_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	uint8_t int_host2rxdma_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int hw_macid[MAX_PDEV_CNT];
 	int hw_macid_pdev_id_map[MAX_NUM_LMAC_HW];
 	int base_hw_macid;
@@ -317,6 +319,10 @@ struct wlan_cfg_dp_soc_ctxt {
 	uint8_t radio1_rx_default_reo;
 	uint8_t radio2_rx_default_reo;
 	bool wow_check_rx_pending_enable;
+#ifdef IPA_OFFLOAD
+	uint32_t ipa_tx_ring_size;
+	uint32_t ipa_tx_comp_ring_size;
+#endif
 };
 
 /**
@@ -1412,13 +1418,15 @@ wlan_cfg_is_tx_per_pkt_vdev_id_check_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
  * wlan_cfg_fill_interrupt_mask() - set interrupt mask
  *
  * @wlan_cfg_dp_soc_ctxt: soc configuration context
- * @interrupt_mode: interrupt_mode: MSI/LEGACY
+ * @num_dp_msi: Number of DP interrupts available (0 for integrated)
+ * @interrupt_mode: Type of interrupt
  * @is_monitor_mode: is monitor mode enabled
  *
  * Return: void
  */
 void wlan_cfg_fill_interrupt_mask(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
-				  int interrupt_mode, bool is_monitor_mode);
+				  int num_dp_msi, int interrupt_mode,
+				  bool is_monitor_mode);
 
 /**
  * wlan_cfg_is_rx_fisa_enabled() - Get Rx FISA enabled flag
@@ -1522,6 +1530,36 @@ bool wlan_cfg_is_swlm_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
  * Return: force use 64 BA flag
  */
 bool wlan_cfg_is_dp_force_rx_64_ba(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+#ifdef IPA_OFFLOAD
+/*
+ * wlan_cfg_ipa_tx_ring_size - Get Tx DMA ring size (TCL Data Ring)
+ * @wlan_cfg_soc_ctx: dp cfg context
+ *
+ * Return: IPA Tx Ring Size
+ */
+uint32_t wlan_cfg_ipa_tx_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_ipa_tx_comp_ring_size - Get Tx completion ring size (WBM Ring)
+ * @wlan_cfg_soc_ctx: dp cfg context
+ *
+ * Return: IPA Tx Completion ring size
+ */
+uint32_t wlan_cfg_ipa_tx_comp_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+#else
+static inline
+uint32_t wlan_cfg_ipa_tx_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return 0;
+}
+
+static inline
+uint32_t wlan_cfg_ipa_tx_comp_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return 0;
+}
+#endif
 #endif
 
 /**
@@ -1561,10 +1599,11 @@ void wlan_cfg_set_rxdma1_enable(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
  * is enabled
  * @cfg: soc configuration context
  *
- * Return: .
+ * Return: true if enabled, false otherwise.
  */
-void
-wlan_cfg_set_delay_mon_replenish(struct wlan_cfg_dp_soc_ctxt *cfg, bool val);
+bool
+wlan_cfg_is_delay_mon_replenish(struct wlan_cfg_dp_soc_ctxt *cfg);
+
 /**
  * wlan_cfg_set_delay_mon_replenish() - Set delayed monitor replenish
  * @cfg: soc configuration context
@@ -1572,5 +1611,13 @@ wlan_cfg_set_delay_mon_replenish(struct wlan_cfg_dp_soc_ctxt *cfg, bool val);
  *
  * Return: .
  */
-bool
-wlan_cfg_is_delay_mon_replenish(struct wlan_cfg_dp_soc_ctxt *cfg);
+void
+wlan_cfg_set_delay_mon_replenish(struct wlan_cfg_dp_soc_ctxt *cfg, bool val);
+
+/**
+ * wlan_cfg_dp_soc_ctx_dump() - Dump few DP cfg soc parameters
+ * @cfg: soc configuration context
+ *
+ * Return:
+ */
+void wlan_cfg_dp_soc_ctx_dump(struct wlan_cfg_dp_soc_ctxt *cfg);

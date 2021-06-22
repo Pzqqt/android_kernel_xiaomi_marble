@@ -74,6 +74,12 @@ static void hif_target_dump_access_log(void);
 #define CE_ATTR_DIAG_FLAGS \
 	(CE_ATTR_FLAGS | CE_ATTR_DIAG)
 
+#ifdef ENABLE_CE4_COMP_DISABLE_HTT_HTC_MISC_LIST
+#define CE4_COMP_HTT_HTC CE_ATTR_FLAGS
+#else
+#define CE4_COMP_HTT_HTC (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR)
+#endif
+
 #ifdef QCN7605_SUPPORT
 
 #define QCN7605_CE_COUNT 9
@@ -1223,7 +1229,8 @@ static struct CE_attr host_ce_config_wlan_qca6390[] = {
 #ifdef REMOVE_PKT_LOG
 	{ /* CE5 */ 0, 0, 0, 0, 0, NULL,},
 #else
-	{ /* CE5 */ CE_ATTR_FLAGS, 0, 0, 2048, 512, NULL,},
+	{ /* CE5 */ (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0, 0, 2048, 512,
+		NULL,},
 #endif
 	/* Target autonomous HIF_memcpy */
 	{ /* CE6 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
@@ -1274,10 +1281,11 @@ static struct CE_attr host_ce_config_wlan_qca6490[] = {
 	/* host->target WMI */
 	{ /* CE3 */ CE_ATTR_FLAGS, 0, 32, 2048, 0, NULL,},
 	/* host->target HTT */
-	{ /* CE4 */ (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,
+	{ /* CE4 */ CE4_COMP_HTT_HTC, 0,
 		CE_HTT_H2T_MSG_SRC_NENTRIES_QCA6490, 256, 0, NULL,},
 	/* target -> host PKTLOG */
-	{ /* CE5 */ CE_ATTR_FLAGS, 0, 0, 2048, 512, NULL,},
+	{ /* CE5 */ (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0, 0, 2048, 512,
+		NULL,},
 	/* Target autonomous HIF_memcpy */
 	{ /* CE6 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
 	/* ce_diag, the Diagnostic Window */
@@ -1319,14 +1327,15 @@ static struct CE_attr host_ce_config_wlan_qca6750[] = {
 	/* target->host HTT + HTC control */
 	{ /* CE1 */ CE_ATTR_FLAGS, 0, 0,  2048, 512, NULL,},
 	/* target->host WMI */
-	{ /* CE2 */ CE_ATTR_FLAGS, 0, 0,  2048, 32, NULL,},
+	{ /* CE2 */ CE_ATTR_FLAGS | CE_ATTR_HI_TASKLET, 0, 0,  2048, 32, NULL,},
 	/* host->target WMI */
 	{ /* CE3 */ CE_ATTR_FLAGS, 0, 32, 2048, 0, NULL,},
 	/* host->target HTT */
 	{ /* CE4 */ (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,
 		CE_HTT_H2T_MSG_SRC_NENTRIES, 256, 0, NULL,},
 	/* target -> host PKTLOG */
-	{ /* CE5 */ CE_ATTR_FLAGS, 0, 0, 2048, 512, NULL,},
+	{ /* CE5 */ (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0, 0, 2048, 512,
+		NULL,},
 	/* Target autonomous HIF_memcpy */
 	{ /* CE6 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
 #ifdef WLAN_FEATURE_WMI_DIAG_OVER_CE7

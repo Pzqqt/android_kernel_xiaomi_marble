@@ -413,6 +413,7 @@ typedef bool (*qdf_irqlocked_func_t)(void *);
  * @QDF_MODULE_ID_QWRAP: QWRAP module ID
  * @QDF_MODULE_ID_DBDC_REP: DBDC repeater module ID
  * @QDF_MODULE_ID_EXT_AP: Extended AP module ID
+ * @QDF_MODULE_ID_MLO: MLO Manager module ID
  * @QDF_MODULE_ID_ANY: anything
  * @QDF_MODULE_ID_MAX: Max place holder module ID
  *
@@ -563,6 +564,7 @@ typedef enum {
 	QDF_MODULE_ID_QWRAP,
 	QDF_MODULE_ID_DBDC_REP,
 	QDF_MODULE_ID_EXT_AP,
+	QDF_MODULE_ID_MLO,
 	QDF_MODULE_ID_ANY,
 	QDF_MODULE_ID_MAX,
 } QDF_MODULE_ID;
@@ -1391,6 +1393,7 @@ enum qdf_suspend_type {
  * @QDF_SUSPEND_NO_CREDIT: host lack of credit after suspend
  * @QCA_HANG_BUS_FAILURE: Bus failure
  * @QDF_TASKLET_CREDIT_LATENCY_DETECT: tasklet or credit latency happened
+ * @QDF_RX_REG_PKT_ROUTE_ERR: MSDU buf errors exceed thresh in REO err path
  */
 enum qdf_hang_reason {
 	QDF_REASON_UNSPECIFIED,
@@ -1418,6 +1421,7 @@ enum qdf_hang_reason {
 	QDF_SUSPEND_NO_CREDIT,
 	QCA_HANG_BUS_FAILURE,
 	QDF_TASKLET_CREDIT_LATENCY_DETECT,
+	QDF_RX_REG_PKT_ROUTE_ERR,
 };
 
 /**

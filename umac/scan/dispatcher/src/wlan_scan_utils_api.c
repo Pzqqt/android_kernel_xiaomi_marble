@@ -1157,15 +1157,22 @@ util_scan_populate_bcn_ie_list(struct wlan_objmgr_pdev *pdev,
 			scan_params->erp = ((struct erp_ie *)ie)->value;
 			break;
 		case WLAN_ELEMID_HTCAP_ANA:
-			if (ie->ie_len != sizeof(struct htcap_cmn_ie))
-				goto err;
-			scan_params->ie_list.htcap =
+			if (ie->ie_len == sizeof(struct htcap_cmn_ie)) {
+				scan_params->ie_list.htcap =
 				(uint8_t *)&(((struct htcap_ie *)ie)->ie);
+			}
 			break;
 		case WLAN_ELEMID_RSN:
-			if (ie->ie_len < WLAN_RSN_IE_MIN_LEN)
-				goto err;
-			scan_params->ie_list.rsn = (uint8_t *)ie;
+			/*
+			 * For security cert TC, RSNIE length can be 1 but if
+			 * beacon is dropped, old entry will remain in scan
+			 * cache and cause cert TC failure as connection with
+			 * old entry with valid RSN IE will pass.
+			 * So instead of dropping the frame, do not store the
+			 * RSN pointer so that old entry is overwritten.
+			 */
+			if (ie->ie_len >= WLAN_RSN_IE_MIN_LEN)
+				scan_params->ie_list.rsn = (uint8_t *)ie;
 			break;
 		case WLAN_ELEMID_XRATES:
 			if (ie->ie_len > WLAN_EXT_SUPPORTED_RATES_IE_MAX_LEN)
@@ -2689,7 +2696,7 @@ util_scan_parse_beacon_frame(struct wlan_objmgr_pdev *pdev,
 	struct wlan_frame_hdr *hdr;
 	uint8_t *mbssid_ie = NULL;
 	uint32_t ie_len = 0;
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct scan_mbssid_info mbssid_info = { 0 };
 
 	hdr = (struct wlan_frame_hdr *)frame;
@@ -2702,6 +2709,10 @@ util_scan_parse_beacon_frame(struct wlan_objmgr_pdev *pdev,
 	mbssid_ie = util_scan_find_ie(WLAN_ELEMID_MULTIPLE_BSSID,
 				      (uint8_t *)&bcn->ie, ie_len);
 	if (mbssid_ie) {
+		if (mbssid_ie[1] <= 0) {
+			scm_debug("MBSSID IE length is wrong %d", mbssid_ie[1]);
+			return status;
+		}
 		qdf_mem_copy(&mbssid_info.trans_bssid,
 			     hdr->i_addr3, QDF_MAC_ADDR_SIZE);
 		mbssid_info.profile_count = 1 << mbssid_ie[2];

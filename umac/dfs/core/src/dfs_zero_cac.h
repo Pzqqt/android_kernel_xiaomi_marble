@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  * Copyright (c) 2007-2008 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
@@ -941,23 +941,6 @@ bool dfs_is_precac_done_on_ht8080_chan(struct wlan_dfs *dfs,
 				       struct dfs_channel *chan);
 
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD) && !defined(QCA_MCL_DFS_SUPPORT)
-/**
- * dfs_find_chwidth_and_center_chan() - Find the channel width enum and
- *                                      primary and secondary center channel
- *                                      value of the current channel.
- * @dfs:                  Pointer to wlan_dfs structure.
- * @chwidth:              Channel width enum of current channel.
- * @primary_chan_ieee:    Primary IEEE channel.
- * @secondary_chan_ieee:  Secondary IEEE channel (in HT80_80 mode).
- */
-#ifdef CONFIG_CHAN_NUM_API
-void dfs_find_chwidth_and_center_chan(struct wlan_dfs *dfs,
-				      enum phy_ch_width *chwidth,
-				      uint8_t *primary_chan_ieee,
-				      uint8_t *secondary_chan_ieee);
-
-#endif
-
 #ifdef CONFIG_CHAN_FREQ_API
 /**
  * dfs_find_curchwidth_and_center_chan_for_freq() - Find the channel width
@@ -974,20 +957,6 @@ dfs_find_curchwidth_and_center_chan_for_freq(struct wlan_dfs *dfs,
 					     enum phy_ch_width *chwidth,
 					     uint16_t *primary_chan_freq,
 					     uint16_t *secondary_chan_freq);
-#endif
-
-/**
- * dfs_mark_precac_done() - Mark the channel as preCAC done.
- * @dfs:           Pointer to wlan_dfs structure.
- * @pri_ch_ieee:   Primary channel IEEE.
- * @sec_ch_ieee:   Secondary channel IEEE (only in HT80_80 mode).
- * @ch_width:      Channel width enum.
- */
-#ifdef CONFIG_CHAN_NUM_API
-void dfs_mark_precac_done(struct wlan_dfs *dfs,
-			  uint8_t pri_ch_ieee,
-			  uint8_t sec_ch_ieee,
-			  enum phy_ch_width ch_width);
 #endif
 
 #ifdef CONFIG_CHAN_FREQ_API
@@ -1055,15 +1024,6 @@ void dfs_unmark_precac_nol_for_freq(struct wlan_dfs *dfs, uint16_t chan_freq);
 #endif
 
 #else
-#ifdef CONFIG_CHAN_NUM_API
-static inline void
-dfs_find_chwidth_and_center_chan(struct wlan_dfs *dfs,
-				 enum phy_ch_width *chwidth,
-				 uint8_t *primary_chan_ieee,
-				 uint8_t *secondary_chan_ieee)
-{
-}
-#endif
 
 #ifdef CONFIG_CHAN_FREQ_API
 static inline void
@@ -1071,15 +1031,6 @@ dfs_find_curchwidth_and_center_chan_for_freq(struct wlan_dfs *dfs,
 					     enum phy_ch_width *chwidth,
 					     uint16_t *primary_chan_freq,
 					     uint16_t *secondary_chan_freq)
-{
-}
-#endif
-
-#ifdef CONFIG_CHAN_NUM_API
-static inline void dfs_mark_precac_done(struct wlan_dfs *dfs,
-					uint8_t pri_ch_ieee,
-					uint8_t sec_ch_ieee,
-					enum phy_ch_width ch_width)
 {
 }
 #endif

@@ -461,6 +461,33 @@ QDF_STATUS mlme_cm_osif_disconnect_start_ind(struct wlan_objmgr_vdev *vdev)
 	return ret;
 }
 
+#ifdef CONN_MGR_ADV_FEATURE
+QDF_STATUS mlme_cm_osif_roam_sync_ind(struct wlan_objmgr_vdev *vdev)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if (glbl_cm_ops &&
+	    glbl_cm_ops->mlme_cm_roam_sync_cb)
+		ret = glbl_cm_ops->mlme_cm_roam_sync_cb(vdev);
+
+	return ret;
+}
+
+QDF_STATUS mlme_cm_osif_pmksa_candidate_notify(struct wlan_objmgr_vdev *vdev,
+					       struct qdf_mac_addr *bssid,
+					       int index, bool preauth)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if (glbl_cm_ops &&
+	    glbl_cm_ops->mlme_cm_pmksa_candidate_notify_cb)
+		ret = glbl_cm_ops->mlme_cm_pmksa_candidate_notify_cb(
+						vdev, bssid, index, preauth);
+
+	return ret;
+}
+#endif
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS mlme_cm_osif_roam_start_ind(struct wlan_objmgr_vdev *vdev)
 {
@@ -484,17 +511,6 @@ QDF_STATUS mlme_cm_osif_roam_abort_ind(struct wlan_objmgr_vdev *vdev)
 	return ret;
 }
 
-QDF_STATUS mlme_cm_osif_roam_sync_ind(struct wlan_objmgr_vdev *vdev)
-{
-	QDF_STATUS ret = QDF_STATUS_SUCCESS;
-
-	if (glbl_cm_ops &&
-	    glbl_cm_ops->mlme_cm_roam_sync_cb)
-		ret = glbl_cm_ops->mlme_cm_roam_sync_cb(vdev);
-
-	return ret;
-}
-
 QDF_STATUS
 mlme_cm_osif_roam_complete(struct wlan_objmgr_vdev *vdev)
 {
@@ -506,8 +522,38 @@ mlme_cm_osif_roam_complete(struct wlan_objmgr_vdev *vdev)
 
 	return ret;
 }
-
 #endif
+
+#ifdef WLAN_FEATURE_PREAUTH_ENABLE
+QDF_STATUS
+mlme_cm_osif_ft_preauth_complete(struct wlan_objmgr_vdev *vdev,
+				 struct wlan_preauth_rsp *rsp)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if (glbl_cm_ops &&
+	    glbl_cm_ops->mlme_cm_ft_preauth_cmpl_cb)
+		ret = glbl_cm_ops->mlme_cm_ft_preauth_cmpl_cb(vdev, rsp);
+
+	return ret;
+}
+
+#ifdef FEATURE_WLAN_ESE
+QDF_STATUS
+mlme_cm_osif_cckm_preauth_complete(struct wlan_objmgr_vdev *vdev,
+				   struct wlan_preauth_rsp *rsp)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if (glbl_cm_ops &&
+	    glbl_cm_ops->mlme_cm_cckm_preauth_cmpl_cb)
+		ret = glbl_cm_ops->mlme_cm_cckm_preauth_cmpl_cb(vdev, rsp);
+
+	return ret;
+}
+#endif
+#endif
+
 void mlme_set_osif_cm_cb(osif_cm_get_global_ops_cb osif_cm_ops)
 {
 	glbl_cm_ops_cb = osif_cm_ops;

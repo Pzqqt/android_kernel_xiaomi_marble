@@ -51,8 +51,13 @@
 #define MAX_CFR_MU_USERS 4
 #define NUM_CHAN_CAPTURE_STATUS 4
 #define NUM_CHAN_CAPTURE_REASON 6
+#if defined(QCA_WIFI_QCA6750) || defined(QCA_WIFI_QCA6490)
+#define MAX_TA_RA_ENTRIES 4
+#define MAX_RESET_CFG_ENTRY 0xF
+#else
 #define MAX_TA_RA_ENTRIES 16
 #define MAX_RESET_CFG_ENTRY 0xFFFF
+#endif
 #define CFR_INVALID_VDEV_ID 0xff
 #define DEFAULT_SRNGID_CFR 0
 #endif
@@ -520,6 +525,19 @@ struct cfr_rcc_param {
 #endif /* WLAN_ENH_CFR_ENABLE */
 
 /**
+ * struct nl_event_cb - nl event cb for cfr data
+ * vdev_id: vdev id
+ * pid: PID to which data is sent via unicast nl evnet
+ * cfr_nl_cb: callback to send nl evnet
+ */
+struct nl_event_cb {
+	uint8_t vdev_id;
+	uint32_t pid;
+	void (*cfr_nl_cb)(uint8_t vdev_id, uint32_t pid,
+			  const void *data, uint32_t data_len);
+};
+
+/**
  * struct pdev_cfr - private pdev object for cfr
  * pdev_obj: pointer to pdev object
  * is_cfr_capable: flag to determine if cfr is enabled or not
@@ -566,6 +584,7 @@ struct cfr_rcc_param {
  * capture_count and capture_duration modes with a nob provided to configure.
  * unassoc_pool: Pool of un-associated clients used when capture method is
  * CFR_CAPTURE_METHOD_PROBE_RESPONSE
+ * nl_cb: call back to register for nl event for cfr data
  * lut_lock: Lock to protect access to cfr lookup table
  */
 /*
@@ -613,6 +632,7 @@ struct pdev_cfr {
 	uint8_t is_mo_marking_support;
 #endif
 	struct unassoc_pool_entry unassoc_pool[MAX_CFR_ENABLED_CLIENTS];
+	struct nl_event_cb nl_cb;
 	qdf_spinlock_t lut_lock;
 };
 

@@ -20,7 +20,6 @@
 #define _DP_RX_H
 
 #include "hal_rx.h"
-#include "dp_tx.h"
 #include "dp_peer.h"
 #include "dp_internal.h"
 
@@ -37,12 +36,12 @@
 #endif /* RXDMA_OPTIMIZATION */
 
 #ifdef QCA_HOST2FW_RXBUF_RING
-#define DP_WBM2SW_RBM HAL_RX_BUF_RBM_SW1_BM
+#define DP_WBM2SW_RBM(sw0_bm_id)	HAL_RX_BUF_RBM_SW1_BM(sw0_bm_id)
 /* RBM value used for re-injecting defragmented packets into REO */
-#define DP_DEFRAG_RBM HAL_RX_BUF_RBM_SW3_BM
+#define DP_DEFRAG_RBM(sw0_bm_id)	HAL_RX_BUF_RBM_SW3_BM(sw0_bm_id)
 #else
-#define DP_WBM2SW_RBM HAL_RX_BUF_RBM_SW3_BM
-#define DP_DEFRAG_RBM DP_WBM2SW_RBM
+#define DP_WBM2SW_RBM(sw0_bm_id)	HAL_RX_BUF_RBM_SW3_BM(sw0_bm_id)
+#define DP_DEFRAG_RBM(sw0_bm_id)	DP_WBM2SW_RBM(sw0_bm_id)
 #endif /* QCA_HOST2FW_RXBUF_RING */
 
 #define RX_BUFFER_RESERVATION   0
@@ -155,6 +154,12 @@ struct dp_rx_desc {
 };
 
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
+#ifdef ATH_RX_PRI_SAVE
+#define DP_RX_TID_SAVE(_nbuf, _tid) \
+	(qdf_nbuf_set_priority(_nbuf, _tid))
+#else
+#define DP_RX_TID_SAVE(_nbuf, _tid)
+#endif
 
 /* RX Descriptor Multi Page memory alloc related */
 #define DP_RX_DESC_OFFSET_NUM_BITS 8
@@ -576,6 +581,11 @@ void *dp_rx_cookie_2_va_mon_status(struct dp_soc *soc, uint32_t cookie)
 #endif /* RX_DESC_MULTI_PAGE_ALLOC */
 
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
+
+static inline bool dp_rx_check_ap_bridge(struct dp_vdev *vdev)
+{
+	return vdev->ap_bridge_enabled;
+}
 
 #ifdef DP_RX_DESC_COOKIE_INVALIDATE
 static inline QDF_STATUS
@@ -1105,6 +1115,62 @@ void *dp_rx_cookie_2_mon_link_desc_va(struct dp_pdev *pdev,
 }
 
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
+/*
+ * dp_rx_intrabss_fwd() - API for intrabss fwd. For EAPOL
+ *  pkt with DA not equal to vdev mac addr, fwd is not allowed.
+ * @soc: core txrx main context
+ * @ta_peer: source peer entry
+ * @rx_tlv_hdr: start address of rx tlvs
+ * @nbuf: nbuf that has to be intrabss forwarded
+ * @msdu_metadata: msdu metadata
+ *
+ * Return: true if it is forwarded else false
+ */
+
+bool dp_rx_intrabss_fwd(struct dp_soc *soc,
+			struct dp_peer *ta_peer,
+			uint8_t *rx_tlv_hdr,
+			qdf_nbuf_t nbuf,
+			struct hal_rx_msdu_metadata msdu_metadata);
+
+#ifdef DISABLE_EAPOL_INTRABSS_FWD
+/*
+ * dp_rx_intrabss_fwd_wrapper() - Wrapper API for intrabss fwd. For EAPOL
+ *  pkt with DA not equal to vdev mac addr, fwd is not allowed.
+ * @soc: core txrx main context
+ * @ta_peer: source peer entry
+ * @rx_tlv_hdr: start address of rx tlvs
+ * @nbuf: nbuf that has to be intrabss forwarded
+ * @msdu_metadata: msdu metadata
+ *
+ * Return: true if it is forwarded else false
+ */
+static inline
+bool dp_rx_intrabss_fwd_wrapper(struct dp_soc *soc, struct dp_peer *ta_peer,
+				uint8_t *rx_tlv_hdr, qdf_nbuf_t nbuf,
+				struct hal_rx_msdu_metadata msdu_metadata)
+{
+	if (qdf_unlikely(qdf_nbuf_is_ipv4_eapol_pkt(nbuf) &&
+			 qdf_mem_cmp(qdf_nbuf_data(nbuf) +
+				     QDF_NBUF_DEST_MAC_OFFSET,
+				     ta_peer->vdev->mac_addr.raw,
+				     QDF_MAC_ADDR_SIZE))) {
+		qdf_nbuf_free(nbuf);
+		DP_STATS_INC(soc, rx.err.intrabss_eapol_drop, 1);
+		return true;
+	}
+
+	return dp_rx_intrabss_fwd(soc, ta_peer, rx_tlv_hdr, nbuf,
+				  msdu_metadata);
+}
+
+#define DP_RX_INTRABSS_FWD(soc, peer, rx_tlv_hdr, nbuf, msdu_metadata) \
+		dp_rx_intrabss_fwd_wrapper(soc, peer, rx_tlv_hdr, nbuf, \
+					   msdu_metadata)
+#else /* DISABLE_EAPOL_INTRABSS_FWD */
+#define DP_RX_INTRABSS_FWD(soc, peer, rx_tlv_hdr, nbuf, msdu_metadata) \
+		dp_rx_intrabss_fwd(soc, peer, rx_tlv_hdr, nbuf, msdu_metadata)
+#endif /* DISABLE_EAPOL_INTRABSS_FWD */
 
 /**
  * dp_rx_defrag_concat() - Concatenate the fragments
@@ -1139,6 +1205,9 @@ static inline QDF_STATUS dp_rx_defrag_concat(qdf_nbuf_t dst, qdf_nbuf_t src)
 #endif /* QCA_HOST_MODE_WIFI_DISABLED */
 
 #ifndef FEATURE_WDS
+void dp_rx_da_learn(struct dp_soc *soc, uint8_t *rx_tlv_hdr,
+		    struct dp_peer *ta_peer, qdf_nbuf_t nbuf);
+
 static inline QDF_STATUS dp_rx_ast_set_active(struct dp_soc *soc, uint16_t sa_idx, bool is_active)
 {
 	return QDF_STATUS_SUCCESS;
@@ -1742,4 +1811,166 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 }
 #endif /* FEATURE_MEC */
 #endif /* QCA_HOST_MODE_WIFI_DISABLED */
+
+#ifdef RECEIVE_OFFLOAD
+void dp_rx_fill_gro_info(struct dp_soc *soc, uint8_t *rx_tlv,
+			 qdf_nbuf_t msdu, uint32_t *rx_ol_pkt_cnt);
+#else
+static inline
+void dp_rx_fill_gro_info(struct dp_soc *soc, uint8_t *rx_tlv,
+			 qdf_nbuf_t msdu, uint32_t *rx_ol_pkt_cnt)
+{
+}
+#endif
+
+void dp_rx_msdu_stats_update(struct dp_soc *soc, qdf_nbuf_t nbuf,
+			     uint8_t *rx_tlv_hdr, struct dp_peer *peer,
+			     uint8_t ring_id,
+			     struct cdp_tid_rx_stats *tid_stats);
+
+void dp_rx_deliver_to_stack_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf);
+
+uint32_t dp_rx_srng_get_num_pending(hal_soc_handle_t hal_soc,
+				    hal_ring_handle_t hal_ring_hdl,
+				    uint32_t num_entries,
+				    bool *near_full);
+
+#ifdef WLAN_FEATURE_DP_RX_RING_HISTORY
+void dp_rx_ring_record_entry(struct dp_soc *soc, uint8_t ring_num,
+			     hal_ring_desc_t ring_desc);
+#else
+static inline void
+dp_rx_ring_record_entry(struct dp_soc *soc, uint8_t ring_num,
+			hal_ring_desc_t ring_desc)
+{
+}
+#endif
+
+#ifndef QCA_HOST_MODE_WIFI_DISABLED
+#ifdef RX_DESC_SANITY_WAR
+QDF_STATUS dp_rx_desc_sanity(struct dp_soc *soc, hal_soc_handle_t hal_soc,
+			     hal_ring_handle_t hal_ring_hdl,
+			     hal_ring_desc_t ring_desc,
+			     struct dp_rx_desc *rx_desc);
+#else
+static inline
+QDF_STATUS dp_rx_desc_sanity(struct dp_soc *soc, hal_soc_handle_t hal_soc,
+			     hal_ring_handle_t hal_ring_hdl,
+			     hal_ring_desc_t ring_desc,
+			     struct dp_rx_desc *rx_desc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+#ifdef DP_RX_DROP_RAW_FRM
+bool dp_rx_is_raw_frame_dropped(qdf_nbuf_t nbuf);
+#else
+static inline
+bool dp_rx_is_raw_frame_dropped(qdf_nbuf_t nbuf)
+{
+	return false;
+}
+#endif
+
+#ifdef RX_DESC_DEBUG_CHECK
+QDF_STATUS dp_rx_desc_nbuf_sanity_check(struct dp_soc *soc,
+					hal_ring_desc_t ring_desc,
+					struct dp_rx_desc *rx_desc);
+#else
+static inline
+QDF_STATUS dp_rx_desc_nbuf_sanity_check(struct dp_soc *soc,
+					hal_ring_desc_t ring_desc,
+					struct dp_rx_desc *rx_desc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+#ifdef WLAN_DP_FEATURE_SW_LATENCY_MGR
+void dp_rx_update_stats(struct dp_soc *soc, qdf_nbuf_t nbuf);
+#else
+static inline
+void dp_rx_update_stats(struct dp_soc *soc, qdf_nbuf_t nbuf)
+{
+}
+#endif
+
+/**
+ * dp_rx_cksum_offload() - set the nbuf checksum as defined by hardware.
+ * @nbuf: pointer to the first msdu of an amsdu.
+ * @rx_tlv_hdr: pointer to the start of RX TLV headers.
+ *
+ * The ipsumed field of the skb is set based on whether HW validated the
+ * IP/TCP/UDP checksum.
+ *
+ * Return: void
+ */
+static inline
+void dp_rx_cksum_offload(struct dp_pdev *pdev,
+			 qdf_nbuf_t nbuf,
+			 uint8_t *rx_tlv_hdr)
+{
+	qdf_nbuf_rx_cksum_t cksum = {0};
+	//TODO - Move this to ring desc api
+	//HAL_RX_MSDU_DESC_IP_CHKSUM_FAIL_GET
+	//HAL_RX_MSDU_DESC_TCP_UDP_CHKSUM_FAIL_GET
+	uint32_t ip_csum_err, tcp_udp_csum_er;
+
+	hal_rx_tlv_csum_err_get(pdev->soc->hal_soc, rx_tlv_hdr, &ip_csum_err,
+				&tcp_udp_csum_er);
+
+	if (qdf_likely(!ip_csum_err && !tcp_udp_csum_er)) {
+		cksum.l4_result = QDF_NBUF_RX_CKSUM_TCP_UDP_UNNECESSARY;
+		qdf_nbuf_set_rx_cksum(nbuf, &cksum);
+	} else {
+		DP_STATS_INCC(pdev, err.ip_csum_err, 1, ip_csum_err);
+		DP_STATS_INCC(pdev, err.tcp_udp_csum_err, 1, tcp_udp_csum_er);
+	}
+}
+
+#endif /* QCA_HOST_MODE_WIFI_DISABLED */
+
+bool dp_rx_reap_loop_pkt_limit_hit(struct dp_soc *soc, int num_reaped);
+bool dp_rx_enable_eol_data_check(struct dp_soc *soc);
+void dp_rx_update_stats(struct dp_soc *soc, qdf_nbuf_t nbuf);
+
+#ifdef QCA_SUPPORT_WDS_EXTENDED
+/**
+ * dp_rx_is_list_ready() - Make different lists for 4-address
+			   and 3-address frames
+ * @nbuf_head: skb list head
+ * @vdev: vdev
+ * @peer: peer
+ * @peer_id: peer id of new received frame
+ * @vdev_id: vdev_id of new received frame
+ *
+ * Return: true if peer_ids are different.
+ */
+static inline bool
+dp_rx_is_list_ready(qdf_nbuf_t nbuf_head,
+		    struct dp_vdev *vdev,
+		    struct dp_peer *peer,
+		    uint16_t peer_id,
+		    uint8_t vdev_id)
+{
+	if (nbuf_head && peer && (peer->peer_id != peer_id))
+		return true;
+
+	return false;
+}
+#else
+static inline bool
+dp_rx_is_list_ready(qdf_nbuf_t nbuf_head,
+		    struct dp_vdev *vdev,
+		    struct dp_peer *peer,
+		    uint16_t peer_id,
+		    uint8_t vdev_id)
+{
+	if (nbuf_head && vdev && (vdev->vdev_id != vdev_id))
+		return true;
+
+	return false;
+}
+#endif
 #endif /* _DP_RX_H */

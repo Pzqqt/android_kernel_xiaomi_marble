@@ -802,6 +802,97 @@ enum country_src {
 	SOURCE_11D
 };
 
+#ifdef WLAN_FEATURE_GET_USABLE_CHAN_LIST
+/**
+ * enum iftype - (virtual) interface types
+ *
+ * @IFTYPE_UNSPECIFIED: unspecified type, driver decides
+ * @IFTYPE_ADHOC: independent BSS member
+ * @IFTYPE_STATION: managed BSS member
+ * @IFTYPE_AP: access point
+ * @IFTYPE_AP_VLAN: VLAN interface for access points; VLAN interfaces
+ *      are a bit special in that they must always be tied to a pre-existing
+ *      AP type interface.
+ * @IFTYPE_WDS: wireless distribution interface
+ * @IFTYPE_MONITOR: monitor interface receiving all frames
+ * @IFTYPE_MESH_POINT: mesh point
+ * @IFTYPE_P2P_CLIENT: P2P client
+ * @IFTYPE_P2P_GO: P2P group owner
+ * @IFTYPE_P2P_DEVICE: P2P device interface type, this is not a netdev
+ *      and therefore can't be created in the normal ways, use the
+ *      %NL80211_CMD_START_P2P_DEVICE and %NL80211_CMD_STOP_P2P_DEVICE
+ *      commands to create and destroy one
+ * @IF_TYPE_OCB: Outside Context of a BSS
+ *      This mode corresponds to the MIB variable dot11OCBActivated=true
+ * @IF_TYPE_NAN: NAN mode
+ * @IFTYPE_MAX: highest interface type number currently defined
+ * @NUM_IFTYPES: number of defined interface types
+ *
+ * These values are used with the %NL80211_ATTR_IFTYPE
+ * to set the type of an interface.
+ *
+ */
+enum iftype {
+	IFTYPE_UNSPECIFIED,
+	IFTYPE_ADHOC,
+	IFTYPE_STATION,
+	IFTYPE_AP,
+	IFTYPE_AP_VLAN,
+	IFTYPE_WDS,
+	IFTYPE_MONITOR,
+	IFTYPE_MESH_POINT,
+	IFTYPE_P2P_CLIENT,
+	IFTYPE_P2P_GO,
+	IFTYPE_P2P_DEVICE,
+	IFTYPE_OCB,
+	IFTYPE_NAN,
+
+	/* keep last */
+	NUM_IFTYPES,
+	IFTYPE_MAX = NUM_IFTYPES - 1
+};
+
+/**
+ * usable_channels_filter - Filters to get usable channels
+ * FILTER_CELLULAR_COEX: Avoid lte coex channels
+ * FILTER_WLAN_CONCURRENCY: Avoid con channels
+ **/
+enum usable_channels_filter {
+	FILTER_CELLULAR_COEX = 0,
+	FILTER_WLAN_CONCURRENCY = 1,
+};
+
+/**
+ * get_usable_chan_res_params - Usable channels resp params
+ * freq : center freq
+ * seg0_freq : seg0 freq
+ * seg1_freq: seg1 freq
+ * bw : bandwidth
+ * state: channel state
+ * iface_mode_mask: interface mode mask
+ **/
+struct get_usable_chan_res_params {
+	qdf_freq_t freq;
+	uint32_t seg0_freq;
+	uint32_t seg1_freq;
+	enum phy_ch_width bw;
+	uint32_t iface_mode_mask;
+	enum channel_state state;
+};
+
+/**
+ * get_usable_chan_req_params - Usable channels req params
+ * band_mask : band mask
+ * iface_mode_mask: interface mode mask
+ * filter_mask: filter mask
+ **/
+struct get_usable_chan_req_params {
+	uint32_t band_mask;
+	uint32_t iface_mode_mask;
+	uint32_t filter_mask;
+};
+#endif
+
 /**
  * struct regulatory_channel
  * @center_freq: center frequency

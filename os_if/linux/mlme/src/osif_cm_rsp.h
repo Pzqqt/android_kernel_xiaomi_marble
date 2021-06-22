@@ -97,6 +97,20 @@ QDF_STATUS osif_connect_handler(struct wlan_objmgr_vdev *vdev,
 void osif_indicate_reassoc_results(struct wlan_objmgr_vdev *vdev,
 				   struct vdev_osif_priv *osif_priv,
 				   struct wlan_cm_connect_resp *rsp);
+
+/**
+ * @osif_pmksa_candidate_notify_cb: Roam pmksa candidate notify callback
+ * @vdev: vdev pointer
+ * @bssid: bssid
+ * @index: index
+ * @preauth: preauth flag
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+osif_pmksa_candidate_notify(struct wlan_objmgr_vdev *vdev,
+			    struct qdf_mac_addr *bssid,
+			    int index, bool preauth);
 #else
 static inline void
 osif_indicate_reassoc_results(struct wlan_objmgr_vdev *vdev,

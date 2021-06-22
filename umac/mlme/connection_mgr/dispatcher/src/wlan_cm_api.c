@@ -298,7 +298,13 @@ const char *wlan_cm_reason_code_to_str(enum wlan_reason_code reason)
 void wlan_cm_hw_mode_change_resp(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 				 wlan_cm_id cm_id, QDF_STATUS status)
 {
-	cm_hw_mode_change_resp(pdev, vdev_id, cm_id, status);
+	uint32_t prefix;
+
+	prefix = CM_ID_GET_PREFIX(cm_id);
+	if (prefix == ROAM_REQ_PREFIX)
+		cm_reassoc_hw_mode_change_resp(pdev, vdev_id, cm_id, status);
+	else
+		cm_hw_mode_change_resp(pdev, vdev_id, cm_id, status);
 }
 #endif /* ifdef POLICY_MGR_ENABLE */
 

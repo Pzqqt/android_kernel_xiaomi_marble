@@ -147,6 +147,19 @@ bool wlan_reg_is_range_overlap_5g(qdf_freq_t low_freq, qdf_freq_t high_freq);
  */
 bool wlan_reg_is_freq_indoor(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq);
 
+#ifdef CONFIG_REG_CLIENT
+/**
+ * wlan_reg_is_freq_indoor_in_secondary_list() - Check if the input frequency is
+ * an indoor frequency in the secondary list
+ * @pdev: Pointer to pdev.
+ * @freq: Channel frequency.
+ *
+ * Return: Return true if a frequency is indoor, else false.
+ */
+bool wlan_reg_is_freq_indoor_in_secondary_list(struct wlan_objmgr_pdev *pdev,
+					       qdf_freq_t freq);
+#endif
+
 #ifdef CONFIG_BAND_6GHZ
 /**
  * wlan_reg_is_6ghz_chan_freq() - Check if the given channel frequency is 6GHz
@@ -327,6 +340,26 @@ uint16_t
 wlan_reg_get_band_channel_list(struct wlan_objmgr_pdev *pdev,
 			       uint8_t band_mask,
 			       struct regulatory_channel *channel_list);
+
+#ifdef CONFIG_REG_CLIENT
+/**
+ * wlan_reg_get_secondary_band_channel_list() - Get secondary channel list for
+ * SAP based on the band_mask
+ * @pdev: pdev ptr
+ * @band_mask: Input bitmap with band set
+ * @channel_list: Pointer to Channel List
+ *
+ * Get the given channel list and number of channels from the secondary current
+ * channel list based on input band bitmap.
+ *
+ * Return: Number of channels, else 0 to indicate error
+ */
+uint16_t
+wlan_reg_get_secondary_band_channel_list(struct wlan_objmgr_pdev *pdev,
+					 uint8_t band_mask,
+					 struct regulatory_channel
+					 *channel_list);
+#endif
 
 /**
  * wlan_reg_chan_band_to_freq - Return channel frequency based on the channel
@@ -555,6 +588,20 @@ qdf_freq_t wlan_reg_get_channel_freq(struct wlan_objmgr_pdev *pdev,
  */
 QDF_STATUS wlan_reg_get_current_chan_list(struct wlan_objmgr_pdev *pdev,
 		struct regulatory_channel *chan_list);
+
+#ifdef CONFIG_REG_CLIENT
+/**
+ * wlan_reg_get_secondary_current_chan_list() - provide the pdev secondary
+ * current channel list
+ * @pdev: pdev pointer
+ * @chan_list: channel list pointer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_reg_get_secondary_current_chan_list(
+					struct wlan_objmgr_pdev *pdev,
+					struct regulatory_channel *chan_list);
+#endif
 
 /**
  * wlan_reg_get_bonded_channel_state_for_freq() - Get bonded channel freq state
@@ -1037,6 +1084,23 @@ wlan_reg_disable_chan_coex(struct wlan_objmgr_pdev *pdev,
 }
 #endif
 
+#ifdef WLAN_FEATURE_GET_USABLE_CHAN_LIST
+/**
+ * wlan_reg_get_usable_channel() - Get usable channels
+ * @pdev: Pointer to pdev
+ * @req_msg: Request msg
+ * @res_msg: Response msg
+ * @count: no of usable channels
+ *
+ * Return: qdf status
+ */
+QDF_STATUS
+wlan_reg_get_usable_channel(struct wlan_objmgr_pdev *pdev,
+			    struct get_usable_chan_req_params req_msg,
+			    struct get_usable_chan_res_params *res_msg,
+			    uint32_t *count);
+#endif
+
 #ifdef CONFIG_CHAN_FREQ_API
 /**
  * wlan_reg_is_same_band_freqs() - Check if two channel frequencies
@@ -1159,6 +1223,20 @@ enum channel_state
 wlan_reg_get_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
 				    qdf_freq_t freq);
 
+#ifdef CONFIG_REG_CLIENT
+/**
+ * wlan_reg_get_channel_state_from_secondary_list_for_freq() - Get channel state
+ * from secondary regulatory current channel list
+ * @pdev: Pointer to pdev
+ * @freq: channel center frequency.
+ *
+ * Return: channel state
+ */
+enum channel_state wlan_reg_get_channel_state_from_secondary_list_for_freq(
+						struct wlan_objmgr_pdev *pdev,
+						qdf_freq_t freq);
+#endif
+
 /**
  * wlan_reg_fill_channel_list() - Fills the reg_channel_list (list of channels)
  * @pdev: Pointer to struct wlan_objmgr_pdev.
@@ -1254,6 +1332,31 @@ bool wlan_reg_is_passive_or_disable_for_freq(struct wlan_objmgr_pdev *pdev,
  */
 bool wlan_reg_is_disable_for_freq(struct wlan_objmgr_pdev *pdev,
 				  qdf_freq_t freq);
+
+#ifdef CONFIG_REG_CLIENT
+/**
+ * wlan_reg_is_disable_in_secondary_list_for_freq() - Checks in the secondary
+ * channel list to see if chan state is disabled
+ * @pdev: pdev ptr
+ * @freq: Channel center frequency
+ *
+ * Return: true or false
+ */
+bool wlan_reg_is_disable_in_secondary_list_for_freq(
+						struct wlan_objmgr_pdev *pdev,
+						qdf_freq_t freq);
+
+/**
+ * wlan_reg_is_dfs_in_secondary_list_for_freq() - hecks the channel state for
+ * DFS from the secondary channel list
+ * @pdev: pdev ptr
+ * @freq: Channel center frequency
+ *
+ * Return: true or false
+ */
+bool wlan_reg_is_dfs_in_secondary_list_for_freq(struct wlan_objmgr_pdev *pdev,
+						qdf_freq_t freq);
+#endif
 
 /**
  * wlan_reg_is_passive_for_freq() - Check the channel flags to see if the

@@ -35,39 +35,6 @@
 typedef struct device_node *__qdf_devnode_t;
 
 /**
- * __qal_devnode_fetch_pci_domain_id() - This function will try to obtain the
- * host bridge domain number
- * @node: device tree node
- * @domain_id: pointer to domain number
- *
- * Return: QDF_STATUS_SUCCESS if domain_id is in the range,
- * error code otherwise
- */
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 18, 0))
-static inline QDF_STATUS
-__qal_devnode_fetch_pci_domain_id(__qdf_devnode_t devnode, int *domain_id)
-{
-	*domain_id = 0;
-
-	return QDF_STATUS_SUCCESS;
-}
-#else
-static inline QDF_STATUS
-__qal_devnode_fetch_pci_domain_id(__qdf_devnode_t devnode, int *domain_id)
-{
-	int ret;
-
-	ret = of_get_pci_domain_nr(devnode);
-	if ((ret >= PCI_DOMAIN_ID_MIN) && (ret <= PCI_DOMAIN_ID_MAX)) {
-		*domain_id = ret;
-		return QDF_STATUS_SUCCESS;
-	}
-
-	return qdf_status_from_os_return(ret);
-}
-#endif
-
-/**
  * __qal_devnode_read_u32_array() - Find and read an array of 32 bit integers
  * from a property.
  * @devnode: device node from which the property value is to be read.

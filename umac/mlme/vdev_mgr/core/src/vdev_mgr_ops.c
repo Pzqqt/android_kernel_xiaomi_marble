@@ -115,6 +115,21 @@ static inline bool vdev_mgr_is_49G_5G_6G_chan_freq(uint16_t chan_freq)
 }
 #endif
 
+#ifdef WLAN_FEATURE_11BE
+static void
+vdev_mgr_start_param_update_11be(struct vdev_mlme_obj *mlme_obj,
+				 struct vdev_start_params *param)
+{
+	param->eht_ops = mlme_obj->proto.eht_ops_info.eht_ops;
+}
+#else
+static void
+vdev_mgr_start_param_update_11be(struct vdev_mlme_obj *mlme_obj,
+				 struct vdev_start_params *param)
+{
+}
+#endif
+
 static QDF_STATUS vdev_mgr_start_param_update(
 					struct vdev_mlme_obj *mlme_obj,
 					struct vdev_start_params *param)
@@ -187,6 +202,8 @@ static QDF_STATUS vdev_mgr_start_param_update(
 	wlan_reg_get_dfs_region(pdev, &dfs_reg);
 	param->regdomain = dfs_reg;
 	param->he_ops = mlme_obj->proto.he_ops_info.he_ops;
+
+	vdev_mgr_start_param_update_11be(mlme_obj, param);
 
 	param->channel.chan_id = des_chan->ch_ieee;
 	param->channel.pwr = mlme_obj->mgmt.generic.tx_power;
@@ -372,12 +389,9 @@ static QDF_STATUS vdev_mgr_up_param_update(
 	param->vdev_id = wlan_vdev_get_id(vdev);
 	param->assoc_id = mlme_obj->proto.sta.assoc_id;
 	mbss = &mlme_obj->mgmt.mbss_11ax;
-	if (mbss->profile_idx) {
-		param->profile_idx = mbss->profile_idx;
-		param->profile_num = mbss->profile_num;
-		qdf_mem_copy(param->trans_bssid, mbss->trans_bssid,
-			     QDF_MAC_ADDR_SIZE);
-	}
+	param->profile_idx = mbss->profile_idx;
+	param->profile_num = mbss->profile_num;
+	qdf_mem_copy(param->trans_bssid, mbss->trans_bssid, QDF_MAC_ADDR_SIZE);
 
 	return QDF_STATUS_SUCCESS;
 }

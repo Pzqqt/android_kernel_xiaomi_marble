@@ -75,7 +75,8 @@ $(HOST_QAL_SRC)/linux/src/qal_bridge.o \
 #linux/src/qdf_net_wext.o
 
 ifeq ($(MEMORY_DEBUG),1)
-qdf-objs += src/qdf_debug_domain.o
+qdf-objs += src/qdf_debug_domain.o \
+    src/qdf_tracker.o
 endif
 
 ifeq ($(LOGGING_UTILS_SUPPORT),1)

@@ -44,7 +44,6 @@
 #define NUM_SUBBUF_4S                               1100
 #define MAX_CFR_CLIENTS_LEGACY                      10
 
-
 static u_int8_t *
 target_if_mac_addr_deswizzle(u_int8_t *tgt_mac_addr, u_int8_t *buffer)
 {
@@ -75,7 +74,8 @@ target_if_mac_addr_deswizzle(u_int8_t *tgt_mac_addr, u_int8_t *buffer)
 }
 
 QDF_STATUS ol_txrx_htt_cfr_rx_ind_handler(void *pdev_ptr,
-				   uint32_t *msg_word, size_t msg_len)
+					  uint32_t *msg_word,
+					  size_t msg_len)
 {
 	struct wlan_objmgr_pdev *pdev;
 	struct wlan_objmgr_psoc *psoc;
@@ -87,7 +87,6 @@ QDF_STATUS ol_txrx_htt_cfr_rx_ind_handler(void *pdev_ptr,
 	u_int32_t cfr_dump_len, cfr_dump_index;
 	uint32_t status, target_type;
 	void *prindex = NULL;
-
 	struct csi_cfr_header cfr_header = {0};
 	u_int32_t end_magic = 0xBEAFDEAD;
 
@@ -107,7 +106,7 @@ QDF_STATUS ol_txrx_htt_cfr_rx_ind_handler(void *pdev_ptr,
 	}
 
 	pa = wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_UMAC_COMP_CFR);
-	if (pa == NULL) {
+	if (!pa) {
 		cfr_err("pdev_cfr is NULL\n");
 		wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
 		return QDF_STATUS_E_FAILURE;
@@ -133,56 +132,55 @@ QDF_STATUS ol_txrx_htt_cfr_rx_ind_handler(void *pdev_ptr,
 	target_if_cfr_fill_header(&cfr_header, true, target_type, false);
 
 	switch (cfr_msg_type) {
-
-	    u_int8_t *peeraddr;
+	u_int8_t *peeraddr;
 
 	case HTT_PEER_CFR_CAPTURE_MSG_TYPE_1:
-
-	    cfr_header.u.meta_v1.status =
+		cfr_header.u.meta_v1.status =
 			HTT_T2H_CFR_DUMP_TYPE1_STATUS_GET(*(msg_word + 2));
-	    cfr_cap_status = cfr_header.u.meta_v1.status;
-	    cfr_header.u.meta_v1.capture_bw =
+		cfr_cap_status = cfr_header.u.meta_v1.status;
+		cfr_header.u.meta_v1.capture_bw =
 			HTT_T2H_CFR_DUMP_TYPE1_CAP_BW_GET(*(msg_word + 2));
-	    cfr_header.u.meta_v1.capture_mode =
+		cfr_header.u.meta_v1.capture_mode =
 			HTT_T2H_CFR_DUMP_TYPE1_MODE_GET(*(msg_word + 2));
-	    cfr_header.u.meta_v1.sts_count =
+		cfr_header.u.meta_v1.sts_count =
 			HTT_T2H_CFR_DUMP_TYPE1_STS_GET(*(msg_word + 2));
-	    cfr_header.u.meta_v1.channel_bw =
+		cfr_header.u.meta_v1.channel_bw =
 			HTT_T2H_CFR_DUMP_TYPE1_CHAN_BW_GET(*(msg_word + 2));
-	    cfr_header.u.meta_v1.capture_type =
+		cfr_header.u.meta_v1.capture_type =
 			HTT_T2H_CFR_DUMP_TYPE1_CAP_TYPE_GET(*(msg_word + 2));
-	    cfr_vdev_id = HTT_T2H_CFR_DUMP_TYPE1_VDEV_ID_GET(*(msg_word + 2));
+		cfr_vdev_id = HTT_T2H_CFR_DUMP_TYPE1_VDEV_ID_GET
+				(*(msg_word + 2));
 
-	    vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, cfr_vdev_id,
-						    WLAN_CFR_ID);
-	    if (vdev == NULL)
-		    cfr_header.u.meta_v1.num_rx_chain = 0;
-	    else {
-		    cfr_header.u.meta_v1.num_rx_chain =
+		vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, cfr_vdev_id,
+							    WLAN_CFR_ID);
+		if (!vdev) {
+			cfr_header.u.meta_v1.num_rx_chain = 0;
+		} else {
+			cfr_header.u.meta_v1.num_rx_chain =
 				wlan_vdev_mlme_get_rxchainmask(vdev);
-		    wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
-	    }
+			wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
+		}
 
-	    peeraddr = target_if_mac_addr_deswizzle((u_int8_t *) (msg_word+3),
-				    cfr_header.u.meta_v1.peer_addr);
+		peeraddr = target_if_mac_addr_deswizzle
+				((u_int8_t *)(msg_word + 3),
+				 cfr_header.u.meta_v1.peer_addr);
 
-	    memcpy(cfr_header.u.meta_v1.peer_addr, peeraddr, 6);
+		memcpy(cfr_header.u.meta_v1.peer_addr, peeraddr, 6);
 
-	    cfr_dump_index	= *(msg_word + 5);
-	    cfr_header.u.meta_v1.length = *(msg_word + 6);
-	    cfr_dump_len = cfr_header.u.meta_v1.length;
-	    cfr_header.u.meta_v1.timestamp = *(msg_word + 7);
-	    cfr_header.u.meta_v1.prim20_chan = *(msg_word + 9);
-	    cfr_header.u.meta_v1.center_freq1 = *(msg_word + 10);
-	    cfr_header.u.meta_v1.center_freq2 = *(msg_word + 11);
-	    cfr_header.u.meta_v1.phy_mode = *(msg_word + 12);
-
-	break;
+		cfr_dump_index	= *(msg_word + 5);
+		cfr_header.u.meta_v1.length = *(msg_word + 6);
+		cfr_dump_len = cfr_header.u.meta_v1.length;
+		cfr_header.u.meta_v1.timestamp = *(msg_word + 7);
+		cfr_header.u.meta_v1.prim20_chan = *(msg_word + 9);
+		cfr_header.u.meta_v1.center_freq1 = *(msg_word + 10);
+		cfr_header.u.meta_v1.center_freq2 = *(msg_word + 11);
+		cfr_header.u.meta_v1.phy_mode = *(msg_word + 12);
+		break;
 
 	default:
-	    cfr_err("Unsupported CFR capture type:%d\n", cfr_msg_type);
-	    wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
-	    return QDF_STATUS_E_NOSUPPORT;
+		cfr_err("Unsupported CFR capture type:%d\n", cfr_msg_type);
+		wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
+		return QDF_STATUS_E_NOSUPPORT;
 	}
 
 	vaddr = pa->cfr_mem_chunk.vaddr;
@@ -191,15 +189,15 @@ QDF_STATUS ol_txrx_htt_cfr_rx_ind_handler(void *pdev_ptr,
 		prindex = (void *)((u_int8_t *)vaddr + cfr_dump_index);
 
 		target_if_cfr_info_send(pdev, &cfr_header,
-				sizeof(struct csi_cfr_header),
-				prindex, cfr_dump_len, &end_magic, 4);
+					sizeof(struct csi_cfr_header),
+					prindex, cfr_dump_len, &end_magic, 4);
 
 		*vaddr =  cfr_dump_index + cfr_dump_len;
 
 	} else if (cfr_cap_status == 0) {
 		target_if_cfr_info_send(pdev, &cfr_header,
-				sizeof(struct csi_cfr_header),
-				prindex, cfr_dump_len, &end_magic, 4);
+					sizeof(struct csi_cfr_header),
+					prindex, cfr_dump_len, &end_magic, 4);
 	}
 
 	cfr_debug("CFR: status=%d rindex=0x%pK dump_len=%d\n",
@@ -209,6 +207,7 @@ QDF_STATUS ol_txrx_htt_cfr_rx_ind_handler(void *pdev_ptr,
 
 	return QDF_STATUS_SUCCESS;
 }
+
 qdf_export_symbol(ol_txrx_htt_cfr_rx_ind_handler);
 
 QDF_STATUS
@@ -224,24 +223,21 @@ cfr_wifi2_0_init_pdev(struct wlan_objmgr_psoc *psoc,
 
 	pa = wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_UMAC_COMP_CFR);
 
-	if (pa == NULL)
+	if (!pa)
 		return QDF_STATUS_E_FAILURE;
 
 	target_type = target_if_cfr_get_target_type(psoc);
 	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
 
 	if (tgt_hdl)
-		info = (&(tgt_hdl->info));
+		info = (&tgt_hdl->info);
 	else
 		return QDF_STATUS_E_FAILURE;
 
 	if (pa->is_cfr_capable) {
-
 		for (idx = 0; idx < info->num_mem_chunks; ++idx) {
-
 			if (info->mem_chunks[idx].req_id ==
 					    CFR_CAPTURE_HOST_MEM_REQ_ID) {
-
 				pa->cfr_mem_chunk.req_id =
 					    info->mem_chunks[idx].req_id;
 				pa->cfr_mem_chunk.paddr =
@@ -254,8 +250,8 @@ cfr_wifi2_0_init_pdev(struct wlan_objmgr_psoc *psoc,
 				(*read_offset) =
 				    CFR_CAPTURE_HOST_MEM_DEFAULT_READ_OFFSET;
 				cfr_debug("CFR: reqid=%d len=%d\n",
-					pa->cfr_mem_chunk.req_id,
-					pa->cfr_mem_chunk.len);
+					  pa->cfr_mem_chunk.req_id,
+					  pa->cfr_mem_chunk.len);
 			}
 
 			if (idx >= info->num_mem_chunks) {
@@ -263,7 +259,6 @@ cfr_wifi2_0_init_pdev(struct wlan_objmgr_psoc *psoc,
 				cfr_err("CFR Shared memory not allocated\n");
 				return QDF_STATUS_E_NOMEM;
 			}
-
 		}
 
     /* TODO: These values need to be fine-tuned for better optimisation,
@@ -279,11 +274,13 @@ cfr_wifi2_0_init_pdev(struct wlan_objmgr_psoc *psoc,
 			pa->cfr_max_sta_count = MAX_CFR_CLIENTS_LEGACY;
 			pa->subbuf_size = MAX_SUBBUF_4S;
 			pa->num_subbufs = NUM_SUBBUF_4S;
-		} else
+		} else {
 			return QDF_STATUS_E_NOSUPPORT;
+		}
 
-	} else
+	} else {
 		return QDF_STATUS_E_NOSUPPORT;
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -292,7 +289,13 @@ QDF_STATUS
 cfr_wifi2_0_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 			struct wlan_objmgr_pdev *pdev)
 {
+	struct pdev_cfr *pa;
 
-    /* TODO:No cleanup action need for now */
+	pa = wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_UMAC_COMP_CFR);
+	if (!pa)
+		return QDF_STATUS_E_FAILURE;
+
+	pa->cfr_timer_enable = 0;
+
 	return QDF_STATUS_SUCCESS;
 }

@@ -76,7 +76,7 @@ dp_rx_mon_handle_status_buf_done(struct dp_pdev *pdev,
 	struct dp_soc *soc = pdev->soc;
 	hal_soc_handle_t hal_soc;
 	void *ring_entry;
-	uint32_t rx_buf_cookie;
+	struct hal_buf_info hbi;
 	qdf_nbuf_t status_nbuf;
 	struct dp_rx_desc *rx_desc;
 	void *rx_tlv;
@@ -91,10 +91,12 @@ dp_rx_mon_handle_status_buf_done(struct dp_pdev *pdev,
 				       soc, mon_status_srng);
 		return DP_MON_STATUS_NO_DMA;
 	}
-	rx_buf_cookie = HAL_RX_BUF_COOKIE_GET(ring_entry);
-	rx_desc = dp_rx_cookie_2_va_mon_status(soc, rx_buf_cookie);
 
-	qdf_assert(rx_desc);
+	hal_rx_buf_cookie_rbm_get(soc->hal_soc, (uint32_t *)ring_entry,
+				  &hbi);
+	rx_desc = dp_rx_cookie_2_va_mon_status(soc, hbi.sw_cookie);
+
+	qdf_assert_always(rx_desc);
 
 	status_nbuf = rx_desc->nbuf;
 
@@ -1480,6 +1482,11 @@ dp_rx_handle_ppdu_stats(struct dp_soc *soc, struct dp_pdev *pdev,
 			}
 		}
 		qdf_spin_unlock_bh(&pdev->neighbour_peer_mutex);
+	} else {
+		dp_info("Neighbour peers RSSI update failed! fc_valid = %d, to_ds_flag = %d and mac_addr2_valid = %d",
+			ppdu_info->nac_info.fc_valid,
+			ppdu_info->nac_info.to_ds_flag,
+			ppdu_info->nac_info.mac_addr2_valid);
 	}
 
 	/* need not generate wdi event when mcopy, cfr rcc mode and
@@ -1504,8 +1511,9 @@ dp_rx_handle_ppdu_stats(struct dp_soc *soc, struct dp_pdev *pdev,
 				   sizeof(struct cdp_rx_indication_ppdu),
 				   0, 0, FALSE);
 	if (ppdu_nbuf) {
-		cdp_rx_ppdu = (struct cdp_rx_indication_ppdu *)ppdu_nbuf->data;
+		cdp_rx_ppdu = (struct cdp_rx_indication_ppdu *)qdf_nbuf_data(ppdu_nbuf);
 
+		qdf_mem_zero(cdp_rx_ppdu, sizeof(struct cdp_rx_indication_ppdu));
 		dp_rx_mon_populate_cfr_info(pdev, ppdu_info, cdp_rx_ppdu);
 		dp_rx_populate_cdp_indication_ppdu(pdev,
 						   ppdu_info, cdp_rx_ppdu);
@@ -1948,7 +1956,7 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 	while (qdf_likely((rxdma_mon_status_ring_entry =
 		hal_srng_src_peek_n_get_next(hal_soc, mon_status_srng))
 			&& quota--)) {
-		uint32_t rx_buf_cookie;
+		struct hal_buf_info hbi;
 		qdf_nbuf_t status_nbuf;
 		struct dp_rx_desc *rx_desc;
 		uint8_t *status_buf;
@@ -1965,13 +1973,13 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 
 		if (qdf_likely(buf_addr)) {
 
-			rx_buf_cookie =
-				HAL_RX_BUF_COOKIE_GET(
-					rxdma_mon_status_ring_entry);
+			hal_rx_buf_cookie_rbm_get(soc->hal_soc,
+					(uint32_t *)rxdma_mon_status_ring_entry,
+					&hbi);
 			rx_desc = dp_rx_cookie_2_va_mon_status(soc,
-				rx_buf_cookie);
+						hbi.sw_cookie);
 
-			qdf_assert(rx_desc);
+			qdf_assert_always(rx_desc);
 
 			status_nbuf = rx_desc->nbuf;
 
@@ -2079,8 +2087,9 @@ buf_replenish:
 						&tail, mac_id, rx_desc_pool);
 
 			hal_rxdma_buff_addr_info_set(
-						rxdma_mon_status_ring_entry,
-						0, 0, HAL_RX_BUF_RBM_SW3_BM);
+				hal_soc, rxdma_mon_status_ring_entry,
+				0, 0,
+				HAL_RX_BUF_RBM_SW3_BM(soc->wbm_sw0_bm_id));
 			work_done++;
 			break;
 		}
@@ -2091,8 +2100,10 @@ buf_replenish:
 		rx_desc->in_use = 1;
 		rx_desc->unmapped = 0;
 
-		hal_rxdma_buff_addr_info_set(rxdma_mon_status_ring_entry,
-			paddr, rx_desc->cookie, HAL_RX_BUF_RBM_SW3_BM);
+		hal_rxdma_buff_addr_info_set(hal_soc,
+					     rxdma_mon_status_ring_entry,
+					     paddr, rx_desc->cookie,
+					     HAL_RX_BUF_RBM_SW3_BM(soc->wbm_sw0_bm_id));
 
 		hal_srng_src_get_next(hal_soc, mon_status_srng);
 		work_done++;
@@ -2162,7 +2173,7 @@ dp_rx_pdev_mon_status_buffers_alloc(struct dp_pdev *pdev, uint32_t mac_id)
 	return dp_rx_mon_status_buffers_replenish(soc, mac_id, mon_status_ring,
 						  rx_desc_pool, num_entries,
 						  &desc_list, &tail,
-						  HAL_RX_BUF_RBM_SW3_BM);
+						  HAL_RX_BUF_RBM_SW3_BM(soc->wbm_sw0_bm_id));
 }
 
 QDF_STATUS
@@ -2209,7 +2220,7 @@ dp_rx_pdev_mon_status_desc_pool_init(struct dp_pdev *pdev, uint32_t mac_id)
 	dp_debug("Mon RX Desc status Pool[%d] init entries=%u",
 		 pdev_id, num_entries);
 
-	rx_desc_pool->owner = HAL_RX_BUF_RBM_SW3_BM;
+	rx_desc_pool->owner = HAL_RX_BUF_RBM_SW3_BM(soc->wbm_sw0_bm_id);
 	rx_desc_pool->buf_size = RX_MON_STATUS_BUF_SIZE;
 	rx_desc_pool->buf_alignment = RX_DATA_BUFFER_ALIGNMENT;
 	/* Disable frag processing flag */
@@ -2408,8 +2419,10 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 		(*desc_list)->rx_desc.unmapped = 0;
 		count++;
 
-		hal_rxdma_buff_addr_info_set(rxdma_ring_entry, paddr,
-			(*desc_list)->rx_desc.cookie, owner);
+		hal_rxdma_buff_addr_info_set(dp_soc->hal_soc,
+					     rxdma_ring_entry, paddr,
+					     (*desc_list)->rx_desc.cookie,
+					     owner);
 
 		dp_rx_mon_status_debug("%pK: rx_desc=%pK, cookie=%d, nbuf=%pK, paddr=%pK",
 				       dp_soc, &(*desc_list)->rx_desc,
@@ -2476,7 +2489,7 @@ dp_mon_status_srng_drop_for_mac(struct dp_pdev *pdev, uint32_t mac_id,
 		hal_srng_src_peek_n_get_next(hal_soc, mon_status_srng)) &&
 		reap_cnt < MON_DROP_REAP_LIMIT && quota--) {
 		uint64_t buf_addr;
-		uint32_t rx_buf_cookie;
+		struct hal_buf_info hbi;
 		struct dp_rx_desc *rx_desc;
 		qdf_nbuf_t status_nbuf;
 		uint8_t *status_buf;
@@ -2490,11 +2503,13 @@ dp_mon_status_srng_drop_for_mac(struct dp_pdev *pdev, uint32_t mac_id,
 		   ((uint64_t)(HAL_RX_BUFFER_ADDR_39_32_GET(ring_desc)) << 32));
 
 		if (qdf_likely(buf_addr)) {
-			rx_buf_cookie = HAL_RX_BUF_COOKIE_GET(ring_desc);
+			hal_rx_buf_cookie_rbm_get(soc->hal_soc,
+						  (uint32_t *)ring_desc,
+						  &hbi);
 			rx_desc = dp_rx_cookie_2_va_mon_status(soc,
-							       rx_buf_cookie);
+							       hbi.sw_cookie);
 
-			qdf_assert(rx_desc);
+			qdf_assert_always(rx_desc);
 
 			status_nbuf = rx_desc->nbuf;
 
@@ -2556,8 +2571,8 @@ dp_mon_status_srng_drop_for_mac(struct dp_pdev *pdev, uint32_t mac_id,
 							 &tail, mac_id,
 							 rx_desc_pool);
 
-			hal_rxdma_buff_addr_info_set(ring_desc, 0, 0,
-						     HAL_RX_BUF_RBM_SW3_BM);
+			hal_rxdma_buff_addr_info_set(hal_soc, ring_desc, 0, 0,
+						     HAL_RX_BUF_RBM_SW3_BM(soc->wbm_sw0_bm_id));
 			break;
 		}
 
@@ -2566,8 +2581,9 @@ dp_mon_status_srng_drop_for_mac(struct dp_pdev *pdev, uint32_t mac_id,
 		rx_desc->nbuf = status_nbuf;
 		rx_desc->in_use = 1;
 
-		hal_rxdma_buff_addr_info_set(ring_desc, iova, rx_desc->cookie,
-					     HAL_RX_BUF_RBM_SW3_BM);
+		hal_rxdma_buff_addr_info_set(hal_soc, ring_desc, iova,
+					     rx_desc->cookie,
+					     HAL_RX_BUF_RBM_SW3_BM(soc->wbm_sw0_bm_id));
 
 		reap_cnt++;
 		hal_srng_src_get_next(hal_soc, mon_status_srng);

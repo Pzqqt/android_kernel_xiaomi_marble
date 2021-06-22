@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,7 @@
 
 #include "wlan_dcs_init_deinit_api.h"
 #include "../../core/src/wlan_dcs.h"
-#include "wlan_dcs_cfg.h"
+#include "cfg_dcs.h"
 #include "cfg_ucfg_api.h"
 
 /**

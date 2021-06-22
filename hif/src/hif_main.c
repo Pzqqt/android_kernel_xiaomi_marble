@@ -904,6 +904,7 @@ struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx,
 	scn->bus_type  = bus_type;
 
 	hif_pm_set_link_state(GET_HIF_OPAQUE_HDL(scn), HIF_PM_LINK_STATE_DOWN);
+	hif_allow_ep_vote_access(GET_HIF_OPAQUE_HDL(scn));
 	hif_get_cfg_from_psoc(scn, psoc);
 
 	hif_set_event_hist_mask(GET_HIF_OPAQUE_HDL(scn));
@@ -1047,6 +1048,66 @@ QDF_STATUS hif_try_complete_tasks(struct hif_softc *scn)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#if defined(HIF_IPCI) && defined(FEATURE_HAL_DELAYED_REG_WRITE)
+QDF_STATUS hif_try_prevent_ep_vote_access(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	uint32_t work_drain_wait_cnt = 0;
+	int work = 0;
+
+	qdf_atomic_set(&scn->dp_ep_vote_access,
+		       HIF_EP_VOTE_ACCESS_DISABLE);
+	qdf_atomic_set(&scn->ep_vote_access,
+		       HIF_EP_VOTE_ACCESS_DISABLE);
+
+	while ((work = hif_get_num_pending_work(scn))) {
+		if (++work_drain_wait_cnt > HIF_WORK_DRAIN_WAIT_CNT) {
+			qdf_atomic_set(&scn->dp_ep_vote_access,
+				       HIF_EP_VOTE_ACCESS_ENABLE);
+			qdf_atomic_set(&scn->ep_vote_access,
+				       HIF_EP_VOTE_ACCESS_ENABLE);
+			hif_err("timeout wait for pending work %d ", work);
+			return QDF_STATUS_E_FAULT;
+		}
+		qdf_sleep(5);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+void hif_allow_ep_vote_access(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	qdf_atomic_set(&scn->dp_ep_vote_access,
+		       HIF_EP_VOTE_ACCESS_ENABLE);
+	qdf_atomic_set(&scn->ep_vote_access,
+		       HIF_EP_VOTE_ACCESS_ENABLE);
+}
+
+void hif_set_ep_vote_access(struct hif_opaque_softc *hif_ctx,
+			    uint8_t type, uint8_t access)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	if (type == HIF_EP_VOTE_DP_ACCESS)
+		qdf_atomic_set(&scn->dp_ep_vote_access, access);
+	else
+		qdf_atomic_set(&scn->ep_vote_access, access);
+}
+
+uint8_t hif_get_ep_vote_access(struct hif_opaque_softc *hif_ctx,
+			       uint8_t type)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	if (type == HIF_EP_VOTE_DP_ACCESS)
+		return qdf_atomic_read(&scn->dp_ep_vote_access);
+	else
+		return qdf_atomic_read(&scn->ep_vote_access);
+}
+#endif
 
 #if (defined(QCA_WIFI_QCA8074) || defined(QCA_WIFI_QCA6018) || \
 	defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
@@ -1470,7 +1531,6 @@ int hif_get_device_type(uint32_t device_id,
 		break;
 
 	case WCN7850_DEVICE_ID:
-	case WCN7850_EMULATION_DEVICE_ID:
 		*hif_type = HIF_TYPE_WCN7850;
 		*target_type = TARGET_TYPE_WCN7850;
 		hif_info(" *********** WCN7850 *************");

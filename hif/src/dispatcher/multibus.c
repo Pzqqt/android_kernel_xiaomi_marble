@@ -58,6 +58,7 @@ static void hif_initialize_default_ops(struct hif_softc *hif_sc)
 	bus_ops->hif_bus_late_resume = &hif_dummy_bus_resume;
 	bus_ops->hif_map_ce_to_irq = &hif_dummy_map_ce_to_irq;
 	bus_ops->hif_grp_irq_configure = &hif_dummy_grp_irq_configure;
+	bus_ops->hif_grp_irq_deconfigure = &hif_dummy_grp_irq_deconfigure;
 	bus_ops->hif_config_irq_affinity =
 		&hif_dummy_config_irq_affinity;
 	bus_ops->hif_config_irq_by_ceid = &hif_dummy_config_irq_by_ceid;
@@ -344,6 +345,11 @@ int hif_grp_irq_configure(struct hif_softc *hif_sc,
 			  struct hif_exec_context *hif_exec)
 {
 	return hif_sc->bus_ops.hif_grp_irq_configure(hif_sc, hif_exec);
+}
+
+void hif_grp_irq_deconfigure(struct hif_softc *hif_sc)
+{
+	hif_sc->bus_ops.hif_grp_irq_deconfigure(hif_sc);
 }
 
 int hif_dump_registers(struct hif_opaque_softc *hif_hdl)

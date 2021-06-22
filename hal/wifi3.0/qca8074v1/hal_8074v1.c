@@ -15,7 +15,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-#include "hal_hw_headers.h"
+#include "hal_li_hw_headers.h"
 #include "hal_internal.h"
 #include "hal_api.h"
 #include "target_type.h"
@@ -105,7 +105,10 @@
 #include "hal_8074v1_tx.h"
 #include "hal_8074v1_rx.h"
 #include <hal_generic_api.h>
-#include <hal_wbm.h>
+#include "hal_li_rx.h"
+#include "hal_li_tx.h"
+#include "hal_li_api.h"
+#include "hal_li_generic_api.h"
 
 /**
  * hal_get_window_address_8074(): Function to get hp/tp address
@@ -625,18 +628,25 @@ static uint32_t hal_rx_hw_desc_get_ppduid_get_8074v1(void *rx_tlv_hdr,
 
 /**
  * hal_reo_status_get_header_8074v1 - Process reo desc info
- * @d - Pointer to reo descriptior
+ * @ring_desc: REO status ring descriptor
  * @b - tlv type info
  * @h1 - Pointer to hal_reo_status_header where info to be stored
  *
  * Return - none.
  *
  */
-static void hal_reo_status_get_header_8074v1(uint32_t *d, int b, void *h1)
+static void hal_reo_status_get_header_8074v1(hal_ring_desc_t ring_desc, int b,
+					     void *h1)
 {
+	uint32_t *d = (uint32_t *)ring_desc;
 	uint32_t val1 = 0;
 	struct hal_reo_status_header *h =
 			(struct hal_reo_status_header *)h1;
+
+	/* Offsets of descriptor fields defined in HW headers start
+	 * from the field after TLV header
+	 */
+	d += HAL_GET_NUM_DWORDS(sizeof(struct tlv_32_hdr));
 
 	switch (b) {
 	case HAL_REO_QUEUE_STATS_STATUS_TLV:
@@ -1212,126 +1222,172 @@ void hal_compute_reo_remap_ix2_ix3_8074v1(uint32_t *ring, uint32_t num_rings,
 	}
 }
 
-struct hal_hw_txrx_ops qca8074_hal_hw_txrx_ops = {
+static void hal_hw_txrx_ops_attach_qca8074(struct hal_soc *hal_soc)
+{
 
 	/* init and setup */
-	.hal_srng_dst_hw_init = hal_srng_dst_hw_init_generic,
-	.hal_srng_src_hw_init = hal_srng_src_hw_init_generic,
-	.hal_get_hw_hptp = hal_get_hw_hptp_generic,
-	.hal_reo_setup = hal_reo_setup_generic,
-	.hal_setup_link_idle_list = hal_setup_link_idle_list_generic,
-	.hal_get_window_address = hal_get_window_address_8074,
+	hal_soc->ops->hal_srng_dst_hw_init = hal_srng_dst_hw_init_generic;
+	hal_soc->ops->hal_srng_src_hw_init = hal_srng_src_hw_init_generic;
+	hal_soc->ops->hal_get_hw_hptp = hal_get_hw_hptp_generic;
+	hal_soc->ops->hal_reo_setup = hal_reo_setup_generic_li;
+	hal_soc->ops->hal_get_window_address = hal_get_window_address_8074;
 
 	/* tx */
-	.hal_tx_desc_set_dscp_tid_table_id =
-		hal_tx_desc_set_dscp_tid_table_id_8074,
-	.hal_tx_set_dscp_tid_map = hal_tx_set_dscp_tid_map_8074,
-	.hal_tx_update_dscp_tid = hal_tx_update_dscp_tid_8074,
-	.hal_tx_desc_set_lmac_id = hal_tx_desc_set_lmac_id_8074,
-	.hal_tx_desc_set_buf_addr = hal_tx_desc_set_buf_addr_generic,
-	.hal_tx_desc_set_search_type = hal_tx_desc_set_search_type_generic,
-	.hal_tx_desc_set_search_index = hal_tx_desc_set_search_index_generic,
-	.hal_tx_desc_set_cache_set_num = hal_tx_desc_set_cache_set_num_generic,
-	.hal_tx_comp_get_status = hal_tx_comp_get_status_generic,
-	.hal_tx_comp_get_release_reason =
-		hal_tx_comp_get_release_reason_generic,
-	.hal_get_wbm_internal_error = hal_get_wbm_internal_error_generic,
-	.hal_tx_desc_set_mesh_en = hal_tx_desc_set_mesh_en_8074v1,
-	.hal_tx_init_cmd_credit_ring = hal_tx_init_cmd_credit_ring_8074v1,
+	hal_soc->ops->hal_tx_desc_set_dscp_tid_table_id =
+		hal_tx_desc_set_dscp_tid_table_id_8074;
+	hal_soc->ops->hal_tx_set_dscp_tid_map = hal_tx_set_dscp_tid_map_8074;
+	hal_soc->ops->hal_tx_update_dscp_tid = hal_tx_update_dscp_tid_8074;
+	hal_soc->ops->hal_tx_desc_set_lmac_id = hal_tx_desc_set_lmac_id_8074;
+	hal_soc->ops->hal_tx_desc_set_buf_addr =
+					hal_tx_desc_set_buf_addr_generic_li;
+	hal_soc->ops->hal_tx_desc_set_search_type =
+					hal_tx_desc_set_search_type_generic_li;
+	hal_soc->ops->hal_tx_desc_set_search_index =
+					hal_tx_desc_set_search_index_generic_li;
+	hal_soc->ops->hal_tx_desc_set_cache_set_num =
+				hal_tx_desc_set_cache_set_num_generic_li;
+	hal_soc->ops->hal_tx_comp_get_status =
+					hal_tx_comp_get_status_generic_li;
+	hal_soc->ops->hal_tx_comp_get_release_reason =
+		hal_tx_comp_get_release_reason_generic_li;
+	hal_soc->ops->hal_get_wbm_internal_error =
+					hal_get_wbm_internal_error_generic_li;
+	hal_soc->ops->hal_tx_desc_set_mesh_en = hal_tx_desc_set_mesh_en_8074v1;
+	hal_soc->ops->hal_tx_init_cmd_credit_ring =
+					hal_tx_init_cmd_credit_ring_8074v1;
 
 	/* rx */
-	.hal_rx_msdu_start_nss_get = hal_rx_msdu_start_nss_get_8074,
-	.hal_rx_mon_hw_desc_get_mpdu_status =
-		hal_rx_mon_hw_desc_get_mpdu_status_8074,
-	.hal_rx_get_tlv = hal_rx_get_tlv_8074,
-	.hal_rx_proc_phyrx_other_receive_info_tlv =
-		hal_rx_proc_phyrx_other_receive_info_tlv_8074,
-	.hal_rx_dump_msdu_start_tlv = hal_rx_dump_msdu_start_tlv_8074,
-	.hal_rx_dump_msdu_end_tlv = hal_rx_dump_msdu_end_tlv_8074,
-	.hal_get_link_desc_size = hal_get_link_desc_size_8074,
-	.hal_rx_mpdu_start_tid_get = hal_rx_mpdu_start_tid_get_8074,
-	.hal_rx_msdu_start_reception_type_get =
-		hal_rx_msdu_start_reception_type_get_8074,
-	.hal_rx_msdu_end_da_idx_get = hal_rx_msdu_end_da_idx_get_8074,
-	.hal_rx_msdu_desc_info_get_ptr = hal_rx_msdu_desc_info_get_ptr_8074v1,
-	.hal_rx_link_desc_msdu0_ptr = hal_rx_link_desc_msdu0_ptr_8074v1,
-	.hal_reo_status_get_header = hal_reo_status_get_header_8074v1,
-	.hal_rx_status_get_tlv_info = hal_rx_status_get_tlv_info_generic,
-	.hal_rx_wbm_err_info_get = hal_rx_wbm_err_info_get_generic,
-	.hal_rx_dump_mpdu_start_tlv = hal_rx_dump_mpdu_start_tlv_generic,
+	hal_soc->ops->hal_rx_msdu_start_nss_get =
+					hal_rx_msdu_start_nss_get_8074;
+	hal_soc->ops->hal_rx_mon_hw_desc_get_mpdu_status =
+		hal_rx_mon_hw_desc_get_mpdu_status_8074;
+	hal_soc->ops->hal_rx_get_tlv = hal_rx_get_tlv_8074;
+	hal_soc->ops->hal_rx_proc_phyrx_other_receive_info_tlv =
+		hal_rx_proc_phyrx_other_receive_info_tlv_8074;
+	hal_soc->ops->hal_rx_dump_msdu_start_tlv =
+					hal_rx_dump_msdu_start_tlv_8074;
+	hal_soc->ops->hal_rx_dump_msdu_end_tlv = hal_rx_dump_msdu_end_tlv_8074;
+	hal_soc->ops->hal_get_link_desc_size = hal_get_link_desc_size_8074;
+	hal_soc->ops->hal_rx_mpdu_start_tid_get =
+					hal_rx_mpdu_start_tid_get_8074;
+	hal_soc->ops->hal_rx_msdu_start_reception_type_get =
+		hal_rx_msdu_start_reception_type_get_8074;
+	hal_soc->ops->hal_rx_msdu_end_da_idx_get =
+					hal_rx_msdu_end_da_idx_get_8074;
+	hal_soc->ops->hal_rx_msdu_desc_info_get_ptr =
+					hal_rx_msdu_desc_info_get_ptr_8074v1;
+	hal_soc->ops->hal_rx_link_desc_msdu0_ptr =
+					hal_rx_link_desc_msdu0_ptr_8074v1;
+	hal_soc->ops->hal_reo_status_get_header =
+					hal_reo_status_get_header_8074v1;
+	hal_soc->ops->hal_rx_status_get_tlv_info =
+					hal_rx_status_get_tlv_info_generic_li;
+	hal_soc->ops->hal_rx_wbm_err_info_get =
+					hal_rx_wbm_err_info_get_generic_li;
+	hal_soc->ops->hal_rx_dump_mpdu_start_tlv =
+					hal_rx_dump_mpdu_start_tlv_generic_li;
 
-	.hal_tx_set_pcp_tid_map = hal_tx_set_pcp_tid_map_generic,
-	.hal_tx_update_pcp_tid_map = hal_tx_update_pcp_tid_generic,
-	.hal_tx_set_tidmap_prty = hal_tx_update_tidmap_prty_generic,
-	.hal_rx_get_rx_fragment_number = hal_rx_get_rx_fragment_number_8074v1,
-	.hal_rx_msdu_end_da_is_mcbc_get = hal_rx_msdu_end_da_is_mcbc_get_8074v1,
-	.hal_rx_msdu_end_sa_is_valid_get =
-		hal_rx_msdu_end_sa_is_valid_get_8074v1,
-	.hal_rx_msdu_end_sa_idx_get = hal_rx_msdu_end_sa_idx_get_8074v1,
-	.hal_rx_desc_is_first_msdu = hal_rx_desc_is_first_msdu_8074v1,
-	.hal_rx_msdu_end_l3_hdr_padding_get =
-		hal_rx_msdu_end_l3_hdr_padding_get_8074v1,
-	.hal_rx_encryption_info_valid = hal_rx_encryption_info_valid_8074v1,
-	.hal_rx_print_pn = hal_rx_print_pn_8074v1,
-	.hal_rx_msdu_end_first_msdu_get = hal_rx_msdu_end_first_msdu_get_8074v1,
-	.hal_rx_msdu_end_da_is_valid_get =
-		hal_rx_msdu_end_da_is_valid_get_8074v1,
-	.hal_rx_msdu_end_last_msdu_get = hal_rx_msdu_end_last_msdu_get_8074v1,
-	.hal_rx_get_mpdu_mac_ad4_valid = hal_rx_get_mpdu_mac_ad4_valid_8074v1,
-	.hal_rx_mpdu_start_sw_peer_id_get =
-		hal_rx_mpdu_start_sw_peer_id_get_8074v1,
-	.hal_rx_mpdu_get_to_ds = hal_rx_mpdu_get_to_ds_8074v1,
-	.hal_rx_mpdu_get_fr_ds = hal_rx_mpdu_get_fr_ds_8074v1,
-	.hal_rx_get_mpdu_frame_control_valid =
-		hal_rx_get_mpdu_frame_control_valid_8074v1,
-	.hal_rx_mpdu_get_addr1 = hal_rx_mpdu_get_addr1_8074v1,
-	.hal_rx_mpdu_get_addr2 = hal_rx_mpdu_get_addr2_8074v1,
-	.hal_rx_mpdu_get_addr3 = hal_rx_mpdu_get_addr3_8074v1,
-	.hal_rx_mpdu_get_addr4 = hal_rx_mpdu_get_addr4_8074v1,
-	.hal_rx_get_mpdu_sequence_control_valid =
-		hal_rx_get_mpdu_sequence_control_valid_8074v1,
-	.hal_rx_is_unicast = hal_rx_is_unicast_8074v1,
-	.hal_rx_tid_get = hal_rx_tid_get_8074v1,
-	.hal_rx_hw_desc_get_ppduid_get = hal_rx_hw_desc_get_ppduid_get_8074v1,
-	.hal_rx_mpdu_start_mpdu_qos_control_valid_get =
-		hal_rx_mpdu_start_mpdu_qos_control_valid_get_8074v1,
-	.hal_rx_msdu_end_sa_sw_peer_id_get =
-		hal_rx_msdu_end_sa_sw_peer_id_get_8074v1,
-	.hal_rx_msdu0_buffer_addr_lsb = hal_rx_msdu0_buffer_addr_lsb_8074v1,
-	.hal_rx_msdu_desc_info_ptr_get = hal_rx_msdu_desc_info_ptr_get_8074v1,
-	.hal_ent_mpdu_desc_info = hal_ent_mpdu_desc_info_8074v1,
-	.hal_dst_mpdu_desc_info = hal_dst_mpdu_desc_info_8074v1,
-	.hal_rx_get_fc_valid = hal_rx_get_fc_valid_8074v1,
-	.hal_rx_get_to_ds_flag = hal_rx_get_to_ds_flag_8074v1,
-	.hal_rx_get_mac_addr2_valid = hal_rx_get_mac_addr2_valid_8074v1,
-	.hal_rx_get_filter_category = hal_rx_get_filter_category_8074v1,
-	.hal_rx_get_ppdu_id = hal_rx_get_ppdu_id_8074v1,
-	.hal_reo_config = hal_reo_config_8074v1,
-	.hal_rx_msdu_flow_idx_get = hal_rx_msdu_flow_idx_get_8074v1,
-	.hal_rx_msdu_flow_idx_invalid = hal_rx_msdu_flow_idx_invalid_8074v1,
-	.hal_rx_msdu_flow_idx_timeout = hal_rx_msdu_flow_idx_timeout_8074v1,
-	.hal_rx_msdu_fse_metadata_get = hal_rx_msdu_fse_metadata_get_8074v1,
-	.hal_rx_msdu_cce_metadata_get = hal_rx_msdu_cce_metadata_get_8074v1,
-	.hal_rx_msdu_get_flow_params = hal_rx_msdu_get_flow_params_8074v1,
-	.hal_rx_tlv_get_tcp_chksum = hal_rx_tlv_get_tcp_chksum_8074v1,
-	.hal_rx_get_rx_sequence = hal_rx_get_rx_sequence_8074v1,
+	hal_soc->ops->hal_tx_set_pcp_tid_map =
+					hal_tx_set_pcp_tid_map_generic_li;
+	hal_soc->ops->hal_tx_update_pcp_tid_map =
+					hal_tx_update_pcp_tid_generic_li;
+	hal_soc->ops->hal_tx_set_tidmap_prty =
+					hal_tx_update_tidmap_prty_generic_li;
+	hal_soc->ops->hal_rx_get_rx_fragment_number =
+					hal_rx_get_rx_fragment_number_8074v1;
+	hal_soc->ops->hal_rx_msdu_end_da_is_mcbc_get =
+					hal_rx_msdu_end_da_is_mcbc_get_8074v1;
+	hal_soc->ops->hal_rx_msdu_end_sa_is_valid_get =
+					hal_rx_msdu_end_sa_is_valid_get_8074v1;
+	hal_soc->ops->hal_rx_msdu_end_sa_idx_get =
+					hal_rx_msdu_end_sa_idx_get_8074v1;
+	hal_soc->ops->hal_rx_desc_is_first_msdu =
+					hal_rx_desc_is_first_msdu_8074v1;
+	hal_soc->ops->hal_rx_msdu_end_l3_hdr_padding_get =
+		hal_rx_msdu_end_l3_hdr_padding_get_8074v1;
+	hal_soc->ops->hal_rx_encryption_info_valid =
+					hal_rx_encryption_info_valid_8074v1;
+	hal_soc->ops->hal_rx_print_pn = hal_rx_print_pn_8074v1;
+	hal_soc->ops->hal_rx_msdu_end_first_msdu_get =
+					hal_rx_msdu_end_first_msdu_get_8074v1;
+	hal_soc->ops->hal_rx_msdu_end_da_is_valid_get =
+					hal_rx_msdu_end_da_is_valid_get_8074v1;
+	hal_soc->ops->hal_rx_msdu_end_last_msdu_get =
+					hal_rx_msdu_end_last_msdu_get_8074v1;
+	hal_soc->ops->hal_rx_get_mpdu_mac_ad4_valid =
+					hal_rx_get_mpdu_mac_ad4_valid_8074v1;
+	hal_soc->ops->hal_rx_mpdu_start_sw_peer_id_get =
+		hal_rx_mpdu_start_sw_peer_id_get_8074v1;
+	hal_soc->ops->hal_rx_mpdu_get_to_ds = hal_rx_mpdu_get_to_ds_8074v1;
+	hal_soc->ops->hal_rx_mpdu_get_fr_ds = hal_rx_mpdu_get_fr_ds_8074v1;
+	hal_soc->ops->hal_rx_get_mpdu_frame_control_valid =
+		hal_rx_get_mpdu_frame_control_valid_8074v1;
+	hal_soc->ops->hal_rx_mpdu_get_addr1 = hal_rx_mpdu_get_addr1_8074v1;
+	hal_soc->ops->hal_rx_mpdu_get_addr2 = hal_rx_mpdu_get_addr2_8074v1;
+	hal_soc->ops->hal_rx_mpdu_get_addr3 = hal_rx_mpdu_get_addr3_8074v1;
+	hal_soc->ops->hal_rx_mpdu_get_addr4 = hal_rx_mpdu_get_addr4_8074v1;
+	hal_soc->ops->hal_rx_get_mpdu_sequence_control_valid =
+		hal_rx_get_mpdu_sequence_control_valid_8074v1;
+	hal_soc->ops->hal_rx_is_unicast = hal_rx_is_unicast_8074v1;
+	hal_soc->ops->hal_rx_tid_get = hal_rx_tid_get_8074v1;
+	hal_soc->ops->hal_rx_hw_desc_get_ppduid_get =
+					hal_rx_hw_desc_get_ppduid_get_8074v1;
+	hal_soc->ops->hal_rx_mpdu_start_mpdu_qos_control_valid_get =
+		hal_rx_mpdu_start_mpdu_qos_control_valid_get_8074v1;
+	hal_soc->ops->hal_rx_msdu_end_sa_sw_peer_id_get =
+		hal_rx_msdu_end_sa_sw_peer_id_get_8074v1;
+	hal_soc->ops->hal_rx_msdu0_buffer_addr_lsb =
+					hal_rx_msdu0_buffer_addr_lsb_8074v1;
+	hal_soc->ops->hal_rx_msdu_desc_info_ptr_get =
+					hal_rx_msdu_desc_info_ptr_get_8074v1;
+	hal_soc->ops->hal_ent_mpdu_desc_info = hal_ent_mpdu_desc_info_8074v1;
+	hal_soc->ops->hal_dst_mpdu_desc_info = hal_dst_mpdu_desc_info_8074v1;
+	hal_soc->ops->hal_rx_get_fc_valid = hal_rx_get_fc_valid_8074v1;
+	hal_soc->ops->hal_rx_get_to_ds_flag = hal_rx_get_to_ds_flag_8074v1;
+	hal_soc->ops->hal_rx_get_mac_addr2_valid =
+					hal_rx_get_mac_addr2_valid_8074v1;
+	hal_soc->ops->hal_rx_get_filter_category =
+					hal_rx_get_filter_category_8074v1;
+	hal_soc->ops->hal_rx_get_ppdu_id = hal_rx_get_ppdu_id_8074v1;
+	hal_soc->ops->hal_reo_config = hal_reo_config_8074v1;
+	hal_soc->ops->hal_rx_msdu_flow_idx_get =
+					hal_rx_msdu_flow_idx_get_8074v1;
+	hal_soc->ops->hal_rx_msdu_flow_idx_invalid =
+					hal_rx_msdu_flow_idx_invalid_8074v1;
+	hal_soc->ops->hal_rx_msdu_flow_idx_timeout =
+					hal_rx_msdu_flow_idx_timeout_8074v1;
+	hal_soc->ops->hal_rx_msdu_fse_metadata_get =
+					hal_rx_msdu_fse_metadata_get_8074v1;
+	hal_soc->ops->hal_rx_msdu_cce_metadata_get =
+					hal_rx_msdu_cce_metadata_get_8074v1;
+	hal_soc->ops->hal_rx_msdu_get_flow_params =
+					hal_rx_msdu_get_flow_params_8074v1;
+	hal_soc->ops->hal_rx_tlv_get_tcp_chksum =
+					hal_rx_tlv_get_tcp_chksum_8074v1;
+	hal_soc->ops->hal_rx_get_rx_sequence = hal_rx_get_rx_sequence_8074v1;
 	/* rx - msdu fast path info fields */
-	.hal_rx_msdu_packet_metadata_get =
-		hal_rx_msdu_packet_metadata_get_generic,
-	.hal_rx_mpdu_start_tlv_tag_valid =
-		hal_rx_mpdu_start_tlv_tag_valid_8074v1,
+	hal_soc->ops->hal_rx_msdu_packet_metadata_get =
+		hal_rx_msdu_packet_metadata_get_generic_li;
+	hal_soc->ops->hal_rx_mpdu_start_tlv_tag_valid =
+		hal_rx_mpdu_start_tlv_tag_valid_8074v1;
 
 	/* rx - TLV struct offsets */
-	.hal_rx_msdu_end_offset_get = hal_rx_msdu_end_offset_get_generic,
-	.hal_rx_attn_offset_get = hal_rx_attn_offset_get_generic,
-	.hal_rx_msdu_start_offset_get = hal_rx_msdu_start_offset_get_generic,
-	.hal_rx_mpdu_start_offset_get = hal_rx_mpdu_start_offset_get_generic,
-	.hal_rx_mpdu_end_offset_get = hal_rx_mpdu_end_offset_get_generic,
+	hal_soc->ops->hal_rx_msdu_end_offset_get =
+					hal_rx_msdu_end_offset_get_generic;
+	hal_soc->ops->hal_rx_attn_offset_get = hal_rx_attn_offset_get_generic;
+	hal_soc->ops->hal_rx_msdu_start_offset_get =
+					hal_rx_msdu_start_offset_get_generic;
+	hal_soc->ops->hal_rx_mpdu_start_offset_get =
+					hal_rx_mpdu_start_offset_get_generic;
+	hal_soc->ops->hal_rx_mpdu_end_offset_get =
+					hal_rx_mpdu_end_offset_get_generic;
 #ifndef NO_RX_PKT_HDR_TLV
-	.hal_rx_pkt_tlv_offset_get = hal_rx_pkt_tlv_offset_get_generic,
+	hal_soc->ops->hal_rx_pkt_tlv_offset_get =
+					hal_rx_pkt_tlv_offset_get_generic;
 #endif
-	.hal_rx_flow_setup_fse = hal_rx_flow_setup_fse_8074v1,
-	.hal_compute_reo_remap_ix2_ix3 = hal_compute_reo_remap_ix2_ix3_8074v1,
+	hal_soc->ops->hal_rx_flow_setup_fse = hal_rx_flow_setup_fse_8074v1;
+	hal_soc->ops->hal_compute_reo_remap_ix2_ix3 =
+					hal_compute_reo_remap_ix2_ix3_8074v1;
 };
 
 struct hal_hw_srng_config hw_srng_table_8074[] = {
@@ -1784,5 +1840,6 @@ void hal_qca8074_attach(struct hal_soc *hal_soc)
 {
 	hal_soc->hw_srng_table = hw_srng_table_8074;
 	hal_soc->hal_hw_reg_offset = hal_hw_reg_offset_qca8074;
-	hal_soc->ops = &qca8074_hal_hw_txrx_ops;
+	hal_hw_txrx_default_ops_attach_li(hal_soc);
+	hal_hw_txrx_ops_attach_qca8074(hal_soc);
 }

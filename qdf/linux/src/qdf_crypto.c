@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -172,7 +172,39 @@ static inline void leftshift_onebit(const uint8_t *input, uint8_t *output)
 	}
 }
 
-static void generate_subkey(struct crypto_cipher *tfm, uint8_t *k1, uint8_t *k2)
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
+static void
+generate_subkey(struct crypto_aes_ctx *aes_ctx, uint8_t *k1, uint8_t *k2)
+{
+	uint8_t l[AES_BLOCK_SIZE], tmp[AES_BLOCK_SIZE];
+	const uint8_t const_rb[AES_BLOCK_SIZE] = {
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x87
+	};
+	const uint8_t const_zero[AES_BLOCK_SIZE] = {
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+	};
+
+	aes_encrypt(aes_ctx, l, const_zero);
+
+	if ((l[0] & 0x80) == 0) {       /* If MSB(l) = 0, then k1 = l << 1 */
+		leftshift_onebit(l, k1);
+	} else {                /* Else k1 = ( l << 1 ) (+) Rb */
+		leftshift_onebit(l, tmp);
+		xor_128(tmp, const_rb, k1);
+	}
+
+	if ((k1[0] & 0x80) == 0) {
+		leftshift_onebit(k1, k2);
+	} else {
+		leftshift_onebit(k1, tmp);
+		xor_128(tmp, const_rb, k2);
+	}
+}
+#else
+static void
+generate_subkey(struct crypto_cipher *tfm, uint8_t *k1, uint8_t *k2)
 {
 	uint8_t l[AES_BLOCK_SIZE], tmp[AES_BLOCK_SIZE];
 	const uint8_t const_rb[AES_BLOCK_SIZE] = {
@@ -200,6 +232,7 @@ static void generate_subkey(struct crypto_cipher *tfm, uint8_t *k1, uint8_t *k2)
 		xor_128(tmp, const_rb, k2);
 	}
 }
+#endif
 
 static inline void padding(const uint8_t *lastb, uint8_t *pad, uint16_t length)
 {
@@ -216,6 +249,65 @@ static inline void padding(const uint8_t *lastb, uint8_t *pad, uint16_t length)
 	}
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
+int qdf_crypto_aes_128_cmac(const uint8_t *key, const uint8_t *data,
+			    uint16_t len, uint8_t *mic)
+{
+	uint8_t x[AES_BLOCK_SIZE], y[AES_BLOCK_SIZE];
+	uint8_t m_last[AES_BLOCK_SIZE], padded[AES_BLOCK_SIZE];
+	uint8_t k1[AES_KEYSIZE_128], k2[AES_KEYSIZE_128];
+	int cmp_blk;
+	int i, num_block = (len + 15) / AES_BLOCK_SIZE;
+	struct crypto_aes_ctx aes_ctx;
+	int ret;
+
+	/*
+	 * Calculate MIC and then copy
+	 */
+	ret = aes_expandkey(&aes_ctx, key, AES_KEYSIZE_128);
+	if (ret) {
+		qdf_err("aes_expandkey failed (%d)", ret);
+		return ret;
+	}
+
+	generate_subkey(&aes_ctx, k1, k2);
+
+	if (num_block == 0) {
+		num_block = 1;
+		cmp_blk = 0;
+	} else {
+		cmp_blk = ((len % AES_BLOCK_SIZE) == 0) ? 1 : 0;
+	}
+
+	if (cmp_blk) {
+		/* Last block is complete block */
+		xor_128(&data[AES_BLOCK_SIZE * (num_block - 1)], k1, m_last);
+	} else {
+		/* Last block is not complete block */
+		padding(&data[AES_BLOCK_SIZE * (num_block - 1)], padded,
+			len % AES_BLOCK_SIZE);
+		xor_128(padded, k2, m_last);
+	}
+
+	for (i = 0; i < AES_BLOCK_SIZE; i++)
+		x[i] = 0;
+
+	for (i = 0; i < (num_block - 1); i++) {
+		/* y = Mi (+) x */
+		xor_128(x, &data[AES_BLOCK_SIZE * i], y);
+		/* x = AES-128(KEY, y) */
+		aes_encrypt(&aes_ctx, x, y);
+	}
+
+	xor_128(x, m_last, y);
+	aes_encrypt(&aes_ctx, x, y);
+	memzero_explicit(&aes_ctx, sizeof(aes_ctx));
+
+	memcpy(mic, x, CMAC_TLEN);
+
+	return 0;
+}
+#else
 int qdf_crypto_aes_128_cmac(const uint8_t *key, const uint8_t *data,
 			    uint16_t len, uint8_t *mic)
 {
@@ -282,6 +374,7 @@ int qdf_crypto_aes_128_cmac(const uint8_t *key, const uint8_t *data,
 
 	return 0;
 }
+#endif
 
 /**
  * set_desc_flags() - set flags variable in the shash_desc struct

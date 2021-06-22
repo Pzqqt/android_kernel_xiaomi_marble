@@ -71,6 +71,38 @@ uint8_t wlan_freq_to_chan(uint32_t freq)
 	return chan;
 }
 
+void
+wlan_get_320_center_freq(qdf_freq_t freq,
+			 qdf_freq_t *center_freq1,
+			 qdf_freq_t *center_freq2)
+{
+	*center_freq1 = 0;
+	*center_freq2 = 0;
+
+	if ((freq >= 5500) && (freq <= 5800)) {
+		*center_freq1 = 5650;
+	} else if ((freq >= 5955) && (freq <= 6095)) {
+		*center_freq1 = 6105;
+	} else if ((freq >= 6115) && (freq <= 6255)) {
+		*center_freq1 = 6105;
+		*center_freq2 = 6205;
+	} else if ((freq >= 6275) && (freq <= 6415)) {
+		*center_freq1 = 6265;
+		*center_freq2 = 6425;
+	} else if ((freq >= 6435) && (freq <= 6575)) {
+		*center_freq1 = 6425;
+		*center_freq2 = 6585;
+	} else if ((freq >= 6595) && (freq <= 6735)) {
+		*center_freq1 = 6585;
+		*center_freq2 = 6745;
+	} else if ((freq >= 6755) && (freq <= 6895)) {
+		*center_freq1 = 6745;
+		*center_freq2 = 6905;
+	} else if ((freq >= 6915) && (freq <= 7055)) {
+		*center_freq1 = 6905;
+	}
+}
+
 bool wlan_is_ie_valid(const uint8_t *ie, size_t ie_len)
 {
 	uint8_t elen;

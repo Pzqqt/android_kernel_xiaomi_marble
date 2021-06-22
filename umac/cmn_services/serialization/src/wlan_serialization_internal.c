@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -537,54 +537,92 @@ error:
 	return status;
 }
 
-void wlan_serialization_generic_timer_cb(void *arg)
+static void wlan_serialization_generic_timer_cb(void *arg)
 {
-	struct wlan_serialization_timer *timer = arg;
-	struct wlan_serialization_command *cmd = timer->cmd;
+	struct wlan_serialization_command *timeout_cmd = arg;
 	struct wlan_objmgr_vdev *vdev = NULL;
-	enum wlan_serialization_cmd_status status;
+	struct wlan_objmgr_psoc *psoc;
 
-
-	if (!cmd) {
-		ser_err("Command not found");
+	if (!timeout_cmd) {
+		ser_err("cmd_info not found");
 		return;
 	}
 
-	vdev = cmd->vdev;
+	vdev = timeout_cmd->vdev;
 	if (!vdev) {
 		ser_err("Invalid vdev");
+		qdf_mem_free(timeout_cmd);
 		return;
 	}
 
-	ser_err("Active cmd timeout for cmd_type[%d] vdev[%d]",
-		cmd->cmd_type, wlan_vdev_get_id(cmd->vdev));
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		ser_err("Psoc is NULL");
+		goto free;
+	}
+	ser_err("Active cmd timeout for cmd_type[%d] vdev[%d] cmd_id[%d]",
+		timeout_cmd->cmd_type, wlan_vdev_get_id(vdev),
+		timeout_cmd->cmd_id);
 
-	if (cmd->cmd_cb)
-		cmd->cmd_cb(cmd, WLAN_SER_CB_ACTIVE_CMD_TIMEOUT);
+	/*
+	 * Validate if active cmnd is still present, as actual command
+	 * completion can removed it in parallel.
+	 */
+	if (!wlan_serialization_is_cmd_present_in_active_queue(psoc,
+	    timeout_cmd)) {
+		ser_err("cmd_type %d vdev %d not in active queue",
+			timeout_cmd->cmd_type, wlan_vdev_get_id(vdev));
+		goto free;
+	}
 
+	if (timeout_cmd->cmd_cb)
+		timeout_cmd->cmd_cb(timeout_cmd,
+				     WLAN_SER_CB_ACTIVE_CMD_TIMEOUT);
 	/*
 	 * dequeue cmd API will cleanup and destroy the timer. If it fails to
 	 * dequeue command then we have to destroy the timer.
 	 */
-	status = wlan_serialization_dequeue_cmd(cmd, SER_TIMEOUT, true);
+	wlan_serialization_dequeue_cmd(timeout_cmd, SER_TIMEOUT, true);
 
-	/* Release the ref taken before the timer was started */
-	if (status == WLAN_SER_CMD_IN_ACTIVE_LIST)
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_SERIALIZATION_ID);
+free:
+	wlan_objmgr_vdev_release_ref(timeout_cmd->vdev, WLAN_SERIALIZATION_ID);
+	qdf_mem_free(timeout_cmd);
 }
 
 static QDF_STATUS wlan_serialization_mc_flush_noop(struct scheduler_msg *msg)
 {
+	struct wlan_serialization_command *timeout_cmd = msg->bodyptr;
+
+	wlan_objmgr_vdev_release_ref(timeout_cmd->vdev, WLAN_SERIALIZATION_ID);
+	qdf_mem_free(timeout_cmd);
+
 	return QDF_STATUS_SUCCESS;
 }
 
 static void
-wlan_serialization_timer_cb_mc_ctx(void *arg)
+wlan_serialization_timer_cb_mc_ctx(struct wlan_serialization_command *cmd)
 {
 	struct scheduler_msg msg = {0};
+	struct wlan_serialization_command *timeout_cmd;
+	QDF_STATUS status;
 
 	msg.type = SYS_MSG_ID_MC_TIMER;
 	msg.reserved = SYS_MSG_COOKIE;
+
+	status = wlan_objmgr_vdev_try_get_ref(cmd->vdev, WLAN_SERIALIZATION_ID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		ser_err("unable to get reference for vdev %d",
+			 wlan_vdev_get_id(cmd->vdev));
+		return;
+	}
+
+	timeout_cmd = qdf_mem_malloc(sizeof(*timeout_cmd));
+	if (!timeout_cmd) {
+		wlan_objmgr_vdev_release_ref(cmd->vdev, WLAN_SERIALIZATION_ID);
+		return;
+	}
+
+	qdf_mem_copy(timeout_cmd, cmd, sizeof(*timeout_cmd));
 
 	/* msg.callback will explicitly cast back to qdf_mc_timer_callback_t
 	 * in scheduler_timer_q_mq_handler.
@@ -594,7 +632,7 @@ wlan_serialization_timer_cb_mc_ctx(void *arg)
 	 */
 	msg.callback =
 		(scheduler_msg_process_fn_t)wlan_serialization_generic_timer_cb;
-	msg.bodyptr = arg;
+	msg.bodyptr = timeout_cmd;
 	msg.bodyval = 0;
 	msg.flush_callback = wlan_serialization_mc_flush_noop;
 
@@ -605,6 +643,9 @@ wlan_serialization_timer_cb_mc_ctx(void *arg)
 		return;
 
 	ser_err("Could not enqueue timer to timer queue");
+	/* free mem and release ref on error */
+	wlan_objmgr_vdev_release_ref(timeout_cmd->vdev, WLAN_SERIALIZATION_ID);
+	qdf_mem_free(timeout_cmd);
 }
 
 static void wlan_serialization_timer_handler(void *arg)
@@ -617,11 +658,11 @@ static void wlan_serialization_timer_handler(void *arg)
 		return;
 	}
 
-	ser_err("Active cmd timeout for cmd_type %d vdev %d",
-		cmd->cmd_type, wlan_vdev_get_id(cmd->vdev));
+	ser_err("Active cmd timeout for cmd_type %d vdev %d cmd id %d",
+		cmd->cmd_type, wlan_vdev_get_id(cmd->vdev),
+		cmd->cmd_id);
 
-	wlan_serialization_timer_cb_mc_ctx(arg);
-
+	wlan_serialization_timer_cb_mc_ctx(cmd);
 }
 
 QDF_STATUS
@@ -715,13 +756,8 @@ wlan_serialization_find_and_stop_timer(struct wlan_objmgr_psoc *psoc,
 		/*
 		 * Release the vdev reference when the active cmd is removed
 		 * through remove/cancel request.
-		 *
-		 * In case the command removal is because of timer expiry,
-		 * the vdev is released when the timer handler completes.
 		 */
-		if (vdev && ser_reason != SER_TIMEOUT)
-			wlan_objmgr_vdev_release_ref(
-					vdev, WLAN_SERIALIZATION_ID);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_SERIALIZATION_ID);
 
 		break;
 

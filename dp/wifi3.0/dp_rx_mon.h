@@ -333,17 +333,20 @@ dp_rx_mon_link_desc_return(struct dp_pdev *dp_pdev,
  *				multiple nbufs. This function
  *                              is to return data length in
  *				fragmented buffer
- *
+ * @soc: Datapath soc handle
  * @total_len: pointer to remaining data length.
  * @frag_len: pointer to data length in this fragment.
  * @l2_hdr_pad: l2 header padding
  */
-static inline void dp_mon_adjust_frag_len(uint32_t *total_len,
+static inline void dp_mon_adjust_frag_len(struct dp_soc *soc,
+					  uint32_t *total_len,
 					  uint32_t *frag_len,
 					  uint16_t l2_hdr_pad)
 {
-	if (*total_len >= (RX_MONITOR_BUFFER_SIZE - RX_PKT_TLVS_LEN)) {
-		*frag_len = RX_MONITOR_BUFFER_SIZE - RX_PKT_TLVS_LEN -
+	uint32_t rx_pkt_tlv_len = soc->rx_pkt_tlv_size;
+
+	if (*total_len >= (RX_MONITOR_BUFFER_SIZE - rx_pkt_tlv_len)) {
+		*frag_len = RX_MONITOR_BUFFER_SIZE - rx_pkt_tlv_len -
 					l2_hdr_pad;
 		*total_len -= *frag_len;
 	} else {
@@ -551,7 +554,7 @@ dp_rx_mon_parse_desc_buffer(struct dp_soc *dp_soc,
 {
 	struct hal_rx_mon_dest_buf_info frame_info;
 	uint16_t tot_payload_len =
-			RX_MONITOR_BUFFER_SIZE - RX_PKT_TLVS_LEN;
+			RX_MONITOR_BUFFER_SIZE - dp_soc->rx_pkt_tlv_size;
 
 	if (msdu_info->msdu_flags & HAL_MSDU_F_MSDU_CONTINUATION) {
 		/* First buffer of MSDU */
@@ -561,7 +564,8 @@ dp_rx_mon_parse_desc_buffer(struct dp_soc *dp_soc,
 
 			*is_frag_p = true;
 			if (HAL_HW_RX_DECAP_FORMAT_RAW ==
-			    HAL_RX_DESC_GET_DECAP_FORMAT(rx_desc_tlv)) {
+			    hal_rx_tlv_decap_format_get(dp_soc->hal_soc,
+							rx_desc_tlv)) {
 				*l2_hdr_offset_p =
 					DP_RX_MON_RAW_L2_HDR_PAD_BYTE;
 				frame_info.is_decap_raw = 1;
@@ -578,8 +582,10 @@ dp_rx_mon_parse_desc_buffer(struct dp_soc *dp_soc,
 
 			frame_info.first_buffer = 1;
 			frame_info.last_buffer = 0;
-			hal_rx_mon_dest_set_buffer_info_to_tlv(rx_desc_tlv,
-							       &frame_info);
+			hal_rx_priv_info_set_in_tlv(dp_soc->hal_soc,
+						    rx_desc_tlv,
+						    (uint8_t *)&frame_info,
+						    sizeof(frame_info));
 		} else {
 			/*
 			 * Continuation Middle frame
@@ -598,8 +604,10 @@ dp_rx_mon_parse_desc_buffer(struct dp_soc *dp_soc,
 
 			frame_info.first_buffer = 0;
 			frame_info.last_buffer = 0;
-			hal_rx_mon_dest_set_buffer_info_to_tlv(rx_desc_tlv,
-							       &frame_info);
+			hal_rx_priv_info_set_in_tlv(dp_soc->hal_soc,
+						    rx_desc_tlv,
+						    (uint8_t *)&frame_info,
+						    sizeof(frame_info));
 		}
 	} else {
 		/**
@@ -621,13 +629,16 @@ dp_rx_mon_parse_desc_buffer(struct dp_soc *dp_soc,
 
 			frame_info.first_buffer = 0;
 			frame_info.last_buffer = 1;
-			hal_rx_mon_dest_set_buffer_info_to_tlv(rx_desc_tlv,
-							       &frame_info);
+			hal_rx_priv_info_set_in_tlv(dp_soc->hal_soc,
+						    rx_desc_tlv,
+						    (uint8_t *)&frame_info,
+						    sizeof(frame_info));
 		} else {
 			/* MSDU with single buffer */
 			*frag_len_p = msdu_info->msdu_len;
 			if (HAL_HW_RX_DECAP_FORMAT_RAW ==
-			    HAL_RX_DESC_GET_DECAP_FORMAT(rx_desc_tlv)) {
+			    hal_rx_tlv_decap_format_get(dp_soc->hal_soc,
+							rx_desc_tlv)) {
 				*l2_hdr_offset_p =
 					DP_RX_MON_RAW_L2_HDR_PAD_BYTE;
 				frame_info.is_decap_raw = 1;
@@ -639,8 +650,10 @@ dp_rx_mon_parse_desc_buffer(struct dp_soc *dp_soc,
 
 			frame_info.first_buffer = 1;
 			frame_info.last_buffer = 1;
-			hal_rx_mon_dest_set_buffer_info_to_tlv(
-						rx_desc_tlv, &frame_info);
+			hal_rx_priv_info_set_in_tlv(dp_soc->hal_soc,
+						    rx_desc_tlv,
+						    (uint8_t *)&frame_info,
+						    sizeof(frame_info));
 		}
 		/* Reset bool after complete processing of MSDU */
 		*is_frag_p = false;
@@ -658,7 +671,7 @@ static inline void dp_rx_mon_buffer_set_pktlen(qdf_nbuf_t msdu, uint32_t size)
 /**
  * dp_rx_mon_add_msdu_to_list()- Add msdu to list and update head_msdu
  *      It will add reaped buffer frag to nr frag of parent msdu.
- *
+ * @soc: DP soc handle
  * @head_msdu: NULL if first time called else &msdu
  * @msdu: Msdu where frag address needs to be added via nr_frag
  * @last: Used to traverse in list if this feature is disabled.
@@ -667,9 +680,9 @@ static inline void dp_rx_mon_buffer_set_pktlen(qdf_nbuf_t msdu, uint32_t size)
  * @l2_hdr_offset: l2 hdr padding
  */
 static inline
-QDF_STATUS dp_rx_mon_add_msdu_to_list(qdf_nbuf_t *head_msdu, qdf_nbuf_t msdu,
-				      qdf_nbuf_t *last, qdf_frag_t rx_desc_tlv,
-				      uint32_t frag_len,
+QDF_STATUS dp_rx_mon_add_msdu_to_list(struct dp_soc *soc, qdf_nbuf_t *head_msdu,
+				      qdf_nbuf_t msdu, qdf_nbuf_t *last,
+				      qdf_frag_t rx_desc_tlv, uint32_t frag_len,
 				      uint32_t l2_hdr_offset)
 {
 	uint32_t num_frags;
@@ -699,7 +712,7 @@ QDF_STATUS dp_rx_mon_add_msdu_to_list(qdf_nbuf_t *head_msdu, qdf_nbuf_t msdu,
 	num_frags = qdf_nbuf_get_nr_frags(msdu_curr);
 	if (num_frags < QDF_NBUF_MAX_FRAGS) {
 		qdf_nbuf_add_rx_frag(rx_desc_tlv, msdu_curr,
-				     SIZE_OF_MONITOR_TLV,
+				     soc->rx_mon_pkt_tlv_size,
 				     frag_len + l2_hdr_offset,
 				     RX_MONITOR_BUFFER_SIZE,
 				     false);
@@ -714,7 +727,7 @@ QDF_STATUS dp_rx_mon_add_msdu_to_list(qdf_nbuf_t *head_msdu, qdf_nbuf_t msdu,
 	    != QDF_STATUS_SUCCESS)
 		return QDF_STATUS_E_FAILURE;
 
-	qdf_nbuf_add_rx_frag(rx_desc_tlv, msdu_curr, SIZE_OF_MONITOR_TLV,
+	qdf_nbuf_add_rx_frag(rx_desc_tlv, msdu_curr, soc->rx_mon_pkt_tlv_size,
 			     frag_len + l2_hdr_offset, RX_MONITOR_BUFFER_SIZE,
 			     false);
 
@@ -754,11 +767,13 @@ void dp_rx_mon_init_tail_msdu(qdf_nbuf_t *head_msdu, qdf_nbuf_t msdu,
  *
  * If feature is disabled, then removal happens in restitch logic.
  *
+ * @soc: Datapath soc handle
  * @head_msdu: Head msdu
  * @tail_msdu: Tail msdu
  */
 static inline
-void dp_rx_mon_remove_raw_frame_fcs_len(qdf_nbuf_t *head_msdu,
+void dp_rx_mon_remove_raw_frame_fcs_len(struct dp_soc *soc,
+					qdf_nbuf_t *head_msdu,
 					qdf_nbuf_t *tail_msdu)
 {
 	qdf_frag_t addr;
@@ -772,9 +787,9 @@ void dp_rx_mon_remove_raw_frame_fcs_len(qdf_nbuf_t *head_msdu,
 
 	/* Strip FCS_LEN for Raw frame */
 	addr = qdf_nbuf_get_frag_addr(*head_msdu, 0);
-	addr -= SIZE_OF_MONITOR_TLV;
-	if (HAL_RX_DESC_GET_DECAP_FORMAT(addr) ==
-	    HAL_HW_RX_DECAP_FORMAT_RAW) {
+	addr -= soc->rx_mon_pkt_tlv_size;
+	if (hal_rx_tlv_decap_format_get(soc->hal_soc, addr) ==
+		HAL_HW_RX_DECAP_FORMAT_RAW) {
 		qdf_nbuf_trim_add_frag_size(*tail_msdu,
 			qdf_nbuf_get_nr_frags(*tail_msdu) - 1,
 					-HAL_RX_FCS_LEN, 0);
@@ -886,11 +901,12 @@ dp_rx_mon_parse_desc_buffer(struct dp_soc *dp_soc,
 			*total_frag_len_p = msdu_info->msdu_len;
 			*is_frag_p = true;
 		}
-		dp_mon_adjust_frag_len(total_frag_len_p, frag_len_p,
+		dp_mon_adjust_frag_len(dp_soc, total_frag_len_p, frag_len_p,
 				       *l2_hdr_offset_p);
 	} else {
 		if (*is_frag_p) {
-			dp_mon_adjust_frag_len(total_frag_len_p, frag_len_p,
+			dp_mon_adjust_frag_len(dp_soc, total_frag_len_p,
+					       frag_len_p,
 					       *l2_hdr_offset_p);
 		} else {
 			*frag_len_p = msdu_info->msdu_len;
@@ -905,9 +921,9 @@ static inline void dp_rx_mon_buffer_set_pktlen(qdf_nbuf_t msdu, uint32_t size)
 }
 
 static inline
-QDF_STATUS dp_rx_mon_add_msdu_to_list(qdf_nbuf_t *head_msdu, qdf_nbuf_t msdu,
-				      qdf_nbuf_t *last, qdf_frag_t rx_desc_tlv,
-				      uint32_t frag_len,
+QDF_STATUS dp_rx_mon_add_msdu_to_list(struct dp_soc *soc, qdf_nbuf_t *head_msdu,
+				      qdf_nbuf_t msdu, qdf_nbuf_t *last,
+				      qdf_frag_t rx_desc_tlv, uint32_t frag_len,
 				      uint32_t l2_hdr_offset)
 {
 	if (head_msdu && !*head_msdu) {
@@ -931,7 +947,8 @@ void dp_rx_mon_init_tail_msdu(qdf_nbuf_t *head_msdu, qdf_nbuf_t msdu,
 }
 
 static inline
-void dp_rx_mon_remove_raw_frame_fcs_len(qdf_nbuf_t *head_msdu,
+void dp_rx_mon_remove_raw_frame_fcs_len(struct dp_soc *soc,
+					qdf_nbuf_t *head_msdu,
 					qdf_nbuf_t *tail_msdu)
 {
 }

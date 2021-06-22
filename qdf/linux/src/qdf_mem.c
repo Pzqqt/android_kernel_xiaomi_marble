@@ -1365,6 +1365,14 @@ void __qdf_mempool_free(qdf_device_t osdev, __qdf_mempool_t pool, void *buf)
 qdf_export_symbol(__qdf_mempool_free);
 
 #if IS_ENABLED(CONFIG_WCNSS_MEM_PRE_ALLOC)
+static bool qdf_might_be_prealloc(void *ptr)
+{
+	if (ksize(ptr) > WCNSS_PRE_ALLOC_GET_THRESHOLD)
+		return true;
+	else
+		return false;
+}
+
 /**
  * qdf_mem_prealloc_get() - conditionally pre-allocate memory
  * @size: the number of bytes to allocate
@@ -1396,6 +1404,11 @@ static inline bool qdf_mem_prealloc_put(void *ptr)
 	return wcnss_prealloc_put(ptr);
 }
 #else
+static bool qdf_might_be_prealloc(void *ptr)
+{
+	return false;
+}
+
 static inline void *qdf_mem_prealloc_get(size_t size)
 {
 	return NULL;
@@ -2033,8 +2046,10 @@ void __qdf_mem_free(void *ptr)
 	if (!ptr)
 		return;
 
-	if (qdf_mem_prealloc_put(ptr))
-		return;
+	if (qdf_might_be_prealloc(ptr)) {
+		if (qdf_mem_prealloc_put(ptr))
+			return;
+	}
 
 	qdf_mem_kmalloc_dec(ksize(ptr));
 

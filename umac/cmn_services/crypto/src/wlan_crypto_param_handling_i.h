@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -91,9 +91,9 @@ int32_t wlan_crypto_get_ucastciphers(struct wlan_crypto_params *crypto_params);
  * wlan_crypto_set_mgmtcipher - called by ucfg to configure
  *                                        mgmt ciphers in vdev
  * @vdev: vdev
- * @ciphers: bitmap value of all supported unicast ciphers
+ * @ciphers: bitmap value of all supported mgmt ciphers
  *
- * This function gets called from ucfg to configure unicast ciphers in vdev
+ * This function gets called from ucfg to configure mgmt ciphers in vdev
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */

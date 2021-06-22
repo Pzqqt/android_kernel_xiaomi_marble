@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -560,6 +560,7 @@ typedef struct ipa_wlan_hdr_attrib_val __qdf_ipa_wlan_hdr_attrib_val_t;
 #define IPA_LAN_RX_NAPI_SUPPORT
 #endif
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 10, 0))
 /*
  * Resume / Suspend
  */
@@ -607,15 +608,6 @@ static inline int __qdf_ipa_put_hdr(u32 hdr_hdl)
 static inline int __qdf_ipa_copy_hdr(struct ipa_ioc_copy_hdr *copy)
 {
 	return ipa_copy_hdr(copy);
-}
-
-/*
- * Messaging
- */
-static inline int __qdf_ipa_send_msg(struct ipa_msg_meta *meta, void *buff,
-		ipa_msg_free_fn callback)
-{
-	return ipa_send_msg(meta, buff, callback);
 }
 
 static inline int __qdf_ipa_register_pull_msg(struct ipa_msg_meta *meta,
@@ -671,28 +663,12 @@ static inline int __qdf_ipa_tx_dp_mul(
 	return ipa_tx_dp_mul(dst, data_desc);
 }
 
-static inline void __qdf_ipa_free_skb(struct ipa_rx_data *rx_in)
-{
-	return ipa_free_skb(rx_in);;
-}
-
 /*
  * System pipes
  */
 static inline u16 __qdf_ipa_get_smem_restr_bytes(void)
 {
 	return ipa_get_smem_restr_bytes();
-}
-
-static inline int __qdf_ipa_setup_sys_pipe(struct ipa_sys_connect_params *sys_in,
-		u32 *clnt_hdl)
-{
-	return ipa_setup_sys_pipe(sys_in, clnt_hdl);
-}
-
-static inline int __qdf_ipa_teardown_sys_pipe(u32 clnt_hdl)
-{
-	return ipa_teardown_sys_pipe(clnt_hdl);
 }
 
 static inline int __qdf_ipa_connect_wdi_pipe(struct ipa_wdi_in_params *in,
@@ -731,18 +707,6 @@ static inline int __qdf_ipa_uc_wdi_get_dbpa(
 {
 	return ipa_uc_wdi_get_dbpa(out);
 }
-
-static inline int __qdf_ipa_uc_reg_rdyCB(
-	struct ipa_wdi_uc_ready_params *param)
-{
-	return ipa_uc_reg_rdyCB(param);
-}
-
-static inline int __qdf_ipa_uc_dereg_rdyCB(void)
-{
-	return ipa_uc_dereg_rdyCB();
-}
-
 
 /*
  * Resource manager
@@ -850,19 +814,9 @@ static inline void __qdf_ipa_bam_reg_dump(void)
 	return ipa_bam_reg_dump();
 }
 
-static inline int __qdf_ipa_get_wdi_stats(struct IpaHwStatsWDIInfoData_t *stats)
-{
-	return ipa_get_wdi_stats(stats);
-}
-
 static inline int __qdf_ipa_get_ep_mapping(enum ipa_client_type client)
 {
 	return ipa_get_ep_mapping(client);
-}
-
-static inline bool __qdf_ipa_is_ready(void)
-{
-	return ipa_is_ready();
 }
 
 static inline void __qdf_ipa_proxy_clk_vote(void)
@@ -938,11 +892,58 @@ static inline int __qdf_ipa_stop_gsi_channel(u32 clnt_hdl)
 	return ipa_stop_gsi_channel(clnt_hdl);
 }
 
+#endif
+static inline void __qdf_ipa_free_skb(struct ipa_rx_data *rx_in)
+{
+	return ipa_free_skb(rx_in);
+}
+
+static inline int __qdf_ipa_get_wdi_stats(struct IpaHwStatsWDIInfoData_t *stats)
+{
+	return ipa_get_wdi_stats(stats);
+}
+
+static inline int __qdf_ipa_uc_reg_rdyCB(struct ipa_wdi_uc_ready_params *param)
+{
+	return ipa_uc_reg_rdyCB(param);
+}
+
+static inline int __qdf_ipa_uc_dereg_rdyCB(void)
+{
+	return ipa_uc_dereg_rdyCB();
+}
+
 static inline int __qdf_ipa_register_ipa_ready_cb(
 	void (*ipa_ready_cb)(void *user_data),
 	void *user_data)
 {
 	return ipa_register_ipa_ready_cb(ipa_ready_cb, user_data);
+}
+
+static inline
+int __qdf_ipa_setup_sys_pipe(struct ipa_sys_connect_params *sys_in,
+			     u32 *clnt_hdl)
+{
+	return ipa_setup_sys_pipe(sys_in, clnt_hdl);
+}
+
+static inline int __qdf_ipa_teardown_sys_pipe(u32 clnt_hdl)
+{
+	return ipa_teardown_sys_pipe(clnt_hdl);
+}
+
+/*
+ * Messaging
+ */
+static inline int __qdf_ipa_send_msg(struct ipa_msg_meta *meta, void *buff,
+				     ipa_msg_free_fn callback)
+{
+	return ipa_send_msg(meta, buff, callback);
+}
+
+static inline bool __qdf_ipa_is_ready(void)
+{
+	return ipa_is_ready();
 }
 
 #ifdef FEATURE_METERING

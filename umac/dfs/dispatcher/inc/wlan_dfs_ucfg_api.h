@@ -36,13 +36,11 @@
  * @pdev_component_obj_detach:         Detach DFS object from PDEV.
  * @pdev_get_comp_private_obj:         Get DFS object from PDEV.
  * @dfs_start_rcsa:                    Send RCSA to RootAP.
- * @mlme_start_csa:                    Sends CSA.
  * @mlme_proc_cac:                     Process the CAC completion event.
  * @mlme_deliver_event_up_after_cac:   Send a CAC timeout, VAP up event to user
  *                                     space
  * @mlme_get_dfs_ch_nchans:            Get number of channels in the channel
  *                                     list.
- * @mlme_get_extchan:                  Gets the extension channel.
  * @mlme_set_no_chans_available:       Sets no_chans_available flag.
  * @mlme_ieee2mhz:                     Gets Channel freq from ieee number.
  * @mlme_find_dot11_channel:           Find dot11 channel.
@@ -95,11 +93,6 @@ struct dfs_to_mlme {
 			uint16_t freq,
 			uint16_t vhtop_ch_freq_seg2,
 			uint64_t flags);
-#ifdef CONFIG_CHAN_NUM_API
-	QDF_STATUS (*mlme_start_csa)(struct wlan_objmgr_pdev *pdev,
-			uint8_t ieee_chan, uint16_t freq,
-			uint8_t cfreq2, uint64_t flags);
-#endif
 #ifdef CONFIG_CHAN_FREQ_API
 	QDF_STATUS (*mlme_start_csa_for_freq)(struct wlan_objmgr_pdev *pdev,
 					      uint8_t ieee_chan, uint16_t freq,
@@ -111,15 +104,6 @@ struct dfs_to_mlme {
 			struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*mlme_get_dfs_ch_nchans)(struct wlan_objmgr_pdev *pdev,
 			int *nchans);
-#ifdef CONFIG_CHAN_NUM_API
-	QDF_STATUS (*mlme_get_extchan)(struct wlan_objmgr_pdev *pdev,
-			uint16_t *dfs_ch_freq,
-			uint64_t *dfs_ch_flags,
-			uint16_t *dfs_ch_flagext,
-			uint8_t *dfs_ch_ieee,
-			uint8_t *dfs_ch_vhtop_ch_freq_seg1,
-			uint8_t *dfs_ch_vhtop_ch_freq_seg2);
-#endif
 #ifdef CONFIG_CHAN_FREQ_API
 	QDF_STATUS (*mlme_get_extchan_for_freq)(struct wlan_objmgr_pdev *pdev,
 						uint16_t *dfs_ch_freq,
@@ -195,6 +179,7 @@ struct dfs_to_mlme {
 	QDF_STATUS
 	    (*mlme_precac_chan_change_csa_for_freq)(struct wlan_objmgr_pdev *,
 						    uint16_t des_chan_freq,
+						    uint16_t des_cfreq2,
 						    enum wlan_phymode des_mode);
 #endif
 #ifdef CONFIG_CHAN_NUM_API

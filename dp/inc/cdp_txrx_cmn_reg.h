@@ -26,9 +26,12 @@
 
 #include "hif_main.h"
 
-#define MOB_DRV_LEGACY_DP	0xdeed/*FIXME Add MCL device IDs */
-#define LITHIUM_DP		0xfffd/*FIXME Add Litium device ID */
-/* Use these device IDs for attach in future */
+#define MOB_DRV_LEGACY_DP 0xdeed
+/* Lithium device IDs */
+#define LITHIUM_DP		0xfffd
+/* Beryllium device IDs */
+#define BERYLLIUM_DP		0xaffe
+/* Use device IDs for attach in future */
 
 #if defined(DP_TXRX_SOC_ATTACH)
 static inline ol_txrx_soc_handle
@@ -100,13 +103,7 @@ void *dp_soc_init_wifi3(struct cdp_soc_t *soc,
 }
 #endif /* QCA_WIFI_QCA8074 */
 
-static inline
-ol_txrx_soc_handle cdp_soc_attach(u_int16_t devid,
-				  struct hif_opaque_softc *hif_handle,
-				  struct cdp_ctrl_objmgr_psoc *psoc,
-				  HTC_HANDLE htc_handle,
-				  qdf_device_t qdf_dev,
-				  struct ol_if_ops *dp_ol_if_ops)
+static inline int cdp_get_arch_type_from_devid(uint16_t devid)
 {
 	switch (devid) {
 	case LITHIUM_DP: /*FIXME Add lithium devide IDs */
@@ -126,7 +123,42 @@ ol_txrx_soc_handle cdp_soc_attach(u_int16_t devid,
 	case RUMIM2M_DEVICE_ID_NODE3: /*lithium emulation */
 	case RUMIM2M_DEVICE_ID_NODE4: /*lithium emulation */
 	case RUMIM2M_DEVICE_ID_NODE5: /*lithium emulation */
-	case WCN7850_EMULATION_DEVICE_ID:
+		return LITHIUM_DP;
+	case BERYLLIUM_DP:
+	case WCN7850_DEVICE_ID:
+		return BERYLLIUM_DP;
+	default:
+		return -1;
+	}
+}
+
+static inline
+ol_txrx_soc_handle cdp_soc_attach(u_int16_t devid,
+				  struct hif_opaque_softc *hif_handle,
+				  struct cdp_ctrl_objmgr_psoc *psoc,
+				  HTC_HANDLE htc_handle,
+				  qdf_device_t qdf_dev,
+				  struct ol_if_ops *dp_ol_if_ops)
+{
+	switch (devid) {
+	case LITHIUM_DP: /*FIXME Add lithium devide IDs */
+	case BERYLLIUM_DP:
+	case QCA8074_DEVICE_ID: /* Hawekeye */
+	case QCA8074V2_DEVICE_ID: /* Hawekeye V2*/
+	case QCA5018_DEVICE_ID:
+	case QCA6290_DEVICE_ID:
+	case QCN9000_DEVICE_ID:
+	case QCN6122_DEVICE_ID:
+	case QCA6390_DEVICE_ID:
+	case QCA6490_DEVICE_ID:
+	case QCA6750_DEVICE_ID:
+	case QCA6390_EMULATION_DEVICE_ID:
+	case RUMIM2M_DEVICE_ID_NODE0: /*lithium emulation */
+	case RUMIM2M_DEVICE_ID_NODE1: /*lithium emulation */
+	case RUMIM2M_DEVICE_ID_NODE2: /*lithium emulation */
+	case RUMIM2M_DEVICE_ID_NODE3: /*lithium emulation */
+	case RUMIM2M_DEVICE_ID_NODE4: /*lithium emulation */
+	case RUMIM2M_DEVICE_ID_NODE5: /*lithium emulation */
 	case WCN7850_DEVICE_ID:
 		return dp_soc_attach_wifi3(psoc, hif_handle, htc_handle,
 			qdf_dev, dp_ol_if_ops, devid);

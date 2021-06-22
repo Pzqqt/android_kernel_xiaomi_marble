@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -179,17 +179,25 @@ int32_t wlan_crypto_get_ucastciphers(struct wlan_crypto_params *crypto_params)
  * wlan_crypto_set_mgmtcipher - called by ucfg to configure
  *                                        mgmt ciphers in vdev
  * @vdev: vdev
- * @ciphers: bitmap value of all supported unicast ciphers
+ * @ciphers: bitmap value of all supported group mgmt ciphers
  *
- * This function gets called from ucfg to configure unicast ciphers in vdev
+ * This function gets called from ucfg to configure group mgmt ciphers in vdev
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
 QDF_STATUS wlan_crypto_set_mgmtcipher(
 				struct wlan_crypto_params *crypto_params,
-				uint32_t value)
+				uint32_t ciphers)
 {
-	SET_MGMT_CIPHER(crypto_params, value);
+	uint16_t i;
+
+	RESET_MGMT_CIPHERS(crypto_params);
+
+	for (i = 0; i < WLAN_CRYPTO_CIPHER_MAX ; i++) {
+		if (HAS_PARAM(ciphers, i) && IS_MGMT_CIPHER(i))
+			SET_MGMT_CIPHER(crypto_params, i);
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 

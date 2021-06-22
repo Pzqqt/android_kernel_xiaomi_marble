@@ -124,12 +124,12 @@
 #ifdef CONFIG_CHAN_NUM_API
 #define DFS_IS_CHAN_JAPAN_INDOOR(_ch)    (((_ch) >= 36)  && ((_ch) <= 64))
 #define DFS_IS_CHAN_JAPAN_W53(_ch)       (((_ch) >= 52)  && ((_ch) <= 64))
-#define DFS_IS_CHAN_JAPAN_OUTDOOR(_ch)   (((_ch) >= 100) && ((_ch) <= 140))
+#define DFS_IS_CHAN_JAPAN_OUTDOOR(_ch)   (((_ch) >= 100) && ((_ch) <= 144))
 #endif
 
 #ifdef CONFIG_CHAN_FREQ_API
 #define DFS_IS_CHAN_JAPAN_INDOOR_FREQ(_ch)(((_ch) >= 5180)  && ((_ch) <= 5320))
-#define DFS_IS_CHAN_JAPAN_OUTDOOR_FREQ(_ch)(((_ch) >= 5500) && ((_ch) <= 5700))
+#define DFS_IS_CHAN_JAPAN_OUTDOOR_FREQ(_ch)(((_ch) >= 5500) && ((_ch) <= 5720))
 #define DFS_IS_CHAN_JAPAN_W53_FREQ(_ch)    (((_ch) >= 5260)  && ((_ch) <= 5320))
 #endif
 

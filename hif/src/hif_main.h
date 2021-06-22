@@ -102,7 +102,6 @@
 #define QCA6750_DEVICE_ID (0x1105)
 
 /* TODO: change IDs for Hamilton */
-#define WCN7850_EMULATION_DEVICE_ID (0xfffa)
 #define WCN7850_DEVICE_ID (0x1107)
 
 #define ADRASTEA_DEVICE_ID_P2_E12 (0x7021)
@@ -142,6 +141,16 @@
 #define HIF_GET_USB_DEVICE(scn) ((struct HIF_DEVICE_USB *)scn)
 #define HIF_GET_SOFTC(scn) ((struct hif_softc *)scn)
 #define GET_HIF_OPAQUE_HDL(scn) ((struct hif_opaque_softc *)scn)
+
+#define NUM_CE_AVAILABLE 12
+/* Add 1 here to store default configuration in index 0 */
+#define NUM_CE_CONTEXT (NUM_CE_AVAILABLE + 1)
+
+#define CE_INTERRUPT_IDX(x) x
+
+struct ce_int_assignment {
+	uint8_t msi_idx[NUM_CE_AVAILABLE];
+};
 
 struct hif_ce_stats {
 	int hif_pipe_no_resrc_count;
@@ -220,6 +229,7 @@ struct hif_softc {
 	uint32_t ce_irq_summary;
 	/* No of copy engines supported */
 	unsigned int ce_count;
+	struct ce_int_assignment *int_assignment;
 	atomic_t active_tasklet_cnt;
 	atomic_t active_grp_tasklet_cnt;
 	atomic_t link_suspended;
@@ -295,6 +305,10 @@ struct hif_softc {
 #endif
 #ifdef SYSTEM_PM_CHECK
 	qdf_atomic_t sys_pm_state;
+#endif
+#if defined(HIF_IPCI) && defined(FEATURE_HAL_DELAYED_REG_WRITE)
+	qdf_atomic_t dp_ep_vote_access;
+	qdf_atomic_t ep_vote_access;
 #endif
 };
 

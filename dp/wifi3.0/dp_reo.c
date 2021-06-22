@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -71,35 +71,10 @@ QDF_STATUS dp_reo_send_cmd(struct dp_soc *soc, enum hal_reo_cmd_type type,
 	struct dp_reo_cmd_info *reo_cmd;
 	int num;
 
-	switch (type) {
-	case CMD_GET_QUEUE_STATS:
-		num = hal_reo_cmd_queue_stats(soc->reo_cmd_ring.hal_srng,
-					      soc->hal_soc, params);
-		break;
-	case CMD_FLUSH_QUEUE:
-		num = hal_reo_cmd_flush_queue(soc->reo_cmd_ring.hal_srng,
-					      soc->hal_soc, params);
-		break;
-	case CMD_FLUSH_CACHE:
-		num = hal_reo_cmd_flush_cache(soc->reo_cmd_ring.hal_srng,
-					      soc->hal_soc, params);
-		break;
-	case CMD_UNBLOCK_CACHE:
-		num = hal_reo_cmd_unblock_cache(soc->reo_cmd_ring.hal_srng,
-						soc->hal_soc, params);
-		break;
-	case CMD_FLUSH_TIMEOUT_LIST:
-		num = hal_reo_cmd_flush_timeout_list(soc->reo_cmd_ring.hal_srng,
-						     soc->hal_soc, params);
-		break;
-	case CMD_UPDATE_RX_REO_QUEUE:
-		num = hal_reo_cmd_update_rx_queue(soc->reo_cmd_ring.hal_srng,
-						  soc->hal_soc, params);
-		break;
-	default:
-		dp_err_log("Invalid REO command type: %d", type);
+	num = hal_reo_send_cmd(soc->hal_soc, soc->reo_cmd_ring.hal_srng, type,
+			       params);
+	if (num < 0)
 		return QDF_STATUS_E_INVAL;
-	};
 
 	dp_reo_cmd_srng_event_record(soc, type, num);
 
@@ -130,7 +105,7 @@ QDF_STATUS dp_reo_send_cmd(struct dp_soc *soc, enum hal_reo_cmd_type type,
 
 uint32_t dp_reo_status_ring_handler(struct dp_intr *int_ctx, struct dp_soc *soc)
 {
-	uint32_t *reo_desc;
+	hal_ring_desc_t reo_desc;
 	struct dp_reo_cmd_info *reo_cmd = NULL;
 	union hal_reo_status reo_status;
 	int num;
@@ -144,54 +119,15 @@ uint32_t dp_reo_status_ring_handler(struct dp_intr *int_ctx, struct dp_soc *soc)
 
 	while (reo_desc) {
 		uint16_t tlv = HAL_GET_TLV(reo_desc);
+		QDF_STATUS status;
+
 		processed_count++;
 
-		switch (tlv) {
-		case HAL_REO_QUEUE_STATS_STATUS_TLV:
-			hal_reo_queue_stats_status(reo_desc,
-					   &reo_status.queue_status,
-					   soc->hal_soc);
-			num = reo_status.queue_status.header.cmd_num;
-			break;
-		case HAL_REO_FLUSH_QUEUE_STATUS_TLV:
-			hal_reo_flush_queue_status(reo_desc,
-						   &reo_status.fl_queue_status,
-						   soc->hal_soc);
-			num = reo_status.fl_queue_status.header.cmd_num;
-			break;
-		case HAL_REO_FLUSH_CACHE_STATUS_TLV:
-			hal_reo_flush_cache_status(reo_desc,
-						   &reo_status.fl_cache_status,
-						   soc->hal_soc);
-			num = reo_status.fl_cache_status.header.cmd_num;
-			break;
-		case HAL_REO_UNBLK_CACHE_STATUS_TLV:
-			hal_reo_unblock_cache_status(reo_desc, soc->hal_soc,
-						&reo_status.unblk_cache_status);
-			num = reo_status.unblk_cache_status.header.cmd_num;
-			break;
-		case HAL_REO_TIMOUT_LIST_STATUS_TLV:
-			hal_reo_flush_timeout_list_status(reo_desc,
-						&reo_status.fl_timeout_status,
-						soc->hal_soc);
-			num = reo_status.fl_timeout_status.header.cmd_num;
-			break;
-		case HAL_REO_DESC_THRES_STATUS_TLV:
-			hal_reo_desc_thres_reached_status(reo_desc,
-						&reo_status.thres_status,
-						soc->hal_soc);
-			num = reo_status.thres_status.header.cmd_num;
-			break;
-		case HAL_REO_UPDATE_RX_QUEUE_STATUS_TLV:
-			hal_reo_rx_update_queue_status(reo_desc,
-						&reo_status.rx_queue_status,
-						soc->hal_soc);
-			num = reo_status.rx_queue_status.header.cmd_num;
-			break;
-		default:
-			dp_reo_warn("%pK: no handler for TLV:%d", soc, tlv);
+		status = hal_reo_status_update(soc->hal_soc,
+					       reo_desc,
+					       &reo_status, tlv, &num);
+		if (status != QDF_STATUS_SUCCESS)
 			goto next;
-		} /* switch */
 
 		qdf_spin_lock_bh(&soc->rx.reo_cmd_lock);
 		TAILQ_FOREACH(reo_cmd, &soc->rx.reo_cmd_list,

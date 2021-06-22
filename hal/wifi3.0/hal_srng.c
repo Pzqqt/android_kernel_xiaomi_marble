@@ -18,9 +18,10 @@
 
 #include "hal_hw_headers.h"
 #include "hal_api.h"
+#include "hal_reo.h"
 #include "target_type.h"
-#include "wcss_version.h"
 #include "qdf_module.h"
+#include "wcss_version.h"
 
 #ifdef QCA_WIFI_QCA8074
 void hal_qca6290_attach(struct hal_soc *hal);
@@ -49,10 +50,18 @@ void hal_qca6750_attach(struct hal_soc *hal);
 #ifdef QCA_WIFI_QCA5018
 void hal_qca5018_attach(struct hal_soc *hal);
 #endif
+#ifdef QCA_WIFI_WCN7850
+void hal_wcn7850_attach(struct hal_soc *hal);
+#endif
 
 #ifdef ENABLE_VERBOSE_DEBUG
 bool is_hal_verbose_debug_enabled;
 #endif
+
+#define HAL_REO_DESTINATION_RING_CTRL_IX_0_ADDR(x)	((x) + 0x4)
+#define HAL_REO_DESTINATION_RING_CTRL_IX_1_ADDR(x)	((x) + 0x8)
+#define HAL_REO_DESTINATION_RING_CTRL_IX_2_ADDR(x)	((x) + 0xc)
+#define HAL_REO_DESTINATION_RING_CTRL_IX_3_ADDR(x)	((x) + 0x10)
 
 #ifdef ENABLE_HAL_REG_WR_HISTORY
 struct hal_reg_write_fail_history hal_reg_wr_hist;
@@ -185,10 +194,12 @@ QDF_STATUS hal_set_shadow_regs(void *hal_soc)
 	int i;
 	struct hal_hw_srng_config *srng_config =
 		&hal->hw_srng_table[WBM2SW_RELEASE];
+	uint32_t reo_reg_base;
+
+	reo_reg_base = hal_get_reo_reg_base_offset(hal_soc);
 
 	target_reg_offset =
-		HWIO_REO_R0_DESTINATION_RING_CTRL_IX_0_ADDR(
-			SEQ_WCSS_UMAC_REO_REG_OFFSET);
+		HAL_REO_DESTINATION_RING_CTRL_IX_0_ADDR(reo_reg_base);
 
 	for (i = 0; i < MAX_REO_REMAP_SHADOW_REGS; i++) {
 		hal_set_one_target_reg_config(hal, target_reg_offset, i);
@@ -379,6 +390,13 @@ static void hal_target_based_configure(struct hal_soc *hal)
 			hal->use_register_windowing = true;
 			hal->static_window_map = true;
 			hal_qca6750_attach(hal);
+		break;
+#endif
+#ifdef QCA_WIFI_WCN7850
+	case TARGET_TYPE_WCN7850:
+		hal->use_register_windowing = true;
+		hal_wcn7850_attach(hal);
+		hal->init_phase = false;
 		break;
 #endif
 #if defined(QCA_WIFI_QCA8074) && defined(WIFI_TARGET_TYPE_3_0)
@@ -1277,6 +1295,49 @@ void hal_delayed_reg_write(struct hal_soc *hal_soc,
 
 #else
 #ifdef FEATURE_HAL_DELAYED_REG_WRITE
+#ifdef QCA_WIFI_QCA6750
+void hal_delayed_reg_write(struct hal_soc *hal_soc,
+			   struct hal_srng *srng,
+			   void __iomem *addr,
+			   uint32_t value)
+{
+	uint8_t vote_access;
+
+	switch (srng->ring_type) {
+	case CE_SRC:
+	case CE_DST:
+	case CE_DST_STATUS:
+		vote_access = hif_get_ep_vote_access(hal_soc->hif_handle,
+						     HIF_EP_VOTE_NONDP_ACCESS);
+		if ((vote_access == HIF_EP_VOTE_ACCESS_DISABLE) ||
+		    (vote_access == HIF_EP_VOTE_INTERMEDIATE_ACCESS &&
+		     PLD_MHI_STATE_L0 ==
+		     pld_get_mhi_state(hal_soc->qdf_dev->dev))) {
+			hal_write_address_32_mb(hal_soc, addr, value, false);
+			qdf_atomic_inc(&hal_soc->stats.wstats.direct);
+			srng->wstats.direct++;
+		} else {
+			hal_reg_write_enqueue(hal_soc, srng, addr, value);
+		}
+		break;
+	default:
+		if (hif_get_ep_vote_access(hal_soc->hif_handle,
+		    HIF_EP_VOTE_DP_ACCESS) ==
+		    HIF_EP_VOTE_ACCESS_DISABLE ||
+		    hal_is_reg_write_tput_level_high(hal_soc) ||
+		    PLD_MHI_STATE_L0 ==
+		    pld_get_mhi_state(hal_soc->qdf_dev->dev)) {
+			hal_write_address_32_mb(hal_soc, addr, value, false);
+			qdf_atomic_inc(&hal_soc->stats.wstats.direct);
+			srng->wstats.direct++;
+		} else {
+			hal_reg_write_enqueue(hal_soc, srng, addr, value);
+		}
+
+		break;
+	}
+}
+#else
 void hal_delayed_reg_write(struct hal_soc *hal_soc,
 			   struct hal_srng *srng,
 			   void __iomem *addr,
@@ -1291,6 +1352,7 @@ void hal_delayed_reg_write(struct hal_soc *hal_soc,
 		hal_reg_write_enqueue(hal_soc, srng, addr, value);
 	}
 }
+#endif
 #endif
 #endif
 
@@ -1355,6 +1417,12 @@ void *hal_attach(struct hif_opaque_softc *hif_handle, qdf_device_t qdf_dev)
 	qdf_spinlock_create(&hal->register_access_lock);
 	hal->register_window = 0;
 	hal->target_type = hal_get_target_type(hal_soc_to_hal_soc_handle(hal));
+	hal->ops = qdf_mem_malloc(sizeof(*hal->ops));
+
+	if (!hal->ops) {
+		hal_err("unable to allocable memory for HAL ops");
+		goto fail3;
+	}
 
 	hal_target_based_configure(hal);
 
@@ -1367,7 +1435,12 @@ void *hal_attach(struct hif_opaque_softc *hif_handle, qdf_device_t qdf_dev)
 	hal_delayed_tcl_reg_write_init(hal);
 
 	return (void *)hal;
-
+fail3:
+	qdf_mem_free_consistent(qdf_dev, qdf_dev->dev,
+				sizeof(*hal->shadow_wrptr_mem_vaddr) *
+				HAL_MAX_LMAC_RINGS,
+				hal->shadow_wrptr_mem_vaddr,
+				hal->shadow_wrptr_mem_paddr, 0);
 fail2:
 	qdf_mem_free_consistent(qdf_dev, qdf_dev->dev,
 		sizeof(*(hal->shadow_rdptr_mem_vaddr)) * HAL_SRNG_ID_MAX,
@@ -1395,6 +1468,7 @@ void hal_get_meminfo(hal_soc_handle_t hal_soc_hdl, struct hal_mem_info *mem)
 	mem->shadow_wrptr_mem_paddr = (void *)hal->shadow_wrptr_mem_paddr;
 	hif_read_phy_mem_base((void *)hal->hif_handle,
 			      (qdf_dma_addr_t *)&mem->dev_base_paddr);
+	mem->lmac_srng_start_id = HAL_SRNG_LMAC1_ID_START;
 	return;
 }
 qdf_export_symbol(hal_get_meminfo);
@@ -1416,6 +1490,7 @@ extern void hal_detach(void *hal_soc)
 
 	hal_delayed_reg_write_deinit(hal);
 	hal_delayed_tcl_reg_write_deinit(hal);
+	qdf_mem_free(hal->ops);
 
 	qdf_mem_free_consistent(hal->qdf_dev, hal->qdf_dev->dev,
 		sizeof(*(hal->shadow_rdptr_mem_vaddr)) * HAL_SRNG_ID_MAX,
@@ -1430,6 +1505,10 @@ extern void hal_detach(void *hal_soc)
 }
 qdf_export_symbol(hal_detach);
 
+#define HAL_CE_CHANNEL_DST_DEST_CTRL_ADDR(x)		((x) + 0x000000b0)
+#define HAL_CE_CHANNEL_DST_DEST_CTRL_DEST_MAX_LENGTH_BMSK	0x0000ffff
+#define HAL_CE_CHANNEL_DST_DEST_RING_CONSUMER_PREFETCH_TIMER_ADDR(x)	((x) + 0x00000040)
+#define HAL_CE_CHANNEL_DST_DEST_RING_CONSUMER_PREFETCH_TIMER_RMSK	0x00000007
 /**
  * hal_ce_dst_setup - Initialize CE destination ring registers
  * @hal_soc: HAL SOC handle
@@ -1444,23 +1523,23 @@ static inline void hal_ce_dst_setup(struct hal_soc *hal, struct hal_srng *srng,
 		HAL_SRNG_CONFIG(hal, CE_DST);
 
 	/* set DEST_MAX_LENGTH according to ce assignment */
-	reg_addr = HWIO_WFSS_CE_CHANNEL_DST_R0_DEST_CTRL_ADDR(
+	reg_addr = HAL_CE_CHANNEL_DST_DEST_CTRL_ADDR(
 			ring_config->reg_start[R0_INDEX] +
 			(ring_num * ring_config->reg_size[R0_INDEX]));
 
 	reg_val = HAL_REG_READ(hal, reg_addr);
-	reg_val &= ~HWIO_WFSS_CE_CHANNEL_DST_R0_DEST_CTRL_DEST_MAX_LENGTH_BMSK;
+	reg_val &= ~HAL_CE_CHANNEL_DST_DEST_CTRL_DEST_MAX_LENGTH_BMSK;
 	reg_val |= srng->u.dst_ring.max_buffer_length &
-		HWIO_WFSS_CE_CHANNEL_DST_R0_DEST_CTRL_DEST_MAX_LENGTH_BMSK;
+		HAL_CE_CHANNEL_DST_DEST_CTRL_DEST_MAX_LENGTH_BMSK;
 	HAL_REG_WRITE(hal, reg_addr, reg_val);
 
 	if (srng->prefetch_timer) {
-		reg_addr = HWIO_WFSS_CE_CHANNEL_DST_R0_DEST_RING_CONSUMER_PREFETCH_TIMER_ADDR(
+		reg_addr = HAL_CE_CHANNEL_DST_DEST_RING_CONSUMER_PREFETCH_TIMER_ADDR(
 				ring_config->reg_start[R0_INDEX] +
 				(ring_num * ring_config->reg_size[R0_INDEX]));
 
 		reg_val = HAL_REG_READ(hal, reg_addr);
-		reg_val &= ~HWIO_WFSS_CE_CHANNEL_DST_R0_DEST_RING_CONSUMER_PREFETCH_TIMER_RMSK;
+		reg_val &= ~HAL_CE_CHANNEL_DST_DEST_RING_CONSUMER_PREFETCH_TIMER_RMSK;
 		reg_val |= srng->prefetch_timer;
 		HAL_REG_WRITE(hal, reg_addr, reg_val);
 		reg_val = HAL_REG_READ(hal, reg_addr);
@@ -1483,64 +1562,67 @@ void hal_reo_read_write_ctrl_ix(hal_soc_handle_t hal_soc_hdl, bool read,
 {
 	uint32_t reg_offset;
 	struct hal_soc *hal = (struct hal_soc *)hal_soc_hdl;
+	uint32_t reo_reg_base;
+
+	reo_reg_base = hal_get_reo_reg_base_offset(hal_soc_hdl);
 
 	if (read) {
 		if (ix0) {
 			reg_offset =
-				HWIO_REO_R0_DESTINATION_RING_CTRL_IX_0_ADDR(
-						SEQ_WCSS_UMAC_REO_REG_OFFSET);
+				HAL_REO_DESTINATION_RING_CTRL_IX_0_ADDR(
+						reo_reg_base);
 			*ix0 = HAL_REG_READ(hal, reg_offset);
 		}
 
 		if (ix1) {
 			reg_offset =
-				HWIO_REO_R0_DESTINATION_RING_CTRL_IX_1_ADDR(
-						SEQ_WCSS_UMAC_REO_REG_OFFSET);
+				HAL_REO_DESTINATION_RING_CTRL_IX_1_ADDR(
+						reo_reg_base);
 			*ix1 = HAL_REG_READ(hal, reg_offset);
 		}
 
 		if (ix2) {
 			reg_offset =
-				HWIO_REO_R0_DESTINATION_RING_CTRL_IX_2_ADDR(
-						SEQ_WCSS_UMAC_REO_REG_OFFSET);
+				HAL_REO_DESTINATION_RING_CTRL_IX_2_ADDR(
+						reo_reg_base);
 			*ix2 = HAL_REG_READ(hal, reg_offset);
 		}
 
 		if (ix3) {
 			reg_offset =
-				HWIO_REO_R0_DESTINATION_RING_CTRL_IX_3_ADDR(
-						SEQ_WCSS_UMAC_REO_REG_OFFSET);
+				HAL_REO_DESTINATION_RING_CTRL_IX_3_ADDR(
+						reo_reg_base);
 			*ix3 = HAL_REG_READ(hal, reg_offset);
 		}
 	} else {
 		if (ix0) {
 			reg_offset =
-				HWIO_REO_R0_DESTINATION_RING_CTRL_IX_0_ADDR(
-						SEQ_WCSS_UMAC_REO_REG_OFFSET);
+				HAL_REO_DESTINATION_RING_CTRL_IX_0_ADDR(
+						reo_reg_base);
 			HAL_REG_WRITE_CONFIRM_RETRY(hal, reg_offset,
 						    *ix0, true);
 		}
 
 		if (ix1) {
 			reg_offset =
-				HWIO_REO_R0_DESTINATION_RING_CTRL_IX_1_ADDR(
-						SEQ_WCSS_UMAC_REO_REG_OFFSET);
+				HAL_REO_DESTINATION_RING_CTRL_IX_1_ADDR(
+						reo_reg_base);
 			HAL_REG_WRITE_CONFIRM_RETRY(hal, reg_offset,
 						    *ix1, true);
 		}
 
 		if (ix2) {
 			reg_offset =
-				HWIO_REO_R0_DESTINATION_RING_CTRL_IX_2_ADDR(
-						SEQ_WCSS_UMAC_REO_REG_OFFSET);
+				HAL_REO_DESTINATION_RING_CTRL_IX_2_ADDR(
+						reo_reg_base);
 			HAL_REG_WRITE_CONFIRM_RETRY(hal, reg_offset,
 						    *ix2, true);
 		}
 
 		if (ix3) {
 			reg_offset =
-				HWIO_REO_R0_DESTINATION_RING_CTRL_IX_3_ADDR(
-						SEQ_WCSS_UMAC_REO_REG_OFFSET);
+				HAL_REO_DESTINATION_RING_CTRL_IX_3_ADDR(
+						reo_reg_base);
 			HAL_REG_WRITE_CONFIRM_RETRY(hal, reg_offset,
 						    *ix3, true);
 		}
