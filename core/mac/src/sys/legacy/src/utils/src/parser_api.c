@@ -47,6 +47,7 @@
 #include "wlan_mlme_api.h"
 #include "wlan_reg_services_api.h"
 #include "wlan_cm_roam_api.h"
+#include "wlan_mlo_mgr_sta.h"
 
 #define RSN_OUI_SIZE 4
 /* ////////////////////////////////////////////////////////////////////// */
@@ -3661,7 +3662,7 @@ sir_convert_assoc_resp_frame2_struct(struct mac_context *mac,
 	}
 
 	fils_convert_assoc_rsp_frame2_struct(ar, pAssocRsp);
-
+	mlo_ie_convert_assoc_rsp_frame2_struct(ar, &pAssocRsp->mlo_ie);
 	qdf_mem_free(ar);
 	return QDF_STATUS_SUCCESS;
 
@@ -7375,4 +7376,397 @@ QDF_STATUS populate_dot11f_btm_extended_caps(struct mac_context *mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+QDF_STATUS populate_dot11f_assoc_req_mlo_ie(struct mac_context *mac_ctx,
+					     struct pe_session *pe_session,
+					     tDot11fAssocRequest *frm)
+{
+	uint8_t link, sta_link;
+	uint8_t num_sta_prof = 0, total_sta_prof;
+	tDot11fIEmlo_ie *mlo_ie;
+	tDot11fIEsta_profile *sta_prof;
+	struct mlo_link_info *link_info = NULL;
+	struct mlo_partner_info *partner_info;
+	struct qdf_mac_addr *mld_addr;
+	bool is_vht_enabled = false;
+	struct wlan_mlo_dev_context *mlo_dev_ctx;
+	struct wlan_objmgr_vdev *vdev = NULL;
+
+	if (!frm)
+		return QDF_STATUS_E_NULL_VALUE;
+
+	pe_debug("Populate Assoc req MLO IEs");
+
+	mlo_ie = &frm->mlo_ie;
+
+	mlo_ie->present = 1;
+	mlo_ie->mld_mac_addr_present = 1;
+	mlo_ie->type = 0;
+	mld_addr = (struct qdf_mac_addr *)wlan_vdev_mlme_get_mldaddr(pe_session->vdev);
+	qdf_mem_copy(&mlo_ie->mld_mac_addr.info.mld_mac_addr,
+		     mld_addr,
+		     QDF_MAC_ADDR_SIZE);
+	mlo_ie->link_id_info_present = 1;
+	mlo_ie->link_id_info.info.link_id =
+		pe_session->vdev->mlo_dev_ctx->mld_id;
+
+	mlo_ie->bss_param_change_cnt_present = 0;
+	mlo_ie->medium_sync_delay_info_present = 0;
+	mlo_ie->eml_capab_present = 0;
+	mlo_ie->mld_capab_present = 0;
+
+	//find out number of links from bcn or prb rsp
+	total_sta_prof = 2;
+	partner_info = &pe_session->lim_join_req->partner_info;
+
+	for (link = 0, sta_link = 1;
+	     link < total_sta_prof && total_sta_prof != num_sta_prof;
+	     link++, sta_link++) {
+		if (!partner_info->num_partner_links)
+			continue;
+
+		sta_prof = &mlo_ie->sta_profile[num_sta_prof];
+		link_info = &partner_info->partner_link_info[link];
+		mlo_dev_ctx = pe_session->vdev->mlo_dev_ctx;
+		if (!mlo_dev_ctx) {
+			pe_err("mlo_dev_ctx is null");
+			return QDF_STATUS_E_NULL_VALUE;
+		}
+		vdev = mlo_dev_ctx->wlan_vdev_list[sta_link];
+		if (!vdev) {
+			pe_err("vdev is null");
+			return QDF_STATUS_E_NULL_VALUE;
+		}
+
+		sta_prof->present = 1;
+		sta_prof->link_id = link_info->link_id;
+		sta_prof->complete_profile = 1;
+		sta_prof->sta_mac_addr_present = 1;
+		qdf_mem_copy(&sta_prof->sta_mac_addr.info.sta_mac_addr,
+			     vdev->vdev_mlme.macaddr,
+			     QDF_MAC_ADDR_SIZE);
+
+		/* TBD : populate beacon_interval, dtim_info
+		 * nstr_link_pair_present, nstr_bitmap_size
+		 */
+		sta_prof->beacon_interval_present = 0;
+		sta_prof->dtim_info_present = 0;
+		sta_prof->nstr_link_pair_present = 0;
+		sta_prof->nstr_bitmap_size = 0;
+
+		// TBD: mlo_capab, supported oper classes
+		sta_prof->mlo_capabilities.present = 0;
+
+		populate_dot11f_supp_rates(mac_ctx,
+			POPULATE_DOT11F_RATES_OPERATIONAL,
+			&sta_prof->SuppRates, pe_session);
+
+		populate_dot11f_ext_supp_rates(mac_ctx,
+			POPULATE_DOT11F_RATES_OPERATIONAL,
+			&sta_prof->ExtSuppRates, pe_session);
+
+		sta_prof->SuppOperatingClasses.present = 0;
+		sta_prof->WPA.present = 0;
+		sta_prof->ChanSwitchAnn.present = 0;
+		sta_prof->Quiet.present = 0;
+		sta_prof->ext_chan_switch_ann.present = 0;
+		sta_prof->RSN.present = 0;
+		sta_prof->EDCAParamSet.present = 0;
+		sta_prof->P2PAssocRes.present = 0;
+
+		if (pe_session->htCapability &&
+		    mac_ctx->lim.htCapabilityPresentInBeacon)
+			populate_dot11f_ht_caps(mac_ctx,
+						pe_session,
+						&sta_prof->HTCaps);
+
+		populate_dot11f_ht_info(mac_ctx,
+					&sta_prof->HTInfo,
+					pe_session);
+
+		sta_prof->HTInfo.primaryChannel =
+			mlo_get_chan_freq_by_bssid(mac_ctx->pdev,
+				&partner_info->partner_link_info[link].link_addr);
+
+		populate_dot11f_wmm_params(mac_ctx,
+					   &sta_prof->WMMParams,
+					   pe_session);
+
+		populate_dot11f_wmm_caps(&sta_prof->WMMCaps);
+
+		if (pe_session->vhtCapability &&
+		    pe_session->vhtCapabilityPresentInBeacon) {
+			populate_dot11f_vht_caps(mac_ctx,
+						 pe_session,
+						 &sta_prof->VHTCaps);
+			is_vht_enabled = true;
+		}
+
+		populate_dot11f_vht_operation(mac_ctx,
+					      pe_session,
+					      &sta_prof->VHTOperation);
+
+		if (pe_session->is_ext_caps_present)
+			populate_dot11f_ext_cap(mac_ctx,
+						is_vht_enabled,
+						&frm->ExtCap,
+						pe_session);
+
+		populate_dot11f_operating_mode(mac_ctx,
+					       &sta_prof->OperatingMode,
+					       pe_session);
+
+		sta_prof->fils_indication.present = 0;
+		sta_prof->qcn_ie.present = 0;
+
+		populate_dot11f_he_caps(mac_ctx,
+					pe_session,
+					&sta_prof->he_cap);
+
+		populate_dot11f_he_operation(mac_ctx,
+					     pe_session,
+					     &sta_prof->he_op);
+
+		populate_dot11f_he_6ghz_cap(mac_ctx,
+					    pe_session,
+					    &sta_prof->he_6ghz_band_cap);
+
+		populate_dot11f_eht_caps(mac_ctx,
+					 pe_session,
+					 &sta_prof->eht_cap);
+
+		populate_dot11f_eht_operation(mac_ctx,
+					      pe_session,
+					      &sta_prof->eht_op);
+
+		sta_prof->max_chan_switch_time.present = 0;
+		num_sta_prof++;
+	}
+
+	mlo_ie->num_sta_profile = num_sta_prof;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+mlo_ie_convert_assoc_rsp_frame2_struct(tDot11fAssocResponse *ar,
+				       tpSirMultiLink_IE pMloIe)
+
+{
+	tDot11fIEmlo_ie *mlo_ie;
+	tDot11fIEsta_profile *sta_prof = NULL, *pStaProf = NULL;
+	uint8_t sta_index, num_sta_prof;
+
+	if (!ar)
+		return QDF_STATUS_E_NULL_VALUE;
+
+	if (!ar->mlo_ie.present) {
+		pe_err("mlo ie not present");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	mlo_ie = qdf_mem_malloc(sizeof(tDot11fIEmlo_ie));
+	if (!mlo_ie)
+		return QDF_STATUS_E_FAILURE;
+
+	/* Zero-init our [out] parameter, */
+
+	pMloIe->mlo_ie.present = ar->mlo_ie.present;
+	pMloIe->mlo_ie.mld_mac_addr_present = ar->mlo_ie.mld_mac_addr_present;
+	qdf_mem_copy(&pMloIe->mlo_ie.mld_mac_addr.info.mld_mac_addr,
+		     &ar->mlo_ie.mld_mac_addr.info.mld_mac_addr,
+		     QDF_MAC_ADDR_SIZE);
+
+	pMloIe->mlo_ie.link_id_info_present = ar->mlo_ie.link_id_info_present;
+	pMloIe->mlo_ie.link_id_info.info.link_id =
+		ar->mlo_ie.link_id_info.info.link_id;
+	pMloIe->mlo_ie.num_sta_profile = ar->mlo_ie.num_sta_profile;
+	for (sta_index = 0, num_sta_prof = 0;
+	     sta_index < ar->mlo_ie.num_sta_profile;
+	     sta_index++, num_sta_prof++) {
+		sta_prof = &ar->mlo_ie.sta_profile[num_sta_prof];
+		pStaProf = &pMloIe->mlo_ie.sta_profile[sta_index];
+
+		if (!sta_prof || !pStaProf)
+			return QDF_STATUS_E_NULL_VALUE;
+
+		if (!sta_prof->complete_profile ||
+		    !sta_prof->sta_mac_addr_present) {
+			pe_err("Incorrect assoc rsp mlo ie per sta profile");
+			return QDF_STATUS_E_FAILURE;
+		}
+
+	if (sta_prof->sta_mac_addr_present)
+		qdf_mem_copy(&pStaProf->sta_mac_addr.info.sta_mac_addr,
+			     &sta_prof->sta_mac_addr.info.sta_mac_addr,
+			     QDF_MAC_ADDR_SIZE);
+
+	if (sta_prof->beacon_interval_present)
+		pStaProf->beacon_interval.info.beacon_interval =
+			sta_prof->beacon_interval.info.beacon_interval;
+
+	if (sta_prof->dtim_info_present) {
+		pStaProf->dtim_info.info.dtim_count =
+			sta_prof->dtim_info.info.dtim_count;
+		pStaProf->dtim_info.info.dtim_period =
+			sta_prof->dtim_info.info.dtim_period;
+	}
+
+	if (sta_prof->nstr_link_pair_present)
+		pStaProf->nstr_link_pair.info.nstr_link_pair_num  =
+			sta_prof->nstr_link_pair.info.nstr_link_pair_num;
+
+	if (sta_prof->mlo_capabilities.present)
+		qdf_mem_copy(&pStaProf->mlo_capabilities,
+			     &sta_prof->mlo_capabilities,
+			     sizeof(sta_prof->mlo_capabilities));
+
+	if (!sta_prof->SuppRates.present) {
+		pStaProf->SuppRates.present = 0;
+		pe_debug_rl("Mandatory IE Supported Rates not present!");
+	} else {
+		pStaProf->SuppRates.present = 1;
+		pStaProf->SuppRates.num_rates =
+			sta_prof->SuppRates.num_rates;
+		qdf_mem_copy(&pStaProf->SuppRates.rates,
+			     &sta_prof->SuppRates.rates,
+			     sizeof(pStaProf->SuppRates.num_rates));
+	}
+
+	if (sta_prof->ExtSuppRates.present) {
+		pStaProf->ExtSuppRates.present = 1;
+		pStaProf->ExtSuppRates.num_rates =
+			sta_prof->ExtSuppRates.num_rates;
+		qdf_mem_copy(&pStaProf->ExtSuppRates.rates,
+			     &ar->ExtSuppRates.rates,
+			     sizeof(pStaProf->ExtSuppRates.num_rates));
+	}
+
+	if (sta_prof->SuppOperatingClasses.present) {
+		pStaProf->SuppOperatingClasses.num_classes =
+			sta_prof->SuppOperatingClasses.num_classes;
+		qdf_mem_copy(&pStaProf->SuppOperatingClasses.classes,
+			     &sta_prof->SuppOperatingClasses.classes,
+			     sizeof(sta_prof->SuppOperatingClasses.num_classes));
+	}
+
+	if (sta_prof->WPA.present)
+		qdf_mem_copy(&pStaProf->WPA,
+			     &sta_prof->WPA,
+			     sizeof(tDot11fIEWPA));
+
+	if (sta_prof->ChanSwitchAnn.present)
+		qdf_mem_copy(&pStaProf->ChanSwitchAnn,
+			     &sta_prof->ChanSwitchAnn,
+			     sizeof(tDot11fIEChanSwitchAnn));
+
+	if (sta_prof->Quiet.present)
+		qdf_mem_copy(&pStaProf->Quiet,
+			     &sta_prof->Quiet,
+			     sizeof(tDot11fIEQuiet));
+
+	if (sta_prof->ext_chan_switch_ann.present)
+		qdf_mem_copy(&pStaProf->ext_chan_switch_ann,
+			     &sta_prof->ext_chan_switch_ann,
+			     sizeof(tDot11fIEext_chan_switch_ann));
+
+	if (sta_prof->RSN.present)
+		qdf_mem_copy(&pStaProf->RSN,
+			     &sta_prof->RSN,
+			     sizeof(tDot11fIERSN));
+
+	if (sta_prof->EDCAParamSet.present)
+		qdf_mem_copy(&pStaProf->EDCAParamSet,
+			     &sta_prof->EDCAParamSet,
+			     sizeof(tDot11fIEEDCAParamSet));
+
+	if (sta_prof->P2PAssocRes.present)
+		qdf_mem_copy(&pStaProf->P2PAssocRes,
+			     &sta_prof->P2PAssocRes,
+			     sizeof(tDot11fIEP2PAssocRes));
+
+	if (sta_prof->HTCaps.present)
+		qdf_mem_copy(&pStaProf->HTCaps,
+			     &sta_prof->HTCaps,
+			     sizeof(tDot11fIEHTCaps));
+
+	if (sta_prof->HTInfo.present)
+		qdf_mem_copy(&pStaProf->HTInfo,
+			     &sta_prof->HTInfo,
+			     sizeof(tDot11fIEHTInfo));
+
+	if (sta_prof->WMMParams.present)
+		qdf_mem_copy(&pStaProf->WMMParams,
+			     &sta_prof->WMMParams,
+			     sizeof(tDot11fIEWMMParams));
+
+	if (sta_prof->WMMCaps.present)
+		qdf_mem_copy(&pStaProf->WMMCaps,
+			     &sta_prof->WMMCaps,
+			     sizeof(tDot11fIEWMMCaps));
+
+	if (sta_prof->VHTCaps.present)
+		qdf_mem_copy(&pStaProf->VHTCaps,
+			     &sta_prof->VHTCaps,
+			     sizeof(tDot11fIEVHTCaps));
+
+	if (sta_prof->VHTOperation.present)
+		qdf_mem_copy(&pStaProf->VHTOperation,
+			     &sta_prof->VHTOperation,
+			     sizeof(tDot11fIEVHTOperation));
+
+	if (sta_prof->ExtCap.present)
+		qdf_mem_copy(&pStaProf->ExtCap,
+			     &sta_prof->ExtCap,
+			     sizeof(tDot11fIEExtCap));
+
+	if (sta_prof->OperatingMode.present)
+		qdf_mem_copy(&pStaProf->OperatingMode,
+			     &sta_prof->OperatingMode,
+			     sizeof(tDot11fIEOperatingMode));
+
+	if (sta_prof->fils_indication.present)
+		qdf_mem_copy(&pStaProf->fils_indication,
+			     &sta_prof->fils_indication,
+			     sizeof(tDot11fIEfils_indication));
+
+	if (sta_prof->qcn_ie.present)
+		qdf_mem_copy(&pStaProf->qcn_ie,
+			     &sta_prof->qcn_ie,
+			     sizeof(tDot11fIEqcn_ie));
+
+	if (sta_prof->he_cap.present)
+		qdf_mem_copy(&pStaProf->he_cap,
+			     &sta_prof->he_cap,
+			     sizeof(tDot11fIEhe_cap));
+
+	if (sta_prof->he_op.present)
+		qdf_mem_copy(&pStaProf->he_op,
+			     &sta_prof->he_op,
+			     sizeof(tDot11fIEhe_op));
+
+	if (sta_prof->he_6ghz_band_cap.present)
+		qdf_mem_copy(&pStaProf->he_6ghz_band_cap,
+			     &sta_prof->he_6ghz_band_cap,
+			     sizeof(tDot11fIEhe_6ghz_band_cap));
+
+	if (sta_prof->eht_cap.present)
+		qdf_mem_copy(&pStaProf->eht_cap,
+			     &sta_prof->eht_cap,
+			     sizeof(tDot11fIEeht_cap));
+
+	if (sta_prof->eht_op.present)
+		qdf_mem_copy(&pStaProf->eht_op,
+			     &sta_prof->eht_op,
+			     sizeof(tDot11fIEeht_op));
+
+	if (sta_prof->max_chan_switch_time.present)
+		qdf_mem_copy(&pStaProf->max_chan_switch_time,
+			     &sta_prof->max_chan_switch_time,
+			     sizeof(tDot11fIEmax_chan_switch_time));
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 /* parser_api.c ends here. */

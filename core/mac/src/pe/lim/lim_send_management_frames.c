@@ -2325,6 +2325,9 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 		populate_dot11f_eht_caps(mac_ctx, pe_session, &frm->eht_cap);
 	}
 
+#ifdef WLAN_FEATURE_11BE_MLO
+	populate_dot11f_assoc_req_mlo_ie(mac_ctx, pe_session, frm);
+#endif
 	if (pe_session->is11Rconnection) {
 		struct bss_description *bssdescr;
 
