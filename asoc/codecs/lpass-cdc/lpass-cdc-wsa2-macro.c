@@ -936,8 +936,10 @@ static int lpass_cdc_wsa2_macro_mclk_event(struct snd_soc_dapm_widget *w,
 			wsa2_priv->dapm_mclk_enable = true;
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		if (wsa2_priv->dapm_mclk_enable)
+		if (wsa2_priv->dapm_mclk_enable) {
 			lpass_cdc_wsa2_macro_mclk_enable(wsa2_priv, 0, true);
+			wsa2_priv->dapm_mclk_enable = false;
+		}
 		break;
 	default:
 		dev_err(wsa2_priv->dev,
