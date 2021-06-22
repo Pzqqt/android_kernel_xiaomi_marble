@@ -449,8 +449,8 @@ dp_rx_pn_error_handle(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 	struct dp_peer *peer;
 	bool peer_pn_policy = false;
 
-	peer_id = DP_PEER_METADATA_PEER_ID_GET(
-				mpdu_desc_info->peer_meta_data);
+	peer_id = dp_rx_peer_metadata_peer_id_get(soc,
+					       mpdu_desc_info->peer_meta_data);
 
 
 	peer = dp_peer_get_ref_by_id(soc, peer_id, DP_MOD_ID_RX_ERR);
@@ -627,7 +627,8 @@ _dp_rx_bar_frame_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	uint16_t peer_id;
 	struct dp_peer *peer;
 
-	peer_id = DP_PEER_METADATA_PEER_ID_GET(mpdu_desc_info->peer_meta_data);
+	peer_id = dp_rx_peer_metadata_peer_id_get(soc,
+					       mpdu_desc_info->peer_meta_data);
 	peer = dp_peer_get_tgt_peer_by_id(soc, peer_id, DP_MOD_ID_RX_ERR);
 	if (!peer)
 		return;
@@ -703,8 +704,8 @@ dp_rx_reo_err_entry_process(struct dp_soc *soc,
 	QDF_STATUS status;
 	bool ret;
 
-	peer_id = DP_PEER_METADATA_PEER_ID_GET(
-					mpdu_desc_info->peer_meta_data);
+	peer_id = dp_rx_peer_metadata_peer_id_get(soc,
+					       mpdu_desc_info->peer_meta_data);
 
 more_msdu_link_desc:
 	hal_rx_msdu_list_get(soc->hal_soc, link_desc_va, &msdu_list,
@@ -777,7 +778,7 @@ more_msdu_link_desc:
 			hal_rx_tlv_populate_mpdu_desc_info(soc->hal_soc,
 							   qdf_nbuf_data(nbuf),
 							   mpdu_desc_info);
-			peer_id = DP_PEER_METADATA_PEER_ID_GET(
+			peer_id = dp_rx_peer_metadata_peer_id_get(soc,
 					mpdu_desc_info->peer_meta_data);
 
 			if (mpdu_desc_info->bar_frame)

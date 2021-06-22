@@ -340,13 +340,13 @@ more_data:
 		rx_bufs_reaped[rx_desc->pool_id]++;
 		peer_mdata = mpdu_desc_info.peer_meta_data;
 		QDF_NBUF_CB_RX_PEER_ID(rx_desc->nbuf) =
-			DP_PEER_METADATA_PEER_ID_GET(peer_mdata);
+			dp_rx_peer_metadata_peer_id_get_li(soc, peer_mdata);
 		QDF_NBUF_CB_RX_VDEV_ID(rx_desc->nbuf) =
-			DP_PEER_METADATA_VDEV_ID_GET(peer_mdata);
+			DP_PEER_METADATA_VDEV_ID_GET_LI(peer_mdata);
 
 		/* to indicate whether this msdu is rx offload */
 		pkt_capture_offload =
-			DP_PEER_METADATA_OFFLOAD_GET(peer_mdata);
+			DP_PEER_METADATA_OFFLOAD_GET_LI(peer_mdata);
 
 		/*
 		 * save msdu flags first, last and continuation msdu in

@@ -4687,8 +4687,6 @@ more_data:
 			dp_tx_process_htt_completion(soc, tx_desc,
 					htt_tx_status, ring_id);
 		} else {
-			tx_desc->peer_id =
-				hal_tx_comp_get_peer_id(tx_comp_hal_desc);
 			tx_desc->tx_status =
 				hal_tx_comp_get_tx_status(tx_comp_hal_desc);
 			tx_desc->buffer_src = buffer_src;

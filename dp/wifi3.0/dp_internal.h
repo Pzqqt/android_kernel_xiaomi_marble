@@ -869,6 +869,20 @@ void DP_PRINT_STATS(const char *fmt, ...);
 #define FRAME_MASK_IPV4_EAPOL 4
 #define FRAME_MASK_IPV6_DHCP  8
 
+static inline int dp_log2_ceil(unsigned int value)
+{
+	unsigned int tmp = value;
+	int log2 = -1;
+
+	while (tmp) {
+		log2++;
+		tmp >>= 1;
+	}
+	if (1 << log2 != value)
+		log2++;
+	return log2;
+}
+
 #ifdef QCA_SUPPORT_PEER_ISOLATION
 #define dp_get_peer_isolation(_peer) ((_peer)->isolation)
 

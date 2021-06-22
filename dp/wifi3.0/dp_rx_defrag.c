@@ -1711,8 +1711,8 @@ dp_rx_defrag_store_fragment(struct dp_soc *soc,
 	qdf_nbuf_append_ext_list(frag, NULL, 0);
 
 	/* Check if the packet is from a valid peer */
-	peer_id = DP_PEER_METADATA_PEER_ID_GET(
-					mpdu_desc_info->peer_meta_data);
+	peer_id = dp_rx_peer_metadata_peer_id_get(soc,
+					       mpdu_desc_info->peer_meta_data);
 	peer = dp_peer_get_ref_by_id(soc, peer_id, DP_MOD_ID_RX_ERR);
 
 	if (!peer) {

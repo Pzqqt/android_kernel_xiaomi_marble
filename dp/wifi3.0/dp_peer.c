@@ -208,20 +208,6 @@ static QDF_STATUS dp_peer_find_map_attach(struct dp_soc *soc)
 	return QDF_STATUS_SUCCESS; /* success */
 }
 
-static int dp_log2_ceil(unsigned int value)
-{
-	unsigned int tmp = value;
-	int log2 = -1;
-
-	while (tmp) {
-		log2++;
-		tmp >>= 1;
-	}
-	if (1 << log2 != value)
-		log2++;
-	return log2;
-}
-
 #define DP_PEER_HASH_LOAD_MULT  2
 #define DP_PEER_HASH_LOAD_SHIFT 0
 

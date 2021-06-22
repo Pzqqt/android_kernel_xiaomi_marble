@@ -43,27 +43,7 @@
 
 #define RX_BUFFER_RESERVATION   0
 
-#define DP_PEER_METADATA_PEER_ID_MASK	0x0000ffff
-#define DP_PEER_METADATA_PEER_ID_SHIFT	0
-#define DP_PEER_METADATA_VDEV_ID_MASK	0x003f0000
-#define DP_PEER_METADATA_VDEV_ID_SHIFT	16
-#define DP_PEER_METADATA_OFFLOAD_MASK	0x01000000
-#define DP_PEER_METADATA_OFFLOAD_SHIFT	24
-
-
 #define DP_DEFAULT_NOISEFLOOR	(-96)
-
-#define DP_PEER_METADATA_PEER_ID_GET(_peer_metadata)		\
-	(((_peer_metadata) & DP_PEER_METADATA_PEER_ID_MASK)	\
-			>> DP_PEER_METADATA_PEER_ID_SHIFT)
-
-#define DP_PEER_METADATA_VDEV_ID_GET(_peer_metadata)		\
-	(((_peer_metadata) & DP_PEER_METADATA_VDEV_ID_MASK)	\
-			>> DP_PEER_METADATA_VDEV_ID_SHIFT)
-
-#define DP_PEER_METADATA_OFFLOAD_GET(_peer_metadata)		\
-	(((_peer_metadata) & DP_PEER_METADATA_OFFLOAD_MASK)	\
-			>> DP_PEER_METADATA_OFFLOAD_SHIFT)
 
 #define DP_RX_DESC_MAGIC 0xdec0de
 
@@ -2078,6 +2058,13 @@ dp_rx_get_defrag_bm_id(struct dp_soc *soc)
 	return dp_rx_get_rx_bm_id(soc);
 }
 #endif
+
+static inline uint16_t
+dp_rx_peer_metadata_peer_id_get(struct dp_soc *soc, uint32_t peer_metadata)
+{
+	return soc->arch_ops.dp_rx_peer_metadata_peer_id_get(soc,
+							     peer_metadata);
+}
 
 /**
  * dp_rx_desc_pool_init_generic() - Generic Rx descriptors initialization

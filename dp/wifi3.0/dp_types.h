@@ -1660,6 +1660,8 @@ struct dp_arch_ops {
 					       uint32_t dp_budget);
 	void (*tx_implicit_rbm_set)(struct dp_soc *soc, uint8_t tx_ring_id,
 				    uint8_t bm_id);
+	uint16_t (*dp_rx_peer_metadata_peer_id_get)(struct dp_soc *soc,
+						    uint32_t peer_metadata);
 
 	/* Control Arch Ops */
 	QDF_STATUS (*txrx_set_vdev_param)(struct dp_soc *soc,
@@ -1957,6 +1959,9 @@ struct dp_soc {
 
 	/* maximum value for peer_id */
 	uint32_t max_peers;
+
+	uint32_t peer_id_shift;
+	uint32_t peer_id_mask;
 
 	/* SoC level data path statistics */
 	struct dp_soc_stats stats;

@@ -10770,10 +10770,16 @@ static QDF_STATUS dp_peer_map_attach_wifi3(struct cdp_soc_t  *soc_hdl,
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 
-	soc->max_peers = max_peers;
+	soc->peer_id_shift = dp_log2_ceil(max_peers);
+	soc->peer_id_mask = (1 << soc->peer_id_shift) - 1;
+	/*
+	 * Double the peers since we use ML indication bit
+	 * alongwith peer_id to find peers.
+	 */
+	soc->max_peers = 1 << (soc->peer_id_shift + 1);
 
-	qdf_print ("%s max_peers %u, max_ast_index: %u\n",
-		   __func__, max_peers, max_ast_index);
+	dp_info("max_peers %u, calculated max_peers %u max_ast_index: %u\n",
+		max_peers, soc->max_peers, max_ast_index);
 	wlan_cfg_set_max_ast_idx(soc->wlan_cfg_ctx, max_ast_index);
 
 	if (dp_peer_find_attach(soc))
