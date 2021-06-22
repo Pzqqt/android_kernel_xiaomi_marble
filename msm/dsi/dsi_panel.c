@@ -35,6 +35,8 @@
 #define DEFAULT_PANEL_PREFILL_LINES	25
 #define HIGH_REFRESH_RATE_THRESHOLD_TIME_US	500
 #define MIN_PREFILL_LINES      40
+#define RSCC_MODE_THRESHOLD_TIME_US 40
+#define DCS_COMMAND_THRESHOLD_TIME_US 40
 
 static void dsi_dce_prepare_pps_header(char *buf, u32 pps_delay_ms)
 {
@@ -191,47 +193,14 @@ static int dsi_panel_gpio_release(struct dsi_panel *panel)
 	return rc;
 }
 
-int dsi_panel_trigger_esd_attack(struct dsi_panel *panel, bool trusted_vm_env)
+static int dsi_panel_trigger_esd_attack_sub(int reset_gpio)
 {
-	if (!panel) {
-		DSI_ERR("Invalid panel param\n");
+	if (!gpio_is_valid(reset_gpio)) {
+		DSI_INFO("failed to pull down the reset gpio\n");
 		return -EINVAL;
 	}
 
-	/* toggle reset-gpio by writing directly to register in trusted-vm */
-	if (trusted_vm_env) {
-		struct dsi_tlmm_gpio *gpio = NULL;
-		void __iomem *io;
-		u32 offset = 0x4;
-		int i;
-
-		for (i = 0; i < panel->tlmm_gpio_count; i++)
-			if (!strcmp(panel->tlmm_gpio[i].name, "reset-gpio"))
-				gpio = &panel->tlmm_gpio[i];
-
-		if (!gpio) {
-			DSI_ERR("reset gpio not found\n");
-			return -EINVAL;
-		}
-
-		io = ioremap(gpio->addr, gpio->size);
-		writel_relaxed(0, io + offset);
-		iounmap(io);
-
-	} else {
-		struct dsi_panel_reset_config *r_config = &panel->reset_config;
-
-		if (!r_config) {
-			DSI_ERR("Invalid panel reset configuration\n");
-			return -EINVAL;
-		}
-
-		if (!gpio_is_valid(r_config->reset_gpio)) {
-			DSI_ERR("failed to pull down gpio\n");
-			return -EINVAL;
-		}
-		gpio_set_value(r_config->reset_gpio, 0);
-	}
+	gpio_set_value(reset_gpio, 0);
 
 	SDE_EVT32(SDE_EVTLOG_FUNC_CASE1);
 	DSI_INFO("GPIO pulled low to simulate ESD\n");
@@ -239,11 +208,58 @@ int dsi_panel_trigger_esd_attack(struct dsi_panel *panel, bool trusted_vm_env)
 	return 0;
 }
 
+static int dsi_panel_vm_trigger_esd_attack(struct dsi_panel *panel)
+{
+	struct dsi_parser_utils *utils = &panel->utils;
+	int reset_gpio;
+	int rc = 0;
+
+	reset_gpio = utils->get_named_gpio(utils->data,
+			"qcom,platform-reset-gpio", 0);
+	if (!gpio_is_valid(reset_gpio)) {
+		DSI_ERR("[%s] reset gpio not provided\n", panel->name);
+		return -EINVAL;
+	}
+
+	rc = gpio_request(reset_gpio, "reset_gpio");
+	if (rc) {
+		DSI_ERR("request for reset_gpio failed, rc=%d\n", rc);
+		return rc;
+	}
+
+	rc = dsi_panel_trigger_esd_attack_sub(reset_gpio);
+
+	gpio_free(reset_gpio);
+
+	return rc;
+}
+
+static int dsi_panel_trigger_esd_attack(struct dsi_panel *panel)
+{
+	struct dsi_panel_reset_config *r_config;
+
+	if (!panel) {
+		DSI_ERR("Invalid panel param\n");
+		return -EINVAL;
+	}
+
+	r_config = &panel->reset_config;
+	if (!r_config) {
+		DSI_ERR("Invalid panel reset configuration\n");
+		return -EINVAL;
+	}
+
+	return dsi_panel_trigger_esd_attack_sub(r_config->reset_gpio);
+}
+
 static int dsi_panel_reset(struct dsi_panel *panel)
 {
 	int rc = 0;
 	struct dsi_panel_reset_config *r_config = &panel->reset_config;
 	int i;
+
+	if (!gpio_is_valid(r_config->reset_gpio))
+		goto skip_reset_gpio;
 
 	if (gpio_is_valid(panel->reset_config.disp_en_gpio)) {
 		rc = gpio_direction_output(panel->reset_config.disp_en_gpio, 1);
@@ -272,6 +288,7 @@ static int dsi_panel_reset(struct dsi_panel *panel)
 				(r_config->sequence[i].sleep_ms * 1000) + 100);
 	}
 
+skip_reset_gpio:
 	if (gpio_is_valid(panel->bl_config.en_gpio)) {
 		rc = gpio_direction_output(panel->bl_config.en_gpio, 1);
 		if (rc)
@@ -433,6 +450,8 @@ static int dsi_panel_tx_cmd_set(struct dsi_panel *panel,
 			 panel->name, type);
 		goto error;
 	}
+
+	cmds->ctrl_flags = 0;
 
 	for (i = 0; i < count; i++) {
 		if (state == DSI_CMD_SET_STATE_LP)
@@ -797,6 +816,8 @@ static int dsi_panel_parse_timing(struct dsi_mode_info *mode,
 			mode->mdp_transfer_time_us;
 	else
 		display_mode->priv_info->mdp_transfer_time_us = 0;
+
+	priv_info->disable_rsc_solver = utils->read_bool(utils->data, "qcom,disable-rsc-solver");
 
 	rc = utils->read_u32(utils->data,
 				"qcom,mdss-dsi-panel-framerate",
@@ -2202,34 +2223,21 @@ error:
 int dsi_panel_get_io_resources(struct dsi_panel *panel,
 		struct msm_io_res *io_res)
 {
-	struct list_head temp_head;
-	struct msm_io_mem_entry *io_mem, *pos, *tmp;
+	struct dsi_parser_utils *utils = &panel->utils;
 	struct list_head *mem_list = &io_res->mem;
-	int i, rc = 0;
+	int reset_gpio;
+	int rc = 0;
 
-	INIT_LIST_HEAD(&temp_head);
-
-	for (i = 0; i < panel->tlmm_gpio_count; i++) {
-		io_mem = kzalloc(sizeof(*io_mem), GFP_KERNEL);
-		if (!io_mem) {
-			rc = -ENOMEM;
-			goto parse_fail;
+	reset_gpio = utils->get_named_gpio(utils->data,
+					      "qcom,platform-reset-gpio", 0);
+	if (gpio_is_valid(reset_gpio)) {
+		rc = msm_dss_get_gpio_io_mem(reset_gpio, mem_list);
+		if (rc) {
+			DSI_ERR("[%s] failed to retrieve the reset gpio address\n", panel->name);
+			goto end;
 		}
-
-		io_mem->base = panel->tlmm_gpio[i].addr;
-		io_mem->size = panel->tlmm_gpio[i].size;
-
-		list_add(&io_mem->list, &temp_head);
 	}
 
-	list_splice(&temp_head, mem_list);
-	goto end;
-
-parse_fail:
-	list_for_each_entry_safe(pos, tmp, &temp_head, list) {
-		list_del(&pos->list);
-		kfree(pos);
-	}
 end:
 	return rc;
 }
@@ -2316,54 +2324,6 @@ static int dsi_panel_parse_gpios(struct dsi_panel *panel)
 
 error:
 	return rc;
-}
-
-static int dsi_panel_parse_tlmm_gpio(struct dsi_panel *panel)
-{
-	struct dsi_parser_utils *utils = &panel->utils;
-	u32 base, size, pin;
-	int pin_count, address_count, name_count, i;
-
-	address_count = utils->count_u32_elems(utils->data,
-				"qcom,dsi-panel-gpio-address");
-	if (address_count != 2) {
-		DSI_DEBUG("panel gpio address not defined\n");
-		return 0;
-	}
-
-	utils->read_u32_index(utils->data,
-			"qcom,dsi-panel-gpio-address", 0, &base);
-	utils->read_u32_index(utils->data,
-			"qcom,dsi-panel-gpio-address", 1, &size);
-
-	pin_count = utils->count_u32_elems(utils->data,
-				"qcom,dsi-panel-gpio-pins");
-	name_count = utils->count_strings(utils->data,
-				"qcom,dsi-panel-gpio-names");
-	if ((pin_count < 0) || (name_count < 0) || (pin_count != name_count)) {
-		DSI_ERR("invalid gpio pins/names\n");
-		return -EINVAL;
-	}
-
-	panel->tlmm_gpio = kcalloc(pin_count,
-				sizeof(struct dsi_tlmm_gpio), GFP_KERNEL);
-	if (!panel->tlmm_gpio)
-		return -ENOMEM;
-
-	panel->tlmm_gpio_count = pin_count;
-	for (i = 0; i < pin_count; i++) {
-		utils->read_u32_index(utils->data,
-				"qcom,dsi-panel-gpio-pins", i, &pin);
-		panel->tlmm_gpio[i].num = pin;
-		panel->tlmm_gpio[i].addr = base + (pin * size);
-		panel->tlmm_gpio[i].size = size;
-
-		utils->read_string_index(utils->data,
-				"qcom,dsi-panel-gpio-names", i,
-				&(panel->tlmm_gpio[i].name));
-	}
-
-	return 0;
 }
 
 static int dsi_panel_parse_bl_pwm_config(struct dsi_panel *panel)
@@ -3025,6 +2985,19 @@ static int dsi_panel_parse_topology(
 		goto parse_fail;
 	}
 
+	if (!(priv_info->dsc_enabled || priv_info->vdc_enabled) !=
+			!topology[top_sel].num_enc) {
+		DSI_ERR("topology and compression info mismatch dsc:%d vdc:%d num_enc:%d\n",
+			priv_info->dsc_enabled, priv_info->vdc_enabled,
+			topology[top_sel].num_enc);
+		goto parse_fail;
+	}
+
+	if (priv_info->dsc_enabled)
+		topology[top_sel].comp_type = MSM_DISPLAY_COMPRESSION_DSC;
+	else if (priv_info->vdc_enabled)
+		topology[top_sel].comp_type = MSM_DISPLAY_COMPRESSION_VDC;
+
 	DSI_INFO("default topology: lm: %d comp_enc:%d intf: %d\n",
 		topology[top_sel].num_lm,
 		topology[top_sel].num_enc,
@@ -3468,6 +3441,7 @@ static void dsi_panel_setup_vm_ops(struct dsi_panel *panel, bool trusted_vm_env)
 		panel->panel_ops.bl_unregister = dsi_panel_vm_stub;
 		panel->panel_ops.parse_gpios = dsi_panel_vm_stub;
 		panel->panel_ops.parse_power_cfg = dsi_panel_vm_stub;
+		panel->panel_ops.trigger_esd_attack = dsi_panel_vm_trigger_esd_attack;
 	} else {
 		panel->panel_ops.pinctrl_init = dsi_panel_pinctrl_init;
 		panel->panel_ops.gpio_request = dsi_panel_gpio_request;
@@ -3477,6 +3451,7 @@ static void dsi_panel_setup_vm_ops(struct dsi_panel *panel, bool trusted_vm_env)
 		panel->panel_ops.bl_unregister = dsi_panel_bl_unregister;
 		panel->panel_ops.parse_gpios = dsi_panel_parse_gpios;
 		panel->panel_ops.parse_power_cfg = dsi_panel_parse_power_cfg;
+		panel->panel_ops.trigger_esd_attack = dsi_panel_trigger_esd_attack;
 	}
 }
 
@@ -3558,12 +3533,6 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 	rc = panel->panel_ops.parse_gpios(panel);
 	if (rc) {
 		DSI_ERR("failed to parse panel gpios, rc=%d\n", rc);
-		goto error;
-	}
-
-	rc = dsi_panel_parse_tlmm_gpio(panel);
-	if (rc) {
-		DSI_ERR("failed to parse panel tlmm gpios, rc=%d\n", rc);
 		goto error;
 	}
 
@@ -3722,7 +3691,6 @@ int dsi_panel_drv_deinit(struct dsi_panel *panel)
 	if (rc)
 		DSI_ERR("[%s] failed to put regs, rc=%d\n", panel->name, rc);
 
-	kfree(panel->tlmm_gpio);
 	panel->host = NULL;
 	memset(&panel->mipi_device, 0x0, sizeof(panel->mipi_device));
 
@@ -3959,11 +3927,22 @@ void dsi_panel_calc_dsi_transfer_time(struct dsi_host_common_cfg *config,
 
 	timing->min_dsi_clk_hz = min_bitclk_hz;
 
-	min_threshold_us = mult_frac(frame_time_us,
-			jitter_numer, (jitter_denom * 100));
+	/*
+	 * Apart from prefill line time, we need to take into account RSCC mode threshold time. In
+	 * cases where RSC is disabled, as jitter is no longer considered we need to make sure we
+	 * have enough time for DCS command transfer. As of now, the RSC threshold time and DCS
+	 * threshold time are configured to 40us.
+	 */
+	if (mode->priv_info->disable_rsc_solver) {
+		min_threshold_us = DCS_COMMAND_THRESHOLD_TIME_US;
+	} else {
+		min_threshold_us = mult_frac(frame_time_us, jitter_numer, (jitter_denom * 100));
+		min_threshold_us += RSCC_MODE_THRESHOLD_TIME_US;
+	}
+
 	/*
 	 * Increase the prefill_lines proportionately as recommended
-	 * 35lines for 60fps, 52 for 90fps, 70lines for 120fps.
+	 * 40lines for 60fps, 60 for 90fps, 120lines for 120fps, and so on.
 	 */
 	prefill_lines = mult_frac(MIN_PREFILL_LINES,
 			timing->refresh_rate, 60);
@@ -3971,11 +3950,7 @@ void dsi_panel_calc_dsi_transfer_time(struct dsi_host_common_cfg *config,
 	prefill_time_us = mult_frac(frame_time_us, prefill_lines,
 			(timing->v_active));
 
-	/*
-	 * Threshold is sum of panel jitter time, prefill line time
-	 * plus 64usec buffer time.
-	 */
-	min_threshold_us = min_threshold_us + 64 + prefill_time_us;
+	min_threshold_us = min_threshold_us + prefill_time_us;
 
 	DSI_DEBUG("min threshold time=%d\n", min_threshold_us);
 
@@ -3993,7 +3968,8 @@ void dsi_panel_calc_dsi_transfer_time(struct dsi_host_common_cfg *config,
 		timing->dsi_transfer_time_us =
 			mode->priv_info->mdp_transfer_time_us;
 	} else {
-		if (min_threshold_us > frame_threshold_us)
+		if ((min_threshold_us > frame_threshold_us) ||
+				(mode->priv_info->disable_rsc_solver))
 			frame_threshold_us = min_threshold_us;
 
 		timing->dsi_transfer_time_us = frame_time_us -

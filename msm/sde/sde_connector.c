@@ -66,6 +66,11 @@ static const struct drm_prop_enum_list e_qsync_mode[] = {
 	{SDE_RM_QSYNC_CONTINUOUS_MODE,	"continuous"},
 	{SDE_RM_QSYNC_ONE_SHOT_MODE,	"one_shot"},
 };
+static const struct drm_prop_enum_list e_dsc_mode[] = {
+	{MSM_DISPLAY_DSC_MODE_NONE, "none"},
+	{MSM_DISPLAY_DSC_MODE_ENABLED, "dsc_enabled"},
+	{MSM_DISPLAY_DSC_MODE_DISABLED, "dsc_disabled"},
+};
 static const struct drm_prop_enum_list e_frame_trigger_mode[] = {
 	{FRAME_DONE_WAIT_DEFAULT, "default"},
 	{FRAME_DONE_WAIT_SERIALIZE, "serialize_frame_trigger"},
@@ -92,6 +97,29 @@ static inline struct sde_kms *_sde_connector_get_kms(struct drm_connector *conn)
 	}
 
 	return to_sde_kms(priv->kms);
+}
+
+static void sde_dimming_bl_notify(struct sde_connector *conn, struct dsi_backlight_config *config)
+{
+	struct drm_event event;
+	struct drm_msm_backlight_info bl_info;
+
+	if (!conn || !config)
+		return;
+	if (!conn->dimming_bl_notify_enabled)
+		return;
+
+	bl_info.brightness_max = config->brightness_max_level;
+	bl_info.brightness = config->brightness;
+	bl_info.bl_level_max = config->bl_max_level;
+	bl_info.bl_level = config->bl_level;
+	bl_info.bl_scale = config->bl_scale;
+	bl_info.bl_scale_sv = config->bl_scale_sv;
+	event.type = DRM_EVENT_DIMMING_BL;
+	event.length = sizeof(bl_info);
+	SDE_DEBUG("dimming BL event bl_level %d bl_scale %d, bl_scale_sv = %d\n",
+		  bl_info.bl_level, bl_info.bl_scale, bl_info.bl_scale_sv);
+	msm_mode_object_event_notify(&conn->base.base, conn->base.dev, &event, (u8 *)&bl_info);
 }
 
 static int sde_backlight_device_update_status(struct backlight_device *bd)
@@ -124,6 +152,7 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 	if (brightness > c_conn->thermal_max_brightness)
 		brightness = c_conn->thermal_max_brightness;
 
+	display->panel->bl_config.brightness = brightness;
 	/* map UI brightness into driver backlight level with rounding */
 	bl_lvl = mult_frac(brightness, display->panel->bl_config.bl_max_level,
 			display->panel->bl_config.brightness_max_level);
@@ -154,6 +183,7 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 		}
 		rc = c_conn->ops.set_backlight(&c_conn->base,
 				c_conn->display, bl_lvl);
+		sde_dimming_bl_notify(c_conn, &display->panel->bl_config);
 		c_conn->unset_bl_level = 0;
 	}
 
@@ -406,6 +436,7 @@ static void sde_connector_get_avail_res_info(struct drm_connector *conn,
 {
 	struct sde_kms *sde_kms;
 	struct drm_encoder *drm_enc = NULL;
+	struct sde_connector *sde_conn;
 
 	sde_kms = _sde_connector_get_kms(conn);
 	if (!sde_kms) {
@@ -413,12 +444,17 @@ static void sde_connector_get_avail_res_info(struct drm_connector *conn,
 		return;
 	}
 
+	sde_conn = to_sde_connector(conn);
 	if (conn->state && conn->state->best_encoder)
 		drm_enc = conn->state->best_encoder;
 	else
 		drm_enc = conn->encoder;
 
 	sde_rm_get_resource_info(&sde_kms->rm, drm_enc, avail_res);
+	if ((sde_kms->catalog->allowed_dsc_reservation_switch &
+		SDE_DP_DSC_RESERVATION_SWITCH) &&
+		sde_conn->connector_type == DRM_MODE_CONNECTOR_DisplayPort)
+		avail_res->num_dsc = sde_kms->catalog->dsc_count;
 
 	avail_res->max_mixer_width = sde_kms->catalog->max_mixer_width;
 }
@@ -441,6 +477,7 @@ int sde_connector_set_msm_mode(struct drm_connector_state *conn_state,
 
 int sde_connector_get_mode_info(struct drm_connector *conn,
 		const struct drm_display_mode *drm_mode,
+		struct msm_sub_mode *sub_mode,
 		struct msm_mode_info *mode_info)
 {
 	struct sde_connector *sde_conn;
@@ -455,7 +492,7 @@ int sde_connector_get_mode_info(struct drm_connector *conn,
 
 	sde_connector_get_avail_res_info(conn, &avail_res);
 
-	return sde_conn->ops.get_mode_info(conn, drm_mode,
+	return sde_conn->ops.get_mode_info(conn, drm_mode, sub_mode,
 			mode_info, sde_conn->display, &avail_res);
 }
 
@@ -637,6 +674,39 @@ static int _sde_connector_update_power_locked(struct sde_connector *c_conn)
 	return rc;
 }
 
+static int _sde_connector_update_dimming_bl_lut(struct sde_connector *c_conn,
+		struct sde_connector_state *c_state)
+{
+	bool is_dirty;
+	size_t sz = 0;
+	struct dsi_display *dsi_display;
+	struct dsi_backlight_config *bl_config;
+
+	if (!c_conn || !c_state) {
+		SDE_ERROR("invalid arguments\n");
+		return -EINVAL;
+	}
+
+	dsi_display = c_conn->display;
+	if (!dsi_display || !dsi_display->panel) {
+		SDE_ERROR("Invalid params(s) dsi_display %pK, panel %pK\n",
+			dsi_display,
+			((dsi_display) ? dsi_display->panel : NULL));
+		return -EINVAL;
+	}
+
+	is_dirty = msm_property_is_dirty(&c_conn->property_info,
+			&c_state->property_state,
+			CONNECTOR_PROP_DIMMING_BL_LUT);
+	if (!is_dirty)
+		return -ENODATA;
+
+	bl_config = &dsi_display->panel->bl_config;
+	bl_config->dimming_bl_lut = msm_property_get_blob(&c_conn->property_info,
+			&c_state->property_state, &sz, CONNECTOR_PROP_DIMMING_BL_LUT);
+	return 0;
+}
+
 static int _sde_connector_update_bl_scale(struct sde_connector *c_conn)
 {
 	struct dsi_display *dsi_display;
@@ -675,6 +745,8 @@ static int _sde_connector_update_bl_scale(struct sde_connector *c_conn)
 		bl_config->bl_level);
 	rc = c_conn->ops.set_backlight(&c_conn->base,
 			dsi_display, bl_config->bl_level);
+	if (!rc)
+		sde_dimming_bl_notify(c_conn, bl_config);
 	c_conn->unset_bl_level = 0;
 
 	return rc;
@@ -1582,6 +1654,9 @@ static int sde_connector_atomic_set_property(struct drm_connector *connector,
 	case CONNECTOR_PROP_SV_BL_SCALE:
 		c_conn->bl_scale_sv = val;
 		c_conn->bl_scale_dirty = true;
+		break;
+	case CONNECTOR_PROP_DIMMING_BL_LUT:
+		rc = _sde_connector_update_dimming_bl_lut(c_conn, c_state);
 		break;
 	case CONNECTOR_PROP_HDR_METADATA:
 		rc = _sde_connector_set_ext_hdr_info(c_conn,
@@ -2506,6 +2581,29 @@ static void _sde_connector_report_panel_dead(struct sde_connector *conn,
 			conn->base.base.id, conn->encoder->base.id);
 }
 
+const char *sde_conn_get_topology_name(struct drm_connector *conn,
+		struct msm_display_topology topology)
+{
+	struct sde_kms *sde_kms;
+	int topology_idx = 0;
+
+	sde_kms = _sde_connector_get_kms(conn);
+	if (!sde_kms) {
+		SDE_ERROR("invalid kms\n");
+		return NULL;
+	}
+
+	topology_idx = (int)sde_rm_get_topology_name(&sde_kms->rm,
+				topology);
+
+	if (topology_idx >= SDE_RM_TOPOLOGY_MAX) {
+		SDE_ERROR("invalid topology\n");
+		return NULL;
+	}
+
+	return e_topology_name[topology_idx].name;
+}
+
 int sde_connector_esd_status(struct drm_connector *conn)
 {
 	struct sde_connector *sde_conn = NULL;
@@ -2611,6 +2709,7 @@ static int sde_connector_populate_mode_info(struct drm_connector *conn,
 	struct sde_connector *c_conn = NULL;
 	struct drm_display_mode *mode;
 	struct msm_mode_info mode_info;
+	const char *topo_name = NULL;
 	int rc = 0;
 
 	sde_kms = _sde_connector_get_kms(conn);
@@ -2626,12 +2725,10 @@ static int sde_connector_populate_mode_info(struct drm_connector *conn,
 	}
 
 	list_for_each_entry(mode, &conn->modes, head) {
-		int topology_idx = 0;
-		u32 panel_mode_caps = 0;
 
 		memset(&mode_info, 0, sizeof(mode_info));
 
-		rc = sde_connector_get_mode_info(&c_conn->base, mode,
+		rc = sde_connector_get_mode_info(&c_conn->base, mode, NULL,
 				&mode_info);
 		if (rc) {
 			SDE_ERROR_CONN(c_conn,
@@ -2645,20 +2742,12 @@ static int sde_connector_populate_mode_info(struct drm_connector *conn,
 		sde_kms_info_add_keyint(info, "bit_clk_rate",
 					mode_info.clk_rate);
 
-		if (mode_info.bit_clk_count > 0)
-			sde_kms_info_add_list(info, "dyn_bitclk_list",
-					mode_info.bit_clk_rates,
-					mode_info.bit_clk_count);
-
-
-		topology_idx = (int)sde_rm_get_topology_name(&sde_kms->rm,
-					mode_info.topology);
-		if (topology_idx < SDE_RM_TOPOLOGY_MAX) {
-			sde_kms_info_add_keystr(info, "topology",
-					e_topology_name[topology_idx].name);
+		if (c_conn->ops.set_submode_info) {
+			c_conn->ops.set_submode_info(conn, info, c_conn->display, mode);
 		} else {
-			SDE_ERROR_CONN(c_conn, "invalid topology\n");
-			continue;
+			topo_name = sde_conn_get_topology_name(conn, mode_info.topology);
+			if (topo_name)
+				sde_kms_info_add_keystr(info, "topology", topo_name);
 		}
 
 		sde_kms_info_add_keyint(info, "has_cwb_crop", sde_kms->catalog->has_cwb_crop);
@@ -2670,14 +2759,6 @@ static int sde_connector_populate_mode_info(struct drm_connector *conn,
 
 		sde_kms_info_add_keyint(info, "allowed_mode_switch",
 			mode_info.allowed_mode_switches);
-
-		if (mode_info.panel_mode_caps & DSI_OP_CMD_MODE)
-			panel_mode_caps |= DRM_MODE_FLAG_CMD_MODE_PANEL;
-		if (mode_info.panel_mode_caps & DSI_OP_VIDEO_MODE)
-			panel_mode_caps |= DRM_MODE_FLAG_VID_MODE_PANEL;
-
-		sde_kms_info_add_keyint(info, "panel_mode_capabilities",
-			panel_mode_caps);
 
 		if (!mode_info.roi_caps.num_roi)
 			continue;
@@ -2811,6 +2892,11 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 
 	if (connector_type == DRM_MODE_CONNECTOR_DSI) {
 		dsi_display = (struct dsi_display *)(display);
+		if (dsi_display && dsi_display->panel)
+			msm_property_install_blob(&c_conn->property_info,
+				"dimming_bl_lut", DRM_MODE_PROP_BLOB,
+				CONNECTOR_PROP_DIMMING_BL_LUT);
+
 		if (dsi_display && dsi_display->panel &&
 			dsi_display->panel->hdr_props.hdr_enabled == true) {
 			msm_property_install_blob(&c_conn->property_info,
@@ -2891,6 +2977,9 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 						"avr_step", 0x0, 0, U32_MAX, 0,
 						CONNECTOR_PROP_AVR_STEP);
 		}
+
+		msm_property_install_enum(&c_conn->property_info, "dsc_mode", 0,
+			0, e_dsc_mode, ARRAY_SIZE(e_dsc_mode), 0, CONNECTOR_PROP_DSC_MODE);
 
 		if (display_info->capabilities & MSM_DISPLAY_CAP_CMD_MODE)
 			msm_property_install_enum(&c_conn->property_info,
@@ -3155,9 +3244,19 @@ int sde_connector_register_custom_event(struct sde_kms *kms,
 		struct drm_connector *conn_drm, u32 event, bool val)
 {
 	int ret = -EINVAL;
+	struct sde_connector *c_conn;
 
 	switch (event) {
 	case DRM_EVENT_SYS_BACKLIGHT:
+		ret = 0;
+		break;
+	case DRM_EVENT_DIMMING_BL:
+		if (!conn_drm) {
+			SDE_ERROR("invalid connector\n");
+			return -EINVAL;
+		}
+		c_conn = to_sde_connector(conn_drm);
+		c_conn->dimming_bl_notify_enabled = val;
 		ret = 0;
 		break;
 	case DRM_EVENT_PANEL_DEAD:
@@ -3185,6 +3284,7 @@ int sde_connector_event_notify(struct drm_connector *connector, uint32_t type,
 
 	switch (type) {
 	case DRM_EVENT_SYS_BACKLIGHT:
+	case DRM_EVENT_DIMMING_BL:
 	case DRM_EVENT_PANEL_DEAD:
 	case DRM_EVENT_SDE_HW_RECOVERY:
 		ret = 0;

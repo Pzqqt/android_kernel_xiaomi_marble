@@ -12,11 +12,11 @@
 #include "sde_crtc.h"
 #include "sde_vm_msgq.h"
 
-struct hh_notify_vmid_desc *sde_vm_populate_vmid(hh_vmid_t vmid)
+struct gh_notify_vmid_desc *sde_vm_populate_vmid(gh_vmid_t vmid)
 {
-	struct hh_notify_vmid_desc *vmid_desc;
+	struct gh_notify_vmid_desc *vmid_desc;
 
-	vmid_desc = kzalloc(offsetof(struct hh_notify_vmid_desc,
+	vmid_desc = kzalloc(offsetof(struct gh_notify_vmid_desc,
 					vmid_entries[1]), GFP_KERNEL);
 	if (!vmid_desc)
 		return ERR_PTR(ENOMEM);
@@ -27,21 +27,21 @@ struct hh_notify_vmid_desc *sde_vm_populate_vmid(hh_vmid_t vmid)
 	return vmid_desc;
 }
 
-struct hh_acl_desc *sde_vm_populate_acl(enum hh_vm_names vm_name)
+struct gh_acl_desc *sde_vm_populate_acl(enum gh_vm_names vm_name)
 {
-	struct hh_acl_desc *acl_desc;
-	hh_vmid_t vmid;
+	struct gh_acl_desc *acl_desc;
+	gh_vmid_t vmid;
 
-	hh_rm_get_vmid(vm_name, &vmid);
+	gh_rm_get_vmid(vm_name, &vmid);
 
-	acl_desc = kzalloc(offsetof(struct hh_acl_desc, acl_entries[1]),
+	acl_desc = kzalloc(offsetof(struct gh_acl_desc, acl_entries[1]),
 			   GFP_KERNEL);
 	if (!acl_desc)
 		return ERR_PTR(ENOMEM);
 
 	acl_desc->n_acl_entries = 1;
 	acl_desc->acl_entries[0].vmid = vmid;
-	acl_desc->acl_entries[0].perms = HH_RM_ACL_R | HH_RM_ACL_W;
+	acl_desc->acl_entries[0].perms = GH_RM_ACL_R | GH_RM_ACL_W;
 
 	return acl_desc;
 }
@@ -105,9 +105,9 @@ void _sde_vm_sort_and_align(struct list_head *mem)
 				entry->base, entry->size);
 }
 
-struct hh_sgl_desc *sde_vm_populate_sgl(struct msm_io_res *io_res)
+struct gh_sgl_desc *sde_vm_populate_sgl(struct msm_io_res *io_res)
 {
-	struct hh_sgl_desc *sgl_desc;
+	struct gh_sgl_desc *sgl_desc;
 	struct msm_io_mem_entry *mem;
 	u32 i = 0, num_mem_entry = 0;
 
@@ -116,7 +116,7 @@ struct hh_sgl_desc *sde_vm_populate_sgl(struct msm_io_res *io_res)
 	list_for_each_entry(mem, &io_res->mem, list)
 		num_mem_entry++;
 
-	sgl_desc = kzalloc(offsetof(struct hh_sgl_desc,
+	sgl_desc = kzalloc(offsetof(struct gh_sgl_desc,
 			   sgl_entries[num_mem_entry]), GFP_KERNEL);
 	if (!sgl_desc)
 		return ERR_PTR(ENOMEM);

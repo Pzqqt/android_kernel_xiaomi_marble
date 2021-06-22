@@ -58,7 +58,7 @@
 #include <linux/qcom-iommu-util.h>
 #include "soc/qcom/secure_buffer.h"
 #include <linux/qtee_shmbridge.h>
-#include <linux/haven/hh_irq_lend.h>
+#include <linux/gunyah/gh_irq_lend.h>
 
 #define CREATE_TRACE_POINTS
 #include "sde_trace.h"
@@ -1289,6 +1289,7 @@ static void _sde_kms_release_splash_resource(struct sde_kms *sde_kms,
 		for (i = 0; i < SDE_POWER_HANDLE_DBUS_ID_MAX; i++)
 			sde_power_data_bus_set_quota(&priv->phandle, i,
 				SDE_POWER_HANDLE_ENABLE_BUS_AB_QUOTA,
+				priv->phandle.ib_quota[i] ? priv->phandle.ib_quota[i] :
 				SDE_POWER_HANDLE_ENABLE_BUS_IB_QUOTA);
 
 		pm_runtime_put_sync(sde_kms->dev->dev);
@@ -1580,7 +1581,7 @@ static void sde_kms_wait_for_commit_done(struct msm_kms *kms,
 		ret = sde_encoder_wait_for_event(encoder, MSM_ENC_COMMIT_DONE);
 		if (ret && ret != -EWOULDBLOCK) {
 			SDE_ERROR("wait for commit done returned %d\n", ret);
-			sde_crtc_request_frame_reset(crtc);
+			sde_crtc_request_frame_reset(crtc, encoder);
 			break;
 		}
 
@@ -1600,7 +1601,7 @@ static void sde_kms_prepare_fence(struct msm_kms *kms,
 {
 	struct drm_crtc *crtc;
 	struct drm_crtc_state *old_crtc_state;
-	int i, rc;
+	int i;
 
 	if (!kms || !old_state || !old_state->dev || !old_state->acquire_ctx) {
 		SDE_ERROR("invalid argument(s)\n");
@@ -1608,15 +1609,6 @@ static void sde_kms_prepare_fence(struct msm_kms *kms,
 	}
 
 	SDE_ATRACE_BEGIN("sde_kms_prepare_fence");
-retry:
-	/* attempt to acquire ww mutex for connection */
-	rc = drm_modeset_lock(&old_state->dev->mode_config.connection_mutex,
-			       old_state->acquire_ctx);
-
-	if (rc == -EDEADLK) {
-		drm_modeset_backoff(old_state->acquire_ctx);
-		goto retry;
-	}
 
 	/* old_state actually contains updated crtc pointers */
 	for_each_old_crtc_in_state(old_state, crtc, old_crtc_state, i) {
@@ -1770,6 +1762,7 @@ static int _sde_kms_setup_displays(struct drm_device *dev,
 		.get_qsync_min_fps = dsi_display_get_qsync_min_fps,
 		.get_avr_step_req = dsi_display_get_avr_step_req_fps,
 		.prepare_commit = dsi_conn_prepare_commit,
+		.set_submode_info = dsi_conn_set_submode_blob_info,
 	};
 	static const struct sde_connector_ops wb_ops = {
 		.post_init =    sde_wb_connector_post_init,
@@ -1931,6 +1924,9 @@ static int _sde_kms_setup_displays(struct drm_device *dev,
 
 		dsc_count += info.dsc_count;
 		mixer_count += info.lm_count;
+
+		if (dsi_display_has_dsc_switch_support(display))
+			sde_kms->dsc_switch_support = true;
 	}
 
 	max_dp_mixer_count = sde_kms->catalog->mixer_count > mixer_count ?
@@ -1938,6 +1934,9 @@ static int _sde_kms_setup_displays(struct drm_device *dev,
 	max_dp_dsc_count = sde_kms->catalog->dsc_count > dsc_count ?
 				sde_kms->catalog->dsc_count - dsc_count : 0;
 
+	if (sde_kms->catalog->allowed_dsc_reservation_switch &
+			SDE_DP_DSC_RESERVATION_SWITCH)
+		max_dp_dsc_count = sde_kms->catalog->dsc_count;
 	/* dp */
 	for (i = 0; i < sde_kms->dp_display_count &&
 			priv->num_encoders < max_encoders; ++i) {
@@ -2954,9 +2953,10 @@ static int _sde_kms_update_planes_for_cont_splash(struct sde_kms *sde_kms,
 	struct sde_splash_mem *splash;
 	struct sde_splash_mem *demura;
 	struct sde_plane_state *pstate;
-	enum sde_sspp plane_id;
+	struct sde_sspp_index_info *pipe_info;
+	enum sde_sspp pipe_id;
 	bool is_virtual;
-	int i, j;
+	int i;
 
 	if (!sde_kms || !splash_display || !crtc) {
 		SDE_ERROR("invalid input args\n");
@@ -2964,18 +2964,17 @@ static int _sde_kms_update_planes_for_cont_splash(struct sde_kms *sde_kms,
 	}
 
 	priv = sde_kms->dev->dev_private;
+	pipe_info = &splash_display->pipe_info;
+	splash = splash_display->splash;
+	demura = splash_display->demura;
+
 	for (i = 0; i < priv->num_planes; i++) {
 		plane = priv->planes[i];
-		plane_id = sde_plane_pipe(plane);
+		pipe_id = sde_plane_pipe(plane);
 		is_virtual = is_sde_plane_virtual(plane);
-		splash = splash_display->splash;
-		demura = splash_display->demura;
 
-		for (j = 0; j < splash_display->pipe_cnt; j++) {
-			if ((plane_id != splash_display->pipes[j].sspp) ||
-					(splash_display->pipes[j].is_virtual
-					 != is_virtual))
-				continue;
+		if ((is_virtual && test_bit(pipe_id, pipe_info->virt_pipes)) ||
+				(!is_virtual && test_bit(pipe_id, pipe_info->pipes))) {
 
 			if (splash && sde_plane_validate_src_addr(plane,
 						splash->splash_buf_base,
@@ -2984,7 +2983,8 @@ static int _sde_kms_update_planes_for_cont_splash(struct sde_kms *sde_kms,
 						plane, demura->splash_buf_base,
 						demura->splash_buf_size)) {
 					SDE_ERROR("invalid adr on pipe:%d crtc:%d\n",
-							plane_id, DRMID(crtc));
+							pipe_id, DRMID(crtc));
+					continue;
 				}
 			}
 
@@ -2993,7 +2993,7 @@ static int _sde_kms_update_planes_for_cont_splash(struct sde_kms *sde_kms,
 			pstate = to_sde_plane_state(plane->state);
 			pstate->cont_splash_populated = true;
 			SDE_DEBUG("set crtc:%d for plane:%d rect:%d\n",
-					DRMID(crtc), plane_id, is_virtual);
+					DRMID(crtc), DRMID(plane), is_virtual);
 		}
 	}
 
@@ -3556,6 +3556,11 @@ static void _sde_kms_pm_suspend_idle_helper(struct sde_kms *sde_kms,
 		if (sde_encoder_in_clone_mode(conn->encoder))
 			continue;
 
+		crtc_id = drm_crtc_index(conn->state->crtc);
+		if (priv->disp_thread[crtc_id].thread)
+			kthread_flush_worker(
+				&priv->disp_thread[crtc_id].worker);
+
 		ret = sde_encoder_wait_for_event(conn->encoder,
 						MSM_ENC_TX_COMPLETE);
 		if (ret && ret != -EWOULDBLOCK) {
@@ -3563,7 +3568,6 @@ static void _sde_kms_pm_suspend_idle_helper(struct sde_kms *sde_kms,
 				"[conn: %d] wait for commit done returned %d\n",
 				conn->base.id, ret);
 		} else if (!ret) {
-			crtc_id = drm_crtc_index(conn->state->crtc);
 			if (priv->event_thread[crtc_id].thread)
 				kthread_flush_worker(
 					&priv->event_thread[crtc_id].worker);
@@ -3583,9 +3587,15 @@ static void _sde_kms_pm_suspend_idle_helper(struct sde_kms *sde_kms,
 	kthread_flush_worker(&priv->pp_event_worker);
 }
 
-struct msm_display_mode *sde_kms_get_msm_mode(struct drm_crtc_state *c_state)
+struct msm_display_mode *sde_kms_get_msm_mode(struct drm_connector_state *conn_state)
 {
-	return sde_crtc_get_msm_mode(c_state);
+	struct sde_connector_state *sde_conn_state;
+
+	if (!conn_state)
+		return NULL;
+
+	sde_conn_state = to_sde_connector_state(conn_state);
+	return &sde_conn_state->msm_mode;
 }
 
 static int sde_kms_pm_suspend(struct device *dev)
@@ -4573,6 +4583,38 @@ power_error:
 	return rc;
 }
 
+int _sde_kms_get_tvm_inclusion_mem(struct sde_mdss_cfg *catalog, struct list_head *mem_list)
+{
+	struct list_head temp_head;
+	struct msm_io_mem_entry *io_mem;
+	int rc, i = 0;
+
+	INIT_LIST_HEAD(&temp_head);
+
+	for (i = 0; i < catalog->tvm_reg_count; i++) {
+		struct resource *res = &catalog->tvm_reg[i];
+
+		io_mem = kzalloc(sizeof(struct msm_io_mem_entry), GFP_KERNEL);
+		if (!io_mem) {
+			rc = -ENOMEM;
+			goto parse_fail;
+		}
+
+		io_mem->base = res->start;
+		io_mem->size = resource_size(res);
+
+		list_add(&io_mem->list, &temp_head);
+	}
+
+	list_splice(&temp_head, mem_list);
+
+	return 0;
+parse_fail:
+	msm_dss_clean_io_mem(&temp_head);
+
+	return rc;
+}
+
 int sde_kms_get_io_resources(struct sde_kms *sde_kms, struct msm_io_res *io_res)
 {
 	struct platform_device *pdev = to_platform_device(sde_kms->dev->dev);
@@ -4590,9 +4632,15 @@ int sde_kms_get_io_resources(struct sde_kms *sde_kms, struct msm_io_res *io_res)
 		return rc;
 	}
 
-	rc = msm_dss_get_io_irq(pdev, &io_res->irq, HH_IRQ_LABEL_SDE);
+	rc = msm_dss_get_io_irq(pdev, &io_res->irq, GH_IRQ_LABEL_SDE);
 	if (rc) {
 		SDE_ERROR("failed to get io irq for KMS");
+		return rc;
+	}
+
+	rc = _sde_kms_get_tvm_inclusion_mem(sde_kms->catalog, &io_res->mem);
+	if (rc) {
+		SDE_ERROR("failed to get tvm inclusion mem ranges");
 		return rc;
 	}
 

@@ -3,9 +3,9 @@
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 #include <linux/notifier.h>
-#include <linux/haven/hh_rm_drv.h>
-#include <linux/haven/hh_irq_lend.h>
-#include <linux/haven/hh_mem_notifier.h>
+#include <linux/gunyah/gh_rm_drv.h>
+#include <linux/gunyah/gh_irq_lend.h>
+#include <linux/gunyah/gh_mem_notifier.h>
 #include "sde_kms.h"
 #include "sde_vm.h"
 #include "sde_vm_common.h"
@@ -27,13 +27,13 @@ static bool _sde_vm_owns_hw(struct sde_kms *sde_kms)
 }
 
 void sde_vm_irq_release_notification_handler(void *req,
-		unsigned long notif_type, enum hh_irq_label label)
+		unsigned long notif_type, enum gh_irq_label label)
 {
 	SDE_INFO("irq release notification for label: %d\n", label);
 }
 
 static void sde_vm_mem_release_notification_handler(
-		enum hh_mem_notifier_tag tag, unsigned long notif_type,
+		enum gh_mem_notifier_tag tag, unsigned long notif_type,
 		void *entry_data, void *notif_msg)
 {
 	SDE_INFO("mem release notification for tag: %d\n", tag);
@@ -47,7 +47,7 @@ int _sde_vm_reclaim_mem(struct sde_kms *sde_kms)
 	if (sde_vm->base.io_mem_handle < 0)
 		return 0;
 
-	rc = hh_rm_mem_reclaim(sde_vm->base.io_mem_handle, 0);
+	rc = gh_rm_mem_reclaim(sde_vm->base.io_mem_handle, 0);
 	if (rc) {
 		SDE_ERROR("failed to reclaim IO memory, rc=%d\n", rc);
 		goto reclaim_fail;
@@ -74,7 +74,7 @@ int _sde_vm_reclaim_irq(struct sde_kms *sde_kms)
 	for (i = atomic_read(&sde_vm->base.n_irq_lent) - 1; i >= 0; i--) {
 		struct sde_vm_irq_entry *entry = &irq_desc->irq_entries[i];
 
-		rc = hh_irq_reclaim(entry->label);
+		rc = gh_irq_reclaim(entry->label);
 		if (rc) {
 			SDE_ERROR("failed to reclaim irq label: %d rc = %d\n",
 					entry->label, rc);
@@ -116,16 +116,16 @@ static int _sde_vm_lend_mem(struct sde_vm *vm,
 					 struct msm_io_res *io_res)
 {
 	struct sde_vm_primary *sde_vm;
-	struct hh_acl_desc *acl_desc;
-	struct hh_sgl_desc *sgl_desc;
-	struct hh_notify_vmid_desc *vmid_desc;
-	hh_memparcel_handle_t mem_handle;
-	hh_vmid_t trusted_vmid;
+	struct gh_acl_desc *acl_desc;
+	struct gh_sgl_desc *sgl_desc;
+	struct gh_notify_vmid_desc *vmid_desc;
+	gh_memparcel_handle_t mem_handle;
+	gh_vmid_t trusted_vmid;
 	int rc = 0;
 
 	sde_vm = to_vm_primary(vm);
 
-	acl_desc = sde_vm_populate_acl(HH_TRUSTED_VM);
+	acl_desc = sde_vm_populate_acl(GH_TRUSTED_VM);
 	if (IS_ERR(acl_desc)) {
 		SDE_ERROR("failed to populate acl descriptor, rc = %ld\n",
 			   PTR_ERR(acl_desc));
@@ -140,7 +140,7 @@ static int _sde_vm_lend_mem(struct sde_vm *vm,
 		goto sgl_fail;
 	}
 
-	rc = hh_rm_mem_lend(HH_RM_MEM_TYPE_IO, 0, SDE_VM_MEM_LABEL,
+	rc = gh_rm_mem_lend(GH_RM_MEM_TYPE_IO, 0, SDE_VM_MEM_LABEL,
 				 acl_desc, sgl_desc, NULL, &mem_handle);
 	if (rc) {
 		SDE_ERROR("hyp lend failed with error, rc: %d\n", rc);
@@ -149,19 +149,19 @@ static int _sde_vm_lend_mem(struct sde_vm *vm,
 
 	sde_vm->base.io_mem_handle = mem_handle;
 
-	hh_rm_get_vmid(HH_TRUSTED_VM, &trusted_vmid);
+	gh_rm_get_vmid(GH_TRUSTED_VM, &trusted_vmid);
 
 	vmid_desc = sde_vm_populate_vmid(trusted_vmid);
 
-	rc = hh_rm_mem_notify(mem_handle, HH_RM_MEM_NOTIFY_RECIPIENT_SHARED,
-				  HH_MEM_NOTIFIER_TAG_DISPLAY, vmid_desc);
+	rc = gh_rm_mem_notify(mem_handle, GH_RM_MEM_NOTIFY_RECIPIENT_SHARED,
+				  GH_MEM_NOTIFIER_TAG_DISPLAY, vmid_desc);
 	if (rc) {
 		SDE_ERROR("hyp mem notify failed, rc = %d\n", rc);
 		goto notify_fail;
 	}
 
 	SDE_INFO("IO memory lend suceeded for tag: %d\n",
-			HH_MEM_NOTIFIER_TAG_DISPLAY);
+			GH_MEM_NOTIFIER_TAG_DISPLAY);
 
 notify_fail:
 	kfree(vmid_desc);
@@ -189,7 +189,7 @@ static int _sde_vm_lend_irq(struct sde_vm *vm, struct msm_io_res *io_res)
 	for (i  = 0; i < irq_desc->n_irq; i++) {
 		struct sde_vm_irq_entry *entry = &irq_desc->irq_entries[i];
 
-		rc = hh_irq_lend_v2(entry->label, HH_TRUSTED_VM, entry->irq,
+		rc = gh_irq_lend_v2(entry->label, GH_TRUSTED_VM, entry->irq,
 				 sde_vm_irq_release_notification_handler,
 				 sde_vm);
 		if (rc) {
@@ -200,7 +200,7 @@ static int _sde_vm_lend_irq(struct sde_vm *vm, struct msm_io_res *io_res)
 
 		atomic_inc(&sde_vm->base.n_irq_lent);
 
-		rc = hh_irq_lend_notify(entry->label);
+		rc = gh_irq_lend_notify(entry->label);
 		if (rc) {
 			SDE_ERROR("irq lend notify failed, label: %d, rc=%d\n",
 				entry->label, rc);
@@ -270,7 +270,7 @@ static void _sde_vm_deinit(struct sde_kms *sde_kms, struct sde_vm_ops *ops)
 	sde_vm_msgq_deinit(sde_kms->vm);
 
 	if (sde_vm->base.mem_notification_cookie)
-		hh_mem_notifier_unregister(
+		gh_mem_notifier_unregister(
 				sde_vm->base.mem_notification_cookie);
 
 	if (sde_vm->irq_desc)
@@ -307,7 +307,7 @@ int sde_vm_primary_init(struct sde_kms *kms)
 
 	_sde_vm_set_ops(&sde_vm->base.vm_ops);
 
-	cookie = hh_mem_notifier_register(HH_MEM_NOTIFIER_TAG_DISPLAY,
+	cookie = gh_mem_notifier_register(GH_MEM_NOTIFIER_TAG_DISPLAY,
 			       sde_vm_mem_release_notification_handler, sde_vm);
 	if (!cookie) {
 		SDE_ERROR("fails to register RM mem release notifier\n");

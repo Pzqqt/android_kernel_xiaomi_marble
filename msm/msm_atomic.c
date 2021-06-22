@@ -35,6 +35,31 @@ struct msm_commit {
 	struct kthread_work commit_work;
 };
 
+static struct drm_connector_state *_msm_get_conn_state(struct drm_crtc_state *crtc_state)
+{
+	struct drm_connector *conn;
+	struct drm_connector_state *conn_state = NULL;
+	struct drm_device *dev;
+	struct drm_connector_list_iter conn_iter;
+
+	if (!crtc_state || !crtc_state->crtc)
+		return NULL;
+
+	dev = crtc_state->crtc->dev;
+	drm_connector_list_iter_begin(dev, &conn_iter);
+
+	drm_for_each_connector_iter(conn, &conn_iter) {
+		if (drm_connector_mask(conn) & crtc_state->connector_mask) {
+			if (!(conn_state && conn->connector_type ==
+					DRM_MODE_CONNECTOR_VIRTUAL))
+				conn_state = conn->state;
+		}
+	}
+
+	drm_connector_list_iter_end(&conn_iter);
+	return conn_state;
+}
+
 static inline bool _msm_seamless_for_crtc(struct drm_atomic_state *state,
 			struct drm_crtc_state *crtc_state, bool enable)
 {
@@ -48,7 +73,7 @@ static inline bool _msm_seamless_for_crtc(struct drm_atomic_state *state,
 	if (!priv || !priv->kms || !priv->kms->funcs->get_msm_mode)
 		return false;
 
-	msm_mode = priv->kms->funcs->get_msm_mode(crtc_state);
+	msm_mode = priv->kms->funcs->get_msm_mode(_msm_get_conn_state(crtc_state));
 	if (!msm_mode)
 		return false;
 
@@ -103,7 +128,8 @@ static inline bool _msm_seamless_for_conn(struct drm_connector *connector,
 	if (!priv || !priv->kms || !priv->kms->funcs->get_msm_mode)
 		return false;
 
-	msm_mode = priv->kms->funcs->get_msm_mode(old_conn_state->crtc->state);
+	msm_mode = priv->kms->funcs->get_msm_mode(
+			_msm_get_conn_state(old_conn_state->crtc->state));
 	if (!msm_mode)
 		return false;
 
@@ -180,7 +206,8 @@ msm_disable_outputs(struct drm_device *dev, struct drm_atomic_state *old_state)
 							old_conn_state->crtc);
 
 		if (!old_crtc_state->active ||
-		    !msm_atomic_needs_modeset(old_conn_state->crtc->state))
+		    !msm_atomic_needs_modeset(old_conn_state->crtc->state,
+				_msm_get_conn_state(old_conn_state->crtc->state)))
 			continue;
 
 		encoder = old_conn_state->best_encoder;
@@ -221,7 +248,8 @@ msm_disable_outputs(struct drm_device *dev, struct drm_atomic_state *old_state)
 		const struct drm_crtc_helper_funcs *funcs;
 
 		/* Shut down everything that needs a full modeset. */
-		if (!msm_atomic_needs_modeset(crtc->state))
+		if (!msm_atomic_needs_modeset(crtc->state,
+				_msm_get_conn_state(crtc->state)))
 			continue;
 
 		if (!old_crtc_state->active)
@@ -294,7 +322,8 @@ msm_crtc_set_mode(struct drm_device *dev, struct drm_atomic_state *old_state)
 					old_conn_state, false))
 				continue;
 		} else if (!new_crtc_state->mode_changed) {
-			if (!msm_is_private_mode_changed(old_conn_state->crtc->state))
+			if (!msm_is_private_mode_changed(
+					_msm_get_conn_state(old_conn_state->crtc->state)))
 				continue;
 		}
 
@@ -373,7 +402,8 @@ static void msm_atomic_helper_commit_modeset_enables(struct drm_device *dev,
 		struct msm_display_mode *msm_mode;
 
 		/* Need to filter out CRTCs where only planes change. */
-		if (!msm_atomic_needs_modeset(new_crtc_state))
+		if (!msm_atomic_needs_modeset(new_crtc_state,
+				_msm_get_conn_state(new_crtc_state)))
 			continue;
 
 		if (!new_crtc_state->active)
@@ -397,7 +427,8 @@ static void msm_atomic_helper_commit_modeset_enables(struct drm_device *dev,
 		if (!kms->funcs || !kms->funcs->get_msm_mode)
 			continue;
 
-		msm_mode = kms->funcs->get_msm_mode(new_crtc_state);
+		msm_mode = kms->funcs->get_msm_mode(
+			_msm_get_conn_state(new_crtc_state));
 		if (!msm_mode)
 			continue;
 
@@ -417,7 +448,8 @@ static void msm_atomic_helper_commit_modeset_enables(struct drm_device *dev,
 			continue;
 
 		if (!new_conn_state->crtc->state->active ||
-				!msm_atomic_needs_modeset(new_conn_state->crtc->state))
+				!msm_atomic_needs_modeset(new_conn_state->crtc->state,
+					_msm_get_conn_state(new_conn_state->crtc->state)))
 			continue;
 
 		old_conn_state = drm_atomic_get_old_connector_state(
@@ -466,7 +498,8 @@ static void msm_atomic_helper_commit_modeset_enables(struct drm_device *dev,
 			continue;
 
 		if (!new_conn_state->crtc->state->active ||
-		    !msm_atomic_needs_modeset(new_conn_state->crtc->state))
+		    !msm_atomic_needs_modeset(new_conn_state->crtc->state,
+				_msm_get_conn_state(new_conn_state->crtc->state)))
 			continue;
 
 		old_conn_state = drm_atomic_get_old_connector_state(
@@ -712,6 +745,16 @@ int msm_atomic_commit(struct drm_device *dev,
 			drm_atomic_set_fence_for_plane(new_plane_state, fence);
 		}
 		c->plane_mask |= (1 << drm_plane_index(plane));
+	}
+
+	/* Protection for prepare_fence callback */
+retry:
+	ret = drm_modeset_lock(&state->dev->mode_config.connection_mutex,
+		state->acquire_ctx);
+
+	if (ret == -EDEADLK) {
+		drm_modeset_backoff(state->acquire_ctx);
+		goto retry;
 	}
 
 	/*

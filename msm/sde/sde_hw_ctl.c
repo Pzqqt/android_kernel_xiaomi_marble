@@ -919,7 +919,7 @@ static void sde_hw_ctl_setup_blendstage(struct sde_hw_ctl *ctx,
 }
 
 static u32 sde_hw_ctl_get_staged_sspp(struct sde_hw_ctl *ctx, enum sde_lm lm,
-		struct sde_sspp_index_info *info, u32 info_max_cnt)
+		struct sde_sspp_index_info *info)
 {
 	int i, j;
 	u32 count = 0;
@@ -929,8 +929,8 @@ static u32 sde_hw_ctl_get_staged_sspp(struct sde_hw_ctl *ctx, enum sde_lm lm,
 	struct sde_hw_blk_reg_map *c;
 	const struct ctl_sspp_stage_reg_map *sspp_cfg;
 
-	if (!ctx || (lm >= LM_MAX) || !info)
-		return count;
+	if (!ctx || (lm >= LM_DCWB_DUMMY_0) || !info)
+		return 0;
 
 	c = &ctx->hw;
 	mixercfg[0] = SDE_REG_READ(c, CTL_LAYER(lm));
@@ -938,10 +938,11 @@ static u32 sde_hw_ctl_get_staged_sspp(struct sde_hw_ctl *ctx, enum sde_lm lm,
 	mixercfg[2] = SDE_REG_READ(c, CTL_LAYER_EXT2(lm));
 	mixercfg[3] = SDE_REG_READ(c, CTL_LAYER_EXT3(lm));
 
+	if (mixercfg[0] & CTL_MIXER_BORDER_OUT)
+		info->bordercolor = true;
+
 	for (i = SSPP_VIG0; i < SSPP_MAX; i++) {
 		for (j = 0; j < CTL_SSPP_MAX_RECTS; j++) {
-			if (count >= info_max_cnt)
-				goto end;
 
 			sspp_cfg = &sspp_reg_cfg_tbl[i][j];
 			if (!sspp_cfg->bits || sspp_cfg->ext >= CTL_NUM_EXT)
@@ -953,14 +954,15 @@ static u32 sde_hw_ctl_get_staged_sspp(struct sde_hw_ctl *ctx, enum sde_lm lm,
 				staged = mixercfg[1] & sspp_cfg->sec_bit_mask;
 
 			if (staged) {
-				info[count].sspp = i;
-				info[count].is_virtual = j;
+				if (j)
+					set_bit(i, info->virt_pipes);
+				else
+					set_bit(i, info->pipes);
 				count++;
 			}
 		}
 	}
 
-end:
 	return count;
 }
 

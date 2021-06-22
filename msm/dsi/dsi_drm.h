@@ -68,6 +68,7 @@ void dsi_connector_put_modes(struct drm_connector *connector,
 /**
  * dsi_conn_get_mode_info - retrieve information on the mode selected
  * @drm_mode: Display mode set for the display
+ * @sub_mode: Additional mode info to drm display mode
  * @mode_info: Out parameter. information of the mode.
  * @display: Pointer to private display structure
  * @avail_res: Pointer with curr available resources
@@ -75,6 +76,7 @@ void dsi_connector_put_modes(struct drm_connector *connector,
  */
 int dsi_conn_get_mode_info(struct drm_connector *connector,
 		const struct drm_display_mode *drm_mode,
+		struct msm_sub_mode *sub_mode,
 		struct msm_mode_info *mode_info,
 		void *display, const struct msm_resource_caps_info *avail_res);
 
@@ -159,5 +161,15 @@ void dsi_conn_set_allowed_mode_switch(struct drm_connector *connector,
  */
 int dsi_conn_set_dyn_bit_clk(struct drm_connector *connector,
 		uint64_t value);
+
+/**
+ * dsi_conn_set_submode_blob_info - populate given sub mode blob
+ * @connector: Pointer to drm connector structure
+ * @info: Pointer to sde connector info structure
+ * @display: Pointer to private display handle
+ * @drm_mode: Pointer to drm_display_mode structure
+ */
+void dsi_conn_set_submode_blob_info(struct drm_connector *conn,
+		void *info, void *display, struct drm_display_mode *drm_mode);
 
 #endif /* _DSI_DRM_H_ */

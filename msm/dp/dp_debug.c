@@ -537,6 +537,11 @@ static ssize_t dp_debug_write_mst_con_id(struct file *file,
 
 	debug->mst_con_id = con_id;
 
+	if (status == connector_status_connected)
+		DP_INFO("plug mst connector %d\n", con_id);
+	else
+		DP_INFO("unplug mst connector %d\n", con_id);
+
 	if (status == connector_status_unknown)
 		goto out;
 
@@ -550,6 +555,7 @@ static ssize_t dp_debug_write_mst_con_id(struct file *file,
 		dp_panel->mst_hide = (status == connector_status_disconnected);
 		drm_kms_helper_hotplug_event(connector->dev);
 	}
+
 out:
 	drm_connector_put(connector);
 	goto end;

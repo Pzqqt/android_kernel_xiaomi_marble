@@ -398,7 +398,8 @@ static bool dsi_bridge_mode_fixup(struct drm_bridge *bridge,
 	struct dsi_display_mode dsi_mode, cur_dsi_mode, *panel_dsi_mode;
 	struct drm_crtc_state *crtc_state;
 	struct drm_connector_state *drm_conn_state;
-	struct sde_connector_state *conn_state;
+	struct sde_connector_state *conn_state, *old_conn_state;
+	struct msm_sub_mode new_sub_mode;
 
 	crtc_state = container_of(mode, struct drm_crtc_state, mode);
 
@@ -435,12 +436,15 @@ static bool dsi_bridge_mode_fixup(struct drm_bridge *bridge,
 
 	convert_to_dsi_mode(mode, &dsi_mode);
 	msm_parse_mode_priv_info(&conn_state->msm_mode, &dsi_mode);
+	new_sub_mode.dsc_mode = sde_connector_get_property(drm_conn_state,
+				CONNECTOR_PROP_DSC_MODE);
 
 	/*
 	 * retrieve dsi mode from dsi driver's cache since not safe to take
 	 * the drm mode config mutex in all paths
 	 */
-	rc = dsi_display_find_mode(display, &dsi_mode, &panel_dsi_mode);
+	rc = dsi_display_find_mode(display, &dsi_mode, &new_sub_mode,
+						&panel_dsi_mode);
 	if (rc)
 		return rc;
 
@@ -474,10 +478,11 @@ static bool dsi_bridge_mode_fixup(struct drm_bridge *bridge,
 			crtc_state->crtc) {
 		const struct drm_display_mode *cur_mode =
 				&crtc_state->crtc->state->mode;
+		old_conn_state = to_sde_connector_state(display->drm_conn->state);
+
 		convert_to_dsi_mode(cur_mode, &cur_dsi_mode);
-		cur_dsi_mode.timing.dsc_enabled =
-				dsi_mode.priv_info->dsc_enabled;
-		cur_dsi_mode.timing.dsc = &dsi_mode.priv_info->dsc;
+		msm_parse_mode_priv_info(&old_conn_state->msm_mode, &cur_dsi_mode);
+
 		rc = dsi_display_validate_mode_change(c_bridge->display,
 					&cur_dsi_mode, &dsi_mode);
 		if (rc) {
@@ -546,6 +551,7 @@ u32 dsi_drm_get_dfps_maxfps(void *display)
 
 int dsi_conn_get_mode_info(struct drm_connector *connector,
 		const struct drm_display_mode *drm_mode,
+		struct msm_sub_mode *sub_mode,
 		struct msm_mode_info *mode_info,
 		void *display, const struct msm_resource_caps_info *avail_res)
 {
@@ -557,7 +563,7 @@ int dsi_conn_get_mode_info(struct drm_connector *connector,
 		return -EINVAL;
 
 	convert_to_dsi_mode(drm_mode, &partial_dsi_mode);
-	rc = dsi_display_find_mode(display, &partial_dsi_mode, &dsi_mode);
+	rc = dsi_display_find_mode(display, &partial_dsi_mode, sub_mode, &dsi_mode);
 	if (rc || !dsi_mode->priv_info)
 		return -EINVAL;
 
@@ -574,6 +580,7 @@ int dsi_conn_get_mode_info(struct drm_connector *connector,
 	mode_info->panel_mode_caps = dsi_mode->panel_mode_caps;
 	mode_info->mdp_transfer_time_us =
 		dsi_mode->priv_info->mdp_transfer_time_us;
+	mode_info->disable_rsc_solver = dsi_mode->priv_info->disable_rsc_solver;
 
 	memcpy(&mode_info->topology, &dsi_mode->priv_info->topology,
 			sizeof(struct msm_display_topology));
@@ -765,6 +772,9 @@ int dsi_conn_set_info_blob(struct drm_connector *connector,
 		break;
 	}
 
+	sde_kms_info_add_keyint(info, "max os brightness", panel->bl_config.brightness_max_level);
+	sde_kms_info_add_keyint(info, "max panel backlight", panel->bl_config.bl_max_level);
+
 	if (panel->spr_info.enable)
 		sde_kms_info_add_keystr(info, "spr_pack_type",
 			msm_spr_pack_type_str[panel->spr_info.pack_type]);
@@ -795,6 +805,67 @@ int dsi_conn_set_info_blob(struct drm_connector *connector,
 
 end:
 	return 0;
+}
+
+void dsi_conn_set_submode_blob_info(struct drm_connector *conn,
+		void *info, void *display, struct drm_display_mode *drm_mode)
+{
+	struct dsi_display *dsi_display = display;
+	struct dsi_display_mode partial_dsi_mode;
+	int count, i;
+	int preferred_submode_idx = -EINVAL;
+
+	if (!conn || !display || !drm_mode) {
+		DSI_ERR("Invalid params\n");
+		return;
+	}
+
+	convert_to_dsi_mode(drm_mode, &partial_dsi_mode);
+
+	mutex_lock(&dsi_display->display_lock);
+	count = dsi_display->panel->num_display_modes;
+	for (i = 0; i < count; i++) {
+		struct dsi_display_mode *dsi_mode = &dsi_display->modes[i];
+
+		u32 panel_mode_caps = 0;
+		const char *topo_name = NULL;
+
+		if (dsi_display_mode_match(&partial_dsi_mode, dsi_mode,
+				DSI_MODE_MATCH_FULL_TIMINGS)) {
+
+			sde_kms_info_add_keyint(info, "submode_idx", i);
+
+			if (dsi_mode->is_preferred)
+				preferred_submode_idx = i;
+
+			if (dsi_mode->panel_mode_caps & DSI_OP_CMD_MODE)
+				panel_mode_caps |= DRM_MODE_FLAG_CMD_MODE_PANEL;
+			if (dsi_mode->panel_mode_caps & DSI_OP_VIDEO_MODE)
+				panel_mode_caps |= DRM_MODE_FLAG_VID_MODE_PANEL;
+
+			sde_kms_info_add_keyint(info, "panel_mode_capabilities",
+				panel_mode_caps);
+
+			sde_kms_info_add_keyint(info, "dsc_mode",
+				dsi_mode->priv_info->dsc_enabled ? MSM_DISPLAY_DSC_MODE_ENABLED :
+					MSM_DISPLAY_DSC_MODE_DISABLED);
+			topo_name = sde_conn_get_topology_name(conn,
+				dsi_mode->priv_info->topology);
+			if (topo_name)
+				sde_kms_info_add_keystr(info, "topology", topo_name);
+
+			if (dsi_mode->priv_info->bit_clk_list.count > 0)
+				sde_kms_info_add_list(info, "dyn_bitclk_list",
+						dsi_mode->priv_info->bit_clk_list.rates,
+						dsi_mode->priv_info->bit_clk_list.count);
+		}
+	}
+
+	if (preferred_submode_idx >= 0)
+		sde_kms_info_add_keyint(info, "preferred_submode_idx",
+			preferred_submode_idx);
+
+	mutex_unlock(&dsi_display->display_lock);
 }
 
 enum drm_connector_status dsi_conn_detect(struct drm_connector *conn,
@@ -831,25 +902,21 @@ enum drm_connector_status dsi_conn_detect(struct drm_connector *conn,
 void dsi_connector_put_modes(struct drm_connector *connector,
 	void *display)
 {
-	struct drm_display_mode *drm_mode;
-	struct dsi_display_mode dsi_mode, *full_dsi_mode = NULL;
 	struct dsi_display *dsi_display;
-	int rc = 0;
+	int count, i;
 
 	if (!connector || !display)
 		return;
 
-	list_for_each_entry(drm_mode, &connector->modes, head) {
-		convert_to_dsi_mode(drm_mode, &dsi_mode);
-		rc = dsi_display_find_mode(display, &dsi_mode, &full_dsi_mode);
-		if (rc)
-			continue;
+	dsi_display = display;
+	count = dsi_display->panel->num_display_modes;
+	for (i = 0; i < count; i++) {
+		struct dsi_display_mode *dsi_mode = &dsi_display->modes[i];
 
-		dsi_display_put_mode(display, full_dsi_mode);
+		dsi_display_put_mode(dsi_display, dsi_mode);
 	}
 
 	/* free the display structure modes also */
-	dsi_display = display;
 	kfree(dsi_display->modes);
 	dsi_display->modes = NULL;
 }
@@ -1050,7 +1117,7 @@ enum drm_mode_status dsi_conn_mode_valid(struct drm_connector *connector,
 	if (conn_state)
 		msm_parse_mode_priv_info(&conn_state->msm_mode, &dsi_mode);
 
-	rc = dsi_display_find_mode(display, &dsi_mode, &full_dsi_mode);
+	rc = dsi_display_find_mode(display, &dsi_mode, NULL, &full_dsi_mode);
 	if (rc) {
 		DSI_ERR("could not find mode %s\n", mode->name);
 		return MODE_ERROR;
@@ -1273,7 +1340,7 @@ void dsi_conn_set_allowed_mode_switch(struct drm_connector *connector,
 
 		convert_to_dsi_mode(drm_mode, &dsi_mode);
 
-		rc = dsi_display_find_mode(display, &dsi_mode, &panel_dsi_mode);
+		rc = dsi_display_find_mode(display, &dsi_mode, NULL, &panel_dsi_mode);
 		if (rc)
 			return;
 
@@ -1290,7 +1357,7 @@ void dsi_conn_set_allowed_mode_switch(struct drm_connector *connector,
 			convert_to_dsi_mode(cmp_drm_mode, &dsi_mode);
 
 			rc = dsi_display_find_mode(display, &dsi_mode,
-					&cmp_panel_dsi_mode);
+					NULL, &cmp_panel_dsi_mode);
 			if (rc)
 				return;
 

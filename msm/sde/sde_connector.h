@@ -138,6 +138,7 @@ struct sde_connector_ops {
 	 * get_mode_info - retrieve mode information
 	 * @connector: Pointer to drm connector structure
 	 * @drm_mode: Display mode set for the display
+	 * @sub_mode: Additional mode info to drm display mode
 	 * @mode_info: Out parameter. information of the display mode
 	 * @display: Pointer to private display structure
 	 * @avail_res: Pointer with curr available resources
@@ -145,6 +146,7 @@ struct sde_connector_ops {
 	 */
 	int (*get_mode_info)(struct drm_connector *connector,
 			const struct drm_display_mode *drm_mode,
+			struct msm_sub_mode *sub_mode,
 			struct msm_mode_info *mode_info,
 			void *display,
 			const struct msm_resource_caps_info *avail_res);
@@ -397,6 +399,16 @@ struct sde_connector_ops {
 	 * Returns: AVR step fps value on success
 	 */
 	int (*get_avr_step_req)(void *display, u32 mode_fps);
+
+	/**
+	 * set_submode_info - populate given sub mode blob
+	 * @connector: Pointer to drm connector structure
+	 * @info: Pointer to sde connector info structure
+	 * @display: Pointer to private display handle
+	 * @drm_mode: Pointer to drm_display_mode structure
+	 */
+	void (*set_submode_info)(struct drm_connector *conn,
+		void *info, void *display, struct drm_display_mode *drm_mode);
 };
 
 /**
@@ -490,6 +502,7 @@ struct sde_connector_dyn_hdr_metadata {
  * @hdr_supported: does the sink support HDR content
  * @color_enc_fmt: Colorimetry encoding formats of sink
  * @allow_bl_update: Flag to indicate if BL update is allowed currently or not
+ * @dimming_bl_notify_enabled: Flag to indicate if dimming bl notify is enabled or not
  * @qsync_mode: Cached Qsync mode, 0=disabled, 1=continuous mode
  * @qsync_updated: Qsync settings were updated
  * @avr_step: fps rate for fixed steps in AVR mode; 0 means step is disabled
@@ -549,6 +562,7 @@ struct sde_connector {
 	u32 bl_scale_sv;
 	u32 unset_bl_level;
 	bool allow_bl_update;
+	bool dimming_bl_notify_enabled;
 
 	u32 hdr_eotf;
 	bool hdr_metadata_type_one;
@@ -726,6 +740,21 @@ static inline enum sde_rm_topology_name sde_connector_get_old_topology_name(
 		return SDE_RM_TOPOLOGY_NONE;
 
 	return c_state->old_topology_name;
+}
+
+/**
+ * sde_connector_panel_dead - check if panel is dead
+ * @conn: pointer to drm connector
+ * Returns: bool indicating whether or not panel is dead based on connector
+ */
+static inline bool sde_connector_panel_dead(struct drm_connector *conn)
+{
+	struct sde_connector *sde_conn = to_sde_connector(conn);
+
+	if (!sde_conn)
+		return true;
+
+	return sde_conn->panel_dead;
 }
 
 /**
@@ -1080,11 +1109,13 @@ int sde_connector_set_msm_mode(struct drm_connector_state *conn_state,
 * sde_connector_get_mode_info - retrieve mode info for given mode
 * @connector: Pointer to drm connector structure
 * @drm_mode: Display mode set for the display
+* @sub_mode: Additional mode info to drm display mode
 * @mode_info: Out parameter. information of the display mode
 * Returns: Zero on success
 */
 int sde_connector_get_mode_info(struct drm_connector *conn,
 		const struct drm_display_mode *drm_mode,
+		struct msm_sub_mode *sub_mode,
 		struct msm_mode_info *mode_info);
 
 /**
@@ -1134,5 +1165,8 @@ int sde_connector_get_panel_vfp(struct drm_connector *connector,
  * @connector: Pointer to DRM connector object
  */
 int sde_connector_esd_status(struct drm_connector *connector);
+
+const char *sde_conn_get_topology_name(struct drm_connector *conn,
+		struct msm_display_topology topology);
 
 #endif /* _SDE_CONNECTOR_H_ */

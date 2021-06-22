@@ -70,7 +70,7 @@ struct msm_kms_funcs {
 	void (*complete_commit)(struct msm_kms *kms,
 			struct drm_atomic_state *state);
 	struct msm_display_mode *(*get_msm_mode)(
-				struct drm_crtc_state *c_state);
+				struct drm_connector_state *c_state);
 	/* functions to wait for atomic commit completed on each CRTC */
 	void (*wait_for_crtc_commit_done)(struct msm_kms *kms,
 					struct drm_crtc *crtc);
@@ -268,16 +268,16 @@ static inline bool msm_needs_vblank_pre_modeset(
 }
 
 static inline bool msm_is_private_mode_changed(
-		struct drm_crtc_state *state)
+		struct drm_connector_state *conn_state)
 {
 	struct msm_display_mode *msm_mode = NULL;
 	struct msm_drm_private *priv = NULL;
 	struct msm_kms *kms;
 
-	if (!state || !state->crtc)
+	if (!conn_state || !conn_state->connector || !conn_state->connector->dev)
 		return false;
 
-	priv = state->crtc->dev->dev_private;
+	priv = conn_state->connector->dev->dev_private;
 	if (!priv)
 		return false;
 
@@ -285,7 +285,7 @@ static inline bool msm_is_private_mode_changed(
 	if (!kms || !kms->funcs->get_msm_mode)
 		return false;
 
-	msm_mode = kms->funcs->get_msm_mode(state);
+	msm_mode = kms->funcs->get_msm_mode(conn_state);
 	if (!msm_mode)
 		return false;
 
@@ -295,15 +295,19 @@ static inline bool msm_is_private_mode_changed(
 	if (msm_is_mode_seamless_dyn_clk(msm_mode))
 		return true;
 
+	if (msm_is_mode_seamless_dms(msm_mode))
+		return true;
+
 	return false;
 }
 
-static inline bool msm_atomic_needs_modeset(struct drm_crtc_state *state)
+static inline bool msm_atomic_needs_modeset(struct drm_crtc_state *state,
+		struct drm_connector_state *conn_state)
 {
 	if (drm_atomic_crtc_needs_modeset(state))
 		return true;
 
-	if (msm_is_private_mode_changed(state))
+	if (msm_is_private_mode_changed(conn_state))
 		return true;
 	return false;
 }

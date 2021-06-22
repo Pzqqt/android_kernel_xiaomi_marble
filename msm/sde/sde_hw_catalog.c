@@ -210,6 +210,7 @@ enum sde_prop {
 	BASE_LAYER,
 	TRUSTED_VM_ENV,
 	MAX_TRUSTED_VM_DISPLAYS,
+	TVM_INCLUDE_REG,
 	SDE_PROP_MAX,
 };
 
@@ -598,6 +599,7 @@ static struct sde_prop_type sde_prop[] = {
 	{TRUSTED_VM_ENV, "qcom,sde-trusted-vm-env", false, PROP_TYPE_BOOL},
 	{MAX_TRUSTED_VM_DISPLAYS, "qcom,sde-max-trusted-vm-displays", false,
 			PROP_TYPE_U32},
+	{TVM_INCLUDE_REG, "qcom,tvm-include-reg", false, PROP_TYPE_U32_ARRAY},
 };
 
 static struct sde_prop_type sde_perf_prop[] = {
@@ -2175,8 +2177,7 @@ void sde_hw_mixer_set_preference(struct sde_mdss_cfg *sde_cfg, u32 num_lm,
 	}
 }
 
-static int sde_mixer_parse_dt(struct device_node *np,
-						struct sde_mdss_cfg *sde_cfg)
+static int sde_mixer_parse_dt(struct device_node *np, struct sde_mdss_cfg *sde_cfg)
 {
 	int rc = 0, i, j;
 	u32 off_count, blend_off_count, max_blendstages, lm_pair_mask;
@@ -2290,6 +2291,7 @@ static int sde_mixer_parse_dt(struct device_node *np,
 			if (mixer->base == dummy_mixer_base) {
 				mixer->base = 0x0;
 				mixer->len = 0;
+				mixer->dummy_mixer = true;
 			}
 		}
 
@@ -3965,6 +3967,16 @@ static void _sde_top_parse_dt_helper(struct sde_mdss_cfg *cfg,
 			 0);
 	cfg->max_trusted_vm_displays = PROP_VALUE_ACCESS(props->values,
 			MAX_TRUSTED_VM_DISPLAYS, 0);
+	if (props->exists[TVM_INCLUDE_REG]) {
+		cfg->tvm_reg_count = props->counts[TVM_INCLUDE_REG] / 2;
+		for (i = 0; i < cfg->tvm_reg_count; i++) {
+			cfg->tvm_reg[i].start = PROP_VALUE_ACCESS(props->values,
+				TVM_INCLUDE_REG, i * 2);
+			cfg->tvm_reg[i].end = cfg->tvm_reg[i].start +
+				PROP_VALUE_ACCESS(props->values, TVM_INCLUDE_REG,
+						i * 2 + 1);
+		}
+	}
 }
 
 static int sde_top_parse_dt(struct device_node *np, struct sde_mdss_cfg *cfg)
@@ -5044,6 +5056,7 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->has_trusted_vm_support = true;
 		sde_cfg->syscache_supported = true;
 	} else if (IS_WAIPIO_TARGET(hw_rev)) {
+		sde_cfg->allowed_dsc_reservation_switch = SDE_DP_DSC_RESERVATION_SWITCH;
 		sde_cfg->has_dedicated_cwb_support = true;
 		sde_cfg->has_cwb_dither = true;
 		sde_cfg->has_wb_ubwc = true;

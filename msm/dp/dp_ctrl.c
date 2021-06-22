@@ -198,12 +198,12 @@ static int dp_ctrl_update_sink_vx_px(struct dp_ctrl_private *ctrl)
 	u8 size = min_t(u8, sizeof(buf), ctrl->link->link_params.lane_count);
 	u32 max_level_reached = 0;
 
-	if (v_level == DP_LINK_VOLTAGE_MAX) {
+	if (v_level == ctrl->link->phy_params.max_v_level) {
 		DP_DEBUG("max voltage swing level reached %d\n", v_level);
 		max_level_reached |= DP_TRAIN_MAX_SWING_REACHED;
 	}
 
-	if (p_level == DP_LINK_PRE_EMPHASIS_MAX) {
+	if (p_level == ctrl->link->phy_params.max_p_level) {
 		DP_DEBUG("max pre-emphasis level reached %d\n", p_level);
 		max_level_reached |= DP_TRAIN_MAX_PRE_EMPHASIS_REACHED;
 	}
@@ -374,7 +374,7 @@ static int dp_ctrl_link_training_1(struct dp_ctrl_private *ctrl)
 		else
 			break;
 
-		if (ctrl->link->phy_params.v_level == DP_LINK_VOLTAGE_MAX) {
+		if (ctrl->link->phy_params.v_level == ctrl->link->phy_params.max_v_level) {
 			pr_err_ratelimited("max v_level reached\n");
 			break;
 		}

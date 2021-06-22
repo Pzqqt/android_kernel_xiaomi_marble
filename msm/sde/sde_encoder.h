@@ -559,6 +559,12 @@ void sde_encoder_irq_control(struct drm_encoder *drm_enc, bool enable);
 struct drm_connector *sde_encoder_get_connector(struct drm_device *dev,
 			struct drm_encoder *drm_enc);
 
+/**sde_encoder_needs_dsc_disable - indicates if dsc should be disabled
+ *			based on previous topology
+ * @drm_enc:	Pointer to drm encoder structure
+ */
+bool sde_encoder_needs_dsc_disable(struct drm_encoder *drm_enc);
+
 /**
  * sde_encoder_get_transfer_time - get the mdp transfer time in usecs
  * @drm_enc: Pointer to drm encoder structure

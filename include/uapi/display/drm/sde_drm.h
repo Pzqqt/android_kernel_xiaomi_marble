@@ -453,6 +453,9 @@ struct sde_drm_color {
 /* Color fill outside of the rect, excluding border */
 #define SDE_DRM_DIM_LAYER_EXCLUSIVE     0x2
 
+ /* bitmask for allowed_dsc_reservation_switch property */
+#define SDE_DP_DSC_RESERVATION_SWITCH (1 << 0)
+
 /**
  * struct sde_drm_dim_layer - dim layer cfg struct
  * @flags:         Refer SDE_DRM_DIM_LAYER_CONFIG_FLAG for possible values
@@ -810,6 +813,7 @@ struct drm_msm_noise_layer_cfg {
 #define DRM_EVENT_LTM_OFF 0X8000000A
 #define DRM_EVENT_MMRM_CB 0X8000000B
 #define DRM_EVENT_FRAME_DATA 0x8000000C
+#define DRM_EVENT_DIMMING_BL 0X8000000D
 
 #ifndef DRM_MODE_FLAG_VID_MODE_PANEL
 #define DRM_MODE_FLAG_VID_MODE_PANEL        0x01

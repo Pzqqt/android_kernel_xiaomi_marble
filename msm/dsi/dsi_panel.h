@@ -126,10 +126,14 @@ struct dsi_backlight_config {
 	u32 bl_min_level;
 	u32 bl_max_level;
 	u32 brightness_max_level;
+	/* current brightness value */
+	u32 brightness;
 	u32 bl_level;
 	u32 bl_scale;
 	u32 bl_scale_sv;
 	bool bl_inverted_dbv;
+	/* digital dimming backlight LUT */
+	struct drm_msm_dimming_bl_lut *dimming_bl_lut;
 
 	int en_gpio;
 	/* PWM params */
@@ -187,13 +191,6 @@ struct dsi_panel_spr_info {
 	enum msm_display_spr_pack_type pack_type;
 };
 
-struct dsi_tlmm_gpio {
-	u32 num;
-	u32 addr;
-	u32 size;
-	const char *name;
-};
-
 struct dsi_panel;
 
 struct dsi_panel_ops {
@@ -205,6 +202,7 @@ struct dsi_panel_ops {
 	int (*bl_unregister)(struct dsi_panel *panel);
 	int (*parse_gpios)(struct dsi_panel *panel);
 	int (*parse_power_cfg)(struct dsi_panel *panel);
+	int (*trigger_esd_attack)(struct dsi_panel *panel);
 };
 
 struct dsi_panel {
@@ -228,6 +226,7 @@ struct dsi_panel {
 	struct dsi_dfps_capabilities dfps_caps;
 	struct dsi_dyn_clk_caps dyn_clk_caps;
 	struct dsi_panel_phy_props phy_props;
+	bool dsc_switch_supported;
 
 	struct dsi_display_mode *cur_mode;
 	u32 num_timing_nodes;
@@ -267,9 +266,6 @@ struct dsi_panel {
 	int power_mode;
 	enum dsi_panel_physical_type panel_type;
 
-	struct dsi_tlmm_gpio *tlmm_gpio;
-	u32 tlmm_gpio_count;
-
 	struct dsi_panel_ops panel_ops;
 };
 
@@ -304,8 +300,6 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 				const char *type,
 				int topology_override,
 				bool trusted_vm_env);
-
-int dsi_panel_trigger_esd_attack(struct dsi_panel *panel, bool trusted_vm_env);
 
 void dsi_panel_put(struct dsi_panel *panel);
 

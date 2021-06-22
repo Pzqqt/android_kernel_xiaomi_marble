@@ -19,6 +19,7 @@
  * based on current design
  */
 #define MAX_BLOCKS    12
+#define MAX_REG_SIZE_ENTRIES 14
 
 #define SDE_HW_VER(MAJOR, MINOR, STEP) ((u32)((MAJOR & 0xF) << 28)    |\
 		((MINOR & 0xFFF) << 16)  |\
@@ -1060,6 +1061,7 @@ struct sde_sspp_cfg {
  * @dspp:              ID of connected DSPP, DSPP_MAX if unsupported
  * @pingpong:          ID of connected PingPong, PINGPONG_MAX if unsupported
  * @ds:                ID of connected DS, DS_MAX if unsupported
+ * @dummy_mixer:       identifies dcwb mixer is considered dummy
  * @lm_pair_mask:      Bitmask of LMs that can be controlled by same CTL
  */
 struct sde_lm_cfg {
@@ -1068,6 +1070,7 @@ struct sde_lm_cfg {
 	u32 dspp;
 	u32 pingpong;
 	u32 ds;
+	bool dummy_mixer;
 	unsigned long lm_pair_mask;
 };
 
@@ -1470,6 +1473,10 @@ struct sde_perf_cfg {
  *			the trusted VM. false, otherwise.
  * @max_trusted_vm_displays	maximum number of concurrent trusted
  *				vm displays supported.
+ * @tvm_reg_count		number of sub-driver register ranges that need to be included
+ *						for trusted vm for accepting the resources
+ * @tvm_reg				array of sub-driver register ranges entries that need to be
+ *						included
  * @max_sspp_linewidth max source pipe line width support.
  * @vig_sspp_linewidth max vig source pipe line width support.
  * @scaling_linewidth max vig source pipe linewidth for scaling usecases
@@ -1500,6 +1507,7 @@ struct sde_perf_cfg {
  * @ubwc_bw_calc_version indicate how UBWC BW has to be calculated
  * @skip_inline_rot_thresh    Skip inline rotation threshold
  * @has_idle_pc        indicate if idle power collapse feature is supported
+ * @allowed_dsc_reservation_switch  intf to which dsc reservation switch is supported
  * @wakeup_with_touch  indicate early wake up display with input touch event
  * @has_hdr            HDR feature support
  * @has_hdr_plus       HDR10+ feature support
@@ -1558,6 +1566,8 @@ struct sde_mdss_cfg {
 	u32 hwversion;
 	bool trusted_vm_env;
 	u32 max_trusted_vm_displays;
+	u32 tvm_reg_count;
+	struct resource tvm_reg[MAX_REG_SIZE_ENTRIES];
 
 	u32 max_sspp_linewidth;
 	u32 vig_sspp_linewidth;
@@ -1590,6 +1600,7 @@ struct sde_mdss_cfg {
 	u32 ubwc_bw_calc_version;
 	bool skip_inline_rot_threshold;
 	bool has_idle_pc;
+	u32 allowed_dsc_reservation_switch;
 	bool wakeup_with_touch;
 	u32 vbif_qos_nlvl;
 	u32 ts_prefill_rev;

@@ -1890,6 +1890,7 @@ static void dp_display_deinit_sub_modules(struct dp_display_private *dp)
 static int dp_init_sub_modules(struct dp_display_private *dp)
 {
 	int rc = 0;
+	u32 dp_core_revision = 0;
 	bool hdcp_disabled;
 	struct device *dev = &dp->pdev->dev;
 	struct dp_hpd_cb *cb = &dp->hpd_cb;
@@ -1933,6 +1934,8 @@ static int dp_init_sub_modules(struct dp_display_private *dp)
 		goto error_catalog;
 	}
 
+	dp_core_revision = dp_catalog_get_dp_core_version(dp->catalog);
+
 	dp->aux = dp_aux_get(dev, &dp->catalog->aux, dp->parser,
 			dp->aux_switch_node, dp->aux_bridge);
 	if (IS_ERR(dp->aux)) {
@@ -1950,7 +1953,7 @@ static int dp_init_sub_modules(struct dp_display_private *dp)
 
 	pll_in.aux = dp->aux;
 	pll_in.parser = dp->parser;
-	pll_in.dp_core_revision = dp_catalog_get_dp_core_version(dp->catalog);
+	pll_in.dp_core_revision = dp_core_revision;
 
 	dp->pll = dp_pll_get(&pll_in);
 	if (IS_ERR(dp->pll)) {
@@ -1982,7 +1985,7 @@ static int dp_init_sub_modules(struct dp_display_private *dp)
 		goto error_link;
 	}
 
-	dp->link = dp_link_get(dev, dp->aux);
+	dp->link = dp_link_get(dev, dp->aux, dp_core_revision);
 	if (IS_ERR(dp->link)) {
 		rc = PTR_ERR(dp->link);
 		DP_ERR("failed to initialize link, rc = %d\n", rc);

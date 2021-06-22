@@ -641,8 +641,9 @@ static void _sde_crtc_setup_blend_cfg(struct sde_crtc_mixer *mixer,
 		break;
 	}
 
-	lm->ops.setup_blend_config(lm, pstate->stage, fg_alpha,
-						bg_alpha, blend_op);
+	if (lm->ops.setup_blend_config)
+		lm->ops.setup_blend_config(lm, pstate->stage, fg_alpha, bg_alpha, blend_op);
+
 	SDE_DEBUG(
 		"format: %4.4s, alpha_enable %u fg alpha:0x%x bg alpha:0x%x blend_op:0x%x\n",
 		(char *) &format->base.pixel_format,
@@ -1284,7 +1285,8 @@ static void _sde_crtc_program_lm_output_roi(struct drm_crtc *crtc)
 			cfg.right_mixer = right_mixer;
 			cfg.flags = 0;
 
-			hw_lm->ops.setup_mixer_out(hw_lm, &cfg);
+			if (hw_lm->ops.setup_mixer_out)
+				hw_lm->ops.setup_mixer_out(hw_lm, &cfg);
 			lm_updated = true;
 		}
 
@@ -1828,7 +1830,8 @@ static void _sde_crtc_blend_setup(struct drm_crtc *crtc,
 		if (sde_kms_rect_is_null(lm_roi))
 			sde_crtc->mixers[i].mixer_op_mode = 0;
 
-		lm->ops.setup_alpha_out(lm, mixer[i].mixer_op_mode);
+		if (lm->ops.setup_alpha_out)
+			lm->ops.setup_alpha_out(lm, mixer[i].mixer_op_mode);
 
 		/* stage config flush mask */
 		ctl->ops.update_bitmask_mixer(ctl, mixer[i].hw_lm->idx, 1);
@@ -2407,6 +2410,7 @@ exit:
 	while (sde_crtc->frame_data.cnt--)
 		_sde_crtc_put_frame_data_buffer(
 				sde_crtc->frame_data.buf[sde_crtc->frame_data.cnt]);
+	sde_crtc->frame_data.cnt = 0;
 }
 
 static void _sde_crtc_frame_data_notify(struct drm_crtc *crtc,
@@ -2448,7 +2452,7 @@ void sde_crtc_get_frame_data(struct drm_crtc *crtc)
 	if (frame_data->cnt) {
 		struct msm_gem_object *msm_gem;
 
-		msm_gem = to_msm_bo(frame_data->buf[frame_data->cnt]->gem);
+		msm_gem = to_msm_bo(frame_data->buf[frame_data->idx]->gem);
 		data = (struct sde_drm_frame_data_packet *)
 				(((u8 *)msm_gem->vaddr) + msm_gem->offset);
 	} else {
@@ -3891,8 +3895,11 @@ int sde_crtc_reset_hw(struct drm_crtc *crtc, struct drm_crtc_state *old_state,
 		}
 	}
 
-	/* Early out if simple ctl reset succeeded */
-	if (i == sde_crtc->num_ctls)
+	/*
+	 * Early out if simple ctl reset succeeded or reset is
+	 * being performed after timeout
+	 */
+	if (i == sde_crtc->num_ctls || crtc->state == old_state)
 		return 0;
 
 	SDE_DEBUG("crtc%d: issuing hard reset\n", DRMID(crtc));
@@ -3995,6 +4002,7 @@ void sde_crtc_commit_kickoff(struct drm_crtc *crtc,
 
 	idle_pc_state = sde_crtc_get_property(cstate, CRTC_PROP_IDLE_PC_STATE);
 
+	sde_crtc->kickoff_in_progress = true;
 	list_for_each_entry(encoder, &dev->mode_config.encoder_list, head) {
 		if (encoder->crtc != crtc)
 			continue;
@@ -4056,6 +4064,7 @@ void sde_crtc_commit_kickoff(struct drm_crtc *crtc,
 
 		sde_encoder_kickoff(encoder, false, true);
 	}
+	sde_crtc->kickoff_in_progress = false;
 
 	/* store the event after frame trigger */
 	if (sde_crtc->event) {
@@ -5628,6 +5637,10 @@ static void sde_crtc_setup_capabilities_blob(struct sde_kms_info *info,
 	sde_kms_info_add_keyint(info, "skip_inline_rot_threshold",
 			catalog->skip_inline_rot_threshold);
 
+	if (catalog->allowed_dsc_reservation_switch)
+		sde_kms_info_add_keyint(info, "allowed_dsc_reservation_switch",
+			catalog->allowed_dsc_reservation_switch);
+
 	if (catalog->uidle_cfg.uidle_rev)
 		sde_kms_info_add_keyint(info, "has_uidle",
 			true);
@@ -5815,6 +5828,8 @@ static void sde_crtc_install_properties(struct drm_crtc *crtc,
 			sde_kms_info_add_keyint(info, "demura_count",
 					catalog->demura_count);
 	}
+
+	sde_kms_info_add_keyint(info, "dsc_block_count", catalog->dsc_count);
 
 	msm_property_install_blob(&sde_crtc->property_info, "capabilities",
 		DRM_MODE_PROP_IMMUTABLE, CRTC_PROP_INFO);
@@ -6457,24 +6472,22 @@ static ssize_t _sde_crtc_misr_read(struct file *file,
 
 		m = &sde_crtc->mixers[i];
 		if (!m->hw_lm || !m->hw_lm->ops.collect_misr) {
-			len += scnprintf(buf + len, MISR_BUFF_SIZE - len,
-					"invalid\n");
-			SDE_ERROR("crtc:%d invalid misr ops\n", DRMID(crtc));
+			if (!m->hw_lm || !m->hw_lm->cap->dummy_mixer) {
+				len += scnprintf(buf + len, MISR_BUFF_SIZE - len, "invalid\n");
+				SDE_ERROR("crtc:%d invalid misr ops\n", DRMID(crtc));
+			}
 			continue;
 		}
 
 		rc = m->hw_lm->ops.collect_misr(m->hw_lm, false, &misr_value);
 		if (rc) {
-			len += scnprintf(buf + len, MISR_BUFF_SIZE - len,
-					"invalid\n");
-			SDE_ERROR("crtc:%d failed to collect misr %d\n",
-					DRMID(crtc), rc);
+			len += scnprintf(buf + len, MISR_BUFF_SIZE - len, "invalid\n");
+			SDE_ERROR("crtc:%d failed to collect misr %d\n", DRMID(crtc), rc);
 			continue;
 		} else {
 			len += scnprintf(buf + len, MISR_BUFF_SIZE - len,
 					"lm idx:%d\n", m->hw_lm->idx - LM_0);
-			len += scnprintf(buf + len, MISR_BUFF_SIZE - len,
-					"0x%x\n", misr_value);
+			len += scnprintf(buf + len, MISR_BUFF_SIZE - len, "0x%x\n", misr_value);
 		}
 	}
 
@@ -6557,6 +6570,9 @@ static int _sde_debugfs_fence_status_show(struct seq_file *s, void *data)
 	dev = crtc->dev;
 	cstate = to_sde_crtc_state(crtc->state);
 
+	if (!sde_crtc->kickoff_in_progress)
+		goto skip_input_fence;
+
 	/* Dump input fence info */
 	seq_puts(s, "===Input fence===\n");
 	drm_atomic_crtc_for_each_plane(plane, crtc) {
@@ -6584,6 +6600,7 @@ static int _sde_debugfs_fence_status_show(struct seq_file *s, void *data)
 		}
 	}
 
+skip_input_fence:
 	/* Dump release fence info */
 	seq_puts(s, "\n");
 	seq_puts(s, "===Release fence===\n");
@@ -7089,6 +7106,7 @@ struct drm_crtc *sde_crtc_init(struct drm_device *dev, struct drm_plane *plane)
 	atomic_set(&sde_crtc->frame_pending, 0);
 
 	sde_crtc->enabled = false;
+	sde_crtc->kickoff_in_progress = false;
 
 	/* Below parameters are for fps calculation for sysfs node */
 	sde_crtc->fps_info.fps_periodic_duration = DEFAULT_FPS_PERIOD_1_SEC;
@@ -7135,6 +7153,11 @@ struct drm_crtc *sde_crtc_init(struct drm_device *dev, struct drm_plane *plane)
 		drm_crtc_cleanup(crtc);
 		kfree(sde_crtc);
 		return ERR_PTR(rc);
+	}
+
+	if (kms->catalog->allowed_dsc_reservation_switch && !kms->dsc_switch_support) {
+		SDE_DEBUG("dsc switch not supported\n");
+		kms->catalog->allowed_dsc_reservation_switch = 0;
 	}
 
 	/* create CRTC properties */

@@ -1435,8 +1435,7 @@ static void _setup_layer_ops(struct sde_hw_pipe *c,
 		ret = reg_dmav1_init_sspp_op_v4(is_qseed3_rev_qseed3lite(
 					c->catalog) ? SDE_SSPP_SCALER_QSEED3LITE
 					: SDE_SSPP_SCALER_QSEED3, c->idx);
-		if (!ret)
-			c->ops.setup_scaler = reg_dmav1_setup_vig_qseed3;
+
 	}
 
 	if (test_bit(SDE_SSPP_MULTIRECT_ERROR, &features)) {

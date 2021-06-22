@@ -29,6 +29,7 @@
 #include "sde_core_perf.h"
 #include "sde_hw_ds.h"
 #include "sde_color_processing.h"
+#include "sde_encoder.h"
 
 #define SDE_CRTC_NAME_SIZE	12
 
@@ -285,6 +286,7 @@ struct sde_frame_data {
  * @ad_active     : list containing ad properties that are active
  * @crtc_lock     : crtc lock around create, destroy and access.
  * @frame_pending : Whether or not an update is pending
+ * @kickoff_in_progress : boolean entry to check if kickoff is in progress
  * @frame_events  : static allocation of in-flight frame events
  * @frame_event_list : available frame event list
  * @spin_lock     : spin lock for transaction status, etc...
@@ -312,6 +314,7 @@ struct sde_frame_data {
  * @ltm_buf_free    : list of LTM buffers that are available
  * @ltm_buf_busy    : list of LTM buffers that are been used by HW
  * @ltm_hist_en     : flag to indicate whether LTM hist is enabled or not
+ * @ltm_merge_clear_pending : flag indicates merge mode bit needs to be cleared
  * @ltm_buffer_lock : muttx to protect ltm_buffers allcation and free
  * @ltm_lock        : Spinlock to protect ltm buffer_cnt, hist_en and ltm lists
  * @needs_hw_reset  : Initiate a hw ctl reset
@@ -378,6 +381,7 @@ struct sde_crtc {
 	struct list_head frame_event_list;
 	spinlock_t spin_lock;
 	spinlock_t fevent_spin_lock;
+	bool kickoff_in_progress;
 
 	/* for handling internal event thread */
 	struct sde_crtc_event event_cache[SDE_CRTC_MAX_EVENT_COUNT];
@@ -407,6 +411,7 @@ struct sde_crtc {
 	struct list_head ltm_buf_free;
 	struct list_head ltm_buf_busy;
 	bool ltm_hist_en;
+	bool ltm_merge_clear_pending;
 	struct drm_msm_ltm_cfg_param ltm_cfg;
 	struct mutex ltm_buffer_lock;
 	spinlock_t ltm_lock;
@@ -632,12 +637,15 @@ int sde_crtc_reset_hw(struct drm_crtc *crtc, struct drm_crtc_state *old_state,
 /**
  * sde_crtc_request_frame_reset - requests for next frame reset
  * @crtc: Pointer to drm crtc object
+ * @encoder: Pointer to drm encoder object
  */
-static inline int sde_crtc_request_frame_reset(struct drm_crtc *crtc)
+static inline int sde_crtc_request_frame_reset(struct drm_crtc *crtc,
+		struct drm_encoder *encoder)
 {
 	struct sde_crtc *sde_crtc = to_sde_crtc(crtc);
 
-	if (sde_crtc->frame_trigger_mode == FRAME_DONE_WAIT_POSTED_START)
+	if (sde_crtc->frame_trigger_mode == FRAME_DONE_WAIT_POSTED_START ||
+			!sde_encoder_is_dsi_display(encoder))
 		sde_crtc_reset_hw(crtc, crtc->state, false);
 
 	return 0;

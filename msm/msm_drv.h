@@ -198,6 +198,7 @@ enum msm_mdp_conn_property {
 	CONNECTOR_PROP_PP_CWB_DITHER,
 	CONNECTOR_PROP_HDR_METADATA,
 	CONNECTOR_PROP_DEMURA_PANEL_ID,
+	CONNECTOR_PROP_DIMMING_BL_LUT,
 
 	/* # of blob properties */
 	CONNECTOR_PROP_BLOBCOUNT,
@@ -226,6 +227,7 @@ enum msm_mdp_conn_property {
 	CONNECTOR_PROP_CMD_FRAME_TRIGGER_MODE,
 	CONNECTOR_PROP_SET_PANEL_MODE,
 	CONNECTOR_PROP_AVR_STEP,
+	CONNECTOR_PROP_DSC_MODE,
 
 	/* total # of properties */
 	CONNECTOR_PROP_COUNT
@@ -308,6 +310,18 @@ enum panel_op_mode {
 };
 
 /**
+ * enum msm_display_dsc_mode - panel dsc mode
+ * @MSM_DISPLAY_DSC_MODE_NONE: No operation
+ * @MSM_DISPLAY_DSC_MODE_ENABLED: DSC is enabled
+ * @MSM_DISPLAY_DSC_MODE_DISABLED: DSC is disabled
+ */
+enum msm_display_dsc_mode {
+	MSM_DISPLAY_DSC_MODE_NONE,
+	MSM_DISPLAY_DSC_MODE_ENABLED,
+	MSM_DISPLAY_DSC_MODE_DISABLED,
+};
+
+/**
  * struct msm_display_mode - wrapper for drm_display_mode
  * @base: drm_display_mode attached to this msm_mode
  * @private_flags: integer holding private driver mode flags
@@ -317,6 +331,14 @@ struct msm_display_mode {
 	struct drm_display_mode *base;
 	u32 private_flags;
 	u32 *private;
+};
+
+/**
+ * struct msm_sub_mode - msm display sub mode
+ * @dsc_enabled: boolean used to indicate if dsc should be enabled
+ */
+struct msm_sub_mode {
+	enum msm_display_dsc_mode dsc_mode;
 };
 
 /**
@@ -709,6 +731,7 @@ struct msm_display_topology {
  * @allowed_mode_switches: bit mask to indicate supported mode switch.
  * @bit_clk_rates: list of supported bit clock rates
  * @bit_clk_count: number of supported bit clock rates
+ * @disable_rsc_solver: Dynamically disable RSC solver for the timing mode due to lower bitclk rate.
  */
 struct msm_mode_info {
 	uint32_t frame_rate;
@@ -727,6 +750,7 @@ struct msm_mode_info {
 	u32 allowed_mode_switches;
 	u32 *bit_clk_rates;
 	u32 bit_clk_count;
+	bool disable_rsc_solver;
 };
 
 /**

@@ -377,6 +377,7 @@ end:
 
 int dp_connector_get_mode_info(struct drm_connector *connector,
 		const struct drm_display_mode *drm_mode,
+		struct msm_sub_mode *sub_mode,
 		struct msm_mode_info *mode_info,
 		void *display, const struct msm_resource_caps_info *avail_res)
 {

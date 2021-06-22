@@ -719,4 +719,19 @@ struct drm_msm_fp16_csc {
 	__u32 cfg_param_1[FP16_CSC_CFG1_PARAM_LEN];
 };
 
+struct drm_msm_backlight_info {
+	__u32 brightness_max;
+	__u32 brightness;
+	__u32 bl_level_max;
+	__u32 bl_level;
+	__u32 bl_scale;
+	__u32 bl_scale_sv;
+};
+
+#define DIMMING_BL_LUT_LEN 8192
+struct drm_msm_dimming_bl_lut {
+	__u32 length;
+	__u32 mapped_bl[DIMMING_BL_LUT_LEN];
+};
+
 #endif /* _MSM_DRM_PP_H_ */

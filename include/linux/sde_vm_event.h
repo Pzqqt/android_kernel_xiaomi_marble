@@ -14,7 +14,7 @@
 
 /**
  * struct - msm_io_irq_entry - define irq item
- * @label: hh_irq_label for the irq
+ * @label: gh_irq_label for the irq
  * @irq_num: linux mapped irq num
  * @list: list head pointer
  */

@@ -33,6 +33,14 @@
 		x == SDE_RM_TOPOLOGY_QUADPIPE_DSCMERGE ||\
 		x == SDE_RM_TOPOLOGY_QUADPIPE_DSC4HSMERGE)
 
+#define TOPOLOGY_DSC_MODE(x) \
+	(x == SDE_RM_TOPOLOGY_SINGLEPIPE_DSC ||\
+		x == SDE_RM_TOPOLOGY_DUALPIPE_DSC ||\
+		x == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_DSC ||\
+		x == SDE_RM_TOPOLOGY_DUALPIPE_DSCMERGE ||\
+		x == SDE_RM_TOPOLOGY_QUADPIPE_3DMERGE_DSC ||\
+		x == SDE_RM_TOPOLOGY_QUADPIPE_DSCMERGE ||\
+		x == SDE_RM_TOPOLOGY_QUADPIPE_DSC4HSMERGE)
 /**
  * enum sde_rm_topology_name - HW resource use case in use by connector
  * @SDE_RM_TOPOLOGY_NONE:                 No topology in use currently

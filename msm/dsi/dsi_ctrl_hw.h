@@ -644,6 +644,12 @@ struct dsi_ctrl_hw_ops {
 	void (*clear_interrupt_status)(struct dsi_ctrl_hw *ctrl, u32 ints);
 
 	/**
+	 * poll_dma_status()- API to poll DMA status
+	 * @ctrl:                 Pointer to the controller host hardware.
+	 */
+	u32 (*poll_dma_status)(struct dsi_ctrl_hw *ctrl);
+
+	/**
 	 * enable_status_interrupts() - enable the specified interrupts
 	 * @ctrl:          Pointer to the controller host hardware.
 	 * @ints:          List of interrupts to be enabled.
