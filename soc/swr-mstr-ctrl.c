@@ -2084,7 +2084,8 @@ handle_irq:
 						handle_nested_irq(
 							irq_find_mapping(
 							swr_dev->slave_irq, 0));
-					} while (swr_dev->slave_irq_pending);
+						trace_printk("%s: slave_irq_pending\n", __func__);
+					} while (swr_dev->slave_irq_pending && swrm->dev_up);
 				}
 
 			}
@@ -2095,6 +2096,8 @@ handle_irq:
 			break;
 		case SWRM_INTERRUPT_STATUS_CHANGE_ENUM_SLAVE_STATUS:
 			status = swr_master_read(swrm, SWRM_MCP_SLV_STATUS);
+			trace_printk("%s: ENUM_SLAVE_STATUS 0x%x, slave_status 0x%x\n", __func__,
+					status, swrm->slave_status);
 			swrm_enable_slave_irq(swrm);
 			if (status == swrm->slave_status) {
 				dev_dbg(swrm->dev,
@@ -2247,10 +2250,11 @@ handle_irq:
 	intr_sts = swr_master_read(swrm, SWRM_INTERRUPT_STATUS);
 	intr_sts_masked = intr_sts & swrm->intr_mask;
 
-	if (intr_sts_masked) {
+	if (intr_sts_masked && !pm_runtime_suspended(swrm->dev)) {
 		dev_dbg(swrm->dev, "%s: new interrupt received 0x%x\n",
 			__func__, intr_sts_masked);
-		trace_printk("%s, new interrupt received\n", __func__);
+		trace_printk("%s: new interrupt received 0x%x\n", __func__,
+				intr_sts_masked);
 		goto handle_irq;
 	}
 
