@@ -55,6 +55,7 @@ struct net_device *rmnet_qmap_get_dev(u8 mux_id);
 #define QMAP_DFC_IND		11
 #define QMAP_DFC_QUERY		12
 #define QMAP_DFC_END_MARKER	13
+#define QMAP_DFC_POWERSAVE	14
 int dfc_qmap_cmd_handler(struct sk_buff *skb);
 
 #define QMAP_LL_SWITCH		25

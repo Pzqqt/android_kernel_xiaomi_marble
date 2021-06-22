@@ -31,40 +31,9 @@ struct rmnet_ll_stats {
 		u64 rx_tmp_allocs;
 };
 
-#if IS_ENABLED(CONFIG_MHI_BUS)
-
 int rmnet_ll_send_skb(struct sk_buff *skb);
 struct rmnet_ll_stats *rmnet_ll_get_stats(void);
 int rmnet_ll_init(void);
 void rmnet_ll_exit(void);
-
-#else
-
-static struct rmnet_ll_stats rmnet_ll_dummy_stats;
-
-static inline int rmnet_ll_send_skb(struct sk_buff *skb)
-{
-	return -EINVAL;
-}
-
-static inline struct rmnet_ll_stats *rmnet_ll_get_stats(void)
-{
-	return &rmnet_ll_dummy_stats;
-}
-
-static inline int rmnet_ll_init(void)
-{
-	/* Allow configuration to continue. Nothing else will happen since all
-	 * this does is register the driver with the mhi framework, and if the
-	 * channel never comes up, we don't do anything.
-	 */
-	return 0;
-}
-
-static inline void rmnet_ll_exit(void)
-{
-}
-
-#endif
 
 #endif

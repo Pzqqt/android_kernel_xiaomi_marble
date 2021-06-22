@@ -7,7 +7,6 @@ ccflags-y	+= -DRMNET_TRACE_INCLUDE_LE
 endif
 
 obj-m += rmnet_core.o
-obj-m += rmnet_ctl.o
 
 #core sources
 rmnet_core-y := \
@@ -18,8 +17,10 @@ rmnet_core-y := \
 	rmnet_map_command.o \
 	rmnet_map_data.o \
 	rmnet_vnd.o
-rmnet_core-$(CONFIG_MHI_BUS) += \
-	rmnet_ll.o
+
+rmnet_core-y += \
+	rmnet_ll.o \
+	rmnet_ll_ipa.o
 
 #DFC sources
 rmnet_core-y += \
@@ -30,6 +31,9 @@ rmnet_core-y += \
 	rmnet_qmap.o \
 	rmnet_ll_qmap.o
 
+ifneq (, $(filter y, $(CONFIG_ARCH_LAHAINA) $(CONFIG_ARCH_WAIPIO)))
+obj-m += rmnet_ctl.o
 rmnet_ctl-y := \
 	rmnet_ctl_client.o \
 	rmnet_ctl_ipa.o
+endif

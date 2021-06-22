@@ -69,6 +69,7 @@ static void rmnet_qmap_cmd_handler(struct sk_buff *skb)
 	case QMAP_DFC_IND:
 	case QMAP_DFC_QUERY:
 	case QMAP_DFC_END_MARKER:
+	case QMAP_DFC_POWERSAVE:
 		rc = dfc_qmap_cmd_handler(skb);
 		break;
 

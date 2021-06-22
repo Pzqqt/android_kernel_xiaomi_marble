@@ -12,6 +12,7 @@
 #include "dfc.h"
 
 #define QMAP_DFC_VER		1
+#define QMAP_PS_MAX_BEARERS	32
 
 struct qmap_dfc_config {
 	struct qmap_cmd_hdr	hdr;
@@ -87,6 +88,22 @@ struct qmap_dfc_end_marker_cnf {
 	u16			reserved3;
 	__be16			seq_num;
 	u32			reserved4;
+} __aligned(1);
+
+struct qmap_dfc_powersave_req {
+	struct qmap_cmd_hdr	hdr;
+	u8			cmd_ver;
+	u8			allow:1;
+	u8			autoshut:1;
+	u8			reserved:6;
+	u8			reserved2;
+	u8			mode:1;
+	u8			reserved3:7;
+	__be32			ep_type;
+	__be32			iface_id;
+	u8			num_bearers;
+	u8			bearer_id[QMAP_PS_MAX_BEARERS];
+	u8			reserved4[3];
 } __aligned(1);
 
 static struct dfc_flow_status_ind_msg_v01 qmap_flow_ind;
@@ -384,6 +401,65 @@ static void dfc_qmap_send_end_marker_cnf(struct qos_info *qos,
 		rmnet_qmap_send(skb, RMNET_CH_CTL, false);
 }
 
+static int dfc_qmap_send_powersave(u8 enable, u8 num_bearers, u8 *bearer_id)
+{
+	struct sk_buff *skb;
+	struct qmap_dfc_powersave_req *dfc_powersave;
+	unsigned int len = sizeof(struct qmap_dfc_powersave_req);
+	struct dfc_qmi_data *dfc;
+	u32 ep_type = 0;
+	u32 iface_id = 0;
+
+	rcu_read_lock();
+	dfc = rcu_dereference(qmap_dfc_data);
+	if (dfc) {
+		ep_type = dfc->svc.ep_type;
+		iface_id = dfc->svc.iface_id;
+	} else {
+		rcu_read_unlock();
+		return -EINVAL;
+	}
+	rcu_read_unlock();
+
+	skb = alloc_skb(len, GFP_ATOMIC);
+	if (!skb)
+		return -ENOMEM;
+
+	skb->protocol = htons(ETH_P_MAP);
+	dfc_powersave = (struct qmap_dfc_powersave_req *)skb_put(skb, len);
+	memset(dfc_powersave, 0, len);
+
+	dfc_powersave->hdr.cd_bit = 1;
+	dfc_powersave->hdr.mux_id = 0;
+	dfc_powersave->hdr.pkt_len = htons(len - QMAP_HDR_LEN);
+	dfc_powersave->hdr.cmd_name = QMAP_DFC_POWERSAVE;
+	dfc_powersave->hdr.cmd_type = QMAP_CMD_REQUEST;
+	dfc_powersave->hdr.tx_id =  htonl(rmnet_qmap_next_txid());
+
+	dfc_powersave->cmd_ver = 3;
+	dfc_powersave->mode = enable ? 1 : 0;
+
+	if (enable && num_bearers) {
+		if (unlikely(num_bearers > QMAP_PS_MAX_BEARERS))
+			num_bearers = QMAP_PS_MAX_BEARERS;
+		dfc_powersave->allow = 1;
+		dfc_powersave->autoshut = 1;
+		dfc_powersave->num_bearers = num_bearers;
+		memcpy(dfc_powersave->bearer_id, bearer_id, num_bearers);
+	}
+
+	dfc_powersave->ep_type = htonl(ep_type);
+	dfc_powersave->iface_id = htonl(iface_id);
+
+	return rmnet_qmap_send(skb, RMNET_CH_CTL, false);
+}
+
+int dfc_qmap_set_powersave(u8 enable, u8 num_bearers, u8 *bearer_id)
+{
+	trace_dfc_set_powersave_mode(enable);
+	return dfc_qmap_send_powersave(enable, num_bearers, bearer_id);
+}
+
 void dfc_qmap_send_ack(struct qos_info *qos, u8 bearer_id, u16 seq, u8 type)
 {
 	struct rmnet_bearer_map *bearer;
@@ -429,8 +505,14 @@ int dfc_qmap_client_init(void *port, int index, struct svc_info *psvc,
 
 	pr_info("DFC QMAP init\n");
 
-	dfc_config_acked = false;
-	dfc_qmap_send_config(data);
+	/* Currently if powersave ext is enabled, no need to do dfc config
+	 * which only enables tx_info */
+	if (qmi->ps_ext) {
+		dfc_config_acked = true;
+	} else {
+		dfc_config_acked = false;
+		dfc_qmap_send_config(data);
+	}
 
 	return 0;
 }

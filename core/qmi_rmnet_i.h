@@ -139,6 +139,7 @@ struct qmi_info {
 	bool ps_enabled;
 	bool dl_msg_active;
 	bool ps_ignore_grant;
+	int ps_ext;
 };
 
 enum data_ep_type_enum_v01 {
@@ -202,8 +203,9 @@ void qmi_rmnet_watchdog_add(struct rmnet_bearer_map *bearer);
 void qmi_rmnet_watchdog_remove(struct rmnet_bearer_map *bearer);
 
 int rmnet_ll_switch(struct net_device *dev, struct tcmsg *tcm, int attrlen);
-
 void rmnet_ll_guard_fn(struct timer_list *t);
+void rmnet_ll_wq_init(void);
+void rmnet_ll_wq_exit(void);
 #else
 static inline struct rmnet_flow_map *
 qmi_rmnet_get_flow_map(struct qos_info *qos_info,
@@ -266,6 +268,7 @@ void wda_qmi_client_exit(void *wda_data);
 int wda_set_powersave_mode(void *wda_data, u8 enable);
 void qmi_rmnet_flush_ps_wq(void);
 void wda_qmi_client_release(void *wda_data);
+int dfc_qmap_set_powersave(u8 enable, u8 num_bearers, u8 *bearer_id);
 #else
 static inline int
 wda_qmi_client_init(void *port, struct svc_info *psvc, struct qmi_info *qmi)

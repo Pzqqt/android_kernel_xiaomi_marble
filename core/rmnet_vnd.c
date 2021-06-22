@@ -89,7 +89,30 @@ static netdev_tx_t rmnet_vnd_start_xmit(struct sk_buff *skb,
 			rmnet_perf_tether_egress(skb);
 		}
 		low_latency = qmi_rmnet_flow_is_low_latency(dev, skb);
-		rmnet_egress_handler(skb, low_latency);
+		if (low_latency && skb_is_gso(skb)) {
+			netdev_features_t features;
+			struct sk_buff *segs, *tmp;
+
+			features = dev->features & ~NETIF_F_GSO_MASK;
+			segs = skb_gso_segment(skb, features);
+			if (IS_ERR_OR_NULL(segs)) {
+				this_cpu_add(priv->pcpu_stats->stats.tx_drops,
+					     skb_shinfo(skb)->gso_segs);
+				priv->stats.ll_tso_errs++;
+				kfree_skb(skb);
+				return NETDEV_TX_OK;
+			}
+
+			consume_skb(skb);
+			for (skb = segs; skb; skb = tmp) {
+				tmp = skb->next;
+				skb->dev = dev;
+				priv->stats.ll_tso_segs++;
+				rmnet_egress_handler(skb, low_latency);
+			}
+		} else {
+			rmnet_egress_handler(skb, low_latency);
+		}
 		qmi_rmnet_burst_fc_check(dev, ip_type, mark, len);
 		qmi_rmnet_work_maybe_restart(rmnet_get_rmnet_port(dev));
 	} else {

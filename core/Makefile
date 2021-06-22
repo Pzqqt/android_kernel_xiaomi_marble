@@ -22,11 +22,17 @@ rmnet_core-y += 	rmnet_config.o \
 			dfc_qmap.c \
 			dfc_qmi.c \
 			qmi_rmnet.0 \
-			wda_qmi.0
+			wda_qmi.0 \
+			rmnet_ll.o \
+			rmnet_ll_ipa.o \
+			rmnet_qmap.o \
+			rmnet_ll_qmap.o
 
+ifneq (, $(filter y, $(CONFIG_ARCH_LAHAINA) $(CONFIG_ARCH_WAIPIO)))
 rmnet_ctl-y += 		rmnet_ctl_client.o \
 			rmnet_ctl_ipa.o \
 			rmnet_ctl_mhi.o
+endif
 
 KERNEL_SRC ?= /lib/modules/$(shell uname -r)/build
 

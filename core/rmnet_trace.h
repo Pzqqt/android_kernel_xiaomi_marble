@@ -5,16 +5,15 @@
 #undef TRACE_SYSTEM
 #define TRACE_SYSTEM rmnet
 #undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH ../../../../vendor/qcom/opensource/datarmnet/core
-#ifdef RMNET_LA_PLATFORM
-#define TRACE_INCLUDE_PATH ../../../../vendor/qcom/opensource/datarmnet/core
-#elif LINUX_VERSION_CODE < KERNEL_VERSION(5,5,0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,5,0)
 #ifdef CONFIG_ARCH_SDXNIGHTJAR
 #define TRACE_INCLUDE_PATH ../../../../../../../datarmnet/core
 #else
 #define TRACE_INCLUDE_PATH ../../../../../../../src/datarmnet/core
 #endif /* endif LINUX_VERSION_CODE < KERNEL_VERSION(5,5,0) */
-#endif /* endif RMNET_LA_PLATFORM */
+#else
+#define TRACE_INCLUDE_PATH ../../../../vendor/qcom/opensource/datarmnet/core
+#endif
 #define TRACE_INCLUDE_FILE rmnet_trace
 
 #if !defined(_TRACE_RMNET_H) || defined(TRACE_HEADER_MULTI_READ)
