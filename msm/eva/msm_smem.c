@@ -262,6 +262,9 @@ static int alloc_dma_mem(size_t size, u32 align, int map_kernel,
 	int rc = 0;
 	struct dma_buf *dbuf = NULL;
 	struct dma_heap *heap = NULL;
+	struct mem_buf_lend_kernel_arg arg;
+	int vmids[1];
+	int perms[1];
 
 	if (!res) {
 		dprintk(CVP_ERR, "%s: NULL res\n", __func__);
@@ -281,18 +284,32 @@ static int alloc_dma_mem(size_t size, u32 align, int map_kernel,
 		size, align);
 	}
 
-	if (mem->flags & SMEM_NON_PIXEL)
-		heap = dma_heap_find("qcom,secure-non-pixel");
-	else if (mem->flags & SMEM_PIXEL)
-		heap = dma_heap_find("qcom,secure-pixel");
-
 	dbuf = dma_heap_buffer_alloc(heap, size, 0, 0);
 	if (IS_ERR_OR_NULL(dbuf)) {
 		dprintk(CVP_ERR,
-		"Failed to allocate shared memory = %x bytes, %x %x\n",
-		size, mem->flags, PTR_ERR(dbuf));
+			"Failed to allocate shared memory = %x bytes, %x %x\n",
+			size, mem->flags, PTR_ERR(dbuf));
 		rc = -ENOMEM;
 		goto fail_shared_mem_alloc;
+	}
+
+	perms[0] = PERM_READ | PERM_WRITE;
+	arg.nr_acl_entries = 1;
+	arg.vmids = vmids;
+	arg.perms = perms;
+
+	if (mem->flags & SMEM_NON_PIXEL) {
+		vmids[0] = VMID_CP_NON_PIXEL;
+		rc = mem_buf_lend(dbuf, &arg);
+	} else if (mem->flags & SMEM_PIXEL) {
+		vmids[0] = VMID_CP_PIXEL;
+		rc = mem_buf_lend(dbuf, &arg);
+	}
+
+	if (rc) {
+		dprintk(CVP_ERR, "Failed to lend dmabuf %d, vmid %d\n",
+			rc, vmids[0]);
+		goto fail_device_address;
 	}
 
 	if (!gfa_cv.dmabuf_f_op)

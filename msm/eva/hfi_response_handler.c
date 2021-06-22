@@ -388,66 +388,6 @@ static int hfi_process_session_rel_buf_done(u32 device_id,
 	return 0;
 }
 
-static int hfi_process_session_cvp_operation_config(u32 device_id,
-		void *hdr, struct msm_cvp_cb_info *info)
-{
-	struct cvp_hfi_msg_session_op_cfg_packet *pkt =
-		(struct cvp_hfi_msg_session_op_cfg_packet *)hdr;
-	struct cvp_hfi_msg_session_hdr *lhdr =
-		(struct cvp_hfi_msg_session_hdr *)hdr;
-	struct msm_cvp_cb_cmd_done cmd_done = {0};
-	int signal;
-	unsigned int conf_id, session_id, error_type;
-
-	if (!pkt) {
-		dprintk(CVP_ERR, "%s: invalid param\n", __func__);
-		return -EINVAL;
-	} else if (pkt->size < get_msg_size(lhdr)) {
-		dprintk(CVP_ERR,
-				"%s: bad_pkt_size\n", __func__);
-		return -E2BIG;
-	}
-
-	get_msg_opconfigs(pkt, &session_id, &error_type, &conf_id);
-	cmd_done.device_id = device_id;
-	cmd_done.session_id = (void *)(uintptr_t)session_id;
-	cmd_done.status = hfi_map_err_status(error_type);
-	cmd_done.size = 0;
-
-	dprintk(CVP_HFI,
-		"%s: device_id=%d status=%d, sessionid=%pK config=%x\n",
-		__func__, device_id, cmd_done.status,
-		cmd_done.session_id, pkt->op_conf_id);
-
-	if (pkt->packet_type == HFI_MSG_SESSION_CVP_SET_PERSIST_BUFFERS)
-		signal = get_signal_from_pkt_type(
-				HFI_CMD_SESSION_CVP_SET_PERSIST_BUFFERS);
-	else if (pkt->packet_type ==
-			HFI_MSG_SESSION_CVP_RELEASE_PERSIST_BUFFERS)
-		signal = get_signal_from_pkt_type(
-			HFI_CMD_SESSION_CVP_RELEASE_PERSIST_BUFFERS);
-	else if (pkt->packet_type == HFI_MSG_SESSION_CVP_SET_MODEL_BUFFERS)
-		signal = get_signal_from_pkt_type(
-				HFI_CMD_SESSION_CVP_SET_MODEL_BUFFERS);
-	else if (pkt->packet_type == HFI_MSG_SESSION_CVP_DMM_PARAMS)
-		signal = get_signal_from_pkt_type(
-				HFI_CMD_SESSION_CVP_DMM_PARAMS);
-	else if (pkt->packet_type == HFI_MSG_SESSION_CVP_WARP_DS_PARAMS)
-		signal = get_signal_from_pkt_type(
-				HFI_CMD_SESSION_CVP_WARP_DS_PARAMS);
-	else
-		signal = get_signal_from_pkt_type(conf_id);
-
-	if (signal < 0) {
-		dprintk(CVP_ERR, "%s Invalid op config id\n", __func__);
-		return -EINVAL;
-	}
-
-	info->response_type = signal;
-	info->response.cmd = cmd_done;
-	return 0;
-}
-
 static struct msm_cvp_inst *cvp_get_inst_from_id(struct msm_cvp_core *core,
 	unsigned int session_id)
 {
@@ -482,6 +422,48 @@ retry:
 
 	return inst;
 
+}
+
+static int hfi_process_session_dump_notify(u32 device_id,
+		void *hdr, struct msm_cvp_cb_info *info)
+{
+	struct msm_cvp_inst *inst = NULL;
+	struct msm_cvp_core *core;
+	struct cvp_session_prop *session_prop;
+	unsigned int session_id;
+	struct msm_cvp_cb_cmd_done cmd_done = {0};
+	struct cvp_hfi_dumpmsg_session_hdr *pkt =
+			(struct cvp_hfi_dumpmsg_session_hdr *)hdr;
+
+	if (!pkt) {
+		dprintk(CVP_ERR, "%s: invalid param\n", __func__);
+		return -EINVAL;
+	} else if (pkt->size > sizeof(struct cvp_hfi_dumpmsg_session_hdr)) {
+		dprintk(CVP_ERR, "%s: bad_pkt_size %d\n", __func__, pkt->size);
+		return -E2BIG;
+	}
+	session_id = get_msg_session_id(pkt);
+	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	inst = cvp_get_inst_from_id(core, session_id);
+	if (!inst) {
+		dprintk(CVP_ERR, "%s: invalid session\n", __func__);
+		return -EINVAL;
+	}
+	session_prop = &inst->prop;
+	session_prop->dump_offset = pkt->dump_offset;
+	session_prop->dump_size = pkt->dump_size;
+
+	dprintk(CVP_SESS, "RECEIVED: SESSION_DUMP[%x]\n", session_id);
+
+	cmd_done.device_id = device_id;
+	cmd_done.session_id = (void *)(uintptr_t)pkt->session_id;
+	cmd_done.status = hfi_map_err_status(pkt->error_type);
+	cmd_done.size = 0;
+
+	info->response_type = HAL_SESSION_DUMP_NOTIFY;
+	info->response.cmd = cmd_done;
+
+	return 0;
 }
 
 static int hfi_process_session_cvp_msg(u32 device_id,
@@ -658,23 +640,8 @@ int cvp_hfi_process_msg_packet(u32 device_id, void *hdr,
 	case HFI_MSG_SESSION_CVP_FLUSH:
 		pkt_func = (pkt_func_def)hfi_process_session_flush_done;
 		break;
-	case HFI_MSG_SESSION_CVP_OPERATION_CONFIG:
-	case HFI_MSG_SESSION_CVP_SET_PERSIST_BUFFERS:
-	case HFI_MSG_SESSION_CVP_RELEASE_PERSIST_BUFFERS:
-	case HFI_MSG_SESSION_CVP_SET_MODEL_BUFFERS:
-	case HFI_MSG_SESSION_CVP_DMM_PARAMS:
-	case HFI_MSG_SESSION_CVP_WARP_DS_PARAMS:
-		pkt_func =
-			(pkt_func_def)hfi_process_session_cvp_operation_config;
-		break;
-	case HFI_MSG_SESSION_CVP_DS:
-	case HFI_MSG_SESSION_CVP_DFS:
-	case HFI_MSG_SESSION_CVP_DMM:
-	case HFI_MSG_SESSION_CVP_WARP:
-	case HFI_MSG_SESSION_CVP_WARP_NCC:
-	case HFI_MSG_SESSION_CVP_FD:
-	case HFI_MSG_SESSION_CVP_SGM_OF:
-		pkt_func = (pkt_func_def)hfi_process_session_cvp_msg;
+	case HFI_MSG_EVENT_NOTIFY_SNAPSHOT_READY:
+		pkt_func = (pkt_func_def)hfi_process_session_dump_notify;
 		break;
 	default:
 		dprintk(CVP_HFI, "Use default msg handler: %#x\n",

@@ -250,6 +250,8 @@ struct cvp_session_prop {
 	u32 ddr_cache;
 	u32 ddr_op_cache;
 	u32 fps[HFI_MAX_HW_THREADS];
+	u32 dump_offset;
+	u32 dump_size;
 };
 
 enum cvp_event_t {
@@ -259,6 +261,7 @@ enum cvp_event_t {
 	CVP_MAX_CLIENTS_EVENT,
 	CVP_HW_UNSUPPORTED_EVENT,
 	CVP_INVALID_EVENT,
+	CVP_DUMP_EVENT,
 };
 
 struct cvp_session_event {
