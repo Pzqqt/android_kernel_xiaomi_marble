@@ -291,7 +291,7 @@ u32 msm_vidc_encoder_input_size(struct msm_vidc_inst *inst)
 	f = &inst->fmts[INPUT_PORT];
 	size = VIDEO_RAW_BUFFER_SIZE(f->fmt.pix_mp.pixelformat,
 			f->fmt.pix_mp.width,
-			f->fmt.pix_mp.height, false);
+			f->fmt.pix_mp.height, true);
 	return size;
 }
 
