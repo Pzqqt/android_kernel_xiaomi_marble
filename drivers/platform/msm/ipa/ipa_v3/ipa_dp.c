@@ -952,16 +952,7 @@ void __ipa3_update_curr_poll_state(enum ipa_client_type client, int state)
 		case IPA_CLIENT_APPS_WAN_CONS:
 			ep_idx = ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS);
 			break;
-		case IPA_CLIENT_APPS_LAN_CONS:
-		case IPA_CLIENT_APPS_WAN_PROD:
-		case IPA_CLIENT_APPS_LAN_PROD:
-		case IPA_CLIENT_APPS_WAN_LOW_LAT_CONS:
-		case IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_PROD:
-		case IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS:
-			/* for error handling */
-			break;
 		default:
-			IPAERR_RL("unexpected client:%d\n", client);
 			break;
 	}
 
@@ -1028,6 +1019,7 @@ static int ipa3_rx_switch_to_intr_mode(struct ipa3_sys_context *sys)
  */
 static void ipa3_handle_rx(struct ipa3_sys_context *sys)
 {
+	enum ipa_client_type client_type;
 	int inactive_cycles;
 	int cnt;
 	int ret;
@@ -1061,7 +1053,12 @@ start_poll:
 	if (ret == -GSI_STATUS_PENDING_IRQ)
 		goto start_poll;
 
-	IPA_ACTIVE_CLIENTS_DEC_EP(sys->ep->client);
+	if (IPA_CLIENT_IS_WAN_CONS(sys->ep->client))
+		client_type = IPA_CLIENT_APPS_WAN_COAL_CONS;
+	else
+		client_type = sys->ep->client;
+
+	IPA_ACTIVE_CLIENTS_DEC_EP(client_type);
 }
 
 static void ipa3_switch_to_intr_rx_work_func(struct work_struct *work)
@@ -1145,6 +1142,52 @@ static void ipa_pm_sys_pipe_cb(void *p, enum ipa_pm_cb_event event)
 		WARN_ON(1);
 		return;
 	}
+}
+
+int ipa3_setup_tput_pipe(void)
+{
+	struct ipa3_ep_context *ep;
+	int ipa_ep_idx, result;
+	struct ipa_sys_connect_params sys_in;
+
+	memset(&sys_in, 0, sizeof(struct ipa_sys_connect_params));
+	sys_in.client = IPA_CLIENT_TPUT_CONS;
+	sys_in.desc_fifo_sz = IPA_SYS_TPUT_EP_DESC_FIFO_SZ;
+
+	ipa_ep_idx = ipa3_get_ep_mapping(sys_in.client);
+	if (ipa_ep_idx == IPA_EP_NOT_ALLOCATED) {
+		IPAERR("Invalid client.\n");
+		return -EFAULT;
+	}
+	ep = &ipa3_ctx->ep[ipa_ep_idx];
+	if (ep->valid == 1) {
+		IPAERR("EP %d already allocated.\n", ipa_ep_idx);
+		return -EFAULT;
+	}
+	IPA_ACTIVE_CLIENTS_INC_EP(sys_in.client);
+	memset(ep, 0, offsetof(struct ipa3_ep_context, sys));
+	ep->valid = 1;
+	ep->client = sys_in.client;
+
+	result = ipa_gsi_setup_channel(&sys_in, ep);
+	if (result) {
+		IPAERR("Failed to setup GSI channel\n");
+		goto fail_setup;
+	}
+
+	result = ipa3_enable_data_path(ipa_ep_idx);
+	if (result) {
+		IPAERR("enable data path failed res=%d ep=%d.\n", result,
+			 ipa_ep_idx);
+		goto fail_setup;
+	}
+	IPA_ACTIVE_CLIENTS_DEC_EP(sys_in.client);
+	return 0;
+
+fail_setup:
+	memset(&ipa3_ctx->ep[ipa_ep_idx], 0, sizeof(struct ipa3_ep_context));
+	IPA_ACTIVE_CLIENTS_DEC_EP(sys_in.client);
+	return result;
 }
 
 /**
@@ -1343,7 +1386,7 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 	if (ipa3_assign_policy(sys_in, ep->sys)) {
 		IPAERR("failed to sys ctx for client %d\n", sys_in->client);
 		result = -ENOMEM;
-		goto fail_napi_rx;
+		goto fail_napi;
 	}
 
 	ep->valid = 1;
@@ -1553,12 +1596,11 @@ fail_page_recycle_repl:
 		ep->sys->page_recycle_repl->capacity = 0;
 		kfree(ep->sys->page_recycle_repl);
 	}
-fail_napi_rx:
+fail_napi:
 	if (sys_in->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS) {
 		napi_disable(&ep->sys->napi_rx);
 		netif_napi_del(&ep->sys->napi_rx);
 	}
-fail_napi:
 	/* Delete NAPI TX object. */
 	if (ipa3_ctx->tx_napi_enable &&
 		(IPA_CLIENT_IS_PROD(sys_in->client)))
@@ -2568,7 +2610,7 @@ static void ipa3_replenish_wlan_rx_cache(struct ipa3_sys_context *sys)
 			 IPA_WLAN_COMM_RX_POOL_HIGH) {
 		ipa3_replenish_rx_cache(sys);
 		ipa3_ctx->wc_memb.wlan_comm_total_cnt +=
-			(sys->rx_pool_sz - rx_len_cached);
+			(sys->len - rx_len_cached);
 	}
 
 	return;
@@ -5096,7 +5138,7 @@ static int ipa_gsi_setup_channel(struct ipa_sys_connect_params *in,
 	 */
 	ring_size = 2 * in->desc_fifo_sz;
 	ep->gsi_evt_ring_hdl = ~0;
-	if (ep->sys->use_comm_evt_ring) {
+	if (ep->sys && ep->sys->use_comm_evt_ring) {
 		if (ipa3_ctx->gsi_evt_comm_ring_rem < ring_size) {
 			IPAERR("not enough space in common event ring\n");
 			IPAERR("available: %d needed: %d\n",
@@ -5124,7 +5166,7 @@ static int ipa_gsi_setup_channel(struct ipa_sys_connect_params *in,
 			goto fail_setup_event_ring;
 		}
 		return result;
-	} else if (ep->sys->policy != IPA_POLICY_NOINTR_MODE ||
+	} else if ((ep->sys && ep->sys->policy != IPA_POLICY_NOINTR_MODE) ||
 			IPA_CLIENT_IS_CONS(ep->client)) {
 		result = ipa_gsi_setup_event_ring(ep, ring_size, mem_flag);
 		if (result)
@@ -5200,7 +5242,7 @@ static int ipa_gsi_setup_event_ring(struct ipa3_ep_context *ep,
 	ep->gsi_mem_info.evt_ring_base_vaddr =
 		gsi_evt_ring_props.ring_base_vaddr;
 
-	if (ep->sys->napi_obj) {
+	if (ep->sys && ep->sys->napi_obj) {
 		gsi_evt_ring_props.int_modt = IPA_GSI_EVT_RING_INT_MODT;
 		gsi_evt_ring_props.int_modc = IPA_GSI_EVT_RING_INT_MODC;
 	} else {
@@ -5208,7 +5250,7 @@ static int ipa_gsi_setup_event_ring(struct ipa3_ep_context *ep,
 		gsi_evt_ring_props.int_modc = 1;
 	}
 
-	if (ep->sys->ext_ioctl_v2 &&
+	if ((ep->sys && ep->sys->ext_ioctl_v2) &&
 		((ep->client == IPA_CLIENT_APPS_WAN_PROD) ||
 		(ep->client == IPA_CLIENT_APPS_WAN_CONS) ||
 		(ep->client == IPA_CLIENT_APPS_WAN_COAL_CONS) ||
@@ -5298,7 +5340,8 @@ static int ipa_gsi_setup_transfer_ring(struct ipa3_ep_context *ep,
 			gsi_channel_props.tx_poll = false;
 	} else {
 		gsi_channel_props.dir = GSI_CHAN_DIR_FROM_GSI;
-		gsi_channel_props.max_re_expected = ep->sys->rx_pool_sz;
+		if (ep->sys)
+			gsi_channel_props.max_re_expected = ep->sys->rx_pool_sz;
 	}
 
 	gsi_ep_info = ipa3_get_gsi_ep_info(ep->client);

@@ -24,11 +24,13 @@
 #include <linux/version.h>
 
 #define GSI_CMD_TIMEOUT (5*HZ)
+#define GSI_FC_CMD_TIMEOUT (2*GSI_CMD_TIMEOUT)
 #define GSI_START_CMD_TIMEOUT_MS 1000
 #define GSI_CMD_POLL_CNT 5
 #define GSI_STOP_CMD_TIMEOUT_MS 200
 #define GSI_MAX_CH_LOW_WEIGHT 15
 #define GSI_IRQ_STORM_THR 5
+#define GSI_FC_MAX_TIMEOUT 5
 
 #define GSI_STOP_CMD_POLL_CNT 4
 #define GSI_STOP_IN_PROC_CMD_POLL_CNT 2
@@ -51,6 +53,10 @@
 #define GSI_INST_RAM_FW_VER_FLAVOR_SHIFT	(7)
 #define GSI_INST_RAM_FW_VER_FW_MASK			(0x7f)
 #define GSI_INST_RAM_FW_VER_FW_SHIFT		(0)
+
+#define GSI_FC_NUM_WORDS_PER_CHNL_SHRAM		(20)
+#define GSI_FC_STATE_INDEX_SHRAM			(7)
+#define GSI_FC_PENDING_MASK					(0x00080000)
 
 #ifndef CONFIG_DEBUG_FS
 void gsi_debugfs_init(void)
@@ -4871,7 +4877,7 @@ free_lock:
 }
 EXPORT_SYMBOL(gsi_enable_flow_control_ee);
 
-int gsi_flow_control_ee(unsigned int chan_idx, unsigned int ee,
+int gsi_flow_control_ee(unsigned int chan_idx, int ep_id, unsigned int ee,
 				bool enable, bool prmy_scnd_fc, int *code)
 {
 	struct gsihal_reg_gsi_ee_generic_cmd cmd;
@@ -4879,6 +4885,8 @@ int gsi_flow_control_ee(unsigned int chan_idx, unsigned int ee,
 					GSI_GEN_EE_CMD_ENABLE_FLOW_CHANNEL :
 					GSI_GEN_EE_CMD_DISABLE_FLOW_CHANNEL;
 	int res;
+	int wait_due_pending = 0;
+	uint32_t fc_pending = 0;
 
 	if (!gsi_ctx) {
 		pr_err("%s:%d gsi context not allocated\n", __func__, __LINE__);
@@ -4911,10 +4919,20 @@ int gsi_flow_control_ee(unsigned int chan_idx, unsigned int ee,
 	gsihal_write_reg_n_fields(
 		GSI_EE_n_GSI_EE_GENERIC_CMD, gsi_ctx->per.ee, &cmd);
 
+wait_again:
+	fc_pending = gsihal_read_reg_n(GSI_GSI_SHRAM_n,
+		(ep_id * GSI_FC_NUM_WORDS_PER_CHNL_SHRAM) + GSI_FC_STATE_INDEX_SHRAM) &
+		GSI_FC_PENDING_MASK;
 	res = wait_for_completion_timeout(&gsi_ctx->gen_ee_cmd_compl,
-		msecs_to_jiffies(GSI_CMD_TIMEOUT));
+		msecs_to_jiffies(GSI_FC_CMD_TIMEOUT));
 	if (res == 0) {
 		GSIERR("chan_idx=%u ee=%u timed out\n", chan_idx, ee);
+		if (op == GSI_GEN_EE_CMD_ENABLE_FLOW_CHANNEL &&
+			wait_due_pending < GSI_FC_MAX_TIMEOUT &&
+			fc_pending) {
+			wait_due_pending++;
+			goto wait_again;
+		}
 		res = -GSI_STATUS_TIMED_OUT;
 		GSI_ASSERT();
 		goto free_lock;

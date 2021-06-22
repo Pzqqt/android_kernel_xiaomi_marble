@@ -54,7 +54,7 @@ public:
 		LOG_MSG_DEBUG("Entering %s\n", __func__);
 		int ret;
 		unsigned char *input, *output;
-		char pkt[PACKET_SIZE] = {
+		unsigned char pkt[PACKET_SIZE] = {
 			0x59, 0x61, 0x6e, 0x69,
 			0x76, 0x5f, 0x48 ,0x61,
 			0x73 ,0x62 ,0x61 ,0x6e,
@@ -142,7 +142,7 @@ public:
 		LOG_MSG_DEBUG("Entering %s\n", __func__);
 		int ret;
 		unsigned char *input, *output;
-		char pkt[PACKET_SIZE] = {
+		unsigned char pkt[PACKET_SIZE] = {
 			0x59, 0x61, 0x6e, 0x69,
 			0x76, 0x5f, 0x48 ,0x61,
 			0x73 ,0x62 ,0x61 ,0x6e,

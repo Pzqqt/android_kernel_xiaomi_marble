@@ -1846,7 +1846,12 @@ int ipa_drop_stats_init(void)
 			&reg_idx);
 		pipe_bitmask[reg_idx] |= mask;
 	}
-
+	if (ipa3_ctx->use_tput_est_ep) {
+		mask = ipa_hw_stats_get_ep_bit_n_idx(
+			IPA_CLIENT_TPUT_CONS,
+			&reg_idx);
+		pipe_bitmask[reg_idx] |= mask;
+	}
 	/* Always enable drop stats for USB DPL Pipe. */
 	mask = ipa_hw_stats_get_ep_bit_n_idx(
 		IPA_CLIENT_USB_DPL_CONS,

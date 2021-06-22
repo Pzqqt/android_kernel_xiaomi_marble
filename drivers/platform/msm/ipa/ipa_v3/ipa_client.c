@@ -18,7 +18,8 @@
 #define IPA_HOLB_TMR_EN 0x1
 #define IPA_HOLB_TMR_DIS 0x0
 #define IPA_POLL_AGGR_STATE_RETRIES_NUM 3
-#define IPA_POLL_AGGR_STATE_SLEEP_MSEC 1
+#define IPA_POLL_AGGR_STATE_SLEEP_USEC_MIN 1010
+#define IPA_POLL_AGGR_STATE_SLEEP_USEC_MAX 1050
 
 #define IPA_PKT_FLUSH_TO_US 100
 
@@ -65,6 +66,7 @@ int ipa3_enable_data_path(u32 clnt_hdl)
 		 * on other end from IPA hw.
 		 */
 		if ((ep->client == IPA_CLIENT_USB_DPL_CONS) ||
+				(ep->client == IPA_CLIENT_TPUT_CONS) ||
 				(ep->client == IPA_CLIENT_MHI_DPL_CONS) ||
 				(ep->client == IPA_CLIENT_MHI_QDSS_CONS))
 			holb_cfg.en = IPA_HOLB_TMR_EN;
@@ -186,9 +188,10 @@ int ipa3_reset_gsi_channel(u32 clnt_hdl)
 
 	/*
 	 * Reset channel
-	 * If the reset called after stop, need to wait 1ms
+	 * If the reset called after stop, need to wait for about 1010us to 1050us
 	 */
-	msleep(IPA_POLL_AGGR_STATE_SLEEP_MSEC);
+	usleep_range(IPA_POLL_AGGR_STATE_SLEEP_USEC_MIN,
+		IPA_POLL_AGGR_STATE_SLEEP_USEC_MAX);
 	gsi_res = gsi_reset_channel(ep->gsi_chan_hdl);
 	if (gsi_res != GSI_STATUS_SUCCESS) {
 		IPAERR("Error resetting channel: %d\n", gsi_res);
@@ -1166,8 +1169,8 @@ int ipa3_remove_secondary_flow_ctrl(int gsi_chan_hdl)
 	result = gsi_query_flow_control_state_ee(gsi_chan_hdl, 0, 1, &code);
 	if (result == GSI_STATUS_SUCCESS) {
 		code = 0;
-		result = gsi_flow_control_ee(gsi_chan_hdl, 0, false, true,
-							&code);
+		result = gsi_flow_control_ee(gsi_chan_hdl,
+			ipa3_get_ep_mapping_from_gsi(gsi_chan_hdl), 0, false, true, &code);
 		if (result == GSI_STATUS_SUCCESS) {
 			IPADBG("flow control sussess ch %d code %d\n",
 					gsi_chan_hdl, code);

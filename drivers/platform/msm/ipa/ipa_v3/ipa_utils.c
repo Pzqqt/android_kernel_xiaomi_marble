@@ -700,11 +700,11 @@ static const struct rsrc_min_max ipa3_rsrc_dst_grp_config
 		{0, 0x3f}, {0, 0x3f}, {0, 0}, {0, 0}, {0, 0}, {0, 0}, {0, 0},  },
 	},
 	[IPA_5_0_MHI] = {
-		/* UL  DL  unused  unused unused  UC_RX_Q DRBIP N/A */
+		/* UL DL IPADMA QDSS unused unused CV2X */
 		[IPA_v5_0_RSRC_GRP_TYPE_DST_DATA_SECTORS] = {
 		{6, 6}, {5, 5}, {2, 2}, {2, 2}, {0, 0}, {0, 0}, {30, 39},  },
 		[IPA_v5_0_RSRC_GRP_TYPE_DST_DPS_DMARS] = {
-		{0, 3}, {0, 3}, {1, 2}, {0, 0}, {0, 0}, {0, 0}, {0, 0},  },
+		{0, 3}, {0, 3}, {1, 2}, {1, 1}, {0, 0}, {0, 0}, {0, 0},  },
 	},
 
 	[IPA_5_1] = {
@@ -2640,7 +2640,12 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			IPA_DPS_HPS_SEQ_TYPE_INVALID,
 			QMB_MASTER_SELECT_DDR,
 			{ 31, 31, 8, 8, IPA_EE_AP }, IPA_TX_INSTANCE_NA },
-
+	[IPA_4_5][IPA_CLIENT_TPUT_CONS]          = {
+			true, IPA_v4_5_GROUP_UL_DL,
+			false,
+			IPA_DPS_HPS_SEQ_TYPE_INVALID,
+			QMB_MASTER_SELECT_DDR,
+			{ 25, 16, 9, 9, IPA_EE_AP, GSI_SMART_PRE_FETCH, 4 } },
 	/* IPA_4_5_MHI */
 	[IPA_4_5_MHI][IPA_CLIENT_APPS_CMD_PROD]		= {
 			true, IPA_v4_5_MHI_GROUP_DDR,
@@ -4331,6 +4336,13 @@ static const struct ipa_ep_configuration ipa3_ep_mapping
 			QMB_MASTER_SELECT_DDR,
 			{ 18, 4, 9, 9, IPA_EE_Q6, GSI_ESCAPE_BUF_ONLY, 0 },
 			IPA_TX_INSTANCE_UL },
+	[IPA_5_0][IPA_CLIENT_TPUT_CONS] = {
+			true, IPA_v5_0_GROUP_UL,
+			false,
+			IPA_DPS_HPS_SEQ_TYPE_INVALID,
+			QMB_MASTER_SELECT_DDR,
+			{ 33, 6, 9, 9, IPA_EE_AP, GSI_SMART_PRE_FETCH, 3},
+			IPA_TX_INSTANCE_DL },
 
 	/* IPA_5_0_MHI */
 	[IPA_5_0_MHI][IPA_CLIENT_USB_PROD] = {
@@ -5948,6 +5960,9 @@ const char *ipa_clients_strings[IPA_CLIENT_MAX] = {
 	__stringify(IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_PROD),
 	__stringify(IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS),
 	__stringify(IPA_CLIENT_Q6_DL_NLO_LL_DATA_PROD),
+	__stringify(RESERVERD_CONS_123),
+	__stringify(RESERVERD_PROD_124),
+	__stringify(IPA_CLIENT_TPUT_CONS),
 };
 EXPORT_SYMBOL(ipa_clients_strings);
 
@@ -6887,6 +6902,37 @@ int ipa3_get_ep_mapping(enum ipa_client_type client)
 }
 
 /**
+ * ipa3_get_ep_mapping_from_gsi() - provide endpoint mapping
+ * @ch_id: GSI Virt CH id
+ *
+ * Return value: endpoint mapping
+ */
+int ipa3_get_ep_mapping_from_gsi(int ch_id)
+{
+	int ipa_ep_idx = IPA_EP_NOT_ALLOCATED;
+	u8 hw_idx;
+	int i = 0;
+
+	hw_idx = ipa3_ctx->hw_type_index;
+
+	if (ch_id >= GSI_CHAN_MAX || ch_id < 0) {
+		IPAERR_RL("Bad ch_id number! ch_id =%d\n", ch_id);
+		return IPA_EP_NOT_ALLOCATED;
+	}
+
+	for (i = 0; i < IPA_CLIENT_MAX; i++) {
+		if (ipa3_ep_mapping[hw_idx][i].valid &&
+			ipa3_ep_mapping[hw_idx][i].ipa_gsi_ep_info.ipa_gsi_chan_num
+			== ch_id) {
+			ipa_ep_idx = ipa3_ep_mapping[hw_idx][i].ipa_gsi_ep_info.ipa_ep_num;
+			break;
+		}
+	}
+
+	return ipa_ep_idx;
+}
+
+/**
  * ipa3_get_gsi_ep_info() - provide gsi ep information
  * @client: IPA client value
  *
@@ -7776,7 +7822,7 @@ int ipa3_cfg_ep_ctrl(u32 clnt_hdl, const struct ipa_ep_cfg_ctrl *ep_ctrl)
 		else
 			primary_secondry = false;
 
-		result = gsi_flow_control_ee(ep->gsi_chan_hdl, 0,
+		result = gsi_flow_control_ee(ep->gsi_chan_hdl, clnt_hdl, 0,
 				ep_ctrl->ipa_ep_delay, primary_secondry, &code);
 		if (result == GSI_STATUS_SUCCESS) {
 			IPADBG("flow control sussess gsi ch %d with code %d\n",
@@ -8431,6 +8477,16 @@ int ipa3_cfg_ep_metadata(u32 clnt_hdl, const struct ipa_ep_cfg_metadata *ep_md)
 
 	/* copy over EP cfg */
 	ipa3_ctx->ep[clnt_hdl].cfg.meta = *ep_md;
+
+	if (ipa3_ctx->eogre_enabled &&
+		ipa3_ctx->ep[clnt_hdl].client == IPA_CLIENT_ETHERNET_PROD) {
+		/* reconfigure ep metadata reg to override mux-id */
+		ipa3_ctx->ep[clnt_hdl].cfg.hdr.hdr_ofst_metadata_valid = 0;
+		ipa3_ctx->ep[clnt_hdl].cfg.hdr.hdr_ofst_metadata = 0;
+		ipa3_ctx->ep[clnt_hdl].cfg.hdr.hdr_metadata_reg_valid = 1;
+		ipahal_write_reg_n_fields(IPA_ENDP_INIT_HDR_n, clnt_hdl,
+			&ipa3_ctx->ep[clnt_hdl].cfg.hdr);
+	}
 
 	IPA_ACTIVE_CLIENTS_INC_EP(ipa3_get_client_mapping(clnt_hdl));
 
@@ -12109,3 +12165,159 @@ bool ipa3_is_ulso_supported(void)
 	return ipa3_ctx->ulso_supported;
 }
 EXPORT_SYMBOL(ipa3_is_ulso_supported);
+
+static void ipa3_eogre_info_free_cb(
+	void *buff,
+	u32   len,
+	u32   type)
+{
+	if (buff) {
+		kfree(buff);
+	}
+}
+
+/**
+ * ipa3_check_eogre() - Check if the eogre is worthy of sending to
+ *                      recipients who would use the data.
+ *
+ * Returns: 0 on success, negative on failure
+ */
+int ipa3_check_eogre(
+	struct ipa_ioc_eogre_info *eogre_info,
+	bool                      *send2uC,
+	bool                      *send2ipacm )
+{
+	struct ipa_ioc_eogre_info null_eogre;
+
+	bool cache_is_null, eogre_is_null, same;
+
+	int ret = 0;
+
+	if (eogre_info == NULL || send2uC == NULL || send2ipacm == NULL) {
+		IPAERR("NULL ptr: eogre_info(%p) and/or "
+			   "send2uC(%p) and/or send2ipacm(%p)\n",
+			   eogre_info, send2uC, send2ipacm);
+		ret = -EIO;
+		goto done;
+	}
+
+	memset(&null_eogre, 0, sizeof(null_eogre));
+
+	cache_is_null =
+		!memcmp(
+			&ipa3_ctx->eogre_cache,
+			&null_eogre,
+			sizeof(null_eogre));
+
+	eogre_is_null =
+		!memcmp(
+			eogre_info,
+			&null_eogre,
+			sizeof(null_eogre));
+
+	*send2uC = *send2ipacm = false;
+
+	if (cache_is_null) {
+
+		if (eogre_is_null) {
+			IPAERR(
+				"Attempting to disable EoGRE. EoGRE is "
+				"already disabled. No work needs to be done.\n");
+			ret = -EIO;
+			goto done;
+		}
+
+		*send2uC = *send2ipacm = true;
+
+	} else { /* (!cache_is_null) */
+
+		if (!eogre_is_null) {
+			IPAERR(
+				"EoGRE is already enabled for iptype(%d). "
+				"No work needs to be done.\n",
+				ipa3_ctx->eogre_cache.ipgre_info.iptype);
+			ret = -EIO;
+			goto done;
+		}
+
+		same = !memcmp(
+			&ipa3_ctx->eogre_cache.map_info,
+			&eogre_info->map_info,
+			sizeof(struct IpaDscpVlanPcpMap_t));
+
+		*send2uC = !same;
+
+		same = !memcmp(
+			&ipa3_ctx->eogre_cache.ipgre_info,
+			&eogre_info->ipgre_info,
+			sizeof(struct ipa_ipgre_info));
+
+		*send2ipacm = !same;
+	}
+
+	ipa3_ctx->eogre_cache = *eogre_info;
+
+	IPADBG("send2uC(%u) send2ipacm(%u)\n",
+		   *send2uC, *send2ipacm);
+
+done:
+	return ret;
+}
+
+/**
+ * ipa3_send_eogre_info() - Notify ipacm of incoming eogre event
+ *
+ * Returns:	0 on success, negative on failure
+ *
+ * Note: Should not be called from atomic context
+ */
+int ipa3_send_eogre_info(
+	enum ipa_eogre_event       etype,
+	struct ipa_ioc_eogre_info *info )
+{
+	struct ipa_msg_meta    msg_meta;
+	struct ipa_ipgre_info *eogre_info;
+
+	int                    res = 0;
+
+	if (!info) {
+		IPAERR("Bad arg: info is NULL\n");
+		res = -EIO;
+		goto done;
+	}
+
+	/*
+	 * Prep and send msg to ipacm
+	 */
+	memset(&msg_meta, 0, sizeof(struct ipa_msg_meta));
+
+	eogre_info = kzalloc(
+		sizeof(struct ipa_ipgre_info), GFP_KERNEL);
+
+	if (!eogre_info) {
+		IPAERR("eogre_info memory allocation failed !\n");
+		res = -ENOMEM;
+		goto done;
+	}
+
+	memcpy(eogre_info,
+		   &(info->ipgre_info),
+		   sizeof(struct ipa_ipgre_info));
+
+	msg_meta.msg_type = etype;
+	msg_meta.msg_len  = sizeof(struct ipa_ipgre_info);
+
+	/*
+	 * Post event to ipacm
+	 */
+	res = ipa3_send_msg(&msg_meta, eogre_info, ipa3_eogre_info_free_cb);
+
+	if (res) {
+		IPAERR_RL("ipa3_send_msg failed: %d\n", res);
+		kfree(eogre_info);
+		goto done;
+	}
+
+done:
+	return res;
+}

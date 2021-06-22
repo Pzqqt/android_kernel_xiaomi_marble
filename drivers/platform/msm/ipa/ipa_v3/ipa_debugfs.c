@@ -92,6 +92,8 @@ const char *ipa3_event_name[IPA_EVENT_MAX_NUM] = {
 	__stringify(IPA_MAC_FLT_EVENT),
 	__stringify(IPA_DONE_RESTORE_EVENT),
 	__stringify(IPA_SW_FLT_EVENT),
+	__stringify(IPA_EoGRE_UP_EVENT),
+	__stringify(IPA_EoGRE_DOWN_EVENT),
 };
 
 const char *ipa3_hdr_l2_type_name[] = {
@@ -112,6 +114,9 @@ const char *ipa3_hdr_proc_type_name[] = {
 	__stringify(IPA_HDR_PROC_ETHII_TO_ETHII_EX),
 	__stringify(IPA_HDR_PROC_L2TP_UDP_HEADER_ADD),
 	__stringify(IPA_HDR_PROC_L2TP_UDP_HEADER_REMOVE),
+	__stringify(IPA_HDR_PROC_SET_DSCP),
+	__stringify(IPA_HDR_PROC_EoGRE_HEADER_ADD),
+	__stringify(IPA_HDR_PROC_EoGRE_HEADER_REMOVE),
 };
 
 static struct dentry *dent;
@@ -548,6 +553,129 @@ static ssize_t ipa3_read_keep_awake(struct file *file, char __user *ubuf,
 	mutex_unlock(&ipa3_ctx->ipa3_active_clients.mutex);
 
 	return simple_read_from_buffer(ubuf, count, ppos, dbg_buff, nbytes);
+}
+
+static ssize_t ipa3_read_mpm_ring_size_dl(struct file *file, char __user *ubuf,
+	size_t count, loff_t *ppos)
+{
+	int nbytes;
+
+	nbytes = scnprintf(dbg_buff, IPA_MAX_MSG_LEN,
+			"IPA_MPM_RING_SIZE_DL = %d\n",
+			ipa3_ctx->mpm_ring_size_dl);
+
+	return simple_read_from_buffer(ubuf, count, ppos, dbg_buff, nbytes);
+}
+
+static ssize_t ipa3_read_mpm_ring_size_ul(struct file *file, char __user *ubuf,
+	size_t count, loff_t *ppos)
+{
+	int nbytes;
+
+	nbytes = scnprintf(dbg_buff, IPA_MAX_MSG_LEN,
+			"IPA_MPM_RING_SIZE_UL = %d\n",
+			ipa3_ctx->mpm_ring_size_ul);
+
+	return simple_read_from_buffer(ubuf, count, ppos, dbg_buff, nbytes);
+}
+
+static ssize_t ipa3_read_mpm_uc_thresh(struct file *file, char __user *ubuf,
+	size_t count, loff_t *ppos)
+{
+	int nbytes;
+
+	nbytes = scnprintf(dbg_buff, IPA_MAX_MSG_LEN,
+			"IPA_MPM_UC_THRESH = %d\n", ipa3_ctx->mpm_uc_thresh);
+
+	return simple_read_from_buffer(ubuf, count, ppos, dbg_buff, nbytes);
+}
+
+static ssize_t ipa3_read_mpm_teth_aggr_size(struct file *file,
+	char __user *ubuf, size_t count, loff_t *ppos)
+{
+	int nbytes;
+
+	nbytes = scnprintf(dbg_buff, IPA_MAX_MSG_LEN,
+			"IPA_MPM_TETH_AGGR_SIZE = %d\n",
+			ipa3_ctx->mpm_teth_aggr_size);
+
+	return simple_read_from_buffer(ubuf, count, ppos, dbg_buff, nbytes);
+}
+
+static ssize_t ipa3_write_mpm_ring_size_dl(struct file *file,
+	const char __user *buf,
+	size_t count, loff_t *ppos)
+{
+	s8 option = 0;
+	int ret;
+
+	ret = kstrtos8_from_user(buf, count, 0, &option);
+	if (ret)
+		return ret;
+	/* as option is type s8, max it can take is 127 */
+	if ((option > 0) && (option <= IPA_MPM_MAX_RING_LEN))
+		ipa3_ctx->mpm_ring_size_dl = option;
+	else
+		IPAERR("Invalid dl ring size =%d: range is 1 to %d\n",
+			option, IPA_MPM_MAX_RING_LEN);
+	return count;
+}
+
+static ssize_t ipa3_write_mpm_ring_size_ul(struct file *file,
+	const char __user *buf,
+	size_t count, loff_t *ppos)
+{
+	s8 option = 0;
+	int ret;
+
+	ret = kstrtos8_from_user(buf, count, 0, &option);
+	if (ret)
+		return ret;
+	/* as option is type s8, max it can take is 127 */
+	if ((option > 0) && (option <= IPA_MPM_MAX_RING_LEN))
+		ipa3_ctx->mpm_ring_size_ul = option;
+	else
+		IPAERR("Invalid ul ring size =%d: range is 1 to %d\n",
+			option, IPA_MPM_MAX_RING_LEN);
+	return count;
+}
+
+static ssize_t ipa3_write_mpm_uc_thresh(struct file *file,
+	const char __user *buf,
+	size_t count, loff_t *ppos)
+{
+	s8 option = 0;
+	int ret;
+
+	ret = kstrtos8_from_user(buf, count, 0, &option);
+	if (ret)
+		return ret;
+	/* as option is type s8, max it can take is 127 */
+	if ((option > 0) && (option <= IPA_MPM_MAX_UC_THRESH))
+		ipa3_ctx->mpm_uc_thresh = option;
+	else
+		IPAERR("Invalid uc thresh =%d: range is 1 to %d\n",
+			option, IPA_MPM_MAX_UC_THRESH);
+	return count;
+}
+
+static ssize_t ipa3_write_mpm_teth_aggr_size(struct file *file,
+	const char __user *buf,
+	size_t count, loff_t *ppos)
+{
+	s8 option = 0;
+	int ret;
+
+	ret = kstrtos8_from_user(buf, count, 0, &option);
+	if (ret)
+		return ret;
+	/* as option is type s8, max it can take is 127 */
+	if ((option > 0) && (option <= IPA_MAX_TETH_AGGR_BYTE_LIMIT))
+		ipa3_ctx->mpm_teth_aggr_size = option;
+	else
+		IPAERR("Invalid agg byte limit =%d: range is 1 to %d\n",
+			option, IPA_MAX_TETH_AGGR_BYTE_LIMIT);
+	return count;
 }
 
 static ssize_t ipa3_read_holb_events(struct file *file, char __user *ubuf, size_t count,
@@ -1669,6 +1797,16 @@ static ssize_t ipa3_read_wstats(struct file *file, char __user *ubuf,
 			FRMT_STR1, "Tx Pkts Dropped:",
 			ep->wstats.tx_pkts_dropped);
 		cnt += nbytes;
+		if (ep->sys) {
+			nbytes = scnprintf(dbg_buff + cnt, IPA_MAX_MSG_LEN - cnt,
+				FRMT_STR1, "sys len:",
+				ep->sys->len);
+			cnt += nbytes;
+			nbytes = scnprintf(dbg_buff + cnt, IPA_MAX_MSG_LEN - cnt,
+				FRMT_STR1, "rx_pool_sz:",
+				ep->sys->rx_pool_sz);
+			cnt += nbytes;
+		}
 
 nxt_clnt_cons:
 			switch (client) {
@@ -2958,6 +3096,71 @@ static ssize_t ipa3_write_page_poll_threshold(struct file *file,
 	return count;
 }
 
+static void ipa3_nat_move_free_cb(void *buff, u32 len, u32 type)
+{
+	kfree(buff);
+}
+
+static ssize_t ipa3_write_nat_table_move(struct file *file,
+	const char __user *buf, size_t count, loff_t *ppos)
+{
+	u32 direction;
+	unsigned long missing;
+	char *sptr, *token;
+	struct ipa_move_nat_req_msg_v01 *req_data;
+	struct ipa_msg_meta msg_meta;
+
+	if (count >= sizeof(dbg_buff))
+		return -EFAULT;
+
+	missing = copy_from_user(dbg_buff, buf, count);
+	if (missing)
+		return -EFAULT;
+
+	dbg_buff[count] = '\0';
+
+	sptr = dbg_buff;
+
+	token = strsep(&sptr, " ");
+	if (!token)
+		return -EINVAL;
+	if (kstrtou32(token, 0, &direction))
+		return -EINVAL;
+
+	if (direction) {
+		pr_err("moving to DDR\n");
+		direction = QMI_IPA_MOVE_NAT_TO_DDR_V01;
+	} else {
+		pr_err("moving to SRAM\n");
+		direction = QMI_IPA_MOVE_NAT_TO_SRAM_V01;
+	}
+
+	req_data = kzalloc(sizeof(struct ipa_move_nat_req_msg_v01),
+		GFP_KERNEL);
+	if (!req_data) {
+		pr_err("allocation failed\n");
+		return EFAULT;
+	}
+
+	memset(&msg_meta, 0, sizeof(struct ipa_msg_meta));
+	msg_meta.msg_type = IPA_MOVE_NAT_TABLE;
+	msg_meta.msg_len = sizeof(struct ipa_move_nat_req_msg_v01);
+
+	req_data->nat_move_direction = direction;
+
+	ipa3_disable_move_nat_resp();
+	pr_err("disabled QMI\n");
+	/* make sure QMI is disabled before message sent to IPACM */
+	wmb();
+	if (ipa_send_msg(&msg_meta, req_data, ipa3_nat_move_free_cb)) {
+		pr_err("ipa_send_msg failed\nn");
+	}
+	pr_err("message sent\n");
+
+	return count;
+}
+
+
 static const struct ipa3_debugfs_file debugfs_files[] = {
 	{
 		"gen_reg", IPA_READ_ONLY_MODE, NULL, {
@@ -2977,6 +3180,26 @@ static const struct ipa3_debugfs_file debugfs_files[] = {
 		"keep_awake", IPA_READ_WRITE_MODE, NULL, {
 			.read = ipa3_read_keep_awake,
 			.write = ipa3_write_keep_awake,
+		}
+	}, {
+		"mpm_ring_size_dl", IPA_READ_WRITE_MODE, NULL, {
+			.read = ipa3_read_mpm_ring_size_dl,
+			.write = ipa3_write_mpm_ring_size_dl,
+		}
+	}, {
+		"mpm_ring_size_ul", IPA_READ_WRITE_MODE, NULL, {
+			.read = ipa3_read_mpm_ring_size_ul,
+			.write = ipa3_write_mpm_ring_size_ul,
+		}
+	}, {
+		"mpm_uc_thresh", IPA_READ_WRITE_MODE, NULL, {
+			.read = ipa3_read_mpm_uc_thresh,
+			.write = ipa3_write_mpm_uc_thresh,
+		}
+	}, {
+		"mpm_teth_aggr_size", IPA_READ_WRITE_MODE, NULL, {
+			.read = ipa3_read_mpm_teth_aggr_size,
+			.write = ipa3_write_mpm_teth_aggr_size,
 		}
 	}, {
 		"set_clk_idx", IPA_READ_WRITE_MODE, NULL, {
@@ -3139,6 +3362,10 @@ static const struct ipa3_debugfs_file debugfs_files[] = {
 		"page_poll_threshold", IPA_READ_WRITE_MODE, NULL, {
 			.read = ipa3_read_page_poll_threshold,
 			.write = ipa3_write_page_poll_threshold,
+		}
+	}, {
+		"move_nat_table_to_ddr", IPA_WRITE_ONLY_MODE, NULL,{
+			.write = ipa3_write_nat_table_move,
 		}
 	},
 };

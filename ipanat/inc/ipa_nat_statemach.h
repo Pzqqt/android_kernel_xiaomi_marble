@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -31,6 +31,8 @@
 
 typedef uintptr_t arb_t;
 
+#define MAKE_AS_STR_CASE(v) case v: return #v
+
 /******************************************************************************/
 /**
  * The following enum represents the states that a nati object can be
@@ -45,6 +47,26 @@ typedef enum {
 
 	NATI_STATE_LAST
 } ipa_nati_state;
+
+/* KEEP THE FOLLOWING IN SYNC WITH ABOVE. */
+static inline const char* ipa_nati_state_as_str(
+	ipa_nati_state s )
+{
+	switch ( s )
+	{
+		MAKE_AS_STR_CASE(NATI_STATE_NULL);
+		MAKE_AS_STR_CASE(NATI_STATE_DDR_ONLY);
+		MAKE_AS_STR_CASE(NATI_STATE_SRAM_ONLY);
+		MAKE_AS_STR_CASE(NATI_STATE_HYBRID);
+		MAKE_AS_STR_CASE(NATI_STATE_HYBRID_DDR);
+		MAKE_AS_STR_CASE(NATI_STATE_LAST);
+
+	default:
+		break;
+	}
+
+	return "???";
+}
 
 # undef strcasesame
 # define strcasesame(a, b) (!strcasecmp(a, b))
@@ -116,6 +138,8 @@ typedef struct
 {
 	ipa_nati_state prev_state;
 	ipa_nati_state curr_state;
+	bool           hold_state;
+	ipa_nati_state state_to_hold;
 	uint32_t       ddr_tbl_hdl;
 	uint32_t       sram_tbl_hdl;
 	uint32_t       tot_slots_in_sram;
@@ -146,10 +170,31 @@ typedef struct
 #define DDR_SUB  0
 #define SRAM_SUB 1
 
+#undef BACK2_UNSTARTED_STATE
+#define BACK2_UNSTARTED_STATE() \
+	nati_obj.prev_state = nati_obj.curr_state = NATI_STATE_NULL;
+
+#undef IN_UNSTARTED_STATE
+#define IN_UNSTARTED_STATE() \
+	( nati_obj.prev_state == NATI_STATE_NULL )
+
 #undef IN_HYBRID_STATE
 #define IN_HYBRID_STATE() \
 	( nati_obj.curr_state == NATI_STATE_HYBRID || \
 	  nati_obj.curr_state == NATI_STATE_HYBRID_DDR )
+
+#undef COMPATIBLE_NMI_4SWITCH
+#define COMPATIBLE_NMI_4SWITCH(n) \
+	( (n) == IPA_NAT_MEM_IN_SRAM && nati_obj.curr_state == NATI_STATE_HYBRID_DDR ) || \
+	( (n) == IPA_NAT_MEM_IN_DDR  && nati_obj.curr_state == NATI_STATE_HYBRID ) || \
+	( (n) == IPA_NAT_MEM_IN_DDR  && nati_obj.curr_state == NATI_STATE_DDR_ONLY ) || \
+	( (n) == IPA_NAT_MEM_IN_SRAM && nati_obj.curr_state == NATI_STATE_SRAM_ONLY )
+
+#undef GEN_HOLD_STATE
+#define GEN_HOLD_STATE() \
+	( ! IN_HYBRID_STATE() ) ? nati_obj.curr_state : \
+	(nati_obj.curr_state == NATI_STATE_HYBRID) ? NATI_STATE_SRAM_ONLY : \
+	NATI_STATE_DDR_ONLY
 
 #undef  SRAM_CURRENTLY_ACTIVE
 #define SRAM_CURRENTLY_ACTIVE() \

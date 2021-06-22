@@ -2393,8 +2393,8 @@ int gsi_get_hw_profiling_stats(struct gsi_hw_profiling_data *stats);
  */
 int gsi_get_fw_version(struct gsi_fw_version *ver);
 
-int gsi_flow_control_ee(unsigned int chan_idx, unsigned int ee,
-				bool enable, bool prmy_scnd_fc, int *code);
+int gsi_flow_control_ee(unsigned int chan_idx, int ep_id, unsigned int ee,
+    bool enable, bool prmy_scnd_fc, int *code);
 int gsi_query_flow_control_state_ee(unsigned int chan_idx, unsigned int ee,
 						bool prmy_scnd_fc, int *code);
 /*

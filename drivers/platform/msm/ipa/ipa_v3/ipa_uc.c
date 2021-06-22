@@ -55,6 +55,7 @@
  * IPA_CPU_2_HW_CMD_DEL_HOLB_MONITOR: Command to delete GSI channel to HOLB
  *                                 monitor.
  * IPA_CPU_2_HW_CMD_DISABLE_HOLB_MONITOR: Command to disable HOLB monitoring.
+ * IPA_CPU_2_HW_CMD_ADD_EOGRE_MAPPING: Command to create/update GRE mapping
  */
 enum ipa3_cpu_2_hw_commands {
 	IPA_CPU_2_HW_CMD_NO_OP                     =
@@ -97,6 +98,8 @@ enum ipa3_cpu_2_hw_commands {
 		FEATURE_ENUM_VAL(IPA_HW_FEATURE_COMMON, 19),
 	IPA_CPU_2_HW_CMD_DISABLE_HOLB_MONITOR       =
 		FEATURE_ENUM_VAL(IPA_HW_FEATURE_COMMON, 20),
+	IPA_CPU_2_HW_CMD_ADD_EOGRE_MAPPING             =
+		FEATURE_ENUM_VAL(IPA_HW_FEATURE_COMMON, 21),
 };
 
 /**
@@ -1079,8 +1082,8 @@ send_cmd:
 			goto send_cmd;
 		}
 
-		IPAERR("Received status %u, Expected status %u\n",
-			ipa3_ctx->uc_ctx.uc_status, expected_status);
+		IPAERR("uC cmd(%u): Received status %u, Expected status %u\n",
+			   opcode, ipa3_ctx->uc_ctx.uc_status, expected_status);
 		IPA3_UC_UNLOCK(flags);
 		return -EFAULT;
 	}
@@ -1981,5 +1984,64 @@ int ipa3_uc_send_update_flow_control(uint32_t bitmask,
 			bitmask, add_delete);
 
 	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
+	return res;
+}
+
+/**
+ * ipa3_add_dscp_vlan_pcp_map() - Feed "vlan/pcp to dscp" map into the IPA uC
+ * @map: The mapping data destined for the uC
+ *
+ * Returns: 0 on success, negative on failure
+ */
+int ipa3_add_dscp_vlan_pcp_map(
+	struct IpaDscpVlanPcpMap_t *map )
+{
+	struct ipa_mem_buffer       mem;
+	struct IpaDscpVlanPcpMap_t *cmd;
+	int res;
+
+	if (!map) {
+		IPAERR("null argument (ie. map) passed\n");
+		return -EINVAL;
+	}
+
+	IPADBG("map add attempt. num_vlan: %u\n", map->num_vlan);
+
+	mem.size = sizeof(struct IpaDscpVlanPcpMap_t);
+
+	mem.base = dma_alloc_coherent(
+		ipa3_ctx->uc_pdev, mem.size,
+		&mem.phys_base, GFP_KERNEL);
+
+	if (!mem.base) {
+		IPAERR("Fail to alloc DMA buff of size %d\n", mem.size);
+		return -ENOMEM;
+	}
+
+	cmd = (struct IpaDscpVlanPcpMap_t *) mem.base;
+
+	memcpy(cmd, map, sizeof(struct IpaDscpVlanPcpMap_t));
+
+	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
+
+	res = ipa3_uc_send_cmd(
+		(u32) mem.phys_base,
+		IPA_CPU_2_HW_CMD_ADD_EOGRE_MAPPING,
+		0, true, 10 * HZ);
+
+	if (res) {
+		IPAERR("ipa3_uc_send_cmd failed %d\n", res);
+		goto free_coherent;
+	}
+
+	IPADBG("map add success\n");
+
+	res = 0;
+
+free_coherent:
+	dma_free_coherent(ipa3_ctx->uc_pdev, mem.size, mem.base, mem.phys_base);
+
+	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
+
 	return res;
 }

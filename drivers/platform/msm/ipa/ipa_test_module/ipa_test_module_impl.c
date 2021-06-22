@@ -532,14 +532,14 @@ int create_channel_device_by_type(
 	/* Add a pointer from the channel device to the test context info */
 	channel_dev->test = ipa_test;
 
-	channel_dev->class = class_create(THIS_MODULE, name);
+	channel_dev->class = class_create(THIS_MODULE, channel_dev->name);
 	if (IS_ERR(channel_dev->class)) {
 		IPATEST_ERR(":class_create() err.\n");
 		ret = -ENOMEM;
 		goto create_class_failure;
 	}
 
-	ret = alloc_chrdev_region(&channel_dev->dev_num, 0, 1, name);
+	ret = alloc_chrdev_region(&channel_dev->dev_num, 0, 1, channel_dev->name);
 	if (ret) {
 		IPATEST_ERR("alloc_chrdev_region err.\n");
 		ret = -ENOMEM;
@@ -547,7 +547,7 @@ int create_channel_device_by_type(
 	}
 
 	channel_dev->dev = device_create(channel_dev->class, NULL,
-		channel_dev->dev_num, channel_dev, name);
+		channel_dev->dev_num, channel_dev, channel_dev->name);
 	if (IS_ERR(channel_dev->dev)) {
 		IPATEST_ERR("device_create err.\n");
 		ret = -ENODEV;
@@ -576,7 +576,7 @@ int create_channel_device_by_type(
 
 	if (!ret)
 		IPATEST_DBG("Channel device:%d, name:%s created, address:0x%px.\n",
-			index, name, channel_dev);
+			index, channel_dev->name, channel_dev);
 
 	return 0;
 
@@ -593,7 +593,7 @@ create_class_failure:
 create_channel_device_failure:
 	kfree(channel_dev);
 	IPATEST_ERR("Channel device %d, name %s creation FAILED.\n",
-		index, name);
+		index, channel_dev->name);
 
 	return ret;
 }
@@ -4518,6 +4518,22 @@ static int handle_holb_config_ioctl(unsigned long ioctl_arg)
 	return ipa3_cfg_ep_holb(clnt_hdl, &holb_cfg);
 }
 
+static int ipa_test_get_mem_part(unsigned long ioctl_arg)
+{
+	unsigned long result;
+
+	// Let's check that mirrored structure is of the same siz as the original
+	BUILD_BUG_ON(sizeof(struct ipa_test_mem_partition) != sizeof(struct ipa3_mem_partition));
+
+	result = copy_to_user((u8 *)ioctl_arg,
+		ipa3_ctx->ctrl->mem_partition, sizeof(struct ipa3_mem_partition));
+
+	if (result != 0)
+		return -EACCES;
+
+	return 0;
+}
+
 static long ipa_test_ioctl(struct file *filp,
 	unsigned int cmd, unsigned long arg)
 {
@@ -4550,6 +4566,8 @@ static long ipa_test_ioctl(struct file *filp,
 		break;
 	case IPA_TEST_IOC_IS_TEST_PROD_FLT_IN_SRAM:
 		retval = ipa_is_test_prod_flt_in_sram_internal(arg);
+	case IPA_TEST_IOC_GET_MEM_PART:
+		retval = ipa_test_get_mem_part(arg);
 		break;
 	default:
 		IPATEST_ERR("ioctl is not supported (%d)\n", cmd);
