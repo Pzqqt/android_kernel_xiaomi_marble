@@ -22,6 +22,7 @@
 #include "hal_be_reo.h"
 #include "hal_tx.h"	//HAL_SET_FLD
 #include "hal_be_rx.h"	//HAL_RX_BUF_RBM_GET
+#include "hal_be_rx_tlv.h"
 
 #if defined(QDF_BIG_ENDIAN_MACHINE)
 /**
