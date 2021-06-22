@@ -232,11 +232,13 @@ static int lpass_cdc_clk_rsc_mux1_clk_request(struct lpass_cdc_clk_rsc *priv,
 
 	if (enable) {
 		if (priv->clk_cnt[clk_id] == 0) {
-			ret = lpass_cdc_clk_rsc_mux0_clk_request(priv,
+			if (clk_id != VA_CORE_CLK) {
+				ret = lpass_cdc_clk_rsc_mux0_clk_request(priv,
 							default_clk_id,
 							true);
-			if (ret < 0)
-				goto done;
+				if (ret < 0)
+					goto done;
+			}
 
 			ret = clk_prepare_enable(priv->clk[clk_id]);
 			if (ret < 0) {
@@ -244,14 +246,22 @@ static int lpass_cdc_clk_rsc_mux1_clk_request(struct lpass_cdc_clk_rsc *priv,
 					__func__, clk_id);
 				goto err_clk;
 			}
-			if (priv->dev_up_gfmux) {
-				iowrite32(0x1, clk_muxsel);
-				muxsel = ioread32(clk_muxsel);
-				trace_printk("%s: muxsel value after enable: %d\n",
-						__func__, muxsel);
-			}
-			lpass_cdc_clk_rsc_mux0_clk_request(priv, default_clk_id,
+			/*
+			 * Temp SW workaround to address a glitch issue of
+			 * VA GFMux instance responsible for switching from
+			 * TX MCLK to VA MCLK. This configuration would be taken
+			 * care in DSP itself
+			 */
+			if (clk_id != VA_CORE_CLK) {
+				if (priv->dev_up_gfmux) {
+					iowrite32(0x1, clk_muxsel);
+					muxsel = ioread32(clk_muxsel);
+					trace_printk("%s: muxsel value after enable: %d\n",
+							__func__, muxsel);
+				}
+				lpass_cdc_clk_rsc_mux0_clk_request(priv, default_clk_id,
 							   false);
+			}
 		}
 		priv->clk_cnt[clk_id]++;
 	} else {
@@ -263,24 +273,34 @@ static int lpass_cdc_clk_rsc_mux1_clk_request(struct lpass_cdc_clk_rsc *priv,
 		}
 		priv->clk_cnt[clk_id]--;
 		if (priv->clk_cnt[clk_id] == 0) {
-			ret = lpass_cdc_clk_rsc_mux0_clk_request(priv,
+			/*
+			 * Temp SW workaround to address a glitch issue
+			 * of VA GFMux instance responsible for
+			 * switching from TX MCLK to VA MCLK.
+			 * This configuration would be taken
+			 * care in DSP itself.
+			 */
+			if (clk_id != VA_CORE_CLK) {
+				ret = lpass_cdc_clk_rsc_mux0_clk_request(priv,
 						default_clk_id, true);
-			if (!ret && priv->dev_up_gfmux) {
-				iowrite32(0x0, clk_muxsel);
-				muxsel = ioread32(clk_muxsel);
-				trace_printk("%s: muxsel value after disable: %d\n",
+				if (!ret && priv->dev_up_gfmux) {
+					iowrite32(0x0, clk_muxsel);
+					muxsel = ioread32(clk_muxsel);
+					trace_printk("%s: muxsel value after disable: %d\n",
 						__func__, muxsel);
+				}
 			}
 			clk_disable_unprepare(priv->clk[clk_id]);
-			if (!ret)
+			if (clk_id != VA_CORE_CLK && !ret)
 				lpass_cdc_clk_rsc_mux0_clk_request(priv,
-							default_clk_id, false);
+						default_clk_id, false);
 		}
 	}
 	return ret;
 
 err_clk:
-	lpass_cdc_clk_rsc_mux0_clk_request(priv, default_clk_id, false);
+	if (clk_id != VA_CORE_CLK)
+		lpass_cdc_clk_rsc_mux0_clk_request(priv, default_clk_id, false);
 done:
 	return ret;
 }

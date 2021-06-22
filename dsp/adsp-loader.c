@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2014, 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014, 2017-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -135,16 +135,6 @@ static void adsp_load_fw(struct work_struct *adsp_ldr_work)
 
 load_adsp:
 	{
-		prop = of_find_property(pdev->dev.of_node, "qcom,rproc-handle",
-						&size);
-		if (!prop) {
-			dev_err(&pdev->dev, "Missing remotproc handle\n");
-			goto fail;
-		}
-		rproc_phandle = be32_to_cpup(prop->value);
-		priv->pil_h = rproc_get_by_phandle(rproc_phandle);
-		if (!priv->pil_h)
-			goto fail;
 		adsp_state = spf_core_is_apm_ready();
 		if (adsp_state == SPF_SUBSYS_DOWN) {
 			rc = rproc_boot(priv->pil_h);
@@ -199,8 +189,8 @@ static ssize_t adsp_ssr_store(struct kobject *kobj,
 
 	dev_err(&pdev->dev, "requesting for ADSP restart\n");
 
-	/* subsystem_restart_dev has worker queue to handle */
-	rproc_report_crash(adsp_dev, RPROC_FATAL_ERROR);
+	rproc_shutdown(adsp_dev);
+	adsp_loader_do(adsp_private);
 
 	dev_dbg(&pdev->dev, "%s :: ADSP restarted\n", __func__);
 	return count;
@@ -239,7 +229,6 @@ static void adsp_loader_unload(struct platform_device *pdev)
 
 	if (priv->pil_h) {
 		rproc_shutdown(priv->pil_h);
-		priv->pil_h = NULL;
 	}
 }
 
@@ -336,14 +325,34 @@ static int adsp_loader_probe(struct platform_device *pdev)
 	int ret = 0;
 	u32 adsp_fuse_not_supported = 0;
 	const char *adsp_fw_name;
+	struct property *prop;
+	int size;
+	phandle rproc_phandle;
+	struct rproc *adsp;
+
+	prop = of_find_property(pdev->dev.of_node, "qcom,rproc-handle",
+				&size);
+	if (!prop) {
+		dev_err(&pdev->dev, "Missing remotproc handle\n");
+		return -ENOPARAM;
+	}
+	rproc_phandle = be32_to_cpup(prop->value);
+	adsp = rproc_get_by_phandle(rproc_phandle);
+	if (!adsp) {
+		dev_err(&pdev->dev, "fail to get rproc\n", __func__);
+		return -EPROBE_DEFER;
+	}
 
 	ret = adsp_loader_init_sysfs(pdev);
 	if (ret != 0) {
 		dev_err(&pdev->dev, "%s: Error in initing sysfs\n", __func__);
+		rproc_put(adsp);
 		return ret;
 	}
 
 	priv = platform_get_drvdata(pdev);
+	priv->pil_h = adsp;
+
 	/* get adsp variant idx */
 	cell = nvmem_cell_get(&pdev->dev, "adsp_variant");
 	if (IS_ERR_OR_NULL(cell)) {
@@ -462,6 +471,7 @@ wqueue:
 		devm_kfree(&pdev->dev, adsp_fw_bit_values);
 	if (adsp_fw_name_array)
 		devm_kfree(&pdev->dev, adsp_fw_name_array);
+
 	return 0;
 
 }

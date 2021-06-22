@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/gpio.h>
@@ -119,6 +119,7 @@ struct lpi_gpio_state {
 	struct mutex         slew_access_lock;
 	bool core_hw_vote_status;
 	struct mutex        core_hw_vote_lock;
+	struct work_struct reset_work;
 };
 
 static const char *const lpi_gpio_groups[] = {
@@ -471,6 +472,18 @@ static void lpi_gpio_set(struct gpio_chip *chip, unsigned int pin, int value)
 	lpi_config_set(state->ctrl, pin, &config, 1);
 }
 
+static void lpi_clk_reset(struct work_struct *work)
+{
+	struct lpi_gpio_state *state = dev_get_drvdata(lpi_dev);
+
+	if (state->lpass_core_hw_vote)
+		digital_cdc_rsc_mgr_hw_vote_reset(
+			state->lpass_core_hw_vote);
+	if (state->lpass_audio_hw_vote)
+		digital_cdc_rsc_mgr_hw_vote_reset(
+			state->lpass_audio_hw_vote);
+}
+
 static int lpi_notifier_service_cb(struct notifier_block *this,
 				   unsigned long opcode, void *ptr)
 {
@@ -496,12 +509,7 @@ static int lpi_notifier_service_cb(struct notifier_block *this,
 		if (!lpi_dev_up) {
 			/* Add 100ms sleep to ensure AVS is up after SSR */
 			msleep(100);
-			if (state->lpass_core_hw_vote)
-				digital_cdc_rsc_mgr_hw_vote_reset(
-					state->lpass_core_hw_vote);
-			if (state->lpass_audio_hw_vote)
-				digital_cdc_rsc_mgr_hw_vote_reset(
-					state->lpass_audio_hw_vote);
+			schedule_work(&state->reset_work);
 		}
 
 		lpi_dev_up = true;
@@ -742,6 +750,7 @@ static int lpi_pinctrl_probe(struct platform_device *pdev)
 	}
 
 	state->base = lpi_base;
+	INIT_WORK(&state->reset_work, lpi_clk_reset);
 
 	for (i = 0; i < npins; i++, pindesc++) {
 		pad = &pads[i];

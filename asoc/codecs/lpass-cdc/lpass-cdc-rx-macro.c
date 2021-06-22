@@ -1352,7 +1352,13 @@ static int lpass_cdc_rx_macro_mclk_enable(
 		if (rx_priv->rx_mclk_users == 0) {
 			if (rx_priv->is_native_on)
 				rx_priv->clk_id = RX_CORE_CLK;
-			lpass_cdc_rx_macro_core_vote(rx_priv, true);
+			ret = lpass_cdc_rx_macro_core_vote(rx_priv, true);
+			if (ret < 0) {
+				dev_err(rx_priv->dev,
+					"%s: rx request core vote failed\n",
+					__func__);
+				goto exit;
+			}
 			ret = lpass_cdc_clk_rsc_request_clock(rx_priv->dev,
 							   rx_priv->default_clk_id,
 							   rx_priv->clk_id,
@@ -1407,7 +1413,13 @@ static int lpass_cdc_rx_macro_mclk_enable(
 				0x01, 0x00);
 			lpass_cdc_clk_rsc_fs_gen_request(rx_priv->dev,
 			   false);
-			lpass_cdc_rx_macro_core_vote(rx_priv, true);
+			ret = lpass_cdc_rx_macro_core_vote(rx_priv, true);
+			if (ret < 0) {
+				dev_err(rx_priv->dev,
+					"%s: rx request core vote failed\n",
+					__func__);
+				goto exit;
+			}
 			lpass_cdc_clk_rsc_request_clock(rx_priv->dev,
 						 rx_priv->default_clk_id,
 						 rx_priv->clk_id,
@@ -1522,7 +1534,13 @@ static int lpass_cdc_rx_macro_event_handler(struct snd_soc_component *component,
 		}
 		break;
 	case LPASS_CDC_MACRO_EVT_PRE_SSR_UP:
-		lpass_cdc_rx_macro_core_vote(rx_priv, true);
+		ret = lpass_cdc_rx_macro_core_vote(rx_priv, true);
+		if (ret < 0) {
+			dev_err(rx_priv->dev,
+				"%s: rx request core vote failed\n",
+				__func__);
+			break;
+		}
 		/* enable&disable RX_CORE_CLK to reset GFMUX reg */
 		ret = lpass_cdc_clk_rsc_request_clock(rx_priv->dev,
 						rx_priv->default_clk_id,

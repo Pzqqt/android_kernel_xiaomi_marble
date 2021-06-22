@@ -176,7 +176,7 @@ struct tx_macro_priv {
 	int bcs_ch;
 	bool bcs_clk_en;
 	bool hs_slow_insert_complete;
-	int amic_sample_rate;
+	int pcm_rate[NUM_DECIMATORS];
 	bool lpi_enable;
 	bool register_event_listener;
 	u16 current_clk_id;
@@ -545,23 +545,23 @@ static void tx_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 		snd_soc_component_update_bits(component, hpf_gate_reg,
 						0x03, 0x02);
 		/* Add delay between toggle hpf gate based on sample rate */
-		switch(tx_priv->amic_sample_rate) {
-		case 8000:
+		switch (tx_priv->pcm_rate[hpf_work->decimator]) {
+		case 0:
 			usleep_range(125, 130);
 			break;
-		case 16000:
+		case 1:
 			usleep_range(62, 65);
 			break;
-		case 32000:
+		case 3:
 			usleep_range(31, 32);
 			break;
-		case 48000:
+		case 4:
 			usleep_range(20, 21);
 			break;
-		case 96000:
+		case 5:
 			usleep_range(10, 11);
 			break;
-		case 192000:
+		case 6:
 			usleep_range(5, 6);
 			break;
 		default:
@@ -1061,7 +1061,7 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 	tx_fs_reg = BOLERO_CDC_TX0_TX_PATH_CTL +
 				TX_MACRO_TX_PATH_OFFSET * decimator;
 
-	tx_priv->amic_sample_rate = (snd_soc_component_read(component,
+	tx_priv->pcm_rate[decimator] = (snd_soc_component_read(component,
 				     tx_fs_reg) & 0x0F);
 
 	switch (event) {
@@ -2722,6 +2722,7 @@ static int tx_macro_tx_va_mclk_enable(struct tx_macro_priv *tx_priv,
 			}
 			bolero_clk_rsc_fs_gen_request(tx_priv->dev,
 						  true);
+			mutex_lock(&tx_priv->mclk_lock);
 			if (tx_priv->tx_mclk_users == 0) {
 				regmap_update_bits(regmap,
 					BOLERO_CDC_TX_TOP_CSR_FREQ_MCLK,
@@ -2734,6 +2735,7 @@ static int tx_macro_tx_va_mclk_enable(struct tx_macro_priv *tx_priv,
 					0x01, 0x01);
 			}
 			tx_priv->tx_mclk_users++;
+			mutex_unlock(&tx_priv->mclk_lock);
 		}
 		if (tx_priv->swr_clk_users == 0) {
 			dev_dbg(tx_priv->dev, "%s: reset_swr: %d\n",
@@ -2778,10 +2780,12 @@ static int tx_macro_tx_va_mclk_enable(struct tx_macro_priv *tx_priv,
 		if (clk_type == TX_MCLK)
 			tx_macro_mclk_enable(tx_priv, 0);
 		if (clk_type == VA_MCLK) {
+			mutex_lock(&tx_priv->mclk_lock);
 			if (tx_priv->tx_mclk_users <= 0) {
 				dev_err(tx_priv->dev, "%s: clock already disabled\n",
 						__func__);
 				tx_priv->tx_mclk_users = 0;
+				mutex_unlock(&tx_priv->mclk_lock);
 				goto tx_clk;
 			}
 			tx_priv->tx_mclk_users--;
@@ -2793,7 +2797,7 @@ static int tx_macro_tx_va_mclk_enable(struct tx_macro_priv *tx_priv,
 					BOLERO_CDC_TX_CLK_RST_CTRL_MCLK_CONTROL,
 					0x01, 0x00);
 			}
-
+			mutex_unlock(&tx_priv->mclk_lock);
 			bolero_clk_rsc_fs_gen_request(tx_priv->dev,
 						false);
 			ret = bolero_clk_rsc_request_clock(tx_priv->dev,

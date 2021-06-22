@@ -171,6 +171,8 @@ struct lpass_cdc_va_macro_priv {
 	bool lpi_enable;
 	bool clk_div_switch;
 	int dec_mode[LPASS_CDC_VA_MACRO_NUM_DECIMATORS];
+	int pcm_rate[LPASS_CDC_VA_MACRO_NUM_DECIMATORS];
+	bool wcd_dmic_enabled;
 };
 
 static bool lpass_cdc_va_macro_get_data(struct snd_soc_component *component,
@@ -227,10 +229,18 @@ static int lpass_cdc_va_macro_mclk_enable(
 
 	mutex_lock(&va_priv->mclk_lock);
 	if (mclk_enable) {
+		ret = lpass_cdc_va_macro_core_vote(va_priv, true);
+		if (ret < 0) {
+			dev_err(va_priv->dev,
+				"%s: va request core vote failed\n",
+				__func__);
+			goto exit;
+		}
 		ret = lpass_cdc_clk_rsc_request_clock(va_priv->dev,
 						   va_priv->default_clk_id,
 						   va_priv->clk_id,
 						   true);
+		lpass_cdc_va_macro_core_vote(va_priv, false);
 		if (ret < 0) {
 			dev_err(va_priv->dev,
 				"%s: va request clock en failed\n",
@@ -256,10 +266,18 @@ static int lpass_cdc_va_macro_mclk_enable(
 		va_priv->va_mclk_users--;
 		lpass_cdc_clk_rsc_fs_gen_request(va_priv->dev,
 					  false);
+		ret = lpass_cdc_va_macro_core_vote(va_priv, true);
+		if (ret < 0) {
+			dev_err(va_priv->dev,
+				"%s: va request core vote failed\n",
+				__func__);
+			goto exit;
+		}
 		lpass_cdc_clk_rsc_request_clock(va_priv->dev,
 					va_priv->default_clk_id,
 					va_priv->clk_id,
 					false);
+		lpass_cdc_va_macro_core_vote(va_priv, false);
 	}
 exit:
 	mutex_unlock(&va_priv->mclk_lock);
@@ -301,7 +319,13 @@ static int lpass_cdc_va_macro_event_handler(struct snd_soc_component *component,
 		break;
 	case LPASS_CDC_MACRO_EVT_PRE_SSR_UP:
 		/* enable&disable VA_CORE_CLK to reset GFMUX reg */
-		lpass_cdc_va_macro_core_vote(va_priv, true);
+		ret = lpass_cdc_va_macro_core_vote(va_priv, true);
+		if (ret < 0) {
+			dev_err(va_priv->dev,
+				"%s: va request core vote failed\n",
+				__func__);
+			break;
+		}
 		ret = lpass_cdc_clk_rsc_request_clock(va_priv->dev,
 						va_priv->default_clk_id,
 						VA_CORE_CLK, true);
@@ -398,10 +422,18 @@ static int lpass_cdc_va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		if (va_priv->default_clk_id != VA_CORE_CLK) {
+			ret = lpass_cdc_va_macro_core_vote(va_priv, true);
+			if (ret < 0) {
+				dev_err(va_priv->dev,
+					"%s: va request core vote failed\n",
+					__func__);
+				break;
+			}
 			ret = lpass_cdc_clk_rsc_request_clock(va_priv->dev,
 					va_priv->default_clk_id,
 					VA_CORE_CLK,
 					true);
+			lpass_cdc_va_macro_core_vote(va_priv, false);
 			if (ret) {
 				dev_dbg(component->dev,
 					"%s: request clock VA_CLK enable failed\n",
@@ -436,10 +468,18 @@ static int lpass_cdc_va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
 					__func__);
 				break;
 			}
+			ret = lpass_cdc_va_macro_core_vote(va_priv, true);
+			if (ret < 0) {
+				dev_err(va_priv->dev,
+					"%s: va request core vote failed\n",
+					__func__);
+				break;
+			}
 			ret = lpass_cdc_clk_rsc_request_clock(va_priv->dev,
 					va_priv->default_clk_id,
 					VA_CORE_CLK,
 					false);
+			lpass_cdc_va_macro_core_vote(va_priv, false);
 			if (ret) {
 				dev_dbg(component->dev,
 					"%s: request clock VA_CLK disable failed\n",
@@ -834,8 +874,29 @@ static void lpass_cdc_va_macro_tx_hpf_corner_freq_callback(
 				hpf_cut_off_freq << 5);
 		snd_soc_component_update_bits(component, hpf_gate_reg,
 					      0x03, 0x02);
-		/* Minimum 1 clk cycle delay is required as per HW spec */
-		usleep_range(1000, 1010);
+		/* Add delay between toggle hpf gate based on sample rate */
+		switch (va_priv->pcm_rate[hpf_work->decimator]) {
+		case 0:
+			usleep_range(125, 130);
+			break;
+		case 1:
+			usleep_range(62, 65);
+			break;
+		case 3:
+			usleep_range(31, 32);
+			break;
+		case 4:
+			usleep_range(20, 21);
+			break;
+		case 5:
+			usleep_range(10, 11);
+			break;
+		case 6:
+			usleep_range(5, 6);
+			break;
+		default:
+			usleep_range(125, 130);
+		}
 		snd_soc_component_update_bits(component, hpf_gate_reg,
 					      0x03, 0x01);
 	} else {
@@ -917,7 +978,7 @@ static int lpass_cdc_va_macro_put_dec_enum(struct snd_kcontrol *kcontrol,
 	}
 	if (strnstr(widget->name, "SMIC", strlen(widget->name))) {
 		if (val != 0) {
-			if (val < 5) {
+			if (!va_priv->wcd_dmic_enabled) {
 				snd_soc_component_update_bits(component,
 							mic_sel_reg,
 							1 << 7, 0x0 << 7);
@@ -979,6 +1040,7 @@ static int lpass_cdc_va_macro_lpi_put(struct snd_kcontrol *kcontrol,
 
 	return 0;
 }
+
 
 static int lpass_cdc_va_macro_tx_mixer_get(struct snd_kcontrol *kcontrol,
 			     struct snd_ctl_elem_value *ucontrol)
@@ -1085,6 +1147,7 @@ static int lpass_cdc_va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 	u16 tx_gain_ctl_reg;
 	u8 hpf_cut_off_freq;
 	u16 adc_mux_reg = 0;
+	u16 tx_fs_reg = 0;
 	struct device *va_dev = NULL;
 	struct lpass_cdc_va_macro_priv *va_priv = NULL;
 	int hpf_delay = LPASS_CDC_VA_TX_DMIC_HPF_DELAY_MS;
@@ -1109,6 +1172,10 @@ static int lpass_cdc_va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 				LPASS_CDC_VA_MACRO_TX_PATH_OFFSET * decimator;
 	adc_mux_reg = LPASS_CDC_VA_INP_MUX_ADC_MUX0_CFG1 +
 			LPASS_CDC_VA_MACRO_ADC_MUX_CFG_OFFSET * decimator;
+	tx_fs_reg = LPASS_CDC_VA_TX0_TX_PATH_CTL +
+				LPASS_CDC_VA_MACRO_TX_PATH_OFFSET * decimator;
+	va_priv->pcm_rate[decimator] = (snd_soc_component_read(component,
+				tx_fs_reg) & 0x0F);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
@@ -2271,6 +2338,7 @@ static int lpass_cdc_va_macro_probe(struct platform_device *pdev)
 	const char *micb_current_str = "qcom,va-vdd-micb-current";
 	int ret = 0;
 	const char *dmic_sample_rate = "qcom,va-dmic-sample-rate";
+	const char *wcd_dmic_enabled = "qcom,wcd-dmic-enabled";
 	u32 default_clk_id = 0;
 	struct clk *lpass_audio_hw_vote = NULL;
 	u32 is_used_va_swr_gpio = 0;
@@ -2290,6 +2358,10 @@ static int lpass_cdc_va_macro_probe(struct platform_device *pdev)
 		return ret;
 	}
 
+	if (of_find_property(pdev->dev.of_node, wcd_dmic_enabled, NULL))
+		va_priv->wcd_dmic_enabled = true;
+	else
+		va_priv->wcd_dmic_enabled = false;
 	ret = of_property_read_u32(pdev->dev.of_node, dmic_sample_rate,
 				   &sample_rate);
 	if (ret) {

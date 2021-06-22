@@ -221,22 +221,22 @@ static void check_userspace_service_state(struct snd_soc_pcm_runtime *rtd,
 
 static int get_intf_index(const char *stream_name)
 {
-	if (strnstr(stream_name, "PRIMARY", strlen(stream_name)))
-		return PRI_MI2S_TDM_AUXPCM;
-	else if (strnstr(stream_name, "SECONDARY", strlen(stream_name)))
-		return SEC_MI2S_TDM_AUXPCM;
-	else if (strnstr(stream_name, "TERTIARY", strlen(stream_name)))
-		return TER_MI2S_TDM_AUXPCM;
-	else if (strnstr(stream_name, "QUATERNARY", strlen(stream_name)))
+	if (strnstr(stream_name, "LPAIF_RXTX", strlen(stream_name)))
 		return QUAT_MI2S_TDM_AUXPCM;
-	else if (strnstr(stream_name, "QUINARY", strlen(stream_name)))
-		return QUIN_MI2S_TDM_AUXPCM;
-	else if (strnstr(stream_name, "SENARY", strlen(stream_name)))
+	else if (strnstr(stream_name, "LPAIF_WSA", strlen(stream_name)))
 		return SEN_MI2S_TDM_AUXPCM;
-	else {
-		pr_debug("%s: stream name %s does not match\n", __func__, stream_name);
-		return -EINVAL;
+	else if (strnstr(stream_name, "LPAIF_VA", strlen(stream_name)))
+		return QUIN_MI2S_TDM_AUXPCM;
+	else if (strnstr(stream_name, "LPAIF_AUD", strlen(stream_name)))
+		return SEC_MI2S_TDM_AUXPCM;
+	else if (strnstr(stream_name, "LPAIF", strlen(stream_name))) {
+		if (strnstr(stream_name, "PRIMARY", strlen(stream_name)))
+			return PRI_MI2S_TDM_AUXPCM;
+		else if (strnstr(stream_name, "TERTIARY", strlen(stream_name)))
+			return TER_MI2S_TDM_AUXPCM;
 	}
+	pr_debug("%s: stream name %s does not match\n", __func__, stream_name);
+	return -EINVAL;
 }
 
 int msm_common_snd_startup(struct snd_pcm_substream *substream)

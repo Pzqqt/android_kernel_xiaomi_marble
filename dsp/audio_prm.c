@@ -1,13 +1,6 @@
-/* Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 and
- * only version 2 as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+// SPDX-License-Identifier: GPL-2.0-only
+/*
+ * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/slab.h>
@@ -37,6 +30,7 @@ struct audio_prm {
 	atomic_t state;
 	atomic_t status;
 	bool is_adsp_up;
+	struct work_struct reset_work;
 };
 
 static struct audio_prm g_prm;
@@ -313,6 +307,13 @@ int audio_prm_set_lpass_clk_cfg (struct clk_cfg *clk, uint8_t enable)
 }
 EXPORT_SYMBOL(audio_prm_set_lpass_clk_cfg);
 
+static void audio_prm_adsp_work(struct work_struct *work)
+{
+	mutex_lock(&g_prm.lock);
+	g_prm.is_adsp_up = true;
+	mutex_unlock(&g_prm.lock);
+}
+
 static int audio_prm_service_cb(struct notifier_block *this,
 				unsigned long opcode, void *data)
 {
@@ -327,9 +328,7 @@ static int audio_prm_service_cb(struct notifier_block *this,
 		mutex_unlock(&g_prm.lock);
 		break;
 	case AUDIO_NOTIFIER_SERVICE_UP:
-		mutex_lock(&g_prm.lock);
-		g_prm.is_adsp_up = true;
-		mutex_unlock(&g_prm.lock);
+		schedule_work(&g_prm.reset_work);
 		break;
 	default:
 		break;
@@ -362,6 +361,7 @@ static int audio_prm_probe(struct gpr_device *adev)
 
 	init_waitqueue_head(&g_prm.wait);
 	g_prm.is_adsp_up = true;
+	INIT_WORK(&g_prm.reset_work, audio_prm_adsp_work);
 	pr_err("%s: prm probe success\n", __func__);
 	return ret;
 }
@@ -374,6 +374,9 @@ static int audio_prm_remove(struct gpr_device *adev)
 	mutex_lock(&g_prm.lock);
 	g_prm.is_adsp_up = false;
 	g_prm.adev = NULL;
+	flush_work(&g_prm.reset_work);
+	cancel_work_sync(&g_prm.reset_work);
+	INIT_WORK(&g_prm.reset_work, NULL);
 	mutex_unlock(&g_prm.lock);
 	return ret;
 }

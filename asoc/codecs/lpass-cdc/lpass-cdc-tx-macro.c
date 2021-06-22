@@ -144,7 +144,8 @@ struct lpass_cdc_tx_macro_priv {
 	int bcs_ch;
 	bool bcs_clk_en;
 	bool hs_slow_insert_complete;
-	int amic_sample_rate;
+	int pcm_rate[NUM_DECIMATORS];
+	bool wcd_dmic_enabled;
 };
 
 static bool lpass_cdc_tx_macro_get_data(struct snd_soc_component *component,
@@ -399,23 +400,23 @@ static void lpass_cdc_tx_macro_tx_hpf_corner_freq_callback(struct work_struct *w
 		snd_soc_component_update_bits(component, hpf_gate_reg,
 						0x03, 0x02);
 		/* Add delay between toggle hpf gate based on sample rate */
-		switch(tx_priv->amic_sample_rate) {
-		case 8000:
+		switch (tx_priv->pcm_rate[hpf_work->decimator]) {
+		case 0:
 			usleep_range(125, 130);
 			break;
-		case 16000:
+		case 1:
 			usleep_range(62, 65);
 			break;
-		case 32000:
+		case 3:
 			usleep_range(31, 32);
 			break;
-		case 48000:
+		case 4:
 			usleep_range(20, 21);
 			break;
-		case 96000:
+		case 5:
 			usleep_range(10, 11);
 			break;
-		case 192000:
+		case 6:
 			usleep_range(5, 6);
 			break;
 		default:
@@ -515,7 +516,7 @@ static int lpass_cdc_tx_macro_put_dec_enum(struct snd_kcontrol *kcontrol,
 	}
 	if (strnstr(widget->name, "SMIC", strlen(widget->name))) {
 		if (val != 0) {
-			if (val < 5) {
+			if (!tx_priv->wcd_dmic_enabled) {
 				snd_soc_component_update_bits(component,
 							mic_sel_reg,
 							1 << 7, 0x0 << 7);
@@ -877,7 +878,7 @@ static int lpass_cdc_tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 	tx_fs_reg = LPASS_CDC_TX0_TX_PATH_CTL +
 				LPASS_CDC_TX_MACRO_TX_PATH_OFFSET * decimator;
 
-	tx_priv->amic_sample_rate = (snd_soc_component_read(component,
+	tx_priv->pcm_rate[decimator] = (snd_soc_component_read(component,
 				     tx_fs_reg) & 0x0F);
 
 	switch (event) {
@@ -1998,6 +1999,7 @@ static int lpass_cdc_tx_macro_probe(struct platform_device *pdev)
 	char __iomem *tx_io_base = NULL;
 	int ret = 0;
 	const char *dmic_sample_rate = "qcom,tx-dmic-sample-rate";
+	const char *wcd_dmic_enabled = "qcom,wcd-dmic-enabled";
 
 	if (!lpass_cdc_is_va_macro_registered(&pdev->dev)) {
 		dev_err(&pdev->dev,
@@ -2040,6 +2042,12 @@ static int lpass_cdc_tx_macro_probe(struct platform_device *pdev)
 		sample_rate, tx_priv) == LPASS_CDC_TX_MACRO_DMIC_SAMPLE_RATE_UNDEFINED)
 			return -EINVAL;
 	}
+
+	if (of_find_property(pdev->dev.of_node, wcd_dmic_enabled, NULL))
+		tx_priv->wcd_dmic_enabled = true;
+	else
+		tx_priv->wcd_dmic_enabled = false;
+
 	mutex_init(&tx_priv->mclk_lock);
 	lpass_cdc_tx_macro_init_ops(&ops, tx_io_base);
 	ops.clk_id_req = TX_CORE_CLK;
