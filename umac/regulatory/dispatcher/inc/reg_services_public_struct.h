@@ -1474,4 +1474,26 @@ struct reg_tpc_power_info {
 	struct chan_power_info chan_power_info[MAX_NUM_PWR_LEVEL];
 };
 
+#ifdef FEATURE_WLAN_CH_AVOID_EXT
+typedef struct unsafe_ch_list avoid_ch_ext_list;
+/**
+ * struct chan_5g_center_freq
+ * @center_freq_20: center frequency of max 200Mhz
+ * @center_freq_40: center frequency of max 40Mhz
+ * @center_freq_80: center frequency of max 80Mhz
+ * @center_freq_160: center frequency of max 160Mhz
+ */
+struct chan_5g_center_freq {
+	qdf_freq_t center_freq_20;
+	qdf_freq_t center_freq_40;
+	qdf_freq_t center_freq_80;
+	qdf_freq_t center_freq_160;
+};
+
+#define INVALID_CENTER_FREQ 0
+/*MAX 5g channel numbers, not include dsrc*/
+#define MAX_5G_CHAN_NUM 28
+
+#endif
+
 #endif

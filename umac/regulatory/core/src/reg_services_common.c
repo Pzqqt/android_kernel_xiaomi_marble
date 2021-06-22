@@ -5163,3 +5163,216 @@ bool reg_is_upper_6g_edge_ch_disabled(struct wlan_objmgr_psoc *psoc)
 	return psoc_priv_obj->is_upper_6g_edge_ch_disabled;
 }
 #endif
+
+#ifdef FEATURE_WLAN_CH_AVOID_EXT
+/**
+ * reg_process_ch_avoid_freq_ext() - Update extended avoid frequencies in
+ * psoc_priv_obj
+ * @psoc: Pointer to psoc structure
+ * @pdev: pointer to pdev object
+ *
+ * Return: None
+ */
+static QDF_STATUS
+reg_process_ch_avoid_freq_ext(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_objmgr_pdev *pdev)
+{
+	uint32_t i;
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+	uint8_t start_channel;
+	uint8_t end_channel;
+	struct ch_avoid_freq_type *range;
+	enum channel_enum ch_loop;
+	enum channel_enum start_ch_idx;
+	enum channel_enum end_ch_idx;
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!pdev_priv_obj) {
+		reg_err("reg pdev private obj is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	psoc_priv_obj = reg_get_psoc_obj(psoc);
+	if (!psoc_priv_obj) {
+		reg_err("reg psoc private obj is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (pdev_priv_obj->avoid_chan_ext_list.chan_cnt > 0) {
+		uint32_t len;
+
+		len = sizeof(pdev_priv_obj->avoid_chan_ext_list.chan_freq_list);
+		pdev_priv_obj->avoid_chan_ext_list.chan_cnt = 0;
+		qdf_mem_zero(&pdev_priv_obj->avoid_chan_ext_list.chan_freq_list,
+			     len);
+	}
+
+	for (i = 0; i < psoc_priv_obj->avoid_freq_ext_list.ch_avoid_range_cnt;
+		i++) {
+		if (pdev_priv_obj->avoid_chan_ext_list.chan_cnt >=
+		    NUM_CHANNELS) {
+			reg_debug("ext avoid channel list full");
+			break;
+		}
+
+		start_ch_idx = INVALID_CHANNEL;
+		end_ch_idx = INVALID_CHANNEL;
+		range = &psoc_priv_obj->avoid_freq_ext_list.avoid_freq_range[i];
+
+		start_channel = reg_freq_to_chan(pdev, range->start_freq);
+		end_channel = reg_freq_to_chan(pdev, range->end_freq);
+		reg_debug("start: freq %d, ch %d, end: freq %d, ch %d",
+			  range->start_freq, start_channel, range->end_freq,
+			  end_channel);
+
+		/* do not process frequency bands that are not mapped to
+		 * predefined channels
+		 */
+		if (start_channel == 0 || end_channel == 0)
+			continue;
+
+		for (ch_loop = 0; ch_loop < NUM_CHANNELS;
+			ch_loop++) {
+			if (REG_CH_TO_FREQ(ch_loop) >= range->start_freq) {
+				start_ch_idx = ch_loop;
+				break;
+			}
+		}
+		for (ch_loop = 0; ch_loop < NUM_CHANNELS;
+			ch_loop++) {
+			if (REG_CH_TO_FREQ(ch_loop) >= range->end_freq) {
+				end_ch_idx = ch_loop;
+				if (REG_CH_TO_FREQ(ch_loop) > range->end_freq)
+					end_ch_idx--;
+				break;
+			}
+		}
+
+		if (start_ch_idx == INVALID_CHANNEL ||
+		    end_ch_idx == INVALID_CHANNEL)
+			continue;
+
+		for (ch_loop = start_ch_idx; ch_loop <= end_ch_idx;
+			ch_loop++) {
+			pdev_priv_obj->avoid_chan_ext_list.chan_freq_list
+			[pdev_priv_obj->avoid_chan_ext_list.chan_cnt++] =
+			REG_CH_TO_FREQ(ch_loop);
+
+			if (pdev_priv_obj->avoid_chan_ext_list.chan_cnt >=
+				NUM_CHANNELS) {
+				reg_debug("avoid freq ext list full");
+				break;
+			}
+		}
+		/* if start == end for 5G, meanwhile it only have one valid
+		 * channel updated, then disable 20M by default around
+		 * this center freq. For example input [5805-5805], it
+		 * will disable 20Mhz around 5805, then the range change
+		 * to [5705-5815], otherwise, not sure about how many width
+		 * need to disabled for such case.
+		 */
+		if ((ch_loop - start_ch_idx) == 1 &&
+		    (range->end_freq - range->start_freq == 0) &&
+			reg_is_5ghz_ch_freq(range->start_freq)) {
+			range->start_freq = range->start_freq - HALF_20MHZ_BW;
+			range->end_freq = range->end_freq + HALF_20MHZ_BW;
+		}
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * reg_update_avoid_ch_ext() - Updates the current channel list that block out
+ * by extended avoid frequency list
+ * @psoc: Pointer to psoc structure
+ * @object: Pointer to pdev structure
+ * @arg: List of arguments
+ *
+ * Return: None
+ */
+static void
+reg_update_avoid_ch_ext(struct wlan_objmgr_psoc *psoc,
+			void *object, void *arg)
+{
+	struct wlan_objmgr_pdev *pdev = (struct wlan_objmgr_pdev *)object;
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	QDF_STATUS status;
+
+	psoc_priv_obj = reg_get_psoc_obj(psoc);
+	if (!psoc_priv_obj) {
+		reg_err("reg psoc private obj is NULL");
+		return;
+	}
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("reg pdev priv obj is NULL");
+		return;
+	}
+
+	if (psoc_priv_obj->ch_avoid_ext_ind) {
+		status = reg_process_ch_avoid_freq_ext(psoc, pdev);
+		if (QDF_IS_STATUS_ERROR(status))
+			psoc_priv_obj->ch_avoid_ext_ind = false;
+	}
+
+	reg_compute_pdev_current_chan_list(pdev_priv_obj);
+	status = reg_send_scheduler_msg_sb(psoc, pdev);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		reg_err("channel change msg schedule failed");
+}
+
+QDF_STATUS
+reg_process_ch_avoid_ext_event(struct wlan_objmgr_psoc *psoc,
+			       struct ch_avoid_ind_type *ch_avoid_event)
+{
+	uint32_t i;
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+	QDF_STATUS status;
+	struct ch_avoid_freq_type *range;
+
+	psoc_priv_obj = reg_get_psoc_obj(psoc);
+	if (!psoc_priv_obj) {
+		reg_err("reg psoc private obj is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	reg_debug("freq range count %d", ch_avoid_event->ch_avoid_range_cnt);
+
+	qdf_mem_zero(&psoc_priv_obj->avoid_freq_ext_list,
+		     sizeof(struct ch_avoid_ind_type));
+
+	for (i = 0; i < ch_avoid_event->ch_avoid_range_cnt; i++) {
+		range = &psoc_priv_obj->avoid_freq_ext_list.avoid_freq_range[i];
+		range->start_freq =
+			ch_avoid_event->avoid_freq_range[i].start_freq;
+		range->end_freq =
+			ch_avoid_event->avoid_freq_range[i].end_freq;
+	}
+	psoc_priv_obj->avoid_freq_ext_list.ch_avoid_range_cnt =
+		ch_avoid_event->ch_avoid_range_cnt;
+
+	psoc_priv_obj->ch_avoid_ext_ind = true;
+
+	status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_REGULATORY_SB_ID);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		reg_err("error taking psoc ref cnt");
+		return status;
+	}
+
+	status = wlan_objmgr_iterate_obj_list(psoc, WLAN_PDEV_OP,
+					      reg_update_avoid_ch_ext,
+					      NULL, 1,
+					      WLAN_REGULATORY_SB_ID);
+
+	wlan_objmgr_psoc_release_ref(psoc, WLAN_REGULATORY_SB_ID);
+
+	return status;
+}
+#endif

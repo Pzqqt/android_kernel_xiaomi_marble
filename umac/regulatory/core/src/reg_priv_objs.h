@@ -109,6 +109,8 @@ struct chan_change_cbk_entry {
  * supported
  * @is_upper_6g_edge_ch_disabled: whether upper 6ghz edge channel 7115MHz is
  * disabled
+ * @ch_avoid_ext_ind: whether need to update extended channel frequency list
+ * @avoid_freq_ext_list: the extended avoid channel frequency list
  */
 struct wlan_regulatory_psoc_priv_obj {
 	struct mas_chan_params mas_chan_params[PSOC_MAX_PHY_REG_CAP];
@@ -170,6 +172,10 @@ struct wlan_regulatory_psoc_priv_obj {
 	bool is_lower_6g_edge_ch_supported;
 	bool is_upper_6g_edge_ch_disabled;
 #endif
+#ifdef FEATURE_WLAN_CH_AVOID_EXT
+	bool ch_avoid_ext_ind;
+	struct ch_avoid_ind_type avoid_freq_ext_list;
+#endif
 };
 
 /**
@@ -194,6 +200,7 @@ struct wlan_regulatory_psoc_priv_obj {
  * 802.11 standard.
  * @max_phymode: The maximum phymode supported by the device and regulatory.
  * @max_chwidth: The maximum bandwidth corresponding to the maximum phymode.
+ * @avoid_chan_ext_list: the extended avoid frequency list.
  */
 struct wlan_regulatory_pdev_priv_obj {
 	struct regulatory_channel cur_chan_list[NUM_CHANNELS];
@@ -250,6 +257,9 @@ struct wlan_regulatory_pdev_priv_obj {
 #ifdef CONFIG_HOST_FIND_CHAN
 	enum reg_phymode max_phymode;
 	enum phy_ch_width max_chwidth;
+#endif
+#ifdef FEATURE_WLAN_CH_AVOID_EXT
+	avoid_ch_ext_list avoid_chan_ext_list;
 #endif
 };
 

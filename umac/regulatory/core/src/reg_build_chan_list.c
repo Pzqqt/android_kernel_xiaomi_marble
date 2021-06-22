@@ -1118,6 +1118,331 @@ reg_populate_secondary_cur_chan_list(struct wlan_regulatory_pdev_priv_obj
 #endif /* CONFIG_REG_CLIENT */
 #endif /* CONFIG_BAND_6GHZ */
 
+#ifdef FEATURE_WLAN_CH_AVOID_EXT
+struct chan_5g_center_freq center_5g[MAX_5G_CHAN_NUM] = {
+	/*36*/
+	{5180, 5190, 5210, 5250},
+	/*40*/
+	{5200, 5190, 5210, 5250},
+	/*44*/
+	{5220, 5230, 5210, 5250},
+	/*48*/
+	{5240, 5230, 5210, 5250},
+
+	/*52*/
+	{5260, 5270, 5290, 5250},
+	/*56*/
+	{5280, 5270, 5290, 5250},
+	/*60*/
+	{5300, 5310, 5290, 5250},
+	/*64*/
+	{5320, 5310, 5290, 5250},
+
+	/*100*/
+	{5500, 5510, 5530, 5570},
+	/*104*/
+	{5520, 5510, 5530, 5570},
+	/*108*/
+	{5540, 5550, 5530, 5570},
+	/*112*/
+	{5560, 5550, 5530, 5570},
+
+	/*116*/
+	{5580, 5590, 5610, 5570},
+	/*120*/
+	{5600, 5590, 5610, 5570},
+	/*124*/
+	{5620, 5630, 5610, 5570},
+	/*128*/
+	{5640, 5630, 5610, 5570},
+
+	/*132*/
+	{5660, 5670, 5690, INVALID_CENTER_FREQ},
+	/*136*/
+	{5680, 5670, 5690, INVALID_CENTER_FREQ},
+	/*140*/
+	{5700, 5710, 5690, INVALID_CENTER_FREQ},
+	/*144*/
+	{5720, 5710, 5690, INVALID_CENTER_FREQ},
+
+	/*149*/
+	{5745, 5755, 5775, 5815},
+	/*153*/
+	{5765, 5755, 5775, 5815},
+	/*157*/
+	{5785, 5795, 5775, 5815},
+	/*161*/
+	{5805, 5795, 5775, 5815},
+
+	/*165*/
+	{5825, 5835, 5855, 5815},
+	/*169*/
+	{5845, 5835, 5855, 5815},
+	/*173*/
+	{5865, 5875, 5855, 5815},
+	/*177*/
+	{5885, 5875, 5855, 5815},
+};
+
+/**
+ * reg_modify_5g_maxbw() - Update the max bandwidth for 5G channel
+ * @chan: Pointer to current channel
+ * @avoid_freq: current avoid frequency range
+ *
+ * This function updates the max bandwidth for the 5G channels if
+ * it has overlap with avoid frequency range. For example, if the
+ * avoid frequency range is []5755-5775], and current channel is 149 with
+ * max bandwidth 80Mhz by default, then has to change the max bandwidth
+ * to 20Mhz, since both 40Mhz [5735-5775] and 80M [5735-5815] has
+ * overlap with avoid frequency [5755-5775].
+ *
+ * Return: void.
+ */
+static void
+reg_modify_5g_maxbw(struct regulatory_channel *chan,
+		    struct ch_avoid_freq_type *avoid_freq)
+{
+	int i;
+	qdf_freq_t start, end, cur;
+	bool found = false;
+
+	for (i = 0; i < MAX_5G_CHAN_NUM; i++) {
+		cur = center_5g[i].center_freq_20;
+		if (chan->center_freq == cur) {
+			while (!found) {
+				uint16_t h_bw;
+
+				if (chan->max_bw < 20 ||
+				    chan->max_bw > 160)
+					break;
+
+				switch (chan->max_bw) {
+				case 160:
+					cur = center_5g[i].center_freq_160;
+					if (!cur) {
+						chan->max_bw = chan->max_bw / 2;
+						break;
+					}
+					start = cur - HALF_160MHZ_BW;
+					end = cur + HALF_160MHZ_BW;
+					break;
+				case 80:
+					cur = center_5g[i].center_freq_80;
+					start = cur - HALF_80MHZ_BW;
+					end = cur + HALF_80MHZ_BW;
+					break;
+				case 40:
+					cur = center_5g[i].center_freq_40;
+					start = cur - HALF_40MHZ_BW;
+					end = cur + HALF_40MHZ_BW;
+					break;
+				case 20:
+					cur = center_5g[i].center_freq_20;
+					start = cur - HALF_20MHZ_BW;
+					end = cur + HALF_20MHZ_BW;
+					break;
+				default:
+					break;
+				}
+
+				if (avoid_freq->end_freq <= end &&
+				    avoid_freq->start_freq >= start) {
+					/* avoid freq inside */
+					h_bw = chan->max_bw / 2;
+					chan->max_bw = min(chan->max_bw, h_bw);
+					continue;
+				} else if ((avoid_freq->start_freq > start &&
+					   avoid_freq->start_freq < end) ||
+					   (avoid_freq->end_freq > start &&
+					   avoid_freq->end_freq < end)) {
+					/* avoid freq part overlap */
+					h_bw = chan->max_bw / 2;
+					chan->max_bw = min(chan->max_bw, h_bw);
+					continue;
+				} else if (avoid_freq->start_freq >= end ||
+					   avoid_freq->end_freq <= start) {
+					/* beyond the range freq */
+					found = true;
+				}
+			}
+		}
+	}
+}
+
+/**
+ * reg_modify_chan_list_for_avoid_chan_ext() - Update the state and bandwidth
+ * for each channel in the current channel list.
+ * @pdev_priv_obj: Pointer to wlan regulatory pdev private object.
+ *
+ * This function update the state and bandwidth for each channel in the current
+ * channel list if it is affected by avoid frequency list.
+ * For 2.4G/5G, all the center frequency of specific channel in the
+ * avoid_chan_ext_list (avoid frequency list) will be disabled.
+ * For example, avoid frequency list include [2412,2417,2422],
+ * then channel 1, 2 and 3 will be disabled. Same logic apply for 5g.
+ * For 5G, if the max bandwidth of the channel affected by avoid frequency
+ * range then need to reduce the bandwidth or finally disabled.
+ * For other bands, to-do in furture if need.
+ *
+ * Return: void.
+ */
+static void
+reg_modify_chan_list_for_avoid_chan_ext(struct wlan_regulatory_pdev_priv_obj
+				     *pdev_priv_obj)
+{
+	uint32_t i, j, k;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+	uint32_t num_avoid_channels;
+	struct regulatory_channel *chan_list = pdev_priv_obj->cur_chan_list;
+	struct regulatory_channel *sec_chan_list;
+	uint16_t *avoid_chan_ext_list;
+	uint32_t num_avoid_freq;
+	struct ch_avoid_freq_type *avoid_freq_ext, *avoid_freq_ext_t;
+
+	sec_chan_list = pdev_priv_obj->secondary_cur_chan_list;
+
+	avoid_chan_ext_list = pdev_priv_obj->avoid_chan_ext_list.chan_freq_list;
+	num_avoid_channels = pdev_priv_obj->avoid_chan_ext_list.chan_cnt;
+
+	psoc = wlan_pdev_get_psoc(pdev_priv_obj->pdev_ptr);
+	if (!psoc)
+		return;
+
+	psoc_priv_obj = reg_get_psoc_obj(psoc);
+	if (!psoc_priv_obj)
+		return;
+
+	if (!num_avoid_channels || !psoc_priv_obj->ch_avoid_ext_ind)
+		return;
+
+	num_avoid_freq = psoc_priv_obj->avoid_freq_ext_list.ch_avoid_range_cnt;
+	avoid_freq_ext = psoc_priv_obj->avoid_freq_ext_list.avoid_freq_range;
+
+	for (i = 0; i < num_avoid_channels; i++)
+		for (j = 0; j < NUM_CHANNELS; j++) {
+			qdf_freq_t c_freq, avoid_tmp = avoid_chan_ext_list[i];
+
+			if (chan_list[j].state == CHANNEL_STATE_DISABLE)
+				goto second_chan_handle;
+
+			/* For 2.4G, just only disable the channel if center
+			 * frequecy is in avoid_chan_ext_list.
+			 * For 5G, customer ask for bandwidth reduction if
+			 * it affect by the nearby channel that in the
+			 * avoid_chan_ext_list.
+			 * For example, if block out frequency range is
+			 * [5755-5775], then except for channel 153 need
+			 * to be disabled, and 149 has to change max 80Mhz
+			 * to 20Mhz, since 149 only has [5735-5755] available.
+			 * channel 157/161 [5775-5815] has to change max 80
+			 * to 40.
+			 * For 6G: to-do in future.
+			 */
+			c_freq = chan_list[j].center_freq;
+			if (avoid_tmp == c_freq) {
+				chan_list[j].state = CHANNEL_STATE_DISABLE;
+				chan_list[j].chan_flags |=
+					REGULATORY_CHAN_DISABLED;
+			} else if (reg_is_5ghz_ch_freq(c_freq)) {
+				for (k = 0; k < num_avoid_freq; k++) {
+					qdf_freq_t s_freq, e_freq;
+
+					avoid_freq_ext_t = &avoid_freq_ext[k];
+					s_freq = avoid_freq_ext_t->start_freq;
+					e_freq = avoid_freq_ext_t->end_freq;
+
+					/* need to cover [5170-5190] case*/
+					if ((!reg_is_5ghz_ch_freq(s_freq) &&
+					     ((s_freq + HALF_20MHZ_BW) <
+					       reg_min_5ghz_chan_freq())) ||
+					    (!reg_is_5ghz_ch_freq(e_freq) &&
+					      ((e_freq - HALF_20MHZ_BW) >
+					       reg_max_5ghz_chan_freq())))
+						continue;
+
+					/* if current center freq is in the
+					 * avoid rang, then skip it, it will be
+					 * handled in the branch (avoid_tmp
+					 * == c_freq)
+					 */
+					if ((c_freq > s_freq &&
+					     c_freq < e_freq))
+						continue;
+
+					reg_modify_5g_maxbw(&chan_list[j],
+							    avoid_freq_ext_t);
+
+					if (chan_list[j].max_bw <
+					    HALF_40MHZ_BW) {
+						chan_list[j].state =
+							CHANNEL_STATE_DISABLE;
+						chan_list[j].chan_flags |=
+						REGULATORY_CHAN_DISABLED;
+						break;
+					}
+				}
+			}
+second_chan_handle:
+
+			if (sec_chan_list[j].state ==
+			   CHANNEL_STATE_DISABLE)
+				continue;
+
+			c_freq = sec_chan_list[j].center_freq;
+			if (avoid_tmp == c_freq) {
+				sec_chan_list[j].state = CHANNEL_STATE_DISABLE;
+				sec_chan_list[j].chan_flags |=
+					REGULATORY_CHAN_DISABLED;
+			} else if (reg_is_5ghz_ch_freq(c_freq)) {
+				for (k = 0; k < num_avoid_freq; k++) {
+					qdf_freq_t s_freq, e_freq;
+
+					avoid_freq_ext_t = &avoid_freq_ext[k];
+					s_freq = avoid_freq_ext_t->start_freq;
+					e_freq = avoid_freq_ext_t->end_freq;
+
+					/* need to cover [5170-5190] case*/
+					if ((!reg_is_5ghz_ch_freq(s_freq) &&
+					     ((s_freq + HALF_20MHZ_BW) <
+					       reg_min_5ghz_chan_freq())) ||
+					    (!reg_is_5ghz_ch_freq(e_freq) &&
+					      ((e_freq - HALF_20MHZ_BW) >
+					       reg_max_5ghz_chan_freq())))
+						continue;
+
+					/* if current center freq is in the
+					 * avoid rang, then skip it, it will be
+					 * handled in the branch (avoid_tmp
+					 * == c_freq)
+					 */
+					if ((c_freq > s_freq &&
+					     c_freq < e_freq))
+						continue;
+
+					reg_modify_5g_maxbw(&sec_chan_list[j],
+							    avoid_freq_ext_t);
+
+					if (sec_chan_list[j].max_bw <
+					    HALF_40MHZ_BW) {
+						sec_chan_list[j].state =
+							CHANNEL_STATE_DISABLE;
+						sec_chan_list[j].chan_flags |=
+						REGULATORY_CHAN_DISABLED;
+						break;
+					}
+				}
+			}
+		}
+}
+#else
+static inline void
+reg_modify_chan_list_for_avoid_chan_ext(struct wlan_regulatory_pdev_priv_obj
+				     *pdev_priv_obj)
+{
+}
+#endif
+
 void reg_compute_pdev_current_chan_list(struct wlan_regulatory_pdev_priv_obj
 					*pdev_priv_obj)
 {
@@ -1164,6 +1489,8 @@ void reg_compute_pdev_current_chan_list(struct wlan_regulatory_pdev_priv_obj
 						  cur_chan_list);
 
 	reg_populate_secondary_cur_chan_list(pdev_priv_obj);
+
+	reg_modify_chan_list_for_avoid_chan_ext(pdev_priv_obj);
 }
 
 void reg_reset_reg_rules(struct reg_rule_info *reg_rules)

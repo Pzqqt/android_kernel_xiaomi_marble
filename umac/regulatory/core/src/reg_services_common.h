@@ -71,6 +71,9 @@
  */
 #define HALF_5MHZ_BW     2
 #define HALF_20MHZ_BW    10
+#define HALF_40MHZ_BW    20
+#define HALF_80MHZ_BW    40
+#define HALF_160MHZ_BW   80
 
 #define TWO_GIG_STARTING_EDGE_FREQ (channel_map_global[MIN_24GHZ_CHANNEL]. \
 				  center_freq - HALF_20MHZ_BW)
@@ -1570,5 +1573,26 @@ bool reg_is_lower_6g_edge_ch_supp(struct wlan_objmgr_psoc *psoc);
  * Return: true if edge channels are supported, else false
  */
 bool reg_is_upper_6g_edge_ch_disabled(struct wlan_objmgr_psoc *psoc);
+#endif
+
+#ifdef FEATURE_WLAN_CH_AVOID_EXT
+/**
+ * reg_process_ch_avoid_ext_event() - Process channel avoid extended event
+ * @psoc: psoc for country information
+ * @ch_avoid_event: channel avoid extended event buffer
+ *
+ * Return: QDF_STATUS
+ */
+
+QDF_STATUS
+reg_process_ch_avoid_ext_event(struct wlan_objmgr_psoc *psoc,
+			       struct ch_avoid_ind_type *ch_avoid_event);
+#else
+static inline QDF_STATUS
+reg_process_ch_avoid_ext_event(struct wlan_objmgr_psoc *psoc,
+			       struct ch_avoid_ind_type *ch_avoid_event)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 #endif
