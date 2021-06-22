@@ -3464,6 +3464,7 @@ int msm_vidc_remove_session(struct msm_vidc_inst *inst)
 	list_for_each_entry_safe(i, temp, &core->instances, list) {
 		if (i->session_id == inst->session_id) {
 			list_del_init(&i->list);
+			list_add_tail(&i->list, &core->dangling_instances);
 			i_vpr_h(inst, "%s: removed session %#x\n",
 				__func__, i->session_id);
 		}
@@ -3471,6 +3472,35 @@ int msm_vidc_remove_session(struct msm_vidc_inst *inst)
 	list_for_each_entry(i, &core->instances, list)
 		count++;
 	i_vpr_h(inst, "%s: remaining sessions %d\n", __func__, count);
+	core_unlock(core, __func__);
+
+	return 0;
+}
+
+static int msm_vidc_remove_dangling_session(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_inst *i, *temp;
+	struct msm_vidc_core *core;
+	u32 count = 0;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+
+	core_lock(core, __func__);
+	list_for_each_entry_safe(i, temp, &core->dangling_instances, list) {
+		if (i->session_id == inst->session_id) {
+			list_del_init(&i->list);
+			i_vpr_h(inst, "%s: removed dangling session %#x\n",
+				__func__, i->session_id);
+			break;
+		}
+	}
+	list_for_each_entry(i, &core->dangling_instances, list)
+		count++;
+	i_vpr_h(inst, "%s: remaining dangling sessions %d\n", __func__, count);
 	core_unlock(core, __func__);
 
 	return 0;
@@ -3975,6 +4005,7 @@ int msm_vidc_core_deinit_locked(struct msm_vidc_core *core, bool force)
 	list_for_each_entry_safe(inst, dummy, &core->instances, list) {
 		msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 		list_del_init(&inst->list);
+		list_add_tail(&inst->list, &core->dangling_instances);
 	}
 	msm_vidc_change_core_state(core, MSM_VIDC_CORE_DEINIT, __func__);
 
@@ -4608,9 +4639,10 @@ static void msm_vidc_close_helper(struct kref *kref)
 		msm_venc_inst_deinit(inst);
 	msm_vidc_free_input_cr_list(inst);
 	msm_vidc_free_capabililty_list(inst, CHILD_LIST | FW_LIST);
-	kfree(inst->capabilities);
 	if (inst->response_workq)
 		destroy_workqueue(inst->response_workq);
+	msm_vidc_remove_dangling_session(inst);
+	kfree(inst->capabilities);
 	kfree(inst);
 }
 
