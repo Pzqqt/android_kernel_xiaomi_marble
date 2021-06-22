@@ -441,6 +441,13 @@ int msm_vidc_qbuf(void *instance, struct media_device *mdev,
 		return -EINVAL;
 	}
 
+	/* Expecting non-zero filledlen on INPUT port */
+	if (b->type == INPUT_MPLANE && !b->m.planes[0].bytesused) {
+		i_vpr_e(inst,
+			"%s: zero bytesused input buffer not supported\n", __func__);
+		return -EINVAL;
+	}
+
 	q = msm_vidc_get_vb2q(inst, b->type, __func__);
 	if (!q) {
 		rc = -EINVAL;
