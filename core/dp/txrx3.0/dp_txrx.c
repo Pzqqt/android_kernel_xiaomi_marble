@@ -307,6 +307,16 @@ static struct dp_prealloc_context g_dp_context_allocs[] = {
 	{DP_RX_REFILL_RING_HIST_TYPE, sizeof(struct dp_rx_refill_history),
 	false, false, NULL},
 #endif	/* WLAN_FEATURE_DP_RX_RING_HISTORY */
+#ifdef DP_TX_HW_DESC_HISTORY
+	{DP_TX_HW_DESC_HIST_TYPE, sizeof(struct dp_tx_hw_desc_history),
+	false, false, NULL},
+#endif
+#ifdef WLAN_FEATURE_DP_TX_DESC_HISTORY
+	{DP_TX_TCL_HIST_TYPE, sizeof(struct dp_tx_tcl_history),
+	 false, false, NULL},
+	{DP_TX_COMP_HIST_TYPE, sizeof(struct dp_tx_comp_history),
+	 false, false, NULL},
+#endif	/* WLAN_FEATURE_DP_TX_DESC_HISTORY */
 #ifdef WLAN_SUPPORT_RX_FISA
 	{DP_FISA_RX_FT_TYPE, sizeof(struct dp_fisa_rx_sw_ft) * FISA_RX_FT_SIZE,
 	 false, true, NULL},

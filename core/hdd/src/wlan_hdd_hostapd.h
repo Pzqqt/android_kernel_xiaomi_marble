@@ -111,6 +111,26 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 				uint8_t vdev_id, uint32_t *ch_freq);
 
 /**
+ * wlan_get_ap_prefer_conc_ch_params() - Get prefer sap target channel
+ *  bw parameters
+ * @psoc: pointer to psoc
+ * @vdev_id: vdev id
+ * @chan_freq: sap channel
+ * @ch_params: output channel parameters
+ *
+ * This function is used to get prefer sap target channel bw during sap force
+ * scc CSA. The new bw will not exceed the orginal bw during start ap
+ * request.
+ *
+ * Return: QDF_STATUS_SUCCESS if successfully
+ */
+QDF_STATUS
+wlan_get_ap_prefer_conc_ch_params(
+		struct wlan_objmgr_psoc *psoc,
+		uint8_t vdev_id, uint32_t chan_freq,
+		struct ch_params *ch_params);
+
+/**
  * hdd_get_ap_6ghz_capable() - Get ap vdev 6ghz capable flags
  * @psoc: PSOC object information
  * @vdev_id: vdev id
@@ -318,4 +338,11 @@ enum qca_wlan_802_11_mode hdd_convert_dot11mode_from_phymode(int phymode);
  */
 void hdd_stop_sap_due_to_invalid_channel(struct work_struct *work);
 
+/**
+ * hdd_is_any_sta_connecting() - check if any sta is connecting
+ * @hdd_ctx: hdd context
+ *
+ * Return: true if any sta is connecting
+ */
+bool hdd_is_any_sta_connecting(struct hdd_context *hdd_ctx);
 #endif /* end #if !defined(WLAN_HDD_HOSTAPD_H) */

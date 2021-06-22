@@ -27,6 +27,7 @@
 #ifdef QCA_SUPPORT_CP_STATS
 #include "wlan_cp_stats_mc_defs.h"
 
+//TODO -  Check if this is true for hamilton
 #ifdef QCA_WIFI_QCA6490
 #define TGT_MAC_ID_24G 2
 #define TGT_MAC_ID_5G 1

@@ -336,10 +336,10 @@ wlan_hdd_wifi_test_config_policy[
 			      QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_MAX) \
 },
 
+#ifndef FEATURE_CM_ENABLE
 int wlan_hdd_cfg80211_pmksa_candidate_notify(struct hdd_adapter *adapter,
 					struct csr_roam_info *roam_info,
 					int index, bool preauth);
-#ifndef FEATURE_CM_ENABLE
 #ifdef FEATURE_WLAN_LFR_METRICS
 QDF_STATUS
 wlan_hdd_cfg80211_roam_metrics_preauth(struct hdd_adapter *adapter,
@@ -525,6 +525,28 @@ void wlan_hdd_cfg80211_unlink_bss(struct hdd_adapter *adapter,
 
 void wlan_hdd_cfg80211_acs_ch_select_evt(struct hdd_adapter *adapter);
 
+#ifdef WLAN_CFR_ENABLE
+/*
+ * hdd_cfr_data_send_nl_event() - send cfr data through nl event
+ * @vdev_id: vdev id
+ * @pid: process pid to which send data event unicast way
+ * @data: pointer to the cfr data
+ * @data_len: length of data
+ *
+ * Return: void
+ */
+void hdd_cfr_data_send_nl_event(uint8_t vdev_id, uint32_t pid,
+				const void *data, uint32_t data_len);
+
+#define FEATURE_CFR_DATA_VENDOR_EVENTS                                  \
+[QCA_NL80211_VENDOR_SUBCMD_PEER_CFR_CAPTURE_CFG_INDEX] = {              \
+        .vendor_id = QCA_NL80211_VENDOR_ID,                             \
+        .subcmd = QCA_NL80211_VENDOR_SUBCMD_PEER_CFR_CAPTURE_CFG,       \
+},
+#else
+#define FEATURE_CFR_DATA_VENDOR_EVENTS
+#endif
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * hdd_send_roam_scan_ch_list_event() - roam scan ch list event to user space
@@ -597,6 +619,7 @@ int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx,
 				  struct wiphy *wiphy,
 				  enum band_info new_band);
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * wlan_hdd_cfg80211_indicate_disconnect() - Indicate disconnnect to userspace
  * @adapter: Pointer to adapter
@@ -617,6 +640,7 @@ wlan_hdd_cfg80211_indicate_disconnect(struct hdd_adapter *adapter,
 				      enum wlan_reason_code reason,
 				      uint8_t *disconnect_ies,
 				      uint16_t disconnect_ies_len);
+#endif
 
 /**
  * wlan_hdd_change_hw_mode_for_given_chnl() - change HW mode for given channel

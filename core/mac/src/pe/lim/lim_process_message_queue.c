@@ -1760,7 +1760,9 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 #endif  /* FEATURE_WLAN_ESE */
 	case eWNI_SME_REGISTER_MGMT_FRAME_CB:
 	case eWNI_SME_EXT_CHANGE_CHANNEL:
+#ifndef FEATURE_CM_ENABLE
 	case eWNI_SME_ROAM_INVOKE:
+#endif
 		/* fall through */
 	case eWNI_SME_ROAM_SEND_SET_PCL_REQ:
 	case eWNI_SME_SET_ADDBA_ACCEPT:
@@ -2104,8 +2106,14 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 	case CM_CONNECT_REQ:
 		cm_process_join_req(msg);
 		break;
+	case CM_REASSOC_REQ:
+		cm_process_reassoc_req(msg);
+		break;
 	case CM_DISCONNECT_REQ:
 		cm_process_disconnect_req(msg);
+		break;
+	case CM_PREAUTH_REQ:
+		cm_process_preauth_req(msg);
 		break;
 #endif
 	default:

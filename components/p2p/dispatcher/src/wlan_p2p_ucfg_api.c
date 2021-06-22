@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -294,7 +294,8 @@ QDF_STATUS ucfg_p2p_cleanup_tx_by_psoc(struct wlan_objmgr_psoc *psoc)
 }
 
 QDF_STATUS ucfg_p2p_mgmt_tx(struct wlan_objmgr_psoc *soc,
-	struct p2p_mgmt_tx *mgmt_frm, uint64_t *cookie)
+			    struct p2p_mgmt_tx *mgmt_frm, uint64_t *cookie,
+			    struct wlan_objmgr_pdev *pdev)
 {
 	struct scheduler_msg msg = {0};
 	struct p2p_soc_priv_obj *p2p_soc_obj;
@@ -354,7 +355,7 @@ QDF_STATUS ucfg_p2p_mgmt_tx(struct wlan_objmgr_psoc *soc,
 	tx_action->nbuf = NULL;
 	tx_action->id = id;
 
-	p2p_rand_mac_tx(tx_action);
+	p2p_rand_mac_tx(pdev, tx_action);
 
 	msg.type = P2P_MGMT_TX;
 	msg.bodyptr = tx_action;

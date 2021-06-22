@@ -145,6 +145,18 @@ static inline bool wma_is_peer_eht_capable(tpAddStaParams params)
  * Return: QDF_STATUS
  */
 QDF_STATUS wma_get_eht_capabilities(struct eht_capability *eht_cap);
+
+/**
+ * wma_set_peer_assoc_params_bw_320() - Set bw_320 based on ch_width
+ * @params: pointer to peer assoc params
+ * @ch_width: enum phy_ch_width
+ *
+ * If ch_width is CH_WIDTH_320MHZ, set params->bw_320 to 1
+ *
+ * Return: None
+ */
+void wma_set_peer_assoc_params_bw_320(struct peer_assoc_params *params,
+				      enum phy_ch_width ch_width);
 #else
 static inline void wma_eht_update_tgt_services(struct wmi_unified *wmi_handle,
 					       struct wma_tgt_services *cfg)
@@ -200,5 +212,10 @@ static inline bool wma_is_peer_eht_capable(tpAddStaParams params)
 	return false;
 }
 
+static inline
+void wma_set_peer_assoc_params_bw_320(struct peer_assoc_params *params,
+				      enum phy_ch_width ch_width)
+{
+}
 #endif
 #endif

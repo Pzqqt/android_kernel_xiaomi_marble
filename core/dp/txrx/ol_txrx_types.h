@@ -831,7 +831,7 @@ struct ol_txrx_pdev_t {
 	struct {
 		int (*cmp)(union htt_rx_pn_t *new,
 			   union htt_rx_pn_t *old,
-			   int is_unicast, int opmode);
+			   int is_unicast, int opmode, bool strict_chk);
 		int len;
 	} rx_pn[htt_num_sec_types];
 

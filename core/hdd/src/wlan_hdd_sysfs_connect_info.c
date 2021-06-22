@@ -291,39 +291,6 @@ uint8_t *hdd_dot11_mode_str(uint32_t dot11mode)
 }
 
 /**
- * hdd_ch_width_str() - Get string for channel width
- * @ch_width: channel width from connect info
- *
- * Return: User readable string for channel width
- */
-static
-uint8_t *hdd_ch_width_str(enum phy_ch_width ch_width)
-{
-	switch (ch_width) {
-	case CH_WIDTH_20MHZ:
-		return "20MHz";
-	case CH_WIDTH_40MHZ:
-		return "40MHz";
-	case CH_WIDTH_80MHZ:
-		return "80MHz";
-	case CH_WIDTH_160MHZ:
-		return "160MHz";
-	case CH_WIDTH_80P80MHZ:
-		return "(80 + 80)MHz";
-	case CH_WIDTH_5MHZ:
-		return "5MHz";
-	case CH_WIDTH_10MHZ:
-		return "10MHz";
-	case CH_WIDTH_INVALID:
-		/* Fallthrough */
-	case CH_WIDTH_MAX:
-		/* Fallthrough */
-	default:
-		return "UNKNOWN";
-	}
-}
-
-/**
  * wlan_hdd_connect_info() - Populate connect info
  * @adapter: pointer to sta adapter for which connect info is required
  * @buf: output buffer to hold version info
@@ -360,7 +327,7 @@ static ssize_t wlan_hdd_connect_info(struct hdd_adapter *adapter, uint8_t *buf,
 		return buf_avail_len;
 	}
 
-	if (hdd_sta_ctx->hdd_reassoc_scenario) {
+	if (hdd_cm_is_vdev_roaming(adapter)) {
 		ret_val = scnprintf(buf + length, buf_avail_len - length,
 				    "Roaming is in progress");
 		if (ret_val <= 0)

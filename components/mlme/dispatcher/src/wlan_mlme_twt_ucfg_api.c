@@ -90,6 +90,34 @@ ucfg_mlme_set_twt_responder(struct wlan_objmgr_psoc *psoc,
 }
 
 QDF_STATUS
+ucfg_mlme_set_twt_requestor_flag(struct wlan_objmgr_psoc *psoc, bool val)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_INVAL;
+
+	mlme_obj->cfg.twt_cfg.req_flag = val;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_set_twt_responder_flag(struct wlan_objmgr_psoc *psoc, bool val)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_INVAL;
+
+	mlme_obj->cfg.twt_cfg.res_flag = val;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
 ucfg_mlme_get_twt_congestion_timeout(struct wlan_objmgr_psoc *psoc,
 				     uint32_t *val)
 {

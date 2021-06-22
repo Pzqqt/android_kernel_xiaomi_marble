@@ -619,22 +619,38 @@ static QDF_STATUS cm_process_roam_keys(struct wlan_objmgr_vdev *vdev,
 			 */
 			if (!cm_is_auth_type_11r(mlme_obj, vdev,
 						 mdie_present) &&
-				roaming_info->pmk_len) {
-				qdf_mem_zero(pmkid_cache, sizeof(*pmkid_cache));
+			    roaming_info->pmk_len) {
+				/*
+				 * This pmksa buffer is to update the
+				 * crypto table
+				 */
+				pmksa = qdf_mem_malloc(sizeof(*pmksa));
+				if (!pmksa) {
+					status = QDF_STATUS_E_NOMEM;
+					qdf_mem_zero(pmkid_cache,
+						     sizeof(*pmkid_cache));
+					qdf_mem_free(pmkid_cache);
+					goto end;
+				}
 				wlan_cm_set_psk_pmk(pdev, vdev_id,
 						    roaming_info->pmk,
 						    roaming_info->pmk_len);
 				wlan_vdev_get_bss_peer_mac(vdev,
-							   &pmkid_cache->bssid);
-				qdf_mem_copy(pmkid_cache->pmkid,
+							   &pmksa->bssid);
+				qdf_mem_copy(pmksa->pmkid,
 					     roaming_info->pmkid, PMKID_LEN);
-				qdf_mem_copy(pmkid_cache->pmk,
+				qdf_mem_copy(pmksa->pmk,
 					     roaming_info->pmk,
 					     roaming_info->pmk_len);
-				pmkid_cache->pmk_len = roaming_info->pmk_len;
+				pmksa->pmk_len = roaming_info->pmk_len;
 
-				wlan_crypto_set_del_pmksa(vdev, pmkid_cache,
-							  true);
+				status = wlan_crypto_set_del_pmksa(vdev,
+								   pmksa,
+								   true);
+				if (QDF_IS_STATUS_ERROR(status)) {
+					qdf_mem_zero(pmksa, sizeof(*pmksa));
+					qdf_mem_free(pmksa);
+				}
 			}
 		}
 		qdf_mem_zero(pmkid_cache, sizeof(*pmkid_cache));
@@ -730,7 +746,7 @@ cm_fw_roam_sync_propagation(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	cm_update_scan_db_on_roam_success(vdev, connect_rsp,
 					  roam_synch_data, cm_id);
 
-	cm_csr_roam_sync_rsp(vdev, rsp);
+	cm_csr_connect_rsp(vdev, rsp);
 	cm_process_roam_keys(vdev, rsp, cm_id);
 
 	mlme_cm_osif_connect_complete(vdev, connect_rsp);
@@ -921,6 +937,22 @@ error:
 	return status;
 }
 
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+static void cm_ho_fail_diag_event(void)
+{
+	WLAN_HOST_DIAG_EVENT_DEF(roam_connection,
+				 host_event_wlan_status_payload_type);
+	qdf_mem_zero(&roam_connection,
+		     sizeof(host_event_wlan_status_payload_type));
+
+	roam_connection.eventId = DIAG_WLAN_STATUS_DISCONNECT;
+	roam_connection.reason = DIAG_REASON_ROAM_HO_FAIL;
+	WLAN_HOST_DIAG_EVENT_REPORT(&roam_connection, EVENT_WLAN_STATUS_V2);
+}
+#else
+static inline void cm_ho_fail_diag_event(void) {}
+#endif
+
 static QDF_STATUS cm_handle_ho_fail(struct scheduler_msg *msg)
 {
 	QDF_STATUS status;
@@ -928,9 +960,11 @@ static QDF_STATUS cm_handle_ho_fail(struct scheduler_msg *msg)
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_pdev *pdev;
 	struct cnx_mgr *cm_ctx;
-	wlan_cm_id cm_id;
+	wlan_cm_id cm_id = CM_ID_INVALID;
 	struct reject_ap_info ap_info;
 	struct cm_roam_req *roam_req = NULL;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct wlan_objmgr_psoc *psoc;
 
 	if (!msg || !msg->bodyptr)
 		return QDF_STATUS_E_FAILURE;
@@ -952,6 +986,19 @@ static QDF_STATUS cm_handle_ho_fail(struct scheduler_msg *msg)
 		goto error;
 	}
 
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		mlme_err("psoc object is NULL");
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto error;
+	}
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to mlme psoc obj");
+		status = QDF_STATUS_E_FAILURE;
+		goto error;
+	}
+
 	cm_ctx = cm_get_cm_ctx(vdev);
 	if (!cm_ctx) {
 		status = QDF_STATUS_E_NULL_VALUE;
@@ -959,13 +1006,11 @@ static QDF_STATUS cm_handle_ho_fail(struct scheduler_msg *msg)
 	}
 
 	roam_req = cm_get_first_roam_command(vdev);
-	if (!roam_req) {
-		mlme_err("Failed to find roam req from list");
-		status = QDF_STATUS_E_FAILURE;
-		goto error;
+	if (roam_req) {
+		mlme_debug("Roam req found, get cm id to remove it, before disconnect");
+		cm_id = roam_req->cm_id;
 	}
 
-	cm_id = roam_req->cm_id;
 	cm_sm_deliver_event(vdev, WLAN_CM_SM_EV_ROAM_HO_FAIL,
 			    sizeof(wlan_cm_id), &cm_id);
 
@@ -975,6 +1020,7 @@ static QDF_STATUS cm_handle_ho_fail(struct scheduler_msg *msg)
 	ap_info.source = ADDED_BY_DRIVER;
 	wlan_blm_add_bssid_to_reject_list(pdev, &ap_info);
 
+	cm_ho_fail_diag_event();
 	wlan_roam_debug_log(ind->vdev_id,
 			    DEBUG_ROAM_SYNCH_FAIL,
 			    DEBUG_INVALID_PEER_ID, NULL, NULL, 0, 0);
@@ -983,6 +1029,11 @@ static QDF_STATUS cm_handle_ho_fail(struct scheduler_msg *msg)
 			       CM_MLME_DISCONNECT,
 			       REASON_FW_TRIGGERED_ROAM_FAILURE,
 			       NULL);
+
+	if (mlme_obj->cfg.gen.fatal_event_trigger)
+		cds_flush_logs(WLAN_LOG_TYPE_FATAL,
+			       WLAN_LOG_INDICATOR_HOST_DRIVER,
+			       WLAN_LOG_REASON_ROAM_HO_FAILURE, false, false);
 
 	if (QDF_IS_STATUS_ERROR(status))
 		cm_remove_cmd(cm_ctx, &cm_id);
@@ -1022,4 +1073,42 @@ void cm_fw_ho_fail_req(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 }
+
+#ifdef WLAN_FEATURE_FIPS
+QDF_STATUS cm_roam_pmkid_req_ind(struct wlan_objmgr_psoc *psoc,
+				 uint8_t vdev_id,
+				 struct roam_pmkid_req_event *src_lst)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wlan_objmgr_vdev *vdev;
+	struct qdf_mac_addr *dst_list;
+	uint32_t num_entries, i;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_SB_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	num_entries = src_lst->num_entries;
+	mlme_debug("Num entries %d", num_entries);
+	for (i = 0; i < num_entries; i++) {
+		dst_list = &src_lst->ap_bssid[i];
+		status = mlme_cm_osif_pmksa_candidate_notify(vdev, dst_list,
+							     1, false);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			mlme_err("Number %d Notify failed for " QDF_MAC_ADDR_FMT,
+				 i, QDF_MAC_ADDR_REF(dst_list->bytes));
+			goto rel_ref;
+		}
+	}
+
+rel_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_SB_ID);
+
+	return status;
+}
+#endif /* WLAN_FEATURE_FIPS */
+
 #endif // FEATURE_CM_ENABLE

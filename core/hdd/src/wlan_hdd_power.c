@@ -190,7 +190,7 @@ static void hdd_enable_gtk_offload(struct hdd_adapter *adapter)
 
 	status = ucfg_pmo_enable_gtk_offload_in_fwr(vdev);
 	if (status != QDF_STATUS_SUCCESS)
-		hdd_info("Failed to enable gtk offload");
+		hdd_debug("Failed to enable gtk offload");
 	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 }
 
@@ -253,7 +253,7 @@ hdd_send_igmp_offload_params(struct hdd_adapter *adapter,
 
 	status = ucfg_pmo_enable_igmp_offload(vdev, igmp_req);
 	if (status != QDF_STATUS_SUCCESS)
-		hdd_info("Failed to enable igmp offload");
+		hdd_debug("Failed to enable igmp offload");
 
 	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 	qdf_mem_free(igmp_req);
@@ -281,7 +281,7 @@ static void hdd_enable_igmp_offload(struct hdd_adapter *adapter)
 	}
 	status = hdd_send_igmp_offload_params(adapter, true);
 	if (status != QDF_STATUS_SUCCESS)
-		hdd_info("Failed to enable gtk offload");
+		hdd_debug("Failed to enable gtk offload");
 	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 }
 
@@ -305,7 +305,7 @@ static void hdd_disable_igmp_offload(struct hdd_adapter *adapter)
 	}
 	status = hdd_send_igmp_offload_params(adapter, false);
 	if (status != QDF_STATUS_SUCCESS)
-		hdd_info("Failed to enable igmp offload");
+		hdd_debug("Failed to enable igmp offload");
 	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_POWER_ID);
 }
 #else
@@ -2036,8 +2036,8 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 		goto exit_with_code;
 	}
 
-	if (hdd_ctx->config->is_wow_disabled) {
-		hdd_err("wow is disabled");
+	if (ucfg_pmo_get_suspend_mode(hdd_ctx->psoc) == PMO_SUSPEND_NONE) {
+		hdd_info_rl("Suspend is not supported");
 		return -EINVAL;
 	}
 
@@ -2206,11 +2206,8 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	if (0 != rc)
 		return rc;
 
-	/* Wait for the stop module if already in progress */
-	hdd_psoc_idle_timer_stop(hdd_ctx);
-
-	if (hdd_ctx->config->is_wow_disabled) {
-		hdd_info_rl("wow is disabled");
+	if (ucfg_pmo_get_suspend_mode(hdd_ctx->psoc) == PMO_SUSPEND_NONE) {
+		hdd_info_rl("Suspend is not supported");
 		return -EINVAL;
 	}
 
@@ -2449,6 +2446,18 @@ int wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 {
 	struct osif_psoc_sync *psoc_sync;
 	int errno;
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
+
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != errno)
+		return errno;
+
+	/*
+	 * Flush the idle shutdown before ops start.This is done here to avoid
+	 * the deadlock as idle shutdown waits for the dsc ops
+	 * to complete.
+	 */
+	hdd_psoc_idle_timer_stop(hdd_ctx);
 
 	errno = osif_psoc_sync_op_start(wiphy_dev(wiphy), &psoc_sync);
 	if (errno)
@@ -2859,7 +2868,6 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 	struct net_device *ndev = wdev->netdev;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	int status;
-	struct hdd_station_ctx *sta_ctx;
 	static bool is_rate_limited;
 
 	hdd_enter_dev(ndev);
@@ -2882,8 +2890,7 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 	switch (adapter->device_mode) {
 	case QDF_STA_MODE:
 	case QDF_P2P_CLIENT_MODE:
-		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-		if (sta_ctx->hdd_reassoc_scenario) {
+		if (hdd_cm_is_vdev_roaming(adapter)) {
 			hdd_debug("Roaming is in progress, rej this req");
 			return -EINVAL;
 		}
@@ -3096,15 +3103,15 @@ int hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev,
 
 	if (pause_setting < WOW_INTERFACE_PAUSE_DEFAULT ||
 	    pause_setting >= WOW_INTERFACE_PAUSE_COUNT) {
-		hdd_err("Invalid interface pause %d (expected range [0, 2])",
-			pause_setting);
+		hdd_err_rl("Invalid interface pause %d (expected range [0, 2])",
+			   pause_setting);
 		return -EINVAL;
 	}
 
 	if (resume_setting < WOW_RESUME_TRIGGER_DEFAULT ||
 	    resume_setting >= WOW_RESUME_TRIGGER_COUNT) {
-		hdd_err("Invalid resume trigger %d (expected range [0, 2])",
-			resume_setting);
+		hdd_err_rl("Invalid resume trigger %d (expected range [0, 2])",
+			   resume_setting);
 		return -EINVAL;
 	}
 

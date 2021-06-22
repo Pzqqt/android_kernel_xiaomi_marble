@@ -128,7 +128,7 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 			  u_int16_t vdev_id, uint32_t status)
 {
 	uint8_t bssid[QDF_MAC_ADDR_SIZE];
-	uint8_t tid = 0, tx_retry_cnt = 0;
+	uint8_t tid = 0;
 	struct dp_soc *psoc = soc;
 
 	switch (event) {
@@ -137,6 +137,7 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 		struct pkt_capture_tx_hdr_elem_t *ptr_pktcapture_hdr;
 		struct pkt_capture_tx_hdr_elem_t pktcapture_hdr = {0};
 		struct hal_tx_completion_status tx_comp_status = {0};
+		struct qdf_tso_seg_elem_t *tso_seg = NULL;
 		uint32_t txcap_hdr_size =
 				sizeof(struct pkt_capture_tx_hdr_elem_t);
 
@@ -167,13 +168,21 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 		pktcapture_hdr.beamformed = 0;
 		pktcapture_hdr.framectrl = IEEE80211_FC0_TYPE_DATA |
 					   (IEEE80211_FC1_DIR_TODS << 8);
-		pktcapture_hdr.tx_retry_cnt = tx_comp_status.transmit_cnt;
+		pktcapture_hdr.tx_retry_cnt = tx_comp_status.transmit_cnt - 1;
 		/* seqno not available */
 		pktcapture_hdr.seqno = 0;
 		tid = tx_comp_status.tid;
 		status = tx_comp_status.status;
 
-		nbuf_len = qdf_nbuf_len(desc->nbuf);
+		if (desc->frm_type == dp_tx_frm_tso) {
+			if (!desc->tso_desc)
+				return;
+			tso_seg = desc->tso_desc;
+			nbuf_len = tso_seg->seg.total_len;
+		} else {
+			nbuf_len = qdf_nbuf_len(desc->nbuf);
+		}
+
 		netbuf = qdf_nbuf_alloc(NULL,
 					roundup(nbuf_len + RESERVE_BYTES, 4),
 					RESERVE_BYTES, 4, false);
@@ -183,8 +192,48 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 
 		qdf_nbuf_put_tail(netbuf, nbuf_len);
 
-		qdf_mem_copy(qdf_nbuf_data(netbuf),
-			     qdf_nbuf_data(desc->nbuf), nbuf_len);
+		if (desc->frm_type == dp_tx_frm_tso) {
+			uint8_t frag_cnt, num_frags = 0;
+			int frag_len = 0;
+			uint32_t tcp_seq_num;
+			uint16_t ip_len;
+
+			if (tso_seg->seg.num_frags > 0)
+				num_frags = tso_seg->seg.num_frags - 1;
+
+			/*Num of frags in a tso seg cannot be less than 2 */
+			if (num_frags < 1) {
+				pkt_capture_err("num of frags in tso segment is %d\n",
+						(num_frags + 1));
+				qdf_nbuf_free(netbuf);
+				return;
+			}
+
+			tcp_seq_num = tso_seg->seg.tso_flags.tcp_seq_num;
+			tcp_seq_num = qdf_cpu_to_be32(tcp_seq_num);
+
+			ip_len = tso_seg->seg.tso_flags.ip_len;
+			ip_len = qdf_cpu_to_be16(ip_len);
+
+			for (frag_cnt = 0; frag_cnt <= num_frags; frag_cnt++) {
+				qdf_mem_copy(
+				qdf_nbuf_data(netbuf) + frag_len,
+				tso_seg->seg.tso_frags[frag_cnt].vaddr,
+				tso_seg->seg.tso_frags[frag_cnt].length);
+				frag_len +=
+					tso_seg->seg.tso_frags[frag_cnt].length;
+			}
+
+			qdf_mem_copy((qdf_nbuf_data(netbuf) +
+				     IPV4_PKT_LEN_OFFSET),
+				     &ip_len, sizeof(ip_len));
+			qdf_mem_copy((qdf_nbuf_data(netbuf) +
+				     IPV4_TCP_SEQ_NUM_OFFSET),
+				     &tcp_seq_num, sizeof(tcp_seq_num));
+		} else {
+			qdf_mem_copy(qdf_nbuf_data(netbuf),
+				     qdf_nbuf_data(desc->nbuf), nbuf_len);
+		}
 
 		if (qdf_unlikely(qdf_nbuf_headroom(netbuf) < txcap_hdr_size)) {
 			netbuf = qdf_nbuf_realloc_headroom(netbuf,
@@ -212,7 +261,7 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 		pkt_capture_datapkt_process(
 			vdev_id, netbuf, TXRX_PROCESS_TYPE_DATA_TX_COMPL,
 			tid, status, TXRX_PKTCAPTURE_PKT_FORMAT_8023,
-			bssid, NULL, tx_retry_cnt);
+			bssid, NULL, pktcapture_hdr.tx_retry_cnt);
 
 		break;
 	}

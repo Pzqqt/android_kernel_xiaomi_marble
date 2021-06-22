@@ -218,7 +218,6 @@ const char *get_e_roam_cmd_status_str(eRoamCmdStatus val)
 #endif
 		CASE_RETURN_STR(eCSR_ROAM_CHANNEL_COMPLETE_IND);
 		CASE_RETURN_STR(eCSR_ROAM_SAE_COMPUTE);
-		CASE_RETURN_STR(eCSR_ROAM_FIPS_PMK_REQUEST);
 	default:
 		return "unknown";
 	}
@@ -2123,6 +2122,15 @@ bool csr_is_profile_rsn(struct csr_roam_profile *pProfile)
 	}
 	return fRSNProfile;
 }
+
+#ifdef FEATURE_WLAN_ESE
+/* Function to return true if the profile is ESE */
+bool csr_is_profile_ese(struct csr_roam_profile *pProfile)
+{
+	return csr_is_auth_type_ese(pProfile->negotiatedAuthType);
+}
+#endif
+
 #endif
 
 bool csr_is_auth_type_ese(enum csr_akm_type AuthType)
@@ -2136,47 +2144,6 @@ bool csr_is_auth_type_ese(enum csr_akm_type AuthType)
 	}
 	return false;
 }
-
-#ifdef FEATURE_WLAN_ESE
-
-/* Function to return true if the profile is ESE */
-bool csr_is_profile_ese(struct csr_roam_profile *pProfile)
-{
-	return csr_is_auth_type_ese(pProfile->negotiatedAuthType);
-}
-
-#endif
-
-#ifdef FEATURE_WLAN_WAPI
-bool csr_is_profile_wapi(struct csr_roam_profile *pProfile)
-{
-	bool fWapiProfile = false;
-
-	switch (pProfile->negotiatedAuthType) {
-	case eCSR_AUTH_TYPE_WAPI_WAI_CERTIFICATE:
-	case eCSR_AUTH_TYPE_WAPI_WAI_PSK:
-		fWapiProfile = true;
-		break;
-
-	default:
-		fWapiProfile = false;
-		break;
-	}
-
-	if (fWapiProfile) {
-		switch (pProfile->negotiatedUCEncryptionType) {
-		case eCSR_ENCRYPT_TYPE_WPI:
-			fWapiProfile = true;
-			break;
-
-		default:
-			fWapiProfile = false;
-			break;
-		}
-	}
-	return fWapiProfile;
-}
-#endif /* FEATURE_WLAN_WAPI */
 
 bool csr_is_pmkid_found_for_peer(struct mac_context *mac,
 				 struct csr_roam_session *session,
@@ -2217,6 +2184,36 @@ bool csr_is_pmkid_found_for_peer(struct mac_context *mac,
 }
 
 #ifndef FEATURE_CM_ENABLE
+#ifdef FEATURE_WLAN_WAPI
+bool csr_is_profile_wapi(struct csr_roam_profile *pProfile)
+{
+	bool fWapiProfile = false;
+
+	switch (pProfile->negotiatedAuthType) {
+	case eCSR_AUTH_TYPE_WAPI_WAI_CERTIFICATE:
+	case eCSR_AUTH_TYPE_WAPI_WAI_PSK:
+		fWapiProfile = true;
+		break;
+
+	default:
+		fWapiProfile = false;
+		break;
+	}
+
+	if (fWapiProfile) {
+		switch (pProfile->negotiatedUCEncryptionType) {
+		case eCSR_ENCRYPT_TYPE_WPI:
+			fWapiProfile = true;
+			break;
+
+		default:
+			fWapiProfile = false;
+			break;
+		}
+	}
+	return fWapiProfile;
+}
+#endif /* FEATURE_WLAN_WAPI */
 bool csr_lookup_fils_pmkid(struct mac_context *mac,
 			   uint8_t vdev_id, uint8_t *cache_id,
 			   uint8_t *ssid, uint8_t ssid_len,
@@ -2771,13 +2768,19 @@ void csr_release_profile(struct mac_context *mac,
 			qdf_mem_free(pProfile->SSIDs.SSIDList);
 			pProfile->SSIDs.SSIDList = NULL;
 		}
-		if (pProfile->pWPAReqIE) {
-			qdf_mem_free(pProfile->pWPAReqIE);
-			pProfile->pWPAReqIE = NULL;
+
+		if (pProfile->ChannelInfo.freq_list) {
+			qdf_mem_free(pProfile->ChannelInfo.freq_list);
+			pProfile->ChannelInfo.freq_list = NULL;
 		}
 		if (pProfile->pRSNReqIE) {
 			qdf_mem_free(pProfile->pRSNReqIE);
 			pProfile->pRSNReqIE = NULL;
+		}
+#ifndef FEATURE_CM_ENABLE
+		if (pProfile->pWPAReqIE) {
+			qdf_mem_free(pProfile->pWPAReqIE);
+			pProfile->pWPAReqIE = NULL;
 		}
 #ifdef FEATURE_WLAN_WAPI
 		if (pProfile->pWAPIReqIE) {
@@ -2786,20 +2789,15 @@ void csr_release_profile(struct mac_context *mac,
 		}
 #endif /* FEATURE_WLAN_WAPI */
 
-		if (pProfile->pAddIEScan) {
-			qdf_mem_free(pProfile->pAddIEScan);
-			pProfile->pAddIEScan = NULL;
-		}
-
 		if (pProfile->pAddIEAssoc) {
 			qdf_mem_free(pProfile->pAddIEAssoc);
 			pProfile->pAddIEAssoc = NULL;
 		}
-		if (pProfile->ChannelInfo.freq_list) {
-			qdf_mem_free(pProfile->ChannelInfo.freq_list);
-			pProfile->ChannelInfo.freq_list = NULL;
+
+		if (pProfile->pAddIEScan) {
+			qdf_mem_free(pProfile->pAddIEScan);
+			pProfile->pAddIEScan = NULL;
 		}
-#ifndef FEATURE_CM_ENABLE
 		csr_free_fils_profile_info(mac, pProfile);
 #endif
 		qdf_mem_zero(pProfile, sizeof(struct csr_roam_profile));

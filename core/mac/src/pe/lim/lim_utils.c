@@ -6522,10 +6522,6 @@ void lim_add_he_cap(struct mac_context *mac_ctx, struct pe_session *pe_session,
 	qdf_mem_copy(&add_sta_params->he_config, &assoc_req->he_cap,
 		     sizeof(add_sta_params->he_config));
 
-	add_sta_params->he_mcs_12_13_map =
-		assoc_req->qcn_ie.he_mcs13_attr.he_mcs_12_13_supp_80 |
-		assoc_req->qcn_ie.he_mcs13_attr.he_mcs_12_13_supp_160 << 8;
-
 	if (lim_is_he_6ghz_band(pe_session))
 		lim_update_he_6ghz_band_caps(mac_ctx,
 					     &assoc_req->he_6ghz_band_cap,
@@ -7470,6 +7466,7 @@ QDF_STATUS lim_send_he_caps_ie(struct mac_context *mac_ctx,
 				   HE_CAP_80P80_MCS_MAP_LEN;
 	uint8_t num_ppe_th = 0;
 	bool nan_beamforming_supported;
+	bool disable_nan_tx_bf = false;
 
 	/* Sending only minimal info(no PPET) to FW now, update if required */
 	qdf_mem_zero(he_caps, he_cap_total_len);
@@ -7491,6 +7488,7 @@ QDF_STATUS lim_send_he_caps_ie(struct mac_context *mac_ctx,
 		he_cap->num_sounding_lt_80 = 0;
 		he_cap->su_feedback_tone16 = 0;
 		he_cap->mu_feedback_tone16 = 0;
+		disable_nan_tx_bf = true;
 	}
 
 	/*
@@ -7498,7 +7496,14 @@ QDF_STATUS lim_send_he_caps_ie(struct mac_context *mac_ctx,
 	 * mac->he_cap_5g.bfee_sts_lt_80 to keep the values same
 	 * as initial connection
 	 */
-	he_cap->bfee_sts_lt_80 = mac_ctx->he_cap_5g.bfee_sts_lt_80;
+	if (!disable_nan_tx_bf) {
+		he_cap->bfee_sts_lt_80 = mac_ctx->he_cap_5g.bfee_sts_lt_80;
+		he_cap->bfee_sts_gt_80 = mac_ctx->he_cap_5g.bfee_sts_gt_80;
+		he_cap->num_sounding_gt_80 =
+					mac_ctx->he_cap_5g.num_sounding_gt_80;
+		pe_debug("he_cap_5g: bfee_sts_gt_80 %d num_sounding_gt_80 %d",
+			 he_cap->bfee_sts_gt_80, he_cap->num_sounding_gt_80);
+	}
 
 	if (he_cap->ppet_present)
 		num_ppe_th = lim_set_he_caps_ppet(mac_ctx, he_caps,
@@ -7516,7 +7521,14 @@ QDF_STATUS lim_send_he_caps_ie(struct mac_context *mac_ctx,
 	 * mac->he_cap_5g.bfee_sts_lt_80 to keep the values same
 	 * as initial connection
 	 */
-	he_cap->bfee_sts_lt_80 = mac_ctx->he_cap_2g.bfee_sts_lt_80;
+	if (!disable_nan_tx_bf) {
+		he_cap->bfee_sts_lt_80 = mac_ctx->he_cap_2g.bfee_sts_lt_80;
+		he_cap->bfee_sts_gt_80 = mac_ctx->he_cap_2g.bfee_sts_gt_80;
+		he_cap->num_sounding_gt_80 =
+					mac_ctx->he_cap_2g.num_sounding_gt_80;
+		pe_debug("he_cap_2g: bfee_sts_gt_80 %d num_sounding_gt_80 %d",
+			 he_cap->bfee_sts_gt_80, he_cap->num_sounding_gt_80);
+	}
 
 	lim_intersect_he_ch_width_2g(mac_ctx, he_cap);
 
@@ -8660,12 +8672,23 @@ QDF_STATUS lim_ap_mlme_vdev_update_beacon(struct vdev_mlme_obj *vdev_mlme,
 					  uint16_t data_len, void *data)
 {
 	struct pe_session *session;
+	struct mac_context *mac_ctx;
 
 	if (!data) {
-		pe_err("event_data is NULL");
-		return QDF_STATUS_E_INVAL;
+		mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+		if (!mac_ctx) {
+			pe_err("mac ctx is null");
+			return QDF_STATUS_E_INVAL;
+		}
+		session = pe_find_session_by_vdev_id(
+			mac_ctx, vdev_mlme->vdev->vdev_objmgr.vdev_id);
+		if (!session) {
+			pe_err("session is NULL");
+			return QDF_STATUS_E_INVAL;
+		}
+	} else {
+		session = (struct pe_session *)data;
 	}
-	session = (struct pe_session *)data;
 	if (LIM_IS_NDI_ROLE(session))
 		return QDF_STATUS_SUCCESS;
 
@@ -8686,12 +8709,25 @@ QDF_STATUS lim_ap_mlme_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
 {
 	struct scheduler_msg msg = {0};
 	QDF_STATUS status;
-	struct pe_session *session = (struct pe_session *)data;
+	struct pe_session *session;
+	struct mac_context *mac_ctx;
 
-	if (!session) {
-		pe_err("session is NULL");
-		return QDF_STATUS_E_INVAL;
+	if (!data) {
+		mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+		if (!mac_ctx) {
+			pe_err("mac ctx is null");
+			return QDF_STATUS_E_INVAL;
+		}
+		session = pe_find_session_by_vdev_id(
+			mac_ctx, vdev_mlme->vdev->vdev_objmgr.vdev_id);
+		if (!session) {
+			pe_err("session is NULL");
+			return QDF_STATUS_E_INVAL;
+		}
+	} else {
+		session = (struct pe_session *)data;
 	}
+
 	if (LIM_IS_NDI_ROLE(session))
 		return QDF_STATUS_SUCCESS;
 
@@ -8708,11 +8744,23 @@ QDF_STATUS lim_ap_mlme_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
 QDF_STATUS lim_ap_mlme_vdev_disconnect_peers(struct vdev_mlme_obj *vdev_mlme,
 					     uint16_t data_len, void *data)
 {
-	struct pe_session *session = (struct pe_session *)data;
+	struct pe_session *session;
+	struct mac_context *mac_ctx;
 
 	if (!data) {
-		pe_err("data is NULL");
-		return QDF_STATUS_E_INVAL;
+		mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+		if (!mac_ctx) {
+			pe_err("mac ctx is null");
+			return QDF_STATUS_E_INVAL;
+		}
+		session = pe_find_session_by_vdev_id(
+			mac_ctx, vdev_mlme->vdev->vdev_objmgr.vdev_id);
+		if (!session) {
+			pe_err("session is NULL");
+			return QDF_STATUS_E_INVAL;
+		}
+	} else {
+		session = (struct pe_session *)data;
 	}
 
 	lim_delete_all_peers(session);

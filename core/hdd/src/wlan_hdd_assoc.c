@@ -87,6 +87,8 @@
 #include "wlan_hdd_bootup_marker.h"
 #include "wlan_roam_debug.h"
 
+#include "wlan_hdd_twt.h"
+
 /* These are needed to recognize WPA and RSN suite types */
 #define HDD_WPA_OUI_SIZE 4
 #define HDD_RSN_OUI_SIZE 4
@@ -264,8 +266,6 @@ static void hdd_start_powersave_timer_on_associated(struct hdd_adapter *adapter)
 {
 	uint32_t timeout;
 	uint32_t auto_bmps_timer_val;
-	struct hdd_station_ctx *hddstactx =
-		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	if (adapter->device_mode != QDF_STA_MODE &&
@@ -273,7 +273,7 @@ static void hdd_start_powersave_timer_on_associated(struct hdd_adapter *adapter)
 		return;
 	ucfg_mlme_get_auto_bmps_timer_value(hdd_ctx->psoc,
 					    &auto_bmps_timer_val);
-	timeout = hddstactx->hdd_reassoc_scenario ?
+	timeout = hdd_cm_is_vdev_roaming(adapter) ?
 		AUTO_PS_ENTRY_TIMER_DEFAULT_VALUE :
 		(auto_bmps_timer_val * 1000);
 	sme_ps_enable_auto_ps_timer(hdd_ctx->mac_handle,
@@ -1627,11 +1627,14 @@ void hdd_conn_remove_connect_info(struct hdd_station_ctx *sta_ctx)
 
 void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter)
 {
+#ifndef FEATURE_CM_ENABLE
 	struct hdd_station_ctx *sta_ctx;
 	struct csr_roam_profile *roam_profile;
+#endif
 
 	hdd_enter();
 
+#ifndef FEATURE_CM_ENABLE
 	/* clear WPA/RSN/WSC IE information in the profile */
 	roam_profile = hdd_roam_profile(adapter);
 
@@ -1669,18 +1672,18 @@ void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter)
 	roam_profile->MFPEnabled = false;
 	roam_profile->MFPRequired = 0;
 	roam_profile->MFPCapable = 0;
+#endif /* FEATURE_CM_ENABLE */
 
-	qdf_mem_zero(roam_profile->Keys.KeyLength, CSR_MAX_NUM_KEY);
-	qdf_mem_zero(roam_profile->Keys.KeyMaterial,
-		     sizeof(roam_profile->Keys.KeyMaterial));
 #ifdef FEATURE_WLAN_WAPI
 	adapter->wapi_info.wapi_auth_mode = WAPI_AUTH_MODE_OPEN;
 	adapter->wapi_info.wapi_mode = false;
 #endif
 
+#ifndef FEATURE_CM_ENABLE
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	sta_ctx->auth_key_mgmt = 0;
 	qdf_zero_macaddr(&sta_ctx->requested_bssid);
+#endif
 	hdd_exit();
 }
 
@@ -4043,6 +4046,7 @@ static void hdd_roam_channel_switch_handler(struct hdd_adapter *adapter,
 		hdd_debug("set hw mode change not done");
 
 	policy_mgr_check_concurrent_intf_and_restart_sap(hdd_ctx->psoc);
+	wlan_twt_concurrency_update(hdd_ctx);
 }
 
 #ifdef WLAN_FEATURE_HOST_ROAM
@@ -4122,9 +4126,7 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 			hdd_dis_connect_handler(adapter, roam_info, roam_id,
 						roam_status, roam_result);
 		sta_ctx->ft_carrier_on = false;
-		sta_ctx->hdd_reassoc_scenario = false;
-		hdd_debug("hdd_reassoc_scenario set to: %d, ReAssoc Failed, session: %d",
-			  sta_ctx->hdd_reassoc_scenario, adapter->vdev_id);
+		hdd_debug("ReAssoc Failed, session: %d", adapter->vdev_id);
 		break;
 	case eCSR_ROAM_FT_START:
 		/*
@@ -4143,9 +4145,7 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 				WLAN_STOP_ALL_NETIF_QUEUE,
 				WLAN_CONTROL_PATH);
 		sta_ctx->ft_carrier_on = true;
-		sta_ctx->hdd_reassoc_scenario = true;
-		hdd_debug("hdd_reassoc_scenario set to: %d, due to eCSR_ROAM_FT_START, session: %d",
-			  sta_ctx->hdd_reassoc_scenario, adapter->vdev_id);
+		hdd_debug("eCSR_ROAM_FT_START, session: %d", adapter->vdev_id);
 		break;
 	case eCSR_ROAM_NAPI_OFF:
 		hdd_debug("After Roam Synch Comp: NAPI Serialize OFF");
@@ -4213,12 +4213,6 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 		} else {
 			wlan_hdd_ft_set_key_delay(hdd_ctx->mac_handle, adapter);
 		}
-		if (sta_ctx->ft_carrier_on) {
-			sta_ctx->hdd_reassoc_scenario = false;
-			hdd_debug("hdd_reassoc_scenario set to: %d session: %d",
-				  sta_ctx->hdd_reassoc_scenario,
-				  adapter->vdev_id);
-		}
 
 		qdf_ret_status =
 			hdd_association_completion_handler(adapter, roam_info,
@@ -4250,12 +4244,9 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 			hdd_roam_set_key_complete_handler(adapter, roam_info,
 							  roam_id, roam_status,
 							  roam_result);
-		if (eCSR_ROAM_RESULT_AUTHENTICATED == roam_result) {
-			sta_ctx->hdd_reassoc_scenario = false;
-			hdd_debug("hdd_reassoc_scenario set to: %d, set key complete, session: %d",
-				  sta_ctx->hdd_reassoc_scenario,
+		if (eCSR_ROAM_RESULT_AUTHENTICATED == roam_result)
+			hdd_debug("set key complete, session: %d",
 				  adapter->vdev_id);
-		}
 	}
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 		if (roam_info)
@@ -4405,12 +4396,6 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 		if (roam_info)
 			wlan_hdd_sae_callback(adapter, roam_info);
 		break;
-	case eCSR_ROAM_FIPS_PMK_REQUEST:
-		/* notify the supplicant of a new candidate */
-		qdf_ret_status = wlan_hdd_cfg80211_pmksa_candidate_notify(
-					adapter, roam_info, 1, false);
-		break;
-
 	default:
 		break;
 	}
@@ -5165,8 +5150,10 @@ static void hdd_initialize_fils_info(struct hdd_adapter *adapter)
 void hdd_roam_profile_init(struct hdd_adapter *adapter)
 {
 	struct csr_roam_profile *roam_profile;
+#ifndef FEATURE_CM_ENABLE
 	uint8_t *security_ie;
 	tSirAddie *assoc_additional_ie;
+#endif
 	struct hdd_station_ctx *sta_ctx;
 
 	hdd_enter();
@@ -5174,12 +5161,13 @@ void hdd_roam_profile_init(struct hdd_adapter *adapter)
 	roam_profile = hdd_roam_profile(adapter);
 	qdf_mem_zero(roam_profile, sizeof(*roam_profile));
 
+#ifndef FEATURE_CM_ENABLE
 	security_ie = hdd_security_ie(adapter);
 	qdf_mem_zero(security_ie, WLAN_MAX_IE_LEN);
 
 	assoc_additional_ie = hdd_assoc_additional_ie(adapter);
 	qdf_mem_zero(assoc_additional_ie, sizeof(*assoc_additional_ie));
-
+#endif
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	/* Configure the roaming profile links to SSID and bssid. */
@@ -5196,8 +5184,10 @@ void hdd_roam_profile_init(struct hdd_adapter *adapter)
 	roam_profile->BSSType = eCSR_BSS_TYPE_INFRASTRUCTURE;
 
 	roam_profile->phyMode = eCSR_DOT11_MODE_AUTO;
-	sta_ctx->wpa_versions = 0;
 
+#ifndef FEATURE_CM_ENABLE
+	sta_ctx->wpa_versions = 0;
+#endif
 	/* Set the default scan mode */
 	adapter->scan_info.scan_mode = eSIR_ACTIVE_SCAN;
 
@@ -5217,6 +5207,12 @@ struct osif_cm_ops osif_ops = {
 	.save_gtk_cb = hdd_cm_save_gtk,
 #ifdef WLAN_FEATURE_FILS_SK
 	.set_hlp_data_cb = hdd_cm_set_hlp_data,
+#endif
+#ifdef WLAN_FEATURE_PREAUTH_ENABLE
+	.ft_preauth_complete_cb = hdd_cm_ft_preauth_complete,
+#ifdef FEATURE_WLAN_ESE
+	.cckm_preauth_complete_cb = hdd_cm_cckm_preauth_complete,
+#endif
 #endif
 };
 

@@ -304,8 +304,7 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 	populate_dot11f_supp_rates(mac_ctx, POPULATE_DOT11F_RATES_OPERATIONAL,
 				   &bcn_1->SuppRates, session);
 	populate_dot11f_ds_params(mac_ctx, &bcn_1->DSParams,
-				  wlan_reg_freq_to_chan(
-				  mac_ctx->pdev, session->curr_op_freq));
+				  session->curr_op_freq);
 
 	offset = sizeof(tAniBeaconStruct);
 	ptr = session->pSchBeaconFrameBegin + offset;
@@ -889,6 +888,7 @@ void lim_update_probe_rsp_template_ie_bitmap_beacon2(struct mac_context *mac,
 				     sizeof(beacon2->transmit_power_env[i]));
 		}
 	}
+	prb_rsp->num_transmit_power_env = num_tpe;
 
 	if (beacon2->VHTExtBssLoad.present) {
 		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap,

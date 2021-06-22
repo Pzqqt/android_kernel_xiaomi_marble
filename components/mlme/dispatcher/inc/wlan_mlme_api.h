@@ -1529,6 +1529,16 @@ wlan_mlme_cfg_set_vht_max_mpdu_len(struct wlan_objmgr_psoc *psoc,
 				   uint8_t value);
 
 /**
+ * wlan_mlme_cfg_get_ht_smps() - gets HT SM Power Save mode from cfg item
+ * @psoc: psoc context
+ * @value: data to be set
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_mlme_cfg_get_ht_smps(struct wlan_objmgr_psoc *psoc,
+				     uint8_t *value);
+
+/**
  * wlan_mlme_cfg_get_vht_chan_width() - gets vht supported channel width from
  * cfg item
  * @psoc: psoc context
@@ -2027,6 +2037,17 @@ wlan_mlme_get_srd_master_mode_for_vdev(struct wlan_objmgr_psoc *psoc,
 				       bool *value);
 
 /**
+ * wlan_mlme_get_indoor_support_for_nan  - Get indoor channel support for NAN
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_indoor_support_for_nan(struct wlan_objmgr_psoc *psoc,
+				     bool *value);
+
+/**
  * wlan_mlme_get_force_sap_enabled() - Get the value of force SAP enabled
  * @psoc: psoc context
  * @value: data to get
@@ -2402,7 +2423,7 @@ wlan_mlme_get_self_gen_frm_pwr(struct wlan_objmgr_psoc *psoc,
  * Return: QDF Status
  */
 QDF_STATUS
-wlan_mlme_get_4way_hs_offload(struct wlan_objmgr_psoc *psoc, bool *value);
+wlan_mlme_get_4way_hs_offload(struct wlan_objmgr_psoc *psoc, uint32_t *value);
 
 /**
  * wlan_mlme_get_bmiss_skip_full_scan_value() - To get value of
@@ -3189,6 +3210,16 @@ mlme_is_twt_enabled(struct wlan_objmgr_psoc *psoc)
  * preference
  */
 bool wlan_mlme_is_local_tpe_pref(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_mlme_skip_tpe() - Get preference to not consider TPE in 2G/5G case
+ *
+ * @psoc: pointer to psoc object
+ *
+ * Return: True if host should not consider TPE IE in TX power calculation when
+ * operating in 2G/5G bands, false if host should always consider TPE IE values
+ */
+bool wlan_mlme_skip_tpe(struct wlan_objmgr_psoc *psoc);
 
 /**
  * wlan_mlme_is_data_stall_recovery_fw_supported() - Check if data stall

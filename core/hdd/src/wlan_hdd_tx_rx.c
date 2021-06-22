@@ -1922,12 +1922,12 @@ static void hdd_qdf_lro_flush(void *data)
 /**
  * hdd_register_rx_ol() - Register LRO/GRO rx processing callbacks
  * @hdd_ctx: pointer to hdd_ctx
- * @lithium_based_target: whether its a lithium arch based target or not
+ * @wifi3_0_target: whether its a lithium/beryllium arch based target or not
  *
  * Return: none
  */
 static void hdd_register_rx_ol_cb(struct hdd_context *hdd_ctx,
-				  bool lithium_based_target)
+				  bool wifi3_0_target)
 {
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
@@ -1944,7 +1944,7 @@ static void hdd_register_rx_ol_cb(struct hdd_context *hdd_ctx,
 		hdd_debug("LRO is enabled");
 	} else if (hdd_ctx->ol_enable == CFG_GRO_ENABLED) {
 		qdf_atomic_set(&hdd_ctx->dp_agg_param.rx_aggregation, 1);
-		if (lithium_based_target) {
+		if (wifi3_0_target) {
 		/* no flush registration needed, it happens in DP thread */
 			hdd_ctx->receive_offload_cb = hdd_gro_rx_dp_thread;
 		} else {
@@ -2011,18 +2011,11 @@ static int hdd_rx_ol_send_config(struct hdd_context *hdd_ctx)
 int hdd_rx_ol_init(struct hdd_context *hdd_ctx)
 {
 	int ret = 0;
-	bool lithium_based_target = false;
-
-	if (hdd_ctx->target_type == TARGET_TYPE_QCA6290 ||
-	    hdd_ctx->target_type == TARGET_TYPE_QCA6390 ||
-	    hdd_ctx->target_type == TARGET_TYPE_QCA6490 ||
-	    hdd_ctx->target_type == TARGET_TYPE_QCA6750)
-		lithium_based_target = true;
 
 	hdd_resolve_rx_ol_mode(hdd_ctx);
-	hdd_register_rx_ol_cb(hdd_ctx, lithium_based_target);
+	hdd_register_rx_ol_cb(hdd_ctx, hdd_ctx->is_wifi3_0_target);
 
-	if (!lithium_based_target) {
+	if (!hdd_ctx->is_wifi3_0_target) {
 		ret = hdd_rx_ol_send_config(hdd_ctx);
 		if (ret) {
 			hdd_ctx->ol_enable = 0;
@@ -2203,6 +2196,33 @@ void hdd_set_fisa_disallowed_for_vdev(ol_txrx_soc_handle soc, uint8_t vdev_id,
 
 #ifdef WLAN_FEATURE_DYNAMIC_RX_AGGREGATION
 /**
+ * hdd_is_chain_list_non_empty_for_clsact_qdisc() - Check if chain_list in
+ *  ingress block is non-empty for a clsact qdisc.
+ * @qdisc: pointer to clsact qdisc
+ *
+ * Return: true if chain_list is not empty else false
+ */
+static bool
+hdd_is_chain_list_non_empty_for_clsact_qdisc(struct Qdisc *qdisc)
+{
+	const struct Qdisc_class_ops *cops;
+	struct tcf_block *ingress_block;
+
+	cops = qdisc->ops->cl_ops;
+	if (qdf_unlikely(!cops || !cops->tcf_block))
+		return false;
+
+	ingress_block = cops->tcf_block(qdisc, TC_H_MIN_INGRESS, NULL);
+	if (qdf_unlikely(!ingress_block))
+		return false;
+
+	if (list_empty(&ingress_block->chain_list))
+		return false;
+	else
+		return true;
+}
+
+/**
  * hdd_rx_check_qdisc_for_adapter() - Check if any ingress qdisc is configured
  *  for given adapter
  * @adapter: pointer to HDD adapter context
@@ -2219,39 +2239,34 @@ hdd_rx_check_qdisc_for_adapter(struct hdd_adapter *adapter, uint8_t rx_ctx_id)
 	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct netdev_queue *ingress_q;
 	struct Qdisc *ingress_qdisc;
-	bool is_qdisc_ingress = false;
 
 	if (qdf_unlikely(!soc))
 		return;
 
-	/*
-	 * This additional ingress_queue NULL check is to avoid
-	 * doing RCU lock/unlock in the common scenario where
-	 * ingress_queue is not configured by default
-	 */
-	if (qdf_likely(!adapter->dev->ingress_queue))
+	if (!adapter->dev->ingress_queue)
 		goto reset_wl;
 
 	rcu_read_lock();
-	ingress_q = rcu_dereference(adapter->dev->ingress_queue);
 
+	ingress_q = rcu_dereference(adapter->dev->ingress_queue);
 	if (qdf_unlikely(!ingress_q))
 		goto reset;
 
 	ingress_qdisc = rcu_dereference(ingress_q->qdisc);
-	if (!ingress_qdisc)
+	if (qdf_unlikely(!ingress_qdisc))
 		goto reset;
 
-	is_qdisc_ingress = qdf_str_eq(ingress_qdisc->ops->id, "ingress");
-	if (!is_qdisc_ingress)
+	if (!(qdf_str_eq(ingress_qdisc->ops->id, "ingress") ||
+	      (qdf_str_eq(ingress_qdisc->ops->id, "clsact") &&
+	       hdd_is_chain_list_non_empty_for_clsact_qdisc(ingress_qdisc))))
 		goto reset;
 
 	rcu_read_unlock();
 
-	if (adapter->gro_disallowed[rx_ctx_id])
+	if (qdf_likely(adapter->gro_disallowed[rx_ctx_id]))
 		return;
 
-	hdd_debug("ingress qdisc configured disable GRO");
+	hdd_debug("ingress qdisc/filter configured disable GRO");
 	adapter->gro_disallowed[rx_ctx_id] = 1;
 	hdd_set_fisa_disallowed_for_vdev(soc, adapter->vdev_id, rx_ctx_id, 1);
 
@@ -2261,8 +2276,8 @@ reset:
 	rcu_read_unlock();
 
 reset_wl:
-	if (adapter->gro_disallowed[rx_ctx_id]) {
-		hdd_debug("ingress qdisc removed enable GRO");
+	if (qdf_unlikely(adapter->gro_disallowed[rx_ctx_id])) {
+		hdd_debug("ingress qdisc/filter removed enable GRO");
 		hdd_set_fisa_disallowed_for_vdev(soc, adapter->vdev_id,
 						 rx_ctx_id, 0);
 		adapter->gro_disallowed[rx_ctx_id] = 0;
@@ -3396,16 +3411,18 @@ void hdd_reset_tcp_delack(struct hdd_context *hdd_ctx)
 
 void hdd_reset_tcp_adv_win_scale(struct hdd_context *hdd_ctx)
 {
-	enum wlan_tp_level next_level = WLAN_SVC_TP_NONE;
+	enum wlan_tp_level next_level = WLAN_SVC_TP_LOW;
 	struct wlan_rx_tp_data rx_tp_data = {0};
 
 	if (!hdd_ctx->config->enable_tcp_adv_win_scale)
 		return;
 
-	rx_tp_data.rx_tp_flags |= TCP_ADV_WIN_SCL;
-	rx_tp_data.level = next_level;
-	hdd_ctx->cur_rx_level = WLAN_SVC_TP_NONE;
-	wlan_hdd_update_tcp_rx_param(hdd_ctx, &rx_tp_data);
+	if (hdd_ctx->cur_rx_level != next_level) {
+		rx_tp_data.rx_tp_flags |= TCP_ADV_WIN_SCL;
+		rx_tp_data.level = next_level;
+		hdd_ctx->cur_rx_level = next_level;
+		wlan_hdd_update_tcp_rx_param(hdd_ctx, &rx_tp_data);
+	}
 }
 
 /**

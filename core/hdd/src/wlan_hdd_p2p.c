@@ -337,7 +337,9 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 	 * from policy manager.
 	 */
 	if ((adapter->device_mode == QDF_STA_MODE ||
-	     adapter->device_mode == QDF_SAP_MODE) &&
+	     adapter->device_mode == QDF_SAP_MODE ||
+	     adapter->device_mode == QDF_P2P_CLIENT_MODE ||
+	     adapter->device_mode == QDF_P2P_GO_MODE) &&
 	    (type == SIR_MAC_MGMT_FRAME &&
 	    sub_type == SIR_MAC_MGMT_AUTH)) {
 		qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_SME,
@@ -511,6 +513,7 @@ int hdd_set_p2p_noa(struct net_device *dev, uint8_t *command)
 	hdd_debug("P2P_SET GO noa: count=%d interval=%d duration=%d",
 		count, interval, duration);
 	duration = MS_TO_TU_MUS(duration);
+	interval = MS_TO_TU_MUS(interval);
 	/* PS Selection
 	 * Periodic noa (2)
 	 * Single NOA   (4)
@@ -518,15 +521,21 @@ int hdd_set_p2p_noa(struct net_device *dev, uint8_t *command)
 	noa.opp_ps = 0;
 	noa.ct_window = 0;
 	if (count == 1) {
+		if (duration > interval)
+			duration = interval;
 		noa.duration = 0;
 		noa.single_noa_duration = duration;
 		noa.ps_selection = P2P_POWER_SAVE_TYPE_SINGLE_NOA;
 	} else {
+		if (duration >= interval) {
+			hdd_err("Duration should be less than interval");
+			return -EINVAL;
+		}
 		noa.duration = duration;
 		noa.single_noa_duration = 0;
 		noa.ps_selection = P2P_POWER_SAVE_TYPE_PERIODIC_NOA;
 	}
-	noa.interval = MS_TO_TU_MUS(interval);
+	noa.interval = interval;
 	noa.count = count;
 	noa.vdev_id = adapter->vdev_id;
 
@@ -907,7 +916,6 @@ void hdd_clean_up_interface(struct hdd_context *hdd_ctx,
 	hdd_stop_adapter(hdd_ctx, adapter);
 	hdd_deinit_adapter(hdd_ctx, adapter, true);
 	hdd_close_adapter(hdd_ctx, adapter, true);
-	hdd_send_twt_enable_cmd(hdd_ctx);
 }
 
 int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
@@ -1207,10 +1215,12 @@ int wlan_hdd_set_power_save(struct hdd_adapter *adapter,
 	hdd_debug("p2p set power save, status:%d", status);
 
 	/* P2P-GO-NOA and TWT do not go hand in hand */
-	if (ps_config->duration)
+	if (ps_config->duration) {
 		hdd_send_twt_role_disable_cmd(hdd_ctx, TWT_RESPONDER);
-	else
-		hdd_send_twt_enable_cmd(hdd_ctx);
+	} else {
+		hdd_send_twt_requestor_enable_cmd(hdd_ctx);
+		hdd_send_twt_responder_enable_cmd(hdd_ctx);
+	}
 
 	return qdf_status_to_os_return(status);
 }

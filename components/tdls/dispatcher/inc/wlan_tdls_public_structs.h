@@ -88,6 +88,11 @@
 
 #define INVALID_TDLS_PEER_INDEX 0xFF
 
+#ifdef WLAN_FEATURE_11AX
+#define MIN_TDLS_HE_CAP_LEN 17
+#define MAX_TDLS_HE_CAP_LEN 29
+#endif
+
 /**
  * enum tdls_add_oper - add peer type
  * @TDLS_OPER_NONE: none

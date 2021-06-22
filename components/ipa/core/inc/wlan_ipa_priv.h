@@ -26,7 +26,11 @@
 
 #ifdef IPA_OFFLOAD
 
-#ifdef CONFIG_IPA_WDI_UNIFIED_API
+#include <linux/version.h>
+#include <linux/kernel.h>
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)) || \
+	defined(CONFIG_IPA_WDI_UNIFIED_API)
 #include <qdf_ipa_wdi3.h>
 #else
 #include <qdf_ipa.h>
@@ -191,7 +195,8 @@ struct wlan_ipa_tx_hdr {
  * @reserved2: Reserved not used
  */
 #if defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
-    defined(QCA_WIFI_QCA6490) || defined(QCA_WIFI_QCA6750)
+    defined(QCA_WIFI_QCA6490) || defined(QCA_WIFI_QCA6750) || \
+    defined(QCA_WIFI_WCN7850)
 struct frag_header {
 	uint8_t reserved[0];
 };
@@ -217,7 +222,8 @@ struct frag_header {
  */
 
 #if defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
-    defined(QCA_WIFI_QCA6490) || defined(QCA_WIFI_QCA6750)
+    defined(QCA_WIFI_QCA6490) || defined(QCA_WIFI_QCA6750) || \
+    defined(QCA_WIFI_WCN7850)
 struct ipa_header {
 	uint8_t reserved[0];
 };
@@ -324,6 +330,7 @@ struct wlan_ipa_priv;
  * @interface_lock: Interface lock
  * @ifa_address: Interface address
  * @stats: Interface stats
+ * @bssid: BSSID. valid only for sta iface ctx;
  */
 struct wlan_ipa_iface_context {
 	struct wlan_ipa_priv *ipa_ctx;
@@ -341,6 +348,7 @@ struct wlan_ipa_iface_context {
 	qdf_spinlock_t interface_lock;
 	uint32_t ifa_address;
 	struct wlan_ipa_iface_stats stats;
+	struct qdf_mac_addr bssid;
 };
 
 /**

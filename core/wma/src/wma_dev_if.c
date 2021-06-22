@@ -2612,6 +2612,16 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 				 status);
 	}
 
+	wma_debug("Setting WMI_VDEV_PARAM_WMM_TXOP_ENABLE: %d",
+		  mac->mlme_cfg->edca_params.enable_wmm_txop);
+
+	status  = wma_vdev_set_param(wma_handle->wmi_handle, vdev_id,
+				WMI_VDEV_PARAM_WMM_TXOP_ENABLE,
+				mac->mlme_cfg->edca_params.enable_wmm_txop);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		wma_err("failed to set WMM TXOP (status = %d)", status);
+
 	wma_debug("Setting WMI_VDEV_PARAM_DISCONNECT_TH: %d",
 		 mac->mlme_cfg->gen.dropped_pkt_disconnect_thresh);
 	status  = wma_vdev_set_param(

@@ -193,6 +193,7 @@ tSirResultCodes csr_get_de_auth_rsp_status_code(struct deauth_rsp *pSmeRsp);
 uint32_t csr_get_frag_thresh(struct mac_context *mac_ctx);
 uint32_t csr_get_rts_thresh(struct mac_context *mac_ctx);
 
+#ifndef FEATURE_CM_ENABLE
 uint8_t csr_construct_rsn_ie(struct mac_context *mac, uint32_t sessionId,
 			     struct csr_roam_profile *pProfile,
 			     struct bss_description *pSirBssDesc,
@@ -202,11 +203,9 @@ uint8_t csr_construct_wpa_ie(struct mac_context *mac, uint8_t session_id,
 			     struct csr_roam_profile *pProfile,
 			     struct bss_description *pSirBssDesc,
 			     tDot11fBeaconIEs *pIes, tCsrWpaIe *pWpaIe);
-
 #ifdef FEATURE_WLAN_WAPI
 bool csr_is_profile_wapi(struct csr_roam_profile *pProfile);
 #endif /* FEATURE_WLAN_WAPI */
-#ifndef FEATURE_CM_ENABLE
 /*
  * If a WPAIE exists in the profile, just use it.
  * Or else construct one from the BSS Caller allocated memory for pWpaIe and
@@ -245,7 +244,7 @@ uint8_t csr_retrieve_wapi_ie(struct mac_context *mac, uint32_t sessionId,
 			     struct bss_description *pSirBssDesc,
 			     tDot11fBeaconIEs *pIes, tCsrWapiIe *pWapiIe);
 #endif /* FEATURE_WLAN_WAPI */
-#endif
+#endif /* FEATURE_CM_ENABLE */
 bool csr_rates_is_dot11_rate11b_supported_rate(uint8_t dot11Rate);
 bool csr_rates_is_dot11_rate11a_supported_rate(uint8_t dot11Rate);
 tAniEdType csr_translate_encrypt_type_to_ed_type(
@@ -283,11 +282,10 @@ QDF_STATUS csr_get_phy_mode_from_bss(struct mac_context *mac,
 QDF_STATUS csr_reassoc(struct mac_context *mac, uint32_t sessionId,
 		tCsrRoamModifyProfileFields *pModProfileFields,
 		uint32_t *pRoamId, bool fForce);
-#endif
 #ifdef FEATURE_WLAN_ESE
 bool csr_is_profile_ese(struct csr_roam_profile *pProfile);
 #endif
-
+#endif
 /**
  * csr_is_auth_type_ese() - Checks whether Auth type is ESE or not
  * @AuthType: Authentication type

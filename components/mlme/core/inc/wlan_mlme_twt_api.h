@@ -132,6 +132,60 @@ void mlme_set_twt_peer_capabilities(struct wlan_objmgr_psoc *psoc,
 				    tDot11fIEhe_op *he_op);
 
 /**
+ * mlme_twt_any_peer_cmd_in_progress() - Iterate through the list of peers
+ * and check if the given command is in progress
+ * @psoc: Pointer to psoc object
+ * @vdev_id: Vdev id
+ * @dialog_id: Dialog id
+ * @cmd: command
+ *
+ * This API is used to check for the given @dialog_id if the
+ * @cmd command is in progress for any of the peers.
+ *
+ * Return: true if command is in progress, false otherwise
+ */
+bool
+mlme_twt_any_peer_cmd_in_progress(struct wlan_objmgr_psoc *psoc,
+				  uint8_t vdev_id,
+				  uint8_t dialog_id,
+				  enum wlan_twt_commands cmd);
+
+/**
+ * mlme_sap_set_twt_all_peers_cmd_in_progress()  - Iterate through the list
+ * of peers and set the command in the TWT session entry in the TWT context
+ * @psoc: Pointer to global psoc object
+ * @vdev_id: Vdev id
+ * @dialog_id: Dialog ID
+ * @cmd: Command
+ *
+ * This API iterates through the list of peers and updates the active
+ * command to @cmd for the given dialog_id.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mlme_sap_set_twt_all_peers_cmd_in_progress(struct wlan_objmgr_psoc *psoc,
+					   uint8_t vdev_id,
+					   uint8_t dialog_id,
+					   enum wlan_twt_commands cmd);
+
+/**
+ * mlme_init_all_peers_twt_context()  - Iterate through the list
+ * of peers and initialize the TWT context structure
+ * @psoc: Pointer to global psoc object
+ * @vdev_id: Vdev id
+ * @dialog_id: Dialog ID
+ *
+ * This API iterates through the list of peers and initializes
+ * the TWT context structure
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mlme_init_all_peers_twt_context(struct wlan_objmgr_psoc *psoc,
+				uint8_t vdev_id,
+				uint8_t dialog_id);
+/**
  * mlme_init_twt_context() - Initialize TWT context structure
  * @psoc: Pointer to psoc object
  * @peer_mac: Pointer to peer mac address
@@ -175,6 +229,25 @@ bool mlme_is_twt_notify_in_progress(struct wlan_objmgr_psoc *psoc,
 bool mlme_is_flexible_twt_enabled(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * mlme_sap_set_twt_command_in_progress() - Set TWT command is in progress.
+ * @psoc: Pointer to psoc object
+ * @vdev_id: vdev id
+ * @peer_mac: Pointer to peer mac address
+ * @dialog_id: Dialog id
+ * @cmd: TWT command
+ *
+ * if the broadcast MAC address is passed, then
+ * set TWT command is in progress for all the peers
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlme_sap_set_twt_command_in_progress(struct wlan_objmgr_psoc *psoc,
+						uint8_t vdev_id,
+						struct qdf_mac_addr *peer_mac,
+						uint8_t dialog_id,
+						enum wlan_twt_commands cmd);
+
+/**
  * mlme_set_twt_command_in_progress() - Set TWT command is in progress.
  * @psoc: Pointer to psoc object
  * @peer_mac: Pointer to peer mac address
@@ -187,6 +260,22 @@ QDF_STATUS mlme_set_twt_command_in_progress(struct wlan_objmgr_psoc *psoc,
 					    struct qdf_mac_addr *peer_mac,
 					    uint8_t dialog_id,
 					    enum wlan_twt_commands cmd);
+
+/**
+ * mlme_sap_twt_peer_is_cmd_in_progress() - For a given peer_mac check if
+ * the given command is in progress
+ * @psoc: Pointer to psoc object
+ * @peer_mac: Pointer to peer mac address
+ * @dialog_id: Dialog id
+ * @cmd: TWT command
+ *
+ * Return: True if given command is in progress.
+ */
+bool mlme_sap_twt_peer_is_cmd_in_progress(struct wlan_objmgr_psoc *psoc,
+					  struct qdf_mac_addr *peer_mac,
+					  uint8_t dialog_id,
+					  enum wlan_twt_commands cmd);
+
 
 /**
  * mlme_twt_is_command_in_progress() - Check if given command is in progress

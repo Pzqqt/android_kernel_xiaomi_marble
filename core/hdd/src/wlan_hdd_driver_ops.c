@@ -278,6 +278,38 @@ hdd_hif_register_shutdown_notifier(struct hif_opaque_softc *hif_ctx)
 }
 
 /**
+
+ * hdd_hif_set_ce_max_yield_time() - Wrapper API to set CE max yield time
+ * @hif_ctx: hif context
+ * @bus_type: underlying bus type
+ * @ce_service_max_yield_time: max yield time to be set
+ *
+ * Return: None
+ */
+#if defined(CONFIG_SLUB_DEBUG_ON)
+#define CE_SNOC_MAX_YIELD_TIME_US 2000
+
+static void hdd_hif_set_ce_max_yield_time(struct hif_opaque_softc *hif_ctx,
+					  enum qdf_bus_type bus_type,
+					  uint32_t ce_service_max_yield_time)
+{
+	if (bus_type == QDF_BUS_TYPE_SNOC &&
+	    ce_service_max_yield_time < CE_SNOC_MAX_YIELD_TIME_US)
+		ce_service_max_yield_time = CE_SNOC_MAX_YIELD_TIME_US;
+
+	hif_set_ce_service_max_yield_time(hif_ctx, ce_service_max_yield_time);
+}
+
+#else
+static void hdd_hif_set_ce_max_yield_time(struct hif_opaque_softc *hif_ctx,
+					  enum qdf_bus_type bus_type,
+					  uint32_t ce_service_max_yield_time)
+{
+	hif_set_ce_service_max_yield_time(hif_ctx, ce_service_max_yield_time);
+}
+#endif
+
+/**
  * hdd_init_cds_hif_context() - API to set CDS HIF Context
  * @hif: HIF Context
  *
@@ -401,7 +433,8 @@ int hdd_hif_open(struct device *dev, void *bdev, const struct hif_bus_id *bid,
 		}
 	}
 
-	hif_set_ce_service_max_yield_time(hif_ctx,
+	hdd_hif_set_ce_max_yield_time(
+				hif_ctx, bus_type,
 				cfg_get(hdd_ctx->psoc,
 					CFG_DP_CE_SERVICE_MAX_YIELD_TIME));
 	ucfg_pmo_psoc_set_hif_handle(hdd_ctx->psoc, hif_ctx);
@@ -1160,8 +1193,6 @@ static int __wlan_hdd_bus_suspend(struct wow_enable_params wow_params,
 	if (err)
 		return err;
 
-	/* Wait for the stop module if already in progress */
-	hdd_psoc_idle_timer_stop(hdd_ctx);
 
 	/* If Wifi is off, return success for system suspend */
 	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
@@ -1227,6 +1258,12 @@ static int __wlan_hdd_bus_suspend(struct wow_enable_params wow_params,
 	if (pending) {
 		hdd_debug("Prevent suspend, RX frame pending %d", pending);
 		err = -EBUSY;
+		goto resume_txrx;
+	}
+
+	if (hif_try_prevent_ep_vote_access(hif_ctx)) {
+		hdd_debug("Prevent suspend, ep work pending");
+		err = QDF_STATUS_E_BUSY;
 		goto resume_txrx;
 	}
 
@@ -1839,6 +1876,20 @@ static int wlan_hdd_pld_suspend(struct device *dev,
 {
 	struct osif_psoc_sync *psoc_sync;
 	int errno;
+	struct hdd_context *hdd_ctx;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno)
+		return errno;
+	/*
+	 * Flush the idle shutdown before ops start.This is done here to avoid
+	 * the deadlock as idle shutdown waits for the dsc ops
+	 * to complete.
+	 */
+	hdd_psoc_idle_timer_stop(hdd_ctx);
+
 
 	errno = osif_psoc_sync_op_start(dev, &psoc_sync);
 	if (errno)
@@ -2041,6 +2092,16 @@ wlan_hdd_pld_uevent(struct device *dev, struct pld_uevent_data *event_data)
 
 		hdd_send_hang_data(hang_evt_data.hang_data,
 				   QDF_HANG_EVENT_DATA_SIZE);
+		break;
+	case PLD_BUS_EVENT:
+		hdd_debug("Bus event received");
+
+		/* Currently only link_down taken care.
+		 * Need to extend event buffer to define more bus info,
+		 * if need later.
+		 */
+		if (event_data->bus_data.etype == PLD_BUS_EVENT_PCIE_LINK_DOWN)
+			host_log_device_status(WLAN_STATUS_BUS_EXCEPTION);
 		break;
 	default:
 		/* other events intentionally not handled */

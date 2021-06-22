@@ -203,3 +203,10 @@ QDF_STATUS wma_get_eht_capabilities(struct eht_capability *eht_cap)
 	eht_cap->mac_cap = wma_handle->eht_cap.mac_cap;
 	return QDF_STATUS_SUCCESS;
 }
+
+void wma_set_peer_assoc_params_bw_320(struct peer_assoc_params *params,
+				      enum phy_ch_width ch_width)
+{
+	if (ch_width == CH_WIDTH_320MHZ)
+		params->bw_320 = 1;
+}

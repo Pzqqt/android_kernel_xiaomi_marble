@@ -2694,7 +2694,16 @@ static void lim_set_mbssid_info(struct pe_session *pe_session)
 {
 	struct scan_mbssid_info *mbssid_info;
 
-	mbssid_info = &pe_session->lim_join_req->bssDescription.mbssid_info;
+	if (!pe_session->lim_join_req && !pe_session->pLimReAssocReq)
+		return;
+
+	if (pe_session->lim_join_req)
+		mbssid_info =
+			&pe_session->lim_join_req->bssDescription.mbssid_info;
+	else
+		mbssid_info =
+			&pe_session->pLimReAssocReq->bssDescription.mbssid_info;
+
 	mlme_set_mbssid_info(pe_session->vdev, mbssid_info);
 }
 

@@ -114,7 +114,7 @@ void lim_ft_cleanup_pre_auth_info(struct mac_context *mac,
  * lim_process_ft_pre_auth_req() - process ft pre auth req
  *
  * @mac_ctx:    global mac ctx
- * @msg:        pointer to message
+ * @ft_pre_auth_req:  ft preauth request
  *
  * In this function, we process the FT Pre Auth Req:
  *   We receive Pre-Auth, suspend link, register a call back. In the call back,
@@ -124,13 +124,12 @@ void lim_ft_cleanup_pre_auth_info(struct mac_context *mac,
  *
  * Return: value to indicate if buffer was consumed
  */
-int lim_process_ft_pre_auth_req(struct mac_context *mac_ctx,
-				struct scheduler_msg *msg)
+bool lim_process_ft_pre_auth_req(struct mac_context *mac_ctx,
+				 tpSirFTPreAuthReq ft_pre_auth_req)
 {
-	int buf_consumed = false;
+	bool buf_consumed = false;
 	struct pe_session *session;
 	uint8_t session_id;
-	tpSirFTPreAuthReq ft_pre_auth_req = (tSirFTPreAuthReq *) msg->bodyptr;
 
 	if (!ft_pre_auth_req) {
 		pe_err("tSirFTPreAuthReq is NULL");
@@ -226,7 +225,6 @@ void lim_perform_ft_pre_auth(struct mac_context *mac, QDF_STATUS status,
 			     uint32_t *data, struct pe_session *pe_session)
 {
 	tSirMacAuthFrameBody authFrame;
-	int32_t ucast_cipher;
 	bool is_open = false;
 
 	if (!pe_session) {
@@ -234,11 +232,7 @@ void lim_perform_ft_pre_auth(struct mac_context *mac, QDF_STATUS status,
 		return;
 	}
 
-	ucast_cipher = wlan_crypto_get_param(pe_session->vdev,
-					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
-	if (!ucast_cipher ||
-	    ((QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_NONE) ==
-	      ucast_cipher)))
+	if (cm_is_open_mode(pe_session->vdev))
 		is_open = true;
 
 	if (pe_session->is11Rconnection &&
@@ -574,6 +568,74 @@ void lim_process_ft_preauth_rsp_timeout(struct mac_context *mac_ctx)
 	lim_handle_ft_pre_auth_rsp(mac_ctx, QDF_STATUS_E_FAILURE, NULL, 0, session);
 }
 
+#ifdef FEATURE_CM_ENABLE
+/*
+ * lim_cm_post_preauth_rsp() - post preauth response to osif.
+ *
+ * @mac_ctx:		global mac ctx
+ * @status:		status code to post in auth rsp
+ * @auth_rsp:		pointer to auth rsp FT ie
+ * @auth_rsp_length:	len of the IE field
+ * @session:	        pe session
+ *
+ * post preauth response to osif.
+ *
+ * Return: void
+ */
+static void
+lim_cm_post_preauth_rsp(struct mac_context *mac_ctx, QDF_STATUS status,
+			uint8_t *auth_rsp, uint16_t auth_rsp_length,
+			struct pe_session *session)
+{
+	QDF_STATUS qdf_status;
+	struct scheduler_msg rsp_msg = {0};
+	struct wlan_preauth_rsp *rsp;
+
+	rsp = qdf_mem_malloc(sizeof(*rsp));
+	if (!rsp)
+		return;
+
+	rsp->psoc = mac_ctx->psoc;
+	if (session) {
+		/* Nothing to be done if the session is not in STA mode */
+		if (!LIM_IS_STA_ROLE(session)) {
+			pe_err("session is not in STA mode");
+			qdf_mem_free(rsp);
+			return;
+		}
+		rsp->vdev_id = session->vdev_id;
+		/* The bssid of the AP we are sending Auth1 to. */
+		if (session->ftPEContext.pFTPreAuthReq)
+			qdf_mem_copy(rsp->pre_auth_bssid.bytes,
+				     session->ftPEContext.
+						pFTPreAuthReq->preAuthbssId,
+				     QDF_MAC_ADDR_SIZE);
+	}
+	rsp->status = status;
+
+	/* Attach the auth response now back to osif */
+	rsp->ft_ie_length = 0;
+	if (auth_rsp && (auth_rsp_length < MAX_FTIE_SIZE)) {
+		/* Only 11r assoc has FT IEs */
+		qdf_mem_copy(rsp->ft_ie, auth_rsp, auth_rsp_length);
+		rsp->ft_ie_length = auth_rsp_length;
+	}
+
+	rsp_msg.bodyptr = rsp;
+	rsp_msg.callback = cm_handle_preauth_rsp;
+
+	qdf_status = scheduler_post_message(
+				QDF_MODULE_ID_PE, QDF_MODULE_ID_OS_IF,
+				QDF_MODULE_ID_OS_IF, &rsp_msg);
+
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		pe_err("Failed to post preauth rsp to sme vdev_id %d",
+		       rsp->vdev_id);
+		qdf_mem_free(rsp);
+	}
+}
+#endif
+
 /*
  * lim_post_ft_pre_auth_rsp() - post ft pre auth response to SME.
  *
@@ -661,7 +723,7 @@ void lim_post_ft_pre_auth_rsp(struct mac_context *mac_ctx,
 		lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_PREAUTH_DONE,
 				      session, status, 0);
 #endif
-	/* post msg to osif to cm */
+lim_cm_post_preauth_rsp(mac_ctx, status, auth_rsp, auth_rsp_length, session);
 #endif
 }
 

@@ -1351,6 +1351,7 @@ static void csr_save_tx_power_to_cfg(struct mac_context *mac,
 	qdf_mem_free(p_buf);
 }
 
+#ifndef FEATURE_CM_ENABLE
 QDF_STATUS csr_scan_abort_mac_scan(struct mac_context *mac_ctx,
 				   uint32_t vdev_id,
 				   uint32_t scan_id)
@@ -1397,7 +1398,6 @@ QDF_STATUS csr_scan_abort_mac_scan(struct mac_context *mac_ctx,
 	return status;
 }
 
-#ifndef FEATURE_CM_ENABLE
 bool csr_roam_is_valid_channel(struct mac_context *mac, uint32_t ch_freq)
 {
 	bool fValid = false;
@@ -1460,22 +1460,7 @@ free_mem:
 
 	return status;
 }
-#endif
 
-#ifdef FEATURE_WLAN_ESE
-/*  Update the TSF with the difference in system time */
-void update_cckmtsf(uint32_t *timeStamp0, uint32_t *timeStamp1,
-		    uint64_t *incr)
-{
-	uint64_t timeStamp64 = ((uint64_t) *timeStamp1 << 32) | (*timeStamp0);
-
-	timeStamp64 = (uint64_t)(timeStamp64 + (*incr));
-	*timeStamp0 = (uint32_t) (timeStamp64 & 0xffffffff);
-	*timeStamp1 = (uint32_t) ((timeStamp64 >> 32) & 0xffffffff);
-}
-#endif
-
-#ifndef FEATURE_CM_ENABLE
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS
 csr_rso_save_ap_to_scan_cache(struct mac_context *mac,

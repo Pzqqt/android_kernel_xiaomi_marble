@@ -592,20 +592,6 @@ typedef QDF_STATUS
 		     uint8_t session_id, uint8_t reason,
 		     enum wlan_cm_rso_control_requestor requestor);
 
-/**
- * typedef csr_roam_pmkid_req_fn_t - pmkid generation fallback event pointer
- * @vdev_id: Vdev id
- * @bss_list: candidate AP bssid list
- *
- * This type is for callbacks registered with CSR to handle roam event from
- * firmware for pmkid generation fallback
- *
- * Return: Success or Failure.
- */
-typedef QDF_STATUS
-(*csr_roam_pmkid_req_fn_t)(uint8_t vdev_id,
-			   struct roam_pmkid_req_event *bss_list);
-
 /* / Definition for indicating all modules ready on STA */
 struct sme_ready_req {
 	uint16_t messageType;   /* eWNI_SME_SYS_READY_IND */
@@ -625,7 +611,6 @@ struct sme_ready_req {
 					uint8_t *deauth_disassoc_frame,
 					uint16_t deauth_disassoc_frame_len,
 					uint16_t reason_code);
-	csr_roam_pmkid_req_fn_t csr_roam_pmkid_req_cb;
 };
 
 /**
@@ -1029,35 +1014,27 @@ typedef struct sEsePEContext {
 
 #endif /* FEATURE_WLAN_ESE */
 
-/* / Definition for join request */
-/* / ---> MAC */
+/* Warning Do not add any new param in this struct */
 struct join_req {
+#ifndef FEATURE_CM_ENABLE
 	uint16_t messageType;   /* eWNI_SME_JOIN_REQ */
 	uint16_t length;
 	uint8_t vdev_id;
 	tSirMacSSid ssId;
-	tSirRSNie rsnIE;        /* RSN IE to be sent in */
-	tSirAddie addIEScan;    /* Additional IE to be sent in */
-	/* (unicast) Probe Request at the time of join */
-
-	tSirAddie addIEAssoc;   /* Additional IE to be sent in */
-	/* (Re) Association Request */
-#ifndef FEATURE_CM_ENABLE
 	tAniEdType UCEncryptionType;
 	enum ani_akm_type akm;
 	bool wps_registration;
 	bool isOSENConnection;
 	bool force_24ghz_in_ht20;
-#endif
-
 #ifdef FEATURE_WLAN_ESE
 	tESETspecInfo eseTspecInfo;
 #endif
-	struct supported_channels supportedChannels;
 	bool force_rsne_override;
-	bool same_ctry_code;  /* If AP Country IE has same country code as */
-	/* STA programmed country */
-	uint8_t ap_power_type_6g;  /* AP power type for 6G (LPI, SP, or VLP) */
+#endif /* FEATURE_CM_ENABLE */
+	tSirRSNie rsnIE;
+	tSirAddie addIEScan;
+	tSirAddie addIEAssoc;
+	/* Warning:::::::::::: Do not add any new param in this struct */
 	/* Pls make this as last variable in struct */
 	struct bss_description bssDescription;
 	/*
@@ -2589,6 +2566,7 @@ typedef struct {
 } tSirStatsExtEvent, *tpSirStatsExtEvent;
 #endif
 
+#ifndef FEATURE_CM_ENABLE
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 struct handoff_failure_ind {
 	uint8_t vdev_id;
@@ -2598,7 +2576,7 @@ struct handoff_failure_ind {
 struct roam_offload_synch_fail {
 	uint8_t session_id;
 };
-
+#endif
 #endif
 
 /**
@@ -4200,7 +4178,7 @@ struct obss_ht40_scanind {
 	uint8_t bss_id;
 	uint8_t fortymhz_intolerent;
 	uint8_t channel_count;
-	uint32_t chan_freq_list[ROAM_MAX_CHANNELS];
+	uint32_t chan_freq_list[CFG_VALID_CHANNEL_LIST_LEN];
 	uint8_t current_operatingclass;
 	uint16_t iefield_len;
 	uint8_t  iefield[SIR_ROAM_SCAN_MAX_PB_REQ_SIZE];

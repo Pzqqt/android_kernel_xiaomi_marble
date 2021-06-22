@@ -3566,33 +3566,6 @@ static int hdd_handle_pdev_reset(struct hdd_adapter *adapter, int value)
 	return ret;
 }
 
-static int hdd_we_set_ch_width(struct hdd_adapter *adapter, int ch_width)
-{
-	uint32_t bonding_mode;
-
-	/* updating channel bonding only on 5Ghz */
-	hdd_debug("WMI_VDEV_PARAM_CHWIDTH val %d", ch_width);
-
-	switch (ch_width) {
-	case eHT_CHANNEL_WIDTH_20MHZ:
-		bonding_mode = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
-		break;
-
-	case eHT_CHANNEL_WIDTH_40MHZ:
-	case eHT_CHANNEL_WIDTH_80MHZ:
-	case eHT_CHANNEL_WIDTH_80P80MHZ:
-	case eHT_CHANNEL_WIDTH_160MHZ:
-		bonding_mode = WNI_CFG_CHANNEL_BONDING_MODE_ENABLE;
-		break;
-
-	default:
-		hdd_err("Invalid channel width 0->20 1->40 2->80");
-		return -EINVAL;
-	}
-
-	return hdd_update_channel_width(adapter, ch_width, bonding_mode);
-}
-
 static int hdd_we_set_11d_state(struct hdd_adapter *adapter, int state_11d)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -6352,23 +6325,20 @@ static int __iw_get_char_setnone(struct net_device *dev,
 #endif
 	case WE_GET_11W_INFO:
 	{
-		struct csr_roam_profile *roam_profile =
-			hdd_roam_profile(adapter);
+		struct qdf_mac_addr connected_bssid;
 
-		hdd_debug("WE_GET_11W_ENABLED = %d",
-		       roam_profile->MFPEnabled);
-
+		wlan_mlme_get_bssid_vdev_id(hdd_ctx->pdev, adapter->vdev_id,
+					    &connected_bssid);
 		snprintf(extra, WE_MAX_STR_LEN,
-			 "\n BSSID %02X:%02X:%02X:%02X:%02X:%02X, Is PMF Assoc? %d"
+			 "\n BSSID %02X:%02X:%02X:%02X:%02X:%02X"
 			 "\n Number of Unprotected Disassocs %d"
 			 "\n Number of Unprotected Deauths %d",
-			 roam_profile->BSSIDs.bssid->bytes[0],
-			 roam_profile->BSSIDs.bssid->bytes[1],
-			 roam_profile->BSSIDs.bssid->bytes[2],
-			 roam_profile->BSSIDs.bssid->bytes[3],
-			 roam_profile->BSSIDs.bssid->bytes[4],
-			 roam_profile->BSSIDs.bssid->bytes[5],
-			 roam_profile->MFPEnabled,
+			 connected_bssid.bytes[0],
+			 connected_bssid.bytes[1],
+			 connected_bssid.bytes[2],
+			 connected_bssid.bytes[3],
+			 connected_bssid.bytes[4],
+			 connected_bssid.bytes[5],
 			 adapter->hdd_stats.hdd_pmf_stats.
 			 num_unprot_disassoc_rx,
 			 adapter->hdd_stats.hdd_pmf_stats.
@@ -6805,7 +6775,9 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 			hdd_ctx->psoc,
 			apps_args[0], apps_args[1], apps_args[2], apps_args[3],
 			apps_args[4], apps_args[5],
-			wlan_chan_to_freq(apps_args[6]), apps_args[7]);
+			wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev,
+						     apps_args[6]),
+						     apps_args[7]);
 	}
 	break;
 
@@ -6865,7 +6837,8 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 		}
 		policy_mgr_current_connections_update(
 			hdd_ctx->psoc, adapter->vdev_id,
-			wlan_chan_to_freq(apps_args[0]),
+			wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev,
+						     apps_args[0]),
 			POLICY_MGR_UPDATE_REASON_UT, POLICY_MGR_DEF_REQ_ID);
 	}
 	break;
@@ -6882,7 +6855,9 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 		}
 		allow = policy_mgr_allow_concurrency(
 				hdd_ctx->psoc, apps_args[0],
-				wlan_chan_to_freq(apps_args[1]), apps_args[2]);
+				wlan_reg_legacy_chan_to_freq(hdd_ctx->pdev,
+							     apps_args[1]),
+							     apps_args[2]);
 		hdd_debug("allow %d {0 = don't allow, 1 = allow}", allow);
 	}
 	break;

@@ -4792,3 +4792,37 @@ int wma_oem_event_handler(void *wma_ctx, uint8_t *event_buff, uint32_t len)
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+/**
+ * wma_get_eht_ch_width - return eht channel width
+ *
+ * Return: return eht channel width
+ */
+#ifdef WLAN_FEATURE_11BE
+uint32_t wma_get_eht_ch_width(void)
+{
+#ifdef TBD
+	uint32_t fw_ch_wd = WNI_CFG_EHT_CHANNEL_WIDTH_80MHZ;
+	tp_wma_handle wm_hdl = cds_get_context(QDF_MODULE_ID_WMA);
+	struct target_psoc_info *tgt_hdl;
+	int eht_cap_info;
+
+	if (!wm_hdl)
+		return fw_ch_wd;
+
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(wm_hdl->psoc);
+	if (!tgt_hdl)
+		return fw_ch_wd;
+
+	eht_cap_info = target_if_get_eht_cap_info(tgt_hdl);
+	if (eht_cap_info & WMI_EHT_CAP_CH_WIDTH_160MHZ)
+		fw_ch_wd = WNI_CFG_EHT_CHANNEL_WIDTH_160MHZ;
+	else if (eht_cap_info & WMI_EHT_CAP_CH_WIDTH_320MHZ)
+		fw_ch_wd = WNI_CFG_EHT_CHANNEL_WIDTH_320MHZ;
+
+	return fw_ch_wd;
+#else
+	return WNI_CFG_EHT_CHANNEL_WIDTH_320MHZ;
+#endif
+}
+#endif

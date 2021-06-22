@@ -113,7 +113,12 @@
 #define MAX_BSSID_AVOID_LIST     16
 #define MAX_BSSID_FAVORED      16
 
+#if defined(FEATURE_CM_ENABLE) && defined(WLAN_FEATURE_HOST_ROAM)
+#define MAX_FTIE_SIZE CM_MAX_FTIE_SIZE
+#else
 #define MAX_FTIE_SIZE 384
+#endif
+
 #define ESE_MAX_TSPEC_IES 4
 
 /*
@@ -262,9 +267,25 @@ enum roam_fail_params {
 	ROAM_FAIL_REASON,
 };
 
+#if defined(FEATURE_CM_ENABLE) && defined(WLAN_FEATURE_HOST_ROAM)
+/**
+ * srtuct reassoc_timer_ctx - reassoc timer context
+ * @pdev: pdev object pointer
+ * @vdev_id: vdev id
+ * @cm_id: cm id to find cm_roam_req
+ */
+struct reassoc_timer_ctx {
+	struct wlan_objmgr_pdev *pdev;
+	uint8_t vdev_id;
+	wlan_cm_id cm_id;
+};
+#endif
+
 /**
  * struct rso_config - connect config to be used to send info in
  * RSO. This is the info we dont have in VDEV or CM ctx
+ * @reassoc_timer: reassoc timer
+ * @ctx: reassoc timer context
  * @cm_rso_lock: RSO lock
  * @rsn_cap: original rsn caps from the connect req from supplicant
  * @disable_hi_rssi: disable high rssi
@@ -309,6 +330,10 @@ enum roam_fail_params {
  * @lost_link_rssi: lost link RSSI
  */
 struct rso_config {
+#if defined(FEATURE_CM_ENABLE) && defined(WLAN_FEATURE_HOST_ROAM)
+	qdf_mc_timer_t reassoc_timer;
+	struct reassoc_timer_ctx ctx;
+#endif
 	qdf_mutex_t cm_rso_lock;
 	uint8_t rsn_cap;
 	bool disable_hi_rssi;
@@ -486,15 +511,20 @@ enum roam_cfg_param {
  * miss event at firmware
  * @WLAN_ROAM_SKIP_EAPOL_4WAY_HANDSHAKE: Disable 4 Way-HS offload to firmware
  * Setting this flag will make the eapol packets reach to host every time
- * and can cause frequent APPS wake-ups.
+ * and can cause frequent APPS wake-ups. And clearing this flag will make
+ * eapol offload to firmware except for SAE and OWE roam.
  * @WLAN_ROAM_BMISS_FINAL_SCAN_TYPE: Set this flag to skip full scan on final
  * bmiss and use the channel map to do the partial scan alone
+ * @WLAN_ROAM_SKIP_SAE_ROAM_4WAY_HANDSHAKE: Disable 4 Way-HS offload to firmware
+ * Setting this flag will make the eapol packets reach to host and clearing this
+ * flag will make eapol offload to firmware including for SAE roam.
  */
 enum roam_offload_init_flags {
 	WLAN_ROAM_FW_OFFLOAD_ENABLE = BIT(1),
 	WLAN_ROAM_BMISS_FINAL_SCAN_ENABLE = BIT(2),
 	WLAN_ROAM_SKIP_EAPOL_4WAY_HANDSHAKE = BIT(3),
-	WLAN_ROAM_BMISS_FINAL_SCAN_TYPE = BIT(4)
+	WLAN_ROAM_BMISS_FINAL_SCAN_TYPE = BIT(4),
+	WLAN_ROAM_SKIP_SAE_ROAM_4WAY_HANDSHAKE = BIT(5)
 };
 
 /**
@@ -514,15 +544,21 @@ struct wlan_roam_offload_init_params {
  * qca_roam_scan_freq_scheme
  * @connected_rssi_threshold: RSSI threshold of the current
  * connected AP
- * @candidate_rssi_threshold: RSSI threshold of the
- * candidate AP
+ * @candidate_rssi_threshold_2g: RSSI threshold of the
+ * candidate AP in 2.4Ghz band
+ * @candidate_rssi_threshold_5g: RSSI threshold of the candidate AP in 5Ghz
+ * band
+ * @candidate_rssi_threshold_6g: RSSI threshold of the candidate AP in 6Ghz
+ * band
  * @user_roam_reason: Roam triggered reason code, value zero is for enable
  * and non zero value is disable
  */
 struct wlan_cm_roam_vendor_btm_params {
 	uint32_t scan_freq_scheme;
 	uint32_t connected_rssi_threshold;
-	uint32_t candidate_rssi_threshold;
+	uint32_t candidate_rssi_threshold_2g;
+	uint32_t candidate_rssi_threshold_5g;
+	uint32_t candidate_rssi_threshold_6g;
 	uint32_t user_roam_reason;
 };
 
@@ -1404,7 +1440,6 @@ struct wlan_roam_scan_period_params {
 	uint32_t full_scan_period;
 };
 
-#define ROAM_MAX_CHANNELS 80
 /**
  * wlan_roam_scan_channel_list  - Roam Scan channel list related
  * parameters
@@ -1416,7 +1451,7 @@ struct wlan_roam_scan_period_params {
 struct wlan_roam_scan_channel_list {
 	uint32_t vdev_id;
 	uint8_t chan_count;
-	uint32_t chan_freq_list[ROAM_MAX_CHANNELS];
+	uint32_t chan_freq_list[CFG_VALID_CHANNEL_LIST_LEN];
 	uint8_t chan_cache_type;
 };
 
@@ -1732,11 +1767,9 @@ enum roam_scan_freq_scheme {
  * data related structure
  * @pcl_vdev_cmd_active:  Flag to check if vdev level pcl command needs to be
  * sent or PDEV level PCL command needs to be sent
- * @control_param: vendor configured roam control param
  */
 struct wlan_cm_roam {
 	bool pcl_vdev_cmd_active;
-	struct wlan_cm_roam_vendor_btm_params vendor_btm_param;
 };
 
 /**
@@ -1797,6 +1830,16 @@ struct cm_hw_mode_trans_ind {
 	uint32_t new_hw_mode_index;
 	uint32_t num_vdev_mac_entries;
 	struct policy_mgr_vdev_mac_map vdev_mac_map[MAX_VDEV_SUPPORTED];
+};
+
+/*
+ * struct roam_pmkid_req_event - Pmkid event with entries destination structure
+ * @num_entries: total entries sent over the event
+ * @ap_bssid: bssid list
+ */
+struct roam_pmkid_req_event {
+	uint32_t num_entries;
+	struct qdf_mac_addr ap_bssid[];
 };
 
 struct roam_offload_synch_ind {

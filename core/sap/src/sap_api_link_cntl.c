@@ -82,6 +82,18 @@
  * Function Declarations and Documentation
  * -------------------------------------------------------------------------*/
 
+#ifdef WLAN_FEATURE_11BE
+static inline bool sap_acs_cfg_is_chwidth_320mhz(uint16_t width)
+{
+	return width == CH_WIDTH_320MHZ;
+}
+#else
+static inline bool sap_acs_cfg_is_chwidth_320mhz(uint16_t width)
+{
+	return false;
+}
+#endif
+
 /**
  * sap_config_acs_result : Generate ACS result params based on ch constraints
  * @sap_ctx: pointer to SAP context data struct
@@ -114,7 +126,8 @@ void sap_config_acs_result(mac_handle_t mac_handle,
 		sap_ctx->acs_cfg->vht_seg0_center_ch_freq = 0;
 
 	if (sap_ctx->acs_cfg->ch_width == CH_WIDTH_80P80MHZ ||
-	   (sap_ctx->acs_cfg->ch_width == CH_WIDTH_160MHZ))
+	   (sap_ctx->acs_cfg->ch_width == CH_WIDTH_160MHZ) ||
+	   sap_acs_cfg_is_chwidth_320mhz(sap_ctx->acs_cfg->ch_width))
 		sap_ctx->acs_cfg->vht_seg1_center_ch_freq =
 						ch_params.mhz_freq_seg1;
 	else

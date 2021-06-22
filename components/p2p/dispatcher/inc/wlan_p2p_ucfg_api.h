@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018,2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018, 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -248,13 +248,16 @@ QDF_STATUS ucfg_p2p_cleanup_tx_by_psoc(struct wlan_objmgr_psoc *psoc);
  * @soc: soc context
  * @mgmt_frm: TX mgmt frame parameters
  * @cookie: Return the cookie to caller
+ * @pdev: pdev object
  *
  * This function delivers mgmt frame tx request to P2P component.
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
 QDF_STATUS ucfg_p2p_mgmt_tx(struct wlan_objmgr_psoc *soc,
-	struct p2p_mgmt_tx *mgmt_frm, uint64_t *cookie);
+			    struct p2p_mgmt_tx *mgmt_frm,
+			    uint64_t *cookie,
+			    struct wlan_objmgr_pdev *pdev);
 
 /**
  * ucfg_p2p_mgmt_tx_cancel() - Cancel mgmt frame tx request

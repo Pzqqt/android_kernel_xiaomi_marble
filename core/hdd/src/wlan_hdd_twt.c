@@ -29,6 +29,7 @@
 #include "wlan_hdd_twt.h"
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_cfg.h"
+#include "wlan_hdd_hostapd.h"
 #include "sme_api.h"
 #include "wma_twt.h"
 #include "osif_sync.h"
@@ -38,6 +39,7 @@
 #include <wlan_mlme_twt_ucfg_api.h>
 
 #define TWT_DISABLE_COMPLETE_TIMEOUT 4000
+#define TWT_ENABLE_COMPLETE_TIMEOUT  4000
 
 #define TWT_FLOW_TYPE_ANNOUNCED 0
 #define TWT_FLOW_TYPE_UNANNOUNCED 1
@@ -66,6 +68,11 @@ qca_wlan_vendor_twt_add_dialog_policy[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1] = 
 	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MIN_WAKE_INTVL] = {.type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX_WAKE_INTVL] = {.type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL2_MANTISSA] = {.type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAC_ADDR] = VENDOR_NLA_POLICY_MAC_ADDR,
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST_ID] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST_RECOMMENDATION] = {
+							.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST_PERSISTENCE] = {.type = NLA_U8 },
 };
 
 static const struct nla_policy
@@ -170,6 +177,26 @@ int hdd_twt_get_add_dialog_values(struct nlattr **tb,
 
 	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST;
 	params->flag_bcast = nla_get_flag(tb[cmd_id]);
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST_ID;
+	if (tb[cmd_id]) {
+		params->dialog_id = nla_get_u8(tb[cmd_id]);
+		hdd_debug("TWT_SETUP_BCAST_ID %d", params->dialog_id);
+	}
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST_RECOMMENDATION;
+	if (tb[cmd_id]) {
+		params->b_twt_recommendation = nla_get_u8(tb[cmd_id]);
+		hdd_debug("TWT_SETUP_BCAST_RECOMM %d",
+			  params->b_twt_recommendation);
+	}
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST_PERSISTENCE;
+	if (tb[cmd_id]) {
+		params->b_twt_persistence = nla_get_u8(tb[cmd_id]);
+		hdd_debug("TWT_SETUP_BCAST_PERSIS %d",
+			  params->b_twt_persistence);
+	}
 
 	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_REQ_TYPE;
 	if (!tb[cmd_id]) {
@@ -314,6 +341,7 @@ int hdd_test_config_twt_setup_session(struct hdd_adapter *adapter,
 	uint32_t congestion_timeout = 0;
 	int ret = 0;
 	int cmd_id;
+	QDF_STATUS qdf_status;
 
 	if (adapter->device_mode != QDF_STA_MODE &&
 	    adapter->device_mode != QDF_P2P_CLIENT_MODE) {
@@ -352,13 +380,22 @@ int hdd_test_config_twt_setup_session(struct hdd_adapter *adapter,
 						     &congestion_timeout);
 		if (congestion_timeout) {
 			ret = qdf_status_to_os_return(
-				hdd_send_twt_disable_cmd(adapter->hdd_ctx));
+			hdd_send_twt_requestor_disable_cmd(adapter->hdd_ctx));
 			if (ret) {
 				hdd_err("Failed to disable TWT");
 				return ret;
 			}
+
 			ucfg_mlme_set_twt_congestion_timeout(adapter->hdd_ctx->psoc, 0);
-			hdd_send_twt_enable_cmd(adapter->hdd_ctx);
+
+			qdf_status = hdd_send_twt_requestor_enable_cmd(
+							adapter->hdd_ctx);
+
+			ret = qdf_status_to_os_return(qdf_status);
+			if (ret) {
+				hdd_err("Failed to Enable TWT");
+				return ret;
+			}
 		}
 
 		ret = qdf_status_to_os_return(sme_test_config_twt_setup(&params));
@@ -766,15 +803,82 @@ hdd_twt_get_peer_session_params(struct hdd_context *hdd_ctx,
 }
 
 /**
- * hdd_twt_get_session_params() - Parses twt nl attrributes, obtains twt
+ * hdd_sap_twt_get_session_params() - Parses twt nl attrributes, obtains twt
  * session parameters based on dialog_id and returns to user via nl layer
  * @adapter: hdd_adapter
  * @twt_param_attr: twt nl attributes
  *
  * Return: 0 on success, negative value on failure
  */
-static int hdd_twt_get_session_params(struct hdd_adapter *adapter,
-				      struct nlattr *twt_param_attr)
+static int hdd_sap_twt_get_session_params(struct hdd_adapter *adapter,
+					  struct nlattr *twt_param_attr)
+{
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1];
+	struct wmi_host_twt_session_stats_info
+				params[TWT_PSOC_MAX_SESSIONS] = { {0} };
+	int ret, id, id1;
+	QDF_STATUS qdf_status;
+	struct qdf_mac_addr mac_addr;
+	bool is_associated;
+
+	ret = wlan_cfg80211_nla_parse_nested(
+					tb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX,
+					twt_param_attr,
+					qca_wlan_vendor_twt_add_dialog_policy);
+	if (ret)
+		return ret;
+
+	id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID;
+	id1 = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAC_ADDR;
+
+	if (tb[id] && tb[id1]) {
+		params[0].dialog_id = nla_get_u8(tb[id]);
+		nla_memcpy(params[0].peer_mac, tb[id1], QDF_MAC_ADDR_SIZE);
+	} else {
+		hdd_err_rl("TWT: get_params dialog_id or mac_addr is missing");
+		return -EINVAL;
+	}
+
+	if (QDF_IS_ADDR_BROADCAST(params[0].peer_mac) &&
+	    params[0].dialog_id != TWT_ALL_SESSIONS_DIALOG_ID) {
+		hdd_err_rl("TWT: get_params dialog_is is invalid");
+		return -EINVAL;
+	}
+
+	if (!params[0].dialog_id)
+		params[0].dialog_id = TWT_ALL_SESSIONS_DIALOG_ID;
+
+	qdf_mem_copy(mac_addr.bytes, params[0].peer_mac, QDF_MAC_ADDR_SIZE);
+
+	if (!qdf_is_macaddr_broadcast(&mac_addr)) {
+		is_associated = hdd_is_peer_associated(adapter, &mac_addr);
+		if (!is_associated) {
+			hdd_err("TWT: Association doesn't exist for STA: "
+				   QDF_MAC_ADDR_FMT,
+				   QDF_MAC_ADDR_REF(&mac_addr));
+			return -EINVAL;
+		}
+	}
+
+	hdd_debug("TWT: get_params dialog_id %d and mac_addr " QDF_MAC_ADDR_FMT,
+		  params[0].dialog_id, QDF_MAC_ADDR_REF(params[0].peer_mac));
+
+	qdf_status = hdd_twt_get_peer_session_params(adapter->hdd_ctx,
+						     &params[0]);
+
+	return qdf_status_to_os_return(qdf_status);
+}
+
+/**
+ * hdd_sta_twt_get_session_params() - Parses twt nl attrributes, obtains twt
+ * session parameters based on dialog_id and returns to user via nl layer
+ * @adapter: hdd_adapter
+ * @twt_param_attr: twt nl attributes
+ *
+ * Return: 0 on success, negative value on failure
+ */
+static int hdd_sta_twt_get_session_params(struct hdd_adapter *adapter,
+					  struct nlattr *twt_param_attr)
 {
 	struct hdd_station_ctx *hdd_sta_ctx =
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter);
@@ -783,6 +887,7 @@ static int hdd_twt_get_session_params(struct hdd_adapter *adapter,
 				params[TWT_PSOC_MAX_SESSIONS] = { {0} };
 	int ret, id;
 	QDF_STATUS qdf_status;
+	struct qdf_mac_addr bcast_addr = QDF_MAC_ADDR_BCAST_INIT;
 
 	ret = wlan_cfg80211_nla_parse_nested(tb,
 					     QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX,
@@ -811,10 +916,12 @@ static int hdd_twt_get_session_params(struct hdd_adapter *adapter,
 			     QDF_MAC_ADDR_SIZE);
 		hdd_debug("TWT: get_params peer mac_addr " QDF_MAC_ADDR_FMT,
 			  QDF_MAC_ADDR_REF(params[0].peer_mac));
+	} else {
+		qdf_mem_copy(params[0].peer_mac, &bcast_addr,
+			     QDF_MAC_ADDR_SIZE);
 	}
 
-	if ((adapter->device_mode != QDF_SAP_MODE ||
-	     params[0].dialog_id != WLAN_ALL_SESSIONS_DIALOG_ID) &&
+	if (params[0].dialog_id != WLAN_ALL_SESSIONS_DIALOG_ID &&
 	    !ucfg_mlme_is_twt_setup_done(adapter->hdd_ctx->psoc,
 					 &hdd_sta_ctx->conn_info.bssid,
 					 params[0].dialog_id)) {
@@ -825,12 +932,39 @@ static int hdd_twt_get_session_params(struct hdd_adapter *adapter,
 		return qdf_status_to_os_return(qdf_status);
 	}
 
-	hdd_debug("TWT: get_params dialog_id %d", params[0].dialog_id);
+	hdd_debug("TWT: get_params dialog_id %d and mac_addr " QDF_MAC_ADDR_FMT,
+		  params[0].dialog_id, QDF_MAC_ADDR_REF(params[0].peer_mac));
 
 	qdf_status = hdd_twt_get_peer_session_params(adapter->hdd_ctx,
 						     &params[0]);
 
 	return qdf_status_to_os_return(qdf_status);
+}
+
+/**
+ * hdd_twt_get_session_params() - Parses twt nl attrributes, obtains twt
+ * session parameters based on dialog_id and returns to user via nl layer
+ * @adapter: hdd_adapter
+ * @twt_param_attr: twt nl attributes
+ *
+ * Return: 0 on success, negative value on failure
+ */
+static int hdd_twt_get_session_params(struct hdd_adapter *adapter,
+				      struct nlattr *twt_param_attr)
+{
+	enum QDF_OPMODE device_mode = adapter->device_mode;
+
+	switch (device_mode) {
+	case QDF_STA_MODE:
+		return hdd_sta_twt_get_session_params(adapter, twt_param_attr);
+	case QDF_SAP_MODE:
+		return hdd_sap_twt_get_session_params(adapter, twt_param_attr);
+	default:
+		hdd_err_rl("TWT terminate is not supported on %s",
+			   qdf_opmode_str(adapter->device_mode));
+	}
+
+	return -EOPNOTSUPP;
 }
 
 /**
@@ -885,6 +1019,8 @@ uint32_t hdd_get_twt_setup_event_len(bool additional_params_present)
 	len += nla_total_size(sizeof(u8));
 	/*QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TWT_INFO_ENABLED*/
 	len += nla_total_size(sizeof(u8));
+	/*QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAC_ADDR*/
+	len += nla_total_size(QDF_MAC_ADDR_SIZE);
 
 	return len;
 }
@@ -1136,7 +1272,7 @@ hdd_twt_setup_pack_resp_nlmsg(struct sk_buff *reply_skb,
 	struct nlattr *config_attr;
 	uint64_t sp_offset_tsf;
 	enum qca_wlan_vendor_twt_status vendor_status;
-	int response_type;
+	int response_type, attr;
 	uint32_t wake_duration;
 	uint32_t wake_intvl_mantis_us, wake_intvl_mantis_tu;
 
@@ -1144,14 +1280,14 @@ hdd_twt_setup_pack_resp_nlmsg(struct sk_buff *reply_skb,
 
 	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_OPERATION,
 		       QCA_WLAN_TWT_SET)) {
-		hdd_err("TWT: Failed to put TWT operation");
+		hdd_err("Failed to put TWT operation");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	config_attr = nla_nest_start(reply_skb,
 				     QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS);
 	if (!config_attr) {
-		hdd_err("TWT: nla_nest_start error");
+		hdd_err("nla_nest_start error");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -1159,16 +1295,17 @@ hdd_twt_setup_pack_resp_nlmsg(struct sk_buff *reply_skb,
 	sp_offset_tsf = (sp_offset_tsf << 32) |
 			 event->additional_params.sp_tsf_us_lo;
 
-	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID,
-		       event->params.dialog_id)) {
-		hdd_err("TWT: Failed to put dialog_id");
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID;
+	if (nla_put_u8(reply_skb, attr, event->params.dialog_id)) {
+		hdd_err("Failed to put dialog_id");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	vendor_status = wmi_twt_add_status_to_vendor_twt_status(event->params.status);
-	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS,
-		       vendor_status)) {
-		hdd_err("TWT: Failed to put setup status");
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS;
+	vendor_status = wmi_twt_add_status_to_vendor_twt_status(
+							event->params.status);
+	if (nla_put_u8(reply_skb, attr, vendor_status)) {
+		hdd_err("Failed to put setup status");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1177,29 +1314,32 @@ hdd_twt_setup_pack_resp_nlmsg(struct sk_buff *reply_skb,
 		return QDF_STATUS_SUCCESS;
 	}
 
-	response_type = wmi_twt_add_cmd_to_vendor_twt_resp_type(event->additional_params.twt_cmd);
+	response_type = wmi_twt_add_cmd_to_vendor_twt_resp_type(
+					event->additional_params.twt_cmd);
 	if (response_type == -EINVAL) {
-		hdd_err("TWT: Invalid response type from firmware");
-		return QDF_STATUS_E_FAILURE;
-	}
-	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_RESP_TYPE,
-		       response_type)) {
-		hdd_err("TWT: Failed to put setup response type");
+		hdd_err("Invalid response type from firmware");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_TYPE,
-		       event->additional_params.announce)) {
-		hdd_err("TWT: Failed to put setup flow type");
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_RESP_TYPE;
+	if (nla_put_u8(reply_skb, attr, response_type)) {
+		hdd_err("Failed to put setup response type");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_TYPE;
+	if (nla_put_u8(reply_skb, attr, event->additional_params.announce)) {
+		hdd_err("Failed to put setup flow type");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	hdd_debug("wake_dur_us %d", event->additional_params.wake_dur_us);
 	wake_duration = (event->additional_params.wake_dur_us /
 			 TWT_WAKE_DURATION_MULTIPLICATION_FACTOR);
-	if (nla_put_u32(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_DURATION,
-			wake_duration)) {
-		hdd_err("TWT: Failed to put wake duration");
+
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_DURATION;
+	if (nla_put_u32(reply_skb, attr, wake_duration)) {
+		hdd_err("Failed to put wake duration");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1207,70 +1347,77 @@ hdd_twt_setup_pack_resp_nlmsg(struct sk_buff *reply_skb,
 	if (nla_put_u32(reply_skb,
 			QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL2_MANTISSA,
 			wake_intvl_mantis_us)) {
-		hdd_err("TWT: Failed to put wake interval mantissa in us");
+		hdd_err("Failed to put wake interval mantissa in us");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	wake_intvl_mantis_tu = (event->additional_params.wake_intvl_us /
 				 TWT_WAKE_INTVL_MULTIPLICATION_FACTOR);
-	if (nla_put_u32(reply_skb,
-			QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_MANTISSA,
-			wake_intvl_mantis_tu)) {
-		hdd_err("TWT: Failed to put wake interval mantissa in tu");
+
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_MANTISSA;
+	if (nla_put_u32(reply_skb, attr, wake_intvl_mantis_tu)) {
+		hdd_err("Failed to put wake interval mantissa in tu");
 		return QDF_STATUS_E_FAILURE;
 	}
-	hdd_debug("TWT: Send mantissa_us:%d, mantissa_tu:%d to userspace",
+	hdd_debug("Send mantissa_us:%d, mantissa_tu:%d to userspace",
 		  wake_intvl_mantis_us, wake_intvl_mantis_tu);
 
-	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_EXP,
-		       0)) {
-		hdd_err("TWT: Failed to put wake interval exp");
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_EXP;
+	if (nla_put_u8(reply_skb, attr, 0)) {
+		hdd_err("Failed to put wake interval exp");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (wlan_cfg80211_nla_put_u64(reply_skb,
-				      QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_TIME_TSF,
-				      sp_offset_tsf)) {
-		hdd_err("TWT: Failed to put sp_offset_tsf");
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_TIME_TSF;
+	if (wlan_cfg80211_nla_put_u64(reply_skb, attr, sp_offset_tsf)) {
+		hdd_err("Failed to put sp_offset_tsf");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (nla_put_u32(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_TIME,
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_TIME;
+	if (nla_put_u32(reply_skb, attr,
 			event->additional_params.sp_offset_us)) {
-		hdd_err("TWT: Failed to put sp_offset_us");
+		hdd_err("Failed to put sp_offset_us");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (event->additional_params.trig_en) {
-		if (nla_put_flag(reply_skb,
-				 QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TRIGGER)) {
-			hdd_err("TWT: Failed to put trig type");
+		attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TRIGGER;
+		if (nla_put_flag(reply_skb, attr)) {
+			hdd_err("Failed to put trig type");
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
 
 	if (event->additional_params.protection) {
-		if (nla_put_flag(reply_skb,
-				 QCA_WLAN_VENDOR_ATTR_TWT_SETUP_PROTECTION)) {
-			hdd_err("TWT: Failed to put protection flag");
+		attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_PROTECTION;
+		if (nla_put_flag(reply_skb, attr)) {
+			hdd_err("Failed to put protection flag");
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
 
 	if (event->additional_params.bcast) {
-		if (nla_put_flag(reply_skb,
-				 QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST)) {
-			hdd_err("TWT: Failed to put bcast flag");
+		attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST;
+		if (nla_put_flag(reply_skb, attr)) {
+			hdd_err("Failed to put bcast flag");
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
 
 	if (!event->additional_params.info_frame_disabled) {
-		if (nla_put_flag(reply_skb,
-				 QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TWT_INFO_ENABLED)) {
-			hdd_err("TWT: Failed to put twt info enable flag");
+		attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TWT_INFO_ENABLED;
+		if (nla_put_flag(reply_skb, attr)) {
+			hdd_err("Failed to put twt info enable flag");
 			return QDF_STATUS_E_FAILURE;
 		}
+	}
+
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAC_ADDR;
+	if (nla_put(reply_skb, attr, QDF_MAC_ADDR_SIZE,
+		    event->params.peer_macaddr)) {
+		hdd_err("Failed to put mac_addr");
+		return QDF_STATUS_E_INVAL;
 	}
 
 	nla_nest_end(reply_skb, config_attr);
@@ -1489,13 +1636,20 @@ static int hdd_twt_setup_session(struct hdd_adapter *adapter,
 
 	if (congestion_timeout) {
 		ret = qdf_status_to_os_return(
-			hdd_send_twt_disable_cmd(adapter->hdd_ctx));
+			hdd_send_twt_requestor_disable_cmd(adapter->hdd_ctx));
 		if (ret) {
 			hdd_err("Failed to disable TWT");
 			return ret;
 		}
+
 		ucfg_mlme_set_twt_congestion_timeout(adapter->hdd_ctx->psoc, 0);
-		hdd_send_twt_enable_cmd(adapter->hdd_ctx);
+
+		ret = qdf_status_to_os_return(
+			hdd_send_twt_requestor_enable_cmd(adapter->hdd_ctx));
+		if (ret) {
+			hdd_err("Failed to Enable TWT");
+			return ret;
+		}
 	}
 
 	if (ucfg_mlme_is_max_twt_sessions_reached(adapter->hdd_ctx->psoc,
@@ -1556,6 +1710,8 @@ static uint32_t hdd_get_twt_event_len(void)
 	len += nla_total_size(sizeof(u8));
 	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS */
 	len += nla_total_size(sizeof(u8));
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAC_ADDR*/
+	len += nla_total_size(QDF_MAC_ADDR_SIZE);
 
 	return len;
 }
@@ -1574,32 +1730,39 @@ hdd_twt_terminate_pack_resp_nlmsg(struct sk_buff *reply_skb,
 				  struct wmi_twt_del_dialog_complete_event_param *params)
 {
 	struct nlattr *config_attr;
-	int vendor_status;
+	int vendor_status, attr;
 
 	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_OPERATION,
 		       QCA_WLAN_TWT_TERMINATE)) {
-		hdd_err("TWT: Failed to put TWT operation");
+		hdd_err("Failed to put TWT operation");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	config_attr = nla_nest_start(reply_skb,
 				     QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS);
 	if (!config_attr) {
-		hdd_err("TWT: nla_nest_start error");
+		hdd_err("nla_nest_start error");
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID,
-		       params->dialog_id)) {
-		hdd_debug("TWT: Failed to put dialog_id");
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID;
+	if (nla_put_u8(reply_skb, attr, params->dialog_id)) {
+		hdd_debug("Failed to put dialog_id");
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS;
 	vendor_status = wmi_twt_del_status_to_vendor_twt_status(params->status);
-	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS,
-		       vendor_status)) {
-		hdd_err("TWT: Failed to put QCA_WLAN_TWT_TERMINATE");
+	if (nla_put_u8(reply_skb, attr, vendor_status)) {
+		hdd_err("Failed to put QCA_WLAN_TWT_TERMINATE");
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAC_ADDR;
+	if (nla_put(reply_skb, attr, QDF_MAC_ADDR_SIZE,
+		    params->peer_macaddr)) {
+		hdd_err("Failed to put mac_addr");
+		return QDF_STATUS_E_INVAL;
 	}
 
 	nla_nest_end(reply_skb, config_attr);
@@ -1647,11 +1810,11 @@ hdd_twt_del_dialog_comp_cb(struct wlan_objmgr_psoc *psoc,
 				QCA_NL80211_VENDOR_SUBCMD_CONFIG_TWT_INDEX,
 				GFP_KERNEL);
 	if (!twt_vendor_event) {
-		hdd_err("TWT: Del dialog skb alloc failed");
+		hdd_err("Del dialog skb alloc failed");
 		return;
 	}
 
-	hdd_debug("TWT: del dialog_id:%d, status:%d vdev_id %d peer mac_addr "
+	hdd_debug("del dialog_id:%d, status:%d vdev_id %d peer mac_addr "
 		  QDF_MAC_ADDR_FMT, params->dialog_id,
 		  params->status, params->vdev_id,
 		  QDF_MAC_ADDR_REF(params->peer_macaddr));
@@ -1728,30 +1891,117 @@ int hdd_send_twt_del_dialog_cmd(struct hdd_context *hdd_ctx,
 }
 
 /**
- * hdd_twt_terminate_session - Process TWT terminate
- * operation in the received vendor command and
- * send it to firmare
- * @adapter: adapter pointer
- * @twt_param_attr: nl attributes
- *
- * Handles QCA_WLAN_TWT_TERMINATE
+ * hdd_send_sap_twt_del_dialog_cmd() - Send SAP TWT del dialog command
+ * @hdd_ctx: HDD Context
+ * @twt_params: Pointer to del dialog cmd params structure
  *
  * Return: 0 on success, negative value on failure
  */
-static int hdd_twt_terminate_session(struct hdd_adapter *adapter,
-				     struct nlattr *twt_param_attr)
+static
+int hdd_send_sap_twt_del_dialog_cmd(struct hdd_context *hdd_ctx,
+				    struct wmi_twt_del_dialog_param *twt_params)
+{
+	QDF_STATUS status;
+	int ret = 0;
+
+	status = sme_sap_del_dialog_cmd(hdd_ctx->mac_handle,
+				    hdd_twt_del_dialog_comp_cb,
+				    twt_params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to send del dialog command");
+		ret = qdf_status_to_os_return(status);
+	}
+
+	return ret;
+}
+
+
+static int hdd_sap_twt_terminate_session(struct hdd_adapter *adapter,
+					 struct nlattr *twt_param_attr)
+{
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1];
+	struct wmi_twt_del_dialog_param params = {0};
+	QDF_STATUS status;
+	int id, id1, ret;
+	bool is_associated;
+	struct qdf_mac_addr mac_addr;
+
+	params.vdev_id = adapter->vdev_id;
+
+	ret = wlan_cfg80211_nla_parse_nested(tb,
+					     QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX,
+					     twt_param_attr,
+					     qca_wlan_vendor_twt_add_dialog_policy);
+	if (ret)
+		return ret;
+
+	id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID;
+	id1 = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAC_ADDR;
+	if (tb[id] && tb[id1]) {
+		params.dialog_id = nla_get_u8(tb[id]);
+		nla_memcpy(params.peer_macaddr, tb[id1], QDF_MAC_ADDR_SIZE);
+	} else if (!tb[id] && !tb[id1]) {
+		struct qdf_mac_addr bcast_addr = QDF_MAC_ADDR_BCAST_INIT;
+
+		params.dialog_id = TWT_ALL_SESSIONS_DIALOG_ID;
+		qdf_mem_copy(params.peer_macaddr, bcast_addr.bytes,
+			     QDF_MAC_ADDR_SIZE);
+	} else {
+		hdd_err_rl("get_params dialog_id or mac_addr is missing");
+		return -EINVAL;
+	}
+
+	if (!params.dialog_id)
+		params.dialog_id = TWT_ALL_SESSIONS_DIALOG_ID;
+
+	if (params.dialog_id != TWT_ALL_SESSIONS_DIALOG_ID &&
+	    QDF_IS_ADDR_BROADCAST(params.peer_macaddr)) {
+		hdd_err("Bcast MAC valid with dlg_id:%d but here dlg_id is:%d",
+			TWT_ALL_SESSIONS_DIALOG_ID, params.dialog_id);
+		return -EINVAL;
+	}
+
+	status = hdd_twt_check_all_twt_support(adapter->hdd_ctx->psoc,
+					       params.dialog_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_debug("All TWT sessions not supported by target");
+		return -EOPNOTSUPP;
+	}
+
+	qdf_mem_copy(mac_addr.bytes, params.peer_macaddr, QDF_MAC_ADDR_SIZE);
+
+	if (!qdf_is_macaddr_broadcast(&mac_addr)) {
+		is_associated = hdd_is_peer_associated(adapter, &mac_addr);
+		if (!is_associated) {
+			hdd_err_rl("Association doesn't exist for STA: "
+				   QDF_MAC_ADDR_FMT,
+				   QDF_MAC_ADDR_REF(mac_addr.bytes));
+			/*
+			 * Return success, since STA is not associated and
+			 * there is no TWT session.
+			 */
+			return 0;
+		}
+	}
+
+	hdd_debug("vdev_id %d dialog_id %d peer mac_addr "
+		  QDF_MAC_ADDR_FMT, params.vdev_id, params.dialog_id,
+		  QDF_MAC_ADDR_REF(params.peer_macaddr));
+
+	ret = hdd_send_sap_twt_del_dialog_cmd(adapter->hdd_ctx, &params);
+
+	return ret;
+}
+
+static int hdd_sta_twt_terminate_session(struct hdd_adapter *adapter,
+					 struct nlattr *twt_param_attr)
 {
 	struct hdd_station_ctx *hdd_sta_ctx = NULL;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1];
 	struct wmi_twt_del_dialog_param params = {0};
 	QDF_STATUS status;
-	int id;
-	int ret;
-
-	if (adapter->device_mode != QDF_STA_MODE &&
-	    adapter->device_mode != QDF_P2P_CLIENT_MODE)
-		return -EOPNOTSUPP;
+	int id, ret;
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	if (!hdd_cm_is_vdev_associated(adapter)) {
@@ -1794,6 +2044,12 @@ static int hdd_twt_terminate_session(struct hdd_adapter *adapter,
 		hdd_debug("TWT_TERMINATE_FLOW_ID not specified. set to zero");
 	}
 
+	id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST_ID;
+	if (tb[id]) {
+		params.dialog_id = nla_get_u8(tb[id]);
+		hdd_debug("TWT_SETUP_BCAST_ID %d", params.dialog_id);
+	}
+
 	status = hdd_twt_check_all_twt_support(adapter->hdd_ctx->psoc,
 					       params.dialog_id);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -1809,13 +2065,41 @@ static int hdd_twt_terminate_session(struct hdd_adapter *adapter,
 		return -EAGAIN;
 	}
 
-	hdd_debug("twt_terminate: vdev_id %d dialog_id %d peer mac_addr "
+	hdd_debug("vdev_id %d dialog_id %d peer mac_addr "
 		  QDF_MAC_ADDR_FMT, params.vdev_id, params.dialog_id,
 		  QDF_MAC_ADDR_REF(params.peer_macaddr));
 
 	ret = hdd_send_twt_del_dialog_cmd(adapter->hdd_ctx, &params);
 
 	return ret;
+}
+
+/**
+ * hdd_twt_terminate_session - Process TWT terminate
+ * operation in the received vendor command and
+ * send it to firmare
+ * @adapter: adapter pointer
+ * @twt_param_attr: nl attributes
+ *
+ * Handles QCA_WLAN_TWT_TERMINATE
+ *
+ * Return: 0 on success, negative value on failure
+ */
+static int hdd_twt_terminate_session(struct hdd_adapter *adapter,
+				     struct nlattr *twt_param_attr)
+{
+	enum QDF_OPMODE device_mode = adapter->device_mode;
+
+	switch (device_mode) {
+	case QDF_STA_MODE:
+		return hdd_sta_twt_terminate_session(adapter, twt_param_attr);
+	case QDF_SAP_MODE:
+		return hdd_sap_twt_terminate_session(adapter, twt_param_attr);
+	default:
+		hdd_err_rl("TWT terminate is not supported on %s",
+			   qdf_opmode_str(adapter->device_mode));
+		return -EOPNOTSUPP;
+	}
 }
 
 /**
@@ -1832,7 +2116,7 @@ hdd_twt_nudge_pack_resp_nlmsg(struct sk_buff *reply_skb,
 		      struct wmi_twt_nudge_dialog_complete_event_param *params)
 {
 	struct nlattr *config_attr;
-	int vendor_status;
+	int vendor_status, attr;
 	uint64_t tsf_val;
 
 	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_OPERATION,
@@ -1863,12 +2147,19 @@ hdd_twt_nudge_pack_resp_nlmsg(struct sk_buff *reply_skb,
 		return QDF_STATUS_E_INVAL;
 	}
 
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS;
 	vendor_status =
 		     wmi_twt_nudge_status_to_vendor_twt_status(params->status);
-	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS,
-		       vendor_status)) {
+	if (nla_put_u8(reply_skb, attr, vendor_status)) {
 		hdd_err("Failed to put QCA_WLAN_TWT_NUDGE status");
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_NUDGE_MAC_ADDR;
+	if (nla_put(reply_skb, attr, QDF_MAC_ADDR_SIZE,
+		    params->peer_macaddr)) {
+		hdd_err("Failed to put mac_addr");
+		return QDF_STATUS_E_INVAL;
 	}
 
 	nla_nest_end(reply_skb, config_attr);
@@ -1949,32 +2240,39 @@ hdd_twt_pause_pack_resp_nlmsg(struct sk_buff *reply_skb,
 			      struct wmi_twt_pause_dialog_complete_event_param *params)
 {
 	struct nlattr *config_attr;
-	int vendor_status;
+	int vendor_status, attr;
 
 	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_OPERATION,
 		       QCA_WLAN_TWT_SUSPEND)) {
-		hdd_err("TWT: Failed to put TWT operation");
+		hdd_err("Failed to put TWT operation");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	config_attr = nla_nest_start(reply_skb,
 				     QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS);
 	if (!config_attr) {
-		hdd_err("TWT: nla_nest_start error");
+		hdd_err("nla_nest_start error");
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID,
-		       params->dialog_id)) {
-		hdd_debug("TWT: Failed to put dialog_id");
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID;
+	if (nla_put_u8(reply_skb, attr, params->dialog_id)) {
+		hdd_debug("Failed to put dialog_id");
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS;
 	vendor_status = wmi_twt_pause_status_to_vendor_twt_status(params->status);
-	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS,
-		       vendor_status)) {
-		hdd_err("TWT: Failed to put QCA_WLAN_TWT_PAUSE status");
+	if (nla_put_u8(reply_skb, attr, vendor_status)) {
+		hdd_err("Failed to put QCA_WLAN_TWT_PAUSE status");
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAC_ADDR;
+	if (nla_put(reply_skb, attr, QDF_MAC_ADDR_SIZE,
+		    params->peer_macaddr)) {
+		hdd_err("Failed to put mac_addr");
+		return QDF_STATUS_E_INVAL;
 	}
 
 	nla_nest_end(reply_skb, config_attr);
@@ -2017,7 +2315,7 @@ hdd_twt_pause_dialog_comp_cb(
 
 	wdev = adapter->dev->ieee80211_ptr;
 
-	hdd_debug("TWT: pause dialog_id:%d, status:%d vdev_id %d peer mac_addr "
+	hdd_debug("pause dialog_id:%d, status:%d vdev_id %d peer mac_addr "
 		  QDF_MAC_ADDR_FMT, params->dialog_id,
 		  params->status, params->vdev_id,
 		  QDF_MAC_ADDR_REF(params->peer_macaddr));
@@ -2030,7 +2328,7 @@ hdd_twt_pause_dialog_comp_cb(
 				QCA_NL80211_VENDOR_SUBCMD_CONFIG_TWT_INDEX,
 				GFP_KERNEL);
 	if (!twt_vendor_event) {
-		hdd_err("TWT: pause dialog alloc skb failed");
+		hdd_err("pause dialog alloc skb failed");
 		return;
 	}
 
@@ -2103,7 +2401,7 @@ static int hdd_twt_pause_session(struct hdd_adapter *adapter,
 				      twt_param_attr,
 				      qca_wlan_vendor_twt_nudge_dialog_policy);
 	if (ret) {
-		hdd_debug("TWT: command parsing failed");
+		hdd_debug("command parsing failed");
 		return ret;
 	}
 
@@ -2271,32 +2569,39 @@ hdd_twt_resume_pack_resp_nlmsg(struct sk_buff *reply_skb,
 			       struct wmi_twt_resume_dialog_complete_event_param *params)
 {
 	struct nlattr *config_attr;
-	int vendor_status;
+	int vendor_status, attr;
 
 	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_OPERATION,
 		       QCA_WLAN_TWT_RESUME)) {
-		hdd_err("TWT: Failed to put TWT operation");
+		hdd_err("Failed to put TWT operation");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	config_attr = nla_nest_start(reply_skb,
 				     QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS);
 	if (!config_attr) {
-		hdd_err("TWT: nla_nest_start error");
+		hdd_err("nla_nest_start error");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_RESUME_FLOW_ID,
 		       params->dialog_id)) {
-		hdd_debug("TWT: Failed to put dialog_id");
+		hdd_debug("Failed to put dialog_id");
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS;
 	vendor_status = wmi_twt_resume_status_to_vendor_twt_status(params->status);
-	if (nla_put_u8(reply_skb, QCA_WLAN_VENDOR_ATTR_TWT_SETUP_STATUS,
-		       vendor_status)) {
-		hdd_err("TWT: Failed to put QCA_WLAN_TWT_RESUME status");
+	if (nla_put_u8(reply_skb, attr, vendor_status)) {
+		hdd_err("Failed to put QCA_WLAN_TWT_RESUME status");
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	attr = QCA_WLAN_VENDOR_ATTR_TWT_RESUME_MAC_ADDR;
+	if (nla_put(reply_skb, attr, QDF_MAC_ADDR_SIZE,
+		    params->peer_macaddr)) {
+		hdd_err("Failed to put mac_addr");
+		return QDF_STATUS_E_INVAL;
 	}
 
 	nla_nest_end(reply_skb, config_attr);
@@ -3293,32 +3598,28 @@ void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 					     cfg->twt_stats_enabled);
 }
 
-void hdd_send_twt_enable_cmd(struct hdd_context *hdd_ctx)
+QDF_STATUS hdd_send_twt_requestor_enable_cmd(struct hdd_context *hdd_ctx)
 {
 	uint8_t pdev_id = hdd_ctx->pdev->pdev_objmgr.wlan_pdev_id;
 	struct twt_enable_disable_conf twt_en_dis = {0};
-	bool is_requestor_en, is_responder_en;
-	bool twt_bcast_requestor = false, twt_bcast_responder = false;
+	bool is_requestor_en, twt_bcast_requestor = false;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
-	/* Get MLME TWT config */
 	ucfg_mlme_get_twt_requestor(hdd_ctx->psoc, &is_requestor_en);
-	ucfg_mlme_get_twt_responder(hdd_ctx->psoc, &is_responder_en);
-
-	ucfg_mlme_get_twt_bcast_responder(hdd_ctx->psoc, &twt_bcast_responder);
 	ucfg_mlme_get_twt_bcast_requestor(hdd_ctx->psoc, &twt_bcast_requestor);
-	twt_en_dis.bcast_en = (twt_bcast_requestor || twt_bcast_responder);
+	twt_en_dis.bcast_en = twt_bcast_requestor;
 
 	ucfg_mlme_get_twt_congestion_timeout(hdd_ctx->psoc,
 					     &twt_en_dis.congestion_timeout);
-	hdd_debug("TWT mlme cfg:req: %d, res:%d, bcast:%d, cong:%d, pdev:%d",
-		  is_requestor_en, is_responder_en, twt_en_dis.bcast_en,
+	hdd_debug("TWT mlme cfg:req: %d, bcast:%d, cong:%d, pdev:%d",
+		  is_requestor_en, twt_en_dis.bcast_en,
 		  twt_en_dis.congestion_timeout, pdev_id);
 
 	/* The below code takes care of the following :
-	 * If user wants to separately enable requestor and responder roles,
-	 * and also the broadcast TWT capaibilities separately for each role.
-	 * This is done by reusing the INI configuration to indicate the user
-	 * preference and sending the command accordingly.
+	 * If user wants to separately enable requestor role, and also the
+	 * broadcast TWT capabilities separately for each role. This is done
+	 * by reusing the INI configuration to indicate the user preference
+	 * and sending the command accordingly.
 	 * Legacy targets did not provide this. Newer targets provide this.
 	 *
 	 * 1. The MLME config holds the intersection of fw cap and user config
@@ -3338,8 +3639,49 @@ void hdd_send_twt_enable_cmd(struct hdd_context *hdd_ctx)
 		else
 			twt_en_dis.oper = WMI_TWT_OPERATION_INDIVIDUAL;
 
+		ucfg_mlme_set_twt_requestor_flag(hdd_ctx->psoc, true);
+		qdf_event_reset(&hdd_ctx->twt_enable_comp_evt);
 		wma_send_twt_enable_cmd(pdev_id, &twt_en_dis);
+		status = qdf_wait_single_event(&hdd_ctx->twt_enable_comp_evt,
+					       TWT_ENABLE_COMPLETE_TIMEOUT);
+
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_warn("TWT Requestor Enable timedout");
+			ucfg_mlme_set_twt_requestor_flag(hdd_ctx->psoc, false);
+		}
 	}
+
+	return status;
+}
+
+QDF_STATUS hdd_send_twt_responder_enable_cmd(struct hdd_context *hdd_ctx)
+{
+	uint8_t pdev_id = hdd_ctx->pdev->pdev_objmgr.wlan_pdev_id;
+	struct twt_enable_disable_conf twt_en_dis = {0};
+	bool is_responder_en, twt_bcast_responder = false;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	ucfg_mlme_get_twt_responder(hdd_ctx->psoc, &is_responder_en);
+	ucfg_mlme_get_twt_bcast_responder(hdd_ctx->psoc, &twt_bcast_responder);
+	twt_en_dis.bcast_en = twt_bcast_responder;
+
+	hdd_debug("TWT responder mlme cfg:res:%d, bcast:%d, pdev:%d",
+		  is_responder_en, twt_en_dis.bcast_en, pdev_id);
+
+	/* The below code takes care of the following :
+	 * If user wants to separately enable responder roles, and also the
+	 * broadcast TWT capabilities separately for each role. This is done
+	 * by reusing the INI configuration to indicate the user preference
+	 * and sending the command accordingly.
+	 * Legacy targets did not provide this. Newer targets provide this.
+	 *
+	 * 1. The MLME config holds the intersection of fw cap and user config
+	 * 2. This may result in two enable commands sent for legacy, but
+	 *    that's fine, since the firmware returns harmlessly for the
+	 *    second command.
+	 * 3. The new two parameters in the enable command are ignored
+	 *    by legacy targets, and honored by new targets.
+	 */
 
 	/* If responder configured, send responder bcast/ucast config */
 	if (is_responder_en) {
@@ -3350,33 +3692,84 @@ void hdd_send_twt_enable_cmd(struct hdd_context *hdd_ctx)
 		else
 			twt_en_dis.oper = WMI_TWT_OPERATION_INDIVIDUAL;
 
+		ucfg_mlme_set_twt_responder_flag(hdd_ctx->psoc, true);
+		qdf_event_reset(&hdd_ctx->twt_enable_comp_evt);
 		wma_send_twt_enable_cmd(pdev_id, &twt_en_dis);
+		status = qdf_wait_single_event(&hdd_ctx->twt_enable_comp_evt,
+					       TWT_ENABLE_COMPLETE_TIMEOUT);
+
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_warn("TWT Responder Enable timedout");
+			ucfg_mlme_set_twt_responder_flag(hdd_ctx->psoc, false);
+		}
 	}
 
-	return;
+	return status;
 }
 
-QDF_STATUS hdd_send_twt_disable_cmd(struct hdd_context *hdd_ctx)
+QDF_STATUS hdd_send_twt_requestor_disable_cmd(struct hdd_context *hdd_ctx)
 {
 	uint8_t pdev_id = hdd_ctx->pdev->pdev_objmgr.wlan_pdev_id;
 	struct twt_enable_disable_conf twt_en_dis = {0};
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
-	hdd_debug("TWT disable cmd :pdev:%d", pdev_id);
+	hdd_debug("TWT requestor disable cmd: pdev:%d", pdev_id);
 
-	/* One disable should be fine, with extended configuration
-	 * set to false, and extended arguments will be ignored by target
-	 */
+	/* Set MLME TWT flag */
+	ucfg_mlme_set_twt_requestor_flag(hdd_ctx->psoc, false);
+
+       /* One disable should be fine, with extended configuration
+	* set to false, and extended arguments will be ignored by target
+	*/
+	twt_en_dis.role = WMI_TWT_ROLE_REQUESTOR;
 	hdd_ctx->twt_state = TWT_DISABLE_REQUESTED;
 	twt_en_dis.ext_conf_present = false;
+	qdf_event_reset(&hdd_ctx->twt_disable_comp_evt);
 	wma_send_twt_disable_cmd(pdev_id, &twt_en_dis);
 
 	status = qdf_wait_single_event(&hdd_ctx->twt_disable_comp_evt,
 				       TWT_DISABLE_COMPLETE_TIMEOUT);
 
 	if (!QDF_IS_STATUS_SUCCESS(status))
-		hdd_warn("TWT Responder disable timedout");
+		goto timeout;
 
+	return status;
+
+timeout:
+	hdd_warn("TWT Requestor disable timedout");
+	return status;
+}
+
+QDF_STATUS hdd_send_twt_responder_disable_cmd(struct hdd_context *hdd_ctx)
+{
+	uint8_t pdev_id = hdd_ctx->pdev->pdev_objmgr.wlan_pdev_id;
+	struct twt_enable_disable_conf twt_en_dis = {0};
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	hdd_debug("TWT responder disable cmd: pdev:%d", pdev_id);
+
+	/* Set MLME TWT flag */
+	ucfg_mlme_set_twt_responder_flag(hdd_ctx->psoc, false);
+
+       /* One disable should be fine, with extended configuration
+	* set to false, and extended arguments will be ignored by target
+	*/
+	twt_en_dis.role = WMI_TWT_ROLE_RESPONDER;
+	hdd_ctx->twt_state = TWT_DISABLE_REQUESTED;
+	twt_en_dis.ext_conf_present = false;
+	qdf_event_reset(&hdd_ctx->twt_disable_comp_evt);
+	wma_send_twt_disable_cmd(pdev_id, &twt_en_dis);
+
+	status = qdf_wait_single_event(&hdd_ctx->twt_disable_comp_evt,
+				       TWT_DISABLE_COMPLETE_TIMEOUT);
+
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		goto timeout;
+
+	return status;
+
+timeout:
+	hdd_warn("TWT Responder disable timedout");
 	return status;
 }
 
@@ -3393,6 +3786,7 @@ hdd_twt_enable_comp_cb(hdd_handle_t hdd_handle,
 {
 	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
 	enum twt_status prev_state;
+	QDF_STATUS status;
 
 	prev_state = hdd_ctx->twt_state;
 	if (params->status == WMI_HOST_ENABLE_TWT_STATUS_OK ||
@@ -3408,6 +3802,7 @@ hdd_twt_enable_comp_cb(hdd_handle_t hdd_handle,
 			break;
 		}
 	}
+
 	if (params->status == WMI_HOST_ENABLE_TWT_INVALID_PARAM ||
 	    params->status == WMI_HOST_ENABLE_TWT_STATUS_UNKNOWN_ERROR)
 		hdd_ctx->twt_state = TWT_INIT;
@@ -3415,6 +3810,10 @@ hdd_twt_enable_comp_cb(hdd_handle_t hdd_handle,
 	hdd_debug("TWT: pdev ID:%d, status:%d State transitioned from %d to %d",
 		  params->pdev_id, params->status,
 		  prev_state, hdd_ctx->twt_state);
+
+	status = qdf_event_set(&hdd_ctx->twt_enable_comp_evt);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to set twt_enable_comp_evt");
 }
 
 /**
@@ -3489,6 +3888,157 @@ void hdd_send_twt_role_disable_cmd(struct hdd_context *hdd_ctx,
 	}
 }
 
+void hdd_twt_concurrency_update_on_scc_mcc(struct wlan_objmgr_pdev *pdev,
+					   void *object, void *arg)
+{
+	struct wlan_objmgr_vdev *vdev = (struct wlan_objmgr_vdev *)object;
+	struct twt_conc_arg *twt_arg = arg;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (vdev->vdev_mlme.vdev_opmode == QDF_SAP_MODE &&
+	    vdev->vdev_mlme.mlme_state == WLAN_VDEV_S_UP) {
+		hdd_debug("Concurrency exist on SAP vdev");
+		status = hdd_send_twt_responder_disable_cmd(twt_arg->hdd_ctx);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("TWT responder disable cmd to firmware failed");
+			return;
+		}
+		sme_twt_update_beacon_template(twt_arg->hdd_ctx->mac_handle);
+	}
+
+	if (vdev->vdev_mlme.vdev_opmode == QDF_STA_MODE &&
+	    vdev->vdev_mlme.mlme_state == WLAN_VDEV_S_UP) {
+		hdd_debug("Concurrency exist on STA vdev");
+		status = hdd_send_twt_requestor_disable_cmd(twt_arg->hdd_ctx);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("TWT requestor disable cmd to firmware failed");
+			return;
+		}
+	}
+}
+
+void hdd_twt_concurrency_update_on_dbs(struct wlan_objmgr_pdev *pdev,
+				       void *object, void *arg)
+{
+	struct wlan_objmgr_vdev *vdev = (struct wlan_objmgr_vdev *)object;
+	struct twt_conc_arg *twt_arg = arg;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (vdev->vdev_mlme.vdev_opmode == QDF_SAP_MODE &&
+	    vdev->vdev_mlme.mlme_state == WLAN_VDEV_S_UP) {
+		hdd_debug("SAP vdev exist");
+		status = hdd_send_twt_responder_enable_cmd(twt_arg->hdd_ctx);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("TWT responder enable cmd to firmware failed");
+			return;
+		}
+		sme_twt_update_beacon_template(twt_arg->hdd_ctx->mac_handle);
+	}
+
+	if (vdev->vdev_mlme.vdev_opmode == QDF_STA_MODE &&
+	    vdev->vdev_mlme.mlme_state == WLAN_VDEV_S_UP) {
+		hdd_debug("STA vdev exist");
+		status = hdd_send_twt_requestor_enable_cmd(twt_arg->hdd_ctx);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("TWT requestor enable cmd to firmware failed");
+			return;
+		}
+	}
+}
+
+void __hdd_twt_update_work_handler(struct hdd_context *hdd_ctx)
+{
+	struct twt_conc_arg twt_arg;
+	uint32_t num_connections = 0, sap_count = 0, sta_count = 0;
+	int ret;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret) {
+		hdd_err("Invalid HDD context");
+		return;
+	}
+	num_connections = policy_mgr_get_connection_count(hdd_ctx->psoc);
+	sta_count = policy_mgr_mode_specific_connection_count(hdd_ctx->psoc,
+							      PM_STA_MODE,
+							      NULL);
+	sap_count = policy_mgr_mode_specific_connection_count(hdd_ctx->psoc,
+							      PM_SAP_MODE,
+							      NULL);
+	twt_arg.hdd_ctx = hdd_ctx;
+
+	hdd_debug("Total connection %d, sta_count %d, sap_count %d",
+		  num_connections, sta_count, sap_count);
+	switch (num_connections) {
+	case 1:
+		if (sta_count == 1) {
+			hdd_send_twt_requestor_enable_cmd(hdd_ctx);
+		} else if (sap_count == 1) {
+			hdd_send_twt_responder_enable_cmd(hdd_ctx);
+			sme_twt_update_beacon_template(hdd_ctx->mac_handle);
+		}
+		break;
+	case 2:
+		if (policy_mgr_current_concurrency_is_scc(hdd_ctx->psoc) ||
+		    policy_mgr_current_concurrency_is_mcc(hdd_ctx->psoc)) {
+			status = wlan_objmgr_pdev_iterate_obj_list(
+					hdd_ctx->pdev,
+					WLAN_VDEV_OP,
+					hdd_twt_concurrency_update_on_scc_mcc,
+					&twt_arg, 0,
+					WLAN_HDD_ID_OBJ_MGR);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				hdd_err("SAP not in SCC/MCC concurrency");
+				return;
+			}
+		} else if (policy_mgr_is_current_hwmode_dbs(hdd_ctx->psoc)) {
+			status = wlan_objmgr_pdev_iterate_obj_list(
+					hdd_ctx->pdev,
+					WLAN_VDEV_OP,
+					hdd_twt_concurrency_update_on_dbs,
+					&twt_arg, 0,
+					WLAN_HDD_ID_OBJ_MGR);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				hdd_err("SAP not in DBS case");
+				return;
+			}
+		}
+		break;
+	case 3:
+		status = wlan_objmgr_pdev_iterate_obj_list(
+					hdd_ctx->pdev,
+					WLAN_VDEV_OP,
+					hdd_twt_concurrency_update_on_scc_mcc,
+					&twt_arg, 0,
+					WLAN_HDD_ID_OBJ_MGR);
+		break;
+	default:
+		hdd_err("Unexpected number of connection");
+		break;
+	}
+}
+
+void hdd_twt_update_work_handler(void *data)
+{
+	struct hdd_context *hdd_ctx = (struct hdd_context *)data;
+	struct osif_psoc_sync *psoc_sync;
+	int ret;
+
+	ret = osif_psoc_sync_op_start(wiphy_dev(hdd_ctx->wiphy), &psoc_sync);
+	if (ret)
+		return;
+
+	__hdd_twt_update_work_handler(hdd_ctx);
+
+	osif_psoc_sync_op_stop(psoc_sync);
+}
+
+void wlan_twt_concurrency_update(struct hdd_context *hdd_ctx)
+{
+	qdf_flush_work(&hdd_ctx->twt_en_dis_work);
+	qdf_sched_work(0, &hdd_ctx->twt_en_dis_work);
+}
+
 void wlan_hdd_twt_init(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS status;
@@ -3512,6 +4062,13 @@ void wlan_hdd_twt_init(struct hdd_context *hdd_ctx)
 		return;
 	}
 
+	status = qdf_event_create(&hdd_ctx->twt_enable_comp_evt);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_clear_twt_complete_cb(hdd_ctx->mac_handle);
+		hdd_err("twt_enable_comp_evt init failed");
+		return;
+	}
+
 	status = qdf_event_create(&hdd_ctx->twt_disable_comp_evt);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		sme_clear_twt_complete_cb(hdd_ctx->mac_handle);
@@ -3519,16 +4076,25 @@ void wlan_hdd_twt_init(struct hdd_context *hdd_ctx)
 		return;
 	}
 
-	hdd_send_twt_enable_cmd(hdd_ctx);
+	hdd_send_twt_requestor_enable_cmd(hdd_ctx);
+	qdf_create_work(0, &hdd_ctx->twt_en_dis_work,
+			hdd_twt_update_work_handler, hdd_ctx);
 }
 
 void wlan_hdd_twt_deinit(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS status;
 
+	qdf_flush_work(&hdd_ctx->twt_en_dis_work);
+	qdf_destroy_work(NULL, &hdd_ctx->twt_en_dis_work);
+
 	status = qdf_event_destroy(&hdd_ctx->twt_disable_comp_evt);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("Failed to destroy twt_disable_comp_evt");
+
+	status = qdf_event_destroy(&hdd_ctx->twt_enable_comp_evt);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to destroy twt_enable_comp_evt");
 
 	status = sme_clear_twt_complete_cb(hdd_ctx->mac_handle);
 	if (QDF_IS_STATUS_ERROR(status))

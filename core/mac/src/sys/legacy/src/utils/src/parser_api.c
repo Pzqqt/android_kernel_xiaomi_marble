@@ -550,7 +550,7 @@ populate_dot11f_country(struct mac_context *mac,
 	uint8_t code[REG_ALPHA2_LEN + 1];
 	uint8_t cur_triplet_num_chans = 0;
 	int chan_enum, chan_num, chan_spacing = 0;
-	struct regulatory_channel *cur_chan_list;
+	struct regulatory_channel *sec_cur_chan_list;
 	struct regulatory_channel *cur_chan, *start, *prev;
 	enum reg_wifi_band rf_band = REG_BAND_UNKNOWN;
 	uint8_t buffer_triplets[81][3];
@@ -558,8 +558,9 @@ populate_dot11f_country(struct mac_context *mac,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	bool six_gig_started = false;
 
-	cur_chan_list = qdf_mem_malloc(NUM_CHANNELS * sizeof(*cur_chan_list));
-	if (!cur_chan_list)
+	sec_cur_chan_list = qdf_mem_malloc(NUM_CHANNELS *
+					   sizeof(*sec_cur_chan_list));
+	if (!sec_cur_chan_list)
 		return QDF_STATUS_E_NOMEM;
 
 	lim_get_rf_band_new(mac, &rf_band, pe_session);
@@ -577,8 +578,9 @@ populate_dot11f_country(struct mac_context *mac,
 		goto out;
 	}
 
-	chan_num = wlan_reg_get_band_channel_list(mac->pdev, BIT(rf_band),
-						  cur_chan_list);
+	chan_num = wlan_reg_get_secondary_band_channel_list(mac->pdev,
+							    BIT(rf_band),
+							    sec_cur_chan_list);
 	if (!chan_num) {
 		pe_err("failed to get cur_chan list");
 		status = QDF_STATUS_E_FAILURE;
@@ -594,7 +596,7 @@ populate_dot11f_country(struct mac_context *mac,
 	start = NULL;
 	prev = NULL;
 	for (chan_enum = 0; chan_enum < chan_num; chan_enum++) {
-		cur_chan = &cur_chan_list[chan_enum];
+		cur_chan = &sec_cur_chan_list[chan_enum];
 
 		if (cur_chan->chan_flags & REGULATORY_CHAN_DISABLED)
 			continue;
@@ -679,7 +681,7 @@ populate_dot11f_country(struct mac_context *mac,
 	ctry_ie->present = 1;
 
 out:
-	qdf_mem_free(cur_chan_list);
+	qdf_mem_free(sec_cur_chan_list);
 	return status;
 } /* End populate_dot11f_country. */
 
@@ -687,7 +689,7 @@ out:
  * populate_dot11f_ds_params() - To populate DS IE params
  * mac_ctx: Pointer to global mac context
  * dot11f_param: pointer to DS params IE
- * channel: channel number
+ * freq: freq
  *
  * This routine will populate DS param in management frame like
  * beacon, probe response, and etc.
@@ -696,11 +698,13 @@ out:
  */
 QDF_STATUS
 populate_dot11f_ds_params(struct mac_context *mac_ctx,
-			  tDot11fIEDSParams *dot11f_param, uint8_t channel)
+			  tDot11fIEDSParams *dot11f_param, qdf_freq_t freq)
 {
-	if (IS_24G_CH(channel)) {
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(freq)) {
 		/* .11b/g mode PHY => Include the DS Parameter Set IE: */
-		dot11f_param->curr_channel = channel;
+		dot11f_param->curr_channel = wlan_reg_freq_to_chan(
+								mac_ctx->pdev,
+								freq);
 		dot11f_param->present = 1;
 	}
 
@@ -1894,18 +1898,15 @@ populate_dot11f_supp_channels(struct mac_context *mac,
 {
 	uint8_t i;
 	uint8_t *p;
+	struct supported_channels supportedChannels;
 
-	if (nAssocType == LIM_REASSOC) {
-		p = (uint8_t *) pe_session->pLimReAssocReq->
-		    supportedChannels.channelList;
-		pDot11f->num_bands =
-			pe_session->pLimReAssocReq->supportedChannels.numChnl;
-	} else {
-		p = (uint8_t *)pe_session->lim_join_req->supportedChannels.
-		    channelList;
-		pDot11f->num_bands =
-			pe_session->lim_join_req->supportedChannels.numChnl;
-	}
+	wlan_add_supported_5Ghz_channels(mac->psoc, mac->pdev,
+					 supportedChannels.channelList,
+					 &supportedChannels.numChnl,
+					 false);
+	p = supportedChannels.channelList;
+	pDot11f->num_bands = supportedChannels.numChnl;
+
 	for (i = 0U; i < pDot11f->num_bands; ++i, ++p) {
 		pDot11f->bands[i][0] = *p;
 		pDot11f->bands[i][1] = 1;
@@ -2145,15 +2146,27 @@ void populate_dot11f_wmm_caps(tDot11fIEWMMCaps *pCaps)
 } /* End PopulateDot11fWmmCaps. */
 
 #ifdef FEATURE_WLAN_ESE
+#ifdef WLAN_FEATURE_HOST_ROAM
 void populate_dot11f_re_assoc_tspec(struct mac_context *mac,
 				    tDot11fReAssocRequest *pReassoc,
 				    struct pe_session *pe_session)
 {
 	uint8_t numTspecs = 0, idx;
 	tTspecInfo *pTspec = NULL;
+#ifdef FEATURE_CM_ENABLE
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(pe_session->vdev);
+	if (!mlme_priv)
+		return;
+
+	numTspecs = mlme_priv->connect_info.ese_tspec_info.numTspecs;
+	pTspec = &mlme_priv->connect_info.ese_tspec_info.tspec[0];
+#else
 
 	numTspecs = pe_session->pLimReAssocReq->eseTspecInfo.numTspecs;
 	pTspec = &pe_session->pLimReAssocReq->eseTspecInfo.tspec[0];
+#endif
 	pReassoc->num_WMMTSPEC = numTspecs;
 	if (numTspecs) {
 		for (idx = 0; idx < numTspecs; idx++) {
@@ -2164,7 +2177,7 @@ void populate_dot11f_re_assoc_tspec(struct mac_context *mac,
 		}
 	}
 }
-
+#endif
 void ese_populate_wmm_tspec(struct mac_tspec_ie *source,
 			    ese_wmm_tspec_ie *dest)
 {
@@ -3347,35 +3360,6 @@ QDF_STATUS wlan_parse_ftie_sha384(uint8_t *frame, uint32_t frame_len,
 	return QDF_STATUS_SUCCESS;
 }
 
-static void
-sir_get_iot_aggr_sz(struct mac_context *mac, uint8_t *ie_ptr, uint32_t ie_len,
-		    uint32_t *amsdu_sz, uint32_t *ampdu_sz)
-{
-	const uint8_t *oui, *vendor_ie;
-	struct wlan_mlme_iot *iot;
-	uint32_t oui_len, aggr_num;
-	int i;
-
-	iot = &mac->mlme_cfg->iot;
-	aggr_num = iot->aggr_num;
-	if (!aggr_num)
-		return;
-
-	for (i = 0; i < aggr_num; i++) {
-		oui = iot->aggr[i].oui;
-		oui_len = iot->aggr[i].oui_len;
-		vendor_ie = wlan_get_vendor_ie_ptr_from_oui(oui, oui_len,
-							    ie_ptr, ie_len);
-		if (vendor_ie) {
-			*amsdu_sz = iot->aggr[i].amsdu_sz;
-			*ampdu_sz = iot->aggr[i].ampdu_sz;
-			pe_debug("Found oui[%s] amsdu %u, ampdu %u",
-				 oui, *amsdu_sz, *ampdu_sz);
-			break;
-		}
-	}
-}
-
 QDF_STATUS
 sir_convert_assoc_resp_frame2_struct(struct mac_context *mac,
 				     struct pe_session *session_entry,
@@ -3543,10 +3527,6 @@ sir_convert_assoc_resp_frame2_struct(struct mac_context *mac,
 		qdf_mem_copy(&pAssocRsp->FTInfo, &ar->FTInfo,
 			     sizeof(tDot11fIEFTInfo));
 	}
-
-	sir_get_iot_aggr_sz(mac, ie_ptr, ie_len,
-			    &pAssocRsp->iot_amsdu_sz,
-			    &pAssocRsp->iot_ampdu_sz);
 
 	if (ar->num_RICDataDesc && ar->num_RICDataDesc <= 2) {
 		for (cnt = 0; cnt < ar->num_RICDataDesc; cnt++) {
@@ -6420,9 +6400,9 @@ populate_dot11f_timing_advert_frame(struct mac_context *mac_ctx,
 #ifdef WLAN_FEATURE_11AX
 #ifdef WLAN_SUPPORT_TWT
 static void
-populate_dot11f_broadcast_twt_he_cap(struct mac_context *mac,
-				     struct pe_session *session,
-				     tDot11fIEhe_cap *he_cap)
+populate_dot11f_twt_he_cap(struct mac_context *mac,
+			   struct pe_session *session,
+			   tDot11fIEhe_cap *he_cap)
 {
 	bool bcast_requestor =
 		mac->mlme_cfg->twt_cfg.is_bcast_requestor_enabled;
@@ -6430,6 +6410,17 @@ populate_dot11f_broadcast_twt_he_cap(struct mac_context *mac,
 		mac->mlme_cfg->twt_cfg.is_bcast_responder_enabled;
 
 	he_cap->broadcast_twt = 0;
+	if (session->opmode == QDF_STA_MODE &&
+	    !(mac->mlme_cfg->twt_cfg.req_flag)) {
+		/* Set twt_request as 0 if any SCC/MCC concurrency exist */
+		he_cap->twt_request = 0;
+		return;
+	} else if (session->opmode == QDF_SAP_MODE &&
+		   !(mac->mlme_cfg->twt_cfg.res_flag)) {
+		/** Set twt_responder as 0 if any SCC/MCC concurrency exist */
+		he_cap->twt_responder = 0;
+		return;
+	}
 
 	if (session->opmode == QDF_STA_MODE) {
 		he_cap->broadcast_twt = bcast_requestor;
@@ -6439,9 +6430,9 @@ populate_dot11f_broadcast_twt_he_cap(struct mac_context *mac,
 }
 #else
 static inline void
-populate_dot11f_broadcast_twt_he_cap(struct mac_context *mac_ctx,
-				     struct pe_session *session,
-				     tDot11fIEhe_cap *he_cap)
+populate_dot11f_twt_he_cap(struct mac_context *mac_ctx,
+			   struct pe_session *session,
+			   tDot11fIEhe_cap *he_cap)
 {
 	he_cap->broadcast_twt = 0;
 }
@@ -6489,7 +6480,7 @@ QDF_STATUS populate_dot11f_he_caps(struct mac_context *mac_ctx, struct pe_sessio
 	} else {
 		he_cap->ppet.ppe_threshold.num_ppe_th = 0;
 	}
-	populate_dot11f_broadcast_twt_he_cap(mac_ctx, session, he_cap);
+	populate_dot11f_twt_he_cap(mac_ctx, session, he_cap);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -6651,11 +6642,13 @@ QDF_STATUS populate_dot11f_twt_extended_caps(struct mac_context *mac_ctx,
 
 	if (pe_session->opmode == QDF_STA_MODE)
 		p_ext_cap->twt_requestor_support =
-			mac_ctx->mlme_cfg->he_caps.dot11_he_cap.twt_request;
+			mac_ctx->mlme_cfg->he_caps.dot11_he_cap.twt_request &&
+			mac_ctx->mlme_cfg->twt_cfg.req_flag;
 
 	if (pe_session->opmode == QDF_SAP_MODE)
 		p_ext_cap->twt_responder_support =
-			mac_ctx->mlme_cfg->he_caps.dot11_he_cap.twt_responder;
+			mac_ctx->mlme_cfg->he_caps.dot11_he_cap.twt_responder &&
+			mac_ctx->mlme_cfg->twt_cfg.res_flag;
 
 	dot11f->num_bytes = lim_compute_ext_cap_ie_length(dot11f);
 
@@ -7047,15 +7040,47 @@ void wlan_add_rate_bitmap(uint8_t rate, uint16_t *rate_bitmap)
 	}
 }
 
+static bool is_ofdm_rates(uint16_t rate)
+{
+	uint16_t n = BITS_OFF(rate, WLAN_DOT11_BASIC_RATE_MASK);
+
+	switch (n) {
+	case SIR_MAC_RATE_6:
+	case SIR_MAC_RATE_9:
+	case SIR_MAC_RATE_12:
+	case SIR_MAC_RATE_18:
+	case SIR_MAC_RATE_24:
+	case SIR_MAC_RATE_36:
+	case SIR_MAC_RATE_48:
+	case SIR_MAC_RATE_54:
+		return true;
+	default:
+		break;
+	}
+
+	return false;
+}
+
 QDF_STATUS wlan_get_rate_set(struct mac_context *mac,
 			     tDot11fBeaconIEs *ie_struct,
-			     tSirMacRateSet *op_rate,
-			     tSirMacRateSet *ext_rate)
+			     struct pe_session *pe_session)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	int i;
 	uint8_t *dst_rate;
 	uint16_t rateBitmap = 0;
+	bool is_5ghz_freq;
+	tSirMacRateSet *op_rate;
+	tSirMacRateSet *ext_rate;
+
+
+	if (!pe_session) {
+		pe_err("pe session is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+	op_rate = &pe_session->rateSet;
+	ext_rate = &pe_session->extRateSet;
+	is_5ghz_freq = wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq);
 
 	qdf_mem_zero(op_rate, sizeof(tSirMacRateSet));
 	qdf_mem_zero(ext_rate, sizeof(tSirMacRateSet));
@@ -7076,7 +7101,11 @@ QDF_STATUS wlan_get_rate_set(struct mac_context *mac,
 	dst_rate = op_rate->rate;
 	if (ie_struct->SuppRates.present) {
 		for (i = 0; i < ie_struct->SuppRates.num_rates; i++) {
-			if (csr_rates_is_dot11_rate_supported(mac,
+			if (is_5ghz_freq &&
+			    !is_ofdm_rates(ie_struct->SuppRates.rates[i]))
+				continue;
+
+			if (wlan_rates_is_dot11_rate_supported(mac,
 				ie_struct->SuppRates.rates[i]) &&
 				!wlan_check_rate_bitmap(
 					ie_struct->SuppRates.rates[i],

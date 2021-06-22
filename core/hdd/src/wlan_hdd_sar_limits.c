@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -830,7 +830,7 @@ void hdd_disable_sar(struct hdd_context *hdd_ctx)
 	struct sar_limit_cmd_row *row;
 	QDF_STATUS status;
 
-	if (hdd_ctx->sar_version != SAR_VERSION_2) {
+	if (hdd_ctx->sar_version == SAR_VERSION_1) {
 		hdd_nofl_debug("FW SAR version: %d", hdd_ctx->sar_version);
 		return;
 	}
@@ -887,7 +887,7 @@ void hdd_configure_sar_index(struct hdd_context *hdd_ctx, uint32_t sar_index)
 	struct sar_limit_cmd_row *row;
 	QDF_STATUS status;
 
-	if (hdd_ctx->sar_version != SAR_VERSION_2) {
+	if (hdd_ctx->sar_version == SAR_VERSION_1) {
 		hdd_nofl_debug("FW SAR version: %d", hdd_ctx->sar_version);
 		return;
 	}
@@ -1057,7 +1057,7 @@ void wlan_hdd_sar_timers_reset(struct hdd_context *hdd_ctx)
 	if (!hdd_ctx->config->enable_sar_safety)
 		return;
 
-	if (hdd_ctx->sar_version != SAR_VERSION_2)
+	if (hdd_ctx->sar_version == SAR_VERSION_1)
 		return;
 
 	if (QDF_TIMER_STATE_RUNNING ==

@@ -46,6 +46,9 @@ wlan_cm_roam_send_set_vdev_pcl(struct wlan_objmgr_psoc *psoc,
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
+
+#define CFG_DISABLE_4WAY_HS_OFFLOAD_DEFAULT BIT(0)
+
 /**
  * wlan_cm_tgt_send_roam_offload_init()  - Send WMI_VDEV_PARAM_ROAM_FW_OFFLOAD
  * to init/deinit roaming module at firmware

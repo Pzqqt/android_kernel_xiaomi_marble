@@ -1492,30 +1492,6 @@ struct dhcp_server {
 
 /*
  * <ini>
- * gDisableWow - Used to disable wow feature
- *
- * @Min: 0
- * @Max: 1
- * Default: 0
- *
- * This ini is used to disable wow feature for all modes
- * that means hlos platform suspend(cfg80211 suspend) will
- * be rejected by wifi kernel driver.
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_WOW_DISABLE  CFG_INI_UINT( \
-			"gDisableWow", \
-			0, \
-			1, \
-			0, \
-			CFG_VALUE_OR_DEFAULT, \
-			"Disable wow feature")
-
-/*
- * <ini>
  * nb_commands_interval - Used to rate limit nb commands from userspace
  *
  * @Min: 0
@@ -1816,7 +1792,6 @@ enum host_log_level {
 	CFG(CFG_ENABLE_DISABLE_CHANNEL) \
 	CFG(CFG_READ_MAC_ADDR_FROM_MAC_FILE) \
 	CFG(CFG_SAR_CONVERSION) \
-	CFG(CFG_WOW_DISABLE) \
 	CFG(CFG_ENABLE_HOST_MODULE_LOG_LEVEL) \
 	SAR_SAFETY_FEATURE_ALL
 #endif

@@ -32,6 +32,9 @@
 #ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
 #include <wlan_pmo_obj_mgmt_api.h>
 #endif
+#ifdef WLAN_SUPPORT_TWT
+#include <wlan_mlme_twt_public_struct.h>
+#endif
 
 #ifdef WLAN_SUPPORT_TWT
 
@@ -44,9 +47,10 @@
  * @dest_param: Pointer to copy twt session parameters when a peer with
  * given dialog id is found
  *
- * Return: true if stats are copied for a peer with given dialog, else false
+ * Return: Success if stats are copied for a peer with given dialog,
+ * else failure
  */
-static bool
+static QDF_STATUS
 ucfg_twt_get_peer_session_param_by_dlg_id(struct peer_mc_cp_stats *mc_stats,
 					  uint32_t input_dialog_id,
 					  struct wmi_host_twt_session_stats_info
@@ -54,26 +58,33 @@ ucfg_twt_get_peer_session_param_by_dlg_id(struct peer_mc_cp_stats *mc_stats,
 {
 	struct wmi_host_twt_session_stats_info *src_param;
 	uint32_t event_type;
-	int i;
+	int i, num_session = 0;
+	QDF_STATUS qdf_status = QDF_STATUS_E_INVAL;
 
 	if (!mc_stats || !dest_param)
-		return false;
+		return qdf_status;
 
 	for (i = 0; i < TWT_PEER_MAX_SESSIONS; i++) {
 		event_type = mc_stats->twt_param[i].event_type;
 
 		src_param = &mc_stats->twt_param[i];
-		if ((!event_type) || (src_param->dialog_id != input_dialog_id))
+		if (!event_type ||
+		    (src_param->dialog_id != input_dialog_id &&
+		     input_dialog_id != WLAN_ALL_SESSIONS_DIALOG_ID))
 			continue;
 
 		if ((event_type == HOST_TWT_SESSION_SETUP) ||
 		    (event_type == HOST_TWT_SESSION_UPDATE)) {
-			qdf_mem_copy(dest_param, src_param, sizeof(*src_param));
-			return true;
+			qdf_mem_copy(&dest_param[num_session], src_param,
+				     sizeof(*src_param));
+			qdf_status = QDF_STATUS_SUCCESS;
+			num_session += 1;
+			if (num_session >= TWT_PEER_MAX_SESSIONS)
+				break;
 		}
 	}
 
-	return false;
+	return qdf_status;
 }
 
 /**
@@ -114,10 +125,10 @@ ucfg_twt_get_single_peer_session_params(struct wlan_objmgr_psoc *psoc_obj,
 	wlan_cp_stats_peer_obj_lock(peer_cp_stats_priv);
 	peer_mc_stats = peer_cp_stats_priv->peer_stats;
 
-	if (ucfg_twt_get_peer_session_param_by_dlg_id(peer_mc_stats,
-						      dialog_id, params)) {
-		qdf_status = QDF_STATUS_SUCCESS;
-	} else {
+	qdf_status = ucfg_twt_get_peer_session_param_by_dlg_id(peer_mc_stats,
+							       dialog_id,
+							       params);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		qdf_err("No TWT session for " QDF_MAC_ADDR_FMT " dialog_id %d",
 			QDF_MAC_ADDR_REF(mac_addr), dialog_id);
 	}
@@ -192,6 +203,9 @@ ucfg_twt_get_all_peer_session_params(struct wlan_objmgr_psoc *psoc_obj,
 	qdf_list_t *obj_list;
 	int i, num_sessions = 0;
 
+	if (!psoc_obj || !params)
+		return qdf_status;
+
 	/* psoc obj lock should be taken before peer list lock */
 	wlan_psoc_obj_lock(psoc_obj);
 	psoc_objmgr = &psoc_obj->soc_objmgr;
@@ -262,18 +276,19 @@ ucfg_twt_get_peer_session_params(struct wlan_objmgr_psoc *psoc_obj,
 	dialog_id = params[0].dialog_id;
 
 	/*
-	 * Currently twt_get_params nl cmd is sending only dialog_id(STA) and
-	 * mac_addr is being filled by driver in STA peer case. When
-	 * twt_get_params adds support for mac_addr and dialog_id of STA/SAP,
-	 * we need handle unicast/multicast macaddr in
-	 * ucfg_twt_get_all_peer_session_params for all active twt sessions
+	 * Currently for STA case, twt_get_params nl is sending only dialog_id
+	 * and mac_addr is being filled by driver in STA peer case.
+	 * For SAP case, twt_get_params nl is sending dialog_id and
+	 * peer mac_addr. When twt_get_params add mac_addr and dialog_id of
+	 * STA/SAP, we need handle unicast/multicast macaddr in
+	 * ucfg_twt_get_peer_session_params.
 	 */
-	if (dialog_id <= TWT_MAX_DIALOG_ID)
+	if (!QDF_IS_ADDR_BROADCAST(mac_addr))
 		return ucfg_twt_get_single_peer_session_params(psoc_obj,
 							       mac_addr,
 							       dialog_id,
 							       params);
-	else if (dialog_id == TWT_GET_ALL_PEER_PARAMS_DIALOG_ID)
+	else
 		return ucfg_twt_get_all_peer_session_params(psoc_obj, params);
 
 	return QDF_STATUS_E_INVAL;

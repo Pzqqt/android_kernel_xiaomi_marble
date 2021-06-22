@@ -870,33 +870,26 @@ struct hdd_mon_set_ch_info {
 /**
  * struct hdd_station_ctx -- STA-specific information
  * @roam_profile: current roaming profile
- * @security_ie: WPA or RSN IE used by the @roam_profile
- * @assoc_additional_ie: association additional IE used by the @roam_profile
- * @wpa_versions: bitmap of supported WPA versions
- * @auth_key_mgmt: bitmap of supported auth key mgmt protocols
- * @requested_bssid: Specific BSSID to which to connect
  * @conn_info: current connection information
- * @roam_info: current roaming information
- * @ft_carrier_on: is carrier on
- * @hdd_reassoc_scenario: is station in the middle of reassociation?
- * @sta_debug_state: STA context debug variable
- * @broadcast_sta_id: STA ID assigned for broadcast frames
+ * @cache_conn_info: prev connection info
+ * @reg_phymode: reg phymode
  * @ch_info: monitor mode channel information
  * @ap_supports_immediate_power_save: Does the current AP allow our STA
  *    to immediately go into power save?
  */
 struct hdd_station_ctx {
-	struct csr_roam_profile roam_profile;
+#ifndef FEATURE_CM_ENABLE
 	uint8_t security_ie[WLAN_MAX_IE_LEN];
 	tSirAddie assoc_additional_ie;
 	enum nl80211_wpa_versions wpa_versions;
 	enum hdd_auth_key_mgmt auth_key_mgmt;
 	struct qdf_mac_addr requested_bssid;
+	bool ft_carrier_on;
+#endif
+	uint32_t reg_phymode;
+	struct csr_roam_profile roam_profile;
 	struct hdd_connection_info conn_info;
 	struct hdd_connection_info cache_conn_info;
-	bool ft_carrier_on;
-	bool hdd_reassoc_scenario;
-	int sta_debug_state;
 	struct hdd_mon_set_ch_info ch_info;
 	bool ap_supports_immediate_power_save;
 };
@@ -1866,6 +1859,7 @@ struct hdd_adapter_ops_history {
  * @disconnect_for_sta_mon_conc: disconnect if sta monitor intf concurrency
  * @bbm_ctx: bus bandwidth manager context
  * @is_dual_mac_cfg_updated: indicate whether dual mac cfg has been updated
+ * @twt_en_dis_work: work to send twt enable/disable cmd on MCC/SCC concurrency
  */
 struct hdd_context {
 	struct wlan_objmgr_psoc *psoc;
@@ -2144,6 +2138,7 @@ struct hdd_context {
 #ifdef WLAN_SUPPORT_TWT
 	enum twt_status twt_state;
 	qdf_event_t twt_disable_comp_evt;
+	qdf_event_t twt_enable_comp_evt;
 #endif
 #ifdef FEATURE_WLAN_APF
 	uint32_t apf_version;
@@ -2217,6 +2212,10 @@ struct hdd_context {
 	qdf_event_t regulatory_update_event;
 	qdf_mutex_t regulatory_status_lock;
 	bool is_fw_dbg_log_levels_configured;
+#ifdef WLAN_SUPPORT_TWT
+	qdf_work_t twt_en_dis_work;
+#endif
+	bool is_wifi3_0_target;
 };
 
 /**
@@ -2285,6 +2284,25 @@ struct hdd_channel_info {
 	u_int8_t max_antenna_gain;
 	u_int8_t vht_center_freq_seg0;
 	u_int8_t vht_center_freq_seg1;
+};
+
+/**
+ * struct hdd_chwidth_info - channel width related info
+ * @sir_chwidth_valid: If nl_chan_width is valid in Sir
+ * @sir_chwidth: enum eSirMacHTChannelWidth
+ * @ch_bw: enum hw_mode_bandwidth
+ * @ch_bw_str: ch_bw in string format
+ * @phy_chwidth: enum phy_ch_width
+ * @bonding mode: WNI_CFG_CHANNEL_BONDING_MODE_DISABLE or
+ *		  WNI_CFG_CHANNEL_BONDING_MODE_ENABLE
+ */
+struct hdd_chwidth_info {
+	bool sir_chwidth_valid;
+	enum eSirMacHTChannelWidth sir_chwidth;
+	enum hw_mode_bandwidth ch_bw;
+	char *ch_bw_str;
+	enum phy_ch_width phy_chwidth;
+	int bonding_mode;
 };
 
 /*
@@ -3978,6 +3996,7 @@ struct csr_roam_profile *hdd_roam_profile(struct hdd_adapter *adapter)
 	return &sta_ctx->roam_profile;
 }
 
+#ifndef FEATURE_CM_ENABLE
 /**
  * hdd_security_ie() - Get adapter's security IE
  * @adapter: The adapter being queried
@@ -4025,6 +4044,7 @@ tSirAddie *hdd_assoc_additional_ie(struct hdd_adapter *adapter)
 
 	return &sta_ctx->assoc_additional_ie;
 }
+#endif
 
 /**
  * hdd_is_roaming_in_progress() - check if roaming is in progress
@@ -4979,4 +4999,47 @@ void wlan_hdd_set_pm_qos_request(struct hdd_context *hdd_ctx,
 {
 }
 #endif
+
+/**
+ * hdd_nl80211_chwidth_to_chwidth - Get sir chan width from nl chan width
+ * @nl80211_chwidth: enum nl80211_chan_width
+ *
+ * Return: enum eSirMacHTChannelWidth or -INVAL for unsupported nl chan width
+ */
+enum eSirMacHTChannelWidth
+hdd_nl80211_chwidth_to_chwidth(uint8_t nl80211_chwidth);
+
+/**
+ * hdd_chwidth_to_nl80211_chwidth - Get nl chan width from sir chan width
+ * @chwidth: enum eSirMacHTChannelWidth
+ *
+ * Return: enum nl80211_chan_width or 0xFF for unsupported sir chan width
+ */
+uint8_t hdd_chwidth_to_nl80211_chwidth(enum eSirMacHTChannelWidth chwidth);
+
+/**
+ * wlan_hdd_get_channel_bw() - get channel bandwidth
+ * @width: input channel width in nl80211_chan_width value
+ *
+ * Return: channel width value defined by driver
+ */
+enum hw_mode_bandwidth wlan_hdd_get_channel_bw(enum nl80211_chan_width width);
+
+/**
+ * hdd_ch_width_str() - Get string for channel width
+ * @ch_width: channel width from connect info
+ *
+ * Return: User readable string for channel width
+ */
+uint8_t *hdd_ch_width_str(enum phy_ch_width ch_width);
+
+/**
+ * hdd_we_set_ch_width - Function to update channel width
+ * @adapter: hdd_adapter pointer
+ * @ch_width: enum eSirMacHTChannelWidth
+ *
+ * Return: 0 for success otherwise failure
+ */
+int hdd_we_set_ch_width(struct hdd_adapter *adapter, int ch_width);
+
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

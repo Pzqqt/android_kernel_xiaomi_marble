@@ -584,6 +584,7 @@ enum phy_ch_width wlan_sap_get_concurrent_bw(struct wlan_objmgr_pdev *pdev,
 	enum phy_ch_width sta_chan_width;
 	bool sta_present, is_con_chan_dfs = false;
 	uint8_t sta_vdev_id;
+	uint8_t sta_sap_scc_on_dfs_chnl;
 
 	if (WLAN_REG_IS_24GHZ_CH_FREQ(con_ch_freq))
 		return CH_WIDTH_20MHZ;
@@ -595,6 +596,32 @@ enum phy_ch_width wlan_sap_get_concurrent_bw(struct wlan_objmgr_pdev *pdev,
 							&sta_vdev_id,
 							con_ch_freq,
 							&sta_ch_width);
+	if (policy_mgr_is_hw_dbs_capable(psoc)) {
+		policy_mgr_get_sta_sap_scc_on_dfs_chnl(
+					psoc, &sta_sap_scc_on_dfs_chnl);
+		if (sta_sap_scc_on_dfs_chnl ==
+					PM_STA_SAP_ON_DFS_MASTER_MODE_FLEX) {
+			return channel_width;
+		} else if (sta_sap_scc_on_dfs_chnl ==
+				PM_STA_SAP_ON_DFS_MASTER_MODE_DISABLED) {
+			if (sta_present)
+				return channel_width;
+			/*
+			 * sta_sap_scc_on_dfs_chnl = 1, DFS master is disabled.
+			 * If STA not present (SAP single), the SAP (160Mhz) is
+			 * not allowed on DFS, so limit SAP to 80Mhz.
+			 */
+			return QDF_MIN(channel_width, CH_WIDTH_80MHZ);
+		}
+		/*
+		 * sta_sap_scc_on_dfs_chnl = 0, not allow STA+SAP SCC
+		 * on DFS. Limit SAP to 80Mhz if STA present.
+		 */
+		if (sta_present)
+			return QDF_MIN(channel_width, CH_WIDTH_80MHZ);
+
+		return channel_width;
+	}
 
 	/* if no STA present return max of BW and 80MHZ */
 	if (!sta_present)
@@ -731,13 +758,7 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 	/* Channel selection is auto or configured */
 	sap_ctx->chan_freq = config->chan_freq;
 	sap_ctx->dfs_mode = config->acs_dfs_mode;
-	sap_ctx->ch_params.ch_width = config->ch_params.ch_width;
-	sap_ctx->ch_params.center_freq_seg0 =
-		config->ch_params.center_freq_seg0;
-	sap_ctx->ch_params.center_freq_seg1 =
-		config->ch_params.center_freq_seg1;
-	sap_ctx->ch_params.sec_ch_offset =
-		config->ch_params.sec_ch_offset;
+	sap_ctx->ch_params = config->ch_params;
 	sap_ctx->ch_width_orig = config->ch_width_orig;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	sap_ctx->cc_switch_mode = config->cc_switch_mode;
@@ -1198,12 +1219,42 @@ QDF_STATUS wlansap_deauth_sta(struct sap_context *sap_ctx,
 				   params);
 }
 
+#ifdef WLAN_FEATURE_11BE
+static enum phy_ch_width
+wlansap_get_target_eht_phy_ch_width(void)
+{
+	uint32_t max_fw_bw = sme_get_eht_ch_width();
+
+	if (max_fw_bw == WNI_CFG_EHT_CHANNEL_WIDTH_160MHZ)
+		return CH_WIDTH_160MHZ;
+	else if (max_fw_bw == WNI_CFG_EHT_CHANNEL_WIDTH_320MHZ)
+		return CH_WIDTH_320MHZ;
+	else
+		return CH_WIDTH_80MHZ;
+}
+#else /* !WLAN_FEATURE_11BE */
+static enum phy_ch_width
+wlansap_get_target_eht_phy_ch_width(void)
+{
+	return CH_WIDTH_20MHZ;
+}
+#endif /* WLAN_FEATURE_11BE */
+
 enum phy_ch_width
 wlansap_get_csa_chanwidth_from_phymode(struct sap_context *sap_context,
-				       uint32_t chan_freq)
+				       uint32_t chan_freq,
+				       struct ch_params *tgt_ch_params)
 {
 	uint32_t max_fw_bw;
-	enum phy_ch_width ch_width;
+	enum phy_ch_width ch_width, concurrent_bw = 0;
+	struct mac_context *mac;
+	struct ch_params ch_params = {0};
+
+	mac = sap_get_mac_context();
+	if (!mac) {
+		sap_err("Invalid MAC context");
+		return CH_WIDTH_20MHZ;
+	}
 
 	if (WLAN_REG_IS_24GHZ_CH_FREQ(chan_freq)) {
 		/*
@@ -1230,6 +1281,10 @@ wlansap_get_csa_chanwidth_from_phymode(struct sap_context *sap_context,
 				ch_width = CH_WIDTH_160MHZ;
 			else
 				ch_width = CH_WIDTH_80MHZ;
+
+			ch_width = QDF_MAX(
+					wlansap_get_target_eht_phy_ch_width(),
+					ch_width);
 		} else if (sap_context->csr_roamProfile.phyMode ==
 			   eCSR_DOT11_MODE_11n ||
 			   sap_context->csr_roamProfile.phyMode ==
@@ -1239,7 +1294,23 @@ wlansap_get_csa_chanwidth_from_phymode(struct sap_context *sap_context,
 			/* For legacy 11a mode return 20MHz */
 			ch_width = CH_WIDTH_20MHZ;
 		}
+		concurrent_bw = wlan_sap_get_concurrent_bw(
+				mac->pdev, mac->psoc, chan_freq,
+				ch_width);
+		ch_width = QDF_MIN(ch_width, concurrent_bw);
+		ch_width = QDF_MIN(ch_width, sap_context->ch_width_orig);
 	}
+	ch_params.ch_width = ch_width;
+	wlan_reg_set_channel_params_for_freq(mac->pdev, chan_freq, 0,
+					     &ch_params);
+	ch_width = ch_params.ch_width;
+	if (tgt_ch_params)
+		*tgt_ch_params = ch_params;
+	sap_nofl_debug("freq %d bw %d (orig bw %d phymode %d, con bw %d)",
+		       chan_freq, ch_width,
+		       sap_context->ch_width_orig,
+		       sap_context->csr_roamProfile.phyMode,
+		       concurrent_bw);
 
 	return ch_width;
 }
@@ -1315,7 +1386,8 @@ wlansap_set_chan_params_for_csa(struct mac_context *mac,
 {
 	mac->sap.SapDfsInfo.new_chanWidth =
 		wlansap_get_csa_chanwidth_from_phymode(sap_ctx,
-						       target_chan_freq);
+						       target_chan_freq,
+						       NULL);
 	/*
 	 * Copy the requested target channel
 	 * to sap context.
@@ -1385,13 +1457,15 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 		sap_err("%u is unsafe channel freq", target_chan_freq);
 		return QDF_STATUS_E_FAULT;
 	}
-	sap_nofl_debug("SAP CSA: %d ---> %d BW %d conn on 5GHz:%d, csa_reason:%s(%d) strict %d vdev %d",
-		       sap_ctx->chan_freq, target_chan_freq, target_bw,
+	sap_nofl_debug("SAP CSA: %d BW %d ---> %d BW %d conn on 5GHz:%d, csa_reason:%s(%d) strict %d vdev %d",
+		       sap_ctx->chan_freq, sap_ctx->ch_params.ch_width,
+		       target_chan_freq, target_bw,
 		       policy_mgr_is_any_mode_active_on_band_along_with_session(
 		       mac->psoc, sap_ctx->sessionId, POLICY_MGR_BAND_5),
 		       sap_get_csa_reason_str(sap_ctx->csa_reason),
 		       sap_ctx->csa_reason, strict, sap_ctx->sessionId);
-	if (sap_ctx->chan_freq == target_chan_freq)
+	if (sap_ctx->chan_freq == target_chan_freq &&
+	    sap_ctx->ch_params.ch_width == target_bw)
 		return QDF_STATUS_E_FAULT;
 
 	state = wlan_reg_get_channel_state_for_freq(mac->pdev,
@@ -1407,7 +1481,8 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 
 	tmp_ch_params.ch_width =
 		wlansap_get_csa_chanwidth_from_phymode(sap_ctx,
-						       target_chan_freq);
+						       target_chan_freq,
+						       NULL);
 	if (target_bw != CH_WIDTH_MAX) {
 		tmp_ch_params.ch_width =
 			QDF_MIN(tmp_ch_params.ch_width, target_bw);

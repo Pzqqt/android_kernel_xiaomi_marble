@@ -501,6 +501,13 @@ hdd_notify_thermal_throttle_handler(struct wlan_objmgr_psoc *psoc,
 	if (ret)
 		return QDF_STATUS_E_FAILURE;
 
+	/* TX will be throttled completely if above MITIGATION level.
+	 * So report additional DIAG event to notify user-space explicitly.
+	 */
+	if (info->level == THERMAL_SHUTOFF ||
+	    info->level == THERMAL_SHUTDOWN_TARGET)
+		host_log_device_status(WLAN_STATUS_DEVICE_TEMPERATURE_HIGH);
+
 	data_len = NLMSG_HDRLEN + nla_total_size(sizeof(uint32_t));
 	vendor_event = wlan_cfg80211_vendor_event_alloc(
 				hdd_ctx->wiphy, NULL, data_len,

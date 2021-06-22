@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -316,6 +316,38 @@ QDF_STATUS ucfg_tdls_psoc_open(struct wlan_objmgr_psoc *psoc)
 
 	return status;
 }
+
+#ifdef WLAN_FEATURE_11AX
+void ucfg_tdls_update_fw_11ax_capability(struct wlan_objmgr_psoc *psoc,
+					 bool is_fw_tdls_11ax_capable)
+{
+	struct tdls_soc_priv_obj *soc_obj;
+
+	soc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+							WLAN_UMAC_COMP_TDLS);
+	if (!soc_obj) {
+		tdls_err("Failed to get tdls psoc component");
+		return;
+	}
+
+	soc_obj->fw_tdls_11ax_capability = is_fw_tdls_11ax_capable;
+}
+
+bool  ucfg_tdls_is_fw_11ax_capable(struct wlan_objmgr_psoc *psoc)
+{
+	struct tdls_soc_priv_obj *soc_obj;
+
+	soc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+							WLAN_UMAC_COMP_TDLS);
+	if (!soc_obj) {
+		tdls_err("Failed to get tdls psoc component");
+		return false;
+	}
+	tdls_debug("FW 11AX capability %d", soc_obj->fw_tdls_11ax_capability);
+
+	return soc_obj->fw_tdls_11ax_capability;
+}
+#endif
 
 QDF_STATUS ucfg_tdls_update_config(struct wlan_objmgr_psoc *psoc,
 				   struct tdls_start_params *req)

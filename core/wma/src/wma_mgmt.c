@@ -895,46 +895,6 @@ static inline uint8_t wma_parse_mpdudensity(uint8_t mpdudensity)
 		return 0;
 }
 
-#if defined(CONFIG_HL_SUPPORT) && defined(FEATURE_WLAN_TDLS)
-
-/**
- * wma_unified_peer_state_update() - update peer state
- * @sta_mac: pointer to sta mac addr
- * @bss_addr: bss address
- * @sta_type: sta entry type
- *
- *
- * Return: None
- */
-static void
-wma_unified_peer_state_update(
-	uint8_t *sta_mac,
-	uint8_t *bss_addr,
-	uint8_t sta_type)
-{
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-
-	if (STA_ENTRY_TDLS_PEER == sta_type)
-		cdp_peer_state_update(soc, sta_mac,
-				      OL_TXRX_PEER_STATE_AUTH);
-	else
-		cdp_peer_state_update(soc, bss_addr,
-				      OL_TXRX_PEER_STATE_AUTH);
-}
-#else
-
-static inline void
-wma_unified_peer_state_update(
-	uint8_t *sta_mac,
-	uint8_t *bss_addr,
-	uint8_t sta_type)
-{
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-
-	cdp_peer_state_update(soc, bss_addr, OL_TXRX_PEER_STATE_AUTH);
-}
-#endif
-
 #define CFG_CTRL_MASK              0xFF00
 #define CFG_DATA_MASK              0x00FF
 
@@ -1533,6 +1493,8 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	else if (params->ch_width == CH_WIDTH_80P80MHZ)
 		cmd->bw_160 = 1;
 
+	wma_set_peer_assoc_params_bw_320(cmd, params->ch_width);
+
 	cmd->peer_vht_caps = params->vht_caps;
 	if (params->p2pCapableSta) {
 		cmd->p2p_capable_sta = 1;
@@ -1585,9 +1547,6 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	}
 	if (params->wpa_rsn >> 1)
 		cmd->need_gtk_2_way = 1;
-
-	wma_unified_peer_state_update(params->staMac,
-				      params->bssId, params->staType);
 
 #ifdef FEATURE_WLAN_WAPI
 	if (params->encryptType == eSIR_ED_WPI) {
@@ -1910,8 +1869,7 @@ void wma_update_frag_params(tp_wma_handle wma, uint32_t value)
 
 #ifdef FEATURE_WLAN_WAPI
 #define WPI_IV_LEN 16
-#if defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
-    defined(QCA_WIFI_QCA6490) || defined(QCA_WIFI_QCA6750)
+#if defined(CONFIG_LITHIUM) || defined(CONFIG_BERYLLIUM)
 /**
  * wma_fill_in_wapi_key_params() - update key parameters about wapi
  * @key_params: wma key parameters
@@ -2141,8 +2099,22 @@ static QDF_STATUS wma_unified_bcn_tmpl_send(tp_wma_handle wma,
 		tmpl_len = *(uint32_t *) &bcn_info->beacon[0];
 	else
 		tmpl_len = bcn_info->beaconLength;
-	if (p2p_ie_len)
+
+	if (tmpl_len > WMI_BEACON_TX_BUFFER_SIZE) {
+		wma_err("tmpl_len: %d > %d. Invalid tmpl len", tmpl_len,
+			WMI_BEACON_TX_BUFFER_SIZE);
+		return -EINVAL;
+	}
+
+	if (p2p_ie_len) {
+		if (tmpl_len <= p2p_ie_len) {
+			wma_err("tmpl_len %d <= p2p_ie_len %d, Invalid",
+				tmpl_len, p2p_ie_len);
+			return -EINVAL;
+		}
 		tmpl_len -= (uint32_t) p2p_ie_len;
+	}
+
 	frm = bcn_info->beacon + bytes_to_strip;
 	tmpl_len_aligned = roundup(tmpl_len, sizeof(A_UINT32));
 	/*
@@ -3787,9 +3759,8 @@ QDF_STATUS wma_de_register_mgmt_frm_client(void)
 /**
  * wma_register_roaming_callbacks() - Register roaming callbacks
  * @csr_roam_synch_cb: CSR roam synch callback routine pointer
- * @pe_roam_synch_cb: PE roam synch callback routine pointer
  * @csr_roam_auth_event_handle_cb: CSR callback routine pointer
- * @csr_roam_pmkid_req_cb: CSR roam pmkid callback routine pointer
+ * @pe_roam_synch_cb: PE roam synch callback routine pointer
  *
  * Register the SME and PE callback routines with WMA for
  * handling roaming
@@ -3808,8 +3779,7 @@ QDF_STATUS wma_register_roaming_callbacks(
 					uint8_t vdev_id,
 					uint8_t *deauth_disassoc_frame,
 					uint16_t deauth_disassoc_frame_len,
-					uint16_t reason_code),
-	csr_roam_pmkid_req_fn_t csr_roam_pmkid_req_cb)
+					uint16_t reason_code))
 {
 
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
@@ -3825,7 +3795,6 @@ QDF_STATUS wma_register_roaming_callbacks(
 	wma->pe_disconnect_cb = pe_disconnect_cb;
 	wma_debug("Registered roam synch callbacks with WMA successfully");
 
-	wma->csr_roam_pmkid_req_cb = csr_roam_pmkid_req_cb;
 	return QDF_STATUS_SUCCESS;
 }
 #endif

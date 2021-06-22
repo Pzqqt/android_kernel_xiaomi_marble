@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -191,6 +191,7 @@ struct tdls_set_state_info {
  * @runtime_lock: runtime lock
  * @tdls_osif_init_cb: Callback to initialize the tdls private
  * @tdls_osif_deinit_cb: Callback to deinitialize the tdls private
+ * @fw_tdls_11ax_capablity: bool for tdls 11ax fw capability
  */
 struct tdls_soc_priv_obj {
 	struct wlan_objmgr_psoc *soc;
@@ -239,6 +240,9 @@ struct tdls_soc_priv_obj {
 #endif
 	tdls_vdev_init_cb tdls_osif_init_cb;
 	tdls_vdev_deinit_cb tdls_osif_deinit_cb;
+#ifdef WLAN_FEATURE_11AX
+	bool fw_tdls_11ax_capability;
+#endif
 };
 
 /**

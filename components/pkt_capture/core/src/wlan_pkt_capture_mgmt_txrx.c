@@ -431,6 +431,7 @@ pkt_capture_mgmt_rx_data_cb(struct wlan_objmgr_psoc *psoc,
 	qdf_nbuf_t nbuf;
 	int buf_len;
 	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_pdev *pdev;
 
 	if (!(pkt_capture_get_pktcap_mode(psoc) & PKT_CAPTURE_MODE_MGMT_ONLY)) {
 		qdf_nbuf_free(wbuf);
@@ -454,14 +455,13 @@ pkt_capture_mgmt_rx_data_cb(struct wlan_objmgr_psoc *psoc,
 	pfc = (tpSirMacFrameCtl)(qdf_nbuf_data(nbuf));
 	wh = (struct ieee80211_frame *)qdf_nbuf_data(nbuf);
 
+	vdev = pkt_capture_get_vdev();
+	pdev = wlan_vdev_get_pdev(vdev);
+
 	if ((pfc->type == IEEE80211_FC0_TYPE_MGT) &&
 	    (pfc->subType == SIR_MAC_MGMT_DISASSOC ||
 	     pfc->subType == SIR_MAC_MGMT_DEAUTH ||
 	     pfc->subType == SIR_MAC_MGMT_ACTION)) {
-		struct wlan_objmgr_pdev *pdev;
-
-		vdev = pkt_capture_get_vdev();
-		pdev = wlan_vdev_get_pdev(vdev);
 		if (pkt_capture_is_rmf_enabled(pdev, psoc, wh->i_addr1)) {
 			QDF_STATUS status;
 
@@ -474,7 +474,9 @@ pkt_capture_mgmt_rx_data_cb(struct wlan_objmgr_psoc *psoc,
 
 	txrx_status.tsft = (u_int64_t)rx_params->tsf_l32;
 	txrx_status.chan_num = rx_params->channel;
-	txrx_status.chan_freq = wlan_chan_to_freq(txrx_status.chan_num);
+	txrx_status.chan_freq = wlan_reg_legacy_chan_to_freq(
+							pdev,
+							txrx_status.chan_num);
 	/* rx_params->rate is in Kbps, convert into Mbps */
 	txrx_status.rate = (rx_params->rate / 1000);
 	txrx_status.ant_signal_db = rx_params->snr;
@@ -506,22 +508,24 @@ pkt_capture_mgmt_rx_data_cb(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS pkt_capture_mgmt_rx_ops(struct wlan_objmgr_psoc *psoc,
 				   bool is_register)
 {
-	struct mgmt_txrx_mgmt_frame_cb_info frm_cb_info;
+	struct mgmt_txrx_mgmt_frame_cb_info frm_cb_info[2];
 	QDF_STATUS status;
 	int num_of_entries;
 
-	frm_cb_info.frm_type = MGMT_FRAME_TYPE_ALL;
-	frm_cb_info.mgmt_rx_cb = pkt_capture_mgmt_rx_data_cb;
-	num_of_entries = 1;
+	frm_cb_info[0].frm_type = MGMT_FRAME_TYPE_ALL;
+	frm_cb_info[0].mgmt_rx_cb = pkt_capture_mgmt_rx_data_cb;
+	frm_cb_info[1].frm_type = MGMT_CTRL_FRAME;
+	frm_cb_info[1].mgmt_rx_cb = pkt_capture_mgmt_rx_data_cb;
+	num_of_entries = 2;
 
 	if (is_register)
 		status = wlan_mgmt_txrx_register_rx_cb(
 					psoc, WLAN_UMAC_COMP_PKT_CAPTURE,
-					&frm_cb_info, num_of_entries);
+					frm_cb_info, num_of_entries);
 	else
 		status = wlan_mgmt_txrx_deregister_rx_cb(
 					psoc, WLAN_UMAC_COMP_PKT_CAPTURE,
-					&frm_cb_info, num_of_entries);
+					frm_cb_info, num_of_entries);
 
 	return status;
 }

@@ -187,13 +187,18 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 	ft_session->htSecondaryChannelOffset =
 		pBeaconStruct->HTInfo.secondaryChannelOffset;
 	sta_ctx = &pAddBssParams->staContext;
+	/*
+	 * in lim_extract_ap_capability function intersection of FW
+	 * advertised channel width and AP advertised channel
+	 * width has been taken into account for calculating
+	 * pe_session->ch_width
+	 */
+	pAddBssParams->ch_width = ft_session->ch_width;
+	sta_ctx->ch_width = ft_session->ch_width;
 
 	if (ft_session->vhtCapability &&
 	    ft_session->vhtCapabilityPresentInBeacon) {
 		pAddBssParams->vhtCapable = pBeaconStruct->VHTCaps.present;
-		if (pBeaconStruct->VHTOperation.chanWidth && chan_width_support)
-			pAddBssParams->ch_width =
-				pBeaconStruct->VHTOperation.chanWidth + 1;
 		vht_caps = &pBeaconStruct->VHTCaps;
 		lim_update_vhtcaps_assoc_resp(mac, pAddBssParams,
 					      vht_caps, ft_session);
@@ -202,10 +207,6 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 		pe_debug("VHT caps are present in vendor specific IE");
 		pAddBssParams->vhtCapable =
 			pBeaconStruct->vendor_vht_ie.VHTCaps.present;
-		if (pBeaconStruct->vendor_vht_ie.VHTOperation.chanWidth &&
-		    chan_width_support)
-			pAddBssParams->ch_width =
-			pBeaconStruct->vendor_vht_ie.VHTOperation.chanWidth + 1;
 		vht_caps = &pBeaconStruct->vendor_vht_ie.VHTCaps;
 		lim_update_vhtcaps_assoc_resp(mac, pAddBssParams,
 					      vht_caps, ft_session);
@@ -225,8 +226,8 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 		lim_add_bss_eht_cfg(pAddBssParams, ft_session);
 	}
 
-	pe_debug("SIR_HAL_ADD_BSS_REQ with frequency: %d",
-		bssDescription->chan_freq);
+	pe_debug("SIR_HAL_ADD_BSS_REQ with frequency: %d, width: %d",
+		 bssDescription->chan_freq, pAddBssParams->ch_width);
 
 	/* Populate the STA-related parameters here */
 	/* Note that the STA here refers to the AP */
@@ -250,14 +251,6 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 		if (IS_DOT11_MODE_HT(ft_session->dot11mode) &&
 		    (pBeaconStruct->HTCaps.present)) {
 			pAddBssParams->staContext.htCapable = 1;
-			if (pBeaconStruct->HTCaps.supportedChannelWidthSet &&
-			    chan_width_support) {
-				pAddBssParams->staContext.ch_width = (uint8_t)
-					pBeaconStruct->HTInfo.recommendedTxWidthSet;
-			} else {
-				pAddBssParams->staContext.ch_width =
-					CH_WIDTH_20MHZ;
-			}
 			if (ft_session->vhtCapability &&
 			    IS_BSS_VHT_CAPABLE(pBeaconStruct->VHTCaps)) {
 				pAddBssParams->staContext.vhtCapable = 1;
@@ -281,19 +274,6 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 							  pAddBssParams,
 							  pBeaconStruct, NULL);
 
-			if (pBeaconStruct->HTCaps.supportedChannelWidthSet &&
-			    chan_width_support) {
-				sta_ctx->ch_width = (uint8_t)
-					pBeaconStruct->HTInfo.recommendedTxWidthSet;
-				if (pAddBssParams->staContext.vhtCapable &&
-					pBeaconStruct->VHTOperation.chanWidth)
-					sta_ctx->ch_width =
-					pBeaconStruct->VHTOperation.chanWidth
-						+ 1;
-			} else {
-				pAddBssParams->staContext.ch_width =
-					CH_WIDTH_20MHZ;
-			}
 			pAddBssParams->staContext.mimoPS =
 				(tSirMacHTMIMOPowerSaveState) pBeaconStruct->HTCaps.
 				mimoPowerSave;

@@ -225,6 +225,7 @@ void policy_mgr_decr_session_set_pcl(struct wlan_objmgr_psoc *psoc,
  * policy_mgr_update_valid_ch_freq_list() - Update policy manager valid ch list
  * @pm_ctx: policy manager context data
  * @ch_list: Regulatory channel list
+ * @is_client: true if caller is a client, false if it is a beaconing entity
  *
  * When regulatory component channel list is updated this internal function is
  * called to update policy manager copy of valid channel list.
@@ -233,14 +234,21 @@ void policy_mgr_decr_session_set_pcl(struct wlan_objmgr_psoc *psoc,
  */
 static void
 policy_mgr_update_valid_ch_freq_list(struct policy_mgr_psoc_priv_obj *pm_ctx,
-				     struct regulatory_channel *reg_ch_list)
+				     struct regulatory_channel *reg_ch_list,
+				     bool is_client)
 {
 	uint32_t i, j = 0, ch_freq;
 	enum channel_state state;
 
 	for (i = 0; i < NUM_CHANNELS; i++) {
 		ch_freq = reg_ch_list[i].center_freq;
-		state = wlan_reg_get_channel_state_for_freq(pm_ctx->pdev, ch_freq);
+		if (is_client)
+			state = wlan_reg_get_channel_state_for_freq(
+							pm_ctx->pdev, ch_freq);
+		else
+			state =
+			wlan_reg_get_channel_state_from_secondary_list_for_freq(
+							pm_ctx->pdev, ch_freq);
 
 		if (state != CHANNEL_STATE_DISABLE &&
 		    state != CHANNEL_STATE_INVALID) {
@@ -268,7 +276,8 @@ policy_mgr_reg_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 
-	policy_mgr_update_valid_ch_freq_list(pm_ctx, chan_list);
+	wlan_reg_decide_6g_ap_pwr_type(pdev);
+	policy_mgr_update_valid_ch_freq_list(pm_ctx, chan_list, false);
 
 	if (!avoid_freq_ind) {
 		policy_mgr_debug("avoid_freq_ind NULL");
@@ -571,7 +580,9 @@ static QDF_STATUS policy_mgr_modify_sap_pcl_based_on_dfs(
 	}
 
 	for (i = 0; i < *pcl_len_org; i++) {
-		if (!wlan_reg_is_dfs_for_freq(pm_ctx->pdev, pcl_list_org[i])) {
+		if (!wlan_reg_is_dfs_in_secondary_list_for_freq(
+							pm_ctx->pdev,
+							pcl_list_org[i])) {
 			pcl_list_org[pcl_len] = pcl_list_org[i];
 			weight_list_org[pcl_len++] = weight_list_org[i];
 		}
@@ -604,7 +615,7 @@ static QDF_STATUS policy_mgr_modify_sap_pcl_based_on_nol(
 	}
 
 	for (i = 0; i < *pcl_len_org; i++) {
-		if (!wlan_reg_is_disable_for_freq(
+		if (!wlan_reg_is_disable_in_secondary_list_for_freq(
 		    pm_ctx->pdev, pcl_list_org[i])) {
 			pcl_list[pcl_len] = pcl_list_org[i];
 			weight_list[pcl_len++] = weight_list_org[i];
@@ -704,7 +715,8 @@ policy_mgr_modify_pcl_based_on_indoor(struct wlan_objmgr_psoc *psoc,
 	}
 
 	for (i = 0; i < *pcl_len_org; i++) {
-		if (wlan_reg_is_freq_indoor(pm_ctx->pdev, pcl_list_org[i]))
+		if (wlan_reg_is_freq_indoor_in_secondary_list(pm_ctx->pdev,
+							      pcl_list_org[i]))
 			continue;
 		pcl_list[pcl_len] = pcl_list_org[i];
 		weight_list[pcl_len++] = weight_list_org[i];

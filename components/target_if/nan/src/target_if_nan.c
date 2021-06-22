@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -994,7 +994,7 @@ QDF_STATUS target_if_nan_register_events(struct wlan_objmgr_psoc *psoc)
 
 	ret = wmi_unified_register_event_handler(handle, wmi_nan_dmesg_event_id,
 						 target_if_nan_dmesg_handler,
-						 WMI_RX_UMAC_CTX);
+						 WMI_RX_WORK_CTX);
 	if (QDF_IS_STATUS_ERROR(ret)) {
 		target_if_err("wmi event registration failed, ret: %d", ret);
 		target_if_nan_deregister_events(psoc);

@@ -97,6 +97,22 @@ ucfg_cm_rso_set_roam_trigger(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 	return wlan_cm_rso_set_roam_trigger(pdev, vdev_id, trigger);
 }
 
+/**
+ * ucfg_cm_update_session_assoc_ie() - Send assoc ie
+ * @psoc: Pointer to psoc
+ * @vdev_id: vdev id
+ * @assoc_ie: assoc ir to update.
+ *
+ * Return: QDF_STATUS
+ */
+static inline void
+ucfg_cm_update_session_assoc_ie(struct wlan_objmgr_psoc *psoc,
+				uint8_t vdev_id,
+				struct element_info *assoc_ie)
+{
+	cm_update_session_assoc_ie(psoc, vdev_id, assoc_ie);
+}
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static inline QDF_STATUS
 ucfg_cm_update_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,

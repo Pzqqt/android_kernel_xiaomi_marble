@@ -2851,25 +2851,9 @@ void sme_send_hlp_ie_info(mac_handle_t mac_handle, uint8_t vdev_id,
 			  uint32_t if_addr);
 
 /**
- * sme_update_session_assoc_ie() - Updates the assoc IEs to csr_roam_session
- * @mac_handle: Opaque handle to the global MAC context
- * @vdev_id: vdev id
- * @assoc_ie: assoc ie
- *
- * This API is used to copy the assoc IE sent from user space to
- * csr_roam_session
- *
- * Return: None
- */
-void sme_update_session_assoc_ie(mac_handle_t mac_handle,
-				 uint8_t vdev_id,
-				 struct element_info *assoc_ie);
-
-/**
  * sme_send_rso_connect_params() - Updates the assoc IEs to csr_roam_session
  * @mac_handle: Opaque handle to the global MAC context
  * @vdev_id: vdev id
- * @src_profile: CSR Roam profile
  *
  * When the user space updates the assoc IEs or FILS auth type or FILS ERP info,
  * host driver needs to send these updated parameters to firmware via
@@ -2878,8 +2862,7 @@ void sme_update_session_assoc_ie(mac_handle_t mac_handle,
  * Return: None
  */
 QDF_STATUS sme_send_rso_connect_params(mac_handle_t mac_handle,
-				       uint8_t vdev_id,
-				       struct csr_roam_profile *src_profile);
+				       uint8_t vdev_id);
 
 #if defined(WLAN_FEATURE_FILS_SK)
 #ifndef FEATURE_CM_ENABLE
@@ -3827,6 +3810,19 @@ QDF_STATUS sme_del_dialog_cmd(mac_handle_t mac_handle,
 			      struct wmi_twt_del_dialog_param *twt_params);
 
 /**
+ * sme_sap_del_dialog_cmd() - Register callback and send TWT del dialog
+ * command to firmware
+ * @mac_handle: MAC handle
+ * @twt_del_dialog_cb: Function callback to handle del_dialog event
+ * @twt_params: TWT del dialog parameters
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS sme_sap_del_dialog_cmd(mac_handle_t mac_handle,
+				  twt_del_dialog_cb del_dialog_cb,
+				  struct wmi_twt_del_dialog_param *twt_params);
+
+/**
  * sme_pause_dialog_cmd() - Register callback and send TWT pause dialog
  * command to firmware
  * @mac_handle: MAC handle
@@ -3864,6 +3860,15 @@ sme_nudge_dialog_cmd(mac_handle_t mac_handle,
 QDF_STATUS
 sme_resume_dialog_cmd(mac_handle_t mac_handle,
 		      struct wmi_twt_resume_dialog_cmd_param *twt_params);
+
+/**
+ * sme_twt_update_beacon_template() - API to send beacon update to fw
+ * @mac_handle: MAC handle
+ *
+ * Return: None
+ */
+void sme_twt_update_beacon_template(mac_handle_t mac_handle);
+
 #else
 
 static inline
@@ -3877,6 +3882,12 @@ sme_test_config_twt_terminate(struct wmi_twt_del_dialog_param *params)
 {
 	return QDF_STATUS_E_FAILURE;
 }
+
+static inline
+void sme_twt_update_beacon_template(mac_handle_t mac_handle)
+{
+}
+
 #endif
 
 #ifdef WLAN_UNIT_TEST
@@ -4465,5 +4476,19 @@ void sme_fill_auth_type(enum csr_akm_type *auth_type,
  * Return: csr_cfgdot11mode
  */
 enum csr_cfgdot11mode sme_phy_mode_to_dot11mode(enum wlan_phymode phy_mode);
+
+#ifdef WLAN_FEATURE_11BE
+/**
+ * sme_get_eht_ch_width() - SME API to get max supported EHT chan width by FW
+ *
+ * Return: Max EHT channel width supported by FW (eg. 80, 160, 320)
+ */
+uint32_t sme_get_eht_ch_width(void);
+#else /* !WLAN_FEATURE_11BE */
+static inline uint32_t sme_get_eht_ch_width(void)
+{
+	return 0;
+}
+#endif /* WLAN_FEATURE_11BE */
 
 #endif /* #if !defined( __SME_API_H ) */

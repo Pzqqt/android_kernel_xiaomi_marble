@@ -245,11 +245,12 @@ rrm_process_link_measurement_request(struct mac_context *mac,
 				     tDot11fLinkMeasurementRequest *pLinkReq,
 				     struct pe_session *pe_session)
 {
-	tSirMacLinkReport LinkReport;
+	tSirMacLinkReport LinkReport = {0};
 	tpSirMacMgmtHdr pHdr;
 	int8_t currentRSSI = 0;
 	struct vdev_mlme_obj *mlme_obj;
 	struct wlan_lmac_if_reg_tx_ops *tx_ops;
+	uint8_t ap_pwr_constraint = 0;
 
 	pe_debug("Received Link measurement request");
 
@@ -266,14 +267,20 @@ rrm_process_link_measurement_request(struct mac_context *mac,
 	}
 
 	if (wlan_reg_is_ext_tpc_supported(mac->psoc)) {
-		if (pLinkReq->MaxTxPower.maxTxPower !=
-				mlme_obj->reg_tpc_obj.ap_constraint_power) {
+		ap_pwr_constraint = mlme_obj->reg_tpc_obj.ap_constraint_power;
+		mlme_obj->reg_tpc_obj.ap_constraint_power =
+				pLinkReq->MaxTxPower.maxTxPower;
+		lim_calculate_tpc(mac, pe_session, true);
 
+		LinkReport.txPower =
+			mlme_obj->reg_tpc_obj.chan_power_info[0].tx_power;
+		if (LinkReport.txPower < MIN_TX_PWR_CAP)
+			LinkReport.txPower = MIN_TX_PWR_CAP;
+		else if (LinkReport.txPower > MAX_TX_PWR_CAP)
+			LinkReport.txPower = MAX_TX_PWR_CAP;
+
+		if (pLinkReq->MaxTxPower.maxTxPower != ap_pwr_constraint) {
 			tx_ops = wlan_reg_get_tx_ops(mac->psoc);
-
-			mlme_obj->reg_tpc_obj.ap_constraint_power =
-					pLinkReq->MaxTxPower.maxTxPower;
-			lim_calculate_tpc(mac, pe_session, true);
 
 			if (tx_ops->set_tpc_power)
 				tx_ops->set_tpc_power(mac->psoc,
@@ -302,12 +309,12 @@ rrm_process_link_measurement_request(struct mac_context *mac,
 			rrm_send_set_max_tx_power_req(mac, LinkReport.txPower,
 						      pe_session))) {
 			pe_warn("Local: %d", pe_session->maxTxPower);
-			pe_warn("Link Request TxPwr: %d Link Report TxPwr: %d",
-				LinkReport.txPower,
-				pLinkReq->MaxTxPower.maxTxPower);
 			pe_session->maxTxPower = LinkReport.txPower;
 		}
 	}
+	pe_warn("Link Request Tx Pwr: %d Link Report Tx Pwr: %d",
+		pLinkReq->MaxTxPower.maxTxPower, LinkReport.txPower);
+
 	LinkReport.dialogToken = pLinkReq->DialogToken.token;
 	LinkReport.rxAntenna = 0;
 	LinkReport.txAntenna = 0;

@@ -487,7 +487,8 @@ static QDF_STATUS pmo_core_psoc_configure_suspend(struct wlan_objmgr_psoc *psoc,
 	if (is_runtime_pm)
 		pmo_core_enable_runtime_pm_offloads(psoc);
 
-	if (pmo_core_is_wow_applicable(psoc)) {
+	if (psoc_ctx->psoc_cfg.suspend_mode == PMO_SUSPEND_WOW &&
+	    pmo_core_is_wow_applicable(psoc)) {
 		pmo_debug("WOW Suspend");
 		pmo_core_apply_lphb(psoc);
 		/*
@@ -1177,6 +1178,12 @@ QDF_STATUS pmo_core_psoc_bus_runtime_suspend(struct wlan_objmgr_psoc *psoc,
 		hif_process_runtime_suspend_success(hif_ctx);
 	}
 
+	if (hif_try_prevent_ep_vote_access(hif_ctx)) {
+		pmo_debug("Prevent suspend, ep work pending");
+		status = QDF_STATUS_E_BUSY;
+		goto resume_txrx;
+	}
+
 	goto dec_psoc_ref;
 
 resume_txrx:
@@ -1193,6 +1200,8 @@ pmo_bus_resume:
 pmo_resume_configure:
 	PMO_CORE_PSOC_RUNTIME_PM_QDF_BUG(QDF_STATUS_SUCCESS !=
 		pmo_core_psoc_configure_resume(psoc, true));
+
+	hif_pm_set_link_state(hif_ctx, HIF_PM_LINK_STATE_UP);
 
 resume_htc:
 	PMO_CORE_PSOC_RUNTIME_PM_QDF_BUG(QDF_STATUS_SUCCESS !=
@@ -1334,12 +1343,22 @@ QDF_STATUS pmo_core_psoc_send_host_wakeup_ind_to_fw(
 			struct pmo_psoc_priv_obj *psoc_ctx)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	void *hif_ctx;
 
 	pmo_enter();
+
+	hif_ctx = pmo_core_psoc_get_hif_handle(psoc);
+	hif_set_ep_vote_access(hif_ctx,
+			       HIF_EP_VOTE_NONDP_ACCESS,
+			       HIF_EP_VOTE_INTERMEDIATE_ACCESS);
+
 	qdf_event_reset(&psoc_ctx->wow.target_resume);
 
 	status = pmo_tgt_psoc_send_host_wakeup_ind(psoc);
 	if (status) {
+		hif_set_ep_vote_access(hif_ctx,
+				       HIF_EP_VOTE_NONDP_ACCESS,
+				       HIF_EP_VOTE_ACCESS_DISABLE);
 		status = QDF_STATUS_E_FAILURE;
 		goto out;
 	}
@@ -1359,6 +1378,12 @@ QDF_STATUS pmo_core_psoc_send_host_wakeup_ind_to_fw(
 		pmo_debug("Host wakeup received");
 		pmo_tgt_update_target_suspend_flag(psoc, false);
 		pmo_tgt_update_target_suspend_acked_flag(psoc, false);
+		hif_set_ep_vote_access(hif_ctx,
+				       HIF_EP_VOTE_NONDP_ACCESS,
+				       HIF_EP_VOTE_ACCESS_ENABLE);
+		hif_set_ep_vote_access(hif_ctx,
+				       HIF_EP_VOTE_DP_ACCESS,
+				       HIF_EP_VOTE_ACCESS_ENABLE);
 	}
 out:
 	pmo_exit();

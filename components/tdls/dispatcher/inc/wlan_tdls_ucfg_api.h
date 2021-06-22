@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -73,6 +73,41 @@ QDF_STATUS ucfg_tdls_psoc_close(struct wlan_objmgr_psoc *psoc);
  */
 QDF_STATUS ucfg_tdls_update_config(struct wlan_objmgr_psoc *psoc,
 				   struct tdls_start_params *req);
+
+#ifdef WLAN_FEATURE_11AX
+/**
+ * ucfg_tdls_update_fw_11ax_support() - Update FW TDLS 11ax capability in TLDS
+ *                                      Component
+ * @psoc: psoc object
+ * @is_fw_tdls_11ax_capable: bool if fw is tdls 11ax capable then it is true
+ *
+ * Return: void
+ */
+void ucfg_tdls_update_fw_11ax_capability(struct wlan_objmgr_psoc *psoc,
+					 bool is_fw_tdls_11ax_capable);
+
+/**
+ * ucfg_tdls_is_fw_11ax_supported() - Get FW TDLS 11ax capability from TLDS
+ *                                    component.
+ * @psoc: psoc object
+ *
+ * Return: true if fw supports tdls 11ax
+ */
+bool ucfg_tdls_is_fw_11ax_capable(struct wlan_objmgr_psoc *psoc);
+
+#else
+static inline
+void ucfg_tdls_update_fw_11ax_capability(struct wlan_objmgr_psoc *psoc,
+					 bool is_fw_tdls_11ax_capable)
+{
+}
+
+static inline
+bool  ucfg_tdls_is_fw_11ax_capable(struct wlan_objmgr_psoc *psoc)
+{
+return false;
+}
+#endif
 
 /**
  * ucfg_tdls_psoc_enable() - TDLS module enable API
@@ -409,5 +444,16 @@ struct wlan_objmgr_vdev *ucfg_get_tdls_vdev(struct wlan_objmgr_psoc *psoc,
 	return NULL;
 }
 
+static inline
+void ucfg_tdls_update_fw_11ax_capability(struct wlan_objmgr_psoc *psoc,
+					 bool is_fw_tdls_11ax_capable)
+{
+}
+
+static inline
+bool  ucfg_tdls_is_fw_11ax_capable(struct wlan_objmgr_psoc *psoc)
+{
+return false;
+}
 #endif /* FEATURE_WLAN_TDLS */
 #endif

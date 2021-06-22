@@ -43,6 +43,7 @@
 #include <wlan_hdd_regulatory.h>
 #include "wlan_ipa_ucfg_api.h"
 #include "wlan_policy_mgr_ucfg.h"
+#include "wlan_mlme_twt_ucfg_api.h"
 #include <wma_types.h>
 #include "wlan_hdd_sta_info.h"
 #include "ol_defines.h"
@@ -1136,13 +1137,6 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf)
 		next = skb->next;
 		skb->next = NULL;
 
-/* Debug code, remove later */
-#if defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
-    defined(QCA_WIFI_QCA6490) || defined(QCA_WIFI_QCA6750)
-		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
-			 "%s: skb %pK skb->len %d\n", __func__, skb, skb->len);
-#endif
-
 		hdd_softap_dump_sk_buff(skb);
 
 		skb->dev = adapter->dev;
@@ -1177,6 +1171,15 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf)
 			hdd_put_sta_info_ref(&adapter->sta_info_list, &sta_info,
 					     true,
 					     STA_INFO_SOFTAP_RX_PACKET_CBK);
+		}
+
+		if (qdf_unlikely(qdf_nbuf_is_ipv4_eapol_pkt(skb) &&
+				 qdf_mem_cmp(qdf_nbuf_data(skb) +
+					     QDF_NBUF_DEST_MAC_OFFSET,
+					     adapter->mac_addr.bytes,
+					     QDF_MAC_ADDR_SIZE))) {
+			qdf_nbuf_free(skb);
+			continue;
 		}
 
 		hdd_event_eapol_log(skb, QDF_RX);
@@ -1413,6 +1416,8 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 				   WLAN_START_ALL_NETIF_QUEUE_N_CARRIER,
 				   WLAN_CONTROL_PATH);
 	ucfg_mlme_update_oce_flags(hdd_ctx->pdev);
+	ucfg_mlme_init_twt_context(hdd_ctx->psoc, sta_mac,
+				   WLAN_ALL_SESSIONS_DIALOG_ID);
 	return qdf_status;
 }
 

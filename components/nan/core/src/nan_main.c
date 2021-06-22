@@ -827,6 +827,7 @@ static QDF_STATUS nan_handle_enable_rsp(struct nan_event_params *nan_event)
 	QDF_STATUS status;
 	void (*call_back)(void *cookie);
 	uint8_t vdev_id;
+	void (*nan_conc_callback)(void);
 
 	psoc = nan_event->psoc;
 	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
@@ -874,6 +875,9 @@ fail:
 	policy_mgr_check_n_start_opportunistic_timer(psoc);
 
 done:
+	nan_conc_callback = psoc_nan_obj->cb_obj.nan_concurrency_update;
+	if (nan_conc_callback)
+		nan_conc_callback();
 	call_back = psoc_nan_obj->cb_obj.ucfg_nan_request_process_cb;
 	if (call_back)
 		call_back(psoc_nan_obj->nan_disc_request_ctx);
@@ -886,6 +890,7 @@ QDF_STATUS nan_disable_cleanup(struct wlan_objmgr_psoc *psoc)
 	struct nan_psoc_priv_obj *psoc_nan_obj;
 	QDF_STATUS status;
 	uint8_t vdev_id;
+	void (*nan_conc_callback)(void);
 
 	if (!psoc) {
 		nan_err("psoc is NULL");
@@ -917,6 +922,9 @@ QDF_STATUS nan_disable_cleanup(struct wlan_objmgr_psoc *psoc)
 		nan_err("Cannot set NAN state to disabled!");
 		return QDF_STATUS_E_FAILURE;
 	}
+	nan_conc_callback = psoc_nan_obj->cb_obj.nan_concurrency_update;
+	if (nan_conc_callback)
+		nan_conc_callback();
 
 	return status;
 }

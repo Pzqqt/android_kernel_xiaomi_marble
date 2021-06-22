@@ -826,7 +826,6 @@ struct wma_wlm_stats_data {
  * @last_umac_data_ota_timestamp: timestamp when OTA of last umac data
  *   was done
  * @last_umac_data_nbuf: cache nbuf ptr for the last umac data buf
- * @needShutdown: is shutdown needed or not
  * @tgt_cfg_update_cb: configuration update callback
  * @reg_cap: regulatory capablities
  * @scan_id: scan id
@@ -949,7 +948,6 @@ typedef struct {
 	wma_tx_ota_comp_callback umac_data_ota_ack_cb;
 	unsigned long last_umac_data_ota_timestamp;
 	qdf_nbuf_t last_umac_data_nbuf;
-	bool needShutdown;
 	wma_tgt_cfg_cb tgt_cfg_update_cb;
 	HAL_REG_CAPABILITIES reg_cap;
 	uint32_t scan_id;
@@ -1019,8 +1017,6 @@ typedef struct {
 					uint8_t *deauth_disassoc_frame,
 					uint16_t deauth_disassoc_frame_len,
 					uint16_t reason_code);
-	QDF_STATUS (*csr_roam_pmkid_req_cb)(uint8_t vdev_id,
-		struct roam_pmkid_req_event *bss_list);
 	qdf_wake_lock_t wmi_cmd_rsp_wake_lock;
 	qdf_runtime_lock_t wmi_cmd_rsp_runtime_lock;
 	qdf_runtime_lock_t sap_prevent_runtime_pm_lock;
@@ -1500,6 +1496,16 @@ int wma_mgmt_tx_completion_handler(void *handle, uint8_t *cmpl_event_params,
 int wma_mgmt_tx_bundle_completion_handler(void *handle,
 	uint8_t *cmpl_event_params, uint32_t len);
 uint32_t wma_get_vht_ch_width(void);
+
+#ifdef WLAN_FEATURE_11BE
+uint32_t wma_get_eht_ch_width(void);
+#else
+static inline uint32_t wma_get_eht_ch_width(void)
+{
+	return 0;
+}
+#endif
+
 QDF_STATUS
 wma_config_debug_module_cmd(wmi_unified_t wmi_handle, A_UINT32 param,
 		A_UINT32 val, A_UINT32 *module_id_bitmap,
