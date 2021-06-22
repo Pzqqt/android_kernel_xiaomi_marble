@@ -1,4 +1,4 @@
-ifneq ($(TARGET_PRODUCT), qssi)
+ifneq ($(TARGET_BOARD_PLATFORM), qssi)
 ifeq ($(call is-board-platform-in-list, $(TARGET_BOARD_PLATFORM)),true)
 
 DLKM_DIR   := device/qcom/common/dlkm
