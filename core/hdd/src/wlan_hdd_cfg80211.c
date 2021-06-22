@@ -169,6 +169,8 @@
 #include "wlan_hdd_bootup_marker.h"
 #include "wlan_hdd_cm_api.h"
 #include "wlan_roam_debug.h"
+#include "wlan_hdd_avoid_freq_ext.h"
+
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
 
@@ -16531,6 +16533,7 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 	FEATURE_GPIO_CFG_VENDOR_COMMANDS
 	FEATURE_MEDIUM_ASSESS_VENDOR_COMMANDS
 	FEATURE_RADAR_HISTORY_VENDOR_COMMANDS
+	FEATURE_AVOID_FREQ_EXT_VENDOR_COMMANDS
 };
 
 struct hdd_context *hdd_cfg80211_wiphy_alloc(void)
