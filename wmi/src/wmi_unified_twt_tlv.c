@@ -1028,6 +1028,27 @@ extract_twt_session_stats_event_data(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS extract_twt_cap_service_ready_ext2_tlv(
+				wmi_unified_t wmi_handle, uint8_t *event,
+				struct wmi_twt_cap_bitmap_params *var)
+{
+	WMI_SERVICE_READY_EXT2_EVENTID_param_tlvs *param_buf;
+	wmi_twt_caps_params *twt_caps;
+
+	param_buf = (WMI_SERVICE_READY_EXT2_EVENTID_param_tlvs *)event;
+	if (!param_buf)
+		return QDF_STATUS_E_INVAL;
+
+	twt_caps = param_buf->twt_caps;
+	if (!twt_caps)
+		return QDF_STATUS_E_INVAL;
+
+	var->twt_ack_support_cap = WMI_GET_BITS(twt_caps->twt_capability_bitmap,
+						0, 1);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 void wmi_twt_attach_tlv(wmi_unified_t wmi_handle)
 {
 	struct wmi_ops *ops = wmi_handle->ops;
@@ -1060,5 +1081,8 @@ void wmi_twt_attach_tlv(wmi_unified_t wmi_handle)
 				extract_twt_session_stats_event_data;
 	ops->extract_twt_notify_event =
 				extract_twt_notify_event_tlv;
+	ops->extract_twt_cap_service_ready_ext2 =
+				extract_twt_cap_service_ready_ext2_tlv,
+
 	wmi_twt_attach_bcast_twt_tlv(ops);
 }

@@ -286,3 +286,15 @@ QDF_STATUS wmi_extract_twt_session_stats_data(
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+QDF_STATUS wmi_extract_twt_cap_service_ready_ext2(
+		wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct wmi_twt_cap_bitmap_params *params)
+{
+	if (wmi_handle->ops->extract_twt_cap_service_ready_ext2)
+		return wmi_handle->ops->extract_twt_cap_service_ready_ext2(
+				wmi_handle, evt_buf, params);
+
+	return QDF_STATUS_E_FAILURE;
+}

@@ -535,6 +535,31 @@ free_and_return:
 	return qdf_status_to_os_return(status);
 }
 
+#ifdef WLAN_SUPPORT_TWT
+int init_deinit_populate_twt_cap_ext2(struct wlan_objmgr_psoc *psoc,
+				      wmi_unified_t handle, uint8_t *event,
+				      struct tgt_info *info)
+{
+	struct wmi_twt_cap_bitmap_params param;
+	struct target_psoc_info *psoc_info;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	status = wmi_extract_twt_cap_service_ready_ext2(handle, event,
+							&param);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("Extraction of twt capability failed");
+		goto exit;
+	}
+
+	psoc_info = wlan_psoc_get_tgt_if_handle(psoc);
+
+	target_psoc_set_twt_ack_cap(psoc_info, param.twt_ack_support_cap);
+
+exit:
+	return qdf_status_to_os_return(status);
+}
+#endif
+
 QDF_STATUS init_deinit_dbr_ring_cap_free(
 		struct target_psoc_info *tgt_psoc_info)
 {

@@ -395,6 +395,15 @@ struct wmi_twt_add_dialog_complete_event_param {
 };
 
 /**
+ * struct wmi_twt_cap_bitmap_params -
+ * twt_cap_bitmap: TWT capability bitmap
+ *
+ */
+struct wmi_twt_cap_bitmap_params {
+	uint32_t twt_ack_support_cap:1;
+};
+
+/**
  * struct wmi_twt_del_dialog_param -
  * @vdev_id: VDEV identifier
  * @peer_macaddr: Peer mac address
