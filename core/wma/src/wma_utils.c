@@ -3850,6 +3850,12 @@ QDF_STATUS wma_send_vdev_stop_to_fw(t_wma_handle *wma, uint8_t vdev_id)
 
 	status = vdev_mgr_stop_send(vdev_mlme);
 
+	/*
+	 * If vdev_stop send to fw during channel switch, it means channel
+	 * switch failure. Clean flag chan_switch_in_progress.
+	 */
+	mlme_set_chan_switch_in_progress(vdev_mlme->vdev, false);
+
 	return status;
 }
 
