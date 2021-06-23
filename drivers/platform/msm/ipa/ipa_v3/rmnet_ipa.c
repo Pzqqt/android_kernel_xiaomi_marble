@@ -3744,14 +3744,20 @@ static int ipa3_wwan_remove(struct platform_device *pdev)
 	rmnet_ipa3_ctx->ingress_eps_mask = IPA_AP_INGRESS_NONE;
 	rmnet_ipa3_ctx->wan_rt_table_setup = false;
 	mutex_unlock(&rmnet_ipa3_ctx->pipe_handle_guard);
+	/* Clean up netdev resources in BEFORE_SHUTDOWN for non remoteproc
+	 * targets. */
+#if !IS_ENABLED(CONFIG_QCOM_Q6V5_PAS)
 	IPAWANINFO("rmnet_ipa unregister_netdev\n");
 	unregister_netdev(IPA_NETDEV());
 	ipa3_wwan_deregister_netdev_pm_client();
+#endif
 	cancel_work_sync(&ipa3_tx_wakequeue_work);
 	cancel_delayed_work(&ipa_tether_stats_poll_wakequeue_work);
+#if !IS_ENABLED(CONFIG_QCOM_Q6V5_PAS)
 	if (IPA_NETDEV())
 		free_netdev(IPA_NETDEV());
 	rmnet_ipa3_ctx->wwan_priv = NULL;
+#endif
 	/* No need to remove wwan_ioctl during SSR */
 	if (!atomic_read(&rmnet_ipa3_ctx->is_ssr))
 		ipa3_wan_ioctl_deinit();
@@ -3968,6 +3974,16 @@ static int ipa3_lcl_mdm_ssr_notifier_cb(struct notifier_block *this,
 #endif
 		IPAWANINFO("IPA Received MPSS AFTER_SHUTDOWN\n");
 		ipa3_set_modem_up(false);
+		/* Clean up netdev resources in AFTER_SHUTDOWN for remoteproc
+		 * enabled targets. */
+#if IS_ENABLED(CONFIG_QCOM_Q6V5_PAS)
+		IPAWANINFO("rmnet_ipa unregister_netdev\n");
+		unregister_netdev(IPA_NETDEV());
+		ipa3_wwan_deregister_netdev_pm_client();
+		if (IPA_NETDEV())
+			free_netdev(IPA_NETDEV());
+		rmnet_ipa3_ctx->wwan_priv = NULL;
+#endif
 		if (atomic_read(&rmnet_ipa3_ctx->is_ssr) &&
 			ipa3_ctx_get_type(IPA_HW_TYPE) < IPA_HW_v4_0)
 			ipa3_q6_post_shutdown_cleanup();
