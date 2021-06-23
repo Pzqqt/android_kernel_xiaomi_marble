@@ -5,7 +5,6 @@
 
 #include <linux/types.h>
 #include <linux/hash.h>
-#include "msm_vidc.h"
 #include "msm_vidc_core.h"
 #include "msm_vidc_inst.h"
 #include "msm_vdec.h"
@@ -19,6 +18,7 @@
 #include "msm_vidc_power.h"
 #include "msm_vidc_memory.h"
 #include "venus_hfi_response.h"
+#include "msm_vidc.h"
 
 #define MSM_VIDC_DRV_NAME "msm_vidc_driver"
 /* kernel/msm-4.19 */

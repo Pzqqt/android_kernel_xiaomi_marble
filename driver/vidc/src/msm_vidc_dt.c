@@ -8,10 +8,10 @@
 #include <linux/of.h>
 #include <linux/sort.h>
 
+#include "msm_vidc_debug.h"
 #include "msm_vidc_dt.h"
 #include "msm_vidc_internal.h"
 #include "msm_vidc_core.h"
-#include "msm_vidc_debug.h"
 #include "msm_vidc_driver.h"
 
 static size_t get_u32_array_num_elements(struct device_node *np,

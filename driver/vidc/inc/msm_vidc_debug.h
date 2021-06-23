@@ -6,6 +6,7 @@
 #ifndef __MSM_VIDC_DEBUG__
 #define __MSM_VIDC_DEBUG__
 
+#include <linux/errno.h>
 #include <linux/debugfs.h>
 #include <linux/delay.h>
 #include <linux/types.h>
