@@ -16502,6 +16502,10 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_aoa_for_rcc_supported] =
 			WMI_SERVICE_AOA_FOR_RCC_SUPPORTED;
 #endif
+#ifdef WLAN_FEATURE_P2P_P2P_STA
+	wmi_service[wmi_service_p2p_p2p_cc_support] =
+			WMI_SERVICE_P2P_P2P_CONCURRENCY_SUPPORT;
+#endif
 }
 
 /**
