@@ -727,14 +727,14 @@ target_if_cm_roam_offload_11k_params(wmi_unified_t wmi_handle,
 	if (!wmi_service_enabled(wmi_handle,
 				 wmi_service_11k_neighbour_report_support)) {
 		target_if_err("FW doesn't support 11k offload");
-		return QDF_STATUS_E_NOSUPPORT;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	/* If 11k enable command and ssid length is 0, drop it */
 	if (req->offload_11k_bitmask &&
 	    !req->neighbor_report_params.ssid.length) {
 		target_if_debug("SSID Len 0");
-		return QDF_STATUS_E_INVAL;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	status = wmi_unified_offload_11k_cmd(wmi_handle, req);
