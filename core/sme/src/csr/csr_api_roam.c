@@ -7313,7 +7313,9 @@ QDF_STATUS csr_roam_disconnect(struct mac_context *mac_ctx, uint32_t session_id,
 	}
 #else
 	csr_flush_pending_start_bss_cmd(mac_ctx, session_id);
-	if (CSR_IS_CONN_NDI(&session->connectedProfile))
+	if (CSR_IS_CONN_NDI(&session->connectedProfile) ||
+	    wlan_serialization_get_active_cmd(mac_ctx->psoc, session_id,
+					      WLAN_SER_CMD_VDEV_START_BSS))
 		status = csr_roam_issue_disassociate_cmd(mac_ctx, session_id,
 							 reason, mac_reason);
 #endif
