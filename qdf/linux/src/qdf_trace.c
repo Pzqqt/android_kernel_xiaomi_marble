@@ -3832,39 +3832,41 @@ qdf_export_symbol(qdf_shared_print_ctrl_init);
 
 #ifdef QCA_WIFI_MODULE_PARAMS_FROM_INI
 QDF_STATUS qdf_module_param_handler(void *context, const char *str_param,
-				    const char *str_value)
+				    const char *str)
 {
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint16_t param = 0;
+	uint32_t flush_tmr_prd;
+	bool dump_flag;
 
 	while (param < QDF_PARAM_MAX) {
 		if (qdf_str_eq(qdf_module_param[param], str_param)) {
 			switch (param) {
 			case MEM_DEBUG_DISABLED:
-			status = qdf_mem_debug_disabled_config_set(str_value);
+				status = qdf_mem_debug_disabled_config_set(str);
 				break;
 			case QDF_DBG_MASK:
-			status = qdf_int32_parse(str_value, &qdf_dbg_mask);
+				status = qdf_int32_parse(str, &qdf_dbg_mask);
 				break;
 			case PREALLOC_DISABLED:
-			status = qdf_prealloc_disabled_config_set(str_value);
+				status = qdf_prealloc_disabled_config_set(str);
 				break;
 			case QDF_LOG_DUMP_AT_KERNEL_ENABLE:
-			status = qdf_bool_parse(str_value,
-						&qdf_log_dump_at_kernel_enable);
+				status = qdf_bool_parse(str, &dump_flag);
+				qdf_log_dump_at_kernel_enable = dump_flag;
 				break;
 			case QDF_DBG_ARR:
-			qdf_dbg_arr[0] = (char *)str_value;
+				qdf_dbg_arr[0] = (char *)str;
+				status = QDF_STATUS_SUCCESS;
 				break;
 			case QDF_LOG_FLUSH_TIMER_PERIOD:
-			status = qdf_uint32_parse(str_value,
-						  &qdf_log_flush_timer_period);
+				status = qdf_uint32_parse(str, &flush_tmr_prd);
+				qdf_log_flush_timer_period = flush_tmr_prd;
 				break;
 			default:
 				break;
 			}
-			if (QDF_IS_STATUS_SUCCESS(status))
-				return QDF_STATUS_SUCCESS;
+			return status;
 		}
 		param++;
 	}
