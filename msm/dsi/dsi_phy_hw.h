@@ -7,6 +7,7 @@
 #define _DSI_PHY_HW_H_
 
 #include "dsi_defs.h"
+#include "dsi_hw.h"
 
 #define DSI_MAX_SETTINGS 8
 #define DSI_PHY_TIMING_V3_SIZE 12
@@ -21,13 +22,13 @@
 #define DSI_PHY_WARN(p, fmt, ...)	DRM_WARN("[msm-dsi-warn]: DSI_%d: " fmt,\
 		p ? p->index : -1, ##__VA_ARGS__)
 
+#define DSI_MISC_R32(dsi_phy_hw, off) DSI_GEN_R32((dsi_phy_hw)->phy_clamp_base, off)
+#define DSI_MISC_W32(dsi_phy_hw, off, val) \
+	DSI_GEN_W32_DEBUG((dsi_phy_hw)->phy_clamp_base, (dsi_phy_hw)->index, off, val)
+
 /**
  * enum dsi_phy_version - DSI PHY version enumeration
  * @DSI_PHY_VERSION_UNKNOWN:    Unknown version.
- * @DSI_PHY_VERSION_0_0_HPM:    28nm-HPM.
- * @DSI_PHY_VERSION_0_0_LPM:    28nm-HPM.
- * @DSI_PHY_VERSION_1_0:        20nm
- * @DSI_PHY_VERSION_2_0:        14nm
  * @DSI_PHY_VERSION_3_0:        10nm
  * @DSI_PHY_VERSION_4_0:        7nm
  * @DSI_PHY_VERSION_4_1:	7nm
@@ -37,10 +38,6 @@
  */
 enum dsi_phy_version {
 	DSI_PHY_VERSION_UNKNOWN,
-	DSI_PHY_VERSION_0_0_HPM, /* 28nm-HPM */
-	DSI_PHY_VERSION_0_0_LPM, /* 28nm-LPM */
-	DSI_PHY_VERSION_1_0, /* 20nm */
-	DSI_PHY_VERSION_2_0, /* 14nm */
 	DSI_PHY_VERSION_3_0, /* 10nm */
 	DSI_PHY_VERSION_4_0, /* 7nm  */
 	DSI_PHY_VERSION_4_1, /* 7nm */

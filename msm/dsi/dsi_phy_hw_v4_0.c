@@ -497,7 +497,7 @@ void dsi_phy_hw_v4_0_enable(struct dsi_phy_hw *phy,
 	}
 
 	/* wait for REFGEN READY */
-	rc = readl_poll_timeout_atomic(phy->base + DSIPHY_CMN_PHY_STATUS,
+	rc = DSI_READ_POLL_TIMEOUT_ATOMIC(phy, DSIPHY_CMN_PHY_STATUS,
 		status, (status & BIT(0)), delay_us, timeout_us);
 	if (rc) {
 		DSI_PHY_ERR(phy, "Ref gen not ready. Aborting\n");
@@ -583,7 +583,7 @@ int dsi_phy_hw_v4_0_wait_for_lane_idle(
 
 	DSI_PHY_DBG(phy, "polling for lanes to be in stop state, mask=0x%08x\n",
 		stop_state_mask);
-	rc = readl_poll_timeout(phy->base + DSIPHY_CMN_LANE_STATUS1, val,
+	rc = DSI_READ_POLL_TIMEOUT(phy, DSIPHY_CMN_LANE_STATUS1, val,
 				((val & stop_state_mask) == stop_state_mask),
 				sleep_us, timeout_us);
 	if (rc) {

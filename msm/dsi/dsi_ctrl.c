@@ -49,8 +49,6 @@ struct dsi_ctrl_list_item {
 static LIST_HEAD(dsi_ctrl_list);
 static DEFINE_MUTEX(dsi_ctrl_list_lock);
 
-static const enum dsi_ctrl_version dsi_ctrl_v1_4 = DSI_CTRL_VERSION_1_4;
-static const enum dsi_ctrl_version dsi_ctrl_v2_0 = DSI_CTRL_VERSION_2_0;
 static const enum dsi_ctrl_version dsi_ctrl_v2_2 = DSI_CTRL_VERSION_2_2;
 static const enum dsi_ctrl_version dsi_ctrl_v2_3 = DSI_CTRL_VERSION_2_3;
 static const enum dsi_ctrl_version dsi_ctrl_v2_4 = DSI_CTRL_VERSION_2_4;
@@ -58,14 +56,6 @@ static const enum dsi_ctrl_version dsi_ctrl_v2_5 = DSI_CTRL_VERSION_2_5;
 static const enum dsi_ctrl_version dsi_ctrl_v2_6 = DSI_CTRL_VERSION_2_6;
 
 static const struct of_device_id msm_dsi_of_match[] = {
-	{
-		.compatible = "qcom,dsi-ctrl-hw-v1.4",
-		.data = &dsi_ctrl_v1_4,
-	},
-	{
-		.compatible = "qcom,dsi-ctrl-hw-v2.0",
-		.data = &dsi_ctrl_v2_0,
-	},
 	{
 		.compatible = "qcom,dsi-ctrl-hw-v2.2",
 		.data = &dsi_ctrl_v2_2,
@@ -708,18 +698,6 @@ static int dsi_ctrl_init_regmap(struct platform_device *pdev,
 	DSI_CTRL_DEBUG(ctrl, "map dsi_ctrl registers to %pK\n", ctrl->hw.base);
 
 	switch (ctrl->version) {
-	case DSI_CTRL_VERSION_1_4:
-	case DSI_CTRL_VERSION_2_0:
-		ptr = msm_ioremap(pdev, "mmss_misc", ctrl->name);
-		if (IS_ERR(ptr)) {
-			DSI_CTRL_ERR(ctrl, "mmss_misc base address not found\n");
-			rc = PTR_ERR(ptr);
-			return rc;
-		}
-		ctrl->hw.mmss_misc_base = ptr;
-		ctrl->hw.disp_cc_base = NULL;
-		ctrl->hw.mdp_intf_base = NULL;
-		break;
 	case DSI_CTRL_VERSION_2_2:
 	case DSI_CTRL_VERSION_2_3:
 	case DSI_CTRL_VERSION_2_4:
@@ -1273,46 +1251,6 @@ int dsi_ctrl_wait_for_cmd_mode_mdp_idle(struct dsi_ctrl *dsi_ctrl)
 	return rc;
 }
 
-static void dsi_ctrl_wait_for_video_done(struct dsi_ctrl *dsi_ctrl)
-{
-	u32 v_total = 0, v_blank = 0, sleep_ms = 0, fps = 0, ret;
-	struct dsi_mode_info *timing;
-
-	/**
-	 * No need to wait if the panel is not video mode or
-	 * if DSI controller supports command DMA scheduling or
-	 * if we are sending init commands.
-	 */
-	if ((dsi_ctrl->host_config.panel_mode != DSI_OP_VIDEO_MODE) ||
-		(dsi_ctrl->version >= DSI_CTRL_VERSION_2_2) ||
-		(dsi_ctrl->current_state.vid_engine_state !=
-					DSI_CTRL_ENGINE_ON))
-		return;
-
-	dsi_ctrl->hw.ops.clear_interrupt_status(&dsi_ctrl->hw,
-				DSI_VIDEO_MODE_FRAME_DONE);
-
-	dsi_ctrl_enable_status_interrupt(dsi_ctrl,
-				DSI_SINT_VIDEO_MODE_FRAME_DONE, NULL);
-	reinit_completion(&dsi_ctrl->irq_info.vid_frame_done);
-	ret = wait_for_completion_timeout(
-			&dsi_ctrl->irq_info.vid_frame_done,
-			msecs_to_jiffies(DSI_CTRL_TX_TO_MS));
-	if (ret <= 0)
-		DSI_CTRL_DEBUG(dsi_ctrl, "wait for video done failed\n");
-	dsi_ctrl_disable_status_interrupt(dsi_ctrl,
-				DSI_SINT_VIDEO_MODE_FRAME_DONE);
-
-	timing = &(dsi_ctrl->host_config.video_timing);
-	v_total = timing->v_sync_width + timing->v_back_porch +
-			timing->v_front_porch + timing->v_active;
-	v_blank = timing->v_sync_width + timing->v_back_porch;
-	fps = timing->refresh_rate;
-
-	sleep_ms = CEIL((v_blank * 1000), (v_total * fps)) + 1;
-	udelay(sleep_ms * 1000);
-}
-
 int dsi_message_validate_tx_mode(struct dsi_ctrl *dsi_ctrl,
 		u32 cmd_len,
 		u32 *flags)
@@ -1497,8 +1435,6 @@ static void dsi_kickoff_msg_tx(struct dsi_ctrl *dsi_ctrl,
 	}
 
 	if (!(flags & DSI_CTRL_CMD_DEFER_TRIGGER)) {
-		dsi_ctrl_wait_for_video_done(dsi_ctrl);
-
 		atomic_set(&dsi_ctrl->dma_irq_trig, 0);
 		dsi_ctrl_enable_status_interrupt(dsi_ctrl,
 					DSI_SINT_CMD_MODE_DMA_DONE, NULL);
@@ -3637,7 +3573,6 @@ int dsi_ctrl_cmd_tx_trigger(struct dsi_ctrl *dsi_ctrl, u32 flags)
 
 	if ((flags & DSI_CTRL_CMD_BROADCAST) &&
 		(flags & DSI_CTRL_CMD_BROADCAST_MASTER)) {
-		dsi_ctrl_wait_for_video_done(dsi_ctrl);
 		atomic_set(&dsi_ctrl->dma_irq_trig, 0);
 		dsi_ctrl_enable_status_interrupt(dsi_ctrl,
 					DSI_SINT_CMD_MODE_DMA_DONE, NULL);
@@ -3993,8 +3928,7 @@ int dsi_ctrl_set_vid_engine_state(struct dsi_ctrl *dsi_ctrl,
 		 * playback, display does not recover back after ESD failure.
 		 * Perform a reset if video engine is stuck.
 		 */
-		if (!on && (dsi_ctrl->version < DSI_CTRL_VERSION_1_3 ||
-								vid_eng_busy))
+		if (!on && vid_eng_busy)
 			dsi_ctrl->hw.ops.soft_reset(&dsi_ctrl->hw);
 	}
 

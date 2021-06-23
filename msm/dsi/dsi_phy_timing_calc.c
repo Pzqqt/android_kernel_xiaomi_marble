@@ -974,22 +974,6 @@ int dsi_phy_timing_calc_init(struct dsi_phy_hw *phy,
 	phy->ops.timing_ops = ops;
 
 	switch (version) {
-	case DSI_PHY_VERSION_2_0:
-		ops->get_default_phy_params =
-			dsi_phy_hw_v2_0_get_default_phy_params;
-		ops->calc_clk_zero =
-			dsi_phy_hw_v2_0_calc_clk_zero;
-		ops->calc_clk_trail_rec_min =
-			dsi_phy_hw_v2_0_calc_clk_trail_rec_min;
-		ops->calc_clk_trail_rec_max =
-			dsi_phy_hw_v2_0_calc_clk_trail_rec_max;
-		ops->calc_hs_zero =
-			dsi_phy_hw_v2_0_calc_hs_zero;
-		ops->calc_hs_trail =
-			dsi_phy_hw_v2_0_calc_hs_trail;
-		ops->update_timing_params =
-			dsi_phy_hw_v2_0_update_timing_params;
-		break;
 	case DSI_PHY_VERSION_3_0:
 		ops->get_default_phy_params =
 			dsi_phy_hw_v3_0_get_default_phy_params;
@@ -1025,9 +1009,6 @@ int dsi_phy_timing_calc_init(struct dsi_phy_hw *phy,
 		ops->update_timing_params =
 			dsi_phy_hw_v4_0_update_timing_params;
 		break;
-	case DSI_PHY_VERSION_0_0_HPM:
-	case DSI_PHY_VERSION_0_0_LPM:
-	case DSI_PHY_VERSION_1_0:
 	default:
 		kfree(ops);
 		return -ENOTSUPP;

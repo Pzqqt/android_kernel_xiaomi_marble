@@ -31,34 +31,6 @@ struct dsi_phy_list_item {
 static LIST_HEAD(dsi_phy_list);
 static DEFINE_MUTEX(dsi_phy_list_lock);
 
-static const struct dsi_ver_spec_info dsi_phy_v0_0_hpm = {
-	.version = DSI_PHY_VERSION_0_0_HPM,
-	.lane_cfg_count = 4,
-	.strength_cfg_count = 2,
-	.regulator_cfg_count = 1,
-	.timing_cfg_count = 8,
-};
-static const struct dsi_ver_spec_info dsi_phy_v0_0_lpm = {
-	.version = DSI_PHY_VERSION_0_0_LPM,
-	.lane_cfg_count = 4,
-	.strength_cfg_count = 2,
-	.regulator_cfg_count = 1,
-	.timing_cfg_count = 8,
-};
-static const struct dsi_ver_spec_info dsi_phy_v1_0 = {
-	.version = DSI_PHY_VERSION_1_0,
-	.lane_cfg_count = 4,
-	.strength_cfg_count = 2,
-	.regulator_cfg_count = 1,
-	.timing_cfg_count = 8,
-};
-static const struct dsi_ver_spec_info dsi_phy_v2_0 = {
-	.version = DSI_PHY_VERSION_2_0,
-	.lane_cfg_count = 4,
-	.strength_cfg_count = 2,
-	.regulator_cfg_count = 1,
-	.timing_cfg_count = 8,
-};
 static const struct dsi_ver_spec_info dsi_phy_v3_0 = {
 	.version = DSI_PHY_VERSION_3_0,
 	.lane_cfg_count = 4,
@@ -100,14 +72,6 @@ static const struct dsi_ver_spec_info dsi_phy_v4_3 = {
 };
 
 static const struct of_device_id msm_dsi_phy_of_match[] = {
-	{ .compatible = "qcom,dsi-phy-v0.0-hpm",
-	  .data = &dsi_phy_v0_0_hpm,},
-	{ .compatible = "qcom,dsi-phy-v0.0-lpm",
-	  .data = &dsi_phy_v0_0_lpm,},
-	{ .compatible = "qcom,dsi-phy-v1.0",
-	  .data = &dsi_phy_v1_0,},
-	{ .compatible = "qcom,dsi-phy-v2.0",
-	  .data = &dsi_phy_v2_0,},
 	{ .compatible = "qcom,dsi-phy-v3.0",
 	  .data = &dsi_phy_v3_0,},
 	{ .compatible = "qcom,dsi-phy-v4.0",
@@ -165,18 +129,6 @@ static int dsi_phy_regmap_init(struct platform_device *pdev,
 	phy->hw.dyn_pll_base = ptr;
 
 	DSI_PHY_DBG(phy, "map dsi_phy registers to %pK\n", phy->hw.base);
-
-	switch (phy->ver_info->version) {
-	case DSI_PHY_VERSION_2_0:
-		ptr = msm_ioremap(pdev, "phy_clamp_base", phy->name);
-		if (IS_ERR(ptr))
-			phy->hw.phy_clamp_base = NULL;
-		else
-			phy->hw.phy_clamp_base = ptr;
-		break;
-	default:
-		break;
-	}
 
 	return rc;
 }

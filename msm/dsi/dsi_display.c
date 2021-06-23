@@ -4333,10 +4333,7 @@ void dsi_display_update_byte_intf_div(struct dsi_display *display)
 	config = &display->panel->host_config;
 
 	phy_ver = dsi_phy_get_version(m_ctrl->phy);
-	if (phy_ver <= DSI_PHY_VERSION_2_0)
-		config->byte_intf_clk_div = 1;
-	else
-		config->byte_intf_clk_div = 2;
+	config->byte_intf_clk_div = 2;
 }
 
 static int dsi_display_update_dsi_bitrate(struct dsi_display *display,
