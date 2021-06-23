@@ -508,7 +508,7 @@ static int cvp_fence_proc(struct msm_cvp_inst *inst,
 			current->comm, __func__);
 		synx_state = SYNX_STATE_SIGNALED_CANCEL;
 	} else if (hfi_err == HFI_ERR_SESSION_STREAM_CORRUPT) {
-		dprintk(CVP_WARN, "%s %s: cvp_wait_process_msg non-fatal %d\n",
+		dprintk(CVP_INFO, "%s %s: cvp_wait_process_msg non-fatal %d\n",
 		current->comm, __func__, hfi_err);
 		synx_state = SYNX_STATE_SIGNALED_SUCCESS;
 	} else if (hfi_err != HFI_ERR_NONE) {
