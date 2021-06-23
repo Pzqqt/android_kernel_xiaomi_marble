@@ -1222,7 +1222,7 @@ int hif_pm_runtime_get(struct hif_opaque_softc *hif_ctx,
 		if (ret > 0)
 			ret = 0;
 
-		if (ret)
+		if (ret < 0)
 			hif_pm_runtime_put(hif_ctx, rtpm_dbgid);
 
 		if (ret && ret != -EINPROGRESS) {
