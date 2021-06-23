@@ -84,6 +84,17 @@ QDF_STATUS wlan_reg_get_max_5g_bw_from_regdomain(uint16_t regdmn,
 	return reg_get_max_5g_bw_from_regdomain(regdmn, max_bw_5g);
 }
 
+#ifdef CONFIG_REG_CLIENT
+QDF_STATUS
+wlan_reg_get_6g_power_type_for_ctry(uint8_t *ap_ctry, uint8_t *sta_ctry,
+				    enum reg_6g_ap_type *pwr_type_6g,
+				    bool *ctry_code_match)
+{
+	return reg_get_6g_power_type_for_ctry(ap_ctry, sta_ctry, pwr_type_6g,
+					      ctry_code_match);
+}
+#endif
+
 /**
  * wlan_reg_get_dfs_region () - Get the current dfs region
  * @dfs_reg: pointer to dfs region
