@@ -1264,6 +1264,54 @@ static void wma_objmgr_set_peer_mlme_type(tp_wma_handle wma,
 	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * wma_set_mlo_capability() - set MLO caps to the peer assoc request
+ * @wma: wma handle
+ * @vdev: vdev object
+ * @req: peer assoc request parameters
+ *
+ * Return: None
+ */
+static void wma_set_mlo_capability(tp_wma_handle wma,
+				   struct wlan_objmgr_vdev *vdev,
+				   struct peer_assoc_params *req)
+{
+	uint8_t pdev_id;
+	struct wlan_objmgr_peer *peer;
+	struct wlan_objmgr_psoc *psoc = wma->psoc;
+
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(wma->pdev);
+	peer = wlan_objmgr_get_peer(psoc, pdev_id, req->peer_mac,
+				    WLAN_LEGACY_WMA_ID);
+
+	if (!peer) {
+		wma_err("peer not valid");
+		return;
+	}
+
+	if (!qdf_is_macaddr_zero((struct qdf_mac_addr *)peer->mldaddr)) {
+		req->mlo_params.mlo_enabled = true;
+		req->mlo_params.mlo_assoc_link =
+					wlan_peer_mlme_get_assoc_peer(peer);
+		WLAN_ADDR_COPY(req->mlo_params.mld_mac, peer->mldaddr);
+		wma_debug("assoc_link %d " QDF_MAC_ADDR_FMT,
+			  req->mlo_params.mlo_assoc_link,
+			  QDF_MAC_ADDR_REF(peer->mldaddr));
+	} else {
+		wma_debug("Peer MLO context is NULL");
+		req->mlo_params.mlo_enabled = false;
+	}
+	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
+}
+#else
+static inline void wma_set_mlo_capability(tp_wma_handle wma,
+					  struct wlan_objmgr_vdev *vdev,
+					  struct peer_assoc_params *req)
+{
+}
+#endif
+
 /**
  * wmi_unified_send_peer_assoc() - send peer assoc command to fw
  * @wma: wma handle
@@ -1602,6 +1650,8 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 				  cmd->peer_bw_rxnss_override);
 		}
 	}
+
+	wma_set_mlo_capability(wma, intr->vdev, cmd);
 
 	wma_debug("rx_max_rate %d, rx_mcs %x, tx_max_rate %d, tx_mcs: %x num rates %d need 4 way %d",
 		  cmd->rx_max_rate, cmd->rx_mcs_set, cmd->tx_max_rate,
