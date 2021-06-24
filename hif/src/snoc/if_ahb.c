@@ -732,6 +732,7 @@ void hif_ahb_nointrs(struct hif_softc *scn)
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	struct CE_attr *host_ce_conf = hif_state->host_ce_config;
 
+	scn->free_irq_done = true;
 	ce_unregister_irq(hif_state, CE_ALL_BITMAP);
 
 	if (scn->request_irq_done == false)

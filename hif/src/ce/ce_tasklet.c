@@ -442,7 +442,8 @@ static void ce_tasklet(unsigned long data)
 	if (scn->ce_latency_stats)
 		ce_tasklet_update_bucket(hif_ce_state, tasklet_entry->ce_id);
 
-	if (scn->target_status != TARGET_STATUS_RESET)
+	if ((scn->target_status != TARGET_STATUS_RESET) &&
+	    !scn->free_irq_done)
 		hif_irq_enable(scn, tasklet_entry->ce_id);
 
 	qdf_atomic_dec(&scn->active_tasklet_cnt);

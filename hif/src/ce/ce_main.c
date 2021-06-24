@@ -3768,6 +3768,7 @@ void hif_ce_prepare_config(struct hif_softc *scn)
 
 	scn->ce_count = HOST_CE_COUNT;
 	scn->int_assignment = &ce_int_context[msi_data_count];
+	scn->free_irq_done = false;
 	/* if epping is enabled we need to use the epping configuration. */
 	if (QDF_IS_EPPING_ENABLED(mode)) {
 		hif_ce_prepare_epping_config(scn, hif_state);

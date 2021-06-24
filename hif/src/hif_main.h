@@ -217,6 +217,7 @@ struct hif_softc {
 	bool hif_init_done;
 	bool request_irq_done;
 	bool ext_grp_irq_configured;
+	bool free_irq_done;
 	uint8_t ce_latency_stats;
 	/* Packet statistics */
 	struct hif_ce_stats pkt_stats;

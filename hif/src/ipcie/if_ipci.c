@@ -252,6 +252,7 @@ void hif_ipci_nointrs(struct hif_softc *scn)
 	int ret;
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 
+	scn->free_irq_done = true;
 	ce_unregister_irq(hif_state, CE_ALL_BITMAP);
 
 	if (scn->request_irq_done == false)
