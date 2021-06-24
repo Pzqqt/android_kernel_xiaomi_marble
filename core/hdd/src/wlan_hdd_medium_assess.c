@@ -201,7 +201,7 @@ static int hdd_medium_assess_cca(struct hdd_context *hdd_ctx,
 	}
 
 	dcs_enable = ucfg_get_dcs_enable(hdd_ctx->psoc, mac_id);
-	if (!(dcs_enable & CAP_DCS_WLANIM)) {
+	if (!(dcs_enable & WLAN_HOST_DCS_WLANIM)) {
 		hdd_err_rl("DCS_WLANIM is not enabled");
 		errno = -EINVAL;
 		goto out;

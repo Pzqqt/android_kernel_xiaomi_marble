@@ -1098,7 +1098,8 @@ static void wma_dcs_wlan_interference_mitigation_enable(
 		ucfg_config_dcs_event_data(mac_ctx->psoc, mac_id, true);
 
 	if (rsp->resp_type == WMI_HOST_VDEV_START_RESP_EVENT) {
-		ucfg_config_dcs_enable(mac_ctx->psoc, mac_id, CAP_DCS_WLANIM);
+		ucfg_config_dcs_enable(mac_ctx->psoc, mac_id,
+				       WLAN_HOST_DCS_WLANIM);
 		ucfg_wlan_dcs_cmd(mac_ctx->psoc, mac_id, true);
 	}
 }
