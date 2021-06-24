@@ -1405,6 +1405,8 @@ struct seg_hdr_info {
  *	        Data:1 Mgmt:0
  * @cfr_enable: flag to enable CFR capture
  *              0:disable 1:enable
+ * @en_beamforming: flag to enable tx beamforming
+ *              0:disable 1:enable
  */
 struct tx_send_params {
 	uint32_t pwr:8,
@@ -1416,7 +1418,8 @@ struct tx_send_params {
 		 preamble_type:5,
 		 frame_type:1,
 		 cfr_enable:1,
-		 reserved:10;
+		 en_beamforming:1,
+		 reserved:9;
 };
 
 /**
