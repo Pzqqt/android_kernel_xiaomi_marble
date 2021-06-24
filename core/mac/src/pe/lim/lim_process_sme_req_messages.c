@@ -5790,10 +5790,7 @@ end:
 		!assoc_cnf.need_assoc_rsp_tx_cb) {
 		assoc_req = (tpSirAssocReq)
 			session_entry->parsedAssocReq[sta_ds->assocId];
-		if (assoc_req->assocReqFrame) {
-			qdf_mem_free(assoc_req->assocReqFrame);
-			assoc_req->assocReqFrame = NULL;
-		}
+		lim_free_assoc_req_frm_buf(assoc_req);
 		qdf_mem_free(session_entry->parsedAssocReq[sta_ds->assocId]);
 		session_entry->parsedAssocReq[sta_ds->assocId] = NULL;
 	}

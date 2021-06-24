@@ -723,22 +723,40 @@ lim_reject_association(struct mac_context *mac_ctx, tSirMacAddr peer_addr,
 				      sub_type, 0, session_entry, false);
 
 	if (session_entry->parsedAssocReq[sta_ds->assocId]) {
-		uint8_t *assoc_req_frame;
-
-		assoc_req_frame = (uint8_t *)((tpSirAssocReq) (session_entry->
-			parsedAssocReq[sta_ds->assocId]))->assocReqFrame;
-		/*
-		 *Assoction confirmation is complete,
-		 *free the copy of association request frame.
-		 */
-		if (assoc_req_frame) {
-			qdf_mem_free(assoc_req_frame);
-			assoc_req_frame = NULL;
-		}
+		lim_free_assoc_req_frm_buf(
+			session_entry->parsedAssocReq[sta_ds->assocId]);
 
 		qdf_mem_free(session_entry->parsedAssocReq[sta_ds->assocId]);
 		session_entry->parsedAssocReq[sta_ds->assocId] = NULL;
 	}
+}
+
+void lim_free_assoc_req_frm_buf(tpSirAssocReq assoc_req)
+{
+	if (!assoc_req)
+		return;
+	if (assoc_req->assoc_req_buf) {
+		qdf_nbuf_free(assoc_req->assoc_req_buf);
+		assoc_req->assoc_req_buf = NULL;
+		assoc_req->assocReqFrame = NULL;
+		assoc_req->assocReqFrameLength = 0;
+	}
+}
+
+bool lim_alloc_assoc_req_frm_buf(tpSirAssocReq assoc_req,
+				 qdf_nbuf_t buf, uint32_t mac_header_len,
+				 uint32_t frame_len)
+{
+	if (!assoc_req)
+		return false;
+	assoc_req->assoc_req_buf = qdf_nbuf_clone(buf);
+	if (!assoc_req->assoc_req_buf)
+		return false;
+	assoc_req->assocReqFrame = qdf_nbuf_data(assoc_req->assoc_req_buf) +
+				   mac_header_len;
+	assoc_req->assocReqFrameLength = frame_len;
+
+	return true;
 }
 
 /**

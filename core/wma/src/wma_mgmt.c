@@ -3465,6 +3465,7 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 					 rx_pkt->pkt_meta.mpdu_hdr_len;
 	rx_pkt->pkt_meta.tsf_delta = mgmt_rx_params->tsf_delta;
 	rx_pkt->pkt_buf = buf;
+	rx_pkt->pkt_meta.pkt_qdf_buf = buf;
 
 	/* If it is a beacon/probe response, save it for future use */
 	mgt_type = (wh)->i_fc[0] & IEEE80211_FC0_TYPE_MASK;

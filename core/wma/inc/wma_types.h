@@ -30,6 +30,12 @@
 
 #define DPU_FEEDBACK_UNPROTECTED_ERROR 0x0F
 
+#define WMA_GET_QDF_NBUF(pRxMeta) \
+	(((t_packetmeta *)pRxMeta)->pkt_qdf_buf)
+
+#define WMA_GET_RX_MAC_HEADER_LEN(pRxMeta) \
+	(((t_packetmeta *)pRxMeta)->mpdu_hdr_len)
+
 #define WMA_GET_RX_MAC_HEADER(pRxMeta) \
 	(tpSirMacMgmtHdr)(((t_packetmeta *)pRxMeta)->mpdu_hdr_ptr)
 

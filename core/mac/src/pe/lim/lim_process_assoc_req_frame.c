@@ -1554,11 +1554,7 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 	if (session->parsedAssocReq) {
 		tmp_assoc_req = session->parsedAssocReq[sta_ds->assocId];
 		if (tmp_assoc_req) {
-			if (tmp_assoc_req->assocReqFrame) {
-				qdf_mem_free(tmp_assoc_req->assocReqFrame);
-				tmp_assoc_req->assocReqFrame = NULL;
-				tmp_assoc_req->assocReqFrameLength = 0;
-			}
+			lim_free_assoc_req_frm_buf(tmp_assoc_req);
 			qdf_mem_free(tmp_assoc_req);
 			tmp_assoc_req = NULL;
 		}
@@ -2003,11 +1999,7 @@ void lim_process_assoc_cleanup(struct mac_context *mac_ctx,
 	tpSirAssocReq tmp_assoc_req;
 
 	if (assoc_req) {
-		if (assoc_req->assocReqFrame) {
-			qdf_mem_free(assoc_req->assocReqFrame);
-			assoc_req->assocReqFrame = NULL;
-			assoc_req->assocReqFrameLength = 0;
-		}
+		lim_free_assoc_req_frm_buf(assoc_req);
 
 		qdf_mem_free(assoc_req);
 		/* to avoid double free */
@@ -2022,12 +2014,7 @@ void lim_process_assoc_cleanup(struct mac_context *mac_ctx,
 			tmp_assoc_req =
 				session->parsedAssocReq[sta_ds->assocId];
 			if (tmp_assoc_req) {
-				if (tmp_assoc_req->assocReqFrame) {
-					qdf_mem_free(
-						tmp_assoc_req->assocReqFrame);
-					tmp_assoc_req->assocReqFrame = NULL;
-					tmp_assoc_req->assocReqFrameLength = 0;
-				}
+				lim_free_assoc_req_frm_buf(tmp_assoc_req);
 				qdf_mem_free(tmp_assoc_req);
 				session->parsedAssocReq[sta_ds->assocId] = NULL;
 			}
@@ -2473,13 +2460,11 @@ void lim_process_assoc_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_in
 				assoc_req, sub_type, frm_body, frame_len))
 		goto error;
 
-	assoc_req->assocReqFrame = qdf_mem_malloc(frame_len);
-	if (!assoc_req->assocReqFrame)
+	if (!lim_alloc_assoc_req_frm_buf(assoc_req,
+					 WMA_GET_QDF_NBUF(rx_pkt_info),
+					 WMA_GET_RX_MAC_HEADER_LEN(rx_pkt_info),
+					 frame_len))
 		goto error;
-
-	qdf_mem_copy((uint8_t *) assoc_req->assocReqFrame,
-		(uint8_t *) frm_body, frame_len);
-	assoc_req->assocReqFrameLength = frame_len;
 
 	if (false == lim_chk_capab(mac_ctx, hdr, session, assoc_req,
 				sub_type, &local_cap))

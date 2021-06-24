@@ -401,4 +401,23 @@ void lim_update_vhtcaps_assoc_resp(struct mac_context *mac_ctx,
 				   struct bss_params *pAddBssParams,
 				   tDot11fIEVHTCaps *vht_caps,
 				   struct pe_session *pe_session);
+
+/**
+ * lim_free_assoc_req_frm_buf() - free assoc request frame buffer
+ * @assoc_req: pointer to tpSirAssocReq
+ *
+ * Return : void
+ */
+void lim_free_assoc_req_frm_buf(tpSirAssocReq assoc_req);
+
+/**
+ * lim_alloc_assoc_req_frm_buf() - allocate assoc request frame buffer
+ * @assoc_req: pointer to tpSirAssocReq
+ * @buf: pointer to assoc request frame
+ * @mac_header_len: ieee80211 header length
+ * @frame_len: payload length of assoc request frame
+ */
+bool lim_alloc_assoc_req_frm_buf(tpSirAssocReq assoc_req,
+				 qdf_nbuf_t buf, uint32_t mac_header_len,
+				 uint32_t frame_len);
 #endif /* __LIM_ASSOC_UTILS_H */

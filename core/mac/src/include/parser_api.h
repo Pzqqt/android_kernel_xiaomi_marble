@@ -365,6 +365,7 @@ typedef struct sSirAssocReq {
 	uint8_t supportedChannelsPresent;
 	/* keeping copy of association request received, this is
 	   required for indicating the frame to upper layers */
+	qdf_nbuf_t assoc_req_buf;
 	uint32_t assocReqFrameLength;
 	uint8_t *assocReqFrame;
 	tDot11fIEVHTCaps VHTCaps;

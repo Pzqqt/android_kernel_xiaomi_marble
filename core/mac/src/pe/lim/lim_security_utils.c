@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -38,6 +38,7 @@
 #include "lim_security_utils.h"
 #include "lim_ft_defs.h"
 #include "lim_session.h"
+#include <lim_assoc_utils.h>
 
 #define LIM_SEED_LENGTH 16
 /*
@@ -311,8 +312,7 @@ void lim_release_pre_auth_node(struct mac_context *mac,
 		tpSirAssocReq assoc =
 			 (tpSirAssocReq)pAuthNode->assoc_req.assoc_req;
 
-		if (assoc->assocReqFrameLength)
-			qdf_mem_free(assoc->assocReqFrame);
+		lim_free_assoc_req_frm_buf(assoc);
 		qdf_mem_free(assoc);
 		pAuthNode->assoc_req.assoc_req = NULL;
 		pAuthNode->assoc_req.present = false;

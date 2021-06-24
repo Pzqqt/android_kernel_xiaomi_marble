@@ -1357,10 +1357,7 @@ static QDF_STATUS lim_assoc_rsp_tx_complete(
 	qdf_mem_free(lim_assoc_ind);
 
 free_buffers:
-	if (assoc_req->assocReqFrame) {
-		qdf_mem_free(assoc_req->assocReqFrame);
-		assoc_req->assocReqFrame = NULL;
-	}
+	lim_free_assoc_req_frm_buf(assoc_req);
 	qdf_mem_free(session_entry->parsedAssocReq[sta_ds->assocId]);
 	session_entry->parsedAssocReq[sta_ds->assocId] = NULL;
 	qdf_nbuf_free(buf);
@@ -1370,10 +1367,7 @@ free_buffers:
 lim_assoc_ind:
 	qdf_mem_free(lim_assoc_ind);
 free_assoc_req:
-	if (assoc_req->assocReqFrame) {
-		qdf_mem_free(assoc_req->assocReqFrame);
-		assoc_req->assocReqFrame = NULL;
-	}
+	lim_free_assoc_req_frm_buf(assoc_req);
 	qdf_mem_free(session_entry->parsedAssocReq[sta_ds->assocId]);
 	session_entry->parsedAssocReq[sta_ds->assocId] = NULL;
 end:

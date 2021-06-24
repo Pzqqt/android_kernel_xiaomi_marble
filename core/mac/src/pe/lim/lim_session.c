@@ -38,6 +38,7 @@
 #include "sch_api.h"
 #include "lim_send_messages.h"
 #include "cfg_ucfg_api.h"
+#include <lim_assoc_utils.h>
 
 #ifdef WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY
 static struct sDphHashNode *g_dph_node_array;
@@ -935,11 +936,7 @@ void pe_delete_session(struct mac_context *mac_ctx, struct pe_session *session)
 				continue;
 			tmp_ptr = ((tpSirAssocReq)
 				  (session->parsedAssocReq[i]));
-			if (tmp_ptr->assocReqFrame) {
-				qdf_mem_free(tmp_ptr->assocReqFrame);
-				tmp_ptr->assocReqFrame = NULL;
-				tmp_ptr->assocReqFrameLength = 0;
-			}
+			lim_free_assoc_req_frm_buf(tmp_ptr);
 			qdf_mem_free(session->parsedAssocReq[i]);
 			session->parsedAssocReq[i] = NULL;
 		}
