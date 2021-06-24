@@ -109,6 +109,10 @@ uint8_t *peer_assoc_add_mlo_params(uint8_t *buf_ptr,
  */
 uint8_t *peer_assoc_add_ml_partner_links(uint8_t *buf_ptr,
 					 struct peer_assoc_params *req);
+/** wmi_11be_tlv_attach_tlv - Attach 11be relaated callbacks
+ *  @wmi_handle: WMI handle
+ */
+void wmi_11be_attach_tlv(wmi_unified_t wmi_handle);
 #else
 static uint8_t *vdev_create_add_mlo_params(uint8_t *buf_ptr,
 					   struct vdev_create_params *param)
@@ -183,5 +187,7 @@ static uint8_t *peer_assoc_add_ml_partner_links(uint8_t *buf_ptr,
 	return buf_ptr + WMI_TLV_HDR_SIZE;
 }
 
+static void wmi_11be_attach_tlv(wmi_unified_t wmi_handle)
+{ }
 #endif /*WLAN_FEATURE_11BE_MLO*/
 #endif /*_WMI_UNIFIED_11BE_TLV_H_*/

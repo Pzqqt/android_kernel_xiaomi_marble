@@ -118,6 +118,10 @@
 
 #include "wmi_unified_cp_stats_api.h"
 
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
+#include "wmi_unified_11be_setup_api.h"
+#endif
+
 typedef qdf_nbuf_t wmi_buf_t;
 #define wmi_buf_data(_buf) qdf_nbuf_data(_buf)
 

@@ -16763,6 +16763,12 @@ event_ids[wmi_roam_scan_chan_list_id] =
 	event_ids[wmi_mgmt_rx_fw_consumed_eventid] =
 			WMI_MGMT_RX_FW_CONSUMED_EVENTID;
 #endif
+#ifdef WLAN_FEATURE_11BE_MLO
+	event_ids[wmi_mlo_setup_complete_event_id] =
+			WMI_MLO_SETUP_COMPLETE_EVENTID;
+	event_ids[wmi_mlo_teardown_complete_event_id] =
+			WMI_MLO_TEARDOWN_COMPLETE_EVENTID;
+#endif
 }
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
@@ -17247,6 +17253,7 @@ void wmi_tlv_attach(wmi_unified_t wmi_handle)
 	wmi_cfr_attach_tlv(wmi_handle);
 	wmi_cp_stats_attach_tlv(wmi_handle);
 	wmi_gpio_attach_tlv(wmi_handle);
+	wmi_11be_attach_tlv(wmi_handle);
 }
 qdf_export_symbol(wmi_tlv_attach);
 

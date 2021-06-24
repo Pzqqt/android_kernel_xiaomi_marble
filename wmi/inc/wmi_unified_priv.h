@@ -93,6 +93,10 @@
 #include <wmi_unified_ap_params.h>
 #endif
 
+#ifdef WLAN_FEATURE_11BE_MLO
+#include <wmi_unified_11be_param.h>
+#endif
+
 #define WMI_UNIFIED_MAX_EVENT 0x100
 
 #ifdef WMI_EXT_DBG
@@ -2686,6 +2690,23 @@ QDF_STATUS (*send_mgmt_rx_reo_filter_config_cmd)(
 					wmi_unified_t wmi_handle,
 					uint8_t pdev_id,
 					struct mgmt_rx_reo_filter *filter);
+#endif
+
+#ifdef WLAN_FEATURE_11BE_MLO
+QDF_STATUS (*mlo_setup_cmd_send)(wmi_unified_t wmi_handle,
+				 struct wmi_mlo_setup_params *params);
+QDF_STATUS (*mlo_teardown_cmd_send)(wmi_unified_t wmi_handle,
+				    struct wmi_mlo_teardown_params *params);
+QDF_STATUS (*mlo_ready_cmd_send)(wmi_unified_t wmi_handle,
+				 struct wmi_mlo_ready_params *params);
+QDF_STATUS
+(*extract_mlo_setup_cmpl_event)(wmi_unified_t wmi_handle,
+				uint8_t *buf,
+				struct wmi_mlo_setup_complete_params *params);
+QDF_STATUS
+(*extract_mlo_teardown_cmpl_event)(wmi_unified_t wmi_handle,
+				   uint8_t *buf,
+				   struct wmi_mlo_teardown_cmpl_params *param);
 #endif
 };
 

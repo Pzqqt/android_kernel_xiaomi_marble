@@ -4691,6 +4691,10 @@ typedef enum {
 #ifdef WLAN_MGMT_RX_REO_SUPPORT
 	wmi_mgmt_rx_fw_consumed_eventid,
 #endif
+#ifdef WLAN_FEATURE_11BE_MLO
+	wmi_mlo_setup_complete_event_id,
+	wmi_mlo_teardown_complete_event_id,
+#endif
 	wmi_events_max,
 } wmi_conv_event_id;
 
