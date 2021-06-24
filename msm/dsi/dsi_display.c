@@ -2814,7 +2814,7 @@ static void dsi_display_toggle_resync_fifo(struct dsi_display *display)
 	 * bit on each phy. Avoid this for Cphy.
 	 */
 
-	if (display->panel->host_config.phy_type == DSI_PHY_TYPE_CPHY)
+	if (dsi_is_type_cphy(&display->panel->host_config))
 		return;
 
 	display_for_each_ctrl(i, display) {
@@ -4496,17 +4496,6 @@ static void _dsi_display_calc_pipe_delay(struct dsi_display *display,
 		delay->pll_delay = 25;
 
 	delay->pll_delay = ((delay->pll_delay * esc_clk_rate_hz) / 1000000);
-}
-
-/*
- * dsi_display_is_type_cphy - check if panel type is cphy
- * @display: Pointer to private display structure
- * Returns: True if panel type is cphy
- */
-static inline bool dsi_display_is_type_cphy(struct dsi_display *display)
-{
-	return (display->panel->host_config.phy_type ==
-		DSI_PHY_TYPE_CPHY) ? true : false;
 }
 
 static int _dsi_display_dyn_update_clks(struct dsi_display *display,
@@ -6681,7 +6670,7 @@ void dsi_display_adjust_mode_timing(struct dsi_display *display,
 		do_div(old_htotal, display->ctrl_count);
 		new_htotal = dsi_mode->timing.clk_rate_hz * lanes;
 		div = bpp * vtotal * dsi_mode->timing.refresh_rate;
-		if (dsi_display_is_type_cphy(display)) {
+		if (dsi_is_type_cphy(&display->panel->host_config)) {
 			new_htotal = new_htotal * bits_per_symbol;
 			div = div * num_of_symbols;
 		}
@@ -6699,7 +6688,7 @@ void dsi_display_adjust_mode_timing(struct dsi_display *display,
 		do_div(htotal, display->ctrl_count);
 		new_vtotal = dsi_mode->timing.clk_rate_hz * lanes;
 		div = bpp * htotal * dsi_mode->timing.refresh_rate;
-		if (dsi_display_is_type_cphy(display)) {
+		if (dsi_is_type_cphy(&display->panel->host_config)) {
 			new_vtotal = new_vtotal * bits_per_symbol;
 			div = div * num_of_symbols;
 		}

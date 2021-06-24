@@ -1859,7 +1859,8 @@ static int dsi_enable_ulps(struct dsi_ctrl *dsi_ctrl)
 		return 0;
 	}
 
-	lanes |= DSI_CLOCK_LANE;
+	if (!dsi_is_type_cphy(&dsi_ctrl->host_config.common_config))
+		lanes |= DSI_CLOCK_LANE;
 	dsi_ctrl->hw.ops.ulps_ops.ulps_request(&dsi_ctrl->hw, lanes);
 
 	ulps_lanes = dsi_ctrl->hw.ops.ulps_ops.get_lanes_in_ulps(&dsi_ctrl->hw);
@@ -1887,7 +1888,8 @@ static int dsi_disable_ulps(struct dsi_ctrl *dsi_ctrl)
 	}
 
 	lanes = dsi_ctrl->host_config.common_config.data_lanes;
-	lanes |= DSI_CLOCK_LANE;
+	if (!dsi_is_type_cphy(&dsi_ctrl->host_config.common_config))
+		lanes |= DSI_CLOCK_LANE;
 
 	ulps_lanes = dsi_ctrl->hw.ops.ulps_ops.get_lanes_in_ulps(&dsi_ctrl->hw);
 

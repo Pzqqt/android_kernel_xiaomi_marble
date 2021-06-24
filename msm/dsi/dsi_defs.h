@@ -812,6 +812,16 @@ static inline u64 dsi_h_total_dce(struct dsi_mode_info *mode)
 	return h_total;
 }
 
+/*
+ * dsi_is_type_cphy - check if panel type is cphy
+ * @cfg: Pointer to dsi host common cfg
+ * Returns: True if panel type is cphy
+ */
+static inline bool dsi_is_type_cphy(struct dsi_host_common_cfg *cfg)
+{
+	return (cfg->phy_type == DSI_PHY_TYPE_CPHY) ? true : false;
+}
+
 /**
  * dsi_host_transfer_sub() - transfers DSI commands from host to panel
  * @host:    pointer to the DSI mipi host device
