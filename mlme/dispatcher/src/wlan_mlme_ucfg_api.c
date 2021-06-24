@@ -63,6 +63,7 @@ QDF_STATUS ucfg_mlme_init(void)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	mlme_register_mlo_ext_ops();
 	return status;
 }
 
@@ -70,6 +71,7 @@ QDF_STATUS ucfg_mlme_deinit(void)
 {
 	QDF_STATUS status;
 
+	mlme_unregister_mlo_ext_ops();
 	status = wlan_objmgr_unregister_peer_destroy_handler(
 			WLAN_UMAC_COMP_MLME,
 			mlme_peer_object_destroyed_notification,
