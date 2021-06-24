@@ -474,9 +474,7 @@ pkt_capture_mgmt_rx_data_cb(struct wlan_objmgr_psoc *psoc,
 
 	txrx_status.tsft = (u_int64_t)rx_params->tsf_l32;
 	txrx_status.chan_num = rx_params->channel;
-	txrx_status.chan_freq = wlan_reg_legacy_chan_to_freq(
-							pdev,
-							txrx_status.chan_num);
+	txrx_status.chan_freq = rx_params->chan_freq;
 	/* rx_params->rate is in Kbps, convert into Mbps */
 	txrx_status.rate = (rx_params->rate / 1000);
 	txrx_status.ant_signal_db = rx_params->snr;
