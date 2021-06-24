@@ -859,7 +859,8 @@ static int dsi_phy_enable_ulps(struct msm_dsi_phy *phy,
 	u32 ulps_lanes;
 
 	lanes = config->common_config.data_lanes;
-	lanes |= DSI_CLOCK_LANE;
+	if (!dsi_is_type_cphy(&config->common_config))
+		lanes |= DSI_CLOCK_LANE;
 
 	/*
 	 * If DSI clamps are enabled, it means that the DSI lanes are
@@ -894,7 +895,8 @@ static int dsi_phy_disable_ulps(struct msm_dsi_phy *phy,
 	u32 ulps_lanes, lanes = 0;
 
 	lanes = config->common_config.data_lanes;
-	lanes |= DSI_CLOCK_LANE;
+	if (!dsi_is_type_cphy(&config->common_config))
+		lanes |= DSI_CLOCK_LANE;
 
 	ulps_lanes = phy->hw.ops.ulps_ops.get_lanes_in_ulps(&phy->hw);
 
