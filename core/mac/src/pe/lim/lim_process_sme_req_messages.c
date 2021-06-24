@@ -8538,10 +8538,11 @@ static void lim_process_set_ie_req(struct mac_context *mac_ctx, uint32_t *msg_bu
 
 	pe_session = pe_find_session_by_vdev_id(mac_ctx, vdev_id);
 	if (pe_session) {
-		add_ie_len = pe_session->lim_join_req->addIEAssoc.length;
-		if (!add_ie_len)
+		if (!pe_session->lim_join_req ||
+		    !pe_session->lim_join_req->addIEAssoc.length)
 			goto send_ie;
 
+		add_ie_len = pe_session->lim_join_req->addIEAssoc.length;
 		add_ie = qdf_mem_malloc(add_ie_len);
 		if (!add_ie)
 			goto send_ie;

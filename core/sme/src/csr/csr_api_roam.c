@@ -6055,6 +6055,22 @@ static inline void csr_update_tspec_info(struct mac_context *mac_ctx,
 					 tDot11fBeaconIEs *ie_struct) {}
 #endif
 
+void cm_csr_send_set_ie(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		sme_err("Failed to get vdev mlme obj!");
+		QDF_BUG(0);
+		return;
+	}
+
+	csr_send_set_ie(vdev_mlme->mgmt.generic.type,
+			vdev_mlme->mgmt.generic.subtype,
+			wlan_vdev_get_id(vdev));
+}
+
 QDF_STATUS cm_csr_handle_join_req(struct wlan_objmgr_vdev *vdev,
 				  struct wlan_cm_vdev_connect_req *req,
 				  struct cm_vdev_join_req *join_req,
