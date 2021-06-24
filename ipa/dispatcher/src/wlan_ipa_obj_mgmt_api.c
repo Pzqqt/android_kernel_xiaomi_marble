@@ -182,6 +182,7 @@ static void ipa_register_ready_cb(void *user_data)
 						      WLAN_UMAC_COMP_IPA,
 						      ipa_obj);
 		qdf_mem_free(ipa_obj);
+		ipa_disable_register_cb();
 		goto out;
 	}
 	if (ucfg_ipa_uc_ol_init(pdev, qdf_dev)) {

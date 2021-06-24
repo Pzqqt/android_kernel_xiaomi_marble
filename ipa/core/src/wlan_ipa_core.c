@@ -144,6 +144,11 @@ static void wlan_ipa_uc_loaded_uc_cb(void *priv_ctxt)
 	struct op_msg_type *msg;
 	struct uc_op_work_struct *uc_op_work;
 
+	if (!ipa_cb_is_ready()) {
+		ipa_info("IPA is not READY");
+		return;
+	}
+
 	if (!priv_ctxt) {
 		ipa_err("Invalid IPA context");
 		return;
