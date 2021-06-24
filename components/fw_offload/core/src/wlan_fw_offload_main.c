@@ -543,6 +543,7 @@ static void ucfg_fwol_fetch_ra_filter(struct wlan_objmgr_psoc *psoc,
 static void fwol_thermal_init(struct wlan_fwol_psoc_obj *fwol_obj)
 {
 	fwol_obj->thermal_throttle.level = THERMAL_FULLPERF;
+	fwol_obj->thermal_throttle.pdev_id = WLAN_INVALID_PDEV_ID;
 }
 #else
 static void fwol_thermal_init(struct wlan_fwol_psoc_obj *fwol_obj)
