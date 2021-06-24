@@ -633,6 +633,7 @@ struct hfi_queue_header {
 #define ALIGNED_QUEUE_SIZE ALIGN(QUEUE_SIZE, SZ_4K)
 #define SHARED_QSIZE ALIGN(ALIGNED_SFR_SIZE + ALIGNED_QUEUE_SIZE + \
 			ALIGNED_QDSS_SIZE, SZ_1M)
+#define TOTAL_QSIZE (SHARED_QSIZE - ALIGNED_SFR_SIZE - ALIGNED_QDSS_SIZE)
 
 struct buf_count {
 	u32                    etb;
