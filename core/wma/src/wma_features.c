@@ -78,6 +78,12 @@
  */
 #define WMA_SET_VDEV_IE_SOURCE_HOST 0x0
 
+/*
+ * Max AMPDU Tx Aggr supported size
+ */
+#define ADDBA_TXAGGR_SIZE_HELIUM 64
+#define ADDBA_TXAGGR_SIZE_LITHIUM 256
+
 static bool is_wakeup_event_console_logs_enabled = false;
 
 void wma_set_wakeup_logs_to_console(bool value)
@@ -4094,14 +4100,26 @@ QDF_STATUS wma_set_tx_rx_aggr_size(uint8_t vdev_id,
 		WMITLV_GET_STRUCT_TLVLEN(
 			wmi_vdev_set_custom_aggr_size_cmd_fixed_param));
 
+	if (wmi_service_enabled(wma_handle->wmi_handle,
+				wmi_service_ampdu_tx_buf_size_256_support)) {
+		cmd->enable_bitmap |= (0x1 << 6);
+		if (!(tx_size <= ADDBA_TXAGGR_SIZE_LITHIUM)) {
+			wma_err("Invalid AMPDU Size");
+			return QDF_STATUS_E_INVAL;
+		}
+	} else if (tx_size == ADDBA_TXAGGR_SIZE_LITHIUM) {
+		tx_size = ADDBA_TXAGGR_SIZE_HELIUM;
+	} else if (!(tx_size <= ADDBA_TXAGGR_SIZE_HELIUM)) {
+		wma_err("Invalid AMPDU Size");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	cmd->vdev_id = vdev_id;
 	cmd->tx_aggr_size = tx_size;
 	cmd->rx_aggr_size = rx_size;
 	/* bit 2 (aggr_type): TX Aggregation Type (0=A-MPDU, 1=A-MSDU) */
 	if (aggr_type == WMI_VDEV_CUSTOM_AGGR_TYPE_AMSDU)
 		cmd->enable_bitmap |= 0x04;
-
-	cmd->enable_bitmap |= (0x1 << 6);
 
 	wma_debug("tx aggr: %d rx aggr: %d vdev: %d enable_bitmap %d",
 		 cmd->tx_aggr_size, cmd->rx_aggr_size, cmd->vdev_id,
@@ -4160,13 +4178,26 @@ QDF_STATUS wma_set_tx_rx_aggr_size_per_ac(WMA_HANDLE handle,
 		cmd->vdev_id = vdev_id;
 		cmd->rx_aggr_size = qos_aggr->rx_aggregation_size;
 		cmd->tx_aggr_size = tx_aggr_size[queue_num];
+
+		if (wmi_service_enabled(wma_handle->wmi_handle,
+					wmi_service_ampdu_tx_buf_size_256_support)) {
+			cmd->enable_bitmap |= (0x1 << 6);
+			if (!(tx_aggr_size[queue_num] <= ADDBA_TXAGGR_SIZE_LITHIUM)) {
+				wma_err("Invalid AMPDU Size");
+				return QDF_STATUS_E_INVAL;
+			}
+		} else if (tx_aggr_size[queue_num] == ADDBA_TXAGGR_SIZE_LITHIUM) {
+			tx_aggr_size[queue_num] = ADDBA_TXAGGR_SIZE_HELIUM;
+		} else if (!(tx_aggr_size[queue_num] <= ADDBA_TXAGGR_SIZE_HELIUM)) {
+			wma_err("Invalid AMPDU Size");
+			return QDF_STATUS_E_INVAL;
+		}
+
 		/* bit 5: tx_ac_enable, if set, ac bitmap is valid. */
-		cmd->enable_bitmap = 0x20 | queue_num;
+		cmd->enable_bitmap |= 0x20 | queue_num;
 		/* bit 2 (aggr_type): TX Aggregation Type (0=A-MPDU, 1=A-MSDU) */
 		if (aggr_type == WMI_VDEV_CUSTOM_AGGR_TYPE_AMSDU)
 			cmd->enable_bitmap |= 0x04;
-
-		cmd->enable_bitmap |= (0x1 << 6);
 
 		wma_debug("queue_num: %d, tx aggr: %d rx aggr: %d vdev: %d, bitmap: %d",
 			 queue_num, cmd->tx_aggr_size,
