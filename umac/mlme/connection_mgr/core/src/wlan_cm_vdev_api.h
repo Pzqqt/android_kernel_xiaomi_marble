@@ -255,6 +255,14 @@ QDF_STATUS cm_get_rssi_snr_by_bssid(struct wlan_objmgr_pdev *pdev,
 				    struct qdf_mac_addr *bssid,
 				    int8_t *rssi, int8_t *snr);
 
+/**
+ * cm_csr_send_set_ie()  - CM wrapper to send the set IE request
+ * @vdev: Object manager VDEV
+ *
+ * Return: None
+ */
+void cm_csr_send_set_ie(struct wlan_objmgr_vdev *vdev);
+
 static inline QDF_STATUS
 cm_ext_hdl_create(struct wlan_objmgr_vdev *vdev, cm_ext_t **ext_cm_ptr)
 {

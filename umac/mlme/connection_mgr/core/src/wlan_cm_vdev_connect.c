@@ -1274,6 +1274,7 @@ static void cm_process_connect_complete(struct wlan_objmgr_psoc *psoc,
 	}
 
 	cm_csr_set_joined(vdev_id);
+	cm_csr_send_set_ie(vdev);
 
 	ucast_cipher = wlan_crypto_get_param(vdev,
 					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
