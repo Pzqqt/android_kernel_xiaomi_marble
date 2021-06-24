@@ -7068,9 +7068,10 @@ QDF_STATUS wlan_get_rate_set(struct mac_context *mac,
 	int i;
 	uint8_t *dst_rate;
 	uint16_t rateBitmap = 0;
-	bool is_5ghz_freq;
+	bool is_24ghz_freq;
 	tSirMacRateSet *op_rate;
 	tSirMacRateSet *ext_rate;
+	tSirMacRateSet rate_set;
 
 
 	if (!pe_session) {
@@ -7079,10 +7080,11 @@ QDF_STATUS wlan_get_rate_set(struct mac_context *mac,
 	}
 	op_rate = &pe_session->rateSet;
 	ext_rate = &pe_session->extRateSet;
-	is_5ghz_freq = wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq);
+	is_24ghz_freq = wlan_reg_is_24ghz_ch_freq(pe_session->curr_op_freq);
 
 	qdf_mem_zero(op_rate, sizeof(tSirMacRateSet));
 	qdf_mem_zero(ext_rate, sizeof(tSirMacRateSet));
+	qdf_mem_zero(&rate_set, sizeof(tSirMacRateSet));
 	QDF_ASSERT(ie_struct);
 
 	/*
@@ -7100,7 +7102,7 @@ QDF_STATUS wlan_get_rate_set(struct mac_context *mac,
 	dst_rate = op_rate->rate;
 	if (ie_struct->SuppRates.present) {
 		for (i = 0; i < ie_struct->SuppRates.num_rates; i++) {
-			if (is_5ghz_freq &&
+			if (!is_24ghz_freq &&
 			    !is_ofdm_rates(ie_struct->SuppRates.rates[i]))
 				continue;
 
@@ -7131,6 +7133,33 @@ QDF_STATUS wlan_get_rate_set(struct mac_context *mac,
 					rateBitmap)) {
 				*dst_rate++ = ie_struct->ExtSuppRates.rates[i];
 				ext_rate->numRates++;
+			}
+		}
+	}
+	if (!op_rate->numRates) {
+		dst_rate = op_rate->rate;
+		wlan_populate_basic_rates(&rate_set, !is_24ghz_freq, true);
+		for (i = 0; i < rate_set.numRates; i++) {
+			if (!wlan_check_rate_bitmap(rate_set.rate[i],
+						    rateBitmap)) {
+				wlan_add_rate_bitmap(rate_set.rate[i],
+						     &rateBitmap);
+				*dst_rate++ = rate_set.rate[i];
+				op_rate->numRates++;
+			}
+		}
+		if (!is_24ghz_freq)
+			return QDF_STATUS_SUCCESS;
+
+		wlan_populate_basic_rates(&rate_set, true, false);
+		for (i = op_rate->numRates;
+		     i < WLAN_SUPPORTED_RATES_IE_MAX_LEN; i++) {
+			if (!wlan_check_rate_bitmap(rate_set.rate[i],
+						    rateBitmap)) {
+				wlan_add_rate_bitmap(rate_set.rate[i],
+						     &rateBitmap);
+				*dst_rate++ = rate_set.rate[i];
+				op_rate->numRates++;
 			}
 		}
 	}
