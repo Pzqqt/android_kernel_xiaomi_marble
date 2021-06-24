@@ -9616,6 +9616,7 @@ void wlan_hdd_set_pm_qos_request(struct hdd_context *hdd_ctx,
  * hdd_low_tput_gro_flush_skip_handler() - adjust GRO flush for low tput
  * @hdd_ctx: handle to hdd context
  * @next_vote_level: next bus bandwidth level
+ * @legacy_client: legacy connection mode active
  *
  * If bus bandwidth level is PLD_BUS_WIDTH_LOW consistently and hit
  * the bus_low_cnt_threshold, set flag to skip GRO flush.
@@ -9626,13 +9627,14 @@ void wlan_hdd_set_pm_qos_request(struct hdd_context *hdd_ctx,
  */
 static inline void hdd_low_tput_gro_flush_skip_handler(
 			struct hdd_context *hdd_ctx,
-			enum pld_bus_width_type next_vote_level)
+			enum pld_bus_width_type next_vote_level,
+			bool legacy_client)
 {
 	uint32_t threshold = hdd_ctx->config->bus_low_cnt_threshold;
 	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
 	int i;
 
-	if (next_vote_level == PLD_BUS_WIDTH_LOW) {
+	if (next_vote_level == PLD_BUS_WIDTH_LOW && legacy_client) {
 		if (++hdd_ctx->bus_low_vote_cnt >= threshold)
 			qdf_atomic_set(&hdd_ctx->low_tput_gro_enable, 1);
 	} else {
@@ -9688,6 +9690,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	bool is_tx_pm_qos_high = false;
 	enum tput_level tput_level;
 	struct bbm_params param = {0};
+	bool legacy_client = false;
 
 	cpumask_clear(&pm_qos_cpu_mask);
 
@@ -9717,7 +9720,12 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 
 	dptrace_high_tput_req =
 			next_vote_level > PLD_BUS_WIDTH_IDLE ? true : false;
-	hdd_low_tput_gro_flush_skip_handler(hdd_ctx, next_vote_level);
+
+	if (qdf_atomic_read(&hdd_ctx->num_latency_critical_clients))
+		legacy_client = true;
+
+	hdd_low_tput_gro_flush_skip_handler(hdd_ctx, next_vote_level,
+					    legacy_client);
 
 	if (hdd_ctx->cur_vote_level != next_vote_level) {
 		hdd_debug("tx_packets: %lld, rx_packets: %lld",
