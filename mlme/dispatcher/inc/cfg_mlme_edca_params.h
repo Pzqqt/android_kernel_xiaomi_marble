@@ -106,7 +106,31 @@
 #define STR_EDCA_WME_ACBK_LOCAL "0x0, 0x7, 0x0, 0xf, 0x3, 0xff, 0x0, 0x0, 0x1f, 0x3, 0xff, 0x0, 0x0, 0xf, 0x3, 0xff, 0x0"
 #define STR_EDCA_WME_ACBK_LOCAL_LEN (sizeof(STR_EDCA_WME_ACBK_LOCAL) - 1)
 
-#define CFG_EDCA_WME_ACBK_LOCAL CFG_STRING( \
+/*
+ * <ini>
+ * edca_wme_acbk_local - Set EDCA parameters for WME local AC BK
+ * @Default: 0x0,0x7,0x0,0xf,0x3,0xff,0x0,0x0,0x1f,0x3,0xff,0x0,0x0,0xf,0x3,
+ *	     0xff,0x0
+ *
+ * This ini is used to set EDCA parameters for WME AC BK that are used locally
+ * on AP. The ini is with 17 bytes and comma is used as a separator for each
+ * byte. Index of each byte is defined in wlan_mlme_public_struct.h, such as
+ * CFG_EDCA_PROFILE_ACM_IDX.
+ *
+ * For cwmin and cwmax, they each occupy two bytes with the index defined
+ * above. The actual value are counted as number of bits with 1, e.g.
+ * "0x0,0x3f" means a value of 6. And final cwmin and cwmax will be converted
+ * to 2^value - 1.
+ *
+ * Related: None
+ *
+ * Supported Feature: AP
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_EDCA_WME_ACBK_LOCAL CFG_INI_STRING( \
 		"edca_wme_acbk_local", \
 		0, \
 		STR_EDCA_WME_ACBK_LOCAL_LEN, \
@@ -116,7 +140,31 @@
 #define STR_EDCA_WME_ACBE_LOCAL "0x0, 0x3, 0x0, 0xf, 0x0, 0x3f, 0x0, 0x0, 0x1f, 0x3, 0xff, 0x0, 0x0, 0xf, 0x0, 0x3f, 0x0"
 #define STR_EDCA_WME_ACBE_LOCAL_LEN (sizeof(STR_EDCA_WME_ACBE_LOCAL) - 1)
 
-#define CFG_EDCA_WME_ACBE_LOCAL CFG_STRING( \
+/*
+ * <ini>
+ * edca_wme_acbe_local - Set EDCA parameters for WME local AC BE
+ * @Default: 0x0,0x3,0x0,0xf,0x0,0x3f,0x0,0x0,0x1f,0x3,0xff,0x0,0x0,0xf,0x0,
+ *	     0x3f,0x0
+ *
+ * This ini is used to set EDCA parameters for WME AC BE that are used locally
+ * on AP. The ini is with 17 bytes and comma is used as a separator for each
+ * byte. Index of each byte is defined in wlan_mlme_public_struct.h, such as
+ * CFG_EDCA_PROFILE_ACM_IDX.
+ *
+ * For cwmin and cwmax, they each occupy two bytes with the index defined
+ * above. The actual value are counted as number of bits with 1, e.g.
+ * "0x0,0x3f" means a value of 6. And final cwmin and cwmax will be converted
+ * to 2^value - 1.
+ *
+ * Related: None
+ *
+ * Supported Feature: AP
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_EDCA_WME_ACBE_LOCAL CFG_INI_STRING( \
 		"edca_wme_acbe_local", \
 		0, \
 		STR_EDCA_WME_ACBE_LOCAL_LEN, \
@@ -126,7 +174,31 @@
 #define STR_EDCA_WME_ACVI_LOCAL "0x0, 0x1, 0x0, 0x7, 0x0, 0xf, 0x5e, 0x0, 0x7, 0x0, 0xf, 0xbc, 0x0, 0x7, 0x0, 0xf, 0x5e"
 #define STR_EDCA_WME_ACVI_LOCAL_LEN (sizeof(STR_EDCA_WME_ACVI_LOCAL) - 1)
 
-#define CFG_EDCA_WME_ACVI_LOCAL CFG_STRING( \
+/*
+ * <ini>
+ * edca_wme_acvi_local - Set EDCA parameters for WME AC VI
+ * @Default: 0x0,0x1,0x0,0x7,0x0,0xf,0x5e,0x0,0x7,0x0,0xf,0xbc,0x0,0x7,0x0,0xf,
+ *	     0x5e
+ *
+ * This ini is used to set EDCA parameters for WME AC VI that are used locally
+ * on AP. The ini is with 17 bytes and comma is used as a separator for each
+ * byte. Index of each byte is defined in wlan_mlme_public_struct.h, such as
+ * CFG_EDCA_PROFILE_ACM_IDX.
+ *
+ * For cwmin and cwmax, they each occupy two bytes with the index defined
+ * above. The actual value are counted as number of bits with 1, e.g.
+ * "0x0,0x3f" means a value of 6. And final cwmin and cwmax will be converted
+ * to 2^value - 1.
+ *
+ * Related: None
+ *
+ * Supported Feature: AP
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_EDCA_WME_ACVI_LOCAL CFG_INI_STRING( \
 		"edca_wme_acvi_local", \
 		0, \
 		STR_EDCA_WME_ACVI_LOCAL_LEN, \
@@ -136,7 +208,31 @@
 #define STR_EDCA_WME_ACVO_LOCAL "0x0, 0x1, 0x0, 0x3, 0x0, 0x7, 0x2f, 0x0, 0x3, 0x0, 0x7, 0x66, 0x0, 0x3, 0x0, 0x7, 0x2f"
 #define STR_EDCA_WME_ACVO_LOCAL_LEN (sizeof(STR_EDCA_WME_ACVO_LOCAL) - 1)
 
-#define CFG_EDCA_WME_ACVO_LOCAL CFG_STRING( \
+/*
+ * <ini>
+ * edca_wme_acvo_local - Set EDCA parameters for WME AC VO
+ * @Default: 0x0,0x1,0x0,0x3,0x0,0x7,0x2f,0x0,0x3,0x0,0x7,0x66,0x0,0x3,0x0,0x7,
+ *	     0x2f
+ *
+ * This ini is used to set EDCA parameters for WME AC VO that are used locally
+ * on AP. The ini is with 17 bytes and comma is used as a separator for each
+ * byte. Index of each byte is defined in wlan_mlme_public_struct.h, such as
+ * CFG_EDCA_PROFILE_ACM_IDX.
+ *
+ * For cwmin and cwmax, they each occupy two bytes with the index defined
+ * above. The actual value are counted as number of bits with 1, e.g.
+ * "0x0,0x3f" means a value of 6. And final cwmin and cwmax will be converted
+ * to 2^value - 1.
+ *
+ * Related: None
+ *
+ * Supported Feature: AP
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_EDCA_WME_ACVO_LOCAL CFG_INI_STRING( \
 		"edca_wme_acvo_local", \
 		0, \
 		STR_EDCA_WME_ACVO_LOCAL_LEN, \
@@ -186,7 +282,31 @@
 #define STR_EDCA_ETSI_ACBK_LOCAL "0x0, 0x7, 0x0, 0xf, 0x3, 0xff, 0xbb, 0x0, 0x1f, 0x3, 0xff, 0x0, 0x0, 0xf, 0x3, 0xff, 0x0"
 #define STR_EDCA_ETSI_ACBK_LOCAL_LEN (sizeof(STR_EDCA_ETSI_ACBK_LOCAL) - 1)
 
-#define CFG_EDCA_ETSI_ACBK_LOCAL CFG_STRING( \
+/*
+ * <ini>
+ * edca_etsi_acbk_local - Set EDCA parameters for ETSI local AC BK
+ * @Default: 0x0,0x7,0x0,0xf,0x3,0xff,0xbb,0x0,0x1f,0x3,0xff,0x0,0x0,0xf,0x3,
+ *	     0xff,0x0
+ *
+ * This ini is used to set EDCA parameters for ETSI AC BK that are used locally
+ * on AP. The ini is with 17 bytes and comma is used as a separator for each
+ * byte. Index of each byte is defined in wlan_mlme_public_struct.h, such as
+ * CFG_EDCA_PROFILE_ACM_IDX.
+ *
+ * For cwmin and cwmax, they each occupy two bytes with the index defined
+ * above. The actual value are counted as number of bits with 1, e.g.
+ * "0x0,0x3f" means a value of 6. And final cwmin and cwmax will be converted
+ * to 2^value - 1.
+ *
+ * Related: None
+ *
+ * Supported Feature: AP
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_EDCA_ETSI_ACBK_LOCAL CFG_INI_STRING( \
 		"edca_etsi_acbk_local", \
 		0, \
 		STR_EDCA_ETSI_ACBK_LOCAL_LEN, \
@@ -196,7 +316,31 @@
 #define STR_EDCA_ETSI_ACBE_LOCAL "0x0, 0x3, 0x0, 0xf, 0x0, 0x3f, 0xbb, 0x0, 0x1f, 0x3, 0xff, 0x0, 0x0, 0xf, 0x0, 0x3f, 0x0"
 #define STR_EDCA_ETSI_ACBE_LOCAL_LEN (sizeof(STR_EDCA_ETSI_ACBE_LOCAL) - 1)
 
-#define CFG_EDCA_ETSI_ACBE_LOCAL CFG_STRING( \
+/*
+ * <ini>
+ * edca_etsi_acbe_local - Set EDCA parameters for ETSI local AC BE
+ * @Default: 0x0,0x3,0x0,0xf,0x0,0x3f,0xbb,0x0,0x1f,0x3,0xff,0x0,0x0,0xf,0x0,
+ *	     0x3f,0x0
+ *
+ * This ini is used to set EDCA parameters for ETSI AC BE that are used locally
+ * on AP. The ini is with 17 bytes and comma is used as a separator for each
+ * byte. Index of each byte is defined in wlan_mlme_public_struct.h, such as
+ * CFG_EDCA_PROFILE_ACM_IDX.
+ *
+ * For cwmin and cwmax, they each occupy two bytes with the index defined
+ * above. The actual value are counted as number of bits with 1, e.g.
+ * "0x0,0x3f" means a value of 6. And final cwmin and cwmax will be converted
+ * to 2^value - 1.
+ *
+ * Related: None
+ *
+ * Supported Feature: AP
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_EDCA_ETSI_ACBE_LOCAL CFG_INI_STRING( \
 		"edca_etsi_acbe_local", \
 		0, \
 		STR_EDCA_ETSI_ACBE_LOCAL_LEN, \
@@ -206,7 +350,31 @@
 #define STR_EDCA_ETSI_ACVI_LOCAL "0x0, 0x1, 0x0, 0x7, 0x0, 0xf, 0x7d, 0x0, 0x7, 0x0, 0xf, 0xbc, 0x0, 0x7, 0x0, 0xf, 0x5e"
 #define STR_EDCA_ETSI_ACVI_LOCAL_LEN (sizeof(STR_EDCA_ETSI_ACVI_LOCAL) - 1)
 
-#define CFG_EDCA_ETSI_ACVI_LOCAL CFG_STRING( \
+/*
+ * <ini>
+ * edca_etsi_acvi_local - Set EDCA parameters for ETSI local AC VI
+ * @Default: 0x0,0x1,0x0,0x7,0x0,0xf,0x7d,0x0,0x7,0x0,0xf,0xbc,0x0,0x7,0x0,
+ *	     0xf,0x5e
+ *
+ * This ini is used to set EDCA parameters for ETSI AC VI that are used locally
+ * on AP. The ini is with 17 bytes and comma is used as a separator for each
+ * byte. Index of each byte is defined in wlan_mlme_public_struct.h, such as
+ * CFG_EDCA_PROFILE_ACM_IDX.
+ *
+ * For cwmin and cwmax, they each occupy two bytes with the index defined
+ * above. The actual value are counted as number of bits with 1, e.g.
+ * "0x0,0x3f" means a value of 6. And final cwmin and cwmax will be converted
+ * to 2^value - 1.
+ *
+ * Related: None
+ *
+ * Supported Feature: AP
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_EDCA_ETSI_ACVI_LOCAL CFG_INI_STRING( \
 		"edca_etsi_acvi_local", \
 		0, \
 		STR_EDCA_ETSI_ACVI_LOCAL_LEN, \
@@ -216,7 +384,31 @@
 #define STR_EDCA_ETSI_ACVO_LOCAL "0x0, 0x1, 0x0, 0x3, 0x0, 0x7, 0x3e, 0x0, 0x3, 0x0, 0x7, 0x66, 0x0, 0x3, 0x0, 0x7, 0x2f"
 #define STR_EDCA_ETSI_ACVO_LOCAL_LEN (sizeof(STR_EDCA_ETSI_ACVO_LOCAL) - 1)
 
-#define CFG_EDCA_ETSI_ACVO_LOCAL CFG_STRING( \
+/*
+ * <ini>
+ * edca_etsi_acvo_local - Set EDCA parameters for ETSI local AC VO
+ * @Default: 0x0,0x1,0x0,0x3,0x0,0x7,0x3e,0x0,0x3,0x0,0x7,0x66,0x0,0x3,0x0,
+ *	     0x7,0x2f
+ *
+ * This ini is used to set EDCA parameters for ETSI AC VO that are used locally
+ * on AP. The ini is with 17 bytes and comma is used as a separator for each
+ * byte. Index of each byte is defined in wlan_mlme_public_struct.h, such as
+ * CFG_EDCA_PROFILE_ACM_IDX.
+ *
+ * For cwmin and cwmax, they each occupy two bytes with the index defined
+ * above. The actual value are counted as number of bits with 1, e.g.
+ * "0x0,0x3f" means a value of 6. And final cwmin and cwmax will be converted
+ * to 2^value - 1.
+ *
+ * Related: None
+ *
+ * Supported Feature: AP
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_EDCA_ETSI_ACVO_LOCAL CFG_INI_STRING( \
 		"edca_etsi_acvo_local", \
 		0, \
 		STR_EDCA_ETSI_ACVO_LOCAL_LEN, \

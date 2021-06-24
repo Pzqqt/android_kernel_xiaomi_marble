@@ -467,7 +467,8 @@ static void mlme_init_edca_ani_cfg(struct wlan_mlme_edca_params *edca_params)
 			      &edca_params->ani_acvo_b.len);
 }
 
-static void mlme_init_edca_wme_cfg(struct wlan_mlme_edca_params *edca_params)
+static void mlme_init_edca_wme_cfg(struct wlan_objmgr_psoc *psoc,
+				   struct wlan_mlme_edca_params *edca_params)
 {
 	/* initialize the max allowed array length for read/write */
 	edca_params->wme_acbk_l.max_len = CFG_EDCA_DATA_LEN;
@@ -481,22 +482,22 @@ static void mlme_init_edca_wme_cfg(struct wlan_mlme_edca_params *edca_params)
 	edca_params->wme_acvo_b.max_len = CFG_EDCA_DATA_LEN;
 
 	/* parse the WME edca parameters from cfg string for BK,BE,VI,VO ac */
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_WME_ACBK_LOCAL),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_WME_ACBK_LOCAL),
 			      edca_params->wme_acbk_l.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->wme_acbk_l.len);
 
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_WME_ACBE_LOCAL),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_WME_ACBE_LOCAL),
 			      edca_params->wme_acbe_l.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->wme_acbe_l.len);
 
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_WME_ACVI_LOCAL),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_WME_ACVI_LOCAL),
 			      edca_params->wme_acvi_l.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->wme_acvi_l.len);
 
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_WME_ACVO_LOCAL),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_WME_ACVO_LOCAL),
 			      edca_params->wme_acvo_l.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->wme_acvo_l.len);
@@ -522,7 +523,8 @@ static void mlme_init_edca_wme_cfg(struct wlan_mlme_edca_params *edca_params)
 			      &edca_params->wme_acvo_b.len);
 }
 
-static void mlme_init_edca_etsi_cfg(struct wlan_mlme_edca_params *edca_params)
+static void mlme_init_edca_etsi_cfg(struct wlan_objmgr_psoc *psoc,
+				    struct wlan_mlme_edca_params *edca_params)
 {
 	/* initialize the max allowed array length for read/write */
 	edca_params->etsi_acbe_l.max_len = CFG_EDCA_DATA_LEN;
@@ -536,22 +538,22 @@ static void mlme_init_edca_etsi_cfg(struct wlan_mlme_edca_params *edca_params)
 	edca_params->etsi_acvo_b.max_len = CFG_EDCA_DATA_LEN;
 
 	/* parse the ETSI edca parameters from cfg string for BK,BE,VI,VO ac */
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ETSI_ACBK_LOCAL),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_ETSI_ACBK_LOCAL),
 			      edca_params->etsi_acbk_l.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->etsi_acbk_l.len);
 
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ETSI_ACBE_LOCAL),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_ETSI_ACBE_LOCAL),
 			      edca_params->etsi_acbe_l.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->etsi_acbe_l.len);
 
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ETSI_ACVI_LOCAL),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_ETSI_ACVI_LOCAL),
 			      edca_params->etsi_acvi_l.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->etsi_acvi_l.len);
 
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ETSI_ACVO_LOCAL),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_ETSI_ACVO_LOCAL),
 			      edca_params->etsi_acvo_l.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->etsi_acvo_l.len);
@@ -619,8 +621,8 @@ static void mlme_init_edca_params(struct wlan_objmgr_psoc *psoc,
 				  struct wlan_mlme_edca_params *edca_params)
 {
 	mlme_init_edca_ani_cfg(edca_params);
-	mlme_init_edca_wme_cfg(edca_params);
-	mlme_init_edca_etsi_cfg(edca_params);
+	mlme_init_edca_wme_cfg(psoc, edca_params);
+	mlme_init_edca_etsi_cfg(psoc, edca_params);
 	mlme_init_qos_edca_params(psoc, edca_params);
 }
 
