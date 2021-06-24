@@ -39,88 +39,6 @@ qdf_size_t dp_get_context_size_be(enum dp_context_type context_type)
 	}
 }
 
-static QDF_STATUS dp_hw_cookie_conversion_attach(struct dp_soc_be *be_soc)
-{
-	struct dp_soc *soc = &be_soc->soc;
-	struct dp_hw_cookie_conversion_t *cc_ctx = &be_soc->hw_cc_ctx;
-	uint32_t max_tx_rx_desc_num, num_spt_pages, i = 0;
-	struct dp_spt_page_desc *page_desc_elem;
-	struct qdf_mem_dma_page_t *dma_page;
-
-	/* get CMEM for cookie conversion */
-	if (soc->cmem_size < DP_CC_PPT_MEM_SIZE) {
-		dp_err("cmem_size %llu bytes < 4K", soc->cmem_size);
-		return QDF_STATUS_E_RESOURCES;
-	}
-	cc_ctx->cmem_base = (uint32_t)(soc->cmem_base +
-					DP_CC_MEM_OFFSET_IN_CMEM);
-
-	/* estimate how many SPT DDR pages needed */
-	max_tx_rx_desc_num = WLAN_CFG_NUM_TX_DESC_MAX * MAX_TXDESC_POOLS +
-			WLAN_CFG_RX_SW_DESC_NUM_SIZE_MAX * MAX_RXDESC_POOLS;
-	num_spt_pages = max_tx_rx_desc_num / DP_CC_SPT_PAGE_MAX_ENTRIES;
-	num_spt_pages = num_spt_pages <= DP_CC_PPT_MAX_ENTRIES ?
-					num_spt_pages : DP_CC_PPT_MAX_ENTRIES;
-	dp_info("num_spt_pages needed %d", num_spt_pages);
-
-	dp_desc_multi_pages_mem_alloc(soc, DP_HW_CC_SPT_PAGE_TYPE,
-				      &cc_ctx->page_pool, qdf_page_size,
-				      num_spt_pages, 0, false);
-	if (!cc_ctx->page_pool.dma_pages) {
-		dp_err("spt ddr pages allocation failed");
-		return QDF_STATUS_E_RESOURCES;
-	}
-	cc_ctx->page_desc_base = qdf_mem_malloc(
-			num_spt_pages * sizeof(struct dp_spt_page_desc));
-	if (!cc_ctx->page_desc_base) {
-		dp_err("spt page descs allocation failed");
-		goto fail_0;
-	}
-
-	/* initial page desc */
-	page_desc_elem = cc_ctx->page_desc_base;
-	dma_page = cc_ctx->page_pool.dma_pages;
-	while (i < num_spt_pages) {
-		/* check if page address 4K aligned */
-		if (qdf_unlikely(dma_page[i].page_p_addr & 0xFFF)) {
-			dp_err("non-4k aligned pages addr %pK",
-			       (void *)dma_page[i].page_p_addr);
-			goto fail_1;
-		}
-
-		page_desc_elem[i].page_v_addr =
-					dma_page[i].page_v_addr_start;
-		page_desc_elem[i].page_p_addr =
-					dma_page[i].page_p_addr;
-		i++;
-	}
-
-	cc_ctx->total_page_num = num_spt_pages;
-	qdf_spinlock_create(&cc_ctx->cc_lock);
-
-	return QDF_STATUS_SUCCESS;
-fail_1:
-	qdf_mem_free(cc_ctx->page_desc_base);
-fail_0:
-	dp_desc_multi_pages_mem_free(soc, DP_HW_CC_SPT_PAGE_TYPE,
-				     &cc_ctx->page_pool, 0, false);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-static QDF_STATUS dp_hw_cookie_conversion_detach(struct dp_soc_be *be_soc)
-{
-	struct dp_soc *soc = &be_soc->soc;
-	struct dp_hw_cookie_conversion_t *cc_ctx = &be_soc->hw_cc_ctx;
-
-	qdf_mem_free(cc_ctx->page_desc_base);
-	dp_desc_multi_pages_mem_free(soc, DP_HW_CC_SPT_PAGE_TYPE,
-				     &cc_ctx->page_pool, 0, false);
-	qdf_spinlock_destroy(&cc_ctx->cc_lock);
-
-	return QDF_STATUS_SUCCESS;
-}
-
 #ifdef DP_FEATURE_HW_COOKIE_CONVERSION
 /**
  * dp_cc_reg_cfg_init() - initialize and configure HW cookie
@@ -141,9 +59,7 @@ static void dp_cc_reg_cfg_init(struct dp_soc *soc,
 	cc_cfg.cc_global_en = soc->wlan_cfg_ctx->hw_cc_enabled;
 	cc_cfg.page_4k_align = is_4k_align;
 	cc_cfg.cookie_offset_msb = DP_CC_DESC_ID_SPT_VA_OS_MSB;
-	cc_cfg.cookie_page_msb = is_4k_align ?
-				DP_CC_DESC_ID_PPT_PAGE_OS_4K_ALIGNED_MSB :
-				DP_CC_DESC_ID_PPT_PAGE_OS_4K_UNALIGNED_MSB;
+	cc_cfg.cookie_page_msb = DP_CC_DESC_ID_PPT_PAGE_OS_MSB;
 	/* 36th bit should be 1 then HW know this is CMEM address */
 	cc_cfg.lut_base_addr_39_32 = 0x10;
 
@@ -174,6 +90,29 @@ static inline void dp_hw_cc_cmem_write(hal_soc_handle_t hal_soc_hdl,
 	hal_cmem_write(hal_soc_hdl, offset, value);
 }
 
+/**
+ * dp_hw_cc_cmem_addr_init() - Check and initialize CMEM base address for
+			       HW cookie conversion
+ * @soc: SOC handle
+ * @cc_ctx: cookie conversion context pointer
+ *
+ * Return: 0 in case of success, else error value
+ */
+static inline QDF_STATUS dp_hw_cc_cmem_addr_init(
+				struct dp_soc *soc,
+				struct dp_hw_cookie_conversion_t *cc_ctx)
+{
+	/* get CMEM for cookie conversion */
+	if (soc->cmem_size < DP_CC_PPT_MEM_SIZE) {
+		dp_err("cmem_size %llu bytes < 4K", soc->cmem_size);
+		return QDF_STATUS_E_RESOURCES;
+	}
+	cc_ctx->cmem_base = (uint32_t)(soc->cmem_base +
+					DP_CC_MEM_OFFSET_IN_CMEM);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #else
 
 static inline void dp_cc_reg_cfg_init(struct dp_soc *soc,
@@ -185,36 +124,121 @@ static inline void dp_hw_cc_cmem_write(hal_soc_handle_t hal_soc_hdl,
 				       uint32_t value)
 { }
 
+static inline QDF_STATUS dp_hw_cc_cmem_addr_init(
+				struct dp_soc *soc,
+				struct dp_hw_cookie_conversion_t *cc_ctx)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif
+
+static QDF_STATUS dp_hw_cookie_conversion_attach(struct dp_soc_be *be_soc)
+{
+	struct dp_soc *soc = &be_soc->soc;
+	struct dp_hw_cookie_conversion_t *cc_ctx = &be_soc->hw_cc_ctx;
+	uint32_t max_tx_rx_desc_num, num_spt_pages, i = 0;
+	struct dp_spt_page_desc *spt_desc;
+	struct qdf_mem_dma_page_t *dma_page;
+	QDF_STATUS qdf_status;
+
+	qdf_status = dp_hw_cc_cmem_addr_init(soc, cc_ctx);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+		return qdf_status;
+
+	/* estimate how many SPT DDR pages needed */
+	max_tx_rx_desc_num = WLAN_CFG_NUM_TX_DESC_MAX * MAX_TXDESC_POOLS +
+			WLAN_CFG_RX_SW_DESC_NUM_SIZE_MAX * MAX_RXDESC_POOLS;
+	num_spt_pages = max_tx_rx_desc_num / DP_CC_SPT_PAGE_MAX_ENTRIES;
+	num_spt_pages = num_spt_pages <= DP_CC_PPT_MAX_ENTRIES ?
+					num_spt_pages : DP_CC_PPT_MAX_ENTRIES;
+	dp_info("num_spt_pages needed %d", num_spt_pages);
+
+	dp_desc_multi_pages_mem_alloc(soc, DP_HW_CC_SPT_PAGE_TYPE,
+				      &cc_ctx->page_pool, qdf_page_size,
+				      num_spt_pages, 0, false);
+	if (!cc_ctx->page_pool.dma_pages) {
+		dp_err("spt ddr pages allocation failed");
+		return QDF_STATUS_E_RESOURCES;
+	}
+	cc_ctx->page_desc_base = qdf_mem_malloc(
+			num_spt_pages * sizeof(struct dp_spt_page_desc));
+	if (!cc_ctx->page_desc_base) {
+		dp_err("spt page descs allocation failed");
+		goto fail_0;
+	}
+
+	/* initial page desc */
+	spt_desc = cc_ctx->page_desc_base;
+	dma_page = cc_ctx->page_pool.dma_pages;
+	while (i < num_spt_pages) {
+		/* check if page address 4K aligned */
+		if (qdf_unlikely(dma_page[i].page_p_addr & 0xFFF)) {
+			dp_err("non-4k aligned pages addr %pK",
+			       (void *)dma_page[i].page_p_addr);
+			goto fail_1;
+		}
+
+		spt_desc[i].page_v_addr =
+					dma_page[i].page_v_addr_start;
+		spt_desc[i].page_p_addr =
+					dma_page[i].page_p_addr;
+		i++;
+	}
+
+	cc_ctx->total_page_num = num_spt_pages;
+	qdf_spinlock_create(&cc_ctx->cc_lock);
+
+	return QDF_STATUS_SUCCESS;
+fail_1:
+	qdf_mem_free(cc_ctx->page_desc_base);
+fail_0:
+	dp_desc_multi_pages_mem_free(soc, DP_HW_CC_SPT_PAGE_TYPE,
+				     &cc_ctx->page_pool, 0, false);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+static QDF_STATUS dp_hw_cookie_conversion_detach(struct dp_soc_be *be_soc)
+{
+	struct dp_soc *soc = &be_soc->soc;
+	struct dp_hw_cookie_conversion_t *cc_ctx = &be_soc->hw_cc_ctx;
+
+	qdf_mem_free(cc_ctx->page_desc_base);
+	dp_desc_multi_pages_mem_free(soc, DP_HW_CC_SPT_PAGE_TYPE,
+				     &cc_ctx->page_pool, 0, false);
+	qdf_spinlock_destroy(&cc_ctx->cc_lock);
+
+	return QDF_STATUS_SUCCESS;
+}
 
 static QDF_STATUS dp_hw_cookie_conversion_init(struct dp_soc_be *be_soc)
 {
 	struct dp_soc *soc = &be_soc->soc;
 	struct dp_hw_cookie_conversion_t *cc_ctx = &be_soc->hw_cc_ctx;
 	uint32_t i = 0;
-	struct dp_spt_page_desc *page_desc_elem;
+	struct dp_spt_page_desc *spt_desc;
 
 	if (!cc_ctx->total_page_num) {
 		dp_err("total page num is 0");
 		return QDF_STATUS_E_INVAL;
 	}
 
-	page_desc_elem = cc_ctx->page_desc_base;
+	spt_desc = cc_ctx->page_desc_base;
 	while (i < cc_ctx->total_page_num) {
 		/* write page PA to CMEM */
 		dp_hw_cc_cmem_write(soc->hal_soc,
 				    (cc_ctx->cmem_base +
 				     i * DP_CC_PPT_ENTRY_SIZE_4K_ALIGNED),
-				    (page_desc_elem[i].page_p_addr >>
+				    (spt_desc[i].page_p_addr >>
 				     DP_CC_PPT_ENTRY_HW_APEND_BITS_4K_ALIGNED));
 
-		page_desc_elem[i].ppt_index = i;
-		page_desc_elem[i].avail_entry_index = 0;
+		spt_desc[i].ppt_index = i;
+		spt_desc[i].avail_entry_index = 0;
 		/* link page desc */
 		if ((i + 1) != cc_ctx->total_page_num)
-			page_desc_elem[i].next = &page_desc_elem[i + 1];
+			spt_desc[i].next = &spt_desc[i + 1];
 		else
-			page_desc_elem[i].next = NULL;
+			spt_desc[i].next = NULL;
 		i++;
 	}
 
@@ -240,13 +264,13 @@ static QDF_STATUS dp_hw_cookie_conversion_deinit(struct dp_soc_be *be_soc)
 uint16_t dp_cc_spt_page_desc_alloc(struct dp_soc_be *be_soc,
 				   struct dp_spt_page_desc **list_head,
 				   struct dp_spt_page_desc **list_tail,
-				   uint16_t desc_num)
+				   uint16_t num_desc)
 {
 	uint16_t num_pages, count;
 	struct dp_hw_cookie_conversion_t *cc_ctx = &be_soc->hw_cc_ctx;
 
-	num_pages = (desc_num / DP_CC_SPT_PAGE_MAX_ENTRIES) +
-			(desc_num % DP_CC_SPT_PAGE_MAX_ENTRIES ? 1 : 0);
+	num_pages = (num_desc / DP_CC_SPT_PAGE_MAX_ENTRIES) +
+			(num_desc % DP_CC_SPT_PAGE_MAX_ENTRIES ? 1 : 0);
 
 	if (num_pages > cc_ctx->free_page_num) {
 		dp_err("fail: num_pages required %d > free_page_num %d",

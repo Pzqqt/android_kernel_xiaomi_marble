@@ -113,13 +113,13 @@ void dp_tx_update_bank_profile(struct dp_soc_be *be_soc,
 /**
  * dp_tx_desc_pool_init_be() - Initialize Tx Descriptor pool(s)
  * @soc: Handle to DP Soc structure
- * @pool_desc_num: pool descriptor number
+ * @num_elem: number of descriptor in pool
  * @pool_id: pool ID to allocate
  *
  * Return: QDF_STATUS_SUCCESS - success, others - failure
  */
 QDF_STATUS dp_tx_desc_pool_init_be(struct dp_soc *soc,
-				   uint16_t pool_desc_num,
+				   uint16_t num_elem,
 				   uint8_t pool_id);
 /**
  * dp_tx_desc_pool_deinit_be() - De-initialize Tx Descriptor pool(s)

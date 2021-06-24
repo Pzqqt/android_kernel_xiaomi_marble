@@ -46,30 +46,24 @@
 
 #define DP_CC_DESC_ID_SPT_VA_OS_MSB 8
 
-/* for 4k unaligned case */
-#define DP_CC_DESC_ID_PPT_PAGE_OS_4K_UNALIGNED_SHIFT 9
+/* higher 11 bits in Desc ID for offset in CMEM of PPT */
+#define DP_CC_DESC_ID_PPT_PAGE_OS_LSB 9
 
-#define DP_CC_DESC_ID_PPT_PAGE_OS_4K_UNALIGNED_MASK 0xFFE00
+#define DP_CC_DESC_ID_PPT_PAGE_OS_MSB 19
 
-#define DP_CC_DESC_ID_PPT_PAGE_OS_4K_UNALIGNED_LSB 9
+#define DP_CC_DESC_ID_PPT_PAGE_OS_SHIFT 9
 
-#define DP_CC_DESC_ID_PPT_PAGE_OS_4K_UNALIGNED_MSB 19
+#define DP_CC_DESC_ID_PPT_PAGE_OS_MASK 0xFFE00
 
+/*
+ * page 4K unaligned case, single SPT page physical address
+ * need 8 bytes in PPT
+ */
 #define DP_CC_PPT_ENTRY_SIZE_4K_UNALIGNED 8
-
-/* for 4k aligned case */
-#define DP_CC_DESC_ID_PPT_PAGE_OS_4K_ALIGNED_SHIFT 10
-
-#define DP_CC_DESC_ID_PPT_PAGE_OS_4K_ALIGNED_MASK 0xFFC00
-
-#define DP_CC_DESC_ID_PPT_PAGE_OS_4K_ALIGNED_LSB 10
-
-#define DP_CC_DESC_ID_PPT_PAGE_OS_4K_ALIGNED_MSB 19
-
-#define DP_CC_DESC_ID_PPT_PAGE_HIGH_32BIT_4K_ALIGNED_SHIFT 9
-
-#define DP_CC_DESC_ID_PPT_PAGE_HIGH_32BIT_4K_ALIGNED_MASK 0x200
-
+/*
+ * page 4K aligned case, single SPT page physical address
+ * need 4 bytes in PPT
+ */
 #define DP_CC_PPT_ENTRY_SIZE_4K_ALIGNED 4
 
 /* 4K aligned case, number of bits HW append for one PPT entry value */
@@ -264,14 +258,14 @@ struct dp_peer_be *dp_get_be_peer_from_dp_peer(struct dp_peer *peer)
  * @be_soc: beryllium soc handler
  * @list_head: pointer to page desc head
  * @list_tail: pointer to page desc tail
- * @desc_num: number of TX/RX Descs required for SPT pages
+ * @num_desc: number of TX/RX Descs required for SPT pages
  *
  * Return: number of SPT page Desc allocated
  */
 uint16_t dp_cc_spt_page_desc_alloc(struct dp_soc_be *be_soc,
 				   struct dp_spt_page_desc **list_head,
 				   struct dp_spt_page_desc **list_tail,
-				   uint16_t desc_num);
+				   uint16_t num_desc);
 /**
  * dp_cc_spt_page_desc_free() - free SPT DDR page descriptor to pool
  * @be_soc: beryllium soc handler
@@ -289,49 +283,35 @@ void dp_cc_spt_page_desc_free(struct dp_soc_be *be_soc,
 				DDR page 4K aligned or not
  * @ppt_index: offset index in primary page table
  * @spt_index: offset index in sceondary DDR page
- * @page_4k_align: DDR page address 4K aligned or not
  *
- * for 4K aligned DDR page, ppt_index offset is using 4 bytes entry,
- * while HW use 8 bytes offset index, need 10th bit to indicate it's
- * in high 32bits or low 32bits.
- * for 4k un-aligned DDR page, ppt_index offset is using 8bytes entry,
- * it's match with HW assuming.
+ * Generate SW cookie ID to match as HW expected
  *
  * Return: cookie ID
  */
 static inline uint32_t dp_cc_desc_id_generate(uint16_t ppt_index,
-					      uint16_t spt_index,
-					      bool page_4k_align)
+					      uint16_t spt_index)
 {
-	uint32_t id = 0;
-
-	if (qdf_likely(page_4k_align))
-		id =
-		((ppt_index / 2) <<
-		DP_CC_DESC_ID_PPT_PAGE_OS_4K_ALIGNED_SHIFT) |
-		((ppt_index % 2) <<
-		DP_CC_DESC_ID_PPT_PAGE_HIGH_32BIT_4K_ALIGNED_SHIFT) |
-		spt_index;
-	else
-		id =
-		(ppt_index <<
-		DP_CC_DESC_ID_PPT_PAGE_OS_4K_UNALIGNED_SHIFT) |
-		spt_index;
-
-	return id;
+	/*
+	 * for 4k aligned case, cmem entry size is 4 bytes,
+	 * HW index from bit19~bit10 value = ppt_index / 2, high 32bits flag
+	 * from bit9 value = ppt_index % 2, then bit 19 ~ bit9 value is
+	 * exactly same with original ppt_index value.
+	 * for 4k un-aligned case, cmem entry size is 8 bytes.
+	 * bit19 ~ bit9 will be HW index value, same as ppt_index value.
+	 */
+	return ((((uint32_t)ppt_index) << DP_CC_DESC_ID_PPT_PAGE_OS_SHIFT) |
+		spt_index);
 }
 
 /**
  * dp_cc_desc_va_find() - find TX/RX Descs virtual address by ID
  * @be_soc: be soc handle
  * @desc_id: TX/RX Dess ID
- * @page_4k_align: DDR page address 4K aligned or not
  *
  * Return: TX/RX Desc virtual address
  */
 static inline uintptr_t dp_cc_desc_find(struct dp_soc *soc,
-					uint32_t desc_id,
-					bool page_4k_align)
+					uint32_t desc_id)
 {
 	struct dp_soc_be *be_soc;
 	struct dp_hw_cookie_conversion_t *cc_ctx;
@@ -340,19 +320,8 @@ static inline uintptr_t dp_cc_desc_find(struct dp_soc *soc,
 
 	be_soc = dp_get_be_soc_from_dp_soc(soc);
 	cc_ctx = &be_soc->hw_cc_ctx;
-	if (qdf_likely(page_4k_align))
-		ppt_page_id =
-			(((desc_id &
-			DP_CC_DESC_ID_PPT_PAGE_OS_4K_ALIGNED_MASK) >>
-			DP_CC_DESC_ID_PPT_PAGE_OS_4K_ALIGNED_SHIFT) * 2) +
-			((desc_id &
-			DP_CC_DESC_ID_PPT_PAGE_HIGH_32BIT_4K_ALIGNED_MASK) >>
-			DP_CC_DESC_ID_PPT_PAGE_HIGH_32BIT_4K_ALIGNED_SHIFT);
-	else
-		ppt_page_id =
-			(desc_id &
-			DP_CC_DESC_ID_PPT_PAGE_OS_4K_UNALIGNED_MASK) >>
-			DP_CC_DESC_ID_PPT_PAGE_OS_4K_UNALIGNED_SHIFT;
+	ppt_page_id = (desc_id & DP_CC_DESC_ID_PPT_PAGE_OS_MASK) >>
+			DP_CC_DESC_ID_PPT_PAGE_OS_SHIFT;
 
 	spt_va_id = (desc_id & DP_CC_DESC_ID_SPT_VA_OS_MASK) >>
 			DP_CC_DESC_ID_SPT_VA_OS_SHIFT;

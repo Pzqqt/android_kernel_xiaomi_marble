@@ -92,8 +92,7 @@ dp_rx_desc_sw_cc_check(struct dp_soc *soc,
 	if (qdf_unlikely(!(*r_rx_desc))) {
 		*r_rx_desc = (struct dp_rx_desc *)
 				dp_cc_desc_find(soc,
-						rx_buf_cookie,
-						true);
+						rx_buf_cookie);
 	}
 }
 #else

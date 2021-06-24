@@ -820,8 +820,7 @@ dp_rx_desc_pool_init_be_cc(struct dp_soc *soc,
 
 		rx_desc_elem->rx_desc.cookie =
 			dp_cc_desc_id_generate(page_desc->ppt_index,
-					       page_desc->avail_entry_index,
-					       true);
+					       page_desc->avail_entry_index);
 		rx_desc_elem->rx_desc.pool_id = pool_id;
 		rx_desc_elem->rx_desc.in_use = 0;
 		rx_desc_elem = rx_desc_elem->next;
@@ -876,8 +875,7 @@ dp_rx_desc_pool_init_be_cc(struct dp_soc *soc,
 
 		rx_desc_pool->array[i].rx_desc.cookie =
 			dp_cc_desc_id_generate(page_desc->ppt_index,
-					       page_desc->avail_entry_index,
-					       true);
+					       page_desc->avail_entry_index);
 
 		rx_desc_pool->array[i].rx_desc.pool_id = pool_id;
 		rx_desc_pool->array[i].rx_desc.in_use = 0;
@@ -963,7 +961,7 @@ QDF_STATUS dp_wbm_get_rx_desc_from_hal_desc_be(struct dp_soc *soc,
 		uint32_t cookie = HAL_RX_BUF_COOKIE_GET(ring_desc);
 
 		*r_rx_desc = (struct dp_rx_desc *)
-				dp_cc_desc_find(soc, cookie, true);
+				dp_cc_desc_find(soc, cookie);
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -988,7 +986,7 @@ QDF_STATUS dp_wbm_get_rx_desc_from_hal_desc_be(struct dp_soc *soc,
 	uint32_t cookie = HAL_RX_BUF_COOKIE_GET(ring_desc);
 
 	*r_rx_desc = (struct dp_rx_desc *)
-			dp_cc_desc_find(soc, cookie, true);
+			dp_cc_desc_find(soc, cookie);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -997,7 +995,7 @@ QDF_STATUS dp_wbm_get_rx_desc_from_hal_desc_be(struct dp_soc *soc,
 struct dp_rx_desc *dp_rx_desc_cookie_2_va_be(struct dp_soc *soc,
 					     uint32_t cookie)
 {
-	return (struct dp_rx_desc *)dp_cc_desc_find(soc, cookie, true);
+	return (struct dp_rx_desc *)dp_cc_desc_find(soc, cookie);
 }
 
 #ifdef WLAN_FEATURE_NEAR_FULL_IRQ

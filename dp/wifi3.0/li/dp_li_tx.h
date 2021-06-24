@@ -56,13 +56,13 @@ void dp_tx_comp_get_params_from_hal_desc_li(struct dp_soc *soc,
 /**
  * dp_tx_desc_pool_init_li() - Initialize Tx Descriptor pool(s)
  * @soc: Handle to DP Soc structure
- * @pool_desc_num: pool descriptor number
+ * @num_elem: pool descriptor number
  * @pool_id: pool to allocate
  *
  * Return: QDF_STATUS_SUCCESS - success, others - failure
  */
 QDF_STATUS dp_tx_desc_pool_init_li(struct dp_soc *soc,
-				   uint16_t pool_desc_num,
+				   uint16_t num_elem,
 				   uint8_t pool_id);
 
 /**

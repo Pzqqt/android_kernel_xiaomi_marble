@@ -41,7 +41,7 @@ void dp_tx_comp_get_params_from_hal_desc_be(struct dp_soc *soc,
 		/* SW do cookie conversion to VA */
 		tx_desc_id = hal_tx_comp_get_desc_id(tx_comp_hal_desc);
 		*r_tx_desc =
-		(struct dp_tx_desc_s *)dp_cc_desc_find(soc, tx_desc_id, true);
+		(struct dp_tx_desc_s *)dp_cc_desc_find(soc, tx_desc_id);
 	}
 }
 #else
@@ -64,7 +64,7 @@ void dp_tx_comp_get_params_from_hal_desc_be(struct dp_soc *soc,
 	/* SW do cookie conversion to VA */
 	tx_desc_id = hal_tx_comp_get_desc_id(tx_comp_hal_desc);
 	*r_tx_desc =
-	(struct dp_tx_desc_s *)dp_cc_desc_find(soc, tx_desc_id, true);
+	(struct dp_tx_desc_s *)dp_cc_desc_find(soc, tx_desc_id);
 }
 #endif /* DP_FEATURE_HW_COOKIE_CONVERSION */
 
@@ -379,16 +379,16 @@ void dp_tx_update_bank_profile(struct dp_soc_be *be_soc,
 }
 
 QDF_STATUS dp_tx_desc_pool_init_be(struct dp_soc *soc,
-				   uint16_t pool_desc_num,
+				   uint16_t num_elem,
 				   uint8_t pool_id)
 {
 	struct dp_tx_desc_pool_s *tx_desc_pool;
 	struct dp_soc_be *be_soc;
 	struct dp_spt_page_desc *page_desc;
 	struct dp_spt_page_desc_list *page_desc_list;
-	struct dp_tx_desc_s *tx_desc_elem;
+	struct dp_tx_desc_s *tx_desc;
 
-	if (!pool_desc_num) {
+	if (!num_elem) {
 		dp_err("desc_num 0 !!");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -402,7 +402,7 @@ QDF_STATUS dp_tx_desc_pool_init_be(struct dp_soc *soc,
 		dp_cc_spt_page_desc_alloc(be_soc,
 					  &page_desc_list->spt_page_list_head,
 					  &page_desc_list->spt_page_list_tail,
-					  pool_desc_num);
+					  num_elem);
 
 	if (!page_desc_list->num_spt_pages) {
 		dp_err("fail to allocate cookie conversion spt pages");
@@ -411,17 +411,16 @@ QDF_STATUS dp_tx_desc_pool_init_be(struct dp_soc *soc,
 
 	/* put each TX Desc VA to SPT pages and get corresponding ID */
 	page_desc = page_desc_list->spt_page_list_head;
-	tx_desc_elem = tx_desc_pool->freelist;
-	while (tx_desc_elem) {
+	tx_desc = tx_desc_pool->freelist;
+	while (tx_desc) {
 		DP_CC_SPT_PAGE_UPDATE_VA(page_desc->page_v_addr,
 					 page_desc->avail_entry_index,
-					 tx_desc_elem);
-		tx_desc_elem->id =
+					 tx_desc);
+		tx_desc->id =
 			dp_cc_desc_id_generate(page_desc->ppt_index,
-					       page_desc->avail_entry_index,
-					       true);
-		tx_desc_elem->pool_id = pool_id;
-		tx_desc_elem = tx_desc_elem->next;
+					       page_desc->avail_entry_index);
+		tx_desc->pool_id = pool_id;
+		tx_desc = tx_desc->next;
 
 		page_desc->avail_entry_index++;
 		if (page_desc->avail_entry_index >=

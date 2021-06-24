@@ -412,6 +412,7 @@ enum dp_ctxt_type {
  * @DP_RX_DESC_BUF_TYPE: DP RX SW descriptor
  * @DP_RX_DESC_STATUS_TYPE: DP RX SW descriptor for monitor status
  * @DP_HW_LINK_DESC_TYPE: DP HW link descriptor
+ * @DP_HW_CC_SPT_PAGE_TYPE: DP pages for HW CC secondary page table
  */
 enum dp_desc_type {
 	DP_TX_DESC_TYPE,
@@ -422,9 +423,7 @@ enum dp_desc_type {
 	DP_RX_DESC_BUF_TYPE,
 	DP_RX_DESC_STATUS_TYPE,
 	DP_HW_LINK_DESC_TYPE,
-#ifdef CONFIG_BERYLLIUM
 	DP_HW_CC_SPT_PAGE_TYPE,
-#endif
 };
 
 /**
@@ -1586,7 +1585,7 @@ struct dp_arch_ops {
 				  uint8_t reo_ring_num, uint32_t quota);
 
 	QDF_STATUS (*dp_tx_desc_pool_init)(struct dp_soc *soc,
-					   uint16_t pool_desc_num,
+					   uint16_t num_elem,
 					   uint8_t pool_id);
 	void (*dp_tx_desc_pool_deinit)(
 				struct dp_soc *soc,
