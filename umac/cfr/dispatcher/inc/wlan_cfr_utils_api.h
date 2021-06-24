@@ -558,6 +558,9 @@ struct nl_event_cb {
  * CFR_CAPTURE_METHOD_PROBE_RESPONSE
  * nl_cb: call back to register for nl event for cfr data
  * lut_lock: Lock to protect access to cfr lookup table
+ * is_prevent_suspend: CFR wake lock acquired or not
+ * wake_lock: wake lock for cfr
+ * runtime_lock: runtime lock for cfr
  */
 /*
  * To be extended if we get more capbality info
@@ -606,6 +609,11 @@ struct pdev_cfr {
 	struct unassoc_pool_entry unassoc_pool[MAX_CFR_ENABLED_CLIENTS];
 	struct nl_event_cb nl_cb;
 	qdf_spinlock_t lut_lock;
+#ifdef WLAN_CFR_PM
+	bool is_prevent_suspend;
+	qdf_wake_lock_t wake_lock;
+	qdf_runtime_lock_t runtime_lock;
+#endif
 };
 
 /**

@@ -1326,6 +1326,37 @@ QDF_STATUS ucfg_cfr_committed_rcc_config(struct wlan_objmgr_vdev *vdev)
 	return status;
 }
 
+#ifdef WLAN_CFR_PM
+QDF_STATUS ucfg_cfr_suspend(struct wlan_objmgr_pdev *pdev)
+{
+	struct pdev_cfr *pcfr;
+
+	pcfr = wlan_objmgr_pdev_get_comp_private_obj(
+				pdev, WLAN_UMAC_COMP_CFR);
+
+	if (!pcfr) {
+		cfr_err("null pcfr");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return cfr_allow_suspend(pcfr);
+}
+
+QDF_STATUS ucfg_cfr_resume(struct wlan_objmgr_pdev *pdev)
+{
+	struct pdev_cfr *pcfr;
+
+	pcfr = wlan_objmgr_pdev_get_comp_private_obj(
+				pdev, WLAN_UMAC_COMP_CFR);
+
+	if (!pcfr) {
+		cfr_err("null pcfr");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return cfr_prevent_suspend(pcfr);
+}
+#endif
 /*
  * This handler is used to enable / disable the capture mode.
  *
@@ -1404,5 +1435,4 @@ QDF_STATUS ucfg_cfr_subscribe_ppdu_desc(struct wlan_objmgr_pdev *pdev,
 	return tgt_cfr_subscribe_ppdu_desc(pdev, is_subscribe);
 }
 #endif
-
 #endif
