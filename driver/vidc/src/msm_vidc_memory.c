@@ -145,7 +145,7 @@ void msm_vidc_memory_put_dmabuf(struct msm_vidc_inst *inst, struct dma_buf *dmab
 	dma_buf_put(buf->dmabuf);
 
 	/* put tracker instance back to pool */
-	msm_memory_free(inst, MSM_MEM_POOL_DMABUF, buf);
+	msm_memory_free(inst, buf);
 }
 
 void msm_vidc_memory_put_dmabuf_completely(struct msm_vidc_inst *inst,
@@ -166,7 +166,7 @@ void msm_vidc_memory_put_dmabuf_completely(struct msm_vidc_inst *inst,
 			dma_buf_put(buf->dmabuf);
 
 			/* put tracker instance back to pool */
-			msm_memory_free(inst, MSM_MEM_POOL_DMABUF, buf);
+			msm_memory_free(inst, buf);
 			break;
 		}
 	}
@@ -426,6 +426,9 @@ void *msm_memory_alloc(struct msm_vidc_inst *inst, enum msm_memory_pool_type typ
 		/* add to busy pool */
 		list_add_tail(&hdr->list, &pool->busy_pool);
 
+		/* set busy flag to true. This is to catch double free request */
+		hdr->busy = true;
+
 		return hdr->buf;
 	}
 
@@ -435,36 +438,45 @@ void *msm_memory_alloc(struct msm_vidc_inst *inst, enum msm_memory_pool_type typ
 		return NULL;
 	}
 	INIT_LIST_HEAD(&hdr->list);
+	hdr->type = type;
+	hdr->busy = true;
 	hdr->buf = (void *)(hdr + 1);
 	list_add_tail(&hdr->list, &pool->busy_pool);
 
 	return hdr->buf;
 }
 
-void msm_memory_free(struct msm_vidc_inst *inst, enum msm_memory_pool_type type,
-	void *vidc_buf)
+void msm_memory_free(struct msm_vidc_inst *inst, void *vidc_buf)
 {
 	struct msm_memory_alloc_header *hdr;
 	struct msm_memory_pool *pool;
-	bool found = false;
 
-	if (!inst || !vidc_buf || type < 0 || type >= MSM_MEM_POOL_MAX) {
+	if (!inst || !vidc_buf) {
 		d_vpr_e("%s: Invalid params\n", __func__);
 		return;
 	}
-	pool = &inst->pool[type];
+	hdr = (struct msm_memory_alloc_header *)vidc_buf - 1;
 
 	/* sanitize buffer addr */
-	list_for_each_entry(hdr, &pool->busy_pool, list) {
-		if (hdr->buf == vidc_buf) {
-			found = true;
-			break;
-		}
-	}
-	if (!found) {
+	if (hdr->buf != vidc_buf) {
 		i_vpr_e(inst, "%s: invalid buf addr %#x\n", __func__, vidc_buf);
 		return;
 	}
+
+	/* sanitize pool type */
+	if (hdr->type < 0 || hdr->type >= MSM_MEM_POOL_MAX) {
+		i_vpr_e(inst, "%s: invalid pool type %#x\n", __func__, hdr->type);
+		return;
+	}
+	pool = &inst->pool[hdr->type];
+
+	/* catch double-free request */
+	if (!hdr->busy) {
+		i_vpr_e(inst, "%s: double free request. type %s, addr %#x\n", __func__,
+			pool->name, vidc_buf);
+		return;
+	}
+	hdr->busy = false;
 
 	/* remove from busy pool */
 	list_del_init(&hdr->list);
@@ -558,8 +570,6 @@ int msm_memory_pools_init(struct msm_vidc_inst *inst)
 				i, buftype_size_name_arr[i].type);
 			return -EINVAL;
 		}
-
-		inst->pool[i].type = buftype_size_name_arr[i].type;
 		inst->pool[i].size = buftype_size_name_arr[i].size;
 		inst->pool[i].name = buftype_size_name_arr[i].name;
 		INIT_LIST_HEAD(&inst->pool[i].free_pool);

@@ -1848,7 +1848,7 @@ int msm_vdec_handle_release_buffer(struct msm_vidc_inst *inst,
 	print_vidc_buffer(VIDC_LOW, "low ", "release done", inst, buf);
 	/* delete the buffer from release list */
 	list_del(&buf->list);
-	msm_memory_free(inst, MSM_MEM_POOL_BUFFER, buf);
+	msm_memory_free(inst, buf);
 
 	return rc;
 }

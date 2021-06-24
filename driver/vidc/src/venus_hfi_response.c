@@ -657,7 +657,7 @@ static int handle_non_read_only_buffer(struct msm_vidc_inst *inst,
 	if (found) {
 		print_vidc_buffer(VIDC_LOW, "low ", "ro buf deleted", inst, ro_buf);
 		list_del(&ro_buf->list);
-		msm_memory_free(inst, MSM_MEM_POOL_BUFFER, ro_buf);
+		msm_memory_free(inst, ro_buf);
 	}
 
 	return 0;

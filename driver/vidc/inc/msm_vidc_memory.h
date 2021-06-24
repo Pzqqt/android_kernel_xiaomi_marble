@@ -28,11 +28,12 @@ enum msm_memory_pool_type {
 
 struct msm_memory_alloc_header {
 	struct list_head       list;
+	u32                    type;
+	bool                   busy;
 	void                  *buf;
 };
 
 struct msm_memory_pool {
-	u32                    type;
 	u32                    size;
 	char                  *name;
 	struct list_head       free_pool; /* list of struct msm_memory_alloc_header */
@@ -57,7 +58,6 @@ int msm_memory_pools_init(struct msm_vidc_inst *inst);
 void msm_memory_pools_deinit(struct msm_vidc_inst *inst);
 void *msm_memory_alloc(struct msm_vidc_inst *inst,
 	enum msm_memory_pool_type type);
-void msm_memory_free(struct msm_vidc_inst *inst,
-	enum msm_memory_pool_type type, void *vidc_buf);
+void msm_memory_free(struct msm_vidc_inst *inst, void *vidc_buf);
 
 #endif // _MSM_VIDC_MEMORY_H_
