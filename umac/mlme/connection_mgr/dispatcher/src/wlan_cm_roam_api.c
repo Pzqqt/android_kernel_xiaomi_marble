@@ -1454,6 +1454,7 @@ bool cm_is_rsn_or_8021x_sha256_auth_type(struct wlan_objmgr_vdev *vdev)
 #ifdef WLAN_FEATURE_HOST_ROAM
 QDF_STATUS wlan_cm_host_roam_start(struct scheduler_msg *msg)
 {
+	QDF_STATUS status;
 	struct cm_host_roam_start_ind *req;
 	struct qdf_mac_addr bssid = QDF_MAC_ADDR_ZERO_INIT;
 
@@ -1461,8 +1462,11 @@ QDF_STATUS wlan_cm_host_roam_start(struct scheduler_msg *msg)
 		return QDF_STATUS_E_FAILURE;
 
 	req = msg->bodyptr;
-	return wlan_cm_roam_invoke(req->pdev, req->vdev_id, &bssid, 0,
-				   CM_ROAMING_FW);
+	status = wlan_cm_roam_invoke(req->pdev, req->vdev_id, &bssid, 0,
+				     CM_ROAMING_FW);
+	qdf_mem_free(req);
+
+	return status;
 }
 
 QDF_STATUS cm_mlme_roam_preauth_fail(struct wlan_objmgr_vdev *vdev,
