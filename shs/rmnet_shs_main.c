@@ -11,7 +11,6 @@
  *
  */
 
-
 #include <net/sock.h>
 #include <linux/netlink.h>
 #include <linux/ip.h>
@@ -110,21 +109,19 @@ DATARMNETc00baf31c3;struct ipv6hdr*ip6h,DATARMNETcf1d9e2c1e;switch(skb->protocol
 ip4h),&DATARMNETc00baf31c3);if(!ip4h)break;if(!ip_is_fragment(ip4h)&&(ip4h->
 protocol==IPPROTO_TCP||ip4h->protocol==IPPROTO_UDP)){DATARMNETbd864aa442=
 (0xd26+209-0xdf6);break;}if(ip4h->protocol==IPPROTO_ICMP){skb->hash=
-(0xd2d+202-0xdf7);skb->sw_hash=DATARMNET9273f84bf1&((0xd26+209-0xdf6)<<
-DATARMNETecc0627c70.DATARMNET5c24e1df05);}break;case htons(ETH_P_IPV6):ip6h=
-DATARMNETefcaf5fbe9(skb,(0xd2d+202-0xdf7),sizeof(*ip6h),&DATARMNETcf1d9e2c1e);if
-(!ip6h)break;if(!(ip6h->nexthdr==NEXTHDR_FRAGMENT)&&(ip6h->nexthdr==IPPROTO_TCP
-||ip6h->nexthdr==IPPROTO_UDP)){DATARMNETbd864aa442=(0xd26+209-0xdf6);break;}if(
-ip6h->nexthdr==IPPROTO_ICMP){skb->hash=(0xd2d+202-0xdf7);skb->sw_hash=
-DATARMNET9273f84bf1&((0xd26+209-0xdf6)<<DATARMNETecc0627c70.DATARMNET5c24e1df05)
-;}break;default:break;}DATARMNETda96251102(DATARMNETcd24fca747,
-DATARMNET116c96c236,DATARMNETbd864aa442,(0x16e8+787-0xc0c),(0x16e8+787-0xc0c),
-(0x16e8+787-0xc0c),skb,NULL);return DATARMNETbd864aa442;}static void 
-DATARMNETfa919d00dc(int cpu,int DATARMNET8a461bad56){struct timespec64 
-DATARMNET2e47295bf1;struct timespec64*DATARMNET736ac5582e;long 
-DATARMNETb64270afc1;int DATARMNETa67155ba38=(DATARMNETa1ac2608b5<
-DATARMNET8948dc953d)?DATARMNET8948dc953d:DATARMNETa1ac2608b5;
-ktime_get_boottime_ts64(&DATARMNET2e47295bf1);DATARMNET736ac5582e=&
+(0xd2d+202-0xdf7);skb->sw_hash=(0xd26+209-0xdf6);}break;case htons(ETH_P_IPV6):
+ip6h=DATARMNETefcaf5fbe9(skb,(0xd2d+202-0xdf7),sizeof(*ip6h),&
+DATARMNETcf1d9e2c1e);if(!ip6h)break;if(!(ip6h->nexthdr==NEXTHDR_FRAGMENT)&&(ip6h
+->nexthdr==IPPROTO_TCP||ip6h->nexthdr==IPPROTO_UDP)){DATARMNETbd864aa442=
+(0xd26+209-0xdf6);break;}if(ip6h->nexthdr==IPPROTO_ICMP){skb->hash=
+(0xd2d+202-0xdf7);skb->sw_hash=(0xd26+209-0xdf6);}break;default:break;}
+DATARMNETda96251102(DATARMNETcd24fca747,DATARMNET116c96c236,DATARMNETbd864aa442,
+(0x16e8+787-0xc0c),(0x16e8+787-0xc0c),(0x16e8+787-0xc0c),skb,NULL);return 
+DATARMNETbd864aa442;}static void DATARMNETfa919d00dc(int cpu,int 
+DATARMNET8a461bad56){struct timespec64 DATARMNET2e47295bf1;struct timespec64*
+DATARMNET736ac5582e;long DATARMNETb64270afc1;int DATARMNETa67155ba38=(
+DATARMNETa1ac2608b5<DATARMNET8948dc953d)?DATARMNET8948dc953d:DATARMNETa1ac2608b5
+;ktime_get_boottime_ts64(&DATARMNET2e47295bf1);DATARMNET736ac5582e=&
 DATARMNETecc0627c70.DATARMNET132b9c7dc4[cpu].DATARMNET251b97a380;
 DATARMNETb64270afc1=DATARMNETe6671dbf38(DATARMNET2e47295bf1.tv_sec-
 DATARMNET736ac5582e->tv_sec)+DATARMNET2e47295bf1.tv_nsec-DATARMNET736ac5582e->
