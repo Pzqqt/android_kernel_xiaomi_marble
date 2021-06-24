@@ -172,6 +172,7 @@ const char *intfrm_delay_bucket[CDP_DELAY_BUCKET_MAX + 1] = {
 
 #define TID_COUNTER_STATS 1	/* Success/drop stats type */
 #define TID_DELAY_STATS 2	/* Delay stats type */
+#define TID_RX_ERROR_STATS 3	/* Rx Error stats type */
 
 /*
  * dp_print_stats_string_tlv: display htt_stats_string_tlv
@@ -4421,7 +4422,7 @@ dp_accumulate_tid_stats(struct dp_pdev *pdev, uint8_t tid,
 			struct cdp_tid_tx_stats *total_tx,
 			struct cdp_tid_rx_stats *total_rx, uint8_t type)
 {
-	uint8_t ring_id = 0, drop = 0, tqm_status_idx = 0, htt_status_idx = 0;
+	uint8_t i = 0, ring_id = 0, drop = 0, tqm_status_idx = 0, htt_status_idx = 0;
 	struct cdp_tid_stats *tid_stats = &pdev->stats.tid_stats;
 	struct cdp_tid_tx_stats *per_ring_tx = NULL;
 	struct cdp_tid_rx_stats *per_ring_rx = NULL;
@@ -4493,6 +4494,22 @@ dp_accumulate_tid_stats(struct dp_pdev *pdev, uint8_t tid,
 		break;
 	}
 
+	case TID_RX_ERROR_STATS:
+	{
+		for (ring_id = 0; ring_id < CDP_MAX_RX_RINGS; ring_id++) {
+			per_ring_rx = &tid_stats->tid_rx_stats[ring_id][tid];
+			total_rx->reo_err.err_src_reo_code_inv += per_ring_rx->reo_err.err_src_reo_code_inv;
+			for (i = 0; i < CDP_REO_CODE_MAX; i++) {
+				total_rx->reo_err.err_reo_codes[i] += per_ring_rx->reo_err.err_reo_codes[i];
+			}
+
+			total_rx->rxdma_err.err_src_rxdma_code_inv += per_ring_rx->rxdma_err.err_src_rxdma_code_inv;
+			for (i = 0; i < CDP_DMA_CODE_MAX; i++) {
+				total_rx->rxdma_err.err_dma_codes[i] += per_ring_rx->rxdma_err.err_dma_codes[i];
+			}
+		}
+		break;
+	}
 	default:
 		qdf_err("Invalid stats type");
 		break;
@@ -4660,6 +4677,40 @@ void dp_pdev_print_delay_stats(struct dp_pdev *pdev)
 		DP_PRINT_STATS("Min = %u", total_rx.to_stack_delay.min_delay);
 		DP_PRINT_STATS("Max = %u", total_rx.to_stack_delay.max_delay);
 		DP_PRINT_STATS("Avg = %u\n", total_rx.to_stack_delay.avg_delay);
+	}
+}
+
+void dp_pdev_print_rx_error_stats(struct dp_pdev *pdev)
+{
+	struct dp_soc *soc = pdev->soc;
+	struct cdp_tid_rx_stats total_rx;
+	struct cdp_tid_tx_stats total_tx;
+	struct cdp_tid_stats *tid_stats;
+
+	uint8_t tid, index;
+
+	if (!soc)
+		return;
+
+	tid_stats = &pdev->stats.tid_stats;
+
+	DP_PRINT_STATS("Per TID RX Error Stats:\n");
+	for (tid = 0; tid < CDP_MAX_VOW_TID; tid++) {
+		dp_accumulate_tid_stats(pdev, tid, &total_tx, &total_rx,
+					TID_RX_ERROR_STATS);
+		DP_PRINT_STATS("----TID: %d----", tid + 4);
+
+		DP_PRINT_STATS("Rx REO Error stats:");
+		DP_PRINT_STATS("err_src_reo_code_inv = %llu", total_rx.reo_err.err_src_reo_code_inv);
+		for (index = 0; index < CDP_REO_CODE_MAX; index++) {
+			DP_PRINT_STATS("err src reo codes: %d = %llu", index, total_rx.reo_err.err_reo_codes[index]);
+		}
+
+		DP_PRINT_STATS("Rx Rxdma Error stats:");
+		DP_PRINT_STATS("err_src_rxdma_code_inv = %llu", total_rx.rxdma_err.err_src_rxdma_code_inv);
+		for (index = 0; index < CDP_DMA_CODE_MAX; index++) {
+			DP_PRINT_STATS("err src dma codes: %d = %llu", index, total_rx.rxdma_err.err_dma_codes[index]);
+		}
 	}
 }
 #endif

@@ -10477,6 +10477,8 @@ static uint32_t dp_tx_flow_ctrl_configure_pdev(struct cdp_soc_t *soc_handle,
 		dp_pdev_print_tid_stats(pdev);
 		qdf_print("------ Delay Stats ------\n");
 		dp_pdev_print_delay_stats(pdev);
+		qdf_print("------ Rx Error Stats ------\n");
+		dp_pdev_print_rx_error_stats(pdev);
 		break;
 #endif
 	case DP_PARAM_TOTAL_Q_SIZE:
