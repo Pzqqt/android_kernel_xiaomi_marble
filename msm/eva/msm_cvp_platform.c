@@ -379,11 +379,16 @@ const struct msm_cvp_hfi_defs cvp_hfi_defs[] = {
 
 };
 
+int get_pkt_array_size(void)
+{
+	return ARRAY_SIZE(cvp_hfi_defs);
+}
+
 int get_pkt_index(struct cvp_hal_session_cmd_pkt *hdr)
 {
-	int i, pkt_num = ARRAY_SIZE(cvp_hfi_defs);
+	int i;
 
-	for (i = 0; i < pkt_num; i++)
+	for (i = 0; i < get_pkt_array_size(); i++)
 		if (cvp_hfi_defs[i].type == hdr->packet_type)
 			return i;
 

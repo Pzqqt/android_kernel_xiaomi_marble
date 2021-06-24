@@ -118,7 +118,8 @@ static int cvp_wait_process_message(struct msm_cvp_inst *inst,
 
 	hdr = (struct cvp_hfi_msg_session_hdr *)&msg->pkt;
 	memcpy(out, &msg->pkt, get_msg_size(hdr));
-	msm_cvp_unmap_frame(inst, hdr->client_data.kdata);
+	if (hdr->client_data.kdata >= get_pkt_array_size())
+		msm_cvp_unmap_frame(inst, hdr->client_data.kdata);
 	kmem_cache_free(cvp_driver->msg_cache, msg);
 
 exit:
@@ -166,6 +167,7 @@ static int msm_cvp_session_process_hfi(
 	struct msm_cvp_inst *s;
 	bool is_config_pkt;
 	enum buf_map_type map_type;
+	struct cvp_hfi_cmd_session_hdr *cmd_hdr;
 
 	if (!inst || !inst->core || !in_pkt) {
 		dprintk(CVP_ERR, "%s: invalid params\n", __func__);
@@ -221,6 +223,10 @@ static int msm_cvp_session_process_hfi(
 	}
 	pkt_type = in_pkt->pkt_data[1];
 	map_type = cvp_find_map_type(pkt_type);
+
+	cmd_hdr = (struct cvp_hfi_cmd_session_hdr *)in_pkt;
+	/* The kdata will be overriden by transaction ID if the cmd has buf */
+	cmd_hdr->client_data.kdata = pkt_idx;
 
 	if (map_type == MAP_PERSIST)
 		rc = msm_cvp_map_user_persist(inst, in_pkt, offset, buf_num);
