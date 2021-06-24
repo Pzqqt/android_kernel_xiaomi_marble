@@ -600,7 +600,7 @@ void cm_preauth_success(struct cnx_mgr *cm_ctx, struct wlan_preauth_rsp *rsp)
 						    1, false);
 
 	mlme_priv->connect_info.ft_info.add_mdie = false;
-	if (!is_11r && !cm_is_open_mode(vdev))
+	if (!(is_11r && cm_is_open_mode(vdev)))
 		return;
 
 	qdf_mem_zero(mlme_priv->connect_info.ft_info.reassoc_ft_ie,
@@ -620,7 +620,7 @@ void cm_preauth_success(struct cnx_mgr *cm_ctx, struct wlan_preauth_rsp *rsp)
 	mlme_priv->connect_info.ft_info.reassoc_ie_len =
 			mlme_priv->connect_info.ft_info.ric_ies_length;
 	mlme_priv->connect_info.ft_info.add_mdie = true;
-		return;
+	return;
 
 err:
 	rsp->status = QDF_STATUS_E_ABORTED;
