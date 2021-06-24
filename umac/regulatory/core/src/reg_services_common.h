@@ -1531,7 +1531,7 @@ void reg_set_2g_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
 enum channel_state reg_combine_channel_states(enum channel_state chan_state1,
 					      enum channel_state chan_state2);
 
-#if defined(CONFIG_BAND_6GHZ) && defined(CONFIG_REG_CLIENT)
+#if defined(CONFIG_BAND_6GHZ)
 /**
  * reg_set_lower_6g_edge_ch_supp() - Set if lower 6ghz edge channel is
  * supported by FW

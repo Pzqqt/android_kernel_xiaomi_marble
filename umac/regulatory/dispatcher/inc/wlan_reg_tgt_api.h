@@ -116,7 +116,7 @@ QDF_STATUS tgt_reg_set_5dot9_ghz_supported(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS tgt_reg_set_ext_tpc_supported(struct wlan_objmgr_psoc *psoc,
 					 bool val);
 
-#if defined(CONFIG_BAND_6GHZ) && defined(CONFIG_REG_CLIENT)
+#if defined(CONFIG_BAND_6GHZ)
 /**
  * tgt_reg_set_lower_6g_edge_ch_supp() - Assign the value set by FW for lower
  * 6ghz edge channel (5935 MHz) support

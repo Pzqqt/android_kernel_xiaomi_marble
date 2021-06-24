@@ -303,7 +303,7 @@ static inline void wlan_lmac_if_register_master_list_ext_handler(
 }
 #endif
 
-#if defined(CONFIG_BAND_6GHZ) && defined(CONFIG_REG_CLIENT)
+#if defined(CONFIG_BAND_6GHZ)
 static void wlan_lmac_if_register_6g_edge_chan_supp(
 					struct wlan_lmac_if_rx_ops *rx_ops)
 {

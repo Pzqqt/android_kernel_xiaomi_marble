@@ -166,7 +166,7 @@ struct wlan_regulatory_psoc_priv_obj {
 	uint8_t domain_code_6g_client[REG_CURRENT_MAX_AP_TYPE][REG_MAX_CLIENT_TYPE];
 #endif
 	bool is_ext_tpc_supported;
-#if defined(CONFIG_BAND_6GHZ) && defined(CONFIG_REG_CLIENT)
+#if defined(CONFIG_BAND_6GHZ)
 	bool is_lower_6g_edge_ch_supported;
 	bool is_upper_6g_edge_ch_disabled;
 #endif

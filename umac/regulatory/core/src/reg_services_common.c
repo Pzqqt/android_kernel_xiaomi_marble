@@ -5032,7 +5032,7 @@ bool reg_is_ext_tpc_supported(struct wlan_objmgr_psoc *psoc)
 	return psoc_priv_obj->is_ext_tpc_supported;
 }
 
-#if defined(CONFIG_BAND_6GHZ) && defined(CONFIG_REG_CLIENT)
+#if defined(CONFIG_BAND_6GHZ)
 QDF_STATUS
 reg_set_lower_6g_edge_ch_supp(struct wlan_objmgr_psoc *psoc, bool val)
 {

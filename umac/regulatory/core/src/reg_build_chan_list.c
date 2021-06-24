@@ -846,7 +846,7 @@ reg_modify_chan_list_for_5dot9_ghz_channels(struct wlan_objmgr_pdev *pdev,
 	}
 }
 
-#if defined(CONFIG_BAND_6GHZ) && defined(CONFIG_REG_CLIENT)
+#if defined(CONFIG_BAND_6GHZ)
 /**
  * reg_modify_chan_list_for_6g_edge_channels() - Modify 6 GHz edge channels
  *
