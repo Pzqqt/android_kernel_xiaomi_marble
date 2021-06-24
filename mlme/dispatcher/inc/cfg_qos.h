@@ -24,12 +24,7 @@
 #ifndef __CFG_MLME_QOS_H
 #define __CFG_MLME_QOS_H
 
-#if defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
-	defined(QCA_WIFI_QCA6490) || defined(QCA_WIFI_QCA6750)
 #define ADDBA_TXAGGR_SIZE 256
-#else
-#define ADDBA_TXAGGR_SIZE 64
-#endif
 
 /*
  * <ini>
