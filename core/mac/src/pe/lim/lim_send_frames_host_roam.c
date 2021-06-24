@@ -394,7 +394,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 		payload += add_ie_len;
 	}
 
-#ifdef FEATURE_CM_ENABLE
+#ifndef FEATURE_CM_ENABLE
 	pe_session->assoc_req = qdf_mem_malloc(payload);
 	if (pe_session->assoc_req) {
 		/*
