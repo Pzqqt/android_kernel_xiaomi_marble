@@ -1920,6 +1920,18 @@ static int ipahal_cp_proc_ctx_to_hw_buff_v3(enum ipa_hdr_proc_type type,
 			(struct ipa_hw_hdr_proc_ctx_remove_eogre_hdr_cmd_seq *)
 			(base + offset);
 
+		ctx->hdr_add.tlv.type = IPA_PROC_CTX_TLV_TYPE_HDR_ADD;
+		ctx->hdr_add.tlv.length = 2;
+		ctx->hdr_add.tlv.value = hdr_len;
+		hdr_addr = is_hdr_proc_ctx ? phys_base :
+			hdr_base_addr + offset_entry->offset;
+		IPAHAL_DBG("header address 0x%llx length %d\n",
+				   hdr_addr, ctx->hdr_add.tlv.value);
+		IPAHAL_CP_PROC_CTX_HEADER_UPDATE(
+			ctx->hdr_add.hdr_addr,
+			ctx->hdr_add.hdr_addr_hi, hdr_addr);
+		if (!is_64)
+			ctx->hdr_add.hdr_addr_hi = 0;
 		ctx->eogre_params.tlv.type = IPA_PROC_CTX_TLV_TYPE_PROC_CMD;
 		ctx->eogre_params.tlv.length = 1;
 		ctx->eogre_params.tlv.value = IPA_HDR_UCP_EoGRE_HEADER_REMOVE;
