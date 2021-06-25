@@ -18,6 +18,9 @@
  * DOC: Define the data structure for AFC implementation
  */
 
+#ifndef __WLAN_REG_AFC_H
+#define __WLAN_REG_AFC_H
+
 /* All the structures in this header will be packed and will follow network
  * byte order
  */
@@ -27,17 +30,17 @@
  *                                          requests to AFC app to query the
  *                                          AFC server.
  *
- * @version_minor  Lower 16 bits for the AFC request version.
- * @version_major  Higher 16 bits for the AFC request version.
  * @req_id:        Unique request ID from FW to be used as AFC request ID
  *                 to server.
+ * @version_minor  Lower 16 bits for the AFC request version.
+ * @version_major  Higher 16 bits for the AFC request version.
  * @req_length:    Length of entire AFC request message.
  * @min_des_power: Minimum desired power(in dbm) for queried spectrum.
  */
 struct wlan_afc_host_req_fixed_params {
+	uint64_t req_id;
 	uint16_t version_minor;
 	uint16_t version_major;
-	uint64_t req_id;
 	uint16_t req_length;
 	int16_t  min_des_power;
 } qdf_packed;
@@ -45,12 +48,12 @@ struct wlan_afc_host_req_fixed_params {
 /**
  * struct wlan_afc_freq_range_obj - Structure for frequency range query.
  *
- * @lowfreq:  Lower limit(in MHz) of frequency range query.
+ * @lowfreq:  Lower limit(in MHz) for frequency range query.
  * @highfreq: Higher limit(in MHz) for frequency range query.
  */
 struct wlan_afc_freq_range_obj {
-	int16_t lowfreq;
-	int16_t highfreq;
+	uint16_t lowfreq;
+	uint16_t highfreq;
 } qdf_packed;
 
 /**
@@ -123,3 +126,4 @@ struct wlan_afc_host_resp {
 	int32_t length;
 	uint8_t afc_resp[0];
 } qdf_packed;
+#endif
