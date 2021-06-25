@@ -6679,6 +6679,7 @@ void hdd_cfr_data_send_nl_event(uint8_t vdev_id, uint32_t pid,
 		return;
 	}
 
+	hdd_debug("vdev id %d pid %d data len %d", vdev_id, pid, data_len);
 	len = nla_total_size(data_len) + NLMSG_HDRLEN;
 	vendor_event = cfg80211_vendor_event_alloc(
 			hdd_ctx->wiphy, &adapter->wdev, len,
@@ -6708,8 +6709,7 @@ void hdd_cfr_data_send_nl_event(uint8_t vdev_id, uint32_t pid,
 			hdd_err_rl("nlhdr is null");
 	}
 
-	hdd_debug("vdev id %d pid %d", vdev_id, pid);
-	cfg80211_vendor_event(vendor_event, GFP_KERNEL);
+	cfg80211_vendor_event(vendor_event, GFP_ATOMIC);
 }
 #endif
 
