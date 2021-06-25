@@ -50,7 +50,7 @@ int venus_hfi_session_open(struct msm_vidc_inst *inst);
 int venus_hfi_session_set_codec(struct msm_vidc_inst *inst);
 int venus_hfi_session_set_secure_mode(struct msm_vidc_inst *inst);
 int venus_hfi_core_init(struct msm_vidc_core *core);
-int venus_hfi_core_deinit(struct msm_vidc_core *core);
+int venus_hfi_core_deinit(struct msm_vidc_core *core, bool force);
 int venus_hfi_noc_error_info(struct msm_vidc_core *core);
 int venus_hfi_suspend(struct msm_vidc_core *core);
 int venus_hfi_trigger_ssr(struct msm_vidc_core *core, u32 type,

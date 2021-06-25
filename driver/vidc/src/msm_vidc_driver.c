@@ -3999,7 +3999,7 @@ int msm_vidc_core_deinit_locked(struct msm_vidc_core *core, bool force)
 		}
 	}
 
-	venus_hfi_core_deinit(core);
+	venus_hfi_core_deinit(core, force);
 
 	/* unlink all sessions from core, if any */
 	list_for_each_entry_safe(inst, dummy, &core->instances, list) {

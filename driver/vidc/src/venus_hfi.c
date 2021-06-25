@@ -1212,7 +1212,7 @@ static int __power_collapse(struct msm_vidc_core *core, bool force)
 		return -EINVAL;
 	}
 
-	__flush_debug_queue(core, core->packet, core->packet_size);
+	__flush_debug_queue(core, (!force ? core->packet : NULL), core->packet_size);
 
 	rc = call_venus_op(core, prepare_pc, core);
 	if (rc)
@@ -2859,7 +2859,7 @@ error:
 	return rc;
 }
 
-int venus_hfi_core_deinit(struct msm_vidc_core *core)
+int venus_hfi_core_deinit(struct msm_vidc_core *core, bool force)
 {
 	int rc = 0;
 
@@ -2875,7 +2875,7 @@ int venus_hfi_core_deinit(struct msm_vidc_core *core)
 	if (core->state == MSM_VIDC_CORE_DEINIT)
 		return 0;
 	__resume(core);
-	__flush_debug_queue(core, core->packet, core->packet_size);
+	__flush_debug_queue(core, (!force ? core->packet : NULL), core->packet_size);
 	__disable_subcaches(core);
 	__unload_fw(core);
 	/**
