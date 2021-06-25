@@ -3192,16 +3192,14 @@ static int rmnet_ipa_send_coalesce_notification(uint8_t qmap_id,
 	if (!coalesce_info)
 		return -ENOMEM;
 
-	if (enable) {
-		coalesce_info->qmap_id = qmap_id;
-		coalesce_info->tcp_enable = tcp;
-		coalesce_info->udp_enable = udp;
+	coalesce_info->qmap_id = qmap_id;
+	coalesce_info->tcp_enable = tcp;
+	coalesce_info->udp_enable = udp;
+	msg_meta.msg_len = sizeof(struct ipa_coalesce_info);
+	if (enable)
 		msg_meta.msg_type = IPA_COALESCE_ENABLE;
-		msg_meta.msg_len = sizeof(struct ipa_coalesce_info);
-	} else {
+	else
 		msg_meta.msg_type = IPA_COALESCE_DISABLE;
-		msg_meta.msg_len = sizeof(struct ipa_coalesce_info);
-	}
 	rc = ipa_send_msg(&msg_meta, coalesce_info, ipa3_wwan_msg_free_cb);
 	if (rc) {
 		IPAWANERR("ipa_send_msg failed: %d\n", rc);
