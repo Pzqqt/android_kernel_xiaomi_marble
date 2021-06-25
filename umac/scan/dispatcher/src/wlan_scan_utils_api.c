@@ -1828,13 +1828,16 @@ static void util_scan_update_ml_info(struct scan_cache_entry *scan_entry)
 	uint16_t multi_link_ctrl;
 	uint8_t offset;
 
-	if (!scan_entry->ie_list.multi_link)
+	if (!scan_entry->ie_list.multi_link) {
+		scm_err("scan_entry->ie_list.multi_link is null");
 		return;
+	}
 
 	multi_link_ctrl = *(uint16_t *)(ml_ie + ML_CONTROL_OFFSET);
 
 	/* TODO: update ml_info based on ML IE */
 
+	multi_link_ctrl = *(uint16_t *)(ml_ie + ML_CONTROL_OFFSET);
 	offset = ML_CMN_INFO_OFFSET;
 	/* TODO: Add proper parsing based on presense bitmap */
 	if (multi_link_ctrl & CMN_INFO_MLD_ADDR_PRESENT_BIT) {
@@ -1886,6 +1889,7 @@ util_scan_gen_scan_entry(struct wlan_objmgr_pdev *pdev,
 		scm_err("failed to allocate memory for scan_entry");
 		return QDF_STATUS_E_NOMEM;
 	}
+
 	scan_entry->raw_frame.ptr =
 			qdf_mem_malloc_atomic(frame_len);
 	if (!scan_entry->raw_frame.ptr) {

@@ -229,6 +229,11 @@ QDF_STATUS wlan_vdev_is_peer_create_allowed(struct wlan_objmgr_vdev *vdev)
 	enum wlan_vdev_state state;
 	enum wlan_vdev_state substate;
 
+	if (!vdev) {
+		mlme_err("vdev is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	state = wlan_vdev_mlme_get_state(vdev);
 	substate = wlan_vdev_mlme_get_substate(vdev);
 	if (!((state == WLAN_VDEV_S_INIT) ||
