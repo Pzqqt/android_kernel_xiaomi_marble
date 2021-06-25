@@ -23,6 +23,50 @@
 #include "hal_li_tx.h"
 #include "hal_li_rx.h"
 
+#define HAL_RX_WBM_REO_PUSH_REASON_GET(wbm_desc)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(wbm_desc,	\
+		WBM_RELEASE_RING_2_REO_PUSH_REASON_OFFSET)),	\
+		WBM_RELEASE_RING_2_REO_PUSH_REASON_MASK, \
+		WBM_RELEASE_RING_2_REO_PUSH_REASON_LSB))
+
+#define HAL_RX_WBM_REO_ERROR_CODE_GET(wbm_desc)		\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(wbm_desc,	\
+		WBM_RELEASE_RING_2_REO_ERROR_CODE_OFFSET)),	\
+		WBM_RELEASE_RING_2_REO_ERROR_CODE_MASK, \
+		WBM_RELEASE_RING_2_REO_ERROR_CODE_LSB))
+
+#define HAL_RX_WBM_RXDMA_PUSH_REASON_GET(wbm_desc)	\
+	(((*(((uint32_t *)wbm_desc) +			\
+	(WBM_RELEASE_RING_2_RXDMA_PUSH_REASON_OFFSET >> 2))) & \
+	WBM_RELEASE_RING_2_RXDMA_PUSH_REASON_MASK) >>	\
+	WBM_RELEASE_RING_2_RXDMA_PUSH_REASON_LSB)
+
+#define HAL_RX_WBM_RXDMA_ERROR_CODE_GET(wbm_desc)	\
+	(((*(((uint32_t *)wbm_desc) +			\
+	(WBM_RELEASE_RING_2_RXDMA_ERROR_CODE_OFFSET >> 2))) & \
+	WBM_RELEASE_RING_2_RXDMA_ERROR_CODE_MASK) >>	\
+	WBM_RELEASE_RING_2_RXDMA_ERROR_CODE_LSB)
+
+/**
+ * hal_rx_wbm_err_info_get_generic_li(): Retrieves WBM error code and reason and
+ *	save it to hal_wbm_err_desc_info structure passed by caller
+ * @wbm_desc: wbm ring descriptor
+ * @wbm_er_info1: hal_wbm_err_desc_info structure, output parameter.
+ * Return: void
+ */
+static inline void hal_rx_wbm_err_info_get_generic_li(void *wbm_desc,
+				void *wbm_er_info1)
+{
+	struct hal_wbm_err_desc_info *wbm_er_info =
+		(struct hal_wbm_err_desc_info *)wbm_er_info1;
+
+	wbm_er_info->wbm_err_src = HAL_WBM2SW_RELEASE_SRC_GET(wbm_desc);
+	wbm_er_info->reo_psh_rsn = HAL_RX_WBM_REO_PUSH_REASON_GET(wbm_desc);
+	wbm_er_info->reo_err_code = HAL_RX_WBM_REO_ERROR_CODE_GET(wbm_desc);
+	wbm_er_info->rxdma_psh_rsn = HAL_RX_WBM_RXDMA_PUSH_REASON_GET(wbm_desc);
+	wbm_er_info->rxdma_err_code = HAL_RX_WBM_RXDMA_ERROR_CODE_GET(wbm_desc);
+}
+
 /**
  * hal_tx_comp_get_status() - TQM Release reason
  * @hal_desc: completion ring Tx status

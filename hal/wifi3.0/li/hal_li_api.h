@@ -102,7 +102,6 @@ void hal_tx_init_data_ring_li(hal_soc_handle_t hal_soc_hdl,
  */
 void hal_hw_txrx_default_ops_attach_li(struct hal_soc *soc);
 
-void hal_rx_wbm_err_info_get_generic_li(void *wbm_desc, void *wbm_er_info1);
 uint32_t hal_rx_wbm_err_src_get_li(hal_ring_desc_t ring_desc);
 uint8_t hal_rx_ret_buf_manager_get_li(hal_ring_desc_t ring_desc);
 
