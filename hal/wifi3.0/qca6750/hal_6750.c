@@ -2018,6 +2018,8 @@ static void hal_hw_txrx_ops_attach_qca6750(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_rx_flow_get_cmem_fse = hal_rx_flow_get_cmem_fse_6750;
 	hal_soc->ops->hal_rx_msdu_get_reo_destination_indication =
 		hal_rx_msdu_get_reo_destination_indication_6750;
+	hal_soc->ops->hal_setup_link_idle_list =
+				hal_setup_link_idle_list_generic_li;
 };
 
 struct hal_hw_srng_config hw_srng_table_6750[] = {

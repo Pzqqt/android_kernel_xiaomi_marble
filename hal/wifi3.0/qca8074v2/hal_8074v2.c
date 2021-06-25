@@ -1389,6 +1389,8 @@ static void hal_hw_txrx_ops_attach_qca8074v2(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_rx_flow_setup_fse = hal_rx_flow_setup_fse_8074v2;
 	hal_soc->ops->hal_compute_reo_remap_ix2_ix3 =
 					hal_compute_reo_remap_ix2_ix3_8074v2;
+	hal_soc->ops->hal_setup_link_idle_list =
+				hal_setup_link_idle_list_generic_li;
 };
 
 struct hal_hw_srng_config hw_srng_table_8074v2[] = {

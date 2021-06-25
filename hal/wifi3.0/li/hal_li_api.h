@@ -23,15 +23,6 @@
 #include "hal_api.h"
 
 /**
- * hal_reo_setup_generic_li - Initialize HW REO block
- *
- * @hal_soc: Opaque HAL SOC handle
- * @reo_params: parameters needed by HAL for REO config
- */
-void hal_reo_setup_generic_li(struct hal_soc *soc,
-			      void *reoparams);
-
-/**
  * hal_set_link_desc_addr_li - Setup link descriptor in a buffer_addr_info
  * HW structure
  *
@@ -42,47 +33,6 @@ void hal_reo_setup_generic_li(struct hal_soc *soc,
  */
 void hal_set_link_desc_addr_li(void *desc, uint32_t cookie,
 			       qdf_dma_addr_t link_desc_paddr);
-
-/**
- * hal_tx_desc_set_search_type_generic_li - Set the search type value
- * @desc: Handle to Tx Descriptor
- * @search_type: search type
- *		     0 – Normal search
- *		     1 – Index based address search
- *		     2 – Index based flow search
- *
- * Return: void
- */
-void hal_tx_desc_set_search_type_generic_li(void *desc,
-					    uint8_t search_type);
-
-/**
- * hal_tx_desc_set_search_index_generic_li - Set the search index value
- * @desc: Handle to Tx Descriptor
- * @search_index: The index that will be used for index based address or
- *                flow search. The field is valid when 'search_type' is
- *                1 0r 2
- *
- * Return: void
- */
-void hal_tx_desc_set_search_index_generic_li(void *desc,
-					     uint32_t search_index);
-
-/**
- * hal_tx_desc_set_cache_set_num_generic_li - Set the cache-set-num value
- * @desc: Handle to Tx Descriptor
- * @cache_num: Cache set number that should be used to cache the index
- *                based search results, for address and flow search.
- *                This value should be equal to LSB four bits of the hash value
- *                of match data, in case of search index points to an entry
- *                which may be used in content based search also. The value can
- *                be anything when the entry pointed by search index will not be
- *                used for content based search.
- *
- * Return: void
- */
-void hal_tx_desc_set_cache_set_num_generic_li(void *desc,
-					      uint8_t cache_num);
 
 /**
  * hal_tx_init_data_ring_li() - Initialize all the TCL Descriptors in SRNG

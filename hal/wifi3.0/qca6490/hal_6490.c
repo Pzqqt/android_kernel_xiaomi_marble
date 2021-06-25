@@ -1854,6 +1854,8 @@ static void hal_hw_txrx_ops_attach_qca6490(struct hal_soc *hal_soc)
 					hal_compute_reo_remap_ix2_ix3_6490;
 	hal_soc->ops->hal_rx_msdu_get_reo_destination_indication =
 		hal_rx_msdu_get_reo_destination_indication_6490;
+	hal_soc->ops->hal_setup_link_idle_list =
+				hal_setup_link_idle_list_generic_li;
 };
 
 struct hal_hw_srng_config hw_srng_table_6490[] = {

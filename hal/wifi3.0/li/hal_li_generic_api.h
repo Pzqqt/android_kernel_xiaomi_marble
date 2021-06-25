@@ -54,8 +54,9 @@
  * @wbm_er_info1: hal_wbm_err_desc_info structure, output parameter.
  * Return: void
  */
-static inline void hal_rx_wbm_err_info_get_generic_li(void *wbm_desc,
-				void *wbm_er_info1)
+static inline
+void hal_rx_wbm_err_info_get_generic_li(void *wbm_desc,
+					void *wbm_er_info1)
 {
 	struct hal_wbm_err_desc_info *wbm_er_info =
 		(struct hal_wbm_err_desc_info *)wbm_er_info1;
@@ -1990,4 +1991,345 @@ static uint32_t hal_rx_pkt_tlv_offset_get_generic(void)
 }
 #endif
 
+#if defined(QDF_BIG_ENDIAN_MACHINE)
+/**
+ * hal_setup_reo_swap() - Set the swap flag for big endian machines
+ * @soc: HAL soc handle
+ *
+ * Return: None
+ */
+static inline void hal_setup_reo_swap(struct hal_soc *soc)
+{
+	uint32_t reg_val;
+
+	reg_val = HAL_REG_READ(soc, HWIO_REO_R0_CACHE_CTL_CONFIG_ADDR(
+		SEQ_WCSS_UMAC_REO_REG_OFFSET));
+
+	reg_val |= HAL_SM(HWIO_REO_R0_CACHE_CTL_CONFIG, WRITE_STRUCT_SWAP, 1);
+	reg_val |= HAL_SM(HWIO_REO_R0_CACHE_CTL_CONFIG, READ_STRUCT_SWAP, 1);
+
+	HAL_REG_WRITE(soc, HWIO_REO_R0_CACHE_CTL_CONFIG_ADDR(
+		SEQ_WCSS_UMAC_REO_REG_OFFSET), reg_val);
+}
+#else
+static inline void hal_setup_reo_swap(struct hal_soc *soc)
+{
+}
+#endif
+
+/**
+ * hal_reo_setup_generic_li - Initialize HW REO block
+ *
+ * @hal_soc: Opaque HAL SOC handle
+ * @reo_params: parameters needed by HAL for REO config
+ */
+static
+void hal_reo_setup_generic_li(struct hal_soc *soc, void *reoparams)
+{
+	uint32_t reg_val;
+	struct hal_reo_params *reo_params = (struct hal_reo_params *)reoparams;
+
+	reg_val = HAL_REG_READ(soc, HWIO_REO_R0_GENERAL_ENABLE_ADDR(
+		SEQ_WCSS_UMAC_REO_REG_OFFSET));
+
+	hal_reo_config(soc, reg_val, reo_params);
+	/* Other ring enable bits and REO_ENABLE will be set by FW */
+
+	/* TODO: Setup destination ring mapping if enabled */
+
+	/* TODO: Error destination ring setting is left to default.
+	 * Default setting is to send all errors to release ring.
+	 */
+
+	/* Set the reo descriptor swap bits in case of BIG endian platform */
+	hal_setup_reo_swap(soc);
+
+	HAL_REG_WRITE(soc,
+		      HWIO_REO_R0_AGING_THRESHOLD_IX_0_ADDR(
+		      SEQ_WCSS_UMAC_REO_REG_OFFSET),
+		      HAL_DEFAULT_BE_BK_VI_REO_TIMEOUT_MS * 1000);
+
+	HAL_REG_WRITE(soc,
+		      HWIO_REO_R0_AGING_THRESHOLD_IX_1_ADDR(
+		      SEQ_WCSS_UMAC_REO_REG_OFFSET),
+		      (HAL_DEFAULT_BE_BK_VI_REO_TIMEOUT_MS * 1000));
+
+	HAL_REG_WRITE(soc,
+		      HWIO_REO_R0_AGING_THRESHOLD_IX_2_ADDR(
+		      SEQ_WCSS_UMAC_REO_REG_OFFSET),
+		      (HAL_DEFAULT_BE_BK_VI_REO_TIMEOUT_MS * 1000));
+
+	HAL_REG_WRITE(soc,
+		      HWIO_REO_R0_AGING_THRESHOLD_IX_3_ADDR(
+		      SEQ_WCSS_UMAC_REO_REG_OFFSET),
+		      (HAL_DEFAULT_VO_REO_TIMEOUT_MS * 1000));
+
+	/*
+	 * When hash based routing is enabled, routing of the rx packet
+	 * is done based on the following value: 1 _ _ _ _ The last 4
+	 * bits are based on hash[3:0]. This means the possible values
+	 * are 0x10 to 0x1f. This value is used to look-up the
+	 * ring ID configured in Destination_Ring_Ctrl_IX_* register.
+	 * The Destination_Ring_Ctrl_IX_2 and Destination_Ring_Ctrl_IX_3
+	 * registers need to be configured to set-up the 16 entries to
+	 * map the hash values to a ring number. There are 3 bits per
+	 * hash entry  which are mapped as follows:
+	 * 0: TCL, 1:SW1, 2:SW2, * 3:SW3, 4:SW4, 5:Release, 6:FW(WIFI),
+	 * 7: NOT_USED.
+	 */
+	if (reo_params->rx_hash_enabled) {
+		HAL_REG_WRITE(soc,
+			      HWIO_REO_R0_DESTINATION_RING_CTRL_IX_2_ADDR(
+			      SEQ_WCSS_UMAC_REO_REG_OFFSET),
+			      reo_params->remap1);
+
+		hal_debug("HWIO_REO_R0_DESTINATION_RING_CTRL_IX_2_ADDR 0x%x",
+			  HAL_REG_READ(soc,
+				       HWIO_REO_R0_DESTINATION_RING_CTRL_IX_2_ADDR(
+				       SEQ_WCSS_UMAC_REO_REG_OFFSET)));
+
+		HAL_REG_WRITE(soc,
+			      HWIO_REO_R0_DESTINATION_RING_CTRL_IX_3_ADDR(
+			      SEQ_WCSS_UMAC_REO_REG_OFFSET),
+			      reo_params->remap2);
+
+		hal_debug("HWIO_REO_R0_DESTINATION_RING_CTRL_IX_3_ADDR 0x%x",
+			  HAL_REG_READ(soc,
+				       HWIO_REO_R0_DESTINATION_RING_CTRL_IX_3_ADDR(
+				       SEQ_WCSS_UMAC_REO_REG_OFFSET)));
+	}
+
+	/* TODO: Check if the following registers shoould be setup by host:
+	 * AGING_CONTROL
+	 * HIGH_MEMORY_THRESHOLD
+	 * GLOBAL_LINK_DESC_COUNT_THRESH_IX_0[1,2]
+	 * GLOBAL_LINK_DESC_COUNT_CTRL
+	 */
+}
+
+/**
+ * hal_setup_link_idle_list_generic_li - Setup scattered idle list using the
+ * buffer list provided
+ *
+ * @hal_soc: Opaque HAL SOC handle
+ * @scatter_bufs_base_paddr: Array of physical base addresses
+ * @scatter_bufs_base_vaddr: Array of virtual base addresses
+ * @num_scatter_bufs: Number of scatter buffers in the above lists
+ * @scatter_buf_size: Size of each scatter buffer
+ * @last_buf_end_offset: Offset to the last entry
+ * @num_entries: Total entries of all scatter bufs
+ *
+ * Return: None
+ */
+static void
+hal_setup_link_idle_list_generic_li(struct hal_soc *soc,
+				    qdf_dma_addr_t scatter_bufs_base_paddr[],
+				    void *scatter_bufs_base_vaddr[],
+				    uint32_t num_scatter_bufs,
+				    uint32_t scatter_buf_size,
+				    uint32_t last_buf_end_offset,
+				    uint32_t num_entries)
+{
+	int i;
+	uint32_t *prev_buf_link_ptr = NULL;
+	uint32_t reg_scatter_buf_size, reg_tot_scatter_buf_size;
+	uint32_t val;
+
+	/* Link the scatter buffers */
+	for (i = 0; i < num_scatter_bufs; i++) {
+		if (i > 0) {
+			prev_buf_link_ptr[0] =
+				scatter_bufs_base_paddr[i] & 0xffffffff;
+			prev_buf_link_ptr[1] = HAL_SM(
+				HWIO_WBM_R0_SCATTERED_LINK_DESC_LIST_BASE_MSB,
+				BASE_ADDRESS_39_32,
+				((uint64_t)(scatter_bufs_base_paddr[i])
+				 >> 32)) | HAL_SM(
+				HWIO_WBM_R0_SCATTERED_LINK_DESC_LIST_BASE_MSB,
+				ADDRESS_MATCH_TAG,
+				ADDRESS_MATCH_TAG_VAL);
+		}
+		prev_buf_link_ptr = (uint32_t *)(scatter_bufs_base_vaddr[i] +
+			scatter_buf_size - WBM_IDLE_SCATTER_BUF_NEXT_PTR_SIZE);
+	}
+
+	/* TBD: Register programming partly based on MLD & the rest based on
+	 * inputs from HW team. Not complete yet.
+	 */
+
+	reg_scatter_buf_size = (scatter_buf_size -
+				WBM_IDLE_SCATTER_BUF_NEXT_PTR_SIZE) / 64;
+	reg_tot_scatter_buf_size = ((scatter_buf_size -
+		WBM_IDLE_SCATTER_BUF_NEXT_PTR_SIZE) * num_scatter_bufs) / 64;
+
+	HAL_REG_WRITE(soc,
+		      HWIO_WBM_R0_IDLE_LIST_CONTROL_ADDR
+		      (SEQ_WCSS_UMAC_WBM_REG_OFFSET),
+		      HAL_SM(HWIO_WBM_R0_IDLE_LIST_CONTROL,
+			     SCATTER_BUFFER_SIZE,
+			     reg_scatter_buf_size) |
+		      HAL_SM(HWIO_WBM_R0_IDLE_LIST_CONTROL,
+			     LINK_DESC_IDLE_LIST_MODE, 0x1));
+
+	HAL_REG_WRITE(soc,
+		      HWIO_WBM_R0_IDLE_LIST_SIZE_ADDR
+		      (SEQ_WCSS_UMAC_WBM_REG_OFFSET),
+		      HAL_SM(HWIO_WBM_R0_IDLE_LIST_SIZE,
+			     SCATTER_RING_SIZE_OF_IDLE_LINK_DESC_LIST,
+			     reg_tot_scatter_buf_size));
+
+	HAL_REG_WRITE(soc,
+		      HWIO_WBM_R0_SCATTERED_LINK_DESC_LIST_BASE_LSB_ADDR
+		      (SEQ_WCSS_UMAC_WBM_REG_OFFSET),
+		      scatter_bufs_base_paddr[0] & 0xffffffff);
+
+	HAL_REG_WRITE(soc,
+		      HWIO_WBM_R0_SCATTERED_LINK_DESC_LIST_BASE_MSB_ADDR
+		      (SEQ_WCSS_UMAC_WBM_REG_OFFSET),
+		      ((uint64_t)(scatter_bufs_base_paddr[0]) >> 32) &
+		      HWIO_WBM_R0_SCATTERED_LINK_DESC_LIST_BASE_MSB_BASE_ADDRESS_39_32_BMSK);
+
+	HAL_REG_WRITE(soc,
+		      HWIO_WBM_R0_SCATTERED_LINK_DESC_LIST_BASE_MSB_ADDR
+		      (SEQ_WCSS_UMAC_WBM_REG_OFFSET),
+		      HAL_SM(HWIO_WBM_R0_SCATTERED_LINK_DESC_LIST_BASE_MSB,
+			     BASE_ADDRESS_39_32,
+			     ((uint64_t)(scatter_bufs_base_paddr[0]) >> 32)) |
+		      HAL_SM(HWIO_WBM_R0_SCATTERED_LINK_DESC_LIST_BASE_MSB,
+			     ADDRESS_MATCH_TAG, ADDRESS_MATCH_TAG_VAL));
+
+	/* ADDRESS_MATCH_TAG field in the above register is expected to match
+	 * with the upper bits of link pointer. The above write sets this field
+	 * to zero and we are also setting the upper bits of link pointers to
+	 * zero while setting up the link list of scatter buffers above
+	 */
+
+	/* Setup head and tail pointers for the idle list */
+	HAL_REG_WRITE(soc,
+		      HWIO_WBM_R0_SCATTERED_LINK_DESC_PTR_HEAD_INFO_IX0_ADDR
+		      (SEQ_WCSS_UMAC_WBM_REG_OFFSET),
+		      scatter_bufs_base_paddr[num_scatter_bufs - 1] &
+		      0xffffffff);
+	HAL_REG_WRITE(soc,
+		      HWIO_WBM_R0_SCATTERED_LINK_DESC_PTR_HEAD_INFO_IX1_ADDR
+		      (SEQ_WCSS_UMAC_WBM_REG_OFFSET),
+		      HAL_SM(HWIO_WBM_R0_SCATTERED_LINK_DESC_PTR_HEAD_INFO_IX1,
+			     BUFFER_ADDRESS_39_32,
+			     ((uint64_t)(scatter_bufs_base_paddr
+				     [num_scatter_bufs - 1]) >> 32)) |
+		      HAL_SM(HWIO_WBM_R0_SCATTERED_LINK_DESC_PTR_HEAD_INFO_IX1,
+			     HEAD_POINTER_OFFSET, last_buf_end_offset >> 2));
+
+	HAL_REG_WRITE(soc,
+		      HWIO_WBM_R0_SCATTERED_LINK_DESC_PTR_HEAD_INFO_IX0_ADDR
+		      (SEQ_WCSS_UMAC_WBM_REG_OFFSET),
+		      scatter_bufs_base_paddr[0] & 0xffffffff);
+
+	HAL_REG_WRITE(soc,
+		      HWIO_WBM_R0_SCATTERED_LINK_DESC_PTR_TAIL_INFO_IX0_ADDR
+		      (SEQ_WCSS_UMAC_WBM_REG_OFFSET),
+		      scatter_bufs_base_paddr[0] & 0xffffffff);
+	HAL_REG_WRITE(soc,
+		      HWIO_WBM_R0_SCATTERED_LINK_DESC_PTR_TAIL_INFO_IX1_ADDR
+		      (SEQ_WCSS_UMAC_WBM_REG_OFFSET),
+		      HAL_SM(HWIO_WBM_R0_SCATTERED_LINK_DESC_PTR_TAIL_INFO_IX1,
+			     BUFFER_ADDRESS_39_32,
+			     ((uint64_t)(scatter_bufs_base_paddr[0]) >> 32)) |
+		      HAL_SM(HWIO_WBM_R0_SCATTERED_LINK_DESC_PTR_TAIL_INFO_IX1,
+			     TAIL_POINTER_OFFSET, 0));
+
+	HAL_REG_WRITE(soc,
+		      HWIO_WBM_R0_SCATTERED_LINK_DESC_PTR_HP_ADDR
+		      (SEQ_WCSS_UMAC_WBM_REG_OFFSET), 2 * num_entries);
+
+	/* Set RING_ID_DISABLE */
+	val = HAL_SM(HWIO_WBM_R0_WBM_IDLE_LINK_RING_MISC, RING_ID_DISABLE, 1);
+
+	/*
+	 * SRNG_ENABLE bit is not available in HWK v1 (QCA8074v1). Hence
+	 * check the presence of the bit before toggling it.
+	 */
+#ifdef HWIO_WBM_R0_WBM_IDLE_LINK_RING_MISC_SRNG_ENABLE_BMSK
+	val |= HAL_SM(HWIO_WBM_R0_WBM_IDLE_LINK_RING_MISC, SRNG_ENABLE, 1);
+#endif
+	HAL_REG_WRITE(soc,
+		      HWIO_WBM_R0_WBM_IDLE_LINK_RING_MISC_ADDR
+		      (SEQ_WCSS_UMAC_WBM_REG_OFFSET),
+		      val);
+}
+
+#ifdef TCL_DATA_CMD_2_SEARCH_TYPE_OFFSET
+/**
+ * hal_tx_desc_set_search_type_generic_li - Set the search type value
+ * @desc: Handle to Tx Descriptor
+ * @search_type: search type
+ *		     0 – Normal search
+ *		     1 – Index based address search
+ *		     2 – Index based flow search
+ *
+ * Return: void
+ */
+static inline
+void hal_tx_desc_set_search_type_generic_li(void *desc, uint8_t search_type)
+{
+	HAL_SET_FLD(desc, TCL_DATA_CMD_2, SEARCH_TYPE) |=
+		HAL_TX_SM(TCL_DATA_CMD_2, SEARCH_TYPE, search_type);
+}
+#else
+static inline
+void hal_tx_desc_set_search_type_generic_li(void *desc, uint8_t search_type)
+{
+}
+
+#endif
+
+#ifdef TCL_DATA_CMD_5_SEARCH_INDEX_OFFSET
+/**
+ * hal_tx_desc_set_search_index_generic_li - Set the search index value
+ * @desc: Handle to Tx Descriptor
+ * @search_index: The index that will be used for index based address or
+ *                flow search. The field is valid when 'search_type' is
+ *                1 0r 2
+ *
+ * Return: void
+ */
+static inline
+void hal_tx_desc_set_search_index_generic_li(void *desc, uint32_t search_index)
+{
+	HAL_SET_FLD(desc, TCL_DATA_CMD_5, SEARCH_INDEX) |=
+		HAL_TX_SM(TCL_DATA_CMD_5, SEARCH_INDEX, search_index);
+}
+#else
+static inline
+void hal_tx_desc_set_search_index_generic_li(void *desc, uint32_t search_index)
+{
+}
+#endif
+
+#ifdef TCL_DATA_CMD_5_CACHE_SET_NUM_OFFSET
+/**
+ * hal_tx_desc_set_cache_set_num_generic_li - Set the cache-set-num value
+ * @desc: Handle to Tx Descriptor
+ * @cache_num: Cache set number that should be used to cache the index
+ *                based search results, for address and flow search.
+ *                This value should be equal to LSB four bits of the hash value
+ *                of match data, in case of search index points to an entry
+ *                which may be used in content based search also. The value can
+ *                be anything when the entry pointed by search index will not be
+ *                used for content based search.
+ *
+ * Return: void
+ */
+static inline
+void hal_tx_desc_set_cache_set_num_generic_li(void *desc, uint8_t cache_num)
+{
+	HAL_SET_FLD(desc, TCL_DATA_CMD_5, CACHE_SET_NUM) |=
+		HAL_TX_SM(TCL_DATA_CMD_5, CACHE_SET_NUM, cache_num);
+}
+#else
+static inline
+void hal_tx_desc_set_cache_set_num_generic_li(void *desc, uint8_t cache_num)
+{
+}
+#endif
 #endif /* _HAL_LI_GENERIC_API_H_ */

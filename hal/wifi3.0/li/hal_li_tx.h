@@ -301,5 +301,4 @@ static inline qdf_dma_addr_t hal_tx_comp_get_paddr(void *hal_desc)
 
 	return (qdf_dma_addr_t)(paddr_lo | (((uint64_t)paddr_hi) << 32));
 }
-
 #endif /* _HAL_LI_TX_H_ */

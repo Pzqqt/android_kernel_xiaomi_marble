@@ -1888,6 +1888,8 @@ static void hal_hw_txrx_ops_attach_qcn6122(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_rx_flow_setup_fse = hal_rx_flow_setup_fse_6122;
 	hal_soc->ops->hal_compute_reo_remap_ix2_ix3 =
 					hal_compute_reo_remap_ix2_ix3_6122;
+	hal_soc->ops->hal_setup_link_idle_list =
+				hal_setup_link_idle_list_generic_li;
 };
 
 struct hal_hw_srng_config hw_srng_table_6122[] = {
