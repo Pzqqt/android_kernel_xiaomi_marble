@@ -1001,13 +1001,17 @@ static int dsi_display_ctrl_get_host_init_state(struct dsi_display *dsi_display,
 {
 	struct dsi_display_ctrl *ctrl;
 	int i, rc = -EINVAL;
+	bool final_state = true;
 
 	display_for_each_ctrl(i, dsi_display) {
+		bool ctrl_state = false;
 		ctrl = &dsi_display->ctrl[i];
-		rc = dsi_ctrl_get_host_engine_init_state(ctrl->ctrl, state);
-		if (rc)
+		rc = dsi_ctrl_get_host_engine_init_state(ctrl->ctrl, &ctrl_state);
+		final_state &= ctrl_state;
+		if ((rc) || !(final_state))
 			break;
 	}
+	*state = final_state;
 	return rc;
 }
 
@@ -1204,6 +1208,16 @@ int dsi_display_cmd_receive(void *display, const char *cmd_buf,
 	}
 
 	rc = dsi_display_ctrl_get_host_init_state(dsi_display, &state);
+
+	/**
+	 * Handle scenario where a command transfer is initiated through
+	 * sysfs interface when device is in suspend state.
+	 */
+	if (!rc && !state) {
+		pr_warn_ratelimited("Command xfer attempted while device is in suspend state\n");
+		rc = -EPERM;
+		goto end;
+	}
 	if (rc || !state) {
 		DSI_ERR("[DSI] Invalid host state = %d rc = %d\n",
 			state, rc);
