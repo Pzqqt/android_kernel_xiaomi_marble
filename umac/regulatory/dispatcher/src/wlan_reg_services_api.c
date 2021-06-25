@@ -911,6 +911,25 @@ wlan_reg_chan_has_dfs_attribute_for_freq(struct wlan_objmgr_pdev *pdev,
 	return reg_chan_has_dfs_attribute_for_freq(pdev, freq);
 }
 
+#if defined(WLAN_FEATURE_11BE) && defined(CONFIG_REG_CLIENT)
+enum channel_state
+wlan_reg_get_5g_bonded_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
+					      qdf_freq_t freq,
+					      enum phy_ch_width bw)
+{
+	if (bw == CH_WIDTH_320MHZ) {
+		const struct bonded_channel_freq *bonded_chan_ptr_ptr = NULL;
+
+		return reg_get_5g_bonded_channel_for_freq(pdev, freq, bw,
+							  &bonded_chan_ptr_ptr);
+	}
+	return reg_get_5g_bonded_channel_state_for_freq(pdev, freq, bw);
+}
+
+qdf_export_symbol(wlan_reg_get_5g_bonded_channel_state_for_freq);
+
+#else
+
 enum channel_state
 wlan_reg_get_5g_bonded_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
 					      qdf_freq_t freq,
@@ -920,6 +939,7 @@ wlan_reg_get_5g_bonded_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
 }
 
 qdf_export_symbol(wlan_reg_get_5g_bonded_channel_state_for_freq);
+#endif
 
 enum channel_state
 wlan_reg_get_2g_bonded_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
@@ -1064,6 +1084,30 @@ wlan_reg_get_5g_bonded_channel_and_state_for_freq(struct wlan_objmgr_pdev *pdev,
 						  bonded_chan_ptr_ptr);
 }
 
+#if defined(WLAN_FEATURE_11BE) && defined(CONFIG_REG_CLIENT)
+enum channel_state
+wlan_reg_get_bonded_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
+					   qdf_freq_t freq,
+					   enum phy_ch_width bw,
+					   qdf_freq_t sec_freq)
+{
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(freq))
+		return reg_get_2g_bonded_channel_state_for_freq(pdev, freq,
+						       sec_freq, bw);
+	if (bw == CH_WIDTH_320MHZ) {
+		const struct bonded_channel_freq *bonded_chan_ptr_ptr = NULL;
+
+		return reg_get_5g_bonded_channel_for_freq(pdev, freq, bw,
+							  &bonded_chan_ptr_ptr);
+	} else {
+		return reg_get_5g_bonded_channel_state_for_freq(pdev, freq,
+								bw);
+	}
+}
+
+qdf_export_symbol(wlan_reg_get_5g_bonded_channel_and_state_for_freq);
+
+#else
 enum channel_state
 wlan_reg_get_bonded_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
 					   qdf_freq_t freq,
@@ -1079,7 +1123,7 @@ wlan_reg_get_bonded_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
 }
 
 qdf_export_symbol(wlan_reg_get_5g_bonded_channel_and_state_for_freq);
-
+#endif
 #endif /* CONFIG CHAN FREQ API */
 
 uint16_t wlan_reg_get_op_class_width(struct wlan_objmgr_pdev *pdev,
