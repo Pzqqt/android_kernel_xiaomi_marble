@@ -225,6 +225,34 @@ QDF_STATUS utils_dfs_stacac_stop(struct wlan_objmgr_pdev *pdev);
  */
 QDF_STATUS utils_dfs_get_usenol(struct wlan_objmgr_pdev *pdev,
 		uint16_t *usenol);
+/*
+ * utils_dfs_radar_disable() - Disables the radar.
+ * @pdev: Pointer to DFS pdev object.
+ *
+ * Return: true if Spruce spur WAR is applicable else false.
+ *
+ * Spur or leakage transmissions is observed in Spruce HW in
+ * frequencies from 5260MHz to 5320MHz when one of the following
+ * conditions is true,
+ * i) The AP is transmitting in 52/56/60/64 in 80MHz mode and then the  AP
+ * moves to the adjacent channel 36/44/48 in 80MHz mode and starts
+ * transmitting.
+ * ii) The AP is transmitting in 36/44/48/52/56/60/64 in 160MHz mode and then
+ * the  AP moves to the adjacent channel 36/44/48 in 80MHz mode and starts
+ * transmitting.
+ *
+ * Hence, the spruce spur WAR becomes applicable when,
+ * a) the target is Spruce,
+ * b) the primary channel is 52/56/60/64, and the home channel width is 80MHz.
+ * c) or, the primary channel is 36/44/48/52/56/60/64 and the home channel width
+ *    is 160MHz.
+ *
+ * When the conditions (a) and (b) or (c) is true, random channel selection
+ * should make sure to prevent moving to the adjacent channels 36/44/48 in
+ * 80MHz mode. Failing to do so will cause spur transmissions in channel 52
+ * through 64.
+ */
+bool utils_dfs_is_spruce_spur_war_applicable(struct wlan_objmgr_pdev *pdev);
 
 /**
  * utils_dfs_radar_disable() - Disables the radar.
