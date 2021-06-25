@@ -28,7 +28,7 @@ static int mmrm_sw_update_freq(
 
 	clk_val_min = clk_round_rate(tbl_entry->clk, 1);
 	clk_val_max = clk_round_rate(tbl_entry->clk, ~0UL);
-	d_mpr_h("%s: csid(%d): min_clk_rate(%llu) max_clk_rate(%llu)\n",
+	d_mpr_h("%s: csid(0x%x): min_clk_rate(%llu) max_clk_rate(%llu)\n",
 		__func__,
 		tbl_entry->clk_src_id,
 		clk_val_min,
@@ -72,7 +72,7 @@ static int mmrm_sw_update_freq(
 
 	/* print results */
 	for (i = 0; i < MMRM_VDD_LEVEL_MAX; i++) {
-		d_mpr_h("%s: csid(%d) corner(%s) clk_rate(%llu) dyn_pwr(%zu) leak_pwr(%zu)\n",
+		d_mpr_h("%s: csid(0x%x) corner(%s) clk_rate(%llu) dyn_pwr(%zu) leak_pwr(%zu)\n",
 			__func__,
 			tbl_entry->clk_src_id,
 			cset->corner_tbl[i].name,
@@ -128,12 +128,16 @@ static int mmrm_sw_update_curr(struct mmrm_sw_clk_mgr_info *sinfo,
 
 			tbl_entry->current_ma[i][j] = fp_round(fp_div((dyn_pwr+leak_pwr), volt));
 
-			d_mpr_h("%s: csid(%d) corner(%s) dyn_pwr(%zu) leak_pwr(%zu) tot_pwr(%d) cur_ma(%d)\n",
+			d_mpr_h("%s: csid(0x%x) corner(%s) dyn_pwr(%zu) leak_pwr(%zu) ",
 				__func__,
 				tbl_entry->clk_src_id,
 				cset->corner_tbl[i].name,
 				fp_round(dyn_pwr),
-				fp_round(leak_pwr),
+				fp_round(leak_pwr));
+
+			d_mpr_h("%s: csid(0x%x) tot_pwr(%d)cur_ma(%d)\n",
+				__func__,
+				tbl_entry->clk_src_id,
 				fp_round(dyn_pwr+leak_pwr),
 				tbl_entry->current_ma[i][j]);
 		}
@@ -178,7 +182,7 @@ static struct mmrm_client *mmrm_sw_clk_client_register(
 
 	/* entry not found */
 	if (c == sinfo->tot_clk_clients) {
-		d_mpr_e("%s: unknown clk client %d\n",
+		d_mpr_e("%s: unknown clk client 0x%x\n",
 			__func__, clk_client_src_id);
 		rc = -EINVAL;
 		goto err_nofree_entry;
@@ -190,13 +194,13 @@ static struct mmrm_client *mmrm_sw_clk_client_register(
 	if (tbl_entry->client) {
 		if (msm_mmrm_allow_multiple_register) {
 			tbl_entry->ref_count++;
-			d_mpr_h("%s: client csid(%d) already registered ref:%d\n",
+			d_mpr_h("%s: client csid(0x%x) already registered ref:%d\n",
 				__func__, tbl_entry->clk_src_id, tbl_entry->ref_count);
 			clk_client = tbl_entry->client;
 			goto exit_found;
 		}
 
-		d_mpr_e("%s: client csid(%d) already registered\n",
+		d_mpr_e("%s: client csid(0x%x) already registered\n",
 			__func__, tbl_entry->clk_src_id);
 		rc = -EINVAL;
 		goto err_already_registered;
@@ -224,7 +228,7 @@ static struct mmrm_client *mmrm_sw_clk_client_register(
 	tbl_entry->notifier_cb_fn = not_fn_cb;
 
 	/* print table entry */
-	d_mpr_h("%s: csid(%d) name(%s) pri(%d) pvt(%p) notifier(%p)\n",
+	d_mpr_h("%s: csid(0x%x) name(%s) pri(%d) pvt(%p) notifier(%p)\n",
 		__func__,
 		tbl_entry->clk_src_id,
 		tbl_entry->name,
@@ -235,7 +239,7 @@ static struct mmrm_client *mmrm_sw_clk_client_register(
 	/* determine full range of clock freq */
 	rc = mmrm_sw_update_freq(sinfo, tbl_entry);
 	if (rc) {
-		d_mpr_e("%s: csid(%d) failed to update freq\n",
+		d_mpr_e("%s: csid(0x%x) failed to update freq\n",
 			__func__, tbl_entry->clk_src_id);
 		goto err_fail_update_entry;
 	}
@@ -243,7 +247,7 @@ static struct mmrm_client *mmrm_sw_clk_client_register(
 	/* calculate current & scale power for other levels */
 	rc = mmrm_sw_update_curr(sinfo, tbl_entry);
 	if (rc) {
-		d_mpr_e("%s: csid(%d) failed to update current\n",
+		d_mpr_e("%s: csid(0x%x) failed to update current\n",
 			__func__, tbl_entry->clk_src_id);
 		goto err_fail_update_entry;
 	}
@@ -332,7 +336,7 @@ static int mmrm_sw_get_req_level(
 	/* get voltage corner */
 	voltage_corner = qcom_clk_get_voltage(tbl_entry->clk, clk_val);
 	if (voltage_corner < 0 || voltage_corner > mmrm_sw_vdd_corner[MMRM_VDD_LEVEL_TURBO]) {
-		d_mpr_e("%s: csid(%d): invalid voltage corner(%d) for clk rate(%llu)\n",
+		d_mpr_e("%s: csid(0x%x): invalid voltage corner(%d) for clk rate(%llu)\n",
 			__func__,
 			tbl_entry->clk_src_id,
 			voltage_corner,
@@ -343,7 +347,7 @@ static int mmrm_sw_get_req_level(
 
 	/* voltage corner is below svsl1 */
 	if (voltage_corner < mmrm_sw_vdd_corner[MMRM_VDD_LEVEL_SVS_L1]) {
-		d_mpr_h("%s: csid(%d): lower voltage corner(%d)\n",
+		d_mpr_h("%s: csid(0x%x): lower voltage corner(%d)\n",
 			__func__,
 			tbl_entry->clk_src_id,
 			voltage_corner);
@@ -358,7 +362,7 @@ static int mmrm_sw_get_req_level(
 	}
 
 	if (level == MMRM_VDD_LEVEL_MAX) {
-		d_mpr_e("%s: csid(%d): invalid voltage corner(%d) for clk rate(%llu)\n",
+		d_mpr_e("%s: csid(0x%x): invalid voltage corner(%d) for clk rate(%llu)\n",
 			__func__,
 			tbl_entry->clk_src_id,
 			voltage_corner,
@@ -566,7 +570,7 @@ static int mmrm_sw_clk_client_setval(struct mmrm_clk_mgr *sw_clk_mgr,
 	 */
 	req_reserve = client_data->flags & MMRM_CLIENT_DATA_FLAG_RESERVE_ONLY;
 	if (tbl_entry->clk_rate == clk_val) {
-		d_mpr_h("%s: csid(%d) same as previous clk rate %llu\n",
+		d_mpr_h("%s: csid(0x%x) same as previous clk rate %llu\n",
 			__func__, tbl_entry->clk_src_id, clk_val);
 
 		/* a & b */
@@ -589,7 +593,7 @@ static int mmrm_sw_clk_client_setval(struct mmrm_clk_mgr *sw_clk_mgr,
 	if (clk_val) {
 		rc = mmrm_sw_get_req_level(tbl_entry, clk_val, &req_level);
 		if (rc || req_level >= MMRM_VDD_LEVEL_MAX) {
-			d_mpr_e("%s: csid(%d) unable to get level for clk rate %llu\n",
+			d_mpr_e("%s: csid(0x%x) unable to get level for clk rate %llu\n",
 				__func__, tbl_entry->clk_src_id, clk_val);
 			rc = -EINVAL;
 			goto err_invalid_clk_val;
@@ -603,7 +607,7 @@ static int mmrm_sw_clk_client_setval(struct mmrm_clk_mgr *sw_clk_mgr,
 	/* check and update for peak current */
 	rc = mmrm_sw_check_peak_current(sinfo, tbl_entry, req_level, clk_val);
 	if (rc) {
-		d_mpr_e("%s: csid (%d) peak overshoot peak_cur(%lu)\n",
+		d_mpr_e("%s: csid (0x%x) peak overshoot peak_cur(%lu)\n",
 			__func__, tbl_entry->clk_src_id,
 			sinfo->peak_cur_data.aggreg_val);
 		mutex_unlock(&sw_clk_mgr->lock);
@@ -619,18 +623,18 @@ static int mmrm_sw_clk_client_setval(struct mmrm_clk_mgr *sw_clk_mgr,
 
 	/* check reserve only flag (skip set clock rate) */
 	if (req_reserve) {
-		d_mpr_h("%s: csid(%d) skip setting clk rate\n",
+		d_mpr_h("%s: csid(0x%x) skip setting clk rate\n",
 		__func__, tbl_entry->clk_src_id);
 		rc = 0;
 		goto exit_no_err;
 	}
 
 set_clk_rate:
-	d_mpr_h("%s: csid(%d) setting clk rate %llu\n",
+	d_mpr_h("%s: csid(0x%x) setting clk rate %llu\n",
 		__func__, tbl_entry->clk_src_id, clk_val);
 	rc = clk_set_rate(tbl_entry->clk, clk_val);
 	if (rc) {
-		d_mpr_e("%s: csid(%d) failed to set clk rate %llu\n",
+		d_mpr_e("%s: csid(0x%x) failed to set clk rate %llu\n",
 			__func__, tbl_entry->clk_src_id, clk_val);
 		rc = -EINVAL;
 		/* TBD: incase of failure clk_rate is invalid */
@@ -737,7 +741,7 @@ static int mmrm_sw_prepare_table(struct mmrm_clk_platform_resources *cres,
 		tbl_entry->leak_pwr[MMRM_VDD_LEVEL_NOM] =
 			nom_tbl_entry->nom_leak_pwr;
 
-		d_mpr_h("%s: updating csid(%d) dyn_pwr(%d) leak_pwr(%d)\n",
+		d_mpr_h("%s: updating csid(0x%x) dyn_pwr(%d) leak_pwr(%d)\n",
 			__func__,
 			tbl_entry->clk_src_id,
 			tbl_entry->dyn_pwr[MMRM_VDD_LEVEL_NOM],
