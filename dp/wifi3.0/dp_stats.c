@@ -29,6 +29,7 @@
 #endif
 
 #define DP_MAX_STRING_LEN 500
+#define INVALID_FREE_BUFF 0xffffffff
 
 #define DP_HTT_HW_INTR_NAME_LEN  HTT_STATS_MAX_HW_INTR_NAME_LEN
 #define DP_HTT_HW_MODULE_NAME_LEN  HTT_STATS_MAX_HW_MODULE_NAME_LEN
@@ -4373,6 +4374,7 @@ QDF_STATUS dp_peer_stats_notify(struct dp_pdev *dp_pdev, struct dp_peer *peer)
 		peer_stats_intf.rx_byte_count = peer_stats->rx.to_stack.bytes;
 		peer_stats_intf.per = peer_stats->tx.last_per;
 		peer_stats_intf.ack_rssi = peer_stats->tx.last_ack_rssi;
+		peer_stats_intf.free_buff = INVALID_FREE_BUFF;
 		dp_wdi_event_handler(WDI_EVENT_PEER_STATS, dp_pdev->soc,
 				     (void *)&peer_stats_intf, 0,
 				     WDI_NO_VAL, dp_pdev->pdev_id);

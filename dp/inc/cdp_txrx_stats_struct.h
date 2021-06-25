@@ -1366,6 +1366,7 @@ struct cdp_peer_tid_stats {
 /* struct cdp_interface_peer_stats - interface structure for txrx peer stats
  * @peer_mac: peer mac address
  * @vdev_id : vdev_id for the peer
+ * @rssi_changed: denotes rssi is changed
  * @last_peer_tx_rate: peer tx rate for last transmission
  * @peer_tx_rate: tx rate for current transmission
  * @peer_rssi: current rssi value of peer
@@ -1375,7 +1376,7 @@ struct cdp_peer_tid_stats {
  * @rx_byte_count: rx byte count
  * @per: per error rate
  * @ack_rssi: RSSI of the last ack received
- * @rssi_changed: denotes rssi is changed
+ * @free_buff: free tx descriptor count
  */
 struct cdp_interface_peer_stats {
 	uint8_t  peer_mac[QDF_MAC_ADDR_SIZE];
@@ -1390,6 +1391,7 @@ struct cdp_interface_peer_stats {
 	uint32_t rx_byte_count;
 	uint32_t per;
 	uint32_t ack_rssi;
+	uint32_t free_buff;
 };
 
 /* struct cdp_interface_peer_qos_stats - interface structure for peer qos stats
