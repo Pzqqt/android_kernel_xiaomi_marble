@@ -1116,15 +1116,16 @@ static int wsa883x_spkr_event(struct snd_soc_dapm_widget *w,
 						0x01, 0x01);
 		/* Added delay as per HW sequence */
 		usleep_range(250, 300);
+
+		/* Force remove group */
+		swr_remove_from_group(wsa883x->swr_slave,
+				      wsa883x->swr_slave->dev_num);
 		if (wsa883x->comp_enable)
 			snd_soc_component_update_bits(component,
 						WSA883X_DRE_CTL_0,
 						0x07,
 						wsa883x->comp_offset);
 		wcd_enable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_UVLO);
-		/* Force remove group */
-		swr_remove_from_group(wsa883x->swr_slave,
-				      wsa883x->swr_slave->dev_num);
 		snd_soc_component_update_bits(component,
 				WSA883X_VBAT_ADC_FLT_CTL,
 				0x0E, 0x06);
