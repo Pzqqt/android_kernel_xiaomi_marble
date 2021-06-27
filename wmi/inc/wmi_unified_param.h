@@ -5535,6 +5535,7 @@ typedef struct {
 	uint32_t is_go_connected_d3wow_enabled;
 	bool sae_eapol_offload;
 	bool dynamic_pcie_gen_speed_change;
+	bool twt_ack_support_cap;
 } target_resource_config;
 
 /**

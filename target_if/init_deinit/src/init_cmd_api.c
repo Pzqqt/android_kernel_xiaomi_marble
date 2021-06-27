@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -463,6 +463,9 @@ void init_deinit_prepare_send_init_cmd(
 	info->wlan_res_cfg.max_ndp_sessions =
 		QDF_MIN(info->wlan_res_cfg.max_ndp_sessions,
 			info->service_ext2_param.max_ndp_sessions);
+
+	if (info->service_ext2_param.twt_ack_support_cap)
+		info->wlan_res_cfg.twt_ack_support_cap = true;
 
 	target_if_debug("FW version 0x%x ", info->target_caps.fw_version);
 	if (init_deinit_is_service_ext_msg(psoc, tgt_hdl) == QDF_STATUS_SUCCESS)

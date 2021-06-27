@@ -7583,6 +7583,10 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 		 tgt_res_cfg->dynamic_pcie_gen_speed_change);
 
 	WMI_RSRC_CFG_FLAGS2_IS_DYNAMIC_PCIE_GEN_SPEED_SWITCH_ENABLED_SET(resource_cfg->flags2, tgt_res_cfg->dynamic_pcie_gen_speed_change);
+
+	if (tgt_res_cfg->twt_ack_support_cap)
+		WMI_RSRC_CFG_HOST_SERVICE_FLAG_STA_TWT_SYNC_EVT_SUPPORT_SET(
+			resource_cfg->host_service_flags, 1);
 }
 
 /* copy_hw_mode_id_in_init_cmd() - Helper routine to copy hw_mode in init cmd
