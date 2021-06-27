@@ -1059,6 +1059,46 @@ mgmt_rx_reo_list_init(struct mgmt_rx_reo_list *reo_list)
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * wlan_mgmt_rx_reo_update_host_snapshot() - Update Host snapshot with the MGMT
+ * Rx REO parameters.
+ * @pdev: pdev extracted from the WMI event
+ * @reo_params: MGMT Rx REO parameters received in the WMI event
+ *
+ * Return: QDF_STATUS of operation
+ */
+static QDF_STATUS
+wlan_mgmt_rx_reo_update_host_snapshot(struct wlan_objmgr_pdev *pdev,
+				      struct mgmt_rx_reo_params *reo_params)
+{
+	struct mgmt_rx_reo_pdev_info *rx_reo_pdev_ctx;
+	struct mgmt_rx_reo_snapshot_params *host_ss;
+
+	if (!reo_params) {
+		mgmt_rx_reo_err("Mgmt Rx REO params are NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	rx_reo_pdev_ctx = wlan_mgmt_rx_reo_get_priv_object(pdev);
+	if (!rx_reo_pdev_ctx) {
+		mgmt_rx_reo_err("Mgmt Rx REO context empty for pdev %pK", pdev);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* FW should send valid REO parameters */
+	if (!reo_params->valid) {
+		mgmt_rx_reo_err("Mgmt Rx REO params is invalid");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	host_ss = &rx_reo_pdev_ctx->host_snapshot;
+	host_ss->valid = true;
+	host_ss->global_timestamp = reo_params->global_timestamp;
+	host_ss->mgmt_pkt_ctr = reo_params->mgmt_pkt_ctr;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS
 mgmt_rx_reo_init_context(void)
 {
