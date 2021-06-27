@@ -712,7 +712,7 @@ static inline int hal_rx_mpdu_sequence_number_get_be(uint8_t *buf)
  * @ buf: pointer to the start of RX PKT TLV headers
  * @ hal_rx_msdu_metadata: pointer to the msdu info structure
  */
-static void
+static inline void
 hal_rx_msdu_packet_metadata_get_generic_be(uint8_t *buf,
 					   void *pkt_msdu_metadata)
 {
@@ -735,7 +735,7 @@ hal_rx_msdu_packet_metadata_get_generic_be(uint8_t *buf,
  * @buf: pointer to the start of RX PKT TLV header
  * Return: uint32_t(nss)
  */
-static uint32_t hal_rx_tlv_nss_get_be(uint8_t *buf)
+static inline uint32_t hal_rx_tlv_nss_get_be(uint8_t *buf)
 {
 	struct rx_pkt_tlvs *rx_pkt_tlvs = (struct rx_pkt_tlvs *)buf;
 	uint8_t mimo_ss_bitmap;
@@ -776,7 +776,7 @@ static uint32_t hal_rx_tlv_nss_get_be(uint8_t *buf)
  *
  * Return: void
  */
-static void
+static inline void
 hal_rx_mon_hw_desc_get_mpdu_status_be(void *hw_desc_addr,
 				      struct mon_rx_status *rs)
 {

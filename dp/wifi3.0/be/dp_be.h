@@ -125,7 +125,7 @@ struct dp_spt_page_desc_list {
 };
 
 #define DP_CC_SPT_PAGE_UPDATE_VA(_page_base_va, _index, _desc_va) \
-	{ ((uint64_t *)(_page_base_va))[_index] = (uint64_t)(_desc_va); }
+	{ (_page_base_va)[_index] = (uintptr_t)(_desc_va); }
 
 /**
  * struct dp_tx_bank_profile - DP wrapper for TCL banks
@@ -366,6 +366,6 @@ static inline void *dp_cc_desc_find(struct dp_soc *soc,
 	spt_page_va =
 		(uint64_t *)cc_ctx->page_desc_base[ppt_page_id].page_v_addr;
 
-	return (void *)(*(spt_page_va  + spt_va_id));
+	return (void *)(uintptr_t)(*(spt_page_va  + spt_va_id));
 }
 #endif
