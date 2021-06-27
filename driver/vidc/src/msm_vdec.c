@@ -107,6 +107,14 @@ static int msm_vdec_codec_change(struct msm_vidc_inst *inst, u32 v4l2_codec)
 	if(rc)
 		goto exit;
 
+	rc = msm_vidc_update_buffer_count(inst, INPUT_PORT);
+	if (rc)
+		return rc;
+
+	rc = msm_vidc_update_buffer_count(inst, OUTPUT_PORT);
+	if (rc)
+		return rc;
+
 exit:
 	return rc;
 }
