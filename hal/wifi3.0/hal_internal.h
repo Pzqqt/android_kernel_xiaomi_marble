@@ -601,6 +601,10 @@ struct hal_srng {
 	unsigned long srng_event;
 	/* last flushed time stamp */
 	uint64_t last_flush_ts;
+#if defined(CLEAR_SW2TCL_CONSUMED_DESC)
+	/* last ring desc entry cleared */
+	uint32_t last_desc_cleared;
+#endif
 #if defined(FEATURE_HAL_DELAYED_REG_WRITE) || \
 	defined(FEATURE_HAL_DELAYED_REG_WRITE_V2)
 	/* Previous hp/tp (based on ring dir) value written to the reg */

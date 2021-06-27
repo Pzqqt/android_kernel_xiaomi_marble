@@ -1911,6 +1911,48 @@ void hal_get_sw_hptp(void *hal_soc, hal_ring_handle_t hal_ring_hdl,
 	}
 }
 
+#if defined(CLEAR_SW2TCL_CONSUMED_DESC)
+/**
+ * hal_srng_src_get_next_consumed - Get the next desc if consumed by HW
+ *
+ * @hal_soc: Opaque HAL SOC handle
+ * @hal_ring_hdl: Source ring pointer
+ *
+ * Return: pointer to descriptor if consumed by HW, else NULL
+ */
+static inline
+void *hal_srng_src_get_next_consumed(void *hal_soc,
+				     hal_ring_handle_t hal_ring_hdl)
+{
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
+	uint32_t *desc = NULL;
+	/* TODO: Using % is expensive, but we have to do this since
+	 * size of some SRNG rings is not power of 2 (due to descriptor
+	 * sizes). Need to create separate API for rings used
+	 * per-packet, with sizes power of 2 (TCL2SW, REO2SW,
+	 * SW2RXDMA and CE rings)
+	 */
+	uint32_t next_entry = (srng->last_desc_cleared + srng->entry_size) %
+			      srng->ring_size;
+
+	if (next_entry != (srng->u.src_ring.cached_tp + srng->entry_size) %
+			  srng->ring_size) {
+		desc = &srng->ring_base_vaddr[next_entry];
+		srng->last_desc_cleared = next_entry;
+	}
+
+	return desc;
+}
+
+#else
+static inline
+void *hal_srng_src_get_next_consumed(void *hal_soc,
+				     hal_ring_handle_t hal_ring_hdl)
+{
+	return NULL;
+}
+#endif /* CLEAR_SW2TCL_CONSUMED_DESC */
+
 /**
  * hal_srng_src_get_next - Get next entry from a source ring and move cached tail pointer
  *
