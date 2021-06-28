@@ -24262,6 +24262,8 @@ typedef enum {
     TSF_TSTAMP_CAPTURE_RESET = 2,
     TSF_TSTAMP_READ_VALUE = 3,
     TSF_TSTAMP_QTIMER_CAPTURE_REQ = 4,
+    TSF_TSTAMP_AUTO_REPORT_ENABLE = 5,
+    TSF_TSTAMP_AUTO_REPORT_DISABLE = 6,
 } wmi_tsf_tstamp_action;
 
 typedef struct {
