@@ -538,6 +538,8 @@ typedef  enum  {
     WMI_SERVICE_HALPHY_CAL_STATUS = 293, /* Indicates FW supports sending online HALPHY Calibration status to host */
     WMI_SERVICE_HALPHY_CAL_ENABLE_DISABLE_SUPPORT = 294, /* Indicates Calibraton enable/disable support by FW */
     WMI_SERVICE_AFC_SUPPORT = 295, /* Indicates FW supports AFC_CMD,AFC_EVENT */
+    WMI_SERVICE_RTT_AP_INITIATOR_STAGGERED_MODE_SUPPORTED = 296, /* FW supports RTT in AP Initiator for Staggered beacon mode */
+    WMI_SERVICE_RTT_AP_INITIATOR_BURSTED_MODE_SUPPORTED = 297, /* FW supports RTT in AP Initiator for BURSTED beacon mode */
 
 
     WMI_MAX_EXT2_SERVICE
