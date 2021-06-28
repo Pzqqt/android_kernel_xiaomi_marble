@@ -4108,7 +4108,6 @@ int msm_vidc_core_init(struct msm_vidc_core *core)
 	core_lock(core, __func__);
 	if (!rc) {
 		d_vpr_e("%s: core init timed out\n", __func__);
-		msm_vidc_core_deinit_locked(core, true);
 		rc = -ETIMEDOUT;
 	} else {
 		msm_vidc_change_core_state(core, MSM_VIDC_CORE_INIT, __func__);
@@ -4117,6 +4116,8 @@ int msm_vidc_core_init(struct msm_vidc_core *core)
 	}
 
 unlock:
+	if (rc)
+		msm_vidc_core_deinit_locked(core, true);
 	core_unlock(core, __func__);
 	return rc;
 }
