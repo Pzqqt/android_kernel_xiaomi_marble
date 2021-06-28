@@ -1983,7 +1983,7 @@ int msm_vidc_process_readonly_buffers(struct msm_vidc_inst *inst,
 			buf->attr |= MSM_VIDC_ATTR_READ_ONLY;
 			print_vidc_buffer(VIDC_LOW, "low ", "ro buf removed", inst, ro_buf);
 			list_del(&ro_buf->list);
-			msm_memory_free(inst, MSM_MEM_POOL_BUFFER, ro_buf);
+			msm_memory_free(inst, ro_buf);
 			break;
 		}
 	}
@@ -2010,7 +2010,7 @@ int msm_vidc_memory_unmap_completely(struct msm_vidc_inst *inst,
 		if (!map->refcount) {
 			msm_vidc_memory_put_dmabuf(inst, map->dmabuf);
 			list_del(&map->list);
-			msm_memory_free(inst, MSM_MEM_POOL_MAP, map);
+			msm_memory_free(inst, map);
 			break;
 		}
 	}
@@ -2175,7 +2175,7 @@ int msm_vidc_flush_ts(struct msm_vidc_inst *inst)
 		i_vpr_l(inst, "%s: flushing ts: val %lld, rank %%lld\n",
 			__func__, ts->sort.val, ts->rank);
 		list_del(&ts->sort.list);
-		msm_memory_free(inst, MSM_MEM_POOL_TIMESTAMP, ts);
+		msm_memory_free(inst, ts);
 	}
 	inst->timestamps.count = 0;
 	inst->timestamps.rank = 0;
@@ -2222,7 +2222,7 @@ int msm_vidc_update_timestamp(struct msm_vidc_inst *inst, u64 timestamp)
 		}
 		inst->timestamps.count--;
 		list_del(&ts->sort.list);
-		msm_memory_free(inst, MSM_MEM_POOL_TIMESTAMP, ts);
+		msm_memory_free(inst, ts);
 	}
 
 	return 0;
@@ -2268,7 +2268,7 @@ int msm_vidc_put_delayed_unmap(struct msm_vidc_inst *inst, struct msm_vidc_map *
 	if (!map->refcount) {
 		msm_vidc_memory_put_dmabuf(inst, map->dmabuf);
 		list_del(&map->list);
-		msm_memory_free(inst, MSM_MEM_POOL_MAP, map);
+		msm_memory_free(inst, map);
 	}
 
 	return rc;
@@ -2336,7 +2336,7 @@ int msm_vidc_unmap_driver_buf(struct msm_vidc_inst *inst,
 	if (!map->refcount) {
 		msm_vidc_memory_put_dmabuf(inst, map->dmabuf);
 		list_del(&map->list);
-		msm_memory_free(inst, MSM_MEM_POOL_MAP, map);
+		msm_memory_free(inst, map);
 	}
 
 	return rc;
@@ -2387,7 +2387,7 @@ int msm_vidc_map_driver_buf(struct msm_vidc_inst *inst,
 			rc = msm_vidc_get_delayed_unmap(inst, map);
 			if (rc) {
 				msm_vidc_memory_put_dmabuf(inst, map->dmabuf);
-				msm_memory_free(inst, MSM_MEM_POOL_MAP, map);
+				msm_memory_free(inst, map);
 				return rc;
 			}
 		}
@@ -2418,7 +2418,7 @@ int msm_vidc_put_driver_buf(struct msm_vidc_inst *inst,
 
 	/* delete the buffer from buffers->list */
 	list_del(&buf->list);
-	msm_memory_free(inst, MSM_MEM_POOL_BUFFER, buf);
+	msm_memory_free(inst, buf);
 
 	return rc;
 }
@@ -2472,7 +2472,7 @@ struct msm_vidc_buffer *msm_vidc_get_driver_buf(struct msm_vidc_inst *inst,
 error:
 	msm_vidc_memory_put_dmabuf(inst, buf->dmabuf);
 	list_del(&buf->list);
-	msm_memory_free(inst, MSM_MEM_POOL_BUFFER, buf);
+	msm_memory_free(inst, buf);
 	return NULL;
 }
 
@@ -2915,7 +2915,7 @@ int msm_vidc_destroy_internal_buffer(struct msm_vidc_inst *inst,
 		if (map->dmabuf == buffer->dmabuf) {
 			msm_vidc_memory_unmap(inst->core, map);
 			list_del(&map->list);
-			msm_memory_free(inst, MSM_MEM_POOL_MAP, map);
+			msm_memory_free(inst, map);
 			break;
 		}
 	}
@@ -2924,7 +2924,7 @@ int msm_vidc_destroy_internal_buffer(struct msm_vidc_inst *inst,
 		if (alloc->dmabuf == buffer->dmabuf) {
 			msm_vidc_memory_free(inst->core, alloc);
 			list_del(&alloc->list);
-			msm_memory_free(inst, MSM_MEM_POOL_ALLOC, alloc);
+			msm_memory_free(inst, alloc);
 			break;
 		}
 	}
@@ -2932,7 +2932,7 @@ int msm_vidc_destroy_internal_buffer(struct msm_vidc_inst *inst,
 	list_for_each_entry_safe(buf, dummy, &buffers->list, list) {
 		if (buf->dmabuf == buffer->dmabuf) {
 			list_del(&buf->list);
-			msm_memory_free(inst, MSM_MEM_POOL_BUFFER, buf);
+			msm_memory_free(inst, buf);
 			break;
 		}
 	}
@@ -4599,20 +4599,20 @@ void msm_vidc_destroy_buffers(struct msm_vidc_inst *inst)
 	list_for_each_entry_safe(buf, dummy, &inst->buffers.read_only.list, list) {
 		print_vidc_buffer(VIDC_ERR, "err ", "destroying ro buffer", inst, buf);
 		list_del(&buf->list);
-		msm_memory_free(inst, MSM_MEM_POOL_BUFFER, buf);
+		msm_memory_free(inst, buf);
 	}
 
 	list_for_each_entry_safe(buf, dummy, &inst->buffers.release.list, list) {
 		print_vidc_buffer(VIDC_ERR, "err ", "destroying release buffer", inst, buf);
 		list_del(&buf->list);
-		msm_memory_free(inst, MSM_MEM_POOL_BUFFER, buf);
+		msm_memory_free(inst, buf);
 	}
 
 	list_for_each_entry_safe(ts, dummy_ts, &inst->timestamps.list, sort.list) {
 		i_vpr_e(inst, "%s: removing ts: val %lld, rank %lld\n",
 			__func__, ts->sort.val, ts->rank);
 		list_del(&ts->sort.list);
-		msm_memory_free(inst, MSM_MEM_POOL_TIMESTAMP, ts);
+		msm_memory_free(inst, ts);
 	}
 
 	list_for_each_entry_safe(dbuf, dummy_dbuf, &inst->dmabuf_tracker, list) {
