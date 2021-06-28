@@ -10786,6 +10786,11 @@ static int __wlan_hdd_cfg80211_wifi_logger_get_ring_data(struct wiphy *wiphy,
 			hdd_err("Failed to trigger bug report");
 			return -EINVAL;
 		}
+		status = wlan_logging_wait_for_flush_log_completion();
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("wait for flush log timed out");
+			return qdf_status_to_os_return(status);
+		}
 	} else {
 		wlan_report_log_completion(WLAN_LOG_TYPE_NON_FATAL,
 					   WLAN_LOG_INDICATOR_FRAMEWORK,
