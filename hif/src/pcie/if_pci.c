@@ -1995,7 +1995,7 @@ static int hif_ce_srng_msi_free_irq(struct hif_softc *scn)
 		msi_data = irq_id + msi_irq_start;
 		irq = pld_get_msi_irq(scn->qdf_dev->dev, msi_data);
 
-		hif_pci_ce_irq_remove_affinity_hint(irq);
+		hif_ce_irq_remove_affinity_hint(irq);
 
 		hif_debug("%s: (ce_id %d, irq_id %d, msi_data %d, irq %d)",
 			  __func__, irq_id, ce_id, msi_data, irq);
