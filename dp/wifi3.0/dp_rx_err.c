@@ -1027,7 +1027,7 @@ dp_2k_jump_handle(struct dp_soc *soc,
 
 	peer = dp_peer_get_ref_by_id(soc, peer_id, DP_MOD_ID_RX_ERR);
 	if (!peer) {
-		dp_rx_err_err("%pK: peer not found", soc);
+		dp_rx_err_info_rl("%pK: peer not found", soc);
 		goto free_nbuf;
 	}
 
