@@ -35,7 +35,6 @@
 #include "csr_internal.h"
 #include "cds_reg_service.h"
 #include "mac_trace.h"
-#include "csr_neighbor_roam.h"
 #include "cds_regdomain.h"
 #include "cds_utils.h"
 #include "sir_types.h"
@@ -8138,11 +8137,7 @@ static enum wlan_serialization_cmd_type csr_get_roam_cmd_type(
 
 	switch (sme_cmd->u.roamCmd.roamReason) {
 	case eCsrHddIssued:
-		if (CSR_IS_INFRA_AP(&sme_cmd->u.roamCmd.roamProfile) ||
-		    CSR_IS_NDI(&sme_cmd->u.roamCmd.roamProfile))
-			cmd_type = WLAN_SER_CMD_VDEV_START_BSS;
-		else
-			cmd_type = WLAN_SER_CMD_VDEV_CONNECT;
+		cmd_type = WLAN_SER_CMD_VDEV_START_BSS;
 		break;
 	case eCsrStopBss:
 		cmd_type = WLAN_SER_CMD_VDEV_STOP_BSS;
@@ -8215,7 +8210,7 @@ static void csr_fill_cmd_timeout(struct wlan_serialization_command *cmd)
 {
 	switch (cmd->cmd_type) {
 	case WLAN_SER_CMD_WM_STATUS_CHANGE:
-		cmd->cmd_timeout_duration = SME_CMD_VDEV_DISCONNECT_TIMEOUT;
+		cmd->cmd_timeout_duration = SME_CMD_PEER_DISCONNECT_TIMEOUT;
 		break;
 	case WLAN_SER_CMD_VDEV_START_BSS:
 		cmd->cmd_timeout_duration = SME_CMD_VDEV_START_BSS_TIMEOUT;
@@ -8241,8 +8236,6 @@ static void csr_fill_cmd_timeout(struct wlan_serialization_command *cmd)
 	case WLAN_SER_CMD_SET_ANTENNA_MODE:
 		cmd->cmd_timeout_duration = SME_CMD_POLICY_MGR_CMD_TIMEOUT;
 		break;
-	case WLAN_SER_CMD_VDEV_CONNECT:
-		/* fallthrough to use def MAX value */
 	default:
 		cmd->cmd_timeout_duration = SME_ACTIVE_LIST_CMD_TIMEOUT_VALUE;
 		break;

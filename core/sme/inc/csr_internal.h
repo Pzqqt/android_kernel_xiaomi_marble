@@ -31,7 +31,7 @@
 #include "csr_support.h"
 #include "cds_reg_service.h"
 #include "wlan_scan_public_structs.h"
-#include "csr_neighbor_roam.h"
+#include "wlan_cm_roam_api.h"
 #include "sir_types.h"
 #include "wlan_mlme_public_struct.h"
 
@@ -825,4 +825,40 @@ QDF_STATUS csr_roam_update_config(
  * Return : true if channel causes MCC, else false
  */
 bool csr_is_mcc_channel(struct mac_context *mac_ctx, uint32_t chan_freq);
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * csr_roam_auth_offload_callback() - Registered CSR Callback function to handle
+ * WPA3 roam pre-auth event from firmware.
+ * @mac_ctx: Global mac context pointer
+ * @vdev_id: Vdev id
+ * @bssid: candidate AP bssid
+ */
+QDF_STATUS
+csr_roam_auth_offload_callback(struct mac_context *mac_ctx,
+			       uint8_t vdev_id,
+			       struct qdf_mac_addr bssid);
+#else
+static inline QDF_STATUS
+csr_roam_auth_offload_callback(struct mac_context *mac_ctx,
+			       uint8_t vdev_id,
+			       struct qdf_mac_addr bssid)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
+
+/**
+ * csr_invoke_neighbor_report_request - Send neighbor report invoke command to
+ *					WMA
+ * @mac_ctx: MAC context
+ * @session_id: session id
+ *
+ * API called from IW to invoke neighbor report request to WMA then to FW
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS csr_invoke_neighbor_report_request(uint8_t session_id,
+				struct sRrmNeighborReq *neighbor_report_req,
+				bool send_resp_to_host);
 #endif

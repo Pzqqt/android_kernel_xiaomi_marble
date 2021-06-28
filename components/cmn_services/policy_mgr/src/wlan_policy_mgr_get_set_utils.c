@@ -36,7 +36,7 @@
 #include "nan_public_structs.h"
 #include "wlan_reg_services_api.h"
 #include "wlan_cm_roam_public_struct.h"
-#include "csr_neighbor_roam.h"
+#include "wlan_mlme_api.h"
 #include "wlan_mlme_main.h"
 #include "wlan_mlme_vdev_mgr_interface.h"
 /* invalid channel id. */

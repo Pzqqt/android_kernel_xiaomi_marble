@@ -19,7 +19,7 @@
 #include <sir_common.h>
 #include <ani_global.h>
 #include <csr_inside_api.h>
-#include <csr_neighbor_roam.h>
+#include "wlan_cm_roam_api.h"
 #include <sir_api.h>
 
 #ifdef WLAN_FEATURE_HOST_ROAM

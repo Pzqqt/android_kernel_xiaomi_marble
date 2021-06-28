@@ -32,7 +32,6 @@
 
 #include "mac_trace.h"
 #include "wma_types.h"
-#include "csr_neighbor_roam.h"
 #include "csr_internal.h"
 #include "lim_global.h"
 #include "lim_types.h"

@@ -7373,7 +7373,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 					rc = wait_for_completion_timeout(
 						&adapter->disconnect_comp_var,
 						msecs_to_jiffies
-						 (SME_DISCONNECT_TIMEOUT));
+						 (SME_CMD_STOP_BSS_TIMEOUT));
 					if (!rc)
 						hdd_warn("disconn_comp_var wait fail");
 					hdd_cleanup_ndi(hdd_ctx, adapter);
