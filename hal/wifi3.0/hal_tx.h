@@ -178,6 +178,8 @@ do {                                            \
  * @transmit_cnt: Number of times this frame has been transmitted
  * @tid: TID of the flow or MPDU queue
  * @peer_id: Peer ID of the flow or MPDU queue
+ * @buffer_timestamp: Frame system entrance timestamp in units of 1024
+ *		      microseconds
  */
 struct hal_tx_completion_status {
 	uint8_t status;
@@ -200,6 +202,9 @@ struct hal_tx_completion_status {
 	uint8_t transmit_cnt;
 	uint8_t tid;
 	uint16_t peer_id;
+#ifdef WLAN_FEATURE_TSF_UPLINK_DELAY
+	uint32_t buffer_timestamp:19;
+#endif
 };
 
 /**
