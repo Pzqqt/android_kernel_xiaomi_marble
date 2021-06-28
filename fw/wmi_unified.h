@@ -28915,6 +28915,7 @@ typedef enum {
      * This type can be expanded in future as per requirements.
      */
     AFC_SERV_RESP_FORMAT_JSON = 0,
+    AFC_SERV_RESP_FORMAT_BINARY = 1,
 } WMI_AFC_SERV_RESP_FORMAT_TYPE;
 
 typedef enum {
@@ -28950,13 +28951,15 @@ typedef struct {
                             * status = 1 will indicate payload is valid. */
     A_UINT32 time_to_live; /* Total time for which this AFC info is valid in seconds */
     A_UINT32 length;       /* length of the payload, in bytes */
-    /* The structure above is followed by array of char which will have JSON string
-     * A_CHAR bufp[];    AFC payload (JSON string)
-     */
+    A_UINT32 payload_format; /* The format of payload written in FW memory:
+                              * 0 -> JSON format
+                              * 1 -> Binary format
+                              * Refer to WMI_AFC_SERV_RESP_FORMAT_TYPE.
+                              */
     /*
-     * In future if we need to add new variable, or new format of information,
-     * this structure should be optionally followed by new TLV,
-     * which will be written in same contiguous memory location.
+     * The structure above is followed by array of char which will have
+     * JSON string or binary data, as specified by the payload_format field.
+     * A_CHAR bufp[];    AFC payload (JSON string or binary data)
      */
 } wmi_afc_serv_resp_struct;
 
