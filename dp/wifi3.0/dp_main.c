@@ -3934,7 +3934,7 @@ static void dp_soc_reset_intr_mask(struct dp_soc *soc)
 		if (group_number < 0) {
 			dp_init_debug("%pK: ring not part of any group; ring_type: %d,ring_num %d",
 				      soc, WBM2SW_RELEASE, j);
-			return;
+			continue;
 		}
 
 		mask = wlan_cfg_get_tx_ring_mask(soc->wlan_cfg_ctx, group_number);
@@ -3969,7 +3969,7 @@ static void dp_soc_reset_intr_mask(struct dp_soc *soc)
 		if (group_number < 0) {
 			dp_init_debug("%pK: ring not part of any group; ring_type: %d,ring_num %d",
 				      soc, REO_DST, j);
-			return;
+			continue;
 		}
 
 		mask =  wlan_cfg_get_rx_ring_mask(soc->wlan_cfg_ctx, group_number);
@@ -4007,7 +4007,7 @@ static void dp_soc_reset_intr_mask(struct dp_soc *soc)
 		if (group_number < 0) {
 			dp_init_debug("%pK: ring not part of any group; ring_type: %d,ring_num %d",
 				      soc, REO_DST, lmac_id);
-			return;
+			continue;
 		}
 
 		/* set the interrupt mask for offloaded ring */
@@ -4036,7 +4036,7 @@ static void dp_soc_reset_intr_mask(struct dp_soc *soc)
 		if (group_number < 0) {
 			dp_init_debug("%pK: ring not part of any group; ring_type: %d,ring_num %d",
 				      soc, REO_EXCEPTION, j);
-			return;
+			continue;
 		}
 
 		wlan_cfg_set_rx_err_ring_mask(soc->wlan_cfg_ctx,
