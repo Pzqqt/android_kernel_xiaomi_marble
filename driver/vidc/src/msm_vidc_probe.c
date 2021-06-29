@@ -140,7 +140,10 @@ static int msm_vidc_register_video_device(struct msm_vidc_core *core,
 	core->vdev[index].vdev.release =
 		msm_vidc_release_video_device;
 	core->vdev[index].vdev.fops = core->v4l2_file_ops;
-	core->vdev[index].vdev.ioctl_ops = core->v4l2_ioctl_ops;
+	if (type == MSM_VIDC_DECODER)
+		core->vdev[index].vdev.ioctl_ops = core->v4l2_ioctl_ops_dec;
+	else
+		core->vdev[index].vdev.ioctl_ops = core->v4l2_ioctl_ops_enc;
 	core->vdev[index].vdev.vfl_dir = VFL_DIR_M2M;
 	core->vdev[index].type = type;
 	core->vdev[index].vdev.v4l2_dev = &core->v4l2_dev;
