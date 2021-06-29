@@ -186,17 +186,10 @@ csr_roam_get_phy_mode_band_for_bss(struct mac_context *mac,
 				   struct csr_roam_profile *pProfile,
 				   uint32_t bss_op_ch_freq,
 				   enum reg_wifi_band *pBand);
-static QDF_STATUS csr_roam_get_qos_info_from_bss(
-struct mac_context *mac, struct bss_description *bss_desc);
 static QDF_STATUS csr_roam_start_wds(struct mac_context *mac,
-						uint32_t sessionId,
-				     struct csr_roam_profile *pProfile,
-				     struct bss_description *bss_desc);
+				     uint32_t sessionId,
+				     struct csr_roam_profile *pProfile);
 static void csr_init_session(struct mac_context *mac, uint32_t sessionId);
-
-static QDF_STATUS
-csr_roam_get_qos_info_from_bss(struct mac_context *mac,
-			       struct bss_description *bss_desc);
 
 static void csr_init_operating_classes(struct mac_context *mac);
 
@@ -2327,10 +2320,9 @@ QDF_STATUS csr_roam_issue_deauth_sta_cmd(struct mac_context *mac,
 	return status;
 }
 
-QDF_STATUS csr_roam_prepare_bss_config_from_profile(
-	struct mac_context *mac, struct csr_roam_profile *pProfile,
-					struct bss_config_param *pBssConfig,
-					struct bss_description *bss_desc)
+QDF_STATUS csr_roam_prepare_bss_config_from_profile(struct mac_context *mac,
+					struct csr_roam_profile *pProfile,
+					struct bss_config_param *pBssConfig)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint32_t bss_op_ch_freq = 0;
@@ -2368,10 +2360,6 @@ QDF_STATUS csr_roam_prepare_bss_config_from_profile(
 		if (CSR_IS_INFRA_AP(pProfile)
 		    && (eCsrRoamWmmNoQos !=
 			mac->roam.configParam.WMMSupportMode)) {
-			qAPisEnabled = true;
-		} else
-		if (csr_roam_get_qos_info_from_bss(mac, bss_desc) ==
-		    QDF_STATUS_SUCCESS) {
 			qAPisEnabled = true;
 		} else {
 			qAPisEnabled = false;
@@ -2420,31 +2408,6 @@ QDF_STATUS csr_roam_prepare_bss_config_from_profile(
 	return status;
 }
 
-static QDF_STATUS
-csr_roam_get_qos_info_from_bss(struct mac_context *mac,
-			       struct bss_description *bss_desc)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tDot11fBeaconIEs *pIes = NULL;
-
-	do {
-		if (!QDF_IS_STATUS_SUCCESS(
-			csr_get_parsed_bss_description_ies(
-				mac, bss_desc, &pIes))) {
-			sme_err("csr_get_parsed_bss_description_ies() failed");
-			break;
-		}
-		/* check if the AP is QAP & it supports APSD */
-		if (CSR_IS_QOS_BSS(pIes))
-			status = QDF_STATUS_SUCCESS;
-	} while (0);
-
-	if (pIes)
-		qdf_mem_free(pIes);
-
-	return status;
-}
-
 static QDF_STATUS csr_set_qos_to_cfg(struct mac_context *mac, uint32_t sessionId,
 				     eCsrMediaAccessType qosType)
 {
@@ -2485,117 +2448,6 @@ static QDF_STATUS csr_set_qos_to_cfg(struct mac_context *mac, uint32_t sessionId
 	mac->roam.roamSession[sessionId].fWMMConnection = (bool) WmeEnabled;
 	mac->roam.roamSession[sessionId].fQOSConnection = (bool) QoSEnabled;
 	return status;
-}
-
-static void csr_set_cfg_rate_set(struct mac_context *mac, eCsrPhyMode phyMode,
-				 struct csr_roam_profile *pProfile,
-				 struct bss_description *bss_desc,
-				 tDot11fBeaconIEs *pIes,
-				 uint32_t session_id)
-{
-	int i;
-	uint8_t *pDstRate;
-	enum csr_cfgdot11mode cfgDot11Mode;
-	/* leave enough room for the max number of rates */
-	uint8_t OperationalRates[CSR_DOT11_SUPPORTED_RATES_MAX];
-	qdf_size_t OperationalRatesLength = 0;
-	/* leave enough room for the max number of rates */
-	uint8_t ExtendedOperationalRates
-				[CSR_DOT11_EXTENDED_SUPPORTED_RATES_MAX];
-	qdf_size_t ExtendedOperationalRatesLength = 0;
-	uint8_t MCSRateIdxSet[SIZE_OF_SUPPORTED_MCS_SET];
-	qdf_size_t MCSRateLength = 0;
-	struct wlan_objmgr_vdev *vdev;
-
-	QDF_ASSERT(pIes);
-	if (pIes) {
-		csr_is_phy_mode_match(mac, phyMode, bss_desc, pProfile,
-				      &cfgDot11Mode, pIes);
-		/* Originally, we thought that for 11a networks, the 11a rates
-		 * are always in the Operational Rate set & for 11b and 11g
-		 * networks, the 11b rates appear in the Operational Rate set.
-		 * Consequently, in either case, we would blindly put the rates
-		 * we support into our Operational Rate set (including the basic
-		 * rates, which we have already verified are supported earlier
-		 * in the roaming decision). However, it turns out that this is
-		 * not always the case.  Some AP's (e.g. D-Link DI-784) ram 11g
-		 * rates into the Operational Rate set, too.  Now, we're a
-		 * little more careful:
-		 */
-		pDstRate = OperationalRates;
-		if (pIes->SuppRates.present) {
-			for (i = 0; i < pIes->SuppRates.num_rates; i++) {
-				if (csr_rates_is_dot11_rate_supported
-					    (mac, pIes->SuppRates.rates[i])
-				    && (OperationalRatesLength <
-					CSR_DOT11_SUPPORTED_RATES_MAX)) {
-					*pDstRate++ = pIes->SuppRates.rates[i];
-					OperationalRatesLength++;
-				}
-			}
-		}
-		if (eCSR_CFG_DOT11_MODE_11G == cfgDot11Mode ||
-		    eCSR_CFG_DOT11_MODE_11N == cfgDot11Mode ||
-		    eCSR_CFG_DOT11_MODE_ABG == cfgDot11Mode) {
-			/* If there are Extended Rates in the beacon, we will
-			 * reflect those extended rates that we support in out
-			 * Extended Operational Rate set:
-			 */
-			pDstRate = ExtendedOperationalRates;
-			if (pIes->ExtSuppRates.present) {
-				for (i = 0; i < pIes->ExtSuppRates.num_rates;
-				     i++) {
-					if (csr_rates_is_dot11_rate_supported
-						    (mac, pIes->ExtSuppRates.
-							rates[i])
-					    && (ExtendedOperationalRatesLength <
-						CSR_DOT11_EXTENDED_SUPPORTED_RATES_MAX)) {
-						*pDstRate++ =
-							pIes->ExtSuppRates.
-							rates[i];
-						ExtendedOperationalRatesLength++;
-					}
-				}
-			}
-		}
-		/* Enable proprietary MAC features if peer node is Airgo node
-		 * and STA user wants to use them For ANI network companions,
-		 * we need to populate the proprietary rate set with any
-		 * proprietary rates we found in the beacon, only if user allows
-		 * them.
-		 */
-		/* No proprietary modes... */
-		/* Get MCS Rate */
-		pDstRate = MCSRateIdxSet;
-		if (pIes->HTCaps.present) {
-			for (i = 0; i < VALID_MAX_MCS_INDEX; i++) {
-				if ((unsigned int)pIes->HTCaps.
-				    supportedMCSSet[0] & (1 << i)) {
-					MCSRateLength++;
-					*pDstRate++ = i;
-				}
-			}
-		}
-		/* Set the operational rate set CFG variables... */
-		vdev = wlan_objmgr_get_vdev_by_id_from_pdev(
-						mac->pdev, session_id,
-						WLAN_LEGACY_SME_ID);
-		if (vdev) {
-			mlme_set_opr_rate(vdev, OperationalRates,
-					  OperationalRatesLength);
-			mlme_set_ext_opr_rate(vdev, ExtendedOperationalRates,
-					      ExtendedOperationalRatesLength);
-			wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-		} else {
-			sme_err("null vdev");
-		}
-
-		wlan_mlme_set_cfg_str(MCSRateIdxSet,
-				      &mac->mlme_cfg->rates.current_mcs_set,
-				      MCSRateLength);
-	} /* Parsing BSSDesc */
-	else
-		sme_err("failed to parse BssDesc");
 }
 
 static void csr_set_cfg_rate_set_from_profile(struct mac_context *mac,
@@ -2712,9 +2564,6 @@ static void csr_roam_ccm_cfg_set_callback(struct mac_context *mac,
 	pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
 	sessionId = pCommand->vdev_id;
 
-	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(mac->psoc, sessionId))
-		sme_debug("LFR3: Set ccm vdev_id:%d", session_id);
-
 	if (CSR_IS_ROAM_JOINING(mac, sessionId)
 	    && CSR_IS_ROAM_SUBSTATE_CONFIG(mac, sessionId)) {
 		csr_roaming_state_config_cnf_processor(mac, pCommand,
@@ -2725,10 +2574,7 @@ static void csr_roam_ccm_cfg_set_callback(struct mac_context *mac,
 /* pIes may be NULL */
 QDF_STATUS csr_roam_set_bss_config_cfg(struct mac_context *mac, uint32_t sessionId,
 				       struct csr_roam_profile *pProfile,
-				       struct bss_description *bss_desc,
-				       struct bss_config_param *pBssConfig,
-				       struct sDot11fBeaconIEs *pIes,
-				       bool resetCountry)
+				       struct bss_config_param *pBssConfig)
 {
 	uint32_t cfgCb = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
@@ -2739,23 +2585,12 @@ QDF_STATUS csr_roam_set_bss_config_cfg(struct mac_context *mac, uint32_t session
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	/* Make sure we have the domain info for the BSS we try to connect to.
-	 * Do we need to worry about sequence for OSs that are not Windows??
-	 */
-	if (bss_desc) {
-		if ((wlan_reg_11d_enabled_on_host(mac->psoc)) && pIes) {
-			if (!pIes->Country.present)
-				csr_apply_channel_power_info_wrapper(mac);
-		}
-	}
 	/* Qos */
 	csr_set_qos_to_cfg(mac, sessionId, pBssConfig->qosType);
 	/* CB */
 	if (CSR_IS_INFRA_AP(pProfile))
 		chan_freq = pProfile->op_freq;
-	else if (bss_desc)
-		chan_freq = bss_desc->chan_freq;
-	if (0 != chan_freq) {
+	if (chan_freq) {
 		/* for now if we are on 2.4 Ghz, CB will be always disabled */
 		if (WLAN_REG_IS_24GHZ_CH_FREQ(chan_freq))
 			cfgCb = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
@@ -2764,18 +2599,8 @@ QDF_STATUS csr_roam_set_bss_config_cfg(struct mac_context *mac, uint32_t session
 	}
 	/* Rate */
 	/* Fixed Rate */
-	if (bss_desc)
-		csr_set_cfg_rate_set(mac, (eCsrPhyMode) pProfile->phyMode,
-				     pProfile, bss_desc, pIes, sessionId);
-	else
-		csr_set_cfg_rate_set_from_profile(mac, pProfile, sessionId);
+	csr_set_cfg_rate_set_from_profile(mac, pProfile, sessionId);
 
-	/* Any roaming related changes should be above this line */
-	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(mac->psoc, sessionId)) {
-		sme_debug("LFR3: Roam synch is in progress Session_id: %d",
-			  sessionId);
-		return QDF_STATUS_SUCCESS;
-	}
 	/* Make this the last CFG to set. The callback will trigger a
 	 * join_req Join time out
 	 */
@@ -2851,7 +2676,7 @@ static void csr_roam_join_handle_profile(struct mac_context *mac_ctx,
 		/* Attempt to start this WDS... */
 		csr_roam_assign_default_param(mac_ctx, cmd);
 		/* For AP WDS, we dont have any BSSDescription */
-		status = csr_roam_start_wds(mac_ctx, session_id, profile, NULL);
+		status = csr_roam_start_wds(mac_ctx, session_id, profile);
 		if (QDF_IS_STATUS_SUCCESS(status))
 			*roam_state = eCsrContinueRoaming;
 		else
@@ -3236,23 +3061,12 @@ static void csr_roam_process_start_bss_success(struct mac_context *mac_ctx,
 		session->connectState = eCSR_ASSOC_STATE_TYPE_WDS_DISCONNECTED;
 
 	bss_desc = &start_bss_rsp->bssDescription;
-	if (CSR_IS_NDI(profile)) {
-		csr_roam_state_change(mac_ctx, eCSR_ROAMING_STATE_JOINED,
-			session_id);
-		csr_roam_save_ndi_connected_info(mac_ctx, session_id, profile,
-						bss_desc);
+	csr_roam_save_connected_information(mac_ctx, session_id, profile);
+	if (CSR_IS_NDI(profile))
 		roam_info->u.pConnectedProfile = &session->connectedProfile;
-		qdf_mem_copy(&roam_info->bssid, &bss_desc->bssId,
-			     sizeof(struct qdf_mac_addr));
-	} else {
-		csr_roam_state_change(mac_ctx, eCSR_ROAMING_STATE_JOINED,
-				session_id);
-	}
 
-	csr_roam_free_connect_profile(&session->connectedProfile);
+	csr_roam_state_change(mac_ctx, eCSR_ROAMING_STATE_JOINED, session_id);
 	csr_roam_free_connected_info(mac_ctx, &session->connectedInfo);
-	csr_roam_save_connected_information(mac_ctx, session_id,
-			profile, bss_desc, NULL);
 	qdf_mem_copy(&roam_info->bssid, &bss_desc->bssId,
 		     sizeof(struct qdf_mac_addr));
 	/* We are done with the IEs so free it */
@@ -3295,11 +3109,6 @@ static void csr_roam_process_start_bss_success(struct mac_context *mac_ctx,
 	 * will trigger the connection start indication in Vista
 	 */
 	roam_info->status_code = eSIR_SME_SUCCESS;
-	roam_info->bss_desc = bss_desc;
-	if (bss_desc)
-		qdf_mem_copy(roam_info->bssid.bytes, bss_desc->bssId,
-			     sizeof(struct qdf_mac_addr));
-
 	csr_roam_call_callback(mac_ctx, session_id, roam_info,
 			       cmd->u.roamCmd.roamId,
 			       roam_status, roam_result);
@@ -3322,7 +3131,6 @@ static bool csr_roam_process_results(struct mac_context *mac_ctx, tSmeCmd *cmd,
 					void *context)
 {
 	bool release_cmd = true;
-	struct bss_description *bss_desc = NULL;
 	struct csr_roam_info *roam_info;
 	uint32_t session_id = cmd->vdev_id;
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
@@ -3356,12 +3164,6 @@ static bool csr_roam_process_results(struct mac_context *mac_ctx, tSmeCmd *cmd,
 							  &roam_result,
 							  roam_info);
 		}
-
-		if (context)
-			bss_desc = (struct bss_description *) context;
-		else
-			bss_desc = NULL;
-		roam_info->bss_desc = bss_desc;
 		csr_roam_call_callback(mac_ctx, session_id, roam_info,
 				       cmd->u.roamCmd.roamId, roam_status,
 				       roam_result);
@@ -3832,12 +3634,9 @@ csr_fill_single_pmk(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 QDF_STATUS
 csr_roam_save_connected_information(struct mac_context *mac,
 				    uint32_t sessionId,
-				    struct csr_roam_profile *pProfile,
-				    struct bss_description *pSirBssDesc,
-				    tDot11fBeaconIEs *pIes)
+				    struct csr_roam_profile *pProfile)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tDot11fBeaconIEs *pIesTemp = pIes;
 	struct csr_roam_session *pSession = NULL;
 	tCsrRoamConnectedProfile *pConnectProfile = NULL;
 
@@ -3854,19 +3653,6 @@ csr_roam_save_connected_information(struct mac_context *mac,
 	pConnectProfile->BSSType = pProfile->BSSType;
 	pConnectProfile->modifyProfileFields.uapsd_mask =
 			pProfile->uapsd_mask;
-	/* Save bssid */
-	if (!pSirBssDesc->beaconInterval)
-		sme_err("ERROR: Beacon interval is ZERO");
-	if (!pIesTemp)
-		status = csr_get_parsed_bss_description_ies(mac, pSirBssDesc,
-							   &pIesTemp);
-
-	/* save ssid */
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		if (!pIes)
-			/* Free memory if it allocated locally */
-			qdf_mem_free(pIesTemp);
-	}
 
 	return status;
 }
@@ -5970,68 +5756,6 @@ csr_roam_get_bss_start_parms(struct mac_context *mac,
 	return QDF_STATUS_SUCCESS;
 }
 
-static void
-csr_roam_get_bss_start_parms_from_bss_desc(
-					struct mac_context *mac,
-					struct bss_description *bss_desc,
-					tDot11fBeaconIEs *pIes,
-					struct csr_roamstart_bssparams *pParam)
-{
-	if (!pParam) {
-		sme_err("BSS param's pointer is NULL");
-		return;
-	}
-
-	pParam->sirNwType = bss_desc->nwType;
-	pParam->cbMode = PHY_SINGLE_CHANNEL_CENTERED;
-	pParam->operation_chan_freq = bss_desc->chan_freq;
-	qdf_mem_copy(&pParam->bssid, bss_desc->bssId,
-						sizeof(struct qdf_mac_addr));
-
-	if (!pIes) {
-		pParam->ssId.length = 0;
-		pParam->operationalRateSet.numRates = 0;
-		sme_err("IEs struct pointer is NULL");
-		return;
-	}
-
-	if (pIes->SuppRates.present) {
-		pParam->operationalRateSet.numRates = pIes->SuppRates.num_rates;
-		if (pIes->SuppRates.num_rates > WLAN_SUPPORTED_RATES_IE_MAX_LEN) {
-			sme_err(
-				"num_rates: %d > max val, resetting",
-				pIes->SuppRates.num_rates);
-			pIes->SuppRates.num_rates =
-				WLAN_SUPPORTED_RATES_IE_MAX_LEN;
-		}
-		qdf_mem_copy(pParam->operationalRateSet.rate,
-			     pIes->SuppRates.rates,
-			     sizeof(*pIes->SuppRates.rates) *
-			     pIes->SuppRates.num_rates);
-	}
-	if (pIes->ExtSuppRates.present) {
-		pParam->extendedRateSet.numRates = pIes->ExtSuppRates.num_rates;
-		if (pIes->ExtSuppRates.num_rates >
-		    SIR_MAC_MAX_NUMBER_OF_RATES) {
-			sme_err("num_rates: %d > max val, resetting",
-				pIes->ExtSuppRates.num_rates);
-			pIes->ExtSuppRates.num_rates =
-				SIR_MAC_MAX_NUMBER_OF_RATES;
-		}
-		qdf_mem_copy(pParam->extendedRateSet.rate,
-			     pIes->ExtSuppRates.rates,
-			     sizeof(*pIes->ExtSuppRates.rates) *
-			     pIes->ExtSuppRates.num_rates);
-	}
-	if (pIes->SSID.present) {
-		pParam->ssId.length = pIes->SSID.num_ssid;
-		qdf_mem_copy(pParam->ssId.ssId, pIes->SSID.ssid,
-			     pParam->ssId.length);
-	}
-	pParam->cbMode =
-		wlan_get_cb_mode(mac, pParam->operation_chan_freq, pIes);
-}
-
 static void csr_roam_determine_max_rate_for_ad_hoc(struct mac_context *mac,
 						   tSirMacRateSet *pSirRateSet)
 {
@@ -6126,9 +5850,7 @@ QDF_STATUS csr_roam_issue_start_bss(struct mac_context *mac, uint32_t sessionId,
 
 void csr_roam_prepare_bss_params(struct mac_context *mac, uint32_t sessionId,
 					struct csr_roam_profile *pProfile,
-					struct bss_description *bss_desc,
-					struct bss_config_param *pBssConfig,
-					tDot11fBeaconIEs *pIes)
+					struct bss_config_param *pBssConfig)
 {
 	ePhyChanBondState cbMode = PHY_SINGLE_CHANNEL_CENTERED;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
@@ -6139,31 +5861,22 @@ void csr_roam_prepare_bss_params(struct mac_context *mac, uint32_t sessionId,
 		return;
 	}
 
-	if (bss_desc) {
-		csr_roam_get_bss_start_parms_from_bss_desc(mac, bss_desc, pIes,
-							  &pSession->bssParams);
-		if (CSR_IS_NDI(pProfile)) {
-			qdf_copy_macaddr(&pSession->bssParams.bssid,
-				&pSession->self_mac_addr);
-		}
-	} else {
-		csr_roam_get_bss_start_parms(mac, pProfile,
-					     &pSession->bssParams,
-					     skip_hostapd_rate);
-		/* Use the first SSID */
-		if (pProfile->SSIDs.numOfSSIDs)
-			qdf_mem_copy(&pSession->bssParams.ssId,
-				     pProfile->SSIDs.SSIDList,
-				     sizeof(tSirMacSSid));
-		if (pProfile->BSSIDs.numOfBSSIDs)
-			/* Use the first BSSID */
-			qdf_mem_copy(&pSession->bssParams.bssid,
-				     pProfile->BSSIDs.bssid,
-				     sizeof(struct qdf_mac_addr));
-		else
-			qdf_mem_zero(&pSession->bssParams.bssid,
-				    sizeof(struct qdf_mac_addr));
-	}
+	csr_roam_get_bss_start_parms(mac, pProfile, &pSession->bssParams,
+				     skip_hostapd_rate);
+	/* Use the first SSID */
+	if (pProfile->SSIDs.numOfSSIDs)
+		qdf_mem_copy(&pSession->bssParams.ssId,
+			     pProfile->SSIDs.SSIDList,
+			     sizeof(tSirMacSSid));
+	if (pProfile->BSSIDs.numOfBSSIDs)
+		/* Use the first BSSID */
+		qdf_mem_copy(&pSession->bssParams.bssid,
+			     pProfile->BSSIDs.bssid,
+			     sizeof(struct qdf_mac_addr));
+	else
+		qdf_mem_zero(&pSession->bssParams.bssid,
+			    sizeof(struct qdf_mac_addr));
+
 	/* Set operating frequency in pProfile which will be used */
 	/* in csr_roam_set_bss_config_cfg() to determine channel bonding */
 	/* mode and will be configured in CFG later */
@@ -6173,18 +5886,12 @@ void csr_roam_prepare_bss_params(struct mac_context *mac, uint32_t sessionId,
 		sme_err("CSR cannot find a channel to start");
 	else {
 		csr_roam_determine_max_rate_for_ad_hoc(mac,
-						       &pSession->bssParams.
-						       operationalRateSet);
+				&pSession->bssParams.operationalRateSet);
 		if (CSR_IS_INFRA_AP(pProfile)) {
-			if (WLAN_REG_IS_24GHZ_CH_FREQ(pProfile->op_freq)) {
-				cbMode =
-					mac->roam.configParam.
-					channelBondingMode24GHz;
-			} else {
-				cbMode =
-					mac->roam.configParam.
-					channelBondingMode5GHz;
-			}
+			if (WLAN_REG_IS_24GHZ_CH_FREQ(pProfile->op_freq))
+				cbMode = mac->roam.configParam.channelBondingMode24GHz;
+			else
+				cbMode = mac->roam.configParam.channelBondingMode5GHz;
 			sme_debug("## cbMode %d", cbMode);
 			pBssConfig->cbMode = cbMode;
 			pSession->bssParams.cbMode = cbMode;
@@ -6281,8 +5988,7 @@ void csr_clear_sae_single_pmk(struct wlan_objmgr_psoc *psoc,
 #endif
 
 static QDF_STATUS csr_roam_start_wds(struct mac_context *mac, uint32_t sessionId,
-				     struct csr_roam_profile *pProfile,
-				     struct bss_description *bss_desc)
+				     struct csr_roam_profile *pProfile)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
@@ -6305,10 +6011,8 @@ static QDF_STATUS csr_roam_start_wds(struct mac_context *mac, uint32_t sessionId
 	 * need to adopt all Bss configuration parameters from the
 	 * Profile.
 	 */
-	status = csr_roam_prepare_bss_config_from_profile(mac,
-							pProfile,
-							&bssConfig,
-							bss_desc);
+	status = csr_roam_prepare_bss_config_from_profile(mac, pProfile,
+							  &bssConfig);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/* Save profile for late use */
 		csr_free_roam_profile(mac, sessionId);
@@ -6321,11 +6025,9 @@ static QDF_STATUS csr_roam_start_wds(struct mac_context *mac, uint32_t sessionId
 		}
 		/* Prepare some more parameters for this WDS */
 		csr_roam_prepare_bss_params(mac, sessionId, pProfile,
-					NULL, &bssConfig, NULL);
+					    &bssConfig);
 		status = csr_roam_set_bss_config_cfg(mac, sessionId,
-						pProfile, NULL,
-						&bssConfig, NULL,
-						false);
+						pProfile, &bssConfig);
 	}
 
 	return status;

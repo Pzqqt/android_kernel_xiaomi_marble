@@ -639,7 +639,6 @@ struct csr_config_params {
 
 struct csr_roam_info {
 	struct csr_roam_profile *pProfile;
-	struct bss_description *bss_desc;
 	uint32_t nBeaconLength;
 	uint32_t nAssocReqLength;
 	uint32_t nAssocRspLength;

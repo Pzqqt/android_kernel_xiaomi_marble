@@ -2124,12 +2124,6 @@ bool csr_is_bssid_match(struct qdf_mac_addr *pProfBssid,
 	return fMatch;
 }
 
-bool csr_rates_is_dot11_rate_supported(struct mac_context *mac_ctx,
-				       uint8_t rate)
-{
-	return wlan_rates_is_dot11_rate_supported(mac_ctx, rate);
-}
-
 void csr_release_profile(struct mac_context *mac,
 			 struct csr_roam_profile *pProfile)
 {

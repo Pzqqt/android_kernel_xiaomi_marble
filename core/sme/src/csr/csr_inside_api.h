@@ -155,9 +155,7 @@ csr_issue_set_context_req_helper(struct mac_context *mac,
 QDF_STATUS
 csr_roam_save_connected_information(struct mac_context *mac,
 				    uint32_t sessionId,
-				    struct csr_roam_profile *pProfile,
-				    struct bss_description *pSirBssDesc,
-				    tDot11fBeaconIEs *pIes);
+				    struct csr_roam_profile *pProfile);
 
 void csr_roam_check_for_link_status_change(struct mac_context *mac,
 					tSirSmeRsp *pSirMsg);
@@ -607,15 +605,12 @@ QDF_STATUS csr_set_ht2040_mode(struct mac_context *mac, uint32_t sessionId,
 QDF_STATUS
 csr_roam_prepare_bss_config_from_profile(struct mac_context *mac_ctx,
 					 struct csr_roam_profile *profile,
-					 struct bss_config_param *bss_cfg,
-					 struct bss_description *bss_desc);
+					 struct bss_config_param *bss_cfg);
 
 void
 csr_roam_prepare_bss_params(struct mac_context *mac_ctx, uint32_t session_id,
 			    struct csr_roam_profile *profile,
-			    struct bss_description *bss_desc,
-			    struct bss_config_param *bss_cfg,
-			    tDot11fBeaconIEs *ies);
+			    struct bss_config_param *bss_cfg);
 
 /**
  * csr_remove_bssid_from_scan_list() - remove the bssid from
@@ -633,9 +628,7 @@ void csr_remove_bssid_from_scan_list(struct mac_context *mac_ctx,
 QDF_STATUS
 csr_roam_set_bss_config_cfg(struct mac_context *mac_ctx, uint32_t session_id,
 			    struct csr_roam_profile *profile,
-			    struct bss_description *bss_desc,
-			    struct bss_config_param *bss_cfg,
-			    tDot11fBeaconIEs *ies, bool reset_country);
+			    struct bss_config_param *bss_cfg);
 
 void csr_prune_channel_list_for_mode(struct mac_context *mac,
 				     struct csr_channel *pChannelList);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,11 +32,6 @@
 QDF_STATUS csr_roam_start_ndi(struct mac_context *mac_ctx, uint32_t session_id,
 			      struct csr_roam_profile *profile);
 
-void csr_roam_save_ndi_connected_info(struct mac_context *mac_ctx,
-				      uint32_t session_id,
-				      struct csr_roam_profile *roam_profile,
-				      struct bss_description *bss_desc);
-
 void csr_roam_update_ndp_return_params(struct mac_context *mac_ctx,
 					uint32_t result,
 					uint32_t *roam_status,
@@ -50,13 +45,6 @@ static inline QDF_STATUS csr_roam_start_ndi(struct mac_context *mac_ctx,
 					struct csr_roam_profile *profile)
 {
 	return QDF_STATUS_SUCCESS;
-}
-
-static inline void csr_roam_save_ndi_connected_info(struct mac_context *mac_ctx,
-					uint32_t session_id,
-					struct csr_roam_profile *roam_profile,
-					struct bss_description *bss_desc)
-{
 }
 
 static inline void csr_roam_update_ndp_return_params(struct mac_context *mac_ctx,

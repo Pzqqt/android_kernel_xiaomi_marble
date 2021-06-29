@@ -200,7 +200,6 @@ tAniEdType csr_translate_encrypt_type_to_ed_type(
 
 bool csr_is_bssid_match(struct qdf_mac_addr *pProfBssid,
 			struct qdf_mac_addr *BssBssid);
-bool csr_rates_is_dot11_rate_supported(struct mac_context *mac_ctx, uint8_t rate);
 enum bss_type csr_translate_bsstype_to_mac_type(eCsrRoamBssType csrtype);
 /* Caller allocates memory for pIEStruct */
 QDF_STATUS csr_parse_bss_description_ies(struct mac_context *mac_ctx,

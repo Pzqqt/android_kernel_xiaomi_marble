@@ -44,56 +44,24 @@ QDF_STATUS csr_roam_start_ndi(struct mac_context *mac_ctx, uint32_t session,
 
 	/* Build BSS configuration from profile */
 	status = csr_roam_prepare_bss_config_from_profile(mac_ctx, profile,
-						    &bss_cfg, NULL);
+							  &bss_cfg);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		mac_ctx->roam.roamSession[session].bssParams.uCfgDot11Mode
 			= bss_cfg.uCfgDot11Mode;
 		/* Copy profile parameters to PE session */
-		csr_roam_prepare_bss_params(mac_ctx, session, profile, NULL,
-			&bss_cfg, NULL);
+		csr_roam_prepare_bss_params(mac_ctx, session, profile,
+					    &bss_cfg);
 		/*
 		 * Following routine will eventually call
 		 * csrRoamIssueStartBss through csrRoamCcmCfgSetCallback
 		 */
 		status = csr_roam_set_bss_config_cfg(mac_ctx, session, profile,
-						NULL, &bss_cfg, NULL, false);
+						     &bss_cfg);
 	}
 
 	sme_debug("profile config validity: %d", status);
 
 	return status;
-}
-
-/**
- * csr_roam_save_ndi_connected_info() - Save connected profile parameters
- * @mac_ctx: Global MAC context
- * @session_id: Session ID
- * @roam_profile: Profile given for starting BSS
- * @bssdesc: BSS description from start BSS response
- *
- * Saves NDI profile parameters into session's connected profile.
- *
- * Return: None
- */
-void csr_roam_save_ndi_connected_info(struct mac_context *mac_ctx,
-				      uint32_t session_id,
-				      struct csr_roam_profile *roam_profile,
-				      struct bss_description *bssdesc)
-{
-	struct csr_roam_session *roam_session;
-	tCsrRoamConnectedProfile *connect_profile;
-
-	roam_session = CSR_GET_SESSION(mac_ctx, session_id);
-	if (!roam_session) {
-		sme_err("session %d not found", session_id);
-		return;
-	}
-
-	connect_profile = &roam_session->connectedProfile;
-	qdf_mem_zero(connect_profile, sizeof(*connect_profile));
-	connect_profile->BSSType = roam_profile->BSSType;
-	connect_profile->modifyProfileFields.uapsd_mask =
-		roam_profile->uapsd_mask;
 }
 
 /**
