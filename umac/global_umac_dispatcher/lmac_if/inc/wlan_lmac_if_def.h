@@ -31,9 +31,6 @@
 #ifdef WLAN_ATF_ENABLE
 #include "wlan_atf_utils_defs.h"
 #endif
-#ifdef QCA_SUPPORT_SON
-#include <wlan_son_tgt_api.h>
-#endif
 #ifdef WLAN_SA_API_ENABLE
 #include "wlan_sa_api_utils_defs.h"
 #endif
@@ -1083,6 +1080,59 @@ struct wlan_lmac_if_gpio_tx_ops {
 #endif
 
 /**
+ * wlan_lmac_if_son_tx_ops: son tx operations
+ * son_send_null: send null packet
+ * get_peer_rate: get peer rate
+ * peer_ext_stats_enable: Enable peer ext stats
+ */
+struct wlan_lmac_if_son_tx_ops {
+	/* Function pointer to enable/disable band steering */
+	QDF_STATUS (*son_send_null)(struct wlan_objmgr_pdev *pdev,
+				    u_int8_t *macaddr,
+				    struct wlan_objmgr_vdev *vdev);
+
+	u_int32_t  (*get_peer_rate)(struct wlan_objmgr_peer *peer,
+				    u_int8_t type);
+
+	QDF_STATUS (*peer_ext_stats_enable)(struct wlan_objmgr_pdev *pdev,
+					    u_int8_t *peer_addr,
+					    struct wlan_objmgr_vdev *vdev,
+					    u_int32_t stats_count,
+					    u_int32_t enable);
+};
+
+/**
+ * wlan_lmac_if_son_rx_ops: son rx operations
+ * deliver_event: deliver mlme and other mac events
+ * process_mgmt_frame: process mgmt frames
+ * config_set: route son config from cfg80211
+ * config_get: route son config from cfg80211
+ * config_ext_set_get: route extended configs from cfg80211
+ */
+struct wiphy;
+struct wireless_dev;
+struct wlan_lmac_if_son_rx_ops {
+	int (*deliver_event)(struct wlan_objmgr_vdev *vdev,
+			     struct wlan_objmgr_peer *peer,
+			     uint32_t event,
+			     void *event_data);
+	int (*process_mgmt_frame)(struct wlan_objmgr_vdev *vdev,
+				  struct wlan_objmgr_peer *peer,
+				  int subtype, u_int8_t *frame,
+				  u_int16_t frame_len,
+				  void *meta_data);
+	int (*config_set)(struct wiphy *wiphy,
+			  struct wireless_dev *wdev,
+			  void *params);
+	int (*config_get)(struct wiphy *wiphy,
+			  struct wireless_dev *wdev,
+			  void *params);
+	int (*config_ext_set_get)(struct net_device *dev,
+				  void *req,
+				  void *wri);
+};
+
+/**
  * struct wlan_lmac_if_tx_ops - south bound tx function pointers
  * @mgmt_txrx_tx_ops: mgmt txrx tx ops
  * @scan: scan tx ops
@@ -1113,7 +1163,6 @@ struct wlan_lmac_if_tx_ops {
 #ifdef QCA_SUPPORT_SON
 	struct wlan_lmac_if_son_tx_ops son_tx_ops;
 #endif
-
 #ifdef WLAN_ATF_ENABLE
 	struct wlan_lmac_if_atf_tx_ops atf_tx_ops;
 #endif
@@ -1890,6 +1939,7 @@ struct wlan_lmac_if_rx_ops {
 #endif
 
 	struct wlan_lmac_if_ftm_rx_ops ftm_rx_ops;
+	struct wlan_lmac_if_son_rx_ops son_rx_ops;
 };
 
 /* Function pointer to call legacy tx_ops registration in OL/WMA.
