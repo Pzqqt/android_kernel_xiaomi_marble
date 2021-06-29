@@ -1336,6 +1336,8 @@ static int handle_session_property(struct msm_vidc_inst *inst,
 		break;
 	case HFI_PROP_PICTURE_TYPE:
 		inst->hfi_frame_info.picture_type = payload_ptr[0];
+		if (inst->hfi_frame_info.picture_type & HFI_PICTURE_B)
+			inst->has_bframe = true;
 		break;
 	case HFI_PROP_NO_OUTPUT:
 		if (port != INPUT_PORT) {

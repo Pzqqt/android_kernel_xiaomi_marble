@@ -76,8 +76,11 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 
 		vpp_cycles = mbs_per_second * vpp_cycles_per_mb /
 			inst->capabilities->cap[PIPE].value;
-		/* 1.25 factor for IBP GOP structure */
-		if (inst->capabilities->cap[B_FRAME].value)
+
+		/* Factor 1.25 for IbP and 1.375 for I1B2b1P GOP structure */
+		if (inst->capabilities->cap[B_FRAME].value > 1)
+			vpp_cycles += (vpp_cycles / 4) + (vpp_cycles / 8);
+		else if (inst->capabilities->cap[B_FRAME].value)
 			vpp_cycles += vpp_cycles / 4;
 		/* 21 / 20 is minimum overhead factor */
 		vpp_cycles += max(div_u64(vpp_cycles, 20), fw_vpp_cycles);
@@ -133,7 +136,8 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 			vpp_cycles += div_u64(vpp_cycles * 59, 1000);
 
 		/* VSP */
-		base_cycles = inst->capabilities->cap[MB_CYCLES_VSP].value;
+		base_cycles = inst->has_bframe ?
+				80 : inst->capabilities->cap[MB_CYCLES_VSP].value;
 		vsp_cycles = fps * data_size * 8;
 
 		if (inst->codec == MSM_VIDC_VP9) {
