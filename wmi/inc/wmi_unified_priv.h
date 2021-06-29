@@ -1242,6 +1242,9 @@ QDF_STATUS (*send_set_mimogain_table_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_packet_power_info_get_cmd)(wmi_unified_t wmi_handle,
 		      struct packet_power_info_params *param);
 
+QDF_STATUS (*send_get_halphy_cal_status_cmd)(wmi_unified_t wmi_handle,
+					     struct halphy_cal_status_params *param);
+
 QDF_STATUS (*send_set_ht_ie_cmd)(wmi_unified_t wmi_handle,
 		struct ht_ie_params *param);
 
@@ -2547,6 +2550,10 @@ QDF_STATUS (*send_big_data_stats_request_cmd)(
 QDF_STATUS (*extract_dpd_status_ev_param)(wmi_unified_t wmi_handle,
 					  void *evt_buf,
 					  struct wmi_host_pdev_get_dpd_status_event *param);
+
+QDF_STATUS (*extract_halphy_cal_status_ev_param)(wmi_unified_t wmi_handle,
+						 void *evt_buf,
+						 struct wmi_host_pdev_get_halphy_cal_status_event *param);
 
 QDF_STATUS
 (*extract_install_key_comp_event)(wmi_unified_t wmi_handle,

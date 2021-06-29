@@ -15120,6 +15120,29 @@ extract_dpd_status_ev_param_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS
+extract_halphy_cal_status_ev_param_tlv(wmi_unified_t wmi_handle,
+				       void *evt_buf,
+				       struct wmi_host_pdev_get_halphy_cal_status_event *param)
+{
+	WMI_PDEV_GET_HALPHY_CAL_STATUS_EVENTID_param_tlvs *param_buf;
+	wmi_pdev_get_halphy_cal_status_evt_fixed_param *halphy_cal_status;
+
+	param_buf = (WMI_PDEV_GET_HALPHY_CAL_STATUS_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		wmi_err("Invalid get halphy cal status event");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	halphy_cal_status = param_buf->fixed_param;
+	param->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host
+		(wmi_handle, halphy_cal_status->pdev_id);
+	param->halphy_cal_valid_bmap = halphy_cal_status->halphy_cal_valid_bmap;
+	param->halphy_cal_status = halphy_cal_status->halphy_cal_status;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * extract_install_key_comp_event_tlv() - extract install key complete event tlv
  * @wmi_handle: wmi handle
@@ -15536,6 +15559,7 @@ struct wmi_ops tlv_ops =  {
 	.send_set_tpc_power_cmd = send_set_tpc_power_cmd_tlv,
 	.extract_dpd_status_ev_param = extract_dpd_status_ev_param_tlv,
 	.extract_install_key_comp_event = extract_install_key_comp_event_tlv,
+	.extract_halphy_cal_status_ev_param = extract_halphy_cal_status_ev_param_tlv,
 };
 
 /**
@@ -15946,6 +15970,8 @@ event_ids[wmi_roam_scan_chan_list_id] =
 	event_ids[wmi_vdev_smart_monitor_event_id] =
 			WMI_VDEV_SMART_MONITOR_EVENTID;
 #endif
+	event_ids[wmi_pdev_get_halphy_cal_status_event_id] =
+			WMI_PDEV_GET_HALPHY_CAL_STATUS_EVENTID;
 }
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
@@ -16354,6 +16380,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 #endif
 	wmi_service[wmi_service_ampdu_tx_buf_size_256_support] =
 			WMI_SERVICE_AMPDU_TX_BUF_SIZE_256_SUPPORT;
+	wmi_service[wmi_service_halphy_cal_status] =
+			WMI_SERVICE_HALPHY_CAL_STATUS;
 }
 
 /**

@@ -4675,6 +4675,7 @@ typedef enum {
 #ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 	wmi_vdev_smart_monitor_event_id,
 #endif
+	wmi_pdev_get_halphy_cal_status_event_id,
 	wmi_events_max,
 } wmi_conv_event_id;
 
@@ -5262,7 +5263,7 @@ typedef enum {
 #endif
 	wmi_service_sae_eapol_offload_support,
 	wmi_service_ampdu_tx_buf_size_256_support,
-
+	wmi_service_halphy_cal_status,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
@@ -8029,6 +8030,12 @@ enum wmi_host_dpd_status {
 struct wmi_host_pdev_get_dpd_status_event {
 	uint32_t pdev_id;
 	enum wmi_host_dpd_status dpd_status;
+};
+
+struct wmi_host_pdev_get_halphy_cal_status_event {
+	uint32_t pdev_id;
+	uint32_t halphy_cal_valid_bmap;
+	uint32_t halphy_cal_status;
 };
 
 /**
