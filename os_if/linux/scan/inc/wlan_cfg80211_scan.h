@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -153,6 +153,8 @@ struct scan_req {
  * inapplicable.
  * @dwell_time_passive_6g: 6 GHz specific passive dwell time. Ignored if zero or
  * inapplicable.
+ * @scan_f_2ghz: Scan only 2GHz channels
+ * @scan_f_5ghz: Scan only 5+6GHz channels
  */
 struct scan_params {
 	uint8_t source;
@@ -167,6 +169,8 @@ struct scan_params {
 	uint32_t dwell_time_passive;
 	uint32_t dwell_time_active_6g;
 	uint32_t dwell_time_passive_6g;
+	bool scan_f_2ghz;
+	bool scan_f_5ghz;
 };
 
 /**

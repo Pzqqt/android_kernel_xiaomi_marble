@@ -1512,6 +1512,14 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 	if (qdf_is_macaddr_zero(&req->scan_req.bssid_list[0]))
 		qdf_set_macaddr_broadcast(&req->scan_req.bssid_list[0]);
 
+	if (params->scan_f_2ghz && !params->scan_f_5ghz) {
+		req->scan_req.scan_f_2ghz = true;
+		req->scan_req.scan_f_5ghz = false;
+	} else if (!params->scan_f_2ghz && params->scan_f_5ghz) {
+		req->scan_req.scan_f_2ghz = false;
+		req->scan_req.scan_f_5ghz = true;
+	}
+
 	if (request->n_channels) {
 #ifdef WLAN_POLICY_MGR_ENABLE
 		bool ap_or_go_present =
@@ -1540,17 +1548,25 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 					continue;
 			}
 #endif
-			req->scan_req.chan_list.chan[num_chan].freq = c_freq;
-			band = util_scan_scm_freq_to_band(c_freq);
-			if (band == WLAN_BAND_2_4_GHZ)
-				req->scan_req.chan_list.chan[num_chan].phymode =
-					SCAN_PHY_MODE_11G;
-			else
-				req->scan_req.chan_list.chan[num_chan].phymode =
-					SCAN_PHY_MODE_11A;
-			num_chan++;
-			if (num_chan >= NUM_CHANNELS)
-				break;
+
+			if ((req->scan_req.scan_f_2ghz &&
+			     WLAN_REG_IS_24GHZ_CH_FREQ(c_freq)) ||
+			    (req->scan_req.scan_f_5ghz &&
+			     (WLAN_REG_IS_5GHZ_CH_FREQ(c_freq) ||
+			      WLAN_REG_IS_6GHZ_CHAN_FREQ(c_freq)))) {
+				req->scan_req.chan_list.chan[num_chan].freq =
+									c_freq;
+				band = util_scan_scm_freq_to_band(c_freq);
+				if (band == WLAN_BAND_2_4_GHZ)
+					req->scan_req.chan_list.chan[num_chan].phymode =
+						SCAN_PHY_MODE_11G;
+				else
+					req->scan_req.chan_list.chan[num_chan].phymode =
+						SCAN_PHY_MODE_11A;
+				num_chan++;
+				if (num_chan >= NUM_CHANNELS)
+					break;
+			}
 		}
 	}
 	if (!num_chan) {
