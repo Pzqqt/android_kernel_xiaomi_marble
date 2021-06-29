@@ -124,8 +124,11 @@ struct dp_spt_page_desc_list {
 	uint16_t num_spt_pages;
 };
 
+/* HW reading 8 bytes for VA */
+#define DP_CC_HW_READ_BYTES 8
 #define DP_CC_SPT_PAGE_UPDATE_VA(_page_base_va, _index, _desc_va) \
-	{ (_page_base_va)[_index] = (uintptr_t)(_desc_va); }
+	{ *((uintptr_t *)((_page_base_va) + (_index) * DP_CC_HW_READ_BYTES)) \
+	= (uintptr_t)(_desc_va); }
 
 /**
  * struct dp_tx_bank_profile - DP wrapper for TCL banks
@@ -326,14 +329,14 @@ static inline uint32_t dp_cc_desc_id_generate(uint16_t ppt_index,
  *
  * Return: TX/RX Desc virtual address
  */
-static inline void *dp_cc_desc_find(struct dp_soc *soc,
-				    uint32_t desc_id,
-				    bool page_4k_align)
+static inline uintptr_t dp_cc_desc_find(struct dp_soc *soc,
+					uint32_t desc_id,
+					bool page_4k_align)
 {
 	struct dp_soc_be *be_soc;
 	struct dp_hw_cookie_conversion_t *cc_ctx;
 	uint16_t ppt_page_id, spt_va_id;
-	uint64_t *spt_page_va;
+	uint8_t *spt_page_va;
 
 	be_soc = dp_get_be_soc_from_dp_soc(soc);
 	cc_ctx = &be_soc->hw_cc_ctx;
@@ -357,16 +360,13 @@ static inline void *dp_cc_desc_find(struct dp_soc *soc,
 	/*
 	 * ppt index in cmem is same order where the page in the
 	 * page desc array during initialization.
-	 * entry size in DDR page is 64 bits, then
-	 * (1) 64 bits OS, (uint64_t *) --> (void *) conversion, no issue.
-	 * (2) 32 bits OS, TX/RX Desc VA size is 32bits, (uint64_t *) -->
-	 * (void *) conversion, lower 32 bits from uint64_t is saved, no issue
-	 * as higer 32 bits is 0.
+	 * entry size in DDR page is 64 bits, for 32 bits system,
+	 * only lower 32 bits VA value is needed.
 	 */
-	spt_page_va =
-		(uint64_t *)cc_ctx->page_desc_base[ppt_page_id].page_v_addr;
+	spt_page_va = cc_ctx->page_desc_base[ppt_page_id].page_v_addr;
 
-	return (void *)(uintptr_t)(*(spt_page_va  + spt_va_id));
+	return (*((uintptr_t *)(spt_page_va  +
+				spt_va_id * DP_CC_HW_READ_BYTES)));
 }
 
 #ifdef WLAN_FEATURE_NEAR_FULL_IRQ

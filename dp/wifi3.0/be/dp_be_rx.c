@@ -175,7 +175,7 @@ more_data:
 			break;
 		}
 
-		rx_desc = (struct dp_rx_desc *)(uintptr_t)
+		rx_desc = (struct dp_rx_desc *)
 				hal_rx_get_reo_desc_va(ring_desc);
 		dp_rx_desc_sw_cc_check(soc, rx_buf_cookie, &rx_desc);
 

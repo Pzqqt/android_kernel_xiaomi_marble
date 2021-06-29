@@ -306,12 +306,18 @@ static inline uint8_t hal_rx_wbm_get_cookie_convert_done(void *hal_desc)
  *
  * Return: RX descriptor virtual address
  */
-static inline uint64_t hal_rx_wbm_get_desc_va(void *hal_desc)
+static inline uintptr_t hal_rx_wbm_get_desc_va(void *hal_desc)
 {
-	return HAL_RX_GET(hal_desc, WBM2SW_COMPLETION_RING_RX,
-			  BUFFER_VIRT_ADDR_31_0) |
-		(((uint64_t)HAL_RX_GET(hal_desc, WBM2SW_COMPLETION_RING_RX,
-			   BUFFER_VIRT_ADDR_63_32)) << 32);
+	uint64_t va_from_desc;
+
+	va_from_desc = HAL_RX_GET(hal_desc,
+				  WBM2SW_COMPLETION_RING_RX,
+				  BUFFER_VIRT_ADDR_31_0) |
+			(((uint64_t)HAL_RX_GET(hal_desc,
+					       WBM2SW_COMPLETION_RING_RX,
+					       BUFFER_VIRT_ADDR_63_32)) << 32);
+
+	return (uintptr_t)va_from_desc;
 }
 
 #define HAL_RX_WBM_FIRST_MSDU_GET(wbm_desc)		\
@@ -417,12 +423,18 @@ hal_rx_msdu_desc_info_get_be(void *desc_addr,
  *
  * Return: RX descriptor virtual address
  */
-static inline uint64_t hal_rx_get_reo_desc_va(void *reo_desc)
+static inline uintptr_t hal_rx_get_reo_desc_va(void *reo_desc)
 {
-	return HAL_RX_GET(reo_desc, REO_DESTINATION_RING,
-			  BUFFER_VIRT_ADDR_31_0) |
-		(((uint64_t)HAL_RX_GET(reo_desc, REO_DESTINATION_RING,
-			   BUFFER_VIRT_ADDR_63_32)) << 32);
+	uint64_t va_from_desc;
+
+	va_from_desc = HAL_RX_GET(reo_desc,
+				  REO_DESTINATION_RING,
+				  BUFFER_VIRT_ADDR_31_0) |
+		(((uint64_t)HAL_RX_GET(reo_desc,
+				       REO_DESTINATION_RING,
+				       BUFFER_VIRT_ADDR_63_32)) << 32);
+
+	return (uintptr_t)va_from_desc;
 }
 
 #endif /* _HAL_BE_RX_H_ */
