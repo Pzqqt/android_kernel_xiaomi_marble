@@ -504,7 +504,7 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 	if (QDF_STATUS_E_FAILURE == csr_roam_get_session_id_from_bssid(mac_ctx,
 			&rrm_ctx->sessionBssId, &session_id)) {
 		sme_debug("BSSID mismatch, using current session_id");
-		session_id = mac_ctx->roam.roamSession->sessionId;
+		session_id = mac_ctx->roam.roamSession->vdev_id;
 	}
 	status = sme_scan_get_result(mac_handle, (uint8_t)session_id,
 				     filter, &result_handle);

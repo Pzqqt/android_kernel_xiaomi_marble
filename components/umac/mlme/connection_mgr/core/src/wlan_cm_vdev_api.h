@@ -241,8 +241,19 @@ void cm_csr_set_ss_none(uint8_t vdev_id);
 void cm_csr_set_joining(uint8_t vdev_id);
 void cm_csr_set_joined(uint8_t vdev_id);
 void cm_csr_set_idle(uint8_t vdev_id);
-int8_t cm_get_rssi_by_bssid(struct wlan_objmgr_pdev *pdev,
-			    struct qdf_mac_addr *bssid);
+
+/**
+ * cm_get_rssi_snr_by_bssid() - get rssi and snr by bssid
+ * @pdev: Pointer to pdev
+ * @bssid: bssid to get rssi and snr
+ * @rssi: pointer to fill rssi
+ * @snr: poiter to fill snr
+ *
+ * Return: none
+ */
+QDF_STATUS cm_get_rssi_snr_by_bssid(struct wlan_objmgr_pdev *pdev,
+				    struct qdf_mac_addr *bssid,
+				    int8_t *rssi, int8_t *snr);
 
 static inline QDF_STATUS
 cm_ext_hdl_create(struct wlan_objmgr_vdev *vdev, cm_ext_t **ext_cm_ptr)

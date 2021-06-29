@@ -241,17 +241,22 @@ end:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 }
 
-int8_t cm_get_rssi_by_bssid(struct wlan_objmgr_pdev *pdev,
-			    struct qdf_mac_addr *bssid)
+QDF_STATUS cm_get_rssi_snr_by_bssid(struct wlan_objmgr_pdev *pdev,
+				    struct qdf_mac_addr *bssid,
+				    int8_t *rssi, int8_t *snr)
 {
 	struct scan_filter *scan_filter;
-	int8_t rssi = 0;
 	qdf_list_t *list = NULL;
 	struct scan_cache_node *first_node = NULL;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
+	if (snr)
+		*snr = 0;
+	if (rssi)
+		*rssi = 0;
 	scan_filter = qdf_mem_malloc(sizeof(*scan_filter));
 	if (!scan_filter)
-		return rssi;
+		return QDF_STATUS_E_NOMEM;
 
 	scan_filter->num_of_bssid = 1;
 	qdf_mem_copy(scan_filter->bssid_list[0].bytes,
@@ -262,17 +267,23 @@ int8_t cm_get_rssi_by_bssid(struct wlan_objmgr_pdev *pdev,
 
 	if (!list || (list && !qdf_list_size(list))) {
 		mlme_debug("scan list empty");
+		status = QDF_STATUS_E_NULL_VALUE;
 		goto error;
 	}
 
 	qdf_list_peek_front(list, (qdf_list_node_t **) &first_node);
-	if (first_node && first_node->entry)
-		rssi = first_node->entry->rssi_raw;
+	if (first_node && first_node->entry) {
+		if (rssi)
+			*rssi = first_node->entry->rssi_raw;
+		if (snr)
+			*snr = first_node->entry->snr;
+	}
+
 error:
 	if (list)
 		wlan_scan_purge_results(list);
 
-	return rssi;
+	return status;
 }
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
@@ -688,7 +699,7 @@ void cm_connect_info(struct wlan_objmgr_vdev *vdev, bool connect_success,
 		conn_stats.ssid_len = WLAN_SSID_MAX_LEN;
 	qdf_mem_copy(conn_stats.ssid, ssid->ssid, conn_stats.ssid_len);
 
-	conn_stats.rssi = cm_get_rssi_by_bssid(pdev, bssid);
+	cm_get_rssi_snr_by_bssid(pdev, bssid, &conn_stats.rssi, NULL);
 	conn_stats.est_link_speed = 0;
 
 	des_chan = wlan_vdev_mlme_get_des_chan(vdev);
@@ -885,7 +896,7 @@ void cm_get_sta_cxn_info(struct wlan_objmgr_vdev *vdev,
 			     "\n\tssid: %.*s", ssid.length,
 			     ssid.ssid);
 
-	rssi = cm_get_rssi_by_bssid(pdev, &bss_peer_mac);
+	cm_get_rssi_snr_by_bssid(pdev, &bss_peer_mac, &rssi, NULL);
 	len += qdf_scnprintf(buf + len, buf_sz - len,
 			     "\n\trssi: %d", rssi);
 

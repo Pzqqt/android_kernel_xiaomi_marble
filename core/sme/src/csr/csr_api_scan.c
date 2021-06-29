@@ -582,44 +582,6 @@ static void csr_save_tx_power_to_cfg(struct mac_context *mac,
 	qdf_mem_free(p_buf);
 }
 
-/**
- * csr_get_fst_bssdescr_ptr() - This function returns the pointer to first bss
- * description from scan handle
- * @result_handle: an object for the result.
- *
- * Return: first bss descriptor from the scan handle.
- */
-struct bss_description*
-csr_get_fst_bssdescr_ptr(tScanResultHandle result_handle)
-{
-	tListElem *first_element = NULL;
-	struct tag_csrscan_result *scan_result = NULL;
-	struct scan_result_list *bss_list =
-				(struct scan_result_list *)result_handle;
-
-	if (!bss_list) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			FL("Empty bss_list"));
-		return NULL;
-	}
-	if (csr_ll_is_list_empty(&bss_list->List, LL_ACCESS_NOLOCK)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			FL("bss_list->List is empty"));
-		return NULL;
-	}
-	first_element = csr_ll_peek_head(&bss_list->List, LL_ACCESS_NOLOCK);
-	if (!first_element) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			FL("peer head return NULL"));
-		return NULL;
-	}
-
-	scan_result = GET_BASE_ADDR(first_element, struct tag_csrscan_result,
-					Link);
-
-	return &scan_result->Result.BssDescriptor;
-}
-
 static void csr_fill_rsn_auth_type(enum csr_akm_type *auth_type, uint32_t akm)
 {
 	/* Try the more preferred ones first. */
@@ -884,8 +846,7 @@ static QDF_STATUS csr_parse_scan_list(struct mac_context *mac_ctx,
 
 QDF_STATUS csr_scan_get_result(struct mac_context *mac_ctx,
 			       struct scan_filter *filter,
-			       tScanResultHandle *results,
-			       bool scoring_required)
+			       tScanResultHandle *results)
 {
 	QDF_STATUS status;
 	struct scan_result_list *ret_list = NULL;
@@ -982,7 +943,7 @@ QDF_STATUS csr_scan_get_result_for_bssid(struct mac_context *mac_ctx,
 		     QDF_MAC_ADDR_SIZE);
 
 	status = csr_scan_get_result(mac_ctx, scan_filter,
-				&filtered_scan_result, false);
+				&filtered_scan_result);
 
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_err("Failed to get scan result");
