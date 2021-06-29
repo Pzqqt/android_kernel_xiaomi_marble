@@ -1441,6 +1441,17 @@ void sap_undo_acs(struct sap_context *sap_context, struct sap_config *sap_cfg);
  */
 uint32_t wlansap_get_chan_width(struct sap_context *sap_ctx);
 
+/**
+ * wlansap_get_max_bw_by_phymode() - get max channel width based on phymode
+ * @sap_ctx: pointer to the SAP context
+ *
+ * This function get max channel width of sap based on phymode.
+ *
+ * Return: channel width
+ */
+enum phy_ch_width
+wlansap_get_max_bw_by_phymode(struct sap_context *sap_ctx);
+
 /*
  * wlansap_set_invalid_session() - set session ID to invalid
  * @sap_ctx: pointer to the SAP context

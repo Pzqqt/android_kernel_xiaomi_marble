@@ -2491,6 +2491,7 @@ void policy_mgr_change_sap_channel_with_csa(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 	if (pm_ctx->hdd_cbacks.wlan_get_ap_prefer_conc_ch_params) {
+		ch_params.ch_width = ch_width;
 		status = pm_ctx->hdd_cbacks.wlan_get_ap_prefer_conc_ch_params(
 			psoc, vdev_id, ch_freq, &ch_params);
 		if (QDF_IS_STATUS_SUCCESS(status) &&

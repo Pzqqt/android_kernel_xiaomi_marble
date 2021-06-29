@@ -1155,6 +1155,7 @@ static void __wlan_hdd_sap_pre_cac_success(struct hdd_adapter *adapter)
 	struct hdd_adapter *ap_adapter;
 	int i;
 	struct hdd_context *hdd_ctx;
+	enum phy_ch_width pre_cac_ch_width;
 
 	hdd_enter();
 
@@ -1163,6 +1164,9 @@ static void __wlan_hdd_sap_pre_cac_success(struct hdd_adapter *adapter)
 		hdd_err("HDD context is null");
 		return;
 	}
+
+	pre_cac_ch_width = wlansap_get_chan_width(
+				WLAN_HDD_GET_SAP_CTX_PTR(adapter));
 
 	hdd_stop_adapter(hdd_ctx, adapter);
 
@@ -1183,7 +1187,7 @@ static void __wlan_hdd_sap_pre_cac_success(struct hdd_adapter *adapter)
 				    CSA_REASON_PRE_CAC_SUCCESS);
 	i = hdd_softap_set_channel_change(ap_adapter->dev,
 					  ap_adapter->pre_cac_freq,
-			CH_WIDTH_MAX, false);
+					  pre_cac_ch_width, false);
 	if (0 != i) {
 		hdd_err("failed to change channel");
 		wlan_hdd_set_pre_cac_complete_status(ap_adapter, false);
