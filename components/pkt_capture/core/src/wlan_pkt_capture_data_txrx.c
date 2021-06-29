@@ -733,13 +733,19 @@ static void pkt_capture_rx_mon_get_rx_status(void *context, void *dp_soc,
 	uint8_t *rx_tlv_hdr = desc;
 	struct dp_soc *soc = dp_soc;
 	struct hal_rx_pkt_capture_flags flags = {0};
-	struct connection_info info[MAX_NUMBER_OF_CONC_CONNECTIONS];
-	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_vdev *vdev = context;
 	struct pkt_capture_vdev_priv *vdev_priv;
-	uint32_t conn_count;
-	uint8_t vdev_id;
-	int i;
+	uint8_t primary_chan_num;
+	uint32_t center_chan_freq;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
+	enum reg_wifi_band band;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		pkt_capture_err("Failed to get psoc");
+		return;
+	}
 
 	hal_rx_tlv_get_pkt_capture_flags(soc->hal_soc, (uint8_t *)rx_tlv_hdr,
 					 &flags);
@@ -748,30 +754,26 @@ static void pkt_capture_rx_mon_get_rx_status(void *context, void *dp_soc,
 	rx_status->ant_signal_db = flags.rssi_comb;
 	rx_status->rssi_comb = flags.rssi_comb;
 	rx_status->tsft = flags.tsft;
+	primary_chan_num = flags.chan_freq;
+	center_chan_freq = flags.chan_freq >> 16;
+	rx_status->chan_num = primary_chan_num;
+	band = wlan_reg_freq_to_band(center_chan_freq);
 
-	vdev_id = wlan_vdev_get_id(vdev);
-
-	psoc = wlan_vdev_get_psoc(vdev);
-	if (!psoc) {
-		pkt_capture_err("Failed to get psoc");
+	pdev = wlan_objmgr_get_pdev_by_id(psoc, 0, WLAN_PKT_CAPTURE_ID);
+	if (!pdev) {
+		pkt_capture_err("Failed to get pdev");
 		return;
 	}
+
+	rx_status->chan_freq =
+		wlan_reg_chan_band_to_freq(pdev, primary_chan_num, BIT(band));
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_PKT_CAPTURE_ID);
 
 	vdev_priv = pkt_capture_vdev_get_priv(vdev);
 	if (qdf_unlikely(!vdev))
 		return;
 
 	rx_status->rssi_comb = vdev_priv->rx_avg_rssi;
-
-	/* Update the connected channel info from policy manager */
-	conn_count = policy_mgr_get_connection_info(psoc, info);
-	for (i = 0; i < conn_count; i++) {
-		if (info[i].vdev_id == vdev_id) {
-			rx_status->chan_freq = info[0].ch_freq;
-			rx_status->chan_num = info[0].channel;
-			break;
-		}
-	}
 
 	if (rx_status->chan_freq > CHANNEL_FREQ_5150)
 		rx_status->ofdm_flag = 1;
