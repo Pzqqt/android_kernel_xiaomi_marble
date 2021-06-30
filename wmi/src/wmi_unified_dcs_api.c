@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -46,6 +46,16 @@ QDF_STATUS wmi_extract_dcs_im_tgt_stats(
 								 evt_buf,
 								 wlan_stat);
 	}
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_extract_dcs_awgn_info(wmi_unified_t wmi_hdl, void *evt_buf,
+				     struct wlan_host_dcs_awgn_info *awgn_info)
+{
+	if (wmi_hdl && wmi_hdl->ops->extract_dcs_awgn_info)
+		return wmi_hdl->ops->extract_dcs_awgn_info(wmi_hdl, evt_buf,
+							   awgn_info);
+
 	return QDF_STATUS_E_FAILURE;
 }
 
