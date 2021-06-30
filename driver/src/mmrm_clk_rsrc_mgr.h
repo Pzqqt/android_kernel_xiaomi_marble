@@ -30,7 +30,7 @@ static int mmrm_sw_vdd_corner[] = {
 };
 
 #define MMRM_SW_CLIENTS_NUM_MAX 35
-
+extern msm_mmrm_enable_throttle_feature;
 typedef int (*notifier_callback_fn_t)(
 	struct mmrm_client_notifier_data *notifier_data);
 

@@ -591,7 +591,8 @@ static int mmrm_sw_check_peak_current(struct mmrm_sw_clk_mgr_info *sinfo,
 	/* peak overshoot, do not update peak data */
 	if ((signed)peak_cur + delta_cur >= peak_data->threshold) {
 		/* Find low prority client and throttle it*/
-		if (tbl_entry->pri == MMRM_CLIENT_PRIOR_HIGH) {
+		if ((tbl_entry->pri == MMRM_CLIENT_PRIOR_HIGH)
+			&& (msm_mmrm_enable_throttle_feature > 0)) {
 			rc = mmrm_sw_throttle_low_priority_client(sinfo, &delta_cur);
 			if (rc != 0) {
 				d_mpr_e("%s: Failed to throttle the low priority client\n",
@@ -604,7 +605,6 @@ static int mmrm_sw_check_peak_current(struct mmrm_sw_clk_mgr_info *sinfo,
 			rc = -EINVAL;
 			goto err_peak_overshoot;
 		}
-
 	}
 	/* update peak data */
 	peak_data->aggreg_val = peak_cur + delta_cur;
