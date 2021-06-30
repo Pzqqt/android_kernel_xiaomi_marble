@@ -1740,6 +1740,12 @@ static void lim_check_oui_and_update_session(struct mac_context *mac_ctx,
 	lim_handle_iot_ap_no_common_he_rates(mac_ctx, session, ie_struct);
 	lim_update_he_caps_mcs(mac_ctx, session);
 	lim_update_eht_caps_mcs(mac_ctx, session);
+
+	is_vendor_ap_present = wlan_get_vendor_ie_ptr_from_oui(
+				SIR_MAC_BA_2K_JUMP_AP_VENDOR_OUI,
+				SIR_MAC_BA_2K_JUMP_AP_VENDOR_OUI_LEN,
+				vendor_ap_search_attr.ie_data, ie_len);
+	wlan_mlme_set_ba_2k_jump_iot_ap(session->vdev, is_vendor_ap_present);
 }
 
 static enum mlme_dot11_mode

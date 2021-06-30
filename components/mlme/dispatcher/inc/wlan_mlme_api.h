@@ -3240,4 +3240,43 @@ wlan_mlme_is_data_stall_recovery_fw_supported(struct wlan_objmgr_psoc *psoc);
  */
 QDF_STATUS mlme_cfg_get_eht_caps(struct wlan_objmgr_psoc *psoc,
 				 tDot11fIEeht_cap *eht_cap);
+
+/**
+ * wlan_mlme_set_ba_2k_jump_iot_ap() - Set a flag if ba 2k jump IOT AP is found
+ * @vdev: vdev pointer
+ * @found: Carries the value true if ba 2k jump IOT AP is found
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_set_ba_2k_jump_iot_ap(struct wlan_objmgr_vdev *vdev, bool found);
+
+/**
+ * wlan_mlme_is_ba_2k_jump_iot_ap() - Check if ba 2k jump IOT AP is found
+ * @vdev: vdev pointer
+ *
+ * Return: true if ba 2k jump IOT AP is found
+ */
+bool
+wlan_mlme_is_ba_2k_jump_iot_ap(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * wlan_mlme_set_last_delba_sent_time() - Cache the last delba sent ts
+ * @vdev: vdev pointer
+ * @delba_sent_time: Last delba sent timestamp
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_set_last_delba_sent_time(struct wlan_objmgr_vdev *vdev,
+				   qdf_time_t delba_sent_time);
+
+/**
+ * wlan_mlme_get_last_delba_sent_time() - Get the last delba sent ts
+ * @vdev: vdev pointer
+ *
+ * Return: Last delba timestamp if cached, 0 otherwise
+ */
+qdf_time_t
+wlan_mlme_get_last_delba_sent_time(struct wlan_objmgr_vdev *vdev);
 #endif /* _WLAN_MLME_API_H_ */

@@ -339,6 +339,9 @@
 #define SIR_MAC_VENDOR_AP_4_OUI             "\x8C\xFD\xF0"
 #define SIR_MAC_VENDOR_AP_4_OUI_LEN         3
 
+#define SIR_MAC_BA_2K_JUMP_AP_VENDOR_OUI             "\x00\x14\x6C"
+#define SIR_MAC_BA_2K_JUMP_AP_VENDOR_OUI_LEN         3
+
 /* Maximum allowable size of a beacon and probe rsp frame */
 #define SIR_MAX_BEACON_SIZE    512
 #define SIR_MAX_PROBE_RESP_SIZE 512
