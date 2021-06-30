@@ -615,7 +615,7 @@ QDF_STATUS ucfg_pmo_flush_gtk_offload_req(struct wlan_objmgr_vdev *vdev);
  */
 QDF_STATUS ucfg_pmo_enable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev);
 
-#ifdef WLAN_FEATURE_BIG_DATA_STATS
+#ifdef WLAN_FEATURE_IGMP_OFFLOAD
 /**
  * ucfg_pmo_enable_igmp_offload(): enable igmp request in fwr
  * @vdev: objmgr vdev handle
