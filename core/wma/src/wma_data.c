@@ -3100,7 +3100,8 @@ uint8_t wma_rx_invalid_peer_ind(uint8_t vdev_id, void *wh)
 }
 
 int wma_dp_send_delba_ind(uint8_t vdev_id, uint8_t *peer_macaddr,
-			  uint8_t tid, uint8_t reason_code)
+			  uint8_t tid, uint8_t reason_code,
+			  enum cdp_delba_rcode cdp_reason_code)
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	struct lim_delba_req_info *req;

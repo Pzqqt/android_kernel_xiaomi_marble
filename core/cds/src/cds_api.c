@@ -109,9 +109,11 @@ struct cds_hang_event_fixed_param {
 static inline int
 cds_send_delba(struct cdp_ctrl_objmgr_psoc *psoc,
 	       uint8_t vdev_id, uint8_t *peer_macaddr,
-	       uint8_t tid, uint8_t reason_code)
+	       uint8_t tid, uint8_t reason_code,
+	       uint8_t cdp_reason_code)
 {
-	return wma_dp_send_delba_ind(vdev_id, peer_macaddr, tid, reason_code);
+	return wma_dp_send_delba_ind(vdev_id, peer_macaddr, tid,
+				     reason_code, cdp_reason_code);
 }
 
 static struct ol_if_ops  dp_ol_if_ops = {
