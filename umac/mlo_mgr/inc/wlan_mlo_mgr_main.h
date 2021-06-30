@@ -24,9 +24,9 @@
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_objmgr_vdev_obj.h>
-#include <wlan_mlo_mgr_public_structs.h>
 
 #ifdef WLAN_FEATURE_11BE_MLO
+#include <wlan_mlo_mgr_public_structs.h>
 /**
  * wlan_mlo_mgr_init() - Initialize the MLO data structures
  *
