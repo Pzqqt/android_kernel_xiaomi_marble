@@ -576,7 +576,8 @@ void dp_rx_err_handle_bar(struct dp_soc *soc,
 
 	status = dp_rx_tid_update_wifi3(peer, tid,
 					peer->rx_tid[tid].ba_win_size,
-					start_seq_num);
+					start_seq_num,
+					true);
 	if (status != QDF_STATUS_SUCCESS) {
 		dp_err_rl("failed to handle bar frame update rx tid");
 		DP_STATS_INC(soc, rx.err.bar_handle_fail_count, 1);
