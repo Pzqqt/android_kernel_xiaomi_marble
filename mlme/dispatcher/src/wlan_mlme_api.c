@@ -4985,3 +4985,63 @@ QDF_STATUS mlme_cfg_get_eht_caps(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+QDF_STATUS
+wlan_mlme_set_ba_2k_jump_iot_ap(struct wlan_objmgr_vdev *vdev, bool found)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_priv->ba_2k_jump_iot_ap = found;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+bool wlan_mlme_is_ba_2k_jump_iot_ap(struct wlan_objmgr_vdev *vdev)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return false;
+	}
+
+	return mlme_priv->ba_2k_jump_iot_ap;
+}
+
+QDF_STATUS
+wlan_mlme_set_last_delba_sent_time(struct wlan_objmgr_vdev *vdev,
+				   qdf_time_t delba_sent_time)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_priv->last_delba_sent_time = delba_sent_time;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_time_t
+wlan_mlme_get_last_delba_sent_time(struct wlan_objmgr_vdev *vdev)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return 0;
+	}
+
+	return mlme_priv->last_delba_sent_time;
+}
