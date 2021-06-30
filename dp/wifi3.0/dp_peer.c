@@ -3434,7 +3434,8 @@ static void dp_teardown_256_ba_sessions(struct dp_peer *peer)
 							peer->vdev->pdev->soc->ctrl_psoc,
 							peer->vdev->vdev_id,
 							peer->mac_addr.raw,
-							tid, delba_rcode);
+							tid, delba_rcode,
+							CDP_DELBA_REASON_NONE);
 				} else {
 					qdf_spin_unlock_bh(&rx_tid->tid_lock);
 				}
@@ -3853,7 +3854,8 @@ int dp_delba_tx_completion_wifi3(struct cdp_soc_t *cdp_soc, uint8_t *peer_mac,
 					peer->vdev->pdev->soc->ctrl_psoc,
 					peer->vdev->vdev_id,
 					peer->mac_addr.raw, tid,
-					rx_tid->delba_rcode);
+					rx_tid->delba_rcode,
+					CDP_DELBA_REASON_NONE);
 		}
 		goto end;
 	} else {
@@ -4225,7 +4227,8 @@ dp_rx_delba_ind_handler(void *soc_handle, uint16_t peer_id,
 					peer->vdev->vdev_id,
 					peer->mac_addr.raw,
 					tid,
-					rx_tid->delba_rcode);
+					rx_tid->delba_rcode,
+					CDP_DELBA_REASON_NONE);
 		}
 	} else {
 		dp_peer_err("%pK: BA session is not setup for TID:%d ", soc, tid);

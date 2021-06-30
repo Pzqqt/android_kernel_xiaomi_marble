@@ -1059,7 +1059,8 @@ dp_2k_jump_handle(struct dp_soc *soc,
 					peer->vdev->vdev_id,
 					peer->mac_addr.raw,
 					tid,
-					rx_tid->delba_rcode);
+					rx_tid->delba_rcode,
+					CDP_DELBA_2K_JUMP);
 		}
 	} else {
 		qdf_spin_unlock_bh(&rx_tid->tid_lock);
