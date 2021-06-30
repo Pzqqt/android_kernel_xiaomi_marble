@@ -2161,20 +2161,6 @@ QDF_STATUS sme_update_tx_fail_cnt_threshold(mac_handle_t mac_handle,
 		uint8_t session_id, uint32_t tx_fail_count);
 
 /**
- * sme_roam_is_ese_assoc() - Check if association type is ESE
- * @roam_info: Pointer to roam info
- *
- * Return: true if ESE Association, false otherwise.
- */
-#ifdef FEATURE_WLAN_ESE
-bool sme_roam_is_ese_assoc(struct csr_roam_info *roam_info);
-#else
-static inline bool sme_roam_is_ese_assoc(struct csr_roam_info *roam_info)
-{
-	return false;
-}
-#endif
-/**
  * sme_neighbor_roam_is11r_assoc() - Check if association type is 11R
  * @mac_handle: MAC_HANDLE handle
  * @session_id: session id
@@ -2716,21 +2702,6 @@ void sme_send_hlp_ie_info(mac_handle_t mac_handle, uint8_t vdev_id,
  */
 QDF_STATUS sme_send_rso_connect_params(mac_handle_t mac_handle,
 				       uint8_t vdev_id);
-
-#if defined(WLAN_FEATURE_FILS_SK)
-/**
- * sme_free_join_rsp_fils_params - free fils params
- * @roam_info: roam info
- *
- * Return: void
- */
-void sme_free_join_rsp_fils_params(struct csr_roam_info *roam_info);
-#else
-static inline
-void sme_free_join_rsp_fils_params(struct csr_roam_info *roam_info)
-{}
-
-#endif
 
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR
 /**

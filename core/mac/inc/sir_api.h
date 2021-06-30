@@ -2266,13 +2266,6 @@ typedef struct sSirSmeDfsChannelList {
 	uint8_t channels[SIR_DFS_MAX_20M_SUB_CH];
 } tSirSmeDfsChannelList, *tpSirSmeDfsChannelList;
 
-typedef struct sSirSmeDfsEventInd {
-	uint32_t sessionId;
-	tSirSmeDfsChannelList chan_list;
-	uint32_t dfs_radar_status;
-	int use_nol;
-} tSirSmeDfsEventInd, *tpSirSmeDfsEventInd;
-
 typedef struct sSirChanChangeRequest {
 	uint16_t messageType;
 	uint16_t messageLen;

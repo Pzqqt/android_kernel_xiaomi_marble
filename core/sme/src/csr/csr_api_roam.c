@@ -2081,8 +2081,6 @@ QDF_STATUS csr_roam_call_callback(struct mac_context *mac, uint32_t sessionId,
 	chan_freq = wlan_get_operation_chan_freq_vdev_id(mac->pdev, sessionId);
 
 	if (mac->session_roam_complete_cb) {
-		if (roam_info)
-			roam_info->sessionId = (uint8_t) sessionId;
 		status = mac->session_roam_complete_cb(mac->psoc, sessionId, roam_info,
 						       roamId, u1, u2);
 	}
@@ -5028,7 +5026,6 @@ csr_roam_chk_lnk_max_assoc_exceeded(struct mac_context *mac_ctx, tSirSmeRsp *msg
 	sme_debug(
 		"max assoc have been reached, new peer cannot be accepted");
 	sessionId = pSmeMaxAssocInd->sessionId;
-	roam_info->sessionId = sessionId;
 	qdf_copy_macaddr(&roam_info->peerMac, &pSmeMaxAssocInd->peer_mac);
 	csr_roam_call_callback(mac_ctx, sessionId, roam_info, 0,
 			       eCSR_ROAM_INFRA_IND,

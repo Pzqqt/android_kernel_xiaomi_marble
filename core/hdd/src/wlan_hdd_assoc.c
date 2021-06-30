@@ -2130,10 +2130,6 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 			hdd_debug("set key complete, session: %d",
 				  adapter->vdev_id);
 	}
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-		if (roam_info)
-			roam_info->roamSynchInProgress = false;
-#endif
 		break;
 	case eCSR_ROAM_UNPROT_MGMT_FRAME_IND:
 		if (roam_info)

@@ -638,10 +638,6 @@ struct csr_config_params {
 #endif
 
 struct csr_roam_info {
-	struct csr_roam_profile *pProfile;
-	uint32_t nBeaconLength;
-	uint32_t nAssocReqLength;
-	uint32_t nAssocRspLength;
 	uint32_t nFrameLength;
 	uint8_t frameType;
 	/*
@@ -651,7 +647,6 @@ struct csr_roam_info {
 	 */
 	uint8_t *pbFrames;
 	bool fReassocReq;       /* set to true if for re-association */
-	bool fReassocRsp;       /* set to true if for re-association */
 	struct qdf_mac_addr bssid;
 	struct qdf_mac_addr peerMac;
 	tSirResultCodes status_code;
@@ -663,7 +658,6 @@ struct csr_roam_info {
 	uint8_t staId;         /* Peer stationId when connected */
 	/* false means auth needed from supplicant. true means authenticated */
 	bool fAuthRequired;
-	uint8_t sessionId;
 	uint8_t rsnIELen;
 	uint8_t *prsnIE;
 	uint8_t wapiIELen;
@@ -676,46 +670,17 @@ struct csr_roam_info {
 		tSirWPSPBCProbeReq *pWPSPBCProbeReq;
 	} u;
 	bool wmmEnabledSta;  /* set to true if WMM enabled STA */
-	uint32_t dtimPeriod;
 #ifdef FEATURE_WLAN_ESE
-	bool isESEAssoc;
 	struct tsm_ie tsm_ie;
-	uint32_t timestamp[2];
 	uint16_t tsmRoamDelay;
 	struct ese_bcn_report_rsp *pEseBcnReportRsp;
-#endif
-#ifdef FEATURE_WLAN_TDLS
-	/*
-	 * TDLS parameters to check whether TDLS
-	 * and TDLS channel switch is allowed in the
-	 * AP network
-	 */
-	bool tdls_prohibited;           /* per ExtCap in Assoc/Reassoc resp */
-	bool tdls_chan_swit_prohibited; /* per ExtCap in Assoc/Reassoc resp */
 #endif
 	/* Required for indicating the frames to upper layer */
 	uint32_t assocReqLength;
 	uint8_t *assocReqPtr;
-	int8_t rxRssi;
-	tSirSmeDfsEventInd dfs_event;
 	tSirChanChangeResponse *channelChangeRespEvent;
 	/* Timing and fine Timing measurement capability clubbed together */
 	uint8_t timingMeasCap;
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	uint8_t roamSynchInProgress;
-	uint8_t synchAuthStatus;
-	uint8_t kck[MAX_KCK_LEN];
-	uint8_t kck_len;
-	uint8_t kek[MAX_KEK_LENGTH];
-	uint8_t kek_len;
-	uint32_t pmk_len;
-	uint8_t pmk[MAX_PMK_LEN];
-	uint8_t pmkid[PMKID_LEN];
-	bool update_erp_next_seq_num;
-	uint16_t next_erp_seq_num;
-	uint8_t replay_ctr[REPLAY_CTR_LEN];
-	uint8_t subnet_change_status;
-#endif
 	struct oem_channel_info chan_info;
 	uint32_t target_chan_freq;
 
@@ -728,13 +693,6 @@ struct csr_roam_info {
 	tDot11fIEHTCaps ht_caps;
 	tDot11fIEVHTCaps vht_caps;
 	bool he_caps_present;
-	tDot11fIEhs20vendor_ie hs20vendor_ie;
-	tDot11fIEVHTOperation vht_operation;
-	tDot11fIEHTInfo ht_operation;
-#ifdef WLAN_FEATURE_11AX
-	tDot11fIEhe_op he_operation;
-#endif
-	bool reassoc;
 	bool ampdu;
 	bool sgi_enable;
 	bool tx_stbc;
@@ -748,11 +706,6 @@ struct csr_roam_info {
 	uint8_t tx_mcs_map;
 	/* Extended capabilities of STA */
 	uint8_t ecsa_capable;
-	bool is_fils_connection;
-#ifdef WLAN_FEATURE_FILS_SK
-	uint16_t fils_seq_num;
-	struct fils_join_rsp_params *fils_join_rsp;
-#endif
 	int rssi;
 	int tx_rate;
 	int rx_rate;
@@ -763,11 +716,6 @@ struct csr_roam_info {
 	struct sir_sae_info *sae_info;
 #endif
 	struct assoc_ind *owe_pending_assoc_ind;
-	uint16_t roam_reason;
-	struct element_info *disconnect_ies;
-#ifdef WLAN_FEATURE_11BE
-	tDot11fIEeht_op eht_operation;
-#endif
 };
 
 typedef struct sSirSmeAssocIndToUpperLayerCnf {

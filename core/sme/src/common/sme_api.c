@@ -1337,7 +1337,6 @@ QDF_STATUS sme_update_new_channel_event(mac_handle_t mac_handle,
 	if (!roamInfo)
 		return QDF_STATUS_E_FAILURE;
 
-	roamInfo->dfs_event.sessionId = session_id;
 	roamStatus = eCSR_ROAM_CHANNEL_COMPLETE_IND;
 	roamResult = eCSR_ROAM_RESULT_DFS_RADAR_FOUND_IND;
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
@@ -6111,25 +6110,6 @@ void sme_send_hlp_ie_info(mac_handle_t mac_handle, uint8_t vdev_id,
 	}
 
 	sme_release_global_lock(&mac->sme);
-}
-
-void sme_free_join_rsp_fils_params(struct csr_roam_info *roam_info)
-{
-	struct fils_join_rsp_params *roam_fils_params;
-
-	if (!roam_info)
-		return;
-
-	roam_fils_params = roam_info->fils_join_rsp;
-	if (!roam_fils_params)
-		return;
-
-	if (roam_fils_params->fils_pmk)
-		qdf_mem_free(roam_fils_params->fils_pmk);
-
-	qdf_mem_free(roam_fils_params);
-
-	roam_info->fils_join_rsp = NULL;
 }
 
 #else
@@ -13017,13 +12997,6 @@ QDF_STATUS sme_set_lost_link_info_cb(mac_handle_t mac_handle,
 
 	return status;
 }
-
-#ifdef FEATURE_WLAN_ESE
-bool sme_roam_is_ese_assoc(struct csr_roam_info *roam_info)
-{
-	return roam_info->isESEAssoc;
-}
-#endif
 
 bool sme_neighbor_roam_is11r_assoc(mac_handle_t mac_handle, uint8_t session_id)
 {
