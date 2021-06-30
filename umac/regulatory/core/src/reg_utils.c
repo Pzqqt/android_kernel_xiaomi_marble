@@ -323,6 +323,37 @@ QDF_STATUS reg_get_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef CONFIG_REG_CLIENT
+QDF_STATUS
+reg_get_6g_power_type_for_ctry(uint8_t *ap_ctry, uint8_t *sta_ctry,
+			       enum reg_6g_ap_type *pwr_type_6g,
+			       bool *ctry_code_match)
+{
+	*pwr_type_6g = REG_INDOOR_AP;
+
+	if (qdf_mem_cmp(ap_ctry, sta_ctry, REG_ALPHA2_LEN)) {
+		reg_debug("Country IE:%c%c, STA country:%c%c", ap_ctry[0],
+			  ap_ctry[1], sta_ctry[0], sta_ctry[1]);
+		*ctry_code_match = false;
+
+		if (wlan_reg_is_us(sta_ctry)) {
+			reg_err("US VLP not in place yet, connection not allowed");
+			return QDF_STATUS_E_NOSUPPORT;
+		}
+
+		if (wlan_reg_is_etsi(sta_ctry)) {
+			reg_debug("STA ctry:%c%c, doesn't match with AP ctry, switch to VLP",
+				  sta_ctry[0], sta_ctry[1]);
+			*pwr_type_6g = REG_VERY_LOW_POWER_AP;
+		}
+	} else {
+		*ctry_code_match = true;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 #ifdef CONFIG_CHAN_FREQ_API
 bool reg_is_passive_or_disable_for_freq(struct wlan_objmgr_pdev *pdev,
 					qdf_freq_t freq)
