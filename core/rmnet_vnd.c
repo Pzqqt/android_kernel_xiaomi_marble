@@ -110,6 +110,46 @@ static netdev_tx_t rmnet_vnd_start_xmit(struct sk_buff *skb,
 				priv->stats.ll_tso_segs++;
 				rmnet_egress_handler(skb, low_latency);
 			}
+		} else if (!low_latency && skb_is_gso(skb)) {
+			u64 gso_limit = priv->real_dev->gso_max_size ? : 1;
+			u16 gso_goal = 0;
+			netdev_features_t features = NETIF_F_SG;
+			u16 orig_gso_size = skb_shinfo(skb)->gso_size;
+			unsigned int orig_gso_type = skb_shinfo(skb)->gso_type;
+			struct sk_buff *segs, *tmp;
+
+			features |=  NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
+
+			if (skb->len < gso_limit || gso_limit > 65535) {
+				priv->stats.tso_segment_skip++;
+				rmnet_egress_handler(skb, low_latency);
+			} else {
+				do_div(gso_limit, skb_shinfo(skb)->gso_size);
+				gso_goal = gso_limit * skb_shinfo(skb)->gso_size;
+				skb_shinfo(skb)->gso_size = gso_goal;
+
+				segs = __skb_gso_segment(skb, features, false);
+				if (IS_ERR_OR_NULL(segs)) {
+					skb_shinfo(skb)->gso_size = orig_gso_size;
+					skb_shinfo(skb)->gso_type = orig_gso_type;
+
+					priv->stats.tso_segment_fail++;
+					rmnet_egress_handler(skb, low_latency);
+				} else {
+					consume_skb(skb);
+
+					for (skb = segs; skb; skb = tmp) {
+						tmp = skb->next;
+						skb->dev = dev;
+
+						skb_shinfo(skb)->gso_size = orig_gso_size;
+						skb_shinfo(skb)->gso_type = orig_gso_type;
+
+						priv->stats.tso_segment_success++;
+						rmnet_egress_handler(skb, low_latency);
+					}
+				}
+			}
 		} else {
 			rmnet_egress_handler(skb, low_latency);
 		}
@@ -295,6 +335,9 @@ static const char rmnet_gstrings_stats[][ETH_GSTRING_LEN] = {
 	"Uplink priority packets",
 	"TSO packets",
 	"TSO packets arriving incorrectly",
+	"TSO segment success",
+	"TSO segment fail",
+	"TSO segment skip",
 	"LL TSO segment success",
 	"LL TSO segment fail",
 };

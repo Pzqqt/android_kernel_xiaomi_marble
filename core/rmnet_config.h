@@ -188,6 +188,9 @@ struct rmnet_priv_stats {
 	u64 ul_prio;
 	u64 tso_pkts;
 	u64 tso_arriv_errs;
+	u64 tso_segment_success;
+	u64 tso_segment_fail;
+	u64 tso_segment_skip;
 	u64 ll_tso_segs;
 	u64 ll_tso_errs;
 };
