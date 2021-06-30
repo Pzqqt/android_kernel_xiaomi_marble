@@ -1405,4 +1405,9 @@ bool wlan_reg_is_afc_expiry_event_received(struct wlan_objmgr_pdev *pdev)
 }
 
 qdf_export_symbol(wlan_reg_is_afc_expiry_event_received);
+
+bool wlan_reg_is_noaction_on_afc_pwr_evt(struct wlan_objmgr_pdev *pdev)
+{
+	return reg_is_noaction_on_afc_pwr_evt(pdev);
+}
 #endif

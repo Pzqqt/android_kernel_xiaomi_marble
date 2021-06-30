@@ -6223,4 +6223,18 @@ bool reg_is_afc_expiry_event_received(struct wlan_objmgr_pdev *pdev)
 
 	return pdev_priv_obj->is_6g_afc_expiry_event_received;
 }
+
+bool reg_is_noaction_on_afc_pwr_evt(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("reg pdev priv obj is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return pdev_priv_obj->is_reg_noaction_on_afc_pwr_evt;
+}
 #endif

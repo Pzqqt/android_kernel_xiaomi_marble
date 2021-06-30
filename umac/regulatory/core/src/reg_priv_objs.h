@@ -217,6 +217,8 @@ struct wlan_regulatory_psoc_priv_obj {
  * server response.
  * @power_info: pointer to AFC power information received from the AFC event
  * sent by the target
+ * @is_reg_noaction_on_afc_pwr_evt: indicates whether regulatory needs to
+ * take action when AFC Power event is received
  */
 struct wlan_regulatory_pdev_priv_obj {
 	struct regulatory_channel cur_chan_list[NUM_CHANNELS];
@@ -286,6 +288,7 @@ struct wlan_regulatory_pdev_priv_obj {
 	struct regulatory_channel afc_chan_list[NUM_6GHZ_CHANNELS];
 	struct regulatory_channel mas_chan_list_6g_afc[NUM_6GHZ_CHANNELS];
 	struct reg_fw_afc_power_event *power_info;
+	bool is_reg_noaction_on_afc_pwr_evt;
 #endif
 };
 

@@ -35,6 +35,7 @@
 #include <scheduler_api.h>
 #include "reg_build_chan_list.h"
 #include <qdf_platform.h>
+#include <wlan_reg_services_api.h>
 
 #define MAX_PWR_FCC_CHAN_12 8
 #define MAX_PWR_FCC_CHAN_13 2
@@ -2824,7 +2825,8 @@ reg_process_afc_power_event(struct afc_regulatory_info *afc_info)
 	pdev_priv_obj->is_6g_afc_power_event_received =
 	soc_reg->mas_chan_params[phy_id].is_6g_afc_power_event_received;
 
-	if (tx_ops->trigger_acs_for_afc)
+	if (tx_ops->trigger_acs_for_afc &&
+	    !wlan_reg_is_noaction_on_afc_pwr_evt(pdev))
 		tx_ops->trigger_acs_for_afc(pdev);
 
 	wlan_objmgr_pdev_release_ref(pdev, dbg_id);

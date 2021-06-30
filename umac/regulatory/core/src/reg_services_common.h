@@ -1783,5 +1783,15 @@ QDF_STATUS reg_get_afc_req_id(struct wlan_objmgr_pdev *pdev, uint64_t *req_id);
  * Return: true if AFC expiry event is received from the FW or false otherwise
  */
 bool reg_is_afc_expiry_event_received(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * reg_is_noaction_on_afc_pwr_evt() - Checks if the regulatory module
+ * needs to take action when AFC power event is received.
+ *
+ * @pdev: pdev ptr
+ *
+ * Return: true if regulatory should not take any action or false otherwise
+ */
+bool reg_is_noaction_on_afc_pwr_evt(struct wlan_objmgr_pdev *pdev);
 #endif
 #endif
