@@ -365,4 +365,6 @@ ucfg_reg_get_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
 {
 	return reg_get_cur_6g_ap_pwr_type(pdev, reg_cur_6g_ap_pwr_type);
 }
+
+qdf_export_symbol(ucfg_reg_get_cur_6g_ap_pwr_type);
 #endif
