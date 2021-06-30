@@ -7364,11 +7364,8 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 			/* For NDI do not use roam_profile */
 			if (adapter->device_mode == QDF_NDI_MODE) {
 				hdd_peer_cleanup(hdd_ctx, adapter);
-				status = sme_roam_disconnect(
-					mac_handle,
-					adapter->vdev_id,
-					eCSR_DISCONNECT_REASON_NDI_DELETE,
-					reason);
+				status = sme_roam_ndi_stop(mac_handle,
+							   adapter->vdev_id);
 				if (QDF_IS_STATUS_SUCCESS(status)) {
 					rc = wait_for_completion_timeout(
 						&adapter->disconnect_comp_var,

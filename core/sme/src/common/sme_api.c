@@ -3225,21 +3225,9 @@ eCsrPhyMode sme_get_phy_mode(mac_handle_t mac_handle)
 	return mac->roam.configParam.phyMode;
 }
 
-/*
- * sme_roam_connect() -
- * A wrapper function to request CSR to inititiate an association
- *   This is an asynchronous call.
- *
- * sessionId - the sessionId returned by sme_open_session.
- * pProfile - description of the network to which to connect
- * hBssListIn - a list of BSS descriptor to roam to. It is returned
- *			from csr_scan_get_result
- * pRoamId - to get back the request ID
- * Return QDF_STATUS
- */
-QDF_STATUS sme_roam_connect(mac_handle_t mac_handle, uint8_t sessionId,
-			    struct csr_roam_profile *pProfile,
-			    uint32_t *pRoamId)
+QDF_STATUS sme_bss_start(mac_handle_t mac_handle, uint8_t vdev_id,
+			 struct csr_roam_profile *profile,
+			 uint32_t *roam_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
@@ -3248,19 +3236,18 @@ QDF_STATUS sme_roam_connect(mac_handle_t mac_handle, uint8_t sessionId,
 		return QDF_STATUS_E_FAILURE;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_MSG_CONNECT, sessionId, 0));
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		if (CSR_IS_SESSION_VALID(mac, sessionId)) {
-			status =
-				csr_roam_connect(mac, sessionId, pProfile,
-						 pRoamId);
-		} else {
-			sme_err("Invalid sessionID: %d", sessionId);
-			status = QDF_STATUS_E_INVAL;
-		}
-		sme_release_global_lock(&mac->sme);
+			 TRACE_CODE_SME_RX_HDD_MSG_CONNECT, vdev_id, 0));
+
+	if (!CSR_IS_SESSION_VALID(mac, vdev_id)) {
+		sme_err("Invalid sessionID: %d", vdev_id);
+		return QDF_STATUS_E_INVAL;
 	}
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	status = csr_bss_start(mac, vdev_id, profile, roam_id);
+	sme_release_global_lock(&mac->sme);
 
 	return status;
 }
@@ -3287,26 +3274,26 @@ QDF_STATUS sme_set_phy_mode(mac_handle_t mac_handle, eCsrPhyMode phyMode)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS sme_roam_disconnect(mac_handle_t mac_handle, uint8_t session_id,
-			       eCsrRoamDisconnectReason reason,
-			       enum wlan_reason_code mac_reason)
+QDF_STATUS sme_roam_ndi_stop(mac_handle_t mac_handle, uint8_t vdev_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_ROAM_DISCONNECT, session_id,
-			 reason));
-	status = sme_acquire_global_lock(&mac_ctx->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		if (CSR_IS_SESSION_VALID(mac_ctx, session_id))
-			status = csr_roam_disconnect(mac_ctx, session_id,
-						     reason,
-						     mac_reason);
-		else
-			status = QDF_STATUS_E_INVAL;
-		sme_release_global_lock(&mac_ctx->sme);
+			 TRACE_CODE_SME_RX_HDD_ROAM_DISCONNECT, vdev_id,
+			 0));
+
+	if (!CSR_IS_SESSION_VALID(mac_ctx, vdev_id)) {
+		sme_err("Invalid sessionID: %d", vdev_id);
+		return QDF_STATUS_E_INVAL;
 	}
+
+	status = sme_acquire_global_lock(&mac_ctx->sme);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	status = csr_roam_ndi_stop(mac_ctx, vdev_id);
+	sme_release_global_lock(&mac_ctx->sme);
 
 	return status;
 }
@@ -3333,29 +3320,18 @@ void sme_dhcp_done_ind(mac_handle_t mac_handle, uint8_t session_id)
 	session->dhcp_done = true;
 }
 
-/*
- * sme_roam_stop_bss() -
- * To stop BSS for Soft AP. This is an asynchronous API.
- *
- * mac_handle - Global structure
- * sessionId - sessionId of SoftAP
- * Return QDF_STATUS  SUCCESS  Roam callback will be called to indicate
- * actual results
- */
-QDF_STATUS sme_roam_stop_bss(mac_handle_t mac_handle, uint8_t sessionId)
+QDF_STATUS sme_roam_stop_bss(mac_handle_t mac_handle, uint8_t vdev_id)
 {
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS status;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
 	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		if (CSR_IS_SESSION_VALID(mac, sessionId))
-			status = csr_roam_issue_stop_bss_cmd(mac, sessionId,
-							false);
-		else
-			status = QDF_STATUS_E_INVAL;
-		sme_release_global_lock(&mac->sme);
-	}
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	status = csr_roam_issue_stop_bss_cmd(mac, vdev_id,
+					     eCSR_BSS_TYPE_INFRA_AP, false);
+	sme_release_global_lock(&mac->sme);
 
 	return status;
 }

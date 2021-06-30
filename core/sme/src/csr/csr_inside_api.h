@@ -122,9 +122,9 @@ QDF_STATUS csr_roam_call_callback(struct mac_context *mac, uint32_t sessionId,
 				  struct csr_roam_info *roam_info,
 				  uint32_t roamId,
 				  eRoamCmdStatus u1, eCsrRoamResult u2);
-QDF_STATUS csr_roam_issue_connect(struct mac_context *mac, uint32_t sessionId,
-				  struct csr_roam_profile *pProfile,
-				  enum csr_roam_reason reason, uint32_t roamId);
+QDF_STATUS csr_issue_bss_start(struct mac_context *mac, uint8_t vdev_id,
+			       struct csr_roam_profile *pProfile,
+			       uint32_t roamId);
 void csr_roam_complete(struct mac_context *mac, enum csr_roamcomplete_result Result,
 		       void *Context, uint8_t session_id);
 
@@ -166,11 +166,6 @@ QDF_STATUS csr_roam_issue_start_bss(struct mac_context *mac, uint32_t sessionId,
 				    uint32_t roamId);
 QDF_STATUS csr_roam_issue_stop_bss(struct mac_context *mac, uint32_t sessionId,
 				   enum csr_roam_substate NewSubstate);
-/* pBand can be NULL if caller doesn't need to get it */
-QDF_STATUS csr_roam_issue_disassociate_cmd(struct mac_context *mac,
-					   uint32_t sessionId,
-					   eCsrRoamDisconnectReason reason,
-					   enum wlan_reason_code mac_reason);
 QDF_STATUS csr_send_mb_disassoc_req_msg(struct mac_context *mac, uint32_t sessionId,
 					tSirMacAddr bssId, uint16_t reasonCode);
 QDF_STATUS csr_send_mb_deauth_req_msg(struct mac_context *mac, uint32_t sessionId,
@@ -434,16 +429,17 @@ QDF_STATUS csr_scan_result_purge(struct mac_context *mac,
 
 /* /////////////////////////////////////////Common Scan ends */
 
-/*
- * csr_roam_connect() -
- * To inititiate an association
- * pProfile - can be NULL to join to any open ones
- * pRoamId - to get back the request ID
+/**
+ * csr_bss_start() - A wrapper function to request CSR to inititiate start bss
+ * @mac: mac ctx
+ * @vdev_id: the vdev id.
+ * @profile: description of bss to start
+ * @roam_id: to get back the request ID
+ *
  * Return QDF_STATUS
  */
-QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
-			    struct csr_roam_profile *pProfile,
-			    uint32_t *pRoamId);
+QDF_STATUS csr_bss_start(struct mac_context *mac, uint32_t vdev_id,
+			 struct csr_roam_profile *profile, uint32_t *roam_id);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /*
@@ -489,24 +485,21 @@ void csr_roam_free_connect_profile(tCsrRoamConnectedProfile *profile);
 QDF_STATUS csr_apply_channel_and_power_list(struct mac_context *mac);
 
 /*
- * csr_roam_disconnect() - To disconnect from a network
+ * csr_roam_ndi_stop() - stop ndi
  * @mac: pointer to mac context
  * @session_id: Session ID
- * @reason: CSR disconnect reason code as per @enum eCsrRoamDisconnectReason
- * @mac_reason: Mac Disconnect reason code as per @enum wlan_reason_code
  *
  * Return QDF_STATUS
  */
-QDF_STATUS csr_roam_disconnect(struct mac_context *mac, uint32_t session_id,
-			       eCsrRoamDisconnectReason reason,
-			       enum wlan_reason_code mac_reason);
+QDF_STATUS csr_roam_ndi_stop(struct mac_context *mac, uint32_t session_id);
 
 /* This function is used to stop a BSS. It is similar of csr_roamIssueDisconnect
  * but this function doesn't have any logic other than blindly trying to stop
  * BSS
  */
-QDF_STATUS csr_roam_issue_stop_bss_cmd(struct mac_context *mac, uint32_t sessionId,
-				       bool fHighPriority);
+QDF_STATUS csr_roam_issue_stop_bss_cmd(struct mac_context *mac, uint8_t vdev_id,
+				       eCsrRoamBssType bss_type,
+				       bool high_priority);
 
 /**
  * csr_roam_issue_disassociate_sta_cmd() - disassociate a associated station

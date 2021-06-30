@@ -266,8 +266,8 @@ static int hdd_ndi_start_bss(struct hdd_adapter *adapter,
 	roam_profile->EncryptionType.encryptionType[0] = eCSR_ENCRYPT_TYPE_NONE;
 
 	mac_handle = hdd_adapter_get_mac_handle(adapter);
-	status = sme_roam_connect(mac_handle, adapter->vdev_id,
-				  roam_profile, &roam_id);
+	status = sme_bss_start(mac_handle, adapter->vdev_id,
+			       roam_profile, &roam_id);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("NDI sme_RoamConnect session %d failed with status %d -> NotConnected",
 			adapter->vdev_id, status);

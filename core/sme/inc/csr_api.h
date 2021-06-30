@@ -391,10 +391,6 @@ typedef enum {
 } eCsrRoamResult;
 
 typedef enum {
-	eCSR_DISCONNECT_REASON_NDI_DELETE = 6,
-} eCsrRoamDisconnectReason;
-
-typedef enum {
 	/* Not associated in Infra or participating in an Ad-hoc */
 	eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED,
 	/* Participating in WDS network in AP/STA mode but not connected yet */

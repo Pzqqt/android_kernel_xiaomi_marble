@@ -2509,9 +2509,9 @@ static QDF_STATUS sap_goto_starting(struct sap_context *sap_ctx,
 
 	sap_debug("session: %d", sap_ctx->sessionId);
 
-	qdf_status = sme_roam_connect(mac_handle, sap_ctx->sessionId,
-				      &sap_ctx->csr_roamProfile,
-				      &sap_ctx->csr_roamId);
+	qdf_status = sme_bss_start(mac_handle, sap_ctx->sessionId,
+				   &sap_ctx->csr_roamProfile,
+				   &sap_ctx->csr_roamId);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		sap_err("Failed to issue sme_roam_connect");
 

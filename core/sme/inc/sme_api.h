@@ -519,24 +519,38 @@ tCsrScanResultInfo *sme_scan_result_get_first(mac_handle_t,
 tCsrScanResultInfo *sme_scan_result_get_next(mac_handle_t,
 		tScanResultHandle hScanResult);
 QDF_STATUS sme_scan_result_purge(tScanResultHandle hScanResult);
-QDF_STATUS sme_roam_connect(mac_handle_t mac_handle, uint8_t sessionId,
-		struct csr_roam_profile *pProfile, uint32_t *pRoamId);
 
 /**
- * sme_roam_disconnect() - API to request CSR to disconnect
+ * sme_bss_start() - A wrapper function to request CSR to inititiate start bss
+ * @mac_handle: mac handle
+ * @vdev_id: the vdev id.
+ * @profile: description of bss to start
+ * @roam_id: to get back the request ID
+ *
+ * Return QDF_STATUS
+ */
+QDF_STATUS sme_bss_start(mac_handle_t mac_handle, uint8_t vdev_id,
+			 struct csr_roam_profile *profile, uint32_t *roam_id);
+
+/**
+ * sme_roam_ndi_stop() - API to request stop ndi
  * @mac_handle: Opaque handle to the global MAC context
- * @session: SME session identifier
- * @reason: Reason to disconnect
- * @mac_reason: Reason to disconnect as per enum wlan_reason_code
+ * @vdev_id: vdev id
  *
  * Return: QDF Status success or failure
  */
-QDF_STATUS sme_roam_disconnect(mac_handle_t mac_handle, uint8_t session,
-			       eCsrRoamDisconnectReason reason,
-			       enum wlan_reason_code mac_reason);
+QDF_STATUS sme_roam_ndi_stop(mac_handle_t mac_handle, uint8_t vdev_id);
 
 void sme_dhcp_done_ind(mac_handle_t mac_handle, uint8_t session_id);
-QDF_STATUS sme_roam_stop_bss(mac_handle_t mac_handle, uint8_t sessionId);
+
+/*
+ * sme_roam_stop_bss() - To stop BSS for Soft AP. This is an asynchronous API.
+ * @mac_handle - Global structure
+ * @vdev_id - vdev id of SoftAP
+ *
+ * Return: QDF Status success or failure
+ */
+QDF_STATUS sme_roam_stop_bss(mac_handle_t mac_handle, uint8_t vdev_id);
 QDF_STATUS sme_roam_disconnect_sta(mac_handle_t mac_handle, uint8_t sessionId,
 		struct csr_del_sta_params *p_del_sta_params);
 QDF_STATUS sme_roam_deauth_sta(mac_handle_t mac_handle, uint8_t sessionId,
