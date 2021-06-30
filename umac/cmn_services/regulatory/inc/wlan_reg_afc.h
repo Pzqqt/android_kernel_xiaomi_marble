@@ -27,12 +27,16 @@
  *                                          requests to AFC app to query the
  *                                          AFC server.
  *
+ * @version_minor  Lower 16 bits for the AFC request version.
+ * @version_major  Higher 16 bits for the AFC request version.
  * @req_id:        Unique request ID from FW to be used as AFC request ID
  *                 to server.
  * @req_length:    Length of entire AFC request message.
  * @min_des_power: Minimum desired power(in dbm) for queried spectrum.
  */
 struct wlan_afc_host_req_fixed_params {
+	uint16_t version_minor;
+	uint16_t version_major;
 	uint64_t req_id;
 	uint16_t req_length;
 	int16_t  min_des_power;
