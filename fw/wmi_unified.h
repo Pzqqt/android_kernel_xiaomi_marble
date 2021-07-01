@@ -458,6 +458,8 @@ typedef enum {
     WMI_PDEV_SET_HALPHY_CAL_BMAP_CMDID,
     /* WMI cmd to send vdev param for multiple vdev */
     WMI_PDEV_MULTIPLE_VDEV_SET_PARAM_CMDID,
+    /* Configure MEC AGING TIMER */
+    WMI_PDEV_MEC_AGING_TIMER_CONFIG_CMDID,
 
     /* VDEV (virtual device) specific commands */
     /** vdev create */
@@ -28871,6 +28873,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PDEV_SET_HALPHY_CAL_BMAP_CMDID);
         WMI_RETURN_STRING(WMI_AFC_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_MULTIPLE_VDEV_SET_PARAM_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_MEC_AGING_TIMER_CONFIG_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -33765,6 +33768,19 @@ typedef struct {
      */
     A_UINT32 agg_relation;
 } wmi_audio_sync_trigger_cmd_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_pdev_mec_aging_timer_config_cmd_fixed_param
+     */
+    A_UINT32 tlv_header;
+    /** SOC level Command. pdev_id - WMI_PDEV_ID_SOC is used.
+     */
+    A_UINT32 pdev_id;
+    /* The Threshold for mec aging timer in ms
+     */
+    A_UINT32 mec_aging_timer_threshold;
+} wmi_pdev_mec_aging_timer_config_cmd_fixed_param;
 
 #define WMI_CFR_GROUP_TA_ADDR_VALID_BIT_POS           0
 #define WMI_CFR_GROUP_TA_ADDR_MASK_VALID_BIT_POS      1
