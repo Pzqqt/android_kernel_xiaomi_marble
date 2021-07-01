@@ -4407,6 +4407,7 @@ static int dsi_panel_roi_prepare_dcs_cmds(struct dsi_panel_cmd_set *set,
 	set->cmds[0].msg.channel = 0;
 	set->cmds[0].msg.type = MIPI_DSI_DCS_LONG_WRITE;
 	set->cmds[0].msg.flags = unicast ? MIPI_DSI_MSG_UNICAST_COMMAND : 0;
+	set->cmds[0].msg.flags |= MIPI_DSI_MSG_BATCH_COMMAND;
 	set->cmds[0].msg.tx_len = ROI_CMD_LEN;
 	set->cmds[0].msg.tx_buf = caset;
 	set->cmds[0].msg.rx_len = 0;
