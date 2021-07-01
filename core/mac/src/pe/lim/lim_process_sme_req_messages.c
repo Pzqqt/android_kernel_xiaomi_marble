@@ -1176,6 +1176,15 @@ static QDF_STATUS lim_send_join_req(struct pe_session *session,
 {
 	QDF_STATUS status;
 
+	/* Continue connect only if Vdev is in INIT state */
+	status = wlan_vdev_mlme_is_init_state(session->vdev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("Vdev %d not in int state cur state %d substate %d",
+			session->vdev_id,
+			wlan_vdev_mlme_get_state(session->vdev),
+			wlan_vdev_mlme_get_substate(session->vdev));
+		return status;
+	}
 	status = mlme_set_assoc_type(session->vdev, VDEV_ASSOC);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
