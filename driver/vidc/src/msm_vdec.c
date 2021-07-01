@@ -762,7 +762,7 @@ static int msm_vdec_set_output_properties(struct msm_vidc_inst *inst)
 	if (rc)
 		return rc;
 
-	rc = msm_vidc_set_seq_change_at_sync_frame(inst, LOWLATENCY_MODE);
+	rc = msm_vidc_set_seq_change_at_sync_frame(inst);
 	if (rc)
 		return rc;
 
@@ -2041,6 +2041,10 @@ int msm_vdec_process_cmd(struct msm_vidc_inst *inst, u32 cmd)
 			return rc;
 
 		rc = msm_vidc_set_pipe(inst, PIPE);
+		if (rc)
+			return rc;
+
+		rc = msm_vidc_set_seq_change_at_sync_frame(inst);
 		if (rc)
 			return rc;
 

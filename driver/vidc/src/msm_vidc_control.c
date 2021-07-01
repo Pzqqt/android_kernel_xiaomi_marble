@@ -808,6 +808,14 @@ int msm_v4l2_op_s_ctrl(struct v4l2_ctrl *ctrl)
 		goto exit;
 	}
 
+	if (ctrl->id == V4L2_CID_MPEG_VIDC_LOWLATENCY_REQUEST) {
+		if (ctrl->val == V4L2_MPEG_MSM_VIDC_ENABLE) {
+			rc = msm_vidc_set_seq_change_at_sync_frame(inst);
+			if (rc)
+				return rc;
+		}
+	}
+
 exit:
 	if (rc)
 		msm_vidc_free_capabililty_list(inst, CHILD_LIST | FW_LIST);
@@ -3619,8 +3627,7 @@ int msm_vidc_set_pipe(void *instance,
 	return rc;
 }
 
-int msm_vidc_set_seq_change_at_sync_frame(void* instance,
-	enum msm_vidc_inst_capability_type cap_id)
+int msm_vidc_set_seq_change_at_sync_frame(void *instance)
 {
 	int rc = 0;
 	u32 payload;
@@ -3632,7 +3639,7 @@ int msm_vidc_set_seq_change_at_sync_frame(void* instance,
 	}
 
 	payload = inst->capabilities->cap[LOWLATENCY_MODE].value;
-	rc = msm_vidc_packetize_control(inst, cap_id, HFI_PAYLOAD_U32,
+	rc = msm_vidc_packetize_control(inst, LOWLATENCY_MODE, HFI_PAYLOAD_U32,
 		&payload, sizeof(u32), __func__);
 	if (rc)
 		return rc;
