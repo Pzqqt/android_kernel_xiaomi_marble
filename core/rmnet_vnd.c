@@ -295,6 +295,8 @@ static const char rmnet_gstrings_stats[][ETH_GSTRING_LEN] = {
 	"Uplink priority packets",
 	"TSO packets",
 	"TSO packets arriving incorrectly",
+	"LL TSO segment success",
+	"LL TSO segment fail",
 };
 
 static const char rmnet_port_gstrings_stats[][ETH_GSTRING_LEN] = {
