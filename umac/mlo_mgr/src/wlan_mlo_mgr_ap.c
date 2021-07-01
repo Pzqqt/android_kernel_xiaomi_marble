@@ -33,7 +33,7 @@ bool mlo_ap_vdev_attach(struct wlan_objmgr_vdev *vdev,
 {
 	struct wlan_mlo_dev_context *dev_ctx;
 
-	if (!vdev || !vdev->mlo_dev_ctx) {
+	if (!vdev || !vdev->mlo_dev_ctx || !vdev->mlo_dev_ctx->ap_ctx) {
 		mlo_err("Invalid input");
 		return false;
 	}
@@ -47,7 +47,7 @@ bool mlo_ap_vdev_attach(struct wlan_objmgr_vdev *vdev,
 	 * and they should provide the same vdev_count.
 	 */
 	mlo_dev_lock_acquire(dev_ctx);
-	dev_ctx->wlan_vdev_count = vdev_count;
+	dev_ctx->ap_ctx->num_ml_vdevs = vdev_count;
 	mlo_dev_lock_release(dev_ctx);
 
 	return true;
@@ -101,7 +101,7 @@ static bool mlo_is_ap_vdev_up_allowed(struct wlan_objmgr_vdev *vdev)
 	int i;
 	bool up_allowed = false;
 
-	if (!vdev || !vdev->mlo_dev_ctx) {
+	if (!vdev || !vdev->mlo_dev_ctx || !vdev->mlo_dev_ctx->ap_ctx) {
 		mlo_err("Invalid input");
 		return up_allowed;
 	}
@@ -117,7 +117,7 @@ static bool mlo_is_ap_vdev_up_allowed(struct wlan_objmgr_vdev *vdev)
 			vdev_count++;
 	}
 
-	if (vdev_count == dev_ctx->wlan_vdev_count)
+	if (vdev_count == dev_ctx->ap_ctx->num_ml_vdevs)
 		up_allowed = true;
 	mlo_dev_lock_release(dev_ctx);
 
@@ -178,7 +178,7 @@ static void mlo_handle_link_ready(struct wlan_objmgr_vdev *vdev)
 		if (dev_ctx->wlan_vdev_list[i] &&
 		    wlan_vdev_mlme_is_mlo_ap(dev_ctx->wlan_vdev_list[i]) &&
 		    mlo_pre_link_up(dev_ctx->wlan_vdev_list[i]))
-			wlan_vdev_mlme_sm_deliver_evt(
+			wlan_vdev_mlme_sm_deliver_evt_sync(
 				dev_ctx->wlan_vdev_list[i],
 				WLAN_VDEV_SM_EV_MLO_SYNC_COMPLETE,
 				0, NULL);

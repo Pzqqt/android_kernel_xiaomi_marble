@@ -234,8 +234,12 @@ static QDF_STATUS mlo_dev_ctx_init(struct wlan_objmgr_vdev *vdev)
 		}
 	} else if (wlan_vdev_mlme_get_opmode(vdev) == QDF_SAP_MODE) {
 		ml_dev->ap_ctx = qdf_mem_malloc(sizeof(struct wlan_mlo_ap));
-		if (!ml_dev->ap_ctx)
-			mlo_debug("Failed to allocate memory for ap ctx");
+		if (!ml_dev->ap_ctx) {
+			mlo_err("Failed to allocate memory for ap ctx");
+			mlo_dev_lock_destroy(ml_dev);
+			qdf_mem_free(ml_dev);
+			return QDF_STATUS_E_NOMEM;
+		}
 	}
 
 	ml_link_lock_acquire(g_mlo_ctx);

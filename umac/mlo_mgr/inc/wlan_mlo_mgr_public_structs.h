@@ -94,8 +94,10 @@ struct wlan_mlo_sta {
 
 /*
  * struct wlan_mlo_ap - MLO AP related info
+ * @num_ml_vdevs: number of vdevs to form MLD
  */
 struct wlan_mlo_ap {
+	uint8_t num_ml_vdevs;
 };
 
 /*
@@ -110,7 +112,8 @@ struct wlan_mlo_peer_list {
 
 /*
  * struct wlan_mlo_dev_context - MLO device context
- *
+ * @node: QDF list node member
+ * @mld_id: MLD id
  * @mld_addr: MLO device MAC address
  * @wlan_vdev_list: list of vdevs associated with this MLO connection
  * @wlan_vdev_count: number of elements in the vdev list
