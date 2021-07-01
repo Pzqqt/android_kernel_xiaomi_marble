@@ -410,10 +410,28 @@ QDF_STATUS wlan_pdev_chan_change_pending_ap_vdevs_down(
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_11BE
+static inline bool
+wlan_chan_puncture_eq(struct wlan_channel *chan1, struct wlan_channel *chan2)
+{
+	if (chan1->puncture_bitmap == chan2->puncture_bitmap)
+		return true;
+
+	return false;
+}
+#else
+static inline bool
+wlan_chan_puncture_eq(struct wlan_channel *chan1, struct wlan_channel *chan2)
+{
+	return true;
+}
+#endif /* WLAN_FEATURE_11BE */
+
 QDF_STATUS wlan_chan_eq(struct wlan_channel *chan1, struct wlan_channel *chan2)
 {
 	if ((chan1->ch_ieee == chan2->ch_ieee) &&
-	    (chan1->ch_freq_seg2 == chan2->ch_freq_seg2))
+	    (chan1->ch_freq_seg2 == chan2->ch_freq_seg2) &&
+	    wlan_chan_puncture_eq(chan1, chan2))
 		return QDF_STATUS_SUCCESS;
 
 	return QDF_STATUS_E_FAILURE;

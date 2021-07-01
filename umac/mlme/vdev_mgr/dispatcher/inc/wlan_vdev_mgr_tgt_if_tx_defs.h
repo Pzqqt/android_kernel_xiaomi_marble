@@ -287,6 +287,7 @@ struct fils_discovery_tmpl_params {
  * @maxreqpower: Max regulatory power
  * @antennamac: Max antenna
  * @reg_class_id: Regulatory class id.
+ * @puncture_pattern: 11be static puncture pattern
  */
 struct mlme_channel_param {
 	uint8_t chan_id;
@@ -309,6 +310,9 @@ struct mlme_channel_param {
 	int8_t   maxregpower;
 	uint8_t  antennamax;
 	uint8_t  reg_class_id;
+#ifdef WLAN_FEATURE_11BE
+	uint16_t puncture_pattern;
+#endif
 };
 
 /**

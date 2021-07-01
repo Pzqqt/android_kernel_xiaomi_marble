@@ -266,6 +266,7 @@ struct wlan_vdev_create_params {
  * @ch_cfreq2:    channel center frequency for secondary
  * @ch_width:     Channel width.
  * @ch_phymode:   Channel phymode.
+ * @puncture_bitmap:   Puncture bitmap per 20MHz.
  */
 struct wlan_channel {
 	uint16_t     ch_freq;
@@ -279,6 +280,9 @@ struct wlan_channel {
 	uint32_t     ch_cfreq2;
 	enum phy_ch_width ch_width;
 	enum wlan_phymode ch_phymode;
+#ifdef WLAN_FEATURE_11BE
+	uint16_t     puncture_bitmap;
+#endif
 };
 
 /**
