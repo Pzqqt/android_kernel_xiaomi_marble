@@ -1183,6 +1183,8 @@ static QDF_STATUS lim_send_join_req(struct pe_session *session,
 			session->vdev_id,
 			wlan_vdev_mlme_get_state(session->vdev),
 			wlan_vdev_mlme_get_substate(session->vdev));
+		qdf_trigger_self_recovery(session->mac_ctx->psoc,
+					  QDF_VDEV_SM_OUT_OF_SYNC);
 		return status;
 	}
 	status = mlme_set_assoc_type(session->vdev, VDEV_ASSOC);
@@ -3064,6 +3066,9 @@ lim_cm_create_session(struct mac_context *mac_ctx, struct cm_vdev_join_req *req)
 		       pe_session->vdev_id,
 		       QDF_MAC_ADDR_REF(req->entry->bssid.bytes),
 		       pe_session->limSmeState);
+
+		qdf_trigger_self_recovery(mac_ctx->psoc,
+					  QDF_VDEV_SM_OUT_OF_SYNC);
 		return NULL;
 	}
 
