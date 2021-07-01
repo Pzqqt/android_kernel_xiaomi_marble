@@ -524,7 +524,6 @@ endif
 $(call add-wlan-objs,dsc,$(DSC_OBJS))
 
 cppflags-$(CONFIG_ONE_MSI_VECTOR) += -DWLAN_ONE_MSI_VECTOR
-cppflags-$(CONFIG_CNSS_UTILS) += -DCONFIG_CNSS_UTILS
 
 cppflags-$(CONFIG_DSC_DEBUG) += -DWLAN_DSC_DEBUG
 cppflags-$(CONFIG_DSC_TEST) += -DWLAN_DSC_TEST
@@ -3085,6 +3084,14 @@ ifeq (y,$(findstring y, $(CONFIG_CNSS_GENL) $(CONFIG_CNSS_GENL_MODULE)))
 cppflags-y += -DCNSS_GENL
 endif
 
+ifeq (y,$(findstring y, $(CONFIG_CNSS_UTILS) $(CONFIG_CNSS_UTILS_MODULE)))
+cppflags-y += -DCNSS_UTILS
+endif
+
+ifeq (y,$(findstring y, $(CONFIG_WCNSS_MEM_PRE_ALLOC) $(CONFIG_WCNSS_MEM_PRE_ALLOC_MODULE)))
+cppflags-y += -DCNSS_MEM_PRE_ALLOC
+endif
+
 cppflags-$(CONFIG_QCACLD_WLAN_LFR2) += -DWLAN_FEATURE_HOST_ROAM
 
 cppflags-$(CONFIG_FEATURE_ROAM_DEBUG) += -DFEATURE_ROAM_DEBUG
@@ -3244,7 +3251,6 @@ endif
 endif
 
 cppflags-$(CONFIG_FEATURE_SKB_PRE_ALLOC) += -DFEATURE_SKB_PRE_ALLOC
-cppflags-$(CONFIG_WCNSS_MEM_PRE_ALLOC) += -DCONFIG_WCNSS_MEM_PRE_ALLOC
 
 #Enable USB specific APIS
 ifeq ($(CONFIG_HIF_USB), y)

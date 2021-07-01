@@ -24,7 +24,7 @@
 #include <linux/pm.h>
 #include <osapi_linux.h>
 
-#if IS_ENABLED(CONFIG_CNSS_UTILS)
+#ifdef CNSS_UTILS
 #include <net/cnss_utils.h>
 #endif
 
@@ -39,7 +39,7 @@
 
 #define TOTAL_DUMP_SIZE         0x00200000
 
-#if IS_ENABLED(CONFIG_WCNSS_MEM_PRE_ALLOC)
+#ifdef CNSS_MEM_PRE_ALLOC
 #include <net/cnss_prealloc.h>
 #endif
 
@@ -969,7 +969,7 @@ void pld_thermal_unregister(struct device *dev, int mon_id);
 int pld_get_thermal_state(struct device *dev, unsigned long *thermal_state,
 			  int mon_id);
 
-#if IS_ENABLED(CONFIG_WCNSS_MEM_PRE_ALLOC) && defined(FEATURE_SKB_PRE_ALLOC)
+#if defined(CNSS_MEM_PRE_ALLOC) && defined(FEATURE_SKB_PRE_ALLOC)
 
 /**
  * pld_nbuf_pre_alloc() - get allocated nbuf from platform driver.

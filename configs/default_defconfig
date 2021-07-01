@@ -156,6 +156,12 @@ endif
 ifeq ($(CONFIG_CNSS_GENL), m)
 	CONFIG_CNSS_GENL_MODULE := y
 endif
+ifeq ($(CONFIG_CNSS_UTILS), m)
+	CONFIG_CNSS_UTILS_MODULE := y
+endif
+ifeq ($(CONFIG_WCNSS_MEM_PRE_ALLOC), m)
+	CONFIG_WCNSS_MEM_PRE_ALLOC_MODULE := y
+endif
 
 ifeq (y,$(findstring y,$(CONFIG_ICNSS) $(CONFIG_ICNSS_MODULE)))
 	CONFIG_ROME_IF = snoc
