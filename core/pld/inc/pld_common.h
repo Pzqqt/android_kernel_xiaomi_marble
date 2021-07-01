@@ -25,7 +25,11 @@
 #include <osapi_linux.h>
 
 #ifdef CNSS_UTILS
+#ifdef CONFIG_CNSS_OUT_OF_TREE
+#include "cnss_utils.h"
+#else
 #include <net/cnss_utils.h>
+#endif
 #endif
 
 #define PLD_IMAGE_FILE               "athwlan.bin"
@@ -40,7 +44,11 @@
 #define TOTAL_DUMP_SIZE         0x00200000
 
 #ifdef CNSS_MEM_PRE_ALLOC
+#ifdef CONFIG_CNSS_OUT_OF_TREE
+#include "cnss_prealloc.h"
+#else
 #include <net/cnss_prealloc.h>
+#endif
 #endif
 
 /**
