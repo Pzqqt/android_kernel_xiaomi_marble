@@ -53,6 +53,37 @@
 
 #define mlo_nofl_debug(format, args...) \
 		QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_MLO, format, ## args)
+
+#define mlo_alert_rl(format, args...) \
+		QDF_TRACE_FATAL_RL(QDF_MODULE_ID_MLO, format, ## args)
+
+#define mlo_err_rl(format, args...) \
+		QDF_TRACE_ERROR_RL(QDF_MODULE_ID_MLO, format, ## args)
+
+#define mlo_warn_rl(format, args...) \
+		QDF_TRACE_WARN_RL(QDF_MODULE_ID_MLO, format, ## args)
+
+#define mlo_info_rl(format, args...) \
+		QDF_TRACE_INFO_RL(QDF_MODULE_ID_MLO, format, ## args)
+
+#define mlo_debug_rl(format, args...) \
+		QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_MLO, format, ## args)
+
+#define mlo_nofl_alert_rl(format, args...) \
+		QDF_TRACE_FATAL_RL_NO_FL(QDF_MODULE_ID_MLO, format, ## args)
+
+#define mlo_nofl_err_rl(format, args...) \
+		QDF_TRACE_ERROR_RL_NO_FL(QDF_MODULE_ID_MLO, format, ## args)
+
+#define mlo_nofl_warn_rl(format, args...) \
+		QDF_TRACE_WARN_RL_NO_FL(QDF_MODULE_ID_MLO, format, ## args)
+
+#define mlo_nofl_info_rl(format, args...) \
+		QDF_TRACE_INFO_RL_NO_FL(QDF_MODULE_ID_MLO, format, ## args)
+
+#define mlo_nofl_debug_rl(format, args...) \
+		QDF_TRACE_DEBUG_RL_NO_FL(QDF_MODULE_ID_MLO, format, ## args)
+
 /**
  * mlo_get_link_information() - get partner link information
  * @mld_addr : MLD address
