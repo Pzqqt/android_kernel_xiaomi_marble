@@ -24,7 +24,11 @@
 #include <wlan_nlink_common.h>
 #include <qdf_module.h>
 #ifdef CNSS_GENL
+#ifdef CONFIG_CNSS_OUT_OF_TREE
+#include "cnss_nl.h"
+#else
 #include <net/cnss_nl.h>
+#endif
 #endif
 #include <wlan_cfg80211.h>
 
