@@ -189,9 +189,13 @@ static void pkt_capture_tx_get_phy_info(
 		tx_status->he_flags = 1;
 		tx_status->he_data1 |=
 			IEEE80211_RADIOTAP_HE_DATA1_DATA_MCS_KNOWN |
-			IEEE80211_RADIOTAP_HE_DATA1_BW_RU_ALLOC_KNOWN;
+			IEEE80211_RADIOTAP_HE_DATA1_BW_RU_ALLOC_KNOWN |
+			IEEE80211_RADIOTAP_HE_DATA1_CODING_KNOWN |
+			IEEE80211_RADIOTAP_HE_DATA1_STBC_KNOWN;
 		tx_status->he_data2 |= IEEE80211_RADIOTAP_HE_DATA2_GI_KNOWN;
-		tx_status->he_data3 |= pktcapture_hdr->mcs << 0x8;
+		tx_status->he_data3 |= (pktcapture_hdr->mcs << 0x8) |
+					(pktcapture_hdr->ldpc << 0xd) |
+					(pktcapture_hdr->stbc << 0xf);
 		tx_status->he_data5 |=
 			(pktcapture_hdr->bw | (pktcapture_hdr->sgi << 0x4));
 		tx_status->he_data6 |= pktcapture_hdr->nss;
