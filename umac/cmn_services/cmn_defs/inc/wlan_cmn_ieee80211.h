@@ -1465,6 +1465,7 @@ struct wlan_ie_ehtcaps {
  * @chan_freq_seg0: EHT Channel Centre Frequency Segment 0
  * @chan_freq_seg1: EHT Channel Centre Frequency Segment 1
  * @minimum_rate: EHT Minimum Rate
+ * @puncture_pattern: per 20MHz puncturing bitmap
  */
 struct wlan_ie_ehtops {
 	uint8_t elem_id;
@@ -1477,6 +1478,7 @@ struct wlan_ie_ehtops {
 	uint8_t chan_freq_seg0;
 	uint8_t chan_freq_seg1;
 	uint8_t minimum_rate;
+	uint16_t puncture_pattern;
 } qdf_packed;
 #endif
 

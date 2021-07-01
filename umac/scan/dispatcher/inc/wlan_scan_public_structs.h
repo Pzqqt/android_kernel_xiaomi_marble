@@ -125,12 +125,16 @@ struct wlan_objmgr_psoc;
  * @chan_freq: channel frequency
  * @cfreq0: channel frequency index0
  * @cfreq1: channel frequency index1
+ * @puncture_bitmap: puncture bitmap advertised in beacon
  * @priv: channel private information
  */
 struct channel_info {
 	uint32_t chan_freq;
 	uint32_t cfreq0;
 	uint32_t cfreq1;
+#ifdef WLAN_FEATURE_11BE
+	uint16_t puncture_bitmap;
+#endif
 	void *priv;
 };
 
