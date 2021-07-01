@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/ipa_uc_offload.h>
@@ -121,7 +121,11 @@ static int ipa_uc_offload_ntn_register_pm_client(
 	struct ipa_pm_register_params params;
 
 	memset(&params, 0, sizeof(params));
-	params.name = "ETH";
+
+	if (ntn_ctx->proto == IPA_UC_NTN_V2X)
+		params.name = "ETH_v2x";
+	else
+		params.name = "ETH";
 	params.callback = ipa_uc_offload_ntn_pm_cb;
 	params.user_data = ntn_ctx;
 	params.group = IPA_PM_GROUP_DEFAULT;
@@ -130,11 +134,15 @@ static int ipa_uc_offload_ntn_register_pm_client(
 		IPA_UC_OFFLOAD_ERR("fail to register with PM %d\n", res);
 		return res;
 	}
-
-	res = ipa_pm_associate_ipa_cons_to_client(ntn_ctx->pm_hdl,
-		IPA_CLIENT_ETHERNET_CONS);
+	if (ntn_ctx->proto == IPA_UC_NTN_V2X)
+		res = ipa_pm_associate_ipa_cons_to_client(ntn_ctx->pm_hdl,
+			IPA_CLIENT_ETHERNET2_CONS);
+	else
+		res = ipa_pm_associate_ipa_cons_to_client(ntn_ctx->pm_hdl,
+			IPA_CLIENT_ETHERNET_CONS);
 	if (res) {
-		IPA_UC_OFFLOAD_ERR("fail to associate cons with PM %d\n", res);
+		IPA_UC_OFFLOAD_ERR("fail to associate. PM (%d) Prot: %d\n",
+			res, ntn_ctx->proto);
 		ipa_pm_deregister(ntn_ctx->pm_hdl);
 		ntn_ctx->pm_hdl = ~0;
 		return res;
@@ -322,10 +330,26 @@ static int ipa_uc_offload_reg_intf_internal(
 		return -EINVAL;
 	}
 
+	/* only register IPA properties for uc_ntn */
 	if (ctx->proto == IPA_UC_NTN) {
 		ret = ipa_uc_offload_ntn_reg_intf(inp, outp, ctx);
 		if (!ret)
 			outp->clnt_hndl = IPA_UC_NTN;
+	}
+
+	/* only register IPA-pm for uc_ntn_v2x */
+	if (ctx->proto == IPA_UC_NTN_V2X) {
+		/* always in vlan mode */
+		IPA_UC_OFFLOAD_INFO("v2x hdr_len %d\n",
+			inp->hdr_info[0].hdr_len);
+		ctx->hdr_len = inp->hdr_info[0].hdr_len;
+		ret = ipa_uc_offload_ntn_register_pm_client(ctx);
+		if (!ret)
+			outp->clnt_hndl = IPA_UC_NTN_V2X;
+		else
+			IPA_UC_OFFLOAD_ERR("fail to create pm resource\n");
+		/* set to initialized state */
+		ctx->state = IPA_UC_OFFLOAD_STATE_INITIALIZED;
 	}
 
 	return ret;
@@ -461,7 +485,7 @@ static int ipa_uc_offload_conn_pipes_internal(struct ipa_uc_offload_conn_in_para
 
 	offload_ctx = ipa_uc_offload_ctx[inp->clnt_hndl];
 	if (!offload_ctx) {
-		IPA_UC_OFFLOAD_ERR("Invalid Handle\n");
+		IPA_UC_OFFLOAD_ERR("Invalid ctx %d\n", inp->clnt_hndl);
 		return -EINVAL;
 	}
 
@@ -471,6 +495,7 @@ static int ipa_uc_offload_conn_pipes_internal(struct ipa_uc_offload_conn_in_para
 	}
 
 	switch (offload_ctx->proto) {
+	case IPA_UC_NTN_V2X:
 	case IPA_UC_NTN:
 		ret = ipa_uc_ntn_conn_pipes(&inp->u.ntn, &outp->u.ntn,
 						offload_ctx);
@@ -503,8 +528,13 @@ static int ipa_uc_ntn_disconn_pipes(struct ipa_uc_offload_ctx *ntn_ctx)
 		return -EFAULT;
 	}
 
-	ipa_ep_idx_ul = ipa_get_ep_mapping(IPA_CLIENT_ETHERNET_PROD);
-	ipa_ep_idx_dl = ipa_get_ep_mapping(IPA_CLIENT_ETHERNET_CONS);
+	if (ntn_ctx->proto == IPA_UC_NTN_V2X) {
+		ipa_ep_idx_ul = ipa_get_ep_mapping(IPA_CLIENT_ETHERNET2_PROD);
+		ipa_ep_idx_dl = ipa_get_ep_mapping(IPA_CLIENT_ETHERNET2_CONS);
+	} else {
+		ipa_ep_idx_ul = ipa_get_ep_mapping(IPA_CLIENT_ETHERNET_PROD);
+		ipa_ep_idx_dl = ipa_get_ep_mapping(IPA_CLIENT_ETHERNET_CONS);
+	}
 	ret = ipa3_tear_down_uc_offload_pipes(ipa_ep_idx_ul, ipa_ep_idx_dl,
 		&ntn_ctx->conn);
 	if (ret) {
@@ -543,6 +573,7 @@ static int ipa_uc_offload_disconn_pipes_internal(u32 clnt_hdl)
 	}
 
 	switch (offload_ctx->proto) {
+	case IPA_UC_NTN_V2X:
 	case IPA_UC_NTN:
 		ret = ipa_uc_ntn_disconn_pipes(offload_ctx);
 		break;
@@ -617,6 +648,11 @@ static int ipa_uc_offload_cleanup_internal(u32 clnt_hdl)
 		ret = ipa_uc_ntn_cleanup(offload_ctx);
 		break;
 
+	case IPA_UC_NTN_V2X:
+		/* only clean-up pm_handle */
+		ipa_uc_offload_ntn_deregister_pm_client(offload_ctx);
+		break;
+
 	default:
 		IPA_UC_OFFLOAD_ERR("Invalid Proto :%d\n", clnt_hdl);
 		ret = -EINVAL;
@@ -650,7 +686,7 @@ int ipa_uc_offload_reg_rdyCB_internal(struct ipa_uc_ready_params *inp)
 		return -EINVAL;
 	}
 
-	if (inp->proto == IPA_UC_NTN)
+	if (inp->proto == IPA_UC_NTN || inp->proto == IPA_UC_NTN_V2X)
 		ret = ipa3_ntn_uc_reg_rdyCB(inp->notify, inp->priv);
 
 	if (ret == -EEXIST) {
@@ -664,7 +700,7 @@ int ipa_uc_offload_reg_rdyCB_internal(struct ipa_uc_ready_params *inp)
 
 void ipa_uc_offload_dereg_rdyCB_internal(enum ipa_uc_offload_proto proto)
 {
-	if (proto == IPA_UC_NTN)
+	if (proto == IPA_UC_NTN || proto == IPA_UC_NTN_V2X)
 		ipa3_ntn_uc_dereg_rdyCB();
 }
 
