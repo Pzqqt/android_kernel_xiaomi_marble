@@ -2154,12 +2154,11 @@ int msm_vidc_adjust_session_priority(void *instance, struct v4l2_ctrl *ctrl)
 	}
 
 	/*
-	 * For RT, check for resource feasability if rate is set by client.
-	 * For RT, move to NRT, if rate is not set by client.
+	 * For RT, check for resource feasability.
 	 * For NRT, sessions with rate set by client takes higher order
 	 * among NRT sessions. They are constraint RT or low priority RT.
 	 */
-	if (adjusted_value == 0 && rate_by_client) {
+	if (adjusted_value == 0) {
 		rc = msm_vidc_check_core_mbps(inst);
 		if (rc) {
 			i_vpr_e(inst, "%s: unsupported load\n", __func__);
@@ -2182,9 +2181,6 @@ int msm_vidc_adjust_session_priority(void *instance, struct v4l2_ctrl *ctrl)
 			goto exit;
 		}
 	}
-
-	if (adjusted_value == 0 && !rate_by_client)
-		adjusted_value = 1;
 
 	msm_vidc_update_cap_value(inst, PRIORITY, adjusted_value, __func__);
 
