@@ -586,9 +586,6 @@ static bool dsi_display_validate_reg_read(struct dsi_panel *panel)
 	for (i = 0; i < count; i++)
 		len += lenp[i];
 
-	for (i = 0; i < len; i++)
-		j += len;
-
 	for (j = 0; j < config->groups; ++j) {
 		for (i = 0; i < len; ++i) {
 			if (config->return_buf[i] !=
