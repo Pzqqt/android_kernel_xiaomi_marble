@@ -116,9 +116,9 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 		} else {
 			base_cycles = 0;
 			vsp_cycles = div_u64(vsp_cycles, 2);
-			/* VSP FW Overhead 1.05 */
-			vsp_cycles = div_u64(vsp_cycles * 21, 20);
 		}
+		/* VSP FW Overhead 1.05 */
+		vsp_cycles = div_u64(vsp_cycles * 21, 20);
 
 		if (inst->capabilities->cap[STAGE].value == MSM_VIDC_STAGE_1)
 			vsp_cycles = vsp_cycles * 3;
@@ -148,9 +148,9 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 		} else {
 			base_cycles = 0;
 			vsp_cycles = div_u64(vsp_cycles, 2);
-			/* VSP FW overhead 1.05 */
-			vsp_cycles = div_u64(vsp_cycles * 21, 20);
 		}
+		/* VSP FW overhead 1.05 */
+		vsp_cycles = div_u64(vsp_cycles * 21, 20);
 
 		if (inst->capabilities->cap[STAGE].value == MSM_VIDC_STAGE_1)
 			vsp_cycles = vsp_cycles * 3;
