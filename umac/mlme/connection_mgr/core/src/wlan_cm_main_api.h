@@ -797,6 +797,14 @@ void cm_set_max_connect_attempts(struct wlan_objmgr_vdev *vdev,
 				 uint8_t max_connect_attempts);
 
 /**
+ * cm_trigger_panic_on_cmd_timeout() - trigger panic on active command timeout
+ * @vdev: vdev pointer
+ *
+ * Return: void
+ */
+void cm_trigger_panic_on_cmd_timeout(struct wlan_objmgr_vdev *vdev);
+
+/**
  * cm_set_max_connect_timeout() - Set max connect timeout
  * @vdev: vdev pointer
  * @max_connect_timeout: max connect timeout to be set.
