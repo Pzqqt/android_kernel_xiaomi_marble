@@ -1049,7 +1049,9 @@ vdev_start_cmd_fill_11be(wmi_vdev_start_request_cmd_fixed_param *cmd,
 			 struct vdev_start_params *req)
 {
 	cmd->eht_ops = req->eht_ops;
-	wmi_info("EHT ops: %x", req->eht_ops);
+	cmd->puncture_20mhz_bitmap = req->channel.puncture_pattern;
+	wmi_info("EHT ops: %x puncture_pattern %x",
+		 req->eht_ops, req->channel.puncture_pattern);
 }
 #else
 static void
@@ -2641,6 +2643,8 @@ static uint8_t *update_peer_flags_tlv_ehtinfo(
 	int i;
 
 	cmd->peer_eht_ops = param->peer_eht_ops;
+	cmd->puncture_20mhz_bitmap = param->puncture_pattern;
+
 	qdf_mem_copy(&cmd->peer_eht_cap_mac, &param->peer_eht_cap_macinfo,
 		     sizeof(param->peer_eht_cap_macinfo));
 	qdf_mem_copy(&cmd->peer_eht_cap_phy, &param->peer_eht_cap_phyinfo,
@@ -2678,11 +2682,11 @@ static uint8_t *update_peer_flags_tlv_ehtinfo(
 			  QDF_MAC_ADDR_REF(param->peer_mac));
 	}
 
-	wmi_debug("EHT cap_mac %x %x ehtops %x  EHT phy %x  %x  %x  ",
+	wmi_debug("EHT cap_mac %x %x ehtops %x  EHT phy %x  %x  %x  pp %x",
 		  cmd->peer_eht_cap_mac[0],
 		  cmd->peer_eht_cap_mac[1], cmd->peer_eht_ops,
 		  cmd->peer_eht_cap_phy[0], cmd->peer_he_cap_phy[1],
-		  cmd->peer_eht_cap_phy[2]);
+		  cmd->peer_eht_cap_phy[2], cmd->puncture_20mhz_bitmap);
 
 	return buf_ptr;
 }
