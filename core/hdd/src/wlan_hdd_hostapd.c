@@ -5824,7 +5824,10 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	updated_phy_mode = wlan_reg_get_max_phymode(hdd_ctx->pdev, reg_phy_mode,
 						    config->chan_freq);
 	config->SapHw_mode = csr_convert_from_reg_phy_mode(updated_phy_mode);
-
+	if (config->sap_orig_hw_mode != config->SapHw_mode)
+		hdd_info("orig phymode %d new phymode %d",
+			 config->sap_orig_hw_mode,
+			 config->SapHw_mode);
 	qdf_mem_zero(sme_config, sizeof(*sme_config));
 	sme_get_config_param(mac_handle, sme_config);
 	/* Override hostapd.conf wmm_enabled only for 11n and 11AC configs (IOT)
