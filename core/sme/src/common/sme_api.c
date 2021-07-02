@@ -10956,6 +10956,49 @@ void sme_set_he_mu_edca_def_cfg(mac_handle_t mac_handle)
 	}
 }
 
+int sme_update_he_capabilities(mac_handle_t mac_handle, uint8_t session_id,
+			       uint8_t cfg_val, uint8_t cfg_id)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	struct csr_roam_session *session;
+	tDot11fIEhe_cap *cfg_he_cap;
+	tDot11fIEhe_cap *he_cap_orig;
+
+	session = CSR_GET_SESSION(mac_ctx, session_id);
+
+	if (!session) {
+		sme_err("No session for id %d", session_id);
+		return -EINVAL;
+	}
+	cfg_he_cap = &mac_ctx->mlme_cfg->he_caps.dot11_he_cap;
+	he_cap_orig = &mac_ctx->mlme_cfg->he_caps.he_cap_orig;
+
+	switch (cfg_id) {
+	case QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_BCAST_TWT_SUPPORT:
+		if (cfg_val) {
+			mac_ctx->mlme_cfg->twt_cfg.disable_btwt_usr_cfg = false;
+			cfg_he_cap->broadcast_twt = he_cap_orig->broadcast_twt;
+		} else {
+			cfg_he_cap->broadcast_twt = 0;
+			mac_ctx->mlme_cfg->twt_cfg.disable_btwt_usr_cfg = true;
+		}
+		break;
+	case QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_RX_CTRL_FRAME_TO_MBSS:
+		if (cfg_val)
+			cfg_he_cap->rx_ctrl_frame = he_cap_orig->rx_ctrl_frame;
+		else
+			cfg_he_cap->rx_ctrl_frame = 0;
+		break;
+	default:
+		sme_debug("default: Unhandled cfg %d", cfg_id);
+		return -EINVAL;
+	}
+
+	sme_debug("HE cap: cfg id %d, cfg val %d", cfg_id, cfg_val);
+	csr_update_session_he_cap(mac_ctx, session);
+	return 0;
+}
+
 int sme_update_he_tx_bfee_supp(mac_handle_t mac_handle, uint8_t session_id,
 			       uint8_t cfg_val)
 {
@@ -14755,6 +14798,9 @@ void sme_set_he_testbed_def(mac_handle_t mac_handle, uint8_t vdev_id)
 	sme_debug("set HE testbed defaults");
 	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.amsdu_in_ampdu = 0;
 	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.twt_request = 0;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.broadcast_twt = 0;
+	mac_ctx->mlme_cfg->twt_cfg.disable_btwt_usr_cfg = true;
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.rx_ctrl_frame = 0;
 	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.omi_a_ctrl = 0;
 	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.he_ppdu_20_in_160_80p80Mhz = 0;
 	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.he_ppdu_20_in_40Mhz_2G = 0;
@@ -14844,6 +14890,8 @@ void sme_reset_he_caps(mac_handle_t mac_handle, uint8_t vdev_id)
 
 	if (QDF_STATUS_SUCCESS != status)
 		sme_err("prevent PM reset cmd send failed");
+
+	mac_ctx->mlme_cfg->twt_cfg.disable_btwt_usr_cfg = false;
 	status = ucfg_mlme_set_enable_bcast_probe_rsp(mac_ctx->psoc, true);
 	if (QDF_IS_STATUS_ERROR(status))
 		sme_err("Failed not set enable bcast probe resp info, %d",

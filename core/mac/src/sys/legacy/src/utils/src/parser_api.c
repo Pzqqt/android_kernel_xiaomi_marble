@@ -6476,7 +6476,8 @@ populate_dot11f_twt_he_cap(struct mac_context *mac,
 			   tDot11fIEhe_cap *he_cap)
 {
 	bool bcast_requestor =
-		mac->mlme_cfg->twt_cfg.is_bcast_requestor_enabled;
+		mac->mlme_cfg->twt_cfg.is_bcast_requestor_enabled &&
+		!mac->mlme_cfg->twt_cfg.disable_btwt_usr_cfg;
 	bool bcast_responder =
 		mac->mlme_cfg->twt_cfg.is_bcast_responder_enabled;
 
