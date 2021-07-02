@@ -2436,7 +2436,6 @@ static void rndis_ipa_debugfs_init(struct rndis_ipa_dev *rndis_ipa_ctx)
 	debugfs_create_u8
 		("aggr_type", flags_read_write,
 		aggr_directory, (u8 *)&ipa_to_usb_ep_cfg.aggr.aggr);
-		RNDIS_IPA_ERROR("could not create aggr_type file\n");
 
 	debugfs_create_u32
 		("aggr_byte_limit", flags_read_write,
