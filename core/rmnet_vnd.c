@@ -20,7 +20,10 @@
 #include <linux/ipv6.h>
 #include <linux/tcp.h>
 #include <linux/inet.h>
+#include <linux/icmp.h>
+#include <linux/icmpv6.h>
 #include <net/pkt_sched.h>
+#include <net/ipv6.h>
 #include "rmnet_config.h"
 #include "rmnet_handlers.h"
 #include "rmnet_private.h"
@@ -250,6 +253,52 @@ static u16 rmnet_vnd_select_queue(struct net_device *dev,
 	int boost_trigger = 0;
 	int txq = 0;
 
+	if (trace_print_icmp_tx_enabled()) {
+		char saddr[INET6_ADDRSTRLEN], daddr[INET6_ADDRSTRLEN];
+		u16 ip_proto = 0;
+		__be16 sequence = 0;
+		u8 type = 0;
+
+		memset(saddr, 0, INET6_ADDRSTRLEN);
+		memset(daddr, 0, INET6_ADDRSTRLEN);
+
+		if (skb->protocol == htons(ETH_P_IP)) {
+			if (ip_hdr(skb)->protocol != IPPROTO_ICMP)
+				goto skip_trace_print_icmp_tx;
+
+			if (icmp_hdr(skb)->type != ICMP_ECHOREPLY &&
+			    icmp_hdr(skb)->type != ICMP_ECHO)
+				goto skip_trace_print_icmp_tx;
+
+			ip_proto = htons(ETH_P_IP);
+			type = icmp_hdr(skb)->type;
+			sequence = icmp_hdr(skb)->un.echo.sequence;
+			snprintf(saddr, INET6_ADDRSTRLEN, "%pI4", &ip_hdr(skb)->saddr);
+			snprintf(daddr, INET6_ADDRSTRLEN, "%pI4", &ip_hdr(skb)->daddr);
+		}
+
+		if (skb->protocol == htons(ETH_P_IPV6)) {
+			if (ipv6_hdr(skb)->nexthdr != NEXTHDR_ICMP)
+				goto skip_trace_print_icmp_tx;
+
+			if (icmp6_hdr(skb)->icmp6_type != ICMPV6_ECHO_REQUEST &&
+			    icmp6_hdr(skb)->icmp6_type != ICMPV6_ECHO_REPLY)
+				goto skip_trace_print_icmp_tx;
+
+			ip_proto = htons(ETH_P_IPV6);
+			type = icmp6_hdr(skb)->icmp6_type;
+			sequence = icmp6_hdr(skb)->icmp6_sequence;
+			snprintf(saddr, INET6_ADDRSTRLEN, "%pI6", &ipv6_hdr(skb)->saddr);
+			snprintf(daddr, INET6_ADDRSTRLEN, "%pI6", &ipv6_hdr(skb)->daddr);
+		}
+
+		if (!ip_proto)
+			goto skip_trace_print_icmp_tx;
+
+		trace_print_icmp_tx(skb, ip_proto, type, sequence, saddr, daddr);
+	}
+
+skip_trace_print_icmp_tx:
 	if (trace_print_skb_gso_enabled()) {
 		char saddr[INET6_ADDRSTRLEN], daddr[INET6_ADDRSTRLEN];
 		u16 ip_proto = 0, xport_proto = 0;

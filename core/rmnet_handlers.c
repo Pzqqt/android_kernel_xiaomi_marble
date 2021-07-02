@@ -51,6 +51,7 @@ EXPORT_TRACEPOINT_SYMBOL(rmnet_err);
 EXPORT_TRACEPOINT_SYMBOL(rmnet_freq_update);
 EXPORT_TRACEPOINT_SYMBOL(rmnet_freq_reset);
 EXPORT_TRACEPOINT_SYMBOL(rmnet_freq_boost);
+EXPORT_TRACEPOINT_SYMBOL(print_icmp_rx);
 
 
 

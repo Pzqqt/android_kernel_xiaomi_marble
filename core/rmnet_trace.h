@@ -117,7 +117,7 @@ TRACE_EVENT(print_skb_gso,
 	TP_ARGS(skb, src, dest, ip_proto, xport_proto, saddr, daddr),
 
 	TP_STRUCT__entry(
-		__field(void *,	skbaddr)
+		__field(void *, skbaddr)
 		__field(int, len)
 		__field(int, data_len)
 		__field(__be16, src)
@@ -146,6 +146,58 @@ TRACE_EVENT(print_skb_gso,
 		__entry->xport_proto == IPPROTO_TCP ? "TCP" : "UDP",
 		__get_str(saddr), be16_to_cpu(__entry->src),
 		__get_str(daddr), be16_to_cpu(__entry->dest))
+);
+
+DECLARE_EVENT_CLASS(print_icmp,
+
+	TP_PROTO(struct sk_buff *skb, u16 ip_proto, u8 type, __be16 sequence,
+		const char *saddr, const char *daddr),
+
+	TP_ARGS(skb, ip_proto, type, sequence, saddr, daddr),
+
+	TP_STRUCT__entry(
+		__field(void *, skbaddr)
+		__field(int, len)
+		__field(u16, ip_proto)
+		__field(u8, type)
+		__field(__be16, sequence)
+		__string(saddr, saddr)
+		__string(daddr, daddr)
+	),
+
+	TP_fast_assign(
+		__entry->skbaddr = skb;
+		__entry->len = skb->len;
+		__entry->ip_proto = ip_proto;
+		__entry->type = type;
+		__entry->sequence = sequence;
+		__assign_str(saddr, saddr);
+		__assign_str(daddr, daddr);
+	),
+
+	TP_printk("ICMP: skbaddr=%pK, len=%d, [%s] type=%u sequence=%u source=%s dest=%s",
+		__entry->skbaddr, __entry->len,
+		__entry->ip_proto == htons(ETH_P_IP) ? "IPv4" : "IPv6",
+		__entry->type, be16_to_cpu(__entry->sequence), __get_str(saddr),
+		__get_str(daddr))
+);
+
+DEFINE_EVENT
+	(print_icmp, print_icmp_tx,
+
+	TP_PROTO(struct sk_buff *skb, u16 ip_proto, u8 type, __be16 sequence,
+		const char *saddr, const char *daddr),
+
+	TP_ARGS(skb, ip_proto, type, sequence, saddr, daddr)
+);
+
+DEFINE_EVENT
+	(print_icmp, print_icmp_rx,
+
+	TP_PROTO(struct sk_buff *skb, u16 ip_proto, u8 type, __be16 sequence,
+		const char *saddr, const char *daddr),
+
+	TP_ARGS(skb, ip_proto, type, sequence, saddr, daddr)
 );
 
 /*****************************************************************************/
