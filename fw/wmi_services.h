@@ -541,6 +541,7 @@ typedef  enum  {
     WMI_SERVICE_RTT_AP_INITIATOR_STAGGERED_MODE_SUPPORTED = 296, /* FW supports RTT in AP Initiator for Staggered beacon mode */
     WMI_SERVICE_RTT_AP_INITIATOR_BURSTED_MODE_SUPPORTED = 297, /* FW supports RTT in AP Initiator for BURSTED beacon mode */
     WMI_SERVICE_P2P_P2P_CONCURRENCY_SUPPORT = 298, /* Indicates FW supports P2P + P2P conncurency both in SCC, MCC, SBS and DBS */
+    WMI_SERVICE_MGMT_RX_REO_SUPPORTED = 299, /* Indicates FW supports Management RX Reorder */
 
 
     WMI_MAX_EXT2_SERVICE
