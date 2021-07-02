@@ -941,6 +941,29 @@ uint32_t hdd_get_adapter_home_channel(struct hdd_adapter *adapter)
 	return home_chan_freq;
 }
 
+enum phy_ch_width hdd_get_adapter_width(struct hdd_adapter *adapter)
+{
+	enum phy_ch_width width = CH_WIDTH_20MHZ;
+	struct hdd_context *hdd_ctx;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (!hdd_ctx) {
+		hdd_err("hdd context is NULL");
+		return 0;
+	}
+
+	if ((adapter->device_mode == QDF_SAP_MODE ||
+	     adapter->device_mode == QDF_P2P_GO_MODE) &&
+	    test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
+		width = adapter->session.ap.sap_config.ch_params.ch_width;
+	} else if ((adapter->device_mode == QDF_STA_MODE ||
+		    adapter->device_mode == QDF_P2P_CLIENT_MODE) &&
+		   hdd_cm_is_vdev_associated(adapter)) {
+		width = adapter->session.station.conn_info.ch_width;
+	}
+	return width;
+}
+
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0))
 static inline struct net_device *hdd_net_dev_from_notifier(void *context)
 {
