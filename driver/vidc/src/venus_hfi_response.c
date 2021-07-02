@@ -1059,6 +1059,7 @@ static int handle_session_buffer(struct msm_vidc_inst *inst,
 	static const struct msm_vidc_hfi_buffer_handle enc_input_hfi_handle[] = {
 		{HFI_BUFFER_METADATA,       handle_input_metadata_buffer      },
 		{HFI_BUFFER_RAW,            handle_input_buffer               },
+		{HFI_BUFFER_VPSS,           handle_release_internal_buffer    },
 	};
 	static const struct msm_vidc_hfi_buffer_handle enc_output_hfi_handle[] = {
 		{HFI_BUFFER_METADATA,       handle_output_metadata_buffer     },
@@ -1069,7 +1070,6 @@ static int handle_session_buffer(struct msm_vidc_inst *inst,
 		{HFI_BUFFER_LINE,           handle_release_internal_buffer    },
 		{HFI_BUFFER_ARP,            handle_release_internal_buffer    },
 		{HFI_BUFFER_DPB,            handle_release_internal_buffer    },
-		{HFI_BUFFER_VPSS,           handle_release_internal_buffer    },
 	};
 	static const struct msm_vidc_hfi_buffer_handle dec_input_hfi_handle[] = {
 		{HFI_BUFFER_METADATA,       handle_input_metadata_buffer      },
@@ -1146,9 +1146,11 @@ static int handle_session_buffer(struct msm_vidc_inst *inst,
 	}
 
 	/* handle unknown buffer type */
-	if (i == hfi_handle_size)
+	if (i == hfi_handle_size) {
 		i_vpr_e(inst, "%s: port %u, unknown buffer type %#x\n", __func__,
 			pkt->port, buffer->type);
+		return -EINVAL;
+	}
 
 	return rc;
 }
@@ -1505,20 +1507,18 @@ static int __handle_session_response(struct msm_vidc_inst *inst,
 			if (packet->flags & HFI_FW_FLAGS_SESSION_ERROR) {
 				i_vpr_e(inst, "%s: received session error %#x\n",
 					__func__, packet->type);
-				rc = handle_session_error(inst, packet);
-				if (rc)
-					goto exit;
+				handle_session_error(inst, packet);
 			}
 			if (in_range(be[i], packet->type)) {
 				dequeue |= (packet->type == HFI_CMD_BUFFER);
 				rc = be[i].handle(inst, packet);
 				if (rc)
-					goto exit;
+					msm_vidc_change_inst_state(inst, MSM_VIDC_ERROR, __func__);
 			}
 			pkt += packet->size;
 		}
 	}
-exit:
+
 	memset(&inst->hfi_frame_info, 0, sizeof(struct msm_vidc_hfi_frame_info));
 	if (dequeue) {
 		rc = handle_dequeue_buffers(inst);

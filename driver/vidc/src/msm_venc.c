@@ -683,6 +683,8 @@ static int msm_venc_property_subscription(struct msm_vidc_inst *inst,
 			HFI_PAYLOAD_U32_ARRAY,
 			&payload[0],
 			payload_size);
+	if (rc)
+		return rc;
 
 	return rc;
 }
@@ -719,11 +721,7 @@ static int msm_venc_metadata_delivery(struct msm_vidc_inst *inst,
 				capability->cap[metadata_list[i]].hfi_id;
 			count++;
 		}
-	};
-
-	// TODO: remove below check later
-	if (!count)
-		return 0;
+	}
 
 	rc = venus_hfi_session_command(inst,
 			HFI_CMD_DELIVERY_MODE,
@@ -731,6 +729,8 @@ static int msm_venc_metadata_delivery(struct msm_vidc_inst *inst,
 			HFI_PAYLOAD_U32_ARRAY,
 			&payload[0],
 			(count + 1) * sizeof(u32));
+	if (rc)
+		return rc;
 
 	return rc;
 }
@@ -767,11 +767,7 @@ static int msm_venc_metadata_subscription(struct msm_vidc_inst *inst,
 				capability->cap[metadata_list[i]].hfi_id;
 			count++;
 		}
-	};
-
-	// TODO: remove below check later
-	if (!count)
-		return 0;
+	}
 
 	rc = venus_hfi_session_command(inst,
 			HFI_CMD_SUBSCRIBE_MODE,
@@ -779,6 +775,8 @@ static int msm_venc_metadata_subscription(struct msm_vidc_inst *inst,
 			HFI_PAYLOAD_U32_ARRAY,
 			&payload[0],
 			(count + 1) * sizeof(u32));
+	if (rc)
+		return rc;
 
 	return rc;
 }
