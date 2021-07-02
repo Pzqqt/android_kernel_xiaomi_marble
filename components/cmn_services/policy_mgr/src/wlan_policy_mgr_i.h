@@ -574,11 +574,24 @@ enum policy_mgr_con_mode policy_mgr_get_mode(uint8_t type,
  */
 enum hw_mode_bandwidth policy_mgr_get_bw(enum phy_ch_width chan_width);
 
+/**
+ * policy_mgr_get_channel_list() - Get channel list based on PCL and mode
+ * @psoc: psoc object
+ * @pcl: pcl type
+ * @mode: interface mode
+ * @pcl_channels: pcl channel list buffer
+ * @pcl_weights: pcl weight buffer
+ * @pcl_sz: pcl channel list buffer size
+ * @len: pcl channel number returned from API
+ *
+ * Return: QDF_STATUS
+ */
 QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
-			enum policy_mgr_pcl_type pcl,
-			uint32_t *pcl_channels, uint32_t *len,
-			enum policy_mgr_con_mode mode,
-			uint8_t *pcl_weights, uint32_t weight_len);
+				       enum policy_mgr_pcl_type pcl,
+				       enum policy_mgr_con_mode mode,
+				       uint32_t *pcl_channels,
+				       uint8_t *pcl_weights,
+				       uint32_t pcl_sz, uint32_t *len);
 
 /**
  * policy_mgr_allow_new_home_channel() - Check for allowed number of

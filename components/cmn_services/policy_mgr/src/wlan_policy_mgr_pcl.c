@@ -1019,8 +1019,8 @@ QDF_STATUS policy_mgr_get_pcl(struct wlan_objmgr_psoc *psoc,
 	/* once the PCL enum is obtained find out the exact channel list with
 	 * help from sme_get_cfg_valid_channels
 	 */
-	status = policy_mgr_get_channel_list(psoc, pcl, pcl_channels, len, mode,
-					pcl_weight, weight_len);
+	status = policy_mgr_get_channel_list(psoc, pcl, mode, pcl_channels,
+					     pcl_weight, weight_len, len);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		policy_mgr_err("failed to get channel list:%d", status);
 		return status;
