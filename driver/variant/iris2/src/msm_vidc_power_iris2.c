@@ -95,6 +95,13 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 		if (fps == 480)
 			vpp_cycles += div_u64(vpp_cycles * 2, 100);
 
+		/*
+		 * Add 5 percent extra for 720p@960fps use case
+		 * to bump it to next level (366MHz).
+		 */
+		if (fps == 960)
+			vpp_cycles += div_u64(vpp_cycles * 5, 100);
+
 		/* VSP */
 		/* bitrate is based on fps, scale it using operating rate */
 		operating_rate = inst->capabilities->cap[OPERATING_RATE].value >> 16;
@@ -116,9 +123,9 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 		} else {
 			base_cycles = 0;
 			vsp_cycles = div_u64(vsp_cycles, 2);
-			/* VSP FW Overhead 1.05 */
-			vsp_cycles = div_u64(vsp_cycles * 21, 20);
 		}
+		/* VSP FW Overhead 1.05 */
+		vsp_cycles = div_u64(vsp_cycles * 21, 20);
 
 		if (inst->capabilities->cap[STAGE].value == MSM_VIDC_STAGE_1)
 			vsp_cycles = vsp_cycles * 3;
@@ -148,9 +155,9 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 		} else {
 			base_cycles = 0;
 			vsp_cycles = div_u64(vsp_cycles, 2);
-			/* VSP FW overhead 1.05 */
-			vsp_cycles = div_u64(vsp_cycles * 21, 20);
 		}
+		/* VSP FW overhead 1.05 */
+		vsp_cycles = div_u64(vsp_cycles * 21, 20);
 
 		if (inst->capabilities->cap[STAGE].value == MSM_VIDC_STAGE_1)
 			vsp_cycles = vsp_cycles * 3;

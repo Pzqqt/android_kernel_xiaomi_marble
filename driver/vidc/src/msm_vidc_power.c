@@ -84,13 +84,16 @@ static int fill_dynamic_stats(struct msm_vidc_inst *inst,
 	u32 cf = MSM_VIDC_MAX_UBWC_COMPLEXITY_FACTOR;
 	u32 cr = MSM_VIDC_MIN_UBWC_COMPRESSION_RATIO;
 	u32 input_cr = MSM_VIDC_MIN_UBWC_COMPRESSION_RATIO;
+	u32 frame_size;
 
 	if (inst->power.fw_cr)
 		cr = inst->power.fw_cr;
 
 	if (inst->power.fw_cf) {
 		cf = inst->power.fw_cf;
-		cf = cf / ((msm_vidc_get_mbs_per_frame(inst)) / (32 * 8) * 3) / 2;
+		frame_size = (msm_vidc_get_mbs_per_frame(inst) / (32 * 8) * 3) / 2;
+		if (frame_size)
+			cf = cf / frame_size;
 	}
 
 	list_for_each_entry_safe(temp, next, &inst->enc_input_crs, list)
