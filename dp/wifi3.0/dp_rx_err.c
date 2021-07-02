@@ -2722,10 +2722,17 @@ done:
 					qdf_nbuf_free(nbuf);
 				}
 			} else if (wbm_err_info.reo_psh_rsn
-					== HAL_RX_WBM_REO_PSH_RSN_ROUTE)
+					== HAL_RX_WBM_REO_PSH_RSN_ROUTE) {
 				dp_rx_err_route_hdl(soc, nbuf, peer,
 						    rx_tlv_hdr,
 						    HAL_RX_WBM_ERR_SRC_REO);
+			} else {
+				/* should not enter here */
+				dp_rx_err_alert("invalid reo push reason %u",
+						wbm_err_info.reo_psh_rsn);
+				qdf_nbuf_free(nbuf);
+				qdf_assert_always(0);
+			}
 		} else if (wbm_err_info.wbm_err_src ==
 					HAL_RX_WBM_ERR_SRC_RXDMA) {
 			if (wbm_err_info.rxdma_psh_rsn
@@ -2790,10 +2797,23 @@ done:
 						  wbm_err_info.rxdma_err_code);
 				}
 			} else if (wbm_err_info.rxdma_psh_rsn
-					== HAL_RX_WBM_RXDMA_PSH_RSN_ROUTE)
+					== HAL_RX_WBM_RXDMA_PSH_RSN_ROUTE) {
 				dp_rx_err_route_hdl(soc, nbuf, peer,
 						    rx_tlv_hdr,
 						    HAL_RX_WBM_ERR_SRC_RXDMA);
+			} else if (wbm_err_info.rxdma_psh_rsn
+					== HAL_RX_WBM_RXDMA_PSH_RSN_FLUSH) {
+				dp_rx_err_err("rxdma push reason %u",
+						wbm_err_info.rxdma_psh_rsn);
+				DP_STATS_INC(soc, rx.err.rx_flush_count, 1);
+				qdf_nbuf_free(nbuf);
+			} else {
+				/* should not enter here */
+				dp_rx_err_alert("invalid rxdma push reason %u",
+						wbm_err_info.rxdma_psh_rsn);
+				qdf_nbuf_free(nbuf);
+				qdf_assert_always(0);
+			}
 		} else {
 			/* Should not come here */
 			qdf_assert(0);

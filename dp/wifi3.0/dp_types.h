@@ -1080,6 +1080,8 @@ struct dp_soc_stats {
 			uint32_t pn_in_dest_check_fail;
 			/* MSDU len err count */
 			uint32_t msdu_len_err;
+			/* Rx flush count */
+			uint32_t rx_flush_count;
 		} err;
 
 		/* packet count per core - per ring */
