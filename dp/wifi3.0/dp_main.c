@@ -10619,6 +10619,30 @@ static QDF_STATUS dp_txrx_update_vdev_host_stats(struct cdp_soc_t *soc_hdl,
 	return QDF_STATUS_SUCCESS;
 }
 
+/* dp_txrx_get_soc_stats - will return cdp_soc_stats
+ * @soc_hdl: soc handle
+ * @soc_stats: buffer to hold the values
+ *
+ * return: status success/failure
+ */
+static QDF_STATUS
+dp_txrx_get_soc_stats(struct cdp_soc_t *soc_hdl,
+		      struct cdp_soc_stats *soc_stats)
+{
+	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
+
+	soc_stats->tx.egress = soc->stats.tx.egress;
+	soc_stats->rx.ingress = soc->stats.rx.ingress;
+	soc_stats->rx.err_ring_pkts = soc->stats.rx.err_ring_pkts;
+	soc_stats->rx.rx_frags = soc->stats.rx.rx_frags;
+	soc_stats->rx.reo_reinject = soc->stats.rx.reo_reinject;
+	soc_stats->rx.bar_frame = soc->stats.rx.bar_frame;
+	soc_stats->rx.err.rx_rejected = soc->stats.rx.err.rejected;
+	soc_stats->rx.err.rx_raw_frm_drop = soc->stats.rx.err.raw_frm_drop;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /* dp_txrx_get_peer_stats - will return cdp_peer_stats
  * @soc: soc handle
  * @vdev_id: id of vdev handle
@@ -12458,6 +12482,7 @@ static struct cdp_host_stats_ops dp_ops_host_stats = {
 	.txrx_stats_publish = dp_txrx_stats_publish,
 	.txrx_get_vdev_stats  = dp_txrx_get_vdev_stats,
 	.txrx_get_peer_stats = dp_txrx_get_peer_stats,
+	.txrx_get_soc_stats = dp_txrx_get_soc_stats,
 	.txrx_get_peer_stats_param = dp_txrx_get_peer_stats_param,
 	.txrx_reset_peer_stats = dp_txrx_reset_peer_stats,
 	.txrx_get_pdev_stats = dp_txrx_get_pdev_stats,
