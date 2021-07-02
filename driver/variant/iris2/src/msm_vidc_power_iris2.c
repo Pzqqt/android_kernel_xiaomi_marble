@@ -16,7 +16,7 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 	struct msm_vidc_core* core;
 	struct msm_vidc_power* power;
 	u64 vsp_cycles = 0, vpp_cycles = 0, fw_cycles = 0;
-	u64 fw_vpp_cycles = 0;
+	u64 fw_vpp_cycles = 0, bitrate = 0;
 	u32 vpp_cycles_per_mb;
 	u32 mbs_per_second;
 	u32 operating_rate, vsp_factor_num = 1, vsp_factor_den = 1;
@@ -145,7 +145,8 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 		/* VSP */
 		base_cycles = inst->has_bframe ?
 				80 : inst->capabilities->cap[MB_CYCLES_VSP].value;
-		vsp_cycles = fps * data_size * 8;
+		bitrate = fps * data_size * 8;
+		vsp_cycles = bitrate;
 
 		if (inst->codec == MSM_VIDC_VP9) {
 			vsp_cycles = div_u64(vsp_cycles * 170, 100);
@@ -164,6 +165,12 @@ u64 msm_vidc_calc_freq_iris2(struct msm_vidc_inst *inst, u32 data_size)
 
 		vsp_cycles += mbs_per_second * base_cycles;
 
+		if (inst->codec == MSM_VIDC_VP9 &&
+				inst->capabilities->cap[STAGE].value ==
+					MSM_VIDC_STAGE_2 &&
+				inst->capabilities->cap[PIPE].value == 4 &&
+				bitrate > 90000000)
+			vsp_cycles = msm_vidc_max_freq(inst);
 	} else {
 		i_vpr_e(inst, "%s: Unknown session type\n", __func__);
 		return msm_vidc_max_freq(inst);
