@@ -654,6 +654,9 @@ typedef enum {
      */
     WMI_PEER_CONFIG_VLAN_CMDID,
 
+    /** WMI command for per-peer configuration of PPE DS */
+    WMI_PEER_CONFIG_PPE_DS_CMDID,
+
 
     /* beacon/management specific commands */
 
@@ -5657,6 +5660,10 @@ typedef struct {
 
 #define WMI_TX_SEND_PARAM_CFR_CAPTURE_GET(tx_param_dword1) WMI_GET_BITS(tx_param_dword1, 21, 1)
 #define WMI_TX_SEND_PARAM_CFR_CAPTURE_SET(tx_param_dword1, value) WMI_SET_BITS(tx_param_dword1, 21, 1, value)
+
+#define WMI_TX_SEND_PARAM_BEAMFORM_GET(tx_param_dword1) WMI_GET_BITS(tx_param_dword1, 22, 1)
+#define WMI_TX_SEND_PARAM_BEAMFORM_SET(tx_param_dword1, value) WMI_SET_BITS(tx_param_dword1, 22, 1, value)
+
 
 /* TX_SEND flags:
  * Bit 0: set wrong txkey
@@ -28874,6 +28881,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_AFC_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_MULTIPLE_VDEV_SET_PARAM_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_MEC_AGING_TIMER_CONFIG_CMDID);
+        WMI_RETURN_STRING(WMI_PEER_CONFIG_PPE_DS_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -34293,6 +34301,36 @@ typedef struct {
     /* VDEV identifier */
     A_UINT32 vdev_id;
 } wmi_peer_config_vlan_cmd_fixed_param;
+
+typedef struct {
+  /** TLV tag and len; tag equals
+    * WMITLV_TAG_STRUC_wmi_peer_config_ppe_ds_cmd_fixed_param */
+    A_UINT32 tlv_header;
+
+    wmi_mac_addr peer_macaddr;
+    A_UINT32 ppe_routing_enable; /* enum WMI_PPE_ROUTING_TYPE */
+
+    /* The processing stages in PPE that this packet buffer need to go through
+     * and on to which PPE queues these buffers should be mapped to.
+     * Refer pkg/ppe/src/ppe_sc.h for service code types
+     */
+    A_UINT32 service_code;
+
+    A_UINT32 priority_valid;
+
+    /* Unique number that represents a VAP's vdev_id in PPE domain */
+    A_UINT32 src_info;
+
+    /* VDEV identifier */
+    A_UINT32 vdev_id;
+} wmi_peer_config_ppe_ds_cmd_fixed_param;
+
+typedef enum {
+    WMI_PPE_ROUTING_DISABLED = 0,
+    WMI_AST_USE_PPE_ENABLED  = 1,
+    WMI_AST_USE_PPE_DISABLED = 2,
+    WMI_PPE_ROUTING_TYPE_MAX,
+} WMI_PPE_ROUTING_TYPE;
 
 typedef struct {
     /** TLV tag and len; tag equals

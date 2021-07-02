@@ -1182,6 +1182,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_vdev_bcn_offload_ml_quiet_config_params,
     WMITLV_TAG_STRUC_wmi_pdev_multiple_vdev_set_param_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_mec_aging_timer_config_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_peer_config_ppe_ds_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1652,6 +1653,7 @@ typedef enum {
     OP(WMI_AFC_CMDID) \
     OP(WMI_PDEV_MULTIPLE_VDEV_SET_PARAM_CMDID) \
     OP(WMI_PDEV_MEC_AGING_TIMER_CONFIG_CMDID) \
+    OP(WMI_PEER_CONFIG_PPE_DS_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -4744,6 +4746,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_MULTIPLE_VDEV_SET_PARAM_CMDID);
 #define WMITLV_TABLE_WMI_PDEV_MEC_AGING_TIMER_CONFIG_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_mec_aging_timer_config_cmd_fixed_param, wmi_pdev_mec_aging_timer_config_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_MEC_AGING_TIMER_CONFIG_CMDID);
+
+/* PPE DS config */
+#define WMITLV_TABLE_WMI_PEER_CONFIG_PPE_DS_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_config_ppe_ds_cmd_fixed_param, wmi_peer_config_ppe_ds_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PEER_CONFIG_PPE_DS_CMDID);
 
 
 

@@ -212,10 +212,11 @@
  * 3.88 Add HTT_H2T_MSG_TYPE_HOST_PADDR_SIZE def.
  * 3.89 Add MSDU queue enumerations.
  * 3.90 Add HTT_T2H_MSG_TYPE_MLO_TIMESTAMP_OFFSET_IND def.
- * 3.91 Add TT_T2H_MSG_TYPE_MLO_RX_PEER_MAP, _UNMAP defs.
+ * 3.91 Add HTT_T2H_MSG_TYPE_MLO_RX_PEER_MAP, _UNMAP defs.
+ * 3.92 Add HTT_H2T_MSG_TYPE_RXDMA_RXOLE_PPE_CFG def.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 91
+#define HTT_CURRENT_VERSION_MINOR 92
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -528,6 +529,7 @@ enum htt_h2t_msg_type {
     HTT_H2T_MSG_TYPE_3_TUPLE_HASH_CFG      = 0x16,
     HTT_H2T_MSG_TYPE_RX_FULL_MONITOR_MODE  = 0x17,
     HTT_H2T_MSG_TYPE_HOST_PADDR_SIZE       = 0x18,
+    HTT_H2T_MSG_TYPE_RXDMA_RXOLE_PPE_CFG   = 0x19,
 
     /* keep this last */
     HTT_H2T_NUM_MSGS
@@ -7001,6 +7003,132 @@ PREPACK struct htt_h2t_host_paddr_size_entry_t {
         HTT_CHECK_SET_VAL(HTT_H2T_HOST_PADDR_SIZE_NUM_ENTRIES, _val); \
         ((_var) |= ((_val) << HTT_H2T_HOST_PADDR_SIZE_NUM_ENTRIES_S)); \
     } while (0)
+
+/**
+ * @brief host --> target Host RXDMA RXOLE PPE register configuration
+ *
+ * MSG_TYPE => HTT_H2T_MSG_TYPE_RXDMA_RXOLE_PPE_CFG
+ *
+ * @details
+ *  The HTT_H2T_MSG_TYPE_RXDMA_RXOLE_PPE_CFG message is sent by the host to
+ *  provide the PPE DS register confiuration for RXOLE and RXDMA.
+ *
+ *  The message would appear as follows:
+ *
+ *     |31                 19|18 |17 |16 |15 |14 |13       9|8|7         0|
+ *     |---------------------------------+---+---+----------+-+-----------|
+ *     |      reserved       |IFO|DNO|DRO|IBO|MIO|   RDI    |O| msg_type  |
+ *     |---------------------+---+---+---+---+---+----------+-+-----------|
+ *
+ *
+ * The message is interpreted as follows:
+ * dword0 - b'0:7   - msg_type: This will be set to
+ *                    0x19 (HTT_H2T_MSG_TYPE_RXDMA_RXOLE_PPE_CFG)
+ *          b'8     - override bit to drive MSDUs to PPE ring
+ *          b'9:13  - REO destination ring indication
+ *          b'14    - Multi buffer msdu override enable bit
+ *          b'15    - Intra BSS override
+ *          b'16    - Decap raw override
+ *          b'17    - Decap Native wifi override
+ *          b'18    - IP frag override
+ *          b'19:31 - reserved
+ */
+PREPACK struct htt_h2t_msg_type_rxdma_rxole_ppe_cfg_t {
+   A_UINT32 msg_type:                      8, /* HTT_H2T_MSG_TYPE_RXDMA_RXOLE_PPE_CFG */
+            override:                      1,
+            reo_destination_indication:    5,
+            multi_buffer_msdu_override_en: 1,
+            intra_bss_override:            1,
+            decap_raw_override:            1,
+            decap_nwifi_override:          1,
+            ip_frag_override:              1,
+            reserved:                     13;
+} POSTPACK;
+
+/* DWORD 0: Override */
+#define HTT_PPE_CFG_OVERRIDE_M                  0x00000100
+#define HTT_PPE_CFG_OVERRIDE_S                  8
+#define HTT_PPE_CFG_OVERRIDE_GET(_var) \
+        (((_var) & HTT_PPE_CFG_OVERRIDE_M) >> \
+                HTT_PPE_CFG_OVERRIDE_S)
+#define HTT_PPE_CFG_OVERRIDE_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_PPE_CFG_OVERRIDE, _val); \
+            ((_var) |= ((_val) << HTT_PPE_CFG_OVERRIDE_S)); \
+        } while (0)
+
+/* DWORD 0: REO Destination Indication*/
+#define HTT_PPE_CFG_REO_DEST_IND_M                  0x00003E00
+#define HTT_PPE_CFG_REO_DEST_IND_S                  9
+#define HTT_PPE_CFG_REO_DEST_IND_GET(_var) \
+        (((_var) & HTT_PPE_CFG_REO_DEST_IND_M) >> \
+                HTT_PPE_CFG_REO_DEST_IND_S)
+#define HTT_PPE_CFG_REO_DEST_IND_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_PPE_CFG_REO_DEST_IND, _val); \
+            ((_var) |= ((_val) << HTT_PPE_CFG_REO_DEST_IND_S)); \
+        } while (0)
+
+/* DWORD 0: Multi buffer MSDU override */
+#define HTT_PPE_CFG_MULTI_BUF_MSDU_OVERRIDE_EN_M                  0x00004000
+#define HTT_PPE_CFG_MULTI_BUF_MSDU_OVERRIDE_EN_S                  14
+#define HTT_PPE_CFG_MULTI_BUF_MSDU_OVERRIDE_EN_GET(_var) \
+        (((_var) & HTT_PPE_CFG_MULTI_BUF_MSDU_OVERRIDE_EN_M) >> \
+                HTT_PPE_CFG_MULTI_BUF_MSDU_OVERRIDE_EN_S)
+#define HTT_PPE_CFG_MULTI_BUF_MSDU_OVERRIDE_EN_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_PPE_CFG_MULTI_BUF_MSDU_OVERRIDE_EN, _val); \
+            ((_var) |= ((_val) << HTT_PPE_CFG_MULTI_BUF_MSDU_OVERRIDE_EN_S)); \
+        } while (0)
+
+/* DWORD 0: Intra BSS override */
+#define HTT_PPE_CFG_INTRA_BSS_OVERRIDE_EN_M                  0x00008000
+#define HTT_PPE_CFG_INTRA_BSS_OVERRIDE_EN_S                  15
+#define HTT_PPE_CFG_INTRA_BSS_OVERRIDE_EN_GET(_var) \
+        (((_var) & HTT_PPE_CFG_INTRA_BSS_OVERRIDE_EN_M) >> \
+                HTT_PPE_CFG_INTRA_BSS_OVERRIDE_EN_S)
+#define HTT_PPE_CFG_INTRA_BSS_OVERRIDE_EN_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_PPE_CFG_INTRA_BSS_OVERRIDE_EN, _val); \
+            ((_var) |= ((_val) << HTT_PPE_CFG_INTRA_BSS_OVERRIDE_EN_S)); \
+        } while (0)
+
+/* DWORD 0: Decap RAW override */
+#define HTT_PPE_CFG_DECAP_RAW_OVERRIDE_EN_M                  0x00010000
+#define HTT_PPE_CFG_DECAP_RAW_OVERRIDE_EN_S                  16
+#define HTT_PPE_CFG_DECAP_RAW_OVERRIDE_EN_GET(_var) \
+        (((_var) & HTT_PPE_CFG_DECAP_RAW_OVERRIDE_EN_M) >> \
+                HTT_PPE_CFG_DECAP_RAW_OVERRIDE_EN_S)
+#define HTT_PPE_CFG_DECAP_RAW_OVERRIDE_EN_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_PPE_CFG_DECAP_RAW_OVERRIDE_EN, _val); \
+            ((_var) |= ((_val) << HTT_PPE_CFG_DECAP_RAW_OVERRIDE_EN_S)); \
+        } while (0)
+
+/* DWORD 0: Decap NWIFI override */
+#define HTT_PPE_CFG_DECAP_NWIFI_OVERRIDE_EN_M                  0x00020000
+#define HTT_PPE_CFG_DECAP_NWIFI_OVERRIDE_EN_S                  17
+#define HTT_PPE_CFG_DECAP_NWIFI_OVERRIDE_EN_GET(_var) \
+        (((_var) & HTT_PPE_CFG_DECAP_NWIFI_OVERRIDE_EN_M) >> \
+                HTT_PPE_CFG_DECAP_NWIFI_OVERRIDE_EN_S)
+#define HTT_PPE_CFG_DECAP_NWIFI_OVERRIDE_EN_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_PPE_CFG_DECAP_NWIFI_OVERRIDE_EN, _val); \
+            ((_var) |= ((_val) << HTT_PPE_CFG_DECAP_NWIFI_OVERRIDE_EN_S)); \
+        } while (0)
+
+/* DWORD 0: IP frag override */
+#define HTT_PPE_CFG_IP_FRAG_OVERRIDE_EN_M                  0x00040000
+#define HTT_PPE_CFG_IP_FRAG_OVERRIDE_EN_S                  18
+#define HTT_PPE_CFG_IP_FRAG_OVERRIDE_EN_GET(_var) \
+        (((_var) & HTT_PPE_CFG_IP_FRAG_OVERRIDE_EN_M) >> \
+                HTT_PPE_CFG_IP_FRAG_OVERRIDE_EN_S)
+#define HTT_PPE_CFG_IP_FRAG_OVERRIDE_EN_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_PPE_CFG_IP_FRAG_OVERRIDE_EN, _val); \
+            ((_var) |= ((_val) << HTT_PPE_CFG_IP_FRAG_OVERRIDE_EN_S)); \
+        } while (0)
+
 
 
 /*=== target -> host messages ===============================================*/
