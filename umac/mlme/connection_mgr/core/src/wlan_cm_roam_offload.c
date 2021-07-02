@@ -3953,11 +3953,12 @@ void cm_update_pmk_cache_ft(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 	}
 
 	/*
-	 * In FT connection fetch the MDID from Session and send it to crypto
-	 * so that it will update the crypto PMKSA table with the MDID for the
-	 * matching BSSID or SSID PMKSA entry. And delete the old/stale PMK
-	 * cache entries for the same mobility domain as of the newly added
-	 * entry to avoid multiple PMK cache entries for the same MDID.
+	 * In FT connection fetch the MDID from Session or scan result whichever
+	 * and send it to crypto so that it will update the crypto PMKSA table
+	 * with the MDID for the matching BSSID or SSID PMKSA entry. And delete
+	 * the old/stale PMK cache entries for the same mobility domain as of
+	 * the newly added entry to avoid multiple PMK cache entries for the
+	 * same MDID.
 	 */
 	wlan_vdev_get_bss_peer_mac(vdev, &pmksa.bssid);
 	wlan_vdev_mlme_get_ssid(vdev, pmksa.ssid, &pmksa.ssid_len);
@@ -3968,7 +3969,7 @@ void cm_update_pmk_cache_ft(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 	if (src_cfg.bool_value) {
 		pmksa.mdid.mdie_present = 1;
 		pmksa.mdid.mobility_domain = src_cfg.uint_value;
-		mlme_debug("copied the MDID from session to PMKSA");
+		mlme_debug("copied the MDID to PMKSA");
 
 		status = wlan_crypto_update_pmk_cache_ft(vdev, &pmksa);
 		if (status == QDF_STATUS_SUCCESS)
