@@ -842,7 +842,7 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 		inst->power.fw_cr = inst->hfi_frame_info.cr;
 	}
 
-	if (is_decode_session(inst) && buf->data_size)
+	if (!is_image_session(inst) && is_decode_session(inst) && buf->data_size)
 		msm_vidc_update_timestamp(inst, buf->timestamp);
 
 	print_vidc_buffer(VIDC_HIGH, "high", "dqbuf", inst, buf);

@@ -471,8 +471,7 @@ static int __power_off_iris2_hardware(struct msm_vidc_core *core)
 		} while (count < max_count);
 
 		if (count == max_count)
-			d_vpr_e(
-				"%s: VCODEC_SS_IDLE_STATUSn (%d) is not idle (%#x)\n",
+			d_vpr_h("%s: VCODEC_SS_IDLE_STATUSn (%d) is not idle (%#x)\n",
 				__func__, i, value);
 	}
 
@@ -490,8 +489,7 @@ static int __power_off_iris2_hardware(struct msm_vidc_core *core)
 		count++;
 	} while (count < max_count);
 	if (count == max_count)
-		d_vpr_e("%s: AON_WRAPPER_MVP_NOC_RESET assert failed\n",
-			__func__);
+		d_vpr_h("%s: AON_WRAPPER_MVP_NOC_RESET assert failed\n", __func__);
 
 	/* De-assert partial reset on MSF interface and wait for ACK */
 	rc = __write_register(core, AON_WRAPPER_MVP_NOC_RESET_REQ, 0x0);
@@ -507,8 +505,7 @@ static int __power_off_iris2_hardware(struct msm_vidc_core *core)
 		count++;
 	} while (count < max_count);
 	if (count == max_count)
-		d_vpr_e("%s: AON_WRAPPER_MVP_NOC_RESET de-assert failed\n",
-			__func__);
+		d_vpr_h("%s: AON_WRAPPER_MVP_NOC_RESET de-assert failed\n", __func__);
 
 	/*
 	 * Reset both sides of 2 ahb2ahb_bridges (TZ and non-TZ)
@@ -569,8 +566,7 @@ static int __power_off_iris2_controller(struct msm_vidc_core *core)
 		count++;
 	} while (count < max_count);
 	if (count == max_count)
-		d_vpr_e("%s: AON_WRAPPER_MVP_NOC_LPI_CONTROL failed\n",
-			__func__);
+		d_vpr_h("%s: AON_WRAPPER_MVP_NOC_LPI_CONTROL failed\n", __func__);
 
 	/* Set Debug bridge Low power */
 	rc = __write_register(core, WRAPPER_DEBUG_BRIDGE_LPI_CONTROL_IRIS2, 0x7);
@@ -587,7 +583,7 @@ static int __power_off_iris2_controller(struct msm_vidc_core *core)
 		count++;
 	} while (count < max_count);
 	if (count == max_count)
-		d_vpr_e("%s: debug bridge low power failed\n", __func__);
+		d_vpr_h("%s: debug bridge low power failed\n", __func__);
 
 	/* Debug bridge LPI release */
 	rc = __write_register(core, WRAPPER_DEBUG_BRIDGE_LPI_CONTROL_IRIS2, 0x0);
@@ -605,7 +601,7 @@ static int __power_off_iris2_controller(struct msm_vidc_core *core)
 		count++;
 	} while (count < max_count);
 	if (count == max_count)
-		d_vpr_e("%s: debug bridge release failed\n", __func__);
+		d_vpr_h("%s: debug bridge release failed\n", __func__);
 
 	/* power down process */
 	rc = __disable_regulator_iris2(core, "iris-ctl");
