@@ -1447,6 +1447,7 @@ struct wlan_mlme_acs {
  * @is_all_twt_tgt_cap_enabled: support for all twt enable/disable
  * @is_twt_statistics_tgt_cap_enabled: support for twt statistics
  * @twt_congestion_timeout: congestion timeout value
+ * @disable_btwt_usr_cfg: User config param to enable/disable the BTWT support
  * @enable_twt_24ghz: Enable/disable host TWT when STA is connected in
  * 2.4Ghz
  * @req_flag: requestor flag enable/disable
@@ -1464,6 +1465,7 @@ struct wlan_mlme_cfg_twt {
 	bool is_all_twt_tgt_cap_enabled;
 	bool is_twt_statistics_tgt_cap_enabled;
 	uint32_t twt_congestion_timeout;
+	bool disable_btwt_usr_cfg;
 	bool enable_twt_24ghz;
 	bool req_flag;
 	bool res_flag;
