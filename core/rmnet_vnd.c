@@ -19,6 +19,7 @@
 #include <linux/ip.h>
 #include <linux/ipv6.h>
 #include <linux/tcp.h>
+#include <linux/inet.h>
 #include <net/pkt_sched.h>
 #include "rmnet_config.h"
 #include "rmnet_handlers.h"
@@ -250,21 +251,47 @@ static u16 rmnet_vnd_select_queue(struct net_device *dev,
 	int txq = 0;
 
 	if (trace_print_skb_gso_enabled()) {
+		char saddr[INET6_ADDRSTRLEN], daddr[INET6_ADDRSTRLEN];
+		u16 ip_proto = 0, xport_proto = 0;
+
 		if (!skb_shinfo(skb)->gso_size)
 			goto skip_trace;
 
+		memset(saddr, 0, INET6_ADDRSTRLEN);
+		memset(daddr, 0, INET6_ADDRSTRLEN);
+
 		if (skb->protocol == htons(ETH_P_IP)) {
-			if (ip_hdr(skb)->protocol != IPPROTO_TCP)
+			if (ip_hdr(skb)->protocol == IPPROTO_TCP)
+				xport_proto = IPPROTO_TCP;
+			else if (ip_hdr(skb)->protocol == IPPROTO_UDP)
+				xport_proto = IPPROTO_UDP;
+			else
 				goto skip_trace;
+
+			ip_proto = htons(ETH_P_IP);
+			snprintf(saddr, INET6_ADDRSTRLEN, "%pI4", &ip_hdr(skb)->saddr);
+			snprintf(daddr, INET6_ADDRSTRLEN, "%pI4", &ip_hdr(skb)->daddr);
 		}
 
 		if (skb->protocol == htons(ETH_P_IPV6)) {
-			if (ipv6_hdr(skb)->nexthdr != IPPROTO_TCP)
+			if (ipv6_hdr(skb)->nexthdr == IPPROTO_TCP)
+				xport_proto = IPPROTO_TCP;
+			else if (ipv6_hdr(skb)->nexthdr == IPPROTO_UDP)
+				xport_proto = IPPROTO_UDP;
+			else
 				goto skip_trace;
+
+			ip_proto = htons(ETH_P_IPV6);
+			snprintf(saddr, INET6_ADDRSTRLEN, "%pI6", &ipv6_hdr(skb)->saddr);
+			snprintf(daddr, INET6_ADDRSTRLEN, "%pI6", &ipv6_hdr(skb)->daddr);
 		}
 
-		trace_print_skb_gso(skb, tcp_hdr(skb)->source,
-				    tcp_hdr(skb)->dest);
+		trace_print_skb_gso(skb,
+				    xport_proto == IPPROTO_TCP ? tcp_hdr(skb)->source :
+								 udp_hdr(skb)->source,
+				    xport_proto == IPPROTO_TCP ? tcp_hdr(skb)->dest :
+								 udp_hdr(skb)->dest,
+				    ip_proto, xport_proto, saddr, daddr);
 	}
 
 skip_trace:
