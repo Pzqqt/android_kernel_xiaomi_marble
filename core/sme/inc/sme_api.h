@@ -597,6 +597,18 @@ void sme_get_pmk_info(mac_handle_t mac_handle, uint8_t session_id,
 QDF_STATUS sme_roam_set_psk_pmk(mac_handle_t mac_handle, uint8_t sessionId,
 				uint8_t *psk_pmk, size_t pmk_len,
 				bool update_to_fw);
+
+/**
+ * sme_set_pmk_cache_ft() - a wrapper function to request CSR to save MDID
+ * This is a synchronous call.
+ * @mac_handle:  Global structure
+ * @session_id:   SME session id
+ * @pmk_cache:    pointer to pmk cache structure wlan_crypto_pmksa
+ *
+ * Return: QDF_STATUS -status whether MDID is set or not
+ */
+QDF_STATUS sme_set_pmk_cache_ft(mac_handle_t mac_handle, uint8_t session_id,
+				struct wlan_crypto_pmksa *pmk_cache);
 #else
 static inline
 void sme_get_pmk_info(mac_handle_t mac_handle, uint8_t session_id,
@@ -621,6 +633,13 @@ static inline
 QDF_STATUS sme_roam_set_psk_pmk(mac_handle_t mac_handle, uint8_t sessionId,
 				uint8_t *psk_pmk, size_t pmk_len,
 				bool update_to_fw)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS sme_set_pmk_cache_ft(mac_handle_t mac_handle, uint8_t session_id,
+				struct wlan_crypto_pmksa *pmk_cache)
 {
 	return QDF_STATUS_SUCCESS;
 }

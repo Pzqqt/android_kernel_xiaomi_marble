@@ -5665,19 +5665,34 @@ QDF_STATUS csr_roam_set_psk_pmk(struct mac_context *mac, uint8_t vdev_id,
 				uint8_t *psk_pmk, size_t pmk_len,
 				bool update_to_fw)
 {
-	int32_t akm;
-	struct wlan_objmgr_vdev *vdev;
+	wlan_cm_set_psk_pmk(mac->pdev, vdev_id, psk_pmk, pmk_len);
+	if (update_to_fw)
+		wlan_roam_update_cfg(mac->psoc, vdev_id,
+				     REASON_ROAM_PSK_PMK_CHANGED);
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, vdev_id,
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS csr_set_pmk_cache_ft(struct mac_context *mac, uint32_t session_id,
+				struct wlan_crypto_pmksa *pmk_cache)
+{
+	struct wlan_objmgr_vdev *vdev;
+	int32_t akm;
+
+	if (!CSR_IS_SESSION_VALID(mac, session_id)) {
+		sme_err("session %d not found", session_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, session_id,
 						    WLAN_LEGACY_SME_ID);
 	if (!vdev) {
 		sme_err("vdev is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
-	wlan_cm_set_psk_pmk(mac->pdev, vdev_id, psk_pmk, pmk_len);
+
 	akm = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-
 	if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_CCKM)) {
 		sme_debug("PMK update is not required for ESE");
 		return QDF_STATUS_SUCCESS;
@@ -5688,13 +5703,32 @@ QDF_STATUS csr_roam_set_psk_pmk(struct mac_context *mac, uint8_t vdev_id,
 	    QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FILS_SHA384) ||
 	    QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X_SHA384)) {
 		sme_debug("Auth type: %x update the MDID in cache", akm);
-		cm_update_pmk_cache_ft(mac->psoc, vdev_id);
+		cm_update_pmk_cache_ft(mac->psoc, session_id);
+	} else {
+		struct cm_roam_values_copy src_cfg;
+		QDF_STATUS status = QDF_STATUS_E_FAILURE;
+		tCsrScanResultInfo *scan_res;
+
+		scan_res = qdf_mem_malloc(sizeof(tCsrScanResultInfo));
+		if (!scan_res)
+			return QDF_STATUS_E_NOMEM;
+
+		status = csr_scan_get_result_for_bssid(mac, &pmk_cache->bssid,
+						       scan_res);
+		if (QDF_IS_STATUS_SUCCESS(status) &&
+		    scan_res->BssDescriptor.mdiePresent) {
+			sme_debug("Update MDID in cache from scan_res");
+			src_cfg.bool_value = true;
+			src_cfg.uint_value =
+				(scan_res->BssDescriptor.mdie[0] |
+				 (scan_res->BssDescriptor.mdie[1] << 8));
+			wlan_cm_roam_cfg_set_value(mac->psoc, session_id,
+						   MOBILITY_DOMAIN, &src_cfg);
+			cm_update_pmk_cache_ft(mac->psoc, session_id);
+		}
+		qdf_mem_free(scan_res);
+		scan_res = NULL;
 	}
-
-	if (update_to_fw)
-		wlan_roam_update_cfg(mac->psoc, vdev_id,
-				     REASON_ROAM_PSK_PMK_CHANGED);
-
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */

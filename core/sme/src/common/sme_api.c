@@ -3465,6 +3465,20 @@ QDF_STATUS sme_roam_set_psk_pmk(mac_handle_t mac_handle, uint8_t sessionId,
 	}
 	return status;
 }
+
+QDF_STATUS sme_set_pmk_cache_ft(mac_handle_t mac_handle, uint8_t session_id,
+				struct wlan_crypto_pmksa *pmk_cache)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		status = csr_set_pmk_cache_ft(mac, session_id, pmk_cache);
+		sme_release_global_lock(&mac->sme);
+	}
+	return status;
+}
 #endif
 
 /*

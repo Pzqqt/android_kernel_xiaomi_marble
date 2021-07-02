@@ -19699,10 +19699,12 @@ static QDF_STATUS wlan_hdd_set_pmksa_cache(struct hdd_adapter *adapter,
 		qdf_mem_free(pmksa);
 	}
 
-	if (result == QDF_STATUS_SUCCESS && pmk_cache->pmk_len)
+	if (result == QDF_STATUS_SUCCESS && pmk_cache->pmk_len) {
 		sme_roam_set_psk_pmk(mac_handle, adapter->vdev_id,
 				     pmk_cache->pmk, pmk_cache->pmk_len,
 				     false);
+		sme_set_pmk_cache_ft(mac_handle, adapter->vdev_id, pmk_cache);
+	}
 	hdd_objmgr_put_vdev_by_user(vdev, WLAN_OSIF_ID);
 
 	return result;
