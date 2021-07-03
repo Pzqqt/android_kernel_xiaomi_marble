@@ -3076,8 +3076,8 @@ cm_roam_switch_to_deinit(struct wlan_objmgr_pdev *pdev,
 	 */
 	if (reason != REASON_SUPPLICANT_INIT_ROAMING &&
 	    reason != REASON_ROAM_SET_PRIMARY) {
-	    mlme_debug("enable roaming on connected sta vdev_id:%d, reason:%d",
-		       vdev_id, reason);
+		mlme_debug("vdev_id:%d enable roaming on other connected sta - reason:%d",
+			   vdev_id, reason);
 		wlan_cm_enable_roaming_on_connected_sta(pdev, vdev_id);
 	}
 
@@ -3107,6 +3107,7 @@ cm_roam_switch_to_init(struct wlan_objmgr_pdev *pdev,
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 	struct wlan_mlme_psoc_ext_obj *mlme_obj;
 	struct dual_sta_policy *dual_sta_policy;
+	struct wlan_objmgr_vdev *vdev;
 	bool is_vdev_primary = false;
 
 	if (!psoc)
@@ -3193,6 +3194,17 @@ cm_roam_switch_to_init(struct wlan_objmgr_pdev *pdev,
 	default:
 		return QDF_STATUS_SUCCESS;
 	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (cm_is_vdev_disconnecting(vdev) ||
+	    cm_is_vdev_disconnected(vdev)) {
+		mlme_debug("CM_RSO: RSO Init received in disconnected state");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 
 	status = cm_roam_init_req(psoc, vdev_id, true);
 
