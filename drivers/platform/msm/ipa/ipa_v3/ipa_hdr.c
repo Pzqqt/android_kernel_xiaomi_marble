@@ -99,6 +99,12 @@ static int ipa3_hdr_proc_ctx_to_hw_format(struct ipa_mem_buffer *mem,
 			}
 		}
 
+		/* Check the pointer and header length to avoid dangerous overflow in HW */
+		if (unlikely(!entry->hdr || !entry->hdr->offset_entry ||
+			     entry->hdr->hdr_len == 0 ||
+			     entry->hdr->hdr_len > ipa_hdr_bin_sz[IPA_HDR_BIN_MAX - 1]))
+			return -EINVAL;
+
 		ret = ipahal_cp_proc_ctx_to_hw_buff(entry->type, mem->base,
 				entry->offset_entry->offset,
 				entry->hdr->hdr_len,
@@ -743,6 +749,7 @@ static int __ipa_add_hpc_hdr_insertion(struct ipa_hdr_add *hdr, bool user)
 		goto fail_add_proc_ctx;
 	}
 	entry->proc_ctx = (struct ipa3_hdr_proc_ctx_entry *)ipa3_id_find(proc_ctx.proc_ctx_hdl);
+	WARN_ON_RATELIMIT_IPA(!entry->proc_ctx);
 
 	return 0;
 
@@ -801,7 +808,7 @@ int __ipa3_del_hdr(u32 hdr_hdl, bool by_user)
 		return 0;
 	}
 
-	if (entry->is_hdr_proc_ctx) {
+	if (entry->is_hdr_proc_ctx || entry->proc_ctx) {
 		dma_unmap_single(ipa3_ctx->pdev,
 			entry->phys_base,
 			entry->hdr_len,
