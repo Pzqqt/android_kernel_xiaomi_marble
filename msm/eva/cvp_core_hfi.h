@@ -7,6 +7,7 @@
 #define __H_CVP_CORE_HFI_H__
 
 #include <linux/clk.h>
+#include <linux/clk-provider.h>
 #include <linux/mutex.h>
 #include <linux/platform_device.h>
 #include <linux/pm_qos.h>
