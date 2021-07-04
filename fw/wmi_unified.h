@@ -10102,6 +10102,23 @@ typedef struct {
 #define WMI_CTRL_PATH_CALIBRATION_STATS_IS_PERIODIC_CAL_SET(cal_info, is_periodic) WMI_SET_BITS(cal_info, 13, 1, is_periodic)
 
 typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_ctrl_path_dfs_channel_stats_struct*/
+    A_UINT32 tlv_header;
+    /** pdev_id for identifying the PHY */
+    A_UINT32 pdev_id;
+    /** nol element num */
+    A_UINT32 nol;
+    /** Channel in MHz */
+    A_UINT32 channel;
+
+    /** Channel width in MHz */
+    A_UINT32 chwidth;
+
+    /** Time left for the channel to remain in NOL list (in seconds) */
+    A_UINT32 timeleft;
+} wmi_ctrl_path_dfs_channel_stats_struct;
+
+typedef struct {
     /** TLV tag and len; tag equals
     *  WMITLV_TAG_STRUC_wmi_ctrl_path_stats_event_fixed_param */
     A_UINT32 tlv_header;
@@ -27125,6 +27142,7 @@ typedef enum {
     WMI_REQUEST_CTRL_PATH_MEM_STAT          = 3,
     WMI_REQUEST_CTRL_PATH_TWT_STAT          = 4,
     WMI_REQUEST_CTRL_PATH_CALIBRATION_STAT  = 5,
+    WMI_REQUEST_CTRL_PATH_DFS_CHANNEL_STAT  = 6,
 } wmi_ctrl_path_stats_id;
 
 typedef enum {
