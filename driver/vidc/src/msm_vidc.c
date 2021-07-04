@@ -379,7 +379,11 @@ int msm_vidc_g_ctrl(void *instance, struct v4l2_control *control)
 		rc = msm_vidc_get_control(inst, ctrl);
 		if (!rc)
 			control->value = ctrl->val;
+	} else {
+		i_vpr_e(inst, "%s: invalid control\n", __func__);
+		return -EINVAL;
 	}
+
 	if (rc)
 		i_vpr_e(inst, "%s: failed for control id %#x\n",
 			__func__, control->id);
