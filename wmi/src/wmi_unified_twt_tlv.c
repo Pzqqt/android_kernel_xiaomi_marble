@@ -175,6 +175,8 @@ send_twt_add_dialog_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->max_wake_intvl_us = params->max_wake_intvl_us;
 	cmd->min_wake_dura_us = params->min_wake_dura_us;
 	cmd->max_wake_dura_us = params->max_wake_dura_us;
+	cmd->sp_start_tsf_lo = (uint32_t)(params->wake_time_tsf & 0xFFFFFFFF);
+	cmd->sp_start_tsf_hi = (uint32_t)(params->wake_time_tsf >> 32);
 	TWT_FLAGS_SET_CMD(cmd->flags, params->twt_cmd);
 	TWT_FLAGS_SET_BROADCAST(cmd->flags, params->flag_bcast);
 	TWT_FLAGS_SET_TRIGGER(cmd->flags, params->flag_trigger);
