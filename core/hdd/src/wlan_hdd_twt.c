@@ -75,6 +75,7 @@ qca_wlan_vendor_twt_add_dialog_policy[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1] = 
 	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST_RECOMMENDATION] = {
 							.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST_PERSISTENCE] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_TIME_TSF] = {.type = NLA_U64 },
 };
 
 static const struct nla_policy
@@ -312,6 +313,12 @@ int hdd_twt_get_add_dialog_values(struct nlattr **tb,
 		params->max_wake_dura_us = 0;
 	}
 
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_TIME_TSF;
+	if (tb[cmd_id])
+		params->wake_time_tsf = nla_get_u64(tb[cmd_id]);
+	else
+		params->wake_time_tsf = 0;
+
 	hdd_debug("twt: dialog_id %d, vdev %d, wake intvl_us %d, min %d, max %d, mantis %d",
 		  params->dialog_id, params->vdev_id, params->wake_intvl_us,
 		  params->min_wake_intvl_us, params->max_wake_intvl_us,
@@ -321,10 +328,11 @@ int hdd_twt_get_add_dialog_values(struct nlattr **tb,
 		  params->wake_dura_us, params->min_wake_dura_us,
 		  params->max_wake_dura_us, params->sp_offset_us,
 		  params->twt_cmd);
-	hdd_debug("twt: bcast %d, trigger %d, flow_type %d, prot %d",
+	hdd_debug("twt: bcast %d, trigger %d, flow_type %d, prot %d wake_tsf 0x%llx",
 		  params->flag_bcast, params->flag_trigger,
 		  params->flag_flow_type,
-		  params->flag_protection);
+		  params->flag_protection,
+		  params->wake_time_tsf);
 	hdd_debug("twt: peer mac_addr "
 		  QDF_MAC_ADDR_FMT,
 		  QDF_MAC_ADDR_REF(params->peer_macaddr));
