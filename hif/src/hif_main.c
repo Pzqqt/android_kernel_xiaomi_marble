@@ -981,18 +981,6 @@ void hif_close(struct hif_opaque_softc *hif_ctx)
 }
 
 /**
- * hif_get_num_active_tasklets() - get the number of active
- *		tasklets pending to be completed.
- * @scn: HIF context
- *
- * Returns: the number of tasklets which are active
- */
-static inline int hif_get_num_active_tasklets(struct hif_softc *scn)
-{
-	return qdf_atomic_read(&scn->active_tasklet_cnt);
-}
-
-/**
  * hif_get_num_active_grp_tasklets() - get the number of active
  *		datapath group tasklets pending to be completed.
  * @scn: HIF context

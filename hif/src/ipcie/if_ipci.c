@@ -374,6 +374,22 @@ fail:
 
 int hif_ipci_bus_suspend_noirq(struct hif_softc *scn)
 {
+	/*
+	 * If it is system suspend case and wake-IRQ received
+	 * just before Kernel issuing suspend_noirq, that must
+	 * have scheduled CE2 tasklet, so suspend activity can
+	 * be aborted.
+	 * Similar scenario for runtime suspend case, would be
+	 * handled by hif_pm_runtime_check_and_request_resume
+	 * in hif_ce_interrupt_handler.
+	 *
+	 */
+	if (!hif_pm_runtime_get_monitor_wake_intr(GET_HIF_OPAQUE_HDL(scn)) &&
+	    hif_get_num_active_tasklets(scn)) {
+		hif_err("Tasklets are pending, abort sys suspend_noirq");
+		return -EBUSY;
+	}
+
 	return 0;
 }
 
