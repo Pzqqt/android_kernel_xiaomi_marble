@@ -1938,7 +1938,7 @@ static int dp_rx_err_handle_msdu_buf(struct dp_soc *soc,
 
 	/* After this point the rx_desc and nbuf are valid */
 	dp_ipa_rx_buf_smmu_mapping_lock(soc);
-	qdf_assert_always(rx_desc->unmapped);
+	qdf_assert_always(!rx_desc->unmapped);
 	dp_ipa_handle_rx_buf_smmu_mapping(soc,
 					  rx_desc->nbuf,
 					  RX_DATA_BUFFER_SIZE,

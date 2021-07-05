@@ -188,7 +188,7 @@ more_data:
 					   ring_desc, rx_desc);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			if (qdf_unlikely(rx_desc && rx_desc->nbuf)) {
-				qdf_assert_always(rx_desc->unmapped);
+				qdf_assert_always(!rx_desc->unmapped);
 				dp_ipa_reo_ctx_buf_mapping_lock(soc,
 								reo_ring_num);
 				dp_ipa_handle_rx_buf_smmu_mapping(
