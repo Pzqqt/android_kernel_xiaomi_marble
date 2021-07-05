@@ -234,10 +234,14 @@ static struct test_context *ipa_test;
 static void test_alloc_mem(struct ipa_mem_buffer *mem)
 {
 	dma_addr_t dma_addr;
+	struct device *pdev;
 
+	pdev = ipa3_get_pdev();
 	/* need to check return value in formal code */
-	mem->base = dma_alloc_coherent(ipa3_get_pdev(), mem->size, &dma_addr, GFP_KERNEL);
-	mem->phys_base = dma_addr;
+	if (pdev != NULL) {
+		mem->base = dma_alloc_coherent(pdev, mem->size, &dma_addr, GFP_KERNEL);
+		mem->phys_base = dma_addr;
+	}
 }
 
 /**
@@ -248,9 +252,11 @@ static void test_alloc_mem(struct ipa_mem_buffer *mem)
 static void test_free_mem(struct ipa_mem_buffer *mem)
 {
 	dma_addr_t dma_addr = mem->phys_base;
+	struct device *pdev;
 
-	if (dma_addr)
-		dma_free_coherent(ipa3_get_pdev(), mem->size, mem->base, dma_addr);
+	pdev = ipa3_get_pdev();
+	if (dma_addr && pdev != NULL)
+		dma_free_coherent(pdev, mem->size, mem->base, dma_addr);
 
 	mem->phys_base = 0;
 	mem->base = NULL;
@@ -957,6 +963,13 @@ int connect_ipa_to_apps(struct test_endpoint_sys *rx_ep,
 
 	dma_addr_t dma_addr;
 	const struct ipa_gsi_ep_config *gsi_ep_config;
+	struct device *pdev;
+
+	pdev = ipa3_get_pdev();
+	if (!pdev) {
+		IPATEST_ERR("IPA module not initialized\n");
+		return -EINVAL;
+	}
 
 	memset(&rx_ep->gsi_evt_ring_props, 0, sizeof(rx_ep->gsi_evt_ring_props));
 	rx_ep->gsi_evt_ring_props.intf = GSI_EVT_CHTYPE_GPI_EV;
@@ -966,7 +979,7 @@ int connect_ipa_to_apps(struct test_endpoint_sys *rx_ep,
 
 	rx_ep->gsi_evt_ring_props.ring_len = GSI_EVT_RING_LEN;
 	rx_ep->gsi_evt_ring_props.ring_base_vaddr =
-		dma_alloc_coherent(ipa3_get_pdev(), GSI_EVT_RING_LEN,
+		dma_alloc_coherent(pdev, GSI_EVT_RING_LEN,
 		&dma_addr, 0);
 	rx_ep->gsi_evt_ring_props.ring_base_addr = dma_addr;
 
@@ -1000,7 +1013,7 @@ int connect_ipa_to_apps(struct test_endpoint_sys *rx_ep,
 
 	rx_ep->gsi_channel_props.ring_len = GSI_CHANNEL_RING_LEN;
 	rx_ep->gsi_channel_props.ring_base_vaddr =
-		dma_alloc_coherent(ipa3_get_pdev(), GSI_CHANNEL_RING_LEN,
+		dma_alloc_coherent(pdev, GSI_CHANNEL_RING_LEN,
 		&dma_addr, 0);
 	if (!rx_ep->gsi_channel_props.ring_base_vaddr) {
 		IPATEST_ERR("connect_ipa_to_apps: falied to alloc GSI ring\n");
@@ -1056,6 +1069,13 @@ int connect_apps_to_ipa(struct test_endpoint_sys *tx_ep,
 	int res = 0;
 	dma_addr_t dma_addr;
 	const struct ipa_gsi_ep_config *gsi_ep_config;
+	struct device *pdev;
+
+	pdev = ipa3_get_pdev();
+	if (!pdev) {
+		IPATEST_ERR("IPA module not initialized\n");
+		return -EINVAL;
+	}
 
 	memset(&tx_ep->gsi_evt_ring_props, 0, sizeof(tx_ep->gsi_evt_ring_props));
 	tx_ep->gsi_evt_ring_props.intf = GSI_EVT_CHTYPE_GPI_EV;
@@ -1065,7 +1085,7 @@ int connect_apps_to_ipa(struct test_endpoint_sys *tx_ep,
 
 	tx_ep->gsi_evt_ring_props.ring_len = GSI_EVT_RING_LEN;
 	tx_ep->gsi_evt_ring_props.ring_base_vaddr =
-		dma_alloc_coherent(ipa3_get_pdev(), GSI_EVT_RING_LEN,
+		dma_alloc_coherent(pdev, GSI_EVT_RING_LEN,
 		&dma_addr, 0);
 	tx_ep->gsi_evt_ring_props.ring_base_addr = dma_addr;
 
@@ -1098,7 +1118,7 @@ int connect_apps_to_ipa(struct test_endpoint_sys *tx_ep,
 
 	tx_ep->gsi_channel_props.ring_len = GSI_CHANNEL_RING_LEN;
 	tx_ep->gsi_channel_props.ring_base_vaddr =
-		dma_alloc_coherent(ipa3_get_pdev(), GSI_CHANNEL_RING_LEN,
+		dma_alloc_coherent(pdev, GSI_CHANNEL_RING_LEN,
 		&dma_addr, 0);
 	if (!tx_ep->gsi_channel_props.ring_base_vaddr) {
 		IPATEST_ERR("connect_apps_to_ipa: falied to alloc GSI ring\n");
@@ -2730,12 +2750,16 @@ fail:
 void destroy_channel_device(struct channel_dev *channel_dev)
 {
 	int res = 0;
+	struct device *pdev;
 
 	IPATEST_DBG("Destroying device channel_dev = 0x%px,name %s.\n",
 	       channel_dev, channel_dev->name);
 
 	IPATEST_DBG("ep=0x%px gsi_chan_hdl=0x%lx\n", &channel_dev->ep, channel_dev->ep.gsi_chan_hdl);
-	if (channel_dev->ep.gsi_valid) {
+
+	pdev = ipa3_get_pdev();
+
+	if (channel_dev->ep.gsi_valid && pdev != NULL) {
 		IPATEST_DBG("stopping channel 0x%lx\n", channel_dev->ep.gsi_chan_hdl);
 		res = ipa_stop_gsi_channel(channel_dev->ipa_client_hdl);
 		if (res != GSI_STATUS_SUCCESS)
@@ -2751,13 +2775,13 @@ void destroy_channel_device(struct channel_dev *channel_dev)
 		if (res != GSI_STATUS_SUCCESS)
 			IPATEST_ERR("gsi_dealloc_channel failed %d\n\n", res);
 
-		dma_free_coherent(ipa3_get_pdev(), channel_dev->ep.gsi_channel_props.ring_len, channel_dev->ep.gsi_channel_props.ring_base_vaddr, channel_dev->ep.gsi_channel_props.ring_base_addr);
+		dma_free_coherent(pdev, channel_dev->ep.gsi_channel_props.ring_len, channel_dev->ep.gsi_channel_props.ring_base_vaddr, channel_dev->ep.gsi_channel_props.ring_base_addr);
 
 		IPATEST_DBG("deallocate channel event ring 0x%lx\n", channel_dev->ep.gsi_evt_ring_hdl);
 		res = gsi_dealloc_evt_ring(channel_dev->ep.gsi_evt_ring_hdl);
 		if (res != GSI_STATUS_SUCCESS)
 			IPATEST_ERR("gsi_dealloc_evt_ring failed %d\n\n", res);
-		dma_free_coherent(ipa3_get_pdev(), channel_dev->ep.gsi_evt_ring_props.ring_len, channel_dev->ep.gsi_evt_ring_props.ring_base_vaddr, channel_dev->ep.gsi_evt_ring_props.ring_base_addr);
+		dma_free_coherent(pdev, channel_dev->ep.gsi_evt_ring_props.ring_len, channel_dev->ep.gsi_evt_ring_props.ring_base_vaddr, channel_dev->ep.gsi_evt_ring_props.ring_base_addr);
 
 		res = ipa3_sys_teardown(channel_dev->ipa_client_hdl);
 		if (res) {
