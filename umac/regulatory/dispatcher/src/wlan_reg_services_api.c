@@ -1283,6 +1283,9 @@ wlan_reg_set_ap_pwr_and_update_chan_list(struct wlan_objmgr_pdev *pdev,
 {
 	return reg_set_ap_pwr_and_update_chan_list(pdev, ap_pwr_type);
 }
+
+qdf_export_symbol(wlan_reg_set_ap_pwr_and_update_chan_list);
+
 #endif /* CONFIG_BAND_6GHZ */
 
 bool wlan_reg_is_ext_tpc_supported(struct wlan_objmgr_psoc *psoc)
