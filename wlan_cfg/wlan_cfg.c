@@ -1559,7 +1559,7 @@ int wlan_cfg_per_pdev_lmac_ring(struct wlan_cfg_dp_soc_ctxt *cfg)
 
 qdf_export_symbol(wlan_cfg_per_pdev_lmac_ring);
 
-#ifdef DP_MEMORY_OPT
+#if defined(DP_USE_SINGLE_TCL)
 int wlan_cfg_num_tcl_data_rings(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return 1;
