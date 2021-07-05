@@ -100,6 +100,13 @@ struct hif_pci_stats {
 	uint32_t soc_force_wake_release_success;
 };
 
+struct hif_soc_info {
+	u32 family_number;
+	u32 device_number;
+	u32 major_version;
+	u32 minor_version;
+};
+
 struct hif_pci_softc {
 	struct HIF_CE_state ce_sc;
 	void __iomem *mem;      /* PCI address. */
@@ -138,6 +145,7 @@ struct hif_pci_softc {
 	/* Stores the affinity hint mask for each CE IRQ */
 	qdf_cpu_mask ce_irq_cpu_mask[CE_COUNT_MAX];
 #endif
+	struct hif_soc_info device_version;
 };
 
 bool hif_pci_targ_is_present(struct hif_softc *scn, void *__iomem *mem);

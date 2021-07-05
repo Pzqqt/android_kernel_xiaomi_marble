@@ -3301,6 +3301,17 @@ static void hif_pci_get_soc_info_pld(struct hif_pci_softc *sc,
 	sc->mem = info.v_addr;
 	sc->ce_sc.ol_sc.mem    = info.v_addr;
 	sc->ce_sc.ol_sc.mem_pa = info.p_addr;
+	sc->device_version.family_number = info.device_version.family_number;
+	sc->device_version.device_number = info.device_version.device_number;
+	sc->device_version.major_version = info.device_version.major_version;
+	sc->device_version.minor_version = info.device_version.minor_version;
+
+	hif_info("%s: fam num %u dev ver %u maj ver %u min ver %u\n", __func__,
+		 sc->device_version.family_number,
+		 sc->device_version.device_number,
+		 sc->device_version.major_version,
+		 sc->device_version.minor_version);
+
 	/* dev_mem_info[0] is for CMEM */
 	scn->cmem_start = info.dev_mem_info[0].start;
 	scn->cmem_size = info.dev_mem_info[0].size;
