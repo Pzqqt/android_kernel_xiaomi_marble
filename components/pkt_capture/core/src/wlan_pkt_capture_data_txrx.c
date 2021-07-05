@@ -419,6 +419,7 @@ pkt_capture_rx_convert8023to80211(hal_soc_handle_t hal_soc_hdl,
 	uint8_t *pwh;
 	uint8_t hdsize, new_hdsize;
 	struct ieee80211_qoscntl *qos_cntl;
+	static uint8_t first_msdu_hdr[sizeof(struct ieee80211_frame)];
 	uint8_t localbuf[sizeof(struct ieee80211_qosframe_htc_addr4) +
 			sizeof(struct llc_snap_hdr_t)];
 	const uint8_t ethernet_II_llc_snap_header_prefix[] = {
@@ -429,13 +430,29 @@ pkt_capture_rx_convert8023to80211(hal_soc_handle_t hal_soc_hdl,
 
 	eth_hdr = (struct ethernet_hdr_t *)qdf_nbuf_data(msdu);
 	hdsize = sizeof(struct ethernet_hdr_t);
-	pwh = hal_rx_desc_get_80211_hdr(hal_soc_hdl, desc);
 
 	wh = (struct ieee80211_frame *)localbuf;
 
 	new_hdsize = sizeof(struct ieee80211_frame);
 
-	qdf_mem_copy(localbuf, pwh, new_hdsize);
+	/*
+	 * Only first msdu in mpdu has rx_tlv_hdr(802.11 hdr) filled by HW, so
+	 * copy the 802.11 hdr to all other msdu's which are received in
+	 * single mpdu from first msdu.
+	 */
+	if (qdf_nbuf_is_rx_chfrag_start(msdu)) {
+		pwh = HAL_RX_DESC_GET_80211_HDR(desc);
+		qdf_mem_copy(first_msdu_hdr, pwh,
+			     sizeof(struct ieee80211_frame));
+	}
+
+	qdf_mem_copy(localbuf, first_msdu_hdr, new_hdsize);
+
+	/* Flush the cached 802.11 hdr once last msdu in mpdu is received */
+	if (qdf_nbuf_is_rx_chfrag_end(msdu))
+		qdf_mem_zero(first_msdu_hdr, sizeof(struct ieee80211_frame));
+
+	wh->i_fc[0] |= IEEE80211_FC0_TYPE_DATA;
 	wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
 
 	if (wh->i_fc[0] & QDF_IEEE80211_FC0_SUBTYPE_QOS) {
