@@ -30,8 +30,11 @@
 #include "rmnet_shs_wq.h"
 #include "rmnet_shs_modules.h"
 #include "rmnet_shs_common.h"
+#include "rmnet_trace.h"
 #include <linux/module.h>
 #include <linux/cpumask.h>
+#include <linux/icmp.h>
+#include <linux/inet.h>
 #define DATARMNET2f67183a86 2000000
 #define DATARMNET68fc0be252 1000000
 #define DATARMNETd391fbd694 (0xd2d+202-0xdf7)
@@ -109,12 +112,34 @@ DATARMNETc00baf31c3;struct ipv6hdr*ip6h,DATARMNETcf1d9e2c1e;switch(skb->protocol
 ip4h),&DATARMNETc00baf31c3);if(!ip4h)break;if(!ip_is_fragment(ip4h)&&(ip4h->
 protocol==IPPROTO_TCP||ip4h->protocol==IPPROTO_UDP)){DATARMNETbd864aa442=
 (0xd26+209-0xdf6);break;}if(ip4h->protocol==IPPROTO_ICMP){skb->hash=
-(0xd2d+202-0xdf7);skb->sw_hash=(0xd26+209-0xdf6);}break;case htons(ETH_P_IPV6):
-ip6h=DATARMNETefcaf5fbe9(skb,(0xd2d+202-0xdf7),sizeof(*ip6h),&
+(0xd2d+202-0xdf7);skb->sw_hash=(0xd26+209-0xdf6);if(trace_print_icmp_rx_enabled(
+)){char saddr[INET6_ADDRSTRLEN],daddr[INET6_ADDRSTRLEN];u16 ip_proto=
+(0xd2d+202-0xdf7);__be16 sequence=(0xd2d+202-0xdf7);u8 type=(0xd2d+202-0xdf7);
+struct icmphdr*icmphdr,DATARMNET5aa29a2264;memset(saddr,(0xd2d+202-0xdf7),
+INET6_ADDRSTRLEN);memset(daddr,(0xd2d+202-0xdf7),INET6_ADDRSTRLEN);icmphdr=
+DATARMNETefcaf5fbe9(skb,ip4h->ihl*(0xd11+230-0xdf3),sizeof(*icmphdr),&
+DATARMNET5aa29a2264);if(!icmphdr)goto DATARMNET03fd0cd6e6;if(icmphdr->type!=
+ICMP_ECHOREPLY&&icmphdr->type!=ICMP_ECHO)goto DATARMNET03fd0cd6e6;ip_proto=htons
+(ETH_P_IP);type=icmphdr->type;sequence=icmphdr->un.echo.sequence;snprintf(saddr,
+INET6_ADDRSTRLEN,"\x25\x70\x49\x34",&ip4h->saddr);snprintf(daddr,
+INET6_ADDRSTRLEN,"\x25\x70\x49\x34",&ip4h->daddr);trace_print_icmp_rx(skb,
+ip_proto,type,sequence,saddr,daddr);}}DATARMNET03fd0cd6e6:break;case htons(
+ETH_P_IPV6):ip6h=DATARMNETefcaf5fbe9(skb,(0xd2d+202-0xdf7),sizeof(*ip6h),&
 DATARMNETcf1d9e2c1e);if(!ip6h)break;if(!(ip6h->nexthdr==NEXTHDR_FRAGMENT)&&(ip6h
 ->nexthdr==IPPROTO_TCP||ip6h->nexthdr==IPPROTO_UDP)){DATARMNETbd864aa442=
 (0xd26+209-0xdf6);break;}if(ip6h->nexthdr==NEXTHDR_ICMP){skb->hash=
-(0xd2d+202-0xdf7);skb->sw_hash=(0xd26+209-0xdf6);}break;default:break;}
+(0xd2d+202-0xdf7);skb->sw_hash=(0xd26+209-0xdf6);if(trace_print_icmp_rx_enabled(
+)){char saddr[INET6_ADDRSTRLEN],daddr[INET6_ADDRSTRLEN];u16 ip_proto=
+(0xd2d+202-0xdf7);__be16 sequence=(0xd2d+202-0xdf7);u8 type=(0xd2d+202-0xdf7);
+struct icmp6hdr*icmp6hdr,DATARMNETaa41336581;memset(saddr,(0xd2d+202-0xdf7),
+INET6_ADDRSTRLEN);memset(daddr,(0xd2d+202-0xdf7),INET6_ADDRSTRLEN);icmp6hdr=
+DATARMNETefcaf5fbe9(skb,sizeof(*ip6h),sizeof(*icmp6hdr),&DATARMNETaa41336581);if
+(!icmp6hdr)goto DATARMNETf623862dd4;if(icmp6hdr->icmp6_type!=ICMPV6_ECHO_REQUEST
+&&icmp6hdr->icmp6_type!=ICMPV6_ECHO_REPLY)goto DATARMNETf623862dd4;ip_proto=
+htons(ETH_P_IPV6);type=icmp6hdr->icmp6_type;sequence=icmp6hdr->icmp6_sequence;
+snprintf(saddr,INET6_ADDRSTRLEN,"\x25\x70\x49\x36",&ip6h->saddr);snprintf(daddr,
+INET6_ADDRSTRLEN,"\x25\x70\x49\x36",&ip6h->daddr);trace_print_icmp_rx(skb,
+ip_proto,type,sequence,saddr,daddr);}}DATARMNETf623862dd4:break;default:break;}
 DATARMNETda96251102(DATARMNETcd24fca747,DATARMNET116c96c236,DATARMNETbd864aa442,
 (0x16e8+787-0xc0c),(0x16e8+787-0xc0c),(0x16e8+787-0xc0c),skb,NULL);return 
 DATARMNETbd864aa442;}static void DATARMNETfa919d00dc(int cpu,int 
