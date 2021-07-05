@@ -1034,6 +1034,10 @@ typedef struct {
 #ifdef WLAN_FEATURE_11BE
 	struct eht_capability eht_cap;
 #endif
+	qdf_atomic_t sap_num_clients_connected;
+	qdf_atomic_t go_num_clients_connected;
+	qdf_wake_lock_t sap_d3_wow_wake_lock;
+	qdf_wake_lock_t go_d3_wow_wake_lock;
 } t_wma_handle, *tp_wma_handle;
 
 /**

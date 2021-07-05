@@ -101,6 +101,14 @@
 #include "wlan_ipa_ucfg_api.h"
 #endif
 
+/*
+ * FW only supports 8 clients in SAP/GO mode for D3 WoW feature
+ * and hence host needs to hold a wake lock after 9th client connects
+ * and release the wake lock when 9th client disconnects
+ */
+#define SAP_D3_WOW_MAX_CLIENT_HOLD_WAKE_LOCK (9)
+#define SAP_D3_WOW_MAX_CLIENT_RELEASE_WAKE_LOCK (8)
+
 QDF_STATUS wma_find_vdev_id_by_addr(tp_wma_handle wma, uint8_t *addr,
 				    uint8_t *vdev_id)
 {
@@ -4821,6 +4829,58 @@ static bool wma_is_vdev_in_go_mode(tp_wma_handle wma, uint8_t vdev_id)
 	return false;
 }
 
+static void wma_sap_d3_wow_client_connect(tp_wma_handle wma)
+{
+	uint32_t num_clients;
+
+	num_clients = qdf_atomic_inc_return(&wma->sap_num_clients_connected);
+	wmi_debug("sap d3 wow %d client connected", num_clients);
+	if (num_clients == SAP_D3_WOW_MAX_CLIENT_HOLD_WAKE_LOCK) {
+		wmi_info("max clients connected acquire sap d3 wow wake lock");
+		qdf_wake_lock_acquire(&wma->sap_d3_wow_wake_lock,
+				      WIFI_POWER_EVENT_WAKELOCK_SAP_D3_WOW);
+	}
+}
+
+static void wma_sap_d3_wow_client_disconnect(tp_wma_handle wma)
+{
+	uint32_t num_clients;
+
+	num_clients = qdf_atomic_dec_return(&wma->sap_num_clients_connected);
+	wmi_debug("sap d3 wow %d client connected", num_clients);
+	if (num_clients == SAP_D3_WOW_MAX_CLIENT_RELEASE_WAKE_LOCK) {
+		wmi_info("max clients disconnected release sap d3 wow wake lock");
+		qdf_wake_lock_release(&wma->sap_d3_wow_wake_lock,
+				      WIFI_POWER_EVENT_WAKELOCK_SAP_D3_WOW);
+	}
+}
+
+static void wma_go_d3_wow_client_connect(tp_wma_handle wma)
+{
+	uint32_t num_clients;
+
+	num_clients = qdf_atomic_inc_return(&wma->go_num_clients_connected);
+	wmi_debug("go d3 wow %d client connected", num_clients);
+	if (num_clients == SAP_D3_WOW_MAX_CLIENT_HOLD_WAKE_LOCK) {
+		wmi_info("max clients connected acquire go d3 wow wake lock");
+		qdf_wake_lock_acquire(&wma->go_d3_wow_wake_lock,
+				      WIFI_POWER_EVENT_WAKELOCK_GO_D3_WOW);
+	}
+}
+
+static void wma_go_d3_wow_client_disconnect(tp_wma_handle wma)
+{
+	uint32_t num_clients;
+
+	num_clients = qdf_atomic_dec_return(&wma->go_num_clients_connected);
+	wmi_debug("go d3 wow %d client connected", num_clients);
+	if (num_clients == SAP_D3_WOW_MAX_CLIENT_RELEASE_WAKE_LOCK) {
+		wmi_info("max clients disconnected release go d3 wow wake lock");
+		qdf_wake_lock_release(&wma->go_d3_wow_wake_lock,
+				      WIFI_POWER_EVENT_WAKELOCK_GO_D3_WOW);
+	}
+}
+
 void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 {
 	uint8_t oper_mode = BSS_OPERATIONAL_MODE_STA;
@@ -4864,6 +4924,7 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 			wmi_info("sap d0 wow");
 		} else {
 			wmi_info("sap d3 wow");
+			wma_sap_d3_wow_client_connect(wma);
 		}
 		wma_sap_prevent_runtime_pm(wma);
 
@@ -4881,6 +4942,7 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 			wmi_info("p2p go d0 wow");
 		} else {
 			wmi_info("p2p go d3 wow");
+			wma_go_d3_wow_client_connect(wma);
 		}
 		wma_sap_prevent_runtime_pm(wma);
 
@@ -4961,6 +5023,7 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 			wmi_info("sap d0 wow");
 		} else {
 			wmi_info("sap d3 wow");
+			wma_sap_d3_wow_client_disconnect(wma);
 		}
 		wma_sap_allow_runtime_pm(wma);
 
@@ -4978,6 +5041,7 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 			wmi_info("p2p go d0 wow");
 		} else {
 			wmi_info("p2p go d3 wow");
+			wma_go_d3_wow_client_disconnect(wma);
 		}
 		wma_sap_allow_runtime_pm(wma);
 
