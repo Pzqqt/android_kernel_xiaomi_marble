@@ -1298,7 +1298,6 @@ wlansap_get_csa_chanwidth_from_phymode(struct sap_context *sap_context,
 				mac->pdev, mac->psoc, chan_freq,
 				ch_width);
 		ch_width = QDF_MIN(ch_width, concurrent_bw);
-		ch_width = QDF_MIN(ch_width, sap_context->ch_width_orig);
 	}
 	ch_params.ch_width = ch_width;
 	wlan_reg_set_channel_params_for_freq(mac->pdev, chan_freq, 0,
