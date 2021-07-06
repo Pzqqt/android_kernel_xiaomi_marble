@@ -4000,7 +4000,6 @@ bool cm_lookup_pmkid_using_bssid(struct wlan_objmgr_psoc *psoc,
 void cm_roam_restore_default_config(struct wlan_objmgr_pdev *pdev,
 				    uint8_t vdev_id)
 {
-	struct wlan_roam_triggers triggers;
 	struct cm_roam_values_copy src_config;
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_mlme_psoc_ext_obj *mlme_obj;
@@ -4019,10 +4018,6 @@ void cm_roam_restore_default_config(struct wlan_objmgr_pdev *pdev,
 					   &src_config);
 	}
 
-	triggers.vdev_id = vdev_id;
-	triggers.trigger_bitmap = wlan_mlme_get_roaming_triggers(psoc);
-	mlme_debug("Reset roam trigger bitmap to 0x%x", triggers.trigger_bitmap);
-	cm_rso_set_roam_trigger(pdev, vdev_id, &triggers);
 	cm_roam_control_restore_default_config(pdev, vdev_id);
 }
 
