@@ -1486,8 +1486,13 @@ static struct CE_pipe_config target_ce_config_wlan_wcn7850[] = {
 	/* host->target HTT */
 	{ /* CE4 */ 4, PIPEDIR_OUT, 256, 256,
 		(CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,},
+#ifdef FEATURE_PKTLOG
 	/* Target -> host PKTLOG */
 	{ /* CE5 */ 5, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
+#else
+	{ /* CE5 */ 5, PIPEDIR_IN,  0, 2048, CE_ATTR_FLAGS, 0,},
+#endif
+
 	/* Reserved for target autonomous HIF_memcpy */
 	{ /* CE6 */ 6, PIPEDIR_INOUT, 32, 16384, CE_ATTR_FLAGS, 0,},
 	/* CE7 used only by Host */
