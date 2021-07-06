@@ -2130,7 +2130,6 @@ void dp_rx_deliver_to_pkt_capture_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	uint16_t peer_id, vdev_id;
 	uint32_t pkt_len = 0;
 	uint8_t *rx_tlv_hdr;
-	uint32_t l2_hdr_offset = 0;
 	struct hal_rx_msdu_metadata msdu_metadata;
 
 	peer_id = QDF_NBUF_CB_RX_PEER_ID(nbuf);
@@ -2140,14 +2139,15 @@ void dp_rx_deliver_to_pkt_capture_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	msdu_len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
 	pkt_len = msdu_len + msdu_metadata.l3_hdr_pad +
 		  soc->rx_pkt_tlv_size;
-	l2_hdr_offset =
-		hal_rx_msdu_end_l3_hdr_padding_get(soc->hal_soc, rx_tlv_hdr);
 
 	qdf_nbuf_set_pktlen(nbuf, pkt_len);
 	dp_rx_skip_tlvs(soc, nbuf, msdu_metadata.l3_hdr_pad);
 
 	dp_wdi_event_handler(WDI_EVENT_PKT_CAPTURE_RX_DATA, soc, nbuf,
 			     HTT_INVALID_VDEV, is_offload, 0);
+
+	qdf_nbuf_push_head(nbuf, msdu_metadata.l3_hdr_pad +
+			   soc->rx_pkt_tlv_size);
 }
 
 #endif
