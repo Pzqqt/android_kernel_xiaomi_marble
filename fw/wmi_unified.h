@@ -3965,6 +3965,16 @@ typedef struct {
      * Otherwise, halphy will do normal flow.
      */
     A_UINT32 cbc_flow_ena;
+
+    /** @brief ema_init_config - can be used by Host to indicate beacon size
+     *  @details
+     *  Bit   0 : 15 - Size of beacon, currently it can be sent as
+     *                 1500 or 2500 or 4000 bytes
+     *  Bit  16 : 31 - Reserved
+     *  In case of Backward compatibility, if this variable is 0 then
+     *  default beacon size (1500) is used.
+     */
+    A_UINT32 ema_init_config;
 } wmi_resource_config;
 
 #define WMI_MSDU_FLOW_AST_ENABLE_GET(msdu_flow_config0, ast_x) \
@@ -11411,6 +11421,9 @@ typedef struct {
     A_UINT32 vdevid_trans;
     A_UINT32 eht_ops;
     A_UINT32 puncture_20mhz_bitmap; /* each bit indicates one 20 MHz BW punctured */
+
+    A_UINT32 mbssid_multi_group_flag; /* Flag to indentify whether multi group mbssid is supported */
+    A_UINT32 mbssid_multi_group_id; /* Group id of current vdev only valid when multi group mbssid is supported */
 
 /* The TLVs follows this structure:
  *     wmi_channel chan; <-- WMI channel
