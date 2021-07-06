@@ -74,16 +74,40 @@ static int mmrm_sw_update_freq(
 
 	/* print results */
 	for (i = 0; i < MMRM_VDD_LEVEL_MAX; i++) {
-		d_mpr_h("%s: csid(0x%x) corner(%s) clk_rate(%llu) dyn_pwr(%zu) leak_pwr(%zu)\n",
+		d_mpr_h("%s: csid(0x%x) corner(%s) clk_rate(%llu)\n",
 			__func__,
 			tbl_entry->clk_src_id,
 			cset->corner_tbl[i].name,
-			tbl_entry->freq[i],
-			tbl_entry->dyn_pwr[i],
-			tbl_entry->leak_pwr[i]);
+			tbl_entry->freq[i]);
 	}
 
 	return rc;
+}
+
+static void mmrm_sw_print_client_data(struct mmrm_sw_clk_mgr_info *sinfo,
+			struct mmrm_sw_clk_client_tbl_entry *tbl_entry)
+{
+	struct mmrm_driver_data *drv_data = (struct mmrm_driver_data *)sinfo->driver_data;
+	struct mmrm_clk_platform_resources *cres = &drv_data->clk_res;
+	struct voltage_corner_set *cset = &cres->corner_set;
+	u32 i, j;
+
+	for (i = 0; i < MMRM_VDD_LEVEL_MAX; i++) {
+		d_mpr_h("%s: csid(0x%x) corner(%s) dyn_pwr(%zu) leak_pwr(%zu) \n",
+				__func__,
+				tbl_entry->clk_src_id,
+				cset->corner_tbl[i].name,
+				tbl_entry->dyn_pwr[i],
+				tbl_entry->leak_pwr[i]);
+
+		for (j = 0; j < MMRM_VDD_LEVEL_MAX; j++) {
+			d_mpr_h("%s: csid(0x%x) total_pwr(%zu) cur_ma(%zu)\n",
+				__func__,
+				tbl_entry->clk_src_id,
+				(tbl_entry->dyn_pwr[i] + tbl_entry->leak_pwr[i]),
+				tbl_entry->current_ma[i][j]);
+		}
+	}
 }
 
 static int mmrm_sw_update_curr(struct mmrm_sw_clk_mgr_info *sinfo,
@@ -96,12 +120,27 @@ static int mmrm_sw_update_curr(struct mmrm_sw_clk_mgr_info *sinfo,
 	u32 scaling_factor = 0, voltage_factor = 0;
 	fp_t nom_dyn_pwr, nom_leak_pwr, dyn_sc, leak_sc,
 		volt, dyn_pwr, leak_pwr, pwr_mw, nom_freq;
+	u32 c;
+	struct nom_clk_src_info *nom_tbl_entry = NULL;
 
-	nom_dyn_pwr = FP(Q16_INT(tbl_entry->dyn_pwr[MMRM_VDD_LEVEL_NOM]),
-		Q16_FRAC(tbl_entry->dyn_pwr[MMRM_VDD_LEVEL_NOM]), 100);
+	for (c = 0; c < sinfo->tot_clk_clients; c++) {
+		if (tbl_entry->clk_src_id == sinfo->clk_client_tbl[c].clk_src_id) {
+			nom_tbl_entry = &cres->nom_clk_set.clk_src_tbl[c];
+			break;
+		}
+	}
+	if (nom_tbl_entry == NULL) {
+		d_mpr_h("%s: can't find 0x%x clock src ID\n",
+			__func__,
+			tbl_entry->clk_src_id);
+		return -EINVAL;
+	}
 
-	nom_leak_pwr = FP(Q16_INT(tbl_entry->leak_pwr[MMRM_VDD_LEVEL_NOM]),
-		Q16_FRAC(tbl_entry->leak_pwr[MMRM_VDD_LEVEL_NOM]), 100);
+	nom_dyn_pwr = FP(Q16_INT(nom_tbl_entry->nom_dyn_pwr),
+		Q16_FRAC(nom_tbl_entry->nom_dyn_pwr), 100);
+
+	nom_leak_pwr = FP(Q16_INT(nom_tbl_entry->nom_leak_pwr),
+		Q16_FRAC(nom_tbl_entry->nom_leak_pwr), 100);
 
 	nom_freq = tbl_entry->freq[MMRM_VDD_LEVEL_NOM];
 
@@ -123,28 +162,17 @@ static int mmrm_sw_update_curr(struct mmrm_sw_clk_mgr_info *sinfo,
 		dyn_pwr = fp_mult(pwr_mw, dyn_sc);
 		leak_pwr = fp_mult(nom_leak_pwr, leak_sc);
 
+		tbl_entry->dyn_pwr[i] = fp_round(dyn_pwr);
+		tbl_entry->leak_pwr[i] = fp_round(leak_pwr);
 
 		for (j = 0; j < MMRM_VDD_LEVEL_MAX; j++) {
 			voltage_factor = cset->corner_tbl[j].volt_factor;
 			volt = FP(Q16_INT(voltage_factor), Q16_FRAC(voltage_factor), 100);
 
 			tbl_entry->current_ma[i][j] = fp_round(fp_div((dyn_pwr+leak_pwr), volt));
-
-			d_mpr_h("%s: csid(0x%x) corner(%s) dyn_pwr(%zu) leak_pwr(%zu) ",
-				__func__,
-				tbl_entry->clk_src_id,
-				cset->corner_tbl[i].name,
-				fp_round(dyn_pwr),
-				fp_round(leak_pwr));
-
-			d_mpr_h("%s: csid(0x%x) tot_pwr(%d)cur_ma(%d)\n",
-				__func__,
-				tbl_entry->clk_src_id,
-				fp_round(dyn_pwr+leak_pwr),
-				tbl_entry->current_ma[i][j]);
 		}
 	}
-
+	mmrm_sw_print_client_data(sinfo, tbl_entry);
 	return 0;
 }
 
@@ -199,6 +227,9 @@ static struct mmrm_client *mmrm_sw_clk_client_register(
 			d_mpr_h("%s: client csid(0x%x) already registered ref:%d\n",
 				__func__, tbl_entry->clk_src_id, tbl_entry->ref_count);
 			clk_client = tbl_entry->client;
+
+			mmrm_sw_print_client_data(sinfo, tbl_entry);
+
 			goto exit_found;
 		}
 
