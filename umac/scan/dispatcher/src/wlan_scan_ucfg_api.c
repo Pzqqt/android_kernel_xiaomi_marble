@@ -769,6 +769,8 @@ wlan_scan_global_init(struct wlan_objmgr_psoc *psoc,
 				cfg_get(psoc, CFG_ENABLE_WAKE_LOCK_IN_SCAN);
 	scan_obj->scan_def.active_dwell_2g =
 			 cfg_get(psoc, CFG_ACTIVE_MAX_2G_CHANNEL_TIME);
+	scan_obj->scan_def.min_dwell_time_6g =
+			cfg_get(psoc, CFG_MIN_6G_CHANNEL_TIME);
 	scan_obj->scan_def.active_dwell_6g =
 			 cfg_get(psoc, CFG_ACTIVE_MAX_6G_CHANNEL_TIME);
 	scan_obj->scan_def.passive_dwell_6g =

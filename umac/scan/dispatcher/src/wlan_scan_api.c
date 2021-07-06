@@ -493,6 +493,7 @@ wlan_scan_init_default_params(struct wlan_objmgr_vdev *vdev,
 	req->scan_req.scan_priority = def->scan_priority;
 	req->scan_req.dwell_time_active = def->active_dwell;
 	req->scan_req.dwell_time_active_2g = def->active_dwell_2g;
+	req->scan_req.min_dwell_time_6g = def->min_dwell_time_6g;
 	req->scan_req.dwell_time_active_6g = def->active_dwell_6g;
 	req->scan_req.dwell_time_passive_6g = def->passive_dwell_6g;
 	req->scan_req.dwell_time_passive = def->passive_dwell;

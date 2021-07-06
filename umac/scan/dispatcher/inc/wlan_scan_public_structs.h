@@ -973,6 +973,7 @@ enum scan_request_type {
  * @dwell_time_active: active dwell time
  * @dwell_time_active_2g: active dwell time for 2G channels, if it's not zero
  * @dwell_time_passive: passive dwell time
+ * @min_dwell_time_6g: 6Ghz min dwell time
  * @dwell_time_active_6g: 6Ghz active dwell time
  * @dwell_time_passive_6g: 6Ghz passive dwell time
  * @min_rest_time: min rest time
@@ -1058,6 +1059,7 @@ struct scan_req_params {
 	uint32_t dwell_time_active;
 	uint32_t dwell_time_active_2g;
 	uint32_t dwell_time_passive;
+	uint32_t min_dwell_time_6g;
 	uint32_t dwell_time_active_6g;
 	uint32_t dwell_time_passive_6g;
 	uint32_t min_rest_time;
