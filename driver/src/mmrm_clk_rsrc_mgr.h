@@ -10,6 +10,7 @@
 #include <linux/soc/qcom/msm_mmrm.h>
 
 #include "mmrm_internal.h"
+#define MMRM_MAX_THROTTLE_CLIENTS 5
 
 enum mmrm_clk_mgr_scheme {
 	CLK_MGR_SCHEME_SW,
@@ -17,6 +18,8 @@ enum mmrm_clk_mgr_scheme {
 };
 
 enum mmrm_sw_vdd_levels {
+	MMRM_VDD_LEVEL_LOW_SVS,
+	MMRM_VDD_LEVEL_SVS,
 	MMRM_VDD_LEVEL_SVS_L1,
 	MMRM_VDD_LEVEL_NOM,
 	MMRM_VDD_LEVEL_TURBO,
@@ -24,6 +27,8 @@ enum mmrm_sw_vdd_levels {
 };
 
 static int mmrm_sw_vdd_corner[] = {
+	[MMRM_VDD_LEVEL_LOW_SVS] = RPMH_REGULATOR_LEVEL_LOW_SVS,
+	[MMRM_VDD_LEVEL_SVS] = RPMH_REGULATOR_LEVEL_SVS,
 	[MMRM_VDD_LEVEL_SVS_L1] = RPMH_REGULATOR_LEVEL_SVS_L1,
 	[MMRM_VDD_LEVEL_NOM] = RPMH_REGULATOR_LEVEL_NOM,
 	[MMRM_VDD_LEVEL_TURBO] = RPMH_REGULATOR_LEVEL_TURBO
@@ -70,6 +75,11 @@ struct mmrm_sw_peak_current_data {
 	u32 aggreg_level;
 };
 
+struct mmrm_throttle_info {
+	u32 csid_throttle_client;
+	u16 tbl_entry_id;
+};
+
 struct mmrm_sw_clk_mgr_info {
 	void *driver_data;
 
@@ -77,6 +87,8 @@ struct mmrm_sw_clk_mgr_info {
 	struct mmrm_sw_clk_client_tbl_entry *clk_client_tbl;
 	u32 tot_clk_clients;
 	u32 enabled_clk_clients;
+	struct mmrm_throttle_info throttle_clients_info[MMRM_MAX_THROTTLE_CLIENTS];
+	u16 throttle_clients_data_length;
 
 	/* peak current data */
 	struct mmrm_sw_peak_current_data peak_cur_data;

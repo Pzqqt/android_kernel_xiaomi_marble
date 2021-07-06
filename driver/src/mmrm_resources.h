@@ -1,12 +1,13 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _MMRM_RESOURCES_H_
 #define _MMRM_RESOURCES_H_
 
 #include <linux/platform_device.h>
+#define MMRM_MAX_THROTTLE_CLIENTS 5
 
 struct corner_info {
 	const char *name;
@@ -36,6 +37,8 @@ struct mmrm_clk_platform_resources {
 	struct platform_device *pdev;
 	u32 threshold;
 	u32 scheme;
+	u32 clsid_threshold_clients[MMRM_MAX_THROTTLE_CLIENTS];
+	u16 throttle_clients_data_length;
 	struct voltage_corner_set corner_set;
 	struct nom_clk_src_set nom_clk_set;
 };

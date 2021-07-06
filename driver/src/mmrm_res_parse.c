@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/types.h>
@@ -30,7 +30,7 @@ static int mmrm_read_clk_pltfrm_rsrc_frm_drv_data(
 {
 	struct mmrm_platform_data *pdata;
 	struct mmrm_clk_platform_resources *cres;
-	int rc = 0;
+	int i = 0;
 
 	pdata = ddata->platform_data;
 	cres = &ddata->clk_res;
@@ -44,8 +44,15 @@ static int mmrm_read_clk_pltfrm_rsrc_frm_drv_data(
 					"qcom,mmrm_clk_mgr_scheme");
 	d_mpr_h("%s: configured mmrm scheme %d\n",
 		__func__, cres->scheme);
+	cres->throttle_clients_data_length = pdata->throttle_clk_clients_data_length;
 
-	return rc;
+	for (i = 0; i < pdata->throttle_clk_clients_data_length; i++) {
+		cres->clsid_threshold_clients[i] =
+			(pdata->throttle_clk_clients_data[i].domain << 16
+				| pdata->throttle_clk_clients_data[i].id);
+	}
+
+	return 0;
 }
 
 static void mmrm_free_rail_corner_table(

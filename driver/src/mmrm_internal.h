@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _MMRM_INTERNAL_H_
@@ -17,9 +17,16 @@ struct mmrm_common_data {
 	int value;
 };
 
+struct mmrm_throttle_clients_data {
+	u32 domain;
+	u32 id;
+};
+
 struct mmrm_platform_data {
 	struct mmrm_common_data *common_data;
+	struct mmrm_throttle_clients_data *throttle_clk_clients_data;
 	u32 common_data_length;
+	u16 throttle_clk_clients_data_length;
 	u32 scheme;
 };
 

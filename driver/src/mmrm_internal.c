@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/types.h>
@@ -20,9 +20,36 @@ static struct mmrm_common_data waipio_common_data[] = {
 	},
 };
 
+/*throttle client list is as per fdd & resource availability*/
+
+static struct mmrm_throttle_clients_data waipio_throttle_clients_data[] = {
+	{
+		.domain = MMRM_CLIENT_DOMAIN_DISPLAY,
+		.id = 0x3d,
+	},
+	{
+		.domain = MMRM_CLIENT_DOMAIN_VIDEO,
+		.id = 0x03,
+	},
+	{
+		.domain = MMRM_CLIENT_DOMAIN_CAMERA,
+		.id = 0x46,
+	},
+	{
+		.domain = MMRM_CLIENT_DOMAIN_CVP,
+		.id = 0x08,
+	},
+	{
+		.domain = MMRM_CLIENT_DOMAIN_CAMERA,
+		.id = 0x02,
+	},
+};
+
 static struct mmrm_platform_data waipio_data = {
 	.common_data = waipio_common_data,
 	.common_data_length = ARRAY_SIZE(waipio_common_data),
+	.throttle_clk_clients_data = waipio_throttle_clients_data,
+	.throttle_clk_clients_data_length = ARRAY_SIZE(waipio_throttle_clients_data),
 };
 
 static const struct of_device_id mmrm_dt_match[] = {
