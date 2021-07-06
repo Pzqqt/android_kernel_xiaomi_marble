@@ -433,6 +433,13 @@ static const char rmnet_port_gstrings_stats[][ETH_GSTRING_LEN] = {
 	"DL trailer pkts received",
 	"UL agg reuse",
 	"UL agg alloc",
+	"DL chaining [0-10)",
+	"DL chaining [10-20)",
+	"DL chaining [20-30)",
+	"DL chaining [30-40)",
+	"DL chaining [40-50)",
+	"DL chaining [50-60)",
+	"DL chaining >= 60",
 };
 
 static const char rmnet_ll_gstrings_stats[][ETH_GSTRING_LEN] = {
