@@ -12232,7 +12232,7 @@ int ipa_hdrs_hpc_destroy(u32 hdr_hdl)
 	hdr_del = &del_wrapper->hdl[0];
 	hdr_del->hdl = hdr_hdl;
 
-	result = ipa3_del_hdr(del_wrapper);
+	result = ipa3_del_hdr_hpc(del_wrapper);
 	if (result || hdr_del->status)
 		IPAERR("ipa3_del_hdr failed\n");
 	kfree(del_wrapper);

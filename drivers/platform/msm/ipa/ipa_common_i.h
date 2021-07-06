@@ -703,6 +703,8 @@ int ipa3_add_hdr_hpc(struct ipa_ioc_add_hdr *hdrs);
 
 int ipa3_add_hdr_hpc_usr(struct ipa_ioc_add_hdr *hdrs, bool user_only);
 
+int ipa3_del_hdr_hpc(struct ipa_ioc_del_hdr *hdrs);
+
 int ipa3_add_hdr(struct ipa_ioc_add_hdr *hdrs);
 
 int ipa3_del_hdr(struct ipa_ioc_del_hdr *hdls);
