@@ -3109,7 +3109,7 @@ static void sde_encoder_virt_disable(struct drm_encoder *drm_enc)
 
 	/* reset connector topology name property */
 	if (sde_enc->cur_master && sde_enc->cur_master->connector &&
-			sde_enc->crtc->state->active_changed) {
+			sde_enc->crtc && sde_enc->crtc->state->active_changed) {
 		ret = sde_rm_update_topology(&sde_kms->rm,
 				sde_enc->cur_master->connector->state, NULL);
 		if (ret) {
@@ -5530,6 +5530,8 @@ int sde_encoder_update_caps_for_cont_splash(struct drm_encoder *encoder,
 		SDE_ERROR_ENC(sde_enc, "No encoder mapped to connector=%d\n",
 				conn->base.id);
 	}
+
+	sde_enc->crtc = encoder->crtc;
 
 	ret = sde_rm_reserve(&sde_kms->rm, encoder, encoder->crtc->state,
 			conn->state, false);
