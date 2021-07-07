@@ -753,7 +753,7 @@ static void *get_vaddr(struct drm_gem_object *obj, unsigned madv)
 				dma_buf_vmap(obj->import_attach->dmabuf);
 		} else {
 			msm_obj->vaddr = vmap(pages, obj->size >> PAGE_SHIFT,
-				VM_MAP, pgprot_writecombine(PAGE_KERNEL));
+				VM_MAP, PAGE_KERNEL);
 		}
 
 		if (msm_obj->vaddr == NULL) {
