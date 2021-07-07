@@ -718,6 +718,25 @@ target_if_cfr_set_mo_marking_support(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_E_INVAL;
 }
 
+QDF_STATUS
+target_if_cfr_set_aoa_for_rcc_support(struct wlan_objmgr_psoc *psoc,
+				      uint8_t value)
+{
+	struct wlan_lmac_if_rx_ops *rx_ops;
+
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (!rx_ops) {
+		cfr_err("rx_ops is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (rx_ops->cfr_rx_ops.cfr_aoa_for_rcc_support_set)
+		return rx_ops->cfr_rx_ops.cfr_aoa_for_rcc_support_set(
+						psoc, value);
+
+	return QDF_STATUS_E_INVAL;
+}
+
 void target_if_cfr_info_send(struct wlan_objmgr_pdev *pdev, void *head,
 			     size_t hlen, void *data, size_t dlen, void *tail,
 			     size_t tlen)
