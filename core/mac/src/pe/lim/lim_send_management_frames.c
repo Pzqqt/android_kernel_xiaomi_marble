@@ -3901,24 +3901,37 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 #endif
 	uint8_t smeSessionId = 0;
 	struct element_info *discon_ie;
+	bool drop_deauth = false;
 
 	if (!pe_session) {
 		return;
 	}
 
 	/*
-	 * In case when cac timer is running for this SAP session then
-	 * avoid deauth frame out. It is violation of dfs specification.
+	 * Avoid sending deauth frame out when
+	 * 1. CAC timer is running for this SAP session,
+	 *    It is avoid violation of dfs specification.
+	 * 2. Silent deauth is requested for a particular peer
 	 */
-	if (((pe_session->opmode == QDF_SAP_MODE) ||
-	    (pe_session->opmode == QDF_P2P_GO_MODE)) &&
-	    (true == mac->sap.SapDfsInfo.is_dfs_cac_timer_running)) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-			  FL
+	if ((pe_session->opmode == QDF_SAP_MODE) ||
+	    (pe_session->opmode == QDF_P2P_GO_MODE)) {
+		if (mac->sap.SapDfsInfo.is_dfs_cac_timer_running) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+				  FL
 				  ("CAC timer is running, drop the deauth from going out"));
-		if (waitForAck)
-			lim_send_deauth_cnf(mac);
-		return;
+			drop_deauth = true;
+		}
+		if (nReason == REASON_HOST_TRIGGERED_SILENT_DEAUTH) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+				  FL
+				  ("Silent deauth, remove the peer"));
+			drop_deauth = true;
+		}
+		if (drop_deauth) {
+			if (waitForAck)
+				lim_send_deauth_cnf(mac);
+			return;
+		}
 	}
 	smeSessionId = pe_session->smeSessionId;
 

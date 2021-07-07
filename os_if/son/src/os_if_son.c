@@ -911,3 +911,17 @@ bool os_if_son_vdev_is_wds(struct wlan_objmgr_vdev *vdev)
 }
 
 qdf_export_symbol(os_if_son_vdev_is_wds);
+
+void os_if_son_deauth_peer_sta(struct wlan_objmgr_vdev *vdev,
+			       uint8_t *peer_mac,
+			       bool ignore_frame)
+{
+	if (!vdev || !peer_mac) {
+		osif_err("null vdev / peer_mac");
+		return;
+	}
+	if (g_son_os_if_cb.os_if_deauth_sta)
+		g_son_os_if_cb.os_if_deauth_sta(vdev, peer_mac, ignore_frame);
+}
+
+qdf_export_symbol(os_if_son_deauth_peer_sta);
