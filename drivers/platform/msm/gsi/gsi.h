@@ -487,7 +487,7 @@ struct gsi_chan_props {
 	uint8_t ch_id;
 	unsigned long evt_ring_hdl;
 	enum gsi_chan_ring_elem_size re_size;
-	uint16_t ring_len;
+	uint32_t ring_len;
 	uint16_t max_re_expected;
 	uint64_t ring_base_addr;
 	uint8_t db_in_bytes;
