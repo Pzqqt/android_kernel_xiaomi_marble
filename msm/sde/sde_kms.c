@@ -1929,6 +1929,12 @@ static int _sde_kms_setup_displays(struct drm_device *dev,
 			sde_kms->dsc_switch_support = true;
 	}
 
+	if (sde_kms->catalog->allowed_dsc_reservation_switch &&
+			!sde_kms->dsc_switch_support) {
+		SDE_DEBUG("dsc switch not supported\n");
+		sde_kms->catalog->allowed_dsc_reservation_switch = 0;
+	}
+
 	max_dp_mixer_count = sde_kms->catalog->mixer_count > mixer_count ?
 				sde_kms->catalog->mixer_count - mixer_count : 0;
 	max_dp_dsc_count = sde_kms->catalog->dsc_count > dsc_count ?

@@ -7154,11 +7154,6 @@ struct drm_crtc *sde_crtc_init(struct drm_device *dev, struct drm_plane *plane)
 		return ERR_PTR(rc);
 	}
 
-	if (kms->catalog->allowed_dsc_reservation_switch && !kms->dsc_switch_support) {
-		SDE_DEBUG("dsc switch not supported\n");
-		kms->catalog->allowed_dsc_reservation_switch = 0;
-	}
-
 	/* create CRTC properties */
 	msm_property_init(&sde_crtc->property_info, &crtc->base, dev,
 			priv->crtc_property, sde_crtc->property_data,
