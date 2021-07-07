@@ -25,8 +25,50 @@
 #include <qdf_types.h>
 #include <wlan_mgmt_txrx_rx_reo_public_structs.h>
 #include <wlan_mgmt_txrx_rx_reo_utils_api.h>
+#include <wlan_mgmt_txrx_tgt_api.h>
+#include <wlan_lmac_if_def.h>
 
 #ifdef WLAN_MGMT_RX_REO_SUPPORT
+/**
+ * wlan_pdev_get_mgmt_rx_reo_txops() - Get management rx-reorder txops from pdev
+ * @pdev: Pointer to pdev object
+ *
+ * Return: Pointer to management rx-reorder txops in case of success, else NULL
+ */
+static inline struct wlan_lmac_if_mgmt_rx_reo_tx_ops *
+wlan_pdev_get_mgmt_rx_reo_txops(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_lmac_if_mgmt_txrx_tx_ops *mgmt_txrx_tx_ops;
+
+	mgmt_txrx_tx_ops = wlan_pdev_get_mgmt_txrx_txops(pdev);
+	if (!mgmt_txrx_tx_ops) {
+		mgmt_txrx_err("txops is null for mgmt txrx module");
+		return NULL;
+	}
+
+	return &mgmt_txrx_tx_ops->mgmt_rx_reo_tx_ops;
+}
+
+/**
+ * wlan_psoc_get_mgmt_rx_reo_txops() - Get management rx-reorder txops from psoc
+ * @psoc: Pointer to psoc object
+ *
+ * Return: Pointer to management rx-reorder txops in case of success, else NULL
+ */
+static inline struct wlan_lmac_if_mgmt_rx_reo_tx_ops *
+wlan_psoc_get_mgmt_rx_reo_txops(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_lmac_if_mgmt_txrx_tx_ops *mgmt_txrx_tx_ops;
+
+	mgmt_txrx_tx_ops = wlan_psoc_get_mgmt_txrx_txops(psoc);
+	if (!mgmt_txrx_tx_ops) {
+		mgmt_txrx_err("txops is null for mgmt txrx module");
+		return NULL;
+	}
+
+	return &mgmt_txrx_tx_ops->mgmt_rx_reo_tx_ops;
+}
+
 /**
  * tgt_mgmt_rx_reo_read_snapshot() - Read management rx-reorder snapshot
  * @pdev: Pointer to pdev object
@@ -82,5 +124,38 @@ tgt_mgmt_rx_reo_get_snapshot_address(
 			struct wlan_objmgr_pdev *pdev,
 			enum mgmt_rx_reo_shared_snapshot_id id,
 			struct mgmt_rx_reo_snapshot **address);
+
+/**
+ * tgt_mgmt_rx_reo_frame_handler() - REO handler for management Rx frames.
+ * @pdev: pdev for which this management frame is intended
+ * @buf: buffer
+ * @mgmt_rx_params: rx event params
+ *
+ * Return: QDF_STATUS of operation.
+ */
+QDF_STATUS tgt_mgmt_rx_reo_frame_handler(
+			struct wlan_objmgr_pdev *pdev,
+			qdf_nbuf_t buf,
+			struct mgmt_rx_event_params *mgmt_rx_params);
+#else
+/**
+ * tgt_mgmt_rx_reo_frame_handler() - REO handler for management Rx frames.
+ * @pdev: pdev for which this management frame is intended
+ * @buf: buffer
+ * @mgmt_rx_params: rx event params
+ *
+ * Return: QDF_STATUS of operation.
+ */
+static inline QDF_STATUS tgt_mgmt_rx_reo_frame_handler(
+			struct wlan_objmgr_pdev *pdev,
+			qdf_nbuf_t buf,
+			struct mgmt_rx_event_params *mgmt_rx_params)
+{
+	/**
+	 * If MGMT Rx REO feature is not compiled,
+	 * process the frame right away.
+	 */
+	return tgt_mgmt_txrx_process_rx_frame(pdev, buf, mgmt_rx_params);
+}
 #endif /* WLAN_MGMT_RX_REO_SUPPORT */
 #endif /* _WLAN_MGMT_TXRX_RX_REO_TGT_API_H */

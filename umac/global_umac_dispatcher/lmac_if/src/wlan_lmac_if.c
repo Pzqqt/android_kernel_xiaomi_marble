@@ -617,6 +617,8 @@ wlan_lmac_if_mgmt_txrx_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 			tgt_mgmt_txrx_get_vdev_id_from_desc_id;
 	mgmt_txrx_rx_ops->mgmt_txrx_get_free_desc_pool_count =
 			tgt_mgmt_txrx_get_free_desc_pool_count;
+	mgmt_txrx_rx_ops->mgmt_rx_frame_entry =
+			tgt_mgmt_txrx_rx_frame_entry;
 
 	return wlan_lmac_if_mgmt_rx_reo_rx_ops_register(mgmt_txrx_rx_ops);
 }

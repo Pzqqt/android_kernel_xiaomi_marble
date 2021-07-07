@@ -597,13 +597,14 @@ mgmt_rx_reo_list_entry_send_up(struct mgmt_rx_reo_list *reo_list,
 
 	link_id = mgmt_rx_reo_get_link_id(entry->rx_params);
 
-	pdev = wlan_get_pdev_from_mlo_link_id(link_id);
-
-	qdf_assert_always(pdev);
-
-	qdf_assert_always(QDF_IS_STATUS_SUCCESS(status));
-
 	free_mgmt_rx_event_params(entry->rx_params);
+
+	pdev = wlan_get_pdev_from_mlo_link_id(link_id);
+	if (!pdev) {
+		mgmt_rx_reo_err("Unable to get pdev corresponding to entry %pK",
+				entry);
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	/**
 	 * Release the reference taken when the entry is inserted into
@@ -873,6 +874,7 @@ mgmt_rx_reo_update_wait_count(
  * @reo_list: Pointer to reorder list
  * @num_mlo_links: Number of MLO HW links
  * @frame_desc: Pointer to frame descriptor
+ * @is_queued: Whether this frame is queued in the REO list
  *
  * API to update the reorder list on every management frame reception.
  * This API does the following things.
@@ -898,7 +900,8 @@ mgmt_rx_reo_update_wait_count(
 static QDF_STATUS
 mgmt_rx_reo_update_list(struct mgmt_rx_reo_list *reo_list,
 			uint8_t num_mlo_links,
-			struct mgmt_rx_reo_frame_descriptor *frame_desc)
+			struct mgmt_rx_reo_frame_descriptor *frame_desc,
+			bool *is_queued)
 {
 	struct mgmt_rx_reo_list_entry *cur_entry;
 	struct mgmt_rx_reo_list_entry *least_greater_entry;
@@ -906,6 +909,10 @@ mgmt_rx_reo_update_list(struct mgmt_rx_reo_list *reo_list,
 	QDF_STATUS status;
 	uint32_t new_frame_global_ts;
 	struct mgmt_rx_reo_list_entry *new_entry = NULL;
+
+	if (!is_queued)
+		return QDF_STATUS_E_NULL_VALUE;
+	*is_queued = false;
 
 	if (!reo_list) {
 		mgmt_rx_reo_err("Mgmt Rx reo list is null");
@@ -977,6 +984,8 @@ mgmt_rx_reo_update_list(struct mgmt_rx_reo_list *reo_list,
 						&least_greater_entry->node);
 		if (QDF_IS_STATUS_ERROR(status))
 			goto error;
+
+		*is_queued = true;
 	}
 
 	cur_entry = least_greater_entry;
@@ -997,28 +1006,32 @@ mgmt_rx_reo_update_list(struct mgmt_rx_reo_list *reo_list,
 	goto exit;
 
 error:
-	/* TODO check whether frame is not queued and then do the cleanup */
-	if (new_entry) {
+	/* Cleanup the entry if it is not queued */
+	if (!*is_queued) {
 		struct wlan_objmgr_pdev *pdev;
 		uint8_t link_id;
 
 		link_id = mgmt_rx_reo_get_link_id(new_entry->rx_params);
 
 		pdev = wlan_get_pdev_from_mlo_link_id(link_id);
-		qdf_assert_always(pdev);
-
 		/**
 		 * New entry created is not inserted to reorder list, free
 		 * the entry and release the reference
 		 */
+		if (pdev)
+			wlan_objmgr_pdev_release_ref(pdev, WLAN_MGMT_RX_REO_ID);
+		else
+			mgmt_rx_reo_err("Unable to get pdev corresponding to entry %pK",
+					new_entry);
 		qdf_mem_free(new_entry);
-		wlan_objmgr_pdev_release_ref(pdev, WLAN_MGMT_RX_REO_ID);
 	}
 
 exit:
 	qdf_spin_unlock_bh(&reo_list->list_lock);
 
-	/* TODO check whether frame is queued and then print */
+	if (!*is_queued)
+		return status;
+
 	if (frame_desc->type == MGMT_RX_REO_FRAME_DESC_HOST_CONSUMED_FRAME) {
 		if (least_greater_entry_found)
 			mgmt_rx_reo_debug("Inserting new entry %pK before %pK",
@@ -1097,6 +1110,61 @@ wlan_mgmt_rx_reo_update_host_snapshot(struct wlan_objmgr_pdev *pdev,
 	host_ss->mgmt_pkt_ctr = reo_params->mgmt_pkt_ctr;
 
 	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wlan_mgmt_rx_reo_algo_entry(struct wlan_objmgr_pdev *pdev,
+			    struct mgmt_rx_reo_frame_descriptor *desc,
+			    bool *is_queued)
+{
+	struct mgmt_rx_reo_context *reo_ctx;
+	QDF_STATUS status;
+
+	if (!is_queued)
+		return QDF_STATUS_E_NULL_VALUE;
+
+	*is_queued = false;
+
+	if (!desc || !desc->rx_params) {
+		mgmt_rx_reo_err("MGMT Rx REO descriptor or rx params are null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	reo_ctx = mgmt_rx_reo_get_context();
+	if (!reo_ctx) {
+		mgmt_rx_reo_err("REO context is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Update the Host snapshot */
+	status = wlan_mgmt_rx_reo_update_host_snapshot(
+						pdev,
+						desc->rx_params->reo_params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mgmt_rx_reo_err("Unable to update Host snapshot");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Compute wait count for this frame/event */
+	status = wlan_mgmt_rx_reo_algo_calculate_wait_count(
+						pdev,
+						desc->rx_params->reo_params,
+						reo_ctx->num_mlo_links,
+						&desc->wait_count);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mgmt_rx_reo_err("Wait count calculation failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Update the REO list */
+	status = mgmt_rx_reo_update_list(&reo_ctx->reo_list, desc, is_queued);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mgmt_rx_reo_err("REO list updation failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Finally, release the entries for which pending frame is received */
+	return mgmt_rx_reo_list_release_entries(&reo_ctx->reo_list);
 }
 
 QDF_STATUS

@@ -140,10 +140,12 @@ struct mgmt_rx_reo_list_entry {
  * @reo_list: Linked list used for reordering
  * @ts_last_delivered_frame: Stores the global time stamp for the last frame
  * delivered to the upper layer
+ * @num_mlo_links: Number of MLO links on the system
  */
 struct mgmt_rx_reo_context {
 	struct mgmt_rx_reo_list reo_list;
 	struct mgmt_rx_reo_global_ts_info ts_last_delivered_frame;
+	uint8_t num_mlo_links;
 };
 
 /**
@@ -245,5 +247,37 @@ mgmt_rx_reo_init_context(void);
  */
 QDF_STATUS
 mgmt_rx_reo_deinit_context(void);
+
+/**
+ * is_mgmt_rx_reo_required() - Whether MGMT REO required for this frame/event
+ * @pdev: pdev for which this frame/event is intended
+ * @desc: Descriptor corresponding to this frame/event
+ *
+ * Return: true if REO is required; else false
+ */
+static inline bool is_mgmt_rx_reo_required(
+			struct wlan_objmgr_pdev *pdev,
+			struct mgmt_rx_reo_frame_descriptor *desc)
+{
+	/**
+	 * TODO: Need to implement the actual policy based on WMI service bit.
+	 * For now, returning false so that algorithm won't kick in on mainline.
+	 */
+	return false;
+}
+
+/**
+ * wlan_mgmt_rx_reo_algo_entry() - Entry point to the MGMT Rx REO algorithm for
+ * a given MGMT frame/event.
+ * @pdev: pdev for which this frame/event is intended
+ * @desc: Descriptor corresponding to this frame/event
+ * @is_queued: Whether this frame/event is queued in the REO list
+ *
+ * Return: QDF_STATUS of operation
+ */
+QDF_STATUS
+wlan_mgmt_rx_reo_algo_entry(struct wlan_objmgr_pdev *pdev,
+			    struct mgmt_rx_reo_frame_descriptor *desc,
+			    bool *is_queued);
 #endif /* WLAN_MGMT_RX_REO_SUPPORT */
 #endif /* _WLAN_MGMT_TXRX_RX_REO_I_H */

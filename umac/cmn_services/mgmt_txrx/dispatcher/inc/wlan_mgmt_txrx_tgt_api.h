@@ -28,9 +28,10 @@
  */
 
 #include "wlan_objmgr_cmn.h"
+#include <wlan_objmgr_pdev_obj.h>
 #include "wlan_mgmt_txrx_utils_api.h"
 #include "qdf_nbuf.h"
-
+#include <wlan_lmac_if_def.h>
 
 /**
  * tgt_mgmt_txrx_rx_frame_handler() - handles rx mgmt. frames
@@ -137,4 +138,75 @@ tgt_mgmt_txrx_register_ev_handler(struct wlan_objmgr_psoc *psoc);
  */
 QDF_STATUS
 tgt_mgmt_txrx_unregister_ev_handler(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_psoc_get_mgmt_txrx_txops() - Get txops of MGMT TxRx module using psoc
+ * @psoc: Pointer to psoc object
+ *
+ * Return: txops of MGMT TxRx module on success, otherwise NULL
+ */
+static inline struct wlan_lmac_if_mgmt_txrx_tx_ops *
+wlan_psoc_get_mgmt_txrx_txops(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_lmac_if_tx_ops *tx_ops;
+
+	if (!psoc) {
+		mgmt_txrx_err("psoc is null");
+		return NULL;
+	}
+
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		mgmt_txrx_err("tx_ops is NULL");
+		return NULL;
+	}
+
+	return &tx_ops->mgmt_txrx_tx_ops;
+}
+
+/**
+ * wlan_pdev_get_mgmt_txrx_txops() - Get txops of MGMT TxRx module using pdev
+ * @pdev: Pointer to pdev object
+ *
+ * Return: txops of MGMT TxRx module on success, otherwise NULL
+ */
+static inline struct wlan_lmac_if_mgmt_txrx_tx_ops *
+wlan_pdev_get_mgmt_txrx_txops(struct wlan_objmgr_pdev *pdev)
+{
+	if (!pdev) {
+		mgmt_txrx_err("pdev is null");
+		return NULL;
+	}
+
+	return wlan_psoc_get_mgmt_txrx_txops(wlan_pdev_get_psoc(pdev));
+}
+
+/**
+ * tgt_mgmt_txrx_process_rx_frame() - Process management rx frames
+ * @pdev: pdev for which this management frame is intended
+ * @buf: buffer
+ * @mgmt_rx_params: rx event params
+ *
+ * This API processes MGMT Rx frames and delivers them to the upper layers.
+ *
+ * Return: QDF_STATUS of operation.
+ */
+QDF_STATUS tgt_mgmt_txrx_process_rx_frame(
+			struct wlan_objmgr_pdev *pdev,
+			qdf_nbuf_t buf,
+			struct mgmt_rx_event_params *mgmt_rx_params);
+
+/**
+ * tgt_mgmt_txrx_rx_frame_entry() - Entry point to the MGMT TxRx module for
+ * management Rx frames.
+ * @pdev: pdev for which this management frame is intended
+ * @buf: buffer
+ * @mgmt_rx_params: rx event params
+ *
+ * Return: QDF_STATUS of operation.
+ */
+QDF_STATUS tgt_mgmt_txrx_rx_frame_entry(
+			struct wlan_objmgr_pdev *pdev,
+			qdf_nbuf_t buf,
+			struct mgmt_rx_event_params *mgmt_rx_params);
 #endif
