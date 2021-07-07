@@ -1935,8 +1935,7 @@ void *hal_srng_src_get_next_consumed(void *hal_soc,
 	uint32_t next_entry = (srng->last_desc_cleared + srng->entry_size) %
 			      srng->ring_size;
 
-	if (next_entry != (srng->u.src_ring.cached_tp + srng->entry_size) %
-			  srng->ring_size) {
+	if (next_entry != srng->u.src_ring.cached_tp) {
 		desc = &srng->ring_base_vaddr[next_entry];
 		srng->last_desc_cleared = next_entry;
 	}
