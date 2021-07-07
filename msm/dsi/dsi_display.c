@@ -7150,7 +7150,7 @@ int dsi_display_find_mode(struct dsi_display *display,
 	struct dsi_display_mode *m;
 	struct dsi_dyn_clk_caps *dyn_clk_caps;
 	unsigned int match_flags = DSI_MODE_MATCH_FULL_TIMINGS;
-	struct dsi_display_mode_priv_info priv_info;
+	struct dsi_display_mode_priv_info *priv_info;
 
 	if (!display || !out_mode)
 		return -EINVAL;
@@ -7166,6 +7166,10 @@ int dsi_display_find_mode(struct dsi_display *display,
 		if (rc)
 			return rc;
 	}
+
+	priv_info = kzalloc(sizeof(struct dsi_display_mode_priv_info), GFP_KERNEL);
+	if (ZERO_OR_NULL_PTR(priv_info))
+		return -ENOMEM;
 
 	mutex_lock(&display->display_lock);
 	dyn_clk_caps = &(display->panel->dyn_clk_caps);
@@ -7183,9 +7187,7 @@ int dsi_display_find_mode(struct dsi_display *display,
 
 		if (sub_mode && sub_mode->dsc_mode) {
 			match_flags |= DSI_MODE_MATCH_DSC_CONFIG;
-			cmp->priv_info = &priv_info;
-			memset(cmp->priv_info, 0,
-				sizeof(struct dsi_display_mode_priv_info));
+			cmp->priv_info = priv_info;
 			cmp->priv_info->dsc_enabled = (sub_mode->dsc_mode ==
 				MSM_DISPLAY_DSC_MODE_ENABLED) ? true : false;
 		}
@@ -7200,6 +7202,7 @@ int dsi_display_find_mode(struct dsi_display *display,
 	cmp->priv_info = NULL;
 
 	mutex_unlock(&display->display_lock);
+	kfree(priv_info);
 
 	if (!*out_mode) {
 		DSI_ERR("[%s] failed to find mode for v_active %u h_active %u fps %u pclk %u\n",
