@@ -275,6 +275,7 @@ u32 v4l2_matrix_coeff_from_driver(struct msm_vidc_inst *inst,
 	u32 vidc_matrix_coeff, const char *func);
 int v4l2_type_to_driver_port(struct msm_vidc_inst *inst, u32 type,
 	const char *func);
+const char *allow_name(enum msm_vidc_allow allow);
 const char *state_name(enum msm_vidc_inst_state state);
 int msm_vidc_change_inst_state(struct msm_vidc_inst *inst,
 	enum msm_vidc_inst_state request_state, const char *func);
@@ -375,7 +376,7 @@ bool msm_vidc_allow_reqbufs(struct msm_vidc_inst *inst, u32 type);
 enum msm_vidc_allow msm_vidc_allow_stop(struct msm_vidc_inst *inst);
 bool msm_vidc_allow_start(struct msm_vidc_inst *inst);
 bool msm_vidc_allow_streamon(struct msm_vidc_inst *inst, u32 type);
-bool msm_vidc_allow_streamoff(struct msm_vidc_inst *inst, u32 type);
+enum msm_vidc_allow msm_vidc_allow_streamoff(struct msm_vidc_inst *inst, u32 type);
 enum msm_vidc_allow msm_vidc_allow_qbuf(struct msm_vidc_inst *inst, u32 type);
 enum msm_vidc_allow msm_vidc_allow_input_psc(struct msm_vidc_inst *inst);
 bool msm_vidc_allow_last_flag(struct msm_vidc_inst *inst);
