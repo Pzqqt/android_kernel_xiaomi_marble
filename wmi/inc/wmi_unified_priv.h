@@ -2542,6 +2542,12 @@ QDF_STATUS (*send_set_tpc_power_cmd)(wmi_unified_t wmi_handle,
 				     uint8_t vdev_id,
 				     struct reg_tpc_power_info *param);
 
+#ifdef CONFIG_AFC_SUPPORT
+QDF_STATUS
+(*send_afc_cmd)(wmi_unified_t wmi_handle, uint8_t pdev_id,
+		struct reg_afc_resp_rx_ind_info *param);
+#endif
+
 #ifdef WLAN_FEATURE_BIG_DATA_STATS
 QDF_STATUS (*send_big_data_stats_request_cmd)(
 				wmi_unified_t wmi_handle,

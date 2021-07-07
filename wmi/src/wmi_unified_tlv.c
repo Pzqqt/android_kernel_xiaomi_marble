@@ -15029,6 +15029,56 @@ static QDF_STATUS extract_pdev_csa_switch_count_status_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef CONFIG_AFC_SUPPORT
+/**
+ * send_afc_cmd_tlv() - Sends the AFC indication to FW
+ * @wmi_handle: wmi handle
+ * @pdev_id: Pdev id
+ * @param: Pointer to hold AFC indication.
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static
+QDF_STATUS send_afc_cmd_tlv(wmi_unified_t wmi_handle,
+			    uint8_t pdev_id,
+			    struct reg_afc_resp_rx_ind_info *param)
+{
+	wmi_buf_t buf;
+	wmi_afc_cmd_fixed_param *cmd;
+	uint32_t len;
+	uint8_t *buf_ptr;
+	QDF_STATUS ret;
+
+	len = sizeof(wmi_afc_cmd_fixed_param);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	buf_ptr = (uint8_t *)wmi_buf_data(buf);
+	cmd = (wmi_afc_cmd_fixed_param *)buf_ptr;
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_afc_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_afc_cmd_fixed_param));
+
+	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+								wmi_handle,
+								pdev_id);
+	cmd->cmd_type = param->cmd_type;
+	cmd->serv_resp_format = param->serv_resp_format;
+
+	wmi_mtrace(WMI_AFC_CMDID, NO_SESSION, 0);
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len, WMI_AFC_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		wmi_err("Failed to send WMI_AFC_CMDID");
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * send_set_tpc_power_cmd_tlv() - Sends the set TPC power level to FW
  * @wmi_handle: wmi handle
@@ -15562,6 +15612,9 @@ struct wmi_ops tlv_ops =  {
 	.extract_pdev_csa_switch_count_status =
 		extract_pdev_csa_switch_count_status_tlv,
 	.send_set_tpc_power_cmd = send_set_tpc_power_cmd_tlv,
+#ifdef CONFIG_AFC_SUPPORT
+	.send_afc_cmd = send_afc_cmd_tlv,
+#endif
 	.extract_dpd_status_ev_param = extract_dpd_status_ev_param_tlv,
 	.extract_install_key_comp_event = extract_install_key_comp_event_tlv,
 	.extract_halphy_cal_status_ev_param = extract_halphy_cal_status_ev_param_tlv,

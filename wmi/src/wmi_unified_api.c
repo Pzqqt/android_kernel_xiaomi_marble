@@ -3437,6 +3437,20 @@ QDF_STATUS wmi_unified_send_set_tpc_power_cmd(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef CONFIG_AFC_SUPPORT
+QDF_STATUS
+wmi_unified_send_afc_cmd(wmi_unified_t wmi_handle, uint8_t pdev_id,
+			 struct reg_afc_resp_rx_ind_info *param)
+{
+	if (wmi_handle->ops->send_afc_cmd)
+		return wmi_handle->ops->send_afc_cmd(wmi_handle,
+						     pdev_id,
+						     param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
+
 QDF_STATUS
 wmi_extract_dpd_status_ev_param(wmi_unified_t wmi_handle,
 				void *evt_buf,
