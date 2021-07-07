@@ -2538,14 +2538,13 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 		struct sde_encoder_phys *phys = sde_enc->phys_encs[i];
 
 		if (phys) {
-			if (!sde_enc->hw_pp[i * num_pp_per_intf] ||
-				sde_enc->topology.num_intf) {
-				SDE_ERROR_ENC(sde_enc, "invalid phys %d pp_per_intf %d num_intf %d",
-						i, num_pp_per_intf, sde_enc->topology.num_intf);
+			if (!sde_enc->hw_pp[i * num_pp_per_intf]) {
+				SDE_ERROR_ENC(sde_enc, "invalid phys %d pp_per_intf %d",
+						i, num_pp_per_intf);
 				return;
 			}
 			phys->hw_pp = sde_enc->hw_pp[i * num_pp_per_intf];
-			phys->connector = conn->state->connector;
+			phys->connector = conn;
 			if (phys->ops.mode_set)
 				phys->ops.mode_set(phys, mode, adj_mode);
 		}
