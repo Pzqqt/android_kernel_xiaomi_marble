@@ -1057,7 +1057,6 @@ struct ml_partner_info {
 	uint32_t hw_mld_link_id;
 };
 
-#define WMI_MAX_ML_PARTNER_LINKS 4
 /**
  * struct peer_assoc_ml_partner_links - ML partner links
  * @num_links: Number of links
@@ -1065,7 +1064,7 @@ struct ml_partner_info {
  */
 struct peer_assoc_ml_partner_links {
 	uint8_t num_links;
-	struct ml_partner_info partner_info[WMI_MAX_ML_PARTNER_LINKS];
+	struct ml_partner_info partner_info[WLAN_UMAC_MLO_MAX_VDEVS];
 };
 #endif
 /**

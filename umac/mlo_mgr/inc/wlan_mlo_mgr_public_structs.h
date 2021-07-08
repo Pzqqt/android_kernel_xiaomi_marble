@@ -27,7 +27,6 @@
 #include <wlan_cmn_ieee80211.h>
 #include <wlan_cmn.h>
 #include <wlan_objmgr_global_obj.h>
-#include <include/wlan_vdev_mlme.h>
 
 /* MAX MLO dev support */
 #define WLAN_UMAC_MLO_MAX_VDEVS 3
@@ -39,6 +38,7 @@
 #define MAX_MLO_PEER 512
 
 struct mlo_mlme_ext_ops;
+struct vdev_mlme_obj;
 
 /*
  * struct mlo_setup_info

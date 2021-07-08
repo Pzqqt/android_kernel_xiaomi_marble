@@ -2498,6 +2498,9 @@ static QDF_STATUS send_beacon_tmpl_send_cmd_tlv(wmi_unified_t wmi_handle,
 	WMI_HOST_IF_MSG_COPY_CHAR_ARRAY(buf_ptr, param->frm,
 					param->tmpl_len);
 
+	buf_ptr += param->tmpl_len;
+	buf_ptr = bcn_tmpl_add_ml_partner_links(buf_ptr, param);
+
 	wmi_mtrace(WMI_BCN_TMPL_CMDID, cmd->vdev_id, 0);
 	ret = wmi_unified_cmd_send(wmi_handle,
 				   wmi_buf, wmi_buf_len, WMI_BCN_TMPL_CMDID);

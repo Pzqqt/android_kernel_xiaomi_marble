@@ -26,6 +26,9 @@
 #define __WLAN_VDEV_MGR_TX_OPS_DEFS_H__
 
 #include <qdf_nbuf.h>
+#ifdef WLAN_FEATURE_11BE_MLO
+#include <wlan_mlo_mgr_public_structs.h>
+#endif
 
 /** slot time long */
 #define WLAN_MLME_VDEV_SLOT_TIME_LONG   0x1
@@ -192,6 +195,34 @@ struct tbttoffset_params {
 /* Send CSA switch count event for every update to switch count */
 #define WLAN_CSA_EVENT_BMAP_ALL                  0XFFFFFFFF
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * struct ml_bcn_partner_info - Partner link beacon information
+ * @vdev_id: Vdev id
+ * @hw_link_id: Unique hw link id across SoCs
+ * @beacon_interval: Beacon interval
+ * @csa_switch_count_offset: CSA swith count offset in beacon frame
+ * @ext_csa_switch_count_offset: ECSA switch count offset in beacon frame
+ */
+struct ml_bcn_partner_info {
+	uint32_t vdev_id;
+	uint32_t hw_link_id;
+	uint32_t beacon_interval;
+	uint32_t csa_switch_count_offset;
+	uint32_t ext_csa_switch_count_offset;
+};
+
+/**
+ * struct mlo_bcn_templ_partner_links - ML partner links
+ * @num_links: Number of links
+ * @partner_info: Partner link info
+ */
+struct mlo_bcn_templ_partner_links {
+	uint8_t num_links;
+	struct ml_bcn_partner_info partner_info[WLAN_UMAC_MLO_MAX_VDEVS];
+};
+#endif
+
 /**
  * struct beacon_tmpl_params - beacon template cmd parameter
  * @vdev_id: vdev id
@@ -212,6 +243,7 @@ struct tbttoffset_params {
  *     switch count is 0, 1, 4, and 5, set the bitmap to (0X80000033)
  * @enable_bigtk: enable bigtk or not
  * @frm: beacon template parameter
+ * @mlo_partner: Partner link information
  */
 struct beacon_tmpl_params {
 	uint8_t vdev_id;
@@ -227,6 +259,9 @@ struct beacon_tmpl_params {
 	uint32_t csa_event_bitmap;
 	bool enable_bigtk;
 	uint8_t *frm;
+#ifdef WLAN_FEATURE_11BE_MLO
+	struct mlo_bcn_templ_partner_links mlo_partner;
+#endif
 };
 
 /**
@@ -479,7 +514,6 @@ struct ml_vdev_start_partner_info {
 	uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
 };
 
-#define MAX_ML_PARTNER_LINKS 4
 /**
  * struct mlo_vdev_start__partner_links - ML partner links
  * @num_links: Number of links
@@ -487,7 +521,7 @@ struct ml_vdev_start_partner_info {
  */
 struct mlo_vdev_start_partner_links {
 	uint8_t num_links;
-	struct ml_vdev_start_partner_info partner_info[MAX_ML_PARTNER_LINKS];
+	struct ml_vdev_start_partner_info partner_info[WLAN_UMAC_MLO_MAX_VDEVS];
 };
 #endif
 /**

@@ -59,6 +59,16 @@ uint8_t *vdev_start_add_mlo_params(uint8_t *buf_ptr,
 uint8_t *vdev_start_add_ml_partner_links(uint8_t *buf_ptr,
 					 struct vdev_start_params *req);
 /**
+ * bcn_tmpl_add_ml_partner_links - Add MLO partner links in beacon template
+ *                                 command
+ * @buf_ptr: pointer to beacon cmd buffer.
+ * @param: pointer to beacon template params
+ *
+ * Return: pointer to new offset of cmd buffer
+ */
+uint8_t *bcn_tmpl_add_ml_partner_links(uint8_t *buf_ptr,
+				       struct beacon_tmpl_params *param);
+/**
  *  peer_create_add_mlo_params() - Add MLO params in peer create cmd
  *  @buf_ptr: pointer to peer create cmd buffer.
  *  @req: pointer to peer create request param
@@ -126,6 +136,13 @@ static size_t vdev_start_mlo_params_size(struct vdev_start_params *req)
 
 static uint8_t *vdev_start_add_ml_partner_links(uint8_t *buf_ptr,
 						struct vdev_start_params *req)
+{
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, 0);
+	return buf_ptr + WMI_TLV_HDR_SIZE;
+}
+
+static uint8_t *bcn_tmpl_add_ml_partner_links(uint8_t *buf_ptr,
+					      struct beacon_tmpl_params *param)
 {
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, 0);
 	return buf_ptr + WMI_TLV_HDR_SIZE;
