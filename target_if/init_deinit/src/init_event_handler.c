@@ -140,6 +140,16 @@ static int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 		wlan_psoc_nif_fw_ext_cap_set(
 				psoc, WLAN_SOC_NSS_RATIO_TO_HOST_SUPPORT);
 
+	if (wmi_service_enabled(wmi_handle,
+				wmi_service_rtt_ap_initiator_staggered_mode_supported))
+		wlan_psoc_nif_fw_ext_cap_set(
+				psoc, WLAN_SOC_RTT_AP_INITIATOR_STAGGERED_MODE_SUPPORTED);
+
+	if (wmi_service_enabled(wmi_handle,
+				wmi_service_rtt_ap_initiator_bursted_mode_supported))
+		wlan_psoc_nif_fw_ext_cap_set(
+				psoc, WLAN_SOC_RTT_AP_INITIATOR_BURSTED_MODE_SUPPORTED);
+
 	target_if_debug(" TT support %d, Wide BW Scan %d, SW cal %d",
 		wlan_psoc_nif_fw_ext_cap_get(psoc, WLAN_SOC_CEXT_TT_SUPPORT),
 		wlan_psoc_nif_fw_ext_cap_get(psoc, WLAN_SOC_CEXT_WIDEBAND_SCAN),

@@ -16445,6 +16445,10 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_AMPDU_TX_BUF_SIZE_256_SUPPORT;
 	wmi_service[wmi_service_halphy_cal_status] =
 			WMI_SERVICE_HALPHY_CAL_STATUS;
+	wmi_service[wmi_service_rtt_ap_initiator_staggered_mode_supported] =
+			WMI_SERVICE_RTT_AP_INITIATOR_STAGGERED_MODE_SUPPORTED;
+	wmi_service[wmi_service_rtt_ap_initiator_bursted_mode_supported] =
+			WMI_SERVICE_RTT_AP_INITIATOR_BURSTED_MODE_SUPPORTED;
 }
 
 /**

@@ -5265,6 +5265,8 @@ typedef enum {
 	wmi_service_sae_eapol_offload_support,
 	wmi_service_ampdu_tx_buf_size_256_support,
 	wmi_service_halphy_cal_status,
+	wmi_service_rtt_ap_initiator_staggered_mode_supported,
+	wmi_service_rtt_ap_initiator_bursted_mode_supported,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
