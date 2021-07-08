@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -50,6 +50,18 @@ QDF_STATUS wmi_unified_send_cfr_rcc_cmd(wmi_unified_t wmi_handle,
 {
 	if (wmi_handle->ops->send_cfr_rcc_cmd)
 		return wmi_handle->ops->send_cfr_rcc_cmd(wmi_handle, cfg);
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+wmi_extract_cfr_pdev_phase_delta_event(wmi_unified_t wmi_handle,
+				       void *evt_buf,
+				       struct wmi_cfr_phase_delta_param *param)
+{
+	if (wmi_handle->ops->extract_cfr_phase_param)
+		return wmi_handle->ops->extract_cfr_phase_param(wmi_handle,
+								evt_buf,
+								param);
 	return QDF_STATUS_E_FAILURE;
 }
 #endif /* WLAN_ENH_CFR_ENABLE */

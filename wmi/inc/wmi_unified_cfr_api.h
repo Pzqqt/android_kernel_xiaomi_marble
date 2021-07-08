@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -55,6 +55,20 @@ wmi_extract_cfr_peer_tx_event_param(wmi_unified_t wmi_handle, void *evt_buf,
  */
 QDF_STATUS wmi_unified_send_cfr_rcc_cmd(wmi_unified_t wmi_handle,
 					struct cfr_rcc_param *cfg);
+
+/**
+ * wmi_extract_cfr_pdev_phase_delta_event() - WMI function to extract the
+ * phase delta information.
+ * @wmi_handle: WMI handle
+ * @evt_buf: Buffer holding the event data
+ * @param: phase delta params to be updated from event
+ *
+ * Return: QDF_STATUS_SUCCESS if success, else returns proper error code.
+ */
+QDF_STATUS
+wmi_extract_cfr_pdev_phase_delta_event(wmi_unified_t wmi_handle,
+				       void *evt_buf,
+				       struct wmi_cfr_phase_delta_param *param);
 #endif
 #endif /* WLAN_CFR_ENABLE */
 #endif /* _WMI_UNIFIED_CFR_API_H_ */

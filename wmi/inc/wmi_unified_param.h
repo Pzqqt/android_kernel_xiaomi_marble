@@ -401,6 +401,9 @@
 #define WMI_CONFIG_MSDU_AST_INDEX_2         0x2
 #define WMI_CONFIG_MSDU_AST_INDEX_3         0x3
 
+#define WMI_MAX_AOA_PHASE_DELTA 31
+#define WMI_MAX_CHAINS_PHASE 2
+
 #include "qdf_atomic.h"
 
 #ifdef BIG_ENDIAN_HOST
@@ -4680,6 +4683,7 @@ typedef enum {
 	wmi_vdev_smart_monitor_event_id,
 #endif
 	wmi_pdev_get_halphy_cal_status_event_id,
+	wmi_pdev_aoa_phasedelta_event_id,
 	wmi_events_max,
 } wmi_conv_event_id;
 
@@ -5270,6 +5274,7 @@ typedef enum {
 	wmi_service_halphy_cal_status,
 	wmi_service_rtt_ap_initiator_staggered_mode_supported,
 	wmi_service_rtt_ap_initiator_bursted_mode_supported,
+	wmi_service_aoa_for_rcc_supported,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
@@ -7826,6 +7831,25 @@ typedef struct {
 	uint32_t mcs_rate;
 	uint32_t gi_type;
 } wmi_cfr_peer_tx_event_param;
+
+/**
+ * struct wmi_cfr_phase_delta_param - AoA phase delta params
+ * @pdev_id: pdev id
+ * @freq: primary 20 MHz channel frequency in mhz
+ * @max_chains: indicates max chains for which AoA will be reported
+ * @chain_phase_mask: indicates the chains to which phase values are
+ * reported by target
+ * @phase_delta: phase delta associated with reported chain's each gain value
+ * ibf_cal_val: IBF values to be added with phase delta of chains reported
+ */
+struct wmi_cfr_phase_delta_param {
+	uint32_t pdev_id;
+	uint32_t freq;
+	uint32_t max_chains;
+	uint32_t chain_phase_mask;
+	uint32_t phase_delta[WMI_MAX_CHAINS_PHASE][WMI_MAX_AOA_PHASE_DELTA];
+	uint32_t ibf_cal_val[WMI_MAX_CHAINS_PHASE];
+};
 
 /**
  * struct wmi_host_oem_indirect_data - Indirect OEM data

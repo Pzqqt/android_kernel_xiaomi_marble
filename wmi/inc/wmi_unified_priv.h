@@ -2574,6 +2574,13 @@ QDF_STATUS
 (*extract_install_key_comp_event)(wmi_unified_t wmi_handle,
 				  void *evt_buf, uint32_t len,
 				  struct wmi_install_key_comp_event *param);
+
+#ifdef WLAN_ENH_CFR_ENABLE
+QDF_STATUS
+(*extract_cfr_phase_param)(wmi_unified_t wmi_handle,
+			   void *evt_buf,
+			   struct wmi_cfr_phase_delta_param *param);
+#endif
 };
 
 /* Forward declartion for psoc*/
