@@ -16037,6 +16037,10 @@ event_ids[wmi_roam_scan_chan_list_id] =
 #endif
 	event_ids[wmi_pdev_get_halphy_cal_status_event_id] =
 			WMI_PDEV_GET_HALPHY_CAL_STATUS_EVENTID;
+#ifdef REPORT_AOA_FOR_RCC
+	event_ids[wmi_pdev_aoa_phasedelta_event_id] =
+			WMI_PDEV_AOA_PHASEDELTA_EVENTID;
+#endif
 }
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
@@ -16451,6 +16455,10 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_RTT_AP_INITIATOR_STAGGERED_MODE_SUPPORTED;
 	wmi_service[wmi_service_rtt_ap_initiator_bursted_mode_supported] =
 			WMI_SERVICE_RTT_AP_INITIATOR_BURSTED_MODE_SUPPORTED;
+#ifdef REPORT_AOA_FOR_RCC
+	wmi_service[wmi_service_aoa_for_rcc_supported] =
+			WMI_SERVICE_AOA_FOR_RCC_SUPPORTED;
+#endif
 }
 
 /**
