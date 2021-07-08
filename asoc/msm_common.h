@@ -49,6 +49,9 @@ void msm_common_set_pdata(struct snd_soc_card *card,
 
 int snd_card_sysfs_init(void);
 
+int msm_common_snd_hw_params(struct snd_pcm_substream *substream,
+			struct snd_pcm_hw_params *params);
+
 int msm_common_snd_startup(struct snd_pcm_substream *substream);
 
 void msm_common_snd_shutdown(struct snd_pcm_substream *substream);

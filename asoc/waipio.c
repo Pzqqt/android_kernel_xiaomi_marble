@@ -177,6 +177,7 @@ static bool msm_usbc_swap_gnd_mic(struct snd_soc_component *component, bool acti
 }
 
 static struct snd_soc_ops msm_common_be_ops = {
+	.hw_params = msm_common_snd_hw_params,
 	.startup = msm_common_snd_startup,
 	.shutdown = msm_common_snd_shutdown,
 };
