@@ -1044,12 +1044,12 @@ is_chan_enabled_for_scan(struct regulatory_channel *reg_chan,
 	if (reg_chan->nol_chan)
 		return false;
 	/* 2 GHz channel */
-	if ((util_scan_scm_chan_to_band(reg_chan->chan_num) ==
+	if ((util_scan_scm_freq_to_band(reg_chan->center_freq) ==
 			WLAN_BAND_2_4_GHZ) &&
 			((reg_chan->center_freq < low_2g) ||
 			(reg_chan->center_freq > high_2g)))
 		return false;
-	else if ((util_scan_scm_chan_to_band(reg_chan->chan_num) ==
+	else if ((util_scan_scm_freq_to_band(reg_chan->center_freq) ==
 				WLAN_BAND_5_GHZ) &&
 		 ((reg_chan->center_freq < low_5g) ||
 		  (reg_chan->center_freq > high_5g)))
