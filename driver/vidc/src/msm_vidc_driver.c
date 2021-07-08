@@ -238,6 +238,35 @@ exit:
 	return name;
 }
 
+struct msm_vidc_allow_name {
+	enum msm_vidc_allow allow;
+	char *name;
+};
+
+static const struct msm_vidc_allow_name inst_allow_name_arr[] = {
+	{MSM_VIDC_DISALLOW,                  "MSM_VIDC_DISALLOW"   },
+	{MSM_VIDC_ALLOW,                     "MSM_VIDC_ALLOW"      },
+	{MSM_VIDC_DEFER,                     "MSM_VIDC_DEFER"      },
+	{MSM_VIDC_DISCARD,                   "MSM_VIDC_DISCARD"    },
+	{MSM_VIDC_IGNORE,                    "MSM_VIDC_IGNORE"     },
+};
+
+const char *allow_name(enum msm_vidc_allow allow)
+{
+	const char *name = "UNKNOWN";
+
+	if (allow > ARRAY_SIZE(inst_allow_name_arr))
+		goto exit;
+
+	if (inst_allow_name_arr[allow].allow != allow)
+		goto exit;
+
+	name = inst_allow_name_arr[allow].name;
+
+exit:
+	return name;
+}
+
 struct msm_vidc_inst_state_name {
 	enum msm_vidc_inst_state state;
 	char *name;
@@ -1444,32 +1473,35 @@ bool msm_vidc_allow_streamon(struct msm_vidc_inst *inst, u32 type)
 	return false;
 }
 
-bool msm_vidc_allow_streamoff(struct msm_vidc_inst *inst, u32 type)
+enum msm_vidc_allow msm_vidc_allow_streamoff(struct msm_vidc_inst *inst, u32 type)
 {
-	bool allow = true;
+	enum msm_vidc_allow allow = MSM_VIDC_ALLOW;
 
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
-		return false;
+		return MSM_VIDC_DISALLOW;
 	}
 	if (type == INPUT_MPLANE) {
-		if (inst->state == MSM_VIDC_OPEN ||
-			inst->state == MSM_VIDC_START_OUTPUT)
-			allow = false;
+		if (!inst->vb2q[INPUT_PORT].streaming)
+			allow = MSM_VIDC_IGNORE;
 	} else if (type == INPUT_META_PLANE) {
-		if (inst->state == MSM_VIDC_START_INPUT)
-			allow = false;
+		if (inst->vb2q[INPUT_PORT].streaming)
+			allow = MSM_VIDC_DISALLOW;
+		else if (!inst->vb2q[INPUT_META_PORT].streaming)
+			allow = MSM_VIDC_IGNORE;
 	} else if (type == OUTPUT_MPLANE) {
-		if (inst->state == MSM_VIDC_OPEN ||
-			inst->state == MSM_VIDC_START_INPUT)
-			allow = false;
+		if (!inst->vb2q[OUTPUT_PORT].streaming)
+			allow = MSM_VIDC_IGNORE;
 	} else if (type == OUTPUT_META_PLANE) {
-		if (inst->state == MSM_VIDC_START_OUTPUT)
-			allow = false;
+		if (inst->vb2q[OUTPUT_PORT].streaming)
+			allow = MSM_VIDC_DISALLOW;
+		else if (!inst->vb2q[OUTPUT_META_PORT].streaming)
+			allow = MSM_VIDC_IGNORE;
 	}
-	if (!allow)
-		i_vpr_e(inst, "%s: type %d not allowed in state %s\n",
-				__func__, type, state_name(inst->state));
+	if (allow != MSM_VIDC_ALLOW)
+		i_vpr_e(inst, "%s: type %d is %s in state %s\n",
+				__func__, type, allow_name(allow),
+				state_name(inst->state));
 
 	return allow;
 }

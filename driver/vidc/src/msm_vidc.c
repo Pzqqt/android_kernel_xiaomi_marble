@@ -543,14 +543,21 @@ int msm_vidc_streamoff(void *instance, enum v4l2_buf_type type)
 	int rc = 0;
 	struct msm_vidc_inst *inst = instance;
 	int port;
+	enum msm_vidc_allow allow;
 
 	if (!inst) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 
-	if (!msm_vidc_allow_streamoff(inst, type)) {
+	allow = msm_vidc_allow_streamoff(inst, type);
+	if (allow == MSM_VIDC_DISALLOW) {
 		rc = -EBUSY;
+		goto exit;
+	} else if (allow == MSM_VIDC_IGNORE) {
+		goto exit;
+	} else if (allow != MSM_VIDC_ALLOW) {
+		rc = -EINVAL;
 		goto exit;
 	}
 	rc = msm_vidc_state_change_streamoff(inst, type);
