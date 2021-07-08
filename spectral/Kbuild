@@ -108,6 +108,7 @@ INCS += -I$(obj)/$(DEPTH)/include -I$(obj)/$(DEPTH)/umac/include \
         -I$(obj)/$(DEPTH)/cmn_dev/global_lmac_if/inc \
         -I$(obj)/$(DEPTH)/cmn_dev/os_if/linux \
         -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/cmn_defs/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/regulatory/inc \
         -I$(obj)/$(DEPTH)/cmn_dev/target_if/core/inc \
         -I$(obj)/$(DEPTH)/cmn_dev/umac/scan/dispatcher/inc \
         -I$(obj)/$(DEPTH)/umac/scan \
