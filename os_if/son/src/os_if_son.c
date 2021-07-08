@@ -925,3 +925,17 @@ void os_if_son_deauth_peer_sta(struct wlan_objmgr_vdev *vdev,
 }
 
 qdf_export_symbol(os_if_son_deauth_peer_sta);
+
+void os_if_son_modify_acl(struct wlan_objmgr_vdev *vdev,
+			  uint8_t *peer_mac,
+			  bool allow_auth)
+{
+	if (!vdev || !peer_mac) {
+		osif_err("null vdev / peer_mac");
+		return;
+	}
+	if (g_son_os_if_cb.os_if_modify_acl)
+		g_son_os_if_cb.os_if_modify_acl(vdev, peer_mac, allow_auth);
+}
+
+qdf_export_symbol(os_if_son_modify_acl);

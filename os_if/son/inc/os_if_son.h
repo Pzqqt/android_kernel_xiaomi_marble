@@ -54,6 +54,7 @@
  * @os_if_set_chwidth: set chan width
  * @os_if_get_chwidth: get chan width
  * @os_if_deauth_sta: Deauths the target peer
+ * @os_if_modify_acl: Add/Del target peer in ACL
  */
 struct son_callbacks {
 	uint32_t (*os_if_is_acs_in_progress)(struct wlan_objmgr_vdev *vdev);
@@ -95,6 +96,9 @@ struct son_callbacks {
 	void (*os_if_deauth_sta)(struct wlan_objmgr_vdev *vdev,
 				 uint8_t *peer_mac,
 				 bool ignore_frame);
+	void (*os_if_modify_acl)(struct wlan_objmgr_vdev *vdev,
+				 uint8_t *peer_mac,
+				 bool allow_auth);
 };
 
 /**
@@ -481,4 +485,16 @@ enum ieee80211_cwm_width os_if_son_get_chwidth(struct wlan_objmgr_vdev *vdev);
 void os_if_son_deauth_peer_sta(struct wlan_objmgr_vdev *vdev,
 			       uint8_t *peer_mac,
 			       bool ignore_frame);
+
+/**
+ * os_if_son_modify_acl - Updates ACL with given peer
+ * @vdev: vdev
+ * @peer_mac: Target peer MAC address
+ * @allow_auth: True to allow specified peer to connect
+ *
+ * Return: void
+ */
+void os_if_son_modify_acl(struct wlan_objmgr_vdev *vdev,
+			  uint8_t *peer_mac,
+			  bool allow_auth);
 #endif
