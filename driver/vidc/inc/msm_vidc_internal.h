@@ -154,14 +154,14 @@ enum priority_level {
 };
 
 enum msm_vidc_colorformat_type {
-	MSM_VIDC_FMT_NONE = 0,
-	MSM_VIDC_FMT_NV12          = BIT(0),
-	MSM_VIDC_FMT_NV21          = BIT(1),
-	MSM_VIDC_FMT_NV12C         = BIT(2),
-	MSM_VIDC_FMT_P010          = BIT(3),
-	MSM_VIDC_FMT_TP10C         = BIT(4),
-	MSM_VIDC_FMT_RGBA8888      = BIT(5),
-	MSM_VIDC_FMT_RGBA8888C     = BIT(6),
+	MSM_VIDC_FMT_NONE          = 0,
+	MSM_VIDC_FMT_NV12C         = BIT(0),
+	MSM_VIDC_FMT_NV12          = BIT(1),
+	MSM_VIDC_FMT_NV21          = BIT(2),
+	MSM_VIDC_FMT_TP10C         = BIT(3),
+	MSM_VIDC_FMT_P010          = BIT(4),
+	MSM_VIDC_FMT_RGBA8888C     = BIT(5),
+	MSM_VIDC_FMT_RGBA8888      = BIT(6),
 };
 
 enum msm_vidc_buffer_type {
