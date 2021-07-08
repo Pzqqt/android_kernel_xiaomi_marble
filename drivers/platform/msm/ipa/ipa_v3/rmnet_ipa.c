@@ -2326,16 +2326,16 @@ static int handle3_ingress_format_v2(struct net_device *dev,
 			return -EFAULT;
 		}
 
-		if(ipa3_ctx->rmnet_ll_enable) {
-			rc = ipa3_setup_low_lat_rt_rules();
-			if (rc)
-				IPAWANERR("low lat rt rule add failed = %d\n", rc);
-		}
-
 		rc = ipa3_setup_dflt_wan_rt_tables();
 		if (rc) {
 			ipa3_del_a7_qmap_hdr();
 			return rc;
+		}
+
+		if(ipa3_ctx->rmnet_ll_enable) {
+			rc = ipa3_setup_low_lat_rt_rules();
+			if (rc)
+				IPAWANERR("low lat rt rule add failed = %d\n", rc);
 		}
 		/* Sending QMI indication message share RSC/QMAP pipe details*/
 		IPAWANDBG("ingress_ep_mask = %d\n", rmnet_ipa3_ctx->ingress_eps_mask);
