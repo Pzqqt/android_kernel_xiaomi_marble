@@ -6748,6 +6748,13 @@ static int ipa3_panic_notifier(struct notifier_block *this,
 	int res;
 	struct ipa_active_client_logging_info log_info;
 
+	if (ipa3_ctx != NULL)
+	{
+		if (ipa3_ctx->is_device_crashed)
+			return NOTIFY_DONE;
+		ipa3_ctx->is_device_crashed = true;
+	}
+
 	ipa3_freeze_clock_vote_and_notify_modem();
 
 	IPADBG("Calling uC panic handler\n");
@@ -8265,6 +8272,7 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	ipa3_ctx->gsi_ch20_wa = resource_p->gsi_ch20_wa;
 	ipa3_ctx->wdi_over_pcie = resource_p->wdi_over_pcie;
 	ipa3_ctx->ipa3_active_clients_logging.log_rdy = false;
+	ipa3_ctx->is_device_crashed = false;
 	ipa3_ctx->mhi_evid_limits[0] = resource_p->mhi_evid_limits[0];
 	ipa3_ctx->mhi_evid_limits[1] = resource_p->mhi_evid_limits[1];
 	ipa3_ctx->entire_ipa_block_size = resource_p->entire_ipa_block_size;
