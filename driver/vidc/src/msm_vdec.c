@@ -1725,12 +1725,38 @@ error:
 	return rc;
 }
 
+static inline enum msm_vidc_allow msm_vdec_allow_queue_deferred_buffers(
+	struct msm_vidc_inst *inst)
+{
+	int count;
+
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return MSM_VIDC_DISALLOW;
+	}
+
+	/* do not defer buffers initially to avoid latency issues */
+	if (inst->power.buffer_counter <= SKIP_BATCH_WINDOW)
+		return MSM_VIDC_ALLOW;
+
+	/* do not defer, if client waiting for last flag FBD */
+	if (inst->state != MSM_VIDC_START)
+		return MSM_VIDC_ALLOW;
+
+	/* defer qbuf, if pending buffers count less than batch size */
+	count = msm_vidc_num_buffers(inst, MSM_VIDC_BUF_OUTPUT, MSM_VIDC_ATTR_DEFERRED);
+	if (count < inst->decode_batch.size)
+		return MSM_VIDC_DEFER;
+
+	return MSM_VIDC_ALLOW;
+}
+
 static int msm_vdec_qbuf_batch(struct msm_vidc_inst *inst,
 	struct vb2_buffer *vb2)
 {
 	struct msm_vidc_buffer *buf;
 	enum msm_vidc_allow allow;
-	int count, rc;
+	int rc;
 
 	if (!inst || !vb2 || !inst->decode_batch.size) {
 		d_vpr_e("%s: invalid params\n", __func__);
@@ -1750,18 +1776,17 @@ static int msm_vdec_qbuf_batch(struct msm_vidc_inst *inst,
 		return 0;
 	}
 
-	/* do not defer buffers initially to avoid latency issues */
-	if (inst->power.buffer_counter > SKIP_BATCH_WINDOW) {
-		count = msm_vidc_num_buffers(inst, MSM_VIDC_BUF_OUTPUT, MSM_VIDC_ATTR_DEFERRED);
-		if (count < inst->decode_batch.size) {
-			print_vidc_buffer(VIDC_LOW, "low ", "batch-qbuf deferred", inst, buf);
-			schedule_batch_work(inst);
-			return 0;
-		}
-
-		cancel_batch_work(inst);
+	allow = msm_vdec_allow_queue_deferred_buffers(inst);
+	if (allow == MSM_VIDC_DISALLOW) {
+		i_vpr_e(inst, "%s: queue deferred buffers not allowed\n", __func__);
+		return -EINVAL;
+	} else if (allow == MSM_VIDC_DEFER) {
+		print_vidc_buffer(VIDC_LOW, "low ", "batch-qbuf deferred", inst, buf);
+		schedule_batch_work(inst);
+		return 0;
 	}
 
+	cancel_batch_work(inst);
 	rc = msm_vidc_queue_deferred_buffers(inst, MSM_VIDC_BUF_OUTPUT);
 	if (rc)
 		return rc;
