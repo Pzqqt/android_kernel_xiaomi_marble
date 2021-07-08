@@ -3717,13 +3717,20 @@ typedef struct {
     /** Maximum number of Multi group key to support */
     A_UINT32 max_num_group_keys;
 
-    /**
-     * HTT peer map/unmap V2 format support
-     * 0 -> host doesn't support HTT peer map/unmap v2 format.
-     * 1 -> host supports HTT peer map/unmap v2 format; the target is
-     *      allowed but not required to use peer map/unmap v2 format.
-     */
-    A_UINT32 peer_map_unmap_v2_support;
+    union {
+        A_UINT32 peer_map_unmap_v2_support; /* old name */
+        /**
+         * HTT peer map/unmap format support (map 4bits and unmap 4bits)
+         * 0x00 -> host use default map/unmap only.
+         * 0x01 -> legacy value that is interpreted the same as 0x22.
+         * 0x22 -> host supports HTT peer map/unmap v2 format; the target is
+         *         allowed but not required to use peer map/unmap v2 format.
+         * 0x32 -> host supports HTT peer map v3 format; the target is
+         *         allowed but not required to use peer map v3 format and
+         *         peer unmap v2 format.
+         */
+        A_UINT32 peer_map_unmap_versions;
+    };
 
     /** Sched config params for all pdevs
      * These tx scheduling configuration parameters are currently only
