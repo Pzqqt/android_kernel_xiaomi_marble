@@ -142,8 +142,6 @@ static const struct sde_format_extended wb2_formats[] = {
 	{DRM_FORMAT_YUV420, 0},
 	{DRM_FORMAT_NV12, 0},
 	{DRM_FORMAT_NV12, DRM_FORMAT_MOD_QCOM_COMPRESSED},
-	{DRM_FORMAT_NV16, 0},
-	{DRM_FORMAT_YUYV, 0},
 
 	RGB_10BIT_FMTS,
 	TP10_UBWC_FMTS,
