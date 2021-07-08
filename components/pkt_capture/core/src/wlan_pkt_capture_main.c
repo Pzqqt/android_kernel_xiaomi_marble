@@ -38,6 +38,7 @@ static struct wlan_objmgr_vdev *gp_pkt_capture_vdev;
 #ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 wdi_event_subscribe PKT_CAPTURE_TX_SUBSCRIBER;
 wdi_event_subscribe PKT_CAPTURE_RX_SUBSCRIBER;
+wdi_event_subscribe PKT_CAPTURE_RX_NO_PEER_SUBSCRIBER;
 wdi_event_subscribe PKT_CAPTURE_OFFLOAD_TX_SUBSCRIBER;
 
 /**
@@ -69,6 +70,16 @@ static void pkt_capture_wdi_event_subscribe(struct wlan_objmgr_psoc *psoc)
 	cdp_wdi_event_sub(soc, pdev_id, &PKT_CAPTURE_RX_SUBSCRIBER,
 			  WDI_EVENT_PKT_CAPTURE_RX_DATA);
 
+	/* subscribe for rx data packets when no peer is there*/
+	PKT_CAPTURE_RX_NO_PEER_SUBSCRIBER.callback =
+				pkt_capture_callback;
+
+	PKT_CAPTURE_RX_NO_PEER_SUBSCRIBER.context =
+					wlan_psoc_get_dp_handle(psoc);
+
+	cdp_wdi_event_sub(soc, pdev_id, &PKT_CAPTURE_RX_NO_PEER_SUBSCRIBER,
+			  WDI_EVENT_PKT_CAPTURE_RX_DATA_NO_PEER);
+
 	/* subscribing for offload tx data packets */
 	PKT_CAPTURE_OFFLOAD_TX_SUBSCRIBER.callback =
 				pkt_capture_callback;
@@ -99,6 +110,10 @@ static void pkt_capture_wdi_event_unsubscribe(struct wlan_objmgr_psoc *psoc)
 	cdp_wdi_event_unsub(soc, pdev_id, &PKT_CAPTURE_RX_SUBSCRIBER,
 			    WDI_EVENT_PKT_CAPTURE_RX_DATA);
 
+	/* unsubscribe for rx data no peer packets */
+	cdp_wdi_event_sub(soc, pdev_id, &PKT_CAPTURE_RX_NO_PEER_SUBSCRIBER,
+			  WDI_EVENT_PKT_CAPTURE_RX_DATA_NO_PEER);
+
 	/* unsubscribing for offload tx data packets */
 	cdp_wdi_event_unsub(soc, pdev_id, &PKT_CAPTURE_OFFLOAD_TX_SUBSCRIBER,
 			    WDI_EVENT_PKT_CAPTURE_OFFLOAD_TX_DATA);
@@ -122,6 +137,48 @@ pkt_capture_get_pktcap_mode_v2()
 		mode = vdev_priv->cb_ctx->pkt_capture_mode;
 
 	return mode;
+}
+
+#define RX_OFFLOAD_PKT 1
+
+static void
+pkt_capture_process_rx_data_no_peer(void *soc, uint16_t vdev_id, uint8_t *bssid,
+				    uint32_t status, qdf_nbuf_t nbuf)
+{
+	uint32_t pkt_len, l3_hdr_pad, nbuf_len;
+	struct dp_soc *psoc = soc;
+	qdf_nbuf_t msdu;
+	uint8_t *rx_tlv_hdr;
+
+	nbuf_len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
+	rx_tlv_hdr = qdf_nbuf_data(nbuf);
+	l3_hdr_pad = hal_rx_msdu_end_l3_hdr_padding_get(psoc->hal_soc,
+							rx_tlv_hdr);
+	pkt_len = nbuf_len + l3_hdr_pad + psoc->rx_pkt_tlv_size;
+	qdf_nbuf_set_pktlen(nbuf, pkt_len);
+
+	/*
+	 * Offload rx packets are delivered only to pkt capture component, so
+	 * can modify the received nbuf, in other cases create a private copy
+	 * of the received nbuf so that pkt capture component can modify it
+	 * without altering the original nbuf
+	 */
+	if (status == RX_OFFLOAD_PKT)
+		msdu = nbuf;
+	else
+		msdu = qdf_nbuf_copy(nbuf);
+
+	if (!msdu)
+		return;
+
+	QDF_NBUF_CB_RX_PACKET_L3_HDR_PAD(msdu) = l3_hdr_pad;
+
+	qdf_nbuf_pull_head(msdu, l3_hdr_pad + psoc->rx_pkt_tlv_size);
+	pkt_capture_datapkt_process(
+			vdev_id, msdu,
+			TXRX_PROCESS_TYPE_DATA_RX, 0, 0,
+			TXRX_PKTCAPTURE_PKT_FORMAT_8023,
+			bssid, psoc, 0);
 }
 
 void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
@@ -274,6 +331,26 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 
 		pkt_capture_msdu_process_pkts(bssid, log_data, vdev_id, soc,
 					      status);
+		break;
+	}
+
+	case WDI_EVENT_PKT_CAPTURE_RX_DATA_NO_PEER:
+	{
+		qdf_nbuf_t nbuf = (qdf_nbuf_t)log_data;
+
+		if (!(pkt_capture_get_pktcap_mode_v2() &
+					PKT_CAPTURE_MODE_DATA_ONLY)) {
+			/*
+			 * Rx offload packets are delivered only to pkt capture
+			 * component and not to stack so free them.
+			 */
+			if (status == RX_OFFLOAD_PKT)
+				qdf_nbuf_free(nbuf);
+			return;
+		}
+
+		pkt_capture_process_rx_data_no_peer(soc, vdev_id, bssid, status,
+						    nbuf);
 		break;
 	}
 
