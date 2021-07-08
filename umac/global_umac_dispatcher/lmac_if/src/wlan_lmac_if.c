@@ -580,6 +580,8 @@ wlan_lmac_if_mgmt_rx_reo_rx_ops_register(
 	mgmt_rx_reo_rx_ops = &mgmt_txrx_rx_ops->mgmt_rx_reo_rx_ops;
 	mgmt_rx_reo_rx_ops->fw_consumed_event_handler =
 			tgt_mgmt_rx_reo_fw_consumed_event_handler;
+	mgmt_rx_reo_rx_ops->host_drop_handler =
+			tgt_mgmt_rx_reo_host_drop_handler;
 
 	return QDF_STATUS_SUCCESS;
 }

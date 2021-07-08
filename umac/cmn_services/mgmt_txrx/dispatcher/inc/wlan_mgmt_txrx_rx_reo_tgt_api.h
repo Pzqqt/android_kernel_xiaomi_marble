@@ -87,16 +87,17 @@ tgt_mgmt_rx_reo_read_snapshot(
 			struct mgmt_rx_reo_snapshot *address,
 			enum mgmt_rx_reo_shared_snapshot_id id,
 			struct mgmt_rx_reo_snapshot_params *value);
+
 /**
  * tgt_mgmt_rx_reo_fw_consumed_event_handler() - MGMT Rx REO FW consumed
  * event handler
- * @psoc: Pointer to psoc objmgr
+ * @pdev: pdev for which this event is intended
  * @params: Pointer to MGMT Rx REO parameters
  *
  * Return: QDF_STATUS of operation
  */
 QDF_STATUS
-tgt_mgmt_rx_reo_fw_consumed_event_handler(struct wlan_objmgr_psoc *psoc,
+tgt_mgmt_rx_reo_fw_consumed_event_handler(struct wlan_objmgr_pdev *pdev,
 					  struct mgmt_rx_reo_params *params);
 
 /**
@@ -137,6 +138,19 @@ QDF_STATUS tgt_mgmt_rx_reo_frame_handler(
 			struct wlan_objmgr_pdev *pdev,
 			qdf_nbuf_t buf,
 			struct mgmt_rx_event_params *mgmt_rx_params);
+
+/**
+ * tgt_mgmt_rx_reo_host_drop_handler() - MGMT Rx REO handler for the
+ * management Rx frames that gets dropped in the Host before entering
+ * MGMT Rx REO algorithm
+ * @pdev: pdev for which this frame was intended
+ * @params: MGMT Rx event parameters
+ *
+ * Return: QDF_STATUS of operation
+ */
+QDF_STATUS
+tgt_mgmt_rx_reo_host_drop_handler(struct wlan_objmgr_pdev *pdev,
+				  struct mgmt_rx_reo_params *params);
 #else
 /**
  * tgt_mgmt_rx_reo_frame_handler() - REO handler for management Rx frames.

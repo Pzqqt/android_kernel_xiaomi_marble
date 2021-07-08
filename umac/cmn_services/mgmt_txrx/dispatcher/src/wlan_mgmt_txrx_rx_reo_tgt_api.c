@@ -45,11 +45,70 @@ tgt_mgmt_rx_reo_read_snapshot(
 	return mgmt_rx_reo_txops->read_mgmt_rx_reo_snapshot(address, id, value);
 }
 
+/**
+ * tgt_mgmt_rx_reo_enter_algo_without_buffer() - Entry point to the MGMT Rx REO
+ * algorithm when there is no frame buffer
+ * @pdev: pdev for which this frame/event is intended
+ * @reo_params: MGMT Rx REO parameters corresponding to this frame/event
+ * @type: Type of the MGMT Rx REO frame/event descriptor
+ *
+ * Return: QDF_STATUS of operation
+ */
+static QDF_STATUS
+tgt_mgmt_rx_reo_enter_algo_without_buffer(
+				struct wlan_objmgr_pdev *pdev,
+				struct mgmt_rx_reo_params *reo_params,
+				enum mgmt_rx_reo_frame_descriptor_type type)
+{
+	struct mgmt_rx_event_params mgmt_rx_params;
+	struct mgmt_rx_reo_frame_descriptor desc;
+	bool is_frm_queued;
+	QDF_STATUS status;
+
+	if (!pdev) {
+		mgmt_rx_reo_err("pdev is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!reo_params) {
+		mgmt_rx_reo_err("mgmt rx reo params are null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	mgmt_rx_params.reo_params = reo_params;
+
+	desc.nbuf = NULL; /* No frame buffer */
+	desc.rx_params = &mgmt_rx_params;
+	desc.type = type;
+
+	/** If REO is not required for this descriptor,
+	 *  no need to proceed further
+	 */
+	if (!is_mgmt_rx_reo_required(pdev, &desc))
+		return  QDF_STATUS_SUCCESS;
+
+	/* Enter the REO algorithm */
+	status = wlan_mgmt_rx_reo_algo_entry(pdev, &desc, &is_frm_queued);
+
+	qdf_assert_always(!is_frm_queued);
+
+	return status;
+}
+
 QDF_STATUS
-tgt_mgmt_rx_reo_fw_consumed_event_handler(struct wlan_objmgr_psoc *psoc,
+tgt_mgmt_rx_reo_fw_consumed_event_handler(struct wlan_objmgr_pdev *pdev,
 					  struct mgmt_rx_reo_params *params)
 {
-	return QDF_STATUS_SUCCESS;
+	return tgt_mgmt_rx_reo_enter_algo_without_buffer(
+			pdev, params, MGMT_RX_REO_FRAME_DESC_FW_CONSUMED_FRAME);
+}
+
+QDF_STATUS
+tgt_mgmt_rx_reo_host_drop_handler(struct wlan_objmgr_pdev *pdev,
+				  struct mgmt_rx_reo_params *params)
+{
+	return tgt_mgmt_rx_reo_enter_algo_without_buffer(
+			pdev, params, MGMT_RX_REO_FRAME_DESC_ERROR_FRAME);
 }
 
 QDF_STATUS tgt_mgmt_rx_reo_filter_config(struct wlan_objmgr_pdev *pdev,

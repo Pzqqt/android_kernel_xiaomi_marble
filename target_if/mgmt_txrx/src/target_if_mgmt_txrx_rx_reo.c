@@ -20,6 +20,7 @@
  */
 
 #include <wlan_objmgr_psoc_obj.h>
+#include <wlan_objmgr_pdev_obj.h>
 #include <qdf_status.h>
 #include <target_if.h>
 #include <wlan_mgmt_txrx_rx_reo_public_structs.h>
@@ -41,6 +42,7 @@ target_if_mgmt_rx_reo_fw_consumed_event_handler(
 	ol_scn_t scn, uint8_t *data, uint32_t datalen)
 {
 	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
 	struct wmi_unified *wmi_handle;
 	QDF_STATUS status;
 	struct mgmt_rx_reo_params params;
@@ -75,12 +77,23 @@ target_if_mgmt_rx_reo_fw_consumed_event_handler(
 		return -EINVAL;
 	}
 
-	status = mgmt_rx_reo_rx_ops->fw_consumed_event_handler(psoc, &params);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		mgmt_rx_reo_err("FW consumed event handling failed");
+	/* Take the pdev reference */
+	pdev = wlan_objmgr_get_pdev_by_id(psoc, params.pdev_id,
+					  WLAN_MGMT_SB_ID);
+	if (!pdev) {
+		mgmt_rx_reo_err("Couldn't get pdev for pdev_id: %d"
+				"on psoc: %pK", params.pdev_id, psoc);
 		return -EINVAL;
 	}
 
+	status = mgmt_rx_reo_rx_ops->fw_consumed_event_handler(pdev, &params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mgmt_rx_reo_err("FW consumed event handling failed");
+		wlan_objmgr_pdev_release_ref(pdev, WLAN_MGMT_SB_ID);
+		return -EINVAL;
+	}
+
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_MGMT_SB_ID);
 	return 0;
 }
 
@@ -323,4 +336,30 @@ target_if_mgmt_rx_reo_tx_ops_register(
 					target_if_mgmt_rx_reo_filter_config;
 
 	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+target_if_mgmt_rx_reo_host_drop_handler(struct wlan_objmgr_pdev *pdev,
+					struct mgmt_rx_event_params *params)
+{
+	struct wlan_lmac_if_mgmt_rx_reo_rx_ops *mgmt_rx_reo_rx_ops;
+
+	if (!pdev) {
+		mgmt_rx_reo_err("pdev is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!params) {
+		mgmt_rx_reo_err("mgmt rx event params are null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	mgmt_rx_reo_rx_ops = target_if_mgmt_rx_reo_get_rx_ops(
+					wlan_pdev_get_psoc(pdev));
+	if (!mgmt_rx_reo_rx_ops) {
+		mgmt_rx_reo_err("rx_ops of MGMT Rx REO module is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	return mgmt_rx_reo_rx_ops->host_drop_handler(pdev, params->reo_params);
 }

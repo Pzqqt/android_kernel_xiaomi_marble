@@ -102,6 +102,18 @@ QDF_STATUS
 target_if_mgmt_rx_reo_extract_reo_params(wmi_unified_t wmi_handle,
 					 void *evt_buf,
 					 struct mgmt_rx_event_params *params);
+/**
+ * target_if_mgmt_rx_reo_host_drop_handler() - MGMT Rx REO handler for the
+ * management Rx frames that gets dropped in the Host before entering
+ * MGMT Rx REO algorithm
+ * @pdev: pdev for which this frame was intended
+ * @params: MGMT Rx event parameters
+ *
+ * Return: QDF_STATUS of operation
+ */
+QDF_STATUS
+target_if_mgmt_rx_reo_host_drop_handler(struct wlan_objmgr_pdev *pdev,
+					struct mgmt_rx_event_params *params);
 #else
 /**
  * target_if_mgmt_rx_reo_register_event_handlers() - Register management
@@ -157,6 +169,23 @@ target_if_mgmt_rx_reo_extract_reo_params(wmi_unified_t wmi_handle,
 					 void *evt_buf,
 					 struct mgmt_rx_event_params *hdr)
 {
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * target_if_mgmt_rx_reo_host_drop_handler() - MGMT Rx REO handler for the
+ * management Rx frames that gets dropped in the Host before entering
+ * MGMT Rx REO algorithm
+ * @pdev: pdev for which this frame was intended
+ * @params: MGMT Rx event parameters
+ *
+ * Return: QDF_STATUS of operation
+ */
+static inline QDF_STATUS
+target_if_mgmt_rx_reo_host_drop_handler(struct wlan_objmgr_pdev *pdev,
+					struct mgmt_rx_event_params *params)
+{
+	/* Nothing to do when REO is compiled off */
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* WLAN_MGMT_RX_REO_SUPPORT */

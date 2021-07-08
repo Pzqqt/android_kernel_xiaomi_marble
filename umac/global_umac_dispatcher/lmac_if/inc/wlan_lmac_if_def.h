@@ -238,10 +238,15 @@ struct wlan_lmac_if_mgmt_rx_reo_tx_ops {
  * struct wlan_lmac_if_mgmt_txrx_rx_ops - structure of rx function
  * pointers for mgmt rx reo module
  * @fw_consumed_event_handler: FW consumed event handler
+ * @host_drop_handler: Handler for the frames that gets dropped in Host before
+ * entering REO algorithm
  */
 struct wlan_lmac_if_mgmt_rx_reo_rx_ops {
 	QDF_STATUS (*fw_consumed_event_handler)(
-			struct wlan_objmgr_psoc *psoc,
+			struct wlan_objmgr_pdev *pdev,
+			struct mgmt_rx_reo_params *params);
+	QDF_STATUS (*host_drop_handler)(
+			struct wlan_objmgr_pdev *pdev,
 			struct mgmt_rx_reo_params *params);
 };
 #endif
