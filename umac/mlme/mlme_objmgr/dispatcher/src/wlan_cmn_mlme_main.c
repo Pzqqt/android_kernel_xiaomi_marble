@@ -281,13 +281,15 @@ QDF_STATUS mlme_cm_bss_select_ind(struct wlan_objmgr_vdev *vdev,
 }
 
 QDF_STATUS mlme_cm_bss_peer_create_req(struct wlan_objmgr_vdev *vdev,
-				       struct qdf_mac_addr *peer_mac)
+				       struct qdf_mac_addr *peer_mac,
+				       struct qdf_mac_addr *mld_mac,
+				       bool is_assoc_link)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	if ((glbl_ops) && glbl_ops->mlme_cm_ext_bss_peer_create_req_cb)
-		ret = glbl_ops->mlme_cm_ext_bss_peer_create_req_cb(vdev,
-								   peer_mac);
+		ret = glbl_ops->mlme_cm_ext_bss_peer_create_req_cb(
+				vdev, peer_mac, mld_mac, is_assoc_link);
 
 	return ret;
 }

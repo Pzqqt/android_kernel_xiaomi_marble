@@ -205,7 +205,9 @@ struct mlme_ext_ops {
 			struct wlan_cm_vdev_connect_req *req);
 	QDF_STATUS (*mlme_cm_ext_bss_peer_create_req_cb)(
 				struct wlan_objmgr_vdev *vdev,
-				struct qdf_mac_addr *peer_mac);
+				struct qdf_mac_addr *peer_mac,
+				struct qdf_mac_addr *mld_mac,
+				bool is_assoc_link);
 	QDF_STATUS (*mlme_cm_ext_connect_req_cb)(struct wlan_objmgr_vdev *vdev,
 			struct wlan_cm_vdev_connect_req *req);
 	QDF_STATUS (*mlme_cm_ext_connect_complete_ind_cb)(
@@ -476,11 +478,15 @@ QDF_STATUS mlme_cm_bss_select_ind(struct wlan_objmgr_vdev *vdev,
  * request
  * @vdev: VDEV object
  * @peer_mac: Peer mac address
+ * @mld_mac: mld mac address
+ * @is_assoc_link: assoc happens on this link or not
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS mlme_cm_bss_peer_create_req(struct wlan_objmgr_vdev *vdev,
-				       struct qdf_mac_addr *peer_mac);
+				       struct qdf_mac_addr *peer_mac,
+				       struct qdf_mac_addr *mld_mac,
+				       bool is_assoc_link);
 
 /**
  * mlme_cm_connect_req() - Connection manager ext connect request to start vdev

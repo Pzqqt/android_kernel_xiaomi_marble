@@ -485,6 +485,34 @@ static void cm_update_vdev_mlme_macaddr(struct cnx_mgr *cm_ctx,
 {
 }
 #endif
+/**
+ * cm_get_bss_peer_mld_addr() - get bss peer mld mac address
+ * @req: pointer to cm_connect_req
+ *
+ * Return: mld mac address
+ */
+static struct qdf_mac_addr *cm_get_bss_peer_mld_addr(struct cm_connect_req *req)
+{
+	if (req && req->cur_candidate && req->cur_candidate->entry &&
+	    req->cur_candidate->entry->ml_info)
+		return &req->cur_candidate->entry->ml_info->mld_mac_addr;
+	else
+		return NULL;
+}
+
+/**
+ * cm_bss_peer_is_assoc_peer() - is the bss peer to be created assoc peer or not
+ * @req: pointer to cm_connect_req
+ *
+ * Return: true if the bss peer to be created is assoc peer
+ */
+static bool cm_bss_peer_is_assoc_peer(struct cm_connect_req *req)
+{
+	if (req)
+		return !req->req.is_non_assoc_link;
+
+	return false;
+}
 #else
 static inline
 void cm_set_vdev_link_id(struct cnx_mgr *cm_ctx,
@@ -495,6 +523,16 @@ static void cm_update_vdev_mlme_macaddr(struct cnx_mgr *cm_ctx,
 					struct cm_connect_req *req)
 {
 }
+
+static struct qdf_mac_addr *cm_get_bss_peer_mld_addr(struct cm_connect_req *req)
+{
+	return NULL;
+}
+
+static bool cm_bss_peer_is_assoc_peer(struct cm_connect_req *req)
+{
+	return false;
+}
 #endif
 
 static void cm_create_bss_peer(struct cnx_mgr *cm_ctx,
@@ -502,10 +540,23 @@ static void cm_create_bss_peer(struct cnx_mgr *cm_ctx,
 {
 	QDF_STATUS status;
 	struct qdf_mac_addr *bssid;
+	struct qdf_mac_addr *mld_mac;
+	bool is_assoc_link = false;
 
+	if (!cm_ctx) {
+		mlme_err("invalid cm_ctx");
+		return;
+	}
+	if (!req) {
+		mlme_err("invalid req");
+		return;
+	}
 	bssid = &req->cur_candidate->entry->bssid;
 	cm_set_vdev_link_id(cm_ctx, req);
-	status = mlme_cm_bss_peer_create_req(cm_ctx->vdev, bssid);
+	mld_mac = cm_get_bss_peer_mld_addr(req);
+	is_assoc_link = cm_bss_peer_is_assoc_peer(req);
+	status = mlme_cm_bss_peer_create_req(cm_ctx->vdev, bssid,
+					     mld_mac, is_assoc_link);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		struct wlan_cm_connect_resp *resp;
 		uint8_t vdev_id = wlan_vdev_get_id(cm_ctx->vdev);

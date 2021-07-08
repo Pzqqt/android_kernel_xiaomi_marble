@@ -403,7 +403,7 @@ QDF_STATUS cm_reassoc_disconnect_complete(struct cnx_mgr *cm_ctx,
 	mlme_cm_disconnect_complete_ind(cm_ctx->vdev, resp);
 	bssid = &cm_req->roam_req.cur_candidate->entry->bssid;
 
-	status = mlme_cm_bss_peer_create_req(cm_ctx->vdev, bssid);
+	status = mlme_cm_bss_peer_create_req(cm_ctx->vdev, bssid, NULL, false);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		mlme_err(CM_PREFIX_FMT "Peer create request failed",
 			 CM_PREFIX_REF(vdev_id, cm_id));
