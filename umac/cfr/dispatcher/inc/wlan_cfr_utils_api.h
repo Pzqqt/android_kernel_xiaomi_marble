@@ -65,6 +65,8 @@
 #define MAX_CFR_PRD  (10 * 60 * 1000)   /* 10 minutes */
 #define CFR_MOD_PRD  10                 /* CFR period to be multiples of 10ms */
 
+#define MAX_AGC_GAIN 62
+
 enum cfrmetaversion {
 	CFR_META_VERSION_NONE,
 	CFR_META_VERSION_1, /* initial version for leg_cfr_metadata */
@@ -279,6 +281,7 @@ struct psoc_cfr {
 #ifdef WLAN_ENH_CFR_ENABLE
 	uint8_t is_cap_interval_mode_sel_support;
 	uint8_t is_mo_marking_support;
+	uint8_t is_aoa_for_rcc_support;
 #endif
 };
 
@@ -553,6 +556,7 @@ struct nl_event_cb {
  * cfr_dma_aborts: No. of CFR DMA aborts in ucode
  * is_cap_interval_mode_sel_support: flag to determine if target supports both
  * is_mo_marking_support: flag to determine if MO marking is supported or not
+ * is_aoa_for_rcc_support: flag to determine if AoA is available for RCC or not
  * capture_count and capture_duration modes with a nob provided to configure.
  * unassoc_pool: Pool of un-associated clients used when capture method is
  * CFR_CAPTURE_METHOD_PROBE_RESPONSE
@@ -561,6 +565,12 @@ struct nl_event_cb {
  * is_prevent_suspend: CFR wake lock acquired or not
  * wake_lock: wake lock for cfr
  * runtime_lock: runtime lock for cfr
+ * freq: current operating freq for which AoA Phase delta values reported by FW
+ * max_aoa_chains: Indicate the max number of chains to which target supports
+ * AoA data.
+ * phase_delta: per chain phase delta associated with 62 gain values reported by
+ * FW via WMI_PDEV_AOA_PHASEDELTA_EVENTID.
+ * ibf_cal_val: Per chain IBF cal value from FW.
  */
 /*
  * To be extended if we get more capbality info
@@ -605,6 +615,7 @@ struct pdev_cfr {
 	uint64_t cfr_dma_aborts;
 	uint8_t is_cap_interval_mode_sel_support;
 	uint8_t is_mo_marking_support;
+	uint8_t is_aoa_for_rcc_support;
 #endif
 	struct unassoc_pool_entry unassoc_pool[MAX_CFR_ENABLED_CLIENTS];
 	struct nl_event_cb nl_cb;
@@ -613,6 +624,12 @@ struct pdev_cfr {
 	bool is_prevent_suspend;
 	qdf_wake_lock_t wake_lock;
 	qdf_runtime_lock_t runtime_lock;
+#endif
+#ifdef WLAN_ENH_CFR_ENABLE
+	uint32_t freq;
+	uint32_t max_aoa_chains;
+	uint16_t phase_delta[HOST_MAX_CHAINS][MAX_AGC_GAIN];
+	uint32_t ibf_cal_val[HOST_MAX_CHAINS];
 #endif
 };
 

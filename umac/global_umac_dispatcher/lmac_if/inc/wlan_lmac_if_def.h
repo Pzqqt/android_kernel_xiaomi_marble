@@ -1441,6 +1441,7 @@ struct wlan_lmac_if_sa_api_rx_ops {
  * @cfr_capture_count_support_set: Set the capture_count support based on FW
  * advert
  * @cfr_mo_marking_support_set: Set MO marking supported based on FW advert
+ * @cfr_aoa_for_rcc_support_set: Set AoA for RCC support based on FW advert
  */
 struct wlan_lmac_if_cfr_rx_ops {
 	void (*cfr_support_set)(struct wlan_objmgr_psoc *psoc, uint32_t value);
@@ -1451,6 +1452,8 @@ struct wlan_lmac_if_cfr_rx_ops {
 			struct wlan_objmgr_psoc *psoc, uint32_t value);
 	QDF_STATUS (*cfr_mo_marking_support_set)(struct wlan_objmgr_psoc *psoc,
 						 uint32_t value);
+	QDF_STATUS (*cfr_aoa_for_rcc_support_set)(
+			struct wlan_objmgr_psoc *psoc, uint32_t value);
 };
 #endif
 

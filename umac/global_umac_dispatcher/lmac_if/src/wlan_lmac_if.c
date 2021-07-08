@@ -255,6 +255,8 @@ wlan_lmac_if_cfr_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	cfr_rx_ops->cfr_capture_count_support_set =
 		tgt_cfr_capture_count_support_set;
 	cfr_rx_ops->cfr_mo_marking_support_set = tgt_cfr_mo_marking_support_set;
+	cfr_rx_ops->cfr_aoa_for_rcc_support_set =
+		tgt_cfr_aoa_for_rcc_support_set;
 }
 #else
 static void
