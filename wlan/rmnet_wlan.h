@@ -32,6 +32,7 @@ DATARMNETf0d9de7e2f,struct genl_info*DATARMNET54338da2ff);int
 DATARMNETc97c6a4265(__be16 DATARMNETf0d9de7e2f,struct genl_info*
 DATARMNET54338da2ff);bool DATARMNETa8b2566e6a(struct sk_buff*DATARMNET543491eb0f
 ,struct DATARMNETb89ecedefc*DATARMNET3396919a68,int DATARMNET611d08d671);int 
-DATARMNET078f6bd384(void);void DATARMNETfae36afa03(void);
+DATARMNET078f6bd384(void);void DATARMNETfae36afa03(void);char*
+DATARMNET934406764d(void);
 #endif
 
