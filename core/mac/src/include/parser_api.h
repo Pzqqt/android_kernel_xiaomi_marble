@@ -684,11 +684,35 @@ sir_convert_qos_map_configure_frame2_struct(struct mac_context *mac,
 #ifdef WLAN_FEATURE_11BE_MLO
 QDF_STATUS
 mlo_ie_convert_assoc_rsp_frame2_struct(tDot11fAssocResponse *ar,
-				       tpSirMultiLink_IE pMloIe);
+				     tpSirMultiLink_IE pMloIe);
+
+QDF_STATUS
+populate_dot11f_probe_req_mlo_ie(struct mac_context *mac_ctx,
+				 struct pe_session *session,
+				 tDot11fIEmlo_ie *mlo_ie);
+
+QDF_STATUS
+sir_convert_mlo_probe_rsp_frame2_struct(tDot11fProbeResponse *pr,
+					tpSirMultiLink_IE mlo_ie_ptr);
 #else
 static inline QDF_STATUS
 mlo_ie_convert_assoc_rsp_frame2_struct(tDot11fAssocResponse *ar,
 				       tpSirMultiLink_IE pMloIe)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+populate_dot11f_probe_req_mlo_ie(struct mac_context *mac_ctx,
+				 struct pe_session *session,
+				 tDot11fIEmlo_ie *mlo_ie)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+sir_convert_mlo_probe_rsp_frame2_struct(tDot11fProbeResponse *pr,
+					tpSirMultiLink_IE mlo_ie_ptr)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }

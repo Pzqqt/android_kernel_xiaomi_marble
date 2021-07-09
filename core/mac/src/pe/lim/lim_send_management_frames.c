@@ -329,9 +329,11 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 	populate_dot11f_he_6ghz_cap(mac_ctx, pesession,
 				    &pr->he_6ghz_band_cap);
 
-	if (IS_DOT11_MODE_EHT(dot11mode) && pesession)
+	if (IS_DOT11_MODE_EHT(dot11mode) && pesession) {
 		lim_update_session_eht_capable(mac_ctx, pesession);
-
+		populate_dot11f_probe_req_mlo_ie(mac_ctx, pesession,
+						 &pr->mlo_ie);
+	}
 	populate_dot11f_eht_caps(mac_ctx, pesession, &pr->eht_cap);
 
 	if (addn_ielen && additional_ie) {

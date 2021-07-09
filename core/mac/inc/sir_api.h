@@ -49,6 +49,9 @@ struct mac_context;
 #include "wlan_tdls_public_structs.h"
 #include "qca_vendor.h"
 #include "wlan_cp_stats_mc_defs.h"
+#ifdef WLAN_FEATURE_11BE_MLO
+#include "wlan_mlo_mgr_public_structs.h"
+#endif
 
 /* The ini gDataInactivityTimeout is deprecated. So, definng a new macro
  * PS_DATA_INACTIVITY_TIMEOUT with the ini's default value.
@@ -990,6 +993,9 @@ struct join_req {
 	tSirRSNie rsnIE;
 	tSirAddie addIEScan;
 	tSirAddie addIEAssoc;
+#ifdef WLAN_FEATURE_11BE_MLO
+	struct mlo_partner_info partner_info;
+#endif
 	/* Warning:::::::::::: Do not add any new param in this struct */
 	/* Pls make this as last variable in struct */
 	struct bss_description bssDescription;

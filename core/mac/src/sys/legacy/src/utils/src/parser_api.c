@@ -2943,6 +2943,7 @@ QDF_STATUS sir_convert_probe_frame2_struct(struct mac_context *mac,
 	}
 
 	update_bss_color_change_ie_from_probe_rsp(pr, pProbeResp);
+	sir_convert_mlo_probe_rsp_frame2_struct(pr, pProbeResp->mlo_ie);
 
 	qdf_mem_free(pr);
 	return QDF_STATUS_SUCCESS;
@@ -7639,6 +7640,150 @@ void populate_dot11f_rnr_tbtt_info_10(struct mac_context *mac_ctx,
 							rnr_session->vdev);
 	dot11f->tbtt_info.tbtt_info_10.bss_param_change_cnt =
 		rnr_session->mlo_link_info.link_ie.bss_param_change_cnt;
+}
+
+QDF_STATUS
+populate_dot11f_probe_req_mlo_ie(struct mac_context *mac_ctx,
+				 struct pe_session *session,
+				 tDot11fIEmlo_ie *mlo_ie)
+{
+	int link = 0, num_sta_pro = 0;
+	tDot11fIEsta_profile *sta_pro;
+	struct mlo_partner_info *link_info;
+	uint16_t vdev_count;
+	struct wlan_objmgr_vdev *wlan_vdev_list[WLAN_UMAC_MLO_MAX_VDEVS];
+	struct pe_session *link_session;
+	uint8_t *mld_addr;
+
+	mlo_ie->present = 1;
+	mlo_ie->type = 1;
+	mlo_ie->mld_mac_addr_present = 1;
+	mld_addr = wlan_vdev_mlme_get_mldaddr(session->vdev);
+	qdf_mem_copy(&mlo_ie->mld_mac_addr.info.mld_mac_addr, mld_addr,
+		     sizeof(mlo_ie->mld_mac_addr.info.mld_mac_addr));
+	mlo_ie->link_id_info_present = 1;
+
+
+	lim_get_mlo_vdev_list(session, &vdev_count, wlan_vdev_list);
+	link_session = pe_find_session_by_vdev_id(
+			mac_ctx, wlan_vdev_list[link]->vdev_objmgr.vdev_id);
+	sta_pro = &mlo_ie->sta_profile[num_sta_pro];
+	link_info = &link_session->lim_join_req->partner_info;
+	sta_pro->present = 1;
+	sta_pro->complete_profile = 1;
+	sta_pro->sta_mac_addr_present = 1;
+	qdf_mem_copy(&sta_pro->sta_mac_addr.info.sta_mac_addr,
+		     &link_info->partner_link_info[0].link_addr.bytes,
+		     QDF_MAC_ADDR_SIZE);
+	mlo_ie->link_id_info.info.link_id =
+			link_info->partner_link_info[0].link_id;
+
+	mlo_ie->num_sta_profile = num_sta_pro;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+sir_convert_mlo_probe_rsp_frame2_struct(tDot11fProbeResponse *pr,
+					tpSirMultiLink_IE mlo_ie_ptr)
+{
+	tDot11fIEmlo_ie *mlo_ie;
+	tDot11fIEsta_profile *sta_prof, *pStaProf;
+
+	if (!pr)
+		return QDF_STATUS_E_NULL_VALUE;
+
+	if (!pr->mlo_ie.present) {
+		pe_err("MLO IE not present");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	mlo_ie = qdf_mem_malloc(sizeof(*mlo_ie));
+	if (!mlo_ie)
+		return QDF_STATUS_E_FAILURE;
+
+	qdf_mem_zero((uint8_t *)mlo_ie_ptr, sizeof(tSirMultiLink_IE));
+
+	mlo_ie_ptr->mlo_ie.present = pr->mlo_ie.present;
+	mlo_ie_ptr->mlo_ie.mld_mac_addr_present =
+			pr->mlo_ie.mld_mac_addr_present;
+	qdf_mem_copy(&mlo_ie_ptr->mlo_ie.mld_mac_addr.info.mld_mac_addr,
+		     &pr->mlo_ie.mld_mac_addr.info.mld_mac_addr,
+		     QDF_MAC_ADDR_SIZE);
+
+	mlo_ie_ptr->mlo_ie.link_id_info_present =
+				pr->mlo_ie.link_id_info_present;
+	mlo_ie_ptr->mlo_ie.link_id_info.info.link_id =
+				pr->mlo_ie.link_id_info.info.link_id;
+
+	mlo_ie_ptr->mlo_ie.bss_param_change_cnt_present =
+			pr->mlo_ie.bss_param_change_cnt_present;
+	mlo_ie_ptr->mlo_ie.bss_param_change_cnt.info.bss_param_change_count =
+		pr->mlo_ie.bss_param_change_cnt.info.bss_param_change_count;
+
+	sta_prof = &pr->mlo_ie.sta_profile[0];
+	pStaProf = &mlo_ie_ptr->mlo_ie.sta_profile[0];
+
+	if (!sta_prof || !pStaProf)
+		return QDF_STATUS_E_NULL_VALUE;
+
+	if (sta_prof->sta_mac_addr_present)
+		qdf_mem_copy(&pStaProf->sta_mac_addr.info.sta_mac_addr,
+			     &sta_prof->sta_mac_addr.info.sta_mac_addr,
+			     QDF_MAC_ADDR_SIZE);
+
+	if (sta_prof->HTCaps.present)
+		qdf_mem_copy(&pStaProf->HTCaps, &sta_prof->HTCaps,
+			     sizeof(tDot11fIEHTCaps));
+
+	if (sta_prof->HTInfo.present)
+		qdf_mem_copy(&pStaProf->HTInfo, &sta_prof->HTInfo,
+			     sizeof(tDot11fIEHTInfo));
+
+	if (sta_prof->VHTCaps.present)
+		qdf_mem_copy(&pStaProf->VHTCaps, &sta_prof->VHTCaps,
+			     sizeof(tDot11fIEVHTCaps));
+
+	if (sta_prof->VHTOperation.present)
+		qdf_mem_copy(&pStaProf->VHTOperation, &sta_prof->VHTOperation,
+			     sizeof(tDot11fIEVHTOperation));
+
+	if (sta_prof->he_cap.present)
+		qdf_mem_copy(&pStaProf->he_cap, &sta_prof->he_cap,
+			     sizeof(tDot11fIEhe_cap));
+
+	if (sta_prof->he_op.present)
+		qdf_mem_copy(&pStaProf->he_op, &sta_prof->he_op,
+			     sizeof(tDot11fIEhe_op));
+
+	if (sta_prof->eht_cap.present)
+		qdf_mem_copy(&pStaProf->eht_cap, &sta_prof->eht_cap,
+			     sizeof(tDot11fIEeht_cap));
+
+	if (sta_prof->eht_op.present)
+		qdf_mem_copy(&pStaProf->eht_op, &sta_prof->eht_op,
+			     sizeof(tDot11fIEeht_op));
+
+	if (sta_prof->ChanSwitchAnn.present)
+		qdf_mem_copy(&pStaProf->ChanSwitchAnn,
+			     &sta_prof->ChanSwitchAnn,
+			     sizeof(tDot11fIEChanSwitchAnn));
+
+	if (sta_prof->ext_chan_switch_ann.present)
+		qdf_mem_copy(&pStaProf->ext_chan_switch_ann,
+			     &sta_prof->ext_chan_switch_ann,
+			     sizeof(tDot11fIEext_chan_switch_ann));
+
+	if (sta_prof->Quiet.present)
+		qdf_mem_copy(&pStaProf->Quiet, &sta_prof->Quiet,
+			     sizeof(tDot11fIEQuiet));
+
+	if (sta_prof->max_chan_switch_time.present)
+		qdf_mem_copy(&pStaProf->max_chan_switch_time,
+			     &sta_prof->max_chan_switch_time,
+			     sizeof(tDot11fIEmax_chan_switch_time));
+
+	return QDF_STATUS_SUCCESS;
 }
 #endif /* WLAN_FEATURE_11BE_MLO */
 

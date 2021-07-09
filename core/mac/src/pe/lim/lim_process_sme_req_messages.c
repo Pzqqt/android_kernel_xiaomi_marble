@@ -3528,6 +3528,35 @@ static void lim_fill_crypto_params(struct mac_context *mac_ctx,
 	lim_update_fils_config(mac_ctx, session, req);
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+static void lim_fill_ml_partner_info(struct cm_vdev_join_req *req,
+				     struct join_req *pe_join_req)
+{
+	uint8_t idx, num_links = 0;
+	struct mlo_partner_info *partner_info = NULL;
+
+	partner_info = &pe_join_req->partner_info;
+	if (!partner_info) {
+		pe_err("Partner link info not present");
+		return;
+	}
+	num_links = req->partner_info.num_partner_links;
+
+	for (idx = 0; idx < num_links; idx++) {
+		partner_info->partner_link_info[idx].link_id =
+			req->partner_info.partner_link_info[idx].link_id;
+		qdf_copy_macaddr(
+			&partner_info->partner_link_info[idx].link_addr,
+			&req->partner_info.partner_link_info[idx].link_addr);
+	}
+}
+#else
+static void lim_fill_ml_partner_info(struct cm_vdev_join_req *req,
+				     struct join_req *pe_join_req)
+{
+}
+#endif
+
 static QDF_STATUS
 lim_fill_session_params(struct mac_context *mac_ctx,
 			struct pe_session *session,
@@ -3607,6 +3636,8 @@ lim_fill_session_params(struct mac_context *mac_ctx,
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
+
+	lim_fill_ml_partner_info(req, pe_join_req);
 
 	return QDF_STATUS_SUCCESS;
 }
