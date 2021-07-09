@@ -739,6 +739,34 @@ qdf_freq_t wlan_get_operation_chan_freq(struct wlan_objmgr_vdev *vdev);
 qdf_freq_t wlan_get_operation_chan_freq_vdev_id(struct wlan_objmgr_pdev *pdev,
 						uint8_t vdev_id);
 
+/**
+ * wlan_get_opmode_vdev_id() - get operating mode of given vdev id
+ * @pdev: Pointer to pdev
+ * @vdev_id: vdev id
+ *
+ * Return: opmode
+ */
+enum QDF_OPMODE wlan_get_opmode_vdev_id(struct wlan_objmgr_pdev *pdev,
+					uint8_t vdev_id);
+
+/**
+ * wlan_is_open_wep_cipher() - check if cipher is open or WEP
+ * @pdev: Pointer to pdev
+ * @vdev_id: vdev id
+ *
+ * Return: if cipher is open or WEP
+ */
+bool wlan_is_open_wep_cipher(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id);
+
+/**
+ * wlan_is_vdev_id_up() - check if vdev id is in UP state
+ * @pdev: Pointer to pdev
+ * @vdev_id: vdev id
+ *
+ * Return: if vdev is up
+ */
+bool wlan_is_vdev_id_up(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id);
+
 QDF_STATUS
 wlan_get_op_chan_freq_info_vdev_id(struct wlan_objmgr_pdev *pdev,
 				   uint8_t vdev_id, qdf_freq_t *op_freq,
