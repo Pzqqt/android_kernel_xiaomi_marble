@@ -1154,7 +1154,7 @@ static int sde_dbg_debugfs_open(struct inode *inode, struct file *file)
 	file->private_data = inode->i_private;
 	mutex_lock(&sde_dbg_base.mutex);
 	sde_dbg_base.cur_evt_index = 0;
-	sde_dbg_base.evtlog->first = sde_dbg_base.evtlog->curr + 1;
+	sde_dbg_base.evtlog->first = (u32)atomic_add_return(0, &sde_dbg_base.evtlog->curr) + 1;
 	sde_dbg_base.evtlog->last =
 		sde_dbg_base.evtlog->first + SDE_EVTLOG_ENTRY;
 	mutex_unlock(&sde_dbg_base.mutex);
