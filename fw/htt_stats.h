@@ -1929,6 +1929,11 @@ typedef struct {
     A_UINT32 delayed_bar_7; /* BAR sent for MU user 7 */
     A_UINT32 bar_with_tqm_head_seq_num;
     A_UINT32 bar_with_tid_seq_num;
+    A_UINT32 su_sw_rts_queued;  /* SW generated RTS frame queued to the HW */
+    A_UINT32 su_sw_rts_tried;   /* SW generated RTS frame sent over the air */
+    A_UINT32 su_sw_rts_err;     /* SW generated RTS frame completed with error */
+    A_UINT32 su_sw_rts_flushed; /* SW generated RTS frame flushed */
+    A_UINT32 su_sw_rts_rcvd_cts_diff_bw; /* CTS (RTS response) received in different BW */
 } htt_tx_selfgen_cmn_stats_tlv;
 
 typedef struct {
