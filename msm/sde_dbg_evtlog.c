@@ -197,7 +197,7 @@ void sde_evtlog_dump_all(struct sde_dbg_evtlog *evtlog)
 	char buf[SDE_EVTLOG_BUF_MAX];
 	bool update_last_entry = true;
 
-	if (!evtlog || !(evtlog->dump_mode & SDE_DBG_DUMP_IN_LOG))
+	if (!evtlog || !(evtlog->dump_mode & (SDE_DBG_DUMP_IN_LOG | SDE_DBG_DUMP_IN_LOG_LIMITED)))
 		return;
 
 	while (sde_evtlog_dump_to_buffer(evtlog, buf, sizeof(buf),
