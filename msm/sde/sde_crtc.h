@@ -1049,4 +1049,10 @@ void sde_crtc_disable_cp_features(struct drm_crtc *crtc);
  */
 void _sde_crtc_clear_dim_layers_v1(struct drm_crtc_state *state);
 
+/**
+ * sde_crtc_cancel_delayed_work - cancel any pending work items for a given crtc
+ * @crtc: Pointer to DRM crtc object
+ */
+void sde_crtc_cancel_delayed_work(struct drm_crtc *crtc);
+
 #endif /* _SDE_CRTC_H_ */

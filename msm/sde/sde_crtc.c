@@ -7102,6 +7102,24 @@ static void __sde_crtc_idle_notify_work(struct kthread_work *work)
 	}
 }
 
+void sde_crtc_cancel_delayed_work(struct drm_crtc *crtc)
+{
+	struct sde_crtc *sde_crtc;
+	struct sde_crtc_state *cstate;
+	bool idle_status;
+	bool cache_status;
+
+	if (!crtc || !crtc->state)
+		return;
+
+	sde_crtc = to_sde_crtc(crtc);
+	cstate = to_sde_crtc_state(crtc->state);
+
+	idle_status = kthread_cancel_delayed_work_sync(&sde_crtc->idle_notify_work);
+	cache_status = kthread_cancel_delayed_work_sync(&sde_crtc->static_cache_read_work);
+	SDE_EVT32(DRMID(crtc), idle_status, cache_status);
+}
+
 /* initialize crtc */
 struct drm_crtc *sde_crtc_init(struct drm_device *dev, struct drm_plane *plane)
 {
