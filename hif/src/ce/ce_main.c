@@ -1782,6 +1782,16 @@ static int ce_ring_setup(struct hif_softc *scn, uint8_t ring_type,
 					      ring, attr);
 }
 
+static void ce_srng_cleanup(struct hif_softc *scn, struct CE_state *CE_state,
+			    uint8_t ring_type)
+{
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+
+	if (hif_state->ce_services->ce_srng_cleanup)
+		hif_state->ce_services->ce_srng_cleanup(scn,
+					CE_state, ring_type);
+}
+
 int hif_ce_bus_early_suspend(struct hif_softc *scn)
 {
 	uint8_t ul_pipe, dl_pipe;
@@ -2543,6 +2553,7 @@ void ce_fini(struct CE_handle *copyeng)
 			ce_free_desc_ring(scn, CE_state->id,
 					  CE_state->src_ring,
 					  desc_size);
+		ce_srng_cleanup(scn, CE_state, CE_RING_SRC);
 		qdf_mem_free(CE_state->src_ring);
 	}
 	if (CE_state->dest_ring) {
@@ -2554,6 +2565,7 @@ void ce_fini(struct CE_handle *copyeng)
 			ce_free_desc_ring(scn, CE_state->id,
 					  CE_state->dest_ring,
 					  desc_size);
+		ce_srng_cleanup(scn, CE_state, CE_RING_DEST);
 		qdf_mem_free(CE_state->dest_ring);
 
 		/* epping */
@@ -2574,6 +2586,7 @@ void ce_fini(struct CE_handle *copyeng)
 			ce_free_desc_ring(scn, CE_state->id,
 					  CE_state->status_ring,
 					  desc_size);
+		ce_srng_cleanup(scn, CE_state, CE_RING_STATUS);
 		qdf_mem_free(CE_state->status_ring);
 	}
 

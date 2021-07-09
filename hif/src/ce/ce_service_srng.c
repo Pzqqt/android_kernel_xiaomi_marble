@@ -907,6 +907,28 @@ static int ce_ring_setup_srng(struct hif_softc *scn, uint8_t ring_type,
 	return 0;
 }
 
+static void ce_ring_cleanup_srng(struct hif_softc *scn,
+				 struct CE_state *CE_state,
+				 uint8_t ring_type)
+{
+	hal_ring_handle_t hal_srng = NULL;
+
+	switch (ring_type) {
+	case CE_RING_SRC:
+		hal_srng = (hal_ring_handle_t)CE_state->src_ring->srng_ctx;
+	break;
+	case CE_RING_DEST:
+		hal_srng = (hal_ring_handle_t)CE_state->dest_ring->srng_ctx;
+	break;
+	case CE_RING_STATUS:
+		hal_srng = (hal_ring_handle_t)CE_state->status_ring->srng_ctx;
+	break;
+	}
+
+	if (hal_srng)
+		hal_srng_cleanup(scn->hal_soc, hal_srng);
+}
+
 static void ce_construct_shadow_config_srng(struct hif_softc *scn)
 {
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
@@ -994,6 +1016,7 @@ int ce_get_index_info_srng(struct hif_softc *scn, void *ce_state,
 static struct ce_ops ce_service_srng = {
 	.ce_get_desc_size = ce_get_desc_size_srng,
 	.ce_ring_setup = ce_ring_setup_srng,
+	.ce_srng_cleanup = ce_ring_cleanup_srng,
 	.ce_sendlist_send = ce_sendlist_send_srng,
 	.ce_completed_recv_next_nolock = ce_completed_recv_next_nolock_srng,
 	.ce_revoke_recv_next = ce_revoke_recv_next_srng,
