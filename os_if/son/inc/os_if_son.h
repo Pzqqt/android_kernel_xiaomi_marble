@@ -32,6 +32,8 @@
 #include <wlan_reg_ucfg_api.h>
 #include <ieee80211_external.h>
 
+#define INVALID_WIDTH 0xFF
+
 /**
  * struct son_callbacks - struct containing callback to non-converged driver
  * @os_if_is_acs_in_progress: whether acs is in progress or not
