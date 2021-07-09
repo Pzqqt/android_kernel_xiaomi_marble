@@ -192,6 +192,7 @@ static bool mlme_vdev_state_init_event(void *ctx, uint16_t event,
 		 */
 		mlme_vdev_notify_down_complete(vdev_mlme, event_data_len,
 					       event_data);
+		mlme_vdev_down_cmpl_notify_mlo_mgr(vdev_mlme);
 		status = true;
 		break;
 
@@ -882,6 +883,8 @@ static bool mlme_vdev_subst_start_conn_progress_event(void *ctx,
 					vdev_mlme,
 					WLAN_VDEV_SM_EV_CONNECTION_FAIL,
 					event_data_len, event_data);
+		else
+			mlme_vdev_start_rsp_notify_mlo_mgr(vdev_mlme);
 		status = true;
 		break;
 

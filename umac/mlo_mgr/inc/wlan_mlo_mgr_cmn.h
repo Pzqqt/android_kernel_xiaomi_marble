@@ -102,16 +102,16 @@ void mlo_get_link_information(struct qdf_mac_addr *mld_addr,
 void is_mlo_all_links_up(struct wlan_mlo_dev_context *ml_dev);
 
 /**
- * mlo_get_partner_vdev_by_link_id() - get partner vdev by link id
+ * mlo_get_vdev_by_link_id() - get vdev by link id
  * @vdev: vdev pointer
  * @link_id: link id
  *
  * Caller should make sure to release the reference of thus obtained vdev
  * by calling mlo_release_vdev_ref() after usage of vdev.
  *
- * Return: vdev object pointer to partner link
+ * Return: vdev object pointer to link id
  */
-struct wlan_objmgr_vdev *mlo_get_partner_vdev_by_link_id(
+struct wlan_objmgr_vdev *mlo_get_vdev_by_link_id(
 			struct wlan_objmgr_vdev *vdev,
 			uint8_t link_id);
 

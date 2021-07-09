@@ -814,6 +814,21 @@ static inline uint8_t wlan_vdev_get_link_id(struct wlan_objmgr_vdev *vdev)
 {
 	return vdev->vdev_mlme.mlo_link_id;
 }
+
+/**
+ * wlan_vdev_set_link_id() - set vdev mlo link id
+ * @vdev: VDEV object
+ * @link_id: link id
+ *
+ * API to set vdev mlo link id
+ *
+ * Return: void
+ */
+static inline void wlan_vdev_set_link_id(struct wlan_objmgr_vdev *vdev,
+					 uint8_t link_id)
+{
+	vdev->vdev_mlme.mlo_link_id = link_id;
+}
 #else
 static inline uint8_t wlan_vdev_get_link_id(struct wlan_objmgr_vdev *vdev)
 {

@@ -32,7 +32,7 @@ void is_mlo_all_links_up(struct wlan_mlo_dev_context *mldev)
 /* STA: Loop through all the associated vdev status. */
 }
 
-struct wlan_objmgr_vdev *mlo_get_partner_vdev_by_link_id(
+struct wlan_objmgr_vdev *mlo_get_vdev_by_link_id(
 			struct wlan_objmgr_vdev *vdev,
 			uint8_t link_id)
 {
