@@ -86,6 +86,9 @@ int msm_vidc_clock_voting = !1;
 bool msm_vidc_fw_dump = !true;
 EXPORT_SYMBOL(msm_vidc_fw_dump);
 
+unsigned int msm_vidc_enable_bugon = !1;
+EXPORT_SYMBOL(msm_vidc_enable_bugon);
+
 #define MAX_DBG_BUF_SIZE 4096
 
 struct core_inst_pair {
@@ -249,6 +252,8 @@ struct dentry* msm_vidc_debugfs_init_drv()
 			&msm_vidc_lossless_encode);
 	debugfs_create_bool("msm_vidc_fw_dump", 0644, dir,
 			&msm_vidc_fw_dump);
+	debugfs_create_u32("enable_bugon", 0644, dir,
+			&msm_vidc_enable_bugon);
 
 	return dir;
 

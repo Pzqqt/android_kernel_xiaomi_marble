@@ -35,6 +35,7 @@ extern bool msm_vidc_lossless_encode;
 extern bool msm_vidc_syscache_disable;
 extern int msm_vidc_clock_voting;
 extern bool msm_vidc_fw_dump;
+extern unsigned int msm_vidc_enable_bugon;
 
 /* To enable messages OR these values and
  * echo the result to debugfs file.
@@ -120,11 +121,25 @@ enum vidc_msg_prio {
 		} \
 	} while (0)
 
+#define MSM_VIDC_FATAL(value)	\
+	do { \
+		if (value) { \
+			d_vpr_e("bug on\n"); \
+			BUG_ON(value); \
+		} \
+	} while (0)
+
 enum msm_vidc_debugfs_event {
 	MSM_VIDC_DEBUGFS_EVENT_ETB,
 	MSM_VIDC_DEBUGFS_EVENT_EBD,
 	MSM_VIDC_DEBUGFS_EVENT_FTB,
 	MSM_VIDC_DEBUGFS_EVENT_FBD,
+};
+
+enum msm_vidc_bug_on_error {
+	MSM_VIDC_BUG_ON_FATAL             = BIT(0),
+	MSM_VIDC_BUG_ON_NOC               = BIT(1),
+	MSM_VIDC_BUG_ON_WD_TIMEOUT        = BIT(2),
 };
 
 struct dentry *msm_vidc_debugfs_init_drv(void);
