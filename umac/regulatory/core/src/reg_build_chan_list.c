@@ -1047,15 +1047,38 @@ static void
 reg_populate_secondary_cur_chan_list(struct wlan_regulatory_pdev_priv_obj
 				     *pdev_priv_obj)
 {
-	qdf_mem_copy(pdev_priv_obj->secondary_cur_chan_list,
-		     pdev_priv_obj->cur_chan_list,
-		     (NUM_CHANNELS - NUM_6GHZ_CHANNELS) *
-		     sizeof(struct regulatory_channel));
-	qdf_mem_copy(&pdev_priv_obj->
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_reg_tx_ops *reg_tx_ops;
+
+	psoc = wlan_pdev_get_psoc(pdev_priv_obj->pdev_ptr);
+	if (!psoc) {
+		reg_err("psoc is NULL");
+		return;
+	}
+
+	reg_tx_ops = reg_get_psoc_tx_ops(psoc);
+	if (!reg_tx_ops) {
+		reg_err("reg_tx_ops null");
+		return;
+	}
+	if (reg_tx_ops->register_master_ext_handler &&
+	    wlan_psoc_nif_fw_ext_cap_get(psoc, WLAN_SOC_EXT_EVENT_SUPPORTED)) {
+		qdf_mem_copy(pdev_priv_obj->secondary_cur_chan_list,
+			     pdev_priv_obj->cur_chan_list,
+			     (NUM_CHANNELS - NUM_6GHZ_CHANNELS) *
+			     sizeof(struct regulatory_channel));
+
+		qdf_mem_copy(&pdev_priv_obj->
 		     secondary_cur_chan_list[MIN_6GHZ_CHANNEL],
 		     pdev_priv_obj->mas_chan_list_6g_ap
 		     [pdev_priv_obj->reg_cur_6g_ap_pwr_type],
 		     NUM_6GHZ_CHANNELS * sizeof(struct regulatory_channel));
+	} else {
+		qdf_mem_copy(pdev_priv_obj->secondary_cur_chan_list,
+			     pdev_priv_obj->cur_chan_list,
+			     (NUM_CHANNELS) *
+			     sizeof(struct regulatory_channel));
+	}
 }
 #else /* CONFIG_REG_CLIENT */
 static void

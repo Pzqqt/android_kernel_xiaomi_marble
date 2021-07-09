@@ -150,6 +150,8 @@
 #define WLAN_SOC_RTT_AP_INITIATOR_STAGGERED_MODE_SUPPORTED 0x04000000
 	/* AP initiator mode supported in burst beacon mode */
 #define WLAN_SOC_RTT_AP_INITIATOR_BURSTED_MODE_SUPPORTED 0x08000000
+	/* ext cc event supported by fw */
+#define WLAN_SOC_EXT_EVENT_SUPPORTED      0x010000000
 
 /* feature_flags */
 	/* CONF: ATH FF enabled */

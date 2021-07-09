@@ -285,8 +285,11 @@ static int init_deinit_service_ext2_ready_event_handler(ol_scn_t scn_handle,
 		goto exit;
 
 	if (wmi_service_enabled(wmi_handle,
-				wmi_service_reg_cc_ext_event_support))
+				wmi_service_reg_cc_ext_event_support)) {
 		target_if_set_reg_cc_ext_supp(tgt_hdl, psoc);
+		wlan_psoc_nif_fw_ext_cap_set(psoc,
+					     WLAN_SOC_EXT_EVENT_SUPPORTED);
+	}
 
 	/* dbr_ring_caps could have already come as part of EXT event */
 	if (info->service_ext2_param.num_dbr_ring_caps) {
