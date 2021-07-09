@@ -491,6 +491,14 @@ static bool dsi_bridge_mode_fixup(struct drm_bridge *bridge,
 			return false;
 		}
 
+		/*
+		 * DMS Flag if set during active changed condition cannot be
+		 * treated as seamless. Hence, removing DMS flag in such cases.
+		 */
+		if ((dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_DMS) &&
+				crtc_state->active_changed)
+			dsi_mode.dsi_mode_flags &= ~DSI_MODE_FLAG_DMS;
+
 		/* No DMS/VRR when drm pipeline is changing */
 		if (!drm_mode_equal(cur_mode, adjusted_mode) &&
 			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_VRR)) &&
