@@ -3377,4 +3377,11 @@ wlan_mlme_get_p2p_p2p_conc_support(struct wlan_objmgr_psoc *psoc)
 	return false;
 }
 #endif
+
+/**
+ * mlme_get_vht_ch_width() - get vht channel width of fw capability
+ *
+ * Return: vht channel width
+ */
+enum phy_ch_width mlme_get_vht_ch_width(void);
 #endif /* _WLAN_MLME_API_H_ */
