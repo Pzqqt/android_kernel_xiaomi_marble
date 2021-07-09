@@ -4622,6 +4622,13 @@ int hdd_psoc_idle_shutdown(struct device *dev);
 int hdd_psoc_idle_restart(struct device *dev);
 
 /**
+ * hdd_adapter_is_ap() - whether adapter is ap or not
+ * @adapter: adapter to check
+ * Return: true if it is AP
+ */
+bool hdd_adapter_is_ap(struct hdd_adapter *adapter);
+
+/**
  * hdd_common_roam_callback() - common sme roam callback
  * @psoc: Object Manager Psoc
  * @session_id: session id for which callback is called

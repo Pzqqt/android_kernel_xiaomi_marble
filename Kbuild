@@ -201,6 +201,10 @@ ifeq ($(CONFIG_IPA_OFFLOAD), y)
 HDD_OBJS +=	$(HDD_SRC_DIR)/wlan_hdd_ipa.o
 endif
 
+ifeq ($(CONFIG_QCACLD_FEATURE_SON), y)
+HDD_OBJS +=	$(HDD_SRC_DIR)/wlan_hdd_son.o
+endif
+
 ifeq ($(CONFIG_QCACLD_FEATURE_NAN), y)
 HDD_OBJS +=	$(HDD_SRC_DIR)/wlan_hdd_nan.o
 HDD_OBJS +=	$(HDD_SRC_DIR)/wlan_hdd_nan_datapath.o
@@ -2312,6 +2316,27 @@ $(call add-wlan-objs,nan,$(WLAN_NAN_OBJS))
 
 #######################################################
 
+######################### SON #########################
+#SON_CORE_DIR := components/son/core/src
+#SON_CORE_INC := -I$(WLAN_ROOT)/components/son/core/inc
+SON_UCFG_DIR := components/son/dispatcher/src
+SON_UCFG_INC := -I$(WLAN_ROOT)/components/son/dispatcher/inc
+#SON_TGT_DIR  := components/target_if/son/src
+#SON_TGT_INC  := -I$(WLAN_ROOT)/components/target_if/son/inc
+
+SON_OS_IF_DIR  := os_if/son/src
+SON_OS_IF_INC  := -I$(WLAN_ROOT)/os_if/son/inc
+
+ifeq ($(CONFIG_QCACLD_FEATURE_SON), y)
+WLAN_SON_OBJS := $(SON_UCFG_DIR)/son_ucfg_api.o \
+		 $(SON_UCFG_DIR)/son_api.o \
+		 $(SON_OS_IF_DIR)/os_if_son.o
+endif
+
+$(call add-wlan-objs,son,$(WLAN_SON_OBJS))
+
+#######################################################
+
 ###### COEX ########
 COEX_OS_IF_SRC      := os_if/coex/src
 COEX_TGT_SRC        := components/target_if/coex/src
@@ -2787,6 +2812,11 @@ INCS +=		$(NAN_CORE_INC)
 INCS +=		$(NAN_UCFG_INC)
 INCS +=		$(NAN_TGT_INC)
 INCS +=		$(NAN_OS_IF_INC)
+################ SON ################
+INCS +=		$(SON_CORE_INC)
+INCS +=		$(SON_UCFG_INC)
+INCS +=		$(SON_TGT_INC)
+INCS +=		$(SON_OS_IF_INC)
 ##########################################
 INCS +=		$(UMAC_OBJMGR_INC)
 INCS +=		$(UMAC_MGMT_TXRX_INC)
@@ -3196,6 +3226,7 @@ cppflags-$(CONFIG_WLAN_LOG_EXIT) += -DWLAN_LOG_EXIT
 cppflags-$(WLAN_OPEN_SOURCE) += -DWLAN_OPEN_SOURCE
 cppflags-$(CONFIG_FEATURE_STATS_EXT) += -DWLAN_FEATURE_STATS_EXT
 cppflags-$(CONFIG_QCACLD_FEATURE_NAN) += -DWLAN_FEATURE_NAN
+cppflags-$(CONFIG_QCACLD_FEATURE_SON) += -DWLAN_FEATURE_SON
 cppflags-$(CONFIG_NDP_SAP_CONCURRENCY_ENABLE) += -DNDP_SAP_CONCURRENCY_ENABLE
 
 ifeq ($(CONFIG_DFS_FCC_TYPE4_DURATION_CHECK), y)
