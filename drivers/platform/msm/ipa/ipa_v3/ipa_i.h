@@ -2332,6 +2332,7 @@ struct ipa3_context {
 	bool use_tput_est_ep;
 	struct ipa_ioc_eogre_info eogre_cache;
 	bool eogre_enabled;
+	bool is_device_crashed;
 };
 
 struct ipa3_plat_drv_res {
