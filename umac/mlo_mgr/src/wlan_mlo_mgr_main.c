@@ -24,19 +24,21 @@
 #include <wlan_objmgr_global_obj.h>
 #include "wlan_mlo_mgr_cmn.h"
 
-/* Global MLO Manager context pointer */
-struct mlo_mgr_context *g_mlo_mgr_ctx;
-
 static void mlo_global_ctx_deinit(void)
 {
-	if (qdf_list_empty(&g_mlo_mgr_ctx->ml_dev_list))
+	struct mlo_mgr_context *mlo_mgr_ctx = wlan_objmgr_get_mlo_ctx();
+
+	if (!mlo_mgr_ctx)
+		return;
+
+	if (qdf_list_empty(&mlo_mgr_ctx->ml_dev_list))
 		mlo_err("ML dev list is not empty");
 
-	ml_link_lock_destroy(g_mlo_mgr_ctx);
-	qdf_list_destroy(&g_mlo_mgr_ctx->ml_dev_list);
+	ml_link_lock_destroy(mlo_mgr_ctx);
+	qdf_list_destroy(&mlo_mgr_ctx->ml_dev_list);
 
-	qdf_mem_free(g_mlo_mgr_ctx);
-	g_mlo_mgr_ctx = NULL;
+	qdf_mem_free(mlo_mgr_ctx);
+	wlan_objmgr_set_mlo_ctx(NULL);
 }
 
 static void mlo_global_ctx_init(void)
@@ -44,7 +46,7 @@ static void mlo_global_ctx_init(void)
 	struct mlo_mgr_context *mlo_mgr_ctx;
 
 	/* If it is already created, ignore */
-	if (g_mlo_mgr_ctx) {
+	if (wlan_objmgr_get_mlo_ctx()) {
 		mlo_err("Global object is already created");
 		return;
 	}
@@ -54,7 +56,8 @@ static void mlo_global_ctx_init(void)
 			qdf_mem_malloc(sizeof(*mlo_mgr_ctx));
 	if (!mlo_mgr_ctx)
 		return;
-	g_mlo_mgr_ctx = mlo_mgr_ctx;
+
+	wlan_objmgr_set_mlo_ctx(mlo_mgr_ctx);
 
 	qdf_list_create(&mlo_mgr_ctx->ml_dev_list, WLAN_UMAC_MLO_MAX_DEV);
 	ml_link_lock_create(mlo_mgr_ctx);
@@ -89,8 +92,9 @@ QDF_STATUS wlan_mlo_mgr_init(void)
 QDF_STATUS wlan_mlo_mgr_deinit(void)
 {
 	QDF_STATUS status;
+	struct mlo_mgr_context *mlo_mgr_ctx = wlan_objmgr_get_mlo_ctx();
 
-	if (!g_mlo_mgr_ctx) {
+	if (!mlo_mgr_ctx) {
 		mlo_err("MLO global object is not allocated");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -155,9 +159,13 @@ static inline struct wlan_mlo_dev_context
 	struct wlan_mlo_dev_context *mld_cur;
 	struct wlan_mlo_dev_context *mld_next;
 	qdf_list_t *ml_list;
+	struct mlo_mgr_context *mlo_mgr_ctx = wlan_objmgr_get_mlo_ctx();
 
-	ml_link_lock_acquire(g_mlo_mgr_ctx);
-	ml_list = &g_mlo_mgr_ctx->ml_dev_list;
+	if (!mlo_mgr_ctx)
+		return NULL;
+
+	ml_link_lock_acquire(mlo_mgr_ctx);
+	ml_list = &mlo_mgr_ctx->ml_dev_list;
 	/* Get first mld context */
 	mld_cur = mlo_list_peek_head(ml_list);
 	/**
@@ -167,14 +175,14 @@ static inline struct wlan_mlo_dev_context
 	while (mld_cur) {
 		if (QDF_IS_STATUS_SUCCESS(WLAN_ADDR_EQ(&mld_cur->mld_addr,
 					  mldaddr))) {
-			ml_link_lock_release(g_mlo_mgr_ctx);
+			ml_link_lock_release(mlo_mgr_ctx);
 			return mld_cur;
 		}
 		/* get next mld node */
 		mld_next = mlo_get_next_mld_ctx(ml_list, mld_cur);
 		mld_cur = mld_next;
 	}
-	ml_link_lock_release(g_mlo_mgr_ctx);
+	ml_link_lock_release(mlo_mgr_ctx);
 
 	return NULL;
 }
@@ -184,7 +192,7 @@ static QDF_STATUS mlo_dev_ctx_init(struct wlan_objmgr_vdev *vdev)
 	struct wlan_mlo_dev_context *ml_dev;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct qdf_mac_addr *mld_addr;
-	struct mlo_mgr_context *g_mlo_ctx = g_mlo_mgr_ctx;
+	struct mlo_mgr_context *g_mlo_ctx = wlan_objmgr_get_mlo_ctx();
 	uint8_t id = 0;
 
 	mld_addr = (struct qdf_mac_addr *)wlan_vdev_mlme_get_mldaddr(vdev);
@@ -243,7 +251,7 @@ static QDF_STATUS mlo_dev_ctx_deinit(struct wlan_objmgr_vdev *vdev)
 	struct wlan_mlo_dev_context *ml_dev;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct qdf_mac_addr *mld_addr;
-	struct mlo_mgr_context *g_mlo_ctx = g_mlo_mgr_ctx;
+	struct mlo_mgr_context *g_mlo_ctx = wlan_objmgr_get_mlo_ctx();
 	uint8_t id = 0;
 
 	mld_addr = (struct qdf_mac_addr *)wlan_vdev_mlme_get_mldaddr(vdev);
@@ -267,8 +275,8 @@ static QDF_STATUS mlo_dev_ctx_deinit(struct wlan_objmgr_vdev *vdev)
 	}
 	ml_link_lock_acquire(g_mlo_ctx);
 	if (!ml_dev->wlan_vdev_count) {
-		qdf_list_remove_node(&g_mlo_mgr_ctx->ml_dev_list,
-			     &ml_dev->node);
+		qdf_list_remove_node(&g_mlo_ctx->ml_dev_list,
+				     &ml_dev->node);
 		if (wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE) {
 			if (ml_dev->sta_ctx->connect_req)
 				qdf_mem_free(ml_dev->sta_ctx->connect_req);

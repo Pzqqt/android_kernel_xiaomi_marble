@@ -868,4 +868,9 @@ struct mlo_mgr_context *wlan_objmgr_get_mlo_ctx(void)
 {
 	return g_umac_glb_obj->mlo_ctx;
 }
+
+void wlan_objmgr_set_mlo_ctx(struct mlo_mgr_context *ctx)
+{
+	g_umac_glb_obj->mlo_ctx = ctx;
+}
 #endif
