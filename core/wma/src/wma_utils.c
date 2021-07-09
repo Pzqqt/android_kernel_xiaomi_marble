@@ -3788,20 +3788,12 @@ bool wma_capability_enhanced_mcast_filter(void)
 
 bool wma_is_vdev_up(uint8_t vdev_id)
 {
-	struct wlan_objmgr_vdev *vdev;
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
-	bool is_up = false;
 
 	if (!wma)
-		return is_up;
+		return false;
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(wma->psoc, vdev_id,
-			WLAN_LEGACY_WMA_ID);
-	if (vdev) {
-		is_up = QDF_IS_STATUS_SUCCESS(wlan_vdev_is_up(vdev));
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
-	}
-	return is_up;
+	return wlan_is_vdev_id_up(wma->pdev, vdev_id);
 }
 
 void wma_acquire_wakelock(qdf_wake_lock_t *wl, uint32_t msec)

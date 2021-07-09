@@ -547,13 +547,12 @@ csr_get_vdev_dot11_mode(struct mac_context *mac,
 
 static bool csr_is_conn_state_ap(struct mac_context *mac, uint32_t sessionId)
 {
-	struct csr_roam_session *pSession;
+	enum QDF_OPMODE opmode;
 
-	pSession = CSR_GET_SESSION(mac, sessionId);
-	if (!pSession)
-		return false;
-	if (CSR_IS_INFRA_AP(&pSession->connectedProfile))
+	opmode = wlan_get_opmode_vdev_id(mac->pdev, sessionId);
+	if (opmode == QDF_SAP_MODE || opmode == QDF_P2P_GO_MODE)
 		return true;
+
 	return false;
 }
 
@@ -2149,17 +2148,6 @@ void csr_release_profile(struct mac_context *mac,
 	}
 }
 
-void csr_free_roam_profile(struct mac_context *mac, uint32_t sessionId)
-{
-	struct csr_roam_session *pSession = &mac->roam.roamSession[sessionId];
-
-	if (pSession->pCurRoamProfile) {
-		csr_release_profile(mac, pSession->pCurRoamProfile);
-		qdf_mem_free(pSession->pCurRoamProfile);
-		pSession->pCurRoamProfile = NULL;
-	}
-}
-
 tSirResultCodes csr_get_de_auth_rsp_status_code(struct deauth_rsp *pSmeRsp)
 {
 	uint8_t *pBuffer = (uint8_t *) pSmeRsp;
@@ -2338,8 +2326,8 @@ QDF_STATUS csr_get_modify_profile_fields(struct mac_context *mac,
 		return QDF_STATUS_E_FAILURE;
 
 	qdf_mem_copy(pModifyProfileFields,
-		     &mac->roam.roamSession[sessionId].connectedProfile.
-		     modifyProfileFields, sizeof(tCsrRoamModifyProfileFields));
+		     &mac->roam.roamSession[sessionId].modifyProfileFields,
+		     sizeof(tCsrRoamModifyProfileFields));
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2351,7 +2339,7 @@ QDF_STATUS csr_set_modify_profile_fields(struct mac_context *mac,
 {
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
 
-	qdf_mem_copy(&pSession->connectedProfile.modifyProfileFields,
+	qdf_mem_copy(&pSession->modifyProfileFields,
 		     pModifyProfileFields, sizeof(tCsrRoamModifyProfileFields));
 
 	return QDF_STATUS_SUCCESS;

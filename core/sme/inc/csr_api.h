@@ -511,8 +511,8 @@ typedef struct tagCsrKeys {
 } tCsrKeys;
 
 /*
- * Following fields which're part of tCsrRoamConnectedProfile might need
- * modification dynamically once STA is up & running & this'd trigger reassoc
+ * Following fields might need modification dynamically once STA is up
+ * & running & this'd trigger reassoc.
  */
 typedef struct tagCsrRoamModifyProfileFields {
 	/*
@@ -577,11 +577,6 @@ struct csr_roam_profile {
 	uint32_t cac_duration_ms;
 	uint32_t dfs_regdomain;
 };
-
-typedef struct tagCsrRoamConnectedProfile {
-	eCsrRoamBssType BSSType;
-	tCsrRoamModifyProfileFields modifyProfileFields;
-} tCsrRoamConnectedProfile;
 
 struct csr_config_params {
 	/* keep this uint32_t. This gets converted to ePhyChannelBondState */
@@ -662,7 +657,6 @@ struct csr_roam_info {
 	uint8_t *paddIE;
 	union {
 		tSirMicFailureInfo *pMICFailureInfo;
-		tCsrRoamConnectedProfile *pConnectedProfile;
 		tSirWPSPBCProbeReq *pWPSPBCProbeReq;
 	} u;
 	bool wmmEnabledSta;  /* set to true if WMM enabled STA */
@@ -875,8 +869,7 @@ typedef QDF_STATUS (*csr_session_close_cb)(uint8_t session_id);
 #else
 #define CSR_IS_NDI(profile)  (false)
 #endif
-#define CSR_IS_CONN_INFRA_AP(pProfile)  (eCSR_BSS_TYPE_INFRA_AP == \
-					 (pProfile)->BSSType)
+
 #ifdef WLAN_FEATURE_NAN
 #define CSR_IS_CONN_NDI(profile)  (eCSR_BSS_TYPE_NDI == (profile)->BSSType)
 #else

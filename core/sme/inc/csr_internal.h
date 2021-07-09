@@ -303,9 +303,8 @@ struct csr_roam_session {
 	struct qdf_mac_addr self_mac_addr;
 
 	eCsrConnectState connectState;
-	tCsrRoamConnectedProfile connectedProfile;
 	struct csr_roam_connectedinfo connectedInfo;
-	struct csr_roam_profile *pCurRoamProfile;
+	tCsrRoamModifyProfileFields modifyProfileFields;
 	/*
 	 * to remember some parameters needed for START_BSS.
 	 * All member must be set every time we try to join
