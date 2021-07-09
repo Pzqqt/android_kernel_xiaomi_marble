@@ -31,6 +31,17 @@
 #define HIF_PCI_DEBUG   ATH_DEBUG_MAKE_MODULE_MASK(0)
 #define HIF_PCI_IPA_UC_ASSIGNED_CE  5
 
+#if defined(QCA_LOWMEM_CONFIG) || defined(QCA_512M_CONFIG)
+#define WMI_CE_BUF_SIZE 2048
+#else
+/**
+ * WMI_CE_BUF_SIZE = (SKB_SIZE - 64BIT_SH_INFO -
+ *		      NETBUF_FIXED_MIN_HEADROOM - WMI_HEADROOM)
+ * 3520 = (4096 - 384 - 128 - 64)
+ */
+#define WMI_CE_BUF_SIZE 3520
+#endif
+
 #if defined(WLAN_DEBUG) || defined(DEBUG)
 static ATH_DEBUG_MASK_DESCRIPTION g_hif_debug_description[] = {
 	{HIF_PCI_DEBUG, "hif_pci"},
@@ -1012,10 +1023,10 @@ static struct CE_attr host_ce_config_wlan_qcn6122[] = {
 	{/*CE1*/ (CE_ATTR_FLAGS), 0, 0,  2048,
 		512, NULL,},
 	/* target->host WMI */
-	{/*CE2*/ (CE_ATTR_FLAGS), 0, 0,  2048,
+	{/*CE2*/ (CE_ATTR_FLAGS), 0, 0,  WMI_CE_BUF_SIZE,
 		128, NULL,},
 	/* host->target WMI */
-	{/*CE3*/ (CE_ATTR_FLAGS), 0, 32, 2048, 0, NULL,},
+	{/*CE3*/ (CE_ATTR_FLAGS), 0, 32, WMI_CE_BUF_SIZE, 0, NULL,},
 	/* host->target HTT */
 	{/*CE4*/ (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,
 		CE_HTT_H2T_MSG_SRC_NENTRIES, 256, 0, NULL,},
@@ -1037,9 +1048,9 @@ static struct CE_pipe_config target_ce_config_wlan_qcn6122[] = {
 	/* target->host HTT */
 	{ /* CE1 */ 1, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
 	/* target->host WMI  + HTC control */
-	{ /* CE2 */ 2, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
+	{ /* CE2 */ 2, PIPEDIR_IN,  32, WMI_CE_BUF_SIZE, CE_ATTR_FLAGS, 0,},
 	/* host->target WMI */
-	{ /* CE3 */ 3, PIPEDIR_OUT, 32, 2048, CE_ATTR_FLAGS, 0,},
+	{ /* CE3 */ 3, PIPEDIR_OUT, 32, WMI_CE_BUF_SIZE, CE_ATTR_FLAGS, 0,},
 	/* host->target HTT */
 	{ /* CE4 */ 4, PIPEDIR_OUT, 256, 256,
 		(CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,},
@@ -1117,6 +1128,7 @@ static struct CE_pipe_config target_ce_config_wlan_qca5018[] = {
 };
 
 #define QCN_9000_CE_COUNT 6
+
 /* QCN9000 enable polling mode */
 static struct CE_attr host_ce_config_wlan_qcn9000[] = {
 	/* host->target HTC control and raw streams */
@@ -1125,10 +1137,10 @@ static struct CE_attr host_ce_config_wlan_qcn9000[] = {
 	{/*CE1*/ (CE_ATTR_FLAGS), 0, 0,  2048,
 		512, NULL,},
 	/* target->host WMI */
-	{/*CE2*/ (CE_ATTR_FLAGS), 0, 0,  2048,
+	{/*CE2*/ (CE_ATTR_FLAGS), 0, 0,  WMI_CE_BUF_SIZE,
 		128, NULL,},
 	/* host->target WMI */
-	{/*CE3*/ (CE_ATTR_FLAGS), 0, 32, 2048, 0, NULL,},
+	{/*CE3*/ (CE_ATTR_FLAGS), 0, 32, WMI_CE_BUF_SIZE, 0, NULL,},
 	/* host->target HTT */
 	{/*CE4*/ (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,
 		CE_HTT_H2T_MSG_SRC_NENTRIES, 256, 0, NULL,},
@@ -1154,9 +1166,9 @@ static struct CE_pipe_config target_ce_config_wlan_qcn9000[] = {
 	/* target->host HTT */
 	{ /* CE1 */ 1, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
 	/* target->host WMI  + HTC control */
-	{ /* CE2 */ 2, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
+	{ /* CE2 */ 2, PIPEDIR_IN,  32, WMI_CE_BUF_SIZE, CE_ATTR_FLAGS, 0,},
 	/* host->target WMI */
-	{ /* CE3 */ 3, PIPEDIR_OUT, 32, 2048, CE_ATTR_FLAGS, 0,},
+	{ /* CE3 */ 3, PIPEDIR_OUT, 32, WMI_CE_BUF_SIZE, CE_ATTR_FLAGS, 0,},
 	/* host->target HTT */
 	{ /* CE4 */ 4, PIPEDIR_OUT, 256, 256,
 		(CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,},
