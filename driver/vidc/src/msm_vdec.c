@@ -548,8 +548,9 @@ static int msm_vdec_set_output_order(struct msm_vidc_inst *inst,
 		return -EINVAL;
 	}
 
-	if (inst->capabilities->cap[DISPLAY_DELAY_ENABLE].value &&
-		!inst->capabilities->cap[DISPLAY_DELAY].value)
+	if (inst->capabilities->cap[THUMBNAIL_MODE].value ||
+		(inst->capabilities->cap[DISPLAY_DELAY_ENABLE].value &&
+		!inst->capabilities->cap[DISPLAY_DELAY].value))
 		output_order = 1;
 
 	i_vpr_h(inst, "%s: output order: %d", __func__, output_order);
