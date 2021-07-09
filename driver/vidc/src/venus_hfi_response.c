@@ -1583,6 +1583,8 @@ void handle_session_response_work_handler(struct work_struct *work)
 				/* continue to next entry processing */
 				continue;
 			} else if (allow == MSM_VIDC_DISCARD) {
+				/* if ipsc is discarded then override the psc properties again */
+				inst->ipsc_properties_set = false;
 				/* discard current entry processing */
 				break;
 			} else if (allow == MSM_VIDC_ALLOW) {
