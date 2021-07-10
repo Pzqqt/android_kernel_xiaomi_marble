@@ -24,6 +24,10 @@
 #ifndef __REG_SERVICES_PUBLIC_STRUCT_H_
 #define __REG_SERVICES_PUBLIC_STRUCT_H_
 
+#ifdef CONFIG_AFC_SUPPORT
+#include <wlan_reg_afc.h>
+#endif
+
 #define REG_SBS_SEPARATION_THRESHOLD 100
 
 #ifdef CONFIG_BAND_6GHZ
@@ -704,6 +708,9 @@ enum behav_limit {
  * @behav_limit: OR of bitmaps of enum behav_limit
  * @start_freq: starting frequency
  * @channels: channel set
+ * @cfis: Set of center frequency indices. Center for 40/80/160/320MHz band
+ *         channel opclasses. For 20MHz the list is empty as it is  already
+ *         available in @channels variable.
  */
 struct reg_dmn_op_class_map_t {
 	uint8_t op_class;
@@ -712,6 +719,7 @@ struct reg_dmn_op_class_map_t {
 	uint16_t behav_limit;
 	qdf_freq_t start_freq;
 	uint8_t channels[REG_MAX_CHANNELS_PER_OPERATING_CLASS];
+	uint8_t cfis[REG_MAX_CHANNELS_PER_OPERATING_CLASS];
 };
 
 /**
@@ -1523,5 +1531,18 @@ struct reg_afc_resp_rx_ind_info {
 	enum reg_afc_cmd_type cmd_type;
 	enum reg_afc_serv_resp_format serv_resp_format;
 };
+
+/**
+ * afc_req_rx_evt_handler() - Function prototype of AFC request received event
+ * handler
+ * @pdev: Pointer to pdev
+ * @afc_par_req: Pointer to AFC partial request
+ * @arg: Pointer to void (opaque) argument object
+ *
+ * Return: void
+ */
+typedef void (*afc_req_rx_evt_handler)(struct wlan_objmgr_pdev *pdev,
+				       struct wlan_afc_host_partial_request *afc_par_req,
+				       void *arg);
 #endif
 #endif

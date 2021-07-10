@@ -23,6 +23,10 @@
 
 #include <wlan_cmn.h>
 #include <reg_services_public_struct.h>
+#ifdef CONFIG_AFC_SUPPORT
+#include <wlan_reg_services_api.h>
+#include "reg_opclass.h"
+#endif
 #include <wlan_objmgr_psoc_obj.h>
 #include <qdf_lock.h>
 #include "reg_priv_objs.h"
@@ -4812,6 +4816,454 @@ reg_get_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef CONFIG_AFC_SUPPORT
+/**
+ *  reg_get_frange_list_len() - Calculate the length of the list of the
+ *  frequency ranges
+ *  Input: None
+ *
+ *  Return: Length of the frequency range list
+ */
+static uint16_t reg_get_frange_list_len(void)
+{
+	uint16_t num_freq_ranges = 1;
+	uint16_t frange_lst_len;
+
+	frange_lst_len =
+		sizeof(struct wlan_afc_frange_list) +
+		sizeof(struct wlan_afc_freq_range_obj) * num_freq_ranges;
+
+	return frange_lst_len;
+}
+
+/**
+ * reg_get_opclasses_array_len() - Calculate the length of the array of
+ * opclasses objects
+ * @num_opclasses: The number of opclasses
+ * @chansize_lst: The array of sizes of channel lists
+ *
+ * Return: Length of the array of opclass object
+ */
+static uint16_t reg_get_opclasses_array_len(struct wlan_objmgr_pdev *pdev,
+					    uint8_t num_opclasses,
+					    uint8_t *chansize_lst)
+{
+	uint16_t opclasses_arr_len = 0;
+	uint16_t i;
+
+	for (i = 0; i < num_opclasses; i++) {
+		opclasses_arr_len +=
+			sizeof(struct wlan_afc_opclass_obj) +
+			sizeof(uint8_t) * chansize_lst[i];
+	}
+
+	return opclasses_arr_len;
+}
+
+/**
+ * reg_get_afc_req_length() - Calculate the length of the AFC partial request
+ * @num_opclasses: The number of opclasses
+ * @chansize_lst: The array of sizes of channel lists
+ *
+ * Return: Length of the partial AFC request
+ */
+static uint16_t reg_get_afc_req_length(struct wlan_objmgr_pdev *pdev,
+				       uint8_t num_opclasses,
+				       uint8_t *chansize_lst)
+{
+	uint16_t afc_req_len;
+	uint16_t frange_lst_len;
+	uint16_t fixed_param_len;
+	uint16_t num_opclasses_len;
+	uint16_t opclasses_arr_len;
+
+	fixed_param_len = sizeof(struct wlan_afc_host_req_fixed_params);
+	frange_lst_len = reg_get_frange_list_len();
+	num_opclasses_len = sizeof(struct wlan_afc_num_opclasses);
+	opclasses_arr_len = reg_get_opclasses_array_len(pdev,
+							num_opclasses,
+							chansize_lst);
+
+	afc_req_len =
+		fixed_param_len +
+		frange_lst_len +
+		num_opclasses_len +
+		opclasses_arr_len;
+
+	return afc_req_len;
+}
+
+/**
+ * reg_fill_afc_fixed_params() - Fill the AFC fixed params
+ * @p_fixed_params: Pointer to afc fixed params object
+ * @afc_req_len: Length of the partial AFC request
+ *
+ * Return: Void
+ */
+static inline void
+reg_fill_afc_fixed_params(struct wlan_afc_host_req_fixed_params *p_fixed_params,
+			  uint16_t afc_req_len)
+{
+	p_fixed_params->req_length = afc_req_len;
+	p_fixed_params->req_id = DEFAULT_REQ_ID;
+	p_fixed_params->min_des_power = DEFAULT_MIN_POWER;
+}
+
+/**
+ * reg_fill_afc_freq_ranges() - Fill the AFC fixed params
+ * @p_frange_lst: Pointer to frequencey range list
+ *
+ * Return: Void
+ */
+static inline void
+reg_fill_afc_freq_ranges(struct wlan_afc_frange_list *p_frange_lst)
+{
+	struct wlan_afc_freq_range_obj *p_range_obj;
+
+	p_frange_lst->num_ranges = DEFAULT_NUM_FREQS;
+
+	p_range_obj = &p_frange_lst->range_objs[0];
+
+	/* For now there is only one range */
+	p_range_obj->lowfreq =  DEFAULT_LOW_6GFREQ;
+	p_range_obj->highfreq = DEFAULT_HIGH_6GFREQ;
+}
+
+/**
+ * reg_fill_afc_opclass_obj() - Fill the opclass object and return pointer to
+ *                              next AFC opclass object
+ * @p_obj_opclass_obj: Pointer to opclass object
+ * @opclass: Operating class
+ * @num_chans: Number of channels in the opclass
+ * @p_chan_lst: Pointer to channel list
+ *
+ * Return: Pointer to the next AFC opclass object
+ */
+static struct wlan_afc_opclass_obj *
+reg_fill_afc_opclass_obj(struct wlan_afc_opclass_obj *p_obj_opclass_obj,
+			 uint8_t opclass,
+			 uint8_t num_chans,
+			 uint8_t *p_chan_lst)
+{
+	uint16_t len_obj;
+	uint8_t *out_p;
+	uint8_t *src, *dst;
+	uint8_t copy_len;
+
+	p_obj_opclass_obj->opclass_num_cfis = num_chans;
+	p_obj_opclass_obj->opclass = opclass;
+	src = p_chan_lst;
+	dst = p_obj_opclass_obj->cfis;
+	copy_len = num_chans * sizeof(uint8_t);
+
+	qdf_mem_copy(dst, src, copy_len);
+
+	len_obj = sizeof(struct wlan_afc_opclass_obj) + copy_len;
+	out_p = (uint8_t *)p_obj_opclass_obj + len_obj;
+
+	return (struct wlan_afc_opclass_obj *)out_p;
+}
+
+/**
+ * reg_fill_afc_opclasses_arr() - Fill the array of opclass objects
+ * @num_opclasses: The number of opclasses
+ * @opclass_lst: The array of Operating classes
+ * @chansize_lst: The array of sizes of channel lists
+ * @channel_lists: The array of channel lists
+ * @p_opclass_obj_arr: Pointer to the first opclass object
+ *
+ * Return: Void
+ */
+static inline void
+reg_fill_afc_opclasses_arr(struct wlan_objmgr_pdev *pdev,
+			   uint8_t num_opclasses,
+			   uint8_t *opclass_lst,
+			   uint8_t *chansize_lst,
+			   uint8_t *channel_lists[],
+			   struct wlan_afc_opclass_obj *p_opclass_obj_arr)
+{
+	uint16_t i;
+	struct wlan_afc_opclass_obj *p_opclass_obj;
+
+	p_opclass_obj = p_opclass_obj_arr;
+
+	for (i = 0; i < num_opclasses; i++) {
+		p_opclass_obj =  reg_fill_afc_opclass_obj(p_opclass_obj,
+							  opclass_lst[i],
+							  chansize_lst[i],
+							  channel_lists[i]);
+	}
+}
+
+/**
+ * reg_next_opcls_ptr() - Get the pointer to the next opclass object
+ * @p_cur_opcls_obj: Pointer to the current operating class object
+ * @num_cfis: number of center frequencey indices
+ *
+ * Return: Pointer to next opclss object
+ */
+static struct wlan_afc_opclass_obj *
+reg_next_opcls_ptr(struct wlan_afc_opclass_obj *p_cur_opcls_obj,
+		   uint8_t num_cfis)
+{
+	uint8_t cur_obj_sz;
+	uint8_t fixed_opcls_sz;
+	struct wlan_afc_opclass_obj *p_next_opcls_obj;
+	uint8_t *p_tmp_next;
+
+	fixed_opcls_sz = sizeof(struct wlan_afc_opclass_obj);
+	cur_obj_sz = fixed_opcls_sz + num_cfis * sizeof(uint8_t);
+	p_tmp_next = (uint8_t *)p_cur_opcls_obj + cur_obj_sz;
+	p_next_opcls_obj = (struct wlan_afc_opclass_obj *)p_tmp_next;
+
+	return p_next_opcls_obj;
+}
+
+void reg_print_partial_afc_req_info(struct wlan_objmgr_pdev *pdev,
+				    struct wlan_afc_host_partial_request *afc_req)
+{
+	struct wlan_afc_host_req_fixed_params *p_fixed_params;
+	struct wlan_afc_frange_list *p_frange_lst;
+	struct wlan_afc_num_opclasses *p_num_opclasses;
+	uint8_t i;
+	uint8_t j;
+	uint16_t frange_lst_len;
+	uint8_t num_opclasses;
+	struct wlan_afc_opclass_obj *p_obj_opclass_arr;
+	struct wlan_afc_opclass_obj *p_opclass_obj;
+	uint8_t *p_temp;
+
+	p_fixed_params = &afc_req->fixed_params;
+	reg_debug("req_length=%hu", p_fixed_params->req_length);
+	reg_debug("req_id=%llu", p_fixed_params->req_id);
+	reg_debug("min_des_power=%hd", p_fixed_params->min_des_power);
+
+	p_temp = (uint8_t *)p_fixed_params;
+	p_temp += sizeof(*p_fixed_params);
+	p_frange_lst = (struct wlan_afc_frange_list *)p_temp;
+	reg_debug("num_ranges=%hhu", p_frange_lst->num_ranges);
+	for (i = 0; i < p_frange_lst->num_ranges; i++) {
+		struct wlan_afc_freq_range_obj *p_range_obj;
+
+		p_range_obj = &p_frange_lst->range_objs[i];
+		reg_debug("lowfreq=%hu", p_range_obj->lowfreq);
+		reg_debug("highfreq=%hu", p_range_obj->highfreq);
+	}
+
+	frange_lst_len = reg_get_frange_list_len();
+	p_temp += frange_lst_len;
+	p_num_opclasses = (struct wlan_afc_num_opclasses *)p_temp;
+	num_opclasses = p_num_opclasses->num_opclasses;
+	reg_debug("num_opclasses=%hhu", num_opclasses);
+
+	p_temp += sizeof(*p_num_opclasses);
+	p_obj_opclass_arr = (struct wlan_afc_opclass_obj *)p_temp;
+	p_opclass_obj = p_obj_opclass_arr;
+	for (i = 0; i < num_opclasses; i++) {
+		uint8_t opclass = p_opclass_obj->opclass;
+		uint8_t num_cfis = p_opclass_obj->opclass_num_cfis;
+		uint8_t *cfis = p_opclass_obj->cfis;
+
+		reg_debug("opclass[%hhu]=%hhu", i, opclass);
+		reg_debug("num_cfis[%hhu]=%hhu", i, num_cfis);
+		reg_debug("[");
+		for (j = 0; j < num_cfis; j++)
+			reg_debug("%hhu,", cfis[j]);
+		reg_debug("]");
+
+		p_opclass_obj = reg_next_opcls_ptr(p_opclass_obj, num_cfis);
+	}
+}
+
+QDF_STATUS
+reg_get_partial_afc_req_info(struct wlan_objmgr_pdev *pdev,
+			     struct wlan_afc_host_partial_request **afc_req)
+{
+	/* allocate the memory for the partial request */
+	struct wlan_afc_host_partial_request *temp_afc_req;
+	struct wlan_afc_host_req_fixed_params *p_fixed_params;
+	struct wlan_afc_frange_list *p_frange_lst;
+	struct wlan_afc_num_opclasses *p_num_opclasses;
+	uint16_t afc_req_len;
+	uint16_t frange_lst_len;
+	uint8_t num_opclasses;
+	struct wlan_afc_opclass_obj *p_obj_opclass_arr;
+
+	uint8_t *opclass_lst;
+	uint8_t *chansize_lst;
+	uint8_t **channel_lists;
+	QDF_STATUS status;
+
+	status = reg_dmn_get_6g_opclasses_and_channels(pdev,
+						       &num_opclasses,
+						       &opclass_lst,
+						       &chansize_lst,
+						       &channel_lists);
+	if (status != QDF_STATUS_SUCCESS)
+		return status;
+
+	afc_req_len = reg_get_afc_req_length(pdev,
+					     num_opclasses,
+					     chansize_lst);
+
+	temp_afc_req = qdf_mem_malloc(afc_req_len);
+
+	if (!temp_afc_req) {
+		*afc_req = NULL;
+		status = QDF_STATUS_E_NOMEM;
+		goto free_opcls_chan_mem;
+	}
+
+	p_fixed_params = &temp_afc_req->fixed_params;
+	reg_fill_afc_fixed_params(p_fixed_params, afc_req_len);
+
+	p_frange_lst = (struct wlan_afc_frange_list *)&p_fixed_params[1];
+	reg_fill_afc_freq_ranges(p_frange_lst);
+
+	frange_lst_len = reg_get_frange_list_len();
+	p_num_opclasses = (struct wlan_afc_num_opclasses *)
+	    ((char *)(p_frange_lst) + frange_lst_len);
+	p_num_opclasses->num_opclasses = num_opclasses;
+
+	p_obj_opclass_arr = (struct wlan_afc_opclass_obj *)&p_num_opclasses[1];
+	reg_fill_afc_opclasses_arr(pdev,
+				   num_opclasses,
+				   opclass_lst,
+				   chansize_lst,
+				   channel_lists,
+				   p_obj_opclass_arr);
+
+free_opcls_chan_mem:
+	reg_dmn_free_6g_opclasses_and_channels(pdev,
+					       num_opclasses,
+					       opclass_lst,
+					       chansize_lst,
+					       channel_lists);
+
+	*afc_req = (struct wlan_afc_host_partial_request *)p_fixed_params;
+
+	return status;
+}
+
+/**
+ * reg_dmn_set_afc_req_id() -  Set the request ID in the AFC partial request
+ *                             object
+ * @afc_req: pointer to AFC partial request
+ * @req_id: AFC request ID
+ *
+ * Return: Void
+ */
+static
+void reg_dmn_set_afc_req_id(struct wlan_afc_host_partial_request *afc_req,
+			    uint64_t req_id)
+{
+	struct wlan_afc_host_req_fixed_params *p_fixed_params;
+
+	p_fixed_params = &afc_req->fixed_params;
+	p_fixed_params->req_id = req_id;
+}
+
+/**
+ * reg_send_afc_partial_request() - Send AFC partial request to registered
+ * recipient
+ * @pdev: Pointer to pdev
+ * @pdev_priv_obj: Pointer to pdev private object
+ * @afc_req: Pointer to afc partial request
+ *
+ * Return: void
+ */
+static
+void reg_send_afc_partial_request(struct wlan_objmgr_pdev *pdev,
+				  struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj,
+				  struct wlan_afc_host_partial_request *afc_req)
+{
+	afc_req_rx_evt_handler cbf;
+	void *arg;
+
+	qdf_spin_lock_bh(&pdev_priv_obj->afc_cb_lock);
+	cbf = pdev_priv_obj->afc_cb_obj.func;
+	if (cbf) {
+		arg = pdev_priv_obj->afc_cb_obj.arg;
+		cbf(pdev, afc_req, arg);
+	}
+	qdf_spin_unlock_bh(&pdev_priv_obj->afc_cb_lock);
+}
+
+QDF_STATUS reg_afc_start(struct wlan_objmgr_pdev *pdev, uint64_t req_id)
+{
+	struct wlan_afc_host_partial_request *afc_req;
+	QDF_STATUS status;
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("pdev reg component is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = reg_get_partial_afc_req_info(pdev, &afc_req);
+	if (status != QDF_STATUS_SUCCESS) {
+		reg_err("Creating AFC Request failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	reg_dmn_set_afc_req_id(afc_req, req_id);
+
+	reg_send_afc_partial_request(pdev, pdev_priv_obj, afc_req);
+
+	reg_print_partial_afc_req_info(pdev, afc_req);
+
+	qdf_mem_free(afc_req);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS reg_register_afc_req_rx_callback(struct wlan_objmgr_pdev *pdev,
+					    afc_req_rx_evt_handler cbf,
+					    void *arg)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("pdev reg component is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_spin_lock_bh(&pdev_priv_obj->afc_cb_lock);
+	pdev_priv_obj->afc_cb_obj.func = cbf;
+	pdev_priv_obj->afc_cb_obj.arg = arg;
+	qdf_spin_unlock_bh(&pdev_priv_obj->afc_cb_lock);
+	reg_debug("afc_event_cb: 0x%pK, arg: 0x%pK", cbf, arg);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS reg_unregister_afc_req_rx_callback(struct wlan_objmgr_pdev *pdev,
+					      afc_req_rx_evt_handler cbf)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("pdev reg component is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_spin_lock_bh(&pdev_priv_obj->afc_cb_lock);
+	if (pdev_priv_obj->afc_cb_obj.func == cbf) {
+		pdev_priv_obj->afc_cb_obj.func = NULL;
+		pdev_priv_obj->afc_cb_obj.arg = NULL;
+	} else {
+		reg_err("cb function=0x%pK not found", cbf);
+	}
+	qdf_spin_unlock_bh(&pdev_priv_obj->afc_cb_lock);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+#endif /* CONFIG_AFC_SUPPORT */
 
 QDF_STATUS
 reg_get_cur_6g_client_type(struct wlan_objmgr_pdev *pdev,

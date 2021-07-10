@@ -26,6 +26,9 @@
 #define __REG_PRIV_OBJS_H
 
 #include <wlan_scan_public_structs.h>
+#ifdef CONFIG_AFC_SUPPORT
+#include "reg_services_common.h"
+#endif
 
 #define reg_alert(params...) \
 	QDF_TRACE_FATAL(QDF_MODULE_ID_REGULATORY, params)
@@ -202,6 +205,8 @@ struct wlan_regulatory_psoc_priv_obj {
  * @max_phymode: The maximum phymode supported by the device and regulatory.
  * @max_chwidth: The maximum bandwidth corresponding to the maximum phymode.
  * @avoid_chan_ext_list: the extended avoid frequency list.
+ * @afc_cb_lock: The spinlock to synchronize afc callbacks
+ * @afc_cb_obj: The object containing the callback function and opaque argument
  */
 struct wlan_regulatory_pdev_priv_obj {
 	struct regulatory_channel cur_chan_list[NUM_CHANNELS];
@@ -262,6 +267,10 @@ struct wlan_regulatory_pdev_priv_obj {
 #endif
 #ifdef FEATURE_WLAN_CH_AVOID_EXT
 	avoid_ch_ext_list avoid_chan_ext_list;
+#endif
+#ifdef CONFIG_AFC_SUPPORT
+	qdf_spinlock_t afc_cb_lock;
+	struct afc_cb_handler afc_cb_obj;
 #endif
 };
 

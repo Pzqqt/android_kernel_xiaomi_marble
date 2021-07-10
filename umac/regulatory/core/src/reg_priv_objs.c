@@ -247,6 +247,30 @@ reg_init_6g_vars(struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
 }
 #endif
 
+#ifdef CONFIG_AFC_SUPPORT
+static void
+reg_create_afc_cb_spinlock(struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
+{
+	qdf_spinlock_create(&pdev_priv_obj->afc_cb_lock);
+}
+
+static void
+reg_destroy_afc_cb_spinlock(struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
+{
+	qdf_spinlock_destroy(&pdev_priv_obj->afc_cb_lock);
+}
+#else
+static inline void
+reg_create_afc_cb_spinlock(struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
+{
+}
+
+static inline void
+reg_destroy_afc_cb_spinlock(struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
+{
+}
+#endif
+
 QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
 	struct wlan_objmgr_pdev *pdev, void *arg_list)
 {
@@ -293,6 +317,7 @@ QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
 	reg_reset_unii_5g_bitmap(pdev_priv_obj);
 
 	qdf_spinlock_create(&pdev_priv_obj->reg_rules_lock);
+	reg_create_afc_cb_spinlock(pdev_priv_obj);
 
 	reg_cap_ptr = psoc_priv_obj->reg_cap;
 	pdev_priv_obj->force_ssc_disable_indoor_channel =
@@ -395,6 +420,7 @@ QDF_STATUS wlan_regulatory_pdev_obj_destroyed_notification(
 	reg_reset_reg_rules(&pdev_priv_obj->reg_rules);
 	qdf_spin_unlock_bh(&pdev_priv_obj->reg_rules_lock);
 
+	reg_destroy_afc_cb_spinlock(pdev_priv_obj);
 	qdf_spinlock_destroy(&pdev_priv_obj->reg_rules_lock);
 
 	qdf_mem_free(pdev_priv_obj);

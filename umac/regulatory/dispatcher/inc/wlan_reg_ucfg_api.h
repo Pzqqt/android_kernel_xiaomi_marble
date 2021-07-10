@@ -26,6 +26,9 @@
 #ifndef __WLAN_REG_UCFG_API_H
 #define __WLAN_REG_UCFG_API_H
 
+#ifdef CONFIG_AFC_SUPPORT
+#include <wlan_reg_afc.h>
+#endif
 #include <reg_services_public_struct.h>
 
 typedef QDF_STATUS (*reg_event_cb)(void *status_struct);
@@ -298,6 +301,43 @@ void ucfg_reg_register_chan_change_callback(struct wlan_objmgr_psoc *psoc,
  */
 void ucfg_reg_unregister_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 					      void *cbk);
+
+#ifdef CONFIG_AFC_SUPPORT
+/**
+ * ucfg_reg_register_afc_req_rx_callback () - add AFC request received callback
+ * @pdev: Pointer to pdev
+ * @cbf: Pointer to callback function
+ * @arg: Pointer to opaque argument
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_reg_register_afc_req_rx_callback(struct wlan_objmgr_pdev *pdev,
+						 afc_req_rx_evt_handler cbf,
+						 void *arg);
+
+/**
+ * ucfg_reg_unregister_afc_req_rx_callback () - remove AFC request received
+ * callback
+ * @pdev: Pointer to pdev
+ * @cbf: Pointer to callback function
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_reg_unregister_afc_req_rx_callback(struct wlan_objmgr_pdev *pdev,
+						   afc_req_rx_evt_handler cbf);
+
+/**
+ * ucfg_reg_get_partial_afc_req_info() -  Get the the frequency ranges and
+ * opclass + channel ranges. This is partial because in the AFC request there
+ * are a few more parameters: Longitude, Latitude a few other information
+ * @pdev: Pointer to PDEV object.
+ *
+ * Return: QDF_STATUS_E_INVAL if unable to set and QDF_STATUS_SUCCESS is set.
+ */
+QDF_STATUS
+ucfg_reg_get_partial_afc_req_info(struct wlan_objmgr_pdev *pdev,
+				  struct wlan_afc_host_partial_request **afc_req);
+#endif
 
 /**
  * ucfg_reg_get_cc_and_src () - get country code and src

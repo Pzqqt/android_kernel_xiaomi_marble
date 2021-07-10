@@ -26,6 +26,10 @@
 #ifndef __REG_SERVICES_COMMON_H_
 #define __REG_SERVICES_COMMON_H_
 
+#ifdef CONFIG_AFC_SUPPORT
+#include <wlan_reg_afc.h>
+#endif
+
 #define IS_VALID_PSOC_REG_OBJ(psoc_priv_obj) (psoc_priv_obj)
 #define IS_VALID_PDEV_REG_OBJ(pdev_priv_obj) (pdev_priv_obj)
 #define FREQ_TO_CHAN_SCALE     5
@@ -123,6 +127,17 @@
 #define MIN_6GHZ_OPER_CLASS 131
 #define MAX_6GHZ_OPER_CLASS 136
 
+#ifdef CONFIG_AFC_SUPPORT
+#define DEFAULT_REQ_ID 11235813
+/* default minimum power in dBm units */
+#define DEFAULT_MIN_POWER    (-10)
+#define DEFAULT_NUM_FREQS       1
+
+/* Have the entire 6Ghz band as single range */
+#define DEFAULT_LOW_6GFREQ    5925
+#define DEFAULT_HIGH_6GFREQ   7125
+#endif
+
 extern const struct chan_map *channel_map;
 extern const struct chan_map channel_map_us[];
 extern const struct chan_map channel_map_eu[];
@@ -132,6 +147,19 @@ extern const struct chan_map channel_map_global[];
 
 #ifdef WLAN_FEATURE_11BE
 #define ALL_SCHANS_PUNC 0x0000 /* all subchannels punctured */
+#endif
+
+#ifdef CONFIG_AFC_SUPPORT
+/**
+ * struct afc_cb_handler - defines structure for afc request received  event
+ * handler call back function and argument
+ * @func: handler function pointer
+ * @arg: argument to handler function
+ */
+struct afc_cb_handler {
+	afc_req_rx_evt_handler func;
+	void *arg;
+};
 #endif
 /**
  * get_next_lower_bandwidth() - Get next lower bandwidth
@@ -1204,6 +1232,67 @@ reg_set_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
 QDF_STATUS
 reg_get_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
 			   enum reg_6g_ap_type *reg_cur_6g_ap_pwr_type);
+
+#ifdef CONFIG_AFC_SUPPORT
+/**
+ * reg_afc_start() -  Start the AFC request from regulatory. This finally
+ *                    send the request to MLME(UMAC)
+ * @pdev: Pointer to pdev
+ * @req_id: The AFC request ID
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS reg_afc_start(struct wlan_objmgr_pdev *pdev, uint64_t req_id);
+
+/**
+ * reg_get_partial_afc_req_info() - Get the AFC partial request information
+ * @pdev: Pointer to pdev
+ * @afc_req: Address of AFC request pointer
+ *
+ * NOTE:- The memory  for AFC request is allocated by the function must be
+ *        freed by the caller.
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+reg_get_partial_afc_req_info(struct wlan_objmgr_pdev *pdev,
+			     struct wlan_afc_host_partial_request **afc_req);
+
+/**
+ * reg_print_partial_afc_req_info() -  Print the  AFC partial request
+ *                                     information
+ * @pdev: Pointer to pdev
+ * @afc_req: Pointer to AFC request
+ *
+ * Return: Void
+ */
+void
+reg_print_partial_afc_req_info(struct wlan_objmgr_pdev *pdev,
+			       struct wlan_afc_host_partial_request *afc_req);
+
+/**
+ * reg_register_afc_req_rx_callback () - add AFC request received callback
+ * @pdev: Pointer to pdev
+ * @cbf: Pointer to callback handler
+ * @arg: Pointer to opaque argument
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS reg_register_afc_req_rx_callback(struct wlan_objmgr_pdev *pdev,
+					    afc_req_rx_evt_handler cbf,
+					    void *arg);
+
+/**
+ * reg_unregister_afc_req_rx_callback () - remove AFC request received
+ * callback
+ * @pdev: Pointer to pdev
+ * @cbf: Pointer to callback handler
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS reg_unregister_afc_req_rx_callback(struct wlan_objmgr_pdev *pdev,
+					      afc_req_rx_evt_handler cbf);
+#endif
+
 /**
  * reg_get_cur_6g_client_type() - Get the current 6G regulatory client Type.
  * @pdev: Pointer to PDEV object.

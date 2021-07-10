@@ -241,6 +241,28 @@ void ucfg_reg_unregister_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 					    (reg_chan_change_callback)cbk);
 }
 
+#ifdef CONFIG_AFC_SUPPORT
+QDF_STATUS ucfg_reg_register_afc_req_rx_callback(struct wlan_objmgr_pdev *pdev,
+						 afc_req_rx_evt_handler cbf,
+						 void *arg)
+{
+	return reg_register_afc_req_rx_callback(pdev, cbf, arg);
+}
+
+QDF_STATUS ucfg_reg_unregister_afc_req_rx_callback(struct wlan_objmgr_pdev *pdev,
+						   afc_req_rx_evt_handler cbf)
+{
+	return reg_unregister_afc_req_rx_callback(pdev, cbf);
+}
+
+QDF_STATUS
+ucfg_reg_get_partial_afc_req_info(struct wlan_objmgr_pdev *pdev,
+				  struct wlan_afc_host_partial_request **afc_req)
+{
+	return reg_get_partial_afc_req_info(pdev, afc_req);
+}
+#endif
+
 enum country_src ucfg_reg_get_cc_and_src(struct wlan_objmgr_psoc *psoc,
 					 uint8_t *alpha2)
 {
