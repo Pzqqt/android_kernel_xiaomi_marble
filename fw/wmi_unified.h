@@ -549,6 +549,8 @@ typedef enum {
     WMI_VDEV_SET_TPC_POWER_CMDID,
     /** IGMP OFFLOAD */
     WMI_VDEV_IGMP_OFFLOAD_CMDID,
+    /** Enable/Disable Intra Bss for each vdev */
+    WMI_VDEV_ENABLE_DISABLE_INTRA_BSS_CMDID,
 
     /* peer specific commands */
 
@@ -656,6 +658,9 @@ typedef enum {
 
     /** WMI command for per-peer configuration of PPE DS */
     WMI_PEER_CONFIG_PPE_DS_CMDID,
+
+    /** Enable/Disable Intra Bss for the peer */
+    WMI_PEER_ENABLE_DISABLE_INTRA_BSS_CMDID,
 
 
     /* beacon/management specific commands */
@@ -28946,6 +28951,8 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PDEV_MULTIPLE_VDEV_SET_PARAM_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_MEC_AGING_TIMER_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_PEER_CONFIG_PPE_DS_CMDID);
+        WMI_RETURN_STRING(WMI_VDEV_ENABLE_DISABLE_INTRA_BSS_CMDID);
+        WMI_RETURN_STRING(WMI_PEER_ENABLE_DISABLE_INTRA_BSS_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -29109,6 +29116,35 @@ typedef struct {
      *     num_channel_obj * sizeof(afc_channel_info)
      */
 } afc_spectrum_inquiry_resp_bin_type;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_vdev_enable_disable_intra_bss_cmd_fixed_param
+     */
+    A_UINT32 tlv_header;
+    /** The corresponding vdev_id.
+     */
+    A_UINT32 vdev_id;
+    /* Enable/Disable intra_bss.
+     */
+    A_UINT32 enable;
+} wmi_vdev_enable_disable_intra_bss_cmd_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_peer_enable_disable_intra_bss_cmd_fixed_param
+     */
+    A_UINT32 tlv_header;
+    /** Mac Address of the peer.
+     */
+    wmi_mac_addr mac_addr;
+    /** The corresponding vdev_id.
+     */
+    A_UINT32 vdev_id;
+    /* Enable/Disable intra_bss.
+     */
+    A_UINT32 enable;
+} wmi_peer_enable_disable_intra_bss_cmd_fixed_param;
 
 /* Freq units in MHz */
 #define WMI_REG_RULE_START_FREQ_GET(freq_info)                     WMI_GET_BITS(freq_info, 0, 16)
