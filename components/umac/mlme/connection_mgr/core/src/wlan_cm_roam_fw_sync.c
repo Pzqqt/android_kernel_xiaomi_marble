@@ -335,6 +335,49 @@ cm_copy_tspec_ie(struct cm_vdev_join_rsp *rsp,
 }
 #endif
 
+#ifdef WLAN_FEATURE_FILS_SK
+static void
+cm_fils_update_erp_seq_num(struct wlan_objmgr_vdev *vdev,
+			   uint16_t next_erp_seq_num,
+			   wlan_cm_id cm_id)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_fils_connection_info *fils_info;
+	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		mlme_err(CM_PREFIX_FMT "Failed to find pdev",
+			 CM_PREFIX_REF(vdev_id, cm_id));
+		return;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		mlme_err(CM_PREFIX_FMT "Failed to find psoc",
+			 CM_PREFIX_REF(vdev_id, cm_id));
+		return;
+	}
+
+	fils_info = wlan_cm_get_fils_connection_info(psoc, vdev_id);
+	if (!fils_info)
+		return;
+
+	/*
+	 * update the erp sequence number to the vdev level
+	 * FILS cache. This will be sent in the next RSO
+	 * command.
+	 */
+	fils_info->erp_sequence_number = next_erp_seq_num;
+}
+#else
+static inline void
+cm_fils_update_erp_seq_num(struct wlan_objmgr_vdev *vdev,
+			   uint16_t next_erp_seq_num, wlan_cm_id cm_id)
+{}
+#endif
+
 static QDF_STATUS
 cm_fill_roam_info(struct wlan_objmgr_vdev *vdev,
 		  struct roam_offload_synch_ind *roam_synch_data,
@@ -407,6 +450,8 @@ cm_fill_roam_info(struct wlan_objmgr_vdev *vdev,
 	roaming_info->update_erp_next_seq_num =
 			roam_synch_data->update_erp_next_seq_num;
 	roaming_info->next_erp_seq_num = roam_synch_data->next_erp_seq_num;
+
+	cm_fils_update_erp_seq_num(vdev, roaming_info->next_erp_seq_num, cm_id);
 
 	return status;
 }
