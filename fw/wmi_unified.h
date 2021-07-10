@@ -2081,6 +2081,7 @@ typedef enum {
     WMI_TWT_SESSION_STATS_EVENTID,
     WMI_TWT_NUDGE_DIALOG_COMPLETE_EVENTID,
     WMI_TWT_NOTIFY_EVENTID,
+    WMI_TWT_ACK_EVENTID,
 
     /** Events in Prototyping phase */
     WMI_NDI_CAP_RSP_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_PROTOTYPE),
@@ -4236,6 +4237,10 @@ typedef struct {
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_NAN_CHANNEL_SUPPORT_SET(host_service_flags, val) \
     WMI_SET_BITS(host_service_flags, 5, 1, val)
 
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_STA_TWT_SYNC_EVT_SUPPORT_GET(host_service_flags) \
+    WMI_GET_BITS(host_service_flags, 6, 1)
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_STA_TWT_SYNC_EVT_SUPPORT_SET(host_service_flags, val) \
+    WMI_SET_BITS(host_service_flags, 6, 1, val)
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_init_cmd_fixed_param */
@@ -27961,6 +27966,27 @@ typedef struct {
 } WMI_HAL_REG_CAPABILITIES_EXT2;
 
 /*
+ * TWT service capability bitmap in wmi_twt_caps_params TLV
+ * within WMI_SERVICE_READY_EXT2_EVENTID message
+ */
+typedef enum {
+    WMI_TWT_STA_SYNC_EVENT_CAP = 1, /* STA TWT: FW internal errors reported using sync WMI_TWT_ACK_EVENTID */
+
+    /* Add new TWT Caps above */
+    WMI_TWT_MAX_CAP = 32,
+} WMI_TWT_CAPS_BITMAP;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_caps_param */
+
+    /* twt_capability_bitmap
+     * TWT Capabilities - refer to WMI_TWT_CAPS_BITMAP for the meaning of
+     * the bits within the bitmap
+     */
+    A_UINT32 twt_capability_bitmap;
+} wmi_twt_caps_params;
+
+/*
  * This TLV used for Scan Radio RDP
  * We have an RDP which supports Multiband-Frequency (2Ghz, 5Ghz and 6Ghz)
  * on a single radio.
@@ -30200,6 +30226,20 @@ typedef enum _WMI_TWT_COMMAND_T {
 /* 0 means TWT Information frame is enabled, 1 means TWT Information frame is disabled */
 #define TWT_FLAGS_GET_TWT_INFO_FRAME_DISABLED(flag)      WMI_GET_BITS(flag, 13, 1)
 #define TWT_FLAGS_SET_TWT_INFO_FRAME_DISABLED(flag, val) WMI_SET_BITS(flag, 13, 1, val)
+
+typedef struct {
+    A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_ack_event_fixed_param */
+    A_UINT32 vdev_id;       /* VDEV identifier */
+    wmi_mac_addr peer_macaddr; /* peer MAC address */
+    A_UINT32 dialog_id;     /* TWT dialog ID */
+    A_UINT32 twt_cmd;       /* TWT command for which this ack is sent */
+    A_UINT32 status;        /* Status code corresponding to twt_cmd.
+                             * This status field contains a value from the
+                             * status enum corresponding to the twt_cmd type
+                             * (WMI_ADD_TWT_STATUS_T, WMI_DEL_TWT_STATUS_T,
+                             * WMI_PAUSE_TWT_STATUS_T, etc.)
+                             */
+} wmi_twt_ack_event_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_add_dialog_cmd_fixed_param  */

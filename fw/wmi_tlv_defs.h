@@ -1184,6 +1184,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_pdev_mec_aging_timer_config_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_peer_config_ppe_ds_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_ctrl_path_dfs_channel_stats_struct,
+    WMITLV_TAG_STRUC_wmi_twt_ack_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_twt_caps_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1925,6 +1927,7 @@ typedef enum {
     OP(WMI_PDEV_GET_HALPHY_CAL_STATUS_EVENTID) \
     OP(WMI_PDEV_SET_HALPHY_CAL_BMAP_EVENTID) \
     OP(WMI_AFC_EVENTID) \
+    OP(WMI_TWT_ACK_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -4801,7 +4804,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_SERVICE_READY_EXT_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, WMI_MAC_PHY_CAPABILITIES_EXT, mac_phy_caps, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, WMI_HAL_REG_CAPABILITIES_EXT2, hal_reg_caps, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_nan_capabilities, wmi_nan_capabilities, nan_cap, WMITLV_SIZE_FIX) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, WMI_SCAN_RADIO_CAPABILITIES_EXT2, wmi_scan_radio_caps, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, WMI_SCAN_RADIO_CAPABILITIES_EXT2, wmi_scan_radio_caps, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_twt_caps_params, twt_caps, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_SERVICE_READY_EXT2_EVENTID);
 
 #define WMITLV_TABLE_WMI_CHAN_RF_CHARACTERIZATION_INFO_EVENTID(id,op,buf,len) \
@@ -6230,6 +6234,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_TWT_BTWT_REMOVE_STA_COMPLETE_EVENTID);
 #define WMITLV_TABLE_WMI_TWT_NOTIFY_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_twt_notify_event_fixed_param, wmi_twt_notify_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_TWT_NOTIFY_EVENTID);
+
+/* TWT Ack Event - FW to send Ack Sync event for Host TWT Cmds */
+#define WMITLV_TABLE_WMI_TWT_ACK_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_twt_ack_event_fixed_param, wmi_twt_ack_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_TWT_ACK_EVENTID);
 
 /* Event to send roam scan stats */
 #define WMITLV_TABLE_WMI_ROAM_SCAN_STATS_EVENTID(id,op,buf,len) \
