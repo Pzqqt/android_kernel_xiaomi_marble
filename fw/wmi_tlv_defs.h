@@ -1188,6 +1188,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_twt_caps_param,
     WMITLV_TAG_STRUC_wmi_vdev_enable_disable_intra_bss_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_peer_enable_disable_intra_bss_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_aoa_phasedelta_evt_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1932,6 +1933,7 @@ typedef enum {
     OP(WMI_PDEV_SET_HALPHY_CAL_BMAP_EVENTID) \
     OP(WMI_AFC_EVENTID) \
     OP(WMI_TWT_ACK_EVENTID) \
+    OP(WMI_PDEV_AOA_PHASEDELTA_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -6408,6 +6410,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MLO_LINK_SET_ACTIVE_RESP_EVENTID);
 #define WMITLV_TABLE_WMI_PDEV_GET_DPD_STATUS_EVENTID(id,op,buf,len)  \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_get_dpd_status_evt_fixed_param, wmi_pdev_get_dpd_status_evt_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_GET_DPD_STATUS_EVENTID);
+
+/* AOA phase delta Event */
+#define WMITLV_TABLE_WMI_PDEV_AOA_PHASEDELTA_EVENTID(id,op,buf,len)  \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_aoa_phasedelta_evt_fixed_param, wmi_pdev_aoa_phasedelta_evt_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_AOA_PHASEDELTA_EVENTID);
 
 /* Response event for MLO setup cmd */
 #define WMITLV_TABLE_WMI_MLO_SETUP_COMPLETE_EVENTID(id,op,buf,len)  \

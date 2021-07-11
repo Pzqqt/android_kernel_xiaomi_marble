@@ -544,6 +544,7 @@ typedef  enum  {
     WMI_SERVICE_MGMT_RX_REO_SUPPORTED = 299, /* Indicates FW supports Management RX Reorder */
     WMI_SERVICE_EMA_MULTIPLE_GROUP_SUPPORT = 300, /* FW support for EMA multi group support */
     WMI_SERVICE_LARGE_BEACON_SUPPORT = 301, /* FW support for Large beacon support greater then 1.5K */
+    WMI_SERVICE_AOA_FOR_RCC_SUPPORTED = 302,
 
 
     WMI_MAX_EXT2_SERVICE

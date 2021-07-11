@@ -84,6 +84,8 @@ extern "C" {
 #define MAX_RSSI_VALUES         10 /*Max Rssi values*/
 #define WMI_MAX_CHAINS 8
 
+#define MAX_AOA_PHASEDELTA      31  /* 62 gain values */
+
 /* The WLAN_MAX_AC macro cannot be changed without breaking
    WMI compatibility. */
 /* The maximum value of access category */
@@ -1535,6 +1537,8 @@ typedef enum {
     /* Event to set halphy cal bitmap */
     WMI_PDEV_SET_HALPHY_CAL_BMAP_EVENTID,
 
+    /* Event to get AOA phasedelta values from HALPHY */
+    WMI_PDEV_AOA_PHASEDELTA_EVENTID,
 
     /* VDEV specific events */
     /** VDEV started event in response to VDEV_START request */
@@ -31760,6 +31764,31 @@ typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_get_halphy_cal_status_cmd_fixed_param */
     A_UINT32 pdev_id;       /* PDEV ID set by the command */
 } wmi_pdev_get_halphy_cal_status_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_aoa_phasedelta_evt_fixed_param  */
+    A_UINT32 pdev_id; /* PDEV Id set by the command */
+    A_UINT32 freq; /* Current channel in MHz */
+
+    /*
+     * Phase Delta values:
+     * Two phase delta values are packed into each A_UINT32 word
+     * LSB 16-bit is 1st value and MSB 16-bit is 2nd value
+     * Phasedelta values will be 0-1023 (mapped to 0-360 degree)
+     * Each gain from 0 to 61 has a phasedelta value, e.g.
+     * gain 0's phase delta occupies bits 15:0 of phasedelta[chain][0],
+     * gain 1's phase delta occupies bits 31:16 of phasedelta[chain][0],
+     * gain 2's phase delta occupies bits 15:0 of phasedelta[chain][1], etc.
+     */
+    A_UINT32 phasedelta[WMI_MAX_CHAINS][MAX_AOA_PHASEDELTA];
+
+    /*
+     * IBF cal values:
+     * Used for final AoA calculation
+     * [AoAPhase =  ( PhaseDeltaValue + IBFcalValue )   %   1024]
+     */
+    A_UINT32 perChainIbfCalVal[WMI_MAX_CHAINS];
+} wmi_pdev_aoa_phasedelta_evt_fixed_param;
 
 /* WMI_HALPHY_CAL_LIST:
  *
