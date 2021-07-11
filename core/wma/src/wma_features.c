@@ -71,6 +71,7 @@
 #include "wlan_cm_api.h"
 #include <wlan_crypto_global_api.h>
 #include "cdp_txrx_host_stats.h"
+#include "target_if_cm_roam_event.h"
 
 /**
  * WMA_SET_VDEV_IE_SOURCE_HOST - Flag to identify the source of VDEV SET IE
@@ -2735,8 +2736,13 @@ static int wma_wake_event_piggybacked(
 				    NULL, NULL, wake_reason,
 				    pb_event_len);
 		if (pb_event_len > 0) {
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+			errno = target_if_cm_roam_event(wma, pb_event,
+							pb_event_len);
+#else
 			errno = wma_roam_event_callback(wma, pb_event,
 							pb_event_len);
+#endif
 		} else {
 			/*
 			 * No wow_packet_buffer means a better AP beacon

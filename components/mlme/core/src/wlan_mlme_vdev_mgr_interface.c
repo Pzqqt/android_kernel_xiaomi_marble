@@ -1528,9 +1528,6 @@ QDF_STATUS psoc_mlme_ext_hdl_create(struct psoc_mlme_obj *psoc_mlme)
 
 	target_if_wfatestcmd_register_tx_ops(
 			&psoc_mlme->ext_psoc_ptr->wfa_testcmd.tx_ops);
-#ifdef ROAM_TARGET_IF_CONVERGENCE
-	target_if_roam_offload_register_events(psoc_mlme->psoc);
-#endif /* ROAM_TARGET_IF_CONVERGENCE */
 	target_if_cm_roam_register_rx_ops(
 			&psoc_mlme->ext_psoc_ptr->rso_rx_ops);
 

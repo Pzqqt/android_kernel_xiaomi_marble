@@ -903,6 +903,30 @@ void wlan_cm_get_psk_pmk(struct wlan_objmgr_pdev *pdev,
 QDF_STATUS
 cm_akm_roam_allowed(struct wlan_objmgr_psoc *psoc,
 		    struct wlan_objmgr_vdev *vdev);
+
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+
+/**
+ * cm_invalid_roam_reason_handler() - Handler for invalid roam reason
+ * @vdev_id: vdev id
+ * @notif: roam notification of type enum cm_roam_notif
+ *
+ * Return: QDF_STATUS
+ */
+void cm_invalid_roam_reason_handler(uint32_t vdev_id, enum cm_roam_notif notif);
+
+/**
+ * cm_handle_roam_reason_ho_failed() - Handler for roam due to ho failure
+ * @vdev_id: vdev id
+ * @bssid: carries the BSSID mac address
+ * @hw_mode_trans_ind: hw_mode transition indication
+ *
+ * Return: None
+ */
+void
+cm_handle_roam_reason_ho_failed(uint8_t vdev_id, struct qdf_mac_addr bssid,
+				struct cm_hw_mode_trans_ind *hw_mode_trans_ind);
+#endif
 #else
 static inline
 void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,
@@ -1017,5 +1041,92 @@ cm_akm_roam_allowed(struct wlan_objmgr_psoc *psoc,
 {
 	return false;
 }
+
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+static inline void
+cm_handle_roam_reason_ho_failed(uint8_t vdev_id, struct qdf_mac_addr bssid,
+				struct cm_hw_mode_trans_ind *hw_mode_trans_ind)
+{}
+#endif
 #endif  /* FEATURE_ROAM_OFFLOAD */
+
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+/**
+ * cm_rso_cmd_status_event_handler() - Handler for rso cmd status
+ * @vdev_id: vdev id
+ * @notif: roam notification of type enum cm_roam_notif
+ *
+ * Return: QDF_STATUS
+ */
+int cm_rso_cmd_status_event_handler(uint8_t vdev_id, enum cm_roam_notif notif);
+
+/**
+ * cm_handle_roam_reason_invoke_roam_fail() - Handler for roam invoke fail event
+ * @vdev_id: vdev id
+ * @notif_params: contains roam invoke fail reason from wmi_roam_invoke_error_t
+ * @trans_ind: hw_mode transition indication
+ *
+ * Return: None
+ */
+void
+cm_handle_roam_reason_invoke_roam_fail(uint8_t vdev_id,	uint32_t notif_params,
+				       struct cm_hw_mode_trans_ind *trans_ind);
+
+/**
+ * cm_handle_roam_reason_deauth() - Handler for roam due to deauth from AP
+ * @vdev_id: vdev id
+ * @notif_params: contains roam invoke fail reason from wmi_roam_invoke_error_t
+ * @deauth_disassoc_frame: Disassoc or deauth frame
+ * @frame_len: Contains the length of @deauth_disassoc_frame
+ *
+ * Return: None
+ */
+void cm_handle_roam_reason_deauth(uint8_t vdev_id, uint32_t notif_params,
+				  uint8_t *deauth_disassoc_frame,
+				  uint32_t frame_len);
+
+/**
+ * cm_handle_roam_reason_btm() - Handler for roam due to btm from AP
+ * @vdev_id: vdev id
+ *
+ * Return: None
+ */
+void cm_handle_roam_reason_btm(uint8_t vdev_id);
+
+/**
+ * cm_handle_roam_reason_bmiss() - Handler for roam due to bmiss
+ * @vdev_id: vdev id
+ * @rssi: RSSI value
+ *
+ * Return: None
+ */
+void cm_handle_roam_reason_bmiss(uint8_t vdev_id, uint32_t rssi);
+
+/**
+ * cm_handle_roam_reason_better_ap() - Handler for roam due to better AP
+ * @vdev_id: vdev id
+ * @rssi: RSSI value
+ *
+ * Return: None
+ */
+void cm_handle_roam_reason_better_ap(uint8_t vdev_id, uint32_t rssi);
+
+/**
+ * cm_handle_roam_reason_suitable_ap() - Handler for roam due to suitable AP
+ * @vdev_id: vdev id
+ * @rssi: RSSI value
+ *
+ * Return: None
+ */
+void cm_handle_roam_reason_suitable_ap(uint8_t vdev_id, uint32_t rssi);
+
+/**
+ * cm_roam_event_handler() - Carries extracted roam info
+ * @roam_event: data carried by roam event
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_roam_event_handler(struct roam_offload_roam_event roam_event);
+#endif
 #endif  /* WLAN_CM_ROAM_API_H__ */

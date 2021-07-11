@@ -3036,7 +3036,7 @@ int wma_link_status_event_handler(void *handle, uint8_t *cmd_param_info,
 	return 0;
 }
 
-int wma_rso_cmd_status_event_handler(wmi_roam_event_fixed_param *wmi_event)
+int wma_rso_cmd_status_event_handler(uint8_t vdev_id, enum cm_roam_notif notif)
 {
 	struct rso_cmd_status *rso_status;
 	struct scheduler_msg sme_msg = {0};
@@ -3046,10 +3046,10 @@ int wma_rso_cmd_status_event_handler(wmi_roam_event_fixed_param *wmi_event)
 	if (!rso_status)
 		return -ENOMEM;
 
-	rso_status->vdev_id = wmi_event->vdev_id;
-	if (WMI_ROAM_NOTIF_SCAN_MODE_SUCCESS == wmi_event->notif)
+	rso_status->vdev_id = vdev_id;
+	if (notif == CM_ROAM_NOTIF_SCAN_MODE_SUCCESS)
 		rso_status->status = true;
-	else if (WMI_ROAM_NOTIF_SCAN_MODE_FAIL == wmi_event->notif)
+	else if (notif == CM_ROAM_NOTIF_SCAN_MODE_FAIL)
 		rso_status->status = false;
 	sme_msg.type = eWNI_SME_RSO_CMD_STATUS_IND;
 	sme_msg.bodyptr = rso_status;

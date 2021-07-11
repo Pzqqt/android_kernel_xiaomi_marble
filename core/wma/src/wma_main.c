@@ -115,6 +115,7 @@
 #endif
 
 #include "wlan_pkt_capture_ucfg_api.h"
+#include "target_if_cm_roam_event.h"
 
 #define WMA_LOG_COMPLETION_TIMER 3000 /* 3 seconds */
 #define WMI_TLV_HEADROOM 128
@@ -3081,6 +3082,10 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	/* Register Converged Event handlers */
 	init_deinit_register_tgt_psoc_ev_handlers(psoc);
 
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+	target_if_roam_offload_register_events(psoc);
+#endif /* ROAM_TARGET_IF_CONVERGENCE */
+
 	/* Initialize max_no_of_peers for wma_get_number_of_peers_supported() */
 	cds_cfg->max_station = wma_init_max_no_of_peers(wma_handle,
 							cds_cfg->max_station);
@@ -4089,6 +4094,7 @@ QDF_STATUS wma_start(void)
 		goto end;
 	}
 
+#ifndef ROAM_TARGET_IF_CONVERGENCE
 	qdf_status = wmi_unified_register_event_handler(wmi_handle,
 						    wmi_roam_event_id,
 						    wma_roam_event_callback,
@@ -4098,6 +4104,7 @@ QDF_STATUS wma_start(void)
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto end;
 	}
+#endif
 
 	qdf_status = wmi_unified_register_event_handler(wmi_handle,
 						    wmi_wow_wakeup_host_event_id,
