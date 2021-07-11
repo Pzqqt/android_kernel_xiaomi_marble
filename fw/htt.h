@@ -215,9 +215,11 @@
  * 3.91 Add HTT_T2H_MSG_TYPE_MLO_RX_PEER_MAP, _UNMAP defs.
  * 3.92 Add HTT_H2T_MSG_TYPE_RXDMA_RXOLE_PPE_CFG def.
  * 3.93 Add HTT_T2H_MSG_TYPE_PEER_MAP_V3 def.
+ * 3.94 Add HTT_H2T_MSG_TYPE_VDEVS_TXRX_STATS_CFG,
+ *      HTT_T2H_MSG_TYPE_VDEVS_TXRX_STATS_PERIODIC_IND defs.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 93
+#define HTT_CURRENT_VERSION_MINOR 94
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -501,6 +503,184 @@ PREPACK struct htt_option_tlv_support_tx_msdu_desc_ext_t {
     A_UINT16 tx_msdu_desc_ext_support; /* SUPPORT_TX_MSDU_DESC_EXT enum */
 } POSTPACK;
 
+typedef struct {
+    union {
+        /* BIT [11 :  0]   :- tag
+         * BIT [23 : 12]   :- length
+         * BIT [31 : 24]   :- reserved
+         */
+        A_UINT32 tag__length;
+        /*
+         * The following struct is not endian-portable.
+         * It is suitable for use within the target, which is known to be
+         * little-endian.
+         * The host should use the above endian-portable macros to access
+         * the tag and length bitfields in an endian-neutral manner.
+         */
+        struct {
+            A_UINT32 tag      :      12, /* BIT [11 :  0] */
+                     length   :   12,    /* BIT [23 : 12] */
+                     reserved :  8;      /* BIT [31 : 24] */
+        };
+    };
+} htt_tlv_hdr_t;
+
+typedef enum {
+    HTT_STATS_TX_PDEV_CMN_TAG                      = 0,  /* htt_tx_pdev_stats_cmn_tlv */
+    HTT_STATS_TX_PDEV_UNDERRUN_TAG                 = 1,  /* htt_tx_pdev_stats_urrn_tlv_v */
+    HTT_STATS_TX_PDEV_SIFS_TAG                     = 2,  /* htt_tx_pdev_stats_sifs_tlv_v */
+    HTT_STATS_TX_PDEV_FLUSH_TAG                    = 3,  /* htt_tx_pdev_stats_flush_tlv_v */
+    HTT_STATS_TX_PDEV_PHY_ERR_TAG                  = 4,  /* htt_tx_pdev_stats_phy_err_tlv_v */
+    HTT_STATS_STRING_TAG = 5,                            /* htt_stats_string_tlv */
+    HTT_STATS_TX_HWQ_CMN_TAG = 6,                        /* htt_tx_hwq_stats_cmn_tlv */
+    HTT_STATS_TX_HWQ_DIFS_LATENCY_TAG              = 7,  /* htt_tx_hwq_difs_latency_stats_tlv_v */
+    HTT_STATS_TX_HWQ_CMD_RESULT_TAG                = 8,  /* htt_tx_hwq_cmd_result_stats_tlv_v */
+    HTT_STATS_TX_HWQ_CMD_STALL_TAG                 = 9,  /* htt_tx_hwq_cmd_stall_stats_tlv_v */
+    HTT_STATS_TX_HWQ_FES_STATUS_TAG                = 10, /* htt_tx_hwq_fes_result_stats_tlv_v */
+    HTT_STATS_TX_TQM_GEN_MPDU_TAG                  = 11, /* htt_tx_tqm_gen_mpdu_stats_tlv_v */
+    HTT_STATS_TX_TQM_LIST_MPDU_TAG                 = 12, /* htt_tx_tqm_list_mpdu_stats_tlv_v */
+    HTT_STATS_TX_TQM_LIST_MPDU_CNT_TAG             = 13, /* htt_tx_tqm_list_mpdu_cnt_tlv_v */
+    HTT_STATS_TX_TQM_CMN_TAG = 14,                       /* htt_tx_tqm_cmn_stats_tlv */
+    HTT_STATS_TX_TQM_PDEV_TAG                      = 15, /* htt_tx_tqm_pdev_stats_tlv_v */
+    HTT_STATS_TX_TQM_CMDQ_STATUS_TAG               = 16, /* htt_tx_tqm_cmdq_status_tlv */
+    HTT_STATS_TX_DE_EAPOL_PACKETS_TAG              = 17, /* htt_tx_de_eapol_packets_stats_tlv */
+    HTT_STATS_TX_DE_CLASSIFY_FAILED_TAG            = 18, /* htt_tx_de_classify_failed_stats_tlv */
+    HTT_STATS_TX_DE_CLASSIFY_STATS_TAG             = 19, /* htt_tx_de_classify_stats_tlv */
+    HTT_STATS_TX_DE_CLASSIFY_STATUS_TAG            = 20, /* htt_tx_de_classify_status_stats_tlv */
+    HTT_STATS_TX_DE_ENQUEUE_PACKETS_TAG            = 21, /* htt_tx_de_enqueue_packets_stats_tlv */
+    HTT_STATS_TX_DE_ENQUEUE_DISCARD_TAG            = 22, /* htt_tx_de_enqueue_discard_stats_tlv */
+    HTT_STATS_TX_DE_CMN_TAG = 23,                        /* htt_tx_de_cmn_stats_tlv */
+    HTT_STATS_RING_IF_TAG = 24,                          /* htt_ring_if_stats_tlv */
+    HTT_STATS_TX_PDEV_MU_MIMO_STATS_TAG            = 25, /* htt_tx_pdev_mu_mimo_sch_stats_tlv */
+    HTT_STATS_SFM_CMN_TAG = 26,                          /* htt_sfm_cmn_tlv */
+    HTT_STATS_SRING_STATS_TAG                      = 27, /* htt_sring_stats_tlv */
+    HTT_STATS_RX_PDEV_FW_STATS_TAG                 = 28, /* htt_rx_pdev_fw_stats_tlv */
+    HTT_STATS_RX_PDEV_FW_RING_MPDU_ERR_TAG         = 29, /* htt_rx_pdev_fw_ring_mpdu_err_tlv_v */
+    HTT_STATS_RX_PDEV_FW_MPDU_DROP_TAG             = 30, /* htt_rx_pdev_fw_mpdu_drop_tlv_v */
+    HTT_STATS_RX_SOC_FW_STATS_TAG                  = 31, /* htt_rx_soc_fw_stats_tlv */
+    HTT_STATS_RX_SOC_FW_REFILL_RING_EMPTY_TAG      = 32, /* htt_rx_soc_fw_refill_ring_empty_tlv_v */
+    HTT_STATS_RX_SOC_FW_REFILL_RING_NUM_REFILL_TAG = 33, /* htt_rx_soc_fw_refill_ring_num_refill_tlv_v */
+    HTT_STATS_TX_PDEV_RATE_STATS_TAG               = 34, /* htt_tx_pdev_rate_stats_tlv */
+    HTT_STATS_RX_PDEV_RATE_STATS_TAG               = 35, /* htt_rx_pdev_rate_stats_tlv */
+    HTT_STATS_TX_PDEV_SCHEDULER_TXQ_STATS_TAG      = 36, /* htt_tx_pdev_stats_sched_per_txq_tlv */
+    HTT_STATS_TX_SCHED_CMN_TAG                     = 37, /* htt_stats_tx_sched_cmn_tlv */
+    HTT_STATS_TX_PDEV_MUMIMO_MPDU_STATS_TAG        = 38, /* htt_tx_pdev_mu_mimo_mpdu_stats_tlv */
+    HTT_STATS_SCHED_TXQ_CMD_POSTED_TAG             = 39, /* htt_sched_txq_cmd_posted_tlv_v */
+    HTT_STATS_RING_IF_CMN_TAG                      = 40, /* htt_ring_if_cmn_tlv */
+    HTT_STATS_SFM_CLIENT_USER_TAG                  = 41, /* htt_sfm_client_user_tlv_v */
+    HTT_STATS_SFM_CLIENT_TAG = 42,                       /* htt_sfm_client_tlv */
+    HTT_STATS_TX_TQM_ERROR_STATS_TAG               = 43, /* htt_tx_tqm_error_stats_tlv */
+    HTT_STATS_SCHED_TXQ_CMD_REAPED_TAG             = 44, /* htt_sched_txq_cmd_reaped_tlv_v */
+    HTT_STATS_SRING_CMN_TAG = 45,                        /* htt_sring_cmn_tlv */
+    HTT_STATS_TX_SELFGEN_AC_ERR_STATS_TAG          = 46, /* htt_tx_selfgen_ac_err_stats_tlv */
+    HTT_STATS_TX_SELFGEN_CMN_STATS_TAG             = 47, /* htt_tx_selfgen_cmn_stats_tlv */
+    HTT_STATS_TX_SELFGEN_AC_STATS_TAG              = 48, /* htt_tx_selfgen_ac_stats_tlv */
+    HTT_STATS_TX_SELFGEN_AX_STATS_TAG              = 49, /* htt_tx_selfgen_ax_stats_tlv */
+    HTT_STATS_TX_SELFGEN_AX_ERR_STATS_TAG          = 50, /* htt_tx_selfgen_ax_err_stats_tlv */
+    HTT_STATS_TX_HWQ_MUMIMO_SCH_STATS_TAG          = 51, /* htt_tx_hwq_mu_mimo_sch_stats_tlv */
+    HTT_STATS_TX_HWQ_MUMIMO_MPDU_STATS_TAG         = 52, /* htt_tx_hwq_mu_mimo_mpdu_stats_tlv */
+    HTT_STATS_TX_HWQ_MUMIMO_CMN_STATS_TAG          = 53, /* htt_tx_hwq_mu_mimo_cmn_stats_tlv */
+    HTT_STATS_HW_INTR_MISC_TAG                     = 54, /* htt_hw_stats_intr_misc_tlv */
+    HTT_STATS_HW_WD_TIMEOUT_TAG                    = 55, /* htt_hw_stats_wd_timeout_tlv */
+    HTT_STATS_HW_PDEV_ERRS_TAG                     = 56, /* htt_hw_stats_pdev_errs_tlv */
+    HTT_STATS_COUNTER_NAME_TAG                     = 57, /* htt_counter_tlv */
+    HTT_STATS_TX_TID_DETAILS_TAG                   = 58, /* htt_tx_tid_stats_tlv */
+    HTT_STATS_RX_TID_DETAILS_TAG                   = 59, /* htt_rx_tid_stats_tlv */
+    HTT_STATS_PEER_STATS_CMN_TAG                   = 60, /* htt_peer_stats_cmn_tlv */
+    HTT_STATS_PEER_DETAILS_TAG                     = 61, /* htt_peer_details_tlv */
+    HTT_STATS_PEER_TX_RATE_STATS_TAG               = 62, /* htt_tx_peer_rate_stats_tlv */
+    HTT_STATS_PEER_RX_RATE_STATS_TAG               = 63, /* htt_rx_peer_rate_stats_tlv */
+    HTT_STATS_PEER_MSDU_FLOWQ_TAG                  = 64, /* htt_msdu_flow_stats_tlv */
+    HTT_STATS_TX_DE_COMPL_STATS_TAG                = 65, /* htt_tx_de_compl_stats_tlv */
+    HTT_STATS_WHAL_TX_TAG = 66,                          /* htt_hw_stats_whal_tx_tlv */
+    HTT_STATS_TX_PDEV_SIFS_HIST_TAG                = 67, /* htt_tx_pdev_stats_sifs_hist_tlv_v */
+    HTT_STATS_RX_PDEV_FW_STATS_PHY_ERR_TAG         = 68, /* htt_rx_pdev_fw_stats_phy_err_tlv */
+    HTT_STATS_TX_TID_DETAILS_V1_TAG                = 69, /* htt_tx_tid_stats_v1_tlv */
+    HTT_STATS_PDEV_CCA_1SEC_HIST_TAG               = 70, /* htt_pdev_cca_stats_hist_tlv (for 1 sec interval stats) */
+    HTT_STATS_PDEV_CCA_100MSEC_HIST_TAG            = 71, /* htt_pdev_cca_stats_hist_tlv (for 100 msec interval stats) */
+    HTT_STATS_PDEV_CCA_STAT_CUMULATIVE_TAG         = 72, /* htt_pdev_stats_cca_stats_tlv */
+    HTT_STATS_PDEV_CCA_COUNTERS_TAG                = 73, /* htt_pdev_stats_cca_counters_tlv */
+    HTT_STATS_TX_PDEV_MPDU_STATS_TAG               = 74, /* htt_tx_pdev_mpdu_stats_tlv */
+    HTT_STATS_PDEV_TWT_SESSIONS_TAG                = 75, /* htt_pdev_stats_twt_sessions_tlv */
+    HTT_STATS_PDEV_TWT_SESSION_TAG                 = 76, /* htt_pdev_stats_twt_session_tlv */
+    HTT_STATS_RX_REFILL_RXDMA_ERR_TAG              = 77, /* htt_rx_soc_fw_refill_ring_num_rxdma_err_tlv_v */
+    HTT_STATS_RX_REFILL_REO_ERR_TAG                = 78, /* htt_rx_soc_fw_refill_ring_num_reo_err_tlv_v */
+    HTT_STATS_RX_REO_RESOURCE_STATS_TAG            = 79, /* htt_rx_reo_debug_stats_tlv_v */
+    HTT_STATS_TX_SOUNDING_STATS_TAG                = 80, /* htt_tx_sounding_stats_tlv */
+    HTT_STATS_TX_PDEV_TX_PPDU_STATS_TAG            = 81, /* htt_tx_pdev_stats_tx_ppdu_stats_tlv_v */
+    HTT_STATS_TX_PDEV_TRIED_MPDU_CNT_HIST_TAG      = 82, /* htt_tx_pdev_stats_tried_mpdu_cnt_hist_tlv_v */
+    HTT_STATS_TX_HWQ_TRIED_MPDU_CNT_HIST_TAG       = 83, /* htt_tx_hwq_tried_mpdu_cnt_hist_tlv_v */
+    HTT_STATS_TX_HWQ_TXOP_USED_CNT_HIST_TAG        = 84, /* htt_tx_hwq_txop_used_cnt_hist_tlv_v */
+    HTT_STATS_TX_DE_FW2WBM_RING_FULL_HIST_TAG      = 85, /* htt_tx_de_fw2wbm_ring_full_hist_tlv */
+    HTT_STATS_SCHED_TXQ_SCHED_ORDER_SU_TAG         = 86, /* htt_sched_txq_sched_order_su_tlv */
+    HTT_STATS_SCHED_TXQ_SCHED_INELIGIBILITY_TAG    = 87, /* htt_sched_txq_sched_eligibility_tlv */
+    HTT_STATS_PDEV_OBSS_PD_TAG                     = 88, /* htt_pdev_obss_pd_stats_tlv */
+    HTT_STATS_HW_WAR_TAG                           = 89, /* htt_hw_war_stats_tlv */
+    HTT_STATS_RING_BACKPRESSURE_STATS_TAG          = 90, /* htt_ring_backpressure_stats_tlv */
+    HTT_STATS_LATENCY_PROF_STATS_TAG               = 91, /* htt_latency_prof_stats_tlv */
+    HTT_STATS_LATENCY_CTX_TAG                      = 92, /* htt_latency_prof_ctx_tlv */
+    HTT_STATS_LATENCY_CNT_TAG                      = 93, /* htt_latency_prof_cnt_tlv */
+    HTT_STATS_RX_PDEV_UL_TRIG_STATS_TAG            = 94, /* htt_rx_pdev_ul_trigger_stats_tlv */
+    HTT_STATS_RX_PDEV_UL_OFDMA_USER_STATS_TAG      = 95, /* htt_rx_pdev_ul_ofdma_user_stats_tlv */
+    HTT_STATS_RX_PDEV_UL_MIMO_USER_STATS_TAG       = 96, /* htt_rx_pdev_ul_mimo_user_stats_tlv */
+    HTT_STATS_RX_PDEV_UL_MUMIMO_TRIG_STATS_TAG     = 97, /* htt_rx_pdev_ul_mumimo_trig_stats_tlv */
+    HTT_STATS_RX_FSE_STATS_TAG                     = 98, /* htt_rx_fse_stats_tlv */
+    HTT_STATS_PEER_SCHED_STATS_TAG                 = 99, /* htt_peer_sched_stats_tlv */
+    HTT_STATS_SCHED_TXQ_SUPERCYCLE_TRIGGER_TAG     = 100, /* htt_sched_txq_supercycle_triggers_tlv_v */
+    HTT_STATS_PEER_CTRL_PATH_TXRX_STATS_TAG        = 101, /* htt_peer_ctrl_path_txrx_stats_tlv */
+    HTT_STATS_PDEV_CTRL_PATH_TX_STATS_TAG          = 102, /* htt_pdev_ctrl_path_tx_stats_tlv */
+    HTT_STATS_RX_PDEV_RATE_EXT_STATS_TAG           = 103, /* htt_rx_pdev_rate_ext_stats_tlv */
+    HTT_STATS_TX_PDEV_DL_MU_MIMO_STATS_TAG         = 104, /* htt_tx_pdev_dl_mu_mimo_sch_stats_tlv */
+    HTT_STATS_TX_PDEV_UL_MU_MIMO_STATS_TAG         = 105, /* htt_tx_pdev_ul_mu_mimo_sch_stats_tlv */
+    HTT_STATS_TX_PDEV_DL_MU_OFDMA_STATS_TAG        = 106, /* htt_tx_pdev_dl_mu_ofdma_sch_stats_tlv */
+    HTT_STATS_TX_PDEV_UL_MU_OFDMA_STATS_TAG        = 107, /* htt_tx_pdev_ul_mu_ofdma_sch_stats_tlv */
+    HTT_STATS_PDEV_TX_RATE_TXBF_STATS_TAG          = 108, /* htt_tx_peer_rate_txbf_stats_tlv */
+    HTT_STATS_UNSUPPORTED_ERROR_STATS_TAG          = 109, /* htt_stats_error_tlv_v */
+    HTT_STATS_UNAVAILABLE_ERROR_STATS_TAG          = 110, /* htt_stats_error_tlv_v */
+    HTT_STATS_TX_SELFGEN_AC_SCHED_STATUS_STATS_TAG = 111, /* htt_tx_selfgen_ac_sched_status_stats_tlv */
+    HTT_STATS_TX_SELFGEN_AX_SCHED_STATUS_STATS_TAG = 112, /* htt_tx_selfgen_ax_sched_status_stats_tlv */
+    HTT_STATS_TXBF_OFDMA_NDPA_STATS_TAG            = 113, /* htt_txbf_ofdma_ndpa_stats_tlv */
+    HTT_STATS_TXBF_OFDMA_NDP_STATS_TAG             = 114, /* htt_txbf_ofdma_ndp_stats_tlv */
+    HTT_STATS_TXBF_OFDMA_BRP_STATS_TAG             = 115, /* htt_txbf_ofdma_brp_stats_tlv */
+    HTT_STATS_TXBF_OFDMA_STEER_STATS_TAG           = 116, /* htt_txbf_ofdma_steer_stats_tlv */
+    HTT_STATS_STA_UL_OFDMA_STATS_TAG               = 117, /* htt_sta_ul_ofdma_stats_tlv */
+    HTT_STATS_VDEV_RTT_RESP_STATS_TAG              = 118, /* htt_vdev_rtt_resp_stats_tlv */
+    HTT_STATS_PKTLOG_AND_HTT_RING_STATS_TAG        = 119, /* htt_pktlog_and_htt_ring_stats_tlv */
+    HTT_STATS_DLPAGER_STATS_TAG                    = 120, /* htt_dlpager_stats_tlv */
+    HTT_STATS_PHY_COUNTERS_TAG                     = 121, /* htt_phy_counters_tlv */
+    HTT_STATS_PHY_STATS_TAG                        = 122, /* htt_phy_stats_tlv */
+    HTT_STATS_PHY_RESET_COUNTERS_TAG               = 123, /* htt_phy_reset_counters_tlv */
+    HTT_STATS_PHY_RESET_STATS_TAG                  = 124, /* htt_phy_reset_stats_tlv */
+    HTT_STATS_SOC_TXRX_STATS_COMMON_TAG            = 125, /* htt_t2h_soc_txrx_stats_common_tlv */
+    HTT_STATS_VDEV_TXRX_STATS_HW_STATS_TAG         = 126, /* htt_t2h_vdev_txrx_stats_hw_stats_tlv */
+
+    HTT_STATS_MAX_TAG,
+} htt_tlv_tag_t;
+
+#define HTT_STATS_TLV_TAG_M 0x00000fff
+#define HTT_STATS_TLV_TAG_S 0
+#define HTT_STATS_TLV_LENGTH_M 0x00fff000
+#define HTT_STATS_TLV_LENGTH_S 12
+
+#define HTT_STATS_TLV_TAG_GET(_var) \
+    (((_var) & HTT_STATS_TLV_TAG_M) >> \
+     HTT_STATS_TLV_TAG_S)
+
+#define HTT_STATS_TLV_TAG_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_STATS_TLV_TAG, _val); \
+        ((_var) |= ((_val) << HTT_STATS_TLV_TAG_S)); \
+    } while (0)
+
+#define HTT_STATS_TLV_LENGTH_GET(_var) \
+    (((_var) & HTT_STATS_TLV_LENGTH_M) >> \
+     HTT_STATS_TLV_LENGTH_S)
+#define HTT_STATS_TLV_LENGTH_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_STATS_TLV_LENGTH, _val); \
+        ((_var) |= ((_val) << HTT_STATS_TLV_LENGTH_S)); \
+    } while (0)
+
 
 /*=== host -> target messages ===============================================*/
 
@@ -531,6 +711,7 @@ enum htt_h2t_msg_type {
     HTT_H2T_MSG_TYPE_RX_FULL_MONITOR_MODE  = 0x17,
     HTT_H2T_MSG_TYPE_HOST_PADDR_SIZE       = 0x18,
     HTT_H2T_MSG_TYPE_RXDMA_RXOLE_PPE_CFG   = 0x19,
+    HTT_H2T_MSG_TYPE_VDEVS_TXRX_STATS_CFG  = 0x1a,
 
     /* keep this last */
     HTT_H2T_NUM_MSGS
@@ -7130,61 +7311,149 @@ PREPACK struct htt_h2t_msg_type_rxdma_rxole_ppe_cfg_t {
             ((_var) |= ((_val) << HTT_PPE_CFG_IP_FRAG_OVERRIDE_EN_S)); \
         } while (0)
 
+/*
+ * MSG_TYPE => HTT_H2T_MSG_TYPE_VDEVS_TXRX_STATS_CFG
+ *
+ * @details
+ * The following field definitions describe the format of the HTT host
+ * to target FW VDEV TX RX stats retrieve message.
+ * The message specifies the type of stats the host wants to retrieve.
+ *
+ * |31  27|26 25|24         17|16|15           8|7            0|
+ * |-----------------------------------------------------------|
+ * | rsvd |  R  | Periodic Int| E|    pdev_id   |   msg type   |
+ * |-----------------------------------------------------------|
+ * |                  vdev_id lower bitmask                    |
+ * |-----------------------------------------------------------|
+ * |                  vdev_id upper bitmask                    |
+ * |-----------------------------------------------------------|
+ * Header fields:
+ * Where:
+ * dword0 - b'7:0       - msg_type: This will be set to
+ *                        0x1a (HTT_H2T_MSG_TYPE_VDEVS_TXRX_STATS_CFG)
+ *          b'15:8      - pdev id
+ *          b'16(E)     - Enable/Disable the vdev HW stats
+ *          b'17:24(PI) - Periodic Interval, units = 8 ms, e.g. 125 -> 1000 ms
+ *          b'25:26(R)  - Reset stats bits
+ *                        0: don't reset stats
+ *                        1: reset stats once
+ *                        2: reset stats at the start of each periodic interval
+ *          b'27:31     - reserved for future use
+ * dword1 - b'0:31      - vdev_id lower bitmask
+ * dword2 - b'0:31      - vdev_id upper bitmask
+ */
+
+PREPACK struct htt_h2t_vdevs_txrx_stats_cfg {
+    A_UINT32 msg_type          :8,
+             pdev_id           :8,
+             enable            :1,
+             periodic_interval :8,
+             reset_stats_bits  :2,
+             reserved0         :5;
+    A_UINT32 vdev_id_lower_bitmask;
+    A_UINT32 vdev_id_upper_bitmask;
+} POSTPACK;
+
+#define HTT_H2T_VDEVS_TXRX_STATS_PDEV_ID_M                           0xFF00
+#define HTT_H2T_VDEVS_TXRX_STATS_PDEV_ID_S                           8
+#define HTT_H2T_VDEVS_TXRX_STATS_PDEV_ID_GET(_var) \
+        (((_var) & HTT_H2T_VDEVS_TXRX_STATS_PDEV_ID_M) >> \
+                HTT_H2T_VDEVS_TXRX_STATS_PDEV_ID_S)
+#define HTT_RX_VDEVS_TXRX_STATS_PDEV_ID_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_H2T_VDEVS_TXRX_STATS_PDEV_ID, _val); \
+            ((_var) |= ((_val) << HTT_H2T_VDEVS_TXRX_STATS_PDEV_ID_S)); \
+        } while (0)
+
+#define HTT_H2T_VDEVS_TXRX_STATS_ENABLE_M                            0x10000
+#define HTT_H2T_VDEVS_TXRX_STATS_ENABLE_S                            16
+#define HTT_H2T_VDEVS_TXRX_STATS_ENABLE_GET(_var) \
+        (((_var) & HTT_H2T_VDEVS_TXRX_STATS_ENABLE_M) >> \
+                HTT_H2T_VDEVS_TXRX_STATS_ENABLE_S)
+#define HTT_RX_VDEVS_TXRX_STATS_ENABLE_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_H2T_VDEVS_TXRX_STATS_ENABLE, _val); \
+            ((_var) |= ((_val) << HTT_H2T_VDEVS_TXRX_STATS_ENABLE_S)); \
+        } while (0)
+
+#define HTT_H2T_VDEVS_TXRX_STATS_PERIODIC_INTERVAL_M                 0x1FE0000
+#define HTT_H2T_VDEVS_TXRX_STATS_PERIODIC_INTERVAL_S                 17
+#define HTT_H2T_VDEVS_TXRX_STATS_PERIODIC_INTERVAL_GET(_var) \
+        (((_var) & HTT_H2T_VDEVS_TXRX_STATS_PERIODIC_INTERVAL_M) >> \
+                HTT_H2T_VDEVS_TXRX_STATS_PERIODIC_INTERVAL_S)
+#define HTT_RX_VDEVS_TXRX_STATS_PERIODIC_INTERVAL_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_H2T_VDEVS_TXRX_STATS_PERIODIC_INTERVAL, _val); \
+            ((_var) |= ((_val) << HTT_H2T_VDEVS_TXRX_STATS_PERIODIC_INTERVAL_S)); \
+        } while (0)
+
+#define HTT_H2T_VDEVS_TXRX_STATS_RESET_STATS_BITS_M                   0x6000000
+#define HTT_H2T_VDEVS_TXRX_STATS_RESET_STATS_BITS_S                   25
+#define HTT_H2T_VDEVS_TXRX_STATS_RESET_STATS_BITS_GET(_var) \
+        (((_var) & HTT_H2T_VDEVS_TXRX_STATS_RESET_STATS_BITS_M) >> \
+                HTT_H2T_VDEVS_TXRX_STATS_RESET_STATS_BITS_S)
+#define HTT_RX_VDEVS_TXRX_STATS_RESET_STATS_BITS_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_H2T_VDEVS_TXRX_STATS_RESET_STATS_BITS, _val); \
+            ((_var) |= ((_val) << HTT_H2T_VDEVS_TXRX_STATS_RESET_STATS_BITS_S)); \
+        } while (0)
+
 
 
 /*=== target -> host messages ===============================================*/
 
 
 enum htt_t2h_msg_type {
-    HTT_T2H_MSG_TYPE_VERSION_CONF             = 0x0,
-    HTT_T2H_MSG_TYPE_RX_IND                   = 0x1,
-    HTT_T2H_MSG_TYPE_RX_FLUSH                 = 0x2,
-    HTT_T2H_MSG_TYPE_PEER_MAP                 = 0x3,
-    HTT_T2H_MSG_TYPE_PEER_UNMAP               = 0x4,
-    HTT_T2H_MSG_TYPE_RX_ADDBA                 = 0x5,
-    HTT_T2H_MSG_TYPE_RX_DELBA                 = 0x6,
-    HTT_T2H_MSG_TYPE_TX_COMPL_IND             = 0x7,
-    HTT_T2H_MSG_TYPE_PKTLOG                   = 0x8,
-    HTT_T2H_MSG_TYPE_STATS_CONF               = 0x9,
-    HTT_T2H_MSG_TYPE_RX_FRAG_IND              = 0xa,
-    HTT_T2H_MSG_TYPE_SEC_IND                  = 0xb,
-    DEPRECATED_HTT_T2H_MSG_TYPE_RC_UPDATE_IND = 0xc, /* no longer used */
-    HTT_T2H_MSG_TYPE_TX_INSPECT_IND           = 0xd,
-    HTT_T2H_MSG_TYPE_MGMT_TX_COMPL_IND        = 0xe,
+    HTT_T2H_MSG_TYPE_VERSION_CONF                  = 0x0,
+    HTT_T2H_MSG_TYPE_RX_IND                        = 0x1,
+    HTT_T2H_MSG_TYPE_RX_FLUSH                      = 0x2,
+    HTT_T2H_MSG_TYPE_PEER_MAP                      = 0x3,
+    HTT_T2H_MSG_TYPE_PEER_UNMAP                    = 0x4,
+    HTT_T2H_MSG_TYPE_RX_ADDBA                      = 0x5,
+    HTT_T2H_MSG_TYPE_RX_DELBA                      = 0x6,
+    HTT_T2H_MSG_TYPE_TX_COMPL_IND                  = 0x7,
+    HTT_T2H_MSG_TYPE_PKTLOG                        = 0x8,
+    HTT_T2H_MSG_TYPE_STATS_CONF                    = 0x9,
+    HTT_T2H_MSG_TYPE_RX_FRAG_IND                   = 0xa,
+    HTT_T2H_MSG_TYPE_SEC_IND                       = 0xb,
+    DEPRECATED_HTT_T2H_MSG_TYPE_RC_UPDATE_IND      = 0xc, /* no longer used */
+    HTT_T2H_MSG_TYPE_TX_INSPECT_IND                = 0xd,
+    HTT_T2H_MSG_TYPE_MGMT_TX_COMPL_IND             = 0xe,
     /* only used for HL, add HTT MSG for HTT CREDIT update */
-    HTT_T2H_MSG_TYPE_TX_CREDIT_UPDATE_IND     = 0xf,
-    HTT_T2H_MSG_TYPE_RX_PN_IND                = 0x10,
-    HTT_T2H_MSG_TYPE_RX_OFFLOAD_DELIVER_IND   = 0x11,
-    HTT_T2H_MSG_TYPE_RX_IN_ORD_PADDR_IND      = 0x12,
+    HTT_T2H_MSG_TYPE_TX_CREDIT_UPDATE_IND          = 0xf,
+    HTT_T2H_MSG_TYPE_RX_PN_IND                     = 0x10,
+    HTT_T2H_MSG_TYPE_RX_OFFLOAD_DELIVER_IND        = 0x11,
+    HTT_T2H_MSG_TYPE_RX_IN_ORD_PADDR_IND           = 0x12,
     /* 0x13 is reserved for RX_RING_LOW_IND (RX Full reordering related) */
-    HTT_T2H_MSG_TYPE_WDI_IPA_OP_RESPONSE      = 0x14,
-    HTT_T2H_MSG_TYPE_CHAN_CHANGE              = 0x15,
-    HTT_T2H_MSG_TYPE_RX_OFLD_PKT_ERR          = 0x16,
-    HTT_T2H_MSG_TYPE_RATE_REPORT              = 0x17,
-    HTT_T2H_MSG_TYPE_FLOW_POOL_MAP            = 0x18,
-    HTT_T2H_MSG_TYPE_FLOW_POOL_UNMAP          = 0x19,
-    HTT_T2H_MSG_TYPE_SRING_SETUP_DONE         = 0x1a,
-    HTT_T2H_MSG_TYPE_MAP_FLOW_INFO            = 0x1b,
-    HTT_T2H_MSG_TYPE_EXT_STATS_CONF           = 0x1c,
-    HTT_T2H_MSG_TYPE_PPDU_STATS_IND           = 0x1d,
-    HTT_T2H_MSG_TYPE_PEER_MAP_V2              = 0x1e,
-    HTT_T2H_MSG_TYPE_PEER_UNMAP_V2            = 0x1f,
-    HTT_T2H_MSG_TYPE_MONITOR_MAC_HEADER_IND   = 0x20,
-    HTT_T2H_MSG_TYPE_FLOW_POOL_RESIZE         = 0x21,
-    HTT_T2H_MSG_TYPE_CFR_DUMP_COMPL_IND       = 0x22,
-    HTT_T2H_MSG_TYPE_PEER_STATS_IND           = 0x23,
-    HTT_T2H_MSG_TYPE_BKPRESSURE_EVENT_IND     = 0x24,
+    HTT_T2H_MSG_TYPE_WDI_IPA_OP_RESPONSE           = 0x14,
+    HTT_T2H_MSG_TYPE_CHAN_CHANGE                   = 0x15,
+    HTT_T2H_MSG_TYPE_RX_OFLD_PKT_ERR               = 0x16,
+    HTT_T2H_MSG_TYPE_RATE_REPORT                   = 0x17,
+    HTT_T2H_MSG_TYPE_FLOW_POOL_MAP                 = 0x18,
+    HTT_T2H_MSG_TYPE_FLOW_POOL_UNMAP               = 0x19,
+    HTT_T2H_MSG_TYPE_SRING_SETUP_DONE              = 0x1a,
+    HTT_T2H_MSG_TYPE_MAP_FLOW_INFO                 = 0x1b,
+    HTT_T2H_MSG_TYPE_EXT_STATS_CONF                = 0x1c,
+    HTT_T2H_MSG_TYPE_PPDU_STATS_IND                = 0x1d,
+    HTT_T2H_MSG_TYPE_PEER_MAP_V2                   = 0x1e,
+    HTT_T2H_MSG_TYPE_PEER_UNMAP_V2                 = 0x1f,
+    HTT_T2H_MSG_TYPE_MONITOR_MAC_HEADER_IND        = 0x20,
+    HTT_T2H_MSG_TYPE_FLOW_POOL_RESIZE              = 0x21,
+    HTT_T2H_MSG_TYPE_CFR_DUMP_COMPL_IND            = 0x22,
+    HTT_T2H_MSG_TYPE_PEER_STATS_IND                = 0x23,
+    HTT_T2H_MSG_TYPE_BKPRESSURE_EVENT_IND          = 0x24,
     /* TX_OFFLOAD_DELIVER_IND:
      * Forward the target's locally-generated packets to the host,
      * to provide to the monitor mode interface.
      */
-    HTT_T2H_MSG_TYPE_TX_OFFLOAD_DELIVER_IND   = 0x25,
-    HTT_T2H_MSG_TYPE_CHAN_CALDATA             = 0x26,
-    HTT_T2H_MSG_TYPE_FSE_CMEM_BASE_SEND       = 0x27,
-    HTT_T2H_MSG_TYPE_MLO_TIMESTAMP_OFFSET_IND = 0x28,
-    HTT_T2H_MSG_TYPE_MLO_RX_PEER_MAP          = 0x29,
-    HTT_T2H_MSG_TYPE_MLO_RX_PEER_UNMAP        = 0x2a,
-    HTT_T2H_MSG_TYPE_PEER_MAP_V3              = 0x2b,
+    HTT_T2H_MSG_TYPE_TX_OFFLOAD_DELIVER_IND        = 0x25,
+    HTT_T2H_MSG_TYPE_CHAN_CALDATA                  = 0x26,
+    HTT_T2H_MSG_TYPE_FSE_CMEM_BASE_SEND            = 0x27,
+    HTT_T2H_MSG_TYPE_MLO_TIMESTAMP_OFFSET_IND      = 0x28,
+    HTT_T2H_MSG_TYPE_MLO_RX_PEER_MAP               = 0x29,
+    HTT_T2H_MSG_TYPE_MLO_RX_PEER_UNMAP             = 0x2a,
+    HTT_T2H_MSG_TYPE_PEER_MAP_V3                   = 0x2b,
+    HTT_T2H_MSG_TYPE_VDEVS_TXRX_STATS_PERIODIC_IND = 0x2c,
 
 
     HTT_T2H_MSG_TYPE_TEST,
@@ -15474,5 +15743,122 @@ typedef struct {
              reserved3:                          10; /* bits 31:22 */
 } htt_t2h_mlo_offset_ind_t;
 
+/*
+ * @brief target -> host VDEV TX RX STATS
+ *
+ * MSG_TYPE => HTT_T2H_MSG_TYPE_VDEVS_TXRX_STATS_PERIODIC_IND
+ *
+ * @details
+ *  HTT_T2H_MSG_TYPE_VDEVS_TXRX_STATS_PERIODIC_IND message is sent by the target
+ *  every periodic interval programmed in HTT_H2T_MSG_TYPE_VDEVS_TXRX_STATS_CFG.
+ *  After the host sends an initial HTT_H2T_MSG_TYPE_VDEVS_TXRX_STATS_CFG,
+ *  this HTT_T2H_MSG_TYPE_VDEVS_TXRX_STATS_PERIODIC_IND message will be sent
+ *  periodically by target even in the absence of any further HTT request
+ *  messages from host.
+ *
+ *  The message is formatted as follows:
+ *
+ *     |31                             16|15             8|7              0|
+ *     |---------------------------------+----------------+----------------|
+ *     |            payload_size         |     pdev_id    |   msg_type     |
+ *     |---------------------------------+----------------+----------------|
+ *     |                             reserved0                             |
+ *     |-------------------------------------------------------------------|
+ *     |                             reserved1                             |
+ *     |-------------------------------------------------------------------|
+ *     |                             reserved2                             |
+ *     |-------------------------------------------------------------------|
+ *     |                                                                   |
+ *     |                    VDEV specific Tx Rx stats info                 |
+ *     |                                                                   |
+ *     |-------------------------------------------------------------------|
+ *
+ * The message is interpreted as follows:
+ * dword0 - b'0:7   - msg_type: This will be set to 0x2c
+ *                    (HTT_T2H_MSG_TYPE_VDEVS_TXRX_STATS_PERIODIC_IND)
+ *          b'8:15  - pdev_id
+ *          b'16:31 - size in bytes of the payload that follows the 16-byte
+ *                    message header fields (msg_type through reserved2)
+ * dword1 - b'0:31  - reserved0.
+ * dword2 - b'0:31  - reserved1.
+ * dword3 - b'0:31  - reserved2.
+ */
+typedef struct {
+    A_UINT32 msg_type:       8,
+             pdev_id:        8,
+             payload_size:  16;
+    A_UINT32 reserved0;
+    A_UINT32 reserved1;
+    A_UINT32 reserved2;
+} htt_t2h_vdevs_txrx_stats_periodic_hdr_t;
+
+#define HTT_T2H_VDEVS_TXRX_STATS_PERIODIC_IND_HDR_SIZE          16
+
+#define HTT_T2H_VDEVS_TXRX_STATS_PERIODIC_IND_PDEV_ID_M         0x0000FF00
+#define HTT_T2H_VDEVS_TXRX_STATS_PERIODIC_IND_PDEV_ID_S         8
+
+#define HTT_T2H_VDEVS_TXRX_STATS_PERIODIC_IND_PDEV_ID_GET(_var) \
+    (((_var) & HTT_T2H_VDEVS_TXRX_STATS_PERIODIC_IND_PDEV_ID_M) >> HTT_T2H_VDEVS_TXRX_STATS_PERIODIC_IND_PDEV_ID_S)
+#define HTT_T2H_VDEVS_TXRX_STATS_PERIODIC_IND_PDEV_ID_SET(_var, _val)            \
+    do {                                                   \
+        HTT_CHECK_SET_VAL(HTT_T2H_VDEVS_TXRX_STATS_PERIODIC_IND_PDEV_ID, _val);  \
+        ((_var) |= ((_val) << HTT_T2H_VDEVS_TXRX_STATS_PERIODIC_IND_PDEV_ID_S)); \
+    } while (0)
+
+#define HTT_T2H_VDEVS_TXRX_STATS_PERIODIC_IND_PAYLOAD_SIZE_M    0xFFFF0000
+#define HTT_T2H_VDEVS_TXRX_STATS_PERIODIC_IND_PAYLOAD_SIZE_S    16
+
+#define HTT_T2H_VDEVS_TXRX_STATS_PERIODIC_IND_PAYLOAD_SIZE_GET(_var) \
+    (((_var) & HTT_T2H_VDEVS_TXRX_STATS_PERIODIC_IND_PAYLOAD_SIZE_M) >> HTT_T2H_VDEVS_TXRX_STATS_PERIODIC_IND_PAYLOAD_SIZE_S)
+#define HTT_T2H_VDEVS_TXRX_STATS_PERIODIC_IND_PAYLOAD_SIZE_SET(_var, _val)            \
+    do {                                                   \
+        HTT_CHECK_SET_VAL(HTT_T2H_VDEVS_TXRX_STATS_PERIODIC_IND_PAYLOAD_SIZE, _val);  \
+        ((_var) |= ((_val) << HTT_T2H_VDEVS_TXRX_STATS_PERIODIC_IND_PAYLOAD_SIZE_S)); \
+    } while (0)
+
+/* SOC related stats */
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+     /* When TQM is not able to find the peers during Tx, then it drops the packets
+     *  This can be due to either the peer is deleted or deletion is ongoing
+     * */
+    A_UINT32 inv_peers_msdu_drop_count_lo;
+    A_UINT32 inv_peers_msdu_drop_count_hi;
+} htt_t2h_soc_txrx_stats_common_tlv;
+
+/* VDEV HW Tx/Rx stats */
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 vdev_id;
+
+    /* Rx msdu byte cnt */
+    A_UINT32 rx_msdu_byte_cnt_lo;
+    A_UINT32 rx_msdu_byte_cnt_hi;
+
+    /* Rx msdu cnt */
+    A_UINT32 rx_msdu_cnt_lo;
+    A_UINT32 rx_msdu_cnt_hi;
+
+    /* tx msdu byte cnt */
+    A_UINT32 tx_msdu_byte_cnt_lo;
+    A_UINT32 tx_msdu_byte_cnt_hi;
+
+    /* tx msdu cnt */
+    A_UINT32 tx_msdu_cnt_lo;
+    A_UINT32 tx_msdu_cnt_hi;
+
+    /* tx excessive retry discarded msdu cnt*/
+    A_UINT32 tx_msdu_excessive_retry_discard_cnt_lo;
+    A_UINT32 tx_msdu_excessive_retry_discard_cnt_hi;
+
+    /* TX congestion ctrl msdu drop cnt */
+    A_UINT32 tx_msdu_cong_ctrl_drop_cnt_lo;
+    A_UINT32 tx_msdu_cong_ctrl_drop_cnt_hi;
+
+    /* discarded tx msdus cnt coz of time to live expiry */
+    A_UINT32 tx_msdu_ttl_expire_drop_cnt_lo;
+    A_UINT32 tx_msdu_ttl_expire_drop_cnt_hi;
+} htt_t2h_vdev_txrx_stats_hw_stats_tlv;
 
 #endif
