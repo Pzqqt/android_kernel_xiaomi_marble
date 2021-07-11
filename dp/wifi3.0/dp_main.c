@@ -6587,6 +6587,24 @@ static inline void dp_peer_rx_bufq_resources_init(struct dp_peer *peer)
 }
 #endif
 
+#ifdef QCA_VDEV_STATS_HW_OFFLOAD_SUPPORT
+/*
+ * dp_peer_hw_txrx_stats_init() - Initialize hw_txrx_stats_en in dp_peer
+ * @soc: Datapath soc handle
+ * @peer: Datapath peer handle
+ *
+ * Return: none
+ */
+static inline
+void dp_peer_hw_txrx_stats_init(struct dp_soc *soc, struct dp_peer *peer)
+{
+	peer->hw_txrx_stats_en =
+		wlan_cfg_get_vdev_stats_hw_offload_config(soc->wlan_cfg_ctx);
+}
+#else
+static inline
+void dp_peer_hw_txrx_stats_init(struct dp_soc *soc, struct dp_peer *peer) {}
+#endif
 /*
  * dp_peer_create_wifi3() - attach txrx peer
  * @soc_hdl: Datapath soc handle
@@ -6666,7 +6684,7 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 		dp_set_peer_isolation(peer, false);
 
 		dp_wds_ext_peer_init(peer);
-
+		dp_peer_hw_txrx_stats_init(soc, peer);
 		dp_peer_update_state(soc, peer, DP_PEER_STATE_INIT);
 
 		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
@@ -6716,7 +6734,7 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	dp_peer_add_ast(soc, peer, peer_mac_addr, ast_type, 0);
 	qdf_spinlock_create(&peer->peer_info_lock);
 	dp_wds_ext_peer_init(peer);
-
+	dp_peer_hw_txrx_stats_init(soc, peer);
 	dp_peer_rx_bufq_resources_init(peer);
 
 	qdf_mem_copy(
@@ -8235,6 +8253,8 @@ void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 		return;
 	}
 
+	soc = pdev->soc;
+
 	qdf_mem_zero(&pdev->stats.tx, sizeof(pdev->stats.tx));
 	qdf_mem_zero(&pdev->stats.rx, sizeof(pdev->stats.rx));
 	qdf_mem_zero(&pdev->stats.tx_i, sizeof(pdev->stats.tx_i));
@@ -8242,7 +8262,6 @@ void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 	if (dp_monitor_is_enable_mcopy_mode(pdev))
 		DP_UPDATE_STATS(pdev, pdev->invalid_peer);
 
-	soc = pdev->soc;
 	qdf_spin_lock_bh(&pdev->vdev_list_lock);
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
 
@@ -8293,12 +8312,16 @@ static QDF_STATUS dp_vdev_getstats(struct cdp_vdev *vdev_handle,
 
 	dp_aggregate_vdev_stats(vdev, vdev_stats);
 
-	stats->tx_packets = vdev_stats->tx_i.rcvd.num;
-	stats->tx_bytes = vdev_stats->tx_i.rcvd.bytes;
+	stats->tx_packets = vdev_stats->tx.comp_pkt.num;
+	stats->tx_bytes = vdev_stats->tx.comp_pkt.bytes;
 
-	stats->tx_errors = vdev_stats->tx.tx_failed +
-		vdev_stats->tx_i.dropped.dropped_pkt.num;
-	stats->tx_dropped = stats->tx_errors;
+	stats->tx_errors = vdev_stats->tx.tx_failed;
+	stats->tx_dropped = vdev_stats->tx_i.dropped.dropped_pkt.num +
+			    vdev_stats->tx_i.sg.dropped_host.num +
+			    vdev_stats->tx_i.mcast_en.dropped_map_error +
+			    vdev_stats->tx_i.mcast_en.dropped_self_mac +
+			    vdev_stats->tx_i.mcast_en.dropped_send_fail +
+			    vdev_stats->tx.nawds_mcast_drop;
 
 	stats->rx_packets = vdev_stats->rx.unicast.num +
 		vdev_stats->rx.multicast.num +
@@ -8326,12 +8349,17 @@ static void dp_pdev_getstats(struct cdp_pdev *pdev_handle,
 
 	dp_aggregate_pdev_stats(pdev);
 
-	stats->tx_packets = pdev->stats.tx_i.rcvd.num;
-	stats->tx_bytes = pdev->stats.tx_i.rcvd.bytes;
+	stats->tx_packets = pdev->stats.tx.comp_pkt.num;
+	stats->tx_bytes = pdev->stats.tx.comp_pkt.bytes;
 
-	stats->tx_errors = pdev->stats.tx.tx_failed +
-		pdev->stats.tx_i.dropped.dropped_pkt.num;
-	stats->tx_dropped = stats->tx_errors;
+	stats->tx_errors = pdev->stats.tx.tx_failed;
+	stats->tx_dropped = pdev->stats.tx_i.dropped.dropped_pkt.num +
+			    pdev->stats.tx_i.sg.dropped_host.num +
+			    pdev->stats.tx_i.mcast_en.dropped_map_error +
+			    pdev->stats.tx_i.mcast_en.dropped_self_mac +
+			    pdev->stats.tx_i.mcast_en.dropped_send_fail +
+			    pdev->stats.tx.nawds_mcast_drop +
+			    pdev->stats.tso_stats.dropped_host.num;
 
 	stats->rx_packets = pdev->stats.rx.unicast.num +
 		pdev->stats.rx.multicast.num +

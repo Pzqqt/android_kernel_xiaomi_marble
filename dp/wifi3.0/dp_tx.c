@@ -4183,6 +4183,50 @@ out:
 	return;
 }
 
+#if defined(QCA_VDEV_STATS_HW_OFFLOAD_SUPPORT) && \
+	defined(QCA_ENHANCED_STATS_SUPPORT)
+/*
+ * dp_tx_update_peer_basic_stats(): Update peer basic stats
+ * @peer: Datapath peer handle
+ * @length: Length of the packet
+ * @tx_status: Tx status from TQM/FW
+ * @update: enhanced flag value present in dp_pdev
+ *
+ * Return: none
+ */
+static inline
+void dp_tx_update_peer_basic_stats(struct dp_peer *peer, uint32_t length,
+				   uint8_t tx_status, bool update)
+{
+	if ((!peer->hw_txrx_stats_en) || update) {
+		DP_STATS_INC_PKT(peer, tx.comp_pkt, 1, length);
+		DP_STATS_INCC(peer, tx.tx_failed, 1,
+			      tx_status != HAL_TX_TQM_RR_FRAME_ACKED);
+	}
+}
+#elif defined(QCA_VDEV_STATS_HW_OFFLOAD_SUPPORT)
+static inline
+void dp_tx_update_peer_basic_stats(struct dp_peer *peer, uint32_t length,
+				   uint8_t tx_status, bool update)
+{
+	if (!peer->hw_txrx_stats_en) {
+		DP_STATS_INC_PKT(peer, tx.comp_pkt, 1, length);
+		DP_STATS_INCC(peer, tx.tx_failed, 1,
+			      tx_status != HAL_TX_TQM_RR_FRAME_ACKED);
+	}
+}
+
+#else
+static inline
+void dp_tx_update_peer_basic_stats(struct dp_peer *peer, uint32_t length,
+				   uint8_t tx_status, bool update)
+{
+	DP_STATS_INC_PKT(peer, tx.comp_pkt, 1, length);
+	DP_STATS_INCC(peer, tx.tx_failed, 1,
+		      tx_status != HAL_TX_TQM_RR_FRAME_ACKED);
+}
+#endif
+
 /**
  * dp_tx_comp_process_desc_list() - Tx complete software descriptor handler
  * @soc: core txrx main context
@@ -4220,19 +4264,11 @@ dp_tx_comp_process_desc_list(struct dp_soc *soc,
 		if (qdf_likely(desc->flags & DP_TX_DESC_FLAG_SIMPLE)) {
 			struct dp_pdev *pdev = desc->pdev;
 
-			if (qdf_likely(peer)) {
-				/*
-				 * Increment peer statistics
-				 * Minimal statistics update done here
-				 */
-				DP_STATS_INC_PKT(peer, tx.comp_pkt, 1,
-						 desc->length);
-
-				if (desc->tx_status !=
-						HAL_TX_TQM_RR_FRAME_ACKED)
-					DP_STATS_INC(peer, tx.tx_failed, 1);
-			}
-
+			if (qdf_likely(peer))
+				dp_tx_update_peer_basic_stats(peer,
+							      desc->length,
+							      desc->tx_status,
+							      false);
 			qdf_assert(pdev);
 			dp_tx_outstanding_dec(pdev);
 
@@ -4389,6 +4425,7 @@ void dp_tx_process_htt_completion(struct dp_soc *soc,
 			ts.peer_id = HTT_INVALID_PEER;
 			ts.tid = HTT_INVALID_TID;
 		}
+		ts.release_src = HAL_TX_COMP_RELEASE_SOURCE_FW;
 		ts.ppdu_id =
 			HTT_TX_WBM_COMPLETION_V2_SCH_CMD_ID_GET(
 					htt_desc[1]);
@@ -4413,6 +4450,12 @@ void dp_tx_process_htt_completion(struct dp_soc *soc,
 
 		peer = dp_peer_get_ref_by_id(soc, ts.peer_id,
 					     DP_MOD_ID_HTT_COMP);
+
+		if (qdf_likely(peer))
+			dp_tx_update_peer_basic_stats(peer,
+						      qdf_nbuf_len(tx_desc->nbuf),
+						      tx_status,
+						      pdev->enhanced_stats_en);
 
 		dp_tx_comp_process_tx_status(soc, tx_desc, &ts, peer, ring_id);
 		dp_tx_comp_process_desc(soc, tx_desc, &ts, peer);
