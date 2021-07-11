@@ -29,6 +29,7 @@
 #include "wlan_crypto_global_api.h"
 #include <wlan_cm_api.h>
 #include "connection_mgr/core/src/wlan_cm_roam.h"
+#include "wlan_cm_roam_api.h"
 
 /* Support for "Fast roaming" (i.e., ESE, LFR, or 802.11r.) */
 #define BG_SCAN_OCCUPIED_CHANNEL_LIST_LEN 15
@@ -1963,5 +1964,89 @@ uint32_t wlan_cm_get_roam_states(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 
 	return roam_states;
+}
+#endif
+
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+static void
+cm_handle_roam_offload_events(struct roam_offload_roam_event roam_event)
+{
+	switch (roam_event.reason) {
+	case ROAM_REASON_HO_FAILED: {
+		struct qdf_mac_addr bssid;
+
+		bssid.bytes[0] = roam_event.notif_params >> 0 & 0xFF;
+		bssid.bytes[1] = roam_event.notif_params >> 8 & 0xFF;
+		bssid.bytes[2] = roam_event.notif_params >> 16 & 0xFF;
+		bssid.bytes[3] = roam_event.notif_params >> 24 & 0xFF;
+		bssid.bytes[4] = roam_event.notif_params1 >> 0 & 0xFF;
+		bssid.bytes[5] = roam_event.notif_params1 >> 8 & 0xFF;
+		cm_handle_roam_reason_ho_failed(roam_event.vdev_id, bssid,
+						roam_event.hw_mode_trans_ind);
+	}
+	break;
+	case ROAM_REASON_INVALID:
+		cm_invalid_roam_reason_handler(roam_event.vdev_id,
+					       roam_event.notif);
+		break;
+	default:
+		break;
+	}
+}
+#else
+static void
+cm_handle_roam_offload_events(struct roam_offload_roam_event roam_event)
+{
+	mlme_debug("Unhandled roam event with reason 0x%x for vdev_id %u",
+		   roam_event.reason, roam_event.vdev_id);
+}
+#endif
+
+QDF_STATUS
+cm_roam_event_handler(struct roam_offload_roam_event roam_event)
+{
+	switch (roam_event.reason) {
+	case ROAM_REASON_BTM:
+		cm_handle_roam_reason_btm(roam_event.vdev_id);
+		break;
+	case ROAM_REASON_BMISS:
+		cm_handle_roam_reason_bmiss(roam_event.vdev_id,
+					    roam_event.rssi);
+		break;
+	case ROAM_REASON_BETTER_AP:
+		cm_handle_roam_reason_better_ap(roam_event.vdev_id,
+						roam_event.rssi);
+		break;
+	case ROAM_REASON_SUITABLE_AP:
+		cm_handle_roam_reason_suitable_ap(roam_event.vdev_id,
+						  roam_event.rssi);
+		break;
+	case ROAM_REASON_HO_FAILED:
+	case ROAM_REASON_INVALID:
+		cm_handle_roam_offload_events(roam_event);
+		break;
+	case ROAM_REASON_RSO_STATUS:
+		cm_rso_cmd_status_event_handler(roam_event.vdev_id,
+						roam_event.notif);
+		break;
+	case ROAM_REASON_INVOKE_ROAM_FAIL:
+		cm_handle_roam_reason_invoke_roam_fail(roam_event.vdev_id,
+						roam_event.notif_params,
+						roam_event.hw_mode_trans_ind);
+		break;
+	case ROAM_REASON_DEAUTH:
+		cm_handle_roam_reason_deauth(roam_event.vdev_id,
+					     roam_event.notif_params,
+					     roam_event.deauth_disassoc_frame,
+					     roam_event.notif_params1);
+		break;
+	default:
+		mlme_debug("Unhandled roam event with reason 0x%x for vdev_id %u",
+			   roam_event.reason, roam_event.vdev_id);
+		break;
+	}
+
+	return QDF_STATUS_SUCCESS;
 }
 #endif
