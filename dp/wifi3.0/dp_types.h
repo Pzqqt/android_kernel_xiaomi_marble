@@ -1017,6 +1017,8 @@ struct dp_soc_stats {
 		uint32_t hp_oos2;
 		/* tx desc freed as part of vdev detach */
 		uint32_t tx_comp_exception;
+		/* TQM drops after/during peer delete */
+		uint64_t tqm_drop_no_peer;
 	} tx;
 
 	/* SOC level RX stats */
@@ -3333,7 +3335,8 @@ struct dp_peer {
 		valid:1, /* valid bit */
 		in_twt:1, /* in TWT session */
 		delete_in_progress:1, /* Indicate kickout sent */
-		sta_self_peer:1; /* Indicate STA self peer */
+		sta_self_peer:1, /* Indicate STA self peer */
+		hw_txrx_stats_en:1; /*Indicate HW offload vdev stats */
 
 #ifdef WLAN_FEATURE_11BE_MLO
 	uint8_t assoc_link:1, /* first assoc link peer for MLO */
@@ -3418,6 +3421,7 @@ struct dp_peer {
 	struct dp_wds_ext_peer wds_ext;
 	ol_txrx_rx_fp osif_rx;
 #endif
+
 #ifdef WLAN_SUPPORT_MESH_LATENCY
 	struct dp_peer_mesh_latency_parameter mesh_latency_params[DP_MAX_TIDS];
 #endif

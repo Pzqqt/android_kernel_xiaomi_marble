@@ -1335,8 +1335,11 @@ static inline void dp_update_vdev_stats(struct dp_soc *soc,
 		tgtobj->rx.reception_type[i] +=
 			srcobj->stats.rx.reception_type[i];
 
-	tgtobj->tx.comp_pkt.bytes += srcobj->stats.tx.comp_pkt.bytes;
-	tgtobj->tx.comp_pkt.num += srcobj->stats.tx.comp_pkt.num;
+	if (!wlan_cfg_get_vdev_stats_hw_offload_config(soc->wlan_cfg_ctx)) {
+		tgtobj->tx.comp_pkt.bytes += srcobj->stats.tx.comp_pkt.bytes;
+		tgtobj->tx.comp_pkt.num += srcobj->stats.tx.comp_pkt.num;
+		tgtobj->tx.tx_failed += srcobj->stats.tx.tx_failed;
+	}
 	tgtobj->tx.ucast.num += srcobj->stats.tx.ucast.num;
 	tgtobj->tx.ucast.bytes += srcobj->stats.tx.ucast.bytes;
 	tgtobj->tx.mcast.num += srcobj->stats.tx.mcast.num;
@@ -1354,7 +1357,6 @@ static inline void dp_update_vdev_stats(struct dp_soc *soc,
 		srcobj->stats.tx.nawds_mcast_drop;
 	tgtobj->tx.num_ppdu_cookie_valid +=
 		srcobj->stats.tx.num_ppdu_cookie_valid;
-	tgtobj->tx.tx_failed += srcobj->stats.tx.tx_failed;
 	tgtobj->tx.ofdma += srcobj->stats.tx.ofdma;
 	tgtobj->tx.stbc += srcobj->stats.tx.stbc;
 	tgtobj->tx.ldpc += srcobj->stats.tx.ldpc;
@@ -1468,14 +1470,16 @@ static inline void dp_update_vdev_stats(struct dp_soc *soc,
 		for (i = 0; i < MAX_RECEPTION_TYPES; i++) \
 			DP_STATS_AGGR(_tgtobj, _srcobj, rx.reception_type[i]); \
 		\
-		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.comp_pkt); \
+		if (!wlan_cfg_get_vdev_stats_hw_offload_config(soc->wlan_cfg_ctx)) { \
+			DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.comp_pkt); \
+			DP_STATS_AGGR(_tgtobj, _srcobj, tx.tx_failed); \
+		} \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.ucast); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.mcast); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.bcast); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.tx_success); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.nawds_mcast); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, tx.nawds_mcast_drop); \
-		DP_STATS_AGGR(_tgtobj, _srcobj, tx.tx_failed); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, tx.ofdma); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, tx.stbc); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, tx.ldpc); \
