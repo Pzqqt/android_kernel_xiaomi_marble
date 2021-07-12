@@ -1356,9 +1356,8 @@ QDF_STATUS pmo_core_psoc_send_host_wakeup_ind_to_fw(
 	pmo_enter();
 
 	hif_ctx = pmo_core_psoc_get_hif_handle(psoc);
-	hif_set_ep_vote_access(hif_ctx,
-			       HIF_EP_VOTE_NONDP_ACCESS,
-			       HIF_EP_VOTE_INTERMEDIATE_ACCESS);
+
+	hif_set_ep_intermediate_vote_access(hif_ctx);
 
 	qdf_event_reset(&psoc_ctx->wow.target_resume);
 
