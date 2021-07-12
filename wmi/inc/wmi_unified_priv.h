@@ -405,6 +405,10 @@ QDF_STATUS
 (*extract_vdev_disconnect_event)(wmi_unified_t wmi_handle,
 				 uint8_t *event, uint32_t data_len,
 				 struct vdev_disconnect_event_data *data);
+QDF_STATUS
+(*extract_roam_scan_chan_list)(wmi_unified_t wmi_handle,
+			       uint8_t *event, uint32_t data_len,
+			       struct cm_roam_scan_ch_resp **data);
 #endif /* ROAM_TARGET_IF_CONVERGENCE */
 #endif
 QDF_STATUS (*send_vdev_create_cmd)(wmi_unified_t wmi_handle,
