@@ -825,7 +825,7 @@ void policy_mgr_restore_deleted_conn_info(struct wlan_objmgr_psoc *psoc,
 	uint32_t conn_index;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
-	if (MAX_NUMBER_OF_CONC_CONNECTIONS <= num_cxn_del || 0 == num_cxn_del) {
+	if (MAX_NUMBER_OF_CONC_CONNECTIONS < num_cxn_del || 0 == num_cxn_del) {
 		policy_mgr_err("Failed to restore %d/%d deleted information",
 				num_cxn_del, MAX_NUMBER_OF_CONC_CONNECTIONS);
 		return;
