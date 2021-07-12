@@ -1437,19 +1437,6 @@ QDF_STATUS csr_get_tsm_stats(struct mac_context *mac,
 }
 #endif /* FEATURE_WLAN_ESE */
 
-/**
- * csr_roam_is_roam_offload_scan_enabled() - is roam offload enabled
- * @mac_ctx: Global MAC context
- *
- * Returns whether firmware based background scan is currently enabled or not.
- *
- * Return: true if roam offload scan enabled; false otherwise
- */
-bool csr_roam_is_roam_offload_scan_enabled(struct mac_context *mac_ctx)
-{
-	return mac_ctx->mlme_cfg->lfr.roam_scan_offload_enabled;
-}
-
 /* The funcns csr_convert_cb_ini_value_to_phy_cb_state and
  * csr_convert_phy_cb_state_to_ini_value have been introduced
  * to convert the ini value to the ENUM used in csr and MAC for CB state
@@ -2810,18 +2797,6 @@ bool csr_roam_is11r_assoc(struct mac_context *mac, uint8_t sessionId)
 				   &config);
 
 	return config.bool_value;
-}
-
-bool csr_roam_is_fast_roam_enabled(struct mac_context *mac, uint8_t vdev_id)
-{
-	if (wlan_get_opmode_from_vdev_id(mac->pdev, vdev_id) != QDF_STA_MODE)
-		return false;
-
-	if (true == CSR_IS_FASTROAM_IN_CONCURRENCY_INI_FEATURE_ENABLED(mac))
-		return mac->mlme_cfg->lfr.lfr_enabled;
-	else
-		return mac->mlme_cfg->lfr.lfr_enabled &&
-			(!csr_is_concurrent_session_running(mac));
 }
 
 /**
@@ -5315,11 +5290,6 @@ QDF_STATUS csr_get_cfg_valid_channels(struct mac_context *mac,
 	return QDF_STATUS_SUCCESS;
 }
 
-int8_t csr_get_cfg_max_tx_power(struct mac_context *mac, uint32_t ch_freq)
-{
-	return wlan_get_cfg_max_tx_power(mac->psoc, mac->pdev, ch_freq);
-}
-
 /**
  * csr_populate_basic_rates() - populates OFDM or CCK rates
  * @rates:         rate struct to populate
@@ -5640,7 +5610,7 @@ void csr_roam_prepare_bss_params(struct mac_context *mac, uint32_t sessionId,
 		return;
 	}
 
-	csr_roam_get_bss_start_parms(mac, sessionId, pProfile, 
+	csr_roam_get_bss_start_parms(mac, sessionId, pProfile,
 				     &pSession->bssParams,
 				     skip_hostapd_rate);
 	/* Use the first SSID */

@@ -18551,7 +18551,8 @@ static int __wlan_hdd_cfg80211_get_key(struct wiphy *wiphy,
 
 	memset(&params, 0, sizeof(params));
 
-	if (CSR_MAX_NUM_KEY <= key_index) {
+	if (key_index >= (WLAN_CRYPTO_MAXKEYIDX + WLAN_CRYPTO_MAXIGTKKEYIDX +
+			  WLAN_CRYPTO_MAXBIGTKKEYIDX)) {
 		hdd_err("Invalid key index: %d", key_index);
 		return -EINVAL;
 	}
@@ -18724,7 +18725,8 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 		  qdf_opmode_str(adapter->device_mode),
 		  adapter->device_mode, key_index);
 
-	if (CSR_MAX_NUM_KEY <= key_index) {
+	if (key_index >= (WLAN_CRYPTO_MAXKEYIDX + WLAN_CRYPTO_MAXIGTKKEYIDX +
+			  WLAN_CRYPTO_MAXBIGTKKEYIDX)) {
 		hdd_err("Invalid key index: %d", key_index);
 		return -EINVAL;
 	}

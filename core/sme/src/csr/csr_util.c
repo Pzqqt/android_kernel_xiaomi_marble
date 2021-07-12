@@ -36,130 +36,6 @@
 #include "wlan_cm_roam_api.h"
 #include <../../core/src/wlan_cm_vdev_api.h>
 
-uint8_t csr_wpa_oui[][CSR_WPA_OUI_SIZE] = {
-	{0x00, 0x50, 0xf2, 0x00}
-	,
-	{0x00, 0x50, 0xf2, 0x01}
-	,
-	{0x00, 0x50, 0xf2, 0x02}
-	,
-	{0x00, 0x50, 0xf2, 0x03}
-	,
-	{0x00, 0x50, 0xf2, 0x04}
-	,
-	{0x00, 0x50, 0xf2, 0x05}
-	,
-#ifdef FEATURE_WLAN_ESE
-	{0x00, 0x40, 0x96, 0x00}
-	,                       /* CCKM */
-#endif /* FEATURE_WLAN_ESE */
-};
-
-#define FT_PSK_IDX   4
-#define FT_8021X_IDX 3
-
-/*
- * PLEASE DO NOT ADD THE #IFDEF IN BELOW TABLE,
- * IF STILL REQUIRE THEN PLEASE ADD NULL ENTRIES
- * OTHERWISE IT WILL BREAK OTHER LOWER
- * SECUIRTY MODES.
- */
-
-uint8_t csr_rsn_oui[][CSR_RSN_OUI_SIZE] = {
-	{0x00, 0x0F, 0xAC, 0x00}
-	,                       /* group cipher */
-	{0x00, 0x0F, 0xAC, 0x01}
-	,                       /* WEP-40 or RSN */
-	{0x00, 0x0F, 0xAC, 0x02}
-	,                       /* TKIP or RSN-PSK */
-	{0x00, 0x0F, 0xAC, 0x03}
-	,                       /* Reserved */
-	{0x00, 0x0F, 0xAC, 0x04}
-	,                       /* AES-CCMP */
-	{0x00, 0x0F, 0xAC, 0x05}
-	,                       /* WEP-104 */
-	{0x00, 0x40, 0x96, 0x00}
-	,                       /* CCKM */
-	{0x00, 0x0F, 0xAC, 0x06}
-	,                       /* BIP (encryption type) or
-				 * RSN-PSK-SHA256 (authentication type)
-				 */
-	/* RSN-8021X-SHA256 (authentication type) */
-	{0x00, 0x0F, 0xAC, 0x05},
-#ifdef WLAN_FEATURE_FILS_SK
-#define ENUM_FILS_SHA256 9
-	/* FILS SHA256 */
-	{0x00, 0x0F, 0xAC, 0x0E},
-#define ENUM_FILS_SHA384 10
-	/* FILS SHA384 */
-	{0x00, 0x0F, 0xAC, 0x0F},
-#define ENUM_FT_FILS_SHA256 11
-	/* FILS FT SHA256 */
-	{0x00, 0x0F, 0xAC, 0x10},
-#define ENUM_FT_FILS_SHA384 12
-	/* FILS FT SHA384 */
-	{0x00, 0x0F, 0xAC, 0x11},
-#else
-	{0x00, 0x00, 0x00, 0x00},
-	{0x00, 0x00, 0x00, 0x00},
-	{0x00, 0x00, 0x00, 0x00},
-	{0x00, 0x00, 0x00, 0x00},
-#endif
-	/* AES GCMP */
-	{0x00, 0x0F, 0xAC, 0x08},
-	/* AES GCMP-256 */
-	{0x00, 0x0F, 0xAC, 0x09},
-#define ENUM_DPP_RSN 15
-	/* DPP RSN */
-	{0x50, 0x6F, 0x9A, 0x02},
-#define ENUM_OWE 16
-	/* OWE https://tools.ietf.org/html/rfc8110 */
-	{0x00, 0x0F, 0xAC, 0x12},
-#define ENUM_SUITEB_EAP256 17
-	{0x00, 0x0F, 0xAC, 0x0B},
-#define ENUM_SUITEB_EAP384 18
-	{0x00, 0x0F, 0xAC, 0x0C},
-
-#ifdef WLAN_FEATURE_SAE
-#define ENUM_SAE 19
-	/* SAE */
-	{0x00, 0x0F, 0xAC, 0x08},
-#define ENUM_FT_SAE 20
-	/* FT SAE */
-	{0x00, 0x0F, 0xAC, 0x09},
-#else
-	{0x00, 0x00, 0x00, 0x00},
-	{0x00, 0x00, 0x00, 0x00},
-#endif
-#define ENUM_OSEN 21
-	/* OSEN RSN */
-	{0x50, 0x6F, 0x9A, 0x01},
-#define ENUM_FT_SUITEB_SHA384 22
-	/* FT Suite-B SHA384 */
-	{0x00, 0x0F, 0xAC, 0x0D},
-
-	/* define new oui here, update #define CSR_OUI_***_INDEX  */
-};
-
-#ifdef FEATURE_WLAN_WAPI
-uint8_t csr_wapi_oui[][CSR_WAPI_OUI_SIZE] = {
-	{0x00, 0x14, 0x72, 0x00}
-	,                       /* Reserved */
-	{0x00, 0x14, 0x72, 0x01}
-	,                       /* WAI certificate or SMS4 */
-	{0x00, 0x14, 0x72, 0x02} /* WAI PSK */
-};
-#endif /* FEATURE_WLAN_WAPI */
-
-uint8_t csr_group_mgmt_oui[][CSR_RSN_OUI_SIZE] = {
-#define ENUM_CMAC 0
-	{0x00, 0x0F, 0xAC, 0x06},
-#define ENUM_GMAC_128 1
-	{0x00, 0x0F, 0xAC, 0x0B},
-#define ENUM_GMAC_256 2
-	{0x00, 0x0F, 0xAC, 0x0C},
-};
-
 #define CASE_RETURN_STR(n) {\
 	case (n): return (# n);\
 }
@@ -293,20 +169,6 @@ const char *csr_phy_mode_str(eCsrPhyMode phy_mode)
 	default:
 		return "unknown";
 	}
-}
-
-void csr_purge_vdev_pending_ser_cmd_list(struct mac_context *mac_ctx,
-					 uint32_t vdev_id)
-{
-	wlan_serialization_purge_all_pending_cmd_by_vdev_id(mac_ctx->pdev,
-							    vdev_id);
-}
-
-void csr_purge_vdev_all_scan_ser_cmd_list(struct mac_context *mac_ctx,
-					  uint32_t vdev_id)
-{
-	wlan_serialization_purge_all_scan_cmd_by_vdev_id(mac_ctx->pdev,
-							 vdev_id);
 }
 
 void csr_purge_pdev_all_ser_cmd_list(struct mac_context *mac_ctx)
@@ -916,25 +778,6 @@ bool csr_is_all_session_disconnected(struct mac_context *mac)
 	return fRc;
 }
 
-bool csr_is_concurrent_session_running(struct mac_context *mac)
-{
-	uint8_t vdev_id, noOfCocurrentSession = 0;
-	bool fRc = false;
-
-	for (vdev_id = 0; vdev_id < WLAN_MAX_VDEVS; vdev_id++) {
-		if (!CSR_IS_SESSION_VALID(mac, vdev_id))
-			continue;
-		if (csr_is_conn_state_connected_infra_ap(mac, vdev_id) ||
-		    cm_is_vdevid_connected(mac->pdev, vdev_id))
-			++noOfCocurrentSession;
-	}
-
-	/* More than one session is Up and Running */
-	if (noOfCocurrentSession > 1)
-		fRc = true;
-	return fRc;
-}
-
 bool csr_is_infra_ap_started(struct mac_context *mac)
 {
 	uint32_t sessionId;
@@ -964,13 +807,6 @@ bool csr_is_conn_state_disconnected(struct mac_context *mac, uint8_t vdev_id)
 
 	return eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED ==
 	       mac->roam.roamSession[vdev_id].connectState;
-}
-
-bool csr_is_infra_bss_desc(struct bss_description *pSirBssDesc)
-{
-	tSirMacCapabilityInfo dot11Caps = csr_get_bss_capabilities(pSirBssDesc);
-
-	return (bool) dot11Caps.ess;
 }
 
 static bool csr_is_qos_bss_desc(struct bss_description *pSirBssDesc)
@@ -1073,14 +909,6 @@ csr_get_qos_from_bss_desc(struct mac_context *mac_ctx,
 	return qosType;
 }
 
-/* Caller allocates memory for pIEStruct */
-QDF_STATUS csr_parse_bss_description_ies(struct mac_context *mac_ctx,
-					 struct bss_description *bss_desc,
-					 tDot11fBeaconIEs *pIEStruct)
-{
-	return wlan_parse_bss_description_ies(mac_ctx, bss_desc, pIEStruct);
-}
-
 /* This function will allocate memory for the parsed IEs to the caller.
  * Caller must free the memory after it is done with the data only if
  * this function succeeds
@@ -1091,44 +919,6 @@ QDF_STATUS csr_get_parsed_bss_description_ies(struct mac_context *mac_ctx,
 {
 	return wlan_get_parsed_bss_description_ies(mac_ctx, bss_desc,
 						   ppIEStruct);
-}
-
-bool csr_is_nullssid(uint8_t *pBssSsid, uint8_t len)
-{
-	bool fNullSsid = false;
-
-	uint32_t SsidLength;
-	uint8_t *pSsidStr;
-
-	do {
-		if (0 == len) {
-			fNullSsid = true;
-			break;
-		}
-		/* Consider 0 or space for hidden SSID */
-		if (0 == pBssSsid[0]) {
-			fNullSsid = true;
-			break;
-		}
-
-		SsidLength = len;
-		pSsidStr = pBssSsid;
-
-		while (SsidLength) {
-			if (*pSsidStr)
-				break;
-
-			pSsidStr++;
-			SsidLength--;
-		}
-
-		if (0 == SsidLength) {
-			fNullSsid = true;
-			break;
-		}
-	} while (0);
-
-	return fNullSsid;
 }
 
 uint32_t csr_get_frag_thresh(struct mac_context *mac_ctx)
@@ -1356,84 +1146,6 @@ bool csr_is_pmkid_found_for_peer(struct mac_context *mac,
 	return false;
 }
 
-bool csr_rates_is_dot11_rate11a_supported_rate(uint8_t dot11Rate)
-{
-	bool fSupported = false;
-	uint16_t nonBasicRate =
-		(uint16_t) (BITS_OFF(dot11Rate, CSR_DOT11_BASIC_RATE_MASK));
-
-	switch (nonBasicRate) {
-	case SUPP_RATE_6_MBPS:
-	case SUPP_RATE_9_MBPS:
-	case SUPP_RATE_12_MBPS:
-	case SUPP_RATE_18_MBPS:
-	case SUPP_RATE_24_MBPS:
-	case SUPP_RATE_36_MBPS:
-	case SUPP_RATE_48_MBPS:
-	case SUPP_RATE_54_MBPS:
-		fSupported = true;
-		break;
-
-	default:
-		break;
-	}
-
-	return fSupported;
-}
-
-tAniEdType csr_translate_encrypt_type_to_ed_type(eCsrEncryptionType EncryptType)
-{
-	tAniEdType edType;
-
-	switch (EncryptType) {
-	default:
-	case eCSR_ENCRYPT_TYPE_NONE:
-		edType = eSIR_ED_NONE;
-		break;
-
-	case eCSR_ENCRYPT_TYPE_WEP40_STATICKEY:
-	case eCSR_ENCRYPT_TYPE_WEP40:
-		edType = eSIR_ED_WEP40;
-		break;
-
-	case eCSR_ENCRYPT_TYPE_WEP104_STATICKEY:
-	case eCSR_ENCRYPT_TYPE_WEP104:
-		edType = eSIR_ED_WEP104;
-		break;
-
-	case eCSR_ENCRYPT_TYPE_TKIP:
-		edType = eSIR_ED_TKIP;
-		break;
-
-	case eCSR_ENCRYPT_TYPE_AES:
-		edType = eSIR_ED_CCMP;
-		break;
-#ifdef FEATURE_WLAN_WAPI
-	case eCSR_ENCRYPT_TYPE_WPI:
-		edType = eSIR_ED_WPI;
-		break;
-#endif
-	/* 11w BIP */
-	case eCSR_ENCRYPT_TYPE_AES_CMAC:
-		edType = eSIR_ED_AES_128_CMAC;
-		break;
-	case eCSR_ENCRYPT_TYPE_AES_GCMP:
-		edType = eSIR_ED_GCMP;
-		break;
-	case eCSR_ENCRYPT_TYPE_AES_GCMP_256:
-		edType = eSIR_ED_GCMP_256;
-		break;
-	case eCSR_ENCRYPT_TYPE_AES_GMAC_128:
-		edType = eSIR_ED_AES_GMAC_128;
-		break;
-	case eCSR_ENCRYPT_TYPE_AES_GMAC_256:
-		edType = eSIR_ED_AES_GMAC_256;
-		break;
-	}
-
-	return edType;
-}
-
 bool csr_is_bssid_match(struct qdf_mac_addr *pProfBssid,
 			struct qdf_mac_addr *BssBssid)
 {
@@ -1488,21 +1200,6 @@ void csr_release_profile(struct mac_context *mac,
 		}
 		qdf_mem_zero(pProfile, sizeof(struct csr_roam_profile));
 	}
-}
-
-tSirResultCodes csr_get_de_auth_rsp_status_code(struct deauth_rsp *pSmeRsp)
-{
-	uint8_t *pBuffer = (uint8_t *) pSmeRsp;
-	uint32_t ret;
-
-	pBuffer +=
-		(sizeof(uint16_t) + sizeof(uint16_t) + sizeof(uint8_t) +
-		 sizeof(uint16_t));
-	/* tSirResultCodes is an enum, assuming is 32bit */
-	/* If we cannot make this assumption, use copymemory */
-	qdf_get_u32(pBuffer, &ret);
-
-	return (tSirResultCodes) ret;
 }
 
 enum bss_type csr_translate_bsstype_to_mac_type(eCsrRoamBssType csrtype)
@@ -1628,37 +1325,6 @@ csr_get_cfg_dot11_mode_from_csr_phy_mode(struct csr_roam_profile *pProfile,
 	return cfgDot11Mode;
 }
 
-QDF_STATUS csr_get_regulatory_domain_for_country(struct mac_context *mac,
-						 uint8_t *pCountry,
-						 v_REGDOMAIN_t *pDomainId,
-						 enum country_src source)
-{
-	QDF_STATUS status = QDF_STATUS_E_INVAL;
-	QDF_STATUS qdf_status;
-	uint8_t countryCode[CDS_COUNTRY_CODE_LEN + 1];
-	v_REGDOMAIN_t domainId;
-
-	if (pCountry) {
-		countryCode[0] = pCountry[0];
-		countryCode[1] = pCountry[1];
-		qdf_status = wlan_reg_get_domain_from_country_code(&domainId,
-								  countryCode,
-								  source);
-
-		if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			if (pDomainId)
-				*pDomainId = domainId;
-			status = QDF_STATUS_SUCCESS;
-		} else {
-			sme_warn("Couldn't find domain for country code %c%c",
-				pCountry[0], pCountry[1]);
-			status = QDF_STATUS_E_INVAL;
-		}
-	}
-
-	return status;
-}
-
 QDF_STATUS csr_get_modify_profile_fields(struct mac_context *mac,
 					uint32_t sessionId,
 					 tCsrRoamModifyProfileFields *
@@ -1749,46 +1415,6 @@ const char *sme_bss_type_to_string(const uint8_t bss_type)
 	default:
 		return "unknown bss type";
 	}
-}
-
-/**
- * csr_wait_for_connection_update() - Wait for hw mode update
- * @mac: Pointer to the MAC context
- * @do_release_reacquire_lock: Indicates whether release and
- * re-acquisition of SME global lock is required.
- *
- * Waits for CONNECTION_UPDATE_TIMEOUT time so that the
- * hw mode update can get processed.
- *
- * Return: True if the wait was successful, false otherwise
- */
-bool csr_wait_for_connection_update(struct mac_context *mac,
-		bool do_release_reacquire_lock)
-{
-	QDF_STATUS status, ret;
-
-	if (do_release_reacquire_lock == true) {
-		ret = sme_release_global_lock(&mac->sme);
-		if (!QDF_IS_STATUS_SUCCESS(ret)) {
-			cds_err("lock release fail %d", ret);
-			return false;
-		}
-	}
-
-	status = policy_mgr_wait_for_connection_update(mac->psoc);
-
-	if (do_release_reacquire_lock == true) {
-		ret = sme_acquire_global_lock(&mac->sme);
-		if (!QDF_IS_STATUS_SUCCESS(ret))
-			return false;
-	}
-
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		cds_err("wait for event failed");
-		return false;
-	}
-
-	return true;
 }
 
 /**

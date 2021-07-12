@@ -29,19 +29,6 @@
 #include "cds_reg_service.h"
 #include "wlan_objmgr_vdev_obj.h"
 
-#ifdef QCA_WIFI_3_0_EMU
-#define CSR_ACTIVE_SCAN_LIST_CMD_TIMEOUT (1000*30*20)
-#else
-#define CSR_ACTIVE_SCAN_LIST_CMD_TIMEOUT (1000*30)
-#endif
-/* ***************************************************************************
- * The MAX BSSID Count should be lower than the command timeout value.
- * As in some case auth timeout can take upto 5 sec (in case of SAE auth) try
- * (command timeout/5000 - 1) candidates.
- * ***************************************************************************/
-#define CSR_MAX_BSSID_COUNT     (SME_ACTIVE_LIST_CMD_TIMEOUT_VALUE/5000) - 1
-#define CSR_CUSTOM_CONC_GO_BI    100
-extern uint8_t csr_wpa_oui[][CSR_WPA_OUI_SIZE];
 bool csr_is_supported_channel(struct mac_context *mac, uint32_t chan_freq);
 
 enum csr_roamcomplete_result {
@@ -175,8 +162,6 @@ QDF_STATUS csr_get_cfg_valid_channels(struct mac_context *mac,
 				      uint32_t *ch_freq_list,
 				      uint32_t *num_ch_freq);
 
-int8_t csr_get_cfg_max_tx_power(struct mac_context *mac, uint32_t ch_freq);
-
 /* to free memory allocated inside the profile structure */
 void csr_release_profile(struct mac_context *mac,
 			 struct csr_roam_profile *pProfile);
@@ -224,8 +209,6 @@ void csr_cleanup_vdev_session(struct mac_context *mac, uint8_t vdev_id);
 QDF_STATUS csr_roam_get_session_id_from_bssid(struct mac_context *mac,
 						struct qdf_mac_addr *bssid,
 					      uint32_t *pSessionId);
-enum csr_cfgdot11mode csr_find_best_phy_mode(struct mac_context *mac,
-							uint32_t phyMode);
 
 /*
  * csr_scan_get_result() - Return scan results based on filter
@@ -280,24 +263,6 @@ tCsrScanResultInfo *csr_scan_result_get_first(struct mac_context *mac,
  */
 tCsrScanResultInfo *csr_scan_result_get_next(struct mac_context *mac,
 					     tScanResultHandle hScanResult);
-
-/*
- * csr_get_regulatory_domain_for_country() -
- * This function is to get the regulatory domain for a country.
- * This function must be called after CFG is downloaded and all the band/mode
- * setting already passed into CSR.
- *
- * pCountry - Caller allocated buffer with at least 3 bytes specifying the
- * country code
- * pDomainId - Caller allocated buffer to get the return domain ID upon
- * success return. Can be NULL.
- * source - the source of country information.
- * Return QDF_STATUS
- */
-QDF_STATUS csr_get_regulatory_domain_for_country(struct mac_context *mac,
-						 uint8_t *pCountry,
-						 v_REGDOMAIN_t *pDomainId,
-						 enum country_src source);
 
 /* some support functions */
 bool csr_is11h_supported(struct mac_context *mac);
