@@ -44,6 +44,14 @@
 #define IPA_DEV_NAME_MAX_LEN 15
 #define DRV_NAME "ipa"
 
+#define IPA_v4_USB0_EP_ID		11
+#define IPA_v4_USB1_EP_ID		12
+
+#define IPA_v4_PCIE0_EP_ID		21
+#define IPA_v4_PCIE1_EP_ID		22
+
+#define IPA_v5_PCIE0_EP_ID		4
+
 #define IPA_COOKIE 0x57831603
 #define IPA_RT_RULE_COOKIE 0x57831604
 #define IPA_RT_TBL_COOKIE 0x57831605
