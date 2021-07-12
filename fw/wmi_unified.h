@@ -4545,6 +4545,13 @@ typedef struct {
      * Offset time is in milliseconds per channel.
      */
     A_UINT32 scan_start_offset;
+    /**
+     * minimum dwell time in msec for 6 GHz channel
+     * We'll listen for this time on the channel; if no beacon /
+     * probe response / FILS frame are received during this time
+     * we'll move to next channel.
+     */
+    A_UINT32 min_dwell_time_6ghz;
 
 /**
  * TLV (tag length value) parameters follow the scan_cmd
