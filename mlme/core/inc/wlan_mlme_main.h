@@ -759,6 +759,32 @@ enum QDF_OPMODE wlan_get_opmode_vdev_id(struct wlan_objmgr_pdev *pdev,
 bool wlan_is_open_wep_cipher(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id);
 
 /**
+ * wlan_vdev_id_is_open_cipher() - check if cipher is open
+ * @pdev: Pointer to pdev
+ * @vdev_id: vdev id
+ *
+ * Return: if cipher is open
+ */
+bool wlan_vdev_id_is_open_cipher(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id);
+
+/**
+ * wlan_vdev_is_open_mode() - check if cipher is open
+ * @vdev: Pointer to vdev
+ *
+ * Return: if cipher is open
+ */
+bool wlan_vdev_is_open_mode(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * wlan_vdev_id_is_11n_allowed() - check if 11n allowed
+ * @pdev: Pointer to pdev
+ * @vdev_id: vdev id
+ *
+ * Return: false if cipher is TKIP or WEP
+ */
+bool wlan_vdev_id_is_11n_allowed(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id);
+
+/**
  * wlan_is_vdev_id_up() - check if vdev id is in UP state
  * @pdev: Pointer to pdev
  * @vdev_id: vdev id

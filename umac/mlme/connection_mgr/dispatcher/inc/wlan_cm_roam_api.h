@@ -543,7 +543,10 @@ bool wlan_cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
 	return cm_is_auth_type_11r(mlme_obj, vdev, mdie_present);
 }
 
-bool cm_is_open_mode(struct wlan_objmgr_vdev *vdev);
+static inline bool cm_is_open_mode(struct wlan_objmgr_vdev *vdev)
+{
+	return wlan_vdev_is_open_mode(vdev);
+}
 
 #ifdef FEATURE_WLAN_ESE
 bool
