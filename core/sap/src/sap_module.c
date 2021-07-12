@@ -319,9 +319,6 @@ QDF_STATUS sap_init_ctx(struct sap_context *sap_ctx,
 	sap_ctx->csr_roamProfile.csrPersona = mode;
 	qdf_mem_copy(sap_ctx->self_mac_addr, addr, QDF_MAC_ADDR_SIZE);
 
-	/* Now configure the auth type in the roaming profile. To open. */
-	sap_ctx->csr_roamProfile.negotiatedAuthType = eCSR_AUTH_TYPE_OPEN_SYSTEM;        /* open is the default */
-
 	mac = sap_get_mac_context();
 	if (!mac) {
 		sap_err("Invalid MAC context");
@@ -1881,6 +1878,7 @@ QDF_STATUS wlansap_channel_change_request(struct sap_context *sap_ctx,
 
 	status = sme_roam_channel_change_req(MAC_HANDLE(mac_ctx),
 					     sap_ctx->bssid,
+					     sap_ctx->sessionId,
 					     ch_params,
 					     &sap_ctx->csr_roamProfile);
 

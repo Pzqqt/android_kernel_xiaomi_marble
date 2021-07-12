@@ -18532,10 +18532,9 @@ static int __wlan_hdd_cfg80211_get_key(struct wiphy *wiphy,
 				       )
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
-	struct csr_roam_profile *roam_profile;
 	struct key_params params;
 	eCsrEncryptionType enc_type;
-	struct hdd_station_ctx *sta_ctx;
+	int32_t ucast_cipher = 0;
 
 	hdd_enter();
 
@@ -18556,30 +18555,11 @@ static int __wlan_hdd_cfg80211_get_key(struct wiphy *wiphy,
 		hdd_err("Invalid key index: %d", key_index);
 		return -EINVAL;
 	}
+	if (adapter->vdev)
+		ucast_cipher = wlan_crypto_get_param(adapter->vdev,
+						WLAN_CRYPTO_PARAM_UCAST_CIPHER);
 
-	if ((adapter->device_mode == QDF_SAP_MODE) ||
-	    (adapter->device_mode == QDF_P2P_GO_MODE)) {
-		struct hdd_ap_ctx *ap_ctx =
-			WLAN_HDD_GET_AP_CTX_PTR(adapter);
-
-		roam_profile =
-			wlan_sap_get_roam_profile(ap_ctx->sap_context);
-		if (!roam_profile) {
-			hdd_err("Get roam profile failed!");
-			return -EINVAL;
-		}
-		enc_type = roam_profile->EncryptionType.encryptionType[0];
-	} else if (adapter->device_mode == QDF_NDI_MODE) {
-		roam_profile = hdd_roam_profile(adapter);
-		if (!roam_profile) {
-			hdd_err("Get roam profile failed!");
-			return -EINVAL;
-		}
-		enc_type = roam_profile->EncryptionType.encryptionType[0];
-	} else {
-		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-		enc_type = sta_ctx->conn_info.uc_encrypt_type;
-	}
+	sme_fill_enc_type(&enc_type, ucast_cipher);
 
 	switch (enc_type) {
 	case eCSR_ENCRYPT_TYPE_NONE:
@@ -21168,6 +21148,7 @@ static int __wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 	adapter->monitor_mode_vdev_up_in_progress = true;
 
 	status = sme_roam_channel_change_req(mac_handle, bssid,
+					     adapter->vdev_id,
 					     &roam_profile.ch_params,
 					     &roam_profile);
 	if (status) {

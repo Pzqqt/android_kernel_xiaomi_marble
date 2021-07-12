@@ -708,6 +708,7 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 	int32_t ucast_cipher;
 	int32_t auth_mode;
 	int32_t akm;
+	int32_t rsn_caps;
 
 /* FEATURE_WLAN_DIAG_SUPPORT */
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM
@@ -859,8 +860,12 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 
 		session->txLdpcIniFeatureEnabled =
 			sme_start_bss_req->txLdpcIniFeatureEnabled;
-		session->limRmfEnabled = sme_start_bss_req->pmfCapable ? 1 : 0;
-		pe_debug("RMF enabled: %d", session->limRmfEnabled);
+		rsn_caps = wlan_crypto_get_param(session->vdev,
+						 WLAN_CRYPTO_PARAM_RSN_CAP);
+		session->limRmfEnabled =
+			rsn_caps & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED ? 1 : 0;
+		pe_debug("RMF enabled: %d rsn_caps 0x%x",
+			 session->limRmfEnabled, rsn_caps);
 
 		qdf_mem_copy((void *)&session->rateSet,
 			     (void *)&sme_start_bss_req->operationalRateSet,

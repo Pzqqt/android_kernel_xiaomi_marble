@@ -744,9 +744,6 @@ struct start_bss_req {
 	tSirNwType nwType;      /* Indicates 11a/b/g */
 	tSirMacRateSet operationalRateSet;      /* Has 11a or 11b rates */
 	tSirMacRateSet extendedRateSet; /* Has 11g rates */
-	bool pmfCapable;
-	bool pmfRequired;
-
 	struct add_ie_params add_ie_params;
 
 	bool obssEnabled;

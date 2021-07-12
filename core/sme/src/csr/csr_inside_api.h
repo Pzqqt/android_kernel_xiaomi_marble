@@ -79,14 +79,6 @@ struct scan_result_list {
 #define CSR_IS_WAIT_FOR_KEY(mac, sessionId) \
 		 (CSR_IS_ROAM_JOINED(mac, sessionId) && \
 		  CSR_IS_ROAM_SUBSTATE_WAITFORKEY(mac, sessionId))
-/* WIFI has a test case for not using HT rates with TKIP as encryption */
-/* We may need to add WEP but for now, TKIP only. */
-
-#define CSR_IS_11n_ALLOWED(encType) ((eCSR_ENCRYPT_TYPE_TKIP != (encType)) && \
-			(eCSR_ENCRYPT_TYPE_WEP40_STATICKEY != (encType)) && \
-			(eCSR_ENCRYPT_TYPE_WEP104_STATICKEY != (encType)) && \
-				     (eCSR_ENCRYPT_TYPE_WEP40 != (encType)) && \
-				       (eCSR_ENCRYPT_TYPE_WEP104 != (encType)))
 
 enum csr_roam_state csr_roam_state_change(struct mac_context *mac,
 					  enum csr_roam_state NewRoamState,
@@ -168,18 +160,6 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(struct mac_context *mac,
 					 struct csr_roamstart_bssparams *pParam);
 QDF_STATUS csr_send_mb_stop_bss_req_msg(struct mac_context *mac,
 					uint32_t sessionId);
-
-/* Caller should put the BSS' ssid to fiedl bssSsid when
- * comparing SSID for a BSS.
- */
-bool csr_is_ssid_match(struct mac_context *mac, uint8_t *ssid1, uint8_t ssid1Len,
-		       uint8_t *bssSsid, uint8_t bssSsidLen,
-			bool fSsidRequired);
-bool csr_is_phy_mode_match(struct mac_context *mac, uint32_t phyMode,
-			   struct bss_description *pSirBssDesc,
-			   struct csr_roam_profile *pProfile,
-			   enum csr_cfgdot11mode *pReturnCfgDot11Mode,
-			   tDot11fBeaconIEs *pIes);
 
 /**
  * csr_get_cfg_valid_channels() - Get valid channel frequency list
@@ -577,6 +557,7 @@ QDF_STATUS csr_set_ht2040_mode(struct mac_context *mac, uint32_t sessionId,
 QDF_STATUS
 csr_roam_prepare_bss_config_from_profile(struct mac_context *mac_ctx,
 					 struct csr_roam_profile *profile,
+					 uint8_t vdev_id,
 					 struct bss_config_param *bss_cfg);
 
 void

@@ -8370,19 +8370,9 @@ QDF_STATUS sme_set_mas(uint32_t val)
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * sme_roam_channel_change_req() - Channel change to new target channel
- * @mac_handle: handle returned by mac_open
- * @bssid: mac address of BSS
- * @ch_params: target channel information
- * @profile: CSR profile
- *
- * API to Indicate Channel change to new target channel
- *
- * Return: QDF_STATUS
- */
 QDF_STATUS sme_roam_channel_change_req(mac_handle_t mac_handle,
 				       struct qdf_mac_addr bssid,
+				       uint8_t vdev_id,
 				       struct ch_params *ch_params,
 				       struct csr_roam_profile *profile)
 {
@@ -8392,8 +8382,8 @@ QDF_STATUS sme_roam_channel_change_req(mac_handle_t mac_handle,
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 
-		status = csr_roam_channel_change_req(mac, bssid, ch_params,
-				profile);
+		status = csr_roam_channel_change_req(mac, bssid, vdev_id,
+						     ch_params, profile);
 		sme_release_global_lock(&mac->sme);
 	}
 	return status;

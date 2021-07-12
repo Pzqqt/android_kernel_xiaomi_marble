@@ -4199,20 +4199,6 @@ bool cm_is_auth_type_11r(struct wlan_mlme_psoc_ext_obj *mlme_obj,
 	return false;
 }
 
-bool cm_is_open_mode(struct wlan_objmgr_vdev *vdev)
-{
-	int32_t ucast_cipher;
-
-	ucast_cipher = wlan_crypto_get_param(vdev,
-					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
-	if (!ucast_cipher ||
-	    ((QDF_HAS_PARAM(ucast_cipher, WLAN_CRYPTO_CIPHER_NONE) ==
-	      ucast_cipher)))
-		return true;
-
-	return false;
-}
-
 #ifdef FEATURE_WLAN_ESE
 bool
 cm_ese_open_present(struct wlan_objmgr_vdev *vdev,

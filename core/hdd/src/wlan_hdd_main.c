@@ -8030,7 +8030,8 @@ int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, qdf_freq_t freq,
 	adapter->monitor_mode_vdev_up_in_progress = true;
 
 	status = sme_roam_channel_change_req(hdd_ctx->mac_handle,
-					     bssid, &roam_profile.ch_params,
+					     bssid, adapter->vdev_id,
+					     &roam_profile.ch_params,
 					     &roam_profile);
 	if (status) {
 		hdd_err("Status: %d Failed to set sme_roam Channel for monitor mode",

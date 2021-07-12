@@ -3207,32 +3207,6 @@ sapconvert_to_csr_profile(struct sap_config *config, eCsrRoamBssType bssType,
 		     config->SSIDinfo.ssid.ssId,
 		     sizeof(config->SSIDinfo.ssid.ssId));
 
-	profile->negotiatedAuthType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
-
-	if (config->authType == eSAP_OPEN_SYSTEM) {
-		profile->negotiatedAuthType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
-	} else if (config->authType == eSAP_SHARED_KEY) {
-		profile->negotiatedAuthType = eCSR_AUTH_TYPE_SHARED_KEY;
-	} else {
-		profile->negotiatedAuthType = eCSR_AUTH_TYPE_AUTOSWITCH;
-	}
-
-	profile->AuthType.numEntries = 1;
-	profile->AuthType.authType[0] = eCSR_AUTH_TYPE_OPEN_SYSTEM;
-
-	/* Always set the Encryption Type */
-	profile->EncryptionType.numEntries = 1;
-	profile->EncryptionType.encryptionType[0] =
-		config->RSNEncryptType;
-
-	profile->mcEncryptionType.numEntries = 1;
-	profile->mcEncryptionType.encryptionType[0] =
-		config->mcRSNEncryptType;
-
-	if (config->privacy & eSAP_SHARED_KEY) {
-		profile->AuthType.authType[0] = eCSR_AUTH_TYPE_SHARED_KEY;
-	}
-
 	profile->privacy = config->privacy;
 	profile->fwdWPSPBCProbeReq = config->fwdWPSPBCProbeReq;
 
@@ -3294,13 +3268,8 @@ sapconvert_to_csr_profile(struct sap_config *config, eCsrRoamBssType bssType,
 	if (QDF_IS_STATUS_ERROR(qdf_status))
 		sap_err("Get ap protection mode failed using default value");
 	profile->cfg_protection = ap_prot;
-	profile->ieee80211d = config->ieee80211d;
 	/* wps config info */
 	profile->wps_state = config->wps_state;
-
-	/* MFP capable/required */
-	profile->MFPCapable = config->mfpCapable ? 1 : 0;
-	profile->MFPRequired = config->mfpRequired ? 1 : 0;
 
 	if (config->probeRespIEsBufferLen > 0 &&
 	    config->pProbeRespIEsBuffer) {

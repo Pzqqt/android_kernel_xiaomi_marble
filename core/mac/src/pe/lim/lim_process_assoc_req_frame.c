@@ -970,7 +970,7 @@ static enum wlan_status_code lim_check_sae_pmf_cap(struct pe_session *session,
 {
 	enum wlan_status_code status = STATUS_SUCCESS;
 
-	if (session->pLimStartBssReq->pmfCapable &&
+	if (session->limRmfEnabled &&
 	    (rsn->RSN_Cap[0] & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED) == 0 &&
 	    akm_type == ANI_AKM_TYPE_SAE)
 		status = STATUS_ROBUST_MGMT_FRAME_POLICY_VIOLATION;

@@ -531,19 +531,6 @@ struct csr_roam_profile {
 	/* this is bit mask of all the needed phy mode defined in eCsrPhyMode */
 	uint32_t phyMode;
 	eCsrRoamBssType BSSType;
-	tCsrAuthList AuthType;
-	enum csr_akm_type negotiatedAuthType;
-	tCsrEncryptionList EncryptionType;
-	/* This field is for output only, not for input */
-	eCsrEncryptionType negotiatedUCEncryptionType;
-	/*
-	 * eCSR_ENCRYPT_TYPE_ANY cannot be set in multicast encryption type.
-	 * If caller doesn't case, put all supported encryption types in here
-	 */
-	tCsrEncryptionList mcEncryptionType;
-	/* Management Frame Protection */
-	uint8_t MFPRequired;
-	uint8_t MFPCapable;
 	tCsrChannelInfo ChannelInfo;
 	uint32_t op_freq;
 	struct ch_params ch_params;
@@ -557,7 +544,6 @@ struct csr_roam_profile {
 	uint8_t uapsd_mask;
 	uint32_t nRSNReqIELength; /* The byte count in the pRSNReqIE */
 	uint8_t *pRSNReqIE;       /* If not null,it's IE byte stream for RSN */
-	uint8_t ieee80211d;
 	uint8_t privacy;
 	bool fwdWPSPBCProbeReq;
 	tAniAuthType csr80211AuthType;

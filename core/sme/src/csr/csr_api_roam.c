@@ -183,6 +183,7 @@ static QDF_STATUS csr_roam_free_connected_info(struct mac_context *mac,
 					       pConnectedInfo);
 static enum csr_cfgdot11mode
 csr_roam_get_phy_mode_band_for_bss(struct mac_context *mac,
+				   uint8_t vdev_id,
 				   struct csr_roam_profile *pProfile,
 				   uint32_t bss_op_ch_freq,
 				   enum reg_wifi_band *pBand);
@@ -2308,6 +2309,7 @@ QDF_STATUS csr_roam_issue_deauth_sta_cmd(struct mac_context *mac,
 
 QDF_STATUS csr_roam_prepare_bss_config_from_profile(struct mac_context *mac,
 					struct csr_roam_profile *pProfile,
+					uint8_t vdev_id,
 					struct bss_config_param *pBssConfig)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -2329,15 +2331,16 @@ QDF_STATUS csr_roam_prepare_bss_config_from_profile(struct mac_context *mac,
 	/* Settomg up the capabilities */
 	pBssConfig->BssCap.ess = 1;
 
-	if (eCSR_ENCRYPT_TYPE_NONE !=
-	    pProfile->EncryptionType.encryptionType[0])
+	/* set priv if not open mode */
+	if (!wlan_vdev_id_is_open_cipher(mac->pdev, vdev_id))
 		pBssConfig->BssCap.privacy = 1;
 
 	/* phymode */
 	if (pProfile->ChannelInfo.freq_list)
 		bss_op_ch_freq = pProfile->ChannelInfo.freq_list[0];
 	pBssConfig->uCfgDot11Mode = csr_roam_get_phy_mode_band_for_bss(
-						mac, pProfile, bss_op_ch_freq,
+						mac, vdev_id, pProfile,
+						bss_op_ch_freq,
 						&band);
 	/* QOS */
 	/* Is this correct to always set to this // *** */
@@ -2362,27 +2365,6 @@ QDF_STATUS csr_roam_prepare_bss_config_from_profile(struct mac_context *mac,
 		pBssConfig->qosType = eCSR_MEDIUM_ACCESS_DCF;
 	}
 
-	/* auth type */
-	/* Take the preferred Auth type. */
-	switch (pProfile->AuthType.authType[0]) {
-	default:
-	case eCSR_AUTH_TYPE_WPA:
-	case eCSR_AUTH_TYPE_WPA_PSK:
-	case eCSR_AUTH_TYPE_WPA_NONE:
-	case eCSR_AUTH_TYPE_OPEN_SYSTEM:
-		pBssConfig->authType = eSIR_OPEN_SYSTEM;
-		break;
-	case eCSR_AUTH_TYPE_SHARED_KEY:
-		pBssConfig->authType = eSIR_SHARED_KEY;
-		break;
-	case eCSR_AUTH_TYPE_AUTOSWITCH:
-		pBssConfig->authType = eSIR_AUTO_SWITCH;
-		break;
-	case eCSR_AUTH_TYPE_SAE:
-	case eCSR_AUTH_TYPE_FT_SAE:
-		pBssConfig->authType = eSIR_AUTH_TYPE_SAE;
-		break;
-	}
 	/* short slot time */
 	if (WNI_CFG_PHY_MODE_11B != pBssConfig->uCfgDot11Mode) {
 		mac->mlme_cfg->feature_flags.enable_short_slot_time_11g =
@@ -2438,7 +2420,8 @@ static QDF_STATUS csr_set_qos_to_cfg(struct mac_context *mac, uint32_t sessionId
 
 static void csr_set_cfg_rate_set_from_profile(struct mac_context *mac,
 					      struct csr_roam_profile *pProfile,
-					      uint32_t session_id)
+					      uint32_t session_id,
+					      enum csr_cfgdot11mode cfgDot11Mode)
 {
 	tSirMacRateSetIE DefaultSupportedRates11a = { WLAN_ELEMID_RATES,
 						      {8,
@@ -2456,8 +2439,6 @@ static void csr_set_cfg_rate_set_from_profile(struct mac_context *mac,
 							SIR_MAC_RATE_2,
 							SIR_MAC_RATE_5_5,
 							SIR_MAC_RATE_11} } };
-	enum csr_cfgdot11mode cfgDot11Mode;
-	enum reg_wifi_band band;
 	/* leave enough room for the max number of rates */
 	uint8_t OperationalRates[CSR_DOT11_SUPPORTED_RATES_MAX];
 	qdf_size_t OperationalRatesLength = 0;
@@ -2470,16 +2451,14 @@ static void csr_set_cfg_rate_set_from_profile(struct mac_context *mac,
 
 	if (pProfile->ChannelInfo.freq_list)
 		bss_op_ch_freq = pProfile->ChannelInfo.freq_list[0];
-	cfgDot11Mode = csr_roam_get_phy_mode_band_for_bss(mac, pProfile,
-							  bss_op_ch_freq,
-							  &band);
+
 	/* For 11a networks, the 11a rates go into the Operational Rate set.
 	 * For 11b and 11g networks, the 11b rates appear in the Operational
 	 * Rate set. In either case, we can blindly put the rates we support
 	 * into our Operational Rate set (including the basic rates, which we
 	 * have already verified are supported earlier in the roaming decision).
 	 */
-	if (REG_BAND_5G == band) {
+	if (wlan_reg_is_5ghz_ch_freq(bss_op_ch_freq)) {
 		/* 11a rates into the Operational Rate Set. */
 		OperationalRatesLength =
 			DefaultSupportedRates11a.supportedRateSet.numRates *
@@ -2585,51 +2564,15 @@ QDF_STATUS csr_roam_set_bss_config_cfg(struct mac_context *mac, uint32_t session
 	}
 	/* Rate */
 	/* Fixed Rate */
-	csr_set_cfg_rate_set_from_profile(mac, pProfile, sessionId);
+	csr_set_cfg_rate_set_from_profile(mac, pProfile, sessionId,
+					  pBssConfig->uCfgDot11Mode);
 
 	csr_roam_substate_change(mac, eCSR_ROAM_SUBSTATE_CONFIG, sessionId);
+	pSession->bssParams.uCfgDot11Mode = pBssConfig->uCfgDot11Mode;
 
 	csr_roam_ccm_cfg_set_callback(mac, sessionId);
 
 	return QDF_STATUS_SUCCESS;
-}
-
-/* In case no matching BSS is found, use whatever default we can find */
-static void csr_roam_assign_default_param(struct mac_context *mac,
-					tSmeCmd *pCommand)
-{
-	/* Need to get all negotiated types in place first */
-	/* auth type */
-	/* Take the preferred Auth type. */
-	switch (pCommand->u.roamCmd.roamProfile.AuthType.authType[0]) {
-	default:
-	case eCSR_AUTH_TYPE_WPA:
-	case eCSR_AUTH_TYPE_WPA_PSK:
-	case eCSR_AUTH_TYPE_WPA_NONE:
-	case eCSR_AUTH_TYPE_OPEN_SYSTEM:
-		pCommand->u.roamCmd.roamProfile.negotiatedAuthType =
-			eCSR_AUTH_TYPE_OPEN_SYSTEM;
-		break;
-
-	case eCSR_AUTH_TYPE_SHARED_KEY:
-		pCommand->u.roamCmd.roamProfile.negotiatedAuthType =
-			eCSR_AUTH_TYPE_SHARED_KEY;
-		break;
-
-	case eCSR_AUTH_TYPE_AUTOSWITCH:
-		pCommand->u.roamCmd.roamProfile.negotiatedAuthType =
-			eCSR_AUTH_TYPE_AUTOSWITCH;
-		break;
-
-	case eCSR_AUTH_TYPE_SAE:
-	case eCSR_AUTH_TYPE_FT_SAE:
-		pCommand->u.roamCmd.roamProfile.negotiatedAuthType =
-			eCSR_AUTH_TYPE_SAE;
-		break;
-	}
-	pCommand->u.roamCmd.roamProfile.negotiatedUCEncryptionType =
-		pCommand->u.roamCmd.roamProfile.EncryptionType.
-		encryptionType[0];
 }
 
 /**
@@ -2651,32 +2594,25 @@ static void csr_roam_start_bss(struct mac_context *mac_ctx,
 
 	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
 		sme_err("Invalid session id %d", session_id);
+		*roam_state = eCsrStopRoaming;
 		return;
 	}
 	session = CSR_GET_SESSION(mac_ctx, session_id);
 
 	if (CSR_IS_INFRA_AP(profile)) {
-		/* Attempt to start this WDS... */
-		csr_roam_assign_default_param(mac_ctx, cmd);
-		/* For AP WDS, we dont have any BSSDescription */
 		status = csr_roam_start_wds(mac_ctx, session_id, profile);
-		if (QDF_IS_STATUS_SUCCESS(status))
-			*roam_state = eCsrContinueRoaming;
-		else
-			*roam_state = eCsrStopRoaming;
 	} else if (CSR_IS_NDI(profile)) {
-		csr_roam_assign_default_param(mac_ctx, cmd);
 		status = csr_roam_start_ndi(mac_ctx, session_id, profile);
-		if (QDF_IS_STATUS_SUCCESS(status))
-			*roam_state = eCsrContinueRoaming;
-		else
-			*roam_state = eCsrStopRoaming;
 	} else {
 		/* Nothing we can do */
 		sme_warn("cannot continue without BSS list");
-		*roam_state = eCsrStopRoaming;
-		return;
+		status = QDF_STATUS_E_INVAL;
 	}
+
+	if (QDF_IS_STATUS_SUCCESS(status))
+		*roam_state = eCsrContinueRoaming;
+	else
+		*roam_state = eCsrStopRoaming;
 
 }
 
@@ -3205,14 +3141,6 @@ QDF_STATUS csr_roam_copy_profile(struct mac_context *mac,
 			     sizeof(uint32_t) *
 			     pSrcProfile->ChannelInfo.numOfChannels);
 	}
-	pDstProfile->AuthType = pSrcProfile->AuthType;
-	pDstProfile->EncryptionType = pSrcProfile->EncryptionType;
-	pDstProfile->negotiatedUCEncryptionType =
-		pSrcProfile->negotiatedUCEncryptionType;
-	pDstProfile->mcEncryptionType = pSrcProfile->mcEncryptionType;
-	pDstProfile->negotiatedAuthType = pSrcProfile->negotiatedAuthType;
-	pDstProfile->MFPRequired = pSrcProfile->MFPRequired;
-	pDstProfile->MFPCapable = pSrcProfile->MFPCapable;
 	pDstProfile->BSSType = pSrcProfile->BSSType;
 	pDstProfile->phyMode = pSrcProfile->phyMode;
 	pDstProfile->csrPersona = pSrcProfile->csrPersona;
@@ -3237,9 +3165,6 @@ QDF_STATUS csr_roam_copy_profile(struct mac_context *mac,
 	pDstProfile->obssProtEnabled = pSrcProfile->obssProtEnabled;
 	pDstProfile->cfg_protection = pSrcProfile->cfg_protection;
 	pDstProfile->wps_state = pSrcProfile->wps_state;
-	pDstProfile->ieee80211d = pSrcProfile->ieee80211d;
-	pDstProfile->MFPRequired = pSrcProfile->MFPRequired;
-	pDstProfile->MFPCapable = pSrcProfile->MFPCapable;
 	pDstProfile->add_ie_params = pSrcProfile->add_ie_params;
 
 	pDstProfile->beacon_tx_rate = pSrcProfile->beacon_tx_rate;
@@ -3334,6 +3259,8 @@ QDF_STATUS csr_bss_start(struct mac_context *mac, uint32_t vdev_id,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint32_t id = 0;
 	struct csr_roam_session *session = CSR_GET_SESSION(mac, vdev_id);
+	struct wlan_objmgr_vdev *vdev;
+	int32_t cipher, mc_cipher, akm;
 
 	if (!session) {
 		sme_err("session does not exist for given sessionId: %d",
@@ -3345,11 +3272,19 @@ QDF_STATUS csr_bss_start(struct mac_context *mac, uint32_t vdev_id,
 		sme_err("No profile specified");
 		return QDF_STATUS_E_FAILURE;
 	}
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac->pdev, vdev_id,
+						    WLAN_LEGACY_MAC_ID);
+	if (!vdev) {
+		sme_err("No vdev for vdev id %d", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+	cipher = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+	mc_cipher = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_MCAST_CIPHER);
+	akm = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 
-	sme_debug("Persona %d authtype %d  encryType %d mc_encType %d",
-		  profile->csrPersona, profile->AuthType.authType[0],
-		  profile->EncryptionType.encryptionType[0],
-		  profile->mcEncryptionType.encryptionType[0]);
+	sme_debug("vdev_id %d Persona %d akm 0x%x uc cipher 0x%x mc cipher 0x%x",
+		  vdev_id, profile->csrPersona, akm, cipher, mc_cipher);
 
 	csr_flush_pending_start_bss_cmd(mac, vdev_id);
 	id = GET_NEXT_ROAM_ID(&mac->roam);
@@ -5253,12 +5188,14 @@ csr_compute_mode_and_band(struct mac_context *mac_ctx,
  */
 static enum csr_cfgdot11mode
 csr_roam_get_phy_mode_band_for_bss(struct mac_context *mac_ctx,
+				   uint8_t vdev_id,
 				   struct csr_roam_profile *profile,
 				   uint32_t bss_op_ch_freq,
 				   enum reg_wifi_band *p_band)
 {
 	enum reg_wifi_band band = REG_BAND_2G;
-	uint8_t opr_freq = 0;
+	qdf_freq_t opr_freq = 0;
+	bool is_11n_allowed;
 	enum csr_cfgdot11mode curr_mode =
 		mac_ctx->roam.configParam.uCfgDot11Mode;
 	enum csr_cfgdot11mode cfg_dot11_mode =
@@ -5310,22 +5247,23 @@ csr_roam_get_phy_mode_band_for_bss(struct mac_context *mac_ctx,
 	 * Incase of WEP Security encryption type is coming as part of add key.
 	 * So while STart BSS dont have information
 	 */
-	if ((!CSR_IS_11n_ALLOWED(profile->EncryptionType.encryptionType[0])
-	    || ((profile->privacy == 1)
-		&& (profile->EncryptionType.encryptionType[0] ==
-		eCSR_ENCRYPT_TYPE_NONE)))
-		&& ((eCSR_CFG_DOT11_MODE_11N == cfg_dot11_mode) ||
-		    (eCSR_CFG_DOT11_MODE_11AC == cfg_dot11_mode) ||
-		    (eCSR_CFG_DOT11_MODE_11AX == cfg_dot11_mode) ||
-		    CSR_IS_CFG_DOT11_PHY_MODE_11BE(cfg_dot11_mode))) {
+	is_11n_allowed = wlan_vdev_id_is_11n_allowed(mac_ctx->pdev, vdev_id);
+	if ((!is_11n_allowed || (profile->privacy &&
+	       wlan_vdev_id_is_open_cipher(mac_ctx->pdev, vdev_id))) &&
+	      ((eCSR_CFG_DOT11_MODE_11N == cfg_dot11_mode) ||
+		(eCSR_CFG_DOT11_MODE_11AC == cfg_dot11_mode) ||
+		(eCSR_CFG_DOT11_MODE_11AX == cfg_dot11_mode) ||
+		CSR_IS_CFG_DOT11_PHY_MODE_11BE(cfg_dot11_mode))) {
 		/* We cannot do 11n here */
 		if (wlan_reg_is_24ghz_ch_freq(bss_op_ch_freq))
 			cfg_dot11_mode = eCSR_CFG_DOT11_MODE_11G;
 		else
 			cfg_dot11_mode = eCSR_CFG_DOT11_MODE_11A;
 	}
-	sme_debug("dot11mode: %d phyMode %d fw sup AX %d", cfg_dot11_mode,
-		  profile->phyMode, IS_FEATURE_SUPPORTED_BY_FW(DOT11AX));
+	sme_debug("dot11mode: %d phyMode %d is_11n_allowed %d privacy %d chan freq %d fw sup AX %d",
+		  cfg_dot11_mode, profile->phyMode, is_11n_allowed,
+		  profile->privacy, bss_op_ch_freq,
+		  IS_FEATURE_SUPPORTED_BY_FW(DOT11AX));
 #ifdef WLAN_FEATURE_11BE
 	sme_debug("BE :%d", IS_FEATURE_SUPPORTED_BY_FW(DOT11BE));
 #endif
@@ -5485,6 +5423,7 @@ static void csr_populate_supported_rates_from_hostapd(tSirMacRateSet *opr_rates,
 /**
  * csr_roam_get_bss_start_parms() - get bss start param from profile
  * @mac:          mac global context
+ * @vdev_id: vdev id
  * @pProfile:      roam profile
  * @pParam:        out param, start bss params
  * @skip_hostapd_rate: to skip given hostapd's rate
@@ -5495,6 +5434,7 @@ static void csr_populate_supported_rates_from_hostapd(tSirMacRateSet *opr_rates,
  */
 static QDF_STATUS
 csr_roam_get_bss_start_parms(struct mac_context *mac,
+			     uint8_t vdev_id,
 			     struct csr_roam_profile *pProfile,
 			     struct csr_roamstart_bssparams *pParam,
 			     bool skip_hostapd_rate)
@@ -5511,7 +5451,7 @@ csr_roam_get_bss_start_parms(struct mac_context *mac,
 		tmp_opr_ch_freq = pProfile->ChannelInfo.freq_list[0];
 
 	pParam->uCfgDot11Mode =
-		csr_roam_get_phy_mode_band_for_bss(mac, pProfile,
+		csr_roam_get_phy_mode_band_for_bss(mac, vdev_id, pProfile,
 						   tmp_opr_ch_freq,
 						   &band);
 
@@ -5628,7 +5568,6 @@ QDF_STATUS csr_roam_issue_start_bss(struct mac_context *mac, uint32_t sessionId,
 				    uint32_t roamId)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	enum reg_wifi_band band;
 	/* Set the roaming substate to 'Start BSS attempt'... */
 	csr_roam_substate_change(mac, eCSR_ROAM_SUBSTATE_START_BSS_REQ,
 				 sessionId);
@@ -5654,15 +5593,7 @@ QDF_STATUS csr_roam_issue_start_bss(struct mac_context *mac, uint32_t sessionId,
 	pParam->obssProtEnabled = pProfile->obssProtEnabled;
 	pParam->ht_protection = pProfile->cfg_protection;
 	pParam->wps_state = pProfile->wps_state;
-
-	pParam->uCfgDot11Mode =
-		csr_roam_get_phy_mode_band_for_bss(mac, pProfile,
-						   pParam->operation_chan_freq,
-						   &band);
 	pParam->bssPersona = pProfile->csrPersona;
-
-	pParam->mfpCapable = (0 != pProfile->MFPCapable);
-	pParam->mfpRequired = (0 != pProfile->MFPRequired);
 
 	pParam->add_ie_params.probeRespDataLen =
 		pProfile->add_ie_params.probeRespDataLen;
@@ -5684,7 +5615,8 @@ QDF_STATUS csr_roam_issue_start_bss(struct mac_context *mac, uint32_t sessionId,
 	else
 		pParam->sap_dot11mc = 1;
 
-	sme_debug("11MC Support Enabled : %d", pParam->sap_dot11mc);
+	sme_debug("11MC Support Enabled : %d uCfgDot11Mode %d",
+		  pParam->sap_dot11mc, pParam->uCfgDot11Mode);
 
 	pParam->cac_duration_ms = pProfile->cac_duration_ms;
 	pParam->dfs_regdomain = pProfile->dfs_regdomain;
@@ -5708,7 +5640,8 @@ void csr_roam_prepare_bss_params(struct mac_context *mac, uint32_t sessionId,
 		return;
 	}
 
-	csr_roam_get_bss_start_parms(mac, pProfile, &pSession->bssParams,
+	csr_roam_get_bss_start_parms(mac, sessionId, pProfile, 
+				     &pSession->bssParams,
 				     skip_hostapd_rate);
 	/* Use the first SSID */
 	if (pProfile->SSIDs.numOfSSIDs)
@@ -5859,6 +5792,7 @@ static QDF_STATUS csr_roam_start_wds(struct mac_context *mac, uint32_t sessionId
 	 * Profile.
 	 */
 	status = csr_roam_prepare_bss_config_from_profile(mac, pProfile,
+							  sessionId,
 							  &bssConfig);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/* Prepare some more parameters for this WDS */
@@ -6925,9 +6859,6 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(struct mac_context *mac, uint32_t
 	pMsg->bssPersona = pParam->bssPersona;
 	pMsg->txLdpcIniFeatureEnabled = mac->mlme_cfg->ht_caps.tx_ldpc_enable;
 
-	pMsg->pmfCapable = pParam->mfpCapable;
-	pMsg->pmfRequired = pParam->mfpRequired;
-
 	if (pParam->nRSNIELength > sizeof(pMsg->rsnIE.rsnIEdata)) {
 		qdf_mem_free(pMsg);
 		return QDF_STATUS_E_INVAL;
@@ -7765,19 +7696,9 @@ QDF_STATUS csr_roam_update_config(struct mac_context *mac_ctx, uint8_t session_i
 	return status;
 }
 
-/**
- * csr_roam_channel_change_req() - Post channel change request to LIM
- * @mac: mac context
- * @bssid: SAP bssid
- * @ch_params: channel information
- * @profile: CSR profile
- *
- * This API is primarily used to post Channel Change Req for SAP
- *
- * Return: QDF_STATUS
- */
 QDF_STATUS csr_roam_channel_change_req(struct mac_context *mac,
 				       struct qdf_mac_addr bssid,
+				       uint8_t vdev_id,
 				       struct ch_params *ch_params,
 				       struct csr_roam_profile *profile)
 {
@@ -7794,7 +7715,7 @@ QDF_STATUS csr_roam_channel_change_req(struct mac_context *mac,
 	 */
 	qdf_mem_zero(&param, sizeof(struct csr_roamstart_bssparams));
 
-	status = csr_roam_get_bss_start_parms(mac, profile, &param,
+	status = csr_roam_get_bss_start_parms(mac, vdev_id, profile, &param,
 					      skip_hostapd_rate);
 
 	if (status != QDF_STATUS_SUCCESS) {

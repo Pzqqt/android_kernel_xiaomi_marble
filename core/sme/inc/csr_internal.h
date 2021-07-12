@@ -134,7 +134,6 @@ struct bss_config_param {
 	eCsrMediaAccessType qosType;
 	tSirMacSSid SSID;
 	enum csr_cfgdot11mode uCfgDot11Mode;
-	tAniAuthType authType;
 	tSirMacCapabilityInfo BssCap;
 	ePhyChanBondState cbMode;
 };
@@ -170,8 +169,6 @@ struct csr_roamstart_bssparams {
 	uint8_t *pRSNIE;        /* If not null, it has IE byte stream for RSN */
 	/* Flag used to indicate update beaconInterval */
 	bool updatebeaconInterval;
-	bool mfpCapable;
-	bool mfpRequired;
 	struct add_ie_params add_ie_params;
 	uint8_t sap_dot11mc;
 	uint16_t beacon_tx_rate;
@@ -611,10 +608,22 @@ bool csr_roam_is_fast_roam_enabled(struct mac_context *mac,  uint8_t vdev_id);
 bool csr_roam_is_roam_offload_scan_enabled(
 	struct mac_context *mac);
 
-/* Post Channel Change Indication */
+/**
+ * csr_roam_channel_change_req() - Post channel change request to LIM
+ * @mac: mac context
+ * @bssid: SAP bssid
+ * @vdev_id: vdev_id
+ * @ch_params: channel information
+ * @profile: CSR profile
+ *
+ * This API is primarily used to post Channel Change Req for SAP
+ *
+ * Return: QDF_STATUS
+ */
 QDF_STATUS csr_roam_channel_change_req(struct mac_context *mac,
-					struct qdf_mac_addr
-				       bssid, struct ch_params *ch_params,
+				       struct qdf_mac_addr bssid,
+				       uint8_t vdev_id,
+				       struct ch_params *ch_params,
 				       struct csr_roam_profile *profile);
 
 /* Post Beacon Tx Start Indication */
