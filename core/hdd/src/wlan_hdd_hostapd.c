@@ -5473,26 +5473,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 				mlme_set_bigtk_support(adapter->vdev, true);
 		}
 
-		ie = wlan_get_ie_ptr_from_eid(WLAN_EID_COUNTRY,
-					      beacon->tail, beacon->tail_len);
-		if ((adapter->device_mode == QDF_SAP_MODE) && ie) {
-			if (ie[1] < IEEE80211_COUNTRY_IE_MIN_LEN) {
-				hdd_err("Invalid Country IE len: %d", ie[1]);
-				ret = -EINVAL;
-				goto error;
-			}
-
-			if (!qdf_mem_cmp(hdd_ctx->reg.alpha2, &ie[2],
-					 REG_ALPHA2_LEN))
-				config->ieee80211d = 1;
-			else
-				config->ieee80211d = 0;
-		} else
-			config->ieee80211d = 0;
-
-		config->countryCode[0] = hdd_ctx->reg.alpha2[0];
-		config->countryCode[1] = hdd_ctx->reg.alpha2[1];
-
 		/* Overwrite second AP's channel with first only when:
 		 * 1. If operating mode is single mac
 		 * 2. or if 2nd AP is coming up on 5G band channel
@@ -5539,8 +5519,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		wlansap_set_dfs_preferred_channel_location(mac_handle);
 
 		wlan_hdd_set_sap_mcc_chnl_avoid(hdd_ctx);
-	} else {
-		config->ieee80211d = 0;
 	}
 
 	tgt_dfs_set_tx_leakage_threshold(hdd_ctx->pdev);
@@ -5580,9 +5558,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	}
 	/* Forward WPS PBC probe request frame up */
 	config->fwdWPSPBCProbeReq = 1;
-
-	config->RSNEncryptType = eCSR_ENCRYPT_TYPE_NONE;
-	config->mcRSNEncryptType = eCSR_ENCRYPT_TYPE_NONE;
 	(WLAN_HDD_GET_AP_CTX_PTR(adapter))->encryption_type =
 		eCSR_ENCRYPT_TYPE_NONE;
 
@@ -5617,8 +5592,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 			/* Now copy over all the security attributes you have
 			 * parsed out. Use the cipher type in the RSN IE
 			 */
-			config->RSNEncryptType = rsn_encrypt_type;
-			config->mcRSNEncryptType = mc_rsn_encrypt_type;
 			(WLAN_HDD_GET_AP_CTX_PTR(adapter))->
 			encryption_type = rsn_encrypt_type;
 			hdd_debug("CSR Encryption: %d mcEncryption: %d num_akm_suites:%d",
@@ -5665,12 +5638,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 					 config->RSNWPAReqIE);
 
 			if (QDF_STATUS_SUCCESS == status) {
-				/* Now copy over all the security attributes
-				 * you have parsed out. Use the cipher type
-				 * in the RSN IE
-				 */
-				config->RSNEncryptType = rsn_encrypt_type;
-				config->mcRSNEncryptType = mc_rsn_encrypt_type;
 				(WLAN_HDD_GET_AP_CTX_PTR(adapter))->
 				encryption_type = rsn_encrypt_type;
 				hdd_debug("CSR Encryption: %d mcEncryption: %d num_akm_suites:%d",
@@ -5893,12 +5860,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		goto error;
 	}
 
-	config->mfpCapable = mfp_capable;
-	config->mfpRequired = mfp_required;
-	hdd_debug("Soft AP MFP capable %d, MFP required %d",
-		  config->mfpCapable, config->mfpRequired);
-
-	hdd_nofl_debug("SAP mac:" QDF_MAC_ADDR_FMT " SSID: %.*s BCNINTV:%d Freq:%d freq_seg0:%d freq_seg1:%d ch_width:%d HW mode:%d privacy:%d akm:%d acs_mode:%d acs_dfs_mode %d dtim period:%d",
+	hdd_nofl_debug("SAP mac:" QDF_MAC_ADDR_FMT " SSID: %.*s BCNINTV:%d Freq:%d freq_seg0:%d freq_seg1:%d ch_width:%d HW mode:%d privacy:%d akm:%d acs_mode:%d acs_dfs_mode %d dtim period:%d MFPC %d, MFPR %d",
 		       QDF_MAC_ADDR_REF(adapter->mac_addr.bytes),
 		       config->SSIDinfo.ssid.length,
 		       config->SSIDinfo.ssid.ssId, (int)config->beacon_int,
@@ -5907,7 +5869,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		       config->ch_params.ch_width,
 		       config->SapHw_mode, config->privacy,
 		       config->authType, config->acs_cfg.acs_mode,
-		       config->acs_dfs_mode, config->dtim_period);
+		       config->acs_dfs_mode, config->dtim_period,
+		       mfp_capable, mfp_required);
 
 	mutex_lock(&hdd_ctx->sap_lock);
 	if (cds_is_driver_unloading()) {
