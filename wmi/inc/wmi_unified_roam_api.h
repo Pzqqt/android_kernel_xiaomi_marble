@@ -243,13 +243,19 @@ QDF_STATUS wmi_unified_vdev_set_pcl_cmd(wmi_unified_t wmi_handle,
  * wmi_extract_roam_sync_event  - Extract roam sync event
  * @wmi_handle: WMI handle
  * @evt_buf: Event buffer
+ * @len: evt buffer data len
+ * @synd_ind: roam sync ptr
+ *
+ * This api will allocate memory for roam sync info, extract
+ * the information sent by FW and pass to CM.The memory will be
+ * freed by target_if_cm_roam_sync_event.
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS
 wmi_extract_roam_sync_event(wmi_unified_t wmi_handle, void *evt_buf,
 			    uint32_t len,
-			    uint8_t *vdev_id);
+			    struct roam_offload_synch_ind **sync_ind);
 
 /**
  * wmi_extract_roam_sync_frame_event  - Extract roam sync frame event

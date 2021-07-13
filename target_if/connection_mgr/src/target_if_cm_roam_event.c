@@ -91,7 +91,7 @@ target_if_cm_roam_sync_frame_event(ol_scn_t scn,
 	frame_ind_ptr = qdf_mem_malloc(sizeof(*frame_ind_ptr));
 
 	if (!frame_ind_ptr)
-		return -EINVAL;
+		return -ENOMEM;
 
 	qdf_status = wmi_extract_roam_sync_frame_event(wmi_handle, event,
 						       len,
@@ -128,8 +128,8 @@ int target_if_cm_roam_sync_event(ol_scn_t scn, uint8_t *event,
 	struct wmi_unified *wmi_handle;
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_cm_roam_rx_ops *roam_rx_ops;
+	struct roam_offload_synch_ind *sync_ind = NULL;
 	int status = 0;
-	uint8_t vdev_id;
 
 	psoc = target_if_get_psoc_from_scn_hdl(scn);
 	if (!psoc) {
@@ -144,10 +144,11 @@ int target_if_cm_roam_sync_event(ol_scn_t scn, uint8_t *event,
 	}
 
 	status = wmi_extract_roam_sync_event(wmi_handle, event,
-					     len, &vdev_id);
+					     len, &sync_ind);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("parsing of event failed, %d", status);
-		return -EINVAL;
+		status = -EINVAL;
+		goto err;
 	}
 
 	roam_rx_ops = target_if_cm_get_roam_rx_ops(psoc);
@@ -159,14 +160,18 @@ int target_if_cm_roam_sync_event(ol_scn_t scn, uint8_t *event,
 	}
 
 	qdf_status = roam_rx_ops->roam_sync_event(psoc,
-							event,
-							len,
-							vdev_id);
+						  event,
+						  len,
+						  sync_ind);
 
 	if (QDF_IS_STATUS_ERROR(qdf_status))
 		status = -EINVAL;
 
 err:
+	if (sync_ind && sync_ind->ric_tspec_data)
+		qdf_mem_free(sync_ind->ric_tspec_data);
+	if (sync_ind)
+		qdf_mem_free(sync_ind);
 	return status;
 }
 
