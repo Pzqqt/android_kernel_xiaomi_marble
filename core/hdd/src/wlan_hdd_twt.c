@@ -783,9 +783,13 @@ hdd_send_inactive_session_reply(struct hdd_adapter *adapter,
 				struct wmi_host_twt_session_stats_info *params)
 {
 	QDF_STATUS qdf_status;
+	int num_twt_session = 0;
 
-	params[0].event_type = HOST_TWT_SESSION_UPDATE;
-	qdf_status = hdd_twt_pack_get_params_resp(adapter->hdd_ctx, params, 0);
+	params[num_twt_session].event_type = HOST_TWT_SESSION_UPDATE;
+	num_twt_session++;
+
+	qdf_status = hdd_twt_pack_get_params_resp(adapter->hdd_ctx, params,
+						  num_twt_session);
 
 	return qdf_status;
 }
@@ -944,8 +948,7 @@ static int hdd_sta_twt_get_session_params(struct hdd_adapter *adapter,
 			     QDF_MAC_ADDR_SIZE);
 	}
 
-	if (params[0].dialog_id != WLAN_ALL_SESSIONS_DIALOG_ID &&
-	    !ucfg_mlme_is_twt_setup_done(adapter->hdd_ctx->psoc,
+	if (!ucfg_mlme_is_twt_setup_done(adapter->hdd_ctx->psoc,
 					 &hdd_sta_ctx->conn_info.bssid,
 					 params[0].dialog_id)) {
 		hdd_debug("vdev%d: TWT session %d setup incomplete",
