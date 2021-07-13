@@ -113,14 +113,6 @@ util_get_last_scan_time(struct wlan_objmgr_vdev *vdev)
 		return 0;
 }
 
-enum wlan_band util_scan_scm_chan_to_band(uint32_t chan)
-{
-	if (WLAN_CHAN_IS_2GHZ(chan))
-		return WLAN_BAND_2_4_GHZ;
-
-	return WLAN_BAND_5_GHZ;
-}
-
 enum wlan_band util_scan_scm_freq_to_band(uint16_t freq)
 {
 	if (WLAN_REG_IS_24GHZ_CH_FREQ(freq))

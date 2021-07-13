@@ -1739,14 +1739,6 @@ util_scan_entry_rsnxe(struct scan_cache_entry *scan_entry)
 }
 
 /**
- * util_scan_scm_chan_to_band() - function to tell band for channel number
- * @chan: Channel number
- *
- * Return: Band information as per channel
- */
-enum wlan_band util_scan_scm_chan_to_band(uint32_t chan);
-
-/**
  * util_scan_scm_freq_to_band() - API to get band from frequency
  * @freq: Channel frequency
  *
