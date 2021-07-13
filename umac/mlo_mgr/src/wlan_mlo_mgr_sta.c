@@ -932,4 +932,41 @@ mlo_get_ml_vdev_by_mac(struct wlan_objmgr_vdev *vdev,
 	return NULL;
 }
 #endif
+qdf_freq_t
+mlo_get_chan_freq_by_bssid(struct wlan_objmgr_pdev *pdev,
+			   struct qdf_mac_addr *bssid)
+{
+	struct scan_filter *scan_filter;
+	int8_t ch_freq = 0;
+	qdf_list_t *list = NULL;
+	struct scan_cache_node *first_node = NULL;
+	qdf_list_node_t *cur_node = NULL;
+
+	scan_filter = qdf_mem_malloc(sizeof(*scan_filter));
+	if (!scan_filter)
+		return ch_freq;
+
+	scan_filter->num_of_bssid = 1;
+	qdf_mem_copy(scan_filter->bssid_list[0].bytes,
+		     bssid, sizeof(struct qdf_mac_addr));
+	list = wlan_scan_get_result(pdev, scan_filter);
+	qdf_mem_free(scan_filter);
+
+	if (!list || (list && !qdf_list_size(list))) {
+		mlo_debug("scan list empty");
+		goto error;
+	}
+
+	qdf_list_peek_front(list, &cur_node);
+	first_node = qdf_container_of(cur_node,
+				      struct scan_cache_node,
+				      node);
+	if (first_node && first_node->entry)
+		ch_freq = first_node->entry->channel.chan_freq;
+error:
+	if (list)
+		wlan_scan_purge_results(list);
+
+	return ch_freq;
+}
 #endif

@@ -23,7 +23,6 @@
 #include <wlan_mlo_mgr_public_structs.h>
 #include <wlan_cm_ucfg_api.h>
 #include <wlan_objmgr_vdev_obj.h>
-
 #ifdef WLAN_FEATURE_11BE_MLO
 /**
  * mlo_connect - Start the connection process
@@ -204,6 +203,18 @@ struct wlan_objmgr_vdev *
 mlo_get_ml_vdev_by_mac(struct wlan_objmgr_vdev *vdev,
 		       struct qdf_mac_addr *macaddr);
 #endif
+
+/*
+ * mlo_get_chan_freq_by_bssid - Get channel freq by bssid
+ *
+ * @pdev: pdev pointer
+ * @bssid: link mac address
+ *
+ * Return: chan frequency
+ */
+qdf_freq_t
+mlo_get_chan_freq_by_bssid(struct wlan_objmgr_pdev *pdev,
+			   struct qdf_mac_addr *bssid);
 #else
 static inline
 QDF_STATUS mlo_connect(struct wlan_objmgr_vdev *vdev,
@@ -294,6 +305,13 @@ mlo_get_ml_vdev_by_mac(struct wlan_objmgr_vdev *vdev,
 		       struct qdf_mac_addr *macaddr)
 {
 	return vdev;
+}
+
+static inline qdf_freq_t
+mlo_get_chan_freq_by_bssid(struct wlan_objmgr_pdev *pdev,
+			   struct qdf_mac_addr *bssid)
+{
+	return 0;
 }
 #endif
 #endif
