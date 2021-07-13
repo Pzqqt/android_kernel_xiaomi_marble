@@ -1824,136 +1824,190 @@ enum phy_ch_width policy_mgr_get_ch_width(enum hw_mode_bandwidth bw)
 	return ch_width;
 }
 
-/**
- * policy_mgr_get_sbs_channels() - provides the sbs channel(s)
- *  with respect to current connection(s)
- * @psoc: psoc object
- * @pcl_freqs: the channel(s) on which current connection(s) is
- * @pcl_weights: Pointer to the weights of PCL
- * @pcl_sz: Max length of the PCL list
- * @index: Index from which the weight list needs to be populated,
- *  will increase accordingly if any channel is obtained
- * @group_id: Next available groups for weight assignment
- * @available_5g_channels: List of available 5g channels
- * @available_5g_channels_len: Length of the 5g channels list
- * @add_5g_channels: If this flag is true append 5G channel list as well
- *
- * This function provides the channel(s) on which current
- * connection(s) is/are
- *
- * Return: QDF_STATUS
- */
-
-static QDF_STATUS
-policy_mgr_get_sbs_channels(struct wlan_objmgr_psoc *psoc, uint32_t *pcl_freqs,
-			    uint8_t *pcl_weights, uint32_t pcl_sz,
-			    uint32_t *index,
-			    enum policy_mgr_pcl_group_id group_id,
-			    uint32_t *available_5g_ch_freqs,
-			    uint32_t available_5g_channels_len,
-			    bool add_5g_channels)
+static bool
+is_preset_in_chlist(uint32_t chan_freq, const uint32_t *chlist,
+		    uint32_t chlist_len)
 {
-	uint32_t conn_index = 0;
-	uint32_t num_5g_channels = 0, cur_5g_ch_freq = 0;
-	uint32_t remaining_5g_ch_freqs[NUM_CHANNELS] = {};
-	uint32_t remaining_channel_index = 0;
-	uint32_t j = 0, i = 0, weight1, weight2, idx;
-	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint32_t i;
 
-	if (!policy_mgr_is_hw_sbs_capable(psoc))
-		return QDF_STATUS_E_NOSUPPORT;
+	for (i = 0; i < chlist_len; i++)
+		if (chlist[i] == chan_freq)
+			return true;
 
-	if (!pcl_freqs || !pcl_weights || !index || !pcl_sz) {
-		policy_mgr_err("channels or len is NULL");
-		return QDF_STATUS_E_INVAL;
+	return false;
+}
+
+static void
+get_sbs_chlist(struct wlan_objmgr_psoc *psoc,
+	       uint32_t *sbs_freqs, uint32_t *sbs_num, uint32_t chan_freq,
+	       const uint32_t *chlist1, uint32_t chlist1_len,
+	       const uint32_t *chlist2, uint32_t chlist2_len)
+{
+	uint32_t size_of_sbs = *sbs_num;
+	uint32_t i;
+
+	*sbs_num = 0;
+	for (i = 0; i < chlist1_len; i++) {
+		if (*sbs_num >= size_of_sbs)
+			return;
+		if (WLAN_REG_IS_FREQUENCY_VALID_5G_SBS(chan_freq,
+						       chlist1[i]))
+			sbs_freqs[(*sbs_num)++] = chlist1[i];
 	}
+	for (i = 0; i < chlist2_len; i++) {
+		if (*sbs_num >= size_of_sbs)
+			return;
+		if (WLAN_REG_IS_FREQUENCY_VALID_5G_SBS(chan_freq,
+						       chlist2[i]))
+			sbs_freqs[(*sbs_num)++] = chlist2[i];
+	}
+}
+
+static void
+get_rest_chlist(uint32_t *rest_freqs, uint32_t *rest_num,
+		uint32_t *scc_freqs, uint32_t scc_num,
+		uint32_t *sbs_freqs, uint32_t sbs_num,
+		const uint32_t *chlist1, uint32_t chlist1_len,
+		const uint32_t *chlist2, uint32_t chlist2_len)
+{
+	uint32_t size_of_rest = *rest_num;
+	uint32_t i;
+
+	*rest_num = 0;
+	for (i = 0; i < chlist1_len; i++) {
+		if (*rest_num >= size_of_rest)
+			return;
+		if (is_preset_in_chlist(chlist1[i], scc_freqs, scc_num) ||
+		    is_preset_in_chlist(chlist1[i], sbs_freqs, sbs_num))
+			continue;
+		rest_freqs[(*rest_num)++] = chlist1[i];
+	}
+	for (i = 0; i < chlist2_len; i++) {
+		if (*rest_num >= size_of_rest)
+			return;
+		if (is_preset_in_chlist(chlist2[i], scc_freqs, scc_num) ||
+		    is_preset_in_chlist(chlist2[i], sbs_freqs, sbs_num))
+			continue;
+		rest_freqs[(*rest_num)++] = chlist2[i];
+	}
+}
+
+static void
+get_sub_channels(struct wlan_objmgr_psoc *psoc,
+		 uint32_t *sbs_freqs, uint32_t *sbs_num,
+		 uint32_t *scc_freqs, uint32_t *scc_num,
+		 uint32_t *rest_freqs, uint32_t *rest_num,
+		 const uint32_t *chlist_5g, uint32_t chlist_5g_len,
+		 const uint32_t *chlist_6g, uint32_t chlist_6g_len)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint32_t i = 0;
+	const uint32_t *chlist1;
+	uint8_t chlist1_len;
+	const uint32_t *chlist2;
+	uint8_t chlist2_len;
+	uint32_t size_of_scc = *scc_num;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid Context");
-		return QDF_STATUS_E_FAILURE;
+		*scc_num = 0;
+		*sbs_num = 0;
+		*rest_num = 0;
+		return;
 	}
 
-	if (group_id == POLICY_MGR_PCL_GROUP_ID1_ID2) {
-		weight1 = WEIGHT_OF_GROUP1_PCL_CHANNELS;
-		weight2 = WEIGHT_OF_GROUP2_PCL_CHANNELS;
-	} else if (group_id == POLICY_MGR_PCL_GROUP_ID2_ID3) {
-		weight1 = WEIGHT_OF_GROUP2_PCL_CHANNELS;
-		weight2 = WEIGHT_OF_GROUP3_PCL_CHANNELS;
+	if (pm_ctx->cfg.pcl_band_priority == POLICY_MGR_PCL_BAND_6G_THEN_5G) {
+		chlist1 = chlist_6g;
+		chlist1_len = chlist_6g_len;
+		chlist2 = chlist_5g;
+		chlist2_len = chlist_5g_len;
 	} else {
-		weight1 = WEIGHT_OF_GROUP3_PCL_CHANNELS;
-		weight2 = WEIGHT_OF_GROUP4_PCL_CHANNELS;
+		chlist1 = chlist_5g;
+		chlist1_len = chlist_5g_len;
+		chlist2 = chlist_6g;
+		chlist2_len = chlist_6g_len;
 	}
-
-	idx = *index;
-	policy_mgr_debug("weight1=%d weight2=%d index=%d ",
-			 weight1, weight2, idx);
-
+	*scc_num = 0;
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
-	while (PM_CONC_CONNECTION_LIST_VALID_INDEX(conn_index)) {
+	/* For SCC channels, 6G first then 5G */
+	i = 0;
+	while (PM_CONC_CONNECTION_LIST_VALID_INDEX(i)) {
+		if (WLAN_REG_IS_6GHZ_CHAN_FREQ(
+		    pm_conc_connection_list[i].freq)) {
+			if (*scc_num < size_of_scc &&
+			    !is_preset_in_chlist(
+					pm_conc_connection_list[i].freq,
+					scc_freqs, *scc_num))
+				scc_freqs[(*scc_num)++] =
+					pm_conc_connection_list[i].freq;
+		}
+		i++;
+	}
+	i = 0;
+	while (PM_CONC_CONNECTION_LIST_VALID_INDEX(i)) {
 		if (WLAN_REG_IS_5GHZ_CH_FREQ(
-		    pm_conc_connection_list[conn_index].freq) &&
-		    pm_conc_connection_list[conn_index].in_use) {
-			num_5g_channels++;
-			cur_5g_ch_freq =
-				pm_conc_connection_list[conn_index].freq;
+		    pm_conc_connection_list[i].freq)) {
+			if (*scc_num < size_of_scc &&
+			    !is_preset_in_chlist(
+					pm_conc_connection_list[i].freq,
+					scc_freqs, *scc_num))
+				scc_freqs[(*scc_num)++] =
+					pm_conc_connection_list[i].freq;
 		}
-		conn_index++;
+		i++;
 	}
-
-	conn_index = 0;
-	if (num_5g_channels > 1) {
-		/* This case we are already in SBS so return the channels */
-		while (PM_CONC_CONNECTION_LIST_VALID_INDEX(conn_index) &&
-		       idx < pcl_sz) {
-			pcl_freqs[idx] =
-				pm_conc_connection_list[conn_index++].freq;
-			pcl_weights[idx] = weight1;
-			idx++;
-		}
-
-		/* fix duplicate issue later */
-		if (add_5g_channels)
-			for (j = 0; j < available_5g_channels_len; j++)
-				remaining_5g_ch_freqs[
-				remaining_channel_index++] =
-				available_5g_ch_freqs[j];
-	} else {
-		/* Get list of valid sbs channels for the current
-		 * connected channel
-		 */
-		for (j = 0; (j < available_5g_channels_len) &&
-		     (j < NUM_CHANNELS) && idx < pcl_sz; j++) {
-			if (WLAN_REG_IS_FREQUENCY_VALID_5G_SBS(
-			    cur_5g_ch_freq, available_5g_ch_freqs[j])) {
-				pcl_freqs[idx] = available_5g_ch_freqs[j];
-				pcl_weights[idx] = weight1;
-				idx++;
-			} else {
-				remaining_5g_ch_freqs[
-						remaining_channel_index++] =
-					available_5g_ch_freqs[j];
-				continue;
-			}
-		}
-	}
-
-	if (add_5g_channels) {
-		remaining_channel_index =
-			QDF_MIN(idx + remaining_channel_index, pcl_sz) - idx;
-		qdf_mem_copy(&pcl_freqs[idx], remaining_5g_ch_freqs,
-			     remaining_channel_index * sizeof(*pcl_freqs));
-
-		for (i = idx; i < idx + remaining_channel_index; i++)
-			pcl_weights[i] = weight2;
-
-		idx += remaining_channel_index;
-	}
-
-	*index = idx;
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
-	return QDF_STATUS_SUCCESS;
+	if (policy_mgr_is_hw_sbs_capable(psoc)) {
+		if (*scc_num > 1) {
+			if (WLAN_REG_IS_FREQUENCY_VALID_5G_SBS(
+					scc_freqs[0], scc_freqs[1])) {
+				/* 2/3 home channels with SBS separation */
+				*sbs_num = 0;
+			} else {
+				/* SCC or MCC (not SBS separation) */
+				get_sbs_chlist(psoc, sbs_freqs, sbs_num,
+					       scc_freqs[0],
+					       chlist1, chlist1_len,
+					       chlist2, chlist2_len);
+			}
+		} else if (*scc_num > 0) {
+			get_sbs_chlist(psoc, sbs_freqs, sbs_num, scc_freqs[0],
+				       chlist1, chlist1_len,
+				       chlist2, chlist2_len);
+		}
+	} else {
+		*sbs_num = 0;
+	}
+
+	get_rest_chlist(rest_freqs, rest_num, scc_freqs, *scc_num,
+			sbs_freqs, *sbs_num, chlist1, chlist1_len,
+			chlist2, chlist2_len);
+}
+
+static void
+add_chlist_to_pcl(struct wlan_objmgr_pdev *pdev,
+		  uint32_t *pcl_freqs, uint8_t *pcl_weights,
+		  uint32_t pcl_sz, uint32_t *index, uint32_t weight,
+		  const uint32_t *chlist, uint8_t chlist_len,
+		  bool skip_dfs_channel, bool skip_6gh_channel)
+{
+	uint32_t i;
+
+	for (i = 0; i < chlist_len && *index < pcl_sz; i++) {
+		if (skip_dfs_channel &&
+		    wlan_reg_is_dfs_for_freq(pdev, chlist[i]))
+			continue;
+		if (skip_6gh_channel &&
+		    WLAN_REG_IS_6GHZ_CHAN_FREQ(chlist[i]))
+			continue;
+		pcl_freqs[*index] = chlist[i];
+		pcl_weights[*index] = weight;
+		(*index)++;
+	}
+	policy_mgr_debug("Add chlist len %d index %d",
+			 chlist_len, *index);
 }
 
 /**
@@ -2360,13 +2414,14 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint32_t num_channels = 0;
-	uint32_t sbs_num_channels = 0;
 	uint32_t chan_index_24 = 0, chan_index_5 = 0, chan_index_6 = 0;
 	bool skip_dfs_channel = false;
 	uint32_t i = 0;
+	bool skip_6ghz_channel = false;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	uint32_t *channel_list, *channel_list_24, *channel_list_5,
-		 *sbs_channel_list, *channel_list_6;
+		 *sbs_freqs, *channel_list_6, *scc_freqs, *rest_freqs;
+	uint32_t sbs_num, scc_num, rest_num;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -2395,14 +2450,16 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 	channel_list = qdf_mem_malloc(NUM_CHANNELS * sizeof(uint32_t));
 	channel_list_24 = qdf_mem_malloc(NUM_CHANNELS * sizeof(uint32_t));
 	channel_list_5 = qdf_mem_malloc(NUM_CHANNELS * sizeof(uint32_t));
-	sbs_channel_list = qdf_mem_malloc(NUM_CHANNELS * sizeof(uint32_t));
+	sbs_freqs = qdf_mem_malloc(NUM_CHANNELS * sizeof(uint32_t));
 	channel_list_6 = qdf_mem_malloc(NUM_CHANNELS * sizeof(uint32_t));
+	rest_freqs = qdf_mem_malloc(NUM_CHANNELS * sizeof(uint32_t));
+	scc_freqs = qdf_mem_malloc(
+			MAX_NUMBER_OF_CONC_CONNECTIONS * sizeof(uint32_t));
 	if (!channel_list || !channel_list_24 || !channel_list_5 ||
-	    !sbs_channel_list || !channel_list_6) {
+	    !sbs_freqs || !channel_list_6 || !rest_freqs || !scc_freqs) {
 		status = QDF_STATUS_E_NOMEM;
 		goto end;
 	}
-
 	/* get the channel list for current domain */
 	status = policy_mgr_get_valid_chans(psoc, channel_list,
 					    &num_channels);
@@ -2431,11 +2488,14 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 			channel_list_6[chan_index_6++] = channel_list[i];
 		}
 	}
-	if (!policy_mgr_is_6ghz_conc_mode_supported(psoc, mode))
+	if (!policy_mgr_is_6ghz_conc_mode_supported(psoc, mode)) {
 		chan_index_6 = 0;
-	num_channels = 0;
-	sbs_num_channels = 0;
-	i = 0;
+		skip_6ghz_channel = true;
+	}
+	sbs_num = NUM_CHANNELS;
+	scc_num = MAX_NUMBER_OF_CONC_CONNECTIONS;
+	rest_num = NUM_CHANNELS;
+
 	/* In the below switch case, the channel list is populated based on the
 	 * pcl. e.g., if the pcl is PM_SCC_CH_24G, the SCC channel group is
 	 * populated first followed by the 2.4GHz channel group. Along with
@@ -2623,87 +2683,253 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 		status = QDF_STATUS_SUCCESS;
 		break;
 	case PM_24G_SCC_CH_SBS_CH:
-		policy_mgr_add_24g_to_pcl(pcl_channels, pcl_weights, pcl_sz,
-					  len, WEIGHT_OF_GROUP1_PCL_CHANNELS,
-					  channel_list_24, chan_index_24);
-
-		policy_mgr_get_connection_channels(psoc, mode,
-						   POLICY_MGR_PCL_ORDER_NONE,
-						   skip_dfs_channel,
-						   POLICY_MGR_PCL_GROUP_ID2_ID3,
-						   pcl_channels, pcl_weights,
-						   pcl_sz, len);
-
-		policy_mgr_get_sbs_channels(psoc, pcl_channels, pcl_weights,
-					    pcl_sz, len,
-					    POLICY_MGR_PCL_GROUP_ID3_ID4,
-					    channel_list_5, chan_index_5,
-					    false);
+		get_sub_channels(psoc,
+				 sbs_freqs, &sbs_num,
+				 scc_freqs, &scc_num,
+				 rest_freqs, &rest_num,
+				 channel_list_5, chan_index_5,
+				 channel_list_6, chan_index_6);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP1_PCL_CHANNELS,
+				  channel_list_24, chan_index_24,
+				  false, false);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP2_PCL_CHANNELS,
+				  scc_freqs, scc_num,
+				  skip_dfs_channel, skip_6ghz_channel);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP3_PCL_CHANNELS,
+				  sbs_freqs, sbs_num,
+				  skip_dfs_channel, skip_6ghz_channel);
 		status = QDF_STATUS_SUCCESS;
 		break;
 	case PM_24G_SCC_CH_SBS_CH_5G:
-		policy_mgr_add_24g_to_pcl(pcl_channels, pcl_weights, pcl_sz,
-					  len, WEIGHT_OF_GROUP1_PCL_CHANNELS,
-					  channel_list_24, chan_index_24);
-		policy_mgr_get_connection_channels(
-						psoc, mode,
-						POLICY_MGR_PCL_ORDER_NONE,
-						skip_dfs_channel,
-						POLICY_MGR_PCL_GROUP_ID2_ID3,
-						pcl_channels, pcl_weights,
-						pcl_sz, len);
-		if (policy_mgr_is_hw_sbs_capable(psoc)) {
-			policy_mgr_get_sbs_channels(
-						psoc, pcl_channels,
-						pcl_weights, pcl_sz, len,
-						POLICY_MGR_PCL_GROUP_ID3_ID4,
-						channel_list_5, chan_index_5,
-						true);
-		} else {
-			policy_mgr_add_5g_to_pcl(psoc, pcl_channels,
-						 pcl_weights, pcl_sz, len,
-						 POLICY_MGR_PCL_GROUP_ID3_ID4,
-						 channel_list_5, chan_index_5,
-						 channel_list_6, chan_index_6);
-		}
+		get_sub_channels(psoc,
+				 sbs_freqs, &sbs_num,
+				 scc_freqs, &scc_num,
+				 rest_freqs, &rest_num,
+				 channel_list_5, chan_index_5,
+				 channel_list_6, chan_index_6);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP1_PCL_CHANNELS,
+				  channel_list_24, chan_index_24,
+				  false, false);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP2_PCL_CHANNELS,
+				  scc_freqs, scc_num,
+				  skip_dfs_channel, skip_6ghz_channel);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP3_PCL_CHANNELS,
+				  sbs_freqs, sbs_num,
+				  skip_dfs_channel, skip_6ghz_channel);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP4_PCL_CHANNELS,
+				  rest_freqs, rest_num,
+				  skip_dfs_channel, skip_6ghz_channel);
 		status = QDF_STATUS_SUCCESS;
 		break;
 	case PM_24G_SBS_CH_MCC_CH:
-		policy_mgr_add_24g_to_pcl(pcl_channels, pcl_weights, pcl_sz,
-					  len, WEIGHT_OF_GROUP1_PCL_CHANNELS,
-					  channel_list_24, chan_index_24);
-		if (policy_mgr_is_hw_sbs_capable(psoc)) {
-			policy_mgr_get_sbs_channels(
-						psoc, pcl_channels,
-						pcl_weights,
-						pcl_sz, len,
-						POLICY_MGR_PCL_GROUP_ID2_ID3,
-						channel_list_5, chan_index_5,
-						false);
-		}
-		policy_mgr_get_connection_channels(
-						psoc, mode,
-						POLICY_MGR_PCL_ORDER_NONE,
-						skip_dfs_channel,
-						POLICY_MGR_PCL_GROUP_ID2_ID3,
-						pcl_channels, pcl_weights,
-						pcl_sz, len);
+		get_sub_channels(psoc,
+				 sbs_freqs, &sbs_num,
+				 scc_freqs, &scc_num,
+				 rest_freqs, &rest_num,
+				 channel_list_5, chan_index_5,
+				 channel_list_6, chan_index_6);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP1_PCL_CHANNELS,
+				  channel_list_24, chan_index_24,
+				  false, false);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP2_PCL_CHANNELS,
+				  sbs_freqs, sbs_num,
+				  skip_dfs_channel, skip_6ghz_channel);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP3_PCL_CHANNELS,
+				  scc_freqs, scc_num,
+				  skip_dfs_channel, skip_6ghz_channel);
+		status = QDF_STATUS_SUCCESS;
+		break;
+	case PM_SBS_CH:
+		get_sub_channels(psoc,
+				 sbs_freqs, &sbs_num,
+				 scc_freqs, &scc_num,
+				 rest_freqs, &rest_num,
+				 channel_list_5, chan_index_5,
+				 channel_list_6, chan_index_6);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP1_PCL_CHANNELS,
+				  sbs_freqs, sbs_num,
+				  skip_dfs_channel, skip_6ghz_channel);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP2_PCL_CHANNELS,
+				  scc_freqs, scc_num,
+				  skip_dfs_channel, skip_6ghz_channel);
 		status = QDF_STATUS_SUCCESS;
 		break;
 	case PM_SBS_CH_5G:
-		if (policy_mgr_is_hw_sbs_capable(psoc)) {
-			policy_mgr_get_sbs_channels(
-				psoc, pcl_channels,
-				pcl_weights, pcl_sz, len,
-				POLICY_MGR_PCL_GROUP_ID1_ID2,
-				channel_list_5, chan_index_5, true);
-		} else {
-			policy_mgr_add_5g_to_pcl(psoc, pcl_channels,
-						 pcl_weights, pcl_sz, len,
-						 POLICY_MGR_PCL_GROUP_ID1_ID2,
-						 channel_list_5, chan_index_5,
-						 channel_list_6, chan_index_6);
-		}
+		get_sub_channels(psoc,
+				 sbs_freqs, &sbs_num,
+				 scc_freqs, &scc_num,
+				 rest_freqs, &rest_num,
+				 channel_list_5, chan_index_5,
+				 channel_list_6, chan_index_6);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP1_PCL_CHANNELS,
+				  sbs_freqs, sbs_num,
+				  skip_dfs_channel, skip_6ghz_channel);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP2_PCL_CHANNELS,
+				  scc_freqs, scc_num,
+				  skip_dfs_channel, skip_6ghz_channel);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP3_PCL_CHANNELS,
+				  rest_freqs, rest_num,
+				  skip_dfs_channel, skip_6ghz_channel);
+		status = QDF_STATUS_SUCCESS;
+		break;
+	case PM_SBS_CH_24G_SCC_CH:
+		get_sub_channels(psoc,
+				 sbs_freqs, &sbs_num,
+				 scc_freqs, &scc_num,
+				 rest_freqs, &rest_num,
+				 channel_list_5, chan_index_5,
+				 channel_list_6, chan_index_6);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP1_PCL_CHANNELS,
+				  sbs_freqs, sbs_num,
+				  skip_dfs_channel, skip_6ghz_channel);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP2_PCL_CHANNELS,
+				  channel_list_24, chan_index_24,
+				  false, false);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP3_PCL_CHANNELS,
+				  scc_freqs, scc_num,
+				  skip_dfs_channel, skip_6ghz_channel);
+		status = QDF_STATUS_SUCCESS;
+		break;
+	case PM_SBS_CH_SCC_CH_24G:
+		get_sub_channels(psoc,
+				 sbs_freqs, &sbs_num,
+				 scc_freqs, &scc_num,
+				 rest_freqs, &rest_num,
+				 channel_list_5, chan_index_5,
+				 channel_list_6, chan_index_6);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP1_PCL_CHANNELS,
+				  sbs_freqs, sbs_num,
+				  skip_dfs_channel, skip_6ghz_channel);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP2_PCL_CHANNELS,
+				  scc_freqs, scc_num,
+				  skip_dfs_channel, skip_6ghz_channel);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP3_PCL_CHANNELS,
+				  channel_list_24, chan_index_24,
+				  false, false);
+		status = QDF_STATUS_SUCCESS;
+		break;
+	case PM_SCC_CH_SBS_CH_24G:
+		get_sub_channels(psoc,
+				 sbs_freqs, &sbs_num,
+				 scc_freqs, &scc_num,
+				 rest_freqs, &rest_num,
+				 channel_list_5, chan_index_5,
+				 channel_list_6, chan_index_6);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP1_PCL_CHANNELS,
+				  scc_freqs, scc_num,
+				  skip_dfs_channel, skip_6ghz_channel);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP2_PCL_CHANNELS,
+				  sbs_freqs, sbs_num,
+				  skip_dfs_channel, skip_6ghz_channel);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP3_PCL_CHANNELS,
+				  channel_list_24, chan_index_24,
+				  false, false);
+		status = QDF_STATUS_SUCCESS;
+		break;
+	case PM_SBS_CH_SCC_CH_5G_24G:
+		get_sub_channels(psoc,
+				 sbs_freqs, &sbs_num,
+				 scc_freqs, &scc_num,
+				 rest_freqs, &rest_num,
+				 channel_list_5, chan_index_5,
+				 channel_list_6, chan_index_6);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP1_PCL_CHANNELS,
+				  sbs_freqs, sbs_num,
+				  skip_dfs_channel, skip_6ghz_channel);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP2_PCL_CHANNELS,
+				  scc_freqs, scc_num,
+				  skip_dfs_channel, skip_6ghz_channel);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP3_PCL_CHANNELS,
+				  rest_freqs, rest_num,
+				  skip_dfs_channel, skip_6ghz_channel);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP4_PCL_CHANNELS,
+				  channel_list_24, chan_index_24,
+				  false, false);
+		status = QDF_STATUS_SUCCESS;
+		break;
+	case PM_SCC_CH_MCC_CH_SBS_CH_24G:
+		get_sub_channels(psoc,
+				 sbs_freqs, &sbs_num,
+				 scc_freqs, &scc_num,
+				 rest_freqs, &rest_num,
+				 channel_list_5, chan_index_5,
+				 channel_list_6, chan_index_6);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP1_PCL_CHANNELS,
+				  scc_freqs, scc_num,
+				  skip_dfs_channel, skip_6ghz_channel);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP2_PCL_CHANNELS,
+				  rest_freqs, rest_num,
+				  skip_dfs_channel, skip_6ghz_channel);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP3_PCL_CHANNELS,
+				  sbs_freqs, sbs_num,
+				  skip_dfs_channel, skip_6ghz_channel);
+		add_chlist_to_pcl(pm_ctx->pdev,
+				  pcl_channels, pcl_weights, pcl_sz,
+				  len, WEIGHT_OF_GROUP4_PCL_CHANNELS,
+				  channel_list_24, chan_index_24,
+				  false, false);
 		status = QDF_STATUS_SUCCESS;
 		break;
 	default:
@@ -2727,8 +2953,10 @@ end:
 	qdf_mem_free(channel_list);
 	qdf_mem_free(channel_list_24);
 	qdf_mem_free(channel_list_5);
-	qdf_mem_free(sbs_channel_list);
+	qdf_mem_free(sbs_freqs);
 	qdf_mem_free(channel_list_6);
+	qdf_mem_free(scc_freqs);
+	qdf_mem_free(rest_freqs);
 
 	return status;
 }
