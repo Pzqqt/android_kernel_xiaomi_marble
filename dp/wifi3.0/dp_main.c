@@ -2117,6 +2117,27 @@ static void dp_srng_free(struct dp_soc *soc, struct dp_srng *srng)
 	srng->hal_srng = NULL;
 }
 
+#ifdef DISABLE_MON_RING_MSI_CFG
+/*
+ * dp_skip_msi_cfg() - Check if msi cfg has to be skipped for ring_type
+ * @ring_type: sring type
+ *
+ * Return: True if msi cfg should be skipped for srng type else false
+ */
+static inline bool dp_skip_msi_cfg(int ring_type)
+{
+	if (ring_type == RXDMA_MONITOR_STATUS)
+		return true;
+
+	return false;
+}
+#else
+static inline bool dp_skip_msi_cfg(int ring_type)
+{
+	return false;
+}
+#endif
+
 /*
  * dp_srng_init() - Initialize SRNG
  * @soc  : Data path soc handle
@@ -2154,11 +2175,10 @@ static QDF_STATUS dp_srng_init(struct dp_soc *soc, struct dp_srng *srng,
 		(void *)ring_params.ring_base_paddr,
 		ring_params.num_entries);
 
-	if (soc->intr_mode == DP_INTR_MSI) {
+	if (soc->intr_mode == DP_INTR_MSI && !dp_skip_msi_cfg(ring_type)) {
 		dp_srng_msi_setup(soc, &ring_params, ring_type, ring_num);
 		dp_verbose_debug("Using MSI for ring_type: %d, ring_num %d",
 				 ring_type, ring_num);
-
 	} else {
 		ring_params.msi_data = 0;
 		ring_params.msi_addr = 0;
