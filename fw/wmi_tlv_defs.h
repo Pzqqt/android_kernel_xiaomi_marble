@@ -1189,6 +1189,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_vdev_enable_disable_intra_bss_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_peer_enable_disable_intra_bss_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_aoa_phasedelta_evt_fixed_param,
+    WMITLV_TAG_STRUC_wmi_roam_mlo_config_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -3462,6 +3463,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_IDLE_TRIGGER_MONITOR_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_configure_roam_trigger_parameters, config_roam_trigger_param, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_ENABLE_DISABLE_TRIGGER_REASON_CMDID);
 
+/* Configure roam MLO parameters */
+#define WMITLV_TABLE_WMI_ROAM_MLO_CONFIG_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_roam_mlo_config_cmd_fixed_param, wmi_roam_mlo_config_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_MLO_CONFIG_CMDID);
+
 /* DSM filter parameters */
 #define WMITLV_TABLE_WMI_PDEV_DSM_FILTER_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_dsm_filter_fixed_param, wmi_pdev_dsm_filter_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
@@ -5082,7 +5088,9 @@ WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_pdev_set_hw_mode_response_vdev_mac_entry, wmi_pdev_set_hw_mode_response_vdev_mac_mapping, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_fils_synch_tlv_param, roam_fils_synch_info, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_key_material_ext, key_ext, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_pmk_cache_synch_tlv_param, roam_pmk_cache_synch_info, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_pmk_cache_synch_tlv_param, roam_pmk_cache_synch_info, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_ml_setup_links_param, setup_links_param, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_ml_key_material_param, ml_key_material, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_SYNCH_EVENTID);
 
 /* Roam Synch frame Event */

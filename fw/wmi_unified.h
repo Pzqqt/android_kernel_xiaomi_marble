@@ -800,6 +800,8 @@ typedef enum {
     WMI_ROAM_PREAUTH_STATUS_CMDID,
     /** Command to get roam scan channels list */
     WMI_ROAM_GET_SCAN_CHANNEL_LIST_CMDID,
+    /** configure MLO parameters for roaming */
+    WMI_ROAM_MLO_CONFIG_CMDID,
 
     /** offload scan specific commands */
     /** set offload scan AP profile   */
@@ -5090,6 +5092,22 @@ typedef struct {
     A_UINT8  pmk[WMI_MAX_PMK_LEN];
     A_UINT8  pmkid[WMI_MAX_PMKID_LEN];
 } wmi_roam_pmk_cache_synch_tlv_param;
+
+/**
+ * WMI_ROAM_LINK_FLAG_XXX definition:
+ */
+#define WMI_ROAM_LINK_FLAG_DISABLE    0x1   /* link is disabled, host can overwrite it later. */
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_ml_setup_links_param */
+    A_UINT32 vdev_id; /* when vdev_id is 0xffffffff, means the link_id hasn't attached to vdev */
+    A_UINT32 link_id; /* link id defined as in 802.11 BE spec. */
+    wmi_channel channel; /* link primary channel */
+    /**
+     * link flags: refer WMI_ROAM_LINK_FLAG_XXX.
+     */
+    A_UINT32 flags;
+} wmi_roam_ml_setup_links_param;
 
 /*
  * If FW has multiple active channels due to MCC(multi channel concurrency),
@@ -15403,6 +15421,9 @@ typedef struct {
 #define WLAN_ROAM_SCORING_PCL_DISABLE                   0x00000100
 #define WLAN_ROAM_SCORING_HE_DISABLE                    0x00000200
 #define WLAN_ROAM_SCORING_OCE_WAN_DISABLE               0x00000400
+#define WLAN_ROAM_SCORING_ETH_DISABLE                   0x00000800
+#define WLAN_ROAM_SCORING_MLO_DISABLE                   0x00001000
+
 #define WLAN_ROAM_SCORING_DISABLE_ALL                   0xFFFFFFFF
 #define WLAN_ROAM_SCORING_DEFAULT_PARAM_ALLOW           0x0
 
@@ -15437,6 +15458,17 @@ typedef struct {
 
 #define WLAN_ROAM_SCORE_MAX_OCE_WAN_SLOT                16
 #define WLAN_ROAM_SCORE_DEFAULT_OCE_WAN_SLOT            0
+
+#define WLAN_ROAM_SCORE_320MHZ_BW_EXT_INDEX             0
+#define WLAN_ROAM_SCORE_MAX_BW_EXT_INDEX                4
+
+#define WLAN_ROAM_SCORE_MLSR_INDEX                      0
+#define WLAN_ROAM_SCORE_MLMR_INDEX                      1
+#define WLAN_ROAM_SCORE_EMLSR_INDEX                     2
+#define WLAN_ROAM_SCORE_EMLMR_INDEX                     3
+#define WLAN_ROAM_SCORE_MLO_INDEX                       4
+#define WMI_ROAM_GET_MLO_SCORE_PERCENTAGE(value32, mlo_index)                 WMI_GET_BITS(value32, (8 * (mlo_index)), 8)
+#define WMI_ROAM_SET_MLO_SCORE_PERCENTAGE(value32, score_pcnt, mlo_index)     WMI_SET_BITS(value32, (8 * (mlo_index)), 8, score_pcnt)
 
 /**
     best_rssi_threshold: Roamable AP RSSI equal or better than this threshold, full rssi score 100. Units in dBm.
@@ -15496,11 +15528,19 @@ typedef struct {
 } wmi_roam_cnd_rssi_scoring;
 
 /**
-    Use macro WMI_ROAM_CND_GET/SET_BW_SCORE_PERCENTAGE to get and set the value respectively.
-    BITS 0-7   :- It contains scoring percentage of 20MHz   BW
-    BITS 8-15  :- It contains scoring percentage of 40MHz   BW
-    BITS 16-23 :- It contains scoring percentage of 80MHz   BW
-    BITS 24-31 :- It contains scoring percentage of 1600MHz BW
+    Use macro WMI_ROAM_CND_GET/SET_BW_SCORE_PERCENTAGE to get and set the
+    value respectively of bw_scoring
+        BITS 0-7   :- It contains scoring percentage of 20MHz  BW
+        BITS 8-15  :- It contains scoring percentage of 40MHz  BW
+        BITS 16-23 :- It contains scoring percentage of 80MHz  BW
+        BITS 24-31 :- It contains scoring percentage of 160MHz BW
+
+    Use macro WMI_ROAM_CND_GET/SET_BW_SCORE_PERCENTAGE to get and set the
+    value respectively of ext_bw_scoring:
+        BITS 0-7   :- It contains scoring percentage of 320MHz BW
+        BITS 8-15  :- reserved
+        BITS 16-23 :- reserved
+        BITS 24-31 :- reserved
 
     The value of each index must be 0-100
  */
@@ -15646,6 +15686,18 @@ typedef struct {
      * Only used if sae_pk_ap_weightage_pcnt != 0.
      */
     A_UINT32 sae_pk_ap_weightage_pcnt;
+    /*
+     * Give weightage to bandwidth which is greater than 160Mhz.
+     */
+    wmi_roam_cnd_bw_scoring ext_bw_scoring;
+    /*
+     * eht_weightage_pcnt :- 11be weightage out of total score in percentage.
+     */
+    A_UINT32 eht_weightage_pcnt;
+    /*
+     * mlo_weightage_pcnt :- give weightage to candidate based on MLO support.
+     */
+    A_UINT32 mlo_weightage_pcnt;
 } wmi_roam_cnd_scoring_param;
 
 typedef struct {
@@ -18199,6 +18251,23 @@ typedef struct {
 #define GTK_REPLAY_COUNTER_BYTES    8
 #define WMI_MAX_KEY_LEN             32
 #define IGTK_PN_SIZE                6
+
+#define WMI_MAX_PN_LEN 8
+
+typedef struct {
+    /**
+     * WMITLV_TAG_STRUC_wmi_roam_ml_key_material_param will exist when link is not created by fw.
+     */
+
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_ml_link_key_material_param */
+    A_UINT32 link_id;    /* The key is for which link, when link_id is 0xf, means the key is used for all links, like PTK */
+    /** key index */
+    A_UINT32 key_ix;
+    /** key cipher, defined as WMI_CIPHER_ */
+    A_UINT32 key_cipher;
+    A_UINT8  pn[WMI_MAX_PN_LEN];
+    A_UINT8  key_buff[WMI_MAX_KEY_LEN];
+} wmi_roam_ml_key_material_param;
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WMI_GTK_OFFLOAD_STATUS_EVENT_fixed_param */
@@ -28964,6 +29033,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PEER_CONFIG_PPE_DS_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_ENABLE_DISABLE_INTRA_BSS_CMDID);
         WMI_RETURN_STRING(WMI_PEER_ENABLE_DISABLE_INTRA_BSS_CMDID);
+        WMI_RETURN_STRING(WMI_ROAM_MLO_CONFIG_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -31558,6 +31628,11 @@ typedef struct {
      */
     A_UINT32 scoring_capability_bitmap;
 } wmi_roam_capability_report_event_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_mlo_config_cmd_fixed_param */
+    wmi_mac_addr partner_link_addr; /* Assigned link address which can be used as self link addr when vdev is not created */
+} wmi_roam_mlo_config_cmd_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_get_big_data_cmd_fixed_param */
