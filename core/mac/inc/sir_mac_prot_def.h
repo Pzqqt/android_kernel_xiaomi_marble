@@ -1717,6 +1717,19 @@ struct he_capability_info {
 	uint16_t tx_he_mcs_map_80_80;
 #endif
 } qdf_packed;
+
+struct he_6ghz_capability_info {
+	uint16_t min_mpdu_start_spacing:3;
+	uint16_t    max_ampdu_len_exp:3;
+	uint16_t         max_mpdu_len:2;
+
+	uint16_t             reserved:1;
+	uint16_t          sm_pow_save:2;
+	uint16_t         rd_responder:1;
+	uint16_t rx_ant_pattern_consistency:1;
+	uint16_t tx_ant_pattern_consistency:1;
+	uint16_t             reserved2:2;
+} qdf_packed;
 #endif
 
 /*
