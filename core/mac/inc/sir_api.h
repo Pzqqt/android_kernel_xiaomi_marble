@@ -123,12 +123,8 @@ typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
 #define SIR_SAP_MAX_NUM_PEERS 32
 #endif
 
-#define KCK_192BIT_KEY_LEN 24
-#define KCK_256BIT_KEY_LEN 32
-
 #define SIR_KEK_KEY_LEN 16
 #define SIR_KEK_KEY_LEN_FILS 64
-#define KEK_256BIT_KEY_LEN 32
 
 #define SIR_REPLAY_CTR_LEN 8
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
@@ -539,8 +535,7 @@ struct roam_pmkid_req_event;
  * typedef pe_roam_synch_fn_t - PE roam synch callback routine pointer
  * @mac_ctx: Global MAC context
  * @roam_sync_ind_ptr: Structure with roam synch parameters
- * @bss_desc_ptr: bss_description pointer for new bss to which the firmware has
- * started roaming
+ * @ie_len: ie length
  * @reason: Reason for calling the callback
  *
  * This type is for callbacks registered with WMA to complete the roam synch
@@ -552,7 +547,7 @@ struct roam_pmkid_req_event;
 typedef QDF_STATUS
 (*pe_roam_synch_fn_t)(struct mac_context *mac_ctx,
 		      struct roam_offload_synch_ind *roam_sync_ind_ptr,
-		      struct bss_description *bss_desc_ptr,
+		      uint16_t ie_len,
 		      enum sir_roam_op_code reason);
 
 /**

@@ -28,6 +28,7 @@
 #include "wmi_unified_param.h"
 #include "wmi_unified_sta_param.h"
 #include "wlan_cm_public_struct.h"
+#include "wmi_unified.h"
 
 #define ROAM_SCAN_OFFLOAD_START                     1
 #define ROAM_SCAN_OFFLOAD_STOP                      2
@@ -1914,34 +1915,6 @@ struct wlan_cm_roam_tx_ops {
 };
 
 /**
- * wlan_cm_roam_rx_ops  - structure of rx function pointers for
- * roaming related commands
- * @roam_sync_event: RX ops function pointer for roam sync event
- * @roam_sync_frame_event: Rx ops function pointer for roam sync frame event
- * @roam_event_rx: Rx ops function pointer for roam info event
- * @btm_blacklist_event: Rx ops function pointer for btm blacklist event
- * @vdev_disconnect_event: Rx ops function pointer for vdev disconnect event
- * @roam_scan_chan_list_event: Rx ops function pointer for roam scan ch event
- */
-struct wlan_cm_roam_rx_ops {
-	QDF_STATUS (*roam_sync_event)(struct wlan_objmgr_psoc *psoc,
-				      uint8_t *event,
-				      uint32_t len,
-				      uint8_t vdev_id);
-	QDF_STATUS (*roam_sync_frame_event)(struct wlan_objmgr_psoc *psoc,
-					    struct roam_synch_frame_ind *frm);
-	QDF_STATUS (*roam_event_rx)(struct roam_offload_roam_event roam_event);
-#ifdef ROAM_TARGET_IF_CONVERGENCE
-	QDF_STATUS (*btm_blacklist_event)(struct wlan_objmgr_psoc *psoc,
-					  struct roam_blacklist_event *list);
-	QDF_STATUS
-	(*vdev_disconnect_event)(struct vdev_disconnect_event_data *data);
-	QDF_STATUS
-	(*roam_scan_chan_list_event)(struct cm_roam_scan_ch_resp *data);
-#endif
-};
-
-/**
  * enum roam_scan_freq_scheme - Scan mode for triggering roam
  * ROAM_SCAN_FREQ_SCHEME_NO_SCAN: Indicates the fw to not scan.
  * ROAM_SCAN_FREQ_SCHEME_PARTIAL_SCAN: Indicates the firmware to
@@ -2080,5 +2053,34 @@ struct roam_offload_synch_ind {
 	uint8_t hlp_data[FILS_MAX_HLP_DATA_LEN];
 	bool is_ft_im_roam;
 	enum wlan_phymode phy_mode; /*phy mode sent by fw */
+	wmi_channel chan;
+};
+
+/**
+ * wlan_cm_roam_rx_ops  - structure of rx function pointers for
+ * roaming related commands
+ * @roam_sync_event: RX ops function pointer for roam sync event
+ * @roam_sync_frame_event: Rx ops function pointer for roam sync frame event
+ * @roam_event_rx: Rx ops function pointer for roam info event
+ * @btm_blacklist_event: Rx ops function pointer for btm blacklist event
+ * @vdev_disconnect_event: Rx ops function pointer for vdev disconnect event
+ * @roam_scan_chan_list_event: Rx ops function pointer for roam scan ch event
+ */
+struct wlan_cm_roam_rx_ops {
+	QDF_STATUS (*roam_sync_event)(struct wlan_objmgr_psoc *psoc,
+				      uint8_t *event,
+				      uint32_t len,
+				      struct roam_offload_synch_ind *sync_ind);
+	QDF_STATUS (*roam_sync_frame_event)(struct wlan_objmgr_psoc *psoc,
+					    struct roam_synch_frame_ind *frm);
+	QDF_STATUS (*roam_event_rx)(struct roam_offload_roam_event roam_event);
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+	QDF_STATUS (*btm_blacklist_event)(struct wlan_objmgr_psoc *psoc,
+					  struct roam_blacklist_event *list);
+	QDF_STATUS
+	(*vdev_disconnect_event)(struct vdev_disconnect_event_data *data);
+	QDF_STATUS
+	(*roam_scan_chan_list_event)(struct cm_roam_scan_ch_resp *data);
+#endif
 };
 #endif

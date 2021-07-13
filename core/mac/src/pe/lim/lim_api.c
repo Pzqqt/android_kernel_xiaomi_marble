@@ -2510,7 +2510,7 @@ lim_get_assoc_resp_from_roam_sync(
 QDF_STATUS
 pe_roam_synch_callback(struct mac_context *mac_ctx,
 		       struct roam_offload_synch_ind *roam_sync_ind_ptr,
-		       struct bss_description *bss_desc,
+		       uint16_t ie_len,
 		       enum sir_roam_op_code reason)
 {
 	struct pe_session *session_ptr;
@@ -2521,6 +2521,7 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 	uint16_t aid;
 	struct bss_params *add_bss_params;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	struct bss_description *bss_desc = NULL;
 	uint16_t ric_tspec_len;
 	tpSirAssocRsp assoc_rsp;
 
@@ -2580,9 +2581,18 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 		pe_err("LFR3: Not in Link est state");
 		return status;
 	}
+
+	bss_desc = qdf_mem_malloc(sizeof(struct bss_description) + ie_len);
+	if (!bss_desc) {
+		QDF_ASSERT(bss_desc);
+		status = -QDF_STATUS_E_NOMEM;
+		return status;
+	}
+
 	status = lim_roam_fill_bss_descr(mac_ctx, roam_sync_ind_ptr, bss_desc);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		pe_err("LFR3:Failed to fill Bss Descr");
+		qdf_mem_free(bss_desc);
 		return status;
 	}
 	status = QDF_STATUS_E_FAILURE;
@@ -2594,6 +2604,7 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 	if (!ft_session_ptr) {
 		pe_err("LFR3:Cannot create PE Session");
 		lim_print_mac_addr(mac_ctx, bss_desc->bssId, LOGE);
+		qdf_mem_free(bss_desc);
 		return status;
 	}
 	/* Update the beacon/probe filter in mac_ctx */
@@ -2618,8 +2629,11 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 			    assoc_rsp);
 	pe_set_rmf_caps(mac_ctx, ft_session_ptr, roam_sync_ind_ptr);
 	/* Next routine may update nss based on dot11Mode */
+
 	lim_ft_prepare_add_bss_req(mac_ctx, ft_session_ptr, bss_desc,
 				   assoc_rsp);
+	qdf_mem_free(bss_desc);
+
 	if (session_ptr->is11Rconnection)
 		lim_fill_fils_ft(session_ptr, ft_session_ptr);
 
@@ -2652,7 +2666,6 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 		qdf_mem_free(assoc_rsp);
 		return status;
 	}
-
 
 	if (roam_sync_ind_ptr->auth_status ==
 	    ROAM_AUTH_STATUS_AUTHENTICATED) {

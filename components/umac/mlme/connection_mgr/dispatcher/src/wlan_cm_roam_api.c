@@ -31,6 +31,8 @@
 #include "connection_mgr/core/src/wlan_cm_roam.h"
 #include "wlan_cm_roam_api.h"
 #include "wlan_blm_api.h"
+#include <../../core/src/wlan_cm_roam_i.h>
+
 
 /* Support for "Fast roaming" (i.e., ESE, LFR, or 802.11r.) */
 #define BG_SCAN_OCCUPIED_CHANNEL_LIST_LEN 15
@@ -320,6 +322,12 @@ QDF_STATUS wlan_cm_roam_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 }
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
+QDF_STATUS
+wlan_cm_fw_roam_abort_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	return cm_fw_roam_abort_req(psoc, vdev_id);
+}
+
 QDF_STATUS
 wlan_cm_roam_extract_btm_response(wmi_unified_t wmi, void *evt_buf,
 				  struct roam_btm_response_data *dst,
@@ -2051,6 +2059,20 @@ QDF_STATUS wlan_get_chan_by_link_id_from_rnr(struct wlan_objmgr_vdev *vdev,
 		}
 	}
 
+	return status;
+}
+#endif
+
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+QDF_STATUS wlan_cm_sta_mlme_vdev_roam_notify(struct vdev_mlme_obj *vdev_mlme,
+					     uint16_t data_len, void *data)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+	status = cm_roam_sync_event_handler_cb(vdev_mlme->vdev, data, data_len);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_err("Failed to process roam synch event");
+#endif
 	return status;
 }
 #endif

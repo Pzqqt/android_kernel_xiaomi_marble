@@ -45,7 +45,7 @@
 #include "connection_mgr/core/src/wlan_cm_sm.h"
 
 QDF_STATUS cm_fw_roam_sync_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
-			       uint8_t *event, uint32_t event_data_len)
+			       void *event, uint32_t event_data_len)
 {
 	QDF_STATUS status;
 	struct wlan_objmgr_vdev *vdev;
@@ -117,7 +117,7 @@ error:
 
 QDF_STATUS
 cm_fw_roam_sync_start_ind(struct wlan_objmgr_vdev *vdev,
-			  struct roam_offload_synch_ind *roam_synch_data)
+			  uint8_t roam_reason)
 {
 	QDF_STATUS status;
 	struct wlan_objmgr_pdev *pdev;
@@ -138,7 +138,7 @@ cm_fw_roam_sync_start_ind(struct wlan_objmgr_vdev *vdev,
 	wlan_blm_update_bssid_connect_params(pdev,
 					     connected_bssid,
 					     BLM_AP_DISCONNECTED);
-	if (IS_ROAM_REASON_STA_KICKOUT(roam_synch_data->roam_reason)) {
+	if (IS_ROAM_REASON_STA_KICKOUT(roam_reason)) {
 		struct reject_ap_info ap_info;
 
 		ap_info.bssid = connected_bssid;
@@ -1159,7 +1159,7 @@ rel_ref:
 #endif /* WLAN_FEATURE_FIPS */
 
 #ifdef ROAM_TARGET_IF_CONVERGENCE
-QDF_STATUS cm_free_roam_synch_frame_ind(struct rso_config *rso_cfg)
+QDF_STATUS wlan_cm_free_roam_synch_frame_ind(struct rso_config *rso_cfg)
 {
 	struct roam_synch_frame_ind *frame_ind;
 

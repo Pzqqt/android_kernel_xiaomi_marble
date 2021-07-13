@@ -66,7 +66,7 @@
 #define mlme_legacy_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_MLME, params)
 #define mlme_legacy_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_MLME, params)
 #define mlme_legacy_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_MLME, params)
-
+#define MAC_B_PR_SSID_OFFSET 12
 enum size_of_len_field {
 	ONE_BYTE = 1,
 	TWO_BYTE = 2

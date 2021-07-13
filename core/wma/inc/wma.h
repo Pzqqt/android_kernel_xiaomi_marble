@@ -992,7 +992,7 @@ typedef struct {
 						    struct qdf_mac_addr bssid);
 	QDF_STATUS (*pe_roam_synch_cb)(struct mac_context *mac,
 		struct roam_offload_synch_ind *roam_synch_data,
-		struct bss_description *bss_desc_ptr,
+		uint16_t ie_len,
 		enum sir_roam_op_code reason);
 	QDF_STATUS (*pe_disconnect_cb) (struct mac_context *mac,
 					uint8_t vdev_id,

@@ -280,8 +280,7 @@ tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(struct mac_context *mac,
  * ROAM SYNCH event is received from firmware
  * @mac_ctx: global mac context
  * @roam_sync_ind_ptr: Structure with roam synch parameters
- * @bss_desc_ptr: bss_description pointer for new bss to which the firmware has
- * started roaming
+ * @ie_len: ie length
  * @reason: Operation to be done by the callback
  *
  * This is a PE level callback called from WMA to complete the roam synch
@@ -293,7 +292,7 @@ tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(struct mac_context *mac,
 QDF_STATUS
 pe_roam_synch_callback(struct mac_context *mac_ctx,
 		       struct roam_offload_synch_ind *roam_sync_ind_ptr,
-		       struct bss_description *bss_desc_ptr,
+		       uint16_t ie_len,
 		       enum sir_roam_op_code reason);
 
 void
@@ -322,7 +321,7 @@ pe_disconnect_callback(struct mac_context *mac, uint8_t vdev_id,
 static inline QDF_STATUS
 pe_roam_synch_callback(struct mac_context *mac_ctx,
 		       struct roam_offload_synch_ind *roam_sync_ind_ptr,
-		       struct bss_description *bss_desc_ptr,
+		       uint16_t ie_len,
 		       enum sir_roam_op_code reason)
 {
 	return QDF_STATUS_E_NOSUPPORT;

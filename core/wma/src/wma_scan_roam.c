@@ -86,7 +86,7 @@
 #include "host_diag_core_log.h"
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 #include <../../core/src/wlan_cm_roam_i.h>
-
+#include "wlan_cm_roam_api.h"
 #ifdef FEATURE_WLAN_EXTSCAN
 #define WMA_EXTSCAN_CYCLE_WAKE_LOCK_DURATION WAKELOCK_DURATION_RECOMMENDED
 
@@ -543,6 +543,7 @@ wma_send_roam_preauth_status(tp_wma_handle wma_handle,
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
+#ifndef ROAM_TARGET_IF_CONVERGENCE
 /**
  * wma_free_roam_synch_frame_ind() - Free the bcn_probe_rsp, reassoc_req,
  * reassoc_rsp received as part of the ROAM_SYNC_FRAME event
@@ -739,7 +740,7 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 
 	if (!QDF_IS_STATUS_SUCCESS(
 		cm_fw_roam_sync_start_ind(iface->vdev,
-					  roam_synch_ind_ptr)))
+					  roam_synch_ind_ptr->roam_reason)))
 	{
 		wma_err("LFR3: CSR Roam synch cb failed");
 		wma_free_roam_synch_frame_ind(iface);
@@ -883,7 +884,7 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 	wma_free_roam_synch_frame_ind(iface);
 	return 0;
 }
-
+#endif /* ROAM_TARGET_IF_CONVERGENCE */
 /**
  * wma_roam_update_vdev() - Update the STA and BSS
  * @wma: Global WMA Handle
@@ -1005,6 +1006,7 @@ static void wma_update_phymode_on_roam(tp_wma_handle wma, uint8_t *bssid,
 		  des_chan->ch_cfreq1, des_chan->ch_cfreq2);
 }
 
+#ifndef ROAM_TARGET_IF_CONVERGENCE
 int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
 					 uint32_t len)
 {
@@ -1012,7 +1014,6 @@ int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
 	wmi_roam_synch_event_fixed_param *synch_event = NULL;
 	tp_wma_handle wma = (tp_wma_handle) handle;
 	struct roam_offload_synch_ind *roam_synch_ind_ptr = NULL;
-	struct bss_description *bss_desc_ptr = NULL;
 	uint16_t ie_len = 0;
 	int status = -EINVAL;
 	qdf_time_t roam_synch_received = qdf_get_system_timestamp();
@@ -1159,15 +1160,8 @@ int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
 		wma_err("LFR3: Invalid Beacon Length");
 		goto cleanup_label;
 	}
-	bss_desc_ptr = qdf_mem_malloc(sizeof(struct bss_description) + ie_len);
-	if (!bss_desc_ptr) {
-		QDF_ASSERT(bss_desc_ptr);
-		status = -ENOMEM;
-		goto cleanup_label;
-	}
-	qdf_mem_zero(bss_desc_ptr, sizeof(struct bss_description) + ie_len);
 	if (QDF_IS_STATUS_ERROR(wma->pe_roam_synch_cb(wma->mac_context,
-			roam_synch_ind_ptr, bss_desc_ptr,
+			roam_synch_ind_ptr, ie_len,
 			SIR_ROAM_SYNCH_PROPAGATION))) {
 		wma_err("LFR3: PE roam synch cb failed");
 		status = -EBUSY;
@@ -1214,13 +1208,10 @@ cleanup_label:
 		qdf_mem_free(roam_synch_ind_ptr->ric_tspec_data);
 	if (roam_synch_ind_ptr)
 		qdf_mem_free(roam_synch_ind_ptr);
-	if (bss_desc_ptr)
-		qdf_mem_free(bss_desc_ptr);
 
 	return status;
 }
 
-#ifndef ROAM_TARGET_IF_CONVERGENCE
 int wma_roam_synch_frame_event_handler(void *handle, uint8_t *event,
 					uint32_t len)
 {
@@ -4140,7 +4131,7 @@ static void wma_invalid_roam_reason_handler(tp_wma_handle wma_handle,
 	roam_synch_data->roamed_vdev_id = vdev_id;
 	if (notif != CM_ROAM_NOTIF_ROAM_START)
 		wma_handle->pe_roam_synch_cb(wma_handle->mac_context,
-					     roam_synch_data, NULL, op_code);
+					     roam_synch_data, 0, op_code);
 
 	if (notif == CM_ROAM_NOTIF_ROAM_START)
 		cm_fw_roam_start_req(wma_handle->psoc, vdev_id);
@@ -4932,4 +4923,43 @@ int wma_roam_pmkid_request_event_handler(void *handle, uint8_t *event,
 	qdf_mem_free(dst_list);
 	return 0;
 }
+#endif
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+void cm_roam_update_vdev(struct roam_offload_synch_ind *sync_ind)
+{
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	wma_roam_update_vdev(wma, sync_ind);
+}
+
+QDF_STATUS
+cm_roam_pe_sync_callback(struct roam_offload_synch_ind *sync_ind,
+			 uint16_t ie_len)
+{
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	QDF_STATUS status;
+
+	status = wma->pe_roam_synch_cb(wma->mac_context,
+				sync_ind, ie_len,
+				SIR_ROAM_SYNCH_PROPAGATION);
+
+	return status;
+}
+
+void cm_update_phymode_on_roam(uint8_t vdev_id, uint8_t *bssid,
+			       wmi_channel *chan)
+{
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	wma_update_phymode_on_roam(wma, bssid, chan, &wma->interfaces[vdev_id]);
+}
+
+enum wlan_phymode
+wlan_cm_fw_to_host_phymode(WMI_HOST_WLAN_PHY_MODE phymode)
+{
+	return wma_fw_to_host_phymode(phymode);
+}
+#endif /* ROAM_TARGET_IF_CONVERGENCE */
 #endif
