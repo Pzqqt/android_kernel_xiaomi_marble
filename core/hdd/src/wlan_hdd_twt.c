@@ -852,6 +852,9 @@ static int hdd_sap_twt_get_session_params(struct hdd_adapter *adapter,
 	params = qdf_mem_malloc(TWT_PEER_MAX_SESSIONS * max_num_peer *
 				sizeof(*params));
 
+	if (!params)
+		return -ENOMEM;
+
 	params[0].vdev_id = adapter->vdev_id;
 	id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID;
 	id1 = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAC_ADDR;
