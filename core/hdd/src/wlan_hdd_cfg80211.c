@@ -18363,9 +18363,9 @@ static int wlan_hdd_add_key_sap(struct hdd_adapter *adapter,
 	return errno;
 }
 
-static int wlan_hdd_add_key_sta(struct hdd_adapter *adapter,
-				bool pairwise, u8 key_index,
-				mac_handle_t mac_handle, bool *ft_mode)
+static int wlan_hdd_add_key_sta(struct wlan_objmgr_pdev *pdev,
+				struct hdd_adapter *adapter,
+				bool pairwise, u8 key_index, bool *ft_mode)
 {
 	struct wlan_objmgr_vdev *vdev;
 	int errno;
@@ -18375,7 +18375,7 @@ static int wlan_hdd_add_key_sta(struct hdd_adapter *adapter,
 	 * pre-authentication is done. Save the key in the
 	 * UMAC and install it after association
 	 */
-	status = sme_check_ft_status(mac_handle, adapter->vdev_id);
+	status = ucfg_cm_check_ft_status(pdev, adapter->vdev_id);
 	if (status == QDF_STATUS_SUCCESS) {
 		*ft_mode = true;
 		return 0;
@@ -18482,8 +18482,8 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		break;
 	case QDF_STA_MODE:
 	case QDF_P2P_CLIENT_MODE:
-		errno = wlan_hdd_add_key_sta(adapter, pairwise, key_index,
-					     mac_handle, &ft_mode);
+		errno = wlan_hdd_add_key_sta(hdd_ctx->pdev, adapter, pairwise,
+					     key_index, &ft_mode);
 		if (ft_mode)
 			return 0;
 		break;
@@ -20143,7 +20143,6 @@ __wlan_hdd_cfg80211_update_ft_ies(struct wiphy *wiphy,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	int status;
-	mac_handle_t mac_handle;
 
 	hdd_enter();
 
@@ -20171,10 +20170,8 @@ __wlan_hdd_cfg80211_update_ft_ies(struct wiphy *wiphy,
 	}
 	hdd_debug("called with Ie of length = %zu", ftie->ie_len);
 
-	/* Pass the received FT IEs to SME */
-	mac_handle = hdd_ctx->mac_handle;
-	sme_set_ft_ies(mac_handle, adapter->vdev_id,
-		       (const u8 *)ftie->ie, ftie->ie_len);
+	ucfg_cm_set_ft_ies(hdd_ctx->pdev, adapter->vdev_id,
+			   (const u8 *)ftie->ie, ftie->ie_len);
 	hdd_exit();
 	return 0;
 }

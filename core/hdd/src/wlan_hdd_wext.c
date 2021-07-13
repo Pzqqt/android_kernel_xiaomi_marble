@@ -7807,8 +7807,8 @@ static int __iw_set_fties(struct net_device *dev, struct iw_request_info *info,
 	hdd_debug("called with Ie of length = %d", wrqu->data.length);
 
 	/* Pass the received FT IEs to SME */
-	sme_set_ft_ies(hdd_ctx->mac_handle, adapter->vdev_id,
-		       extra, wrqu->data.length);
+	ucfg_cm_set_ft_ies(hdd_ctx->pdev, adapter->vdev_id,
+			   extra, wrqu->data.length);
 	hdd_exit();
 	return 0;
 }
