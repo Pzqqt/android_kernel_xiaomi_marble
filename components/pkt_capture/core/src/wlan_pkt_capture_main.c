@@ -536,6 +536,8 @@ pkt_capture_register_callbacks(struct wlan_objmgr_vdev *vdev,
 	target_if_pkt_capture_register_rx_ops(&vdev_priv->rx_ops);
 	pkt_capture_wdi_event_subscribe(psoc);
 	pkt_capture_record_channel(vdev);
+	vdev_priv->curr_freq = vdev->vdev_mlme.des_chan->ch_freq;
+	vdev_priv->last_freq = vdev_priv->curr_freq;
 
 	status = tgt_pkt_capture_register_ev_handler(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
