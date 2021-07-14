@@ -1711,6 +1711,40 @@ int hdd_send_twt_add_dialog_cmd(struct hdd_context *hdd_ctx,
 		goto cleanup;
 	}
 
+	ack_priv = osif_request_priv(request);
+	if (ack_priv->status) {
+		hdd_err("Received TWT ack error. Reset twt command");
+		ucfg_mlme_reset_twt_init_context(
+				hdd_ctx->psoc,
+				(struct qdf_mac_addr *)twt_params->peer_macaddr,
+				twt_params->dialog_id);
+
+		switch (ack_priv->status) {
+		case WMI_HOST_ADD_TWT_STATUS_INVALID_PARAM:
+		case WMI_HOST_ADD_TWT_STATUS_UNKNOWN_ERROR:
+		case WMI_HOST_ADD_TWT_STATUS_USED_DIALOG_ID:
+			ret = -EINVAL;
+			break;
+		case WMI_HOST_ADD_TWT_STATUS_ROAM_IN_PROGRESS:
+		case WMI_HOST_ADD_TWT_STATUS_CHAN_SW_IN_PROGRESS:
+		case WMI_HOST_ADD_TWT_STATUS_SCAN_IN_PROGRESS:
+			ret = -EBUSY;
+			break;
+		case WMI_HOST_ADD_TWT_STATUS_TWT_NOT_ENABLED:
+			ret = -EOPNOTSUPP;
+			break;
+		case WMI_HOST_ADD_TWT_STATUS_NOT_READY:
+			ret = -EAGAIN;
+			break;
+		case WMI_HOST_ADD_TWT_STATUS_NO_RESOURCE:
+			ret = -ENOMEM;
+			break;
+		default:
+			ret = -EINVAL;
+			break;
+		}
+	}
+
 	ret = qdf_status_to_os_return(status);
 cleanup:
 	osif_request_put(request);
@@ -2063,6 +2097,42 @@ int hdd_send_twt_del_dialog_cmd(struct hdd_context *hdd_ctx,
 	if (QDF_IS_STATUS_ERROR(status)) {
 		ret = qdf_status_to_os_return(status);
 		goto cleanup;
+	}
+
+	ack_priv = osif_request_priv(request);
+	if (ack_priv->status) {
+		hdd_err("Received TWT ack error. Reset twt command");
+		ucfg_mlme_reset_twt_init_context(
+				hdd_ctx->psoc,
+				(struct qdf_mac_addr *)twt_params->peer_macaddr,
+				twt_params->dialog_id);
+
+		switch (ack_priv->status) {
+		case WMI_HOST_DEL_TWT_STATUS_INVALID_PARAM:
+		case WMI_HOST_DEL_TWT_STATUS_UNKNOWN_ERROR:
+			ret = -EINVAL;
+			break;
+		case WMI_HOST_DEL_TWT_STATUS_DIALOG_ID_NOT_EXIST:
+			ret = -EAGAIN;
+			break;
+		case WMI_HOST_DEL_TWT_STATUS_DIALOG_ID_BUSY:
+			ret = -EINPROGRESS;
+			break;
+		case WMI_HOST_DEL_TWT_STATUS_NO_RESOURCE:
+			ret = -ENOMEM;
+			break;
+		case WMI_HOST_DEL_TWT_STATUS_ROAMING:
+		case WMI_HOST_DEL_TWT_STATUS_CHAN_SW_IN_PROGRESS:
+		case WMI_HOST_DEL_TWT_STATUS_SCAN_IN_PROGRESS:
+			ret = -EBUSY;
+			break;
+		case WMI_HOST_DEL_TWT_STATUS_CONCURRENCY:
+			ret = -EAGAIN;
+			break;
+		default:
+			ret = -EINVAL;
+			break;
+		}
 	}
 
 	ret = qdf_status_to_os_return(status);
@@ -2574,6 +2644,40 @@ int hdd_send_twt_pause_dialog_cmd(struct hdd_context *hdd_ctx,
 		goto cleanup;
 	}
 
+	ack_priv = osif_request_priv(request);
+	if (ack_priv->status) {
+		hdd_err("Received TWT ack error. Reset twt command");
+		ucfg_mlme_reset_twt_init_context(
+				hdd_ctx->psoc,
+				(struct qdf_mac_addr *)twt_params->peer_macaddr,
+				twt_params->dialog_id);
+
+		switch (ack_priv->status) {
+		case WMI_HOST_PAUSE_TWT_STATUS_INVALID_PARAM:
+		case WMI_HOST_PAUSE_TWT_STATUS_ALREADY_PAUSED:
+		case WMI_HOST_PAUSE_TWT_STATUS_UNKNOWN_ERROR:
+			ret = -EINVAL;
+			break;
+		case WMI_HOST_PAUSE_TWT_STATUS_DIALOG_ID_NOT_EXIST:
+			ret = -EAGAIN;
+			break;
+		case WMI_HOST_PAUSE_TWT_STATUS_DIALOG_ID_BUSY:
+			ret = -EINPROGRESS;
+			break;
+		case WMI_HOST_PAUSE_TWT_STATUS_NO_RESOURCE:
+			ret = -ENOMEM;
+			break;
+		case WMI_HOST_PAUSE_TWT_STATUS_CHAN_SW_IN_PROGRESS:
+		case WMI_HOST_PAUSE_TWT_STATUS_ROAM_IN_PROGRESS:
+		case WMI_HOST_PAUSE_TWT_STATUS_SCAN_IN_PROGRESS:
+			ret = -EBUSY;
+			break;
+		default:
+			ret = -EINVAL;
+			break;
+		}
+	}
+
 	ret = qdf_status_to_os_return(status);
 cleanup:
 	osif_request_put(request);
@@ -2697,6 +2801,39 @@ int hdd_send_twt_nudge_dialog_cmd(struct hdd_context *hdd_ctx,
 	if (QDF_IS_STATUS_ERROR(status)) {
 		ret = qdf_status_to_os_return(status);
 		goto cleanup;
+	}
+
+	ack_priv = osif_request_priv(request);
+	if (ack_priv->status) {
+		hdd_err("Received TWT ack error. Reset twt command");
+		ucfg_mlme_reset_twt_init_context(
+				hdd_ctx->psoc,
+				(struct qdf_mac_addr *)twt_params->peer_macaddr,
+				twt_params->dialog_id);
+
+		switch (ack_priv->status) {
+		case WMI_HOST_NUDGE_TWT_STATUS_INVALID_PARAM:
+		case WMI_HOST_NUDGE_TWT_STATUS_UNKNOWN_ERROR:
+			ret = -EINVAL;
+			break;
+		case WMI_HOST_NUDGE_TWT_STATUS_DIALOG_ID_NOT_EXIST:
+			ret = -EAGAIN;
+			break;
+		case WMI_HOST_NUDGE_TWT_STATUS_DIALOG_ID_BUSY:
+			ret = -EINPROGRESS;
+			break;
+		case WMI_HOST_NUDGE_TWT_STATUS_NO_RESOURCE:
+			ret = -ENOMEM;
+			break;
+		case WMI_HOST_NUDGE_TWT_STATUS_CHAN_SW_IN_PROGRESS:
+		case WMI_HOST_NUDGE_TWT_STATUS_ROAM_IN_PROGRESS:
+		case WMI_HOST_NUDGE_TWT_STATUS_SCAN_IN_PROGRESS:
+			ret = -EBUSY;
+			break;
+		default:
+			ret = -EINVAL;
+			break;
+		}
 	}
 
 	ret = qdf_status_to_os_return(status);
@@ -2965,6 +3102,40 @@ hdd_send_twt_resume_dialog_cmd(struct hdd_context *hdd_ctx,
 	if (QDF_IS_STATUS_ERROR(status)) {
 		ret = qdf_status_to_os_return(status);
 		goto cleanup;
+	}
+
+	ack_priv = osif_request_priv(request);
+	if (ack_priv->status) {
+		hdd_err("Received TWT ack error. Reset twt command");
+		ucfg_mlme_reset_twt_init_context(
+				hdd_ctx->psoc,
+				(struct qdf_mac_addr *)twt_params->peer_macaddr,
+				twt_params->dialog_id);
+
+		switch (ack_priv->status) {
+		case WMI_HOST_RESUME_TWT_STATUS_INVALID_PARAM:
+		case WMI_HOST_RESUME_TWT_STATUS_UNKNOWN_ERROR:
+			ret = -EINVAL;
+			break;
+		case WMI_HOST_RESUME_TWT_STATUS_DIALOG_ID_NOT_EXIST:
+		case WMI_HOST_RESUME_TWT_STATUS_NOT_PAUSED:
+			ret = EAGAIN;
+			break;
+		case WMI_HOST_RESUME_TWT_STATUS_DIALOG_ID_BUSY:
+			ret = -EINPROGRESS;
+			break;
+		case WMI_HOST_RESUME_TWT_STATUS_NO_RESOURCE:
+			ret = -ENOMEM;
+			break;
+		case WMI_HOST_RESUME_TWT_STATUS_CHAN_SW_IN_PROGRESS:
+		case WMI_HOST_RESUME_TWT_STATUS_ROAM_IN_PROGRESS:
+		case WMI_HOST_RESUME_TWT_STATUS_SCAN_IN_PROGRESS:
+			ret = -EBUSY;
+			break;
+		default:
+			ret = -EINVAL;
+			break;
+		}
 	}
 
 	ret = qdf_status_to_os_return(status);
