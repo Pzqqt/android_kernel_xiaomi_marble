@@ -106,38 +106,35 @@ static char sde_dsc_rc_range_bpg[DSC_RATIO_TYPE_MAX][DSC_NUM_BUF_RANGES] = {
 /**
  * Maps to lookup the sde_dsc_ratio_type index used in rate control tables
  */
-static struct sde_dsc_v1_1_table_index_lut {
-	int scr_ver;
-	u32 bpc;
-	u32 bpp;
-	u32 type;
-} sde_dsc_v1_1_index_map[] = {
-	{0, 8, 8, DSC_V11_8BPC_8BPP},
-	{0, 10, 8, DSC_V11_10BPC_8BPP},
-	{0, 10, 10, DSC_V11_10BPC_10BPP},
-
-	{1, 8, 8, DSC_V11_SCR1_8BPC_8BPP},
-	{1, 10, 8, DSC_V11_SCR1_10BPC_8BPP},
-	{1, 10, 10, DSC_V11_SCR1_10BPC_10BPP},
-};
-
-static struct sde_dsc_v1_2_table_index_lut {
+static struct sde_dsc_table_index_lut {
 	u32 fmt;
+	u32 scr_ver;
+	u32 minor_ver;
 	u32 bpc;
 	u32 bpp;
 	u32 type;
-} sde_dsc_v1_2_index_map[] = {
-	{MSM_CHROMA_444, 8, 8, DSC_V12_444_8BPC_8BPP},
-	{MSM_CHROMA_444, 10, 8, DSC_V12_444_10BPC_8BPP},
-	{MSM_CHROMA_444, 10, 10, DSC_V12_444_10BPC_10BPP},
+} sde_dsc_index_map[] = {
+	/* DSC 1.1 formats - scr version is considered */
+	{MSM_CHROMA_444, 0, 1, 8, 8, DSC_V11_8BPC_8BPP},
+	{MSM_CHROMA_444, 0, 1, 10, 8, DSC_V11_10BPC_8BPP},
+	{MSM_CHROMA_444, 0, 1, 10, 10, DSC_V11_10BPC_10BPP},
 
-	{MSM_CHROMA_422, 8, 7, DSC_V12_422_8BPC_7BPP},
-	{MSM_CHROMA_422, 8, 8, DSC_V12_422_8BPC_8BPP},
-	{MSM_CHROMA_422, 10, 7, DSC_V12_422_10BPC_7BPP},
-	{MSM_CHROMA_422, 10, 10, DSC_V12_422_10BPC_10BPP},
+	{MSM_CHROMA_444, 1, 1, 8, 8, DSC_V11_SCR1_8BPC_8BPP},
+	{MSM_CHROMA_444, 1, 1, 10, 8, DSC_V11_SCR1_10BPC_8BPP},
+	{MSM_CHROMA_444, 1, 1, 10, 10, DSC_V11_SCR1_10BPC_10BPP},
 
-	{MSM_CHROMA_420, 8, 6, DSC_V12_420_8BPC_6BPP},
-	{MSM_CHROMA_420, 10, 6, DSC_V12_420_10BPC_6BPP},
+	/* DSC 1.2 formats - scr version is no-op */
+	{MSM_CHROMA_444, -1, 2, 8, 8, DSC_V12_444_8BPC_8BPP},
+	{MSM_CHROMA_444, -1, 2, 10, 8, DSC_V12_444_10BPC_8BPP},
+	{MSM_CHROMA_444, -1, 2, 10, 10, DSC_V12_444_10BPC_10BPP},
+
+	{MSM_CHROMA_422, -1, 2, 8, 7, DSC_V12_422_8BPC_7BPP},
+	{MSM_CHROMA_422, -1, 2, 8, 8, DSC_V12_422_8BPC_8BPP},
+	{MSM_CHROMA_422, -1, 2, 10, 7, DSC_V12_422_10BPC_7BPP},
+	{MSM_CHROMA_422, -1, 2, 10, 10, DSC_V12_422_10BPC_10BPP},
+
+	{MSM_CHROMA_420, -1, 2, 8, 6, DSC_V12_420_8BPC_6BPP},
+	{MSM_CHROMA_420, -1, 2, 10, 6, DSC_V12_420_10BPC_6BPP},
 };
 
 static int _get_rc_table_index(struct drm_dsc_config *dsc, int scr_ver)
@@ -158,20 +155,14 @@ static int _get_rc_table_index(struct drm_dsc_config *dsc, int scr_ver)
 	else if (dsc->native_420)
 		fmt = MSM_CHROMA_420;
 
-	if (dsc->dsc_version_minor == 0x1) {
-		for (i = 0; i < ARRAY_SIZE(sde_dsc_v1_1_index_map); i++) {
-			if (bpc == sde_dsc_v1_1_index_map[i].bpc &&
-			    bpp == sde_dsc_v1_1_index_map[i].bpp &&
-			    scr_ver == sde_dsc_v1_1_index_map[i].scr_ver)
-				return sde_dsc_v1_1_index_map[i].type;
-		}
-	} else if (dsc->dsc_version_minor == 0x2) {
-		for (i = 0; i < ARRAY_SIZE(sde_dsc_v1_2_index_map); i++) {
-			if (bpc == sde_dsc_v1_2_index_map[i].bpc &&
-			    bpp == sde_dsc_v1_2_index_map[i].bpp &&
-			    fmt == sde_dsc_v1_2_index_map[i].fmt)
-				return sde_dsc_v1_2_index_map[i].type;
-		}
+	for (i = 0; i < ARRAY_SIZE(sde_dsc_index_map); i++) {
+		if (dsc->dsc_version_minor == sde_dsc_index_map[i].minor_ver &&
+				fmt ==  sde_dsc_index_map[i].fmt &&
+				bpc == sde_dsc_index_map[i].bpc &&
+				bpp == sde_dsc_index_map[i].bpp &&
+				(dsc->dsc_version_minor != 0x1 ||
+					scr_ver == sde_dsc_index_map[i].scr_ver))
+			return sde_dsc_index_map[i].type;
 	}
 
 	SDE_ERROR("unsupported DSC v%d.%dr%d, bpc:%d, bpp:%d, fmt:0x%x\n",
