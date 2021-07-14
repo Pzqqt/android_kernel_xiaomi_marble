@@ -706,7 +706,7 @@ QDF_STATUS wlan_mlme_get_ssid_vdev_id(struct wlan_objmgr_pdev *pdev,
 				      uint8_t *ssid, uint8_t *ssid_len);
 
 /**
- * wlan_vdev_get_bss_peer_mac() - get bss peer mac address(BSSID) using vdev id
+ * wlan_mlme_get_bssid_vdev_id() - get bss peer mac address(BSSID) using vdev id
  * @pdev: pdev
  * @vdev_id: vdev_id
  * @bss_peer_mac: pointer to bss_peer_mac_address
@@ -999,4 +999,20 @@ mlme_clear_operations_bitmap(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id);
  */
 void mlme_reinit_control_config_lfr_params(struct wlan_objmgr_psoc *psoc,
 					   struct wlan_mlme_lfr_cfg *lfr);
+
+/**
+ * wlan_mlme_get_mac_vdev_id() - get vdev self mac address using vdev id
+ * @pdev: pdev
+ * @vdev_id: vdev_id
+ * @self_mac: pointer to self_mac_address
+ *
+ * This API is used to get self mac address.
+ *
+ * Context: Any context.
+ *
+ * Return: QDF_STATUS based on overall success
+ */
+QDF_STATUS wlan_mlme_get_mac_vdev_id(struct wlan_objmgr_pdev *pdev,
+				     uint8_t vdev_id,
+				     struct qdf_mac_addr *self_mac);
 #endif
