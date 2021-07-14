@@ -97,6 +97,7 @@ const char *ipa3_event_name[IPA_EVENT_MAX_NUM] = {
 	__stringify(IPA_MOVE_NAT_TABLE),
 	__stringify(IPA_EoGRE_UP_EVENT),
 	__stringify(IPA_EoGRE_DOWN_EVENT),
+	__stringify(IPA_IPPT_SW_FLT_EVENT),
 };
 
 const char *ipa3_hdr_l2_type_name[] = {
