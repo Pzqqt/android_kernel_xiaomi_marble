@@ -3336,4 +3336,23 @@ QDF_STATUS mlme_set_user_ps(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
  * Return: True if user_ps flag is set
  */
 bool mlme_get_user_ps(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id);
+
+#ifdef WLAN_FEATURE_P2P_P2P_STA
+/**
+ * wlan_mlme_get_p2p_p2p_conc_support() - Get p2p+p2p conc support
+ *
+ * @psoc: pointer to psoc object
+ * @val : value
+ *
+ * Return: Success/failure
+ */
+bool
+wlan_mlme_get_p2p_p2p_conc_support(struct wlan_objmgr_psoc *psoc);
+#else
+static inline bool
+wlan_mlme_get_p2p_p2p_conc_support(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+#endif
 #endif /* _WLAN_MLME_API_H_ */

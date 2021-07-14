@@ -651,6 +651,25 @@ static inline void policy_mgr_change_sap_channel_with_csa(
 }
 #endif
 
+#ifdef WLAN_FEATURE_P2P_P2P_STA
+/**
+ * policy_mgr_is_p2p_p2p_conc_supported() - p2p concurrency support
+ * @psoc: pointer to psoc
+ *
+ * This API is used to check whether firmware supports p2p concurrency
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+bool
+policy_mgr_is_p2p_p2p_conc_supported(struct wlan_objmgr_psoc *psoc);
+#else
+static inline bool
+policy_mgr_is_p2p_p2p_conc_supported(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+#endif
+
 /**
  * policy_mgr_set_pcl_for_existing_combo() - SET PCL for existing combo
  * @psoc: PSOC object information
