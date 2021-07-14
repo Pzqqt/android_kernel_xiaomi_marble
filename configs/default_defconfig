@@ -251,6 +251,7 @@ ifeq ($(CONFIG_ARCH_QCS40X), y)
 	CONFIG_WLAN_CLD_PM_QOS := y
 endif
 CONFIG_WLAN_FEATURE_MBSSID := y
+CONFIG_WLAN_FEATURE_P2P_P2P_STA := y
 
 #Flag to enable Legacy Fast Roaming3(LFR3)
 ifeq (y,$(findstring y,$(CONFIG_HELIUMPLUS) $(CONFIG_LITHIUM) $(CONFIG_BERYLLIUM)))
