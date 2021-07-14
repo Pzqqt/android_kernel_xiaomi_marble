@@ -237,6 +237,11 @@ typedef enum {
         ((mode) == MODE_11AX_HE20_2G)  || \
         ((mode) == MODE_11AX_HE40_2G)  || \
         ((mode) == MODE_11AX_HE80_2G))
+#define IS_MODE_HE_5G_6G(mode) (((mode) == MODE_11AX_HE20) || \
+        ((mode) == MODE_11AX_HE40)     || \
+        ((mode) == MODE_11AX_HE80)     || \
+        ((mode) == MODE_11AX_HE80_80)  || \
+        ((mode) == MODE_11AX_HE160))
 #define IS_MODE_HE_2G(mode) (((mode) == MODE_11AX_HE20_2G) || \
         ((mode) == MODE_11AX_HE40_2G) || \
         ((mode) == MODE_11AX_HE80_2G))
@@ -286,9 +291,17 @@ typedef enum {
 #ifdef CONFIG_160MHZ_SUPPORT
   #define IS_MODE_11AC(phymode)  ((phymode >= MODE_11AC_VHT20) && \
                                   (phymode <= MODE_11AC_VHT160))
+  #define IS_MODE_11AC_5G(phymode) ((phymode == MODE_11AC_VHT20) || \
+                                    (phymode == MODE_11AC_VHT40) || \
+                                    (phymode == MODE_11AC_VHT80) || \
+                                    (phymode == MODE_11AC_VHT80_80) || \
+                                    (phymode == MODE_11AC_VHT160))
 #else
   #define IS_MODE_11AC(phymode)  ((phymode >= MODE_11AC_VHT20) && \
                                   (phymode <= MODE_11AC_VHT80_2G))
+  #define IS_MODE_11AC_5G(phymode) ((phymode == MODE_11AC_VHT20) || \
+                                    (phymode == MODE_11AC_VHT40) || \
+                                    (phymode == MODE_11AC_VHT80))
 #endif /* CONFIG_160MHZ_SUPPORT */
 
 #if SUPPORT_11AX
