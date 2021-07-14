@@ -103,6 +103,36 @@ static char sde_dsc_rc_range_bpg[DSC_RATIO_TYPE_MAX][DSC_NUM_BUF_RANGES] = {
 	{10, 8, 6, 4, 2, 0, -2, -4, -6, -8, -10, -10, -12, -12, -12},
 };
 
+static struct sde_dsc_rc_init_params_lut {
+	u32 rc_quant_incr_limit0;
+	u32 rc_quant_incr_limit1;
+	u32 initial_fullness_offset;
+	u32 initial_xmit_delay;
+	u32 second_line_bpg_offset;
+	u32 second_line_offset_adj;
+	u32 flatness_min_qp;
+	u32 flatness_max_qp;
+}  sde_dsc_rc_init_param_lut[] = {
+	/* DSC v1.1 */
+	{11, 11, 6144, 512, 0, 0, 3, 12}, /* DSC_V11_8BPC_8BPP */
+	{15, 15, 6144, 512, 0, 0, 7, 16}, /* DSC_V11_10BPC_8BPP */
+	{15, 15, 5632, 410, 0, 0, 7, 16}, /* DSC_V11_10BPC_10BPP */
+	/* DSC v1.1 SCR and DSC v1.2 RGB 444 */
+	{11, 11, 6144, 512, 0, 0, 3, 12}, /* DSC_V12_444_8BPC_8BPP or DSC_V11_SCR1_8BPC_8BPP */
+	{15, 15, 6144, 512, 0, 0, 7, 16}, /* DSC_V12_444_10BPC_8BPP or DSC_V11_SCR1_10BPC_8BPP */
+	{15, 15, 5632, 410, 0, 0, 7, 16}, /* DSC_V12_444_10BPC_10BPP or DSC_V11_SCR1_10BPC_10BPP */
+	/* DSC v1.2 YUV422 */
+	{11, 11, 5632, 410, 0, 0, 3, 12}, /* DSC_V12_422_8BPC_7BPP */
+	{11, 11, 2048, 341, 0, 0, 3, 12}, /* DSC_V12_422_8BPC_8BPP */
+	{15, 15, 5632, 410, 0, 0, 7, 16}, /* DSC_V12_422_10BPC_7BPP */
+	{15, 15, 2048, 273, 0, 0, 7, 16}, /* DSC_V12_422_10BPC_10BPP */
+	/* DSC v1.2 YUV420 */
+	{11, 11, 5632, 410, 0, 0, 3, 12},    /* DSC_V12_422_8BPC_7BPP */
+	{11, 11, 2048, 341, 12, 512, 3, 12}, /* DSC_V12_420_8BPC_6BPP */
+	{15, 15, 2048, 341, 12, 512, 7, 16}, /* DSC_V12_420_10BPC_6BPP */
+	{15, 15, 2048, 256, 12, 512, 7, 16}, /* DSC_V12_420_10BPC_7_5BPP */
+};
+
 /**
  * Maps to lookup the sde_dsc_ratio_type index used in rate control tables
  */
@@ -210,6 +240,7 @@ int sde_dsc_populate_dsc_config(struct drm_dsc_config *dsc, int scr_ver) {
 	int slice_bits;
 	int data;
 	int final_value, final_scale;
+	struct sde_dsc_rc_init_params_lut *rc_param_lut;
 	int i, ratio_idx;
 
 	dsc->rc_model_size = 8192;
@@ -235,8 +266,8 @@ int sde_dsc_populate_dsc_config(struct drm_dsc_config *dsc, int scr_ver) {
 	bpc = dsc->bits_per_component;
 
 	ratio_idx = _get_rc_table_index(dsc, scr_ver);
-	if (ratio_idx == -EINVAL)
-		return ratio_idx;
+	if ((ratio_idx < 0) || (ratio_idx >= DSC_RATIO_TYPE_MAX))
+		return -EINVAL;
 
 	for (i = 0; i < DSC_NUM_BUF_RANGES - 1; i++)
 		dsc->rc_buf_thresh[i] = sde_dsc_rc_buf_thresh[i];
@@ -250,45 +281,22 @@ int sde_dsc_populate_dsc_config(struct drm_dsc_config *dsc, int scr_ver) {
 			sde_dsc_rc_range_bpg[ratio_idx][i];
 	}
 
-	if (bpp == 8) {
-		dsc->initial_offset = 6144;
-		dsc->initial_xmit_delay = 512;
-	} else if (bpp == 10) {
-		dsc->initial_offset = 5632;
-		dsc->initial_xmit_delay = 410;
-	} else {
-		dsc->initial_offset = 2048;
-		dsc->initial_xmit_delay = 341;
-	}
+	rc_param_lut = &sde_dsc_rc_init_param_lut[ratio_idx];
+	dsc->rc_quant_incr_limit0 = rc_param_lut->rc_quant_incr_limit0;
+	dsc->rc_quant_incr_limit1 = rc_param_lut->rc_quant_incr_limit1;
+	dsc->initial_offset = rc_param_lut->initial_fullness_offset;
+	dsc->initial_xmit_delay = rc_param_lut->initial_xmit_delay;
+	dsc->second_line_bpg_offset = rc_param_lut->second_line_bpg_offset;
+	dsc->second_line_offset_adj = rc_param_lut->second_line_offset_adj;
+	dsc->flatness_min_qp = rc_param_lut->flatness_min_qp;
+	dsc->flatness_max_qp = rc_param_lut->flatness_max_qp;
 
 	dsc->line_buf_depth = bpc + 1;
+	dsc->mux_word_size = bpc > 10 ? DSC_MUX_WORD_SIZE_12_BPC: DSC_MUX_WORD_SIZE_8_10_BPC;
 
-	if (bpc == 8) {
-		dsc->flatness_min_qp = 3;
-		dsc->flatness_max_qp = 12;
-		dsc->rc_quant_incr_limit0 = 11;
-		dsc->rc_quant_incr_limit1 = 11;
-		dsc->mux_word_size = DSC_MUX_WORD_SIZE_8_10_BPC;
-	} else if (bpc == 10) { /* 10bpc */
-		dsc->flatness_min_qp = 7;
-		dsc->flatness_max_qp = 16;
-		dsc->rc_quant_incr_limit0 = 15;
-		dsc->rc_quant_incr_limit1 = 15;
-		dsc->mux_word_size = DSC_MUX_WORD_SIZE_8_10_BPC;
-	} else { /* 12 bpc */
-		dsc->flatness_min_qp = 11;
-		dsc->flatness_max_qp = 20;
-		dsc->rc_quant_incr_limit0 = 19;
-		dsc->rc_quant_incr_limit1 = 19;
-		dsc->mux_word_size = DSC_MUX_WORD_SIZE_12_BPC;
-	}
-	if ((dsc->dsc_version_minor == 0x2) && (dsc->native_420)) {
-		dsc->second_line_bpg_offset = 12;
-		dsc->second_line_offset_adj = 512;
-		dsc->nsl_bpg_offset = 2048 *
-			(DIV_ROUND_UP(dsc->second_line_bpg_offset,
-				(dsc->slice_height - 1)));
-	}
+	if ((dsc->dsc_version_minor == 0x2) && (dsc->native_420))
+		dsc->nsl_bpg_offset = (2048 * (DIV_ROUND_UP(dsc->second_line_bpg_offset,
+				(dsc->slice_height - 1))));
 
 	groups_per_line = DIV_ROUND_UP(dsc->slice_width, 3);
 
