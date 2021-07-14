@@ -12,6 +12,7 @@
 #include <linux/elf.h>
 #include "ipa_i.h"
 #include "ipahal.h"
+#include "ipahal_nat.h"
 #include "ipahal_fltrt.h"
 #include "ipahal_hw_stats.h"
 #include "ipa_rm_i.h"
@@ -12222,10 +12223,14 @@ void ipa3_eth_get_status(u32 client, int scratch_id,
 
 int ipa3_get_max_pdn(void)
 {
-	if (ipa3_get_hw_type_index() == IPA_4_5_AUTO)
-		return IPA_MAX_PDN_NUM;
-	else
-		return IPA_MAX_PDN_NUM_v4;
+	size_t pdn_entry_size;
+	int max_pdn;
+
+	ipahal_nat_entry_size(IPAHAL_NAT_IPV4_PDN, &pdn_entry_size);
+	max_pdn = IPA_MEM_PART(pdn_config_size)/pdn_entry_size;
+	IPADBG("IPA offload max_pdn = %d\n", max_pdn);
+
+	return max_pdn;
 }
 
 bool ipa3_is_modem_up(void)
