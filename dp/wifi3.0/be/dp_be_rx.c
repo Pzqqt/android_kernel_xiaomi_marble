@@ -470,6 +470,7 @@ done:
 			nbuf->next = NULL;
 			dp_rx_deliver_to_pkt_capture_no_peer(
 					soc, nbuf, pkt_capture_offload);
+
 			if (!pkt_capture_offload)
 				dp_rx_deliver_to_stack_no_peer(soc, nbuf);
 			nbuf = next;

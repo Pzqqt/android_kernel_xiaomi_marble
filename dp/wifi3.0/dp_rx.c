@@ -2066,37 +2066,19 @@ void dp_rx_deliver_to_pkt_capture(struct dp_soc *soc,  struct dp_pdev *pdev,
 				  uint16_t peer_id, uint32_t is_offload,
 				  qdf_nbuf_t netbuf)
 {
-	dp_wdi_event_handler(WDI_EVENT_PKT_CAPTURE_RX_DATA, soc, netbuf,
-			     peer_id, is_offload, pdev->pdev_id);
+	if (wlan_cfg_get_pkt_capture_mode(soc->wlan_cfg_ctx))
+		dp_wdi_event_handler(WDI_EVENT_PKT_CAPTURE_RX_DATA, soc, netbuf,
+				     peer_id, is_offload, pdev->pdev_id);
 }
 
 void dp_rx_deliver_to_pkt_capture_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf,
 					  uint32_t is_offload)
 {
-	uint16_t msdu_len = 0;
-	uint16_t peer_id, vdev_id;
-	uint32_t pkt_len = 0;
-	uint8_t *rx_tlv_hdr;
-	struct hal_rx_msdu_metadata msdu_metadata;
-
-	peer_id = QDF_NBUF_CB_RX_PEER_ID(nbuf);
-	vdev_id = QDF_NBUF_CB_RX_VDEV_ID(nbuf);
-	rx_tlv_hdr = qdf_nbuf_data(nbuf);
-	hal_rx_msdu_metadata_get(soc->hal_soc, rx_tlv_hdr, &msdu_metadata);
-	msdu_len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
-	pkt_len = msdu_len + msdu_metadata.l3_hdr_pad +
-		  soc->rx_pkt_tlv_size;
-
-	qdf_nbuf_set_pktlen(nbuf, pkt_len);
-	dp_rx_skip_tlvs(soc, nbuf, msdu_metadata.l3_hdr_pad);
-
-	dp_wdi_event_handler(WDI_EVENT_PKT_CAPTURE_RX_DATA, soc, nbuf,
-			     HTT_INVALID_VDEV, is_offload, 0);
-
-	qdf_nbuf_push_head(nbuf, msdu_metadata.l3_hdr_pad +
-			   soc->rx_pkt_tlv_size);
+	if (wlan_cfg_get_pkt_capture_mode(soc->wlan_cfg_ctx))
+		dp_wdi_event_handler(WDI_EVENT_PKT_CAPTURE_RX_DATA_NO_PEER,
+				     soc, nbuf, HTT_INVALID_VDEV,
+				     is_offload, 0);
 }
-
 #endif
 
 #endif /* QCA_HOST_MODE_WIFI_DISABLED */
