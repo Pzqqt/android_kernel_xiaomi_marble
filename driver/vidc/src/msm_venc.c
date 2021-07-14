@@ -314,17 +314,22 @@ static int msm_venc_set_colorspace(struct msm_vidc_inst* inst,
 	u32 primaries = MSM_VIDC_PRIMARIES_RESERVED;
 	u32 matrix_coeff = MSM_VIDC_MATRIX_COEFF_RESERVED;
 	u32 transfer_char = MSM_VIDC_TRANSFER_RESERVED;
-	u32 full_range = V4L2_QUANTIZATION_DEFAULT;
+	u32 full_range = 0;
 	u32 colour_description_present_flag = 0;
 	u32 video_signal_type_present_flag = 0, payload = 0;
 	/* Unspecified video format */
 	u32 video_format = 5;
+	struct v4l2_format *input_fmt;
+	u32 pix_fmt;
 
 	if (port != INPUT_PORT) {
 		i_vpr_e(inst, "%s: invalid port %d\n", __func__, port);
 		return -EINVAL;
 	}
 
+	input_fmt = &inst->fmts[INPUT_PORT];
+	pix_fmt = v4l2_colorformat_to_driver(
+		input_fmt->fmt.pix_mp.pixelformat, __func__);
 	if (inst->fmts[port].fmt.pix_mp.colorspace != V4L2_COLORSPACE_DEFAULT ||
 	    inst->fmts[port].fmt.pix_mp.ycbcr_enc != V4L2_YCBCR_ENC_DEFAULT ||
 	    inst->fmts[port].fmt.pix_mp.xfer_func != V4L2_XFER_FUNC_DEFAULT) {
@@ -336,6 +341,13 @@ static int msm_venc_set_colorspace(struct msm_vidc_inst* inst,
 			inst->fmts[port].fmt.pix_mp.ycbcr_enc, __func__);
 		transfer_char = v4l2_transfer_char_to_driver(inst,
 			inst->fmts[port].fmt.pix_mp.xfer_func, __func__);
+	} else if (is_rgba_colorformat(pix_fmt)) {
+		colour_description_present_flag = 1;
+		video_signal_type_present_flag = 1;
+		primaries = MSM_VIDC_PRIMARIES_BT709;
+		matrix_coeff = MSM_VIDC_MATRIX_COEFF_BT709;
+		transfer_char = MSM_VIDC_TRANSFER_BT709;
+		full_range = 0;
 	}
 
 	if (inst->fmts[port].fmt.pix_mp.quantization !=
