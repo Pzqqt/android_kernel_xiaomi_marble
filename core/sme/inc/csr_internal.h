@@ -287,9 +287,6 @@ struct csr_roam_session {
 	uint8_t vdev_id;
 	bool sessionActive;     /* true if it is used */
 
-	/* For BT-AMP station, this serve as BSSID for self-BSS. */
-	struct qdf_mac_addr self_mac_addr;
-
 	eCsrConnectState connectState;
 	struct csr_roam_connectedinfo connectedInfo;
 	tCsrRoamModifyProfileFields modifyProfileFields;

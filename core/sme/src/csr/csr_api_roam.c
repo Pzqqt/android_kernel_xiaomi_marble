@@ -6541,8 +6541,7 @@ QDF_STATUS csr_send_mb_disassoc_req_msg(struct mac_context *mac,
 	pMsg->length = sizeof(*pMsg);
 	pMsg->sessionId = sessionId;
 
-	qdf_mem_copy(&pMsg->bssid.bytes, &pSession->self_mac_addr,
-		     QDF_MAC_ADDR_SIZE);
+	wlan_mlme_get_mac_vdev_id(mac->pdev, sessionId, &pMsg->bssid);
 	qdf_mem_copy(&pMsg->peer_macaddr.bytes, bssId, QDF_MAC_ADDR_SIZE);
 	pMsg->reasonCode = reasonCode;
 
@@ -6585,7 +6584,8 @@ QDF_STATUS csr_send_chng_mcc_beacon_interval(struct mac_context *mac,
 		pMsg->message_type = eWNI_SME_CHNG_MCC_BEACON_INTERVAL;
 		pMsg->length = len;
 
-		qdf_copy_macaddr(&pMsg->bssid, &pSession->self_mac_addr);
+		wlan_mlme_get_mac_vdev_id(mac->pdev, sessionId,
+					  &pMsg->bssid);
 		sme_debug("CSR Attempting to change BI for Bssid= "
 			  QDF_MAC_ADDR_FMT,
 			  QDF_MAC_ADDR_REF(pMsg->bssid.bytes));
@@ -6627,7 +6627,7 @@ QDF_STATUS csr_set_ht2040_mode(struct mac_context *mac, uint32_t sessionId,
 		pMsg->messageType = eWNI_SME_SET_HT_2040_MODE;
 		pMsg->length = len;
 
-		qdf_copy_macaddr(&pMsg->bssid, &pSession->self_mac_addr);
+		wlan_mlme_get_mac_vdev_id(mac->pdev, sessionId, &pMsg->bssid);
 		sme_debug(
 			"CSR Attempting to set HT20/40 mode for Bssid= "
 			 QDF_MAC_ADDR_FMT,
@@ -6661,7 +6661,7 @@ QDF_STATUS csr_send_mb_deauth_req_msg(struct mac_context *mac,
 	pMsg->length = sizeof(*pMsg);
 	pMsg->vdev_id = vdev_id;
 
-	qdf_mem_copy(&pMsg->bssid, &pSession->self_mac_addr, QDF_MAC_ADDR_SIZE);
+	wlan_mlme_get_mac_vdev_id(mac->pdev, vdev_id, &pMsg->bssid);
 	/* Set the peer MAC address before sending the message to LIM */
 	qdf_mem_copy(&pMsg->peer_macaddr.bytes, bssId, QDF_MAC_ADDR_SIZE);
 	pMsg->reasonCode = reasonCode;
@@ -6821,7 +6821,7 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(struct mac_context *mac, uint32_t
 	pMsg->length = sizeof(*pMsg);
 	qdf_copy_macaddr(&pMsg->bssid, &pParam->bssid);
 	/* self_mac_addr */
-	qdf_copy_macaddr(&pMsg->self_macaddr, &pSession->self_mac_addr);
+	wlan_mlme_get_mac_vdev_id(mac->pdev, sessionId, &pMsg->self_macaddr);
 	if (pParam->beaconInterval)
 		candidate_info.beacon_interval = pParam->beaconInterval;
 	else
@@ -7050,7 +7050,6 @@ QDF_STATUS csr_setup_vdev_session(struct vdev_mlme_obj *vdev_mlme)
 
 	vdev_id = wlan_vdev_get_id(vdev);
 	mac_addr = (struct qdf_mac_addr *)wlan_vdev_mlme_get_macaddr(vdev);
-
 	/* check to see if the mac address already belongs to a session */
 	status = csr_roam_get_session_id_from_bssid(mac_ctx, mac_addr,
 						    &existing_session_id);
@@ -7076,9 +7075,6 @@ QDF_STATUS csr_setup_vdev_session(struct vdev_mlme_obj *vdev_mlme)
 
 	session->sessionActive = true;
 	session->vdev_id = vdev_id;
-
-	qdf_mem_copy(&session->self_mac_addr, mac_addr,
-		     sizeof(struct qdf_mac_addr));
 
 	ht_cap.caps = 0;
 	vht_config.caps = 0;
@@ -7183,7 +7179,6 @@ static void csr_init_session(struct mac_context *mac, uint32_t sessionId)
 	pSession->vdev_id = WLAN_UMAC_VDEV_ID_MAX;
 	pSession->connectState = eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED;
 	csr_roam_free_connected_info(mac, &pSession->connectedInfo);
-	qdf_mem_zero(&pSession->self_mac_addr, sizeof(struct qdf_mac_addr));
 }
 
 static void csr_get_vdev_id_from_bssid(struct wlan_objmgr_pdev *pdev,

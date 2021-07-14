@@ -5594,8 +5594,8 @@ QDF_STATUS sme_8023_multicast_list(mac_handle_t mac_handle, uint8_t sessionId,
 	qdf_mem_copy(request_buf, pMulticastAddrs,
 		     sizeof(tSirRcvFltMcAddrList));
 
-	qdf_copy_macaddr(&request_buf->self_macaddr, &pSession->self_mac_addr);
-
+	wlan_mlme_get_mac_vdev_id(mac->pdev, sessionId,
+				  &request_buf->self_macaddr);
 	wlan_mlme_get_bssid_vdev_id(mac->pdev, sessionId, &request_buf->bssid);
 
 	msg.type = WMA_8023_MULTICAST_LIST_REQ;
