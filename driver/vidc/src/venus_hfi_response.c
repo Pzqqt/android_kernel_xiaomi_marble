@@ -384,7 +384,7 @@ void fw_coredump(struct msm_vidc_core *core)
 	phys_addr_t mem_phys = 0;
 	size_t res_size = 0;
 	void *mem_va = NULL;
-	char *data = NULL;
+	char *data = NULL, *dump = NULL;
 	u64 total_size;
 
 	if (!core) {
@@ -415,22 +415,28 @@ void fw_coredump(struct msm_vidc_core *core)
 		d_vpr_e("%s: unable to remap firmware memory\n", __func__);
 		return;
 	}
-	total_size = res_size + TOTAL_QSIZE;
+	total_size = res_size + TOTAL_QSIZE + ALIGNED_SFR_SIZE;
 
 	data = vmalloc(total_size);
 	if (!data) {
 		memunmap(mem_va);
 		return;
 	}
+	dump = data;
 
 	/* copy firmware dump */
 	memcpy(data, mem_va, res_size);
 	memunmap(mem_va);
 
 	/* copy queues(cmd, msg, dbg) dump(along with headers) */
-	memcpy(data + res_size, (char *)core->iface_q_table.align_virtual_addr, TOTAL_QSIZE);
+	data += res_size;
+	memcpy(data, (char *)core->iface_q_table.align_virtual_addr, TOTAL_QSIZE);
 
-	dev_coredumpv(&pdev->dev, data, total_size, GFP_KERNEL);
+	/* copy sfr dump */
+	data += TOTAL_QSIZE;
+	memcpy(data, (char *)core->sfr.align_virtual_addr, ALIGNED_SFR_SIZE);
+
+	dev_coredumpv(&pdev->dev, dump, total_size, GFP_KERNEL);
 }
 
 int handle_system_error(struct msm_vidc_core *core,
