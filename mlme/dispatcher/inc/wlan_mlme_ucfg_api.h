@@ -1199,6 +1199,15 @@ ucfg_mlme_get_roam_bmiss_final_bcnt(struct wlan_objmgr_psoc *psoc,
 				    uint8_t *val);
 
 /**
+ * ucfg_mlme_validate_roam_bmiss_final_bcnt() - Validate roam bmiss final bcnt
+ * @bmiss_final_bcnt: Roam bmiss final bcnt
+ *
+ * Return: True if bmiss_final_bcnt is in expected range, false otherwise.
+ */
+bool
+ucfg_mlme_validate_roam_bmiss_final_bcnt(uint32_t bmiss_final_bcnt);
+
+/**
  * ucfg_mlme_get_dual_sta_roaming_enabled() - Get dual sta roaming enable flag
  * @psoc: pointer to psoc object
  *
