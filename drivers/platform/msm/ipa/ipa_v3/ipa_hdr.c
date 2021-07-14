@@ -745,12 +745,13 @@ static int __ipa_add_hpc_hdr_insertion(struct ipa_hdr_add *hdr, bool user)
 	IPADBG("adding processing context for header %s\n", hdr->name);
 	proc_ctx.type = IPA_HDR_PROC_NONE;
 	proc_ctx.hdr_hdl = hdr->hdr_hdl;
-	if (__ipa_add_hdr_proc_ctx(&proc_ctx, false, user)) {
+	if (__ipa_add_hdr_proc_ctx(&proc_ctx, true, user)) {
 		IPAERR("failed to add hdr proc ctx\n");
 		goto fail_add_proc_ctx;
 	}
 	entry->proc_ctx = (struct ipa3_hdr_proc_ctx_entry *)ipa3_id_find(proc_ctx.proc_ctx_hdl);
 	WARN_ON_RATELIMIT_IPA(!entry->proc_ctx);
+	entry->proc_ctx->ref_cnt++;
 
 	return 0;
 
@@ -891,6 +892,70 @@ bail:
 	mutex_unlock(&ipa3_ctx->lock);
 	return result;
 }
+
+/**
+ * ipa3_del_hdr_hpc_usr() - Remove the specified headers from SW
+ * and optionally commit them to IPA HW
+ * @hdls:	[inout] set of headers to delete
+ * @by_user:	Operation requested by user?
+ *
+ * Returns:	0 on success, negative on failure
+ *
+ * Note:	Should not be called from atomic context
+ */
+int ipa3_del_hdr_hpc_usr(struct ipa_ioc_del_hdr *hdls, bool by_user)
+{
+	int i;
+	int result = 0;
+	struct ipa3_hdr_entry *entry;
+	struct ipa3_hdr_proc_ctx_entry *proc_ctx_entry;
+
+	if (hdls == NULL || hdls->num_hdls == 0) {
+		IPAERR_RL("bad parm\n");
+		return -EINVAL;
+	}
+
+	mutex_lock(&ipa3_ctx->lock);
+	for (i = 0; i < hdls->num_hdls; i++) {
+		entry = (struct ipa3_hdr_entry *)ipa3_id_find(hdls->hdl[i].hdl);
+		if (entry) {
+			proc_ctx_entry = entry->proc_ctx;
+			entry->ref_cnt--;
+			result = __ipa3_del_hdr(hdls->hdl[i].hdl, by_user) != 0;
+			if (proc_ctx_entry) {
+				proc_ctx_entry->ref_cnt--;
+				result = __ipa3_del_hdr_proc_ctx(proc_ctx_entry->id, false, false) != 0;
+			}
+		}
+		hdls->hdl[i].status = result;
+	}
+
+	if (hdls->commit) {
+		if (ipa3_ctx->ctrl->ipa3_commit_hdr()) {
+			result = -EPERM;
+			goto bail;
+		}
+	}
+	result = 0;
+bail:
+	mutex_unlock(&ipa3_ctx->lock);
+	return result;
+}
+
+/**
+ * ipa3_del_hdr_hpc() - add the specified headers to SW and
+ * optionally commit them to IPA HW
+ * @hdrs:	[inout] set of headers to add
+ *
+ * Returns:	0 on success, negative on failure
+ *
+ * Note:	Should not be called from atomic context
+ */
+int ipa3_del_hdr_hpc(struct ipa_ioc_del_hdr *hdrs)
+{
+	return ipa3_del_hdr_hpc_usr(hdrs, false);
+}
+EXPORT_SYMBOL(ipa3_del_hdr_hpc);
 
 /**
  * ipa3_add_hdr() - add the specified headers to SW and optionally commit them
