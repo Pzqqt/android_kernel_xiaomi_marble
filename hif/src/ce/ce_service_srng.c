@@ -450,8 +450,8 @@ ce_completed_recv_next_nolock_srng(struct CE_state *CE_state,
 		 * as a descriptor that is not yet done.
 		 */
 		hal_get_sw_hptp(scn->hal_soc, status_ring->srng_ctx,
-				&hp, &tp);
-		hif_info("No data to reap, hp %d tp %d", hp, tp);
+				&tp, &hp);
+		hif_info_rl("No data to reap, hp %d tp %d", hp, tp);
 		status = QDF_STATUS_E_FAILURE;
 		hal_srng_access_end_reap(scn->hal_soc, status_ring->srng_ctx);
 		goto done;
