@@ -2259,9 +2259,6 @@ void policy_mgr_set_weight_of_dfs_passive_channels_to_zero(
 			weight_list[i] = 0;
 	}
 
-	policy_mgr_dump_channel_list(orig_channel_count,
-				     pcl_channels, weight_list);
-
 	return;
 }
 
@@ -2937,9 +2934,10 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 		break;
 	}
 
-	if ((*len != 0) && (*len != i))
-		policy_mgr_debug("pcl len (%d) and weight list len mismatch (%d)",
-				 *len, i);
+	policy_mgr_debug("pcl %s: mode %s", pcl_type_to_string(pcl),
+			 device_mode_to_string(mode));
+	policy_mgr_debug("pcl len %d and weight list sz %d",
+			 *len, pcl_sz);
 
 	/* check the channel avoidance list for beaconing entities */
 	if ((mode == PM_SAP_MODE) || (mode == PM_P2P_GO_MODE))

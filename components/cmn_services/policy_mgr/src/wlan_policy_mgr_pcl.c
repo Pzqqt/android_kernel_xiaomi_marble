@@ -835,8 +835,6 @@ static QDF_STATUS policy_mgr_pcl_modification_for_p2p_go(
 		}
 	}
 
-	policy_mgr_dump_channel_list(*len, pcl_channels, pcl_weight);
-
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1026,8 +1024,6 @@ QDF_STATUS policy_mgr_get_pcl(struct wlan_objmgr_psoc *psoc,
 		return status;
 	}
 
-	policy_mgr_dump_channel_list(*len, pcl_channels, pcl_weight);
-
 	policy_mgr_mode_specific_modification_on_pcl(
 		psoc, pcl_channels, pcl_weight, len, mode);
 
@@ -1038,6 +1034,8 @@ QDF_STATUS policy_mgr_get_pcl(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_err("failed to get modified pcl based on DNBS");
 		return status;
 	}
+	policy_mgr_dump_channel_list(*len, pcl_channels, pcl_weight);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -2320,6 +2318,7 @@ QDF_STATUS policy_mgr_get_valid_chans_from_range(
 		policy_mgr_err("failed to get modified pcl based on DNBS");
 		return status;
 	}
+	policy_mgr_dump_channel_list(*ch_cnt, ch_freq_list, ch_weight_list);
 
 	return status;
 }
@@ -2688,7 +2687,7 @@ uint32_t policy_mgr_get_alternate_channel_for_sap(
 bool policy_mgr_dump_channel_list(uint32_t len, uint32_t *pcl_channels,
 				  uint8_t *pcl_weight)
 {
-	uint32_t idx, buff_len, num = 0, count = 0, count_6G = 0;
+	uint32_t idx, buff_len, num = 0, count = 0;
 	char *chan_buff = NULL;
 
 	buff_len = (QDF_MIN(len, MAX_CHAN_TO_PRINT) * CHAN_WEIGHT_CHAR_LEN) + 1;
@@ -2698,51 +2697,22 @@ bool policy_mgr_dump_channel_list(uint32_t len, uint32_t *pcl_channels,
 
 	policymgr_nofl_debug("Total PCL Chan Freq %d", len);
 	for (idx = 0; (idx < len) && (idx < NUM_CHANNELS); idx++) {
-		if (!WLAN_REG_IS_6GHZ_CHAN_FREQ(pcl_channels[idx])) {
-			num += qdf_scnprintf(chan_buff + num, buff_len - num,
-					     " %d[%d]", pcl_channels[idx],
-					     pcl_weight[idx]);
-			count++;
-			if (count >= MAX_CHAN_TO_PRINT) {
-				/* Print the MAX_CHAN_TO_PRINT channels */
-				policymgr_nofl_debug("2G+5G Freq[weight]:%s",
-						     chan_buff);
-				count = 0;
-				num = 0;
-			}
-		} else {
-			count_6G++;
+		num += qdf_scnprintf(chan_buff + num, buff_len - num,
+				     " %d[%d]", pcl_channels[idx],
+				     pcl_weight[idx]);
+		count++;
+		if (count >= MAX_CHAN_TO_PRINT) {
+			/* Print the MAX_CHAN_TO_PRINT channels */
+			policymgr_nofl_debug("Freq[weight]:%s",
+					     chan_buff);
+			count = 0;
+			num = 0;
 		}
 	}
 	/* Print any pending channels */
 	if (num)
-		policymgr_nofl_debug("2G+5G Freq[weight]:%s", chan_buff);
+		policymgr_nofl_debug("Freq[weight]:%s", chan_buff);
 
-	if (!count_6G)
-		goto free;
-
-	count = 0;
-	num = 0;
-	for (idx = 0; (idx < len) && (idx < NUM_CHANNELS); idx++) {
-		if (WLAN_REG_IS_6GHZ_CHAN_FREQ(pcl_channels[idx])) {
-			num += qdf_scnprintf(chan_buff + num, buff_len - num,
-					     " %d[%d]", pcl_channels[idx],
-					     pcl_weight[idx]);
-			count++;
-			if (count >= MAX_CHAN_TO_PRINT) {
-				/* Print the MAX_CHAN_TO_PRINT channels */
-				policymgr_nofl_debug("6G Freq[weight]:%s",
-						     chan_buff);
-				count = 0;
-				num = 0;
-			}
-		}
-	}
-	/* Print any pending channels */
-	if (num)
-		policymgr_nofl_debug("6G Freq[weight]:%s", chan_buff);
-
-free:
 	qdf_mem_free(chan_buff);
 
 	return true;
