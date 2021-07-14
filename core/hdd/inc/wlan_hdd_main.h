@@ -2209,6 +2209,7 @@ struct hdd_context {
 #endif
 	bool is_wifi3_0_target;
 	bool dump_in_progress;
+	qdf_time_t bw_vote_time;
 };
 
 /**
