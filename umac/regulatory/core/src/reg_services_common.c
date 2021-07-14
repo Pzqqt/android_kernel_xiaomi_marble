@@ -5836,7 +5836,7 @@ reg_process_ch_avoid_ext_event(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
-#ifdef CONFIG_AFC_SUPPORT
+#if defined(CONFIG_AFC_SUPPORT) && defined(CONFIG_BAND_6GHZ)
 QDF_STATUS reg_send_afc_cmd(struct wlan_objmgr_pdev *pdev,
 			    struct reg_afc_resp_rx_ind_info *afc_ind_obj)
 {
@@ -5855,5 +5855,18 @@ QDF_STATUS reg_send_afc_cmd(struct wlan_objmgr_pdev *pdev,
 		return tx_ops->send_afc_ind(psoc, pdev_id, afc_ind_obj);
 
 	return QDF_STATUS_E_FAILURE;
+}
+
+bool reg_is_afc_power_event_received(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("pdev reg component is NULL");
+		return false;
+	}
+
+	return pdev_priv_obj->is_6g_afc_power_event_received;
 }
 #endif

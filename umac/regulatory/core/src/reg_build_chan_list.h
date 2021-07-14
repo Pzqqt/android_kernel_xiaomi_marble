@@ -130,6 +130,18 @@ QDF_STATUS reg_get_6g_ap_master_chan_list(struct wlan_objmgr_pdev *pdev,
  */
 QDF_STATUS reg_get_6g_afc_chan_list(struct wlan_objmgr_pdev *pdev,
 				    struct regulatory_channel *chan_list);
+
+/**
+ * reg_get_6g_afc_mas_chan_list() - provide the pdev afc master channel list
+ * @pdev: pdev pointer
+ * @chan_list: channel list pointer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+reg_get_6g_afc_mas_chan_list(struct wlan_objmgr_pdev *pdev,
+			     struct regulatory_channel *chan_list);
+
 /**
  * reg_psd_2_eirp() - Calculate EIRP from PSD and bandwidth
  * channel list

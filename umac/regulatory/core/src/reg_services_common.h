@@ -1685,7 +1685,7 @@ reg_process_ch_avoid_ext_event(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
-#ifdef CONFIG_AFC_SUPPORT
+#if defined(CONFIG_AFC_SUPPORT) && defined(CONFIG_BAND_6GHZ)
 /**
  * reg_send_afc_cmd() - Send AFC cmd to the FW
  * @pdev: pdev ptr
@@ -1696,5 +1696,15 @@ reg_process_ch_avoid_ext_event(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS reg_send_afc_cmd(struct wlan_objmgr_pdev *pdev,
 			    struct reg_afc_resp_rx_ind_info *afc_ind_obj);
+
+/**
+ * reg_is_afc_power_event_received() - Checks if AFC power event is
+ * received from the FW.
+ *
+ * @pdev: pdev ptr
+ *
+ * Return: true if AFC power event is received from the FW or false otherwise
+ */
+bool reg_is_afc_power_event_received(struct wlan_objmgr_pdev *pdev);
 #endif
 #endif

@@ -2643,6 +2643,25 @@ QDF_STATUS reg_get_6g_afc_chan_list(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS
+reg_get_6g_afc_mas_chan_list(struct wlan_objmgr_pdev *pdev,
+			     struct regulatory_channel *chan_list)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("reg pdev private obj is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_mem_copy(chan_list, pdev_priv_obj->mas_chan_list_6g_afc,
+		     NUM_6GHZ_CHANNELS * sizeof(struct regulatory_channel));
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * struct bw_10log10_pair - The bandwidth and 10*log10(bandwidth) pair.
  * ten_l_len = trunc(10*log10(bw)).  'trunc' is truncation function.

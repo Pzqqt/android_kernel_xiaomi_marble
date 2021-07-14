@@ -145,6 +145,17 @@ QDF_STATUS wlan_reg_get_6g_afc_chan_list(struct wlan_objmgr_pdev *pdev,
 	return reg_get_6g_afc_chan_list(pdev, chan_list);
 }
 
+qdf_export_symbol(wlan_reg_get_6g_afc_chan_list);
+
+QDF_STATUS
+wlan_reg_get_6g_afc_mas_chan_list(struct wlan_objmgr_pdev *pdev,
+				  struct regulatory_channel *chan_list)
+{
+	return reg_get_6g_afc_mas_chan_list(pdev, chan_list);
+}
+
+qdf_export_symbol(wlan_reg_get_6g_afc_mas_chan_list);
+
 QDF_STATUS wlan_reg_psd_2_eirp(struct wlan_objmgr_pdev *pdev,
 			       int16_t psd,
 			       uint16_t ch_bw,
@@ -1274,6 +1285,8 @@ QDF_STATUS wlan_reg_get_6g_chan_ap_power(struct wlan_objmgr_pdev *pdev,
 					tx_power, eirp_psd_power);
 }
 
+qdf_export_symbol(wlan_reg_get_6g_chan_ap_power);
+
 QDF_STATUS
 wlan_reg_get_client_power_for_connecting_ap(struct wlan_objmgr_pdev *pdev,
 					    enum reg_6g_ap_type ap_type,
@@ -1319,3 +1332,12 @@ bool wlan_reg_is_ext_tpc_supported(struct wlan_objmgr_psoc *psoc)
 {
 	return reg_is_ext_tpc_supported(psoc);
 }
+
+#ifdef CONFIG_AFC_SUPPORT
+bool wlan_reg_is_afc_power_event_received(struct wlan_objmgr_pdev *pdev)
+{
+	return reg_is_afc_power_event_received(pdev);
+}
+
+qdf_export_symbol(wlan_reg_is_afc_power_event_received);
+#endif

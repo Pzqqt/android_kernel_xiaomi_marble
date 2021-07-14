@@ -504,7 +504,7 @@ ucfg_reg_set_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
 }
 #endif
 
-#ifdef CONFIG_AFC_SUPPORT
+#if defined(CONFIG_AFC_SUPPORT) && defined(CONFIG_BAND_6GHZ)
 /**
  * ucfg_reg_send_afc_resp_rx_ind() - Send AFC response received indication to
  * the FW.

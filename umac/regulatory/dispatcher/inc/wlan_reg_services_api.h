@@ -556,6 +556,18 @@ QDF_STATUS wlan_reg_get_6g_afc_chan_list(struct wlan_objmgr_pdev *pdev,
 					 struct regulatory_channel *chan_list);
 
 /**
+ * wlan_reg_get_6g_afc_mas_chan_list() - provide the pdev afc master channel
+ * list
+ * @pdev: pdev pointer
+ * @chan_list: channel list pointer
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_reg_get_6g_afc_mas_chan_list(struct wlan_objmgr_pdev *pdev,
+				  struct regulatory_channel *chan_list);
+
+/**
  * wlan_reg_psd_2_eirp() - Calculate EIRP from PSD and bandwidth
  * channel list
  * @pdev: pdev pointer
@@ -569,6 +581,29 @@ QDF_STATUS wlan_reg_psd_2_eirp(struct wlan_objmgr_pdev *pdev,
 			       int16_t psd,
 			       uint16_t ch_bw,
 			       int16_t *eirp);
+
+/**
+ * wlan_reg_is_afc_power_event_received() - Checks if AFC power event is
+ * received from the FW.
+ *
+ * @pdev: pdev ptr
+ *
+ * Return: true if AFC power event is received from the FW or false otherwise
+ */
+bool wlan_reg_is_afc_power_event_received(struct wlan_objmgr_pdev *pdev);
+#else
+static inline bool
+wlan_reg_is_afc_power_event_received(struct wlan_objmgr_pdev *pdev)
+{
+	return false;
+}
+
+static inline QDF_STATUS
+wlan_reg_get_6g_afc_chan_list(struct wlan_objmgr_pdev *pdev,
+			      struct regulatory_channel *chan_list)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
 #endif
 
 /**
