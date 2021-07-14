@@ -1160,8 +1160,7 @@ struct policy_mgr_conc_connection_info *policy_mgr_get_conn_info(
  * @tx_streams: number of transmit spatial streams
  * @rx_streams: number of receive spatial streams
  * @chain_mask: chain mask
- * @type: connection type
- * @sub_type: connection subtype
+ * @mode: conn mode
  * @ch_freq: channel frequency value
  * @mac_id: mac id
  *
@@ -1174,8 +1173,8 @@ QDF_STATUS
 policy_mgr_incr_connection_count_utfw(struct wlan_objmgr_psoc *psoc,
 				      uint32_t vdev_id, uint32_t tx_streams,
 				      uint32_t rx_streams,
-				      uint32_t chain_mask, uint32_t type,
-				      uint32_t sub_type,
+				      uint32_t chain_mask,
+				      enum policy_mgr_con_mode mode,
 				      uint32_t ch_freq, uint32_t mac_id);
 
 /**
@@ -1269,7 +1268,7 @@ enum policy_mgr_pcl_type policy_mgr_get_pcl_from_third_conn_table(
 static inline QDF_STATUS policy_mgr_incr_connection_count_utfw(
 		struct wlan_objmgr_psoc *psoc, uint32_t vdev_id,
 		uint32_t tx_streams, uint32_t rx_streams,
-		uint32_t chain_mask, uint32_t type, uint32_t sub_type,
+		uint32_t chain_mask, enum policy_mgr_con_mode mode,
 		uint32_t ch_freq, uint32_t mac_id)
 {
 	return QDF_STATUS_SUCCESS;

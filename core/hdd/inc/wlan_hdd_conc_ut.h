@@ -27,15 +27,16 @@
 void clean_report(struct hdd_context *hdd_ctx);
 void fill_report(struct hdd_context *hdd_ctx, char *title,
 	uint32_t first_persona, uint32_t second_persona, uint32_t third_persona,
-	uint32_t chnl_1st_conn, uint32_t chnl_2nd_conn, uint32_t chnl_3rd_conn,
-	bool status, enum policy_mgr_pcl_type pcl_type, char *reason,
-	qdf_freq_t *pcl_freqs);
+	qdf_freq_t chnl_1st_conn, qdf_freq_t chnl_2nd_conn,
+	qdf_freq_t chnl_3rd_conn, bool status,
+	enum policy_mgr_pcl_type pcl_type, char *reason,
+	uint32_t *pcl_freqs, uint32_t pcl_len);
 void print_report(struct hdd_context *hdd_ctx);
 void wlan_hdd_one_connection_scenario(struct hdd_context *hdd_ctx);
 void wlan_hdd_two_connections_scenario(struct hdd_context *hdd_ctx,
-	uint8_t first_chnl, enum policy_mgr_chain_mode first_chain_mask);
+	qdf_freq_t first_chnl, enum policy_mgr_chain_mode first_chain_mask);
 void wlan_hdd_three_connections_scenario(struct hdd_context *hdd_ctx,
-	uint8_t first_chnl, uint8_t second_chnl,
+	qdf_freq_t first_chnl, qdf_freq_t second_chnl,
 	enum policy_mgr_chain_mode chain_mask, uint8_t use_same_mac);
 #else
 static inline
@@ -45,10 +46,11 @@ void clean_report(struct hdd_context *hdd_ctx)
 
 static inline
 void fill_report(struct hdd_context *hdd_ctx, char *title,
-	uint32_t first_persona, uint32_t second_persona, uint32_t third_persona,
-	uint32_t chnl_1st_conn, uint32_t chnl_2nd_conn, uint32_t chnl_3rd_conn,
+	uint32_t first_persona, uint32_t second_persona,
+	uint32_t third_persona, qdf_freq_t chnl_1st_conn,
+	qdf_freq_t chnl_2nd_conn, qdf_freq_t chnl_3rd_conn,
 	bool status, enum policy_mgr_pcl_type pcl_type, char *reason,
-	qdf_freq_t *pcl_freqs)
+	uint32_t *pcl_freqs, uint32_t pcl_len)
 {
 }
 
@@ -63,14 +65,17 @@ void wlan_hdd_one_connection_scenario(struct hdd_context *hdd_ctx)
 }
 
 static inline
-void wlan_hdd_two_connections_scenario(struct hdd_context *hdd_ctx,
-		uint8_t first_chnl, enum policy_mgr_chain_mode first_chain_mask)
+void wlan_hdd_two_connections_scenario(
+		struct hdd_context *hdd_ctx,
+		qdf_freq_t first_chnl,
+		enum policy_mgr_chain_mode first_chain_mask)
 {
 }
 
 static inline
-void wlan_hdd_three_connections_scenario(struct hdd_context *hdd_ctx,
-		uint8_t first_chnl, uint8_t second_chnl,
+void wlan_hdd_three_connections_scenario(
+		struct hdd_context *hdd_ctx,
+		qdf_freq_t first_chnl, qdf_freq_t second_chnl,
 		enum policy_mgr_chain_mode chain_mask, uint8_t use_same_mac)
 {
 }

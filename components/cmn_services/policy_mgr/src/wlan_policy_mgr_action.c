@@ -3105,13 +3105,12 @@ QDF_STATUS policy_mgr_update_connection_info_utfw(
 QDF_STATUS policy_mgr_incr_connection_count_utfw(
 		struct wlan_objmgr_psoc *psoc,
 		uint32_t vdev_id, uint32_t tx_streams, uint32_t rx_streams,
-		uint32_t chain_mask, uint32_t type, uint32_t sub_type,
+		uint32_t chain_mask, enum policy_mgr_con_mode mode,
 		uint32_t ch_freq, uint32_t mac_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint32_t conn_index = 0;
 	bool update_conn = true;
-	enum policy_mgr_con_mode mode;
 	uint16_t ch_flagext = 0;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
@@ -3124,7 +3123,6 @@ QDF_STATUS policy_mgr_incr_connection_count_utfw(
 	}
 	policy_mgr_debug("--> filling entry at index[%d]", conn_index);
 
-	mode = policy_mgr_get_mode(type, sub_type);
 	if (mode == PM_STA_MODE || mode == PM_P2P_CLIENT_MODE)
 		update_conn = false;
 
@@ -3135,10 +3133,13 @@ QDF_STATUS policy_mgr_incr_connection_count_utfw(
 	}
 	if (wlan_reg_is_dfs_for_freq(pm_ctx->pdev, ch_freq))
 		ch_flagext |= IEEE80211_CHAN_DFS;
-
-	policy_mgr_update_conc_list(psoc, conn_index, mode, ch_freq,
-				    HW_MODE_20_MHZ, mac_id, chain_mask,
-				    0, vdev_id, true, update_conn, ch_flagext);
+	if (mode < PM_MAX_NUM_OF_MODE) {
+		pm_ctx->no_of_active_sessions[mode]++;
+		policy_mgr_update_conc_list(psoc, conn_index, mode, ch_freq,
+					    HW_MODE_20_MHZ, mac_id, chain_mask,
+					    0, vdev_id, true, update_conn,
+					    ch_flagext);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -3147,6 +3148,13 @@ QDF_STATUS policy_mgr_decr_connection_count_utfw(struct wlan_objmgr_psoc *psoc,
 		uint32_t del_all, uint32_t vdev_id)
 {
 	QDF_STATUS status;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid pm context");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	if (del_all) {
 		status = policy_mgr_psoc_disable(psoc);
@@ -3160,7 +3168,17 @@ QDF_STATUS policy_mgr_decr_connection_count_utfw(struct wlan_objmgr_psoc *psoc,
 			return QDF_STATUS_E_FAILURE;
 		}
 	} else {
-		policy_mgr_decr_connection_count(psoc, vdev_id);
+		enum policy_mgr_con_mode mode =
+			policy_mgr_get_mode_by_vdev_id(psoc, vdev_id);
+
+		if (mode < PM_MAX_NUM_OF_MODE &&
+		    pm_ctx->no_of_active_sessions[mode]) {
+			pm_ctx->no_of_active_sessions[mode]--;
+			policy_mgr_decr_connection_count(psoc, vdev_id);
+		} else {
+			policy_mgr_err("mode %d unexpected", mode);
+			return QDF_STATUS_E_FAILURE;
+		}
 	}
 
 	return QDF_STATUS_SUCCESS;
