@@ -1763,8 +1763,8 @@ static void util_scan_set_security(struct scan_cache_entry *scan_params)
 #define ML_CONTROL_OFFSET 3
 #define ML_CMN_INFO_OFFSET ML_CONTROL_OFFSET + 2
 
-#define CMN_INFO_MLD_ADDR_PRESENT_BIT     BIT(0)
-#define CMN_INFO_LINK_ID_PRESENT_BIT      BIT(1)
+#define CMN_INFO_MLD_ADDR_PRESENT_BIT     BIT(4)
+#define CMN_INFO_LINK_ID_PRESENT_BIT      BIT(5)
 #define LINK_INFO_MAC_ADDR_PRESENT_BIT    BIT(5)
 
 static uint8_t util_get_link_info_offset(uint8_t *ml_ie)
@@ -1792,10 +1792,16 @@ static void util_get_partner_link_info(struct scan_cache_entry *scan_entry)
 	uint8_t offset = util_get_link_info_offset(ml_ie);
 	uint16_t sta_ctrl;
 
-	if (!offset) {
-		scm_err("Per STA profile is not present in the ML_IE ");
+	/* Update partner info  from RNR IE */
+	qdf_mem_copy(&scan_entry->ml_info->link_info[0].link_addr,
+		     &scan_entry->rnr.bss_info[0].bssid, 6);
+
+	scan_entry->ml_info->link_info[0].link_id =
+				scan_entry->rnr.bss_info[0].mld_info.link_id;
+
+	if (!offset)
 		return;
-	}
+
 	/* TODO: loop through all the STA info fields */
 
 	/* Sub element ID 0 represents Per-STA Profile */
@@ -1806,22 +1812,15 @@ static void util_get_partner_link_info(struct scan_cache_entry *scan_entry)
 		/* Skip STA control field */
 		offset += 2;
 
-		scan_entry->ml_info->link_info[1].link_id =
-						ml_ie[offset] & 0xF;
+		scan_entry->ml_info->link_info[0].link_id = sta_ctrl & 0xF;
 		if (sta_ctrl & LINK_INFO_MAC_ADDR_PRESENT_BIT) {
 			qdf_mem_copy(
-				&scan_entry->ml_info->link_info[1].link_addr,
+				&scan_entry->ml_info->link_info[0].link_addr,
 				ml_ie + offset, 6);
 			scm_debug("Found partner info in ML IE");
 			return;
 		}
 	}
-
-	qdf_mem_copy(&scan_entry->ml_info->link_info[1].link_addr,
-		     &scan_entry->rnr.bss_info[0].bssid, 6);
-
-	scan_entry->ml_info->link_info[1].link_id =
-				scan_entry->rnr.bss_info[0].mld_info.link_id;
 }
 
 static void util_scan_update_ml_info(struct scan_cache_entry *scan_entry)
@@ -1853,10 +1852,7 @@ static void util_scan_update_ml_info(struct scan_cache_entry *scan_entry)
 	 * in the partner info list
 	 */
 	if (multi_link_ctrl & CMN_INFO_LINK_ID_PRESENT_BIT)
-		scan_entry->ml_info->link_info[0].link_id = ml_ie[offset];
-
-	qdf_mem_copy(&scan_entry->ml_info->link_info[0].link_addr,
-		     &scan_entry->mac_addr, 6);
+		scan_entry->ml_info->self_link_id = ml_ie[offset] & 0x0F;
 
 	util_get_partner_link_info(scan_entry);
 }

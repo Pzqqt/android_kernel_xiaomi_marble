@@ -516,12 +516,14 @@ struct partner_link_info {
  * struct ml_info: Multi link formation of a 11be beacon
  * @mld_mac_addr: MLD mac address
  * @num_links: Number of links supported by ML AP
+ * @self_link_id: Link id of the scan entry
  * @link_info: Array containing partner links information
  * @ml_bss_score: Multi link BSS score
  */
 struct ml_info {
 	struct qdf_mac_addr mld_mac_addr;
 	uint8_t num_links;
+	uint8_t self_link_id;
 	struct partner_link_info link_info[MLD_MAX_LINKS - 1];
 	uint16_t ml_bss_score;
 };
