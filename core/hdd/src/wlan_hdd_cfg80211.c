@@ -8321,6 +8321,11 @@ static int hdd_config_total_beacon_miss_count(struct hdd_adapter *adapter,
 	uint8_t total_miss_count;
 	QDF_STATUS status;
 
+	if (adapter->device_mode != QDF_STA_MODE) {
+		hdd_err("Only supported in sta mode");
+		return -EINVAL;
+	}
+
 	total_miss_count = nla_get_u8(attr);
 	ucfg_mlme_get_roam_bmiss_first_bcnt(hdd_ctx->psoc,
 					    &first_miss_count);
@@ -8332,14 +8337,14 @@ static int hdd_config_total_beacon_miss_count(struct hdd_adapter *adapter,
 
 	final_miss_count = total_miss_count - first_miss_count;
 
+	if (!ucfg_mlme_validate_roam_bmiss_final_bcnt(final_miss_count))
+		return -EINVAL;
+
 	hdd_debug("First count %u, final count %u",
 		  first_miss_count, final_miss_count);
 
-	/*****
-	 * TODO: research why is 0 being passed for vdev id???
-	 */
 	status = sme_set_roam_bmiss_final_bcnt(hdd_ctx->mac_handle,
-					       0,
+					       adapter->vdev_id,
 					       final_miss_count);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to set final count, status %u", status);
