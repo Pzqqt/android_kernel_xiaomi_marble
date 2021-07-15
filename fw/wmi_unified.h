@@ -7505,6 +7505,17 @@ typedef enum {
      */
     WMI_PDEV_PARAM_DISABLE_HW_ASSIST,
 
+    /*
+     * Param to Enable/Disable Tx on DFS for Scan Radio RDP
+     * Send MGMT frames on the DFS channel before Tx on the said channel
+     * when in monitor mode.
+     * Scan Radio RDP should do Tx on DFS channel based on available
+     * Tx frame on DFS without doing CAC.
+     * Host should ensure to send this param only for Scan Radio RDP.
+     * This param used to inform Scan Radio Supports Tx on DFS channel.
+     */
+    WMI_PDEV_PARAM_SCAN_RADIO_TX_ON_DFS,
+
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
