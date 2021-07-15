@@ -483,6 +483,7 @@ static inline const char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 					"WLAN_OSIF_TDLS_ID",
 					"WLAN_OSIF_CM_ID",
 					"WLAN_TXRX_STREAMS_ID",
+					"WLAN_MLO_MGR_ID",
 					};
 
 	if (id >= WLAN_REF_ID_MAX)
