@@ -952,7 +952,9 @@ static void wma_update_phymode_on_roam(tp_wma_handle wma, uint8_t *bssid,
 	/* update new phymode to peer */
 	wma_objmgr_set_peer_mlme_phymode(wma, bssid, bss_phymode);
 
-	wma_debug("LFR3: new phymode %d", bss_phymode);
+	wma_debug("LFR3: new phymode %d freq %d (bw %d, %d %d)",
+		  bss_phymode, des_chan->ch_freq, des_chan->ch_width,
+		  des_chan->ch_cfreq1, des_chan->ch_cfreq2);
 }
 
 int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
