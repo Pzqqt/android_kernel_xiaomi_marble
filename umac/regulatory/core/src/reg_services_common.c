@@ -3365,6 +3365,11 @@ reg_get_5g_bonded_chan_array_for_freq(struct wlan_objmgr_pdev *pdev,
 	enum channel_state chan_state = CHANNEL_STATE_INVALID;
 	enum channel_state temp_chan_state;
 
+	if (!bonded_chan_ptr) {
+		reg_debug("bonded chan ptr is NULL");
+		return chan_state;
+	}
+
 	chan_cfreq =  bonded_chan_ptr->start_freq;
 	while (chan_cfreq <= bonded_chan_ptr->end_freq) {
 		temp_chan_state = reg_get_channel_state_for_freq(pdev,
@@ -3926,8 +3931,10 @@ reg_get_5g_bonded_channel_for_freq(struct wlan_objmgr_pdev *pdev,
 	/* Fetch the bonded_chan_ptr for width greater than 20MHZ. */
 	*bonded_chan_ptr_ptr = reg_get_bonded_chan_entry(freq, ch_width);
 
-	if (!(*bonded_chan_ptr_ptr))
+	if (!(*bonded_chan_ptr_ptr)) {
+		reg_debug_rl("bonded_chan_ptr_ptr is NULL");
 		return CHANNEL_STATE_INVALID;
+	}
 
 	return reg_get_5g_bonded_chan_array_for_freq(pdev, freq,
 						     *bonded_chan_ptr_ptr);
