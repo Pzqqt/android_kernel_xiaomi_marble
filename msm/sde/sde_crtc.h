@@ -282,6 +282,7 @@ struct sde_frame_data {
  * @cp_feature_list  : list of color processing features supported on a crtc
  * @cp_active_list   : list of color processing features are active
  * @cp_dirty_list    : list of color processing features are dirty
+ * @revalidate_mask : stores dirty flags to revalidate after idlepc
  * @ad_dirty      : list containing ad properties that are dirty
  * @ad_active     : list containing ad properties that are active
  * @crtc_lock     : crtc lock around create, destroy and access.
@@ -382,6 +383,7 @@ struct sde_crtc {
 	spinlock_t spin_lock;
 	spinlock_t fevent_spin_lock;
 	bool kickoff_in_progress;
+	unsigned long revalidate_mask;
 
 	/* for handling internal event thread */
 	struct sde_crtc_event event_cache[SDE_CRTC_MAX_EVENT_COUNT];
