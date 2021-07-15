@@ -130,6 +130,7 @@ static void sde_hw_dsc_config(struct sde_hw_dsc *hw_dsc,
 	u32 idx;
 	u32 data = 0;
 	u32 slice_count_per_enc;
+	u32 bpp;
 
 	if (!hw_dsc || !dsc)
 		return;
@@ -170,8 +171,14 @@ static void sde_hw_dsc_config(struct sde_hw_dsc *hw_dsc,
 			data |= BIT(21);
 	}
 
+	bpp = dsc->config.bits_per_pixel;
+	/* as per hw requirement bpp should be programmed
+	 * twice the actual value in case of 420 or 422 encoding
+	 */
+	if (dsc->config.native_422 || dsc->config.native_420)
+		bpp = 2 * bpp;
 	data |= (dsc->config.block_pred_enable ? 1 : 0) << 20;
-	data |= (dsc->config.bits_per_pixel << 10);
+	data |= (bpp << 10);
 	data |= (dsc->config.line_buf_depth & 0xf) << 6;
 	data |= dsc->config.convert_rgb << 4;
 	data |= dsc->config.bits_per_component & 0xf;
