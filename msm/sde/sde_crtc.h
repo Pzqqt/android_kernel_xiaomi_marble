@@ -1043,4 +1043,10 @@ void sde_crtc_reset_sw_state(struct drm_crtc *crtc);
 */
 void sde_crtc_disable_cp_features(struct drm_crtc *crtc);
 
+/*
+ * _sde_crtc_clear_dim_layers_v1 - clear all dim layer settings
+ * @cstate:      Pointer to drm crtc state
+ */
+void _sde_crtc_clear_dim_layers_v1(struct drm_crtc_state *state);
+
 #endif /* _SDE_CRTC_H_ */

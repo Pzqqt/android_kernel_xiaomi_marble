@@ -45,6 +45,7 @@
 #include <drm/drm_ioctl.h>
 #include <drm/drm_vblank.h>
 #include <drm/drm_drv.h>
+#include <drm/drm_auth.h>
 #include <drm/drm_probe_helper.h>
 
 #include "msm_drv.h"
@@ -967,6 +968,15 @@ static void context_close(struct msm_file_private *ctx)
 	kfree(ctx);
 }
 
+static void msm_preclose(struct drm_device *dev, struct drm_file *file)
+{
+	struct msm_drm_private *priv = dev->dev_private;
+	struct msm_kms *kms = priv->kms;
+
+	if (kms && kms->funcs && kms->funcs->preclose)
+		kms->funcs->preclose(kms, file);
+}
+
 static void msm_postclose(struct drm_device *dev, struct drm_file *file)
 {
 	struct msm_drm_private *priv = dev->dev_private;
@@ -1470,6 +1480,14 @@ static int msm_release(struct inode *inode, struct file *filp)
 						false);
 		kfree(node);
 	}
+
+	/**
+	 * Handle preclose operation here for removing fb's whose
+	 * refcount > 1. This operation is not triggered from upstream
+	 * drm as msm_driver does not support DRIVER_LEGACY feature.
+	 */
+	if (drm_is_current_master(file_priv))
+		msm_preclose(dev, file_priv);
 
 	return drm_release(inode, filp);
 }
