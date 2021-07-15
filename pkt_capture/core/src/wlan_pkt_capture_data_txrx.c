@@ -774,7 +774,6 @@ uint8_t pkt_capture_get_rx_rtap_flags(struct hal_rx_pkt_capture_flags *flags)
 	return rtap_flags;
 }
 
-#define CHANNEL_FREQ_5150 5150
 /**
  * pkt_capture_rx_mon_get_rx_status() - Get rx status
  * @context: objmgr vdev
@@ -825,11 +824,6 @@ static void pkt_capture_rx_mon_get_rx_status(void *context, void *dp_soc,
 	rx_status->chan_freq =
 		wlan_reg_chan_band_to_freq(pdev, primary_chan_num, BIT(band));
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_PKT_CAPTURE_ID);
-
-	if (rx_status->chan_freq > CHANNEL_FREQ_5150)
-		rx_status->ofdm_flag = 1;
-	else
-		rx_status->cck_flag = 1;
 
 	pkt_capture_rx_get_phy_info(context, dp_soc, desc, rx_status);
 }
