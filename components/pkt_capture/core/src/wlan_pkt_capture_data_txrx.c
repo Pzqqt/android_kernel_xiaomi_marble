@@ -441,7 +441,7 @@ pkt_capture_rx_convert8023to80211(hal_soc_handle_t hal_soc_hdl,
 	 * single mpdu from first msdu.
 	 */
 	if (qdf_nbuf_is_rx_chfrag_start(msdu)) {
-		pwh = HAL_RX_DESC_GET_80211_HDR(desc);
+		pwh = hal_rx_desc_get_80211_hdr(hal_soc_hdl, desc);
 		qdf_mem_copy(first_msdu_hdr, pwh,
 			     sizeof(struct ieee80211_frame));
 	}
