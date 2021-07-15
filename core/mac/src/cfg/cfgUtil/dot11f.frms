@@ -3271,14 +3271,68 @@ IE he_6ghz_band_cap (EID_EXTN_ID_ELEMENT) OUI (0x3B)
 
 IE eht_cap (EID_EXTN_ID_ELEMENT) OUI (0xFD)
 {
-    eht_mac_cap[6];
-    phy_cap_bytes[11];
     {
-        reserved: 1;
-        supported_ch_width_set: 7;
+	nsep_pri_access: 1;
+	eht_om_ctl: 1;
+	triggered_txop_sharing: 1;
+	reserved: 13;
     }
-    rx_mcs_map, 2;
-    tx_mcs_map, 2;
+    {
+	reserved2: 1;
+	support_320mhz_6ghz: 1;
+	ru_242tone_wt_20mhz: 1;
+	ndp_4x_eht_ltf_3dot2_us_gi: 1;
+	partial_bw_mu_mimo: 1;
+	su_beamformer: 1;
+	su_beamformee: 1;
+	bfee_ss_le_80mhz: 3;
+	bfee_ss_160mhz: 3;
+	bfee_ss_320mhz: 3;
+	num_sounding_dim_le_80mhz: 3;
+	num_sounding_dim_160mhz: 3;
+	num_sounding_dim_320mhz: 3;
+	ng_16_su_feedback: 1;
+	ng_16_mu_feedback: 1;
+	cb_sz_4_2_su_feedback: 1;
+	cb_sz_7_5_su_feedback: 1;
+	trig_su_bforming_feedback: 1;
+	trig_mu_bforming_partial_bw_feedback: 1;
+	triggered_cqi_feedback: 1;
+    }
+    {
+	partial_bw_dl_mu_mimo: 1;
+	psr_based_sr: 1;
+	power_boost_factor: 1;
+	eht_mu_ppdu_4x_ltf_0_8_us_gi: 1;
+	max_nc: 4;
+	non_trig_cqi_feedback: 1;
+	tx_1024_4096_qam_lt_242_tone_ru: 1;
+	rx_1024_4096_qam_lt_242_tone_ru: 1;
+	ppet_present: 1;
+	common_nominal_pkt_padding: 2;
+	max_num_eht_ltf: 5;
+	mcs_15: 4;
+	eht_dup_6ghz: 1;
+	op_sta_rx_ndp_wider_bw_20mhz: 1;
+	non_ofdma_ul_mu_mimo_le_80mhz: 1;
+	non_ofdma_ul_mu_mimo_160mhz: 1;
+	non_ofdma_ul_mu_mimo_320mhz: 1;
+	mu_bformer_le_80mhz: 1;
+	mu_bformer_160mhz: 1;
+	mu_bformer_320mhz: 1;
+	reserved3: 1;
+    }
+    eht_mcs_map_20[0..4];
+    eht_mcs_map_le_80[0..3];
+    eht_mcs_map_160[0..3];
+    eht_mcs_map_320[3][0..1] COUNTIS support_320mhz_6ghz;
+    OPTIONAL UNION ppet (DISCRIMINATOR ppet_present)
+    {
+        ppe_threshold (ppet_present IS 1)
+        {
+            ppe_th[2..62];
+        }
+    };
 }
 
 IE eht_op (EID_EXTN_ID_ELEMENT) OUI (0xFE)
