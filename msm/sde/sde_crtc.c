@@ -549,7 +549,7 @@ static bool sde_crtc_mode_fixup(struct drm_crtc *crtc,
 
 	drm_for_each_encoder_mask(encoder, c_state->crtc->dev,
 		c_state->encoder_mask) {
-		if (!sde_encoder_in_clone_mode(encoder)) {
+		if (!sde_crtc_state_in_clone_mode(encoder, c_state)) {
 			encoder_valid = true;
 			break;
 		}
@@ -868,7 +868,7 @@ static int _sde_crtc_set_crtc_roi(struct drm_crtc *crtc,
 		 * This restriction should be relaxed when Connector ROI scaling is
 		 * supported and while in clone mode.
 		 */
-		if (!sde_encoder_in_clone_mode(sde_conn->encoder) &&
+		if (!sde_crtc_state_in_clone_mode(sde_conn->encoder, state) &&
 				is_conn_roi_dirty != is_crtc_roi_dirty) {
 			SDE_ERROR("connector/crtc rois not updated together\n");
 			return -EINVAL;
@@ -2554,7 +2554,7 @@ void sde_crtc_prepare_commit(struct drm_crtc *crtc,
 	dev = crtc->dev;
 	sde_crtc = to_sde_crtc(crtc);
 	cstate = to_sde_crtc_state(crtc->state);
-	SDE_EVT32_VERBOSE(DRMID(crtc));
+	SDE_EVT32_VERBOSE(DRMID(crtc), cstate->cwb_enc_mask);
 
 	SDE_ATRACE_BEGIN("sde_crtc_prepare_commit");
 
@@ -2574,6 +2574,7 @@ void sde_crtc_prepare_commit(struct drm_crtc *crtc,
 
 			cstate->connectors[cstate->num_connectors++] = conn;
 			sde_connector_prepare_fence(conn);
+			sde_encoder_set_clone_mode(encoder, crtc->state);
 		}
 	drm_connector_list_iter_end(&conn_iter);
 
@@ -2636,7 +2637,7 @@ enum sde_intf_mode sde_crtc_get_intf_mode(struct drm_crtc *crtc,
 	drm_for_each_encoder_mask(encoder, crtc->dev,
 			cstate->encoder_mask) {
 		/* continue if copy encoder is encountered */
-		if (sde_encoder_in_clone_mode(encoder))
+		if (sde_crtc_state_in_clone_mode(encoder, cstate))
 			continue;
 
 		return sde_encoder_get_intf_mode(encoder);

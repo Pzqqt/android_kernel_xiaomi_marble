@@ -468,6 +468,7 @@ enum sde_crtc_dirty_flags {
  * @property_values: Current crtc property values
  * @input_fence_timeout_ns : Cached input fence timeout, in ns
  * @num_dim_layers: Number of dim layers
+ * @cwb_enc_mask  : encoder mask populated during atomic_check if CWB is enabled
  * @dim_layer: Dim layer configs
  * @num_ds: Number of destination scalers to be configured
  * @num_ds_enabled: Number of destination scalers enabled
@@ -503,6 +504,7 @@ struct sde_crtc_state {
 	DECLARE_BITMAP(dirty, SDE_CRTC_DIRTY_MAX);
 	uint64_t input_fence_timeout_ns;
 	uint32_t num_dim_layers;
+	uint32_t cwb_enc_mask;
 	struct sde_hw_dim_layer dim_layer[SDE_MAX_DIM_LAYERS];
 	uint32_t num_ds;
 	uint32_t num_ds_enabled;
@@ -880,6 +882,22 @@ static inline bool sde_crtc_atomic_check_has_modeset(
 	crtc_state = drm_atomic_get_new_crtc_state(state,
 					crtc);
 	return (crtc_state && drm_atomic_crtc_needs_modeset(crtc_state));
+}
+
+static inline bool sde_crtc_state_in_clone_mode(struct drm_encoder *encoder,
+	struct drm_crtc_state *state)
+{
+	struct sde_crtc_state *cstate;
+
+	if (!state || !encoder)
+		return false;
+
+	cstate = to_sde_crtc_state(state);
+	if (sde_encoder_in_clone_mode(encoder) ||
+		(cstate->cwb_enc_mask & drm_encoder_mask(encoder)))
+		return true;
+
+	return false;
 }
 
 /**

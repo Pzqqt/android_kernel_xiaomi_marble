@@ -2135,7 +2135,7 @@ static int _sde_rm_populate_requirements(
 	 * found enabled.
 	 */
 	if ((!RM_RQ_CWB(reqs) || !RM_RQ_DCWB(reqs))
-				&& sde_encoder_in_clone_mode(enc)) {
+				&& sde_crtc_state_in_clone_mode(enc, crtc_state)) {
 		if (cfg->has_dedicated_cwb_support)
 			reqs->top_ctrl |= BIT(SDE_RM_TOPCTL_DCWB);
 		else
