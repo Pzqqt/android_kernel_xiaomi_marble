@@ -557,6 +557,29 @@ u32 dsi_drm_get_dfps_maxfps(void *display)
 	return dfps_maxfps;
 }
 
+int dsi_conn_get_lm_from_mode(void *display, const struct drm_display_mode *drm_mode)
+{
+	struct dsi_display *dsi_display = display;
+	struct dsi_display_mode dsi_mode, *panel_dsi_mode;
+	int rc = -EINVAL;
+
+	if (!dsi_display || !drm_mode) {
+		DSI_ERR("Invalid params %d %d\n", !display, !drm_mode);
+		return rc;
+	}
+
+	convert_to_dsi_mode(drm_mode, &dsi_mode);
+
+	rc = dsi_display_find_mode(dsi_display, &dsi_mode, NULL, &panel_dsi_mode);
+	if (rc) {
+		DSI_ERR("mode not found %d\n", rc);
+		drm_mode_debug_printmodeline(drm_mode);
+		return rc;
+	}
+
+	return panel_dsi_mode->priv_info->topology.num_lm;
+}
+
 int dsi_conn_get_mode_info(struct drm_connector *connector,
 		const struct drm_display_mode *drm_mode,
 		struct msm_sub_mode *sub_mode,
