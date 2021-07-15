@@ -67,6 +67,8 @@
 #define MIN_SLICE_HEIGHT                    128
 #define MAX_BITRATE_BOOST                    25
 #define MAX_SUPPORTED_MIN_QUALITY            70
+#define MIN_CHROMA_QP_OFFSET                -12
+#define MAX_CHROMA_QP_OFFSET                  0
 
 #define DCVS_WINDOW 16
 #define ENC_FPS_WINDOW 3

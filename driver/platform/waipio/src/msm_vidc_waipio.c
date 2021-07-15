@@ -16,8 +16,6 @@
 #define DEFAULT_VIDEO_CONCEAL_COLOR_BLACK 0x8020010
 #define MAX_LTR_FRAME_COUNT     2
 #define MAX_BASE_LAYER_PRIORITY_ID 63
-#define MIN_CHROMA_QP_OFFSET    -12
-#define MAX_CHROMA_QP_OFFSET    0
 #define MAX_BITRATE             220000000
 #define DEFAULT_BITRATE         20000000
 #define MIN_QP_10BIT            -12
@@ -1233,7 +1231,8 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		HFI_PROP_CHROMA_QP_OFFSET,
 		CAP_FLAG_ROOT | CAP_FLAG_OUTPUT_PORT,
 		{0}, {0},
-		NULL, msm_vidc_set_chroma_qp_index_offset},
+		msm_vidc_adjust_chroma_qp_index_offset,
+		msm_vidc_set_chroma_qp_index_offset},
 
 	{DISPLAY_DELAY_ENABLE, DEC, H264|HEVC|VP9,
 		V4L2_MPEG_MSM_VIDC_DISABLE, V4L2_MPEG_MSM_VIDC_ENABLE,

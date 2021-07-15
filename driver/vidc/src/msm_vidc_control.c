@@ -1157,6 +1157,31 @@ int msm_vidc_adjust_transform_8x8(void *instance, struct v4l2_ctrl *ctrl)
 	return 0;
 }
 
+int msm_vidc_adjust_chroma_qp_index_offset(void *instance,
+	struct v4l2_ctrl *ctrl)
+{
+	struct msm_vidc_inst_capability *capability;
+	s32 adjusted_value;
+	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	capability = inst->capabilities;
+
+	adjusted_value = ctrl ? ctrl->val :
+		capability->cap[CHROMA_QP_INDEX_OFFSET].value;
+
+	if (adjusted_value != MIN_CHROMA_QP_OFFSET)
+		adjusted_value = MAX_CHROMA_QP_OFFSET;
+
+	msm_vidc_update_cap_value(inst, CHROMA_QP_INDEX_OFFSET,
+		adjusted_value, __func__);
+
+	return 0;
+}
+
 int msm_vidc_adjust_slice_count(void *instance, struct v4l2_ctrl *ctrl)
 {
 	struct msm_vidc_inst *inst = (struct msm_vidc_inst *) instance;
