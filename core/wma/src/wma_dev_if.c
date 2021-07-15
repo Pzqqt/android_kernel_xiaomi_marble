@@ -2559,6 +2559,7 @@ QDF_STATUS wma_vdev_self_peer_create(struct vdev_mlme_obj *vdev_mlme)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct wlan_objmgr_vdev *vdev = vdev_mlme->vdev;
 	tp_wma_handle wma_handle;
+	uint8_t peer_vdev_id, *self_peer_macaddr;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma_handle)
@@ -2574,9 +2575,26 @@ QDF_STATUS wma_vdev_self_peer_create(struct vdev_mlme_obj *vdev_mlme)
 		if (QDF_IS_STATUS_ERROR(status))
 			wma_err("Failed to create peer %d", status);
 	} else if (vdev_mlme->mgmt.generic.type == WMI_VDEV_TYPE_STA) {
+		if (!qdf_is_macaddr_zero(
+				(struct qdf_mac_addr *)vdev->vdev_mlme.mldaddr))
+			self_peer_macaddr = vdev->vdev_mlme.mldaddr;
+		else
+			self_peer_macaddr = vdev->vdev_mlme.macaddr;
+
+		/**
+		 * Self peer is used for the frames exchanged before
+		 * association. For ML STA, Self peer create will be triggered
+		 * for both the VDEVs, but one self peer is enough. So in case
+		 * of ML, use MLD address for the self peer and ignore self peer
+		 * creation for the partner link vdev.
+		 */
+		if (wma_objmgr_peer_exist(wma_handle, self_peer_macaddr,
+					  &peer_vdev_id))
+			return QDF_STATUS_SUCCESS;
+
 		obj_peer = wma_create_objmgr_peer(wma_handle,
 						  wlan_vdev_get_id(vdev),
-						  vdev->vdev_mlme.macaddr,
+						  self_peer_macaddr,
 						  WMI_PEER_TYPE_DEFAULT);
 		if (!obj_peer) {
 			wma_err("Failed to create obj mgr peer for self");

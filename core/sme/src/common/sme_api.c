@@ -4692,7 +4692,7 @@ QDF_STATUS sme_vdev_delete(mac_handle_t mac_handle,
 {
 	QDF_STATUS status;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	uint8_t vdev_id = wlan_vdev_get_id(vdev);
+	uint8_t *self_peer_macaddr, vdev_id = wlan_vdev_get_id(vdev);
 	struct scheduler_msg self_peer_delete_msg = {0};
 	struct del_vdev_params *del_self_peer;
 
@@ -4732,10 +4732,14 @@ QDF_STATUS sme_vdev_delete(mac_handle_t mac_handle,
 	if (!del_self_peer)
 		return QDF_STATUS_E_NOMEM;
 
+	self_peer_macaddr = wlan_vdev_mlme_get_mldaddr(vdev);
+	if (qdf_is_macaddr_zero((struct qdf_mac_addr *)self_peer_macaddr))
+		self_peer_macaddr = wlan_vdev_mlme_get_macaddr(vdev);
+
 	del_self_peer->vdev = vdev;
 	del_self_peer->vdev_id = wlan_vdev_get_id(vdev);
-	qdf_mem_copy(del_self_peer->self_mac_addr,
-		     wlan_vdev_mlme_get_macaddr(vdev), sizeof(tSirMacAddr));
+	qdf_mem_copy(del_self_peer->self_mac_addr, self_peer_macaddr,
+		     sizeof(tSirMacAddr));
 
 	self_peer_delete_msg.bodyptr = del_self_peer;
 	self_peer_delete_msg.callback = mlme_vdev_self_peer_delete;
