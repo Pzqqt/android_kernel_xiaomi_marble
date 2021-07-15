@@ -440,6 +440,12 @@ static const char rmnet_port_gstrings_stats[][ETH_GSTRING_LEN] = {
 	"DL chaining [40-50)",
 	"DL chaining [50-60)",
 	"DL chaining >= 60",
+	"DL chaining frags [0-1]",
+	"DL chaining frags [2-3]",
+	"DL chaining frags [4-7]",
+	"DL chaining frags [8-11]",
+	"DL chaining frags [12-15]",
+	"DL chaining frags = 16",
 };
 
 static const char rmnet_ll_gstrings_stats[][ETH_GSTRING_LEN] = {

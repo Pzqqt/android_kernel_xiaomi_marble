@@ -1771,6 +1771,26 @@ void rmnet_descriptor_classify_chain_count(u64 chain_count,
 	port->stats.dl_chain_stat[index] += chain_count;
 }
 
+void rmnet_descriptor_classify_frag_count(u64 frag_count,
+					  struct rmnet_port *port)
+{
+	u64 index;
+
+	if (frag_count <= 1) {
+		port->stats.dl_frag_stat_1 += frag_count;
+		return;
+	}
+
+	if (frag_count >= 16) {
+		port->stats.dl_frag_stat[4] += frag_count;
+		return;
+	}
+
+	index = frag_count;
+	do_div(index, 4);
+	port->stats.dl_frag_stat[index] += frag_count;
+}
+
 void rmnet_frag_ingress_handler(struct sk_buff *skb,
 				struct rmnet_port *port)
 {
@@ -1786,6 +1806,8 @@ void rmnet_frag_ingress_handler(struct sk_buff *skb,
 		struct sk_buff *skb_frag;
 
 		chain_count++;
+		rmnet_descriptor_classify_frag_count(skb_shinfo(skb)->nr_frags,
+						     port);
 
 		rmnet_frag_deaggregate(skb, port, &desc_list, skb->priority);
 		if (!list_empty(&desc_list)) {
