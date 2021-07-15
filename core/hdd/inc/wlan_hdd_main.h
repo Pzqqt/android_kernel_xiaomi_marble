@@ -119,6 +119,7 @@
 #include "wlan_hdd_sta_info.h"
 #include "wlan_hdd_bus_bandwidth.h"
 #include <wlan_hdd_cm_api.h>
+#include "wlan_hdd_mlo.h"
 
 /*
  * Preprocessor definitions and constants
@@ -442,6 +443,8 @@ enum hdd_nb_cmd_id {
 #define NUM_TX_RX_HISTOGRAM_MASK (NUM_TX_RX_HISTOGRAM - 1)
 
 #define HDD_NOISE_FLOOR_DBM (-96)
+
+#define INTF_MACADDR_MASK       0x7
 
 /**
  * enum hdd_auth_key_mgmt - auth key mgmt protocols
@@ -2224,6 +2227,9 @@ struct hdd_context {
 	bool dump_in_progress;
 	qdf_time_t bw_vote_time;
 	struct hdd_dual_sta_policy dual_sta_policy;
+#ifdef WLAN_FEATURE_11BE_MLO
+	struct hdd_mld_mac_info mld_mac_info;
+#endif
 };
 
 /**
