@@ -458,17 +458,43 @@ void cm_set_vdev_link_id(struct cnx_mgr *cm_ctx,
 		}
 	}
 }
+
+static void cm_update_vdev_mlme_macaddr(struct cnx_mgr *cm_ctx,
+					struct cm_connect_req *req)
+{
+	wlan_vdev_obj_lock(cm_ctx->vdev);
+	if (req->cur_candidate->entry->ie_list.multi_link) {
+		/* Use link address for ML connection */
+		wlan_vdev_mlme_set_macaddr(cm_ctx->vdev,
+					   cm_ctx->vdev->vdev_mlme.linkaddr);
+	} else {
+		/* Use net_dev address for non-ML connection */
+		wlan_vdev_mlme_set_macaddr(cm_ctx->vdev,
+					   cm_ctx->vdev->vdev_mlme.mldaddr);
+	}
+	wlan_vdev_obj_unlock(cm_ctx->vdev);
+}
 #else
 static inline
 void cm_set_vdev_link_id(struct cnx_mgr *cm_ctx,
 			 struct cm_connect_req *req)
 { }
+
+static void cm_update_vdev_mlme_macaddr(struct cnx_mgr *cm_ctx,
+					struct cm_connect_req *req)
+{
+}
 #endif
 #else
 static inline
 void cm_set_vdev_link_id(struct cnx_mgr *cm_ctx,
 			 struct cm_connect_req *req)
 { }
+
+static void cm_update_vdev_mlme_macaddr(struct cnx_mgr *cm_ctx,
+					struct cm_connect_req *req)
+{
+}
 #endif
 
 static void cm_create_bss_peer(struct cnx_mgr *cm_ctx,
@@ -847,6 +873,9 @@ cm_peer_create_on_bss_select_ind_resp(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	cm_req = cm_get_req_by_cm_id(cm_ctx, *cm_id);
 	if (!cm_req)
 		return QDF_STATUS_E_FAILURE;
+
+	/* Update vdev mlme mac address based on connection type */
+	cm_update_vdev_mlme_macaddr(cm_ctx, &cm_req->connect_req);
 
 	cm_create_bss_peer(cm_ctx, &cm_req->connect_req);
 
@@ -1448,14 +1477,19 @@ QDF_STATUS cm_try_next_candidate(struct cnx_mgr *cm_ctx,
 	cm_update_ser_timer_for_new_candidate(cm_ctx, resp->cm_id);
 
 	status = cm_send_bss_select_ind(cm_ctx, &cm_req->connect_req);
+
 	/*
 	 * If candidate select indication is not supported continue with bss
 	 * peer create, else peer will be created after resp.
 	 */
-	if (status == QDF_STATUS_E_NOSUPPORT)
+	if (status == QDF_STATUS_E_NOSUPPORT) {
+		/* Update vdev mlme mac address based on connection type */
+		cm_update_vdev_mlme_macaddr(cm_ctx, &cm_req->connect_req);
+
 		cm_create_bss_peer(cm_ctx, &cm_req->connect_req);
-	else if (QDF_IS_STATUS_ERROR(status))
+	} else if (QDF_IS_STATUS_ERROR(status)) {
 		goto connect_err;
+	}
 
 	return QDF_STATUS_SUCCESS;
 
@@ -1518,10 +1552,14 @@ QDF_STATUS cm_connect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 	 * If candidate select indication is not supported continue with bss
 	 * peer create, else peer will be created after resp.
 	 */
-	if (status == QDF_STATUS_E_NOSUPPORT)
+	if (status == QDF_STATUS_E_NOSUPPORT) {
+		/* Update vdev mlme mac address based on connection type */
+		cm_update_vdev_mlme_macaddr(cm_ctx, &cm_req->connect_req);
+
 		cm_create_bss_peer(cm_ctx, &cm_req->connect_req);
-	else if (QDF_IS_STATUS_ERROR(status))
+	} else if (QDF_IS_STATUS_ERROR(status)) {
 		goto connect_err;
+	}
 
 	return QDF_STATUS_SUCCESS;
 

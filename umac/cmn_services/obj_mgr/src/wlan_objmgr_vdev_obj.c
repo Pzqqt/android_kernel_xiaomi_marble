@@ -210,6 +210,8 @@ struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(
 	wlan_vdev_mlme_set_mataddr(vdev, params->mataddr);
 	/* set MLD address */
 	wlan_vdev_mlme_set_mldaddr(vdev, params->mldaddr);
+	/* set link address */
+	wlan_vdev_mlme_set_linkaddr(vdev, params->macaddr);
 	/* Set create flags */
 	vdev->vdev_objmgr.c_flags = params->flags;
 	/* store os-specific pointer */

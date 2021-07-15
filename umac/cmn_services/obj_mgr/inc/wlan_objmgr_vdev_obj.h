@@ -298,8 +298,10 @@ struct wlan_channel {
  * @vdev_feat_ext2_caps: More VDEV Extended feature caps
  * @vdev_op_flags:      Operation flags
  * @mataddr[]:          MAT address
- * @macaddr[]:          VDEV self MAC address
+ * @macaddr[]:          Contains link MAC address for ML connection and
+ *                      net dev address for non-ML connection
  * @mldaddr[]:          MLD address
+ * @linkaddr[]:         Link MAC address
  * @link_id:            link id for mlo connection
  */
 struct wlan_objmgr_vdev_mlme {
@@ -316,6 +318,7 @@ struct wlan_objmgr_vdev_mlme {
 	uint8_t  mataddr[QDF_MAC_ADDR_SIZE];
 	uint8_t  macaddr[QDF_MAC_ADDR_SIZE];
 	uint8_t  mldaddr[QDF_MAC_ADDR_SIZE];
+	uint8_t  linkaddr[QDF_MAC_ADDR_SIZE];
 #ifdef WLAN_FEATURE_11BE_MLO
 	uint8_t  mlo_link_id;
 #endif
@@ -780,6 +783,43 @@ static inline void wlan_vdev_mlme_set_mldaddr(struct wlan_objmgr_vdev *vdev,
 {
 	/* This API is invoked with lock acquired, do not add log prints */
 	WLAN_ADDR_COPY(vdev->vdev_mlme.mldaddr, mldaddr);
+}
+
+/**
+ * wlan_vdev_mlme_get_linkaddr() - get vdev linkaddr
+ * @vdev: VDEV object
+ *
+ * API to get link MAC address from vdev object
+ *
+ * Caller need to acquire lock with wlan_vdev_obj_lock()
+ *
+ * Return:
+ * @linkaddr: Link MAC address
+ */
+static inline
+uint8_t *wlan_vdev_mlme_get_linkaddr(struct wlan_objmgr_vdev *vdev)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	return vdev->vdev_mlme.linkaddr;
+}
+
+/**
+ * wlan_vdev_mlme_set_linkaddr() - set vdev linkaddr
+ * @vdev: VDEV object
+ * @linkaddr: Link address
+ *
+ * API to set link addr in vdev object
+ *
+ * Caller need to acquire lock with wlan_vdev_obj_lock()
+ *
+ * Return: void
+ */
+static inline void wlan_vdev_mlme_set_linkaddr(struct wlan_objmgr_vdev *vdev,
+					       uint8_t *linkaddr)
+{
+	/* This API is invoked with lock acquired, do not add log prints */
+	qdf_copy_macaddr((struct qdf_mac_addr *)vdev->vdev_mlme.linkaddr,
+			 (struct qdf_mac_addr *)linkaddr);
 }
 
 /**
