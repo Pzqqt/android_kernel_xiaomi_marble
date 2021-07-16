@@ -570,6 +570,7 @@ int hdd_ndi_open(char *iface_name)
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	uint8_t ndi_adapter_count = 0;
 	uint8_t *ndi_mac_addr;
+	struct hdd_adapter_create_param params = {0};
 
 	hdd_enter();
 	if (!hdd_ctx)
@@ -602,7 +603,8 @@ int hdd_ndi_open(char *iface_name)
 	}
 
 	adapter = hdd_open_adapter(hdd_ctx, QDF_NDI_MODE, iface_name,
-				   ndi_mac_addr, NET_NAME_UNKNOWN, true);
+				   ndi_mac_addr, NET_NAME_UNKNOWN, true,
+				   &params);
 	if (!adapter) {
 		if (!cfg_nan_get_ndi_mac_randomize(hdd_ctx->psoc))
 			wlan_hdd_release_intf_addr(hdd_ctx, ndi_mac_addr);
