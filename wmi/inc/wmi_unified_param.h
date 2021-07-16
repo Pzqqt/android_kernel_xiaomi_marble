@@ -4857,6 +4857,7 @@ typedef enum {
 	wmi_pdev_param_set_mesh_params,
 	wmi_pdev_param_mpd_userpd_ssr,
 	wmi_pdev_param_low_latency_mode,
+	wmi_pdev_param_scan_radio_tx_on_dfs,
 	wmi_pdev_param_max,
 } wmi_conv_pdev_params_id;
 

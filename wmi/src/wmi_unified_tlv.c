@@ -349,6 +349,8 @@ static const uint32_t pdev_param_tlv[] = {
 	[wmi_pdev_param_mpd_userpd_ssr] = WMI_PDEV_PARAM_MPD_USERPD_SSR,
 	[wmi_pdev_param_low_latency_mode] =
 			WMI_PDEV_PARAM_LOW_LATENCY_SCHED_MODE,
+	[wmi_pdev_param_scan_radio_tx_on_dfs] =
+					WMI_PDEV_PARAM_SCAN_RADIO_TX_ON_DFS,
 };
 
 /**
