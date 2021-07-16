@@ -282,10 +282,10 @@ static void dsi_phy_hw_cphy_enable(struct dsi_phy_hw *phy,
 	/* turn off resync FIFO */
 	DSI_W32(phy, DSIPHY_CMN_RBUF_CTRL, 0x00);
 
-	/* program CMN_CTRL_4 for minor_ver 2 chipsets*/
+	/* program CMN_CTRL_4 for minor_ver greater than 2 chipsets*/
 	minor_ver = DSI_R32(phy, DSIPHY_CMN_REVISION_ID0);
 	minor_ver = minor_ver & (0xf0);
-	if (minor_ver == 0x20)
+	if (minor_ver >= 0x20)
 		DSI_W32(phy, DSIPHY_CMN_CTRL_4, 0x04);
 
 	/* Configure PHY lane swap */
@@ -407,10 +407,10 @@ static void dsi_phy_hw_dphy_enable(struct dsi_phy_hw *phy,
 	/* turn off resync FIFO */
 	DSI_W32(phy, DSIPHY_CMN_RBUF_CTRL, 0x00);
 
-	/* program CMN_CTRL_4 for minor_ver 2 chipsets*/
+	/* program CMN_CTRL_4 for minor_ver greater than 2 chipsets*/
 	minor_ver = DSI_R32(phy, DSIPHY_CMN_REVISION_ID0);
 	minor_ver = minor_ver & (0xf0);
-	if (minor_ver == 0x20)
+	if (minor_ver >= 0x20)
 		DSI_W32(phy, DSIPHY_CMN_CTRL_4, 0x04);
 
 	/* Configure PHY lane swap */
