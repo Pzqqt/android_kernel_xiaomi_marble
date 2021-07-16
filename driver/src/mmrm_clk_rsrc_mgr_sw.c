@@ -420,7 +420,8 @@ static int mmrm_sw_check_req_level(
 {
 	int rc = 0;
 	struct mmrm_sw_peak_current_data *peak_data = &sinfo->peak_cur_data;
-	struct mmrm_sw_clk_client_tbl_entry *tbl_entry;
+	struct mmrm_sw_clk_client_tbl_entry *tbl_entry = NULL;
+	struct mmrm_sw_clk_client_tbl_entry *next_max_entry = NULL;
 	u32 c, level = req_level;
 
 	if (req_level >= MMRM_VDD_LEVEL_MAX) {
@@ -428,22 +429,31 @@ static int mmrm_sw_check_req_level(
 		rc = -EINVAL;
 		goto err_invalid_level;
 	}
+	d_mpr_h("%s: csid(0x%x) level(%d) peak_data->aggreg_level(%d)\n",
+		__func__, clk_src_id, level, peak_data->aggreg_level);
 
 	/* req_level is rejected when another client has a higher level */
 	if (req_level < peak_data->aggreg_level) {
 		for (c = 0; c < sinfo->tot_clk_clients; c++) {
 			tbl_entry = &sinfo->clk_client_tbl[c];
 			if (IS_ERR_OR_NULL(tbl_entry->clk) || !tbl_entry->clk_rate ||
-				tbl_entry->clk_src_id == clk_src_id) {
+				(tbl_entry->clk_src_id == clk_src_id)) {
 				continue;
 			}
 			if (tbl_entry->vdd_level == peak_data->aggreg_level) {
 				break;
 			}
+			if  ((tbl_entry->vdd_level < peak_data->aggreg_level)
+					&& (tbl_entry->vdd_level > req_level ))
+				next_max_entry = tbl_entry;
+
 		}
 		/* reject req level */
 		if (c < sinfo->tot_clk_clients) {
 			level = peak_data->aggreg_level;
+		} else if (!IS_ERR_OR_NULL(next_max_entry)
+			&& next_max_entry->vdd_level > req_level) {
+			level = next_max_entry->vdd_level;
 		}
 	}
 
@@ -504,29 +514,31 @@ static int mmrm_sw_throttle_low_priority_client(
 	for (i = 0; i < sinfo->throttle_clients_data_length ; i++) {
 		tbl_entry_throttle_client =
 			&sinfo->clk_client_tbl[sinfo->throttle_clients_info[i].tbl_entry_id];
+		if (!IS_ERR_OR_NULL(tbl_entry_throttle_client)) {
 			now_cur_ma = tbl_entry_throttle_client->current_ma
 				[tbl_entry_throttle_client->vdd_level]
 				[peak_data->aggreg_level];
 			min_cur_ma = tbl_entry_throttle_client->current_ma[clk_min_level]
 				[peak_data->aggreg_level];
 
-		d_mpr_h("%s:csid(0x%x) name(%s)\n",
-			__func__, tbl_entry_throttle_client->clk_src_id,
-			tbl_entry_throttle_client->name);
+			d_mpr_h("%s:csid(0x%x) name(%s)\n",
+				__func__, tbl_entry_throttle_client->clk_src_id,
+				tbl_entry_throttle_client->name);
+		}
 		d_mpr_h("%s:now_cur_ma(%llu) min_cur_ma(%llu) delta_cur(%d)\n",
 			__func__, now_cur_ma, min_cur_ma, *delta_cur);
 
-			if (tbl_entry_throttle_client
-				&& (now_cur_ma > min_cur_ma)
-				&& (now_cur_ma - min_cur_ma > *delta_cur)) {
-				found_client_throttle = true;
-				d_mpr_h("%s: Throttle client csid(0x%x) name(%s)\n",
-					__func__, tbl_entry_throttle_client->clk_src_id,
-					tbl_entry_throttle_client->name);
-				d_mpr_h("%s:now_cur_ma %llu-min_cur_ma %llu>delta_cur %d\n",
-					__func__, now_cur_ma, min_cur_ma, *delta_cur);
-				/* found client to throttle, break from here. */
-				break;
+		if (!IS_ERR_OR_NULL(tbl_entry_throttle_client)
+			&& (now_cur_ma > min_cur_ma)
+			&& (now_cur_ma - min_cur_ma > *delta_cur)) {
+			found_client_throttle = true;
+			d_mpr_h("%s: Throttle client csid(0x%x) name(%s)\n",
+				__func__, tbl_entry_throttle_client->clk_src_id,
+				tbl_entry_throttle_client->name);
+			d_mpr_h("%s:now_cur_ma %llu-min_cur_ma %llu>delta_cur %d\n",
+				__func__, now_cur_ma, min_cur_ma, *delta_cur);
+			/* found client to throttle, break from here. */
+			break;
 		}
 	}
 
@@ -626,6 +638,7 @@ static int mmrm_sw_check_peak_current(struct mmrm_sw_clk_mgr_info *sinfo,
 	/* peak overshoot, do not update peak data */
 	if ((signed)peak_cur + delta_cur >= peak_data->threshold) {
 		/* Find low prority client and throttle it*/
+
 		if ((tbl_entry->pri == MMRM_CLIENT_PRIOR_HIGH)
 			&& (msm_mmrm_enable_throttle_feature > 0)) {
 			rc = mmrm_sw_throttle_low_priority_client(sinfo, &delta_cur);
