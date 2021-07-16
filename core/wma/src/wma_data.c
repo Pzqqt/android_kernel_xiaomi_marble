@@ -79,6 +79,7 @@
 #include <wlan_cp_stats_mc_ucfg_api.h>
 #include <wlan_crypto_global_api.h>
 #include <wlan_mlme_main.h>
+#include <wlan_cm_api.h>
 #include "wlan_pkt_capture_ucfg_api.h"
 
 struct wma_search_rate {
@@ -3166,8 +3167,8 @@ bool wma_is_roam_in_progress(uint32_t vdev_id)
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (!wma)
+	if (!wma || !wma->interfaces[vdev_id].vdev)
 		return false;
 
-	return wma->interfaces[vdev_id].roaming_in_progress;
+	return wlan_cm_is_vdev_roaming(wma->interfaces[vdev_id].vdev);
 }

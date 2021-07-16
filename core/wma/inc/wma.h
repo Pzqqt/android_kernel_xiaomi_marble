@@ -670,7 +670,6 @@ struct wma_invalid_peer_params {
  * @nwType: network type (802.11a/b/g/n/ac)
  * @ps_enabled: is powersave enable/disable
  * @peer_count: peer count
- * @roam_synch_in_progress: flag is in progress or not
  * @plink_status_req: link status request
  * @psnr_req: snr request
  * @tx_streams: number of tx streams can be used by the vdev
@@ -722,7 +721,6 @@ struct wma_txrx_node {
 #endif
 	uint32_t tx_streams;
 	uint32_t mac_id;
-	bool roaming_in_progress;
 	int32_t roam_synch_delay;
 	struct sme_rcpi_req *rcpi_req;
 	bool in_bmps;

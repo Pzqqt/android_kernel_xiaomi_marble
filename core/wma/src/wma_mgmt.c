@@ -86,6 +86,7 @@
 #include <wlan_logging_sock_svc.h>
 #endif
 #include "wlan_cm_roam_api.h"
+#include "wlan_cm_api.h"
 
 /**
  * wma_send_bcn_buf_ll() - prepare and send beacon buffer to fw for LL
@@ -354,11 +355,12 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 		      QDF_MAC_ADDR_REF(macaddr), QDF_MAC_ADDR_REF(addr),
 		      vdev_id, kickout_event->reason);
 
-	if (wma->interfaces[vdev_id].roaming_in_progress) {
-		wma_err("Ignore STA kick out since roaming is in progress");
+	if (wlan_cm_is_vdev_roaming(vdev)) {
+		wma_err("vdev_id %d: Ignore STA kick out since roaming is in progress",
+			vdev_id);
 		return -EINVAL;
 	}
-	bssid = wma_get_vdev_bssid(wma->interfaces[vdev_id].vdev);
+	bssid = wma_get_vdev_bssid(vdev);
 	if (!bssid) {
 		wma_err("Failed to get bssid for vdev_%d", vdev_id);
 		return -ENOMEM;

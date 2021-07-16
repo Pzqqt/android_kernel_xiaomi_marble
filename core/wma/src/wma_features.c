@@ -68,6 +68,7 @@
 #include "target_if_nan.h"
 #endif
 #include "wlan_scan_api.h"
+#include "wlan_cm_api.h"
 #include <wlan_crypto_global_api.h>
 #include "cdp_txrx_host_stats.h"
 
@@ -1233,8 +1234,8 @@ int wma_csa_offload_handler(void *handle, uint8_t *event, uint32_t len)
 	if (!csa_offload_event)
 		return -EINVAL;
 
-	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(wma->psoc, vdev_id) ||
-	    wma->interfaces[vdev_id].roaming_in_progress) {
+	if (intr[vdev_id].vdev &&
+	    wlan_cm_is_vdev_roaming(intr[vdev_id].vdev)) {
 		wma_err("Roaming in progress for vdev %d, ignore csa event",
 			 vdev_id);
 		qdf_mem_free(csa_offload_event);

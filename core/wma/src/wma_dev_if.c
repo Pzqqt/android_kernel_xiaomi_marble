@@ -4191,15 +4191,16 @@ static void wma_add_tdls_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 	bool peer_assoc_cnf = false;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint8_t pdev_id = OL_TXRX_PDEV_ID;
+	struct wma_txrx_node *iface = &wma->interfaces[add_sta->smesessionId];
 
 	wma_debug("staType: %d, updateSta: %d, bssId: "QDF_MAC_ADDR_FMT", staMac: "QDF_MAC_ADDR_FMT,
 		 add_sta->staType,
 		 add_sta->updateSta, QDF_MAC_ADDR_REF(add_sta->bssId),
 		 QDF_MAC_ADDR_REF(add_sta->staMac));
 
-	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(wma->psoc, add_sta->smesessionId) ||
-	    wma_is_roam_in_progress(add_sta->smesessionId)) {
-		wma_err("roaming in progress, reject add sta!");
+	if (iface->vdev && wlan_cm_is_vdev_roaming(iface->vdev)) {
+		wma_err("Vdev %d roaming in progress, reject add sta!",
+			add_sta->smesessionId);
 		add_sta->status = QDF_STATUS_E_PERM;
 		goto send_rsp;
 	}

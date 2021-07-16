@@ -3961,8 +3961,6 @@ QDF_STATUS wma_send_vdev_down_to_fw(t_wma_handle *wma, uint8_t vdev_id)
 		return status;
 	}
 
-	wma->interfaces[vdev_id].roaming_in_progress = false;
-
 	status = vdev_mgr_down_send(vdev_mlme);
 
 	return status;

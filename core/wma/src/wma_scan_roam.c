@@ -996,14 +996,6 @@ int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
 		return status;
 	}
 
-	/*
-	 * This flag is set during ROAM_START and once this event is being
-	 * executed which is a run to completion, no other event can interrupt
-	 * this in MC thread context. So, it is OK to reset the flag here as
-	 * soon as we receive this event.
-	 */
-	wma->interfaces[synch_event->vdev_id].roaming_in_progress = false;
-
 	if (synch_event->bcn_probe_rsp_len >
 	    param_buf->num_bcn_probe_rsp_frame ||
 	    synch_event->reassoc_req_len >
@@ -4008,7 +4000,6 @@ void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 	if (!ind)
 		return;
 
-	wma->interfaces[vdev_id].roaming_in_progress = true;
 	ind->pdev = wma->pdev;
 	ind->vdev_id = vdev_id;
 	msg.bodyptr = ind;
@@ -4082,10 +4073,8 @@ static void wma_invalid_roam_reason_handler(tp_wma_handle wma_handle,
 	enum sir_roam_op_code op_code;
 
 	if (notif == WMI_ROAM_NOTIF_ROAM_START) {
-		wma_handle->interfaces[vdev_id].roaming_in_progress = true;
 		op_code = SIR_ROAMING_START;
 	} else if (notif == WMI_ROAM_NOTIF_ROAM_ABORT) {
-		wma_handle->interfaces[vdev_id].roaming_in_progress = false;
 		op_code = SIR_ROAMING_ABORT;
 		lim_sae_auth_cleanup_retry(wma_handle->mac_context, vdev_id);
 	} else {
