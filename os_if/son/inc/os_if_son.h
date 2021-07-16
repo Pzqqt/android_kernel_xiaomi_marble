@@ -46,6 +46,11 @@
  * @os_if_set_phymode: set phy mode
  * @os_if_get_phymode: get phy mode
  * @os_if_get_rx_nss: Gets number of RX spatial streams
+ * @os_if_set_acl_policy: set acl policy
+ * @os_if_get_acl_policy: get acl policy
+ * @os_if_add_acl_mac: add mac to acl
+ * @os_if_del_acl_mac: del mac from acl
+ * @os_if_kickout_mac: kickout sta with given mac
  */
 struct son_callbacks {
 	uint32_t (*os_if_is_acs_in_progress)(struct wlan_objmgr_vdev *vdev);
@@ -70,6 +75,16 @@ struct son_callbacks {
 	enum ieee80211_phymode (*os_if_get_phymode)(
 					struct wlan_objmgr_vdev *vdev);
 	uint8_t (*os_if_get_rx_nss)(struct wlan_objmgr_vdev *vdev);
+	QDF_STATUS (*os_if_set_acl_policy)(struct wlan_objmgr_vdev *vdev,
+					   ieee80211_acl_cmd son_acl_policy);
+	ieee80211_acl_cmd (*os_if_get_acl_policy)(
+						struct wlan_objmgr_vdev *vdev);
+	int (*os_if_add_acl_mac)(struct wlan_objmgr_vdev *vdev,
+				 struct qdf_mac_addr *acl_mac);
+	int (*os_if_del_acl_mac)(struct wlan_objmgr_vdev *vdev,
+				 struct qdf_mac_addr *acl_mac);
+	int (*os_if_kickout_mac)(struct wlan_objmgr_vdev *vdev,
+				 struct qdf_mac_addr *acl_mac);
 };
 
 /**
@@ -369,5 +384,53 @@ QDF_STATUS os_if_son_cfg80211_reply(qdf_nbuf_t sk_buf);
  * Return: true if wds is supported
  */
 bool os_if_son_vdev_is_wds(struct wlan_objmgr_vdev *vdev);
+
+/*
+ * os_if_son_set_acl_policy() - set acl policy
+ * @vdev: vdev
+ * @son_acl_policy: son acl policy. enum ieee80211_acl_cmd
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS os_if_son_set_acl_policy(struct wlan_objmgr_vdev *vdev,
+				    ieee80211_acl_cmd son_acl_policy);
+
+/**
+ * os_if_son_get_acl_policy() - get acl policy
+ * @vdev: vdev
+ *
+ * Return: acl policy. enum ieee80211_acl_cmd
+ */
+ieee80211_acl_cmd os_if_son_get_acl_policy(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * os_if_son_add_acl_mac() - add mac to acl
+ * @vdev: vdev
+ * @acl_mac: mac to add
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int os_if_son_add_acl_mac(struct wlan_objmgr_vdev *vdev,
+			  struct qdf_mac_addr *acl_mac);
+
+/**
+ * os_if_son_del_acl_mac() - del mac from acl
+ * @vdev: vdev
+ * @acl_mac: mac to del
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int os_if_son_del_acl_mac(struct wlan_objmgr_vdev *vdev,
+			  struct qdf_mac_addr *acl_mac);
+
+/**
+ * os_if_son_kickout_mac() - kickout sta with given mac
+ * @vdev: vdev
+ * @acl_mac: sta mac to kickout
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int os_if_son_kickout_mac(struct wlan_objmgr_vdev *vdev,
+			  struct qdf_mac_addr *mac);
 
 #endif

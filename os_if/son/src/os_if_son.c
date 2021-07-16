@@ -625,6 +625,89 @@ qdf_freq_t os_if_son_get_candidate_freq(struct wlan_objmgr_vdev *vdev)
 }
 qdf_export_symbol(os_if_son_get_candidate_freq);
 
+QDF_STATUS os_if_son_set_acl_policy(struct wlan_objmgr_vdev *vdev,
+				    ieee80211_acl_cmd son_acl_policy)
+{
+	QDF_STATUS ret;
+
+	if (!vdev) {
+		osif_err("null vdev");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	ret = g_son_os_if_cb.os_if_set_acl_policy(vdev, son_acl_policy);
+	osif_debug("set acl policy %d status %d", son_acl_policy, ret);
+
+	return ret;
+}
+qdf_export_symbol(os_if_son_set_acl_policy);
+
+ieee80211_acl_cmd os_if_son_get_acl_policy(struct wlan_objmgr_vdev *vdev)
+{
+	ieee80211_acl_cmd son_acl_policy;
+
+	if (!vdev) {
+		osif_err("null vdev");
+		return IEEE80211_MACCMD_DETACH;
+	}
+	son_acl_policy = g_son_os_if_cb.os_if_get_acl_policy(vdev);
+	osif_debug("get acl policy %d", son_acl_policy);
+
+	return son_acl_policy;
+}
+qdf_export_symbol(os_if_son_get_acl_policy);
+
+int os_if_son_add_acl_mac(struct wlan_objmgr_vdev *vdev,
+			  struct qdf_mac_addr *acl_mac)
+{
+	int ret;
+
+	if (!vdev) {
+		osif_err("null vdev");
+		return -EINVAL;
+	}
+	ret = g_son_os_if_cb.os_if_add_acl_mac(vdev, acl_mac);
+	osif_debug("add_acl_mac " QDF_MAC_ADDR_FMT " ret %d",
+		   QDF_MAC_ADDR_REF(acl_mac->bytes), ret);
+
+	return ret;
+}
+qdf_export_symbol(os_if_son_add_acl_mac);
+
+int os_if_son_del_acl_mac(struct wlan_objmgr_vdev *vdev,
+			  struct qdf_mac_addr *acl_mac)
+{
+	int ret;
+
+	if (!vdev) {
+		osif_err("null vdev");
+		return -EINVAL;
+	}
+	ret = g_son_os_if_cb.os_if_del_acl_mac(vdev, acl_mac);
+	osif_debug("del_acl_mac " QDF_MAC_ADDR_FMT " ret %d",
+		   QDF_MAC_ADDR_REF(acl_mac->bytes), ret);
+
+	return ret;
+}
+qdf_export_symbol(os_if_son_del_acl_mac);
+
+int os_if_son_kickout_mac(struct wlan_objmgr_vdev *vdev,
+			  struct qdf_mac_addr *mac)
+{
+	int ret;
+
+	if (!vdev) {
+		osif_err("null vdev");
+		return -EINVAL;
+	}
+	ret = g_son_os_if_cb.os_if_kickout_mac(vdev, mac);
+	osif_debug("kickout mac " QDF_MAC_ADDR_FMT " ret %d",
+		   QDF_MAC_ADDR_REF(mac->bytes), ret);
+
+	return ret;
+}
+qdf_export_symbol(os_if_son_kickout_mac);
+
 int os_if_son_set_phymode(struct wlan_objmgr_vdev *vdev,
 			  enum ieee80211_phymode mode)
 {

@@ -7719,7 +7719,7 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 		hdd_abort_ongoing_sta_connection(hdd_ctx);
 		/* Diassociate with all the peers before stop ap post */
 		if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
-			if (wlan_hdd_del_station(adapter))
+			if (wlan_hdd_del_station(adapter, NULL))
 				hdd_sap_indicate_disconnect_for_sta(adapter);
 		}
 		status = wlan_hdd_flush_pmksa_cache(adapter);
@@ -16051,7 +16051,7 @@ void wlan_hdd_stop_sap(struct hdd_adapter *ap_adapter)
 
 	mutex_lock(&hdd_ctx->sap_lock);
 	if (test_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags)) {
-		wlan_hdd_del_station(ap_adapter);
+		wlan_hdd_del_station(ap_adapter, NULL);
 		hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(ap_adapter);
 		hdd_debug("Now doing SAP STOPBSS");
 		qdf_event_reset(&hostapd_state->qdf_stop_bss_event);
@@ -18511,7 +18511,7 @@ void hdd_restart_sap(struct hdd_adapter *ap_adapter)
 
 	mutex_lock(&hdd_ctx->sap_lock);
 	if (test_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags)) {
-		wlan_hdd_del_station(ap_adapter);
+		wlan_hdd_del_station(ap_adapter, NULL);
 		hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(ap_adapter);
 		qdf_event_reset(&hostapd_state->qdf_stop_bss_event);
 		if (QDF_STATUS_SUCCESS == wlansap_stop_bss(sap_ctx)) {

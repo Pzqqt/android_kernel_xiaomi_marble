@@ -20230,17 +20230,11 @@ fn_end:
 }
 
 #if defined(USE_CFG80211_DEL_STA_V2)
-/**
- * wlan_hdd_del_station() - delete station wrapper
- * @adapter: pointer to the hdd adapter
- *
- * Return: Errno
- */
-int wlan_hdd_del_station(struct hdd_adapter *adapter)
+int wlan_hdd_del_station(struct hdd_adapter *adapter, const uint8_t *mac)
 {
 	struct station_del_parameters del_sta;
 
-	del_sta.mac = NULL;
+	del_sta.mac = mac;
 	del_sta.subtype = IEEE80211_STYPE_DEAUTH >> 4;
 	del_sta.reason_code = WLAN_REASON_DEAUTH_LEAVING;
 
@@ -20248,10 +20242,10 @@ int wlan_hdd_del_station(struct hdd_adapter *adapter)
 					     adapter->dev, &del_sta);
 }
 #else
-int wlan_hdd_del_station(struct hdd_adapter *adapter)
+int wlan_hdd_del_station(struct hdd_adapter *adapter, const uint8_t *mac)
 {
 	return wlan_hdd_cfg80211_del_station(adapter->wdev.wiphy,
-					     adapter->dev, NULL);
+					     adapter->dev, mac);
 }
 #endif
 

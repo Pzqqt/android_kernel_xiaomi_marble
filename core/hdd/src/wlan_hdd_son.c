@@ -862,9 +862,250 @@ static enum ieee80211_phymode hdd_son_get_phymode(struct wlan_objmgr_vdev *vdev)
 		hdd_err("null hdd ctx");
 		return IEEE80211_MODE_AUTO;
 	}
+
 	phymode = sme_get_phy_mode(hdd_ctx->mac_handle);
 
 	return hdd_phymode_chwidth_freq_to_son_phymode(phymode, chwidth, freq);
+}
+
+/**
+ * hdd_son_set_acl_policy() - set son acl policy
+ * @vdev: vdev
+ * @son_acl_policy: enum ieee80211_acl_cmd
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS hdd_son_set_acl_policy(struct wlan_objmgr_vdev *vdev,
+					 ieee80211_acl_cmd son_acl_policy)
+{
+	struct hdd_adapter *adapter;
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
+
+	if (!vdev) {
+		hdd_err("null vdev");
+		return status;
+	}
+	adapter = wlan_hdd_get_adapter_from_objmgr(vdev);
+	if (!adapter) {
+		hdd_err("null adapter");
+		return status;
+	}
+
+	switch (son_acl_policy) {
+	case IEEE80211_MACCMD_POLICY_OPEN:
+		status = wlansap_set_acl_mode(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
+					      eSAP_ALLOW_ALL);
+		break;
+	case IEEE80211_MACCMD_POLICY_ALLOW:
+		status = wlansap_set_acl_mode(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
+					      eSAP_DENY_UNLESS_ACCEPTED);
+		break;
+	case IEEE80211_MACCMD_POLICY_DENY:
+		status = wlansap_set_acl_mode(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
+					      eSAP_ACCEPT_UNLESS_DENIED);
+		break;
+	case IEEE80211_MACCMD_FLUSH:
+	case IEEE80211_MACCMD_DETACH:
+		status = wlansap_clear_acl(WLAN_HDD_GET_SAP_CTX_PTR(adapter));
+		break;
+	default:
+		hdd_err("invalid son acl policy %d", son_acl_policy);
+		break;
+	}
+
+	return status;
+}
+
+/**
+ * hdd_acl_policy_to_son_acl_policy() - convert acl policy to son acl policy
+ * @acl_policy: acl policy
+ *
+ * Return: son acl policy. enum ieee80211_acl_cmd
+ */
+static ieee80211_acl_cmd hdd_acl_policy_to_son_acl_policy(
+						eSapMacAddrACL acl_policy)
+{
+	ieee80211_acl_cmd son_acl_policy = IEEE80211_MACCMD_DETACH;
+
+	switch (acl_policy) {
+	case eSAP_ACCEPT_UNLESS_DENIED:
+		son_acl_policy = IEEE80211_MACCMD_POLICY_DENY;
+		break;
+	case eSAP_DENY_UNLESS_ACCEPTED:
+		son_acl_policy = IEEE80211_MACCMD_POLICY_ALLOW;
+		break;
+	case eSAP_ALLOW_ALL:
+		son_acl_policy = IEEE80211_MACCMD_POLICY_OPEN;
+		break;
+	default:
+		hdd_err("invalid acl policy %d", acl_policy);
+		break;
+	}
+
+	return son_acl_policy;
+}
+
+/**
+ * hdd_son_get_acl_policy() - get son acl policy
+ * @vdev: vdev
+ *
+ * Return: son acl policy. enum ieee80211_acl_cmd
+ */
+static ieee80211_acl_cmd hdd_son_get_acl_policy(struct wlan_objmgr_vdev *vdev)
+{
+	eSapMacAddrACL acl_policy;
+	struct hdd_adapter *adapter;
+	ieee80211_acl_cmd son_acl_policy = IEEE80211_MACCMD_DETACH;
+
+	if (!vdev) {
+		hdd_err("null vdev");
+		return son_acl_policy;
+	}
+	adapter = wlan_hdd_get_adapter_from_objmgr(vdev);
+	if (!adapter) {
+		hdd_err("null adapter");
+		return son_acl_policy;
+	}
+
+	wlansap_get_acl_mode(WLAN_HDD_GET_SAP_CTX_PTR(adapter), &acl_policy);
+
+	son_acl_policy = hdd_acl_policy_to_son_acl_policy(acl_policy);
+
+	return son_acl_policy;
+}
+
+/**
+ * hdd_son_add_acl_mac() - add mac to access control list(ACL)
+ * @vdev: vdev
+ * @acl_mac: mac address to add
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int hdd_son_add_acl_mac(struct wlan_objmgr_vdev *vdev,
+			       struct qdf_mac_addr *acl_mac)
+{
+	eSapACLType list_type;
+	QDF_STATUS qdf_status;
+	eSapMacAddrACL acl_policy;
+	struct hdd_adapter *adapter;
+
+	if (!vdev) {
+		hdd_err("null vdev");
+		return -EINVAL;
+	}
+	if (!acl_mac) {
+		hdd_err("null acl_mac");
+		return -EINVAL;
+	}
+	adapter = wlan_hdd_get_adapter_from_objmgr(vdev);
+	if (!adapter) {
+		hdd_err("null adapter");
+		return -EINVAL;
+	}
+
+	wlansap_get_acl_mode(WLAN_HDD_GET_SAP_CTX_PTR(adapter), &acl_policy);
+
+	if (acl_policy == eSAP_ACCEPT_UNLESS_DENIED) {
+		list_type = eSAP_BLACK_LIST;
+	} else if (acl_policy == eSAP_DENY_UNLESS_ACCEPTED) {
+		list_type = eSAP_WHITE_LIST;
+	} else {
+		hdd_err("Invalid ACL policy %d.", acl_policy);
+		return -EINVAL;
+	}
+	qdf_status = wlansap_modify_acl(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
+					acl_mac->bytes, list_type,
+					ADD_STA_TO_ACL);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		hdd_err("Modify ACL failed");
+		return -EIO;
+	}
+
+	return 0;
+}
+
+/**
+ * hdd_son_del_acl_mac() - delete mac from acl
+ * @vdev: vdev
+ * @acl_mac: mac to remove
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int hdd_son_del_acl_mac(struct wlan_objmgr_vdev *vdev,
+			       struct qdf_mac_addr *acl_mac)
+{
+	eSapACLType list_type;
+	QDF_STATUS qdf_status;
+	eSapMacAddrACL acl_policy;
+	struct hdd_adapter *adapter;
+	struct sap_context *sap_ctx;
+
+	if (!vdev) {
+		hdd_err("null vdev");
+		return -EINVAL;
+	}
+	if (!acl_mac) {
+		hdd_err("null acl_mac");
+		return -EINVAL;
+	}
+	adapter = wlan_hdd_get_adapter_from_objmgr(vdev);
+	if (!adapter) {
+		hdd_err("null adapter");
+		return -EINVAL;
+	}
+
+	sap_ctx = WLAN_HDD_GET_SAP_CTX_PTR(adapter);
+	if (!sap_ctx) {
+		hdd_err("null sap ctx");
+		return -EINVAL;
+	}
+
+	wlansap_get_acl_mode(sap_ctx, &acl_policy);
+
+	if (acl_policy == eSAP_ACCEPT_UNLESS_DENIED) {
+		list_type = eSAP_BLACK_LIST;
+	} else if (acl_policy == eSAP_DENY_UNLESS_ACCEPTED) {
+		list_type = eSAP_WHITE_LIST;
+	} else {
+		hdd_err("Invalid ACL policy %d.", acl_policy);
+		return -EINVAL;
+	}
+	qdf_status = wlansap_modify_acl(sap_ctx, acl_mac->bytes, list_type,
+					DELETE_STA_FROM_ACL);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		hdd_err("Modify ACL failed");
+		return -EIO;
+	}
+
+	return 0;
+}
+
+/**
+ * hdd_son_kickout_mac() - kickout sta with given mac
+ * @vdev: vdev
+ * @acl_mac: sta mac to kickout
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int hdd_son_kickout_mac(struct wlan_objmgr_vdev *vdev,
+			       struct qdf_mac_addr *mac)
+{
+	struct hdd_adapter *adapter;
+
+	if (!vdev) {
+		hdd_err("null vdev");
+		return -EINVAL;
+	}
+	adapter = wlan_hdd_get_adapter_from_objmgr(vdev);
+	if (!adapter) {
+		hdd_err("null adapter");
+		return -EINVAL;
+	}
+
+	if (mac)
+		return wlan_hdd_del_station(adapter, mac->bytes);
+	else
+		return wlan_hdd_del_station(adapter, NULL);
 }
 
 static uint8_t hdd_son_get_rx_nss(struct wlan_objmgr_vdev *vdev)
@@ -891,6 +1132,11 @@ void hdd_son_register_callbacks(struct hdd_context *hdd_ctx)
 	cb_obj.os_if_set_bandwidth = hdd_son_set_bandwidth;
 	cb_obj.os_if_get_bandwidth = hdd_son_get_bandwidth;
 	cb_obj.os_if_set_chan = hdd_son_set_chan;
+	cb_obj.os_if_set_acl_policy = hdd_son_set_acl_policy;
+	cb_obj.os_if_get_acl_policy = hdd_son_get_acl_policy;
+	cb_obj.os_if_add_acl_mac = hdd_son_add_acl_mac;
+	cb_obj.os_if_del_acl_mac = hdd_son_del_acl_mac;
+	cb_obj.os_if_kickout_mac = hdd_son_kickout_mac;
 	cb_obj.os_if_set_country_code = hdd_son_set_country;
 	cb_obj.os_if_set_candidate_freq = hdd_son_set_candidate_freq;
 	cb_obj.os_if_get_candidate_freq = hdd_son_get_candidate_freq;

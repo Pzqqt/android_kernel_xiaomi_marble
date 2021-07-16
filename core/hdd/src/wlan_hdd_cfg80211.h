@@ -440,7 +440,15 @@ void hdd_select_cbmode(struct hdd_adapter *adapter, qdf_freq_t oper_freq,
  * Return: true or false based on findings
  */
 bool wlan_hdd_is_ap_supports_immediate_power_save(uint8_t *ies, int length);
-int wlan_hdd_del_station(struct hdd_adapter *adapter);
+
+/**
+ * wlan_hdd_del_station() - delete station wrapper
+ * @adapter: pointer to the hdd adapter
+ * @mac: pointer to mac addr
+ *
+ * Return: Errno
+ */
+int wlan_hdd_del_station(struct hdd_adapter *adapter, const uint8_t *mac);
 
 #if defined(USE_CFG80211_DEL_STA_V2)
 int wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
