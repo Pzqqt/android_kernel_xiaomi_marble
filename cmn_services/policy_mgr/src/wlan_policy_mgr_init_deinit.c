@@ -31,6 +31,7 @@
 #include "wlan_policy_mgr_tables_2x2_dbs_i.h"
 #include "wlan_policy_mgr_tables_2x2_5g_1x1_2g.h"
 #include "wlan_policy_mgr_tables_2x2_2g_1x1_5g.h"
+#include "wlan_policy_mgr_tables_2x2_dbs_sbs_i.h"
 #include "wlan_policy_mgr_i.h"
 #include "qdf_types.h"
 #include "qdf_trace.h"
@@ -485,7 +486,11 @@ QDF_STATUS policy_mgr_psoc_enable(struct wlan_objmgr_psoc *psoc)
 		policy_mgr_get_current_pref_hw_mode_ptr =
 		policy_mgr_get_current_pref_hw_mode_dbs_1x1;
 
-	if (policy_mgr_is_hw_dbs_2x2_capable(psoc) ||
+	if (policy_mgr_is_hw_dbs_2x2_capable(psoc) &&
+	    policy_mgr_is_hw_sbs_capable(psoc))
+		second_connection_pcl_dbs_table =
+		&pm_second_connection_pcl_dbs_sbs_2x2_table;
+	else if (policy_mgr_is_hw_dbs_2x2_capable(psoc) ||
 	    policy_mgr_is_hw_dbs_required_for_band(psoc,
 						   HW_MODE_MAC_BAND_2G) ||
 	    policy_mgr_is_2x2_1x1_dbs_capable(psoc))
@@ -495,7 +500,11 @@ QDF_STATUS policy_mgr_psoc_enable(struct wlan_objmgr_psoc *psoc)
 		second_connection_pcl_dbs_table =
 		&pm_second_connection_pcl_dbs_1x1_table;
 
-	if (policy_mgr_is_hw_dbs_2x2_capable(psoc) ||
+	if (policy_mgr_is_hw_dbs_2x2_capable(psoc) &&
+	    policy_mgr_is_hw_sbs_capable(psoc))
+		third_connection_pcl_dbs_table =
+		&pm_third_connection_pcl_dbs_sbs_2x2_table;
+	else if (policy_mgr_is_hw_dbs_2x2_capable(psoc) ||
 	    policy_mgr_is_hw_dbs_required_for_band(psoc,
 						   HW_MODE_MAC_BAND_2G) ||
 	    policy_mgr_is_2x2_1x1_dbs_capable(psoc))
