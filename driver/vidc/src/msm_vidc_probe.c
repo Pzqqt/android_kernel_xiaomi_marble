@@ -64,10 +64,10 @@ static int msm_vidc_init_irq(struct msm_vidc_core *core)
 		goto exit;
 	}
 
-	rc = request_irq(dt->irq, venus_hfi_isr, IRQF_TRIGGER_HIGH,
-				     "msm_vidc", core);
-	if (unlikely(rc)) {
-		d_vpr_e("%s: request_irq failed\n", __func__);
+	rc = devm_request_threaded_irq(&core->pdev->dev, dt->irq, venus_hfi_isr,
+			venus_hfi_isr_handler, IRQF_TRIGGER_HIGH, "msm-vidc", core);
+	if (rc) {
+		d_vpr_e("%s: Failed to allocate venus IRQ\n", __func__);
 		goto exit;
 	}
 	disable_irq_nosync(dt->irq);
@@ -191,12 +191,8 @@ static int msm_vidc_deinitialize_core(struct msm_vidc_core *core)
 	if (core->pm_workq)
 		destroy_workqueue(core->pm_workq);
 
-	if (core->device_workq)
-		destroy_workqueue(core->device_workq);
-
 	core->batch_workq = NULL;
 	core->pm_workq = NULL;
-	core->device_workq = NULL;
 
 	return rc;
 }
@@ -212,13 +208,6 @@ static int msm_vidc_initialize_core(struct msm_vidc_core *core)
 	d_vpr_h("%s()\n", __func__);
 
 	msm_vidc_change_core_state(core, MSM_VIDC_CORE_DEINIT, __func__);
-
-	core->device_workq = create_singlethread_workqueue("device_workq");
-	if (!core->device_workq) {
-		d_vpr_e("%s: create device workq failed\n", __func__);
-		rc = -EINVAL;
-		goto exit;
-	}
 
 	core->pm_workq = create_singlethread_workqueue("pm_workq");
 	if (!core->pm_workq) {
@@ -254,7 +243,6 @@ static int msm_vidc_initialize_core(struct msm_vidc_core *core)
 	INIT_LIST_HEAD(&core->instances);
 	INIT_LIST_HEAD(&core->dangling_instances);
 
-	INIT_WORK(&core->device_work, venus_hfi_work_handler);
 	INIT_DELAYED_WORK(&core->pm_work, venus_hfi_pm_work_handler);
 	INIT_DELAYED_WORK(&core->fw_unload_work, msm_vidc_fw_unload_handler);
 	INIT_WORK(&core->ssr_work, msm_vidc_ssr_handler);
@@ -269,11 +257,8 @@ exit:
 		destroy_workqueue(core->batch_workq);
 	if (core->pm_workq)
 		destroy_workqueue(core->pm_workq);
-	if (core->device_workq)
-		destroy_workqueue(core->device_workq);
 	core->batch_workq = NULL;
 	core->pm_workq = NULL;
-	core->device_workq = NULL;
 
 	return rc;
 }

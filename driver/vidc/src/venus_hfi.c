@@ -2673,24 +2673,19 @@ static int __response_handler(struct msm_vidc_core *core)
 
 irqreturn_t venus_hfi_isr(int irq, void *data)
 {
-	struct msm_vidc_core *core = data;
-
 	disable_irq_nosync(irq);
-	queue_work(core->device_workq, &core->device_work);
-
-	return IRQ_HANDLED;
+	return IRQ_WAKE_THREAD;
 }
 
-void venus_hfi_work_handler(struct work_struct *work)
+irqreturn_t venus_hfi_isr_handler(int irq, void *data)
 {
-	struct msm_vidc_core *core;
+	struct msm_vidc_core *core = data;
 	int num_responses = 0, rc = 0;
 
 	d_vpr_l("%s()\n", __func__);
-	core = container_of(work, struct msm_vidc_core, device_work);
 	if (!core) {
 		d_vpr_e("%s: invalid params\n", __func__);
-		return;
+		return IRQ_NONE;
 	}
 
 	core_lock(core, __func__);
@@ -2698,16 +2693,18 @@ void venus_hfi_work_handler(struct work_struct *work)
 	if (rc) {
 		d_vpr_e("%s: Power on failed\n", __func__);
 		core_unlock(core, __func__);
-		goto err_no_work;
+		goto exit;
 	}
 	call_venus_op(core, clear_interrupt, core);
 	core_unlock(core, __func__);
 
 	num_responses = __response_handler(core);
 
-err_no_work:
+exit:
 	if (!call_venus_op(core, watchdog, core, core->intr_status))
-		enable_irq(core->dt->irq);
+		enable_irq(irq);
+
+	return IRQ_HANDLED;
 }
 
 void venus_hfi_pm_work_handler(struct work_struct *work)
