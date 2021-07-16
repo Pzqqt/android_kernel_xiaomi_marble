@@ -89,6 +89,20 @@
 struct wlan_cfg_dp_pdev_ctxt;
 
 /**
+ * struct wlan_cfg_tcl_wbm_ring_num_map - TCL WBM Ring number mapping
+ * @tcl_ring_num - TCL Ring number
+ * @wbm_ring_num - WBM Ring number
+ * @wbm_ring_num - WBM RBM ID to be used when enqueuing to TCL
+ * @for_ipa - whether this TCL/WBM for IPA use or not
+ */
+struct wlan_cfg_tcl_wbm_ring_num_map {
+	uint8_t tcl_ring_num;
+	uint8_t wbm_ring_num;
+	uint8_t wbm_rbm_id;
+	uint8_t for_ipa;
+};
+
+/**
  * struct wlan_srng_cfg - Per ring configuration parameters
  * @timer_threshold: Config to control interrupts based on timer duration
  * @batch_count_threshold: Config to control interrupts based on
@@ -208,6 +222,8 @@ struct wlan_srng_cfg {
  * @wow_check_rx_pending_enable: Enable RX frame pending check in WoW
  * @ipa_tx_ring_size: IPA tx ring size
  * @ipa_tx_comp_ring_size: IPA tx completion ring size
+ * @hw_cc_conv_enabled: cookie conversion enabled
+ * @tcl_wbm_map_array: TCL-WBM map array
  */
 struct wlan_cfg_dp_soc_ctxt {
 	int num_int_ctxts;
@@ -337,6 +353,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	uint32_t ipa_tx_comp_ring_size;
 #endif
 	bool hw_cc_enabled;
+	struct wlan_cfg_tcl_wbm_ring_num_map *tcl_wbm_map_array;
 };
 
 /**
@@ -355,18 +372,6 @@ struct wlan_cfg_dp_pdev_ctxt {
 	int rxdma_monitor_desc_ring;
 	int num_mac_rings;
 	int nss_enabled;
-};
-
-/**
- * struct wlan_cfg_tcl_wbm_ring_num_map - TCL WBM Ring number mapping
- * @tcl_ring_num - TCL Ring number
- * @wbm_ring_num - WBM Ring number
- * @for_ipa - whether this TCL/WBM for IPA use or not
- */
-struct wlan_cfg_tcl_wbm_ring_num_map {
-	uint8_t tcl_ring_num;
-	uint8_t wbm_ring_num;
-	uint8_t for_ipa;
 };
 
 /**
@@ -479,8 +484,10 @@ int wlan_cfg_get_num_contexts(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
  */
 int wlan_cfg_get_tx_ring_mask(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
 		int context);
+
 /**
  * wlan_cfg_get_tcl_wbm_ring_num_for_index() - Get TCL/WBM ring number for index
+ * @wlan_cfg_ctx - Configuration Handle
  * @index: index for which TCL/WBM ring numbers are needed
  * @tcl: pointer to TCL ring number, to be filled
  * @wbm: pointer to WBM ring number to be filled
@@ -493,19 +500,45 @@ int wlan_cfg_get_tx_ring_mask(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
  *
  * Return: None
  */
-void wlan_cfg_get_tcl_wbm_ring_num_for_index(int index, int *tcl, int *wbm);
+static inline
+void wlan_cfg_get_tcl_wbm_ring_num_for_index(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
+					     int index, int *tcl, int *wbm)
+{
+	*tcl = wlan_cfg_ctx->tcl_wbm_map_array[index].tcl_ring_num;
+	*wbm = wlan_cfg_ctx->tcl_wbm_map_array[index].wbm_ring_num;
+}
 
 /**
  * wlan_cfg_get_wbm_ring_num_for_index() - Get WBM ring number for index
+ * @wlan_cfg_ctx - Configuration Handle
  * @index: index for which WBM ring numbers is needed
  *
  * Return: WBM Ring number for the index
  */
 static inline
-int wlan_cfg_get_wbm_ring_num_for_index(int index)
+int wlan_cfg_get_wbm_ring_num_for_index(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
+					int index)
 {
-	extern struct wlan_cfg_tcl_wbm_ring_num_map tcl_wbm_map_array[MAX_TCL_DATA_RINGS];
-	return tcl_wbm_map_array[index].wbm_ring_num;
+	return wlan_cfg_ctx->tcl_wbm_map_array[index].wbm_ring_num;
+}
+
+/**
+ * wlan_cfg_get_rbm_id_for_index() - Get WBM RBM ID for TX ring index
+ * @wlan_cfg_ctx - Configuration Handle
+ * @index: TCL index for which WBM rbm value is needed
+ *
+ * The function fills in wbm rbm value corresponding to a TX ring index in
+ * soc->tcl_data_ring. This is needed since WBM ring numbers donot map
+ * sequentially to wbm rbm values.
+ * The function returns rbm id values as stored in tcl_wbm_map_array global
+ * array.
+ *
+ * Return: WBM rbm value corresnponding to TX ring index
+ */
+static inline
+int wlan_cfg_get_rbm_id_for_index(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx, int index)
+{
+	return wlan_cfg_ctx->tcl_wbm_map_array[index].wbm_rbm_id;
 }
 
 /**

@@ -1782,7 +1782,7 @@ struct hal_hw_srng_config hw_srng_table_7850[] = {
 	},
 	{ /* WBM2SW_RELEASE */
 		.start_ring_id = HAL_SRNG_WBM2SW0_RELEASE,
-		.max_rings = 7,
+		.max_rings = 8,
 		.entry_size = sizeof(struct wbm_release_ring) >> 2,
 		.lmac_ring = FALSE,
 		.ring_dir = HAL_SRNG_DST_RING,

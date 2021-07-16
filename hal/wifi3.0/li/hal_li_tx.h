@@ -24,9 +24,7 @@ enum hal_li_tx_ret_buf_manager {
 	HAL_LI_WBM_SW1_BM_ID = 4,
 	HAL_LI_WBM_SW2_BM_ID = 5,
 	HAL_LI_WBM_SW3_BM_ID = 6,
-#ifdef IPA_WDI3_TX_TWO_PIPES
 	HAL_LI_WBM_SW4_BM_ID = 7,
-#endif
 };
 
 /*---------------------------------------------------------------------------

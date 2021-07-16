@@ -85,14 +85,12 @@ static inline uint8_t dp_tx_get_rbm_id_be(struct dp_soc *soc,
 
 #else
 static inline uint8_t dp_tx_get_rbm_id_be(struct dp_soc *soc,
-					  uint8_t ring_id)
+					  uint8_t tcl_index)
 {
-	uint8_t wbm_ring_id, rbm;
+	uint8_t rbm;
 
-	wbm_ring_id = wlan_cfg_get_wbm_ring_num_for_index(ring_id);
-	rbm = wbm_ring_id + soc->wbm_sw0_bm_id;
-	dp_debug("ring_id %u wbm ring num %u rbm %u",
-		 ring_id, wbm_ring_id, rbm);
+	rbm = wlan_cfg_get_rbm_id_for_index(soc->wlan_cfg_ctx, tcl_index);
+	dp_verbose_debug("tcl_id %u rbm %u", tcl_index, rbm);
 	return rbm;
 }
 #endif

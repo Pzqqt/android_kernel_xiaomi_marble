@@ -23,6 +23,31 @@
 #include "dp_be_rx.h"
 #include <hal_be_api.h>
 
+#if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
+static struct wlan_cfg_tcl_wbm_ring_num_map g_tcl_wbm_map_array[MAX_TCL_DATA_RINGS] = {
+	{.tcl_ring_num = 0, .wbm_ring_num = 0, .wbm_rbm_id = HAL_BE_WBM_SW0_BM_ID, .for_ipa = 0},
+	{1, 4, HAL_BE_WBM_SW4_BM_ID, 0},
+	{2, 2, HAL_BE_WBM_SW2_BM_ID, 0},
+	{3, 6, HAL_BE_WBM_SW5_BM_ID, 0},
+	{4, 7, HAL_BE_WBM_SW6_BM_ID, 0}
+};
+
+#else
+
+static struct wlan_cfg_tcl_wbm_ring_num_map g_tcl_wbm_map_array[MAX_TCL_DATA_RINGS] = {
+	{.tcl_ring_num = 0, .wbm_ring_num = 0, .wbm_rbm_id = HAL_BE_WBM_SW0_BM_ID, .for_ipa = 0},
+	{1, 1, HAL_BE_WBM_SW1_BM_ID, 0},
+	{2, 2, HAL_BE_WBM_SW2_BM_ID, 0},
+	{3, 3, HAL_BE_WBM_SW3_BM_ID, 0},
+	{4, 4, HAL_BE_WBM_SW4_BM_ID, 0}
+};
+#endif
+
+static void dp_soc_cfg_attach_be(struct dp_soc *soc)
+{
+	soc->wlan_cfg_ctx->tcl_wbm_map_array = g_tcl_wbm_map_array;
+}
+
 qdf_size_t dp_get_context_size_be(enum dp_context_type context_type)
 {
 	switch (context_type) {
@@ -714,6 +739,7 @@ void dp_initialize_arch_ops_be(struct dp_arch_ops *arch_ops)
 	arch_ops->txrx_vdev_attach = dp_vdev_attach_be;
 	arch_ops->txrx_vdev_detach = dp_vdev_detach_be;
 	arch_ops->dp_rxdma_ring_sel_cfg = dp_rxdma_ring_sel_cfg_be;
+	arch_ops->soc_cfg_attach = dp_soc_cfg_attach_be;
 
 	dp_init_near_full_arch_ops_be(arch_ops);
 }

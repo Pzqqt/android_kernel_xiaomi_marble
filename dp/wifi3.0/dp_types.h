@@ -1569,6 +1569,7 @@ struct dp_arch_ops {
 	QDF_STATUS (*txrx_vdev_detach)(struct dp_soc *soc,
 				       struct dp_vdev *vdev);
 	QDF_STATUS (*dp_rxdma_ring_sel_cfg)(struct dp_soc *soc);
+	void (*soc_cfg_attach)(struct dp_soc *soc);
 
 	/* TX RX Arch Ops */
 	QDF_STATUS (*tx_hw_enqueue)(struct dp_soc *soc, struct dp_vdev *vdev,

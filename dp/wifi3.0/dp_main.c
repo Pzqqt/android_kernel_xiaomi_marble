@@ -2340,8 +2340,7 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 
 	/* Process Tx completion interrupts first to return back buffers */
 	for (index = 0; index < soc->num_tcl_data_rings; index++) {
-		if (!((1 << wlan_cfg_get_wbm_ring_num_for_index(index)) &
-		       tx_mask))
+		if (!(1 << wlan_cfg_get_wbm_ring_num_for_index(soc->wlan_cfg_ctx, index) & tx_mask))
 			continue;
 		work_done = dp_tx_comp_handler(int_ctx,
 					       soc,
@@ -4200,7 +4199,8 @@ static void dp_deinit_tx_pair_by_index(struct dp_soc *soc, int index)
 {
 	int tcl_ring_num, wbm_ring_num;
 
-	wlan_cfg_get_tcl_wbm_ring_num_for_index(index,
+	wlan_cfg_get_tcl_wbm_ring_num_for_index(soc->wlan_cfg_ctx,
+						index,
 						&tcl_ring_num,
 						&wbm_ring_num);
 
@@ -4246,7 +4246,8 @@ static QDF_STATUS dp_init_tx_ring_pair_by_index(struct dp_soc *soc,
 		goto fail1;
 	}
 
-	wlan_cfg_get_tcl_wbm_ring_num_for_index(index,
+	wlan_cfg_get_tcl_wbm_ring_num_for_index(soc->wlan_cfg_ctx,
+						index,
 						&tcl_ring_num,
 						&wbm_ring_num);
 
@@ -13047,6 +13048,8 @@ static void dp_soc_cfg_attach(struct dp_soc *soc)
 		soc->num_reo_dest_rings =
 			wlan_cfg_num_reo_dest_rings(soc->wlan_cfg_ctx);
 	}
+
+	soc->arch_ops.soc_cfg_attach(soc);
 }
 
 static inline  void dp_pdev_set_default_reo(struct dp_pdev *pdev)

@@ -45,6 +45,8 @@
 #define WLAN_CFG_TX_RING_MASK_4 BIT(4)
 #define WLAN_CFG_TX_RING_MASK_5 BIT(5)
 #define WLAN_CFG_TX_RING_MASK_6 BIT(6)
+#define WLAN_CFG_TX_RING_MASK_7 BIT(7)
+
 
 #define WLAN_CFG_RX_MON_RING_MASK_0 0x1
 #define WLAN_CFG_RX_MON_RING_MASK_1 0x2
@@ -112,13 +114,13 @@ struct dp_int_mask_assignment {
 #ifdef CONFIG_BERYLLIUM
 #ifdef IPA_OFFLOAD
 static const uint8_t tx_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
-	[0] = WLAN_CFG_TX_RING_MASK_0, [1] = WLAN_CFG_TX_RING_MASK_5,
-	[2] = WLAN_CFG_TX_RING_MASK_6};
+	[0] = WLAN_CFG_TX_RING_MASK_0, [1] = WLAN_CFG_TX_RING_MASK_6,
+	[2] = WLAN_CFG_TX_RING_MASK_7};
 #else
 static const uint8_t tx_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
 	[0] = WLAN_CFG_TX_RING_MASK_0, [1] = WLAN_CFG_TX_RING_MASK_4,
-	[2] = WLAN_CFG_TX_RING_MASK_2, [3] = WLAN_CFG_TX_RING_MASK_5,
-	[4] = WLAN_CFG_TX_RING_MASK_6};
+	[2] = WLAN_CFG_TX_RING_MASK_2, [3] = WLAN_CFG_TX_RING_MASK_6,
+	[4] = WLAN_CFG_TX_RING_MASK_7};
 #endif
 #else
 static const uint8_t tx_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
@@ -211,32 +213,6 @@ static const uint8_t rx_ring_near_full_irq_2_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS]
 	0 };
 static const uint8_t tx_ring_near_full_irq_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
 	0 };
-#endif
-
-#ifdef CONFIG_BERYLLIUM
-#ifdef IPA_OFFLOAD
-struct  wlan_cfg_tcl_wbm_ring_num_map tcl_wbm_map_array[MAX_TCL_DATA_RINGS] = {
-	{.tcl_ring_num = 0, .wbm_ring_num = 0, .for_ipa = 0},
-	{1, 4, 1}, /* For IPA */
-	{2, 2, 1}, /* For IPA */
-	{3, 5, 0},
-	{4, 6, 0},
-};
-#else
-struct  wlan_cfg_tcl_wbm_ring_num_map tcl_wbm_map_array[MAX_TCL_DATA_RINGS] = {
-	{.tcl_ring_num = 0, .wbm_ring_num = 0, .for_ipa = 0},
-	{1, 4, 0},
-	{2, 2, 0},
-	{3, 5, 0},
-	{4, 6, 0},
-};
-#endif /* IPA_OFFLOAD */
-#else
-struct  wlan_cfg_tcl_wbm_ring_num_map tcl_wbm_map_array[MAX_TCL_DATA_RINGS] = {
-	{.tcl_ring_num = 0, .wbm_ring_num = 0, .for_ipa = 0},
-	{1, 4, 1}, /* For IPA */
-	{2, 2, 1}, /* For IPA */
-};
 #endif
 
 #else
@@ -825,14 +801,6 @@ static struct dp_int_mask_assignment dp_mask_assignment[NUM_INTERRUPT_COMBINATIO
 		  WLAN_CFG_REO_STATUS_RING_MASK_3,
 		  0, 0, 0, 0},
 	},
-};
-
-struct  wlan_cfg_tcl_wbm_ring_num_map tcl_wbm_map_array[MAX_TCL_DATA_RINGS] = {
-	{0, 0, 0},
-	{1, 1, 0},
-	{2, 2, 0},
-	{3, 3, 0},
-	{4, 4, 0},
 };
 #endif
 
@@ -1484,12 +1452,6 @@ int wlan_cfg_get_num_contexts(struct wlan_cfg_dp_soc_ctxt *cfg)
 int wlan_cfg_get_tx_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg, int context)
 {
 	return cfg->int_tx_ring_mask[context];
-}
-
-void wlan_cfg_get_tcl_wbm_ring_num_for_index(int index, int *tcl, int *wbm)
-{
-	*tcl = tcl_wbm_map_array[index].tcl_ring_num;
-	*wbm = tcl_wbm_map_array[index].wbm_ring_num;
 }
 
 int wlan_cfg_get_rx_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg, int context)

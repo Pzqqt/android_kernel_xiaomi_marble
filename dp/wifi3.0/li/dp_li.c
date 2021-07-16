@@ -23,6 +23,24 @@
 #include "dp_li_tx.h"
 #include "dp_li_rx.h"
 
+#if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
+static struct wlan_cfg_tcl_wbm_ring_num_map g_tcl_wbm_map_array[MAX_TCL_DATA_RINGS] = {
+	{.tcl_ring_num = 0, .wbm_ring_num = 0, .wbm_rbm_id = HAL_LI_WBM_SW0_BM_ID, .for_ipa = 0},
+	{1, 4, HAL_LI_WBM_SW4_BM_ID, 1}, /* For IPA */
+	{2, 2, HAL_LI_WBM_SW2_BM_ID, 1} /* For IPA */};
+#else
+static struct wlan_cfg_tcl_wbm_ring_num_map g_tcl_wbm_map_array[MAX_TCL_DATA_RINGS] = {
+	{.tcl_ring_num = 0, .wbm_ring_num = 0, .wbm_rbm_id = HAL_LI_WBM_SW0_BM_ID, .for_ipa = 0},
+	{1, 1, HAL_LI_WBM_SW1_BM_ID, 0},
+	{2, 2, HAL_LI_WBM_SW2_BM_ID, 0}
+};
+#endif
+
+static void dp_soc_cfg_attach_li(struct dp_soc *soc)
+{
+	soc->wlan_cfg_ctx->tcl_wbm_map_array = g_tcl_wbm_map_array;
+}
+
 qdf_size_t dp_get_context_size_li(enum dp_context_type context_type)
 {
 	switch (context_type) {
@@ -285,5 +303,6 @@ void dp_initialize_arch_ops_li(struct dp_arch_ops *arch_ops)
 			dp_rx_desc_cookie_2_va_li;
 
 	arch_ops->dp_rxdma_ring_sel_cfg = dp_rxdma_ring_sel_cfg_li;
+	arch_ops->soc_cfg_attach = dp_soc_cfg_attach_li;
 }
 
