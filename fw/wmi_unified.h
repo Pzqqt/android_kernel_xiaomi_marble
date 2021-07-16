@@ -83,6 +83,7 @@ extern "C" {
 #define MAX_TX_RATE_VALUES      10 /*Max Tx Rates*/
 #define MAX_RSSI_VALUES         10 /*Max Rssi values*/
 #define WMI_MAX_CHAINS 8
+#define WMI_MAX_CHAINS_FOR_AOA_RCC 2
 
 #define MAX_AOA_PHASEDELTA      31  /* 62 gain values */
 
@@ -31864,6 +31865,17 @@ typedef struct {
     A_UINT32 freq; /* Current channel in MHz */
 
     /*
+     * Chain Info
+     * LSB 16 bits - Max chain supported,
+     * MSB 16 bits - Chain pair which has phase values:
+     *        0x0003 - chain 0 and 1
+     *        0x000c - chain 2 and 3
+     *        0x0030 - chain 4 and 5
+     *        0x00c0 - chain 6 and 7
+     */
+    A_UINT32 chainInfo;
+
+    /*
      * Phase Delta values:
      * Two phase delta values are packed into each A_UINT32 word
      * LSB 16-bit is 1st value and MSB 16-bit is 2nd value
@@ -31873,14 +31885,14 @@ typedef struct {
      * gain 1's phase delta occupies bits 31:16 of phasedelta[chain][0],
      * gain 2's phase delta occupies bits 15:0 of phasedelta[chain][1], etc.
      */
-    A_UINT32 phasedelta[WMI_MAX_CHAINS][MAX_AOA_PHASEDELTA];
+    A_UINT32 phasedelta[WMI_MAX_CHAINS_FOR_AOA_RCC][MAX_AOA_PHASEDELTA];
 
     /*
      * IBF cal values:
      * Used for final AoA calculation
      * [AoAPhase =  ( PhaseDeltaValue + IBFcalValue )   %   1024]
      */
-    A_UINT32 perChainIbfCalVal[WMI_MAX_CHAINS];
+    A_UINT32 perChainIbfCalVal[WMI_MAX_CHAINS_FOR_AOA_RCC];
 } wmi_pdev_aoa_phasedelta_evt_fixed_param;
 
 /* WMI_HALPHY_CAL_LIST:
