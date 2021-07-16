@@ -555,7 +555,7 @@ void wlan_ipa_reg_send_to_nw_cb(struct wlan_ipa_priv *ipa_ctx,
 	ipa_ctx->send_to_nw = cb;
 }
 
-#ifdef IPA_LAN_RX_NAPI_SUPPORT
+#ifdef QCA_CONFIG_RPS
 /**
  * wlan_ipa_reg_rps_enable_cb() - Register callback to enable RPS
  * @ipa_ctx: IPA context

@@ -183,7 +183,7 @@ void ucfg_ipa_reg_send_to_nw_cb(struct wlan_objmgr_pdev *pdev,
  *
  * Return: None
  */
-#ifdef IPA_LAN_RX_NAPI_SUPPORT
+#ifdef QCA_CONFIG_RPS
 void ucfg_ipa_reg_rps_enable_cb(struct wlan_objmgr_pdev *pdev,
 				wlan_ipa_rps_enable cb);
 #else

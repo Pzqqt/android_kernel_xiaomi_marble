@@ -3362,6 +3362,9 @@ cppflags-$(CONFIG_EXT_WOW) += -DWLAN_FEATURE_EXTWOW_SUPPORT
 #Mark it as SMP Kernel
 cppflags-$(CONFIG_SMP) += -DQCA_CONFIG_SMP
 
+#CONFIG_RPS default Y, but depend on CONFIG_SMP
+cppflags-$(CONFIG_RPS) += -DQCA_CONFIG_RPS
+
 cppflags-$(CONFIG_CHNL_MATRIX_RESTRICTION) += -DWLAN_ENABLE_CHNL_MATRIX_RESTRICTION
 
 #Enable ICMP packet disable powersave feature
