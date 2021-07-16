@@ -120,8 +120,11 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 	{PIX_FMTS, ENC, H264,
 		MSM_VIDC_FMT_NV12,
 		MSM_VIDC_FMT_NV12C,
-		MSM_VIDC_FMT_NV12 | MSM_VIDC_FMT_NV21 | MSM_VIDC_FMT_NV12C |
-		MSM_VIDC_FMT_RGBA8888 | MSM_VIDC_FMT_RGBA8888C,
+		MSM_VIDC_FMT_NV12 | MSM_VIDC_FMT_NV21 | MSM_VIDC_FMT_NV12C,
+		/* Since CTSEncodeDecode test cannot handle BT 709LR,
+		 * disabled HW RGBA encoding.
+		 * | MSM_VIDC_FMT_RGBA8888 | MSM_VIDC_FMT_RGBA8888C,
+		 */
 		MSM_VIDC_FMT_NV12C,
 		0, 0,
 		CAP_FLAG_ROOT,
@@ -131,8 +134,11 @@ static struct msm_platform_inst_capability instance_data_waipio[] = {
 		MSM_VIDC_FMT_NV12,
 		MSM_VIDC_FMT_TP10C,
 		MSM_VIDC_FMT_NV12 | MSM_VIDC_FMT_NV21 | MSM_VIDC_FMT_NV12C |
-		MSM_VIDC_FMT_P010 | MSM_VIDC_FMT_TP10C |
-		MSM_VIDC_FMT_RGBA8888 | MSM_VIDC_FMT_RGBA8888C,
+		MSM_VIDC_FMT_P010 | MSM_VIDC_FMT_TP10C,
+		/* Since CTSEncodeDecode test cannot handle BT 709LR,
+		 * disabled HW RGBA encoding.
+		 * | MSM_VIDC_FMT_RGBA8888 | MSM_VIDC_FMT_RGBA8888C,
+		 */
 		MSM_VIDC_FMT_NV12C,
 		0, 0,
 		CAP_FLAG_ROOT,
