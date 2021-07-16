@@ -1044,7 +1044,10 @@ struct hif_exec_context *hif_exec_create(enum hif_exec_type type,
  */
 void hif_exec_destroy(struct hif_exec_context *ctx)
 {
-	qdf_spinlock_destroy(&ctx->irq_lock);
+	struct hif_softc *scn = HIF_GET_SOFTC(ctx->hif);
+
+	if (scn->ext_grp_irq_configured)
+		qdf_spinlock_destroy(&ctx->irq_lock);
 	qdf_mem_free(ctx);
 }
 
