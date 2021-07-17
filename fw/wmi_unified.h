@@ -30422,6 +30422,10 @@ typedef struct {
     * If this variable is set to 0 by host, FW will ignore it.
     */
     A_UINT32 max_wake_dura_us;
+
+    /* Service period start TSF (absolute) */
+    A_UINT32 sp_start_tsf_lo; /* bits 31:0 */
+    A_UINT32 sp_start_tsf_hi; /* bits 63:32 */
 } wmi_twt_add_dialog_cmd_fixed_param;
 
 /* status code of adding TWT dialog */
