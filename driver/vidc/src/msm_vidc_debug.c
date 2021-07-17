@@ -16,7 +16,7 @@ extern struct msm_vidc_core *g_core;
 #define MAX_SSR_STRING_LEN         64
 #define MAX_DEBUG_LEVEL_STRING_LEN 15
 
-unsigned int msm_vidc_debug = VIDC_ERR | VIDC_PRINTK | FW_ERROR | FW_FATAL;
+unsigned int msm_vidc_debug = VIDC_ERR | VIDC_PRINTK | FW_ERROR | FW_FATAL | FW_PRINTK;
 
 static int debug_level_set(const char *val,
 	const struct kernel_param *kp)
