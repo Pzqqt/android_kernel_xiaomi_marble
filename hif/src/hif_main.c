@@ -52,6 +52,10 @@
 #endif
 #include <linux/cpumask.h>
 
+#if defined(HIF_IPCI) && defined(FEATURE_HAL_DELAYED_REG_WRITE)
+#include <pld_common.h>
+#endif
+
 void hif_dump(struct hif_opaque_softc *hif_ctx, uint8_t cmd_id, bool start)
 {
 	hif_trigger_dump(hif_ctx, cmd_id, start);
@@ -1043,6 +1047,7 @@ QDF_STATUS hif_try_prevent_ep_vote_access(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	uint32_t work_drain_wait_cnt = 0;
+	uint32_t wait_cnt = 0;
 	int work = 0;
 
 	qdf_atomic_set(&scn->dp_ep_vote_access,
@@ -1060,6 +1065,14 @@ QDF_STATUS hif_try_prevent_ep_vote_access(struct hif_opaque_softc *hif_ctx)
 			return QDF_STATUS_E_FAULT;
 		}
 		qdf_sleep(10);
+	}
+
+	while (pld_is_pci_ep_awake(scn->qdf_dev->dev)) {
+		if (++wait_cnt > HIF_EP_WAKE_RESET_WAIT_CNT) {
+			hif_err("Release EP vote is not proceed by Fw");
+			return QDF_STATUS_E_FAULT;
+		}
+		qdf_sleep(5);
 	}
 
 	return QDF_STATUS_SUCCESS;

@@ -49,6 +49,8 @@ typedef void *hif_handle_t;
 
 #if defined(HIF_IPCI) && defined(FEATURE_HAL_DELAYED_REG_WRITE)
 #define HIF_WORK_DRAIN_WAIT_CNT 50
+
+#define HIF_EP_WAKE_RESET_WAIT_CNT 10
 #endif
 
 #define HIF_TYPE_AR6002   2
