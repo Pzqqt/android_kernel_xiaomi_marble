@@ -22,11 +22,13 @@
 #define DRIVER_NAME "ecm_ipa"
 #define ECM_IPA_IPV4_HDR_NAME "ecm_eth_ipv4"
 #define ECM_IPA_IPV6_HDR_NAME "ecm_eth_ipv6"
+#define EMPTY_HDR_NAME "empty"
 #define INACTIVITY_MSEC_DELAY 100
 #define DEFAULT_OUTSTANDING_HIGH 64
 #define DEFAULT_OUTSTANDING_LOW 32
 #define DEBUGFS_TEMP_BUF_SIZE 4
 #define TX_TIMEOUT (5 * HZ)
+#define ULSO_MAX_SIZE 64000
 
 #define IPA_ECM_IPC_LOG_PAGES 50
 
@@ -83,6 +85,28 @@ static void *ipa_ecm_logbuf;
 
 #define ECM_IPA_LOG_ENTRY() ECM_IPA_DEBUG("begin\n")
 #define ECM_IPA_LOG_EXIT() ECM_IPA_DEBUG("end\n")
+
+#define IPV4_IS_TCP(iph) ((iph)->protocol == IPPROTO_TCP)
+#define IPV4_IS_UDP(iph) ((iph)->protocol == IPPROTO_UDP)
+#define IPV6_IS_TCP(iph) (((struct ipv6hdr *)iph)->nexthdr == IPPROTO_TCP)
+#define IPV6_IS_UDP(iph) (((struct ipv6hdr *)iph)->nexthdr == IPPROTO_UDP)
+#define IPV4_DELTA 40
+#define IPV6_DELTA 60
+
+static struct qmap_hdr qmap_template_hdr = {
+	.pad = 0,
+	.next_hdr = 1,/* Followed by a qmap header extension */
+	.cd = 0,/* data */
+	.mux_id = 0,
+	.packet_len_with_pad = 0,
+	.ext_next_hdr = 0,
+	.hdr_type = 0x3,/* ulso header type */
+	.additional_hdr_size = 0,/* added to hdr_len ep cfg */
+	.reserved = 0,
+	.zero_checksum = 0,/* calculate checksum */
+	.ip_id_cfg = 0,/* increment ip id for segments */
+	.segment_size = 0,/* max segment size for segmentation */
+};
 
 /**
  * enum ecm_ipa_state - specify the current driver internal state
@@ -146,12 +170,14 @@ enum ecm_ipa_operation {
  * @state: current state of ecm_ipa driver
  * @device_ready_notify: callback supplied by USB core driver
  * This callback shall be called by the Netdev once the Netdev internal
- * state is changed to RNDIS_IPA_CONNECTED_AND_UP
+ * state is changed to ECM_IPA_CONNECTED_AND_UP
  * @ipa_to_usb_client: consumer client
  * @usb_to_ipa_client: producer client
  * @pm_hdl: handle for IPA PM
  * @is_vlan_mode: does the driver need to work in VLAN mode?
  * @netif_rx_function: holds the correct network stack API, needed for NAPI
+ * @is_ulso_mode: indicator for ulso support
+ * @empty_hdr_hdl: header handle of empty header
  */
 struct ecm_ipa_dev {
 	struct net_device *net;
@@ -170,6 +196,8 @@ struct ecm_ipa_dev {
 	u32 pm_hdl;
 	bool is_vlan_mode;
 	int (*netif_rx_function)(struct sk_buff *skb);
+	bool is_ulso_mode;
+	u32 empty_hdr_hdl;
 };
 
 static int ecm_ipa_open(struct net_device *net);
@@ -192,6 +220,7 @@ static int ecm_ipa_rules_cfg
 		const void *src_mac);
 static void ecm_ipa_rules_destroy(struct ecm_ipa_dev *ecm_ipa_ctx);
 static int ecm_ipa_register_properties(struct ecm_ipa_dev *ecm_ipa_ctx);
+static int ecm_ipa_hdrs_hpc_cfg(struct ecm_ipa_dev *ecm_ipa_ctx);;
 static void ecm_ipa_deregister_properties(void);
 static struct net_device_stats *ecm_ipa_get_stats(struct net_device *net);
 static int ecm_ipa_register_pm_client(struct ecm_ipa_dev *ecm_ipa_ctx);
@@ -326,6 +355,9 @@ int ecm_ipa_init(struct ecm_ipa_params *params)
 	}
 	ECM_IPA_DEBUG("is vlan mode %d\n", ecm_ipa_ctx->is_vlan_mode);
 
+	ecm_ipa_ctx->is_ulso_mode = ipa3_is_ulso_supported();
+	ECM_IPA_DEBUG("is_ulso_mode=%d\n", ecm_ipa_ctx->is_ulso_mode);
+
 	result = ecm_ipa_rules_cfg
 		(ecm_ipa_ctx, params->host_ethaddr, params->device_ethaddr);
 	if (result) {
@@ -333,6 +365,23 @@ int ecm_ipa_init(struct ecm_ipa_params *params)
 		goto fail_rules_cfg;
 	}
 	ECM_IPA_DEBUG("Ethernet header insertion set\n");
+
+	if (ecm_ipa_ctx->is_ulso_mode){
+		result = ecm_ipa_hdrs_hpc_cfg(ecm_ipa_ctx);
+		if (result) {
+			ECM_IPA_ERROR("fail on ipa hdrs hpc set\n");
+			goto fail_hdrs_hpc_add;
+		}
+		ECM_IPA_DEBUG("IPA header-insertion configured for ECM\n");
+
+		ecm_ipa_ctx->net->hw_features = NETIF_F_RXCSUM;
+		ecm_ipa_ctx->net->hw_features |= NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
+		ecm_ipa_ctx->net->hw_features |= NETIF_F_SG;
+		ecm_ipa_ctx->net->hw_features |= NETIF_F_GRO_HW;
+		ecm_ipa_ctx->net->hw_features |= NETIF_F_GSO_UDP_L4;
+		ecm_ipa_ctx->net->hw_features |= NETIF_F_ALL_TSO;
+		ecm_ipa_ctx->net->gso_max_size = ULSO_MAX_SIZE;
+	}
 
 	netif_carrier_off(net);
 	ECM_IPA_DEBUG("netif_carrier_off() was called\n");
@@ -346,6 +395,10 @@ int ecm_ipa_init(struct ecm_ipa_params *params)
 		goto fail_register_netdev;
 	}
 	ECM_IPA_DEBUG("register_netdev succeeded\n");
+
+	if (ecm_ipa_ctx->is_vlan_mode)
+		qmap_template_hdr.additional_hdr_size =
+			VLAN_ETH_HLEN - ETH_HLEN;
 
 	params->ecm_ipa_rx_dp_notify = ecm_ipa_packet_receive_notify;
 	params->ecm_ipa_tx_dp_notify = ecm_ipa_tx_complete_notify;
@@ -361,6 +414,9 @@ int ecm_ipa_init(struct ecm_ipa_params *params)
 	return 0;
 
 fail_register_netdev:
+if (ecm_ipa_ctx->is_ulso_mode)
+    ipa_hdrs_hpc_destroy(ecm_ipa_ctx->empty_hdr_hdl);
+fail_hdrs_hpc_add:
 	ecm_ipa_rules_destroy(ecm_ipa_ctx);
 fail_rules_cfg:
 fail_get_vlan_mode:
@@ -620,10 +676,29 @@ static netdev_tx_t ecm_ipa_start_xmit
 
 	if (ecm_ipa_ctx->is_vlan_mode)
 		if (unlikely(skb->protocol != htons(ETH_P_8021Q)))
-			ECM_IPA_DEBUG(
-				"ether_type != ETH_P_8021Q && vlan, prot = 0x%X\n"
-				, skb->protocol);
+			ECM_IPA_DEBUG("ether_type != ETH_P_8021Q && vlan, prot = 0x%X\n",
+				skb->protocol);
 
+	if (ecm_ipa_ctx->is_ulso_mode &&
+		(net->features & (NETIF_F_ALL_TSO | NETIF_F_GSO_UDP_L4))){
+		struct iphdr *iph = NULL;
+
+		if (ntohs(skb->protocol) == ETH_P_IP) {
+			iph = ip_hdr(skb);
+			if (IPV4_IS_TCP(iph) || IPV4_IS_UDP(iph)) {
+				skb = qmap_encapsulate_skb(skb, &qmap_template_hdr);
+				skb_shinfo(skb)->gso_size =
+					net->mtu - IPV4_DELTA;
+			}
+		} else if (ntohs(skb->protocol) == ETH_P_IPV6) {
+			iph = ip_hdr(skb);
+			if (IPV6_IS_TCP(iph) || IPV6_IS_UDP(iph)) {
+				skb = qmap_encapsulate_skb(skb, &qmap_template_hdr);
+				skb_shinfo(skb)->gso_size =
+					net->mtu - IPV6_DELTA;
+			}
+		}
+	}
 	ret = ipa_tx_dp(ecm_ipa_ctx->ipa_to_usb_client, skb, NULL);
 	if (ret) {
 		ECM_IPA_ERROR("ipa transmit failed (%d)\n", ret);
@@ -836,6 +911,9 @@ void ecm_ipa_cleanup(void *priv)
 	ecm_ipa_ctx->state = next_state;
 	ECM_IPA_STATE_DEBUG(ecm_ipa_ctx);
 
+	if (ecm_ipa_ctx->is_ulso_mode)
+        ipa_hdrs_hpc_destroy(ecm_ipa_ctx->empty_hdr_hdl);
+
 	ecm_ipa_rules_destroy(ecm_ipa_ctx);
 	ecm_ipa_debugfs_destroy(ecm_ipa_ctx);
 
@@ -856,6 +934,9 @@ static void ecm_ipa_enable_data_path(struct ecm_ipa_dev *ecm_ipa_ctx)
 	} else {
 		ECM_IPA_DEBUG("device_ready_notify() not supplied\n");
 	}
+
+	qmap_template_hdr.segment_size = htons(ecm_ipa_ctx->net->mtu -
+		sizeof(qmap_template_hdr));
 
 	netif_start_queue(ecm_ipa_ctx->net);
 	ECM_IPA_DEBUG("queue started\n");
@@ -896,6 +977,55 @@ static void ecm_ipa_prepare_header_insertion(
 	ECM_IPA_LOG_EXIT();
 }
 
+static int ecm_ipa_hdrs_hpc_cfg(struct ecm_ipa_dev *ecm_ipa_ctx)
+{
+	struct ipa_ioc_add_hdr *hdrs;
+	struct ipa_hdr_add *empty_hdr;
+	struct ipa_pkt_init_ex_hdr_ofst_set lookup;
+	int result = 0;
+
+	ECM_IPA_LOG_ENTRY();
+
+	hdrs = kzalloc(sizeof(*hdrs) + sizeof(*empty_hdr), GFP_KERNEL);
+	if (!hdrs) {
+		result = -ENOMEM;
+		goto fail_mem;
+	}
+	empty_hdr = &hdrs->hdr[0];
+	strlcpy(empty_hdr->name, EMPTY_HDR_NAME, sizeof(empty_hdr->name));
+	empty_hdr->hdr_len = 0;
+	empty_hdr->hdr_hdl = -1;
+	empty_hdr->is_partial = false;
+	empty_hdr->status = -1;
+	hdrs->num_hdrs = 1;
+	hdrs->commit = 1;
+
+	result = ipa3_add_hdr_hpc(hdrs);
+	if (result) {
+		ECM_IPA_ERROR("Fail on Header-Insertion(%d)\n", result);
+		goto fail_add_hdr;
+	}
+	if (empty_hdr->status) {
+		ECM_IPA_ERROR("Fail on Header-Insertion ecm(%d)\n",
+			empty_hdr->status);
+		result = empty_hdr->status;
+		goto fail_add_hdr;
+	}
+
+	ecm_ipa_ctx->empty_hdr_hdl = empty_hdr->hdr_hdl;
+	lookup.ep = IPA_CLIENT_USB_CONS;
+	strlcpy(lookup.name, EMPTY_HDR_NAME, sizeof(lookup.name));
+	if (ipa_set_pkt_init_ex_hdr_ofst(&lookup, true))
+		goto fail_add_hdr;
+
+	ECM_IPA_LOG_EXIT();
+
+fail_add_hdr:
+	kfree(hdrs);
+fail_mem:
+	return result;
+}
+
 /**
  * ecm_ipa_rules_cfg() - set header insertion and register Tx/Rx properties
  *				Headers will be committed to HW
@@ -905,8 +1035,7 @@ static void ecm_ipa_prepare_header_insertion(
  *
  * Returns negative errno, or zero on success
  */
-static int ecm_ipa_rules_cfg
-	(struct ecm_ipa_dev *ecm_ipa_ctx,
+static int ecm_ipa_rules_cfg(struct ecm_ipa_dev *ecm_ipa_ctx,
 	const void *dst_mac, const void *src_mac)
 {
 	struct ipa_ioc_add_hdr *hdrs;
@@ -915,22 +1044,19 @@ static int ecm_ipa_rules_cfg
 	int result = 0;
 
 	ECM_IPA_LOG_ENTRY();
-	hdrs = kzalloc
-		(sizeof(*hdrs) + sizeof(*ipv4_hdr) + sizeof(*ipv6_hdr),
-			GFP_KERNEL);
+	hdrs = kzalloc(sizeof(*hdrs) + sizeof(*ipv4_hdr) + sizeof(*ipv6_hdr),
+		GFP_KERNEL);
 	if (!hdrs) {
 		result = -ENOMEM;
 		goto out;
 	}
 
 	ipv4_hdr = &hdrs->hdr[0];
-	ecm_ipa_prepare_header_insertion(
-		ETH_P_IP, ECM_IPA_IPV4_HDR_NAME,
+	ecm_ipa_prepare_header_insertion(ETH_P_IP, ECM_IPA_IPV4_HDR_NAME,
 		ipv4_hdr, dst_mac, src_mac, ecm_ipa_ctx->is_vlan_mode);
 
 	ipv6_hdr = &hdrs->hdr[1];
-	ecm_ipa_prepare_header_insertion(
-		ETH_P_IPV6, ECM_IPA_IPV6_HDR_NAME,
+	ecm_ipa_prepare_header_insertion(ETH_P_IPV6, ECM_IPA_IPV6_HDR_NAME,
 		ipv6_hdr, dst_mac, src_mac, ecm_ipa_ctx->is_vlan_mode);
 
 	hdrs->commit = 1;
@@ -941,21 +1067,20 @@ static int ecm_ipa_rules_cfg
 		goto out_free_mem;
 	}
 	if (ipv4_hdr->status) {
-		ECM_IPA_ERROR
-			("Fail on Header-Insertion ipv4(%d)\n",
+		ECM_IPA_ERROR("Fail on Header-Insertion ipv4(%d)\n",
 			ipv4_hdr->status);
 		result = ipv4_hdr->status;
 		goto out_free_mem;
 	}
 	if (ipv6_hdr->status) {
-		ECM_IPA_ERROR
-			("Fail on Header-Insertion ipv6(%d)\n",
+		ECM_IPA_ERROR("Fail on Header-Insertion ipv6(%d)\n",
 			ipv6_hdr->status);
 		result = ipv6_hdr->status;
 		goto out_free_mem;
 	}
 	ecm_ipa_ctx->eth_ipv4_hdr_hdl = ipv4_hdr->hdr_hdl;
 	ecm_ipa_ctx->eth_ipv6_hdr_hdl = ipv6_hdr->hdr_hdl;
+
 	ECM_IPA_LOG_EXIT();
 out_free_mem:
 	kfree(hdrs);
@@ -977,16 +1102,18 @@ static void ecm_ipa_rules_destroy(struct ecm_ipa_dev *ecm_ipa_ctx)
 	struct ipa_hdr_del *ipv6;
 	int result;
 
-	del_hdr = kzalloc(sizeof(*del_hdr) + sizeof(*ipv4) +
-			sizeof(*ipv6), GFP_KERNEL);
+	del_hdr = kzalloc(sizeof(*del_hdr) + sizeof(*ipv4) + sizeof(*ipv6),
+			GFP_KERNEL);
 	if (!del_hdr)
 		return;
+
 	del_hdr->commit = 1;
 	del_hdr->num_hdls = 2;
 	ipv4 = &del_hdr->hdl[0];
 	ipv4->hdl = ecm_ipa_ctx->eth_ipv4_hdr_hdl;
 	ipv6 = &del_hdr->hdl[1];
 	ipv6->hdl = ecm_ipa_ctx->eth_ipv6_hdr_hdl;
+
 	result = ipa3_del_hdr(del_hdr);
 	if (result || ipv4->status || ipv6->status)
 		ECM_IPA_ERROR("ipa3_del_hdr failed\n");
@@ -1134,7 +1261,6 @@ static void ecm_ipa_deregister_pm_client(struct ecm_ipa_dev *ecm_ipa_ctx)
 	ipa_pm_deregister(ecm_ipa_ctx->pm_hdl);
 	ecm_ipa_ctx->pm_hdl = ~0;
 }
-
 
 /**
  * ecm_ipa_tx_complete_notify() - Rx notify
@@ -1349,6 +1475,8 @@ static int ecm_ipa_ep_registers_cfg(u32 usb_to_ipa_hdl, u32 ipa_to_usb_hdl,
 		usb_to_ipa_ep_cfg.hdr.hdr_ofst_metadata_valid = 1;
 		usb_to_ipa_ep_cfg.hdr.hdr_ofst_metadata = ETH_HLEN;
 		usb_to_ipa_ep_cfg.hdr.hdr_metadata_reg_valid = false;
+		qmap_template_hdr.additional_hdr_size =
+			VLAN_ETH_HLEN - ETH_HLEN;
 	}
 
 	result = ipa3_cfg_ep(usb_to_ipa_hdl, &usb_to_ipa_ep_cfg);
@@ -1360,6 +1488,7 @@ static int ecm_ipa_ep_registers_cfg(u32 usb_to_ipa_hdl, u32 ipa_to_usb_hdl,
 	ipa_to_usb_ep_cfg.aggr.aggr_en = IPA_BYPASS_AGGR;
 	ipa_to_usb_ep_cfg.hdr.hdr_len = ETH_HLEN + hdr_add;
 	ipa_to_usb_ep_cfg.nat.nat_en = IPA_BYPASS_NAT;
+	ipa_to_usb_ep_cfg.ulso.is_ulso_pipe = ipa3_is_ulso_supported();
 	result = ipa3_cfg_ep(ipa_to_usb_hdl, &ipa_to_usb_ep_cfg);
 	if (result) {
 		ECM_IPA_ERROR("failed to configure IPA to USB end-point\n");

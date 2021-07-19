@@ -174,6 +174,34 @@ do {\
 #define IPA_GSI_CHANNEL_STOP_SLEEP_MAX_USEC (5000)
 
 /**
+ * qmap_hdr -
+ * @next_hdr: 1 - there is a qmap extension header, 0 - opposite
+ * @cd: 0 - data, 1 - command
+ * @packet_len: length excluding qmap header
+ * @ext_next_hdr: always zero
+ * @hdr_type: type of extension header
+ * @additional_hdr_size: distance between end of qmap header to start of ip
+ * 		header
+ * @zero_checksum: 0 - compute checksum, 1 - zero checksum
+ * @ip_id_cfg: 0 - running ip id per segment, 1 - constant ip id
+ * @segment_size: maximum segment size for the segmentation operation
+ */
+struct qmap_hdr {
+    u16 pad: 6;
+    u16 next_hdr: 1;
+    u16 cd: 1;
+    u16 mux_id: 8;
+    u16 packet_len_with_pad: 16;
+    u16 ext_next_hdr: 1;
+    u16 hdr_type: 7;
+    u16 additional_hdr_size: 5;
+    u16 reserved: 1;
+    u16 zero_checksum: 1;
+    u16 ip_id_cfg: 1;
+    u16 segment_size: 16;
+} __packed;
+
+/**
  * struct ipa_pkt_init_ex_hdr_ofst_set - header entry lookup parameters, if
  * lookup was successful than the ep's pkt_init_ex offset will be set.
  * @name: name of the header resource
@@ -860,5 +888,9 @@ bool ipa3_is_ulso_supported(void);
 /* IPA_PACKET_INIT_EX IC to pipe API */
 int ipa_set_pkt_init_ex_hdr_ofst(
 	struct ipa_pkt_init_ex_hdr_ofst_set *lookup, bool proc_ctx);
+
+struct sk_buff* qmap_encapsulate_skb(struct sk_buff *skb, const struct qmap_hdr *qh);
+
+int ipa_hdrs_hpc_destroy(u32 hdr_hdl);
 
 #endif /* _IPA_COMMON_I_H_ */

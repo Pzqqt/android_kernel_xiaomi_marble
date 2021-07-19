@@ -262,11 +262,12 @@ static int ipa_mhi_start_gsi_channel(enum ipa_client_type client,
 		ep->gsi_evt_ring_hdl = *params->cached_gsi_evt_ring_hdl;
 	}
 
-	if (params->ev_ctx_host->wp == params->ev_ctx_host->rbase) {
-		IPA_MHI_ERR("event ring wp is not updated. base=wp=0x%llx\n",
-			params->ev_ctx_host->wp);
-		goto fail_alloc_ch;
-	}
+	/**
+	 * compare host evt ring wp with base ptr condition was added to check
+	 * whether MHI driver ring db or not, but in wrap around case wp and
+	 * base ptr can be same so removing it.
+	 * if evt-ring has no credit, gsi will crash.
+	 */
 
 	IPA_MHI_DBG("Ring event db: evt_ring_hdl=%lu host_wp=0x%llx\n",
 		ep->gsi_evt_ring_hdl, params->ev_ctx_host->wp);
@@ -303,6 +304,7 @@ static int ipa_mhi_start_gsi_channel(enum ipa_client_type client,
 		ch_props.use_db_eng = GSI_CHAN_DB_MODE;
 
 	ch_props.db_in_bytes = 1;
+	ch_props.low_latency_en = 0;
 	ch_props.max_prefetch = GSI_ONE_PREFETCH_SEG;
 	ch_props.low_weight = 1;
 	ch_props.prefetch_mode = ep_cfg->prefetch_mode;
