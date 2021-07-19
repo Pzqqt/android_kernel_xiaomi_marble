@@ -1777,6 +1777,40 @@ enum roam_reason {
 	ROAM_REASON_DEAUTH,
 };
 
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+/*
+ * struct roam_blacklist_timeout - BTM blacklist entry
+ * @bssid: bssid that is to be blacklisted
+ * @timeout: time duration for which the bssid is blacklisted
+ * @received_time: boot timestamp at which the firmware event was received
+ * @rssi: rssi value for which the bssid is blacklisted
+ * @reject_reason: reason to add the BSSID to BLM
+ * @original_timeout: original timeout sent by the AP
+ * @source: Source of adding the BSSID to BLM
+ */
+struct roam_blacklist_timeout {
+	struct qdf_mac_addr bssid;
+	uint32_t timeout;
+	qdf_time_t received_time;
+	int32_t rssi;
+	enum blm_reject_ap_reason reject_reason;
+	uint32_t original_timeout;
+	enum blm_reject_ap_source source;
+};
+
+/*
+ * struct roam_blacklist_event - Blacklist event entries destination structure
+ * @vdev_id: vdev id
+ * @num_entries: total entries sent over the event
+ * @roam_blacklist: blacklist details
+ */
+struct roam_blacklist_event {
+	uint8_t vdev_id;
+	uint32_t num_entries;
+	struct roam_blacklist_timeout roam_blacklist[];
+};
+#endif
+
 /**
  * struct roam_offload_roam_event: Data carried by roam event
  * @vdev_id: vdev id
@@ -1848,6 +1882,7 @@ struct wlan_cm_roam_tx_ops {
  * @roam_sync_event: RX ops function pointer for roam sync event
  * @roam_sync_frame_event: Rx ops function pointer for roam sync frame event
  * @roam_event_rx: Rx ops function pointer for roam info event
+ * @btm_blacklist_event: Rx ops function pointer for btm blacklist event
  */
 struct wlan_cm_roam_rx_ops {
 	QDF_STATUS (*roam_sync_event)(struct wlan_objmgr_psoc *psoc,
@@ -1857,6 +1892,10 @@ struct wlan_cm_roam_rx_ops {
 	QDF_STATUS (*roam_sync_frame_event)(struct wlan_objmgr_psoc *psoc,
 					    struct roam_synch_frame_ind *frm);
 	QDF_STATUS (*roam_event_rx)(struct roam_offload_roam_event roam_event);
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+	QDF_STATUS (*btm_blacklist_event)(struct wlan_objmgr_psoc *psoc,
+					  struct roam_blacklist_event *list);
+#endif
 };
 
 /**

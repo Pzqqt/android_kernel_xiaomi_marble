@@ -378,5 +378,18 @@ wmi_extract_roam_event(wmi_unified_t wmi_handle, uint8_t *event,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+QDF_STATUS
+wmi_extract_btm_blacklist_event(wmi_unified_t wmi_handle,
+				uint8_t *event, uint32_t data_len,
+				struct roam_blacklist_event **dst_list)
+{
+	if (wmi_handle->ops->extract_btm_bl_event)
+		return wmi_handle->ops->extract_btm_bl_event(wmi_handle,
+							     event,
+							     data_len,
+							     dst_list);
+	return QDF_STATUS_E_FAILURE;
+}
 #endif /* ROAM_TARGET_IF_CONVERGENCE */
 #endif
