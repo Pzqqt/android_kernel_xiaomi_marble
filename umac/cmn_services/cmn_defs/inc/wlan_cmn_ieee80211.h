@@ -1841,6 +1841,30 @@ struct wlan_ml_bv_linfo_perstaprof_stainfo_dtiminfo {
 
 /* End of definitions related to Basic variant Multi-Link element. */
 
+/*
+ * Definitions related to MLO specific aspects of Reduced Neighbor Report
+ * element.
+ */
+
+/*
+ * Definitions for MLD Parameters subfield in TBTT Information field present as
+ * part of TBTT Information Set in Neighbor AP Information field of Reduced
+ * Neighbor Report element.
+ */
+/* MLD ID */
+#define WLAN_RNR_NBRAPINFO_TBTTINFO_MLDPARAMS_MLDID_IDX                  0
+#define WLAN_RNR_NBRAPINFO_TBTTINFO_MLDPARAMS_MLDID_BITS                 8
+/* Link ID */
+#define WLAN_RNR_NBRAPINFO_TBTTINFO_MLDPARAMS_LINKID_IDX                 8
+#define WLAN_RNR_NBRAPINFO_TBTTINFO_MLDPARAMS_LINKID_BITS                4
+/* BSS Parameters Change Count */
+#define WLAN_RNR_NBRAPINFO_TBTTINFO_MLDPARAMS_BSSPARAMCHANGECNT_IDX      12
+#define WLAN_RNR_NBRAPINFO_TBTTINFO_MLDPARAMS_BSSPARAMCHANGECNT_BITS     8
+
+/*
+ * End of definitions related to MLO specific aspects of Reduced Neighbor Report
+ * element.
+ */
 #endif /* WLAN_FEATURE_11BE_MLO */
 #endif /* WLAN_FEATURE_11BE */
 
