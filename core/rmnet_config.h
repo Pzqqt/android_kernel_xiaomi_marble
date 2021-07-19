@@ -60,6 +60,7 @@ struct rmnet_port_priv_stats {
 	u64 dl_trl_last_seq;
 	u64 dl_trl_count;
 	struct rmnet_agg_stats agg;
+	u64 dl_chain_stat[7];
 };
 
 struct rmnet_egress_agg_params {
@@ -188,6 +189,9 @@ struct rmnet_priv_stats {
 	u64 ul_prio;
 	u64 tso_pkts;
 	u64 tso_arriv_errs;
+	u64 tso_segment_success;
+	u64 tso_segment_fail;
+	u64 tso_segment_skip;
 	u64 ll_tso_segs;
 	u64 ll_tso_errs;
 };

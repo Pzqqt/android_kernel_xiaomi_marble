@@ -19,7 +19,11 @@
 #include <linux/ip.h>
 #include <linux/ipv6.h>
 #include <linux/tcp.h>
+#include <linux/inet.h>
+#include <linux/icmp.h>
+#include <linux/icmpv6.h>
 #include <net/pkt_sched.h>
+#include <net/ipv6.h>
 #include "rmnet_config.h"
 #include "rmnet_handlers.h"
 #include "rmnet_private.h"
@@ -109,6 +113,46 @@ static netdev_tx_t rmnet_vnd_start_xmit(struct sk_buff *skb,
 				skb->dev = dev;
 				priv->stats.ll_tso_segs++;
 				rmnet_egress_handler(skb, low_latency);
+			}
+		} else if (!low_latency && skb_is_gso(skb)) {
+			u64 gso_limit = priv->real_dev->gso_max_size ? : 1;
+			u16 gso_goal = 0;
+			netdev_features_t features = NETIF_F_SG;
+			u16 orig_gso_size = skb_shinfo(skb)->gso_size;
+			unsigned int orig_gso_type = skb_shinfo(skb)->gso_type;
+			struct sk_buff *segs, *tmp;
+
+			features |=  NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
+
+			if (skb->len < gso_limit || gso_limit > 65535) {
+				priv->stats.tso_segment_skip++;
+				rmnet_egress_handler(skb, low_latency);
+			} else {
+				do_div(gso_limit, skb_shinfo(skb)->gso_size);
+				gso_goal = gso_limit * skb_shinfo(skb)->gso_size;
+				skb_shinfo(skb)->gso_size = gso_goal;
+
+				segs = __skb_gso_segment(skb, features, false);
+				if (IS_ERR_OR_NULL(segs)) {
+					skb_shinfo(skb)->gso_size = orig_gso_size;
+					skb_shinfo(skb)->gso_type = orig_gso_type;
+
+					priv->stats.tso_segment_fail++;
+					rmnet_egress_handler(skb, low_latency);
+				} else {
+					consume_skb(skb);
+
+					for (skb = segs; skb; skb = tmp) {
+						tmp = skb->next;
+						skb->dev = dev;
+
+						skb_shinfo(skb)->gso_size = orig_gso_size;
+						skb_shinfo(skb)->gso_type = orig_gso_type;
+
+						priv->stats.tso_segment_success++;
+						rmnet_egress_handler(skb, low_latency);
+					}
+				}
 			}
 		} else {
 			rmnet_egress_handler(skb, low_latency);
@@ -209,22 +253,94 @@ static u16 rmnet_vnd_select_queue(struct net_device *dev,
 	int boost_trigger = 0;
 	int txq = 0;
 
-	if (trace_print_skb_gso_enabled()) {
-		if (!skb_shinfo(skb)->gso_size)
-			goto skip_trace;
+	if (trace_print_icmp_tx_enabled()) {
+		char saddr[INET6_ADDRSTRLEN], daddr[INET6_ADDRSTRLEN];
+		u16 ip_proto = 0;
+		__be16 sequence = 0;
+		u8 type = 0;
+
+		memset(saddr, 0, INET6_ADDRSTRLEN);
+		memset(daddr, 0, INET6_ADDRSTRLEN);
 
 		if (skb->protocol == htons(ETH_P_IP)) {
-			if (ip_hdr(skb)->protocol != IPPROTO_TCP)
-				goto skip_trace;
+			if (ip_hdr(skb)->protocol != IPPROTO_ICMP)
+				goto skip_trace_print_icmp_tx;
+
+			if (icmp_hdr(skb)->type != ICMP_ECHOREPLY &&
+			    icmp_hdr(skb)->type != ICMP_ECHO)
+				goto skip_trace_print_icmp_tx;
+
+			ip_proto = htons(ETH_P_IP);
+			type = icmp_hdr(skb)->type;
+			sequence = icmp_hdr(skb)->un.echo.sequence;
+			snprintf(saddr, INET6_ADDRSTRLEN, "%pI4", &ip_hdr(skb)->saddr);
+			snprintf(daddr, INET6_ADDRSTRLEN, "%pI4", &ip_hdr(skb)->daddr);
 		}
 
 		if (skb->protocol == htons(ETH_P_IPV6)) {
-			if (ipv6_hdr(skb)->nexthdr != IPPROTO_TCP)
-				goto skip_trace;
+			if (ipv6_hdr(skb)->nexthdr != NEXTHDR_ICMP)
+				goto skip_trace_print_icmp_tx;
+
+			if (icmp6_hdr(skb)->icmp6_type != ICMPV6_ECHO_REQUEST &&
+			    icmp6_hdr(skb)->icmp6_type != ICMPV6_ECHO_REPLY)
+				goto skip_trace_print_icmp_tx;
+
+			ip_proto = htons(ETH_P_IPV6);
+			type = icmp6_hdr(skb)->icmp6_type;
+			sequence = icmp6_hdr(skb)->icmp6_sequence;
+			snprintf(saddr, INET6_ADDRSTRLEN, "%pI6", &ipv6_hdr(skb)->saddr);
+			snprintf(daddr, INET6_ADDRSTRLEN, "%pI6", &ipv6_hdr(skb)->daddr);
 		}
 
-		trace_print_skb_gso(skb, tcp_hdr(skb)->source,
-				    tcp_hdr(skb)->dest);
+		if (!ip_proto)
+			goto skip_trace_print_icmp_tx;
+
+		trace_print_icmp_tx(skb, ip_proto, type, sequence, saddr, daddr);
+	}
+
+skip_trace_print_icmp_tx:
+	if (trace_print_skb_gso_enabled()) {
+		char saddr[INET6_ADDRSTRLEN], daddr[INET6_ADDRSTRLEN];
+		u16 ip_proto = 0, xport_proto = 0;
+
+		if (!skb_shinfo(skb)->gso_size)
+			goto skip_trace;
+
+		memset(saddr, 0, INET6_ADDRSTRLEN);
+		memset(daddr, 0, INET6_ADDRSTRLEN);
+
+		if (skb->protocol == htons(ETH_P_IP)) {
+			if (ip_hdr(skb)->protocol == IPPROTO_TCP)
+				xport_proto = IPPROTO_TCP;
+			else if (ip_hdr(skb)->protocol == IPPROTO_UDP)
+				xport_proto = IPPROTO_UDP;
+			else
+				goto skip_trace;
+
+			ip_proto = htons(ETH_P_IP);
+			snprintf(saddr, INET6_ADDRSTRLEN, "%pI4", &ip_hdr(skb)->saddr);
+			snprintf(daddr, INET6_ADDRSTRLEN, "%pI4", &ip_hdr(skb)->daddr);
+		}
+
+		if (skb->protocol == htons(ETH_P_IPV6)) {
+			if (ipv6_hdr(skb)->nexthdr == IPPROTO_TCP)
+				xport_proto = IPPROTO_TCP;
+			else if (ipv6_hdr(skb)->nexthdr == IPPROTO_UDP)
+				xport_proto = IPPROTO_UDP;
+			else
+				goto skip_trace;
+
+			ip_proto = htons(ETH_P_IPV6);
+			snprintf(saddr, INET6_ADDRSTRLEN, "%pI6", &ipv6_hdr(skb)->saddr);
+			snprintf(daddr, INET6_ADDRSTRLEN, "%pI6", &ipv6_hdr(skb)->daddr);
+		}
+
+		trace_print_skb_gso(skb,
+				    xport_proto == IPPROTO_TCP ? tcp_hdr(skb)->source :
+								 udp_hdr(skb)->source,
+				    xport_proto == IPPROTO_TCP ? tcp_hdr(skb)->dest :
+								 udp_hdr(skb)->dest,
+				    ip_proto, xport_proto, saddr, daddr);
 	}
 
 skip_trace:
@@ -295,6 +411,11 @@ static const char rmnet_gstrings_stats[][ETH_GSTRING_LEN] = {
 	"Uplink priority packets",
 	"TSO packets",
 	"TSO packets arriving incorrectly",
+	"TSO segment success",
+	"TSO segment fail",
+	"TSO segment skip",
+	"LL TSO segment success",
+	"LL TSO segment fail",
 };
 
 static const char rmnet_port_gstrings_stats[][ETH_GSTRING_LEN] = {
@@ -312,6 +433,13 @@ static const char rmnet_port_gstrings_stats[][ETH_GSTRING_LEN] = {
 	"DL trailer pkts received",
 	"UL agg reuse",
 	"UL agg alloc",
+	"DL chaining [0-10)",
+	"DL chaining [10-20)",
+	"DL chaining [20-30)",
+	"DL chaining [30-40)",
+	"DL chaining [40-50)",
+	"DL chaining [50-60)",
+	"DL chaining >= 60",
 };
 
 static const char rmnet_ll_gstrings_stats[][ETH_GSTRING_LEN] = {

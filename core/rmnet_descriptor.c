@@ -1756,18 +1756,36 @@ recycle:
 rmnet_perf_chain_hook_t rmnet_perf_chain_end __rcu __read_mostly;
 EXPORT_SYMBOL(rmnet_perf_chain_end);
 
+void rmnet_descriptor_classify_chain_count(u64 chain_count,
+					   struct rmnet_port *port)
+{
+	u64 index;
+
+	if (chain_count >= 60) {
+		port->stats.dl_chain_stat[6] += chain_count;
+		return;
+	}
+
+	index = chain_count;
+	do_div(index, 10);
+	port->stats.dl_chain_stat[index] += chain_count;
+}
+
 void rmnet_frag_ingress_handler(struct sk_buff *skb,
 				struct rmnet_port *port)
 {
 	rmnet_perf_chain_hook_t rmnet_perf_opt_chain_end;
 	LIST_HEAD(desc_list);
 	bool skip_perf = (skb->priority == 0xda1a);
+	u64 chain_count = 0;
 
 	/* Deaggregation and freeing of HW originating
 	 * buffers is done within here
 	 */
 	while (skb) {
 		struct sk_buff *skb_frag;
+
+		chain_count++;
 
 		rmnet_frag_deaggregate(skb, port, &desc_list, skb->priority);
 		if (!list_empty(&desc_list)) {
@@ -1785,6 +1803,8 @@ void rmnet_frag_ingress_handler(struct sk_buff *skb,
 		consume_skb(skb);
 		skb = skb_frag;
 	}
+
+	rmnet_descriptor_classify_chain_count(chain_count, port);
 
 	if (skip_perf)
 		return;
