@@ -129,6 +129,20 @@ void wlan_scan_cfg_set_passive_dwelltime(struct wlan_objmgr_psoc *psoc,
 void wlan_scan_cfg_get_passive_dwelltime(struct wlan_objmgr_psoc *psoc,
 					 uint32_t *dwell_time);
 
+#ifdef WLAN_POLICY_MGR_ENABLE
+/*
+ * wlan_scan_update_pno_dwell_time() - update active and passive dwell time
+ * depending on active concurrency modes
+ * @vdev: vdev object pointer
+ * @req: scan request
+ *
+ * Return: void
+ */
+void wlan_scan_update_pno_dwell_time(struct wlan_objmgr_vdev *vdev,
+				     struct pno_scan_req_params *req,
+				     struct scan_default_params *scan_def);
+#endif
+
 /**
  * wlan_scan_cfg_get_conc_active_dwelltime() - Get concurrent active dwelltime
  * @psoc: pointer to psoc object
