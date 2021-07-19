@@ -972,7 +972,7 @@ QDF_STATUS cm_roam_disconnect_rsp(struct wlan_objmgr_vdev *vdev,
 	}
 	qdf_status =
 		cm_sm_deliver_event(vdev,
-				    WLAN_CM_SM_EV_DISCONNECT_DONE,
+				    WLAN_CM_SM_EV_HO_ROAM_DISCONNECT_DONE,
 				    sizeof(*resp), resp);
 	if (QDF_IS_STATUS_SUCCESS(qdf_status))
 		return qdf_status;

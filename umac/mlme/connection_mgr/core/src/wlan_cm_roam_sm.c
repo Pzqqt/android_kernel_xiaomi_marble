@@ -323,7 +323,7 @@ bool cm_subst_reassoc_event(void *ctx, uint16_t event,
 		}
 		cm_reassoc_active(cm_ctx, data);
 		break;
-	case WLAN_CM_SM_EV_DISCONNECT_DONE:
+	case WLAN_CM_SM_EV_HO_ROAM_DISCONNECT_DONE:
 		cm_reassoc_disconnect_complete(cm_ctx, data);
 		break;
 	case WLAN_CM_SM_EV_BSS_CREATE_PEER_SUCCESS:

@@ -1012,6 +1012,7 @@ static const char *cm_sm_event_names[] = {
 	"EV_PREAUTH_ACTIVE",
 	"EV_PREAUTH_RESP",
 	"EV_REASSOC_TIMER",
+	"EV_HO_ROAM_DISCONNECT_DONE",
 };
 
 enum wlan_cm_sm_state cm_get_state(struct cnx_mgr *cm_ctx)
