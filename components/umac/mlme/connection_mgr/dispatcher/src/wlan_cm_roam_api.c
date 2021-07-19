@@ -30,9 +30,13 @@
 #include <wlan_cm_api.h>
 #include "connection_mgr/core/src/wlan_cm_roam.h"
 #include "wlan_cm_roam_api.h"
+#include "wlan_blm_api.h"
 
 /* Support for "Fast roaming" (i.e., ESE, LFR, or 802.11r.) */
 #define BG_SCAN_OCCUPIED_CHANNEL_LIST_LEN 15
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+#define CM_MIN_RSSI 0 /* 0dbm */
+#endif
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 QDF_STATUS
@@ -2046,6 +2050,80 @@ cm_roam_event_handler(struct roam_offload_roam_event roam_event)
 			   roam_event.reason, roam_event.vdev_id);
 		break;
 	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static void
+cm_add_bssid_to_reject_list(struct wlan_objmgr_pdev *pdev,
+			    struct sir_rssi_disallow_lst *entry)
+{
+	struct reject_ap_info ap_info = {0};
+
+	ap_info.bssid = entry->bssid;
+	ap_info.reject_ap_type = DRIVER_RSSI_REJECT_TYPE;
+	ap_info.rssi_reject_params.expected_rssi = entry->expected_rssi;
+	ap_info.rssi_reject_params.retry_delay = entry->retry_delay;
+	ap_info.reject_reason = entry->reject_reason;
+	ap_info.source = entry->source;
+	ap_info.rssi_reject_params.received_time = entry->received_time;
+	ap_info.rssi_reject_params.original_timeout = entry->original_timeout;
+	/* Add this ap info to the rssi reject ap type in blacklist manager */
+	wlan_blm_add_bssid_to_reject_list(pdev, &ap_info);
+}
+
+QDF_STATUS
+cm_btm_blacklist_event_handler(struct wlan_objmgr_psoc *psoc,
+			       struct roam_blacklist_event *list)
+{
+	uint32_t i, pdev_id;
+	struct sir_rssi_disallow_lst entry;
+	struct roam_blacklist_timeout *blacklist;
+	struct wlan_objmgr_pdev *pdev;
+
+	pdev_id = wlan_get_pdev_id_from_vdev_id(psoc, list->vdev_id,
+						WLAN_MLME_CM_ID);
+	if (pdev_id == WLAN_INVALID_PDEV_ID) {
+		mlme_err("Invalid pdev id");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	pdev = wlan_objmgr_get_pdev_by_id(psoc, pdev_id, WLAN_MLME_CM_ID);
+	if (!pdev) {
+		mlme_err("Invalid pdev");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mlme_debug("Received Blacklist event from FW num entries %d",
+		   list->num_entries);
+	blacklist = &list->roam_blacklist[0];
+	for (i = 0; i < list->num_entries; i++) {
+		qdf_mem_zero(&entry, sizeof(struct sir_rssi_disallow_lst));
+		entry.bssid = blacklist->bssid;
+		entry.time_during_rejection = blacklist->received_time;
+		entry.reject_reason = blacklist->reject_reason;
+		entry.source = blacklist->source ? blacklist->source :
+						   ADDED_BY_TARGET;
+		entry.original_timeout = blacklist->original_timeout;
+		entry.received_time = blacklist->received_time;
+		/* If timeout = 0 and rssi = 0 ignore the entry */
+		if (!blacklist->timeout && !blacklist->rssi) {
+			continue;
+		} else if (blacklist->timeout) {
+			entry.retry_delay = blacklist->timeout;
+			/* set 0dbm as expected rssi */
+			entry.expected_rssi = CM_MIN_RSSI;
+		} else {
+			/* blacklist timeout as 0 */
+			entry.retry_delay = blacklist->timeout;
+			entry.expected_rssi = blacklist->rssi;
+		}
+
+		/* Add this bssid to the rssi reject ap type in blacklist mgr */
+		cm_add_bssid_to_reject_list(pdev, &entry);
+		blacklist++;
+	}
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_MLME_CM_ID);
 
 	return QDF_STATUS_SUCCESS;
 }

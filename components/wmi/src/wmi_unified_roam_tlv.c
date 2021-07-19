@@ -2068,6 +2068,115 @@ end:
 }
 #endif
 
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+static enum blm_reject_ap_reason wmi_get_reject_reason(uint32_t reason)
+{
+	switch (reason) {
+	case WMI_BL_REASON_NUD_FAILURE:
+		return REASON_NUD_FAILURE;
+	case WMI_BL_REASON_STA_KICKOUT:
+		return REASON_STA_KICKOUT;
+	case WMI_BL_REASON_ROAM_HO_FAILURE:
+		return REASON_ROAM_HO_FAILURE;
+	case WMI_BL_REASON_ASSOC_REJECT_POOR_RSSI:
+		return REASON_ASSOC_REJECT_POOR_RSSI;
+	case WMI_BL_REASON_ASSOC_REJECT_OCE:
+		return REASON_ASSOC_REJECT_OCE;
+	case WMI_BL_REASON_USERSPACE_BL:
+		return REASON_USERSPACE_BL;
+	case WMI_BL_REASON_USERSPACE_AVOID_LIST:
+		return REASON_USERSPACE_AVOID_LIST;
+	case WMI_BL_REASON_BTM_DIASSOC_IMMINENT:
+		return REASON_BTM_DISASSOC_IMMINENT;
+	case WMI_BL_REASON_BTM_BSS_TERMINATION:
+		return REASON_BTM_BSS_TERMINATION;
+	case WMI_BL_REASON_BTM_MBO_RETRY:
+		return REASON_BTM_MBO_RETRY;
+	case WMI_BL_REASON_REASSOC_RSSI_REJECT:
+		return REASON_REASSOC_RSSI_REJECT;
+	case WMI_BL_REASON_REASSOC_NO_MORE_STAS:
+		return REASON_REASSOC_NO_MORE_STAS;
+	default:
+		return REASON_UNKNOWN;
+	}
+}
+
+static QDF_STATUS
+extract_btm_blacklist_event(wmi_unified_t wmi_handle,
+			    uint8_t *event, uint32_t len,
+			    struct roam_blacklist_event **list)
+{
+	WMI_ROAM_BLACKLIST_EVENTID_param_tlvs *param_buf;
+	wmi_roam_blacklist_event_fixed_param *resp_event;
+	wmi_roam_blacklist_with_timeout_tlv_param *src_list;
+	struct roam_blacklist_timeout *roam_blacklist;
+	struct roam_blacklist_event *dst_list;
+	uint32_t num_entries, i;
+
+	param_buf = (WMI_ROAM_BLACKLIST_EVENTID_param_tlvs *)event;
+	if (!param_buf) {
+		wmi_err("Invalid event buffer");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	resp_event = param_buf->fixed_param;
+	if (!resp_event) {
+		wmi_err("received null event data from target");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (resp_event->vdev_id >= WLAN_MAX_VDEVS) {
+		wmi_err("received invalid vdev_id %d", resp_event->vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	num_entries = param_buf->num_blacklist_with_timeout;
+	if (num_entries == 0) {
+		/* no aps to blacklist just return*/
+		wmi_err("No APs in blacklist received");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	if (num_entries > MAX_RSSI_AVOID_BSSID_LIST) {
+		wmi_err("num blacklist entries:%d exceeds maximum value",
+			num_entries);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	src_list = param_buf->blacklist_with_timeout;
+	if (len < (sizeof(*resp_event) + (num_entries * sizeof(*src_list)))) {
+		wmi_err("Invalid length:%d", len);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	dst_list = qdf_mem_malloc(sizeof(struct roam_blacklist_event) +
+				 (sizeof(struct roam_blacklist_timeout) *
+				 num_entries));
+	if (!dst_list)
+		return QDF_STATUS_E_NOMEM;
+
+	dst_list->vdev_id = resp_event->vdev_id;
+	roam_blacklist = &dst_list->roam_blacklist[0];
+	for (i = 0; i < num_entries; i++) {
+		WMI_MAC_ADDR_TO_CHAR_ARRAY(&src_list->bssid,
+					   roam_blacklist->bssid.bytes);
+		roam_blacklist->timeout = src_list->timeout;
+		roam_blacklist->received_time = src_list->timestamp;
+		roam_blacklist->original_timeout = src_list->original_timeout;
+		roam_blacklist->reject_reason =
+				wmi_get_reject_reason(src_list->reason);
+		roam_blacklist->source = src_list->source;
+		roam_blacklist++;
+		src_list++;
+	}
+
+	dst_list->num_entries = num_entries;
+	*list = dst_list;
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 void wmi_roam_offload_attach_tlv(wmi_unified_t wmi_handle)
 {
 	struct wmi_ops *ops = wmi_handle->ops;
@@ -2080,6 +2189,7 @@ void wmi_roam_offload_attach_tlv(wmi_unified_t wmi_handle)
 	ops->extract_roam_sync_event = extract_roam_sync_event_tlv;
 	ops->extract_roam_sync_frame_event = extract_roam_sync_frame_event_tlv;
 	ops->extract_roam_event = extract_roam_event_tlv;
+	ops->extract_btm_bl_event = extract_btm_blacklist_event;
 #endif /* ROAM_TARGET_IF_CONVERGENCE */
 	ops->send_set_ric_req_cmd = send_set_ric_req_cmd_tlv;
 	ops->send_process_roam_synch_complete_cmd =

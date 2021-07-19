@@ -8994,6 +8994,7 @@ void lim_continue_sta_csa_req(struct mac_context *mac_ctx, uint8_t vdev_id)
 	lim_process_channel_switch(mac_ctx, vdev_id);
 }
 
+#ifndef ROAM_TARGET_IF_CONVERGENCE
 void lim_add_roam_blacklist_ap(struct mac_context *mac_ctx,
 			       struct roam_blacklist_event *src_lst)
 {
@@ -9031,3 +9032,4 @@ void lim_add_roam_blacklist_ap(struct mac_context *mac_ctx,
 		blacklist++;
 	}
 }
+#endif

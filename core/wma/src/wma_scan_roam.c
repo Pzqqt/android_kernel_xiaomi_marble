@@ -4682,6 +4682,7 @@ QDF_STATUS wma_send_ht40_obss_scanind(tp_wma_handle wma,
 	return status;
 }
 
+#ifndef ROAM_TARGET_IF_CONVERGENCE
 static enum blm_reject_ap_reason wma_get_reject_reason(uint32_t reason)
 {
 	switch(reason) {
@@ -4785,6 +4786,7 @@ int wma_handle_btm_blacklist_event(void *handle, uint8_t *cmd_param_info,
 	wma_send_msg(wma, WMA_ROAM_BLACKLIST_MSG, (void *)dst_list, 0);
 	return 0;
 }
+#endif
 
 #if defined(WLAN_FEATURE_ROAM_OFFLOAD) && defined(WLAN_FEATURE_FIPS)
 void wma_register_pmkid_req_event_handler(tp_wma_handle wma_handle)

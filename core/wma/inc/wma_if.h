@@ -772,6 +772,7 @@ typedef struct sStatsExtRequest {
 } tStatsExtRequest, *tpStatsExtRequest;
 #endif /* WLAN_FEATURE_STATS_EXT */
 
+#ifndef ROAM_TARGET_IF_CONVERGENCE
 /*
  * struct roam_blacklist_timeout - BTM blacklist entry
  * @bssid - bssid that is to be blacklisted
@@ -801,4 +802,5 @@ struct roam_blacklist_event {
 	uint32_t num_entries;
 	struct roam_blacklist_timeout roam_blacklist[];
 };
+#endif
 #endif /* _HALMSGAPI_H_ */

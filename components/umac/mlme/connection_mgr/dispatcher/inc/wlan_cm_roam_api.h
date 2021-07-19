@@ -1128,5 +1128,16 @@ void cm_handle_roam_reason_suitable_ap(uint8_t vdev_id, uint32_t rssi);
  */
 QDF_STATUS
 cm_roam_event_handler(struct roam_offload_roam_event roam_event);
+
+/**
+ * cm_btm_blacklist_event_handler() - Black list the given BSSID due to btm
+ * @psoc: PSOC pointer
+ * @list: Roam blacklist info
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_btm_blacklist_event_handler(struct wlan_objmgr_psoc *psoc,
+			       struct roam_blacklist_event *list);
 #endif
 #endif  /* WLAN_CM_ROAM_API_H__ */

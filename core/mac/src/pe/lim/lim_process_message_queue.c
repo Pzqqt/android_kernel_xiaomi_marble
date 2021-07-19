@@ -2086,6 +2086,7 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
+#ifndef ROAM_TARGET_IF_CONVERGENCE
 	case WMA_ROAM_BLACKLIST_MSG:
 		lim_add_roam_blacklist_ap(mac_ctx,
 					  (struct roam_blacklist_event *)
@@ -2093,6 +2094,7 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
+#endif
 	case SIR_LIM_PROCESS_DEFERRED_QUEUE:
 		break;
 	case CM_BSS_PEER_CREATE_REQ:
