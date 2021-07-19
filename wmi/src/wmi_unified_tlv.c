@@ -523,6 +523,7 @@ static const uint32_t vdev_param_tlv[] = {
 			WMI_VDEV_PARAM_ENABLE_DISABLE_RTT_RESPONDER_ROLE,
 	[wmi_vdev_param_enable_disable_rtt_initiator_role] =
 			WMI_VDEV_PARAM_ENABLE_DISABLE_RTT_INITIATOR_ROLE,
+	[wmi_vdev_param_mcast_steer] = WMI_VDEV_PARAM_MCAST_STEERING,
 };
 #endif
 

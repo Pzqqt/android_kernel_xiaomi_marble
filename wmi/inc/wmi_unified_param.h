@@ -4999,6 +4999,7 @@ typedef enum {
 	wmi_vdev_param_nan_config_features,
 	wmi_vdev_param_enable_disable_rtt_responder_role,
 	wmi_vdev_param_enable_disable_rtt_initiator_role,
+	wmi_vdev_param_mcast_steer,
 #ifdef WLAN_FEATURE_11BE
 	wmi_vdev_param_set_ehtop,
 #endif
