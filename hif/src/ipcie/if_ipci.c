@@ -897,15 +897,16 @@ int hif_prevent_link_low_power_states(struct hif_opaque_softc *hif)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif);
 	struct hif_ipci_softc *ipci_scn = HIF_GET_IPCI_SOFTC(scn);
-	uint32_t timeout = 0;
+	uint32_t start_time = 0, curr_time = 0;
 
 	if (pld_is_pci_ep_awake(scn->qdf_dev->dev) == -ENOTSUPP)
 		return 0;
 
+	start_time = curr_time = qdf_system_ticks_to_msecs(qdf_system_ticks());
 	while (pld_is_pci_ep_awake(scn->qdf_dev->dev) &&
-	       timeout <= EP_WAKE_RESET_DELAY_TIMEOUT_US) {
+	       curr_time <= start_time + EP_WAKE_RESET_DELAY_TIMEOUT_MS) {
 		qdf_sleep_us(EP_WAKE_RESET_DELAY_US);
-		timeout += EP_WAKE_RESET_DELAY_US;
+		curr_time = qdf_system_ticks_to_msecs(qdf_system_ticks());
 	}
 
 	if (pld_is_pci_ep_awake(scn->qdf_dev->dev)) {
@@ -921,11 +922,11 @@ int hif_prevent_link_low_power_states(struct hif_opaque_softc *hif)
 	}
 
 	ipci_scn->prevent_l1 = true;
-	timeout = 0;
+	start_time = curr_time = qdf_system_ticks_to_msecs(qdf_system_ticks());
 	while (!pld_is_pci_ep_awake(scn->qdf_dev->dev) &&
-	       timeout <= EP_WAKE_DELAY_TIMEOUT_US) {
+	       curr_time <= start_time + EP_WAKE_DELAY_TIMEOUT_MS) {
 		qdf_sleep_us(EP_WAKE_DELAY_US);
-		timeout += EP_WAKE_DELAY_US;
+		curr_time = qdf_system_ticks_to_msecs(qdf_system_ticks());
 	}
 
 	if (pld_is_pci_ep_awake(scn->qdf_dev->dev) <= 0) {
