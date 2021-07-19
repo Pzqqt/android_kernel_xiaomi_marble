@@ -501,11 +501,16 @@ wlan_cfg80211_peer_enh_cfr_capture(struct hdd_adapter *adapter,
 		hdd_debug("cleanup rcc mode");
 		ucfg_cfr_set_rcc_mode(vdev, RCC_DIS_ALL_MODE, 0);
 	}
+
+	if (is_start_capture)
+		ucfg_cfr_resume(wlan_vdev_get_pdev(vdev));
+
 	ucfg_cfr_subscribe_ppdu_desc(wlan_vdev_get_pdev(vdev),
 				     is_start_capture);
 	ucfg_cfr_committed_rcc_config(vdev);
 	if (!is_start_capture) {
 		ucfg_cfr_stop_indication(vdev);
+		ucfg_cfr_suspend(wlan_vdev_get_pdev(vdev));
 		hdd_debug("stop indication done");
 	}
 

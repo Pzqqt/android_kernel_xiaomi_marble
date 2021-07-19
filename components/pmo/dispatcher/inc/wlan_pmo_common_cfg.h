@@ -546,6 +546,29 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"configure igmp offload support version")
 
+/*
+ * <ini>
+ * disconnect_sap_tdls_in_wow - disconnect sap tdls in wow
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * Due to the limitation on third party platform, add ini to take
+ * special care of the below wow case to avoid fw crash.
+ * The sap/p2p_go shall kick out all the connected sta/p2p_gc and
+ * then go to suspend considering d0wow/d3wow is not supported.
+ * Teardown tdls link proactively since auto sleep mechanism not
+ * supported.
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_DISCONNECT_SAP_TDLS_IN_WOW CFG_INI_BOOL( \
+		"disconnect_sap_tdls_in_wow", \
+		0, \
+		"disconnect sap tdls in wow")
+
 #define CFG_PMO_COMMON_ALL \
 	CFG(CFG_ENABLE_SAP_SUSPEND) \
 	CFG(CFG_PMO_ENABLE_HOST_ARPOFFLOAD) \
@@ -568,6 +591,7 @@
 	CFG(CFG_PMO_MOD_DTIM_ON_SYS_SUSPEND) \
 	CFG(CFG_ENABLE_BUS_SUSPEND_IN_SAP_MODE) \
 	CFG(CFG_ENABLE_BUS_SUSPEND_IN_GO_MODE)\
-	CFG(CFG_IGMP_VERSION_SUPPORT)
+	CFG(CFG_IGMP_VERSION_SUPPORT) \
+	CFG(CFG_DISCONNECT_SAP_TDLS_IN_WOW)
 
 #endif /* WLAN_PMO_COMMON_CFG_H__ */

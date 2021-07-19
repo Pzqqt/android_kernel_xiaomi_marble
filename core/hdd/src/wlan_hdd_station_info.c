@@ -2222,11 +2222,14 @@ static int hdd_get_station_info_ex(struct hdd_context *hdd_ctx,
 	uint32_t nl_buf_len = 0, connect_fail_rsn_len;
 	struct hdd_station_ctx *hdd_sta_ctx;
 	bool big_data_stats_req = false;
+	bool big_data_fw_support = false;
 	int ret;
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	ucfg_mc_cp_get_big_data_fw_support(hdd_ctx->psoc, &big_data_fw_support);
 
-	if (hdd_cm_is_disconnected(adapter))
+	if (hdd_cm_is_disconnected(adapter) &&
+	    big_data_fw_support)
 		big_data_stats_req = true;
 
 	if (wlan_hdd_get_station_stats(adapter))

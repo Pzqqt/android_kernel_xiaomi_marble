@@ -308,3 +308,12 @@ ucfg_pkt_capture_register_wma_callbacks(struct wlan_objmgr_psoc *psoc,
 
 	return 0;
 }
+
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
+QDF_STATUS ucfg_pkt_capture_send_config
+				(struct wlan_objmgr_vdev *vdev,
+				 enum pkt_capture_trigger_qos_config config)
+{
+	return tgt_pkt_capture_send_config(vdev, config);
+}
+#endif

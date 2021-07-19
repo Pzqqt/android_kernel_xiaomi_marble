@@ -1176,6 +1176,17 @@ static QDF_STATUS lim_send_join_req(struct pe_session *session,
 {
 	QDF_STATUS status;
 
+	/* Continue connect only if Vdev is in INIT state */
+	status = wlan_vdev_mlme_is_init_state(session->vdev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("Vdev %d not in int state cur state %d substate %d",
+			session->vdev_id,
+			wlan_vdev_mlme_get_state(session->vdev),
+			wlan_vdev_mlme_get_substate(session->vdev));
+		qdf_trigger_self_recovery(session->mac_ctx->psoc,
+					  QDF_VDEV_SM_OUT_OF_SYNC);
+		return status;
+	}
 	status = mlme_set_assoc_type(session->vdev, VDEV_ASSOC);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
@@ -1325,6 +1336,23 @@ static void lim_join_req_update_ht_vht_caps(struct mac_context *mac,
 	session->vht_config = vht_config;
 	ht_caps.caps = vdev_mlme->proto.ht_info.ht_caps;
 	session->ht_config = ht_caps.ht_caps;
+
+	if (session->opmode == QDF_STA_MODE) {
+		pe_debug("AP capability shortGI20MHz %d shortGI40MHz %d ini capability short_gi_20_mhz %d short_gi_40_mhz %d",
+			bcn_ie->HTCaps.shortGI20MHz,
+			bcn_ie->HTCaps.shortGI40MHz,
+			session->ht_config.short_gi_20_mhz,
+			session->ht_config.short_gi_40_mhz);
+
+		if (session->ht_config.short_gi_20_mhz)
+			session->ht_config.short_gi_20_mhz =
+						bcn_ie->HTCaps.shortGI20MHz;
+
+		if (session->ht_config.short_gi_40_mhz)
+			session->ht_config.short_gi_40_mhz =
+						bcn_ie->HTCaps.shortGI40MHz;
+	}
+
 	pe_debug("HT capability 0x%x VHT capability 0x%x",
 		 ht_caps.caps, vht_config.caps);
 }
@@ -2621,6 +2649,8 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 				&ps_global_info->ps_params[session->vdev_id];
 	uint32_t join_timeout;
 	uint8_t programmed_country[REG_ALPHA2_LEN + 1];
+	enum reg_6g_ap_type power_type_6g;
+	bool ctry_code_match;
 
 	/*
 	 * Update the capability here itself as this is used in
@@ -2697,29 +2727,17 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 			pe_debug("Channel is 6G but country IE not present");
 		wlan_reg_read_current_country(mac_ctx->psoc,
 					      programmed_country);
-		if (qdf_mem_cmp(ie_struct->Country.country, programmed_country,
-				REG_ALPHA2_LEN)) {
-			pe_debug("Country IE:%c%c, STA country:%c%c",
-				  ie_struct->Country.country[0],
-				  ie_struct->Country.country[1],
-				  programmed_country[0],
-				  programmed_country[1]);
-			session->same_ctry_code = false;
-			if (wlan_reg_is_us(programmed_country)) {
-				pe_err("US VLP not in place yet, connection not allowed");
-				qdf_mem_free(ie_struct);
-				return QDF_STATUS_E_NOSUPPORT;
-			}
-			if (wlan_reg_is_etsi(programmed_country)) {
-				pe_debug("STA ctry:%c%c, doesn't match with AP ctry, switch to VLP",
-					  programmed_country[0],
-					  programmed_country[1]);
-				session->ap_power_type_6g =
-							REG_VERY_LOW_POWER_AP;
-			}
-		} else {
-			session->same_ctry_code = true;
+		status = wlan_reg_get_6g_power_type_for_ctry(
+					ie_struct->Country.country,
+					programmed_country, &power_type_6g,
+					&ctry_code_match);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			qdf_mem_free(ie_struct);
+			return QDF_STATUS_E_NOSUPPORT;
 		}
+		session->ap_power_type_6g = power_type_6g;
+		session->same_ctry_code = ctry_code_match;
+
 		lim_iterate_triplets(ie_struct->Country);
 
 		if (!ie_struct->num_transmit_power_env ||
@@ -3032,7 +3050,6 @@ lim_send_connect_req_to_mlm(struct pe_session *session)
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef FEATURE_CM_ENABLE
 static struct pe_session *
 lim_cm_create_session(struct mac_context *mac_ctx, struct cm_vdev_join_req *req)
 {
@@ -3049,6 +3066,9 @@ lim_cm_create_session(struct mac_context *mac_ctx, struct cm_vdev_join_req *req)
 		       pe_session->vdev_id,
 		       QDF_MAC_ADDR_REF(req->entry->bssid.bytes),
 		       pe_session->limSmeState);
+
+		qdf_trigger_self_recovery(mac_ctx->psoc,
+					  QDF_VDEV_SM_OUT_OF_SYNC);
 		return NULL;
 	}
 
@@ -4368,227 +4388,6 @@ QDF_STATUS cm_process_preauth_req(struct scheduler_msg *msg)
 }
 #endif
 
-#else
-
-/**
- * __lim_process_sme_join_req() - process SME_JOIN_REQ message
- * @mac_ctx: Pointer to Global MAC structure
- * @msg_buf: A pointer to the SME message buffer
- *
- * This function is called to process SME_JOIN_REQ message
- * from HDD or upper layer application.
- *
- * Return: None
- */
-static void
-__lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
-{
-	struct join_req *in_req = msg_buf;
-	struct join_req *sme_join_req = NULL;
-	tSirResultCodes ret_code = eSIR_SME_SUCCESS;
-	uint8_t session_id;
-	struct pe_session *session = NULL;
-	uint8_t vdev_id = 0;
-	struct bss_description *bss_desc;
-	QDF_STATUS status;
-	int32_t ucast_cipher, auth_mode, akm;
-	tSirMacCapabilityInfo *ap_cap_info;
-
-	if (!mac_ctx || !msg_buf) {
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
-			  FL("JOIN REQ with invalid data"));
-		return;
-	}
-
-/* FEATURE_WLAN_DIAG_SUPPORT */
-#ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM
-	/*
-	 * Not sending any session, since it is not created yet.
-	 * The response whould have correct state.
-	 */
-	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_JOIN_REQ_EVENT, NULL, 0, 0);
-#endif /* FEATURE_WLAN_DIAG_SUPPORT */
-
-	/*
-	 * Expect Join request in idle state.
-	 * Reassociate request is expected in link established state.
-	 */
-
-	/* Global SME and LIM states are not defined yet for BT-AMP Support */
-	if (mac_ctx->lim.gLimSmeState == eLIM_SME_IDLE_STATE) {
-		sme_join_req = qdf_mem_malloc(in_req->length);
-		if (!sme_join_req) {
-			ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
-			goto end;
-		}
-		qdf_mem_copy(sme_join_req, in_req, in_req->length);
-
-		if (!lim_is_sme_join_req_valid(mac_ctx, sme_join_req)) {
-			/* Received invalid eWNI_SME_JOIN_REQ */
-			/* Log the event */
-			pe_warn("vdev_id:%d JOIN REQ with invalid data",
-				sme_join_req->vdev_id);
-			ret_code = eSIR_SME_INVALID_PARAMETERS;
-			goto end;
-		}
-
-		bss_desc = &sme_join_req->bssDescription;
-		/* check for the existence of start BSS session  */
-		session = pe_find_session_by_bssid(mac_ctx, bss_desc->bssId,
-				&session_id);
-
-		if (session) {
-			pe_err("Session(%d) Already exists for BSSID: "
-				   QDF_MAC_ADDR_FMT " in limSmeState = %X",
-				session_id,
-				QDF_MAC_ADDR_REF(bss_desc->bssId),
-				session->limSmeState);
-
-			if (session->limSmeState == eLIM_SME_LINK_EST_STATE &&
-			    session->smeSessionId == sme_join_req->vdev_id) {
-				/*
-				 * Received eWNI_SME_JOIN_REQ for same
-				 * BSS as currently associated.
-				 * Log the event and send success
-				 */
-				pe_warn("SessionId: %d", session_id);
-				pe_warn("JOIN_REQ for current joined BSS");
-				/* Send Join success response to host */
-				ret_code = eSIR_SME_ALREADY_JOINED_A_BSS;
-				session = NULL;
-				goto end;
-			} else {
-				pe_err("JOIN_REQ not for current joined BSS");
-				ret_code = eSIR_SME_REFUSED;
-				session = NULL;
-				goto end;
-			}
-		} else {
-			/*
-			 * Session Entry does not exist for given BSSId
-			 * Try to Create a new session
-			 */
-			session = pe_create_session(mac_ctx, bss_desc->bssId,
-					&session_id,
-					mac_ctx->lim.max_sta_of_pe_session,
-					eSIR_INFRASTRUCTURE_MODE,
-					sme_join_req->vdev_id);
-			if (!session) {
-				pe_err("Session Can not be created");
-				ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
-				goto end;
-			}
-		}
-
-		/* store the smejoin req handle in session table */
-		session->lim_join_req = sme_join_req;
-		session->force_24ghz_in_ht20 =
-			sme_join_req->force_24ghz_in_ht20;
-
-		status = lim_fill_pe_session(mac_ctx, session, bss_desc);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			pe_err("Failed to fill pe session vdev id %d",
-			       session->vdev_id);
-
-			ret_code = eSIR_SME_INVALID_PARAMETERS;
-			goto end;
-		}
-
-		session->wps_registration = sme_join_req->wps_registration;
-
-		/* Copy the SSID from smejoinreq to session entry  */
-		session->ssId.length = sme_join_req->ssId.length;
-		qdf_mem_copy(session->ssId.ssId, sme_join_req->ssId.ssId,
-			session->ssId.length);
-
-		session->connected_akm = sme_join_req->akm;
-
-		lim_update_fils_config(mac_ctx, session, sme_join_req);
-		session->encryptType = sme_join_req->UCEncryptionType;
-		if (wlan_reg_is_6ghz_chan_freq(session->curr_op_freq)) {
-			if (!lim_is_session_he_capable(session)) {
-				pe_err("JOIN_REQ with invalid 6G security");
-				ret_code = eSIR_SME_INVALID_PARAMETERS;
-				goto end;
-			}
-		}
-		if (sme_join_req->addIEScan.length)
-			qdf_mem_copy(&session->lim_join_req->addIEScan,
-				     &sme_join_req->addIEScan,
-				     sizeof(tSirAddie));
-
-		if (sme_join_req->addIEAssoc.length)
-			qdf_mem_copy(&session->lim_join_req->addIEAssoc,
-				     &sme_join_req->addIEAssoc,
-				     sizeof(tSirAddie));
-
-		session->isOSENConnection = sme_join_req->isOSENConnection;
-		pe_debug("Freq %d width %d freq0 %d freq1 %d, Smps %d: mode %d action %d, nss 1x1 %d vdev_nss %d nss %d cbMode %d dot11mode %d subfer %d subfee %d csn %d is_cisco %d",
-			 session->curr_op_freq, session->ch_width,
-			 session->ch_center_freq_seg0,
-			 session->ch_center_freq_seg1,
-			 session->enableHtSmps, session->htSmpsvalue,
-			 session->send_smps_action, session->supported_nss_1x1,
-			 session->vdev_nss, session->nss,
-			 session->htSupportedChannelWidthSet,
-			 session->dot11mode,
-			 session->vht_config.su_beam_former,
-			 session->vht_config.su_beam_formee,
-			 session->vht_config.csnof_beamformer_antSup,
-			 session->isCiscoVendorAP);
-
-		ucast_cipher = wlan_crypto_get_param(session->vdev,
-						     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
-		auth_mode = wlan_crypto_get_param(session->vdev,
-						  WLAN_CRYPTO_PARAM_AUTH_MODE);
-		akm = wlan_crypto_get_param(session->vdev,
-					    WLAN_CRYPTO_PARAM_KEY_MGMT);
-		ap_cap_info = (tSirMacCapabilityInfo *)
-			       &session->lim_join_req->bssDescription.capabilityInfo;
-
-		lim_set_privacy(mac_ctx, ucast_cipher, auth_mode, akm,
-				ap_cap_info->privacy);
-
-		/* Issue LIM_MLM_JOIN_REQ to MLM */
-		status = lim_send_connect_req_to_mlm(session);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			ret_code = eSIR_SME_REFUSED;
-			goto end;
-		}
-		return;
-
-	} else {
-		/* Received eWNI_SME_JOIN_REQ un expected state */
-		pe_err("received unexpected SME_JOIN_REQ in state %X",
-			mac_ctx->lim.gLimSmeState);
-		lim_print_sme_state(mac_ctx, LOGE, mac_ctx->lim.gLimSmeState);
-		ret_code = eSIR_SME_UNEXPECTED_REQ_RESULT_CODE;
-		session = NULL;
-		goto end;
-	}
-
-end:
-	vdev_id = in_req->vdev_id;
-
-	if (sme_join_req) {
-		qdf_mem_free(sme_join_req);
-		sme_join_req = NULL;
-		if (session)
-			session->lim_join_req = NULL;
-	}
-	if (ret_code != eSIR_SME_SUCCESS) {
-		if (session) {
-			pe_delete_session(mac_ctx, session);
-			session = NULL;
-		}
-	}
-	pe_debug("Send failure status on vdev_id: %d with ret_code: %d",
-		vdev_id, ret_code);
-	lim_send_sme_join_reassoc_rsp(mac_ctx, eWNI_SME_JOIN_RSP, ret_code,
-		STATUS_UNSPECIFIED_FAILURE, session, vdev_id);
-}
-#endif
-
 static uint8_t lim_get_num_tpe_octets(uint8_t max_transmit_power_count)
 {
 	if (!max_transmit_power_count)
@@ -4868,7 +4667,9 @@ uint8_t lim_get_max_tx_power(struct mac_context *mac,
 
 void lim_calculate_tpc(struct mac_context *mac,
 		       struct pe_session *session,
-		       bool is_pwr_constraint_absolute)
+		       bool is_pwr_constraint_absolute,
+		       uint8_t ap_pwr_type,
+		       bool ctry_code_match)
 {
 	bool is_psd_power = false;
 	bool is_tpe_present = false, is_6ghz_freq = false;
@@ -4882,11 +4683,6 @@ void lim_calculate_tpc(struct mac_context *mac,
 	struct vdev_mlme_obj *mlme_obj;
 	uint8_t tpe_power;
 	bool skip_tpe = false;
-
-	if (LIM_IS_STA_ROLE(session) && !session->lim_join_req) {
-		pe_err("Join Request is NULL");
-		return;
-	}
 
 	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(session->vdev);
 	if (!mlme_obj) {
@@ -4913,11 +4709,17 @@ void lim_calculate_tpc(struct mac_context *mac,
 	} else {
 		is_6ghz_freq = true;
 		is_psd_power = wlan_reg_is_6g_psd_power(mac->pdev);
+		/* Power mode calculation for 6G*/
+		ap_power_type_6g = session->ap_power_type;
 		if (LIM_IS_STA_ROLE(session)) {
-			if (session->same_ctry_code)
-				ap_power_type_6g = session->ap_power_type;
-			else
-				ap_power_type_6g = session->ap_power_type_6g;
+			if (!session->lim_join_req) {
+				if (!ctry_code_match)
+					ap_power_type_6g = ap_pwr_type;
+			} else {
+				if (!session->same_ctry_code)
+					ap_power_type_6g =
+						session->ap_power_type_6g;
+			}
 		}
 	}
 
@@ -5023,368 +4825,6 @@ void lim_calculate_tpc(struct mac_context *mac,
 	pe_debug("num_pwr_levels: %d, is_psd_power: %d, total eirp_power: %d, ap_pwr_type: %d",
 		 num_pwr_levels, is_psd_power, reg_max, ap_power_type_6g);
 }
-
-#ifndef FEATURE_CM_ENABLE
-/**
- * __lim_process_sme_reassoc_req() - process reassoc req
- *
- * @mac_ctx: Pointer to Global MAC structure
- * @msg_buf: pointer to the SME message buffer
- *
- * This function is called to process SME_REASSOC_REQ message
- * from HDD or upper layer application.
- *
- * Return: None
- */
-
-static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
-					  void *msg_buf)
-{
-	uint16_t caps;
-	uint32_t val;
-	struct join_req *in_req = msg_buf;
-	struct join_req *reassoc_req;
-	tLimMlmReassocReq *mlm_reassoc_req;
-	tSirResultCodes ret_code = eSIR_SME_SUCCESS;
-	struct pe_session *session_entry = NULL;
-	uint8_t session_id;
-	uint8_t vdev_id;
-	int8_t local_pwr_constraint = 0, reg_max = 0;
-	uint32_t tele_bcn_en = 0;
-	QDF_STATUS status;
-	tDot11fBeaconIEs *ie_struct;
-	ePhyChanBondState cb_mode;
-	tSirMacCapabilityInfo *ap_cap_info;
-	struct bss_description *bss_desc;
-	uint8_t wmm_mode, value;
-	bool is_pwr_constraint;
-	int32_t ucast_cipher;
-	int32_t auth_mode;
-	int32_t akm;
-
-	vdev_id = in_req->vdev_id;
-
-	reassoc_req = qdf_mem_malloc(in_req->length);
-	if (!reassoc_req) {
-		ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
-		goto end;
-	}
-	qdf_mem_copy(reassoc_req, in_req, in_req->length);
-
-	if (!lim_is_sme_join_req_valid(mac_ctx, reassoc_req)) {
-		/*
-		 * Received invalid eWNI_SME_REASSOC_REQ
-		 */
-		pe_warn("received SME_REASSOC_REQ with invalid data");
-
-		ret_code = eSIR_SME_INVALID_PARAMETERS;
-		goto end;
-	}
-
-	session_entry = pe_find_session_by_bssid(mac_ctx,
-			reassoc_req->bssDescription.bssId,
-			&session_id);
-	if (!session_entry) {
-		pe_err("Session does not exist for given bssId");
-		lim_print_mac_addr(mac_ctx, reassoc_req->bssDescription.bssId,
-				LOGE);
-		ret_code = eSIR_SME_INVALID_PARAMETERS;
-		session_entry =
-			pe_find_session_by_vdev_id(mac_ctx, vdev_id);
-		if (session_entry)
-			lim_handle_sme_join_result(mac_ctx,
-					eSIR_SME_INVALID_PARAMETERS,
-					STATUS_UNSPECIFIED_FAILURE,
-					session_entry);
-		goto end;
-	}
-#ifdef FEATURE_WLAN_DIAG_SUPPORT /* FEATURE_WLAN_DIAG_SUPPORT */
-	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_REASSOC_REQ_EVENT,
-			session_entry, QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
-#endif /* FEATURE_WLAN_DIAG_SUPPORT */
-	/* mac_ctx->lim.gpLimReassocReq = reassoc_req;//TO SUPPORT BT-AMP */
-
-	/* Store the reassoc handle in the session Table */
-	session_entry->pLimReAssocReq = reassoc_req;
-	session_entry->lim_join_req = reassoc_req;
-
-	status = wlan_get_parsed_bss_description_ies(mac_ctx,
-				&session_entry->pLimReAssocReq->bssDescription,
-				&ie_struct);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		pe_err("IE parsing failed vdev id %d",
-		       session_entry->vdev_id);
-		ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
-		goto end;
-	}
-
-	ucast_cipher = wlan_crypto_get_param(session_entry->vdev,
-					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
-	auth_mode = wlan_crypto_get_param(session_entry->vdev,
-					  WLAN_CRYPTO_PARAM_AUTH_MODE);
-	akm = wlan_crypto_get_param(session_entry->vdev,
-				    WLAN_CRYPTO_PARAM_KEY_MGMT);
-	ap_cap_info = (tSirMacCapabilityInfo *)
-		&session_entry->pLimReAssocReq->bssDescription.capabilityInfo;
-
-	lim_set_privacy(mac_ctx, ucast_cipher, auth_mode, akm,
-			ap_cap_info->privacy);
-
-	if (session_entry->vhtCapability) {
-		if (session_entry->opmode == QDF_STA_MODE) {
-			session_entry->vht_config.su_beam_formee =
-			    mac_ctx->mlme_cfg->vht_caps.vht_cap_info.su_bformee;
-		} else {
-			session_entry->vht_config.su_beam_formee = 0;
-		}
-		session_entry->enableVhtpAid =
-			mac_ctx->mlme_cfg->vht_caps.vht_cap_info.enable_paid;
-		session_entry->enableVhtGid =
-			mac_ctx->mlme_cfg->vht_caps.vht_cap_info.enable_gid;
-		pe_debug("vht su bformer [%d]", session_entry->vht_config.su_beam_former);
-	}
-
-	if (session_entry->nss == 1)
-		session_entry->supported_nss_1x1 = true;
-
-	lim_check_oui_and_update_session(mac_ctx, session_entry, ie_struct);
-
-	session_entry->lim_reassoc_chan_freq =
-		session_entry->pLimReAssocReq->bssDescription.chan_freq;
-	cb_mode = wlan_get_cb_mode(mac_ctx,
-				  session_entry->lim_reassoc_chan_freq,
-				  ie_struct);
-	session_entry->reAssocHtSupportedChannelWidthSet = cb_mode ? 1 : 0;
-	session_entry->reAssocHtRecommendedTxWidthSet =
-		session_entry->reAssocHtSupportedChannelWidthSet;
-	session_entry->reAssocHtSecondaryChannelOffset = cb_mode;
-	session_entry->enable_session_twt_support =
-					lim_enable_twt(mac_ctx, ie_struct);
-
-	qdf_mem_free(ie_struct);
-	pe_debug("vhtCapability: %d su_beam_formee: %d su_tx_bformer %d",
-		session_entry->vhtCapability,
-		session_entry->vht_config.su_beam_formee,
-		session_entry->vht_config.su_beam_former);
-
-	session_entry->enableHtSmps = mac_ctx->mlme_cfg->ht_caps.enable_smps;
-	session_entry->htSmpsvalue = mac_ctx->mlme_cfg->ht_caps.smps;
-	session_entry->send_smps_action =
-		mac_ctx->roam.configParam.send_smps_action;
-	pe_debug("enableHtSmps: %d htSmps: %d send action: %d supported nss 1x1: %d",
-		session_entry->enableHtSmps,
-		session_entry->htSmpsvalue,
-		session_entry->send_smps_action,
-		session_entry->supported_nss_1x1);
-	session_entry->lim_join_req = NULL;
-	/*
-	 * Reassociate request is expected
-	 * in link established state only.
-	 */
-
-	if (session_entry->limSmeState != eLIM_SME_LINK_EST_STATE) {
-		if (session_entry->limSmeState == eLIM_SME_WT_REASSOC_STATE) {
-			/*
-			 * May be from 11r FT pre-auth. So lets check it
-			 * before we bail out
-			 */
-			pe_debug("Session in reassoc state is %d",
-					session_entry->peSessionId);
-
-			/* Make sure its our preauth bssid */
-			if (qdf_mem_cmp(reassoc_req->bssDescription.bssId,
-					     session_entry->limReAssocbssId,
-					     6)) {
-				lim_print_mac_addr(mac_ctx,
-						   reassoc_req->bssDescription.
-						   bssId, LOGE);
-				pe_err("Unknown bssId in reassoc state");
-				ret_code = eSIR_SME_INVALID_PARAMETERS;
-				goto end;
-			}
-
-			session_entry->vdev_id = vdev_id;
-			mlm_reassoc_req =
-				qdf_mem_malloc(sizeof(*mlm_reassoc_req));
-			if (!mlm_reassoc_req) {
-				ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
-				goto end;
-			}
-
-			/* Update PE sessionId */
-			mlm_reassoc_req->sessionId = session_entry->peSessionId;
-			status = lim_send_ft_reassoc_req(session_entry,
-							 mlm_reassoc_req);
-			if (QDF_IS_STATUS_ERROR(status)) {
-				qdf_mem_free(mlm_reassoc_req);
-				ret_code = eSIR_SME_REFUSED;
-				goto end;
-			}
-			return;
-		}
-		/*
-		 * Should not have received eWNI_SME_REASSOC_REQ
-		 */
-		pe_err("received unexpected SME_REASSOC_REQ in state %X",
-			session_entry->limSmeState);
-		lim_print_sme_state(mac_ctx, LOGE, session_entry->limSmeState);
-
-		ret_code = eSIR_SME_UNEXPECTED_REQ_RESULT_CODE;
-		goto end;
-	}
-
-	qdf_mem_copy(session_entry->limReAssocbssId,
-		     session_entry->pLimReAssocReq->bssDescription.bssId,
-		     sizeof(tSirMacAddr));
-
-	bss_desc = &session_entry->pLimReAssocReq->bssDescription;
-	session_entry->limReassocBssCaps =
-		session_entry->pLimReAssocReq->bssDescription.capabilityInfo;
-	reg_max = wlan_reg_get_channel_reg_power_for_freq(
-		mac_ctx->pdev, session_entry->curr_op_freq);
-	local_pwr_constraint = reg_max;
-
-	lim_extract_ap_capability(mac_ctx,
-		(uint8_t *)session_entry->pLimReAssocReq->bssDescription.ieFields,
-		lim_get_ielen_from_bss_description(
-			&session_entry->pLimReAssocReq->bssDescription),
-		&session_entry->limReassocBssQosCaps,
-		&session_entry->gLimCurrentBssUapsd,
-		&local_pwr_constraint, session_entry,
-		&is_pwr_constraint);
-	if (is_pwr_constraint)
-		local_pwr_constraint = reg_max - local_pwr_constraint;
-
-	session_entry->maxTxPower = QDF_MIN(reg_max, (local_pwr_constraint));
-	session_entry->max_11h_pwr =
-		QDF_MIN(lim_get_cfg_max_tx_power(mac_ctx,
-						 bss_desc->chan_freq),
-			MAX_TX_PWR_CAP);
-	session_entry->min_11h_pwr = MIN_TX_PWR_CAP;
-	if (!session_entry->max_11h_pwr)
-		session_entry->max_11h_pwr = MAX_TX_PWR_CAP;
-
-	if (session_entry->max_11h_pwr > session_entry->maxTxPower)
-		session_entry->max_11h_pwr = session_entry->maxTxPower;
-
-	pe_err("Reg max = %d, local pwr constraint = %d, max tx = %d",
-		reg_max, local_pwr_constraint, session_entry->maxTxPower);
-	/* Copy the SSID from session entry to local variable */
-	session_entry->limReassocSSID.length = reassoc_req->ssId.length;
-	qdf_mem_copy(session_entry->limReassocSSID.ssId,
-		     reassoc_req->ssId.ssId,
-		     session_entry->limReassocSSID.length);
-
-	if (!session_entry->enable_session_twt_support) {
-		status = wlan_mlme_get_wmm_mode(mac_ctx->psoc, &wmm_mode);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			pe_err("Get wmm_mode failed");
-			ret_code = eSIR_SME_INVALID_PARAMETERS;
-			goto end;
-		} else if (wmm_mode == 2) {
-			/*QoS not enabled in cfg file */
-			session_entry->gUapsdPerAcBitmask = 0;
-		} else {
-			/*QoS enabled, update uapsd mask from cfg file */
-			status = wlan_mlme_get_wmm_uapsd_mask(mac_ctx->psoc,
-							      &value);
-			if (QDF_IS_STATUS_ERROR(status)) {
-				pe_err("Get uapsd_mask failed");
-				ret_code = eSIR_SME_INVALID_PARAMETERS;
-				goto end;
-			} else
-				session_entry->gUapsdPerAcBitmask = value;
-		}
-	}
-
-	if (session_entry->gLimCurrentBssUapsd)
-		pe_debug("UAPSD flag for all AC - 0x%2x",
-			session_entry->gUapsdPerAcBitmask);
-
-	mlm_reassoc_req = qdf_mem_malloc(sizeof(tLimMlmReassocReq));
-	if (!mlm_reassoc_req) {
-		ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
-		goto end;
-	}
-
-	qdf_mem_copy(mlm_reassoc_req->peerMacAddr,
-		     session_entry->limReAssocbssId, sizeof(tSirMacAddr));
-
-	if (lim_get_capability_info(mac_ctx, &caps, session_entry) !=
-	    QDF_STATUS_SUCCESS)
-		pe_err("could not retrieve Capabilities value");
-
-	lim_update_caps_info_for_bss(mac_ctx, &caps,
-				reassoc_req->bssDescription.capabilityInfo);
-	pe_debug("Capabilities info Reassoc: 0x%X", caps);
-
-	mlm_reassoc_req->capabilityInfo = caps;
-
-	/* Update PE session_id */
-	mlm_reassoc_req->sessionId = session_id;
-
-	/*
-	 * If telescopic beaconing is enabled, set listen interval to
-	 * CFG_TELE_BCN_MAX_LI
-	 */
-
-	tele_bcn_en = mac_ctx->mlme_cfg->sap_cfg.tele_bcn_wakeup_en;
-
-	if (tele_bcn_en)
-		val = mac_ctx->mlme_cfg->sap_cfg.tele_bcn_max_li;
-	else
-		val = mac_ctx->mlme_cfg->sap_cfg.listen_interval;
-
-	mlm_reassoc_req->listenInterval = (uint16_t) val;
-	if (mac_ctx->mlme_cfg->gen.enabled_11h &&
-	    ap_cap_info->spectrumMgt && bss_desc->nwType == eSIR_11A_NW_TYPE)
-		session_entry->spectrumMgtEnabled = true;
-
-	/* Enable the spectrum management if this is a DFS channel */
-	if (session_entry->country_info_present &&
-	    lim_isconnected_on_dfs_freq(
-		mac_ctx, session_entry->curr_op_freq))
-		session_entry->spectrumMgtEnabled = true;
-
-	session_entry->limPrevSmeState = session_entry->limSmeState;
-	session_entry->limSmeState = eLIM_SME_WT_REASSOC_STATE;
-
-	MTRACE(mac_trace(mac_ctx, TRACE_CODE_SME_STATE,
-				session_entry->peSessionId,
-				session_entry->limSmeState));
-
-	status = lim_send_reassoc_req(session_entry, mlm_reassoc_req);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		qdf_mem_free(mlm_reassoc_req);
-		ret_code = eSIR_SME_REFUSED;
-		goto end;
-	}
-
-	return;
-end:
-	if (reassoc_req) {
-		qdf_mem_free(reassoc_req);
-		if (session_entry)
-			session_entry->pLimReAssocReq = NULL;
-	}
-
-	if (session_entry)
-		/*
-		 * error occurred after we determined the session so
-		 * extract session id from there, otherwise we'll use
-		 * the value already extracted from the message
-		 */
-		vdev_id = session_entry->vdev_id;
-
-	/*
-	 * Send Reassoc failure response to host
-	 * (note session_entry may be NULL, but that's OK)
-	 */
-	lim_send_sme_join_reassoc_rsp(mac_ctx, eWNI_SME_REASSOC_RSP,
-				      ret_code, STATUS_UNSPECIFIED_FAILURE,
-				      session_entry, vdev_id);
-}
-#endif
 
 bool send_disassoc_frame = 1;
 /**
@@ -6951,41 +6391,6 @@ static inline void lim_send_roam_set_pcl(struct mac_context *mac_ctx,
 }
 #endif
 
-#ifndef FEATURE_CM_ENABLE
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-/**
- * lim_process_roam_invoke() - process the Roam Invoke req
- * @mac_ctx: Pointer to Global MAC structure
- * @msg_buf: Pointer to the SME message buffer
- *
- * This function is called by limProcessMessageQueue(). This function sends the
- * ROAM_INVOKE command to WMA.
- *
- * Return: None
- */
-static void lim_process_roam_invoke(struct mac_context *mac_ctx,
-				    uint32_t *msg_buf)
-{
-	struct scheduler_msg msg = {0};
-	QDF_STATUS status;
-
-	msg.type = SIR_HAL_ROAM_INVOKE;
-	msg.bodyptr = msg_buf;
-	msg.reserved = 0;
-
-	status = wma_post_ctrl_msg(mac_ctx, &msg);
-	if (QDF_STATUS_SUCCESS != status)
-		pe_err("Not able to post SIR_HAL_ROAM_INVOKE to WMA");
-}
-#else
-static void lim_process_roam_invoke(struct mac_context *mac_ctx,
-				    uint32_t *msg_buf)
-{
-	qdf_mem_free(msg_buf);
-}
-#endif
-#endif
-
 static void lim_handle_update_ssid_hidden(struct mac_context *mac_ctx,
 				struct pe_session *session, uint8_t ssid_hidden)
 {
@@ -7927,14 +7332,6 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 	case eWNI_SME_START_BSS_REQ:
 		bufConsumed = __lim_process_sme_start_bss_req(mac, pMsg);
 		break;
-#ifndef FEATURE_CM_ENABLE
-	case eWNI_SME_JOIN_REQ:
-		__lim_process_sme_join_req(mac, msg_buf);
-		break;
-	case eWNI_SME_REASSOC_REQ:
-		__lim_process_sme_reassoc_req(mac, msg_buf);
-		break;
-#endif
 	case eWNI_SME_DISASSOC_REQ:
 		lim_process_sme_disassoc_req(mac, pMsg);
 		break;
@@ -7996,12 +7393,6 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 		lim_send_roam_set_pcl(mac, (struct set_pcl_req *)msg_buf);
 		bufConsumed = false;
 		break;
-#ifndef FEATURE_CM_ENABLE
-	case eWNI_SME_ROAM_INVOKE:
-		lim_process_roam_invoke(mac, msg_buf);
-		bufConsumed = false;
-		break;
-#endif
 	case eWNI_SME_CHNG_MCC_BEACON_INTERVAL:
 		/* Update the beaconInterval */
 		__lim_process_sme_change_bi(mac, msg_buf);
@@ -8017,15 +7408,6 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 	case eWNI_SME_BEACON_REPORT_RESP_XMIT_IND:
 		__lim_process_report_message(mac, pMsg);
 		break;
-
-#ifndef FEATURE_CM_ENABLE
-	case eWNI_SME_FT_PRE_AUTH_REQ:
-		bufConsumed = lim_process_ft_pre_auth_req(
-					mac, (tpSirFTPreAuthReq)pMsg->bodyptr);
-		break;
-#else
-	/* handle new command */
-#endif
 	case eWNI_SME_FT_AGGR_QOS_REQ:
 		lim_process_ft_aggr_qos_req(mac, msg_buf);
 		break;
@@ -9146,6 +8528,10 @@ static void lim_process_set_ie_req(struct mac_context *mac_ctx, uint32_t *msg_bu
 {
 	struct send_extcap_ie *msg;
 	QDF_STATUS status;
+	tDot11fIEExtCap extra_ext_cap = {0};
+	struct pe_session *pe_session;
+	uint8_t *add_ie = NULL;
+	uint16_t add_ie_len, vdev_id;
 
 	if (!msg_buf) {
 		pe_err("Buffer is Pointing to NULL");
@@ -9153,10 +8539,43 @@ static void lim_process_set_ie_req(struct mac_context *mac_ctx, uint32_t *msg_bu
 	}
 
 	msg = (struct send_extcap_ie *)msg_buf;
-	status = lim_send_ext_cap_ie(mac_ctx, msg->session_id, NULL, false);
-	if (QDF_STATUS_SUCCESS != status)
-		pe_err("Unable to send ExtCap to FW");
+	vdev_id = msg->session_id;
 
+	pe_session = pe_find_session_by_vdev_id(mac_ctx, vdev_id);
+	if (pe_session) {
+		if (!pe_session->lim_join_req ||
+		    !pe_session->lim_join_req->addIEAssoc.length)
+			goto send_ie;
+
+		add_ie_len = pe_session->lim_join_req->addIEAssoc.length;
+		add_ie = qdf_mem_malloc(add_ie_len);
+		if (!add_ie)
+			goto send_ie;
+
+		qdf_mem_copy(add_ie,
+			     pe_session->lim_join_req->addIEAssoc.addIEdata,
+			     add_ie_len);
+
+		status = lim_strip_extcap_update_struct(mac_ctx, add_ie,
+							&add_ie_len,
+							&extra_ext_cap);
+		if (QDF_IS_STATUS_SUCCESS(status)) {
+			struct s_ext_cap *p_ext_cap =
+				(struct s_ext_cap *)extra_ext_cap.bytes;
+			if (p_ext_cap->interworking_service)
+				p_ext_cap->qos_map = 1;
+
+			extra_ext_cap.num_bytes =
+				lim_compute_ext_cap_ie_length(&extra_ext_cap);
+		}
+		qdf_mem_free(add_ie);
+	}
+
+send_ie:
+	status = lim_send_ext_cap_ie(mac_ctx, msg->session_id, &extra_ext_cap,
+				     true);
+	if (QDF_IS_STATUS_ERROR(status))
+		pe_err("Unable to send ExtCap to FW");
 }
 
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR

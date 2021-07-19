@@ -419,22 +419,22 @@ bool wlansap_is_channel_in_nol_list(struct sap_context *sap_ctx,
 }
 
 static QDF_STATUS wlansap_mark_leaking_channel(struct wlan_objmgr_pdev *pdev,
-		uint8_t *leakage_adjusted_lst,
+		uint16_t *leakage_adjusted_lst,
 		uint8_t chan_bw)
 {
 
-	return utils_dfs_mark_leaking_ch(pdev, chan_bw, 1,
-			leakage_adjusted_lst);
+	return utils_dfs_mark_leaking_chan_for_freq(pdev, chan_bw, 1,
+						    leakage_adjusted_lst);
 }
 
 bool wlansap_is_channel_leaking_in_nol(struct sap_context *sap_ctx,
-				       uint8_t channel,
+				       uint16_t chan_freq,
 				       uint8_t chan_bw)
 {
 	struct mac_context *mac_ctx;
-	uint8_t leakage_adjusted_lst[1];
+	uint16_t leakage_adjusted_lst[1];
 
-	leakage_adjusted_lst[0] = channel;
+	leakage_adjusted_lst[0] = chan_freq;
 	mac_ctx = sap_get_mac_context();
 	if (!mac_ctx) {
 		sap_err("Invalid MAC context");

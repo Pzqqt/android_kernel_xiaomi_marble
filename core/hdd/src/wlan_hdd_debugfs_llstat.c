@@ -236,8 +236,8 @@ void hdd_debugfs_process_radio_stats(struct hdd_adapter *adapter,
 
 	buffer = ll_stats.result;
 	buffer += ll_stats.len;
-	len = scnprintf(buffer, DEBUGFS_LLSTATS_BUF_SIZE,
-			 "\n\n===LL_STATS_RADIO: number of radios: %u===",
+	len = scnprintf(buffer, DEBUGFS_LLSTATS_BUF_SIZE - ll_stats.len,
+			"\n\n===LL_STATS_RADIO: number of radios: %u===",
 			  num_radio);
 
 	for (i = 0; i < num_radio; i++) {

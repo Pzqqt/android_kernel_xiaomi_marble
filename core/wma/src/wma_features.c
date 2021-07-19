@@ -78,6 +78,12 @@
  */
 #define WMA_SET_VDEV_IE_SOURCE_HOST 0x0
 
+/*
+ * Max AMPDU Tx Aggr supported size
+ */
+#define ADDBA_TXAGGR_SIZE_HELIUM 64
+#define ADDBA_TXAGGR_SIZE_LITHIUM 256
+
 static bool is_wakeup_event_console_logs_enabled = false;
 
 void wma_set_wakeup_logs_to_console(bool value)
@@ -1550,6 +1556,8 @@ static const uint8_t *wma_wow_wake_reason_str(A_INT32 wake_reason)
 		return "GENERIC_WAKE";
 	case WOW_REASON_TWT:
 		return "TWT Event";
+	case WOW_REASON_DCS_INT_DET:
+		return "DCS_INT_DET";
 	default:
 		return "unknown";
 	}
@@ -1965,7 +1973,7 @@ wma_wow_get_pkt_proto_subtype(uint8_t *data, uint32_t len)
 				return QDF_PROTO_IPV4_UDP;
 
 			if (!qdf_nbuf_data_is_ipv4_dhcp_pkt(data))
-				return QDF_PROTO_INVALID;
+				return QDF_PROTO_IPV4_UDP;
 
 			if (len < WMA_DHCP_SUBTYPE_GET_MIN_LEN)
 				return QDF_PROTO_INVALID;
@@ -4094,20 +4102,26 @@ QDF_STATUS wma_set_tx_rx_aggr_size(uint8_t vdev_id,
 		WMITLV_GET_STRUCT_TLVLEN(
 			wmi_vdev_set_custom_aggr_size_cmd_fixed_param));
 
+	if (wmi_service_enabled(wma_handle->wmi_handle,
+				wmi_service_ampdu_tx_buf_size_256_support)) {
+		cmd->enable_bitmap |= (0x1 << 6);
+		if (!(tx_size <= ADDBA_TXAGGR_SIZE_LITHIUM)) {
+			wma_err("Invalid AMPDU Size");
+			return QDF_STATUS_E_INVAL;
+		}
+	} else if (tx_size == ADDBA_TXAGGR_SIZE_LITHIUM) {
+		tx_size = ADDBA_TXAGGR_SIZE_HELIUM;
+	} else if (!(tx_size <= ADDBA_TXAGGR_SIZE_HELIUM)) {
+		wma_err("Invalid AMPDU Size");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	cmd->vdev_id = vdev_id;
 	cmd->tx_aggr_size = tx_size;
 	cmd->rx_aggr_size = rx_size;
 	/* bit 2 (aggr_type): TX Aggregation Type (0=A-MPDU, 1=A-MSDU) */
 	if (aggr_type == WMI_VDEV_CUSTOM_AGGR_TYPE_AMSDU)
 		cmd->enable_bitmap |= 0x04;
-	/* Set bit3(tx_aggr_size_disable) if tx_aggr_size is invalid */
-	if (tx_size == 0)
-		cmd->enable_bitmap |= (0x1 << 3);
-	/* Set bit4(rx_aggr_size_disable) if rx_aggr_size is invalid */
-	if (rx_size == 0)
-		cmd->enable_bitmap |= (0x1 << 4);
-
-	cmd->enable_bitmap |= (0x1 << 6);
 
 	wma_debug("tx aggr: %d rx aggr: %d vdev: %d enable_bitmap %d",
 		 cmd->tx_aggr_size, cmd->rx_aggr_size, cmd->vdev_id,
@@ -4166,13 +4180,26 @@ QDF_STATUS wma_set_tx_rx_aggr_size_per_ac(WMA_HANDLE handle,
 		cmd->vdev_id = vdev_id;
 		cmd->rx_aggr_size = qos_aggr->rx_aggregation_size;
 		cmd->tx_aggr_size = tx_aggr_size[queue_num];
+
+		if (wmi_service_enabled(wma_handle->wmi_handle,
+					wmi_service_ampdu_tx_buf_size_256_support)) {
+			cmd->enable_bitmap |= (0x1 << 6);
+			if (!(tx_aggr_size[queue_num] <= ADDBA_TXAGGR_SIZE_LITHIUM)) {
+				wma_err("Invalid AMPDU Size");
+				return QDF_STATUS_E_INVAL;
+			}
+		} else if (tx_aggr_size[queue_num] == ADDBA_TXAGGR_SIZE_LITHIUM) {
+			tx_aggr_size[queue_num] = ADDBA_TXAGGR_SIZE_HELIUM;
+		} else if (!(tx_aggr_size[queue_num] <= ADDBA_TXAGGR_SIZE_HELIUM)) {
+			wma_err("Invalid AMPDU Size");
+			return QDF_STATUS_E_INVAL;
+		}
+
 		/* bit 5: tx_ac_enable, if set, ac bitmap is valid. */
-		cmd->enable_bitmap = 0x20 | queue_num;
+		cmd->enable_bitmap |= 0x20 | queue_num;
 		/* bit 2 (aggr_type): TX Aggregation Type (0=A-MPDU, 1=A-MSDU) */
 		if (aggr_type == WMI_VDEV_CUSTOM_AGGR_TYPE_AMSDU)
 			cmd->enable_bitmap |= 0x04;
-
-		cmd->enable_bitmap |= (0x1 << 6);
 
 		wma_debug("queue_num: %d, tx aggr: %d rx aggr: %d vdev: %d, bitmap: %d",
 			 queue_num, cmd->tx_aggr_size,
@@ -4232,6 +4259,35 @@ static QDF_STATUS wma_set_sw_retry_by_qos(
 	if (ret) {
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wma_set_vdev_sw_retry_th(uint8_t vdev_id, uint8_t sw_retry_count,
+				    wmi_vdev_custom_sw_retry_type_t retry_type)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tp_wma_handle wma_handle;
+	uint32_t queue_num;
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle)
+		return QDF_STATUS_E_FAILURE;
+
+
+	for (queue_num = 0; queue_num < WMI_AC_MAX; queue_num++) {
+		if (sw_retry_count == 0)
+			continue;
+
+		status = wma_set_sw_retry_by_qos(wma_handle,
+						 vdev_id,
+						 retry_type,
+						 queue_num,
+						 sw_retry_count);
+
+		if (QDF_IS_STATUS_ERROR(status))
+			return status;
 	}
 
 	return QDF_STATUS_SUCCESS;

@@ -5346,7 +5346,7 @@ returnAfterError:
 QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 		tSirMacAddr peer_mac, uint16_t tid,
 		struct pe_session *session, uint8_t addba_extn_present,
-		uint8_t amsdu_support, uint8_t is_wep)
+		uint8_t amsdu_support, uint8_t is_wep, uint16_t calc_buff_size)
 {
 
 	tDot11faddba_rsp frm;
@@ -5390,7 +5390,9 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 	if (sta_ds && lim_is_session_he_capable(session))
 		he_cap = lim_is_sta_he_capable(sta_ds);
 
-	if (he_cap)
+	if (sta_ds && sta_ds->staType == STA_ENTRY_NDI_PEER)
+		frm.addba_param_set.buff_size = calc_buff_size;
+	else if (he_cap)
 		frm.addba_param_set.buff_size = MAX_BA_BUFF_SIZE;
 	else
 		frm.addba_param_set.buff_size = SIR_MAC_BA_DEFAULT_BUFF_SIZE;

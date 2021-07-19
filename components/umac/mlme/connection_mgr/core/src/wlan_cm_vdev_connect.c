@@ -78,7 +78,6 @@ void cm_update_hlp_info(struct wlan_objmgr_vdev *vdev,
 }
 #endif
 
-#ifdef FEATURE_CM_ENABLE
 static bool wlan_cm_is_vdev_id_roam_reassoc_state(struct wlan_objmgr_vdev *vdev)
 {
 	return wlan_cm_is_vdev_roam_reassoc_state(vdev);
@@ -91,19 +90,6 @@ wlan_cm_disconnect_on_wait_key_timeout(struct wlan_objmgr_psoc *psoc,
 	cm_disconnect(psoc, vdev->vdev_objmgr.vdev_id, CM_MLME_DISCONNECT,
 		      REASON_KEY_TIMEOUT, NULL);
 }
-#else
-static bool wlan_cm_is_vdev_id_roam_reassoc_state(struct wlan_objmgr_vdev *vdev)
-{
-	return cm_csr_is_handoff_in_progress(vdev->vdev_objmgr.vdev_id);
-}
-
-static void
-wlan_cm_disconnect_on_wait_key_timeout(struct wlan_objmgr_psoc *psoc,
-				       struct wlan_objmgr_vdev *vdev)
-{
-	cm_csr_disconnect_on_wait_key_timeout(vdev->vdev_objmgr.vdev_id);
-}
-#endif
 
 void cm_wait_for_key_time_out_handler(void *data)
 {
@@ -255,17 +241,22 @@ end:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 }
 
-int8_t cm_get_rssi_by_bssid(struct wlan_objmgr_pdev *pdev,
-			    struct qdf_mac_addr *bssid)
+QDF_STATUS cm_get_rssi_snr_by_bssid(struct wlan_objmgr_pdev *pdev,
+				    struct qdf_mac_addr *bssid,
+				    int8_t *rssi, int8_t *snr)
 {
 	struct scan_filter *scan_filter;
-	int8_t rssi = 0;
 	qdf_list_t *list = NULL;
 	struct scan_cache_node *first_node = NULL;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
+	if (snr)
+		*snr = 0;
+	if (rssi)
+		*rssi = 0;
 	scan_filter = qdf_mem_malloc(sizeof(*scan_filter));
 	if (!scan_filter)
-		return rssi;
+		return QDF_STATUS_E_NOMEM;
 
 	scan_filter->num_of_bssid = 1;
 	qdf_mem_copy(scan_filter->bssid_list[0].bytes,
@@ -276,17 +267,23 @@ int8_t cm_get_rssi_by_bssid(struct wlan_objmgr_pdev *pdev,
 
 	if (!list || (list && !qdf_list_size(list))) {
 		mlme_debug("scan list empty");
+		status = QDF_STATUS_E_NULL_VALUE;
 		goto error;
 	}
 
 	qdf_list_peek_front(list, (qdf_list_node_t **) &first_node);
-	if (first_node && first_node->entry)
-		rssi = first_node->entry->rssi_raw;
+	if (first_node && first_node->entry) {
+		if (rssi)
+			*rssi = first_node->entry->rssi_raw;
+		if (snr)
+			*snr = first_node->entry->snr;
+	}
+
 error:
 	if (list)
 		wlan_scan_purge_results(list);
 
-	return rssi;
+	return status;
 }
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
@@ -702,7 +699,7 @@ void cm_connect_info(struct wlan_objmgr_vdev *vdev, bool connect_success,
 		conn_stats.ssid_len = WLAN_SSID_MAX_LEN;
 	qdf_mem_copy(conn_stats.ssid, ssid->ssid, conn_stats.ssid_len);
 
-	conn_stats.rssi = cm_get_rssi_by_bssid(pdev, bssid);
+	cm_get_rssi_snr_by_bssid(pdev, bssid, &conn_stats.rssi, NULL);
 	conn_stats.est_link_speed = 0;
 
 	des_chan = wlan_vdev_mlme_get_des_chan(vdev);
@@ -899,7 +896,7 @@ void cm_get_sta_cxn_info(struct wlan_objmgr_vdev *vdev,
 			     "\n\tssid: %.*s", ssid.length,
 			     ssid.ssid);
 
-	rssi = cm_get_rssi_by_bssid(pdev, &bss_peer_mac);
+	cm_get_rssi_snr_by_bssid(pdev, &bss_peer_mac, &rssi, NULL);
 	len += qdf_scnprintf(buf + len, buf_sz - len,
 			     "\n\trssi: %d", rssi);
 
@@ -969,7 +966,6 @@ void cm_get_sta_cxn_info(struct wlan_objmgr_vdev *vdev,
 #endif
 #endif
 
-#ifdef FEATURE_CM_ENABLE
 QDF_STATUS cm_connect_start_ind(struct wlan_objmgr_vdev *vdev,
 				struct wlan_cm_connect_req *req)
 {
@@ -1278,6 +1274,7 @@ static void cm_process_connect_complete(struct wlan_objmgr_psoc *psoc,
 	}
 
 	cm_csr_set_joined(vdev_id);
+	cm_csr_send_set_ie(vdev);
 
 	ucast_cipher = wlan_crypto_get_param(vdev,
 					     WLAN_CRYPTO_PARAM_UCAST_CIPHER);
@@ -1331,9 +1328,6 @@ cm_connect_complete_ind(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (op_mode == QDF_STA_MODE)
-		wlan_cm_roam_state_change(pdev, vdev_id, WLAN_ROAM_INIT,
-					  REASON_CONNECT);
 	cm_csr_connect_done_ind(vdev, rsp);
 
 	cm_connect_info(vdev, QDF_IS_STATUS_SUCCESS(rsp->connect_status) ?
@@ -1349,6 +1343,10 @@ cm_connect_complete_ind(struct wlan_objmgr_vdev *vdev,
 					     vdev);
 		wlan_p2p_status_connect(vdev);
 	}
+
+	if (op_mode == QDF_STA_MODE)
+		wlan_cm_roam_state_change(pdev, vdev_id, WLAN_ROAM_INIT,
+					  REASON_CONNECT);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1459,5 +1457,3 @@ bool cm_is_vdevid_active(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 
 	return active;
 }
-
-#endif

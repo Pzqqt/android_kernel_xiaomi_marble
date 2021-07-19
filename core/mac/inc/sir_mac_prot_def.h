@@ -485,7 +485,7 @@ typedef struct sSirMacCapabilityInfo {
 	uint16_t qos:1;
 	uint16_t spectrumMgt:1;
 	uint16_t channelAgility:1;
-	uint16_t pbcc:1;
+	uint16_t criticalUpdateFlag:1;
 	uint16_t shortPreamble:1;
 	uint16_t privacy:1;
 	uint16_t cfPollReq:1;
@@ -499,7 +499,7 @@ typedef struct sSirMacCapabilityInfo {
 	uint16_t cfPollReq:1;
 	uint16_t privacy:1;
 	uint16_t shortPreamble:1;
-	uint16_t pbcc:1;
+	uint16_t criticalUpdateFlag:1;
 	uint16_t channelAgility:1;
 	uint16_t spectrumMgt:1;
 	uint16_t qos:1;

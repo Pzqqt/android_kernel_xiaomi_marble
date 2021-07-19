@@ -59,12 +59,14 @@
  * @pmo_vdev_param_listen_interval: vdev listen interval param id
  * @pmo_vdev_param_dtim_policy: vdev param dtim policy
  * @pmo_vdev_param_forced_dtim_count: vdev param forced dtim count
+ * @pmo_vdev_param_moddtim: vdev param moddtim
  * @pmo_vdev_max_param: Max vdev param id
  */
 enum pmo_vdev_param_id {
 	pmo_vdev_param_listen_interval = 0,
 	pmo_vdev_param_dtim_policy,
 	pmo_vdev_param_forced_dtim_count,
+	pmo_vdev_param_moddtim,
 	pmo_vdev_max_param
 };
 
@@ -346,6 +348,7 @@ enum pmo_gpio_wakeup_mode {
  * @gpio_wakeup_mode: gpio wakeup mode
  * @igmp_version_support: igmp version support
  * @igmp_offload_enable: enable/disable igmp offload feature to fw
+ * @disconnect_sap_tdls_in_wow: sap/p2p_go disconnect or teardown tdls link
  */
 struct pmo_psoc_cfg {
 	bool ptrn_match_enable_all_vdev;
@@ -422,6 +425,7 @@ struct pmo_psoc_cfg {
 	uint32_t igmp_version_support;
 	bool igmp_offload_enable;
 #endif
+	bool disconnect_sap_tdls_in_wow;
 };
 
 /**

@@ -963,3 +963,32 @@ void ucfg_pmo_notify_system_resume(struct wlan_objmgr_psoc *psoc)
 	pmo_core_system_resume(psoc);
 }
 #endif
+
+bool ucfg_pmo_get_moddtim_user_enable(struct wlan_objmgr_vdev *vdev)
+{
+	return pmo_core_vdev_get_moddtim_user_enabled(vdev);
+}
+
+void ucfg_pmo_set_moddtim_user_enable(struct wlan_objmgr_vdev *vdev,
+				      bool value)
+{
+	pmo_core_vdev_set_moddtim_user_enabled(vdev, value);
+}
+
+bool ucfg_pmo_get_moddtim_user_active(struct wlan_objmgr_vdev *vdev)
+{
+	return pmo_core_vdev_get_moddtim_user_active(vdev);
+}
+
+uint32_t ucfg_pmo_get_moddtim_user(struct wlan_objmgr_vdev *vdev)
+{
+	return pmo_core_vdev_get_moddtim_user(vdev);
+}
+
+bool
+ucfg_pmo_get_disconnect_sap_tdls_in_wow(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.disconnect_sap_tdls_in_wow;
+}

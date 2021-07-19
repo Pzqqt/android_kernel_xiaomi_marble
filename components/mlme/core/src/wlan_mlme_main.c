@@ -91,44 +91,6 @@ struct wlan_mlme_nss_chains *mlme_get_ini_vdev_config(
 	return &mlme_priv->ini_cfg;
 }
 
-#ifndef FEATURE_CM_ENABLE
-struct mlme_roam_after_data_stall *
-mlme_get_roam_invoke_params(struct wlan_objmgr_vdev *vdev)
-{
-	struct mlme_legacy_priv *mlme_priv;
-
-	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
-	if (!mlme_priv) {
-		mlme_legacy_err("vdev legacy private object is NULL");
-		return NULL;
-	}
-
-	return &mlme_priv->roam_invoke_params;
-}
-
-bool mlme_is_roam_invoke_in_progress(struct wlan_objmgr_psoc *psoc,
-				     uint8_t vdev_id)
-{
-	struct mlme_roam_after_data_stall *vdev_roam_params;
-	struct wlan_objmgr_vdev *vdev;
-
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
-						    WLAN_MLME_NB_ID);
-	if (!vdev)
-		return false;
-
-	vdev_roam_params = mlme_get_roam_invoke_params(vdev);
-	if (!vdev_roam_params) {
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
-		return false;
-	}
-
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
-
-	return vdev_roam_params->roam_invoke_in_progress;
-}
-#endif
-
 uint8_t *mlme_get_dynamic_oce_flags(struct wlan_objmgr_vdev *vdev)
 {
 	struct mlme_legacy_priv *mlme_priv;
@@ -505,7 +467,8 @@ static void mlme_init_edca_ani_cfg(struct wlan_mlme_edca_params *edca_params)
 			      &edca_params->ani_acvo_b.len);
 }
 
-static void mlme_init_edca_wme_cfg(struct wlan_mlme_edca_params *edca_params)
+static void mlme_init_edca_wme_cfg(struct wlan_objmgr_psoc *psoc,
+				   struct wlan_mlme_edca_params *edca_params)
 {
 	/* initialize the max allowed array length for read/write */
 	edca_params->wme_acbk_l.max_len = CFG_EDCA_DATA_LEN;
@@ -519,22 +482,22 @@ static void mlme_init_edca_wme_cfg(struct wlan_mlme_edca_params *edca_params)
 	edca_params->wme_acvo_b.max_len = CFG_EDCA_DATA_LEN;
 
 	/* parse the WME edca parameters from cfg string for BK,BE,VI,VO ac */
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_WME_ACBK_LOCAL),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_WME_ACBK_LOCAL),
 			      edca_params->wme_acbk_l.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->wme_acbk_l.len);
 
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_WME_ACBE_LOCAL),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_WME_ACBE_LOCAL),
 			      edca_params->wme_acbe_l.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->wme_acbe_l.len);
 
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_WME_ACVI_LOCAL),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_WME_ACVI_LOCAL),
 			      edca_params->wme_acvi_l.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->wme_acvi_l.len);
 
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_WME_ACVO_LOCAL),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_WME_ACVO_LOCAL),
 			      edca_params->wme_acvo_l.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->wme_acvo_l.len);
@@ -560,7 +523,8 @@ static void mlme_init_edca_wme_cfg(struct wlan_mlme_edca_params *edca_params)
 			      &edca_params->wme_acvo_b.len);
 }
 
-static void mlme_init_edca_etsi_cfg(struct wlan_mlme_edca_params *edca_params)
+static void mlme_init_edca_etsi_cfg(struct wlan_objmgr_psoc *psoc,
+				    struct wlan_mlme_edca_params *edca_params)
 {
 	/* initialize the max allowed array length for read/write */
 	edca_params->etsi_acbe_l.max_len = CFG_EDCA_DATA_LEN;
@@ -574,22 +538,22 @@ static void mlme_init_edca_etsi_cfg(struct wlan_mlme_edca_params *edca_params)
 	edca_params->etsi_acvo_b.max_len = CFG_EDCA_DATA_LEN;
 
 	/* parse the ETSI edca parameters from cfg string for BK,BE,VI,VO ac */
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ETSI_ACBK_LOCAL),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_ETSI_ACBK_LOCAL),
 			      edca_params->etsi_acbk_l.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->etsi_acbk_l.len);
 
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ETSI_ACBE_LOCAL),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_ETSI_ACBE_LOCAL),
 			      edca_params->etsi_acbe_l.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->etsi_acbe_l.len);
 
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ETSI_ACVI_LOCAL),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_ETSI_ACVI_LOCAL),
 			      edca_params->etsi_acvi_l.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->etsi_acvi_l.len);
 
-	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ETSI_ACVO_LOCAL),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_EDCA_ETSI_ACVO_LOCAL),
 			      edca_params->etsi_acvo_l.data,
 			      CFG_EDCA_DATA_LEN,
 			      &edca_params->etsi_acvo_l.len);
@@ -657,8 +621,8 @@ static void mlme_init_edca_params(struct wlan_objmgr_psoc *psoc,
 				  struct wlan_mlme_edca_params *edca_params)
 {
 	mlme_init_edca_ani_cfg(edca_params);
-	mlme_init_edca_wme_cfg(edca_params);
-	mlme_init_edca_etsi_cfg(edca_params);
+	mlme_init_edca_wme_cfg(psoc, edca_params);
+	mlme_init_edca_etsi_cfg(psoc, edca_params);
 	mlme_init_qos_edca_params(psoc, edca_params);
 }
 
@@ -765,9 +729,8 @@ static void mlme_init_ht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_SHORT_SLOT_TIME_ENABLED);
 }
 
-#ifdef TX_AGGREGATION_SIZE_ENABLE
-static void mlme_init_tx_aggregation_size(struct wlan_objmgr_psoc *psoc,
-					  struct wlan_mlme_qos *qos_aggr_params)
+static void mlme_init_qos_cfg(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_mlme_qos *qos_aggr_params)
 {
 	qos_aggr_params->tx_aggregation_size =
 				cfg_get(psoc, CFG_TX_AGGREGATION_SIZE);
@@ -779,23 +742,6 @@ static void mlme_init_tx_aggregation_size(struct wlan_objmgr_psoc *psoc,
 				cfg_get(psoc, CFG_TX_AGGREGATION_SIZEVI);
 	qos_aggr_params->tx_aggregation_size_vo =
 				cfg_get(psoc, CFG_TX_AGGREGATION_SIZEVO);
-}
-#else
-static void mlme_init_tx_aggregation_size(struct wlan_objmgr_psoc *psoc,
-					  struct wlan_mlme_qos *qos_aggr_params)
-{
-	qos_aggr_params->tx_aggregation_size = 0;
-	qos_aggr_params->tx_aggregation_size_be = 0;
-	qos_aggr_params->tx_aggregation_size_bk = 0;
-	qos_aggr_params->tx_aggregation_size_vi = 0;
-	qos_aggr_params->tx_aggregation_size_vo = 0;
-}
-#endif
-
-static void mlme_init_qos_cfg(struct wlan_objmgr_psoc *psoc,
-			      struct wlan_mlme_qos *qos_aggr_params)
-{
-	mlme_init_tx_aggregation_size(psoc, qos_aggr_params);
 	qos_aggr_params->rx_aggregation_size =
 				cfg_get(psoc, CFG_RX_AGGREGATION_SIZE);
 	qos_aggr_params->tx_aggr_sw_retry_threshold_be =
@@ -1370,6 +1316,8 @@ static void mlme_init_obss_ht40_cfg(struct wlan_objmgr_psoc *psoc,
 		(bool)cfg_default(CFG_OBSS_DETECTION_OFFLOAD);
 	obss_ht40->obss_color_collision_offload_enabled =
 		(bool)cfg_default(CFG_OBSS_COLOR_COLLISION_OFFLOAD);
+	obss_ht40->bss_color_collision_det_sta =
+		cfg_get(psoc, CFG_BSS_CLR_COLLISION_DETCN_STA);
 }
 
 static void mlme_init_threshold_cfg(struct wlan_objmgr_psoc *psoc,
@@ -2808,60 +2756,6 @@ bool mlme_get_peer_pmf_status(struct wlan_objmgr_peer *peer)
 	}
 
 	return peer_priv->is_pmf_enabled;
-}
-
-void mlme_set_discon_reason_n_from_ap(struct wlan_objmgr_psoc *psoc,
-				      uint8_t vdev_id, bool from_ap,
-				      uint32_t reason_code)
-{
-	struct wlan_objmgr_vdev *vdev;
-	struct mlme_legacy_priv *mlme_priv;
-
-	if (!psoc)
-		return;
-
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
-						    WLAN_LEGACY_MAC_ID);
-	if (!vdev)
-		return;
-	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
-	if (!mlme_priv) {
-		mlme_legacy_err("vdev legacy private object is NULL");
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
-		return;
-	}
-
-	mlme_priv->disconnect_info.from_ap = from_ap;
-	mlme_priv->disconnect_info.discon_reason = reason_code;
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
-}
-
-void mlme_get_discon_reason_n_from_ap(struct wlan_objmgr_psoc *psoc,
-				      uint8_t vdev_id, bool *from_ap,
-				      uint32_t *reason_code)
-{
-	struct wlan_objmgr_vdev *vdev;
-	struct mlme_legacy_priv *mlme_priv;
-
-	if (!psoc)
-		return;
-
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
-						    WLAN_LEGACY_MAC_ID);
-	if (!vdev)
-		return;
-	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
-	if (!mlme_priv) {
-		mlme_legacy_err("vdev legacy private object is NULL");
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
-		return;
-	}
-
-	*from_ap = mlme_priv->disconnect_info.from_ap;
-	*reason_code = mlme_priv->disconnect_info.discon_reason;
-	mlme_priv->disconnect_info.from_ap = false;
-	mlme_priv->disconnect_info.discon_reason = 0;
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 }
 
 enum QDF_OPMODE wlan_get_opmode_from_vdev_id(struct wlan_objmgr_pdev *pdev,

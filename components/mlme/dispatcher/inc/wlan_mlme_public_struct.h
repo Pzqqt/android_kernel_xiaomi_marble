@@ -264,28 +264,6 @@ struct wlan_mlme_dot11_mode {
 	uint32_t vdev_type_dot11_mode;
 };
 
-#ifndef FEATURE_CM_ENABLE
-/**
- * enum roam_invoke_source_entity - Source of invoking roam invoke command.
- * @USERSPACE_INITIATED: Userspace (supplicant)
- * @CONNECTION_MGR_INITIATED: connection mgr initiated.
- */
-enum roam_invoke_source_entity {
-	USERSPACE_INITIATED,
-	CONNECTION_MGR_INITIATED,
-};
-
-/**
- * struct mlme_roam_after_data_stall - roam invoke entity params
- * @roam_invoke_in_progress: is roaming already in progress.
- * @source: source of the roam invoke command.
- */
-struct mlme_roam_after_data_stall {
-	bool roam_invoke_in_progress;
-	enum roam_invoke_source_entity source;
-};
-#endif
-
 /**
  * struct mlme_edca_ac_vi - cwmin, cwmax and  aifs value for edca_ac_vi
  *
@@ -1504,6 +1482,7 @@ struct wlan_mlme_cfg_twt {
  * @is_override_ht20_40_24g: use channel bonding in 2.4 GHz
  * @obss_detection_offload_enabled:       Enable OBSS detection offload
  * @obss_color_collision_offload_enabled: Enable obss color collision
+ * @bss_color_collision_det_sta: STA BSS color collision detection offload
  */
 struct wlan_mlme_obss_ht40 {
 	uint32_t active_dwelltime;
@@ -1516,6 +1495,7 @@ struct wlan_mlme_obss_ht40 {
 	bool is_override_ht20_40_24g;
 	bool obss_detection_offload_enabled;
 	bool obss_color_collision_offload_enabled;
+	bool bss_color_collision_det_sta;
 };
 
 /**

@@ -32,7 +32,6 @@
 #include "wlan_serialization_api.h"
 #include "wlan_cm_roam_api.h"
 #include <wlan_cfg80211_scan.h>
-#ifdef FEATURE_CM_ENABLE
 #include "connection_mgr/core/src/wlan_cm_roam.h"
 #include "connection_mgr/core/src/wlan_cm_sm.h"
 #include "connection_mgr/core/src/wlan_cm_main_api.h"
@@ -334,4 +333,3 @@ rel_ref:
 
 	return status;
 }
-#endif /*FEATURE_CM_ENABLE */

@@ -36,6 +36,7 @@
 #include "sap_api.h"
 #include "wlan_hdd_hostapd.h"
 #include "osif_psoc_sync.h"
+#include "sap_internal.h"
 
 #define REG_RULE_2412_2462    REG_RULE(2412-10, 2462+10, 40, 0, 20, 0)
 
@@ -122,6 +123,7 @@ hdd_world_regrules_67_68_6A_6C = {
 	}
 };
 
+#define OSIF_PSOC_SYNC_OP_WAIT_TIME 500
 /**
  * hdd_get_world_regrules() - get the appropriate world regrules
  * @reg: regulatory data
@@ -1105,6 +1107,30 @@ void fill_wiphy_channel_320mhz(struct ieee80211_channel *wiphy_chan,
 }
 #endif
 
+static void hdd_fill_dfs_cac_duration(struct ieee80211_channel *wiphy_chan)
+{
+	enum dfs_reg dfs_region;
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	if (wlan_hdd_validate_context(hdd_ctx))
+		return;
+
+	wlan_reg_get_dfs_region(hdd_ctx->pdev, &dfs_region);
+
+	if (dfs_region != DFS_ETSI_REGION) {
+		wiphy_chan->dfs_cac_ms = DEFAULT_CAC_TIMEOUT;
+		return;
+	}
+	if (IS_CH_BONDING_WITH_WEATHER_CH(wlan_reg_freq_to_chan(
+						hdd_ctx->pdev,
+						wiphy_chan->center_freq)) ||
+	    IS_ETSI_WEATHER_FREQ(wiphy_chan->center_freq))
+		wiphy_chan->dfs_cac_ms = ETSI_WEATHER_CH_CAC_TIMEOUT;
+
+	else
+		wiphy_chan->dfs_cac_ms = DEFAULT_CAC_TIMEOUT;
+}
+
 static void fill_wiphy_channel(struct ieee80211_channel *wiphy_chan,
 			       struct regulatory_channel *cur_chan)
 {
@@ -1137,6 +1163,8 @@ static void fill_wiphy_channel(struct ieee80211_channel *wiphy_chan,
 	fill_wiphy_channel_320mhz(wiphy_chan, cur_chan->max_bw);
 
 	wiphy_chan->orig_flags = wiphy_chan->flags;
+
+	hdd_fill_dfs_cac_duration(wiphy_chan);
 }
 
 static void fill_wiphy_band_channels(struct wiphy *wiphy,
@@ -1490,18 +1518,9 @@ static void hdd_country_change_update_sta(struct hdd_context *hdd_ctx)
 			phy_changed = (sta_ctx->reg_phymode != csr_phy_mode);
 
 			if (phy_changed || freq_changed) {
-			/* This is temp ifdef will be removed in near future */
-#ifdef FEATURE_CM_ENABLE
 				wlan_hdd_cm_issue_disconnect(adapter,
 							 REASON_UNSPEC_FAILURE,
 							 false);
-#else
-				sme_roam_disconnect(
-					hdd_ctx->mac_handle,
-					adapter->vdev_id,
-					eCSR_DISCONNECT_REASON_UNSPECIFIED,
-					REASON_UNSPEC_FAILURE);
-#endif
 				sta_ctx->reg_phymode = csr_phy_mode;
 			}
 			break;
@@ -1615,6 +1634,11 @@ static void hdd_country_change_update_sap(struct hdd_context *hdd_ctx)
 						     adapter->vdev_id);
 			break;
 		case QDF_SAP_MODE:
+			if (!test_bit(SOFTAP_INIT_DONE,
+				      &adapter->event_flags)) {
+				hdd_info("AP is not started yet");
+				break;
+			}
 			sap_config = &adapter->session.ap.sap_config;
 			reg_phy_mode = csr_convert_to_reg_phy_mode(
 						sap_config->sap_orig_hw_mode,
@@ -1681,8 +1705,16 @@ static void hdd_country_change_work_handle(void *arg)
 		return;
 
 	errno = osif_psoc_sync_op_start(wiphy_dev(hdd_ctx->wiphy), &psoc_sync);
-	if (errno)
+
+	if (errno == -EAGAIN) {
+		qdf_sleep(OSIF_PSOC_SYNC_OP_WAIT_TIME);
+		hdd_debug("rescheduling country change work");
+		qdf_sched_work(0, &hdd_ctx->country_change_work);
 		return;
+	} else if (errno) {
+		hdd_err("can not handle country change %d", errno);
+		return;
+	}
 
 	__hdd_country_change_work_handle(hdd_ctx);
 

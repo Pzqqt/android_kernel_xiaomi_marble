@@ -30,11 +30,8 @@
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_cm_roam_api.h>
 #include "wni_api.h"
-#ifdef FEATURE_CM_ENABLE
 #include "connection_mgr/core/src/wlan_cm_roam.h"
-#endif
 
-#ifdef FEATURE_CM_ENABLE
 QDF_STATUS cm_disconnect_start_ind(struct wlan_objmgr_vdev *vdev,
 				   struct wlan_cm_disconnect_req *req)
 {
@@ -233,7 +230,7 @@ static void cm_clear_pmkid_on_ap_off(struct wlan_objmgr_psoc *psoc,
 	if (!QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_SAE))
 		return;
 
-	cache_rssi = cm_get_rssi_by_bssid(pdev, &req->bssid);
+	cm_get_rssi_snr_by_bssid(pdev, &req->bssid, &cache_rssi, NULL);
 	wlan_cm_roam_cfg_get_value(psoc, req->vdev_id,
 				   NEIGHBOUR_LOOKUP_THRESHOLD, &temp);
 	lookup_threshold = temp.uint_value;
@@ -438,4 +435,3 @@ QDF_STATUS cm_handle_disconnect_resp(struct scheduler_msg *msg)
 
 	return QDF_STATUS_SUCCESS;
 }
-#endif

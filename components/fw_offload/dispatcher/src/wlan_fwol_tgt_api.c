@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -196,12 +196,19 @@ notify_thermal_throttle_handler(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_INVAL;
 	}
 	thermal_cbs = &fwol_obj->thermal_cbs;
-	fwol_obj->thermal_throttle.level = info->level;
-	if (thermal_cbs->notify_thermal_throttle_handler)
-		status = thermal_cbs->notify_thermal_throttle_handler(psoc,
-								      info);
-	else
-		fwol_debug("no thermal throttle handler");
+	fwol_nofl_debug("thermal evt: pdev %d lvl %d", info->pdev_id,
+			info->level);
+	if (info->pdev_id <= fwol_obj->thermal_throttle.pdev_id ||
+	    fwol_obj->thermal_throttle.pdev_id == WLAN_INVALID_PDEV_ID) {
+		fwol_obj->thermal_throttle.level = info->level;
+		fwol_obj->thermal_throttle.pdev_id = info->pdev_id;
+		if (thermal_cbs->notify_thermal_throttle_handler)
+			status =
+			thermal_cbs->notify_thermal_throttle_handler(psoc,
+								     info);
+		else
+			fwol_debug("no thermal throttle handler");
+	}
 
 	return status;
 }

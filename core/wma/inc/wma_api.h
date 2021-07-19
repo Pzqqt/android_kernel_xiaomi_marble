@@ -359,6 +359,19 @@ wma_set_tx_rx_aggr_size_per_ac(WMA_HANDLE wma_handle,
 			       wmi_vdev_custom_aggr_type_t aggr_type);
 
 /**
+ * wma_set_sw_retry_threshold() - set sw retry threshold per vdev
+ * @vdev_id: vdev id
+ * @sw_retry_count: sw retry number
+ * @retry_type: SW vdev retry type
+ *
+ * This function sends WMI command to set the sw retry threshold per vdev.
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS wma_set_vdev_sw_retry_th(uint8_t vdev_id, uint8_t sw_retry_count,
+				    wmi_vdev_custom_sw_retry_type_t retry_type);
+
+/**
  * wma_set_sw_retry_threshold_per_ac() - set sw retry threshold per AC for tx
  * @handle: wma handle
  * @vdev_id: vdev id

@@ -94,7 +94,6 @@ void lim_send_sme_join_reassoc_rsp(struct mac_context *mac_ctx,
 				   struct pe_session *session_entry,
 				   uint8_t vdev_id);
 
-#ifdef FEATURE_CM_ENABLE
 /**
  * lim_cm_send_connect_rsp() - Send Response to Upper Layers
  * @mac_ctx: Pointer to Global MAC structure
@@ -114,7 +113,6 @@ void lim_cm_send_connect_rsp(struct mac_context *mac_ctx,
 			     QDF_STATUS connect_status,
 			     enum wlan_status_code status_code,
 			     bool is_reassoc);
-#endif
 
 /**
  * lim_prepare_disconnect_done_ind() - Prepares the disconnect done ind message

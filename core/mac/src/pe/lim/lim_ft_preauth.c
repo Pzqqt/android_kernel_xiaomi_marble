@@ -568,7 +568,6 @@ void lim_process_ft_preauth_rsp_timeout(struct mac_context *mac_ctx)
 	lim_handle_ft_pre_auth_rsp(mac_ctx, QDF_STATUS_E_FAILURE, NULL, 0, session);
 }
 
-#ifdef FEATURE_CM_ENABLE
 /*
  * lim_cm_post_preauth_rsp() - post preauth response to osif.
  *
@@ -634,7 +633,6 @@ lim_cm_post_preauth_rsp(struct mac_context *mac_ctx, QDF_STATUS status,
 		qdf_mem_free(rsp);
 	}
 }
-#endif
 
 /*
  * lim_post_ft_pre_auth_rsp() - post ft pre auth response to SME.
@@ -655,76 +653,13 @@ void lim_post_ft_pre_auth_rsp(struct mac_context *mac_ctx,
 			      uint16_t auth_rsp_length,
 			      struct pe_session *session)
 {
-#ifndef FEATURE_CM_ENABLE
-	tpSirFTPreAuthRsp ft_pre_auth_rsp;
-	struct scheduler_msg mmh_msg = {0};
-	uint16_t rsp_len = sizeof(tSirFTPreAuthRsp);
-
-	ft_pre_auth_rsp = qdf_mem_malloc(rsp_len);
-	if (!ft_pre_auth_rsp) {
-		QDF_ASSERT(ft_pre_auth_rsp);
-		return;
-	}
-
-	pe_debug("Auth Rsp = %pK", ft_pre_auth_rsp);
-	if (session) {
-		/* Nothing to be done if the session is not in STA mode */
-		if (!LIM_IS_STA_ROLE(session)) {
-			pe_err("session is not in STA mode");
-			qdf_mem_free(ft_pre_auth_rsp);
-			return;
-		}
-		ft_pre_auth_rsp->vdev_id = session->vdev_id;
-		/* The bssid of the AP we are sending Auth1 to. */
-		if (session->ftPEContext.pFTPreAuthReq)
-			sir_copy_mac_addr(ft_pre_auth_rsp->preAuthbssId,
-			    session->ftPEContext.pFTPreAuthReq->preAuthbssId);
-	}
-
-
-	ft_pre_auth_rsp->messageType = eWNI_SME_FT_PRE_AUTH_RSP;
-	ft_pre_auth_rsp->length = (uint16_t) rsp_len;
-	ft_pre_auth_rsp->status = status;
-
-	/* Attach the auth response now back to SME */
-	ft_pre_auth_rsp->ft_ies_length = 0;
-	if ((auth_rsp) && (auth_rsp_length < MAX_FTIE_SIZE)) {
-		/* Only 11r assoc has FT IEs */
-		qdf_mem_copy(ft_pre_auth_rsp->ft_ies,
-			     auth_rsp, auth_rsp_length);
-		ft_pre_auth_rsp->ft_ies_length = auth_rsp_length;
-	}
-
-	if (status != QDF_STATUS_SUCCESS) {
-		/*
-		 * Ensure that on Pre-Auth failure the cached Pre-Auth Req and
-		 * other allocated memory is freed up before returning.
-		 */
-		pe_debug("Pre-Auth Failed, Cleanup!");
-		lim_ft_cleanup(mac_ctx, session);
-	}
-
-	mmh_msg.type = ft_pre_auth_rsp->messageType;
-	mmh_msg.bodyptr = ft_pre_auth_rsp;
-	mmh_msg.bodyval = 0;
-
-	pe_debug("Posted Auth Rsp to SME with status of 0x%x", status);
-
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 	if (status == QDF_STATUS_SUCCESS)
 		lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_PREAUTH_DONE,
 				      session, status, 0);
 #endif
-
-	lim_sys_process_mmh_msg_api(mac_ctx, &mmh_msg);
-#else
-#ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
-	if (status == QDF_STATUS_SUCCESS)
-		lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_PREAUTH_DONE,
-				      session, status, 0);
-#endif
-lim_cm_post_preauth_rsp(mac_ctx, status, auth_rsp, auth_rsp_length, session);
-#endif
+	lim_cm_post_preauth_rsp(mac_ctx, status, auth_rsp, auth_rsp_length,
+				session);
 }
 
 /**

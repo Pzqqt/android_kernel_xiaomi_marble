@@ -25,6 +25,126 @@
 #include <wlan_hdd_dcs.h>
 #include <wlan_hdd_includes.h>
 #include <wlan_dcs_ucfg_api.h>
+#include <wlan_blm_ucfg_api.h>
+#include <wlan_osif_priv.h>
+#include <wlan_objmgr_vdev_obj.h>
+
+/* Time(in milliseconds) before which the AP doesn't expect a connection */
+#define HDD_DCS_AWGN_BSS_RETRY_DELAY (5 * 60 * 1000)
+
+/**
+ * hdd_dcs_add_bssid_to_reject_list() - add bssid to reject list
+ * @pdev: pdev ptr
+ * @bssid: bssid to be added
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+hdd_dcs_add_bssid_to_reject_list(struct wlan_objmgr_pdev *pdev,
+				 struct qdf_mac_addr *bssid)
+{
+	struct reject_ap_info ap_info;
+
+	qdf_copy_macaddr(&ap_info.bssid, bssid);
+	/* set retry_delay to reject new connect requests */
+	ap_info.rssi_reject_params.retry_delay =
+		HDD_DCS_AWGN_BSS_RETRY_DELAY;
+	ap_info.reject_ap_type = DRIVER_RSSI_REJECT_TYPE;
+	ap_info.reject_reason = REASON_STA_KICKOUT;
+	ap_info.source = ADDED_BY_DRIVER;
+	return ucfg_blm_add_bssid_to_reject_list(pdev, &ap_info);
+}
+
+/**
+ * hdd_dcs_switch_chan_cb() - hdd dcs switch channel callback
+ * @vdev: vdev ptr
+ * @tgt_freq: target channel frequency
+ * @tgt_width: target channel width
+ *
+ * This callback is registered with dcs component to trigger channel switch.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS hdd_dcs_switch_chan_cb(struct wlan_objmgr_vdev *vdev,
+					 qdf_freq_t tgt_freq,
+					 enum phy_ch_width tgt_width)
+{
+	struct vdev_osif_priv *osif_priv;
+	struct hdd_adapter *adapter;
+	mac_handle_t mac_handle;
+	struct qdf_mac_addr *bssid;
+	int ret;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_objmgr_psoc *psoc;
+
+	osif_priv = wlan_vdev_get_ospriv(vdev);
+	if (!osif_priv) {
+		hdd_err("Invalid osif priv");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	adapter = osif_priv->legacy_osif_priv;
+	if (!adapter) {
+		hdd_err("Invalid adapter");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	switch (adapter->device_mode) {
+	case QDF_STA_MODE:
+		if (!hdd_cm_is_vdev_associated(adapter))
+			return QDF_STATUS_E_INVAL;
+
+		bssid = &adapter->session.station.conn_info.bssid;
+
+		/* disconnect if got invalid freq or width */
+		if (tgt_freq == 0 || tgt_width == CH_WIDTH_INVALID) {
+			pdev = wlan_vdev_get_pdev(vdev);
+			if (!pdev)
+				return QDF_STATUS_E_INVAL;
+
+			hdd_dcs_add_bssid_to_reject_list(pdev, bssid);
+			wlan_hdd_cm_issue_disconnect(adapter,
+						     REASON_UNSPEC_FAILURE,
+						     true);
+			return QDF_STATUS_SUCCESS;
+		}
+
+		mac_handle = hdd_context_get_mac_handle(adapter->hdd_ctx);
+		if (!mac_handle)
+			return QDF_STATUS_E_INVAL;
+
+		status = sme_switch_channel(mac_handle, bssid,
+					    tgt_freq, tgt_width);
+		break;
+	case QDF_SAP_MODE:
+		if (!test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags))
+			return QDF_STATUS_E_INVAL;
+
+		/* stop sap if got invalid freq or width */
+		if (tgt_freq == 0 || tgt_width == CH_WIDTH_INVALID) {
+			schedule_work(&adapter->sap_stop_bss_work);
+			return QDF_STATUS_SUCCESS;
+		}
+
+		psoc = wlan_vdev_get_psoc(vdev);
+		if (!psoc)
+			return QDF_STATUS_E_INVAL;
+
+		wlan_hdd_set_sap_csa_reason(psoc, adapter->vdev_id,
+					    CSA_REASON_DCS);
+		ret = hdd_softap_set_channel_change(adapter->dev, tgt_freq,
+						    tgt_width, true);
+		status = qdf_status_from_os_return(ret);
+		break;
+	default:
+		hdd_err("OP mode %d not supported", adapter->device_mode);
+		break;
+	}
+
+	return status;
+}
+
 /**
  * hdd_dcs_cb() - hdd dcs specific callback
  * @psoc: psoc
@@ -48,7 +168,7 @@ static void hdd_dcs_cb(struct wlan_objmgr_psoc *psoc, uint8_t mac_id,
 	/*
 	 * so far CAP_DCS_CWIM interference mitigation is not supported
 	 */
-	if (interference_type == CAP_DCS_CWIM) {
+	if (interference_type == WLAN_HOST_DCS_CWIM) {
 		hdd_debug("CW interference mitigation is not supported");
 		return;
 	}
@@ -85,6 +205,7 @@ static void hdd_dcs_cb(struct wlan_objmgr_psoc *psoc, uint8_t mac_id,
 void hdd_dcs_register_cb(struct hdd_context *hdd_ctx)
 {
 	ucfg_dcs_register_cb(hdd_ctx->psoc, hdd_dcs_cb, hdd_ctx);
+	ucfg_dcs_register_awgn_cb(hdd_ctx->psoc, hdd_dcs_switch_chan_cb);
 }
 
 void hdd_dcs_hostapd_set_chan(struct hdd_context *hdd_ctx,
@@ -233,7 +354,7 @@ void hdd_dcs_clear(struct hdd_adapter *adapter)
 	}
 
 	if (policy_mgr_get_sap_go_count_on_mac(psoc, list, mac_id) <= 1) {
-		ucfg_config_dcs_disable(psoc, mac_id, CAP_DCS_WLANIM);
+		ucfg_config_dcs_disable(psoc, mac_id, WLAN_HOST_DCS_WLANIM);
 		ucfg_wlan_dcs_cmd(psoc, mac_id, true);
 		if (wlansap_dcs_is_wlan_interference_mitigation_enabled(
 					WLAN_HDD_GET_SAP_CTX_PTR(adapter)))

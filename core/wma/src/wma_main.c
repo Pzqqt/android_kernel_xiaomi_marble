@@ -3308,12 +3308,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	wma_handle->staDynamicDtim =
 			ucfg_pmo_get_sta_dynamic_dtim(wma_handle->psoc);
 
-	/* register for install key completion event */
-	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-				wmi_vdev_install_key_complete_event_id,
-				wma_vdev_install_key_complete_event_handler,
-				WMA_RX_SERIALIZER_CTX);
-
 #ifdef WLAN_FEATURE_STATS_EXT
 	/* register for extended stats event */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
@@ -5785,10 +5779,45 @@ static void wma_set_mlme_caps(struct wlan_objmgr_psoc *psoc)
 		wma_err("Failed to set sae roam support");
 }
 
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+static bool wma_is_big_data_support_enable(struct wmi_unified *wmi_handle)
+{
+	return wmi_service_enabled(wmi_handle, wmi_service_big_data_support);
+}
+#else
+static bool wma_is_big_data_support_enable(struct wmi_unified *wmi_handle)
+{
+	return false;
+}
+#endif
+
+/**
+ * wma_set_mc_cp_caps() - Populate mc cp component related capabilities
+ *			  to the mc cp component
+ *
+ * @psoc: Pointer to psoc object
+ *
+ * Return: None
+ */
+static void wma_set_mc_cp_caps(struct wlan_objmgr_psoc *psoc)
+{
+	tp_wma_handle wma;
+
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma)
+		return;
+
+	if (wma_is_big_data_support_enable(wma->wmi_handle))
+		ucfg_mc_cp_set_big_data_fw_support(psoc, true);
+	else
+		ucfg_mc_cp_set_big_data_fw_support(psoc, false);
+}
+
 static void wma_set_component_caps(struct wlan_objmgr_psoc *psoc)
 {
 	wma_set_pmo_caps(psoc);
 	wma_set_mlme_caps(psoc);
+	wma_set_mc_cp_caps(psoc);
 }
 
 #if defined(WLAN_FEATURE_GTK_OFFLOAD) && defined(WLAN_POWER_MANAGEMENT_OFFLOAD)
@@ -8788,21 +8817,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		qdf_mem_free(msg->bodyptr);
 		break;
 #endif /* WLAN_FEATURE_LINK_LAYER_STATS */
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-#ifndef FEATURE_CM_ENABLE
-	case WMA_ROAM_OFFLOAD_SYNCH_FAIL:
-		wma_process_roam_synch_fail(wma_handle,
-			(struct roam_offload_synch_fail *)msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
-	case SIR_HAL_ROAM_INVOKE:
-		wma_debug("SIR_HAL_ROAM_INVOKE - wma_process_roam_invoke");
-		wma_process_roam_invoke(wma_handle,
-			(struct roam_invoke_req *)msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
-#endif
-#endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 	case SIR_HAL_SET_BASE_MACADDR_IND:
 		wma_set_base_macaddr_indicate(wma_handle,
 					      (tSirMacAddr *) msg->bodyptr);

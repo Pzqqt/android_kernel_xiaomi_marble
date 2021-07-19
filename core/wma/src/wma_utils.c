@@ -2008,7 +2008,6 @@ post_stats:
 		WMA_LINK_LAYER_STATS_RESULTS_RSP,
 		link_stats_results,
 		mac->sme.ll_stats_context);
-	wma_unified_radio_tx_mem_free(handle);
 
 	return 0;
 }
@@ -2314,7 +2313,6 @@ link_radio_stats_cb:
 				     WMA_LINK_LAYER_STATS_RESULTS_RSP,
 				     link_stats_results,
 				     mac->sme.ll_stats_context);
-	wma_unified_radio_tx_mem_free(handle);
 
 	return 0;
 }
@@ -3851,6 +3849,12 @@ QDF_STATUS wma_send_vdev_stop_to_fw(t_wma_handle *wma, uint8_t vdev_id)
 		     sizeof(struct wlan_mlme_nss_chains));
 
 	status = vdev_mgr_stop_send(vdev_mlme);
+
+	/*
+	 * If vdev_stop send to fw during channel switch, it means channel
+	 * switch failure. Clean flag chan_switch_in_progress.
+	 */
+	mlme_set_chan_switch_in_progress(vdev_mlme->vdev, false);
 
 	return status;
 }

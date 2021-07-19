@@ -2391,6 +2391,15 @@ void lim_process_assoc_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_in
 				session->limSystemRole,
 				QDF_MAC_ADDR_REF(hdr->sa));
 			return;
+		} else if (sta_ds->rmfEnabled && !sta_ds->is_key_installed) {
+			/* When PMF enabled, SA Query will be triggered
+			 * unexpectly if duplicated assoc_req received -
+			 * 1) after pre_auth node deleted and
+			 * 2) before key installed.
+			 * Here drop such duplicated assoc_req frame.
+			 */
+			pe_err("Drop duplicate assoc_req before 4-way HS");
+			return;
 		}
 	}
 

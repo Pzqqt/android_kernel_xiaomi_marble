@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -34,6 +34,22 @@ enum pkt_capture_mode {
 };
 
 /**
+ * enum pkt_capture_trigger_qos_config - packet capture config
+ * @PACKET_CAPTURE_CONFIG_TRIGGER_QOS_DISABLE: disable capture for trigger and
+ *                                             qos frames
+ * @PACKET_CAPTURE_CONFIG_TRIGGER_ENABLE: enable capture for trigger frames only
+ * @PACKET_CAPTURE_CONFIG_QOS_ENABLE: enable capture for qos frames only
+ * @PACKET_CAPTURE_CONFIG_TRIGGER_QOS_ENABLE: enable capture for both trigger
+ *                                            and qos frames
+ */
+enum pkt_capture_trigger_qos_config {
+	PACKET_CAPTURE_CONFIG_TRIGGER_QOS_DISABLE = 0,
+	PACKET_CAPTURE_CONFIG_TRIGGER_ENABLE,
+	PACKET_CAPTURE_CONFIG_QOS_ENABLE,
+	PACKET_CAPTURE_CONFIG_TRIGGER_QOS_ENABLE,
+};
+
+/**
  * struct mgmt_offload_event_params - Management offload event params
  * @tsf_l32: The lower 32 bits of the TSF
  * @chan_freq: channel frequency in MHz
@@ -59,6 +75,11 @@ struct mgmt_offload_event_params {
 	uint8_t tx_retry_cnt;
 };
 
+struct smu_event_params {
+	uint32_t vdev_id;
+	int32_t rx_avg_rssi;
+};
+
 /**
  * struct pkt_capture_callbacks - callbacks to non-converged driver
  * @get_rmf_status: callback to get rmf status
@@ -71,12 +92,17 @@ struct pkt_capture_callbacks {
  * struct wlan_pkt_capture_tx_ops - structure of tx operation function
  * pointers for packet capture component
  * @pkt_capture_send_mode: send packet capture mode
+ * @pkt_capture_send_config: send packet capture config
  *
  */
 struct wlan_pkt_capture_tx_ops {
 	QDF_STATUS (*pkt_capture_send_mode)(struct wlan_objmgr_psoc *psoc,
 					    uint8_t vdev_id,
 					    enum pkt_capture_mode mode);
+	QDF_STATUS (*pkt_capture_send_config)
+				(struct wlan_objmgr_psoc *psoc,
+				 uint8_t vdev_id,
+				 enum pkt_capture_trigger_qos_config config);
 };
 
 /**
@@ -84,11 +110,17 @@ struct wlan_pkt_capture_tx_ops {
  * pointers for packet capture component
  * @pkt_capture_register_ev_handlers: register mgmt offload event
  * @pkt_capture_unregister_ev_handlers: unregister mgmt offload event
+ * @pkt_capture_register_smart_monitor_event: register smu event
+ * @pkt_capture_unregister_smart_monitor_event: unregister smu event
  */
 struct wlan_pkt_capture_rx_ops {
 	QDF_STATUS (*pkt_capture_register_ev_handlers)
 					(struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*pkt_capture_unregister_ev_handlers)
+					(struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*pkt_capture_register_smart_monitor_event)
+					(struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*pkt_capture_unregister_smart_monitor_event)
 					(struct wlan_objmgr_psoc *psoc);
 };
 

@@ -615,6 +615,35 @@ typedef struct sSapDfsInfo {
 	uint16_t reduced_beacon_interval;
 } tSapDfsInfo;
 
+/* MAX number of CAC channels to be recorded */
+#define MAX_NUM_OF_CAC_HISTORY 8
+
+/**
+ * struct prev_cac_result - previous cac result
+ * @ap_start_time: ap start timestamp
+ * @ap_end_time: ap stop or cac end timestamp
+ * @cac_complete: cac complete without found radar event
+ * @cac_ch_param: ap channel parameters
+ */
+struct prev_cac_result {
+	uint64_t ap_start_time;
+	uint64_t ap_end_time;
+	bool cac_complete;
+	struct ch_params cac_ch_param;
+};
+
+/**
+ * struct dfs_radar_history - radar found history element
+ * @time: timestamp in us from system boot
+ * @radar_found: radar found or not
+ * @ch_freq: channel frequency in Mhz
+ */
+struct dfs_radar_history {
+	uint64_t time;
+	bool radar_found;
+	uint16_t ch_freq;
+};
+
 #ifdef DCS_INTERFERENCE_DETECTION
 /**
  * struct sap_dcs_info - record sap dcs information.
@@ -768,13 +797,13 @@ bool wlansap_is_channel_in_nol_list(struct sap_context *sap_ctx,
  * wlansap_is_channel_leaking_in_nol() - This API checks if channel is leaking
  * in nol list
  * @sap_ctx: SAP context pointer
- * @channel: channel
+ * @chan_freq: channel frequency
  * @chan_bw: channel bandwidth
  *
  * Return: True/False
  */
 bool wlansap_is_channel_leaking_in_nol(struct sap_context *sap_ctx,
-				       uint8_t channel,
+				       uint16_t chan_freq,
 				       uint8_t chan_bw);
 
 /**
@@ -1444,6 +1473,17 @@ void sap_get_cac_dur_dfs_region(struct sap_context *sap_ctx,
 				uint32_t *cac_duration_ms,
 				uint32_t *dfs_region);
 
+/**
+ * sap_clear_global_dfs_param() - Reset global dfs param of sap ctx
+ * @mac_handle: pointer to mac handle
+ * @sap_ctx: sap context
+ *
+ * This API resets global dfs param of sap ctx.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sap_clear_global_dfs_param(mac_handle_t mac_handle,
+				      struct sap_context *sap_ctx);
 
 /**
  * sap_dfs_set_current_channel() - Set current channel params in dfs component
@@ -1545,6 +1585,24 @@ uint32_t wlansap_get_safe_channel_from_pcl_for_sap(struct sap_context *sap_ctx);
  */
 qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx,
 					  enum sap_csa_reason_code *csa_reason);
+
+#ifdef FEATURE_RADAR_HISTORY
+/**
+ * wlansap_query_radar_history() -  get radar history info
+ * @mac_handle: mac context
+ * @radar_history: radar history buffer to be returned
+ * @count: total history count
+ *
+ * The API will return the dfs nol list(Radar found history) and
+ * CAC history (no Radar found).
+ *
+ * Return - QDF_STATUS
+ */
+QDF_STATUS
+wlansap_query_radar_history(mac_handle_t mac_handle,
+			    struct dfs_radar_history **radar_history,
+			    uint32_t *count);
+#endif
 
 #ifdef DCS_INTERFERENCE_DETECTION
 /**

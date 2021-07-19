@@ -61,9 +61,6 @@ uint8_t *mac_trace_get_info_log_string(uint16_t infoLog);
 
 #endif
 uint8_t *mac_trace_get_wma_msg_string(uint16_t wmaMsg);
-#ifndef FEATURE_CM_ENABLE
-uint8_t *mac_trace_get_neighbour_roam_state(uint16_t neighbourRoamState);
-#endif
 uint8_t *mac_trace_getcsr_roam_state(uint16_t csr_roamState);
 uint8_t *mac_trace_getcsr_roam_sub_state(uint16_t csr_roamSubState);
 uint8_t *mac_trace_get_lim_sme_state(uint16_t limState);

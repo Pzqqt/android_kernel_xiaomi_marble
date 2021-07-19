@@ -1622,6 +1622,7 @@ QDF_STATUS hdd_wlan_shutdown(void)
 		scheduler_resume();
 		hdd_ctx->is_scheduler_suspended = false;
 		hdd_ctx->is_wiphy_suspended = false;
+		hdd_ctx->hdd_wlan_suspended = false;
 	}
 
 	wlan_hdd_rx_thread_resume(hdd_ctx);
@@ -1673,6 +1674,7 @@ QDF_STATUS hdd_wlan_shutdown(void)
 
 	hdd_lpass_notify_stop(hdd_ctx);
 
+	qdf_set_smmu_fault_state(false);
 	hdd_info("WLAN driver shutdown complete");
 
 	return QDF_STATUS_SUCCESS;
@@ -1840,10 +1842,6 @@ QDF_STATUS hdd_wlan_re_init(void)
 	hdd_start_all_adapters(hdd_ctx);
 
 	hdd_init_scan_reject_params(hdd_ctx);
-
-#ifndef FEATURE_CM_ENABLE
-	complete(&adapter->roaming_comp_var);
-#endif
 	hdd_ctx->bt_coex_mode_set = false;
 
 	/* Allow the phone to go to sleep */
@@ -2192,6 +2190,12 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	struct wlan_objmgr_vdev *vdev;
 	int rc;
 	wlan_net_dev_ref_dbgid dbgid = NET_DEV_HOLD_CFG80211_SUSPEND_WLAN;
+	struct hdd_hostapd_state *hapd_state;
+	struct csr_del_sta_params params = {
+		.peerMacAddr = QDF_MAC_ADDR_BCAST_INIT,
+		.reason_code = REASON_DEAUTH_NETWORK_LEAVING,
+		.subtype = SIR_MAC_MGMT_DEAUTH,
+	};
 
 	hdd_enter();
 
@@ -2254,6 +2258,14 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 					hdd_adapter_dev_put_debug(next_adapter,
 								  dbgid);
 				return -EOPNOTSUPP;
+			} else if (ucfg_pmo_get_disconnect_sap_tdls_in_wow(
+				   hdd_ctx->psoc)) {
+				hapd_state =
+					WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
+				if (hapd_state)
+					hdd_softap_deauth_all_sta(adapter,
+								  hapd_state,
+								  &params);
 			}
 		} else if (QDF_P2P_GO_MODE == adapter->device_mode) {
 			if (!ucfg_pmo_get_enable_sap_suspend(
@@ -2267,7 +2279,19 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 					hdd_adapter_dev_put_debug(next_adapter,
 								  dbgid);
 				return -EOPNOTSUPP;
+			} else if (ucfg_pmo_get_disconnect_sap_tdls_in_wow(
+				   hdd_ctx->psoc)) {
+				hapd_state =
+					WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
+				if (hapd_state)
+					hdd_softap_deauth_all_sta(adapter,
+								  hapd_state,
+								  &params);
 			}
+		} else if (QDF_TDLS_MODE == adapter->device_mode) {
+			if (ucfg_pmo_get_disconnect_sap_tdls_in_wow(
+								hdd_ctx->psoc))
+				ucfg_tdls_teardown_links_sync(hdd_ctx->psoc);
 		}
 		hdd_adapter_dev_put_debug(adapter, dbgid);
 	}

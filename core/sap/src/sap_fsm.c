@@ -1111,8 +1111,8 @@ sap_find_valid_concurrent_session(mac_handle_t mac_handle)
 	return NULL;
 }
 
-static QDF_STATUS sap_clear_global_dfs_param(mac_handle_t mac_handle,
-					     struct sap_context *sap_ctx)
+QDF_STATUS sap_clear_global_dfs_param(mac_handle_t mac_handle,
+				      struct sap_context *sap_ctx)
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	struct sap_context *con_sap_ctx;
@@ -1402,6 +1402,245 @@ static bool sap_save_owe_pending_assoc_ind(struct sap_context *sap_ctx,
 	return true;
 }
 
+#ifdef FEATURE_RADAR_HISTORY
+/* Last cac result */
+static struct prev_cac_result prev_cac_history;
+
+/**
+ * sap_update_cac_history() - record SAP Radar found result in last
+ * "active" or CAC period
+ * @mac_ctx: mac context
+ * @sap_ctx: sap context
+ * @event_id: sap event
+ *
+ *  The function is to save the dfs channel information
+ *  If SAP has been "active" or "CAC" on DFS channel for 60s and
+ *  no found radar event.
+ *
+ * Return: void
+ */
+static void
+sap_update_cac_history(struct mac_context *mac_ctx,
+		       struct sap_context *sap_ctx,
+		       eSapHddEvent event_id)
+{
+	struct prev_cac_result *cac_result = &sap_ctx->cac_result;
+
+	switch (event_id) {
+	case eSAP_START_BSS_EVENT:
+	case eSAP_CHANNEL_CHANGE_RESP:
+	case eSAP_DFS_CAC_START:
+		if (sap_operating_on_dfs(mac_ctx, sap_ctx)) {
+			qdf_mem_zero(cac_result,
+				     sizeof(struct prev_cac_result));
+			if (!sap_ctx->ch_params.mhz_freq_seg0) {
+				sap_debug("invalid seq0");
+				return;
+			}
+			cac_result->ap_start_time =
+				qdf_get_monotonic_boottime();
+			cac_result->cac_ch_param = sap_ctx->ch_params;
+			sap_debug("ap start(CAC) (%d, %d) bw %d",
+				  cac_result->cac_ch_param.mhz_freq_seg0,
+				  cac_result->cac_ch_param.mhz_freq_seg1,
+				  cac_result->cac_ch_param.ch_width);
+		}
+		break;
+	case eSAP_DFS_RADAR_DETECT:
+		qdf_mem_zero(cac_result,
+			     sizeof(struct prev_cac_result));
+		break;
+	case eSAP_DFS_CAC_END:
+	case eSAP_STOP_BSS_EVENT:
+		if (cac_result->ap_start_time) {
+			uint64_t diff_ms;
+
+			cac_result->ap_end_time =
+				qdf_get_monotonic_boottime();
+			diff_ms = qdf_do_div(cac_result->ap_end_time -
+				     cac_result->ap_start_time, 1000);
+			if (diff_ms < DEFAULT_CAC_TIMEOUT - 5000) {
+				if (event_id == eSAP_STOP_BSS_EVENT)
+					qdf_mem_zero(
+					cac_result,
+					sizeof(struct prev_cac_result));
+				sap_debug("ap cac dur %llu ms", diff_ms);
+				break;
+			}
+			cac_result->cac_complete = true;
+			qdf_mem_copy(&prev_cac_history, cac_result,
+				     sizeof(struct prev_cac_result));
+			sap_debug("ap cac saved %llu ms %llu (%d, %d) bw %d",
+				  diff_ms,
+				  cac_result->ap_end_time,
+				  cac_result->cac_ch_param.mhz_freq_seg0,
+				  cac_result->cac_ch_param.mhz_freq_seg1,
+				  cac_result->cac_ch_param.ch_width);
+			if (event_id == eSAP_STOP_BSS_EVENT)
+				qdf_mem_zero(cac_result,
+					     sizeof(struct prev_cac_result));
+		}
+		break;
+	default:
+		break;
+	}
+}
+
+/**
+ * find_ch_freq_in_radar_hist() - check channel frequency existing
+ * in radar history buffer
+ * @radar_result: radar history buffer
+ * @count: radar history element number
+ * @ch_freq: channel frequency
+ *
+ * Return: bool
+ */
+static
+bool find_ch_freq_in_radar_hist(struct dfs_radar_history *radar_result,
+				uint32_t count, uint16_t ch_freq)
+{
+	while (count) {
+		if (radar_result->ch_freq == ch_freq)
+			return true;
+		radar_result++;
+		count--;
+	}
+
+	return false;
+}
+
+/**
+ * sap_append_cac_history() - Add CAC history to list
+ * @radar_result: radar history buffer
+ * @idx: current radar history element number
+ * @max_elems: max elements nummber of radar history buffer.
+ *
+ * This function is to add the CAC history to radar history list.
+ *
+ * Return: void
+ */
+static
+void sap_append_cac_history(struct mac_context *mac_ctx,
+			    struct dfs_radar_history *radar_result,
+			    uint32_t *idx, uint32_t max_elems)
+{
+	struct prev_cac_result *cac_result = &prev_cac_history;
+	struct ch_params ch_param = cac_result->cac_ch_param;
+	uint32_t count = *idx;
+
+	if (!cac_result->cac_complete || !cac_result->ap_end_time) {
+		sap_debug("cac hist empty");
+		return;
+	}
+
+	if (ch_param.ch_width <= CH_WIDTH_20MHZ) {
+		if (wlan_reg_is_dfs_for_freq(mac_ctx->pdev,
+					     ch_param.mhz_freq_seg0) &&
+		    !find_ch_freq_in_radar_hist(radar_result, count,
+						ch_param.mhz_freq_seg0) &&
+		    *idx < max_elems) {
+			radar_result[*idx].ch_freq = ch_param.mhz_freq_seg0;
+			radar_result[*idx].time = cac_result->ap_end_time;
+			radar_result[*idx].radar_found = false;
+			sap_debug("radar hist[%d] freq %d time %llu no radar",
+				  *idx, ch_param.mhz_freq_seg0,
+				  cac_result->ap_end_time);
+			(*idx)++;
+		}
+	} else {
+		uint16_t chan_cfreq;
+		enum channel_state state;
+		const struct bonded_channel_freq *bonded_chan_ptr = NULL;
+
+		state = wlan_reg_get_5g_bonded_channel_and_state_for_freq
+			(mac_ctx->pdev, ch_param.mhz_freq_seg0,
+			 ch_param.ch_width, &bonded_chan_ptr);
+		if (!bonded_chan_ptr || state == CHANNEL_STATE_INVALID) {
+			sap_debug("invalid freq %d", ch_param.mhz_freq_seg0);
+			return;
+		}
+
+		chan_cfreq = bonded_chan_ptr->start_freq;
+		while (chan_cfreq <= bonded_chan_ptr->end_freq) {
+			state = wlan_reg_get_channel_state_for_freq(
+					mac_ctx->pdev, chan_cfreq);
+			if (state == CHANNEL_STATE_INVALID) {
+				sap_debug("invalid ch freq %d",
+					  chan_cfreq);
+				chan_cfreq = chan_cfreq + 20;
+				continue;
+			}
+			if (wlan_reg_is_dfs_for_freq(mac_ctx->pdev,
+						     chan_cfreq) &&
+			    !find_ch_freq_in_radar_hist(radar_result, count,
+							chan_cfreq) &&
+			    *idx < max_elems) {
+				radar_result[*idx].ch_freq = chan_cfreq;
+				radar_result[*idx].time =
+						cac_result->ap_end_time;
+				radar_result[*idx].radar_found = false;
+				sap_debug("radar hist[%d] freq %d time %llu no radar",
+					  *idx, chan_cfreq,
+					  cac_result->ap_end_time);
+				(*idx)++;
+			}
+			chan_cfreq = chan_cfreq + 20;
+		}
+	}
+}
+
+QDF_STATUS
+wlansap_query_radar_history(mac_handle_t mac_handle,
+			    struct dfs_radar_history **radar_history,
+			    uint32_t *count)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	struct dfsreq_nolinfo *nol_info;
+	uint32_t i;
+	uint32_t hist_count;
+	struct dfs_radar_history *radar_result;
+
+	nol_info = qdf_mem_malloc(sizeof(struct dfsreq_nolinfo));
+	if (!nol_info)
+		return QDF_STATUS_E_NOMEM;
+
+	ucfg_dfs_getnol(mac_ctx->pdev, nol_info);
+
+	hist_count = nol_info->dfs_ch_nchans + MAX_NUM_OF_CAC_HISTORY;
+	radar_result = qdf_mem_malloc(sizeof(struct dfs_radar_history) *
+					hist_count);
+	if (!radar_result) {
+		qdf_mem_free(nol_info);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	for (i = 0; i < nol_info->dfs_ch_nchans && i < DFS_CHAN_MAX; i++) {
+		radar_result[i].ch_freq = nol_info->dfs_nol[i].nol_freq;
+		radar_result[i].time = nol_info->dfs_nol[i].nol_start_us;
+		radar_result[i].radar_found = true;
+		sap_debug("radar hist[%d] freq %d time %llu radar",
+			  i, nol_info->dfs_nol[i].nol_freq,
+			  nol_info->dfs_nol[i].nol_start_us);
+	}
+
+	sap_append_cac_history(mac_ctx, radar_result, &i, hist_count);
+	sap_debug("hist count %d cur %llu", i, qdf_get_monotonic_boottime());
+
+	*radar_history = radar_result;
+	*count = i;
+	qdf_mem_free(nol_info);
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static inline void
+sap_update_cac_history(struct mac_context *mac_ctx,
+		       struct sap_context *sap_ctx,
+		       eSapHddEvent event_id)
+{
+}
+#endif
+
 /**
  * sap_signal_hdd_event() - send event notification
  * @sap_ctx: Sap Context
@@ -1506,6 +1745,9 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 
 		bss_complete->operating_chan_freq = sap_ctx->chan_freq;
 		bss_complete->ch_width = sap_ctx->ch_params.ch_width;
+		if (QDF_IS_STATUS_SUCCESS(bss_complete->status))
+			sap_update_cac_history(mac_ctx, sap_ctx,
+					       sap_hddevent);
 		break;
 	case eSAP_DFS_CAC_START:
 	case eSAP_DFS_CAC_INTERRUPTED:
@@ -1517,6 +1759,8 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		sap_ap_event->sapHddEventCode = sap_hddevent;
 		sap_ap_event->sapevt.sapStopBssCompleteEvent.status =
 			(eSapStatus) context;
+		sap_update_cac_history(mac_ctx, sap_ctx,
+				       sap_hddevent);
 		break;
 	case eSAP_ACS_SCAN_SUCCESS_EVENT:
 		sap_handle_acs_scan_event(sap_ctx, sap_ap_event,
@@ -1820,6 +2064,8 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 			sap_ctx->csr_roamProfile.ch_params.mhz_freq_seg0;
 		acs_selected->vht_seg1_center_ch_freq =
 			sap_ctx->csr_roamProfile.ch_params.mhz_freq_seg1;
+		sap_update_cac_history(mac_ctx, sap_ctx,
+				       sap_hddevent);
 		sap_debug("SAP event callback event = %s",
 			  "eSAP_CHANNEL_CHANGE_RESP");
 		break;
@@ -2263,9 +2509,9 @@ static QDF_STATUS sap_goto_starting(struct sap_context *sap_ctx,
 
 	sap_debug("session: %d", sap_ctx->sessionId);
 
-	qdf_status = sme_roam_connect(mac_handle, sap_ctx->sessionId,
-				      &sap_ctx->csr_roamProfile,
-				      &sap_ctx->csr_roamId);
+	qdf_status = sme_bss_start(mac_handle, sap_ctx->sessionId,
+				   &sap_ctx->csr_roamProfile,
+				   &sap_ctx->csr_roamId);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		sap_err("Failed to issue sme_roam_connect");
 

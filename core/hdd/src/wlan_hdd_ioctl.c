@@ -528,148 +528,6 @@ static int hdd_parse_reassoc_command_v1_data(const uint8_t *command,
 	return 0;
 }
 
-#ifndef FEATURE_CM_ENABLE
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-QDF_STATUS hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
-					const tSirMacAddr bssid,
-					uint32_t ch_freq)
-{
-	struct hdd_station_ctx *hdd_sta_ctx =
-			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	struct csr_roam_profile *roam_profile;
-	tSirMacAddr connected_bssid;
-
-	roam_profile = hdd_roam_profile(adapter);
-	qdf_mem_copy(connected_bssid, hdd_sta_ctx->conn_info.bssid.bytes,
-		     ETH_ALEN);
-	return sme_fast_reassoc(adapter->hdd_ctx->mac_handle,
-				roam_profile, bssid, ch_freq,
-				adapter->vdev_id, connected_bssid);
-}
-#endif
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0))
-/**
- * hdd_is_fast_reassoc_allowed  - check if roaming offload init is
- * done. If roaming offload is not initialized, don't allow roam invoke
- * to be triggered.
- * @psoc: Pointer to psoc object
- * @vdev_id: vdev_id
- *
- * This API should return true if kernel version is less than 4.9, because
- * the earlier versions don't have the fix to handle reassociation failure.
- *
- * Return: true if roaming module initialization is done else false
- */
-static bool
-hdd_is_fast_reassoc_allowed(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
-{
-	return MLME_IS_ROAM_INITIALIZED(psoc, vdev_id);
-}
-#else
-static inline bool
-hdd_is_fast_reassoc_allowed(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
-{
-	return true;
-}
-#endif
-
-int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
-		uint32_t ch_freq, const handoff_src src)
-{
-	struct hdd_station_ctx *sta_ctx;
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	int ret = 0;
-	QDF_STATUS status;
-	uint8_t connected_vdev;
-
-	if (!hdd_ctx) {
-		hdd_err("Invalid hdd ctx");
-		return -EINVAL;
-	}
-
-	if (QDF_STA_MODE != adapter->device_mode) {
-		hdd_warn("Unsupported in mode %s(%d)",
-			 qdf_opmode_str(adapter->device_mode),
-			 adapter->device_mode);
-		return -EINVAL;
-	}
-
-	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-
-	/*
-	 * pHddStaCtx->conn_info.conn_state is set to disconnected only
-	 * after the disconnect done indication from SME. If the SME is
-	 * in the process of disconnecting, the SME Connection state is
-	 * set to disconnected and the pHddStaCtx->conn_info.conn_state
-	 * will still be associated till the disconnect is done.
-	 * So check both the HDD state and SME state here.
-	 * If not associated, no need to proceed with reassoc
-	 */
-	if (!hdd_cm_is_vdev_associated(adapter)) {
-		hdd_warn("Not associated");
-		ret = -EINVAL;
-		goto exit;
-	}
-
-	if (!sme_is_conn_state_connected(hdd_ctx->mac_handle,
-					 adapter->vdev_id)) {
-		hdd_warn("Not in connected state");
-		ret = -EINVAL;
-		goto exit;
-	}
-	/*
-	 * if the target bssid is same as currently associated AP,
-	 * use the current connections's channel.
-	 */
-	if (!memcmp(bssid, sta_ctx->conn_info.bssid.bytes,
-		    QDF_MAC_ADDR_SIZE)) {
-		hdd_warn("Reassoc BSSID is same as currently associated AP bssid");
-		ch_freq = sta_ctx->conn_info.chan_freq;
-	}
-
-	if (QDF_STATUS_SUCCESS !=
-	    wlan_hdd_validate_operation_channel(adapter, ch_freq)) {
-		hdd_err("Invalid Ch freq: %d", ch_freq);
-		ret = -EINVAL;
-		goto exit;
-	}
-	if (wlan_get_connected_vdev_by_bssid(hdd_ctx->pdev, (uint8_t *)bssid,
-					     &connected_vdev) &&
-	    connected_vdev != adapter->vdev_id) {
-		hdd_err("bssid "QDF_MAC_ADDR_FMT" connected by other vdev %d",
-			QDF_MAC_ADDR_REF(bssid), connected_vdev);
-		ret = -EPERM;
-		goto exit;
-	}
-
-	/* Proceed with reassoc */
-	if (roaming_offload_enabled(hdd_ctx)) {
-		if (!hdd_is_fast_reassoc_allowed(hdd_ctx->psoc,
-						adapter->vdev_id)) {
-			hdd_err("LFR3: vdev[%d] Roaming module is not initialized",
-				adapter->vdev_id);
-			ret = -EPERM;
-			goto exit;
-		}
-		status = hdd_wma_send_fastreassoc_cmd(adapter, bssid, ch_freq);
-		if (status != QDF_STATUS_SUCCESS) {
-			hdd_err("Failed to send fast reassoc cmd");
-			ret = -EINVAL;
-		}
-	} else {
-		tCsrHandoffRequest handoff;
-
-		handoff.ch_freq = ch_freq;
-		handoff.src = src;
-		qdf_mem_copy(handoff.bssid.bytes, bssid, QDF_MAC_ADDR_SIZE);
-		sme_handoff_request(hdd_ctx->mac_handle, adapter->vdev_id,
-				    &handoff);
-	}
-exit:
-	return ret;
-}
-#endif /* FEATURE_CM_ENABLE */
-
 /**
  * hdd_parse_reassoc_v1() - parse version 1 of the REASSOC command
  * @adapter:	Adapter upon which the command was received
@@ -693,11 +551,10 @@ static int hdd_parse_reassoc_v1(struct hdd_adapter *adapter, const char *command
 	qdf_freq_t freq = 0;
 	tSirMacAddr bssid;
 	int ret;
-#ifdef FEATURE_CM_ENABLE
 	struct qdf_mac_addr target_bssid;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	QDF_STATUS status;
-#endif
+
 	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(adapter->vdev);
 
 	ret = hdd_parse_reassoc_command_v1_data(command, bssid, &freq, pdev);
@@ -706,18 +563,12 @@ static int hdd_parse_reassoc_v1(struct hdd_adapter *adapter, const char *command
 		return ret;
 	}
 
-#ifdef FEATURE_CM_ENABLE
 	qdf_mem_copy(target_bssid.bytes, bssid, sizeof(tSirMacAddr));
 	status = ucfg_wlan_cm_roam_invoke(hdd_ctx->pdev,
 					  adapter->vdev_id,
 					  &target_bssid, freq,
 					  CM_ROAMING_HOST);
 	return qdf_status_to_os_return(status);
-#else
-	ret = hdd_reassoc(adapter, bssid, freq, REASSOC);
-
-	return ret;
-#endif
 }
 
 /**
@@ -741,11 +592,9 @@ static int hdd_parse_reassoc_v2(struct hdd_adapter *adapter,
 	tSirMacAddr bssid;
 	qdf_freq_t freq = 0;
 	int ret;
-#ifdef FEATURE_CM_ENABLE
 	struct qdf_mac_addr target_bssid;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	QDF_STATUS status;
-#endif
 	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(adapter->vdev);
 
 	if (total_len < sizeof(params) + 8) {
@@ -769,16 +618,12 @@ static int hdd_parse_reassoc_v2(struct hdd_adapter *adapter,
 		if (!hdd_check_and_fill_freq(params.channel, &freq, pdev))
 			return -EINVAL;
 
-#ifdef FEATURE_CM_ENABLE
 		qdf_mem_copy(target_bssid.bytes, bssid, sizeof(tSirMacAddr));
 		status = ucfg_wlan_cm_roam_invoke(hdd_ctx->pdev,
 						  adapter->vdev_id,
 						  &target_bssid, freq,
 						  CM_ROAMING_HOST);
 		ret = qdf_status_to_os_return(status);
-#else
-		ret = hdd_reassoc(adapter, bssid, freq, REASSOC);
-#endif
 	}
 
 	return ret;
@@ -4613,16 +4458,7 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 	uint8_t *value = command;
 	qdf_freq_t freq = 0;
 	tSirMacAddr bssid;
-#ifdef FEATURE_CM_ENABLE
 	struct qdf_mac_addr target_bssid;
-#else
-	uint32_t roam_id = INVALID_ROAM_ID;
-	tCsrRoamModifyProfileFields mod_fields;
-	tCsrHandoffRequest req;
-	mac_handle_t mac_handle;
-	qdf_freq_t chan_freq;
-	struct qdf_mac_addr connected_bssid;
-#endif
 
 	if (QDF_STA_MODE != adapter->device_mode) {
 		hdd_warn("Unsupported in mode %s(%d)",
@@ -4647,52 +4483,10 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
-#ifdef FEATURE_CM_ENABLE
 	qdf_mem_copy(target_bssid.bytes, bssid, sizeof(tSirMacAddr));
 	ucfg_wlan_cm_roam_invoke(hdd_ctx->pdev, adapter->vdev_id,
 				 &target_bssid, freq, CM_ROAMING_HOST);
-#else
-	mac_handle = hdd_ctx->mac_handle;
-	chan_freq = wlan_get_operation_chan_freq(adapter->vdev);
-	wlan_mlme_get_bssid_vdev_id(hdd_ctx->pdev, adapter->vdev_id,
-				    &connected_bssid);
-	/*
-	 * if the target bssid is same as currently associated AP,
-	 * issue reassoc to same AP
-	 */
-	if (!qdf_mem_cmp(bssid, connected_bssid.bytes,
-			 QDF_MAC_ADDR_SIZE)) {
-		hdd_warn("Reassoc BSSID is same as currently associated AP bssid");
-		if (roaming_offload_enabled(hdd_ctx)) {
-			hdd_wma_send_fastreassoc_cmd(
-				adapter, bssid, chan_freq);
-		} else {
-			sme_get_modify_profile_fields(mac_handle,
-				adapter->vdev_id,
-				&mod_fields);
-			sme_roam_reassoc(mac_handle, adapter->vdev_id,
-				NULL, mod_fields, &roam_id, 1);
-		}
-		return 0;
-	}
 
-	/* Check freq number is a valid freq number */
-	if (freq && QDF_STATUS_SUCCESS !=
-		wlan_hdd_validate_operation_channel(adapter, freq)) {
-		hdd_err("Invalid freq [%d]", freq);
-		return -EINVAL;
-	}
-
-	if (roaming_offload_enabled(hdd_ctx)) {
-		hdd_wma_send_fastreassoc_cmd(adapter, bssid, freq);
-		goto exit;
-	}
-	/* Proceed with reassoc */
-	req.ch_freq = freq;
-	req.src = FASTREASSOC;
-	qdf_mem_copy(req.bssid.bytes, bssid, sizeof(tSirMacAddr));
-	sme_handoff_request(mac_handle, adapter->vdev_id, &req);
-#endif
 exit:
 	return ret;
 }

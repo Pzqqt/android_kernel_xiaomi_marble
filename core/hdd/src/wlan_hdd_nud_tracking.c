@@ -235,20 +235,8 @@ hdd_handle_nud_fail_sta(struct hdd_context *hdd_ctx,
 {
 	struct reject_ap_info ap_info;
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-#ifdef FEATURE_CM_ENABLE
 	struct qdf_mac_addr bssid;
-#endif
 
-	/* This is temp ifdef will be removed in near future */
-#ifndef FEATURE_CM_ENABLE
-	qdf_mutex_acquire(&adapter->disconnection_status_lock);
-	if (adapter->disconnection_in_progress) {
-		qdf_mutex_release(&adapter->disconnection_status_lock);
-		hdd_debug("Disconnect is in progress");
-		return;
-	}
-	qdf_mutex_release(&adapter->disconnection_status_lock);
-#endif
 	if (hdd_is_roaming_in_progress(hdd_ctx)) {
 		hdd_debug("Roaming already in progress, cannot trigger roam.");
 		return;
@@ -264,51 +252,19 @@ hdd_handle_nud_fail_sta(struct hdd_context *hdd_ctx,
 	ucfg_blm_add_bssid_to_reject_list(hdd_ctx->pdev, &ap_info);
 
 	if (roaming_offload_enabled(hdd_ctx)) {
-#ifndef FEATURE_CM_ENABLE
-		sme_roam_invoke_nud_fail(hdd_ctx->mac_handle,
-					 adapter->vdev_id);
-#else
 		qdf_zero_macaddr(&bssid);
 		ucfg_wlan_cm_roam_invoke(hdd_ctx->pdev,
 					 adapter->vdev_id,
 					 &bssid, 0, CM_ROAMING_NUD_FAILURE);
-#endif
 	}
 }
 
 static void
 hdd_handle_nud_fail_non_sta(struct hdd_adapter *adapter)
 {
-	/* This is temp ifdef will be removed in near future */
-#ifdef FEATURE_CM_ENABLE
 	wlan_hdd_cm_issue_disconnect(adapter,
 				     REASON_GATEWAY_REACHABILITY_FAILURE,
 				     false);
-#else
-	int status;
-
-	qdf_mutex_acquire(&adapter->disconnection_status_lock);
-	if (adapter->disconnection_in_progress) {
-		qdf_mutex_release(&adapter->disconnection_status_lock);
-		hdd_debug("Disconnect is in progress");
-		return;
-	}
-
-	adapter->disconnection_in_progress = true;
-	qdf_mutex_release(&adapter->disconnection_status_lock);
-
-	hdd_debug("Disconnecting vdev with vdev id: %d",
-		  adapter->vdev_id);
-
-	/* Issue Disconnect */
-	status = wlan_hdd_disconnect(adapter, eCSR_DISCONNECT_REASON_DEAUTH,
-				     REASON_GATEWAY_REACHABILITY_FAILURE);
-	if (0 != status) {
-		hdd_err("wlan_hdd_disconnect failed, status: %d",
-			status);
-		hdd_set_disconnect_status(adapter, false);
-	}
-#endif
 }
 
 #ifdef WLAN_NUD_TRACKING

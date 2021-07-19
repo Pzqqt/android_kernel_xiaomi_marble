@@ -878,14 +878,6 @@ struct hdd_mon_set_ch_info {
  *    to immediately go into power save?
  */
 struct hdd_station_ctx {
-#ifndef FEATURE_CM_ENABLE
-	uint8_t security_ie[WLAN_MAX_IE_LEN];
-	tSirAddie assoc_additional_ie;
-	enum nl80211_wpa_versions wpa_versions;
-	enum hdd_auth_key_mgmt auth_key_mgmt;
-	struct qdf_mac_addr requested_bssid;
-	bool ft_carrier_on;
-#endif
 	uint32_t reg_phymode;
 	struct csr_roam_profile roam_profile;
 	struct hdd_connection_info conn_info;
@@ -1270,11 +1262,6 @@ struct hdd_adapter {
 #endif
 
 	struct hdd_mic_work mic_work;
-#ifndef FEATURE_CM_ENABLE
-	bool disconnection_in_progress;
-	qdf_mutex_t disconnection_status_lock;
-	struct completion roaming_comp_var;
-#endif
 	unsigned long event_flags;
 
 	/**Device TX/RX statistics*/
@@ -1860,6 +1847,7 @@ struct hdd_adapter_ops_history {
  * @bbm_ctx: bus bandwidth manager context
  * @is_dual_mac_cfg_updated: indicate whether dual mac cfg has been updated
  * @twt_en_dis_work: work to send twt enable/disable cmd on MCC/SCC concurrency
+ * @dump_in_progress: Stores value of dump in progress
  */
 struct hdd_context {
 	struct wlan_objmgr_psoc *psoc;
@@ -2216,6 +2204,7 @@ struct hdd_context {
 	qdf_work_t twt_en_dis_work;
 #endif
 	bool is_wifi3_0_target;
+	bool dump_in_progress;
 };
 
 /**
@@ -2903,8 +2892,7 @@ hdd_add_latency_critical_client(struct hdd_adapter *adapter,
 	switch (phymode) {
 	case QCA_WLAN_802_11_MODE_11A:
 	case QCA_WLAN_802_11_MODE_11G:
-		if (adapter->device_mode == QDF_STA_MODE)
-			qdf_atomic_inc(&hdd_ctx->num_latency_critical_clients);
+		qdf_atomic_inc(&hdd_ctx->num_latency_critical_clients);
 
 		hdd_debug("Adding latency critical connection for vdev %d",
 			  adapter->vdev_id);
@@ -2937,8 +2925,7 @@ hdd_del_latency_critical_client(struct hdd_adapter *adapter,
 	switch (phymode) {
 	case QCA_WLAN_802_11_MODE_11A:
 	case QCA_WLAN_802_11_MODE_11G:
-		if (adapter->device_mode == QDF_STA_MODE)
-			qdf_atomic_dec(&hdd_ctx->num_latency_critical_clients);
+		qdf_atomic_dec(&hdd_ctx->num_latency_critical_clients);
 
 		hdd_info("Removing latency critical connection for vdev %d",
 			 adapter->vdev_id);
@@ -3817,22 +3804,6 @@ QDF_STATUS hdd_sme_open_session_callback(uint8_t vdev_id,
 					 QDF_STATUS qdf_status);
 QDF_STATUS hdd_sme_close_session_callback(uint8_t vdev_id);
 
-#ifndef FEATURE_CM_ENABLE
-/**
- * hdd_reassoc() - perform a userspace-directed reassoc
- * @adapter:    Adapter upon which the command was received
- * @bssid:      BSSID with which to reassociate
- * @ch_freq:    channel upon which to reassociate
- * @src:        The source for the trigger of this action
- *
- * This function performs a userspace-directed reassoc operation
- *
- * Return: 0 for success non-zero for failure
- */
-int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
-		uint32_t ch_freq, const handoff_src src);
-#endif
-
 int hdd_register_cb(struct hdd_context *hdd_ctx);
 void hdd_deregister_cb(struct hdd_context *hdd_ctx);
 int hdd_start_station_adapter(struct hdd_adapter *adapter);
@@ -3905,15 +3876,6 @@ void hdd_populate_random_mac_addr(struct hdd_context *hdd_ctx, uint32_t num);
  * Return: 0 if interface was opened else false
  */
 bool hdd_is_interface_up(struct hdd_adapter *adapter);
-
-#ifndef FEATURE_CM_ENABLE
-void hdd_connect_result(struct net_device *dev, const u8 *bssid,
-			struct csr_roam_info *roam_info, const u8 *req_ie,
-			size_t req_ie_len, const u8 *resp_ie,
-			size_t resp_ie_len, u16 status, gfp_t gfp,
-			bool connect_timeout,
-			tSirResultCodes timeout_reason);
-#endif
 
 #ifdef WLAN_FEATURE_FASTPATH
 void hdd_enable_fastpath(struct hdd_context *hdd_ctx,
@@ -3995,56 +3957,6 @@ struct csr_roam_profile *hdd_roam_profile(struct hdd_adapter *adapter)
 
 	return &sta_ctx->roam_profile;
 }
-
-#ifndef FEATURE_CM_ENABLE
-/**
- * hdd_security_ie() - Get adapter's security IE
- * @adapter: The adapter being queried
- *
- * Given an adapter this function returns a pointer to its security IE
- * buffer. Note that this buffer is maintained outside the roam
- * profile but, when in use, is referenced by a pointer within the
- * roam profile.
- *
- * NOTE WELL: Caller is responsible for ensuring this interface is only
- * invoked for STA-type interfaces
- *
- * Return: pointer to the adapter's roam profile security IE buffer
- */
-static inline
-uint8_t *hdd_security_ie(struct hdd_adapter *adapter)
-{
-	struct hdd_station_ctx *sta_ctx;
-
-	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-
-	return sta_ctx->security_ie;
-}
-
-/**
- * hdd_assoc_additional_ie() - Get adapter's assoc additional IE
- * @adapter: The adapter being queried
- *
- * Given an adapter this function returns a pointer to its assoc
- * additional IE buffer. Note that this buffer is maintained outside
- * the roam profile but, when in use, is referenced by a pointer
- * within the roam profile.
- *
- * NOTE WELL: Caller is responsible for ensuring this interface is only
- * invoked for STA-type interfaces
- *
- * Return: pointer to the adapter's assoc additional IE buffer
- */
-static inline
-tSirAddie *hdd_assoc_additional_ie(struct hdd_adapter *adapter)
-{
-	struct hdd_station_ctx *sta_ctx;
-
-	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-
-	return &sta_ctx->assoc_additional_ie;
-}
-#endif
 
 /**
  * hdd_is_roaming_in_progress() - check if roaming is in progress
@@ -4285,29 +4197,6 @@ int hdd_get_rssi_snr_by_bssid(struct hdd_adapter *adapter, const uint8_t *bssid,
  */
 int hdd_reset_limit_off_chan(struct hdd_adapter *adapter);
 
-#ifndef FEATURE_CM_ENABLE
-#if defined(WLAN_FEATURE_FILS_SK) && \
-	(defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) || \
-		 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)))
-/**
- * hdd_update_hlp_info() - Update HLP packet received in FILS (re)assoc rsp
- * @dev: net device
- * @roam_fils_params: Fils join rsp params
- *
- * This API is used to send the received HLP packet in Assoc rsp(FILS AKM)
- * to the network layer.
- *
- * Return: None
- */
-void hdd_update_hlp_info(struct net_device *dev,
-			 struct csr_roam_info *roam_info);
-#else
-static inline void hdd_update_hlp_info(struct net_device *dev,
-				       struct csr_roam_info *roam_info)
-{}
-#endif
-#endif
-
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0)
 static inline void hdd_dev_setup_destructor(struct net_device *dev)
 {
@@ -4442,17 +4331,6 @@ static inline void hdd_driver_mem_cleanup(void)
 {
 }
 #endif /* WLAN_FEATURE_MEMDUMP_ENABLE */
-
-#ifndef FEATURE_CM_ENABLE
-/**
- * hdd_set_disconnect_status() - set adapter disconnection status
- * @hdd_adapter: Pointer to hdd adapter
- * @disconnecting: Disconnect status to set
- *
- * Return: None
- */
-void hdd_set_disconnect_status(struct hdd_adapter *adapter, bool disconnecting);
-#endif
 
 #ifdef FEATURE_MONITOR_MODE_SUPPORT
 /**

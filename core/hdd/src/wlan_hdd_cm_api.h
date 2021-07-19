@@ -27,7 +27,6 @@
 #include "wlan_cm_public_struct.h"
 #include "osif_cm_util.h"
 
-#ifdef FEATURE_CM_ENABLE
 /**
  * wlan_hdd_cm_connect() - cfg80211 connect api
  * @wiphy: Pointer to wiphy
@@ -150,7 +149,6 @@ QDF_STATUS hdd_cm_cckm_preauth_complete(struct wlan_objmgr_vdev *vdev,
 					struct wlan_preauth_rsp *rsp);
 #endif
 #endif
-#endif
 
 #ifdef WLAN_FEATURE_MSCS
 /**
@@ -169,13 +167,6 @@ void reset_mscs_params(struct hdd_adapter *adapter)
 	return;
 }
 #endif
-
-static const uint8_t acm_mask_bit[WLAN_MAX_AC] = {
-	0x4,                    /* SME_AC_BK */
-	0x8,                    /* SME_AC_BE */
-	0x2,                    /* SME_AC_VI */
-	0x1                     /* SME_AC_VO */
-};
 
 /**
  * hdd_handle_disassociation_event() - Handle disassociation event
@@ -308,4 +299,4 @@ bool hdd_cm_is_disconnecting(struct hdd_adapter *adapter);
  */
 bool hdd_cm_is_vdev_roaming(struct hdd_adapter *adapter);
 
-#endif
+#endif /* __WLAN_HDD_CM_API_H */

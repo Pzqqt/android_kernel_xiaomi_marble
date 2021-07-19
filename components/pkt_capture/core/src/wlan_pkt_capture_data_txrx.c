@@ -736,6 +736,7 @@ static void pkt_capture_rx_mon_get_rx_status(void *context, void *dp_soc,
 	struct connection_info info[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_vdev *vdev = context;
+	struct pkt_capture_vdev_priv *vdev_priv;
 	uint32_t conn_count;
 	uint8_t vdev_id;
 	int i;
@@ -755,6 +756,12 @@ static void pkt_capture_rx_mon_get_rx_status(void *context, void *dp_soc,
 		pkt_capture_err("Failed to get psoc");
 		return;
 	}
+
+	vdev_priv = pkt_capture_vdev_get_priv(vdev);
+	if (qdf_unlikely(!vdev))
+		return;
+
+	rx_status->rssi_comb = vdev_priv->rx_avg_rssi;
 
 	/* Update the connected channel info from policy manager */
 	conn_count = policy_mgr_get_connection_info(psoc, info);
@@ -970,7 +977,6 @@ pkt_capture_rx_data_cb(
 		/* need to update this to fill rx_status*/
 		pkt_capture_rx_mon_get_rx_status(context, psoc,
 						 rx_tlv_hdr, &rx_status);
-		rx_status.chan_noise_floor = NORMALIZED_TO_NOISE_FLOOR;
 		rx_status.tx_status = status;
 		rx_status.tx_retry_cnt = tx_retry_cnt;
 		rx_status.add_rtap_ext = true;

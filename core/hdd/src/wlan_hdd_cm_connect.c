@@ -48,7 +48,6 @@
 #include "wlan_roam_debug.h"
 #include <wlan_hdd_regulatory.h>
 
-#ifdef FEATURE_CM_ENABLE
 bool hdd_cm_is_vdev_associated(struct hdd_adapter *adapter)
 {
 	struct wlan_objmgr_vdev *vdev;
@@ -165,44 +164,6 @@ bool hdd_cm_is_vdev_roaming(struct hdd_adapter *adapter)
 	return is_vdev_roaming;
 }
 
-#else
-bool hdd_cm_is_vdev_associated(struct hdd_adapter *adapter)
-{
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-
-	return (sta_ctx->conn_info.conn_state == eConnectionState_Associated ||
-		sta_ctx->conn_info.conn_state == eConnectionState_NdiConnected);
-}
-
-bool hdd_cm_is_connecting(struct hdd_adapter *adapter)
-{
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-
-	return sta_ctx->conn_info.conn_state == eConnectionState_Connecting;
-}
-
-bool hdd_cm_is_disconnected(struct hdd_adapter *adapter)
-{
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-
-	return sta_ctx->conn_info.conn_state == eConnectionState_NotConnected;
-}
-
-bool hdd_cm_is_disconnecting(struct hdd_adapter *adapter)
-{
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-
-	return sta_ctx->conn_info.conn_state == eConnectionState_Disconnecting;
-}
-
-bool hdd_cm_is_vdev_roaming(struct hdd_adapter *adapter)
-{
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-
-	return sme_roaming_in_progress(hdd_ctx->mac_handle, adapter->vdev_id);
-}
-#endif
-
 void hdd_cm_set_peer_authenticate(struct hdd_adapter *adapter,
 				  struct qdf_mac_addr *bssid,
 				  bool is_auth_required)
@@ -308,8 +269,6 @@ void hdd_cm_save_connect_status(struct hdd_adapter *adapter,
 {
 	adapter->connect_req_status = reason_code;
 }
-
-#ifdef FEATURE_CM_ENABLE
 
 #ifdef FEATURE_WLAN_WAPI
 static bool hdd_cm_is_wapi_sta(enum csr_akm_type auth_type)
@@ -646,6 +605,13 @@ static bool hdd_is_ese_assoc(enum csr_akm_type auth_type,
 }
 #endif
 
+static const uint8_t acm_mask_bit[WLAN_MAX_AC] = {
+	0x4,                    /* SME_AC_BK */
+	0x8,                    /* SME_AC_BE */
+	0x2,                    /* SME_AC_VI */
+	0x1                     /* SME_AC_VO */
+};
+
 static void hdd_wmm_cm_connect(struct wlan_objmgr_vdev *vdev,
 			       struct hdd_adapter *adapter,
 			       tDot11fBeaconIEs *bcn_ie,
@@ -816,6 +782,39 @@ static void hdd_cm_save_connect_info(struct hdd_adapter *adapter,
 	hdd_cm_save_bss_info(adapter, rsp);
 }
 
+#ifdef WLAN_FEATURE_FILS_SK
+static bool hdd_cm_is_fils_connection(struct wlan_cm_connect_resp *rsp)
+{
+	return rsp->is_fils_connection;
+}
+#else
+static inline
+bool hdd_cm_is_fils_connection(struct wlan_cm_connect_resp *rsp)
+{
+	return false;
+}
+#endif
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+static bool hdd_cm_is_roam_auth_required(struct hdd_station_ctx *sta_ctx,
+					 struct wlan_cm_connect_resp *rsp)
+{
+	if (!rsp->roaming_info)
+		return false;
+
+	if (rsp->roaming_info->auth_status == ROAM_AUTH_STATUS_AUTHENTICATED)
+		return false;
+
+	return true;
+}
+#else
+static bool hdd_cm_is_roam_auth_required(struct hdd_station_ctx *sta_ctx,
+					 struct wlan_cm_connect_resp *rsp)
+{
+	return true;
+}
+#endif
+
 static void
 hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
 				       struct wlan_cm_connect_resp *rsp)
@@ -828,6 +827,8 @@ hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
 	uint32_t ie_len;
 	uint8_t *ie_field;
 	mac_handle_t mac_handle;
+	bool is_auth_required = true;
+	bool is_roam_offload = false;
 	bool is_roam = rsp->is_reassoc;
 	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
 	uint32_t phymode;
@@ -941,7 +942,22 @@ hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
 		adapter->is_link_up_service_needed = false;
 	}
 
-	if (ucfg_ipa_is_enabled())
+	if (!rsp->is_wps_connection &&
+	    (sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_NONE ||
+	     sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_OPEN_SYSTEM ||
+	     sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_SHARED_KEY ||
+	     hdd_cm_is_fils_connection(rsp)))
+		is_auth_required = false;
+
+	if (is_roam)
+		/* If roaming is set check if FW roaming/LFR3  */
+		ucfg_mlme_get_roaming_offload(hdd_ctx->psoc, &is_roam_offload);
+
+	if (is_roam_offload)
+		/* for LFR 3 get authenticated info from resp */
+		is_auth_required = hdd_cm_is_roam_auth_required(sta_ctx, rsp);
+
+	if (ucfg_ipa_is_enabled() && !is_auth_required)
 		ucfg_ipa_wlan_evt(hdd_ctx->pdev, adapter->dev,
 				  adapter->device_mode,
 				  adapter->vdev_id,
@@ -964,41 +980,6 @@ hdd_cm_connect_success_pre_user_update(struct wlan_objmgr_vdev *vdev,
 		hdd_nud_indicate_roam(adapter);
 	 /* hdd_objmgr_set_peer_mlme_auth_state */
 }
-
-#ifdef WLAN_FEATURE_FILS_SK
-static bool hdd_cm_is_fils_connection(struct wlan_cm_connect_resp *rsp)
-{
-	return rsp->is_fils_connection;
-}
-#else
-static inline
-bool hdd_cm_is_fils_connection(struct wlan_cm_connect_resp *rsp)
-{
-	return false;
-}
-#endif
-
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-static bool hdd_cm_is_roam_auth_required(struct hdd_station_ctx *sta_ctx,
-					 struct wlan_cm_connect_resp *rsp)
-{
-	if (!rsp->roaming_info)
-		return false;
-
-	if (rsp->roaming_info->auth_status == ROAM_AUTH_STATUS_AUTHENTICATED ||
-	    sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_SAE ||
-	    sta_ctx->conn_info.auth_type == eCSR_AUTH_TYPE_OWE)
-		return false;
-
-	return true;
-}
-#else
-static bool hdd_cm_is_roam_auth_required(struct hdd_station_ctx *sta_ctx,
-					 struct wlan_cm_connect_resp *rsp)
-{
-	return true;
-}
-#endif
 
 static void
 hdd_cm_connect_success_post_user_update(struct wlan_objmgr_vdev *vdev,
@@ -1502,4 +1483,3 @@ QDF_STATUS hdd_cm_cckm_preauth_complete(struct wlan_objmgr_vdev *vdev,
 }
 #endif /* FEATURE_WLAN_ESE */
 #endif /* WLAN_FEATURE_PREAUTH_ENABLE */
-#endif

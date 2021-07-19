@@ -280,9 +280,11 @@ struct wlan_fwol_cfg {
 /**
  * struct wlan_fwol_thermal_throttle_info - FW offload thermal throttle info
  * @level: thermal throttle level
+ * @pdev_id: pdev id
  */
 struct wlan_fwol_thermal_throttle_info {
 	enum thermal_throttle_level level;
+	uint32_t pdev_id;
 };
 
 /**

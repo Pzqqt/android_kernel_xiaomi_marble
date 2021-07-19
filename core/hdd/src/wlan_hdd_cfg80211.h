@@ -270,12 +270,13 @@ typedef enum {
 #define WIFI_TDLS_EXTERNAL_CONTROL_SUPPORT	BIT(1)
 #define WIIF_TDLS_OFFCHANNEL_SUPPORT		BIT(2)
 
-#define CFG_NON_AGG_RETRY_MAX                  (31)
-#define CFG_AGG_RETRY_MAX                      (31)
+#define CFG_NON_AGG_RETRY_MAX                  (64)
+#define CFG_AGG_RETRY_MAX                      (64)
 #define CFG_CTRL_RETRY_MAX                     (31)
 #define CFG_PROPAGATION_DELAY_MAX              (63)
 #define CFG_PROPAGATION_DELAY_BASE             (64)
 #define CFG_AGG_RETRY_MIN                      (5)
+#define CFG_NON_AGG_RETRY_MIN                  (5)
 
 #define CFG_NO_SUPPORT_UL_MUMIMO		(0)
 #define CFG_FULL_BW_SUPPORT_UL_MUMIMO		(1)
@@ -285,12 +286,6 @@ typedef enum {
 #define PCL_CHANNEL_SUPPORT_GO			BIT(0)
 #define PCL_CHANNEL_SUPPORT_CLI			BIT(1)
 #define PCL_CHANNEL_EXCLUDE_IN_GO_NEG		BIT(3)
-
-#ifndef FEATURE_CM_ENABLE
-struct cfg80211_bss *
-wlan_hdd_cfg80211_update_bss_db(struct hdd_adapter *adapter,
-				struct csr_roam_info *roam_info);
-#endif
 
 #define CONNECTIVITY_CHECK_SET_ARP \
 	QCA_WLAN_VENDOR_CONNECTIVITY_CHECK_SET_ARP
@@ -335,25 +330,6 @@ wlan_hdd_wifi_test_config_policy[
 	vendor_command_policy(wlan_hdd_wifi_test_config_policy,          \
 			      QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_MAX) \
 },
-
-#ifndef FEATURE_CM_ENABLE
-int wlan_hdd_cfg80211_pmksa_candidate_notify(struct hdd_adapter *adapter,
-					struct csr_roam_info *roam_info,
-					int index, bool preauth);
-#ifdef FEATURE_WLAN_LFR_METRICS
-QDF_STATUS
-wlan_hdd_cfg80211_roam_metrics_preauth(struct hdd_adapter *adapter,
-				       struct csr_roam_info *roam_info);
-QDF_STATUS
-wlan_hdd_cfg80211_roam_metrics_preauth_status(struct hdd_adapter *adapter,
-					      struct csr_roam_info *roam_info,
-					      bool preauth_status);
-
-QDF_STATUS
-wlan_hdd_cfg80211_roam_metrics_handover(struct hdd_adapter *adapter,
-					struct csr_roam_info *roam_info);
-#endif
-#endif
 
 extern const struct nla_policy
 	qca_wlan_vendor_set_nud_stats_policy
@@ -507,22 +483,6 @@ int wlan_hdd_send_avoid_freq_for_dnbs(struct hdd_context *hdd_ctx,
 void wlan_hdd_rso_cmd_status_cb(hdd_handle_t hdd_handle,
 				struct rso_cmd_status *rso_status);
 
-#ifndef FEATURE_CM_ENABLE
-/*
- * wlan_hdd_cfg80211_unlink_bss :to inform nl80211
- * interface that BSS might have been lost.
- * @adapter: adapter
- * @bssid: bssid which might have been lost
- * @ssid: SSID
- * @ssid_len: length of the SSID
- *
- * Return: void
- */
-void wlan_hdd_cfg80211_unlink_bss(struct hdd_adapter *adapter,
-				  tSirMacAddr bssid, uint8_t *ssid,
-				  uint8_t ssid_len);
-#endif
-
 void wlan_hdd_cfg80211_acs_ch_select_evt(struct hdd_adapter *adapter);
 
 #ifdef WLAN_CFR_ENABLE
@@ -560,23 +520,7 @@ void hdd_cfr_data_send_nl_event(uint8_t vdev_id, uint32_t pid,
 void hdd_send_roam_scan_ch_list_event(struct hdd_context *hdd_ctx,
 				      uint8_t vdev_id, uint16_t buf_len,
 				      uint8_t *buf);
-
-#ifndef FEATURE_CM_ENABLE
-int wlan_hdd_send_roam_auth_event(struct hdd_adapter *adapter, uint8_t *bssid,
-		uint8_t *req_rsn_ie, uint32_t req_rsn_length, uint8_t
-		*rsp_rsn_ie, uint32_t rsp_rsn_length, struct csr_roam_info
-		*roam_info_ptr);
-#endif
 #else
-#ifndef FEATURE_CM_ENABLE
-static inline int wlan_hdd_send_roam_auth_event(struct hdd_adapter *adapter,
-		uint8_t *bssid, uint8_t *req_rsn_ie, uint32_t req_rsn_length,
-		uint8_t *rsp_rsn_ie, uint32_t rsp_rsn_length,
-		struct csr_roam_info *roam_info_ptr)
-{
-	return 0;
-}
-#endif
 static inline
 void hdd_send_roam_scan_ch_list_event(struct hdd_context *hdd_ctx,
 				      uint8_t vdev_id, uint16_t buf_len,
@@ -618,29 +562,6 @@ int wlan_hdd_enable_dfs_chan_scan(struct hdd_context *hdd_ctx,
 int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx,
 				  struct wiphy *wiphy,
 				  enum band_info new_band);
-
-#ifndef FEATURE_CM_ENABLE
-/**
- * wlan_hdd_cfg80211_indicate_disconnect() - Indicate disconnnect to userspace
- * @adapter: Pointer to adapter
- * @locally_generated: True if the disconnection is internally generated.
- *                     False if the disconnection is received from peer.
- * @reason: Disconnect reason as per @enum wlan_reason_code
- * @disconnect_ies: IEs received in Deauth/Disassoc from peer
- * @disconnect_ies_len: Length of @disconnect_ies
- *
- * This function is indicate disconnect to the kernel which thus indicates
- * to the userspace.
- *
- * Return: None
- */
-void
-wlan_hdd_cfg80211_indicate_disconnect(struct hdd_adapter *adapter,
-				      bool locally_generated,
-				      enum wlan_reason_code reason,
-				      uint8_t *disconnect_ies,
-				      uint16_t disconnect_ies_len);
-#endif
 
 /**
  * wlan_hdd_change_hw_mode_for_given_chnl() - change HW mode for given channel
@@ -701,33 +622,6 @@ void hdd_set_rate_bw(struct rate_info *info, enum hdd_rate_info_bw hdd_bw);
  * Return : Corresponding band for SAP operating channel
  */
 uint8_t hdd_get_sap_operating_band(struct hdd_context *hdd_ctx);
-
-#ifndef FEATURE_CM_ENABLE
-/**
- * wlan_hdd_try_disconnect() - try disconnnect from previous connection
- * @adapter: Pointer to adapter
- * @reason: Mac Disconnect reason code as per @enum wlan_reason_code
- *
- * This function is used to disconnect from previous connection
- *
- * Return: 0 for success, non-zero for failure
- */
-int wlan_hdd_try_disconnect(struct hdd_adapter *adapter,
-			    enum wlan_reason_code reason);
-
-/**
- * wlan_hdd_disconnect() - hdd disconnect api
- * @adapter: Pointer to adapter
- * @reason: CSR disconnect reason code as per @enum eCsrRoamDisconnectReason
- * @mac_reason: Mac Disconnect reason code as per @enum wlan_reason_code
- *
- * This function is used to issue a disconnect request to SME
- *
- * Return: 0 for success, non-zero for failure
- */
-int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason,
-			enum wlan_reason_code mac_reason);
-#endif
 
 /**
  * wlan_hdd_merge_avoid_freqs(): Merge two tHddAvoidFreqList
@@ -874,4 +768,17 @@ static inline void hdd_send_update_owe_info_event(struct hdd_adapter *adapter,
  */
 bool hdd_is_legacy_connection(struct hdd_adapter *adapter);
 
+struct hdd_hostapd_state;
+
+/**
+ * hdd_softap_deauth_all_sta() - Deauth all sta in the sta list
+ * @adapter: pointer to adapter structure
+ * @hapd_state: pointer to hostapd state structure
+ * @param: pointer to del sta params
+ *
+ * Return: QDF_STATUS on success, corresponding QDF failure status on failure
+ */
+QDF_STATUS hdd_softap_deauth_all_sta(struct hdd_adapter *adapter,
+				     struct hdd_hostapd_state *hapd_state,
+				     struct csr_del_sta_params *param);
 #endif

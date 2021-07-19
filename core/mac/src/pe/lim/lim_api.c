@@ -1217,7 +1217,7 @@ static QDF_STATUS pe_handle_mgmt_frame(struct wlan_objmgr_psoc *psoc,
 
 	ret = wma_form_rx_packet(buf, mgmt_rx_params, pVosPkt);
 	if (ret) {
-		pe_err_rl("Failed to fill cds packet from event buffer");
+		pe_debug_rl("Failed to fill cds packet from event buffer");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1331,9 +1331,6 @@ void pe_register_callbacks_with_wma(struct mac_context *mac,
 	QDF_STATUS status;
 
 	status = wma_register_roaming_callbacks(
-#ifndef FEATURE_CM_ENABLE
-			ready_req->csr_roam_synch_cb,
-#endif
 			ready_req->csr_roam_auth_event_handle_cb,
 			ready_req->pe_roam_synch_cb,
 			ready_req->pe_disconnect_cb);

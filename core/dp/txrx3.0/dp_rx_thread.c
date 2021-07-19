@@ -1014,20 +1014,21 @@ suspend_fail:
  * @rx_thread - rx_thread pointer of the queue from which packets are
  *              to be flushed out
  * @vdev_id: vdev id for which packets are to be flushed
+ * @wait_timeout: wait time value for rx thread to complete flush
  *
  * The function will flush the RX packets by vdev_id in a particular
  * RX thead queue. And will notify and wait the TX thread to flush the
  * packets in the NAPI RX GRO hash list
  *
- * Return: void
+ * Return: Success/Failure
  */
 static inline
-void dp_rx_thread_flush_by_vdev_id(struct dp_rx_thread *rx_thread,
-				   uint8_t vdev_id)
+QDF_STATUS dp_rx_thread_flush_by_vdev_id(struct dp_rx_thread *rx_thread,
+					 uint8_t vdev_id, int wait_timeout)
 {
 	qdf_nbuf_t nbuf_list, tmp_nbuf_list;
 	uint32_t num_list_elements = 0;
-	QDF_STATUS qdf_status;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
 	qdf_nbuf_queue_head_lock(&rx_thread->nbuf_queue);
 	QDF_NBUF_QUEUE_WALK_SAFE(&rx_thread->nbuf_queue, nbuf_list,
@@ -1049,7 +1050,8 @@ void dp_rx_thread_flush_by_vdev_id(struct dp_rx_thread *rx_thread,
 	qdf_wake_up_interruptible(&rx_thread->wait_q);
 
 	qdf_status = qdf_wait_single_event(&rx_thread->vdev_del_event,
-					   DP_RX_THREAD_WAIT_TIMEOUT);
+					    wait_timeout);
+
 	if (QDF_IS_STATUS_SUCCESS(qdf_status))
 		dp_debug("thread:%d napi gro flush successfully",
 			 rx_thread->id);
@@ -1066,6 +1068,8 @@ void dp_rx_thread_flush_by_vdev_id(struct dp_rx_thread *rx_thread,
 	} else
 		dp_err("thread:%d failed while waiting for napi gro flush",
 		       rx_thread->id);
+
+	return qdf_status;
 }
 
 /**
@@ -1077,6 +1081,34 @@ void dp_rx_thread_flush_by_vdev_id(struct dp_rx_thread *rx_thread,
  *
  * Return: QDF_STATUS_SUCCESS
  */
+#ifdef HAL_CONFIG_SLUB_DEBUG_ON
+QDF_STATUS dp_rx_tm_flush_by_vdev_id(struct dp_rx_tm_handle *rx_tm_hdl,
+				     uint8_t vdev_id)
+{
+	struct dp_rx_thread *rx_thread;
+	QDF_STATUS qdf_status;
+	int i;
+	int wait_timeout = DP_RX_THREAD_WAIT_TIMEOUT;
+
+	for (i = 0; i < rx_tm_hdl->num_dp_rx_threads; i++) {
+		rx_thread = rx_tm_hdl->rx_thread[i];
+		if (!rx_thread)
+			continue;
+
+		dp_debug("thread %d", i);
+		qdf_status = dp_rx_thread_flush_by_vdev_id(rx_thread, vdev_id,
+							   wait_timeout);
+
+		/* if one thread timeout happened, shrink timeout value
+		 * to 1/4 of origional value
+		 */
+		if (qdf_status == QDF_STATUS_E_TIMEOUT)
+			wait_timeout = DP_RX_THREAD_WAIT_TIMEOUT / 4;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
 QDF_STATUS dp_rx_tm_flush_by_vdev_id(struct dp_rx_tm_handle *rx_tm_hdl,
 				     uint8_t vdev_id)
 {
@@ -1089,11 +1121,13 @@ QDF_STATUS dp_rx_tm_flush_by_vdev_id(struct dp_rx_tm_handle *rx_tm_hdl,
 			continue;
 
 		dp_debug("thread %d", i);
-		dp_rx_thread_flush_by_vdev_id(rx_thread, vdev_id);
+		dp_rx_thread_flush_by_vdev_id(rx_thread, vdev_id,
+					      DP_RX_THREAD_WAIT_TIMEOUT);
 	}
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 
 /**
  * dp_rx_tm_resume() - resume DP RX threads
@@ -1240,14 +1274,10 @@ static uint8_t dp_rx_tm_select_thread(struct dp_rx_tm_handle *rx_tm_hdl,
 {
 	uint8_t selected_rx_thread;
 
-	if (reo_ring_num >= rx_tm_hdl->num_dp_rx_threads) {
-		dp_err_rl("unexpected ring number");
-		QDF_BUG(0);
-		return 0;
-	}
+	selected_rx_thread = reo_ring_num % rx_tm_hdl->num_dp_rx_threads;
+	dp_debug("ring_num %d, selected thread %u", reo_ring_num,
+		 selected_rx_thread);
 
-	selected_rx_thread = reo_ring_num;
-	dp_debug("selected thread %u", selected_rx_thread);
 	return selected_rx_thread;
 }
 
@@ -1280,13 +1310,11 @@ dp_rx_tm_gro_flush_ind(struct dp_rx_tm_handle *rx_tm_hdl, int rx_ctx_id,
 struct napi_struct *dp_rx_tm_get_napi_context(struct dp_rx_tm_handle *rx_tm_hdl,
 					      uint8_t rx_ctx_id)
 {
-	if (rx_ctx_id >= rx_tm_hdl->num_dp_rx_threads) {
-		dp_err_rl("unexpected rx_ctx_id %u", rx_ctx_id);
-		QDF_BUG(0);
-		return NULL;
-	}
+	uint8_t selected_thread_id;
 
-	return &rx_tm_hdl->rx_thread[rx_ctx_id]->napi;
+	selected_thread_id = dp_rx_tm_select_thread(rx_tm_hdl, rx_ctx_id);
+
+	return &rx_tm_hdl->rx_thread[selected_thread_id]->napi;
 }
 
 QDF_STATUS dp_rx_tm_set_cpu_mask(struct dp_rx_tm_handle *rx_tm_hdl,

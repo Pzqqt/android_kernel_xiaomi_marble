@@ -74,7 +74,6 @@ target_if_cm_roam_send_vdev_set_pcl_cmd(struct wlan_objmgr_vdev *vdev,
 	return wmi_unified_vdev_set_pcl_cmd(wmi_handle, &params);
 }
 
-#ifdef FEATURE_CM_ENABLE
 /**
  * target_if_cm_roam_send_roam_invoke_cmd  - Send roam invoke command to wmi.
  * @vdev: VDEV object pointer
@@ -113,16 +112,13 @@ target_if_cm_roam_send_roam_sync_complete(struct wlan_objmgr_vdev *vdev)
 	return wmi_unified_roam_synch_complete_cmd(wmi_handle,
 						   wlan_vdev_get_id(vdev));
 }
-#endif
 
 static void
 target_if_cm_roam_register_lfr3_ops(struct wlan_cm_roam_tx_ops *tx_ops)
 {
 	tx_ops->send_vdev_set_pcl_cmd = target_if_cm_roam_send_vdev_set_pcl_cmd;
-#ifdef FEATURE_CM_ENABLE
 	tx_ops->send_roam_invoke_cmd = target_if_cm_roam_send_roam_invoke_cmd;
 	tx_ops->send_roam_sync_complete_cmd = target_if_cm_roam_send_roam_sync_complete;
-#endif
 }
 #else
 static inline void
@@ -727,14 +723,14 @@ target_if_cm_roam_offload_11k_params(wmi_unified_t wmi_handle,
 	if (!wmi_service_enabled(wmi_handle,
 				 wmi_service_11k_neighbour_report_support)) {
 		target_if_err("FW doesn't support 11k offload");
-		return QDF_STATUS_E_NOSUPPORT;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	/* If 11k enable command and ssid length is 0, drop it */
 	if (req->offload_11k_bitmask &&
 	    !req->neighbor_report_params.ssid.length) {
 		target_if_debug("SSID Len 0");
-		return QDF_STATUS_E_INVAL;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	status = wmi_unified_offload_11k_cmd(wmi_handle, req);

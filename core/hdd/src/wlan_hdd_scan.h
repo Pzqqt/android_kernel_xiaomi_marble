@@ -130,21 +130,6 @@ void wlan_hdd_cfg80211_abort_scan(struct wiphy *wiphy,
  */
 void hdd_init_scan_reject_params(struct hdd_context *hdd_ctx);
 
-#ifndef FEATURE_CM_ENABLE
-
-/**
- * hdd_reset_scan_reject_params() - reset scan reject params per roam stats
- * @hdd_ctx: hdd contxt
- * @roam_status: roam status
- * @roam_result: roam result
- *
- * Return: None
- */
-void hdd_reset_scan_reject_params(struct hdd_context *hdd_ctx,
-				  eRoamCmdStatus roam_status,
-				  eCsrRoamResult roam_result);
-#endif
-
 /**
  * wlan_hdd_cfg80211_scan_block() - scan block handler
  * @adapter: HDD adapter to work against

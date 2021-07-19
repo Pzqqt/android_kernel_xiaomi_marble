@@ -85,9 +85,7 @@
 #ifdef FEATURE_WLAN_DIAG_SUPPORT    /* FEATURE_WLAN_DIAG_SUPPORT */
 #include "host_diag_core_log.h"
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
-#ifdef FEATURE_CM_ENABLE
 #include <../../core/src/wlan_cm_roam_i.h>
-#endif
 
 #ifdef FEATURE_WLAN_EXTSCAN
 #define WMA_EXTSCAN_CYCLE_WAKE_LOCK_DURATION WAKELOCK_DURATION_RECOMMENDED
@@ -497,70 +495,6 @@ wma_send_roam_preauth_status(tp_wma_handle wma_handle,
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-#ifndef FEATURE_CM_ENABLE
-/**
- * wma_process_roam_invoke() - send roam invoke command to fw.
- * @handle: wma handle
- * @roaminvoke: roam invoke command
- *
- * Send roam invoke command to fw for fastreassoc.
- *
- * Return: none
- */
-void wma_process_roam_invoke(WMA_HANDLE handle,
-		struct roam_invoke_req *roaminvoke)
-{
-	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-	struct wmi_unified *wmi_handle;
-
-	if (wma_validate_handle(wma_handle))
-		goto free_frame_buf;
-
-	wmi_handle = wma_handle->wmi_handle;
-	if (wmi_validate_handle(wmi_handle))
-		goto free_frame_buf;
-
-	if (!wma_is_vdev_valid(roaminvoke->vdev_id)) {
-		wma_err("Invalid vdev id:%d", roaminvoke->vdev_id);
-		goto free_frame_buf;
-	}
-	wma_err("Sending ROAM INVOKE CMD vdev id:%d", roaminvoke->vdev_id);
-
-	wmi_unified_roam_invoke_cmd(wmi_handle,
-				(struct roam_invoke_req *)roaminvoke);
-free_frame_buf:
-	if (roaminvoke->frame_len) {
-		qdf_mem_free(roaminvoke->frame_buf);
-		roaminvoke->frame_buf = NULL;
-	}
-}
-
-/**
- * wma_process_roam_synch_fail() -roam synch failure handle
- * @handle: wma handle
- * @synch_fail: roam synch fail parameters
- *
- * Return: none
- */
-void wma_process_roam_synch_fail(WMA_HANDLE handle,
-				 struct roam_offload_synch_fail *synch_fail)
-{
-	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-	struct wmi_unified *wmi_handle;
-
-	if (wma_validate_handle(wma_handle))
-		return;
-
-	wmi_handle = wma_handle->wmi_handle;
-	if (wmi_validate_handle(wmi_handle))
-		return;
-
-	wlan_roam_debug_log(synch_fail->session_id,
-			    DEBUG_ROAM_SYNCH_FAIL,
-			    DEBUG_INVALID_PEER_ID, NULL, NULL, 0, 0);
-}
-#endif
-
 /**
  * wma_free_roam_synch_frame_ind() - Free the bcn_probe_rsp, reassoc_req,
  * reassoc_rsp received as part of the ROAM_SYNC_FRAME event
@@ -755,15 +689,9 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 		 roam_synch_ind_ptr->rssi,
 		 roam_synch_ind_ptr->isBeacon);
 
-#ifdef FEATURE_CM_ENABLE
 	if (!QDF_IS_STATUS_SUCCESS(
 		cm_fw_roam_sync_start_ind(iface->vdev,
 					  roam_synch_ind_ptr)))
-#else
-	if (!QDF_IS_STATUS_SUCCESS(
-		wma->csr_roam_synch_cb(wma->mac_context, roam_synch_ind_ptr,
-				       NULL, SIR_ROAMING_DEREGISTER_STA)))
-#endif
 	{
 		wma_err("LFR3: CSR Roam synch cb failed");
 		wma_free_roam_synch_frame_ind(iface);
@@ -1027,15 +955,6 @@ static void wma_update_phymode_on_roam(tp_wma_handle wma, uint8_t *bssid,
 	wma_debug("LFR3: new phymode %d", bss_phymode);
 }
 
-#ifndef FEATURE_CM_ENABLE
-static void wma_post_roam_sync_failure(tp_wma_handle wma, uint8_t vdev_id)
-{
-	wlan_cm_roam_stop_req(wma->psoc, vdev_id, REASON_ROAM_SYNCH_FAILED);
-	wma_debug("In cleanup: RSO Command:%d, reason %d vdev %d",
-		  ROAM_SCAN_OFFLOAD_STOP, REASON_ROAM_SYNCH_FAILED, vdev_id);
-}
-#endif
-
 int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
 					 uint32_t len)
 {
@@ -1230,45 +1149,23 @@ int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
 	wma_update_phymode_on_roam(wma, roam_synch_ind_ptr->bssid.bytes,
 				   param_buf->chan,
 				   &wma->interfaces[synch_event->vdev_id]);
-#ifdef FEATURE_CM_ENABLE
 	cm_fw_roam_sync_propagation(wma->psoc,
 				    synch_event->vdev_id,
 				    roam_synch_ind_ptr);
-#else
-	wma->csr_roam_synch_cb(wma->mac_context, roam_synch_ind_ptr,
-			       bss_desc_ptr, SIR_ROAM_SYNCH_PROPAGATION);
-	wma_process_roam_synch_complete(wma, synch_event->vdev_id);
-	wma->csr_roam_synch_cb(wma->mac_context, roam_synch_ind_ptr,
-			       bss_desc_ptr, SIR_ROAM_SYNCH_COMPLETE);
-#endif
-
 	wma->interfaces[synch_event->vdev_id].roam_synch_delay =
 		qdf_get_system_timestamp() - roam_synch_received;
 	wma_debug("LFR3: roam_synch_delay:%d",
 		 wma->interfaces[synch_event->vdev_id].roam_synch_delay);
-#ifndef FEATURE_CM_ENABLE
-	wma->csr_roam_synch_cb(wma->mac_context, roam_synch_ind_ptr,
-			       bss_desc_ptr, SIR_ROAM_SYNCH_NAPI_OFF);
-#endif
 
 	status = 0;
 
 cleanup_label:
 	if (status != 0) {
-#ifdef FEATURE_CM_ENABLE
 		if (synch_event) {
 			cm_fw_roam_abort_req(wma->psoc, synch_event->vdev_id);
 			cm_roam_stop_req(wma->psoc, synch_event->vdev_id,
 					 REASON_ROAM_SYNCH_FAILED);
 		}
-#else
-		if (roam_synch_ind_ptr)
-			wma->csr_roam_synch_cb(wma->mac_context,
-					       roam_synch_ind_ptr, NULL,
-					       SIR_ROAMING_ABORT);
-		if (synch_event)
-			wma_post_roam_sync_failure(wma, synch_event->vdev_id);
-#endif
 	}
 
 	if (roam_synch_ind_ptr && roam_synch_ind_ptr->ric_tspec_data)
@@ -1433,11 +1330,7 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	wmi_roam_synch_event_fixed_param *synch_event = NULL;
 	WMI_ROAM_SYNCH_EVENTID_param_tlvs *param_buf = NULL;
 	tp_wma_handle wma = (tp_wma_handle)handle;
-#ifndef FEATURE_CM_ENABLE
-	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
-	struct wma_txrx_node *iface = NULL;
-	struct vdev_mlme_obj *mlme_obj;
-#endif
+
 	if (!event) {
 		wma_err_rl("event param null");
 		return status;
@@ -1459,26 +1352,9 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 			   synch_event->vdev_id);
 		return status;
 	}
-#ifdef FEATURE_CM_ENABLE
-	cm_fw_roam_sync_req(wma->psoc, synch_event->vdev_id, event, len);
-#else
-	iface = &wma->interfaces[synch_event->vdev_id];
-	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(iface->vdev);
-	if (mlme_obj)
-		mlme_obj->mgmt.generic.tx_pwrlimit =
-				synch_event->max_allowed_tx_power;
 
-	qdf_status = wlan_vdev_mlme_sm_deliver_evt(iface->vdev,
-						   WLAN_VDEV_SM_EV_ROAM,
-						   len,
-						   event);
-	if (QDF_IS_STATUS_ERROR(qdf_status)) {
-		wma_err("Failed to send the EV_ROAM");
-		wma_post_roam_sync_failure(wma, synch_event->vdev_id);
-		return status;
-	}
-	wma_debug("Posted EV_ROAM to VDEV SM");
-#endif
+	cm_fw_roam_sync_req(wma->psoc, synch_event->vdev_id, event, len);
+
 	return 0;
 }
 
@@ -1702,15 +1578,28 @@ wma_get_trigger_detail_str(struct wmi_roam_trigger_info *roam_info, char *buf)
 		buf_left -= buf_cons;
 		return;
 	case WMI_ROAM_TRIGGER_REASON_WTC_BTM:
-		buf_cons =
-		  qdf_snprint(temp, buf_left, "Roaming Mode: %d, Trigger Reason: %d, Sub code:%d, wtc mode:%d, wtc scan mode:%d, wtc rssi th:%d, wtc candi rssi th:%d",
-			      roam_info->wtc_btm_trig_data.roaming_mode,
-			      roam_info->wtc_btm_trig_data.vsie_trigger_reason,
-			      roam_info->wtc_btm_trig_data.sub_code,
-			      roam_info->wtc_btm_trig_data.wtc_mode,
-			      roam_info->wtc_btm_trig_data.wtc_scan_mode,
-			      roam_info->wtc_btm_trig_data.wtc_rssi_th,
-			      roam_info->wtc_btm_trig_data.wtc_candi_rssi_th);
+		if (roam_info->wtc_btm_trig_data.wtc_candi_rssi_ext_present) {
+			buf_cons = qdf_snprint(temp, buf_left, "Roaming Mode: %d, Trigger Reason: %d, Sub code:%d, wtc mode:%d, wtc scan mode:%d, wtc rssi th:%d, wtc candi rssi th_2g:%d, wtc_candi_rssi_th_5g:%d, wtc_candi_rssi_th_6g:%d",
+			     roam_info->wtc_btm_trig_data.roaming_mode,
+			     roam_info->wtc_btm_trig_data.vsie_trigger_reason,
+			     roam_info->wtc_btm_trig_data.sub_code,
+			     roam_info->wtc_btm_trig_data.wtc_mode,
+			     roam_info->wtc_btm_trig_data.wtc_scan_mode,
+			     roam_info->wtc_btm_trig_data.wtc_rssi_th,
+			     roam_info->wtc_btm_trig_data.wtc_candi_rssi_th,
+			     roam_info->wtc_btm_trig_data.wtc_candi_rssi_th_5g,
+			     roam_info->wtc_btm_trig_data.wtc_candi_rssi_th_6g);
+		} else {
+			buf_cons = qdf_snprint(temp, buf_left, "Roaming Mode: %d, Trigger Reason: %d, Sub code:%d, wtc mode:%d, wtc scan mode:%d, wtc rssi th:%d, wtc candi rssi th:%d",
+			       roam_info->wtc_btm_trig_data.roaming_mode,
+			       roam_info->wtc_btm_trig_data.vsie_trigger_reason,
+			       roam_info->wtc_btm_trig_data.sub_code,
+			       roam_info->wtc_btm_trig_data.wtc_mode,
+			       roam_info->wtc_btm_trig_data.wtc_scan_mode,
+			       roam_info->wtc_btm_trig_data.wtc_rssi_th,
+			       roam_info->wtc_btm_trig_data.wtc_candi_rssi_th);
+		}
+
 		temp += buf_cons;
 		buf_left -= buf_cons;
 		return;
@@ -2438,83 +2327,6 @@ int wma_rssi_breached_event_handler(void *handle,
 	return 0;
 }
 #endif /* FEATURE_RSSI_MONITOR */
-
-#ifndef FEATURE_CM_ENABLE
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-/**
- * wma_roam_ho_fail_handler() - LFR3.0 roam hand off failed handler
- * @wma: wma handle
- * @vdev_id: vdev id
- *
- * Return: none
- */
-static void
-wma_roam_ho_fail_handler(tp_wma_handle wma, uint32_t vdev_id,
-			 struct qdf_mac_addr bssid)
-{
-	struct handoff_failure_ind *ho_failure_ind;
-	struct scheduler_msg sme_msg = { 0 };
-	QDF_STATUS qdf_status;
-
-	ho_failure_ind = qdf_mem_malloc(sizeof(*ho_failure_ind));
-	if (!ho_failure_ind)
-		return;
-
-	ho_failure_ind->vdev_id = vdev_id;
-	ho_failure_ind->bssid = bssid;
-
-	sme_msg.type = eWNI_SME_HO_FAIL_IND;
-	sme_msg.bodyptr = ho_failure_ind;
-	sme_msg.bodyval = 0;
-
-	qdf_status = scheduler_post_message(QDF_MODULE_ID_WMA,
-					    QDF_MODULE_ID_SME,
-					    QDF_MODULE_ID_SME, &sme_msg);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		wma_err("Fail to post eWNI_SME_HO_FAIL_IND msg to SME");
-		qdf_mem_free(ho_failure_ind);
-		return;
-	}
-}
-
-/**
- * wma_process_roam_synch_complete() - roam synch complete command to fw.
- * @handle: wma handle
- * @synchcnf: offload synch confirmation params
- *
- * This function sends roam synch complete event to fw.
- *
- * Return: none
- */
-void wma_process_roam_synch_complete(WMA_HANDLE handle, uint8_t vdev_id)
-{
-	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-	struct wmi_unified *wmi_handle;
-
-	if (wma_validate_handle(wma_handle))
-		return;
-
-	wmi_handle = wma_handle->wmi_handle;
-	if (wmi_validate_handle(wmi_handle))
-		return;
-
-	if (!wma_is_vdev_valid(vdev_id))
-		return;
-
-	if (wmi_unified_roam_synch_complete_cmd(wmi_handle, vdev_id))
-		return;
-
-	DPTRACE(qdf_dp_trace_record_event(QDF_DP_TRACE_EVENT_RECORD,
-		vdev_id, QDF_TRACE_DEFAULT_PDEV_ID,
-		QDF_PROTO_TYPE_EVENT, QDF_ROAM_COMPLETE));
-
-	wma_info("LFR3: vdev[%d] Sent ROAM_SYNCH_COMPLETE", vdev_id);
-	wlan_roam_debug_log(vdev_id, DEBUG_ROAM_SYNCH_CNF,
-			    DEBUG_INVALID_PEER_ID, NULL, NULL, 0, 0);
-
-}
-#endif /* WLAN_FEATURE_ROAM_OFFLOAD */
-#endif /* FEATURE_CM_ENABLE */
 
 QDF_STATUS wma_pre_chan_switch_setup(uint8_t vdev_id)
 {
@@ -4186,13 +3998,8 @@ void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 {
 	struct scheduler_msg msg = {0};
 	QDF_STATUS status;
-#ifdef FEATURE_CM_ENABLE
 	struct cm_host_roam_start_ind *ind;
-#else
-	tSirSmeCandidateFoundInd *candidate_ind;
-#endif
 
-#ifdef FEATURE_CM_ENABLE
 	ind = qdf_mem_malloc(sizeof(*ind));
 	if (!ind)
 		return;
@@ -4208,24 +4015,6 @@ void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 					QDF_MODULE_ID_OS_IF,
 					QDF_MODULE_ID_SCAN, &msg);
 
-#else
-	candidate_ind = qdf_mem_malloc(sizeof(tSirSmeCandidateFoundInd));
-	if (!candidate_ind)
-		return;
-
-	wma->interfaces[vdev_id].roaming_in_progress = true;
-	candidate_ind->messageType = eWNI_SME_CANDIDATE_FOUND_IND;
-	candidate_ind->sessionId = vdev_id;
-	candidate_ind->length = sizeof(tSirSmeCandidateFoundInd);
-
-	msg.type = eWNI_SME_CANDIDATE_FOUND_IND;
-	msg.bodyptr = candidate_ind;
-	msg.callback = sme_mc_process_handler;
-	wma_debug("Posting candidate ind to SME, vdev %d", vdev_id);
-
-	status = scheduler_post_message(QDF_MODULE_ID_WMA, QDF_MODULE_ID_SME,
-					QDF_MODULE_ID_SCAN,  &msg);
-#endif
 	if (QDF_IS_STATUS_ERROR(status))
 		qdf_mem_free(msg.bodyptr);
 }
@@ -4307,15 +4096,12 @@ static void wma_invalid_roam_reason_handler(tp_wma_handle wma_handle,
 	if (notif != WMI_ROAM_NOTIF_ROAM_START)
 		wma_handle->pe_roam_synch_cb(wma_handle->mac_context,
 					     roam_synch_data, NULL, op_code);
-#ifdef FEATURE_CM_ENABLE
+
 	if (notif == WMI_ROAM_NOTIF_ROAM_START)
 		cm_fw_roam_start_req(wma_handle->psoc, vdev_id);
 	else
 		cm_fw_roam_abort_req(wma_handle->psoc, vdev_id);
-#else
-	wma_handle->csr_roam_synch_cb(wma_handle->mac_context, roam_synch_data,
-				      NULL, op_code);
-#endif
+
 	qdf_mem_free(roam_synch_data);
 }
 
@@ -4471,11 +4257,8 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 		wma_debug("mac addr to avoid "QDF_MAC_ADDR_FMT,
 			  QDF_MAC_ADDR_REF(bssid.bytes));
 		wma_handle_hw_mode_transition(wma_handle, param_buf);
-#ifdef FEATURE_CM_ENABLE
 		cm_fw_ho_fail_req(wma_handle->psoc, wmi_event->vdev_id, bssid);
-#else
-		wma_roam_ho_fail_handler(wma_handle, wmi_event->vdev_id, bssid);
-#endif
+
 		lim_sae_auth_cleanup_retry(wma_handle->mac_context,
 					   wmi_event->vdev_id);
 		break;
@@ -4496,13 +4279,7 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 		lim_sae_auth_cleanup_retry(wma_handle->mac_context,
 					   wmi_event->vdev_id);
 		roam_synch_data->roamed_vdev_id = wmi_event->vdev_id;
-#ifdef FEATURE_CM_ENABLE
 		cm_fw_roam_invoke_fail(wma_handle->psoc, wmi_event->vdev_id);
-#else
-		wma_handle->csr_roam_synch_cb(wma_handle->mac_context,
-					      roam_synch_data, NULL,
-					      SIR_ROAMING_INVOKE_FAIL);
-#endif
 		wlan_cm_update_roam_states(wma_handle->psoc, wmi_event->vdev_id,
 					   wmi_event->notif_params,
 					   ROAM_INVOKE_FAIL_REASON);
@@ -4523,11 +4300,6 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 			return -ENOMEM;
 
 		roam_synch_data->roamed_vdev_id = wmi_event->vdev_id;
-#ifndef FEATURE_CM_ENABLE
-		wma_handle->csr_roam_synch_cb(
-				wma_handle->mac_context,
-				roam_synch_data, NULL, SIR_ROAMING_DEAUTH);
-#endif
 		qdf_mem_free(roam_synch_data);
 		break;
 	default:

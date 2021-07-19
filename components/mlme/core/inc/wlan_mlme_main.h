@@ -96,14 +96,10 @@ struct wlan_mlme_psoc_ext_obj {
  *                   originated from driver
  * @peer_discon_ies: Disconnect IEs received in deauth/disassoc frames
  *                       from peer
- * @discon_reason: Disconnect reason as per enum wlan_reason_code
- * @from_ap: True if the disconnection is initiated from AP
  */
 struct wlan_disconnect_info {
 	struct element_info self_discon_ies;
 	struct element_info peer_discon_ies;
-	uint32_t discon_reason;
-	bool from_ap;
 };
 
 /**
@@ -370,7 +366,6 @@ struct wait_for_key_timer {
  * @dynamic_cfg: current configuration of nss, chains for vdev.
  * @ini_cfg: Max configuration of nss, chains supported for vdev.
  * @sta_dynamic_oce_value: Dyanmic oce flags value for sta
- * @roam_invoke_params: Roam invoke params
  * @disconnect_info: Disconnection information
  * @vdev_stop_type: vdev stop type request
  * @roam_off_state: Roam offload state
@@ -403,9 +398,6 @@ struct mlme_legacy_priv {
 	struct wlan_mlme_nss_chains dynamic_cfg;
 	struct wlan_mlme_nss_chains ini_cfg;
 	uint8_t sta_dynamic_oce_value;
-#ifndef FEATURE_CM_ENABLE
-	struct mlme_roam_after_data_stall roam_invoke_params;
-#endif
 	struct wlan_disconnect_info disconnect_info;
 	uint32_t vdev_stop_type;
 	struct wlan_mlme_roam mlme_roam;
@@ -423,9 +415,6 @@ struct mlme_legacy_priv {
 #ifdef WLAN_FEATURE_11AX
 	tDot11fIEhe_cap he_config;
 	uint32_t he_sta_obsspd;
-#endif
-#ifndef FEATURE_CM_ENABLE
-	struct rso_config rso_cfg;
 #endif
 	struct mlme_connect_info connect_info;
 	struct wait_for_key_timer wait_key_timer;
@@ -530,27 +519,6 @@ uint32_t mlme_get_vdev_he_ops(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id);
 struct wlan_mlme_nss_chains *mlme_get_ini_vdev_config(
 					struct wlan_objmgr_vdev *vdev);
 
-#ifndef FEATURE_CM_ENABLE
-/**
- * mlme_get_roam_invoke_params() - get the roam invoke params
- * @vdev: vdev pointer
- *
- * Return: pointer to the vdev roam invoke config structure
- */
-struct mlme_roam_after_data_stall *
-mlme_get_roam_invoke_params(struct wlan_objmgr_vdev *vdev);
-
-/**
- * mlme_is_roam_invoke_in_progress  - Get if roam invoked by host
- * is active.
- * @psoc: Pointer to global psoc.
- * @vdev_id: vdev id
- *
- * Return: True if roaming invoke is in progress
- */
-bool mlme_is_roam_invoke_in_progress(struct wlan_objmgr_psoc *psoc,
-				     uint8_t vdev_id);
-#endif
 /**
  * mlme_cfg_on_psoc_enable() - Populate MLME structure from CFG and INI
  * @psoc: pointer to the psoc object
@@ -702,39 +670,6 @@ void mlme_set_peer_pmf_status(struct wlan_objmgr_peer *peer,
  * Return: Value of is_pmf_enabled; True if PMF is enabled by peer
  */
 bool mlme_get_peer_pmf_status(struct wlan_objmgr_peer *peer);
-
-/**
- * mlme_set_discon_reason_n_from_ap() - set disconnect reason and from ap flag
- * @psoc: PSOC pointer
- * @vdev_id: vdev id
- * @from_ap: True if the disconnect is initiated from peer.
- *           False otherwise.
- * @reason_code: The disconnect code received from peer or internally generated.
- *
- * Set the reason code and from_ap.
- *
- * Return: void
- */
-void mlme_set_discon_reason_n_from_ap(struct wlan_objmgr_psoc *psoc,
-				      uint8_t vdev_id, bool from_ap,
-				      uint32_t reason_code);
-
-/**
- * mlme_get_discon_reason_n_from_ap() - Get disconnect reason and from ap flag
- * @psoc: PSOC pointer
- * @vdev_id: vdev id
- * @from_ap: Get the from_ap cached through mlme_set_discon_reason_n_from_ap
- *           and copy to this buffer.
- * @reason_code: Get the reason_code cached through
- *               mlme_set_discon_reason_n_from_ap and copy to this buffer.
- *
- * Copy the contents of from_ap and reason_code to given buffers.
- *
- * Return: void
- */
-void mlme_get_discon_reason_n_from_ap(struct wlan_objmgr_psoc *psoc,
-				      uint8_t vdev_id, bool *from_ap,
-				      uint32_t *reason_code);
 
 /**
  * wlan_get_opmode_from_vdev_id() - Get opmode from vdevid

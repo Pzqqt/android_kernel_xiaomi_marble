@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -58,6 +58,7 @@ struct pkt_capture_cb_context {
  * @cb_ctx: pointer to packet capture mon callback context
  * @rx_ops: rx ops
  * @tx_ops: tx ops
+ * @rx_avg_rssi: avg rssi of rx data packets
  */
 struct pkt_capture_vdev_priv {
 	struct wlan_objmgr_vdev *vdev;
@@ -65,6 +66,7 @@ struct pkt_capture_vdev_priv {
 	struct pkt_capture_cb_context *cb_ctx;
 	struct wlan_pkt_capture_rx_ops rx_ops;
 	struct wlan_pkt_capture_tx_ops tx_ops;
+	int32_t rx_avg_rssi;
 };
 
 /**

@@ -266,22 +266,22 @@ FF BeaconInterval (2)                     // 7.3.1.3
 FF Capabilities (2)                       // 7.3.1.4
 {
     {
-        ess:            1;
-        ibss:           1;
-        cfPollable:     1;
-        cfPollReq:      1;
-        privacy:        1;
-        shortPreamble:  1;
-        pbcc:           1;
-        channelAgility: 1;
-        spectrumMgt:    1;
-        qos:            1;
-        shortSlotTime:  1;
-        apsd:           1;
-        rrm:            1;
-        dsssOfdm:       1;
-        delayedBA:      1;
-        immediateBA:    1;
+        ess:                1;
+        ibss:               1;
+        cfPollable:         1;
+        cfPollReq:          1;
+        privacy:            1;
+        shortPreamble:      1;
+        criticalUpdateFlag: 1;
+        channelAgility:     1;
+        spectrumMgt:        1;
+        qos:                1;
+        shortSlotTime:      1;
+        apsd:               1;
+        rrm:                1;
+        dsssOfdm:           1;
+        delayedBA:          1;
+        immediateBA:        1;
     }
 }
 
@@ -3580,6 +3580,186 @@ IE vendor_vht_ie (EID_VENDOR_SPECIFIC) OUI (0x00, 0x90, 0x4c, 0x04)
    OPTIE IE VHTOperation;
 }
 
+IE non_inheritance (EID_EXTN_ID_ELEMENT) OUI (0x38)
+{
+    data[0..255];
+}
+
+IE mlo_capabilities (0)
+{
+    {
+        ess:                1;
+        ibss:               1;
+        cfPollable:         1;
+        cfPollReq:          1;
+        privacy:            1;
+        shortPreamble:      1;
+        criticalUpdateFlag: 1;
+        channelAgility:     1;
+        spectrumMgt:        1;
+        qos:                1;
+        shortSlotTime:      1;
+        apsd:               1;
+        rrm:                1;
+        dsssOfdm:           1;
+        delayedBA:          1;
+        immediateBA:        1;
+    }
+}
+
+IE sta_profile (0)
+{
+  {
+    link_id:  4;
+    complete_profile:  1;
+    sta_mac_addr_present:  1;
+    beacon_interval_present: 1;
+    dtim_info_present: 1;
+    nstr_link_pair_present: 1;
+    nstr_bitmap_size: 1;
+    reserved: 6;
+  }
+  OPTIONAL UNION sta_mac_addr (DISCRIMINATOR sta_mac_addr_present)
+  {
+        info (sta_mac_addr_present IS 1)
+        {
+            sta_mac_addr[6];
+        }
+  };
+  OPTIONAL UNION beacon_interval (DISCRIMINATOR beacon_interval_present)
+  {
+      info (beacon_interval_present IS 1)
+      {
+          beacon_interval, 2;
+      }
+  };
+  OPTIONAL UNION dtim_info (DISCRIMINATOR dtim_info_present)
+  {
+      info (dtim_info_present IS 1)
+      {
+          dtim_count,  1;
+          dtim_period, 1;
+      }
+  };
+  OPTIONAL UNION nstr_link_pair (DISCRIMINATOR nstr_link_pair_present)
+  {
+      info (nstr_link_pair_present IS 1)
+      {
+          nstr_link_pair_num, 1;
+      }
+  };
+  OPTIE IE mlo_capabilities;
+  MANDIE IE SuppRates;
+  OPTIE IE ExtSuppRates;
+  OPTIE IE SuppOperatingClasses;
+  OPTIE IE WPA;
+  OPTIE IE ChanSwitchAnn;
+  OPTIE IE Quiet;
+  OPTIE IE ext_chan_switch_ann;
+  OPTIE IE RSN;
+  OPTIE IE EDCAParamSet;
+  OPTIE IE P2PAssocRes;
+  OPTIE IE HTCaps;
+  OPTIE IE HTInfo;
+  OPTIE IE WMMParams;
+  OPTIE IE WMMCaps;
+  OPTIE IE VHTCaps;
+  OPTIE IE VHTOperation;
+  OPTIE IE ExtCap;
+  OPTIE IE OperatingMode;
+  OPTIE IE fils_indication;
+  OPTIE IE qcn_ie;
+  OPTIE IE he_cap;
+  OPTIE IE he_op;
+  OPTIE IE he_6ghz_band_cap;
+  OPTIE IE eht_cap;
+  OPTIE IE eht_op;
+  OPTIE IE max_chan_switch_time;
+  OPTIE IE non_inheritance;
+}
+
+IE mlo_ie (EID_EXTN_ID_ELEMENT) OUI (0x5e)
+{
+    {
+        type: 3;
+        reserved: 1;
+        mld_mac_addr_present: 1;
+        link_id_info_present: 1;
+        bss_param_change_cnt_present: 1;
+        medium_sync_delay_info_present: 1;
+        eml_capab_present: 1;
+        mld_capab_present: 1;
+        reserved_1: 6;
+    }
+    OPTIONAL UNION mld_mac_addr (DISCRIMINATOR mld_mac_addr_present)
+    {
+        info (mld_mac_addr_present IS 1)
+        {
+            mld_mac_addr[6];
+        }
+    };
+    OPTIONAL UNION link_id_info (DISCRIMINATOR link_id_info_present)
+    {
+        info (link_id_info_present IS 1)
+        {
+            {
+                link_id:  4;
+                reserved: 4;
+            }
+        }
+    };
+    OPTIONAL UNION bss_param_change_cnt (DISCRIMINATOR bss_param_change_cnt_present)
+    {
+        info (bss_param_change_cnt_present IS 1)
+        {
+            bss_param_change_count, 1;
+        }
+    };
+    OPTIONAL UNION medium_sync_delay_info (DISCRIMINATOR medium_sync_delay_info_present)
+    {
+        info (medium_sync_delay_info_present IS 1)
+        {
+            {
+                medium_sync_duration: 8;
+                medium_sync_ofdm_ed_thresh: 4;
+                medium_sync_max_txop_num: 4;
+            }
+        }
+    };
+    OPTIONAL UNION eml_capabilities (DISCRIMINATOR eml_capab_present)
+    {
+        info (eml_capab_present IS 1)
+        {
+            {
+                emlsr_support: 1;
+                emlsr_delay: 3;
+                emlmr_support: 1;
+                emlmr_delay: 3;
+                transition_timeout: 4;
+                reserved: 4;
+            }
+            {
+                emlmr_rx_nss: 4;
+                emlmr_tx_nss: 4;
+            }
+        }
+    };
+    OPTIONAL UNION mld_capabilities (DISCRIMINATOR mld_capab_present)
+    {
+        info (mld_capab_present IS 1)
+        {
+            {
+                max_simultaneous_link_num: 4;
+                srs_support: 1;
+                tid_link_map_supported: 2;
+                str_freq_separation: 5;
+                reserved: 4;
+            }
+        }
+    };
+    OPTIE sta_profile[2];
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // Frames
 
@@ -3653,6 +3833,7 @@ FRAME Beacon                              // C.f. Sec. 7.2.3.1
     OPTIE  eht_cap;
     OPTIE  eht_op;
     OPTIE  max_chan_switch_time;
+    OPTIE  mlo_ie;
 } // End frame Beacon.
 
 // Ok, here's  the story on  Beacon1 & Beacon2.   We presumably beacon  a lot
@@ -3752,6 +3933,7 @@ FRAME Beacon2
     OPTIE  eht_cap;
     OPTIE  eht_op;
     OPTIE  max_chan_switch_time;
+    OPTIE  mlo_ie;
 }
 
 // This frame is just Beacon with its Fixed Fields stripped out.  It's handy
@@ -3828,6 +4010,7 @@ FRAME BeaconIEs
     OPTIE  eht_cap;
     OPTIE  eht_op;
     OPTIE  max_chan_switch_time;
+    OPTIE  mlo_ie;
 } // End frame BeaconIEs.
 
 FRAME Disassociation                      // 7.3.3.3
@@ -3881,6 +4064,7 @@ FRAME AssocRequest                        // 7.2.3.4
     OPTIE  osen_ie;
     OPTIE roaming_consortium_sel;
     OPTIE  eht_cap;
+    OPTIE  mlo_ie;
 } // End frame AssocRequest.
 
 FRAME AssocResponse                       // 7.2.3.5
@@ -3931,6 +4115,7 @@ FRAME AssocResponse                       // 7.2.3.5
     OPTIE  MBO_IE;
     OPTIE  eht_cap;
     OPTIE  eht_op;
+    OPTIE  mlo_ie;
 } // End frame AssocResponse.
 
 FRAME ReAssocRequest                      // 7.2.3.6
@@ -3974,6 +4159,7 @@ FRAME ReAssocRequest                      // 7.2.3.6
     OPTIE  he_cap;
     OPTIE  he_6ghz_band_cap;
     OPTIE  eht_cap;
+    OPTIE  mlo_ie;
 } // End frame ReAssocRequest.
 
 FRAME ReAssocResponse                     // 7.2.3.7
@@ -4018,6 +4204,7 @@ FRAME ReAssocResponse                     // 7.2.3.7
     OPTIE  MBO_IE;
     OPTIE  eht_cap;
     OPTIE  eht_op;
+    OPTIE  mlo_ie;
 } // End frame ReAssocResponse.
 
 FRAME ProbeRequest                        // 7.2.3.8
@@ -4037,6 +4224,7 @@ FRAME ProbeRequest                        // 7.2.3.8
     OPTIE  he_cap;
     OPTIE  he_6ghz_band_cap;
     OPTIE  eht_cap;
+    OPTIE  mlo_ie;
 } // End frame ProbeRequest.
 
 FRAME ProbeResponse                       // 7.2.3.9
@@ -4106,6 +4294,7 @@ FRAME ProbeResponse                       // 7.2.3.9
     OPTIE  eht_cap;
     OPTIE  eht_op;
     OPTIE  max_chan_switch_time;
+    OPTIE  mlo_ie;
 } // End frame ProbeResponse.
 
 FRAME Authentication                      // 7.2.3.10

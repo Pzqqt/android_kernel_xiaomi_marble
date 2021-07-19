@@ -278,12 +278,16 @@ struct cca_stats {
  * @pending: details of pending requests
  * @wow_unspecified_wake_up_count: number of non-wow related wake ups
  * @wow_stats: wake_lock stats for vdev
+ * @big_data_fw_support_enable: big data feature supported by fw or not
  */
 struct psoc_mc_cp_stats {
 	bool is_cp_stats_suspended;
 	struct pending_stats_requests pending;
 	uint32_t wow_unspecified_wake_up_count;
 	struct wake_lock_stats wow_stats;
+#ifdef WLAN_FEATURE_BIG_DATA_STATS
+	bool big_data_fw_support_enable;
+#endif
 };
 
 /**

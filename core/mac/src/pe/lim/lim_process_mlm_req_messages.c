@@ -390,7 +390,6 @@ failure:
 	lim_post_sme_message(mac, LIM_MLM_JOIN_CNF, (uint32_t *) &mlm_join_cnf);
 }
 
-#ifdef FEATURE_CM_ENABLE
 void lim_send_peer_create_resp(struct mac_context *mac, uint8_t vdev_id,
 			       QDF_STATUS status, uint8_t *peer_mac)
 {
@@ -419,26 +418,6 @@ lim_process_mlm_post_join_suspend_link(struct mac_context *mac_ctx,
 	lim_post_join_set_link_state_callback(mac_ctx, session->vdev_id,
 					      QDF_STATUS_SUCCESS);
 }
-#else
-void lim_send_peer_create_resp(struct mac_context *mac, uint8_t vdev_id,
-			       QDF_STATUS status, uint8_t *peer_mac)
-{
-	lim_post_join_set_link_state_callback(mac, vdev_id, status);
-}
-
-static void
-lim_process_mlm_post_join_suspend_link(struct mac_context *mac_ctx,
-				       struct pe_session *session)
-{
-	lim_deactivate_and_change_timer(mac_ctx, eLIM_JOIN_FAIL_TIMER);
-
-	/* assign appropriate sessionId to the timer object */
-	mac_ctx->lim.lim_timers.gLimJoinFailureTimer.sessionId =
-		session->peSessionId;
-
-	wma_add_bss_peer_sta(session->vdev_id, session->bssId, true);
-}
-#endif
 
 /**
  * lim_process_mlm_join_req() - process mlm join request.

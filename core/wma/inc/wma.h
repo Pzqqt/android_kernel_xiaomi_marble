@@ -999,12 +999,6 @@ typedef struct {
 	bool tx_chain_mask_cck;
 	qdf_mc_timer_t service_ready_ext_timer;
 
-#ifndef FEATURE_CM_ENABLE
-	QDF_STATUS (*csr_roam_synch_cb)(struct mac_context *mac,
-		struct roam_offload_synch_ind *roam_synch_data,
-		struct bss_description *bss_desc_ptr,
-		enum sir_roam_op_code reason);
-#endif
 	QDF_STATUS (*csr_roam_auth_event_handle_cb)(struct mac_context *mac,
 						    uint8_t vdev_id,
 						    struct qdf_mac_addr bssid);

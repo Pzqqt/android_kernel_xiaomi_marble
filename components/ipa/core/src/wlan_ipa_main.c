@@ -575,23 +575,23 @@ QDF_STATUS ipa_uc_ol_deinit(struct wlan_objmgr_pdev *pdev)
 	struct wlan_ipa_priv *ipa_obj;
 	QDF_STATUS status;
 
-	ipa_obj = ipa_pdev_get_priv_obj(pdev);
-	if (!ipa_obj) {
-		ipa_err("IPA object is NULL");
-		return QDF_STATUS_E_FAILURE;
+	if (!ipa_config_is_enabled()) {
+		ipa_debug("ipa is disabled");
+		return QDF_STATUS_SUCCESS;
 	}
 
 	ipa_init_deinit_lock();
 
-	if (!ipa_config_is_enabled()) {
-		ipa_debug("ipa is disabled");
+	if (!ipa_cb_is_ready()) {
+		ipa_debug("ipa is not ready");
 		status = QDF_STATUS_SUCCESS;
 		goto out;
 	}
 
-	if (!ipa_cb_is_ready()) {
-		ipa_debug("ipa is not ready");
-		status = QDF_STATUS_SUCCESS;
+	ipa_obj = ipa_pdev_get_priv_obj(pdev);
+	if (!ipa_obj) {
+		ipa_err("IPA object is NULL");
+		status = QDF_STATUS_E_FAILURE;
 		goto out;
 	}
 

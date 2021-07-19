@@ -33,7 +33,6 @@
 #include "wlan_objmgr_global_obj.h"
 #include "wlan_utility.h"
 #include "wlan_mlme_ucfg_api.h"
-#include "csr_neighbor_roam.h"
 
 /**
  * first_connection_pcl_table - table which provides PCL for the

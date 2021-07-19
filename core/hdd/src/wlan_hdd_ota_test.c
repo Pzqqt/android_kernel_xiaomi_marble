@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -95,7 +95,7 @@ static int __wlan_hdd_cfg80211_set_ota_test(struct wiphy *wiphy,
 	current_roam_state =
 		sme_get_current_roam_state(mac_handle, adapter->vdev_id);
 	status = sme_stop_roaming(mac_handle, adapter->vdev_id,
-				  eCsrHddIssued, RSO_INVALID_REQUESTOR);
+				  REASON_SME_ISSUED, RSO_INVALID_REQUESTOR);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Enable/Disable roaming failed");
 		return -EINVAL;
@@ -110,13 +110,13 @@ static int __wlan_hdd_cfg80211_set_ota_test(struct wiphy *wiphy,
 		    current_roam_state == eCSR_ROAMING_STATE_JOINED)
 			status = sme_start_roaming(mac_handle,
 						 adapter->vdev_id,
-						 eCsrHddIssued,
+						 REASON_SME_ISSUED,
 						 RSO_INVALID_REQUESTOR);
 		else if (current_roam_state == eCSR_ROAMING_STATE_STOP ||
 			 current_roam_state == eCSR_ROAMING_STATE_IDLE)
 			status = sme_stop_roaming(mac_handle,
 						 adapter->vdev_id,
-						 eCsrHddIssued,
+						 REASON_SME_ISSUED,
 						 RSO_INVALID_REQUESTOR);
 
 		if (status != QDF_STATUS_SUCCESS)

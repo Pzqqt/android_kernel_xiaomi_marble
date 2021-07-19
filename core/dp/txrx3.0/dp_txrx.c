@@ -106,7 +106,8 @@ QDF_STATUS dp_txrx_init(ol_txrx_soc_handle soc, uint8_t pdev_id,
 						dp_rx_refill_thread_schedule);
 	}
 
-	num_dp_rx_threads = cdp_get_num_rx_contexts(soc);
+	/* Get num Rx thread config from INI? */
+	num_dp_rx_threads = 3;
 
 	if (dp_ext_hdl->config.enable_rx_threads) {
 		qdf_status = dp_rx_tm_init(&dp_ext_hdl->rx_tm_hdl,
@@ -209,6 +210,10 @@ int dp_rx_tm_get_pending(ol_txrx_soc_handle soc)
 
 /* Num TX desc in TX desc pool */
 #define DP_TX_DESC_POOL_SIZE 6144
+
+#define DP_TX_RX_DESC_MAX_NUM \
+		(WLAN_CFG_NUM_TX_DESC_MAX * MAX_TXDESC_POOLS + \
+			WLAN_CFG_RX_SW_DESC_NUM_SIZE_MAX * MAX_RXDESC_POOLS)
 
 /**
  * struct dp_consistent_prealloc - element representing DP pre-alloc memory
@@ -324,12 +329,16 @@ static struct dp_prealloc_context g_dp_context_allocs[] = {
 };
 
 static struct  dp_consistent_prealloc g_dp_consistent_allocs[] = {
-	/* 5 REO DST rings */
 	{REO_DST, (sizeof(struct reo_destination_ring)) * REO_DST_RING_SIZE, 0, NULL, NULL, 0, 0},
 	{REO_DST, (sizeof(struct reo_destination_ring)) * REO_DST_RING_SIZE, 0, NULL, NULL, 0, 0},
 	{REO_DST, (sizeof(struct reo_destination_ring)) * REO_DST_RING_SIZE, 0, NULL, NULL, 0, 0},
 	{REO_DST, (sizeof(struct reo_destination_ring)) * REO_DST_RING_SIZE, 0, NULL, NULL, 0, 0},
+#ifdef CONFIG_BERYLLIUM
 	{REO_DST, (sizeof(struct reo_destination_ring)) * REO_DST_RING_SIZE, 0, NULL, NULL, 0, 0},
+	{REO_DST, (sizeof(struct reo_destination_ring)) * REO_DST_RING_SIZE, 0, NULL, NULL, 0, 0},
+	{REO_DST, (sizeof(struct reo_destination_ring)) * REO_DST_RING_SIZE, 0, NULL, NULL, 0, 0},
+	{REO_DST, (sizeof(struct reo_destination_ring)) * REO_DST_RING_SIZE, 0, NULL, NULL, 0, 0},
+#endif
 	/* 3 TCL data rings */
 	{TCL_DATA, (sizeof(struct tlv_32_hdr) + sizeof(struct tcl_data_cmd)) * TCL_DATA_RING_SIZE, 0, NULL, NULL, 0, 0},
 	{TCL_DATA, (sizeof(struct tlv_32_hdr) + sizeof(struct tcl_data_cmd)) * TCL_DATA_RING_SIZE, 0, NULL, NULL, 0, 0},
@@ -416,7 +425,11 @@ static struct  dp_multi_page_prealloc g_dp_multi_page_allocs[] = {
 #endif
 	/* DP HW Link DESCs pools */
 	{DP_HW_LINK_DESC_TYPE, HW_LINK_DESC_SIZE, NUM_HW_LINK_DESCS, 0, NON_CACHEABLE, { 0 } },
-
+#ifdef CONFIG_BERYLLIUM
+	{DP_HW_CC_SPT_PAGE_TYPE, qdf_page_size,
+	 ((DP_TX_RX_DESC_MAX_NUM * sizeof(uint64_t)) / qdf_page_size),
+	 0, NON_CACHEABLE, { 0 } },
+#endif
 };
 
 static struct dp_consistent_prealloc_unaligned
@@ -697,8 +710,8 @@ void *dp_prealloc_get_coherent(uint32_t *size, void **base_vaddr_unaligned,
 			va_aligned = p->va_aligned;
 			*size = p->size;
 			dp_debug("index %i -> ring type %s va-aligned %pK", i,
-				dp_srng_get_str_from_hal_ring_type(ring_type),
-				va_aligned);
+				 dp_srng_get_str_from_hal_ring_type(ring_type),
+				 va_aligned);
 			break;
 		}
 	}
