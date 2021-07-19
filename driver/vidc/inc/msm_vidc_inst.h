@@ -128,6 +128,7 @@ struct msm_vidc_inst {
 	struct msm_vidc_decode_vpp_delay   decode_vpp_delay;
 	struct msm_vidc_session_idle       session_idle;
 	struct delayed_work                response_work;
+	struct delayed_work                stats_work;
 	struct workqueue_struct           *response_workq;
 	struct list_head                   response_works; /* list of struct response_work */
 	struct list_head                   enc_input_crs;
@@ -138,6 +139,7 @@ struct msm_vidc_inst {
 	struct dentry                     *debugfs_root;
 	struct msm_vidc_debug              debug;
 	struct debug_buf_count             debug_count;
+	struct msm_vidc_statistics         stats;
 	struct msm_vidc_inst_capability   *capabilities;
 	struct completion                  completions[MAX_SIGNAL];
 	enum priority_level                priority_level;

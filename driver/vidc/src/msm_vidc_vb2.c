@@ -240,6 +240,15 @@ int msm_vidc_start_streaming(struct vb2_queue *q, unsigned int count)
 	if (rc)
 		goto error;
 
+	/* initialize statistics timer(one time) */
+	if (!inst->stats.time_ms)
+		inst->stats.time_ms = ktime_get_ns() / 1000 / 1000;
+
+	/* schedule to print buffer statistics */
+	rc = schedule_stats_work(inst);
+	if (rc)
+		goto error;
+
 	i_vpr_h(inst, "Streamon: %s successful\n", v4l2_type_name(q->type));
 
 	return rc;

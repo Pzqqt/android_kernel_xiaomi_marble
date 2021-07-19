@@ -15,6 +15,8 @@
 #define MSM_VIDC_SESSION_INACTIVE_THRESHOLD_MS 1000
 #define HEIC_GRID_DIMENSION 512
 
+enum msm_vidc_debugfs_event;
+
 static inline is_decode_session(struct msm_vidc_inst *inst)
 {
 	return inst->domain == MSM_VIDC_DECODER;
@@ -346,6 +348,11 @@ int msm_vidc_get_delayed_unmap(struct msm_vidc_inst *inst,
 	struct msm_vidc_map *map);
 int msm_vidc_put_delayed_unmap(struct msm_vidc_inst *inst,
 	struct msm_vidc_map *map);
+void msm_vidc_update_stats(struct msm_vidc_inst *inst,
+	struct msm_vidc_buffer *buf, enum msm_vidc_debugfs_event etype);
+void msm_vidc_stats_handler(struct work_struct *work);
+int schedule_stats_work(struct msm_vidc_inst *inst);
+int cancel_stats_work(struct msm_vidc_inst *inst);
 enum msm_vidc_buffer_type v4l2_type_to_driver(u32 type,
 	const char *func);
 int msm_vidc_queue_buffer_single(struct msm_vidc_inst *inst,

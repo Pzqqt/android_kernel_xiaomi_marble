@@ -729,7 +729,7 @@ static int handle_input_buffer(struct msm_vidc_inst *inst,
 			return -EINVAL;
 		}
 		if (buffer->addr_offset / frame_size < batch_size - 1) {
-			i_vpr_h(inst, "%s: superframe last buffer not reached: %u, %u, %u\n",
+			i_vpr_l(inst, "%s: superframe last buffer not reached: %u, %u, %u\n",
 				__func__, buffer->addr_offset, frame_size, batch_size);
 			return 0;
 		}
@@ -743,7 +743,7 @@ static int handle_input_buffer(struct msm_vidc_inst *inst,
 	buf->flags = get_driver_buffer_flags(inst, buffer->flags);
 
 	print_vidc_buffer(VIDC_HIGH, "high", "dqbuf", inst, buf);
-	msm_vidc_debugfs_update(inst, MSM_VIDC_DEBUGFS_EVENT_EBD);
+	msm_vidc_update_stats(inst, buf, MSM_VIDC_DEBUGFS_EVENT_EBD);
 
 	return rc;
 }
@@ -869,7 +869,7 @@ static int handle_output_buffer(struct msm_vidc_inst *inst,
 		msm_vidc_update_timestamp(inst, buf->timestamp);
 
 	print_vidc_buffer(VIDC_HIGH, "high", "dqbuf", inst, buf);
-	msm_vidc_debugfs_update(inst, MSM_VIDC_DEBUGFS_EVENT_FBD);
+	msm_vidc_update_stats(inst, buf, MSM_VIDC_DEBUGFS_EVENT_FBD);
 
 	return rc;
 }
@@ -916,7 +916,7 @@ static int handle_input_metadata_buffer(struct msm_vidc_inst *inst,
 			return -EINVAL;
 		}
 		if (buffer->addr_offset / frame_size < batch_size - 1) {
-			i_vpr_h(inst, "%s: superframe last buffer not reached: %u, %u, %u\n",
+			i_vpr_l(inst, "%s: superframe last buffer not reached: %u, %u, %u\n",
 				__func__, buffer->addr_offset, frame_size, batch_size);
 			return 0;
 		}
@@ -928,7 +928,7 @@ static int handle_input_metadata_buffer(struct msm_vidc_inst *inst,
 	if (buffer->flags & HFI_BUF_FW_FLAG_LAST)
 		buf->flags |= MSM_VIDC_BUF_FLAG_LAST;
 
-	print_vidc_buffer(VIDC_HIGH, "high", "dqbuf", inst, buf);
+	print_vidc_buffer(VIDC_LOW, "low ", "dqbuf", inst, buf);
 	return rc;
 }
 
@@ -965,7 +965,7 @@ static int handle_output_metadata_buffer(struct msm_vidc_inst *inst,
 	if (buffer->flags & HFI_BUF_FW_FLAG_LAST)
 		buf->flags |= MSM_VIDC_BUF_FLAG_LAST;
 
-	print_vidc_buffer(VIDC_HIGH, "high", "dqbuf", inst, buf);
+	print_vidc_buffer(VIDC_LOW, "low ", "dqbuf", inst, buf);
 	return rc;
 }
 
@@ -1669,6 +1669,25 @@ static int queue_response_work(struct msm_vidc_inst *inst,
 	list_add_tail(&work->list, &inst->response_works);
 	queue_delayed_work(inst->response_workq,
 			&inst->response_work, msecs_to_jiffies(0));
+	return 0;
+}
+
+int cancel_response_work(struct msm_vidc_inst *inst)
+{
+	struct response_work *work, *dummy_work = NULL;
+
+	if (!inst) {
+		d_vpr_e("%s: Invalid arguments\n", __func__);
+		return -EINVAL;
+	}
+	cancel_delayed_work(&inst->response_work);
+
+	list_for_each_entry_safe(work, dummy_work, &inst->response_works, list) {
+		list_del(&work->list);
+		kfree(work->data);
+		kfree(work);
+	}
+
 	return 0;
 }
 

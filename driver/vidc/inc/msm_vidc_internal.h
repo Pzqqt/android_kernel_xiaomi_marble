@@ -328,6 +328,7 @@ enum msm_vidc_core_capability_type {
 	DCVS,
 	DECODE_BATCH,
 	DECODE_BATCH_TIMEOUT,
+	STATS_TIMEOUT,
 	AV_SYNC_WINDOW_SIZE,
 	CLK_FREQ_THRESHOLD,
 	NON_FATAL_FAULTS,
@@ -519,10 +520,16 @@ struct msm_vidc_inst_cap_entry {
 };
 
 struct debug_buf_count {
-	int etb;
-	int ftb;
-	int fbd;
-	int ebd;
+	u64 etb;
+	u64 ftb;
+	u64 fbd;
+	u64 ebd;
+};
+
+struct msm_vidc_statistics {
+	struct debug_buf_count             count;
+	u64                                data_size;
+	u64                                time_ms;
 };
 
 enum efuse_purpose {
@@ -637,13 +644,6 @@ struct hfi_queue_header {
 			ALIGNED_QDSS_SIZE, SZ_1M)
 #define TOTAL_QSIZE (SHARED_QSIZE - ALIGNED_SFR_SIZE - ALIGNED_QDSS_SIZE)
 
-struct buf_count {
-	u32                    etb;
-	u32                    ftb;
-	u32                    fbd;
-	u32                    ebd;
-};
-
 struct profile_data {
 	u64                    start;
 	u64                    stop;
@@ -657,7 +657,6 @@ struct msm_vidc_debug {
 	struct profile_data    pdata[MAX_PROFILING_POINTS];
 	u32                    profile;
 	u32                    samples;
-	struct buf_count       count;
 };
 
 struct msm_vidc_input_cr_data {

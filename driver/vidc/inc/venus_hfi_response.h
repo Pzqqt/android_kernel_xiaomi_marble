@@ -19,6 +19,7 @@ bool is_valid_hfi_buffer_type(struct msm_vidc_inst *inst,
 void handle_session_response_work_handler(struct work_struct *work);
 int handle_session_response_work(struct msm_vidc_inst *inst,
 	struct response_work *work);
+int cancel_response_work(struct msm_vidc_inst *inst);
 int handle_system_error(struct msm_vidc_core *core,
 	struct hfi_packet *pkt);
 void fw_coredump(struct msm_vidc_core *core);

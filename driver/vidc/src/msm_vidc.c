@@ -866,6 +866,7 @@ void *msm_vidc_open(void *vidc_core, u32 session_type)
 	}
 
 	INIT_DELAYED_WORK(&inst->response_work, handle_session_response_work_handler);
+	INIT_DELAYED_WORK(&inst->stats_work, msm_vidc_stats_handler);
 
 	inst->capabilities = kzalloc(sizeof(struct msm_vidc_inst_capability), GFP_KERNEL);
 	if (!inst->capabilities) {
@@ -930,6 +931,8 @@ int msm_vidc_close(void *instance)
 
 	i_vpr_h(inst, "%s()\n", __func__);
 	inst_lock(inst, __func__);
+	cancel_response_work(inst);
+	cancel_stats_work(inst);
 	msm_vidc_session_close(inst);
 	msm_vidc_remove_session(inst);
 	msm_vidc_destroy_buffers(inst);

@@ -2055,7 +2055,7 @@ int msm_vidc_set_auto_framerate(struct msm_vidc_inst *inst, u64 timestamp)
 	struct msm_vidc_timestamp *ts;
 	struct msm_vidc_timestamp *prev = NULL;
 	u32 counter = 0, prev_fr = 0, curr_fr = 0;
-	u64 ts_ms = 0;
+	u64 time_ms = 0;
 	int rc = 0;
 
 	if (!inst || !inst->core || !inst->capabilities) {
@@ -2074,9 +2074,9 @@ int msm_vidc_set_auto_framerate(struct msm_vidc_inst *inst, u64 timestamp)
 
 	list_for_each_entry(ts, &inst->timestamps.list, sort.list) {
 		if (prev) {
-			ts_ms = div_u64(ts->sort.val - prev->sort.val, 1000);
+			time_ms = div_u64(ts->sort.val - prev->sort.val, 1000);
 			prev_fr = curr_fr;
-			curr_fr = ts_ms ? div_u64(MSEC_PER_SEC, ts_ms) << 16 :
+			curr_fr = time_ms ? div_u64(MSEC_PER_SEC, time_ms) << 16 :
 					inst->auto_framerate;
 			if (curr_fr > inst->capabilities->cap[FRAME_RATE].max)
 				curr_fr = inst->capabilities->cap[FRAME_RATE].max;
@@ -2784,9 +2784,106 @@ void msm_vidc_free_capabililty_list(struct msm_vidc_inst *inst,
 	}
 }
 
+void msm_vidc_update_stats(struct msm_vidc_inst *inst,
+	struct msm_vidc_buffer *buf, enum msm_vidc_debugfs_event etype)
+{
+	if (!inst || !buf || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return;
+	}
+
+	if ((is_decode_session(inst) && etype == MSM_VIDC_DEBUGFS_EVENT_ETB) ||
+		(is_encode_session(inst) && etype == MSM_VIDC_DEBUGFS_EVENT_FBD))
+		inst->stats.data_size += buf->data_size;
+
+	msm_vidc_debugfs_update(inst, etype);
+}
+
+static void msm_vidc_print_stats(struct msm_vidc_inst *inst)
+{
+	u32 frame_rate, operating_rate, achieved_fps, priority, etb, ebd, ftb, fbd, dt_ms;
+	u64 bitrate_kbps = 0, time_ms = ktime_get_ns() / 1000 / 1000;
+
+	if (!inst || !inst->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return;
+	}
+
+	etb = inst->debug_count.etb - inst->stats.count.etb;
+	ebd = inst->debug_count.ebd - inst->stats.count.ebd;
+	ftb = inst->debug_count.ftb - inst->stats.count.ftb;
+	fbd = inst->debug_count.fbd - inst->stats.count.fbd;
+	frame_rate = inst->capabilities->cap[FRAME_RATE].value >> 16;
+	operating_rate = inst->capabilities->cap[OPERATING_RATE].value >> 16;
+	priority =  inst->capabilities->cap[PRIORITY].value;
+
+	dt_ms = time_ms - inst->stats.time_ms;
+	achieved_fps = (fbd * 1000) / dt_ms;
+	bitrate_kbps = (inst->stats.data_size * 8 * 1000) / (dt_ms * 1024);
+
+	i_vpr_hp(inst,
+		"stats: counts (etb,ebd,ftb,fbd): %u %u %u %u (total %u %u %u %u), achieved bitrate %lldKbps fps %u/s, frame rate %u, operating rate %u, priority %u, dt %ums\n",
+		etb, ebd, ftb, fbd, inst->debug_count.etb, inst->debug_count.ebd,
+		inst->debug_count.ftb, inst->debug_count.fbd,
+		bitrate_kbps, achieved_fps, frame_rate, operating_rate, priority, dt_ms);
+
+	inst->stats.count = inst->debug_count;
+	inst->stats.data_size = 0;
+	inst->stats.time_ms = time_ms;
+}
+
+int schedule_stats_work(struct msm_vidc_inst *inst)
+{
+	struct msm_vidc_core *core;
+
+	if (!inst || !inst->core) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+	core = inst->core;
+	mod_delayed_work(inst->response_workq, &inst->stats_work,
+		msecs_to_jiffies(core->capabilities[STATS_TIMEOUT].value));
+
+	return 0;
+}
+
+int cancel_stats_work(struct msm_vidc_inst *inst)
+{
+	if (!inst) {
+		d_vpr_e("%s: Invalid arguments\n", __func__);
+		return -EINVAL;
+	}
+	cancel_delayed_work(&inst->stats_work);
+
+	/* print final stats */
+	msm_vidc_print_stats(inst);
+
+	return 0;
+}
+
+void msm_vidc_stats_handler(struct work_struct *work)
+{
+	struct msm_vidc_inst *inst;
+
+	inst = container_of(work, struct msm_vidc_inst, stats_work.work);
+	inst = get_inst_ref(g_core, inst);
+	if (!inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return;
+	}
+
+	inst_lock(inst, __func__);
+	msm_vidc_print_stats(inst);
+	schedule_stats_work(inst);
+	inst_unlock(inst, __func__);
+
+	put_inst(inst);
+}
+
 static int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct msm_vidc_buffer *buf)
 {
 	struct msm_vidc_buffer *meta;
+	enum msm_vidc_debugfs_event etype;
 	int rc = 0;
 	u32 cr = 0;
 
@@ -2816,7 +2913,7 @@ static int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct msm_vidc_buf
 	print_vidc_buffer(VIDC_HIGH, "high", "qbuf", inst, buf);
 	meta = get_meta_buffer(inst, buf);
 	if (meta)
-		print_vidc_buffer(VIDC_HIGH, "high", "qbuf", inst, meta);
+		print_vidc_buffer(VIDC_LOW, "low ", "qbuf", inst, meta);
 
 	if (!meta && is_meta_enabled(inst, buf->type)) {
 		print_vidc_buffer(VIDC_ERR, "err ", "missing meta for", inst, buf);
@@ -2840,10 +2937,12 @@ static int msm_vidc_queue_buffer(struct msm_vidc_inst *inst, struct msm_vidc_buf
 	if (is_input_buffer(buf->type))
 		inst->power.buffer_counter++;
 
-	if (buf->type == MSM_VIDC_BUF_INPUT)
-		msm_vidc_debugfs_update(inst, MSM_VIDC_DEBUGFS_EVENT_ETB);
-	else if (buf->type == MSM_VIDC_BUF_OUTPUT)
-		msm_vidc_debugfs_update(inst, MSM_VIDC_DEBUGFS_EVENT_FTB);
+	if (is_input_buffer(buf->type))
+		etype = MSM_VIDC_DEBUGFS_EVENT_ETB;
+	else
+		etype = MSM_VIDC_DEBUGFS_EVENT_FTB;
+
+	msm_vidc_update_stats(inst, buf, etype);
 
 	return 0;
 }
