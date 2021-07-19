@@ -218,6 +218,25 @@ QDF_STATUS ucfg_mlme_set_twt_requestor_flag(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS ucfg_mlme_set_twt_responder_flag(struct wlan_objmgr_psoc *psoc,
 					    bool val);
+/**
+ * ucfg_mlme_set_twt_res_service_cap() - Set twt responder service capability
+ * @psoc: pointer to psoc object
+ * @val: Value to be set to config
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_twt_res_service_cap(struct wlan_objmgr_psoc *psoc, bool val);
+
+/**
+ * ucfg_mlme_get_twt_res_service_cap() - Get twt responder service capability
+ * @psoc: pointer to psoc object
+ * @val: Value to be set to config
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_twt_res_service_cap(struct wlan_objmgr_psoc *psoc, bool *val);
 
 /**
  * ucfg_mlme_reset_twt_init_context() - Reset twt init if ack fail
@@ -726,6 +745,19 @@ ucfg_mlme_get_twt_session_state(struct wlan_objmgr_psoc *psoc,
 				uint8_t dialog_id)
 {
 	return WLAN_TWT_SETUP_STATE_NOT_ESTABLISHED;
+}
+
+static inline QDF_STATUS
+ucfg_mlme_set_twt_res_service_cap(struct wlan_objmgr_psoc *psoc, bool val)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+ucfg_mlme_get_twt_res_service_cap(struct wlan_objmgr_psoc *psoc, bool *val)
+{
+	*val = false;
+	return QDF_STATUS_E_NOSUPPORT;
 }
 
 #endif /* defined(WLAN_SUPPORT_TWT) && defined(WLAN_FEATURE_11AX) */
