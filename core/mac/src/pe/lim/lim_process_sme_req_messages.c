@@ -3711,17 +3711,11 @@ static void lim_prepare_and_send_deauth(struct mac_context *mac_ctx,
 }
 
 static void lim_prepare_and_send_disassoc(struct mac_context *mac_ctx,
+					  struct pe_session *pe_session,
 					  struct wlan_cm_vdev_discon_req *req)
 {
-	struct pe_session *pe_session;
 	struct scheduler_msg msg = {0};
 	struct disassoc_req disassoc_req = {0};
-	uint8_t pe_session_id;
-
-	pe_session = pe_find_session_by_bssid(mac_ctx, req->req.bssid.bytes,
-					      &pe_session_id);
-	if (!pe_session)
-		return;
 
 	disassoc_req.messageType = eWNI_SME_DISASSOC_REQ;
 	disassoc_req.length = sizeof(disassoc_req);
@@ -3732,8 +3726,10 @@ static void lim_prepare_and_send_disassoc(struct mac_context *mac_ctx,
 	if (req->req.reason_code == REASON_FW_TRIGGERED_ROAM_FAILURE) {
 		disassoc_req.process_ho_fail = true;
 		disassoc_req.doNotSendOverTheAir = 1;
-	} else if (wlan_cm_is_vdev_roaming(pe_session->vdev)) {
+	} else if (wlan_cm_is_vdev_roam_reassoc_state(pe_session->vdev)) {
 		disassoc_req.doNotSendOverTheAir = 1;
+		disassoc_req.reasonCode =
+					REASON_AUTHORIZED_ACCESS_LIMIT_REACHED;
 	}
 
 	msg.bodyptr = &disassoc_req;
@@ -3742,6 +3738,7 @@ static void lim_prepare_and_send_disassoc(struct mac_context *mac_ctx,
 }
 
 static void lim_process_nb_disconnect_req(struct mac_context *mac_ctx,
+					  struct pe_session *pe_session,
 					  struct wlan_cm_vdev_discon_req *req)
 {
 	enum wlan_reason_code reason_code;
@@ -3770,7 +3767,8 @@ static void lim_process_nb_disconnect_req(struct mac_context *mac_ctx,
 					&enable_deauth_to_disassoc_map);
 		if (enable_deauth_to_disassoc_map) {
 			req->req.reason_code = REASON_DISASSOC_NETWORK_LEAVING;
-			return lim_prepare_and_send_disassoc(mac_ctx, req);
+			return lim_prepare_and_send_disassoc(mac_ctx,
+							     pe_session, req);
 		}
 		lim_prepare_and_send_deauth(mac_ctx, req);
 		break;
@@ -3778,7 +3776,7 @@ static void lim_process_nb_disconnect_req(struct mac_context *mac_ctx,
 		/* Set reason REASON_UNSPEC_FAILURE for prop disassoc */
 		if (reason_code >= REASON_PROP_START)
 			req->req.reason_code = REASON_UNSPEC_FAILURE;
-		lim_prepare_and_send_disassoc(mac_ctx, req);
+		lim_prepare_and_send_disassoc(mac_ctx, pe_session, req);
 	}
 }
 
@@ -3820,9 +3818,21 @@ lim_cm_handle_disconnect_req(struct wlan_cm_vdev_discon_req *req)
 	pe_session = pe_find_session_by_bssid(mac_ctx, req->req.bssid.bytes,
 					      &pe_session_id);
 	if (!pe_session) {
-		pe_err("vdev_id %d cm_id 0x%x: Session not found for bssid"
+		pe_err("vdev_id %d cm_id 0x%x: Session not found for bssid "
 		       QDF_MAC_ADDR_FMT, req->req.vdev_id, req->cm_id,
 		       QDF_MAC_ADDR_REF(req->req.bssid.bytes));
+		/* Check for preauth node to cleanup */
+		pe_session =
+			pe_find_session_by_vdev_id(mac_ctx, req->req.vdev_id);
+		if (pe_session &&
+		    pe_session->limSmeState == eLIM_SME_WT_REASSOC_STATE) {
+			pe_err("Deleting Preauth session(%d) vdev %d bssid "
+			       QDF_MAC_ADDR_FMT, pe_session->peSessionId,
+			       pe_session->vdev_id,
+			       QDF_MAC_ADDR_REF(pe_session->bssId));
+			pe_delete_session(mac_ctx, pe_session);
+			pe_session = NULL;
+		}
 		lim_cm_send_disconnect_rsp(mac_ctx, req->req.vdev_id);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -3831,7 +3841,7 @@ lim_cm_handle_disconnect_req(struct wlan_cm_vdev_discon_req *req)
 	    req->req.source == CM_SB_DISCONNECT)
 		lim_process_sb_disconnect_req(mac_ctx, pe_session, req);
 	else
-		lim_process_nb_disconnect_req(mac_ctx, req);
+		lim_process_nb_disconnect_req(mac_ctx, pe_session, req);
 
 	return QDF_STATUS_SUCCESS;
 }
