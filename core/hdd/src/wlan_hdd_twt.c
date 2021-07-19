@@ -4003,6 +4003,11 @@ void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 		  cfg->legacy_bcast_twt_support);
 
 	/*
+	 * Set the twt fw responder service capability
+	 */
+	ucfg_mlme_set_twt_res_service_cap(hdd_ctx->psoc,
+					  services->twt_responder);
+	/*
 	 * The HE cap IE in frame will have intersection of
 	 * "enable_twt" ini, twt requestor fw service cap and
 	 * "twt_requestor" ini requestor bit after this

@@ -6505,7 +6505,13 @@ static void
 wlan_hdd_update_twt_responder(struct hdd_context *hdd_ctx,
 			      struct cfg80211_ap_settings *params)
 {
-	ucfg_mlme_set_twt_responder(hdd_ctx->psoc, params->twt_responder);
+	bool twt_res_svc_cap, enable_twt;
+
+	enable_twt = ucfg_mlme_is_twt_enabled(hdd_ctx->psoc);
+	ucfg_mlme_get_twt_res_service_cap(hdd_ctx->psoc, &twt_res_svc_cap);
+	ucfg_mlme_set_twt_responder(hdd_ctx->psoc, QDF_MIN(
+					twt_res_svc_cap,
+					(enable_twt && params->twt_responder)));
 	if (params->twt_responder)
 		hdd_send_twt_responder_enable_cmd(hdd_ctx);
 	else
