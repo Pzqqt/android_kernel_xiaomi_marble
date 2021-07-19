@@ -7422,7 +7422,6 @@ void lim_log_he_op(struct mac_context *mac, tDot11fIEhe_op *he_ops,
 				 he_ops->oper_info_6g.info.dup_bcon,
 				 he_ops->oper_info_6g.info.min_rate);
 	}
-
 }
 
 void lim_log_he_6g_cap(struct mac_context *mac,
@@ -7517,7 +7516,14 @@ void lim_update_session_he_capable_chan_switch(struct mac_context *mac,
 		session->vhtCapability = 0;
 	else if (wlan_reg_is_5ghz_ch_freq(new_chan_freq))
 		session->vhtCapability = 1;
+	/*
+	 * Re-initialize color bss parameters during channel change
+	 */
 
+	session->he_op.bss_col_disabled = 1;
+	session->bss_color_changing = 1;
+	session->he_bss_color_change.new_color = session->he_op.bss_color;
+	session->he_bss_color_change.countdown = BSS_COLOR_SWITCH_COUNTDOWN;
 	pe_debug("he_capable: %d ht %d vht %d 6ghz_band %d new freq %d vht in 2.4gh %d",
 		 session->he_capable, session->htCapability,
 		 session->vhtCapability, session->he_6ghz_band, new_chan_freq,
