@@ -211,9 +211,10 @@
  * 3.87 Add on-chip AST index field to PEER_MAP_V2 msg.
  * 3.88 Add HTT_H2T_MSG_TYPE_HOST_PADDR_SIZE def.
  * 3.89 Add MSDU queue enumerations.
+ * 3.90 Add HTT_T2H_MSG_TYPE_MLO_TIMESTAMP_OFFSET_IND def.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 89
+#define HTT_CURRENT_VERSION_MINOR 90
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -7050,6 +7051,7 @@ enum htt_t2h_msg_type {
     HTT_T2H_MSG_TYPE_TX_OFFLOAD_DELIVER_IND   = 0x25,
     HTT_T2H_MSG_TYPE_CHAN_CALDATA             = 0x26,
     HTT_T2H_MSG_TYPE_FSE_CMEM_BASE_SEND       = 0x27,
+    HTT_T2H_MSG_TYPE_MLO_TIMESTAMP_OFFSET_IND = 0x28,
 
 
     HTT_T2H_MSG_TYPE_TEST,
@@ -14597,5 +14599,175 @@ enum HTT_MSDUQ_LEGACY_FLOW_INDEX {
     HTT_MSDUQ_LEGACY_UDP_FLOW_INDEX = 2,
     HTT_MSDUQ_LEGACY_NON_UDP_FLOW_INDEX = 3,
 };
+
+/**
+ * @brief target -> host mlo timestamp offset indication
+ *
+ * MSG_TYPE => HTT_T2H_MSG_TYPE_MLO_TIMESTAMP_OFFSET_IND
+ *
+ * @details
+ * The following field definitions describe the format of the HTT target
+ * to host mlo timestamp offset indication message.
+ *
+ *
+ * |31                         16|15    12|11   10|9     8|7            0 |
+ * |----------------------------------------------------------------------|
+ * |      mac_clk_freq_mhz       |  rsvd  |chip_id|pdev_id|    msg type   |
+ * |----------------------------------------------------------------------|
+ * |                      Sync time stamp lo in us                        |
+ * |----------------------------------------------------------------------|
+ * |                      Sync time stamp hi in us                        |
+ * |----------------------------------------------------------------------|
+ * |                  mlo time stamp offset lo in us                      |
+ * |----------------------------------------------------------------------|
+ * |                  mlo time stamp offset hi in us                      |
+ * |----------------------------------------------------------------------|
+ * |           mlo time stamp offset clocks in clock ticks                |
+ * |----------------------------------------------------------------------|
+ * |31  26|25                   16|15                                   0 |
+ * |rsvd2 | mlo time stamp        | mlo time stamp compensation in us     |
+ * |      | compensation in clks  |                                       |
+ * |----------------------------------------------------------------------|
+ * |31           22|21                                                  0 |
+ * |      rsvd 3   | mlo time stamp comp timer period                     |
+ * |----------------------------------------------------------------------|
+ *  The message is interpreted as follows:
+ *
+ *  dword0 - b'0:7   - msg_type: This will be set to
+ *                     HTT_T2H_MSG_TYPE_MLO_TIMESTAMP_OFFSET_IND
+ *                     value: 0x28
+ *
+ *  dword0 - b'9:8   - pdev_id
+ *
+ *  dword0 - b'11:10 - chip_id
+ *
+ *  dword0 - b'15:12 - rsvd1: Reserved for future use
+ *
+ *  dword0 - b'31:16 - mac clock frequency of the mac HW block in MHz
+ *
+ *  dword1 - b'31:0  - lower 32 bits of the WLAN global time stamp (in us) at
+ *                     which last sync interrupt was received
+ *
+ *  dword2 - b'31:0  - upper 32 bits of the WLAN global time stamp (in us) at
+ *                     which last sync interrupt was received
+ *
+ *  dword3 - b'31:0  - lower 32 bits of the MLO time stamp offset in us
+ *
+ *  dword4 - b'31:0  - upper 32 bits of the MLO time stamp offset in us
+ *
+ *  dword5 - b'31:0  - MLO time stamp offset in clock ticks for sub us
+ *
+ *  dword6 - b'15:0  - MLO time stamp compensation applied in us
+ *
+ *  dword6 - b'25:16 - MLO time stamp compensation applied in clock ticks
+ *                     for sub us resolution
+ *
+ *  dword6 - b'31:26 - rsvd2: Reserved for future use
+ *
+ *  dword7 - b'21:0  - period of MLO compensation timer at which compensation
+ *                     is applied, in us
+ *
+ *  dword7 - b'31:22 - rsvd3: Reserved for future use
+ */
+
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_MSG_TYPE_M         0x000000FF
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_MSG_TYPE_S         0
+
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_PDEV_ID_M          0x00000300
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_PDEV_ID_S          8
+
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_CHIP_ID_M          0x00000C00
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_CHIP_ID_S          10
+
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_MAC_CLK_FREQ_MHZ_M 0xFFFF0000
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_MAC_CLK_FREQ_MHZ_S 16
+
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_MLO_TIMESTAMP_COMP_US_M        0x0000FFFF
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_MLO_TIMESTAMP_COMP_US_S        0
+
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_MLO_TIMESTAMP_COMP_CLKS_M      0x03FF0000
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_MLO_TIMESTAMP_COMP_CLKS_S      16
+
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_MLO_TIMESTAMP_COMP_PERIOD_US_M 0x003FFFFF
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_MLO_TIMESTAMP_COMP_PERIOD_US_S 0
+
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_MSG_TYPE_GET(_var) \
+    (((_var) & HTT_T2H_MLO_TIMESTAMP_OFFSET_MSG_TYPE_M) >> HTT_T2H_MLO_TIMESTAMP_OFFSET_MSG_TYPE_S)
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_MSG_TYPE_SET(_var, _val)            \
+    do {                                                   \
+        HTT_CHECK_SET_VAL(HTT_T2H_MLO_TIMESTAMP_OFFSET_MSG_TYPE, _val);  \
+        ((_var) |= ((_val) << HTT_T2H_MLO_TIMESTAMP_OFFSET_MSG_TYPE_S)); \
+    } while (0)
+
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_PDEV_ID_GET(_var) \
+    (((_var) & HTT_T2H_MLO_TIMESTAMP_OFFSET_PDEV_ID_M) >> HTT_T2H_MLO_TIMESTAMP_OFFSET_PDEV_ID_S)
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_PDEV_ID_SET(_var, _val)            \
+    do {                                                   \
+        HTT_CHECK_SET_VAL(HTT_T2H_MLO_TIMESTAMP_OFFSET_PDEV_ID, _val);  \
+        ((_var) |= ((_val) << HTT_T2H_MLO_TIMESTAMP_OFFSET_PDEV_ID_S)); \
+    } while (0)
+
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_CHIP_ID_GET(_var) \
+    (((_var) & HTT_T2H_MLO_TIMESTAMP_OFFSET_CHIP_ID_M) >> HTT_T2H_MLO_TIMESTAMP_OFFSET_CHIP_ID_S)
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_CHIP_ID_SET(_var, _val)            \
+    do {                                                   \
+        HTT_CHECK_SET_VAL(HTT_T2H_MLO_TIMESTAMP_OFFSET_CHIP_ID, _val);  \
+        ((_var) |= ((_val) << HTT_T2H_MLO_TIMESTAMP_OFFSET_CHIP_ID_S)); \
+    } while (0)
+
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_MAC_CLK_FREQ_MHZ_GET(_var) \
+    (((_var) & HTT_T2H_MLO_TIMESTAMP_OFFSET_MAC_CLK_FREQ_MHZ_M) >> \
+    HTT_T2H_MLO_TIMESTAMP_OFFSET_MAC_CLK_FREQ_MHZ_S)
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_MAC_CLK_FREQ_MHZ_SET(_var, _val)            \
+    do {                                                   \
+        HTT_CHECK_SET_VAL(HTT_T2H_MLO_TIMESTAMP_OFFSET_MAC_CLK_FREQ_MHZ, _val);  \
+        ((_var) |= ((_val) << HTT_T2H_MLO_TIMESTAMP_OFFSET_MAC_CLK_FREQ_MHZ_S)); \
+    } while (0)
+
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_MLO_TIMESTAMP_COMP_US_GET(_var) \
+    (((_var) & HTT_T2H_MLO_TIMESTAMP_OFFSET_MLO_TIMESTAMP_COMP_US_M) >> \
+    HTT_T2H_MLO_TIMESTAMP_OFFSET_MLO_TIMESTAMP_COMP_US_S)
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_MLO_TIMESTAMP_COMP_US_SET(_var, _val)            \
+    do {                                                   \
+        HTT_CHECK_SET_VAL(HTT_T2H_MLO_TIMESTAMP_OFFSET_MLO_TIMESTAMP_COMP_US, _val);  \
+        ((_var) |= ((_val) << HTT_T2H_MLO_TIMESTAMP_OFFSET_MLO_TIMESTAMP_COMP_US_S)); \
+    } while (0)
+
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_MLO_TIMESTAMP_COMP_CLKS_GET(_var) \
+    (((_var) & HTT_T2H_MLO_TIMESTAMP_OFFSET_MLO_TIMESTAMP_COMP_CLKS_M) >> \
+      HTT_T2H_MLO_TIMESTAMP_OFFSET_MLO_TIMESTAMP_COMP_CLKS_S)
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_MLO_TIMESTAMP_COMP_CLKS_SET(_var, _val)            \
+    do {                                                   \
+        HTT_CHECK_SET_VAL(HTT_T2H_MLO_TIMESTAMP_OFFSET_MLO_TIMESTAMP_COMP_CLKS, _val);  \
+        ((_var) |= ((_val) << HTT_T2H_MLO_TIMESTAMP_OFFSET_MLO_TIMESTAMP_COMP_CLKS_S)); \
+    } while (0)
+
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_MLO_TIMESTAMP_COMP_PERIOD_US_GET(_var) \
+    (((_var) & HTT_T2H_MLO_TIMESTAMP_OFFSET_MLO_TIMESTAMP_COMP_PERIOD_US_M) >> \
+      HTT_T2H_MLO_TIMESTAMP_OFFSET_MLO_TIMESTAMP_COMP_PERIOD_US_S)
+#define HTT_T2H_MLO_TIMESTAMP_OFFSET_MLO_TIMESTAMP_COMP_PERIOD_US_SET(_var, _val)            \
+    do {                                                   \
+        HTT_CHECK_SET_VAL(HTT_T2H_MLO_TIMESTAMP_OFFSET_MLO_TIMESTAMP_COMP_PERIOD_US, _val);  \
+        ((_var) |= ((_val) << HTT_T2H_MLO_TIMESTAMP_OFFSET_MLO_TIMESTAMP_COMP_PERIOD_US_S)); \
+    } while (0)
+
+typedef struct {
+    A_UINT32 msg_type:          8, /* bits  7:0  */
+             pdev_id:           2, /* bits  9:8  */
+             chip_id:           2, /* bits 11:10 */
+             reserved1:         4, /* bits 15:12 */
+             mac_clk_freq_mhz: 16; /* bits 31:16 */
+    A_UINT32 sync_timestamp_lo_us;
+    A_UINT32 sync_timestamp_hi_us;
+    A_UINT32 mlo_timestamp_offset_lo_us;
+    A_UINT32 mlo_timestamp_offset_hi_us;
+    A_UINT32 mlo_timestamp_offset_clks;
+    A_UINT32 mlo_timestamp_comp_us:   16, /* bits 15:0  */
+             mlo_timestamp_comp_clks: 10, /* bits 25:16 */
+             reserved2:                6; /* bits 31:26 */
+    A_UINT32 mlo_timestamp_comp_timer_period_us: 22, /* bits 21:0  */
+             reserved3:                          10; /* bits 31:22 */
+} htt_t2h_mlo_offset_ind_t;
+
 
 #endif

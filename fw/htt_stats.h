@@ -2748,6 +2748,25 @@ typedef struct {
     A_UINT32 q_empty_failure;
     A_UINT32 q_not_empty_failure;
     A_UINT32 add_msdu_failure;
+
+    /* TQM reset debug stats */
+    A_UINT32 tqm_cache_ctl_err;
+    A_UINT32 tqm_soft_reset;
+    A_UINT32 tqm_reset_total_num_in_use_link_descs;
+    A_UINT32 tqm_reset_worst_case_num_lost_link_descs;
+    A_UINT32 tqm_reset_worst_case_num_lost_host_tx_bufs_count;
+    A_UINT32 tqm_reset_num_in_use_link_descs_internal_tqm;
+    A_UINT32 tqm_reset_num_in_use_link_descs_wbm_idle_link_ring;
+    A_UINT32 tqm_reset_time_to_tqm_hang_delta_ms;
+    A_UINT32 tqm_reset_recovery_time_ms;
+    A_UINT32 tqm_reset_num_peers_hdl;
+    A_UINT32 tqm_reset_cumm_dirty_hw_mpduq_proc_cnt;
+    A_UINT32 tqm_reset_cumm_dirty_hw_msduq_proc;
+    A_UINT32 tqm_reset_flush_cache_cmd_su_cnt;
+    A_UINT32 tqm_reset_flush_cache_cmd_other_cnt;
+    A_UINT32 tqm_reset_flush_cache_cmd_trig_type;
+    A_UINT32 tqm_reset_flush_cache_cmd_trig_cfg;
+    A_UINT32 tqm_reset_flush_cache_cmd_skip_cmd_status_null;
 } htt_tx_tqm_error_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_TQM
@@ -5633,6 +5652,12 @@ typedef struct {
      * 0-disabled, 1-enabled
      */
     A_UINT32 dyn_cca_status;
+    /* RXDEAF Register value
+     * rxdesense_thresh_sw - VREG Register
+     * rxdesense_thresh_hw - PHY Register
+     */
+    A_UINT32 rxdesense_thresh_sw;
+    A_UINT32 rxdesense_thresh_hw;
 } htt_phy_reset_stats_tlv;
 
 typedef struct {
