@@ -1480,7 +1480,63 @@ struct wlan_ie_ehtops {
 	uint8_t minimum_rate;
 	uint16_t puncture_pattern;
 } qdf_packed;
-#endif
+
+#ifdef WLAN_FEATURE_11BE_MLO
+
+/**
+ * struct wlan_ie_multilink - Fixed fields in Multi-Link IE
+ * @elem_id: Element ID
+ * @elem_len: Element length
+ * @elem_id_ext: Element ID extension
+ * @mlcontrol: Multi-Link element Control field
+ */
+struct wlan_ie_multilink {
+	uint8_t elem_id;
+	uint8_t elem_len;
+	uint8_t elem_id_ext;
+	uint16_t mlcontrol;
+} qdf_packed;
+
+/* The above fixed fields may be followed by:
+ * Common Info (variable size)
+ * Link Info (variable size)
+ */
+
+/* Definitions related to Multi-Link element Control field applicable across
+ * variants.
+ */
+
+/* Definitions for subfields in Multi-Link element Control field. Any unused
+ * bits are reserved.
+ */
+/* Type */
+#define WLAN_ML_CTRL_TYPE_IDX                                       0
+#define WLAN_ML_CTRL_TYPE_BITS                                      3
+/* Presence Bitmap */
+#define WLAN_ML_CTRL_PBM_IDX                                        4
+#define WLAN_ML_CTRL_PBM_BITS                                       12
+
+/**
+ * enum wlan_ml_variant - Encoding for Type subfield in Multi-Link element
+ * Control field, which provides the Multi-Link element variant.
+ * Note: In case of holes in the enumeration, scheme for invalid value
+ * determination should be changed.
+ * @WLAN_ML_VARIANT_BASIC: Basic variant
+ * @WLAN_ML_VARIANT_PROBEREQ: Probe Request variant
+ * @WLAN_ML_VARIANT_INVALIDSTART: Start of invalid value range
+ */
+enum wlan_ml_variant {
+	WLAN_ML_VARIANT_BASIC = 0,
+	WLAN_ML_VARIANT_PROBEREQ = 1,
+	WLAN_ML_VARIANT_INVALIDSTART,
+};
+
+/* End of definitions related to Multi-Link element Control field applicable
+ * across variants.
+ */
+
+#endif /* WLAN_FEATURE_11BE_MLO */
+#endif /* WLAN_FEATURE_11BE */
 
 /**
  * struct he_oper_6g_param: 6 Ghz params for HE
