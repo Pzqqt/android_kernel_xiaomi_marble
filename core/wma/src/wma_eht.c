@@ -40,10 +40,74 @@ static void wma_convert_eht_cap(tDot11fIEeht_cap *eht_cap, uint32_t *mac_cap,
 				uint32_t *phy_cap)
 {
 	eht_cap->present = true;
-	qdf_mem_copy(eht_cap->eht_mac_cap, mac_cap,
-		     sizeof(eht_cap->eht_mac_cap));
-	qdf_mem_copy(eht_cap->phy_cap_bytes, phy_cap,
-		     sizeof(eht_cap->phy_cap_bytes));
+
+	/* EHT MAC capabilities */
+	eht_cap->nsep_pri_access = WMI_EHTCAP_MAC_NSEPPRIACCESS_GET(mac_cap);
+	eht_cap->eht_om_ctl = WMI_EHTCAP_MAC_EHTOMCTRL_GET(mac_cap);
+	eht_cap->triggered_txop_sharing = WMI_EHTCAP_MAC_TRIGTXOP_GET(mac_cap);
+
+	/* EHT PHY capabilities */
+	eht_cap->support_320mhz_6ghz = WMI_EHTCAP_PHY_320MHZIN6GHZ_GET(phy_cap);
+	eht_cap->ru_242tone_wt_20mhz = WMI_EHTCAP_PHY_242TONERUBWLT20MHZ_GET(
+			phy_cap);
+	eht_cap->ndp_4x_eht_ltf_3dot2_us_gi =
+		WMI_EHTCAP_PHY_NDP4XEHTLTFAND320NSGI_GET(phy_cap);
+	eht_cap->partial_bw_mu_mimo = WMI_EHTCAP_PHY_PARTIALBWULMU_GET(phy_cap);
+	eht_cap->su_beamformer = WMI_EHTCAP_PHY_SUBFMR_GET(phy_cap);
+	eht_cap->su_beamformee = WMI_EHTCAP_PHY_SUBFME_GET(phy_cap);
+	eht_cap->bfee_ss_le_80mhz = WMI_EHTCAP_PHY_BFMESSLT80MHZ_GET(phy_cap);
+	eht_cap->bfee_ss_160mhz = WMI_EHTCAP_PHY_BFMESS160MHZ_GET(phy_cap);
+	eht_cap->bfee_ss_320mhz = WMI_EHTCAP_PHY_BFMESS320MHZ_GET(phy_cap);
+	eht_cap->num_sounding_dim_le_80mhz = WMI_EHTCAP_PHY_NUMSOUNDLT80MHZ_GET(
+			phy_cap);
+	eht_cap->num_sounding_dim_160mhz = WMI_EHTCAP_PHY_NUMSOUND160MHZ_GET(
+			phy_cap);
+	eht_cap->num_sounding_dim_320mhz = WMI_EHTCAP_PHY_NUMSOUND320MHZ_GET(
+			phy_cap);
+	eht_cap->ng_16_su_feedback = WMI_EHTCAP_PHY_NG16SUFB_GET(phy_cap);
+	eht_cap->ng_16_mu_feedback = WMI_EHTCAP_PHY_NG16MUFB_GET(phy_cap);
+	eht_cap->cb_sz_4_2_su_feedback = WMI_EHTCAP_PHY_CODBK42SUFB_GET(
+			phy_cap);
+	eht_cap->cb_sz_7_5_su_feedback = WMI_EHTCAP_PHY_CODBK75MUFB_GET(
+			phy_cap);
+	eht_cap->trig_su_bforming_feedback = WMI_EHTCAP_PHY_TRIGSUBFFB_GET(
+			phy_cap);
+	eht_cap->trig_mu_bforming_partial_bw_feedback =
+		WMI_EHTCAP_PHY_TRIGMUBFPARTBWFB_GET(phy_cap);
+	eht_cap->triggered_cqi_feedback = WMI_EHTCAP_PHY_TRIGCQIFB_GET(phy_cap);
+	eht_cap->partial_bw_dl_mu_mimo = WMI_EHTCAP_PHY_PARTBWDLMUMIMO_GET(
+			phy_cap);
+	eht_cap->psr_based_sr = WMI_EHTCAP_PHY_PSRSR_GET(phy_cap);
+	eht_cap->power_boost_factor = WMI_EHTCAP_PHY_PWRBSTFACTOR_GET(phy_cap);
+	eht_cap->eht_mu_ppdu_4x_ltf_0_8_us_gi =
+		WMI_EHTCAP_PHY_4XEHTLTFAND800NSGI_GET(phy_cap);
+	eht_cap->max_nc = WMI_EHTCAP_PHY_MAXNC_GET(phy_cap);
+	eht_cap->non_trig_cqi_feedback = WMI_EHTCAP_PHY_NONTRIGCQIFB_GET(
+			phy_cap);
+	eht_cap->tx_1024_4096_qam_lt_242_tone_ru =
+		WMI_EHTCAP_PHY_TX1024AND4096QAMLS242TONERU_GET(phy_cap);
+	eht_cap->rx_1024_4096_qam_lt_242_tone_ru =
+		WMI_EHTCAP_PHY_RX1024AND4096QAMLS242TONERU_GET(phy_cap);
+	eht_cap->ppet_present = WMI_EHTCAP_PHY_PPETHRESPRESENT_GET(phy_cap);
+	eht_cap->common_nominal_pkt_padding = WMI_EHTCAP_PHY_CMNNOMPKTPAD_GET(
+			phy_cap);
+	eht_cap->max_num_eht_ltf = WMI_EHTCAP_PHY_MAXNUMEHTLTF_GET(phy_cap);
+	eht_cap->mcs_15 = WMI_EHTCAP_PHY_SUPMCS15_GET(phy_cap);
+	eht_cap->eht_dup_6ghz = WMI_EHTCAP_PHY_EHTDUPIN6GHZ_GET(phy_cap);
+	eht_cap->op_sta_rx_ndp_wider_bw_20mhz =
+		WMI_EHTCAP_PHY_20MHZOPSTARXNDPWIDERBW_GET(phy_cap);
+	eht_cap->non_ofdma_ul_mu_mimo_le_80mhz =
+		WMI_EHTCAP_PHY_NONOFDMAULMUMIMOLT80MHZ_GET(phy_cap);
+	eht_cap->non_ofdma_ul_mu_mimo_160mhz =
+		WMI_EHTCAP_PHY_NONOFDMAULMUMIMO160MHZ_GET(phy_cap);
+	eht_cap->non_ofdma_ul_mu_mimo_320mhz =
+		WMI_EHTCAP_PHY_NONOFDMAULMUMIMO320MHZ_GET(phy_cap);
+	eht_cap->mu_bformer_le_80mhz = WMI_EHTCAP_PHY_MUBFMRLT80MHZ_GET(
+			phy_cap);
+	eht_cap->mu_bformer_160mhz = WMI_EHTCAP_PHY_MUBFMR160MHZ_GET(phy_cap);
+	eht_cap->mu_bformer_320mhz = WMI_EHTCAP_PHY_MUBFMR320MHZ_GET(phy_cap);
+
+	/* TODO: MCS map and PPET */
 }
 
 void wma_eht_update_tgt_services(struct wmi_unified *wmi_handle,
