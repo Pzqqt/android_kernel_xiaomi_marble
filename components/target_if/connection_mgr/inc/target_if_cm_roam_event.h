@@ -74,6 +74,18 @@ int target_if_cm_roam_event(ol_scn_t scn, uint8_t *event, uint32_t len);
  */
 QDF_STATUS
 target_if_roam_offload_register_events(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * target_if_cm_roam_vdev_disconnect_event_handler - vdev disconnect evt handler
+ * @scn: target handle
+ * @event: event buffer
+ * @len: event buffer length
+ *
+ * Return: int for success or error code
+ */
+int
+target_if_cm_roam_vdev_disconnect_event_handler(ol_scn_t scn, uint8_t *event,
+						uint32_t len);
 #endif /* ROAM_TARGET_IF_CONVERGENCE */
 
 /**
@@ -85,7 +97,6 @@ target_if_roam_offload_register_events(struct wlan_objmgr_psoc *psoc);
  */
 void
 target_if_cm_roam_register_rx_ops(struct wlan_cm_roam_rx_ops *rx_ops);
-
 #else /* WLAN_FEATURE_ROAM_OFFLOAD */
 static inline
 void
@@ -103,6 +114,13 @@ target_if_roam_offload_register_events(struct wlan_objmgr_psoc *psoc)
 
 static inline int
 target_if_cm_roam_event(ol_scn_t scn, uint8_t *event, uint32_t len)
+{
+	return 0;
+}
+
+static inline int
+target_if_cm_roam_vdev_disconnect_event_handler(ol_scn_t scn, uint8_t *event,
+						uint32_t len)
 {
 	return 0;
 }

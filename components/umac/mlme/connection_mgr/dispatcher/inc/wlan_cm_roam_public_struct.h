@@ -1809,6 +1809,28 @@ struct roam_blacklist_event {
 	uint32_t num_entries;
 	struct roam_blacklist_timeout roam_blacklist[];
 };
+
+/*
+ * enum cm_vdev_disconnect_reason - Roam disconnect reason
+ * @CM_DISCONNECT_REASON_CSA_SA_QUERY_TIMEOUT: Disconnect due to SA query
+ *  timeout after moving to new channel due to CSA in OCV enabled case.
+ * @CM_DISCONNECT_REASON_MOVE_TO_CELLULAR: Disconnect from WiFi to move
+ *  to cellular
+ */
+enum cm_vdev_disconnect_reason {
+	CM_DISCONNECT_REASON_CSA_SA_QUERY_TIMEOUT = 1,
+	CM_DISCONNECT_REASON_MOVE_TO_CELLULAR,
+};
+
+/*
+ * struct vdev_disconnect_event_data - Roam disconnect event data
+ * @vdev_id: vdev id
+ * @reason: roam reason of type @enum cm_vdev_disconnect_reason
+ */
+struct vdev_disconnect_event_data {
+	uint8_t vdev_id;
+	enum cm_vdev_disconnect_reason reason;
+};
 #endif
 
 /**
@@ -1883,6 +1905,7 @@ struct wlan_cm_roam_tx_ops {
  * @roam_sync_frame_event: Rx ops function pointer for roam sync frame event
  * @roam_event_rx: Rx ops function pointer for roam info event
  * @btm_blacklist_event: Rx ops function pointer for btm blacklist event
+ * @vdev_disconnect_event: Rx ops function pointer for vdev disconnect event
  */
 struct wlan_cm_roam_rx_ops {
 	QDF_STATUS (*roam_sync_event)(struct wlan_objmgr_psoc *psoc,
@@ -1895,6 +1918,8 @@ struct wlan_cm_roam_rx_ops {
 #ifdef ROAM_TARGET_IF_CONVERGENCE
 	QDF_STATUS (*btm_blacklist_event)(struct wlan_objmgr_psoc *psoc,
 					  struct roam_blacklist_event *list);
+	QDF_STATUS
+	(*vdev_disconnect_event)(struct vdev_disconnect_event_data *data);
 #endif
 };
 

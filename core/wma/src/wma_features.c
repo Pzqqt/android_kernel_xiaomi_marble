@@ -2810,8 +2810,13 @@ static int wma_wake_event_piggybacked(
 		break;
 	case WOW_REASON_VDEV_DISCONNECT:
 		wma_debug("Host woken up because of vdev disconnect event");
+#ifndef ROAM_TARGET_IF_CONVERGENCE
 		errno = wma_roam_vdev_disconnect_event_handler(wma, pb_event,
 							       pb_event_len);
+#else
+		errno = target_if_cm_roam_vdev_disconnect_event_handler(wma,
+					pb_event, pb_event_len);
+#endif
 		break;
 	default:
 		wma_err("Wake reason %s(%u) is not a piggybacked event",

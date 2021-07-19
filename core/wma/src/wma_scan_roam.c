@@ -266,6 +266,34 @@ static void wma_handle_disconnect_reason(tp_wma_handle wma_handle,
 }
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
+#ifdef ROAM_TARGET_IF_CONVERGENCE
+QDF_STATUS
+cm_handle_disconnect_reason(struct vdev_disconnect_event_data *data)
+{
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (!wma) {
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+	switch (data->reason) {
+	case CM_DISCONNECT_REASON_CSA_SA_QUERY_TIMEOUT:
+		wma_handle_disconnect_reason(wma, data->vdev_id,
+			HAL_DEL_STA_REASON_CODE_SA_QUERY_TIMEOUT);
+		break;
+	case CM_DISCONNECT_REASON_MOVE_TO_CELLULAR:
+		wma_handle_disconnect_reason(wma, data->vdev_id,
+			HAL_DEL_STA_REASON_CODE_BTM_DISASSOC_IMMINENT);
+		break;
+	default:
+		return QDF_STATUS_SUCCESS;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+#else
+
 int wma_roam_vdev_disconnect_event_handler(void *handle, uint8_t *event,
 					   uint32_t len)
 {
@@ -308,6 +336,7 @@ int wma_roam_vdev_disconnect_event_handler(void *handle, uint8_t *event,
 
 	return 0;
 }
+#endif
 #endif
 
 /**

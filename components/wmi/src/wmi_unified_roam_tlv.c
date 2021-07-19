@@ -2175,6 +2175,35 @@ extract_btm_blacklist_event(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+static QDF_STATUS
+extract_vdev_disconnect_event_tlv(wmi_unified_t wmi_handle,
+				  uint8_t *event, uint32_t data_len,
+				  struct vdev_disconnect_event_data *data)
+{
+	WMI_VDEV_DISCONNECT_EVENTID_param_tlvs *param_buf;
+	wmi_vdev_disconnect_event_fixed_param *roam_vdev_disc_ev;
+
+	param_buf = (WMI_VDEV_DISCONNECT_EVENTID_param_tlvs *)event;
+
+	roam_vdev_disc_ev = param_buf->fixed_param;
+	if (!roam_vdev_disc_ev) {
+		wmi_err("roam cap event is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (roam_vdev_disc_ev->vdev_id >= WLAN_MAX_VDEVS) {
+		wmi_err("Invalid vdev id %d", roam_vdev_disc_ev->vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+	data->vdev_id = roam_vdev_disc_ev->vdev_id;
+	data->reason = roam_vdev_disc_ev->reason;
+
+	wmi_debug("Received disconnect roam event on vdev_id : %d, reason:%d",
+		  data->vdev_id, data->reason);
+
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 
 void wmi_roam_offload_attach_tlv(wmi_unified_t wmi_handle)
@@ -2190,6 +2219,7 @@ void wmi_roam_offload_attach_tlv(wmi_unified_t wmi_handle)
 	ops->extract_roam_sync_frame_event = extract_roam_sync_frame_event_tlv;
 	ops->extract_roam_event = extract_roam_event_tlv;
 	ops->extract_btm_bl_event = extract_btm_blacklist_event;
+	ops->extract_vdev_disconnect_event = extract_vdev_disconnect_event_tlv;
 #endif /* ROAM_TARGET_IF_CONVERGENCE */
 	ops->send_set_ric_req_cmd = send_set_ric_req_cmd_tlv;
 	ops->send_process_roam_synch_complete_cmd =
