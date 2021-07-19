@@ -6591,14 +6591,14 @@ static int __iw_setnone_getnone(struct net_device *dev,
 	case WE_SET_REASSOC_TRIGGER:
 	{
 		struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-		uint8_t operating_ch =
+		qdf_freq_t chan_freq =
 			wlan_get_operation_chan_freq(adapter->vdev);
 		struct qdf_mac_addr target_bssid;
 
 		wlan_mlme_get_bssid_vdev_id(hdd_ctx->pdev, adapter->vdev_id,
 					    &target_bssid);
 		ucfg_wlan_cm_roam_invoke(hdd_ctx->pdev, adapter->vdev_id,
-					 &target_bssid, operating_ch,
+					 &target_bssid, chan_freq,
 					 CM_ROAMING_HOST);
 		return 0;
 	}
