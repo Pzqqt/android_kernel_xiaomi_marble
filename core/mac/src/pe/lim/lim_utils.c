@@ -6299,6 +6299,10 @@ void lim_merge_extcap_struct(tDot11fIEExtCap *dst,
 	if (!src->present)
 		return;
 
+	pe_debug("source extended capabilities length:%d", src->num_bytes);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+			   src, src->num_bytes);
+
 	/* Return if strip the capabilities from @dst which not present */
 	if (!dst->present && !add)
 		return;
@@ -6313,10 +6317,15 @@ void lim_merge_extcap_struct(tDot11fIEExtCap *dst,
 		tempsrc++;
 	}
 	dst->num_bytes = lim_compute_ext_cap_ie_length(dst);
-	if (dst->num_bytes == 0)
+	if (dst->num_bytes == 0) {
 		dst->present = 0;
-	else
+	} else {
 		dst->present = 1;
+		pe_debug("destination extended capabilities length: %d",
+			 dst->num_bytes);
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+				   dst, dst->num_bytes);
+	}
 }
 
 /**
