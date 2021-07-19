@@ -1998,12 +1998,24 @@ cm_handle_roam_offload_events(struct roam_offload_roam_event roam_event)
 		break;
 	}
 }
+
+QDF_STATUS
+cm_vdev_disconnect_event_handler(struct vdev_disconnect_event_data *data)
+{
+	return cm_handle_disconnect_reason(data);
+}
 #else
 static void
 cm_handle_roam_offload_events(struct roam_offload_roam_event roam_event)
 {
 	mlme_debug("Unhandled roam event with reason 0x%x for vdev_id %u",
 		   roam_event.reason, roam_event.vdev_id);
+}
+
+QDF_STATUS
+cm_vdev_disconnect_event_handler(struct vdev_disconnect_event_data *data)
+{
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 

@@ -1139,5 +1139,23 @@ cm_roam_event_handler(struct roam_offload_roam_event roam_event);
 QDF_STATUS
 cm_btm_blacklist_event_handler(struct wlan_objmgr_psoc *psoc,
 			       struct roam_blacklist_event *list);
+
+/**
+ * cm_vdev_disconnect_event_handler() - disconnect evt handler for target_if
+ * @data: disconnect event data
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_vdev_disconnect_event_handler(struct vdev_disconnect_event_data *data);
+
+/**
+ * cm_handle_disconnect_reason() - disconnect reason evt wrapper for wma
+ * @data: disconnect event data
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_handle_disconnect_reason(struct vdev_disconnect_event_data *data);
 #endif
 #endif  /* WLAN_CM_ROAM_API_H__ */

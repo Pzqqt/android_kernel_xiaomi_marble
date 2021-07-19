@@ -292,6 +292,20 @@ QDF_STATUS
 wmi_extract_btm_blacklist_event(wmi_unified_t wmi_handle,
 				uint8_t *event, uint32_t data_len,
 				struct roam_blacklist_event **dst_list);
+
+/**
+ * wmi_extract_vdev_disconnect_event - Extract disconnect event data
+ * @wmi_handle: WMI handle
+ * @event: Event data received from firmware
+ * @data_len: Event data length received from firmware
+ * @data: Extract the event and fill in data
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wmi_extract_vdev_disconnect_event(wmi_unified_t wmi_handle,
+				  uint8_t *event, uint32_t data_len,
+				  struct vdev_disconnect_event_data *data);
 #endif /* ROAM_TARGET_IF_CONVERGENCE */
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
