@@ -251,12 +251,12 @@ int dsi_display_set_backlight(struct drm_connector *connector,
 	/* use bl_temp as index of dimming bl lut to find the dimming panel backlight */
 	if (bl_temp != 0 && panel->bl_config.dimming_bl_lut &&
 	    bl_temp < panel->bl_config.dimming_bl_lut->length) {
-		DSI_DEBUG("before dimming bl_temp = %u, after dimming bl_temp = %lu\n",
+		pr_debug("before dimming bl_temp = %u, after dimming bl_temp = %lu\n",
 			bl_temp, panel->bl_config.dimming_bl_lut->mapped_bl[bl_temp]);
 		bl_temp = panel->bl_config.dimming_bl_lut->mapped_bl[bl_temp];
 	}
 
-	DSI_DEBUG("bl_scale = %u, bl_scale_sv = %u, bl_lvl = %u\n",
+	pr_debug("bl_scale = %u, bl_scale_sv = %u, bl_lvl = %u\n",
 		bl_scale, bl_scale_sv, (u32)bl_temp);
 
 	rc = dsi_panel_set_backlight(panel, (u32)bl_temp);
@@ -585,9 +585,6 @@ static bool dsi_display_validate_reg_read(struct dsi_panel *panel)
 
 	for (i = 0; i < count; i++)
 		len += lenp[i];
-
-	for (i = 0; i < len; i++)
-		j += len;
 
 	for (j = 0; j < config->groups; ++j) {
 		for (i = 0; i < len; ++i) {
@@ -1001,13 +998,17 @@ static int dsi_display_ctrl_get_host_init_state(struct dsi_display *dsi_display,
 {
 	struct dsi_display_ctrl *ctrl;
 	int i, rc = -EINVAL;
+	bool final_state = true;
 
 	display_for_each_ctrl(i, dsi_display) {
+		bool ctrl_state = false;
 		ctrl = &dsi_display->ctrl[i];
-		rc = dsi_ctrl_get_host_engine_init_state(ctrl->ctrl, state);
-		if (rc)
+		rc = dsi_ctrl_get_host_engine_init_state(ctrl->ctrl, &ctrl_state);
+		final_state &= ctrl_state;
+		if ((rc) || !(final_state))
 			break;
 	}
+	*state = final_state;
 	return rc;
 }
 
@@ -1204,6 +1205,16 @@ int dsi_display_cmd_receive(void *display, const char *cmd_buf,
 	}
 
 	rc = dsi_display_ctrl_get_host_init_state(dsi_display, &state);
+
+	/**
+	 * Handle scenario where a command transfer is initiated through
+	 * sysfs interface when device is in suspend state.
+	 */
+	if (!rc && !state) {
+		pr_warn_ratelimited("Command xfer attempted while device is in suspend state\n");
+		rc = -EPERM;
+		goto end;
+	}
 	if (rc || !state) {
 		DSI_ERR("[DSI] Invalid host state = %d rc = %d\n",
 			state, rc);
@@ -4333,10 +4344,7 @@ void dsi_display_update_byte_intf_div(struct dsi_display *display)
 	config = &display->panel->host_config;
 
 	phy_ver = dsi_phy_get_version(m_ctrl->phy);
-	if (phy_ver <= DSI_PHY_VERSION_2_0)
-		config->byte_intf_clk_div = 1;
-	else
-		config->byte_intf_clk_div = 2;
+	config->byte_intf_clk_div = 2;
 }
 
 static int dsi_display_update_dsi_bitrate(struct dsi_display *display,

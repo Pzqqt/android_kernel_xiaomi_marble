@@ -62,7 +62,7 @@
 #define DSIPHY_CMN_LANE_STATUS0						0x148
 #define DSIPHY_CMN_LANE_STATUS1						0x14C
 #define DSIPHY_CMN_GLBL_DIGTOP_SPARE10                                  0x1AC
-#define DSIPHY_CMN_CMN_SL_DSI_LANE_CTRL1                                0x1B4
+#define DSIPHY_CMN_SL_DSI_LANE_CTRL1                                0x1B4
 
 /* n = 0..3 for data lanes and n = 4 for clock lane */
 #define DSIPHY_LNX_CFG0(n)                         (0x200 + (0x80 * (n)))
@@ -121,6 +121,15 @@ static int dsi_phy_hw_v4_0_is_pll_on(struct dsi_phy_hw *phy)
 	data = DSI_R32(phy, DSIPHY_CMN_PLL_CNTRL);
 	mb(); /*make sure read happened */
 	return (data & BIT(0));
+}
+
+static bool dsi_phy_hw_v4_0_is_split_link_enabled(struct dsi_phy_hw *phy)
+{
+	u32 reg = 0;
+
+	reg = DSI_R32(phy, DSIPHY_CMN_GLBL_CTRL);
+	mb(); /*make sure read happened */
+	return (reg & BIT(5));
 }
 
 static void dsi_phy_hw_v4_0_config_lpcdrx(struct dsi_phy_hw *phy,
@@ -432,7 +441,7 @@ static void dsi_phy_hw_dphy_enable(struct dsi_phy_hw *phy,
 			DSI_W32(phy, DSIPHY_CMN_LANE_CTRL0, 0x3F);
 		}
 
-		DSI_W32(phy, DSIPHY_CMN_CMN_SL_DSI_LANE_CTRL1, 0x03);
+		DSI_W32(phy, DSIPHY_CMN_SL_DSI_LANE_CTRL1, 0x03);
 	} else {
 		/* Remove power down from all blocks */
 		DSI_W32(phy, DSIPHY_CMN_CTRL_0, 0x7f);
@@ -488,7 +497,7 @@ void dsi_phy_hw_v4_0_enable(struct dsi_phy_hw *phy,
 	}
 
 	/* wait for REFGEN READY */
-	rc = readl_poll_timeout_atomic(phy->base + DSIPHY_CMN_PHY_STATUS,
+	rc = DSI_READ_POLL_TIMEOUT_ATOMIC(phy, DSIPHY_CMN_PHY_STATUS,
 		status, (status & BIT(0)), delay_us, timeout_us);
 	if (rc) {
 		DSI_PHY_ERR(phy, "Ref gen not ready. Aborting\n");
@@ -558,8 +567,11 @@ int dsi_phy_hw_v4_0_wait_for_lane_idle(
 	u32 stop_state_mask = 0;
 	u32 const sleep_us = 10;
 	u32 const timeout_us = 100;
+	bool split_link_enabled = dsi_phy_hw_v4_0_is_split_link_enabled(phy);
 
 	stop_state_mask = BIT(4); /* clock lane */
+	if (split_link_enabled)
+		stop_state_mask |= BIT(5);
 	if (lanes & DSI_DATA_LANE_0)
 		stop_state_mask |= BIT(0);
 	if (lanes & DSI_DATA_LANE_1)
@@ -571,7 +583,7 @@ int dsi_phy_hw_v4_0_wait_for_lane_idle(
 
 	DSI_PHY_DBG(phy, "polling for lanes to be in stop state, mask=0x%08x\n",
 		stop_state_mask);
-	rc = readl_poll_timeout(phy->base + DSIPHY_CMN_LANE_STATUS1, val,
+	rc = DSI_READ_POLL_TIMEOUT(phy, DSIPHY_CMN_LANE_STATUS1, val,
 				((val & stop_state_mask) == stop_state_mask),
 				sleep_us, timeout_us);
 	if (rc) {
@@ -586,7 +598,7 @@ int dsi_phy_hw_v4_0_wait_for_lane_idle(
 void dsi_phy_hw_v4_0_ulps_request(struct dsi_phy_hw *phy,
 		struct dsi_phy_cfg *cfg, u32 lanes)
 {
-	u32 reg = 0;
+	u32 reg = 0, sl_lane_ctrl1 = 0;
 
 	if (lanes & DSI_CLOCK_LANE)
 		reg = BIT(4);
@@ -598,9 +610,17 @@ void dsi_phy_hw_v4_0_ulps_request(struct dsi_phy_hw *phy,
 		reg |= BIT(2);
 	if (lanes & DSI_DATA_LANE_3)
 		reg |= BIT(3);
+	if (cfg->split_link.enabled)
+		reg |= BIT(7);
 
-	if (cfg->force_clk_lane_hs)
+	if (cfg->force_clk_lane_hs) {
 		reg |= BIT(5) | BIT(6);
+		if (cfg->split_link.enabled) {
+			sl_lane_ctrl1 = DSI_R32(phy, DSIPHY_CMN_SL_DSI_LANE_CTRL1);
+			sl_lane_ctrl1 |= BIT(2);
+			DSI_W32(phy, DSIPHY_CMN_SL_DSI_LANE_CTRL1, sl_lane_ctrl1);
+		}
+	}
 
 	/*
 	 * ULPS entry request. Wait for short time to make sure
@@ -641,7 +661,7 @@ int dsi_phy_hw_v4_0_lane_reset(struct dsi_phy_hw *phy)
 void dsi_phy_hw_v4_0_ulps_exit(struct dsi_phy_hw *phy,
 			struct dsi_phy_cfg *cfg, u32 lanes)
 {
-	u32 reg = 0;
+	u32 reg = 0, sl_lane_ctrl1 = 0;
 
 	if (lanes & DSI_CLOCK_LANE)
 		reg = BIT(4);
@@ -653,6 +673,8 @@ void dsi_phy_hw_v4_0_ulps_exit(struct dsi_phy_hw *phy,
 		reg |= BIT(2);
 	if (lanes & DSI_DATA_LANE_3)
 		reg |= BIT(3);
+	if (cfg->split_link.enabled)
+		reg |= BIT(5);
 
 	/* enable LPRX and CDRX */
 	dsi_phy_hw_v4_0_config_lpcdrx(phy, cfg, true);
@@ -679,6 +701,11 @@ void dsi_phy_hw_v4_0_ulps_exit(struct dsi_phy_hw *phy,
 	if (cfg->force_clk_lane_hs) {
 		reg = BIT(5) | BIT(6);
 		DSI_W32(phy, DSIPHY_CMN_LANE_CTRL1, reg);
+		if (cfg->split_link.enabled) {
+			sl_lane_ctrl1 = DSI_R32(phy, DSIPHY_CMN_SL_DSI_LANE_CTRL1);
+			sl_lane_ctrl1 |= BIT(2);
+			DSI_W32(phy, DSIPHY_CMN_SL_DSI_LANE_CTRL1, sl_lane_ctrl1);
+		}
 	}
 }
 
@@ -897,7 +924,8 @@ int dsi_phy_hw_v4_0_cache_phy_timings(struct dsi_phy_per_lane_cfgs *timings,
 
 void dsi_phy_hw_v4_0_set_continuous_clk(struct dsi_phy_hw *phy, bool enable)
 {
-	u32 reg = 0;
+	u32 reg = 0, sl_lane_ctrl1 = 0;
+	bool is_split_link_enabled = dsi_phy_hw_v4_0_is_split_link_enabled(phy);
 
 	reg = DSI_R32(phy, DSIPHY_CMN_LANE_CTRL1);
 
@@ -907,5 +935,15 @@ void dsi_phy_hw_v4_0_set_continuous_clk(struct dsi_phy_hw *phy, bool enable)
 		reg &= ~(BIT(5) | BIT(6));
 
 	DSI_W32(phy, DSIPHY_CMN_LANE_CTRL1, reg);
+
+	if (is_split_link_enabled) {
+		sl_lane_ctrl1 = DSI_R32(phy, DSIPHY_CMN_SL_DSI_LANE_CTRL1);
+		if (enable)
+			sl_lane_ctrl1 |= BIT(2);
+		else
+			sl_lane_ctrl1 &= ~BIT(2);
+		DSI_W32(phy, DSIPHY_CMN_SL_DSI_LANE_CTRL1, sl_lane_ctrl1);
+	}
+
 	wmb(); /* make sure request is set */
 }

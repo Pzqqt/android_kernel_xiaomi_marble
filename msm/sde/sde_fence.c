@@ -37,18 +37,18 @@ signed long sde_sync_wait(void *fnc, long timeout_ms)
 
 	rc = dma_fence_wait_timeout(fence, true,
 				msecs_to_jiffies(timeout_ms));
-	if (!rc || (rc == -EINVAL)) {
+	if (!rc || (rc == -EINVAL) || fence->error) {
 		if (fence->ops->timeline_value_str)
 			fence->ops->timeline_value_str(fence,
 					timeline_str, TIMELINE_VAL_LENGTH);
 
 		SDE_ERROR(
-			"fence driver name:%s timeline name:%s seqno:0x%llx timeline:%s signaled:0x%x\n",
+			"fence driver name:%s timeline name:%s seqno:0x%llx timeline:%s signaled:0x%x error:%d\n",
 			fence->ops->get_driver_name(fence),
 			fence->ops->get_timeline_name(fence),
 			fence->seqno, timeline_str,
 			fence->ops->signaled ?
-				fence->ops->signaled(fence) : 0xffffffff);
+				fence->ops->signaled(fence) : 0xffffffff, fence->error);
 	}
 
 	return rc;
@@ -131,7 +131,7 @@ static bool sde_fence_signaled(struct dma_fence *fence)
 	struct sde_fence *f = to_sde_fence(fence);
 	bool status;
 
-	status = (int)((fence->seqno - f->ctx->done_count) <= 0);
+	status = ((int)(fence->seqno - f->ctx->done_count) <= 0);
 	SDE_DEBUG("status:%d fence seq:%llu and timeline:%u\n",
 			status, fence->seqno, f->ctx->done_count);
 	return status;

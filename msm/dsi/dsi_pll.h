@@ -15,6 +15,7 @@
 #include "clk-regmap-divider.h"
 #include "clk-regmap-mux.h"
 #include "dsi_defs.h"
+#include "dsi_hw.h"
 
 #define DSI_PLL_DBG(p, fmt, ...)	DRM_DEV_DEBUG(NULL, "[msm-dsi-debug]: DSI_PLL_%d: "\
 		fmt, p ? p->index : -1,	##__VA_ARGS__)
@@ -25,17 +26,16 @@
 #define DSI_PLL_WARN(p, fmt, ...)	DRM_WARN("[msm-dsi-warn]: DSI_PLL_%d: "\
 		fmt, p ? p->index : -1, ##__VA_ARGS__)
 
-#define DSI_PLL_REG_W(base, offset, data)	\
-				writel_relaxed((data), (base) + (offset))
-#define DSI_PLL_REG_R(base, offset)	readl_relaxed((base) + (offset))
+#define DSI_PLL_REG_W(base, offset, data) \
+	do {\
+		pr_debug("[DSI_PLL][%s] - [0x%08x]\n", #offset, (uint32_t)(data)); \
+		DSI_GEN_W32(base, offset, data); \
+	} while (0)
 
-#define PLL_CALC_DATA(addr0, addr1, data0, data1)      \
-	(((data1) << 24) | ((((addr1) / 4) & 0xFF) << 16) | \
-	 ((data0) << 8) | (((addr0) / 4) & 0xFF))
+#define DSI_PLL_REG_R(base, offset)	DSI_GEN_R32(base, offset)
 
 #define DSI_DYN_PLL_REG_W(base, offset, addr0, addr1, data0, data1)   \
-		writel_relaxed(PLL_CALC_DATA(addr0, addr1, data0, data1), \
-			(base) + (offset))
+		DSI_DYN_REF_REG_W(base, offset, addr0, addr1, data0, data1)
 
 #define upper_8_bit(x) ((((x) >> 2) & 0x100) >> 8)
 

@@ -598,7 +598,7 @@ static int dsi_pll_5nm_lock_status(struct dsi_pll_resource *pll)
 	u32 const delay_us = 100;
 	u32 const timeout_us = 5000;
 
-	rc = readl_poll_timeout_atomic(pll->pll_base + PLL_COMMON_STATUS_ONE,
+	rc = DSI_READ_POLL_TIMEOUT_ATOMIC_GEN(pll->pll_base, pll->index, PLL_COMMON_STATUS_ONE,
 				       status,
 				       ((status & BIT(0)) > 0),
 				       delay_us,

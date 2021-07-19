@@ -5708,7 +5708,6 @@ static void sde_crtc_install_properties(struct drm_crtc *crtc,
 	static const struct drm_prop_enum_list e_dcwb_data_points[] = {
 		{CAPTURE_MIXER_OUT, "capture_mixer_out"},
 		{CAPTURE_DSPP_OUT, "capture_pp_out"},
-		{CAPTURE_DEMURA_OUT, "capture_demura_out"},
 	};
 
 	static const struct drm_prop_enum_list e_idle_pc_state[] = {
