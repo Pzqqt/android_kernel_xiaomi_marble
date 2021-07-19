@@ -1535,6 +1535,273 @@ enum wlan_ml_variant {
  * across variants.
  */
 
+/* Definitions related to Basic variant Multi-Link element. */
+
+/* Definitions for bits in the Presence Bitmap subfield in Basic variant
+ * Multi-Link element Control field. Any unused bits are reserved.
+ */
+/* MLD MAC Address Present */
+#define WLAN_ML_BV_CTRL_PBM_MLDMACADDR_P               ((uint16_t)BIT(0))
+/* Link ID Info Present */
+#define WLAN_ML_BV_CTRL_PBM_LINKIDINFO_P               ((uint16_t)BIT(1))
+/* BSS Parameters Change Count Present */
+#define WLAN_ML_BV_CTRL_PBM_BSSPARAMCHANGECNT_P        ((uint16_t)BIT(2))
+/* Medium Synchronization Delay Information Present */
+#define WLAN_ML_BV_CTRL_PBM_MEDIUMSYNCDELAYINFO_P      ((uint16_t)BIT(3))
+/* EML Capabilities Present */
+#define WLAN_ML_BV_CTRL_PBM_EMLCAP_P                   ((uint16_t)BIT(4))
+/* MLD Capabilities */
+#define WLAN_ML_BV_CTRL_PBM_MLDCAP_P                   ((uint16_t)BIT(5))
+
+/* Definitions related to Basic variant Multi-Link element Common Info field */
+
+/* Definitions for sub-sub fields in Link ID Info subfield in Basic variant
+ * Multi-Link element Common Info field. Any unused bits are reserved.
+ */
+/* Link ID */
+#define WLAN_ML_BV_CINFO_LINKIDINFO_LINKID_IDX                      0
+#define WLAN_ML_BV_CINFO_LINKIDINFO_LINKID_BITS                     4
+
+/* Definitions for sub-sub fields in Medium Synchronization Delay Information
+ * subfield in Basic variant Multi-Link element Common Info field.
+ */
+/* Medium Synchronization Duration */
+#define WLAN_ML_BV_CINFO_MEDMSYNCDELAYINFO_DURATION_IDX             0
+#define WLAN_ML_BV_CINFO_MEDMSYNCDELAYINFO_DURATION_BITS            8
+/* Medium Synchronization OFDM ED Threshold  */
+#define WLAN_ML_BV_CINFO_MEDMSYNCDELAYINFO_OFDMEDTHRESH_IDX         8
+#define WLAN_ML_BV_CINFO_MEDMSYNCDELAYINFO_OFDMEDTHRESH_BITS        4
+/* Medium Synchronization Maximum Number Of TXOPs  */
+#define WLAN_ML_BV_CINFO_MEDMSYNCDELAYINFO_MAXTXOPS_IDX             12
+#define WLAN_ML_BV_CINFO_MEDMSYNCDELAYINFO_MAXTXOPS_BITS            4
+
+/* Definitions for sub-sub fields in EML Capabilities subfield in Basic variant
+ * Multi-Link element Common Info field. Any unused bits are reserved.
+ */
+/* EMLSR Support */
+#define WLAN_ML_BV_CINFO_EMLCAP_EMLSRSUPPORT_IDX                    0
+#define WLAN_ML_BV_CINFO_EMLCAP_EMLSRSUPPORT_BITS                   1
+/* EMLSR Delay */
+#define WLAN_ML_BV_CINFO_EMLCAP_EMLSRDELAY_IDX                      1
+#define WLAN_ML_BV_CINFO_EMLCAP_EMLSRDELAY_BITS                     3
+/* EMLMR Support */
+#define WLAN_ML_BV_CINFO_EMLCAP_EMLMRSUPPORT_IDX                    4
+#define WLAN_ML_BV_CINFO_EMLCAP_EMLMRSUPPORT_BITS                   1
+/* EMLMR Delay */
+#define WLAN_ML_BV_CINFO_EMLCAP_EMLMRDELAY_IDX                      5
+#define WLAN_ML_BV_CINFO_EMLCAP_EMLMRDELAY_BITS                     3
+/* Transition Timeout */
+#define WLAN_ML_BV_CINFO_EMLCAP_TRANSTIMEOUT_IDX                    8
+#define WLAN_ML_BV_CINFO_EMLCAP_TRANSTIMEOUT_BITS                   4
+/* EMLMR Rx NSS */
+#define WLAN_ML_BV_CINFO_EMLCAP_EMLMRRXNSS_IDX                      16
+#define WLAN_ML_BV_CINFO_EMLCAP_EMLMRRXNSS_BITS                     4
+/* EMLMR Tx NSS */
+#define WLAN_ML_BV_CINFO_EMLCAP_EMLMRTXNSS_IDX                      20
+#define WLAN_ML_BV_CINFO_EMLCAP_EMLMRTXNSS_BITS                     4
+
+/**
+ * wlan_ml_bv_cinfo_emlcap_emlsrdelay - Encoding for EMLSR Delay sub-sub field
+ * in EML Capabilities subfield in Basic variant Multi-Link element Common Info
+ * field.
+ * Note: In case of holes in the enumeration, scheme for invalid value
+ * determination should be changed.
+ * @WLAN_ML_BV_CINFO_EMLCAP_EMLSRDELAY_0US: EMLSR delay of 0 us
+ * @WLAN_ML_BV_CINFO_EMLCAP_EMLSRDELAY_32US: EMLSR delay of 32 us
+ * @WLAN_ML_BV_CINFO_EMLCAP_EMLSRDELAY_64US: EMLSR delay of 64 us
+ * @WLAN_ML_BV_CINFO_EMLCAP_EMLSRDELAY_128US: EMLSR delay of 128 us
+ * @WLAN_ML_BV_CINFO_EMLCAP_EMLSRDELAY_256US: EMLSR delay of 256 us
+ * @WLAN_ML_BV_CINFO_EMLCAP_EMLSRDELAY_INVALIDSTART: Start of invalid value
+ * range
+ */
+enum wlan_ml_bv_cinfo_emlcap_emlsrdelay {
+	WLAN_ML_BV_CINFO_EMLCAP_EMLSRDELAY_0US = 0,
+	WLAN_ML_BV_CINFO_EMLCAP_EMLSRDELAY_32US = 1,
+	WLAN_ML_BV_CINFO_EMLCAP_EMLSRDELAY_64US = 2,
+	WLAN_ML_BV_CINFO_EMLCAP_EMLSRDELAY_128US = 3,
+	WLAN_ML_BV_CINFO_EMLCAP_EMLSRDELAY_256US = 4,
+	WLAN_ML_BV_CINFO_EMLCAP_EMLSRDELAY_INVALIDSTART,
+};
+
+/**
+ * wlan_ml_bv_cinfo_emlcap_emlmrdelay - Encoding for EMLMR Delay sub-sub field
+ * in EML Capabilities subfield in Basic variant Multi-Link element Common Info
+ * field.
+ * Note: In case of holes in the enumeration, scheme for invalid value
+ * determination should be changed.
+ * @WLAN_ML_BV_CINFO_EMLCAP_EMLMRDELAY_0US: EMLMR delay of 0 us
+ * @WLAN_ML_BV_CINFO_EMLCAP_EMLMRDELAY_32US: EMLMR delay of 32 us
+ * @WLAN_ML_BV_CINFO_EMLCAP_EMLMRDELAY_64US: EMLMR delay of 64 us
+ * @WLAN_ML_BV_CINFO_EMLCAP_EMLMRDELAY_128US: EMLMR delay of 128 us
+ * @WLAN_ML_BV_CINFO_EMLCAP_EMLMRDELAY_256US: EMLMR delay of 256 us
+ * @WLAN_ML_BV_CINFO_EMLCAP_EMLMRDELAY_INVALIDSTART: Start of invalid
+ * value range
+ */
+enum wlan_ml_bv_cinfo_emlcap_emlmrdelay {
+	WLAN_ML_BV_CINFO_EMLCAP_EMLMRDELAY_0US = 0,
+	WLAN_ML_BV_CINFO_EMLCAP_EMLMRDELAY_32US = 1,
+	WLAN_ML_BV_CINFO_EMLCAP_EMLMRDELAY_64US = 2,
+	WLAN_ML_BV_CINFO_EMLCAP_EMLMRDELAY_128US = 3,
+	WLAN_ML_BV_CINFO_EMLCAP_EMLMRDELAY_256US = 4,
+	WLAN_ML_BV_CINFO_EMLCAP_EMLMRDELAY_INVALIDSTART,
+};
+
+/**
+ * wlan_ml_bv_cinfo_emlcap_transtimeout - Encoding for Transition Timeout
+ * sub-sub field in EML Capabilities subfield in Basic variant Multi-Link
+ * element Common Info field.
+ * Note: a) In case of holes in the enumeration, scheme for invalid value
+ * determination should be changed. b) A mathematical formula could have been
+ * used instead of an enumeration. However, the standard explicitly lists out
+ * values instead of using a formula, and we reflect this accordingly using an
+ * enumeration.
+ * WLAN_ML_BV_CINFO_EMLCAP_TRANSTIMEOUT_0TU: Transition Timeout value of 0 TUs
+ * WLAN_ML_BV_CINFO_EMLCAP_TRANSTIMEOUT_1TU: Transition Timeout value of 1 TU
+ * WLAN_ML_BV_CINFO_EMLCAP_TRANSTIMEOUT_2TU: Transition Timeout value of 2 TUs
+ * WLAN_ML_BV_CINFO_EMLCAP_TRANSTIMEOUT_4TU: Transition Timeout value of 4 TUs
+ * WLAN_ML_BV_CINFO_EMLCAP_TRANSTIMEOUT_8TU: Transition Timeout value of 8 TUs
+ * WLAN_ML_BV_CINFO_EMLCAP_TRANSTIMEOUT_16TU: Transition Timeout value of 16
+ * TUs
+ * WLAN_ML_BV_CINFO_EMLCAP_TRANSTIMEOUT_32TU: Transition Timeout value of 32
+ * TUs
+ * WLAN_ML_BV_CINFO_EMLCAP_TRANSTIMEOUT_64TU: Transition Timeout value of 64
+ * TUs
+ * WLAN_ML_BV_CINFO_EMLCAP_TRANSTIMEOUT_128TU: Transition Timeout value of 128
+ * TUs
+ * @WLAN_ML_BV_CINFO_EMLCAP_TRANSTIMEOUT_INVALIDSTART: Start of invalid value
+ * range
+ */
+enum wlan_ml_bv_cinfo_emlcap_transtimeout {
+	WLAN_ML_BV_CINFO_EMLCAP_TRANSTIMEOUT_0TU = 0,
+	WLAN_ML_BV_CINFO_EMLCAP_TRANSTIMEOUT_1TU = 1,
+	WLAN_ML_BV_CINFO_EMLCAP_TRANSTIMEOUT_2TU = 2,
+	WLAN_ML_BV_CINFO_EMLCAP_TRANSTIMEOUT_4TU = 3,
+	WLAN_ML_BV_CINFO_EMLCAP_TRANSTIMEOUT_8TU = 4,
+	WLAN_ML_BV_CINFO_EMLCAP_TRANSTIMEOUT_16TU = 5,
+	WLAN_ML_BV_CINFO_EMLCAP_TRANSTIMEOUT_32TU = 6,
+	WLAN_ML_BV_CINFO_EMLCAP_TRANSTIMEOUT_64TU = 7,
+	WLAN_ML_BV_CINFO_EMLCAP_TRANSTIMEOUT_128TU = 8,
+	WLAN_ML_BV_CINFO_EMLCAP_TRANSTIMEOUT_INVALIDSTART,
+};
+
+/* Definitions for sub-sub fields in MLD Capabilities subfield in Basic variant
+ * Multi-Link element Common Info field. Any unused bits are reserved.
+ */
+/* Maximum Number Of Simultaneous Links */
+#define WLAN_ML_BV_CINFO_MLDCAP_MAXSIMULLINKS_IDX                   0
+#define WLAN_ML_BV_CINFO_MLDCAP_MAXSIMULLINKS_BITS                  4
+/* SRS Support */
+#define WLAN_ML_BV_CINFO_MLDCAP_SRSSUPPORT_IDX                      4
+#define WLAN_ML_BV_CINFO_MLDCAP_SRSSUPPORT_BITS                     1
+/* TID-To-Link Mapping Negotiation Supported */
+#define WLAN_ML_BV_CINFO_MLDCAP_TIDTOLINKMAPNEGSUPPORT_IDX          5
+#define WLAN_ML_BV_CINFO_MLDCAP_TIDTOLINKMAPNEGSUPPORT_BITS         2
+/* Frequency Separation For STR */
+#define WLAN_ML_BV_CINFO_MLDCAP_STRFREQSEPARATION_IDX               7
+#define WLAN_ML_BV_CINFO_MLDCAP_STRFREQSEPARATION_BITS              5
+
+/* End of definitions related to Basic variant Multi-Link element Common Info
+ * field.
+ */
+
+/* Definitions related to Basic variant Multi-Link element Link Info field */
+
+/* Basic variant Multi-Link element Link Info field contains zero or more
+ * subelements.
+ */
+
+/**
+ *  enum wlan_ml_bv_linfo_subelementid - IDs for subelements in Basic variant
+ *  Multi-Link element Link Info field.
+ *  @WLAN_ML_BV_LINFO_SUBELEMID_PERSTAPROFILE: Per-STA Profile
+ *  @WLAN_ML_BV_LINFO_SUBELEMID_VENDOR: Vendor specific
+ */
+enum wlan_ml_bv_linfo_subelementid {
+	WLAN_ML_BV_LINFO_SUBELEMID_PERSTAPROFILE  = 0,
+	WLAN_ML_BV_LINFO_SUBELEMID_VENDOR = 221,
+};
+
+/**
+ * struct wlan_ml_bv_linfo_perstaprof - Fixed fields of Per-STA Profile
+ * subelement in Basic variant Multi-Link element Link Info field
+ * @subelem_id: Subelement ID
+ * @subelem_len: Subelement length
+ * @stacontrol: STA Control
+ */
+struct wlan_ml_bv_linfo_perstaprof {
+	uint8_t subelem_id;
+	uint8_t subelem_len;
+	uint16_t stacontrol;
+} qdf_packed;
+
+/* The above fixed fields may be followed by:
+ * STA Info (variable size)
+ * STA Profile (variable size)
+ */
+
+/* Definitions for subfields in STA Control field of Per-STA Profile subelement
+ * in Basic variant Multi-Link element Link Info field. Any unused bits are
+ * reserved.
+ */
+/* Link ID */
+#define WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_LINKID_IDX              0
+#define WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_LINKID_BITS             4
+/* Complete Profile */
+#define WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_CMPLTPROF_IDX           4
+#define WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_CMPLTPROF_BITS          1
+/* MAC Address Present */
+#define WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_MACADDRP_IDX            5
+#define WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_MACADDRP_BITS           1
+/* Beacon Interval Present */
+#define WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_BCNINTP_IDX             6
+#define WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_BCNINTP_BITS            1
+/* DTIM Info Present */
+#define WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_DTIMINFOP_IDX           7
+#define WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_DTIMINFOP_BITS          1
+/* NSTR Link Pair Present */
+#define WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_NSTRLINKPRP_IDX         8
+#define WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_NSTRLINKPRP_BITS        1
+/* NSTR Bitmap Size */
+#define WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_NSTRBMSZ_IDX            9
+#define WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_NSTRBMSZ_BITS           1
+
+/**
+ * wlan_ml_bv_linfo_perstaprof_stactrl_nstrbmsz - Encoding for NSTR Bitmap Size
+ * in STA Control field of Per-STA Profile subelement in Basic variant
+ * Multi-Link element Link Info field.
+ * Note: In case of holes in the enumeration, scheme for invalid value
+ * determination should be changed.
+ * @WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_NSTRBMSZ_1_OCTET: NSTR Indication
+ * Bitmap size of 1 octet
+ * @WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_NSTRBMSZ_2_OCTETS: NSTR Indication
+ * Bitmap size of 2 octets
+ * @WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_NSTRBMSZ_INVALIDSTART: Start of invalid
+ * value range
+ */
+enum wlan_ml_bv_linfo_perstaprof_stactrl_nstrbmsz {
+	WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_NSTRBMSZ_1_OCTET = 0,
+	WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_NSTRBMSZ_2_OCTETS = 1,
+	WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_NSTRBMSZ_INVALIDSTART,
+};
+
+/**
+ * struct wlan_ml_bv_linfo_perstaprof_stainfo_dtiminfo - DTIM info in STA info
+ * in Per-STA Profile subelement in Basic variant Multi-Link element Link Info
+ * field.
+ * @dtimcount: DTIM Count
+ * @dtimperiod: DTIM Period
+ */
+struct wlan_ml_bv_linfo_perstaprof_stainfo_dtiminfo {
+	uint8_t dtimcount;
+	uint8_t dtimperiod;
+} qdf_packed;
+
+/* End of definitions related to Basic variant Multi-Link element Link Info
+ * field.
+ */
+
+/* End of definitions related to Basic variant Multi-Link element. */
+
 #endif /* WLAN_FEATURE_11BE_MLO */
 #endif /* WLAN_FEATURE_11BE */
 
