@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -89,33 +89,15 @@ free_rx_desc_pool:
 	return QDF_STATUS_E_FAULT;
 }
 
-/*
- * dp_rx_desc_pool_init() - Initialize the software RX descriptor pool
- *			convert the pool of memory into a list of
- *			rx descriptors and create locks to access this
- *			list of rx descriptors.
- *
- * @soc: core txrx main context
- * @pool_id: pool_id which is one of 3 mac_ids
- * @pool_size: size of the rx descriptor pool
- * @rx_desc_pool: rx descriptor pool pointer
- */
-void dp_rx_desc_pool_init(struct dp_soc *soc, uint32_t pool_id,
-			  uint32_t pool_size, struct rx_desc_pool *rx_desc_pool)
+QDF_STATUS dp_rx_desc_pool_init_generic(struct dp_soc *soc,
+				  struct rx_desc_pool *rx_desc_pool,
+				  uint32_t pool_id)
 {
 	uint32_t id, page_id, offset, num_desc_per_page;
 	uint32_t count = 0;
 	union dp_rx_desc_list_elem_t *rx_desc_elem;
 
-	/* Initialize the lock */
-	qdf_spinlock_create(&rx_desc_pool->lock);
-
-	qdf_spin_lock_bh(&rx_desc_pool->lock);
-	rx_desc_pool->pool_size = pool_size;
-
 	num_desc_per_page = rx_desc_pool->desc_pages.num_element_per_page;
-	rx_desc_pool->freelist = (union dp_rx_desc_list_elem_t *)
-				  *rx_desc_pool->desc_pages.cacheable_pages;
 
 	rx_desc_elem = rx_desc_pool->freelist;
 	while (rx_desc_elem) {
@@ -138,6 +120,39 @@ void dp_rx_desc_pool_init(struct dp_soc *soc, uint32_t pool_id,
 		rx_desc_elem = rx_desc_elem->next;
 		count++;
 	}
+	return QDF_STATUS_SUCCESS;
+}
+
+/*
+ * dp_rx_desc_pool_init() - Initialize the software RX descriptor pool
+ *			convert the pool of memory into a list of
+ *			rx descriptors and create locks to access this
+ *			list of rx descriptors.
+ *
+ * @soc: core txrx main context
+ * @pool_id: pool_id which is one of 3 mac_ids
+ * @pool_size: size of the rx descriptor pool
+ * @rx_desc_pool: rx descriptor pool pointer
+ */
+void dp_rx_desc_pool_init(struct dp_soc *soc, uint32_t pool_id,
+			  uint32_t pool_size, struct rx_desc_pool *rx_desc_pool)
+{
+	QDF_STATUS status;
+
+	/* Initialize the lock */
+	qdf_spinlock_create(&rx_desc_pool->lock);
+
+	qdf_spin_lock_bh(&rx_desc_pool->lock);
+	rx_desc_pool->pool_size = pool_size;
+
+	rx_desc_pool->freelist = (union dp_rx_desc_list_elem_t *)
+				  *rx_desc_pool->desc_pages.cacheable_pages;
+
+	status = soc->arch_ops.dp_rx_desc_pool_init(soc, rx_desc_pool,
+						    pool_id);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		dp_err("RX desc pool initialization failed");
+
 	qdf_spin_unlock_bh(&rx_desc_pool->lock);
 }
 
@@ -249,7 +264,8 @@ void dp_rx_desc_pool_free(struct dp_soc *soc,
 }
 
 void dp_rx_desc_pool_deinit(struct dp_soc *soc,
-			    struct rx_desc_pool *rx_desc_pool)
+			    struct rx_desc_pool *rx_desc_pool,
+			    uint32_t pool_id)
 {
 	qdf_spin_lock_bh(&rx_desc_pool->lock);
 
@@ -258,6 +274,8 @@ void dp_rx_desc_pool_deinit(struct dp_soc *soc,
 
 	/* Deinitialize rx mon desr frag flag */
 	rx_desc_pool->rx_mon_dest_frag_enable = false;
+
+	soc->arch_ops.dp_rx_desc_pool_deinit(soc, rx_desc_pool, pool_id);
 
 	qdf_spin_unlock_bh(&rx_desc_pool->lock);
 	qdf_spinlock_destroy(&rx_desc_pool->lock);
@@ -308,6 +326,25 @@ QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS dp_rx_desc_pool_init_generic(struct dp_soc *soc,
+				  struct rx_desc_pool *rx_desc_pool,
+				  uint32_t pool_id)
+{
+	int i;
+
+	for (i = 0; i <= rx_desc_pool->pool_size - 1; i++) {
+		if (i == rx_desc_pool->pool_size - 1)
+			rx_desc_pool->array[i].next = NULL;
+		else
+			rx_desc_pool->array[i].next =
+				&rx_desc_pool->array[i + 1];
+		rx_desc_pool->array[i].rx_desc.cookie = i | (pool_id << 18);
+		rx_desc_pool->array[i].rx_desc.pool_id = pool_id;
+		rx_desc_pool->array[i].rx_desc.in_use = 0;
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
 /*
  * dp_rx_desc_pool_init() - Initialize the software RX descriptor pool
  *			convert the pool of memory into a list of
@@ -322,7 +359,8 @@ QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc,
 void dp_rx_desc_pool_init(struct dp_soc *soc, uint32_t pool_id,
 			  uint32_t pool_size, struct rx_desc_pool *rx_desc_pool)
 {
-	int i;
+	QDF_STATUS status;
+
 	/* Initialize the lock */
 	qdf_spinlock_create(&rx_desc_pool->lock);
 
@@ -332,16 +370,11 @@ void dp_rx_desc_pool_init(struct dp_soc *soc, uint32_t pool_id,
 	/* link SW rx descs into a freelist */
 	rx_desc_pool->freelist = &rx_desc_pool->array[0];
 	qdf_mem_zero(rx_desc_pool->freelist, rx_desc_pool->pool_size);
-	for (i = 0; i <= rx_desc_pool->pool_size - 1; i++) {
-		if (i == rx_desc_pool->pool_size - 1)
-			rx_desc_pool->array[i].next = NULL;
-		else
-			rx_desc_pool->array[i].next =
-				&rx_desc_pool->array[i + 1];
-		rx_desc_pool->array[i].rx_desc.cookie = i | (pool_id << 18);
-		rx_desc_pool->array[i].rx_desc.pool_id = pool_id;
-		rx_desc_pool->array[i].rx_desc.in_use = 0;
-	}
+
+	status = soc->arch_ops.dp_rx_desc_pool_init(soc, rx_desc_pool,
+						    pool_id);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		dp_err("RX desc pool initialization failed");
 
 	qdf_spin_unlock_bh(&rx_desc_pool->lock);
 }
@@ -446,7 +479,8 @@ void dp_rx_desc_pool_free(struct dp_soc *soc,
 }
 
 void dp_rx_desc_pool_deinit(struct dp_soc *soc,
-			    struct rx_desc_pool *rx_desc_pool)
+			    struct rx_desc_pool *rx_desc_pool,
+			    uint32_t pool_id)
 {
 	qdf_spin_lock_bh(&rx_desc_pool->lock);
 
@@ -456,11 +490,19 @@ void dp_rx_desc_pool_deinit(struct dp_soc *soc,
 	/* Deinitialize rx mon desr frag flag */
 	rx_desc_pool->rx_mon_dest_frag_enable = false;
 
+	soc->arch_ops.dp_rx_desc_pool_deinit(soc, rx_desc_pool, pool_id);
+
 	qdf_spin_unlock_bh(&rx_desc_pool->lock);
 	qdf_spinlock_destroy(&rx_desc_pool->lock);
 }
 
 #endif /* RX_DESC_MULTI_PAGE_ALLOC */
+
+void dp_rx_desc_pool_deinit_generic(struct dp_soc *soc,
+			       struct rx_desc_pool *rx_desc_pool,
+			       uint32_t pool_id)
+{
+}
 
 /*
  * dp_rx_get_free_desc_list() - provide a list of descriptors from

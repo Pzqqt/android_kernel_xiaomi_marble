@@ -284,6 +284,8 @@
  * @WLAN_IOT_SIM_COMP:            IOT Simulation component
  * @WLAN_UMAC_COMP_IF_MGR:        Interface manager component
  * @WLAN_UMAC_COMP_GPIO:          GPIO Configuration
+ * @WLAN_UMAC_COMP_MLO_MGR:       MLO manager
+ * @WLAN_UMAC_COMP_REPEATER:      Repeater component
  * @WLAN_UMAC_COMP_ID_MAX:        Maximum components in UMAC
  *
  * This id is static.
@@ -330,6 +332,8 @@ enum wlan_umac_comp_id {
 	WLAN_IOT_SIM_COMP                 = 37,
 	WLAN_UMAC_COMP_IF_MGR             = 38,
 	WLAN_UMAC_COMP_GPIO               = 39,
+	WLAN_UMAC_COMP_MLO_MGR            = 40,
+	WLAN_UMAC_COMP_REPEATER           = 41,
 	WLAN_UMAC_COMP_ID_MAX,
 };
 

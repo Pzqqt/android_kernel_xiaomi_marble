@@ -3251,6 +3251,20 @@ wmi_unified_extract_vdev_mgmt_offload_event(
 }
 #endif /* WLAN_FEATURE_PKT_CAPTURE */
 
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
+QDF_STATUS
+wmi_unified_extract_smart_monitor_event(
+				wmi_unified_t wmi, void *evt_buf,
+				struct smu_event_params *params)
+{
+	if (wmi->ops->extract_smart_monitor_event)
+		return wmi->ops->extract_smart_monitor_event(wmi, evt_buf,
+							     params);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif /* WLAN_FEATURE_PKT_CAPTURE_V2 */
+
 QDF_STATUS
 wmi_unified_extract_roam_result_stats(wmi_unified_t wmi, void *buf,
 				      struct wmi_roam_result *dst,

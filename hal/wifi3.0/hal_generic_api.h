@@ -292,6 +292,65 @@ void hal_srng_src_hw_init_generic(struct hal_soc *hal,
 	SRNG_SRC_REG_WRITE(srng, MISC, reg_val);
 }
 
+#ifdef WLAN_FEATURE_NEAR_FULL_IRQ
+/**
+ * hal_srng_dst_msi2_setup() - Configure MSI2 register for a SRNG
+ * @srng: SRNG handle
+ *
+ * Return: None
+ */
+static inline void hal_srng_dst_msi2_setup(struct hal_srng *srng)
+{
+	uint32_t reg_val = 0;
+
+	if (srng->u.dst_ring.nf_irq_support) {
+		SRNG_DST_REG_WRITE(srng, MSI2_BASE_LSB,
+				   srng->msi2_addr & 0xffffffff);
+		reg_val = SRNG_SM(SRNG_DST_FLD(MSI2_BASE_MSB, ADDR),
+				  (uint64_t)(srng->msi2_addr) >> 32) |
+				  SRNG_SM(SRNG_DST_FLD(MSI2_BASE_MSB,
+					  MSI2_ENABLE), 1);
+		SRNG_DST_REG_WRITE(srng, MSI2_BASE_MSB, reg_val);
+		SRNG_DST_REG_WRITE(srng, MSI2_DATA,
+				   qdf_cpu_to_le32(srng->msi2_data));
+	}
+}
+
+/**
+ * hal_srng_dst_near_full_int_setup() - Configure near-full params for SRNG
+ * @srng: SRNG handle
+ *
+ * Return: None
+ */
+static inline void hal_srng_dst_near_full_int_setup(struct hal_srng *srng)
+{
+	uint32_t reg_val = 0;
+
+	if (srng->u.dst_ring.nf_irq_support) {
+		if (srng->intr_timer_thres_us) {
+			reg_val |= SRNG_SM(SRNG_DST_FLD(PRODUCER_INT2_SETUP,
+					   INTERRUPT2_TIMER_THRESHOLD),
+					   srng->intr_timer_thres_us >> 3);
+		}
+
+		reg_val |= SRNG_SM(SRNG_DST_FLD(PRODUCER_INT2_SETUP,
+				   HIGH_THRESHOLD),
+				   srng->u.dst_ring.high_thresh *
+				   srng->entry_size);
+	}
+
+	SRNG_DST_REG_WRITE(srng, PRODUCER_INT2_SETUP, reg_val);
+}
+#else
+static inline void hal_srng_dst_msi2_setup(struct hal_srng *srng)
+{
+}
+
+static inline void hal_srng_dst_near_full_int_setup(struct hal_srng *srng)
+{
+}
+#endif
+
 /**
  * hal_srng_dst_hw_init - Private function to initialize SRNG
  * destination ring HW
@@ -317,6 +376,8 @@ void hal_srng_dst_hw_init_generic(struct hal_soc *hal,
 		SRNG_DST_REG_WRITE(srng, MSI1_BASE_MSB, reg_val);
 		SRNG_DST_REG_WRITE(srng, MSI1_DATA,
 				   qdf_cpu_to_le32(srng->msi_data));
+
+		hal_srng_dst_msi2_setup(srng);
 	}
 
 	SRNG_DST_REG_WRITE(srng, BASE_LSB, srng->ring_base_paddr & 0xffffffff);
@@ -351,6 +412,14 @@ void hal_srng_dst_hw_init_generic(struct hal_soc *hal,
 	}
 
 	SRNG_DST_REG_WRITE(srng, PRODUCER_INT_SETUP, reg_val);
+
+	/**
+	 * Near-Full Interrupt setup:
+	 * Default interrupt mode is 'pulse'. Need to setup SW_INTERRUPT_MODE
+	 * if level mode is required
+	 */
+	hal_srng_dst_near_full_int_setup(srng);
+
 	hp_addr = (uint64_t)(hal->shadow_rdptr_mem_paddr +
 		((unsigned long)(srng->u.dst_ring.hp_addr) -
 		(unsigned long)(hal->shadow_rdptr_mem_vaddr)));
@@ -380,4 +449,48 @@ void hal_srng_dst_hw_init_generic(struct hal_soc *hal,
 	SRNG_DST_REG_WRITE(srng, MISC, reg_val);
 
 }
+
+/**
+ * hal_srng_hw_reg_offset_init_generic() - Initialize the HW srng reg offset
+ * @hal_soc: HAL Soc handle
+ *
+ * Return: None
+ */
+static inline void hal_srng_hw_reg_offset_init_generic(struct hal_soc *hal_soc)
+{
+	int32_t *hw_reg_offset = hal_soc->hal_hw_reg_offset;
+
+	/* dst */
+	hw_reg_offset[DST_HP] = REG_OFFSET(DST, HP);
+	hw_reg_offset[DST_TP] = REG_OFFSET(DST, TP);
+	hw_reg_offset[DST_ID] = REG_OFFSET(DST, ID);
+	hw_reg_offset[DST_MISC] = REG_OFFSET(DST, MISC);
+	hw_reg_offset[DST_HP_ADDR_LSB] = REG_OFFSET(DST, HP_ADDR_LSB);
+	hw_reg_offset[DST_HP_ADDR_MSB] = REG_OFFSET(DST, HP_ADDR_MSB);
+	hw_reg_offset[DST_MSI1_BASE_LSB] = REG_OFFSET(DST, MSI1_BASE_LSB);
+	hw_reg_offset[DST_MSI1_BASE_MSB] = REG_OFFSET(DST, MSI1_BASE_MSB);
+	hw_reg_offset[DST_MSI1_DATA] = REG_OFFSET(DST, MSI1_DATA);
+	hw_reg_offset[DST_BASE_LSB] = REG_OFFSET(DST, BASE_LSB);
+	hw_reg_offset[DST_BASE_MSB] = REG_OFFSET(DST, BASE_MSB);
+	hw_reg_offset[DST_PRODUCER_INT_SETUP] =
+					REG_OFFSET(DST, PRODUCER_INT_SETUP);
+
+	/* src */
+	hw_reg_offset[SRC_HP] = REG_OFFSET(SRC, HP);
+	hw_reg_offset[SRC_TP] = REG_OFFSET(SRC, TP);
+	hw_reg_offset[SRC_ID] = REG_OFFSET(SRC, ID);
+	hw_reg_offset[SRC_MISC] = REG_OFFSET(SRC, MISC);
+	hw_reg_offset[SRC_TP_ADDR_LSB] = REG_OFFSET(SRC, TP_ADDR_LSB);
+	hw_reg_offset[SRC_TP_ADDR_MSB] = REG_OFFSET(SRC, TP_ADDR_MSB);
+	hw_reg_offset[SRC_MSI1_BASE_LSB] = REG_OFFSET(SRC, MSI1_BASE_LSB);
+	hw_reg_offset[SRC_MSI1_BASE_MSB] = REG_OFFSET(SRC, MSI1_BASE_MSB);
+	hw_reg_offset[SRC_MSI1_DATA] = REG_OFFSET(SRC, MSI1_DATA);
+	hw_reg_offset[SRC_BASE_LSB] = REG_OFFSET(SRC, BASE_LSB);
+	hw_reg_offset[SRC_BASE_MSB] = REG_OFFSET(SRC, BASE_MSB);
+	hw_reg_offset[SRC_CONSUMER_INT_SETUP_IX0] =
+					REG_OFFSET(SRC, CONSUMER_INT_SETUP_IX0);
+	hw_reg_offset[SRC_CONSUMER_INT_SETUP_IX1] =
+					REG_OFFSET(SRC, CONSUMER_INT_SETUP_IX1);
+}
+
 #endif /* HAL_GENERIC_API_H_ */

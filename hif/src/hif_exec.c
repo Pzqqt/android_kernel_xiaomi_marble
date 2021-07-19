@@ -405,7 +405,7 @@ void hif_print_napi_stats(struct hif_opaque_softc *hif_ctx)
 	 */
 	char hist_str[(QCA_NAPI_NUM_BUCKETS * 11) + 1] = {'\0'};
 
-	QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "NAPI[#]CPU[#] |scheds |polls  |comps  |dones  |t-lim  |max(us)|hist(500us buckets)");
 
 	for (i = 0;
@@ -421,7 +421,7 @@ void hif_print_napi_stats(struct hif_opaque_softc *hif_ctx)
 						    hist_str,
 						    sizeof(hist_str));
 			QDF_TRACE(QDF_MODULE_ID_HIF,
-				  QDF_TRACE_LEVEL_ERROR,
+				  QDF_TRACE_LEVEL_INFO_HIGH,
 				  "NAPI[%d]CPU[%d]: %7u %7u %7u %7u %7u %7llu %s",
 				  i, j,
 				  napi_stats->napi_schedules,

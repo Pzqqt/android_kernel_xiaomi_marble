@@ -776,6 +776,15 @@ static bool hif_pm_runtime_is_suspend_allowed(struct hif_softc *scn)
 	return is_suspend_allowed;
 }
 
+void hif_print_runtime_pm_prevent_list(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	hif_pm_runtime_is_suspend_allowed(scn);
+
+	hif_info("Up_linkstate_vote %d", scn->linkstate_vote);
+}
+
 /**
  * hif_pre_runtime_suspend() - bookkeeping before beginning runtime suspend
  *
@@ -1213,7 +1222,7 @@ int hif_pm_runtime_get(struct hif_opaque_softc *hif_ctx,
 		if (ret > 0)
 			ret = 0;
 
-		if (ret)
+		if (ret < 0)
 			hif_pm_runtime_put(hif_ctx, rtpm_dbgid);
 
 		if (ret && ret != -EINPROGRESS) {

@@ -532,7 +532,7 @@ static inline QDF_STATUS cdp_txrx_get_peer_param(ol_txrx_soc_handle soc,
 #ifdef QCA_MULTIPASS_SUPPORT
 static inline void
 cdp_peer_set_vlan_id(ol_txrx_soc_handle soc, uint8_t vdev_id,
-		     uint8_t *peer_mac, uint8_t vlan_id)
+		     uint8_t *peer_mac, uint16_t vlan_id)
 {
 	if (!soc || !soc->ops) {
 		dp_cdp_debug("Invalid Instance:");
@@ -1186,4 +1186,32 @@ cdp_dump_rx_flow_tag_stats(ol_txrx_soc_handle soc, uint8_t pdev_id,
 								flow_info);
 }
 #endif /* WLAN_SUPPORT_RX_FLOW_TAG */
+
+/**
+ * cdp_peer_flush_frags() - flush frags for peer
+ *
+ * @soc - pointer to the soc
+ * @vdev - the data virtual device object
+ *
+ * Get peer-protocol-count drop-mask
+ *
+ * Return: peer-protocol-count drop-mask
+ */
+static inline
+void cdp_txrx_peer_flush_frags(ol_txrx_soc_handle soc, uint8_t vdev_id,
+			       uint8_t *peer_mac)
+{
+	if (!soc || !soc->ops) {
+		dp_cdp_err("Invalid Instance:");
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_peer_flush_frags)
+		return;
+
+	return soc->ops->ctrl_ops->txrx_peer_flush_frags(soc, vdev_id,
+							 peer_mac);
+}
 #endif /* _CDP_TXRX_CTRL_H_ */

@@ -23,11 +23,7 @@
 #include <include/wlan_psoc_mlme.h>
 #include <include/wlan_pdev_mlme.h>
 #include <include/wlan_vdev_mlme.h>
-#ifdef FEATURE_CM_ENABLE
 #include "wlan_cm_public_struct.h"
-#endif
-
-#ifdef FEATURE_CM_ENABLE
 
 /**
  * mlme_cm_ops: connection manager osif callbacks
@@ -117,7 +113,6 @@ struct mlme_cm_ops {
 #endif
 #endif
 };
-#endif
 
 /**
  * struct vdev_mlme_ext_ops - VDEV MLME legacy callbacks structure
@@ -198,7 +193,6 @@ struct mlme_ext_ops {
 	QDF_STATUS (*mlme_multi_vdev_restart_resp)(
 				struct wlan_objmgr_psoc *psoc,
 				struct multi_vdev_restart_resp *resp);
-#ifdef FEATURE_CM_ENABLE
 	QDF_STATUS (*mlme_cm_ext_hdl_create_cb)(struct wlan_objmgr_vdev *vdev,
 						cm_ext_t **ext_cm_ptr);
 	QDF_STATUS (*mlme_cm_ext_hdl_destroy_cb)(struct wlan_objmgr_vdev *vdev,
@@ -236,7 +230,6 @@ struct mlme_ext_ops {
 	QDF_STATUS (*mlme_cm_ext_reassoc_req_cb)(
 				struct wlan_objmgr_vdev *vdev,
 				struct wlan_cm_vdev_reassoc_req *req);
-#endif
 };
 
 /**
@@ -435,7 +428,6 @@ QDF_STATUS wlan_cmn_mlme_deinit(void);
 QDF_STATUS mlme_vdev_ops_ext_hdl_delete_rsp(struct wlan_objmgr_psoc *psoc,
 					    struct vdev_delete_response *rsp);
 
-#ifdef FEATURE_CM_ENABLE
 /**
  * mlme_cm_ext_hdl_create() - Connection manager callback to create ext
  * context
@@ -744,7 +736,5 @@ typedef struct mlme_cm_ops *(*osif_cm_get_global_ops_cb)(void);
  * Return: void
  */
 void mlme_set_osif_cm_cb(osif_cm_get_global_ops_cb cm_osif_ops);
-
-#endif
 
 #endif

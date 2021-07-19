@@ -22,6 +22,8 @@
 
 #define DP_IPA_MAX_IFACE	3
 #define IPA_REO_DEST_RING_IDX	3
+#define IPA_REO_DEST_RING_IDX_2	7
+
 #define IPA_RX_REFILL_BUF_RING_IDX	2
 
 /* Adding delay before disabling ipa pipes if any Tx Completions are pending */

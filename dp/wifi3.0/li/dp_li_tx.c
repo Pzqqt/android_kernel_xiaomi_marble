@@ -66,6 +66,59 @@ void dp_tx_comp_get_params_from_hal_desc_li(struct dp_soc *soc,
 	}
 }
 
+#ifdef QCA_OL_TX_MULTIQ_SUPPORT
+/*
+ * dp_tx_get_rbm_id()- Get the RBM ID for data transmission completion.
+ * @dp_soc - DP soc structure pointer
+ * @ring_id - Transmit Queue/ring_id to be used when XPS is enabled
+ *
+ * Return - HAL ring handle
+ */
+static inline uint8_t dp_tx_get_rbm_id_li(struct dp_soc *soc,
+					  uint8_t ring_id)
+{
+	return (ring_id ? soc->wbm_sw0_bm_id + (ring_id - 1) :
+			  HAL_WBM_SW2_BM_ID(soc->wbm_sw0_bm_id));
+}
+
+#else
+static inline uint8_t dp_tx_get_rbm_id_li(struct dp_soc *soc,
+					  uint8_t ring_id)
+{
+	return (ring_id + soc->wbm_sw0_bm_id);
+}
+#endif
+
+#if defined(CLEAR_SW2TCL_CONSUMED_DESC)
+/**
+ * dp_tx_clear_consumed_hw_descs - Reset all the consumed Tx ring descs to 0
+ *
+ * @soc: DP soc handle
+ * @hal_ring_hdl: Source ring pointer
+ *
+ * Return: void
+ */
+static inline
+void dp_tx_clear_consumed_hw_descs(struct dp_soc *soc,
+				   hal_ring_handle_t hal_ring_hdl)
+{
+	void *desc = hal_srng_src_get_next_consumed(soc->hal_soc, hal_ring_hdl);
+
+	while (desc) {
+		hal_tx_desc_clear(desc);
+		desc = hal_srng_src_get_next_consumed(soc->hal_soc,
+						      hal_ring_hdl);
+	}
+}
+
+#else
+static inline
+void dp_tx_clear_consumed_hw_descs(struct dp_soc *soc,
+				   hal_ring_handle_t hal_ring_hdl)
+{
+}
+#endif /* CLEAR_SW2TCL_CONSUMED_DESC */
+
 QDF_STATUS
 dp_tx_hw_enqueue_li(struct dp_soc *soc, struct dp_vdev *vdev,
 		    struct dp_tx_desc_s *tx_desc, uint16_t fw_metadata,
@@ -90,7 +143,7 @@ dp_tx_hw_enqueue_li(struct dp_soc *soc, struct dp_vdev *vdev,
 			tx_exc_metadata->sec_type : vdev->sec_type);
 
 	/* Return Buffer Manager ID */
-	uint8_t bm_id = dp_tx_get_rbm_id(soc, ring_id);
+	uint8_t bm_id = dp_tx_get_rbm_id_li(soc, ring_id);
 
 	hal_ring_handle_t hal_ring_hdl = NULL;
 
@@ -166,6 +219,8 @@ dp_tx_hw_enqueue_li(struct dp_soc *soc, struct dp_vdev *vdev,
 		return status;
 	}
 
+	dp_tx_clear_consumed_hw_descs(soc, hal_ring_hdl);
+
 	/* Sync cached descriptor with HW */
 
 	hal_tx_desc = hal_srng_src_get_next(soc->hal_soc, hal_ring_hdl);
@@ -191,4 +246,39 @@ ring_access_fail:
 	dp_tx_ring_access_end_wrapper(soc, hal_ring_hdl, coalesce);
 
 	return status;
+}
+
+QDF_STATUS dp_tx_desc_pool_init_li(struct dp_soc *soc,
+				   uint16_t num_elem,
+				   uint8_t pool_id)
+{
+	uint32_t id, count, page_id, offset, pool_id_32;
+	struct dp_tx_desc_s *tx_desc;
+	struct dp_tx_desc_pool_s *tx_desc_pool;
+	uint16_t num_desc_per_page;
+
+	tx_desc_pool = &soc->tx_desc[pool_id];
+	tx_desc = tx_desc_pool->freelist;
+	count = 0;
+	pool_id_32 = (uint32_t)pool_id;
+	num_desc_per_page = tx_desc_pool->desc_pages.num_element_per_page;
+	while (tx_desc) {
+		page_id = count / num_desc_per_page;
+		offset = count % num_desc_per_page;
+		id = ((pool_id_32 << DP_TX_DESC_ID_POOL_OS) |
+			(page_id << DP_TX_DESC_ID_PAGE_OS) | offset);
+
+		tx_desc->id = id;
+		tx_desc->pool_id = pool_id;
+		tx_desc = tx_desc->next;
+		count++;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+void dp_tx_desc_pool_deinit_li(struct dp_soc *soc,
+			       struct dp_tx_desc_pool_s *tx_desc_pool,
+			       uint8_t pool_id)
+{
 }

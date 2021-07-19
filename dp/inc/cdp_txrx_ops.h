@@ -684,6 +684,9 @@ struct cdp_ctrl_ops {
 					  cdp_config_param_type *val);
 
 	void * (*txrx_get_pldev)(struct cdp_soc_t *soc, uint8_t pdev_id);
+	void (*txrx_peer_flush_frags)(struct cdp_soc_t *soc, uint8_t vdev_id,
+				      uint8_t *peer_mac);
+
 #ifdef VDEV_PEER_PROTOCOL_COUNT
 	void (*txrx_peer_protocol_cnt)(struct cdp_soc_t *soc,
 				       int8_t vdev_id,

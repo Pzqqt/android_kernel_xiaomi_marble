@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -100,11 +100,86 @@ static QDF_STATUS extract_dcs_im_tgt_stats_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_11BE
+#define WLAN_PHY_CH_WIDTH_320MHZ CH_WIDTH_320MHZ
+#else
+#define WLAN_PHY_CH_WIDTH_320MHZ CH_WIDTH_INVALID
+#endif
+
+/*
+ * wmi_map_ch_width() - map wmi channel width to host channel width
+ * @wmi_width: wmi channel width enum
+ *
+ * Return: host channel width, enum phy_ch_width
+ */
+static inline enum phy_ch_width wmi_map_ch_width(wmi_channel_width wmi_width)
+{
+	switch (wmi_width) {
+	case WMI_CHAN_WIDTH_20:
+		return CH_WIDTH_20MHZ;
+	case WMI_CHAN_WIDTH_40:
+		return CH_WIDTH_40MHZ;
+	case WMI_CHAN_WIDTH_80:
+		return CH_WIDTH_80MHZ;
+	case WMI_CHAN_WIDTH_160:
+		return CH_WIDTH_160MHZ;
+	case WMI_CHAN_WIDTH_80P80:
+		return CH_WIDTH_80P80MHZ;
+	case WMI_CHAN_WIDTH_5:
+		return CH_WIDTH_5MHZ;
+	case WMI_CHAN_WIDTH_10:
+		return CH_WIDTH_10MHZ;
+	case WMI_CHAN_WIDTH_320:
+		return WLAN_PHY_CH_WIDTH_320MHZ;
+	default:
+		return CH_WIDTH_INVALID;
+	}
+}
+
+/*
+ * extract_dcs_awgn_info_tlv() - extract DCS AWGN interference from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param awgn_info: Pointer to hold cw interference
+ *
+ * Return: QDF_STATUS_SUCCESS for success or QDF_STATUS_E_* for error
+ */
+static QDF_STATUS
+extract_dcs_awgn_info_tlv(wmi_unified_t wmi_handle, void *evt_buf,
+			  struct wlan_host_dcs_awgn_info *awgn_info)
+{
+	WMI_DCS_INTERFERENCE_EVENTID_param_tlvs *param_buf;
+	wmi_dcs_awgn_int_t *ev;
+
+	param_buf = evt_buf;
+	if (!param_buf)
+		return QDF_STATUS_E_INVAL;
+
+	ev = param_buf->awgn_int;
+	if (!ev) {
+		wmi_err("Invalid awgn info");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	awgn_info->channel_width = wmi_map_ch_width(ev->channel_width);
+	awgn_info->center_freq = (qdf_freq_t)ev->chan_freq;
+	awgn_info->center_freq0 = (qdf_freq_t)ev->center_freq0;
+	awgn_info->center_freq1 = (qdf_freq_t)ev->center_freq1;
+	awgn_info->chan_bw_intf_bitmap = ev->chan_bw_interference_bitmap;
+	wmi_debug("width: %u, freq: %u, freq0: %u, freq1: %u, bitmap: 0x%x",
+		  awgn_info->channel_width, awgn_info->center_freq,
+		  awgn_info->center_freq0, awgn_info->center_freq1,
+		  awgn_info->chan_bw_intf_bitmap);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 void wmi_dcs_attach_tlv(wmi_unified_t wmi_handle)
 {
 	struct wmi_ops *ops = wmi_handle->ops;
 
 	ops->extract_dcs_interference_type = extract_dcs_interference_type_tlv;
 	ops->extract_dcs_im_tgt_stats = extract_dcs_im_tgt_stats_tlv;
+	ops->extract_dcs_awgn_info = extract_dcs_awgn_info_tlv;
 }
 

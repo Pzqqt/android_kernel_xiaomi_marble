@@ -19,9 +19,9 @@
  */
 
 #include "wlan_cm_main.h"
-#include "wlan_cm_sm.h"
-#include "wlan_scan_api.h"
+#include "wlan_cm_roam.h"
 #include "wlan_cm_main_api.h"
+#include "wlan_scan_api.h"
 
 #ifdef WLAN_CM_USE_SPINLOCK
 /**
@@ -100,7 +100,7 @@ QDF_STATUS wlan_cm_init(struct vdev_mlme_obj *vdev_mlme)
 	vdev_mlme->cnx_mgr_ctx->max_connect_attempts =
 					CM_MAX_CONNECT_ATTEMPTS;
 	vdev_mlme->cnx_mgr_ctx->connect_timeout =
-					CM_MAX_CONNECT_TIMEOUT;
+					CM_MAX_PER_CANDIDATE_CONNECT_TIMEOUT;
 	qdf_list_create(&vdev_mlme->cnx_mgr_ctx->req_list, CM_MAX_REQ);
 	cm_req_lock_create(vdev_mlme->cnx_mgr_ctx);
 
@@ -115,27 +115,73 @@ QDF_STATUS wlan_cm_init(struct vdev_mlme_obj *vdev_mlme)
 	return QDF_STATUS_SUCCESS;
 }
 
+static void cm_deinit_req_list(struct cnx_mgr *cm_ctx)
+{
+	uint32_t prefix;
+	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
+	struct cm_req *cm_req = NULL;
+
+	/*
+	 * flush unhandled req from the list, this should not happen if SM is
+	 * handled properly, but in cases of active command timeout
+	 * (which needs be debugged and avoided anyway) if VDEV/PEER SM
+	 * is not able to handle the req it may send out of sync command and
+	 * thus resulting in a unhandled request. Thus to avoid memleak flush
+	 * all unhandled req before destroying the list.
+	 */
+	cm_req_lock_acquire(cm_ctx);
+	qdf_list_peek_front(&cm_ctx->req_list, &cur_node);
+	while (cur_node) {
+		qdf_list_peek_next(&cm_ctx->req_list, cur_node, &next_node);
+
+		cm_req = qdf_container_of(cur_node, struct cm_req, node);
+		prefix = CM_ID_GET_PREFIX(cm_req->cm_id);
+		qdf_list_remove_node(&cm_ctx->req_list, &cm_req->node);
+		mlme_info(CM_PREFIX_FMT "flush prefix %x",
+			  CM_PREFIX_REF(wlan_vdev_get_id(cm_ctx->vdev),
+					cm_req->cm_id), prefix);
+		if (prefix == CONNECT_REQ_PREFIX) {
+			cm_ctx->connect_count--;
+			cm_free_connect_req_mem(&cm_req->connect_req);
+		} else if (prefix == ROAM_REQ_PREFIX) {
+			cm_free_roam_req_mem(&cm_req->roam_req);
+		} else if (prefix == DISCONNECT_REQ_PREFIX) {
+			cm_ctx->disconnect_count--;
+		}
+		qdf_mem_free(cm_req);
+
+		cur_node = next_node;
+		next_node = NULL;
+		cm_req = NULL;
+	}
+	cm_req_lock_release(cm_ctx);
+
+	cm_req_lock_destroy(cm_ctx);
+	qdf_list_destroy(&cm_ctx->req_list);
+}
+
 QDF_STATUS wlan_cm_deinit(struct vdev_mlme_obj *vdev_mlme)
 {
 	struct wlan_objmgr_vdev *vdev = vdev_mlme->vdev;
 	enum QDF_OPMODE op_mode = wlan_vdev_mlme_get_opmode(vdev);
 	struct wlan_objmgr_psoc *psoc = wlan_vdev_get_psoc(vdev);
 	wlan_scan_requester scan_requester_id;
+	struct cnx_mgr *cm_ctx;
 
 	if (op_mode != QDF_STA_MODE && op_mode != QDF_P2P_CLIENT_MODE)
 		return QDF_STATUS_SUCCESS;
 
-	cm_req_history_deinit(vdev_mlme->cnx_mgr_ctx);
-	qdf_event_destroy(&vdev_mlme->cnx_mgr_ctx->disconnect_complete);
-	scan_requester_id = vdev_mlme->cnx_mgr_ctx->scan_requester_id;
-	wlan_scan_unregister_requester(psoc,
-				       scan_requester_id);
-	cm_req_lock_destroy(vdev_mlme->cnx_mgr_ctx);
-	qdf_list_destroy(&vdev_mlme->cnx_mgr_ctx->req_list);
-	cm_sm_destroy(vdev_mlme->cnx_mgr_ctx);
-	mlme_cm_ext_hdl_destroy(vdev, vdev_mlme->cnx_mgr_ctx->ext_cm_ptr);
-	vdev_mlme->cnx_mgr_ctx->ext_cm_ptr = NULL;
-	qdf_mem_free(vdev_mlme->cnx_mgr_ctx);
+	cm_ctx = vdev_mlme->cnx_mgr_ctx;
+	cm_req_history_deinit(cm_ctx);
+	qdf_event_destroy(&cm_ctx->disconnect_complete);
+	scan_requester_id = cm_ctx->scan_requester_id;
+	wlan_scan_unregister_requester(psoc, scan_requester_id);
+
+	cm_deinit_req_list(cm_ctx);
+	cm_sm_destroy(cm_ctx);
+	mlme_cm_ext_hdl_destroy(vdev, cm_ctx->ext_cm_ptr);
+	cm_ctx->ext_cm_ptr = NULL;
+	qdf_mem_free(cm_ctx);
 	vdev_mlme->cnx_mgr_ctx = NULL;
 
 	return QDF_STATUS_SUCCESS;

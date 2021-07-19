@@ -433,6 +433,7 @@ static inline void dp_tx_get_queue(struct dp_vdev *vdev,
 
 	dp_tx_debug("pool_id:%d ring_id: %d",
 		    queue->desc_pool_id, queue->ring_id);
+
 }
 
 /*
@@ -451,21 +452,8 @@ static inline hal_ring_handle_t dp_tx_get_hal_ring_hdl(struct dp_soc *soc,
 	return soc->tcl_data_ring[ring_id].hal_srng;
 }
 
-/*
- * dp_tx_get_rbm_id()- Get the RBM ID for data transmission completion.
- * @dp_soc - DP soc structure pointer
- * @ring_id - Transmit Queue/ring_id to be used when XPS is enabled
- *
- * Return - HAL ring handle
- */
-static inline uint8_t dp_tx_get_rbm_id(struct dp_soc *soc,
-				       uint8_t ring_id)
-{
-	return (ring_id ? soc->wbm_sw0_bm_id + (ring_id - 1) :
-			  HAL_WBM_SW2_BM_ID(soc->wbm_sw0_bm_id));
-}
-
 #else /* QCA_OL_TX_MULTIQ_SUPPORT */
+
 static inline void dp_tx_get_queue(struct dp_vdev *vdev,
 				   qdf_nbuf_t nbuf, struct dp_tx_queue *queue)
 {
@@ -473,20 +461,14 @@ static inline void dp_tx_get_queue(struct dp_vdev *vdev,
 	queue->desc_pool_id = DP_TX_GET_DESC_POOL_ID(vdev);
 	queue->ring_id = DP_TX_GET_RING_ID(vdev);
 
-	dp_tx_debug("pool_id:%d ring_id: %d",
-		    queue->desc_pool_id, queue->ring_id);
+	dp_tx_debug("pool_id:%d ring_id: %d skb %pK ",
+		    queue->desc_pool_id, queue->ring_id, nbuf);
 }
 
 static inline hal_ring_handle_t dp_tx_get_hal_ring_hdl(struct dp_soc *soc,
 						       uint8_t ring_id)
 {
 	return soc->tcl_data_ring[ring_id].hal_srng;
-}
-
-static inline uint8_t dp_tx_get_rbm_id(struct dp_soc *soc,
-				       uint8_t ring_id)
-{
-	return (ring_id + soc->wbm_sw0_bm_id);
 }
 #endif
 

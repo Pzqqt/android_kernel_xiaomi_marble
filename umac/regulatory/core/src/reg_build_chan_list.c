@@ -772,8 +772,9 @@ reg_modify_chan_list_for_srd_channels(struct wlan_objmgr_pdev *pdev,
 		if (chan_list[chan_enum].chan_flags & REGULATORY_CHAN_DISABLED)
 			continue;
 
-		if (reg_is_etsi13_srd_chan(pdev,
-					   chan_list[chan_enum].chan_num)) {
+		if (reg_is_etsi13_srd_chan_for_freq(
+					pdev,
+					chan_list[chan_enum].center_freq)) {
 			chan_list[chan_enum].state =
 				CHANNEL_STATE_DFS;
 			chan_list[chan_enum].chan_flags |=
@@ -845,7 +846,7 @@ reg_modify_chan_list_for_5dot9_ghz_channels(struct wlan_objmgr_pdev *pdev,
 	}
 }
 
-#if defined(CONFIG_BAND_6GHZ) && defined(CONFIG_REG_CLIENT)
+#if defined(CONFIG_BAND_6GHZ)
 /**
  * reg_modify_chan_list_for_6g_edge_channels() - Modify 6 GHz edge channels
  *
@@ -1047,7 +1048,7 @@ reg_populate_secondary_cur_chan_list(struct wlan_regulatory_pdev_priv_obj
 				     *pdev_priv_obj)
 {
 	qdf_mem_copy(pdev_priv_obj->secondary_cur_chan_list,
-		     pdev_priv_obj->mas_chan_list,
+		     pdev_priv_obj->cur_chan_list,
 		     (NUM_CHANNELS - NUM_6GHZ_CHANNELS) *
 		     sizeof(struct regulatory_channel));
 	qdf_mem_copy(&pdev_priv_obj->
@@ -1125,8 +1126,6 @@ void reg_compute_pdev_current_chan_list(struct wlan_regulatory_pdev_priv_obj
 	qdf_mem_copy(pdev_priv_obj->cur_chan_list, pdev_priv_obj->mas_chan_list,
 		     NUM_CHANNELS * sizeof(struct regulatory_channel));
 
-	reg_populate_secondary_cur_chan_list(pdev_priv_obj);
-
 	reg_modify_chan_list_for_freq_range(pdev_priv_obj->cur_chan_list,
 					    pdev_priv_obj->range_2g_low,
 					    pdev_priv_obj->range_2g_high,
@@ -1160,12 +1159,11 @@ void reg_compute_pdev_current_chan_list(struct wlan_regulatory_pdev_priv_obj
 						    pdev_priv_obj->
 						    cur_chan_list);
 
-	reg_modify_chan_list_for_max_chwidth(pdev_priv_obj->pdev_ptr,
-					     pdev_priv_obj->cur_chan_list);
-
 	reg_modify_chan_list_for_6g_edge_channels(pdev_priv_obj->pdev_ptr,
 						  pdev_priv_obj->
 						  cur_chan_list);
+
+	reg_populate_secondary_cur_chan_list(pdev_priv_obj);
 }
 
 void reg_reset_reg_rules(struct reg_rule_info *reg_rules)
@@ -1219,11 +1217,10 @@ static void reg_append_6g_reg_rules_in_pdev(
 			struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
 {
 	struct reg_rule_info *pdev_reg_rules;
-	enum reg_6g_ap_type cur_pwr_type;
+	enum reg_6g_ap_type cur_pwr_type = REG_INDOOR_AP;
 	uint8_t num_reg_rules;
 
 	pdev_reg_rules = &pdev_priv_obj->reg_rules;
-	cur_pwr_type = pdev_priv_obj->reg_cur_6g_ap_pwr_type;
 
 	num_reg_rules = pdev_reg_rules->num_of_reg_rules;
 	pdev_reg_rules->num_of_reg_rules +=
@@ -1329,6 +1326,8 @@ void reg_propagate_mas_chan_list_to_pdev(struct wlan_objmgr_psoc *psoc,
 
 	reg_update_max_phymode_chwidth_for_pdev(pdev);
 	reg_compute_pdev_current_chan_list(pdev_priv_obj);
+	reg_modify_chan_list_for_max_chwidth(pdev_priv_obj->pdev_ptr,
+					     pdev_priv_obj->cur_chan_list);
 
 	if (reg_tx_ops->fill_umac_legacy_chanlist) {
 		reg_tx_ops->fill_umac_legacy_chanlist(

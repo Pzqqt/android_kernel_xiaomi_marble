@@ -52,4 +52,28 @@ dp_tx_hw_enqueue_li(struct dp_soc *soc, struct dp_vdev *vdev,
 void dp_tx_comp_get_params_from_hal_desc_li(struct dp_soc *soc,
 					    void *tx_comp_hal_desc,
 					    struct dp_tx_desc_s **r_tx_desc);
+
+/**
+ * dp_tx_desc_pool_init_li() - Initialize Tx Descriptor pool(s)
+ * @soc: Handle to DP Soc structure
+ * @num_elem: pool descriptor number
+ * @pool_id: pool to allocate
+ *
+ * Return: QDF_STATUS_SUCCESS - success, others - failure
+ */
+QDF_STATUS dp_tx_desc_pool_init_li(struct dp_soc *soc,
+				   uint16_t num_elem,
+				   uint8_t pool_id);
+
+/**
+ * dp_tx_desc_pool_deinit_li() - De-initialize Tx Descriptor pool(s)
+ * @soc: Handle to DP Soc structure
+ * @tx_desc_pool: Tx descriptor pool handler
+ * @pool_id: pool to deinit
+ *
+ * Return: None.
+ */
+void dp_tx_desc_pool_deinit_li(struct dp_soc *soc,
+			       struct dp_tx_desc_pool_s *tx_desc_pool,
+			       uint8_t pool_id);
 #endif

@@ -648,6 +648,46 @@ use_same_candidate:
 	return true;
 }
 
+/*
+ * Do not allow last connect attempt after 25 sec, assuming last attempt will
+ * complete in max 10 sec, total connect time will not be more than 35 sec.
+ * Do not confuse this with active command timeout, that is taken care by
+ * CM_MAX_PER_CANDIDATE_CONNECT_TIMEOUT
+ */
+#define CM_CONNECT_MAX_ACTIVE_TIME 25000
+
+/**
+ * cm_is_time_allowed_for_connect_attempt() - This API check if next connect
+ * attempt can be tried within allocated time.
+ * @cm_ctx: connection manager context
+ * @req: Connect request.
+ *
+ * This function return true if connect attempt can be tried so that total time
+ * taken by connect req do not exceed 30-35 seconds.
+ *
+ * Return: bool
+ */
+static bool cm_is_time_allowed_for_connect_attempt(struct cnx_mgr *cm_ctx,
+						   struct cm_connect_req *req)
+{
+	qdf_time_t time_since_connect_active;
+	uint8_t vdev_id = wlan_vdev_get_id(cm_ctx->vdev);
+
+	time_since_connect_active = qdf_mc_timer_get_system_time() -
+					req->connect_active_time;
+	if (time_since_connect_active >= CM_CONNECT_MAX_ACTIVE_TIME) {
+		mlme_info(CM_PREFIX_FMT "Max time allocated (%d ms) for connect completed, cur time %lu, active time %lu and diff %lu",
+			  CM_PREFIX_REF(vdev_id, req->cm_id),
+			  CM_CONNECT_MAX_ACTIVE_TIME,
+			  qdf_mc_timer_get_system_time(),
+			  req->connect_active_time,
+			  time_since_connect_active);
+		return false;
+	}
+
+	return true;
+}
+
 static inline void cm_update_advance_filter(struct wlan_objmgr_pdev *pdev,
 					    struct cnx_mgr *cm_ctx,
 					    struct scan_filter *filter,
@@ -723,6 +763,13 @@ bool cm_is_retry_with_same_candidate(struct cnx_mgr *cm_ctx,
 				     struct wlan_cm_connect_resp *resp)
 {
 	return false;
+}
+
+static inline
+bool cm_is_time_allowed_for_connect_attempt(struct cnx_mgr *cm_ctx,
+					    struct cm_connect_req *req)
+{
+	return true;
 }
 
 static inline void cm_update_advance_filter(struct wlan_objmgr_pdev *pdev,
@@ -1183,6 +1230,14 @@ static QDF_STATUS cm_get_valid_candidate(struct cnx_mgr *cm_ctx,
 		goto flush_single_pmk;
 	}
 
+	/* From 2nd attempt onward, check if time allows for a new attempt */
+	if (cm_req->connect_req.connect_attempts &&
+	    !cm_is_time_allowed_for_connect_attempt(cm_ctx,
+						    &cm_req->connect_req)) {
+		status = QDF_STATUS_E_FAILURE;
+		goto flush_single_pmk;
+	}
+
 	if (prev_candidate && resp &&
 	    cm_is_retry_with_same_candidate(cm_ctx, &cm_req->connect_req,
 					    resp)) {
@@ -1380,6 +1435,8 @@ QDF_STATUS cm_connect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 		return QDF_STATUS_E_INVAL;
 
 	cm_ctx->active_cm_id = *cm_id;
+	cm_req->connect_req.connect_active_time =
+				qdf_mc_timer_get_system_time();
 	req = &cm_req->connect_req.req;
 	wlan_vdev_mlme_set_ssid(cm_ctx->vdev, req->ssid.ssid, req->ssid.length);
 	/* free vdev keys before setting crypto params */

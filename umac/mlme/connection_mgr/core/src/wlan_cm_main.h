@@ -25,13 +25,15 @@
 
 #include "include/wlan_vdev_mlme.h"
 #include <qdf_event.h>
-
-#ifdef FEATURE_CM_ENABLE
 #include <wlan_cm_public_struct.h>
 
 /* Max candidate/attempts to be tried to connect */
 #define CM_MAX_CONNECT_ATTEMPTS 5
-#define CM_MAX_CONNECT_TIMEOUT 10000
+/*
+ * Default connect timeout to consider 3 sec join timeout + 5 sec auth timeout +
+ * 2 sec assoc timeout + 5 sec buffer for vdev related timeouts.
+ */
+#define CM_MAX_PER_CANDIDATE_CONNECT_TIMEOUT 15000
 
 /*
  * Default max retry attempts to be tried for a candidate.
@@ -107,6 +109,7 @@ struct cm_state_sm {
  * @cur_candidate: current candidate
  * @cur_candidate_retries: attempts for current candidate
  * @connect_attempts: number of connect attempts tried
+ * @connect_active_time: timestamp when connect became active
  */
 struct cm_connect_req {
 	wlan_cm_id cm_id;
@@ -116,6 +119,7 @@ struct cm_connect_req {
 	struct scan_cache_node *cur_candidate;
 	uint8_t cur_candidate_retries;
 	uint8_t connect_attempts;
+	qdf_time_t connect_active_time;
 };
 
 /**
@@ -292,18 +296,4 @@ QDF_STATUS wlan_cm_init(struct vdev_mlme_obj *vdev_mlme);
  *         FAILURE, if deletion fails
  */
 QDF_STATUS wlan_cm_deinit(struct vdev_mlme_obj *vdev_mlme);
-#else
-
-static inline QDF_STATUS wlan_cm_init(struct vdev_mlme_obj *vdev_mlme)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline QDF_STATUS wlan_cm_deinit(struct vdev_mlme_obj *vdev_mlme)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-#endif /* FEATURE_CM_ENABLE */
-
 #endif /* __WLAN_CM_MAIN_H__ */

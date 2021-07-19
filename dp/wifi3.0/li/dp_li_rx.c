@@ -114,6 +114,7 @@ uint32_t dp_rx_process_li(struct dp_intr *int_ctx,
 	qdf_nbuf_t ebuf_head;
 	qdf_nbuf_t ebuf_tail;
 	uint8_t pkt_capture_offload = 0;
+	int max_reap_limit;
 
 	DP_HIST_INIT();
 
@@ -137,6 +138,7 @@ more_data:
 	num_rx_bufs_reaped = 0;
 	ebuf_head = NULL;
 	ebuf_tail = NULL;
+	max_reap_limit = dp_rx_get_loop_pkt_limit(soc);
 
 	qdf_mem_zero(rx_bufs_reaped, sizeof(rx_bufs_reaped));
 	qdf_mem_zero(&mpdu_desc_info, sizeof(mpdu_desc_info));
@@ -383,7 +385,8 @@ more_data:
 		 * then allow break.
 		 */
 		if (is_prev_msdu_last &&
-		    dp_rx_reap_loop_pkt_limit_hit(soc, num_rx_bufs_reaped))
+		    dp_rx_reap_loop_pkt_limit_hit(soc, num_rx_bufs_reaped,
+						  max_reap_limit))
 			break;
 	}
 done:
@@ -503,17 +506,25 @@ done:
 		 * Check if DMA completed -- msdu_done is the last bit
 		 * to be written
 		 */
-		if (qdf_unlikely(!qdf_nbuf_is_rx_chfrag_cont(nbuf) &&
-				 !hal_rx_attn_msdu_done_get_li(rx_tlv_hdr))) {
-			dp_err("MSDU DONE failure");
-			DP_STATS_INC(soc, rx.err.msdu_done_fail, 1);
-			hal_rx_dump_pkt_tlvs(hal_soc, rx_tlv_hdr,
-					     QDF_TRACE_LEVEL_INFO);
-			tid_stats->fail_cnt[MSDU_DONE_FAILURE]++;
-			qdf_nbuf_free(nbuf);
-			qdf_assert(0);
-			nbuf = next;
-			continue;
+		if (qdf_likely(!qdf_nbuf_is_rx_chfrag_cont(nbuf))) {
+			if (qdf_unlikely(!hal_rx_attn_msdu_done_get_li(
+								 rx_tlv_hdr))) {
+				dp_err_rl("MSDU DONE failure");
+				DP_STATS_INC(soc, rx.err.msdu_done_fail, 1);
+				hal_rx_dump_pkt_tlvs(hal_soc, rx_tlv_hdr,
+						     QDF_TRACE_LEVEL_INFO);
+				tid_stats->fail_cnt[MSDU_DONE_FAILURE]++;
+				qdf_assert(0);
+				qdf_nbuf_free(nbuf);
+				nbuf = next;
+				continue;
+			} else if (qdf_unlikely(hal_rx_attn_msdu_len_err_get_li(
+								 rx_tlv_hdr))) {
+				DP_STATS_INC(soc, rx.err.msdu_len_err, 1);
+				qdf_nbuf_free(nbuf);
+				nbuf = next;
+				continue;
+			}
 		}
 
 		DP_HIST_PACKET_COUNT_INC(vdev->pdev->pdev_id);
@@ -778,4 +789,44 @@ done:
 	DP_RX_HIST_STATS_PER_PDEV();
 
 	return rx_bufs_used; /* Assume no scale factor for now */
+}
+
+QDF_STATUS dp_rx_desc_pool_init_li(struct dp_soc *soc,
+				   struct rx_desc_pool *rx_desc_pool,
+				   uint32_t pool_id)
+{
+	return dp_rx_desc_pool_init_generic(soc, rx_desc_pool, pool_id);
+
+}
+
+void dp_rx_desc_pool_deinit_li(struct dp_soc *soc,
+			       struct rx_desc_pool *rx_desc_pool,
+			       uint32_t pool_id)
+{
+}
+
+QDF_STATUS dp_wbm_get_rx_desc_from_hal_desc_li(
+					struct dp_soc *soc,
+					void *ring_desc,
+					struct dp_rx_desc **r_rx_desc)
+{
+	struct hal_buf_info buf_info = {0};
+	hal_soc_handle_t hal_soc = soc->hal_soc;
+
+	/* only cookie and rbm will be valid in buf_info */
+	hal_rx_buf_cookie_rbm_get(hal_soc, (uint32_t *)ring_desc,
+				  &buf_info);
+
+	if (qdf_unlikely(buf_info.rbm !=
+				HAL_RX_BUF_RBM_SW3_BM(soc->wbm_sw0_bm_id))) {
+		/* TODO */
+		/* Call appropriate handler */
+		DP_STATS_INC(soc, rx.err.invalid_rbm, 1);
+		dp_rx_err("%pK: Invalid RBM %d", soc, buf_info.rbm);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*r_rx_desc = dp_rx_cookie_2_va_rxdma_buf(soc, buf_info.sw_cookie);
+
+	return QDF_STATUS_SUCCESS;
 }

@@ -39,20 +39,13 @@
  * @mlme_proc_cac:                     Process the CAC completion event.
  * @mlme_deliver_event_up_after_cac:   Send a CAC timeout, VAP up event to user
  *                                     space
- * @mlme_get_dfs_ch_nchans:            Get number of channels in the channel
- *                                     list.
  * @mlme_set_no_chans_available:       Sets no_chans_available flag.
  * @mlme_ieee2mhz:                     Gets Channel freq from ieee number.
- * @mlme_find_dot11_channel:           Find dot11 channel.
- * @mlme_get_dfs_ch_channels:          Get the channel list.
  * @mlme_dfs_ch_flags_ext:             Gets channel extension flag.
  * @mlme_channel_change_by_precac:     Channel change triggered by PreCAC.
- * @mlme_precac_chan_change_csa:       Channel change triggered by PrCAC using
- *                                     Channel Switch Announcement.
  * @mlme_nol_timeout_notification:     NOL timeout notification.
  * @mlme_clist_update:                 Updates the channel list.
  * @mlme_is_opmode_sta:                Check if pdev opmode is STA.
- * @mlme_get_cac_timeout:              Gets the CAC timeout.
  * @mlme_rebuild_chan_list_with_non_dfs_channel: Rebuild channels with non-dfs
  *                                     channels.
  * @mlme_restart_vaps_with_non_dfs_chan: Restart vaps with non-dfs channel.
@@ -102,8 +95,6 @@ struct dfs_to_mlme {
 	QDF_STATUS (*mlme_proc_cac)(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*mlme_deliver_event_up_after_cac)(
 			struct wlan_objmgr_pdev *pdev);
-	QDF_STATUS (*mlme_get_dfs_ch_nchans)(struct wlan_objmgr_pdev *pdev,
-			int *nchans);
 #ifdef CONFIG_CHAN_FREQ_API
 	QDF_STATUS (*mlme_get_extchan_for_freq)(struct wlan_objmgr_pdev *pdev,
 						uint16_t *dfs_ch_freq,
@@ -121,18 +112,6 @@ struct dfs_to_mlme {
 			int ieee,
 			uint64_t flag,
 			int *freq);
-#ifdef CONFIG_CHAN_NUM_API
-	QDF_STATUS (*mlme_find_dot11_channel)(struct wlan_objmgr_pdev *pdev,
-			uint8_t ieee,
-			uint8_t des_cfreq2,
-			int mode,
-			uint16_t *dfs_ch_freq,
-			uint64_t *dfs_ch_flags,
-			uint16_t *dfs_ch_flagext,
-			uint8_t *dfs_ch_ieee,
-			uint8_t *dfs_ch_vhtop_ch_freq_seg1,
-			uint8_t *dfs_ch_vhtop_ch_freq_seg2);
-#endif
 #ifdef CONFIG_CHAN_FREQ_API
 	QDF_STATUS (*mlme_find_dot11_chan_for_freq)(struct wlan_objmgr_pdev *,
 						    uint16_t freq,
@@ -146,16 +125,6 @@ struct dfs_to_mlme {
 						    uint8_t *dfs_ch_freq_seg2,
 						    uint16_t *dfs_cfreq1_mhz,
 						    uint16_t *dfs_cfreq2_mhz);
-#endif
-#ifdef CONFIG_CHAN_NUM_API
-	QDF_STATUS (*mlme_get_dfs_ch_channels)(struct wlan_objmgr_pdev *pdev,
-			uint16_t *dfs_ch_freq,
-			uint64_t *dfs_ch_flags,
-			uint16_t *dfs_ch_flagext,
-			uint8_t *dfs_ch_ieee,
-			uint8_t *dfs_ch_vhtop_ch_freq_seg1,
-			uint8_t *dfs_ch_vhtop_ch_freq_seg2,
-			int index);
 #endif
 #ifdef CONFIG_CHAN_FREQ_API
 	QDF_STATUS (*mlme_get_dfs_channels_for_freq)(
@@ -182,12 +151,6 @@ struct dfs_to_mlme {
 						    uint16_t des_cfreq2,
 						    enum wlan_phymode des_mode);
 #endif
-#ifdef CONFIG_CHAN_NUM_API
-	QDF_STATUS
-		(*mlme_precac_chan_change_csa)(struct wlan_objmgr_pdev *,
-					       uint8_t des_chan,
-					       enum wlan_phymode des_mode);
-#endif
 #endif
 #ifdef QCA_SUPPORT_DFS_CHAN_POSTNOL
 	QDF_STATUS
@@ -202,13 +165,6 @@ struct dfs_to_mlme {
 			void *nollist,
 			int nentries);
 	bool (*mlme_is_opmode_sta)(struct wlan_objmgr_pdev *pdev);
-#ifdef CONFIG_CHAN_NUM_API
-	QDF_STATUS (*mlme_get_cac_timeout)(struct wlan_objmgr_pdev *pdev,
-			uint16_t dfs_ch_freq,
-			uint8_t c_vhtop_ch_freq_seg2,
-			uint64_t dfs_ch_flags,
-			int *cac_timeout);
-#endif
 #ifdef CONFIG_CHAN_FREQ_API
 	QDF_STATUS
 	    (*mlme_get_cac_timeout_for_freq)(struct wlan_objmgr_pdev *pdev,
@@ -392,29 +348,13 @@ QDF_STATUS ucfg_dfs_get_precac_intermediate_chan(struct wlan_objmgr_pdev *pdev,
 						 int *buff);
 
 /**
- * ucfg_dfs_get_precac_chan_state() - Get precac status for the given channel.
- * @pdev: Pointer to DFS pdev object.
- * @precac_chan: Channel number for which precac state needs to be determined.
- *
- * Wrapper function for dfs_get_precac_chan_state().
- * This function called from outside of dfs component.
- *
- * Return: Precac state of the given channel.
- */
-#ifdef CONFIG_CHAN_NUM_API
-enum precac_chan_state
-ucfg_dfs_get_precac_chan_state(struct wlan_objmgr_pdev *pdev,
-			       uint8_t precac_chan);
-#endif
-
-/**
  * ucfg_dfs_get_precac_chan_state_for_freq() - Get precac status for the
  * given channel.
  * @pdev: Pointer to DFS pdev object.
  * @precac_chan: Channel frequency for which precac state needs to be
  *               determined.
  *
- * Wrapper function for dfs_get_precac_chan_state().
+ * Wrapper function for dfs_get_precac_chan_state_for_freq().
  * This function called from outside of dfs component.
  *
  * Return: Precac state of the given channel.

@@ -1260,4 +1260,25 @@ hal_rx_msdu_desc_info_get_li(void *desc_addr,
 	RX_MSDU_START_5_NSS_MASK,				\
 	RX_MSDU_START_5_NSS_LSB))
 
+#define HAL_RX_ATTN_MSDU_LEN_ERR_GET(_rx_attn)		\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_attn,	\
+		RX_ATTENTION_1_MSDU_LENGTH_ERR_OFFSET)),	\
+		RX_ATTENTION_1_MSDU_LENGTH_ERR_MASK,		\
+		RX_ATTENTION_1_MSDU_LENGTH_ERR_LSB))
+
+/**
+ * hal_rx_attn_msdu_len_err_get_li(): Get msdu_len_err value from
+ *  rx attention tlvs
+ * @buf: pointer to rx pkt tlvs hdr
+ *
+ * Return: msdu_len_err value
+ */
+static inline uint32_t
+hal_rx_attn_msdu_len_err_get_li(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_attention *rx_attn = &pkt_tlvs->attn_tlv.rx_attn;
+
+	return HAL_RX_ATTN_MSDU_LEN_ERR_GET(rx_attn);
+}
 #endif /* _HAL_LI_RX_H_ */

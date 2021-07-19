@@ -149,8 +149,8 @@ struct dp_rx_desc {
 	struct dp_rx_desc_dbg_info *dbg_info;
 #endif
 	uint8_t	in_use:1,
-	unmapped:1,
-	in_err_state:1;
+		unmapped:1,
+		in_err_state:1;
 };
 
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
@@ -540,7 +540,7 @@ void *dp_rx_cookie_2_va_rxdma_buf(struct dp_soc *soc, uint32_t cookie)
 	if (qdf_unlikely(index >= rx_desc_pool->pool_size))
 		return NULL;
 
-	return &(soc->rx_desc_buf[pool_id].array[index].rx_desc);
+	return &rx_desc_pool->array[index].rx_desc;
 }
 
 /**
@@ -653,7 +653,8 @@ void dp_rx_pdev_desc_pool_free(struct dp_pdev *pdev);
 QDF_STATUS dp_rx_pdev_desc_pool_init(struct dp_pdev *pdev);
 void dp_rx_pdev_desc_pool_deinit(struct dp_pdev *pdev);
 void dp_rx_desc_pool_deinit(struct dp_soc *soc,
-			    struct rx_desc_pool *rx_desc_pool);
+			    struct rx_desc_pool *rx_desc_pool,
+			    uint32_t pool_id);
 
 QDF_STATUS dp_rx_pdev_attach(struct dp_pdev *pdev);
 QDF_STATUS dp_rx_pdev_buffers_alloc(struct dp_pdev *pdev);
@@ -1310,6 +1311,23 @@ dp_rx_update_protocol_tag(struct dp_soc *soc, struct dp_vdev *vdev,
 			  bool is_reo_exception, bool is_update_stats)
 {
 }
+
+/**
+ * dp_rx_err_cce_drop() - Reads CCE metadata from the RX MSDU end TLV
+ *                        and returns whether cce metadata matches
+ * @soc: core txrx main context
+ * @vdev: vdev on which the packet is received
+ * @nbuf: QDF pkt buffer on which the protocol tag should be set
+ * @rx_tlv_hdr: rBbase address where the RX TLVs starts
+ * Return: bool
+ */
+static inline bool
+dp_rx_err_cce_drop(struct dp_soc *soc, struct dp_vdev *vdev,
+		   qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr)
+{
+	return false;
+}
+
 #endif /* WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG */
 
 #ifndef WLAN_SUPPORT_RX_FLOW_TAG
@@ -1931,8 +1949,54 @@ void dp_rx_cksum_offload(struct dp_pdev *pdev,
 
 #endif /* QCA_HOST_MODE_WIFI_DISABLED */
 
-bool dp_rx_reap_loop_pkt_limit_hit(struct dp_soc *soc, int num_reaped);
-bool dp_rx_enable_eol_data_check(struct dp_soc *soc);
+#ifdef WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT
+static inline
+bool dp_rx_reap_loop_pkt_limit_hit(struct dp_soc *soc, int num_reaped,
+				   int max_reap_limit)
+{
+	bool limit_hit = false;
+
+	limit_hit =
+		(num_reaped >= max_reap_limit) ? true : false;
+
+	if (limit_hit)
+		DP_STATS_INC(soc, rx.reap_loop_pkt_limit_hit, 1)
+
+	return limit_hit;
+}
+
+static inline
+bool dp_rx_enable_eol_data_check(struct dp_soc *soc)
+{
+	return soc->wlan_cfg_ctx->rx_enable_eol_data_check;
+}
+
+static inline int dp_rx_get_loop_pkt_limit(struct dp_soc *soc)
+{
+	struct wlan_cfg_dp_soc_ctxt *cfg = soc->wlan_cfg_ctx;
+
+	return cfg->rx_reap_loop_pkt_limit;
+}
+#else
+static inline
+bool dp_rx_reap_loop_pkt_limit_hit(struct dp_soc *soc, int num_reaped,
+				   int max_reap_limit)
+{
+	return false;
+}
+
+static inline
+bool dp_rx_enable_eol_data_check(struct dp_soc *soc)
+{
+	return false;
+}
+
+static inline int dp_rx_get_loop_pkt_limit(struct dp_soc *soc)
+{
+	return 0;
+}
+#endif /* WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT */
+
 void dp_rx_update_stats(struct dp_soc *soc, qdf_nbuf_t nbuf);
 
 #ifdef QCA_SUPPORT_WDS_EXTENDED
@@ -1973,4 +2037,21 @@ dp_rx_is_list_ready(qdf_nbuf_t nbuf_head,
 	return false;
 }
 #endif
+
+/**
+ * dp_rx_desc_pool_init_generic() - Generic Rx descriptors initialization
+ * @soc: SOC handle
+ * @rx_desc_pool: pointer to RX descriptor pool
+ * @pool_id: pool ID
+ *
+ * Return: None
+ */
+QDF_STATUS dp_rx_desc_pool_init_generic(struct dp_soc *soc,
+				  struct rx_desc_pool *rx_desc_pool,
+				  uint32_t pool_id);
+
+void dp_rx_desc_pool_deinit_generic(struct dp_soc *soc,
+				  struct rx_desc_pool *rx_desc_pool,
+				  uint32_t pool_id);
+
 #endif /* _DP_RX_H */

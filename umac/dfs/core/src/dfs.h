@@ -1000,21 +1000,13 @@ struct dfs_rcac_params {
  * @is_radar_found_on_secondary_seg: Radar on second segment.
  * @is_radar_during_precac:          Radar found during precac.
  * @dfs_precac_lock:                 Lock to protect precac lists.
- * @dfs_precac_secondary_freq:       Second segment freq for precac.
- *                                   Applicable to only legacy chips.
  * @dfs_precac_secondary_freq_mhz:   Second segment freq in MHZ for precac.
  *                                   Applicable to only legacy chips.
- * @dfs_precac_primary_freq:         PreCAC Primary freq applicable only to
- *                                   legacy chips.
  * @dfs_precac_primary_freq_mhz:     PreCAC Primary freq in MHZ applicable only
  *                                   to legacy chips.
  * @dfs_defer_precac_channel_change: Defer precac channel change.
- * @dfs_precac_inter_chan:           Intermediate non-DFS channel used while
- *                                   doing precac.
  * @dfs_precac_inter_chan_freq:      Intermediate non-DFS freq used while
  *                                   doing precac.
- * @dfs_autoswitch_des_chan:         Desired channel which has to be used
- *                                   after precac.
  * @dfs_autoswitch_chan:             Desired channel of dfs_channel structure
  *                                   which will be prioritized for preCAC.
  * @dfs_autoswitch_des_mode:         Desired PHY mode which has to be used
@@ -1184,20 +1176,12 @@ struct wlan_dfs {
 	bool           is_radar_during_precac;
 	qdf_spinlock_t dfs_precac_lock;
 	bool           dfs_precac_enable;
-#ifdef CONFIG_CHAN_NUM_API
-	uint8_t        dfs_precac_secondary_freq;
-	uint8_t        dfs_precac_primary_freq;
-#endif
 #ifdef CONFIG_CHAN_FREQ_API
 	uint16_t        dfs_precac_secondary_freq_mhz;
 	uint16_t        dfs_precac_primary_freq_mhz;
 #endif
 	uint8_t        dfs_defer_precac_channel_change;
 #ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
-#ifdef CONFIG_CHAN_NUM_API
-	uint8_t        dfs_precac_inter_chan;
-	uint8_t        dfs_autoswitch_des_chan;
-#endif
 	enum wlan_phymode dfs_autoswitch_des_mode;
 #endif
 #ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
@@ -1255,9 +1239,6 @@ struct wlan_dfs {
 	struct dfs_soc_priv_obj *dfs_soc_obj;
 #if defined(QCA_SUPPORT_AGILE_DFS) || defined(ATH_SUPPORT_ZERO_CAC_DFS)
 	uint8_t dfs_psoc_idx;
-#endif
-#ifdef CONFIG_CHAN_NUM_API
-	uint8_t        dfs_agile_precac_freq;
 #endif
 #ifdef CONFIG_CHAN_FREQ_API
 	uint16_t       dfs_agile_precac_freq_mhz;
@@ -2157,13 +2138,16 @@ void dfs_stacac_stop(struct wlan_dfs *dfs);
  * @continue_current_cac: If AP can start CAC then this variable indicates
  * whether to continue with the current CAC or restart the CAC. This variable
  * is valid only if this function returns true.
+ * @is_vap_restart: Flag to indicate if vap is restarted/started.
+ * True: VAP restart. False: VAP start
  *
  * Return: true if AP requires CAC or can continue current CAC, else false.
  */
 bool dfs_is_cac_required(struct wlan_dfs *dfs,
 			 struct dfs_channel *cur_chan,
 			 struct dfs_channel *prev_chan,
-			 bool *continue_current_cac);
+			 bool *continue_current_cac,
+			 bool is_vap_restart);
 
 /**
  * dfs_cac_stop() - Clear the AP CAC timer.
@@ -2245,7 +2229,8 @@ static inline
 bool dfs_is_cac_required(struct wlan_dfs *dfs,
 			 struct dfs_channel *cur_chan,
 			 struct dfs_channel *prev_chan,
-			 bool *continue_current_cac)
+			 bool *continue_current_cac,
+			 bool is_vap_restart)
 {
 	return false;
 }
@@ -2574,26 +2559,6 @@ static inline bool dfs_is_en302_502_applicable(struct wlan_dfs *dfs)
 {
 		return false;
 }
-#endif
-
-/**
- * dfs_set_current_channel() - Set DFS current channel.
- * @dfs: Pointer to wlan_dfs structure.
- * @dfs_ch_freq: Frequency in Mhz.
- * @dfs_ch_flags: Channel flags.
- * @dfs_ch_flagext: Extended channel flags.
- * @dfs_ch_ieee: IEEE channel number.
- * @dfs_ch_vhtop_ch_freq_seg1: Channel Center frequency1.
- * @dfs_ch_vhtop_ch_freq_seg2: Channel Center frequency2.
- */
-#ifdef CONFIG_CHAN_NUM_API
-void dfs_set_current_channel(struct wlan_dfs *dfs,
-		uint16_t dfs_ch_freq,
-		uint64_t dfs_ch_flags,
-		uint16_t dfs_ch_flagext,
-		uint8_t dfs_ch_ieee,
-		uint8_t dfs_ch_vhtop_ch_freq_seg1,
-		uint8_t dfs_ch_vhtop_ch_freq_seg2);
 #endif
 
 #ifdef CONFIG_CHAN_FREQ_API

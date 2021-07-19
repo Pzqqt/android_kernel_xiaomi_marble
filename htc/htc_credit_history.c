@@ -60,11 +60,18 @@ static inline void htc_add_emulation_delay(void)
 }
 #endif
 
+void htc_credit_history_deinit(void)
+{
+	qdf_minidump_remove(&htc_credit_history_buffer,
+			    sizeof(htc_credit_history_buffer), "htc_credit");
+}
 void htc_credit_history_init(void)
 {
 	qdf_spinlock_create(&g_htc_credit_lock);
 	g_htc_credit_history_idx = 0;
 	g_htc_credit_history_length = 0;
+	qdf_minidump_log(&htc_credit_history_buffer,
+			 sizeof(htc_credit_history_buffer), "htc_credit");
 }
 
 /**

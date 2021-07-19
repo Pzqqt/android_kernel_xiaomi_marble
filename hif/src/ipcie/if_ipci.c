@@ -210,6 +210,8 @@ static int hif_ce_srng_msi_free_irq(struct hif_softc *scn)
 		msi_data = (ce_id % msi_data_count) + msi_irq_start;
 		irq = pld_get_msi_irq(scn->qdf_dev->dev, msi_data);
 
+		hif_ce_irq_remove_affinity_hint(irq);
+
 		hif_debug("%s: (ce_id %d, msi_data %d, irq %d)", __func__,
 			  ce_id, msi_data, irq);
 
@@ -250,6 +252,7 @@ void hif_ipci_nointrs(struct hif_softc *scn)
 	int ret;
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 
+	scn->free_irq_done = true;
 	ce_unregister_irq(hif_state, CE_ALL_BITMAP);
 
 	if (scn->request_irq_done == false)
@@ -652,8 +655,6 @@ int hif_ipci_configure_grp_irq(struct hif_softc *scn,
 int hif_configure_irq(struct hif_softc *scn)
 {
 	int ret = 0;
-
-	hif_info("E");
 
 	if (hif_is_polled_mode_enabled(GET_HIF_OPAQUE_HDL(scn))) {
 		scn->request_irq_done = false;

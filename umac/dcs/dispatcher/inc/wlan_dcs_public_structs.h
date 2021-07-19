@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,20 @@
 
 #ifndef _WLAN_DCS_PUBLIC_STRUCTS_H_
 #define _WLAN_DCS_PUBLIC_STRUCTS_H_
+
+/**
+ * enum wlan_host_dcs_type - types of DCS interference events
+ * @WLAN_HOST_DCS_NONE: invalid type
+ * @WLAN_HOST_DCS_CWIM: continuous wave interference
+ * @WLAN_HOST_DCS_WLANIM: wlan interference stats
+ * @WLAN_HOST_DCS_AWGNIM: additive white Gaussian noise (awgn) interference
+ */
+enum wlan_host_dcs_type {
+	WLAN_HOST_DCS_NONE   = 0,      /* 0x0 */
+	WLAN_HOST_DCS_CWIM   = BIT(0), /* 0x1 */
+	WLAN_HOST_DCS_WLANIM = BIT(1), /* 0x2 */
+	WLAN_HOST_DCS_AWGNIM = BIT(2), /* 0x4 */
+};
 
 /**
  * struct wlan_host_dcs_interference_param - dcs interference parameters
@@ -101,4 +115,34 @@ struct wlan_host_dcs_im_user_stats {
 	uint32_t my_bss_rx_cycle_count;
 };
 
+/**
+ * struct wlan_host_dcs_awgn_info - DCS AWGN info
+ * @channel_width: Channel width, enum phy_ch_width
+ * @center_freq: Center frequency of primary channel
+ * @center_freq0: Center frequency of segment 1
+ * @center_freq1: Center frequency of segment 2
+ * @chan_bw_intf_bitmap: Per-20MHz interference bitmap, each bit
+ *  indicates 20MHz in which interference is seen, e.g.
+ *  bit0 - primary 20MHz, bit1 - secondary 20MHz,
+ *  bit2 - secondary 40MHz Lower, bit3 - secondary 40MHz Upper
+ */
+struct wlan_host_dcs_awgn_info {
+	enum phy_ch_width channel_width;
+	qdf_freq_t center_freq;
+	qdf_freq_t center_freq0;
+	qdf_freq_t center_freq1;
+	uint32_t chan_bw_intf_bitmap;
+};
+
+/**
+ * struct wlan_host_dcs_event - define dcs event
+ * @wlan_stat: wlan interference target statistics
+ * @dcs_param: dcs event param
+ * @awgn_info: awgn info
+ */
+struct wlan_host_dcs_event {
+	struct wlan_host_dcs_im_tgt_stats wlan_stat;
+	struct wlan_host_dcs_interference_param dcs_param;
+	struct wlan_host_dcs_awgn_info awgn_info;
+};
 #endif

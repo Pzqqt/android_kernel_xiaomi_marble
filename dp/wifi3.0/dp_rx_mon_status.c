@@ -497,6 +497,16 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
 	cdp_rx_ppdu->lsig_a = ppdu_info->rx_status.rate;
 	cdp_rx_ppdu->u.ltf_size = ppdu_info->rx_status.ltf_size;
 
+	if (ppdu_info->rx_status.preamble_type == HAL_RX_PKT_TYPE_11AC) {
+		cdp_rx_ppdu->u.stbc = ppdu_info->rx_status.is_stbc;
+	} else if (ppdu_info->rx_status.preamble_type ==
+			HAL_RX_PKT_TYPE_11AX) {
+		cdp_rx_ppdu->u.stbc = (ppdu_info->rx_status.he_data3 >>
+				       QDF_MON_STATUS_STBC_SHIFT) & 0x1;
+		cdp_rx_ppdu->u.dcm = (ppdu_info->rx_status.he_data3 >>
+				      QDF_MON_STATUS_DCM_SHIFT) & 0x1;
+	}
+
 	dp_rx_populate_rx_rssi_chain(ppdu_info, cdp_rx_ppdu);
 	dp_rx_populate_su_evm_details(ppdu_info, cdp_rx_ppdu);
 	cdp_rx_ppdu->rx_antenna = ppdu_info->rx_status.rx_antenna;
@@ -1209,6 +1219,21 @@ dp_rx_mon_populate_cfr_ppdu_info(struct dp_pdev *pdev,
 	for (chain = 0; chain < MAX_CHAIN; chain++)
 		cdp_rx_ppdu->per_chain_rssi[chain] =
 			ppdu_info->rx_status.rssi[chain];
+
+	cdp_rx_ppdu->u.ltf_size = ppdu_info->rx_status.ltf_size;
+	cdp_rx_ppdu->beamformed = ppdu_info->rx_status.beamformed;
+	cdp_rx_ppdu->u.ldpc = ppdu_info->rx_status.ldpc;
+
+	if (ppdu_info->rx_status.preamble_type == HAL_RX_PKT_TYPE_11AC) {
+		cdp_rx_ppdu->u.stbc = ppdu_info->rx_status.is_stbc;
+	} else if (ppdu_info->rx_status.preamble_type ==
+			HAL_RX_PKT_TYPE_11AX) {
+		cdp_rx_ppdu->u.stbc = (ppdu_info->rx_status.he_data3 >>
+				       QDF_MON_STATUS_STBC_SHIFT) & 0x1;
+		cdp_rx_ppdu->u.dcm = (ppdu_info->rx_status.he_data3 >>
+				      QDF_MON_STATUS_DCM_SHIFT) & 0x1;
+	}
+
 	dp_rx_mon_handle_cfr_mu_info(pdev, ppdu_info, cdp_rx_ppdu);
 }
 
@@ -1271,6 +1296,10 @@ dp_rx_mon_populate_cfr_info(struct dp_pdev *pdev,
 		= ppdu_info->cfr_info.agc_gain_info3;
 	cfr_info->rx_start_ts
 		= ppdu_info->cfr_info.rx_start_ts;
+	cfr_info->mcs_rate
+		= ppdu_info->cfr_info.mcs_rate;
+	cfr_info->gi_type
+		= ppdu_info->cfr_info.gi_type;
 }
 
 /**
@@ -2265,7 +2294,7 @@ dp_rx_pdev_mon_status_desc_pool_deinit(struct dp_pdev *pdev, uint32_t mac_id) {
 
 	dp_debug("Mon RX Desc status Pool[%d] deinit", pdev_id);
 
-	dp_rx_desc_pool_deinit(soc, rx_desc_pool);
+	dp_rx_desc_pool_deinit(soc, rx_desc_pool, mac_id);
 }
 
 void

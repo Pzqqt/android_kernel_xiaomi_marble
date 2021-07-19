@@ -237,6 +237,7 @@ wlan_pno_global_init(struct wlan_objmgr_psoc *psoc,
 
 	pno_def = &scan_obj->pno_cfg;
 	qdf_wake_lock_create(&pno_def->pno_wake_lock, "wlan_pno_wl");
+	qdf_runtime_lock_init(&pno_def->pno_runtime_pm_lock);
 	mawc_cfg = &pno_def->mawc_params;
 	pno_def->channel_prediction = cfg_get(psoc, CFG_PNO_CHANNEL_PREDICTION);
 	pno_def->top_k_num_of_channels =
@@ -277,6 +278,7 @@ wlan_pno_global_init(struct wlan_objmgr_psoc *psoc,
 static QDF_STATUS
 wlan_pno_global_deinit(struct wlan_scan_obj *scan_obj)
 {
+	qdf_runtime_lock_deinit(&scan_obj->pno_cfg.pno_runtime_pm_lock);
 	qdf_wake_lock_destroy(&scan_obj->pno_cfg.pno_wake_lock);
 
 	return QDF_STATUS_SUCCESS;

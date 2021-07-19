@@ -29,7 +29,8 @@ void hal_qca6290_attach(struct hal_soc *hal);
 #ifdef QCA_WIFI_QCA8074
 void hal_qca8074_attach(struct hal_soc *hal);
 #endif
-#if defined(QCA_WIFI_QCA8074V2) || defined(QCA_WIFI_QCA6018)
+#if defined(QCA_WIFI_QCA8074V2) || defined(QCA_WIFI_QCA6018) || \
+	defined(QCA_WIFI_QCA9574)
 void hal_qca8074v2_attach(struct hal_soc *hal);
 #endif
 #ifdef QCA_WIFI_QCA6390
@@ -327,9 +328,9 @@ void hal_get_shadow_config(void *hal_soc,
 qdf_export_symbol(hal_get_shadow_config);
 
 
-static void hal_validate_shadow_register(struct hal_soc *hal,
-				  uint32_t *destination,
-				  uint32_t *shadow_address)
+static bool hal_validate_shadow_register(struct hal_soc *hal,
+					 uint32_t *destination,
+					 uint32_t *shadow_address)
 {
 	unsigned int index;
 	uint32_t *shadow_0_offset = SHADOW_REGISTER(0) + hal->dev_base_addr;
@@ -349,13 +350,13 @@ static void hal_validate_shadow_register(struct hal_soc *hal,
 			hal->shadow_config[index].addr);
 		goto error;
 	}
-	return;
+	return true;
 error:
 	qdf_print("baddr %pK, desination %pK, shadow_address %pK s0offset %pK index %x",
 		  hal->dev_base_addr, destination, shadow_address,
 		  shadow_0_offset, index);
 	QDF_BUG(0);
-	return;
+	return false;
 }
 
 static void hal_target_based_configure(struct hal_soc *hal)
@@ -413,6 +414,12 @@ static void hal_target_based_configure(struct hal_soc *hal)
 
 #if defined(QCA_WIFI_QCA6018)
 	case TARGET_TYPE_QCA6018:
+		hal_qca8074v2_attach(hal);
+	break;
+#endif
+
+#if defined(QCA_WIFI_QCA9574)
+	case TARGET_TYPE_QCA9574:
 		hal_qca8074v2_attach(hal);
 	break;
 #endif
@@ -668,6 +675,7 @@ hal_process_reg_write_q_elem(struct hal_soc *hal,
 	}
 
 	q_elem->valid = 0;
+	srng->last_dequeue_time = q_elem->dequeue_time;
 	SRNG_UNLOCK(&srng->lock);
 
 	return write_val;
@@ -697,6 +705,64 @@ static inline void hal_reg_write_fill_sched_delay_hist(struct hal_soc *hal,
 	else
 		hist[REG_WRITE_SCHED_DELAY_GT_5000us]++;
 }
+
+#ifdef SHADOW_WRITE_DELAY
+
+#define SHADOW_WRITE_MIN_DELTA_US	5
+#define SHADOW_WRITE_DELAY_US		50
+
+/*
+ * Never add those srngs which are performance relate.
+ * The delay itself will hit performance heavily.
+ */
+#define IS_SRNG_MATCH(s)	((s)->ring_id == HAL_SRNG_CE_1_DST_STATUS || \
+				 (s)->ring_id == HAL_SRNG_CE_1_DST)
+
+static inline bool hal_reg_write_need_delay(struct hal_reg_write_q_elem *elem)
+{
+	struct hal_srng *srng = elem->srng;
+	struct hal_soc *hal;
+	qdf_time_t now;
+	qdf_iomem_t real_addr;
+
+	if (qdf_unlikely(!srng))
+		return false;
+
+	hal = srng->hal_soc;
+	if (qdf_unlikely(!hal))
+		return false;
+
+	/* Check if it is target srng, and valid shadow reg */
+	if (qdf_likely(!IS_SRNG_MATCH(srng)))
+		return false;
+
+	if (srng->ring_dir == HAL_SRNG_SRC_RING)
+		real_addr = SRNG_SRC_ADDR(srng, HP);
+	else
+		real_addr = SRNG_DST_ADDR(srng, TP);
+	if (!hal_validate_shadow_register(hal, real_addr, elem->addr))
+		return false;
+
+	/* Check the time delta from last write of same srng */
+	now = qdf_get_log_timestamp();
+	if (qdf_log_timestamp_to_usecs(now - srng->last_dequeue_time) >
+		SHADOW_WRITE_MIN_DELTA_US)
+		return false;
+
+	/* Delay dequeue, and record */
+	qdf_udelay(SHADOW_WRITE_DELAY_US);
+
+	srng->wstats.dequeue_delay++;
+	hal->stats.wstats.dequeue_delay++;
+
+	return true;
+}
+#else
+static inline bool hal_reg_write_need_delay(struct hal_reg_write_q_elem *elem)
+{
+	return false;
+}
+#endif
 
 /**
  * hal_reg_write_work() - Worker to process delayed writes
@@ -745,6 +811,10 @@ static void hal_reg_write_work(void *arg)
 
 		hal->stats.wstats.dequeues++;
 		qdf_atomic_dec(&hal->stats.wstats.q_depth);
+
+		if (hal_reg_write_need_delay(q_elem))
+			hal_verbose_debug("Delay reg writer for srng 0x%x, addr 0x%pK",
+					  q_elem->srng->ring_id, q_elem->addr);
 
 		write_val = hal_process_reg_write_q_elem(hal, q_elem);
 		hal_verbose_debug("read_idx %u srng 0x%x, addr 0x%pK dequeue_val %u sched delay %llu us",
@@ -1697,6 +1767,92 @@ static inline void hal_srng_hw_init(struct hal_soc *hal,
 #define CHECK_SHADOW_REGISTERS false
 #endif
 
+#ifdef WLAN_FEATURE_NEAR_FULL_IRQ
+/**
+ * hal_srng_is_near_full_irq_supported() - Check if near full irq is
+ *				supported on this SRNG
+ * @hal_soc: HAL SoC handle
+ * @ring_type: SRNG type
+ * @ring_num: ring number
+ *
+ * Return: true, if near full irq is supported for this SRNG
+ *	   false, if near full irq is not supported for this SRNG
+ */
+bool hal_srng_is_near_full_irq_supported(hal_soc_handle_t hal_soc,
+					 int ring_type, int ring_num)
+{
+	struct hal_soc *hal = (struct hal_soc *)hal_soc;
+	struct hal_hw_srng_config *ring_config =
+		HAL_SRNG_CONFIG(hal, ring_type);
+
+	return ring_config->nf_irq_support;
+}
+
+/**
+ * hal_srng_set_msi2_params() - Set MSI2 params to SRNG data structure from
+ *				ring params
+ * @srng: SRNG handle
+ * @ring_params: ring params for this SRNG
+ *
+ * Return: None
+ */
+static inline void
+hal_srng_set_msi2_params(struct hal_srng *srng,
+			 struct hal_srng_params *ring_params)
+{
+	srng->msi2_addr = ring_params->msi2_addr;
+	srng->msi2_data = ring_params->msi2_data;
+}
+
+/**
+ * hal_srng_get_nf_params() - Get the near full MSI2 params from srng
+ * @srng: SRNG handle
+ * @ring_params: ring params for this SRNG
+ *
+ * Return: None
+ */
+static inline void
+hal_srng_get_nf_params(struct hal_srng *srng,
+		       struct hal_srng_params *ring_params)
+{
+	ring_params->msi2_addr = srng->msi2_addr;
+	ring_params->msi2_data = srng->msi2_data;
+}
+
+/**
+ * hal_srng_set_nf_thresholds() - Set the near full thresholds in SRNG
+ * @srng: SRNG handle where the params are to be set
+ * @ring_params: ring params, from where threshold is to be fetched
+ *
+ * Return: None
+ */
+static inline void
+hal_srng_set_nf_thresholds(struct hal_srng *srng,
+			   struct hal_srng_params *ring_params)
+{
+	srng->u.dst_ring.nf_irq_support = ring_params->nf_irq_support;
+	srng->u.dst_ring.high_thresh = ring_params->high_thresh;
+}
+#else
+static inline void
+hal_srng_set_msi2_params(struct hal_srng *srng,
+			 struct hal_srng_params *ring_params)
+{
+}
+
+static inline void
+hal_srng_get_nf_params(struct hal_srng *srng,
+		       struct hal_srng_params *ring_params)
+{
+}
+
+static inline void
+hal_srng_set_nf_thresholds(struct hal_srng *srng,
+			   struct hal_srng_params *ring_params)
+{
+}
+#endif
+
 /**
  * hal_srng_setup - Initialize HW SRNG ring.
  * @hal_soc: Opaque HAL SOC handle
@@ -1757,6 +1913,7 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 		ring_params->intr_batch_cntr_thres_entries;
 	srng->prefetch_timer = ring_params->prefetch_timer;
 	srng->hal_soc = hal_soc;
+	hal_srng_set_msi2_params(srng, ring_params);
 
 	for (i = 0 ; i < MAX_SRNG_REG_GROUPS; i++) {
 		srng->hwreg_base[i] = dev_base_addr + ring_config->reg_start[i]
@@ -1816,6 +1973,7 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 		 * loop count in descriptors updated by HW (to be processed
 		 * by SW).
 		 */
+		hal_srng_set_nf_thresholds(srng, ring_params);
 		srng->u.dst_ring.loop_cnt = 1;
 		srng->u.dst_ring.tp = 0;
 		srng->u.dst_ring.hp_addr =
@@ -1972,6 +2130,8 @@ extern void hal_get_srng_params(hal_soc_handle_t hal_soc_hdl,
 	ring_params->ring_id = srng->ring_id;
 	for (i = 0 ; i < MAX_SRNG_REG_GROUPS; i++)
 		ring_params->hwreg_base[i] = srng->hwreg_base[i];
+
+	hal_srng_get_nf_params(srng, ring_params);
 }
 qdf_export_symbol(hal_get_srng_params);
 

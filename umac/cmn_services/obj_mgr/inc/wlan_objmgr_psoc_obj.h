@@ -190,8 +190,6 @@
 #define WLAN_SOC_F_DOT11D              0x00020000
 	/* Beacon offload */
 #define WLAN_SOC_F_BCN_OFFLOAD         0x00040000
-	/* QWRAP enable */
-#define WLAN_SOC_F_QWRAP_ENABLE        0x00080000
 	/* LTEU support */
 #define WLAN_SOC_F_LTEU_SUPPORT        0x00100000
 	/* BT coext support */

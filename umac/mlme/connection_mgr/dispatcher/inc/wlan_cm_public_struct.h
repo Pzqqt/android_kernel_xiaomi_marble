@@ -23,7 +23,6 @@
 #ifndef __WLAN_CM_PUBLIC_STRUCT_H__
 #define __WLAN_CM_PUBLIC_STRUCT_H__
 
-#ifdef FEATURE_CM_ENABLE
 #include <wlan_scan_public_structs.h>
 #include "wlan_crypto_global_def.h"
 #include "qdf_status.h"
@@ -34,8 +33,11 @@ typedef uint32_t wlan_cm_id;
 /* Diconnect active timeout */
 #define DISCONNECT_TIMEOUT   STOP_RESPONSE_TIMER + DELETE_RESPONSE_TIMER + 1000
 
-/* Diconnect command wait timeout */
-#define CM_DISCONNECT_CMD_TIMEOUT DISCONNECT_TIMEOUT + 2000
+/*
+ * Disconnect command wait timeout VDEV timeouts + 5 sec buff for current active
+ * command to complete
+ */
+#define CM_DISCONNECT_CMD_TIMEOUT DISCONNECT_TIMEOUT + 5000
 
 /**
  * struct wlan_cm_wep_key_params - store wep key info
@@ -214,6 +216,7 @@ struct wlan_cm_connect_req {
 #ifdef WLAN_FEATURE_FILS_SK
 	struct wlan_fils_con_info fils_info;
 #endif
+	bool is_secondary_link_connect;
 };
 
 /**
@@ -567,7 +570,5 @@ enum wlan_cm_active_request_type {
 	CM_DISCONNECT_ACTIVE,
 	CM_ROAM_ACTIVE,
 };
-
-#endif /* FEATURE_CM_ENABLE */
 
 #endif /* __WLAN_CM_PUBLIC_STRUCT_H__ */

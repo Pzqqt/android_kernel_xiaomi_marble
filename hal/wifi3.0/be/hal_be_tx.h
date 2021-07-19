@@ -20,6 +20,7 @@
 #define _HAL_BE_TX_H_
 
 #include "hal_be_hw_headers.h"
+#include "hal_tx.h"
 
 enum hal_be_tx_ret_buf_manager {
 	HAL_BE_WBM_SW0_BM_ID = 5,
@@ -277,6 +278,50 @@ static inline qdf_dma_addr_t hal_tx_comp_get_paddr(void *hal_desc)
 		BUFFER_ADDR_INFO_BUFFER_ADDR_39_32_LSB;
 
 	return (qdf_dma_addr_t)(paddr_lo | (((uint64_t)paddr_hi) << 32));
+}
+
+#ifdef DP_HW_COOKIE_CONVERT_EXCEPTION
+/* HW set dowrd-2 bit30 to 1 if HW CC is done */
+#define HAL_WBM2SW_COMPLETION_RING_TX_CC_DONE_OFFSET 0x8
+#define HAL_WBM2SW_COMPLETION_RING_TX_CC_DONE_MASK 0x40000000
+#define HAL_WBM2SW_COMPLETION_RING_TX_CC_DONE_LSB 0x1E
+/**
+ * hal_tx_comp_get_cookie_convert_done() - Get cookie conversion done flag
+ * @hal_desc: completion ring descriptor pointer
+ *
+ * This function will get the bit value that indicate HW cookie
+ * conversion done or not
+ *
+ * Return: 1 - HW cookie conversion done, 0 - not
+ */
+static inline uint8_t hal_tx_comp_get_cookie_convert_done(void *hal_desc)
+{
+	return HAL_TX_DESC_GET(hal_desc, HAL_WBM2SW_COMPLETION_RING_TX,
+			       CC_DONE);
+}
+#endif
+
+/**
+ * hal_tx_comp_get_desc_va() - Get Desc virtual address within completion Desc
+ * @hal_desc: completion ring descriptor pointer
+ *
+ * This function will get the TX Desc virtual address
+ *
+ * Return: TX desc virtual address
+ */
+static inline uintptr_t hal_tx_comp_get_desc_va(void *hal_desc)
+{
+	uint64_t va_from_desc;
+
+	va_from_desc = HAL_TX_DESC_GET(hal_desc,
+				       WBM2SW_COMPLETION_RING_TX,
+				       BUFFER_VIRT_ADDR_31_0) |
+			(((uint64_t)HAL_TX_DESC_GET(
+					hal_desc,
+					WBM2SW_COMPLETION_RING_TX,
+					BUFFER_VIRT_ADDR_63_32)) << 32);
+
+	return (uintptr_t)va_from_desc;
 }
 
 /*---------------------------------------------------------------------------

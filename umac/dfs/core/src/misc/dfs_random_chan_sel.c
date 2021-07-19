@@ -716,67 +716,6 @@ struct dfs_matrix_tx_leak_info ht20_chan[] = {
 };
 
 /*
- * dfs_find_target_channel_in_channel_matrix() - finds the leakage matrix
- * @ch_width: target channel width
- * @NOL_channel: the NOL channel whose leakage matrix is required
- * @pTarget_chnl_mtrx: pointer to target channel matrix returned.
- *
- * This function gives the leakage matrix for given NOL channel and ch_width
- *
- * Return: TRUE or FALSE
- */
-#ifdef CONFIG_CHAN_NUM_API
-static bool
-dfs_find_target_channel_in_channel_matrix(enum phy_ch_width ch_width,
-				uint8_t NOL_channel,
-				struct dfs_tx_leak_info **pTarget_chnl_mtrx)
-{
-	struct dfs_tx_leak_info *target_chan_matrix = NULL;
-	struct dfs_matrix_tx_leak_info *pchan_matrix = NULL;
-	uint32_t nchan_matrix;
-	int i = 0;
-
-	switch (ch_width) {
-	case CH_WIDTH_20MHZ:
-		/* HT20 */
-		pchan_matrix = ht20_chan;
-		nchan_matrix = QDF_ARRAY_SIZE(ht20_chan);
-		break;
-	case CH_WIDTH_40MHZ:
-		/* HT40 */
-		pchan_matrix = ht40_chan;
-		nchan_matrix = QDF_ARRAY_SIZE(ht40_chan);
-		break;
-	case CH_WIDTH_80MHZ:
-		/* HT80 */
-		pchan_matrix = ht80_chan;
-		nchan_matrix = QDF_ARRAY_SIZE(ht80_chan);
-		break;
-	default:
-		/* handle exception and fall back to HT20 table */
-		pchan_matrix = ht20_chan;
-		nchan_matrix = QDF_ARRAY_SIZE(ht20_chan);
-		break;
-	}
-
-	for (i = 0; i < nchan_matrix; i++) {
-		/* find the SAP channel to map the leakage matrix */
-		if (NOL_channel == pchan_matrix[i].channel) {
-			target_chan_matrix = pchan_matrix[i].chan_matrix;
-			break;
-		}
-	}
-
-	if (!target_chan_matrix) {
-		return false;
-	} else {
-		*pTarget_chnl_mtrx = target_chan_matrix;
-		return true;
-	}
-}
-#endif
-
-/*
  * dfs_find_target_channel_in_channel_matrix_for_freq() - finds the leakage
  * matrix.
  * @chan_width: target channel width
@@ -836,76 +775,6 @@ dfs_find_target_channel_in_channel_matrix_for_freq(enum phy_ch_width chan_width,
 		*pTarget_chnl_mtrx = target_chan_matrix;
 		return true;
 	}
-}
-#endif
-
-#ifdef CONFIG_CHAN_NUM_API
-QDF_STATUS
-dfs_mark_leaking_ch(struct wlan_dfs *dfs,
-		enum phy_ch_width ch_width,
-		uint8_t temp_ch_lst_sz,
-		uint8_t *temp_ch_lst)
-{
-	struct dfs_tx_leak_info *target_chan_matrix = NULL;
-	uint32_t         num_channel = (CHAN_ENUM_5720 - CHAN_ENUM_5180) + 1;
-	uint32_t         j = 0;
-	uint32_t         k = 0;
-	uint8_t          dfs_nol_channel;
-	struct dfs_nolelem *nol;
-
-	nol = dfs->dfs_nol;
-	while (nol) {
-		dfs_nol_channel = wlan_reg_freq_to_chan(dfs->dfs_pdev_obj,
-							nol->nol_freq);
-		if (false == dfs_find_target_channel_in_channel_matrix(
-					ch_width, dfs_nol_channel,
-					&target_chan_matrix)) {
-			/*
-			 * should never happen, we should always find a table
-			 * here, if we don't, need a fix here!
-			 */
-			dfs_err(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
-				"Couldn't find target channel matrix!");
-			QDF_ASSERT(0);
-			return QDF_STATUS_E_FAILURE;
-		}
-		/*
-		 * following is based on assumption that both temp_ch_lst
-		 * and target channel matrix are in increasing order of
-		 * ch_id
-		 */
-		for (j = 0, k = 0; j < temp_ch_lst_sz && k < num_channel;) {
-			if (temp_ch_lst[j] == 0) {
-				j++;
-				continue;
-			}
-			if (target_chan_matrix[k].leak_chan != temp_ch_lst[j]) {
-				k++;
-				continue;
-			}
-			/*
-			 * check leakage from candidate channel
-			 * to NOL channel
-			 */
-			if (target_chan_matrix[k].leak_lvl <=
-				dfs->tx_leakage_threshold) {
-				/*
-				 * candidate channel will have
-				 * bad leakage in NOL channel,
-				 * remove from temp list
-				 */
-				dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
-					"dfs: channel: %d will have bad leakage due to channel: %d\n",
-					dfs_nol_channel, temp_ch_lst[j]);
-				temp_ch_lst[j] = 0;
-			}
-			j++;
-			k++;
-		}
-		nol = nol->nol_next;
-	} /* end of loop that selects each NOL */
-
-	return QDF_STATUS_SUCCESS;
 }
 #endif
 
@@ -985,16 +854,6 @@ dfs_mark_leaking_chan_for_freq(struct wlan_dfs *dfs,
 }
 #endif
 #else
-#ifdef CONFIG_CHAN_NUM_API
-QDF_STATUS
-dfs_mark_leaking_ch(struct wlan_dfs *dfs,
-		enum phy_ch_width ch_width,
-		uint8_t temp_ch_lst_sz,
-		uint8_t *temp_ch_lst)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 #ifdef CONFIG_CHAN_FREQ_API
 QDF_STATUS
 dfs_mark_leaking_chan_for_freq(struct wlan_dfs *dfs,
@@ -1159,7 +1018,7 @@ static uint16_t dfs_get_rand_from_lst_for_freq(struct wlan_dfs *dfs,
 #endif
 
 /**
- * dfs_random_channel_sel_set_bitmap()- Set channel bit in bitmap based
+ * dfs_random_channel_sel_set_bitmap_for_freq()- Set channel bit in bitmap based
  * on given channel number
  * @dfs: Pointer to DFS structure.
  * @bitmap: bitmap

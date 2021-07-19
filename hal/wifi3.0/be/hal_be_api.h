@@ -22,6 +22,24 @@
 #include "hal_hw_headers.h"
 #include "hal_rx.h"
 
+struct hal_hw_cc_config {
+	uint32_t lut_base_addr_31_0;
+	uint32_t cc_global_en:1,
+		 page_4k_align:1,
+		 cookie_offset_msb:5,
+		 cookie_page_msb:5,
+		 lut_base_addr_39_32:8,
+		 wbm2sw6_cc_en:1,
+		 wbm2sw5_cc_en:1,
+		 wbm2sw4_cc_en:1,
+		 wbm2sw3_cc_en:1,
+		 wbm2sw2_cc_en:1,
+		 wbm2sw1_cc_en:1,
+		 wbm2sw0_cc_en:1,
+		 wbm2fw_cc_en:1,
+		 reserved:4;
+};
+
 #define HAL_RX_MSDU_EXT_DESC_INFO_GET(msdu_details_ptr) \
 	((struct rx_msdu_ext_desc_info *) \
 	_OFFSET_TO_BYTE_PTR(msdu_details_ptr, \
@@ -103,5 +121,16 @@ void hal_reo_qdesc_setup_be(hal_soc_handle_t hal_soc_hdl,
 			    uint32_t start_seq, void *hw_qdesc_vaddr,
 			    qdf_dma_addr_t hw_qdesc_paddr,
 			    int pn_type);
+
+/**
+ * hal_cookie_conversion_reg_cfg_be() - set cookie conversion relevant register
+ *					for REO/WBM
+ * @soc: HAL soc handle
+ * @cc_cfg: structure pointer for HW cookie conversion configuration
+ *
+ * Return: None
+ */
+void hal_cookie_conversion_reg_cfg_be(hal_soc_handle_t hal_soc_hdl,
+				      struct hal_hw_cc_config *cc_cfg);
 
 #endif /* _HAL_BE_API_H_ */

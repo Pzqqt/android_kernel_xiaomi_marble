@@ -1642,6 +1642,9 @@ QDF_STATUS (*extract_dcs_im_tgt_stats)(
 		wmi_unified_t wmi_handle,
 		void *evt_buf,
 		struct wlan_host_dcs_im_tgt_stats *wlan_stat);
+
+QDF_STATUS (*extract_dcs_awgn_info)(wmi_unified_t wmi_handle, void *evt_buf,
+				    struct wlan_host_dcs_awgn_info *awgn_info);
 #else
 QDF_STATUS (*extract_dcs_interference_type)(wmi_unified_t wmi_handle,
 	void *evt_buf, struct wmi_host_dcs_interference_param *param);
@@ -2455,6 +2458,13 @@ QDF_STATUS (*extract_vdev_mgmt_offload_event)(
 				struct mgmt_offload_event_params *params);
 #endif /* WLAN_FEATURE_PKT_CAPTURE */
 
+#ifdef WLAN_FEATURE_PKT_CAPTURE_V2
+QDF_STATUS (*extract_smart_monitor_event)(
+				void *handle,
+				void *event_buf,
+				struct smu_event_params *params);
+#endif /* WLAN_FEATURE_PKT_CAPTURE_V2 */
+
 QDF_STATUS (*multisoc_tbtt_sync_cmd)(wmi_unified_t wmi_handle,
 				     struct rnr_tbtt_multisoc_sync_param *param);
 
@@ -2528,6 +2538,7 @@ QDF_STATUS (*config_peer_latency_info_cmd)(
 QDF_STATUS (*send_set_tpc_power_cmd)(wmi_unified_t wmi_handle,
 				     uint8_t vdev_id,
 				     struct reg_tpc_power_info *param);
+
 #ifdef WLAN_FEATURE_BIG_DATA_STATS
 QDF_STATUS (*send_big_data_stats_request_cmd)(
 				wmi_unified_t wmi_handle,
@@ -2536,6 +2547,11 @@ QDF_STATUS (*send_big_data_stats_request_cmd)(
 QDF_STATUS (*extract_dpd_status_ev_param)(wmi_unified_t wmi_handle,
 					  void *evt_buf,
 					  struct wmi_host_pdev_get_dpd_status_event *param);
+
+QDF_STATUS
+(*extract_install_key_comp_event)(wmi_unified_t wmi_handle,
+				  void *evt_buf, uint32_t len,
+				  struct wmi_install_key_comp_event *param);
 };
 
 /* Forward declartion for psoc*/

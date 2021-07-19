@@ -121,11 +121,6 @@
 #endif
 
 #define DFS_IS_CHANNEL_WEATHER_RADAR(_f) (((_f) >= 5600) && ((_f) <= 5650))
-#ifdef CONFIG_CHAN_NUM_API
-#define DFS_IS_CHAN_JAPAN_INDOOR(_ch)    (((_ch) >= 36)  && ((_ch) <= 64))
-#define DFS_IS_CHAN_JAPAN_W53(_ch)       (((_ch) >= 52)  && ((_ch) <= 64))
-#define DFS_IS_CHAN_JAPAN_OUTDOOR(_ch)   (((_ch) >= 100) && ((_ch) <= 144))
-#endif
 
 #ifdef CONFIG_CHAN_FREQ_API
 #define DFS_IS_CHAN_JAPAN_INDOOR_FREQ(_ch)(((_ch) >= 5180)  && ((_ch) <= 5320))
@@ -179,26 +174,6 @@ struct dfs_matrix_tx_leak_info {
 	struct dfs_tx_leak_info chan_matrix[CHAN_ENUM_5720 -
 					    CHAN_ENUM_5180 + 1];
 };
-#endif
-
-/**
- * dfs_mark_leaking_ch() - to mark channel leaking in to nol
- * @dfs: dfs handler.
- * @ch_width: channel width
- * @temp_ch_lst_sz: the target channel list
- * @temp_ch_lst: the target channel list
- *
- * This function removes the channels from temp channel list that
- * (if selected as target channel) will cause leakage in one of
- * the NOL channels
- *
- * Return: QDF_STATUS
- */
-#ifdef CONFIG_CHAN_NUM_API
-QDF_STATUS dfs_mark_leaking_ch(struct wlan_dfs *dfs,
-		enum phy_ch_width ch_width,
-		uint8_t temp_ch_lst_sz,
-		uint8_t *temp_ch_lst);
 #endif
 
 /**

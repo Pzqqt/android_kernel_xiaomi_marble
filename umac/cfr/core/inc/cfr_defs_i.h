@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -142,4 +142,21 @@ cfr_streamfs_flush(struct pdev_cfr *pa);
  */
 QDF_STATUS cfr_stop_indication(struct wlan_objmgr_vdev *vdev);
 
+#ifdef WLAN_CFR_PM
+/**
+ * cfr_prevent_suspend() - Acquire wake lock and prevent suspend
+ * @pcfr - pointer to pdev_cfr object
+ *
+ * Return: QDF status
+ */
+QDF_STATUS cfr_prevent_suspend(struct pdev_cfr *pcfr);
+
+/**
+ * cfr_allow_suspend() - Release wake lock and allow suspend
+ * @pcfr - pointer to pdev_cfr object
+ *
+ * Return: QDF status
+ */
+QDF_STATUS cfr_allow_suspend(struct pdev_cfr *pcfr);
+#endif
 #endif

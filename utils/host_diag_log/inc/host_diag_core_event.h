@@ -942,6 +942,7 @@ enum wifi_connectivity_events {
  * @WIFI_POWER_EVENT_WAKELOCK_DRIVER_IDLE_RESTART: Wakelock for Idle Restart
  * @WIFI_POWER_EVENT_WAKELOCK_DRIVER_IDLE_SHUTDOWN: Wakelock for Idle Shutdown
  * @WIFI_POWER_EVENT_WAKELOCK_TDLS: Wakelock for TDLS
+ * @WIFI_POWER_EVENT_WAKELOCK_CFR: Wakelock for CFR
  *
  * Indicates the reason for which the wakelock was taken/released
  */
@@ -971,6 +972,7 @@ enum wake_lock_reason {
 	WIFI_POWER_EVENT_WAKELOCK_DRIVER_IDLE_RESTART,
 	WIFI_POWER_EVENT_WAKELOCK_DRIVER_IDLE_SHUTDOWN,
 	WIFI_POWER_EVENT_WAKELOCK_TDLS,
+	WIFI_POWER_EVENT_WAKELOCK_CFR,
 };
 
 /* The length of interface name should >= IFNAMSIZ */

@@ -33,6 +33,17 @@
 #define BERYLLIUM_DP		0xaffe
 /* Use device IDs for attach in future */
 
+/* enum cdp_arch_type - enum for DP arch type
+ * CDP_ARCH_TYPE_LI - for lithium
+ * CDP_ARCH_TYPE_BE - for beryllium
+ * CDP_ARCH_TYPE_NONE - not supported
+ */
+enum cdp_arch_type {
+	CDP_ARCH_TYPE_NONE = -1,
+	CDP_ARCH_TYPE_LI,
+	CDP_ARCH_TYPE_BE,
+};
+
 #if defined(DP_TXRX_SOC_ATTACH)
 static inline ol_txrx_soc_handle
 ol_txrx_soc_attach(void *scn_handle, struct ol_if_ops *dp_ol_if_ops)
@@ -69,7 +80,7 @@ ol_txrx_soc_attach(void *scn_handle, struct ol_if_ops *dp_ol_if_ops);
  * Return: DP SOC handle on success, NULL on failure
  */
 #if defined(QCA_WIFI_QCA8074) || defined(QCA_WIFI_QCA6018) || \
-	defined(QCA_WIFI_QCA5018)
+	defined(QCA_WIFI_QCA5018) || defined(QCA_WIFI_QCA9574)
 struct cdp_soc_t *
 dp_soc_attach_wifi3(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 		    struct hif_opaque_softc *hif_handle,
@@ -109,6 +120,7 @@ static inline int cdp_get_arch_type_from_devid(uint16_t devid)
 	case LITHIUM_DP: /*FIXME Add lithium devide IDs */
 	case QCA8074_DEVICE_ID: /* Hawekeye */
 	case QCA8074V2_DEVICE_ID: /* Hawekeye V2*/
+	case QCA9574_DEVICE_ID:
 	case QCA5018_DEVICE_ID:
 	case QCA6290_DEVICE_ID:
 	case QCN9000_DEVICE_ID:
@@ -123,12 +135,13 @@ static inline int cdp_get_arch_type_from_devid(uint16_t devid)
 	case RUMIM2M_DEVICE_ID_NODE3: /*lithium emulation */
 	case RUMIM2M_DEVICE_ID_NODE4: /*lithium emulation */
 	case RUMIM2M_DEVICE_ID_NODE5: /*lithium emulation */
-		return LITHIUM_DP;
+		return CDP_ARCH_TYPE_LI;
 	case BERYLLIUM_DP:
 	case WCN7850_DEVICE_ID:
-		return BERYLLIUM_DP;
+	case QCN9224_DEVICE_ID:
+		return CDP_ARCH_TYPE_BE;
 	default:
-		return -1;
+		return CDP_ARCH_TYPE_NONE;
 	}
 }
 
@@ -160,6 +173,7 @@ ol_txrx_soc_handle cdp_soc_attach(u_int16_t devid,
 	case RUMIM2M_DEVICE_ID_NODE4: /*lithium emulation */
 	case RUMIM2M_DEVICE_ID_NODE5: /*lithium emulation */
 	case WCN7850_DEVICE_ID:
+	case QCN9224_DEVICE_ID:
 		return dp_soc_attach_wifi3(psoc, hif_handle, htc_handle,
 			qdf_dev, dp_ol_if_ops, devid);
 	break;

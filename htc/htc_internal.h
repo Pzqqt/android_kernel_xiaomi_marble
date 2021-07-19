@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -399,6 +399,9 @@ htc_send_complete_check(HTC_ENDPOINT *pEndpoint, int force) {
 #ifndef DEBUG_BUNDLE
 #define DEBUG_BUNDLE 0
 #endif
+
+/* HTC Control message receive timeout msec */
+#define HTC_CONTROL_RX_TIMEOUT     6000
 
 #if defined(HIF_SDIO) || defined(HIF_USB)
 #ifndef ENABLE_BUNDLE_TX

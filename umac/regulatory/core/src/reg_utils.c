@@ -323,18 +323,36 @@ QDF_STATUS reg_get_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef CONFIG_CHAN_NUM_API
-bool reg_is_passive_or_disable_ch(struct wlan_objmgr_pdev *pdev,
-				  uint8_t chan)
+#ifdef CONFIG_REG_CLIENT
+QDF_STATUS
+reg_get_6g_power_type_for_ctry(uint8_t *ap_ctry, uint8_t *sta_ctry,
+			       enum reg_6g_ap_type *pwr_type_6g,
+			       bool *ctry_code_match)
 {
-	enum channel_state ch_state;
+	*pwr_type_6g = REG_INDOOR_AP;
 
-	ch_state = reg_get_channel_state(pdev, chan);
+	if (qdf_mem_cmp(ap_ctry, sta_ctry, REG_ALPHA2_LEN)) {
+		reg_debug("Country IE:%c%c, STA country:%c%c", ap_ctry[0],
+			  ap_ctry[1], sta_ctry[0], sta_ctry[1]);
+		*ctry_code_match = false;
 
-	return (ch_state == CHANNEL_STATE_DFS) ||
-		(ch_state == CHANNEL_STATE_DISABLE);
+		if (wlan_reg_is_us(sta_ctry)) {
+			reg_err("US VLP not in place yet, connection not allowed");
+			return QDF_STATUS_E_NOSUPPORT;
+		}
+
+		if (wlan_reg_is_etsi(sta_ctry)) {
+			reg_debug("STA ctry:%c%c, doesn't match with AP ctry, switch to VLP",
+				  sta_ctry[0], sta_ctry[1]);
+			*pwr_type_6g = REG_VERY_LOW_POWER_AP;
+		}
+	} else {
+		*ctry_code_match = true;
+	}
+
+	return QDF_STATUS_SUCCESS;
 }
-#endif /* CONFIG_CHAN_NUM_API */
+#endif
 
 #ifdef CONFIG_CHAN_FREQ_API
 bool reg_is_passive_or_disable_for_freq(struct wlan_objmgr_pdev *pdev,
@@ -391,32 +409,6 @@ bool reg_is_etsi13_srd_chan_for_freq(struct wlan_objmgr_pdev *pdev,
 	return reg_is_etsi13_regdmn(pdev);
 }
 #endif /* CONFIG_CHAN_FREQ_API */
-
-#ifdef CONFIG_CHAN_NUM_API
-bool reg_is_etsi13_srd_chan(struct wlan_objmgr_pdev *pdev, uint8_t chan)
-{
-	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
-	qdf_freq_t freq = 0;
-
-	pdev_priv_obj = reg_get_pdev_obj(pdev);
-
-	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
-		reg_err("reg pdev priv obj is NULL");
-		return false;
-	}
-
-	if (!REG_IS_5GHZ_CH(chan))
-		return false;
-
-	freq = reg_legacy_chan_to_freq(pdev, chan);
-
-	if (!(freq >= REG_ETSI13_SRD_START_FREQ &&
-	      freq <= REG_ETSI13_SRD_END_FREQ))
-		return false;
-
-	return reg_is_etsi13_regdmn(pdev);
-}
-#endif /* CONFIG_CHAN_NUM_API */
 
 bool reg_is_etsi13_srd_chan_allowed_master_mode(struct wlan_objmgr_pdev *pdev)
 {

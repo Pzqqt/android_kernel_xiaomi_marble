@@ -1659,6 +1659,7 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s %d : HAL Monitor Destination Ring access Failed -- %pK",
 			__func__, __LINE__, mon_dst_srng);
+		qdf_spin_unlock_bh(&pdev->mon_lock);
 		return;
 	}
 
@@ -1894,7 +1895,7 @@ dp_rx_pdev_mon_buf_desc_pool_deinit(struct dp_pdev *pdev, uint32_t mac_id)
 
 	dp_debug("Mon RX Desc buf Pool[%d] deinit", pdev_id);
 
-	dp_rx_desc_pool_deinit(soc, rx_desc_pool);
+	dp_rx_desc_pool_deinit(soc, rx_desc_pool, mac_id);
 
 	/* Detach full monitor mode resources */
 	dp_full_mon_detach(pdev);

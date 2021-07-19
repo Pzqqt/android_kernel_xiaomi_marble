@@ -23,7 +23,6 @@
 #ifndef __WLAN_CM_SM_H__
 #define __WLAN_CM_SM_H__
 
-#ifdef FEATURE_CM_ENABLE
 #include <wlan_sm_engine.h>
 
 /**
@@ -339,6 +338,4 @@ QDF_STATUS cm_sm_deliver_event_sync(struct cnx_mgr *cm_ctx,
 QDF_STATUS  cm_sm_deliver_event(struct wlan_objmgr_vdev *vdev,
 				enum wlan_cm_sm_evt event,
 				uint16_t data_len, void *data);
-
-#endif /* FEATURE_CM_ENABLE */
 #endif /* __WLAN_CM_SM_H__ */

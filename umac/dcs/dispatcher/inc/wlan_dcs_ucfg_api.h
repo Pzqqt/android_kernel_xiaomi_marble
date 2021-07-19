@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -26,16 +26,6 @@
 #include <wlan_dcs_public_structs.h>
 
 /**
- * @brief List of DCS capabilities that can be set or unset
- *      dynamically
- * @see UMAC auto channel selection document for details on each feature
- *
- */
-#define CAP_DCS_CWIM   0x1
-#define CAP_DCS_WLANIM 0x2
-#define CAP_DCS_MASK   (CAP_DCS_CWIM | CAP_DCS_WLANIM)
-
-/**
  * typedef dcs_callback() - DCS callback
  * @psoc: Pointer to psoc
  * @mac_id: mac id
@@ -47,6 +37,16 @@ typedef void (*dcs_callback)(
 		uint8_t mac_id,
 		uint8_t interference_type,
 		void *arg);
+
+/**
+ * typedef dcs_switch_chan_cb() - DCS callback for switching channel
+ * @vdev: Pointer to vdev
+ * @tgt_freq: target channel frequency
+ * @tgt_width: target channel width
+ */
+typedef QDF_STATUS (*dcs_switch_chan_cb)(struct wlan_objmgr_vdev *vdev,
+					 qdf_freq_t tgt_freq,
+					 enum phy_ch_width tgt_width);
 
 #ifdef DCS_INTERFERENCE_DETECTION
 /**
@@ -80,6 +80,16 @@ void ucfg_dcs_register_user_cb(struct wlan_objmgr_psoc *psoc,
 				      int status));
 
 /**
+ * ucfg_dcs_register_awgn_cb() - API to register dcs awgn callback
+ * @psoc: pointer to psoc object
+ * @cb: dcs switch channel callback to be registered
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_dcs_register_awgn_cb(struct wlan_objmgr_psoc *psoc,
+				     dcs_switch_chan_cb cb);
+
+/**
  * ucfg_wlan_dcs_cmd(): API to send dcs command
  * @psoc: pointer to psoc object
  * @mac_id: mac id
@@ -98,7 +108,7 @@ ucfg_wlan_dcs_cmd(struct wlan_objmgr_psoc *psoc,
  * ucfg_config_dcs_enable() - API to config dcs enable
  * @psoc: pointer to psoc object
  * @mac_id: mac id
- * @interference_type: CAP_DCS_CWIM, CAP_DCS_WLANIM, CAP_DCS_MASK
+ * @interference_type: type mask(WLAN_HOST_DCS_CWIM / WLAN_HOST_DCS_WLANIM)
  *
  * This function gets called to config dcs enable
  *
@@ -112,7 +122,7 @@ void ucfg_config_dcs_enable(struct wlan_objmgr_psoc *psoc,
  * ucfg_config_dcs_disable() - API to config dcs disable
  * @psoc: pointer to psoc object
  * @mac_id: mac id
- * @interference_type: CAP_DCS_CWIM, CAP_DCS_WLANIM, CAP_DCS_MASK
+ * @interference_type: type mask(WLAN_HOST_DCS_CWIM / WLAN_HOST_DCS_WLANIM)
  *
  * This function gets called to config dcs disable
  *

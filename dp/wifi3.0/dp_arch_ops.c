@@ -42,12 +42,12 @@ qdf_size_t dp_get_soc_context_size(uint16_t device_id)
 {
 	switch (cdp_get_arch_type_from_devid(device_id)) {
 #ifdef CONFIG_LITHIUM
-	case LITHIUM_DP:
+	case CDP_ARCH_TYPE_LI:
 		return dp_get_soc_context_size_li();
 #endif
 
 #ifdef CONFIG_BERYLLIUM
-	case BERYLLIUM_DP:
+	case CDP_ARCH_TYPE_BE:
 		return dp_get_soc_context_size_be();
 	break;
 #endif
@@ -64,13 +64,13 @@ void dp_configure_arch_ops(struct dp_soc *soc)
 
 	switch (cdp_get_arch_type_from_devid(soc->device_id)) {
 #ifdef CONFIG_LITHIUM
-	case LITHIUM_DP:
+	case CDP_ARCH_TYPE_LI:
 		dp_initialize_arch_ops_li(&soc->arch_ops);
 	break;
 #endif
 
 #ifdef CONFIG_BERYLLIUM
-	case BERYLLIUM_DP:
+	case CDP_ARCH_TYPE_BE:
 		dp_initialize_arch_ops_be(&soc->arch_ops);
 	break;
 #endif

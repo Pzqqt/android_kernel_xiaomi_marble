@@ -23,8 +23,6 @@
 #ifndef __WLAN_CM_UCFG_API_H
 #define __WLAN_CM_UCFG_API_H
 
-#ifdef FEATURE_CM_ENABLE
-
 #include <wlan_cm_api.h>
 
 /**
@@ -189,7 +187,4 @@ const char *ucfg_cm_reason_code_to_str(enum wlan_reason_code reason)
 {
 	return wlan_cm_reason_code_to_str(reason);
 }
-
-#endif
 #endif /* __WLAN_CM_UCFG_API_H */
-

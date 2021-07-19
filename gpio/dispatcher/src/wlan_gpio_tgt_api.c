@@ -102,6 +102,7 @@ static bool tgt_gpio_disabled(struct wlan_objmgr_psoc *psoc)
 	if ((target_type == TARGET_TYPE_QCA8074) ||
 	    (target_type == TARGET_TYPE_QCN6122) ||
 	    (target_type == TARGET_TYPE_QCA8074V2) ||
+	    (target_type == TARGET_TYPE_QCA9574) ||
 	    (target_type == TARGET_TYPE_QCA5018) ||
 	    (target_type == TARGET_TYPE_QCA6018)) {
 		return true;

@@ -186,10 +186,10 @@ void hif_pci_ce_irq_set_affinity_hint(
 	struct hif_softc *scn);
 
 /**
- * hif_pci_ce_irq_remove_affinity_hint() - remove affinity for the irq
+ * hif_ce_irq_remove_affinity_hint() - remove affinity for the irq
  * @irq: irq number to remove affinity from
  */
-static inline void hif_pci_ce_irq_remove_affinity_hint(int irq)
+static inline void hif_ce_irq_remove_affinity_hint(int irq)
 {
 	hif_irq_affinity_remove(irq);
 }
@@ -204,7 +204,7 @@ static inline void hif_pci_ce_irq_set_affinity_hint(
 {
 }
 
-static inline void hif_pci_ce_irq_remove_affinity_hint(int irq)
+static inline void hif_ce_irq_remove_affinity_hint(int irq)
 {
 }
 #endif /* ifdef HIF_CPU_PERF_AFFINE_MASK */

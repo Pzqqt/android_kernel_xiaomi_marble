@@ -47,7 +47,7 @@ ATH_DEBUG_INSTANTIATE_MODULE_VAR(htc,
 #endif
 
 #if (defined(WMI_MULTI_MAC_SVC) || defined(QCA_WIFI_QCA8074) || \
-	defined(QCA_WIFI_QCA6018))
+	defined(QCA_WIFI_QCA6018) || defined(QCA_WIFI_QCA9574))
 static const uint32_t svc_id[] = {WMI_CONTROL_SVC, WMI_CONTROL_SVC_WMAC1,
 						WMI_CONTROL_SVC_WMAC2};
 #else
@@ -322,6 +322,70 @@ void htc_update_rx_bundle_stats(void *ctx, uint8_t no_of_pkt_in_bundle)
 }
 #endif
 
+#ifdef WLAN_DEBUG_LINK_VOTE
+static qdf_atomic_t htc_link_vote_ids[HTC_LINK_VOTE_INVALID_MAX_USER_ID];
+
+static void htc_init_link_vote_ids(void)
+{
+	uint32_t i;
+
+	for (i = HTC_LINK_VOTE_INVALID_MIN_USER_ID;
+	     i < HTC_LINK_VOTE_INVALID_MAX_USER_ID; i++)
+		qdf_atomic_init(&htc_link_vote_ids[i]);
+}
+
+void htc_log_link_user_votes(void)
+{
+	uint32_t i;
+	uint32_t link_vote;
+
+	for (i = HTC_LINK_VOTE_INVALID_MIN_USER_ID + 1;
+	     i < HTC_LINK_VOTE_INVALID_MAX_USER_ID; i++) {
+		link_vote = qdf_atomic_read(&htc_link_vote_ids[i]);
+		if (link_vote)
+			HTC_NOFL_INFO("Link vote %d user id: %d",
+				      link_vote, i);
+	}
+}
+
+void htc_vote_link_down(HTC_HANDLE htc_handle, enum htc_link_vote_user_id id)
+{
+	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(htc_handle);
+
+	if (!target->hif_dev)
+		return;
+	if (id >= HTC_LINK_VOTE_INVALID_MAX_USER_ID ||
+	    id <= HTC_LINK_VOTE_INVALID_MIN_USER_ID) {
+		HTC_ERROR("invalid id: %d", id);
+		return;
+	}
+
+	hif_vote_link_down(target->hif_dev);
+	qdf_atomic_dec(&htc_link_vote_ids[id]);
+}
+
+void htc_vote_link_up(HTC_HANDLE htc_handle, enum htc_link_vote_user_id id)
+{
+	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(htc_handle);
+
+	if (!target->hif_dev)
+		return;
+	if (id >= HTC_LINK_VOTE_INVALID_MAX_USER_ID ||
+	    id <= HTC_LINK_VOTE_INVALID_MIN_USER_ID) {
+		HTC_ERROR("invalid link vote user id: %d", id);
+		return;
+	}
+
+	hif_vote_link_up(target->hif_dev);
+	qdf_atomic_inc(&htc_link_vote_ids[id]);
+}
+#else
+static inline
+void htc_init_link_vote_ids(void)
+{
+}
+#endif
+
 /* registered target arrival callback from the HIF layer */
 HTC_HANDLE htc_create(void *ol_sc, struct htc_init_info *pInfo,
 			qdf_device_t osdev, uint32_t con_mode)
@@ -362,6 +426,14 @@ HTC_HANDLE htc_create(void *ol_sc, struct htc_init_info *pInfo,
 		target->host_handle = pInfo->pContext;
 		target->osdev = osdev;
 		target->con_mode = con_mode;
+
+		/* If htc_ready_timeout_ms is not configured from CFG,
+		 * assign the default timeout value here.
+		 */
+
+		if (!target->HTCInitInfo.htc_ready_timeout_ms)
+			target->HTCInitInfo.htc_ready_timeout_ms =
+							HTC_CONTROL_RX_TIMEOUT;
 
 		reset_endpoint_states(target);
 
@@ -413,6 +485,8 @@ HTC_HANDLE htc_create(void *ol_sc, struct htc_init_info *pInfo,
 
 	htc_hang_event_notifier_register(target);
 
+	htc_init_link_vote_ids();
+
 	return (HTC_HANDLE) target;
 }
 
@@ -427,6 +501,7 @@ void htc_destroy(HTC_HANDLE HTCHandle)
 	if (target)
 		htc_cleanup(target);
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRC, ("-htc_destroy\n"));
+	htc_credit_history_deinit();
 }
 
 /* get the low level HIF device for the caller , the caller may wish to do low
@@ -1116,42 +1191,6 @@ void htc_clear_bundle_stats(HTC_HANDLE HTCHandle)
 	qdf_mem_zero(&target->tx_bundle_stats, sizeof(target->tx_bundle_stats));
 }
 #endif
-
-/**
- * htc_vote_link_down - API to vote for link down
- * @htc_handle: HTC handle
- *
- * API for upper layers to call HIF to vote for link down
- *
- * Return: void
- */
-void htc_vote_link_down(HTC_HANDLE htc_handle)
-{
-	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(htc_handle);
-
-	if (!target->hif_dev)
-		return;
-
-	hif_vote_link_down(target->hif_dev);
-}
-
-/**
- * htc_vote_link_up - API to vote for link up
- * @htc_handle: HTC Handle
- *
- * API for upper layers to call HIF to vote for link up
- *
- * Return: void
- */
-void htc_vote_link_up(HTC_HANDLE htc_handle)
-{
-	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(htc_handle);
-
-	if (!target->hif_dev)
-		return;
-
-	hif_vote_link_up(target->hif_dev);
-}
 
 /**
  * htc_can_suspend_link - API to query HIF for link status

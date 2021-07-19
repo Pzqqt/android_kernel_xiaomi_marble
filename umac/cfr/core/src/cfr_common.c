@@ -28,6 +28,9 @@
 #include <wlan_osif_priv.h>
 #include <cfg_ucfg_api.h>
 #include "cfr_cfg.h"
+#ifdef WLAN_CFR_PM
+#include "host_diag_core_event.h"
+#endif
 
 /**
  * wlan_cfr_is_ini_disabled() - Check if cfr feature is disabled
@@ -106,6 +109,53 @@ wlan_cfr_get_dbr_num_entries(struct wlan_objmgr_pdev *pdev)
 	return num_entries;
 }
 
+#ifdef WLAN_CFR_PM
+/**
+ * cfr_wakelock_init(): Create/init wake lock for CFR
+ *
+ * Create/init wake lock for CFR
+ *
+ * Return None
+ */
+static void cfr_wakelock_init(struct pdev_cfr *pcfr)
+{
+	if (!pcfr) {
+		cfr_debug("NULL pa");
+		return;
+	}
+
+	pcfr->is_prevent_suspend = false;
+	qdf_wake_lock_create(&pcfr->wake_lock, "wlan_cfr");
+	qdf_runtime_lock_init(&pcfr->runtime_lock);
+}
+
+/**
+ * cfr_wakelock_deinit(): Destroy/deinit wake lock for CFR
+ *
+ * Destroy/deinit wake lock for CFR
+ *
+ * Return None
+ */
+static void cfr_wakelock_deinit(struct pdev_cfr *pcfr)
+{
+	if (!pcfr) {
+		cfr_debug("NULL pa");
+		return;
+	}
+
+	qdf_runtime_lock_deinit(&pcfr->runtime_lock);
+	qdf_wake_lock_destroy(&pcfr->wake_lock);
+}
+#else
+static inline void cfr_wakelock_init(struct pdev_cfr *pcfr)
+{
+}
+
+static inline void cfr_wakelock_deinit(struct pdev_cfr *pcfr)
+{
+}
+#endif
+
 QDF_STATUS
 wlan_cfr_psoc_obj_create_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 {
@@ -183,6 +233,7 @@ wlan_cfr_pdev_obj_create_handler(struct wlan_objmgr_pdev *pdev, void *arg)
 		pa->lut[idx] = (struct look_up_table *)qdf_mem_malloc(
 			sizeof(struct look_up_table));
 
+	cfr_wakelock_init(pa);
 	wlan_objmgr_pdev_component_obj_attach(pdev, WLAN_UMAC_COMP_CFR,
 					      (void *)pa, QDF_STATUS_SUCCESS);
 
@@ -207,6 +258,7 @@ wlan_cfr_pdev_obj_destroy_handler(struct wlan_objmgr_pdev *pdev, void *arg)
 
 	pa = wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_UMAC_COMP_CFR);
 	if (pa) {
+		cfr_wakelock_deinit(pa);
 		wlan_objmgr_pdev_component_obj_detach(pdev, WLAN_UMAC_COMP_CFR,
 						      (void *)pa);
 		if (pa->lut) {
@@ -475,3 +527,43 @@ QDF_STATUS cfr_stop_indication(struct wlan_objmgr_vdev *vdev)
 
 	return status;
 }
+
+#ifdef WLAN_CFR_PM
+QDF_STATUS cfr_prevent_suspend(struct pdev_cfr *pcfr)
+{
+	if (!pcfr) {
+		cfr_debug("NULL pcfr");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (pcfr->is_prevent_suspend) {
+		cfr_debug("acquired wake lock");
+		return QDF_STATUS_E_AGAIN;
+	}
+	qdf_wake_lock_acquire(&pcfr->wake_lock,
+			      WIFI_POWER_EVENT_WAKELOCK_CFR);
+	qdf_runtime_pm_prevent_suspend(&pcfr->runtime_lock);
+	pcfr->is_prevent_suspend = true;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS cfr_allow_suspend(struct pdev_cfr *pcfr)
+{
+	if (!pcfr) {
+		cfr_debug("NULL pcfr");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!pcfr->is_prevent_suspend) {
+		cfr_debug("wake lock not acquired");
+		return QDF_STATUS_E_INVAL;
+	}
+	qdf_wake_lock_release(&pcfr->wake_lock,
+			      WIFI_POWER_EVENT_WAKELOCK_CFR);
+	qdf_runtime_pm_allow_suspend(&pcfr->runtime_lock);
+	pcfr->is_prevent_suspend = false;
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif

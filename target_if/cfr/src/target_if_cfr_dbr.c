@@ -309,8 +309,8 @@ static bool cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 	qdf_mem_copy(&lut->dma_hdr, &dma_hdr, sizeof(struct whal_cfir_dma_hdr));
 
 	header = &lut->header;
-	header->u.meta_v4.channel_bw = dma_hdr.upload_pkt_bw;
-	header->u.meta_v4.length = length;
+	header->u.meta_dbr.channel_bw = dma_hdr.upload_pkt_bw;
+	header->u.meta_dbr.length = length;
 	status = correlate_and_relay(pdev, cookie, lut,
 				     CORRELATE_DBR_MODULE_ID);
 	if (status == STATUS_STREAM_AND_RELEASE) {
@@ -379,6 +379,10 @@ static void dump_cfr_peer_tx_event(wmi_cfr_peer_tx_event_param *event)
 
 	cfr_debug("rx_start_ts: %u\n", event->rx_start_ts);
 
+	cfr_debug("mcs_rate: %u\n", event->mcs_rate);
+
+	cfr_debug("gi_type: %u\n", event->gi_type);
+
 	cfr_debug("agc_gain0: %u agc_gain1: %u agc_gain2: %u agc_gain3: %u\n"
 		  "agc_gain4: %u agc_gain5: %u agc_gain6: %u agc_gain7: %u\n",
 		  event->agc_gain[0], event->agc_gain[1],
@@ -400,9 +404,9 @@ void prepare_cfr_header_txstatus(wmi_cfr_peer_tx_event_param *tx_evt_param,
 				 uint32_t target_type)
 {
 	target_if_cfr_fill_header(header, false, target_type, false);
-	header->u.meta_v4.status = 0; /* failure */
-	header->u.meta_v4.length = 0;
-	qdf_mem_copy(&header->u.meta_v4.peer_addr[0],
+	header->u.meta_dbr.status = 0; /* failure */
+	header->u.meta_dbr.length = 0;
+	qdf_mem_copy(&header->u.meta_dbr.peer_addr[0],
 		     &tx_evt_param->peer_mac_addr.bytes[0], QDF_MAC_ADDR_SIZE);
 }
 
@@ -552,35 +556,37 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 
 	target_if_cfr_fill_header(header, false, target_type, false);
 
-	header->u.meta_v4.status         = (tx_evt_param.status &
+	header->u.meta_dbr.status        = (tx_evt_param.status &
 					    PEER_CFR_CAPTURE_EVT_STATUS_MASK) ?
 					    1 : 0;
-	header->u.meta_v4.capture_bw     = tx_evt_param.bandwidth;
-	header->u.meta_v4.phy_mode       = tx_evt_param.phy_mode;
-	header->u.meta_v4.prim20_chan    = tx_evt_param.primary_20mhz_chan;
-	header->u.meta_v4.center_freq1   = tx_evt_param.band_center_freq1;
-	header->u.meta_v4.center_freq2   = tx_evt_param.band_center_freq2;
+	header->u.meta_dbr.capture_bw    = tx_evt_param.bandwidth;
+	header->u.meta_dbr.phy_mode      = tx_evt_param.phy_mode;
+	header->u.meta_dbr.prim20_chan   = tx_evt_param.primary_20mhz_chan;
+	header->u.meta_dbr.center_freq1  = tx_evt_param.band_center_freq1;
+	header->u.meta_dbr.center_freq2  = tx_evt_param.band_center_freq2;
 	/* Currently CFR data is captured on ACK of a Qos NULL frame.
 	 * For 20 MHz, ACK is Legacy and for 40/80/160, ACK is DUP Legacy.
 	 */
-	header->u.meta_v4.capture_mode   = tx_evt_param.bandwidth ?
+	header->u.meta_dbr.capture_mode  = tx_evt_param.bandwidth ?
 					   CFR_DUP_LEGACY_ACK : CFR_LEGACY_ACK;
-	header->u.meta_v4.capture_type   = tx_evt_param.capture_method;
-	header->u.meta_v4.num_rx_chain   = wlan_vdev_mlme_get_rxchainmask(vdev);
-	header->u.meta_v4.sts_count      = tx_evt_param.spatial_streams;
-	header->u.meta_v4.timestamp      = tx_evt_param.timestamp_us;
-	header->u.meta_v4.rx_start_ts    = tx_evt_param.rx_start_ts;
-	header->u.meta_v4.rtt_cfo_measurement = tx_evt_param.cfo_measurement;
+	header->u.meta_dbr.capture_type  = tx_evt_param.capture_method;
+	header->u.meta_dbr.num_rx_chain  = wlan_vdev_mlme_get_rxchainmask(vdev);
+	header->u.meta_dbr.sts_count     = tx_evt_param.spatial_streams;
+	header->u.meta_dbr.timestamp     = tx_evt_param.timestamp_us;
+	header->u.meta_dbr.rx_start_ts   = tx_evt_param.rx_start_ts;
+	header->u.meta_dbr.rtt_cfo_measurement = tx_evt_param.cfo_measurement;
+	header->u.meta_dbr.mcs_rate      = tx_evt_param.mcs_rate;
+	header->u.meta_dbr.gi_type       = tx_evt_param.gi_type;
 
-	qdf_mem_copy(&header->u.meta_v4.agc_gain[0],
+	qdf_mem_copy(&header->u.meta_dbr.agc_gain[0],
 		     &tx_evt_param.agc_gain[0],
 		     HOST_MAX_CHAINS * sizeof(tx_evt_param.agc_gain[0]));
-	qdf_mem_copy(&header->u.meta_v4.peer_addr[0],
+	qdf_mem_copy(&header->u.meta_dbr.peer_addr[0],
 		     &tx_evt_param.peer_mac_addr.bytes[0], QDF_MAC_ADDR_SIZE);
-	qdf_mem_copy(&header->u.meta_v4.chain_rssi[0],
+	qdf_mem_copy(&header->u.meta_dbr.chain_rssi[0],
 		     &tx_evt_param.chain_rssi[0],
 		     HOST_MAX_CHAINS * sizeof(tx_evt_param.chain_rssi[0]));
-	qdf_mem_copy(&header->u.meta_v4.chain_phase[0],
+	qdf_mem_copy(&header->u.meta_dbr.chain_phase[0],
 		     &tx_evt_param.chain_phase[0],
 		     HOST_MAX_CHAINS * sizeof(tx_evt_param.chain_phase[0]));
 

@@ -272,6 +272,44 @@ enum hal_ring_type {
 	MAX_RING_TYPES
 };
 
+enum SRNG_REGISTERS {
+	DST_HP = 0,
+	DST_TP,
+	DST_ID,
+	DST_MISC,
+	DST_HP_ADDR_LSB,
+	DST_HP_ADDR_MSB,
+	DST_MSI1_BASE_LSB,
+	DST_MSI1_BASE_MSB,
+	DST_MSI1_DATA,
+#ifdef CONFIG_BERYLLIUM
+	DST_MSI2_BASE_LSB,
+	DST_MSI2_BASE_MSB,
+	DST_MSI2_DATA,
+#endif
+	DST_BASE_LSB,
+	DST_BASE_MSB,
+	DST_PRODUCER_INT_SETUP,
+#ifdef CONFIG_BERYLLIUM
+	DST_PRODUCER_INT2_SETUP,
+#endif
+
+	SRC_HP,
+	SRC_TP,
+	SRC_ID,
+	SRC_MISC,
+	SRC_TP_ADDR_LSB,
+	SRC_TP_ADDR_MSB,
+	SRC_MSI1_BASE_LSB,
+	SRC_MSI1_BASE_MSB,
+	SRC_MSI1_DATA,
+	SRC_BASE_LSB,
+	SRC_BASE_MSB,
+	SRC_CONSUMER_INT_SETUP_IX0,
+	SRC_CONSUMER_INT_SETUP_IX1,
+	SRNG_REGISTER_MAX,
+};
+
 #define HAL_RXDMA_MAX_RING_SIZE 0xFFFF
 #define HAL_MAX_LMACS 3
 #define HAL_MAX_RINGS_PER_LMAC (HAL_SRNG_LMAC1_ID_END - HAL_SRNG_LMAC1_ID_START)
@@ -352,12 +390,14 @@ struct hal_reg_write_q_elem {
  * @dequeues: writes dequeued from delayed work (not written yet)
  * @coalesces: writes not enqueued since srng is already queued up
  * @direct: writes not enqueued and written to register directly
+ * @dequeue_delay: dequeue operation be delayed
  */
 struct hal_reg_write_srng_stats {
 	uint32_t enqueues;
 	uint32_t dequeues;
 	uint32_t coalesces;
 	uint32_t direct;
+	uint32_t dequeue_delay;
 };
 
 /**
@@ -386,6 +426,7 @@ enum hal_reg_sched_delay {
  * @q_depth: current queue depth in delayed register write queue
  * @max_q_depth: maximum queue for delayed register write queue
  * @sched_delay: = kernel work sched delay + bus wakeup delay, histogram
+ * @dequeue_delay: dequeue operation be delayed
  */
 struct hal_reg_write_soc_stats {
 	qdf_atomic_t enqueues;
@@ -396,6 +437,7 @@ struct hal_reg_write_soc_stats {
 	qdf_atomic_t q_depth;
 	uint32_t max_q_depth;
 	uint32_t sched_delay[REG_WRITE_SCHED_DELAY_HIST_MAX];
+	uint32_t dequeue_delay;
 };
 
 #ifdef FEATURE_HAL_DELAYED_REG_WRITE_V2
@@ -471,6 +513,14 @@ struct hal_srng {
 	/* MSI data */
 	uint32_t msi_data;
 
+#ifdef WLAN_FEATURE_NEAR_FULL_IRQ
+	/* MSI2 Address */
+	qdf_dma_addr_t msi2_addr;
+
+	/* MSI2 data */
+	uint32_t msi2_data;
+#endif
+
 	/* Misc flags */
 	uint32_t flags;
 
@@ -510,6 +560,14 @@ struct hal_srng {
 
 			/* max transfer size */
 			uint16_t max_buffer_length;
+
+#ifdef WLAN_FEATURE_NEAR_FULL_IRQ
+			/* near full IRQ supported */
+			uint16_t nf_irq_support;
+
+			/* High threshold for Near full IRQ */
+			uint16_t high_thresh;
+#endif
 		} dst_ring;
 
 		struct {
@@ -543,12 +601,19 @@ struct hal_srng {
 	unsigned long srng_event;
 	/* last flushed time stamp */
 	uint64_t last_flush_ts;
+#if defined(CLEAR_SW2TCL_CONSUMED_DESC)
+	/* last ring desc entry cleared */
+	uint32_t last_desc_cleared;
+#endif
 #if defined(FEATURE_HAL_DELAYED_REG_WRITE) || \
 	defined(FEATURE_HAL_DELAYED_REG_WRITE_V2)
 	/* Previous hp/tp (based on ring dir) value written to the reg */
 	uint32_t last_reg_wr_val;
 	/* flag to indicate whether srng is already queued for delayed write */
 	uint8_t reg_write_in_progress;
+	/* last dequeue elem time stamp */
+	qdf_time_t last_dequeue_time;
+
 	/* srng specific delayed write stats */
 	struct hal_reg_write_srng_stats wstats;
 #endif
@@ -564,6 +629,7 @@ struct hal_hw_srng_config {
 	uint8_t lmac_ring;
 	enum hal_srng_dir ring_dir;
 	uint32_t max_size;
+	bool nf_irq_support;
 };
 
 #define MAX_SHADOW_REGISTERS 40
@@ -654,6 +720,7 @@ struct hal_hw_txrx_ops {
 	qdf_iomem_t (*hal_get_window_address)(struct hal_soc *hal_soc,
 					      qdf_iomem_t addr);
 	void (*hal_reo_set_err_dst_remap)(void *hal_soc);
+	uint8_t (*hal_reo_enable_pn_in_dest)(void *hal_soc);
 	void (*hal_reo_qdesc_setup)(hal_soc_handle_t hal_soc_hdl, int tid,
 				    uint32_t ba_window_size,
 				    uint32_t start_seq, void *hw_qdesc_vaddr,
@@ -842,6 +909,7 @@ struct hal_hw_txrx_ops {
 	uint32_t (*hal_rx_tlv_mic_err_get)(uint8_t *buf);
 	uint32_t (*hal_rx_tlv_get_pkt_type)(uint8_t *buf);
 	void (*hal_rx_tlv_get_pn_num)(uint8_t *buf, uint64_t *pn_num);
+	void (*hal_rx_reo_prev_pn_get)(void *ring_desc, uint64_t *prev_pn);
 	uint8_t * (*hal_rx_pkt_hdr_get)(uint8_t *buf);
 	uint32_t (*hal_rx_msdu_reo_dst_ind_get)(hal_soc_handle_t hal_soc_hdl,
 						void *msdu_link_desc);
@@ -896,6 +964,8 @@ struct hal_hw_txrx_ops {
 					      uint8_t *priv_data,
 					      uint32_t len);
 	void (*hal_rx_tlv_msdu_len_set)(uint8_t *buf, uint32_t len);
+	void (*hal_rx_tlv_populate_mpdu_desc_info)(uint8_t *buf,
+						   void *mpdu_desc_info_hdl);
 
 	/* REO CMD and STATUS */
 	int (*hal_reo_send_cmd)(hal_soc_handle_t hal_soc_hdl,
@@ -1015,7 +1085,7 @@ struct hal_soc {
 
 	/* srng table */
 	struct hal_hw_srng_config *hw_srng_table;
-	int32_t *hal_hw_reg_offset;
+	int32_t hal_hw_reg_offset[SRNG_REGISTER_MAX];
 	struct hal_hw_txrx_ops *ops;
 
 	/* Indicate srngs initialization */

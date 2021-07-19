@@ -438,6 +438,41 @@ struct vdev_scan_nac_rssi_params {
 	uint32_t action; /* WMI_FILTER_NAC_RSSI_ACTION */
 };
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * @mlo_enabled: indicate is MLO enabled
+ * @mlo_assoc_link: indicate is the link used to initialize
+ *                  the association of mlo connection
+ */
+struct mlo_vdev_start_flags {
+	uint32_t mlo_enabled:1,
+		 mlo_assoc_link:1,
+		 rsvd:30;
+};
+
+/**
+ * struct ml_vdev_start_partner_info - partner link info
+ * @vdev_id: vdev id
+ * @hw_mld_link_id: unique hw link id across SoCs
+ * @mac_addr: Partner mac address
+ */
+struct ml_vdev_start_partner_info {
+	uint32_t vdev_id;
+	uint32_t hw_mld_link_id;
+	uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
+};
+
+#define MAX_ML_PARTNER_LINKS 4
+/**
+ * struct mlo_vdev_start__partner_links - ML partner links
+ * @num_links: Number of links
+ * @partner_info: Partner link info
+ */
+struct mlo_vdev_start_partner_links {
+	uint8_t num_links;
+	struct ml_vdev_start_partner_info partner_info[MAX_ML_PARTNER_LINKS];
+};
+#endif
 /**
  * struct vdev_start_params - vdev start cmd parameter
  * @vdev_id: vdev id
@@ -484,6 +519,10 @@ struct vdev_start_params {
 	bool ldpc_rx_enabled;
 	uint32_t mbssid_flags;
 	uint8_t vdevid_trans;
+#ifdef WLAN_FEATURE_11BE_MLO
+	struct mlo_vdev_start_flags mlo_flags;
+	struct mlo_vdev_start_partner_links mlo_partner;
+#endif
 };
 
 /**
@@ -520,6 +559,9 @@ struct vdev_create_params {
 	uint32_t mbssid_flags;
 	uint8_t vdevid_trans;
 	bool special_vdev_mode;
+#ifdef WLAN_FEATURE_11BE_MLO
+	uint8_t mlo_mac[QDF_MAC_ADDR_SIZE];
+#endif
 };
 
 /**

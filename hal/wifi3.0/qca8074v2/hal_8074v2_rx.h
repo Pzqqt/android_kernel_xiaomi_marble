@@ -23,7 +23,7 @@
 #include "hal_tx.h"
 #include "dp_types.h"
 #include "hal_api_mon.h"
-#ifndef QCA_WIFI_QCA6018
+#if (!defined(QCA_WIFI_QCA6018)) && (!defined(QCA_WIFI_QCA9574))
 #include "phyrx_other_receive_info_su_evm_details.h"
 #endif
 
@@ -422,7 +422,7 @@ static uint8_t hal_rx_get_tlv_8074v2(void *rx_tlv)
 	return HAL_RX_GET(rx_tlv, PHYRX_RSSI_LEGACY_0, RECEIVE_BANDWIDTH);
 }
 
-#ifndef QCA_WIFI_QCA6018
+#if (!defined(QCA_WIFI_QCA6018)) && (!defined(QCA_WIFI_QCA9574))
 #define HAL_RX_UPDATE_SU_EVM_INFO(rx_tlv, ppdu_info, evm, pilot) \
 	(ppdu_info)->evm_info.pilot_evm[pilot] = HAL_RX_GET(rx_tlv, \
 				PHYRX_OTHER_RECEIVE_INFO, \
@@ -589,6 +589,16 @@ void hal_rx_get_rtt_info_8074v2(void *rx_tlv,
 	HAL_RX_GET(rx_tlv,
 		   PHYRX_PKT_END_4_RX_PKT_END_DETAILS,
 		   PHY_TIMESTAMP_2_UPPER_32);
+
+	ppdu_info->cfr_info.mcs_rate =
+	HAL_RX_GET(rx_tlv,
+		   PHYRX_PKT_END_8_RX_PKT_END_DETAILS_RX_LOCATION_INFO_DETAILS,
+		   RTT_MCS_RATE);
+
+	ppdu_info->cfr_info.gi_type =
+	HAL_RX_GET(rx_tlv,
+		   PHYRX_PKT_END_8_RX_PKT_END_DETAILS_RX_LOCATION_INFO_DETAILS,
+		   RTT_GI_TYPE);
 }
 #endif
 

@@ -24,7 +24,6 @@
 #ifndef __OSIF_CM_REQ_H
 #define __OSIF_CM_REQ_H
 
-#ifdef FEATURE_CM_ENABLE
 #include "qdf_status.h"
 #include "wlan_cm_public_struct.h"
 #include <net/cfg80211.h>
@@ -100,5 +99,4 @@ int osif_cm_disconnect(struct net_device *dev, struct wlan_objmgr_vdev *vdev,
  */
 int osif_cm_disconnect_sync(struct wlan_objmgr_vdev *vdev, uint16_t reason);
 
-#endif
 #endif /* __OSIF_CM_REQ_H */

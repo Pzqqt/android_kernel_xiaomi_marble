@@ -58,7 +58,6 @@ struct dp_peer_li {
  *
  * Return: value in bytes for LI specific soc structure
  */
-
 qdf_size_t dp_get_soc_context_size_li(void);
 
 /**

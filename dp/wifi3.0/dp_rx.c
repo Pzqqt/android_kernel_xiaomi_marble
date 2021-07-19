@@ -1886,39 +1886,6 @@ static inline void
 dp_rx_desc_nbuf_len_sanity_check(struct dp_soc *soc, uint32_t pkt_len) { }
 #endif
 
-#ifdef WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT
-bool dp_rx_reap_loop_pkt_limit_hit(struct dp_soc *soc, int num_reaped)
-{
-	bool limit_hit = false;
-	struct wlan_cfg_dp_soc_ctxt *cfg = soc->wlan_cfg_ctx;
-
-	limit_hit =
-		(num_reaped >= cfg->rx_reap_loop_pkt_limit) ? true : false;
-
-	if (limit_hit)
-		DP_STATS_INC(soc, rx.reap_loop_pkt_limit_hit, 1)
-
-	return limit_hit;
-}
-
-bool dp_rx_enable_eol_data_check(struct dp_soc *soc)
-{
-	return soc->wlan_cfg_ctx->rx_enable_eol_data_check;
-}
-
-#else
-bool dp_rx_reap_loop_pkt_limit_hit(struct dp_soc *soc, int num_reaped)
-{
-	return false;
-}
-
-bool dp_rx_enable_eol_data_check(struct dp_soc *soc)
-{
-	return false;
-}
-
-#endif /* WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT */
-
 #ifdef DP_RX_PKT_NO_PEER_DELIVER
 /**
  * dp_rx_deliver_to_stack_no_peer() - try deliver rx data even if
@@ -2551,12 +2518,12 @@ QDF_STATUS dp_rx_pdev_desc_pool_init(struct dp_pdev *pdev)
 	struct dp_srng *dp_rxdma_srng;
 	struct rx_desc_pool *rx_desc_pool;
 
+	rx_desc_pool = &soc->rx_desc_buf[mac_for_pdev];
 	if (wlan_cfg_get_dp_pdev_nss_enabled(pdev->wlan_cfg_ctx)) {
 		/**
 		 * If NSS is enabled, rx_desc_pool is already filled.
 		 * Hence, just disable desc_pool frag flag.
 		 */
-		rx_desc_pool = &soc->rx_desc_buf[mac_for_pdev];
 		dp_rx_enable_mon_dest_frag(rx_desc_pool, false);
 
 		dp_rx_info("%pK: nss-wifi<4> skip Rx refil %d",
@@ -2564,7 +2531,6 @@ QDF_STATUS dp_rx_pdev_desc_pool_init(struct dp_pdev *pdev)
 		return QDF_STATUS_SUCCESS;
 	}
 
-	rx_desc_pool = &soc->rx_desc_buf[mac_for_pdev];
 	if (dp_rx_desc_pool_is_allocated(rx_desc_pool) == QDF_STATUS_E_NOMEM)
 		return QDF_STATUS_E_NOMEM;
 
@@ -2602,7 +2568,7 @@ void dp_rx_pdev_desc_pool_deinit(struct dp_pdev *pdev)
 
 	rx_desc_pool = &soc->rx_desc_buf[mac_for_pdev];
 
-	dp_rx_desc_pool_deinit(soc, rx_desc_pool);
+	dp_rx_desc_pool_deinit(soc, rx_desc_pool, mac_for_pdev);
 }
 
 /*

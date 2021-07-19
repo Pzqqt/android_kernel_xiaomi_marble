@@ -24,24 +24,78 @@
 #include "hal_tx.h"
 #include <hal_be_api.h>
 
+#ifdef DP_FEATURE_HW_COOKIE_CONVERSION
+#ifdef DP_HW_COOKIE_CONVERT_EXCEPTION
 void dp_tx_comp_get_params_from_hal_desc_be(struct dp_soc *soc,
 					    void *tx_comp_hal_desc,
 					    struct dp_tx_desc_s **r_tx_desc)
 {
-	uint8_t pool_id;
 	uint32_t tx_desc_id;
 
-	tx_desc_id = hal_tx_comp_get_desc_id(tx_comp_hal_desc);
-	pool_id = (tx_desc_id & DP_TX_DESC_ID_POOL_MASK) >>
-			DP_TX_DESC_ID_POOL_OS;
-
-	/* Find Tx descriptor */
-	*r_tx_desc = dp_tx_desc_find(soc, pool_id,
-				     (tx_desc_id & DP_TX_DESC_ID_PAGE_MASK) >>
-							DP_TX_DESC_ID_PAGE_OS,
-				     (tx_desc_id & DP_TX_DESC_ID_OFFSET_MASK) >>
-						DP_TX_DESC_ID_OFFSET_OS);
+	if (qdf_likely(
+		hal_tx_comp_get_cookie_convert_done(tx_comp_hal_desc))) {
+		/* HW cookie conversion done */
+		*r_tx_desc = (struct dp_tx_desc_s *)
+				hal_tx_comp_get_desc_va(tx_comp_hal_desc);
+	} else {
+		/* SW do cookie conversion to VA */
+		tx_desc_id = hal_tx_comp_get_desc_id(tx_comp_hal_desc);
+		*r_tx_desc =
+		(struct dp_tx_desc_s *)dp_cc_desc_find(soc, tx_desc_id);
+	}
 }
+#else
+void dp_tx_comp_get_params_from_hal_desc_be(struct dp_soc *soc,
+					    void *tx_comp_hal_desc,
+					    struct dp_tx_desc_s **r_tx_desc)
+{
+	*r_tx_desc = (struct dp_tx_desc_s *)
+			hal_tx_comp_get_desc_va(tx_comp_hal_desc);
+}
+#endif /* DP_HW_COOKIE_CONVERT_EXCEPTION */
+#else
+
+void dp_tx_comp_get_params_from_hal_desc_be(struct dp_soc *soc,
+					    void *tx_comp_hal_desc,
+					    struct dp_tx_desc_s **r_tx_desc)
+{
+	uint32_t tx_desc_id;
+
+	/* SW do cookie conversion to VA */
+	tx_desc_id = hal_tx_comp_get_desc_id(tx_comp_hal_desc);
+	*r_tx_desc =
+	(struct dp_tx_desc_s *)dp_cc_desc_find(soc, tx_desc_id);
+}
+#endif /* DP_FEATURE_HW_COOKIE_CONVERSION */
+
+#ifdef QCA_OL_TX_MULTIQ_SUPPORT
+/*
+ * dp_tx_get_rbm_id()- Get the RBM ID for data transmission completion.
+ * @dp_soc - DP soc structure pointer
+ * @ring_id - Transmit Queue/ring_id to be used when XPS is enabled
+ *
+ * Return - RBM ID corresponding to TCL ring_id
+ */
+static inline uint8_t dp_tx_get_rbm_id_be(struct dp_soc *soc,
+					  uint8_t ring_id)
+{
+	return (ring_id ? soc->wbm_sw0_bm_id + (ring_id - 1) :
+			  HAL_WBM_SW2_BM_ID(soc->wbm_sw0_bm_id));
+}
+
+#else
+static inline uint8_t dp_tx_get_rbm_id_be(struct dp_soc *soc,
+					  uint8_t ring_id)
+{
+	uint8_t wbm_ring_id, rbm;
+
+	wbm_ring_id = wlan_cfg_get_wbm_ring_num_for_index(ring_id);
+	rbm = wbm_ring_id + soc->wbm_sw0_bm_id;
+	dp_debug("ring_id %u wbm ring num %u rbm %u",
+		 ring_id, wbm_ring_id, rbm);
+	return rbm;
+}
+#endif
 
 QDF_STATUS
 dp_tx_hw_enqueue_be(struct dp_soc *soc, struct dp_vdev *vdev,
@@ -53,11 +107,11 @@ dp_tx_hw_enqueue_be(struct dp_soc *soc, struct dp_vdev *vdev,
 	uint32_t *hal_tx_desc_cached;
 	int coalesce = 0;
 	struct dp_tx_queue *tx_q = &msdu_info->tx_queue;
-	uint8_t ring_id = tx_q->ring_id & DP_TX_QUEUE_MASK;
+	uint8_t ring_id = tx_q->ring_id;
 	uint8_t tid = msdu_info->tid;
 	struct dp_vdev_be *be_vdev;
 	uint8_t cached_desc[HAL_TX_DESC_LEN_BYTES] = { 0 };
-	uint8_t bm_id = dp_tx_get_rbm_id(soc, ring_id);
+	uint8_t bm_id = dp_tx_get_rbm_id_be(soc, ring_id);
 	hal_ring_handle_t hal_ring_hdl = NULL;
 	QDF_STATUS status = QDF_STATUS_E_RESOURCES;
 
@@ -323,3 +377,102 @@ void dp_tx_update_bank_profile(struct dp_soc_be *be_soc,
 	dp_tx_put_bank_profile(be_soc, be_vdev);
 	be_vdev->bank_id = dp_tx_get_bank_profile(be_soc, be_vdev);
 }
+
+QDF_STATUS dp_tx_desc_pool_init_be(struct dp_soc *soc,
+				   uint16_t num_elem,
+				   uint8_t pool_id)
+{
+	struct dp_tx_desc_pool_s *tx_desc_pool;
+	struct dp_soc_be *be_soc;
+	struct dp_spt_page_desc *page_desc;
+	struct dp_spt_page_desc_list *page_desc_list;
+	struct dp_tx_desc_s *tx_desc;
+
+	if (!num_elem) {
+		dp_err("desc_num 0 !!");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	be_soc = dp_get_be_soc_from_dp_soc(soc);
+	tx_desc_pool = &soc->tx_desc[pool_id];
+	page_desc_list = &be_soc->tx_spt_page_desc[pool_id];
+
+	/* allocate SPT pages from page desc pool */
+	page_desc_list->num_spt_pages =
+		dp_cc_spt_page_desc_alloc(be_soc,
+					  &page_desc_list->spt_page_list_head,
+					  &page_desc_list->spt_page_list_tail,
+					  num_elem);
+
+	if (!page_desc_list->num_spt_pages) {
+		dp_err("fail to allocate cookie conversion spt pages");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* put each TX Desc VA to SPT pages and get corresponding ID */
+	page_desc = page_desc_list->spt_page_list_head;
+	tx_desc = tx_desc_pool->freelist;
+	while (tx_desc) {
+		DP_CC_SPT_PAGE_UPDATE_VA(page_desc->page_v_addr,
+					 page_desc->avail_entry_index,
+					 tx_desc);
+		tx_desc->id =
+			dp_cc_desc_id_generate(page_desc->ppt_index,
+					       page_desc->avail_entry_index);
+		tx_desc->pool_id = pool_id;
+		tx_desc = tx_desc->next;
+
+		page_desc->avail_entry_index++;
+		if (page_desc->avail_entry_index >=
+				DP_CC_SPT_PAGE_MAX_ENTRIES)
+			page_desc = page_desc->next;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+void dp_tx_desc_pool_deinit_be(struct dp_soc *soc,
+			       struct dp_tx_desc_pool_s *tx_desc_pool,
+			       uint8_t pool_id)
+{
+	struct dp_soc_be *be_soc;
+	struct dp_spt_page_desc *page_desc;
+	struct dp_spt_page_desc_list *page_desc_list;
+
+	be_soc = dp_get_be_soc_from_dp_soc(soc);
+	page_desc_list = &be_soc->tx_spt_page_desc[pool_id];
+
+	/* cleanup for each page */
+	page_desc = page_desc_list->spt_page_list_head;
+	while (page_desc) {
+		page_desc->avail_entry_index = 0;
+		qdf_mem_zero(page_desc->page_v_addr, qdf_page_size);
+		page_desc = page_desc->next;
+	}
+
+	/* free pages desc back to pool */
+	dp_cc_spt_page_desc_free(be_soc,
+				 &page_desc_list->spt_page_list_head,
+				 &page_desc_list->spt_page_list_tail,
+				 page_desc_list->num_spt_pages);
+	page_desc_list->num_spt_pages = 0;
+}
+
+#ifdef WLAN_FEATURE_NEAR_FULL_IRQ
+uint32_t dp_tx_comp_nf_handler(struct dp_intr *int_ctx, struct dp_soc *soc,
+			       hal_ring_handle_t hal_ring_hdl, uint8_t ring_id,
+			       uint32_t quota)
+{
+	struct dp_srng *tx_comp_ring = &soc->tx_comp_ring[ring_id];
+	uint32_t work_done = 0;
+
+	if (dp_srng_get_near_full_level(soc, tx_comp_ring) <
+			DP_SRNG_THRESH_NEAR_FULL)
+		return 0;
+
+	qdf_atomic_set(&tx_comp_ring->near_full, 1);
+	work_done++;
+
+	return work_done;
+}
+#endif

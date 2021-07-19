@@ -25,4 +25,107 @@
 uint32_t dp_rx_process_be(struct dp_intr *int_ctx,
 			  hal_ring_handle_t hal_ring_hdl, uint8_t reo_ring_num,
 			  uint32_t quota);
+
+/**
+ * dp_rx_desc_pool_init_be() - Initialize Rx Descriptor pool(s)
+ * @soc: Handle to DP Soc structure
+ * @rx_desc_pool: Rx descriptor pool handler
+ * @pool_id: Rx descriptor pool ID
+ *
+ * Return: QDF_STATUS_SUCCESS - succeeded, others - failed
+ */
+QDF_STATUS dp_rx_desc_pool_init_be(struct dp_soc *soc,
+				   struct rx_desc_pool *rx_desc_pool,
+				   uint32_t pool_id);
+
+/**
+ * dp_rx_desc_pool_deinit_be() - De-initialize Rx Descriptor pool(s)
+ * @soc: Handle to DP Soc structure
+ * @rx_desc_pool: Rx descriptor pool handler
+ * @pool_id: Rx descriptor pool ID
+ *
+ * Return: None
+ */
+void dp_rx_desc_pool_deinit_be(struct dp_soc *soc,
+			       struct rx_desc_pool *rx_desc_pool,
+			       uint32_t pool_id);
+
+/**
+ * dp_wbm_get_rx_desc_from_hal_desc_be() - Get corresponding Rx Desc
+ *					address from WBM ring Desc
+ * @soc: Handle to DP Soc structure
+ * @ring_desc: ring descriptor structure pointer
+ * @r_rx_desc: pointer to a pointer of Rx Desc
+ *
+ * Return: QDF_STATUS_SUCCESS - succeeded, others - failed
+ */
+QDF_STATUS dp_wbm_get_rx_desc_from_hal_desc_be(struct dp_soc *soc,
+					       void *ring_desc,
+					       struct dp_rx_desc **r_rx_desc);
+
+/**
+ * dp_rx_desc_cookie_2_va_be() - Convert RX Desc cookie ID to VA
+ * @soc:Handle to DP Soc structure
+ * @cookie: cookie used to lookup virtual address
+ *
+ * Return: Rx descriptor virtual address
+ */
+struct dp_rx_desc *dp_rx_desc_cookie_2_va_be(struct dp_soc *soc,
+					     uint32_t cookie);
+
+#if !defined(DP_FEATURE_HW_COOKIE_CONVERSION) || \
+		defined(DP_HW_COOKIE_CONVERT_EXCEPTION)
+/**
+ * dp_rx_desc_sw_cc_check() - check if RX desc VA is got correctly,
+			      if not, do SW cookie conversion.
+ * @soc:Handle to DP Soc structure
+ * @rx_buf_cookie: RX desc cookie ID
+ * @r_rx_desc: double pointer for RX desc
+ *
+ * Return: None
+ */
+static inline void
+dp_rx_desc_sw_cc_check(struct dp_soc *soc,
+		       uint32_t rx_buf_cookie,
+		       struct dp_rx_desc **r_rx_desc)
+{
+	if (qdf_unlikely(!(*r_rx_desc))) {
+		*r_rx_desc = (struct dp_rx_desc *)
+				dp_cc_desc_find(soc,
+						rx_buf_cookie);
+	}
+}
+#else
+static inline void
+dp_rx_desc_sw_cc_check(struct dp_soc *soc,
+		       uint32_t rx_buf_cookie,
+		       struct dp_rx_desc **r_rx_desc)
+{
+}
+#endif /* DP_FEATURE_HW_COOKIE_CONVERSION && DP_HW_COOKIE_CONVERT_EXCEPTION */
+
+#ifdef WLAN_FEATURE_NEAR_FULL_IRQ
+/**
+ * dp_rx_nf_process() - Near Full state handler for RX rings.
+ * @int_ctx: interrupt context
+ * @hal_ring_hdl: Rx ring handle
+ * @reo_ring_num: RX ring number
+ * @quota: Quota of work to be done
+ *
+ * Return: work done in the handler
+ */
+uint32_t dp_rx_nf_process(struct dp_intr *int_ctx,
+			  hal_ring_handle_t hal_ring_hdl,
+			  uint8_t reo_ring_num,
+			  uint32_t quota);
+#else
+static inline
+uint32_t dp_rx_nf_process(struct dp_intr *int_ctx,
+			  hal_ring_handle_t hal_ring_hdl,
+			  uint8_t reo_ring_num,
+			  uint32_t quota)
+{
+	return 0;
+}
+#endif /*WLAN_FEATURE_NEAR_FULL_IRQ */
 #endif

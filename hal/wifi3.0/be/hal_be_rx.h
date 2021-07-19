@@ -279,6 +279,47 @@ hal_rx_msdu_link_desc_reinject(struct hal_soc *soc, uint64_t pa,
 	/* TODO */
 }
 
+#ifdef DP_HW_COOKIE_CONVERT_EXCEPTION
+/* HW set dowrd-2 bit16 to 1 if HW CC is done */
+#define HAL_WBM2SW_COMPLETION_RING_RX_CC_DONE_OFFSET 0x8
+#define HAL_WBM2SW_COMPLETION_RING_RX_CC_DONE_MASK 0x10000
+#define HAL_WBM2SW_COMPLETION_RING_RX_CC_DONE_LSB 0x10
+/**
+ * hal_rx_wbm_get_cookie_convert_done() - Get cookie conversion done flag
+ * @hal_desc: wbm Rx ring descriptor pointer
+ *
+ * This function will get the bit value that indicate HW cookie
+ * conversion done or not
+ *
+ * Return: 1 - HW cookie conversion done, 0 - not
+ */
+static inline uint8_t hal_rx_wbm_get_cookie_convert_done(void *hal_desc)
+{
+	return HAL_RX_GET(hal_desc, HAL_WBM2SW_COMPLETION_RING_RX,
+			  CC_DONE);
+}
+#endif
+
+/**
+ * hal_rx_wbm_get_desc_va() - Get Desc virtual address within WBM Desc
+ * @hal_desc: RX WBM2SW ring descriptor pointer
+ *
+ * Return: RX descriptor virtual address
+ */
+static inline uintptr_t hal_rx_wbm_get_desc_va(void *hal_desc)
+{
+	uint64_t va_from_desc;
+
+	va_from_desc = HAL_RX_GET(hal_desc,
+				  WBM2SW_COMPLETION_RING_RX,
+				  BUFFER_VIRT_ADDR_31_0) |
+			(((uint64_t)HAL_RX_GET(hal_desc,
+					       WBM2SW_COMPLETION_RING_RX,
+					       BUFFER_VIRT_ADDR_63_32)) << 32);
+
+	return (uintptr_t)va_from_desc;
+}
+
 #define HAL_RX_WBM_FIRST_MSDU_GET(wbm_desc)		\
 	(((*(((uint32_t *)wbm_desc) +			\
 	(WBM_RELEASE_RING_FIRST_MSDU_OFFSET >> 2))) & \
@@ -374,6 +415,26 @@ hal_rx_msdu_desc_info_get_be(void *desc_addr,
 	msdu_desc_info->msdu_flags =
 		hal_rx_msdu_flags_get_be((struct rx_msdu_desc_info *)msdu_info);
 	msdu_desc_info->msdu_len = HAL_RX_MSDU_PKT_LENGTH_GET(msdu_info);
+}
+
+/**
+ * hal_rx_get_reo_desc_va() - Get Desc virtual address within REO Desc
+ * @reo_desc: REO2SW ring descriptor pointer
+ *
+ * Return: RX descriptor virtual address
+ */
+static inline uintptr_t hal_rx_get_reo_desc_va(void *reo_desc)
+{
+	uint64_t va_from_desc;
+
+	va_from_desc = HAL_RX_GET(reo_desc,
+				  REO_DESTINATION_RING,
+				  BUFFER_VIRT_ADDR_31_0) |
+		(((uint64_t)HAL_RX_GET(reo_desc,
+				       REO_DESTINATION_RING,
+				       BUFFER_VIRT_ADDR_63_32)) << 32);
+
+	return (uintptr_t)va_from_desc;
 }
 
 #endif /* _HAL_BE_RX_H_ */

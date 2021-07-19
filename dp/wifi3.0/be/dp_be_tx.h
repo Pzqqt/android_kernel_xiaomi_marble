@@ -109,4 +109,51 @@ void dp_tx_put_bank_profile(struct dp_soc_be *soc, struct dp_vdev_be *be_vdev);
  */
 void dp_tx_update_bank_profile(struct dp_soc_be *be_soc,
 			       struct dp_vdev_be *be_vdev);
+
+/**
+ * dp_tx_desc_pool_init_be() - Initialize Tx Descriptor pool(s)
+ * @soc: Handle to DP Soc structure
+ * @num_elem: number of descriptor in pool
+ * @pool_id: pool ID to allocate
+ *
+ * Return: QDF_STATUS_SUCCESS - success, others - failure
+ */
+QDF_STATUS dp_tx_desc_pool_init_be(struct dp_soc *soc,
+				   uint16_t num_elem,
+				   uint8_t pool_id);
+/**
+ * dp_tx_desc_pool_deinit_be() - De-initialize Tx Descriptor pool(s)
+ * @soc: Handle to DP Soc structure
+ * @tx_desc_pool: Tx descriptor pool handler
+ * @pool_id: pool ID to deinit
+ *
+ * Return: None
+ */
+void dp_tx_desc_pool_deinit_be(struct dp_soc *soc,
+			       struct dp_tx_desc_pool_s *tx_desc_pool,
+			       uint8_t pool_id);
+
+#ifdef WLAN_FEATURE_NEAR_FULL_IRQ
+/**
+ * dp_tx_comp_nf_handler() - Tx completion ring Near full scenario handler
+ * @int_ctx: Interrupt context
+ * @soc: Datapath SoC handle
+ * @hal_ring_hdl: TX completion ring handle
+ * @ring_id: TX completion ring number
+ * @quota: Quota of the work to be done
+ *
+ * Return: work done
+ */
+uint32_t dp_tx_comp_nf_handler(struct dp_intr *int_ctx, struct dp_soc *soc,
+			       hal_ring_handle_t hal_ring_hdl, uint8_t ring_id,
+			       uint32_t quota);
+#else
+static inline
+uint32_t dp_tx_comp_nf_handler(struct dp_intr *int_ctx, struct dp_soc *soc,
+			       hal_ring_handle_t hal_ring_hdl, uint8_t ring_id,
+			       uint32_t quota)
+{
+	return 0;
+}
+#endif /* WLAN_FEATURE_NEAR_FULL_IRQ */
 #endif

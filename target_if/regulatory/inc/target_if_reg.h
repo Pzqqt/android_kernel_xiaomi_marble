@@ -101,7 +101,7 @@ QDF_STATUS target_if_regulatory_set_ext_tpc(struct wlan_objmgr_psoc *psoc);
 struct wlan_lmac_if_reg_tx_ops *
 target_if_regulatory_get_tx_ops(struct wlan_objmgr_psoc *psoc);
 
-#if defined(CONFIG_BAND_6GHZ) && defined(CONFIG_REG_CLIENT)
+#if defined(CONFIG_BAND_6GHZ)
 /**
  * target_if_reg_set_lower_6g_edge_ch_info() - populate lower 6ghz edge channel
  * enablement info

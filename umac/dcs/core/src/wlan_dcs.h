@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -164,13 +164,60 @@ struct dcs_pdev_priv_obj {
 };
 
 /**
+ * wlan_dcs_chan_seg - Different segments in the channel band.
+ * @WLAN_DCS_SEG_INVALID: invalid segment
+ * @WLAN_DCS_SEG_PRI20: primary 20MHz
+ * @WLAN_DCS_SEG_SEC20: secondary 20MHz
+ * @WLAN_DCS_SEG_SEC40: secondary 40MHz
+ * @WLAN_DCS_SEG_SEC80: secondary 80MHz
+ * @WLAN_DCS_SEG_SEC160: secondary 160MHz
+ */
+enum wlan_dcs_chan_seg {
+	WLAN_DCS_SEG_INVALID,
+	WLAN_DCS_SEG_PRI20,
+	WLAN_DCS_SEG_SEC20,
+	WLAN_DCS_SEG_SEC40,
+	WLAN_DCS_SEG_SEC80,
+	WLAN_DCS_SEG_SEC160,
+};
+
+/* masks for segments */
+#define WLAN_DCS_SEG_PRI20_MASK BIT(0)
+#define WLAN_DCS_SEG_SEC20_MASK BIT(1)
+#define WLAN_DCS_SEG_SEC40_MASK (BIT(2) | BIT(3))
+#define WLAN_DCS_SEG_SEC80_MASK (BIT(4) | BIT(5) | BIT(6) | BIT(7))
+#define WLAN_DCS_SEG_SEC160_MASK (BIT(8) | BIT(9) | BIT(10) | BIT(11) | \
+				  BIT(12) | BIT(13) | BIT(14) | BIT(15))
+
+#define WLAN_DCS_CHAN_FREQ_OFFSET 5
+#define WLAN_DCS_IS_FREQ_IN_WIDTH(__cfreq, __cfreq0, __cfreq1, __width, __freq)\
+	((((__width) == CH_WIDTH_20MHZ) &&                                     \
+	  ((__cfreq) == (__freq))) ||                                          \
+	 (((__width) == CH_WIDTH_40MHZ) &&                                     \
+	  (((__freq) >= ((__cfreq0) - (2 * WLAN_DCS_CHAN_FREQ_OFFSET))) &&     \
+	   ((__freq) <= ((__cfreq0) + (2 * WLAN_DCS_CHAN_FREQ_OFFSET))))) ||   \
+	 (((__width) == CH_WIDTH_80MHZ) &&                                     \
+	  (((__freq) >= ((__cfreq0) - (6 * WLAN_DCS_CHAN_FREQ_OFFSET))) &&     \
+	   ((__freq) <= ((__cfreq0) + (6 * WLAN_DCS_CHAN_FREQ_OFFSET))))) ||   \
+	 (((__width) == CH_WIDTH_160MHZ) &&                                    \
+	  (((__freq) >= ((__cfreq1) - (14 * WLAN_DCS_CHAN_FREQ_OFFSET))) &&    \
+	   ((__freq) <= ((__cfreq1) + (14 * WLAN_DCS_CHAN_FREQ_OFFSET))))) ||  \
+	 (((__width) == CH_WIDTH_80P80MHZ) &&                                  \
+	  ((((__freq) >= ((__cfreq0) - (6 * WLAN_DCS_CHAN_FREQ_OFFSET))) &&    \
+	   ((__freq) <= ((__cfreq0) + (6 * WLAN_DCS_CHAN_FREQ_OFFSET)))) ||    \
+	   (((__freq) >= ((__cfreq1) - (6 * WLAN_DCS_CHAN_FREQ_OFFSET))) &&    \
+	   ((__freq) <= ((__cfreq1) + (6 * WLAN_DCS_CHAN_FREQ_OFFSET)))))))
+
+/**
  * struct dcs_psoc_priv_obj - define dcs psoc priv
  * @dcs_pdev_priv: dcs pdev priv
  * @dcs_cbk: dcs callback
+ * @switch_chan_cb: callback for switching channel
  */
 struct dcs_psoc_priv_obj {
 	struct dcs_pdev_priv_obj dcs_pdev_priv[WLAN_DCS_MAX_PDEVS];
 	struct psoc_dcs_cbk dcs_cbk;
+	dcs_switch_chan_cb switch_chan_cb;
 };
 
 /**
@@ -222,7 +269,7 @@ QDF_STATUS wlan_dcs_cmd_send(struct wlan_objmgr_psoc *psoc,
 /**
  * wlan_dcs_process() - dcs process main entry
  * @psoc: psoc pointer
- * @event: dcs stats event pointer
+ * @event: dcs event pointer
  *
  * This function is the main entry to do dcs related operation
  * such as algorithm handling and dcs frequency control.
@@ -230,7 +277,7 @@ QDF_STATUS wlan_dcs_cmd_send(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS
  */
 QDF_STATUS wlan_dcs_process(struct wlan_objmgr_psoc *psoc,
-			    struct dcs_stats_event *event);
+			    struct wlan_host_dcs_event *event);
 
 /**
  * wlan_dcs_disable_timer_fn() - dcs disable timer callback

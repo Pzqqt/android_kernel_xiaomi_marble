@@ -70,6 +70,10 @@ extract_cfr_peer_tx_event_param_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 
 	peer_tx_event->rx_start_ts = peer_tx_event_ev->rx_start_ts;
 	peer_tx_event->rx_ts_reset = peer_tx_event_ev->rx_ts_reset;
+	peer_tx_event->mcs_rate =
+		WMI_CFR_MCS_GET(peer_tx_event_ev->mcs_gi_info);
+	peer_tx_event->gi_type =
+		WMI_CFR_GI_TYPE_GET(peer_tx_event_ev->mcs_gi_info);
 
 	chain_phase_ev = param_buf->phase_param;
 	if (chain_phase_ev) {

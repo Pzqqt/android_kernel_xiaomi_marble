@@ -251,6 +251,16 @@ enum hal_rx_mpdu_desc_flags {
 #define HAL_RX_BUF_RBM_SW5_BM(sw0_bm_id)	(sw0_bm_id + 5)
 #define HAL_RX_BUF_RBM_SW6_BM(sw0_bm_id)	(sw0_bm_id + 6)
 
+#define HAL_REO_DESTINATION_RING_MSDU_COUNT_OFFSET	0x8
+#define HAL_REO_DESTINATION_RING_MSDU_COUNT_LSB		0
+#define HAL_REO_DESTINATION_RING_MSDU_COUNT_MASK	0x000000ff
+
+#define HAL_RX_REO_DESC_MSDU_COUNT_GET(reo_desc)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(reo_desc,	\
+		 HAL_REO_DESTINATION_RING_MSDU_COUNT_OFFSET)),	\
+		 HAL_REO_DESTINATION_RING_MSDU_COUNT_MASK,	\
+		 HAL_REO_DESTINATION_RING_MSDU_COUNT_LSB))
+
 #define HAL_BUFFER_ADDR_INFO_BUFFER_ADDR_31_0_OFFSET	0x0
 #define HAL_BUFFER_ADDR_INFO_BUFFER_ADDR_31_0_LSB	0
 #define HAL_BUFFER_ADDR_INFO_BUFFER_ADDR_31_0_MASK	0xffffffff
@@ -1324,6 +1334,20 @@ static inline bool hal_rx_reo_is_oor_error(uint32_t error_code)
 }
 
 /**
+ * hal_rx_reo_is_bar_oor_2k_jump() - Check if the error is 2k-jump or OOR error
+ * @error_code: error code obtained from ring descriptor.
+ *
+ * Return: true, if the error code is 2k-jump or OOR
+ *	false, for other error codes.
+ */
+static inline bool hal_rx_reo_is_bar_oor_2k_jump(uint32_t error_code)
+{
+	return ((error_code == HAL_REO_ERR_BAR_FRAME_2K_JUMP) ||
+		(error_code == HAL_REO_ERR_BAR_FRAME_OOR)) ?
+		true : false;
+}
+
+/**
  * hal_dump_wbm_rel_desc() - dump wbm release descriptor
  * @hal_desc: hardware descriptor pointer
  *
@@ -1688,6 +1712,27 @@ uint32_t hal_rx_desc_is_first_msdu(hal_soc_handle_t hal_soc_hdl,
 	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
 	return hal_soc->ops->hal_rx_desc_is_first_msdu(hw_desc_addr);
+}
+
+/**
+ * hal_rx_tlv_populate_mpdu_desc_info() - Populate mpdu_desc_info fields from
+ *					the rx tlv fields.
+ * @hal_soc_hdl: HAL SoC handle
+ * @buf: rx tlv start address [To be validated by caller]
+ * @mpdu_desc_info_hdl: Buffer where the mpdu_desc_info is to be populated.
+ *
+ * Return: None
+ */
+static inline void
+hal_rx_tlv_populate_mpdu_desc_info(hal_soc_handle_t hal_soc_hdl,
+				   uint8_t *buf,
+				   void *mpdu_desc_info_hdl)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (hal_soc->ops->hal_rx_tlv_populate_mpdu_desc_info)
+		return hal_soc->ops->hal_rx_tlv_populate_mpdu_desc_info(buf,
+							mpdu_desc_info_hdl);
 }
 
 static inline uint32_t
@@ -2702,6 +2747,24 @@ hal_rx_reo_buf_type_get(hal_soc_handle_t hal_soc_hdl, hal_ring_desc_t rx_desc)
 	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
 	return hal_soc->ops->hal_rx_reo_buf_type_get(rx_desc);
+}
+
+/**
+ * hal_rx_reo_prev_pn_get() - Get the previous pn from ring descriptor.
+ * @hal_soc_hdl: HAL SoC handle
+ * @ring_desc: REO ring descriptor
+ * @prev_pn: Buffer to populate the previos PN
+ *
+ * Return: None
+ */
+static inline void
+hal_rx_reo_prev_pn_get(hal_soc_handle_t hal_soc_hdl, hal_ring_desc_t ring_desc,
+		       uint64_t *prev_pn)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (hal_soc->ops->hal_rx_reo_prev_pn_get)
+		return hal_soc->ops->hal_rx_reo_prev_pn_get(ring_desc, prev_pn);
 }
 
 /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -26,25 +26,15 @@
 #include <wlan_dcs_public_structs.h>
 
 /**
- * struct dcs_stats_event - define dcs stats event
- * @wlan_stat: wlan interference target statistics
- * @dcs_param: dcs event param
- */
-struct dcs_stats_event {
-	struct wlan_host_dcs_im_tgt_stats wlan_stat;
-	struct wlan_host_dcs_interference_param dcs_param;
-};
-
-/**
  * tgt_dcs_process_event(): dcs FW event process
  * @psoc: pointer to psoc object
- * @event: pointer to dcs stats event
+ * @event: pointer to dcs event
  *
  * This function gets called to process dcs FW event
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS tgt_dcs_process_event(struct wlan_objmgr_psoc *psoc,
-				 struct dcs_stats_event *event);
+				 struct wlan_host_dcs_event *event);
 
 #endif /* __WLAN_DCS_TGT_API_H__ */

@@ -32,6 +32,9 @@
 #include "rx_flow_search_entry.h"
 #include "hal_rx_flow_info.h"
 #include "hal_be_api.h"
+#include "reo_destination_ring_with_pn.h"
+
+#include <hal_be_rx.h>
 
 #define UNIFIED_RXPCU_PPDU_END_INFO_8_RX_PPDU_DURATION_OFFSET \
 	RXPCU_PPDU_END_INFO_RX_PPDU_DURATION_OFFSET
@@ -714,6 +717,33 @@ static void hal_rx_dump_pkt_tlvs_7850(hal_soc_handle_t hal_soc_hdl,
 }
 
 /**
+ * hal_rx_tlv_populate_mpdu_desc_info_7850() - Populate the local mpdu_desc_info
+ *			elements from the rx tlvs
+ * @buf: start address of rx tlvs [Validated by caller]
+ * @mpdu_desc_info_hdl: Buffer to populate the mpdu_dsc_info
+ *			[To be validated by caller]
+ *
+ * Return: None
+ */
+static void
+hal_rx_tlv_populate_mpdu_desc_info_7850(uint8_t *buf,
+					void *mpdu_desc_info_hdl)
+{
+	struct hal_rx_mpdu_desc_info *mpdu_desc_info =
+		(struct hal_rx_mpdu_desc_info *)mpdu_desc_info_hdl;
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_mpdu_start *mpdu_start =
+					&pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+	struct rx_mpdu_info *mpdu_info = &mpdu_start->rx_mpdu_info_details;
+
+	mpdu_desc_info->mpdu_seq = mpdu_info->mpdu_sequence_number;
+	mpdu_desc_info->mpdu_flags = hal_rx_get_mpdu_flags((uint32_t *)
+							    mpdu_info);
+	mpdu_desc_info->peer_meta_data = mpdu_info->peer_meta_data;
+	mpdu_desc_info->bar_frame = mpdu_info->bar_frame;
+}
+
+/**
  * hal_reo_status_get_header_7850 - Process reo desc info
  * @d - Pointer to reo descriptior
  * @b - tlv type info
@@ -955,25 +985,25 @@ hal_reo_set_err_dst_remap_7850(void *hal_soc)
 {
 	/*
 	 * Set REO error 2k jump (error code 5) / OOR (error code 7)
-	 * frame routed to REO2TCL ring.
+	 * frame routed to REO2SW0 ring.
 	 */
 	uint32_t dst_remap_ix0 =
-		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 0) |
-		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 1) |
-		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 2) |
-		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 3) |
-		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 4) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_TCL, 0) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_TCL, 1) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_TCL, 2) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_TCL, 3) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_TCL, 4) |
 		HAL_REO_ERR_REMAP_IX0(REO_REMAP_TCL, 5) |
 		HAL_REO_ERR_REMAP_IX0(REO_REMAP_TCL, 6) |
 		HAL_REO_ERR_REMAP_IX0(REO_REMAP_TCL, 7);
 
 	uint32_t dst_remap_ix1 =
-		HAL_REO_ERR_REMAP_IX1(REO_REMAP_RELEASE, 14) |
-		HAL_REO_ERR_REMAP_IX1(REO_REMAP_RELEASE, 13) |
-		HAL_REO_ERR_REMAP_IX1(REO_REMAP_RELEASE, 12) |
-		HAL_REO_ERR_REMAP_IX1(REO_REMAP_RELEASE, 11) |
-		HAL_REO_ERR_REMAP_IX1(REO_REMAP_RELEASE, 10) |
-		HAL_REO_ERR_REMAP_IX1(REO_REMAP_RELEASE, 9) |
+		HAL_REO_ERR_REMAP_IX1(REO_REMAP_TCL, 14) |
+		HAL_REO_ERR_REMAP_IX1(REO_REMAP_TCL, 13) |
+		HAL_REO_ERR_REMAP_IX1(REO_REMAP_TCL, 12) |
+		HAL_REO_ERR_REMAP_IX1(REO_REMAP_TCL, 11) |
+		HAL_REO_ERR_REMAP_IX1(REO_REMAP_TCL, 10) |
+		HAL_REO_ERR_REMAP_IX1(REO_REMAP_TCL, 9) |
 		HAL_REO_ERR_REMAP_IX1(REO_REMAP_TCL, 8);
 
 		HAL_REG_WRITE(hal_soc,
@@ -997,6 +1027,20 @@ hal_reo_set_err_dst_remap_7850(void *hal_soc)
 			 hal_soc,
 			 HWIO_REO_R0_ERROR_DESTINATION_MAPPING_IX_1_ADDR(
 			 REO_REG_REG_BASE)));
+}
+
+/**
+ * hal_reo_enable_pn_in_dest_7850() - Set the REO register to enable previous PN
+ *				for OOR and 2K-jump frames
+ * @hal_soc: HAL SoC handle
+ *
+ * Return: 1, since the register is set.
+ */
+static uint8_t hal_reo_enable_pn_in_dest_7850(void *hal_soc)
+{
+	HAL_REG_WRITE(hal_soc, HWIO_REO_R0_PN_IN_DEST_ADDR(REO_REG_REG_BASE),
+		      1);
+	return 1;
 }
 
 /**
@@ -1114,47 +1158,98 @@ hal_rx_flow_setup_fse_7850(uint8_t *rx_fst, uint32_t table_offset,
 }
 
 static
-void hal_compute_reo_remap_ix2_ix3_7850(uint32_t *ring, uint32_t num_rings,
-					uint32_t *remap1, uint32_t *remap2)
+void hal_compute_reo_remap_ix2_ix3_7850(uint32_t *ring_map,
+					uint32_t num_rings, uint32_t *remap1,
+					uint32_t *remap2)
 {
-	switch (num_rings) {
-	case 3:
-		*remap1 = HAL_REO_REMAP_IX2(ring[0], 16) |
-				HAL_REO_REMAP_IX2(ring[1], 17) |
-				HAL_REO_REMAP_IX2(ring[2], 18) |
-				HAL_REO_REMAP_IX2(ring[0], 19) |
-				HAL_REO_REMAP_IX2(ring[1], 20) |
-				HAL_REO_REMAP_IX2(ring[2], 21) |
-				HAL_REO_REMAP_IX2(ring[0], 22) |
-				HAL_REO_REMAP_IX2(ring[1], 23);
+	/*
+	 * The 4 bits REO destination ring value is defined as: 0: TCL
+	 * 1:SW1  2:SW2  3:SW3  4:SW4  5:Release  6:FW(WIFI)  7:SW5
+	 * 8:SW6 9:SW7  10:SW8  11: NOT_USED.
+	 *
+	 */
+	uint32_t reo_dest_ring_map[] = {REO_REMAP_SW1, REO_REMAP_SW2,
+					REO_REMAP_SW3, REO_REMAP_SW4,
+					REO_REMAP_SW5, REO_REMAP_SW6,
+					REO_REMAP_SW7, REO_REMAP_SW8};
 
-		*remap2 = HAL_REO_REMAP_IX3(ring[2], 24) |
-				HAL_REO_REMAP_IX3(ring[0], 25) |
-				HAL_REO_REMAP_IX3(ring[1], 26) |
-				HAL_REO_REMAP_IX3(ring[2], 27) |
-				HAL_REO_REMAP_IX3(ring[0], 28) |
-				HAL_REO_REMAP_IX3(ring[1], 29) |
-				HAL_REO_REMAP_IX3(ring[2], 30) |
-				HAL_REO_REMAP_IX3(ring[0], 31);
+	switch (num_rings) {
+	default:
+	case 3:
+		*remap1 = HAL_REO_REMAP_IX2(reo_dest_ring_map[0], 16) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[1], 17) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[2], 18) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[0], 19) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[1], 20) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[2], 21) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[0], 22) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[1], 23);
+
+		*remap2 = HAL_REO_REMAP_IX3(reo_dest_ring_map[2], 24) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[0], 25) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[1], 26) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[2], 27) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[0], 28) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[1], 29) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[2], 30) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[0], 31);
 		break;
 	case 4:
-		*remap1 = HAL_REO_REMAP_IX2(ring[0], 16) |
-				HAL_REO_REMAP_IX2(ring[1], 17) |
-				HAL_REO_REMAP_IX2(ring[2], 18) |
-				HAL_REO_REMAP_IX2(ring[3], 19) |
-				HAL_REO_REMAP_IX2(ring[0], 20) |
-				HAL_REO_REMAP_IX2(ring[1], 21) |
-				HAL_REO_REMAP_IX2(ring[2], 22) |
-				HAL_REO_REMAP_IX2(ring[3], 23);
+		*remap1 = HAL_REO_REMAP_IX2(reo_dest_ring_map[0], 16) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[1], 17) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[2], 18) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[3], 19) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[0], 20) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[1], 21) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[2], 22) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[3], 23);
 
-		*remap2 = HAL_REO_REMAP_IX3(ring[0], 24) |
-				HAL_REO_REMAP_IX3(ring[1], 25) |
-				HAL_REO_REMAP_IX3(ring[2], 26) |
-				HAL_REO_REMAP_IX3(ring[3], 27) |
-				HAL_REO_REMAP_IX3(ring[0], 28) |
-				HAL_REO_REMAP_IX3(ring[1], 29) |
-				HAL_REO_REMAP_IX3(ring[2], 30) |
-				HAL_REO_REMAP_IX3(ring[3], 31);
+		*remap2 = HAL_REO_REMAP_IX3(reo_dest_ring_map[0], 24) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[1], 25) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[2], 26) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[3], 27) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[0], 28) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[1], 29) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[2], 30) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[3], 31);
+		break;
+	case 6:
+		*remap1 = HAL_REO_REMAP_IX2(reo_dest_ring_map[0], 16) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[1], 17) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[2], 18) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[4], 19) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[5], 20) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[6], 21) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[0], 22) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[1], 23);
+
+		*remap2 = HAL_REO_REMAP_IX3(reo_dest_ring_map[2], 24) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[4], 25) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[5], 26) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[6], 27) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[0], 28) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[1], 29) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[2], 30) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[4], 31);
+		break;
+	case 8:
+		*remap1 = HAL_REO_REMAP_IX2(reo_dest_ring_map[0], 16) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[1], 17) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[2], 18) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[3], 19) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[4], 20) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[5], 21) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[6], 22) |
+			  HAL_REO_REMAP_IX2(reo_dest_ring_map[7], 23);
+
+		*remap2 = HAL_REO_REMAP_IX3(reo_dest_ring_map[0], 24) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[1], 25) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[2], 26) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[3], 27) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[4], 28) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[5], 29) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[6], 30) |
+			  HAL_REO_REMAP_IX3(reo_dest_ring_map[7], 31);
 		break;
 	}
 }
@@ -1172,6 +1267,24 @@ static uint8_t hal_tx_get_num_tcl_banks_7850(void)
 	return HAL_NUM_TCL_BANKS_7850;
 }
 
+/**
+ * hal_rx_reo_prev_pn_get_7850() - Get the previous PN from the REO ring desc.
+ * @ring_desc: REO ring descriptor [To be validated by caller ]
+ * @prev_pn: Buffer where the previous PN is to be populated.
+ *		[To be validated by caller]
+ *
+ * Return: None
+ */
+static void hal_rx_reo_prev_pn_get_7850(void *ring_desc,
+					uint64_t *prev_pn)
+{
+	struct reo_destination_ring_with_pn *reo_desc =
+		(struct reo_destination_ring_with_pn *)ring_desc;
+
+	*prev_pn = reo_desc->prev_pn_23_0;
+	*prev_pn |= ((uint64_t)reo_desc->prev_pn_55_24 << 24);
+}
+
 static void hal_hw_txrx_ops_attach_wcn7850(struct hal_soc *hal_soc)
 {
 	/* init and setup */
@@ -1182,6 +1295,8 @@ static void hal_hw_txrx_ops_attach_wcn7850(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_get_window_address = hal_get_window_address_7850;
 	hal_soc->ops->hal_reo_set_err_dst_remap =
 						hal_reo_set_err_dst_remap_7850;
+	hal_soc->ops->hal_reo_enable_pn_in_dest =
+						hal_reo_enable_pn_in_dest_7850;
 
 	/* tx */
 	hal_soc->ops->hal_tx_set_dscp_tid_map = hal_tx_set_dscp_tid_map_7850;
@@ -1332,6 +1447,7 @@ static void hal_hw_txrx_ops_attach_wcn7850(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_rx_get_fisa_timeout = hal_rx_get_fisa_timeout_be;
 	hal_soc->ops->hal_rx_mpdu_start_tlv_tag_valid =
 		hal_rx_mpdu_start_tlv_tag_valid_be;
+	hal_soc->ops->hal_rx_reo_prev_pn_get = hal_rx_reo_prev_pn_get_7850;
 
 	/* rx - TLV struct offsets */
 	hal_soc->ops->hal_rx_msdu_end_offset_get =
@@ -1388,16 +1504,21 @@ static void hal_hw_txrx_ops_attach_wcn7850(struct hal_soc *hal_soc)
 					hal_rx_mpdu_info_ampdu_flag_get_be;
 	hal_soc->ops->hal_rx_tlv_msdu_len_set =
 					hal_rx_msdu_start_msdu_len_set_be;
+	hal_soc->ops->hal_rx_tlv_populate_mpdu_desc_info =
+				hal_rx_tlv_populate_mpdu_desc_info_7850;
+	hal_soc->ops->hal_rx_tlv_get_pn_num =
+				hal_rx_tlv_get_pn_num_be;
 };
 
 struct hal_hw_srng_config hw_srng_table_7850[] = {
 	/* TODO: max_rings can populated by querying HW capabilities */
 	{ /* REO_DST */
 		.start_ring_id = HAL_SRNG_REO2SW1,
-		.max_rings = 4,
+		.max_rings = 8,
 		.entry_size = sizeof(struct reo_destination_ring) >> 2,
 		.lmac_ring = FALSE,
 		.ring_dir = HAL_SRNG_DST_RING,
+		.nf_irq_support = true,
 		.reg_start = {
 			HWIO_REO_R0_REO2SW1_RING_BASE_LSB_ADDR(
 				REO_REG_REG_BASE),
@@ -1498,7 +1619,7 @@ struct hal_hw_srng_config hw_srng_table_7850[] = {
 	},
 	{ /* TCL_DATA */
 		.start_ring_id = HAL_SRNG_SW2TCL1,
-		.max_rings = 3,
+		.max_rings = 5,
 		.entry_size = sizeof(struct tcl_data_cmd) >> 2,
 		.lmac_ring = FALSE,
 		.ring_dir = HAL_SRNG_SRC_RING,
@@ -1661,10 +1782,11 @@ struct hal_hw_srng_config hw_srng_table_7850[] = {
 	},
 	{ /* WBM2SW_RELEASE */
 		.start_ring_id = HAL_SRNG_WBM2SW0_RELEASE,
-		.max_rings = 4,
+		.max_rings = 7,
 		.entry_size = sizeof(struct wbm_release_ring) >> 2,
 		.lmac_ring = FALSE,
 		.ring_dir = HAL_SRNG_DST_RING,
+		.nf_irq_support = true,
 		.reg_start = {
 		HWIO_WBM_R0_WBM2SW0_RELEASE_RING_BASE_LSB_ADDR(WBM_REG_REG_BASE),
 		HWIO_WBM_R2_WBM2SW0_RELEASE_RING_HP_ADDR(WBM_REG_REG_BASE),
@@ -1795,35 +1917,23 @@ struct hal_hw_srng_config hw_srng_table_7850[] = {
 #endif
 };
 
-int32_t hal_hw_reg_offset_wcn7850[] = {
-	/* dst */
-	REG_OFFSET(DST, HP),
-	REG_OFFSET(DST, TP),
-	REG_OFFSET(DST, ID),
-	REG_OFFSET(DST, MISC),
-	REG_OFFSET(DST, HP_ADDR_LSB),
-	REG_OFFSET(DST, HP_ADDR_MSB),
-	REG_OFFSET(DST, MSI1_BASE_LSB),
-	REG_OFFSET(DST, MSI1_BASE_MSB),
-	REG_OFFSET(DST, MSI1_DATA),
-	REG_OFFSET(DST, BASE_LSB),
-	REG_OFFSET(DST, BASE_MSB),
-	REG_OFFSET(DST, PRODUCER_INT_SETUP),
-	/* src */
-	REG_OFFSET(SRC, HP),
-	REG_OFFSET(SRC, TP),
-	REG_OFFSET(SRC, ID),
-	REG_OFFSET(SRC, MISC),
-	REG_OFFSET(SRC, TP_ADDR_LSB),
-	REG_OFFSET(SRC, TP_ADDR_MSB),
-	REG_OFFSET(SRC, MSI1_BASE_LSB),
-	REG_OFFSET(SRC, MSI1_BASE_MSB),
-	REG_OFFSET(SRC, MSI1_DATA),
-	REG_OFFSET(SRC, BASE_LSB),
-	REG_OFFSET(SRC, BASE_MSB),
-	REG_OFFSET(SRC, CONSUMER_INT_SETUP_IX0),
-	REG_OFFSET(SRC, CONSUMER_INT_SETUP_IX1),
-};
+/**
+ * hal_srng_hw_reg_offset_init_wcn7850() - Initialize the HW srng reg offset
+ *				applicable only for WCN7850
+ * @hal_soc: HAL Soc handle
+ *
+ * Return: None
+ */
+static inline void hal_srng_hw_reg_offset_init_wcn7850(struct hal_soc *hal_soc)
+{
+	int32_t *hw_reg_offset = hal_soc->hal_hw_reg_offset;
+
+	hw_reg_offset[DST_MSI2_BASE_LSB] = REG_OFFSET(DST, MSI2_BASE_LSB),
+	hw_reg_offset[DST_MSI2_BASE_MSB] = REG_OFFSET(DST, MSI2_BASE_MSB),
+	hw_reg_offset[DST_MSI2_DATA] = REG_OFFSET(DST, MSI2_DATA),
+	hw_reg_offset[DST_PRODUCER_INT2_SETUP] =
+					REG_OFFSET(DST, PRODUCER_INT2_SETUP);
+}
 
 /**
  * hal_wcn7850_attach() - Attach 7850 target specific hal_soc ops,
@@ -1832,7 +1942,9 @@ int32_t hal_hw_reg_offset_wcn7850[] = {
 void hal_wcn7850_attach(struct hal_soc *hal_soc)
 {
 	hal_soc->hw_srng_table = hw_srng_table_7850;
-	hal_soc->hal_hw_reg_offset = hal_hw_reg_offset_wcn7850;
+
+	hal_srng_hw_reg_offset_init_generic(hal_soc);
+	hal_srng_hw_reg_offset_init_wcn7850(hal_soc);
 	hal_hw_txrx_default_ops_attach_be(hal_soc);
 	hal_hw_txrx_ops_attach_wcn7850(hal_soc);
 }

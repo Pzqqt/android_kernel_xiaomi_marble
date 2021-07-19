@@ -57,6 +57,8 @@ struct htc_init_info {
 	void (*target_initial_wakeup_cb)(void *cb_ctx);
 	void *target_psoc;
 	uint32_t cfg_wmi_credit_cnt;
+	/* HTC Pipe Ready Timeout in msecs */
+	uint32_t htc_ready_timeout_ms;
 };
 
 /* Struct for HTC layer packet stats*/
@@ -384,6 +386,26 @@ struct htc_endpoint_stats {
 	uint32_t RxAllocThreshHit;
 	/* total number of bytes */
 	uint32_t RxAllocThreshBytes;
+};
+
+/**
+ * htc_link_vote_user_id - user ids for each link vote type
+ * @HTC_LINK_VOTE_INVALID_MIN_USER_ID: min user id
+ * @HTC_LINK_VOTE_SAP_USER_ID: sap user id
+ * @HTC_LINK_VOTE_GO_USER_ID: go user id
+ * @HTC_LINK_VOTE_NDP_USER_ID: ndp user id
+ * @HTC_LINK_VOTE_SAP_DFS_USER_ID: sap dfs user id
+ * @HTC_LINK_VOTE_STA_USER_ID: sta user id
+ * @HTC_LINK_VOTE_INVALID_MAX_USER_ID: max user id
+ */
+enum htc_link_vote_user_id {
+	HTC_LINK_VOTE_INVALID_MIN_USER_ID = 0,
+	HTC_LINK_VOTE_SAP_USER_ID = 1,
+	HTC_LINK_VOTE_GO_USER_ID = 2,
+	HTC_LINK_VOTE_NDP_USER_ID = 3,
+	HTC_LINK_VOTE_SAP_DFS_USER_ID = 4,
+	HTC_LINK_VOTE_STA_USER_ID = 5,
+	HTC_LINK_VOTE_INVALID_MAX_USER_ID
 };
 
 /* ------ Function Prototypes ------ */
@@ -756,8 +778,7 @@ void htc_global_credit_flow_enable(void);
 
 /* Disable ASPM : Disable PCIe low power */
 bool htc_can_suspend_link(HTC_HANDLE HTCHandle);
-void htc_vote_link_down(HTC_HANDLE HTCHandle);
-void htc_vote_link_up(HTC_HANDLE HTCHandle);
+
 #ifdef IPA_OFFLOAD
 void htc_ipa_get_ce_resource(HTC_HANDLE htc_handle,
 			     qdf_shared_mem_t **ce_sr,
@@ -806,6 +827,55 @@ static inline
 int32_t htc_dec_return_runtime_cnt(HTC_HANDLE htc)
 {
 	return -1;
+}
+#endif
+
+#ifdef WLAN_DEBUG_LINK_VOTE
+/**
+ * htc_log_link_user_votes - API to log link user votes
+ *
+ * API to log the link user votes
+ *
+ * Return: void
+ */
+void htc_log_link_user_votes(void);
+
+/**
+ * htc_vote_link_down - API to vote for link down
+ * @htc_handle: HTC handle
+ * @id: PCIe link vote user id
+ *
+ * API for upper layers to call HIF to vote for link down
+ *
+ * Return: void
+ */
+void htc_vote_link_down(HTC_HANDLE htc_handle, enum htc_link_vote_user_id id);
+
+/**
+ * htc_vote_link_up - API to vote for link up
+ * @htc_handle: HTC Handle
+ * @id: PCIe link vote user id
+ *
+ * API for upper layers to call HIF to vote for link up
+ *
+ * Return: void
+ */
+void htc_vote_link_up(HTC_HANDLE htc_handle, enum htc_link_vote_user_id id);
+
+#else
+static inline
+void htc_log_link_user_votes(void)
+{
+}
+
+static inline
+void htc_vote_link_down(HTC_HANDLE htc_handle, enum htc_link_vote_user_id id)
+{
+}
+
+static inline
+void htc_vote_link_up(HTC_HANDLE htc_handle, enum htc_link_vote_user_id id)
+{
 }
 #endif
 

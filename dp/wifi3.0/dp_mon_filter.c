@@ -1184,8 +1184,7 @@ QDF_STATUS dp_mon_filter_update(struct dp_pdev *pdev)
 		 * reset when monitor mode gets enabled/disabled.
 		 */
 		if (soc->wlan_cfg_ctx->rxdma1_enable) {
-			if (pdev->monitor_configured || mon_mode_set ||
-			    pdev->neighbour_peers_added) {
+			if (pdev->monitor_configured || mon_mode_set) {
 				status = dp_mon_ht2_rx_ring_cfg(soc, pdev,
 							mon_srng_type,
 							&filter.tlv_filter);

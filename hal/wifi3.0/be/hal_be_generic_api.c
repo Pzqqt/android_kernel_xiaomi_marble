@@ -22,6 +22,7 @@
 #include "hal_be_reo.h"
 #include "hal_tx.h"	//HAL_SET_FLD
 #include "hal_be_rx.h"	//HAL_RX_BUF_RBM_GET
+#include "hal_be_rx_tlv.h"
 
 #if defined(QDF_BIG_ENDIAN_MACHINE)
 /**
@@ -708,6 +709,113 @@ static uint8_t hal_rx_reo_buf_type_get_be(hal_ring_desc_t rx_desc)
 {
 	return HAL_RX_REO_BUF_TYPE_GET(rx_desc);
 }
+
+#ifdef DP_HW_COOKIE_CONVERT_EXCEPTION
+#define HAL_WBM_MISC_CONTROL_SPARE_CONTROL_FIELD_BIT15 0x8000
+#endif
+void hal_cookie_conversion_reg_cfg_be(hal_soc_handle_t hal_soc_hdl,
+				      struct hal_hw_cc_config *cc_cfg)
+{
+	uint32_t reg_addr, reg_val = 0;
+	struct hal_soc *soc = (struct hal_soc *)hal_soc_hdl;
+
+	/* REO CFG */
+	reg_addr = HWIO_REO_R0_SW_COOKIE_CFG0_ADDR(REO_REG_REG_BASE);
+	reg_val = cc_cfg->lut_base_addr_31_0;
+	HAL_REG_WRITE(soc, reg_addr, reg_val);
+
+	reg_addr = HWIO_REO_R0_SW_COOKIE_CFG1_ADDR(REO_REG_REG_BASE);
+	reg_val = 0;
+	reg_val |= HAL_SM(HWIO_REO_R0_SW_COOKIE_CFG1,
+			  SW_COOKIE_CONVERT_GLOBAL_ENABLE,
+			  cc_cfg->cc_global_en);
+	reg_val |= HAL_SM(HWIO_REO_R0_SW_COOKIE_CFG1,
+			  SW_COOKIE_CONVERT_ENABLE,
+			  cc_cfg->cc_global_en);
+	reg_val |= HAL_SM(HWIO_REO_R0_SW_COOKIE_CFG1,
+			  PAGE_ALIGNMENT,
+			  cc_cfg->page_4k_align);
+	reg_val |= HAL_SM(HWIO_REO_R0_SW_COOKIE_CFG1,
+			  COOKIE_OFFSET_MSB,
+			  cc_cfg->cookie_offset_msb);
+	reg_val |= HAL_SM(HWIO_REO_R0_SW_COOKIE_CFG1,
+			  COOKIE_PAGE_MSB,
+			  cc_cfg->cookie_page_msb);
+	reg_val |= HAL_SM(HWIO_REO_R0_SW_COOKIE_CFG1,
+			  CMEM_LUT_BASE_ADDR_39_32,
+			  cc_cfg->lut_base_addr_39_32);
+	HAL_REG_WRITE(soc, reg_addr, reg_val);
+
+	/* WBM CFG */
+	reg_addr = HWIO_WBM_R0_SW_COOKIE_CFG0_ADDR(WBM_REG_REG_BASE);
+	reg_val = cc_cfg->lut_base_addr_31_0;
+	HAL_REG_WRITE(soc, reg_addr, reg_val);
+
+	reg_addr = HWIO_WBM_R0_SW_COOKIE_CFG1_ADDR(WBM_REG_REG_BASE);
+	reg_val = 0;
+	reg_val |= HAL_SM(HWIO_WBM_R0_SW_COOKIE_CFG1,
+			  PAGE_ALIGNMENT,
+			  cc_cfg->page_4k_align);
+	reg_val |= HAL_SM(HWIO_WBM_R0_SW_COOKIE_CFG1,
+			  COOKIE_OFFSET_MSB,
+			  cc_cfg->cookie_offset_msb);
+	reg_val |= HAL_SM(HWIO_WBM_R0_SW_COOKIE_CFG1,
+			  COOKIE_PAGE_MSB,
+			  cc_cfg->cookie_page_msb);
+	reg_val |= HAL_SM(HWIO_WBM_R0_SW_COOKIE_CFG1,
+			  CMEM_LUT_BASE_ADDR_39_32,
+			  cc_cfg->lut_base_addr_39_32);
+	HAL_REG_WRITE(soc, reg_addr, reg_val);
+
+	/*
+	 * WCSS_UMAC_WBM_R0_SW_COOKIE_CONVERT_CFG default value is 0x1FE,
+	 */
+	reg_addr = HWIO_WBM_R0_SW_COOKIE_CONVERT_CFG_ADDR(WBM_REG_REG_BASE);
+	reg_val = 0;
+	reg_val |= HAL_SM(HWIO_WBM_R0_SW_COOKIE_CONVERT_CFG,
+			  WBM_COOKIE_CONV_GLOBAL_ENABLE,
+			  cc_cfg->cc_global_en);
+	reg_val |= HAL_SM(HWIO_WBM_R0_SW_COOKIE_CONVERT_CFG,
+			  WBM2SW6_COOKIE_CONVERSION_EN,
+			  cc_cfg->wbm2sw6_cc_en);
+	reg_val |= HAL_SM(HWIO_WBM_R0_SW_COOKIE_CONVERT_CFG,
+			  WBM2SW5_COOKIE_CONVERSION_EN,
+			  cc_cfg->wbm2sw5_cc_en);
+	reg_val |= HAL_SM(HWIO_WBM_R0_SW_COOKIE_CONVERT_CFG,
+			  WBM2SW4_COOKIE_CONVERSION_EN,
+			  cc_cfg->wbm2sw4_cc_en);
+	reg_val |= HAL_SM(HWIO_WBM_R0_SW_COOKIE_CONVERT_CFG,
+			  WBM2SW3_COOKIE_CONVERSION_EN,
+			  cc_cfg->wbm2sw3_cc_en);
+	reg_val |= HAL_SM(HWIO_WBM_R0_SW_COOKIE_CONVERT_CFG,
+			  WBM2SW2_COOKIE_CONVERSION_EN,
+			  cc_cfg->wbm2sw2_cc_en);
+	reg_val |= HAL_SM(HWIO_WBM_R0_SW_COOKIE_CONVERT_CFG,
+			  WBM2SW1_COOKIE_CONVERSION_EN,
+			  cc_cfg->wbm2sw1_cc_en);
+	reg_val |= HAL_SM(HWIO_WBM_R0_SW_COOKIE_CONVERT_CFG,
+			  WBM2SW0_COOKIE_CONVERSION_EN,
+			  cc_cfg->wbm2sw0_cc_en);
+	reg_val |= HAL_SM(HWIO_WBM_R0_SW_COOKIE_CONVERT_CFG,
+			  WBM2FW_COOKIE_CONVERSION_EN,
+			  cc_cfg->wbm2fw_cc_en);
+	HAL_REG_WRITE(soc, reg_addr, reg_val);
+
+#ifdef DP_HW_COOKIE_CONVERT_EXCEPTION
+	/*
+	 * To enable indication for HW cookie conversion done or not for
+	 * WBM, WCSS_UMAC_WBM_R0_MISC_CONTROL spare_control field 15th
+	 * bit spare_control[15] should be set.
+	 */
+	reg_addr = HWIO_WBM_R0_MISC_CONTROL_ADDR(WBM_REG_REG_BASE);
+	reg_val = HAL_REG_READ(soc, reg_addr);
+	reg_val |= HAL_SM(HWIO_WCSS_UMAC_WBM_R0_MISC_CONTROL,
+			  SPARE_CONTROL,
+			  HAL_WBM_MISC_CONTROL_SPARE_CONTROL_FIELD_BIT15);
+	HAL_REG_WRITE(soc, reg_addr, reg_val);
+#endif
+}
+qdf_export_symbol(hal_cookie_conversion_reg_cfg_be);
 
 /**
  * hal_hw_txrx_default_ops_attach_be() - Attach the default hal ops for

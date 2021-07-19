@@ -745,7 +745,7 @@ QDF_STATUS target_if_regulatory_set_ext_tpc(struct wlan_objmgr_psoc *psoc)
 	return QDF_STATUS_SUCCESS;
 }
 
-#if defined(CONFIG_BAND_6GHZ) && defined(CONFIG_REG_CLIENT)
+#if defined(CONFIG_BAND_6GHZ)
 /**
  * tgt_if_regulatory_is_lower_6g_edge_ch_supp() - Check if lower 6ghz
  * edge channel (5935MHz) is supported

@@ -1208,6 +1208,8 @@ static void hal_hw_txrx_ops_attach_6290(struct hal_soc *hal_soc)
 #endif
 	hal_soc->ops->hal_compute_reo_remap_ix2_ix3 =
 					hal_compute_reo_remap_ix2_ix3_6290;
+	hal_soc->ops->hal_setup_link_idle_list =
+				hal_setup_link_idle_list_generic_li;
 };
 
 struct hal_hw_srng_config hw_srng_table_6290[] = {
@@ -1619,36 +1621,6 @@ struct hal_hw_srng_config hw_srng_table_6290[] = {
 #endif
 };
 
-int32_t hal_hw_reg_offset_qca6290[] = {
-	/* dst */
-	REG_OFFSET(DST, HP),
-	REG_OFFSET(DST, TP),
-	REG_OFFSET(DST, ID),
-	REG_OFFSET(DST, MISC),
-	REG_OFFSET(DST, HP_ADDR_LSB),
-	REG_OFFSET(DST, HP_ADDR_MSB),
-	REG_OFFSET(DST, MSI1_BASE_LSB),
-	REG_OFFSET(DST, MSI1_BASE_MSB),
-	REG_OFFSET(DST, MSI1_DATA),
-	REG_OFFSET(DST, BASE_LSB),
-	REG_OFFSET(DST, BASE_MSB),
-	REG_OFFSET(DST, PRODUCER_INT_SETUP),
-	/* src */
-	REG_OFFSET(SRC, HP),
-	REG_OFFSET(SRC, TP),
-	REG_OFFSET(SRC, ID),
-	REG_OFFSET(SRC, MISC),
-	REG_OFFSET(SRC, TP_ADDR_LSB),
-	REG_OFFSET(SRC, TP_ADDR_MSB),
-	REG_OFFSET(SRC, MSI1_BASE_LSB),
-	REG_OFFSET(SRC, MSI1_BASE_MSB),
-	REG_OFFSET(SRC, MSI1_DATA),
-	REG_OFFSET(SRC, BASE_LSB),
-	REG_OFFSET(SRC, BASE_MSB),
-	REG_OFFSET(SRC, CONSUMER_INT_SETUP_IX0),
-	REG_OFFSET(SRC, CONSUMER_INT_SETUP_IX1),
-};
-
 /**
  * hal_qca6290_attach() - Attach 6290 target specific hal_soc ops,
  *			  offset and srng table
@@ -1656,7 +1628,7 @@ int32_t hal_hw_reg_offset_qca6290[] = {
 void hal_qca6290_attach(struct hal_soc *hal_soc)
 {
 	hal_soc->hw_srng_table = hw_srng_table_6290;
-	hal_soc->hal_hw_reg_offset = hal_hw_reg_offset_qca6290;
+	hal_srng_hw_reg_offset_init_generic(hal_soc);
 
 	hal_hw_txrx_default_ops_attach_li(hal_soc);
 	hal_hw_txrx_ops_attach_6290(hal_soc);

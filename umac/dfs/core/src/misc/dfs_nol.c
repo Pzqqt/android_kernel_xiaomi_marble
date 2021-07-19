@@ -52,69 +52,6 @@ bool dfs_get_update_nol_flag(struct wlan_dfs *dfs)
 }
 
 /**
- * dfs_nol_timeout() - NOL timeout function.
- *
- * Clears the WLAN_CHAN_DFS_RADAR_FOUND flag for the NOL timeout channel.
- */
-/* Unused function */
-#ifdef CONFIG_CHAN_FREQ_API
-static os_timer_func(dfs_nol_timeout)
-{
-	struct dfs_channel *c = NULL, lc;
-	unsigned long oldest, now;
-	struct wlan_dfs *dfs = NULL;
-	int i;
-	int nchans = 0;
-
-	c = &lc;
-
-	OS_GET_TIMER_ARG(dfs, struct wlan_dfs *);
-	dfs_mlme_get_dfs_ch_nchans(dfs->dfs_pdev_obj, &nchans);
-
-	now = oldest = qdf_system_ticks();
-	for (i = 0; i < nchans; i++) {
-		dfs_mlme_get_dfs_channels_for_freq
-			(dfs->dfs_pdev_obj,
-			 &c->dfs_ch_freq,
-			 &c->dfs_ch_flags,
-			 &c->dfs_ch_flagext,
-			 &c->dfs_ch_ieee,
-			 &c->dfs_ch_vhtop_ch_freq_seg1,
-			 &c->dfs_ch_vhtop_ch_freq_seg2,
-			 &c->dfs_ch_mhz_freq_seg1,
-			 &c->dfs_ch_mhz_freq_seg2,
-			 i);
-		if (WLAN_IS_CHAN_RADAR(dfs, c)) {
-			if (qdf_system_time_after_eq(now,
-						     dfs->dfs_nol_event[i] +
-						     dfs_get_nol_timeout(dfs))) {
-				c->dfs_ch_flagext &= ~WLAN_CHAN_DFS_RADAR_FOUND;
-				if (c->dfs_ch_flags & WLAN_CHAN_DFS_RADAR) {
-					/*
-					 * NB: do this here so we get only one
-					 * msg instead of one for every channel
-					 * table entry.
-					 */
-					dfs_debug(dfs, WLAN_DEBUG_DFS,
-						  "radar on channel %u (%u MHz) cleared after timeout",
-						  c->dfs_ch_ieee,
-						  c->dfs_ch_freq);
-				}
-			} else if (dfs->dfs_nol_event[i] < oldest) {
-				oldest = dfs->dfs_nol_event[i];
-			}
-		}
-	}
-	if (oldest != now) {
-		/* Arrange to process next channel up for a status change. */
-		qdf_timer_mod(&dfs->dfs_nol_timer,
-			      dfs_get_nol_timeout(dfs) -
-			      qdf_system_ticks_to_msecs(qdf_system_ticks()));
-	}
-}
-#endif
-
-/**
  * dfs_nol_elem_free_work_cb -  Free NOL element
  *
  * Free the NOL element memory
@@ -142,19 +79,9 @@ static void dfs_nol_elem_free_work_cb(void *context)
 	}
 }
 
-void dfs_nol_timer_init(struct wlan_dfs *dfs)
-{
-	qdf_timer_init(NULL,
-			&(dfs->dfs_nol_timer),
-			dfs_nol_timeout,
-			(void *)(dfs),
-			QDF_TIMER_TYPE_WAKE_APPS);
-}
-
 void dfs_nol_attach(struct wlan_dfs *dfs)
 {
 	dfs->wlan_dfs_nol_timeout = DFS_NOL_TIMEOUT_S;
-	dfs_nol_timer_init(dfs);
 	qdf_create_work(NULL, &dfs->dfs_nol_elem_free_work,
 			dfs_nol_elem_free_work_cb, dfs);
 	TAILQ_INIT(&dfs->dfs_nol_free_list);
@@ -168,11 +95,6 @@ void dfs_nol_detach(struct wlan_dfs *dfs)
 	qdf_flush_work(&dfs->dfs_nol_elem_free_work);
 	qdf_destroy_work(NULL, &dfs->dfs_nol_elem_free_work);
 	WLAN_DFSNOL_LOCK_DESTROY(dfs);
-}
-
-void dfs_nol_timer_detach(struct wlan_dfs *dfs)
-{
-	qdf_timer_free(&dfs->dfs_nol_timer);
 }
 
 /**
@@ -420,44 +342,6 @@ void dfs_set_nol(struct wlan_dfs *dfs,
 	dfs_nol_update(dfs);
 }
 #else
-#ifdef CONFIG_CHAN_NUM_API
-void dfs_set_nol(struct wlan_dfs *dfs,
-		 struct dfsreq_nolelem *dfs_nol,
-		 int nchan)
-{
-#define TIME_IN_MS 1000
-	uint32_t nol_time_lft_ms;
-	struct dfs_channel chan;
-	int i;
-	uint8_t chan_num;
-
-	if (!dfs) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
-		return;
-	}
-
-	for (i = 0; i < nchan; i++) {
-		nol_time_lft_ms = qdf_do_div(qdf_get_monotonic_boottime() -
-					      dfs_nol[i].nol_start_us, 1000);
-
-		if (nol_time_lft_ms < dfs_nol[i].nol_timeout_ms) {
-			chan.dfs_ch_freq = dfs_nol[i].nol_freq;
-			chan.dfs_ch_flags = 0;
-			chan.dfs_ch_flagext = 0;
-			nol_time_lft_ms =
-				(dfs_nol[i].nol_timeout_ms - nol_time_lft_ms);
-
-			DFS_NOL_ADD_CHAN_LOCKED(dfs, chan.dfs_ch_freq,
-						(nol_time_lft_ms / TIME_IN_MS));
-			chan_num = utils_dfs_freq_to_chan(chan.dfs_ch_freq);
-			utils_dfs_reg_update_nol_ch(dfs->dfs_pdev_obj,
-						    &chan_num, 1, DFS_NOL_SET);
-		}
-	}
-#undef TIME_IN_MS
-	dfs_nol_update(dfs);
-}
-#endif
 #endif
 
 void dfs_nol_addchan(struct wlan_dfs *dfs,

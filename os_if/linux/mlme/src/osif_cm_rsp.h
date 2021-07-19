@@ -24,7 +24,6 @@
 #ifndef __OSIF_CM_RSP_H
 #define __OSIF_CM_RSP_H
 
-#ifdef FEATURE_CM_ENABLE
 #include "wlan_objmgr_vdev_obj.h"
 #include "wlan_cm_public_struct.h"
 
@@ -135,5 +134,4 @@ osif_indicate_reassoc_results(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS osif_failed_candidate_handler(struct wlan_objmgr_vdev *vdev,
 					 struct wlan_cm_connect_resp *rsp);
 
-#endif /* FEATURE_CM_ENABLE */
 #endif /* __OSIF_CM_RSP_H */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -120,28 +120,7 @@ struct vdev_adfs_complete_status {
 
 extern struct dfs_to_mlme global_dfs_to_mlme;
 
-/**
- * tgt_dfs_set_current_channel() - Fill dfs channel structure from
- *                                 dfs_channel structure.
- * @pdev: Pointer to DFS pdev object.
- * @dfs_ch_freq: Frequency in Mhz.
- * @dfs_ch_flags: Channel flags.
- * @dfs_ch_flagext: Extended channel flags.
- * @dfs_ch_ieee: IEEE channel number.
- * @dfs_ch_vhtop_ch_freq_seg1: Channel Center frequency1.
- * @dfs_ch_vhtop_ch_freq_seg2: Channel Center frequency2.
- */
 #ifdef DFS_COMPONENT_ENABLE
-#ifdef CONFIG_CHAN_NUM_API
-QDF_STATUS tgt_dfs_set_current_channel(struct wlan_objmgr_pdev *pdev,
-		uint16_t dfs_ch_freq,
-		uint64_t dfs_ch_flags,
-		uint16_t dfs_ch_flagext,
-		uint8_t dfs_ch_ieee,
-		uint8_t dfs_ch_vhtop_ch_freq_seg1,
-		uint8_t dfs_ch_vhtop_ch_freq_seg2);
-#endif
-
 /**
  * tgt_dfs_set_current_channel_for_freq() - Fill dfs channel structure from
  *                                          dfs_channel structure.
@@ -222,17 +201,6 @@ QDF_STATUS tgt_dfs_get_radars(struct wlan_objmgr_pdev *pdev);
 QDF_STATUS tgt_dfs_process_radar_ind(struct wlan_objmgr_pdev *pdev,
 		struct radar_found_info *radar_found);
 #else
-static inline QDF_STATUS tgt_dfs_set_current_channel(
-		struct wlan_objmgr_pdev *pdev,
-		uint16_t dfs_ch_freq,
-		uint64_t dfs_ch_flags,
-		uint16_t dfs_ch_flagext,
-		uint8_t dfs_ch_ieee,
-		uint8_t dfs_ch_vhtop_ch_freq_seg1,
-		uint8_t dfs_ch_vhtop_ch_freq_seg2)
-{
-	return QDF_STATUS_SUCCESS;
-}
 
 static inline QDF_STATUS tgt_dfs_radar_enable(
 	struct wlan_objmgr_pdev *pdev,
@@ -376,31 +344,6 @@ QDF_STATUS tgt_dfs_agile_precac_start(struct wlan_objmgr_pdev *pdev);
  */
 QDF_STATUS tgt_dfs_ocac_complete(struct wlan_objmgr_pdev *pdev,
 				 struct vdev_adfs_complete_status *ocac_status);
-
-/**
- * utils_dfs_find_vht80_chan_for_precac() - Find VHT80 channel for precac.
- * @pdev: Pointer to DFS pdev object.
- * @chan_mode: Channel mode.
- * @ch_freq_seg1: Segment1 channel freq.
- * @cfreq1: cfreq1.
- * @cfreq2: cfreq2.
- * @phy_mode: Precac phymode.
- * @dfs_set_cfreq2: Precac cfreq2
- * @set_agile: Agile mode flag.
- *
- * wrapper function for  dfs_find_vht80_chan_for_precacdfs_cancel_cac_timer().
- * This function called from outside of dfs component.
- */
-#ifdef CONFIG_CHAN_NUM_API
-QDF_STATUS tgt_dfs_find_vht80_chan_for_precac(struct wlan_objmgr_pdev *pdev,
-		uint32_t chan_mode,
-		uint8_t ch_freq_seg1,
-		uint32_t *cfreq1,
-		uint32_t *cfreq2,
-		uint32_t *phy_mode,
-		bool *dfs_set_cfreq2,
-		bool *set_agile);
-#endif
 
 /**
  * tgt_dfs_find_vht80_precac_chan_freq() - Find VHT80 channel for precac
