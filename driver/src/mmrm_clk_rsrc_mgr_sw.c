@@ -583,6 +583,29 @@ err_clk_set_fail:
 	return rc;
 }
 
+static void mmrm_sw_dump_enabled_client_info(struct mmrm_sw_clk_mgr_info *sinfo)
+{
+	u32 c;
+	struct mmrm_sw_peak_current_data *peak_data = &sinfo->peak_cur_data;
+	struct mmrm_sw_clk_client_tbl_entry *tbl_entry = NULL;
+
+	for (c = 0; c < sinfo->tot_clk_clients; c++) {
+		tbl_entry = &sinfo->clk_client_tbl[c];
+		if (tbl_entry->clk_rate) {
+			d_mpr_p("%s: csid(0x%x) clk_rate(%zu) vdd_level(%zu) cur_ma(%zu)\n",
+				__func__,
+				tbl_entry->clk_src_id,
+				tbl_entry->clk_rate,
+				tbl_entry->vdd_level,
+				tbl_entry->current_ma[tbl_entry->vdd_level]
+									[peak_data->aggreg_level]);
+		}
+	}
+	if (peak_data) {
+		d_mpr_p("%s: aggreg_val(%zu) aggreg_level(%zu)\n", __func__,
+			peak_data->aggreg_val, peak_data->aggreg_level);
+	}
+}
 
 static int mmrm_sw_check_peak_current(struct mmrm_sw_clk_mgr_info *sinfo,
 	struct mmrm_sw_clk_client_tbl_entry *tbl_entry,
@@ -637,11 +660,13 @@ static int mmrm_sw_check_peak_current(struct mmrm_sw_clk_mgr_info *sinfo,
 			if (rc != 0) {
 				d_mpr_e("%s: Failed to throttle the low priority client\n",
 						__func__);
+				mmrm_sw_dump_enabled_client_info(sinfo);
 				goto err_peak_overshoot;
 			}
 		} else {
 			d_mpr_e("%s: Client csid(0x%x) name(%s) can't request throtlling\n",
 				__func__, tbl_entry->clk_src_id, tbl_entry->name);
+			mmrm_sw_dump_enabled_client_info(sinfo);
 			rc = -EINVAL;
 			goto err_peak_overshoot;
 		}
