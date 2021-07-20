@@ -5541,6 +5541,7 @@ typedef struct {
 	bool dynamic_pcie_gen_speed_change;
 	bool twt_ack_support_cap;
 	uint32_t ema_init_config;
+	uint32_t target_cap_flags;
 } target_resource_config;
 
 /**

@@ -2688,4 +2688,23 @@ void target_psoc_get_twt_ack_cap(struct target_psoc_info *psoc_info, bool *val)
 
 	*val = psoc_info->info.service_ext2_param.twt_ack_support_cap;
 }
+
+/**
+ * target_psoc_target_cap_flags() - flags containing information about target
+ * capabilities
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get flags containing information about target capabilities
+ *
+ * Return: no of target_cap_flags
+ */
+static inline uint32_t target_psoc_get_target_cap_flags
+		(struct target_psoc_info *psoc_info)
+{
+	if (!psoc_info)
+		return 0;
+
+	return psoc_info->info.service_ext2_param.target_cap_flags;
+}
+
 #endif
