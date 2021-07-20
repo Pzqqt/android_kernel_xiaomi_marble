@@ -38,14 +38,39 @@
 QDF_STATUS if_mgr_deliver_event(struct wlan_objmgr_vdev *vdev,
 				enum wlan_if_mgr_evt event,
 				struct if_mgr_event_data *event_data);
+/**
+ * if_mgr_get_event_str() - get event string
+ * @event: interface manager event
+ *
+ * Return: Interface event string
+ */
+const char *if_mgr_get_event_str(enum wlan_if_mgr_evt event);
+
+/**
+ * if_mgr_deliver_mbss_event() - interface mgr MBSS event handler
+ * @vdev: vdev object
+ * @event: interface mangaer event
+ * @event_data: Interface mgr event data
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS if_mgr_deliver_mbss_event(struct wlan_objmgr_vdev *vdev,
+				     enum wlan_if_mgr_evt event,
+				     struct if_mgr_event_data *event_data);
+
 #else
 static inline
 QDF_STATUS if_mgr_deliver_event(struct wlan_objmgr_vdev *vdev,
 				enum wlan_if_mgr_evt event,
 				struct if_mgr_event_data *event_data)
 {
-
 	return QDF_STATUS_SUCCESS;
 }
-#endif
+
+static inline const char *if_mgr_get_event_str(enum wlan_if_mgr_evt event)
+{
+	return "";
+}
+
+#endif /* WLAN_FEATURE_INTERFACE_MGR */
 #endif
