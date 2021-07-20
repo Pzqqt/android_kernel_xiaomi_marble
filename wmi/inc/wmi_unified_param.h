@@ -5538,6 +5538,7 @@ typedef struct {
 	bool sae_eapol_offload;
 	bool dynamic_pcie_gen_speed_change;
 	bool twt_ack_support_cap;
+	uint32_t ema_init_config;
 } target_resource_config;
 
 /**
