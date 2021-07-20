@@ -142,7 +142,6 @@ static int msm_audio_dma_buf_map(struct dma_buf *dma_buf,
 {
 
 	struct msm_audio_alloc_data *alloc_data = NULL;
-	unsigned long ionflag = 0;
 	int rc = 0;
 	void *vaddr = NULL;
 	struct device *cb_dev = ion_data->cb_dev;
@@ -166,17 +165,6 @@ static int msm_audio_dma_buf_map(struct dma_buf *dma_buf,
 			__func__, rc);
 		goto free_alloc_data;
 	}
-
-	/* For uncached buffers, avoid cache maintanance */
-	rc = dma_buf_get_flags(alloc_data->dma_buf, &ionflag);
-	if (rc) {
-		dev_err(cb_dev, "%s: dma_buf_get_flags failed: %d\n",
-			__func__, rc);
-		goto detach_dma_buf;
-	}
-
-	if (!(ionflag & ION_FLAG_CACHED))
-		alloc_data->attach->dma_map_attrs |= DMA_ATTR_SKIP_CPU_SYNC;
 
 	/*
 	 * Get the scatter-gather list.

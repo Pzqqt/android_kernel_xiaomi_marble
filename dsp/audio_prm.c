@@ -356,7 +356,6 @@ static int audio_prm_probe(struct gpr_device *adev)
 
 	dev_set_drvdata(&adev->dev, &g_prm);
 
-	mutex_init(&g_prm.lock);
 	g_prm.adev = adev;
 
 	init_waitqueue_head(&g_prm.wait);
@@ -405,11 +404,14 @@ static int __init audio_prm_module_init(void)
 	if (ret)
 		pr_err("%s: gpr driver register failed = %d\n", __func__, ret);
 
+	mutex_init(&g_prm.lock);
+
 	return ret;
 }
 
 static void __exit audio_prm_module_exit(void)
 {
+	mutex_destroy(&g_prm.lock);
 	gpr_driver_unregister(&qcom_audio_prm_driver);
 }
 

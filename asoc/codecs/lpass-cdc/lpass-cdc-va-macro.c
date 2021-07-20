@@ -711,10 +711,13 @@ static int lpass_cdc_va_macro_core_vote(void *handle, bool enable)
 	}
 	if (enable) {
 		pm_runtime_get_sync(va_priv->dev);
-		if (lpass_cdc_check_core_votes(va_priv->dev))
+		if (lpass_cdc_check_core_votes(va_priv->dev)) {
 			rc = 0;
-		else
+		} else {
+			pm_runtime_put_autosuspend(va_priv->dev);
+			pm_runtime_mark_last_busy(va_priv->dev);
 			rc = -ENOTSYNC;
+		}
 	} else {
 		pm_runtime_put_autosuspend(va_priv->dev);
 		pm_runtime_mark_last_busy(va_priv->dev);
