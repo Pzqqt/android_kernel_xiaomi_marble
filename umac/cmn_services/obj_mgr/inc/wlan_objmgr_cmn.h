@@ -379,7 +379,8 @@ typedef enum {
 	WLAN_OSIF_TDLS_ID     = 87,
 	WLAN_OSIF_CM_ID       = 88,
 	WLAN_TXRX_STREAMS_ID  = 89,
-	WLAN_MLO_MGR_ID = 90,
+	WLAN_MLO_MGR_ID       = 90,
+	WLAN_MBSS_ID          = 91,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 
@@ -484,6 +485,7 @@ static inline const char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 					"WLAN_OSIF_CM_ID",
 					"WLAN_TXRX_STREAMS_ID",
 					"WLAN_MLO_MGR_ID",
+					"WLAN_MBSS_ID"
 					};
 
 	if (id >= WLAN_REF_ID_MAX)
