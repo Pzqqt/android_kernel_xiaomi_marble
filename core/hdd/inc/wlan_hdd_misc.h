@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014,2016-2017,2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014,2016-2017,2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -48,5 +48,8 @@
 #define WLAN_INI_FILE              "wlan/" PREFIX "qcom_cfg.ini"
 #define WLAN_MAC_FILE              "wlan/" PREFIX "wlan_mac.bin"
 #endif /* MSM_PLATFORM */
+
+#define WLAN_CONNECTION_ROAMING_INI_FILE "wlan-connection-roaming.ini"
+#define WLAN_CONNECTION_ROAMING_BACKUP_INI_FILE "wlan-connection-roaming-backup.ini"
 
 #endif /* WLAN_HDD_MISC_H */
