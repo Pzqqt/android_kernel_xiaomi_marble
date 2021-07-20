@@ -14408,6 +14408,21 @@ typedef struct {
  */
 #define  WMI_PEER_PARAM_FW_CONGESTION_DISABLE           0x23
 
+/* Per peer dynamically change max Nss limit in supported tx modes.
+ * Whereas WMI_PEER_NSS cmd needs to reset PER tables and start peer rate
+ * control again.
+ * Currently supported only for 2x2 case, and also only supports setting
+ * all NSS up to current NSS.
+ * Mask is used so we can extend in future if needed.
+ *
+ *  Expected values in bits:
+ *  00: Use autorate
+ *  01: Enable only 1SS
+ *  10: Enable only 2SS
+ *  11: Disable NSS clamp feature or Fallback to autorate
+ */
+#define WMI_PEER_PARAM_DYN_NSS_EN_MASK                 0x24
+
 /** mimo ps values for the parameter WMI_PEER_MIMO_PS_STATE  */
 #define WMI_PEER_MIMO_PS_NONE                          0x0
 #define WMI_PEER_MIMO_PS_STATIC                        0x1
