@@ -795,6 +795,16 @@ EXPORT_SYMBOL(ipa3_set_usb_max_packet_size);
 int ipa3_get_usb_gsi_stats(struct ipa_uc_dbg_ring_stats *stats)
 {
 	int i;
+	int ipa_ep_idx_tx, ipa_ep_idx_rx;
+
+	ipa_ep_idx_tx = ipa3_get_ep_mapping(IPA_CLIENT_USB_CONS);
+	ipa_ep_idx_rx = ipa3_get_ep_mapping(IPA_CLIENT_USB_PROD);
+
+	if ((ipa_ep_idx_tx == -1) || (ipa_ep_idx_rx == -1) ||
+		!ipa3_ctx->ep[ipa_ep_idx_tx].valid ||
+		!ipa3_ctx->ep[ipa_ep_idx_rx].valid) {
+		return -EINVAL;
+	}
 
 	if (!ipa3_ctx->usb_ctx.dbg_stats.uc_dbg_stats_mmio) {
 		IPAERR("bad parms NULL usb_gsi_stats_mmio\n");
@@ -2055,6 +2065,16 @@ static void ipa3_get_gsi_ring_stats(struct IpaHwRingStats_t *ring,
 int ipa3_get_aqc_gsi_stats(struct ipa_uc_dbg_ring_stats *stats)
 {
 	int i;
+	int ipa_ep_idx_tx, ipa_ep_idx_rx;
+
+	ipa_ep_idx_tx = ipa3_get_ep_mapping(IPA_CLIENT_AQC_ETHERNET_CONS);
+	ipa_ep_idx_rx = ipa3_get_ep_mapping(IPA_CLIENT_AQC_ETHERNET_PROD);
+
+	if ((ipa_ep_idx_tx == -1) || (ipa_ep_idx_rx == -1) ||
+		!ipa3_ctx->ep[ipa_ep_idx_tx].valid ||
+		!ipa3_ctx->ep[ipa_ep_idx_rx].valid) {
+		return -EINVAL;
+	}
 
 	if (!ipa3_ctx->aqc_ctx.dbg_stats.uc_dbg_stats_mmio) {
 		IPAERR("bad parms NULL aqc_gsi_stats_mmio\n");
@@ -2083,6 +2103,16 @@ int ipa3_get_aqc_gsi_stats(struct ipa_uc_dbg_ring_stats *stats)
 int ipa3_get_ntn_gsi_stats(struct ipa_uc_dbg_ring_stats *stats)
 {
 	int i;
+	int ipa_ep_idx_tx, ipa_ep_idx_rx;
+
+	ipa_ep_idx_tx = ipa3_get_ep_mapping(IPA_CLIENT_ETHERNET_CONS);
+	ipa_ep_idx_rx = ipa3_get_ep_mapping(IPA_CLIENT_ETHERNET_PROD);
+
+	if ((ipa_ep_idx_tx == -1) || (ipa_ep_idx_rx == -1) ||
+		!ipa3_ctx->ep[ipa_ep_idx_tx].valid ||
+		!ipa3_ctx->ep[ipa_ep_idx_rx].valid) {
+		return -EINVAL;
+	}
 
 	if (!ipa3_ctx->ntn_ctx.dbg_stats.uc_dbg_stats_mmio) {
 		IPAERR("bad parms NULL ntn_gsi_stats_mmio\n");
@@ -2112,6 +2142,16 @@ int ipa3_get_rtk_gsi_stats(struct ipa_uc_dbg_ring_stats *stats)
 {
 	int i;
 	u64 low, high;
+	int ipa_ep_idx_tx, ipa_ep_idx_rx;
+
+	ipa_ep_idx_tx = ipa3_get_ep_mapping(IPA_CLIENT_RTK_ETHERNET_CONS);
+	ipa_ep_idx_rx = ipa3_get_ep_mapping(IPA_CLIENT_RTK_ETHERNET_PROD);
+
+	if ((ipa_ep_idx_tx == -1) || (ipa_ep_idx_rx == -1) ||
+		!ipa3_ctx->ep[ipa_ep_idx_tx].valid ||
+		!ipa3_ctx->ep[ipa_ep_idx_rx].valid) {
+		return -EINVAL;
+	}
 
 	if (!ipa3_ctx->rtk_ctx.dbg_stats.uc_dbg_stats_mmio) {
 		IPAERR("bad parms NULL eth_gsi_stats_mmio\n");
