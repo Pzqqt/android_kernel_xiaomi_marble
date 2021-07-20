@@ -14677,6 +14677,7 @@ void sme_set_he_testbed_def(mac_handle_t mac_handle, uint8_t vdev_id)
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	struct csr_roam_session *session;
 	QDF_STATUS status;
+	uint32_t prevent_pm[] = {29, 1};
 
 	session = CSR_GET_SESSION(mac_ctx, vdev_id);
 
@@ -14738,6 +14739,10 @@ void sme_set_he_testbed_def(mac_handle_t mac_handle, uint8_t vdev_id)
 		sme_err("Failed not set enable bcast probe resp info, %d",
 			status);
 
+	status = sme_send_unit_test_cmd(vdev_id, 77, 2, prevent_pm);
+
+	if (QDF_STATUS_SUCCESS != status)
+		sme_err("prevent pm cmd send failed");
 	status = wma_cli_set_command(vdev_id,
 				     WMI_VDEV_PARAM_ENABLE_BCAST_PROBE_RESPONSE,
 				     0, VDEV_CMD);
@@ -14754,6 +14759,7 @@ void sme_reset_he_caps(mac_handle_t mac_handle, uint8_t vdev_id)
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	struct csr_roam_session *session;
 	QDF_STATUS status;
+	uint32_t prevent_pm[] = {29, 0};
 
 	session = CSR_GET_SESSION(mac_ctx, vdev_id);
 
@@ -14767,6 +14773,10 @@ void sme_reset_he_caps(mac_handle_t mac_handle, uint8_t vdev_id)
 	csr_update_session_he_cap(mac_ctx, session);
 
 	wlan_cm_set_check_6ghz_security(mac_ctx->psoc, true);
+	status = sme_send_unit_test_cmd(vdev_id, 77, 2, prevent_pm);
+
+	if (QDF_STATUS_SUCCESS != status)
+		sme_err("prevent PM reset cmd send failed");
 	status = ucfg_mlme_set_enable_bcast_probe_rsp(mac_ctx->psoc, true);
 	if (QDF_IS_STATUS_ERROR(status))
 		sme_err("Failed not set enable bcast probe resp info, %d",
