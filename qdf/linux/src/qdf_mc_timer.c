@@ -37,7 +37,11 @@
 #define LINUX_INVALID_TIMER_COOKIE 0xfeedface
 #define TMR_INVALID_ID (0)
 
+#ifdef QDF_TIMER_MULTIPLIER_FRAC
+static uint32_t g_qdf_timer_multiplier = QDF_TIMER_MULTIPLIER_FRAC;
+#else
 static uint32_t g_qdf_timer_multiplier = 1;
+#endif
 
 inline void qdf_timer_set_multiplier(uint32_t multiplier)
 {
@@ -45,19 +49,11 @@ inline void qdf_timer_set_multiplier(uint32_t multiplier)
 }
 qdf_export_symbol(qdf_timer_set_multiplier);
 
-#ifdef QDF_TIMER_MULTIPLIER_FRAC
-inline uint32_t qdf_timer_get_multiplier(void)
-{
-	return QDF_TIMER_MULTIPLIER_FRAC;
-}
-qdf_export_symbol(qdf_timer_get_multiplier);
-#else
 inline uint32_t qdf_timer_get_multiplier(void)
 {
 	return g_qdf_timer_multiplier;
 }
 qdf_export_symbol(qdf_timer_get_multiplier);
-#endif
 
 /* Type declarations */
 

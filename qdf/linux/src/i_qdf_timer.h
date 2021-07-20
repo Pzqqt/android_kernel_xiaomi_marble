@@ -43,13 +43,8 @@ struct __qdf_timer_t {
 	void *context;
 };
 
-#ifdef QDF_TIMER_MULTIPLIER_FRAC
-#define __qdf_scaled_msecs_to_jiffies(msec) \
-	(QDF_TIMER_MULTIPLIER_FRAC * msecs_to_jiffies(msec))
-#else
 #define __qdf_scaled_msecs_to_jiffies(msec) \
 	(qdf_timer_get_multiplier() * msecs_to_jiffies(msec))
-#endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
 static inline void __os_timer_shim(struct timer_list *os_timer)
