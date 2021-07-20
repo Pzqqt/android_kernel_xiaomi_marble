@@ -58,9 +58,9 @@ int venus_hfi_trigger_ssr(struct msm_vidc_core *core, u32 type,
 int venus_hfi_scale_clocks(struct msm_vidc_inst* inst, u64 freq);
 int venus_hfi_scale_buses(struct msm_vidc_inst* inst, u64 bw_ddr, u64 bw_llcc);
 
-void venus_hfi_work_handler(struct work_struct *work);
 void venus_hfi_pm_work_handler(struct work_struct *work);
 irqreturn_t venus_hfi_isr(int irq, void *data);
+irqreturn_t venus_hfi_isr_handler(int irq, void *data);
 
 int __write_register_masked(struct msm_vidc_core *core,
 		u32 reg, u32 value, u32 mask);
