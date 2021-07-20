@@ -1961,7 +1961,8 @@ ifeq (y,$(filter y,$(CONFIG_LITHIUM) $(CONFIG_BERYLLIUM)))
 ############ DP 3.0 ############
 DP_INC := -I$(WLAN_COMMON_INC)/dp/inc \
 	-I$(WLAN_COMMON_INC)/dp/wifi3.0 \
-	-I$(WLAN_COMMON_INC)/target_if/dp/inc
+	-I$(WLAN_COMMON_INC)/target_if/dp/inc \
+	-I$(WLAN_COMMON_INC)/dp/wifi3.0/monitor
 
 DP_SRC := $(WLAN_COMMON_ROOT)/dp/wifi3.0
 DP_OBJS := $(DP_SRC)/dp_main.o \
@@ -1974,11 +1975,12 @@ DP_OBJS := $(DP_SRC)/dp_main.o \
 		$(DP_SRC)/dp_peer.o \
 		$(DP_SRC)/dp_rx_desc.o \
 		$(DP_SRC)/dp_reo.o \
-		$(DP_SRC)/dp_rx_mon_dest.o \
-		$(DP_SRC)/dp_rx_mon_status.o \
+		$(DP_SRC)/monitor/dp_rx_mon_dest.o \
+		$(DP_SRC)/monitor/dp_rx_mon_status.o \
 		$(DP_SRC)/dp_rx_defrag.o \
-		$(DP_SRC)/dp_mon_filter.o \
+		$(DP_SRC)/monitor/dp_mon_filter.o \
 		$(DP_SRC)/dp_stats.o \
+		$(DP_SRC)/monitor/dp_mon.o \
 		$(WLAN_COMMON_ROOT)/target_if/dp/src/target_if_dp.o
 
 ifeq ($(CONFIG_BERYLLIUM), y)
@@ -3010,6 +3012,11 @@ cppflags-$(CONFIG_WLAN_SYSFS_STA_INFO) += -DWLAN_SYSFS_STA_INFO
 cppflags-$(CONFIG_WLAN_DL_MODES) += -DCONFIG_WLAN_DL_MODES
 cppflags-$(CONFIG_WLAN_THERMAL_MULTI_CLIENT_SUPPORT) += -DFEATURE_WPSS_THERMAL_MITIGATION
 cppflags-$(CONFIG_WLAN_DUMP_IN_PROGRESS) += -DCONFIG_WLAN_DUMP_IN_PROGRESS
+
+
+cppflags-$(CONFIG_WIFI_MONITOR_SUPPORT) += -DWIFI_MONITOR_SUPPORT
+cppflags-$(CONFIG_QCA_MONITOR_PKT_SUPPORT) += -DQCA_MONITOR_PKT_SUPPORT
+cppflags-$(CONFIG_MONITOR_MODULARIZED_ENABLE) += -DMONITOR_MODULARIZED_ENABLE
 
 ifeq ($(CONFIG_LEAK_DETECTION), y)
 cppflags-y += \
