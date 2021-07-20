@@ -46,8 +46,6 @@ struct dentry *msm_mmrm_debugfs_init(void)
 	struct dentry *dir;
 	int file_val;
 
-	d_mpr_h("%s: entering\n", __func__);
-
 	/* create a directory in debugfs root (/sys/kernel/debug) */
 	dir = debugfs_create_dir("msm_mmrm", NULL);
 	if (IS_ERR_OR_NULL(dir)) {
@@ -66,17 +64,14 @@ struct dentry *msm_mmrm_debugfs_init(void)
 	debugfs_create_u8("allow_multiple_register", 0644, dir, &msm_mmrm_allow_multiple_register);
 	debugfs_create_u8("enable_throttle_feature", 0644, dir, &msm_mmrm_enable_throttle_feature);
 
-	d_mpr_h("%s: exiting\n", __func__);
 	return dir;
 
 failed_create_dir:
-	d_mpr_h("%s: error exit\n", __func__);
+	d_mpr_e("%s: error\n", __func__);
 	return NULL;
 }
 
 void msm_mmrm_debugfs_deinit(struct dentry *dir)
 {
-	d_mpr_h("%s: entering\n", __func__);
 	debugfs_remove_recursive(dir);
-	d_mpr_h("%s: exiting\n", __func__);
 }

@@ -35,7 +35,7 @@ struct mmrm_client *mmrm_client_register(struct mmrm_client_desc *client_desc)
 {
 	struct mmrm_client *client = NULL;
 
-	d_mpr_h("%s: entering\n", __func__);
+
 
 	/* check for null input */
 	if (!client_desc) {
@@ -62,7 +62,6 @@ struct mmrm_client *mmrm_client_register(struct mmrm_client_desc *client_desc)
 		goto err_exit;
 	}
 
-	d_mpr_h("%s: exiting\n", __func__);
 	return client;
 
 err_exit:
@@ -75,7 +74,6 @@ int mmrm_client_deregister(struct mmrm_client *client)
 {
 	int rc = 0;
 
-	d_mpr_h("%s: entering\n", __func__);
 
 	/* check for null input */
 	if (!client) {
@@ -101,11 +99,10 @@ int mmrm_client_deregister(struct mmrm_client *client)
 			__func__, client->client_type);
 	}
 
-	d_mpr_h("%s: exiting\n", __func__);
 	return rc;
 
 err_exit:
-	d_mpr_e("%s: error exit\n", __func__);
+	d_mpr_e("%s: error = %d\n", __func__, rc);
 	return rc;
 }
 EXPORT_SYMBOL(mmrm_client_deregister);
@@ -114,8 +111,6 @@ int mmrm_client_set_value(struct mmrm_client *client,
 	struct mmrm_client_data *client_data, unsigned long val)
 {
 	int rc = 0;
-
-	d_mpr_h("%s: entering\n", __func__);
 
 	/* check for null input */
 	if (!client || !client_data) {
@@ -143,11 +138,10 @@ int mmrm_client_set_value(struct mmrm_client *client,
 			__func__, client->client_type);
 	}
 
-	d_mpr_h("%s: exiting\n", __func__);
 	return rc;
 
 err_exit:
-	d_mpr_e("%s: error exit\n", __func__);
+	d_mpr_e("%s: error = %d\n", __func__, rc);
 	return rc;
 }
 EXPORT_SYMBOL(mmrm_client_set_value);
@@ -157,8 +151,6 @@ int mmrm_client_set_value_in_range(struct mmrm_client *client,
 	struct mmrm_client_res_value *val)
 {
 	int rc = 0;
-
-	d_mpr_h("%s: entering\n", __func__);
 
 	/* check for null input */
 	if (!client || !client_data || !val) {
@@ -187,11 +179,10 @@ int mmrm_client_set_value_in_range(struct mmrm_client *client,
 			__func__, client->client_type);
 	}
 
-	d_mpr_h("%s: exiting\n", __func__);
 	return rc;
 
 err_exit:
-	d_mpr_e("%s: error exit\n", __func__);
+	d_mpr_e("%s: error = %d\n", __func__, rc);
 	return rc;
 }
 EXPORT_SYMBOL(mmrm_client_set_value_in_range);
@@ -200,8 +191,6 @@ int mmrm_client_get_value(struct mmrm_client *client,
 	struct mmrm_client_res_value *val)
 {
 	int rc = 0;
-
-	d_mpr_h("%s: entering\n", __func__);
 
 	/* check for null input */
 	if (!client || !val) {
@@ -229,11 +218,10 @@ int mmrm_client_get_value(struct mmrm_client *client,
 			__func__, client->client_type);
 	}
 
-	d_mpr_h("%s: exiting\n", __func__);
 	return rc;
 
 err_exit:
-	d_mpr_e("%s: error exit\n", __func__);
+	d_mpr_e("%s: error = %d\n", __func__, rc);
 	return rc;
 }
 EXPORT_SYMBOL(mmrm_client_get_value);
@@ -241,8 +229,6 @@ EXPORT_SYMBOL(mmrm_client_get_value);
 static int msm_mmrm_probe_init(struct platform_device *pdev)
 {
 	int rc = 0;
-
-	d_mpr_h("%s: entering\n", __func__);
 
 	drv_data = kzalloc(sizeof(*drv_data), GFP_KERNEL);
 	if (!drv_data) {
@@ -280,7 +266,6 @@ static int msm_mmrm_probe_init(struct platform_device *pdev)
 		goto err_mmrm_init;
 	}
 
-	d_mpr_h("%s: exiting with success\n", __func__);
 	return rc;
 
 err_mmrm_init:
@@ -290,7 +275,7 @@ err_read_pltfrm_rsc:
 err_get_drv_data:
 	RESET_DRV_DATA(drv_data);
 err_no_mem:
-	d_mpr_e("%s: error exit\n", __func__);
+	d_mpr_e("%s: error = %d\n", __func__, rc);
 	return rc;
 }
 
@@ -298,18 +283,18 @@ static int msm_mmrm_probe(struct platform_device *pdev)
 {
 	int rc = -EINVAL;
 
-	d_mpr_h("%s: entering\n", __func__);
+	d_mpr_h("%s\n", __func__);
 
 	VERIFY_PDEV(pdev)
 
 	if (of_device_is_compatible(pdev->dev.of_node, "qcom,msm-mmrm"))
 		return msm_mmrm_probe_init(pdev);
 
-	d_mpr_h("%s: exiting: no compatible device node\n", __func__);
+	d_mpr_e("%s: no compatible device node\n", __func__);
 	return rc;
 
 err_exit:
-	d_mpr_e("%s: error exit\n", __func__);
+	d_mpr_e("%s: error = %d\n", __func__, rc);
 	return rc;
 }
 
@@ -331,11 +316,10 @@ static int msm_mmrm_remove(struct platform_device *pdev)
 	dev_set_drvdata(&pdev->dev, NULL);
 	RESET_DRV_DATA(drv_data);
 
-	d_mpr_h("%s: exiting with success\n", __func__);
 	return rc;
 
 err_exit:
-	d_mpr_e("%s: error exit\n", __func__);
+	d_mpr_e("%s: error = %d\n", __func__, rc);
 	return rc;
 }
 
@@ -359,8 +343,6 @@ static int __init msm_mmrm_init(void)
 {
 	int rc = 0;
 
-	d_mpr_h("%s: entering\n", __func__);
-
 	rc = platform_driver_register(&msm_mmrm_driver);
 	if (rc) {
 		d_mpr_e("%s: failed to register platform driver\n",
@@ -368,19 +350,17 @@ static int __init msm_mmrm_init(void)
 		goto err_platform_drv_reg;
 	}
 
-	d_mpr_h("%s: exiting\n", __func__);
+	d_mpr_h("%s: success\n", __func__);
 	return rc;
 
 err_platform_drv_reg:
-	d_mpr_e("%s: error exit\n", __func__);
+	d_mpr_e("%s: error = %d\n", __func__, rc);
 	return rc;
 }
 
 static void __exit msm_mmrm_exit(void)
 {
-	d_mpr_h("%s: entering\n", __func__);
 	platform_driver_unregister(&msm_mmrm_driver);
-	d_mpr_h("%s: exiting\n", __func__);
 }
 
 module_init(msm_mmrm_init);

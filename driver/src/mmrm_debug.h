@@ -23,6 +23,7 @@ enum mmrm_msg_prio {
 	MMRM_HIGH = 0x000002,
 	MMRM_LOW = 0x000004,
 	MMRM_WARN = 0x000008,
+	MMRM_POWER = 0x000010,
 	MMRM_PRINTK = 0x010000,
 	MMRM_FTRACE = 0x020000,
 };
@@ -45,6 +46,7 @@ extern u8 msm_mmrm_allow_multiple_register;
 #define d_mpr_h(__fmt, ...) dprintk(MMRM_HIGH, __fmt, ##__VA_ARGS__)
 #define d_mpr_l(__fmt, ...) dprintk(MMRM_LOW, __fmt, ##__VA_ARGS__)
 #define d_mpr_w(__fmt, ...) dprintk(MMRM_WARN, __fmt, ##__VA_ARGS__)
+#define d_mpr_p(__fmt, ...) dprintk(MMRM_POWER, __fmt, ##__VA_ARGS__)
 
 static inline char *get_debug_level_str(int level)
 {
@@ -57,6 +59,8 @@ static inline char *get_debug_level_str(int level)
 		return "low ";
 	case MMRM_WARN:
 		return "warn";
+	case MMRM_POWER:
+		return "power";
 	default:
 		return "????";
 	}

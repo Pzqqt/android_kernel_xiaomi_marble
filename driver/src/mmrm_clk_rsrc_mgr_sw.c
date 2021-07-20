@@ -92,7 +92,7 @@ static void mmrm_sw_print_client_data(struct mmrm_sw_clk_mgr_info *sinfo,
 	u32 i, j;
 
 	for (i = 0; i < MMRM_VDD_LEVEL_MAX; i++) {
-		d_mpr_h("%s: csid(0x%x) corner(%s) dyn_pwr(%zu) leak_pwr(%zu) \n",
+		d_mpr_p("%s: csid(0x%x) corner(%s) dyn_pwr(%zu) leak_pwr(%zu)\n",
 				__func__,
 				tbl_entry->clk_src_id,
 				cset->corner_tbl[i].name,
@@ -100,7 +100,7 @@ static void mmrm_sw_print_client_data(struct mmrm_sw_clk_mgr_info *sinfo,
 				tbl_entry->leak_pwr[i]);
 
 		for (j = 0; j < MMRM_VDD_LEVEL_MAX; j++) {
-			d_mpr_h("%s: csid(0x%x) total_pwr(%zu) cur_ma(%zu)\n",
+			d_mpr_p("%s: csid(0x%x) total_pwr(%zu) cur_ma(%zu)\n",
 				__func__,
 				tbl_entry->clk_src_id,
 				(tbl_entry->dyn_pwr[i] + tbl_entry->leak_pwr[i]),
@@ -189,8 +189,6 @@ static struct mmrm_client *mmrm_sw_clk_client_register(
 
 	u32 c = 0;
 	u32 clk_client_src_id = 0;
-
-	d_mpr_h("%s: entering\n", __func__);
 
 	mutex_lock(&sw_clk_mgr->lock);
 
@@ -286,7 +284,6 @@ static struct mmrm_client *mmrm_sw_clk_client_register(
 
 exit_found:
 	mutex_unlock(&sw_clk_mgr->lock);
-	d_mpr_h("%s: exiting with success\n", __func__);
 	return clk_client;
 
 err_fail_update_entry:
@@ -302,7 +299,7 @@ err_nofree_entry:
 err_already_registered:
 	mutex_unlock(&sw_clk_mgr->lock);
 
-	d_mpr_h("%s: error exit\n", __func__);
+	d_mpr_e("%s: error = %d\n", __func__, rc);
 	return NULL;
 }
 
@@ -312,8 +309,6 @@ static int mmrm_sw_clk_client_deregister(struct mmrm_clk_mgr *sw_clk_mgr,
 	int rc =  0;
 	struct mmrm_sw_clk_client_tbl_entry *tbl_entry;
 	struct mmrm_sw_clk_mgr_info *sinfo = &(sw_clk_mgr->data.sw_info);
-
-	d_mpr_h("%s: entering\n", __func__);
 
 	/* validate the client ptr */
 	if (!client) {
@@ -350,11 +345,10 @@ static int mmrm_sw_clk_client_deregister(struct mmrm_clk_mgr *sw_clk_mgr,
 
 	mutex_unlock(&sw_clk_mgr->lock);
 
-	d_mpr_h("%s: exiting with success\n", __func__);
 	return rc;
 
 err_invalid_client:
-	d_mpr_h("%s: error exit\n", __func__);
+	d_mpr_e("%s: error = %d\n", __func__, rc);
 	return rc;
 }
 
@@ -508,7 +502,6 @@ static int mmrm_sw_throttle_low_priority_client(
 	u32 now_cur_ma, min_cur_ma;
 	long clk_min_level = MMRM_VDD_LEVEL_LOW_SVS;
 
-	d_mpr_h("%s: entering\n", __func__);
 	init_completion(&timeout);
 
 	for (i = 0; i < sinfo->throttle_clients_data_length ; i++) {
@@ -585,7 +578,6 @@ static int mmrm_sw_throttle_low_priority_client(
 
 		/* Clearing the reserve flag */
 		tbl_entry_throttle_client->reserve = tbl_entry_throttle_client->reserve & 0;
-		d_mpr_h("%s: exiting\n", __func__);
 	}
 err_clk_set_fail:
 	return rc;
@@ -803,7 +795,7 @@ err_invalid_client_data:
 err_invalid_clk_val:
 err_peak_overshoot:
 err_clk_set_fail:
-	d_mpr_h("%s: error exit\n", __func__);
+	d_mpr_e("%s: error = %d\n", __func__, rc);
 	return rc;
 }
 
@@ -812,8 +804,6 @@ static int mmrm_sw_clk_client_setval_inrange(struct mmrm_clk_mgr *sw_clk_mgr,
 		struct mmrm_client_data *client_data,
 		struct mmrm_client_res_value *val)
 {
-	d_mpr_h("%s: entering\n", __func__);
-
 	/* TBD: add support for set val in range */
 	return mmrm_sw_clk_client_setval(sw_clk_mgr, client, client_data,
 		val->cur);
@@ -826,8 +816,6 @@ static int mmrm_sw_clk_client_getval(struct mmrm_clk_mgr *sw_clk_mgr,
 	int rc = 0;
 	struct mmrm_sw_clk_client_tbl_entry *tbl_entry;
 	struct mmrm_sw_clk_mgr_info *sinfo = &(sw_clk_mgr->data.sw_info);
-
-	d_mpr_h("%s: entering\n", __func__);
 
 	/* validate input params */
 	if (!client) {
@@ -856,11 +844,10 @@ static int mmrm_sw_clk_client_getval(struct mmrm_clk_mgr *sw_clk_mgr,
 	val->cur = tbl_entry->clk_rate;
 	val->max = tbl_entry->clk_rate;
 
-	d_mpr_h("%s: exiting with success\n", __func__);
 	return rc;
 
 err_invalid_client:
-	d_mpr_h("%s: error exit\n", __func__);
+	d_mpr_e("%s: error = %d\n", __func__, rc);
 	return rc;
 }
 
@@ -879,8 +866,6 @@ static int mmrm_sw_prepare_table(struct mmrm_clk_platform_resources *cres,
 	u32 c;
 	struct mmrm_sw_clk_client_tbl_entry *tbl_entry;
 	struct nom_clk_src_info *nom_tbl_entry;
-
-	d_mpr_h("%s: entering\n", __func__);
 
 	/* read all resource entries */
 	for (c = 0; c < sinfo->tot_clk_clients; c++) {
@@ -901,7 +886,6 @@ static int mmrm_sw_prepare_table(struct mmrm_clk_platform_resources *cres,
 			tbl_entry->leak_pwr[MMRM_VDD_LEVEL_NOM]);
 	}
 
-	d_mpr_h("%s: exiting\n", __func__);
 	return rc;
 }
 
@@ -914,8 +898,6 @@ int mmrm_init_sw_clk_mgr(void *driver_data)
 	struct mmrm_sw_clk_mgr_info *sinfo = NULL;
 	struct mmrm_clk_mgr *sw_clk_mgr = NULL;
 	u32 tbl_size = 0;
-
-	d_mpr_h("%s: entering\n", __func__);
 
 	/* mmrm_sw_clk_mgr */
 	sw_clk_mgr = kzalloc(sizeof(*sw_clk_mgr), GFP_KERNEL);
@@ -976,7 +958,6 @@ int mmrm_init_sw_clk_mgr(void *driver_data)
 	sw_clk_mgr->clk_client_ops = &clk_client_swops;
 	drv_data->clk_mgr = sw_clk_mgr;
 
-	d_mpr_h("%s: exiting with success\n", __func__);
 	return rc;
 
 err_fail_prep_tbl:
@@ -985,7 +966,7 @@ err_fail_clk_tbl:
 	kfree(sw_clk_mgr);
 	drv_data->clk_mgr = NULL;
 err_fail_sw_clk_mgr:
-	d_mpr_h("%s: error exit\n", __func__);
+	d_mpr_e("%s: error = %d\n", __func__, rc);
 	return rc;
 }
 
