@@ -1040,7 +1040,8 @@ static bool cds_should_suspend_target(void)
 	if (target_type == TARGET_TYPE_AR6320 ||
 	    target_type == TARGET_TYPE_AR6320V1 ||
 	    target_type == TARGET_TYPE_AR6320V2 ||
-	    target_type == TARGET_TYPE_AR6320V3)
+	    target_type == TARGET_TYPE_AR6320V3 ||
+	    target_type == TARGET_TYPE_QCN7605)
 		return false;
 
 	/* target should support suspend in FTM mode */
