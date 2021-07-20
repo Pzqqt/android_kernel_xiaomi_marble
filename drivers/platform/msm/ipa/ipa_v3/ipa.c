@@ -630,6 +630,13 @@ static int ipa3_clean_mhip_dl_rule(void)
 static int ipa3_active_clients_panic_notifier(struct notifier_block *this,
 		unsigned long event, void *ptr)
 {
+	if (ipa3_ctx != NULL)
+	{
+		if (ipa3_ctx->is_device_crashed)
+			return NOTIFY_DONE;
+		ipa3_ctx->is_device_crashed = true;
+	}
+
 	ipa3_active_clients_log_print_table(active_clients_table_buf,
 			IPA3_ACTIVE_CLIENTS_TABLE_BUF_SIZE);
 	IPAERR("%s\n", active_clients_table_buf);
@@ -692,6 +699,7 @@ static int ipa3_active_clients_log_init(void)
 	ipa3_ctx->ipa3_active_clients_logging.log_tail =
 			IPA3_ACTIVE_CLIENTS_LOG_BUFFER_SIZE_LINES - 1;
 	hash_init(ipa3_ctx->ipa3_active_clients_logging.htable);
+	/* 2nd ipa3_active_clients_panic_notifier */
 	atomic_notifier_chain_register(&panic_notifier_list,
 			&ipa3_active_clients_panic_blk);
 	ipa3_ctx->ipa3_active_clients_logging.log_rdy = true;
@@ -6823,7 +6831,6 @@ static int ipa3_panic_notifier(struct notifier_block *this,
 	{
 		if (ipa3_ctx->is_device_crashed)
 			return NOTIFY_DONE;
-		ipa3_ctx->is_device_crashed = true;
 	}
 
 	ipa3_freeze_clock_vote_and_notify_modem();
@@ -7445,6 +7452,7 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 	else
 		IPADBG(":stats init ok\n");
 
+	/* 1st ipa3_panic_notifier*/
 	ipa3_register_panic_hdlr();
 
 	ipa3_debugfs_init();
