@@ -8215,9 +8215,11 @@ void dp_get_os_rx_handles_from_vdev_wifi3(struct cdp_soc_t *soc_hdl,
 	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
 						     DP_MOD_ID_CDP);
 
-	if (!vdev)
+	if (qdf_unlikely(!vdev)) {
+		*stack_fn_p = NULL;
+		*osif_vdev_p = NULL;
 		return;
-
+	}
 	*stack_fn_p = vdev->osif_rx_stack;
 	*osif_vdev_p = vdev->osif_vdev;
 	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
