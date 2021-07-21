@@ -484,7 +484,8 @@
  * connected
  * 1: PCIe Bus suspend is supported in SAP mode with one or more clients
  * connected
- * Related: None
+ * Related: SAP clients connected bus suspend(D3 WoW) is only supported
+ *          when IPA is disabled
  *
  * Supported Feature: Power Save
  *
@@ -512,7 +513,8 @@
  * connected
  * 1: PCIe Bus suspend is supported in P2PGO mode with one or more clients
  * connected
- * Related: None
+ * Related: P2P GO clients connected bus suspend(D3 WoW) is only supported
+ *          when IPA is disabled
  *
  * Supported Feature: Power Save
  *
