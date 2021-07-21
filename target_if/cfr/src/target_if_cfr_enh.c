@@ -1244,6 +1244,34 @@ static void dump_cfr_peer_tx_event_enh(wmi_cfr_peer_tx_event_param *event,
 		  event->chain_rssi[0]);
 }
 
+static void
+populate_phase_delta(struct pdev_cfr *pcfr,
+		     struct wmi_cfr_phase_delta_param param)
+{
+	int c, g, pc, pg;
+	uint32_t c_mask = param.chain_phase_mask;
+
+	pc = 0;
+
+	/* populate phase delta for max chains indicated by target */
+	for (c = 0; c < pcfr->max_aoa_chains; c++) {
+		pg = 0;
+		if (((0x1 << c) & c_mask) && (pc < WMI_MAX_CHAINS_PHASE)) {
+			pcfr->ibf_cal_val[c] = param.ibf_cal_val[pc];
+			for (g = 0; g < MAX_AGC_GAIN; g = g + 2) {
+				if (pg < WMI_MAX_AOA_PHASE_DELTA) {
+					pcfr->phase_delta[c][g] = get_u16_lsb
+						(param.phase_delta[pc][pg]);
+					pcfr->phase_delta[c][g + 1] = get_u16_msb
+						(param.phase_delta[pc][pg]);
+					pg++;
+				}
+			}
+			pc++;
+		}
+	}
+}
+
 static int
 target_if_pdev_aoa_phasedaelta_event_handler(ol_scn_t sc,
 					     uint8_t *data,
@@ -1254,9 +1282,7 @@ target_if_pdev_aoa_phasedaelta_event_handler(ol_scn_t sc,
 	struct wlan_objmgr_pdev *pdev;
 	struct pdev_cfr *pcfr;
 	QDF_STATUS retval = 0;
-	int c, g, pc, pg;
 	struct wmi_cfr_phase_delta_param param = {0};
-	uint32_t c_mask;
 
 	if (!sc || !data) {
 		cfr_err("sc or data is null");
@@ -1318,28 +1344,10 @@ target_if_pdev_aoa_phasedaelta_event_handler(ol_scn_t sc,
 	}
 
 	pcfr->freq = param.freq;
-	pcfr->max_aoa_chains = param.max_chains;
+	pcfr->max_aoa_chains = (param.max_chains <= HOST_MAX_CHAINS) ?
+				param.max_chains : HOST_MAX_CHAINS;
 
-	c_mask = param.chain_phase_mask;
-	pc = 0;
-
-	/* populate phase delta for max chains indicated by target */
-	for (c = 0; c < pcfr->max_aoa_chains; c++) {
-		pg = 0;
-		if (((0x1 << c) & c_mask) && (pc < WMI_MAX_CHAINS_PHASE)) {
-			pcfr->ibf_cal_val[c] = param.ibf_cal_val[pc];
-			for (g = 0; g < MAX_AGC_GAIN; g = g + 2) {
-				if (pg < WMI_MAX_AOA_PHASE_DELTA) {
-					pcfr->phase_delta[c][g] = get_u16_lsb
-						(param.phase_delta[pc][pg]);
-					pcfr->phase_delta[c][g + 1] = get_u16_msb
-						(param.phase_delta[pc][pg]);
-					pg++;
-				}
-			}
-			pc++;
-		}
-	}
+	populate_phase_delta(pcfr, param);
 
 	wlan_objmgr_psoc_release_ref(psoc, WLAN_CFR_ID);
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
