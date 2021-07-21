@@ -114,7 +114,8 @@ void lim_ft_cleanup(struct mac_context *mac, struct pe_session *pe_session)
  *------------------------------------------------------------------*/
 void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 		struct pe_session *ft_session,
-		struct bss_description *bssDescription)
+		struct bss_description *bssDescription,
+		tpSirAssocRsp assoc_rsp)
 {
 	struct bss_params *pAddBssParams = NULL;
 	tAddStaParams *sta_ctx;
@@ -162,6 +163,25 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 	pAddBssParams->llbCoexist =
 		(uint8_t) ft_session->beaconParams.llbCoexist;
 	pAddBssParams->rmfEnabled = ft_session->limRmfEnabled;
+	if (assoc_rsp &&
+	    ft_session->htCapability && pBeaconStruct->HTCaps.present &&
+	    assoc_rsp->HTCaps.present) {
+		/* Some AP have different HT ch width setting in
+		 * beacon/assoc resp. FW uses assoc response to decide
+		 * the bw of HT AP in Roaming sync.
+		 * Here overwrite beacon HT bw setting from assoc
+		 * resp frame to keep sync with FW.
+		 */
+		pBeaconStruct->HTCaps.supportedChannelWidthSet =
+			assoc_rsp->HTCaps.supportedChannelWidthSet;
+		if (pBeaconStruct->HTInfo.present &&
+		    assoc_rsp->HTInfo.present) {
+			pBeaconStruct->HTInfo.secondaryChannelOffset =
+			assoc_rsp->HTInfo.secondaryChannelOffset;
+			pBeaconStruct->HTInfo.recommendedTxWidthSet =
+			assoc_rsp->HTInfo.recommendedTxWidthSet;
+		}
+	}
 
 	/* Use the advertised capabilities from the received beacon/PR */
 	if (IS_DOT11_MODE_HT(ft_session->dot11mode) &&
@@ -514,7 +534,8 @@ void lim_fill_ft_session(struct mac_context *mac,
 			 struct bss_description *pbssDescription,
 			 struct pe_session *ft_session,
 			 struct pe_session *pe_session,
-			 enum wlan_phymode bss_phymode)
+			 enum wlan_phymode bss_phymode,
+			 tpSirAssocRsp assoc_rsp)
 {
 	uint8_t currentBssUapsd;
 	uint8_t bss_chan_id;
@@ -579,6 +600,25 @@ void lim_fill_ft_session(struct mac_context *mac,
 	ft_session->htCapability =
 		(IS_DOT11_MODE_HT(ft_session->dot11mode)
 		 && pBeaconStruct->HTCaps.present);
+	if (assoc_rsp &&
+	    ft_session->htCapability && pBeaconStruct->HTCaps.present &&
+	    assoc_rsp->HTCaps.present) {
+		/* Some AP have different HT ch width setting in
+		 * beacon/assoc resp. FW uses assoc response to decide
+		 * the bw of HT AP in Roaming sync.
+		 * Here overwrite beacon HT bw setting from assoc
+		 * resp frame to keep sync with FW.
+		 */
+		pBeaconStruct->HTCaps.supportedChannelWidthSet =
+			assoc_rsp->HTCaps.supportedChannelWidthSet;
+		if (pBeaconStruct->HTInfo.present &&
+		    assoc_rsp->HTInfo.present) {
+			pBeaconStruct->HTInfo.secondaryChannelOffset =
+			assoc_rsp->HTInfo.secondaryChannelOffset;
+			pBeaconStruct->HTInfo.recommendedTxWidthSet =
+			assoc_rsp->HTInfo.recommendedTxWidthSet;
+		}
+	}
 
 	if (IS_DOT11_MODE_HE(ft_session->dot11mode) &&
 	    pBeaconStruct->he_cap.present)
