@@ -7229,10 +7229,6 @@ enum ipa_client_type ipa3_get_client_by_pipe(int pipe_idx)
 			break;
 	}
 
-	if (j == IPA_CLIENT_MAX)
-		IPADBG("Got to IPA_CLIENT_MAX (%d) while searching for (%d)\n",
-			j, pipe_idx);
-
 	return j;
 }
 

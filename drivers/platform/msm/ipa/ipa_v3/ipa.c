@@ -38,6 +38,7 @@
 #include <linux/qcom_scm.h>
 #include <linux/soc/qcom/mdt_loader.h>
 #include "gsi.h"
+#include "ipa_stats.h"
 
 #ifdef CONFIG_ARM64
 
@@ -7482,6 +7483,9 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 		!ipa3_ctx->gsi_msi_clear_addr_io_mapped &&
 		(ipa3_ctx->rmnet_ll_enable || ipa3_ctx->rmnet_ctl_enable))
 			ipa_gsi_map_unmap_gsi_msi_addr(true);
+
+	if(!ipa_spearhead_stats_init())
+		IPADBG("Fail to init spearhead ipa lnx module");
 
 	pr_info("IPA driver initialization was successful.\n");
 
