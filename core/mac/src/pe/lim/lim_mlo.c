@@ -29,6 +29,7 @@
 #include <wlan_mlo_mgr_peer.h>
 #include <lim_assoc_utils.h>
 #include <wlan_mlo_mgr_peer.h>
+#include <lim_utils.h>
 
 /**
  * lim_send_mlo_ie_update - mlo ie is changed, populate new beacon template
@@ -599,4 +600,102 @@ void lim_mlo_delete_link_peer(struct pe_session *pe_session,
 	wlan_mlo_link_peer_delete(peer);
 
 	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_MAC_ID);
+}
+
+QDF_STATUS lim_mlo_assoc_ind_upper_layer(struct mac_context *mac,
+					 struct pe_session *pe_session,
+					 struct mlo_partner_info *mlo_info)
+{
+	int link;
+	uint8_t link_id;
+	struct qdf_mac_addr *link_addr;
+	struct pe_session *lk_session;
+	tpDphHashNode sta;
+	uint16_t aid;
+	struct assoc_ind *sme_assoc_ind;
+	struct scheduler_msg msg;
+	tpLimMlmAssocInd lim_assoc_ind;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	if (!mac) {
+		pe_err("mac is NULL");
+		return status;
+	}
+
+	if (!pe_session) {
+		pe_err("pe_session is NULL");
+		return status;
+	}
+
+	if (!mlo_info) {
+		pe_err("mlo_info is NULL");
+		return status;
+	}
+
+	for (link = 0; link < mlo_info->num_partner_links; link++) {
+		link_id = mlo_info->partner_link_info[link].link_id;
+		link_addr = &mlo_info->partner_link_info[link].link_addr;
+		lk_session = pe_find_partner_session_by_link_id(pe_session,
+								link_id);
+		if (!lk_session) {
+			pe_err("link_session is NULL");
+			status = QDF_STATUS_E_FAILURE;
+			break;
+		}
+		sta = dph_lookup_hash_entry(mac, link_addr->bytes, &aid,
+					    &lk_session->dph.dphHashTable);
+		if (!sta) {
+			pe_err("sta_ds is NULL");
+			status = QDF_STATUS_E_FAILURE;
+			break;
+		}
+		lim_assoc_ind = qdf_mem_malloc(sizeof(tLimMlmAssocInd));
+		if (!lim_assoc_ind) {
+			pe_err("lim assoc ind allocate error");
+			qdf_mem_free(lk_session->parsedAssocReq[sta->assocId]);
+			lk_session->parsedAssocReq[sta->assocId] = NULL;
+			status = QDF_STATUS_E_FAILURE;
+			break;
+		}
+
+		if (!lim_fill_lim_assoc_ind_params(lim_assoc_ind, mac,
+						   sta, lk_session)) {
+			pe_err("lim assoc ind fill error");
+			qdf_mem_free(lim_assoc_ind);
+			qdf_mem_free(lk_session->parsedAssocReq[sta->assocId]);
+			lk_session->parsedAssocReq[sta->assocId] = NULL;
+			status = QDF_STATUS_E_FAILURE;
+			break;
+		}
+		sme_assoc_ind = qdf_mem_malloc(sizeof(struct assoc_ind));
+		if (!sme_assoc_ind) {
+			pe_err("sme assoc ind allocate error");
+			qdf_mem_free(lim_assoc_ind);
+			qdf_mem_free(lk_session->parsedAssocReq[sta->assocId]);
+			lk_session->parsedAssocReq[sta->assocId] = NULL;
+			status = QDF_STATUS_E_FAILURE;
+			break;
+		}
+
+		sme_assoc_ind->messageType = eWNI_SME_ASSOC_IND_UPPER_LAYER;
+		lim_fill_sme_assoc_ind_params(mac, lim_assoc_ind, sme_assoc_ind,
+					      lk_session, false);
+
+		qdf_mem_zero(&msg, sizeof(struct scheduler_msg));
+		msg.type = eWNI_SME_ASSOC_IND_UPPER_LAYER;
+		msg.bodyptr = sme_assoc_ind;
+		msg.bodyval = 0;
+		sme_assoc_ind->reassocReq = sta->mlmStaContext.subType;
+		sme_assoc_ind->timingMeasCap = sta->timingMeasCap;
+		MTRACE(mac_trace_msg_tx(mac, lk_session->peSessionId,
+					msg.type));
+		lim_sys_process_mmh_msg_api(mac, &msg);
+
+		qdf_mem_free(lim_assoc_ind);
+		qdf_mem_free(lk_session->parsedAssocReq[sta->assocId]);
+		lk_session->parsedAssocReq[sta->assocId] = NULL;
+		status = QDF_STATUS_SUCCESS;
+	}
+
+	return status;
 }

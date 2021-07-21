@@ -214,6 +214,18 @@ void lim_mlo_ap_sta_assoc_fail(struct wlan_objmgr_peer *peer);
 void lim_mlo_delete_link_peer(struct pe_session *pe_session,
 			      tpDphHashNode sta_ds);
 
+/**
+ * lim_mlo_assoc_ind_upper_layer() - indicate assoc confirm to upper layer
+ *                                   for mlo partner link
+ * @mac: pointer to mac_context
+ * @pe_session: pe session
+ * @mlo_info: mlo partner information
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS lim_mlo_assoc_ind_upper_layer(struct mac_context *mac,
+					 struct pe_session *pe_session,
+					 struct mlo_partner_info *mlo_info);
 #else
 
 static inline void lim_mlo_notify_peer_disconn(struct pe_session *pe_session,
@@ -265,6 +277,14 @@ static inline void lim_ap_mlo_sta_peer_ind(struct mac_context *mac,
 static inline void lim_mlo_delete_link_peer(struct pe_session *pe_session,
 					    tpDphHashNode sta_ds)
 {
+}
+
+static inline QDF_STATUS lim_mlo_assoc_ind_upper_layer(
+					struct mac_context *mac,
+					struct pe_session *pe_session,
+					struct mlo_partner_info *mlo_info)
+{
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 #endif

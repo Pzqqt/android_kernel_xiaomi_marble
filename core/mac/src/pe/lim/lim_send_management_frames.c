@@ -1328,6 +1328,13 @@ static QDF_STATUS lim_assoc_rsp_tx_complete(
 		goto free_buffers;
 	}
 
+	if (lim_is_mlo_conn(session_entry, sta_ds) &&
+	    QDF_IS_STATUS_ERROR(lim_mlo_assoc_ind_upper_layer(
+				mac_ctx, session_entry,
+				&assoc_req->mlo_info))) {
+		pe_err("partner link indicate upper layer error");
+		goto free_assoc_req;
+	}
 	lim_assoc_ind = qdf_mem_malloc(sizeof(tLimMlmAssocInd));
 	if (!lim_assoc_ind)
 		goto free_assoc_req;
