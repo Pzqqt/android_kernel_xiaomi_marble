@@ -1218,9 +1218,37 @@ cm_handle_connect_req(struct wlan_objmgr_vdev *vdev,
 	return status;
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * cm_set_peer_mld_info() - set mld_mac and is_assoc_peer flag
+ * @req: cm_peer_create_req
+ * @mld_mac: mld mac addr
+ * @is_assoc_peer: is assoc peer
+ *
+ * Return: void
+ */
+static void cm_set_peer_mld_info(struct cm_peer_create_req *req,
+				 struct qdf_mac_addr *mld_mac,
+				 bool is_assoc_peer)
+{
+	if (!req) {
+		qdf_copy_macaddr(&req->mld_mac, mld_mac);
+		req->is_assoc_peer = is_assoc_peer;
+	}
+}
+#else
+static void cm_set_peer_mld_info(struct cm_peer_create_req *req,
+				 struct qdf_mac_addr *mld_mac,
+				 bool is_assoc_peer)
+{
+}
+#endif
+
 QDF_STATUS
 cm_send_bss_peer_create_req(struct wlan_objmgr_vdev *vdev,
-			    struct qdf_mac_addr *peer_mac)
+			    struct qdf_mac_addr *peer_mac,
+			    struct qdf_mac_addr *mld_mac,
+			    bool is_assoc_peer)
 {
 	struct scheduler_msg msg;
 	QDF_STATUS status;
@@ -1237,7 +1265,7 @@ cm_send_bss_peer_create_req(struct wlan_objmgr_vdev *vdev,
 
 	req->vdev_id = wlan_vdev_get_id(vdev);
 	qdf_copy_macaddr(&req->peer_mac, peer_mac);
-
+	cm_set_peer_mld_info(req, mld_mac, is_assoc_peer);
 	msg.bodyptr = req;
 	msg.type = CM_BSS_PEER_CREATE_REQ;
 
