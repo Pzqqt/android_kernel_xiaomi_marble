@@ -72,6 +72,16 @@
 #define WLAN_CFG_IPA_TX_COMP_RING_SIZE 1024
 #define WLAN_CFG_IPA_TX_COMP_RING_SIZE_MAX 8096
 
+#ifdef IPA_WDI3_TX_TWO_PIPES
+#define WLAN_CFG_IPA_TX_ALT_RING_SIZE_MIN 1024
+#define WLAN_CFG_IPA_TX_ALT_RING_SIZE 1024
+#define WLAN_CFG_IPA_TX_ALT_RING_SIZE_MAX 8096
+
+#define WLAN_CFG_IPA_TX_ALT_COMP_RING_SIZE_MIN 1024
+#define WLAN_CFG_IPA_TX_ALT_COMP_RING_SIZE 1024
+#define WLAN_CFG_IPA_TX_ALT_COMP_RING_SIZE_MAX 8096
+#endif
+
 #define WLAN_CFG_PER_PDEV_TX_RING 0
 #define WLAN_CFG_IPA_UC_TX_BUF_SIZE 2048
 #define WLAN_CFG_IPA_UC_TX_PARTITION_BASE 3000
@@ -1211,11 +1221,71 @@
 		WLAN_CFG_IPA_TX_COMP_RING_SIZE, \
 		CFG_VALUE_OR_DEFAULT, "IPA tx comp ring size")
 
+#ifdef IPA_WDI3_TX_TWO_PIPES
+/*
+ * <ini>
+ * dp_ipa_tx_alt_ring_size - Set alt tcl ring size for IPA
+ * @Min: 1024
+ * @Max: 8096
+ * @Default: 1024
+ *
+ * This ini sets the alt tcl ring size for IPA
+ *
+ * Related: N/A
+ *
+ * Supported Feature: IPA
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_DP_IPA_TX_ALT_RING_SIZE \
+		CFG_INI_UINT("dp_ipa_tx_alt_ring_size", \
+		WLAN_CFG_IPA_TX_ALT_RING_SIZE_MIN, \
+		WLAN_CFG_IPA_TX_ALT_RING_SIZE_MAX, \
+		WLAN_CFG_IPA_TX_ALT_RING_SIZE, \
+		CFG_VALUE_OR_DEFAULT, \
+		"DP IPA TX Alternative Ring Size")
+
+/*
+ * <ini>
+ * dp_ipa_tx_alt_comp_ring_size - Set tx alt comp ring size for IPA
+ * @Min: 1024
+ * @Max: 8096
+ * @Default: 1024
+ *
+ * This ini sets the tx alt comp ring size for IPA
+ *
+ * Related: N/A
+ *
+ * Supported Feature: IPA
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_DP_IPA_TX_ALT_COMP_RING_SIZE \
+		CFG_INI_UINT("dp_ipa_tx_alt_comp_ring_size", \
+		WLAN_CFG_IPA_TX_ALT_COMP_RING_SIZE_MIN, \
+		WLAN_CFG_IPA_TX_ALT_COMP_RING_SIZE_MAX, \
+		WLAN_CFG_IPA_TX_ALT_COMP_RING_SIZE, \
+		CFG_VALUE_OR_DEFAULT, \
+		"DP IPA TX Alternative Completion Ring Size")
+
+#define CFG_DP_IPA_TX_ALT_RING_CFG \
+		CFG(CFG_DP_IPA_TX_ALT_RING_SIZE) \
+		CFG(CFG_DP_IPA_TX_ALT_COMP_RING_SIZE)
+
+#else
+#define CFG_DP_IPA_TX_ALT_RING_CFG
+#endif
+
 #define CFG_DP_IPA_TX_RING_CFG \
 		CFG(CFG_DP_IPA_TX_RING_SIZE) \
 		CFG(CFG_DP_IPA_TX_COMP_RING_SIZE)
 #else
 #define CFG_DP_IPA_TX_RING_CFG
+#define CFG_DP_IPA_TX_ALT_RING_CFG
 #endif
 
 #ifdef WLAN_SUPPORT_PPEDS
@@ -1350,5 +1420,6 @@
 		CFG(CFG_FORCE_RX_64_BA) \
 		CFG(CFG_DP_DELAY_MON_REPLENISH) \
 		CFG_DP_IPA_TX_RING_CFG \
-		CFG_DP_PPE_CONFIG
+		CFG_DP_PPE_CONFIG \
+		CFG_DP_IPA_TX_ALT_RING_CFG
 #endif /* _CFG_DP_H_ */

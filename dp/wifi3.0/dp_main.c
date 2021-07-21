@@ -3972,9 +3972,10 @@ static bool dp_ipa_is_alt_tx_comp_ring(int index)
 static void dp_ipa_get_tx_ring_size(int tx_ring_num, int *tx_ipa_ring_sz,
 				    struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx)
 {
-	if (tx_ring_num == IPA_TCL_DATA_RING_IDX ||
-	    dp_ipa_is_alt_tx_ring(tx_ring_num))
+	if (tx_ring_num == IPA_TCL_DATA_RING_IDX)
 		*tx_ipa_ring_sz = wlan_cfg_ipa_tx_ring_size(soc_cfg_ctx);
+	else if (dp_ipa_is_alt_tx_ring(tx_ring_num))
+		*tx_ipa_ring_sz = wlan_cfg_ipa_tx_alt_ring_size(soc_cfg_ctx);
 }
 
 /**
@@ -3990,10 +3991,12 @@ static void dp_ipa_get_tx_comp_ring_size(int tx_comp_ring_num,
 					 int *tx_comp_ipa_ring_sz,
 				       struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx)
 {
-	if (tx_comp_ring_num == IPA_TCL_DATA_RING_IDX ||
-	    dp_ipa_is_alt_tx_comp_ring(tx_comp_ring_num))
+	if (tx_comp_ring_num == IPA_TCL_DATA_RING_IDX)
 		*tx_comp_ipa_ring_sz =
 				wlan_cfg_ipa_tx_comp_ring_size(soc_cfg_ctx);
+	else if (dp_ipa_is_alt_tx_comp_ring(tx_comp_ring_num))
+		*tx_comp_ipa_ring_sz =
+				wlan_cfg_ipa_tx_alt_comp_ring_size(soc_cfg_ctx);
 }
 #else
 static uint8_t dp_reo_ring_selection(uint32_t value, uint32_t *ring)

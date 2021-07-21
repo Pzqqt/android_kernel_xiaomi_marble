@@ -985,6 +985,29 @@ void wlan_cfg_fill_interrupt_mask(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
 #endif
 
 #ifdef IPA_OFFLOAD
+#ifdef IPA_WDI3_TX_TWO_PIPES
+/**
+ * wlan_soc_ipa_cfg_attach() - Update ipa tx and tx alt config
+ *  in dp soc cfg context
+ * @psoc: Object manager psoc
+ * @wlan_cfg_ctx: dp soc cfg ctx
+ *
+ * Return: None
+ */
+static void
+wlan_soc_ipa_cfg_attach(struct cdp_ctrl_objmgr_psoc *psoc,
+			struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx)
+{
+	wlan_cfg_ctx->ipa_tx_ring_size =
+			cfg_get(psoc, CFG_DP_IPA_TX_RING_SIZE);
+	wlan_cfg_ctx->ipa_tx_comp_ring_size =
+			cfg_get(psoc, CFG_DP_IPA_TX_COMP_RING_SIZE);
+	wlan_cfg_ctx->ipa_tx_alt_ring_size =
+			cfg_get(psoc, CFG_DP_IPA_TX_ALT_RING_SIZE);
+	wlan_cfg_ctx->ipa_tx_alt_comp_ring_size =
+			cfg_get(psoc, CFG_DP_IPA_TX_ALT_COMP_RING_SIZE);
+}
+#else /* !IPA_WDI3_TX_TWO_PIPES */
 /**
  * wlan_soc_ipa_cfg_attach() - Update ipa config in dp soc
  *  cfg context
@@ -1002,7 +1025,8 @@ wlan_soc_ipa_cfg_attach(struct cdp_ctrl_objmgr_psoc *psoc,
 	wlan_cfg_ctx->ipa_tx_comp_ring_size =
 			cfg_get(psoc, CFG_DP_IPA_TX_COMP_RING_SIZE);
 }
-#else
+#endif /* IPA_WDI3_TX_TWO_PIPES */
+#else /* !IPA_OFFLOAD */
 static inline void
 wlan_soc_ipa_cfg_attach(struct cdp_ctrl_objmgr_psoc *psoc,
 			struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx)
@@ -2199,6 +2223,29 @@ uint32_t wlan_cfg_ipa_tx_comp_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->ipa_tx_comp_ring_size;
 }
+
+#ifdef IPA_WDI3_TX_TWO_PIPES
+int wlan_cfg_ipa_tx_alt_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->ipa_tx_alt_ring_size;
+}
+
+int wlan_cfg_ipa_tx_alt_comp_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->ipa_tx_alt_comp_ring_size;
+}
+
+#else
+int wlan_cfg_ipa_tx_alt_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->ipa_tx_ring_size;
+}
+
+int wlan_cfg_ipa_tx_alt_comp_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->ipa_tx_comp_ring_size;
+}
+#endif
 #endif
 
 #ifdef WLAN_SUPPORT_PPEDS
