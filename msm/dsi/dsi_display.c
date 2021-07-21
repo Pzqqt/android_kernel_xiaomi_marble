@@ -713,7 +713,8 @@ static void dsi_display_set_cmd_tx_ctrl_flags(struct dsi_display *display,
 		}
 
 		/* Set flags for last command */
-		if (!(msg->flags & MIPI_DSI_MSG_BATCH_COMMAND))
+		if (!(msg->flags & MIPI_DSI_MSG_BATCH_COMMAND) || (flags & DSI_CTRL_CMD_FIFO_STORE)
+				|| (flags & DSI_CTRL_CMD_NON_EMBEDDED_MODE))
 			flags |= DSI_CTRL_CMD_LAST_COMMAND;
 
 		/*
