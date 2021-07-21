@@ -497,6 +497,16 @@ bool prealloc_disabled = 1;
 qdf_declare_param(prealloc_disabled, bool);
 qdf_export_symbol(prealloc_disabled);
 
+int qdf_mem_malloc_flags(void)
+{
+	if (in_interrupt() || irqs_disabled() || in_atomic())
+		return GFP_ATOMIC;
+
+	return GFP_KERNEL;
+}
+
+qdf_export_symbol(qdf_mem_malloc_flags);
+
 /**
  * qdf_prealloc_disabled_config_get() - Get the user configuration of
  *                                       prealloc_disabled
@@ -1419,14 +1429,6 @@ static inline bool qdf_mem_prealloc_put(void *ptr)
 	return false;
 }
 #endif /* CONFIG_WCNSS_MEM_PRE_ALLOC */
-
-static int qdf_mem_malloc_flags(void)
-{
-	if (in_interrupt() || irqs_disabled() || in_atomic())
-		return GFP_ATOMIC;
-
-	return GFP_KERNEL;
-}
 
 /* External Function implementation */
 #ifdef MEMORY_DEBUG

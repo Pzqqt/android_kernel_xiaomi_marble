@@ -75,7 +75,7 @@ static void osif_roamed_ind(struct net_device *dev, struct cfg80211_bss *bss,
 	info.req_ie_len = req_ie_len;
 	info.resp_ie = resp_ie;
 	info.resp_ie_len = resp_ie_len;
-	cfg80211_roamed(dev, &info, GFP_KERNEL);
+	cfg80211_roamed(dev, &info, qdf_mem_malloc_flags());
 }
 #else
 static inline void osif_roamed_ind(struct net_device *dev,
@@ -85,7 +85,7 @@ static inline void osif_roamed_ind(struct net_device *dev,
 				   size_t resp_ie_len)
 {
 	cfg80211_roamed_bss(dev, bss, req_ie, req_ie_len, resp_ie, resp_ie_len,
-			    GFP_KERNEL);
+			    qdf_mem_malloc_flags());
 }
 #endif
 
@@ -240,7 +240,7 @@ static int osif_send_roam_auth_event(struct wlan_objmgr_vdev *vdev,
 			sizeof(uint16_t) + sizeof(uint8_t) +
 			(9 * NLMSG_HDRLEN) + fils_params_len,
 			QCA_NL80211_VENDOR_SUBCMD_KEY_MGMT_ROAM_AUTH_INDEX,
-			GFP_KERNEL);
+			qdf_mem_malloc_flags());
 
 	if (!skb) {
 		osif_err("cfg80211_vendor_event_alloc failed");
@@ -341,7 +341,7 @@ static int osif_send_roam_auth_event(struct wlan_objmgr_vdev *vdev,
 		}
 	}
 
-	cfg80211_vendor_event(skb, GFP_KERNEL);
+	cfg80211_vendor_event(skb, qdf_mem_malloc_flags());
 	return 0;
 
 nla_put_failure:
@@ -440,7 +440,7 @@ osif_pmksa_candidate_notify(struct wlan_objmgr_vdev *vdev,
 
 	cfg80211_pmksa_candidate_notify(wdev->netdev, index,
 					bssid->bytes,
-					preauth, GFP_KERNEL);
+					preauth, qdf_mem_malloc_flags());
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* CONN_MGR_ADV_FEATURE */

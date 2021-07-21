@@ -331,6 +331,17 @@ void qdf_mem_multi_pages_free(qdf_device_t osdev,
 #endif /* MEMORY_DEBUG */
 
 /**
+ * qdf_mem_malloc_flags: Get mem allocation flags
+ *
+ * Return the flag to be use for memory allocation
+ * based on the context
+ *
+ * Returns: Based on the context, returns the GFP flag
+ * for memory alloaction
+ */
+int qdf_mem_malloc_flags(void);
+
+/**
  * qdf_prealloc_disabled_config_get() - Get the user configuration of
  *                                      prealloc_disabled
  *

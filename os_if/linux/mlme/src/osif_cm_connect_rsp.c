@@ -193,7 +193,7 @@ osif_connect_timeout(struct net_device *dev, const u8 *bssid,
 
 	osif_debug("nl_timeout_reason %d", nl_timeout_reason);
 
-	cfg80211_connect_timeout(dev, bssid, NULL, 0, GFP_KERNEL,
+	cfg80211_connect_timeout(dev, bssid, NULL, 0, qdf_mem_malloc_flags(),
 				 nl_timeout_reason);
 }
 
@@ -228,7 +228,7 @@ static void __osif_connect_bss(struct net_device *dev,
 
 	cfg80211_connect_bss(dev, rsp->bssid.bytes, bss,
 			     req_ptr, req_len, rsp_ptr, rsp_len, status,
-			     GFP_KERNEL, nl_timeout_reason);
+			     qdf_mem_malloc_flags(), nl_timeout_reason);
 }
 #else /* CFG80211_CONNECT_TIMEOUT_REASON_CODE */
 
@@ -239,7 +239,7 @@ static void osif_connect_timeout(
 			const u8 *bssid,
 			enum wlan_cm_connect_fail_reason reason)
 {
-	cfg80211_connect_timeout(dev, bssid, NULL, 0, GFP_KERNEL);
+	cfg80211_connect_timeout(dev, bssid, NULL, 0, qdf_mem_malloc_flags());
 }
 #endif
 
@@ -260,7 +260,7 @@ static void __osif_connect_bss(struct net_device *dev,
 
 	cfg80211_connect_bss(dev, rsp->bssid.bytes, bss,
 			     req_ptr, req_len, rsp_ptr, rsp_len,
-			     status, GFP_KERNEL);
+			     status, qdf_mem_malloc_flags());
 }
 #endif /* CFG80211_CONNECT_TIMEOUT_REASON_CODE */
 
@@ -420,7 +420,7 @@ static void osif_connect_done(struct net_device *dev, struct cfg80211_bss *bss,
 	}
 
 	osif_debug("Connect resp status  %d", conn_rsp_params.status);
-	cfg80211_connect_done(dev, &conn_rsp_params, GFP_KERNEL);
+	cfg80211_connect_done(dev, &conn_rsp_params, qdf_mem_malloc_flags());
 	if (rsp->connect_ies.fils_ie && rsp->connect_ies.fils_ie->hlp_data_len)
 		osif_cm_set_hlp_data(dev, vdev, rsp);
 }
@@ -687,7 +687,8 @@ static void osif_indcate_connect_results(struct wlan_objmgr_vdev *vdev,
 				      &rsp_len, &rsp_ptr);
 	cfg80211_connect_result(osif_priv->wdev->netdev,
 				rsp->bssid.bytes, req_ptr, req_len,
-				rsp_ptr, rsp_len, status, GFP_KERNEL);
+				rsp_ptr, rsp_len, status,
+				qdf_mem_malloc_flags());
 }
 #endif /* WLAN_FEATURE_11BE_MLO */
 #endif /* CFG80211_CONNECT_BSS */
