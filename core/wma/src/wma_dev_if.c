@@ -1789,13 +1789,17 @@ wma_increment_peer_count(tp_wma_handle wma, uint8_t vdev_id)
  * @peer_addr: peer mac addr
  * @peer_type: peer type
  * @vdev_id: vdev id
+ * @peer_mld_addr: peer mld addr
+ * @is_assoc_peer: is assoc peer or not
  *
  * Return: QDF status
  */
 static
 QDF_STATUS wma_add_peer(tp_wma_handle wma,
 			uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
-			uint32_t peer_type, uint8_t vdev_id)
+			uint32_t peer_type, uint8_t vdev_id,
+			uint8_t peer_mld_addr[QDF_MAC_ADDR_SIZE],
+			bool is_assoc_peer)
 {
 	struct peer_create_params param = {0};
 	void *dp_soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -1840,6 +1844,14 @@ QDF_STATUS wma_add_peer(tp_wma_handle wma,
 	 * where the HTT peer map event is received before the peer object
 	 * is created in the data path
 	 */
+	if (peer_mld_addr &&
+	    !qdf_is_macaddr_zero((struct qdf_mac_addr *)peer_mld_addr)) {
+		wma_debug("peer " QDF_MAC_ADDR_FMT "is_assoc_peer%d mld mac " QDF_MAC_ADDR_FMT,
+			  QDF_MAC_ADDR_REF(peer_addr), is_assoc_peer,
+			  QDF_MAC_ADDR_REF(peer_mld_addr));
+		wlan_peer_mlme_set_mldaddr(obj_peer, peer_mld_addr);
+		wlan_peer_mlme_set_assoc_peer(obj_peer, is_assoc_peer);
+	}
 	status = cdp_peer_create(dp_soc, vdev_id, peer_addr);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		wma_err("Unable to attach peer "QDF_MAC_ADDR_FMT,
@@ -1889,15 +1901,17 @@ QDF_STATUS wma_add_peer(tp_wma_handle wma,
 
 QDF_STATUS wma_create_peer(tp_wma_handle wma,
 			   uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
-			   uint32_t peer_type, uint8_t vdev_id)
+			   uint32_t peer_type, uint8_t vdev_id,
+			   uint8_t peer_mld_addr[QDF_MAC_ADDR_SIZE],
+			   bool is_assoc_peer)
 {
 	void *dp_soc = cds_get_context(QDF_MODULE_ID_SOC);
 	QDF_STATUS status;
 
 	if (!dp_soc)
 		return QDF_STATUS_E_FAILURE;
-
-	status = wma_add_peer(wma, peer_addr, peer_type, vdev_id);
+	status = wma_add_peer(wma, peer_addr, peer_type, vdev_id,
+			      peer_mld_addr, is_assoc_peer);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
@@ -1914,13 +1928,17 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma,
  * @peer_addr: peer mac address
  * @peer_type: peer type
  * @vdev_id: vdev id
+ * @mld_addr: peer mld address
+ * @is_assoc_peer: is assoc peer or not
  *
  * Return: QDF_STATUS
  */
 static QDF_STATUS
 wma_create_sta_mode_bss_peer(tp_wma_handle wma,
 			     uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
-			     uint32_t peer_type, uint8_t vdev_id)
+			     uint32_t peer_type, uint8_t vdev_id,
+			     uint8_t mld_addr[QDF_MAC_ADDR_SIZE],
+			     bool is_assoc_peer)
 {
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 	struct wma_target_req *msg = NULL;
@@ -1941,7 +1959,8 @@ wma_create_sta_mode_bss_peer(tp_wma_handle wma,
 		wlan_psoc_nif_fw_ext_cap_get(wma->psoc,
 					     WLAN_SOC_F_PEER_CREATE_RESP);
 	if (!is_tgt_peer_conf_supported) {
-		status = wma_create_peer(wma, peer_addr, peer_type, vdev_id);
+		status = wma_create_peer(wma, peer_addr, peer_type, vdev_id,
+					 mld_addr, is_assoc_peer);
 		goto end;
 	}
 
@@ -1952,7 +1971,8 @@ wma_create_sta_mode_bss_peer(tp_wma_handle wma,
 	wma_acquire_wakelock(&wma->wmi_cmd_rsp_wake_lock,
 			     WMA_PEER_CREATE_RESPONSE_TIMEOUT);
 
-	status = wma_add_peer(wma, peer_addr, peer_type, vdev_id);
+	status = wma_add_peer(wma, peer_addr, peer_type, vdev_id,
+			      mld_addr, is_assoc_peer);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		wma_release_wakelock(&wma->wmi_cmd_rsp_wake_lock);
 		goto end;
@@ -2490,7 +2510,8 @@ QDF_STATUS wma_vdev_self_peer_create(struct vdev_mlme_obj *vdev_mlme)
 		status = wma_create_peer(wma_handle,
 					 vdev->vdev_mlme.macaddr,
 					 WMI_PEER_TYPE_DEFAULT,
-					 wlan_vdev_get_id(vdev));
+					 wlan_vdev_get_id(vdev),
+					 NULL, false);
 		if (QDF_IS_STATUS_ERROR(status))
 			wma_err("Failed to create peer %d", status);
 	} else if (vdev_mlme->mgmt.generic.type == WMI_VDEV_TYPE_STA) {
@@ -3589,7 +3610,8 @@ QDF_STATUS wma_pre_vdev_start_setup(uint8_t vdev_id,
 		mac_addr = wlan_vdev_mlme_get_macaddr(iface->vdev);
 
 	status = wma_create_peer(wma, mac_addr,
-				 WMI_PEER_TYPE_DEFAULT, vdev_id);
+				 WMI_PEER_TYPE_DEFAULT, vdev_id,
+				 NULL, false);
 	if (status != QDF_STATUS_SUCCESS) {
 		wma_err("Failed to create peer");
 		return status;
@@ -3999,6 +4021,37 @@ send_resp:
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * wma_get_mld_info_ap() - get mld mac addr and assoc peer flag for ap
+ * @add_sta: tpAddStaParams
+ * @peer_mld_addr: peer mld mac addr
+ * @is_assoc_peer: is assoc peer or not
+ *
+ * Return: void
+ */
+static void wma_get_mld_info_ap(tpAddStaParams add_sta,
+				uint8_t *peer_mld_addr,
+				bool *is_assoc_peer)
+{
+	if (add_sta) {
+		peer_mld_addr = add_sta->mld_mac_addr;
+		*is_assoc_peer = add_sta->is_assoc_peer;
+	} else {
+		peer_mld_addr = NULL;
+		*is_assoc_peer = false;
+	}
+}
+#else
+static void wma_get_mld_info_ap(tpAddStaParams add_sta,
+				uint8_t *peer_mld_addr,
+				bool *is_assoc_peer)
+{
+	peer_mld_addr = NULL;
+	*is_assoc_peer = false;
+}
+#endif
+
 /**
  * wma_add_sta_req_ap_mode() - process add sta request in ap mode
  * @wma: wma handle
@@ -4020,6 +4073,8 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 	uint16_t mcs_limit;
 	uint8_t *rate_pos;
 	struct mac_context *mac = wma->mac_context;
+	uint8_t *peer_mld_addr = NULL;
+	bool is_assoc_peer = false;
 
 	/* UMAC sends WMA_ADD_STA_REQ msg twice to WMA when the station
 	 * associates. First WMA_ADD_STA_REQ will have staType as
@@ -4059,8 +4114,10 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 
 	wma_delete_invalid_peer_entries(add_sta->smesessionId, add_sta->staMac);
 
+	wma_get_mld_info_ap(add_sta, peer_mld_addr, &is_assoc_peer);
 	status = wma_create_peer(wma, add_sta->staMac, WMI_PEER_TYPE_DEFAULT,
-				 add_sta->smesessionId);
+				 add_sta->smesessionId, peer_mld_addr,
+				 is_assoc_peer);
 	if (status != QDF_STATUS_SUCCESS) {
 		wma_err("Failed to create peer for "QDF_MAC_ADDR_FMT,
 			QDF_MAC_ADDR_REF(add_sta->staMac));
@@ -4227,7 +4284,7 @@ static void wma_add_tdls_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 
 		status = wma_create_peer(wma, add_sta->staMac,
 					 WMI_PEER_TYPE_TDLS,
-					 add_sta->smesessionId);
+					 add_sta->smesessionId, NULL, false);
 		if (status != QDF_STATUS_SUCCESS) {
 			wma_err("Failed to create peer for "QDF_MAC_ADDR_FMT,
 				QDF_MAC_ADDR_REF(add_sta->staMac));
@@ -5475,7 +5532,8 @@ QDF_STATUS wma_set_wlm_latency_level(void *wma_ptr,
 }
 
 QDF_STATUS wma_add_bss_peer_sta(uint8_t vdev_id, uint8_t *bssid,
-				bool is_resp_required)
+				bool is_resp_required,
+				uint8_t *mld_mac, bool is_assoc_peer)
 {
 	tp_wma_handle wma;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -5487,10 +5545,11 @@ QDF_STATUS wma_add_bss_peer_sta(uint8_t vdev_id, uint8_t *bssid,
 	if (is_resp_required)
 		status = wma_create_sta_mode_bss_peer(wma, bssid,
 						      WMI_PEER_TYPE_DEFAULT,
-						      vdev_id);
+						      vdev_id, mld_mac,
+						      is_assoc_peer);
 	else
 		status = wma_create_peer(wma, bssid, WMI_PEER_TYPE_DEFAULT,
-					 vdev_id);
+					 vdev_id, mld_mac, is_assoc_peer);
 err:
 	return status;
 }

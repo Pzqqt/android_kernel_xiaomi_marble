@@ -72,6 +72,9 @@
 #ifdef WLAN_FEATURE_11BE
 #include "wma_eht.h"
 #endif
+#ifdef WLAN_FEATURE_11BE_MLO
+#include <lim_mlo.h>
+#endif
 
 /** -------------------------------------------------------------
    \fn lim_delete_dialogue_token_list
@@ -8143,7 +8146,15 @@ void lim_update_sta_eht_capable(struct mac_context *mac,
 	else
 		add_sta_params->eht_capable = session_entry->eht_capable;
 
-	pe_debug("eht_capable: %d", add_sta_params->eht_capable);
+	if (add_sta_params->eht_capable) {
+		WLAN_ADDR_COPY(add_sta_params->mld_mac_addr, sta_ds->mld_addr);
+		add_sta_params->is_assoc_peer = lim_is_mlo_recv_assoc(sta_ds);
+	}
+
+	pe_debug("eht_capable: %d mld mac " QDF_MAC_ADDR_FMT " assoc peer %d",
+		 add_sta_params->eht_capable,
+		 QDF_MAC_ADDR_REF(add_sta_params->mld_mac_addr),
+		 add_sta_params->is_assoc_peer);
 }
 
 void lim_update_session_eht_capable_chan_switch(struct mac_context *mac,

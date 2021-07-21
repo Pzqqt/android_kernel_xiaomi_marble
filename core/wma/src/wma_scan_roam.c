@@ -937,7 +937,7 @@ wma_roam_update_vdev(tp_wma_handle wma,
 	wma_delete_sta(wma, del_sta_params);
 	wma_delete_bss(wma, vdev_id);
 	wma_create_peer(wma, roam_synch_ind_ptr->bssid.bytes,
-			WMI_PEER_TYPE_DEFAULT, vdev_id);
+			WMI_PEER_TYPE_DEFAULT, vdev_id, NULL, false);
 
 	/* Update new peer's uc cipher */
 	uc_cipher = wlan_crypto_get_param(wma->interfaces[vdev_id].vdev,

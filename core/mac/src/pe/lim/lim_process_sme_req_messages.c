@@ -3895,10 +3895,43 @@ QDF_STATUS cm_process_disconnect_req(struct scheduler_msg *msg)
 	return status;
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * wma_get_mld_info_sta() - get peer_mld_addr and assoc peer flag for sta
+ * @req: cm_peer_create_req
+ * @peer_mld_addr: peer mld mac addr
+ * @is_assoc_peer: is assoc peer
+ *
+ * Return: void
+ */
+static void wma_get_mld_info_sta(struct cm_peer_create_req *req,
+				 uint8_t *peer_mld_addr,
+				 bool *is_assoc_peer)
+{
+	if (req) {
+		peer_mld_addr = req->mld_mac.bytes;
+		*is_assoc_peer = req->is_assoc_peer;
+	} else {
+		peer_mld_addr = NULL;
+		*is_assoc_peer = false;
+	}
+}
+#else
+static void wma_get_mld_info_sta(struct cm_peer_create_req *req,
+				 uint8_t *peer_mld_addr,
+				 bool *is_assoc_peer)
+{
+	peer_mld_addr = NULL;
+	*is_assoc_peer = false;
+}
+#endif
+
 QDF_STATUS cm_process_peer_create(struct scheduler_msg *msg)
 {
 	struct cm_peer_create_req *req;
 	QDF_STATUS status;
+	uint8_t *peer_mld_addr = NULL;
+	bool is_assoc_peer = false;
 
 	if (!msg || !msg->bodyptr) {
 		mlme_err("msg or msg->bodyptr is NULL");
@@ -3907,7 +3940,9 @@ QDF_STATUS cm_process_peer_create(struct scheduler_msg *msg)
 
 	req = msg->bodyptr;
 
-	status = wma_add_bss_peer_sta(req->vdev_id, req->peer_mac.bytes, true);
+	wma_get_mld_info_sta(req, peer_mld_addr, &is_assoc_peer);
+	status = wma_add_bss_peer_sta(req->vdev_id, req->peer_mac.bytes, true,
+				      peer_mld_addr, is_assoc_peer);
 
 	qdf_mem_free(req);
 
