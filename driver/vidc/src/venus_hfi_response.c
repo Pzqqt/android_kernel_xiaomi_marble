@@ -448,17 +448,19 @@ int handle_system_error(struct msm_vidc_core *core,
 	print_sfr_message(core);
 	venus_hfi_noc_error_info(core);
 
-	/* enable force bugon for requested type */
-	if (pkt->type == HFI_SYS_ERROR_FATAL)
-		bug_on = !!(msm_vidc_enable_bugon & MSM_VIDC_BUG_ON_FATAL);
-	else if (pkt->type == HFI_SYS_ERROR_NOC)
-		bug_on = !!(msm_vidc_enable_bugon & MSM_VIDC_BUG_ON_NOC);
-	else if (pkt->type == HFI_SYS_ERROR_WD_TIMEOUT)
-		bug_on = !!(msm_vidc_enable_bugon & MSM_VIDC_BUG_ON_WD_TIMEOUT);
+	if (pkt) {
+		/* enable force bugon for requested type */
+		if (pkt->type == HFI_SYS_ERROR_FATAL)
+			bug_on = !!(msm_vidc_enable_bugon & MSM_VIDC_BUG_ON_FATAL);
+		else if (pkt->type == HFI_SYS_ERROR_NOC)
+			bug_on = !!(msm_vidc_enable_bugon & MSM_VIDC_BUG_ON_NOC);
+		else if (pkt->type == HFI_SYS_ERROR_WD_TIMEOUT)
+			bug_on = !!(msm_vidc_enable_bugon & MSM_VIDC_BUG_ON_WD_TIMEOUT);
 
-	if (bug_on) {
-		d_vpr_e("%s: force bugon for type %#x\n", __func__, pkt->type);
-		MSM_VIDC_FATAL(true);
+		if (bug_on) {
+			d_vpr_e("%s: force bugon for type %#x\n", __func__, pkt->type);
+			MSM_VIDC_FATAL(true);
+		}
 	}
 
 	msm_vidc_core_deinit(core, true);
