@@ -1791,6 +1791,14 @@ wlansap_set_cac_required_for_chan(struct mac_context *mac_ctx,
 		}
 	}
 
+	/* Update cac_duration_ms & dfs_region in sap_ctx for new channel,
+	 * no matter CAC required or not.
+	 * For ETSI, CAC duration is different between DFS and weather channel.
+	 */
+	sap_get_cac_dur_dfs_region(sap_ctx,
+				   &sap_ctx->csr_roamProfile.cac_duration_ms,
+				   &sap_ctx->csr_roamProfile.dfs_regdomain);
+
 	mlme_set_cac_required(sap_ctx->vdev, cac_required);
 }
 
