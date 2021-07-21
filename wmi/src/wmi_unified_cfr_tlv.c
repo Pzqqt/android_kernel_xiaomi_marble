@@ -228,7 +228,6 @@ static QDF_STATUS send_cfr_rcc_cmd_tlv(wmi_unified_t wmi_handle,
 	return status;
 }
 
-#ifdef REPORT_AOA_FOR_RCC
 static QDF_STATUS
 extract_cfr_phase_param_tlv(wmi_unified_t wmi_handle,
 			    void *evt_buf,
@@ -257,27 +256,28 @@ extract_cfr_phase_param_tlv(wmi_unified_t wmi_handle,
 
 	param->chain_phase_mask = (phase_event->chainInfo >> 16) & 0xFFFF;
 
+	if ((sizeof(param->ibf_cal_val)) <
+	    (sizeof(phase_event->perChainIbfCalVal))) {
+		wmi_err("ibf_cal_val can not hold all values from event data");
+		return QDF_STATUS_E_RANGE;
+	}
+
+	if ((sizeof(param->phase_delta)) <
+	    (sizeof(phase_event->phasedelta))) {
+		wmi_err("phase_delta can not hold all values from event data");
+		return QDF_STATUS_E_RANGE;
+	}
+
 	qdf_mem_copy(param->ibf_cal_val,
 		     phase_event->perChainIbfCalVal,
-		     (sizeof(uint32_t) * WMI_MAX_CHAINS_FOR_AOA_RCC));
+		     sizeof(param->ibf_cal_val));
 
 	qdf_mem_copy(param->phase_delta,
 		     phase_event->phasedelta,
-		     (sizeof(uint32_t) *
-		      WMI_MAX_CHAINS_FOR_AOA_RCC *
-		      MAX_AOA_PHASEDELTA));
+		     sizeof(param->phase_delta));
 
 	return QDF_STATUS_SUCCESS;
 }
-#else
-static QDF_STATUS
-extract_cfr_phase_param_tlv(wmi_unified_t wmi_handle,
-			    void *evt_buf,
-			    struct wmi_cfr_phase_delta_param *param)
-{
-	return QDF_STATUS_E_NOSUPPORT;
-}
-#endif /* REPORT_AOA_FOR_RCC */
 #endif
 
 static QDF_STATUS send_peer_cfr_capture_cmd_tlv(wmi_unified_t wmi_handle,
