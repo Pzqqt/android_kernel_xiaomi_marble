@@ -3199,6 +3199,11 @@ cm_roam_switch_to_init(struct wlan_objmgr_pdev *pdev,
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
 						    WLAN_MLME_NB_ID);
+	if (!vdev) {
+		mlme_err("CM_RSO: vdev is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	if (cm_is_vdev_disconnecting(vdev) ||
 	    cm_is_vdev_disconnected(vdev)) {
 		mlme_debug("CM_RSO: RSO Init received in disconnected state");
