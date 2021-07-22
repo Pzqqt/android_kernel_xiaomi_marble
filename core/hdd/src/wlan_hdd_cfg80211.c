@@ -17015,14 +17015,16 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 #endif
 			| WIPHY_FLAG_OFFCHAN_TX;
 
+	if (ucfg_pmo_get_suspend_mode(hdd_ctx->psoc) == PMO_SUSPEND_WOW) {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0))
-	wiphy->wowlan = &wowlan_support_cfg80211_init;
+		wiphy->wowlan = &wowlan_support_cfg80211_init;
 #else
-	wiphy->wowlan.flags = WIPHY_WOWLAN_MAGIC_PKT;
-	wiphy->wowlan.n_patterns = WOWL_MAX_PTRNS_ALLOWED;
-	wiphy->wowlan.pattern_min_len = 1;
-	wiphy->wowlan.pattern_max_len = WOWL_PTRN_MAX_SIZE;
+		wiphy->wowlan.flags = WIPHY_WOWLAN_MAGIC_PKT;
+		wiphy->wowlan.n_patterns = WOWL_MAX_PTRNS_ALLOWED;
+		wiphy->wowlan.pattern_min_len = 1;
+		wiphy->wowlan.pattern_max_len = WOWL_PTRN_MAX_SIZE;
 #endif
+	}
 
 #ifdef FEATURE_WLAN_TDLS
 	wiphy->flags |= WIPHY_FLAG_SUPPORTS_TDLS

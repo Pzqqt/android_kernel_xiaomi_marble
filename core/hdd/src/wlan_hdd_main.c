@@ -9264,24 +9264,26 @@ static int hdd_wiphy_init(struct hdd_context *hdd_ctx)
 		return ret_val;
 	}
 
+	if (ucfg_pmo_get_suspend_mode(hdd_ctx->psoc) == PMO_SUSPEND_WOW) {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0))
-	if (ucfg_pmo_get_suspend_mode(hdd_ctx->psoc) == PMO_SUSPEND_WOW)
 		wiphy->wowlan = &wowlan_support_reg_init;
 #else
-	wiphy->wowlan.flags = WIPHY_WOWLAN_ANY |
-			      WIPHY_WOWLAN_MAGIC_PKT |
-			      WIPHY_WOWLAN_DISCONNECT |
-			      WIPHY_WOWLAN_SUPPORTS_GTK_REKEY |
-			      WIPHY_WOWLAN_GTK_REKEY_FAILURE |
-			      WIPHY_WOWLAN_EAP_IDENTITY_REQ |
-			      WIPHY_WOWLAN_4WAY_HANDSHAKE |
-			      WIPHY_WOWLAN_RFKILL_RELEASE;
+		wiphy->wowlan.flags = WIPHY_WOWLAN_ANY |
+				      WIPHY_WOWLAN_MAGIC_PKT |
+				      WIPHY_WOWLAN_DISCONNECT |
+				      WIPHY_WOWLAN_SUPPORTS_GTK_REKEY |
+				      WIPHY_WOWLAN_GTK_REKEY_FAILURE |
+				      WIPHY_WOWLAN_EAP_IDENTITY_REQ |
+				      WIPHY_WOWLAN_4WAY_HANDSHAKE |
+				      WIPHY_WOWLAN_RFKILL_RELEASE;
 
-	wiphy->wowlan.n_patterns = (WOW_MAX_FILTER_LISTS *
+		wiphy->wowlan.n_patterns = (WOW_MAX_FILTER_LISTS *
 				    WOW_MAX_FILTERS_PER_LIST);
-	wiphy->wowlan.pattern_min_len = WOW_MIN_PATTERN_SIZE;
-	wiphy->wowlan.pattern_max_len = WOW_MAX_PATTERN_SIZE;
+		wiphy->wowlan.pattern_min_len = WOW_MIN_PATTERN_SIZE;
+		wiphy->wowlan.pattern_max_len = WOW_MAX_PATTERN_SIZE;
 #endif
+	}
+
 	ucfg_mlme_get_channel_bonding_24ghz(hdd_ctx->psoc,
 					    &channel_bonding_mode);
 	if (hdd_ctx->obss_scan_offload) {
