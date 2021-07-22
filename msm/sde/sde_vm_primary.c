@@ -2,6 +2,9 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
+
+#define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
+
 #include <linux/notifier.h>
 #include <linux/gunyah/gh_rm_drv.h>
 #include <linux/gunyah/gh_irq_lend.h>

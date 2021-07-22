@@ -3,6 +3,8 @@
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  */
 
+#define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
+
 #include <linux/gunyah/gh_rm_drv.h>
 #include <linux/gunyah/gh_irq_lend.h>
 #include <linux/gunyah/gh_mem_notifier.h>
@@ -14,7 +16,6 @@
 #include "sde_vm_common.h"
 #include "sde_vm.h"
 #include "sde_vm_msgq.h"
-
 
 #define to_vm_trusted(vm) ((struct sde_vm_trusted *)vm)
 
