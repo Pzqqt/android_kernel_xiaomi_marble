@@ -4914,6 +4914,7 @@ target_if_spectral_populate_session_detector_info(
 			}
 			is_sec80 = !is_sec80;
 		}
+		det_map->det_map_valid = true;
 	}
 	return QDF_STATUS_SUCCESS;
 }
@@ -5161,6 +5162,7 @@ target_if_stop_spectral_scan(struct wlan_objmgr_pdev *pdev,
 {
 	struct target_if_spectral_ops *p_sops;
 	struct target_if_spectral *spectral;
+	uint8_t det;
 
 	if (!pdev) {
 		spectral_err("pdev object is NULL");
@@ -5205,6 +5207,9 @@ target_if_stop_spectral_scan(struct wlan_objmgr_pdev *pdev,
 
 	spectral->send_single_packet = 0;
 	spectral->sc_spectral_scan = 0;
+
+	for (det = 0; det < MAX_DETECTORS_PER_PDEV; det++)
+		spectral->det_map[det].det_map_valid = false;
 
 	qdf_spin_unlock(&spectral->spectral_lock);
 

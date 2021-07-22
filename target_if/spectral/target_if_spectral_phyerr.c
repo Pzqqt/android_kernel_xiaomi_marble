@@ -3319,6 +3319,8 @@ target_if_consume_spectral_report_gen3(
 	QDF_STATUS ret;
 	enum spectral_scan_mode spectral_mode = SPECTRAL_SCAN_MODE_INVALID;
 	bool finite_scan = false;
+	int det = 0;
+	struct sscan_detector_list *det_list;
 
 	if (!spectral) {
 		spectral_err_rl("Spectral LMAC object is null");
@@ -3391,6 +3393,18 @@ target_if_consume_spectral_report_gen3(
 	if (QDF_IS_STATUS_ERROR(ret)) {
 		spectral_err_rl("Failed to process search FFT report");
 		goto fail;
+	}
+
+	det_list = &spectral->detector_list[spectral_mode]
+			[spectral->report_info[spectral_mode].sscan_bw];
+	for (det = 0; det < det_list->num_detectors; det++) {
+		if (p_sfft->fft_detector_id == det_list->detectors[det])
+			break;
+		if (det == det_list->num_detectors - 1) {
+			spectral_info("Incorrect det id %d for given scan mode and channel width",
+				      p_sfft->fft_detector_id);
+			goto fail_no_print;
+		}
 	}
 
 	ret = target_if_update_session_info_from_report_ctx(

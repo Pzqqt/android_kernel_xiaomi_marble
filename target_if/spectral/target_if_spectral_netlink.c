@@ -51,11 +51,10 @@ target_if_spectral_fill_samp_msg(struct target_if_spectral *spectral,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	if (params->hw_detector_id > SPECTRAL_DETECTOR_ID_MAX) {
+	if (params->hw_detector_id >= SPECTRAL_DETECTOR_ID_MAX) {
 		spectral_err_rl("Invalid detector ID");
 		return QDF_STATUS_E_FAILURE;
 	}
-	det_map = &spectral->det_map[params->hw_detector_id];
 
 	spectral_mode =
 		spectral->rparams.detid_mode_table[params->hw_detector_id];
@@ -71,6 +70,14 @@ target_if_spectral_fill_samp_msg(struct target_if_spectral *spectral,
 		spectral_err_rl("Invalid spectral msg type");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	if (!spectral->det_map[params->hw_detector_id].det_map_valid) {
+		spectral_info("Detector Map not valid for det id = %d",
+			      params->hw_detector_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	det_map = &spectral->det_map[params->hw_detector_id];
 
 	spec_samp_msg = spectral->nl_cb.get_sbuff(spectral->pdev_obj,
 						  msg_type,
