@@ -771,8 +771,8 @@ int cvp_read_platform_resources_from_drv_data(
 	res->dsp_enabled = find_key_value(platform_data,
 			"qcom,dsp-enabled");
 
-	res->max_load = find_key_value(platform_data,
-			"qcom,max-hw-load");
+	res->max_ssr_allowed = find_key_value(platform_data,
+			"qcom,max-ssr-allowed");
 
 	res->sw_power_collapsible = find_key_value(platform_data,
 			"qcom,sw-power-collapse");
@@ -952,7 +952,7 @@ int msm_cvp_smmu_fault_handler(struct iommu_domain *domain,
 {
 	struct msm_cvp_core *core = token;
 	struct msm_cvp_inst *inst;
-	u32 *pfaddr = &core->last_fault_addr;
+	bool log = false;
 
 	if (!domain || !core) {
 		dprintk(CVP_ERR, "%s - invalid param %pK %pK\n",
@@ -960,22 +960,15 @@ int msm_cvp_smmu_fault_handler(struct iommu_domain *domain,
 		return -EINVAL;
 	}
 
-	if (core->smmu_fault_handled) {
-		if (core->resources.non_fatal_pagefaults) {
-			WARN_ONCE(1, "%s: non-fatal pagefault address: %lx\n",
-					__func__, iova);
-			*pfaddr = (*pfaddr == 0) ? iova : (*pfaddr);
-			return 0;
-		}
-	}
-
-	dprintk(CVP_ERR, "%s - faulting address: %lx\n", __func__, iova);
+	core->smmu_fault_count++;
+	dprintk(CVP_ERR, "%s - faulting address: %lx, %d\n",
+		__func__, iova, core->smmu_fault_count);
 
 	mutex_lock(&core->lock);
+	log = (core->log.snapshot_index > 0)? false : true;
 	list_for_each_entry(inst, &core->instances, list) {
-		msm_cvp_print_inst_bufs(inst);
+		msm_cvp_print_inst_bufs(inst, log);
 	}
-	core->smmu_fault_handled = true;
 	mutex_unlock(&core->lock);
 	/*
 	 * Return -EINVAL to elicit the default behaviour of smmu driver.

@@ -358,6 +358,33 @@ static int _dsp_dbg_get(void *data, u64 *val)
 
 DEFINE_DEBUGFS_ATTRIBUTE(dsp_debug_fops, _dsp_dbg_get, _dsp_dbg_set, "%llu\n");
 
+static int _max_ssr_set(void *data, u64 val)
+{
+	struct msm_cvp_core *core;
+	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	if (core) {
+		if (val < 1) {
+			dprintk(CVP_WARN,
+				"Invalid max_ssr_allowed value %llx\n", val);
+			return 0;
+		}
+
+		core->resources.max_ssr_allowed = (unsigned int)val;
+	}
+	return 0;
+}
+
+static int _max_ssr_get(void *data, u64 *val)
+{
+	struct msm_cvp_core *core;
+	core = list_first_entry(&cvp_driver->cores, struct msm_cvp_core, list);
+	if (core)
+		*val = core->resources.max_ssr_allowed;
+
+	return 0;
+}
+
+DEFINE_DEBUGFS_ATTRIBUTE(max_ssr_fops, _max_ssr_get, _max_ssr_set, "%llu\n");
 
 struct dentry *msm_cvp_debugfs_init_core(struct msm_cvp_core *core,
 		struct dentry *parent)
@@ -394,6 +421,12 @@ struct dentry *msm_cvp_debugfs_init_core(struct msm_cvp_core *core,
 	if (!debugfs_create_file("dsp_debug_level", 0644, dir,
 			NULL, &dsp_debug_fops)) {
 		dprintk(CVP_ERR, "debugfs_create: dsp_debug_level fail\n");
+		goto failed_create_dir;
+	}
+
+	if (!debugfs_create_file("max_ssr_allowed", 0644, dir,
+			NULL, &max_ssr_fops)) {
+		dprintk(CVP_ERR, "debugfs_create: max_ssr_allowed fail\n");
 		goto failed_create_dir;
 	}
 
@@ -512,7 +545,7 @@ struct dentry *msm_cvp_debugfs_init_inst(struct msm_cvp_inst *inst,
 		dprintk(CVP_ERR, "Invalid params, inst: %pK\n", inst);
 		goto exit;
 	}
-	snprintf(debugfs_name, MAX_DEBUGFS_NAME, "inst_%p", inst);
+	snprintf(debugfs_name, MAX_DEBUGFS_NAME, "inst_%pK", inst);
 
 	idata = kzalloc(sizeof(*idata), GFP_KERNEL);
 	if (!idata) {

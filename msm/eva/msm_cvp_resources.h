@@ -152,7 +152,7 @@ struct msm_cvp_platform_resources {
 	struct subcache_set subcache_set;
 	struct reg_set reg_set;
 	struct addr_set qdss_addr_set;
-	uint32_t max_load;
+	uint32_t max_ssr_allowed;
 	struct platform_device *pdev;
 	struct regulator_set regulator_set;
 	struct clock_set clock_set;
