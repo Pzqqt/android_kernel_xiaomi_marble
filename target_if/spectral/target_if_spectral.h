@@ -1180,9 +1180,12 @@ struct sscan_detector_list {
  * @finite_scan: Parameters for finite Spectral scan
  * @detector_list: Detector list for a given Spectral scan mode and channel
  * width, based on the target type.
+ * @detector_list_lock: Lock to synchronize accesses to detector list
  * @det_map: Map of per-session detector information keyed by the Spectral HW
  * detector id.
+ * @session_det_map_lock: Lock to synchronize accesses to session detector map
  * @report_info: Per session info to be filled at report level in SAMP message
+ * @session_report_info_lock: Lock to synchronize access to session report info
  */
 struct target_if_spectral {
 	struct wlan_objmgr_pdev *pdev_obj;
@@ -1306,8 +1309,11 @@ struct target_if_spectral {
 					finite_scan[SPECTRAL_SCAN_MODE_MAX];
 	struct sscan_detector_list
 			detector_list[SPECTRAL_SCAN_MODE_MAX][CH_WIDTH_MAX];
+	qdf_spinlock_t detector_list_lock;
 	struct per_session_det_map det_map[MAX_DETECTORS_PER_PDEV];
+	qdf_spinlock_t session_det_map_lock;
 	struct per_session_report_info report_info[SPECTRAL_SCAN_MODE_MAX];
+	qdf_spinlock_t session_report_info_lock;
 };
 
 /**

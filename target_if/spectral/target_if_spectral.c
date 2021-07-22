@@ -2474,6 +2474,10 @@ target_if_spectral_detach(struct target_if_spectral *spectral)
 		qdf_spinlock_destroy(&spectral->spectral_lock);
 		qdf_spinlock_destroy(&spectral->noise_pwr_reports_lock);
 
+		qdf_spinlock_destroy(&spectral->detector_list_lock);
+		qdf_spinlock_destroy(&spectral->session_report_info_lock);
+		qdf_spinlock_destroy(&spectral->session_det_map_lock);
+
 		qdf_mem_free(spectral);
 		spectral = NULL;
 	}
@@ -2900,11 +2904,14 @@ target_if_spectral_detector_list_init(struct target_if_spectral *spectral)
 	for (; ch_width <= CH_WIDTH_80P80MHZ; ch_width++) {
 		/* Normal spectral scan */
 		smode = SPECTRAL_SCAN_MODE_NORMAL;
+		spectral_debug("is_hw_mode_sbs: %d is_using_phya1:%d",
+			       is_hw_mode_sbs, is_using_phya1);
+
+		qdf_spin_lock_bh(&spectral->detector_list_lock);
+
 		det_list = &spectral->detector_list[smode][ch_width];
 		det_list->num_detectors = 1;
 
-		spectral_debug("is_hw_mode_sbs: %d is_using_phya1:%d",
-			       is_hw_mode_sbs, is_using_phya1);
 		if (is_hw_mode_sbs && is_using_phya1)
 			det_list->detectors[0] = SPECTRAL_DETECTOR_ID_1;
 		else
@@ -2927,12 +2934,16 @@ target_if_spectral_detector_list_init(struct target_if_spectral *spectral)
 			 * scan. Only 20/40/80 MHz is supported on platforms
 			 * with fragmentation, as only 1 detector is available.
 			 */
-			if (is_ch_width_160_or_80p80(ch_width))
+			if (is_ch_width_160_or_80p80(ch_width)) {
+				qdf_spin_unlock_bh(
+						&spectral->detector_list_lock);
 				continue;
+			}
 			det_list->detectors[0] = SPECTRAL_DETECTOR_ID_2;
 		} else {
 			det_list->detectors[0] = SPECTRAL_DETECTOR_ID_1;
 		}
+		qdf_spin_unlock_bh(&spectral->detector_list_lock);
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -3133,6 +3144,10 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 		if (spectral->spectral_gen == SPECTRAL_GEN3)
 			init_160mhz_delivery_state_machine(spectral);
 	}
+
+	qdf_spinlock_create(&spectral->detector_list_lock);
+	qdf_spinlock_create(&spectral->session_report_info_lock);
+	qdf_spinlock_create(&spectral->session_det_map_lock);
 
 	return spectral;
 
@@ -5001,6 +5016,7 @@ target_if_spectral_populate_session_report_info(
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
+	qdf_spin_lock_bh(&spectral->session_report_info_lock);
 	/* Fill per-session report information, based on the spectral mode */
 	rpt_info = &spectral->report_info[smode];
 
@@ -5017,6 +5033,8 @@ target_if_spectral_populate_session_report_info(
 	} else {
 		rpt_info->num_spans = 1;
 	}
+
+	qdf_spin_unlock_bh(&spectral->session_report_info_lock);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -5063,13 +5081,17 @@ target_if_spectral_populate_session_detector_info(
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
+	qdf_spin_lock_bh(&spectral->session_report_info_lock);
 	rpt_info = &spectral->report_info[smode];
+
+	qdf_spin_lock_bh(&spectral->detector_list_lock);
 	/* Fill per-sesion detector-level information */
 	detector_list = &spectral->detector_list[smode][rpt_info->sscan_bw];
 
 	for (det = 0; det < detector_list->num_detectors; det++) {
 		struct per_session_det_map *det_map;
 
+		qdf_spin_lock_bh(&spectral->session_det_map_lock);
 		det_map = &spectral->det_map[detector_list->detectors[det]];
 		if (detector_list->num_detectors > 1) {
 			if (det == 0) {
@@ -5118,7 +5140,11 @@ target_if_spectral_populate_session_detector_info(
 			is_sec80 = !is_sec80;
 		}
 		det_map->det_map_valid = true;
+		qdf_spin_unlock_bh(&spectral->session_det_map_lock);
 	}
+	qdf_spin_unlock_bh(&spectral->detector_list_lock);
+	qdf_spin_unlock_bh(&spectral->session_report_info_lock);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -5431,8 +5457,11 @@ target_if_stop_spectral_scan(struct wlan_objmgr_pdev *pdev,
 	spectral->send_single_packet = 0;
 	spectral->sc_spectral_scan = 0;
 
+	qdf_spin_lock_bh(&spectral->session_det_map_lock);
 	for (det = 0; det < MAX_DETECTORS_PER_PDEV; det++)
 		spectral->det_map[det].det_map_valid = false;
+
+	qdf_spin_unlock_bh(&spectral->session_det_map_lock);
 
 	qdf_spin_unlock(&spectral->spectral_lock);
 

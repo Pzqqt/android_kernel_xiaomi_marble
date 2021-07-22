@@ -71,7 +71,10 @@ target_if_spectral_fill_samp_msg(struct target_if_spectral *spectral,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	qdf_spin_lock_bh(&spectral->session_det_map_lock);
+
 	if (!spectral->det_map[params->hw_detector_id].det_map_valid) {
+		qdf_spin_unlock_bh(&spectral->session_det_map_lock);
 		spectral_info("Detector Map not valid for det id = %d",
 			      params->hw_detector_id);
 		return QDF_STATUS_E_FAILURE;
@@ -83,6 +86,7 @@ target_if_spectral_fill_samp_msg(struct target_if_spectral *spectral,
 						  msg_type,
 						  det_map->buf_type);
 	if (!spec_samp_msg) {
+		qdf_spin_unlock_bh(&spectral->session_det_map_lock);
 		spectral_err_rl("Spectral SAMP message is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -262,6 +266,8 @@ target_if_spectral_fill_samp_msg(struct target_if_spectral *spectral,
 
 		p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
 
+		qdf_spin_lock_bh(&spectral->session_report_info_lock);
+
 		rpt_info = &spectral->report_info[spectral_mode];
 		spec_samp_msg->signature = SPECTRAL_SIGNATURE;
 		p_sops->get_mac_address(spectral, spec_samp_msg->macaddr);
@@ -277,6 +283,9 @@ target_if_spectral_fill_samp_msg(struct target_if_spectral *spectral,
 		spec_samp_msg->sscan_bw = rpt_info->sscan_bw;
 		spec_samp_msg->fft_width = FFT_BIN_SIZE_1BYTE;
 		spec_samp_msg->num_freq_spans = rpt_info->num_spans;
+
+		qdf_spin_unlock_bh(&spectral->session_report_info_lock);
+
 		spec_samp_msg->spectral_upper_rssi = params->upper_rssi;
 		spec_samp_msg->spectral_lower_rssi = params->lower_rssi;
 		qdf_mem_copy(spec_samp_msg->spectral_chain_ctl_rssi,
@@ -296,6 +305,7 @@ target_if_spectral_fill_samp_msg(struct target_if_spectral *spectral,
 			reset_160mhz_delivery_state_machine(spectral,
 							    spectral_mode);
 	}
+	qdf_spin_unlock_bh(&spectral->session_det_map_lock);
 
 	return QDF_STATUS_SUCCESS;
 }
