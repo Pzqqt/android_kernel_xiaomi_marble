@@ -534,7 +534,7 @@ endif
 endif
 
 # Enable fw stats version 2
-ifeq (y,$(findstring y,$(CONFIG_HELIUMPLUS) $(CONFIG_LITHIUM)) $(CONFIG_BERYLLIUM))
+ifeq (y,$(findstring y,$(CONFIG_HELIUMPLUS) $(CONFIG_LITHIUM) $(CONFIG_BERYLLIUM)))
 CONFIG_AR900B := y
 endif
 
