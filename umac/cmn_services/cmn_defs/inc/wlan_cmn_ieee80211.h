@@ -79,6 +79,7 @@
 /* QCA OUI (in little endian) */
 #define QCA_OUI 0xf0fd8c
 #define QCA_OUI_WHC_TYPE  0x00
+#define QCA_OUI_WHC_REPT_TYPE 0x01
 
 /* Extender vendor specific IE */
 #define QCA_OUI_EXTENDER_TYPE           0x03
@@ -1894,6 +1895,23 @@ is_qca_son_oui(uint8_t *frm, uint8_t whc_subtype)
 	return (frm[1] > 4) && (LE_READ_4(frm + 2) ==
 		((QCA_OUI_WHC_TYPE << 24) | QCA_OUI)) &&
 		(*(frm + 6) == whc_subtype);
+}
+
+/**
+ * is_qca_son_rept_oui() - If vendor IE is QCA WHC repeater type
+ * @frm: vendor IE pointer
+ * @whc_subtype: subtype
+ *
+ * API to check if vendor IE is QCA WHC REPT
+ *
+ * Return: true if its QCA WHC REPT IE
+ */
+static inline bool
+is_qca_son_rept_oui(u_int8_t *frm, u_int8_t whc_subtype)
+{
+	return ((frm[1] > 4) && (LE_READ_4(frm + 2) ==
+		((QCA_OUI_WHC_REPT_TYPE << 24) | QCA_OUI)) &&
+		(*(frm + 6) == whc_subtype));
 }
 
 /**
