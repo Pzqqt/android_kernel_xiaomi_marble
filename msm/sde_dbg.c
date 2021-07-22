@@ -238,6 +238,8 @@ struct sde_dbg_regbuf {
  * @evtlog: event log instance
  * @reglog: reg log instance
  * @reg_base_list: list of register dumping regions
+ * @reg_dump_base: base address of register dump region
+ * @reg_dump_addr: register dump address for a block/range
  * @dev: device pointer
  * @mutex: mutex to serialize access to serialze dumps, debugfs access
  * @req_dump_blks: list of blocks requested for dumping
@@ -265,6 +267,8 @@ struct sde_dbg_base {
 	struct sde_dbg_evtlog *evtlog;
 	struct sde_dbg_reglog *reglog;
 	struct list_head reg_base_list;
+	void *reg_dump_base;
+	void *reg_dump_addr;
 	struct device *dev;
 	struct mutex mutex;
 
@@ -460,6 +464,7 @@ static void _sde_dump_reg(const char *dump_name, u32 reg_dump_flag,
 		char *base_addr, char *addr, size_t len_bytes, u32 **dump_mem)
 {
 	u32 in_log, in_mem, len_align, len_padded;
+	struct sde_dbg_base *dbg_base = &sde_dbg_base;
 	u32 *dump_addr = NULL;
 	char *end_addr;
 	int i;
@@ -480,8 +485,9 @@ static void _sde_dump_reg(const char *dump_name, u32 reg_dump_flag,
 	len_padded = len_align * REG_DUMP_ALIGN;
 	end_addr = addr + len_bytes;
 
-	if (in_mem && !(*dump_mem))
-		*dump_mem = devm_kzalloc(sde_dbg_base.dev, len_padded, GFP_KERNEL);
+	*dump_mem = dbg_base->reg_dump_addr;
+	dbg_base->reg_dump_addr += len_padded;
+
 	dump_addr = *dump_mem;
 	SDE_DBG_LOG_DUMP_ADDR(dump_name, dump_addr, len_padded,
 					(unsigned long)(addr - base_addr), in_log);
@@ -528,6 +534,47 @@ static u32 _sde_dbg_get_dump_range(struct sde_dbg_reg_offset *range_node,
 	}
 
 	return length;
+}
+
+static u32 _sde_dbg_get_reg_blk_size(struct sde_dbg_reg_base *dbg)
+{
+	u32 len, len_align, len_padded;
+	u32 size = 0;
+	struct sde_dbg_reg_range *range_node;
+
+	if (!dbg || !dbg->base) {
+		pr_err("dbg base is null!\n");
+		return 0;
+	}
+
+	if (!list_empty(&dbg->sub_range_list)) {
+		list_for_each_entry(range_node, &dbg->sub_range_list, head) {
+			len = _sde_dbg_get_dump_range(&range_node->offset,
+					dbg->max_offset);
+			len_align = (len + REG_DUMP_ALIGN - 1) / REG_DUMP_ALIGN;
+			len_padded = len_align * REG_DUMP_ALIGN;
+			size += REG_BASE_NAME_LEN + RANGE_NAME_LEN + len_padded;
+		}
+	} else {
+		len = dbg->max_offset;
+		len_align = (len + REG_DUMP_ALIGN - 1) / REG_DUMP_ALIGN;
+		len_padded = len_align * REG_DUMP_ALIGN;
+		size += REG_BASE_NAME_LEN + RANGE_NAME_LEN + len_padded;
+	}
+
+	return size;
+}
+
+static u32 _sde_dbg_get_reg_dump_size(void)
+{
+	struct sde_dbg_base *dbg_base = &sde_dbg_base;
+	struct sde_dbg_reg_base *blk_base;
+	u32 size = 0;
+
+	list_for_each_entry(blk_base, &dbg_base->reg_base_list, reg_base_head)
+		size += _sde_dbg_get_reg_blk_size(blk_base);
+
+	return size;
 }
 
 static int _sde_dump_reg_range_cmp(void *priv, struct list_head *a,
@@ -588,6 +635,7 @@ static void _sde_dump_reg_by_ranges(struct sde_dbg_reg_base *dbg, u32 reg_dump_f
 	size_t len;
 	struct sde_dbg_reg_range *range_node;
 	bool in_log;
+	struct sde_dbg_base *dbg_base = &sde_dbg_base;
 
 	if (!dbg || !(dbg->base || dbg->cb)) {
 		pr_err("dbg base is null!\n");
@@ -611,6 +659,11 @@ static void _sde_dump_reg_by_ranges(struct sde_dbg_reg_base *dbg, u32 reg_dump_f
 				range_node->range_name, addr, range_node->offset.start,
 				range_node->offset.end);
 
+			scnprintf(dbg_base->reg_dump_addr, REG_BASE_NAME_LEN, dbg->name);
+			dbg_base->reg_dump_addr += REG_BASE_NAME_LEN;
+			scnprintf(dbg_base->reg_dump_addr, RANGE_NAME_LEN,
+					range_node->range_name);
+			dbg_base->reg_dump_addr += RANGE_NAME_LEN;
 			_sde_dump_reg(range_node->range_name, reg_dump_flag,
 					dbg->base, addr, len, &range_node->reg_dump);
 		}
@@ -619,6 +672,9 @@ static void _sde_dump_reg_by_ranges(struct sde_dbg_reg_base *dbg, u32 reg_dump_f
 		SDE_DBG_LOG_DUMP_ADDR("base", dbg->base, dbg->max_offset, 0, in_log);
 		addr = dbg->base;
 		len = dbg->max_offset;
+		scnprintf(dbg_base->reg_dump_addr, REG_BASE_NAME_LEN, dbg->name);
+		dbg_base->reg_dump_addr += REG_BASE_NAME_LEN;
+		dbg_base->reg_dump_addr += RANGE_NAME_LEN;
 		_sde_dump_reg(dbg->name, reg_dump_flag, dbg->base, addr, len, &dbg->reg_dump);
 	}
 }
@@ -911,7 +967,7 @@ static void _sde_dbg_dump_sde_dbg_bus(struct sde_dbg_sde_debug_bus *bus, u32 ena
 	SDE_DBG_LOG_MARKER(name, SDE_DBG_LOG_START, in_log);
 
 	if (in_mem && (!(*dump_mem))) {
-		*dump_mem = devm_kzalloc(sde_dbg_base.dev, list_size, GFP_KERNEL);
+		*dump_mem = kvzalloc(list_size, GFP_KERNEL);
 		bus->cmn.content_size = list_size / sizeof(u32);
 	}
 	dump_addr = *dump_mem;
@@ -955,7 +1011,7 @@ static void _sde_dbg_dump_dsi_dbg_bus(struct sde_dbg_sde_debug_bus *bus, u32 ena
 
 	mutex_lock(&sde_dbg_dsi_mutex);
 	if (in_mem && (!(*dump_mem))) {
-		*dump_mem = devm_kzalloc(sde_dbg_base.dev, list_size, GFP_KERNEL);
+		*dump_mem = kvzalloc(list_size, GFP_KERNEL);
 		bus->cmn.content_size = list_size / sizeof(u32);
 	}
 	dump_addr = *dump_mem;
@@ -982,10 +1038,17 @@ static void _sde_dump_array(bool do_panic, const char *name, bool dump_secure, u
 {
 	int rc;
 	ktime_t start, end;
+	u32 reg_dump_size;
 	struct sde_dbg_base *dbg_base = &sde_dbg_base;
 	bool skip_power;
 
 	mutex_lock(&dbg_base->mutex);
+
+	reg_dump_size =  _sde_dbg_get_reg_dump_size();
+	if (!dbg_base->reg_dump_base)
+		dbg_base->reg_dump_base = kvzalloc(reg_dump_size, GFP_KERNEL);
+
+	dbg_base->reg_dump_addr =  dbg_base->reg_dump_base;
 
 	/*
 	 * sde power resources are expected to be enabled in this context and might
@@ -2274,6 +2337,7 @@ static void sde_dbg_reg_base_destroy(void)
 		list_del(&blk_base->reg_base_head);
 		kfree(blk_base);
 	}
+	kvfree(dbg_base->reg_dump_base);
 }
 
 static void sde_dbg_dsi_ctrl_destroy(void)
@@ -2286,6 +2350,18 @@ static void sde_dbg_dsi_ctrl_destroy(void)
 		kfree(entry);
 	}
 	mutex_unlock(&sde_dbg_dsi_mutex);
+}
+
+static void sde_dbg_buses_destroy(void)
+{
+	struct sde_dbg_base *dbg_base = &sde_dbg_base;
+
+	kvfree(dbg_base->dbgbus_sde.cmn.dumped_content);
+	kvfree(dbg_base->dbgbus_vbif_rt.cmn.dumped_content);
+	kvfree(dbg_base->dbgbus_dsi.cmn.dumped_content);
+	kvfree(dbg_base->dbgbus_lutdma.cmn.dumped_content);
+	kvfree(dbg_base->dbgbus_rsc.cmn.dumped_content);
+	kvfree(dbg_base->dbgbus_dp.cmn.dumped_content);
 }
 
 /**
@@ -2303,6 +2379,7 @@ void sde_dbg_destroy(void)
 	sde_dbg_base.reglog = NULL;
 	sde_dbg_reg_base_destroy();
 	sde_dbg_dsi_ctrl_destroy();
+	sde_dbg_buses_destroy();
 	mutex_destroy(&sde_dbg_base.mutex);
 }
 
