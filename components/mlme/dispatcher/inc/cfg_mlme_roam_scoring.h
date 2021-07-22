@@ -69,7 +69,7 @@
 
 /*
  * <ini>
- * roam_score_delta - Percentage increment in roam score value
+ * roam_score_delta/RoamCommon_Delta - Percentage increment in roam score value
  * that is expected from a roaming candidate AP.
  * @Min: 0
  * @Max: 100
@@ -88,7 +88,7 @@
  * </ini>
  */
 #define CFG_ROAM_SCORE_DELTA CFG_INI_UINT( \
-			"roam_score_delta", \
+			"roam_score_delta RoamCommon_Delta", \
 			0, \
 			100, \
 			0, \
@@ -173,8 +173,8 @@
 
 /*
  * <ini>
- * candidate_min_rssi_for_disconnect - Candidate AP minimum RSSI in
- * idle roam trigger(in dBm).
+ * candidate_min_rssi_for_disconnect/RoamEmergency_TargetMinRSSI -
+ * Candidate AP minimum RSSI in idle roam trigger(in dBm).
  * @Min: -120
  * @Max: 0
  * @Default: -75
@@ -193,7 +193,7 @@
  * </ini>
  */
 #define CFG_DISCONNECT_ROAM_TRIGGER_MIN_RSSI CFG_INI_INT( \
-		"candidate_min_rssi_for_disconnect", \
+		"candidate_min_rssi_for_disconnect RoamEmergency_TargetMinRSSI", \
 		-120, \
 		0, \
 		-75, \
@@ -202,8 +202,8 @@
 
 /*
  * <ini>
- * candidate_min_rssi_for_beacon_miss - Candidate AP minimum RSSI for beacon
- * miss roam trigger (in dBm)
+ * candidate_min_rssi_for_beacon_miss/RoamBeaconLoss_TargetMinRSSI -
+ * Candidate AP minimum RSSI for beacon miss roam trigger (in dBm)
  * @Min: -120
  * @Max: 0
  * @Default: -75
@@ -222,7 +222,7 @@
  * </ini>
  */
 #define CFG_BMISS_ROAM_MIN_RSSI CFG_INI_INT( \
-	"candidate_min_rssi_for_beacon_miss", \
+	"candidate_min_rssi_for_beacon_miss RoamBeaconLoss_TargetMinRSSI", \
 	-120, \
 	0, \
 	-75, \
@@ -258,7 +258,8 @@
 
 /*
  * <ini>
- * idle_roam_score_delta - Roam score delta value in percentage for idle roam.
+ * idle_roam_score_delta/RoamIdle_Delta - Roam score delta value in
+ * percentage for idle roam.
  * @Min: 0
  * @Max: 100
  * @Default: 0
@@ -277,7 +278,7 @@
  * </ini>
  */
 #define CFG_IDLE_ROAM_SCORE_DELTA CFG_INI_UINT( \
-		"idle_roam_score_delta", \
+		"idle_roam_score_delta RoamIdle_Delta", \
 		0, \
 		100, \
 		0, \
@@ -286,8 +287,8 @@
 
 /*
  * <ini>
- * btm_roam_score_delta - Roam score delta value in percentage for BTM triggered
- * roaming.
+ * btm_roam_score_delta/RoamBTM_Delta - Roam score delta value in percentage for
+ * BTM triggered roaming.
  * @Min: 0
  * @Max: 100
  * @Default: 0
@@ -307,7 +308,7 @@
  * </ini>
  */
 #define CFG_BTM_ROAM_SCORE_DELTA CFG_INI_UINT( \
-	"btm_roam_score_delta", \
+	"btm_roam_score_delta RoamBTM_Delta", \
 	0, \
 	100, \
 	0, \

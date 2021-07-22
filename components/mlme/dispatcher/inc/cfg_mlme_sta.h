@@ -25,7 +25,7 @@
 
 /*
  * <ini>
- * gStaKeepAlivePeriod - STA keep alive period
+ * gStaKeepAlivePeriod/ConKeepAlive_Interval - STA keep alive period
  *
  *
  * @Min: 0
@@ -44,7 +44,7 @@
  * </ini>
  */
 #define CFG_INFRA_STA_KEEP_ALIVE_PERIOD CFG_INI_UINT( \
-	"gStaKeepAlivePeriod", \
+	"gStaKeepAlivePeriod ConKeepAlive_Interval", \
 	0, \
 	1000, \
 	30, \
