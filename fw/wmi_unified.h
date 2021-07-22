@@ -12677,6 +12677,12 @@ typedef enum {
          */
         WMI_VDEV_PARAM_SET_EHT_PUNCTURING_MODE,               /* 0x800D */
 
+        /*
+         * 0 - Disable MCAST Beamforming
+         * 1 - Enable MCAST Beamforming
+         */
+        WMI_VDEV_PARAM_MCAST_STEERING,                        /* 0x800E */
+
     /*=== END VDEV_PARAM_PROTOTYPE SECTION ===*/
 } WMI_VDEV_PARAM;
 
