@@ -135,18 +135,18 @@ QDF_STATUS ol_txrx_htt_cfr_rx_ind_handler(void *pdev_ptr,
 	u_int8_t *peeraddr;
 
 	case HTT_PEER_CFR_CAPTURE_MSG_TYPE_1:
-		cfr_header.u.meta_leg.status =
+		cfr_header.u.meta_legacy.status =
 			HTT_T2H_CFR_DUMP_TYPE1_STATUS_GET(*(msg_word + 2));
-		cfr_cap_status = cfr_header.u.meta_leg.status;
-		cfr_header.u.meta_leg.capture_bw =
+		cfr_cap_status = cfr_header.u.meta_legacy.status;
+		cfr_header.u.meta_legacy.capture_bw =
 			HTT_T2H_CFR_DUMP_TYPE1_CAP_BW_GET(*(msg_word + 2));
-		cfr_header.u.meta_leg.capture_mode =
+		cfr_header.u.meta_legacy.capture_mode =
 			HTT_T2H_CFR_DUMP_TYPE1_MODE_GET(*(msg_word + 2));
-		cfr_header.u.meta_leg.sts_count =
+		cfr_header.u.meta_legacy.sts_count =
 			HTT_T2H_CFR_DUMP_TYPE1_STS_GET(*(msg_word + 2));
-		cfr_header.u.meta_leg.channel_bw =
+		cfr_header.u.meta_legacy.channel_bw =
 			HTT_T2H_CFR_DUMP_TYPE1_CHAN_BW_GET(*(msg_word + 2));
-		cfr_header.u.meta_leg.capture_type =
+		cfr_header.u.meta_legacy.capture_type =
 			HTT_T2H_CFR_DUMP_TYPE1_CAP_TYPE_GET(*(msg_word + 2));
 		cfr_vdev_id = HTT_T2H_CFR_DUMP_TYPE1_VDEV_ID_GET
 				(*(msg_word + 2));
@@ -154,27 +154,27 @@ QDF_STATUS ol_txrx_htt_cfr_rx_ind_handler(void *pdev_ptr,
 		vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, cfr_vdev_id,
 							    WLAN_CFR_ID);
 		if (!vdev) {
-			cfr_header.u.meta_leg.num_rx_chain = 0;
+			cfr_header.u.meta_legacy.num_rx_chain = 0;
 		} else {
-			cfr_header.u.meta_leg.num_rx_chain =
+			cfr_header.u.meta_legacy.num_rx_chain =
 				wlan_vdev_mlme_get_rxchainmask(vdev);
 			wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
 		}
 
 		peeraddr = target_if_mac_addr_deswizzle
 				((u_int8_t *)(msg_word + 3),
-				 cfr_header.u.meta_leg.peer_addr);
+				 cfr_header.u.meta_legacy.peer_addr);
 
-		memcpy(cfr_header.u.meta_leg.peer_addr, peeraddr, 6);
+		memcpy(cfr_header.u.meta_legacy.peer_addr, peeraddr, 6);
 
 		cfr_dump_index = *(msg_word + 5);
-		cfr_header.u.meta_leg.length = *(msg_word + 6);
-		cfr_dump_len = cfr_header.u.meta_leg.length;
-		cfr_header.u.meta_leg.timestamp = *(msg_word + 7);
-		cfr_header.u.meta_leg.prim20_chan = *(msg_word + 9);
-		cfr_header.u.meta_leg.center_freq1 = *(msg_word + 10);
-		cfr_header.u.meta_leg.center_freq2 = *(msg_word + 11);
-		cfr_header.u.meta_leg.phy_mode = *(msg_word + 12);
+		cfr_header.u.meta_legacy.length = *(msg_word + 6);
+		cfr_dump_len = cfr_header.u.meta_legacy.length;
+		cfr_header.u.meta_legacy.timestamp = *(msg_word + 7);
+		cfr_header.u.meta_legacy.prim20_chan = *(msg_word + 9);
+		cfr_header.u.meta_legacy.center_freq1 = *(msg_word + 10);
+		cfr_header.u.meta_legacy.center_freq2 = *(msg_word + 11);
+		cfr_header.u.meta_legacy.phy_mode = *(msg_word + 12);
 		break;
 
 	default:
