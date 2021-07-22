@@ -1553,6 +1553,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 			     WLAN_REG_IS_24GHZ_CH_FREQ(c_freq)) ||
 			    (req->scan_req.scan_f_5ghz &&
 			     (WLAN_REG_IS_5GHZ_CH_FREQ(c_freq) ||
+			      WLAN_REG_IS_49GHZ_FREQ(c_freq) ||
 			      WLAN_REG_IS_6GHZ_CHAN_FREQ(c_freq)))) {
 				req->scan_req.chan_list.chan[num_chan].freq =
 									c_freq;
