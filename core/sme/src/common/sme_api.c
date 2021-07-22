@@ -2244,6 +2244,10 @@ sme_process_sta_twt_del_dialog_event(
 		return;
 	}
 
+	if (!mac->usr_cfg_ps_enable &&
+	    param->status == WMI_HOST_DEL_TWT_STATUS_OK)
+		param->status = WMI_HOST_DEL_TWT_STATUS_PS_DISABLE_TEARDOWN;
+
 	callback = mac->sme.twt_del_dialog_cb;
 	if (callback)
 		callback(mac->psoc, param);
@@ -13520,6 +13524,11 @@ QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
 	enum wlan_twt_commands active_cmd = WLAN_TWT_NONE;
 
 	SME_ENTER();
+
+	if (!mac->usr_cfg_ps_enable) {
+		sme_debug("Power save mode disable");
+		return QDF_STATUS_E_INVAL;
+	}
 
 	is_twt_notify_in_progress = mlme_is_twt_notify_in_progress(
 			mac->psoc, twt_params->vdev_id);

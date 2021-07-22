@@ -1915,6 +1915,7 @@ int wlan_hdd_set_powersave(struct hdd_adapter *adapter,
 	struct hdd_context *hdd_ctx;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	bool is_bmps_enabled;
+	struct hdd_station_ctx *hdd_sta_ctx = NULL;
 
 	if (!adapter) {
 		hdd_err("Adapter NULL");
@@ -1924,6 +1925,12 @@ int wlan_hdd_set_powersave(struct hdd_adapter *adapter,
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	if (!hdd_ctx) {
 		hdd_err("hdd context is NULL");
+		return -EINVAL;
+	}
+
+	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	if (!hdd_sta_ctx) {
+		hdd_err("hdd_sta_context is NULL");
 		return -EINVAL;
 	}
 
@@ -1992,10 +1999,19 @@ int wlan_hdd_set_powersave(struct hdd_adapter *adapter,
 			goto end;
 
 		ucfg_mlme_is_bmps_enabled(hdd_ctx->psoc, &is_bmps_enabled);
-		if (is_bmps_enabled)
+		if (is_bmps_enabled) {
 			status = sme_ps_enable_disable(mac_handle,
 						       adapter->vdev_id,
 						       SME_PS_DISABLE);
+			if (status != QDF_STATUS_SUCCESS)
+				goto end;
+		}
+
+		if (adapter->device_mode == QDF_STA_MODE) {
+			hdd_twt_del_dialog_in_ps_disable(hdd_ctx,
+						&hdd_sta_ctx->conn_info.bssid,
+						adapter->vdev_id);
+		}
 	}
 
 end:
