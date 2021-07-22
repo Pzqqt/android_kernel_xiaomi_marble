@@ -66,6 +66,13 @@ struct mmrm_sw_clk_client_tbl_entry {
 	u32 ref_count;
 };
 
+struct mmrm_sw_throttled_clients_data {
+	struct list_head  list;
+	u32 table_id;
+	u32 delta_cu_ma;
+	u32 prev_vdd_level;
+};
+
 struct mmrm_sw_peak_current_data {
 	/* peak current data in ma */
 	u32 threshold;
@@ -92,6 +99,10 @@ struct mmrm_sw_clk_mgr_info {
 
 	/* peak current data */
 	struct mmrm_sw_peak_current_data peak_cur_data;
+
+	/* HEAD of list of clients throttled */
+	struct list_head throttled_clients;
+
 };
 
 struct mmrm_clk_mgr {

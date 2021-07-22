@@ -499,6 +499,8 @@ static int mmrm_sw_throttle_low_priority_client(
 	struct mmrm_client_notifier_data notifier_data;
 	struct completion timeout;
 	struct mmrm_sw_peak_current_data *peak_data = &sinfo->peak_cur_data;
+	struct mmrm_sw_throttled_clients_data *tc_data;
+
 	u32 now_cur_ma, min_cur_ma;
 	long clk_min_level = MMRM_VDD_LEVEL_LOW_SVS;
 
@@ -568,6 +570,18 @@ static int mmrm_sw_throttle_low_priority_client(
 			__func__, tbl_entry_throttle_client->name,
 			tbl_entry_throttle_client->freq[clk_min_level]);
 			*delta_cur = now_cur_ma - min_cur_ma;
+
+			/* Store this client for bookkeeping */
+			tc_data = kzalloc(sizeof(*tc_data), GFP_KERNEL);
+			if (IS_ERR_OR_NULL(tc_data)) {
+				d_mpr_e("%s: Failed to allocate memory\n", __func__);
+				return -ENOMEM;
+			}
+			tc_data->table_id = i;
+			tc_data->delta_cu_ma = now_cur_ma - min_cur_ma;
+			tc_data->prev_vdd_level = tbl_entry_throttle_client->vdd_level;
+			// Add throttled client to list to access it later
+			list_add_tail(&tc_data->list, &sinfo->throttled_clients);
 		}
 		/* Store the throttled clock rate of client */
 		tbl_entry_throttle_client->clk_rate =
@@ -607,6 +621,45 @@ static void mmrm_sw_dump_enabled_client_info(struct mmrm_sw_clk_mgr_info *sinfo)
 	}
 }
 
+static int mmrm_reinstate_throttled_client(struct mmrm_sw_clk_mgr_info *sinfo) {
+	struct mmrm_sw_peak_current_data *peak_data = &sinfo->peak_cur_data;
+	struct mmrm_sw_throttled_clients_data *iter, *safe_iter = NULL;
+	struct mmrm_client_notifier_data notifier_data;
+	struct mmrm_sw_clk_client_tbl_entry *re_entry_throttle_client;
+
+	list_for_each_entry_safe(iter, safe_iter, &sinfo->throttled_clients, list) {
+		if (!IS_ERR_OR_NULL(iter) && peak_data->aggreg_val +
+			iter->delta_cu_ma <= peak_data->threshold) {
+
+			d_mpr_h("%s: table_id = %d\n", __func__, iter->table_id);
+
+			re_entry_throttle_client =
+				&sinfo->clk_client_tbl
+				[sinfo->throttle_clients_info
+				[iter->table_id].tbl_entry_id];
+			if (!IS_ERR_OR_NULL(re_entry_throttle_client)) {
+				d_mpr_h("%s:found throttled client name(%s) clsid (0x%x)\n",
+					__func__, re_entry_throttle_client->name,
+					re_entry_throttle_client->clk_src_id);
+			notifier_data.cb_type = MMRM_CLIENT_RESOURCE_VALUE_CHANGE;
+			notifier_data.cb_data.val_chng.old_val =
+				re_entry_throttle_client->freq[MMRM_VDD_LEVEL_LOW_SVS];
+
+			notifier_data.cb_data.val_chng.new_val =
+				re_entry_throttle_client->freq[iter->prev_vdd_level];
+
+			notifier_data.pvt_data = re_entry_throttle_client->pvt_data;
+
+			if (re_entry_throttle_client->notifier_cb_fn)
+				re_entry_throttle_client->notifier_cb_fn(&notifier_data);
+			}
+		}
+		list_del(&iter->list);
+		kfree(iter);
+	}
+	return 0;
+}
+
 static int mmrm_sw_check_peak_current(struct mmrm_sw_clk_mgr_info *sinfo,
 	struct mmrm_sw_clk_client_tbl_entry *tbl_entry,
 	u32 req_level, u32 clk_val)
@@ -616,6 +669,7 @@ static int mmrm_sw_check_peak_current(struct mmrm_sw_clk_mgr_info *sinfo,
 	u32 adj_level = req_level;
 	u32 peak_cur = peak_data->aggreg_val;
 	u32 old_cur = 0, new_cur = 0;
+
 	int delta_cur;
 
 	/* check the req level and adjust according to tbl entries */
@@ -674,6 +728,7 @@ static int mmrm_sw_check_peak_current(struct mmrm_sw_clk_mgr_info *sinfo,
 	/* update peak data */
 	peak_data->aggreg_val = peak_cur + delta_cur;
 	peak_data->aggreg_level = adj_level;
+	mmrm_reinstate_throttled_client(sinfo);
 
 exit_no_err:
 	d_mpr_h("%s: aggreg_val(%lu) aggreg_level(%lu)\n",
@@ -949,6 +1004,7 @@ int mmrm_init_sw_clk_mgr(void *driver_data)
 	}
 	sinfo->tot_clk_clients = cres->nom_clk_set.count;
 	sinfo->enabled_clk_clients = 0;
+	INIT_LIST_HEAD(&sinfo->throttled_clients);
 
 	/* prepare table entries */
 	rc = mmrm_sw_prepare_table(cres, sinfo);
@@ -998,6 +1054,13 @@ err_fail_sw_clk_mgr:
 int mmrm_destroy_sw_clk_mgr(struct mmrm_clk_mgr *sw_clk_mgr)
 {
 	int rc = 0;
+	struct mmrm_sw_clk_mgr_info *sinfo = &(sw_clk_mgr->data.sw_info);
+	struct mmrm_sw_throttled_clients_data *iter, *safe_iter = NULL;
+
+	list_for_each_entry_safe(iter, safe_iter, &sinfo->throttled_clients, list) {
+		list_del(&iter->list);
+		kfree(iter);
+	}
 
 	if (!sw_clk_mgr) {
 		d_mpr_e("%s: sw_clk_mgr null\n", __func__);
