@@ -790,6 +790,31 @@ reg_modify_chan_list_for_srd_channels(struct wlan_objmgr_pdev *pdev,
 }
 #endif
 
+#ifdef CONFIG_REG_CLIENT
+
+/**
+ * reg_is_disabling_5dot9_needed() - Checks if 5.9GHz channels should
+ * be disabled.
+ * @psoc: Pointer to psoc object
+ *
+ * This function checks only if F/W has enabled the BDF bit for 5.9GHz
+ * channels for AP target and both the BDF bit as well as if offload is
+ * enabled for STA target.
+ */
+static inline bool
+reg_is_disabling_5dot9_needed(struct wlan_objmgr_psoc *psoc)
+{
+	return (!reg_is_5dot9_ghz_supported(psoc) ||
+		!reg_is_regdb_offloaded(psoc));
+}
+#else
+static inline bool
+reg_is_disabling_5dot9_needed(struct wlan_objmgr_psoc *psoc)
+{
+	return (!reg_is_5dot9_ghz_supported(psoc));
+}
+#endif
+
 /**
  * reg_modify_chan_list_for_5dot9_ghz_channels() - Modify 5.9 GHz channels
  * in FCC
@@ -815,8 +840,7 @@ reg_modify_chan_list_for_5dot9_ghz_channels(struct wlan_objmgr_pdev *pdev,
 	if (!reg_is_fcc_regdmn(pdev))
 		return;
 
-	if (!reg_is_5dot9_ghz_supported(psoc) ||
-	    !reg_is_regdb_offloaded(psoc)) {
+	if (reg_is_disabling_5dot9_needed(psoc)) {
 		for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
 			if (reg_is_5dot9_ghz_freq(pdev, chan_list[chan_enum].
 						  center_freq)) {
