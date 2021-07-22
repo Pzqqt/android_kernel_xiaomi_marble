@@ -3327,7 +3327,7 @@ static uint32_t reg_get_channel_flags_from_secondary_list_for_freq(
 	chan_enum = reg_get_chan_enum_for_freq(freq);
 
 	if (chan_enum == INVALID_CHANNEL) {
-		reg_err("chan freq is not valid");
+		reg_err_rl("chan freq is not valid");
 		return REGULATORY_CHAN_INVALID;
 	}
 
