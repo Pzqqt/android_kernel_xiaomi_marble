@@ -72,14 +72,12 @@ void wlan_hdd_check_11be_support(struct hdd_beacon_data *beacon,
 /**
  * hdd_update_wiphy_eht_cap() - update the wiphy with eht capabilities
  * @hdd_ctx: HDD context
- * @cfg: WMA target configuration
  *
  * update wiphy with the eht capabilties.
  *
  * Return: None
  */
-void hdd_update_wiphy_eht_cap(struct hdd_context *hdd_ctx,
-			      struct wma_tgt_cfg *cfg);
+void hdd_update_wiphy_eht_cap(struct hdd_context *hdd_ctx);
 
 /**
  * wlan_hdd_get_mlo_link_id() - get link id and number of links
@@ -104,8 +102,7 @@ static inline void wlan_hdd_check_11be_support(struct hdd_beacon_data *beacon,
 }
 
 static inline
-void hdd_update_wiphy_eht_cap(struct hdd_context *hdd_ctx,
-			      struct wma_tgt_cfg *cfg)
+void hdd_update_wiphy_eht_cap(struct hdd_context *hdd_ctx)
 {
 }
 #endif
