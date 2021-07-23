@@ -52,6 +52,7 @@ enum htt_ppdu_stats_tlv_tag {
     HTT_PPDU_STATS_USR_MPDU_ENQ_BITMAP_1024_TLV,  /* htt_ppdu_stats_enq_mpdu_bitmap_1024_tlv */
     HTT_PPDU_STATS_USR_COMPLTN_BA_BITMAP_1024_TLV,/* htt_ppdu_stats_user_compltn_ba_bitmap_1024_tlv */
     HTT_PPDU_STATS_RX_MGMTCTRL_PAYLOAD_TLV,       /* htt_ppdu_stats_rx_mgmtctrl_payload_tlv */
+    HTT_PPDU_STATS_FOR_SMU_TLV,                   /* htt_ppdu_stats_for_smu_tlv */
 
     /* New TLV's are added above to this line */
     HTT_PPDU_STATS_MAX_TAG,
@@ -2467,5 +2468,27 @@ typedef struct {
     };
 } htt_ppdu_stats_users_info_tlv;
 
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    A_UINT32 ppdu_id;
+    A_UINT32 tid_num    : 8,
+             reserved1  :24;
+    A_UINT32 start_seq  :16, /* [15: 0] */
+             /* ba_enabled:
+              * To know if block ack established or not.
+              * If block ack is not enabled, start_seq represents
+              * the seq number of the current MPDU/PPDU.
+              */
+             ba_enabled : 1,
+             nss        : 4,
+             /* win_size:
+              * Block ack window size in multiples of 32 bits.
+              * For example: For a 64-bit block ack, win_size will be 2.
+              */
+             win_size   : 8,
+             reserved2  : 3;
+    /* The number of elements in the ba_bitmap array depends on win_size. */
+    A_UINT32 ba_bitmap[1];
+} htt_ppdu_stats_for_smu_tlv;
 
 #endif //__HTT_PPDU_STATS_H__
