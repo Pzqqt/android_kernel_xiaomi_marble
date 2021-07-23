@@ -162,7 +162,7 @@ ifeq (y,$(findstring y,$(CONFIG_ICNSS) $(CONFIG_ICNSS_MODULE)))
 	CONFIG_PLD_SNOC_ICNSS_FLAG := y
 endif
 
-ifeq ($(CONFIG_LITHIUM), y)
+ifeq (y,$(findstring y,$(CONFIG_LITHIUM) $(CONFIG_BERYLLIUM)))
 ifeq ($(CONFIG_CNSS_QCA6750), y)
 	CONFIG_ROME_IF = ipci
 	CONFIG_PLD_IPCI_ICNSS_FLAG := y
