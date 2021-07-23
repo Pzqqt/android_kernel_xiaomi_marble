@@ -2643,88 +2643,56 @@ QDF_STATUS reg_get_6g_afc_chan_list(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * struct bw_10log10_pair - The bandwidth and 10*log10(bandwidth) pair.
+ * ten_l_len = trunc(10*log10(bw)).  'trunc' is truncation function.
+ * @bw: The input bandwidth
+ * @ten_l_ten: Integer value of 10 times the Logarithm (to the base-10) of the
+ * input bandwidth(@bw).
+ */
+struct bw_10log10_pair {
+	uint16_t bw;
+	int16_t ten_l_ten;
+};
+
+/* The array of bandwidth to trunc(10log10(bandwidth)) mapping */
+static const struct bw_10log10_pair bw_to_10log10_map[] = {
+	{ 20, 13}, /* 10* 1.30102 = 13.0102 */
+	{ 40, 16}, /* 10* 1.60205 = 16.0205 */
+	{ 80, 19}, /* 10* 1.90308 = 19.0308 */
+	{160, 22}, /* 10* 2.20411 = 22.0411 */
 #ifdef WLAN_FEATURE_11BE
-QDF_STATUS reg_psd_2_eirp(struct wlan_objmgr_pdev *pdev,
-			  int16_t psd,
-			  uint16_t ch_bw,
-			  int16_t *eirp)
-{
-	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
-	int16_t ten_log_bw;
-
-	pdev_priv_obj = reg_get_pdev_obj(pdev);
-
-	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
-		reg_err("reg pdev private obj is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	/**
-	 * EIRP = PSD + 10 * log10(CH_BW)
-	 */
-	switch (ch_bw) {
-	case BW_20_MHZ:
-		ten_log_bw = 13; /*  10* 1.30102 = 13.0102 */
-		break;
-	case BW_40_MHZ:
-		ten_log_bw = 16; /* 10* 1.60205 = 16.0205 */
-		break;
-	case BW_80_MHZ:
-		ten_log_bw = 19; /* 10* 1.90308 = 19.0308 */
-		break;
-	case BW_160_MHZ:
-		ten_log_bw = 22; /* 10* 2.20411 = 22.0411 */
-		break;
-	case BW_320_MHZ:
-		ten_log_bw = 25; /* 10* 2.50514 = 25.0514 */
-		break;
-	default:
-		reg_err("Invalid input bandwidth %hd", ch_bw);
-		return QDF_STATUS_E_FAILURE;
-	}
-	*eirp = psd + ten_log_bw;
-
-	return QDF_STATUS_SUCCESS;
-}
-#else
-QDF_STATUS reg_psd_2_eirp(struct wlan_objmgr_pdev *pdev,
-			  int16_t psd,
-			  uint16_t ch_bw,
-			  int16_t *eirp)
-{
-	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
-	int16_t ten_log_bw;
-
-	pdev_priv_obj = reg_get_pdev_obj(pdev);
-
-	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
-		reg_err("reg pdev private obj is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	/**
-	 * EIRP = PSD + 10 * log10(CH_BW)
-	 */
-	switch (ch_bw) {
-	case BW_20_MHZ:
-		ten_log_bw = 13; /*  10* 1.30102 = 13.0102 */
-		break;
-	case BW_40_MHZ:
-		ten_log_bw = 16; /* 10* 1.60205 = 16.0205 */
-		break;
-	case BW_80_MHZ:
-		ten_log_bw = 19; /* 10* 1.90308 = 19.0308 */
-		break;
-	case BW_160_MHZ:
-		ten_log_bw = 22; /* 10* 2.20411 = 22.0411 */
-		break;
-	default:
-		reg_err("Invalid input bandwidth %hd", ch_bw);
-		return QDF_STATUS_E_FAILURE;
-	}
-	*eirp = psd + ten_log_bw;
-
-	return QDF_STATUS_SUCCESS;
-}
+	{320, 25}, /* 10* 2.50514 = 25.0514 */
 #endif
+};
+
+QDF_STATUS reg_psd_2_eirp(struct wlan_objmgr_pdev *pdev,
+			  int16_t psd,
+			  uint16_t ch_bw,
+			  int16_t *eirp)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	int16_t ten_log10_bw;
+	uint8_t i;
+	uint8_t num_bws;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("reg pdev private obj is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* EIRP = PSD + (10 * log10(CH_BW)) */
+	num_bws = QDF_ARRAY_SIZE(bw_to_10log10_map);
+	for (i = 0; i < num_bws; i++) {
+		if (ch_bw == bw_to_10log10_map[i].bw) {
+			ten_log10_bw = bw_to_10log10_map[i].ten_l_ten;
+			*eirp = psd + ten_log10_bw;
+			return QDF_STATUS_SUCCESS;
+		}
+	}
+	reg_err("Invalid input bandwidth %hd", ch_bw);
+	return QDF_STATUS_E_FAILURE;
+}
 #endif
