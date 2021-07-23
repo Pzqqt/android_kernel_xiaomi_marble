@@ -16,7 +16,6 @@
 #define CLK_RATE_STEP 1000000
 #define CLIENT_CB_TIMEOUT msecs_to_jiffies(100)
 
-
 static int mmrm_sw_update_freq(
 	struct mmrm_sw_clk_mgr_info *sinfo, struct mmrm_sw_clk_client_tbl_entry *tbl_entry)
 {
@@ -662,7 +661,7 @@ static int mmrm_reinstate_throttled_client(struct mmrm_sw_clk_mgr_info *sinfo) {
 
 static int mmrm_sw_check_peak_current(struct mmrm_sw_clk_mgr_info *sinfo,
 	struct mmrm_sw_clk_client_tbl_entry *tbl_entry,
-	u32 req_level, u32 clk_val)
+	u32 req_level, u32 clk_val, u32 num_hw_blocks)
 {
 	int rc = 0;
 	struct mmrm_sw_peak_current_data *peak_data = &sinfo->peak_cur_data;
@@ -692,7 +691,7 @@ static int mmrm_sw_check_peak_current(struct mmrm_sw_clk_mgr_info *sinfo,
 	}
 
 	if (clk_val) {
-		new_cur = tbl_entry->current_ma[req_level][adj_level];
+		new_cur = tbl_entry->current_ma[req_level][adj_level] * num_hw_blocks;
 	}
 
 	delta_cur = (signed)new_cur - old_cur;
@@ -739,6 +738,21 @@ exit_no_err:
 
 err_invalid_level:
 err_peak_overshoot:
+	return rc;
+}
+
+static bool mmrm_sw_is_valid_num_hw_block(struct mmrm_sw_clk_client_tbl_entry *tbl_entry,
+	struct mmrm_client_data *client_data)
+{
+	bool rc = false;
+	u32 num_hw_blocks = client_data->num_hw_blocks;
+
+	if (num_hw_blocks == 1) {
+		rc = true;
+	} else if  (tbl_entry->clk_src_id == 0x10025) { // CAM_CC_IFE_CSID_CLK_SRC
+		if (num_hw_blocks >= 1 && num_hw_blocks <= 3)
+			rc = true;
+	}
 	return rc;
 }
 
@@ -793,7 +807,8 @@ static int mmrm_sw_clk_client_setval(struct mmrm_clk_mgr *sw_clk_mgr,
 	 * d.  reserve  && !req_reserve:  set clk rate
 	 */
 	req_reserve = client_data->flags & MMRM_CLIENT_DATA_FLAG_RESERVE_ONLY;
-	if (tbl_entry->clk_rate == clk_val) {
+	if (tbl_entry->clk_rate == clk_val &&
+				tbl_entry->num_hw_blocks == client_data->num_hw_blocks) {
 		d_mpr_h("%s: csid(0x%x) same as previous clk rate %llu\n",
 			__func__, tbl_entry->clk_src_id, clk_val);
 
@@ -825,11 +840,18 @@ static int mmrm_sw_clk_client_setval(struct mmrm_clk_mgr *sw_clk_mgr,
 	} else {
 		req_level = 0;
 	}
+	if (!mmrm_sw_is_valid_num_hw_block(tbl_entry, client_data)) {
+		d_mpr_e("%s: csid(0x%x) num_hw_block:%d\n",
+			__func__, tbl_entry->clk_src_id, client_data->num_hw_blocks);
+		rc = -EINVAL;
+		goto err_invalid_client_data;
+	}
 
 	mutex_lock(&sw_clk_mgr->lock);
 
 	/* check and update for peak current */
-	rc = mmrm_sw_check_peak_current(sinfo, tbl_entry, req_level, clk_val);
+	rc = mmrm_sw_check_peak_current(sinfo, tbl_entry,
+		req_level, clk_val, client_data->num_hw_blocks);
 	if (rc) {
 		d_mpr_e("%s: csid (0x%x) peak overshoot peak_cur(%lu)\n",
 			__func__, tbl_entry->clk_src_id,
@@ -842,6 +864,7 @@ static int mmrm_sw_clk_client_setval(struct mmrm_clk_mgr *sw_clk_mgr,
 	tbl_entry->clk_rate = clk_val;
 	tbl_entry->vdd_level = req_level;
 	tbl_entry->reserve = req_reserve;
+	tbl_entry->num_hw_blocks = client_data->num_hw_blocks;
 
 	mutex_unlock(&sw_clk_mgr->lock);
 
@@ -866,7 +889,7 @@ set_clk_rate:
 	}
 
 exit_no_err:
-	d_mpr_h("%s: clk rate %llu set successfully for %s\n",
+	d_mpr_h("%s: clk rate %lu set successfully for %s\n",
 			__func__, clk_val, tbl_entry->name);
 	return rc;
 

@@ -64,6 +64,7 @@ struct mmrm_sw_clk_client_tbl_entry {
 	u32 vdd_level;
 	bool reserve;
 	u32 ref_count;
+	u32 num_hw_blocks;
 };
 
 struct mmrm_sw_throttled_clients_data {
