@@ -990,7 +990,6 @@ QDF_STATUS wlansap_roam_callback(void *ctx,
 		/* Issue stopbss for each sapctx */
 		for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
 			struct sap_context *sap_context;
-			struct csr_roam_profile *profile;
 
 			if (((QDF_SAP_MODE ==
 			    mac_ctx->sap.sapCtxList[intf].sapPersona) ||
@@ -1000,10 +999,9 @@ QDF_STATUS wlansap_roam_callback(void *ctx,
 			    NULL) {
 				sap_context =
 				    mac_ctx->sap.sapCtxList[intf].sap_context;
-				profile = &sap_context->csr_roamProfile;
 				if (!wlan_reg_is_passive_or_disable_for_freq(
 						mac_ctx->pdev,
-						profile->op_freq))
+						sap_context->chan_freq))
 					continue;
 				sap_debug("Vdev %d no channel available , stop bss",
 					  sap_context->sessionId);

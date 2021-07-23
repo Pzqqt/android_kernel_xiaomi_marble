@@ -1841,8 +1841,7 @@ QDF_STATUS wlansap_channel_change_request(struct sap_context *sap_ctx,
 	sap_ctx->csr_roamProfile.phyMode = phy_mode;
 	sap_ctx->phyMode = phy_mode;
 
-	if (sap_ctx->csr_roamProfile.ChannelInfo.numOfChannels == 0 ||
-	    !sap_ctx->csr_roamProfile.ChannelInfo.freq_list) {
+	if (!sap_ctx->chan_freq) {
 		sap_err("Invalid channel list");
 		return QDF_STATUS_E_FAULT;
 	}

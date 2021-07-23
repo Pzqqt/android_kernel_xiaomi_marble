@@ -439,23 +439,20 @@ bool sap_operating_on_dfs(struct mac_context *mac_ctx,
 			  struct sap_context *sap_ctx)
 {
 	uint8_t is_dfs = false;
-	struct csr_roam_profile *profile =
-			&sap_ctx->csr_roamProfile;
-	uint32_t chan_freq = profile->op_freq;
-	struct ch_params *ch_params = &profile->ch_params;
+	uint32_t chan_freq = sap_ctx->chan_freq;
 
 	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(chan_freq) ||
 	    WLAN_REG_IS_24GHZ_CH_FREQ(chan_freq))
 		return false;
-	if (ch_params->ch_width == CH_WIDTH_160MHZ) {
+	if (sap_ctx->ch_params.ch_width == CH_WIDTH_160MHZ) {
 		is_dfs = true;
-	} else if (ch_params->ch_width == CH_WIDTH_80P80MHZ) {
+	} else if (sap_ctx->ch_params.ch_width == CH_WIDTH_80P80MHZ) {
 		if (wlan_reg_is_passive_or_disable_for_freq(
 						mac_ctx->pdev,
 						chan_freq) ||
 		    wlan_reg_is_passive_or_disable_for_freq(
 					mac_ctx->pdev,
-					ch_params->mhz_freq_seg1 - 10))
+					sap_ctx->ch_params.mhz_freq_seg1 - 10))
 			is_dfs = true;
 	} else {
 		if (wlan_reg_is_passive_or_disable_for_freq(
@@ -523,8 +520,8 @@ void sap_get_cac_dur_dfs_region(struct sap_context *sap_ctx,
 void sap_dfs_set_current_channel(void *ctx)
 {
 	struct sap_context *sap_ctx = ctx;
-	uint8_t vht_seg0 = sap_ctx->csr_roamProfile.ch_params.center_freq_seg0;
-	uint8_t vht_seg1 = sap_ctx->csr_roamProfile.ch_params.center_freq_seg1;
+	uint8_t vht_seg0 = sap_ctx->ch_params.center_freq_seg0;
+	uint8_t vht_seg1 = sap_ctx->ch_params.center_freq_seg1;
 	struct wlan_objmgr_pdev *pdev;
 	struct mac_context *mac_ctx;
 	uint32_t use_nol = 0;
@@ -547,7 +544,7 @@ void sap_dfs_set_current_channel(void *ctx)
 
 	sap_debug("freq=%d, dfs %d seg0=%d, seg1=%d, bw %d",
 		  sap_ctx->chan_freq, is_dfs, vht_seg0, vht_seg1,
-		  sap_ctx->csr_roamProfile.ch_params.ch_width);
+		  sap_ctx->ch_params.ch_width);
 
 	if (is_dfs) {
 		if (policy_mgr_concurrent_beaconing_sessions_running(
@@ -2010,7 +2007,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		 */
 		sap_ctx->acs_cfg->pri_ch_freq = sap_ctx->chan_freq;
 		sap_ctx->acs_cfg->ch_width =
-				sap_ctx->csr_roamProfile.ch_params.ch_width;
+					sap_ctx->ch_params.ch_width;
 		sap_config_acs_result(MAC_HANDLE(mac_ctx), sap_ctx,
 				      sap_ctx->sec_ch_freq);
 
@@ -2059,11 +2056,11 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		acs_selected->pri_ch_freq = sap_ctx->chan_freq;
 		acs_selected->ht_sec_ch_freq = sap_ctx->sec_ch_freq;
 		acs_selected->ch_width =
-			sap_ctx->csr_roamProfile.ch_params.ch_width;
+				sap_ctx->ch_params.ch_width;
 		acs_selected->vht_seg0_center_ch_freq =
-			sap_ctx->csr_roamProfile.ch_params.mhz_freq_seg0;
+				sap_ctx->ch_params.mhz_freq_seg0;
 		acs_selected->vht_seg1_center_ch_freq =
-			sap_ctx->csr_roamProfile.ch_params.mhz_freq_seg1;
+				sap_ctx->ch_params.mhz_freq_seg1;
 		sap_update_cac_history(mac_ctx, sap_ctx,
 				       sap_hddevent);
 		sap_debug("SAP event callback event = %s",
@@ -3031,7 +3028,6 @@ static QDF_STATUS sap_fsm_state_started(struct sap_context *sap_ctx,
 		 */
 		for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
 			struct sap_context *temp_sap_ctx;
-			struct csr_roam_profile *profile;
 
 			if (((QDF_SAP_MODE ==
 				mac_ctx->sap.sapCtxList[intf].sapPersona) ||
@@ -3044,20 +3040,19 @@ static QDF_STATUS sap_fsm_state_started(struct sap_context *sap_ctx,
 				 * Radar won't come on non-dfs channel, so
 				 * no need to move them
 				 */
-				profile = &temp_sap_ctx->csr_roamProfile;
 				if (!sap_operating_on_dfs(
 						mac_ctx, temp_sap_ctx)) {
 					sap_debug("vdev %d freq %d (state %d) is not DFS or disabled so continue",
 						  temp_sap_ctx->sessionId,
-						  profile->op_freq,
+						  temp_sap_ctx->chan_freq,
 						  wlan_reg_get_channel_state_for_freq(
 						  mac_ctx->pdev,
-						  profile->op_freq));
+						  temp_sap_ctx->chan_freq));
 					continue;
 				}
 				sap_debug("vdev %d switch freq %d -> %d",
 					  temp_sap_ctx->sessionId,
-					  profile->op_freq,
+					  temp_sap_ctx->chan_freq,
 					  mac_ctx->sap.SapDfsInfo.target_chan_freq);
 				qdf_status =
 				   sap_fsm_send_csa_restart_req(mac_ctx,
@@ -4126,7 +4121,7 @@ bool sap_is_conc_sap_doing_scc_dfs(mac_handle_t mac_handle,
 	uint8_t intf = 0, scc_dfs_counter = 0;
 	qdf_freq_t ch_freq;
 
-	ch_freq = given_sapctx->csr_roamProfile.op_freq;
+	ch_freq = given_sapctx->chan_freq;
 	/*
 	 * current SAP persona's channel itself is not DFS, so no need to check
 	 * what other persona's channel is
@@ -4147,8 +4142,7 @@ bool sap_is_conc_sap_doing_scc_dfs(mac_handle_t mac_handle,
 		/* if same SAP contexts then skip to next context */
 		if (sap_ctx == given_sapctx)
 			continue;
-		if (given_sapctx->csr_roamProfile.op_freq ==
-					sap_ctx->csr_roamProfile.op_freq)
+		if (given_sapctx->chan_freq == sap_ctx->chan_freq)
 			scc_dfs_counter++;
 	}
 
