@@ -138,6 +138,8 @@ struct sae_auth_retry {
  * @last_assoc_received_time: last assoc received time
  * @last_disassoc_deauth_received_time: last disassoc/deauth received time
  * @twt_ctx: TWT context
+ * @allow_kickout: True if the peer can be kicked out. Peer can't be kicked
+ *                 out if it is being steered
  */
 struct peer_mlme_priv_obj {
 	uint8_t last_pn_valid;
@@ -148,6 +150,9 @@ struct peer_mlme_priv_obj {
 	qdf_time_t last_disassoc_deauth_received_time;
 #ifdef WLAN_SUPPORT_TWT
 	struct twt_context twt_ctx;
+#endif
+#ifdef WLAN_FEATURE_SON
+	bool allow_kickout;
 #endif
 };
 

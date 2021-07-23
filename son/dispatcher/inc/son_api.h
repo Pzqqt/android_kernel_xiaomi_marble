@@ -21,6 +21,7 @@
 #define _SON_API_H_
 
 #include <qdf_types.h>
+#include <wlan_objmgr_peer_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
 #include <reg_services_public_struct.h>
 
@@ -38,4 +39,36 @@
 uint32_t wlan_son_get_chan_flag(struct wlan_objmgr_pdev *pdev,
 				qdf_freq_t freq, bool flag_160,
 				struct ch_params *chan_params);
+
+/**
+ * wlan_son_peer_set_kickout_allow() - set the peer is allowed to kickout
+ * @vdev: pointer to vdev
+ * @peer: pointer to peer
+ * @kickout_allow: kickout_allow to set
+ *
+ * Return: QDF_STATUS_SUCCESS on Success else failure.
+ */
+QDF_STATUS wlan_son_peer_set_kickout_allow(struct wlan_objmgr_vdev *vdev,
+					   struct wlan_objmgr_peer *peer,
+					   bool kickout_allow);
+
+#ifdef WLAN_FEATURE_SON
+/**
+ * wlan_son_peer_is_kickout_allow() - Is peer is allowed to kickout
+ * @vdev: pointer to vdev
+ * @macaddr: mac addr of the peer
+ *
+ * Return: True if it is allowed to kickout.
+ */
+bool wlan_son_peer_is_kickout_allow(struct wlan_objmgr_vdev *vdev,
+				    uint8_t *macaddr);
+
+#else
+
+static inline bool wlan_son_peer_is_kickout_allow(struct wlan_objmgr_vdev *vdev,
+						  uint8_t *macaddr)
+{
+	return true;
+}
+#endif /*WLAN_FEATURE_SON*/
 #endif
