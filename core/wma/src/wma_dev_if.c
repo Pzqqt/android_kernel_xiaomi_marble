@@ -1783,6 +1783,65 @@ wma_increment_peer_count(tp_wma_handle wma, uint8_t vdev_id)
 	wma->interfaces[vdev_id].peer_count++;
 }
 
+#ifdef MLO_DP_INTERIM
+static QDF_STATUS wma_cdp_peer_create(ol_txrx_soc_handle dp_soc,
+				      uint8_t vdev_id,
+				      uint8_t *peer_addr,
+				      struct wlan_objmgr_peer *obj_peer)
+{
+	struct cdp_txrx_peer_info peer_info;
+	uint8_t *mld_mac;
+	QDF_STATUS status;
+
+	mld_mac = wlan_peer_mlme_get_mldaddr(peer);
+
+	if (!mld_mac || qdf_is_macaddr_zero(mld_mac))
+		return cdp_peer_create(dp_soc, vdev_id, peer_addr, NULL);
+
+	qdf_mem_zero(&peer_info, sizeof(peer_info));
+
+	peer_info.mld_peer_mac = mld_mac;
+	peer_info.peer_type = CDP_TXRX_LINK_PEER;
+	status = cdp_peer_create(dp_soc, vdev_id, peer_addr, &peer_info);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		wma_err("Unable to attach mld link peer " QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(peer_addr));
+		return status;
+	}
+	if (wlan_peer_mlme_is_assoc_peer(obj_peer)) {
+		peer_info.mld_peer_mac = mld_mac;
+		peer_info.peer_type = CDP_TXRX_MLD_PEER;
+		status = cdp_peer_create(dp_soc, vdev_id, peer_addr,
+					 &peer_info);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			wma_err("Unable to attach mld peer " QDF_MAC_ADDR_FMT,
+				QDF_MAC_ADDR_REF(peer_addr));
+			if (cdp_cfg_get_peer_unmap_conf_support(dp_soc))
+				cdp_peer_delete_sync(
+					dp_soc, vdev_id, peer_addr,
+					wma_peer_unmap_conf_cb,
+					1 << CDP_PEER_DO_NOT_START_UNMAP_TIMER);
+			else
+				cdp_peer_delete(
+					dp_soc, vdev_id, peer_addr,
+					1 << CDP_PEER_DO_NOT_START_UNMAP_TIMER);
+			wlan_objmgr_peer_obj_delete(obj_peer);
+		}
+	}
+
+	return status;
+}
+
+#else
+static QDF_STATUS wma_cdp_peer_create(ol_txrx_soc_handle dp_soc,
+				      uint8_t vdev_id,
+				      uint8_t *peer_addr,
+				      struct wlan_objmgr_peer *obj_peer)
+{
+	return cdp_peer_create(dp_soc, vdev_id, peer_addr);
+}
+#endif
+
 /**
  * wma_add_peer() - send peer create command to fw
  * @wma: wma handle
@@ -1852,7 +1911,7 @@ QDF_STATUS wma_add_peer(tp_wma_handle wma,
 		wlan_peer_mlme_set_mldaddr(obj_peer, peer_mld_addr);
 		wlan_peer_mlme_set_assoc_peer(obj_peer, is_assoc_peer);
 	}
-	status = cdp_peer_create(dp_soc, vdev_id, peer_addr);
+	status = wma_cdp_peer_create(dp_soc, vdev_id, peer_addr, obj_peer);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		wma_err("Unable to attach peer "QDF_MAC_ADDR_FMT,
 			QDF_MAC_ADDR_REF(peer_addr));
