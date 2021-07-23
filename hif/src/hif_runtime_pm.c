@@ -1112,8 +1112,7 @@ int hif_pm_runtime_request_resume(struct hif_opaque_softc *hif_ctx)
 	pm_state = qdf_atomic_read(&rpm_ctx->pm_state);
 	if (pm_state == HIF_PM_RUNTIME_STATE_SUSPENDED ||
 	    pm_state == HIF_PM_RUNTIME_STATE_SUSPENDING)
-		hif_info("Runtime PM resume is requested by %ps",
-			 (void *)_RET_IP_);
+		hif_info("Runtime PM resume is requested by wake_irq");
 
 	rpm_ctx->pm_stats.request_resume++;
 	rpm_ctx->pm_stats.last_resume_caller = (void *)_RET_IP_;
