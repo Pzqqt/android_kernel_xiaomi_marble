@@ -16326,6 +16326,8 @@ typedef enum
 #define WMI_ROAM_NOTIF_SCAN_START        0x8 /** indicate roam scan start, notif_params to be sent as WMI_ROAM_TRIGGER_REASON_ID */
 #define WMI_ROAM_NOTIF_DEAUTH_RECV       0x9 /** indicate deauth received, notif_params to be sent as reason code, notif_params1 to be sent as frame length */
 #define WMI_ROAM_NOTIF_DISASSOC_RECV     0xa /** indicate disassoc received, notif_params to be sent as reason code, notif_params1 to be sent as frame length */
+#define WMI_ROAM_NOTIF_SCAN_MODE_SUCCESS_WITH_HO_FAIL 0xb /** indicate that roaming scan mode is successful but cause disconnection and subsequent
+                                                           ** WMI_ROAM_REASON_HO_FAILED is event expected */
 
 /**whenever RIC request information change, host driver should pass all ric related information to firmware (now only support tsepc)
 * Once, 11r roaming happens, firmware can generate RIC request in reassoc request based on these informations
@@ -30444,7 +30446,11 @@ typedef struct {
     */
     A_UINT32 max_wake_dura_us;
 
-    /* Service period start TSF (absolute) */
+    /*
+     * Service period start TSF (absolute)
+     * If sp_start_tsf_lo == sp_start_tsf_hi == 0, the specification
+     * is invalid, and shall be ignored.
+     */
     A_UINT32 sp_start_tsf_lo; /* bits 31:0 */
     A_UINT32 sp_start_tsf_hi; /* bits 63:32 */
 } wmi_twt_add_dialog_cmd_fixed_param;
