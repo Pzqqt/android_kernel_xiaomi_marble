@@ -1240,16 +1240,6 @@ QDF_STATUS wlansap_set_dfs_target_chnl(mac_handle_t mac_handle,
 				       uint32_t target_chan_freq);
 
 /**
- * wlan_sap_get_roam_profile() - Returns sap roam profile.
- * @sap_ctx:	Pointer to Sap Context.
- *
- * This function provides the SAP roam profile.
- *
- * Return: SAP RoamProfile
- */
-struct csr_roam_profile *wlan_sap_get_roam_profile(struct sap_context *sap_ctx);
-
-/**
  * wlan_sap_get_phymode() - Returns sap phymode.
  * @sap_ctx:	Pointer to Sap Context.
  *

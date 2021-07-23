@@ -1190,7 +1190,7 @@ QDF_STATUS sap_set_session_param(mac_handle_t mac_handle,
 
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].sap_context = sapctx;
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].sapPersona =
-				sapctx->csr_roamProfile.csrPersona;
+			wlan_get_opmode_vdev_id(mac_ctx->pdev, session_id);
 	sap_debug("Initializing sap_ctx = %pK with session = %d",
 		   sapctx, session_id);
 

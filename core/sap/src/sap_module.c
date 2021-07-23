@@ -546,23 +546,6 @@ wlansap_set_scan_acs_channel_params(struct sap_config *config,
 	return status;
 }
 
-/**
- * wlan_sap_get_roam_profile() - Returns sap roam profile.
- * @sap_ctx:	Pointer to Sap Context.
- *
- * This function provides the SAP roam profile.
- *
- * Return: SAP RoamProfile
- */
-struct csr_roam_profile *wlan_sap_get_roam_profile(struct sap_context *sap_ctx)
-{
-	if (!sap_ctx) {
-		sap_err("Invalid SAP pointer from ctx");
-		return NULL;
-	}
-	return &sap_ctx->csr_roamProfile;
-}
-
 eCsrPhyMode wlan_sap_get_phymode(struct sap_context *sap_ctx)
 {
 	if (!sap_ctx) {
@@ -800,7 +783,7 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 	pmac->sap.SapDfsInfo.sap_ch_switch_mode = sap_chanswitch_mode;
 	pmac->sap.sapCtxList[sap_ctx->sessionId].sap_context = sap_ctx;
 	pmac->sap.sapCtxList[sap_ctx->sessionId].sapPersona =
-		sap_ctx->csr_roamProfile.csrPersona;
+							config->persona;
 
 	qdf_status = ucfg_mlme_get_sap_reduces_beacon_interval(
 						pmac->psoc,
