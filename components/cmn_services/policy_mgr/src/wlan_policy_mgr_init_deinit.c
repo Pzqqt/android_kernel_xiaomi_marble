@@ -338,9 +338,15 @@ QDF_STATUS policy_mgr_psoc_open(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_FAILURE;
 	}
 	pm_ctx->sta_ap_intf_check_work_info->psoc = psoc;
-	qdf_create_work(0, &pm_ctx->sta_ap_intf_check_work,
-			policy_mgr_check_sta_ap_concurrent_ch_intf,
-			pm_ctx->sta_ap_intf_check_work_info);
+	if (QDF_IS_STATUS_ERROR(qdf_delayed_work_create(
+				&pm_ctx->sta_ap_intf_check_work,
+				policy_mgr_check_sta_ap_concurrent_ch_intf,
+				pm_ctx))) {
+		policy_mgr_err("Failed to create dealyed work queue");
+		qdf_mutex_destroy(&pm_ctx->qdf_conc_list_lock);
+		qdf_mem_free(pm_ctx->sta_ap_intf_check_work_info);
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -369,7 +375,7 @@ QDF_STATUS policy_mgr_psoc_close(struct wlan_objmgr_psoc *psoc)
 	}
 
 	if (pm_ctx->sta_ap_intf_check_work_info) {
-		qdf_cancel_work(&pm_ctx->sta_ap_intf_check_work);
+		qdf_delayed_work_destroy(&pm_ctx->sta_ap_intf_check_work);
 		qdf_mem_free(pm_ctx->sta_ap_intf_check_work_info);
 		pm_ctx->sta_ap_intf_check_work_info = NULL;
 	}

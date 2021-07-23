@@ -26,7 +26,7 @@
 #include "qdf_defer.h"
 #include "wlan_reg_services_api.h"
 #include "cds_ieee80211_common_i.h"
-
+#include "qdf_delayed_work.h"
 #define DBS_OPPORTUNISTIC_TIME   5
 
 #define POLICY_MGR_SER_CMD_TIMEOUT 4000
@@ -40,6 +40,7 @@
 #define PM_24_GHZ_CH_FREQ_6   (2437)
 #define PM_5_GHZ_CH_FREQ_36   (5180)
 #define CHANNEL_SWITCH_COMPLETE_TIMEOUT   (2000)
+#define MAX_NOA_TIME (3000)
 
 /**
  * Policy Mgr hardware mode list bit-mask definitions.
@@ -347,7 +348,7 @@ struct policy_mgr_psoc_priv_obj {
 	uint32_t concurrency_mode;
 	uint8_t no_of_open_sessions[QDF_MAX_NO_OF_MODE];
 	uint8_t no_of_active_sessions[QDF_MAX_NO_OF_MODE];
-	qdf_work_t sta_ap_intf_check_work;
+	struct qdf_delayed_work sta_ap_intf_check_work;
 	qdf_work_t nan_sap_conc_work;
 	uint32_t num_dbs_hw_modes;
 	struct dbs_hw_mode_info hw_mode;
