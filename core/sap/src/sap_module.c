@@ -459,7 +459,7 @@ uint16_t wlansap_check_cc_intf(struct sap_context *sap_ctx)
 		sap_err("Invalid MAC context");
 		return 0;
 	}
-	phy_mode = sap_ctx->csr_roamProfile.phyMode;
+	phy_mode = sap_ctx->phyMode;
 	intf_ch_freq = sme_check_concurrent_channel_overlap(
 						MAC_HANDLE(mac),
 						sap_ctx->chan_freq,
@@ -569,7 +569,7 @@ eCsrPhyMode wlan_sap_get_phymode(struct sap_context *sap_ctx)
 		sap_err("Invalid SAP pointer from ctx");
 		return 0;
 	}
-	return sap_ctx->csr_roamProfile.phyMode;
+	return sap_ctx->phyMode;
 }
 
 enum phy_ch_width wlan_sap_get_concurrent_bw(struct wlan_objmgr_pdev *pdev,
@@ -676,7 +676,7 @@ static bool wlan_sap_validate_channel_switch(mac_handle_t mac_handle,
 	return sme_validate_sap_channel_switch(
 			mac_handle,
 			sap_ch_freq,
-			sap_context->csr_roamProfile.phyMode,
+			sap_context->phyMode,
 			sap_context->cc_switch_mode,
 			sap_context->sessionId);
 }
@@ -758,6 +758,7 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 	sap_ctx->dfs_cac_offload = config->dfs_cac_offload;
 	sap_ctx->isCacEndNotified = false;
 	sap_ctx->is_chan_change_inprogress = false;
+	sap_ctx->phyMode = config->SapHw_mode;
 
 	/* Set the BSSID to your "self MAC Addr" read the mac address
 		from Configuation ITEM received from HDD */
@@ -1258,7 +1259,7 @@ wlansap_get_csa_chanwidth_from_phymode(struct sap_context *sap_context,
 		*tgt_ch_params = ch_params;
 	sap_nofl_debug("freq %d bw %d (phymode %d, con bw %d, tgt bw %d)",
 		       chan_freq, ch_width,
-		       sap_context->csr_roamProfile.phyMode,
+		       sap_context->phyMode,
 		       concurrent_bw,
 		       tgt_ch_params ? tgt_ch_params->ch_width : CH_WIDTH_MAX);
 
@@ -1826,7 +1827,7 @@ QDF_STATUS wlansap_channel_change_request(struct sap_context *sap_ctx,
 		return QDF_STATUS_E_FAULT;
 	}
 
-	phy_mode = sap_ctx->csr_roamProfile.phyMode;
+	phy_mode = sap_ctx->phyMode;
 
 	/* Update phy_mode if the target channel is in the other band */
 	if (WLAN_REG_IS_5GHZ_CH_FREQ(target_chan_freq) &&
@@ -1838,6 +1839,7 @@ QDF_STATUS wlansap_channel_change_request(struct sap_context *sap_ctx,
 		phy_mode = eCSR_DOT11_MODE_11g;
 
 	sap_ctx->csr_roamProfile.phyMode = phy_mode;
+	sap_ctx->phyMode = phy_mode;
 
 	if (sap_ctx->csr_roamProfile.ChannelInfo.numOfChannels == 0 ||
 	    !sap_ctx->csr_roamProfile.ChannelInfo.freq_list) {
@@ -2510,6 +2512,7 @@ QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
 	sap_context->acs_cfg = &config->acs_cfg;
 	sap_context->ch_width_orig = config->acs_cfg.ch_width;
 	sap_context->csr_roamProfile.phyMode = config->acs_cfg.hw_mode;
+	sap_context->phyMode = config->acs_cfg.hw_mode;
 
 	/*
 	 * Now, configure the scan and ACS channel params
@@ -2613,18 +2616,12 @@ wlansap_get_max_bw_by_phymode(struct sap_context *sap_ctx)
 		return CH_WIDTH_20MHZ;
 	}
 
-	if (sap_ctx->csr_roamProfile.phyMode ==
-	    eCSR_DOT11_MODE_11ac ||
-	    sap_ctx->csr_roamProfile.phyMode ==
-	    eCSR_DOT11_MODE_11ac_ONLY ||
-	    sap_ctx->csr_roamProfile.phyMode ==
-	    eCSR_DOT11_MODE_11ax ||
-	    sap_ctx->csr_roamProfile.phyMode ==
-	    eCSR_DOT11_MODE_11ax_ONLY ||
-	    CSR_IS_DOT11_PHY_MODE_11BE(
-		sap_ctx->csr_roamProfile.phyMode) ||
-	    CSR_IS_DOT11_PHY_MODE_11BE_ONLY(
-		sap_ctx->csr_roamProfile.phyMode)) {
+	if (sap_ctx->phyMode == eCSR_DOT11_MODE_11ac ||
+	    sap_ctx->phyMode == eCSR_DOT11_MODE_11ac_ONLY ||
+	    sap_ctx->phyMode == eCSR_DOT11_MODE_11ax ||
+	    sap_ctx->phyMode == eCSR_DOT11_MODE_11ax_ONLY ||
+	    CSR_IS_DOT11_PHY_MODE_11BE(sap_ctx->phyMode) ||
+	    CSR_IS_DOT11_PHY_MODE_11BE_ONLY(sap_ctx->phyMode)) {
 		max_fw_bw = sme_get_vht_ch_width();
 		if (max_fw_bw >= WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ)
 			ch_width = CH_WIDTH_160MHZ;
@@ -2634,10 +2631,8 @@ wlansap_get_max_bw_by_phymode(struct sap_context *sap_ctx)
 		ch_width = QDF_MAX(
 				wlansap_get_target_eht_phy_ch_width(),
 				ch_width);
-	} else if (sap_ctx->csr_roamProfile.phyMode ==
-		   eCSR_DOT11_MODE_11n ||
-		   sap_ctx->csr_roamProfile.phyMode ==
-		   eCSR_DOT11_MODE_11n_ONLY) {
+	} else if (sap_ctx->phyMode == eCSR_DOT11_MODE_11n ||
+		   sap_ctx->phyMode == eCSR_DOT11_MODE_11n_ONLY) {
 		ch_width = CH_WIDTH_40MHZ;
 	} else {
 		/* For legacy 11a mode return 20MHz */
@@ -3251,7 +3246,7 @@ qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx,
 	}
 
 	cc_mode = sap_ctx->cc_switch_mode;
-	phy_mode = sap_ctx->csr_roamProfile.phyMode;
+	phy_mode = sap_ctx->phyMode;
 	intf_ch_freq = sme_check_concurrent_channel_overlap(
 						       MAC_HANDLE(mac),
 						       restart_freq,

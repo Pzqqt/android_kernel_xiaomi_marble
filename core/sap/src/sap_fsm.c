@@ -848,7 +848,7 @@ sap_validate_chan(struct sap_context *sap_context,
 			con_ch_freq = sme_check_concurrent_channel_overlap(
 					mac_handle,
 					sap_context->chan_freq,
-					sap_context->csr_roamProfile.phyMode,
+					sap_context->phyMode,
 					sap_context->cc_switch_mode);
 			sap_debug("After check overlap: sap freq %d con freq:%d",
 				  sap_context->chan_freq, con_ch_freq);
@@ -2420,30 +2420,31 @@ static void sap_validate_chanmode_and_chwidth(struct mac_context *mac_ctx,
 	enum phy_ch_width orig_ch_width;
 
 	orig_ch_width = sap_ctx->ch_params.ch_width;
-	orig_phymode = sap_ctx->csr_roamProfile.phyMode;
+	orig_phymode = sap_ctx->phyMode;
 
 	if (WLAN_REG_IS_5GHZ_CH_FREQ(sap_ctx->chan_freq) &&
-	    (sap_ctx->csr_roamProfile.phyMode == eCSR_DOT11_MODE_11g ||
-	     sap_ctx->csr_roamProfile.phyMode ==
-					eCSR_DOT11_MODE_11g_ONLY)) {
+	    (sap_ctx->phyMode == eCSR_DOT11_MODE_11g ||
+	     sap_ctx->phyMode == eCSR_DOT11_MODE_11g_ONLY)) {
 		sap_ctx->csr_roamProfile.phyMode = eCSR_DOT11_MODE_11a;
+		sap_ctx->phyMode = eCSR_DOT11_MODE_11a;
 	} else if (WLAN_REG_IS_24GHZ_CH_FREQ(sap_ctx->chan_freq) &&
-		   (sap_ctx->csr_roamProfile.phyMode == eCSR_DOT11_MODE_11a)) {
+		   (sap_ctx->phyMode == eCSR_DOT11_MODE_11a)) {
 		sap_ctx->csr_roamProfile.phyMode = eCSR_DOT11_MODE_11g;
+		sap_ctx->phyMode = eCSR_DOT11_MODE_11g;
 	}
 
 	if (sap_ctx->ch_params.ch_width > CH_WIDTH_20MHZ &&
-	    (sap_ctx->csr_roamProfile.phyMode == eCSR_DOT11_MODE_abg ||
-	     sap_ctx->csr_roamProfile.phyMode == eCSR_DOT11_MODE_11a ||
-	     sap_ctx->csr_roamProfile.phyMode == eCSR_DOT11_MODE_11g ||
-	     sap_ctx->csr_roamProfile.phyMode == eCSR_DOT11_MODE_11b)) {
+	    (sap_ctx->phyMode == eCSR_DOT11_MODE_abg ||
+	     sap_ctx->phyMode == eCSR_DOT11_MODE_11a ||
+	     sap_ctx->phyMode == eCSR_DOT11_MODE_11g ||
+	     sap_ctx->phyMode == eCSR_DOT11_MODE_11b)) {
 		sap_ctx->ch_params.ch_width = CH_WIDTH_20MHZ;
 		wlan_reg_set_channel_params_for_freq(mac_ctx->pdev,
 					       sap_ctx->chan_freq,
 					       sap_ctx->ch_params.sec_ch_offset,
 					       &sap_ctx->ch_params);
 	} else if (sap_ctx->ch_params.ch_width > CH_WIDTH_40MHZ &&
-		   sap_ctx->csr_roamProfile.phyMode == eCSR_DOT11_MODE_11n) {
+		   sap_ctx->phyMode == eCSR_DOT11_MODE_11n) {
 		sap_ctx->ch_params.ch_width = CH_WIDTH_40MHZ;
 		wlan_reg_set_channel_params_for_freq(mac_ctx->pdev,
 					       sap_ctx->chan_freq,
@@ -2452,11 +2453,11 @@ static void sap_validate_chanmode_and_chwidth(struct mac_context *mac_ctx,
 	}
 
 	if (orig_ch_width != sap_ctx->ch_params.ch_width ||
-	    orig_phymode != sap_ctx->csr_roamProfile.phyMode)
+	    orig_phymode != sap_ctx->phyMode)
 		sap_info("Freq %d Updated BW %d -> %d , phymode %d -> %d",
 			 sap_ctx->chan_freq, orig_ch_width,
 			 sap_ctx->ch_params.ch_width,
-			 orig_phymode, sap_ctx->csr_roamProfile.phyMode);
+			 orig_phymode, sap_ctx->phyMode);
 }
 
 /**
@@ -2522,7 +2523,7 @@ static QDF_STATUS sap_goto_starting(struct sap_context *sap_ctx,
 	/* Channel selected. Now can sap_goto_starting */
 	sap_ctx->fsm_state = SAP_STARTING;
 	sap_debug("from state %s => %s phyMode %d, bw %d",
-		  "SAP_INIT", "SAP_STARTING", sap_ctx->csr_roamProfile.phyMode,
+		  "SAP_INIT", "SAP_STARTING", sap_ctx->phyMode,
 		  sap_ctx->ch_params.ch_width);
 	/* Specify the channel */
 	sap_ctx->csr_roamProfile.ChannelInfo.numOfChannels =

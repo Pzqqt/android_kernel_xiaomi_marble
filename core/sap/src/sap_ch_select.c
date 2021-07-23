@@ -476,7 +476,7 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 
 		/* OFDM rates are not supported on frequency 2484 */
 		if (*pChans == 2484 &&
-		    eCSR_DOT11_MODE_11b != sap_ctx->csr_roamProfile.phyMode)
+		    eCSR_DOT11_MODE_11b != sap_ctx->phyMode)
 			continue;
 
 		/* Skip DSRC channels */
