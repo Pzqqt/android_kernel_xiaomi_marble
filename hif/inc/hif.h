@@ -48,7 +48,9 @@ typedef void __iomem *A_target_id_t;
 typedef void *hif_handle_t;
 
 #if defined(HIF_IPCI) && defined(FEATURE_HAL_DELAYED_REG_WRITE)
-#define HIF_WORK_DRAIN_WAIT_CNT 10
+#define HIF_WORK_DRAIN_WAIT_CNT 50
+
+#define HIF_EP_WAKE_RESET_WAIT_CNT 10
 #endif
 
 #define HIF_TYPE_AR6002   2
@@ -1738,6 +1740,7 @@ hif_softc_to_hif_opaque_softc(struct hif_softc *hif_handle)
 
 #if defined(HIF_IPCI) && defined(FEATURE_HAL_DELAYED_REG_WRITE)
 QDF_STATUS hif_try_prevent_ep_vote_access(struct hif_opaque_softc *hif_ctx);
+void hif_set_ep_intermediate_vote_access(struct hif_opaque_softc *hif_ctx);
 void hif_allow_ep_vote_access(struct hif_opaque_softc *hif_ctx);
 void hif_set_ep_vote_access(struct hif_opaque_softc *hif_ctx,
 			    uint8_t type, uint8_t access);
@@ -1748,6 +1751,11 @@ static inline QDF_STATUS
 hif_try_prevent_ep_vote_access(struct hif_opaque_softc *hif_ctx)
 {
 	return QDF_STATUS_SUCCESS;
+}
+
+static inline void
+hif_set_ep_intermediate_vote_access(struct hif_opaque_softc *hif_ctx)
+{
 }
 
 static inline void
