@@ -426,6 +426,10 @@ QDF_STATUS
 (*extract_roam_stats_event)(wmi_unified_t wmi_handle,
 			    uint8_t *event, uint32_t data_len,
 			    struct roam_stats_event **data);
+QDF_STATUS
+(*extract_auth_offload_event)(wmi_unified_t wmi_handle,
+			      uint8_t *event, uint32_t data_len,
+			      struct auth_offload_event *auth_event);
 #endif /* ROAM_TARGET_IF_CONVERGENCE */
 #endif
 QDF_STATUS (*send_vdev_create_cmd)(wmi_unified_t wmi_handle,
