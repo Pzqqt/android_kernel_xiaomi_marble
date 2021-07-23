@@ -319,6 +319,7 @@ struct sde_frame_data {
  * @ltm_lock        : Spinlock to protect ltm buffer_cnt, hist_en and ltm lists
  * @needs_hw_reset  : Initiate a hw ctl reset
  * @hist_irq_idx    : hist interrupt irq idx
+ * @disable_pending_cp : flag tracks pending color processing features force disable
  * @src_bpp         : source bpp used to calculate compression ratio
  * @target_bpp      : target bpp used to calculate compression ratio
  * @static_cache_read_work: delayed worker to transition cache state to read
@@ -417,6 +418,7 @@ struct sde_crtc {
 	spinlock_t ltm_lock;
 	bool needs_hw_reset;
 	int hist_irq_idx;
+	bool disable_pending_cp;
 
 	int src_bpp;
 	int target_bpp;
