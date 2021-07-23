@@ -538,6 +538,7 @@ QDF_STATUS wlan_objmgr_iterate_psoc_list(
 		wlan_objmgr_psoc_handler handler,
 		void *arg, wlan_objmgr_ref_dbgid dbg_id);
 
+#ifdef WLAN_FEATURE_11BE_MLO
 /**
  * wlan_objmgr_get_mlo_ctx() - Get MLO context from global umac object
  *
@@ -545,13 +546,24 @@ QDF_STATUS wlan_objmgr_iterate_psoc_list(
  *
  * Return: Pointer to the mlo context
  */
-#ifdef WLAN_FEATURE_11BE_MLO
 struct mlo_mgr_context *wlan_objmgr_get_mlo_ctx(void);
+
+/**
+ * wlan_objmgr_set_mlo_ctx() - Set MLO context at global umac object
+ *
+ * This API is used to set MLO context object at the global umac object
+ *
+ * Return: None
+ */
+void wlan_objmgr_set_mlo_ctx(struct mlo_mgr_context *ctx);
 #else
 static inline struct mlo_mgr_context *wlan_objmgr_get_mlo_ctx(void)
 {
 	return NULL;
 }
+
+static inline void wlan_objmgr_set_mlo_ctx(struct mlo_mgr_context *ctx)
+{}
 #endif /* WLAN_FEATURE_11BE_MLO */
 
 #endif /* _WLAN_OBJMGR_GLOBAL_OBJ_H_*/
