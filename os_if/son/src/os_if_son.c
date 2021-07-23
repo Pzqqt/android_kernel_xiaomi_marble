@@ -763,9 +763,52 @@ qdf_export_symbol(os_if_son_vdev_ops);
 
 QDF_STATUS os_if_son_peer_ops(struct wlan_objmgr_peer *peer,
 			      enum wlan_mlme_peer_param type,
-			      void *data, void *ret)
+			      union wlan_mlme_peer_data *in,
+			      union wlan_mlme_peer_data *out)
 {
-	return QDF_STATUS_SUCCESS;
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_objmgr_psoc *psoc;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (!peer) {
+		osif_err("null peer");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	vdev = wlan_peer_get_vdev(peer);
+	if (!vdev) {
+		osif_err("null vdev");
+		return QDF_STATUS_E_INVAL;
+	}
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		osif_err("null pdev");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		osif_err("null psoc");
+		return QDF_STATUS_E_INVAL;
+	}
+	osif_debug("type %d", type);
+	/* All PEER MLME operations exported to SON component */
+	switch (type) {
+	case PEER_SET_KICKOUT_ALLOW:
+		if (!in) {
+			osif_err("invalid input parameter");
+			return QDF_STATUS_E_INVAL;
+		}
+		status = ucfg_son_set_peer_kickout_allow(vdev, peer,
+							 in->enable);
+		break;
+	default:
+		osif_err("invalid type: %d", type);
+		status = QDF_STATUS_E_INVAL;
+	}
+
+	return status;
 }
 
 qdf_export_symbol(os_if_son_peer_ops);

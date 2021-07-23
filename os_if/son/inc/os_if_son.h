@@ -328,14 +328,15 @@ QDF_STATUS os_if_son_vdev_ops(struct wlan_objmgr_vdev *pdev,
  * os_if_son_peer_ops() - Handles PEER specific SON commands
  * @peer: peer
  * @type: SON command to handle
- * @data: Input Data
- * @ret: Output Data
+ * @data: Input Data. Pointer to wlan_mlme_peer_data
+ * @ret: Output Data. Pointer to wlan_mlme_peer_data
  *
  * Return: QDF_SUCCCESS_SUCCESS in case of success
  */
 QDF_STATUS os_if_son_peer_ops(struct wlan_objmgr_peer *peer,
 			      enum wlan_mlme_peer_param type,
-			      void *data, void *ret);
+			      union wlan_mlme_peer_data *data,
+			      union wlan_mlme_peer_data *ret);
 
 /**
  * os_if_son_scan_db_iterate() - get country code
