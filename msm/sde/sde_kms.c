@@ -4381,7 +4381,7 @@ static int _sde_kms_get_demura_plane_data(struct sde_splash_data *data)
 			SDE_DEBUG("no Demura node %s! disp count: %d\n",
 					node_name, data->num_splash_displays);
 			continue;
-		} else if (of_address_to_resource(node, i, &r)) {
+		} else if (of_address_to_resource(node, 0, &r)) {
 			SDE_ERROR("invalid data for:%s\n", node_name);
 			ret = -EINVAL;
 			break;
