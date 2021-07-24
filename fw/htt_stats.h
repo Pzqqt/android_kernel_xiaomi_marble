@@ -638,6 +638,24 @@ typedef struct {
     A_UINT32 ul_mumimo_seq_posted;
     /* Num of times UL OFDMA seq posted */
     A_UINT32 ul_ofdma_seq_posted;
+    /* Num of times Thermal module suspended scheduler */
+    A_UINT32 thermal_suspend_cnt;
+    /* Num of times DFS module suspended scheduler */
+    A_UINT32 dfs_suspend_cnt;
+    /* Num of times TX abort module suspended scheduler */
+    A_UINT32 tx_abort_suspend_cnt;
+    /* tgt_specific_opaque_txq_suspend_info:
+     * This field is a target-specifc bit mask of suspended PPDU tx queues.
+     * Since the bit mask definition is different for different targets,
+     * this field is not meant for general use, but rather for debugging use.
+     */
+    A_UINT32 tgt_specific_opaque_txq_suspend_info;
+    /* Last SCHEDULER suspend reason
+     * 1 -> Thermal Module
+     * 2 -> DFS Module
+     * 3 -> Tx Abort Module
+     */
+    A_UINT32 last_suspend_reason;
 } htt_tx_pdev_stats_cmn_tlv;
 
 #define HTT_TX_PDEV_STATS_URRN_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
