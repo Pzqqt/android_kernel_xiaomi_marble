@@ -1727,6 +1727,7 @@ static int dp_mst_display_set_mgr_state(void *dp_display, bool state)
 	if (state)
 		mst->mst_session_state = state;
 
+	dp_mst_clear_edid_cache(dp);
 	mst->mst_fw_cbs = &drm_dp_mst_fw_helper_ops;
 
 	rc = mst->mst_fw_cbs->topology_mgr_set_mst(&mst->mst_mgr, state);
