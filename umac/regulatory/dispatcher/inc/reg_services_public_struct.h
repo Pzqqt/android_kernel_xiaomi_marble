@@ -709,8 +709,8 @@ enum behav_limit {
  * @start_freq: starting frequency
  * @channels: channel set
  * @cfis: Set of center frequency indices. Center for 40/80/160/320MHz band
- *         channel opclasses. For 20MHz the list is empty as it is  already
- *         available in @channels variable.
+ *        channel opclasses. For 20MHz the list is empty as it is already
+ *        available in @channels variable.
  */
 struct reg_dmn_op_class_map_t {
 	uint8_t op_class;

@@ -509,7 +509,7 @@ QDF_STATUS reg_dmn_get_6g_opclasses_and_channels(struct wlan_objmgr_pdev *pdev,
 	*num_opclasses = reg_dmn_get_num_6g_opclasses(pdev);
 	opcls_lst_size = *num_opclasses * sizeof(uint8_t);
 	chansize_lst_size = *num_opclasses * sizeof(uint8_t);
-	arr_chan_lists_size =  *num_opclasses * sizeof(uint8_t *);
+	arr_chan_lists_size = *num_opclasses * sizeof(uint8_t *);
 
 	total_alloc_size = 0;
 	total_alloc_size += opcls_lst_size
@@ -531,9 +531,9 @@ QDF_STATUS reg_dmn_get_6g_opclasses_and_channels(struct wlan_objmgr_pdev *pdev,
 	l_chansize_lst = p_temp_alloc;
 	p_temp_alloc += chansize_lst_size;
 
-	arr_chan_lists  = (uint8_t **)p_temp_alloc;
+	arr_chan_lists = (uint8_t **)p_temp_alloc;
 
-	/* Fill arrays with  opclasses and chanlist sizes */
+	/* Fill arrays with opclasses and chanlist sizes */
 	count = 0;
 	while (op_class_tbl && op_class_tbl->op_class) {
 		if (reg_is_6ghz_op_class(pdev, op_class_tbl->op_class)) {

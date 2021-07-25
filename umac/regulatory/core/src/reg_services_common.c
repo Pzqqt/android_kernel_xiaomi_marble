@@ -4826,11 +4826,11 @@ reg_get_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
 
 #ifdef CONFIG_AFC_SUPPORT
 /**
- *  reg_get_frange_list_len() - Calculate the length of the list of the
- *  frequency ranges
- *  Input: None
+ * reg_get_frange_list_len() - Calculate the length of the list of the
+ * frequency ranges
+ * Input: None
  *
- *  Return: Length of the frequency range list
+ * Return: Length of the frequency range list
  */
 static uint16_t reg_get_frange_list_len(void)
 {
@@ -4933,7 +4933,7 @@ reg_fill_afc_freq_ranges(struct wlan_afc_frange_list *p_frange_lst)
 	p_range_obj = &p_frange_lst->range_objs[0];
 
 	/* For now there is only one range */
-	p_range_obj->lowfreq =  DEFAULT_LOW_6GFREQ;
+	p_range_obj->lowfreq = DEFAULT_LOW_6GFREQ;
 	p_range_obj->highfreq = DEFAULT_HIGH_6GFREQ;
 }
 
@@ -4996,10 +4996,10 @@ reg_fill_afc_opclasses_arr(struct wlan_objmgr_pdev *pdev,
 	p_opclass_obj = p_opclass_obj_arr;
 
 	for (i = 0; i < num_opclasses; i++) {
-		p_opclass_obj =  reg_fill_afc_opclass_obj(p_opclass_obj,
-							  opclass_lst[i],
-							  chansize_lst[i],
-							  channel_lists[i]);
+		p_opclass_obj = reg_fill_afc_opclass_obj(p_opclass_obj,
+							 opclass_lst[i],
+							 chansize_lst[i],
+							 channel_lists[i]);
 	}
 }
 
@@ -5154,8 +5154,8 @@ free_opcls_chan_mem:
 }
 
 /**
- * reg_dmn_set_afc_req_id() -  Set the request ID in the AFC partial request
- *                             object
+ * reg_dmn_set_afc_req_id() - Set the request ID in the AFC partial request
+ *                            object
  * @afc_req: pointer to AFC partial request
  * @req_id: AFC request ID
  *

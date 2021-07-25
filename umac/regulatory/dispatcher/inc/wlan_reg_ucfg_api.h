@@ -327,7 +327,7 @@ QDF_STATUS ucfg_reg_unregister_afc_req_rx_callback(struct wlan_objmgr_pdev *pdev
 						   afc_req_rx_evt_handler cbf);
 
 /**
- * ucfg_reg_get_partial_afc_req_info() -  Get the the frequency ranges and
+ * ucfg_reg_get_partial_afc_req_info() - Get the the frequency ranges and
  * opclass + channel ranges. This is partial because in the AFC request there
  * are a few more parameters: Longitude, Latitude a few other information
  * @pdev: Pointer to PDEV object.
