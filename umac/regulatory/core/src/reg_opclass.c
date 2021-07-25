@@ -39,72 +39,176 @@
 static struct reg_dmn_supp_op_classes reg_dmn_curr_supp_opp_classes = { 0 };
 #endif
 
+/**
+ * Given a global opclass number create the corresponding  array token.
+ * Examples:
+ *     'CFISARR(132)' expands to  'opcls_132_cfis_arr'
+ *     'CFISARR(133)' expands to  'opcls_133_cfis_arr'
+ */
+#define CFISARR(_g_opcls)  opcls_ ## _g_opcls ## _cfis_arr
+
+/**
+ * Given a global opclass number create the corresponding list token.
+ * Examples:
+ *     'CFISLST(132)' expands to  'opcls_132_cfis_lst'
+ *     'CFISLST(133)' expands to  'opcls_133_cfis_lst'
+ */
+#define CFISLST(_g_opcls)  opcls_ ## _g_opcls ## _cfis_lst
+
+/* The type of the opclass list objects */
+#define CFISLST_TYPE static const struct c_freq_lst
+
+/* The number of elements of the array */
+#define NELEMS QDF_ARRAY_SIZE
+
+/**
+ * Given a global opclass number create the corresponding cfis list and assign
+ * the corresponding cfis array and size of the cfis array
+ * Examples:
+ *     'CREATE_CFIS_LST(132);'
+ *     expands to
+ *     '
+ *     static const struct c_freq_lst opcls_132_cfis_lst =
+ *                   {QDF_ARRAY_SIZE(opcls_132_cfis_arr), opcls_132_cfis_arr};
+ *     '
+ *
+ *     'CREATE_CFIS_LST(133);'
+ *     expands to
+ *     '
+ *     static const struct c_freq_lst opcls_133_cfis_lst =
+ *                   {QDF_ARRAY_SIZE(opcls_133_cfis_arr), opcls_133_cfis_arr};
+ *     '
+ */
+#define CREATE_CFIS_LST(_gopcls) \
+CFISLST_TYPE CFISLST(_gopcls) = {NELEMS(CFISARR(_gopcls)), CFISARR(_gopcls)}
+
+/* The NULL pointer to a cfis list object */
+#define NULL_CFIS_LST NULL
+
+/* CFIs for global opclass 132: (start Freq=5925 BW=40MHz) */
+static const uint8_t opcls_132_cfis_arr[] = {
+#ifdef CONFIG_AFC_SUPPORT
+	3, 11, 19, 27, 35, 43, 51, 59, 67, 75,
+	83, 91, 99, 107, 115, 123, 131, 139, 147, 155,
+	163, 171, 179, 187, 195, 203, 211, 219, 227,
+#endif
+};
+
+/* CFIs for global opclass 133: (start Freq=5925 BW=80MHz) */
+static const uint8_t opcls_133_cfis_arr[] = {
+#ifdef CONFIG_AFC_SUPPORT
+	7, 23, 39, 55, 71, 87, 103, 119, 135, 151, 167, 183,
+	  199, 215,
+#endif
+};
+
+/* CFIs for global opclass 134: (start Freq=5950 BW=160MHz) */
+static const uint8_t opcls_134_cfis_arr[] = {
+#ifdef CONFIG_AFC_SUPPORT
+	15, 47, 79, 111, 143, 175, 207,
+#endif
+};
+
+/* CFIs for global opclass 135: (start Freq=5950 BW=80MHz+80MHz) */
+static const uint8_t opcls_135_cfis_arr[] = {
+#ifdef CONFIG_AFC_SUPPORT
+	7, 23, 39, 55, 71, 87, 103, 119, 135, 151, 167, 183,
+	199, 215,
+#endif
+};
+
+/* CFIs for global opclass 136: (start Freq=5925 BW=20MHz) */
+static const uint8_t opcls_136_cfis_arr[] = {
+#ifdef CONFIG_AFC_SUPPORT
+	2,
+#endif
+};
+
+/* CFIs for global opclass 137: (start Freq=5950 BW=320MHz) */
+#ifdef WLAN_FEATURE_11BE
+static const uint8_t opcls_137_cfis_arr[] = {
+#ifdef CONFIG_AFC_SUPPORT
+	31, 63, 95, 127, 159, 191,
+#endif
+};
+#endif
+
+/* Create the CFIS static constant lists */
+CREATE_CFIS_LST(132);
+CREATE_CFIS_LST(133);
+CREATE_CFIS_LST(134);
+CREATE_CFIS_LST(135);
+CREATE_CFIS_LST(136);
+#ifdef WLAN_FEATURE_11BE
+CREATE_CFIS_LST(137);
+#endif
+
 static const struct reg_dmn_op_class_map_t global_op_class[] = {
 	{81, 25, BW20, BIT(BEHAV_NONE), 2407,
 	 {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	 {0} },
+	 NULL_CFIS_LST },
 	{82, 25, BW20, BIT(BEHAV_NONE), 2414,
 	 {14},
-	 {0} },
+	 NULL_CFIS_LST },
 	{83, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 2407,
 	 {1, 2, 3, 4, 5, 6, 7, 8, 9},
-	 {0} },
+	 NULL_CFIS_LST },
 	{84, 40, BW40_HIGH_PRIMARY, BIT(BEHAV_BW40_HIGH_PRIMARY), 2407,
 	 {5, 6, 7, 8, 9, 10, 11, 12, 13},
-	 {0} },
+	 NULL_CFIS_LST },
 	{115, 20, BW20, BIT(BEHAV_NONE), 5000,
 	 {36, 40, 44, 48},
-	 {0} },
+	 NULL_CFIS_LST },
 	{116, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 5000,
 	 {36, 44},
-	 {0} },
+	 NULL_CFIS_LST },
 	{117, 40, BW40_HIGH_PRIMARY, BIT(BEHAV_BW40_HIGH_PRIMARY), 5000,
 	 {40, 48},
-	 {0} },
+	 NULL_CFIS_LST },
 	{118, 20, BW20, BIT(BEHAV_NONE), 5000,
 	 {52, 56, 60, 64},
-	 {0} },
+	 NULL_CFIS_LST },
 	{119, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 5000,
 	 {52, 60},
-	 {0} },
+	 NULL_CFIS_LST },
 	{120, 40, BW40_HIGH_PRIMARY, BIT(BEHAV_BW40_HIGH_PRIMARY), 5000,
 	 {56, 64},
-	 {0} },
+	 NULL_CFIS_LST },
 	{121, 20, BW20, BIT(BEHAV_NONE), 5000,
 	 {100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144},
-	 {0} },
+	 NULL_CFIS_LST },
 	{122, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 5000,
 	 {100, 108, 116, 124, 132, 140},
-	 {0} },
+	 NULL_CFIS_LST },
 	{123, 40, BW40_HIGH_PRIMARY, BIT(BEHAV_BW40_HIGH_PRIMARY), 5000,
 	 {104, 112, 120, 128, 136, 144},
-	 {0} },
+	 NULL_CFIS_LST },
 	{125, 20, BW20, BIT(BEHAV_NONE), 5000,
 	 {149, 153, 157, 161, 165, 169, 173, 177},
-	 {0} },
+	 NULL_CFIS_LST },
 	{126, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 5000,
 	 {149, 157, 165, 173},
-	 {0} },
+	 NULL_CFIS_LST },
 	{127, 40, BW40_HIGH_PRIMARY, BIT(BEHAV_BW40_HIGH_PRIMARY), 5000,
 	 {153, 161, 169, 177},
-	 {0} },
+	 NULL_CFIS_LST },
 	{128, 80, BW80, BIT(BEHAV_NONE), 5000,
 	 {36, 40, 44, 48, 52, 56, 60, 64,
 	  100, 104, 108, 112, 116, 120, 124, 128,
 	  132, 136, 140, 144, 149, 153, 157, 161,
 	  165, 169, 173, 177},
-	  {0} },
+	  NULL_CFIS_LST },
 	{129, 160, BW80, BIT(BEHAV_NONE), 5000,
 	 {36, 40, 44, 48, 52, 56, 60, 64,
 	  100, 104, 108, 112, 116, 120, 124, 128,
 	  149, 153, 157, 161, 165, 169, 173, 177},
-	 {0} },
+	 NULL_CFIS_LST },
 	{130, 80, BW80, BIT(BEHAV_BW80_PLUS), 5000,
 	 {36, 40, 44, 48, 52, 56, 60, 64,
 	  100, 104, 108, 112, 116, 120, 124, 128,
 	  132, 136, 140, 144, 149, 153, 157, 161,
 	  165, 169, 173, 177},
-	 {0} },
+	 NULL_CFIS_LST },
 
 #ifdef CONFIG_BAND_6GHZ
 	{131, 20, BW20, BIT(BEHAV_NONE), 5950,
@@ -116,14 +220,7 @@ static const struct reg_dmn_op_class_map_t global_op_class[] = {
 	  157, 161, 165, 169, 173, 177, 181,
 	  185, 189, 193, 197, 201, 205, 209,
 	  213, 217, 221, 225, 229, 233},
-	 {1, 5, 9, 13, 17, 21, 25, 29, 33,
-	  37, 41, 45, 49, 53, 57, 61, 65, 69,
-	  73, 77, 81, 85, 89, 93, 97,
-	  101, 105, 109, 113, 117, 121, 125,
-	  129, 133, 137, 141, 145, 149, 153,
-	  157, 161, 165, 169, 173, 177, 181,
-	  185, 189, 193, 197, 201, 205, 209,
-	  213, 217, 221, 225, 229, 233} },
+	NULL_CFIS_LST},
 
 	{132, 40, BW40_LOW_PRIMARY, BIT(BEHAV_NONE), 5950,
 	 {1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45, 49,
@@ -132,9 +229,7 @@ static const struct reg_dmn_op_class_map_t global_op_class[] = {
 	  141, 145, 149, 153, 157, 161, 165, 169, 173, 177,
 	  181, 185, 189, 193, 197, 201, 205, 209, 213, 217,
 	  221, 225, 229, 233},
-	 {3, 11, 19, 27, 35, 43, 51, 59, 67, 75,
-	  83, 91, 99, 107, 115, 123, 131, 139, 147, 155,
-	  163, 171, 179, 187, 195, 203, 211, 219, 227} },
+	&CFISLST(132)},
 
 	{133, 80, BW80, BIT(BEHAV_NONE), 5950,
 	 {1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45, 49,
@@ -143,8 +238,7 @@ static const struct reg_dmn_op_class_map_t global_op_class[] = {
 	  141, 145, 149, 153, 157, 161, 165, 169, 173,
 	  177, 181, 185, 189, 193, 197, 201, 205, 209, 213,
 	  217, 221, 225, 229, 233},
-	 {7, 23, 39, 55, 71, 87, 103, 119, 135, 151, 167, 183,
-	  199, 215} },
+	&CFISLST(133)},
 
 	{134, 160, BW80, BIT(BEHAV_NONE), 5950,
 	 {1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45,
@@ -153,7 +247,7 @@ static const struct reg_dmn_op_class_map_t global_op_class[] = {
 	  129, 133, 137, 141, 145, 149, 153, 157, 161,
 	  165, 169, 173, 177, 181, 185, 189, 193, 197,
 	     201, 205, 209, 213, 217, 221, 225, 229, 233},
-	 {15, 47, 79, 111, 143, 175, 207} },
+	&CFISLST(134)},
 
 	{135, 80, BW80, BIT(BEHAV_BW80_PLUS), 5950,
 	 {1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41,
@@ -163,12 +257,11 @@ static const struct reg_dmn_op_class_map_t global_op_class[] = {
 	  153, 157, 161, 165, 169, 173, 177, 181,
 	  185, 189, 193, 197, 201, 205, 209, 213,
 	  217, 221, 225, 229, 233},
-	 {7, 23, 39, 55, 71, 87, 103, 119, 135, 151, 167, 183,
-	  199, 215} },
+	&CFISLST(135)},
 
 	{136, 20, BW20, BIT(BEHAV_NONE), 5925,
 	 {2},
-	 {0} },
+	&CFISLST(136)},
 #ifdef WLAN_FEATURE_11BE
 	{137, 320, BW20, BIT(BEHAV_NONE), 5950,
 	 {1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41,
@@ -178,163 +271,229 @@ static const struct reg_dmn_op_class_map_t global_op_class[] = {
 	  153, 157, 161, 165, 169, 173, 177, 181,
 	  185, 189, 193, 197, 201, 205, 209, 213,
 	  217, 221, 225, 229, 233},
-	 {31, 63, 95, 127, 159, 191} },
+	&CFISLST(137)},
 #endif
 #endif
 	{0, 0, 0, 0, 0, {0},
-	{0} },
+	NULL_CFIS_LST },
 };
 
 static const struct reg_dmn_op_class_map_t us_op_class[] = {
 	{1, 20, BW20, BIT(BEHAV_NONE), 5000,
-	 {36, 40, 44, 48} },
+	 {36, 40, 44, 48},
+	 NULL_CFIS_LST },
 	{2, 20, BW20, BIT(BEHAV_NONE), 5000,
-	 {52, 56, 60, 64} },
+	 {52, 56, 60, 64},
+	 NULL_CFIS_LST },
 	{4, 20, BW20, BIT(BEHAV_NONE), 5000,
-	 {100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144} },
+	 {100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144},
+	 NULL_CFIS_LST },
 	{5, 20, BW20, BIT(BEHAV_NONE), 5000,
-	 {149, 153, 157, 161, 165} },
+	 {149, 153, 157, 161, 165},
+	 NULL_CFIS_LST },
 	{12, 25, BW20, BIT(BEHAV_NONE), 2407,
-	 {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11} },
+	 {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	 NULL_CFIS_LST },
 	{22, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 5000,
-	 {36, 44} },
+	 {36, 44},
+	 NULL_CFIS_LST },
 	{23, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 5000,
-	 {52, 60} },
+	 {52, 60},
+	 NULL_CFIS_LST },
 	{24, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 5000,
-	 {100, 108, 116, 124, 132, 140} },
+	 {100, 108, 116, 124, 132, 140},
+	 NULL_CFIS_LST },
 	{26, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 5000,
-	 {149, 157} },
+	 {149, 157},
+	 NULL_CFIS_LST },
 	{27, 40, BW40_HIGH_PRIMARY, BIT(BEHAV_BW40_HIGH_PRIMARY), 5000,
-	 {40, 48} },
+	 {40, 48},
+	 NULL_CFIS_LST },
 	{28, 40, BW40_HIGH_PRIMARY, BIT(BEHAV_BW40_HIGH_PRIMARY), 5000,
-	 {56, 64} },
+	 {56, 64},
+	 NULL_CFIS_LST },
 	{29, 40, BW40_HIGH_PRIMARY, BIT(BEHAV_BW40_HIGH_PRIMARY), 5000,
-	 {104, 112, 120, 128, 136, 144} },
+	 {104, 112, 120, 128, 136, 144},
+	 NULL_CFIS_LST },
 	{30, 40, BW40_HIGH_PRIMARY, BIT(BEHAV_BW40_HIGH_PRIMARY), 5000,
-	 {153, 161} },
+	 {153, 161},
+	 NULL_CFIS_LST },
 	{31, 40, BW40_HIGH_PRIMARY, BIT(BEHAV_BW40_HIGH_PRIMARY), 5000,
-	 {153, 161} },
+	 {153, 161},
+	 NULL_CFIS_LST },
 	{32, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 2407,
-	 {1, 2, 3, 4, 5, 6, 7} },
+	 {1, 2, 3, 4, 5, 6, 7},
+	 NULL_CFIS_LST },
 	{33, 40, BW40_HIGH_PRIMARY, BIT(BEHAV_BW40_HIGH_PRIMARY), 2407,
-	 {5, 6, 7, 8, 9, 10, 11} },
+	 {5, 6, 7, 8, 9, 10, 11},
+	 NULL_CFIS_LST },
 	{128, 80, BW80, BIT(BEHAV_NONE), 5000,
 	 {36, 40, 44, 48, 52, 56, 60, 64, 100,
 	  104, 108, 112, 116, 120, 124, 128, 132,
-	  136, 140, 144, 149, 153, 157, 161} },
+	  136, 140, 144, 149, 153, 157, 161},
+	 NULL_CFIS_LST },
 	{129, 160, BW80, BIT(BEHAV_NONE), 5000,
 	 {36, 40, 44, 48, 52, 56, 60, 64, 100,
-	  104, 108, 112, 116, 120, 124, 128} },
+	  104, 108, 112, 116, 120, 124, 128},
+	 NULL_CFIS_LST },
 	{130, 80, BW80, BIT(BEHAV_BW80_PLUS), 5000,
 	 {36, 40, 44, 48, 52, 56, 60, 64, 100,
 	  104, 108, 112, 116, 120, 124, 128, 132,
-	  136, 140, 144, 149, 153, 157, 161} },
-	{0, 0, 0, 0, 0, {0} },
+	  136, 140, 144, 149, 153, 157, 161},
+	 NULL_CFIS_LST },
+	{0, 0, 0, 0, 0, {0},
+	 NULL_CFIS_LST },
 };
 
 static const struct reg_dmn_op_class_map_t euro_op_class[] = {
 	{1, 20, BW20, BIT(BEHAV_NONE), 5000,
-	 {36, 40, 44, 48} },
+	 {36, 40, 44, 48},
+	 NULL_CFIS_LST },
 	{2, 20, BW20, BIT(BEHAV_NONE), 5000,
-	 {52, 56, 60, 64} },
+	 {52, 56, 60, 64},
+	 NULL_CFIS_LST },
 	{3, 20, BW20, BIT(BEHAV_NONE), 5000,
 	 {100, 104, 108, 112, 116, 120,
-	  124, 128, 132, 136, 140} },
+	  124, 128, 132, 136, 140},
+	 NULL_CFIS_LST },
 	{4, 25, BW20, BIT(BEHAV_NONE), 2407,
-	 {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13} },
+	 {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	 NULL_CFIS_LST },
 	{5, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 5000,
-	 {36, 44} },
+	 {36, 44},
+	 NULL_CFIS_LST },
 	{6, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 5000,
-	 {52, 60} },
+	 {52, 60},
+	 NULL_CFIS_LST },
 	{7, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 5000,
-	 {100, 108, 116, 124, 132} },
+	 {100, 108, 116, 124, 132},
+	 NULL_CFIS_LST },
 	{8, 40, BW40_HIGH_PRIMARY, BIT(BEHAV_BW40_HIGH_PRIMARY), 5000,
-	 {40, 48} },
+	 {40, 48},
+	 NULL_CFIS_LST },
 	{9, 40, BW40_HIGH_PRIMARY, BIT(BEHAV_BW40_HIGH_PRIMARY), 5000,
-	 {56, 64} },
+	 {56, 64},
+	 NULL_CFIS_LST },
 	{10, 40, BW40_HIGH_PRIMARY, BIT(BEHAV_BW40_HIGH_PRIMARY), 5000,
-	 {104, 112, 120, 128, 136} },
+	 {104, 112, 120, 128, 136},
+	 NULL_CFIS_LST },
 	{11, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 2407,
-	 {1, 2, 3, 4, 5, 6, 7, 8, 9} },
+	 {1, 2, 3, 4, 5, 6, 7, 8, 9},
+	 NULL_CFIS_LST },
 	{12, 40, BW40_HIGH_PRIMARY, BIT(BEHAV_BW40_HIGH_PRIMARY), 2407,
-	 {5, 6, 7, 8, 9, 10, 11, 12, 13} },
+	 {5, 6, 7, 8, 9, 10, 11, 12, 13},
+	 NULL_CFIS_LST },
 	{17, 20, BW20, BIT(BEHAV_NONE), 5000,
-	 {149, 153, 157, 161, 165, 169} },
+	 {149, 153, 157, 161, 165, 169},
+	 NULL_CFIS_LST },
 	{128, 80, BW80, BIT(BEHAV_NONE), 5000,
 	 {36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120,
-	  124, 128} },
+	  124, 128},
+	 NULL_CFIS_LST },
 	{129, 160, BW80, BIT(BEHAV_NONE), 5000,
 	 {36, 40, 44, 48, 52, 56, 60, 64, 100,
-	  104, 108, 112, 116, 120, 124, 128} },
+	  104, 108, 112, 116, 120, 124, 128},
+	 NULL_CFIS_LST },
 	{130, 80, BW80, BIT(BEHAV_BW80_PLUS), 5000,
 	 {36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120,
-	  124, 128} },
-	{0, 0, 0, 0, 0, {0} },
+	  124, 128},
+	 NULL_CFIS_LST },
+	{0, 0, 0, 0, 0, {0},
+	 NULL_CFIS_LST },
 };
 
 static const struct reg_dmn_op_class_map_t japan_op_class[] = {
 	{1, 20, BW20, BIT(BEHAV_NONE), 5000,
-	 {36, 40, 44, 48} },
+	 {36, 40, 44, 48},
+	 NULL_CFIS_LST },
 	{30, 25, BW20, BIT(BEHAV_NONE), 2407,
-	 {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13} },
+	 {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	 NULL_CFIS_LST },
 	{31, 25, BW20, BIT(BEHAV_NONE), 2414,
-	 {14} },
+	 {14},
+	 NULL_CFIS_LST },
 	{32, 20, BW20, BIT(BEHAV_NONE), 5000,
-	 {52, 56, 60, 64} },
+	 {52, 56, 60, 64},
+	 NULL_CFIS_LST },
 	{34, 20, BW20, BIT(BEHAV_NONE), 5000,
-	 {100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140} },
+	 {100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140},
+	 NULL_CFIS_LST },
 	{36, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 5000,
-	 {36, 44} },
+	 {36, 44},
+	 NULL_CFIS_LST },
 	{37, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 5000,
-	 {52, 60} },
+	 {52, 60},
+	 NULL_CFIS_LST },
 	{39, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 5000,
-	 {100, 108, 116, 124, 132} },
+	 {100, 108, 116, 124, 132},
+	 NULL_CFIS_LST },
 	{41, 40, BW40_HIGH_PRIMARY, BIT(BEHAV_BW40_HIGH_PRIMARY), 5000,
-	 {40, 48} },
+	 {40, 48},
+	 NULL_CFIS_LST },
 	{42, 40, BW40_HIGH_PRIMARY, BIT(BEHAV_BW40_HIGH_PRIMARY), 5000,
-	 {56, 64} },
+	 {56, 64},
+	 NULL_CFIS_LST },
 	{44, 40, BW40_HIGH_PRIMARY, BIT(BEHAV_BW40_HIGH_PRIMARY), 5000,
-	 {104, 112, 120, 128, 136} },
+	 {104, 112, 120, 128, 136},
+	 NULL_CFIS_LST },
 	{128, 80, BW80, BIT(BEHAV_NONE), 5000,
 	 {36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120,
-	  124, 128, 132, 136, 140, 144} },
+	  124, 128, 132, 136, 140, 144},
+	 NULL_CFIS_LST },
 	{129, 160, BW80, BIT(BEHAV_NONE), 5000,
 	 {36, 40, 44, 48, 52, 56, 60, 64, 100,
-	  104, 108, 112, 116, 120, 124, 128} },
+	  104, 108, 112, 116, 120, 124, 128},
+	 NULL_CFIS_LST },
 	{130, 80, BW80, BIT(BEHAV_BW80_PLUS), 5000,
 	 {36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120,
-	  124, 128, 132, 136, 140, 144} },
-	{0, 0, 0, 0, 0, {0} },
+	  124, 128, 132, 136, 140, 144},
+	 NULL_CFIS_LST },
+	{0, 0, 0, 0, 0, {0},
+	 NULL_CFIS_LST },
 };
 
 static const struct reg_dmn_op_class_map_t china_op_class[] = {
 	{7, 25, BW20, BIT(BEHAV_NONE), 2407,
-	 {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13} },
+	 {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
+	 NULL_CFIS_LST },
 	{8, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 2407,
-	 {1, 2, 3, 4, 5, 6, 7, 8, 9} },
+	 {1, 2, 3, 4, 5, 6, 7, 8, 9},
+	 NULL_CFIS_LST },
 	{9, 40, BW40_HIGH_PRIMARY, BIT(BEHAV_BW40_HIGH_PRIMARY), 2407,
-	 {5, 6, 7, 8, 9, 10, 11, 12, 13} },
+	 {5, 6, 7, 8, 9, 10, 11, 12, 13},
+	 NULL_CFIS_LST },
 	{1, 20, BW20, BIT(BEHAV_NONE), 5000,
-	 {36, 40, 44, 48} },
+	 {36, 40, 44, 48},
+	 NULL_CFIS_LST },
 	{4, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 5000,
-	 {36, 44} },
+	 {36, 44},
+	 NULL_CFIS_LST },
 	{117, 40, BW40_HIGH_PRIMARY, BIT(BEHAV_BW40_HIGH_PRIMARY), 5000,
-	 {40, 48} },
+	 {40, 48},
+	 NULL_CFIS_LST },
 	{2, 20, BW20, BIT(BEHAV_NONE), 5000,
-	 {52, 56, 60, 64} },
+	 {52, 56, 60, 64},
+	 NULL_CFIS_LST },
 	{5, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 5000,
-	 {52, 60} },
+	 {52, 60},
+	 NULL_CFIS_LST },
 	{3, 20, BW20, BIT(BEHAV_NONE), 5000,
-	 {149, 153, 157, 161, 165} },
+	 {149, 153, 157, 161, 165},
+	 NULL_CFIS_LST },
 	{6, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 5000,
-	 {149, 157} },
+	 {149, 157},
+	 NULL_CFIS_LST },
 	{128, 80, BW80, BIT(BEHAV_NONE), 5000,
-	 {36, 40, 44, 48, 52, 56, 60, 64, 149, 153, 157, 161} },
+	 {36, 40, 44, 48, 52, 56, 60, 64, 149, 153, 157, 161},
+	 NULL_CFIS_LST },
 	{129, 160, BW80, BIT(BEHAV_NONE), 5000,
-	 {36, 40, 44, 48, 52, 56, 60, 64,} },
+	 {36, 40, 44, 48, 52, 56, 60, 64,},
+	 NULL_CFIS_LST },
 	{130, 80, BW80, BIT(BEHAV_BW80_PLUS), 5000,
-	 {36, 40, 44, 48, 52, 56, 60, 64, 149, 153, 157, 161} },
-	{0, 0, 0, 0, 0, {0} },
+	 {36, 40, 44, 48, 52, 56, 60, 64, 149, 153, 157, 161},
+	 NULL_CFIS_LST },
+	{0, 0, 0, 0, 0, {0},
+	 NULL_CFIS_LST },
 };
 #ifdef HOST_OPCLASS
 /**
@@ -437,22 +596,6 @@ static uint8_t reg_dmn_get_num_6g_opclasses(struct wlan_objmgr_pdev *pdev)
 }
 
 /**
- * reg_dmn_get_num_6g_opcls_chans() - Calculate the number of channels given
- * the pointer to the (operating class) channel array.
- *
- * Return: The number of channels
- */
-static uint8_t reg_dmn_get_num_6g_opcls_chans(const uint8_t *p_chans)
-{
-	uint8_t i = 0;
-
-	while (p_chans[i])
-		i++;
-
-	return i;
-}
-
-/**
  * reg_dmn_fill_6g_opcls_chan_lists() - Copy the channel lists for 6g opclasses
  * to the output argument list ('channel_lists')
  * @pdev: Pointer to pdev.
@@ -473,10 +616,15 @@ static void reg_dmn_fill_6g_opcls_chan_lists(struct wlan_objmgr_pdev *pdev,
 
 	while (op_class_tbl && op_class_tbl->op_class) {
 		if (reg_is_6ghz_op_class(pdev, op_class_tbl->op_class)) {
-			uint8_t *dst = channel_lists[i];
-			const uint8_t *src = op_class_tbl->cfis;
-			uint8_t len = chansize_lst[i] * sizeof(*dst);
+			uint8_t *dst;
+			const uint8_t *src;
+			const struct c_freq_lst *p_lst;
+			uint8_t len;
 
+			p_lst = op_class_tbl->p_cfi_lst_obj;
+			src = p_lst->p_cfis_arr;
+			dst = channel_lists[i];
+			len = chansize_lst[i] * sizeof(*dst);
 			qdf_mem_copy(dst, src, len);
 			i++;
 		}
@@ -537,11 +685,11 @@ QDF_STATUS reg_dmn_get_6g_opclasses_and_channels(struct wlan_objmgr_pdev *pdev,
 	count = 0;
 	while (op_class_tbl && op_class_tbl->op_class) {
 		if (reg_is_6ghz_op_class(pdev, op_class_tbl->op_class)) {
-			const uint8_t *pcfis = op_class_tbl->cfis;
+			const struct c_freq_lst *p_lst;
 
+			p_lst = op_class_tbl->p_cfi_lst_obj;
 			l_opcls_lst[count] = op_class_tbl->op_class;
-			l_chansize_lst[count]
-				= reg_dmn_get_num_6g_opcls_chans(pcfis);
+			l_chansize_lst[count] = p_lst->num_cfis;
 			count++;
 		}
 		op_class_tbl++;
