@@ -633,6 +633,11 @@ ifeq ($(CONFIG_QCACLD_FEATURE_NAN), y)
 MAC_NDP_OBJS += $(MAC_SRC_DIR)/pe/nan/nan_datapath.o
 endif
 
+#Temporarily enable ROAM_TARGET_IF_CONVERGENCE to enable wma to target_if roam
+#convergence. It shall be reverted sometime soon by removing the define
+#ROAM_TARGET_IF_CONVERGENCE usage and the legacy code(i.e. code in else part).
+cppflags-y += -DROAM_TARGET_IF_CONVERGENCE
+
 ifeq ($(CONFIG_QCACLD_WLAN_LFR2), y)
 	MAC_LIM_OBJS += $(MAC_SRC_DIR)/pe/lim/lim_process_mlm_host_roam.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_send_frames_host_roam.o \
