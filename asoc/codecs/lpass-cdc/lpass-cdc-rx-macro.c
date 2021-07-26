@@ -1418,7 +1418,6 @@ static int lpass_cdc_rx_macro_mclk_enable(
 				dev_err(rx_priv->dev,
 					"%s: rx request core vote failed\n",
 					__func__);
-				goto exit;
 			}
 			lpass_cdc_clk_rsc_request_clock(rx_priv->dev,
 						 rx_priv->default_clk_id,
