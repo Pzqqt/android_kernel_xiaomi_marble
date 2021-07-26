@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -248,6 +248,7 @@ int16_t
 spectral_vdev_get_chan_freq_seg2(struct wlan_objmgr_vdev *vdev)
 {
 	struct spectral_context *sc;
+	struct wlan_channel *des_chan;
 
 	sc = spectral_get_spectral_ctx_from_vdev(vdev);
 	if (!sc) {
@@ -256,8 +257,11 @@ spectral_vdev_get_chan_freq_seg2(struct wlan_objmgr_vdev *vdev)
 	}
 
 	if (!sc->legacy_cbacks.vdev_get_chan_freq_seg2) {
-		spectral_err("vdev_get_chan_freq_seg2 is not supported");
-		return -ENOTSUPP;
+		des_chan = wlan_vdev_mlme_get_des_chan(vdev);
+		if (des_chan->ch_width == CH_WIDTH_80P80MHZ)
+			return des_chan->ch_freq_seg2;
+		else
+			return 0;
 	}
 
 	return sc->legacy_cbacks.vdev_get_chan_freq_seg2(vdev);
