@@ -2139,4 +2139,10 @@ cm_btm_blacklist_event_handler(struct wlan_objmgr_psoc *psoc,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS
+cm_roam_scan_ch_list_event_handler(struct cm_roam_scan_ch_resp *data)
+{
+	return cm_handle_scan_ch_list_data(data);
+}
 #endif

@@ -59,6 +59,7 @@ target_if_cm_roam_register_rx_ops(struct wlan_cm_roam_rx_ops *rx_ops)
 	rx_ops->roam_event_rx = cm_roam_event_handler;
 	rx_ops->btm_blacklist_event = cm_btm_blacklist_event_handler;
 	rx_ops->vdev_disconnect_event = cm_vdev_disconnect_event_handler;
+	rx_ops->roam_scan_chan_list_event = cm_roam_scan_ch_list_event_handler;
 #endif
 }
 
@@ -297,6 +298,49 @@ err:
 	return status;
 }
 
+int
+target_if_cm_roam_scan_chan_list_event_handler(ol_scn_t scn, uint8_t *event,
+					       uint32_t len)
+{
+	QDF_STATUS qdf_status;
+	int status = 0;
+	struct wmi_unified *wmi_handle;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_cm_roam_rx_ops *roam_rx_ops;
+	struct cm_roam_scan_ch_resp *data = NULL;
+
+	psoc = target_if_get_psoc_from_scn_hdl(scn);
+	if (!psoc) {
+		target_if_err("psoc is null");
+		return -EINVAL;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("wmi_handle is null");
+		return -EINVAL;
+	}
+
+	qdf_status = wmi_extract_roam_scan_chan_list(wmi_handle, event, len,
+						     &data);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		target_if_err("parsing of event failed, %d", qdf_status);
+		return -EINVAL;
+	}
+
+	roam_rx_ops = target_if_cm_get_roam_rx_ops(psoc);
+	if (!roam_rx_ops || !roam_rx_ops->roam_scan_chan_list_event) {
+		target_if_err("No valid roam rx ops");
+		qdf_mem_free(data);
+		return -EINVAL;
+	}
+	qdf_status = roam_rx_ops->roam_scan_chan_list_event(data);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		status = -EINVAL;
+
+	return status;
+}
+
 QDF_STATUS
 target_if_roam_offload_register_events(struct wlan_objmgr_psoc *psoc)
 {
@@ -352,6 +396,16 @@ target_if_roam_offload_register_events(struct wlan_objmgr_psoc *psoc)
 	if (QDF_IS_STATUS_ERROR(ret)) {
 		target_if_err("wmi event(%u) registration failed, ret: %d",
 			      wmi_vdev_disconnect_event_id, ret);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ret = wmi_unified_register_event_handler(handle,
+				wmi_roam_scan_chan_list_id,
+				target_if_cm_roam_scan_chan_list_event_handler,
+				WMI_RX_SERIALIZER_CTX);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		target_if_err("wmi event(%u) registration failed, ret: %d",
+			      wmi_roam_scan_chan_list_id, ret);
 		return QDF_STATUS_E_FAILURE;
 	}
 

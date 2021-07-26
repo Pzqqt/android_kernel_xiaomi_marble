@@ -2204,6 +2204,53 @@ extract_vdev_disconnect_event_tlv(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+static QDF_STATUS
+extract_roam_scan_chan_list_tlv(wmi_unified_t wmi_handle,
+				uint8_t *event, uint32_t data_len,
+				struct cm_roam_scan_ch_resp **list)
+{
+	WMI_ROAM_SCAN_CHANNEL_LIST_EVENTID_param_tlvs *param_buf;
+	wmi_roam_scan_channel_list_event_fixed_param *fixed_param;
+	struct cm_roam_scan_ch_resp *data;
+	uint8_t i = 0, num_ch = 0;
+
+	param_buf = (WMI_ROAM_SCAN_CHANNEL_LIST_EVENTID_param_tlvs *)event;
+	if (!param_buf) {
+		wmi_err_rl("NULL event received from target");
+		return -EINVAL;
+	}
+
+	fixed_param = param_buf->fixed_param;
+	if (!fixed_param) {
+		wmi_err_rl(" NULL fixed param");
+		return -EINVAL;
+	}
+
+	if (fixed_param->vdev_id >= WLAN_MAX_VDEVS) {
+		wmi_err_rl("Invalid vdev_id %d", fixed_param->vdev_id);
+		return -EINVAL;
+	}
+
+	num_ch = (param_buf->num_channel_list < CM_CFG_VALID_CHANNEL_LIST_LEN) ?
+		param_buf->num_channel_list : CM_CFG_VALID_CHANNEL_LIST_LEN;
+
+	data = qdf_mem_malloc(sizeof(struct cm_roam_scan_ch_resp) +
+		num_ch * sizeof(param_buf->channel_list[0]));
+	if (!data)
+		return -EINVAL;
+
+	data->chan_list = (uint32_t *)(data + 1);
+	data->vdev_id = fixed_param->vdev_id;
+	data->command_resp = fixed_param->command_response;
+	data->num_channels = param_buf->num_channel_list;
+
+	for (i = 0; i < num_ch; i++)
+		data->chan_list[i] = param_buf->channel_list[i];
+
+	*list = data;
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 
 void wmi_roam_offload_attach_tlv(wmi_unified_t wmi_handle)
@@ -2220,6 +2267,7 @@ void wmi_roam_offload_attach_tlv(wmi_unified_t wmi_handle)
 	ops->extract_roam_event = extract_roam_event_tlv;
 	ops->extract_btm_bl_event = extract_btm_blacklist_event;
 	ops->extract_vdev_disconnect_event = extract_vdev_disconnect_event_tlv;
+	ops->extract_roam_scan_chan_list = extract_roam_scan_chan_list_tlv;
 #endif /* ROAM_TARGET_IF_CONVERGENCE */
 	ops->send_set_ric_req_cmd = send_set_ric_req_cmd_tlv;
 	ops->send_process_roam_synch_complete_cmd =

@@ -292,6 +292,25 @@ cm_handle_disconnect_reason(struct vdev_disconnect_event_data *data)
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS
+cm_handle_scan_ch_list_data(struct cm_roam_scan_ch_resp *data)
+{
+	struct scheduler_msg sme_msg = {0};
+
+	sme_msg.type = eWNI_SME_GET_ROAM_SCAN_CH_LIST_EVENT;
+	sme_msg.bodyptr = data;
+
+	if (scheduler_post_message(QDF_MODULE_ID_WMA,
+				   QDF_MODULE_ID_SME,
+				   QDF_MODULE_ID_SME, &sme_msg)) {
+		wma_err("Failed to post msg to SME");
+		qdf_mem_free(sme_msg.bodyptr);
+		return -EINVAL;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #else
 
 int wma_roam_vdev_disconnect_event_handler(void *handle, uint8_t *event,
@@ -1453,6 +1472,8 @@ int wma_roam_auth_offload_event_handler(WMA_HANDLE handle, uint8_t *event,
 	return 0;
 }
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+#ifndef ROAM_TARGET_IF_CONVERGENCE
 int wma_roam_scan_chan_list_event_handler(WMA_HANDLE handle,
 					  uint8_t *event,
 					  uint32_t len)
@@ -1513,8 +1534,8 @@ int wma_roam_scan_chan_list_event_handler(WMA_HANDLE handle,
 
 	return 0;
 }
+#endif
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * wma_get_trigger_detail_str  - Return roam trigger string from the
  * enum WMI_ROAM_TRIGGER_REASON

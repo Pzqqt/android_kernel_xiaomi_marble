@@ -926,6 +926,15 @@ void cm_invalid_roam_reason_handler(uint32_t vdev_id, enum cm_roam_notif notif);
 void
 cm_handle_roam_reason_ho_failed(uint8_t vdev_id, struct qdf_mac_addr bssid,
 				struct cm_hw_mode_trans_ind *hw_mode_trans_ind);
+
+/**
+ * cm_handle_scan_ch_list_data() - Roam scan ch evt wrapper for wma
+ * @data: roam scan channel event data
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_handle_scan_ch_list_data(struct cm_roam_scan_ch_resp *data);
 #endif
 #else
 static inline
@@ -1047,6 +1056,12 @@ static inline void
 cm_handle_roam_reason_ho_failed(uint8_t vdev_id, struct qdf_mac_addr bssid,
 				struct cm_hw_mode_trans_ind *hw_mode_trans_ind)
 {}
+
+static inline QDF_STATUS
+cm_handle_scan_ch_list_data(struct cm_roam_scan_ch_resp *data)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
 #endif
 #endif  /* FEATURE_ROAM_OFFLOAD */
 
@@ -1157,5 +1172,14 @@ cm_vdev_disconnect_event_handler(struct vdev_disconnect_event_data *data);
  */
 QDF_STATUS
 cm_handle_disconnect_reason(struct vdev_disconnect_event_data *data);
+
+/**
+ * cm_roam_scan_ch_list_event_handler() - Roam scan ch evt handler for target_if
+ * @data: roam scan channel event data
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_roam_scan_ch_list_event_handler(struct cm_roam_scan_ch_resp *data);
 #endif
 #endif  /* WLAN_CM_ROAM_API_H__ */

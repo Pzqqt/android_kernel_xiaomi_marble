@@ -402,5 +402,16 @@ wmi_extract_vdev_disconnect_event(wmi_unified_t wmi_handle,
 				wmi_handle, event, data_len, data);
 	return QDF_STATUS_E_FAILURE;
 }
+
+QDF_STATUS
+wmi_extract_roam_scan_chan_list(wmi_unified_t wmi_handle,
+				uint8_t *event, uint32_t data_len,
+				struct cm_roam_scan_ch_resp **data)
+{
+	if (wmi_handle->ops->extract_roam_scan_chan_list)
+		return wmi_handle->ops->extract_roam_scan_chan_list(
+				wmi_handle, event, data_len, data);
+	return QDF_STATUS_E_FAILURE;
+}
 #endif /* ROAM_TARGET_IF_CONVERGENCE */
 #endif

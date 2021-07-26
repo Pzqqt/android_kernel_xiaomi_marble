@@ -3358,6 +3358,11 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 					wmi_vdev_disconnect_event_id,
 					wma_roam_vdev_disconnect_event_handler,
 					WMA_RX_SERIALIZER_CTX);
+
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+					wmi_roam_scan_chan_list_id,
+					wma_roam_scan_chan_list_event_handler,
+					WMA_RX_SERIALIZER_CTX);
 #endif /* ROAM_TARGET_IF_CONVERGENCE */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   wmi_roam_auth_offload_event_id,
@@ -3367,11 +3372,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   wmi_roam_stats_event_id,
 					   wma_roam_stats_event_handler,
-					   WMA_RX_SERIALIZER_CTX);
-
-	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   wmi_roam_scan_chan_list_id,
-					   wma_roam_scan_chan_list_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
 
 	wma_register_pmkid_req_event_handler(wma_handle);

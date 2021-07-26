@@ -164,6 +164,7 @@
 #define DEAUTH_MIN_RSSI 0
 #define BMISS_MIN_RSSI  1
 #define MIN_RSSI_2G_TO_5G_ROAM 2
+#define CM_CFG_VALID_CHANNEL_LIST_LEN 100
 
 /**
  * struct cm_roam_neighbor_report_offload_params - neighbor report offload
@@ -1831,6 +1832,20 @@ struct vdev_disconnect_event_data {
 	uint8_t vdev_id;
 	enum cm_vdev_disconnect_reason reason;
 };
+
+/**
+ * struct roam_scan_ch_resp - roam scan chan list response to userspace
+ * @vdev_id: vdev id
+ * @num_channels: number of roam scan channels
+ * @command_resp: command response or async event
+ * @chan_list: list of roam scan channels
+ */
+struct cm_roam_scan_ch_resp {
+	uint16_t vdev_id;
+	uint16_t num_channels;
+	uint32_t command_resp;
+	uint32_t *chan_list;
+};
 #endif
 
 /**
@@ -1906,6 +1921,7 @@ struct wlan_cm_roam_tx_ops {
  * @roam_event_rx: Rx ops function pointer for roam info event
  * @btm_blacklist_event: Rx ops function pointer for btm blacklist event
  * @vdev_disconnect_event: Rx ops function pointer for vdev disconnect event
+ * @roam_scan_chan_list_event: Rx ops function pointer for roam scan ch event
  */
 struct wlan_cm_roam_rx_ops {
 	QDF_STATUS (*roam_sync_event)(struct wlan_objmgr_psoc *psoc,
@@ -1920,6 +1936,8 @@ struct wlan_cm_roam_rx_ops {
 					  struct roam_blacklist_event *list);
 	QDF_STATUS
 	(*vdev_disconnect_event)(struct vdev_disconnect_event_data *data);
+	QDF_STATUS
+	(*roam_scan_chan_list_event)(struct cm_roam_scan_ch_resp *data);
 #endif
 };
 
