@@ -404,6 +404,8 @@ void lim_ap_mlo_sta_peer_ind(struct mac_context *mac,
 	tpSirAssocReq assoc_req;
 	struct wlan_mlo_peer_context *ml_peer;
 	struct wlan_objmgr_peer *peer;
+	struct mlo_partner_info info;
+	struct mlo_link_info *linfo;
 
 	if (!sta) {
 		pe_err("sta ds is null");
@@ -420,10 +422,26 @@ void lim_ap_mlo_sta_peer_ind(struct mac_context *mac,
 
 		if (lim_is_mlo_recv_assoc(sta)) {
 			assoc_req = pe_session->parsedAssocReq[sta->assocId];
-			wlan_mlo_peer_create(pe_session->vdev, peer,
-					     &assoc_req->mlo_info,
-					     assoc_req->assoc_req_buf,
-					     sta->assocId);
+			if (assoc_req->mlo_info.num_partner_links <
+			    QDF_ARRAY_SIZE(
+				assoc_req->mlo_info.partner_link_info)) {
+				qdf_mem_copy(&info, &assoc_req->mlo_info,
+					     sizeof(info));
+				linfo =
+				&info.partner_link_info[info.num_partner_links];
+				linfo->link_id = wlan_vdev_get_link_id(
+							pe_session->vdev);
+				qdf_mem_copy(linfo->link_addr.bytes,
+					     sta->staAddr, QDF_MAC_ADDR_SIZE);
+				info.num_partner_links++;
+				wlan_mlo_peer_create(pe_session->vdev, peer,
+						     &info,
+						     assoc_req->assoc_req_buf,
+						     sta->assocId);
+			} else {
+				pe_err("invalid partner link number %d",
+				       assoc_req->mlo_info.num_partner_links);
+			}
 		} else {
 			ml_peer = wlan_mlo_get_mlpeer_by_aid(
 					pe_session->vdev->mlo_dev_ctx,
