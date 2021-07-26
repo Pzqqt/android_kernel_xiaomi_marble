@@ -3831,6 +3831,7 @@ IE sta_profile (0)
   OPTIE IE HTInfo;
   OPTIE IE WMMParams;
   OPTIE IE WMMCaps;
+  OPTIE IE WMMInfoStation;
   OPTIE IE VHTCaps;
   OPTIE IE VHTOperation;
   OPTIE IE ExtCap;

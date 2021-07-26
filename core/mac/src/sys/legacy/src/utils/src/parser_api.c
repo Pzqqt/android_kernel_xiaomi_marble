@@ -6854,6 +6854,19 @@ sir_convert_mlo_assoc_req_frame2_struct(struct mac_context *mac,
 			       num_ie_list))
 		qdf_mem_copy(&pAssocReq->HTCaps, &ar->HTCaps,
 			     sizeof(tDot11fIEHTCaps));
+	if (sta_pro->WMMInfoStation.present) {
+		pAssocReq->wmeInfoPresent = 1;
+		qdf_mem_copy(&pAssocReq->WMMInfoStation,
+			     &sta_pro->WMMInfoStation,
+			     sizeof(tDot11fIEWMMInfoStation));
+	} else if (ar->WMMInfoStation.present &&
+		   !is_noninh_ie(DOT11F_EID_WMMINFOSTATION,
+				 ie_list,
+				 num_ie_list)) {
+		pAssocReq->wmeInfoPresent = 1;
+		qdf_mem_copy(&pAssocReq->WMMInfoStation, &ar->WMMInfoStation,
+			     sizeof(tDot11fIEWMMInfoStation));
+	}
 	if (sta_pro->WMMCaps.present)
 		pAssocReq->wsmCapablePresent = 1;
 	else if (ar->WMMCaps.present &&
@@ -7237,7 +7250,7 @@ QDF_STATUS populate_dot11f_assoc_rsp_mlo_ie(struct mac_context *mac_ctx,
 
 		if (link_ie->link_ht_cap.present && frm->HTCaps.present) {
 			if (qdf_mem_cmp(&link_ie->link_ht_cap, &frm->HTCaps,
-					sizeof(tDot11fIEHTInfo)))
+					sizeof(tDot11fIEHTCaps)))
 				qdf_mem_copy(&sta_pro->HTCaps,
 					     &link_ie->link_ht_cap,
 					     sizeof(tDot11fIEHTCaps));
