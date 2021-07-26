@@ -496,6 +496,9 @@ wlan_cm_dual_sta_roam_update_connect_channels(struct wlan_objmgr_psoc *psoc,
 	struct wlan_mlme_psoc_ext_obj *mlme_obj;
 	struct wlan_mlme_cfg *mlme_cfg;
 	struct dual_sta_policy *dual_sta_policy;
+	uint32_t buff_len;
+	char *chan_buff;
+	uint32_t len = 0;
 
 	mlme_obj = mlme_get_psoc_ext_obj(psoc);
 	if (!mlme_obj)
@@ -529,6 +532,16 @@ wlan_cm_dual_sta_roam_update_connect_channels(struct wlan_objmgr_psoc *psoc,
 	num_channels = mlme_cfg->reg.valid_channel_list_num;
 	channel_list = mlme_cfg->reg.valid_channel_freq_list;
 
+	/*
+	 * Buffer of (num channl * 5) + 1  to consider the 4 char freq,
+	 * 1 space after it for each channel and 1 to end the string
+	 * with NULL.
+	 */
+	buff_len = (num_channels * 5) + 1;
+	chan_buff = qdf_mem_malloc(buff_len);
+	if (!chan_buff)
+		return;
+
 	filter->num_of_channels = 0;
 	for (i = 0; i < num_channels; i++) {
 		is_ch_allowed =
@@ -540,7 +553,14 @@ wlan_cm_dual_sta_roam_update_connect_channels(struct wlan_objmgr_psoc *psoc,
 		filter->chan_freq_list[filter->num_of_channels] =
 					channel_list[i];
 		filter->num_of_channels++;
+
+		len += qdf_scnprintf(chan_buff + len, buff_len - len,
+				     "%d ", channel_list[i]);
 	}
+
+	if (filter->num_of_channels)
+		mlme_debug("Freq list (%d): %s", filter->num_of_channels,
+			   chan_buff);
 }
 
 void
