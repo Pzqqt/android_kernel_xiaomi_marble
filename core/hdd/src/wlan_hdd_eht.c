@@ -27,6 +27,9 @@
 #include "osif_sync.h"
 #include "wlan_utility.h"
 #include "wlan_mlme_ucfg_api.h"
+#include "qc_sap_ioctl.h"
+#include "wma_api.h"
+#include "wlan_hdd_sysfs.h"
 
 #define CHAN_WIDTH_SET_40MHZ_IN_2G \
 	IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_40MHZ_IN_2G
@@ -194,5 +197,125 @@ void hdd_update_wiphy_eht_cap(struct hdd_context *hdd_ctx)
 	hdd_update_wiphy_eht_caps_6ghz(hdd_ctx, eht_cap_cfg);
 
 	hdd_exit();
+}
+
+int hdd_set_11be_rate_code(struct hdd_adapter *adapter, uint8_t rate_code)
+{
+	uint8_t preamble = 0, nss = 0, rix = 0;
+	int ret;
+	struct sap_config *sap_config = NULL;
+
+	if (adapter->device_mode == QDF_SAP_MODE)
+		sap_config = &adapter->session.ap.sap_config;
+
+	if (!sap_config) {
+		if (!sme_is_feature_supported_by_fw(DOT11BE)) {
+			hdd_err_rl("Target does not support 11be");
+			return -EIO;
+		}
+	} else if (sap_config->SapHw_mode != eCSR_DOT11_MODE_11be &&
+		   sap_config->SapHw_mode != eCSR_DOT11_MODE_11be_ONLY) {
+		hdd_err_rl("Invalid hw mode, SAP hw_mode= 0x%x, ch_freq = %d",
+			   sap_config->SapHw_mode, sap_config->chan_freq);
+		return -EIO;
+	}
+
+	rix = RC_2_RATE_IDX_11BE(rate_code);
+	preamble = WMI_RATE_PREAMBLE_EHT;
+	nss = HT_RC_2_STREAMS_11BE(rate_code);
+
+	rate_code = hdd_assemble_rate_code(preamble, nss, rix);
+
+	hdd_debug("SET_11BE_RATE rate_code %d rix %d preamble %x nss %d",
+		  rate_code, rix, preamble, nss);
+
+	ret = wma_cli_set_command(adapter->vdev_id,
+				  WMI_VDEV_PARAM_FIXED_RATE,
+				  rate_code, VDEV_CMD);
+
+	return ret;
+}
+
+static ssize_t
+__hdd_sysfs_set_11be_fixed_rate(struct net_device *net_dev, char const *buf,
+				size_t count)
+{
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(net_dev);
+	struct hdd_context *hdd_ctx;
+	char buf_local[MAX_SYSFS_USER_COMMAND_SIZE_LENGTH + 1];
+	int ret;
+	uint8_t rate_code;
+	char *sptr, *token;
+
+	if (hdd_validate_adapter(adapter)) {
+		hdd_err_rl("invalid adapter");
+		return -EINVAL;
+	}
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret) {
+		hdd_err_rl("invalid hdd context");
+		return ret;
+	}
+
+	if (!wlan_hdd_validate_modules_state(hdd_ctx)) {
+		hdd_err_rl("invalid module state");
+		return -EINVAL;
+	}
+
+	ret = hdd_sysfs_validate_and_copy_buf(buf_local, sizeof(buf_local),
+					      buf, count);
+	if (ret) {
+		hdd_err_rl("invalid input");
+		return ret;
+	}
+
+	sptr = buf_local;
+	token = strsep(&sptr, " ");
+	if (!token || kstrtou8(token, 0, &rate_code)) {
+		hdd_err_rl("invalid input");
+		return -EINVAL;
+	}
+
+	hdd_set_11be_rate_code(adapter, rate_code);
+
+	return count;
+}
+
+static ssize_t hdd_sysfs_set_11be_fixed_rate(
+			     struct device *dev, struct device_attribute *attr,
+			     char const *buf, size_t count)
+{
+	struct net_device *net_dev = container_of(dev, struct net_device, dev);
+	struct osif_vdev_sync *vdev_sync;
+	ssize_t err_size;
+
+	err_size = osif_vdev_sync_op_start(net_dev, &vdev_sync);
+	if (err_size)
+		return err_size;
+
+	err_size = __hdd_sysfs_set_11be_fixed_rate(net_dev, buf, count);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return err_size;
+}
+
+static DEVICE_ATTR(11be_rate, 0220, NULL, hdd_sysfs_set_11be_fixed_rate);
+
+void hdd_sysfs_11be_rate_create(struct hdd_adapter *adapter)
+{
+	int error;
+
+	error = device_create_file(&adapter->dev->dev, &dev_attr_11be_rate);
+	if (error)
+		hdd_err("could not create sysfs file to set 11be rate");
+
+}
+
+void hdd_sysfs_11be_rate_destroy(struct hdd_adapter *adapter)
+{
+	device_remove_file(&adapter->dev->dev, &dev_attr_11be_rate);
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -125,6 +125,11 @@ struct channel_list_info {
 
 #define RC_2_RATE_IDX_11AX(_rc)         ((_rc) & 0x1f)
 #define HT_RC_2_STREAMS_11AX(_rc)       (((_rc) >> 5) & 0x7)
+
+#ifdef WLAN_FEATURE_11BE
+#define RC_2_RATE_IDX_11BE(_rc)         ((_rc) & 0x1f)
+#define HT_RC_2_STREAMS_11BE(_rc)       (((_rc) >> 5) & 0x7)
+#endif
 
 /*
  * <ioctl>
