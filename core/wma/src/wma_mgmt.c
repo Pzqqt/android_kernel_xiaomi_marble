@@ -1295,7 +1295,7 @@ static void wma_set_mlo_capability(tp_wma_handle wma,
 	if (!qdf_is_macaddr_zero((struct qdf_mac_addr *)peer->mldaddr)) {
 		req->mlo_params.mlo_enabled = true;
 		req->mlo_params.mlo_assoc_link =
-					wlan_peer_mlme_get_assoc_peer(peer);
+					wlan_peer_mlme_is_assoc_peer(peer);
 		WLAN_ADDR_COPY(req->mlo_params.mld_mac, peer->mldaddr);
 		wma_debug("assoc_link %d " QDF_MAC_ADDR_FMT,
 			  req->mlo_params.mlo_assoc_link,
