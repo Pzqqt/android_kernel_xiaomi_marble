@@ -3640,6 +3640,8 @@ static void lim_fill_ml_partner_info(struct cm_vdev_join_req *req,
 		return;
 	}
 	num_links = req->partner_info.num_partner_links;
+	partner_info->num_partner_links = num_links;
+	pe_debug("MLO: num_links:%d", num_links);
 
 	for (idx = 0; idx < num_links; idx++) {
 		partner_info->partner_link_info[idx].link_id =
@@ -3647,6 +3649,10 @@ static void lim_fill_ml_partner_info(struct cm_vdev_join_req *req,
 		qdf_copy_macaddr(
 			&partner_info->partner_link_info[idx].link_addr,
 			&req->partner_info.partner_link_info[idx].link_addr);
+		pe_debug("MLO: link_id:%d" QDF_MAC_ADDR_FMT,
+			 partner_info->partner_link_info[idx].link_id,
+			 QDF_MAC_ADDR_REF(partner_info->partner_link_info[idx].
+					  link_addr.bytes));
 	}
 }
 #else

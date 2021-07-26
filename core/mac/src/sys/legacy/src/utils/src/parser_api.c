@@ -2972,7 +2972,7 @@ QDF_STATUS sir_convert_probe_frame2_struct(struct mac_context *mac,
 	}
 
 	update_bss_color_change_ie_from_probe_rsp(pr, pProbeResp);
-	sir_convert_mlo_probe_rsp_frame2_struct(pr, pProbeResp->mlo_ie);
+	sir_convert_mlo_probe_rsp_frame2_struct(pr, &pProbeResp->mlo_ie);
 
 	qdf_mem_free(pr);
 	return QDF_STATUS_SUCCESS;
@@ -6731,7 +6731,7 @@ sir_convert_mlo_reassoc_req_frame2_struct(struct mac_context *mac,
 					  tpSirAssocReq pAssocReq,
 					  uint8_t link_id)
 {
-	/* TDMLO much more like sir_convert_mlo_assoc_req_frame2_struct */
+	/* TD MLO much more like sir_convert_mlo_assoc_req_frame2_struct */
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -8679,7 +8679,7 @@ QDF_STATUS populate_dot11f_assoc_req_mlo_ie(struct mac_context *mac_ctx,
 					     struct pe_session *pe_session,
 					     tDot11fAssocRequest *frm)
 {
-	uint8_t link, sta_link;
+	uint8_t link;
 	uint8_t num_sta_prof = 0, total_sta_prof;
 	tDot11fIEmlo_ie *mlo_ie;
 	tDot11fIEsta_profile *sta_prof;
@@ -8714,37 +8714,36 @@ QDF_STATUS populate_dot11f_assoc_req_mlo_ie(struct mac_context *mac_ctx,
 	qdf_mem_copy(&mlo_ie->mld_mac_addr.info.mld_mac_addr,
 		     mld_addr,
 		     QDF_MAC_ADDR_SIZE);
-	mlo_ie->link_id_info_present = 1;
-	mlo_ie->link_id_info.info.link_id =
-		pe_session->vdev->mlo_dev_ctx->mld_id;
-
+	mlo_ie->link_id_info_present = 0;
 	mlo_ie->bss_param_change_cnt_present = 0;
 	mlo_ie->medium_sync_delay_info_present = 0;
 	mlo_ie->eml_capab_present = 0;
 	mlo_ie->mld_capab_present = 0;
 
-	//find out number of links from bcn or prb rsp
+	/* find out number of links from bcn or prb rsp */
 	total_sta_prof = 2;
 	partner_info = &pe_session->lim_join_req->partner_info;
 
-	for (link = 0, sta_link = 1;
+	mlo_dev_ctx = pe_session->vdev->mlo_dev_ctx;
+	if (!mlo_dev_ctx) {
+		pe_err("mlo_dev_ctx is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	for (link = 0;
 	     link < total_sta_prof && total_sta_prof != num_sta_prof;
-	     link++, sta_link++) {
+	     link++) {
 		if (!partner_info->num_partner_links)
 			continue;
 
-		sta_prof = &mlo_ie->sta_profile[num_sta_prof];
-		link_info = &partner_info->partner_link_info[link];
-		mlo_dev_ctx = pe_session->vdev->mlo_dev_ctx;
-		if (!mlo_dev_ctx) {
-			pe_err("mlo_dev_ctx is null");
-			return QDF_STATUS_E_NULL_VALUE;
-		}
-		vdev = mlo_dev_ctx->wlan_vdev_list[sta_link];
+		vdev = mlo_dev_ctx->wlan_vdev_list[1];
 		if (!vdev) {
 			pe_err("vdev is null");
 			return QDF_STATUS_E_NULL_VALUE;
 		}
+
+		sta_prof = &mlo_ie->sta_profile[num_sta_prof];
+		link_info = &partner_info->partner_link_info[link];
 
 		qdf_mem_zero(non_inher_ie_lists, sizeof(non_inher_ie_lists));
 		qdf_mem_zero(non_inher_ext_ie_lists,
@@ -8757,6 +8756,10 @@ QDF_STATUS populate_dot11f_assoc_req_mlo_ie(struct mac_context *mac_ctx,
 		qdf_mem_copy(&sta_prof->sta_mac_addr.info.sta_mac_addr,
 			     vdev->vdev_mlme.macaddr,
 			     QDF_MAC_ADDR_SIZE);
+
+		pe_debug("link mac: "QDF_MAC_ADDR_FMT, vdev->vdev_mlme.macaddr);
+		pe_debug("STA prof mac: "QDF_MAC_ADDR_FMT,
+			 sta_prof->sta_mac_addr.info.sta_mac_addr);
 
 		/* TBD : populate beacon_interval, dtim_info
 		 * nstr_link_pair_present, nstr_bitmap_size
