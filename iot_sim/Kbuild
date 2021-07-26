@@ -117,7 +117,11 @@ INCS += -I$(obj)/$(DEPTH)/cmn_dev/iot_sim/dispatcher/inc
 
 obj-m += qca_iot_sim.o
 
-ccflags-y+= $(INCS) $(COPTS)
+inc_file := $(obj)/$(DEPTH)/iot_inc_opts
+inc_var := $(shell echo $(INCS) > $(inc_file))
+var := "@$(inc_file)"
+
+ccflags-y+= $(var) $(COPTS)
 
 ifeq ($(strip ${QCA_PARTNER_MAKE_F_SUPPORT}),1)
 MOD_CFLAGS = -D"KBUILD_STR(s)=\#s" -D"KBUILD_BASENAME=KBUILD_STR(qca_iot_sim.mod)"  -D"KBUILD_MODNAME=KBUILD_STR(qca_iot_sim)"
