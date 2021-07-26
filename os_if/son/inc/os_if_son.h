@@ -45,6 +45,7 @@
  * @os_if_get_candidate_freq: get freq to switch after radar detection
  * @os_if_set_phymode: set phy mode
  * @os_if_get_phymode: get phy mode
+ * @os_if_get_rx_nss: Gets number of RX spatial streams
  */
 struct son_callbacks {
 	uint32_t (*os_if_is_acs_in_progress)(struct wlan_objmgr_vdev *vdev);
@@ -68,6 +69,7 @@ struct son_callbacks {
 				 enum ieee80211_phymode mode);
 	enum ieee80211_phymode (*os_if_get_phymode)(
 					struct wlan_objmgr_vdev *vdev);
+	uint8_t (*os_if_get_rx_nss)(struct wlan_objmgr_vdev *vdev);
 };
 
 /**
@@ -280,4 +282,92 @@ enum ieee80211_phymode os_if_son_get_phymode(struct wlan_objmgr_vdev *vdev);
  */
 int os_if_son_set_phymode(struct wlan_objmgr_vdev *vdev,
 			  enum ieee80211_phymode mode);
+
+/**
+ * os_if_son_pdev_ops() - Handles PDEV specific SON commands
+ * @pdev: pdev
+ * @type: SON command to handle
+ * @data: Input Data
+ * @ret: Output Data
+ *
+ * Return: QDF_SUCCCESS_SUCCESS in case of success
+ */
+QDF_STATUS os_if_son_pdev_ops(struct wlan_objmgr_pdev *pdev,
+			      enum wlan_mlme_pdev_param type,
+			      void *data, void *ret);
+
+/**
+ * os_if_son_vdev_ops() - Handles VDEV specific SON commands
+ * @vdev: vdev
+ * @type: SON command to handle
+ * @data: Input Data
+ * @ret: Output Data
+ *
+ * Return: QDF_SUCCCESS_SUCCESS in case of success
+ */
+QDF_STATUS os_if_son_vdev_ops(struct wlan_objmgr_vdev *pdev,
+			      enum wlan_mlme_vdev_param type,
+			      void *data, void *ret);
+
+/**
+ * os_if_son_peer_ops() - Handles PEER specific SON commands
+ * @peer: peer
+ * @type: SON command to handle
+ * @data: Input Data
+ * @ret: Output Data
+ *
+ * Return: QDF_SUCCCESS_SUCCESS in case of success
+ */
+QDF_STATUS os_if_son_peer_ops(struct wlan_objmgr_peer *peer,
+			      enum wlan_mlme_peer_param type,
+			      void *data, void *ret);
+
+/**
+ * os_if_son_scan_db_iterate() - get country code
+ * @pdev: pdev
+ * @handler: scan_iterator
+ * @arg: argument to be passed to handler
+ *
+ * Return: QDF_SUCCCESS_SUCCESS in case of success
+ */
+QDF_STATUS os_if_son_scan_db_iterate(struct wlan_objmgr_pdev *pdev,
+				     scan_iterator_func handler, void *arg);
+
+/**
+ * os_if_son_acl_is_probe_wh_set() - Withheld probes for given mac_addr,
+ *				     not supported
+ * @vdev: vdev
+ * @mac_addr: 6-Byte MAC address
+ * @probe_rssi: Probe Request RSSI
+ *
+ * Return: true / false
+ */
+bool os_if_son_acl_is_probe_wh_set(struct wlan_objmgr_vdev *vdev,
+				   const uint8_t *mac_addr,
+				   uint8_t probe_rssi);
+
+/**
+ * os_if_son_get_rx_streams() - Gets number of RX spatial streams
+ * @vdev: target vdev
+ *
+ * Return: number of spatial stream
+ */
+uint8_t os_if_son_get_rx_streams(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * os_if_son_cfg80211_reply() - replies to cfg80211
+ * @sk_buf: sk_buff to uper layer
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+QDF_STATUS os_if_son_cfg80211_reply(qdf_nbuf_t sk_buf);
+
+/**
+ * os_if_son_vdev_is_wds() - checks if wds capability is supported or not
+ * @vdev: Pointer to vdev
+ *
+ * Return: true if wds is supported
+ */
+bool os_if_son_vdev_is_wds(struct wlan_objmgr_vdev *vdev);
+
 #endif

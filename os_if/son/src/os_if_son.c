@@ -32,6 +32,7 @@
 #include <wlan_vdev_mgr_ucfg_api.h>
 #include <wlan_mlme_ucfg_api.h>
 #include <wlan_reg_services_api.h>
+#include <wlan_scan_ucfg_api.h>
 
 static struct son_callbacks g_son_os_if_cb;
 
@@ -658,3 +659,73 @@ enum ieee80211_phymode os_if_son_get_phymode(struct wlan_objmgr_vdev *vdev)
 	return phymode;
 }
 qdf_export_symbol(os_if_son_get_phymode);
+
+QDF_STATUS os_if_son_pdev_ops(struct wlan_objmgr_pdev *pdev,
+			      enum wlan_mlme_pdev_param type,
+			      void *data, void *ret)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(os_if_son_pdev_ops);
+
+QDF_STATUS os_if_son_vdev_ops(struct wlan_objmgr_vdev *vdev,
+			      enum wlan_mlme_vdev_param type,
+			      void *data, void *ret)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(os_if_son_vdev_ops);
+
+QDF_STATUS os_if_son_peer_ops(struct wlan_objmgr_peer *peer,
+			      enum wlan_mlme_peer_param type,
+			      void *data, void *ret)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(os_if_son_peer_ops);
+
+QDF_STATUS os_if_son_scan_db_iterate(struct wlan_objmgr_pdev *pdev,
+				     scan_iterator_func handler, void *arg)
+{
+	return ucfg_scan_db_iterate(pdev, handler, arg);
+}
+
+qdf_export_symbol(os_if_son_scan_db_iterate);
+
+bool os_if_son_acl_is_probe_wh_set(struct wlan_objmgr_vdev *vdev,
+				   const uint8_t *mac_addr,
+				   uint8_t probe_rssi)
+{
+	return false;
+}
+
+qdf_export_symbol(os_if_son_acl_is_probe_wh_set);
+
+u_int8_t os_if_son_get_rx_streams(struct wlan_objmgr_vdev *vdev)
+{
+	if (!vdev) {
+		osif_err("null vdev");
+		return 0;
+	}
+
+	return g_son_os_if_cb.os_if_get_rx_nss(vdev);
+}
+
+qdf_export_symbol(os_if_son_get_rx_streams);
+
+QDF_STATUS os_if_son_cfg80211_reply(qdf_nbuf_t sk_buf)
+{
+	return wlan_cfg80211_qal_devcfg_send_response(sk_buf);
+}
+
+qdf_export_symbol(os_if_son_cfg80211_reply);
+
+bool os_if_son_vdev_is_wds(struct wlan_objmgr_vdev *vdev)
+{
+	return true;
+}
+
+qdf_export_symbol(os_if_son_vdev_is_wds);

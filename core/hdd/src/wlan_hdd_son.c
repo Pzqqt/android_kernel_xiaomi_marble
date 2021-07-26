@@ -867,6 +867,20 @@ static enum ieee80211_phymode hdd_son_get_phymode(struct wlan_objmgr_vdev *vdev)
 	return hdd_phymode_chwidth_freq_to_son_phymode(phymode, chwidth, freq);
 }
 
+static uint8_t hdd_son_get_rx_nss(struct wlan_objmgr_vdev *vdev)
+{
+	struct hdd_adapter *adapter = wlan_hdd_get_adapter_from_objmgr(vdev);
+	uint8_t rx_nss = 0;
+
+	if (!adapter) {
+		hdd_err("null adapter");
+		return 0;
+	}
+	hdd_get_rx_nss(adapter, &rx_nss);
+
+	return rx_nss;
+}
+
 void hdd_son_register_callbacks(struct hdd_context *hdd_ctx)
 {
 	struct son_callbacks cb_obj = {0};
@@ -882,6 +896,7 @@ void hdd_son_register_callbacks(struct hdd_context *hdd_ctx)
 	cb_obj.os_if_get_candidate_freq = hdd_son_get_candidate_freq;
 	cb_obj.os_if_set_phymode = hdd_son_set_phymode;
 	cb_obj.os_if_get_phymode = hdd_son_get_phymode;
+	cb_obj.os_if_get_rx_nss = hdd_son_get_rx_nss;
 
 	os_if_son_register_hdd_callbacks(hdd_ctx->psoc, &cb_obj);
 }
