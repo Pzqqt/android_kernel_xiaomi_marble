@@ -1931,6 +1931,7 @@ static struct qmi_msg_handler server_handlers[] = {
 		.decoded_size = sizeof(struct ipa_move_nat_req_msg_v01),
 		.fn = ipa3_handle_move_nat_req,
 	},
+	{},
 
 };
 
@@ -1964,6 +1965,7 @@ static struct qmi_msg_handler client_handlers[] = {
 		.decoded_size = IPA_BW_CHANGE_IND_MSG_V01_MAX_MSG_LEN,
 		.fn = ipa3_q6_clnt_bw_change_ind_cb,
 	},
+	{},
 };
 
 
