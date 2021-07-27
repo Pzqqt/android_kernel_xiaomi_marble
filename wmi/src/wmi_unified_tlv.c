@@ -12378,7 +12378,7 @@ static QDF_STATUS extract_reg_chan_list_ext_update_event_tlv(
 	wmi_unified_t wmi_handle, uint8_t *evt_buf,
 	struct cur_regulatory_info *reg_info, uint32_t len)
 {
-	uint32_t i, j;
+	uint32_t i, j, k;
 	WMI_REG_CHAN_LIST_CC_EXT_EVENTID_param_tlvs *param_buf;
 	wmi_reg_chan_list_cc_event_ext_fixed_param *ext_chan_list_event_hdr;
 	wmi_regulatory_rule_ext_struct *ext_wmi_reg_rule;
@@ -12598,10 +12598,26 @@ static QDF_STATUS extract_reg_chan_list_ext_update_event_tlv(
 		create_ext_reg_rules_from_wmi(num_2g_reg_rules,
 					      ext_wmi_reg_rule);
 	ext_wmi_reg_rule += num_2g_reg_rules;
+	for (i = 0; i < num_2g_reg_rules; i++) {
+		if (!reg_info->reg_rules_2g_ptr)
+			break;
+		wmi_debug("2g rule %d start freq %d end freq %d flags %d",
+			  i, reg_info->reg_rules_2g_ptr[i].start_freq,
+			  reg_info->reg_rules_2g_ptr[i].end_freq,
+			  reg_info->reg_rules_2g_ptr[i].flags);
+	}
 	reg_info->reg_rules_5g_ptr =
 		create_ext_reg_rules_from_wmi(num_5g_reg_rules,
 					      ext_wmi_reg_rule);
 	ext_wmi_reg_rule += num_5g_reg_rules;
+	for (i = 0; i < num_5g_reg_rules; i++) {
+		if (!reg_info->reg_rules_5g_ptr)
+			break;
+		wmi_debug("5g rule %d start freq %d end freq %d flags %d",
+			  i, reg_info->reg_rules_5g_ptr[i].start_freq,
+			  reg_info->reg_rules_5g_ptr[i].end_freq,
+			  reg_info->reg_rules_5g_ptr[i].flags);
+	}
 
 	for (i = 0; i < REG_CURRENT_MAX_AP_TYPE; i++) {
 		reg_info->reg_rules_6g_ap_ptr[i] =
@@ -12609,6 +12625,15 @@ static QDF_STATUS extract_reg_chan_list_ext_update_event_tlv(
 						      ext_wmi_reg_rule);
 
 		ext_wmi_reg_rule += num_6g_reg_rules_ap[i];
+		for (j = 0; j < num_6g_reg_rules_ap[i]; j++) {
+			if (!reg_info->reg_rules_6g_ap_ptr[i])
+				break;
+			wmi_debug("6g pwr type %d AP rule %d start freq %d end freq %d flags %d",
+				  i, j,
+				  reg_info->reg_rules_6g_ap_ptr[i][j].start_freq,
+				  reg_info->reg_rules_6g_ap_ptr[i][j].end_freq,
+				  reg_info->reg_rules_6g_ap_ptr[i][j].flags);
+		}
 	}
 
 	for (j = 0; j < REG_CURRENT_MAX_AP_TYPE; j++) {
@@ -12619,6 +12644,15 @@ static QDF_STATUS extract_reg_chan_list_ext_update_event_tlv(
 					ext_wmi_reg_rule);
 
 			ext_wmi_reg_rule += num_6g_reg_rules_client[j][i];
+			for (k = 0; k < num_6g_reg_rules_client[j][i]; k++) {
+				if (!reg_info->reg_rules_6g_client_ptr[j][i])
+					break;
+				wmi_debug("6g pwr type %d cli type %d CLI rule %d start freq %d end freq %d flags %d",
+					  j, i, k,
+					  reg_info->reg_rules_6g_client_ptr[j][i][k].start_freq,
+					  reg_info->reg_rules_6g_client_ptr[j][i][k].end_freq,
+					  reg_info->reg_rules_6g_client_ptr[j][i][k].flags);
+			}
 		}
 	}
 
