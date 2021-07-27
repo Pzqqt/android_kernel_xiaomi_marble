@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -616,14 +616,19 @@ QDF_STATUS wlan_spectral_update_rx_chainmask(struct hdd_adapter *adapter)
 	uint32_t chainmask_2g = 0;
 	uint32_t chainmask_5g = 0;
 	uint32_t chainmask;
-	uint8_t home_chan;
+	qdf_freq_t home_chan_freq;
 	uint8_t pdev_id;
 	struct wlan_objmgr_vdev *vdev;
 
-	home_chan = hdd_get_adapter_home_channel(adapter);
+	home_chan_freq = hdd_get_adapter_home_channel(adapter);
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(adapter->hdd_ctx->pdev);
 	wma_get_rx_chainmask(pdev_id, &chainmask_2g, &chainmask_5g);
-	chainmask = home_chan > MAX_24GHZ_CHANNEL ? chainmask_5g : chainmask_2g;
+	chainmask = chainmask_5g;
+
+	if (wlan_reg_is_24ghz_ch_freq(home_chan_freq))
+		chainmask = chainmask_2g;
+
+	hdd_debug("chan freq %d chainmask %d", home_chan_freq, chainmask);
 	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_OSIF_SPECTRAL_ID);
 	if (!vdev)
 		return QDF_STATUS_E_FAILURE;
