@@ -22104,15 +22104,22 @@ typedef struct {
     /**
      * TLV (tag length value) parameters follows roam_synch_event
      * The TLV's are:
-     *     A_UINT8 bcn_probe_rsp_frame[];  length identified by bcn_probe_rsp_len
-     *     A_UINT8 reassoc_rsp_frame[];  length identified by reassoc_rsp_len
+     *     A_UINT8 bcn_probe_rsp_frame[bcn_probe_resp_len];
+     *     A_UINT8 reassoc_rsp_frame[reassoc_rsp_len];
      *     wmi_channel chan;
-     *     wmi_key_material key;
-     *     A_UINT32 status; subnet changed status not being used currently.
-     *         will pass the information using roam_status.
-     *     A_UINT8 reassoc_req_frame[];  length identified by reassoc_req_len
-     *     wmi_key_material_ext key_ext
-     **/
+     *     wmi_key_material key[];
+     *     A_UINT32 status[]; subnet changed status not being used currently.
+     *         Will pass the information using roam_status.
+     *     A_UINT8 reassoc_req_frame[reassoc_req_len];
+     *     wmi_pdev_hw_mode_transition_event_fixed_param
+     *         hw_mode_transition_fixed_param[];
+     *     wmi_pdev_set_hw_mode_response_vdev_mac_entry
+     *         wmi_pdev_set_hw_mode_response_vdev_mac_mapping[];
+     *     wmi_roam_fils_synch_tlv_param roam_fils_synch_info[];
+     *     wmi_key_material_ext key_ext[];
+     *     wmi_roam_pmk_cache_synch_tlv_param roam_pmk_cache_synch_info[];
+     *     wmi_pdev_band_to_mac mac_freq_mapping[];
+     */
 } wmi_roam_synch_event_fixed_param;
 
 /**
@@ -24853,9 +24860,11 @@ typedef struct {
     A_UINT32 num_vdev_mac_entries;
 
 /**
- * TLV (tag length value) parameters follow the soc_set_hw_mode_response_event
+ * TLV (tag length value) parameters follow the pdev_set_hw_mode_response_event
  * structure. The TLV's are:
- *      A_UINT32 wmi_soc_set_hw_mode_response_vdev_mac_entry[];
+ *     wmi_pdev_set_hw_mode_response_vdev_mac_entry
+ *         wmi_pdev_set_hw_mode_response_vdev_mac_mapping[];
+ *     wmi_pdev_band_to_mac mac_freq_mapping[];
  */
 } wmi_pdev_hw_mode_transition_event_fixed_param;
 

@@ -546,6 +546,7 @@ typedef  enum  {
     WMI_SERVICE_LARGE_BEACON_SUPPORT = 301, /* FW support for Large beacon support greater then 1.5K */
     WMI_SERVICE_AOA_FOR_RCC_SUPPORTED = 302,
     WMI_SERVICE_DYN_NSS_MASK_SUPPORT = 303, /* Indicates FW support for DYN NSS feature */
+    WMI_SERVICE_HW_MODE_POLICY_OFFLOAD_SUPPORT = 304, /* FW supports HW mode selection offload */
 
 
     WMI_MAX_EXT2_SERVICE
