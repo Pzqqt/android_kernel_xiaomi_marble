@@ -291,11 +291,12 @@ pkt_capture_update_tx_status(
 		}
 	}
 
-	pkt_capture_tx_get_phy_info(pktcapture_hdr, tx_status);
-
 	vdev_priv = pkt_capture_vdev_get_priv(vdev);
 	if (qdf_unlikely(!vdev_priv))
 		goto skip_ppdu_stats;
+
+	/* Fill the nss received from ppdu_stats */
+	pktcapture_hdr->nss = vdev_priv->tx_nss;
 
 	/* Remove the ppdu stats from front of list and fill it in tx_status */
 	qdf_spin_lock(&vdev_priv->lock_q);
@@ -320,6 +321,8 @@ pkt_capture_update_tx_status(
 	qdf_spin_unlock(&vdev_priv->lock_q);
 
 skip_ppdu_stats:
+	pkt_capture_tx_get_phy_info(pktcapture_hdr, tx_status);
+
 	tx_status->tsft = (u_int64_t)(pktcapture_hdr->timestamp);
 	tx_status->ant_signal_db = pktcapture_hdr->rssi_comb;
 	tx_status->rssi_comb = pktcapture_hdr->rssi_comb;

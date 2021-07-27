@@ -216,6 +216,7 @@ pkt_capture_process_ppdu_stats(void *log_data)
 		return;
 
 	smu = (htt_ppdu_stats_for_smu_tlv *)log_data;
+	vdev_priv->tx_nss = smu->nss;
 
 	qdf_spin_lock(&vdev_priv->lock_q);
 	if (qdf_list_size(&vdev_priv->ppdu_stats_q) <
