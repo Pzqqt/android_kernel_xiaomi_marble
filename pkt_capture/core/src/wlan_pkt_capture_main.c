@@ -277,6 +277,8 @@ void pkt_capture_callback(void *soc, enum WDI_EVENT event, void *log_data,
 			return;
 		}
 
+		if (tx_comp_status.valid)
+			pktcapture_hdr.ppdu_id = tx_comp_status.ppdu_id;
 		pktcapture_hdr.timestamp = tx_comp_status.tsf;
 		pktcapture_hdr.preamble = tx_comp_status.pkt_type;
 		pktcapture_hdr.mcs = tx_comp_status.mcs;

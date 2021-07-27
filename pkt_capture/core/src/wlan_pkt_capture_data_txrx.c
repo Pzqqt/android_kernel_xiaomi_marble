@@ -32,6 +32,7 @@
 #ifdef WLAN_FEATURE_PKT_CAPTURE_V2
 #include "dp_internal.h"
 #include "cds_utils.h"
+#include "htt_ppdu_stats.h"
 #endif
 
 #define RESERVE_BYTES (100)
@@ -262,8 +263,12 @@ pkt_capture_update_tx_status(
 			struct pkt_capture_tx_hdr_elem_t *pktcapture_hdr)
 {
 	struct connection_info info[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	struct pkt_capture_vdev_priv *vdev_priv;
 	struct wlan_objmgr_vdev *vdev = context;
+	htt_ppdu_stats_for_smu_tlv *smu;
 	struct wlan_objmgr_psoc *psoc;
+	struct pkt_capture_ppdu_stats_q_node *q_node;
+	qdf_list_node_t *node;
 	uint32_t conn_count;
 	uint8_t vdev_id;
 	int i;
@@ -288,12 +293,41 @@ pkt_capture_update_tx_status(
 
 	pkt_capture_tx_get_phy_info(pktcapture_hdr, tx_status);
 
+	vdev_priv = pkt_capture_vdev_get_priv(vdev);
+	if (qdf_unlikely(!vdev_priv))
+		goto skip_ppdu_stats;
+
+	/* Remove the ppdu stats from front of list and fill it in tx_status */
+	qdf_spin_lock(&vdev_priv->lock_q);
+	if (QDF_STATUS_SUCCESS ==
+	    qdf_list_remove_front(&vdev_priv->ppdu_stats_q, &node)) {
+		q_node = qdf_container_of(
+			node, struct pkt_capture_ppdu_stats_q_node, node);
+		smu = (htt_ppdu_stats_for_smu_tlv *)(q_node->buf);
+		tx_status->prev_ppdu_id = smu->ppdu_id;
+		tx_status->start_seq = smu->start_seq;
+		tx_status->tid = smu->tid_num;
+
+		if (smu->win_size == 8)
+			qdf_mem_copy(tx_status->ba_bitmap, smu->ba_bitmap,
+				     8 * sizeof(uint32_t));
+		else if (smu->win_size == 2)
+			qdf_mem_copy(tx_status->ba_bitmap, smu->ba_bitmap,
+				     2 * sizeof(uint32_t));
+
+		qdf_mem_free(q_node);
+	}
+	qdf_spin_unlock(&vdev_priv->lock_q);
+
+skip_ppdu_stats:
 	tx_status->tsft = (u_int64_t)(pktcapture_hdr->timestamp);
 	tx_status->ant_signal_db = pktcapture_hdr->rssi_comb;
 	tx_status->rssi_comb = pktcapture_hdr->rssi_comb;
 	tx_status->tx_status = pktcapture_hdr->status;
 	tx_status->tx_retry_cnt = pktcapture_hdr->tx_retry_cnt;
+	tx_status->ppdu_id = pktcapture_hdr->ppdu_id;
 	tx_status->add_rtap_ext = true;
+	tx_status->add_rtap_ext2 = true;
 }
 #endif
 
