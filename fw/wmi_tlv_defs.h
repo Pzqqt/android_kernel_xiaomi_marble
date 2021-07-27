@@ -1190,6 +1190,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_peer_enable_disable_intra_bss_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_aoa_phasedelta_evt_fixed_param,
     WMITLV_TAG_STRUC_wmi_roam_mlo_config_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_roam_ml_setup_links_param,
+    WMITLV_TAG_STRUC_wmi_roam_ml_key_material_param,
 } WMITLV_TAG_ID;
 
 /*

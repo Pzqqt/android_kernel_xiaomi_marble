@@ -13173,8 +13173,10 @@ typedef struct {
      *  Value 0 indicates ECSA IE is not present in beacon template.
      */
     A_UINT32 ext_csa_switch_count_offset; /* units = bytes */
-    /** TIM IE offset from the beginning of the template. */
-    A_UINT32 tim_ie_offset;
+    /** Per-STA profile Subelement offset from the beginning of the template. */
+    A_UINT32 per_sta_profile_offset;
+    /** Quiet IE offset from the beginning of the template. */
+    A_UINT32 quiet_ie_offset;
 } wmi_bcn_tmpl_ml_params;
 
 typedef struct {
