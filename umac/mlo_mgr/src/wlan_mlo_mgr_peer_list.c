@@ -72,7 +72,7 @@ static inline struct wlan_mlo_peer_context *wlan_mlo_peer_get_next_mlpeer(
 	return next_peer;
 }
 
-static inline struct wlan_mlo_peer_context *mlo_get_mlpeer(
+struct wlan_mlo_peer_context *mlo_get_mlpeer(
 				struct wlan_mlo_dev_context *ml_dev,
 				struct qdf_mac_addr *ml_addr)
 {

@@ -39,6 +39,20 @@ void mlo_peer_create(struct wlan_objmgr_vdev *vdev,
 			       uint8_t aid);
 
 /**
+ * mlo_get_mlpeer - Get ML peer corresponds to the MLD address
+ * @ml_dev: MLO DEV object
+ * @ml_addr: MLD MAC address
+ *
+ * This API will be used to get the ML peer associated with MLD address.
+ * It will return Null if the peer does not exist for the given MLD address.
+ *
+ * Return: Pointer to the ML peer context structure
+ */
+struct wlan_mlo_peer_context *mlo_get_mlpeer(
+				struct wlan_mlo_dev_context *ml_dev,
+				struct qdf_mac_addr *ml_addr);
+
+/**
  * mlo_peer_attach - Attaches the peer by updating the MLO peer context with
  * the new link information
  *
