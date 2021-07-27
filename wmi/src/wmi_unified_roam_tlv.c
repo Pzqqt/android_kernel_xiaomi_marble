@@ -3194,6 +3194,11 @@ wmi_fill_rso_tlvs(wmi_unified_t wmi_handle, uint8_t *buf,
 				  roam_offload_11r->psk_msk_len,
 				  roam_offload_11r->psk_msk_ext_len,
 				  roam_offload_11r->mdid);
+			if (roam_offload_11r->psk_msk_len)
+				QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMI,
+						   QDF_TRACE_LEVEL_DEBUG,
+						   roam_offload_11r->psk_msk,
+						   WLAN_MAX_PMK_DUMP_BYTES);
 		} else {
 			WMITLV_SET_HDR(buf, WMITLV_TAG_ARRAY_STRUC,
 				       sizeof(wmi_roam_11i_offload_tlv_param));
