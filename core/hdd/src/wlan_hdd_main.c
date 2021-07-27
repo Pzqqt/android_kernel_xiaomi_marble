@@ -17147,7 +17147,7 @@ void hdd_driver_unload(void)
 		 * Trigger runtime sync resume before setting unload in progress
 		 * such that resume can happen successfully
 		 */
-		hif_pm_runtime_sync_resume(hif_ctx);
+		hif_pm_runtime_sync_resume(hif_ctx, RTPM_ID_DRIVER_UNLOAD);
 	}
 
 	cds_set_driver_loaded(false);

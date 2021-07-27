@@ -822,7 +822,7 @@ static void __hdd_soc_remove(struct device *dev)
 		 * Trigger runtime sync resume before setting unload in progress
 		 * such that resume can happen successfully
 		 */
-		hif_pm_runtime_sync_resume(hif_ctx);
+		hif_pm_runtime_sync_resume(hif_ctx, RTPM_ID_SOC_REMOVE);
 	}
 
 	cds_set_driver_loaded(false);

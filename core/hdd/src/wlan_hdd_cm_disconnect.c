@@ -229,7 +229,7 @@ QDF_STATUS wlan_hdd_cm_issue_disconnect(struct hdd_adapter *adapter,
 		/*
 		 * Trigger runtime sync resume before sending disconneciton
 		 */
-		hif_pm_runtime_sync_resume(hif_ctx);
+		hif_pm_runtime_sync_resume(hif_ctx, RTPM_ID_CONN_DISCONNECT);
 
 	wlan_rec_conn_info(adapter->vdev_id, DEBUG_CONN_DISCONNECT,
 			   sta_ctx->conn_info.bssid.bytes, 0, reason);
