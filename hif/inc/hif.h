@@ -1053,21 +1053,33 @@ hif_pm_wake_irq_type hif_pm_get_wake_irq_type(struct hif_opaque_softc *hif_ctx);
  * @RTPM_ID_DW_TX_HW_ENQUEUE:   operation in functin dp_tx_hw_enqueue
  * @RTPM_ID_HAL_REO_CMD:        HAL_REO_CMD operation
  * @RTPM_ID_DP_PRINT_RING_STATS:  operation in dp_print_ring_stats
+ * @RTPM_ID_PM_STOP:        operation in hif_pm_runtime_stop
+ * @RTPM_ID_CONN_DISCONNECT:operation when issue disconnect
+ * @RTPM_ID_SOC_REMOVE: operation in soc remove
+ * @RTPM_ID_DRIVER_UNLOAD: operation in driver unload
+ * @RTPM_ID_CE_INTR_HANDLER: operation from ce interrupt handler
+ * @RTPM_ID_WAKE_INTR_HANDLER: operation from wake interrupt handler
  */
 /* New value added to the enum must also be reflected in function
  *  rtpm_string_from_dbgid()
  */
 typedef enum {
 	RTPM_ID_RESVERD   = 0,
-	RTPM_ID_WMI       = 1,
-	RTPM_ID_HTC       = 2,
-	RTPM_ID_QOS_NOTIFY  = 3,
-	RTPM_ID_DP_TX_DESC_ALLOC_FREE  = 4,
-	RTPM_ID_CE_SEND_FAST       = 5,
-	RTPM_ID_SUSPEND_RESUME     = 6,
-	RTPM_ID_DW_TX_HW_ENQUEUE   = 7,
-	RTPM_ID_HAL_REO_CMD        = 8,
-	RTPM_ID_DP_PRINT_RING_STATS  = 9,
+	RTPM_ID_WMI,
+	RTPM_ID_HTC,
+	RTPM_ID_QOS_NOTIFY,
+	RTPM_ID_DP_TX_DESC_ALLOC_FREE,
+	RTPM_ID_CE_SEND_FAST,
+	RTPM_ID_SUSPEND_RESUME,
+	RTPM_ID_DW_TX_HW_ENQUEUE,
+	RTPM_ID_HAL_REO_CMD,
+	RTPM_ID_DP_PRINT_RING_STATS,
+	RTPM_ID_PM_STOP,
+	RTPM_ID_CONN_DISCONNECT,
+	RTPM_ID_SOC_REMOVE,
+	RTPM_ID_DRIVER_UNLOAD,
+	RTPM_ID_CE_INTR_HANDLER,
+	RTPM_ID_WAKE_INTR_HANDLER,
 
 	RTPM_ID_MAX,
 } wlan_rtpm_dbgid;
@@ -1092,6 +1104,12 @@ static inline char *rtpm_string_from_dbgid(wlan_rtpm_dbgid id)
 					"RTPM_ID_DW_TX_HW_ENQUEUE",
 					"RTPM_ID_HAL_REO_CMD",
 					"RTPM_ID_DP_PRINT_RING_STATS",
+					"RTPM_ID_PM_STOP",
+					"RTPM_ID_CONN_DISCONNECT",
+					"RTPM_ID_SOC_REMOVE",
+					"RTPM_ID_DRIVER_UNLOAD",
+					"RTPM_ID_CE_INTR_HANDLER",
+					"RTPM_ID_WAKE_INTR_HANDLER",
 					"RTPM_ID_MAX"};
 
 	return (char *)strings[id];
@@ -1171,7 +1189,8 @@ int hif_pm_runtime_get_sync(struct hif_opaque_softc *hif_ctx,
 			    wlan_rtpm_dbgid rtpm_dbgid);
 int hif_pm_runtime_put_sync_suspend(struct hif_opaque_softc *hif_ctx,
 				    wlan_rtpm_dbgid rtpm_dbgid);
-int hif_pm_runtime_request_resume(struct hif_opaque_softc *hif_ctx);
+int hif_pm_runtime_request_resume(struct hif_opaque_softc *hif_ctx,
+				  wlan_rtpm_dbgid rtpm_dbgid);
 int hif_pm_runtime_get(struct hif_opaque_softc *hif_ctx,
 		       wlan_rtpm_dbgid rtpm_dbgid,
 		       bool is_critical_ctx);
@@ -1199,7 +1218,8 @@ void hif_pm_runtime_check_and_request_resume(struct hif_opaque_softc *hif_ctx);
 void hif_pm_runtime_mark_dp_rx_busy(struct hif_opaque_softc *hif_ctx);
 int hif_pm_runtime_is_dp_rx_busy(struct hif_opaque_softc *hif_ctx);
 qdf_time_t hif_pm_runtime_get_dp_rx_busy_mark(struct hif_opaque_softc *hif_ctx);
-int hif_pm_runtime_sync_resume(struct hif_opaque_softc *hif_ctx);
+int hif_pm_runtime_sync_resume(struct hif_opaque_softc *hif_ctx,
+			       wlan_rtpm_dbgid rtpm_dbgid);
 void hif_pm_runtime_update_stats(struct hif_opaque_softc *hif_ctx,
 				 wlan_rtpm_dbgid rtpm_dbgid,
 				 enum hif_pm_htc_stats stats);
@@ -1233,7 +1253,8 @@ hif_pm_runtime_put_sync_suspend(struct hif_opaque_softc *hif_ctx,
 				wlan_rtpm_dbgid rtpm_dbgid)
 { return 0; }
 static inline int
-hif_pm_runtime_request_resume(struct hif_opaque_softc *hif_ctx)
+hif_pm_runtime_request_resume(struct hif_opaque_softc *hif_ctx,
+			      wlan_rtpm_dbgid rtpm_dbgid)
 { return 0; }
 static inline void
 hif_pm_runtime_get_noresume(struct hif_opaque_softc *hif_ctx,
@@ -1291,7 +1312,8 @@ hif_pm_runtime_is_dp_rx_busy(struct hif_opaque_softc *hif_ctx)
 static inline qdf_time_t
 hif_pm_runtime_get_dp_rx_busy_mark(struct hif_opaque_softc *hif_ctx)
 { return 0; }
-static inline int hif_pm_runtime_sync_resume(struct hif_opaque_softc *hif_ctx)
+static inline int hif_pm_runtime_sync_resume(struct hif_opaque_softc *hif_ctx,
+					     wlan_rtpm_dbgid rtpm_dbgid)
 { return 0; }
 static inline
 void hif_pm_set_link_state(struct hif_opaque_softc *hif_handle, uint8_t val)
