@@ -189,6 +189,17 @@ struct pkt_capture_tx_hdr_elem_t {
 };
 
 /**
+ * pkt_capture_ppdu_stats_q_node - node structure to be enqueued
+ * in ppdu_stats_q
+ * @node: list node
+ * @buf: buffer data received from ppdu_stats
+ */
+struct pkt_capture_ppdu_stats_q_node {
+	qdf_list_node_t node;
+	uint32_t buf[];
+};
+
+/**
  * pkt_capture_tx_get_txcomplete_data_hdr() - extract Tx data hdr from Tx
  * completion for pkt capture mode
  * @msg_word: Tx completion htt msg
