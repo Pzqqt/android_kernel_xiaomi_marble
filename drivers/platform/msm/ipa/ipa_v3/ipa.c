@@ -6847,8 +6847,8 @@ static int ipa3_panic_notifier(struct notifier_block *this,
 	if (res) {
 		IPAERR("IPA clk off not saving the IPA registers\n");
 	} else {
-		ipahal_print_all_regs(false);
 		ipa_save_registers();
+		ipahal_print_all_regs(false);
 		ipa_wigig_save_regs();
 	}
 
