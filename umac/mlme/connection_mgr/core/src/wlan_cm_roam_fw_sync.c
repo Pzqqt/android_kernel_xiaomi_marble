@@ -901,14 +901,14 @@ QDF_STATUS cm_fw_roam_complete(struct cnx_mgr *cm_ctx, void *data)
 	if (ucfg_pkt_capture_get_pktcap_mode(psoc))
 		ucfg_pkt_capture_record_channel(cm_ctx->vdev);
 
-	if (WLAN_REG_IS_5GHZ_CH_FREQ(roam_synch_data->chan_freq)) {
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(roam_synch_data->chan_freq)) {
+		wlan_cm_set_disable_hi_rssi(pdev,
+					    vdev_id, false);
+	} else {
 		wlan_cm_set_disable_hi_rssi(pdev,
 					    vdev_id, true);
 		mlme_debug("Disabling HI_RSSI, AP freq=%d rssi %d",
 			   roam_synch_data->chan_freq, roam_synch_data->rssi);
-	} else {
-		wlan_cm_set_disable_hi_rssi(pdev,
-					    vdev_id, false);
 	}
 	policy_mgr_check_n_start_opportunistic_timer(psoc);
 
