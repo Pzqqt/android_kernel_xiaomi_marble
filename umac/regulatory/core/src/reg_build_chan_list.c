@@ -1507,6 +1507,9 @@ void reg_compute_pdev_current_chan_list(struct wlan_regulatory_pdev_priv_obj
 						    pdev_priv_obj->
 						    cur_chan_list);
 
+	reg_modify_chan_list_for_max_chwidth(pdev_priv_obj->pdev_ptr,
+					     pdev_priv_obj->cur_chan_list);
+
 	reg_modify_chan_list_for_6g_edge_channels(pdev_priv_obj->pdev_ptr,
 						  pdev_priv_obj->
 						  cur_chan_list);
@@ -1676,8 +1679,6 @@ void reg_propagate_mas_chan_list_to_pdev(struct wlan_objmgr_psoc *psoc,
 
 	reg_update_max_phymode_chwidth_for_pdev(pdev);
 	reg_compute_pdev_current_chan_list(pdev_priv_obj);
-	reg_modify_chan_list_for_max_chwidth(pdev_priv_obj->pdev_ptr,
-					     pdev_priv_obj->cur_chan_list);
 
 	if (reg_tx_ops->fill_umac_legacy_chanlist) {
 		reg_tx_ops->fill_umac_legacy_chanlist(
