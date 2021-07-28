@@ -903,6 +903,53 @@ typedef struct {
          ((_var) |= ((_val) << HTT_PPDU_STATS_USER_COMMON_TLV_QOS_CTRL_S)); \
      } while (0)
 
+#define HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_MULTIPLIER_M 0x000000ff
+#define HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_MULTIPLIER_S          0
+
+#define HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_MULTIPLIER_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_MULTIPLIER_M) >> \
+    HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_MULTIPLIER_S)
+
+#define HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_MULTIPLIER_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_MULTIPLIER, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_MULTIPLIER_S)); \
+     } while (0)
+
+#define HTT_PPDU_STATS_USER_COMMON_TLV_CHAIN_ENABLE_BITS_M 0x0000ff00
+#define HTT_PPDU_STATS_USER_COMMON_TLV_CHAIN_ENABLE_BITS_S          8
+
+#define HTT_PPDU_STATS_USER_COMMON_TLV_CHAIN_ENABLE_BITS_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_USER_COMMON_TLV_CHAIN_ENABLE_BITS_M) >> \
+    HTT_PPDU_STATS_USER_COMMON_TLV_CHAIN_ENABLE_BITS_S)
+
+#define HTT_PPDU_STATS_USER_COMMON_TLV_CHAIN_ENABLE_BITS_SET(_var, _val) \
+     do { \
+         HTT_CHECK_SET_VAL(HTT_PPDU_STATS_USER_COMMON_TLV_CHAIN_ENABLE_BITS, _val); \
+         ((_var) |= ((_val) << HTT_PPDU_STATS_USER_COMMON_TLV_CHAIN_ENABLE_BITS_S)); \
+     } while (0)
+
+#define HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_CHAINS_PER_U32 4
+#define HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_MASK 0x000000ff
+
+#define HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_GET(tlv, chain_idx) \
+    ((A_INT8) ((tlv)->tx_pwr[(chain_idx)/HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_CHAINS_PER_U32] >> \
+        ((chain_idx)%HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_CHAINS_PER_U32)*8) & HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_MASK)
+#define HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_SET(tlv, chain_idx, value) \
+    (tlv)->tx_pwr[chain_idx/HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_CHAINS_PER_U32] = \
+        (tlv)->tx_pwr[chain_idx/HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_CHAINS_PER_U32] & \
+            ~(0xff << (((chain_idx)%HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_CHAINS_PER_U32)*8)) | \
+            (((value)<<((chain_idx)%HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_CHAINS_PER_U32)*8))
+
+#define HTT_PPDU_STATS_USER_COMMON_TLV_ALT_TX_PWR_GET(tlv, chain_idx) \
+    ((A_INT8) ((tlv)->alt_tx_pwr[(chain_idx)/HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_CHAINS_PER_U32] >> \
+        ((chain_idx)%HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_CHAINS_PER_U32)*8) & HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_MASK)
+#define HTT_PPDU_STATS_USER_COMMON_TLV_ALT_TX_PWR_SET(tlv, chain_idx, value) \
+    (tlv)->alt_tx_pwr[chain_idx/HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_CHAINS_PER_U32] = \
+        (tlv)->alt_tx_pwr[chain_idx/HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_CHAINS_PER_U32] & \
+            ~(0xff << (((chain_idx)%HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_CHAINS_PER_U32)*8)) | \
+            (((value)<<((chain_idx)%HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_CHAINS_PER_U32)*8))
+
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
 
@@ -1002,6 +1049,79 @@ typedef struct {
      * Note - this is valid if SW RTS was used instead of HW RTS.
      */
     A_UINT32 sw_rts_prot_dur_us;
+
+    /* Data fields related to Transmit power */
+
+    /* tx_pwr_multiplier:
+     * Hawkeye now supports power accuracy in 0.25 dBm steps,
+     * so all powers are x4.
+     * This is needed to resolve compatibility issues with previous
+     * generation chipsets.
+     * API in halphy phyrf_bdf_GetMaxRatePwrMultiplier, used to find out
+     * what the multiplier and use that to correctly report the TPC value
+     * to host.
+     *
+     * chain_enable_bits:
+     * Indicates the valid tx_pwr values in the tx_pwr field.
+     * Default value: 1
+     * tx_pwr[0] value is used for all chains if chain_enable_bits field
+     * is set to 1.
+     */
+    A_UINT32 tx_pwr_multiplier  : 8,
+             chain_enable_bits  : 8,
+             reserved2          : 16;
+
+    /*
+     * Transmit powers (signed values packed into unsigned bitfields)
+     * in units of 0.25 dBm per chain.
+     * To report the tx_pwr value in dBm units, stored value has to be
+     * divided with tx_pwr_multiplier field.
+     * Per chain tx_pwr configuration is not available for all chipsets.
+     * Use tx_pwr[0] value for all chains if chain_enable_bits field
+     * is set to 1.
+     * Each chain uses 1 byte to store the transmit power.
+     * The bytes within a A_UINT32 use little-endian order,
+     * i.e. bits 7:0 of tx_pwr[0] store the tx pwr for chain 0,
+     * bits 15:8 of tx_pwr[0] store the tx pwr for chain 1, etc.
+     * Since HTT_STATS_MAX_CHAINS is a multiple of 4, no rounding is needed
+     * to determine the number of A_UINT32 array elements.
+     * Any bytes that exceed the number of chains with valid
+     * tx_pwr data will be filled with 0x00.
+     * When packing the 1-byte tx_pwr values into the A_UINT32,
+     * masking is needed to keep the sign bits from clobbering
+     * the higher bytes.
+     * When extracting the 1-byte tx_pwr values from the A_UINT32,
+     * sign-extension is needed if the variable holding the extracted
+     * value is larger than A_INT8.
+     */
+    A_UINT32 tx_pwr[HTT_STATS_MAX_CHAINS / HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_CHAINS_PER_U32];
+
+    /*
+     * Transmit powers for the alternate transmit descriptor used for BT COEX
+     * (signed values packed into unsigned bitfields) in units of
+     * 0.25 dBm per chain.
+     * Not used by the host currently.
+     * To report the alt_tx_pwr value in dBm units, stored value has to be
+     * divided with tx_pwr_multiplier field.
+     * Per chain alt_tx_pwr configuration is not available for all chipsets.
+     * Use alt_tx_pwr[0] value for all chains if chain_enable_bits field
+     * is set to 1.
+     * Each chain uses 1 byte to store the alternate transmit power.
+     * The bytes within a A_UINT32 use little-endian order,
+     * i.e. bits 7:0 of alt_tx_pwr[0] store the alt tx pwr for chain 0,
+     * bits 15:8 of alt_tx_pwr[0] store the alt tx pwr for chain 1, etc.
+     * Since HTT_STATS_MAX_CHAINS is a multiple of 4, no rounding is needed
+     * to determine the number of A_UINT32 array elements.
+     * Any bytes that exceed the number of chains with valid
+     * alt_tx_pwr data will be filled with 0x00.
+     * When packing the 1-byte alt_tx_pwr values into the A_UINT32,
+     * masking is needed to keep the sign bits from clobbering
+     * the higher bytes.
+     * When extracting the 1-byte alt_tx_pwr values from the A_UINT32,
+     * sign-extension is needed if the variable holding the extracted
+     * value is larger than A_INT8.
+     */
+    A_UINT32 alt_tx_pwr[HTT_STATS_MAX_CHAINS / HTT_PPDU_STATS_USER_COMMON_TLV_TX_PWR_CHAINS_PER_U32];
 } htt_ppdu_stats_user_common_tlv;
 
 #define HTT_PPDU_STATS_USER_RATE_TLV_TID_NUM_M     0x000000ff
