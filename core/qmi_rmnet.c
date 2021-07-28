@@ -1033,8 +1033,8 @@ static bool _qmi_rmnet_is_tcp_ack(struct sk_buff *skb)
 	}
 
 	th = (struct tcphdr *)(skb->data + ip_hdr_len);
-	if ((ip_payload_len == th->doff << 2) &&
-	    ((tcp_flag_word(th) & cpu_to_be32(0x00FF0000)) == TCP_FLAG_ACK))
+	/* no longer looking for ACK flag */
+	if (ip_payload_len == th->doff << 2)
 		return true;
 
 	return false;
