@@ -7336,7 +7336,7 @@ int dsi_display_validate_mode_change(struct dsi_display *display,
 		}
 
 		/* dynamic clk change use case */
-		if (cur_mode->pixel_clk_khz != adj_mode->pixel_clk_khz) {
+		if (display->dyn_bit_clk_pending) {
 			if (dyn_clk_caps->dyn_clk_support) {
 				DSI_DEBUG("dynamic clk change detected\n");
 				if ((adj_mode->dsi_mode_flags &
@@ -7362,6 +7362,7 @@ int dsi_display_validate_mode_change(struct dsi_display *display,
 					cur_mode->pixel_clk_khz,
 					adj_mode->pixel_clk_khz);
 			}
+			display->dyn_bit_clk_pending = false;
 		}
 	}
 
@@ -8611,8 +8612,6 @@ int dsi_display_update_dyn_bit_clk(struct dsi_display *display,
 	DSI_DEBUG("dynamic bit clk:%u, min dsi clk:%llu, lanes:%d, bpp:%d, pck:%d Khz\n",
 			display->dyn_bit_clk, mode->priv_info->min_dsi_clk_hz, lanes, bpp,
 			mode->pixel_clk_khz);
-
-	display->dyn_bit_clk_pending = false;
 
 	return 0;
 }

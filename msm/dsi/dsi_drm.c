@@ -71,6 +71,7 @@ static void msm_parse_mode_priv_info(const struct msm_display_mode *msm_mode,
 		dsi_mode->timing.vdc_enabled = dsi_mode->priv_info->vdc_enabled;
 		dsi_mode->timing.vdc = &dsi_mode->priv_info->vdc;
 		dsi_mode->timing.pclk_scale = dsi_mode->priv_info->pclk_scale;
+		dsi_mode->timing.clk_rate_hz = dsi_mode->priv_info->clk_rate_hz;
 	}
 
 	if (msm_is_mode_seamless(msm_mode))
@@ -500,7 +501,8 @@ static bool dsi_bridge_mode_fixup(struct drm_bridge *bridge,
 			dsi_mode.dsi_mode_flags &= ~DSI_MODE_FLAG_DMS;
 
 		/* No DMS/VRR when drm pipeline is changing */
-		if (!drm_mode_equal(cur_mode, adjusted_mode) &&
+		if (!dsi_display_mode_match(&cur_dsi_mode, &dsi_mode,
+			DSI_MODE_MATCH_FULL_TIMINGS) &&
 			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_VRR)) &&
 			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_DYN_CLK)) &&
 			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_POMS_TO_VID)) &&
