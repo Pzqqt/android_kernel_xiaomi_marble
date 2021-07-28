@@ -995,7 +995,6 @@ struct wlan_vht_config {
  * @sap_max_inactivity_override: Override updating ap_sta_inactivity from
  * hostapd.conf
  * @sap_uapsd_enabled: Flag to enable/disable UAPSD for SAP
- * @reject_addba_req: Flag to decline ADDBA Req from SAP
  */
 struct wlan_mlme_qos {
 	uint32_t tx_aggregation_size;
@@ -1016,7 +1015,6 @@ struct wlan_mlme_qos {
 	uint32_t tx_non_aggr_sw_retry_threshold;
 	bool sap_max_inactivity_override;
 	bool sap_uapsd_enabled;
-	bool reject_addba_req;
 };
 
 #ifdef WLAN_FEATURE_11AX
