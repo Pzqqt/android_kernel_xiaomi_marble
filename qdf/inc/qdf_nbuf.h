@@ -403,6 +403,7 @@ struct mon_rx_status {
  * @mpdu_fcs_ok_bitmap: mpdu with fcs ok bitmap
  * @mpdu_ok_byte_count: mpdu byte count with fcs ok
  * @mpdu_err_byte_count: mpdu byte count with fcs err
+ * @sw_peer_id: software peer id
  */
 struct mon_rx_user_status {
 	uint32_t mcs:4,
@@ -433,6 +434,7 @@ struct mon_rx_user_status {
 	uint32_t mpdu_fcs_ok_bitmap[QDF_MON_STATUS_MPDU_FCS_BMAP_NWORDS];
 	uint32_t mpdu_ok_byte_count;
 	uint32_t mpdu_err_byte_count;
+	uint16_t sw_peer_id;
 };
 
 /**

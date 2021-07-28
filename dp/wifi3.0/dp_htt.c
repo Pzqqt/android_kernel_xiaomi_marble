@@ -2709,6 +2709,14 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 				  "HTT_T2H_MSG_TYPE_PEER_MAP msg for peer id %d vdev id %d n",
 				  peer_id, vdev_id);
 
+			QDF_TRACE(QDF_MODULE_ID_TXRX,
+				  QDF_TRACE_LEVEL_INFO,
+				  "ast_idx[0] %d ast_idx[1] %d ast_idx[2] %d ast_idx[3] %d n",
+				  ast_flow_info.ast_idx[0],
+				  ast_flow_info.ast_idx[1],
+				  ast_flow_info.ast_idx[2],
+				  ast_flow_info.ast_idx[3]);
+
 			dp_rx_peer_map_handler(soc->dp_soc, peer_id,
 					       hw_peer_id, vdev_id,
 					       peer_mac_addr, ast_hash,

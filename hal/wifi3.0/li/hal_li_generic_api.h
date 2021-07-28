@@ -1524,6 +1524,9 @@ hal_rx_status_get_tlv_info_generic_li(void *rx_tlv_hdr, void *ppduinfo,
 		ppdu_info->sw_frame_group_id =
 			HAL_RX_GET_SW_FRAME_GROUP_ID(rx_mpdu_start);
 
+		ppdu_info->rx_user_status[user_id].sw_peer_id =
+			HAL_RX_GET_SW_PEER_ID(rx_mpdu_start);
+
 		if (ppdu_info->sw_frame_group_id ==
 		    HAL_MPDU_SW_FRAME_GROUP_NULL_DATA) {
 			ppdu_info->rx_status.frame_control_info_valid =
