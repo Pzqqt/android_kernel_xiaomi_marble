@@ -1845,6 +1845,50 @@ wmi_fill_data_synch_event(struct roam_offload_synch_ind *roam_sync_ind,
 		     roam_sync_ind->reassoc_req_length);
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+static void
+wmi_fill_roam_mlo_info(WMI_ROAM_SYNCH_EVENTID_param_tlvs *param_buf,
+		       struct roam_offload_synch_ind *roam_sync_ind)
+{
+	uint8_t i;
+	wmi_roam_ml_setup_links_param *setup_links;
+	wmi_roam_ml_key_material_param *ml_key_param;
+
+	if (param_buf->num_setup_links_param) {
+		roam_sync_ind->num_setup_links = param_buf->num_setup_links_param;
+		setup_links = param_buf->setup_links_param;
+
+		for (i = 0; i < roam_sync_ind->num_setup_links; i++) {
+			roam_sync_ind->ml_link[i].link_id = setup_links->link_id;
+			roam_sync_ind->ml_link[i].vdev_id = setup_links->vdev_id;
+			roam_sync_ind->ml_link[i].channel = setup_links->channel;
+			roam_sync_ind->ml_link[i].flags = setup_links->flags;
+			setup_links += sizeof(wmi_roam_ml_setup_links_param);
+		}
+	}
+	if (param_buf->num_ml_key_material) {
+		roam_sync_ind->num_ml_key_material = param_buf->num_ml_key_material;
+		ml_key_param = param_buf->ml_key_material;
+
+		for (i = 0; i < roam_sync_ind->num_ml_key_material; i++) {
+			roam_sync_ind->ml_key[i].link_id = ml_key_param->link_id;
+			roam_sync_ind->ml_key[i].key_idx = ml_key_param->key_ix;
+			roam_sync_ind->ml_key[i].key_cipher = ml_key_param->key_cipher;
+			qdf_mem_copy(roam_sync_ind->ml_key[i].pn,
+				     ml_key_param->pn, WMI_MAX_PN_LEN);
+			qdf_mem_copy(roam_sync_ind->ml_key[i].key_buff,
+				     ml_key_param->key_buff, WMI_MAX_KEY_LEN);
+			ml_key_param += sizeof(wmi_roam_ml_key_material_param);
+		}
+	}
+}
+#else
+static void wmi_fill_roam_mlo_info(WMI_ROAM_SYNCH_EVENTID_param_tlvs *param_buf,
+				   struct roam_offload_synch_ind *roam_sync_ind)
+{
+}
+#endif
+
 static QDF_STATUS
 wmi_fill_roam_sync_buffer(struct wlan_objmgr_vdev *vdev,
 			  struct rso_config *rso_cfg,
@@ -1860,7 +1904,11 @@ wmi_fill_roam_sync_buffer(struct wlan_objmgr_vdev *vdev,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint8_t kck_len;
 	uint8_t kek_len;
-
+#ifdef WLAN_FEATURE_11BE_MLO
+	uint8_t i;
+	wmi_roam_ml_setup_links_param *setup_links;
+	wmi_roam_ml_key_material_param *ml_key_param;
+#endif
 	synch_event = param_buf->fixed_param;
 	roam_sync_ind->roamed_vdev_id = synch_event->vdev_id;
 	roam_sync_ind->auth_status = synch_event->auth_status;
@@ -2008,6 +2056,8 @@ wmi_fill_roam_sync_buffer(struct wlan_objmgr_vdev *vdev,
 		qdf_mem_copy(roam_sync_ind->pmkid,
 			     pmk_cache_info->pmkid, PMKID_LEN);
 	}
+
+	wmi_fill_roam_mlo_info(param_buf, roam_sync_ind);
 	wlan_cm_free_roam_synch_frame_ind(rso_cfg);
 	return QDF_STATUS_SUCCESS;
 }
@@ -3772,6 +3822,27 @@ send_roam_scan_mode_cmd:
 	return status;
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+static void
+send_update_mlo_roam_params(wmi_roam_cnd_scoring_param *score_param,
+			    struct ap_profile_params *ap_profile)
+{
+	score_param->eht_weightage_pcnt =
+				ap_profile->param.eht_caps_weightage;
+	score_param->mlo_weightage_pcnt =
+				ap_profile->param.mlo_weightage;
+	wmi_debug("11be score params weightage: EHT %d MLO %d",
+		  score_param->eht_weightage_pcnt,
+		  score_param->mlo_weightage_pcnt);
+}
+#else
+static void
+send_update_mlo_roam_params(wmi_roam_cnd_scoring_param *score_param,
+			    struct ap_profile_params *ap_profile)
+{
+}
+#endif
+
 /**
  * send_roam_scan_offload_ap_profile_cmd_tlv() - set roam ap profile in fw
  * @wmi_handle: wmi handle
@@ -3877,7 +3948,7 @@ send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_handle,
 			ap_profile->param.vendor_roam_score_algorithm;
 	score_param->sae_pk_ap_weightage_pcnt =
 				ap_profile->param.sae_pk_ap_weightage;
-
+	send_update_mlo_roam_params(score_param, ap_profile);
 	wmi_debug("Score params weightage: disable_bitmap %x rssi %d ht %d vht %d he %d BW %d band %d NSS %d ESP %d BF %d PCL %d OCE WAN %d APTX %d roam score algo %d subnet id %d sae-pk %d",
 		 score_param->disable_bitmap, score_param->rssi_weightage_pcnt,
 		 score_param->ht_weightage_pcnt,
