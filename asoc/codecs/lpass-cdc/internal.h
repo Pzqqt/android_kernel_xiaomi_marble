@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _LPASS_CDC_INTERNAL_H
@@ -56,6 +56,7 @@ struct lpass_cdc_priv {
 	bool va_without_decimation;
 	bool macros_supported[MAX_MACRO];
 	bool dev_up;
+	bool pre_dev_up;
 	bool initial_boot;
 	struct macro_ops macro_params[MAX_MACRO];
 	struct snd_soc_dai_driver *lpass_cdc_dais;
