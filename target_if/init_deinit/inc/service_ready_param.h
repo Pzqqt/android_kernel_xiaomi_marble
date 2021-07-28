@@ -265,12 +265,12 @@ struct wlan_psoc_host_mac_phy_caps_ext2 {
 	uint32_t phy_id;
 	uint64_t wireless_modes_ext;
 #ifdef WLAN_FEATURE_11BE
-	uint32_t eht_cap_info_2G[PSOC_HOST_MAX_MAC_SIZE];
+	uint32_t eht_cap_info_2G[PSOC_HOST_MAX_EHT_MAC_SIZE];
 	uint32_t eht_supp_mcs_2G;
-	uint32_t eht_cap_info_5G[PSOC_HOST_MAX_MAC_SIZE];
+	uint32_t eht_cap_info_5G[PSOC_HOST_MAX_EHT_MAC_SIZE];
 	uint32_t eht_supp_mcs_5G;
-	uint32_t eht_cap_phy_info_2G[PSOC_HOST_MAX_PHY_SIZE];
-	uint32_t eht_cap_phy_info_5G[PSOC_HOST_MAX_PHY_SIZE];
+	uint32_t eht_cap_phy_info_2G[PSOC_HOST_MAX_EHT_PHY_SIZE];
+	uint32_t eht_cap_phy_info_5G[PSOC_HOST_MAX_EHT_PHY_SIZE];
 	uint32_t eht_cap_info_internal;
 #endif
 };

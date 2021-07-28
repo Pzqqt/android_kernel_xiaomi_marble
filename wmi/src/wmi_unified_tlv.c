@@ -11677,23 +11677,21 @@ static void extract_mac_phy_cap_ehtcaps(
 		     &mac_phy_caps->eht_cap_phy_info_5G,
 		     sizeof(param->eht_cap_phy_info_5G));
 
-	wmi_debug("EHT mac caps: mac cap_info_2G %x %x, mac cap_info_5G %x %x, supp_mcs_2G %x, supp_mcs_5G %x, info_internal %x",
+	wmi_debug("EHT mac caps: mac cap_info_2G %x, mac cap_info_5G %x, supp_mcs_2G %x, supp_mcs_5G %x, info_internal %x",
 		  mac_phy_caps->eht_cap_mac_info_2G[0],
-		  mac_phy_caps->eht_cap_mac_info_2G[1],
 		  mac_phy_caps->eht_cap_mac_info_5G[0],
-		  mac_phy_caps->eht_cap_mac_info_5G[1],
 		  mac_phy_caps->eht_supp_mcs_2G, mac_phy_caps->eht_supp_mcs_5G,
 		  mac_phy_caps->eht_cap_info_internal);
 
 	wmi_nofl_debug("EHT phy caps: ");
 
 	wmi_nofl_debug("2G: ");
-	for (i = 0; i < PSOC_HOST_MAX_PHY_SIZE; i++) {
+	for (i = 0; i < PSOC_HOST_MAX_EHT_PHY_SIZE; i++) {
 		wmi_nofl_debug("index %d value %d",
 			       i, param->eht_cap_phy_info_2G[i]);
 	}
 	wmi_nofl_debug("5G: ");
-	for (i = 0; i < PSOC_HOST_MAX_PHY_SIZE; i++) {
+	for (i = 0; i < PSOC_HOST_MAX_EHT_PHY_SIZE; i++) {
 		wmi_nofl_debug("index %d value %d",
 			       i, param->eht_cap_phy_info_5G[i]);
 	}

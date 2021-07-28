@@ -1418,10 +1418,9 @@ struct wlan_ie_hecaps {
 } qdf_packed;
 
 #ifdef WLAN_FEATURE_11BE
-#define WLAN_EHT_PHYCAP_160_SUPPORT BIT(2)
-#define WLAN_EHT_PHYCAP_320_SUPPORT BIT(3)
-#define WLAN_EHT_MACCAP_LEN 6
-#define WLAN_EHT_PHYCAP_LEN 11
+#define WLAN_EHT_MACCAP_LEN 2
+#define WLAN_EHT_PHYCAP_LEN 8
+
 #define WLAN_EHT_MAX_MCS_MAPS 3
 /**
  * struct wlan_ie_ehtcaps - EHT capabilities
