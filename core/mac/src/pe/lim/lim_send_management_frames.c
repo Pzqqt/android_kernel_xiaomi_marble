@@ -5403,22 +5403,20 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 	tpDphHashNode sta_ds;
 	uint16_t aid;
 	bool he_cap = false;
-	struct wlan_mlme_qos *qos_aggr;
 
 	vdev_id = session->vdev_id;
 
 	cdp_addba_responsesetup(soc, peer_mac, vdev_id, tid,
 				&dialog_token, &status_code, &buff_size,
 				&batimeout);
-	qos_aggr = &mac_ctx->mlme_cfg->qos_mlme_params;
+
 	qdf_mem_zero((uint8_t *) &frm, sizeof(frm));
 	frm.Category.category = ACTION_CATEGORY_BACK;
 	frm.Action.action = ADDBA_RESPONSE;
 
 	frm.DialogToken.token = dialog_token;
 	frm.Status.status = status_code;
-
-	if (qos_aggr->reject_addba_req) {
+	if (mac_ctx->reject_addba_req) {
 		frm.Status.status = STATUS_REQUEST_DECLINED;
 		pe_err("refused addba req");
 	}
