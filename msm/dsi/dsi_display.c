@@ -245,8 +245,6 @@ int dsi_display_set_backlight(struct drm_connector *connector,
 
 	bl_scale_sv = panel->bl_config.bl_scale_sv;
 	bl_temp = (u32)bl_temp * bl_scale_sv / MAX_SV_BL_SCALE_LEVEL;
-	if (bl_temp > panel->bl_config.bl_max_level)
-		bl_temp = panel->bl_config.bl_max_level;
 
 	/* use bl_temp as index of dimming bl lut to find the dimming panel backlight */
 	if (bl_temp != 0 && panel->bl_config.dimming_bl_lut &&
@@ -255,6 +253,9 @@ int dsi_display_set_backlight(struct drm_connector *connector,
 			bl_temp, panel->bl_config.dimming_bl_lut->mapped_bl[bl_temp]);
 		bl_temp = panel->bl_config.dimming_bl_lut->mapped_bl[bl_temp];
 	}
+
+	if (bl_temp > panel->bl_config.bl_max_level)
+		bl_temp = panel->bl_config.bl_max_level;
 
 	pr_debug("bl_scale = %u, bl_scale_sv = %u, bl_lvl = %u\n",
 		bl_scale, bl_scale_sv, (u32)bl_temp);
