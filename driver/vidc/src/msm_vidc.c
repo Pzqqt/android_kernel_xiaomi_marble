@@ -609,6 +609,7 @@ int msm_vidc_enum_framesizes(void *instance, struct v4l2_frmsizeenum *fsize)
 	struct msm_vidc_inst *inst = instance;
 	struct msm_vidc_inst_capability *capability;
 	enum msm_vidc_colorformat_type colorfmt;
+	enum msm_vidc_codec_type codec;
 
 	if (!inst || !fsize) {
 		d_vpr_e("%s: invalid params: %pK %pK\n",
@@ -626,10 +627,13 @@ int msm_vidc_enum_framesizes(void *instance, struct v4l2_frmsizeenum *fsize)
 		return -EINVAL;
 
 	/* validate pixel format */
-	colorfmt = v4l2_colorformat_to_driver(fsize->pixel_format, __func__);
-	if (colorfmt == MSM_VIDC_FMT_NONE) {
-		i_vpr_e(inst, "%s: unsupported pix fmt %#x\n", __func__, fsize->pixel_format);
-		return -EINVAL;
+	codec = v4l2_codec_to_driver(fsize->pixel_format, __func__);
+	if (!codec) {
+		colorfmt = v4l2_colorformat_to_driver(fsize->pixel_format, __func__);
+		if (colorfmt == MSM_VIDC_FMT_NONE) {
+			i_vpr_e(inst, "%s: unsupported pix fmt %#x\n", __func__, fsize->pixel_format);
+			return -EINVAL;
+		}
 	}
 
 	fsize->type = V4L2_FRMSIZE_TYPE_STEPWISE;
