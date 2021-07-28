@@ -71,24 +71,14 @@ void wma_print_eht_cap(tDot11fIEeht_cap *eht_cap);
 void wma_print_eht_phy_cap(uint32_t *phy_cap);
 
 /**
- * wma_print_eht_mac_cap_w1() - Print EHT MAC Capability
- * @mac_cap: MAC Capability
+ * wma_print_eht_mac_cap() - Print EHT MAC Capability
+ * @mac_cap: pointer to MAC Capability
  *
  * This function prints EHT MAC Capability received from FW.
  *
  * Return: none
  */
-void wma_print_eht_mac_cap_w1(uint32_t mac_cap);
-
-/**
- * wma_print_eht_mac_cap_w2() - Print EHT MAC Capability
- * @mac_cap: MAC Capability
- *
- * This function prints EHT MAC Capability received from FW.
- *
- * Return: none
- */
-void wma_print_eht_mac_cap_w2(uint32_t mac_cap);
+void wma_print_eht_mac_cap(uint32_t *mac_cap);
 
 /**
  * wma_print_eht_op() - Print EHT Operation
@@ -187,12 +177,7 @@ void wma_print_eht_phy_cap(uint32_t *phy_cap)
 }
 
 static inline
-void wma_print_eht_mac_cap_w1(uint32_t mac_cap)
-{
-}
-
-static inline
-void wma_print_eht_mac_cap_w2(uint32_t mac_cap)
+void wma_print_eht_mac_cap(uint32_t *mac_cap)
 {
 }
 
