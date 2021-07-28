@@ -649,6 +649,8 @@ struct ap_profile {
  * @rssi_scoring: RSSI scoring information.
  * @esp_qbss_scoring: ESP/QBSS scoring percentage information
  * @oce_wan_scoring: OCE WAN metrics percentage information
+ * @eht_caps_weightage: EHT caps weightage out of total score in %
+ * @mlo_weightage: MLO weightage out of total score in %
  */
 struct scoring_param {
 	uint32_t disable_bitmap;
@@ -676,6 +678,10 @@ struct scoring_param {
 	struct rssi_config_score rssi_scoring;
 	struct per_slot_score esp_qbss_scoring;
 	struct per_slot_score oce_wan_scoring;
+#ifdef WLAN_FEATURE_11BE_MLO
+	uint8_t eht_caps_weightage;
+	uint8_t mlo_weightage;
+#endif
 };
 
 /**
@@ -1991,6 +1997,8 @@ struct cm_roam_values_copy {
 
 /* This should not be greater than MAX_NUMBER_OF_CONC_CONNECTIONS */
 #define MAX_VDEV_SUPPORTED 4
+#define MAX_PN_LEN 8
+#define MAX_KEY_LEN 32
 
 /**
  * struct cm_ho_fail_ind - ho fail indication to CM
@@ -2038,6 +2046,37 @@ struct roam_pmkid_req_event {
 	struct qdf_mac_addr ap_bssid[];
 };
 
+/*
+ * struct ml_setup_link_param - MLO setup link param
+ * @vdev_id: vdev id of the link
+ * @link_id: link id of the link
+ * @channel: wmi channel
+ * @flags: link flags
+ */
+struct ml_setup_link_param {
+	uint32_t vdev_id;
+	uint32_t link_id;
+	wmi_channel channel;
+	uint32_t flags;
+};
+
+/*
+ * struct ml_key_material_param - MLO key material param
+ * @link_id: key is for which link, when link_id is 0xf,
+ * means the key is used for all links, like PTK
+ * @key_idx: key idx
+ * @key_cipher: key cipher
+ * @pn: pn
+ * @key_buff: key buffer
+ */
+struct ml_key_material_param {
+	uint32_t link_id;
+	uint32_t key_idx;
+	uint32_t key_cipher;
+	uint8_t pn[MAX_PN_LEN];
+	uint8_t key_buff[MAX_KEY_LEN];
+};
+
 struct roam_offload_synch_ind {
 	uint16_t beaconProbeRespOffset;
 	uint16_t beaconProbeRespLength;
@@ -2082,6 +2121,12 @@ struct roam_offload_synch_ind {
 	bool is_ft_im_roam;
 	enum wlan_phymode phy_mode; /*phy mode sent by fw */
 	wmi_channel chan;
+#ifdef WLAN_FEATURE_11BE_MLO
+	uint8_t num_setup_links;
+	struct ml_setup_link_param ml_link[WLAN_UMAC_MLO_MAX_VDEVS];
+	uint8_t num_ml_key_material;
+	struct ml_key_material_param ml_key[WLAN_UMAC_MLO_MAX_VDEVS];
+#endif
 };
 
 /**
