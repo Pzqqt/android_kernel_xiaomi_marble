@@ -170,8 +170,8 @@ static int cvp_dsp_rpmsg_probe(struct rpmsg_device *rpdev)
 	mutex_lock(&me->tx_lock);
 	me->chan = rpdev;
 	me->state = DSP_PROBED;
-	complete(&me->completions[CPU2DSP_MAX_CMD]);
 	mutex_unlock(&me->tx_lock);
+	complete(&me->completions[CPU2DSP_MAX_CMD]);
 
 	return ret;
 }
