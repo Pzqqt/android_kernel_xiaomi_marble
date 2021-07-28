@@ -1547,18 +1547,22 @@ int msm_venc_s_param(struct msm_vidc_inst *inst,
 		timeperframe = &s_parm->parm.output.timeperframe;
 		max_rate = capability->cap[OPERATING_RATE].max >> 16;
 		default_rate = capability->cap[OPERATING_RATE].value >> 16;
+		s_parm->parm.output.capability = V4L2_CAP_TIMEPERFRAME;
 	} else {
 		timeperframe = &s_parm->parm.capture.timeperframe;
 		is_frame_rate = true;
 		max_rate = capability->cap[FRAME_RATE].max >> 16;
 		default_rate = capability->cap[FRAME_RATE].value >> 16;
+		s_parm->parm.capture.capability = V4L2_CAP_TIMEPERFRAME;
 	}
 
 	if (!timeperframe->denominator || !timeperframe->numerator) {
-		i_vpr_e(inst, "%s: type %s, invalid rate\n", __func__,
-			v4l2_type_name(s_parm->type));
-		input_rate = default_rate;
-		goto set_default;
+		i_vpr_e(inst, "%s: type %s, invalid rate, update with default\n",
+			 __func__, v4l2_type_name(s_parm->type));
+		if (!timeperframe->numerator)
+			timeperframe->numerator = 1;
+		if (!timeperframe->denominator)
+			timeperframe->denominator = default_rate;
 	}
 
 	us_per_frame = timeperframe->numerator * (u64)USEC_PER_SEC;
@@ -1573,7 +1577,6 @@ int msm_venc_s_param(struct msm_vidc_inst *inst,
 	input_rate = (u64)USEC_PER_SEC;
 	do_div(input_rate, us_per_frame);
 
-set_default:
 	i_vpr_h(inst, "%s: type %s, %s value %d\n",
 		__func__, v4l2_type_name(s_parm->type),
 		is_frame_rate ? "frame rate" : "operating rate", input_rate);
@@ -1655,11 +1658,13 @@ int msm_venc_g_param(struct msm_vidc_inst *inst,
 		timeperframe->numerator = 1;
 		timeperframe->denominator =
 			capability->cap[OPERATING_RATE].value >> 16;
+		s_parm->parm.output.capability = V4L2_CAP_TIMEPERFRAME;
 	} else {
 		timeperframe = &s_parm->parm.capture.timeperframe;
 		timeperframe->numerator = 1;
 		timeperframe->denominator =
 			capability->cap[FRAME_RATE].value >> 16;
+		s_parm->parm.capture.capability = V4L2_CAP_TIMEPERFRAME;
 	}
 
 	i_vpr_h(inst, "%s: type %s, num %u denom %u\n",
