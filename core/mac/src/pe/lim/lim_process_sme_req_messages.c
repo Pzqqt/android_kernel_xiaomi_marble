@@ -2804,16 +2804,16 @@ lim_fill_pe_session(struct mac_context *mac_ctx, struct pe_session *session,
 	lim_fill_11r_params(mac_ctx, session , ese_ver_present);
 	lim_fill_ese_params(mac_ctx, session, ese_ver_present);
 
-
-	if (WLAN_REG_IS_5GHZ_CH_FREQ(bss_desc->chan_freq)) {
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(bss_desc->chan_freq)) {
+		wlan_cm_set_disable_hi_rssi(mac_ctx->pdev, session->vdev_id,
+					    false);
+	} else {
 		wlan_cm_set_disable_hi_rssi(mac_ctx->pdev, session->vdev_id,
 					    true);
 		pe_debug("Disabling HI_RSSI, AP freq=%d, rssi=%d",
 			  bss_desc->chan_freq, bss_desc->rssi);
-	} else {
-		wlan_cm_set_disable_hi_rssi(mac_ctx->pdev, session->vdev_id,
-					    false);
 	}
+
 	if (session->opmode == QDF_STA_MODE)
 		session->enable_bcast_probe_rsp =
 			mac_ctx->mlme_cfg->oce.enable_bcast_probe_rsp;
