@@ -10,6 +10,7 @@
 #include "msm_cvp_core.h"
 #include "msm_cvp.h"
 #include "cvp_hfi.h"
+#include "cvp_dump.h"
 
 struct cvp_dsp_apps gfa_cv;
 static int hlosVM[HLOS_VM_NUM] = {VMID_HLOS};
@@ -1914,6 +1915,10 @@ int cvp_dsp_device_init(void)
 	int rc;
 	int i;
 	char name[CVP_FASTRPC_DRIVER_NAME_SIZE] = "qcom,fastcv0\0";
+
+    add_va_node_to_list(&head_node_dbg_struct,
+        &gfa_cv, sizeof(struct cvp_dsp_apps),
+        "cvp_dsp_apps-gfa_cv", false);
 
 	mutex_init(&me->tx_lock);
 	mutex_init(&me->rx_lock);
