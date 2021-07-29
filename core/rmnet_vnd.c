@@ -299,6 +299,58 @@ static u16 rmnet_vnd_select_queue(struct net_device *dev,
 	}
 
 skip_trace_print_icmp_tx:
+	if (trace_print_tcp_tx_enabled()) {
+		char saddr[INET6_ADDRSTRLEN], daddr[INET6_ADDRSTRLEN];
+
+		memset(saddr, 0, INET6_ADDRSTRLEN);
+		memset(daddr, 0, INET6_ADDRSTRLEN);
+
+		if (skb->protocol == htons(ETH_P_IP)) {
+			if (ip_hdr(skb)->protocol != IPPROTO_TCP)
+				goto skip_trace_print_tcp_tx;
+
+			snprintf(saddr, INET6_ADDRSTRLEN, "%pI4", &ip_hdr(skb)->saddr);
+			snprintf(daddr, INET6_ADDRSTRLEN, "%pI4", &ip_hdr(skb)->daddr);
+		}
+
+		if (skb->protocol == htons(ETH_P_IPV6)) {
+			if (ipv6_hdr(skb)->nexthdr != IPPROTO_TCP)
+				goto skip_trace_print_tcp_tx;
+
+			snprintf(saddr, INET6_ADDRSTRLEN, "%pI6", &ipv6_hdr(skb)->saddr);
+			snprintf(daddr, INET6_ADDRSTRLEN, "%pI6", &ipv6_hdr(skb)->daddr);
+		}
+
+		trace_print_tcp_tx(skb, saddr, daddr, tcp_hdr(skb));
+	}
+
+skip_trace_print_tcp_tx:
+	if (trace_print_udp_tx_enabled()) {
+		char saddr[INET6_ADDRSTRLEN], daddr[INET6_ADDRSTRLEN];
+
+		memset(saddr, 0, INET6_ADDRSTRLEN);
+		memset(daddr, 0, INET6_ADDRSTRLEN);
+
+		if (skb->protocol == htons(ETH_P_IP)) {
+			if (ip_hdr(skb)->protocol != IPPROTO_UDP)
+				goto skip_trace_print_udp_tx;
+
+			snprintf(saddr, INET6_ADDRSTRLEN, "%pI4", &ip_hdr(skb)->saddr);
+			snprintf(daddr, INET6_ADDRSTRLEN, "%pI4", &ip_hdr(skb)->daddr);
+		}
+
+		if (skb->protocol == htons(ETH_P_IPV6)) {
+			if (ipv6_hdr(skb)->nexthdr != IPPROTO_UDP)
+				goto skip_trace_print_udp_tx;
+
+			snprintf(saddr, INET6_ADDRSTRLEN, "%pI6", &ipv6_hdr(skb)->saddr);
+			snprintf(daddr, INET6_ADDRSTRLEN, "%pI6", &ipv6_hdr(skb)->daddr);
+		}
+
+		trace_print_udp_tx(skb, saddr, daddr, udp_hdr(skb));
+	}
+
+skip_trace_print_udp_tx:
 	if (trace_print_skb_gso_enabled()) {
 		char saddr[INET6_ADDRSTRLEN], daddr[INET6_ADDRSTRLEN];
 		u16 ip_proto = 0, xport_proto = 0;
