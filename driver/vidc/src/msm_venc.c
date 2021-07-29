@@ -1386,8 +1386,6 @@ int msm_venc_s_selection(struct msm_vidc_inst* inst, struct v4l2_selection* s)
 	}
 
 	switch (s->target) {
-	case V4L2_SEL_TGT_CROP_BOUNDS:
-	case V4L2_SEL_TGT_CROP_DEFAULT:
 	case V4L2_SEL_TGT_CROP:
 		if (s->r.left || s->r.top) {
 			i_vpr_h(inst, "%s: unsupported top %d or left %d\n",
@@ -1422,9 +1420,6 @@ int msm_venc_s_selection(struct msm_vidc_inst* inst, struct v4l2_selection* s)
 		if (rc)
 			return rc;
 		break;
-	case V4L2_SEL_TGT_COMPOSE_BOUNDS:
-	case V4L2_SEL_TGT_COMPOSE_PADDED:
-	case V4L2_SEL_TGT_COMPOSE_DEFAULT:
 	case V4L2_SEL_TGT_COMPOSE:
 		if (s->r.left < inst->crop.left) {
 			i_vpr_e(inst,
