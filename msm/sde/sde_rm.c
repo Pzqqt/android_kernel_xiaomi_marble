@@ -2548,6 +2548,7 @@ int sde_rm_reserve(
 	 */
 	if (test_only && rsvp_nxt) {
 		rsvp_nxt = _sde_rm_poll_get_rsvp_nxt_locked(rm, enc);
+		rsvp_cur = _sde_rm_get_rsvp_cur(rm, enc);
 		if (rsvp_nxt) {
 			pr_err("poll timeout cur %d nxt %d enc %d\n",
 				(rsvp_cur) ? rsvp_cur->seq : -1,
