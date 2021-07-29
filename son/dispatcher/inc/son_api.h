@@ -63,12 +63,34 @@ QDF_STATUS wlan_son_peer_set_kickout_allow(struct wlan_objmgr_vdev *vdev,
 bool wlan_son_peer_is_kickout_allow(struct wlan_objmgr_vdev *vdev,
 				    uint8_t *macaddr);
 
+/**
+ * wlan_son_ind_assoc_req_frm() - indicate assoc req frame to son
+ * @vdev: pointer to vdev
+ * @is_reassoc: true if it is reassoc req
+ * @frame: frame body
+ * @frame_len: frame body length
+ * @status: assoc req frame is handled successfully
+ *
+ * Return: Void
+ */
+void wlan_son_ind_assoc_req_frm(struct wlan_objmgr_vdev *vdev,
+				uint8_t *macaddr, bool is_reassoc,
+				uint8_t *frame, uint16_t frame_len,
+				QDF_STATUS status);
 #else
 
 static inline bool wlan_son_peer_is_kickout_allow(struct wlan_objmgr_vdev *vdev,
 						  uint8_t *macaddr)
 {
 	return true;
+}
+
+static inline
+void wlan_son_ind_assoc_req_frm(struct wlan_objmgr_vdev *vdev,
+				uint8_t *macaddr, bool is_reassoc,
+				uint8_t *frame, uint16_t frame_len,
+				QDF_STATUS status)
+{
 }
 #endif /*WLAN_FEATURE_SON*/
 #endif
