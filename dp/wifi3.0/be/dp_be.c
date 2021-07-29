@@ -40,6 +40,42 @@ qdf_size_t dp_get_context_size_be(enum dp_context_type context_type)
 }
 
 #ifdef DP_FEATURE_HW_COOKIE_CONVERSION
+#if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
+/**
+ * dp_cc_wbm_sw_en_cfg() - configure HW cookie conversion enablement
+			   per wbm2sw ring
+ * @cc_cfg: HAL HW cookie conversion configuration structure pointer
+ *
+ * Return: None
+ */
+static inline
+void dp_cc_wbm_sw_en_cfg(struct hal_hw_cc_config *cc_cfg)
+{
+	cc_cfg->wbm2sw6_cc_en = 1;
+	cc_cfg->wbm2sw5_cc_en = 1;
+	cc_cfg->wbm2sw4_cc_en = 1;
+	cc_cfg->wbm2sw3_cc_en = 1;
+	cc_cfg->wbm2sw2_cc_en = 1;
+	/* disable wbm2sw1 hw cc as it's for FW */
+	cc_cfg->wbm2sw1_cc_en = 0;
+	cc_cfg->wbm2sw0_cc_en = 1;
+	cc_cfg->wbm2fw_cc_en = 0;
+}
+#else
+static inline
+void dp_cc_wbm_sw_en_cfg(struct hal_hw_cc_config *cc_cfg)
+{
+	cc_cfg->wbm2sw6_cc_en = 1;
+	cc_cfg->wbm2sw5_cc_en = 1;
+	cc_cfg->wbm2sw4_cc_en = 1;
+	cc_cfg->wbm2sw3_cc_en = 1;
+	cc_cfg->wbm2sw2_cc_en = 1;
+	cc_cfg->wbm2sw1_cc_en = 1;
+	cc_cfg->wbm2sw0_cc_en = 1;
+	cc_cfg->wbm2fw_cc_en = 0;
+}
+#endif
+
 /**
  * dp_cc_reg_cfg_init() - initialize and configure HW cookie
 			  conversion register
@@ -68,14 +104,7 @@ static void dp_cc_reg_cfg_init(struct dp_soc *soc,
 	/* 36th bit should be 1 then HW know this is CMEM address */
 	cc_cfg.lut_base_addr_39_32 = 0x10;
 
-	cc_cfg.wbm2sw6_cc_en = 1;
-	cc_cfg.wbm2sw5_cc_en = 1;
-	cc_cfg.wbm2sw4_cc_en = 1;
-	cc_cfg.wbm2sw3_cc_en = 1;
-	cc_cfg.wbm2sw2_cc_en = 1;
-	cc_cfg.wbm2sw1_cc_en = 1;
-	cc_cfg.wbm2sw0_cc_en = 1;
-	cc_cfg.wbm2fw_cc_en = 0;
+	dp_cc_wbm_sw_en_cfg(&cc_cfg);
 
 	hal_cookie_conversion_reg_cfg_be(soc->hal_soc, &cc_cfg);
 }
