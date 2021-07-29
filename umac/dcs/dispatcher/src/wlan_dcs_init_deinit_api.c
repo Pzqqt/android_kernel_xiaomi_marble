@@ -201,6 +201,8 @@ QDF_STATUS wlan_dcs_psoc_open(struct wlan_objmgr_psoc *psoc)
 				cfg_get(psoc, CFG_DCS_INTFR_DETECTION_WINDOW);
 		dcs_pdev_priv->dcs_host_params.tx_err_threshold =
 				cfg_get(psoc, CFG_DCS_TX_ERR_THRESHOLD);
+		dcs_pdev_priv->dcs_host_params.force_disable_algorithm =
+				cfg_get(psoc, CFG_DCS_DISABLE_ALGORITHM);
 		dcs_pdev_priv->dcs_freq_ctrl_params.
 					disable_threshold_per_5mins =
 			cfg_get(psoc, CFG_DCS_DISABLE_THRESHOLD_PER_5MINS);

@@ -21,6 +21,7 @@
 
 #include "wlan_dcs_ucfg_api.h"
 #include "../../core/src/wlan_dcs.h"
+#include "wlan_objmgr_vdev_obj.h"
 
 void ucfg_dcs_register_cb(
 			struct wlan_objmgr_psoc *psoc,
@@ -180,4 +181,24 @@ void ucfg_dcs_set_user_request(struct wlan_objmgr_psoc *psoc, uint8_t mac_id,
 	wlan_dcs_pdev_obj_lock(dcs_pdev_priv);
 	dcs_pdev_priv->dcs_host_params.user_request_count = user_request_count;
 	wlan_dcs_pdev_obj_unlock(dcs_pdev_priv);
+}
+
+QDF_STATUS ucfg_dcs_get_ch_util(struct wlan_objmgr_psoc *psoc, uint8_t mac_id,
+				struct wlan_host_dcs_ch_util_stats *dcs_stats)
+{
+	struct dcs_pdev_priv_obj *dcs_pdev_priv;
+
+	dcs_pdev_priv = wlan_dcs_get_pdev_private_obj(psoc, mac_id);
+	if (!dcs_pdev_priv) {
+		dcs_err("dcs pdev private object is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wlan_dcs_pdev_obj_lock(dcs_pdev_priv);
+	qdf_mem_copy(dcs_stats,
+		     &dcs_pdev_priv->dcs_im_stats.dcs_ch_util_im_stats,
+		     sizeof(*dcs_stats));
+	wlan_dcs_pdev_obj_unlock(dcs_pdev_priv);
+
+	return QDF_STATUS_SUCCESS;
 }

@@ -226,6 +226,31 @@ wlan_dcs_im_print_stats(struct wlan_host_dcs_im_tgt_stats *prev_stats,
 }
 
 /**
+ * wlan_dcs_update_chan_util() - update chan utilization of dcs stats
+ * @p_dcs_im_stats: pointer to pdev_dcs_im_stats
+ * @rx_cu: rx channel utilization
+ * @tx_cu: tx channel utilization
+ * @obss_rx_cu: obss rx channel utilization
+ * @total_cu: total channel utilization
+ * @chan_nf: Channel noise floor (units are in dBm)
+ *
+ * Return: Void
+ */
+static void wlan_dcs_update_chan_util(struct pdev_dcs_im_stats *p_dcs_im_stats,
+				      uint32_t rx_cu, uint32_t tx_cu,
+				      uint32_t obss_rx_cu,
+				      uint32_t total_cu, uint32_t chan_nf)
+{
+	if (p_dcs_im_stats) {
+		p_dcs_im_stats->dcs_ch_util_im_stats.rx_cu = rx_cu;
+		p_dcs_im_stats->dcs_ch_util_im_stats.tx_cu = tx_cu;
+		p_dcs_im_stats->dcs_ch_util_im_stats.obss_rx_cu = obss_rx_cu;
+		p_dcs_im_stats->dcs_ch_util_im_stats.total_cu = total_cu;
+		p_dcs_im_stats->dcs_ch_util_im_stats.chan_nf = chan_nf;
+	}
+}
+
+/**
  * wlan_dcs_wlan_interference_process() - dcs detection algorithm handling
  * @curr_stats: current target im stats pointer
  * @dcs_pdev_priv: dcs pdev priv pointer
@@ -252,6 +277,7 @@ wlan_dcs_wlan_interference_process(
 	uint32_t reg_total_cu = 0;
 	uint32_t reg_tx_cu = 0;
 	uint32_t reg_rx_cu = 0;
+	uint32_t obss_rx_cu = 0;
 	uint32_t reg_unused_cu = 0;
 	uint32_t rx_time_cu = 0;
 	uint32_t reg_ofdm_phyerr_delta = 0;
@@ -363,16 +389,6 @@ wlan_dcs_wlan_interference_process(
 	wlan_dcs_pdev_obj_unlock(dcs_pdev_priv);
 
 	/*
-	 * For below scenario, will ignore dcs event data and won't do
-	 * interference detection algorithm calculation:
-	 * 1: Current SAP channel isn't on 5G band
-	 * 2: In the process of ACS
-	 * 3: In the process of dcs disabling dcs_restart_delay time duration
-	 */
-	if (!dcs_host_params.dcs_algorithm_process)
-		goto copy_stats;
-
-	/*
 	 * Total channel utiliztaion is the amount of time RXCLR is
 	 * counted. RXCLR is counted, when 'RX is NOT clear', please
 	 * refer to mac documentation. It means either TX or RX is ON
@@ -385,6 +401,11 @@ wlan_dcs_wlan_interference_process(
 	reg_tx_cu = ((tx_frame_delta >> 8) * 100) / (cycle_count_delta >> 8);
 	reg_rx_cu = ((rx_frame_delta >> 8) * 100) / (cycle_count_delta >> 8);
 	rx_time_cu = ((curr_stats->rx_time >> 8) * 100) / (reg_tsf_delta >> 8);
+	obss_rx_cu = (((rx_frame_delta - my_bss_rx_delta) >> 8) * 100) /
+		     (cycle_count_delta >> 8);
+	wlan_dcs_update_chan_util(p_dcs_im_stats, reg_rx_cu, reg_tx_cu,
+				  obss_rx_cu, reg_total_cu,
+				  curr_stats->chan_nf);
 
 	/*
 	 * Amount of the time AP received cannot go higher than the receive
@@ -395,8 +416,20 @@ wlan_dcs_wlan_interference_process(
 		rx_time_cu = reg_rx_cu;
 
 	if (unlikely(dcs_host_params.dcs_debug >= DCS_DEBUG_VERBOSE))
-		dcs_debug("reg_total_cu: %u, reg_tx_cu: %u, reg_rx_cu: %u, rx_time_cu: %u",
-			  reg_total_cu, reg_tx_cu, reg_rx_cu, rx_time_cu);
+		dcs_debug("reg_total_cu: %u, reg_tx_cu: %u, reg_rx_cu: %u, rx_time_cu: %u, obss_rx_cu: %u dcs_algorithm: %d",
+			  reg_total_cu, reg_tx_cu, reg_rx_cu,
+			  rx_time_cu, obss_rx_cu,
+			  dcs_host_params.dcs_algorithm_process);
+
+	/*
+	 * For below scenario, will ignore dcs event data and won't do
+	 * interference detection algorithm calculation:
+	 * 1: Current SAP channel isn't on 5G band
+	 * 2: In the process of ACS
+	 * 3: In the process of dcs disabling dcs_restart_delay time duration
+	 */
+	if (!dcs_host_params.dcs_algorithm_process)
+		goto copy_stats;
 
 	/*
 	 * Unusable channel utilization is amount of time that we
@@ -1420,6 +1453,12 @@ void wlan_dcs_set_algorithm_process(struct wlan_objmgr_psoc *psoc,
 	dcs_pdev_priv = wlan_dcs_get_pdev_private_obj(psoc, pdev_id);
 	if (!dcs_pdev_priv) {
 		dcs_err("dcs pdev private object is null");
+		return;
+	}
+
+	if (dcs_pdev_priv->dcs_host_params.force_disable_algorithm) {
+		dcs_debug("dcs alorithm is disabled forcely");
+		dcs_pdev_priv->dcs_host_params.dcs_algorithm_process = false;
 		return;
 	}
 

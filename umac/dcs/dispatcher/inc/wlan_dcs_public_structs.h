@@ -98,6 +98,22 @@ struct wlan_host_dcs_im_tgt_stats {
 };
 
 /**
+ * struct wlan_host_dcs_ch_util_stats - DCS IM chan utilization stats
+ * @rx_cu: rx channel utilization
+ * @tx_cu: tx channel utilization
+ * @rx_obss_cu: obss rx channel utilization
+ * @total_cu: total channel utilization
+ * @chan_nf: Channel noise floor (units are in dBm)
+ */
+struct wlan_host_dcs_ch_util_stats {
+	uint32_t rx_cu;
+	uint32_t tx_cu;
+	uint32_t obss_rx_cu;
+	uint32_t total_cu;
+	uint32_t chan_nf;
+};
+
+/**
  * struct wlan_host_dcs_im_user_stats - DCS IM stats requested by userspace
  * @max_rssi: max rssi of the bss traffic
  * @min_rssi: min rssi of the bss traffic
