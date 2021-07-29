@@ -244,6 +244,7 @@ QDF_STATUS wlan_mlme_set_dual_sta_policy(struct wlan_objmgr_psoc *psoc,
 
 	mlme_obj->cfg.gen.dual_sta_policy.concurrent_sta_policy =
 								dual_sta_config;
+	mlme_debug("Set dual_sta_config to :%d", dual_sta_config);
 
 	return QDF_STATUS_SUCCESS;
 }

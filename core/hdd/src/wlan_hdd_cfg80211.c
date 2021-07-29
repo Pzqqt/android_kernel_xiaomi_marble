@@ -8532,6 +8532,13 @@ static int hdd_set_primary_interface(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
+	/* After SSR, the dual sta configuration is lost. As SSR is hidden from
+	 * userland, this command will not come from userspace after a SSR. To
+	 * restore this configuration, save this in hdd context and restore
+	 * after re-init.
+	 */
+	hdd_ctx->dual_sta_policy.primary_vdev_id = primary_vdev_id;
+
 	count = policy_mgr_mode_specific_connection_count(hdd_ctx->psoc,
 							  PM_STA_MODE, NULL);
 
@@ -12364,6 +12371,13 @@ static int __wlan_hdd_cfg80211_dual_sta_policy(struct wiphy *wiphy,
 		hdd_err("failed to set MLME dual sta config");
 		return -EINVAL;
 	}
+
+	/* After SSR, the dual sta configuration is lost. As SSR is hidden from
+	 * userland, this command will not come from userspace after a SSR. To
+	 * restore this configuration, save this in hdd context and restore
+	 * after re-init.
+	 */
+	hdd_ctx->dual_sta_policy.dual_sta_policy = dual_sta_config;
 
 	return 0;
 }

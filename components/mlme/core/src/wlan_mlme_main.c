@@ -2422,16 +2422,18 @@ mlme_init_iot_cfg(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
- * mlme_init_primary_iface - Initialize primary iface
+ * mlme_init_dual_sta_config - Initialize dual sta configuratons
  *
  * @gen: Generic CFG config items
  *
  * Return: None
  */
 static void
-mlme_init_primary_iface(struct wlan_mlme_generic *gen)
+mlme_init_dual_sta_config(struct wlan_mlme_generic *gen)
 {
 	gen->dual_sta_policy.primary_vdev_id = WLAN_UMAC_VDEV_ID_MAX;
+	gen->dual_sta_policy.concurrent_sta_policy =
+				QCA_WLAN_CONCURRENT_STA_POLICY_UNBIASED;
 }
 
 QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
@@ -2488,7 +2490,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_roam_score_config(psoc, mlme_cfg);
 	mlme_init_ratemask_cfg(psoc, &mlme_cfg->ratemask_cfg);
 	mlme_init_iot_cfg(psoc, &mlme_cfg->iot);
-	mlme_init_primary_iface(&mlme_cfg->gen);
+	mlme_init_dual_sta_config(&mlme_cfg->gen);
 
 	return status;
 }

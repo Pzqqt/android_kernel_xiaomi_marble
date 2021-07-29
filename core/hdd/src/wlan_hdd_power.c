@@ -1704,6 +1704,36 @@ static inline void hdd_wlan_ssr_reinit_event(void)
 #endif
 
 /**
+ * hdd_restore_dual_sta_config() - Restore dual sta configuration
+ * @hdd_ctx: pointer to struct hdd_context
+ *
+ * Return: None
+ */
+static void hdd_restore_dual_sta_config(struct hdd_context *hdd_ctx)
+{
+	QDF_STATUS status;
+	struct hdd_dual_sta_policy *sta_policy;
+
+	sta_policy = &hdd_ctx->dual_sta_policy;
+
+	hdd_debug("Restore dual sta config: Primary vdev_id:%d, sta policy:%d",
+		  sta_policy->primary_vdev_id,
+		  sta_policy->dual_sta_policy);
+
+	status =
+		ucfg_mlme_set_primary_interface(hdd_ctx->psoc,
+						sta_policy->primary_vdev_id);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("could not set primary interface, %d", status);
+
+	status =
+		ucfg_mlme_set_dual_sta_policy(hdd_ctx->psoc,
+					      sta_policy->dual_sta_policy);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("failed to set mlme dual sta config");
+}
+
+/**
  * hdd_send_default_scan_ies - send default scan ies to fw
  *
  * This function is used to send default scan ies to fw
@@ -1854,6 +1884,7 @@ QDF_STATUS hdd_wlan_re_init(void)
 	hdd_restore_sar_config(hdd_ctx);
 
 	hdd_send_default_scan_ies(hdd_ctx);
+	hdd_restore_dual_sta_config(hdd_ctx);
 	hdd_info("WLAN host driver reinitiation completed!");
 
 	ucfg_mlme_get_sap_internal_restart(hdd_ctx->psoc, &value);
