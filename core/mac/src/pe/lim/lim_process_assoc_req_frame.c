@@ -44,6 +44,7 @@
 #include "wlan_utility.h"
 #include "wlan_crypto_global_api.h"
 #include "lim_mlo.h"
+#include <son_api.h>
 
 /**
  * lim_convert_supported_channels - Parses channel support IE
@@ -3208,6 +3209,12 @@ QDF_STATUS lim_send_mlm_assoc_ind(struct mac_context *mac_ctx,
 		 QDF_MAC_ADDR_FMT, session_entry->peSessionId,
 		 assoc_req->ssId.ssId, sub_type, sta_ds->assocId,
 		 QDF_MAC_ADDR_REF(sta_ds->staAddr));
+
+	wlan_son_ind_assoc_req_frm(session_entry->vdev, sta_ds->staAddr,
+				   assoc_req->reassocRequest,
+				   qdf_nbuf_data(assoc_req->assoc_req_buf),
+				   qdf_nbuf_len(assoc_req->assoc_req_buf),
+				   QDF_STATUS_SUCCESS);
 
 	if (sub_type == LIM_ASSOC || sub_type == LIM_REASSOC) {
 		temp = sizeof(tLimMlmAssocInd);
