@@ -2288,6 +2288,10 @@ int msm_vdec_g_selection(struct msm_vidc_inst* inst, struct v4l2_selection* s)
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
+	if (s->type != OUTPUT_MPLANE && s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE) {
+		i_vpr_e(inst, "%s: invalid type %d\n", __func__, s->type);
+		return -EINVAL;
+	}
 
 	switch (s->target) {
 	case V4L2_SEL_TGT_CROP_BOUNDS:
@@ -2297,12 +2301,15 @@ int msm_vdec_g_selection(struct msm_vidc_inst* inst, struct v4l2_selection* s)
 	case V4L2_SEL_TGT_COMPOSE_PADDED:
 	case V4L2_SEL_TGT_COMPOSE_DEFAULT:
 	case V4L2_SEL_TGT_COMPOSE:
-	default:
 		s->r.left = inst->crop.left;
 		s->r.top = inst->crop.top;
 		s->r.width = inst->crop.width;
 		s->r.height = inst->crop.height;
 		break;
+	default:
+		i_vpr_e(inst, "%s: invalid target %d\n",
+			__func__, s->target);
+		return -EINVAL;
 	}
 	i_vpr_h(inst, "%s: target %d, r [%d, %d, %d, %d]\n",
 		__func__, s->target, s->r.top, s->r.left,
