@@ -6799,10 +6799,20 @@ static void ipa_cfg_qtime(void)
 
 	/* Configure timers pulse generators granularity */
 	memset(&gran_cfg, 0, sizeof(gran_cfg));
-	gran_cfg.gran_0 = IPA_TIMERS_TIME_GRAN_100_USEC;
-	gran_cfg.gran_1 = IPA_TIMERS_TIME_GRAN_1_MSEC;
-	gran_cfg.gran_2 = IPA_TIMERS_TIME_GRAN_1_MSEC;
-	gran_cfg.gran_3 = IPA_TIMERS_TIME_GRAN_1_MSEC;
+	if (ipa3_ctx->ipa_hw_type < IPA_HW_v5_0)
+	{
+		gran_cfg.gran_0 = IPA_TIMERS_TIME_GRAN_100_USEC;
+		gran_cfg.gran_1 = IPA_TIMERS_TIME_GRAN_1_MSEC;
+		gran_cfg.gran_2 = IPA_TIMERS_TIME_GRAN_1_MSEC;
+		gran_cfg.gran_3 = IPA_TIMERS_TIME_GRAN_1_MSEC;
+	}
+	else
+	{
+		gran_cfg.gran_0 = IPA_TIMERS_TIME_GRAN_100_USEC;
+		gran_cfg.gran_1 = IPA_TIMERS_TIME_GRAN_1_MSEC;
+		gran_cfg.gran_2 = IPA_TIMERS_TIME_GRAN_10_MSEC;
+		gran_cfg.gran_3 = IPA_TIMERS_TIME_GRAN_10_MSEC;
+	}
 	val = ipahal_read_reg(IPA_TIMERS_PULSE_GRAN_CFG);
 	IPADBG("timer pulse granularity before cfg: 0x%x\n", val);
 	ipahal_write_reg_fields(IPA_TIMERS_PULSE_GRAN_CFG, &gran_cfg);
@@ -8053,7 +8063,7 @@ static int ipa3_process_timer_cfg(u32 time_us,
 	u8 *pulse_gen, u8 *time_units)
 {
 	struct ipahal_reg_timers_pulse_gran_cfg gran_cfg;
-	u32 gran0_step, gran1_step;
+	u32 gran0_step, gran1_step, gran2_step;
 
 	IPADBG("time in usec=%u\n", time_us);
 
@@ -8072,10 +8082,11 @@ static int ipa3_process_timer_cfg(u32 time_us,
 
 	gran0_step = ipa3_time_gran_usec_step(gran_cfg.gran_0);
 	gran1_step = ipa3_time_gran_usec_step(gran_cfg.gran_1);
-	/* gran_2 and gran_3 are not used by AP */
+	gran2_step = ipa3_time_gran_usec_step(gran_cfg.gran_2);
+	/* gran_3 is not used by AP */
 
-	IPADBG("gran0 usec step=%u  gran1 usec step=%u\n",
-		gran0_step, gran1_step);
+	IPADBG("gran0 usec step=%u  gran1 usec step=%u gran2 usec step=%u\n",
+		gran0_step, gran1_step, gran2_step);
 
 	/* Lets try pulse generator #0 granularity */
 	if (!(time_us % gran0_step)) {
@@ -8099,6 +8110,18 @@ static int ipa3_process_timer_cfg(u32 time_us,
 			return 0;
 		}
 		IPADBG("gran1 cannot be used due to range limit\n");
+	}
+
+	/* Lets try pulse generator #2 granularity */
+	if (!(time_us % gran2_step)) {
+		if ((time_us / gran2_step) <= IPA_TIMER_SCALED_TIME_LIMIT) {
+			*pulse_gen = 2;
+			*time_units = time_us / gran2_step;
+			IPADBG("Matched: generator=2, units=%u\n",
+				*time_units);
+			return 0;
+		}
+		IPADBG("gran2 cannot be used due to range limit\n");
 	}
 
 	IPAERR("Cannot match requested time to configured granularities\n");
@@ -8156,7 +8179,6 @@ int ipa3_cfg_ep_aggr(u32 clnt_hdl, const struct ipa_ep_cfg_aggr *ep_aggr)
 		if (res) {
 			IPAERR("failed to process AGGR timer tmr=%u\n",
 				ep_aggr->aggr_time_limit);
-			ipa_assert();
 			res = -EINVAL;
 			goto complete;
 		}
