@@ -6714,14 +6714,18 @@ void dsi_display_adjust_mode_timing(struct dsi_display *display,
 	default:
 		break;
 	}
+
+	dsi_mode->pixel_clk_khz = div_u64(dsi_mode->timing.clk_rate_hz * lanes, bpp);
+	do_div(dsi_mode->pixel_clk_khz, 1000);
+	dsi_mode->pixel_clk_khz *= display->ctrl_count;
 }
 
 static void _dsi_display_populate_bit_clks(struct dsi_display *display, int start, int end)
 {
 	struct dsi_dyn_clk_caps *dyn_clk_caps;
-	struct dsi_display_mode *src;
+	struct dsi_display_mode *src, dst;
 	struct dsi_host_common_cfg *cfg;
-	int i, bpp, lanes = 0;
+	int i, j, bpp, lanes = 0;
 
 	if (!display)
 		return;
@@ -6754,9 +6758,33 @@ static void _dsi_display_populate_bit_clks(struct dsi_display *display, int star
 
 		dsi_display_adjust_mode_timing(display, src, lanes, bpp);
 
-		src->pixel_clk_khz = div_u64(src->timing.clk_rate_hz * lanes, bpp);
-		src->pixel_clk_khz /= 1000;
-		src->pixel_clk_khz *= display->ctrl_count;
+		/* populate mode adjusted values */
+		for (j = 0; j < src->priv_info->bit_clk_list.count; j++) {
+			memcpy(&dst, src, sizeof(struct dsi_display_mode));
+			memcpy(&dst.timing, &src->timing, sizeof(struct dsi_mode_info));
+			dst.timing.clk_rate_hz = src->priv_info->bit_clk_list.rates[j];
+
+			dsi_display_adjust_mode_timing(display, &dst, lanes, bpp);
+
+			/* store the list of RFI matching porches */
+			switch (dyn_clk_caps->type) {
+			case DSI_DYN_CLK_TYPE_CONST_FPS_ADJUST_HFP:
+				src->priv_info->bit_clk_list.front_porches[j] =
+						dst.timing.h_front_porch;
+				break;
+
+			case DSI_DYN_CLK_TYPE_CONST_FPS_ADJUST_VFP:
+				src->priv_info->bit_clk_list.front_porches[j] =
+						dst.timing.v_front_porch;
+				break;
+
+			default:
+				break;
+			}
+
+			/* store the list of RFI matching pixel clocks */
+			src->priv_info->bit_clk_list.pixel_clks_khz[j] = dst.pixel_clk_khz;
+		}
 	}
 }
 
@@ -7308,7 +7336,7 @@ int dsi_display_validate_mode_change(struct dsi_display *display,
 		}
 
 		/* dynamic clk change use case */
-		if (cur_mode->pixel_clk_khz != adj_mode->pixel_clk_khz) {
+		if (display->dyn_bit_clk_pending) {
 			if (dyn_clk_caps->dyn_clk_support) {
 				DSI_DEBUG("dynamic clk change detected\n");
 				if ((adj_mode->dsi_mode_flags &
@@ -7334,6 +7362,7 @@ int dsi_display_validate_mode_change(struct dsi_display *display,
 					cur_mode->pixel_clk_khz,
 					adj_mode->pixel_clk_khz);
 			}
+			display->dyn_bit_clk_pending = false;
 		}
 	}
 
@@ -8579,17 +8608,10 @@ int dsi_display_update_dyn_bit_clk(struct dsi_display *display,
 
 	dsi_display_adjust_mode_timing(display, mode, lanes, bpp);
 
-	/* adjust pixel clock based on dynamic bit clock */
-	mode->pixel_clk_khz = div_u64(mode->timing.clk_rate_hz * lanes, bpp);
-	do_div(mode->pixel_clk_khz, 1000);
-	mode->pixel_clk_khz *= display->ctrl_count;
-
 	SDE_EVT32(display->dyn_bit_clk, mode->priv_info->min_dsi_clk_hz, mode->pixel_clk_khz);
 	DSI_DEBUG("dynamic bit clk:%u, min dsi clk:%llu, lanes:%d, bpp:%d, pck:%d Khz\n",
 			display->dyn_bit_clk, mode->priv_info->min_dsi_clk_hz, lanes, bpp,
 			mode->pixel_clk_khz);
-
-	display->dyn_bit_clk_pending = false;
 
 	return 0;
 }

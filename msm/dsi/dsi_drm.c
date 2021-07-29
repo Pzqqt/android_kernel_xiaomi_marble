@@ -71,6 +71,7 @@ static void msm_parse_mode_priv_info(const struct msm_display_mode *msm_mode,
 		dsi_mode->timing.vdc_enabled = dsi_mode->priv_info->vdc_enabled;
 		dsi_mode->timing.vdc = &dsi_mode->priv_info->vdc;
 		dsi_mode->timing.pclk_scale = dsi_mode->priv_info->pclk_scale;
+		dsi_mode->timing.clk_rate_hz = dsi_mode->priv_info->clk_rate_hz;
 	}
 
 	if (msm_is_mode_seamless(msm_mode))
@@ -500,7 +501,8 @@ static bool dsi_bridge_mode_fixup(struct drm_bridge *bridge,
 			dsi_mode.dsi_mode_flags &= ~DSI_MODE_FLAG_DMS;
 
 		/* No DMS/VRR when drm pipeline is changing */
-		if (!drm_mode_equal(cur_mode, adjusted_mode) &&
+		if (!dsi_display_mode_match(&cur_dsi_mode, &dsi_mode,
+			DSI_MODE_MATCH_FULL_TIMINGS) &&
 			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_VRR)) &&
 			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_DYN_CLK)) &&
 			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_POMS_TO_VID)) &&
@@ -589,12 +591,13 @@ int dsi_conn_get_mode_info(struct drm_connector *connector,
 	struct dsi_display_mode partial_dsi_mode, *dsi_mode = NULL;
 	struct dsi_mode_info *timing;
 	int src_bpp, tar_bpp, rc = 0;
+	struct dsi_display *dsi_display = (struct dsi_display *) display;
 
 	if (!drm_mode || !mode_info)
 		return -EINVAL;
 
 	convert_to_dsi_mode(drm_mode, &partial_dsi_mode);
-	rc = dsi_display_find_mode(display, &partial_dsi_mode, sub_mode, &dsi_mode);
+	rc = dsi_display_find_mode(dsi_display, &partial_dsi_mode, NULL, &dsi_mode);
 	if (rc || !dsi_mode->priv_info)
 		return -EINVAL;
 
@@ -607,7 +610,6 @@ int dsi_conn_get_mode_info(struct drm_connector *connector,
 	mode_info->jitter_numer = dsi_mode->priv_info->panel_jitter_numer;
 	mode_info->jitter_denom = dsi_mode->priv_info->panel_jitter_denom;
 	mode_info->dfps_maxfps = dsi_drm_get_dfps_maxfps(display);
-	mode_info->clk_rate = dsi_mode->timing.clk_rate_hz;
 	mode_info->panel_mode_caps = dsi_mode->panel_mode_caps;
 	mode_info->mdp_transfer_time_us =
 		dsi_mode->priv_info->mdp_transfer_time_us;
@@ -617,11 +619,22 @@ int dsi_conn_get_mode_info(struct drm_connector *connector,
 			sizeof(struct msm_display_topology));
 
 	if (dsi_mode->priv_info->bit_clk_list.count) {
-		mode_info->bit_clk_rates =
-				dsi_mode->priv_info->bit_clk_list.rates;
-		mode_info->bit_clk_count =
-				dsi_mode->priv_info->bit_clk_list.count;
+		struct msm_dyn_clk_list *dyn_clk_list = &mode_info->dyn_clk_list;
+
+		dyn_clk_list->rates = dsi_mode->priv_info->bit_clk_list.rates;
+		dyn_clk_list->count = dsi_mode->priv_info->bit_clk_list.count;
+		dyn_clk_list->type = dsi_display->panel->dyn_clk_caps.type;
+		dyn_clk_list->front_porches = dsi_mode->priv_info->bit_clk_list.front_porches;
+		dyn_clk_list->pixel_clks_khz = dsi_mode->priv_info->bit_clk_list.pixel_clks_khz;
+
+		rc = dsi_display_restore_bit_clk(dsi_display, dsi_mode);
+		if (rc) {
+			DSI_ERR("[%s] bit clk rate cannot be restored\n", dsi_display->name);
+			return rc;
+		}
 	}
+
+	mode_info->clk_rate = dsi_mode->timing.clk_rate_hz;
 
 	if (dsi_mode->priv_info->dsc_enabled) {
 		mode_info->comp_info.comp_type = MSM_DISPLAY_COMPRESSION_DSC;
@@ -845,6 +858,12 @@ void dsi_conn_set_submode_blob_info(struct drm_connector *conn,
 	struct dsi_display_mode partial_dsi_mode;
 	int count, i;
 	int preferred_submode_idx = -EINVAL;
+	enum dsi_dyn_clk_feature_type dyn_clk_type;
+	char *dyn_clk_types[DSI_DYN_CLK_TYPE_MAX] = {
+		[DSI_DYN_CLK_TYPE_LEGACY] = "none",
+		[DSI_DYN_CLK_TYPE_CONST_FPS_ADJUST_HFP] = "hfp",
+		[DSI_DYN_CLK_TYPE_CONST_FPS_ADJUST_VFP] = "vfp",
+	};
 
 	if (!conn || !display || !drm_mode) {
 		DSI_ERR("Invalid params\n");
@@ -861,35 +880,46 @@ void dsi_conn_set_submode_blob_info(struct drm_connector *conn,
 		u32 panel_mode_caps = 0;
 		const char *topo_name = NULL;
 
-		if (dsi_display_mode_match(&partial_dsi_mode, dsi_mode,
-				DSI_MODE_MATCH_FULL_TIMINGS)) {
+		if (!dsi_display_mode_match(&partial_dsi_mode, dsi_mode,
+				DSI_MODE_MATCH_FULL_TIMINGS))
+			continue;
 
-			sde_kms_info_add_keyint(info, "submode_idx", i);
+		sde_kms_info_add_keyint(info, "submode_idx", i);
 
-			if (dsi_mode->is_preferred)
-				preferred_submode_idx = i;
+		if (dsi_mode->is_preferred)
+			preferred_submode_idx = i;
 
-			if (dsi_mode->panel_mode_caps & DSI_OP_CMD_MODE)
-				panel_mode_caps |= DRM_MODE_FLAG_CMD_MODE_PANEL;
-			if (dsi_mode->panel_mode_caps & DSI_OP_VIDEO_MODE)
-				panel_mode_caps |= DRM_MODE_FLAG_VID_MODE_PANEL;
+		if (dsi_mode->panel_mode_caps & DSI_OP_CMD_MODE)
+			panel_mode_caps |= DRM_MODE_FLAG_CMD_MODE_PANEL;
+		if (dsi_mode->panel_mode_caps & DSI_OP_VIDEO_MODE)
+			panel_mode_caps |= DRM_MODE_FLAG_VID_MODE_PANEL;
 
-			sde_kms_info_add_keyint(info, "panel_mode_capabilities",
-				panel_mode_caps);
+		sde_kms_info_add_keyint(info, "panel_mode_capabilities",
+			panel_mode_caps);
 
-			sde_kms_info_add_keyint(info, "dsc_mode",
-				dsi_mode->priv_info->dsc_enabled ? MSM_DISPLAY_DSC_MODE_ENABLED :
-					MSM_DISPLAY_DSC_MODE_DISABLED);
-			topo_name = sde_conn_get_topology_name(conn,
-				dsi_mode->priv_info->topology);
-			if (topo_name)
-				sde_kms_info_add_keystr(info, "topology", topo_name);
+		sde_kms_info_add_keyint(info, "dsc_mode",
+			dsi_mode->priv_info->dsc_enabled ? MSM_DISPLAY_DSC_MODE_ENABLED :
+				MSM_DISPLAY_DSC_MODE_DISABLED);
+		topo_name = sde_conn_get_topology_name(conn,
+			dsi_mode->priv_info->topology);
+		if (topo_name)
+			sde_kms_info_add_keystr(info, "topology", topo_name);
 
-			if (dsi_mode->priv_info->bit_clk_list.count > 0)
-				sde_kms_info_add_list(info, "dyn_bitclk_list",
-						dsi_mode->priv_info->bit_clk_list.rates,
-						dsi_mode->priv_info->bit_clk_list.count);
-		}
+		if (!dsi_mode->priv_info->bit_clk_list.count)
+			continue;
+
+		dyn_clk_type = dsi_display->panel->dyn_clk_caps.type;
+		sde_kms_info_add_list(info, "dyn_bitclk_list",
+				dsi_mode->priv_info->bit_clk_list.rates,
+				dsi_mode->priv_info->bit_clk_list.count);
+		sde_kms_info_add_keystr(info, "dyn_fp_type",
+				dyn_clk_types[dyn_clk_type]);
+		sde_kms_info_add_list(info, "dyn_fp_list",
+				dsi_mode->priv_info->bit_clk_list.front_porches,
+				dsi_mode->priv_info->bit_clk_list.count);
+		sde_kms_info_add_list(info, "dyn_pclk_list",
+				dsi_mode->priv_info->bit_clk_list.pixel_clks_khz,
+				dsi_mode->priv_info->bit_clk_list.count);
 	}
 
 	if (preferred_submode_idx >= 0)

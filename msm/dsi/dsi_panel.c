@@ -1388,7 +1388,7 @@ static int dsi_panel_parse_dyn_clk_list(struct dsi_display_mode *mode,
 		struct dsi_parser_utils *utils)
 {
 	int i, rc = 0;
-	struct dyn_clk_list *bit_clk_list;
+	struct msm_dyn_clk_list *bit_clk_list;
 
 	if (!mode || !mode->priv_info) {
 		DSI_ERR("invalid arguments\n");
@@ -1398,26 +1398,51 @@ static int dsi_panel_parse_dyn_clk_list(struct dsi_display_mode *mode,
 	bit_clk_list = &mode->priv_info->bit_clk_list;
 
 	bit_clk_list->count = utils->count_u32_elems(utils->data, "qcom,dsi-dyn-clk-list");
-	if (bit_clk_list->count < 1)
-		return 0;
+	if (bit_clk_list->count < 1 || bit_clk_list->count > 100) {
+		DSI_ERR("invalid number of bit clock values, must be between 1 and 100\n");
+		return -EINVAL;
+	}
 
 	bit_clk_list->rates = kcalloc(bit_clk_list->count, sizeof(u32), GFP_KERNEL);
 	if (!bit_clk_list->rates) {
 		DSI_ERR("failed to allocate space for bit clock list\n");
-		return -ENOMEM;
+		rc = -ENOMEM;
+		goto error;
+	}
+
+	bit_clk_list->front_porches = kcalloc(bit_clk_list->count, sizeof(u32), GFP_KERNEL);
+	if (!bit_clk_list->front_porches) {
+		DSI_ERR("failed to allocate space for front porch list\n");
+		rc = -ENOMEM;
+		goto error;
+	}
+
+	bit_clk_list->pixel_clks_khz = kcalloc(bit_clk_list->count, sizeof(u32), GFP_KERNEL);
+	if (!bit_clk_list->pixel_clks_khz) {
+		DSI_ERR("failed to allocate space for pclk list\n");
+		rc = -ENOMEM;
+		goto error;
 	}
 
 	rc = utils->read_u32_array(utils->data, "qcom,dsi-dyn-clk-list",
 			bit_clk_list->rates, bit_clk_list->count);
 	if (rc) {
-		DSI_ERR("failed to parse supported bit clk list, rc=%d\n", rc);
-		return -EINVAL;
+		DSI_ERR("failed to parse supported bit clk list values, rc=%d\n", rc);
+		goto error;
 	}
 
 	for (i = 0; i < bit_clk_list->count; i++)
 		DSI_DEBUG("bit clk rate[%d]:%d\n", i, bit_clk_list->rates[i]);
 
 	return 0;
+
+error:
+	bit_clk_list->count = 0;
+	kfree(bit_clk_list->rates);
+	kfree(bit_clk_list->front_porches);
+	kfree(bit_clk_list->pixel_clks_khz);
+
+	return rc;
 }
 
 static int dsi_panel_parse_dyn_clk_caps(struct dsi_panel *panel)
