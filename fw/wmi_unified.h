@@ -15806,6 +15806,30 @@ typedef struct {
     A_UINT32 bg_rssi_threshold;
 } wmi_ap_profile;
 
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_cnd_vendor_scoring_param */
+    A_UINT32 tlv_header;
+    /** Indicates the channel band for which these vendor scoring params needs to be applied.
+     *  Refer WLAN_ROAM_SCORE_MAX_BAND_INDEX for possible band_idx values.
+     */
+    A_UINT32 band_idx;
+    /** Below rssi/cu factor_value & factor_score param values are configured by vendor */
+    A_UINT32 rssi_factor_value1;
+    A_UINT32 rssi_factor_value2;
+    A_UINT32 rssi_factor_value3;
+    A_UINT32 rssi_factor_value4;
+    A_UINT32 rssi_factor_value5;
+    A_UINT32 rssi_factor_score1;
+    A_UINT32 rssi_factor_score2;
+    A_UINT32 rssi_factor_score3;
+    A_UINT32 rssi_factor_score4;
+    A_UINT32 rssi_factor_score5;
+    A_UINT32 cu_factor_value1;
+    A_UINT32 cu_factor_value2;
+    A_UINT32 cu_factor_score1;
+    A_UINT32 cu_factor_score2;
+} wmi_roam_cnd_vendor_scoring_param;
+
 /** Support early stop roaming scanning when finding a strong candidate AP
  * A 'strong' candidate is
  * 1) Is eligible candidate
@@ -15985,6 +16009,7 @@ typedef struct {
  *     wmi_roam_cnd_scoring_param roam_cnd_scoring_param
  *     wmi_roam_score_delta_param roam_score_delta_param_list[]
  *     wmi_roam_cnd_min_rssi_param roam_cnd_min_rssi_param_list[]
+ *     wmi_roam_cnd_vendor_scoring_param roam_cnd_vendor_scoring_param[]
  */
 } wmi_roam_ap_profile_fixed_param;
 
@@ -31044,6 +31069,12 @@ typedef struct {
      * than rssi_5g_threshold.
      */
     A_INT32 rssi_5g_threshold; /* units = dbm */
+    /** rssi_6g_threshold
+     * If connected AP is in 6Ghz, then consider bss load roam triggered
+     * only if load % > bss_load_threshold && connected AP rssi is worse
+     * than rssi_6g_threshold. If rssi_6g_threshold is 0, it should be ignored.
+     */
+    A_INT32 rssi_6g_threshold; /* units = dbm */
 } wmi_roam_bss_load_config_cmd_fixed_param;
 
 /** Deauth roam trigger parameters */
