@@ -1915,6 +1915,9 @@ QDF_STATUS (*send_power_dbg_cmd)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*send_multiple_vdev_restart_req_cmd)(wmi_unified_t wmi_handle,
 				struct multiple_vdev_restart_params *param);
+QDF_STATUS (*send_multiple_vdev_set_param_cmd)(
+		wmi_unified_t wmi_handle,
+		struct multiple_vdev_set_param *param);
 #ifdef QCA_SUPPORT_AGILE_DFS
 QDF_STATUS
 (*send_adfs_ocac_abort_cmd)(wmi_unified_t wmi_handle,

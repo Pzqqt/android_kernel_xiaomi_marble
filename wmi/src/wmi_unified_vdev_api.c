@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -54,6 +54,17 @@ QDF_STATUS wmi_unified_send_multiple_vdev_restart_req_cmd(
 {
 	if (wmi_handle->ops->send_multiple_vdev_restart_req_cmd)
 		return wmi_handle->ops->send_multiple_vdev_restart_req_cmd(
+							wmi_handle, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_unified_send_multiple_vdev_set_param_cmd(
+				struct wmi_unified *wmi_handle,
+				struct multiple_vdev_set_param *param)
+{
+	if (wmi_handle->ops->send_multiple_vdev_set_param_cmd)
+		return wmi_handle->ops->send_multiple_vdev_set_param_cmd(
 							wmi_handle, param);
 
 	return QDF_STATUS_E_FAILURE;

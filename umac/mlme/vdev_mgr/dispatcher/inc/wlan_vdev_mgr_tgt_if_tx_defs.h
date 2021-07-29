@@ -385,6 +385,22 @@ struct multiple_vdev_restart_params {
 };
 
 /**
+ * struct multiple_vdev_set_param - Multiple vdev set param command parameter
+ * @pdev_id: Pdev identifier
+ * @param_id: parameter id
+ * @param_value: parameter value
+ * @num_vdevs: number of vdevs
+ * @vdev_ids: Pointer to array of vdev_ids
+ */
+struct multiple_vdev_set_param {
+	uint32_t pdev_id;
+	uint32_t param_id;
+	uint32_t param_value;
+	uint32_t num_vdevs;
+	uint32_t vdev_ids[WLAN_UMAC_PDEV_MAX_VDEVS];
+};
+
+/**
  * struct peer_flush_params - peer flush cmd parameter
  * @peer_tid_bitmap: peer tid bitmap
  * @vdev_id: vdev id
