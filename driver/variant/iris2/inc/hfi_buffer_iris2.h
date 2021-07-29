@@ -1239,7 +1239,7 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 		_size = (standard == HFI_CODEC_ENCODE_HEVC) ? (256 + 16 * \
 			(14 + ((((frame_height_coded) >> 5) + 7) >> 3))) : \
 			(256 + 16 * (14 + ((((frame_height_coded) >> 4) + 7) >> 3))); \
-		_size *= 6; \
+		_size *= 11; \
 		if (num_vpp_pipes_enc > 1) \
 		{ \
 			_size = HFI_ALIGN(_size, VENUS_DMA_ALIGNMENT) * \
@@ -1256,10 +1256,8 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 #define SIZE_LINE_BUF_SDE(frame_width_coded) HFI_ALIGN((256 + \
 		(16 * ((frame_width_coded) >> 4))), VENUS_DMA_ALIGNMENT)
 
-#define SIZE_BSE_SLICE_CMD_BUF ((((8192 << 2) + 7) & (~7)) * 6)
-#define SIZE_BSE_REG_BUF ((((512 << 3) + 7) & (~7)) * 4)
-#define SIZE_VPP_REG_BUF ((((HFI_VENUS_VPPSG_MAX_REGISTERS << 3) +\
-							 31) & (~31)) * 10)
+#define SIZE_BSE_SLICE_CMD_BUF ((((8192 << 2) + 7) & (~7)) * 3)
+
 #define SIZE_LAMBDA_LUT (256 * 11)
 #define SIZE_OVERRIDE_BUF(num_lcumb) (HFI_ALIGN(((16 * (((num_lcumb) + 7)\
 		>> 3))), VENUS_DMA_ALIGNMENT) * 2)
@@ -1401,8 +1399,6 @@ _yuv_bufcount_min, is_opb, num_vpp_pipes)           \
 			   ENC_BITCNT_BUF_SIZE(num_lcu_in_frame) + \
 			   ENC_BITMAP_BUF_SIZE(num_lcu_in_frame) + \
 			   SIZE_BSE_SLICE_CMD_BUF + \
-			   SIZE_BSE_REG_BUF + \
-			   SIZE_VPP_REG_BUF + \
 			   SIZE_LAMBDA_LUT + \
 			   SIZE_OVERRIDE_BUF(num_lcumb) + \
 			   SIZE_IR_BUF(num_lcu_in_frame); \
