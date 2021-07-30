@@ -97,7 +97,7 @@ void wlan_hdd_get_mlo_link_id(struct hdd_beacon_data *beacon,
  *
  * Return: 0 on success, negative errno on failure
  */
-int hdd_set_11be_rate_code(struct hdd_adapter *adapter, uint8_t rate_code);
+int hdd_set_11be_rate_code(struct hdd_adapter *adapter, uint16_t rate_code);
 
 /**
  * hdd_sysfs_11be_rate_create() - Create sysfs entry to configure 11be rate
@@ -132,7 +132,7 @@ void hdd_update_wiphy_eht_cap(struct hdd_context *hdd_ctx)
 }
 
 static inline int
-hdd_set_11be_rate_code(struct hdd_adapter *adapter, uint8_t rate_code)
+hdd_set_11be_rate_code(struct hdd_adapter *adapter, uint16_t rate_code)
 {
 	return 0;
 }
