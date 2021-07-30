@@ -68,7 +68,6 @@ struct msm_cvp_smem {
 	struct list_head list;
 	atomic_t refcount;
 	struct dma_buf *dma_buf;
-	struct file *file;
 	void *kvaddr;
 	u32 device_addr;
 	dma_addr_t dma_handle;

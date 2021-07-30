@@ -214,7 +214,6 @@ int msm_cvp_map_buf_dsp(struct msm_cvp_inst *inst, struct eva_kmd_buffer *buf)
 	}
 
 	smem->dma_buf = dma_buf;
-	smem->file = file;
 	smem->bitmap_index = MAX_DMABUF_NUMS;
 	dprintk(CVP_MEM, "%s: dma_buf = %llx\n", __func__, dma_buf);
 	rc = msm_cvp_map_smem(inst, smem, "map dsp");
@@ -287,7 +286,6 @@ int msm_cvp_unmap_buf_dsp(struct msm_cvp_inst *inst, struct eva_kmd_buffer *buf)
 	if (cbuf->smem->device_addr) {
 		msm_cvp_unmap_smem(inst, cbuf->smem, "unmap dsp");
 		msm_cvp_smem_put_dma_buf(cbuf->smem->dma_buf);
-		fput(cbuf->smem->file);
 	}
 
 	mutex_lock(&inst->cvpdspbufs.lock);
