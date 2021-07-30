@@ -1117,6 +1117,8 @@ static QDF_STATUS target_if_dbr_fill_ring(struct wlan_objmgr_pdev *pdev,
 		}
 	}
 
+	direct_buf_rx_exit();
+
 	return QDF_STATUS_SUCCESS;
 }
 
