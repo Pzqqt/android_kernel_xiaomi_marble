@@ -1198,7 +1198,7 @@ target_if_register_big_data_event_handler(struct wmi_unified *wmi_handle)
 	return wmi_unified_register_event_handler(
 			    wmi_handle, wmi_vdev_send_big_data_p2_eventid,
 			    target_if_mc_cp_stats_big_data_stats_event_handler,
-			    WMI_RX_SERIALIZER_CTX);
+			    WMI_RX_WORK_CTX);
 }
 
 static void
@@ -1268,14 +1268,14 @@ target_if_mc_cp_stats_register_event_handler(struct wlan_objmgr_psoc *psoc)
 			wmi_handle,
 			wmi_update_stats_event_id,
 			target_if_mc_cp_stats_stats_event_handler,
-			WMI_RX_SERIALIZER_CTX);
+			WMI_RX_WORK_CTX);
 	if (QDF_IS_STATUS_ERROR(ret_val))
 		cp_stats_err("Failed to register stats event cb");
 
 	ret_val = wmi_unified_register_event_handler(wmi_handle,
 			    wmi_peer_stats_info_event_id,
 			    target_if_mc_cp_stats_peer_stats_info_event_handler,
-			    WMI_RX_SERIALIZER_CTX);
+			    WMI_RX_WORK_CTX);
 	if (QDF_IS_STATUS_ERROR(ret_val))
 		cp_stats_err("Failed to register peer stats info event cb");
 
