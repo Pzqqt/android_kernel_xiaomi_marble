@@ -1065,6 +1065,38 @@ cm_handle_scan_ch_list_data(struct cm_roam_scan_ch_resp *data)
 #endif
 #endif  /* FEATURE_ROAM_OFFLOAD */
 
+/**
+ * wlan_get_chan_by_bssid_from_rnr: get chan from rnr through bssid
+ * @vdev: vdev
+ * @cm_id: connect manager id
+ * @link_addr: bssid of given link
+ * @chan: chan to get
+ * @op_class: operation class
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_get_chan_by_bssid_from_rnr(struct wlan_objmgr_vdev *vdev,
+					   wlan_cm_id cm_id,
+					   struct qdf_mac_addr *link_addr,
+					   uint8_t *chan, uint8_t *op_class);
+
+/**
+ * wlan_get_chan_by_link_id_from_rnr: get chan from rnr through link id
+ * @vdev: vdev
+ * @cm_id: connect manager id
+ * @link_id: link id of given link
+ * @chan: chan to get
+ * @op_class: operation class
+ *
+ * Return: QDF_STATUS
+ */
+#ifdef WLAN_FEATURE_11BE_MLO
+QDF_STATUS wlan_get_chan_by_link_id_from_rnr(struct wlan_objmgr_vdev *vdev,
+					     wlan_cm_id cm_id,
+					     uint8_t link_id,
+					     uint8_t *chan, uint8_t *op_class);
+#endif
+
 #ifdef ROAM_TARGET_IF_CONVERGENCE
 /**
  * cm_rso_cmd_status_event_handler() - Handler for rso cmd status
