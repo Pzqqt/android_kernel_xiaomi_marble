@@ -289,6 +289,15 @@ int msm_common_snd_hw_params(struct snd_pcm_substream *substream,
 	int index = get_intf_index(stream_name);
 	struct clk_cfg tdm_clk_cfg;
 
+	dev_dbg(rtd->card->dev,
+		"%s: substream = %s  stream = %d\n",
+		__func__, substream->name, substream->stream);
+
+	if (!pdata) {
+		dev_err(rtd->card->dev, "%s: pdata is NULL\n", __func__);
+		return -EINVAL;
+	}
+
 	if (index >= 0) {
 		mutex_lock(&pdata->lock[index]);
 		if (pdata->mi2s_gpio_p[index]) {
