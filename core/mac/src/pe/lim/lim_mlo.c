@@ -473,6 +473,8 @@ static tpDphHashNode lim_mlo_partner_sta_ds(struct pe_session *session,
 	struct wlan_objmgr_peer *peer;
 	uint16_t aid = 0;
 	struct mac_context *mac;
+	struct pe_session *partner_session;
+	struct wlan_objmgr_vdev *vdev;
 
 	mac = cds_get_context(QDF_MODULE_ID_PE);
 	if (!mac) {
@@ -495,8 +497,15 @@ static tpDphHashNode lim_mlo_partner_sta_ds(struct pe_session *session,
 		pe_err("peer is null");
 		return NULL;
 	}
+	vdev = wlan_peer_get_vdev(peer);
+	if (!vdev) {
+		pe_err("vdev is null");
+		return NULL;
+	}
+	partner_session = pe_find_session_by_vdev_id(
+				mac, vdev->vdev_objmgr.vdev_id);
 	return dph_lookup_hash_entry(mac, peer->macaddr, &aid,
-				     &session->dph.dphHashTable);
+				     &partner_session->dph.dphHashTable);
 }
 
 bool lim_mlo_partner_auth_type(struct pe_session *session,
