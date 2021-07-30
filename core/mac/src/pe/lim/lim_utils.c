@@ -5400,6 +5400,9 @@ void lim_send_conc_params_update(void)
 	uint8_t i;
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 
+	if (!mac)
+		return;
+
 	if (!mac->mlme_cfg->edca_params.enable_edca_params ||
 	    (policy_mgr_get_connection_count(mac->psoc) >
 	     MAX_NUMBER_OF_SINGLE_PORT_CONC_CONNECTIONS)) {
