@@ -629,7 +629,7 @@ enum wlan_wds_mode {
  * gRemoveTimeStampSyncCmd - Enable/Disable to remove time stamp sync cmd
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * This ini is used to enable/disable the removal of time stamp sync cmd.
  * If we disable this periodic time sync update to firmware then roaming
@@ -644,7 +644,7 @@ enum wlan_wds_mode {
  */
 #define CFG_REMOVE_TIME_STAMP_SYNC_CMD CFG_INI_BOOL( \
 	"gRemoveTimeStampSyncCmd", \
-	0, \
+	1, \
 	"Enable to remove time stamp sync cmd")
 
 /*
