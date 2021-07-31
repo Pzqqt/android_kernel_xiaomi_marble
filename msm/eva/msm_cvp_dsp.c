@@ -176,9 +176,86 @@ static int cvp_dsp_rpmsg_probe(struct rpmsg_device *rpdev)
 	return ret;
 }
 
+static int eva_fastrpc_dev_unmap_dma(
+		struct fastrpc_device *frpc_device,
+		struct cvp_internal_buf *buf);
+
+static int delete_dsp_session(struct msm_cvp_inst *inst,
+		struct cvp_dsp_fastrpc_driver_entry *frpc_node)
+{
+	struct msm_cvp_list *buf_list = NULL;
+	struct list_head *ptr_dsp_buf = NULL, *next_dsp_buf = NULL;
+	struct cvp_internal_buf *buf = NULL;
+	struct task_struct *task = NULL;
+	int rc;
+
+	if (!inst)
+		return -EINVAL;
+
+	buf_list = &inst->cvpdspbufs;
+
+	mutex_lock(&buf_list->lock);
+	ptr_dsp_buf = &buf_list->list;
+	list_for_each_safe(ptr_dsp_buf, next_dsp_buf, &buf_list->list) {
+		buf = list_entry(ptr_dsp_buf, struct cvp_internal_buf, list);
+		if (buf) {
+			dprintk(CVP_DSP, "fd in list 0x%x\n", buf->fd);
+
+			if (!buf->smem) {
+				dprintk(CVP_DSP, "Empyt smem\n");
+				continue;
+			}
+
+			dprintk(CVP_DSP, "%s find device addr 0x%x\n",
+				__func__, buf->smem->device_addr);
+
+			rc = eva_fastrpc_dev_unmap_dma(
+					frpc_node->cvp_fastrpc_device,
+					buf);
+			if (rc)
+				dprintk(CVP_WARN,
+					"%s Failed to unmap buffer 0x%x\n",
+					__func__, rc);
+
+			rc = cvp_release_dsp_buffers(inst, buf);
+			if (rc)
+				dprintk(CVP_ERR,
+					"%s Failed to free buffer 0x%x\n",
+					__func__, rc);
+
+			list_del(&buf->list);
+
+			kmem_cache_free(cvp_driver->buf_cache, buf);
+		}
+	}
+
+	mutex_unlock(&buf_list->lock);
+
+	rc = msm_cvp_session_delete(inst);
+	if (rc)
+		dprintk(CVP_ERR, "Warning: send Delete Session failed\n");
+
+	task = inst->task;
+
+	rc = msm_cvp_close(inst);
+	if (rc)
+		dprintk(CVP_ERR, "Warning: Failed to close cvp instance\n");
+
+	if (task)
+		put_task_struct(task);
+
+	dprintk(CVP_DSP, "%s DSP2CPU_DETELE_SESSION Done\n", __func__);
+	return rc;
+}
+
 static void cvp_dsp_rpmsg_remove(struct rpmsg_device *rpdev)
 {
 	struct cvp_dsp_apps *me = &gfa_cv;
+
+	struct cvp_dsp_fastrpc_driver_entry *frpc_node = NULL;
+	struct list_head *ptr = NULL, *next = NULL;
+	struct list_head *s = NULL, *next_s = NULL;
+	struct msm_cvp_inst *inst = NULL;
 
 	dprintk(CVP_WARN, "%s: CDSP SSR triggered\n", __func__);
 
@@ -188,8 +265,38 @@ static void cvp_dsp_rpmsg_remove(struct rpmsg_device *rpdev)
 	me->chan = NULL;
 	me->state = DSP_UNINIT;
 	mutex_unlock(&me->tx_lock);
-	/* kernel driver needs clean all dsp sessions */
 
+	ptr = &me->fastrpc_driver_list.list;
+	list_for_each_safe(ptr, next, &me->fastrpc_driver_list.list) {
+		frpc_node = list_entry(ptr,
+				struct cvp_dsp_fastrpc_driver_entry, list);
+
+		if (frpc_node) {
+			s = &frpc_node->dsp_sessions.list;
+			list_for_each_safe(s, next_s,
+					&frpc_node->dsp_sessions.list) {
+				inst = list_entry(s, struct msm_cvp_inst,
+						dsp_list);
+				delete_dsp_session(inst, frpc_node);
+			}
+
+			dprintk(CVP_DSP, "%s DEINIT_MSM_CVP_LIST 0x%x\n",
+					__func__, frpc_node->dsp_sessions);
+			DEINIT_MSM_CVP_LIST(&frpc_node->dsp_sessions);
+			dprintk(CVP_DSP, "%s list_del fastrpc node 0x%x\n",
+					__func__, frpc_node);
+			list_del(&frpc_node->list);
+			fastrpc_driver_unregister(
+				&frpc_node->cvp_fastrpc_driver);
+			dprintk(CVP_DSP,
+				"%s Unregistered fastrpc handle 0x%x\n",
+				__func__, frpc_node->handle);
+			kfree(frpc_node);
+			frpc_node = NULL;
+		}
+	}
+
+	dprintk(CVP_WARN, "%s: CDSP SSR handled\n", __func__);
 }
 
 static int cvp_dsp_rpmsg_callback(struct rpmsg_device *rpdev,
@@ -649,20 +756,23 @@ static struct cvp_dsp_fastrpc_driver_entry *cvp_find_fastrpc_node_with_handle(
 {
 	struct cvp_dsp_apps *me = &gfa_cv;
 	struct list_head *ptr = NULL, *next = NULL;
-	struct cvp_dsp_fastrpc_driver_entry *frpc_node = NULL;
+	struct cvp_dsp_fastrpc_driver_entry *frpc_node = NULL, *tmp_node = NULL;
 
 	mutex_lock(&me->fastrpc_driver_list.lock);
 	list_for_each_safe(ptr, next, &me->fastrpc_driver_list.list) {
-		frpc_node = list_entry(ptr,
+		tmp_node = list_entry(ptr,
 				struct cvp_dsp_fastrpc_driver_entry, list);
-		if (handle == frpc_node->handle) {
-			dprintk(CVP_DSP, "Find frpc_node with handle 0x%x\n",
+		if (handle == tmp_node->handle) {
+			frpc_node = tmp_node;
+			dprintk(CVP_DSP, "Find tmp_node with handle 0x%x\n",
 				handle);
 			break;
 		}
 	}
 	mutex_unlock(&me->fastrpc_driver_list.lock);
 
+	dprintk(CVP_DSP, "%s found fastrpc probe handle %pK pid 0x%x\n",
+		__func__, frpc_node, handle);
 	return frpc_node;
 }
 
@@ -695,6 +805,7 @@ static int cvp_fastrpc_callback(struct fastrpc_device *rpc_dev,
 	 * any handling can happen here, such as
 	 * eva_fastrpc_driver_unregister(rpc_dev->handle, true);
 	 */
+	eva_fastrpc_driver_unregister(rpc_dev->handle, true);
 
 	return 0;
 }
@@ -843,9 +954,13 @@ static int eva_fastrpc_driver_register(uint32_t handle)
 	int rc = 0;
 	struct cvp_dsp_fastrpc_driver_entry *frpc_node = NULL;
 
+	dprintk(CVP_DSP, "%s -> cvp_find_fastrpc_node_with_handle pid 0x%x\n",
+			__func__, handle);
 	frpc_node = cvp_find_fastrpc_node_with_handle(handle);
 
 	if (frpc_node == NULL) {
+		dprintk(CVP_DSP, "%s new fastrpc node pid 0x%x\n",
+				__func__, handle);
 		frpc_node = kzalloc(sizeof(*frpc_node), GFP_KERNEL);
 		if (!frpc_node) {
 			dprintk(CVP_DSP, "%s allocate frpc node fail\n",
@@ -883,17 +998,20 @@ static int eva_fastrpc_driver_register(uint32_t handle)
 				__func__);
 			goto fail_fastrpc_driver_timeout;
 		}
+	} else {
+		dprintk(CVP_DSP, "%s fastrpc probe hndl %pK pid 0x%x\n",
+			__func__, frpc_node, handle);
 	}
 
 	return rc;
 
 fail_fastrpc_driver_timeout:
+	fastrpc_driver_unregister(&frpc_node->cvp_fastrpc_driver);
+fail_fastrpc_driver_register:
 	/* remove list if this is the last session */
 	mutex_lock(&me->fastrpc_driver_list.lock);
 	list_del(&frpc_node->list);
 	mutex_unlock(&me->fastrpc_driver_list.lock);
-	fastrpc_driver_unregister(&frpc_node->cvp_fastrpc_driver);
-fail_fastrpc_driver_register:
 	kfree(frpc_node);
 	return -EINVAL;
 }
@@ -910,8 +1028,11 @@ static void eva_fastrpc_driver_unregister(uint32_t handle, bool force_exit)
 	/* Foundd fastrpc node */
 	frpc_node = cvp_find_fastrpc_node_with_handle(dsp2cpu_cmd->pid);
 
-	if (frpc_node == NULL)
+	if (frpc_node == NULL) {
+		dprintk(CVP_DSP, "%s fastrpc handle 0x%x unregistered\n",
+			__func__, handle);
 		return;
+	}
 
 	if ((frpc_node->session_cnt == 0) || force_exit) {
 		dprintk(CVP_DSP, "%s session cnt %d, force %d\n",
