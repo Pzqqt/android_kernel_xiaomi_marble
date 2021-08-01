@@ -991,6 +991,30 @@ static inline uint8_t hdd_get_bw_offset(uint32_t ch_width)
 
 #endif /* FEATURE_WLAN_TDLS */
 
+/**
+ * wlan_vendor_bitmap_to_reg_wifi_band_bitmap() - Convert vendor bitmap to
+ * reg_wifi_band bitmap
+ * @vendor_bitmap: vendor bitmap value coming via vendor command
+ *
+ * Return: reg_wifi_band bitmap
+ */
+static uint32_t
+wlan_vendor_bitmap_to_reg_wifi_band_bitmap(uint32_t vendor_bitmap)
+{
+	uint32_t reg_bitmap = 0;
+
+	if (vendor_bitmap == QCA_SETBAND_AUTO)
+		reg_bitmap |= REG_BAND_MASK_ALL;
+	if (vendor_bitmap & QCA_SETBAND_2G)
+		reg_bitmap |= BIT(REG_BAND_2G);
+	if (vendor_bitmap & QCA_SETBAND_5G)
+		reg_bitmap |= BIT(REG_BAND_5G);
+	if (vendor_bitmap & QCA_SETBAND_6G)
+		reg_bitmap |= BIT(REG_BAND_6G);
+
+	return reg_bitmap;
+}
+
 int wlan_hdd_merge_avoid_freqs(struct ch_avoid_ind_type *destFreqList,
 		struct ch_avoid_ind_type *srcFreqList)
 {
@@ -4668,6 +4692,7 @@ roam_control_policy[QCA_ATTR_ROAM_CONTROL_MAX + 1] = {
 			.type = NLA_U32},
 	[QCA_ATTR_ROAM_CONTROL_USER_REASON] = {.type = NLA_U32},
 	[QCA_ATTR_ROAM_CONTROL_SCAN_SCHEME_TRIGGERS] = {.type = NLA_U32},
+	[QCA_ATTR_ROAM_CONTROL_BAND_MASK] = {.type = NLA_U32},
 };
 
 /**
@@ -5080,6 +5105,7 @@ hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
 	uint32_t value;
 	struct wlan_cm_roam_vendor_btm_params param = {0};
 	bool is_wtc_param_updated = false;
+	uint32_t band_mask;
 
 	hdd_enter();
 	/* The command must carry PARAM_ROAM_CONTROL_CONFIG */
@@ -5244,6 +5270,21 @@ hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
 		is_wtc_param_updated = true;
 	} else {
 		param.user_roam_reason = DISABLE_VENDOR_BTM_CONFIG;
+	}
+
+	if (tb2[QCA_ATTR_ROAM_CONTROL_BAND_MASK]) {
+		band_mask =
+			nla_get_u32(tb2[QCA_ATTR_ROAM_CONTROL_BAND_MASK]);
+		band_mask =
+			wlan_vendor_bitmap_to_reg_wifi_band_bitmap(band_mask);
+		hdd_debug("[ROAM BAND] band_mask:%d", band_mask);
+		if (band_mask) {
+			ucfg_cm_set_roam_band_mask(hdd_ctx->psoc, vdev_id,
+						   band_mask);
+		} else {
+			hdd_debug("Invalid roam BAND_MASK");
+			return -EINVAL;
+		}
 	}
 
 	if (is_wtc_param_updated) {
@@ -12958,23 +12999,6 @@ const struct nla_policy setband_policy[QCA_WLAN_VENDOR_ATTR_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_SETBAND_MASK] = {.type = NLA_U32},
 };
 
-static uint32_t
-wlan_vendor_bitmap_to_reg_wifi_band_bitmap(uint32_t vendor_bitmap)
-{
-	uint32_t reg_bitmap = 0;
-
-	if (vendor_bitmap == QCA_SETBAND_AUTO)
-		reg_bitmap |= REG_BAND_MASK_ALL;
-	if (vendor_bitmap & QCA_SETBAND_2G)
-		reg_bitmap |= BIT(REG_BAND_2G);
-	if (vendor_bitmap & QCA_SETBAND_5G)
-		reg_bitmap |= BIT(REG_BAND_5G);
-	if (vendor_bitmap & QCA_SETBAND_6G)
-		reg_bitmap |= BIT(REG_BAND_6G);
-
-	return reg_bitmap;
-}
-
 /**
  *__wlan_hdd_cfg80211_setband() - set band
  * @wiphy: Pointer to wireless phy
@@ -15353,9 +15377,8 @@ hdd_get_all_band_mask(void)
 {
 	uint32_t band_mask = 0;
 
-	band_mask = (1 << REG_BAND_2G) |
-			(1 << REG_BAND_5G) |
-			(1 << REG_BAND_6G);
+	band_mask =
+		(1 << REG_BAND_2G) | (1 << REG_BAND_5G) | (1 << REG_BAND_6G);
 
 	return band_mask;
 }

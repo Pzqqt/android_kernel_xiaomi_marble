@@ -337,6 +337,7 @@ struct roam_synch_frame_ind {
  * wmi_roam_invoke_status_error in case of forced roam
  * @lost_link_rssi: lost link RSSI
  * @roam_sync_frame_ind: roam sync frame ind
+ * @roam_band_bitmask: This allows the driver to roam within this band
  */
 struct rso_config {
 #ifdef WLAN_FEATURE_HOST_ROAM
@@ -381,6 +382,7 @@ struct rso_config {
 	uint32_t roam_invoke_fail_reason;
 	int32_t lost_link_rssi;
 	struct roam_synch_frame_ind roam_sync_frame_ind;
+	uint32_t roam_band_bitmask;
 };
 
 /**
@@ -486,6 +488,7 @@ struct rso_config_params {
  * @HS_20_AP: Hotspot 2.0 AP
  * @MBO_OCE_ENABLED_AP: MBO/OCE enabled network
  * @LOST_LINK_RSSI: lost link RSSI
+ * @ROAM_BAND: Allowed band for roaming in FW
  */
 enum roam_cfg_param {
 	RSSI_CHANGE_THRESHOLD,
@@ -514,6 +517,7 @@ enum roam_cfg_param {
 	MBO_OCE_ENABLED_AP,
 	IS_SINGLE_PMK,
 	LOST_LINK_RSSI,
+	ROAM_BAND,
 };
 
 /**

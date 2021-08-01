@@ -122,11 +122,26 @@ ucfg_cm_update_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
 	return wlan_cm_update_roam_scan_scheme_bitmap(psoc, vdev_id,
 						      roam_scan_scheme_bitmap);
 }
+
+static inline QDF_STATUS
+ucfg_cm_set_roam_band_mask(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			   uint32_t roam_band_mask)
+{
+	return wlan_cm_set_roam_band_bitmask(psoc, vdev_id, roam_band_mask);
+}
+
 #else
 static inline QDF_STATUS
 ucfg_cm_update_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
 				       uint8_t vdev_id,
 				       uint32_t roam_scan_scheme_bitmap)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+ucfg_cm_set_roam_band_mask(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			   uint32_t roam_band_mask)
 {
 	return QDF_STATUS_SUCCESS;
 }
