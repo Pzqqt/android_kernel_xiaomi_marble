@@ -1181,6 +1181,11 @@ wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	case LOST_LINK_RSSI:
 		rso_cfg->lost_link_rssi = src_config->int_value;
 		break;
+	case ROAM_BAND:
+		rso_cfg->roam_band_bitmask = src_config->uint_value;
+		mlme_debug("[ROAM BAND] Set roam band:%d",
+			   rso_cfg->roam_band_bitmask);
+		break;
 	default:
 		mlme_err("Invalid roam config requested:%d", roam_cfg_type);
 		status = QDF_STATUS_E_FAILURE;
@@ -1923,6 +1928,17 @@ wlan_cm_update_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_cm_set_roam_band_bitmask(struct wlan_objmgr_psoc *psoc,
+					 uint8_t vdev_id,
+					 uint32_t roam_band_bitmask)
+{
+	struct cm_roam_values_copy src_config;
+
+	src_config.uint_value = roam_band_bitmask;
+	return wlan_cm_roam_cfg_set_value(psoc, vdev_id, ROAM_BAND,
+					  &src_config);
 }
 
 uint32_t wlan_cm_get_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,

@@ -881,6 +881,19 @@ wlan_cm_update_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
 				       uint32_t roam_scan_scheme_bitmap);
 
 /**
+ * wlan_cm_set_roam_band_bitmask() - Set roam band bitmask for vdev
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ * @roam_band_bitmask: bitmask of roam band for which roam scan needs to be
+ * enabled in fw
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_set_roam_band_bitmask(struct wlan_objmgr_psoc *psoc,
+					 uint8_t vdev_id,
+					 uint32_t roam_band_bitmask);
+
+/**
  * wlan_cm_get_roam_scan_scheme_bitmap() - Get roam scan scheme bitmap value
  * @psoc: PSOC pointer
  * @vdev_id: VDEV id
@@ -1109,6 +1122,13 @@ static inline QDF_STATUS
 wlan_cm_update_roam_scan_scheme_bitmap(struct wlan_objmgr_psoc *psoc,
 				       uint8_t vdev_id,
 				       uint32_t roam_scan_scheme_bitmap)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+wlan_cm_set_roam_band_bitmask(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			      uint32_t roam_band_bitmask)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }

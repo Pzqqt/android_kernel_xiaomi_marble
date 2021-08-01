@@ -4311,6 +4311,8 @@ static void cm_roam_start_init(struct wlan_objmgr_psoc *psoc,
 					       DEFAULT_ROAM_SCAN_SCHEME_BITMAP);
 	wlan_cm_roam_cfg_get_value(psoc, vdev_id,
 				   MOBILITY_DOMAIN, &src_cfg);
+	wlan_cm_set_roam_band_bitmask(psoc, vdev_id, REG_BAND_MASK_ALL);
+
 	mdie_present = src_cfg.bool_value;
 	/* Based on the auth scheme tell if we are 11r */
 	if (cm_is_auth_type_11r(mlme_obj, vdev, mdie_present)) {
