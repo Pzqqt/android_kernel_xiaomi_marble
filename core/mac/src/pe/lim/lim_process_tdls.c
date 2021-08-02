@@ -922,15 +922,40 @@ static void lim_tdls_fill_setup_rsp_he_cap(struct mac_context *mac,
 					pe_session);
 }
 
+static void lim_tdls_populate_he_operations(struct mac_context *mac,
+					    struct pe_session *pe_session,
+					    tDot11fIEhe_op *he_op)
+{
+	struct wlan_mlme_he_caps *he_cap_info;
+	uint16_t mcs_set = 0;
+
+	he_cap_info = &mac->mlme_cfg->he_caps;
+	he_op->co_located_bss = 0;
+	he_op->bss_color = pe_session->he_bss_color_change.new_color;
+	if (!he_op->bss_color)
+		he_op->bss_col_disabled = 1;
+
+	mcs_set = (uint16_t)he_cap_info->he_ops_basic_mcs_nss;
+	if (pe_session->nss == NSS_1x1_MODE)
+		mcs_set |= 0xFFFC;
+	else
+		mcs_set |= 0xFFF0;
+
+	*((uint16_t *)he_op->basic_mcs_nss) = mcs_set;
+	populate_dot11f_he_operation(mac,
+				     pe_session,
+				     he_op);
+}
+
 static void lim_tdls_fill_setup_cnf_he_op(struct mac_context *mac,
 					  uint32_t peer_capability,
 					  tDot11fTDLSSetupCnf *tdls_setup_cnf,
 					  struct pe_session *pe_session)
 {
 	if (CHECK_BIT(peer_capability, TDLS_PEER_HE_CAP))
-		populate_dot11f_he_operation(mac,
-					     pe_session,
-					     &tdls_setup_cnf->he_op);
+		lim_tdls_populate_he_operations(mac,
+						pe_session,
+						&tdls_setup_cnf->he_op);
 }
 
 static void lim_tdls_populate_he_matching_rate_set(struct mac_context *mac_ctx,
