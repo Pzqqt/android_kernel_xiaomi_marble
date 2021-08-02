@@ -357,7 +357,7 @@ static QDF_STATUS target_if_green_ap_tx_ops_register(
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* WLAN_SUPPORT_GREEN_AP */
-#if defined(WLAN_CONV_CRYPTO_SUPPORTED) && defined(CRYPTO_SET_KEY_CONVERGED)
+#if defined(CRYPTO_SET_KEY_CONVERGED)
 static void target_if_crypto_tx_ops_register(
 				struct wlan_lmac_if_tx_ops *tx_ops)
 {

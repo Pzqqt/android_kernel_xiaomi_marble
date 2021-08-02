@@ -42,9 +42,7 @@
 #include "wlan_tdls_tgt_api.h"
 #endif
 
-#ifdef WLAN_CONV_CRYPTO_SUPPORTED
 #include "wlan_crypto_global_api.h"
-#endif
 #ifdef DFS_COMPONENT_ENABLE
 #include <wlan_dfs_tgt_api.h>
 #include <wlan_objmgr_vdev_obj.h>
@@ -267,18 +265,11 @@ wlan_lmac_if_cfr_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 }
 #endif
 
-#ifdef WLAN_CONV_CRYPTO_SUPPORTED
 static void
 wlan_lmac_if_crypto_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 {
 	wlan_crypto_register_crypto_rx_ops(&rx_ops->crypto_rx_ops);
 }
-#else
-static void
-wlan_lmac_if_crypto_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
-{
-}
-#endif
 
 #ifdef WIFI_POS_CONVERGED
 static void wlan_lmac_if_umac_rx_ops_register_wifi_pos(

@@ -42,10 +42,8 @@ INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/thermal/dispatcher/inc
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/mlme/connection_mgr/utf/inc
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/mlo_mgr/inc
 
-ifeq ($(WLAN_CONV_CRYPTO_SUPPORTED), 1)
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/crypto/inc
 INCS += -I$(obj)/$(DEPTH)/component_dev/crypto/inc
-endif
 
 ifeq ($(WLAN_SUPPORT_GREEN_AP), 1)
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/green_ap/dispatcher/inc

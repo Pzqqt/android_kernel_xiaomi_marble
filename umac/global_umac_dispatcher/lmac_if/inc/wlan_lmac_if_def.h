@@ -39,9 +39,7 @@
 #endif
 #include <reg_services_public_struct.h>
 
-#ifdef WLAN_CONV_CRYPTO_SUPPORTED
 #include "wlan_crypto_global_def.h"
-#endif
 
 #ifdef WLAN_CFR_ENABLE
 #include "wlan_cfr_utils_api.h"
@@ -1255,9 +1253,7 @@ struct wlan_lmac_if_tx_ops {
 	struct wlan_lmac_if_sptrl_tx_ops sptrl_tx_ops;
 #endif
 
-#ifdef WLAN_CONV_CRYPTO_SUPPORTED
 	struct wlan_lmac_if_crypto_tx_ops crypto_tx_ops;
-#endif
 
 #ifdef WIFI_POS_CONVERGED
 	struct wlan_lmac_if_wifi_pos_tx_ops wifi_pos_tx_ops;
@@ -1999,9 +1995,7 @@ struct wlan_lmac_if_rx_ops {
 	struct wlan_lmac_if_sptrl_rx_ops sptrl_rx_ops;
 #endif
 
-#ifdef WLAN_CONV_CRYPTO_SUPPORTED
 	struct wlan_lmac_if_crypto_rx_ops crypto_rx_ops;
-#endif
 #ifdef WIFI_POS_CONVERGED
 	struct wlan_lmac_if_wifi_pos_rx_ops wifi_pos_rx_ops;
 #endif

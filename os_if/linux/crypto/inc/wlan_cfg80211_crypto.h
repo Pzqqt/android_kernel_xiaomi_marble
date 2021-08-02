@@ -24,7 +24,6 @@
 #define _WLAN_CFG80211_CRYPTO_H_
 #include <net/cfg80211.h>
 #include "wlan_crypto_global_def.h"
-#ifdef WLAN_CONV_CRYPTO_SUPPORTED
 /**
  * wlan_cfg80211_set_default_key() - to set the default key to be used
  * @vdev: VDEV Object pointer
@@ -36,14 +35,6 @@
 int wlan_cfg80211_set_default_key(struct wlan_objmgr_vdev *vdev,
 				  uint8_t key_index,
 				  struct qdf_mac_addr *bssid);
-#else
-static inline int wlan_cfg80211_set_default_key(struct wlan_objmgr_vdev *vdev,
-						uint8_t key_index,
-						struct qdf_mac_addr *bssid)
-{
-	return 0;
-}
-#endif
 
 /**
  * wlan_cfg80211_store_key() - Store the key
