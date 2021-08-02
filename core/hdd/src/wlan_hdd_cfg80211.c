@@ -5285,6 +5285,21 @@ hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
 			hdd_debug("Invalid roam BAND_MASK");
 			return -EINVAL;
 		}
+
+		if (!ucfg_cm_is_change_in_band_allowed(hdd_ctx->psoc, vdev_id,
+						       band_mask))
+			return -EINVAL;
+
+		/* Disable roaming on Vdev before setting PCL */
+		sme_stop_roaming(hdd_ctx->mac_handle, vdev_id,
+				 REASON_DRIVER_DISABLED, RSO_SET_PCL);
+
+		policy_mgr_set_pcl_for_existing_combo(hdd_ctx->psoc,
+						      PM_STA_MODE, vdev_id);
+
+		/* Enable roaming once SET pcl is done */
+		sme_start_roaming(hdd_ctx->mac_handle, vdev_id,
+				  REASON_DRIVER_ENABLED, RSO_SET_PCL);
 	}
 
 	if (is_wtc_param_updated) {

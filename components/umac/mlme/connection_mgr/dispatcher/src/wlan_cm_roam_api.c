@@ -366,6 +366,19 @@ wlan_cm_roam_extract_roam_msg_info(wmi_unified_t wmi, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
+uint32_t wlan_cm_get_roam_band_value(struct wlan_objmgr_psoc *psoc,
+				     uint8_t vdev_id)
+{
+	struct cm_roam_values_copy config;
+	uint32_t band_mask;
+
+	wlan_cm_roam_cfg_get_value(psoc, vdev_id, ROAM_BAND, &config);
+
+	band_mask = config.uint_value;
+	mlme_debug("[ROAM BAND] band mask:%d", band_mask);
+	return band_mask;
+}
+
 void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,
 					uint8_t vdev_id, bool pcl_per_vdev)
 {
@@ -753,6 +766,9 @@ QDF_STATUS wlan_cm_roam_cfg_get_value(struct wlan_objmgr_psoc *psoc,
 		break;
 	case LOST_LINK_RSSI:
 		dst_config->int_value = rso_cfg->lost_link_rssi;
+		break;
+	case ROAM_BAND:
+		dst_config->uint_value = rso_cfg->roam_band_bitmask;
 		break;
 	default:
 		mlme_err("Invalid roam config requested:%d", roam_cfg_type);

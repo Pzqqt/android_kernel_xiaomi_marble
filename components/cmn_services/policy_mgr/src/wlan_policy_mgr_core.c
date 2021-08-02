@@ -1474,6 +1474,7 @@ policy_mgr_get_connected_roaming_vdev_band_mask(struct wlan_objmgr_psoc *psoc,
 	struct wlan_objmgr_vdev *vdev;
 	bool dual_sta_roam_active;
 	struct wlan_channel *chan;
+	uint32_t roam_band_mask;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
 						    WLAN_POLICY_MGR_ID);
@@ -1488,6 +1489,15 @@ policy_mgr_get_connected_roaming_vdev_band_mask(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_err("no active channel");
 		return 0;
 	}
+
+	roam_band_mask = wlan_cm_get_roam_band_value(psoc, vdev_id);
+	/*
+	 * if vendor command to configure roam band is set , we will
+	 * take this as priority instead of drv cmd "SETROAMINTRABAND" or
+	 * active connection band.
+	 */
+	if (roam_band_mask != REG_BAND_MASK_ALL)
+		return roam_band_mask;
 
 	/*
 	 * If PCL command is PDEV level, only one sta is active.

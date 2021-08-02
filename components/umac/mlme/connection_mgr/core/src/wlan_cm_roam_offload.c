@@ -500,6 +500,60 @@ cm_roam_scan_offload_fill_lfr3_config(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+bool
+cm_roam_is_change_in_band_allowed(struct wlan_objmgr_psoc *psoc,
+				  uint8_t vdev_id, uint32_t roam_band_mask)
+{
+	struct wlan_objmgr_vdev *vdev;
+	uint32_t count;
+	bool concurrency_is_dbs;
+	struct wlan_channel *chan;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev) {
+		mlme_err("vdev is NULL");
+		return false;
+	}
+
+	chan = wlan_vdev_get_active_channel(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+	if (!chan) {
+		mlme_err("no active channel");
+		return false;
+	}
+
+	count = policy_mgr_mode_specific_connection_count(psoc, PM_STA_MODE,
+							  NULL);
+	if (count != 2)
+		return true;
+
+	concurrency_is_dbs = !(policy_mgr_current_concurrency_is_mcc(psoc) ||
+	      policy_mgr_current_concurrency_is_scc(psoc));
+
+	if (!concurrency_is_dbs)
+		return true;
+
+	mlme_debug("STA + STA concurrency is in DBS. ch freq %d, roam band:%d",
+		   chan->ch_freq, roam_band_mask);
+
+	if (wlan_reg_freq_to_band(chan->ch_freq) == REG_BAND_2G &&
+	    (!(roam_band_mask & BIT(REG_BAND_2G)))) {
+		mlme_debug("Change in band (2G to 5G/6G) not allowed");
+		return false;
+	}
+
+	if ((wlan_reg_freq_to_band(chan->ch_freq) == REG_BAND_5G ||
+	     wlan_reg_freq_to_band(chan->ch_freq) == REG_BAND_6G) &&
+	    (!(roam_band_mask & BIT(REG_BAND_5G)) &&
+	     !(roam_band_mask & BIT(REG_BAND_6G)))) {
+		mlme_debug("Change in band (5G/6G to 2G) not allowed");
+		return false;
+	}
+
+	return true;
+}
+
 #else
 static inline void
 cm_roam_reason_vsie(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,

@@ -753,6 +753,16 @@ wlan_cm_roam_extract_roam_msg_info(wmi_unified_t wmi, void *evt_buf,
 				   struct roam_msg_info *dst, uint8_t idx);
 
 /**
+ * wlan_cm_get_roam_band_value  - Get roam band value from RSO config
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ *
+ * Return: Roam Band
+ */
+uint32_t wlan_cm_get_roam_band_value(struct wlan_objmgr_psoc *psoc,
+				     uint8_t vdev_id);
+
+/**
  * wlan_cm_roam_activate_pcl_per_vdev() - Set the PCL command to be sent per
  * vdev instead of pdev.
  * @psoc: PSOC pointer
@@ -1050,6 +1060,13 @@ void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,
 					uint8_t vdev_id,
 					bool pcl_per_vdev)
 {}
+
+static inline
+uint32_t wlan_cm_get_roam_band_value(struct wlan_objmgr_psoc *psoc,
+				     uint8_t vdev_id)
+{
+	return REG_BAND_MASK_ALL;
+}
 
 static inline
 bool wlan_cm_roam_is_pcl_per_vdev_active(struct wlan_objmgr_psoc *psoc,
