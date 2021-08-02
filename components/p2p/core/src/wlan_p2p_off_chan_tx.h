@@ -341,7 +341,6 @@ struct tx_action_context *p2p_find_tx_ctx_by_nbuf(
  * @soc: soc object
  * @vdev_id: vdev id
  * @rnd_cookie: random mac mgmt tx cookie
- * @duration: timeout value to flush the addr in target.
  *
  * This function will del the mac addr filter from vdev random mac addr list.
  * If there is no reference to mac addr, it will set a clear timer to flush it
@@ -352,7 +351,26 @@ struct tx_action_context *p2p_find_tx_ctx_by_nbuf(
  */
 QDF_STATUS
 p2p_del_random_mac(struct wlan_objmgr_psoc *soc, uint32_t vdev_id,
-		   uint64_t rnd_cookie, uint32_t duration);
+		   uint64_t rnd_cookie);
+
+/**
+ * p2p_random_mac_handle_tx_done() - del mac filter from given vdev rand mac
+ * list when mgmt tx done
+ * @soc: soc object
+ * @vdev_id: vdev id
+ * @rnd_cookie: random mac mgmt tx cookie
+ * @duration: timeout value to flush the addr in target.
+ *
+ * This function will del the mac addr filter from vdev random mac addr list
+ * and also remove the filter from firmware if duration is zero else start
+ * the timer for that duration.
+ *
+ * Return: QDF_STATUS_SUCCESS - del successfully.
+ *		other : failed to del the mac address entry.
+ */
+QDF_STATUS
+p2p_random_mac_handle_tx_done(struct wlan_objmgr_psoc *soc, uint32_t vdev_id,
+			      uint64_t rnd_cookie, uint32_t duration);
 
 /**
  * p2p_check_random_mac() - check random mac addr or not

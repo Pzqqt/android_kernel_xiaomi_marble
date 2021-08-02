@@ -407,7 +407,7 @@ QDF_STATUS ucfg_p2p_mgmt_tx_cancel(struct wlan_objmgr_psoc *soc,
 		p2p_debug("invalid id for cookie 0x%llx", cookie);
 		return QDF_STATUS_E_INVAL;
 	}
-	p2p_del_random_mac(soc, wlan_vdev_get_id(vdev), cookie, 20);
+	p2p_del_random_mac(soc, wlan_vdev_get_id(vdev), cookie);
 
 	cancel_tx = qdf_mem_malloc(sizeof(*cancel_tx));
 	if (!cancel_tx)
