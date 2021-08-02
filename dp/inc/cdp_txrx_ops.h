@@ -986,6 +986,10 @@ struct cdp_host_stats_ops {
 				  uint8_t *peer_mac, void *stats,
 				  uint32_t last_tx_rate_mcs,
 				  uint32_t stats_id);
+
+	QDF_STATUS
+	(*txrx_get_spcl_vap_stats)(struct cdp_soc_t *soc, uint8_t vdev_id,
+				   struct cdp_spcl_vap_stats *stats);
 };
 
 struct cdp_wds_ops {

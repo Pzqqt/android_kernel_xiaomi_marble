@@ -611,6 +611,25 @@ dp_deliver_tx_mgmt(struct cdp_soc_t *cdp_soc, uint8_t pdev_id, qdf_nbuf_t nbuf)
 }
 
 /**
+ * dp_reset_spcl_vap_stats() - reset spcl vap rx stats
+ * @vdev: Datapath VDEV handle
+ *
+ * Return: void
+ */
+static inline void
+dp_reset_spcl_vap_stats(struct dp_vdev *vdev)
+{
+	struct dp_mon_vdev *mon_vdev;
+
+	mon_vdev = vdev->monitor_vdev;
+	if (!mon_vdev)
+		return;
+
+	qdf_mem_zero(&mon_vdev->spcl_vap_stats,
+		     sizeof(mon_vdev->spcl_vap_stats));
+}
+
+/**
  * dp_vdev_set_monitor_mode() - Set DP VDEV to monitor mode
  * @vdev_handle: Datapath VDEV handle
  * @smart_monitor: Flag to denote if its smart monitor mode
@@ -656,6 +675,10 @@ static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_soc_t *dp_soc,
 		status = QDF_STATUS_SUCCESS;
 		goto fail;
 	}
+
+	if (mon_pdev->spcl_vap_configured &&
+	    mon_pdev->reset_spcl_vap_stats_enable)
+		dp_reset_spcl_vap_stats(vdev);
 
 	/*Check if current pdev's monitor_vdev exists */
 	if (mon_pdev->monitor_configured) {
@@ -5251,6 +5274,29 @@ static void  dp_iterate_update_peer_list(struct cdp_pdev *pdev_hdl)
 }
 #endif
 
+static QDF_STATUS
+dp_get_spcl_vap_stats(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+		      struct cdp_spcl_vap_stats *stats)
+{
+	struct dp_mon_vdev *mon_vdev = NULL;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
+
+	if (!vdev || !stats)
+		return QDF_STATUS_E_INVAL;
+
+	mon_vdev = vdev->monitor_vdev;
+	if (!mon_vdev)
+		return QDF_STATUS_E_INVAL;
+
+	qdf_mem_copy(stats, &mon_vdev->spcl_vap_stats,
+		     sizeof(struct cdp_spcl_vap_stats));
+
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS dp_mon_soc_cfg_init(struct dp_soc *soc)
 {
 	int target_type;
@@ -5670,6 +5716,8 @@ void dp_mon_cdp_ops_register(struct dp_soc *soc)
 #ifdef WDI_EVENT_ENABLE
 	ops->ctrl_ops->txrx_get_pldev = dp_get_pldev;
 #endif
+	ops->host_stats_ops->txrx_get_spcl_vap_stats =
+					dp_get_spcl_vap_stats;
 	return;
 }
 

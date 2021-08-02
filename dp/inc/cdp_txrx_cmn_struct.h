@@ -1115,6 +1115,7 @@ enum cdp_peer_param_type {
  * @CDP_CONFIG_BSS_COLOR: configure bss color
  * @CDP_SET_ATF_STATS_ENABLE: set ATF stats flag
  * @CDP_CONFIG_SPECIAL_VAP: Configure Special vap
+ * @CDP_RESET_SPCL_VAP_STATS_ENABLE: Enable spcl vap stats reset
  */
 enum cdp_pdev_param_type {
 	CDP_CONFIG_DEBUG_SNIFFER,
@@ -1146,6 +1147,7 @@ enum cdp_pdev_param_type {
 	CDP_CONFIG_BSS_COLOR,
 	CDP_SET_ATF_STATS_ENABLE,
 	CDP_CONFIG_SPECIAL_VAP,
+	CDP_RESET_SPCL_VAP_STATS_ENABLE,
 };
 
 /*
@@ -1279,6 +1281,7 @@ typedef union cdp_config_param_t {
 	uint32_t cdp_pdev_param_tx_pending;
 	bool cdp_pdev_param_atf_stats_enable;
 	bool cdp_pdev_param_config_special_vap;
+	bool cdp_pdev_param_reset_spcl_vap_stats_enable;
 
 	/* psoc params */
 	bool cdp_psoc_param_en_rate_stats;
@@ -2566,5 +2569,25 @@ struct cdp_rx_flow_info {
 	enum cdp_flow_fst_operation op_code;
 	struct cdp_rx_flow_tuple_info flow_tuple_info;
 	uint16_t fse_metadata;
+};
+
+/**
+ * cdp_spcl_vap_stats - Special vap statistics info
+ * @rx_ok_pkts: rx fcs ok pkts count
+ * @rx_ok_bytes: rx fcs ok bytes count
+ * @rx_err_pkts: rx fcs err pkts count
+ * @rx_err_bytes: rx fcs err bytes count
+ * @rx_mgmt_pkts: rx mgmt pkts count
+ * @rx_ctrl_pkts: rx ctrl pkts count
+ * @rx_data_pkts: rx data pkts count
+ */
+struct cdp_spcl_vap_stats {
+	uint64_t rx_ok_pkts;
+	uint64_t rx_ok_bytes;
+	uint64_t rx_err_pkts;
+	uint64_t rx_err_bytes;
+	uint64_t rx_mgmt_pkts;
+	uint64_t rx_ctrl_pkts;
+	uint64_t rx_data_pkts;
 };
 #endif

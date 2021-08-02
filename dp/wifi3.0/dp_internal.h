@@ -590,6 +590,17 @@ static inline bool monitor_is_enable_enhanced_stats(struct dp_pdev *pdev)
 {
 	return false;
 }
+
+static inline
+void dp_monitor_pdev_config_spcl_vap(struct dp_pdev *pdev)
+{
+}
+
+static inline
+void dp_monitor_pdev_reset_spcl_vap_stats_enable(struct dp_pdev *pdev,
+						 bool val)
+{
+}
 #endif
 
 #define DP_MAX_TIMER_EXEC_TIME_TICKS \

@@ -351,11 +351,16 @@ struct  dp_mon_pdev {
 
 	qdf_nbuf_t mcopy_status_nbuf;
 	bool is_dp_mon_pdev_initialized;
+	/* indicates if spcl vap is configured */
+	bool spcl_vap_configured;
+	/* enable spcl vap stats reset on ch change */
+	bool reset_spcl_vap_stats_enable;
 };
 
 struct  dp_mon_vdev {
 	/* callback to hand rx monitor 802.11 MPDU to the OS shim */
 	ol_txrx_rx_mon_fp osif_rx_mon;
+	struct cdp_spcl_vap_stats spcl_vap_stats;
 };
 
 struct dp_mon_peer {
@@ -2259,6 +2264,25 @@ void monitor_pdev_set_mon_vdev(struct dp_vdev *vdev)
 		return;
 
 	mon_pdev->mvdev = vdev;
+}
+
+static inline
+void dp_monitor_pdev_config_spcl_vap(struct dp_pdev *pdev, bool val)
+{
+	if (!pdev || !pdev->monitor_pdev)
+		return;
+
+	pdev->monitor_pdev->spcl_vap_configured = val;
+}
+
+static inline
+void dp_monitor_pdev_reset_spcl_vap_stats_enable(struct dp_pdev *pdev,
+						 bool val)
+{
+	if (!pdev || !pdev->monitor_pdev)
+		return;
+
+	pdev->monitor_pdev->reset_spcl_vap_stats_enable = val;
 }
 
 QDF_STATUS dp_mon_soc_attach(struct dp_soc *soc);

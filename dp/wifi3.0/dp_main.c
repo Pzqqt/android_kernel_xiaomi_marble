@@ -8528,7 +8528,13 @@ static QDF_STATUS dp_set_pdev_param(struct cdp_soc_t *cdp_soc, uint8_t pdev_id,
 					val.cdp_pdev_param_atf_stats_enable);
 		break;
 	case CDP_CONFIG_SPECIAL_VAP:
+		dp_monitor_pdev_config_spcl_vap(pdev,
+					val.cdp_pdev_param_config_special_vap);
 		monitor_vdev_set_monitor_mode_buf_rings(pdev);
+		break;
+	case CDP_RESET_SPCL_VAP_STATS_ENABLE:
+		dp_monitor_pdev_reset_spcl_vap_stats_enable(pdev,
+				val.cdp_pdev_param_reset_spcl_vap_stats_enable);
 		break;
 	default:
 		return QDF_STATUS_E_INVAL;
