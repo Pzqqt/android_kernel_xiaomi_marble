@@ -23,7 +23,8 @@
 
 /*
  * <ini>
- * rssi_weightage - RSSI Weightage to calculate best candidate
+ * rssi_weightage/RoamAPScore_RSSIWeight - RSSI Weightage to calculate best
+ * candidate
  * @Min: 0
  * @Max: 100
  * @Default: 20
@@ -40,7 +41,7 @@
  * </ini>
  */
 #define CFG_SCORING_RSSI_WEIGHTAGE CFG_INI_UINT( \
-	"rssi_weightage", \
+	"rssi_weightage RoamAPScore_RSSIWeight", \
 	0, \
 	100, \
 	20, \
@@ -267,7 +268,8 @@
 
 /*
  * <ini>
- * channel_congestion_weightage - channel Congestion Weightage to
+ * channel_congestion_weightage/RoamAPScore_CUWeight - channel Congestion
+ * Weightage to
  * calculate best candidate
  * @Min: 0
  * @Max: 100
@@ -285,7 +287,7 @@
  * </ini>
  */
 #define CFG_SCORING_CHAN_CONGESTION_WEIGHTAGE CFG_INI_UINT( \
-	"channel_congestion_weightage", \
+	"channel_congestion_weightage RoamAPScore_CUWeight", \
 	0, \
 	100, \
 	25, \
