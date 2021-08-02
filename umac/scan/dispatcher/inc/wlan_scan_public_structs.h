@@ -625,7 +625,7 @@ struct scan_cache_entry {
 	 */
 	uint8_t pdev_id;
 #ifdef WLAN_FEATURE_11BE_MLO
-	struct ml_info *ml_info;
+	struct ml_info ml_info;
 #endif
 };
 

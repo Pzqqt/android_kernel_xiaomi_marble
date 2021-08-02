@@ -1765,12 +1765,12 @@ static uint8_t util_get_link_info_offset(uint8_t *ml_ie)
 	uint8_t ml_ie_len = ml_ie[1];
 	uint16_t multi_link_ctrl = *(uint16_t *)(ml_ie + ML_CONTROL_OFFSET);
 
-	offset += (BIT(0) & multi_link_ctrl) * 6 +
-		  (BIT(1) & multi_link_ctrl) * 1 +
-		  (BIT(2) & multi_link_ctrl) * 1 +
-		  (BIT(3) & multi_link_ctrl) * 2 +
-		  (BIT(4) & multi_link_ctrl) * 2 +
-		  (BIT(5) & multi_link_ctrl) * 2;
+	offset += (BIT(4) & multi_link_ctrl) * 6 +
+		  (BIT(5) & multi_link_ctrl) * 1 +
+		  (BIT(6) & multi_link_ctrl) * 1 +
+		  (BIT(7) & multi_link_ctrl) * 2 +
+		  (BIT(8) & multi_link_ctrl) * 2 +
+		  (BIT(9) & multi_link_ctrl) * 2;
 
 	if (offset < ml_ie_len)
 		return offset;
@@ -1785,10 +1785,10 @@ static void util_get_partner_link_info(struct scan_cache_entry *scan_entry)
 	uint16_t sta_ctrl;
 
 	/* Update partner info  from RNR IE */
-	qdf_mem_copy(&scan_entry->ml_info->link_info[0].link_addr,
+	qdf_mem_copy(&scan_entry->ml_info.link_info[0].link_addr,
 		     &scan_entry->rnr.bss_info[0].bssid, 6);
 
-	scan_entry->ml_info->link_info[0].link_id =
+	scan_entry->ml_info.link_info[0].link_id =
 				scan_entry->rnr.bss_info[0].mld_info.link_id;
 
 	if (!offset)
@@ -1804,10 +1804,10 @@ static void util_get_partner_link_info(struct scan_cache_entry *scan_entry)
 		/* Skip STA control field */
 		offset += 2;
 
-		scan_entry->ml_info->link_info[0].link_id = sta_ctrl & 0xF;
+		scan_entry->ml_info.link_info[0].link_id = sta_ctrl & 0xF;
 		if (sta_ctrl & LINK_INFO_MAC_ADDR_PRESENT_BIT) {
 			qdf_mem_copy(
-				&scan_entry->ml_info->link_info[0].link_addr,
+				&scan_entry->ml_info.link_info[0].link_addr,
 				ml_ie + offset, 6);
 			scm_debug("Found partner info in ML IE");
 			return;
@@ -1818,33 +1818,33 @@ static void util_get_partner_link_info(struct scan_cache_entry *scan_entry)
 static void util_scan_update_ml_info(struct scan_cache_entry *scan_entry)
 {
 	uint8_t *ml_ie = scan_entry->ie_list.multi_link;
-	uint16_t multi_link_ctrl = *(uint16_t *)(ml_ie + ML_CONTROL_OFFSET);
+	uint16_t multi_link_ctrl;
 	uint8_t offset;
 
 	if (!scan_entry->ie_list.multi_link)
 		return;
 
-	scan_entry->ml_info = qdf_mem_malloc_atomic(
-					sizeof(*scan_entry->ml_info));
+	multi_link_ctrl = *(uint16_t *)(ml_ie + ML_CONTROL_OFFSET);
+
 	/* TODO: update ml_info based on ML IE */
 
 	offset = ML_CMN_INFO_OFFSET;
 	/* TODO: Add proper parsing based on presense bitmap */
 	if (multi_link_ctrl & CMN_INFO_MLD_ADDR_PRESENT_BIT) {
-		qdf_mem_copy(&scan_entry->ml_info->mld_mac_addr,
+		qdf_mem_copy(&scan_entry->ml_info.mld_mac_addr,
 			     ml_ie + offset, 6);
 		offset += 6;
 	}
 
 	/* TODO: Decode it from ML IE */
-	scan_entry->ml_info->num_links = 2;
+	scan_entry->ml_info.num_links = 2;
 
 	/**
 	 * Copy Link ID & MAC address of the scan cache entry as first entry
 	 * in the partner info list
 	 */
 	if (multi_link_ctrl & CMN_INFO_LINK_ID_PRESENT_BIT)
-		scan_entry->ml_info->self_link_id = ml_ie[offset] & 0x0F;
+		scan_entry->ml_info.self_link_id = ml_ie[offset] & 0x0F;
 
 	util_get_partner_link_info(scan_entry);
 }
