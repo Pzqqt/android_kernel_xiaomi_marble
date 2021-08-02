@@ -15563,6 +15563,8 @@ struct wmi_ops tlv_ops =  {
 	.convert_target_pdev_id_to_host =
 		convert_target_pdev_id_to_host_pdev_id,
 
+	.convert_host_vdev_param_tlv = convert_host_vdev_param_tlv,
+
 	.convert_phy_id_host_to_target =
 		convert_host_phy_id_to_target_phy_id_legacy,
 	.convert_phy_id_target_to_host =
