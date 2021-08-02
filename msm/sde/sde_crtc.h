@@ -1057,4 +1057,10 @@ void _sde_crtc_clear_dim_layers_v1(struct drm_crtc_state *state);
  */
 void sde_crtc_cancel_delayed_work(struct drm_crtc *crtc);
 
+/*
+ * sde_crtc_get_src_encoder_of_clone- find source encoder of a clone mode encoder
+ * @cstate:      Pointer to DRM crtc object
+ */
+struct drm_encoder *sde_crtc_get_src_encoder_of_clone(struct drm_crtc *crtc);
+
 #endif /* _SDE_CRTC_H_ */

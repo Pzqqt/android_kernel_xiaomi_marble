@@ -22,8 +22,7 @@
 #define SDE_ENCODER_NAME_MAX	16
 
 /* wait for at most 2 vsync for lowest refresh rate (24hz) */
-#define KICKOFF_TIMEOUT_MS		84
-#define KICKOFF_TIMEOUT_JIFFIES		msecs_to_jiffies(KICKOFF_TIMEOUT_MS)
+#define DEFAULT_KICKOFF_TIMEOUT_MS		84
 
 #define MAX_TE_PROFILE_COUNT		5
 /**
@@ -286,6 +285,7 @@ struct sde_encoder_irq {
  * @pending_retire_fence_cnt:   Atomic counter tracking the pending retire
  *                              fences that have to be signalled.
  * @pending_kickoff_wq:		Wait queue for blocking until kickoff completes
+ * @kickoff_timeout_ms:		kickoff timeout in mill seconds
  * @irq:			IRQ tracking structures
  * @has_intf_te:		Interface TE configuration support
  * @cont_splash_enabled:	Variable to store continuous splash settings.
@@ -332,6 +332,7 @@ struct sde_encoder_phys {
 	atomic_t pending_kickoff_cnt;
 	atomic_t pending_retire_fence_cnt;
 	wait_queue_head_t pending_kickoff_wq;
+	u32 kickoff_timeout_ms;
 	struct sde_encoder_irq irq[INTR_IDX_MAX];
 	bool has_intf_te;
 	bool cont_splash_enabled;
@@ -538,6 +539,13 @@ void sde_encoder_phys_setup_cdm(struct sde_encoder_phys *phys_enc,
  */
 void sde_encoder_helper_get_pp_line_count(struct drm_encoder *drm_enc,
 		struct sde_hw_pp_vsync_info *info);
+
+/**
+ * sde_encoder_helper_get_kickoff_timeout_ms- get the kickoff timeout value based on fps
+ * @drm_enc: Pointer to drm encoder structure
+ * Returns: Kickoff timeout in milli seconds
+ */
+u32 sde_encoder_helper_get_kickoff_timeout_ms(struct drm_encoder *drm_enc);
 
 /**
  * sde_encoder_helper_trigger_flush - control flush helper function
