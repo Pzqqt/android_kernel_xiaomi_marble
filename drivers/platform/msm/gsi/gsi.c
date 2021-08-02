@@ -1559,9 +1559,6 @@ int gsi_register_device(struct gsi_per_props *props, unsigned long *dev_hdl)
 	if (gsi_ctx->per.ver >= GSI_VER_1_2)
 		gsihal_write_reg_n(GSI_EE_n_ERROR_LOG, gsi_ctx->per.ee, 0);
 
-	/* Reset to zero scratch_1 register*/
-	gsihal_write_reg_n(GSI_EE_n_CNTXT_SCRATCH_1, gsi_ctx->per.ee, 0);
-
 	if (running_emulation) {
 		/*
 		 * Set up the emulator's interrupt controller...

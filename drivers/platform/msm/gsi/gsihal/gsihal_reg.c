@@ -60,7 +60,6 @@ static const char *gsireg_name_to_str[GSI_REG_MAX] = {
 	__stringify(GSI_EE_n_CNTXT_MSI_BASE_MSB),
 	__stringify(GSI_EE_n_GSI_STATUS),
 	__stringify(GSI_EE_n_CNTXT_SCRATCH_0),
-	__stringify(GSI_EE_n_CNTXT_SCRATCH_1),
 	__stringify(GSI_EE_n_EV_CH_k_CNTXT_1),
 	__stringify(GSI_EE_n_EV_CH_k_CNTXT_2),
 	__stringify(GSI_EE_n_EV_CH_k_CNTXT_3),
@@ -1220,9 +1219,6 @@ static struct gsihal_reg_obj gsihal_reg_objs[GSI_VER_MAX][GSI_REG_MAX] = {
 	[GSI_VER_1_0][GSI_EE_n_CNTXT_SCRATCH_0] = {
 	gsireg_construct_dummy, gsireg_parse_dummy,
 	0x0001f400, 0x4000, 0},
-	[GSI_VER_1_0][GSI_EE_n_CNTXT_SCRATCH_1] = {
-	gsireg_construct_dummy, gsireg_parse_dummy,
-	0x0001f404, 0x4000, 0},
 	[GSI_VER_1_0][GSI_EE_n_EV_CH_k_CNTXT_1] = {
 	gsireg_construct_ev_ch_k_cntxt_1, gsireg_parse_dummy,
 	0x0001d004, 0x4000, 0x80},
@@ -1578,9 +1574,6 @@ static struct gsihal_reg_obj gsihal_reg_objs[GSI_VER_MAX][GSI_REG_MAX] = {
 	[GSI_VER_2_5][GSI_EE_n_CNTXT_SCRATCH_0] = {
 	gsireg_construct_dummy, gsireg_parse_dummy,
 	0x00012400, 0x4000, 0},
-	[GSI_VER_2_5][GSI_EE_n_CNTXT_SCRATCH_1] = {
-	gsireg_construct_dummy, gsireg_parse_dummy,
-	0x00012404, 0x4000, 0},
 	[GSI_VER_2_5][GSI_EE_n_EV_CH_k_CNTXT_1] = {
 	gsireg_construct_ev_ch_k_cntxt_1, gsireg_parse_dummy,
 	0x00010004, 0x4000, 0x80},
@@ -1962,9 +1955,6 @@ static struct gsihal_reg_obj gsihal_reg_objs[GSI_VER_MAX][GSI_REG_MAX] = {
 	[GSI_VER_3_0][GSI_EE_n_CNTXT_SCRATCH_0] = {
 	gsireg_construct_dummy, gsireg_parse_dummy,
 	0x00025400, 0x12000, 0},
-	[GSI_VER_3_0][GSI_EE_n_CNTXT_SCRATCH_1] = {
-	gsireg_construct_dummy, gsireg_parse_dummy,
-	0x00024504, 0x12000, 0},
 	[GSI_VER_3_0][GSI_INTER_EE_n_SRC_GSI_CH_IRQ_k] = {
 	gsireg_construct_dummy, gsireg_parse_dummy,
 	0x0000c018, 0x1000, 0x18 },
