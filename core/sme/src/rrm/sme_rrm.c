@@ -39,6 +39,7 @@
 #include <wlan_reg_services_api.h>
 #include <wlan_utility.h>
 #include <../../core/src/wlan_cm_vdev_api.h>
+#include "rrm_api.h"
 
 /* Roam score for a neighbor AP will be calculated based on the below
  * definitions. The calculated roam score will be used to select the
@@ -1102,10 +1103,7 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 		goto cleanup;
 	}
 
-	qdf_mem_zero(country, WNI_CFG_COUNTRY_CODE_LEN);
-	wlan_reg_read_current_country(mac->psoc, country);
-	if (!country[0])
-		country[2] = OP_CLASS_GLOBAL;
+	rrm_get_country_code_from_connected_profile(mac, session_id, country);
 
 	if (wlan_reg_is_6ghz_op_class(mac->pdev,
 				      beacon_req->channel_info.reg_class))

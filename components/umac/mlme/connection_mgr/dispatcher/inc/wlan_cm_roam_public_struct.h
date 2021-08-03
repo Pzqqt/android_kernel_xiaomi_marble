@@ -295,6 +295,7 @@ struct roam_synch_frame_ind {
  * @ctx: reassoc timer context
  * @cm_rso_lock: RSO lock
  * @rsn_cap: original rsn caps from the connect req from supplicant
+ * @country_code: country code from connected AP's beacon IE
  * @disable_hi_rssi: disable high rssi
  * @roam_control_enable: Flag used to cache the status of roam control
  *			 configuration. This will be set only if the
@@ -344,6 +345,7 @@ struct rso_config {
 #endif
 	qdf_mutex_t cm_rso_lock;
 	uint8_t rsn_cap;
+	uint8_t country_code[REG_ALPHA2_LEN + 1];
 	bool disable_hi_rssi;
 	bool roam_control_enable;
 	uint8_t rescan_rssi_delta;

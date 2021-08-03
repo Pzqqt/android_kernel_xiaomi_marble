@@ -6228,6 +6228,7 @@ static void csr_fill_connected_profile(struct mac_context *mac_ctx,
 	sme_QosAssocInfo assoc_info;
 	struct cm_roam_values_copy src_cfg;
 	bool is_ese = false;
+	uint8_t country_code[REG_ALPHA2_LEN + 1];
 
 	session->modifyProfileFields.uapsd_mask = rsp->uapsd_mask;
 	filter = qdf_mem_malloc(sizeof(*filter));
@@ -6300,6 +6301,13 @@ static void csr_fill_connected_profile(struct mac_context *mac_ctx,
 		assoc_info.uapsd_mask = rsp->uapsd_mask;
 		csr_qos_send_assoc_ind(mac_ctx, vdev_id, &assoc_info);
 	}
+
+	if (bcn_ies->Country.present)
+		qdf_mem_copy(country_code, bcn_ies->Country.country,
+			     REG_ALPHA2_LEN + 1);
+	else
+		qdf_mem_zero(country_code, REG_ALPHA2_LEN + 1);
+	wlan_cm_set_country_code(mac_ctx->pdev, vdev_id, country_code);
 
 	qdf_mem_free(bcn_ies);
 

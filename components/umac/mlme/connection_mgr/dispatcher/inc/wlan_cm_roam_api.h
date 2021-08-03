@@ -315,6 +315,28 @@ struct rso_config *wlan_cm_get_rso_config_fl(struct wlan_objmgr_vdev *vdev,
 void wlan_cm_set_disable_hi_rssi(struct wlan_objmgr_pdev *pdev,
 				 uint8_t vdev_id, bool value);
 
+/**
+ * wlan_cm_set_country_code - set country code to vdev rso config
+ * @pdev: pdev pointer
+ * @vdev_id: vdev id
+ * @cc: country code
+ *
+ * Return: void
+ */
+void wlan_cm_set_country_code(struct wlan_objmgr_pdev *pdev,
+			      uint8_t vdev_id, uint8_t  *cc);
+
+/**
+ * wlan_cm_get_country_code - get country code from vdev rso config
+ * @pdev: pdev pointer
+ * @vdev_id: vdev id
+ * @cc: country code
+ *
+ * Return: qdf status
+ */
+QDF_STATUS wlan_cm_get_country_code(struct wlan_objmgr_pdev *pdev,
+				    uint8_t vdev_id, uint8_t *cc);
+
 #ifdef FEATURE_WLAN_ESE
 /**
  * wlan_cm_set_ese_assoc  - set ese assoc
