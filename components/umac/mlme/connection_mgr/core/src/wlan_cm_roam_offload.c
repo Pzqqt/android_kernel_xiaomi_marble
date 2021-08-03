@@ -3141,7 +3141,8 @@ cm_roam_switch_to_init(struct wlan_objmgr_pdev *pdev,
 								  PM_STA_MODE,
 								  NULL);
 		if (dual_sta_roam_active && (count == 2 &&
-		    !policy_mgr_current_concurrency_is_mcc(psoc))) {
+		    !(policy_mgr_current_concurrency_is_mcc(psoc) ||
+		      policy_mgr_current_concurrency_is_scc(psoc)))) {
 			mlme_info("STA + STA concurrency is in DBS");
 			break;
 		}
