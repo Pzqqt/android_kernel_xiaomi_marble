@@ -46,9 +46,10 @@ void print_psc_properties(const char *str, struct msm_vidc_inst *inst,
 		return;
 
 	i_vpr_h(inst,
-		"%s: resolution %#x, crop offsets[0] %#x, crop offsets[1] %#x, bit depth %#x, coded frames %d "
-		"fw min count %d, poc %d, color info %d, profile %d, level %d, tier %d ",
-		str, subsc_params.bitstream_resolution,
+		"%s: width %d, height %d, crop offsets[0] %#x, crop offsets[1] %#x, bit depth %#x, coded frames %d "
+		"fw min count %d, poc %d, color info %d, profile %d, level %d, tier %d\n",
+		str, (subsc_params.bitstream_resolution & HFI_BITMASK_BITSTREAM_WIDTH) >> 16,
+		(subsc_params.bitstream_resolution & HFI_BITMASK_BITSTREAM_HEIGHT),
 		subsc_params.crop_offsets[0], subsc_params.crop_offsets[1],
 		subsc_params.bit_depth, subsc_params.coded_frames,
 		subsc_params.fw_min_count, subsc_params.pic_order_cnt,

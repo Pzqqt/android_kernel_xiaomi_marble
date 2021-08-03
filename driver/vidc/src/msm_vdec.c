@@ -138,8 +138,10 @@ static int msm_vdec_set_bitstream_resolution(struct msm_vidc_inst *inst,
 			HFI_PAYLOAD_U32,
 			&resolution,
 			sizeof(u32));
-	if (rc)
+	if (rc) {
 		i_vpr_e(inst, "%s: set property failed\n", __func__);
+		return rc;
+	}
 
 	return rc;
 }
@@ -173,8 +175,10 @@ static int msm_vdec_set_linear_stride_scanline(struct msm_vidc_inst *inst)
 			HFI_PAYLOAD_U64,
 			&payload,
 			sizeof(u64));
-	if (rc)
+	if (rc) {
 		i_vpr_e(inst, "%s: set property failed\n", __func__);
+		return rc;
+	}
 
 	return rc;
 }
@@ -215,8 +219,10 @@ static int msm_vdec_set_crop_offsets(struct msm_vidc_inst *inst,
 			HFI_PAYLOAD_64_PACKED,
 			&payload,
 			sizeof(u64));
-	if (rc)
+	if (rc) {
 		i_vpr_e(inst, "%s: set property failed\n", __func__);
+		return rc;
+	}
 
 	return rc;
 }
@@ -248,8 +254,10 @@ static int msm_vdec_set_bit_depth(struct msm_vidc_inst *inst,
 			HFI_PAYLOAD_U32,
 			&bitdepth,
 			sizeof(u32));
-	if (rc)
+	if (rc) {
 		i_vpr_e(inst, "%s: set property failed\n", __func__);
+		return rc;
+	}
 
 	return rc;
 }
@@ -305,8 +313,10 @@ static int msm_vdec_set_coded_frames(struct msm_vidc_inst *inst,
 			HFI_PAYLOAD_U32,
 			&coded_frames,
 			sizeof(u32));
-	if (rc)
+	if (rc) {
 		i_vpr_e(inst, "%s: set property failed\n", __func__);
+		return rc;
+	}
 
 	return rc;
 }
@@ -333,9 +343,10 @@ static int msm_vdec_set_min_output_count(struct msm_vidc_inst *inst,
 			HFI_PAYLOAD_U32,
 			&min_output,
 			sizeof(u32));
-	if (rc)
+	if (rc) {
 		i_vpr_e(inst, "%s: set property failed\n", __func__);
-
+		return rc;
+	}
 	return rc;
 }
 
@@ -359,8 +370,10 @@ static int msm_vdec_set_picture_order_count(struct msm_vidc_inst *inst,
 			HFI_PAYLOAD_U32,
 			&poc,
 			sizeof(u32));
-	if (rc)
+	if (rc) {
 		i_vpr_e(inst, "%s: set property failed\n", __func__);
+		return rc;
+	}
 
 	return rc;
 }
@@ -425,8 +438,10 @@ static int msm_vdec_set_colorspace(struct msm_vidc_inst *inst,
 			HFI_PAYLOAD_32_PACKED,
 			&color_info,
 			sizeof(u32));
-	if (rc)
+	if (rc) {
 		i_vpr_e(inst, "%s: set property failed\n", __func__);
+		return rc;
+	}
 
 	return rc;
 }
@@ -452,8 +467,10 @@ static int msm_vdec_set_profile(struct msm_vidc_inst *inst,
 			HFI_PAYLOAD_U32_ENUM,
 			&profile,
 			sizeof(u32));
-	if (rc)
+	if (rc) {
 		i_vpr_e(inst, "%s: set property failed\n", __func__);
+		return rc;
+	}
 
 	return rc;
 }
@@ -479,8 +496,10 @@ static int msm_vdec_set_level(struct msm_vidc_inst *inst,
 			HFI_PAYLOAD_U32_ENUM,
 			&level,
 			sizeof(u32));
-	if (rc)
+	if (rc) {
 		i_vpr_e(inst, "%s: set property failed\n", __func__);
+		return rc;
+	}
 
 	return rc;
 }
@@ -506,8 +525,10 @@ static int msm_vdec_set_tier(struct msm_vidc_inst *inst,
 			HFI_PAYLOAD_U32_ENUM,
 			&tier,
 			sizeof(u32));
-	if (rc)
+	if (rc) {
 		i_vpr_e(inst, "%s: set property failed\n", __func__);
+		return rc;
+	}
 
 	return rc;
 }
@@ -531,8 +552,10 @@ static int msm_vdec_set_colorformat(struct msm_vidc_inst *inst)
 			HFI_PAYLOAD_U32,
 			&hfi_colorformat,
 			sizeof(u32));
-	if (rc)
+	if (rc) {
 		i_vpr_e(inst, "%s: set property failed\n", __func__);
+		return rc;
+	}
 
 	return rc;
 }
@@ -561,8 +584,10 @@ static int msm_vdec_set_output_order(struct msm_vidc_inst *inst,
 			HFI_PAYLOAD_U32,
 			&output_order,
 			sizeof(u32));
-	if (rc)
+	if (rc) {
 		i_vpr_e(inst, "%s: set property failed\n", __func__);
+		return rc;
+	}
 
 	return rc;
 }
@@ -587,8 +612,11 @@ static int msm_vdec_set_rap_frame(struct msm_vidc_inst *inst,
 			HFI_PAYLOAD_U32,
 			&rap_frame,
 			sizeof(u32));
-	if (rc)
+	if (rc) {
 		i_vpr_e(inst, "%s: set property failed\n", __func__);
+		return rc;
+	}
+
 	return rc;
 }
 
@@ -612,8 +640,10 @@ static int msm_vdec_set_thumbnail_mode(struct msm_vidc_inst *inst,
 			HFI_PAYLOAD_U32,
 			&thumbnail_mode,
 			sizeof(u32));
-	if (rc)
+	if (rc) {
 		i_vpr_e(inst, "%s: set property failed\n", __func__);
+		return rc;
+	}
 
 	return rc;
 }
@@ -639,8 +669,10 @@ static int msm_vdec_set_conceal_color_8bit(struct msm_vidc_inst *inst,
 			HFI_PAYLOAD_32_PACKED,
 			&conceal_color_8bit,
 			sizeof(u32));
-	if (rc)
+	if (rc) {
 		i_vpr_e(inst, "%s: set property failed\n", __func__);
+		return rc;
+	}
 
 	return rc;
 }
@@ -666,8 +698,10 @@ static int msm_vdec_set_conceal_color_10bit(struct msm_vidc_inst *inst,
 			HFI_PAYLOAD_32_PACKED,
 			&conceal_color_10bit,
 			sizeof(u32));
-	if (rc)
+	if (rc) {
 		i_vpr_e(inst, "%s: set property failed\n", __func__);
+		return rc;
+	}
 
 	return rc;
 }
@@ -689,8 +723,11 @@ static int msm_vdec_set_host_max_buf_count(struct msm_vidc_inst *inst,
 			HFI_PAYLOAD_U32,
 			&count,
 			sizeof(u32));
-	if (rc)
+	if (rc) {
+		i_vpr_e(inst, "%s: set property failed\n", __func__);
 		return rc;
+	}
+
 	return 0;
 }
 
@@ -1023,6 +1060,7 @@ static int msm_vdec_subscribe_metadata(struct msm_vidc_inst *inst,
 		META_DPB_TAG_LIST,
 		META_SUBFRAME_OUTPUT,
 		META_DEC_QP_METADATA,
+		META_MAX_NUM_REORDER_FRAMES,
 	};
 
 	if (!inst || !inst->core || !inst->capabilities) {
