@@ -783,6 +783,54 @@ void wlan_cm_set_disable_hi_rssi(struct wlan_objmgr_pdev *pdev,
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 }
 
+void wlan_cm_set_country_code(struct wlan_objmgr_pdev *pdev,
+			      uint8_t vdev_id, uint8_t  *cc)
+{
+	static struct rso_config *rso_cfg;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg || !cc)
+		goto release_vdev_ref;
+
+	qdf_mem_copy(rso_cfg->country_code, cc, REG_ALPHA2_LEN + 1);
+
+release_vdev_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+}
+
+QDF_STATUS wlan_cm_get_country_code(struct wlan_objmgr_pdev *pdev,
+				    uint8_t vdev_id, uint8_t *cc)
+{
+	static struct rso_config *rso_cfg;
+	struct wlan_objmgr_vdev *vdev;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+	rso_cfg = wlan_cm_get_rso_config(vdev);
+	if (!rso_cfg || !cc) {
+		status = QDF_STATUS_E_INVAL;
+		goto release_vdev_ref;
+	}
+
+	qdf_mem_copy(cc, rso_cfg->country_code, REG_ALPHA2_LEN + 1);
+
+release_vdev_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+	return status;
+}
+
 #ifdef FEATURE_WLAN_ESE
 void wlan_cm_set_ese_assoc(struct wlan_objmgr_pdev *pdev,
 			   uint8_t vdev_id, bool value)
