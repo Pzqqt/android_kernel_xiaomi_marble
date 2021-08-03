@@ -371,8 +371,8 @@ void dfs_nol_addchan(struct wlan_dfs *dfs,
 				"Update OS Ticks for NOL %d MHz / %d MHz",
 				 nol->nol_freq, nol->nol_chwidth);
 
-			qdf_timer_stop(&nol->nol_timer);
-			qdf_timer_mod(&nol->nol_timer,
+			qdf_timer_sync_cancel(&nol->nol_timer);
+			qdf_timer_start(&nol->nol_timer,
 					dfs_nol_timeout * TIME_IN_MS);
 			return;
 		}
@@ -403,7 +403,7 @@ void dfs_nol_addchan(struct wlan_dfs *dfs,
 		       &elem->nol_timer, dfs_remove_from_nol,
 		       elem, QDF_TIMER_TYPE_WAKE_APPS);
 
-	qdf_timer_mod(&elem->nol_timer, dfs_nol_timeout * TIME_IN_MS);
+	qdf_timer_start(&elem->nol_timer, dfs_nol_timeout * TIME_IN_MS);
 
 	/* Update the NOL counter. */
 	dfs->dfs_nol_count++;
