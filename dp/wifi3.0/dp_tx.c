@@ -2284,6 +2284,7 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				} else
 					break;
 				i++;
+				dp_tx_desc_release(tx_desc, tx_q->desc_pool_id);
 				continue;
 			}
 
@@ -2300,6 +2301,7 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				 */
 				dp_tx_comp_free_buf(soc, tx_desc);
 				i++;
+				dp_tx_desc_release(tx_desc, tx_q->desc_pool_id);
 				continue;
 			}
 
