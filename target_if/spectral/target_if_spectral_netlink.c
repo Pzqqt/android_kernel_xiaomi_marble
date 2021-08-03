@@ -127,7 +127,10 @@ target_if_spectral_fill_samp_msg(struct target_if_spectral *spectral,
 		rb_edge_bins->start_bin_idx =
 					map_det_info->rb_extrabins_start_idx;
 		rb_edge_bins->num_bins = map_det_info->rb_extrabins_num;
-		start_bin_index = lb_edge_bins->start_bin_idx;
+		if (lb_edge_bins->num_bins)
+			start_bin_index = lb_edge_bins->start_bin_idx;
+		else
+			start_bin_index = detector_info->start_bin_idx;
 
 		detector_info->rssi = params->rssi;
 

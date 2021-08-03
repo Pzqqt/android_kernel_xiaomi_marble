@@ -1078,8 +1078,10 @@ target_if_populate_fft_bins_info(struct target_if_spectral *spectral,
 		dest_det_info->dest_end_bin_idx =
 					dest_det_info->dest_start_bin_idx +
 					num_fft_bins - 1;
-		dest_det_info->lb_extrabins_start_idx = start_bin;
-		dest_det_info->rb_extrabins_start_idx = 1 +
+		if (dest_det_info->lb_extrabins_num)
+			dest_det_info->lb_extrabins_start_idx = start_bin;
+		if (dest_det_info->rb_extrabins_num)
+			dest_det_info->rb_extrabins_start_idx = 1 +
 					dest_det_info->dest_end_bin_idx;
 		dest_det_info->src_start_bin_idx = 0;
 	}
