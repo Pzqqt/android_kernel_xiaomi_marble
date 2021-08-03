@@ -25,10 +25,68 @@
 #include <wlan_mgmt_txrx_rx_reo_public_structs.h>
 #include <target_if_mgmt_txrx_rx_reo.h>
 
+/**
+ * target_if_mgmt_rx_reo_fw_consumed_event_handler() - WMI event handler to
+ * process MGMT Rx FW consumed event handler
+ * @scn: Pointer to scn object
+ * @data_buf: Pointer to event buffer
+ * @data_len: Length of event buffer
+ *
+ * Return: 0 for success, else failure
+ */
+static int
+target_if_mgmt_rx_reo_fw_consumed_event_handler(
+	ol_scn_t scn, uint8_t *data, uint32_t datalen)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wmi_unified *wmi_handle;
+	QDF_STATUS status;
+	struct mgmt_rx_reo_params params;
+	struct wlan_lmac_if_mgmt_rx_reo_rx_ops *mgmt_rx_reo_rx_ops;
+
+	psoc = target_if_get_psoc_from_scn_hdl(scn);
+	if (!psoc) {
+		mgmt_rx_reo_err("null psoc");
+		return -EINVAL;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		mgmt_rx_reo_err("wmi_handle is NULL");
+		return -EINVAL;
+	}
+
+	status = wmi_extract_mgmt_rx_fw_consumed(wmi_handle, data, &params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mgmt_rx_reo_err("Failed to extract mgmt rx params");
+		return -EINVAL;
+	}
+
+	mgmt_rx_reo_rx_ops = target_if_mgmt_rx_reo_get_rx_ops(psoc);
+	if (!mgmt_rx_reo_rx_ops) {
+		mgmt_rx_reo_err("rx_ops of MGMT Rx REO module is NULL");
+		return -EINVAL;
+	}
+
+	if (!mgmt_rx_reo_rx_ops->fw_consumed_event_handler) {
+		mgmt_rx_reo_err("FW consumed event handler is NULL");
+		return -EINVAL;
+	}
+
+	status = mgmt_rx_reo_rx_ops->fw_consumed_event_handler(psoc, &params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mgmt_rx_reo_err("FW consumed event handling failed");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 QDF_STATUS
 target_if_mgmt_rx_reo_register_event_handlers(struct wlan_objmgr_psoc *psoc)
 {
 	struct wmi_unified *wmi_handle;
+	QDF_STATUS status;
 
 	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
 	if (!wmi_handle) {
@@ -36,15 +94,23 @@ target_if_mgmt_rx_reo_register_event_handlers(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	/* Register mgmt rx fw consumed event handler here */
+	status = wmi_unified_register_event_handler(
+			wmi_handle,
+			wmi_mgmt_rx_fw_consumed_eventid,
+			target_if_mgmt_rx_reo_fw_consumed_event_handler,
+			WMI_RX_UMAC_CTX);
 
-	return QDF_STATUS_SUCCESS;
+	if (QDF_IS_STATUS_ERROR(status))
+		mgmt_rx_reo_err("Registering for MGMT Rx FW consumed event failed");
+
+	return status;
 }
 
 QDF_STATUS
 target_if_mgmt_rx_reo_unregister_event_handlers(struct wlan_objmgr_psoc *psoc)
 {
 	struct wmi_unified *wmi_handle;
+	QDF_STATUS status;
 
 	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
 	if (!wmi_handle) {
@@ -52,9 +118,14 @@ target_if_mgmt_rx_reo_unregister_event_handlers(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	/* Unregister mgmt rx fw consumed event handler here */
+	status = wmi_unified_unregister_event_handler(
+			wmi_handle,
+			wmi_mgmt_rx_fw_consumed_eventid);
 
-	return QDF_STATUS_SUCCESS;
+	if (QDF_IS_STATUS_ERROR(status))
+		mgmt_rx_reo_err("Unregistering for MGMT Rx FW consumed event failed");
+
+	return status;
 }
 
 /**

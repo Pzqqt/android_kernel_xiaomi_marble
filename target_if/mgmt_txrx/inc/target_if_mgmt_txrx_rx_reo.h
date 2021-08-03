@@ -25,6 +25,7 @@
 #include <qdf_types.h>
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_mgmt_txrx_rx_reo_utils_api.h>
+#include <wlan_lmac_if_api.h>
 
 #ifdef WLAN_MGMT_RX_REO_SUPPORT
 
@@ -65,6 +66,26 @@ target_if_mgmt_rx_reo_unregister_event_handlers(struct wlan_objmgr_psoc *psoc);
 QDF_STATUS
 target_if_mgmt_rx_reo_tx_ops_register(
 		struct wlan_lmac_if_mgmt_txrx_tx_ops *mgmt_txrx_tx_ops);
+
+/**
+ * target_if_mgmt_rx_reo_get_rx_ops() - Retrieve rx_ops of MGMT Rx REO module
+ * @psoc:psoc context
+ *
+ * Return: Pointer to rx_ops of MGMT Rx REO module
+ */
+static struct wlan_lmac_if_mgmt_rx_reo_rx_ops *
+target_if_mgmt_rx_reo_get_rx_ops(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_lmac_if_mgmt_txrx_rx_ops *mgmt_rx_ops;
+
+	mgmt_rx_ops = wlan_lmac_if_get_mgmt_txrx_rx_ops(psoc);
+	if (!mgmt_rx_ops) {
+		mgmt_rx_reo_err("MGMT TxRx rx_ops is NULL");
+		return NULL;
+	}
+
+	return &mgmt_rx_ops->mgmt_rx_reo_rx_ops;
+}
 #else
 /**
  * target_if_mgmt_rx_reo_register_event_handlers() - Register management
