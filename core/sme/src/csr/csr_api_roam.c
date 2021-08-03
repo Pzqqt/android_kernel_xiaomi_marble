@@ -3906,6 +3906,11 @@ csr_roam_chk_lnk_set_ctx_rsp(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 							 sessionId);
 	wlan_mlme_get_bssid_vdev_id(mac_ctx->pdev, sessionId,
 				    &connected_bssid);
+	sme_debug("vdev %d, Status %d, peer_macaddr "QDF_MAC_ADDR_FMT " obss offload %d freq %d opmode %d",
+		  pRsp->sessionId, pRsp->status_code,
+		  QDF_MAC_ADDR_REF(pRsp->peer_macaddr.bytes),
+		  mac_ctx->obss_scan_offload, chan_freq,
+		  wlan_get_opmode_vdev_id(mac_ctx->pdev, sessionId));
 
 	if (CSR_IS_WAIT_FOR_KEY(mac_ctx, sessionId)) {
 		/* We are done with authentication, whethere succeed or not */
@@ -6359,6 +6364,7 @@ cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
 	struct wlan_mlme_psoc_ext_obj *mlme_obj;
 	struct dual_sta_policy *dual_sta_policy;
 	bool enable_mcc_adaptive_sch = false;
+	struct qdf_mac_addr bc_mac = QDF_MAC_ADDR_BCAST_INIT;
 
 	/*
 	 * This API is to update legacy struct and should be removed once
@@ -6437,7 +6443,8 @@ cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
 		install_key_rsp.length = sizeof(install_key_rsp);
 		install_key_rsp.status_code = eSIR_SME_SUCCESS;
 		install_key_rsp.sessionId = vdev_id;
-		qdf_copy_macaddr(&install_key_rsp.peer_macaddr, &rsp->bssid);
+		/* use BC mac to enable OBSS scan */
+		qdf_copy_macaddr(&install_key_rsp.peer_macaddr, &bc_mac);
 		csr_roam_chk_lnk_set_ctx_rsp(mac_ctx,
 					     (tSirSmeRsp *)&install_key_rsp);
 	}

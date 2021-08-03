@@ -1559,25 +1559,15 @@ static void lim_process_sme_obss_scan_ind(struct mac_context *mac_ctx,
 	session = pe_find_session_by_bssid(mac_ctx,
 			ht40_scanind->mac_addr.bytes, &session_id);
 	if (!session) {
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
-			"OBSS Scan not started: session id is NULL");
+		pe_err("OBSS Scan not started: session id is NULL");
 		return;
 	}
+	pe_debug("OBSS Scan Req: vdev %d (pe session %d) htSupportedChannelWidthSet %d",
+		 session->vdev_id, session->peSessionId,
+		 session->htSupportedChannelWidthSet);
 	if (session->htSupportedChannelWidthSet ==
-			WNI_CFG_CHANNEL_BONDING_MODE_ENABLE) {
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
-			"OBSS Scan Start Req: session id %d"
-			"htSupportedChannelWidthSet %d",
-			session->peSessionId,
-			session->htSupportedChannelWidthSet);
+	    WNI_CFG_CHANNEL_BONDING_MODE_ENABLE)
 		lim_send_ht40_obss_scanind(mac_ctx, session);
-	} else {
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
-			"OBSS Scan not started: channel width - %d session %d",
-			session->htSupportedChannelWidthSet,
-			session->peSessionId);
-	}
-	return;
 }
 
 /**
