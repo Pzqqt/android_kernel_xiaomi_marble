@@ -862,6 +862,16 @@ void qdf_nbuf_unmap_nbytes_single_debug(qdf_device_t osdev,
 	qdf_nbuf_unmap_nbytes_single_debug(osdev, buf, dir, nbytes, \
 					   __func__, __LINE__)
 
+void qdf_nbuf_unmap_nbytes_single_paddr_debug(qdf_device_t osdev,
+					      qdf_nbuf_t buf,
+					      qdf_dma_addr_t phy_addr,
+					      qdf_dma_dir_t dir, int nbytes,
+					      const char *func, uint32_t line);
+
+#define qdf_nbuf_unmap_nbytes_single_paddr(osdev, buf, phy_addr, dir, nbytes) \
+	qdf_nbuf_unmap_nbytes_single_paddr_debug(osdev, buf, phy_addr, \
+						 dir, nbytes, __func__, \
+						 __LINE__)
 #else /* NBUF_MAP_UNMAP_DEBUG */
 
 static inline void qdf_nbuf_map_check_for_leaks(void) {}
@@ -916,6 +926,14 @@ qdf_nbuf_unmap_nbytes_single(
 	qdf_device_t osdev, qdf_nbuf_t buf, qdf_dma_dir_t dir, int nbytes)
 {
 	return __qdf_nbuf_unmap_nbytes_single(osdev, buf, dir, nbytes);
+}
+
+static inline void
+qdf_nbuf_unmap_nbytes_single_paddr(qdf_device_t osdev, qdf_nbuf_t buf,
+				   qdf_dma_addr_t phy_addr, qdf_dma_dir_t dir,
+				   int nbytes)
+{
+	__qdf_mem_unmap_nbytes_single(osdev, phy_addr, dir, nbytes);
 }
 #endif /* NBUF_MAP_UNMAP_DEBUG */
 
