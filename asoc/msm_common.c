@@ -45,7 +45,7 @@ struct snd_card_pdata {
 
 #define MAX_CODEC_DAI 8
 #define TDM_SLOT_WIDTH_BITS 32
-#define TDM_MAX_SLOTS 4
+#define TDM_MAX_SLOTS 8
 
 static struct attribute device_state_attr = {
 	.name = "state",
@@ -280,7 +280,7 @@ int msm_common_snd_hw_params(struct snd_pcm_substream *substream,
 {
 	int ret = 0;
 	int slot_width = TDM_SLOT_WIDTH_BITS;
-	int slots = TDM_MAX_SLOTS;
+	int slots;
 	unsigned int rate;
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	const char *stream_name = rtd->dai_link->stream_name;
@@ -293,6 +293,7 @@ int msm_common_snd_hw_params(struct snd_pcm_substream *substream,
 		mutex_lock(&pdata->lock[index]);
 		if (pdata->mi2s_gpio_p[index]) {
 			if ((strnstr(stream_name, "TDM", strlen(stream_name)))) {
+				slots = pdata->tdm_max_slots;
 				rate = params_rate(params);
 
 				tdm_clk_cfg.clk_id =  get_intf_clk_id(index);
@@ -409,7 +410,7 @@ void msm_common_snd_shutdown(struct snd_pcm_substream *substream)
 int msm_common_snd_init(struct platform_device *pdev, struct snd_soc_card *card)
 {
 	struct msm_common_pdata *common_pdata = NULL;
-	int count;
+	int count, ret = 0;
 
 	common_pdata = kcalloc(1, sizeof(struct msm_common_pdata), GFP_KERNEL);
 	if (!common_pdata)
@@ -418,6 +419,19 @@ int msm_common_snd_init(struct platform_device *pdev, struct snd_soc_card *card)
 	for (count = 0; count < MI2S_TDM_AUXPCM_MAX; count++) {
 		mutex_init(&common_pdata->lock[count]);
 		atomic_set(&common_pdata->mi2s_gpio_ref_cnt[count], 0);
+	}
+
+	ret = of_property_read_u32(pdev->dev.of_node, "qcom,tdm-max-slots",
+				&common_pdata->tdm_max_slots);
+	if (ret) {
+		dev_info(&pdev->dev, "%s: No DT match for tdm max slots\n",
+			__func__);
+	}
+	if ((common_pdata->tdm_max_slots <= 0) || (common_pdata->tdm_max_slots >
+			TDM_MAX_SLOTS)) {
+		common_pdata->tdm_max_slots = TDM_MAX_SLOTS;
+		dev_info(&pdev->dev, "%s: Using default tdm max slot: %d\n",
+			__func__, common_pdata->tdm_max_slots);
 	}
 
 	common_pdata->mi2s_gpio_p[PRI_MI2S_TDM_AUXPCM] = of_parse_phandle(pdev->dev.of_node,
