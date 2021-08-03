@@ -10618,6 +10618,48 @@ static QDF_STATUS extract_mgmt_rx_params_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_MGMT_RX_REO_SUPPORT
+/**
+ * extract_mgmt_rx_fw_consumed_tlv() - extract MGMT Rx FW consumed event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @params: Pointer to MGMT Rx REO parameters
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS
+extract_mgmt_rx_fw_consumed_tlv(wmi_unified_t wmi_handle,
+				void *evt_buf,
+				struct mgmt_rx_reo_params *params)
+{
+	WMI_MGMT_RX_FW_CONSUMED_EVENTID_param_tlvs *param_tlvs;
+	wmi_mgmt_rx_fw_consumed_hdr *ev_hdr;
+
+	param_tlvs = evt_buf;
+	if (!param_tlvs) {
+		wmi_err("param_tlvs is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	ev_hdr = param_tlvs->hdr;
+	if (!params) {
+		wmi_err("Rx REO parameters is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	params->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
+							wmi_handle,
+							ev_hdr->pdev_id);
+	params->valid = WMI_MGMT_RX_FW_CONSUMED_PARAM_MGMT_PKT_CTR_VALID_GET(
+				ev_hdr->mgmt_pkt_ctr_info);
+	params->global_timestamp = ev_hdr->global_timestamp;
+	params->mgmt_pkt_ctr = WMI_MGMT_RX_FW_CONSUMED_PARAM_MGMT_PKT_CTR_GET(
+				ev_hdr->mgmt_pkt_ctr_info);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * extract_vdev_roam_param_tlv() - extract vdev roam param from event
  * @wmi_handle: wmi handle
@@ -15769,6 +15811,9 @@ struct wmi_ops tlv_ops =  {
 	.extract_halphy_cal_status_ev_param = extract_halphy_cal_status_ev_param_tlv,
 	.send_set_halphy_cal = send_set_halphy_cal_tlv,
 	.extract_halphy_cal_ev_param = extract_halphy_cal_ev_param_tlv,
+#ifdef WLAN_MGMT_RX_REO_SUPPORT
+	.extract_mgmt_rx_fw_consumed = extract_mgmt_rx_fw_consumed_tlv,
+#endif
 };
 
 /**
@@ -16187,6 +16232,10 @@ event_ids[wmi_roam_scan_chan_list_id] =
 			WMI_PDEV_SET_HALPHY_CAL_BMAP_EVENTID;
 	event_ids[wmi_pdev_aoa_phasedelta_event_id] =
 			WMI_PDEV_AOA_PHASEDELTA_EVENTID;
+#ifdef WLAN_MGMT_RX_REO_SUPPORT
+	event_ids[wmi_mgmt_rx_fw_consumed_eventid] =
+			WMI_MGMT_RX_FW_CONSUMED_EVENTID;
+#endif
 }
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS

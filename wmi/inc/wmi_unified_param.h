@@ -4685,6 +4685,9 @@ typedef enum {
 	wmi_pdev_get_halphy_cal_status_event_id,
 	wmi_pdev_set_halphy_cal_event_id,
 	wmi_pdev_aoa_phasedelta_event_id,
+#ifdef WLAN_MGMT_RX_REO_SUPPORT
+	wmi_mgmt_rx_fw_consumed_eventid,
+#endif
 	wmi_events_max,
 } wmi_conv_event_id;
 

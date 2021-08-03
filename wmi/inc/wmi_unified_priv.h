@@ -2632,6 +2632,12 @@ QDF_STATUS
 (*extract_halphy_cal_ev_param)(wmi_unified_t wmi_handle,
 			       void *evt_buf,
 			       struct wmi_host_pdev_set_halphy_cal_event *param);
+
+#ifdef WLAN_MGMT_RX_REO_SUPPORT
+QDF_STATUS (*extract_mgmt_rx_fw_consumed)(wmi_unified_t wmi_handle,
+					  void *evt_buf,
+					  struct mgmt_rx_reo_params *params);
+#endif
 };
 
 /* Forward declartion for psoc*/

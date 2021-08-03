@@ -67,11 +67,13 @@ struct mgmt_rx_reo_snapshot {
 
 /*
  * struct mgmt_rx_reo_params - MGMT Rx REO parameters
+ * @valid: Whether these params are valid
  * @pdev_id: pdev ID for which FW consumed event is received
  * @mgmt_pkt_ctr: MGMT packet counter of the frame that is consumed
  * @global_timestamp: Global timestamp of the frame that is consumed
  */
 struct mgmt_rx_reo_params {
+	bool valid;
 	uint8_t  pdev_id;
 	uint16_t mgmt_pkt_ctr;
 	uint32_t global_timestamp;

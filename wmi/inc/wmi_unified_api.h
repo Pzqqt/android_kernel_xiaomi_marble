@@ -116,6 +116,8 @@
 
 #include "wmi_unified_cp_stats_api.h"
 
+#include "wlan_mgmt_txrx_rx_reo_public_structs.h"
+
 typedef qdf_nbuf_t wmi_buf_t;
 #define wmi_buf_data(_buf) qdf_nbuf_data(_buf)
 
@@ -2741,6 +2743,20 @@ wmi_extract_encrypt_decrypt_resp_params(void *wmi_hdl, void *evt_buf,
 QDF_STATUS
 wmi_extract_mgmt_rx_params(wmi_unified_t wmi_handle, void *evt_buf,
 			   struct mgmt_rx_event_params *hdr, uint8_t **bufp);
+
+#ifdef WLAN_MGMT_RX_REO_SUPPORT
+/**
+ * wmi_extract_mgmt_rx_fw_consumed() - extract MGMT Rx FW consumed event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @params: Pointer to MGMT Rx REO parameters
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS
+wmi_extract_mgmt_rx_fw_consumed(wmi_unified_t wmi_handle, void *evt_buf,
+				struct mgmt_rx_reo_params *params);
+#endif
 
 /**
  * wmi_extract_vdev_roam_param() - extract vdev roam param from event

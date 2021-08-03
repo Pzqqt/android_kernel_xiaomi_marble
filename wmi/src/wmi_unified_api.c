@@ -1956,6 +1956,19 @@ wmi_extract_mgmt_rx_params(wmi_unified_t wmi_handle, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef WLAN_MGMT_RX_REO_SUPPORT
+QDF_STATUS wmi_extract_mgmt_rx_fw_consumed(wmi_unified_t wmi_handle,
+					   void *evt_buf,
+					   struct mgmt_rx_reo_params *params)
+{
+	if (wmi_handle->ops->extract_mgmt_rx_fw_consumed)
+		return wmi_handle->ops->extract_mgmt_rx_fw_consumed(
+				wmi_handle, evt_buf, params);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
+
 QDF_STATUS
 wmi_extract_vdev_roam_param(wmi_unified_t wmi_handle, void *evt_buf,
 			    wmi_host_roam_event *param)
