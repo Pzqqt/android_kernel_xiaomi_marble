@@ -921,12 +921,18 @@ QDF_STATUS cm_fw_roam_complete(struct cnx_mgr *cm_ctx, void *data)
 		/*
 		 * STA is just in associated state here, RSO
 		 * enable will be sent once EAP & EAPOL will be done by
-		 * user-space and after set key response
-		 * is received.
+		 * user-space and after set key response is received.
+		 *
+		 * When firmware roaming state is connected, EAP/EAPOL will be
+		 * done at the supplicant. If EAP/EAPOL fails and supplicant
+		 * sends disconnect, then the RSO state machine sends
+		 * deinit directly to firmware without RSO stop with roam
+		 * scan mode value 0. So to avoid this move state to RSO
+		 * stop.
 		 */
 		wlan_cm_roam_state_change(pdev, vdev_id,
-					  WLAN_ROAM_INIT,
-					  REASON_CONNECT);
+					  WLAN_ROAM_RSO_STOPPED,
+					  REASON_DISCONNECTED);
 end:
 	return status;
 }
