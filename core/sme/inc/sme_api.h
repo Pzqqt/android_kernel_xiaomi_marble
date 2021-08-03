@@ -355,6 +355,20 @@ sme_nss_chains_update(mac_handle_t mac_handle,
 		      uint8_t vdev_id);
 
 /**
+ * sme_update_bfer_caps_as_per_nss_chains() - Update beamformer caps as per nss
+ * chains.
+ * @mac_handle: The handle returned by mac_open
+ * @cfg: wma target config
+ *
+ * This API will update beamformer capability as per nss chains
+ *
+ * Return: None
+ */
+void
+sme_update_bfer_caps_as_per_nss_chains(mac_handle_t mac_handle,
+				       struct wma_tgt_cfg *cfg);
+
+/**
  * sme_vdev_create() - Create vdev for given persona
  * @mac_handle: The handle returned by mac_open
  * @vdev_params: params required for vdev creation
