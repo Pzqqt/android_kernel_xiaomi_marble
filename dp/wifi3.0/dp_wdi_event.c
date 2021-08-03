@@ -188,7 +188,7 @@ dp_wdi_event_sub(
 		return -EINVAL;
 	}
 
-	monitor_set_pktlog_wifi3(txrx_pdev, event, true);
+	dp_monitor_set_pktlog_wifi3(txrx_pdev, event, true);
 	event_index = event - WDI_EVENT_BASE;
 	wdi_sub = txrx_pdev->wdi_event_list[event_index];
 
@@ -250,7 +250,7 @@ dp_wdi_event_unsub(
 		return -EINVAL;
 	}
 
-	monitor_set_pktlog_wifi3(txrx_pdev, event, false);
+	dp_monitor_set_pktlog_wifi3(txrx_pdev, event, false);
 
 	if (!event_cb_sub->priv.prev) {
 		txrx_pdev->wdi_event_list[event_index] = event_cb_sub->priv.next;

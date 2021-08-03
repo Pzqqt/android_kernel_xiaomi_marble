@@ -1994,7 +1994,7 @@ dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		HTT_TX_TCL_METADATA_VALID_HTT_SET(htt_tcl_metadata, 1);
 
 	dp_tx_desc_update_fast_comp_flag(soc, tx_desc,
-					 !monitor_is_enable_enhanced_stats(pdev));
+					 !dp_monitor_is_enable_enhanced_stats(pdev));
 
 	dp_tx_update_mesh_flags(soc, vdev, tx_desc);
 
@@ -3839,7 +3839,7 @@ static inline void dp_tx_sojourn_stats_process(struct dp_pdev *pdev,
 	uint64_t delta_ms;
 	struct cdp_tx_sojourn_stats *sojourn_stats;
 
-	if (qdf_unlikely(!monitor_is_enable_enhanced_stats(pdev)))
+	if (qdf_unlikely(!dp_monitor_is_enable_enhanced_stats(pdev)))
 		return;
 
 	if (qdf_unlikely(tid == HTT_INVALID_TID ||
@@ -3929,7 +3929,7 @@ dp_tx_comp_process_desc(struct dp_soc *soc,
 		dp_tx_enh_unmap(soc, desc);
 
 		if (QDF_STATUS_SUCCESS ==
-		    monitor_tx_add_to_comp_queue(soc, desc, ts, peer)) {
+		    dp_monitor_tx_add_to_comp_queue(soc, desc, ts, peer)) {
 			return;
 		}
 

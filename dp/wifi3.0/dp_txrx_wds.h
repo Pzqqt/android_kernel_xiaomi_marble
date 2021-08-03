@@ -234,9 +234,9 @@ dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
 			 * smart monitor is enabled and send add_ast command
 			 * to FW.
 			 */
-			monitor_neighbour_peer_add_ast(pdev, ta_peer,
-						       wds_src_mac, nbuf,
-						       flags);
+			dp_monitor_neighbour_peer_add_ast(pdev, ta_peer,
+							  wds_src_mac, nbuf,
+							  flags);
 			return;
 		}
 	}

@@ -2544,7 +2544,9 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 
 	case HTT_T2H_MSG_TYPE_PPDU_STATS_IND:
 		{
-			free_buf = monitor_ppdu_stats_ind_handler(soc, msg_word,
+			free_buf =
+				dp_monitor_ppdu_stats_ind_handler(soc,
+								  msg_word,
 								  htt_t2h_msg);
 			break;
 		}

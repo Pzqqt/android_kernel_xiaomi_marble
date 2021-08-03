@@ -2274,8 +2274,8 @@ static inline struct dp_peer *dp_peer_find_add_id(struct dp_soc *soc,
 		dp_peer_find_id_to_obj_add(soc, peer, peer_id);
 		if (peer->peer_id == HTT_INVALID_PEER) {
 			peer->peer_id = peer_id;
-			monitor_peer_tid_peer_id_update(soc, peer,
-							peer->peer_id);
+			dp_monitor_peer_tid_peer_id_update(soc, peer,
+							   peer->peer_id);
 		} else {
 			QDF_ASSERT(0);
 		}
@@ -3327,7 +3327,7 @@ void dp_peer_cleanup(struct dp_vdev *vdev, struct dp_peer *peer)
 	/* save vdev related member in case vdev freed */
 	vdev_opmode = vdev->opmode;
 
-	monitor_peer_tx_cleanup(vdev, peer);
+	dp_monitor_peer_tx_cleanup(vdev, peer);
 
 	if (vdev_opmode != wlan_op_mode_monitor)
 	/* cleanup the Rx reorder queues for this peer */

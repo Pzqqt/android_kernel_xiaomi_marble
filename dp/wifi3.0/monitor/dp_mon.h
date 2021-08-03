@@ -17,7 +17,11 @@
 #ifndef _DP_MON_H_
 #define _DP_MON_H_
 
+#include "qdf_trace.h"
+#include "dp_internal.h"
+#include "dp_types.h"
 #include "dp_htt.h"
+
 #ifdef WLAN_TX_PKT_CAPTURE_ENH
 #include "dp_tx_capture.h"
 #endif
@@ -31,7 +35,11 @@
 #define DP_MON_REAP_BUDGET 1024
 #define MON_BUF_MIN_ENTRIES 64
 
-#define mon_rx_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_DP_RX, params)
+#define RNG_ERR		"SRNG setup failed for"
+#define dp_mon_info(params...) \
+	__QDF_TRACE_FL(QDF_TRACE_LEVEL_INFO_HIGH, QDF_MODULE_ID_MON, ## params)
+#define dp_mon_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_MON, params)
+#define dp_mon_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_MON, params)
 
 #ifndef WLAN_TX_PKT_CAPTURE_ENH
 struct dp_pdev_tx_capture {
@@ -380,9 +388,6 @@ struct dp_mon_peer {
 #endif
 };
 
-struct mon_ops {
-};
-
 #if defined(QCA_TX_CAPTURE_SUPPORT) || defined(QCA_ENHANCED_STATS_SUPPORT)
 void dp_deliver_mgmt_frm(struct dp_pdev *pdev, qdf_nbuf_t nbuf);
 #else
@@ -673,13 +678,13 @@ static inline bool dp_soc_is_full_mon_enable(struct dp_pdev *pdev)
 }
 
 /*
- * monitor_is_enable_reap_timer_non_pkt() - check if mon reap timer is
+ * dp_mon_is_enable_reap_timer_non_pkt() - check if mon reap timer is
  * enabled by non-pkt log or not
  * @pdev: point to dp pdev
  *
  * Return: true if mon reap timer is enabled by non-pkt log
  */
-static inline bool monitor_is_enable_reap_timer_non_pkt(struct dp_pdev *pdev)
+static inline bool dp_mon_is_enable_reap_timer_non_pkt(struct dp_pdev *pdev)
 {
 	if (qdf_unlikely(!pdev || !pdev->monitor_pdev))
 		return false;
@@ -688,12 +693,12 @@ static inline bool monitor_is_enable_reap_timer_non_pkt(struct dp_pdev *pdev)
 }
 
 /*
- * monitor_is_enable_mcopy_mode() - check if mcopy mode is enabled
+ * dp_monitor_is_enable_mcopy_mode() - check if mcopy mode is enabled
  * @pdev: point to dp pdev
  *
  * Return: true if mcopy mode is enabled
  */
-static inline bool monitor_is_enable_mcopy_mode(struct dp_pdev *pdev)
+static inline bool dp_monitor_is_enable_mcopy_mode(struct dp_pdev *pdev)
 {
 	if (qdf_unlikely(!pdev || !pdev->monitor_pdev))
 		return false;
@@ -702,12 +707,12 @@ static inline bool monitor_is_enable_mcopy_mode(struct dp_pdev *pdev)
 }
 
 /*
- * monitor_is_enable_tx_sniffer() - check if tx sniffer is enabled
+ * dp_monitor_is_enable_tx_sniffer() - check if tx sniffer is enabled
  * @pdev: point to dp pdev
  *
  * Return: true if tx sniffer is enabled
  */
-static inline bool monitor_is_enable_tx_sniffer(struct dp_pdev *pdev)
+static inline bool dp_monitor_is_enable_tx_sniffer(struct dp_pdev *pdev)
 {
 	if (qdf_unlikely(!pdev || !pdev->monitor_pdev))
 		return false;
@@ -716,12 +721,12 @@ static inline bool monitor_is_enable_tx_sniffer(struct dp_pdev *pdev)
 }
 
 /*
- * monitor_is_set_monitor_configured() - check if monitor configured is set
+ * dp_monitor_is_set_monitor_configured() - check if monitor configured is set
  * @pdev: point to dp pdev
  *
  * Return: true if monitor configured is set
  */
-static inline bool monitor_is_configured(struct dp_pdev *pdev)
+static inline bool dp_monitor_is_configured(struct dp_pdev *pdev)
 {
 	if (qdf_unlikely(!pdev || !pdev->monitor_pdev))
 		return false;
@@ -729,8 +734,16 @@ static inline bool monitor_is_configured(struct dp_pdev *pdev)
 	return pdev->monitor_pdev->monitor_configured;
 }
 
-static inline QDF_STATUS monitor_check_com_info_ppdu_id(struct dp_pdev *pdev,
-							void *rx_desc)
+/*
+ * dp_monitor_check_com_info_ppdu_id() - check if msdu ppdu_id matches with
+ * com info ppdu_id
+ * @pdev: point to dp pdev
+ * @rx_desc: point to rx_desc
+ *
+ * Return: success if ppdu_id matches
+ */
+static inline QDF_STATUS dp_monitor_check_com_info_ppdu_id(struct dp_pdev *pdev,
+							   void *rx_desc)
 {
 	struct cdp_mon_status *rs;
 	struct dp_mon_pdev *mon_pdev;
@@ -760,8 +773,14 @@ static inline QDF_STATUS monitor_check_com_info_ppdu_id(struct dp_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+/*
+ * dp_monitor_get_rx_status() - get rx status
+ * @pdev: point to dp pdev
+ *
+ * Return: return rx status pointer
+ */
 static inline struct mon_rx_status*
-monitor_get_rx_status(struct dp_pdev *pdev)
+dp_monitor_get_rx_status(struct dp_pdev *pdev)
 {
 	if (qdf_unlikely(!pdev || !pdev->monitor_pdev))
 		return NULL;
@@ -770,12 +789,12 @@ monitor_get_rx_status(struct dp_pdev *pdev)
 }
 
 /*
- * monitor_is_chan_band_known() - check if monitor chan band known
+ * dp_monitor_is_chan_band_known() - check if monitor chan band known
  * @pdev: point to dp pdev
  *
  * Return: true if chan band known
  */
-static inline bool monitor_is_chan_band_known(struct dp_pdev *pdev)
+static inline bool dp_monitor_is_chan_band_known(struct dp_pdev *pdev)
 {
 	if (qdf_unlikely(!pdev || !pdev->monitor_pdev))
 		return false;
@@ -787,23 +806,23 @@ static inline bool monitor_is_chan_band_known(struct dp_pdev *pdev)
 }
 
 /*
- * monitor_get_chan_band() - get chan band
+ * dp_monitor_get_chan_band() - get chan band
  * @pdev: point to dp pdev
  *
  * Return: wifi channel band
  */
 static inline enum reg_wifi_band
-monitor_get_chan_band(struct dp_pdev *pdev)
+dp_monitor_get_chan_band(struct dp_pdev *pdev)
 {
 	return pdev->monitor_pdev->mon_chan_band;
 }
 
 /*
- * monitor_print_tx_stats() - print tx stats from monitor pdev
+ * dp_monitor_print_tx_stats() - print tx stats from monitor pdev
  * @pdev: point to dp pdev
  *
  */
-static inline void monitor_print_tx_stats(struct dp_pdev *pdev)
+static inline void dp_monitor_print_tx_stats(struct dp_pdev *pdev)
 {
 	if (qdf_unlikely(!pdev || !pdev->monitor_pdev))
 		return;
@@ -819,12 +838,12 @@ static inline void monitor_print_tx_stats(struct dp_pdev *pdev)
 }
 
 /*
- * monitor_is_enable_enhanced_stats() - check if enhanced stats enabled
+ * dp_monitor_is_enable_enhanced_stats() - check if enhanced stats enabled
  * @pdev: point to dp pdev
  *
  * Return: true if enhanced stats is enabled
  */
-static inline bool monitor_is_enable_enhanced_stats(struct dp_pdev *pdev)
+static inline bool dp_monitor_is_enable_enhanced_stats(struct dp_pdev *pdev)
 {
 	if (qdf_unlikely(!pdev || !pdev->monitor_pdev))
 		return false;
@@ -833,13 +852,12 @@ static inline bool monitor_is_enable_enhanced_stats(struct dp_pdev *pdev)
 }
 
 /*
- * monitor_set_chan_num() - set channel number
+ * dp_monitor_set_chan_num() - set channel number
  * @pdev: point to dp pdev
  * @chan_num: channel number
  *
- * Return:
  */
-static inline void monitor_set_chan_num(struct dp_pdev *pdev, int chan_num)
+static inline void dp_monitor_set_chan_num(struct dp_pdev *pdev, int chan_num)
 {
 	if (qdf_unlikely(!pdev || !pdev->monitor_pdev))
 		return;
@@ -848,14 +866,13 @@ static inline void monitor_set_chan_num(struct dp_pdev *pdev, int chan_num)
 }
 
 /*
- * monitor_set_chan_freq() - set channel frequency
+ * dp_monitor_set_chan_freq() - set channel frequency
  * @pdev: point to dp pdev
  * @chan_freq: channel frequency
  *
- * Return:
  */
 static inline void
-monitor_set_chan_freq(struct dp_pdev *pdev, qdf_freq_t chan_freq)
+dp_monitor_set_chan_freq(struct dp_pdev *pdev, qdf_freq_t chan_freq)
 {
 	if (qdf_unlikely(!pdev || !pdev->monitor_pdev))
 		return;
@@ -864,14 +881,13 @@ monitor_set_chan_freq(struct dp_pdev *pdev, qdf_freq_t chan_freq)
 }
 
 /*
- * monitor_set_chan_band() - set channel band
+ * dp_monitor_set_chan_band() - set channel band
  * @pdev: point to dp pdev
  * @chan_band: channel band
  *
- * Return:
  */
 static inline void
-monitor_set_chan_band(struct dp_pdev *pdev, enum reg_wifi_band chan_band)
+dp_monitor_set_chan_band(struct dp_pdev *pdev, enum reg_wifi_band chan_band)
 {
 	if (qdf_unlikely(!pdev || !pdev->monitor_pdev))
 		return;
@@ -880,14 +896,15 @@ monitor_set_chan_band(struct dp_pdev *pdev, enum reg_wifi_band chan_band)
 }
 
 /*
- * monitor_get_mpdu_status() - get mpdu status
+ * dp_monitor_get_mpdu_status() - get mpdu status
  * @pdev: point to dp pdev
  * @soc: point to dp soc
+ * @rx_tlv_hdr: point to rx tlv header
  *
  */
-static inline void monitor_get_mpdu_status(struct dp_pdev *pdev,
-					   struct dp_soc *soc,
-					   uint8_t *rx_tlv_hdr)
+static inline void dp_monitor_get_mpdu_status(struct dp_pdev *pdev,
+					      struct dp_soc *soc,
+					      uint8_t *rx_tlv_hdr)
 {
 	struct dp_mon_pdev *mon_pdev;
 
@@ -900,8 +917,13 @@ static inline void monitor_get_mpdu_status(struct dp_pdev *pdev,
 }
 
 #ifdef FEATURE_NAC_RSSI
-static inline QDF_STATUS monitor_drop_inv_peer_pkts(struct dp_vdev *vdev,
-						    struct ieee80211_frame *wh)
+/*
+ * dp_monitor_drop_inv_peer_pkts() - drop invalid peer pkts
+ * @vdev: point to dp vdev
+ *
+ * Return: success if sta mode and filter for neighbour peers enabled
+ */
+static inline QDF_STATUS dp_monitor_drop_inv_peer_pkts(struct dp_vdev *vdev)
 {
 	struct dp_pdev *pdev = vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
@@ -911,23 +933,20 @@ static inline QDF_STATUS monitor_drop_inv_peer_pkts(struct dp_vdev *vdev,
 
 	if (!soc->monitor_soc->hw_nac_monitor_support &&
 	    pdev->monitor_pdev->filter_neighbour_peers &&
-	    vdev->opmode == wlan_op_mode_sta) {
-		mon_rx_warn("%pK: Drop inv peer pkts with STA RA:%pm",
-			    soc, wh->i_addr1);
+	    vdev->opmode == wlan_op_mode_sta)
 		return QDF_STATUS_SUCCESS;
-	}
 
 	return QDF_STATUS_E_FAILURE;
 }
 #endif
 
-#ifdef FEATURE_PERPKT_INFO
 /*
- * dp_peer_ppdu_delayed_ba_init() Initialize ppdu in peer
+ * dp_peer_ppdu_delayed_ba_init() - Initialize ppdu in peer
  * @peer: Datapath peer
  *
  * return: void
  */
+#ifdef FEATURE_PERPKT_INFO
 static inline void dp_peer_ppdu_delayed_ba_init(struct dp_peer *peer)
 {
 	struct dp_mon_peer *mon_peer = peer->monitor_peer;
@@ -941,19 +960,20 @@ static inline void dp_peer_ppdu_delayed_ba_init(struct dp_peer *peer)
 	mon_peer->last_delayed_ba_ppduid = 0;
 }
 #else
-/*
- * dp_peer_ppdu_delayed_ba_init() Initialize ppdu in peer
- * @peer: Datapath peer
- *
- * return: void
- */
 static inline void dp_peer_ppdu_delayed_ba_init(struct dp_peer *peer)
 {
 }
 #endif
 
-static inline void monitor_vdev_register_osif(struct dp_vdev *vdev,
-					      struct ol_txrx_ops *txrx_ops)
+/*
+ * dp_monitor_vdev_register_osif() - Register osif rx mon
+ * @vdev: point to vdev
+ * @txrx_ops: point to ol txrx ops
+ *
+ * Return: void
+ */
+static inline void dp_monitor_vdev_register_osif(struct dp_vdev *vdev,
+						 struct ol_txrx_ops *txrx_ops)
 {
 	if (!vdev->monitor_vdev)
 		return;
@@ -961,8 +981,14 @@ static inline void monitor_vdev_register_osif(struct dp_vdev *vdev,
 	vdev->monitor_vdev->osif_rx_mon = txrx_ops->rx.mon;
 }
 
+/*
+ * dp_monitor_get_monitor_vdev_from_pdev() - Get monitor vdev
+ * @pdev: point to pdev
+ *
+ * Return: pointer to vdev
+ */
 static inline struct dp_vdev*
-monitor_get_monitor_vdev_from_pdev(struct dp_pdev *pdev)
+dp_monitor_get_monitor_vdev_from_pdev(struct dp_pdev *pdev)
 {
 	if (!pdev || !pdev->monitor_pdev || !pdev->monitor_pdev->mvdev)
 		return NULL;
@@ -970,20 +996,30 @@ monitor_get_monitor_vdev_from_pdev(struct dp_pdev *pdev)
 	return pdev->monitor_pdev->mvdev;
 }
 
-static inline bool monitor_is_vdev_timer_running(struct dp_soc *soc)
+/*
+ * dp_monitor_is_vdev_timer_running() - Get vdev timer status
+ * @soc: point to soc
+ *
+ * Return: true if timer running
+ */
+static inline bool dp_monitor_is_vdev_timer_running(struct dp_soc *soc)
 {
-	struct dp_mon_soc *mon_soc;
-
 	if (qdf_unlikely(!soc || !soc->monitor_soc))
 		return false;
 
-	mon_soc = soc->monitor_soc;
-
-	return mon_soc->mon_vdev_timer_state & MON_VDEV_TIMER_RUNNING;
+	return !!(soc->monitor_soc->mon_vdev_timer_state &
+		  MON_VDEV_TIMER_RUNNING);
 }
 
+/*
+ * dp_monitor_get_link_desc_pages() - Get link desc pages
+ * @soc: point to soc
+ * @mac_id: mac id
+ *
+ * Return: return point to link desc pages
+ */
 static inline struct qdf_mem_multi_page_t*
-monitor_get_link_desc_pages(struct dp_soc *soc, uint32_t mac_id)
+dp_monitor_get_link_desc_pages(struct dp_soc *soc, uint32_t mac_id)
 {
 	if (qdf_unlikely(!soc || !soc->monitor_soc))
 		return NULL;
@@ -991,13 +1027,26 @@ monitor_get_link_desc_pages(struct dp_soc *soc, uint32_t mac_id)
 	return &soc->monitor_soc->mon_link_desc_pages[mac_id];
 }
 
+/*
+ * dp_monitor_get_total_link_descs() - Get total link descs
+ * @soc: point to soc
+ * @mac_id: mac id
+ *
+ * Return: return point total link descs
+ */
 static inline uint32_t *
-monitor_get_total_link_descs(struct dp_soc *soc, uint32_t mac_id)
+dp_monitor_get_total_link_descs(struct dp_soc *soc, uint32_t mac_id)
 {
 	return &soc->monitor_soc->total_mon_link_descs[mac_id];
 }
 
-static inline QDF_STATUS monitor_pdev_attach(struct dp_pdev *pdev)
+/*
+ * dp_monitor_pdev_attach() - Monitor pdev attach
+ * @pdev: point to pdev
+ *
+ * Return: return QDF_STATUS
+ */
+static inline QDF_STATUS dp_monitor_pdev_attach(struct dp_pdev *pdev)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
@@ -1012,14 +1061,20 @@ static inline QDF_STATUS monitor_pdev_attach(struct dp_pdev *pdev)
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_pdev_attach) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	return monitor_ops->mon_pdev_attach(pdev);
 }
 
-static inline QDF_STATUS monitor_pdev_detach(struct dp_pdev *pdev)
+/*
+ * dp_monitor_pdev_detach() - Monitor pdev detach
+ * @pdev: point to pdev
+ *
+ * Return: return QDF_STATUS
+ */
+static inline QDF_STATUS dp_monitor_pdev_detach(struct dp_pdev *pdev)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
@@ -1034,14 +1089,20 @@ static inline QDF_STATUS monitor_pdev_detach(struct dp_pdev *pdev)
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_pdev_detach) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	return monitor_ops->mon_pdev_detach(pdev);
 }
 
-static inline QDF_STATUS monitor_vdev_attach(struct dp_vdev *vdev)
+/*
+ * dp_monitor_vdev_attach() - Monitor vdev attach
+ * @vdev: point to vdev
+ *
+ * Return: return QDF_STATUS
+ */
+static inline QDF_STATUS dp_monitor_vdev_attach(struct dp_vdev *vdev)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = vdev->pdev->soc->monitor_soc;
@@ -1051,14 +1112,20 @@ static inline QDF_STATUS monitor_vdev_attach(struct dp_vdev *vdev)
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_vdev_attach) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	return monitor_ops->mon_vdev_attach(vdev);
 }
 
-static inline QDF_STATUS monitor_vdev_detach(struct dp_vdev *vdev)
+/*
+ * dp_monitor_vdev_detach() - Monitor vdev detach
+ * @vdev: point to vdev
+ *
+ * Return: return QDF_STATUS
+ */
+static inline QDF_STATUS dp_monitor_vdev_detach(struct dp_vdev *vdev)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = vdev->pdev->soc->monitor_soc;
@@ -1068,15 +1135,22 @@ static inline QDF_STATUS monitor_vdev_detach(struct dp_vdev *vdev)
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_vdev_detach) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	return monitor_ops->mon_vdev_detach(vdev);
 }
 
-static inline QDF_STATUS monitor_peer_attach(struct dp_soc *soc,
-					     struct dp_peer *peer)
+/*
+ * dp_monitor_peer_attach() - Monitor peer attach
+ * @soc: point to soc
+ * @peer: point to peer
+ *
+ * Return: return QDF_STATUS
+ */
+static inline QDF_STATUS dp_monitor_peer_attach(struct dp_soc *soc,
+						struct dp_peer *peer)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = soc->monitor_soc;
@@ -1086,15 +1160,22 @@ static inline QDF_STATUS monitor_peer_attach(struct dp_soc *soc,
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_peer_attach) {
-		qdf_print("callback not registered");
+		dp_mon_debug("callback not registered");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	return monitor_ops->mon_peer_attach(peer);
 }
 
-static inline QDF_STATUS monitor_peer_detach(struct dp_soc *soc,
-					     struct dp_peer *peer)
+/*
+ * dp_monitor_peer_detach() - Monitor peer detach
+ * @soc: point to soc
+ * @peer: point to peer
+ *
+ * Return: return QDF_STATUS
+ */
+static inline QDF_STATUS dp_monitor_peer_detach(struct dp_soc *soc,
+						struct dp_peer *peer)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = soc->monitor_soc;
@@ -1104,20 +1185,26 @@ static inline QDF_STATUS monitor_peer_detach(struct dp_soc *soc,
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_peer_detach) {
-		qdf_print("callback not registered");
+		dp_mon_debug("callback not registered");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	return monitor_ops->mon_peer_detach(peer);
 }
 
-static inline QDF_STATUS monitor_pdev_init(struct dp_pdev *pdev)
+/*
+ * dp_monitor_pdev_init() - Monitor pdev init
+ * @pdev: point to pdev
+ *
+ * Return: return QDF_STATUS
+ */
+static inline QDF_STATUS dp_monitor_pdev_init(struct dp_pdev *pdev)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 
 	/*
-	 * mon_soc uninitialized modular support enabled
+	 * mon_soc uninitialized when modular support enabled
 	 * monitor related attach/detach/init/deinit
 	 * will be done while monitor insmod
 	 */
@@ -1126,20 +1213,26 @@ static inline QDF_STATUS monitor_pdev_init(struct dp_pdev *pdev)
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_pdev_init) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	return monitor_ops->mon_pdev_init(pdev);
 }
 
-static inline QDF_STATUS monitor_pdev_deinit(struct dp_pdev *pdev)
+/*
+ * dp_monitor_pdev_deinit() - Monitor pdev deinit
+ * @pdev: point to pdev
+ *
+ * Return: return QDF_STATUS
+ */
+static inline QDF_STATUS dp_monitor_pdev_deinit(struct dp_pdev *pdev)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 
 	/*
-	 * mon_soc uninitialized modular support enabled
+	 * mon_soc uninitialized modular when support enabled
 	 * monitor related attach/detach/init/deinit
 	 * will be done while monitor insmod
 	 */
@@ -1148,38 +1241,51 @@ static inline QDF_STATUS monitor_pdev_deinit(struct dp_pdev *pdev)
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_pdev_deinit) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	return monitor_ops->mon_pdev_deinit(pdev);
 }
 
-static inline QDF_STATUS monitor_soc_cfg_init(struct dp_soc *soc)
+/*
+ * dp_monitor_soc_cfg_init() - Monitor sco cfg init
+ * @soc: point to soc
+ *
+ * Return: return QDF_STATUS
+ */
+static inline QDF_STATUS dp_monitor_soc_cfg_init(struct dp_soc *soc)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = soc->monitor_soc;
 
 	/*
 	 * this API is getting call from dp_soc_init,
-	 * mon_soc will be uninitialized for WIN here
+	 * mon_soc will be uninitialized when monitor support enabled
 	 * So returning QDF_STATUS_SUCCESS.
-	 * For WIN, soc cfg init is done while monitor insmod.
+	 * soc cfg init will be done while monitor insmod.
 	 */
 	if (!mon_soc)
 		return QDF_STATUS_SUCCESS;
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_soc_cfg_init) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	return monitor_ops->mon_soc_cfg_init(soc);
 }
 
-static inline QDF_STATUS monitor_config_debug_sniffer(struct dp_pdev *pdev,
-						      int val)
+/*
+ * dp_monitor_config_debug_sniffer() - Monitor config debug sniffer
+ * @pdev: point to pdev
+ * @val: val
+ *
+ * Return: return QDF_STATUS
+ */
+static inline QDF_STATUS dp_monitor_config_debug_sniffer(struct dp_pdev *pdev,
+							 int val)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
@@ -1189,49 +1295,64 @@ static inline QDF_STATUS monitor_config_debug_sniffer(struct dp_pdev *pdev,
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_config_debug_sniffer) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	return monitor_ops->mon_config_debug_sniffer(pdev, val);
 }
 
-static inline void monitor_flush_rings(struct dp_soc *soc)
+/*
+ * dp_monitor_flush_rings() - Flush monitor rings
+ * @soc: point to soc
+ *
+ * Return: None
+ */
+static inline void dp_monitor_flush_rings(struct dp_soc *soc)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_flush_rings) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return;
 	}
 
 	return monitor_ops->mon_flush_rings(soc);
 }
 
+/*
+ * dp_monitor_htt_srng_setup() - Setup htt srng
+ * @soc: point to soc
+ * @pdev: point to pdev
+ * @mac_id: lmac id
+ * @mac for pdev: pdev id
+ *
+ * Return: QDF_STATUS
+ */
 #if !defined(DISABLE_MON_CONFIG)
-static inline QDF_STATUS monitor_htt_srng_setup(struct dp_soc *soc,
-						struct dp_pdev *pdev,
-						int mac_id,
-						int mac_for_pdev)
+static inline QDF_STATUS dp_monitor_htt_srng_setup(struct dp_soc *soc,
+						   struct dp_pdev *pdev,
+						   int mac_id,
+						   int mac_for_pdev)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return QDF_STATUS_SUCCESS;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_htt_srng_setup) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1239,29 +1360,37 @@ static inline QDF_STATUS monitor_htt_srng_setup(struct dp_soc *soc,
 					       mac_for_pdev);
 }
 #else
-static inline QDF_STATUS monitor_htt_srng_setup(struct dp_soc *soc,
-						struct dp_pdev *pdev,
-						int mac_id,
-						int mac_for_pdev)
+static inline QDF_STATUS dp_monitor_htt_srng_setup(struct dp_soc *soc,
+						   struct dp_pdev *pdev,
+						   int mac_id,
+						   int mac_for_pdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
 #endif
 
+/*
+ * dp_monitor_service_mon_rings() - service monitor rings
+ * @soc: point to soc
+ * @quota: reap budget
+ *
+ * Return: None
+ */
 #if defined(DP_CON_MON)
-static inline void monitor_service_mon_rings(struct dp_soc *soc, uint32_t quota)
+static inline
+void dp_monitor_service_mon_rings(struct dp_soc *soc, uint32_t quota)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_service_rings) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return;
 	}
 
@@ -1269,22 +1398,31 @@ static inline void monitor_service_mon_rings(struct dp_soc *soc, uint32_t quota)
 }
 #endif
 
+/*
+ * dp_monitor_process() - Process monitor
+ * @soc: point to soc
+ * @int_ctx: interrupt ctx
+ * @mac_id: lma
+ * @quota:
+ *
+ * Return: None
+ */
 #ifndef DISABLE_MON_CONFIG
 static inline
-uint32_t monitor_process(struct dp_soc *soc, struct dp_intr *int_ctx,
-			 uint32_t mac_id, uint32_t quota)
+uint32_t dp_monitor_process(struct dp_soc *soc, struct dp_intr *int_ctx,
+			    uint32_t mac_id, uint32_t quota)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return 0;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_process) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return 0;
 	}
 
@@ -1292,29 +1430,37 @@ uint32_t monitor_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 }
 #else
 static inline
-uint32_t monitor_process(struct dp_soc *soc, struct dp_intr *int_ctx,
-			 uint32_t mac_id, uint32_t quota)
+uint32_t dp_monitor_process(struct dp_soc *soc, struct dp_intr *int_ctx,
+			    uint32_t mac_id, uint32_t quota)
 {
 	return 0;
 }
 #endif
 
+/*
+ * dp_monitor_drop_packets_for_mac() - monitor_drop_packets_for_mac
+ * @pdev: point to pdev
+ * @mac_id:
+ * @quota:
+ *
+ * Return:
+ */
 #if !defined(DISABLE_MON_CONFIG) && defined(MON_ENABLE_DROP_FOR_MAC)
 static inline
-uint32_t monitor_drop_packets_for_mac(struct dp_pdev *pdev,
-				      uint32_t mac_id, uint32_t quota)
+uint32_t dp_monitor_drop_packets_for_mac(struct dp_pdev *pdev,
+					 uint32_t mac_id, uint32_t quota)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return 0;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_drop_packets_for_mac) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return 0;
 	}
 
@@ -1323,47 +1469,61 @@ uint32_t monitor_drop_packets_for_mac(struct dp_pdev *pdev,
 }
 #else
 static inline
-uint32_t monitor_drop_packets_for_mac(struct dp_pdev *pdev,
-				      uint32_t mac_id, uint32_t quota)
+uint32_t dp_monitor_drop_packets_for_mac(struct dp_pdev *pdev,
+					 uint32_t mac_id, uint32_t quota)
 {
 	return 0;
 }
 #endif
 
-static inline void monitor_peer_tx_init(struct dp_pdev *pdev,
-					struct dp_peer *peer)
+/*
+ * dp_monitor_peer_tx_init() - peer tx init
+ * @pdev: point to pdev
+ * @peer: point to peer
+ *
+ * Return: None
+ */
+static inline void dp_monitor_peer_tx_init(struct dp_pdev *pdev,
+					   struct dp_peer *peer)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_peer_tx_init) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return;
 	}
 
 	return monitor_ops->mon_peer_tx_init(pdev, peer);
 }
 
-static inline void monitor_peer_tx_cleanup(struct dp_vdev *vdev,
-					   struct dp_peer *peer)
+/*
+ * dp_monitor_peer_tx_cleanup() - peer tx cleanup
+ * @vdev: point to vdev
+ * @peer: point to peer
+ *
+ * Return: None
+ */
+static inline void dp_monitor_peer_tx_cleanup(struct dp_vdev *vdev,
+					      struct dp_peer *peer)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = vdev->pdev->soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_peer_tx_cleanup) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return;
 	}
 
@@ -1371,122 +1531,165 @@ static inline void monitor_peer_tx_cleanup(struct dp_vdev *vdev,
 }
 
 #ifdef WLAN_TX_PKT_CAPTURE_ENH
+/*
+ * dp_monitor_peer_tid_peer_id_update() - peer tid update
+ * @soc: point to soc
+ * @peer: point to peer
+ * @peer_id: peer id
+ *
+ * Return: None
+ */
 static inline
-void monitor_peer_tid_peer_id_update(struct dp_soc *soc,
-				     struct dp_peer *peer,
-				     uint16_t peer_id)
+void dp_monitor_peer_tid_peer_id_update(struct dp_soc *soc,
+					struct dp_peer *peer,
+					uint16_t peer_id)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_peer_tid_peer_id_update) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return;
 	}
 
 	return monitor_ops->mon_peer_tid_peer_id_update(peer, peer_id);
 }
 
-static inline void monitor_tx_ppdu_stats_attach(struct dp_pdev *pdev)
+/*
+ * dp_monitor_tx_ppdu_stats_attach() - Attach tx ppdu stats
+ * @pdev: point to pdev
+ *
+ * Return: None
+ */
+static inline void dp_monitor_tx_ppdu_stats_attach(struct dp_pdev *pdev)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_tx_ppdu_stats_attach) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return;
 	}
 
 	return monitor_ops->mon_tx_ppdu_stats_attach(pdev);
 }
 
-static inline void monitor_tx_ppdu_stats_detach(struct dp_pdev *pdev)
+/*
+ * dp_monitor_tx_ppdu_stats_detach() - Detach tx ppdu stats
+ * @pdev: point to pdev
+ *
+ * Return: None
+ */
+static inline void dp_monitor_tx_ppdu_stats_detach(struct dp_pdev *pdev)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_tx_ppdu_stats_detach) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return;
 	}
 
 	return monitor_ops->mon_tx_ppdu_stats_detach(pdev);
 }
 
-static inline QDF_STATUS monitor_tx_capture_debugfs_init(struct dp_pdev *pdev)
+/*
+ * dp_monitor_tx_capture_debugfs_init() - Init tx capture debugfs
+ * @pdev: point to pdev
+ *
+ * Return: QDF_STATUS_SUCCESS
+ */
+static inline
+QDF_STATUS dp_monitor_tx_capture_debugfs_init(struct dp_pdev *pdev)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_tx_capture_debugfs_init) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	return monitor_ops->mon_tx_capture_debugfs_init(pdev);
 }
 
-static inline void monitor_peer_tx_capture_filter_check(struct dp_pdev *pdev,
-							struct dp_peer *peer)
+/*
+ * dp_monitor_peer_tx_capture_filter_check() - Check tx capture filter
+ * @pdev: point to pdev
+ * @peer: point to peer
+ *
+ * Return: None
+ */
+static inline void dp_monitor_peer_tx_capture_filter_check(struct dp_pdev *pdev,
+							   struct dp_peer *peer)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_peer_tx_capture_filter_check) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return;
 	}
 
 	return monitor_ops->mon_peer_tx_capture_filter_check(pdev, peer);
 }
 
+/*
+ * dp_monitor_tx_add_to_comp_queue() - add completion msdu to queue
+ * @soc: point to soc
+ * @desc: point to tx desc
+ * @ts: Tx completion status from HAL/HTT descriptor
+ * @peer: DP peer
+ *
+ * Return: None
+ */
 static inline
-QDF_STATUS monitor_tx_add_to_comp_queue(struct dp_soc *soc,
-					struct dp_tx_desc_s *desc,
-					struct hal_tx_completion_status *ts,
-					struct dp_peer *peer)
+QDF_STATUS dp_monitor_tx_add_to_comp_queue(struct dp_soc *soc,
+					   struct dp_tx_desc_s *desc,
+					   struct hal_tx_completion_status *ts,
+					   struct dp_peer *peer)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return QDF_STATUS_SUCCESS;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_tx_add_to_comp_queue) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1504,53 +1707,55 @@ QDF_STATUS monitor_update_msdu_to_list(struct dp_soc *soc,
 	struct dp_mon_soc *mon_soc = soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return QDF_STATUS_SUCCESS;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_update_msdu_to_list) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	return monitor_ops->mon_update_msdu_to_list(soc, pdev, peer, ts, netbuf);
+	return monitor_ops->mon_update_msdu_to_list(soc, pdev,
+						    peer, ts, netbuf);
 }
 
 #else
-static inline void monitor_peer_tid_peer_id_update(struct dp_soc *soc,
-						   struct dp_peer *peer,
-						   uint16_t peer_id)
+static inline
+void dp_monitor_peer_tid_peer_id_update(struct dp_soc *soc,
+					struct dp_peer *peer,
+					uint16_t peer_id)
 {
 }
 
-static inline void monitor_tx_ppdu_stats_attach(struct dp_pdev *pdev)
+static inline void dp_monitor_tx_ppdu_stats_attach(struct dp_pdev *pdev)
 {
 }
 
-static inline void monitor_tx_ppdu_stats_detach(struct dp_pdev *pdev)
-{
-}
-
-static inline QDF_STATUS monitor_tx_capture_debugfs_init(struct dp_pdev *pdev)
-{
-	return QDF_STATUS_E_FAILURE;
-}
-
-static inline void monitor_peer_tx_capture_filter_check(struct dp_pdev *pdev,
-							struct dp_peer *peer)
+static inline void dp_monitor_tx_ppdu_stats_detach(struct dp_pdev *pdev)
 {
 }
 
 static inline
-QDF_STATUS monitor_tx_add_to_comp_queue(struct dp_soc *soc,
-					struct dp_tx_desc_s *desc,
-					struct hal_tx_completion_status *ts,
-					struct dp_peer *peer)
+QDF_STATUS dp_monitor_tx_capture_debugfs_init(struct dp_pdev *pdev)
 {
 	return QDF_STATUS_E_FAILURE;
 }
 
+static inline void dp_monitor_peer_tx_capture_filter_check(struct dp_pdev *pdev,
+							   struct dp_peer *peer)
+{
+}
+
+static inline
+QDF_STATUS dp_monitor_tx_add_to_comp_queue(struct dp_soc *soc,
+					   struct dp_tx_desc_s *desc,
+					   struct hal_tx_completion_status *ts,
+					   struct dp_peer *peer)
+{
+	return QDF_STATUS_E_FAILURE;
+}
 
 static inline
 QDF_STATUS monitor_update_msdu_to_list(struct dp_soc *soc,
@@ -1563,23 +1768,31 @@ QDF_STATUS monitor_update_msdu_to_list(struct dp_soc *soc,
 }
 #endif
 
+/*
+ * dp_monitor_ppdu_stats_ind_handler() - PPDU stats msg handler
+ * @htt_soc:     HTT SOC handle
+ * @msg_word:    Pointer to payload
+ * @htt_t2h_msg: HTT msg nbuf
+ *
+ * Return: True if buffer should be freed by caller.
+ */
 #if defined(WDI_EVENT_ENABLE) &&\
 	(defined(QCA_ENHANCED_STATS_SUPPORT) || !defined(REMOVE_PKT_LOG))
-static inline bool monitor_ppdu_stats_ind_handler(struct htt_soc *soc,
-						  uint32_t *msg_word,
-						  qdf_nbuf_t htt_t2h_msg)
+static inline bool dp_monitor_ppdu_stats_ind_handler(struct htt_soc *soc,
+						     uint32_t *msg_word,
+						     qdf_nbuf_t htt_t2h_msg)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = soc->dp_soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return true;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_ppdu_stats_ind_handler) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return true;
 	}
 
@@ -1587,199 +1800,226 @@ static inline bool monitor_ppdu_stats_ind_handler(struct htt_soc *soc,
 						       htt_t2h_msg);
 }
 #else
-static inline bool monitor_ppdu_stats_ind_handler(struct htt_soc *soc,
-						  uint32_t *msg_word,
-						  qdf_nbuf_t htt_t2h_msg)
+static inline bool dp_monitor_ppdu_stats_ind_handler(struct htt_soc *soc,
+						     uint32_t *msg_word,
+						     qdf_nbuf_t htt_t2h_msg)
 {
 	return true;
 }
 #endif
 
-static inline QDF_STATUS monitor_htt_ppdu_stats_attach(struct dp_pdev *pdev)
+/*
+ * dp_monitor_htt_ppdu_stats_attach() - attach resources for HTT PPDU
+ * stats processing
+ * @pdev: Datapath PDEV handle
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS dp_monitor_htt_ppdu_stats_attach(struct dp_pdev *pdev)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return QDF_STATUS_SUCCESS;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_htt_ppdu_stats_attach) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	return monitor_ops->mon_htt_ppdu_stats_attach(pdev);
 }
 
-static inline void monitor_htt_ppdu_stats_detach(struct dp_pdev *pdev)
+/*
+ * dp_monitor_htt_ppdu_stats_detach() - detach stats resources
+ * @pdev: Datapath PDEV handle
+ *
+ * Return: void
+ */
+static inline void dp_monitor_htt_ppdu_stats_detach(struct dp_pdev *pdev)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_htt_ppdu_stats_detach) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return;
 	}
 
 	return monitor_ops->mon_htt_ppdu_stats_detach(pdev);
 }
 
-static inline void monitor_print_pdev_rx_mon_stats(struct dp_pdev *pdev)
+/*
+ * dp_monitor_print_pdev_rx_mon_stats() - print rx mon stats
+ * @pdev: Datapath PDEV handle
+ *
+ * Return: void
+ */
+static inline void dp_monitor_print_pdev_rx_mon_stats(struct dp_pdev *pdev)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_print_pdev_rx_mon_stats) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return;
 	}
 
 	return monitor_ops->mon_print_pdev_rx_mon_stats(pdev);
 }
 
+/*
+ * dp_monitor_print_pdev_tx_capture_stats() - print tx capture stats
+ * @pdev: Datapath PDEV handle
+ *
+ * Return: void
+ */
 #ifdef WLAN_TX_PKT_CAPTURE_ENH
-static inline void monitor_print_pdev_tx_capture_stats(struct dp_pdev *pdev)
+static inline void dp_monitor_print_pdev_tx_capture_stats(struct dp_pdev *pdev)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_print_pdev_tx_capture_stats) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return;
 	}
 
 	return monitor_ops->mon_print_pdev_tx_capture_stats(pdev);
 }
 
-static inline QDF_STATUS monitor_config_enh_tx_capture(struct dp_pdev *pdev,
-						       uint32_t val)
+static inline QDF_STATUS dp_monitor_config_enh_tx_capture(struct dp_pdev *pdev,
+							  uint32_t val)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_config_enh_tx_capture) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	return monitor_ops->mon_config_enh_tx_capture(pdev, val);
 }
 #else
-static inline void monitor_print_pdev_tx_capture_stats(struct dp_pdev *pdev)
+static inline void dp_monitor_print_pdev_tx_capture_stats(struct dp_pdev *pdev)
 {
 }
 
-static inline QDF_STATUS monitor_config_enh_tx_capture(struct dp_pdev *pdev,
-						       uint32_t val)
+static inline QDF_STATUS dp_monitor_config_enh_tx_capture(struct dp_pdev *pdev,
+							  uint32_t val)
 {
 	return QDF_STATUS_E_INVAL;
 }
 #endif
 
 #ifdef WLAN_RX_PKT_CAPTURE_ENH
-static inline QDF_STATUS monitor_config_enh_rx_capture(struct dp_pdev *pdev,
-						       uint32_t val)
+static inline QDF_STATUS dp_monitor_config_enh_rx_capture(struct dp_pdev *pdev,
+							  uint32_t val)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_config_enh_rx_capture) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	return monitor_ops->mon_config_enh_rx_capture(pdev, val);
 }
 #else
-static inline QDF_STATUS monitor_config_enh_rx_capture(struct dp_pdev *pdev,
-						       uint32_t val)
+static inline QDF_STATUS dp_monitor_config_enh_rx_capture(struct dp_pdev *pdev,
+							  uint32_t val)
 {
 	return QDF_STATUS_E_INVAL;
 }
 #endif
 
 #ifdef QCA_SUPPORT_BPR
-static inline QDF_STATUS monitor_set_bpr_enable(struct dp_pdev *pdev,
-						uint32_t val)
+static inline QDF_STATUS dp_monitor_set_bpr_enable(struct dp_pdev *pdev,
+						   uint32_t val)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_set_bpr_enable) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	return monitor_ops->mon_set_bpr_enable(pdev, val);
 }
 #else
-static inline QDF_STATUS monitor_set_bpr_enable(struct dp_pdev *pdev,
-						uint32_t val)
+static inline QDF_STATUS dp_monitor_set_bpr_enable(struct dp_pdev *pdev,
+						   uint32_t val)
 {
 	return QDF_STATUS_E_FAILURE;
 }
 #endif
 
 #ifdef ATH_SUPPORT_NAC
-static inline int monitor_set_filter_neigh_peers(struct dp_pdev *pdev, bool val)
+static inline
+int dp_monitor_set_filter_neigh_peers(struct dp_pdev *pdev, bool val)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return 0;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_set_filter_neigh_peers) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return 0;
 	}
 
 	return monitor_ops->mon_set_filter_neigh_peers(pdev, val);
 }
 #else
-static inline int monitor_set_filter_neigh_peers(struct dp_pdev *pdev, bool val)
+static inline
+int dp_monitor_set_filter_neigh_peers(struct dp_pdev *pdev, bool val)
 {
 	return 0;
 }
@@ -1787,19 +2027,19 @@ static inline int monitor_set_filter_neigh_peers(struct dp_pdev *pdev, bool val)
 
 #ifdef WLAN_ATF_ENABLE
 static inline
-void monitor_set_atf_stats_enable(struct dp_pdev *pdev, bool value)
+void dp_monitor_set_atf_stats_enable(struct dp_pdev *pdev, bool value)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_set_atf_stats_enable) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return;
 	}
 
@@ -1807,25 +2047,25 @@ void monitor_set_atf_stats_enable(struct dp_pdev *pdev, bool value)
 }
 #else
 static inline
-void monitor_set_atf_stats_enable(struct dp_pdev *pdev, bool value)
+void dp_monitor_set_atf_stats_enable(struct dp_pdev *pdev, bool value)
 {
 }
 #endif
 
 static inline
-void monitor_set_bsscolor(struct dp_pdev *pdev, uint8_t bsscolor)
+void dp_monitor_set_bsscolor(struct dp_pdev *pdev, uint8_t bsscolor)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_set_bsscolor) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return;
 	}
 
@@ -1833,20 +2073,20 @@ void monitor_set_bsscolor(struct dp_pdev *pdev, uint8_t bsscolor)
 }
 
 static inline
-bool monitor_pdev_get_filter_mcast_data(struct cdp_pdev *pdev_handle)
+bool dp_monitor_pdev_get_filter_mcast_data(struct cdp_pdev *pdev_handle)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return false;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_pdev_get_filter_mcast_data) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return false;
 	}
 
@@ -1854,20 +2094,20 @@ bool monitor_pdev_get_filter_mcast_data(struct cdp_pdev *pdev_handle)
 }
 
 static inline
-bool monitor_pdev_get_filter_non_data(struct cdp_pdev *pdev_handle)
+bool dp_monitor_pdev_get_filter_non_data(struct cdp_pdev *pdev_handle)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return false;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_pdev_get_filter_non_data) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return false;
 	}
 
@@ -1875,20 +2115,20 @@ bool monitor_pdev_get_filter_non_data(struct cdp_pdev *pdev_handle)
 }
 
 static inline
-bool monitor_pdev_get_filter_ucast_data(struct cdp_pdev *pdev_handle)
+bool dp_monitor_pdev_get_filter_ucast_data(struct cdp_pdev *pdev_handle)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return false;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_pdev_get_filter_ucast_data) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return false;
 	}
 
@@ -1897,69 +2137,71 @@ bool monitor_pdev_get_filter_ucast_data(struct cdp_pdev *pdev_handle)
 
 #ifdef WDI_EVENT_ENABLE
 static inline
-int monitor_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event, bool enable)
+int dp_monitor_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
+				bool enable)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return 0;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_set_pktlog_wifi3) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return 0;
 	}
 
 	return monitor_ops->mon_set_pktlog_wifi3(pdev, event, enable);
 }
 #else
-static inline int monitor_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
-					   bool enable)
+static inline
+int dp_monitor_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
+				bool enable)
 {
 	return 0;
 }
 #endif
 
 #if defined(DP_CON_MON) && !defined(REMOVE_PKT_LOG)
-static inline void monitor_pktlogmod_exit(struct dp_pdev *pdev)
+static inline void dp_monitor_pktlogmod_exit(struct dp_pdev *pdev)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_pktlogmod_exit) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return;
 	}
 
 	return monitor_ops->mon_pktlogmod_exit(pdev);
 }
 #else
-static inline void monitor_pktlogmod_exit(struct dp_pdev *pdev) {}
+static inline void dp_monitor_pktlogmod_exit(struct dp_pdev *pdev) {}
 #endif
 
 static inline
-void monitor_vdev_set_monitor_mode_buf_rings(struct dp_pdev *pdev)
+void dp_monitor_vdev_set_monitor_mode_buf_rings(struct dp_pdev *pdev)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_vdev_set_monitor_mode_buf_rings) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return;
 	}
 
@@ -1967,19 +2209,19 @@ void monitor_vdev_set_monitor_mode_buf_rings(struct dp_pdev *pdev)
 }
 
 static inline
-void monitor_neighbour_peers_detach(struct dp_pdev *pdev)
+void dp_monitor_neighbour_peers_detach(struct dp_pdev *pdev)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_neighbour_peers_detach) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return;
 	}
 
@@ -1987,20 +2229,20 @@ void monitor_neighbour_peers_detach(struct dp_pdev *pdev)
 }
 
 #ifdef FEATURE_NAC_RSSI
-static inline QDF_STATUS monitor_filter_neighbour_peer(struct dp_pdev *pdev,
-						       uint8_t *rx_pkt_hdr)
+static inline QDF_STATUS dp_monitor_filter_neighbour_peer(struct dp_pdev *pdev,
+							  uint8_t *rx_pkt_hdr)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_filter_neighbour_peer) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -2009,19 +2251,19 @@ static inline QDF_STATUS monitor_filter_neighbour_peer(struct dp_pdev *pdev,
 #endif
 
 static inline
-void monitor_reap_timer_init(struct dp_soc *soc)
+void dp_monitor_reap_timer_init(struct dp_soc *soc)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_reap_timer_init) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return;
 	}
 
@@ -2029,19 +2271,19 @@ void monitor_reap_timer_init(struct dp_soc *soc)
 }
 
 static inline
-void monitor_reap_timer_deinit(struct dp_soc *soc)
+void dp_monitor_reap_timer_deinit(struct dp_soc *soc)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_reap_timer_deinit) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return;
 	}
 
@@ -2049,19 +2291,19 @@ void monitor_reap_timer_deinit(struct dp_soc *soc)
 }
 
 static inline
-void monitor_reap_timer_start(struct dp_soc *soc)
+void dp_monitor_reap_timer_start(struct dp_soc *soc)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_reap_timer_start) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return;
 	}
 
@@ -2069,19 +2311,19 @@ void monitor_reap_timer_start(struct dp_soc *soc)
 }
 
 static inline
-bool monitor_reap_timer_stop(struct dp_soc *soc)
+bool dp_monitor_reap_timer_stop(struct dp_soc *soc)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return false;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_reap_timer_stop) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return false;
 	}
 
@@ -2089,19 +2331,19 @@ bool monitor_reap_timer_stop(struct dp_soc *soc)
 }
 
 static inline
-void monitor_vdev_timer_init(struct dp_soc *soc)
+void dp_monitor_vdev_timer_init(struct dp_soc *soc)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_vdev_timer_init) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return;
 	}
 
@@ -2109,19 +2351,19 @@ void monitor_vdev_timer_init(struct dp_soc *soc)
 }
 
 static inline
-void monitor_vdev_timer_deinit(struct dp_soc *soc)
+void dp_monitor_vdev_timer_deinit(struct dp_soc *soc)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_vdev_timer_deinit) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return;
 	}
 
@@ -2129,19 +2371,19 @@ void monitor_vdev_timer_deinit(struct dp_soc *soc)
 }
 
 static inline
-void monitor_vdev_timer_start(struct dp_soc *soc)
+void dp_monitor_vdev_timer_start(struct dp_soc *soc)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_vdev_timer_start) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return;
 	}
 
@@ -2149,19 +2391,19 @@ void monitor_vdev_timer_start(struct dp_soc *soc)
 }
 
 static inline
-bool monitor_vdev_timer_stop(struct dp_soc *soc)
+bool dp_monitor_vdev_timer_stop(struct dp_soc *soc)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return false;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_vdev_timer_stop) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return false;
 	}
 
@@ -2170,21 +2412,21 @@ bool monitor_vdev_timer_stop(struct dp_soc *soc)
 
 #ifdef QCA_MCOPY_SUPPORT
 static inline
-QDF_STATUS monitor_mcopy_check_deliver(struct dp_pdev *pdev,
-				       uint16_t peer_id, uint32_t ppdu_id,
-				       uint8_t first_msdu)
+QDF_STATUS dp_monitor_mcopy_check_deliver(struct dp_pdev *pdev,
+					  uint16_t peer_id, uint32_t ppdu_id,
+					  uint8_t first_msdu)
 {
 	struct dp_mon_ops *monitor_ops;
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_mcopy_check_deliver) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -2193,31 +2435,42 @@ QDF_STATUS monitor_mcopy_check_deliver(struct dp_pdev *pdev,
 }
 #else
 static inline
-QDF_STATUS monitor_mcopy_check_deliver(struct dp_pdev *pdev,
-				       uint16_t peer_id, uint32_t ppdu_id,
-				       uint8_t first_msdu)
+QDF_STATUS dp_monitor_mcopy_check_deliver(struct dp_pdev *pdev,
+					  uint16_t peer_id, uint32_t ppdu_id,
+					  uint8_t first_msdu)
 {
 	return QDF_STATUS_SUCCESS;
 }
 #endif
 
-static inline void monitor_neighbour_peer_add_ast(struct dp_pdev *pdev,
-						  struct dp_peer *ta_peer,
-						  uint8_t *mac_addr,
-						  qdf_nbuf_t nbuf,
-						  uint32_t flags)
+/*
+ * dp_monitor_neighbour_peer_add_ast() - Add ast entry
+ * @pdev: point to dp pdev
+ * @ta_peer: point to peer
+ * @mac_addr: mac address
+ * @nbuf: point to nbuf
+ * @flags: flags
+ *
+ * Return: void
+ */
+static inline void
+dp_monitor_neighbour_peer_add_ast(struct dp_pdev *pdev,
+				  struct dp_peer *ta_peer,
+				  uint8_t *mac_addr,
+				  qdf_nbuf_t nbuf,
+				  uint32_t flags)
 {
 	struct dp_mon_soc *mon_soc = pdev->soc->monitor_soc;
 	struct dp_mon_ops *monitor_ops;
 
 	if (!mon_soc) {
-		qdf_err("monitor soc is NULL");
+		dp_mon_debug("monitor soc is NULL");
 		return;
 	}
 
 	monitor_ops = mon_soc->mon_ops;
 	if (!monitor_ops || !monitor_ops->mon_neighbour_peer_add_ast) {
-		qdf_err("callback not registered");
+		dp_mon_debug("callback not registered");
 		return;
 	}
 
@@ -2225,27 +2478,35 @@ static inline void monitor_neighbour_peer_add_ast(struct dp_pdev *pdev,
 						       nbuf, flags);
 }
 
-static inline void monitor_vdev_delete(struct dp_soc *soc, struct dp_vdev *vdev)
+/*
+ * dp_monitor_vdev_delete() - delete monitor vdev
+ * @soc: point to dp soc
+ * @vdev: point to dp vdev
+ *
+ * Return: void
+ */
+static inline void dp_monitor_vdev_delete(struct dp_soc *soc,
+					  struct dp_vdev *vdev)
 {
 	if (soc->intr_mode == DP_INTR_POLL) {
 		qdf_timer_sync_cancel(&soc->int_timer);
-		monitor_flush_rings(soc);
+		dp_monitor_flush_rings(soc);
 	} else if (soc->intr_mode == DP_INTR_MSI) {
-		if (monitor_vdev_timer_stop(soc))
-			monitor_flush_rings(soc);
+		if (dp_monitor_vdev_timer_stop(soc))
+			dp_monitor_flush_rings(soc);
 	}
 
-	monitor_vdev_detach(vdev);
+	dp_monitor_vdev_detach(vdev);
 }
 
 #ifdef DP_POWER_SAVE
 /*
- * monitor_pktlog_reap_pending_frames() - reap pending frames
+ * dp_monitor_pktlog_reap_pending_frames() - reap pending frames
  * @pdev: point to dp pdev
  *
  * Return: void
  */
-static inline void monitor_pktlog_reap_pending_frames(struct dp_pdev *pdev)
+static inline void dp_monitor_pktlog_reap_pending_frames(struct dp_pdev *pdev)
 {
 	struct dp_soc *soc;
 
@@ -2255,19 +2516,19 @@ static inline void monitor_pktlog_reap_pending_frames(struct dp_pdev *pdev)
 	soc = pdev->soc;
 
 	if (((pdev->monitor_pdev->rx_pktlog_mode != DP_RX_PKTLOG_DISABLED) ||
-	     monitor_is_enable_reap_timer_non_pkt(pdev))) {
-		if (monitor_reap_timer_stop(soc))
-			monitor_service_mon_rings(soc, DP_MON_REAP_BUDGET);
+	     dp_mon_is_enable_reap_timer_non_pkt(pdev))) {
+		if (dp_monitor_reap_timer_stop(soc))
+			dp_monitor_service_mon_rings(soc, DP_MON_REAP_BUDGET);
 	}
 }
 
 /*
- * monitor_pktlog_start_reap_timer() - start reap timer
+ * dp_monitor_pktlog_start_reap_timer() - start reap timer
  * @pdev: point to dp pdev
  *
  * Return: void
  */
-static inline void monitor_pktlog_start_reap_timer(struct dp_pdev *pdev)
+static inline void dp_monitor_pktlog_start_reap_timer(struct dp_pdev *pdev)
 {
 	struct dp_soc *soc;
 
@@ -2276,15 +2537,23 @@ static inline void monitor_pktlog_start_reap_timer(struct dp_pdev *pdev)
 
 	soc = pdev->soc;
 	if (((pdev->monitor_pdev->rx_pktlog_mode != DP_RX_PKTLOG_DISABLED) ||
-	     monitor_is_enable_reap_timer_non_pkt(pdev)))
-		monitor_reap_timer_start(soc);
+	     dp_mon_is_enable_reap_timer_non_pkt(pdev)))
+		dp_monitor_reap_timer_start(soc);
 }
 #endif
 
+/*
+ * dp_monitor_neighbour_peer_list_remove() - remove neighbour peer list
+ * @pdev: point to dp pdev
+ * @vdev: point to dp vdev
+ * @peer: point to dp_neighbour_peer
+ *
+ * Return: void
+ */
 static inline
-void monitor_neighbour_peer_list_remove(struct dp_pdev *pdev,
-					struct dp_vdev *vdev,
-					struct dp_neighbour_peer *peer)
+void dp_monitor_neighbour_peer_list_remove(struct dp_pdev *pdev,
+					   struct dp_vdev *vdev,
+					   struct dp_neighbour_peer *peer)
 {
 	struct dp_mon_pdev *mon_pdev;
 	struct dp_neighbour_peer *temp_peer = NULL;
@@ -2314,14 +2583,12 @@ void monitor_neighbour_peer_list_remove(struct dp_pdev *pdev,
 }
 
 static inline
-void monitor_pdev_set_mon_vdev(struct dp_vdev *vdev)
+void dp_monitor_pdev_set_mon_vdev(struct dp_vdev *vdev)
 {
-	struct dp_mon_pdev *mon_pdev = vdev->pdev->monitor_pdev;
-
-	if (!mon_pdev)
+	if (!vdev->pdev->monitor_pdev)
 		return;
 
-	mon_pdev->mvdev = vdev;
+	vdev->pdev->monitor_pdev->mvdev = vdev;
 }
 
 static inline

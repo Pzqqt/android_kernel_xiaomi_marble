@@ -1179,8 +1179,8 @@ dp_get_completion_indication_for_stack(struct dp_soc *soc,
 	uint8_t last_msdu = ts->last_msdu;
 	uint32_t txcap_hdr_size = sizeof(struct tx_capture_hdr);
 
-	if (qdf_unlikely(!monitor_is_enable_tx_sniffer(pdev) &&
-			 !monitor_is_enable_mcopy_mode(pdev) &&
+	if (qdf_unlikely(!dp_monitor_is_enable_tx_sniffer(pdev) &&
+			 !dp_monitor_is_enable_mcopy_mode(pdev) &&
 			 !pdev->latency_capture_enable))
 		return QDF_STATUS_E_NOSUPPORT;
 
@@ -1194,8 +1194,10 @@ dp_get_completion_indication_for_stack(struct dp_soc *soc,
 	 * per PPDU. If mcopy_mode is M_COPY_EXTENDED deliver 1st MSDU
 	 * for each MPDU
 	 */
-	if (monitor_mcopy_check_deliver(pdev, peer_id, ppdu_id, first_msdu) !=
-	    QDF_STATUS_SUCCESS)
+	if (dp_monitor_mcopy_check_deliver(pdev,
+					   peer_id,
+					   ppdu_id,
+					   first_msdu) != QDF_STATUS_SUCCESS)
 		return QDF_STATUS_E_INVAL;
 
 	if (qdf_unlikely(qdf_nbuf_headroom(netbuf) < txcap_hdr_size)) {

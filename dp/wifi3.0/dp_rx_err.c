@@ -320,6 +320,10 @@ dp_rx_msdus_drop(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 				  &buf_info);
 
 	link_desc_va = dp_rx_cookie_2_link_desc_va(soc, &buf_info);
+	if (!link_desc_va) {
+		dp_rx_err_debug("link desc va is null, soc %pk", soc);
+		return rx_bufs_used;
+	}
 
 more_msdu_link_desc:
 	/* No UNMAP required -- this is "malloc_consistent" memory */
@@ -917,7 +921,7 @@ dp_rx_chain_msdus(struct dp_soc *soc, qdf_nbuf_t nbuf,
 		dp_pdev->invalid_peer_head_msdu = NULL;
 		dp_pdev->invalid_peer_tail_msdu = NULL;
 
-		monitor_get_mpdu_status(dp_pdev, soc, rx_tlv_hdr);
+		dp_monitor_get_mpdu_status(dp_pdev, soc, rx_tlv_hdr);
 	}
 
 	if (dp_pdev->ppdu_id == hal_rx_attn_phy_ppdu_id_get(soc->hal_soc,
