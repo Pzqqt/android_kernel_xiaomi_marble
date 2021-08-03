@@ -2220,6 +2220,71 @@ static QDF_STATUS send_vdev_set_param_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ *  send_vdev_set_mu_snif_cmd_tlv() - WMI vdev set mu snif function
+ *  @param wmi_handle      : handle to WMI.
+ *  @param param    : pointer to hold mu sniffer parameter
+ *
+ *  Return: 0  on success and -ve on failure.
+ */
+static
+QDF_STATUS send_vdev_set_mu_snif_cmd_tlv(wmi_unified_t wmi_handle,
+					 struct vdev_set_mu_snif_param *param)
+{
+	QDF_STATUS ret;
+	wmi_vdev_set_mu_snif_cmd_param *cmd;
+	wmi_buf_t buf;
+	uint32_t *tmp_ptr;
+	uint16_t len = sizeof(*cmd);
+	uint8_t *buf_ptr;
+	uint32_t i;
+
+	/* Length TLV placeholder for array of uint32_t */
+	len += WMI_TLV_HDR_SIZE;
+
+	if (param->num_aid)
+		len += param->num_aid * sizeof(uint32_t);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	buf_ptr = (uint8_t *)wmi_buf_data(buf);
+	cmd = (wmi_vdev_set_mu_snif_cmd_param *)buf_ptr;
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_vdev_set_mu_snif_cmd_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_vdev_set_mu_snif_cmd_param));
+
+	cmd->vdev_id = param->vdev_id;
+	cmd->mode = param->mode;
+	cmd->max_num_user = param->num_user;
+
+	buf_ptr += sizeof(*cmd);
+
+	tmp_ptr = (uint32_t *)(buf_ptr + WMI_TLV_HDR_SIZE);
+
+	for (i = 0; i < param->num_aid; ++i)
+		tmp_ptr[i] = param->aid[i];
+
+	WMITLV_SET_HDR(buf_ptr,
+		       WMITLV_TAG_ARRAY_UINT32,
+		       (param->num_aid * sizeof(uint32_t)));
+
+	wmi_debug("Setting vdev %d mode = %x, max user = %u aids= %u",
+		  cmd->vdev_id, cmd->mode, cmd->max_num_user, param->num_aid);
+	wmi_mtrace(WMI_VDEV_SET_PARAM_CMDID, cmd->vdev_id, 0);
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_VDEV_SET_MU_SNIF_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		wmi_err("Failed to send set param command ret = %d", ret);
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
+/**
  *  send_peer_based_pktlog_cmd() - Send WMI command to enable packet-log
  *  @wmi_handle: handle to WMI.
  *  @macaddr: Peer mac address to be filter
@@ -5405,6 +5470,7 @@ static bool is_service_enabled_tlv(wmi_unified_t wmi_handle,
 			wmi_err("WMI service ext bit map is not saved yet");
 			return false;
 		}
+
 		return WMI_SERVICE_EXT2_IS_ENABLED(soc->wmi_service_bitmap,
 				soc->wmi_ext_service_bitmap,
 				soc->wmi_ext2_service_bitmap,
@@ -16715,6 +16781,7 @@ struct wmi_ops tlv_ops =  {
 	.send_crash_inject_cmd = send_crash_inject_cmd_tlv,
 	.send_dbglog_cmd = send_dbglog_cmd_tlv,
 	.send_vdev_set_param_cmd = send_vdev_set_param_cmd_tlv,
+	.send_vdev_set_mu_snif_cmd = send_vdev_set_mu_snif_cmd_tlv,
 	.send_packet_log_enable_cmd = send_packet_log_enable_cmd_tlv,
 	.send_peer_based_pktlog_cmd = send_peer_based_pktlog_cmd,
 	.send_time_stamp_sync_cmd = send_time_stamp_sync_cmd_tlv,
@@ -17971,6 +18038,7 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_spectral_session_info_support] =
 			WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_mu_snif] = WMI_SERVICE_MU_SNIF;
 }
 
 /**
