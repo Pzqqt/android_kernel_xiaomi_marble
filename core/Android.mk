@@ -1,6 +1,7 @@
 ifneq ($(TARGET_BOARD_PLATFORM),qssi)
 RMNET_CORE_DLKM_PLATFORMS_LIST := lahaina
 RMNET_CORE_DLKM_PLATFORMS_LIST += taro
+RMNET_CORE_DLKM_PLATFORMS_LIST += sa2150p
 
 ifeq ($(call is-board-platform-in-list, $(RMNET_CORE_DLKM_PLATFORMS_LIST)),true)
 #Make file to create RMNET_CORE DLKM
