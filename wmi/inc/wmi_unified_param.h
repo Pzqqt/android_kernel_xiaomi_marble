@@ -5334,6 +5334,7 @@ typedef enum {
 	wmi_service_mgmt_rx_reo_supported,
 	wmi_service_phy_dma_byte_swap_support,
 	wmi_service_spectral_session_info_support,
+	wmi_service_mu_snif,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF

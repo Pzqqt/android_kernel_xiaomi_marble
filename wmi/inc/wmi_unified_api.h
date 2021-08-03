@@ -888,6 +888,18 @@ wmi_unified_roam_set_param_send(wmi_unified_t wmi_handle,
 #endif
 
 /**
+ * wmi_unified_vdev_set_param_send() - WMI vdev set parameter function
+ * @wmi_handle: handle to WMI.
+ * @macaddr: MAC address
+ * @param: pointer to hold vdev set parameter
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_unified_vdev_set_mu_snif_send(wmi_unified_t wmi_handle,
+				  struct vdev_set_mu_snif_param *param);
+
+/**
  * wmi_unified_sifs_trigger_send() - WMI vdev sifs trigger parameter function
  * @wmi_handle: handle to WMI.
  * @param: pointer to hold sifs trigger parameter

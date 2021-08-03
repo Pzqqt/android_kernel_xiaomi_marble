@@ -36,6 +36,8 @@
 /** slot time short */
 #define WLAN_MLME_VDEV_SLOT_TIME_SHORT  0x2
 
+#define WLAN_MU_SNIF_MAX_AIDS 4
+
 /**
  * enum MLME_bcn_tx_rate_code - beacon tx rate code
  */
@@ -609,6 +611,23 @@ struct vdev_set_params {
 	uint32_t vdev_id;
 	uint32_t param_id;
 	uint32_t param_value;
+};
+
+/**
+ * struct vdev_set_mu_snif_params - vdev set mu sniffer cmd parameter
+ * @vdev_id: vdev id
+ * @mode: mu snif mode
+ * @num_user: max number of user
+ * @num_aid: number of set sta aid
+ * @aid: sta aids
+ */
+
+struct vdev_set_mu_snif_param {
+	uint32_t vdev_id;
+	uint32_t mode;
+	uint32_t num_user;
+	uint32_t num_aid;
+	uint32_t aid[WLAN_MU_SNIF_MAX_AIDS];
 };
 
 /**
