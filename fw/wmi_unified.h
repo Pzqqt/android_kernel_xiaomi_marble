@@ -15733,6 +15733,18 @@ typedef struct {
      * mlo_weightage_pcnt :- give weightage to candidate based on MLO support.
      */
     A_UINT32 mlo_weightage_pcnt;
+    /*
+     * btc_score_factor :- Scale down 2.4GHz AP total score by btc_score_factor
+     * during BT coex.
+     * Value 0 should be ignored
+     */
+    A_UINT32 btc_score_factor;
+    /*
+     * btc_etp_factor :- Scale down 2.4GHz AP total etp value by btc_etp_factor
+     * during BT coex.
+     * Value 0 should be ignored
+     */
+    A_UINT32 btc_etp_factor;
 } wmi_roam_cnd_scoring_param;
 
 typedef struct {
@@ -15805,6 +15817,13 @@ typedef struct {
      */
     A_UINT32 bg_rssi_threshold;
 } wmi_ap_profile;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_owe_ap_profile */
+
+    /* OPEN SSID value when STA is connected to OWE transition AP in OWE security */
+    wmi_ssid open_ssid_for_owe_transition;
+} wmi_owe_ap_profile;
 
 typedef struct {
     /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_cnd_vendor_scoring_param */
@@ -16010,6 +16029,7 @@ typedef struct {
  *     wmi_roam_score_delta_param roam_score_delta_param_list[]
  *     wmi_roam_cnd_min_rssi_param roam_cnd_min_rssi_param_list[]
  *     wmi_roam_cnd_vendor_scoring_param roam_cnd_vendor_scoring_param[]
+ *     wmi_owe_ap_profile owe_ap_profile[]
  */
 } wmi_roam_ap_profile_fixed_param;
 
@@ -31019,6 +31039,7 @@ typedef enum {
     WMI_ROAM_TRIGGER_REASON_ESS_RSSI,
     WMI_ROAM_TRIGGER_REASON_WTC_BTM,
     WMI_ROAM_TRIGGER_REASON_PMK_TIMEOUT,
+    WMI_ROAM_TRIGGER_REASON_BTC,
 
     WMI_ROAM_TRIGGER_EXT_REASON_MAX
 } WMI_ROAM_TRIGGER_EXT_REASON_ID;
