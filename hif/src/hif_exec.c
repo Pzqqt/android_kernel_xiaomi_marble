@@ -96,7 +96,7 @@ hif_hist_skip_event_record(struct hif_event_history *hist_ev,
 					    HIF_EVENT_HIST_MAX)) {
 			last_irq_rec =
 				&hist_ev->event[hist_ev->misc.last_irq_index];
-			last_irq_rec->timestamp = qdf_get_log_timestamp();
+			last_irq_rec->timestamp = hif_get_log_timestamp();
 			last_irq_rec->cpu_id = qdf_get_cpu();
 			last_irq_rec->hp++;
 			last_irq_rec->tp = last_irq_rec->timestamp -
@@ -106,7 +106,7 @@ hif_hist_skip_event_record(struct hif_event_history *hist_ev,
 		break;
 	case HIF_EVENT_BH_SCHED:
 		if (rec->type == HIF_EVENT_BH_SCHED) {
-			rec->timestamp = qdf_get_log_timestamp();
+			rec->timestamp = hif_get_log_timestamp();
 			rec->cpu_id = qdf_get_cpu();
 			return true;
 		}
