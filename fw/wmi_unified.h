@@ -18986,11 +18986,13 @@ typedef enum WLAN_COEX_EVENT {
     WLAN_COEX_EVENT_BT_VOICE_PROFILE_REMOVE     = 4,
     WLAN_COEX_EVENT_BT_SCAN_START               = 5,
     WLAN_COEX_EVENT_BT_SCAN_STOP                = 6,
-}WLAN_COEX_EVENT;
+    WLAN_COEX_EVENT_BT_PROFILE_CONNECTED        = 7,
+    WLAN_COEX_EVENT_BT_PROFILE_DISCONNECTED     = 8,
+} WLAN_COEX_EVENT;
 
 typedef struct {
     A_UINT32 tlv_header;
-    A_UINT32 coex_profile_evt; //uses the enum values form WLAN_COEX_EVENT
+    A_UINT32 coex_profile_evt; //uses the enum values from WLAN_COEX_EVENT
 } wmi_coex_bt_activity_event_fixed_param;
 
 enum wmm_ac_downgrade_policy {
