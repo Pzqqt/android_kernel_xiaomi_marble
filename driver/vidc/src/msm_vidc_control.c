@@ -177,11 +177,25 @@ static int msm_vidc_packetize_control(struct msm_vidc_inst *inst,
 	void *hfi_val, u32 payload_size, const char *func)
 {
 	int rc = 0;
+	u64 payload = 0;
 
-	i_vpr_h(inst,
-		"set cap: name: %24s, cap value: %#10x, hfi: %#10x\n",
-		cap_name(cap_id), inst->capabilities->cap[cap_id].value,
-		*(s64 *)hfi_val);
+	if (payload_size == sizeof(u32))
+		payload = *(u32 *)hfi_val;
+	else if (payload_size == sizeof(u64))
+		payload = *(u64 *)hfi_val;
+	else if (payload_size == sizeof(u8))
+		payload = *(u8 *)hfi_val;
+	else if (payload_size == sizeof(u16))
+		payload = *(u16 *)hfi_val;
+
+	if (payload_size <= sizeof(u64))
+		i_vpr_h(inst,
+			"set cap: name: %24s, cap value: %#10x, hfi: %#10x\n",
+			cap_name(cap_id), inst->capabilities->cap[cap_id].value, payload);
+	else
+		i_vpr_h(inst,
+			"set cap: name: %24s, hfi payload size %d\n",
+			cap_name(cap_id), payload_size);
 
 	rc = venus_hfi_session_property(inst,
 		inst->capabilities->cap[cap_id].hfi_id,
@@ -189,13 +203,14 @@ static int msm_vidc_packetize_control(struct msm_vidc_inst *inst,
 		msm_vidc_get_port_info(inst, cap_id),
 		payload_type,
 		hfi_val,
-		sizeof(payload_size));
-	if (rc)
-		i_vpr_e(inst,
-			"%s: failed to set cap[%d] %s to fw\n",
+		payload_size);
+	if (rc) {
+		i_vpr_e(inst, "%s: failed to set cap[%d] %s to fw\n",
 			__func__, cap_id, cap_name(cap_id));
+		return rc;
+	}
 
-	return rc;
+	return 0;
 }
 
 static enum msm_vidc_inst_capability_type msm_vidc_get_cap_id(
