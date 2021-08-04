@@ -20438,9 +20438,31 @@ typedef enum {
  * in wmi_peer_tid_configurations_cmd structure.
  */
 typedef enum {
-      /* Used to indicate that disable_rts_cts field is valid */
-      WMI_PEER_TID_DISABLE_RTS_CTS_VALID = 0x00000001,
+    /* Used to indicate that disable_rts_cts field is valid */
+    WMI_PEER_TID_DISABLE_RTS_CTS_VALID      = 0x00000001,
+    WMI_PEER_TID_MAX_NUM_MPDU_IN_PPDU_VALID = 0x00000002,
+    WMI_PEER_TID_MAX_NUM_MSDU_IN_MPDU_VALID = 0x00000004,
 } WMI_PEER_TID_EXT_CONFIG_VALID_BITMAP;
+
+/**
+ * MPDU Aggregate value for the TID
+ */
+typedef enum {
+    /** Set the default Aggregation value configured in FW */
+    WMI_PEER_TID_MAX_NUM_MPDU_IN_PPDU_DEFAULT,
+    WMI_PEER_TID_MAX_NUM_MPDU_IN_PPDU_MIN = 1,
+    WMI_PEER_TID_MAX_NUM_MPDU_IN_PPDU_MAX = 1024,
+} WMI_PEER_TID_CONFIG_MAX_NUM_MPDU_IN_PPDU;
+
+/**
+ * MSDU Aggregate value for the TID
+ */
+typedef enum {
+    /** Set the default Aggregation value configured in FW */
+    WMI_PEER_TID_MAX_NUM_MSDU_IN_MPDU_DEFAULT,
+    WMI_PEER_TID_MAX_NUM_MSDU_IN_MPDU_MIN = 1,
+    WMI_PEER_TID_MAX_NUM_MSDU_IN_MPDU_MAX = 7,
+} WMI_PEER_TID_CONFIG_MAX_NUM_MSDU_IN_MPDU;
 
 /**
  * Command format for the TID configuration
@@ -20494,6 +20516,26 @@ typedef struct {
 
     /* Knob to enable/disable RTS/CTS per TID */
     A_UINT32 disable_rts_cts;
+
+    /** Size for mpdu aggregation
+     * (max MPDUs per PPDU)
+     * Valid range : 1-1024 (refer to WMI_PEER_TID_MAX_NUM_MPDU_IN_PPDU_MIN,MAX)
+     * When this field is set to 0, default aggregation value configured
+     * in the fw will be used.
+     * This is applicable only when aggr_control is
+     * WMI_PEER_TID_CONFIG_AGGR_CONTROL_ENABLE
+     */
+    A_UINT32 max_num_mpdu_in_ppdu;
+
+    /** Size for msdu aggregation
+     * (max MSDUs per MPDU)
+     * Valid range : 1-7 (refer to WMI_PEER_TID_MAX_NUM_MSDU_IN_MPDU_MIN,MAX)
+     * When this field is set to 0, default aggregation value configured
+     * in the fw will be used.
+     * This is applicable only when aggr_control is
+     * WMI_PEER_TID_CONFIG_AGGR_CONTROL_ENABLE
+     */
+    A_UINT32 max_num_msdu_in_mpdu;
 } wmi_peer_tid_configurations_cmd_fixed_param;
 
 /* The below enable/disable macros are used for both per peer CFR capture
