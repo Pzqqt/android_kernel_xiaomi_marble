@@ -680,9 +680,9 @@ static int sde_hw_rc_check_mask_cfg(
 	}
 
 	if (r2_enable) {
-		if ((hw_cfg->displayv - cfg_param_02) < 1) {
-			SDE_ERROR("invalid max cfg_param_02:%d\n",
-					cfg_param_02);
+		if ((hw_cfg->panel_height - cfg_param_02) < 1) {
+			SDE_ERROR("invalid max cfg_param_02:%d, panel_height:%d\n",
+					cfg_param_02, hw_cfg->panel_height);
 			return -EINVAL;
 		}
 

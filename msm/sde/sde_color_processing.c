@@ -2028,6 +2028,8 @@ static int _sde_cp_crtc_update_pu_features(struct drm_crtc *crtc, bool *need_flu
 			hw_cfg.displayh = hw_cfg.num_of_mixers *
 					hw_lm->cfg.out_width;
 			hw_cfg.displayv = hw_lm->cfg.out_height;
+			hw_cfg.panel_width = sde_crtc->base.state->adjusted_mode.hdisplay;
+			hw_cfg.panel_height = sde_crtc->base.state->adjusted_mode.vdisplay;
 
 			ret = set_pu_feature(hw_dspp, &hw_cfg, sde_crtc);
 			/* feature does not need flush when ret > 0 */
