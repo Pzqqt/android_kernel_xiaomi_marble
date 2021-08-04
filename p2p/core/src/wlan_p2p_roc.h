@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -31,8 +31,9 @@
 #define P2P_WAIT_CANCEL_ROC      1000
 #define P2P_WAIT_CLEANUP_ROC     2000
 #define P2P_MAX_ROC_DURATION     1500
+#define P2P_MAX_ROC_DURATION_GO_PRESENT     600
 
-#define P2P_ROC_DURATION_MULTI_GO_PRESENT   6
+#define P2P_ROC_DURATION_MULTI_GO_PRESENT   300
 #define P2P_ROC_DURATION_MULTI_GO_ABSENT    10
 #define P2P_ACTION_FRAME_DEFAULT_WAIT       200
 #define P2P_ROC_DEFAULT_DURATION            200
