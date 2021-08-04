@@ -1028,6 +1028,22 @@ QDF_STATUS wlan_mgmt_txrx_pdev_open(struct wlan_objmgr_pdev *pdev);
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
 QDF_STATUS wlan_mgmt_txrx_pdev_close(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * wlan_mgmt_txrx_psoc_enable() - mgmt txrx module psoc enable API
+ * @psoc: psoc context
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS wlan_mgmt_txrx_psoc_enable(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_mgmt_txrx_psoc_disable() - mgmt txrx module psoc disable API
+ * @psoc: psoc context
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS wlan_mgmt_txrx_psoc_disable(struct wlan_objmgr_psoc *psoc);
 #endif
 
 
