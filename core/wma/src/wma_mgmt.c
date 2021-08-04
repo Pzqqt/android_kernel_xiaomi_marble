@@ -1383,7 +1383,8 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 		phymode = vdev_phymode;
 	}
 
-	if (!mac->mlme_cfg->rates.disable_abg_rate_txdata) {
+	if (!mac->mlme_cfg->rates.disable_abg_rate_txdata &&
+	    !WLAN_REG_IS_6GHZ_CHAN_FREQ(des_chan->ch_freq)) {
 		/* Legacy Rateset */
 		rate_pos = (uint8_t *) peer_legacy_rates.rates;
 		for (i = 0; i < SIR_NUM_11B_RATES; i++) {
