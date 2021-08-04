@@ -448,6 +448,24 @@ uint32_t dp_soc_get_mon_mask_for_interrupt_mode(struct dp_soc *soc, int intr_ctx
 	return wlan_cfg_get_rx_mon_ring_mask(soc->wlan_cfg_ctx, intr_ctx_num);
 }
 
+/**
+ * dp_soc_reset_mon_intr_mask() - reset mon intr mask
+ * @soc: pointer to dp_soc handle
+ *
+ * Return:
+ */
+void dp_soc_reset_mon_intr_mask(struct dp_soc *soc)
+{
+	int i;
+
+	for (i = 0; i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++) {
+		soc->intr_ctx[i].rx_mon_ring_mask = 0;
+		soc->intr_ctx[i].host2rxdma_mon_ring_mask = 0;
+	}
+}
+
+qdf_export_symbol(dp_soc_reset_mon_intr_mask);
+
 /*
  * dp_service_lmac_rings()- timer to reap lmac rings
  * @arg: SoC Handle

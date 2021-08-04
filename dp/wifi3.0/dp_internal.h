@@ -3050,4 +3050,12 @@ QDF_STATUS dp_pdev_bkp_stats_attach(struct dp_pdev *pdev);
  */
 void dp_peer_flush_frags(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 			 uint8_t *peer_mac);
+
+/**
+ * dp_soc_reset_mon_intr_mask() - reset mon intr mask
+ * @soc: pointer to dp_soc handle
+ *
+ * Return:
+ */
+void dp_soc_reset_mon_intr_mask(struct dp_soc *soc);
 #endif /* #ifndef _DP_INTERNAL_H_ */
