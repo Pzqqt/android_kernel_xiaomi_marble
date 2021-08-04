@@ -5262,6 +5262,8 @@ QDF_STATUS dp_mon_soc_cfg_init(struct dp_soc *soc)
 	case TARGET_TYPE_QCA6390:
 	case TARGET_TYPE_QCA6490:
 	case TARGET_TYPE_QCA6750:
+	case TARGET_TYPE_WCN7850:
+		/* do nothing */
 		break;
 	case TARGET_TYPE_QCA8074:
 		wlan_cfg_set_mon_delayed_replenish_entries(soc->wlan_cfg_ctx,
