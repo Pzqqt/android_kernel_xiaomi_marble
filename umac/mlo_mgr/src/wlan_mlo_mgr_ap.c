@@ -22,11 +22,6 @@
 #include <wlan_mlo_mgr_cmn.h>
 #include <wlan_mlo_mgr_main.h>
 
-bool mlo_is_mld_ap(struct wlan_objmgr_vdev *vdev)
-{
-	return true;
-}
-
 bool mlo_ap_vdev_attach(struct wlan_objmgr_vdev *vdev,
 			uint8_t link_id,
 			uint16_t vdev_count)

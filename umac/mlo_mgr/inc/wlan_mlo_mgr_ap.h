@@ -24,15 +24,6 @@
 #include <wlan_mlo_mgr_public_structs.h>
 
 /**
- * mlo_is_mld_ap - Check if MLD associated with the vdev is an AP
- *
- * @vdev: pointer to vdev
- *
- * Return: true if MLD is an AP, false otherwise
- */
-bool mlo_is_mld_ap(struct wlan_objmgr_vdev *vdev);
-
-/**
  * mlo_ap_vdev_attach() - update vdev obj and vdev count to
  *                         wlan_mlo_dev_context
  * @vdev: vdev pointer
