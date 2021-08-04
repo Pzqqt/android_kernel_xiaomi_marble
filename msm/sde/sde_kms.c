@@ -2754,94 +2754,37 @@ backoff:
 	goto retry;
 }
 
-static int sde_kms_check_vm_request(struct msm_kms *kms,
-				    struct drm_atomic_state *state)
+static int _sde_kms_validate_vm_request(struct drm_atomic_state *state, struct sde_kms *sde_kms,
+		enum sde_crtc_vm_req vm_req, bool vm_owns_hw)
 {
-	struct sde_kms *sde_kms;
-	struct drm_device *dev;
-	struct drm_crtc *crtc;
-	struct drm_encoder *encoder;
+	struct drm_crtc *crtc, *active_crtc = NULL, *global_active_crtc = NULL;
 	struct drm_crtc_state *new_cstate, *old_cstate, *active_cstate;
-	uint32_t i, commit_crtc_cnt = 0, global_crtc_cnt = 0;
-	uint32_t crtc_encoder_cnt = 0;
-	struct drm_crtc *active_crtc = NULL, *global_active_crtc = NULL;
-	enum sde_crtc_vm_req old_vm_req = VM_REQ_NONE, new_vm_req = VM_REQ_NONE;
-	struct sde_vm_ops *vm_ops;
-	bool vm_req_active = false;
-	bool vm_owns_hw;
-	enum sde_crtc_idle_pc_state idle_pc_state;
-	struct sde_mdss_cfg *catalog;
-	int rc = 0;
-	struct sde_connector *sde_conn;
-	struct dsi_display *dsi_display;
+	struct drm_encoder *encoder;
 	struct drm_connector *connector;
 	struct drm_connector_state *new_connstate;
+	struct sde_vm_ops *vm_ops = sde_vm_get_ops(sde_kms);
+	struct sde_mdss_cfg *catalog = sde_kms->catalog;
+	struct sde_connector *sde_conn;
+	struct dsi_display *dsi_display;
+	uint32_t i, commit_crtc_cnt = 0, global_crtc_cnt = 0;
+	uint32_t crtc_encoder_cnt = 0;
+	enum sde_crtc_idle_pc_state idle_pc_state;
+	int rc = 0;
 
-	if (!kms || !state)
-		return -EINVAL;
-
-	sde_kms = to_sde_kms(kms);
-	dev = sde_kms->dev;
-	catalog = sde_kms->catalog;
-
-	vm_ops = sde_vm_get_ops(sde_kms);
-	if (!vm_ops)
-		return 0;
-
-	if (!vm_ops->vm_request_valid || !vm_ops->vm_owns_hw ||
-				!vm_ops->vm_acquire)
-		return -EINVAL;
-
-	sde_vm_lock(sde_kms);
-	vm_owns_hw = sde_vm_owns_hw(sde_kms);
 	for_each_oldnew_crtc_in_state(state, crtc, old_cstate, new_cstate, i) {
-		struct sde_crtc_state *old_state = NULL, *new_state = NULL;
+		struct sde_crtc_state *new_state = NULL;
 
 		if (!new_cstate->active && !old_cstate->active)
 			continue;
 
 		new_state = to_sde_crtc_state(new_cstate);
-		new_vm_req = sde_crtc_get_property(new_state,
-				CRTC_PROP_VM_REQ_STATE);
-
-		old_state = to_sde_crtc_state(old_cstate);
-		old_vm_req = sde_crtc_get_property(old_state,
-				CRTC_PROP_VM_REQ_STATE);
-
-		/*
-		 * No active request if the transition is from
-		 * VM_REQ_NONE to VM_REQ_NONE
-		 */
-		if (old_vm_req || new_vm_req) {
-			rc = vm_ops->vm_request_valid(sde_kms,
-					old_vm_req, new_vm_req);
-			if (rc) {
-				SDE_ERROR(
-				"VM transition check failed; o_state:%d, n_state:%d, hw_owner:%d, rc:%d\n",
-					old_vm_req, new_vm_req, vm_owns_hw, rc);
-				goto end;
-			} else if (old_vm_req == VM_REQ_ACQUIRE &&
-					new_vm_req == VM_REQ_NONE) {
-				SDE_DEBUG(
-				"VM transition valid; ignore further checks\n");
-			} else {
-				vm_req_active = true;
-			}
-		}
-
-		idle_pc_state = sde_crtc_get_property(new_state,
-						CRTC_PROP_IDLE_PC_STATE);
-
+		idle_pc_state = sde_crtc_get_property(new_state, CRTC_PROP_IDLE_PC_STATE);
 		active_crtc = crtc;
 		active_cstate = new_cstate;
 		commit_crtc_cnt++;
 	}
 
-	/* return early if no active vm request */
-	if (!vm_req_active)
-		goto end;
-
-	list_for_each_entry(crtc, &dev->mode_config.crtc_list, head) {
+	list_for_each_entry(crtc, &sde_kms->dev->mode_config.crtc_list, head) {
 		if (!crtc->state->active)
 			continue;
 
@@ -2850,13 +2793,9 @@ static int sde_kms_check_vm_request(struct msm_kms *kms,
 	}
 
 	if (active_crtc) {
-		drm_for_each_encoder_mask(encoder, active_crtc->dev,
-				active_cstate->encoder_mask)
+		drm_for_each_encoder_mask(encoder, active_crtc->dev, active_cstate->encoder_mask)
 			crtc_encoder_cnt++;
 	}
-
-	SDE_EVT32(old_vm_req, new_vm_req, vm_owns_hw);
-	SDE_DEBUG("VM  o_state:%d, n_state:%d, hw_owner:%d\n", old_vm_req, new_vm_req, vm_owns_hw);
 
 	for_each_new_connector_in_state(state, connector, new_connstate, i) {
 		int conn_mask = active_cstate->connector_mask;
@@ -2865,61 +2804,119 @@ static int sde_kms_check_vm_request(struct msm_kms *kms,
 			sde_conn = to_sde_connector(connector);
 			dsi_display = (struct dsi_display *) sde_conn->display;
 
-			SDE_EVT32(DRMID(connector), DRMID(active_crtc), i,
-					dsi_display->type,
+			SDE_EVT32(DRMID(connector), DRMID(active_crtc), i, dsi_display->type,
 					dsi_display->trusted_vm_env);
-			SDE_DEBUG(
-			"VM display:%s, conn:%d, crtc:%d, type:%d, tvm:%d,",
-					dsi_display->name, DRMID(connector),
-					DRMID(active_crtc), dsi_display->type,
-					dsi_display->trusted_vm_env);
+			SDE_DEBUG("VM display:%s, conn:%d, crtc:%d, type:%d, tvm:%d\n",
+					dsi_display->name, DRMID(connector), DRMID(active_crtc),
+					dsi_display->type, dsi_display->trusted_vm_env);
 			break;
 		}
 	}
 
 	/* Check for single crtc commits only on valid VM requests */
 	if (active_crtc && global_active_crtc &&
-		(commit_crtc_cnt > catalog->max_trusted_vm_displays ||
-			global_crtc_cnt > catalog->max_trusted_vm_displays ||
-			active_crtc != global_active_crtc)) {
-		SDE_ERROR(
-		"VM switch failed; MAX:%d a_cnt:%d g_cnt:%d a_crtc:%d g_crtc:%d\n",
-			   catalog->max_trusted_vm_displays,
-			   commit_crtc_cnt, global_crtc_cnt, DRMID(active_crtc),
-			   DRMID(global_active_crtc));
-		rc =  -E2BIG;
-		goto end;
-
-	} else if ((new_vm_req == VM_REQ_RELEASE) &&
-	    ((idle_pc_state == IDLE_PC_ENABLE) ||
-		(crtc_encoder_cnt > TRUSTED_VM_MAX_ENCODER_PER_CRTC))) {
+			(commit_crtc_cnt > catalog->max_trusted_vm_displays ||
+			 global_crtc_cnt > catalog->max_trusted_vm_displays ||
+			 active_crtc != global_active_crtc)) {
+		SDE_ERROR("VM switch failed; MAX:%d a_cnt:%d g_cnt:%d a_crtc:%d g_crtc:%d\n",
+			  catalog->max_trusted_vm_displays, commit_crtc_cnt, global_crtc_cnt,
+			  DRMID(active_crtc), DRMID(global_active_crtc));
+		return  -E2BIG;
+	} else if ((vm_req == VM_REQ_RELEASE) &&
+		   ((idle_pc_state == IDLE_PC_ENABLE) ||
+		    (crtc_encoder_cnt > TRUSTED_VM_MAX_ENCODER_PER_CRTC))) {
 		/*
 		 * disable idle-pc before releasing the HW
 		 * allow only specified number of encoders on a given crtc
 		 */
-		SDE_ERROR(
-			"VM switch failed; idle-pc:%d max:%d encoder_cnt:%d\n",
-				idle_pc_state, TRUSTED_VM_MAX_ENCODER_PER_CRTC,
-				crtc_encoder_cnt);
-		rc = -EINVAL;
-		goto end;
+		SDE_ERROR("VM switch failed; idle-pc:%d max:%d encoder_cnt:%d\n",
+				idle_pc_state, TRUSTED_VM_MAX_ENCODER_PER_CRTC, crtc_encoder_cnt);
+		return -EINVAL;
 	}
 
-	if ((new_vm_req == VM_REQ_ACQUIRE) && !vm_owns_hw) {
+	if ((vm_req == VM_REQ_ACQUIRE) && !vm_owns_hw) {
 		rc = vm_ops->vm_acquire(sde_kms);
 		if (rc) {
-			SDE_ERROR(
-			"VM acquire failed; o_state:%d, n_state:%d, hw_owner:%d, rc:%d\n",
-				old_vm_req, new_vm_req, vm_owns_hw, rc);
-			goto end;
+			SDE_ERROR("VM acquire failed; hw_owner:%d, rc:%d\n", vm_owns_hw, rc);
+			return rc;
 		}
 
 		if (vm_ops->vm_resource_init)
 			rc = vm_ops->vm_resource_init(sde_kms, state);
 	}
 
-end:
-	sde_vm_unlock(sde_kms);
+	return rc;
+}
+
+static int sde_kms_check_vm_request(struct msm_kms *kms,
+				    struct drm_atomic_state *state)
+{
+	struct sde_kms *sde_kms;
+	struct drm_crtc *crtc;
+	struct drm_crtc_state *new_cstate, *old_cstate;
+	struct sde_vm_ops *vm_ops;
+	enum sde_crtc_vm_req old_vm_req = VM_REQ_NONE, new_vm_req = VM_REQ_NONE;
+	int i, rc = 0;
+	bool vm_req_active = false;
+	bool vm_owns_hw;
+
+	if (!kms || !state)
+		return -EINVAL;
+
+	sde_kms = to_sde_kms(kms);
+	vm_ops = sde_vm_get_ops(sde_kms);
+	if (!vm_ops)
+		return 0;
+
+	if (!vm_ops->vm_request_valid || !vm_ops->vm_owns_hw || !vm_ops->vm_acquire)
+		return -EINVAL;
+
+	/* check for an active vm request */
+	for_each_oldnew_crtc_in_state(state, crtc, old_cstate, new_cstate, i) {
+		struct sde_crtc_state *old_state = NULL, *new_state = NULL;
+
+		if (!new_cstate->active && !old_cstate->active)
+			continue;
+
+		new_state = to_sde_crtc_state(new_cstate);
+		new_vm_req = sde_crtc_get_property(new_state, CRTC_PROP_VM_REQ_STATE);
+
+		old_state = to_sde_crtc_state(old_cstate);
+		old_vm_req = sde_crtc_get_property(old_state, CRTC_PROP_VM_REQ_STATE);
+
+		/* No active request if the transition is from VM_REQ_NONE to VM_REQ_NONE */
+		if (old_vm_req || new_vm_req) {
+			if (!vm_req_active) {
+				sde_vm_lock(sde_kms);
+				vm_owns_hw = sde_vm_owns_hw(sde_kms);
+			}
+
+			rc = vm_ops->vm_request_valid(sde_kms, old_vm_req, new_vm_req);
+			if (rc) {
+				SDE_ERROR(
+				"VM transition check failed; o_state:%d, n_state:%d, hw_owner:%d, rc:%d\n",
+						old_vm_req, new_vm_req, vm_owns_hw, rc);
+				sde_vm_unlock(sde_kms);
+				vm_req_active = false;
+				break;
+			} else if (old_vm_req == VM_REQ_ACQUIRE && new_vm_req == VM_REQ_NONE) {
+				SDE_DEBUG("VM transition valid; ignore further checks\n");
+				if (!vm_req_active)
+					sde_vm_unlock(sde_kms);
+			} else {
+				vm_req_active = true;
+			}
+		}
+	}
+
+	/* validate active requests and perform acquire if necessary */
+	if (vm_req_active) {
+		rc = _sde_kms_validate_vm_request(state, sde_kms, new_vm_req, vm_owns_hw);
+		sde_vm_unlock(sde_kms);
+		SDE_EVT32(old_vm_req, new_vm_req, vm_req_active, vm_owns_hw, rc);
+		SDE_DEBUG("VM  o_state:%d, n_state:%d, hw_owner:%d, rc:%d\n", old_vm_req, new_vm_req,
+				vm_req_active ? vm_owns_hw : -1, rc);
+	}
 
 	return rc;
 }
