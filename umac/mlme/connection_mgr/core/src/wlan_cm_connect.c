@@ -1709,9 +1709,6 @@ cm_resume_connect_after_peer_create(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 		rsn_caps &= ~WLAN_CRYPTO_RSN_CAP_MFP_REQUIRED;
 		rsn_caps &= ~WLAN_CRYPTO_RSN_CAP_OCV_SUPPORTED;
 	}
-	/* Reset OCV if AP doesnt support */
-	if (!(neg_sec_info->rsn_caps & WLAN_CRYPTO_RSN_CAP_OCV_SUPPORTED))
-		rsn_caps &= ~WLAN_CRYPTO_RSN_CAP_OCV_SUPPORTED;
 
 	/* Update the new caps */
 	wlan_crypto_set_vdev_param(cm_ctx->vdev, WLAN_CRYPTO_PARAM_RSN_CAP,
