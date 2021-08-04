@@ -33,6 +33,7 @@
 #include <wlan_mlme_ucfg_api.h>
 #include <wlan_reg_services_api.h>
 #include <wlan_scan_ucfg_api.h>
+#include <wlan_dcs_ucfg_api.h>
 
 static struct son_callbacks g_son_os_if_cb;
 
@@ -707,6 +708,38 @@ int os_if_son_kickout_mac(struct wlan_objmgr_vdev *vdev,
 	return ret;
 }
 qdf_export_symbol(os_if_son_kickout_mac);
+
+uint8_t os_if_son_get_chan_util(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_host_dcs_ch_util_stats dcs_son_stats = {};
+	struct wlan_objmgr_psoc *psoc;
+	uint8_t mac_id;
+	QDF_STATUS status;
+
+	if (!vdev) {
+		osif_err("null vdev");
+		return 0;
+	}
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		osif_err("null psoc");
+		return 0;
+	}
+	status = policy_mgr_get_mac_id_by_session_id(psoc,
+						     wlan_vdev_get_id(vdev),
+						     &mac_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		osif_err("Failed to get mac_id");
+		return 0;
+	}
+
+	ucfg_dcs_get_ch_util(psoc, mac_id, &dcs_son_stats);
+	osif_debug("get_chan_util %d", dcs_son_stats.total_cu);
+
+	return dcs_son_stats.total_cu;
+}
+qdf_export_symbol(os_if_son_get_chan_util);
 
 int os_if_son_set_phymode(struct wlan_objmgr_vdev *vdev,
 			  enum ieee80211_phymode mode)

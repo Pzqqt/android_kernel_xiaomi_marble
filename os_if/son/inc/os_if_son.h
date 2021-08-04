@@ -305,6 +305,14 @@ int os_if_son_set_phymode(struct wlan_objmgr_vdev *vdev,
 			  enum ieee80211_phymode mode);
 
 /**
+ * os_if_son_get_chan_util() - get chan utilization
+ * @vdev: vdev
+ *
+ * Return: chan utilization (0 - 100)
+ */
+uint8_t os_if_son_get_chan_util(struct wlan_objmgr_vdev *vdev);
+
+/**
  * os_if_son_pdev_ops() - Handles PDEV specific SON commands
  * @pdev: pdev
  * @type: SON command to handle
