@@ -1280,6 +1280,7 @@ void sde_cp_crtc_init(struct drm_crtc *crtc)
 	spin_lock_init(&sde_crtc->ltm_lock);
 	INIT_LIST_HEAD(&sde_crtc->ltm_buf_free);
 	INIT_LIST_HEAD(&sde_crtc->ltm_buf_busy);
+	sde_crtc->disable_pending_cp = false;
 	sde_cp_crtc_disable(crtc);
 }
 
@@ -2094,6 +2095,7 @@ void sde_cp_crtc_apply_properties(struct drm_crtc *crtc)
 	int rc = 0;
 	bool need_flush = false;
 	struct sde_crtc_state *cstate;
+	bool disable_pending_cp = false;
 
 	if (!crtc || !crtc->dev) {
 		DRM_ERROR("invalid crtc %pK dev %pK\n", crtc,
@@ -2123,6 +2125,8 @@ void sde_cp_crtc_apply_properties(struct drm_crtc *crtc)
 	mutex_lock(&sde_crtc->crtc_cp_lock);
 	_sde_clear_ltm_merge_mode(sde_crtc);
 
+	disable_pending_cp = sde_crtc->disable_pending_cp;
+	sde_crtc->disable_pending_cp = false;
 	if (list_empty(&sde_crtc->cp_dirty_list) &&
 			list_empty(&sde_crtc->ad_dirty) &&
 			list_empty(&sde_crtc->ad_active) &&
@@ -2181,6 +2185,8 @@ void sde_cp_crtc_apply_properties(struct drm_crtc *crtc)
 	}
 exit:
 	mutex_unlock(&sde_crtc->crtc_cp_lock);
+	if (disable_pending_cp)
+		sde_cp_disable_features(crtc);
 }
 
 void sde_cp_crtc_install_properties(struct drm_crtc *crtc)
@@ -2724,8 +2730,9 @@ void sde_cp_crtc_clear(struct drm_crtc *crtc)
 		DRM_ERROR("sde_crtc %pK\n", sde_crtc);
 		return;
 	}
-	sde_cp_disable_features(crtc);
+
 	mutex_lock(&sde_crtc->crtc_cp_lock);
+	sde_crtc->disable_pending_cp = true;
 	list_del_init(&sde_crtc->cp_active_list);
 	list_del_init(&sde_crtc->cp_dirty_list);
 	list_del_init(&sde_crtc->ad_active);
