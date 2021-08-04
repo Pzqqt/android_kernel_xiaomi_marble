@@ -31448,9 +31448,11 @@ typedef struct {
         #endif
         struct {
             /* opaque space reservation for vendor-specific fields */
-            A_UINT32 vendor_specific2[3];
+            A_UINT32 vendor_specific2[4];
         };
     };
+    /* btm_req_dialog_token: dialog token number in BTM request frame */
+    A_UINT32 btm_req_dialog_token;
 } wmi_roam_trigger_reason;
 
 typedef struct {
@@ -31467,6 +31469,12 @@ typedef struct {
     A_UINT32 roam_scan_channel_count; /* Number of channels scanned during roam scan */
     A_UINT32 roam_ap_count; /* Number of roamable APs */
     A_UINT32 frame_info_count; /* Number of frame info */
+    /*
+     * scan_complete_timestamp is the absolute time w.r.t host timer
+     * which is synchronized between the host and target.
+     * This timestamp indicates the time when roam scan finished.
+     */
+    A_UINT32 scan_complete_timestamp;   /* milli second units */
 } wmi_roam_scan_info;
 
 typedef struct {
@@ -31584,6 +31592,12 @@ typedef struct {
      */
     A_UINT32 neighbor_report_response_timestamp; /* in milli seconds */
     A_UINT32 neighbor_report_channel_count; /* Number of channels received in neighbor report response */
+    A_UINT32 btm_query_token; /* btm query dialog token */
+    /* btm_query_reason_code:
+     * Transition Query Reasons are enumerated in table 7-43x
+     * of the 802.11v spec.
+     */
+    A_UINT32 btm_query_reason_code;
 } wmi_roam_neighbor_report_info;
 
 typedef struct {
@@ -31613,7 +31627,19 @@ typedef struct {
      * This timestamp indicates the time when btm response is sent.
      */
     A_UINT32 timestamp; /* milli second units */
+    A_UINT32 btm_resp_dialog_token; /* dialog_token in btm response frame */
+    /* btm_resp_bss_termination_delay:
+     * bss_termination_delay in btm response frame is the number of minutes
+     * that the responding STA requests the BSS to delay termination.
+     */
+    A_UINT32 btm_resp_bss_termination_delay;
 } wmi_roam_btm_response_info;
+
+typedef struct {
+    A_UINT32 tlv_header;                /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_btm_request_candidate_info_tlv_param */
+    wmi_mac_addr btm_candidate_bssid;   /* BTM candidate MAC address */
+    A_UINT32 preference;                /* preference in Preference IE */
+} wmi_roam_btm_request_candidate_info;
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_neighbor_report_channel_info_tlv_param */
@@ -31627,13 +31653,56 @@ typedef struct {
     /*
      * frame_info = frame_type | (frame_subtype << 2) | (request_or_response << 6)| (seq_num << 16)
      * frame_type(2 bits), frame_subtype(4 bits) are from 802.11 spec.
+     * If frame_type is WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT, frame_subtype
+     * should be one of value in WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_SUBTYPE.
      * request_or_response(1 bit) - Valid if frame_subtype is authentication.
      *      0 - Authentication request 1 - Authentication response
      * seq_num(16 bits) - frame sequence number
      */
     A_UINT32 frame_info;
-    A_UINT32 status_code; /* Status code from 802.11 spec, section 9.4.1.9 */
+
+    /* status_code:
+     * For Rx frames : Status code from 802.11 spec, section 9.4.1.9
+     * For Rx frames (deauth / disassoc) : Reason code from 802.11 spec,
+     *     section 9.4.1.7
+     * For Tx frames : Status_code should be one of value in
+     *     WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_STATUS
+     */
+    A_UINT32 status_code;
+    /*
+     * rssi_dbm_abs
+     * Last known RSSI of the current BSSID at the moment when the frame
+     * was sent and received.
+     * This rssi value is valid for deauth / disassoc frame only.
+     * The rssi_dbm_abs value is the absolute value of the RSSI in dBm units.
+     * For example, if the RSSI is -40 dBm, rssi_dbm_abs will be 40.
+     */
+    A_UINT32 rssi_dbm_abs;
+    /* retry_count
+     * To show how many times the same frame (but with different
+     * sequence number) is retransmitted, in protocol level.
+     */
+    A_UINT32 retry_count;
 } wmi_roam_frame_info;
+
+typedef enum {
+    WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT = 3,
+} WMI_ROAM_FRAME_INFO_FRAME_TYPE;
+
+typedef enum {
+    WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_SUBTYPE_M1 = 1,
+    WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_SUBTYPE_M2,
+    WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_SUBTYPE_M3,
+    WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_SUBTYPE_M4,
+    WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_SUBTYPE_GTK_M1,
+    WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_SUBTYPE_GTK_M2,
+} WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_SUBTYPE;
+
+typedef enum {
+    WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_STATUS_ACK = 0,
+    WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_STATUS_NO_ACK,
+    WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_STATUS_TX_FAIL,
+} WMI_ROAM_FRAME_INFO_FRAME_TYPE_EXT_STATUS;
 
 typedef struct {
     A_UINT32 tlv_header;     /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_initial_info_tlv_param */
