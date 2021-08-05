@@ -1358,7 +1358,7 @@ static bool mlme_vdev_subst_suspend_csa_restart_event(void *ctx,
 	 * change in channel i.e. only Beacon Probe response template
 	 * is updated (CSA / ECSA IE is removed).
 	 */
-
+		mlme_vdev_chan_switch_disable_notify_dfs(vdev_mlme);
 		mlme_vdev_sm_transition_to(vdev_mlme, WLAN_VDEV_S_UP);
 		mlme_vdev_sm_deliver_event(vdev_mlme,
 					   WLAN_VDEV_SM_EV_UP_HOST_RESTART,
