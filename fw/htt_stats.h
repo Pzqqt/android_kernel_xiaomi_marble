@@ -400,6 +400,8 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_EXT_VDEVS_TXRX_STATS = 38,
 
+    HTT_DBG_EXT_VDEV_RTT_INITIATOR_STATS = 39,
+
 
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
@@ -5133,11 +5135,36 @@ typedef struct {
     A_UINT32 rx_iftmr_cnt;
     /* No of duplicate initial Fine Timing Measurement Request frames received */
     A_UINT32 rx_iftmr_dup_cnt;
+    /* No of responder sessions rejected when initiator was active */
+    A_UINT32 initiator_active_responder_rejected_cnt;
+    /* Responder terminate count */
+    A_UINT32 responder_terminate_cnt;
+    A_UINT32 vdev_id;
 } htt_vdev_rtt_resp_stats_tlv;
 
 typedef struct {
     htt_vdev_rtt_resp_stats_tlv vdev_rtt_resp_stats;
 } htt_vdev_rtt_resp_stats_t;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    A_UINT32 vdev_id;
+    /* No of Fine Timing Measurement request frames transmitted successfully */
+    A_UINT32 tx_ftmr_cnt;
+    /* No of Fine Timing Measurement request frames not transmitted successfully */
+    A_UINT32 tx_ftmr_fail;
+    /* No of Fine Timing Measurement request frames transmitted successfully after retry */
+    A_UINT32 tx_ftmr_suc_retry;
+    /* No of Fine Timing Measurement frames received, including initial, non-initial, and duplicates */
+    A_UINT32 rx_ftm_cnt;
+    /* Initiator Terminate count */
+    A_UINT32 initiator_terminate_cnt;
+} htt_vdev_rtt_init_stats_tlv;
+
+typedef struct {
+    htt_vdev_rtt_init_stats_tlv vdev_rtt_init_stats;
+} htt_vdev_rtt_init_stats_t;
 
 /* STATS_TYPE : HTT_DBG_EXT_PKTLOG_AND_HTT_RING_STATS
  * TLV_TAGS:
