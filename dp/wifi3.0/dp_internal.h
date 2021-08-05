@@ -311,6 +311,16 @@ QDF_STATUS monitor_tx_add_to_comp_queue(struct dp_soc *soc,
 	return QDF_STATUS_E_FAILURE;
 }
 
+static inline
+QDF_STATUS monitor_update_msdu_to_list(struct dp_soc *soc,
+				       struct dp_pdev *pdev,
+				       struct dp_peer *peer,
+				       struct hal_tx_completion_status *ts,
+				       qdf_nbuf_t netbuf)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
 static inline bool monitor_ppdu_stats_ind_handler(struct htt_soc *soc,
 						  uint32_t *msg_word,
 						  qdf_nbuf_t htt_t2h_msg)

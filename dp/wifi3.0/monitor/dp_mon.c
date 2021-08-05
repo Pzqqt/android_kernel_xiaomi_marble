@@ -5603,6 +5603,7 @@ static struct dp_mon_ops monitor_ops = {
 	.mon_tx_capture_debugfs_init = dp_tx_capture_debugfs_init,
 	.mon_tx_add_to_comp_queue = dp_tx_add_to_comp_queue,
 	.mon_peer_tx_capture_filter_check = dp_peer_tx_capture_filter_check,
+	.mon_update_msdu_to_list = dp_update_msdu_to_list,
 #endif
 #if defined(WDI_EVENT_ENABLE) &&\
 	(defined(QCA_ENHANCED_STATS_SUPPORT) || !defined(REMOVE_PKT_LOG))

@@ -88,6 +88,11 @@ struct dp_mon_ops {
 					       struct dp_tx_desc_s *desc,
 					       struct hal_tx_completion_status *ts,
 					       struct dp_peer *peer);
+	QDF_STATUS (*mon_update_msdu_to_list)(struct dp_soc *soc,
+					      struct dp_pdev *pdev,
+					      struct dp_peer *peer,
+					      struct hal_tx_completion_status *ts,
+					      qdf_nbuf_t netbuf);
 #endif
 #if defined(WDI_EVENT_ENABLE) &&\
 	(defined(QCA_ENHANCED_STATS_SUPPORT) || !defined(REMOVE_PKT_LOG))
@@ -494,6 +499,25 @@ QDF_STATUS dp_tx_add_to_comp_queue(struct dp_soc *soc,
 				   struct dp_tx_desc_s *desc,
 				   struct hal_tx_completion_status *ts,
 				   struct dp_peer *peer)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * dp_update_msdu_to_list(): Function to queue msdu from wbm
+ * @pdev: dp_pdev
+ * @peer: dp_peer
+ * @ts: hal tx completion status
+ * @netbuf: msdu
+ *
+ * return: status
+ */
+static inline
+QDF_STATUS dp_update_msdu_to_list(struct dp_soc *soc,
+				  struct dp_pdev *pdev,
+				  struct dp_peer *peer,
+				  struct hal_tx_completion_status *ts,
+				  qdf_nbuf_t netbuf)
 {
 	return QDF_STATUS_E_FAILURE;
 }
@@ -1469,6 +1493,30 @@ QDF_STATUS monitor_tx_add_to_comp_queue(struct dp_soc *soc,
 	return monitor_ops->mon_tx_add_to_comp_queue(soc, desc, ts, peer);
 }
 
+static inline
+QDF_STATUS monitor_update_msdu_to_list(struct dp_soc *soc,
+				       struct dp_pdev *pdev,
+				       struct dp_peer *peer,
+				       struct hal_tx_completion_status *ts,
+				       qdf_nbuf_t netbuf)
+{
+	struct dp_mon_ops *monitor_ops;
+	struct dp_mon_soc *mon_soc = soc->monitor_soc;
+
+	if (!mon_soc) {
+		qdf_err("monitor soc is NULL");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	monitor_ops = mon_soc->mon_ops;
+	if (!monitor_ops || !monitor_ops->mon_update_msdu_to_list) {
+		qdf_err("callback not registered");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return monitor_ops->mon_update_msdu_to_list(soc, pdev, peer, ts, netbuf);
+}
+
 #else
 static inline void monitor_peer_tid_peer_id_update(struct dp_soc *soc,
 						   struct dp_peer *peer,
@@ -1503,6 +1551,16 @@ QDF_STATUS monitor_tx_add_to_comp_queue(struct dp_soc *soc,
 	return QDF_STATUS_E_FAILURE;
 }
 
+
+static inline
+QDF_STATUS monitor_update_msdu_to_list(struct dp_soc *soc,
+				       struct dp_pdev *pdev,
+				       struct dp_peer *peer,
+				       struct hal_tx_completion_status *ts,
+				       qdf_nbuf_t netbuf)
+{
+	return QDF_STATUS_E_FAILURE;
+}
 #endif
 
 #if defined(WDI_EVENT_ENABLE) &&\
