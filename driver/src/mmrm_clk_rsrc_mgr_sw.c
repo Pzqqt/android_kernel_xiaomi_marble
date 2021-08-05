@@ -518,21 +518,20 @@ static int mmrm_sw_throttle_low_priority_client(
 			d_mpr_h("%s:csid(0x%x) name(%s)\n",
 				__func__, tbl_entry_throttle_client->clk_src_id,
 				tbl_entry_throttle_client->name);
-		}
-		d_mpr_h("%s:now_cur_ma(%llu) min_cur_ma(%llu) delta_cur(%d)\n",
-			__func__, now_cur_ma, min_cur_ma, *delta_cur);
-
-		if (!IS_ERR_OR_NULL(tbl_entry_throttle_client)
-			&& (now_cur_ma > min_cur_ma)
-			&& (now_cur_ma - min_cur_ma > *delta_cur)) {
-			found_client_throttle = true;
-			d_mpr_h("%s: Throttle client csid(0x%x) name(%s)\n",
-				__func__, tbl_entry_throttle_client->clk_src_id,
-				tbl_entry_throttle_client->name);
-			d_mpr_h("%s:now_cur_ma %llu-min_cur_ma %llu>delta_cur %d\n",
+			d_mpr_h("%s:now_cur_ma(%llu) min_cur_ma(%llu) delta_cur(%d)\n",
 				__func__, now_cur_ma, min_cur_ma, *delta_cur);
-			/* found client to throttle, break from here. */
-			break;
+
+			if ((now_cur_ma > min_cur_ma)
+				&& (now_cur_ma - min_cur_ma > *delta_cur)) {
+				found_client_throttle = true;
+				d_mpr_h("%s: Throttle client csid(0x%x) name(%s)\n",
+					__func__, tbl_entry_throttle_client->clk_src_id,
+					tbl_entry_throttle_client->name);
+				d_mpr_h("%s:now_cur_ma %llu-min_cur_ma %llu>delta_cur %d\n",
+					__func__, now_cur_ma, min_cur_ma, *delta_cur);
+				/* found client to throttle, break from here. */
+				break;
+			}
 		}
 	}
 
