@@ -877,3 +877,34 @@ void target_if_set_reg_cc_ext_supp(struct target_psoc_info *tgt_hdl,
 	info->wlan_res_cfg.is_reg_cc_ext_event_supported =
 		target_if_reg_is_reg_cc_ext_event_host_supported(psoc);
 }
+
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
+uint16_t  target_if_pdev_get_hw_link_id(struct wlan_objmgr_pdev *pdev)
+{
+	struct target_pdev_info *tgt_pdev_info;
+
+	if (!pdev)
+		return PDEV_INVALID_HW_LINK_ID;
+
+	tgt_pdev_info = wlan_pdev_get_tgt_if_handle(pdev);
+	if (!tgt_pdev_info)
+		return PDEV_INVALID_HW_LINK_ID;
+
+	return tgt_pdev_info->hw_link_id;
+}
+
+void target_pdev_set_hw_link_id(struct wlan_objmgr_pdev *pdev,
+				uint16_t hw_link_id)
+{
+	struct target_pdev_info *tgt_pdev_info;
+
+	if (!pdev)
+		return;
+
+	tgt_pdev_info = wlan_pdev_get_tgt_if_handle(pdev);
+	if (!tgt_pdev_info)
+		return;
+
+	tgt_pdev_info->hw_link_id  = hw_link_id;
+}
+#endif /*WLAN_FEATURE_11BE_MLO && WLAN_MLO_MULTI_CHIP*/

@@ -184,6 +184,7 @@ struct wlan_psoc_host_hal_reg_cap_ext {
  * @nss_ratio_enabled: This flag is set if nss ratio is received from FW as part
  *                     of service ready ext event.
  * @nss_ratio: nss ratio is used to calculate the NSS value for 160MHz.
+ * @hw_link_id: Unique link id across SoCs used to identify link in Multi-SoC ML
  */
 struct wlan_psoc_host_mac_phy_caps {
 	uint32_t hw_mode_id;
@@ -230,6 +231,9 @@ struct wlan_psoc_host_mac_phy_caps {
 	uint32_t tgt_pdev_id;
 	bool nss_ratio_enabled;
 	uint8_t nss_ratio_info;
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
+	uint16_t hw_link_id;
+#endif
 };
 
 /**

@@ -354,6 +354,7 @@ enum wlan_mlme_cfg_id;
  * @psoc_vdev_rsp_timer_mod: function to modify the time of vdev rsp timer
  * @psoc_wake_lock_init: Initialize psoc wake lock for vdev response timer
  * @psoc_wake_lock_deinit: De-Initialize psoc wake lock for vdev response timer
+ * @get_hw_link_id: Get hw_link_id for pdev
  */
 struct wlan_lmac_if_mlme_tx_ops {
 	uint32_t (*get_wifi_iface_id) (struct wlan_objmgr_pdev *pdev);
@@ -436,6 +437,9 @@ struct wlan_lmac_if_mlme_tx_ops {
 				struct wlan_objmgr_psoc *psoc,
 				struct vdev_response_timer *vdev_rsp,
 				enum wlan_vdev_mgr_tgt_if_rsp_bit clear_bit);
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
+	uint16_t (*get_hw_link_id)(struct wlan_objmgr_pdev *pdev);
+#endif
 };
 
 /**

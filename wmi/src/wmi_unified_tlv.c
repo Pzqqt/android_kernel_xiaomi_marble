@@ -11693,6 +11693,19 @@ extract_service_ready_11be_support(struct wlan_psoc_host_mac_phy_caps *param,
 }
 #endif
 
+#if defined(WLAN_FEATURE_11BE_MLO) && defined(WLAN_MLO_MULTI_CHIP)
+static void extract_hw_link_id(struct wlan_psoc_host_mac_phy_caps *param,
+			       WMI_MAC_PHY_CAPABILITIES *mac_phy_caps)
+{
+	param->hw_link_id = WMI_PHY_GET_HW_LINK_ID(mac_phy_caps->pdev_id);
+}
+#else
+static void extract_hw_link_id(struct wlan_psoc_host_mac_phy_caps *param,
+			       WMI_MAC_PHY_CAPABILITIES *mac_phy_caps)
+{
+}
+#endif /*WLAN_FEATURE_11BE_MLO && WLAN_MLO_MULTI_CHIP*/
+
 /**
  * extract_mac_phy_cap_service_ready_ext_tlv() -
  *       extract MAC phy cap from service ready event
@@ -11713,7 +11726,7 @@ static QDF_STATUS extract_mac_phy_cap_service_ready_ext_tlv(
 	WMI_MAC_PHY_CAPABILITIES *mac_phy_caps;
 	WMI_SOC_MAC_PHY_HW_MODE_CAPS *hw_caps;
 	uint32_t phy_map;
-	uint8_t hw_idx, phy_idx = 0;
+	uint8_t hw_idx, phy_idx = 0, pdev_id;
 
 	param_buf = (WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *) event;
 	if (!param_buf)
@@ -11751,10 +11764,12 @@ static QDF_STATUS extract_mac_phy_cap_service_ready_ext_tlv(
 
 	param->hw_mode_id = mac_phy_caps->hw_mode_id;
 	param->phy_idx = phy_idx;
+	pdev_id = WMI_PHY_GET_PDEV_ID(mac_phy_caps->pdev_id);
 	param->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
 							wmi_handle,
-							mac_phy_caps->pdev_id);
-	param->tgt_pdev_id = mac_phy_caps->pdev_id;
+							pdev_id);
+	param->tgt_pdev_id = pdev_id;
+	extract_hw_link_id(param, mac_phy_caps);
 	param->phy_id = mac_phy_caps->phy_id;
 	param->supports_11b =
 			WMI_SUPPORT_11B_GET(mac_phy_caps->supported_flags);
