@@ -2122,8 +2122,8 @@ static void lim_defer_sme_indication(struct mac_context *mac_ctx,
 
 	sta_pre_auth_ctx->assoc_req.present = true;
 	sta_pre_auth_ctx->assoc_req.sub_type = sub_type;
-	qdf_mem_copy(&sta_pre_auth_ctx->assoc_req.sa, sa,
-		     sizeof(tSirMacMgmtHdr));
+	qdf_mem_copy(sta_pre_auth_ctx->assoc_req.sa, sa,
+		     sizeof(sta_pre_auth_ctx->assoc_req.sa));
 	sta_pre_auth_ctx->assoc_req.assoc_req = assoc_req;
 	sta_pre_auth_ctx->assoc_req.pmf_connection = pmf_connection;
 	sta_pre_auth_ctx->assoc_req.assoc_req_copied = assoc_req_copied;
