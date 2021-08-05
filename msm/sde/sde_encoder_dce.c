@@ -123,7 +123,6 @@ static int _dce_dsc_initial_line_calc(struct msm_display_dsc_info *dsc,
 
 	int bpc = dsc->config.bits_per_component;
 	int bpp = DSC_BPP(dsc->config);
-	int num_of_active_ss = dsc->config.slice_count;
 	bool native_422 = dsc->config.native_422;
 	bool native_420 = dsc->config.native_420;
 
@@ -135,7 +134,7 @@ static int _dce_dsc_initial_line_calc(struct msm_display_dsc_info *dsc,
 	if (dsc_cmn_mode & DSC_MODE_MULTIPLEX)
 		multiplex_mode_enable = 1;
 	if (dsc_cmn_mode & DSC_MODE_SPLIT_PANEL)
-		split_panel_enable = 0;
+		split_panel_enable = 1;
 	container_slice_width = (native_422 ?
 			dsc->config.slice_width / 2 : dsc->config.slice_width);
 	max_muxword_size = (rtl_max_bpc >= 12) ? 64 : 48;
@@ -144,7 +143,7 @@ static int _dce_dsc_initial_line_calc(struct msm_display_dsc_info *dsc,
 	mux_word_size = (bpc >= 12) ? 64 : 48;
 	compress_bpp_group = native_422 ? (2 * bpp) : bpp;
 	input_ssm_out_latency = pipeline_latency + 3 * (max_ssm_delay + 2)
-			* num_of_active_ss;
+			* dsc->num_active_ss_per_enc;
 	rtl_num_components = (native_420 || native_422) ? 4 : 3;
 	ob_data_width_4comps = (rtl_output_data_width >= (2 *
 			max_muxword_size)) ?
@@ -164,8 +163,7 @@ static int _dce_dsc_initial_line_calc(struct msm_display_dsc_info *dsc,
 		(output_rate_ratio_complement * chunk_bits) >>
 		((ob_data_width == 128) ? 7 : 6);
 	multi_hs_c = split_panel_enable * multiplex_mode_enable;
-	multi_hs_d = (num_of_active_ss > 1) * (ob_data_width >
-			compress_bpp_group);
+	multi_hs_d = (dsc->num_active_ss_per_enc > 1) * (ob_data_width > compress_bpp_group);
 	multi_hs_extra_budget_bits = multi_hs_c ?
 				chunk_bits : (multi_hs_d ? chunk_bits :
 					output_rate_extra_budget_bits);
@@ -479,6 +477,12 @@ static int _dce_dsc_setup_helper(struct sde_encoder_virt *sde_enc,
 	}
 	if (enc_master->intf_mode == INTF_MODE_VIDEO)
 		dsc_common_mode |= DSC_MODE_VIDEO;
+
+	dsc->num_active_ss_per_enc = dsc->config.slice_count;
+	if (dsc->dsc_4hsmerge_en)
+		dsc->num_active_ss_per_enc = dsc->config.slice_count >> 2;
+	else if ((dsc_common_mode & DSC_MODE_MULTIPLEX) || (dsc->half_panel_pu))
+		dsc->num_active_ss_per_enc = dsc->config.slice_count >> 1;
 
 	sde_dsc_populate_dsc_private_params(dsc, intf_ip_w);
 

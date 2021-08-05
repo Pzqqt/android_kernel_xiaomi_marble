@@ -409,6 +409,7 @@ struct msm_roi_caps {
  * @pclk_per_line:           Compressed width.
  * @slice_last_group_size:   Size of last group in pixels.
  * @slice_per_pkt:           Number of slices per packet.
+ * @num_active_ss_per_enc:   Number of active soft slices per encoder.
  * @source_color_space:      Source color space of DSC encoder
  * @chroma_format:           Chroma_format of DSC encoder.
  * @det_thresh_flatness:     Flatness threshold.
@@ -433,6 +434,7 @@ struct msm_display_dsc_info {
 	int pclk_per_line;
 	int slice_last_group_size;
 	int slice_per_pkt;
+	int num_active_ss_per_enc;
 	int source_color_space;
 	int chroma_format;
 	int det_thresh_flatness;
