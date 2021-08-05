@@ -1102,7 +1102,7 @@ static void lim_tdls_update_node_he_caps(struct mac_context *mac,
 	if (sta->he_config.present)
 		sta->mlmStaContext.he_capable = 1;
 
-	if (pe_session && sta->he_config.present)
+	if (sta->he_config.present)
 		lim_tdls_set_he_chan_width(&sta->he_config, pe_session);
 
 	lim_log_he_cap(mac, &sta->he_config);
