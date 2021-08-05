@@ -3207,6 +3207,10 @@ static void dp_print_rx_pdev_rate_stats_tlv(struct dp_pdev *pdev,
 		       dp_stats_buf->rx_11ax_ofdma);
 	DP_PRINT_STATS("txbf = %u",
 		       dp_stats_buf->txbf);
+	DP_PRINT_STATS("rx_su_ndpa = %u",
+		       dp_stats_buf->rx_su_ndpa);
+	DP_PRINT_STATS("rx_br_poll = %u",
+		       dp_stats_buf->rx_br_poll);
 
 	index = 0;
 	qdf_mem_zero(str_buf, DP_MAX_STRING_LEN);
@@ -3399,6 +3403,26 @@ static void dp_print_rx_pdev_rate_stats_tlv(struct dp_pdev *pdev,
 				     i, dp_stats_buf->rx_ulofdma_mpdu_fail[i]);
 	}
 	DP_PRINT_STATS("rx_ulofdma_mpdu_fail = %s", str_buf);
+
+	index = 0;
+	qdf_mem_zero(str_buf, DP_MAX_STRING_LEN);
+	for (i = 0; i < HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS; i++) {
+		index += qdf_snprint(&str_buf[index],
+				     DP_MAX_STRING_LEN - index,
+				     " %u:%u,",
+				     i, dp_stats_buf->rx_11ax_su_txbf_mcs[i]);
+	}
+	DP_PRINT_STATS("rx_11ax_su_txbf_mcs = %s", str_buf);
+
+	index = 0;
+	qdf_mem_zero(str_buf, DP_MAX_STRING_LEN);
+	for (i = 0; i < HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS; i++) {
+		index += qdf_snprint(&str_buf[index],
+				     DP_MAX_STRING_LEN - index,
+				     " %u:%u,",
+				     i, dp_stats_buf->rx_11ax_mu_txbf_mcs[i]);
+	}
+	DP_PRINT_STATS("rx_11ax_mu_txbf_mcs = %s", str_buf);
 
 	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_GI_COUNTERS; i++)
 		qdf_mem_free(ul_ofdma_rx_gi[i]);
