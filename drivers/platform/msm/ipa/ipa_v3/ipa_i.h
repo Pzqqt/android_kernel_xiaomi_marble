@@ -2290,7 +2290,8 @@ struct ipa3_context {
 	u32 icc_num_cases;
 	u32 icc_num_paths;
 	u32 icc_clk[IPA_ICC_LVL_MAX][IPA_ICC_PATH_MAX][IPA_ICC_TYPE_MAX];
-	struct ipahal_imm_cmd_pyld *coal_cmd_pyld;
+	struct ipahal_imm_cmd_pyld *coal_cmd_pyld[2];
+	struct ipa_mem_buffer ulso_wa_cmd;
 	u32 tx_wrapper_cache_max_size;
 	struct ipa3_app_clock_vote app_clock_vote;
 	bool clients_registered;

@@ -9650,17 +9650,20 @@ int ipa3_tag_process(struct ipa3_desc desc[],
 	}
 
 	/* NO-OP IC for ensuring that IPA pipeline is empty */
-	cmd_pyld = ipahal_construct_nop_imm_cmd(
-		false, IPAHAL_FULL_PIPELINE_CLEAR, false);
-	if (!cmd_pyld) {
-		IPAERR("failed to construct NOP imm cmd\n");
-		res = -ENOMEM;
-		goto fail_free_desc;
+	if (!ipa3_ctx->ulso_wa)
+	{
+		cmd_pyld = ipahal_construct_nop_imm_cmd(
+			false, IPAHAL_FULL_PIPELINE_CLEAR, false);
+		if (!cmd_pyld) {
+			IPAERR("failed to construct NOP imm cmd\n");
+			res = -ENOMEM;
+			goto fail_free_desc;
+		}
+		ipa3_init_imm_cmd_desc(&tag_desc[desc_idx], cmd_pyld);
+		tag_desc[desc_idx].callback = ipa3_tag_destroy_imm;
+		tag_desc[desc_idx].user1 = cmd_pyld;
+		++desc_idx;
 	}
-	ipa3_init_imm_cmd_desc(&tag_desc[desc_idx], cmd_pyld);
-	tag_desc[desc_idx].callback = ipa3_tag_destroy_imm;
-	tag_desc[desc_idx].user1 = cmd_pyld;
-	++desc_idx;
 
 	/* IP_PACKET_INIT IC for tag status to be sent to apps */
 	pktinit_cmd.destination_pipe_index =
@@ -9825,6 +9828,10 @@ static int ipa3_tag_generate_force_close_desc(struct ipa3_desc desc[],
 		ipahal_read_reg_n_fields(IPA_ENDP_INIT_AGGR_n, i, &ep_aggr);
 		if (!ep_aggr.aggr_en)
 			continue;
+		/* Skip Coalescing pipe when ulso wa is enabled. */
+		if (ipa3_ctx->ulso_wa &&
+			(i == ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS)))
+			continue;
 		IPADBG("Force close ep: %d\n", i);
 		if (desc_idx + 1 > desc_size) {
 			IPAERR("Internal error - no descriptors\n");
@@ -9832,9 +9839,14 @@ static int ipa3_tag_generate_force_close_desc(struct ipa3_desc desc[],
 			goto fail_no_desc;
 		}
 
-		reg_write_agg_close.skip_pipeline_clear = false;
-		reg_write_agg_close.pipeline_clear_options =
-			IPAHAL_FULL_PIPELINE_CLEAR;
+		if (!ipa3_ctx->ulso_wa) {
+			reg_write_agg_close.skip_pipeline_clear = false;
+			reg_write_agg_close.pipeline_clear_options =
+				IPAHAL_FULL_PIPELINE_CLEAR;
+		} else {
+			reg_write_agg_close.skip_pipeline_clear = true;
+		}
+
 		if (ipa3_ctx->ipa_hw_type < IPA_HW_v5_0)
 			offset = ipahal_get_reg_ofst(
 				IPA_AGGR_FORCE_CLOSE);
@@ -11070,17 +11082,21 @@ static int _ipa_suspend_resume_pipe(enum ipa_client_type client, bool suspend)
 
 void ipa3_force_close_coal(void)
 {
-	struct ipa3_desc desc;
-	int ep_idx;
+	struct ipa3_desc desc[2];
+	int ep_idx, num_desc = 0;
 
 	ep_idx = ipa3_get_ep_mapping(IPA_CLIENT_APPS_WAN_COAL_CONS);
 	if (ep_idx == IPA_EP_NOT_ALLOCATED || (!ipa3_ctx->ep[ep_idx].valid))
 		return;
 
-	ipa3_init_imm_cmd_desc(&desc, ipa3_ctx->coal_cmd_pyld);
-
-	IPADBG("Sending 1 descriptor for coal force close\n");
-	if (ipa3_send_cmd(1, &desc))
+	ipa3_init_imm_cmd_desc(&desc[0], ipa3_ctx->coal_cmd_pyld[0]);
+	num_desc++;
+	if (ipa3_ctx->ulso_wa) {
+		ipa3_init_imm_cmd_desc(&desc[1], ipa3_ctx->coal_cmd_pyld[1]);
+		num_desc++;
+	}
+	IPADBG("Sending %d descriptor for coal force close\n", num_desc);
+	if (ipa3_send_cmd(num_desc, desc))
 		IPADBG("ipa3_send_cmd timedout\n");
 }
 
@@ -11273,6 +11289,7 @@ void ipa3_free_dma_task_for_gsi(void)
 int ipa3_allocate_coal_close_frame(void)
 {
 	struct ipahal_imm_cmd_register_write reg_write_cmd = { 0 };
+	struct ipahal_imm_cmd_register_read dummy_reg_read = { 0 };
 	struct ipahal_reg_valmask valmask;
 	int ep_idx;
 	u32 offset = 0;
@@ -11282,7 +11299,11 @@ int ipa3_allocate_coal_close_frame(void)
 		return 0;
 	IPADBG("Allocate coal close frame cmd\n");
 	reg_write_cmd.skip_pipeline_clear = false;
-	reg_write_cmd.pipeline_clear_options = IPAHAL_HPS_CLEAR;
+	if (ipa3_ctx->ulso_wa) {
+		reg_write_cmd.pipeline_clear_options = IPAHAL_SRC_GRP_CLEAR;
+	} else {
+		reg_write_cmd.pipeline_clear_options = IPAHAL_HPS_CLEAR;
+	}
 	if (ipa3_ctx->ipa_hw_type < IPA_HW_v5_0)
 		offset = ipahal_get_reg_ofst(
 			IPA_AGGR_FORCE_CLOSE);
@@ -11293,13 +11314,37 @@ int ipa3_allocate_coal_close_frame(void)
 	ipahal_get_aggr_force_close_valmask(ep_idx, &valmask);
 	reg_write_cmd.value = valmask.val;
 	reg_write_cmd.value_mask = valmask.mask;
-	ipa3_ctx->coal_cmd_pyld =
+	ipa3_ctx->coal_cmd_pyld[0] =
 		ipahal_construct_imm_cmd(IPA_IMM_CMD_REGISTER_WRITE,
 			&reg_write_cmd, false);
-	if (!ipa3_ctx->coal_cmd_pyld) {
+	if (!ipa3_ctx->coal_cmd_pyld[0]) {
 		IPAERR("fail construct register_write imm cmd\n");
 		ipa_assert();
 		return 0;
+	}
+
+	if (ipa3_ctx->ulso_wa) {
+		/* dummary regsiter read IC with HPS clear*/
+		ipa3_ctx->ulso_wa_cmd.size = 4;
+		ipa3_ctx->ulso_wa_cmd.base = dma_alloc_coherent(ipa3_ctx->pdev,
+			ipa3_ctx->ulso_wa_cmd.size,
+			&ipa3_ctx->ulso_wa_cmd.phys_base, GFP_KERNEL);
+		if (ipa3_ctx->ulso_wa_cmd.base == NULL) {
+			ipa_assert();
+		}
+		offset = ipahal_get_reg_n_ofst(IPA_STAT_QUOTA_BASE_n,
+			ipa3_ctx->ee);
+		dummy_reg_read.skip_pipeline_clear = false;
+		dummy_reg_read.pipeline_clear_options = IPAHAL_HPS_CLEAR;
+		dummy_reg_read.offset = offset;
+		dummy_reg_read.sys_addr = ipa3_ctx->ulso_wa_cmd.phys_base;
+		ipa3_ctx->coal_cmd_pyld[1] = ipahal_construct_imm_cmd(
+			IPA_IMM_CMD_REGISTER_READ,
+			&dummy_reg_read, false);
+		if (!ipa3_ctx->coal_cmd_pyld[1]) {
+			IPAERR("failed to construct DUMMY READ IC\n");
+			ipa_assert();
+		}
 	}
 
 	return 0;
@@ -11307,8 +11352,14 @@ int ipa3_allocate_coal_close_frame(void)
 
 void ipa3_free_coal_close_frame(void)
 {
-	if (ipa3_ctx->coal_cmd_pyld)
-		ipahal_destroy_imm_cmd(ipa3_ctx->coal_cmd_pyld);
+	if (ipa3_ctx->coal_cmd_pyld[0])
+		ipahal_destroy_imm_cmd(ipa3_ctx->coal_cmd_pyld[0]);
+
+	if (ipa3_ctx->coal_cmd_pyld[1]) {
+		ipahal_destroy_imm_cmd(ipa3_ctx->coal_cmd_pyld[1]);
+		dma_free_coherent(ipa3_ctx->pdev, ipa3_ctx->ulso_wa_cmd.size,
+			ipa3_ctx->ulso_wa_cmd.base, ipa3_ctx->ulso_wa_cmd.phys_base);
+	}
 }
 /**
  * ipa3_inject_dma_task_for_gsi()- Send DMA_TASK to IPA for GSI stop channel
