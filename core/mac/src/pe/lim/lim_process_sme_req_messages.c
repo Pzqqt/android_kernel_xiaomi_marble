@@ -1574,9 +1574,35 @@ lim_update_he_caps_mcs(struct mac_context *mac, struct pe_session *session)
 	mlme_priv->he_config.tx_he_mcs_map_lt_80 = tx_mcs_map;
 	mlme_priv->he_config.rx_he_mcs_map_lt_80 = rx_mcs_map;
 }
+
+/**
+ * lim_update_he_caps_htc() - Update htc in he caps
+ * @session: Pointer to PE session
+ * @val: htc he enabled status
+ *
+ * Return: void
+ */
+static void
+lim_update_he_caps_htc(struct pe_session *session, bool val)
+{
+	struct wlan_objmgr_vdev *vdev = session->vdev;
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv)
+		return;
+
+	pe_debug("new htc he: %d", val);
+	mlme_priv->he_config.htc_he = val;
+}
 #else
 static void
 lim_update_he_caps_mcs(struct mac_context *mac, struct pe_session *session)
+{
+}
+
+static void
+lim_update_he_caps_htc(struct pe_session *session,  bool val)
 {
 }
 #endif
@@ -1752,6 +1778,23 @@ static void lim_check_oui_and_update_session(struct mac_context *mac_ctx,
 				SIR_MAC_BA_2K_JUMP_AP_VENDOR_OUI_LEN,
 				vendor_ap_search_attr.ie_data, ie_len);
 	wlan_mlme_set_ba_2k_jump_iot_ap(session->vdev, is_vendor_ap_present);
+
+	is_vendor_ap_present = wlan_get_vendor_ie_ptr_from_oui
+				(SIR_MAC_BAD_HTC_HE_VENDOR_OUI1,
+				 SIR_MAC_BAD_HTC_HE_VENDOR_OUI_LEN,
+				 vendor_ap_search_attr.ie_data, ie_len) &&
+			       wlan_get_vendor_ie_ptr_from_oui
+				(SIR_MAC_BAD_HTC_HE_VENDOR_OUI2,
+				 SIR_MAC_BAD_HTC_HE_VENDOR_OUI_LEN,
+				 vendor_ap_search_attr.ie_data, ie_len);
+
+	/*
+	 * For SAP with special OUI, if DUT STA connect with 11ax mode with ht
+	 * control enabled, SAP can't decode unicast pkt from DUT.
+	 * Fix it by clearing ht control bit in he cap when send peer assoc cmd
+	 * to firmware when connect such IOT AP with 11ax mode.
+	 */
+	lim_update_he_caps_htc(session, !is_vendor_ap_present);
 }
 
 static enum mlme_dot11_mode
