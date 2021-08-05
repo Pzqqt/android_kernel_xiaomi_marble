@@ -1588,13 +1588,13 @@ fail_gen3:
 fail_repl:
 	ep->sys->repl_hdlr = ipa3_replenish_rx_cache;
 	if (ep->sys->repl && !ep->sys->common_buff_pool) {
-		ep->sys->repl->capacity = 0;
 		kfree(ep->sys->repl);
+		ep->sys->repl = NULL;
 	}
 fail_page_recycle_repl:
 	if (ep->sys->page_recycle_repl && !ep->sys->common_buff_pool) {
-		ep->sys->page_recycle_repl->capacity = 0;
 		kfree(ep->sys->page_recycle_repl);
+		ep->sys->page_recycle_repl = NULL;
 	}
 fail_napi:
 	if (sys_in->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS) {
@@ -3111,6 +3111,7 @@ static void ipa3_cleanup_rx(struct ipa3_sys_context *sys)
 
 		kfree(sys->repl->cache);
 		kfree(sys->repl);
+		sys->repl = NULL;
 	}
 	if (sys->page_recycle_repl) {
 		list_for_each_entry_safe(rx_pkt, r,
@@ -3127,6 +3128,7 @@ static void ipa3_cleanup_rx(struct ipa3_sys_context *sys)
 				rx_pkt);
 		}
 		kfree(sys->page_recycle_repl);
+		sys->page_recycle_repl = NULL;
 	}
 }
 

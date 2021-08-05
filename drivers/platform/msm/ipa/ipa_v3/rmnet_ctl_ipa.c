@@ -103,6 +103,7 @@ int ipa3_rmnet_ctl_init(void)
 		WQ_MEM_RECLAIM | WQ_UNBOUND | WQ_SYSFS, 1);
 	if (!rmnet_ctl_ipa3_ctx->wq) {
 		kfree(rmnet_ctl_ipa3_ctx);
+		rmnet_ctl_ipa3_ctx = NULL;
 		return -ENOMEM;
 	}
 	memset(&rmnet_ctl_ipa3_ctx->apps_to_ipa_low_lat_ep_cfg, 0,
