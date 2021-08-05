@@ -15254,6 +15254,54 @@ extract_halphy_cal_status_ev_param_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * set_halphy_cal_fw_status_to_host_status() - Convert set halphy cal status to host enum
+ * @fw_status: set halphy cal status from WMI_PDEV_SET_HALPHY_CAL_BMAP_EVENTID event
+ *
+ * Return: host_set_halphy_cal_status
+ */
+static enum wmi_host_set_halphy_cal_status
+set_halphy_cal_fw_status_to_host_status(uint32_t fw_status)
+{
+	if (fw_status == 0)
+		return WMI_HOST_SET_HALPHY_CAL_STATUS_SUCCESS;
+	else if (fw_status == 1)
+		return WMI_HOST_SET_HALPHY_CAL_STATUS_FAIL;
+
+	wmi_debug("Unknown set halphy status code(%u) from WMI", fw_status);
+	return WMI_HOST_SET_HALPHY_CAL_STATUS_FAIL;
+}
+
+/**
+ * extract_halphy_cal_ev_param_tlv() - extract dpd status from FW event
+ * @wmi_handle: wmi handle
+ * @evt_buf: event buffer
+ * @param: set halphy cal status info
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS
+extract_halphy_cal_ev_param_tlv(wmi_unified_t wmi_handle,
+				void *evt_buf,
+				struct wmi_host_pdev_set_halphy_cal_event *param)
+{
+	WMI_PDEV_SET_HALPHY_CAL_BMAP_EVENTID_param_tlvs *param_buf;
+	wmi_pdev_set_halphy_cal_bmap_evt_fixed_param *set_halphy_status;
+
+	param_buf = (WMI_PDEV_SET_HALPHY_CAL_BMAP_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		wmi_err("Invalid set halphy_status event");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	set_halphy_status = param_buf->fixed_param;
+	param->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host
+		(wmi_handle, set_halphy_status->pdev_id);
+	param->status = set_halphy_cal_fw_status_to_host_status(set_halphy_status->status);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * extract_install_key_comp_event_tlv() - extract install key complete event tlv
  * @wmi_handle: wmi handle
  * @evt_buf: pointer to event buffer
@@ -15295,6 +15343,42 @@ extract_install_key_comp_event_tlv(wmi_unified_t wmi_handle,
 				   param->peer_macaddr);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
+send_set_halphy_cal_tlv(wmi_unified_t wmi_handle,
+			struct wmi_host_send_set_halphy_cal_info *param)
+{
+	wmi_buf_t buf;
+	wmi_pdev_set_halphy_cal_bmap_cmd_fixed_param *cmd;
+	QDF_STATUS ret;
+	uint32_t len;
+
+	len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_FAILURE;
+
+	cmd = (void *)wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_pdev_set_halphy_cal_bmap_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_pdev_set_halphy_cal_bmap_cmd_fixed_param));
+
+	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(wmi_handle,
+								       param->pdev_id);
+	cmd->online_halphy_cals_bmap = param->value;
+	cmd->home_scan_channel = param->chan_sel;
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_PDEV_SET_HALPHY_CAL_BMAP_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		wmi_err("WMI_PDEV_SET_HALPHY_CAL_BMAP_CMDID send returned Error %d",ret);
+		wmi_buf_free(buf);
+	}
+
+	return ret;
 }
 
 struct wmi_ops tlv_ops =  {
@@ -15675,6 +15759,8 @@ struct wmi_ops tlv_ops =  {
 	.extract_dpd_status_ev_param = extract_dpd_status_ev_param_tlv,
 	.extract_install_key_comp_event = extract_install_key_comp_event_tlv,
 	.extract_halphy_cal_status_ev_param = extract_halphy_cal_status_ev_param_tlv,
+	.send_set_halphy_cal = send_set_halphy_cal_tlv,
+	.extract_halphy_cal_ev_param = extract_halphy_cal_ev_param_tlv,
 };
 
 /**
@@ -16089,6 +16175,8 @@ event_ids[wmi_roam_scan_chan_list_id] =
 #endif
 	event_ids[wmi_pdev_get_halphy_cal_status_event_id] =
 			WMI_PDEV_GET_HALPHY_CAL_STATUS_EVENTID;
+	event_ids[wmi_pdev_set_halphy_cal_event_id] =
+			WMI_PDEV_SET_HALPHY_CAL_BMAP_EVENTID;
 	event_ids[wmi_pdev_aoa_phasedelta_event_id] =
 			WMI_PDEV_AOA_PHASEDELTA_EVENTID;
 }
@@ -16499,6 +16587,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 #endif
 	wmi_service[wmi_service_ampdu_tx_buf_size_256_support] =
 			WMI_SERVICE_AMPDU_TX_BUF_SIZE_256_SUPPORT;
+	wmi_service[wmi_service_halphy_cal_enable_disable_support] =
+			WMI_SERVICE_HALPHY_CAL_ENABLE_DISABLE_SUPPORT;
 	wmi_service[wmi_service_halphy_cal_status] =
 			WMI_SERVICE_HALPHY_CAL_STATUS;
 	wmi_service[wmi_service_rtt_ap_initiator_staggered_mode_supported] =

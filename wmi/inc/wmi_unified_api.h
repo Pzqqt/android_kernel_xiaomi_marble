@@ -4356,4 +4356,28 @@ QDF_STATUS
 wmi_extract_halphy_cal_status_ev_param(wmi_unified_t wmi_handle,
 				       void *evt_buf,
 				       struct wmi_host_pdev_get_halphy_cal_status_event *param);
+
+/**
+ * wmi_unified_send_set_halphy_cal() - send set halphy cal bmap
+ * @wmi_handle: wmi handle
+ * @param: set halphy cal input info
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS wmi_unified_send_set_halphy_cal(wmi_unified_t wmi_handle,
+					   struct wmi_host_send_set_halphy_cal_info *param);
+
+/**
+ * wmi_extract_halphy_cal_ev_param() - extract halphy cal status from FW event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buf
+ * @param: halphy cal status info
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS
+wmi_extract_halphy_cal_ev_param(wmi_unified_t wmi_handle,
+				void *evt_buf,
+				struct wmi_host_pdev_set_halphy_cal_event *param);
+
 #endif /* _WMI_UNIFIED_API_H_ */
