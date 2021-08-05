@@ -292,6 +292,12 @@ typedef struct prm_cmd_request_hw_core_t
 
 #define CLOCK_ID_SEN_MI2S_EBIT 0x10C
 
+/** Clock ID of the septenary MI2S IBIT. */
+#define CLOCK_ID_SEP_MI2S_IBIT 0x10D
+
+/** Clock ID of the septenary MI2S EBIT. */
+#define CLOCK_ID_SEP_MI2S_EBIT 0x10E
+
 /** ID of I2S IBIT clock 0 that is used with integrated codec. */
 
 #define CLOCK_ID_INT0_I2S_IBIT 0x10D
@@ -423,6 +429,12 @@ typedef struct prm_cmd_request_hw_core_t
 /** Clock ID for the senary TDM EBIT. */
 
 #define CLOCK_ID_SEN_TDM_EBIT 0x20C
+
+/** Clock ID of the septenary TDM IBIT. */
+#define CLOCK_ID_SEP_TDM_IBIT 0x20D
+
+/** Clock ID of the septenary TDM EBIT. */
+#define CLOCK_ID_SEP_TDM_EBIT 0x20E
 
 /** Clock ID for MCLK 1. */
 
