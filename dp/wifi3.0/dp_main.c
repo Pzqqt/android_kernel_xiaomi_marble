@@ -4714,39 +4714,72 @@ static int dp_setup_ipa_rx_refill_buf_ring(struct dp_soc *soc,
 	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx;
 	int entries;
 
-	soc_cfg_ctx = soc->wlan_cfg_ctx;
-	entries = wlan_cfg_get_dp_soc_rxdma_refill_ring_size(soc_cfg_ctx);
+	if (wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx)) {
+		soc_cfg_ctx = soc->wlan_cfg_ctx;
+		entries =
+			wlan_cfg_get_dp_soc_rxdma_refill_ring_size(soc_cfg_ctx);
 
-	/* Setup second Rx refill buffer ring */
-	if (dp_srng_alloc(soc, &pdev->rx_refill_buf_ring2, RXDMA_BUF,
-			  entries, 0)) {
-		dp_init_err("%pK: dp_srng_alloc failed second rx refill ring", soc);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (dp_srng_init(soc, &pdev->rx_refill_buf_ring2, RXDMA_BUF,
-			 IPA_RX_REFILL_BUF_RING_IDX, pdev->pdev_id)) {
-		dp_init_err("%pK: dp_srng_init failed second rx refill ring", soc);
-		return QDF_STATUS_E_FAILURE;
+		/* Setup second Rx refill buffer ring */
+		if (dp_srng_alloc(soc, &pdev->rx_refill_buf_ring2, RXDMA_BUF,
+				  entries, 0)) {
+			dp_init_err("%pK: dp_srng_alloc failed second"
+				    "rx refill ring", soc);
+			return QDF_STATUS_E_FAILURE;
+		}
 	}
 
 	return QDF_STATUS_SUCCESS;
 }
 
 /**
- * dp_cleanup_ipa_rx_refill_buf_ring - Cleanup second Rx refill buffer ring
+ * dp_init_ipa_rx_refill_buf_ring - Init second Rx refill buffer ring
+ * @soc: data path instance
+ * @pdev: core txrx pdev context
+ *
+ * Return: QDF_STATUS_SUCCESS: success
+ *         QDF_STATUS_E_RESOURCES: Error return
+ */
+static int dp_init_ipa_rx_refill_buf_ring(struct dp_soc *soc,
+					  struct dp_pdev *pdev)
+{
+	if (wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx)) {
+		if (dp_srng_init(soc, &pdev->rx_refill_buf_ring2, RXDMA_BUF,
+				 IPA_RX_REFILL_BUF_RING_IDX, pdev->pdev_id)) {
+			dp_init_err("%pK: dp_srng_init failed second"
+				    "rx refill ring", soc);
+			return QDF_STATUS_E_FAILURE;
+		}
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_deinit_ipa_rx_refill_buf_ring - deinit second Rx refill buffer ring
  * @soc: data path instance
  * @pdev: core txrx pdev context
  *
  * Return: void
  */
-static void dp_cleanup_ipa_rx_refill_buf_ring(struct dp_soc *soc,
-					      struct dp_pdev *pdev)
+static void dp_deinit_ipa_rx_refill_buf_ring(struct dp_soc *soc,
+					     struct dp_pdev *pdev)
 {
-	dp_srng_deinit(soc, &pdev->rx_refill_buf_ring2, RXDMA_BUF, 0);
-	dp_srng_free(soc, &pdev->rx_refill_buf_ring2);
+	if (wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx))
+		dp_srng_deinit(soc, &pdev->rx_refill_buf_ring2, RXDMA_BUF, 0);
 }
 
+/**
+ * dp_free_ipa_rx_refill_buf_ring - free second Rx refill buffer ring
+ * @soc: data path instance
+ * @pdev: core txrx pdev context
+ *
+ * Return: void
+ */
+static void dp_free_ipa_rx_refill_buf_ring(struct dp_soc *soc,
+					   struct dp_pdev *pdev)
+{
+	if (wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx))
+		dp_srng_free(soc, &pdev->rx_refill_buf_ring2);
+}
 #else
 static int dp_setup_ipa_rx_refill_buf_ring(struct dp_soc *soc,
 					   struct dp_pdev *pdev)
@@ -4754,8 +4787,19 @@ static int dp_setup_ipa_rx_refill_buf_ring(struct dp_soc *soc,
 	return QDF_STATUS_SUCCESS;
 }
 
-static void dp_cleanup_ipa_rx_refill_buf_ring(struct dp_soc *soc,
-					      struct dp_pdev *pdev)
+static int dp_init_ipa_rx_refill_buf_ring(struct dp_soc *soc,
+					  struct dp_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static void dp_deinit_ipa_rx_refill_buf_ring(struct dp_soc *soc,
+					     struct dp_pdev *pdev)
+{
+}
+
+static void dp_free_ipa_rx_refill_buf_ring(struct dp_soc *soc,
+					   struct dp_pdev *pdev)
 {
 }
 #endif
@@ -5011,30 +5055,39 @@ QDF_STATUS dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 		goto fail2;
 	}
 
+	/* Setup second Rx refill buffer ring */
+	if (dp_setup_ipa_rx_refill_buf_ring(soc, pdev)) {
+		dp_init_err("%pK: dp_srng_alloc failed rxrefill2 ring",
+			    soc);
+		goto fail3;
+	}
+
 	/* Allocate memory for pdev rxdma rings */
 	if (dp_rxdma_ring_alloc(soc, pdev)) {
 		dp_init_err("%pK: dp_rxdma_ring_alloc failed", soc);
-		goto fail3;
+		goto fail4;
 	}
 
 	/* Rx specific init */
 	if (dp_rx_pdev_desc_pool_alloc(pdev)) {
 		dp_init_err("%pK: dp_rx_pdev_attach failed", soc);
-		goto fail3;
+		goto fail4;
 	}
 
 	if (dp_monitor_pdev_attach(pdev)) {
 		dp_init_err("%pK: dp_monitor_pdev_attach failed", soc);
-		goto fail4;
+		goto fail5;
 	}
 
 	soc->arch_ops.txrx_pdev_attach(pdev, params);
 
 	return QDF_STATUS_SUCCESS;
-fail4:
+fail5:
 	dp_rx_pdev_desc_pool_free(pdev);
-fail3:
+fail4:
 	dp_rxdma_ring_free(pdev);
+	dp_free_ipa_rx_refill_buf_ring(soc, pdev);
+fail3:
 	dp_pdev_srng_free(pdev);
 fail2:
 	wlan_cfg_pdev_detach(pdev->wlan_cfg_ctx);
@@ -5126,7 +5179,7 @@ static void dp_pdev_deinit(struct cdp_pdev *txrx_pdev, int force)
 	dp_pdev_srng_deinit(pdev);
 
 	dp_ipa_uc_detach(pdev->soc, pdev);
-	dp_cleanup_ipa_rx_refill_buf_ring(pdev->soc, pdev);
+	dp_deinit_ipa_rx_refill_buf_ring(pdev->soc, pdev);
 	dp_rxdma_ring_cleanup(pdev->soc, pdev);
 
 	curr_nbuf = pdev->invalid_peer_head_msdu;
@@ -5225,6 +5278,7 @@ static void dp_pdev_detach(struct cdp_pdev *txrx_pdev, int force)
 	dp_rx_pdev_desc_pool_free(pdev);
 	dp_monitor_pdev_detach(pdev);
 	dp_rxdma_ring_free(pdev);
+	dp_free_ipa_rx_refill_buf_ring(soc, pdev);
 	dp_pdev_srng_free(pdev);
 
 	soc->pdev_count--;
@@ -9290,6 +9344,9 @@ dp_set_psoc_param(struct cdp_soc_t *cdp_soc,
 	case CDP_SET_PREFERRED_HW_MODE:
 		soc->preferred_hw_mode = val.cdp_psoc_param_preferred_hw_mode;
 		break;
+	case CDP_IPA_ENABLE:
+		soc->wlan_cfg_ctx->ipa_enabled = val.cdp_ipa_enabled;
+		break;
 	default:
 		break;
 	}
@@ -13215,11 +13272,6 @@ static void dp_pdev_srng_deinit(struct dp_pdev *pdev)
 			       RXDMA_BUF,
 			       pdev->lmac_id);
 
-	if (wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx)) {
-		dp_deinit_tx_pair_by_index(soc, IPA_TCL_DATA_RING_IDX);
-		dp_ipa_deinit_alt_tx_ring(soc);
-	}
-
 	if (!soc->rxdma2sw_rings_not_supported) {
 		for (i = 0; i < NUM_RXDMA_RINGS_PER_PDEV; i++) {
 			int lmac_id = dp_get_lmac_id_for_pdev_id(soc, i,
@@ -13263,14 +13315,6 @@ static QDF_STATUS dp_pdev_srng_init(struct dp_pdev *pdev)
 				    soc);
 			goto fail1;
 		}
-	}
-
-	if (wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx)) {
-		if (dp_init_tx_ring_pair_by_index(soc, IPA_TCL_DATA_RING_IDX))
-			goto fail1;
-
-		if (dp_ipa_init_alt_tx_ring(soc))
-			goto fail1;
 	}
 
 	/* LMAC RxDMA to SW Rings configuration */
@@ -13322,11 +13366,6 @@ static void dp_pdev_srng_free(struct dp_pdev *pdev)
 	if (!hal_dmac_cmn_src_rxbuf_ring_get(soc->hal_soc))
 		dp_srng_free(soc, &soc->rx_refill_buf_ring[pdev->lmac_id]);
 
-	if (wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx)) {
-		dp_free_tx_ring_pair_by_index(soc, IPA_TCL_DATA_RING_IDX);
-		dp_ipa_free_alt_tx_ring(soc);
-	}
-
 	if (!soc->rxdma2sw_rings_not_supported) {
 		for (i = 0; i < NUM_RXDMA_RINGS_PER_PDEV; i++) {
 			int lmac_id = dp_get_lmac_id_for_pdev_id(soc, i,
@@ -13362,14 +13401,6 @@ static QDF_STATUS dp_pdev_srng_alloc(struct dp_pdev *pdev)
 				    soc);
 			goto fail1;
 		}
-	}
-
-	if (wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx)) {
-		if (dp_alloc_tx_ring_pair_by_index(soc, IPA_TCL_DATA_RING_IDX))
-			goto fail1;
-
-		if (dp_ipa_alloc_alt_tx_ring(soc))
-			goto fail1;
 	}
 
 	ring_size = wlan_cfg_get_dp_soc_rxdma_err_dst_ring_size(soc_cfg_ctx);
@@ -13425,6 +13456,11 @@ static void dp_soc_srng_deinit(struct dp_soc *soc)
 	/* Tx data rings */
 	for (i = 0; i < soc->num_tcl_data_rings; i++)
 		dp_deinit_tx_pair_by_index(soc, i);
+
+	if (wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx)) {
+		dp_deinit_tx_pair_by_index(soc, IPA_TCL_DATA_RING_IDX);
+		dp_ipa_deinit_alt_tx_ring(soc);
+	}
 
 	/* TCL command and status rings */
 	if (soc->init_tcl_cmd_cred_ring) {
@@ -13616,6 +13652,14 @@ static QDF_STATUS dp_soc_srng_init(struct dp_soc *soc)
 			goto fail1;
 	}
 
+	if (wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx)) {
+		if (dp_init_tx_ring_pair_by_index(soc, IPA_TCL_DATA_RING_IDX))
+			goto fail1;
+
+		if (dp_ipa_init_alt_tx_ring(soc))
+			goto fail1;
+	}
+
 	dp_create_ext_stats_event(soc);
 
 	for (i = 0; i < soc->num_reo_dest_rings; i++) {
@@ -13666,6 +13710,12 @@ static void dp_soc_srng_free(struct dp_soc *soc)
 
 	for (i = 0; i < soc->num_tcl_data_rings; i++)
 		dp_free_tx_ring_pair_by_index(soc, i);
+
+	/* Free IPA rings for TCL_TX and TCL_COMPL ring */
+	if (wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx)) {
+		dp_free_tx_ring_pair_by_index(soc, IPA_TCL_DATA_RING_IDX);
+		dp_ipa_free_alt_tx_ring(soc);
+	}
 
 	if (soc->init_tcl_cmd_cred_ring)
 		dp_srng_free(soc, &soc->tcl_cmd_credit_ring);
@@ -13774,6 +13824,15 @@ static QDF_STATUS dp_soc_srng_alloc(struct dp_soc *soc)
 
 	for (i = 0; i < soc->num_tcl_data_rings; i++) {
 		if (dp_alloc_tx_ring_pair_by_index(soc, i))
+			goto fail1;
+	}
+
+	/* IPA rings for TCL_TX and TX_COMP will be allocated here */
+	if (wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx)) {
+		if (dp_alloc_tx_ring_pair_by_index(soc, IPA_TCL_DATA_RING_IDX))
+			goto fail1;
+
+		if (dp_ipa_alloc_alt_tx_ring(soc))
 			goto fail1;
 	}
 
@@ -14147,7 +14206,7 @@ static QDF_STATUS dp_pdev_init(struct cdp_soc_t *txrx_soc,
 		goto fail4;
 	}
 
-	if (dp_setup_ipa_rx_refill_buf_ring(soc, pdev))
+	if (dp_init_ipa_rx_refill_buf_ring(soc, pdev))
 		goto fail4;
 
 	if (dp_ipa_ring_resource_setup(soc, pdev))
@@ -14197,7 +14256,7 @@ fail7:
 fail6:
 	dp_ipa_uc_detach(soc, pdev);
 fail5:
-	dp_cleanup_ipa_rx_refill_buf_ring(soc, pdev);
+	dp_deinit_ipa_rx_refill_buf_ring(soc, pdev);
 fail4:
 	dp_rxdma_ring_cleanup(soc, pdev);
 	qdf_nbuf_free(pdev->sojourn_buf);
