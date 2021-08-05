@@ -6352,6 +6352,41 @@ QDF_STATUS cm_csr_connect_rsp(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+static void
+cm_update_rsn_ocv_cap(int32_t *rsn_cap,
+		      struct wlan_cm_connect_resp *rsp)
+{
+	struct wlan_crypto_params crypto_params;
+	uint8_t *ie_ptr;
+	uint32_t ie_len;
+	QDF_STATUS status;
+
+	if (!rsp->connect_ies.bcn_probe_rsp.ptr ||
+	    !rsp->connect_ies.bcn_probe_rsp.len ||
+	    (rsp->connect_ies.bcn_probe_rsp.len <
+		(sizeof(struct wlan_frame_hdr) +
+		offsetof(struct wlan_bcn_frame, ie)))) {
+		sme_err("invalid beacon probe rsp");
+		return;
+	}
+
+	ie_len = (rsp->connect_ies.bcn_probe_rsp.len -
+			sizeof(struct wlan_frame_hdr) -
+			offsetof(struct wlan_bcn_frame, ie));
+	ie_ptr = (uint8_t *)(rsp->connect_ies.bcn_probe_rsp.ptr +
+			     sizeof(struct wlan_frame_hdr) +
+			     offsetof(struct wlan_bcn_frame, ie));
+
+	status = wlan_get_crypto_params_from_rsn_ie(&crypto_params, ie_ptr,
+						    ie_len);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("get crypto prarams from RSN IE failed");
+		return;
+	}
+	if (!(crypto_params.rsn_caps & WLAN_CRYPTO_RSN_CAP_OCV_SUPPORTED))
+		*rsn_cap &= ~WLAN_CRYPTO_RSN_CAP_OCV_SUPPORTED;
+}
+
 QDF_STATUS
 cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
 			struct wlan_cm_connect_resp *rsp)
@@ -6451,6 +6486,7 @@ cm_csr_connect_done_ind(struct wlan_objmgr_vdev *vdev,
 
 	rsn_cap = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_RSN_CAP);
 	if (rsn_cap >= 0) {
+		cm_update_rsn_ocv_cap(&rsn_cap, rsp);
 		if (wma_cli_set2_command(vdev_id, WMI_VDEV_PARAM_RSN_CAPABILITY,
 					 rsn_cap, 0, VDEV_CMD))
 			sme_err("Failed to update WMI_VDEV_PARAM_RSN_CAPABILITY for vdev id %d",
