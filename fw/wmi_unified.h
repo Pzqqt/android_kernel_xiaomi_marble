@@ -4555,6 +4555,10 @@ typedef struct {
      * we'll move to next channel.
      */
     A_UINT32 min_dwell_time_6ghz;
+    /**
+     * dwell time in msec for 6 GHz channel of spectral scan channel list
+     */
+    A_UINT32 dwell_time_spectral_ch;
 
 /**
  * TLV (tag length value) parameters follow the scan_cmd
@@ -4575,6 +4579,7 @@ typedef struct {
  *     A_UINT8 phymode_list[0 or num_chan]; // see WMI_SCAN_CHAN_MODE macros
  *     wmi_hint_freq_short_ssid hint_freq_short_ssid[num]; // the num can be calculated by TLV len
  *     wmi_hint_freq_bssid hint_freq_bssid[num]; // the num can be calculated by TLV len
+ *     A_UINT32 spectral_chan_list[num]; // in MHz, the num can be calculated by TLV len
  *     *** NOTE:
  *     *** Use caution when using further TLVs, in case the additional
  *     *** TLVs cause the message size to exceed the of the buffer to
