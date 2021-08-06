@@ -8546,7 +8546,7 @@ static int hdd_set_primary_interface(struct hdd_adapter *adapter,
 
 	if (count != 2) {
 		hdd_debug("STA + STA concurrency not present, count:%d", count);
-		return -EINVAL;
+		return 0;
 	}
 
 	/* if dual sta roaming enabled and both sta in DBS then no need
@@ -8574,7 +8574,7 @@ static int hdd_set_primary_interface(struct hdd_adapter *adapter,
 	 */
 	if (!policy_mgr_current_concurrency_is_mcc(hdd_ctx->psoc)) {
 		hdd_debug("STA + STA concurrency not in MCC");
-		return -EINVAL;
+		return 0;
 	}
 
 	status = ucfg_mlme_get_dual_sta_policy(hdd_ctx->psoc, &dual_sta_policy);
