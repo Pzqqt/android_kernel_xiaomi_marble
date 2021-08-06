@@ -638,8 +638,8 @@ int __set_clk_rate(struct msm_vidc_core *core,
 		return 0;
 
 	d_vpr_p("Scaling clock %s to %llu, prev %llu\n", cl->name, rate, cl->prev);
-	/* TODO: Set num_hw_blocks based on encoder or decoder */
 	memset(&client_data, 0, sizeof(client_data));
+	client_data.num_hw_blocks = 1;
 	rc = mmrm_client_set_value(client, &client_data, rate);
 	if (rc) {
 		d_vpr_e("%s: Failed to set clock rate %llu %s: %d\n",
