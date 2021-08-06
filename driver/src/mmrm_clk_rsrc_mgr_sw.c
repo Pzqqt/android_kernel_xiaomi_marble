@@ -490,7 +490,7 @@ err_invalid_level:
 }
 
 static int mmrm_sw_throttle_low_priority_client(
-	struct mmrm_sw_clk_mgr_info *sinfo, u32 *delta_cur)
+	struct mmrm_sw_clk_mgr_info *sinfo, int *delta_cur)
 {
 	int rc = 0, i;
 	bool found_client_throttle = false;
@@ -557,31 +557,34 @@ static int mmrm_sw_throttle_low_priority_client(
 			goto err_clk_set_fail;
 		}
 
-		rc = clk_set_rate(tbl_entry_throttle_client->clk,
-					tbl_entry_throttle_client->freq[clk_min_level]);
-		if (rc) {
-			d_mpr_e("%s: Failed to throttle the clk csid(%d)\n",
+		if (tbl_entry_throttle_client->reserve == false) {
+			rc = clk_set_rate(tbl_entry_throttle_client->clk,
+						tbl_entry_throttle_client->freq[clk_min_level]);
+			if (rc) {
+				d_mpr_e("%s: Failed to throttle the clk csid(%d)\n",
 					__func__, tbl_entry_throttle_client->clk_src_id);
-			rc = -EINVAL;
-			goto err_clk_set_fail;
-		} else {
-			d_mpr_h("%s: %s throttled to %llu\n",
+				rc = -EINVAL;
+				goto err_clk_set_fail;
+			}
+		}
+
+		d_mpr_h("%s: %s throttled to %llu\n",
 			__func__, tbl_entry_throttle_client->name,
 			tbl_entry_throttle_client->freq[clk_min_level]);
-			*delta_cur = now_cur_ma - min_cur_ma;
+		*delta_cur -= now_cur_ma - min_cur_ma;
 
-			/* Store this client for bookkeeping */
-			tc_data = kzalloc(sizeof(*tc_data), GFP_KERNEL);
-			if (IS_ERR_OR_NULL(tc_data)) {
-				d_mpr_e("%s: Failed to allocate memory\n", __func__);
-				return -ENOMEM;
-			}
-			tc_data->table_id = i;
-			tc_data->delta_cu_ma = now_cur_ma - min_cur_ma;
-			tc_data->prev_vdd_level = tbl_entry_throttle_client->vdd_level;
-			// Add throttled client to list to access it later
-			list_add_tail(&tc_data->list, &sinfo->throttled_clients);
+		/* Store this client for bookkeeping */
+		tc_data = kzalloc(sizeof(*tc_data), GFP_KERNEL);
+		if (IS_ERR_OR_NULL(tc_data)) {
+			d_mpr_e("%s: Failed to allocate memory\n", __func__);
+			return -ENOMEM;
 		}
+		tc_data->table_id = i;
+		tc_data->delta_cu_ma = now_cur_ma - min_cur_ma;
+		tc_data->prev_vdd_level = tbl_entry_throttle_client->vdd_level;
+		// Add throttled client to list to access it later
+		list_add_tail(&tc_data->list, &sinfo->throttled_clients);
+
 		/* Store the throttled clock rate of client */
 		tbl_entry_throttle_client->clk_rate =
 					tbl_entry_throttle_client->freq[clk_min_level];
@@ -590,7 +593,7 @@ static int mmrm_sw_throttle_low_priority_client(
 		tbl_entry_throttle_client->vdd_level = clk_min_level;
 
 		/* Clearing the reserve flag */
-		tbl_entry_throttle_client->reserve = tbl_entry_throttle_client->reserve & 0;
+		tbl_entry_throttle_client->reserve = false;
 	}
 err_clk_set_fail:
 	return rc;
