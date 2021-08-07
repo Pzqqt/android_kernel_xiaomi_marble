@@ -40,6 +40,7 @@
 #endif
 
 #include "wmi_unified_twt_api.h"
+#include "wmi_unified_wds_api.h"
 
 #ifdef WLAN_POLICY_MGR_ENABLE
 #include "wlan_policy_mgr_public_struct.h"
@@ -17223,6 +17224,7 @@ void wmi_tlv_attach(wmi_unified_t wmi_handle)
 #endif
 	populate_tlv_events_id(wmi_handle->wmi_events);
 	populate_tlv_service(wmi_handle->services);
+	wmi_wds_attach_tlv(wmi_handle);
 	wmi_twt_attach_tlv(wmi_handle);
 	wmi_extscan_attach_tlv(wmi_handle);
 	wmi_smart_ant_attach_tlv(wmi_handle);

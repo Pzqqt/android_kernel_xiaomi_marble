@@ -53,7 +53,9 @@
 #include "wmi_unified_twt_param.h"
 #include "wmi_unified_twt_api.h"
 #endif
-
+#ifdef WDS_CONV_TARGET_IF_OPS_ENABLE
+#include "wmi_unified_wds_api.h"
+#endif
 #ifdef FEATURE_WLAN_EXTSCAN
 #include "wmi_unified_extscan_api.h"
 #endif

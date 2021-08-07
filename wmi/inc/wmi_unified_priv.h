@@ -61,6 +61,10 @@
 #include "wmi_unified_atf_param.h"
 #endif
 
+#ifdef WDS_CONV_TARGET_IF_OPS_ENABLE
+#include "wmi_unified_wds_param.h"
+#endif
+
 #ifdef WLAN_FEATURE_INTEROP_ISSUES_AP
 #include <wlan_interop_issues_ap_public_structs.h>
 #endif
@@ -1273,7 +1277,7 @@ QDF_STATUS (*send_set_vap_dscp_tid_map_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_proxy_ast_reserve_cmd)(wmi_unified_t wmi_handle,
 		struct proxy_ast_reserve_params *param);
 
-#ifdef WMI_AP_SUPPORT
+#if defined(WMI_AP_SUPPORT) || defined(WDS_CONV_TARGET_IF_OPS_ENABLE)
 QDF_STATUS (*send_peer_add_wds_entry_cmd)(wmi_unified_t wmi_handle,
 		struct peer_add_wds_entry_params *param);
 
@@ -1282,6 +1286,9 @@ QDF_STATUS (*send_peer_del_wds_entry_cmd)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*send_peer_update_wds_entry_cmd)(wmi_unified_t wmi_handle,
 		struct peer_update_wds_entry_params *param);
+#endif
+
+#ifdef WMI_AP_SUPPORT
 
 QDF_STATUS (*send_set_ctl_table_cmd)(wmi_unified_t wmi_handle,
 		struct ctl_table_params *param);
