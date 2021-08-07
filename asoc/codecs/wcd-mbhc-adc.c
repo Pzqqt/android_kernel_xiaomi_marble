@@ -870,9 +870,6 @@ correct_plug_type:
 			wrk_complete = false;
 		}
 	}
-	if (mbhc->mbhc_cb->bcs_enable)
-		mbhc->mbhc_cb->bcs_enable(mbhc, true);
-
 	if (!wrk_complete) {
 		/*
 		 * If plug_tye is headset, we might have already reported either
@@ -905,6 +902,9 @@ report:
 		pr_debug("%s: Switch level is low\n", __func__);
 		goto exit;
 	}
+
+	if (mbhc->mbhc_cb->bcs_enable)
+		mbhc->mbhc_cb->bcs_enable(mbhc, true);
 
 	pr_debug("%s: Valid plug found, plug type %d wrk_cmpt %d btn_intr %d\n",
 			__func__, plug_type, wrk_complete,
