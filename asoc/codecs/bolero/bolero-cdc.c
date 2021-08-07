@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/of_platform.h>
@@ -509,7 +509,7 @@ static u8 bolero_dmic_clk_div_get(struct snd_soc_component *component,
 
 	if (priv->macro_params[macro].clk_div_get) {
 		ret = priv->macro_params[macro].clk_div_get(component);
-		if (ret > 0)
+		if (ret >= 0)
 			return ret;
 	}
 
