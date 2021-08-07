@@ -273,7 +273,6 @@ static int lpass_cdc_va_macro_mclk_enable(
 			dev_err(va_priv->dev,
 				"%s: va request core vote failed\n",
 				__func__);
-			goto exit;
 		}
 		lpass_cdc_clk_rsc_request_clock(va_priv->dev,
 					va_priv->default_clk_id,
