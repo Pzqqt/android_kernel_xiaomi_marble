@@ -967,6 +967,9 @@ typedef enum {
     /** unified request for LL stats and get station cmds */
     WMI_REQUEST_UNIFIED_LL_GET_STA_CMDID,
 
+    /** request for thermal stats */
+    WMI_REQUEST_THERMAL_STATS_CMDID,
+
 
     /** ARP OFFLOAD REQUEST*/
     WMI_SET_ARP_NS_OFFLOAD_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_ARP_NS_OFL),
@@ -28370,6 +28373,33 @@ typedef struct {
 } wmi_therm_throt_level_config_info;
 
 typedef enum {
+    WMI_THERMAL_TEMP_RANGE_STATS_NONE = 0,
+    WMI_THERMAL_TEMP_RANGE_STATS_INIT,
+    WMI_THERMAL_TEMP_RANGE_STATS_REQUEST,
+    WMI_THERMAL_TEMP_RANGE_STATS_CLEAR,
+    WMI_THERMAL_STATS_CURRENT_ALL_SENSORS_TEMP,
+} wmi_thermal_stats_action;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_thermal_stats_cmd_fixed_param
+     */
+    A_UINT32 tlv_header;
+    /*
+     * Configure thermal temperature offset value for capturing
+     * thermal stats in thermal range.
+     * FW already has thermal throttling threshold temperature in BDF.
+     * Thermal STATS start capturing from temperature threshold to
+     * temperature threshold + offset.
+     * If thermal offset is 0 then thermal STATS capture is disabled.
+     *
+     * Units of thermal_offset are degrees Celsius.
+     */
+    A_UINT32 thermal_offset;
+    A_UINT32 thermal_action; /* refer to enum wmi_thermal_stats_action */
+} wmi_thermal_stats_cmd_fixed_param;
+
+typedef enum {
     WMI_THERMAL_CLIENT_UNSPECIFIED = 0,
     WMI_THERMAL_CLIENT_APPS        = 1,
     WMI_THERMAL_CLIENT_WPSS        = 2,
@@ -28408,6 +28438,8 @@ typedef enum {
     WMI_THERMAL_SHUTDOWN_TGT    = 3,
 } WMI_THERMAL_THROT_LEVEL;
 
+#define WMI_THERMAL_STATS_TEMP_THRESH_LEVEL_MAX 5
+
 /** FW response with the stats event id for every pdev and zones */
 typedef struct {
     /*  TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_therm_throt_stats_event_fixed_param */
@@ -28419,9 +28451,9 @@ typedef struct {
     A_UINT32 therm_throt_levels; /* number of levels in therm_throt_level_stats_info */
     /* This TLV is followed by another TLV of array of structs
      * wmi_therm_throt_level_stats_info therm_throt_level_stats_info[therm_throt_levels];
+     * wmi_thermal_throt_temp_range_stats temp_range_stats[therm_throt_levels];
      */
 } wmi_therm_throt_stats_event_fixed_param;
-
 
 typedef struct {
     /** TLV tag and len; tag equals
@@ -28432,7 +28464,27 @@ typedef struct {
                           /* this number increments by one each time we are in this state and we finish one full duty cycle. */
 } wmi_therm_throt_level_stats_info;
 
+typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_thermal_throt_temp_range_stats
+     */
+    A_UINT32 tlv_header;
+    /**
+     * Temperature range to capture thermal stats between start to end
+     * temperature level.
+     */
+    A_UINT32 start_temp_level; /* unit in degC */
+    A_UINT32 end_temp_level;   /* unit in degC */
 
+    /** Total time spent on each thermal stats level, units are milliseconds. */
+    A_UINT32 total_time_ms_lo;
+    A_UINT32 total_time_ms_hi;
+    /**
+     * Thermal stats counter for every time thermal stats level enters
+     * this temperature range.
+     */
+    A_UINT32 num_entry;
+} wmi_thermal_throt_temp_range_stats;
 
 
 typedef enum {
@@ -29174,6 +29226,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_ENABLE_DISABLE_INTRA_BSS_CMDID);
         WMI_RETURN_STRING(WMI_PEER_ENABLE_DISABLE_INTRA_BSS_CMDID);
         WMI_RETURN_STRING(WMI_ROAM_MLO_CONFIG_CMDID);
+        WMI_RETURN_STRING(WMI_REQUEST_THERMAL_STATS_CMDID);
     }
 
     return "Invalid WMI cmd";

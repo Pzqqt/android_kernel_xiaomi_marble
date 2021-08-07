@@ -1195,6 +1195,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_roam_cnd_vendor_scoring_param,
     WMITLV_TAG_STRUC_wmi_owe_ap_profile,
     WMITLV_TAG_STRUC_wmi_roam_btm_request_candidate_info_tlv_param,
+    WMITLV_TAG_STRUC_wmi_thermal_stats_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_thermal_throt_temp_range_stats,
 } WMITLV_TAG_ID;
 
 /*
@@ -1668,6 +1670,7 @@ typedef enum {
     OP(WMI_PEER_CONFIG_PPE_DS_CMDID) \
     OP(WMI_VDEV_ENABLE_DISABLE_INTRA_BSS_CMDID) \
     OP(WMI_PEER_ENABLE_DISABLE_INTRA_BSS_CMDID) \
+    OP(WMI_REQUEST_THERMAL_STATS_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -4787,6 +4790,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_ENABLE_DISABLE_INTRA_BSS_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_enable_disable_intra_bss_cmd_fixed_param, wmi_peer_enable_disable_intra_bss_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PEER_ENABLE_DISABLE_INTRA_BSS_CMDID);
 
+#define WMITLV_TABLE_WMI_REQUEST_THERMAL_STATS_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_thermal_stats_cmd_fixed_param, wmi_thermal_stats_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_REQUEST_THERMAL_STATS_CMDID);
+
 
 
 /************************** TLV definitions of WMI events *******************************/
@@ -6193,7 +6200,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_WLAN_COEX_BT_ACTIVITY_EVENTID);
 /* Thermal Throttling stats event */
 #define WMITLV_TABLE_WMI_THERM_THROT_STATS_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_therm_throt_stats_event_fixed_param, wmi_therm_throt_stats_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_therm_throt_level_stats_info, therm_throt_level_stats_info, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_therm_throt_level_stats_info, therm_throt_level_stats_info, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_thermal_throt_temp_range_stats, temp_range_stats, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_THERM_THROT_STATS_EVENTID);
 
 #define WMITLV_TABLE_WMI_PDEV_DMA_RING_CFG_RSP_EVENTID(id,op,buf,len) \

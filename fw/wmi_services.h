@@ -547,6 +547,7 @@ typedef  enum  {
     WMI_SERVICE_AOA_FOR_RCC_SUPPORTED = 302,
     WMI_SERVICE_DYN_NSS_MASK_SUPPORT = 303, /* Indicates FW support for DYN NSS feature */
     WMI_SERVICE_HW_MODE_POLICY_OFFLOAD_SUPPORT = 304, /* FW supports HW mode selection offload */
+    WMI_SERVICE_THERMAL_THROT_STATS_TEMP_RANGE_SUPPORT = 305, /* FW supports thermal throttling temperature range stats based on wmi_thermal_stats_action */
 
 
     WMI_MAX_EXT2_SERVICE
