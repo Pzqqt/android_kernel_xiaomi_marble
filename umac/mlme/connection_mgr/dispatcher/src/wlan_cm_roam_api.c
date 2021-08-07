@@ -982,6 +982,52 @@ cm_append_pref_chan_list(struct rso_chan_info *chan_info, qdf_freq_t *freq_list,
 	return num_chan;
 }
 
+/**
+ * cm_modify_chan_list_based_on_band() - Modify RSO channel list based on band
+ * @freq_list: Channel list coming from user space
+ * @num_chan: Number of channel present in freq_list buffer
+ * @band_bitmap: On basis of this band host modify RSO channel list
+ *
+ * Return: valid number of channel as per bandmap
+ */
+static uint8_t
+cm_modify_chan_list_based_on_band(qdf_freq_t *freq_list, uint8_t num_chan,
+				  uint32_t band_bitmap)
+{
+	uint8_t i = 0, valid_chan_num = 0;
+
+	if (!(band_bitmap & BIT(REG_BAND_2G))) {
+		mlme_debug("disabling 2G");
+		for (i = 0; i < num_chan; i++) {
+			if (WLAN_REG_IS_24GHZ_CH_FREQ(freq_list[i]))
+				freq_list[i] = 0;
+		}
+	}
+
+	if (!(band_bitmap & BIT(REG_BAND_5G))) {
+		mlme_debug("disabling 5G");
+		for (i = 0; i < num_chan; i++) {
+			if (WLAN_REG_IS_5GHZ_CH_FREQ(freq_list[i]))
+				freq_list[i] = 0;
+		}
+	}
+
+	if (!(band_bitmap & BIT(REG_BAND_6G))) {
+		mlme_debug("disabling 6G");
+		for (i = 0; i < num_chan; i++) {
+			if (WLAN_REG_IS_6GHZ_CHAN_FREQ(freq_list[i]))
+				freq_list[i] = 0;
+		}
+	}
+
+	for (i = 0; i < num_chan; i++) {
+		if (freq_list[i])
+			freq_list[valid_chan_num++] = freq_list[i];
+	}
+
+	return valid_chan_num;
+}
+
 static QDF_STATUS cm_create_bg_scan_roam_channel_list(struct rso_chan_info *chan_info,
 						const qdf_freq_t *chan_freq_lst,
 						const uint8_t num_chan)
@@ -1000,16 +1046,90 @@ static QDF_STATUS cm_create_bg_scan_roam_channel_list(struct rso_chan_info *chan
 	return status;
 }
 
+/**
+ * cm_remove_disabled_channels() - Remove disabled channels as per current
+ * connected band
+ * @vdev: vdev common object
+ * @freq_list: Channel list coming from user space
+ * @num_chan: Number of channel present in freq_list buffer
+ *
+ * Return: Number of channels as per SETBAND mask
+ */
+static uint32_t cm_remove_disabled_channels(struct wlan_objmgr_vdev *vdev,
+					    qdf_freq_t *freq_list,
+					    uint8_t num_chan)
+{
+	struct regulatory_channel *cur_chan_list;
+	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
+	uint32_t valid_chan_num = 0;
+	enum channel_state state;
+	uint32_t freq, i, j;
+	QDF_STATUS status;
+	uint32_t filtered_lst[NUM_CHANNELS] = {0};
+
+	cur_chan_list =
+	     qdf_mem_malloc(NUM_CHANNELS * sizeof(struct regulatory_channel));
+	if (!cur_chan_list)
+		return 0;
+
+	status = wlan_reg_get_current_chan_list(pdev, cur_chan_list);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_mem_free(cur_chan_list);
+		return 0;
+	}
+
+	for (i = 0; i < NUM_CHANNELS; i++) {
+		freq = cur_chan_list[i].center_freq;
+		state = wlan_reg_get_channel_state_for_freq(pdev, freq);
+		if (state != CHANNEL_STATE_DISABLE &&
+		    state != CHANNEL_STATE_INVALID) {
+			for (j = 0; j < num_chan; j++) {
+				if (freq == freq_list[j]) {
+					filtered_lst[valid_chan_num++] =
+								freq_list[j];
+					break;
+				}
+			}
+		}
+	}
+
+	mlme_debug("[ROAM_BAND]: num channel :%d", valid_chan_num);
+	for (i = 0; i < valid_chan_num; i++)
+		freq_list[i] = filtered_lst[i];
+
+	qdf_mem_free(cur_chan_list);
+
+	return valid_chan_num;
+}
+
+/**
+ * cm_update_roam_scan_channel_list() - Update channel list as per RSO chan info
+ * band bitmask
+ * @psoc: Psoc common object
+ * @vdev: vdev common object
+ * @rso_cfg: connect config to be used to send info in RSO
+ * @vdev_id: vdev id
+ * @chan_info: hannel list already sent via RSO
+ * @freq_list: Channel list coming from user space
+ * @num_chan: Number of channel present in freq_list buffer
+ * @update_preferred_chan: Decide whether to update preferred chan list or not
+ *
+ * Return: QDF_STATUS
+ */
 static QDF_STATUS
-cm_update_roam_scan_channel_list(uint8_t vdev_id,
+cm_update_roam_scan_channel_list(struct wlan_objmgr_psoc *psoc,
+				 struct wlan_objmgr_vdev *vdev,
+				 struct rso_config *rso_cfg, uint8_t vdev_id,
 				 struct rso_chan_info *chan_info,
 				 qdf_freq_t *freq_list, uint8_t num_chan,
 				 bool update_preferred_chan)
 {
 	uint16_t pref_chan_cnt = 0;
+	uint32_t valid_chan_num = 0;
+	struct cm_roam_values_copy config;
 
 	if (chan_info->num_chan) {
-		mlme_debug("Current channels:");
+		mlme_debug("Current channel num: %d", chan_info->num_chan);
 		cm_dump_freq_list(chan_info);
 	}
 
@@ -1018,10 +1138,28 @@ cm_update_roam_scan_channel_list(uint8_t vdev_id,
 							 num_chan);
 		num_chan = pref_chan_cnt;
 	}
+
+	num_chan = cm_remove_disabled_channels(vdev, freq_list, num_chan);
+	if (!num_chan)
+		return QDF_STATUS_E_FAILURE;
+
+	wlan_cm_roam_cfg_get_value(psoc, vdev_id, ROAM_BAND, &config);
+	/* No need to modify channel list if all channel is allowed */
+	if (config.uint_value != REG_BAND_MASK_ALL) {
+		valid_chan_num =
+			cm_modify_chan_list_based_on_band(freq_list, num_chan,
+							  config.uint_value);
+		if (!valid_chan_num) {
+			mlme_debug("No valid channels left to send to the fw");
+			return QDF_STATUS_E_FAILURE;
+		}
+		num_chan = valid_chan_num;
+	}
+
 	cm_flush_roam_channel_list(chan_info);
 	cm_create_bg_scan_roam_channel_list(chan_info, freq_list, num_chan);
 
-	mlme_debug("New channels:");
+	mlme_debug("New channel num: %d", num_chan);
 	cm_dump_freq_list(chan_info);
 
 	return QDF_STATUS_SUCCESS;
@@ -1120,11 +1258,10 @@ wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			status = QDF_STATUS_E_INVAL;
 			break;
 		}
-		status = cm_update_roam_scan_channel_list(vdev_id,
-					&dst_cfg->pref_chan_info,
+		status = cm_update_roam_scan_channel_list(psoc, vdev, rso_cfg,
+					vdev_id, &dst_cfg->pref_chan_info,
 					src_config->chan_info.freq_list,
-					src_config->chan_info.num_chan,
-					true);
+					src_config->chan_info.num_chan, true);
 		if (QDF_IS_STATUS_ERROR(status))
 			break;
 		if (mlme_obj->cfg.lfr.roam_scan_offload_enabled)
@@ -1132,11 +1269,13 @@ wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 					   REASON_CHANNEL_LIST_CHANGED);
 		break;
 	case ROAM_SPECIFIC_CHAN:
-		cm_update_roam_scan_channel_list(vdev_id,
-					&dst_cfg->specific_chan_info,
+		status = cm_update_roam_scan_channel_list(psoc, vdev, rso_cfg,
+					vdev_id, &dst_cfg->specific_chan_info,
 					src_config->chan_info.freq_list,
 					src_config->chan_info.num_chan,
 					false);
+		if (QDF_IS_STATUS_ERROR(status))
+			break;
 		if (mlme_obj->cfg.lfr.roam_scan_offload_enabled)
 			cm_roam_update_cfg(psoc, vdev_id,
 					   REASON_CHANNEL_LIST_CHANGED);
