@@ -486,6 +486,10 @@ ifeq ($(CONFIG_WLAN_FEATURE_MDNS_OFFLOAD),y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mdns_offload.o
 endif
 
+ifeq ($(CONFIG_QCACLD_WLAN_CONNECTIVITY_LOGGING), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_connectivity_logging.o
+endif
+
 $(call add-wlan-objs,hdd,$(HDD_OBJS))
 
 ###### OSIF_SYNC ########
@@ -1487,6 +1491,15 @@ MLME_OBJS +=    $(CM_DIR)/dispatcher/src/wlan_cm_tgt_if_tx_api.o \
 		$(CM_DIR)/core/src/wlan_cm_roam_offload.o \
 		$(CM_DIR)/core/src/wlan_cm_vdev_connect.o \
 		$(CM_DIR)/core/src/wlan_cm_vdev_disconnect.o
+
+LOGGING_DIR := components/cmn_services/logging
+LOGGING_INC := -I$(WLAN_ROOT)/$(LOGGING_DIR)/inc
+
+MLME_INC += $(LOGGING_INC)
+
+ifeq ($(CONFIG_QCACLD_WLAN_CONNECTIVITY_LOGGING), y)
+MLME_OBJS += $(LOGGING_DIR)/src/wlan_connectivity_logging.o
+endif
 
 ifeq ($(CONFIG_CM_UTF_ENABLE), y)
 MLME_OBJS +=    $(CM_DIR)/utf/src/cm_utf.o
@@ -3093,6 +3106,7 @@ endif
 cppflags-y += -DCONN_MGR_ADV_FEATURE
 
 cppflags-$(CONFIG_QCACLD_WLAN_LFR3) += -DWLAN_FEATURE_ROAM_OFFLOAD
+cppflags-$(CONFIG_QCACLD_WLAN_CONNECTIVITY_LOGGING) += -DWLAN_FEATURE_CONNECTIVITY_LOGGING
 
 cppflags-$(CONFIG_WLAN_FEATURE_MBSSID) += -DWLAN_FEATURE_MBSSID
 cppflags-$(CONFIG_WLAN_FEATURE_P2P_P2P_STA) += -DWLAN_FEATURE_P2P_P2P_STA

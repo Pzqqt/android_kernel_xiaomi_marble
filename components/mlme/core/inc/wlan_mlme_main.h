@@ -22,6 +22,7 @@
 #ifndef _WLAN_MLME_MAIN_H_
 #define _WLAN_MLME_MAIN_H_
 
+#include "qdf_periodic_work.h"
 #include <wlan_mlme_public_struct.h>
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_global_obj.h>
@@ -92,18 +93,34 @@ struct pwr_channel_info {
 	int8_t max_tx_pwr;
 };
 
+#ifdef WLAN_FEATURE_CONNECTIVITY_LOGGING
+/**
+ * struct wlan_mlme_logging  - Data structures related to the logging
+ * to userspace infrastructure
+ * @user_log: Log to userspace periodic work. This work will be rescheduled
+ * every 1 sec.
+ */
+struct wlan_mlme_logging {
+	struct qdf_periodic_work logging_work;
+};
+#endif
+
 /**
  * struct wlan_mlme_psoc_ext_obj -MLME ext psoc priv object
  * @cfg:     cfg items
  * @rso_tx_ops: Roam Tx ops to send roam offload commands to firmware
  * @rso_rx_ops: Roam Rx ops to receive roam offload events from firmware
  * @wfa_testcmd: WFA config tx ops to send to FW
+ * @logger_data: Logging related periodic work data
  */
 struct wlan_mlme_psoc_ext_obj {
 	struct wlan_mlme_cfg cfg;
 	struct wlan_cm_roam_tx_ops rso_tx_ops;
 	struct wlan_cm_roam_rx_ops rso_rx_ops;
 	struct wlan_mlme_wfa_cmd wfa_testcmd;
+#ifdef WLAN_FEATURE_CONNECTIVITY_LOGGING
+	struct wlan_mlme_logging logger_data;
+#endif
 };
 
 /**
