@@ -74,11 +74,15 @@ enum wlan_if_mgr_evt {
  * @peer_addr: MAC address of the BSS
  * @chan_freq: Frequency of the potential BSS connection
  * @beacon_interval: beacon interval of BSS
+ * @is_mlo: indicate whether MLO is supported by the BSS or not
  */
 struct validate_bss_data {
 	struct qdf_mac_addr peer_addr;
 	qdf_freq_t chan_freq;
 	uint16_t beacon_interval;
+#ifdef WLAN_FEATURE_11BE_MLO
+	bool is_mlo;
+#endif
 };
 
 /**

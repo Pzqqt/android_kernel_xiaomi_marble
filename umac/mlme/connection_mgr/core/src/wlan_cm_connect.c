@@ -521,6 +521,20 @@ static bool cm_bss_peer_is_assoc_peer(struct cm_connect_req *req)
 
 	return false;
 }
+
+/**
+ * cm_candidate_mlo_update() - handle mlo scenario for candidate validating
+ * @scan_entry: scan result of the candidate
+ * @validate_bss_info: candidate info to be updated
+ *
+ * Return: None
+ */
+static void
+cm_candidate_mlo_update(struct scan_cache_entry *scan_entry,
+			struct validate_bss_data *validate_bss_info)
+{
+	validate_bss_info->is_mlo = !!scan_entry->ie_list.multi_link;
+}
 #else
 static inline
 void cm_set_vdev_link_id(struct cnx_mgr *cm_ctx,
@@ -540,6 +554,12 @@ static struct qdf_mac_addr *cm_get_bss_peer_mld_addr(struct cm_connect_req *req)
 static bool cm_bss_peer_is_assoc_peer(struct cm_connect_req *req)
 {
 	return false;
+}
+
+static inline void
+cm_candidate_mlo_update(struct scan_cache_entry *scan_entry,
+			struct validate_bss_data *validate_bss_info)
+{
 }
 #endif
 
@@ -596,6 +616,7 @@ QDF_STATUS cm_if_mgr_validate_candidate(struct cnx_mgr *cm_ctx,
 	event_data.validate_bss_info.beacon_interval = scan_entry->bcn_int;
 	qdf_copy_macaddr(&event_data.validate_bss_info.peer_addr,
 			 &scan_entry->bssid);
+	cm_candidate_mlo_update(scan_entry, &event_data.validate_bss_info);
 
 	return if_mgr_deliver_event(cm_ctx->vdev,
 				    WLAN_IF_MGR_EV_VALIDATE_CANDIDATE,
