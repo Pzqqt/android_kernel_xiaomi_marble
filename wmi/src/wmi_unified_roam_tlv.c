@@ -1676,10 +1676,8 @@ extract_roam_msg_info_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 
 	if (!param_buf || !param_buf->roam_msg_info ||
 	    !param_buf->num_roam_msg_info ||
-	    idx >= param_buf->num_roam_msg_info) {
-		wmi_debug("Empty roam_msg_info param buf");
+	    idx >= param_buf->num_roam_msg_info)
 		return QDF_STATUS_SUCCESS;
-	}
 
 	src_data = &param_buf->roam_msg_info[idx];
 
