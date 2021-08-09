@@ -546,7 +546,7 @@ static void cm_create_bss_peer(struct cnx_mgr *cm_ctx,
 		mlme_err("invalid cm_ctx");
 		return;
 	}
-	if (!req) {
+	if (!req || !req->cur_candidate || !req->cur_candidate->entry) {
 		mlme_err("invalid req");
 		return;
 	}
