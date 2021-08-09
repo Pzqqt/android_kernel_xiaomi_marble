@@ -345,8 +345,6 @@ target_if_cm_roam_idle_params(wmi_unified_t wmi_handle, uint8_t command,
 	switch (command) {
 	case ROAM_SCAN_OFFLOAD_START:
 	case ROAM_SCAN_OFFLOAD_UPDATE_CFG:
-		if (!req->enable)
-			return;
 		break;
 	case ROAM_SCAN_OFFLOAD_STOP:
 		req->enable = false;

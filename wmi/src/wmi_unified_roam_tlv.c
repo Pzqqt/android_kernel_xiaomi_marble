@@ -823,6 +823,8 @@ convert_roam_trigger_reason(enum roam_trigger_reason trigger_reason)
 		return WMI_ROAM_TRIGGER_REASON_WTC_BTM;
 	case ROAM_TRIGGER_REASON_PMK_TIMEOUT:
 		return WMI_ROAM_TRIGGER_REASON_PMK_TIMEOUT;
+	case ROAM_TRIGGER_REASON_BTC:
+		return WMI_ROAM_TRIGGER_REASON_BTC;
 	case ROAM_TRIGGER_REASON_MAX:
 		return WMI_ROAM_TRIGGER_REASON_MAX;
 	default:
@@ -1312,6 +1314,9 @@ static QDF_STATUS send_set_roam_trigger_cmd_tlv(wmi_unified_t wmi_handle,
 	if (BIT(ROAM_TRIGGER_REASON_PER) & roam_scan_scheme_bitmap)
 		num_triggers_enabled++;
 
+	if (BIT(ROAM_TRIGGER_REASON_BTC) & roam_scan_scheme_bitmap)
+		num_triggers_enabled++;
+
 	if (BIT(ROAM_TRIGGER_REASON_BMISS) & roam_scan_scheme_bitmap)
 		num_triggers_enabled++;
 
@@ -1395,6 +1400,12 @@ static QDF_STATUS send_set_roam_trigger_cmd_tlv(wmi_unified_t wmi_handle,
 		wmi_fill_score_delta_params(roam_trigger_parameters,
 					    triggers,
 					    IDLE_ROAM_TRIGGER);
+		if (cmd->trigger_reason_bitmask &
+		    BIT(WMI_ROAM_TRIGGER_REASON_IDLE))
+			roam_trigger_parameters->enable = 1;
+		else
+			roam_trigger_parameters->enable = 0;
+
 		roam_trigger_parameters++;
 
 		wmi_fill_score_delta_params(roam_trigger_parameters,
@@ -1438,6 +1449,16 @@ static QDF_STATUS send_set_roam_trigger_cmd_tlv(wmi_unified_t wmi_handle,
 		wmi_fill_default_roam_trigger_parameters(
 				roam_trigger_parameters,
 				WMI_ROAM_TRIGGER_REASON_PER);
+		roam_trigger_parameters->scan_mode =
+			ROAM_TRIGGER_SCAN_MODE_PARTIAL;
+
+		roam_trigger_parameters++;
+	}
+
+	if (BIT(ROAM_TRIGGER_REASON_BTC) & roam_scan_scheme_bitmap) {
+		wmi_fill_default_roam_trigger_parameters(
+				roam_trigger_parameters,
+				WMI_ROAM_TRIGGER_REASON_BTC);
 		roam_trigger_parameters->scan_mode =
 			ROAM_TRIGGER_SCAN_MODE_PARTIAL;
 

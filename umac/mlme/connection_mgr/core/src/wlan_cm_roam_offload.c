@@ -40,6 +40,7 @@
 #include "connection_mgr/core/src/wlan_cm_roam.h"
 #include "connection_mgr/core/src/wlan_cm_main.h"
 #include "connection_mgr/core/src/wlan_cm_sm.h"
+#include "wlan_reg_ucfg_api.h"
 
 #ifdef WLAN_FEATURE_SAE
 #define CM_IS_FW_FT_SAE_SUPPORTED(fw_akm_bitmap) \
@@ -163,6 +164,53 @@ cm_roam_reason_vsie(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 }
 
 /**
+ * cm_is_only_2g_band_supported()  - Check if BTC trigger and IDLE trigger needs
+ * to be disabled based on the current connected band.
+ * @psoc:   Pointer to the psoc object
+ * @vdev_id: Vdev id
+ *
+ * Return: true if BTC trigger and IDLE trigger are allowed or not
+ */
+static bool
+cm_is_only_2g_band_supported(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_pdev *pdev;
+	bool only_2g_band_supported = false;
+	uint32_t band_bitmap;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_CM_ID);
+	if (!vdev) {
+		mlme_err("Vdev is null for vdev_id:%d", vdev_id);
+		return false;
+	}
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		mlme_err("pdev is null for vdev_id:%d", vdev_id);
+		goto release;
+	}
+
+	if (QDF_IS_STATUS_ERROR(ucfg_reg_get_band(pdev, &band_bitmap))) {
+		mlme_debug("Failed to get band");
+		goto release;
+	}
+
+	mlme_debug("Current band bitmap:%d", band_bitmap);
+
+	if (band_bitmap & BIT(REG_BAND_2G) &&
+	    !(band_bitmap & BIT(REG_BAND_5G)) &&
+	    !(band_bitmap & BIT(REG_BAND_6G)))
+		only_2g_band_supported = true;
+
+
+release:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+	return only_2g_band_supported;
+}
+
+/**
  * cm_roam_triggers() - set roam triggers
  * @psoc: psoc pointer
  * @vdev_id: vdev id
@@ -190,6 +238,17 @@ cm_roam_triggers(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	is_per_roam_enabled = cm_roam_is_per_roam_allowed(psoc, vdev_id);
 	if (!is_per_roam_enabled)
 		params->trigger_bitmap &= ~BIT(ROAM_TRIGGER_REASON_PER);
+
+	/*
+	 * Enable BTC trigger and IDLE trigger only when DUT is dual band
+	 * capable(2g + 5g/6g)
+	 */
+	if (cm_is_only_2g_band_supported(psoc, vdev_id)) {
+		params->trigger_bitmap &= ~BIT(ROAM_TRIGGER_REASON_IDLE);
+		params->trigger_bitmap &= ~BIT(ROAM_TRIGGER_REASON_BTC);
+	}
+
+	mlme_debug("[ROAM_TRIGGER] trigger_bitmap:%d", params->trigger_bitmap);
 
 	params->roam_scan_scheme_bitmap =
 		wlan_cm_get_roam_scan_scheme_bitmap(psoc, vdev_id);
@@ -2491,6 +2550,10 @@ cm_roam_start_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	cm_roam_bss_load_config(psoc, vdev_id, &start_req->bss_load_config);
 	cm_roam_disconnect_params(psoc, vdev_id, &start_req->disconnect_params);
 	cm_roam_idle_params(psoc, vdev_id, &start_req->idle_params);
+	if (!(BIT(ROAM_TRIGGER_REASON_IDLE) &
+	    start_req->roam_triggers.trigger_bitmap))
+		start_req->idle_params.enable = false;
+
 	cm_roam_scan_offload_rssi_thresh(psoc, vdev_id,
 					 &start_req->rssi_params, rso_cfg);
 	cm_roam_scan_offload_scan_period(vdev_id,
@@ -2568,10 +2631,13 @@ cm_roam_update_config_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	if (MLME_IS_ROAM_STATE_RSO_ENABLED(psoc, vdev_id)) {
 		cm_roam_disconnect_params(psoc, vdev_id,
 					  &update_req->disconnect_params);
-		cm_roam_idle_params(psoc, vdev_id,
-				    &update_req->idle_params);
 		cm_roam_triggers(psoc, vdev_id,
 				 &update_req->roam_triggers);
+		cm_roam_idle_params(psoc, vdev_id,
+				    &update_req->idle_params);
+		if (!(BIT(ROAM_TRIGGER_REASON_IDLE) &
+		    update_req->roam_triggers.trigger_bitmap))
+			update_req->idle_params.enable = false;
 	}
 	cm_roam_scan_offload_rssi_thresh(psoc, vdev_id,
 					 &update_req->rssi_params, rso_cfg);

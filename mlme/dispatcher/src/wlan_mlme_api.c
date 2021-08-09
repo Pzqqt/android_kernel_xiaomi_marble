@@ -3958,6 +3958,8 @@ char *mlme_get_roam_trigger_str(uint32_t roam_scan_trigger)
 		return "NONE";
 	case WMI_ROAM_TRIGGER_REASON_PMK_TIMEOUT:
 		return "PMK Expired";
+	case WMI_ROAM_TRIGGER_REASON_BTC:
+		return "BTC TRIGGER";
 	default:
 		return "UNKNOWN";
 	}
