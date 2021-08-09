@@ -485,7 +485,8 @@ static int ipa3_setup_dflt_wan_rt_tables(void)
 			(uint8_t)IPPROTO_ICMP;
 	}
 
-	if (ipa3_add_rt_rule_ext_v2(rt_rule)) {
+	if (ipa3_add_rt_rule_ext_v2(rt_rule,
+		false)) {
 		IPAWANERR("fail to add dflt_wan v4 rule\n");
 		ret = -EPERM;
 		goto free_rule_entry;
@@ -509,7 +510,8 @@ static int ipa3_setup_dflt_wan_rt_tables(void)
 		rt_rule_entry[WAN_RT_ICMP].rule.attrib.u.v6.next_hdr =
 			(uint8_t)NEXTHDR_ICMP;
 	}
-	if (ipa3_add_rt_rule_ext_v2(rt_rule)) {
+	if (ipa3_add_rt_rule_ext_v2(rt_rule,
+		false)) {
 		IPAWANERR("fail to add dflt_wan v6 rule\n");
 		ret = -EPERM;
 		goto free_rule_entry;
@@ -596,7 +598,8 @@ static int ipa3_setup_low_lat_rt_rules(void)
 	rt_rule_entry[WAN_RT_ICMP].rule.attrib.u.v4.protocol =
 		(uint8_t)IPPROTO_ICMP;
 
-	if (ipa3_add_rt_rule_ext_v2(rt_rule)) {
+	if (ipa3_add_rt_rule_ext_v2(rt_rule,
+		false)) {
 		IPAWANERR("fail to add low lat v4 rule\n");
 		ret = -EPERM;
 		goto free_rule_entry;
@@ -616,7 +619,8 @@ static int ipa3_setup_low_lat_rt_rules(void)
 		IPA_FLT_META_DATA | IPA_FLT_NEXT_HDR;
 	rt_rule_entry[WAN_RT_ICMP].rule.attrib.u.v6.next_hdr =
 		(uint8_t)IPPROTO_ICMP;
-	if (ipa3_add_rt_rule_ext_v2(rt_rule)) {
+	if (ipa3_add_rt_rule_ext_v2(rt_rule,
+		false)) {
 		IPAWANERR("fail to add low lat v6 rule\n");
 		ret = -EPERM;
 		goto free_rule_entry;

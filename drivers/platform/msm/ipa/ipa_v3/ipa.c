@@ -1497,7 +1497,7 @@ static int ipa3_ioctl_add_rt_rule_ext_v2(unsigned long arg)
 	((struct ipa_ioc_add_rt_rule_ext_v2 *)header)->rules =
 		(u64)kptr;
 	if (ipa3_add_rt_rule_ext_v2(
-		(struct ipa_ioc_add_rt_rule_ext_v2 *)header)) {
+		(struct ipa_ioc_add_rt_rule_ext_v2 *)header, true)) {
 		IPAERR_RL("ipa3_add_rt_rule_ext_v2 fails\n");
 		retval = -EPERM;
 		goto free_param_kptr;
