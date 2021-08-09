@@ -1114,7 +1114,7 @@
  * BSSID.
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: non AP 1, AP 0
  *
  * This ini is used to Enable check for 6Ghz allowed security. If enabled
  * only WPA3 and other allowed security will be allowed for 6Ghz connection
@@ -1128,7 +1128,7 @@
  * </ini>
  */
 #define CFG_CHECK_6GHZ_SECURITY CFG_INI_BOOL(\
-				"check_6ghz_security", 0, \
+				"check_6ghz_security", PLATFORM_VALUE(1, 0), \
 				"Enable check for 6Ghz allowed security")
 /*
  * <ini>
