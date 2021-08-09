@@ -363,6 +363,7 @@ static void hdd_ipa_set_wake_up_idle(bool wake_up_idle)
 }
 #endif
 
+#ifdef QCA_CONFIG_SMP
 /**
  * hdd_ipa_send_to_nw_stack() - Check if IPA supports NAPI
  * polling during RX
@@ -384,6 +385,15 @@ static int hdd_ipa_send_to_nw_stack(qdf_nbuf_t skb)
 		result = netif_rx_ni(skb);
 	return result;
 }
+#else
+static int hdd_ipa_send_to_nw_stack(qdf_nbuf_t skb)
+{
+	int result;
+
+	result = netif_rx_ni(skb);
+	return result;
+}
+#endif
 
 #ifdef QCA_CONFIG_SMP
 
