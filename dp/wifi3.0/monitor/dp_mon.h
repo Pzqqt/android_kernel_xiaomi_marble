@@ -843,20 +843,6 @@ static inline void dp_monitor_print_tx_stats(struct dp_pdev *pdev)
 }
 
 /*
- * dp_monitor_is_enable_enhanced_stats() - check if enhanced stats enabled
- * @pdev: point to dp pdev
- *
- * Return: true if enhanced stats is enabled
- */
-static inline bool dp_monitor_is_enable_enhanced_stats(struct dp_pdev *pdev)
-{
-	if (qdf_unlikely(!pdev || !pdev->monitor_pdev))
-		return false;
-
-	return pdev->monitor_pdev->enhanced_stats_en;
-}
-
-/*
  * dp_monitor_set_chan_num() - set channel number
  * @pdev: point to dp pdev
  * @chan_num: channel number

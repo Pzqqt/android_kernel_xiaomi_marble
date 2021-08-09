@@ -2429,6 +2429,9 @@ struct dp_pdev {
 	/* Global RX decap mode for the device */
 	enum htt_pkt_type rx_decap_mode;
 
+	/* Enhanced Stats is enabled */
+	bool enhanced_stats_en;
+
 	qdf_atomic_t num_tx_outstanding;
 	int32_t tx_descs_max;
 

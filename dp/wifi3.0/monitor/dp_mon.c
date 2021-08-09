@@ -4825,6 +4825,7 @@ dp_enable_enhanced_stats(struct cdp_soc_t *soc, uint8_t pdev_id)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	pdev->enhanced_stats_en = true;
 	if (is_ppdu_txrx_capture_enabled(pdev) && !mon_pdev->bpr_enable) {
 		dp_h2t_cfg_stats_msg_send(pdev, DP_PPDU_STATS_CFG_ENH_STATS,
 					  pdev->pdev_id);
@@ -4863,6 +4864,7 @@ dp_disable_enhanced_stats(struct cdp_soc_t *soc, uint8_t pdev_id)
 		dp_cal_client_timer_stop(mon_pdev->cal_client_ctx);
 
 	mon_pdev->enhanced_stats_en = 0;
+	pdev->enhanced_stats_en = false;
 
 	if (is_ppdu_txrx_capture_enabled(pdev) && !mon_pdev->bpr_enable) {
 		dp_h2t_cfg_stats_msg_send(pdev, 0, pdev->pdev_id);
