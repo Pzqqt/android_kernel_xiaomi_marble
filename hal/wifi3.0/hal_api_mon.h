@@ -663,11 +663,15 @@ struct mon_rx_user_info {
 	uint8_t qos_control_info_valid;
 };
 
+#ifdef QCA_SUPPORT_SCAN_SPCL_VAP_STATS
 struct hal_rx_frm_type_info {
 	uint32_t rx_mgmt_cnt;
 	uint32_t rx_ctrl_cnt;
 	uint32_t rx_data_cnt;
 };
+#else
+struct hal_rx_frm_type_info {};
+#endif
 
 struct hal_rx_ppdu_info {
 	struct hal_rx_ppdu_common_info com_info;

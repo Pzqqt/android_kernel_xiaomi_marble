@@ -606,24 +606,113 @@ dp_deliver_tx_mgmt(struct cdp_soc_t *cdp_soc, uint8_t pdev_id, qdf_nbuf_t nbuf)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef QCA_SUPPORT_SCAN_SPCL_VAP_STATS
 /**
- * dp_reset_spcl_vap_stats() - reset spcl vap rx stats
+ * dp_scan_spcl_vap_stats_attach() - alloc spcl vap stats struct
+ * @mon_vdev: Datapath mon VDEV handle
+ *
+ * Return: 0 on success, not 0 on failure
+ */
+static inline QDF_STATUS
+dp_scan_spcl_vap_stats_attach(struct dp_mon_vdev *mon_vdev)
+{
+	mon_vdev->scan_spcl_vap_stats =
+		qdf_mem_malloc(sizeof(struct cdp_scan_spcl_vap_stats));
+
+	if (!mon_vdev->scan_spcl_vap_stats) {
+		dp_mon_err("scan spcl vap stats attach fail");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_scan_spcl_vap_stats_detach() - free spcl vap stats struct
+ * @mon_vdev: Datapath mon VDEV handle
+ *
+ * Return: void
+ */
+static inline void
+dp_scan_spcl_vap_stats_detach(struct dp_mon_vdev *mon_vdev)
+{
+	if (mon_vdev->scan_spcl_vap_stats) {
+		qdf_mem_free(mon_vdev->scan_spcl_vap_stats);
+		mon_vdev->scan_spcl_vap_stats = NULL;
+	}
+}
+
+/**
+ * dp_reset_scan_spcl_vap_stats() - reset spcl vap rx stats
  * @vdev: Datapath VDEV handle
  *
  * Return: void
  */
 static inline void
-dp_reset_spcl_vap_stats(struct dp_vdev *vdev)
+dp_reset_scan_spcl_vap_stats(struct dp_vdev *vdev)
 {
 	struct dp_mon_vdev *mon_vdev;
+	struct dp_mon_pdev *mon_pdev;
 
-	mon_vdev = vdev->monitor_vdev;
-	if (!mon_vdev)
+	mon_pdev = vdev->pdev->monitor_pdev;
+	if (!mon_pdev || !mon_pdev->reset_scan_spcl_vap_stats_enable)
 		return;
 
-	qdf_mem_zero(&mon_vdev->spcl_vap_stats,
-		     sizeof(mon_vdev->spcl_vap_stats));
+	mon_vdev = vdev->monitor_vdev;
+	if (!mon_vdev || !mon_vdev->scan_spcl_vap_stats)
+		return;
+
+	qdf_mem_zero(mon_vdev->scan_spcl_vap_stats,
+		     sizeof(struct cdp_scan_spcl_vap_stats));
 }
+
+/**
+ * dp_get_scan_spcl_vap_stats() - get spcl vap rx stats
+ * @soc_hdl: Datapath soc handle
+ * @vdev_id: vdev id
+ * @stats: structure to hold spcl vap stats
+ *
+ * Return: 0 on success, not 0 on failure
+ */
+static QDF_STATUS
+dp_get_scan_spcl_vap_stats(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
+			   struct cdp_scan_spcl_vap_stats *stats)
+{
+	struct dp_mon_vdev *mon_vdev = NULL;
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_CDP);
+
+	if (!vdev || !stats)
+		return QDF_STATUS_E_INVAL;
+
+	mon_vdev = vdev->monitor_vdev;
+	if (!mon_vdev || !mon_vdev->scan_spcl_vap_stats)
+		return QDF_STATUS_E_INVAL;
+
+	qdf_mem_copy(stats, mon_vdev->scan_spcl_vap_stats,
+		     sizeof(struct cdp_scan_spcl_vap_stats));
+
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static inline void
+dp_reset_scan_spcl_vap_stats(struct dp_vdev *vdev)
+{
+}
+
+static inline QDF_STATUS
+dp_scan_spcl_vap_stats_attach(struct dp_mon_vdev *mon_vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void
+dp_scan_spcl_vap_stats_detach(struct dp_mon_vdev *mon_vdev)
+{
+}
+#endif
 
 /**
  * dp_vdev_set_monitor_mode() - Set DP VDEV to monitor mode
@@ -672,9 +761,8 @@ static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_soc_t *dp_soc,
 		goto fail;
 	}
 
-	if (mon_pdev->spcl_vap_configured &&
-	    mon_pdev->reset_spcl_vap_stats_enable)
-		dp_reset_spcl_vap_stats(vdev);
+	if (mon_pdev->scan_spcl_vap_configured)
+		dp_reset_scan_spcl_vap_stats(vdev);
 
 	/*Check if current pdev's monitor_vdev exists */
 	if (mon_pdev->monitor_configured) {
@@ -5296,29 +5384,6 @@ static void  dp_iterate_update_peer_list(struct cdp_pdev *pdev_hdl)
 }
 #endif
 
-static QDF_STATUS
-dp_get_spcl_vap_stats(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
-		      struct cdp_spcl_vap_stats *stats)
-{
-	struct dp_mon_vdev *mon_vdev = NULL;
-	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
-	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
-						     DP_MOD_ID_CDP);
-
-	if (!vdev || !stats)
-		return QDF_STATUS_E_INVAL;
-
-	mon_vdev = vdev->monitor_vdev;
-	if (!mon_vdev)
-		return QDF_STATUS_E_INVAL;
-
-	qdf_mem_copy(stats, &mon_vdev->spcl_vap_stats,
-		     sizeof(struct cdp_spcl_vap_stats));
-
-	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
-	return QDF_STATUS_SUCCESS;
-}
-
 QDF_STATUS dp_mon_soc_cfg_init(struct dp_soc *soc)
 {
 	int target_type;
@@ -5533,12 +5598,16 @@ QDF_STATUS dp_mon_pdev_deinit(struct dp_pdev *pdev)
 static QDF_STATUS dp_mon_vdev_attach(struct dp_vdev *vdev)
 {
 	struct dp_mon_vdev *mon_vdev;
+	struct dp_pdev *pdev = vdev->pdev;
 
 	mon_vdev = (struct dp_mon_vdev *)qdf_mem_malloc(sizeof(*mon_vdev));
 	if (!mon_vdev) {
 		dp_mon_err("%pK: Monitor vdev allocation failed", vdev);
 		return QDF_STATUS_E_NOMEM;
 	}
+
+	if (pdev->monitor_pdev->scan_spcl_vap_configured)
+		dp_scan_spcl_vap_stats_attach(mon_vdev);
 
 	vdev->monitor_vdev = mon_vdev;
 
@@ -5552,6 +5621,9 @@ static QDF_STATUS dp_mon_vdev_detach(struct dp_vdev *vdev)
 
 	if (!mon_vdev)
 		return QDF_STATUS_E_FAILURE;
+
+	if (pdev->monitor_pdev->scan_spcl_vap_configured)
+		dp_scan_spcl_vap_stats_detach(mon_vdev);
 
 	qdf_mem_free(mon_vdev);
 	vdev->monitor_vdev = NULL;
@@ -5741,8 +5813,10 @@ void dp_mon_cdp_ops_register(struct dp_soc *soc)
 #ifdef WDI_EVENT_ENABLE
 	ops->ctrl_ops->txrx_get_pldev = dp_get_pldev;
 #endif
-	ops->host_stats_ops->txrx_get_spcl_vap_stats =
-					dp_get_spcl_vap_stats;
+#ifdef QCA_SUPPORT_SCAN_SPCL_VAP_STATS
+	ops->host_stats_ops->txrx_get_scan_spcl_vap_stats =
+					dp_get_scan_spcl_vap_stats;
+#endif
 	return;
 }
 

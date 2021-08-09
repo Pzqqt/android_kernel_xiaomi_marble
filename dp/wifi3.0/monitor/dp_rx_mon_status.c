@@ -1705,16 +1705,17 @@ dp_rx_mon_handle_mu_ul_info(struct hal_rx_ppdu_info *ppdu_info)
 }
 #endif
 
+#ifdef QCA_SUPPORT_SCAN_SPCL_VAP_STATS
 /**
- * dp_rx_mon_update_spcl_vap_stats() - Update special vap stats
+ * dp_rx_mon_update_scan_spcl_vap_stats() - Update special vap stats
  * @pdev: dp pdev context
  * @ppdu_info: ppdu info structure from ppdu ring
  *
  * Return: none
  */
 static inline void
-dp_rx_mon_update_spcl_vap_stats(struct dp_pdev *pdev,
-				struct hal_rx_ppdu_info *ppdu_info)
+dp_rx_mon_update_scan_spcl_vap_stats(struct dp_pdev *pdev,
+				     struct hal_rx_ppdu_info *ppdu_info)
 {
 	struct mon_rx_user_status *rx_user_status = NULL;
 	struct dp_mon_pdev *mon_pdev = NULL;
@@ -1727,28 +1728,35 @@ dp_rx_mon_update_spcl_vap_stats(struct dp_pdev *pdev,
 		return;
 
 	mon_vdev = mon_pdev->mvdev->monitor_vdev;
-	if (!mon_vdev)
+	if (!mon_vdev || !mon_vdev->scan_spcl_vap_stats)
 		return;
 
 	num_users = ppdu_info->com_info.num_users;
 	for (user = 0; user < num_users; user++) {
 		rx_user_status =  &ppdu_info->rx_user_status[user];
-		mon_vdev->spcl_vap_stats.rx_ok_pkts +=
+		mon_vdev->scan_spcl_vap_stats->rx_ok_pkts +=
 				rx_user_status->mpdu_cnt_fcs_ok;
-		mon_vdev->spcl_vap_stats.rx_ok_bytes +=
+		mon_vdev->scan_spcl_vap_stats->rx_ok_bytes +=
 				rx_user_status->mpdu_ok_byte_count;
-		mon_vdev->spcl_vap_stats.rx_err_pkts +=
+		mon_vdev->scan_spcl_vap_stats->rx_err_pkts +=
 				rx_user_status->mpdu_cnt_fcs_err;
-		mon_vdev->spcl_vap_stats.rx_err_bytes +=
+		mon_vdev->scan_spcl_vap_stats->rx_err_bytes +=
 				rx_user_status->mpdu_err_byte_count;
 	}
-	mon_vdev->spcl_vap_stats.rx_mgmt_pkts +=
+	mon_vdev->scan_spcl_vap_stats->rx_mgmt_pkts +=
 				ppdu_info->frm_type_info.rx_mgmt_cnt;
-	mon_vdev->spcl_vap_stats.rx_ctrl_pkts +=
+	mon_vdev->scan_spcl_vap_stats->rx_ctrl_pkts +=
 				ppdu_info->frm_type_info.rx_ctrl_cnt;
-	mon_vdev->spcl_vap_stats.rx_data_pkts +=
+	mon_vdev->scan_spcl_vap_stats->rx_data_pkts +=
 				ppdu_info->frm_type_info.rx_data_cnt;
 }
+#else
+static inline void
+dp_rx_mon_update_scan_spcl_vap_stats(struct dp_pdev *pdev,
+				     struct hal_rx_ppdu_info *ppdu_info)
+{
+}
+#endif
 
 /**
  * dp_rx_mon_status_process_tlv() - Process status TLV in status
@@ -1894,9 +1902,9 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, struct dp_intr *int_ctx,
 			mon_pdev->mon_ppdu_status = DP_PPDU_STATUS_DONE;
 
 			/* Collect spcl vap stats if configured */
-			if (mon_pdev->spcl_vap_configured)
-				dp_rx_mon_update_spcl_vap_stats(pdev,
-								ppdu_info);
+			if (mon_pdev->scan_spcl_vap_configured)
+				dp_rx_mon_update_scan_spcl_vap_stats(pdev,
+								     ppdu_info);
 
 			/*
 			* if chan_num is not fetched correctly from ppdu RX TLV,

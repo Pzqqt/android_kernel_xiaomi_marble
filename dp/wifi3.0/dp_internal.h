@@ -606,13 +606,13 @@ static inline bool dp_monitor_is_enable_enhanced_stats(struct dp_pdev *pdev)
 }
 
 static inline
-void dp_monitor_pdev_config_spcl_vap(struct dp_pdev *pdev)
+void dp_monitor_pdev_config_scan_spcl_vap(struct dp_pdev *pdev)
 {
 }
 
 static inline
-void dp_monitor_pdev_reset_spcl_vap_stats_enable(struct dp_pdev *pdev,
-						 bool val)
+void dp_monitor_pdev_reset_scan_spcl_vap_stats_enable(struct dp_pdev *pdev,
+						      bool val)
 {
 }
 #endif

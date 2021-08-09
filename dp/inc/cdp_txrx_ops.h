@@ -987,9 +987,11 @@ struct cdp_host_stats_ops {
 				  uint32_t last_tx_rate_mcs,
 				  uint32_t stats_id);
 
+#ifdef QCA_SUPPORT_SCAN_SPCL_VAP_STATS
 	QDF_STATUS
-	(*txrx_get_spcl_vap_stats)(struct cdp_soc_t *soc, uint8_t vdev_id,
-				   struct cdp_spcl_vap_stats *stats);
+	(*txrx_get_scan_spcl_vap_stats)(struct cdp_soc_t *soc, uint8_t vdev_id,
+					struct cdp_scan_spcl_vap_stats *stats);
+#endif
 };
 
 struct cdp_wds_ops {

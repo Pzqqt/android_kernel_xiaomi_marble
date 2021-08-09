@@ -487,6 +487,35 @@ hal_get_mac_addr1(uint8_t *rx_mpdu_start,
 }
 #endif
 
+#ifdef QCA_SUPPORT_SCAN_SPCL_VAP_STATS
+static inline void
+hal_update_frame_type_cnt(uint8_t *rx_mpdu_start,
+			  struct hal_rx_ppdu_info *ppdu_info)
+{
+	uint16_t frame_ctrl;
+	uint8_t fc_type;
+
+	if (HAL_RX_GET_FC_VALID(rx_mpdu_start)) {
+		frame_ctrl = HAL_RX_GET(rx_mpdu_start,
+					RX_MPDU_INFO_14,
+					MPDU_FRAME_CONTROL_FIELD);
+		fc_type = HAL_RX_GET_FRAME_CTRL_TYPE(frame_ctrl);
+		if (fc_type == HAL_RX_FRAME_CTRL_TYPE_MGMT)
+			ppdu_info->frm_type_info.rx_mgmt_cnt++;
+		else if (fc_type == HAL_RX_FRAME_CTRL_TYPE_CTRL)
+			ppdu_info->frm_type_info.rx_ctrl_cnt++;
+		else if (fc_type == HAL_RX_FRAME_CTRL_TYPE_DATA)
+			ppdu_info->frm_type_info.rx_data_cnt++;
+	}
+}
+#else
+static inline void
+hal_update_frame_type_cnt(uint8_t *rx_mpdu_start,
+			  struct hal_rx_ppdu_info *ppdu_info)
+{
+}
+#endif
+
 /**
  * hal_rx_status_get_tlv_info() - process receive info TLV
  * @rx_tlv_hdr: pointer to TLV header
@@ -1494,21 +1523,8 @@ hal_rx_status_get_tlv_info_generic_li(void *rx_tlv_hdr, void *ppduinfo,
 		uint8_t *rx_mpdu_start = (uint8_t *)rx_tlv;
 		uint32_t ppdu_id = HAL_RX_GET_PPDU_ID(rx_mpdu_start);
 		uint8_t filter_category = 0;
-		uint16_t frame_ctrl;
-		uint8_t fc_type;
 
-		if (HAL_RX_GET_FC_VALID(rx_mpdu_start)) {
-			frame_ctrl = HAL_RX_GET(rx_mpdu_start,
-						RX_MPDU_INFO_14,
-						MPDU_FRAME_CONTROL_FIELD);
-			fc_type = HAL_RX_GET_FRAME_CTRL_TYPE(frame_ctrl);
-			if (fc_type == HAL_RX_FRAME_CTRL_TYPE_MGMT)
-				ppdu_info->frm_type_info.rx_mgmt_cnt++;
-			else if (fc_type == HAL_RX_FRAME_CTRL_TYPE_CTRL)
-				ppdu_info->frm_type_info.rx_ctrl_cnt++;
-			else if (fc_type == HAL_RX_FRAME_CTRL_TYPE_DATA)
-				ppdu_info->frm_type_info.rx_data_cnt++;
-		}
+		hal_update_frame_type_cnt(rx_mpdu_start, ppdu_info);
 
 		ppdu_info->nac_info.fc_valid =
 				HAL_RX_GET_FC_VALID(rx_mpdu_start);
