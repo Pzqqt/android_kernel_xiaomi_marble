@@ -416,6 +416,7 @@ typedef bool (*qdf_irqlocked_func_t)(void *);
  * @QDF_MODULE_ID_MLO: MLO Manager module ID
  * @QDF_MODULE_ID_MLOIE: MLO related IE protocol processing module ID
  * @QDF_MODULE_ID_MBSS: MBSS Framework module ID
+ * @QDF_MODULE_ID_MON: Monitor module ID
  * @QDF_MODULE_ID_ANY: anything
  * @QDF_MODULE_ID_MAX: Max place holder module ID
  *
@@ -569,6 +570,7 @@ typedef enum {
 	QDF_MODULE_ID_MLO,
 	QDF_MODULE_ID_MLOIE,
 	QDF_MODULE_ID_MBSS,
+	QDF_MODULE_ID_MON,
 	QDF_MODULE_ID_ANY,
 	QDF_MODULE_ID_MAX,
 } QDF_MODULE_ID;

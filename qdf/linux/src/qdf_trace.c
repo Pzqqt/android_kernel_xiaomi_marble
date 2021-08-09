@@ -3233,6 +3233,7 @@ struct category_name_info g_qdf_category_name[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_MLO] = {"MLO_MGR"},
 	[QDF_MODULE_ID_MLOIE] = {"MLOIE"},
 	[QDF_MODULE_ID_MBSS] = {"MBSS"},
+	[QDF_MODULE_ID_MON] = {"MONITOR"},
 	[QDF_MODULE_ID_ANY] = {"ANY"},
 };
 qdf_export_symbol(g_qdf_category_name);
@@ -3804,6 +3805,7 @@ static void set_default_trace_levels(struct category_info *cinfo)
 		[QDF_MODULE_ID_MLO] = QDF_TRACE_LEVEL_INFO,
 		[QDF_MODULE_ID_MLOIE] = QDF_TRACE_LEVEL_INFO,
 		[QDF_MODULE_ID_MBSS] = QDF_TRACE_LEVEL_ERROR,
+		[QDF_MODULE_ID_MON] = QDF_TRACE_LEVEL_ERROR,
 		[QDF_MODULE_ID_ANY] = QDF_TRACE_LEVEL_INFO,
 	};
 
