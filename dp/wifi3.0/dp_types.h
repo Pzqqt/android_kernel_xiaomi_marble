@@ -810,6 +810,9 @@ struct dp_rx_tid {
 
 	/* Peer TID statistics */
 	struct cdp_peer_tid_stats stats;
+
+	/* defrag usage only, dp_peer pointer related with this tid */
+	struct dp_peer *defrag_peer;
 };
 
 /**
@@ -1905,6 +1908,15 @@ struct dp_soc {
 		TAILQ_HEAD(, dp_peer) * bins;
 	} peer_hash;
 
+#ifdef WLAN_FEATURE_11BE_MLO
+	/* Protect mld peer hash table */
+	DP_MUTEX_TYPE mld_peer_hash_lock;
+	struct {
+		unsigned mask;
+		unsigned idx_bits;
+		TAILQ_HEAD(, dp_peer) * bins;
+	} mld_peer_hash;
+#endif
 	/* rx defrag state – TBD: do we need this per radio? */
 	struct {
 		struct {
@@ -3122,6 +3134,34 @@ struct dp_peer_mesh_latency_parameter {
 };
 #endif
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/* Max number of links for MLO connection */
+#define DP_MAX_MLO_LINKS 3
+
+/**
+ * struct dp_peer_link_info - link peer information for MLO
+ * @mac_add: Mac address
+ * @vdev_id: Vdev ID for current link peer
+ * @is_valid: flag for link peer info valid or not
+ */
+struct dp_peer_link_info {
+	union dp_align_mac_addr mac_addr;
+	uint8_t vdev_id;
+	uint8_t is_valid;
+};
+
+/**
+ * struct dp_mld_link_peers - this structure is used to get link peers
+			      pointer from mld peer
+ * @link_peers: link peers pointer array
+ * @num_links: number of link peers fetched
+ */
+struct dp_mld_link_peers {
+	struct dp_peer *link_peers[DP_MAX_MLO_LINKS];
+	uint8_t num_links;
+};
+#endif
+
 /* Peer structure for data path state */
 struct dp_peer {
 	/* VDEV to which this peer is associated */
@@ -3141,8 +3181,8 @@ struct dp_peer {
 	/* node in the hash table bin's list of peers */
 	TAILQ_ENTRY(dp_peer) hash_list_elem;
 
-	/* TID structures */
-	struct dp_rx_tid rx_tid[DP_MAX_TIDS];
+	/* TID structures pointer */
+	struct dp_rx_tid *rx_tid;
 
 	/* TBD: No transmit TID state required? */
 
@@ -3163,6 +3203,11 @@ struct dp_peer {
 		in_twt:1, /* in TWT session */
 		delete_in_progress:1, /* Indicate kickout sent */
 		sta_self_peer:1; /* Indicate STA self peer */
+
+#ifdef WLAN_FEATURE_11BE_MLO
+	uint8_t assoc_link:1, /* first assoc link peer for MLO */
+		primary_link:1; /* primary link for MLO */
+#endif
 
 #ifdef QCA_SUPPORT_PEER_ISOLATION
 	bool isolation; /* enable peer isolation for this peer */
@@ -3247,6 +3292,17 @@ struct dp_peer {
 #endif
 #ifdef WIFI_MONITOR_SUPPORT
 	struct dp_mon_peer *monitor_peer;
+#endif
+#ifdef WLAN_FEATURE_11BE_MLO
+	/* peer type */
+	enum cdp_peer_type peer_type;
+	/*---------for link peer---------*/
+	struct dp_peer *mld_peer;
+
+	/*---------for mld peer----------*/
+	struct dp_peer_link_info link_peers[DP_MAX_MLO_LINKS];
+	uint8_t num_links;
+	DP_MUTEX_TYPE link_peers_info_lock;
 #endif
 };
 

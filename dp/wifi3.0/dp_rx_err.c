@@ -628,7 +628,7 @@ _dp_rx_bar_frame_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	struct dp_peer *peer;
 
 	peer_id = DP_PEER_METADATA_PEER_ID_GET(mpdu_desc_info->peer_meta_data);
-	peer = dp_peer_get_ref_by_id(soc, peer_id, DP_MOD_ID_RX_ERR);
+	peer = dp_peer_get_tgt_peer_by_id(soc, peer_id, DP_MOD_ID_RX_ERR);
 	if (!peer)
 		return;
 

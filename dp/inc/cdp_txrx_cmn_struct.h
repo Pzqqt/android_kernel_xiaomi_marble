@@ -386,6 +386,31 @@ enum htt_cmn_t2h_en_stats_status {
 };
 
 /**
+ * enum cdp_peer_type - Peer type
+ * @CDP_INVALID_PEER_TYPE: invalid peer type
+ * @CDP_LINK_PEER_TYPE: legacy peer or link peer for MLO connection
+ * @CDP_MLD_PEER_TYPE: MLD peer for MLO connection
+ */
+enum cdp_peer_type {
+	CDP_INVALID_PEER_TYPE,
+	CDP_LINK_PEER_TYPE,
+	CDP_MLD_PEER_TYPE,
+};
+
+/**
+ * struct cdp_peer_setup_info: MLO connection info for cdp_peer_setup()
+ * @mld_peer_mac: mld peer mac address pointer
+ * @is_assoc_link: set true for first MLO link peer association
+ * @is_primary_link: for MCC, the first link will always be primary link,
+		     for WIN,  other link might be primary link.
+ */
+struct cdp_peer_setup_info {
+	uint8_t *mld_peer_mac;
+	uint8_t is_assoc_link:1,
+		is_primary_link:1;
+};
+
+/**
  * struct ol_txrx_peer_state - Peer state information
  */
 enum ol_txrx_peer_state {

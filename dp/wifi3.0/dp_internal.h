@@ -1543,11 +1543,6 @@ void dp_peer_ppdu_delayed_ba_cleanup(struct dp_peer *peer);
 extern void dp_peer_rx_init(struct dp_pdev *pdev, struct dp_peer *peer);
 void dp_peer_cleanup(struct dp_vdev *vdev, struct dp_peer *peer);
 void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer);
-extern struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
-					      uint8_t *peer_mac_addr,
-					      int mac_addr_is_aligned,
-					      uint8_t vdev_id,
-					      enum dp_mod_id id);
 
 #ifdef DP_PEER_EXTENDED_API
 /**

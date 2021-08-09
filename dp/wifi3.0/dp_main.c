@@ -214,7 +214,8 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 	      struct ol_if_ops *ol_ops, uint16_t device_id);
 static inline QDF_STATUS dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl,
 					      uint8_t vdev_id,
-					      uint8_t *peer_mac_addr);
+					      uint8_t *peer_mac_addr,
+					      enum cdp_peer_type peer_type);
 static QDF_STATUS dp_peer_delete_wifi3(struct cdp_soc_t *soc_hdl,
 				       uint8_t vdev_id,
 				       uint8_t *peer_mac, uint32_t bitmap);
@@ -6037,7 +6038,7 @@ static QDF_STATUS dp_vdev_attach_wifi3(struct cdp_soc_t *cdp_soc,
 
 	if (wlan_op_mode_sta == vdev->opmode)
 		dp_peer_create_wifi3((struct cdp_soc_t *)soc, vdev_id,
-				     vdev->mac_addr.raw);
+				     vdev->mac_addr.raw, CDP_LINK_PEER_TYPE);
 	return QDF_STATUS_SUCCESS;
 
 fail0:
@@ -6137,19 +6138,9 @@ static QDF_STATUS dp_vdev_register_wifi3(struct cdp_soc_t *soc_hdl,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * dp_peer_delete() - delete DP peer
- *
- * @soc: Datatpath soc
- * @peer: Datapath peer
- * @arg: argument to iter function
- *
- * Return: void
- */
-static void
-dp_peer_delete(struct dp_soc *soc,
-	       struct dp_peer *peer,
-	       void *arg)
+void dp_peer_delete(struct dp_soc *soc,
+		    struct dp_peer *peer,
+		    void *arg)
 {
 	if (!peer->valid)
 		return;
@@ -6293,8 +6284,49 @@ static QDF_STATUS dp_vdev_detach_wifi3(struct cdp_soc_t *cdp_soc,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_11BE_MLO
+/**
+ * is_dp_peer_can_reuse() - check if the dp_peer match condition to be reused
+ * @vdev: Target DP vdev handle
+ * @peer: DP peer handle to be checked
+ * @peer_mac_addr: Target peer mac address
+ * @peer_type: Target peer type
+ *
+ * Return: true - if match, false - not match
+ */
+static inline
+bool is_dp_peer_can_reuse(struct dp_vdev *vdev,
+			  struct dp_peer *peer,
+			  uint8_t *peer_mac_addr,
+			  enum cdp_peer_type peer_type)
+{
+	if (peer->bss_peer && (peer->vdev == vdev) &&
+	    (peer->peer_type == peer_type) &&
+	    (qdf_mem_cmp(peer_mac_addr, peer->mac_addr.raw,
+			 QDF_MAC_ADDR_SIZE) == 0))
+		return true;
+
+	return false;
+}
+#else
+static inline
+bool is_dp_peer_can_reuse(struct dp_vdev *vdev,
+			  struct dp_peer *peer,
+			  uint8_t *peer_mac_addr,
+			  enum cdp_peer_type peer_type)
+{
+	if (peer->bss_peer && (peer->vdev == vdev) &&
+	    (qdf_mem_cmp(peer_mac_addr, peer->mac_addr.raw,
+			 QDF_MAC_ADDR_SIZE) == 0))
+		return true;
+
+	return false;
+}
+#endif
+
 static inline struct dp_peer *dp_peer_can_reuse(struct dp_vdev *vdev,
-						uint8_t *peer_mac_addr)
+						uint8_t *peer_mac_addr,
+						enum cdp_peer_type peer_type)
 {
 	struct dp_peer *peer;
 	struct dp_soc *soc = vdev->pdev->soc;
@@ -6304,9 +6336,8 @@ static inline struct dp_peer *dp_peer_can_reuse(struct dp_vdev *vdev,
 		      inactive_list_elem) {
 
 		/* reuse bss peer only when vdev matches*/
-		if (peer->bss_peer && (peer->vdev == vdev) &&
-		    qdf_mem_cmp(peer_mac_addr, peer->mac_addr.raw,
-				QDF_MAC_ADDR_SIZE) == 0) {
+		if (is_dp_peer_can_reuse(vdev, peer,
+					 peer_mac_addr, peer_type)) {
 			/* increment ref count for cdp_peer_create*/
 			if (dp_peer_get_ref(soc, peer, DP_MOD_ID_CONFIG) ==
 						QDF_STATUS_SUCCESS) {
@@ -6365,12 +6396,13 @@ static inline void dp_peer_rx_bufq_resources_init(struct dp_peer *peer)
  * @soc_hdl: Datapath soc handle
  * @vdev_id: id of vdev
  * @peer_mac_addr: Peer MAC address
+ * @peer_type: link or MLD peer type
  *
  * Return: 0 on success, -1 on failure
  */
 static QDF_STATUS
 dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
-		     uint8_t *peer_mac_addr)
+		     uint8_t *peer_mac_addr, enum cdp_peer_type peer_type)
 {
 	struct dp_peer *peer;
 	int i;
@@ -6395,17 +6427,18 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	 * If a peer entry with given MAC address already exists,
 	 * reuse the peer and reset the state of peer.
 	 */
-	peer = dp_peer_can_reuse(vdev, peer_mac_addr);
+	peer = dp_peer_can_reuse(vdev, peer_mac_addr, peer_type);
 
 	if (peer) {
-		dp_peer_vdev_list_add(soc, vdev, peer);
-
-		dp_peer_find_hash_add(soc, peer);
 		qdf_atomic_init(&peer->is_default_route_set);
 		dp_peer_cleanup(vdev, peer);
 
-		for (i = 0; i < DP_MAX_TIDS; i++)
-			qdf_spinlock_create(&peer->rx_tid[i].tid_lock);
+		dp_peer_vdev_list_add(soc, vdev, peer);
+		dp_peer_find_hash_add(soc, peer);
+
+		dp_peer_rx_tids_create(peer);
+		if (IS_MLO_DP_MLD_PEER(peer))
+			dp_mld_peer_init_link_peers_info(peer);
 
 		qdf_spin_lock_bh(&soc->ast_lock);
 		dp_peer_delete_ast_entries(soc, peer);
@@ -6474,6 +6507,7 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 	/* store provided params */
 	peer->vdev = vdev;
+	DP_PEER_SET_TYPE(peer, peer_type);
 	/* get the vdev reference for new peer */
 	dp_vdev_get_ref(soc, vdev, DP_MOD_ID_CHILD);
 
@@ -6534,8 +6568,9 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 		peer->sta_self_peer = 1;
 	}
 
-	for (i = 0; i < DP_MAX_TIDS; i++)
-		qdf_spinlock_create(&peer->rx_tid[i].tid_lock);
+	dp_peer_rx_tids_create(peer);
+	if (IS_MLO_DP_MLD_PEER(peer))
+		dp_mld_peer_init_link_peers_info(peer);
 
 	peer->valid = 1;
 	dp_local_peer_id_alloc(pdev, peer);
@@ -6583,6 +6618,90 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef WLAN_FEATURE_11BE_MLO
+QDF_STATUS dp_peer_mlo_setup(
+			struct dp_soc *soc,
+			struct dp_peer *peer,
+			uint8_t vdev_id,
+			struct cdp_peer_setup_info *setup_info)
+{
+	struct dp_peer *mld_peer = NULL;
+
+	/* Non-MLO connection, do nothing */
+	if (!setup_info || !setup_info->mld_peer_mac)
+		return QDF_STATUS_SUCCESS;
+
+	/* To do: remove this check if link/mld peer mac_addr allow to same */
+	if (!qdf_mem_cmp(setup_info->mld_peer_mac, peer->mac_addr.raw,
+			 QDF_MAC_ADDR_SIZE)) {
+		dp_peer_err("Same mac addres for link/mld peer");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* if this is the first assoc link */
+	if (setup_info->is_assoc_link)
+		/* create MLD peer */
+		dp_peer_create_wifi3((struct cdp_soc_t *)soc,
+				     vdev_id,
+				     setup_info->mld_peer_mac,
+				     CDP_MLD_PEER_TYPE);
+
+	peer->assoc_link = setup_info->is_assoc_link;
+	peer->primary_link = setup_info->is_primary_link;
+	mld_peer = dp_peer_find_hash_find(soc,
+					  setup_info->mld_peer_mac,
+					  0, DP_VDEV_ALL, DP_MOD_ID_CDP);
+	if (mld_peer) {
+		if (setup_info->is_assoc_link) {
+			/* assign rx_tid to mld peer */
+			mld_peer->rx_tid = peer->rx_tid;
+			/* no cdp_peer_setup for MLD peer,
+			 * set it for addba processing
+			 */
+			qdf_atomic_set(&mld_peer->is_default_route_set, 1);
+		} else {
+			/* free link peer origial rx_tids mem */
+			dp_peer_rx_tids_destroy(peer);
+			/* assign mld peer rx_tid to link peer */
+			peer->rx_tid = mld_peer->rx_tid;
+		}
+
+		if (setup_info->is_primary_link &&
+		    !setup_info->is_assoc_link) {
+			/*
+			 * if first link is not the primary link,
+			 * then need to change mld_peer->vdev as
+			 * primary link dp_vdev is not same one
+			 * during mld peer creation.
+			 */
+
+			/* relase the ref to original dp_vdev */
+			dp_vdev_unref_delete(soc, mld_peer->vdev,
+					     DP_MOD_ID_CDP);
+			/*
+			 * get the ref to new dp_vdev,
+			 * increase dp_vdev ref_cnt
+			 */
+			mld_peer->vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+							       DP_MOD_ID_CDP);
+		}
+
+		/* associate mld and link peer */
+		dp_link_peer_add_mld_peer(peer, mld_peer);
+		dp_mld_peer_add_link_peer(mld_peer, peer);
+
+		dp_peer_unref_delete(mld_peer, DP_MOD_ID_CDP);
+	} else {
+		peer->mld_peer = NULL;
+		dp_err("mld peer" QDF_MAC_ADDR_FMT "not found!",
+		       QDF_MAC_ADDR_REF(setup_info->mld_peer_mac));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /*
  * dp_vdev_get_default_reo_hash() - get reo dest ring and hash values for a vdev
@@ -6707,12 +6826,14 @@ static void dp_peer_setup_get_reo_hash(struct dp_vdev *vdev,
  * @soc_hdl: soc handle object
  * @vdev_id : vdev_id of vdev object
  * @peer_mac: Peer's mac address
+ * @peer_setup_info: peer setup info for MLO
  *
  * Return: QDF_STATUS
  */
 static QDF_STATUS
 dp_peer_setup_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
-		    uint8_t *peer_mac)
+		    uint8_t *peer_mac,
+		    struct cdp_peer_setup_info *setup_info)
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 	struct dp_pdev *pdev;
@@ -6766,6 +6887,12 @@ dp_peer_setup_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	}
 
 	qdf_atomic_set(&peer->is_default_route_set, 1);
+
+	status = dp_peer_mlo_setup(soc, peer, vdev->vdev_id, setup_info);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		dp_peer_err("peer mlo setup failed");
+		qdf_assert_always(0);
+	}
 
 	if (vdev_opmode != wlan_op_mode_monitor)
 		dp_peer_rx_init(pdev, peer);
@@ -7275,7 +7402,6 @@ void dp_peer_unref_delete(struct dp_peer *peer, enum dp_mod_id mod_id)
 	struct cdp_peer_cookie peer_cookie;
 	struct dp_peer *tmp_peer;
 	bool found = false;
-	int tid = 0;
 
 	if (mod_id > DP_MOD_ID_RX)
 		QDF_ASSERT(qdf_atomic_dec_return(&peer->mod_refs[mod_id]) >= 0);
@@ -7344,9 +7470,6 @@ void dp_peer_unref_delete(struct dp_peer *peer, enum dp_mod_id mod_id)
 		/* cleanup the peer data */
 		dp_peer_cleanup(vdev, peer);
 		dp_monitor_peer_detach(soc, peer);
-
-		for (tid = 0; tid < DP_MAX_TIDS; tid++)
-			qdf_spinlock_destroy(&peer->rx_tid[tid].tid_lock);
 
 		qdf_spinlock_destroy(&peer->peer_state_lock);
 		qdf_mem_free(peer);
@@ -7427,6 +7550,8 @@ static QDF_STATUS dp_peer_delete_wifi3(struct cdp_soc_t *soc_hdl,
 	dp_peer_find_hash_remove(soc, peer);
 
 	dp_peer_vdev_list_remove(soc, vdev, peer);
+
+	dp_peer_mlo_delete(soc, peer);
 
 	qdf_spin_lock_bh(&soc->inactive_peer_list_lock);
 	TAILQ_INSERT_TAIL(&soc->inactive_peer_list, peer,

@@ -222,9 +222,7 @@ void dp_rx_defrag_waitlist_flush(struct dp_soc *soc)
 		TAILQ_REMOVE(&temp_list, rx_reorder,
 			     defrag_waitlist_elem);
 		/* get address of current peer */
-		peer =
-			container_of(rx_reorder, struct dp_peer,
-				     rx_tid[rx_reorder->tid]);
+		peer = rx_reorder->defrag_peer;
 		qdf_spin_unlock_bh(&rx_reorder->tid_lock);
 
 		temp_peer = dp_peer_get_ref_by_id(soc, peer->peer_id,
@@ -298,9 +296,7 @@ void dp_rx_defrag_waitlist_remove(struct dp_peer *peer, unsigned tid)
 		struct dp_peer *peer_on_waitlist;
 
 		/* get address of current peer */
-		peer_on_waitlist =
-			container_of(rx_reorder, struct dp_peer,
-				     rx_tid[rx_reorder->tid]);
+		peer_on_waitlist = rx_reorder->defrag_peer;
 
 		/* Ensure it is TID for same peer */
 		if (peer_on_waitlist == peer && rx_reorder->tid == tid) {

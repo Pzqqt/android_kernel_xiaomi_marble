@@ -156,11 +156,12 @@ struct cdp_cmn_ops {
 	QDF_STATUS
 	(*txrx_peer_create)
 		(ol_txrx_soc_handle soc, uint8_t vdev_id,
-		uint8_t *peer_mac_addr);
+		 uint8_t *peer_mac_addr, enum cdp_peer_type peer_type);
 
 	QDF_STATUS
 	(*txrx_peer_setup)(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
-			   uint8_t *peer_mac);
+			   uint8_t *peer_mac,
+			   struct cdp_peer_setup_info *setup_info);
 
 	QDF_STATUS
 	(*txrx_cp_peer_del_response)

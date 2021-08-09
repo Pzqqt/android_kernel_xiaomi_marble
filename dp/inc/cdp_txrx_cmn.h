@@ -373,11 +373,12 @@ static inline QDF_STATUS cdp_peer_create
 		return QDF_STATUS_E_FAILURE;
 
 	return soc->ops->cmn_drv_ops->txrx_peer_create(soc, vdev_id,
-			peer_mac_addr);
+			peer_mac_addr, CDP_LINK_PEER_TYPE);
 }
 
 static inline void cdp_peer_setup
-	(ol_txrx_soc_handle soc, uint8_t vdev_id, uint8_t *peer_mac)
+	(ol_txrx_soc_handle soc, uint8_t vdev_id, uint8_t *peer_mac,
+	 struct cdp_peer_setup_info *setup_info)
 {
 	if (!soc || !soc->ops) {
 		dp_cdp_debug("Invalid Instance:");
@@ -390,7 +391,7 @@ static inline void cdp_peer_setup
 		return;
 
 	soc->ops->cmn_drv_ops->txrx_peer_setup(soc, vdev_id,
-			peer_mac);
+			peer_mac, setup_info);
 }
 
 /*
