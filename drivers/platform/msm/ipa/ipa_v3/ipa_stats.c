@@ -341,8 +341,9 @@ static int ipa_get_generic_stats(unsigned long arg)
 			continue;
 
 		reg_idx = ipahal_get_ep_reg_idx(ep_idx);
-		if (!(ipa3_ctx->hw_stats->drop.init.enabled_bitmask[reg_idx] &
-			ipahal_get_ep_bit(ep_idx)))
+		if (!(ipa3_ctx->hw_stats &&
+			(ipa3_ctx->hw_stats->drop.init.enabled_bitmask[reg_idx] &
+			ipahal_get_ep_bit(ep_idx))))
 			continue;
 
 		holb_disc_stats_ptr->client_type = i;
@@ -1525,8 +1526,9 @@ static int ipa_stats_get_alloc_info(unsigned long arg)
 				continue;
 
 			reg_idx = ipahal_get_ep_reg_idx(ep_idx);
-			if (!(ipa3_ctx->hw_stats->drop.init.enabled_bitmask[reg_idx] &
-				ipahal_get_ep_bit(ep_idx)))
+			if (!(ipa3_ctx->hw_stats &&
+				(ipa3_ctx->hw_stats->drop.init.enabled_bitmask[reg_idx] &
+				ipahal_get_ep_bit(ep_idx))))
 				continue;
 
 			holb_drop_stats_num_pipes++;
@@ -1577,7 +1579,8 @@ static int ipa_stats_get_alloc_info(unsigned long arg)
 			ipa_lnx_agent_ctx.alloc_info.eth_inst_info[i].num_rx_instances
 				= 0;
 			k = 0;
-			for (j = 0; j < IPA_ETH_CLIENT_MAX; j++) {
+			for (j = 0; (j < IPA_ETH_CLIENT_MAX) &&
+				(k < SPEARHEAD_NUM_MAX_TX_INSTANCES); j++) {
 				if (ipa_eth_client_exist(j, i)) {
 					ipa_lnx_agent_ctx.alloc_info.eth_inst_info[i].num_pipes =
 						ipa_lnx_agent_ctx.alloc_info.eth_inst_info[
@@ -1616,7 +1619,8 @@ static int ipa_stats_get_alloc_info(unsigned long arg)
 	if (ipa_lnx_agent_ctx.log_type_mask & SPRHD_IPA_LOG_TYPE_USB_STATS) {
 		ipa_lnx_agent_ctx.alloc_info.num_usb_instances = 0;
 		index = 0;
-		for (i = 0; i < IPA_USB_MAX_TETH_PROT_SIZE; i++) {
+		for (i = 0; (i < IPA_USB_MAX_TETH_PROT_SIZE) &&
+			(index < SPEARHEAD_NUM_MAX_INSTANCES); i++) {
 			if(ipa_usb_is_teth_prot_connected(i)) {
 				if (index == SPEARHEAD_NUM_MAX_INSTANCES) {
 					IPA_STATS_ERR("USB alloc info max size reached\n");
