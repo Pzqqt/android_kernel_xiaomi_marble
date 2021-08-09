@@ -1069,6 +1069,8 @@ target_if_populate_fft_bins_info(struct target_if_spectral *spectral,
 	detector_list = &spectral->detector_list[smode][ch_width];
 
 	for (det = 0; det < detector_list->num_detectors; det++) {
+		uint16_t lb_extrabins_offset = 0;
+
 		det_map = &spectral->det_map
 				[detector_list->detectors[det]];
 		dest_det_info = &det_map->dest_det_info[0];
@@ -1079,12 +1081,14 @@ target_if_populate_fft_bins_info(struct target_if_spectral *spectral,
 			if (ch_width == CH_WIDTH_160MHZ &&
 			    is_fragmentation_160 &&
 			    spectral->report_info[smode].pri20_freq >
-			    spectral->report_info[smode].sscan_cfreq1)
-				start_bin = num_fft_bins +
+			    spectral->report_info[smode].sscan_cfreq1) {
+				start_bin = num_fft_bins;
+				lb_extrabins_offset =
 					dest_det_info->lb_extrabins_num +
 					dest_det_info->rb_extrabins_num;
-			else
+			} else {
 				start_bin = 0;
+			}
 			break;
 		case 1:
 			if (ch_width == CH_WIDTH_160MHZ &&
@@ -1092,24 +1096,34 @@ target_if_populate_fft_bins_info(struct target_if_spectral *spectral,
 			    spectral->report_info[smode].pri20_freq >
 			    spectral->report_info[smode].sscan_cfreq1)
 				start_bin = 0;
-			else
-				start_bin = num_fft_bins +
+			else {
+				start_bin = num_fft_bins;
+				lb_extrabins_offset =
 					dest_det_info->lb_extrabins_num +
 					dest_det_info->rb_extrabins_num;
+			}
 			break;
 		default:
 			return QDF_STATUS_E_FAILURE;
 		}
-		dest_det_info->dest_start_bin_idx = start_bin +
-					dest_det_info->lb_extrabins_num;
+		dest_det_info->dest_start_bin_idx = start_bin;
 		dest_det_info->dest_end_bin_idx =
 					dest_det_info->dest_start_bin_idx +
 					num_fft_bins - 1;
-		if (dest_det_info->lb_extrabins_num)
-			dest_det_info->lb_extrabins_start_idx = start_bin;
+		if (dest_det_info->lb_extrabins_num) {
+			if (is_ch_width_160_or_80p80(ch_width)) {
+				dest_det_info->lb_extrabins_start_idx =
+							2 * num_fft_bins +
+							lb_extrabins_offset;
+			} else {
+				dest_det_info->lb_extrabins_start_idx =
+								num_fft_bins;
+			}
+		}
 		if (dest_det_info->rb_extrabins_num)
-			dest_det_info->rb_extrabins_start_idx = 1 +
-					dest_det_info->dest_end_bin_idx;
+			dest_det_info->rb_extrabins_start_idx =
+					dest_det_info->lb_extrabins_start_idx +
+					dest_det_info->lb_extrabins_num;
 		dest_det_info->src_start_bin_idx = 0;
 	}
 
