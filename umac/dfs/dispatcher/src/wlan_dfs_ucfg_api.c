@@ -144,7 +144,7 @@ QDF_STATUS ucfg_dfs_get_legacy_precac_enable(struct wlan_objmgr_pdev *pdev,
 {
 	struct wlan_dfs *dfs;
 
-	if (!tgt_dfs_is_pdev_5ghz(pdev))
+	if (!tgt_dfs_is_5ghz_supported_in_pdev(pdev))
 		return QDF_STATUS_SUCCESS;
 
 	dfs = wlan_pdev_get_dfs_obj(pdev);
@@ -168,7 +168,7 @@ QDF_STATUS ucfg_dfs_get_agile_precac_enable(struct wlan_objmgr_pdev *pdev,
 	if (!pdev || !buff)
 		return QDF_STATUS_E_FAILURE;
 
-	if (!tgt_dfs_is_pdev_5ghz(pdev)) {
+	if (!tgt_dfs_is_5ghz_supported_in_pdev(pdev)) {
 		*buff = false;
 		return QDF_STATUS_SUCCESS;
 	}
@@ -347,7 +347,7 @@ void ucfg_dfs_allow_hw_pulses(struct wlan_objmgr_pdev *pdev,
 {
 	struct wlan_dfs *dfs;
 
-	if (!tgt_dfs_is_pdev_5ghz(pdev))
+	if (!tgt_dfs_is_5ghz_supported_in_pdev(pdev))
 		return;
 
 	dfs = wlan_pdev_get_dfs_obj(pdev);
@@ -365,7 +365,7 @@ bool ucfg_dfs_is_hw_pulses_allowed(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_dfs *dfs;
 
-	if (!tgt_dfs_is_pdev_5ghz(pdev))
+	if (!tgt_dfs_is_5ghz_supported_in_pdev(pdev))
 		return false;
 
 	dfs = wlan_pdev_get_dfs_obj(pdev);
@@ -410,7 +410,7 @@ QDF_STATUS ucfg_dfs_reinit_timers(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_dfs *dfs;
 
-	if (!tgt_dfs_is_pdev_5ghz(pdev))
+	if (!tgt_dfs_is_5ghz_supported_in_pdev(pdev))
 		return QDF_STATUS_SUCCESS;
 
 	dfs = wlan_pdev_get_dfs_obj(pdev);
@@ -450,7 +450,7 @@ QDF_STATUS ucfg_dfs_get_rcac_enable(struct wlan_objmgr_pdev *pdev,
 {
 	struct wlan_dfs *dfs;
 
-	if (!tgt_dfs_is_pdev_5ghz(pdev)) {
+	if (!tgt_dfs_is_5ghz_supported_in_pdev(pdev)) {
 		*rcac_en = false;
 		return QDF_STATUS_SUCCESS;
 	}

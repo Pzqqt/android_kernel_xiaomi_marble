@@ -537,7 +537,7 @@ static void dfs_scan_serialization_comp_info_cb(
 
 	comp_info->scan_info.is_cac_in_progress = false;
 
-	if (!tgt_dfs_is_pdev_5ghz(pdev))
+	if (!tgt_dfs_is_5ghz_supported_in_pdev(pdev))
 		return;
 
 	dfs = wlan_pdev_get_dfs_obj(pdev);
