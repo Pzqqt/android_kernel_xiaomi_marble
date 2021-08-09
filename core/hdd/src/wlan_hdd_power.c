@@ -3245,7 +3245,8 @@ cfg80211_resume:
 	QDF_BUG(!wlan_hdd_cfg80211_resume_wlan(wiphy));
 
 link_down:
-	hif_vote_link_down(hif_ctx);
+	if (resume_setting == WOW_RESUME_TRIGGER_HTC_WAKEUP)
+		hif_vote_link_down(hif_ctx);
 
 	clear_bit(HDD_FA_SUSPENDED_BIT, &fake_apps_state);
 	hdd_err("Unit-test suspend failed: %d", errno);
