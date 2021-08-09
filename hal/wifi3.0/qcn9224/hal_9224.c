@@ -121,16 +121,31 @@
 #define UNIFIED_WBM_RELEASE_RING_6_TX_RATE_STATS_INFO_TX_RATE_STATS_LSB \
 	WBM_RELEASE_RING_TX_TX_RATE_STATS_PPDU_TRANSMISSION_TSF_LSB
 
+#ifdef CONFIG_WIFI_EMULATION_WIFI_3_0
+#define CMEM_REG_BASE 0x0010e000
+
+#define CMEM_WINDOW_ADDRESS_9224 \
+		((CMEM_REG_BASE >> WINDOW_SHIFT) & WINDOW_VALUE_MASK)
+#endif
+
 #define CE_WINDOW_ADDRESS_9224 \
 		((CE_WFSS_CE_REG_BASE >> WINDOW_SHIFT) & WINDOW_VALUE_MASK)
 
 #define UMAC_WINDOW_ADDRESS_9224 \
 		((UMAC_BASE >> WINDOW_SHIFT) & WINDOW_VALUE_MASK)
 
+#ifdef CONFIG_WIFI_EMULATION_WIFI_3_0
+#define WINDOW_CONFIGURATION_VALUE_9224 \
+		((CE_WINDOW_ADDRESS_9224 << 6) |\
+		 (UMAC_WINDOW_ADDRESS_9224 << 12) | \
+		 CMEM_WINDOW_ADDRESS_9224 | \
+		 WINDOW_ENABLE_BIT)
+#else
 #define WINDOW_CONFIGURATION_VALUE_9224 \
 		((CE_WINDOW_ADDRESS_9224 << 6) |\
 		 (UMAC_WINDOW_ADDRESS_9224 << 12) | \
 		 WINDOW_ENABLE_BIT)
+#endif
 
 /* For Berryllium sw2rxdma ring size increased to 20 bits */
 #define HAL_RXDMA_MAX_RING_SIZE_BE 0xFFFFF
@@ -1231,6 +1246,23 @@ static void hal_rx_dump_pkt_tlvs_9224(hal_soc_handle_t hal_soc_hdl,
 #define HAL_NUM_TCL_BANKS_9224 48
 
 /**
+ * hal_cmem_write_9224() - function for CMEM buffer writing
+ * @hal_soc_hdl: HAL SOC handle
+ * @offset: CMEM address
+ * @value: value to write
+ *
+ * Return: None.
+ */
+static void hal_cmem_write_9224(hal_soc_handle_t hal_soc_hdl,
+				uint32_t offset,
+				uint32_t value)
+{
+	struct hal_soc *hal = (struct hal_soc *)hal_soc_hdl;
+
+	pld_reg_write(hal->qdf_dev->dev, offset, value);
+}
+
+/**
  * hal_tx_get_num_tcl_banks_9224() - Get number of banks in target
  *
  * Returns: number of bank
@@ -1247,6 +1279,7 @@ static void hal_hw_txrx_ops_attach_qcn9224(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_srng_src_hw_init = hal_srng_src_hw_init_generic;
 	hal_soc->ops->hal_get_hw_hptp = hal_get_hw_hptp_generic;
 	hal_soc->ops->hal_get_window_address = hal_get_window_address_9224;
+	hal_soc->ops->hal_cmem_write = hal_cmem_write_9224;
 
 	/* tx */
 	hal_soc->ops->hal_tx_set_dscp_tid_map = hal_tx_set_dscp_tid_map_9224;

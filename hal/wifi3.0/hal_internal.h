@@ -915,6 +915,10 @@ struct hal_hw_txrx_ops {
 	void (*hal_rx_flow_get_cmem_fse)(struct hal_soc *soc,
 					 uint32_t fse_offset,
 					 uint32_t *fse, qdf_size_t len);
+
+	void (*hal_cmem_write)(hal_soc_handle_t hal_soc_hdl, uint32_t offset,
+			       uint32_t value);
+
 	void (*hal_rx_msdu_get_reo_destination_indication)(uint8_t *buf,
 							   uint32_t *reo_destination_indication);
 	uint8_t (*hal_tx_get_num_tcl_banks)(void);

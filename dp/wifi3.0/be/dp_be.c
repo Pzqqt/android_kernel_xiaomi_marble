@@ -130,6 +130,8 @@ static void dp_cc_reg_cfg_init(struct dp_soc *soc,
 	/* 36th bit should be 1 then HW know this is CMEM address */
 	cc_cfg.lut_base_addr_39_32 = 0x10;
 
+	cc_cfg.error_path_cookie_conv_en = true;
+	cc_cfg.release_path_cookie_conv_en = true;
 	dp_cc_wbm_sw_en_cfg(&cc_cfg);
 
 	hal_cookie_conversion_reg_cfg_be(soc->hal_soc, &cc_cfg);

@@ -37,7 +37,9 @@ struct hal_hw_cc_config {
 		 wbm2sw1_cc_en:1,
 		 wbm2sw0_cc_en:1,
 		 wbm2fw_cc_en:1,
-		 reserved:4;
+		 error_path_cookie_conv_en:1,
+		 release_path_cookie_conv_en:1,
+		 reserved:2;
 };
 
 #define HAL_RX_MSDU_EXT_DESC_INFO_GET(msdu_details_ptr) \

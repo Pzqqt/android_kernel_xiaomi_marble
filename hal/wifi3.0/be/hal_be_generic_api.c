@@ -824,6 +824,27 @@ void hal_cookie_conversion_reg_cfg_be(hal_soc_handle_t hal_soc_hdl,
 			  cc_cfg->wbm2fw_cc_en);
 	HAL_REG_WRITE(soc, reg_addr, reg_val);
 
+#ifdef HWIO_WBM_R0_WBM_CFG_2_COOKIE_DEBUG_SEL_BMSK
+	reg_addr = HWIO_WBM_R0_WBM_CFG_2_ADDR(WBM_REG_REG_BASE);
+	reg_val = 0;
+	reg_val |= HAL_SM(HWIO_WBM_R0_WBM_CFG_2,
+			  COOKIE_DEBUG_SEL,
+			  cc_cfg->cc_global_en);
+
+	reg_val |= HAL_SM(HWIO_WBM_R0_WBM_CFG_2,
+			  COOKIE_CONV_INDICATION_EN,
+			  cc_cfg->cc_global_en);
+
+	reg_val |= HAL_SM(HWIO_WBM_R0_WBM_CFG_2,
+			  ERROR_PATH_COOKIE_CONV_EN,
+			  cc_cfg->error_path_cookie_conv_en);
+
+	reg_val |= HAL_SM(HWIO_WBM_R0_WBM_CFG_2,
+			  RELEASE_PATH_COOKIE_CONV_EN,
+			  cc_cfg->release_path_cookie_conv_en);
+
+	HAL_REG_WRITE(soc, reg_addr, reg_val);
+#endif
 #ifdef DP_HW_COOKIE_CONVERT_EXCEPTION
 	/*
 	 * To enable indication for HW cookie conversion done or not for

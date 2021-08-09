@@ -1285,6 +1285,23 @@ static void hal_rx_reo_prev_pn_get_7850(void *ring_desc,
 	*prev_pn |= ((uint64_t)reo_desc->prev_pn_55_24 << 24);
 }
 
+/**
+ * hal_cmem_write_7850() - function for CMEM buffer writing
+ * @hal_soc_hdl: HAL SOC handle
+ * @offset: CMEM address
+ * @value: value to write
+ *
+ * Return: None.
+ */
+static inline void hal_cmem_write_7850(hal_soc_handle_t hal_soc_hdl,
+				       uint32_t offset,
+				       uint32_t value)
+{
+	struct hal_soc *hal = (struct hal_soc *)hal_soc_hdl;
+
+	hal_write32_mb(hal, offset, value);
+}
+
 static void hal_hw_txrx_ops_attach_wcn7850(struct hal_soc *hal_soc)
 {
 	/* init and setup */
@@ -1450,6 +1467,7 @@ static void hal_hw_txrx_ops_attach_wcn7850(struct hal_soc *hal_soc)
 	hal_soc->ops->hal_rx_flow_setup_cmem_fse = NULL;
 	hal_soc->ops->hal_rx_flow_get_cmem_fse_ts = NULL;
 	hal_soc->ops->hal_rx_flow_get_cmem_fse = NULL;
+	hal_soc->ops->hal_cmem_write = hal_cmem_write_7850;
 	hal_soc->ops->hal_rx_msdu_get_reo_destination_indication =
 		hal_rx_msdu_get_reo_destination_indication_be;
 	hal_soc->ops->hal_tx_get_num_tcl_banks = hal_tx_get_num_tcl_banks_7850;
