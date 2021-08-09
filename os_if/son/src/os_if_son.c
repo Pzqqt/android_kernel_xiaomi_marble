@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -740,6 +741,49 @@ uint8_t os_if_son_get_chan_util(struct wlan_objmgr_vdev *vdev)
 	return dcs_son_stats.total_cu;
 }
 qdf_export_symbol(os_if_son_get_chan_util);
+
+void os_if_son_get_phy_stats(struct wlan_objmgr_vdev *vdev,
+			     struct ol_ath_radiostats *phy_stats)
+{
+	struct wlan_host_dcs_ch_util_stats dcs_son_stats = {};
+	struct wlan_objmgr_psoc *psoc;
+	uint8_t mac_id;
+	QDF_STATUS status;
+
+	if (!vdev) {
+		osif_err("null vdev");
+		return;
+	}
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		osif_err("null psoc");
+		return;
+	}
+	status = policy_mgr_get_mac_id_by_session_id(psoc,
+						     wlan_vdev_get_id(vdev),
+						     &mac_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		osif_err("Failed to get mac_id");
+		return;
+	}
+
+	ucfg_dcs_get_ch_util(psoc, mac_id, &dcs_son_stats);
+
+	phy_stats->ap_rx_util = dcs_son_stats.rx_cu;
+	phy_stats->ap_tx_util = dcs_son_stats.tx_cu;
+	phy_stats->obss_rx_util = dcs_son_stats.obss_rx_cu;
+	if (dcs_son_stats.total_cu < 100)
+		phy_stats->free_medium = 100 - dcs_son_stats.total_cu;
+	else
+		phy_stats->free_medium = 0;
+	phy_stats->chan_nf = dcs_son_stats.chan_nf;
+	osif_debug("rx_util %d tx_util %d obss_rx_util %d free_medium %d noise floor %d",
+		   phy_stats->ap_rx_util, phy_stats->ap_tx_util,
+		   phy_stats->obss_rx_util, phy_stats->free_medium,
+		   phy_stats->chan_nf);
+}
+qdf_export_symbol(os_if_son_get_phy_stats);
 
 int os_if_son_set_phymode(struct wlan_objmgr_vdev *vdev,
 			  enum ieee80211_phymode mode)

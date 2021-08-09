@@ -1,6 +1,7 @@
 
 /*
  * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -313,6 +314,16 @@ enum ieee80211_phymode os_if_son_get_phymode(struct wlan_objmgr_vdev *vdev);
  */
 int os_if_son_set_phymode(struct wlan_objmgr_vdev *vdev,
 			  enum ieee80211_phymode mode);
+
+/**
+ * os_if_son_get_phy_stats() - get phy stats
+ * @vdev: vdev
+ * @phy_stats: phy stats
+ *
+ * Return: void
+ */
+void os_if_son_get_phy_stats(struct wlan_objmgr_vdev *vdev,
+			     struct ol_ath_radiostats *phy_stats);
 
 /**
  * os_if_son_get_chan_util() - get chan utilization
