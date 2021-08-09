@@ -1525,6 +1525,11 @@ dp_tx_rate_stats_update(struct dp_peer *peer,
 	ppdu_tx_rate = dp_ath_rate_out(peer->stats.tx.avg_tx_rate);
 	DP_STATS_UPD(peer, tx.rnd_avg_tx_rate, ppdu_tx_rate);
 
+	peer->stats.tx.bw_info = ppdu->bw;
+	peer->stats.tx.gi_info = ppdu->gi;
+	peer->stats.tx.nss_info = ppdu->nss;
+	peer->stats.tx.mcs_info = ppdu->mcs;
+	peer->stats.tx.preamble_info = ppdu->preamble;
 	if (peer->vdev) {
 		/*
 		 * In STA mode:
