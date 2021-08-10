@@ -2844,19 +2844,23 @@ static int lpass_cdc_wsa2_macro_set_cur_state(
 {
 	struct lpass_cdc_wsa2_macro_priv *wsa2_priv = cdev->devdata;
 
-	if (!wsa2_priv) {
+	if (!wsa2_priv || !wsa2_priv->dev) {
 		pr_err("%s: cdev->devdata is NULL\n", __func__);
 		return -EINVAL;
 	}
 
-	if (state < wsa2_priv->thermal_max_state)
+	if (state <= wsa2_priv->thermal_max_state) {
 		wsa2_priv->thermal_cur_state = state;
-	else
-		wsa2_priv->thermal_cur_state = wsa2_priv->thermal_max_state;
+	} else {
+		dev_err(wsa2_priv->dev,
+			"%s: incorrect requested state:%d\n",
+			__func__, state);
+		return -EINVAL;
+	}
 
 	dev_dbg(wsa2_priv->dev,
-		"%s: requested state:%d, actual state: %d\n",
-		__func__, state, wsa2_priv->thermal_cur_state);
+		"%s: set the thermal current state to %d\n",
+		__func__, wsa2_priv->thermal_cur_state);
 
 	schedule_work(&wsa2_priv->lpass_cdc_wsa2_macro_cooling_work);
 
