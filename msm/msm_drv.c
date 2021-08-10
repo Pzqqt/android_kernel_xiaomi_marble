@@ -1627,6 +1627,7 @@ int msm_ioctl_display_hint_ops(struct drm_device *dev, void *data,
 
 	SDE_EVT32(display_hint->hint_flags);
 
+	/* Any new hint added will require a check for VM ownership before HW is accessed */
 	if (display_hint->hint_flags == DRM_MSM_DISPLAY_EARLY_WAKEUP_HINT) {
 		if (!display_hint->data) {
 			DRM_ERROR("early_wakeup: wrong parameter\n");

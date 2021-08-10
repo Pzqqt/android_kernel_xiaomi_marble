@@ -5062,9 +5062,9 @@ static int _sde_kms_register_events(struct msm_kms *kms,
 		struct drm_mode_object *obj, u32 event, bool en)
 {
 	int ret = 0;
-	struct drm_crtc *crtc = NULL;
-	struct drm_connector *conn = NULL;
-	struct sde_kms *sde_kms = NULL;
+	struct drm_crtc *crtc;
+	struct drm_connector *conn;
+	struct sde_kms *sde_kms;
 	struct sde_vm_ops *vm_ops;
 
 	if (!kms || !obj) {
@@ -5073,24 +5073,19 @@ static int _sde_kms_register_events(struct msm_kms *kms,
 	}
 
 	sde_kms = to_sde_kms(kms);
+	vm_ops = sde_vm_get_ops(sde_kms);
+	sde_vm_lock(sde_kms);
+	if (vm_ops && vm_ops->vm_owns_hw && !vm_ops->vm_owns_hw(sde_kms)) {
+		sde_vm_unlock(sde_kms);
+		SDE_DEBUG("HW is owned by other VM\n");
+		return -EACCES;
+	}
 
 	/* check vm ownership, if event registration requires HW access */
 	switch (obj->type) {
 	case DRM_MODE_OBJECT_CRTC:
-		vm_ops = sde_vm_get_ops(sde_kms);
-		sde_vm_lock(sde_kms);
-
-		if (vm_ops && vm_ops->vm_owns_hw
-				&& !vm_ops->vm_owns_hw(sde_kms)) {
-			sde_vm_unlock(sde_kms);
-			SDE_DEBUG("HW is owned by other VM\n");
-			return -EACCES;
-		}
-
 		crtc = obj_to_crtc(obj);
 		ret = sde_crtc_register_custom_event(sde_kms, crtc, event, en);
-
-		sde_vm_unlock(sde_kms);
 		break;
 	case DRM_MODE_OBJECT_CONNECTOR:
 		conn = obj_to_connector(obj);
@@ -5098,6 +5093,8 @@ static int _sde_kms_register_events(struct msm_kms *kms,
 				en);
 		break;
 	}
+
+	sde_vm_unlock(sde_kms);
 
 	return ret;
 }
