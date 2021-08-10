@@ -2003,6 +2003,11 @@ u32 gsihal_read_reg_nk(enum gsihal_reg_name reg, u32 n, u32 k)
 {
 	u32 offset;
 
+	if (!gsihal_ctx) {
+		GSIERR("gsihal_ctx mpt initialized");
+		return -EPERM;
+	}
+
 	if (reg >= GSI_REG_MAX) {
 		GSIERR("Invalid register reg=%u\n", reg);
 		WARN_ON(1);
