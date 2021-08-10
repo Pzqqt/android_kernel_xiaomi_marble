@@ -1107,9 +1107,16 @@ static void lim_tdls_update_node_he_caps(struct mac_context *mac,
 
 	lim_log_he_cap(mac, &sta->he_config);
 
-	if (lim_is_he_6ghz_band(pe_session))
+	if (lim_is_he_6ghz_band(pe_session)) {
 		lim_tdls_populate_dot11f_6hgz_he_caps(mac, add_sta_req,
 						      &sta->he_6g_band_cap);
+		/*
+		 * In 6Ghz, vht and ht ie may not present, peer channel width
+		 * is populated while extracting HT and VHT cap itself. So,
+		 * incase of 6ghz fill the chan_width.
+		 */
+		lim_update_stads_he_6ghz_op(pe_session, sta);
+	}
 }
 
 #else
