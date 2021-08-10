@@ -26,6 +26,7 @@
 #include "qdf_types.h"
 #include "utils_mlo.h"
 #include "wlan_mlo_mgr_cmn.h"
+#include "wlan_utility.h"
 
 #ifdef WLAN_FEATURE_11BE_MLO
 
@@ -79,37 +80,37 @@ uint8_t *util_parse_multi_link_ctrl_ie(uint8_t *subelement,
 	/* check if MLD MAC address present */
 	if (qdf_test_bit(WLAN_ML_CTRL_PBM_IDX |
 			 WLAN_ML_BV_CTRL_PBM_MLDMACADDR_P,
-			 &subelement[MULTI_LINK_CTRL_1]))
+			 (unsigned long *)&subelement[MULTI_LINK_CTRL_1]))
 		sub_ie_len = sub_ie_len + QDF_MAC_ADDR_SIZE;
 
 	/* check if Link ID info */
 	if (qdf_test_bit(WLAN_ML_CTRL_PBM_IDX |
 			 WLAN_ML_BV_CTRL_PBM_LINKIDINFO_P,
-			 &subelement[MULTI_LINK_CTRL_1]))
+			 (unsigned long *)&subelement[MULTI_LINK_CTRL_1]))
 		sub_ie_len = sub_ie_len + TAG_LEN_POS;
 
 	/* check if BSS parameter change count */
 	if (qdf_test_bit(WLAN_ML_CTRL_PBM_IDX |
 			 WLAN_ML_BV_CTRL_PBM_BSSPARAMCHANGECNT_P,
-			 &subelement[MULTI_LINK_CTRL_1]))
+			 (unsigned long *)&subelement[MULTI_LINK_CTRL_1]))
 		sub_ie_len = sub_ie_len + TAG_LEN_POS;
 
 	/* check if Medium Sync Delay Info present */
 	if (qdf_test_bit(WLAN_ML_CTRL_PBM_IDX |
 			 WLAN_ML_BV_CTRL_PBM_MEDIUMSYNCDELAYINFO_P,
-			 &subelement[MULTI_LINK_CTRL_1]))
+			 (unsigned long *)&subelement[MULTI_LINK_CTRL_1]))
 		sub_ie_len = sub_ie_len + PAYLOAD_START_POS;
 
 	/* check if EML cap present */
 	if (qdf_test_bit(WLAN_ML_CTRL_PBM_IDX |
 			 WLAN_ML_BV_CTRL_PBM_EMLCAP_P,
-			 &subelement[MULTI_LINK_CTRL_2]))
+			 (unsigned long *)&subelement[MULTI_LINK_CTRL_2]))
 		sub_ie_len = sub_ie_len + SUBELEMENT_START_POS;
 
 	/* check if MLD cap present */
 	if (qdf_test_bit(WLAN_ML_CTRL_PBM_IDX |
 			 WLAN_ML_BV_CTRL_PBM_MLDCAP_P,
-			 &subelement[MULTI_LINK_CTRL_2]))
+			 (unsigned long *)&subelement[MULTI_LINK_CTRL_2]))
 		sub_ie_len = sub_ie_len + PAYLOAD_START_POS;
 
 	if (link_info_ie_len) {
@@ -133,7 +134,7 @@ uint8_t *util_parse_sta_profile_ie(uint8_t *subelement,
 	if (!subelement || !len)
 		return NULL;
 
-	if (subelement[0] == 17)
+	if (subelement[0] == 0)
 		tmp = subelement;
 	if (!tmp)
 		return NULL;
@@ -143,17 +144,17 @@ uint8_t *util_parse_sta_profile_ie(uint8_t *subelement,
 
 	/* check DTIM info present bit */
 	if (qdf_test_bit(WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_DTIMINFOP_IDX,
-			 &subelement[STA_CTRL_1]))
+			 (unsigned long *)&subelement[STA_CTRL_1]))
 		tmp_len = tmp_len + MIN_IE_LEN;
 
 	/* check Beacon interval present bit */
 	if (qdf_test_bit(WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_BCNINTP_IDX,
-			 &subelement[STA_CTRL_1]))
+			 (unsigned long *)&subelement[STA_CTRL_1]))
 		tmp_len = tmp_len + TAG_LEN_POS;
 
 	/* check STA link mac addr info present bit */
 	if (qdf_test_bit(WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_MACADDRP_IDX,
-			 &subelement[STA_CTRL_1])) {
+			 (unsigned long *)&subelement[STA_CTRL_1])) {
 		tmp_len = tmp_len + QDF_MAC_ADDR_SIZE;
 		qdf_mem_copy(&bssid->bytes, &tmp[4], QDF_MAC_ADDR_SIZE);
 	}
@@ -163,12 +164,12 @@ uint8_t *util_parse_sta_profile_ie(uint8_t *subelement,
 
 	/* check NTSR Link pair present bit */
 	if (qdf_test_bit(WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_NSTRLINKPRP_IDX % 8,
-			 &subelement[STA_CTRL_2]))
+			 (unsigned long *)&subelement[STA_CTRL_2]))
 		tmp_len = tmp_len + MIN_IE_LEN;
 
 	/* check NTSR bitmap size present bit */
 	if (qdf_test_bit(WLAN_ML_BV_LINFO_PERSTAPROF_STACTRL_NSTRBMSZ_IDX % 8,
-			 &subelement[STA_CTRL_2]))
+			 (unsigned long *)&subelement[STA_CTRL_2]))
 		tmp_len = tmp_len + TAG_LEN_POS;
 
 	if (len <= tmp_len) {
@@ -185,7 +186,7 @@ QDF_STATUS util_gen_link_assoc_rsp(uint8_t *frame, qdf_size_t len,
 				   uint8_t *assoc_link_frame)
 {
 	uint8_t *tmp = NULL;
-	const uint8_t *tmp_old;
+	const uint8_t *tmp_old, *rsn_ie;
 	qdf_size_t sub_len, tmp_rem_len;
 	qdf_size_t link_info_len, per_sta_prof_len = 0;
 	uint8_t *subelement;
@@ -205,6 +206,11 @@ QDF_STATUS util_gen_link_assoc_rsp(uint8_t *frame, qdf_size_t len,
 	qdf_mem_copy(pos, frame, WLAN_ASSOC_RSP_IES_OFFSET);
 	pos = pos + WLAN_ASSOC_RSP_IES_OFFSET;
 
+	rsn_ie = wlan_get_ie_ptr_from_eid(WLAN_ELEMID_RSN, frame, len);
+	if (rsn_ie) {
+		qdf_mem_copy(pos, rsn_ie, rsn_ie[1]);
+		pos = pos + rsn_ie[1];
+	}
 	/* find MLO IE */
 	subelement = util_find_extn_eid(WLAN_ELEMID_EXTN_ELEM,
 					WLAN_EXTN_ELEMID_MULTI_LINK,
@@ -338,18 +344,16 @@ QDF_STATUS util_gen_link_assoc_rsp(uint8_t *frame, qdf_size_t len,
 	}
 
 update_header:
-	if (bssid.bytes) {
-		/* Copy the link mac addr */
-		qdf_mem_copy(hdr->i_addr3, bssid.bytes,
-			     QDF_MAC_ADDR_SIZE);
-		qdf_mem_copy(hdr->i_addr2, bssid.bytes,
-			     QDF_MAC_ADDR_SIZE);
-		qdf_mem_copy(hdr->i_addr1, &link_addr,
-			     QDF_MAC_ADDR_SIZE);
-		hdr->i_fc[0] = FC0_IEEE_MGMT_FRM;
-		hdr->i_fc[1] = FC1_IEEE_MGMT_FRM;
-		/* seq num not used so not populated */
-	}
+	/* Copy the link mac addr */
+	qdf_mem_copy(hdr->i_addr3, bssid.bytes,
+		     QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(hdr->i_addr2, bssid.bytes,
+		     QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(hdr->i_addr1, &link_addr,
+		     QDF_MAC_ADDR_SIZE);
+	hdr->i_fc[0] = FC0_IEEE_MGMT_FRM;
+	hdr->i_fc[1] = FC1_IEEE_MGMT_FRM;
+	/* seq num not used so not populated */
 	qdf_mem_free(orig_copy);
 
 	return QDF_STATUS_SUCCESS;
