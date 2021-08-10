@@ -454,6 +454,19 @@ static bool mlme_vdev_state_up_event(void *ctx, uint16_t event,
 		status = true;
 		break;
 
+	/**
+	 * Channel switch disabled case, then tansition to up state
+	 * and deliver EV_UP_HOST_RESTART, hand it in up state and
+	 * move to up active state
+	 */
+	case WLAN_VDEV_SM_EV_UP_HOST_RESTART:
+		mlme_vdev_sm_transition_to(vdev_mlme,
+					   WLAN_VDEV_SS_UP_ACTIVE);
+		mlme_vdev_sm_deliver_event(vdev_mlme, event,
+					   event_data_len, event_data);
+		status = true;
+		break;
+
 	default:
 		status = false;
 		break;
