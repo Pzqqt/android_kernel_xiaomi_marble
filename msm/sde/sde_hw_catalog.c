@@ -160,6 +160,11 @@
 #define SDE_UIDLE_MAX_FPS_120 120
 #define SDE_UIDLE_MAX_FPS_240 240
 
+/* Unmult Offsets */
+#define SDE_VIG_UNMULT 0x1EA0
+#define SDE_DGM_UNMULT 0x804
+#define SDE_DGM_UNMULT_2 0xE04
+
 #define SSPP_GET_REGDMA_BASE(blk_base, top_off) ((blk_base) >= (top_off) ?\
 		(blk_base) - (top_off) : (blk_base))
 
@@ -1431,8 +1436,10 @@ static void _sde_sspp_setup_vigs_pp(struct sde_dt_props *props,
 	_sde_sspp_setup_vcm(sspp, props, "sspp_vig_igc", &sblk->igc_blk[0],
 			SDE_SSPP_VIG_IGC, VIG_IGC_PROP, true);
 
-	if (props->exists[VIG_INVERSE_PMA])
+	if (props->exists[VIG_INVERSE_PMA]) {
 		set_bit(SDE_SSPP_INVERSE_PMA, &sspp->features);
+		sblk->unmult_offset[0] = SDE_VIG_UNMULT;
+	}
 }
 
 static int _sde_sspp_setup_vigs(struct device_node *np,
@@ -1829,9 +1836,14 @@ static int _sde_sspp_setup_dmas(struct device_node *np,
 					SDE_SSPP_DMA_GC, DMA_GC_PROP, true);
 
 			if (PROP_VALUE_ACCESS(props[j]->values,
-					DMA_DGM_INVERSE_PMA, 0))
+					DMA_DGM_INVERSE_PMA, 0)) {
 				set_bit(SDE_SSPP_DGM_INVERSE_PMA,
 						&sspp->features);
+				if (sde_cfg->hwversion >= SDE_HW_VER_810)
+					sblk->unmult_offset[j] = SDE_DGM_UNMULT_2 + j*0x1000;
+				else
+					sblk->unmult_offset[j] = SDE_DGM_UNMULT + j*0x1000;
+			}
 
 			if (props[j]->exists[DMA_CSC_OFF])
 				_sde_sspp_setup_dgm(sspp, props[j],

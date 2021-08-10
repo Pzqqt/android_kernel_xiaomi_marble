@@ -46,10 +46,6 @@
 #define SSPP_UIDLE_CTRL_VALUE_REC1         0x1f4
 
 /* SSPP_DGM */
-#define SSPP_DGM_OP_MODE                   0x804
-#define SSPP_DGM_OP_MODE_REC1              0x1804
-#define SSPP_GAMUT_UNMULT_MODE             0x1EA0
-
 #define SSPP_DGM_0                         0x9F0
 #define SSPP_DGM_1                         0x19F0
 #define SSPP_DGM_SIZE                      0x420
@@ -1325,27 +1321,32 @@ static void sde_hw_sspp_setup_inverse_pma(struct sde_hw_pipe *ctx,
 			enum sde_sspp_multirect_index index, u32 enable)
 {
 	u32 op_mode = 0;
+	u32 offset;
 
 	if (!ctx || (index == SDE_SSPP_RECT_1))
 		return;
 
+	offset = ctx->cap->sblk->unmult_offset[0];
+
 	if (enable)
 		op_mode |= BIT(0);
 
-	SDE_REG_WRITE(&ctx->hw, SSPP_GAMUT_UNMULT_MODE, op_mode);
+	SDE_REG_WRITE(&ctx->hw, offset, op_mode);
 }
 
 static void sde_hw_sspp_setup_dgm_inverse_pma(struct sde_hw_pipe *ctx,
 			enum sde_sspp_multirect_index index, u32 enable)
 {
-	u32 offset = SSPP_DGM_OP_MODE;
+	u32 offset;
 	u32 op_mode = 0;
 
 	if (!ctx)
 		return;
 
 	if (index == SDE_SSPP_RECT_1)
-		offset = SSPP_DGM_OP_MODE_REC1;
+		offset = ctx->cap->sblk->unmult_offset[1];
+	else
+		offset = ctx->cap->sblk->unmult_offset[0];
 
 	op_mode = SDE_REG_READ(&ctx->hw, offset);
 
