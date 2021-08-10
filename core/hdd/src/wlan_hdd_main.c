@@ -6866,16 +6866,6 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint32_t i;
 
-	if (hdd_ctx->current_intf_count >= WLAN_MAX_VDEVS) {
-		/*
-		 * Max limit reached on the number of vdevs configured by the
-		 * host. Return error
-		 */
-		hdd_err("Unable to add virtual intf: currentVdevCnt=%d,hostConfiguredVdevCnt=%d",
-			hdd_ctx->current_intf_count, hdd_ctx->max_intf_count);
-		return NULL;
-	}
-
 	status = wlan_hdd_validate_mac_address((struct qdf_mac_addr *)mac_addr);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		/* Not received valid mac_addr */
@@ -7086,11 +7076,6 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 
 	policy_mgr_set_concurrency_mode(hdd_ctx->psoc, session_type);
 
-	/* Adapter successfully added. Increment the vdev count */
-	hdd_ctx->current_intf_count++;
-
-	hdd_debug("current_intf_count=%d", hdd_ctx->current_intf_count);
-
 	hdd_check_and_restart_sap_with_non_dfs_acs();
 
 	if (QDF_STATUS_SUCCESS != hdd_debugfs_init(adapter))
@@ -7136,9 +7121,6 @@ static void __hdd_close_adapter(struct hdd_context *hdd_ctx,
 	qdf_event_destroy(&adapter->peer_cleanup_done);
 	hdd_adapter_feature_update_work_deinit(adapter);
 	hdd_cleanup_adapter(hdd_ctx, adapter, rtnl_held);
-
-	if (hdd_ctx->current_intf_count != 0)
-		hdd_ctx->current_intf_count--;
 }
 
 void hdd_close_adapter(struct hdd_context *hdd_ctx,

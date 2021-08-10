@@ -1984,7 +1984,6 @@ struct hdd_context {
 #endif /* FEATURE_WLAN_CH_AVOID */
 
 	uint8_t max_intf_count;
-	uint8_t current_intf_count;
 #ifdef WLAN_FEATURE_LPSS
 	uint8_t lpss_support;
 #endif
