@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -195,6 +196,24 @@ static bool mlme_vdev_state_init_event(void *ctx, uint16_t event,
 					       event_data);
 		mlme_vdev_down_cmpl_notify_mlo_mgr(vdev_mlme);
 		status = true;
+		break;
+	case WLAN_VDEV_SM_EV_ROAM:
+		/**
+		 * Legacy to MLO roaming: The link vdev would be in INIT state
+		 * as the previous connection was a legacy connection.
+		 * Move the vdev state from INIT to UP up on receiving roam
+		 * sync from firmware. The caller shall make sure the ROAM
+		 * event is sent on right vdev. It's not expected to receive
+		 * WLAN_VDEV_SM_EV_ROAM event on station vdev.
+		 */
+		if (wlan_vdev_mlme_is_mlo_link_vdev(vdev_mlme->vdev)) {
+			mlme_vdev_sm_transition_to(vdev_mlme, WLAN_VDEV_S_UP);
+			mlme_vdev_sm_deliver_event(vdev_mlme, event,
+						   event_data_len, event_data);
+			status = true;
+		} else {
+			status = false;
+		}
 		break;
 
 	default:
@@ -465,6 +484,25 @@ static bool mlme_vdev_state_up_event(void *ctx, uint16_t event,
 		mlme_vdev_sm_deliver_event(vdev_mlme, event,
 					   event_data_len, event_data);
 		status = true;
+		break;
+
+	case WLAN_VDEV_SM_EV_ROAM:
+		/**
+		 * Legacy to MLO roaming:
+		 * Move the vdev state to substate UP active on receiving roam
+		 * event. The caller shall make sure the ROAM
+		 * event is sent on right vdev. It's not expected to receive
+		 * WLAN_VDEV_SM_EV_ROAM event on station vdev.
+		 */
+		if (wlan_vdev_mlme_is_mlo_link_vdev(vdev_mlme->vdev)) {
+			mlme_vdev_sm_transition_to(vdev_mlme,
+						   WLAN_VDEV_SS_UP_ACTIVE);
+			mlme_vdev_sm_deliver_event(vdev_mlme, event,
+						   event_data_len, event_data);
+			status = true;
+		} else {
+			status = false;
+		}
 		break;
 
 	default:
