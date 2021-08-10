@@ -7097,8 +7097,6 @@ QDF_STATUS populate_dot11f_assoc_rsp_mlo_ie(struct mac_context *mac_ctx,
 	mlo_ie->bss_param_change_cnt.info.bss_param_change_count =
 		session->mlo_link_info.link_ie.bss_param_change_cnt;
 	mlo_ie->mld_capab_present = 1;
-	mlo_ie->mld_capabilities.info.max_simultaneous_link_num =
-			lim_get_max_simultaneous_link_num(session);
 
 	assoc_req = session->parsedAssocReq[sta->assocId];
 	for (link = 0; link < assoc_req->mlo_info.num_partner_links; link++) {
@@ -7507,6 +7505,7 @@ QDF_STATUS populate_dot11f_assoc_rsp_mlo_ie(struct mac_context *mac_ctx,
 		num_sta_pro++;
 	}
 	mlo_ie->num_sta_profile = num_sta_pro;
+	mlo_ie->mld_capabilities.info.max_simultaneous_link_num = num_sta_pro;
 	return QDF_STATUS_SUCCESS;
 }
 

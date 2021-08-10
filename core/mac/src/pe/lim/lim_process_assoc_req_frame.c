@@ -1792,6 +1792,8 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tSirMacAddr sa,
 
 	lim_mlo_set_mld_mac_peer(sta_ds, assoc_req->mld_mac);
 
+	lim_mlo_save_mlo_info(sta_ds, &assoc_req->mlo_info);
+
 	if (lim_populate_matching_rate_set(mac_ctx, sta_ds,
 			&(assoc_req->supportedRates),
 			&(assoc_req->extendedRates),

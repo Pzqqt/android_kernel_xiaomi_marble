@@ -76,17 +76,6 @@ QDF_STATUS lim_partner_link_info_change(struct wlan_objmgr_vdev *vdev)
 	return QDF_STATUS_SUCCESS;
 }
 
-uint8_t lim_get_max_simultaneous_link_num(struct pe_session *session)
-{
-	struct wlan_objmgr_vdev *wlan_vdev_list[WLAN_UMAC_MLO_MAX_VDEVS];
-	uint16_t vdev_count = 0;
-
-	mlo_ap_get_vdev_list(session->vdev, &vdev_count,
-			     wlan_vdev_list);
-
-	return vdev_count;
-}
-
 void lim_mlo_release_vdev_ref(struct wlan_objmgr_vdev *vdev)
 {
 	mlo_release_vdev_ref(vdev);
@@ -97,6 +86,7 @@ struct pe_session *pe_find_partner_session_by_link_id(
 {
 	struct wlan_objmgr_vdev *vdev;
 	struct mac_context *mac;
+	struct pe_session *partner_session;
 
 	mac = cds_get_context(QDF_MODULE_ID_PE);
 	if (!mac) {
@@ -116,8 +106,13 @@ struct pe_session *pe_find_partner_session_by_link_id(
 		return NULL;
 	}
 
-	return pe_find_session_by_vdev_id(
+	partner_session = pe_find_session_by_vdev_id(
 			mac, vdev->vdev_objmgr.vdev_id);
+
+	if (!partner_session)
+		lim_mlo_release_vdev_ref(vdev);
+
+	return partner_session;
 }
 
 void lim_get_mlo_vdev_list(struct pe_session *session, uint16_t *vdev_count,
@@ -125,6 +120,139 @@ void lim_get_mlo_vdev_list(struct pe_session *session, uint16_t *vdev_count,
 {
 	mlo_ap_get_vdev_list(session->vdev, vdev_count,
 			     wlan_vdev_list);
+}
+
+/**
+ * lim_mlo_get_assoc_link_session_sta_ds() - get assoc link session and sta ds
+ * @session: pe session
+ * @partner_peer_idx: aid
+ * @assoc_session: assoc link session
+ * @assoc_sta: assoc sta ds
+ *
+ * Return: void
+ */
+static void lim_mlo_get_assoc_link_session_sta_ds(
+				struct pe_session *session,
+				uint16_t partner_peer_idx,
+				struct pe_session **assoc_session,
+				tpDphHashNode *assoc_sta)
+{
+	struct wlan_mlo_peer_context *mlo_peer_ctx;
+	struct wlan_objmgr_peer *peer;
+	uint16_t aid = 0;
+	struct mac_context *mac;
+	struct wlan_objmgr_vdev *vdev;
+	struct pe_session *partner_session;
+
+	*assoc_session = NULL;
+	*assoc_sta = NULL;
+	mac = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac) {
+		pe_err("mac ctx is null");
+		return;
+	}
+	if (!session) {
+		pe_err("session is NULL");
+		return;
+	}
+
+	mlo_peer_ctx = wlan_mlo_get_mlpeer_by_aid(session->vdev->mlo_dev_ctx,
+						  partner_peer_idx);
+	if (!mlo_peer_ctx) {
+		pe_err("mlo peer ctx is null");
+		return;
+	}
+	peer = wlan_mlo_peer_get_assoc_peer(mlo_peer_ctx);
+	if (!peer) {
+		pe_err("peer is null");
+		return;
+	}
+	vdev = wlan_peer_get_vdev(peer);
+	if (!vdev) {
+		pe_err("vdev is null");
+		return;
+	}
+	partner_session = pe_find_session_by_vdev_id(
+				mac, vdev->vdev_objmgr.vdev_id);
+
+	if (!partner_session) {
+		pe_err("assoc session is null");
+		return;
+	}
+	*assoc_sta = dph_lookup_hash_entry(mac, peer->macaddr, &aid,
+					   &partner_session->dph.dphHashTable);
+	*assoc_session = partner_session;
+}
+
+/**
+ * lim_mlo_update_cleanup_trigger () - update clean up trigger
+ * @session: pointer to session
+ * @sta_ds: sta ds
+ * @clnup_tri: clean up trigger
+ *
+ * Return: Void
+ */
+static void lim_mlo_update_cleanup_trigger(struct pe_session *session,
+					   tpDphHashNode sta_ds,
+					   uint16_t clnup_tri)
+{
+	tpDphHashNode assoc_sta = NULL;
+	struct pe_session *link_session;
+	struct pe_session *assoc_session = NULL;
+	struct mac_context *mac_ctx;
+	tpDphHashNode link_sta;
+	uint8_t link_id;
+	int link;
+	uint8_t *sta_addr;
+	uint16_t assoc_id;
+
+	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac_ctx) {
+		pe_err("mac ctx is null");
+		return;
+	}
+	if (!session) {
+		pe_err("session is null");
+		return;
+	}
+	if (!sta_ds) {
+		pe_err("sta ds is null");
+		return;
+	}
+
+	if (lim_is_mlo_recv_assoc(sta_ds)) {
+		assoc_sta = sta_ds;
+	} else {
+		lim_mlo_get_assoc_link_session_sta_ds(session, sta_ds->assocId,
+						      &assoc_session,
+						      &assoc_sta);
+		if (!assoc_sta) {
+			pe_err("assoc link sta ds is null");
+			return;
+		}
+
+		assoc_sta->mlmStaContext.cleanupTrigger = clnup_tri;
+	}
+	for (link = 0; link < assoc_sta->mlo_info.num_partner_links; link++) {
+		link_id = assoc_sta->mlo_info.partner_link_info[link].link_id;
+		link_session = pe_find_partner_session_by_link_id(session,
+								  link_id);
+		if (!link_session)
+			continue;
+		sta_addr =
+		    assoc_sta->mlo_info.partner_link_info[link].link_addr.bytes;
+		link_sta = dph_lookup_hash_entry(
+				mac_ctx,
+				sta_addr,
+				&assoc_id,
+				&link_session->dph.dphHashTable);
+		if (!link_sta || link_sta == sta_ds) {
+			lim_mlo_release_vdev_ref(link_session->vdev);
+			continue;
+		}
+		link_sta->mlmStaContext.cleanupTrigger = clnup_tri;
+		lim_mlo_release_vdev_ref(link_session->vdev);
+	}
 }
 
 void lim_mlo_notify_peer_disconn(struct pe_session *pe_session,
@@ -155,8 +283,13 @@ void lim_mlo_notify_peer_disconn(struct pe_session *pe_session,
 		return;
 	}
 
-	if (lim_is_mlo_conn(pe_session, sta_ds))
+	if (lim_is_mlo_conn(pe_session, sta_ds)) {
+		if (wlan_vdev_mlme_is_mlo_ap(pe_session->vdev))
+			lim_mlo_update_cleanup_trigger(
+					pe_session, sta_ds,
+					sta_ds->mlmStaContext.cleanupTrigger);
 		wlan_mlo_partner_peer_disconnect_notify(peer);
+	}
 
 	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_MAC_ID);
 }
@@ -196,8 +329,6 @@ void lim_mlo_cleanup_partner_peer(struct wlan_objmgr_peer *peer)
 		pe_err("sta ds is null");
 		return;
 	}
-
-	sta_ds->mlmStaContext.cleanupTrigger = eLIM_MLO_PARTNER_PEER;
 
 	lim_cleanup_rx_path(mac_ctx, sta_ds, pe_session, true);
 
@@ -460,63 +591,17 @@ void lim_ap_mlo_sta_peer_ind(struct mac_context *mac,
 	}
 }
 
-/**
- * lim_mlo_partner_sta_ds() - get partner sta ds
- * @session: pe session
- * @partner_peer_idx: aid
- *
- * Return: sta ds
- */
-static tpDphHashNode lim_mlo_partner_sta_ds(struct pe_session *session,
-					    uint16_t partner_peer_idx)
-{
-	struct wlan_mlo_peer_context *mlo_peer_ctx;
-	struct wlan_objmgr_peer *peer;
-	uint16_t aid = 0;
-	struct mac_context *mac;
-	struct pe_session *partner_session;
-	struct wlan_objmgr_vdev *vdev;
-
-	mac = cds_get_context(QDF_MODULE_ID_PE);
-	if (!mac) {
-		pe_err("mac ctx is null");
-		return NULL;
-	}
-	if (!session) {
-		pe_err("session is NULL");
-		return NULL;
-	}
-
-	mlo_peer_ctx = wlan_mlo_get_mlpeer_by_aid(session->vdev->mlo_dev_ctx,
-						  partner_peer_idx);
-	if (!mlo_peer_ctx) {
-		pe_err("mlo peer ctx is null");
-		return NULL;
-	}
-	peer = wlan_mlo_peer_get_assoc_peer(mlo_peer_ctx);
-	if (!peer) {
-		pe_err("peer is null");
-		return NULL;
-	}
-	vdev = wlan_peer_get_vdev(peer);
-	if (!vdev) {
-		pe_err("vdev is null");
-		return NULL;
-	}
-	partner_session = pe_find_session_by_vdev_id(
-				mac, vdev->vdev_objmgr.vdev_id);
-	return dph_lookup_hash_entry(mac, peer->macaddr, &aid,
-				     &partner_session->dph.dphHashTable);
-}
-
 bool lim_mlo_partner_auth_type(struct pe_session *session,
 			       uint16_t partner_peer_idx,
 			       tAniAuthType *auth_type)
 {
 	bool status = false;
+	struct pe_session *assoc_link_session = NULL;
 
-	tpDphHashNode sta_ds = lim_mlo_partner_sta_ds(session,
-						      partner_peer_idx);
+	tpDphHashNode sta_ds = NULL;
+
+	lim_mlo_get_assoc_link_session_sta_ds(session, partner_peer_idx,
+					      &assoc_link_session, &sta_ds);
 
 	if (sta_ds) {
 		*auth_type = sta_ds->mlmStaContext.authType;
@@ -640,6 +725,7 @@ QDF_STATUS lim_mlo_assoc_ind_upper_layer(struct mac_context *mac,
 		if (!lk_session) {
 			pe_err("link_session is NULL");
 			status = QDF_STATUS_E_FAILURE;
+			lim_mlo_release_vdev_ref(lk_session->vdev);
 			break;
 		}
 		sta = dph_lookup_hash_entry(mac, link_addr->bytes, &aid,
@@ -647,6 +733,7 @@ QDF_STATUS lim_mlo_assoc_ind_upper_layer(struct mac_context *mac,
 		if (!sta) {
 			pe_err("sta_ds is NULL");
 			status = QDF_STATUS_E_FAILURE;
+			lim_mlo_release_vdev_ref(lk_session->vdev);
 			break;
 		}
 		lim_assoc_ind = qdf_mem_malloc(sizeof(tLimMlmAssocInd));
@@ -655,6 +742,7 @@ QDF_STATUS lim_mlo_assoc_ind_upper_layer(struct mac_context *mac,
 			qdf_mem_free(lk_session->parsedAssocReq[sta->assocId]);
 			lk_session->parsedAssocReq[sta->assocId] = NULL;
 			status = QDF_STATUS_E_FAILURE;
+			lim_mlo_release_vdev_ref(lk_session->vdev);
 			break;
 		}
 
@@ -665,6 +753,7 @@ QDF_STATUS lim_mlo_assoc_ind_upper_layer(struct mac_context *mac,
 			qdf_mem_free(lk_session->parsedAssocReq[sta->assocId]);
 			lk_session->parsedAssocReq[sta->assocId] = NULL;
 			status = QDF_STATUS_E_FAILURE;
+			lim_mlo_release_vdev_ref(lk_session->vdev);
 			break;
 		}
 		sme_assoc_ind = qdf_mem_malloc(sizeof(struct assoc_ind));
@@ -674,6 +763,7 @@ QDF_STATUS lim_mlo_assoc_ind_upper_layer(struct mac_context *mac,
 			qdf_mem_free(lk_session->parsedAssocReq[sta->assocId]);
 			lk_session->parsedAssocReq[sta->assocId] = NULL;
 			status = QDF_STATUS_E_FAILURE;
+			lim_mlo_release_vdev_ref(lk_session->vdev);
 			break;
 		}
 
@@ -695,7 +785,20 @@ QDF_STATUS lim_mlo_assoc_ind_upper_layer(struct mac_context *mac,
 		qdf_mem_free(lk_session->parsedAssocReq[sta->assocId]);
 		lk_session->parsedAssocReq[sta->assocId] = NULL;
 		status = QDF_STATUS_SUCCESS;
+		lim_mlo_release_vdev_ref(lk_session->vdev);
 	}
 
 	return status;
 }
+
+void lim_mlo_save_mlo_info(tpDphHashNode sta_ds,
+			   struct mlo_partner_info *mlo_info)
+{
+	if (!sta_ds) {
+		pe_err("sta ds is null");
+		return;
+	}
+
+	qdf_mem_copy(&sta_ds->mlo_info, mlo_info, sizeof(sta_ds->mlo_info));
+}
+
