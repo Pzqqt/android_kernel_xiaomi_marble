@@ -857,6 +857,50 @@ wlan_vdev_get_def_scan_params(struct wlan_objmgr_vdev *vdev)
 }
 
 /**
+ * wlan_scan_psoc_set_disable() - private API to disable scans for psoc
+ * @psoc: psoc on which scans need to be disabled
+ * @reason: reason for enable/disabled
+ *
+ * Return: QDF_STATUS.
+ */
+static inline QDF_STATUS
+wlan_scan_psoc_set_disable(struct wlan_objmgr_psoc *psoc,
+			   enum scan_disable_reason reason)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj) {
+		scm_err("Failed to get scan object");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	scan_obj->scan_disabled |= reason;
+
+	scm_debug("Psoc scan_disabled %x", scan_obj->scan_disabled);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+wlan_scan_psoc_set_enable(struct wlan_objmgr_psoc *psoc,
+			  enum scan_disable_reason reason)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj) {
+		scm_err("Failed to get scan object");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	scan_obj->scan_disabled &= ~reason;
+	scm_debug("Psoc scan_disabled %x", scan_obj->scan_disabled);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * wlan_scan_psoc_created_notification() - scan psoc create handler
  * @psoc: psoc object
  * @arg_list: Argument list

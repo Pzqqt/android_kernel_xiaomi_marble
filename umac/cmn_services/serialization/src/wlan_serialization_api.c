@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -851,6 +851,36 @@ void wlan_ser_purge_pdev_cmd_cb(struct wlan_objmgr_psoc *psoc,
 	wlan_serialization_purge_all_pdev_cmd(pdev);
 }
 
+static inline enum scm_scan_status
+wlan_get_scan_status_from_serialization_status(enum
+					       wlan_serialization_cmd_status
+					       status)
+{
+	enum scm_scan_status scan_status;
+
+	switch (status) {
+	case WLAN_SER_CMD_IN_PENDING_LIST:
+		scan_status = SCAN_IS_PENDING;
+		break;
+	case WLAN_SER_CMD_IN_ACTIVE_LIST:
+		scan_status = SCAN_IS_ACTIVE;
+		break;
+	case WLAN_SER_CMDS_IN_ALL_LISTS:
+		scan_status = SCAN_IS_ACTIVE_AND_PENDING;
+		break;
+	case WLAN_SER_CMD_NOT_FOUND:
+		scan_status = SCAN_NOT_IN_PROGRESS;
+		break;
+	default:
+		scm_warn("invalid serialization status %d", status);
+		QDF_ASSERT(0);
+		scan_status = SCAN_NOT_IN_PROGRESS;
+		break;
+	}
+
+	return scan_status;
+}
+
 void wlan_serialization_purge_all_cmd(struct wlan_objmgr_psoc *psoc)
 {
 	wlan_objmgr_iterate_obj_list(psoc, WLAN_PDEV_OP,
@@ -1005,4 +1035,32 @@ QDF_STATUS wlan_ser_vdev_queue_disable(struct wlan_objmgr_vdev *vdev)
 		  wlan_vdev_get_id(vdev));
 
 	return QDF_STATUS_SUCCESS;
+}
+
+enum scm_scan_status
+wlan_get_vdev_status(struct wlan_objmgr_vdev *vdev)
+{
+	enum wlan_serialization_cmd_status status;
+
+	if (!vdev) {
+		ser_err("null vdev");
+		return SCAN_NOT_IN_PROGRESS;
+	}
+	status = wlan_serialization_vdev_scan_status(vdev);
+
+	return wlan_get_scan_status_from_serialization_status(status);
+}
+
+enum scm_scan_status
+wlan_get_pdev_status(struct wlan_objmgr_pdev *pdev)
+{
+	enum wlan_serialization_cmd_status status;
+
+	if (!pdev) {
+		ser_err("null pdev");
+		return SCAN_NOT_IN_PROGRESS;
+	}
+	status = wlan_serialization_pdev_scan_status(pdev);
+
+	return wlan_get_scan_status_from_serialization_status(status);
 }
