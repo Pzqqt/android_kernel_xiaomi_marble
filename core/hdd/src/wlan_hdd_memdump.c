@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,11 +32,7 @@
 #include <sme_api.h>
 #include <wlan_hdd_includes.h>
 
-#ifdef MULTI_IF_NAME
-#define PROCFS_DRIVER_DUMP_DIR "debugdriver" MULTI_IF_NAME
-#else
 #define PROCFS_DRIVER_DUMP_DIR "debugdriver"
-#endif
 #define PROCFS_DRIVER_DUMP_NAME "driverdump"
 #define PROCFS_DRIVER_DUMP_PERM 0444
 
