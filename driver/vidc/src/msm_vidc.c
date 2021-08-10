@@ -210,6 +210,31 @@ int msm_vidc_query_menu(void *instance, struct v4l2_querymenu *qmenu)
 }
 EXPORT_SYMBOL(msm_vidc_query_menu);
 
+int msm_vidc_try_fmt(void *instance, struct v4l2_format *f)
+{
+	int rc = 0;
+	struct msm_vidc_inst *inst = instance;
+
+	if (!inst || !f) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	if (!msm_vidc_allow_s_fmt(inst, f->type))
+		return -EBUSY;
+
+	if (inst->domain == MSM_VIDC_DECODER)
+		rc = msm_vdec_try_fmt(inst, f);
+	if (inst->domain == MSM_VIDC_ENCODER)
+		rc = msm_venc_try_fmt(inst, f);
+
+	if (rc)
+		i_vpr_e(inst, "%s: try_fmt(%d) failed %d\n",
+			__func__, f->type, rc);
+	return rc;
+}
+EXPORT_SYMBOL(msm_vidc_try_fmt);
+
 int msm_vidc_s_fmt(void *instance, struct v4l2_format *f)
 {
 	int rc = 0;
