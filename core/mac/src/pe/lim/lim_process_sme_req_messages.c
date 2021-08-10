@@ -3670,8 +3670,8 @@ static void lim_fill_crypto_params(struct mac_context *mac_ctx,
 }
 
 #ifdef WLAN_FEATURE_11BE_MLO
-static void lim_fill_ml_partner_info(struct cm_vdev_join_req *req,
-				     struct join_req *pe_join_req)
+static void lim_fill_ml_info(struct cm_vdev_join_req *req,
+			     struct join_req *pe_join_req)
 {
 	uint8_t idx, num_links = 0;
 	struct mlo_partner_info *partner_info = NULL;
@@ -3696,10 +3696,11 @@ static void lim_fill_ml_partner_info(struct cm_vdev_join_req *req,
 			 QDF_MAC_ADDR_REF(partner_info->partner_link_info[idx].
 					  link_addr.bytes));
 	}
+	pe_join_req->assoc_link_id = req->assoc_link_id;
 }
 #else
-static void lim_fill_ml_partner_info(struct cm_vdev_join_req *req,
-				     struct join_req *pe_join_req)
+static void lim_fill_ml_info(struct cm_vdev_join_req *req,
+			     struct join_req *pe_join_req)
 {
 }
 #endif
@@ -3784,7 +3785,7 @@ lim_fill_session_params(struct mac_context *mac_ctx,
 		}
 	}
 
-	lim_fill_ml_partner_info(req, pe_join_req);
+	lim_fill_ml_info(req, pe_join_req);
 
 	return QDF_STATUS_SUCCESS;
 }

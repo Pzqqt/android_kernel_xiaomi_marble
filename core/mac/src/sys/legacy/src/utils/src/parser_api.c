@@ -8715,6 +8715,9 @@ QDF_STATUS populate_dot11f_assoc_req_mlo_ie(struct mac_context *mac_ctx,
 		     mld_addr,
 		     QDF_MAC_ADDR_SIZE);
 	mlo_ie->link_id_info_present = 0;
+	mlo_ie->link_id_info.info.link_id =
+				pe_session->lim_join_req->assoc_link_id;
+
 	mlo_ie->bss_param_change_cnt_present = 0;
 	mlo_ie->medium_sync_delay_info_present = 0;
 	mlo_ie->eml_capab_present = 0;
