@@ -135,6 +135,9 @@ enum v4l2_mpeg_vidc_blur_types {
 /* Encoder Complexity control */
 #define V4L2_CID_MPEG_VIDC_VENC_COMPLEXITY                                   \
 	(V4L2_CID_MPEG_VIDC_BASE + 0x2F)
+/* Decoder Max Number of Reorder Frames */
+#define V4L2_CID_MPEG_VIDC_METADATA_MAX_NUM_REORDER_FRAMES                   \
+	(V4L2_CID_MPEG_VIDC_BASE + 0x30)
 
 /* Deprecate below controls once availble in gki and gsi bionic header */
 #ifndef V4L2_CID_MPEG_VIDEO_BASELAYER_PRIORITY_ID
@@ -264,6 +267,7 @@ enum v4l2_mpeg_vidc_metadata {
 	METADATA_DEC_QP_METADATA              = 0x0300016f,
 	METADATA_ROI_INFO                     = 0x03000173,
 	METADATA_DPB_TAG_LIST                 = 0x03000179,
+	METADATA_MAX_NUM_REORDER_FRAMES       = 0x03000127,
 };
 enum meta_interlace_info {
 	META_INTERLACE_INFO_NONE                            = 0x00000000,

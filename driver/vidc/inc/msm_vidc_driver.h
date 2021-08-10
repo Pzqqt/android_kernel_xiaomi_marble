@@ -123,7 +123,8 @@ static inline bool is_output_meta_enabled(struct msm_vidc_inst *inst)
 			inst->capabilities->cap[META_SEI_CLL].value ||
 			inst->capabilities->cap[META_BUF_TAG].value ||
 			inst->capabilities->cap[META_DPB_TAG_LIST].value ||
-			inst->capabilities->cap[META_SUBFRAME_OUTPUT].value);
+			inst->capabilities->cap[META_SUBFRAME_OUTPUT].value ||
+			inst->capabilities->cap[META_MAX_NUM_REORDER_FRAMES].value);
 	} else if (is_encode_session(inst)) {
 		enabled = (inst->capabilities->cap[META_LTR_MARK_USE].value ||
 			inst->capabilities->cap[META_BUF_TAG].value);

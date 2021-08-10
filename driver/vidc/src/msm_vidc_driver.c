@@ -181,6 +181,7 @@ static const struct msm_vidc_cap_name cap_name_arr[] = {
 	{META_ROI_INFO,                  "META_ROI_INFO"              },
 	{META_DEC_QP_METADATA,           "META_DEC_QP_METADATA"       },
 	{COMPLEXITY,                     "COMPLEXITY"                 },
+	{META_MAX_NUM_REORDER_FRAMES,    "META_MAX_NUM_REORDER_FRAMES"},
 	{INST_CAP_MAX,                   "INST_CAP_MAX"               },
 };
 
