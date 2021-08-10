@@ -81,6 +81,7 @@
 #include "wlan_roam_debug.h"
 #include "wlan_cm_roam_public_struct.h"
 #include "wlan_mlme_twt_api.h"
+#include <wlan_serialization_api.h>
 
 #define RSN_AUTH_KEY_MGMT_SAE           WLAN_RSN_SEL(WLAN_AKM_SAE)
 #define MAX_PWR_FCC_CHAN_12 8
@@ -718,7 +719,7 @@ QDF_STATUS csr_update_channel_list(struct mac_context *mac)
 		return lock_status;
 
 	if (mac->mlme_cfg->reg.enable_pending_chan_list_req) {
-		scan_status = ucfg_scan_get_pdev_status(mac->pdev);
+		scan_status = wlan_get_pdev_status(mac->pdev);
 		if (scan_status == SCAN_IS_ACTIVE ||
 		    scan_status == SCAN_IS_ACTIVE_AND_PENDING) {
 			mac->scan.pending_channel_list_req = true;
@@ -938,7 +939,7 @@ QDF_STATUS csr_stop(struct mac_context *mac)
 		ucfg_scan_unregister_event_handler(mac->pdev,
 						   csr_scan_event_handler,
 						   mac);
-	ucfg_scan_psoc_set_disable(mac->psoc, REASON_SYSTEM_DOWN);
+	wlan_scan_psoc_set_disable(mac->psoc, REASON_SYSTEM_DOWN);
 
 	/*
 	 * purge all serialization commnad if there are any pending to make

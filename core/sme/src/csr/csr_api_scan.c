@@ -106,7 +106,7 @@ QDF_STATUS csr_scan_close(struct mac_context *mac)
 	csr_purge_channel_power(mac, &mac->scan.channelPowerInfoList5G);
 	csr_ll_close(&mac->scan.channelPowerInfoList24);
 	csr_ll_close(&mac->scan.channelPowerInfoList5G);
-	ucfg_scan_psoc_set_disable(mac->psoc, REASON_SYSTEM_DOWN);
+	wlan_scan_psoc_set_disable(mac->psoc, REASON_SYSTEM_DOWN);
 
 	return QDF_STATUS_SUCCESS;
 }
