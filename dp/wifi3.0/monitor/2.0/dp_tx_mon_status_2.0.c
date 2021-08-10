@@ -13,3 +13,20 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include "dp_types.h"
+#include "qdf_nbuf.h"
+#include "dp_internal.h"
+#include "qdf_mem.h"   /* qdf_mem_malloc,free */
+#include <qdf_nbuf_frag.h>
+#include <hal_be_api_mon.h>
+#include <dp_mon.h>
+#include <dp_mon_2.0.h>
+#include <dp_tx_mon_2.0.h>
+
+void dp_tx_mon_process_status_tlv(struct dp_soc *soc,
+				  struct dp_pdev *pdev,
+				  struct hal_mon_desc *mon_ring_desc,
+				  qdf_dma_addr_t addr)
+{
+	/* API to process tlv */
+}

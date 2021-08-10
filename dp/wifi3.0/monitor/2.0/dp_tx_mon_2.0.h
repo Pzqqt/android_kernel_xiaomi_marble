@@ -17,6 +17,9 @@
 #ifndef _DP_TX_MON_2_0_H_
 #define _DP_TX_MON_2_0_H_
 
+#include <qdf_nbuf_frag.h>
+#include <hal_be_api_mon.h>
+
 /*
  * dp_tx_mon_buffers_alloc() - allocate tx monitor buffers
  * @soc: DP soc handle
@@ -69,5 +72,18 @@ void dp_tx_mon_buf_desc_pool_free(struct dp_soc *soc);
  */
 QDF_STATUS
 dp_tx_mon_buf_desc_pool_alloc(struct dp_soc *soc);
+
+/*
+ * dp_tx_mon_process_status_tlv() - process status tlv
+ * @soc: dp soc handle
+ * @pdev: dp pdev handle
+ * @mon_ring_desc: monitor ring descriptor
+ * @frag_addr: frag address
+ *
+ */
+void dp_tx_mon_process_status_tlv(struct dp_soc *soc,
+				  struct dp_pdev *pdev,
+				  struct hal_mon_desc *mon_ring_desc,
+				  qdf_dma_addr_t addr);
 
 #endif /* _DP_TX_MON_2_0_H_ */
