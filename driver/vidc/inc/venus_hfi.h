@@ -67,6 +67,8 @@ int __write_register_masked(struct msm_vidc_core *core,
 int __write_register(struct msm_vidc_core *core,
 		u32 reg, u32 value);
 int __read_register(struct msm_vidc_core *core, u32 reg);
+int __read_register_with_poll_timeout(struct msm_vidc_core *core,
+	u32 reg, u32 mask, u32 exp_val, u32 sleep_us, u32 timeout_us);
 int __iface_cmdq_write(struct msm_vidc_core *core,
 	void *pkt);
 int __iface_msgq_read(struct msm_vidc_core *core, void *pkt);
