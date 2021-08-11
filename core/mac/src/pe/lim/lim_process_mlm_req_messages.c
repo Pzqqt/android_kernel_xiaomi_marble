@@ -1695,10 +1695,41 @@ static void lim_process_periodic_join_probe_req_timer(struct mac_context *mac_ct
 	}
 }
 
+static void lim_send_pre_auth_failure(uint8_t vdev_id, tSirMacAddr bssid)
+{
+	struct scheduler_msg sch_msg = {0};
+	struct wmi_roam_auth_status_params *params;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	params = qdf_mem_malloc(sizeof(*params));
+	if (!params)
+		return;
+
+	params->vdev_id = vdev_id;
+	params->preauth_status = STATUS_UNSPECIFIED_FAILURE;
+	qdf_mem_copy(params->bssid.bytes, bssid, QDF_MAC_ADDR_SIZE);
+	qdf_mem_zero(params->pmkid, PMKID_LEN);
+
+	sch_msg.type = WMA_ROAM_PRE_AUTH_STATUS;
+	sch_msg.bodyptr = params;
+	pe_debug("Sending pre auth failure for mac_addr " QDF_MAC_ADDR_FMT,
+		 QDF_MAC_ADDR_REF(params->bssid.bytes));
+
+	status = scheduler_post_message(QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_WMA,
+					&sch_msg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("Sending preauth status failed");
+		qdf_mem_free(params);
+	}
+}
+
 static void lim_handle_sae_auth_timeout(struct mac_context *mac_ctx,
 					struct pe_session *session_entry)
 {
 	struct sae_auth_retry *sae_retry;
+	tpSirMacMgmtHdr mac_hdr;
 
 	sae_retry = mlme_get_sae_auth_retry(session_entry->vdev);
 	if (!(sae_retry && sae_retry->sae_auth.ptr)) {
@@ -1707,18 +1738,25 @@ static void lim_handle_sae_auth_timeout(struct mac_context *mac_ctx,
 		return;
 	}
 
-	pe_debug("retry sae auth for seq num %d vdev id %d",
-		 mac_ctx->mgmtSeqNum, session_entry->vdev_id);
-	lim_send_frame(mac_ctx, session_entry->vdev_id,
-		       sae_retry->sae_auth.ptr, sae_retry->sae_auth.len);
-
-	sae_retry->sae_auth_max_retry--;
-	/* Activate Auth Retry timer if max_retries are not done */
-	if (!sae_retry->sae_auth_max_retry || (tx_timer_activate(
-	    &mac_ctx->lim.lim_timers.g_lim_periodic_auth_retry_timer) !=
-	    TX_SUCCESS))
+	if (!sae_retry->sae_auth_max_retry) {
+		if (MLME_IS_ROAMING_IN_PROG(mac_ctx->psoc,
+					    session_entry->vdev_id)) {
+			mac_hdr = (tpSirMacMgmtHdr)sae_retry->sae_auth.ptr;
+			lim_send_pre_auth_failure(session_entry->vdev_id,
+						  mac_hdr->bssId);
+		}
 		goto free_and_deactivate_timer;
+	}
 
+	pe_debug("Retry sae auth for seq num %d vdev id %d",
+		 mac_ctx->mgmtSeqNum, session_entry->vdev_id);
+	lim_send_frame(mac_ctx, session_entry->vdev_id, sae_retry->sae_auth.ptr,
+		       sae_retry->sae_auth.len);
+	sae_retry->sae_auth_max_retry--;
+
+	if (TX_SUCCESS != tx_timer_activate(
+	    &mac_ctx->lim.lim_timers.g_lim_periodic_auth_retry_timer))
+		goto free_and_deactivate_timer;
 	return;
 
 free_and_deactivate_timer:
