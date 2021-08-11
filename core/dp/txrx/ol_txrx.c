@@ -1011,8 +1011,10 @@ void htt_pkt_log_init(struct cdp_soc_t *soc_hdl, uint8_t pdev_id, void *scn)
 	ol_txrx_pdev_handle handle =
 				ol_txrx_get_pdev_from_pdev_id(soc, pdev_id);
 
-	if (handle->pkt_log_init)
+	if (handle->pkt_log_init) {
+		ol_txrx_err("pktlog already initialized");
 		return;
+	}
 
 	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE &&
 			!QDF_IS_EPPING_ENABLED(cds_get_conparam())) {
@@ -1023,6 +1025,8 @@ void htt_pkt_log_init(struct cdp_soc_t *soc_hdl, uint8_t pdev_id, void *scn)
 			qdf_print(" pktlogmod_init failed");
 		else
 			handle->pkt_log_init = true;
+	} else {
+		ol_txrx_err("Invalid conn mode: %d", cds_get_conparam());
 	}
 }
 
@@ -1035,11 +1039,17 @@ void htt_pkt_log_init(struct cdp_soc_t *soc_hdl, uint8_t pdev_id, void *scn)
  */
 static void htt_pktlogmod_exit(struct ol_txrx_pdev_t *handle)
 {
+	if (!handle->pkt_log_init) {
+		ol_txrx_err("pktlog is not initialized");
+		return;
+	}
+
 	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE &&
-		!QDF_IS_EPPING_ENABLED(cds_get_conparam()) &&
-			handle->pkt_log_init) {
+		!QDF_IS_EPPING_ENABLED(cds_get_conparam())) {
 		pktlogmod_exit(handle);
 		handle->pkt_log_init = false;
+	} else {
+		ol_txrx_err("Invalid conn mode: %d", cds_get_conparam());
 	}
 }
 
@@ -5742,6 +5752,7 @@ static void ol_txrx_soc_detach(struct cdp_soc_t *soc)
 	qdf_mem_free(soc);
 }
 
+#ifdef REMOVE_PKT_LOG
 /**
  * ol_txrx_pkt_log_con_service() - connect packet log service
  * @soc_hdl: Datapath soc handle
@@ -5750,17 +5761,41 @@ static void ol_txrx_soc_detach(struct cdp_soc_t *soc)
  *
  * Return: noe
  */
-#ifdef REMOVE_PKT_LOG
 static void ol_txrx_pkt_log_con_service(struct cdp_soc_t *soc_hdl,
 					uint8_t pdev_id, void *scn)
 {
 }
+
+/**
+ * ol_txrx_pkt_log_exit() - cleanup packet log info
+ * @soc_hdl: Datapath soc handle
+ * @pdev_id: id of data path pdev handle
+ *
+ * Return: noe
+ */
+static void ol_txrx_pkt_log_exit(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
+{
+}
+
 #else
 static void ol_txrx_pkt_log_con_service(struct cdp_soc_t *soc_hdl,
 					uint8_t pdev_id, void *scn)
 {
 	htt_pkt_log_init(soc_hdl, pdev_id, scn);
 	pktlog_htc_attach();
+}
+
+static void ol_txrx_pkt_log_exit(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
+{
+	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
+	ol_txrx_pdev_handle pdev = ol_txrx_get_pdev_from_pdev_id(soc, pdev_id);
+
+	if (!pdev) {
+		ol_txrx_err("pdev handle is NULL");
+		return;
+	}
+
+	htt_pktlogmod_exit(pdev);
 }
 #endif
 
@@ -6152,6 +6187,7 @@ static struct cdp_misc_ops ol_ops_misc = {
 	.get_intra_bss_fwd_pkts_count = ol_get_intra_bss_fwd_pkts_count,
 	.pkt_log_init = htt_pkt_log_init,
 	.pkt_log_con_service = ol_txrx_pkt_log_con_service,
+	.pkt_log_exit = ol_txrx_pkt_log_exit,
 	.register_pktdump_cb = ol_register_packetdump_callback,
 	.unregister_pktdump_cb = ol_deregister_packetdump_callback,
 #ifdef QCA_SUPPORT_TXRX_DRIVER_TCP_DEL_ACK

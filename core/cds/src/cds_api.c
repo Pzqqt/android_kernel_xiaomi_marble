@@ -1111,13 +1111,13 @@ QDF_STATUS cds_pre_enable(void)
 	status = wma_pre_start();
 	if (QDF_IS_STATUS_ERROR(status)) {
 		cds_err("Failed to WMA prestart");
-		return QDF_STATUS_E_FAILURE;
+		goto exit_pkt_log;
 	}
 
 	status = htc_start(gp_cds_context->htc_ctx);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		cds_err("Failed to Start HTC");
-		goto exit_with_status;
+		goto exit_pkt_log;
 	}
 
 	status = wma_wait_for_ready_event(gp_cds_context->wma_context);
@@ -1154,7 +1154,12 @@ stop_wmi:
 	htc_stop(gp_cds_context->htc_ctx);
 
 	wma_wmi_work_close();
-exit_with_status:
+
+exit_pkt_log:
+	if (QDF_GLOBAL_FTM_MODE != cds_get_conparam() &&
+	    QDF_GLOBAL_EPPING_MODE != cds_get_conparam())
+		cdp_pkt_log_exit(soc, OL_TXRX_PDEV_ID);
+
 	return status;
 }
 
