@@ -49,7 +49,7 @@ string sFormat = "ip_accelerator <control_flag> <suit/name>, ..., <suit/name>\n"
 							"ip_accelerator " SHOW_SUIT_FLAG  "\n"
 							"or ip_accelerator --chooser "
 							"for menu chooser interface\n";
-#define MAX_SUITES 15
+#define MAX_SUITES 17
 
 #undef strcasesame
 #define strcasesame(x, y) \

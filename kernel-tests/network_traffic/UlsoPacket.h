@@ -88,7 +88,7 @@ public:
     Transport mTransportHeader;
     vector<uint8_t> mPayload {};
 
-    UlsoPacket(unsigned int segmentSize, unsigned int payloadSize, bool ethernetHeaderValid=false):
+    UlsoPacket(unsigned int segmentSize, unsigned int payloadSize, bool ethernetHeaderValid=true):
         mEthernetHeaderValid(ethernetHeaderValid){
         bool first = true;
         uint32_t seqNum = 0;

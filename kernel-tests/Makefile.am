@@ -48,4 +48,5 @@ ipa_kernel_tests_SOURCES =\
 		FilteringEthernetBridgingTests.cpp \
 		NatTest.cpp \
 		IPv6CTTest.cpp \
+		UlsoTest.cpp \
 		main.cpp

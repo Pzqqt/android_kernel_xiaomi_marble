@@ -992,18 +992,16 @@ static bool is_reconfigure_required(struct ipa_test_config_header *header)
 	return false;
 }
 
-int GenericConfigureScenario(struct ipa_test_config_header *header)
+int GenericConfigureScenario(struct ipa_test_config_header *header, bool isUlso)
 {
 	int fd;
 	int retval;
 
 	if (is_reconfigure_required(header) == false) {
-		g_Logger.AddMessage(LOG_DEVELOPMENT ,
-			"No need to reconfigure, we are all good :)\n");
+		g_Logger.AddMessage(LOG_DEVELOPMENT , "No need to reconfigure, we are all good :)\n");
 		return true;
 	} else {
-		g_Logger.AddMessage(LOG_DEVELOPMENT ,
-			"Need to run configuration again\n");
+		g_Logger.AddMessage(LOG_DEVELOPMENT , "Need to run configuration again\n");
 	}
 	g_Logger.AddMessage(LOG_DEVELOPMENT, "configuration has started, parameters:\n");
 	g_Logger.AddMessage(LOG_DEVELOPMENT, "header->head_marker=0x%x\n", header->head_marker);
@@ -1047,7 +1045,7 @@ int GenericConfigureScenario(struct ipa_test_config_header *header)
 				header->to_ipa_channel_config[i]->en_status);
 	}
 
-	fd = open(CONFIGURATION_NODE_PATH,  O_RDWR);
+	fd = open(CONFIGURATION_NODE_PATH, O_RDWR);
 	if (fd == -1) {
 		g_Logger.AddMessage(LOG_ERROR,
 				"%s - open %s failed (fd=%d,errno=%s)\n",
@@ -1055,7 +1053,11 @@ int GenericConfigureScenario(struct ipa_test_config_header *header)
 		return false;
 	}
 
-	retval = ioctl(fd, IPA_TEST_IOC_CONFIGURE, header);
+	if(isUlso){
+		retval = ioctl(fd, IPA_TEST_IOC_ULSO_CONFIGURE, header);
+	} else {
+		retval = ioctl(fd, IPA_TEST_IOC_CONFIGURE, header);
+	}
 	if (retval) {
 		g_Logger.AddMessage(LOG_ERROR, "fail to configure the system (%d)\n", retval);
 		close(fd);

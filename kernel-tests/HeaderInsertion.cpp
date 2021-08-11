@@ -31,8 +31,11 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <cstring>
 
 #include "HeaderInsertion.h"
+#include "TestsUtils.h"
 
 /*All interaction through the driver are
  * made through this inode.
@@ -76,6 +79,50 @@ bool HeaderInsertion::AddHeader(struct ipa_ioc_add_hdr *pHeaderTableToAdd)
 	return (-1 != nRetVal);
 }
 
+bool HeaderInsertion::addHeaderHpc(const string& name, uint8_t* header, const size_t headerLen, bool isPartial, enum ipa_client_type ipaClient){
+	if(name.empty() || name.size() >= IPA_RESOURCE_NAME_MAX){
+		return false;
+	}
+	int fd = open(CONFIGURATION_NODE_PATH, O_RDONLY);
+	if (fd < 0) {
+		cout << "failed to open " << CONFIGURATION_NODE_PATH << endl;
+		return false;
+	}
+	struct ipa_ioc_add_hdr *iocH = static_cast<struct ipa_ioc_add_hdr*>(calloc(1, sizeof(*iocH) + sizeof(struct ipa_hdr_add)));
+	if(!iocH){
+		return false;
+	}
+	iocH->commit = 1;
+	iocH->num_hdrs = 1;
+	struct ipa_hdr_add *h = &iocH->hdr[0];
+	strlcpy(h->name, name.c_str(), IPA_RESOURCE_NAME_MAX);
+	memcpy(h->hdr, header, headerLen);
+	h->hdr_len = headerLen;
+	h->hdr_hdl = -1;
+	h->status = -1;
+	h->is_partial = isPartial;
+	cout << "h->name=" << h->name << ", h->is_partial=" << h->is_partial << endl;
+	int result = ioctl(fd, IPA_TEST_IOC_ADD_HDR_HPC, iocH);
+	if(result || h->status){
+		free(iocH);
+		close(fd);
+		return false;
+	}
+	cout << "result=" << result << ", status=" << h->status << ", ipaClient=" << ipaClient << endl;
+    struct ipa_pkt_init_ex_hdr_ofst_set lookup;
+    lookup.ep = ipaClient;
+    strlcpy(lookup.name, name.c_str(), IPA_RESOURCE_NAME_MAX);
+    result = ioctl(fd, IPA_TEST_IOC_PKT_INIT_EX_SET_HDR_OFST , &lookup);
+    if (result) {
+		free(iocH);
+		close(fd);
+		return false;
+    }
+	free(iocH);
+	close(fd);
+	return true;
+}
+
 bool HeaderInsertion::DeleteHeader(struct ipa_ioc_del_hdr *pHeaderTableToDelete)
 {
 	int nRetVal = 0;
@@ -83,6 +130,32 @@ bool HeaderInsertion::DeleteHeader(struct ipa_ioc_del_hdr *pHeaderTableToDelete)
 	nRetVal = ioctl(m_fd, IPA_IOC_DEL_HDR , pHeaderTableToDelete);
 	LOG_IOCTL_RETURN_VALUE(nRetVal);
 	return (-1 != nRetVal);
+}
+
+bool HeaderInsertion::DeleteHeader(const string& name){
+	if(name.empty() || name.size() >= IPA_RESOURCE_NAME_MAX){
+		return false;
+	}
+	int hdl = GetHeaderHandle(name);
+	if(hdl == -1){
+		return false;
+	}
+	struct ipa_ioc_del_hdr *iocD = static_cast<struct ipa_ioc_del_hdr*>(calloc(1, sizeof(*iocD) + sizeof(struct ipa_hdr_del)));
+	if(!iocD){
+		return false;
+	}
+	iocD->commit = 1;
+	iocD->num_hdls = 1;
+	struct ipa_hdr_del *h = &iocD->hdl[0];
+	h->hdl = hdl;
+	h->status = -1;
+	cout << "h->hdl=" << h->hdl << endl;
+	if(!DeleteHeader(iocD)){
+		free(iocD);
+		return false;
+	}
+	free(iocD);
+	return true;
 }
 
 bool HeaderInsertion::AddProcCtx(struct ipa_ioc_add_hdr_proc_ctx *procCtxTable)
@@ -152,6 +225,23 @@ bool HeaderInsertion::GetHeaderHandle(struct ipa_ioc_get_hdr *pHeaderStruct)
 	"%s(), IPA_IOC_GET_HDR ioctl issued to IPA header insertion block.\n",
 	__func__);
 	return true;
+}
+
+int HeaderInsertion::GetHeaderHandle(const string& name){
+	if(name.empty() || name.size() >= IPA_RESOURCE_NAME_MAX){
+		return false;
+	}
+	struct ipa_ioc_get_hdr retHeader;
+	memset(&retHeader, 0, sizeof(retHeader));
+	strlcpy(retHeader.name, name.c_str(), IPA_RESOURCE_NAME_MAX);
+	retHeader.hdl = -1;
+	printf("retHeader.name=%s\n", retHeader.name);
+	if(!GetHeaderHandle(&retHeader)){
+		cout << "GetHeaderHandle(&retHeader) Failed" << endl;
+		return -1;
+	}
+	cout << "retHeader.hdl=" << retHeader.hdl << endl;
+	return retHeader.hdl;
 }
 
 bool HeaderInsertion::CopyHeader(struct ipa_ioc_copy_hdr *pCopyHeaderStruct)

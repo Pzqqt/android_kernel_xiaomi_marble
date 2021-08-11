@@ -45,8 +45,11 @@ public:
 	~InterfaceAbstraction();
 	bool Open(const char *toIPAPath, const char *fromIPAPath);
 	void Close();
-	bool SendData(unsigned char *buffer, size_t size);
+	long SendData(unsigned char *buffer, size_t size);
 	int ReceiveData(unsigned char *buf, size_t size);
+	int ReceiveSingleDataChunk(unsigned char *buf, size_t size);
+	int setReadNoBlock();
+	int clearReadNoBlock();
 
 	string m_toChannelName;
 	string m_fromChannelName;

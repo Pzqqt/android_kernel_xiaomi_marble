@@ -296,7 +296,8 @@ bool CreateBypassRoutingTable_v2(
 */
 void ConfigureScenario(int testConfiguration);
 void ConfigureScenario(int testConfiguration, const char *params);
-int GenericConfigureScenario(struct ipa_test_config_header *header);
+int GenericConfigureScenario(struct ipa_test_config_header *header,
+		bool isUlso=false);
 int GenericConfigureScenarioDestory(void);
 int ConfigureSystem(int testConfiguration, int fd);
 int ConfigureSystem(int testConfiguration, int fd, const char *params);
@@ -696,6 +697,11 @@ struct ipa_ep_cfg_seq {
 	int seq_type;
 };
 
+struct ipa_ep_cfg_ulso {
+	int ipid_min_max_idx;
+	bool is_ulso_pipe;
+};
+
 struct ipa_ep_cfg_holb {
 	uint32_t tmr_val;
 	uint32_t base_val;
@@ -705,9 +711,9 @@ struct ipa_ep_cfg_holb {
 	uint8_t scaled_time;
 };
 
-struct ipa_ep_cfg_ulso {
-	int ipid_min_max_idx;
-	bool is_ulso_pipe;
+struct ipa_pkt_init_ex_hdr_ofst_set {
+	char name[IPA_RESOURCE_NAME_MAX];
+	enum ipa_client_type ep;
 };
 
 /*

@@ -31,7 +31,15 @@
 #define HEADER_INSERTION_H_
 
 #include <stdint.h>
+#include <string>
+#include <iostream>
 #include "linux/msm_ipa.h"
+#include "ipa_test_module.h"
+#include "Constants.h"
+
+using std::string;
+using std::cout;
+using std::endl;
 
 class HeaderInsertion
 {
@@ -40,8 +48,11 @@ private:
 
 public:
 	bool AddHeader(struct ipa_ioc_add_hdr *pHeaderTable);
+	bool addHeaderHpc(const string& name, uint8_t* header, const size_t headerLen, bool isPartial, enum ipa_client_type ipaClient);
 	bool DeleteHeader(struct ipa_ioc_del_hdr *pHeaderTable);
+	bool DeleteHeader(const string& name);
 	bool GetHeaderHandle(struct ipa_ioc_get_hdr *pHeaderStruct);
+	int GetHeaderHandle(const string& name);
 	bool CopyHeader(struct ipa_ioc_copy_hdr *pCopyHeaderStruct);
 
 	// Processing context
