@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = -Im4
 EXTRA_CFLAGS	 = -DDEBUG
-AM_CXXFLAGS = -Wall -Wundef -Wno-trigraphs -Werror
+AM_CXXFLAGS = -Wall -Wundef -Wno-trigraphs -Werror -std=c++14
 
 if USE_GLIB
     ipa_kernel_tests_CPPFLAGS  = $(AM_CFLAGS) -DUSE_GLIB -Dstrlcpy=g_strlcpy @GLIB_CFLAGS@
