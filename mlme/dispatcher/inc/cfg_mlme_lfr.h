@@ -2407,7 +2407,7 @@
 
 /*
  * <ini>
- * idle_roam_band - Band on which idle roam scan will be
+ * idle_roam_band/RoamIdle_TriggerBand - Band on which idle roam scan will be
  * enabled
  * @Min: 0
  * @Max: 2
@@ -2426,7 +2426,7 @@
  * </ini>
  */
 #define CFG_LFR_IDLE_ROAM_BAND CFG_INI_UINT( \
-	"idle_roam_band", \
+	"idle_roam_band RoamIdle_TriggerBand", \
 	0, \
 	2, \
 	0, \
