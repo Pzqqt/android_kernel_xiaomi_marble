@@ -600,6 +600,26 @@ QDF_STATUS wlan_reg_psd_2_eirp(struct wlan_objmgr_pdev *pdev,
  * Return: true if AFC power event is received from the FW or false otherwise
  */
 bool wlan_reg_is_afc_power_event_received(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * wlan_reg_get_afc_req_id() - Get the AFC request ID
+ * @pdev: pdev pointer
+ * @req_id: Pointer to request id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_reg_get_afc_req_id(struct wlan_objmgr_pdev *pdev,
+				   uint64_t *req_id);
+
+/**
+ * wlan_reg_is_afc_expiry_event_received() - Checks if AFC power event is
+ * received from the FW.
+ *
+ * @pdev: pdev ptr
+ *
+ * Return: true if AFC exipry event is received from the FW or false otherwise
+ */
+bool wlan_reg_is_afc_expiry_event_received(struct wlan_objmgr_pdev *pdev);
 #else
 static inline bool
 wlan_reg_is_afc_power_event_received(struct wlan_objmgr_pdev *pdev)

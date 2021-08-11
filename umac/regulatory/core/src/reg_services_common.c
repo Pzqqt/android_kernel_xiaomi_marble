@@ -5869,4 +5869,33 @@ bool reg_is_afc_power_event_received(struct wlan_objmgr_pdev *pdev)
 
 	return pdev_priv_obj->is_6g_afc_power_event_received;
 }
+
+QDF_STATUS reg_get_afc_req_id(struct wlan_objmgr_pdev *pdev, uint64_t *req_id)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("reg pdev priv obj is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*req_id = pdev_priv_obj->afc_request_id;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+bool reg_is_afc_expiry_event_received(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("pdev reg component is NULL");
+		return false;
+	}
+
+	return pdev_priv_obj->is_6g_afc_expiry_event_received;
+}
 #endif

@@ -517,5 +517,15 @@ ucfg_reg_set_cur_6g_ap_pwr_type(struct wlan_objmgr_pdev *pdev,
 QDF_STATUS
 ucfg_reg_send_afc_resp_rx_ind(struct wlan_objmgr_pdev *pdev,
 			      struct reg_afc_resp_rx_ind_info *afc_ind_obj);
+
+/**
+ * ucfg_reg_afc_start() - Start the AFC request from regulatory. This finally
+ *                   sends the request to registered callbacks
+ * @pdev: Pointer to pdev
+ * @req_id: The AFC request ID
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_reg_afc_start(struct wlan_objmgr_pdev *pdev, uint64_t req_id);
 #endif
 #endif

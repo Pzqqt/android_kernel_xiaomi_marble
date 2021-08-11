@@ -1706,5 +1706,24 @@ QDF_STATUS reg_send_afc_cmd(struct wlan_objmgr_pdev *pdev,
  * Return: true if AFC power event is received from the FW or false otherwise
  */
 bool reg_is_afc_power_event_received(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * reg_get_afc_req_id() - Get the AFC request ID
+ * @pdev: pdev pointer
+ * @req_id: Pointer to request id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS reg_get_afc_req_id(struct wlan_objmgr_pdev *pdev, uint64_t *req_id);
+
+/**
+ * reg_is_afc_expiry_event_received() - Checks if AFC power event is
+ * received from the FW.
+ *
+ * @pdev: pdev ptr
+ *
+ * Return: true if AFC expiry event is received from the FW or false otherwise
+ */
+bool reg_is_afc_expiry_event_received(struct wlan_objmgr_pdev *pdev);
 #endif
 #endif

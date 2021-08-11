@@ -393,4 +393,10 @@ ucfg_reg_send_afc_resp_rx_ind(struct wlan_objmgr_pdev *pdev,
 {
 	return reg_send_afc_cmd(pdev, afc_ind_obj);
 }
+
+QDF_STATUS
+ucfg_reg_afc_start(struct wlan_objmgr_pdev *pdev, uint64_t req_id)
+{
+	return reg_afc_start(pdev, req_id);
+}
 #endif
