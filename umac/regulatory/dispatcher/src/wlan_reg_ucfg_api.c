@@ -249,6 +249,8 @@ QDF_STATUS ucfg_reg_register_afc_req_rx_callback(struct wlan_objmgr_pdev *pdev,
 	return reg_register_afc_req_rx_callback(pdev, cbf, arg);
 }
 
+qdf_export_symbol(ucfg_reg_register_afc_req_rx_callback);
+
 QDF_STATUS ucfg_reg_unregister_afc_req_rx_callback(struct wlan_objmgr_pdev *pdev,
 						   afc_req_rx_evt_handler cbf)
 {
