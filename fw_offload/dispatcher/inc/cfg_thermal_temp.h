@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018,2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018,2020-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -430,6 +430,31 @@
 				CFG_VALUE_OR_DEFAULT, \
 				"Thermal management action")
 
+/* <ini>
+ * gThermalStatsTempOffset - Configure the thermal stats offset
+ *
+ * @Min: 0
+ * @Max: 10
+ * @Default: 5
+ *
+ * This ini will configure Thermal temperature offset value for capturing
+ * thermal stats in  thermal range.
+ * Thermal STATS start capturing from temperature threshold to temperature
+ * threshold + offset.
+ * If the value 0 is given then then thermal STATS capture is disabled
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_THERMAL_STATS_TEMP_OFFSET CFG_INI_UINT( \
+					"gThermalStatsTempOffset", \
+					0, \
+					10, \
+					5, \
+					CFG_VALUE_OR_DEFAULT, \
+					"Thermal Stats Temperature Offset")
+
 #define CFG_THERMAL_TEMP_ALL \
 	CFG(CFG_THERMAL_TEMP_MIN_LEVEL0) \
 	CFG(CFG_THERMAL_TEMP_MAX_LEVEL0) \
@@ -450,6 +475,7 @@
 	CFG(CFG_THERMAL_SAMPLING_TIME) \
 	CFG(CFG_THERMAL_APPS_PRIORITY) \
 	CFG(CFG_THERMAL_WPPS_PRIOITY) \
-	CFG(CFG_THERMAL_MGMT_ACTION)
-#endif
+	CFG(CFG_THERMAL_MGMT_ACTION) \
+	CFG(CFG_THERMAL_STATS_TEMP_OFFSET)\
 
+#endif

@@ -51,10 +51,12 @@
 /**
  * enum wlan_fwol_southbound_event - fw offload south bound event type
  * @WLAN_FWOL_EVT_GET_ELNA_BYPASS_RESPONSE: get eLNA bypass response
+ * @WLAN_FWOL_EVT_GET_THERMAL_STATS_RESPONSE: get Thermal Stats response
  */
 enum wlan_fwol_southbound_event {
 	WLAN_FWOL_EVT_INVALID = 0,
 	WLAN_FWOL_EVT_GET_ELNA_BYPASS_RESPONSE,
+	WLAN_FWOL_EVT_GET_THERMAL_STATS_RESPONSE,
 	WLAN_FWOL_EVT_LAST,
 	WLAN_FWOL_EVT_MAX = WLAN_FWOL_EVT_LAST - 1
 };
@@ -116,6 +118,7 @@ struct wlan_fwol_coex_config {
  * @priority_apps: Priority of the apps mitigation to consider by fw
  * @priority_wpps: Priority of the wpps mitigation to consider by fw
  * @thermal_action: thermal action as defined enum thermal_mgmt_action_code
+ * @therm_stats_offset: thermal temp offset as set in gThermalStatsTempOffset
  */
 struct wlan_fwol_thermal_temp {
 	bool     thermal_mitigation_enable;
@@ -128,6 +131,9 @@ struct wlan_fwol_thermal_temp {
 	uint8_t priority_apps;
 	uint8_t priority_wpps;
 	enum thermal_mgmt_action_code thermal_action;
+#ifdef THERMAL_STATS_SUPPORT
+	uint8_t therm_stats_offset;
+#endif
 };
 
 /**
@@ -288,6 +294,16 @@ struct wlan_fwol_thermal_throttle_info {
 };
 
 /**
+ * struct wlan_fwol_capability_info - FW offload capability component
+ * @fw_thermal_stats_cap: Thermal Stats Fw capability
+ **/
+struct wlan_fwol_capability_info {
+#ifdef THERMAL_STATS_SUPPORT
+	bool fw_thermal_stats_cap;
+#endif
+};
+
+/**
  * struct wlan_fwol_psoc_obj - FW offload psoc priv object
  * @cfg:     cfg items
  * @cbs:     callback functions
@@ -295,6 +311,7 @@ struct wlan_fwol_thermal_throttle_info {
  * @rx_ops: rx operations for target interface
  * @thermal_throttle: cached target thermal stats information
  * @thermal_cbs: thermal notification callbacks to hdd layer
+ * @capability_info: fwol capability info
  */
 struct wlan_fwol_psoc_obj {
 	struct wlan_fwol_cfg cfg;
@@ -305,6 +322,7 @@ struct wlan_fwol_psoc_obj {
 	struct wlan_fwol_thermal_throttle_info thermal_throttle;
 	struct fwol_thermal_callbacks thermal_cbs;
 #endif
+	struct wlan_fwol_capability_info capability_info;
 };
 
 /**
@@ -312,6 +330,7 @@ struct wlan_fwol_psoc_obj {
  * @psoc: psoc handle
  * @event_id: event ID
  * @get_elna_bypass_response: get eLNA bypass response
+ * @get_thermal_stats_response: get thermal stats response
  */
 struct wlan_fwol_rx_event {
 	struct wlan_objmgr_psoc *psoc;
@@ -319,6 +338,9 @@ struct wlan_fwol_rx_event {
 	union {
 #ifdef WLAN_FEATURE_ELNA
 		struct get_elna_bypass_response get_elna_bypass_response;
+#endif
+#ifdef THERMAL_STATS_SUPPORT
+		struct thermal_throttle_info get_thermal_stats_response;
 #endif
 	};
 };

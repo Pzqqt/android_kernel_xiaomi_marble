@@ -196,8 +196,8 @@ notify_thermal_throttle_handler(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_INVAL;
 	}
 	thermal_cbs = &fwol_obj->thermal_cbs;
-	fwol_nofl_debug("thermal evt: pdev %d lvl %d", info->pdev_id,
-			info->level);
+	fwol_nofl_debug("thermal evt: pdev %d lvl %d",
+			info->pdev_id, info->level);
 	if (info->pdev_id <= fwol_obj->thermal_throttle.pdev_id ||
 	    fwol_obj->thermal_throttle.pdev_id == WLAN_INVALID_PDEV_ID) {
 		fwol_obj->thermal_throttle.level = info->level;
@@ -212,17 +212,81 @@ notify_thermal_throttle_handler(struct wlan_objmgr_psoc *psoc,
 
 	return status;
 }
+#endif
 
-static void tgt_fwol_register_thermal_rx_ops(struct wlan_fwol_rx_ops *rx_ops)
+#ifdef THERMAL_STATS_SUPPORT
+static QDF_STATUS
+tgt_fwol_get_thermal_stats_resp(struct wlan_objmgr_psoc *psoc,
+				struct thermal_throttle_info *resp)
+{
+	QDF_STATUS status;
+	struct scheduler_msg msg = {0};
+	struct wlan_fwol_rx_event *event;
+
+	event = qdf_mem_malloc(sizeof(*event));
+	if (!event)
+		return QDF_STATUS_E_NOMEM;
+
+	status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_FWOL_SB_ID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		fwol_err("Failed to get psoc ref");
+		fwol_release_rx_event(event);
+		return status;
+	}
+
+	event->psoc = psoc;
+	event->event_id = WLAN_FWOL_EVT_GET_THERMAL_STATS_RESPONSE;
+	event->get_thermal_stats_response = *resp;
+	msg.type = WLAN_FWOL_EVT_GET_THERMAL_STATS_RESPONSE;
+	msg.bodyptr = event;
+	msg.callback = fwol_process_event;
+	msg.flush_callback = fwol_flush_callback;
+	status = scheduler_post_message(QDF_MODULE_ID_FWOL,
+					QDF_MODULE_ID_FWOL,
+					QDF_MODULE_ID_TARGET_IF, &msg);
+
+	if (QDF_IS_STATUS_SUCCESS(status))
+		return QDF_STATUS_SUCCESS;
+
+	fwol_err("failed to send WLAN_FWOL_EVT_GET_THERMAL_STATS_RESPONSE msg");
+	fwol_flush_callback(&msg);
+
+	return status;
+
+}
+#endif
+
+#ifdef THERMAL_STATS_SUPPORT
+static void
+tgt_fwol_register_thermal_stats_resp(struct wlan_fwol_rx_ops *rx_ops)
+{
+	rx_ops->get_thermal_stats_resp = tgt_fwol_get_thermal_stats_resp;
+}
+#else
+static void
+tgt_fwol_register_thermal_stats_resp(struct wlan_fwol_rx_ops *rx_ops)
+{
+}
+#endif
+#ifdef FW_THERMAL_THROTTLE_SUPPORT
+static void
+tgt_fwol_register_notify_thermal_throttle_evt(struct wlan_fwol_rx_ops *rx_ops)
 {
 	rx_ops->notify_thermal_throttle_handler =
 					notify_thermal_throttle_handler;
 }
 #else
-static void tgt_fwol_register_thermal_rx_ops(struct wlan_fwol_rx_ops *rx_ops)
+static void
+tgt_fwol_register_notify_thermal_throttle_evt(struct wlan_fwol_rx_ops *rx_ops)
 {
 }
 #endif
+
+static void tgt_fwol_register_thermal_rx_ops(struct wlan_fwol_rx_ops *rx_ops)
+{
+	tgt_fwol_register_notify_thermal_throttle_evt(rx_ops);
+	tgt_fwol_register_thermal_stats_resp(rx_ops);
+}
 
 QDF_STATUS tgt_fwol_register_rx_ops(struct wlan_fwol_rx_ops *rx_ops)
 {
