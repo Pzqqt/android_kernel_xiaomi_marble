@@ -157,6 +157,7 @@ dp_rxdma_ring_sel_cfg_li(struct dp_soc *soc)
 	int i;
 	int mac_id;
 	struct htt_rx_ring_tlv_filter htt_tlv_filter = {0};
+	struct dp_srng *rx_mac_srng;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	htt_tlv_filter.mpdu_start = 1;
@@ -220,9 +221,9 @@ dp_rxdma_ring_sel_cfg_li(struct dp_soc *soc)
 				dp_get_lmac_id_for_pdev_id(soc, mac_id,
 							   pdev->pdev_id);
 
+			rx_mac_srng = dp_get_rxdma_ring(pdev, lmac_id);
 			htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
-					    soc->rx_refill_buf_ring[lmac_id].
-					    hal_srng,
+					    rx_mac_srng->hal_srng,
 					    RXDMA_BUF, RX_DATA_BUFFER_SIZE,
 					    &htt_tlv_filter);
 		}

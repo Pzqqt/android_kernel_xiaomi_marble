@@ -493,9 +493,7 @@ static void dp_mon_reap_timer_handler(void *arg)
 
 	qdf_timer_mod(&mon_soc->mon_reap_timer, DP_INTR_POLL_TIMER_MS);
 }
-#endif
 
-#ifdef QCA_HOST2FW_RXBUF_RING
 static void dp_mon_reap_timer_init(struct dp_soc *soc)
 {
 	struct dp_mon_soc *mon_soc = soc->monitor_soc;
@@ -630,7 +628,7 @@ static void dp_mon_neighbour_peer_add_ast(struct dp_pdev *pdev,
  *
  * Return: non-zero for failure, zero for success
  */
-#ifdef QCA_HOST2FW_RXBUF_RING
+#if defined(DP_CON_MON)
 static
 QDF_STATUS dp_mon_htt_srng_setup_1_0(struct dp_soc *soc,
 				     struct dp_pdev *pdev,

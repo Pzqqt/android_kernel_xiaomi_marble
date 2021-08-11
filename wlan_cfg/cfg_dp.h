@@ -369,7 +369,7 @@
  * Allocate as many RX descriptors as buffers in the SW2RXDMA
  * ring. This value may need to be tuned later.
  */
-#if defined(QCA_HOST2FW_RXBUF_RING)
+#if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
 #define WLAN_CFG_RX_SW_DESC_WEIGHT_SIZE 1
 #define WLAN_CFG_RX_SW_DESC_WEIGHT_SIZE_MIN 1
 #define WLAN_CFG_RX_SW_DESC_WEIGHT_SIZE_MAX 1
@@ -402,7 +402,7 @@
 #define WLAN_CFG_RX_SW_DESC_NUM_SIZE 12288
 #define WLAN_CFG_RX_SW_DESC_NUM_SIZE_MIN 4096
 #define WLAN_CFG_RX_SW_DESC_NUM_SIZE_MAX 12288
-#endif //QCA_HOST2FW_RXBUF_RING
+#endif
 
 #define WLAN_CFG_RX_FLOW_SEARCH_TABLE_SIZE 16384
 #define WLAN_CFG_RX_FLOW_SEARCH_TABLE_SIZE_MIN 1

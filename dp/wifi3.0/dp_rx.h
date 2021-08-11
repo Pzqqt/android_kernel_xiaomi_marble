@@ -36,11 +36,11 @@
 #define RX_MONITOR_BUFFER_ALIGNMENT     4
 #endif /* RXDMA_OPTIMIZATION */
 
-#ifdef QCA_HOST2FW_RXBUF_RING
+#if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
 #define DP_WBM2SW_RBM(sw0_bm_id)	HAL_RX_BUF_RBM_SW1_BM(sw0_bm_id)
 /* RBM value used for re-injecting defragmented packets into REO */
 #define DP_DEFRAG_RBM(sw0_bm_id)	HAL_RX_BUF_RBM_SW3_BM(sw0_bm_id)
-#endif /* QCA_HOST2FW_RXBUF_RING */
+#endif
 
 #define RX_BUFFER_RESERVATION   0
 
@@ -2020,7 +2020,7 @@ dp_rx_is_list_ready(qdf_nbuf_t nbuf_head,
 }
 #endif
 
-#ifdef QCA_HOST2FW_RXBUF_RING
+#if defined(WLAN_MAX_PDEVS) && (WLAN_MAX_PDEVS == 1)
 static inline uint8_t
 dp_rx_get_defrag_bm_id(struct dp_soc *soc)
 {
