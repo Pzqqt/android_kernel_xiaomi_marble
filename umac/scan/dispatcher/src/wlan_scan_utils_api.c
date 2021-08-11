@@ -1577,7 +1577,7 @@ util_scan_add_hidden_ssid(struct wlan_objmgr_pdev *pdev, qdf_nbuf_t bcnbuf)
 	uint16_t tmplen, ie_length;
 	uint8_t *pbeacon, *tmp;
 	bool     set_ssid_flag = false;
-	struct ie_ssid *ssid;
+	struct ie_ssid ssid = {0};
 	uint8_t pdev_id;
 
 	if (!pdev) {
@@ -1626,8 +1626,15 @@ util_scan_add_hidden_ssid(struct wlan_objmgr_pdev *pdev, qdf_nbuf_t bcnbuf)
 						 sizeof(struct ie_header))) {
 				return QDF_STATUS_E_INVAL;
 			}
-			ssid = (struct ie_ssid *)ie;
-			if (util_scan_is_hidden_ssid(ssid)) {
+			ssid.ssid_id = ie->ie_id;
+			ssid.ssid_len = ie->ie_len;
+
+			if (ssid.ssid_len)
+				qdf_mem_copy(ssid.ssid,
+					     ie + sizeof(struct ie_header),
+					     ssid.ssid_len);
+
+			if (util_scan_is_hidden_ssid(&ssid)) {
 				set_ssid_flag  = true;
 				ssid_ie_start_offset = bcn_ie_offset -
 					sizeof(struct ie_header);
@@ -1654,7 +1661,7 @@ util_scan_add_hidden_ssid(struct wlan_objmgr_pdev *pdev, qdf_nbuf_t bcnbuf)
 
 	if (set_ssid_flag) {
 		/* Hidden SSID if the Length is 0 */
-		if (!ssid->ssid_len) {
+		if (!ssid.ssid_len) {
 			/* increase the taillength by length of ssid */
 			if (qdf_nbuf_put_tail(bcnbuf,
 					      conf_ssid->length) == NULL) {
@@ -1687,7 +1694,7 @@ util_scan_add_hidden_ssid(struct wlan_objmgr_pdev *pdev, qdf_nbuf_t bcnbuf)
 			qdf_mem_free(tmp);
 
 			/* Hidden ssid with all 0's */
-		} else if (ssid->ssid_len == conf_ssid->length) {
+		} else if (ssid.ssid_len == conf_ssid->length) {
 			/* Insert the  SSID string */
 			qdf_mem_copy((pbeacon + ssid_ie_start_offset +
 				      sizeof(struct ie_header)),
