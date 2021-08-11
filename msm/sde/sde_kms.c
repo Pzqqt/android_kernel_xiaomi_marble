@@ -2765,6 +2765,7 @@ static int sde_kms_check_vm_request(struct msm_kms *kms,
 	enum sde_crtc_vm_req old_vm_req = VM_REQ_NONE, new_vm_req = VM_REQ_NONE;
 	struct sde_vm_ops *vm_ops;
 	bool vm_req_active = false;
+	bool vm_owns_hw;
 	enum sde_crtc_idle_pc_state idle_pc_state;
 	struct sde_mdss_cfg *catalog;
 	int rc = 0;
@@ -2789,7 +2790,7 @@ static int sde_kms_check_vm_request(struct msm_kms *kms,
 		return -EINVAL;
 
 	sde_vm_lock(sde_kms);
-
+	vm_owns_hw = sde_vm_owns_hw(sde_kms);
 	for_each_oldnew_crtc_in_state(state, crtc, old_cstate, new_cstate, i) {
 		struct sde_crtc_state *old_state = NULL, *new_state = NULL;
 
@@ -2814,8 +2815,7 @@ static int sde_kms_check_vm_request(struct msm_kms *kms,
 			if (rc) {
 				SDE_ERROR(
 				"VM transition check failed; o_state:%d, n_state:%d, hw_owner:%d, rc:%d\n",
-					old_vm_req, new_vm_req,
-					vm_ops->vm_owns_hw(sde_kms), rc);
+					old_vm_req, new_vm_req, vm_owns_hw, rc);
 				goto end;
 			} else if (old_vm_req == VM_REQ_ACQUIRE &&
 					new_vm_req == VM_REQ_NONE) {
@@ -2852,9 +2852,8 @@ static int sde_kms_check_vm_request(struct msm_kms *kms,
 			crtc_encoder_cnt++;
 	}
 
-	SDE_EVT32(old_vm_req, new_vm_req, vm_ops->vm_owns_hw(sde_kms));
-	SDE_DEBUG("VM  o_state:%d, n_state:%d, hw_owner:%d\n", old_vm_req,
-			new_vm_req, vm_ops->vm_owns_hw(sde_kms));
+	SDE_EVT32(old_vm_req, new_vm_req, vm_owns_hw);
+	SDE_DEBUG("VM  o_state:%d, n_state:%d, hw_owner:%d\n", old_vm_req, new_vm_req, vm_owns_hw);
 
 	for_each_new_connector_in_state(state, connector, new_connstate, i) {
 		int conn_mask = active_cstate->connector_mask;
@@ -2903,13 +2902,12 @@ static int sde_kms_check_vm_request(struct msm_kms *kms,
 		goto end;
 	}
 
-	if ((new_vm_req == VM_REQ_ACQUIRE) && !vm_ops->vm_owns_hw(sde_kms)) {
+	if ((new_vm_req == VM_REQ_ACQUIRE) && !vm_owns_hw) {
 		rc = vm_ops->vm_acquire(sde_kms);
 		if (rc) {
 			SDE_ERROR(
 			"VM acquire failed; o_state:%d, n_state:%d, hw_owner:%d, rc:%d\n",
-				old_vm_req, new_vm_req,
-				vm_ops->vm_owns_hw(sde_kms), rc);
+				old_vm_req, new_vm_req, vm_owns_hw, rc);
 			goto end;
 		}
 
@@ -5065,7 +5063,6 @@ static int _sde_kms_register_events(struct msm_kms *kms,
 	struct drm_crtc *crtc;
 	struct drm_connector *conn;
 	struct sde_kms *sde_kms;
-	struct sde_vm_ops *vm_ops;
 
 	if (!kms || !obj) {
 		SDE_ERROR("invalid argument kms %pK obj %pK\n", kms, obj);
@@ -5073,9 +5070,8 @@ static int _sde_kms_register_events(struct msm_kms *kms,
 	}
 
 	sde_kms = to_sde_kms(kms);
-	vm_ops = sde_vm_get_ops(sde_kms);
 	sde_vm_lock(sde_kms);
-	if (vm_ops && vm_ops->vm_owns_hw && !vm_ops->vm_owns_hw(sde_kms)) {
+	if (!sde_vm_owns_hw(sde_kms)) {
 		sde_vm_unlock(sde_kms);
 		SDE_DEBUG("HW is owned by other VM\n");
 		return -EACCES;

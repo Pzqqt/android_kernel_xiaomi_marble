@@ -131,7 +131,6 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 	struct drm_event event;
 	int rc = 0;
 	struct sde_kms *sde_kms;
-	struct sde_vm_ops *vm_ops;
 
 	sde_kms = _sde_connector_get_kms(&c_conn->base);
 	if (!sde_kms) {
@@ -167,8 +166,7 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 
 	sde_vm_lock(sde_kms);
 
-	vm_ops = sde_vm_get_ops(sde_kms);
-	if (vm_ops && vm_ops->vm_owns_hw && !vm_ops->vm_owns_hw(sde_kms)) {
+	if (!sde_vm_owns_hw(sde_kms)) {
 		SDE_DEBUG("skipping bl update due to HW unavailablity\n");
 		goto done;
 	}
@@ -2077,7 +2075,6 @@ static ssize_t _sde_debugfs_conn_cmd_tx_write(struct file *file,
 {
 	struct drm_connector *connector = file->private_data;
 	struct sde_connector *c_conn = NULL;
-	struct sde_vm_ops *vm_ops;
 	struct sde_kms *sde_kms;
 	char *input, *token, *input_copy, *input_dup = NULL;
 	const char *delim = " ";
@@ -2107,9 +2104,8 @@ static ssize_t _sde_debugfs_conn_cmd_tx_write(struct file *file,
 	if (!input)
 		return -ENOMEM;
 
-	vm_ops = sde_vm_get_ops(sde_kms);
 	sde_vm_lock(sde_kms);
-	if (vm_ops && vm_ops->vm_owns_hw && !vm_ops->vm_owns_hw(sde_kms)) {
+	if (!sde_vm_owns_hw(sde_kms)) {
 		SDE_DEBUG("op not supported due to HW unavailablity\n");
 		rc = -EOPNOTSUPP;
 		goto end;
