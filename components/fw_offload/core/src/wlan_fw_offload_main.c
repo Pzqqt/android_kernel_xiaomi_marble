@@ -111,6 +111,22 @@ fwol_init_coex_config_in_cfg(struct wlan_objmgr_psoc *psoc,
 						    CFG_BLE_SCAN_COEX_POLICY);
 }
 
+#ifdef THERMAL_STATS_SUPPORT
+static void
+fwol_init_thermal_stats_in_cfg(struct wlan_objmgr_psoc *psoc,
+			       struct wlan_fwol_thermal_temp *thermal_temp)
+{
+	thermal_temp->therm_stats_offset =
+				cfg_get(psoc, CFG_THERMAL_STATS_TEMP_OFFSET);
+}
+#else
+static void
+fwol_init_thermal_stats_in_cfg(struct wlan_objmgr_psoc *psoc,
+			       struct wlan_fwol_thermal_temp *thermal_temp)
+{
+}
+#endif
+
 static void
 fwol_init_thermal_temp_in_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_fwol_thermal_temp *thermal_temp)
@@ -155,7 +171,7 @@ fwol_init_thermal_temp_in_cfg(struct wlan_objmgr_psoc *psoc,
 				cfg_get(psoc, CFG_THERMAL_WPPS_PRIOITY);
 	thermal_temp->thermal_action =
 				cfg_get(psoc, CFG_THERMAL_MGMT_ACTION);
-
+	fwol_init_thermal_stats_in_cfg(psoc, thermal_temp);
 }
 
 /**
@@ -680,6 +696,59 @@ fwol_process_get_elna_bypass_resp(struct wlan_fwol_rx_event *event)
 }
 #endif /* WLAN_FEATURE_ELNA */
 
+#ifdef THERMAL_STATS_SUPPORT
+/**
+ * fwol_process_get_thermal_stats_resp() - Process get thermal stats response
+ * @event: response event
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+static QDF_STATUS
+fwol_process_get_thermal_stats_resp(struct wlan_fwol_rx_event *event)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_fwol_psoc_obj *fwol_obj;
+	struct wlan_fwol_callbacks *cbs;
+	struct thermal_throttle_info *resp;
+
+	if (!event) {
+		fwol_err("Event buffer is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	psoc = event->psoc;
+	if (!psoc) {
+		fwol_err("psoc is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL Obj");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	cbs = &fwol_obj->cbs;
+	if (cbs && cbs->get_thermal_stats_callback) {
+		resp = &event->get_thermal_stats_response;
+		cbs->get_thermal_stats_callback(cbs->get_thermal_stats_context,
+						resp);
+	} else {
+		fwol_err("NULL pointer for callback");
+		status = QDF_STATUS_E_IO;
+	}
+
+	return status;
+}
+#else
+static QDF_STATUS
+fwol_process_get_thermal_stats_resp(struct wlan_fwol_rx_event *event)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif /* THERMAL_STATS_SUPPORT */
+
 QDF_STATUS fwol_process_event(struct scheduler_msg *msg)
 {
 	QDF_STATUS status;
@@ -698,6 +767,9 @@ QDF_STATUS fwol_process_event(struct scheduler_msg *msg)
 	switch (msg->type) {
 	case WLAN_FWOL_EVT_GET_ELNA_BYPASS_RESPONSE:
 		status = fwol_process_get_elna_bypass_resp(event);
+		break;
+	case WLAN_FWOL_EVT_GET_THERMAL_STATS_RESPONSE:
+		status = fwol_process_get_thermal_stats_resp(event);
 		break;
 	default:
 		status = QDF_STATUS_E_INVAL;

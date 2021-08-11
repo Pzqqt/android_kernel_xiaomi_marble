@@ -670,6 +670,26 @@ QDF_STATUS ucfg_fwol_set_mdns_config(struct wlan_objmgr_psoc *psoc,
 #endif /* WLAN_FEATURE_MDNS_OFFLOAD */
 
 /**
+ * ucfg_fwol_update_fw_cap_info - API to update fwol capability info
+ * @psoc: pointer to psoc object
+ * @caps: pointer to wlan_fwol_capability_info struct
+ *
+ * Used to update fwol capability info.
+ *
+ * Return: void
+ */
+void ucfg_fwol_update_fw_cap_info(struct wlan_objmgr_psoc *psoc,
+				  struct wlan_fwol_capability_info *caps);
+
+#ifdef THERMAL_STATS_SUPPORT
+QDF_STATUS ucfg_fwol_send_get_thermal_stats_cmd(struct wlan_objmgr_psoc *psoc,
+				      enum thermal_stats_request_type req_type,
+				      void (*callback)(void *context,
+				      struct thermal_throttle_info *response),
+				      void *context);
+#endif /* THERMAL_STATS_SUPPORT */
+
+/**
  * ucfg_fwol_configure_global_params - API to configure global params
  * @psoc: pointer to psoc object
  * @pdev: pointer to pdev object

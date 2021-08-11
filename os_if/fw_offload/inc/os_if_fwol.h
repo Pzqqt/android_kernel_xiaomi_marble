@@ -116,4 +116,12 @@ static inline int os_if_fwol_disable_mdns_offload(struct wlan_objmgr_psoc *psoc)
 }
 #endif /* WLAN_FEATURE_MDNS_OFFLOAD */
 
+#ifdef THERMAL_STATS_SUPPORT
+int os_if_fwol_get_thermal_stats_req(struct wlan_objmgr_psoc *psoc,
+				     enum thermal_stats_request_type req,
+				     void (*callback)(void *context,
+				     struct thermal_throttle_info *response),
+				     void *context);
+#endif /* THERMAL_STATS_SUPPORT */
+
 #endif /* __OS_IF_FWOL_H__ */

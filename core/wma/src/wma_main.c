@@ -116,6 +116,7 @@
 
 #include "wlan_pkt_capture_ucfg_api.h"
 #include "target_if_cm_roam_event.h"
+#include "wlan_fwol_ucfg_api.h"
 
 #define WMA_LOG_COMPLETION_TIMER 3000 /* 3 seconds */
 #define WMI_TLV_HEADROOM 128
@@ -5843,11 +5844,52 @@ static void wma_set_mc_cp_caps(struct wlan_objmgr_psoc *psoc)
 		ucfg_mc_cp_set_big_data_fw_support(psoc, false);
 }
 
+#ifdef THERMAL_STATS_SUPPORT
+static void wma_set_thermal_stats_fw_cap(tp_wma_handle wma,
+					 struct wlan_fwol_capability_info *cap)
+{
+	cap->fw_thermal_stats_cap = wmi_service_enabled(wma->wmi_handle,
+				wmi_service_thermal_stats_temp_range_supported);
+}
+#else
+static void wma_set_thermal_stats_fw_cap(tp_wma_handle wma,
+					 struct wlan_fwol_capability_info *cap)
+{
+}
+#endif
+
+/**
+ * wma_set_fwol_caps() - Populate fwol component related capabilities
+ *			 to the fwol component
+ *
+ * @psoc: Pointer to psoc object
+ *
+ * Return: None
+ */
+static void wma_set_fwol_caps(struct wlan_objmgr_psoc *psoc)
+{
+	tp_wma_handle wma;
+	struct wlan_fwol_capability_info cap_info;
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (!wma) {
+		wma_err_rl("wma Null");
+		return;
+	}
+	if (!psoc) {
+		wma_err_rl("psoc Null");
+		return;
+	}
+
+	wma_set_thermal_stats_fw_cap(wma, &cap_info);
+	ucfg_fwol_update_fw_cap_info(psoc, &cap_info);
+}
 static void wma_set_component_caps(struct wlan_objmgr_psoc *psoc)
 {
 	wma_set_pmo_caps(psoc);
 	wma_set_mlme_caps(psoc);
 	wma_set_mc_cp_caps(psoc);
+	wma_set_fwol_caps(psoc);
 }
 
 #if defined(WLAN_FEATURE_GTK_OFFLOAD) && defined(WLAN_POWER_MANAGEMENT_OFFLOAD)

@@ -37,8 +37,12 @@
 #include "wlan_fwol_ucfg_api.h"
 #include <pld_common.h>
 #include "wlan_hdd_stats.h"
+#include "os_if_fwol.h"
+#include "wlan_osif_request_manager.h"
+#include "wlan_fwol_public_structs.h"
 
 #define DC_OFF_PERCENT_WPPS 50
+#define WLAN_WAIT_TIME_GET_THERM_LVL 1000
 
 const struct nla_policy
 	wlan_hdd_thermal_mitigation_policy
@@ -245,6 +249,223 @@ hdd_get_curr_thermal_temperature_val(struct hdd_context *hdd_ctx,
 	return wlan_cfg80211_vendor_cmd_reply(reply_skb);
 }
 
+#ifdef THERMAL_STATS_SUPPORT
+QDF_STATUS
+hdd_send_get_thermal_stats_cmd(struct hdd_context *hdd_ctx,
+			       enum thermal_stats_request_type request_type,
+			       void (*callback)(void *context,
+			       struct thermal_throttle_info *response),
+			       void *context)
+{
+	int ret;
+
+	if (!hdd_ctx->psoc) {
+		hdd_err_rl("NULL pointer for psoc");
+		return QDF_STATUS_E_INVAL;
+	}
+
+
+	/* Send Get Thermal Stats cmd to FW */
+	ret = os_if_fwol_get_thermal_stats_req(hdd_ctx->psoc, request_type,
+					       callback, context);
+	if (ret)
+		return QDF_STATUS_E_FAILURE;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * hdd_get_thermal_stats_cb() - Get thermal stats callback
+ * @context: Call context
+ * @response: Pointer to response structure
+ *
+ * Return: void
+ */
+static void
+hdd_get_thermal_stats_cb(void *context,
+			 struct thermal_throttle_info *response)
+{
+	struct osif_request *request;
+	struct thermal_throttle_info *priv;
+
+	request = osif_request_get(context);
+	if (!request) {
+		osif_err("Obsolete request");
+		return;
+	}
+
+	priv = osif_request_priv(request);
+	qdf_mem_copy(priv, response, sizeof(struct thermal_throttle_info));
+
+	osif_request_complete(request);
+	osif_request_put(request);
+}
+
+#define THERMAL_MIN_TEMP QCA_WLAN_VENDOR_ATTR_THERMAL_STATS_MIN_TEMPERATURE
+#define THERMAL_MAX_TEMP QCA_WLAN_VENDOR_ATTR_THERMAL_STATS_MAX_TEMPERATURE
+#define THERMAL_DWELL_TIME QCA_WLAN_VENDOR_ATTR_THERMAL_STATS_DWELL_TIME
+#define THERMAL_LVL_COUNT QCA_WLAN_VENDOR_ATTR_THERMAL_STATS_TEMP_LEVEL_COUNTER
+
+/**
+ * hdd_get_curr_thermal_stats_val() - Indicate thermal stats
+ *  to upper layer when query vendor command
+ * @wiphy: Pointer to wireless phy
+ * @hdd_ctx: hdd context
+ *
+ * Return: 0 for success
+ */
+static int
+hdd_get_curr_thermal_stats_val(struct wiphy *wiphy,
+			       struct hdd_context *hdd_ctx)
+{
+	int ret = 0;
+	uint8_t i = 0;
+	struct osif_request *request = NULL;
+	int skb_len = 0;
+	struct thermal_throttle_info *priv;
+	struct thermal_throttle_info *get_tt_stats = NULL;
+	struct sk_buff *skb = NULL;
+	void *cookie;
+	struct nlattr *therm_attr;
+	struct nlattr *tt_levels;
+	static const struct osif_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = WLAN_WAIT_TIME_GET_THERM_LVL,
+		.dealloc = NULL,
+	};
+
+	if (hdd_ctx->is_therm_stats_in_progress) {
+		hdd_err("request already in progress");
+		return -EINVAL;
+	}
+
+	request = osif_request_alloc(&params);
+	if (!request) {
+		hdd_err("request allocation failure");
+		return -ENOMEM;
+	}
+	cookie = osif_request_cookie(request);
+	hdd_ctx->is_therm_stats_in_progress = true;
+	ret = hdd_send_get_thermal_stats_cmd(hdd_ctx, thermal_stats_req,
+					     hdd_get_thermal_stats_cb,
+					     cookie);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		hdd_err("Failure while sending command to fw");
+		ret = -EAGAIN;
+		goto completed;
+	}
+
+	ret = osif_request_wait_for_response(request);
+	if (ret) {
+		hdd_err("Timed out while retrieving thermal stats");
+		ret = -EAGAIN;
+		goto completed;
+	}
+
+	get_tt_stats = osif_request_priv(request);
+	if (!get_tt_stats) {
+		hdd_err("invalid get_tt_stats");
+		ret = -EINVAL;
+		goto completed;
+	}
+
+	skb_len = NLMSG_HDRLEN + (get_tt_stats->therm_throt_levels) *
+		  (NLA_HDRLEN + (NLA_HDRLEN +
+		     sizeof(get_tt_stats->level_info[i].start_temp_level) +
+		     NLA_HDRLEN +
+		     sizeof(get_tt_stats->level_info[i].end_temp_level) +
+		     NLA_HDRLEN +
+		     sizeof(get_tt_stats->level_info[i].total_time_ms_lo) +
+		     NLA_HDRLEN +
+		     sizeof(get_tt_stats->level_info[i].num_entry)));
+
+	skb = wlan_cfg80211_vendor_cmd_alloc_reply_skb(wiphy,
+						       skb_len);
+	if (!skb) {
+		hdd_err_rl("cfg80211_vendor_cmd_alloc_reply_skb failed");
+		ret = -ENOMEM;
+		goto completed;
+	}
+
+	therm_attr = nla_nest_start(skb, QCA_WLAN_VENDOR_ATTR_THERMAL_STATS);
+	if (!therm_attr) {
+		hdd_err_rl("nla_nest_start failed for attr failed");
+		ret = -EINVAL;
+		goto completed;
+	}
+
+	for (i = 0; i < get_tt_stats->therm_throt_levels; i++) {
+		tt_levels = nla_nest_start(skb, i);
+		if (!tt_levels) {
+			hdd_err_rl("nla_nest_start failed for thermal level %d",
+				   i);
+			ret = -EINVAL;
+			goto completed;
+		}
+
+		hdd_debug("level %d, Temp Range: %d - %d, Dwell time %d, Counter %d",
+			  i, get_tt_stats->level_info[i].start_temp_level,
+			  get_tt_stats->level_info[i].end_temp_level,
+			  get_tt_stats->level_info[i].total_time_ms_lo,
+			  get_tt_stats->level_info[i].num_entry);
+
+		if (nla_put_u32(skb, THERMAL_MIN_TEMP,
+				get_tt_stats->level_info[i].start_temp_level) ||
+		    nla_put_u32(skb, THERMAL_MAX_TEMP,
+				get_tt_stats->level_info[i].end_temp_level) ||
+		    nla_put_u32(skb, THERMAL_DWELL_TIME,
+				(get_tt_stats->level_info[i].total_time_ms_lo)) ||
+		    nla_put_u32(skb, THERMAL_LVL_COUNT,
+				get_tt_stats->level_info[i].num_entry)) {
+			hdd_err("nla put failure");
+			kfree_skb(skb);
+			ret =  -EINVAL;
+			hdd_ctx->is_therm_stats_in_progress = false;
+			break;
+		}
+		nla_nest_end(skb, tt_levels);
+	}
+	nla_nest_end(skb, therm_attr);
+	wlan_cfg80211_vendor_cmd_reply(skb);
+
+completed:
+	hdd_ctx->is_therm_stats_in_progress = false;
+	osif_request_put(request);
+
+	return ret;
+}
+
+#undef THERMAL_MIN_TEMP
+#undef THERMAL_MAX_TEMP
+#undef THERMAL_DWELL_TIME
+#undef THERMAL_LVL_COUNT
+
+static QDF_STATUS
+hdd_send_thermal_stats_clear_cmd(struct hdd_context *hdd_ctx)
+{
+	QDF_STATUS status;
+
+	status = hdd_send_get_thermal_stats_cmd(hdd_ctx,
+					     thermal_stats_clear, NULL,
+					     NULL);
+
+	return status;
+}
+#else
+static int
+hdd_get_curr_thermal_stats_val(struct wiphy *wiphy,
+			       struct hdd_context *hdd_ctx)
+{
+	return -EINVAL;
+}
+
+static QDF_STATUS
+hdd_send_thermal_stats_clear_cmd(struct hdd_context *hdd_ctx)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif /* THERMAL_STATS_SUPPORT */
+
 /**
  * __wlan_hdd_cfg80211_set_thermal_mitigation_policy() - Set the thermal policy
  * @wiphy: Pointer to wireless phy
@@ -312,6 +533,16 @@ __wlan_hdd_cfg80211_set_thermal_mitigation_policy(struct wiphy *wiphy,
 		break;
 	case QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_TYPE_GET_TEMPERATURE:
 		ret = hdd_get_curr_thermal_temperature_val(hdd_ctx, adapter);
+		break;
+	case QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_TYPE_GET_THERMAL_STATS:
+		ret = hdd_get_curr_thermal_stats_val(wiphy, hdd_ctx);
+		break;
+	case QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_TYPE_CLEAR_THERMAL_STATS:
+		status = hdd_send_thermal_stats_clear_cmd(hdd_ctx);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("Failure while sending command to fw");
+			ret = -EINVAL;
+		}
 		break;
 	default:
 		ret = -EINVAL;

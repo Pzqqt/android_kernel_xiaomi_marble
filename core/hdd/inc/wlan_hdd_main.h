@@ -1878,7 +1878,6 @@ struct hdd_context {
 	qdf_spinlock_t hdd_adapter_lock;
 	qdf_list_t hdd_adapters; /* List of adapters */
 	bool is_therm_cmd_supp;
-
 	/** Pointer for firmware image data */
 	const struct firmware *fw;
 
@@ -2229,6 +2228,9 @@ struct hdd_context {
 	struct hdd_dual_sta_policy dual_sta_policy;
 #ifdef WLAN_FEATURE_11BE_MLO
 	struct hdd_mld_mac_info mld_mac_info;
+#endif
+#ifdef THERMAL_STATS_SUPPORT
+	bool is_therm_stats_in_progress;
 #endif
 };
 
