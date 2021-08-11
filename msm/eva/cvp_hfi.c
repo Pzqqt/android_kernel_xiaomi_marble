@@ -1882,17 +1882,11 @@ static int iris_hfi_core_release(void *dev)
 	__dsp_shutdown(device, 0);
 
 	if (msm_cvp_mmrm_enabled) {
-		rc = mmrm_client_deregister(device->mmrm_cvp);
+		rc = msm_cvp_mmrm_deregister(device);
 		if (rc) {
 			dprintk(CVP_ERR,
-				"%s: Failed mmrm_client_deregister with rc: %d\n",
+				"%s: Failed msm_cvp_mmrm_deregister:%d\n",
 				__func__, rc);
-		} else {
-			dprintk(CVP_PWR,
-				"%s: Succeed mmrm_client_deregister for mmrm_cvp:%pK, type:%d, uid:%ld\n",
-				__func__, device->mmrm_cvp, device->mmrm_cvp->client_type,
-				device->mmrm_cvp->client_uid);
-			device->mmrm_cvp = NULL;
 		}
 	}
 

@@ -88,15 +88,59 @@ int msm_cvp_mmrm_register(struct iris_hfi_device *device)
 	device->mmrm_cvp = mmrm_client_register(&(device->mmrm_desc));
 	if (device->mmrm_cvp == NULL) {
 		dprintk(CVP_ERR,
-			"%s: Failed mmrm_client_register with mmrm_cvp: %p\n",
+			"%s: Failed mmrm_client_register with mmrm_cvp: %pK\n",
 			__func__, device->mmrm_cvp);
 		rc = -ENOENT;
 	} else {
 		dprintk(CVP_PWR,
-			"%s: mmrm_client_register done: %p, type:%d, uid:%ld\n",
+			"%s: mmrm_client_register done: %pK, type:%d, uid:%ld\n",
 			__func__, device->mmrm_cvp,
 			device->mmrm_cvp->client_type,
 			device->mmrm_cvp->client_uid);
+	}
+
+	return rc;
+}
+
+int msm_cvp_mmrm_deregister(struct iris_hfi_device *device)
+{
+	int rc = 0;
+	struct clock_info *cl = NULL;
+
+	if (!device || !device->mmrm_cvp) {
+		dprintk(CVP_ERR,
+			"%s invalid args: device %pK, or device->mmrm_cvp \n",
+			__func__, device);
+		return -EINVAL;
+	}
+
+	/* set clk value to 0 before deregister	*/
+	iris_hfi_for_each_clock(device, cl) {
+		if (cl->has_scaling) {
+			// set min freq and cur freq to 0;
+			rc = msm_cvp_mmrm_set_value_in_range(device,
+				0, 0);
+			if (rc) {
+				dprintk(CVP_ERR,
+					"%s Failed set clock %s: %d\n",
+					__func__, cl->name, rc);
+			}
+		}
+	}
+
+	rc = mmrm_client_deregister(device->mmrm_cvp);
+	if (rc) {
+		dprintk(CVP_ERR,
+			"%s: Failed mmrm_client_deregister with rc: %d\n",
+			__func__, rc);
+	}
+	else {
+		dprintk(CVP_PWR,
+			"%s: mmrm_client_deregister done:%pK,type:%d,uid:%ld\n",
+			__func__, device->mmrm_cvp,
+			device->mmrm_cvp->client_type,
+			device->mmrm_cvp->client_uid);
+		device->mmrm_cvp = NULL;
 	}
 
 	return rc;
@@ -115,7 +159,7 @@ int msm_cvp_mmrm_set_value_in_range(struct iris_hfi_device *device,
 	}
 
 	dprintk(CVP_PWR,
-		"%s: set clock rate for mmrm_cvp: %p, type :%d, uid: %ld\n",
+		"%s: set clock rate for mmrm_cvp: %pK, type :%d, uid: %ld\n",
 		__func__, device->mmrm_cvp,
 		device->mmrm_cvp->client_type, device->mmrm_cvp->client_uid);
 
