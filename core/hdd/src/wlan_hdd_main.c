@@ -3128,10 +3128,12 @@ static int __hdd_pktcapture_open(struct net_device *dev)
 	ret = qdf_status_to_os_return(status);
 	if (ret) {
 		hdd_objmgr_put_vdev_by_user(adapter->vdev, WLAN_OSIF_ID);
+		adapter->vdev = NULL;
 		return ret;
 	}
 
 	set_bit(DEVICE_IFACE_OPENED, &adapter->event_flags);
+	sta_adapter->mon_adapter = adapter;
 
 	return ret;
 }
@@ -3162,69 +3164,89 @@ static int hdd_pktcapture_open(struct net_device *net_dev)
 }
 
 /**
- * hdd_del_monitor_interface() - Delete monitor interface
- * @hdd_ctx: hdd context
+ * hdd_unmap_monitor_interface_vdev() - unmap monitor interface vdev and
+ * deregister packet capture callbacks
+ * @sta_adapter: station adapter
  *
  * Return: void
  */
-static void hdd_del_monitor_interface(struct hdd_context *hdd_ctx)
+static void
+hdd_unmap_monitor_interface_vdev(struct hdd_adapter *sta_adapter)
 {
-	struct hdd_adapter *adapter;
+	struct hdd_adapter *mon_adapter = sta_adapter->mon_adapter;
 
-	adapter = hdd_get_adapter(hdd_ctx, QDF_MONITOR_MODE);
-	if (adapter) {
-		struct osif_vdev_sync *vdev_sync;
-
-		vdev_sync = osif_vdev_sync_unregister(adapter->dev);
-
-		if (hdd_is_interface_up(adapter)) {
-			hdd_stop_adapter(hdd_ctx, adapter);
-			hdd_deinit_adapter(hdd_ctx, adapter,
-					true);
-		}
-
-		hdd_close_adapter(hdd_ctx, adapter, true);
-
-		if (vdev_sync) {
-			osif_vdev_sync_wait_for_ops(vdev_sync);
-			osif_vdev_sync_destroy(vdev_sync);
-		}
+	if (mon_adapter && hdd_is_interface_up(mon_adapter)) {
+		ucfg_pkt_capture_deregister_callbacks(mon_adapter->vdev);
+		hdd_objmgr_put_vdev_by_user(mon_adapter->vdev,
+					    WLAN_OSIF_ID);
+		mon_adapter->vdev = NULL;
+		hdd_reset_monitor_interface(sta_adapter);
 	}
 }
 
 /**
- * hdd_close_monitor_interface() - Close monitor interface
- * @hdd_ctx: hdd context
+ * hdd_map_monitor_interface_vdev() - Map monitor interface vdev and
+ * register packet capture callbacks
+ * @sta_adapter: Station adapter
  *
- * Return: void
+ * Return: None
  */
-static void hdd_close_monitor_interface(struct hdd_context *hdd_ctx)
+static void hdd_map_monitor_interface_vdev(struct hdd_adapter *sta_adapter)
 {
-	struct hdd_adapter *adapter;
+	struct hdd_adapter *mon_adapter;
+	QDF_STATUS status;
+	int ret;
 
-	adapter = hdd_get_adapter(hdd_ctx, QDF_MONITOR_MODE);
-	if (adapter) {
-		struct osif_vdev_sync *vdev_sync;
-
-		vdev_sync = osif_vdev_sync_unregister(
-				adapter->dev);
-
-		wlan_hdd_del_monitor(hdd_ctx, adapter, true);
-
-		if (vdev_sync) {
-			osif_vdev_sync_wait_for_ops(vdev_sync);
-			osif_vdev_sync_destroy(vdev_sync);
-		}
+	mon_adapter = hdd_get_adapter(sta_adapter->hdd_ctx, QDF_MONITOR_MODE);
+	if (!mon_adapter) {
+		hdd_debug("No monitor interface found");
+		return;
 	}
+
+	if (!mon_adapter || !hdd_is_interface_up(mon_adapter)) {
+		hdd_debug("Monitor interface is not up\n");
+		return;
+	}
+
+	if (!wlan_hdd_is_session_type_monitor(mon_adapter->device_mode))
+		return;
+
+	mon_adapter->vdev = hdd_objmgr_get_vdev_by_user(sta_adapter,
+							WLAN_OSIF_ID);
+
+	status = ucfg_pkt_capture_register_callbacks(mon_adapter->vdev,
+						     hdd_mon_rx_packet_cbk,
+						     mon_adapter);
+	ret = qdf_status_to_os_return(status);
+	if (ret) {
+		hdd_err("Failed registering packet capture callbacks");
+		hdd_objmgr_put_vdev_by_user(mon_adapter->vdev,
+					    WLAN_OSIF_ID);
+		mon_adapter->vdev = NULL;
+		return;
+	}
+
+	sta_adapter->mon_adapter = mon_adapter;
+}
+
+void hdd_reset_monitor_interface(struct hdd_adapter *sta_adapter)
+{
+	sta_adapter->mon_adapter = NULL;
+}
+
+struct hdd_adapter *
+hdd_is_pkt_capture_mon_enable(struct hdd_adapter *sta_adapter)
+{
+	return sta_adapter->mon_adapter;
 }
 #else
 static inline void
-hdd_del_monitor_interface(struct hdd_context *hdd_ctx)
+hdd_unmap_monitor_interface_vdev(struct hdd_adapter *sta_adapter)
 {
 }
 
 static inline void
-hdd_close_monitor_interface(struct hdd_context *hdd_ctx)
+hdd_map_monitor_interface_vdev(struct hdd_adapter *sta_adapter)
 {
 }
 #endif
@@ -4678,6 +4700,8 @@ static int __hdd_open(struct net_device *dev)
 	hdd_populate_wifi_pos_cfg(hdd_ctx);
 	hdd_lpass_notify_start(hdd_ctx, adapter);
 
+	hdd_map_monitor_interface_vdev(adapter);
+
 	return 0;
 }
 
@@ -4754,22 +4778,8 @@ int hdd_stop_no_trans(struct net_device *dev)
 				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 				     WLAN_CONTROL_PATH);
 
-	if (adapter->device_mode == QDF_STA_MODE) {
+	if (adapter->device_mode == QDF_STA_MODE)
 		hdd_lpass_notify_stop(hdd_ctx);
-
-		if (ucfg_pkt_capture_get_mode(hdd_ctx->psoc) !=
-						PACKET_CAPTURE_MODE_DISABLE)
-			hdd_close_monitor_interface(hdd_ctx);
-	}
-
-	if (wlan_hdd_is_session_type_monitor(adapter->device_mode) &&
-	    adapter->vdev &&
-	    ucfg_pkt_capture_get_mode(hdd_ctx->psoc) !=
-						PACKET_CAPTURE_MODE_DISABLE) {
-		ucfg_pkt_capture_deregister_callbacks(adapter->vdev);
-		hdd_objmgr_put_vdev_by_user(adapter->vdev, WLAN_OSIF_ID);
-		adapter->vdev = NULL;
-	}
 
 	/*
 	 * NAN data interface is different in some sense. The traffic on NDI is
@@ -7346,9 +7356,11 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 	hdd_destroy_adapter_sysfs_files(adapter);
 
 	if (adapter->device_mode == QDF_STA_MODE &&
+	    hdd_is_pkt_capture_mon_enable(adapter) &&
 	    ucfg_pkt_capture_get_mode(hdd_ctx->psoc) !=
-						PACKET_CAPTURE_MODE_DISABLE)
-		hdd_del_monitor_interface(hdd_ctx);
+						PACKET_CAPTURE_MODE_DISABLE) {
+		hdd_unmap_monitor_interface_vdev(adapter);
+	}
 
 	if (adapter->vdev_id != WLAN_UMAC_VDEV_ID_MAX)
 		wlan_hdd_cfg80211_deregister_frames(adapter);
@@ -7469,15 +7481,25 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 		break;
 
 	case QDF_MONITOR_MODE:
-		if (wlan_hdd_is_session_type_monitor(QDF_MONITOR_MODE) &&
+		if (wlan_hdd_is_session_type_monitor(adapter->device_mode) &&
 		    adapter->vdev &&
 		    ucfg_pkt_capture_get_mode(hdd_ctx->psoc) !=
 						PACKET_CAPTURE_MODE_DISABLE) {
+			struct hdd_adapter *sta_adapter;
+
 			ucfg_pkt_capture_deregister_callbacks(adapter->vdev);
 			hdd_objmgr_put_vdev_by_user(adapter->vdev,
 						    WLAN_OSIF_ID);
 			adapter->vdev = NULL;
+
+			sta_adapter = hdd_get_adapter(hdd_ctx, QDF_STA_MODE);
+			if (!sta_adapter) {
+				hdd_err("No station interface found");
+				return -EINVAL;
+			}
+			hdd_reset_monitor_interface(sta_adapter);
 		}
+
 		if (wlan_hdd_is_session_type_monitor(QDF_MONITOR_MODE) &&
 		    ucfg_mlme_is_sta_mon_conc_supported(hdd_ctx->psoc)) {
 			hdd_info("Release wakelock for STA + monitor mode!");
@@ -18545,11 +18567,6 @@ void wlan_hdd_del_monitor(struct hdd_context *hdd_ctx,
 	wlan_hdd_release_intf_addr(hdd_ctx, adapter->mac_addr.bytes);
 	hdd_stop_adapter(hdd_ctx, adapter);
 	hdd_close_adapter(hdd_ctx, adapter, true);
-
-	if (adapter->vdev) {
-		hdd_objmgr_put_vdev_by_user(adapter->vdev, WLAN_OSIF_ID);
-		adapter->vdev = NULL;
-	}
 
 	hdd_open_p2p_interface(hdd_ctx);
 }

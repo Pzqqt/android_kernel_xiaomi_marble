@@ -1218,6 +1218,7 @@ struct hdd_context;
  * @delete_in_progress: Flag to indicate that the adapter delete is in
  *			progress, and any operation using rtnl lock inside
  *			the driver can be avoided/skipped.
+ * @mon_adapter: hdd_adapter of monitor mode.
  */
 struct hdd_adapter {
 	/* Magic cookie for adapter sanity verification.  Note that this
@@ -1531,6 +1532,9 @@ struct hdd_adapter {
 	bool delete_in_progress;
 #ifdef WLAN_FEATURE_BIG_DATA_STATS
 	struct big_data_stats_event big_data_stats;
+#endif
+#ifdef WLAN_FEATURE_PKT_CAPTURE
+	struct hdd_adapter *mon_adapter;
 #endif
 };
 
@@ -4675,6 +4679,22 @@ void wlan_hdd_del_monitor(struct hdd_context *hdd_ctx,
 void
 wlan_hdd_del_p2p_interface(struct hdd_context *hdd_ctx);
 
+/**
+ * hdd_reset_monitor_interface() - reset monitor interface flags
+ * @sta_adapter: station adapter
+ *
+ * Return: void
+ */
+void hdd_reset_monitor_interface(struct hdd_adapter *sta_adapter);
+
+/**
+ * hdd_is_pkt_capture_mon_enable() - Is packet capture monitor mode enable
+ * @sta_adapter: station adapter
+ *
+ * Return: status of packet capture monitor adapter
+ */
+struct hdd_adapter *
+hdd_is_pkt_capture_mon_enable(struct hdd_adapter *sta_adapter);
 #else
 static inline
 void wlan_hdd_del_monitor(struct hdd_context *hdd_ctx,
@@ -4691,6 +4711,15 @@ bool wlan_hdd_is_mon_concurrency(void)
 static inline
 void wlan_hdd_del_p2p_interface(struct hdd_context *hdd_ctx)
 {
+}
+
+static inline void hdd_reset_monitor_interface(struct hdd_adapter *sta_adapter)
+{
+}
+
+static inline int hdd_is_pkt_capture_mon_enable(struct hdd_adapter *adapter)
+{
+	return 0;
 }
 #endif /* WLAN_FEATURE_PKT_CAPTURE */
 /**
