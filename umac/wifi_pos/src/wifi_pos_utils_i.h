@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -64,6 +64,8 @@ struct wifi_pos_req_msg;
 
 #ifndef OEM_DATA_RSP_SIZE
 #define OEM_DATA_RSP_SIZE 1724
+/* Header + VHT80 CIR * 2 chains */
+#define OEM_DATA_DMA_BUFF_SIZE (64 + 512 * 4 * 2)
 #endif
 
 /**

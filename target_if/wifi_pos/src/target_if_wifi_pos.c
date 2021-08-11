@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -92,6 +92,7 @@ static QDF_STATUS target_if_wifi_pos_get_indirect_data(
 	void *paddr = NULL;
 	uint32_t addr_hi;
 	uint8_t ring_idx = 0, num_rings;
+	uint32_t allocated_len;
 
 	if (!indirect) {
 		target_if_debug("no indirect data. regular event received");
@@ -104,6 +105,16 @@ static QDF_STATUS target_if_wifi_pos_get_indirect_data(
 		target_if_err("incorrect pdev_id: %d", indirect->pdev_id);
 		return QDF_STATUS_E_INVAL;
 	}
+
+	allocated_len = priv_obj->dma_cap[ring_idx].min_buf_size +
+				(priv_obj->dma_cap[ring_idx].min_buf_align - 1);
+	if (indirect->len > allocated_len ||
+	    indirect->len > OEM_DATA_DMA_BUFF_SIZE) {
+		target_if_err("Invalid indirect len: %d, allocated_len:%d",
+			      indirect->len, allocated_len);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	addr_hi = (uint64_t)WMI_OEM_DMA_DATA_ADDR_HI_GET(
 						indirect->addr_hi);
 	paddr = (void *)((uint64_t)addr_hi << 32 | indirect->addr_lo);
