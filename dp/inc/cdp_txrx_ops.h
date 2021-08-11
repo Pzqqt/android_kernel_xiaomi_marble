@@ -1312,6 +1312,7 @@ struct cdp_misc_ops {
 			     void *scn);
 	void (*pkt_log_con_service)(struct cdp_soc_t *soc_hdl,
 				    uint8_t pdev_id, void *scn);
+	void (*pkt_log_exit)(struct cdp_soc_t *soc_hdl, uint8_t pdev_id);
 	int (*get_num_rx_contexts)(struct cdp_soc_t *soc_hdl);
 	void (*register_pktdump_cb)(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 				    ol_txrx_pktdump_cb tx_cb,

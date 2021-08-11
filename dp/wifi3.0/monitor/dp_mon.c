@@ -4563,9 +4563,35 @@ static void dp_pkt_log_con_service(struct cdp_soc_t *soc_hdl,
 	dp_pkt_log_init(soc_hdl, pdev_id, scn);
 	pktlog_htc_attach();
 }
+
+/**
+ * dp_pkt_log_exit() - Wrapper API to cleanup pktlog info
+ * @soc_hdl: Datapath soc handle
+ * @pdev_id: id of data path pdev handle
+ *
+ * Return: none
+ */
+static void dp_pkt_log_exit(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
+{
+	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
+	struct dp_pdev *pdev =
+		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
+
+	if (!pdev) {
+		dp_err("pdev handle is NULL");
+		return;
+	}
+
+	dp_pktlogmod_exit(pdev);
+}
+
 #else
 static void dp_pkt_log_con_service(struct cdp_soc_t *soc_hdl,
 				   uint8_t pdev_id, void *scn)
+{
+}
+
+static void dp_pkt_log_exit(struct cdp_soc_t *soc_hdl, uint8_t pdev_id)
 {
 }
 #endif
@@ -5689,6 +5715,7 @@ void dp_mon_cdp_ops_register(struct dp_soc *soc)
 #ifdef DP_PEER_EXTENDED_API
 	ops->misc_ops->pkt_log_init = dp_pkt_log_init;
 	ops->misc_ops->pkt_log_con_service = dp_pkt_log_con_service;
+	ops->misc_ops->pkt_log_exit = dp_pkt_log_exit;
 #endif
 #ifdef ATH_SUPPORT_NAC_RSSI
 	ops->ctrl_ops->txrx_vdev_config_for_nac_rssi = dp_config_for_nac_rssi;
@@ -5738,6 +5765,7 @@ void dp_mon_cdp_ops_deregister(struct dp_soc *soc)
 #ifdef DP_PEER_EXTENDED_API
 	ops->misc_ops->pkt_log_init = NULL;
 	ops->misc_ops->pkt_log_con_service = NULL;
+	ops->misc_ops->pkt_log_exit = NULL;
 #endif
 #ifdef ATH_SUPPORT_NAC_RSSI
 	ops->ctrl_ops->txrx_vdev_config_for_nac_rssi = NULL;

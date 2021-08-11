@@ -417,6 +417,7 @@ static int pktlog_attach(struct hif_opaque_softc *scn)
 	char *proc_name;
 	struct proc_dir_entry *proc_entry;
 
+	qdf_info("attach pktlog resources");
 	/* Allocate pktlog dev for later use */
 	pl_dev = get_pktlog_handle();
 
@@ -441,6 +442,7 @@ static int pktlog_attach(struct hif_opaque_softc *scn)
 		 */
 		pl_dev->pl_funcs->pktlog_init(scn);
 	} else {
+		qdf_err("pl_dev is NULL");
 		return -EINVAL;
 	}
 
@@ -505,6 +507,7 @@ static void pktlog_detach(struct hif_opaque_softc *scn)
 	struct ath_pktlog_info *pl_info;
 	struct pktlog_dev_t *pl_dev = get_pktlog_handle();
 
+	qdf_info("detach pktlog resources");
 	if (!pl_dev) {
 		qdf_info("Invalid pktlog context");
 		ASSERT(0);
@@ -1038,6 +1041,7 @@ int pktlogmod_init(void *context)
 {
 	int ret;
 
+	qdf_info("Initialize pkt_log module");
 	/* create the proc directory entry */
 	g_pktlog_pde = proc_mkdir(PKTLOG_PROC_DIR, NULL);
 
@@ -1050,8 +1054,10 @@ int pktlogmod_init(void *context)
 	ret = pktlog_attach((struct hif_opaque_softc *)context);
 
 	/* If packet log init failed */
-	if (ret)
+	if (ret) {
+		qdf_err("pktlog_attach failed");
 		goto attach_fail;
+	}
 
 	return ret;
 
@@ -1064,8 +1070,11 @@ attach_fail:
 
 void pktlogmod_exit(void *context)
 {
-	if (!g_pktlog_pde)
+	qdf_info("pkt_log module cleanup");
+	if (!g_pktlog_pde) {
+		qdf_err("g_pktlog_pde is NULL");
 		return;
+	}
 
 	pktlog_detach((struct hif_opaque_softc *)context);
 
