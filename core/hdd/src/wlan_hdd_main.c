@@ -15983,6 +15983,9 @@ static void hdd_set_adapter_wlm_def_level(struct hdd_context *hdd_ctx)
 	wlan_net_dev_ref_dbgid dbgid = NET_DEV_HOLD_GET_ADAPTER;
 	int ret;
 
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam())
+		return;
+
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret != 0)
 		return;
