@@ -3133,10 +3133,14 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 					     WDI_NO_VAL,
 					     pdev->pdev_id);
 		} else {
-			if (ppdu_desc->num_mpdu != 0 &&
+			if ((ppdu_desc->num_mpdu != 0 ||
+			     ppdu_desc->delayed_ba) &&
 			    ppdu_desc->num_users != 0 &&
-			    ppdu_desc->frame_ctrl &
-			    HTT_FRAMECTRL_DATATYPE) {
+			    ((ppdu_desc->frame_ctrl & HTT_FRAMECTRL_DATATYPE) ||
+			     ((ppdu_desc->htt_frame_type ==
+			       HTT_STATS_FTYPE_SGEN_MU_BAR) ||
+			      (ppdu_desc->htt_frame_type ==
+			       HTT_STATS_FTYPE_SGEN_BAR)))) {
 				dp_wdi_event_handler(WDI_EVENT_TX_PPDU_DESC,
 						     pdev->soc,
 						     nbuf, HTT_INVALID_PEER,
@@ -3280,7 +3284,9 @@ struct ppdu_info *dp_get_ppdu_desc(struct dp_pdev *pdev, uint32_t ppdu_id,
 			if ((tlv_type ==
 			     HTT_PPDU_STATS_USR_COMPLTN_ACK_BA_STATUS_TLV) &&
 			    (ppdu_desc->htt_frame_type ==
-			     HTT_STATS_FTYPE_SGEN_MU_BAR))
+			     HTT_STATS_FTYPE_SGEN_MU_BAR ||
+			     ppdu_desc->htt_frame_type ==
+			     HTT_STATS_FTYPE_SGEN_BAR))
 				return ppdu_info;
 
 			dp_ppdu_desc_deliver(pdev, ppdu_info);
