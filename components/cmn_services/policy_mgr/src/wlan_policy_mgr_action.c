@@ -2474,9 +2474,55 @@ sap_restart:
 		}
 	}
 }
-#endif /* FEATURE_WLAN_MCC_TO_SCC_SWITCH */
 
-#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
+/**
+ * policy_mgr_check_bw_with_unsafe_chan_freq() - valid SAP channel bw against
+ *						 unsafe channel list
+ * @psoc: PSOC object information
+ * @center_freq: SAP channel center frequency
+ * @ch_width: SAP channel width
+ *
+ * Return: true if no unsafe channel fall in SAP channel bandwidth range,
+ *	   false otherwise
+ */
+static bool
+policy_mgr_check_bw_with_unsafe_chan_freq(struct wlan_objmgr_psoc *psoc,
+					  qdf_freq_t center_freq,
+					  enum phy_ch_width ch_width)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint32_t freq_start, freq_end, bw, i, unsafe_chan_freq;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return true;
+	}
+
+	if (ch_width <= CH_WIDTH_20MHZ || !center_freq)
+		return true;
+
+	if (!pm_ctx->unsafe_channel_count)
+		return true;
+
+	bw = wlan_reg_get_bw_value(ch_width);
+	freq_start = center_freq - bw / 2;
+	freq_end = center_freq + bw / 2;
+
+	for (i = 0; i < pm_ctx->unsafe_channel_count; i++) {
+		unsafe_chan_freq = pm_ctx->unsafe_channel_list[i];
+		if (unsafe_chan_freq > freq_start &&
+		    unsafe_chan_freq < freq_end) {
+			policy_mgr_debug("unsafe ch freq %d is in range %d-%d",
+					 unsafe_chan_freq,
+					 freq_start,
+					 freq_end);
+			return false;
+		}
+	}
+	return true;
+}
+
 /**
  * policy_mgr_change_sap_channel_with_csa() - Move SAP channel using (E)CSA
  * @psoc: PSOC object information
@@ -2511,13 +2557,20 @@ void policy_mgr_change_sap_channel_with_csa(struct wlan_objmgr_psoc *psoc,
 			ch_width = ch_params.ch_width;
 	}
 
+	if (!policy_mgr_check_bw_with_unsafe_chan_freq(psoc,
+						       ch_params.mhz_freq_seg0,
+						       ch_width)) {
+		policy_mgr_info("SAP bw shrink to 20M for unsafe");
+		ch_width = CH_WIDTH_20MHZ;
+	}
+
 	if (pm_ctx->hdd_cbacks.sap_restart_chan_switch_cb) {
 		policy_mgr_info("SAP change change without restart");
 		pm_ctx->hdd_cbacks.sap_restart_chan_switch_cb(psoc,
 				vdev_id, ch_freq, ch_width, forced);
 	}
 }
-#endif
+#endif /* FEATURE_WLAN_MCC_TO_SCC_SWITCH */
 
 QDF_STATUS policy_mgr_wait_for_connection_update(struct wlan_objmgr_psoc *psoc)
 {
