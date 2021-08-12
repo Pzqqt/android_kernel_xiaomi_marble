@@ -58,23 +58,18 @@ bool sde_evtlog_is_enabled(struct sde_dbg_evtlog *evtlog, u32 flag)
 void sde_evtlog_log(struct sde_dbg_evtlog *evtlog, const char *name, int line,
 		int flag, ...)
 {
-	unsigned long flags;
 	int i, val = 0;
 	va_list args;
 	struct sde_dbg_evtlog_log *log;
+	u32 index;
 
-	if (!evtlog)
+	if (!evtlog || !sde_evtlog_is_enabled(evtlog, flag) ||
+			_sde_evtlog_is_filtered_no_lock(evtlog, name))
 		return;
 
-	if (!sde_evtlog_is_enabled(evtlog, flag))
-		return;
+	index = abs(atomic_inc_return(&evtlog->curr) % SDE_EVTLOG_ENTRY);
 
-	spin_lock_irqsave(&evtlog->spin_lock, flags);
-
-	if (_sde_evtlog_is_filtered_no_lock(evtlog, name))
-		goto exit;
-
-	log = &evtlog->logs[evtlog->curr];
+	log = &evtlog->logs[index];
 	log->time = local_clock();
 	log->name = name;
 	log->line = line;
@@ -93,12 +88,9 @@ void sde_evtlog_log(struct sde_dbg_evtlog *evtlog, const char *name, int line,
 	}
 	va_end(args);
 	log->data_cnt = i;
-	evtlog->curr = (evtlog->curr + 1) % SDE_EVTLOG_ENTRY;
 	evtlog->last++;
 
 	trace_sde_evtlog(name, line, log->data_cnt, log->data);
-exit:
-	spin_unlock_irqrestore(&evtlog->spin_lock, flags);
 }
 
 void sde_reglog_log(u8 blk_id, u32 val, u32 addr)
@@ -205,7 +197,7 @@ void sde_evtlog_dump_all(struct sde_dbg_evtlog *evtlog)
 	char buf[SDE_EVTLOG_BUF_MAX];
 	bool update_last_entry = true;
 
-	if (!evtlog || !(evtlog->dump_mode & SDE_DBG_DUMP_IN_LOG))
+	if (!evtlog || !(evtlog->dump_mode & (SDE_DBG_DUMP_IN_LOG | SDE_DBG_DUMP_IN_LOG_LIMITED)))
 		return;
 
 	while (sde_evtlog_dump_to_buffer(evtlog, buf, sizeof(buf),
@@ -224,6 +216,7 @@ struct sde_dbg_evtlog *sde_evtlog_init(void)
 		return ERR_PTR(-ENOMEM);
 
 	spin_lock_init(&evtlog->spin_lock);
+	atomic_set(&evtlog->curr, 0);
 	evtlog->enable = SDE_EVTLOG_DEFAULT_ENABLE;
 	evtlog->dump_mode = SDE_DBG_DEFAULT_DUMP_MODE;
 

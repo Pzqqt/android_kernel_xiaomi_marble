@@ -228,7 +228,6 @@ struct sde_encoder_virt {
 	struct kthread_work input_event_work;
 	struct kthread_work esd_trigger_work;
 	struct input_handler *input_handler;
-	struct msm_display_topology topology;
 	bool vblank_enabled;
 	bool idle_pc_restore;
 	enum frame_trigger_mode_type frame_trigger_mode;
@@ -492,6 +491,14 @@ void sde_encoder_enable_recovery_event(struct drm_encoder *encoder);
  */
 bool sde_encoder_in_clone_mode(struct drm_encoder *enc);
 
+/**
+ * sde_encoder_set_clone_mode - cwb in wb phys enc is enabled.
+ * drm_enc:	Pointer to drm encoder structure
+ * drm_crtc_state:	Pointer to drm_crtc_state
+ */
+void sde_encoder_set_clone_mode(struct drm_encoder *drm_enc,
+	 struct drm_crtc_state *crtc_state);
+
 /*
  * sde_encoder_is_cwb_disabling - check if cwb encoder disable is pending
  * @drm_enc:    Pointer to drm encoder structure
@@ -605,6 +612,12 @@ void sde_encoder_virt_reset(struct drm_encoder *drm_enc);
  * @drm_enc:    Pointer to drm encoder structure
  */
 ktime_t sde_encoder_calc_last_vsync_timestamp(struct drm_encoder *drm_enc);
+
+/**
+ * sde_encoder_cancel_delayed_work - cancel delayed off work for encoder
+ * @drm_enc:    Pointer to drm encoder structure
+ */
+void sde_encoder_cancel_delayed_work(struct drm_encoder *encoder);
 
 /**
  * sde_encoder_get_kms - retrieve the kms from encoder

@@ -1556,7 +1556,6 @@ static int dsi_message_tx(struct dsi_ctrl *dsi_ctrl, struct dsi_cmd_desc *cmd_de
 		if (((dsi_ctrl->cmd_len + length) > 240) && !(*flags & DSI_CTRL_CMD_LAST_COMMAND)) {
 			*flags |= DSI_CTRL_CMD_LAST_COMMAND;
 			SDE_EVT32(dsi_ctrl->cell_index, SDE_EVTLOG_FUNC_CASE1, *flags);
-			dsi_ctrl_transfer_prepare(dsi_ctrl, *flags);
 		}
 	}
 
@@ -3390,7 +3389,7 @@ int dsi_ctrl_transfer_prepare(struct dsi_ctrl *dsi_ctrl, u32 flags)
 	if (!dsi_ctrl)
 		return -EINVAL;
 
-	if (!(flags & DSI_CTRL_CMD_LAST_COMMAND))
+	if ((flags & DSI_CTRL_CMD_FETCH_MEMORY) && (dsi_ctrl->cmd_len != 0))
 		return rc;
 
 	SDE_EVT32(SDE_EVTLOG_FUNC_ENTRY, dsi_ctrl->cell_index, flags);

@@ -437,6 +437,15 @@ int dsi_display_get_qsync_min_fps(void *dsi_display, u32 mode_fps);
  */
 int dsi_display_get_avr_step_req_fps(void *dsi_display, u32 mode_fps);
 
+/*
+ * dsi_conn_get_lm_from_mode() - retrieves LM count from dsi mode priv info
+ * @display:            Handle to display.
+ * @mode:               Pointer to DRM mode structure
+ *
+ * Return: LM count from dsi panel topology
+ */
+int dsi_conn_get_lm_from_mode(void *dsi_display, const struct drm_display_mode *mode);
+
 /**
  * dsi_display_find_mode() - retrieve cached DSI mode given relevant params
  * @display:            Handle to display.

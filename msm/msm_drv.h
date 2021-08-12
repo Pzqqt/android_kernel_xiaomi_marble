@@ -713,6 +713,22 @@ struct msm_display_topology {
 };
 
 /**
+ * struct msm_dyn_clk_list - list of dynamic clock rates.
+ * @count: number of supported clock rates
+ * @rates: list of supported clock rates
+ * @type: dynamic clock feature support type
+ * @front_porches: list of clock rate matching porch compensation values
+ * @pixel_clks_khz: list of clock rate matching pixel clock values
+ */
+struct msm_dyn_clk_list {
+	u32 count;
+	u32 *rates;
+	u32 type;
+	u32 *front_porches;
+	u32 *pixel_clks_khz;
+};
+
+/**
  * struct msm_mode_info - defines all msm custom mode info
  * @frame_rate:      frame_rate of the mode
  * @vtotal:          vtotal calculated for the mode
@@ -729,9 +745,8 @@ struct msm_display_topology {
  * @mdp_transfer_time_us   Specifies the mdp transfer time for command mode
  *                         panels in microseconds.
  * @allowed_mode_switches: bit mask to indicate supported mode switch.
- * @bit_clk_rates: list of supported bit clock rates
- * @bit_clk_count: number of supported bit clock rates
  * @disable_rsc_solver: Dynamically disable RSC solver for the timing mode due to lower bitclk rate.
+ * @dyn_clk_list: List of dynamic clock rates for RFI.
  */
 struct msm_mode_info {
 	uint32_t frame_rate;
@@ -748,9 +763,8 @@ struct msm_mode_info {
 	u32 panel_mode_caps;
 	u32 mdp_transfer_time_us;
 	u32 allowed_mode_switches;
-	u32 *bit_clk_rates;
-	u32 bit_clk_count;
 	bool disable_rsc_solver;
+	struct msm_dyn_clk_list dyn_clk_list;
 };
 
 /**

@@ -245,8 +245,6 @@ int dsi_display_set_backlight(struct drm_connector *connector,
 
 	bl_scale_sv = panel->bl_config.bl_scale_sv;
 	bl_temp = (u32)bl_temp * bl_scale_sv / MAX_SV_BL_SCALE_LEVEL;
-	if (bl_temp > panel->bl_config.bl_max_level)
-		bl_temp = panel->bl_config.bl_max_level;
 
 	/* use bl_temp as index of dimming bl lut to find the dimming panel backlight */
 	if (bl_temp != 0 && panel->bl_config.dimming_bl_lut &&
@@ -255,6 +253,9 @@ int dsi_display_set_backlight(struct drm_connector *connector,
 			bl_temp, panel->bl_config.dimming_bl_lut->mapped_bl[bl_temp]);
 		bl_temp = panel->bl_config.dimming_bl_lut->mapped_bl[bl_temp];
 	}
+
+	if (bl_temp > panel->bl_config.bl_max_level)
+		bl_temp = panel->bl_config.bl_max_level;
 
 	pr_debug("bl_scale = %u, bl_scale_sv = %u, bl_lvl = %u\n",
 		bl_scale, bl_scale_sv, (u32)bl_temp);
@@ -713,7 +714,8 @@ static void dsi_display_set_cmd_tx_ctrl_flags(struct dsi_display *display,
 		}
 
 		/* Set flags for last command */
-		if (!(msg->flags & MIPI_DSI_MSG_BATCH_COMMAND))
+		if (!(msg->flags & MIPI_DSI_MSG_BATCH_COMMAND) || (flags & DSI_CTRL_CMD_FIFO_STORE)
+				|| (flags & DSI_CTRL_CMD_NON_EMBEDDED_MODE))
 			flags |= DSI_CTRL_CMD_LAST_COMMAND;
 
 		/*
@@ -6713,14 +6715,18 @@ void dsi_display_adjust_mode_timing(struct dsi_display *display,
 	default:
 		break;
 	}
+
+	dsi_mode->pixel_clk_khz = div_u64(dsi_mode->timing.clk_rate_hz * lanes, bpp);
+	do_div(dsi_mode->pixel_clk_khz, 1000);
+	dsi_mode->pixel_clk_khz *= display->ctrl_count;
 }
 
 static void _dsi_display_populate_bit_clks(struct dsi_display *display, int start, int end)
 {
 	struct dsi_dyn_clk_caps *dyn_clk_caps;
-	struct dsi_display_mode *src;
+	struct dsi_display_mode *src, dst;
 	struct dsi_host_common_cfg *cfg;
-	int i, bpp, lanes = 0;
+	int i, j, bpp, lanes = 0;
 
 	if (!display)
 		return;
@@ -6753,9 +6759,33 @@ static void _dsi_display_populate_bit_clks(struct dsi_display *display, int star
 
 		dsi_display_adjust_mode_timing(display, src, lanes, bpp);
 
-		src->pixel_clk_khz = div_u64(src->timing.clk_rate_hz * lanes, bpp);
-		src->pixel_clk_khz /= 1000;
-		src->pixel_clk_khz *= display->ctrl_count;
+		/* populate mode adjusted values */
+		for (j = 0; j < src->priv_info->bit_clk_list.count; j++) {
+			memcpy(&dst, src, sizeof(struct dsi_display_mode));
+			memcpy(&dst.timing, &src->timing, sizeof(struct dsi_mode_info));
+			dst.timing.clk_rate_hz = src->priv_info->bit_clk_list.rates[j];
+
+			dsi_display_adjust_mode_timing(display, &dst, lanes, bpp);
+
+			/* store the list of RFI matching porches */
+			switch (dyn_clk_caps->type) {
+			case DSI_DYN_CLK_TYPE_CONST_FPS_ADJUST_HFP:
+				src->priv_info->bit_clk_list.front_porches[j] =
+						dst.timing.h_front_porch;
+				break;
+
+			case DSI_DYN_CLK_TYPE_CONST_FPS_ADJUST_VFP:
+				src->priv_info->bit_clk_list.front_porches[j] =
+						dst.timing.v_front_porch;
+				break;
+
+			default:
+				break;
+			}
+
+			/* store the list of RFI matching pixel clocks */
+			src->priv_info->bit_clk_list.pixel_clks_khz[j] = dst.pixel_clk_khz;
+		}
 	}
 }
 
@@ -7150,7 +7180,7 @@ int dsi_display_find_mode(struct dsi_display *display,
 	struct dsi_display_mode *m;
 	struct dsi_dyn_clk_caps *dyn_clk_caps;
 	unsigned int match_flags = DSI_MODE_MATCH_FULL_TIMINGS;
-	struct dsi_display_mode_priv_info priv_info;
+	struct dsi_display_mode_priv_info *priv_info;
 
 	if (!display || !out_mode)
 		return -EINVAL;
@@ -7166,6 +7196,10 @@ int dsi_display_find_mode(struct dsi_display *display,
 		if (rc)
 			return rc;
 	}
+
+	priv_info = kzalloc(sizeof(struct dsi_display_mode_priv_info), GFP_KERNEL);
+	if (ZERO_OR_NULL_PTR(priv_info))
+		return -ENOMEM;
 
 	mutex_lock(&display->display_lock);
 	dyn_clk_caps = &(display->panel->dyn_clk_caps);
@@ -7183,9 +7217,7 @@ int dsi_display_find_mode(struct dsi_display *display,
 
 		if (sub_mode && sub_mode->dsc_mode) {
 			match_flags |= DSI_MODE_MATCH_DSC_CONFIG;
-			cmp->priv_info = &priv_info;
-			memset(cmp->priv_info, 0,
-				sizeof(struct dsi_display_mode_priv_info));
+			cmp->priv_info = priv_info;
 			cmp->priv_info->dsc_enabled = (sub_mode->dsc_mode ==
 				MSM_DISPLAY_DSC_MODE_ENABLED) ? true : false;
 		}
@@ -7200,6 +7232,7 @@ int dsi_display_find_mode(struct dsi_display *display,
 	cmp->priv_info = NULL;
 
 	mutex_unlock(&display->display_lock);
+	kfree(priv_info);
 
 	if (!*out_mode) {
 		DSI_ERR("[%s] failed to find mode for v_active %u h_active %u fps %u pclk %u\n",
@@ -7304,7 +7337,7 @@ int dsi_display_validate_mode_change(struct dsi_display *display,
 		}
 
 		/* dynamic clk change use case */
-		if (cur_mode->pixel_clk_khz != adj_mode->pixel_clk_khz) {
+		if (display->dyn_bit_clk_pending) {
 			if (dyn_clk_caps->dyn_clk_support) {
 				DSI_DEBUG("dynamic clk change detected\n");
 				if ((adj_mode->dsi_mode_flags &
@@ -7330,6 +7363,7 @@ int dsi_display_validate_mode_change(struct dsi_display *display,
 					cur_mode->pixel_clk_khz,
 					adj_mode->pixel_clk_khz);
 			}
+			display->dyn_bit_clk_pending = false;
 		}
 	}
 
@@ -8575,17 +8609,10 @@ int dsi_display_update_dyn_bit_clk(struct dsi_display *display,
 
 	dsi_display_adjust_mode_timing(display, mode, lanes, bpp);
 
-	/* adjust pixel clock based on dynamic bit clock */
-	mode->pixel_clk_khz = div_u64(mode->timing.clk_rate_hz * lanes, bpp);
-	do_div(mode->pixel_clk_khz, 1000);
-	mode->pixel_clk_khz *= display->ctrl_count;
-
 	SDE_EVT32(display->dyn_bit_clk, mode->priv_info->min_dsi_clk_hz, mode->pixel_clk_khz);
 	DSI_DEBUG("dynamic bit clk:%u, min dsi clk:%llu, lanes:%d, bpp:%d, pck:%d Khz\n",
 			display->dyn_bit_clk, mode->priv_info->min_dsi_clk_hz, lanes, bpp,
 			mode->pixel_clk_khz);
-
-	display->dyn_bit_clk_pending = false;
 
 	return 0;
 }

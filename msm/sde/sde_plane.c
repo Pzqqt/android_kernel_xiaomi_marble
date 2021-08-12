@@ -643,6 +643,13 @@ int sde_plane_wait_input_fence(struct drm_plane *plane, uint32_t wait_ms)
 				psde->is_error = true;
 				ret = -EINVAL;
 				break;
+			case -EBADF:
+				SDE_INFO("plane%d spec fd signaled on bind failure fd %lld\n",
+					plane->base.id,
+					sde_plane_get_property(pstate, PLANE_PROP_INPUT_FENCE));
+				psde->is_error = true;
+				ret = 0;
+				break;
 			default:
 				SDE_DEBUG_PLANE(psde, "signaled\n");
 				ret = 0;

@@ -549,7 +549,7 @@ static bool sde_crtc_mode_fixup(struct drm_crtc *crtc,
 
 	drm_for_each_encoder_mask(encoder, c_state->crtc->dev,
 		c_state->encoder_mask) {
-		if (!sde_encoder_in_clone_mode(encoder)) {
+		if (!sde_crtc_state_in_clone_mode(encoder, c_state)) {
 			encoder_valid = true;
 			break;
 		}
@@ -868,7 +868,7 @@ static int _sde_crtc_set_crtc_roi(struct drm_crtc *crtc,
 		 * This restriction should be relaxed when Connector ROI scaling is
 		 * supported and while in clone mode.
 		 */
-		if (!sde_encoder_in_clone_mode(sde_conn->encoder) &&
+		if (!sde_crtc_state_in_clone_mode(sde_conn->encoder, state) &&
 				is_conn_roi_dirty != is_crtc_roi_dirty) {
 			SDE_ERROR("connector/crtc rois not updated together\n");
 			return -EINVAL;
@@ -1796,6 +1796,11 @@ static void _sde_crtc_blend_setup(struct drm_crtc *crtc,
 		return;
 	}
 
+	if (test_bit(SDE_CRTC_DIRTY_DIM_LAYERS, &sde_crtc->revalidate_mask)) {
+		set_bit(SDE_CRTC_DIRTY_DIM_LAYERS, sde_crtc_state->dirty);
+		clear_bit(SDE_CRTC_DIRTY_DIM_LAYERS, &sde_crtc->revalidate_mask);
+	}
+
 	for (i = 0; i < sde_crtc->num_mixers; i++) {
 		if (!mixer[i].hw_lm) {
 			SDE_ERROR("invalid lm or ctl assigned to mixer\n");
@@ -2549,7 +2554,7 @@ void sde_crtc_prepare_commit(struct drm_crtc *crtc,
 	dev = crtc->dev;
 	sde_crtc = to_sde_crtc(crtc);
 	cstate = to_sde_crtc_state(crtc->state);
-	SDE_EVT32_VERBOSE(DRMID(crtc));
+	SDE_EVT32_VERBOSE(DRMID(crtc), cstate->cwb_enc_mask);
 
 	SDE_ATRACE_BEGIN("sde_crtc_prepare_commit");
 
@@ -2569,6 +2574,7 @@ void sde_crtc_prepare_commit(struct drm_crtc *crtc,
 
 			cstate->connectors[cstate->num_connectors++] = conn;
 			sde_connector_prepare_fence(conn);
+			sde_encoder_set_clone_mode(encoder, crtc->state);
 		}
 	drm_connector_list_iter_end(&conn_iter);
 
@@ -2631,7 +2637,7 @@ enum sde_intf_mode sde_crtc_get_intf_mode(struct drm_crtc *crtc,
 	drm_for_each_encoder_mask(encoder, crtc->dev,
 			cstate->encoder_mask) {
 		/* continue if copy encoder is encountered */
-		if (sde_encoder_in_clone_mode(encoder))
+		if (sde_crtc_state_in_clone_mode(encoder, cstate))
 			continue;
 
 		return sde_encoder_get_intf_mode(encoder);
@@ -2831,16 +2837,15 @@ static void _sde_crtc_set_input_fence_timeout(struct sde_crtc_state *cstate)
 	cstate->input_fence_timeout_ns *= NSEC_PER_MSEC;
 }
 
-/**
- * _sde_crtc_clear_dim_layers_v1 - clear all dim layer settings
- * @cstate:      Pointer to sde crtc state
- */
-static void _sde_crtc_clear_dim_layers_v1(struct sde_crtc_state *cstate)
+void _sde_crtc_clear_dim_layers_v1(struct drm_crtc_state *state)
 {
 	u32 i;
+	struct sde_crtc_state *cstate;
 
-	if (!cstate)
+	if (!state)
 		return;
+
+	cstate = to_sde_crtc_state(state);
 
 	for (i = 0; i < cstate->num_dim_layers; i++)
 		memset(&cstate->dim_layer[i], 0, sizeof(cstate->dim_layer[i]));
@@ -2870,7 +2875,7 @@ static void _sde_crtc_set_dim_layer_v1(struct drm_crtc *crtc,
 
 	if (!usr_ptr) {
 		/* usr_ptr is null when setting the default property value */
-		_sde_crtc_clear_dim_layers_v1(cstate);
+		_sde_crtc_clear_dim_layers_v1(&cstate->base);
 		SDE_DEBUG("dim_layer data removed\n");
 		goto clear;
 	}
@@ -4245,6 +4250,7 @@ void sde_crtc_reset_sw_state(struct drm_crtc *crtc)
 {
 	struct sde_crtc_state *cstate = to_sde_crtc_state(crtc->state);
 	struct drm_plane *plane;
+	struct sde_crtc *sde_crtc = to_sde_crtc(crtc);
 
 	/* mark planes, mixers, and other blocks dirty for next update */
 	drm_atomic_crtc_for_each_plane(plane, crtc)
@@ -4254,7 +4260,7 @@ void sde_crtc_reset_sw_state(struct drm_crtc *crtc)
 	sde_crtc_clear_cached_mixer_cfg(crtc);
 
 	/* mark other properties which need to be dirty for next update */
-	set_bit(SDE_CRTC_DIRTY_DIM_LAYERS, cstate->dirty);
+	set_bit(SDE_CRTC_DIRTY_DIM_LAYERS, &sde_crtc->revalidate_mask);
 	if (cstate->num_ds_enabled)
 		set_bit(SDE_CRTC_DIRTY_DEST_SCALER, cstate->dirty);
 }
@@ -5390,40 +5396,57 @@ end:
 }
 
 /**
- * sde_crtc_get_num_datapath - get the number of datapath active
- *				of primary connector
+ * sde_crtc_get_num_datapath - get the number of layermixers active
+ *				on primary connector
  * @crtc: Pointer to DRM crtc object
- * @connector: Pointer to DRM connector object of WB in CWB case
+ * @virtual_conn: Pointer to DRM connector object of WB in CWB case
+ * @crtc_state:	Pointer to DRM crtc state
  */
 int sde_crtc_get_num_datapath(struct drm_crtc *crtc,
-		struct drm_connector *connector)
+	struct drm_connector *virtual_conn, struct drm_crtc_state *crtc_state)
 {
 	struct sde_crtc *sde_crtc = to_sde_crtc(crtc);
+	struct drm_connector *conn, *primary_conn = NULL;
 	struct sde_connector_state *sde_conn_state = NULL;
-	struct drm_connector *conn;
 	struct drm_connector_list_iter conn_iter;
+	int num_lm = 0;
 
-	if (!sde_crtc || !connector) {
+	if (!sde_crtc || !virtual_conn || !crtc_state) {
 		SDE_DEBUG("Invalid argument\n");
 		return 0;
 	}
 
+	/* return num_mixers used for primary when available in sde_crtc */
 	if (sde_crtc->num_mixers)
 		return sde_crtc->num_mixers;
 
 	drm_connector_list_iter_begin(crtc->dev, &conn_iter);
 	drm_for_each_connector_iter(conn, &conn_iter) {
-		if (conn->state && conn->state->crtc == crtc &&
-				 conn != connector)
+		if ((drm_connector_mask(conn) & crtc_state->connector_mask)
+			 && conn != virtual_conn) {
 			sde_conn_state = to_sde_connector_state(conn->state);
+			primary_conn = conn;
+			break;
+		}
 	}
-
 	drm_connector_list_iter_end(&conn_iter);
 
+	/* if primary sde_conn_state has mode info available, return num_lm from here */
 	if (sde_conn_state)
-		return sde_conn_state->mode_info.topology.num_lm;
+		num_lm = sde_conn_state->mode_info.topology.num_lm;
 
-	return 0;
+	/* if PM resume occurs with CWB enabled, retrieve num_lm from primary dsi panel mode */
+	if (primary_conn && !num_lm) {
+		num_lm = sde_connector_get_lm_cnt_from_topology(primary_conn,
+				&crtc_state->adjusted_mode);
+		if (num_lm < 0) {
+			SDE_DEBUG("lm cnt fail for conn:%d num_lm:%d\n",
+					 primary_conn->base.id, num_lm);
+			num_lm = 0;
+		}
+	}
+
+	return num_lm;
 }
 
 int sde_crtc_vblank(struct drm_crtc *crtc, bool en)
@@ -5820,9 +5843,12 @@ static void sde_crtc_install_properties(struct drm_crtc *crtc,
 		sde_kms_info_add_keyint(info, "dspp_count",
 				catalog->dspp_count);
 
-		if (catalog->rc_count)
+		if (catalog->rc_count) {
+			sde_kms_info_add_keyint(info, "rc_count", catalog->rc_count);
 			sde_kms_info_add_keyint(info, "rc_mem_size",
 				catalog->dspp[0].sblk->rc.mem_total_size);
+		}
+
 		if (catalog->demura_count)
 			sde_kms_info_add_keyint(info, "demura_count",
 					catalog->demura_count);
@@ -7079,6 +7105,24 @@ static void __sde_crtc_idle_notify_work(struct kthread_work *work)
 	}
 }
 
+void sde_crtc_cancel_delayed_work(struct drm_crtc *crtc)
+{
+	struct sde_crtc *sde_crtc;
+	struct sde_crtc_state *cstate;
+	bool idle_status;
+	bool cache_status;
+
+	if (!crtc || !crtc->state)
+		return;
+
+	sde_crtc = to_sde_crtc(crtc);
+	cstate = to_sde_crtc_state(crtc->state);
+
+	idle_status = kthread_cancel_delayed_work_sync(&sde_crtc->idle_notify_work);
+	cache_status = kthread_cancel_delayed_work_sync(&sde_crtc->static_cache_read_work);
+	SDE_EVT32(DRMID(crtc), idle_status, cache_status);
+}
+
 /* initialize crtc */
 struct drm_crtc *sde_crtc_init(struct drm_device *dev, struct drm_plane *plane)
 {
@@ -7152,11 +7196,6 @@ struct drm_crtc *sde_crtc_init(struct drm_device *dev, struct drm_plane *plane)
 		drm_crtc_cleanup(crtc);
 		kfree(sde_crtc);
 		return ERR_PTR(rc);
-	}
-
-	if (kms->catalog->allowed_dsc_reservation_switch && !kms->dsc_switch_support) {
-		SDE_DEBUG("dsc switch not supported\n");
-		kms->catalog->allowed_dsc_reservation_switch = 0;
 	}
 
 	/* create CRTC properties */

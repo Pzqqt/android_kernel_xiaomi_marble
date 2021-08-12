@@ -153,7 +153,7 @@ struct sde_dbg_evtlog {
 	u32 first;
 	u32 last;
 	u32 last_dump;
-	u32 curr;
+	atomic_t curr;
 	u32 next;
 	u32 enable;
 	u32 dump_mode;

@@ -431,10 +431,11 @@ static int msm_smmu_fault_handler(struct iommu_domain *domain,
 		int flags, void *token)
 {
 	struct msm_smmu_client *client;
+	int rc = -EINVAL;
 
 	if (!token) {
 		DRM_ERROR("Error: token is NULL\n");
-		return -ENOSYS;
+		return -EINVAL;
 	}
 
 	client = (struct msm_smmu_client *)token;
@@ -448,7 +449,7 @@ static int msm_smmu_fault_handler(struct iommu_domain *domain,
 	 * return -ENOSYS to allow smmu driver to dump out useful
 	 * debug info.
 	 */
-	return -ENOSYS;
+	return rc;
 }
 
 /**

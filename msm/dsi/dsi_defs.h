@@ -559,12 +559,17 @@ struct dsi_video_engine_cfg {
  * @wr_mem_continue:               DCS command for write_memory_continue.
  * @insert_dcs_command:            Insert DCS command as first byte of payload
  *                                 of the pixel data.
+ * @mdp_idle_ctrl_en:		Enable idle insertion between command mode mdp packets.
+ * @mdp_idle_ctrl_len:		No. of dsi pclk cycles of idle time to insert between
+ *				   command mode mdp packets.
  */
 struct dsi_cmd_engine_cfg {
 	u32 max_cmd_packets_interleave;
 	u32 wr_mem_start;
 	u32 wr_mem_continue;
 	bool insert_dcs_command;
+	bool mdp_idle_ctrl_en;
+	u32 mdp_idle_ctrl_len;
 };
 
 /**
@@ -591,16 +596,6 @@ struct dsi_host_config {
 	u64 bit_clk_rate_hz_override;
 	struct dsi_mode_info video_timing;
 	struct dsi_lane_map lane_map;
-};
-
-/**
- * struct dyn_clk_list - list of dynamic clock rates.
- * @rates: list of supported clock rates
- * @count: number of supported clock rates
- */
-struct dyn_clk_list {
-	u32 *rates;
-	u32 count;
 };
 
 /**
@@ -641,7 +636,7 @@ struct dsi_display_mode_priv_info {
 	u32 dsi_transfer_time_us;
 	u64 clk_rate_hz;
 	u64 min_dsi_clk_hz;
-	struct dyn_clk_list bit_clk_list;
+	struct msm_dyn_clk_list bit_clk_list;
 
 	struct msm_display_topology topology;
 	struct msm_display_dsc_info dsc;

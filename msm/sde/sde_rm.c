@@ -2135,7 +2135,7 @@ static int _sde_rm_populate_requirements(
 	 * found enabled.
 	 */
 	if ((!RM_RQ_CWB(reqs) || !RM_RQ_DCWB(reqs))
-				&& sde_encoder_in_clone_mode(enc)) {
+				&& sde_crtc_state_in_clone_mode(enc, crtc_state)) {
 		if (cfg->has_dedicated_cwb_support)
 			reqs->top_ctrl |= BIT(SDE_RM_TOPCTL_DCWB);
 		else
@@ -2152,7 +2152,7 @@ static int _sde_rm_populate_requirements(
 			&rm->topology_tbl[SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE];
 
 		num_lm = sde_crtc_get_num_datapath(crtc_state->crtc,
-				conn_state->connector);
+				conn_state->connector, crtc_state);
 
 		if (num_lm == 1)
 			reqs->topology =
@@ -2548,6 +2548,7 @@ int sde_rm_reserve(
 	 */
 	if (test_only && rsvp_nxt) {
 		rsvp_nxt = _sde_rm_poll_get_rsvp_nxt_locked(rm, enc);
+		rsvp_cur = _sde_rm_get_rsvp_cur(rm, enc);
 		if (rsvp_nxt) {
 			pr_err("poll timeout cur %d nxt %d enc %d\n",
 				(rsvp_cur) ? rsvp_cur->seq : -1,

@@ -459,10 +459,11 @@ static int sde_smmu_fault_handler(struct iommu_domain *domain,
 		int flags, void *token)
 {
 	struct sde_smmu_client *sde_smmu;
+	int rc = -EINVAL;
 
 	if (!token) {
 		SDEROT_ERR("Error: token is NULL\n");
-		return -ENOSYS;
+		return -EINVAL;
 	}
 
 	sde_smmu = (struct sde_smmu_client *)token;
@@ -479,7 +480,7 @@ static int sde_smmu_fault_handler(struct iommu_domain *domain,
 	 * return -ENOSYS to allow smmu driver to dump out useful
 	 * debug info.
 	 */
-	return -ENOSYS;
+	return rc;
 }
 
 static struct sde_smmu_domain sde_rot_unsec = {
