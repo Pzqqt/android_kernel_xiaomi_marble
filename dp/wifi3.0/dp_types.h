@@ -1562,6 +1562,10 @@ struct dp_arch_ops {
 	QDF_STATUS (*txrx_soc_detach)(struct dp_soc *soc);
 	QDF_STATUS (*txrx_soc_init)(struct dp_soc *soc);
 	QDF_STATUS (*txrx_soc_deinit)(struct dp_soc *soc);
+	QDF_STATUS (*txrx_soc_srng_alloc)(struct dp_soc *soc);
+	QDF_STATUS (*txrx_soc_srng_init)(struct dp_soc *soc);
+	void (*txrx_soc_srng_deinit)(struct dp_soc *soc);
+	void (*txrx_soc_srng_free)(struct dp_soc *soc);
 	QDF_STATUS (*txrx_pdev_attach)(struct dp_pdev *pdev);
 	QDF_STATUS (*txrx_pdev_detach)(struct dp_pdev *pdev);
 	QDF_STATUS (*txrx_vdev_attach)(struct dp_soc *soc,
@@ -3385,5 +3389,4 @@ void dp_srng_deinit(struct dp_soc *soc, struct dp_srng *srng,
 enum timer_yield_status
 dp_should_timer_irq_yield(struct dp_soc *soc, uint32_t work_done,
 			  uint64_t start_time);
-
 #endif /* _DP_TYPES_H_ */

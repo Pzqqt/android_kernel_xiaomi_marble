@@ -309,6 +309,7 @@ enum hal_ring_type {
 #ifdef WLAN_FEATURE_CIF_CFR
 	WIFI_POS_SRC,
 #endif
+	REO2PPE,
 	PPE2TCL,
 	PPE_RELEASE,
 	TX_MONITOR_BUF,

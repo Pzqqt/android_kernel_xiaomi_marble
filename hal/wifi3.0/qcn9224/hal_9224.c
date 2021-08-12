@@ -1857,6 +1857,26 @@ struct hal_hw_srng_config hw_srng_table_9224[] = {
 		.max_size = HAL_RXDMA_MAX_RING_SIZE_BE,
 	},
 #endif
+	{ /* REO2PPE */
+		.start_ring_id = HAL_SRNG_REO2PPE,
+		.max_rings = 1,
+		.entry_size = sizeof(struct reo_destination_ring) >> 2,
+		.lmac_ring = FALSE,
+		.ring_dir = HAL_SRNG_DST_RING,
+		.reg_start = {
+			HWIO_REO_R0_REO2PPE_RING_BASE_LSB_ADDR(
+				REO_REG_REG_BASE),
+			HWIO_REO_R2_REO2PPE_RING_HP_ADDR(
+				REO_REG_REG_BASE),
+		},
+		/* Single ring - provide ring size if multiple rings of this
+		 * type are supported
+		 */
+		.reg_size = {},
+		.max_size =
+		HWIO_REO_R0_REO2PPE_RING_BASE_LSB_RING_BASE_ADDR_LSB_BMSK >>
+		HWIO_REO_R0_REO2PPE_RING_BASE_LSB_RING_BASE_ADDR_LSB_SHFT,
+	},
 	{ /* PPE2TCL */
 		.start_ring_id = HAL_SRNG_PPE2TCL1,
 		.max_rings = 1,
@@ -1941,30 +1961,6 @@ struct hal_hw_srng_config hw_srng_table_9224[] = {
 		.reg_size = {},
 		.max_size = HAL_RXDMA_MAX_RING_SIZE_BE,
 	},
-/* TODO: Enable this ring once it is part of HW hdr file */
-#ifdef REO2PPE_UNDEFINED
-	{ /* REO2PPE */
-		.start_ring_id = HAL_SRNG_REO2PPE,
-		.max_rings = 1,
-		.entry_size = sizeof(struct reo_destination_ring) >> 2,
-		.lmac_ring = FALSE,
-		.ring_dir = HAL_SRNG_DST_RING,
-		.reg_start = {
-			HWIO_REO_R0_REO2PPE_RING_BASE_LSB_ADDR(
-				REO_REG_REG_BASE),
-			HWIO_REO_R0_REO2PPE_RING_HP_ADDR(
-				REO_REG_REG_BASE),
-		},
-		/* Single ring - provide ring size if multiple rings of this
-		 * type are supported
-		 */
-		.reg_size = {},
-		.max_size =
-		HWIO_REO_R0_REO2PPE_RING_BASE_LSB_RING_BASE_ADDR_LSB_BMSK >>
-		HWIO_REO_R0_REO2PPE_RING_BASE_LSB_RING_BASE_ADDR_LSB_SHFT,
-	},
-#endif
-
 };
 
 /**

@@ -16,6 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <wlan_utility.h>
 #include <dp_internal.h>
 #include <dp_htt.h>
 #include "dp_be.h"
@@ -714,6 +715,183 @@ dp_init_near_full_arch_ops_be(struct dp_arch_ops *arch_ops)
 }
 #endif
 
+#ifdef WLAN_SUPPORT_PPEDS
+static void dp_soc_ppe_srng_deinit(struct dp_soc *soc)
+{
+	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
+	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx;
+
+	soc_cfg_ctx = soc->wlan_cfg_ctx;
+
+	if (!wlan_cfg_get_dp_soc_is_ppe_enabled(soc_cfg_ctx))
+		return;
+
+	dp_srng_deinit(soc, &be_soc->ppe_release_ring, PPE_RELEASE, 0);
+	wlan_minidump_remove(be_soc->ppe_release_ring.base_vaddr_unaligned,
+			     be_soc->ppe_release_ring.alloc_size,
+			     soc->ctrl_psoc,
+			     WLAN_MD_DP_SRNG_PPE_RELEASE,
+			     "ppe_release_ring");
+
+	dp_srng_deinit(soc, &be_soc->ppe2tcl_ring, PPE2TCL, 0);
+	wlan_minidump_remove(be_soc->ppe2tcl_ring.base_vaddr_unaligned,
+			     be_soc->ppe2tcl_ring.alloc_size,
+			     soc->ctrl_psoc,
+			     WLAN_MD_DP_SRNG_PPE2TCL,
+			     "ppe2tcl_ring");
+
+	dp_srng_deinit(soc, &be_soc->reo2ppe_ring, REO2PPE, 0);
+	wlan_minidump_remove(be_soc->reo2ppe_ring.base_vaddr_unaligned,
+			     be_soc->reo2ppe_ring.alloc_size,
+			     soc->ctrl_psoc,
+			     WLAN_MD_DP_SRNG_REO2PPE,
+			     "reo2ppe_ring");
+}
+
+static void dp_soc_ppe_srng_free(struct dp_soc *soc)
+{
+	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
+	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx;
+
+	soc_cfg_ctx = soc->wlan_cfg_ctx;
+
+	if (!wlan_cfg_get_dp_soc_is_ppe_enabled(soc_cfg_ctx))
+		return;
+
+	dp_srng_free(soc, &be_soc->ppe_release_ring);
+
+	dp_srng_free(soc, &be_soc->ppe2tcl_ring);
+
+	dp_srng_free(soc, &be_soc->reo2ppe_ring);
+}
+
+static QDF_STATUS dp_soc_ppe_srng_alloc(struct dp_soc *soc)
+{
+	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
+	uint32_t entries;
+	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx;
+
+	soc_cfg_ctx = soc->wlan_cfg_ctx;
+
+	if (!wlan_cfg_get_dp_soc_is_ppe_enabled(soc_cfg_ctx))
+		return QDF_STATUS_SUCCESS;
+
+	entries = wlan_cfg_get_dp_soc_reo2ppe_ring_size(soc_cfg_ctx);
+
+	if (dp_srng_alloc(soc, &be_soc->reo2ppe_ring, REO2PPE,
+			  entries, 0)) {
+		dp_err("%pK: dp_srng_alloc failed for reo2ppe", soc);
+		goto fail;
+	}
+
+	entries = wlan_cfg_get_dp_soc_ppe2tcl_ring_size(soc_cfg_ctx);
+	if (dp_srng_alloc(soc, &be_soc->ppe2tcl_ring, PPE2TCL,
+			  entries, 0)) {
+		dp_err("%pK: dp_srng_alloc failed for ppe2tcl_ring", soc);
+		goto fail;
+	}
+
+	entries = wlan_cfg_get_dp_soc_ppe_release_ring_size(soc_cfg_ctx);
+	if (dp_srng_alloc(soc, &be_soc->ppe_release_ring, PPE_RELEASE,
+			  entries, 0)) {
+		dp_err("%pK: dp_srng_alloc failed for ppe_release_ring", soc);
+		goto fail;
+	}
+
+	return QDF_STATUS_SUCCESS;
+fail:
+	dp_soc_ppe_srng_free(soc);
+	return QDF_STATUS_E_NOMEM;
+}
+
+static QDF_STATUS dp_soc_ppe_srng_init(struct dp_soc *soc)
+{
+	struct dp_soc_be *be_soc = dp_get_be_soc_from_dp_soc(soc);
+	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx;
+
+	soc_cfg_ctx = soc->wlan_cfg_ctx;
+
+	if (!wlan_cfg_get_dp_soc_is_ppe_enabled(soc_cfg_ctx))
+		return QDF_STATUS_SUCCESS;
+
+	if (dp_srng_init(soc, &be_soc->reo2ppe_ring, REO2PPE, 0, 0)) {
+		dp_err("%pK: dp_srng_init failed for reo2ppe", soc);
+		goto fail;
+	}
+
+	wlan_minidump_log(be_soc->reo2ppe_ring.base_vaddr_unaligned,
+			  be_soc->reo2ppe_ring.alloc_size,
+			  soc->ctrl_psoc,
+			  WLAN_MD_DP_SRNG_REO2PPE,
+			  "reo2ppe_ring");
+
+	if (dp_srng_init(soc, &be_soc->ppe2tcl_ring, PPE2TCL, 0, 0)) {
+		dp_err("%pK: dp_srng_init failed for ppe2tcl_ring", soc);
+		goto fail;
+	}
+
+	wlan_minidump_log(be_soc->ppe2tcl_ring.base_vaddr_unaligned,
+			  be_soc->ppe2tcl_ring.alloc_size,
+			  soc->ctrl_psoc,
+			  WLAN_MD_DP_SRNG_PPE2TCL,
+			  "ppe2tcl_ring");
+
+	if (dp_srng_init(soc, &be_soc->ppe_release_ring, PPE_RELEASE, 0, 0)) {
+		dp_err("%pK: dp_srng_init failed for ppe_release_ring", soc);
+		goto fail;
+	}
+
+	wlan_minidump_log(be_soc->ppe_release_ring.base_vaddr_unaligned,
+			  be_soc->ppe_release_ring.alloc_size,
+			  soc->ctrl_psoc,
+			  WLAN_MD_DP_SRNG_PPE_RELEASE,
+			  "ppe_release_ring");
+
+	return QDF_STATUS_SUCCESS;
+fail:
+	dp_soc_ppe_srng_deinit(soc);
+	return QDF_STATUS_E_NOMEM;
+}
+#else
+static void dp_soc_ppe_srng_deinit(struct dp_soc *soc)
+{
+}
+
+static void dp_soc_ppe_srng_free(struct dp_soc *soc)
+{
+}
+
+static QDF_STATUS dp_soc_ppe_srng_alloc(struct dp_soc *soc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dp_soc_ppe_srng_init(struct dp_soc *soc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+static void dp_soc_srng_deinit_be(struct dp_soc *soc)
+{
+	dp_soc_ppe_srng_deinit(soc);
+}
+
+static void dp_soc_srng_free_be(struct dp_soc *soc)
+{
+	dp_soc_ppe_srng_free(soc);
+}
+
+static QDF_STATUS dp_soc_srng_alloc_be(struct dp_soc *soc)
+{
+	return dp_soc_ppe_srng_alloc(soc);
+}
+
+static QDF_STATUS dp_soc_srng_init_be(struct dp_soc *soc)
+{
+	return dp_soc_ppe_srng_init(soc);
+}
+
 void dp_initialize_arch_ops_be(struct dp_arch_ops *arch_ops)
 {
 #ifndef QCA_HOST_MODE_WIFI_DISABLED
@@ -736,6 +914,10 @@ void dp_initialize_arch_ops_be(struct dp_arch_ops *arch_ops)
 	arch_ops->txrx_soc_detach = dp_soc_detach_be;
 	arch_ops->txrx_soc_init = dp_soc_init_be;
 	arch_ops->txrx_soc_deinit = dp_soc_deinit_be;
+	arch_ops->txrx_soc_srng_alloc = dp_soc_srng_alloc_be;
+	arch_ops->txrx_soc_srng_init = dp_soc_srng_init_be;
+	arch_ops->txrx_soc_srng_deinit = dp_soc_srng_deinit_be;
+	arch_ops->txrx_soc_srng_free = dp_soc_srng_free_be;
 	arch_ops->txrx_pdev_attach = dp_pdev_attach_be;
 	arch_ops->txrx_pdev_detach = dp_pdev_detach_be;
 	arch_ops->txrx_vdev_attach = dp_vdev_attach_be;

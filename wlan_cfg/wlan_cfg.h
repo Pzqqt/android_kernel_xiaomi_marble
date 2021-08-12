@@ -354,6 +354,12 @@ struct wlan_cfg_dp_soc_ctxt {
 #endif
 	bool hw_cc_enabled;
 	struct wlan_cfg_tcl_wbm_ring_num_map *tcl_wbm_map_array;
+#ifdef WLAN_SUPPORT_PPEDS
+	bool ppe_enable;
+	int reo2ppe_ring;
+	int ppe2tcl_ring;
+	int ppe_release_ring;
+#endif
 };
 
 /**
@@ -1739,4 +1745,42 @@ wlan_cfg_set_delay_mon_replenish(struct wlan_cfg_dp_soc_ctxt *cfg, bool val);
  * Return:
  */
 void wlan_cfg_dp_soc_ctx_dump(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+#ifdef WLAN_SUPPORT_PPEDS
+/*
+ * wlan_cfg_get_dp_soc_is_ppe_enabled() - API to get ppe enable flag
+ * @wlan_cfg_ctx - Configuration Handle
+ *
+ * Return: true if ppe is enabled else return false
+ */
+bool
+wlan_cfg_get_dp_soc_is_ppe_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_get_dp_soc_reo2ppe_ring_size() - get ppe rx ring size
+ * @wlan_cfg_ctx - Configuration Handle
+ *
+ * Return: size of reo2ppe ring
+ */
+int
+wlan_cfg_get_dp_soc_reo2ppe_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_get_dp_soc_ppe2tcl_ring_size() - get ppe tx ring size
+ * @wlan_cfg_ctx - Configuration Handle
+ *
+ * Return: size of ppe2tcl ring
+ */
+int
+wlan_cfg_get_dp_soc_ppe2tcl_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_get_dp_soc_ppe_release_ring_size() - get ppe tx comp ring size
+ * @wlan_cfg_ctx - Configuration Handle
+ *
+ * Return: size of ppe release ring
+ */
+int
+wlan_cfg_get_dp_soc_ppe_release_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg);
+#endif
 #endif

@@ -4291,6 +4291,7 @@ static QDF_STATUS dp_init_tx_ring_pair_by_index(struct dp_soc *soc,
 		dp_err("dp_srng_init failed for tx_comp_ring");
 		goto fail1;
 	}
+
 	wlan_minidump_log(soc->tx_comp_ring[index].base_vaddr_unaligned,
 			  soc->tx_comp_ring[index].alloc_size,
 			  soc->ctrl_psoc,
@@ -12496,6 +12497,10 @@ fail1:
 static void dp_soc_srng_deinit(struct dp_soc *soc)
 {
 	uint32_t i;
+
+	if (soc->arch_ops.txrx_soc_srng_deinit)
+		soc->arch_ops.txrx_soc_srng_deinit(soc);
+
 	/* Free the ring memories */
 	/* Common rings */
 	wlan_minidump_remove(soc->wbm_desc_rel_ring.base_vaddr_unaligned,
@@ -12712,6 +12717,14 @@ static QDF_STATUS dp_soc_srng_init(struct dp_soc *soc)
 				  "reo_dest_ring");
 	}
 
+	if (soc->arch_ops.txrx_soc_srng_init) {
+		if (soc->arch_ops.txrx_soc_srng_init(soc)) {
+			dp_init_err("%pK: dp_srng_init failed for arch rings",
+				    soc);
+			goto fail1;
+		}
+	}
+
 	return QDF_STATUS_SUCCESS;
 fail1:
 	/*
@@ -12730,6 +12743,9 @@ fail1:
 static void dp_soc_srng_free(struct dp_soc *soc)
 {
 	uint32_t i;
+
+	if (soc->arch_ops.txrx_soc_srng_free)
+		soc->arch_ops.txrx_soc_srng_free(soc);
 
 	dp_srng_free(soc, &soc->wbm_desc_rel_ring);
 
@@ -12851,6 +12867,14 @@ static QDF_STATUS dp_soc_srng_alloc(struct dp_soc *soc)
 		if (dp_srng_alloc(soc, &soc->reo_dest_ring[i], REO_DST,
 				  reo_dst_ring_size, cached)) {
 			dp_init_err("%pK: dp_srng_alloc failed for reo_dest_ring", soc);
+			goto fail1;
+		}
+	}
+
+	if (soc->arch_ops.txrx_soc_srng_alloc) {
+		if (soc->arch_ops.txrx_soc_srng_alloc(soc)) {
+			dp_init_err("%pK: dp_srng_alloc failed for arch rings",
+				    soc);
 			goto fail1;
 		}
 	}

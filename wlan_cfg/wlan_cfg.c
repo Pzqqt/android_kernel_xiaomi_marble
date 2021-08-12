@@ -1027,6 +1027,33 @@ wlan_soc_hw_cc_cfg_attach(struct cdp_ctrl_objmgr_psoc *psoc,
 }
 #endif
 
+#ifdef WLAN_SUPPORT_PPEDS
+/**
+ * wlan_soc_ppe_cfg_attach() - Update ppe config in dp soc
+ *  cfg context
+ * @psoc - Object manager psoc
+ * @wlan_cfg_ctx - dp soc cfg ctx
+ *
+ * Return: None
+ */
+static void
+wlan_soc_ppe_cfg_attach(struct cdp_ctrl_objmgr_psoc *psoc,
+			struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx)
+{
+	wlan_cfg_ctx->ppe_enable = cfg_get(psoc, CFG_DP_PPE_ENABLE);
+	wlan_cfg_ctx->reo2ppe_ring = cfg_get(psoc, CFG_DP_REO2PPE_RING);
+	wlan_cfg_ctx->ppe2tcl_ring = cfg_get(psoc, CFG_DP_PPE2TCL_RING);
+	wlan_cfg_ctx->ppe_release_ring = cfg_get(psoc,
+						 CFG_DP_PPE_RELEASE_RING);
+}
+#else
+static inline void
+wlan_soc_ppe_cfg_attach(struct cdp_ctrl_objmgr_psoc *psoc,
+			struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx)
+{
+}
+#endif
+
 /**
  * wlan_cfg_soc_attach() - Allocate and prepare SoC configuration
  * @psoc - Object manager psoc
@@ -1205,6 +1232,7 @@ wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 			CFG_DP_DELAY_MON_REPLENISH);
 	wlan_soc_ipa_cfg_attach(psoc, wlan_cfg_ctx);
 	wlan_soc_hw_cc_cfg_attach(psoc, wlan_cfg_ctx);
+	wlan_soc_ppe_cfg_attach(psoc, wlan_cfg_ctx);
 
 	return wlan_cfg_ctx;
 }
@@ -2170,5 +2198,31 @@ uint32_t wlan_cfg_ipa_tx_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
 uint32_t wlan_cfg_ipa_tx_comp_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->ipa_tx_comp_ring_size;
+}
+#endif
+
+#ifdef WLAN_SUPPORT_PPEDS
+bool
+wlan_cfg_get_dp_soc_is_ppe_enabled(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->ppe_enable;
+}
+
+int
+wlan_cfg_get_dp_soc_reo2ppe_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->reo2ppe_ring;
+}
+
+int
+wlan_cfg_get_dp_soc_ppe2tcl_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->ppe2tcl_ring;
+}
+
+int
+wlan_cfg_get_dp_soc_ppe_release_ring_size(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->ppe_release_ring;
 }
 #endif
