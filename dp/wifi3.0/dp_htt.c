@@ -742,7 +742,7 @@ int htt_h2t_full_mon_cfg(struct htt_soc *htt_soc,
 	 * separately during the below call to qdf_nbuf_push_head.
 	 * The contribution from the HTC header is added separately inside HTC.
 	 */
-	if (!qdf_nbuf_put_tail(htt_msg, HTT_RX_RING_SELECTION_CFG_SZ)) {
+	if (!qdf_nbuf_put_tail(htt_msg, HTT_RX_FULL_MONITOR_MODE_SETUP_SZ)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to expand head for RX Ring Cfg msg",
 			  __func__);
@@ -797,7 +797,7 @@ int htt_h2t_full_mon_cfg(struct htt_soc *htt_soc,
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, htt_msg);
 	qdf_debug("config: %d", config);
-	DP_HTT_SEND_HTC_PKT(soc, pkt, HTT_H2T_MSG_TYPE_SRING_SETUP,
+	DP_HTT_SEND_HTC_PKT(soc, pkt, HTT_H2T_MSG_TYPE_RX_FULL_MONITOR_MODE,
 			    htt_logger_bufp);
 	return QDF_STATUS_SUCCESS;
 fail1:
