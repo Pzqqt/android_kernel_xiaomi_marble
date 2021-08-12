@@ -25,20 +25,7 @@
 #include <hal_li_api.h>
 #include <hal_li_tx.h>
 
-/*mapping between hal encrypt type and cdp_sec_type*/
-#define MAX_CDP_SEC_TYPE 12
-uint8_t sec_type_map[MAX_CDP_SEC_TYPE] = {HAL_TX_ENCRYPT_TYPE_NO_CIPHER,
-					  HAL_TX_ENCRYPT_TYPE_WEP_128,
-					  HAL_TX_ENCRYPT_TYPE_WEP_104,
-					  HAL_TX_ENCRYPT_TYPE_WEP_40,
-					  HAL_TX_ENCRYPT_TYPE_TKIP_WITH_MIC,
-					  HAL_TX_ENCRYPT_TYPE_TKIP_NO_MIC,
-					  HAL_TX_ENCRYPT_TYPE_AES_CCMP_128,
-					  HAL_TX_ENCRYPT_TYPE_WAPI,
-					  HAL_TX_ENCRYPT_TYPE_AES_CCMP_256,
-					  HAL_TX_ENCRYPT_TYPE_AES_GCMP_128,
-					  HAL_TX_ENCRYPT_TYPE_AES_GCMP_256,
-					  HAL_TX_ENCRYPT_TYPE_WAPI_GCM_SM4};
+extern uint8_t sec_type_map[MAX_CDP_SEC_TYPE];
 
 void dp_tx_comp_get_params_from_hal_desc_li(struct dp_soc *soc,
 					    void *tx_comp_hal_desc,

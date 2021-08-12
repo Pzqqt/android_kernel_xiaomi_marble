@@ -27,6 +27,7 @@
 #include "qdf_mem.h"
 #include "qdf_nbuf.h"
 #include "qdf_net_types.h"
+#include "qdf_module.h"
 #include <wlan_cfg.h>
 #include "dp_ipa.h"
 #if defined(MESH_MODE_SUPPORT) || defined(FEATURE_PERPKT_INFO)
@@ -60,6 +61,21 @@
 
 /* invalid peer id for reinject*/
 #define DP_INVALID_PEER 0XFFFE
+
+/*mapping between hal encrypt type and cdp_sec_type*/
+uint8_t sec_type_map[MAX_CDP_SEC_TYPE] = {HAL_TX_ENCRYPT_TYPE_NO_CIPHER,
+					  HAL_TX_ENCRYPT_TYPE_WEP_128,
+					  HAL_TX_ENCRYPT_TYPE_WEP_104,
+					  HAL_TX_ENCRYPT_TYPE_WEP_40,
+					  HAL_TX_ENCRYPT_TYPE_TKIP_WITH_MIC,
+					  HAL_TX_ENCRYPT_TYPE_TKIP_NO_MIC,
+					  HAL_TX_ENCRYPT_TYPE_AES_CCMP_128,
+					  HAL_TX_ENCRYPT_TYPE_WAPI,
+					  HAL_TX_ENCRYPT_TYPE_AES_CCMP_256,
+					  HAL_TX_ENCRYPT_TYPE_AES_GCMP_128,
+					  HAL_TX_ENCRYPT_TYPE_AES_GCMP_256,
+					  HAL_TX_ENCRYPT_TYPE_WAPI_GCM_SM4};
+qdf_export_symbol(sec_type_map);
 
 #ifdef CONFIG_WLAN_SYSFS_MEM_STATS
 /**

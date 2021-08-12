@@ -213,6 +213,7 @@ void hal_tx_desc_set_cache_set_num_generic_be(void *desc, uint8_t cache_num)
 }
 #endif
 
+#if defined(QCA_WIFI_WCN7850) || defined(CONFIG_WIFI_EMULATION_WIFI_3_0)
 static inline uint32_t
 hal_wbm2sw_release_source_get(void *hal_desc, enum hal_be_wbm_release_dir dir)
 {
@@ -248,6 +249,13 @@ hal_wbm2sw_release_source_get(void *hal_desc, enum hal_be_wbm_release_dir dir)
 
 	return buf_src;
 }
+#else
+static inline uint32_t
+hal_wbm2sw_release_source_get(void *hal_desc, enum hal_be_wbm_release_dir dir)
+{
+	return HAL_WBM2SW_RELEASE_SRC_GET(hal_desc);
+}
+#endif
 
 uint32_t hal_tx_comp_get_buffer_source_generic_be(void *hal_desc)
 {

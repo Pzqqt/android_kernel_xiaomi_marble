@@ -24,6 +24,8 @@
 #include "hal_tx.h"
 #include <hal_be_api.h>
 
+extern uint8_t sec_type_map[MAX_CDP_SEC_TYPE];
+
 #ifdef DP_FEATURE_HW_COOKIE_CONVERSION
 #ifdef DP_HW_COOKIE_CONVERT_EXCEPTION
 void dp_tx_comp_get_params_from_hal_desc_be(struct dp_soc *soc,
@@ -118,6 +120,19 @@ dp_tx_hw_enqueue_be(struct dp_soc *soc, struct dp_vdev *vdev,
 	if (!dp_tx_is_desc_id_valid(soc, tx_desc->id)) {
 		dp_err_rl("Invalid tx desc id:%d", tx_desc->id);
 		return QDF_STATUS_E_RESOURCES;
+	}
+
+	if (qdf_unlikely(tx_exc_metadata)) {
+		qdf_assert_always((tx_exc_metadata->tx_encap_type ==
+				   CDP_INVALID_TX_ENCAP_TYPE) ||
+				   (tx_exc_metadata->tx_encap_type ==
+				    vdev->tx_encap_type));
+
+		if (tx_exc_metadata->tx_encap_type == htt_cmn_pkt_type_raw)
+			qdf_assert_always((tx_exc_metadata->sec_type ==
+					   CDP_INVALID_SEC_TYPE) ||
+					   tx_exc_metadata->sec_type ==
+					   vdev->sec_type);
 	}
 
 	hal_tx_desc_cached = (void *)cached_desc;
@@ -249,17 +264,22 @@ void dp_tx_get_vdev_bank_config(struct dp_vdev_be *be_vdev,
 	bank_config->encap_type = vdev->tx_encap_type;
 
 	/* Only valid for raw frames. Needs work for RAW mode */
-	bank_config->encrypt_type = 0;
+	if (vdev->tx_encap_type == htt_cmn_pkt_type_raw) {
+		bank_config->encrypt_type = sec_type_map[vdev->sec_type];
+	} else {
+		bank_config->encrypt_type = 0;
+	}
 
 	bank_config->src_buffer_swap = 0;
 	bank_config->link_meta_swap = 0;
 
-	if (soc->is_peer_map_unmap_v2 && vdev->opmode == wlan_op_mode_sta)
-		vdev->search_type = HAL_TX_ADDR_INDEX_SEARCH;
-	else
-		vdev->search_type = HAL_TX_ADDR_SEARCH_DEFAULT;
-
-	bank_config->index_lookup_enable = 0;
+	if (soc->is_peer_map_unmap_v2 && vdev->opmode == wlan_op_mode_sta) {
+		bank_config->index_lookup_enable = 1;
+		bank_config->mcast_pkt_ctrl = 2;
+	} else {
+		bank_config->index_lookup_enable = 0;
+		bank_config->mcast_pkt_ctrl = 0;
+	}
 
 	bank_config->addrx_en =
 		(vdev->hal_desc_addr_search_flags & HAL_TX_DESC_ADDRX_EN) ?
@@ -274,8 +294,6 @@ void dp_tx_get_vdev_bank_config(struct dp_vdev_be *be_vdev,
 	bank_config->vdev_id_check_en = be_vdev->vdev_id_check_en;
 
 	bank_config->pmac_id = vdev->lmac_id;
-
-	bank_config->mcast_pkt_ctrl = 0;
 }
 
 int dp_tx_get_bank_profile(struct dp_soc_be *be_soc,
