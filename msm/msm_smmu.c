@@ -242,9 +242,6 @@ static int msm_smmu_map_dma_buf(struct msm_mmu *mmu, struct sg_table *sgt,
 		return -ENOMEM;
 	}
 
-	if (flags & MSM_BO_KEEPATTRS)
-		attrs |= DMA_ATTR_IOMMU_USE_LLC_NWA;
-
 	/*
 	 * For import buffer type, dma_map_sg_attrs is called during
 	 * dma_buf_map_attachment and is not required to call again

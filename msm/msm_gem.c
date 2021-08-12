@@ -1239,15 +1239,6 @@ int msm_gem_delayed_import(struct drm_gem_object *obj)
 		attach->dma_map_attrs |= DMA_ATTR_SKIP_CPU_SYNC;
 
 	/*
-	 * All SMMU mapping are generated with cache hint.
-	 * SSPP cache hint will control the LLCC access.
-	 */
-	if (msm_obj->flags & MSM_BO_KEEPATTRS)
-		attach->dma_map_attrs |=
-				(DMA_ATTR_IOMMU_USE_UPSTREAM_HINT |
-				DMA_ATTR_IOMMU_USE_LLC_NWA);
-
-	/*
 	 * dma_buf_map_attachment will call dma_map_sg for ion buffer
 	 * mapping, and iova will get mapped when the function returns.
 	 */
